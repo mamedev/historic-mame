@@ -17,17 +17,18 @@
 #include <math.h>
 #include "driver.h"
 #include "cpuintrf.h"
+#include "sp0250.h"
 
 enum { MAIN_CLOCK = 10000 };
 
-static struct {
+struct sp0250 {
 	INT16 amp;
 	UINT8 pitch;
 	UINT8 repeat;
 	UINT8 pcount, rcount;
 	UINT8 pcounto, rcounto;
 	UINT32 RNG;
-	int stream;
+	sound_stream * stream;
 	int voiced;
 	UINT8 fifo[15];
 	int fifo_pos;
@@ -38,11 +39,11 @@ static struct {
 		INT16 F, B;
 		INT16 z1, z2;
 	} filter[6];
-} sp0250;
+};
 
 // Internal ROM to the chip, cf. manual
 
-static UINT16 coefs[128] = {
+static const UINT16 coefs[128] = {
 	  0,   9,  17,  25,  33,  41,  49,  57,  65,  73,  81,  89,  97, 105, 113, 121,
 	129, 137, 145, 153, 161, 169, 177, 185, 193, 201, 203, 217, 225, 233, 241, 249,
 	257, 265, 273, 281, 289, 297, 301, 305, 309, 313, 317, 321, 325, 329, 333, 337,
@@ -68,125 +69,165 @@ static INT16 sp0250_gc(UINT8 v)
 	return res;
 }
 
-static void sp0250_load_values(void)
+static void sp0250_load_values(struct sp0250 *sp)
 {
-	sp0250.filter[0].B = sp0250_gc(sp0250.fifo[ 0]);
-	sp0250.filter[0].F = sp0250_gc(sp0250.fifo[ 1]);
-	sp0250.amp         = sp0250_ga(sp0250.fifo[ 2]);
-	sp0250.filter[1].B = sp0250_gc(sp0250.fifo[ 3]);
-	sp0250.filter[1].F = sp0250_gc(sp0250.fifo[ 4]);
-	sp0250.pitch       =           sp0250.fifo[ 5];
-	sp0250.filter[2].B = sp0250_gc(sp0250.fifo[ 6]);
-	sp0250.filter[2].F = sp0250_gc(sp0250.fifo[ 7]);
-	sp0250.repeat      =           sp0250.fifo[ 8] & 0x3f;
-	sp0250.voiced      =           sp0250.fifo[ 8] & 0x40;
-	sp0250.filter[3].B = sp0250_gc(sp0250.fifo[ 9]);
-	sp0250.filter[3].F = sp0250_gc(sp0250.fifo[10]);
-	sp0250.filter[4].B = sp0250_gc(sp0250.fifo[11]);
-	sp0250.filter[4].F = sp0250_gc(sp0250.fifo[12]);
-	sp0250.filter[5].B = sp0250_gc(sp0250.fifo[13]);
-	sp0250.filter[5].F = sp0250_gc(sp0250.fifo[14]);
-	sp0250.fifo_pos = 0;
-	sp0250.drq(ASSERT_LINE);
+	sp->filter[0].B = sp0250_gc(sp->fifo[ 0]);
+	sp->filter[0].F = sp0250_gc(sp->fifo[ 1]);
+	sp->amp         = sp0250_ga(sp->fifo[ 2]);
+	sp->filter[1].B = sp0250_gc(sp->fifo[ 3]);
+	sp->filter[1].F = sp0250_gc(sp->fifo[ 4]);
+	sp->pitch       =           sp->fifo[ 5];
+	sp->filter[2].B = sp0250_gc(sp->fifo[ 6]);
+	sp->filter[2].F = sp0250_gc(sp->fifo[ 7]);
+	sp->repeat      =           sp->fifo[ 8] & 0x3f;
+	sp->voiced      =           sp->fifo[ 8] & 0x40;
+	sp->filter[3].B = sp0250_gc(sp->fifo[ 9]);
+	sp->filter[3].F = sp0250_gc(sp->fifo[10]);
+	sp->filter[4].B = sp0250_gc(sp->fifo[11]);
+	sp->filter[4].F = sp0250_gc(sp->fifo[12]);
+	sp->filter[5].B = sp0250_gc(sp->fifo[13]);
+	sp->filter[5].F = sp0250_gc(sp->fifo[14]);
+	sp->fifo_pos = 0;
+	sp->drq(ASSERT_LINE);
 }
 
-static void sp0250_timer_tick(int param)
+static void sp0250_timer_tick(void *param)
 {
-	sp0250.pcount++;
-	if(sp0250.pcount >= sp0250.pitch) {
-		sp0250.pcount = 0;
-		sp0250.rcount++;
-		if(sp0250.rcount >= sp0250.repeat) {
-			sp0250.rcount = 0;
-			stream_update(sp0250.stream, 0);
+	struct sp0250 *sp = param;
+	sp->pcount++;
+	if(sp->pcount >= sp->pitch) {
+		sp->pcount = 0;
+		sp->rcount++;
+		if(sp->rcount >= sp->repeat) {
+			sp->rcount = 0;
+			stream_update(sp->stream, 0);
 
 			// The synchronisation between the update callback and the
 			// timer tick is crap.  Specifically, the timer tick goes
 			// a little faster.  So compensate.
 
-			sp0250.pcount = sp0250.pcounto;
-			sp0250.rcount = sp0250.rcounto;
-			if(sp0250.pcount || sp0250.rcount)
+			sp->pcount = sp->pcounto;
+			sp->rcount = sp->rcounto;
+			if(sp->pcount || sp->rcount)
 				return;
 
-			if(sp0250.fifo_pos == 15)
-				sp0250_load_values();
+			if(sp->fifo_pos == 15)
+				sp0250_load_values(sp);
 			else {
-				sp0250.amp = 0;
-				sp0250.pitch = 0;
-				sp0250.repeat = 0;
+				sp->amp = 0;
+				sp->pitch = 0;
+				sp->repeat = 0;
 			}
 		}
 	}
 }
 
-static void sp0250_update(int num, INT16 *output, int length)
+static void sp0250_update(void *param, stream_sample_t **inputs, stream_sample_t **buffer, int length)
 {
+	struct sp0250 *sp = param;
+	stream_sample_t *output = buffer[0];
 	int i;
 	for(i=0; i<length; i++) {
 		INT16 z0 = 0;
 		int f;
 
-		if(sp0250.voiced)
-			if(!sp0250.pcounto)
-				z0 = sp0250.amp;
+		if(sp->voiced)
+			if(!sp->pcounto)
+				z0 = sp->amp;
 			else
 				z0 = 0;
 		else {
 			// Borrowing the ay noise generation LFSR
 
-			if(sp0250.RNG & 1) {
-				z0 = sp0250.amp;
-				sp0250.RNG ^= 0x24000;
+			if(sp->RNG & 1) {
+				z0 = sp->amp;
+				sp->RNG ^= 0x24000;
 			} else
-				z0 = -sp0250.amp;
-			sp0250.RNG >>= 1;
+				z0 = -sp->amp;
+			sp->RNG >>= 1;
 		}
 		for(f=0; f<6; f++) {
-			z0 += ((sp0250.filter[f].z1 * sp0250.filter[f].F) >> 8)
-				+ ((sp0250.filter[f].z2 * sp0250.filter[f].B) >> 9);
-			sp0250.filter[f].z2 = sp0250.filter[f].z1;
-			sp0250.filter[f].z1 = z0;
+			z0 += ((sp->filter[f].z1 * sp->filter[f].F) >> 8)
+				+ ((sp->filter[f].z2 * sp->filter[f].B) >> 9);
+			sp->filter[f].z2 = sp->filter[f].z1;
+			sp->filter[f].z1 = z0;
 		}
 
 		// Physical resolution is only 7 bits, but heh
 		output[i] = z0;
 
-		sp0250.pcounto++;
-		if(sp0250.pcounto >= sp0250.pitch) {
-			sp0250.pcounto = 0;
-			sp0250.rcounto++;
-			if(sp0250.rcounto >= sp0250.repeat)
-				sp0250.rcounto = 0;
+		sp->pcounto++;
+		if(sp->pcounto >= sp->pitch) {
+			sp->pcounto = 0;
+			sp->rcounto++;
+			if(sp->rcounto >= sp->repeat)
+				sp->rcounto = 0;
 		}
 	}
 }
 
 
-int sp0250_sh_start( const struct MachineSound *msound )
+static void *sp0250_start(int sndindex, int clock, const void *config)
 {
-	struct sp0250_interface *intf = msound->sound_interface;
-	memset(&sp0250, 0, sizeof(sp0250));
-	sp0250.RNG = 1;
-	sp0250.drq = intf->drq_callback;
-	sp0250.drq(ASSERT_LINE);
-	timer_pulse(TIME_IN_HZ(MAIN_CLOCK), 0, sp0250_timer_tick);
+	const struct sp0250_interface *intf = config;
+	struct sp0250 *sp;
+	
+	sp = auto_malloc(sizeof(*sp));
+	memset(sp, 0, sizeof(*sp));
+	sp->RNG = 1;
+	sp->drq = intf->drq_callback;
+	sp->drq(ASSERT_LINE);
+	timer_pulse_ptr(TIME_IN_HZ(MAIN_CLOCK), sp, sp0250_timer_tick);
 
-	sp0250.stream = stream_init("SP0250", intf->volume, MAIN_CLOCK, 0, sp0250_update);
+	sp->stream = stream_create(0, 1, MAIN_CLOCK, sp, sp0250_update);
 
-	return 0;
-}
-
-void sp0250_sh_stop( void )
-{
+	return sp;
 }
 
 
 WRITE8_HANDLER( sp0250_w )
 {
-	if(sp0250.fifo_pos != 15) {
-		sp0250.fifo[sp0250.fifo_pos++] = data;
-		if(sp0250.fifo_pos == 15)
-			sp0250.drq(CLEAR_LINE);
+	struct sp0250 *sp = sndti_token(SOUND_SP0250, 0);
+	if(sp->fifo_pos != 15) {
+		sp->fifo[sp->fifo_pos++] = data;
+		if(sp->fifo_pos == 15)
+			sp->drq(CLEAR_LINE);
 	}
 }
+
+
+
+/**************************************************************************
+ * Generic get_info
+ **************************************************************************/
+
+static void sp0250_set_info(void *token, UINT32 state, union sndinfo *info)
+{
+	switch (state)
+	{
+		/* no parameters to set */
+	}
+}
+
+
+void sp0250_get_info(void *token, UINT32 state, union sndinfo *info)
+{
+	switch (state)
+	{
+		/* --- the following bits of info are returned as 64-bit signed integers --- */
+
+		/* --- the following bits of info are returned as pointers to data or functions --- */
+		case SNDINFO_PTR_SET_INFO:						info->set_info = sp0250_set_info;		break;
+		case SNDINFO_PTR_START:							info->start = sp0250_start;				break;
+		case SNDINFO_PTR_STOP:							/* Nothing */							break;
+		case SNDINFO_PTR_RESET:							/* Nothing */							break;
+
+		/* --- the following bits of info are returned as NULL-terminated strings --- */
+		case SNDINFO_STR_NAME:							info->s = "SP0250";						break;
+		case SNDINFO_STR_CORE_FAMILY:					info->s = "GI speech";					break;
+		case SNDINFO_STR_CORE_VERSION:					info->s = "1.0";						break;
+		case SNDINFO_STR_CORE_FILE:						info->s = __FILE__;						break;
+		case SNDINFO_STR_CORE_CREDITS:					info->s = "Copyright (c) 2004, The MAME Team"; break;
+	}
+}
+

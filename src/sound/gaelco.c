@@ -48,8 +48,8 @@ Registers per channel:
 
 data16_t *gaelco_sndregs;
 
-/* table for converting from 8 to 16 bits with volume control */
-INT16 volume_table[VOLUME_LEVELS][256];
+/* fix me -- asumes that only one type can be active at a time */
+static int chip_type;
 
 /* this structure defines a channel */
 struct gaelcosnd_channel
@@ -62,14 +62,14 @@ struct gaelcosnd_channel
 /* this structure defines the Gaelco custom sound chip */
 struct GAELCOSND
 {
-	int stream;												/* our stream */
+	sound_stream *stream;									/* our stream */
 	UINT8 *snd_data;										/* PCM data */
 	int banks[4];											/* start of each ROM bank */
 	struct gaelcosnd_channel channel[GAELCO_NUM_CHANNELS];	/* 7 stereo channels */
-};
 
-/* Gaelco CG-1V/GAE1 chip */
-static struct GAELCOSND gaelcosnd;
+	/* table for converting from 8 to 16 bits with volume control */
+	INT16 volume_table[VOLUME_LEVELS][256];
+};
 
 #ifdef LOG_WAVE
 void *	wavraw;					/* raw waveform */
@@ -81,8 +81,9 @@ void *	wavraw;					/* raw waveform */
 			Writes length bytes to the sound buffer
   ============================================================================*/
 
-static void gaelco_sh_update(int param, INT16 **buffer, int length)
+static void gaelco_update(void *param, stream_sample_t **inputs, stream_sample_t **buffer, int length)
 {
+	struct GAELCOSND *info = param;
 	int j, ch;
 
     /* fill all data needed */
@@ -92,7 +93,7 @@ static void gaelco_sh_update(int param, INT16 **buffer, int length)
 		/* for each channel */
 		for (ch = 0; ch < GAELCO_NUM_CHANNELS; ch ++){
 			int ch_data_l = 0, ch_data_r = 0;
-			struct gaelcosnd_channel *channel = &gaelcosnd.channel[ch];
+			struct gaelcosnd_channel *channel = &info->channel[ch];
 
 			/* if the channel is playing */
 			if (channel->active == 1){
@@ -108,7 +109,7 @@ static void gaelco_sh_update(int param, INT16 **buffer, int length)
 
 				/* get channel parameters */
 				type = ((gaelco_sndregs[base_offset + 1] >> 4) & 0x0f);
-				bank = gaelcosnd.banks[((gaelco_sndregs[base_offset + 1] >> 0) & 0x03)];
+				bank = info->banks[((gaelco_sndregs[base_offset + 1] >> 0) & 0x03)];
 				vol_l = ((gaelco_sndregs[base_offset + 1] >> 12) & 0x0f);
 				vol_r = ((gaelco_sndregs[base_offset + 1] >> 8) & 0x0f);
 				end_pos = gaelco_sndregs[base_offset + 2] << 8;
@@ -116,21 +117,21 @@ static void gaelco_sh_update(int param, INT16 **buffer, int length)
 				/* generates output data (range 0x00000..0xffff) */
 				if (type == 0x08){
 					/* PCM, 8 bits mono */
-					data = gaelcosnd.snd_data[bank + end_pos + gaelco_sndregs[base_offset + 3]];
-					ch_data_l = volume_table[vol_l][data];
-					ch_data_r = volume_table[vol_r][data];
+					data = info->snd_data[bank + end_pos + gaelco_sndregs[base_offset + 3]];
+					ch_data_l = info->volume_table[vol_l][data];
+					ch_data_r = info->volume_table[vol_r][data];
 
 					gaelco_sndregs[base_offset + 3]--;
 				} else if (type == 0x0c){
 					/* PCM, 8 bits stereo */
-					data = gaelcosnd.snd_data[bank + end_pos + gaelco_sndregs[base_offset + 3]];
-					ch_data_l = volume_table[vol_l][data];
+					data = info->snd_data[bank + end_pos + gaelco_sndregs[base_offset + 3]];
+					ch_data_l = info->volume_table[vol_l][data];
 
 					gaelco_sndregs[base_offset + 3]--;
 
 					if (gaelco_sndregs[base_offset + 3] > 0){
-						data = gaelcosnd.snd_data[bank + end_pos + gaelco_sndregs[base_offset + 3]];
-						ch_data_r = volume_table[vol_r][data];
+						data = info->snd_data[bank + end_pos + gaelco_sndregs[base_offset + 3]];
+						ch_data_r = info->volume_table[vol_r][data];
 
 						gaelco_sndregs[base_offset + 3]--;
 					}
@@ -202,14 +203,15 @@ READ16_HANDLER( gaelcosnd_r )
 
 WRITE16_HANDLER( gaelcosnd_w )
 {
-	struct gaelcosnd_channel *channel = &gaelcosnd.channel[offset >> 3];
+	struct GAELCOSND *info = sndti_token(chip_type, 0);
+	struct gaelcosnd_channel *channel = &info->channel[offset >> 3];
 
 #ifdef LOG_READ_WRITES
 	logerror("%06x: (GAE1): write %04x to %04x\n", activecpu_get_pc(), data, offset);
 #endif
 
 	/* first update the stream to this point in time */
-	stream_update(gaelcosnd.stream, 0);
+	stream_update(info->stream, 0);
 
 	COMBINE_DATA(&gaelco_sndregs[offset]);
 
@@ -249,39 +251,31 @@ WRITE16_HANDLER( gaelcosnd_w )
 						CG-1V/GAE1 Init
   ============================================================================*/
 
-int gaelcosnd_sh_start(const struct MachineSound *msound, int chip)
+static void *gaelcosnd_start(int sndtype, int sndindex, int clock, const void *config)
 {
 	int j, vol;
-	const struct gaelcosnd_interface *intf = msound->sound_interface;
+	const struct gaelcosnd_interface *intf = config;
 
-	int volume[2];
-	char buf[2][64];
-	const char *name[2];
+	struct GAELCOSND *info;
+	info = auto_malloc(sizeof(*info));
+	memset(info, 0, sizeof(*info));
+	
+	chip_type = sndtype;
 
 	/* bag on a 0 sample_rate */
-	if (Machine->sample_rate == 0)	return 0;
-
-	/* init chip state */
-	memset(&gaelcosnd, 0, sizeof(struct GAELCOSND));
-
-	/* allocate one stereo stream */
-	for (j = 0; j < 2; j++){
-		sprintf(buf[j], chip ? "CG-1V Channel #%d" : "GAE1 Channel #%d", j);
-		name[j] = buf[j];
-		volume[j] = MIXER(intf->volume[j], j ? MIXER_PAN_RIGHT : MIXER_PAN_LEFT);
-	}
+	if (Machine->sample_rate == 0)	return info;
 
 	/* copy rom banks */
 	for (j = 0; j < 4; j++){
-		gaelcosnd.banks[j] = intf->banks[j];
+		info->banks[j] = intf->banks[j];
 	}
-	gaelcosnd.stream = stream_init_multi(2, name, volume, 8000, 0, gaelco_sh_update);
-	gaelcosnd.snd_data = (UINT8 *)memory_region(intf->region);
+	info->stream = stream_create(0, 2, 8000, info, gaelco_update);
+	info->snd_data = (UINT8 *)memory_region(intf->region);
 
 	/* init volume table */
 	for (vol = 0; vol < VOLUME_LEVELS; vol++){
 		for (j = -128; j <= 127; j++){
-			volume_table[vol][(j ^ 0x80) & 0xff] = (vol*j*256)/(VOLUME_LEVELS - 1);
+			info->volume_table[vol][(j ^ 0x80) & 0xff] = (vol*j*256)/(VOLUME_LEVELS - 1);
 		}
 	}
 
@@ -289,23 +283,97 @@ int gaelcosnd_sh_start(const struct MachineSound *msound, int chip)
 	wavraw = wav_open("gae1_snd.wav", 8000, 2);
 #endif
 
-	return 0;
+	return info;
 }
 
-int gaelco_gae1_sh_start(const struct MachineSound *msound)
+static void *gaelco_gae1_start(int sndindex, int clock, const void *config)
 {
-	return gaelcosnd_sh_start(msound, 0);
+	return gaelcosnd_start(SOUND_GAELCO_GAE1, sndindex, clock, config);
 }
 
-int gaelco_cg1v_sh_start(const struct MachineSound *msound)
+static void *gaelco_cg1v_start(int sndindex, int clock, const void *config)
 {
-	return gaelcosnd_sh_start(msound, 1);
+	return gaelcosnd_start(SOUND_GAELCO_CG1V, sndindex, clock, config);
 }
 
 
-void gaelcosnd_sh_stop(void)
+static void gaelco_stop(void *chip)
 {
 #ifdef LOG_WAVE
 	wav_close(wavraw);
 #endif
 }
+
+
+
+
+/**************************************************************************
+ * Generic get_info
+ **************************************************************************/
+
+static void gaelco_gae1_set_info(void *token, UINT32 state, union sndinfo *info)
+{
+	switch (state)
+	{
+		/* no parameters to set */
+	}
+}
+
+
+void gaelco_gae1_get_info(void *token, UINT32 state, union sndinfo *info)
+{
+	switch (state)
+	{
+		/* --- the following bits of info are returned as 64-bit signed integers --- */
+
+		/* --- the following bits of info are returned as pointers to data or functions --- */
+		case SNDINFO_PTR_SET_INFO:						info->set_info = gaelco_gae1_set_info;	break;
+		case SNDINFO_PTR_START:							info->start = gaelco_gae1_start;		break;
+		case SNDINFO_PTR_STOP:							info->stop = gaelco_stop;				break;
+		case SNDINFO_PTR_RESET:							/* nothing */							break;
+
+		/* --- the following bits of info are returned as NULL-terminated strings --- */
+		case SNDINFO_STR_NAME:							info->s = "Gaelco GAE1";				break;
+		case SNDINFO_STR_CORE_FAMILY:					info->s = "Gaelco custom";				break;
+		case SNDINFO_STR_CORE_VERSION:					info->s = "1.0";						break;
+		case SNDINFO_STR_CORE_FILE:						info->s = __FILE__;						break;
+		case SNDINFO_STR_CORE_CREDITS:					info->s = "Copyright (c) 2004, The MAME Team"; break;
+	}
+}
+
+
+
+/**************************************************************************
+ * Generic get_info
+ **************************************************************************/
+
+static void gaelco_cg1v_set_info(void *token, UINT32 state, union sndinfo *info)
+{
+	switch (state)
+	{
+		/* no parameters to set */
+	}
+}
+
+
+void gaelco_cg1v_get_info(void *token, UINT32 state, union sndinfo *info)
+{
+	switch (state)
+	{
+		/* --- the following bits of info are returned as 64-bit signed integers --- */
+
+		/* --- the following bits of info are returned as pointers to data or functions --- */
+		case SNDINFO_PTR_SET_INFO:						info->set_info = gaelco_cg1v_set_info;	break;
+		case SNDINFO_PTR_START:							info->start = gaelco_cg1v_start;		break;
+		case SNDINFO_PTR_STOP:							info->stop = gaelco_stop;				break;
+		case SNDINFO_PTR_RESET:							/* nothing */							break;
+
+		/* --- the following bits of info are returned as NULL-terminated strings --- */
+		case SNDINFO_STR_NAME:							info->s = "Gaelco CG1V";				break;
+		case SNDINFO_STR_CORE_FAMILY:					info->s = "Gaelco custom";				break;
+		case SNDINFO_STR_CORE_VERSION:					info->s = "1.0";						break;
+		case SNDINFO_STR_CORE_FILE:						info->s = __FILE__;						break;
+		case SNDINFO_STR_CORE_CREDITS:					info->s = "Copyright (c) 2004, The MAME Team"; break;
+	}
+}
+

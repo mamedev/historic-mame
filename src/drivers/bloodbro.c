@@ -96,6 +96,7 @@ Stephh's notes (based on the games M68000 code and some tests) :
 #include "vidhrdw/generic.h"
 #include "sndhrdw/seibu.h"
 #include "cpu/z80/z80.h"
+#include "sound/3812intf.h"
 
 
 extern UINT16 *bloodbro_bgvideoram, *bloodbro_fgvideoram;
@@ -528,7 +529,7 @@ static struct GfxDecodeInfo weststry_gfxdecodeinfo[] =
 /* Sound Interfaces */
 
 // Parameters: YM3812 frequency, Oki frequency, Oki memory region
-SEIBU_SOUND_SYSTEM_YM3812_HARDWARE(14318180/4, 8000, REGION_SOUND1);
+SEIBU_SOUND_SYSTEM_YM3812_HARDWARE;
 
 /* Machine Drivers */
 
@@ -556,7 +557,7 @@ static MACHINE_DRIVER_START( bloodbro )
 	MDRV_VIDEO_UPDATE(bloodbro)
 
 	// sound hardware
-	SEIBU_SOUND_SYSTEM_YM3812_INTERFACE
+	SEIBU_SOUND_SYSTEM_YM3812_INTERFACE(14318180/4, 8000, 1)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( weststry )

@@ -248,7 +248,32 @@ static MACHINE_DRIVER_START( rocnrope )
 	MDRV_VIDEO_UPDATE(rocnrope)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(AY8910, timeplt_ay8910_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(AY8910, 14318180/8)
+	MDRV_SOUND_CONFIG(timeplt_ay8910_interface)
+	MDRV_SOUND_ROUTE(0, "filter.0.0", 0.60)
+	MDRV_SOUND_ROUTE(1, "filter.0.1", 0.60)
+	MDRV_SOUND_ROUTE(2, "filter.0.2", 0.60)
+
+	MDRV_SOUND_ADD(AY8910, 14318180/8)
+	MDRV_SOUND_ROUTE(0, "filter.1.0", 0.60)
+	MDRV_SOUND_ROUTE(1, "filter.1.1", 0.60)
+	MDRV_SOUND_ROUTE(2, "filter.1.2", 0.60)
+	
+	MDRV_SOUND_ADD_TAG("filter.0.0", FILTER_RC, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
+	MDRV_SOUND_ADD_TAG("filter.0.1", FILTER_RC, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
+	MDRV_SOUND_ADD_TAG("filter.0.2", FILTER_RC, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
+
+	MDRV_SOUND_ADD_TAG("filter.1.0", FILTER_RC, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
+	MDRV_SOUND_ADD_TAG("filter.1.1", FILTER_RC, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
+	MDRV_SOUND_ADD_TAG("filter.1.2", FILTER_RC, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 /***************************************************************************

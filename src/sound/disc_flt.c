@@ -15,6 +15,7 @@
  * DST_RCFILTER          - Simple RC filter & also lowpass filter
  * DST_RCDISC            - Simple discharging RC
  * DST_RCDISC2           - Simple charge R1/C, discharge R0/C
+ * DST_RCDISC3           - Simple charge R1/c, discharge R0*R1/(R0+R1)/C
  *
  ************************************************************************/
 
@@ -97,8 +98,8 @@ void dst_crfilter_step(struct node_description *node)
 
 	if(DST_CRFILTER__ENABLE)
 	{
-		context->vCap += ((DST_CRFILTER__IN - DST_CRFILTER__VREF) - context->vCap) * context->exponent;
 		node->output = DST_CRFILTER__IN - context->vCap;
+		context->vCap += ((DST_CRFILTER__IN - DST_CRFILTER__VREF) - context->vCap) * context->exponent;
 	}
 	else
 	{
@@ -568,6 +569,65 @@ void dst_rcdisc2_reset(struct node_description *node)
 	context->step = 1.0 / Machine->sample_rate;
 	context->exponent0=-1.0 * DST_RCDISC2__R0 * DST_RCDISC2__C;
 	context->exponent1=-1.0 * DST_RCDISC2__R1 * DST_RCDISC2__C;
+}
+
+/************************************************************************
+ *
+ * DST_RCDISC3 -  Usage of node_description values for RC discharge
+ *                Has switchable charge resistor/input
+ *
+ * input[0]    - Enable
+ * input[1]    - input  value
+ * input[2]    - Resistor0 value (initialization only)
+ * input[4]    - Resistor1 value (initialization only)
+ * input[5]    - Capacitor Value (initialization only)
+ *
+ ************************************************************************/
+#define DST_RCDISC3__ENABLE	(*(node->input[0]))
+#define DST_RCDISC3__IN	    (*(node->input[1]))
+#define DST_RCDISC3__R1		(*(node->input[2]))
+#define DST_RCDISC3__R2		(*(node->input[3]))
+#define DST_RCDISC3__C		(*(node->input[4]))
+
+void dst_rcdisc3_step(struct node_description *node)
+{
+	double diff;
+	struct dst_rcdisc_context *context = node->context;
+
+	/* Exponential based in difference between input/output   */
+
+	if(DST_RCDISC3__ENABLE)
+	{
+		diff = DST_RCDISC3__IN - node->output;
+		if( diff > 0 )
+		{
+			diff = diff - (diff * exp(context->step / context->exponent0));
+		} else if( diff < 0)
+		{
+			if(diff < -0.5)
+				diff = diff - (diff * exp(context->step / context->exponent1));
+			else
+				diff = diff - (diff * exp(context->step / context->exponent0));
+		}
+		node->output += diff;
+	}
+	else
+	{
+		node->output=0;
+	}
+}
+
+void dst_rcdisc3_reset(struct node_description *node)
+{
+	struct dst_rcdisc_context *context = node->context;
+
+	node->output=0;
+
+	context->state = 0;
+	context->t = 0;
+	context->step = 1.0 / Machine->sample_rate;
+	context->exponent0=-1.0 * DST_RCDISC3__R1 * DST_RCDISC3__C;
+	context->exponent1=-1.0 *(DST_RCDISC3__R1 * DST_RCDISC3__R2)/( DST_RCDISC3__R1 + DST_RCDISC3__R2)* DST_RCDISC3__C;
 }
 
 

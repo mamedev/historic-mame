@@ -8,6 +8,7 @@
 #include "machine/8255ppi.h"
 #include "turbo.h"
 #include "artwork.h"
+#include "sound/samples.h"
 
 /* globals */
 UINT8 turbo_opa, turbo_opb, turbo_opc;

@@ -91,6 +91,8 @@ Notes:
 #include "vidhrdw/konamiic.h"
 #include "cpu/konami/konami.h" /* for the callback and the firq irq definition */
 #include "machine/eeprom.h"
+#include "sound/2151intf.h"
+#include "sound/k053260.h"
 
 /* prototypes */
 static MACHINE_INIT( vendetta );
@@ -535,21 +537,9 @@ INPUT_PORTS_END
 
 ***************************************************************************/
 
-static struct YM2151interface ym2151_interface =
-{
-	1,			/* 1 chip */
-	4000000,	/* adjusted to be in sync with Z80 CPU */
-	{ YM3012_VOL(100,MIXER_PAN_LEFT,100,MIXER_PAN_RIGHT) },	/* music volume */
-	{ 0 }
-};
-
 static struct K053260_interface k053260_interface =
 {
-	1,
-	{ 4000000 },	/* adjusted to be in sync with Z80 CPU */
-	{ REGION_SOUND1 }, /* memory region */
-	{ { MIXER(75,MIXER_PAN_LEFT), MIXER(75,MIXER_PAN_RIGHT) } },
-	{ 0 }
+	REGION_SOUND1 /* memory region */
 };
 
 static INTERRUPT_GEN( vendetta_irq )
@@ -585,9 +575,16 @@ static MACHINE_DRIVER_START( vendetta )
 	MDRV_VIDEO_UPDATE(vendetta)
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(YM2151, ym2151_interface)
-	MDRV_SOUND_ADD(K053260, k053260_interface)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(YM2151, 4000000)
+	MDRV_SOUND_ROUTE(0, "left", 1.0)
+	MDRV_SOUND_ROUTE(1, "right", 1.0)
+
+	MDRV_SOUND_ADD(K053260, 4000000)
+	MDRV_SOUND_CONFIG(k053260_interface)
+	MDRV_SOUND_ROUTE(0, "left", 0.75)
+	MDRV_SOUND_ROUTE(1, "right", 0.75)
 MACHINE_DRIVER_END
 
 

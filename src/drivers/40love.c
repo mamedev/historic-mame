@@ -220,6 +220,9 @@ Notes - Has jumper setting for 122HZ or 61HZ)
 #include "driver.h"
 #include "cpu/z80/z80.h"
 #include "vidhrdw/generic.h"
+#include "sound/ay8910.h"
+#include "sound/dac.h"
+#include "sound/msm5232.h"
 
 /* in machine/buggychl.c */
 READ8_HANDLER( buggychl_68705_portA_r );
@@ -823,14 +826,14 @@ static WRITE8_HANDLER( sound_control_0_w )
 //	usrintf_showmessage("SND0 0=%02x 1=%02x 2=%02x 3=%02x", snd_ctrl0, snd_ctrl1, snd_ctrl2, snd_ctrl3);
 
 	/* this definitely controls main melody voice on 2'-1 and 4'-1 outputs */
-	mixer_set_volume (3, vol_ctrl[ (snd_ctrl0>>4) & 15 ]);	/* group1 from msm5232 */
+	sndti_set_output_gain(SOUND_MSM5232, 0, 0, vol_ctrl[ (snd_ctrl0>>4) & 15 ] / 100.0);	/* group1 from msm5232 */
 
 }
 static WRITE8_HANDLER( sound_control_1_w )
 {
 	snd_ctrl1 = data & 0xff;
 //	usrintf_showmessage("SND1 0=%02x 1=%02x 2=%02x 3=%02x", snd_ctrl0, snd_ctrl1, snd_ctrl2, snd_ctrl3);
-	mixer_set_volume (4, vol_ctrl[ (snd_ctrl1>>4) & 15 ]);	/* group2 from msm5232 */
+	sndti_set_output_gain(SOUND_MSM5232, 0, 1, vol_ctrl[ (snd_ctrl1>>4) & 15 ] / 100.0);	/* group2 from msm5232 */
 }
 
 static WRITE8_HANDLER( sound_control_2_w )
@@ -841,7 +844,7 @@ static WRITE8_HANDLER( sound_control_2_w )
 //	usrintf_showmessage("SND2 0=%02x 1=%02x 2=%02x 3=%02x", snd_ctrl0, snd_ctrl1, snd_ctrl2, snd_ctrl3);
 
 	for (i=0; i<3; i++)
-		mixer_set_volume (i, vol_ctrl[ (snd_ctrl2>>4) & 15 ]);	/* ym2149f all */
+		sndti_set_output_gain(SOUND_AY8910, 0, i, vol_ctrl[ (snd_ctrl2>>4) & 15 ] / 100.0);	/* ym2149f all */
 }
 
 static WRITE8_HANDLER( sound_control_3_w ) /* unknown */
@@ -1157,27 +1160,15 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 static struct AY8910interface ay8910_interface =
 {
-	1, /* number of chips */
-	2000000, /* 2 MHz ??? */
-	{ 10 },
-	{ 0 },
-	{ 0 },
-	{ sound_control_2_w },
-	{ sound_control_3_w }
+	0,
+	0,
+	sound_control_2_w,
+	sound_control_3_w
 };
 
 static struct MSM5232interface msm5232_interface =
 {
-	1, /* number of chips */
-	8000000/4, /* 2 MHz ??? */
-	{ { 1.0e-6, 1.0e-6, 1.0e-6, 1.0e-6, 1.0e-6, 1.0e-6, 1.0e-6, 1.0e-6 } },	/* 1.0 uF capacitors (verified on real PCB) */
-	{ 100 }	/* mixing level ??? */
-};
-
-static struct DACinterface dac_interface =
-{
-	1,
-	{ 20 }
+	{ 1.0e-6, 1.0e-6, 1.0e-6, 1.0e-6, 1.0e-6, 1.0e-6, 1.0e-6, 1.0e-6 }	/* 1.0 uF capacitors (verified on real PCB) */
 };
 
 /*******************************************************************************/
@@ -1214,9 +1205,18 @@ static MACHINE_DRIVER_START( 40love )
 	MDRV_VIDEO_UPDATE(fortyl)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(AY8910, ay8910_interface)
-	MDRV_SOUND_ADD(MSM5232, msm5232_interface)
-	MDRV_SOUND_ADD(DAC, dac_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(AY8910, 2000000)
+	MDRV_SOUND_CONFIG(ay8910_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.10)
+
+	MDRV_SOUND_ADD(MSM5232, 8000000/4)
+	MDRV_SOUND_CONFIG(msm5232_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
+
+	MDRV_SOUND_ADD(DAC, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.20)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( undoukai )
@@ -1250,9 +1250,18 @@ static MACHINE_DRIVER_START( undoukai )
 	MDRV_VIDEO_UPDATE(fortyl)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(AY8910, ay8910_interface)
-	MDRV_SOUND_ADD(MSM5232, msm5232_interface)
-	MDRV_SOUND_ADD(DAC, dac_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(AY8910, 2000000)
+	MDRV_SOUND_CONFIG(ay8910_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.10)
+
+	MDRV_SOUND_ADD(MSM5232, 8000000/4)
+	MDRV_SOUND_CONFIG(msm5232_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
+
+	MDRV_SOUND_ADD(DAC, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.20)
 MACHINE_DRIVER_END
 
 /*******************************************************************************/

@@ -181,6 +181,7 @@
 #include "machine/atari_vg.h"
 #include "vidhrdw/avgdvg.h"
 #include "vidhrdw/vector.h"
+#include "sound/pokey.h"
 #include "mhavoc.h"
 
 
@@ -533,39 +534,8 @@ INPUT_PORTS_END
 
 static struct POKEYinterface pokey_interface =
 {
-	4,	/* 4 chips */
-	MHAVOC_CLOCK_1_25M,	/* 1.25 MHz??? */
-	{ 25, 25, 25, 25 },
-	/* The 8 pot handlers */
-	{ 0, 0, 0, 0 },
-	{ 0, 0, 0, 0 },
-	{ 0, 0, 0, 0 },
-	{ 0, 0, 0, 0 },
-	{ 0, 0, 0, 0 },
-	{ 0, 0, 0, 0 },
-	{ 0, 0, 0, 0 },
-	{ 0, 0, 0, 0 },
-	/* The allpot handler */
-	{ input_port_3_r, 0, 0, 0 },
-};
-
-
-static struct POKEYinterface pokey_interface_alphaone =
-{
-	2,	/* 2 chips */
-	MHAVOC_CLOCK_1_25M,	/* 1.25 MHz??? */
-	{ 50, 50 },
-	/* The 8 pot handlers */
-	{ 0, 0 },
-	{ 0, 0 },
-	{ 0, 0 },
-	{ 0, 0 },
-	{ 0, 0 },
-	{ 0, 0 },
-	{ 0, 0 },
-	{ 0, 0 },
-	/* The allpot handler */
-	{ 0, 0 },
+	{ 0 },
+	input_port_3_r
 };
 
 
@@ -600,7 +570,20 @@ static MACHINE_DRIVER_START( mhavoc )
 	MDRV_VIDEO_UPDATE(vector)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD_TAG("pokey", POKEY, pokey_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD_TAG("pokey.1", POKEY, MHAVOC_CLOCK_1_25M)
+	MDRV_SOUND_CONFIG(pokey_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
+
+	MDRV_SOUND_ADD_TAG("pokey.2", POKEY, MHAVOC_CLOCK_1_25M)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
+
+	MDRV_SOUND_ADD_TAG("pokey.3", POKEY, MHAVOC_CLOCK_1_25M)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
+
+	MDRV_SOUND_ADD_TAG("pokey.4", POKEY, MHAVOC_CLOCK_1_25M)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
 MACHINE_DRIVER_END
 
 
@@ -617,7 +600,14 @@ static MACHINE_DRIVER_START( alphaone )
 	MDRV_VIDEO_START(avg_alphaone)
 
 	/* sound hardware */
-	MDRV_SOUND_REPLACE("pokey", POKEY, pokey_interface_alphaone)
+	MDRV_SOUND_REPLACE("pokey.1", POKEY, MHAVOC_CLOCK_1_25M)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
+	
+	MDRV_SOUND_REPLACE("pokey.2", POKEY, MHAVOC_CLOCK_1_25M)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
+	
+	MDRV_SOUND_REMOVE("pokey.3")
+	MDRV_SOUND_REMOVE("pokey.4")
 MACHINE_DRIVER_END
 
 

@@ -6,6 +6,7 @@
 
 #include "driver.h"
 #include "asteroid.h"
+#include "sound/discrete.h"
 
 /************************************************************************/
 /* Lunar Lander Sound System Analog emulation by K.Wilkins Nov 2000     */

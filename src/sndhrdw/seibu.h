@@ -23,6 +23,12 @@
 
 ***************************************************************************/
 
+#include "sound/3812intf.h"
+#include "sound/2151intf.h"
+#include "sound/2203intf.h"
+#include "sound/okim6295.h"
+#include "sound/msm5205.h"
+
 ADDRESS_MAP_EXTERN(seibu_sound_readmem);
 ADDRESS_MAP_EXTERN(seibu_sound_writemem);
 ADDRESS_MAP_EXTERN(seibu2_sound_readmem);
@@ -66,83 +72,33 @@ WRITE8_HANDLER( seibu_adpcm_ctl_2_w );
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 ) PORT_IMPULSE(4)			\
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_COIN2 ) PORT_IMPULSE(4)
 
-#define SEIBU_SOUND_SYSTEM_YM3812_HARDWARE(freq1,freq2,region)		\
+#define SEIBU_SOUND_SYSTEM_YM3812_HARDWARE							\
 																	\
 static struct YM3812interface ym3812_interface =					\
 {																	\
-	1,																\
-	freq1,															\
-	{ 100 },														\
-	{ seibu_ym3812_irqhandler },									\
-};																	\
-																	\
-static struct OKIM6295interface okim6295_interface =				\
-{																	\
-	1,																\
-	{ freq2 },														\
-	{ region },														\
-	{ 40 }															\
-}
-
-#define SEIBU_SOUND_SYSTEM_RAIDEN_YM3812_HARDWARE(freq1,freq2,region)		\
-																	\
-static struct YM3812interface ym3812_interface =					\
-{																	\
-	1,																\
-	freq1,															\
-	{ 100 },														\
-	{ seibu_ym3812_irqhandler },									\
-};																	\
-																	\
-static struct OKIM6295interface okim6295_interface =				\
-{																	\
-	1,																\
-	{ freq2 },														\
-	{ region },														\
-	{ 100 }															\
-}
-
-#define SEIBU_SOUND_SYSTEM_ADPCM_HARDWARE	\
-	\
-static struct ADPCMinterface adpcm_interface =			\
-{								\
-	2,							\
-	8000,							\
-	REGION_SOUND1, 						\
-	{40,40}							\
+	seibu_ym3812_irqhandler											\
 };
 
+#define SEIBU_SOUND_SYSTEM_ADPCM_HARDWARE							\
+																	\
+static struct MSM5205interface msm5205_interface =					\
+{																	\
+	NULL,				/* VCK function */							\
+	MSM5205_S48_4B		/* 8 kHz */									\
+};
 
-#define SEIBU_SOUND_SYSTEM_YM2151_HARDWARE(freq1,freq2,region)		\
+#define SEIBU_SOUND_SYSTEM_YM2151_HARDWARE							\
 																	\
 static struct YM2151interface ym2151_interface =					\
 {																	\
-	1,																\
-	freq1,															\
-	{ 50 },															\
-	{ seibu_ym2151_irqhandler },									\
-};																	\
-																	\
-static struct OKIM6295interface okim6295_interface2 =				\
-{																	\
-	1,																\
-	{ freq2 },														\
-	{ region },														\
-	{ 40 }															\
-}
+	seibu_ym2151_irqhandler											\
+};
 
-#define SEIBU_SOUND_SYSTEM_YM2203_HARDWARE(freq1)					\
+#define SEIBU_SOUND_SYSTEM_YM2203_HARDWARE							\
 																	\
 static struct YM2203interface ym2203_interface =					\
 {																	\
-	2,																\
-	freq1,															\
-	{ YM2203_VOL(15,15), YM2203_VOL(15,15) },						\
-	{ 0 },															\
-	{ 0 },															\
-	{ 0 },															\
-	{ 0 },															\
-	{ seibu_ym2203_irqhandler }										\
+	0,0,0,0,seibu_ym2203_irqhandler									\
 };
 
 #define SEIBU_SOUND_SYSTEM_CPU(freq)								\
@@ -165,20 +121,55 @@ static struct YM2203interface ym2203_interface =					\
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)									\
 	MDRV_CPU_PROGRAM_MAP(seibu3_sound_readmem,seibu3_adpcm_sound_writemem)		\
 
-#define SEIBU_SOUND_SYSTEM_YM3812_INTERFACE							\
-	MDRV_SOUND_ADD(YM3812, ym3812_interface)						\
-	MDRV_SOUND_ADD(OKIM6295, okim6295_interface)					\
+#define SEIBU_SOUND_SYSTEM_YM3812_INTERFACE(freq1,freq2,region)		\
+	MDRV_SPEAKER_STANDARD_MONO("mono")								\
+																	\
+	MDRV_SOUND_ADD(YM3812, freq1)									\
+	MDRV_SOUND_CONFIG(ym3812_interface)								\
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)						\
+																	\
+	MDRV_SOUND_ADD(OKIM6295, freq2)									\
+	MDRV_SOUND_CONFIG(okim6295_interface_region_##region)			\
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.40)						\
 
-#define SEIBU_SOUND_SYSTEM_YM2151_INTERFACE							\
-	MDRV_SOUND_ADD(YM2151, ym2151_interface)						\
-	MDRV_SOUND_ADD(OKIM6295, okim6295_interface2)					\
+#define SEIBU_SOUND_SYSTEM_YM3812_RAIDEN_INTERFACE(freq1,freq2,region) \
+	MDRV_SPEAKER_STANDARD_MONO("mono")								\
+																	\
+	MDRV_SOUND_ADD(YM3812, freq1)									\
+	MDRV_SOUND_CONFIG(ym3812_interface)								\
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)						\
+																	\
+	MDRV_SOUND_ADD(OKIM6295, freq2)									\
+	MDRV_SOUND_CONFIG(okim6295_interface_region_##region)			\
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)						\
 
-#define SEIBU_SOUND_SYSTEM_YM2203_INTERFACE							\
-	MDRV_SOUND_ADD(YM2203, ym2203_interface)						\
+#define SEIBU_SOUND_SYSTEM_YM2151_INTERFACE(freq1,freq2,region)		\
+	MDRV_SPEAKER_STANDARD_MONO("mono")								\
+																	\
+	MDRV_SOUND_ADD(YM2151, freq1)									\
+	MDRV_SOUND_CONFIG(ym2151_interface)								\
+	MDRV_SOUND_ROUTE(0, "mono", 0.50)								\
+	MDRV_SOUND_ROUTE(1, "mono", 0.50)								\
+																	\
+	MDRV_SOUND_ADD(OKIM6295, freq2)									\
+	MDRV_SOUND_CONFIG(okim6295_interface_region_##region)			\
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.40)						\
 
+#define SEIBU_SOUND_SYSTEM_YM2203_INTERFACE(freq)					\
+	MDRV_SPEAKER_STANDARD_MONO("mono")								\
+																	\
+	MDRV_SOUND_ADD(YM2203, freq)									\
+	MDRV_SOUND_CONFIG(ym2203_interface)								\
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.15)						\
 
-#define SEIBU_SOUND_SYSTEM_ADPCM_INTERFACE	\
-	MDRV_SOUND_ADD(ADPCM, adpcm_interface)	\
+#define SEIBU_SOUND_SYSTEM_ADPCM_INTERFACE							\
+	MDRV_SOUND_ADD(MSM5205, 384000) 								\
+	MDRV_SOUND_CONFIG(msm5205_interface)							\
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.40) 					\
+																	\
+	MDRV_SOUND_ADD(MSM5205, 384000) 								\
+	MDRV_SOUND_CONFIG(msm5205_interface)							\
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.40)						\
 
 
 /**************************************************************************/

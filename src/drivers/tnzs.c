@@ -213,7 +213,8 @@ Driver by Takahiro Nogi (nogi@kt.rim.or.jp) 1999/11/06
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "cpu/i8x41/i8x41.h"
-
+#include "sound/2203intf.h"
+#include "sound/samples.h"
 
 
 /* prototypes for functions in ../machine/tnzs.c */
@@ -253,21 +254,17 @@ VIDEO_EOF( tnzs );
 /* max samples */
 #define	MAX_SAMPLES	0x2f
 
-int kageki_init_samples(const struct MachineSound *msound)
+static INT16 *sampledata[MAX_SAMPLES];
+static int samplesize[MAX_SAMPLES];
+
+void kageki_init_samples(void)
 {
-	struct GameSamples *samples;
-	unsigned char *scan, *src, *dest;
+	unsigned char *scan, *src;
+	INT16 *dest;
 	int start, size;
 	int i, n;
 
-	size = sizeof(struct GameSamples) + MAX_SAMPLES * sizeof(struct GameSamples *);
-
-	if ((Machine->samples = auto_malloc(size)) == NULL) return 1;
-
-	samples = Machine->samples;
-	samples->total = MAX_SAMPLES;
-
-	for (i = 0; i < samples->total; i++)
+	for (i = 0; i < MAX_SAMPLES; i++)
 	{
 		src = memory_region(REGION_SOUND1) + 0x0090;
 		start = (src[(i * 2) + 1] * 256) + src[(i * 2)];
@@ -284,25 +281,20 @@ int kageki_init_samples(const struct MachineSound *msound)
 				size++;
 			}
 		}
-		if ((samples->sample[i] = auto_malloc(sizeof(struct GameSample) + size * sizeof(unsigned char))) == NULL) return 1;
+		sampledata[i] = auto_malloc(size * sizeof(sampledata[0]));
+		samplesize[i] = size;
 
 		if (start < 0x100) start = size = 0;
 
-		samples->sample[i]->smpfreq = 7000;	/* 7 KHz??? */
-		samples->sample[i]->resolution = 8;	/* 8 bit */
-		samples->sample[i]->length = size;
-
 		// signed 8-bit sample to unsigned 8-bit sample convert
-		dest = (unsigned char *)samples->sample[i]->data;
+		dest = sampledata[i];
 		scan = &src[start];
 		for (n = 0; n < size; n++)
 		{
-			*dest++ = ((*scan++) ^ 0x80);
+			*dest++ = (INT8)((*scan++) ^ 0x80) * 256;
 		}
 	//	logerror("samples num:%02X ofs:%04X lng:%04X\n", i, start, size);
 	}
-
-	return 0;
 }
 
 
@@ -352,7 +344,7 @@ static WRITE8_HANDLER( kageki_csport_w )
 			sprintf(mess, "VOICE:%02X STOP", data);
 		} else {
 			// play samples
-			sample_start(0, data, 0);
+			sample_start_raw(0, sampledata[data], samplesize[data], 7000, 0);
 			sprintf(mess, "VOICE:%02X PLAY", data);
 		}
 	//	usrintf_showmessage(mess);
@@ -1250,13 +1242,8 @@ static struct GfxDecodeInfo insectx_gfxdecodeinfo[] =
 
 static struct YM2203interface ym2203_interface =
 {
-	1,			/* 1 chip */
-	3000000,	/* 3 MHz  */
-	{ YM2203_VOL(30,30) },
-	{ input_port_0_r },		/* DSW1 connected to port A */
-	{ input_port_1_r },		/* DSW2 connected to port B */
-	{ 0 },
-	{ 0 }
+	input_port_0_r,		/* DSW1 connected to port A */
+	input_port_1_r		/* DSW2 connected to port B */
 };
 
 
@@ -1266,40 +1253,19 @@ static void irqhandler(int irq)
 	cpunum_set_input_line(2, INPUT_LINE_NMI, irq ? ASSERT_LINE : CLEAR_LINE);
 }
 
-static struct YM2203interface ym2203b_interface =
-{
-	1,			/* 1 chip */
-	3000000,	/* 3 MHz ??? */
-	{ YM2203_VOL(MIXERG(100,MIXER_GAIN_2x,MIXER_PAN_CENTER),100) },	// compensate for very low volume
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ irqhandler }
-};
-
 static struct YM2203interface kageki_ym2203_interface =
 {
-	1,					/* 1 chip */
-	3000000,			/* 12000000/4 ??? */
-	{ YM2203_VOL(35, 15) },
-	{ kageki_csport_r },
-	{ 0 },
-	{ 0 },
-	{ kageki_csport_w },
+	kageki_csport_r,
+	0,
+	0,
+	kageki_csport_w
 };
 
 static struct Samplesinterface samples_interface =
 {
-	1,					/* 1 channel */
-	100					/* volume */
-};
-
-static struct CustomSound_interface custom_interface =
-{
-	kageki_init_samples,
-	0,
-	0
+	1,
+	NULL,
+	kageki_init_samples
 };
 
 
@@ -1333,7 +1299,11 @@ static MACHINE_DRIVER_START( arknoid2 )
 	MDRV_VIDEO_EOF(tnzs)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM2203, ym2203_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM2203, 3000000)
+	MDRV_SOUND_CONFIG(ym2203_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.30)
 MACHINE_DRIVER_END
 
 
@@ -1366,7 +1336,11 @@ static MACHINE_DRIVER_START( drtoppel )
 	MDRV_VIDEO_EOF(tnzs)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM2203, ym2203_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM2203, 3000000)
+	MDRV_SOUND_CONFIG(ym2203_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.30)
 MACHINE_DRIVER_END
 
 
@@ -1402,7 +1376,11 @@ static MACHINE_DRIVER_START( tnzs )
 	MDRV_VIDEO_EOF(tnzs)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM2203, ym2203_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM2203, 3000000)
+	MDRV_SOUND_CONFIG(ym2203_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.30)
 MACHINE_DRIVER_END
 
 
@@ -1434,7 +1412,11 @@ static MACHINE_DRIVER_START( insectx )
 	MDRV_VIDEO_EOF(tnzs)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM2203, ym2203_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM2203, 3000000)
+	MDRV_SOUND_CONFIG(ym2203_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.30)
 MACHINE_DRIVER_END
 
 
@@ -1466,9 +1448,18 @@ static MACHINE_DRIVER_START( kageki )
 	MDRV_VIDEO_EOF(tnzs)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM2203, kageki_ym2203_interface)
-	MDRV_SOUND_ADD(SAMPLES, samples_interface)
-	MDRV_SOUND_ADD(CUSTOM, custom_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM2203, 3000000)
+	MDRV_SOUND_CONFIG(kageki_ym2203_interface)
+	MDRV_SOUND_ROUTE(0, "mono", 0.15)
+	MDRV_SOUND_ROUTE(1, "mono", 0.15)
+	MDRV_SOUND_ROUTE(2, "mono", 0.15)
+	MDRV_SOUND_ROUTE(3, "mono", 0.35)
+
+	MDRV_SOUND_ADD(SAMPLES, 0)
+	MDRV_SOUND_CONFIG(samples_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 
@@ -1504,7 +1495,14 @@ static MACHINE_DRIVER_START( tnzsb )
 	MDRV_VIDEO_EOF(tnzs)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM2203, ym2203b_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM2203, 3000000)
+	MDRV_SOUND_CONFIG(ym2203_interface)
+	MDRV_SOUND_ROUTE(0, "mono", 1.0)
+	MDRV_SOUND_ROUTE(1, "mono", 1.0)
+	MDRV_SOUND_ROUTE(2, "mono", 1.0)
+	MDRV_SOUND_ROUTE(3, "mono", 2.0)
 MACHINE_DRIVER_END
 
 

@@ -42,6 +42,8 @@ Known Issues
 #include "cpu/z80/z80.h"
 #include "machine/eeprom.h"
 #include "state.h"
+#include "sound/2151intf.h"
+#include "sound/k054539.h"
 
 
 VIDEO_START( gijoe );
@@ -328,22 +330,11 @@ INPUT_PORTS_START( gijoe )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
 INPUT_PORTS_END
 
-static struct YM2151interface ym2151_interface =
-{
-	1,			/* 1 chip */
-	3579545,	/* ??? */
-	{ YM3012_VOL(50,MIXER_PAN_LEFT,50,MIXER_PAN_RIGHT) },
-	{ 0 }
-};
-
 static struct K054539interface k054539_interface =
 {
-	1,			/* 1 chip */
-	48000,
-	{ REGION_SOUND1 },
-	{ { 100, 100 } },
-	{ 0 },
-	{ sound_nmi }
+	REGION_SOUND1,
+	NULL,
+	sound_nmi
 };
 
 static MACHINE_DRIVER_START( gijoe )
@@ -372,9 +363,16 @@ static MACHINE_DRIVER_START( gijoe )
 	MDRV_VIDEO_UPDATE(gijoe)
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(YM2151, ym2151_interface)
-	MDRV_SOUND_ADD(K054539, k054539_interface)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(YM2151, 3579545)
+	MDRV_SOUND_ROUTE(0, "left", 0.50)
+	MDRV_SOUND_ROUTE(1, "right", 0.50)
+
+	MDRV_SOUND_ADD(K054539, 48000)
+	MDRV_SOUND_CONFIG(k054539_interface)
+	MDRV_SOUND_ROUTE(0, "left", 1.0)
+	MDRV_SOUND_ROUTE(1, "right", 1.0)
 MACHINE_DRIVER_END
 
 

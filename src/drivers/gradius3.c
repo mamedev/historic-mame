@@ -24,6 +24,8 @@ a symmetrical visible area).
 #include "vidhrdw/konamiic.h"
 #include "cpu/m68000/m68000.h"
 #include "cpu/z80/z80.h"
+#include "sound/2151intf.h"
+#include "sound/k007232.h"
 
 
 extern data16_t *gradius3_gfxram;
@@ -361,14 +363,6 @@ INPUT_PORTS_END
 
 
 
-static struct YM2151interface ym2151_interface =
-{
-	1,			/* 1 chip */
-	3579545,	/* 3.579545 MHz */
-	{ YM3012_VOL(100,MIXER_PAN_LEFT,100,MIXER_PAN_RIGHT) },
-	{ 0 }
-};
-
 static void volume_callback(int v)
 {
 	K007232_set_volume(0,0,(v >> 4) * 0x11,0);
@@ -377,11 +371,8 @@ static void volume_callback(int v)
 
 static struct K007232_interface k007232_interface =
 {
-	1,		/* number of chips */
-	3579545,	/* clock */
-	{ REGION_SOUND1 },	/* memory regions */
-	{ K007232_VOL(20,MIXER_PAN_CENTER,20,MIXER_PAN_CENTER) },	/* volume */
-	{ volume_callback }	/* external port callback */
+	REGION_SOUND1,	/* memory regions */
+	volume_callback	/* external port callback */
 };
 
 
@@ -418,9 +409,18 @@ static MACHINE_DRIVER_START( gradius3 )
 	MDRV_VIDEO_UPDATE(gradius3)
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(YM2151, ym2151_interface)
-	MDRV_SOUND_ADD(K007232, k007232_interface)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(YM2151, 3579545)
+	MDRV_SOUND_ROUTE(0, "left", 1.0)
+	MDRV_SOUND_ROUTE(1, "right", 1.0)
+	
+	MDRV_SOUND_ADD(K007232, 3579545)
+	MDRV_SOUND_CONFIG(k007232_interface)
+	MDRV_SOUND_ROUTE(0, "left", 0.20)
+	MDRV_SOUND_ROUTE(0, "right", 0.20)
+	MDRV_SOUND_ROUTE(1, "left", 0.20)
+	MDRV_SOUND_ROUTE(1, "right", 0.20)
 MACHINE_DRIVER_END
 
 

@@ -7,6 +7,7 @@
 #include "driver.h"
 #include "sega.h"
 #include "cpu/i8039/i8039.h"
+#include "sound/sp0250.h"
 
 /* SP0250-based speechboard */
 
@@ -81,6 +82,5 @@ ADDRESS_MAP_END
 
 struct sp0250_interface sega_sp0250_interface =
 {
-	100,
 	speechboard_drq_w
 };

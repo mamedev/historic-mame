@@ -67,6 +67,9 @@ Other notes:
 #include "system16.h"
 #include "cpu/m68000/m68000.h"
 #include "machine/fd1094.h"
+#include "sound/msm5205.h"
+#include "sound/2612intf.h"
+#include "sound/rf5c68.h"
 
 void fd1094_machine_init(void);
 void fd1094_driver_init(void);
@@ -184,11 +187,8 @@ static void shdancbl_msm5205_callback(int data)
 
 static struct MSM5205interface shdancbl_msm5205_interface =
 {
-	1,
-	200000, /* 200KHz */
-	{ shdancbl_msm5205_callback },
-	{ MSM5205_S48_4B},
-	{ 80 }
+	shdancbl_msm5205_callback,
+	MSM5205_S48_4B
 };
 
 UINT8* shdancbl_soundbank_ptr = NULL;		/* Pointer to currently selected portion of ROM */
@@ -235,14 +235,14 @@ static ADDRESS_MAP_START( shdancbl_sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)
 	AM_RANGE(0x8000, 0xbfff) AM_READ(shdancbl_soundbank_r)
 	AM_RANGE(0xc400, 0xc400) AM_READ(soundlatch_r)
-	AM_RANGE(0xcc00, 0xcc00) AM_READ(YM2612_status_port_0_A_r)
-	AM_RANGE(0xcc01, 0xcc01) AM_READ(YM2612_status_port_0_B_r)
-	AM_RANGE(0xcc02, 0xcc02) AM_READ(YM2612_status_port_0_B_r)
-	AM_RANGE(0xcc03, 0xcc03) AM_READ(YM2612_status_port_0_B_r)
-	AM_RANGE(0xd000, 0xd000) AM_READ(YM2612_status_port_1_A_r)
-	AM_RANGE(0xd001, 0xd001) AM_READ(YM2612_status_port_1_B_r)
-	AM_RANGE(0xd002, 0xd002) AM_READ(YM2612_status_port_1_B_r)
-	AM_RANGE(0xd003, 0xd003) AM_READ(YM2612_status_port_1_B_r)
+	AM_RANGE(0xcc00, 0xcc00) AM_READ(YM3438_status_port_0_A_r)
+	AM_RANGE(0xcc01, 0xcc01) AM_READ(YM3438_status_port_0_B_r)
+	AM_RANGE(0xcc02, 0xcc02) AM_READ(YM3438_status_port_0_B_r)
+	AM_RANGE(0xcc03, 0xcc03) AM_READ(YM3438_status_port_0_B_r)
+	AM_RANGE(0xd000, 0xd000) AM_READ(YM3438_status_port_1_A_r)
+	AM_RANGE(0xd001, 0xd001) AM_READ(YM3438_status_port_1_B_r)
+	AM_RANGE(0xd002, 0xd002) AM_READ(YM3438_status_port_1_B_r)
+	AM_RANGE(0xd003, 0xd003) AM_READ(YM3438_status_port_1_B_r)
 	AM_RANGE(0xdf00, 0xdfff) AM_READ(MRA8_NOP)
 	AM_RANGE(0xe000, 0xffff) AM_READ(MRA8_RAM)
 ADDRESS_MAP_END
@@ -252,14 +252,14 @@ static ADDRESS_MAP_START(shdancbl_sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x8000, 0xbfff) AM_WRITE(MWA8_NOP) /* ROM bank */
 	AM_RANGE(0xc000, 0xc00f) AM_WRITE(MWA8_NOP)
 	AM_RANGE(0xc800, 0xc800) AM_WRITE(shdancbl_msm5205_data_w)
-	AM_RANGE(0xcc00, 0xcc00) AM_WRITE(YM2612_control_port_0_A_w)
-	AM_RANGE(0xcc01, 0xcc01) AM_WRITE(YM2612_data_port_0_A_w)
-	AM_RANGE(0xcc02, 0xcc02) AM_WRITE(YM2612_control_port_0_B_w)
-	AM_RANGE(0xcc03, 0xcc03) AM_WRITE(YM2612_data_port_0_B_w)
-	AM_RANGE(0xd000, 0xd000) AM_WRITE(YM2612_control_port_1_A_w)
-	AM_RANGE(0xd001, 0xd001) AM_WRITE(YM2612_data_port_1_A_w)
-	AM_RANGE(0xd002, 0xd002) AM_WRITE(YM2612_control_port_1_B_w)
-	AM_RANGE(0xd003, 0xd003) AM_WRITE(YM2612_data_port_1_B_w)
+	AM_RANGE(0xcc00, 0xcc00) AM_WRITE(YM3438_control_port_0_A_w)
+	AM_RANGE(0xcc01, 0xcc01) AM_WRITE(YM3438_data_port_0_A_w)
+	AM_RANGE(0xcc02, 0xcc02) AM_WRITE(YM3438_control_port_0_B_w)
+	AM_RANGE(0xcc03, 0xcc03) AM_WRITE(YM3438_data_port_0_B_w)
+	AM_RANGE(0xd000, 0xd000) AM_WRITE(YM3438_control_port_1_A_w)
+	AM_RANGE(0xd001, 0xd001) AM_WRITE(YM3438_data_port_1_A_w)
+	AM_RANGE(0xd002, 0xd002) AM_WRITE(YM3438_control_port_1_B_w)
+	AM_RANGE(0xd003, 0xd003) AM_WRITE(YM3438_data_port_1_B_w)
 	AM_RANGE(0xd400, 0xd400) AM_WRITE(shdancbl_bankctrl_w)
 	AM_RANGE(0xdf00, 0xdfff) AM_WRITE(MWA8_NOP)
 	AM_RANGE(0xe000, 0xffff) AM_WRITE(MWA8_RAM)
@@ -314,22 +314,22 @@ static WRITE8_HANDLER( sys18_soundbank_w )
 
 
 static ADDRESS_MAP_START( sound_readport_18, ADDRESS_SPACE_IO, 8 )
-	AM_RANGE(0x80, 0x80) AM_READ(YM2612_status_port_0_A_r)
-//	AM_RANGE(0x82, 0x82) AM_READ(YM2612_status_port_0_B_r)
-//	AM_RANGE(0x90, 0x90) AM_READ(YM2612_status_port_1_A_r)
-//	AM_RANGE(0x92, 0x92) AM_READ(YM2612_status_port_1_B_r)
+	AM_RANGE(0x80, 0x80) AM_READ(YM3438_status_port_0_A_r)
+//	AM_RANGE(0x82, 0x82) AM_READ(YM3438_status_port_0_B_r)
+//	AM_RANGE(0x90, 0x90) AM_READ(YM3438_status_port_1_A_r)
+//	AM_RANGE(0x92, 0x92) AM_READ(YM3438_status_port_1_B_r)
 	AM_RANGE(0xc0, 0xc0) AM_READ(soundlatch_r)
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( sound_writeport_18, ADDRESS_SPACE_IO, 8 )
-	AM_RANGE(0x80, 0x80) AM_WRITE(YM2612_control_port_0_A_w)
-	AM_RANGE(0x81, 0x81) AM_WRITE(YM2612_data_port_0_A_w)
-	AM_RANGE(0x82, 0x82) AM_WRITE(YM2612_control_port_0_B_w)
-	AM_RANGE(0x83, 0x83) AM_WRITE(YM2612_data_port_0_B_w)
-	AM_RANGE(0x90, 0x90) AM_WRITE(YM2612_control_port_1_A_w)
-	AM_RANGE(0x91, 0x91) AM_WRITE(YM2612_data_port_1_A_w)
-	AM_RANGE(0x92, 0x92) AM_WRITE(YM2612_control_port_1_B_w)
-	AM_RANGE(0x93, 0x93) AM_WRITE(YM2612_data_port_1_B_w)
+	AM_RANGE(0x80, 0x80) AM_WRITE(YM3438_control_port_0_A_w)
+	AM_RANGE(0x81, 0x81) AM_WRITE(YM3438_data_port_0_A_w)
+	AM_RANGE(0x82, 0x82) AM_WRITE(YM3438_control_port_0_B_w)
+	AM_RANGE(0x83, 0x83) AM_WRITE(YM3438_data_port_0_B_w)
+	AM_RANGE(0x90, 0x90) AM_WRITE(YM3438_control_port_1_A_w)
+	AM_RANGE(0x91, 0x91) AM_WRITE(YM3438_data_port_1_A_w)
+	AM_RANGE(0x92, 0x92) AM_WRITE(YM3438_control_port_1_B_w)
+	AM_RANGE(0x93, 0x93) AM_WRITE(YM3438_data_port_1_B_w)
 	AM_RANGE(0xa0, 0xa0) AM_WRITE(sys18_soundbank_w)
 ADDRESS_MAP_END
 
@@ -1136,9 +1136,17 @@ static MACHINE_DRIVER_START( system18 )
 	MDRV_VIDEO_UPDATE(system18old)
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD_TAG("3438", YM3438, sys18_ym3438_interface)
-	MDRV_SOUND_ADD_TAG("5c68", RF5C68, sys18_rf5c68_interface)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD_TAG("3438", YM3438, 8000000)
+	MDRV_SOUND_ROUTE(0, "left", 0.40)
+	MDRV_SOUND_ROUTE(1, "right", 0.40)
+	MDRV_SOUND_ROUTE(2, "left", 0.40)
+	MDRV_SOUND_ROUTE(3, "right", 0.40)
+
+	MDRV_SOUND_ADD_TAG("5c68", RF5C68, 8000000)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 1.0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 1.0)
 MACHINE_DRIVER_END
 
 
@@ -1181,7 +1189,11 @@ static MACHINE_DRIVER_START( shdancbl )
 	MDRV_CPU_PROGRAM_MAP(shdancbl_sound_readmem,shdancbl_sound_writemem)
 	MDRV_CPU_IO_MAP(shdancbl_sound_readport,shdancbl_sound_writeport)
 	MDRV_SOUND_REMOVE("5c68")
-	MDRV_SOUND_ADD_TAG("5205", MSM5205, shdancbl_msm5205_interface)
+
+	MDRV_SOUND_ADD_TAG("5205", MSM5205, 200000)
+	MDRV_SOUND_CONFIG(shdancbl_msm5205_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.80)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 0.80)
 
 	MDRV_MACHINE_INIT(shdancbl)
 MACHINE_DRIVER_END

@@ -133,6 +133,9 @@ If someone could fix the protection it'd be fully playable with sound and music.
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "sndhrdw/seibu.h"
+#include "sound/2203intf.h"
+#include "sound/okim6295.h"
+#include "sound/3812intf.h"
 
 extern data16_t *nmk_bgvideoram,*nmk_fgvideoram,*nmk_txvideoram;
 extern data16_t *gunnail_scrollram;
@@ -2551,32 +2554,9 @@ static void ym2203_irqhandler(int irq)
 	cpunum_set_input_line(1,0,irq ? ASSERT_LINE : CLEAR_LINE);
 }
 
-static struct YM2203interface ym2203_interface_15 =
+static struct YM2203interface ym2203_interface =
 {
-	1,			/* 1 chip */
-	1500000,	/* 2 MHz ??? */
-	{ YM2203_VOL(90,90) },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ ym2203_irqhandler }
-};
-
-static struct OKIM6295interface okim6295_interface_dual =
-{
-	2,              					/* 2 chips */
-	{ 16000000/4/165, 16000000/4/165 },	/* 24242Hz frequency? */
-	{ REGION_SOUND1, REGION_SOUND2 },	/* memory region */
-	{ 40, 40 }							/* volume */
-};
-
-static struct OKIM6295interface okim6295_interface_ssmissin =
-{
-	1,              	/* 1 chip */
-	{ 8000000/4/165 },	/* ? unknown */
-	{ REGION_SOUND1 },	/* memory region */
-	{ 100 }				/* volume */
+	0,0,0,0,ym2203_irqhandler
 };
 
 static INTERRUPT_GEN( nmk_interrupt )
@@ -2587,7 +2567,7 @@ static INTERRUPT_GEN( nmk_interrupt )
 
 
 /* Parameters: YM3812 frequency, Oki frequency, Oki memory region */
-SEIBU_SOUND_SYSTEM_YM3812_HARDWARE(14318180/4, 8000, REGION_SOUND1);
+SEIBU_SOUND_SYSTEM_YM3812_HARDWARE;
 
 
 static MACHINE_DRIVER_START( vandyke )
@@ -2615,7 +2595,15 @@ static MACHINE_DRIVER_START( vandyke )
 
 	/* sound hardware */
 	/* there's also a YM2203 */
-	MDRV_SOUND_ADD(OKIM6295, okim6295_interface_dual)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(OKIM6295, 16000000/4/165)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.40)
+
+	MDRV_SOUND_ADD(OKIM6295, 16000000/4/165)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_2)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.40)
 MACHINE_DRIVER_END
 
 
@@ -2648,8 +2636,19 @@ static MACHINE_DRIVER_START( tharrier )
 	MDRV_VIDEO_UPDATE(tharrier)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM2203, ym2203_interface_15)
-	MDRV_SOUND_ADD(OKIM6295, okim6295_interface_dual)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM2203, 1500000)
+	MDRV_SOUND_CONFIG(ym2203_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.90)
+
+	MDRV_SOUND_ADD(OKIM6295, 16000000/4/165)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.40)
+
+	MDRV_SOUND_ADD(OKIM6295, 16000000/4/165)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_2)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.40)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( manybloc )
@@ -2680,8 +2679,19 @@ static MACHINE_DRIVER_START( manybloc )
 	MDRV_VIDEO_UPDATE(manybloc)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM2203, ym2203_interface_15)
-	MDRV_SOUND_ADD(OKIM6295, okim6295_interface_dual)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM2203, 1500000)
+	MDRV_SOUND_CONFIG(ym2203_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.90)
+
+	MDRV_SOUND_ADD(OKIM6295, 16000000/4/165)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.40)
+
+	MDRV_SOUND_ADD(OKIM6295, 16000000/4/165)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_2)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.40)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( mustang )
@@ -2709,8 +2719,19 @@ static MACHINE_DRIVER_START( mustang )
 
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM2203, ym2203_interface_15)
-	MDRV_SOUND_ADD(OKIM6295, okim6295_interface_dual)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM2203, 1500000)
+	MDRV_SOUND_CONFIG(ym2203_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.90)
+
+	MDRV_SOUND_ADD(OKIM6295, 16000000/4/165)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.40)
+
+	MDRV_SOUND_ADD(OKIM6295, 16000000/4/165)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_2)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.40)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( mustangb )
@@ -2739,7 +2760,7 @@ static MACHINE_DRIVER_START( mustangb )
 	MDRV_VIDEO_UPDATE(macross)
 
 	/* sound hardware */
-	SEIBU_SOUND_SYSTEM_YM3812_INTERFACE
+	SEIBU_SOUND_SYSTEM_YM3812_INTERFACE(14318180/4, 8000, 1)
 
 MACHINE_DRIVER_END
 
@@ -2768,7 +2789,15 @@ static MACHINE_DRIVER_START( acrobatm )
 
 	/* sound hardware */
 	/* there's also a YM2203? */
-	MDRV_SOUND_ADD(OKIM6295, okim6295_interface_dual)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(OKIM6295, 16000000/4/165)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.40)
+
+	MDRV_SOUND_ADD(OKIM6295, 16000000/4/165)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_2)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.40)
 MACHINE_DRIVER_END
 
 
@@ -2797,7 +2826,15 @@ static MACHINE_DRIVER_START( bioship )
 
 	/* sound hardware */
 	/* there's also a YM2203 */
-	MDRV_SOUND_ADD(OKIM6295, okim6295_interface_dual)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(OKIM6295, 16000000/4/165)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.40)
+
+	MDRV_SOUND_ADD(OKIM6295, 16000000/4/165)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_2)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.40)
 MACHINE_DRIVER_END
 
 
@@ -2828,7 +2865,7 @@ static MACHINE_DRIVER_START( tdragonb )
 	MDRV_VIDEO_UPDATE(macross)
 
 	/* sound hardware */
-	SEIBU_SOUND_SYSTEM_YM3812_INTERFACE
+	SEIBU_SOUND_SYSTEM_YM3812_INTERFACE(14318180/4, 8000, 1)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( tdragon )
@@ -2885,7 +2922,11 @@ static MACHINE_DRIVER_START( ssmissin )
 	MDRV_VIDEO_UPDATE(macross)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(OKIM6295, okim6295_interface_ssmissin)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(OKIM6295, 8000000/4/165)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 
@@ -2914,7 +2955,15 @@ static MACHINE_DRIVER_START( strahl )
 
 	/* sound hardware */
 	/* there's also a YM2203 */
-	MDRV_SOUND_ADD(OKIM6295, okim6295_interface_dual)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(OKIM6295, 16000000/4/165)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.40)
+
+	MDRV_SOUND_ADD(OKIM6295, 16000000/4/165)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_2)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.40)
 MACHINE_DRIVER_END
 
 
@@ -2943,7 +2992,15 @@ static MACHINE_DRIVER_START( hachamf )
 
 	/* sound hardware */
 	/* there's also a YM2203 */
-	MDRV_SOUND_ADD(OKIM6295, okim6295_interface_dual)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(OKIM6295, 16000000/4/165)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.40)
+
+	MDRV_SOUND_ADD(OKIM6295, 16000000/4/165)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_2)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.40)
 MACHINE_DRIVER_END
 
 
@@ -2972,7 +3029,15 @@ static MACHINE_DRIVER_START( macross )
 
 	/* sound hardware */
 	/* there's also a YM2203 */
-	MDRV_SOUND_ADD(OKIM6295, okim6295_interface_dual)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(OKIM6295, 16000000/4/165)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.40)
+
+	MDRV_SOUND_ADD(OKIM6295, 16000000/4/165)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_2)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.40)
 MACHINE_DRIVER_END
 
 
@@ -3000,7 +3065,15 @@ static MACHINE_DRIVER_START( gunnail )
 	MDRV_VIDEO_UPDATE(gunnail)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(OKIM6295, okim6295_interface_dual)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(OKIM6295, 16000000/4/165)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.40)
+
+	MDRV_SOUND_ADD(OKIM6295, 16000000/4/165)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_2)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.40)
 MACHINE_DRIVER_END
 
 
@@ -3033,8 +3106,19 @@ static MACHINE_DRIVER_START( macross2 )
 	MDRV_VIDEO_UPDATE(macross)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM2203, ym2203_interface_15)
-	MDRV_SOUND_ADD(OKIM6295, okim6295_interface_dual)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM2203, 1500000)
+	MDRV_SOUND_CONFIG(ym2203_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.90)
+
+	MDRV_SOUND_ADD(OKIM6295, 16000000/4/165)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.40)
+
+	MDRV_SOUND_ADD(OKIM6295, 16000000/4/165)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_2)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.40)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( tdragon2 )
@@ -3066,8 +3150,19 @@ static MACHINE_DRIVER_START( tdragon2 )
 	MDRV_VIDEO_UPDATE(macross)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM2203, ym2203_interface_15)
-	MDRV_SOUND_ADD(OKIM6295, okim6295_interface_dual)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM2203, 1500000)
+	MDRV_SOUND_CONFIG(ym2203_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.90)
+
+	MDRV_SOUND_ADD(OKIM6295, 16000000/4/165)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.40)
+
+	MDRV_SOUND_ADD(OKIM6295, 16000000/4/165)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_2)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.40)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( raphero )
@@ -3101,8 +3196,19 @@ static MACHINE_DRIVER_START( raphero )
 	MDRV_VIDEO_UPDATE(macross)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM2203, ym2203_interface_15)
-	MDRV_SOUND_ADD(OKIM6295, okim6295_interface_dual)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM2203, 1500000)
+	MDRV_SOUND_CONFIG(ym2203_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.90)
+
+	MDRV_SOUND_ADD(OKIM6295, 16000000/4/165)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.40)
+
+	MDRV_SOUND_ADD(OKIM6295, 16000000/4/165)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_2)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.40)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( bjtwin )
@@ -3129,7 +3235,15 @@ static MACHINE_DRIVER_START( bjtwin )
 	MDRV_VIDEO_UPDATE(bjtwin)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(OKIM6295, okim6295_interface_dual)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(OKIM6295, 16000000/4/165)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.40)
+
+	MDRV_SOUND_ADD(OKIM6295, 16000000/4/165)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_2)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.40)
 MACHINE_DRIVER_END
 
 ROM_START( vandyke )

@@ -219,6 +219,7 @@ there are 9 PALS on the pcb (not dumped)
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "sound/ymz280b.h"
 
 extern data32_t* skns_spc_regs;
 
@@ -761,11 +762,8 @@ INPUT_PORTS_END
 
 static struct YMZ280Binterface ymz280b_intf =
 {
-	1,
-	{ 28636400 / 2 }, /* complete guess */
-	{ REGION_SOUND1 },
-	{ YM3012_VOL(100,MIXER_PAN_LEFT,100,MIXER_PAN_RIGHT) },
-	{ 0 }	// irq ?
+	REGION_SOUND1,
+	0	// irq ?
 };
 
 
@@ -795,8 +793,12 @@ static MACHINE_DRIVER_START( jchan )
 	MDRV_VIDEO_UPDATE(jchan)
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(YMZ280B, ymz280b_intf)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(YMZ280B, 28636400 / 2)
+	MDRV_SOUND_CONFIG(ymz280b_intf)
+	MDRV_SOUND_ROUTE(0, "left", 1.0)
+	MDRV_SOUND_ROUTE(1, "right", 1.0)
 MACHINE_DRIVER_END
 
 /* rom loading */

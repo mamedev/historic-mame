@@ -133,6 +133,8 @@ Changes:
 #include "vidhrdw/generic.h"
 #include "vidhrdw/ppu2c03b.h"
 #include "machine/rp5h01.h"
+#include "sound/dac.h"
+#include "sound/nes_apu.h"
 
 /* clock frequency */
 #define N2A03_DEFAULTCLOCK ( 21477272.724 / 12 )
@@ -2042,30 +2044,14 @@ static struct GfxDecodeInfo nes_gfxdecodeinfo[] =
 	{ -1 } /* end of array */
 };
 
-static struct NESinterface nes_interface =
+static struct NESinterface nes_interface_1 =
 {
-	1,
-	{ REGION_CPU1 },
-	{ 50 },
+	REGION_CPU1
 };
 
-static struct DACinterface nes_dac_interface =
+static struct NESinterface nes_interface_2 =
 {
-	1,
-	{ 50 },
-};
-
-static struct NESinterface nes_dual_interface =
-{
-	2,
-	{ REGION_CPU1, REGION_CPU2 },
-	{ 25, 25 },
-};
-
-static struct DACinterface nes_dual_dac_interface =
-{
-	2,
-	{ 25, 25 },
+	REGION_CPU2
 };
 
 static MACHINE_DRIVER_START( vsnes )
@@ -2092,8 +2078,14 @@ static MACHINE_DRIVER_START( vsnes )
 	MDRV_VIDEO_UPDATE(vsnes)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(NES, nes_interface)
-	MDRV_SOUND_ADD(DAC, nes_dac_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	
+	MDRV_SOUND_ADD(NES, 0)
+	MDRV_SOUND_CONFIG(nes_interface_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
+
+	MDRV_SOUND_ADD(DAC, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
 MACHINE_DRIVER_END
 
 
@@ -2125,8 +2117,21 @@ static MACHINE_DRIVER_START( vsdual )
 	MDRV_VIDEO_UPDATE(vsdual)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(NES, nes_dual_interface)
-	MDRV_SOUND_ADD(DAC, nes_dual_dac_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	
+	MDRV_SOUND_ADD(NES, 0)
+	MDRV_SOUND_CONFIG(nes_interface_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
+	
+	MDRV_SOUND_ADD(NES, 0)
+	MDRV_SOUND_CONFIG(nes_interface_2)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
+
+	MDRV_SOUND_ADD(DAC, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
+
+	MDRV_SOUND_ADD(DAC, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
 MACHINE_DRIVER_END
 
 

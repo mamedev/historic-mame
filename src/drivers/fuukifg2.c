@@ -36,6 +36,9 @@ To Do:
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "sound/2203intf.h"
+#include "sound/3812intf.h"
+#include "sound/okim6295.h"
 
 static int fuuki16_raster_enable = 1; /* Enabled by default */
 
@@ -486,32 +489,9 @@ static void soundirq(int state)
 	cpunum_set_input_line(1, 0, state);
 }
 
-static struct YM2203interface fuuki16_ym2203_intf =
-{
-	1,
-	4000000,		/* ? */
-	{ YM2203_VOL(15,15) },
-	{ 0 },			/* Port A Read  */
-	{ 0 },			/* Port B Read  */
-	{ 0 },			/* Port A Write */
-	{ 0 },			/* Port B Write */
-	{ 0 }			/* IRQ handler  */
-};
-
 static struct YM3812interface fuuki16_ym3812_intf =
 {
-	1,
-	4000000,		/* ? */
-	{ 30 },
-	{ soundirq },	/* IRQ Line */
-};
-
-static struct OKIM6295interface fuuki16_m6295_intf =
-{
-	1,
-	{ 8000 },		/* ? */
-	{ REGION_SOUND1 },
-	{ 85 }
+	soundirq	/* IRQ Line */
 };
 
 /*
@@ -578,10 +558,21 @@ static MACHINE_DRIVER_START( fuuki16 )
 	MDRV_VIDEO_UPDATE(fuuki16)
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(YM2203, fuuki16_ym2203_intf)
-	MDRV_SOUND_ADD(YM3812, fuuki16_ym3812_intf)
-	MDRV_SOUND_ADD(OKIM6295, fuuki16_m6295_intf)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(YM2203, 4000000)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.15)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 0.15)
+
+	MDRV_SOUND_ADD(YM3812, 4000000)
+	MDRV_SOUND_CONFIG(fuuki16_ym3812_intf)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.30)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 0.30)
+
+	MDRV_SOUND_ADD(OKIM6295, 8000)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.85)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 0.85)
 MACHINE_DRIVER_END
 
 

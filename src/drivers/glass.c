@@ -11,6 +11,7 @@ The DS5002FP has up to 128KB undumped gameplay code making the game unplayable :
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "cpu/m68000/m68000.h"
+#include "sound/okim6295.h"
 
 extern data16_t *glass_vregs;
 extern data16_t *glass_videoram;
@@ -200,14 +201,6 @@ INPUT_PORTS_END
 
 
 
-static struct OKIM6295interface glass_okim6295_interface =
-{
-	1,                  /* 1 chip */
-	{ 8000 },			/* 8000 KHz? */
-	{ REGION_SOUND1 },  /* memory region */
-	{ 100 }				/* volume */
-};
-
 static MACHINE_DRIVER_START( glass )
 
 	/* basic machine hardware */
@@ -231,7 +224,11 @@ static MACHINE_DRIVER_START( glass )
 	MDRV_VIDEO_UPDATE(glass)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(OKIM6295, glass_okim6295_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(OKIM6295, 8000)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 ROM_START( glass )

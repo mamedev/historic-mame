@@ -7,6 +7,7 @@
 #include "cpu/tms32010/tms32010.h"
 #include "machine/atarigen.h"
 #include "harddriv.h"
+#include "sound/dac.h"
 
 
 #define BIO_FREQUENCY		(1000000 / 50)

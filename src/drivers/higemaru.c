@@ -8,6 +8,7 @@ driver by Mirko Buffoni
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "sound/ay8910.h"
 
 
 extern WRITE8_HANDLER( higemaru_videoram_w );
@@ -170,17 +171,6 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 	{ -1 } /* end of array */
 };
 
-static struct AY8910interface ay8910_interface =
-{
-	2,	/* 2 chips */
-	12000000/8,	/* 1.5 MHz ? Main xtal is 12MHz */
-	{ 25, 25 },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ 0 }
-};
-
 
 static MACHINE_DRIVER_START( higemaru )
 
@@ -205,7 +195,13 @@ static MACHINE_DRIVER_START( higemaru )
 	MDRV_VIDEO_UPDATE(higemaru)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(AY8910, ay8910_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	
+	MDRV_SOUND_ADD(AY8910, 12000000/8)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
+	
+	MDRV_SOUND_ADD(AY8910, 12000000/8)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
 MACHINE_DRIVER_END
 
 /***************************************************************************

@@ -25,6 +25,8 @@ down hardware (it doesn't write any good sound data btw, mostly zeros).
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "cpu/h6280/h6280.h"
+#include "sound/2151intf.h"
+#include "sound/okim6295.h"
 
 VIDEO_START( supbtime );
 VIDEO_UPDATE( supbtime );
@@ -374,14 +376,6 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 /******************************************************************************/
 
-static struct OKIM6295interface okim6295_interface =
-{
-	1,          /* 1 chip */
-	{ 7757 },	/* Frequency */
-	{ REGION_SOUND1 },	/* memory region */
-	{ 50 }
-};
-
 static void sound_irq(int state)
 {
 	cpunum_set_input_line(1,1,state); /* IRQ 2 */
@@ -389,10 +383,7 @@ static void sound_irq(int state)
 
 static struct YM2151interface ym2151_interface =
 {
-	1,
-	32220000/9, /* May not be correct, there is another crystal near the ym2151 */
-	{ YM3012_VOL(45,MIXER_PAN_LEFT,45,MIXER_PAN_RIGHT) },
-	{ sound_irq }
+	sound_irq
 };
 
 static MACHINE_DRIVER_START( supbtime )
@@ -420,8 +411,16 @@ static MACHINE_DRIVER_START( supbtime )
 	MDRV_VIDEO_UPDATE(supbtime)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM2151, ym2151_interface)
-	MDRV_SOUND_ADD(OKIM6295, okim6295_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM2151, 32220000/9)
+	MDRV_SOUND_CONFIG(ym2151_interface)
+	MDRV_SOUND_ROUTE(0, "mono", 0.45)
+	MDRV_SOUND_ROUTE(1, "mono", 0.45)
+
+	MDRV_SOUND_ADD(OKIM6295, 7757)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
 MACHINE_DRIVER_END
 
 
@@ -450,8 +449,16 @@ static MACHINE_DRIVER_START( chinatwn )
 	MDRV_VIDEO_UPDATE(chinatwn)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM2151, ym2151_interface)
-	MDRV_SOUND_ADD(OKIM6295, okim6295_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM2151, 32220000/9)
+	MDRV_SOUND_CONFIG(ym2151_interface)
+	MDRV_SOUND_ROUTE(0, "mono", 0.45)
+	MDRV_SOUND_ROUTE(1, "mono", 0.45)
+
+	MDRV_SOUND_ADD(OKIM6295, 7757)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
 MACHINE_DRIVER_END
 
 /******************************************************************************/

@@ -35,6 +35,8 @@ Notes:
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "cpu/z80/z80.h"
+#include "sound/3812intf.h"
+#include "sound/upd7759.h"
 
 VIDEO_START( pow );
 VIDEO_START( searchar );
@@ -686,19 +688,12 @@ static void irqhandler(int irq)
 
 static struct YM3812interface ym3812_interface =
 {
-	1,			/* 1 chip */
-	4000000,	/* 4 MHz - accurate for POW, should be accurate for others */
-	{ 100 },
-	{ irqhandler },
+	irqhandler
 };
 
 static struct upd7759_interface upd7759_interface =
 {
-	1,		/* number of chips */
-	{ UPD7759_STANDARD_CLOCK },
-	{ 50 }, /* volume */
-	{ REGION_SOUND1 },		/* memory region */
-	{0}
+	REGION_SOUND1		/* memory region */
 };
 
 /******************************************************************************/
@@ -729,8 +724,15 @@ static MACHINE_DRIVER_START( ikari3 )
 	MDRV_VIDEO_UPDATE(searchar)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM3812, ym3812_interface)
-	MDRV_SOUND_ADD(UPD7759, upd7759_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM3812, 4000000)
+	MDRV_SOUND_CONFIG(ym3812_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
+
+	MDRV_SOUND_ADD(UPD7759, UPD7759_STANDARD_CLOCK)
+	MDRV_SOUND_CONFIG(upd7759_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
 MACHINE_DRIVER_END
 
 
@@ -760,8 +762,15 @@ static MACHINE_DRIVER_START( pow )
 	MDRV_VIDEO_UPDATE(pow)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM3812, ym3812_interface)
-	MDRV_SOUND_ADD(UPD7759, upd7759_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM3812, 4000000)
+	MDRV_SOUND_CONFIG(ym3812_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
+
+	MDRV_SOUND_ADD(UPD7759, UPD7759_STANDARD_CLOCK)
+	MDRV_SOUND_CONFIG(upd7759_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
 MACHINE_DRIVER_END
 
 
@@ -791,8 +800,15 @@ static MACHINE_DRIVER_START( searchar )
 	MDRV_VIDEO_UPDATE(searchar)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM3812, ym3812_interface)
-	MDRV_SOUND_ADD(UPD7759, upd7759_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM3812, 4000000)
+	MDRV_SOUND_CONFIG(ym3812_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
+
+	MDRV_SOUND_ADD(UPD7759, UPD7759_STANDARD_CLOCK)
+	MDRV_SOUND_CONFIG(upd7759_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
 MACHINE_DRIVER_END
 
 
@@ -822,8 +838,15 @@ static MACHINE_DRIVER_START( streetsm )
 	MDRV_VIDEO_UPDATE(searchar)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM3812, ym3812_interface)
-	MDRV_SOUND_ADD(UPD7759, upd7759_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM3812, 4000000)
+	MDRV_SOUND_CONFIG(ym3812_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
+
+	MDRV_SOUND_ADD(UPD7759, UPD7759_STANDARD_CLOCK)
+	MDRV_SOUND_CONFIG(upd7759_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
 MACHINE_DRIVER_END
 
 /******************************************************************************/

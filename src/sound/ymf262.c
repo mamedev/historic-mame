@@ -252,11 +252,11 @@ typedef struct {
 
 	/* external event callback handlers */
 	OPL3_TIMERHANDLER  TimerHandler;/* TIMER handler				*/
-	int TimerParam;					/* TIMER parameter				*/
+	void *TimerParam;					/* TIMER parameter				*/
 	OPL3_IRQHANDLER    IRQHandler;	/* IRQ handler					*/
-	int IRQParam;					/* IRQ parameter				*/
+	void *IRQParam;					/* IRQ parameter				*/
 	OPL3_UPDATEHANDLER UpdateHandler;/* stream update handler		*/
-	int UpdateParam;				/* stream update parameter		*/
+	void *UpdateParam;				/* stream update parameter		*/
 
 	UINT8 type;						/* chip type					*/
 	int clock;						/* master clock  (Hz)			*/
@@ -1738,14 +1738,14 @@ static void OPL3WriteReg(OPL3 *chip, int r, int v)
 				{
 					double interval = st2 ? (double)chip->T[1]*chip->TimerBase : 0.0;
 					chip->st[1] = st2;
-					if (chip->TimerHandler) (chip->TimerHandler)(chip->TimerParam+1,interval);
+					if (chip->TimerHandler) (chip->TimerHandler)(chip->TimerParam,1,interval);
 				}
 				/* timer 1 */
 				if(chip->st[0] != st1)
 				{
 					double interval = st1 ? (double)chip->T[0]*chip->TimerBase : 0.0;
 					chip->st[0] = st1;
-					if (chip->TimerHandler) (chip->TimerHandler)(chip->TimerParam+0,interval);
+					if (chip->TimerHandler) (chip->TimerHandler)(chip->TimerParam,0,interval);
 				}
 			}
 		break;
@@ -2372,17 +2372,17 @@ static void OPL3Destroy(OPL3 *chip)
 
 /* Optional handlers */
 
-static void OPL3SetTimerHandler(OPL3 *chip,OPL3_TIMERHANDLER TimerHandler,int channelOffset)
+static void OPL3SetTimerHandler(OPL3 *chip,OPL3_TIMERHANDLER TimerHandler,void *param)
 {
 	chip->TimerHandler   = TimerHandler;
-	chip->TimerParam = channelOffset;
+	chip->TimerParam = param;
 }
-static void OPL3SetIRQHandler(OPL3 *chip,OPL3_IRQHANDLER IRQHandler,int param)
+static void OPL3SetIRQHandler(OPL3 *chip,OPL3_IRQHANDLER IRQHandler,void *param)
 {
 	chip->IRQHandler     = IRQHandler;
 	chip->IRQParam = param;
 }
-static void OPL3SetUpdateHandler(OPL3 *chip,OPL3_UPDATEHANDLER UpdateHandler,int param)
+static void OPL3SetUpdateHandler(OPL3 *chip,OPL3_UPDATEHANDLER UpdateHandler,void *param)
 {
 	chip->UpdateHandler = UpdateHandler;
 	chip->UpdateParam = param;
@@ -2460,7 +2460,7 @@ static int OPL3TimerOver(OPL3 *chip,int c)
 		OPL3_STATUS_SET(chip,0x40);
 	}
 	/* reload timer */
-	if (chip->TimerHandler) (chip->TimerHandler)(chip->TimerParam+c,(double)chip->T[c]*chip->TimerBase);
+	if (chip->TimerHandler) (chip->TimerHandler)(chip->TimerParam,c,(double)chip->T[c]*chip->TimerBase);
 	return chip->status>>7;
 }
 
@@ -2469,58 +2469,26 @@ static int OPL3TimerOver(OPL3 *chip,int c)
 
 #if (BUILD_YMF262)
 
-#define MAX_OPL3_CHIPS 2
-
-static OPL3 *YMF262[MAX_OPL3_CHIPS];	/* array of pointers to the YMF262's */
-static int YMF262NumChips = 0;				/* number of chips */
-
-int YMF262Init(int num, int clock, int rate)
+void * YMF262Init(int clock, int rate)
 {
-	int i;
-
-	if (YMF262NumChips)
-		return -1;	/* duplicate init. */
-
-	YMF262NumChips = num;
-
-	for (i = 0;i < YMF262NumChips; i++)
-	{
-		/* emulator create */
-		YMF262[i] = OPL3Create(OPL3_TYPE_YMF262,clock,rate);
-		if(YMF262[i] == NULL)
-		{
-			/* it's really bad - we run out of memeory */
-			YMF262NumChips = 0;
-			return -1;
-		}
-	}
-
-	return 0;
+	return OPL3Create(OPL3_TYPE_YMF262,clock,rate);
 }
 
-void YMF262Shutdown(void)
+void YMF262Shutdown(void *chip)
 {
-	int i;
-
-	for (i = 0;i < YMF262NumChips; i++)
-	{
-		/* emulator shutdown */
-		OPL3Destroy(YMF262[i]);
-		YMF262[i] = NULL;
-	}
-	YMF262NumChips = 0;
+	OPL3Destroy(chip);
 }
-void YMF262ResetChip(int which)
+void YMF262ResetChip(void *chip)
 {
-	OPL3ResetChip(YMF262[which]);
+	OPL3ResetChip(chip);
 }
 
-int YMF262Write(int which, int a, int v)
+int YMF262Write(void *chip, int a, int v)
 {
-	return OPL3Write(YMF262[which], a, v);
+	return OPL3Write(chip, a, v);
 }
 
-unsigned char YMF262Read(int which, int a)
+unsigned char YMF262Read(void *chip, int a)
 {
 	/* Note on status register: */
 
@@ -2531,24 +2499,24 @@ unsigned char YMF262Read(int which, int a)
 
 	/* YMF278(OPL4) returns bit2 in LOW and bit1 in HIGH state ??? info from manual - not verified */
 
-	return OPL3Read(YMF262[which], a);
+	return OPL3Read(chip, a);
 }
-int YMF262TimerOver(int which, int c)
+int YMF262TimerOver(void *chip, int c)
 {
-	return OPL3TimerOver(YMF262[which], c);
+	return OPL3TimerOver(chip, c);
 }
 
-void YMF262SetTimerHandler(int which, OPL3_TIMERHANDLER TimerHandler, int channelOffset)
+void YMF262SetTimerHandler(void *chip, OPL3_TIMERHANDLER TimerHandler, void *param)
 {
-	OPL3SetTimerHandler(YMF262[which], TimerHandler, channelOffset);
+	OPL3SetTimerHandler(chip, TimerHandler, param);
 }
-void YMF262SetIRQHandler(int which,OPL3_IRQHANDLER IRQHandler,int param)
+void YMF262SetIRQHandler(void *chip,OPL3_IRQHANDLER IRQHandler,void *param)
 {
-	OPL3SetIRQHandler(YMF262[which], IRQHandler, param);
+	OPL3SetIRQHandler(chip, IRQHandler, param);
 }
-void YMF262SetUpdateHandler(int which,OPL3_UPDATEHANDLER UpdateHandler,int param)
+void YMF262SetUpdateHandler(void *chip,OPL3_UPDATEHANDLER UpdateHandler,void *param)
 {
-	OPL3SetUpdateHandler(YMF262[which], UpdateHandler, param);
+	OPL3SetUpdateHandler(chip, UpdateHandler, param);
 }
 
 
@@ -2559,9 +2527,9 @@ void YMF262SetUpdateHandler(int which,OPL3_UPDATEHANDLER UpdateHandler,int param
 ** '**buffers' is table of 4 pointers to the buffers: CH.A, CH.B, CH.C and CH.D
 ** 'length' is the number of samples that should be generated
 */
-void YMF262UpdateOne(int which, INT16 **buffers, int length)
+void YMF262UpdateOne(void *_chip, OPL3SAMPLE **buffers, int length)
 {
-	OPL3		*chip  = YMF262[which];
+	OPL3		*chip  = _chip;
 	UINT8		rhythm = chip->rhythm&0x20;
 
 	OPL3SAMPLE	*ch_a = buffers[0];

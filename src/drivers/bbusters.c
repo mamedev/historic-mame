@@ -166,6 +166,8 @@ Stephh's notes (based on the games M68000 code and some tests) :
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "sound/2608intf.h"
+#include "sound/2610intf.h"
 
 #define BBUSTERS_HACK	0
 #define MECHATT_HACK	0
@@ -649,31 +651,15 @@ static void sound_irq( int irq )
 
 static struct YM2608interface ym2608_interface =
 {
-	1,
-	8000000,	/* 8 MHz */
-	{ 50 },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ sound_irq },
-	{ REGION_SOUND1 },
-	{ YM3012_VOL(100,MIXER_PAN_LEFT,100,MIXER_PAN_RIGHT) }
+	0,0,0,0,sound_irq,
+	REGION_SOUND1
 };
 
-struct YM2610interface ym2610_interface =
+static struct YM2610interface ym2610_interface =
 {
-	1,
-	8000000,
-	{ MIXERG(15,MIXER_GAIN_4x,MIXER_PAN_CENTER) },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ sound_irq },
-	{ REGION_SOUND2 },
-	{ REGION_SOUND1 },
-	{ YM3012_VOL(20,MIXER_PAN_LEFT,20,MIXER_PAN_RIGHT) }
+	sound_irq,
+	REGION_SOUND2,
+	REGION_SOUND1
 };
 
 /******************************************************************************/
@@ -742,8 +728,14 @@ static MACHINE_DRIVER_START( bbusters )
 	MDRV_VIDEO_EOF(bbuster)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM2610, ym2610_interface)
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(YM2610, 8000000)
+	MDRV_SOUND_CONFIG(ym2610_interface)
+	MDRV_SOUND_ROUTE(0, "left",  0.60)
+	MDRV_SOUND_ROUTE(0, "right", 0.60)
+	MDRV_SOUND_ROUTE(1, "left",  0.20)
+	MDRV_SOUND_ROUTE(2, "right", 0.20)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( mechatt )
@@ -776,8 +768,14 @@ static MACHINE_DRIVER_START( mechatt )
 	MDRV_VIDEO_EOF(mechatt)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM2608, ym2608_interface)
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(YM2608, 8000000)
+	MDRV_SOUND_CONFIG(ym2608_interface)
+	MDRV_SOUND_ROUTE(0, "left",  0.50)
+	MDRV_SOUND_ROUTE(0, "right", 0.50)
+	MDRV_SOUND_ROUTE(1, "left",  1.0)
+	MDRV_SOUND_ROUTE(2, "right", 1.0)
 MACHINE_DRIVER_END
 
 /******************************************************************************/

@@ -35,7 +35,8 @@
 /*****************************************************************************/
 
 #include "driver.h"
-
+#include "sound/ay8910.h"
+#include "sound/samples.h"
 
 #define CPU_MUSIC_ID            1       /* music CPU id number */
 

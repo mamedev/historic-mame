@@ -21,6 +21,7 @@ Volfied (c) 1989 Taito Corporation
 #include "vidhrdw/generic.h"
 #include "vidhrdw/taitoic.h"
 #include "sndhrdw/taitosnd.h"
+#include "sound/2203intf.h"
 
 WRITE16_HANDLER( volfied_sprite_ctrl_w );
 WRITE16_HANDLER( volfied_video_ram_w );
@@ -303,14 +304,11 @@ static void irqhandler(int irq)
 
 static struct YM2203interface ym2203_interface =
 {
-	1,         /* 1 chip */
-	4000000,   /* 4 MHz? */
-	{ YM2203_VOL(60,15) },
-	{ input_port_0_r },    /* DSW A */
-	{ input_port_1_r },    /* DSW B */
-	{ 0 },
-	{ 0 },
-	{ irqhandler }
+	input_port_0_r,    /* DSW A */
+	input_port_1_r,    /* DSW B */
+	0,
+	0,
+	irqhandler
 };
 
 
@@ -348,7 +346,14 @@ static MACHINE_DRIVER_START( volfied )
 	MDRV_VIDEO_UPDATE(volfied)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM2203, ym2203_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM2203, 4000000)
+	MDRV_SOUND_CONFIG(ym2203_interface)
+	MDRV_SOUND_ROUTE(0, "mono", 0.15)
+	MDRV_SOUND_ROUTE(1, "mono", 0.15)
+	MDRV_SOUND_ROUTE(2, "mono", 0.15)
+	MDRV_SOUND_ROUTE(3, "mono", 0.60)
 MACHINE_DRIVER_END
 
 

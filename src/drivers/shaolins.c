@@ -8,6 +8,7 @@ driver by Allard Van Der Bas
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "sound/sn76496.h"
 
 
 UINT8 shaolins_nmi_enable;
@@ -216,15 +217,6 @@ static struct GfxDecodeInfo shaolins_gfxdecodeinfo[] =
 
 
 
-static struct SN76496interface sn76496_interface =
-{
-	2,	/* 2 chips */
-	{ 1536000, 3072000 },	/* 3.072 MHz???? */
-	{ 100, 100 }
-};
-
-
-
 static MACHINE_DRIVER_START( shaolins )
 
 	/* basic machine hardware */
@@ -248,7 +240,13 @@ static MACHINE_DRIVER_START( shaolins )
 	MDRV_VIDEO_UPDATE(shaolins)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(SN76496, sn76496_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(SN76496, 1536000)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
+
+	MDRV_SOUND_ADD(SN76496, 3072000)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 

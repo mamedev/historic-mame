@@ -23,6 +23,9 @@ Notes:
 #include "driver.h"
 #include "cpu/z80/z80.h"
 #include "lasso.h"
+#include "sound/dac.h"
+#include "sound/sn76496.h"
+#include "sound/ay8910.h"
 
 
 /* IRQ = VBlank, NMI = Coin Insertion */
@@ -610,30 +613,6 @@ static struct GfxDecodeInfo pinbo_gfxdecodeinfo[] =
 
 
 
-static struct SN76496interface sn76496_interface =
-{
-	2,	/* 2 chips */
-	{ 2000000, 2000000 },	/* ? MHz */
-	{ 100, 100 }
-};
-
-static struct DACinterface dac_interface =
-{
-	1,
-	{ 100 }
-};
-
-static struct AY8910interface ay8910_interface =
-{
-	2,		/* 2 chips */
-	1250000,	/* 1.25 MHz? */
-	{ 25, 25 },
-	{ 0, 0 },
-	{ 0, 0 },
-	{ 0, 0 },
-	{ 0, 0 }
-};
-
 static MACHINE_DRIVER_START( lasso )
 
 	/* basic machine hardware */
@@ -664,7 +643,13 @@ static MACHINE_DRIVER_START( lasso )
 	MDRV_VIDEO_UPDATE(lasso)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD_TAG("sn76496", SN76496, sn76496_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD_TAG("sn76496.1", SN76496, 2000000)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
+
+	MDRV_SOUND_ADD_TAG("sn76496.2", SN76496, 2000000)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( chameleo )
@@ -706,7 +691,8 @@ static MACHINE_DRIVER_START( wwjgtin )
 	MDRV_VIDEO_UPDATE(wwjgtin)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(DAC, dac_interface)
+	MDRV_SOUND_ADD(DAC, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( pinbo )
@@ -731,8 +717,14 @@ static MACHINE_DRIVER_START( pinbo )
 	MDRV_VIDEO_UPDATE(chameleo)
 
 	/* sound hardware */
-	MDRV_SOUND_REMOVE("sn76496")
-	MDRV_SOUND_ADD(AY8910, ay8910_interface)
+	MDRV_SOUND_REMOVE("sn76496.1")
+	MDRV_SOUND_REMOVE("sn76496.2")
+
+	MDRV_SOUND_ADD(AY8910, 1250000)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1250000)
+
+	MDRV_SOUND_ADD(AY8910, 1250000)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1250000)
 MACHINE_DRIVER_END
 
 

@@ -5,7 +5,7 @@
 *************************************************************************/
 #include "driver.h"
 #include "nitedrvr.h"
-
+#include "sound/discrete.h"
 
 
 /* Discrete Sound Emulation */

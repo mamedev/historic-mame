@@ -3,12 +3,8 @@
 
 struct ST0016interface 
 {
-	int mixing_level;			/* volume */
 	data8_t **p_soundram;
 };
-
-int st0016_sh_start( const struct MachineSound *msound );
-void st0016_sh_stop( void );
 
 extern data8_t *st0016_sound_regs;
 

@@ -20,6 +20,8 @@
 
 #include "driver.h"
 #include "machine/eeprom.h"
+#include "sound/2151intf.h"
+#include "sound/okim6295.h"
 
 static data16_t *tiles, *wram;
 static int flip_bit, flipscreen = 0;
@@ -277,23 +279,6 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 	{ -1 } /* end of array */
 };
 
-static struct YM2151interface ym2151_interface =
-{
-	1,
-	14318180/4,
-	{ YM3012_VOL(100,MIXER_PAN_LEFT,100,MIXER_PAN_RIGHT) },
-	{ 0 }, /* irq handler */
-	{ 0 } /* port_write */
-};
-
-static struct OKIM6295interface m6295_interface =
-{
-	1,              	/* 1 chip */
-	{ 1789772.5 / 132 },/* sample rate */
-	{ REGION_SOUND1 },	/* memory region */
-	{ 100 }				/* volume */
-};
-
 static INTERRUPT_GEN( common_interrupts )
 {
 	if(cpu_getiloops())
@@ -378,9 +363,16 @@ static MACHINE_DRIVER_START( common )
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( sound_ym_oki )
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(YM2151, ym2151_interface)
-	MDRV_SOUND_ADD(OKIM6295, m6295_interface)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(YM2151, 14318180/4)
+	MDRV_SOUND_ROUTE(0, "left", 1.0)
+	MDRV_SOUND_ROUTE(1, "right", 1.0)
+
+	MDRV_SOUND_ADD(OKIM6295, 1789772.5 / 132)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 1.0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 1.0)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( sound_qs1000 )

@@ -62,22 +62,18 @@
 #include "c6280.h"
 
 /* Local function prototypes */
-void c6280_init(int which, double clk, double rate, double volume);
-void c6280_write(int which, int offset, int data);
-void c6280_update(int which, INT16 **buffer, int length);
-
-static int stream[MAX_C6280];
-c6280_t c6280[MAX_C6280];
+void c6280_init(c6280_t *p, double clk, double rate);
+void c6280_write(c6280_t *p, int offset, int data);
+void c6280_update(void *param, stream_sample_t **inputs, stream_sample_t **buffer, int length);
 
 
-void c6280_init(int which, double clk, double rate, double volume)
+void c6280_init(c6280_t *p, double clk, double rate)
 {
-    c6280_t *p = &c6280[which];
     int i;
     double step;
 
     /* Loudest volume level for table */
-    double level = (65535 * (volume / 100.0)) / 6.0 / 32.0;
+    double level = 65535.0 / 6.0 / 32.0;
 
     /* Clear context */
     memset(p, 0, sizeof(c6280_t));
@@ -108,13 +104,12 @@ void c6280_init(int which, double clk, double rate, double volume)
 }
 
 
-void c6280_write(int which, int offset, int data)
+void c6280_write(c6280_t *p, int offset, int data)
 {
-    c6280_t *p = &c6280[which];
     t_channel *q = &p->channel[p->select];
 
     /* Update stream */
-    stream_update(stream[which], 0);
+    stream_update(p->stream, 0);
 
     switch(offset & 0x0F)
     {
@@ -192,7 +187,7 @@ void c6280_write(int which, int offset, int data)
 }
 
 
-void c6280_update(int num, INT16 **buffer, int length)
+void c6280_update(void *param, stream_sample_t **inputs, stream_sample_t **buffer, int length)
 {
     static int scale_tab[] = {
         0x00, 0x03, 0x05, 0x07, 0x09, 0x0B, 0x0D, 0x0F,
@@ -200,7 +195,7 @@ void c6280_update(int num, INT16 **buffer, int length)
     };
     int ch;
     int i;
-    c6280_t *p = &c6280[num];
+    c6280_t *p = param;
 
     int lmal = (p->balance >> 4) & 0x0F;
     int rmal = (p->balance >> 0) & 0x0F;
@@ -291,42 +286,58 @@ void c6280_update(int num, INT16 **buffer, int length)
 /* MAME specific code                                                       */
 /*--------------------------------------------------------------------------*/
 
-int c6280_sh_start(const struct MachineSound *msound)
+static void *c6280_start(int sndindex, int clock, const void *config)
 {
-    const struct C6280_interface *intf = msound->sound_interface;
-	char buf[2][64];
-    const char *name[2];
-    int volume[2];
-	int i;
+    c6280_t *info;
+    
+    info = auto_malloc(sizeof(*info));
+    memset(info, 0, sizeof(*info));
 
-    for (i = 0; i < intf->num; i++)
-    {
-        /* Initialize PSG emulator */
-        c6280_init(i, intf->clock[i], Machine->sample_rate, intf->volume[i]&0xff);
+   /* Initialize PSG emulator */
+   c6280_init(info, clock, Machine->sample_rate);
 
-        /* Set up device name */
-        sprintf(buf[0], "HuC6280 #%d", i);
-        sprintf(buf[1], "HuC6280 #%d", i);
-        name[0] = buf[0];
-        name[1] = buf[1];
+   /* Create stereo stream */
+   info->stream = stream_create(0, 2, Machine->sample_rate, info, c6280_update);
 
-        /* Set up volume */
-		volume[0] = MIXER(intf->volume[i], MIXER_PAN_LEFT);
-		volume[1] = MIXER(intf->volume[i], MIXER_PAN_RIGHT);
-
-        /* Create stereo stream */
-        stream[i] = stream_init_multi(2, name, volume, Machine->sample_rate, i, c6280_update);
-        if(stream[i] == -1)
-            return 1;
-    }
-
-    return 0;
+    return info;
 }
 
-void c6280_sh_stop(void)
+WRITE8_HANDLER( C6280_0_w ) {  c6280_write(sndti_token(SOUND_C6280, 0),offset,data); }
+WRITE8_HANDLER( C6280_1_w ) {  c6280_write(sndti_token(SOUND_C6280, 1),offset,data); }
+
+
+
+/**************************************************************************
+ * Generic get_info
+ **************************************************************************/
+
+static void c6280_set_info(void *token, UINT32 state, union sndinfo *info)
 {
+	switch (state)
+	{
+		/* no parameters to set */
+	}
 }
 
-WRITE8_HANDLER( C6280_0_w ) {  c6280_write(0,offset,data); }
-WRITE8_HANDLER( C6280_1_w ) {  c6280_write(1,offset,data); }
+
+void c6280_get_info(void *token, UINT32 state, union sndinfo *info)
+{
+	switch (state)
+	{
+		/* --- the following bits of info are returned as 64-bit signed integers --- */
+
+		/* --- the following bits of info are returned as pointers to data or functions --- */
+		case SNDINFO_PTR_SET_INFO:						info->set_info = c6280_set_info;		break;
+		case SNDINFO_PTR_START:							info->start = c6280_start;				break;
+		case SNDINFO_PTR_STOP:							/* nothing */							break;
+		case SNDINFO_PTR_RESET:							/* nothing */							break;
+
+		/* --- the following bits of info are returned as NULL-terminated strings --- */
+		case SNDINFO_STR_NAME:							info->s = "HuC6280";					break;
+		case SNDINFO_STR_CORE_FAMILY:					info->s = "????";						break;
+		case SNDINFO_STR_CORE_VERSION:					info->s = "1.0";						break;
+		case SNDINFO_STR_CORE_FILE:						info->s = __FILE__;						break;
+		case SNDINFO_STR_CORE_CREDITS:					info->s = "Copyright (c) 2004, The MAME Team"; break;
+	}
+}
 

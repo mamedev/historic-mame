@@ -130,6 +130,7 @@ Dumped by Chackn
 #include "vidhrdw/generic.h"
 #include "cpu/z80/z80.h"
 #include "machine/segacrpt.h"
+#include "sound/2203intf.h"
 
 static READ8_HANDLER( angelkds_sound_r );
 static WRITE8_HANDLER( angelkds_sound_w );
@@ -448,14 +449,11 @@ static void irqhandler(int irq)
 
 static struct YM2203interface ym2203_interface =
 {
-	2,                      /* 2 chips */
-	4000000,        /* 4 MHz ? */
-	{ YM2203_VOL(15,25), YM2203_VOL(15,25) },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ irqhandler }
+	0,
+	0,
+	0,
+	0,
+	irqhandler
 };
 
 /*** Graphics Decoding
@@ -529,7 +527,20 @@ static MACHINE_DRIVER_START( angelkds )
 	MDRV_VIDEO_START(angelkds)
 	MDRV_VIDEO_UPDATE(angelkds)
 
-	MDRV_SOUND_ADD(YM2203, ym2203_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM2203, 4000000)
+	MDRV_SOUND_CONFIG(ym2203_interface)
+	MDRV_SOUND_ROUTE(0, "mono", 0.25)
+	MDRV_SOUND_ROUTE(1, "mono", 0.25)
+	MDRV_SOUND_ROUTE(2, "mono", 0.25)
+	MDRV_SOUND_ROUTE(3, "mono", 0.15)
+
+	MDRV_SOUND_ADD(YM2203, 4000000)
+	MDRV_SOUND_ROUTE(0, "mono", 0.25)
+	MDRV_SOUND_ROUTE(1, "mono", 0.25)
+	MDRV_SOUND_ROUTE(2, "mono", 0.25)
+	MDRV_SOUND_ROUTE(3, "mono", 0.15)
 MACHINE_DRIVER_END
 
 /*** Rom Loading

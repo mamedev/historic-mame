@@ -69,7 +69,7 @@ Notes:
       DIP32         - Empty DIP32 socket for connection of ROM Sub Board
       CN1           - 4-pin Connector
 
-      Custom IC's -
+      Custom IC's - 
                     X1-001A (SDIP64) \ Sprite Generators
                     X1-002A (SDIP64) /
                     X1-007  (SDIP42)   Video DAC? (connected to RGB output)
@@ -88,14 +88,15 @@ Notes:
             AB001008.U26   82S147 PROM (DIP20)
             AB001009.U27   82S147 PROM (DIP20)
 
-            AB002002.2-2   2M MaskROM (DIP32)   \
+            AB002002.2-2   2M MaskROM (DIP32)   \ 
             AB002003.2-3   2M MaskROM (DIP32)   | PCM Samples (Connected to X1-010 via a sub-board)
-            AB003002.3-2   2M MaskROM (DIP32)   |
-            AB003003.3-3   2M MaskROM (DIP32)   /
+            AB003002.3-2   2M MaskROM (DIP32)   | 
+            AB003003.3-3   2M MaskROM (DIP32)   / 
 
 */
 
 #include "driver.h"
+#include "sound/x1_010.h"
 
 unsigned char *tnzs_objram, *tnzs_sharedram;
 unsigned char *tnzs_vdcram, *tnzs_scrollram, *tnzs_objctrl;
@@ -103,6 +104,22 @@ unsigned char *tnzs_vdcram, *tnzs_scrollram, *tnzs_objctrl;
 PALETTE_INIT( arknoid2 );
 VIDEO_UPDATE( tnzs );
 VIDEO_EOF( tnzs );
+
+static UINT8 last_trackball_val[2] = {0,0};
+
+static READ8_HANDLER( trackball_r )
+{
+	UINT8 ret;
+	UINT8 port4 = readinputport(4);
+	UINT8 port5 = readinputport(5);
+	
+	ret = (((port4 - last_trackball_val[0]) & 0x0f)<<4) | ((port5 - last_trackball_val[1]) & 0x0f);
+
+	last_trackball_val[0] = port4;
+	last_trackball_val[1] = port5;
+
+	return ret;
+}
 
 static WRITE8_HANDLER( champbwl_misc_w )
 {
@@ -113,8 +130,6 @@ static WRITE8_HANDLER( champbwl_misc_w )
 	coin_lockout_w(1, ~data & 4);
 
 	cpu_setbank(1, memory_region(REGION_CPU1) + 0x10000 + 0x4000 * ((data & 0x30)>>4));
-
-//	data & 0x80 ???
 }
 
 static ADDRESS_MAP_START( champbwl_map, ADDRESS_SPACE_PROGRAM, 8 )
@@ -129,51 +144,25 @@ static ADDRESS_MAP_START( champbwl_map, ADDRESS_SPACE_PROGRAM, 8 )
 
 	AM_RANGE(0xe800, 0xe800) AM_WRITENOP
 
-	AM_RANGE(0xf000, 0xf000) AM_READ(input_port_0_r)
-	AM_RANGE(0xf002, 0xf002) AM_READ(input_port_1_r)
-	AM_RANGE(0xf004, 0xf004) AM_READ(input_port_2_r)
-	AM_RANGE(0xf006, 0xf006) AM_READ(input_port_3_r)
-	AM_RANGE(0xf007, 0xf007) AM_READ(input_port_4_r)
+	AM_RANGE(0xf000, 0xf000) AM_READ(trackball_r)
+	AM_RANGE(0xf002, 0xf002) AM_READ(input_port_0_r)
+	AM_RANGE(0xf004, 0xf004) AM_READ(input_port_1_r)
+	AM_RANGE(0xf006, 0xf006) AM_READ(input_port_2_r)
+	AM_RANGE(0xf007, 0xf007) AM_READ(input_port_3_r)
 
 	AM_RANGE(0xf000, 0xf000) AM_WRITE(champbwl_misc_w)
-	AM_RANGE(0xf002, 0xf002) AM_WRITENOP
-	AM_RANGE(0xf004, 0xf004) AM_WRITENOP
-	AM_RANGE(0xf006, 0xf006) AM_WRITENOP
+	AM_RANGE(0xf002, 0xf002) AM_WRITENOP //buttons light?
+	AM_RANGE(0xf004, 0xf004) AM_WRITENOP //buttons light?
+	AM_RANGE(0xf006, 0xf006) AM_WRITENOP //buttons light?
 	AM_RANGE(0xf800, 0xf800) AM_WRITENOP
 ADDRESS_MAP_END
 
 INPUT_PORTS_START( champbwl )
 	PORT_START
-	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-
-	PORT_START
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT )
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_START1 )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_NAME("Player Change")
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON3 ) PORT_NAME("Player Change")
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_COIN2 )
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_SPECIAL ) // INT( 4M)
@@ -213,7 +202,7 @@ INPUT_PORTS_START( champbwl )
 	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Free_Play ) )
 	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
+	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unused ) )
@@ -253,6 +242,12 @@ INPUT_PORTS_START( champbwl )
 	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unused ) )
 	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+
+	PORT_START	/* FAKE */
+	PORT_BIT( 0xff, 0x00, IPT_TRACKBALL_X )PORT_SENSITIVITY(50) PORT_KEYDELTA(50) PORT_CENTERDELTA(0)
+
+	PORT_START	/* FAKE */
+	PORT_BIT( 0xff, 0x00, IPT_TRACKBALL_Y ) PORT_SENSITIVITY(50) PORT_KEYDELTA(45) PORT_CENTERDELTA(0) PORT_REVERSE
 INPUT_PORTS_END
 
 static struct GfxLayout charlayout =
@@ -274,11 +269,9 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 	{ -1 }	/* end of array */
 };
 
-static struct x1_010_interface champbwl_sound_intf_16MHz =
+static struct x1_010_interface champbwl_sound_intf =
 {
-	16000000,	/* clock */
-	YM3012_VOL(100,MIXER_PAN_LEFT,100,MIXER_PAN_RIGHT),	/* volume */
-	0x0000,		/* address */
+	0x0000		/* address */
 };
 
 static MACHINE_DRIVER_START( champbwl )
@@ -305,8 +298,12 @@ static MACHINE_DRIVER_START( champbwl )
 	MDRV_VIDEO_EOF(tnzs)
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(X1_010, champbwl_sound_intf_16MHz)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+	
+	MDRV_SOUND_ADD(X1_010, 16000000)
+	MDRV_SOUND_CONFIG(champbwl_sound_intf)
+	MDRV_SOUND_ROUTE(0, "left", 1.0)
+	MDRV_SOUND_ROUTE(1, "right", 1.0)
 MACHINE_DRIVER_END
 
 ROM_START( champbwl )
@@ -323,11 +320,11 @@ ROM_START( champbwl )
 	ROM_LOAD( "ab001008.u26", 0x0000, 0x0200, CRC(30ac8d48) SHA1(af034de3f3b8548534effdf4e3717fe3838b7754) )
 	ROM_LOAD( "ab001009.u27", 0x0200, 0x0200, CRC(3bbd4bcd) SHA1(8c87ccc42ece2432b8ad25f8679cdf886e12a43c) )
 
-	ROM_REGION( 0x100000, REGION_SOUND1, 0 )	/* Samples */
+	ROM_REGION( 0x100000, REGION_SOUND1, 0 )	/* Samples */	
 	ROM_LOAD( "ab003003.3-3", 0x00000, 0x40000, CRC(ad40ad10) SHA1(db0e5744ea3fcda87345b545031f82fcb3fec175) )
 	ROM_LOAD( "ab003002.3-2", 0x40000, 0x40000, CRC(7ede8f28) SHA1(b5519c09b4f0019dc76cadca725da1d581912540) )
 	ROM_LOAD( "ab002003.2-3", 0x80000, 0x40000, CRC(3051b8c3) SHA1(5f53596d7af1c79db1dde4bdca3878e07c67b5d1) )
 	ROM_LOAD( "ab002002.2-2", 0xc0000, 0x40000, CRC(42ebe997) SHA1(1808b9e5e996a395c1d48ac001067f736f96feec) )
 ROM_END
 
-GAMEX( 1989, champbwl, 0, champbwl, champbwl, 0, ROT270, "Seta / Romstar Inc.", "Championship Bowling", GAME_IMPERFECT_GRAPHICS | GAME_NOT_WORKING )
+GAMEX( 1989, champbwl, 0, champbwl, champbwl, 0, ROT270, "Seta / Romstar Inc.", "Championship Bowling", GAME_IMPERFECT_GRAPHICS )

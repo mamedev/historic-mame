@@ -20,6 +20,10 @@ MAIN BOARD:
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "cpu/m6809/m6809.h"
+#include "sound/sn76496.h"
+#include "sound/vlm5030.h"
+#include "sound/dac.h"
+#include "sound/msm5205.h"
 
 
 extern void konami1_decode(void);
@@ -44,10 +48,6 @@ extern READ8_HANDLER( trackfld_speech_r );
 extern WRITE8_HANDLER( trackfld_sound_w );
 extern READ8_HANDLER( hyprolyb_speech_r );
 extern WRITE8_HANDLER( hyprolyb_ADPCM_data_w );
-
-extern struct SN76496interface konami_sn76496_interface;
-extern struct DACinterface konami_dac_interface;
-extern struct ADPCMinterface hyprolyb_adpcm_interface;
 
 /*
  Track'n'Field has 1k of battery backed RAM which can be erased by setting a dipswitch
@@ -718,10 +718,14 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 struct VLM5030interface trackfld_vlm5030_interface =
 {
-	3580000,    /* master clock  */
-	100,        /* volume        */
 	REGION_SOUND1,	/* memory region  */
 	0           /* memory size    */
+};
+
+static struct MSM5205interface msm5205_interface =
+{
+	NULL,				/* VCK function */
+	MSM5205_S48_4B		/* 8 kHz */
 };
 
 
@@ -755,9 +759,17 @@ static MACHINE_DRIVER_START( trackfld )
 	MDRV_VIDEO_UPDATE(trackfld)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(DAC, konami_dac_interface)
-	MDRV_SOUND_ADD(SN76496, konami_sn76496_interface)
-	MDRV_SOUND_ADD(VLM5030, trackfld_vlm5030_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(DAC, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.80)
+
+	MDRV_SOUND_ADD(SN76496, 14318180/8)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
+
+	MDRV_SOUND_ADD(VLM5030, 3580000)
+	MDRV_SOUND_CONFIG(trackfld_vlm5030_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 /* same as the original, but uses ADPCM instead of VLM5030 */
@@ -791,9 +803,17 @@ static MACHINE_DRIVER_START( hyprolyb )
 	MDRV_VIDEO_UPDATE(trackfld)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(DAC, konami_dac_interface)
-	MDRV_SOUND_ADD(SN76496, konami_sn76496_interface)
-	MDRV_SOUND_ADD(ADPCM, hyprolyb_adpcm_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(DAC, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.80)
+
+	MDRV_SOUND_ADD(SN76496, 14318180/8)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
+
+	MDRV_SOUND_ADD(MSM5205, 384000)
+	MDRV_SOUND_CONFIG(msm5205_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
 MACHINE_DRIVER_END
 
 
@@ -1176,7 +1196,7 @@ static DRIVER_INIT( wizzquiz )
 GAME( 1983, trackfld, 0,        trackfld, trackfld, trackfld, ROT0, "Konami", "Track & Field" )
 GAME( 1983, trackflc, trackfld, trackfld, trackfld, trackfld, ROT0, "Konami (Centuri license)", "Track & Field (Centuri)" )
 GAME( 1983, hyprolym, trackfld, trackfld, trackfld, trackfld, ROT0, "Konami", "Hyper Olympic" )
-GAME( 1983, hyprolyb, trackfld, hyprolyb, trackfld, trackfld, ROT0, "bootleg", "Hyper Olympic (bootleg)" )
+GAMEX(1983, hyprolyb, trackfld, hyprolyb, trackfld, trackfld, ROT0, "bootleg", "Hyper Olympic (bootleg)", GAME_IMPERFECT_SOUND )
 GAME( 1996, atlantol, trackfld, hyprolyb, atlantol,	atlantol, ROT0, "bootleg", "Atlant Olimpic" )
 GAMEX(1988, mastkin,  0,        mastkin,  mastkin,  mastkin,  ROT0, "Du Tech", "The Masters of Kin", GAME_WRONG_COLORS )
 GAMEX(1985, wizzquiz, 0,        wizzquiz, wizzquiz, wizzquiz, ROT0, "Konami", "Wizz Quiz (version ?)", GAME_NOT_WORKING )

@@ -18,6 +18,7 @@ To Do:
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "sound/okim6295.h"
 
 /* Variables defined in vidhrdw: */
 
@@ -271,14 +272,6 @@ static struct GfxDecodeInfo blmbycar_gfxdecodeinfo[] =
 
 ***************************************************************************/
 
-static struct OKIM6295interface blmbycar_okim6295_interface =
-{
-	1,
-	{ 8000 },		/* ? */
-	{ REGION_SOUND1 },
-	{ 100 }
-};
-
 static MACHINE_DRIVER_START( blmbycar )
 
 	/* basic machine hardware */
@@ -300,8 +293,12 @@ static MACHINE_DRIVER_START( blmbycar )
 	MDRV_VIDEO_UPDATE(blmbycar)
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(OKIM6295, blmbycar_okim6295_interface)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(OKIM6295, 8000)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 1.0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 1.0)
 MACHINE_DRIVER_END
 
 

@@ -111,6 +111,8 @@
 #include "driver.h"
 #include "cpu/m6502/m6502.h"
 #include "vidhrdw/generic.h"
+#include "sound/5220intf.h"
+#include "sound/pokey.h"
 #include "jedi.h"
 
 
@@ -513,40 +515,6 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 /*************************************
  *
- *	Sound definitions
- *
- *************************************/
-
-static struct POKEYinterface pokey_interface =
-{
-	4,
-	SOUND_CPU_OSC/2/4,	/* 1.5MHz */
-	{ 30, 30, MIXER(30,MIXER_PAN_LEFT), MIXER(30,MIXER_PAN_RIGHT) },
-	/* The 8 pot handlers */
-	{ 0, 0, 0, 0 },
-	{ 0, 0, 0, 0 },
-	{ 0, 0, 0, 0 },
-	{ 0, 0, 0, 0 },
-	{ 0, 0, 0, 0 },
-	{ 0, 0, 0, 0 },
-	{ 0, 0, 0, 0 },
-	{ 0, 0, 0, 0 },
-	/* The allpot handler */
-	{ 0, 0, 0, 0 }
-};
-
-
-static struct TMS5220interface tms5220_interface =
-{
-	SOUND_CPU_OSC/2/9,
-	100,
-	0
-};
-
-
-
-/*************************************
- *
  *	Machine driver
  *
  *************************************/
@@ -578,9 +546,25 @@ static MACHINE_DRIVER_START( jedi )
 	MDRV_VIDEO_UPDATE(jedi)
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(POKEY,   pokey_interface)
-	MDRV_SOUND_ADD(TMS5220, tms5220_interface)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(POKEY, SOUND_CPU_OSC/2/4)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.30)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 0.30)
+
+	MDRV_SOUND_ADD(POKEY, SOUND_CPU_OSC/2/4)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.30)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 0.30)
+
+	MDRV_SOUND_ADD(POKEY, SOUND_CPU_OSC/2/4)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.30)
+
+	MDRV_SOUND_ADD(POKEY, SOUND_CPU_OSC/2/4)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 0.30)
+	
+	MDRV_SOUND_ADD(TMS5220, SOUND_CPU_OSC/2/9)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 1.0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 1.0)
 MACHINE_DRIVER_END
 
 

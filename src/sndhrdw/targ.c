@@ -13,8 +13,8 @@
 
 #include "driver.h"
 #include "exidy.h"
-
-static int tone_channel;
+#include "sound/samples.h"
+#include "sound/dac.h"
 
 unsigned char targ_spec_flag;
 static unsigned char targ_sh_ctrl0=0;
@@ -35,11 +35,11 @@ static unsigned char tone_prom[32] =
 };
 
 /* waveforms for the audio hardware */
-static unsigned char waveform1[32] =
+static INT16 waveform1[32] =
 {
 	/* sine-wave */
-	0x0F, 0x0F, 0x0F, 0x06, 0x06, 0x09, 0x09, 0x06, 0x06, 0x09, 0x06, 0x0D, 0x0F, 0x0F, 0x0D, 0x00,
-	0xE6, 0xDE, 0xE1, 0xE6, 0xEC, 0xE6, 0xE7, 0xE7, 0xE7, 0xEC, 0xEC, 0xEC, 0xE7, 0xE1, 0xE1, 0xE7,
+	0x0F0F, 0x0F0F, 0x0F0F, 0x0606, 0x0606, 0x0909, 0x0909, 0x0606, 0x0606, 0x0909, 0x0606, 0x0D0D, 0x0F0F, 0x0F0F, 0x0D0D, 0x0000,
+	0xE6E6, 0xDEDE, 0xE1E1, 0xE6E6, 0xECEC, 0xE6E6, 0xE7E7, 0xE7E7, 0xE7E7, 0xECEC, 0xECEC, 0xECEC, 0xE7E7, 0xE1E1, 0xE1E1, 0xE7E7,
 };
 
 /* some macros to make detecting bit changes easier */
@@ -58,31 +58,23 @@ void targ_tone_generator(int data)
     sound_a_freq = data;
     if (sound_a_freq == 0xFF || sound_a_freq == 0x00)
 	{
-		mixer_set_volume(tone_channel,0);
+		sample_set_volume(3,0);
     }
     else
 	{
-		mixer_set_sample_frequency(tone_channel,maxfreq/(0xFF-sound_a_freq));
-		mixer_set_volume(tone_channel,tone_active*100);
+		sample_set_freq(3,maxfreq/(0xFF-sound_a_freq));
+		sample_set_volume(3,tone_active*1.0);
 	}
 }
 
-int targ_sh_start(const struct MachineSound *msound)
+void targ_sh_start(void)
 {
-	tone_channel = mixer_allocate_channel(50);
-
 	tone_pointer=0;
 	tone_offset=0;
 	tone_active=0;
 	sound_a_freq = 0x00;
-	mixer_set_volume(tone_channel,0);
-	mixer_play_sample(tone_channel,(signed char*)waveform1,32,1000,1);
-	return 0;
-}
-
-void targ_sh_stop(void)
-{
-    mixer_stop_sample(tone_channel);
+	sample_set_volume(3,0);
+	sample_start_raw(3,waveform1,32,1000,1);
 }
 
 WRITE8_HANDLER( targ_sh_w )
@@ -152,12 +144,12 @@ WRITE8_HANDLER( targ_sh_w )
            tone_active=0;
            if (sound_a_freq == 0xFF || sound_a_freq == 0x00)
 		   {
-				mixer_set_volume(tone_channel,0);
+				sample_set_volume(3,0);
            }
            else
 		   {
-             mixer_set_sample_frequency(tone_channel,maxfreq/(0xFF-sound_a_freq));
-             mixer_set_volume(tone_channel,0);
+             sample_set_freq(3,maxfreq/(0xFF-sound_a_freq));
+             sample_set_volume(3,0);
 		   }
         }
         if RISING_EDGE(0x80) {

@@ -5,6 +5,8 @@
 *************************************************************************/
 #include "driver.h"
 #include "qix.h"
+#include "sound/discrete.h"
+#include "sound/sn76477.h"
 
 /* Discrete Sound Input Nodes */
 #define QIX_DAC_DATA		NODE_01
@@ -72,6 +74,6 @@ DISCRETE_SOUND_START(qix_discrete_interface)
 	DISCRETE_CRFILTER(NODE_13, 1, NODE_12, RES_K(1.5), CAP_U(1))
 	DISCRETE_CRFILTER(NODE_23, 1, NODE_22, RES_K(1.5), CAP_U(1))
 
-	DISCRETE_OUTPUT(NODE_13, MIXER(100,MIXER_PAN_LEFT))
-	DISCRETE_OUTPUT(NODE_23, MIXER(100,MIXER_PAN_RIGHT))
+	DISCRETE_OUTPUT(NODE_13, 100)
+	DISCRETE_OUTPUT(NODE_23, 100)
 DISCRETE_SOUND_END

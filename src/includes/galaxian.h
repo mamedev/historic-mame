@@ -17,7 +17,7 @@ MACHINE_DRIVER_EXTERN(galaxian_base);
 
 
 /* defined in drivers/scobra.c */
-extern struct AY8910interface scobra_ay8910_interface;
+extern struct AY8910interface scobra_ay8910_interface_2;
 ADDRESS_MAP_EXTERN(scobra_sound_readmem);
 ADDRESS_MAP_EXTERN(scobra_sound_writemem);
 ADDRESS_MAP_EXTERN(scobra_sound_readport);
@@ -239,7 +239,7 @@ READ8_HANDLER( gmgalax_input_port_2_r );
 
 
 /* defined in sndhrdw/galaxian.c */
-extern struct CustomSound_interface galaxian_custom_interface;
+extern struct Samplesinterface galaxian_custom_interface;
 WRITE8_HANDLER( galaxian_pitch_w );
 WRITE8_HANDLER( galaxian_vol_w );
 WRITE8_HANDLER( galaxian_noise_enable_w );

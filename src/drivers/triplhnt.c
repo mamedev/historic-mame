@@ -8,6 +8,7 @@ Atari Triple Hunt Driver
 
 #include "driver.h"
 #include "triplhnt.h"
+#include "sound/discrete.h"
 
 extern VIDEO_START( triplhnt );
 extern VIDEO_UPDATE( triplhnt );
@@ -341,7 +342,11 @@ static MACHINE_DRIVER_START( triplhnt )
 	MDRV_VIDEO_UPDATE(triplhnt)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD_TAG("discrete", DISCRETE, triplhnt_discrete_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	
+	MDRV_SOUND_ADD_TAG("discrete", DISCRETE, 0)
+	MDRV_SOUND_CONFIG(triplhnt_discrete_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 

@@ -1,5 +1,6 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "sound/sn76496.h"
 
 extern WRITE8_HANDLER( pingpong_videoram_w );
 extern WRITE8_HANDLER( pingpong_colorram_w );
@@ -302,14 +303,6 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 
 
-static struct SN76496interface sn76496_interface =
-{
-	1,			/* 1 chip */
-	{ 18432000/8 },	/* 2.304 MHz */
-	{ 100 }
-};
-
-
 static MACHINE_DRIVER_START( pingpong )
 
 	/* basic machine hardware */
@@ -333,7 +326,10 @@ static MACHINE_DRIVER_START( pingpong )
 	MDRV_VIDEO_UPDATE(pingpong)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(SN76496, sn76496_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(SN76496, 18432000/8)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 /* too fast! */

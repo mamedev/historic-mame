@@ -107,6 +107,8 @@
 #include "cpu/z80/z80.h"
 #include "vidhrdw/generic.h"
 #include "fromance.h"
+#include "sound/2608intf.h"
+#include "sound/2610intf.h"
 #include <math.h>
 
 
@@ -566,32 +568,16 @@ static void irqhandler(int irq)
 
 static struct YM2608interface ym2608_interface =
 {
-	1,
-	8000000,	/* 8 MHz */
-	{ 50 },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ irqhandler },
-	{ REGION_SOUND1 },
-	{ YM3012_VOL(100,MIXER_PAN_LEFT,100,MIXER_PAN_RIGHT) }
+	0,0,0,0,irqhandler,
+	REGION_SOUND1
 };
 
 
 static struct YM2610interface ym2610_interface =
 {
-	1,
-	8000000,	/* 8 MHz */
-	{ 50 },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ irqhandler },
-	{ REGION_SOUND1 },
-	{ REGION_SOUND2 },
-	{ YM3012_VOL(100,MIXER_PAN_LEFT,100,MIXER_PAN_RIGHT) }
+	irqhandler,
+	REGION_SOUND1,
+	REGION_SOUND2
 };
 
 
@@ -631,7 +617,13 @@ static MACHINE_DRIVER_START( pipedrm )
 	MDRV_VIDEO_UPDATE(pipedrm)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM2610, ym2610_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM2610, 8000000)
+	MDRV_SOUND_CONFIG(ym2610_interface)
+	MDRV_SOUND_ROUTE(0, "mono", 0.50)
+	MDRV_SOUND_ROUTE(1, "mono", 1.0)
+	MDRV_SOUND_ROUTE(2, "mono", 1.0)
 MACHINE_DRIVER_END
 
 
@@ -664,7 +656,13 @@ static MACHINE_DRIVER_START( hatris )
 	MDRV_VIDEO_UPDATE(fromance)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM2608, ym2608_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM2608, 8000000)
+	MDRV_SOUND_CONFIG(ym2608_interface)
+	MDRV_SOUND_ROUTE(0, "mono", 0.50)
+	MDRV_SOUND_ROUTE(1, "mono", 1.0)
+	MDRV_SOUND_ROUTE(2, "mono", 1.0)
 MACHINE_DRIVER_END
 
 

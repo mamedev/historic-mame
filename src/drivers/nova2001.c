@@ -33,6 +33,7 @@
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "sound/ay8910.h"
 
 /* From vidhrdw/nova2001.c */
 extern UINT8 *nova2001_videoram2, *nova2001_colorram2;
@@ -175,16 +176,18 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 
 
-static struct AY8910interface ay8910_interface =
+static struct AY8910interface ay8910_interface_1 =
 {
-	2,	/* 2 chips */
-	6000000/3,	/* 2 MHz */
-	{ 25, 25 },
-	{ 0, input_port_3_r },
-	{ 0, input_port_4_r },
-	{ nova2001_scroll_x_w }, /* writes are connected to pf scroll */
-	{ nova2001_scroll_y_w },
-	{ 0 }
+	0,
+	0,
+	nova2001_scroll_x_w, /* writes are connected to pf scroll */
+	nova2001_scroll_y_w
+};
+
+static struct AY8910interface ay8910_interface_2 =
+{
+	input_port_3_r,
+	input_port_4_r
 };
 
 static MACHINE_DRIVER_START( nova2001 )
@@ -210,7 +213,15 @@ static MACHINE_DRIVER_START( nova2001 )
 	MDRV_VIDEO_UPDATE(nova2001)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(AY8910, ay8910_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	
+	MDRV_SOUND_ADD(AY8910, 6000000/3)
+	MDRV_SOUND_CONFIG(ay8910_interface_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
+	
+	MDRV_SOUND_ADD(AY8910, 6000000/3)
+	MDRV_SOUND_CONFIG(ay8910_interface_2)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
 MACHINE_DRIVER_END
 
 

@@ -50,6 +50,7 @@ Thanks to HIGHWAYMAN for providing info on how to get to these epoxies
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "vidhrdw/res_net.h"
+#include "sound/ay8910.h"
 
 static struct tilemap *bg_tilemap;
 
@@ -283,18 +284,6 @@ static DRIVER_INIT( wallca )
 
 
 
-static struct AY8910interface ay8912_interface =
-{
-	1,	/* 1 chip */
-	12288000 / 8,	/* 1.536 MHz? */
-	{ 30 },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ 0 }
-};
-
-
 static MACHINE_DRIVER_START( wallc )
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80, 12288000 / 4)	/* 3.072 MHz ? */
@@ -316,7 +305,9 @@ static MACHINE_DRIVER_START( wallc )
 	MDRV_VIDEO_UPDATE(wallc)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(AY8910, ay8912_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	MDRV_SOUND_ADD(AY8910, 12288000 / 8)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.30)
 MACHINE_DRIVER_END
 
 /***************************************************************************

@@ -83,6 +83,9 @@ AT-2
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "cpu/z80/z80.h"
+#include "sound/dac.h"
+#include "sound/2203intf.h"
+#include "sound/3812intf.h"
 
 static const data16_t *mpProtData;
 static data8_t mAmazonProtCmd;
@@ -562,30 +565,6 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 	{ -1 }
 };
 
-static struct YM3526interface ym3526_interface =
-{
-	1,			/* 1 chip (no more supported) */
-	4000000,	/* 4 MHz ? (hand tuned) */
-	{ 100 }		/* volume */
-};
-
-static struct YM2203interface ym2203_interface =
-{
-	1,			/* 1 chip */
-	4000000,	/* 4 MHz ???? */
-	{ YM2203_VOL(40,20), YM2203_VOL(40,20) },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ 0 }
-};
-
-static struct DACinterface dac_interface =
-{
-	2,	/* 2 channels */
-	{ 50, 50 }
-};
-
 static MACHINE_DRIVER_START( amazon )
 	MDRV_CPU_ADD(M68000, 8000000 )
 	MDRV_CPU_PROGRAM_MAP(amazon_readmem,amazon_writemem)
@@ -611,8 +590,16 @@ static MACHINE_DRIVER_START( amazon )
 	MDRV_VIDEO_START(amazon)
 	MDRV_VIDEO_UPDATE(amazon)
 
-	MDRV_SOUND_ADD(YM3526, ym3526_interface)
-	MDRV_SOUND_ADD(DAC, dac_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM3526, 4000000)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
+
+	MDRV_SOUND_ADD(DAC, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
+
+	MDRV_SOUND_ADD(DAC, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( ym3526 )
@@ -640,8 +627,16 @@ static MACHINE_DRIVER_START( ym3526 )
 	MDRV_VIDEO_START(amazon)
 	MDRV_VIDEO_UPDATE(amazon)
 
-	MDRV_SOUND_ADD(YM3526, ym3526_interface)
-	MDRV_SOUND_ADD(DAC, dac_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM3526, 4000000)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
+
+	MDRV_SOUND_ADD(DAC, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
+
+	MDRV_SOUND_ADD(DAC, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( ym2203 )
@@ -669,8 +664,25 @@ static MACHINE_DRIVER_START( ym2203 )
 	MDRV_VIDEO_START(amazon)
 	MDRV_VIDEO_UPDATE(amazon)
 
-	MDRV_SOUND_ADD(YM2203, ym2203_interface)
-	MDRV_SOUND_ADD(DAC, dac_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM2203, 4000000)
+	MDRV_SOUND_ROUTE(0, "mono", 0.20)
+	MDRV_SOUND_ROUTE(1, "mono", 0.20)
+	MDRV_SOUND_ROUTE(2, "mono", 0.20)
+	MDRV_SOUND_ROUTE(3, "mono", 0.40)
+
+	MDRV_SOUND_ADD(YM2203, 4000000)
+	MDRV_SOUND_ROUTE(0, "mono", 0.20)
+	MDRV_SOUND_ROUTE(1, "mono", 0.20)
+	MDRV_SOUND_ROUTE(2, "mono", 0.20)
+	MDRV_SOUND_ROUTE(3, "mono", 0.40)
+
+	MDRV_SOUND_ADD(DAC, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
+
+	MDRV_SOUND_ADD(DAC, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
 MACHINE_DRIVER_END
 
 ROM_START( terracre )

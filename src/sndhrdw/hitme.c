@@ -5,6 +5,7 @@
 *************************************************************************/
 #include "driver.h"
 #include "hitme.h"
+#include "sound/discrete.h"
 
 
 const struct discrete_555_desc desc_hitme_555 =

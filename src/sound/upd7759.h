@@ -1,8 +1,6 @@
 #ifndef UPD7759S_H
 #define UPD7759S_H
 
-#define MAX_UPD7759 2
-
 /* There are two modes for the uPD7759, selected through the !MD pin.
    This is the mode select input.  High is stand alone, low is slave.
    We're making the assumption that nobody switches modes through
@@ -12,15 +10,9 @@
 
 struct upd7759_interface
 {
-	int num;					/* number of chips */
-	int clock[MAX_UPD7759];		/* clock (per chip) */
-	int volume[MAX_UPD7759];	/* volume (per chip) */
-	int region[MAX_UPD7759]; 	/* memory region (per chip, standalone mode only) */
-	void (*drqcallback[MAX_UPD7759])(int param);	/* drq callback (per chip, slave mode only) */
+	int region; 	/* memory region (per chip, standalone mode only) */
+	void (*drqcallback)(int param);	/* drq callback (per chip, slave mode only) */
 };
-
-int upd7759_sh_start(const struct MachineSound *msound);
-void upd7759_sh_stop(void);
 
 void upd7759_set_bank_base(int which, offs_t base);
 

@@ -5,7 +5,7 @@
 *************************************************************************/
 #include "driver.h"
 #include "avalnche.h"
-
+#include "sound/discrete.h"
 
 /************************************************************************/
 /* avalnche Sound System Analog emulation                               */

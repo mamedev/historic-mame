@@ -81,6 +81,8 @@
 #include "cpu/i86/i186intf.h"
 #include "cpu/z80/z80.h"
 #include "leland.h"
+#include "sound/custom.h"
+#include "sound/2151intf.h"
 
 
 /*************************************
@@ -96,14 +98,15 @@ static UINT8 *dac_buffer[2];
 static UINT32 dac_bufin[2];
 static UINT32 dac_bufout[2];
 
-static int dac_stream;
+static sound_stream * dac_stream;
 
-static void leland_update(int param, INT16 *buffer, int length)
+static void leland_update(void *param, stream_sample_t **inputs, stream_sample_t **outputs, int length)
 {
+	stream_sample_t *buffer = outputs[0];
 	int dacnum;
 
 	/* reset the buffer */
-	memset(buffer, 0, length * sizeof(INT16));
+	memset(buffer, 0, length * sizeof(*buffer));
 	for (dacnum = 0; dacnum < 2; dacnum++)
 	{
 		int bufout = dac_bufout[dacnum];
@@ -125,7 +128,7 @@ static void leland_update(int param, INT16 *buffer, int length)
 }
 
 
-int leland_sh_start(const struct MachineSound *msound)
+void *leland_sh_start(int clock, const struct CustomSound_interface *config)
 {
 	/* reset globals */
 	dac_buffer[0] = dac_buffer[1] = NULL;
@@ -134,23 +137,16 @@ int leland_sh_start(const struct MachineSound *msound)
 
 	/* skip if no sound */
 	if (Machine->sample_rate == 0)
-		return 0;
+		return auto_malloc(1);
 
 	/* allocate the stream */
-	dac_stream = stream_init("Onboard DACs", 50, 256*60, 0, leland_update);
+	dac_stream = stream_create(0, 1, 256*60, NULL, leland_update);
 
 	/* allocate memory */
 	dac_buffer[0] = auto_malloc(DAC_BUFFER_SIZE);
 	dac_buffer[1] = auto_malloc(DAC_BUFFER_SIZE);
-	if (!dac_buffer[0] || !dac_buffer[1])
-		return 1;
 
-	return 0;
-}
-
-
-void leland_sh_stop(void)
-{
+	return auto_malloc(1);
 }
 
 
@@ -199,9 +195,9 @@ void leland_dac_update(int dacnum, UINT8 sample)
 #define CPU_RESUME_TRIGGER	7123
 
 
-static int dma_stream;
-static int nondma_stream;
-static int extern_stream;
+static sound_stream * dma_stream;
+static sound_stream * nondma_stream;
+static sound_stream * extern_stream;
 
 static UINT8 *ram_base;
 static UINT8 has_ym2151;
@@ -314,14 +310,15 @@ static WRITE8_HANDLER( peripheral_w );
  *
  *************************************/
 
-static void leland_i186_dac_update(int param, INT16 *buffer, int length)
+static void leland_i186_dac_update(void *param, stream_sample_t **inputs, stream_sample_t **outputs, int length)
 {
+	stream_sample_t *buffer = outputs[0];
 	int i, j, start, stop;
 
 	if (LOG_SHORTAGES) logerror("----\n");
 
 	/* reset the buffer */
-	memset(buffer, 0, length * sizeof(INT16));
+	memset(buffer, 0, length * sizeof(*buffer));
 
 	/* if we're redline racer, we have more DACs */
 	if (!is_redline)
@@ -380,12 +377,13 @@ static void leland_i186_dac_update(int param, INT16 *buffer, int length)
  *
  *************************************/
 
-static void leland_i186_dma_update(int param, INT16 *buffer, int length)
+static void leland_i186_dma_update(void *param, stream_sample_t **inputs, stream_sample_t **outputs, int length)
 {
+	stream_sample_t *buffer = outputs[0];
 	int i, j;
 
 	/* reset the buffer */
-	memset(buffer, 0, length * sizeof(INT16));
+	memset(buffer, 0, length * sizeof(*buffer));
 
 	/* loop over DMA buffers */
 	for (i = 0; i < 2; i++)
@@ -468,14 +466,15 @@ static void leland_i186_dma_update(int param, INT16 *buffer, int length)
  *
  *************************************/
 
-static void leland_i186_extern_update(int param, INT16 *buffer, int length)
+static void leland_i186_extern_update(void *param, stream_sample_t **inputs, stream_sample_t **outputs, int length)
 {
+	stream_sample_t *buffer = outputs[0];
 	struct dac_state *d = &dac[7];
 	int count = ext_stop - ext_start;
 	int j;
 
 	/* reset the buffer */
-	memset(buffer, 0, length * sizeof(INT16));
+	memset(buffer, 0, length * sizeof(*buffer));
 
 	/* if we have data, process it */
 	if (count > 0 && ext_active)
@@ -511,13 +510,13 @@ static void leland_i186_extern_update(int param, INT16 *buffer, int length)
 static void internal_timer_int(int which);
 static void dma_timer_callback(int which);
 
-int leland_i186_sh_start(const struct MachineSound *msound)
+void *leland_i186_sh_start(int clock, const struct CustomSound_interface *config)
 {
 	int i;
 
 	/* bail if nothing to play */
 	if (Machine->sample_rate == 0)
-		return 0;
+		return auto_malloc(1);
 
 	/* determine which sound hardware is installed */
 	has_ym2151 = 0;
@@ -526,14 +525,14 @@ int leland_i186_sh_start(const struct MachineSound *msound)
 			has_ym2151 = 1;
 
 	/* allocate separate streams for the DMA and non-DMA DACs */
-	dma_stream = stream_init("80186 DMA-driven DACs", 100, Machine->sample_rate, 0, leland_i186_dma_update);
-	nondma_stream = stream_init("80186 manually-driven DACs", 100, Machine->sample_rate, 0, leland_i186_dac_update);
+	dma_stream = stream_create(0, 1, Machine->sample_rate, NULL, leland_i186_dma_update);
+	nondma_stream = stream_create(0, 1, Machine->sample_rate, NULL, leland_i186_dac_update);
 
 	/* if we have a 2151, install an externally driven DAC stream */
 	if (has_ym2151)
 	{
 		ext_base = memory_region(REGION_SOUND1);
-		extern_stream = stream_init("80186 externally-driven DACs", 100, Machine->sample_rate, 0, leland_i186_extern_update);
+		extern_stream = stream_create(0, 1, Machine->sample_rate, NULL, leland_i186_extern_update);
 	}
 
 	/* by default, we're not redline racer */
@@ -552,13 +551,13 @@ int leland_i186_sh_start(const struct MachineSound *msound)
 	for (i = 0; i < 9; i++)
 		counter[i].timer = timer_alloc(NULL);
 
-	return 0;
+	return auto_malloc(1);
 }
 
 
-int redline_i186_sh_start(const struct MachineSound *msound)
+void *redline_i186_sh_start(int clock, const struct CustomSound_interface *config)
 {
-	int result = leland_i186_sh_start(msound);
+	void *result = leland_i186_sh_start(clock, config);
 	is_redline = 1;
 	return result;
 }

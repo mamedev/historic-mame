@@ -14,6 +14,7 @@
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "sound/2203intf.h"
 
 extern data8_t *tryout_gfx_control;
 
@@ -188,18 +189,6 @@ static INTERRUPT_GEN( tryout_interrupt )
 		cpunum_set_input_line(0, INPUT_LINE_NMI, ASSERT_LINE);
 }
 
-static struct YM2203interface ym2203_interface =
-{
-	1,	/* 1 chip */
-	1500000,	/* 1.5 MHz */
-	{ YM2203_VOL(50,50) },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-};
-
 static MACHINE_DRIVER_START( tryout )
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M6502, 2000000)		 /* ? */
@@ -227,7 +216,10 @@ static MACHINE_DRIVER_START( tryout )
 	MDRV_VIDEO_UPDATE(tryout)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM2203, ym2203_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM2203, 1500000)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
 MACHINE_DRIVER_END
 
 ROM_START( tryout )

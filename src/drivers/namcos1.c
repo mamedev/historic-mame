@@ -345,6 +345,9 @@ C - uses sub board with support for player 3 and 4 controls
 #include "vidhrdw/generic.h"
 #include "cpu/m6809/m6809.h"
 #include "cpu/m6800/m6800.h"
+#include "sound/2151intf.h"
+#include "sound/namco.h"
+#include "sound/dac.h"
 
 /* from vidhrdw */
 VIDEO_START( namcos1 );
@@ -967,18 +970,12 @@ static void namcos1_sound_interrupt( int irq )
 
 static struct YM2151interface ym2151_interface =
 {
-	1,          /* 1 chip */
-	3579580,    /* 3.58 MHz */
-	{ YM3012_VOL(50,MIXER_PAN_LEFT,50,MIXER_PAN_RIGHT) },
-	{ namcos1_sound_interrupt },
-	{ 0 }
+	namcos1_sound_interrupt
 };
 
 static struct namco_interface namco_interface =
 {
-	49152000/2048/2, /* 12000Hz */
 	8,          /* number of voices */
-	50,         /* playback volume */
 	-1,         /* memory region */
 	1           /* stereo */
 };
@@ -988,12 +985,6 @@ static struct namco_interface namco_interface =
 	And,they are connected with pre-amp through active LPF.
 	LPF info : Fco = 3.3KHz , g = -12dB/oct
 */
-static struct DACinterface dac_interface =
-{
-	1,		/* 2 channel , but they are mixed by the driver */
-	{ 100 }	/* mixing level */
-};
-
 
 static MACHINE_DRIVER_START( ns1 )
 
@@ -1035,10 +1026,21 @@ static MACHINE_DRIVER_START( ns1 )
 	MDRV_VIDEO_EOF(namcos1)
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(YM2151, ym2151_interface)
-	MDRV_SOUND_ADD(NAMCO_CUS30, namco_interface)
-	MDRV_SOUND_ADD(DAC, dac_interface)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(YM2151, 3579580)
+	MDRV_SOUND_CONFIG(ym2151_interface)
+	MDRV_SOUND_ROUTE(0, "left", 0.50)
+	MDRV_SOUND_ROUTE(1, "right", 0.50)
+
+	MDRV_SOUND_ADD(NAMCO_CUS30, 49152000/2048/2)
+	MDRV_SOUND_CONFIG(namco_interface)
+	MDRV_SOUND_ROUTE(0, "left", 0.50)
+	MDRV_SOUND_ROUTE(1, "right", 0.50)
+
+	MDRV_SOUND_ADD(DAC, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 1.0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 1.0)
 MACHINE_DRIVER_END
 
 

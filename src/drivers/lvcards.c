@@ -47,6 +47,7 @@ that these switches be set 'always on'
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "sound/ay8910.h"
 
 
 extern WRITE8_HANDLER( lvcards_videoram_w );
@@ -195,13 +196,8 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 static struct AY8910interface lcay8910_interface =
 {
-	1,	 /* 1 chip */
-	18432000/12, /* 1.536 MHz */
-	{ 25, 25 },
-	{ input_port_3_r },
-	{ input_port_4_r },
-	{ 0 },
-	{ 0 },
+	input_port_3_r,
+	input_port_4_r
 };
 
 
@@ -229,7 +225,11 @@ static MACHINE_DRIVER_START( lvcards )
 	MDRV_VIDEO_UPDATE(lvcards)
 
 	// sound hardware
-	MDRV_SOUND_ADD(AY8910, lcay8910_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(AY8910, 18432000/12)
+	MDRV_SOUND_CONFIG(lcay8910_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
 MACHINE_DRIVER_END
 
 

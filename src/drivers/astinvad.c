@@ -14,6 +14,7 @@ Space Intruder emulation by Lee Taylor (lee@defender.demon.co.uk),
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "sound/samples.h"
 
 
 extern VIDEO_UPDATE( astinvad );
@@ -268,7 +269,11 @@ static MACHINE_DRIVER_START( astinvad )
 	MDRV_VIDEO_UPDATE(astinvad)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(SAMPLES, astinvad_samples_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	
+	MDRV_SOUND_ADD(SAMPLES, 0)
+	MDRV_SOUND_CONFIG(astinvad_samples_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
 MACHINE_DRIVER_END
 
 
@@ -305,7 +310,11 @@ static MACHINE_DRIVER_START( spaceint )
 	MDRV_VIDEO_UPDATE(spaceint)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(SAMPLES, astinvad_samples_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	
+	MDRV_SOUND_ADD(SAMPLES, 0)
+	MDRV_SOUND_CONFIG(astinvad_samples_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
 MACHINE_DRIVER_END
 
 

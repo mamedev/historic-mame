@@ -412,7 +412,7 @@ int cdrom_audio_ended(struct cdrom_file *file)
  *                       converts it to 2 16-bit 44.1 kHz streams.
  */
 
-void cdrom_get_audio_data(struct cdrom_file *file, INT16 *bufL, INT16 *bufR, UINT32 samples_wanted)
+void cdrom_get_audio_data(struct cdrom_file *file, stream_sample_t *bufL, stream_sample_t *bufR, UINT32 samples_wanted)
 {
 	int i, sectoread, remaining;
 
@@ -420,8 +420,8 @@ void cdrom_get_audio_data(struct cdrom_file *file, INT16 *bufL, INT16 *bufR, UIN
 	   just zero fill */
 	if (!file || !file->audio_playing || file->audio_pause || (!file->audio_length && !file->audio_samples))
 	{
-		memset(bufL, 0, sizeof(INT16)*samples_wanted);
-		memset(bufR, 0, sizeof(INT16)*samples_wanted);
+		memset(bufL, 0, sizeof(stream_sample_t)*samples_wanted);
+		memset(bufR, 0, sizeof(stream_sample_t)*samples_wanted);
 		return;
 	}
 

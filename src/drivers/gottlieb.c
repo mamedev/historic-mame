@@ -149,6 +149,9 @@ VBlank duration: 1/VSYNC * (16/256) = 1017.6 us
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "sound/ay8910.h"
+#include "sound/dac.h"
+#include "sound/samples.h"
 
 extern UINT8 *gottlieb_charram;
 
@@ -1493,19 +1496,6 @@ static struct GfxDecodeInfo charROM_gfxdecodeinfo[] =
 };
 
 
-
-static struct DACinterface dac1_interface =
-{
-	1,
-	{ 50 }
-};
-
-static struct DACinterface dac2_interface =
-{
-	2,
-	{ 25, 25 }
-};
-
 static const char *reactor_sample_names[] =
 {
 	"*reactor",
@@ -1586,31 +1576,17 @@ static const char *qbert_sample_names[] =
 static struct Samplesinterface qbert_samples_interface =
 {
  	1,	/* one channel */
-	100,	/* volume */
 	qbert_sample_names
 };
 
 static struct Samplesinterface reactor_samples_interface =
 {
 	1,	/* one channel */
-	100,	/* volume */
 	reactor_sample_names
 };
 
 #define gottlieb_samples_interface qbert_samples_interface	/* not used */
 #define krull_samples_interface qbert_samples_interface		/* not used */
-
-
-static struct AY8910interface ay8910_interface =
-{
-	2,	/* 2 chips */
-	2000000,	/* 2 MHz */
-	{ 25, 25 },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ 0 }
-};
 
 
 
@@ -1655,7 +1631,10 @@ static MACHINE_DRIVER_START( gottlieb )
 	MDRV_VIDEO_UPDATE(gottlieb)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(DAC, dac1_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(DAC, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
 MACHINE_DRIVER_END
 
 
@@ -1670,7 +1649,10 @@ static MACHINE_DRIVER_START( reactor )
 
 	/* video hardware */
 	MDRV_GFXDECODE(charRAM_gfxdecodeinfo)
-	MDRV_SOUND_ADD(SAMPLES, reactor_samples_interface)
+
+	MDRV_SOUND_ADD(SAMPLES, 0)
+	MDRV_SOUND_CONFIG(reactor_samples_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 
@@ -1680,7 +1662,9 @@ static MACHINE_DRIVER_START( qbert )
 	MDRV_IMPORT_FROM(gottlieb)
 
 	/* video hardware */
-	MDRV_SOUND_ADD(SAMPLES, qbert_samples_interface)
+	MDRV_SOUND_ADD(SAMPLES, 0)
+	MDRV_SOUND_CONFIG(qbert_samples_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 
@@ -1727,8 +1711,19 @@ static MACHINE_DRIVER_START( gottlieb2 )
 	MDRV_VIDEO_UPDATE(gottlieb)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(DAC, dac2_interface)
-	MDRV_SOUND_ADD(AY8910, ay8910_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(DAC, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
+
+	MDRV_SOUND_ADD(DAC, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
+
+	MDRV_SOUND_ADD(AY8910, 2000000)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
+
+	MDRV_SOUND_ADD(AY8910, 2000000)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
 MACHINE_DRIVER_END
 
 

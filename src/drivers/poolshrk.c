@@ -6,6 +6,7 @@ Atari Poolshark Driver
 
 #include "driver.h"
 #include "poolshrk.h"
+#include "sound/discrete.h"
 
 
 extern VIDEO_START( poolshrk );
@@ -238,7 +239,11 @@ static MACHINE_DRIVER_START( poolshrk )
 	MDRV_VIDEO_UPDATE(poolshrk)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD_TAG("discrete", DISCRETE, poolshrk_discrete_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	
+	MDRV_SOUND_ADD_TAG("discrete", DISCRETE, 0)
+	MDRV_SOUND_CONFIG(poolshrk_discrete_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 

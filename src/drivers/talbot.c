@@ -8,6 +8,7 @@
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "sound/ay8910.h"
 
 static struct tilemap *bg_tilemap;
 
@@ -328,17 +329,6 @@ PALETTE_INIT( talbot )
 		colortable[i] = color_prom[i];	
 }
 
-static struct AY8910interface ay8910_interface =
-{
-	1,			/* 1 chip */
-	1500000,	/* 1.5 MHz ? */
-	{ 100 },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ 0 }
-};
-
 static MACHINE_DRIVER_START( talbot )
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80, 4000000)	/* 4.0 MHz (?) */
@@ -361,7 +351,9 @@ static MACHINE_DRIVER_START( talbot )
 	MDRV_VIDEO_UPDATE(talbot)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(AY8910, ay8910_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	MDRV_SOUND_ADD(AY8910, 1500000)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 

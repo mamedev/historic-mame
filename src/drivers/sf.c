@@ -14,6 +14,8 @@ TODO:
 #include "vidhrdw/generic.h"
 #include "cpu/z80/z80.h"
 #include "cpu/m68000/m68000.h"
+#include "sound/2151intf.h"
+#include "sound/msm5205.h"
 
 
 extern data16_t *sf_objectram,*sf_videoram;
@@ -805,19 +807,13 @@ static void irq_handler(int irq)
 
 static struct YM2151interface ym2151_interface =
 {
-	1,	/* 1 chip */
-	3579545,	/* ? xtal is 3.579545MHz */
-	{ YM3012_VOL(60,MIXER_PAN_LEFT,60,MIXER_PAN_RIGHT) },
-	{ irq_handler }
+	irq_handler
 };
 
 static struct MSM5205interface msm5205_interface =
 {
-	2,		/* 2 chips */
-	384000,				/* 384KHz ?           */
-	{ 0, 0 },/* interrupt function */
-	{ MSM5205_SEX_4B,MSM5205_SEX_4B},	/* 8KHz playback ?    */
-	{ 100, 100 }
+	0,				/* interrupt function */
+	MSM5205_SEX_4B	/* 8KHz playback ?    */
 };
 
 static MACHINE_DRIVER_START( sf )
@@ -851,9 +847,22 @@ static MACHINE_DRIVER_START( sf )
 	MDRV_VIDEO_UPDATE(sf)
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(YM2151, ym2151_interface)
-	MDRV_SOUND_ADD(MSM5205, msm5205_interface)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(YM2151, 3579545)
+	MDRV_SOUND_CONFIG(ym2151_interface)
+	MDRV_SOUND_ROUTE(0, "left", 0.60)
+	MDRV_SOUND_ROUTE(1, "right", 0.60)
+
+	MDRV_SOUND_ADD(MSM5205, 384000)
+	MDRV_SOUND_CONFIG(msm5205_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 1.0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 1.0)
+
+	MDRV_SOUND_ADD(MSM5205, 384000)
+	MDRV_SOUND_CONFIG(msm5205_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 1.0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 1.0)
 MACHINE_DRIVER_END
 
 

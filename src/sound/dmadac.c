@@ -52,7 +52,7 @@
 struct dmadac_channel_data
 {
 	/* sound stream and buffers */
-	int		channel;
+	sound_stream *channel;
 	INT16 *	buffer;
 	INT16	last;
 	
@@ -86,8 +86,6 @@ static UINT32 freqmult_quiece_time;
 static UINT32 consecutive_shortages;
 static UINT32 consecutive_overruns;
 
-static struct dmadac_channel_data dmadac[MAX_DMADAC_CHANNELS];
-
 
 
 /*************************************
@@ -117,15 +115,20 @@ static void adjust_freqmult(void)
 	int i;
 	
 	/* first, sum up the data for all channels */
-	for (i = 0; i < MAX_DMADAC_CHANNELS; i++)
-		if (dmadac[i].outsamples)
+	for (i = 0; i < MAX_SOUND; i++)
+	{
+		struct dmadac_channel_data *info = sndti_token(SOUND_DMADAC, i);
+		if (!info)
+			break;
+		if (info->outsamples)
 		{
-			shortages += dmadac[i].shortages;
-			overruns += dmadac[i].overruns;
-			dmadac[i].shortages = 0;
-			dmadac[i].overruns = 0;
-			dmadac[i].outsamples -= Machine->sample_rate * SECONDS_BETWEEN_ADJUSTS;
+			shortages += info->shortages;
+			overruns += info->overruns;
+			info->shortages = 0;
+			info->overruns = 0;
+			info->outsamples -= Machine->sample_rate * SECONDS_BETWEEN_ADJUSTS;
 		}
+	}
 	
 	/* don't do anything if we're quiescing */
 	if (freqmult_quiece_time)
@@ -157,8 +160,13 @@ static void adjust_freqmult(void)
 		consecutive_overruns = 0;
 	
 	/* now recompute the step value for each channel */
-	for (i = 0; i < MAX_DMADAC_CHANNELS; i++)
-		compute_step(&dmadac[i]);
+	for (i = 0; i < MAX_SOUND; i++)
+	{
+		struct dmadac_channel_data *info = sndti_token(SOUND_DMADAC, i);
+		if (!info)
+			break;
+		compute_step(info);
+	}
 }
 
 
@@ -169,13 +177,14 @@ static void adjust_freqmult(void)
  *
  *************************************/
 
-static void dmadac_update(int num, INT16 *buffer, int length)
+static void dmadac_update(void *param, stream_sample_t **inputs, stream_sample_t **_buffer, int length)
 {
-	struct dmadac_channel_data *ch = &dmadac[num];
+	struct dmadac_channel_data *ch = param;
 	UINT32 frac = ch->curoutfrac;
 	UINT32 out = ch->curoutpos;
 	UINT32 step = ch->step;
 	INT16 last = ch->last;
+	stream_sample_t *buffer = _buffer[0];
 	
 	/* track how many samples we've been asked to output; every second, consider adjusting */
 	ch->outsamples += length;
@@ -235,13 +244,15 @@ static void dmadac_update(int num, INT16 *buffer, int length)
  *
  *************************************/
 
-int dmadac_sh_start(const struct MachineSound *msound)
+static void *dmadac_start(int sndindex, int clock, const void *config)
 {
-	const struct dmadac_interface *intf = msound->sound_interface;
-	int i;
+	struct dmadac_channel_data *info;
+
+	info = auto_malloc(sizeof(*info));
+	memset(info, 0, sizeof(*info));
 
 	if (Machine->sample_rate == 0)
-		return 0;
+		return info;
 
 	/* init globals */
 	freqmult = 1.0;
@@ -249,36 +260,27 @@ int dmadac_sh_start(const struct MachineSound *msound)
 	consecutive_shortages = 0;
 	consecutive_overruns = 0;
 	
-	/* init each channel */
-	for (i = 0; i < intf->num; i++)
-	{
-		char name[40];
-		
-		/* allocate a clear a buffer */
-		dmadac[i].buffer = auto_malloc(sizeof(dmadac[i].buffer[0]) * BUFFER_SIZE);
-		if (!dmadac[i].buffer)
-			return 1;
-		memset(dmadac[i].buffer, 0, sizeof(dmadac[i].buffer[0]) * BUFFER_SIZE);
-		
-		/* reset the state */
-		dmadac[i].last = 0;
-		dmadac[i].volume = 0x100;
-		dmadac[i].enabled = 0;
-		
-		/* reset the framing */
-		dmadac[i].step = 0;
-		dmadac[i].curoutfrac = 0;
-		dmadac[i].curoutpos = 0;
-		dmadac[i].curinpos = 0;
+	/* allocate a clear a buffer */
+	info->buffer = auto_malloc(sizeof(info->buffer[0]) * BUFFER_SIZE);
+	if (!info->buffer)
+		return NULL;
+	memset(info->buffer, 0, sizeof(info->buffer[0]) * BUFFER_SIZE);
+	
+	/* reset the state */
+	info->last = 0;
+	info->volume = 0x100;
+	info->enabled = 0;
+	
+	/* reset the framing */
+	info->step = 0;
+	info->curoutfrac = 0;
+	info->curoutpos = 0;
+	info->curinpos = 0;
 
-		/* allocate a stream channel */
-		sprintf(name, "DMA DAC #%d", i);
-		dmadac[i].channel = stream_init(name, intf->mixing_level[i], Machine->sample_rate, i, dmadac_update);
-		if (dmadac[i].channel == -1)
-			return 1;
-	}
+	/* allocate a stream channel */
+	info->channel = stream_create(0, 1, Machine->sample_rate, info, dmadac_update);
 
-	return 0;
+	return info;
 }
 
 
@@ -298,12 +300,15 @@ void dmadac_transfer(UINT8 first_channel, UINT8 num_channels, offs_t channel_spa
 	
 	/* flush out as much data as we can */
 	for (i = 0; i < num_channels; i++)
-		stream_update(dmadac[first_channel + i].channel, 0);
+	{
+		struct dmadac_channel_data *info = sndti_token(SOUND_DMADAC, first_channel + i);
+		stream_update(info->channel, 0);
+	}
 	
 	/* loop over all channels and accumulate the data */
 	for (i = 0; i < num_channels; i++)
 	{
-		struct dmadac_channel_data *ch = &dmadac[first_channel + i];
+		struct dmadac_channel_data *ch = sndti_token(SOUND_DMADAC, first_channel + i);
 		if (ch->enabled)
 		{
 			INT16 *src = data + i * channel_spacing;
@@ -353,10 +358,11 @@ void dmadac_enable(UINT8 first_channel, UINT8 num_channels, UINT8 enable)
 	/* flush out as much data as we can */
 	for (i = 0; i < num_channels; i++)
 	{
-		stream_update(dmadac[first_channel + i].channel, 0);
-		dmadac[first_channel + i].enabled = enable;
+		struct dmadac_channel_data *info = sndti_token(SOUND_DMADAC, first_channel + i);
+		stream_update(info->channel, 0);
+		info->enabled = enable;
 		if (!enable)
-			dmadac[first_channel + i].curinpos = dmadac[first_channel + i].curoutpos = dmadac[first_channel + i].curoutfrac = 0;
+			info->curinpos = info->curoutpos = info->curoutfrac = 0;
 	}
 }
 
@@ -378,9 +384,10 @@ void dmadac_set_frequency(UINT8 first_channel, UINT8 num_channels, double freque
 	/* flush out as much data as we can */
 	for (i = 0; i < num_channels; i++)
 	{
-		stream_update(dmadac[first_channel + i].channel, 0);
-		dmadac[first_channel + i].frequency = frequency;
-		compute_step(&dmadac[first_channel + i]);
+		struct dmadac_channel_data *info = sndti_token(SOUND_DMADAC, first_channel + i);
+		stream_update(info->channel, 0);
+		info->frequency = frequency;
+		compute_step(info);
 	}
 }
 
@@ -402,8 +409,45 @@ void dmadac_set_volume(UINT8 first_channel, UINT8 num_channels, UINT16 volume)
 	/* flush out as much data as we can */
 	for (i = 0; i < num_channels; i++)
 	{
-		stream_update(dmadac[first_channel + i].channel, 0);
-		dmadac[first_channel + i].volume = volume;
+		struct dmadac_channel_data *info = sndti_token(SOUND_DMADAC, first_channel + i);
+		stream_update(info->channel, 0);
+		info->volume = volume;
+	}
+}
+
+
+
+/**************************************************************************
+ * Generic get_info
+ **************************************************************************/
+
+static void dmadac_set_info(void *token, UINT32 state, union sndinfo *info)
+{
+	switch (state)
+	{
+		/* no parameters to set */
+	}
+}
+
+
+void dmadac_get_info(void *token, UINT32 state, union sndinfo *info)
+{
+	switch (state)
+	{
+		/* --- the following bits of info are returned as 64-bit signed integers --- */
+
+		/* --- the following bits of info are returned as pointers to data or functions --- */
+		case SNDINFO_PTR_SET_INFO:						info->set_info = dmadac_set_info;		break;
+		case SNDINFO_PTR_START:							info->start = dmadac_start;				break;
+		case SNDINFO_PTR_STOP:							/* nothing */							break;
+		case SNDINFO_PTR_RESET:							/* nothing */							break;
+
+		/* --- the following bits of info are returned as NULL-terminated strings --- */
+		case SNDINFO_STR_NAME:							info->s = "DMA-driven DAC";				break;
+		case SNDINFO_STR_CORE_FAMILY:					info->s = "DAC";						break;
+		case SNDINFO_STR_CORE_VERSION:					info->s = "1.0";						break;
+		case SNDINFO_STR_CORE_FILE:						info->s = __FILE__;						break;
+		case SNDINFO_STR_CORE_CREDITS:					info->s = "Copyright (c) 2004, The MAME Team"; break;
 	}
 }
 

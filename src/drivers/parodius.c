@@ -10,6 +10,8 @@ driver by Nicola Salmoria
 #include "vidhrdw/generic.h"
 #include "cpu/konami/konami.h" /* for the callback and the firq irq definition */
 #include "vidhrdw/konamiic.h"
+#include "sound/2151intf.h"
+#include "sound/k053260.h"
 
 /* prototypes */
 static MACHINE_INIT( parodius );
@@ -299,21 +301,9 @@ INPUT_PORTS_END
 
 ***************************************************************************/
 
-static struct YM2151interface ym2151_interface =
-{
-	1,			/* 1 chip */
-	3579545,	/* 3.579545 MHz */
-	{ YM3012_VOL(100,MIXER_PAN_LEFT,100,MIXER_PAN_RIGHT) },
-	{ 0 },
-};
-
 static struct K053260_interface k053260_interface =
 {
-	1,
-	{ 3579545 },
-	{ REGION_SOUND1 }, /* memory region */
-	{ { MIXER(70,MIXER_PAN_LEFT), MIXER(70,MIXER_PAN_RIGHT) } },
-//	{ sound_nmi_callback }
+	REGION_SOUND1 /* memory region */
 };
 
 
@@ -344,9 +334,16 @@ static MACHINE_DRIVER_START( parodius )
 	MDRV_VIDEO_UPDATE(parodius)
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(YM2151, ym2151_interface)
-	MDRV_SOUND_ADD(K053260, k053260_interface)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(YM2151, 3579545)
+	MDRV_SOUND_ROUTE(0, "left", 1.0)
+	MDRV_SOUND_ROUTE(1, "right", 1.0)
+
+	MDRV_SOUND_ADD(K053260, 3579545)
+	MDRV_SOUND_CONFIG(k053260_interface)
+	MDRV_SOUND_ROUTE(0, "left", 0.70)
+	MDRV_SOUND_ROUTE(1, "right", 0.70)
 MACHINE_DRIVER_END
 
 /***************************************************************************

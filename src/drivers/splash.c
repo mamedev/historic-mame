@@ -34,6 +34,9 @@ Sound not working on Return of Lady Frog
 #include "vidhrdw/generic.h"
 #include "cpu/z80/z80.h"
 #include "cpu/m68000/m68000.h"
+#include "sound/2203intf.h"
+#include "sound/3812intf.h"
+#include "sound/msm5205.h"
 
 
 extern data16_t *splash_vregs;
@@ -337,21 +340,10 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 	{ -1 }
 };
 
-static struct YM3812interface splash_ym3812_interface =
-{
-	1,						/* 1 chip */
-	3000000,				/* 3.75 MHz (30/8) */
-	{ 80 },					/* volume */
-	{ 0 }					/* IRQ handler */
-};
-
 static struct MSM5205interface splash_msm5205_interface =
 {
-	1,						/* 1 chip */
-	384000,					/* 384KHz (384000/48) */
-	{ splash_msm5205_int },	/* IRQ handler */
-	{ MSM5205_S48_4B },		/* 8KHz */
-	{ 80 }					/* volume */
+	splash_msm5205_int,	/* IRQ handler */
+	MSM5205_S48_4B		/* 8KHz */
 };
 
 
@@ -381,8 +373,14 @@ static MACHINE_DRIVER_START( splash )
 	MDRV_VIDEO_UPDATE(splash)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM3812, splash_ym3812_interface)
-	MDRV_SOUND_ADD(MSM5205, splash_msm5205_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM3812, 3000000)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.80)
+
+	MDRV_SOUND_ADD(MSM5205, 384000)
+	MDRV_SOUND_CONFIG(splash_msm5205_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.80)
 MACHINE_DRIVER_END
 
 static void ym_irq(int state)
@@ -392,14 +390,7 @@ static void ym_irq(int state)
 
 static struct YM2203interface ym2203_interface =
 {
-	1,		/* 1 chip */
-	3000000,	/* 3 MHz - verified */
-	{ YM2203_VOL(40,60) },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ ym_irq }
+	0,0,0,0,ym_irq
 };
 
 static MACHINE_DRIVER_START( roldfrog )
@@ -429,7 +420,14 @@ static MACHINE_DRIVER_START( roldfrog )
 	MDRV_VIDEO_START(splash)
 	MDRV_VIDEO_UPDATE(splash)
 
-	MDRV_SOUND_ADD(YM2203, ym2203_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM2203, 3000000)
+	MDRV_SOUND_CONFIG(ym2203_interface)
+	MDRV_SOUND_ROUTE(0, "mono", 0.60)
+	MDRV_SOUND_ROUTE(1, "mono", 0.60)
+	MDRV_SOUND_ROUTE(2, "mono", 0.60)
+	MDRV_SOUND_ROUTE(3, "mono", 0.40)
 MACHINE_DRIVER_END
 
 
@@ -459,8 +457,14 @@ static MACHINE_DRIVER_START( funystrp )
 	MDRV_VIDEO_UPDATE(splash)
 
 	/* sound hardware */
-//	MDRV_SOUND_ADD(YM3812, splash_ym3812_interface)
-//	MDRV_SOUND_ADD(MSM5205, splash_msm5205_interface)
+//	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+//	MDRV_SOUND_ADD(YM3812, 3000000)
+//	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.80)
+
+//	MDRV_SOUND_ADD(MSM5205, 384000)
+//	MDRV_SOUND_CONFIG(msm5205_interface)
+//	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.80)
 MACHINE_DRIVER_END
 
 

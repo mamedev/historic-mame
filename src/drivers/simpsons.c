@@ -13,6 +13,8 @@ someone@secureshell.com
 #include "cpu/konami/konami.h" /* for the callback and the firq irq definition */
 #include "cpu/z80/z80.h"
 #include "vidhrdw/konamiic.h"
+#include "sound/2151intf.h"
+#include "sound/k053260.h"
 
 /* from vidhrdw */
 VIDEO_START( simpsons );
@@ -249,21 +251,9 @@ INPUT_PORTS_END
 
 ***************************************************************************/
 
-static struct YM2151interface ym2151_interface =
-{
-	1,		/* 1 chip */
-	3579545,	/* Reznor007 verified with schematics + PCB trace */
-	{ YM3012_VOL(100,MIXER_PAN_CENTER,0,MIXER_PAN_CENTER) },	/* only left channel is connected */
-	{ 0 }
-};
-
 static struct K053260_interface k053260_interface =
 {
-	1,
-	{ 4000000 },	/* probably not correct, but voices sound much more like the PCB */
-	{ REGION_SOUND1 }, /* memory region */
-	{ { MIXER(75,MIXER_PAN_LEFT), MIXER(75,MIXER_PAN_RIGHT) } },
-//	{ nmi_callback }
+	REGION_SOUND1 /* memory region */
 };
 
 static void simpsons_objdma(void)
@@ -336,9 +326,18 @@ static MACHINE_DRIVER_START( simpsons )
 	MDRV_VIDEO_UPDATE(simpsons)
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(YM2151, ym2151_interface)
-	MDRV_SOUND_ADD(K053260, k053260_interface)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(YM2151, 3579545)
+	MDRV_SOUND_ROUTE(0, "left", 1.0)	/* only left channel is connected */
+	MDRV_SOUND_ROUTE(0, "right", 1.0)
+	MDRV_SOUND_ROUTE(1, "left", 0.0)
+	MDRV_SOUND_ROUTE(1, "right", 0.0)
+
+	MDRV_SOUND_ADD(K053260, 4000000)
+	MDRV_SOUND_CONFIG(k053260_interface)
+	MDRV_SOUND_ROUTE(0, "left", 0.75)
+	MDRV_SOUND_ROUTE(1, "right", 0.75)
 MACHINE_DRIVER_END
 
 

@@ -23,6 +23,9 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "cpu/h6280/h6280.h"
+#include "sound/2203intf.h"
+#include "sound/msm5205.h"
+#include "sound/c6280.h"
 
 VIDEO_UPDATE( battlera );
 VIDEO_START( battlera );
@@ -260,32 +263,10 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 /******************************************************************************/
 
-static struct YM2203interface ym2203_interface =
-{
-	1,
-	12000000/8, /* 1.5 MHz */
-	{ YM2203_VOL(40,40) },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-};
-
-static struct C6280_interface c6280_interface =
-{
-	1,		/* 1 chip */
-	{ 60 },		/* Volume */
-	{ 21477270/6 }	/* 3.579545 MHz */
-};
-
 static struct MSM5205interface msm5205_interface =
 {
-	1,					/* 1 chip			 */
-	384000,				/* 384KHz			 */
-	{ battlera_adpcm_int },/* interrupt function */
-	{ MSM5205_S48_4B},	/* 8KHz			   */
-	{ 85 }
+	battlera_adpcm_int,/* interrupt function */
+	MSM5205_S48_4B		/* 8KHz			   */
 };
 
 /******************************************************************************/
@@ -316,10 +297,20 @@ static MACHINE_DRIVER_START( battlera )
 	MDRV_VIDEO_UPDATE(battlera)
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(YM2203, ym2203_interface)
-	MDRV_SOUND_ADD(MSM5205, msm5205_interface)
-	MDRV_SOUND_ADD(C6280, c6280_interface)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(YM2203, 12000000 / 8)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.40)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 0.40)
+
+	MDRV_SOUND_ADD(MSM5205, 384000)
+	MDRV_SOUND_CONFIG(msm5205_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.85)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 0.85)
+
+	MDRV_SOUND_ADD(C6280, 21477270/6)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.60)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 0.60)
 MACHINE_DRIVER_END
 
 /******************************************************************************/

@@ -15,6 +15,8 @@
 #include "6821pia.h"
 #include "machine/ticket.h"
 #include "williams.h"
+#include "sound/dac.h"
+#include "sound/hc55516.h"
 
 
 /* banking addresses set by the drivers */

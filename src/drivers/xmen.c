@@ -10,6 +10,8 @@ driver by Nicola Salmoria
 #include "machine/eeprom.h"
 #include "cpu/z80/z80.h"
 #include "state.h"
+#include "sound/2151intf.h"
+#include "sound/k054539.h"
 
 VIDEO_START( xmen );
 VIDEO_UPDATE( xmen );
@@ -298,21 +300,9 @@ INPUT_PORTS_END
 
 
 
-static struct YM2151interface ym2151_interface =
-{
-	1,			/* 1 chip */
-	4000000,	/* 4 MHz? (hand tuned) */
-	{ YM3012_VOL(80,MIXER_PAN_LEFT,80,MIXER_PAN_RIGHT) },		/* music volume */
-	{ 0 }
-};
-
 static struct K054539interface k054539_interface =
 {
-	1,			/* 1 chip */
-	48000,
-	{ REGION_SOUND1 },
-	{ { 80, 80 } },
-	{ 0 }		/* The YM does not seem to be connected to the 539 analog input */
+	REGION_SOUND1
 };
 
 
@@ -349,9 +339,16 @@ static MACHINE_DRIVER_START( xmen )
 	MDRV_VIDEO_UPDATE(xmen)
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(YM2151, ym2151_interface)
-	MDRV_SOUND_ADD(K054539, k054539_interface)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(YM2151, 4000000)
+	MDRV_SOUND_ROUTE(0, "left", 0.80)
+	MDRV_SOUND_ROUTE(1, "right", 0.80)
+
+	MDRV_SOUND_ADD(K054539, 48000)
+	MDRV_SOUND_CONFIG(k054539_interface)
+	MDRV_SOUND_ROUTE(0, "left", 0.80)
+	MDRV_SOUND_ROUTE(1, "right", 0.80)
 MACHINE_DRIVER_END
 
 

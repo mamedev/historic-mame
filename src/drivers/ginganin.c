@@ -50,6 +50,8 @@ f5d6	print 7 digit BCD number: d0.l to (a1)+ color $3000
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "sound/ay8910.h"
+#include "sound/3812intf.h"
 
 /* Variables only used here */
 
@@ -339,30 +341,11 @@ INTERRUPT_GEN( ginganin_sound_interrupt )
 
 
 
-static struct AY8910interface AY8910_interface =
-{
-	1,
-	3579545 / 2 ,	/* ? */
-	{ 10 },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ 0 }
-};
-
-
 /* The Y8950 is basically a YM3526 with ADPCM built in */
 static struct Y8950interface y8950_interface =
 {
-	1,
-	3579545,	/* ? */
-	{ 100 },
-	{ 0 },
-	{ REGION_SOUND1 },	/* ROM region */
-	{ 0 },	/* keyboarc read  */
-	{ 0 },	/* keyboard write */
-	{ 0 },	/* I/O read  */
-	{ 0 }	/* I/O write */
+	0,
+	REGION_SOUND1	/* ROM region */
 };
 
 static MACHINE_DRIVER_START( ginganin )
@@ -391,8 +374,14 @@ static MACHINE_DRIVER_START( ginganin )
 	MDRV_VIDEO_UPDATE(ginganin)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(AY8910, AY8910_interface)
-	MDRV_SOUND_ADD(Y8950, y8950_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	
+	MDRV_SOUND_ADD(AY8910, 3579545 / 2)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.10)
+
+	MDRV_SOUND_ADD(Y8950, 3579545)
+	MDRV_SOUND_CONFIG(y8950_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 

@@ -49,6 +49,7 @@
 
 #include "driver.h"
 #include "cpu/i8085/i8085.h"
+#include "sound/ay8910.h"
 
 /* Default NVram, we seem to need one or statriv2 crashes during attract
    attempting to display an unterminated message */
@@ -568,17 +569,6 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 };
 
 
-static struct AY8910interface ay8910_interface =
-{
-	1,	/* 1 chip */
-	1500000,	/* 1.5 MHz ???? */
-	{ 100 },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ 0 }
-};
-
 static INTERRUPT_GEN( statriv2_interrupt )
 {
 	cpunum_set_input_line(0, I8085_RST75_LINE, HOLD_LINE);
@@ -609,7 +599,10 @@ static MACHINE_DRIVER_START( statriv2 )
 	MDRV_VIDEO_UPDATE(statriv2)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(AY8910, ay8910_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	
+	MDRV_SOUND_ADD(AY8910, 1500000)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( statriv4 )

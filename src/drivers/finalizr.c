@@ -10,6 +10,8 @@ driver by Nicola Salmoria
 #include "vidhrdw/generic.h"
 #include "cpu/m6809/m6809.h"
 #include "cpu/i8039/i8039.h"
+#include "sound/sn76496.h"
+#include "sound/dac.h"
 
 
 void konami1_decode(void);
@@ -403,21 +405,6 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 
 
-static struct SN76496interface sn76496_interface =
-{
-	1,	/* 1 chip */
-	{ 18432000/12 },	/* ?? */
-	{ 75 }
-};
-
-static struct DACinterface dac_interface =
-{
-	1,
-	{ 65 }
-};
-
-
-
 static MACHINE_DRIVER_START( finalizr )
 
 	/* basic machine hardware */
@@ -446,8 +433,13 @@ static MACHINE_DRIVER_START( finalizr )
 	MDRV_VIDEO_UPDATE(finalizr)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(SN76496, sn76496_interface)
-	MDRV_SOUND_ADD(DAC, dac_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(SN76496, 18432000/12)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.75)
+
+	MDRV_SOUND_ADD(DAC, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.65)
 MACHINE_DRIVER_END
 
 

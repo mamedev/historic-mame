@@ -808,6 +808,10 @@ void amiga_render_scanline(int scanline)
 		
 		/* get the number of planes */
 		planes = ( custom_regs.BPLCON0 & ( BPLCON0_BPU0 | BPLCON0_BPU1 | BPLCON0_BPU2 ) ) >> 12;
+		if ( planes == 6 && (custom_regs.BPLCON0 & (BPLCON0_DBLPF | BPLCON0_HOMOD)) == 0 )
+		{
+			planes = 5;
+		}
 
 		/* precalculate if the bitplane dma is enabled */
 		bitplane_dma_disabled = ( custom_regs.DMACON & ( DMACON_BPLEN | DMACON_DMAEN ) ) != ( DMACON_BPLEN | DMACON_DMAEN );

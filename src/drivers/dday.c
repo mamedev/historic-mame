@@ -50,6 +50,7 @@ write:
 ***************************************************************************/
 
 #include "driver.h"
+#include "sound/ay8910.h"
 
 extern unsigned char *dday_bgvideoram;
 extern unsigned char *dday_fgvideoram;
@@ -303,18 +304,6 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 
 
-static struct AY8910interface ay8910_interface =
-{
-	2,      /* 2 chips */
-	1000000,	/* 1.0 MHz ? */
-	{ 25, 25 },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ 0 }
-};
-
-
 static MACHINE_DRIVER_START( dday )
 
 	/* basic machine hardware */
@@ -337,7 +326,13 @@ static MACHINE_DRIVER_START( dday )
 	MDRV_VIDEO_UPDATE(dday)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(AY8910, ay8910_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(AY8910, 1000000)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
+
+	MDRV_SOUND_ADD(AY8910, 1000000)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
 MACHINE_DRIVER_END
 
 

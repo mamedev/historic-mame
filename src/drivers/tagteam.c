@@ -27,6 +27,8 @@ TODO:
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "cpu/m6502/m6502.h"
+#include "sound/ay8910.h"
+#include "sound/dac.h"
 
 extern WRITE8_HANDLER( tagteam_videoram_w );
 extern WRITE8_HANDLER( tagteam_colorram_w );
@@ -267,23 +269,6 @@ static struct GfxDecodeInfo tagteam_gfxdecodeinfo[] =
 
 
 
-static struct AY8910interface ay8910_interface =
-{
-	2,      /* 2 chips */
-	1500000,        /* 1.5 MHz ?? */
-	{ 25, 25 },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ 0 }
-};
-
-static struct DACinterface dac_interface =
-{
-	1,
-	{ 255 }
-};
-
 static MACHINE_DRIVER_START( tagteam )
 
 	/* basic machine hardware */
@@ -312,8 +297,16 @@ static MACHINE_DRIVER_START( tagteam )
 	MDRV_VIDEO_UPDATE(tagteam)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(AY8910, ay8910_interface)
-	MDRV_SOUND_ADD(DAC, dac_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	
+	MDRV_SOUND_ADD(AY8910, 1500000)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
+	
+	MDRV_SOUND_ADD(AY8910, 1500000)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
+
+	MDRV_SOUND_ADD(DAC, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 

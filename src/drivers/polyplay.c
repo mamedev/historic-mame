@@ -82,6 +82,7 @@ emulated now. ;)
 #include "vidhrdw/generic.h"
 #include "cpu/z80/z80.h"
 #include "machine/random.h"
+#include "sound/samples.h"
 
 /* video hardware access */
 extern unsigned char *polyplay_characterram;
@@ -104,9 +105,7 @@ static int channel2_active;
 static int channel2_const;
 void play_channel1(int data);
 void play_channel2(int data);
-int  polyplay_sh_start(const struct MachineSound *msound);
-void polyplay_sh_stop(void);
-void polyplay_sh_update(void);
+void polyplay_sh_start(void);
 
 /* timer handling */
 static void timer_callback(int param);
@@ -116,11 +115,11 @@ static WRITE8_HANDLER( polyplay_sound_channel );
 
 
 /* Polyplay Sound Interface */
-static struct CustomSound_interface custom_interface =
+static struct Samplesinterface custom_interface =
 {
-	polyplay_sh_start,
-	polyplay_sh_stop,
-	polyplay_sh_update
+	2,
+	NULL,
+	polyplay_sh_start
 };
 
 
@@ -330,7 +329,11 @@ static MACHINE_DRIVER_START( polyplay )
 	MDRV_VIDEO_UPDATE(polyplay)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(CUSTOM, custom_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	
+	MDRV_SOUND_ADD(SAMPLES, 0)
+	MDRV_SOUND_CONFIG(custom_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
 MACHINE_DRIVER_END
 
 

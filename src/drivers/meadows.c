@@ -120,6 +120,8 @@
 #include "vidhrdw/generic.h"
 #include "cpu/s2650/s2650.h"
 #include "meadows.h"
+#include "sound/dac.h"
+#include "sound/samples.h"
 
 
 
@@ -612,18 +614,11 @@ static struct GfxDecodeInfo minferno_gfxdecodeinfo[] =
  *
  *************************************/
 
-static struct DACinterface dac_interface =
+static struct Samplesinterface custom_interface =
 {
-	1,
-	{ 100 }
-};
-
-
-static struct CustomSound_interface custom_interface =
-{
-	meadows_sh_start,
-	meadows_sh_stop,
-	0
+	2,
+	NULL,
+	meadows_sh_start
 };
 
 
@@ -662,8 +657,14 @@ static MACHINE_DRIVER_START( meadows )
 	MDRV_VIDEO_UPDATE(meadows)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(DAC, dac_interface)
-	MDRV_SOUND_ADD(CUSTOM, custom_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(DAC, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
+
+	MDRV_SOUND_ADD(SAMPLES, 0)
+	MDRV_SOUND_CONFIG(custom_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 

@@ -62,6 +62,8 @@ This was pointed out by Bart Puype
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "sound/2610intf.h"
+#include "sound/ymf278b.h"
 
 
 /* Variables defined in vidhrdw */
@@ -1527,17 +1529,9 @@ static struct GfxDecodeInfo psikyo_gfxdecodeinfo[] =
 
 struct YM2610interface sngkace_ym2610_interface =
 {
-	1,
-	8000000,	/* ? */
-	{ MIXERG(30,MIXER_GAIN_4x,MIXER_PAN_CENTER) },
-	{ 0 },	/* A_r */
-	{ 0 },	/* B_r */
-	{ 0 },	/* A_w */
-	{ 0 },	/* B_w */
-	{ sound_irq },	/* irq */
-	{ REGION_SOUND1 },	/* delta_t */
-	{ REGION_SOUND1 },	/* adpcm */
-	{ YM3012_VOL(100,MIXER_PAN_LEFT,100,MIXER_PAN_RIGHT) }
+	sound_irq,	/* irq */
+	REGION_SOUND1,	/* delta_t */
+	REGION_SOUND1	/* adpcm */
 };
 
 static MACHINE_DRIVER_START( sngkace )
@@ -1567,8 +1561,14 @@ static MACHINE_DRIVER_START( sngkace )
 	MDRV_VIDEO_UPDATE(psikyo)
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(YM2610, sngkace_ym2610_interface)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(YM2610, 8000000)
+	MDRV_SOUND_CONFIG(sngkace_ym2610_interface)
+	MDRV_SOUND_ROUTE(0, "left",  1.2)
+	MDRV_SOUND_ROUTE(0, "right", 1.2)
+	MDRV_SOUND_ROUTE(1, "left",  1.0)
+	MDRV_SOUND_ROUTE(2, "right", 1.0)
 MACHINE_DRIVER_END
 
 
@@ -1580,17 +1580,9 @@ MACHINE_DRIVER_END
 
 struct YM2610interface gunbird_ym2610_interface =
 {
-	1,
-	8000000,	/* ? */
-	{ MIXERG(30,MIXER_GAIN_4x,MIXER_PAN_CENTER) },
-	{ 0 },	/* A_r */
-	{ 0 },	/* B_r */
-	{ 0 },	/* A_w */
-	{ 0 },	/* B_w */
-	{ sound_irq },	/* irq */
-	{ REGION_SOUND1 },	/* delta_t */
-	{ REGION_SOUND2 },	/* adpcm */
-	{ YM3012_VOL(100,MIXER_PAN_LEFT,100,MIXER_PAN_RIGHT) }
+	sound_irq,	/* irq */
+	REGION_SOUND1,	/* delta_t */
+	REGION_SOUND2	/* adpcm */
 };
 
 static MACHINE_DRIVER_START( gunbird )
@@ -1620,8 +1612,14 @@ static MACHINE_DRIVER_START( gunbird )
 	MDRV_VIDEO_UPDATE(psikyo)
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(YM2610, gunbird_ym2610_interface)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(YM2610, 8000000)
+	MDRV_SOUND_CONFIG(gunbird_ym2610_interface)
+	MDRV_SOUND_ROUTE(0, "left",  1.2)
+	MDRV_SOUND_ROUTE(0, "right", 1.2)
+	MDRV_SOUND_ROUTE(1, "left",  1.0)
+	MDRV_SOUND_ROUTE(2, "right", 1.0)
 MACHINE_DRIVER_END
 
 
@@ -1642,11 +1640,8 @@ static void irqhandler(int linestate)
 
 static struct YMF278B_interface ymf278b_interface =
 {
-	1,
-	{ YMF278B_STD_CLOCK },
-	{ REGION_SOUND1 },
-	{ YM3012_VOL(100, MIXER_PAN_CENTER, 100, MIXER_PAN_CENTER) },
-	{ irqhandler }
+	REGION_SOUND1,
+	irqhandler
 };
 
 static MACHINE_DRIVER_START( s1945 )
@@ -1678,8 +1673,12 @@ static MACHINE_DRIVER_START( s1945 )
 	MDRV_VIDEO_UPDATE(psikyo)
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(YMF278B, ymf278b_interface)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(YMF278B, YMF278B_STD_CLOCK)
+	MDRV_SOUND_CONFIG(ymf278b_interface)
+	MDRV_SOUND_ROUTE(0, "left", 1.0)
+	MDRV_SOUND_ROUTE(1, "right", 1.0)
 MACHINE_DRIVER_END
 
 

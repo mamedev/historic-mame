@@ -19,6 +19,7 @@ Notes:
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "sound/2203intf.h"
 
 VIDEO_START( goindol );
 WRITE8_HANDLER( goindol_fg_videoram_w );
@@ -270,18 +271,6 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 };
 
 
-static struct YM2203interface ym2203_interface =
-{
-	1,		/* 1 chip */
-	2000000,	/* 2 MHz (?) */
-	{ YM2203_VOL(25,25) },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ 0 }
-};
-
-
 
 static MACHINE_DRIVER_START( goindol )
 
@@ -310,7 +299,10 @@ static MACHINE_DRIVER_START( goindol )
 	MDRV_VIDEO_UPDATE(goindol)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM2203, ym2203_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM2203, 2000000)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
 MACHINE_DRIVER_END
 
 

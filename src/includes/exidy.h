@@ -4,10 +4,12 @@
 
 *************************************************************************/
 
+#include "sound/custom.h"
+
 /*----------- defined in sndhrdw/exidy.c -----------*/
 
-int exidy_sh_start(const struct MachineSound *msound);
-int victory_sh_start(const struct MachineSound *msound);
+void *exidy_sh_start(int clock, const struct CustomSound_interface *config);
+void *victory_sh_start(int clock, const struct CustomSound_interface *config);
 
 WRITE8_HANDLER( exidy_shriot_w );
 WRITE8_HANDLER( exidy_sfxctrl_w );
@@ -26,8 +28,7 @@ READ8_HANDLER( mtrap_voiceio_r );
 
 extern UINT8 targ_spec_flag;
 
-int targ_sh_start(const struct MachineSound *msound);
-void targ_sh_stop(void);
+void targ_sh_start(void);
 
 WRITE8_HANDLER( targ_sh_w );
 

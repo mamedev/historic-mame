@@ -9,24 +9,695 @@
 #include "driver.h"
 #include <math.h>
 
+#define VERBOSE			(0)
 
-#define BUFFER_LEN 16384
+#if VERBOSE
+#define VPRINTF(x) printf x
+#else
+#define VPRINTF(x)
+#endif
+
+
+#define RESAMPLE_BUFFER_SAMPLES			32768
+#define RESAMPLE_TOSS_SAMPLES_THRESH	(RESAMPLE_BUFFER_SAMPLES/2)
+#define RESAMPLE_KEEP_SAMPLES			256
+
+#define OUTPUT_BUFFER_SAMPLES			32768
+#define OUTPUT_TOSS_SAMPLES_THRESH		(OUTPUT_BUFFER_SAMPLES/2)
+#define OUTPUT_KEEP_SAMPLES				256
+
+#define FRAC_BITS						14
+#define FRAC_ONE						(1 << FRAC_BITS)
+#define FRAC_MASK						(FRAC_ONE - 1)
+
 
 #define SAMPLES_THIS_FRAME(channel) \
-	mixer_need_samples_this_frame((channel),stream_sample_rate[(channel)])
+	mixer_need_samples_this_frame((channel),stream[channel].sample_rate)
 
-static int stream_joined_channels[MIXER_MAX_CHANNELS];
-static INT16 *stream_buffer[MIXER_MAX_CHANNELS];
-static int stream_sample_rate[MIXER_MAX_CHANNELS];
-static int stream_buffer_pos[MIXER_MAX_CHANNELS];
-static int stream_sample_length[MIXER_MAX_CHANNELS];	/* in usec */
-static int stream_param[MIXER_MAX_CHANNELS];
-static void (*stream_callback[MIXER_MAX_CHANNELS])(int param,INT16 *buffer,int length);
-static void (*stream_callback_multi[MIXER_MAX_CHANNELS])(int param,INT16 **buffer,int length);
 
-static int memory[MIXER_MAX_CHANNELS];
-static int k[MIXER_MAX_CHANNELS];
 
+/*************************************
+ *
+ *	Type definitions
+ *
+ *************************************/
+
+struct stream_input
+{
+	sound_stream *stream;						/* pointer to the input stream */
+	struct stream_output *source;				/* pointer to the sound_output for this source */
+	stream_sample_t *resample;					/* buffer for resampling to the stream's sample rate */
+	UINT32			source_frac;				/* fractional position within the source buffer */
+	UINT32			step_frac;					/* source stepping rate */
+	UINT32			resample_in_pos;			/* resample index where next sample will be written */
+	UINT32			resample_out_pos;			/* resample index where next sample will be read */
+	INT16			gain;						/* gain to apply to this input */
+};
+
+
+struct stream_output
+{
+	stream_sample_t *buffer;					/* output buffer */
+	UINT32			cur_in_pos;					/* sample index where next sample will be written */
+	UINT32			cur_out_pos;				/* sample index where next sample will be read */
+	int				dependents;					/* number of dependents */
+	INT16			gain;						/* gain to apply to the output */
+};
+	
+
+struct _sound_stream
+{
+	/* linking information */
+	struct _sound_stream *next;					/* next stream in the chain */
+	void *			tag;						/* tag (used for identification) */
+	
+	/* general information */
+	int				sample_rate;				/* sample rate of this stream */
+	UINT32			samples_per_frame_frac;		/* fractional samples per frame */
+
+	/* input information */
+	int				inputs;						/* number of inputs */
+	struct stream_input *input;					/* list of streams we directly depend upon */
+	stream_sample_t **input_array;				/* array of inputs for passing to the callback */
+	
+	/* output information */
+	int				outputs;					/* number of outputs */
+	struct stream_output *output;				/* list of streams which directly depend upon us */
+	stream_sample_t **output_array;				/* array of outputs for passing to the callback */
+	
+	/* callback information */
+	void *			param;
+	stream_callback callback;					/* callback function */
+};
+
+
+
+/*************************************
+ *
+ *	Global variables
+ *
+ *************************************/
+
+static sound_stream *stream_head;
+static void *stream_current_tag;
+
+
+
+/*************************************
+ *
+ *	Prototypes
+ *
+ *************************************/
+
+static void stream_generate_samples(sound_stream *stream, int samples);
+static void resample_input_stream(struct stream_input *input, int samples);
+
+
+
+/*************************************
+ *
+ *	Start up the streams engine
+ *
+ *************************************/
+
+int streams_init(void)
+{
+	/* reset globals */
+	stream_head = NULL;
+	stream_current_tag = NULL;
+
+	return 0;
+}
+
+
+
+/*************************************
+ *
+ *	Set the current stream tag
+ *
+ *************************************/
+
+void streams_set_tag(void *streamtag)
+{
+	stream_current_tag = streamtag;
+}
+
+
+
+/*************************************
+ *
+ *	Update all 
+ *
+ *************************************/
+
+void streams_frame_update(void)
+{
+	sound_stream *stream;
+	
+	VPRINTF(("streams_frame_update\n"));
+
+	/* iterate over all the streams */
+	for (stream = stream_head; stream != NULL; stream = stream->next)
+	{
+		int inputnum, outputnum;
+		
+		/* iterate over all the inputs */
+		for (inputnum = 0; inputnum < stream->inputs; inputnum++)
+		{
+			struct stream_input *input = &stream->input[inputnum];
+			
+			/* if this input's resample buffer is over halfway full, throw away old samples */
+			VPRINTF(("  Stream %p, input %d: resample_out_pos = %d\n", stream, inputnum, input->resample_out_pos));
+			if (input->resample_out_pos >= RESAMPLE_TOSS_SAMPLES_THRESH)
+			{
+				int samples_to_remove = input->resample_out_pos - RESAMPLE_KEEP_SAMPLES;
+				
+				VPRINTF(("  Tossing resample buffer samples (%p, input %d) - %d samples\n", stream, inputnum, samples_to_remove));
+				
+				/* keep some of the samples and toss the rest */
+				if (RESAMPLE_KEEP_SAMPLES)
+					memmove(&input->resample[0], &input->resample[samples_to_remove], RESAMPLE_KEEP_SAMPLES * sizeof(*input->resample));
+				input->resample_in_pos -= samples_to_remove;
+				input->resample_out_pos -= samples_to_remove;
+			}
+		}
+		
+		/* iterate over all the outputs */
+		for (outputnum = 0; outputnum < stream->outputs; outputnum++)
+		{
+			struct stream_output *output = &stream->output[outputnum];
+			int samples_to_remove = 0;
+			
+			/* if this output is over halfway full, throw away old samples */
+			VPRINTF(("  Stream %p, output %d: cur_in_pos = %d, cur_out_pos = %d\n", stream, outputnum, output->cur_in_pos, output->cur_out_pos));
+			if (output->cur_in_pos >= OUTPUT_TOSS_SAMPLES_THRESH)
+			{
+				samples_to_remove = output->cur_in_pos - OUTPUT_KEEP_SAMPLES;
+
+				VPRINTF(("  Tossing output buffer samples (%p, output %d) - %d samples\n", stream, outputnum, samples_to_remove));
+
+				/* keep some of the samples and toss the rest */
+				if (OUTPUT_KEEP_SAMPLES)
+					memmove(&output->buffer[0], &output->buffer[samples_to_remove], OUTPUT_KEEP_SAMPLES * sizeof(*output->buffer));
+				output->cur_in_pos -= samples_to_remove;
+				if (output->cur_out_pos > samples_to_remove)
+					output->cur_out_pos -= samples_to_remove;
+				else
+					output->cur_out_pos = 0;
+			}
+
+			/* now scan for any dependent inputs and fix up their source pointer */
+			if (output->dependents > 0)
+			{
+				UINT32 min_source_frac = output->cur_in_pos << FRAC_BITS;
+				sound_stream *str;
+				
+				for (str = stream_head; str != NULL; str = str->next)
+					for (inputnum = 0; inputnum < str->inputs; inputnum++)
+						if (str->input[inputnum].source == output)
+						{
+							if (samples_to_remove)
+								VPRINTF(("  Adjusting source_frac of stream %p, input %d from %08x to %08x\n", str, inputnum, str->input[inputnum].source_frac, str->input[inputnum].source_frac - (samples_to_remove << FRAC_BITS)));
+
+							/* first remove any samples */
+							str->input[inputnum].source_frac -= samples_to_remove << FRAC_BITS;
+							
+							/* if this input is further behind, note it */
+							if (str->input[inputnum].source_frac < min_source_frac)
+								min_source_frac = str->input[inputnum].source_frac;
+						}
+				
+				/* update the in position to the minimum source frac */
+				output->cur_out_pos = min_source_frac >> FRAC_BITS;
+			}
+		}
+	}
+}
+
+
+
+/*************************************
+ *
+ *	Create a new stream
+ *
+ *************************************/
+
+sound_stream *stream_create(int inputs, int outputs, int sample_rate, void *param, stream_callback callback)
+{
+	int inputnum, outputnum;
+	sound_stream *stream;
+
+	/* allocate memory */
+	stream = auto_malloc(sizeof(*stream));
+	memset(stream, 0, sizeof(*stream));
+	
+	VPRINTF(("stream_create(%d, %d, %d) => %p\n", inputs, outputs, sample_rate, stream));
+	
+	/* allocate space for the inputs */
+	if (inputs > 0)
+	{
+		stream->input = auto_malloc(inputs * sizeof(*stream->input));
+		memset(stream->input, 0, inputs * sizeof(*stream->input));
+		stream->input_array = auto_malloc(inputs * sizeof(*stream->input_array));
+		memset(stream->input_array, 0, inputs * sizeof(*stream->input_array));
+	}
+	
+	/* allocate space for the outputs */
+	if (outputs > 0)
+	{
+		stream->output = auto_malloc(outputs * sizeof(*stream->output));
+		memset(stream->output, 0, outputs * sizeof(*stream->output));
+		stream->output_array = auto_malloc(outputs * sizeof(*stream->output_array));
+		memset(stream->output_array, 0, outputs * sizeof(*stream->output_array));
+	}
+	
+	/* fill in the data */
+	stream->tag         = stream_current_tag;
+	stream->sample_rate = sample_rate;
+	stream->samples_per_frame_frac = (UINT32)((double)sample_rate * (double)(1 << FRAC_BITS) / Machine->drv->frames_per_second);
+	stream->inputs      = inputs;
+	stream->outputs     = outputs;
+	stream->param       = param;
+	stream->callback    = callback;
+	
+	/* allocate resample buffers */
+	for (inputnum = 0; inputnum < inputs; inputnum++)
+	{
+		stream->input[inputnum].resample = auto_malloc(RESAMPLE_BUFFER_SAMPLES * sizeof(*stream->input[inputnum].resample));
+		stream->input[inputnum].gain = 0x100;
+	}
+	
+	/* allocate output buffers */
+	for (outputnum = 0; outputnum < outputs; outputnum++)
+	{
+		stream->output[outputnum].buffer = auto_malloc(OUTPUT_BUFFER_SAMPLES * sizeof(*stream->output[outputnum].buffer));
+		stream->output[outputnum].gain = 0x100;
+	}
+	
+	/* hook us in */
+	if (!stream_head)
+		stream_head = stream;
+	else
+	{
+		sound_stream *temp;
+		for (temp = stream_head; temp->next; temp = temp->next) ;
+		temp->next = stream;
+	}
+	return stream;
+}
+
+
+
+/*************************************
+ *
+ *	Configure a stream's input
+ *
+ *************************************/
+
+void stream_set_input(sound_stream *stream, int index, sound_stream *input_stream, int output_index, float gain)
+{
+	struct stream_input *input;
+	
+	VPRINTF(("stream_set_input(%p, %d, %p, %d, %f)\n", stream, index, input_stream, output_index, gain));
+
+	/* make sure it's a valid input */
+	if (index >= stream->inputs)
+		osd_die("Fatal error: stream_set_input attempted to configure non-existant input %d (%d max)\n", index, stream->inputs);
+
+	/* make sure it's a valid output */
+	if (input_stream && output_index >= input_stream->outputs)
+		osd_die("Fatal error: stream_set_input attempted to use a non-existant output %d (%d max)\n", output_index, input_stream->outputs);
+	
+	/* if this input is already wired, update the dependent info */
+	input = &stream->input[index];
+	if (input->source)
+		input->source->dependents--;
+	
+	/* wire it up */
+	input->stream = input_stream;
+	input->source = input_stream ? &input_stream->output[output_index] : NULL;
+	input->source_frac = 0;
+	input->step_frac = input_stream ? (((UINT64)input_stream->sample_rate << FRAC_BITS) / stream->sample_rate) : 0;
+	input->resample_in_pos = 0;
+	input->resample_out_pos = 0;
+	input->gain = (int)(0x100 * gain);
+	VPRINTF(("  step_frac = %08X\n", input->step_frac));
+
+	/* update the dependent info */
+	if (input->source)
+		input->source->dependents++;
+}
+
+
+
+/*************************************
+ *
+ *	Update a stream to the current
+ *	time
+ *
+ *************************************/
+
+void stream_update(sound_stream *stream, int min_interval)
+{
+	/* get current position based on the current time */
+	UINT32 target_frac = (stream->output[0].cur_out_pos << FRAC_BITS) + sound_scalebufferpos(stream->samples_per_frame_frac);
+	UINT32 target_sample = ((target_frac + FRAC_ONE - 1) >> FRAC_BITS) + 1;
+
+	VPRINTF(("stream_update(%p, %d)\n", stream, min_interval));
+	VPRINTF(("  cur_in_pos = %d, cur_out_pos = %d, target_sample = %d\n", stream->output[0].cur_in_pos, stream->output[0].cur_out_pos, target_sample));
+	
+	/* compute how many samples we need to get to where we want to be */
+	stream_generate_samples(stream, target_sample - stream->output[0].cur_in_pos);
+}
+
+
+
+/*************************************
+ *
+ *	Find a stream using a tag and
+ *	index
+ *
+ *************************************/
+
+sound_stream *stream_find_by_tag(void *streamtag, int streamindex)
+{
+	sound_stream *stream;
+	
+	/* scan the list looking for the nth stream that matches the tag */
+	for (stream = stream_head; stream; stream = stream->next)
+		if (stream->tag == streamtag && streamindex-- == 0)
+			return stream;
+	return NULL;
+}
+
+
+
+/*************************************
+ *
+ *	Return the number of inputs for
+ *	a given stream
+ *
+ *************************************/
+
+int stream_get_inputs(sound_stream *stream)
+{
+	return stream->inputs;
+}
+
+
+
+/*************************************
+ *
+ *	Return the number of outputs for
+ *	a given stream
+ *
+ *************************************/
+
+int stream_get_outputs(sound_stream *stream)
+{
+	return stream->outputs;
+}
+
+
+
+/*************************************
+ *
+ *	Set the input gain on a given
+ *	stream
+ *
+ *************************************/
+
+void stream_set_input_gain(sound_stream *stream, int input, float gain)
+{
+	stream_update(stream, 0);
+	stream->input[input].gain = (int)(0x100 * gain);
+}
+
+
+
+/*************************************
+ *
+ *	Set the output gain on a given
+ *	stream
+ *
+ *************************************/
+
+void stream_set_output_gain(sound_stream *stream, int output, float gain)
+{
+	stream_update(stream, 0);
+	stream->output[output].gain = (int)(0x100 * gain);
+}
+
+
+
+/*************************************
+ *
+ *	Return a pointer to the output
+ *	buffer for a stream with the
+ *	requested number of samples
+ *
+ *************************************/
+
+stream_sample_t *stream_consume_output(sound_stream *stream, int outputnum, int samples)
+{
+	struct stream_output *output = &stream->output[outputnum];
+	UINT32 target_sample = output->cur_out_pos + samples;
+	
+	VPRINTF(("stream_consume_output(%p, %d, %d)\n", stream, outputnum, samples));
+	
+	/* if we don't have enough samples, fix it */
+	stream_generate_samples(stream, target_sample - output->cur_in_pos);
+	
+	/* return a pointer to the buffer, and adjust the base */
+	output->cur_out_pos += samples;
+	return output->buffer + output->cur_out_pos - samples;
+}
+
+
+
+/*************************************
+ *
+ *	Generate the requested number of
+ *	samples for a stream, making sure
+ *	all inputs have the appropriate
+ *	number of samples generated
+ *
+ *************************************/
+
+static void stream_generate_samples(sound_stream *stream, int samples)
+{
+	int inputnum, outputnum;
+	
+	/* if we're already there, skip it */
+	if (samples <= 0)
+		return;
+	
+	VPRINTF(("stream_generate_samples(%p, %d)\n", stream, samples));
+
+	/* loop over all inputs and make sure we have enough data for them */
+	for (inputnum = 0; inputnum < stream->inputs; inputnum++)
+	{
+		struct stream_input *input = &stream->input[inputnum];
+		UINT32 target_resample_out_pos;
+		INT32 resample_samples_needed;
+		
+		VPRINTF(("  input %d\n", inputnum));
+
+		/* determine the final output position where we need to be to satisfy this request */
+		target_resample_out_pos = input->resample_out_pos + samples;
+		
+		/* if we don't have enough samples in the resample buffer, we need some more */
+		resample_samples_needed = target_resample_out_pos - input->resample_in_pos;
+		VPRINTF(("    resample_samples_needed = %d\n", resample_samples_needed));
+		if (resample_samples_needed > 0)
+		{
+			INT32 source_samples_needed;
+			UINT32 target_source_frac;
+			
+			/* determine where we will be after we process all the needed samples */
+			target_source_frac = input->source_frac + resample_samples_needed * input->step_frac;
+
+			/* if we're undersampling, we need an extra sample for linear interpolation */
+			if (input->step_frac < FRAC_ONE)
+				target_source_frac += FRAC_ONE;
+			
+			/* based on that, we know how many additional source samples we need to generate */
+			source_samples_needed = ((target_source_frac + FRAC_ONE - 1) >> FRAC_BITS) - input->source->cur_in_pos;
+			VPRINTF(("    source_samples_needed = %d\n", source_samples_needed));
+
+			/* if we need some samples, generate them recursively */			
+			if (source_samples_needed > 0)
+				stream_generate_samples(input->stream, source_samples_needed);
+			
+			/* now resample */
+			VPRINTF(("    resample_input_stream(%d)\n", resample_samples_needed));
+			resample_input_stream(input, resample_samples_needed);
+			VPRINTF(("    resample_input_stream done\n"));
+		}
+		
+		/* set the input pointer */
+		stream->input_array[inputnum] = &input->resample[input->resample_out_pos];
+		input->resample_out_pos += samples;
+	}
+	
+	/* loop over all outputs and compute the output array */
+	for (outputnum = 0; outputnum < stream->outputs; outputnum++)
+	{
+		struct stream_output *output = &stream->output[outputnum];
+		stream->output_array[outputnum] = output->buffer + output->cur_in_pos;
+		output->cur_in_pos += samples;
+	}
+	
+	/* okay, all the inputs are up-to-date ... call the callback */
+	VPRINTF(("  callback(%p, %d)\n", stream, samples));
+	(*stream->callback)(stream->param, stream->input_array, stream->output_array, samples);
+	VPRINTF(("  callback done\n"));
+}
+
+
+
+/*************************************
+ *
+ *	Resample an input stream into the
+ *	correct sample rate with gain
+ *	adjustment
+ *
+ *************************************/
+
+static void resample_input_stream(struct stream_input *input, int samples)
+{
+	stream_sample_t *dest = input->resample + input->resample_in_pos;
+	stream_sample_t *source = input->source->buffer;
+	INT16 gain = (input->gain * input->source->gain) >> 8;
+	UINT32 pos = input->source_frac;
+	UINT32 step = input->step_frac;
+	INT32 sample;
+
+	VPRINTF(("    resample_input_stream -- step = %d\n", step));
+	
+	/* perfectly matching */
+	if (step == FRAC_ONE)
+	{
+		/* no or low gain */
+		if (gain <= 0x100)
+		{
+			while (samples--)
+			{
+				/* compute the sample */
+				sample = source[pos >> FRAC_BITS];
+				*dest++ = (sample * gain) >> 8;
+				pos += FRAC_ONE;
+			}
+		}
+		
+		/* with potentially clipping gain */
+		else
+		{
+			while (samples--)
+			{
+				/* compute the sample */
+				sample = source[pos >> FRAC_BITS];
+				sample = (sample * gain) >> 8;
+				pos += FRAC_ONE;
+
+				/* clamp and store */
+				if (sample < -32768)
+					sample = -32768;
+				else if (sample > 32767)
+					sample = 32767;
+				*dest++ = sample;
+			}
+		}
+	}
+	
+	/* input is undersampled: use linear interpolation */
+	else if (step < FRAC_ONE)
+	{
+		/* no or low gain */
+		if (gain <= 0x100)
+		{
+			while (samples--)
+			{
+				/* compute the sample */
+				sample  = source[(pos >> FRAC_BITS) + 0] * (FRAC_ONE - (pos & FRAC_MASK));
+				sample += source[(pos >> FRAC_BITS) + 1] * (pos & FRAC_MASK);
+				sample >>= FRAC_BITS;
+				*dest++ = (sample * gain) >> 8;
+				pos += step;
+			}
+		}
+		
+		/* with potentially clipping gain */
+		else
+		{
+			while (samples--)
+			{
+				/* compute the sample */
+				sample  = source[(pos >> FRAC_BITS) + 0] * (FRAC_ONE - (pos & FRAC_MASK));
+				sample += source[(pos >> FRAC_BITS) + 1] * (pos & FRAC_MASK);
+				sample >>= FRAC_BITS;
+				sample = (sample * gain) >> 8;
+				pos += step;
+
+				/* clamp and store */
+				if (sample < -32768)
+					sample = -32768;
+				else if (sample > 32767)
+					sample = 32767;
+				*dest++ = sample;
+			}
+		}
+	}
+	
+	/* input is oversampled: sum the energy */
+	else
+	{
+		/* no or low gain */
+		if (gain <= 0x100)
+		{
+			while (samples--)
+			{
+				/* compute the sample */
+				sample  = source[(pos >> FRAC_BITS) + 0] * (FRAC_ONE - (pos & FRAC_MASK));
+				sample += source[(pos >> FRAC_BITS) + 1] * (pos & FRAC_MASK);
+				sample >>= FRAC_BITS;
+				*dest++ = (sample * gain) >> 8;
+				pos += step;
+			}
+		}
+		
+		/* with potentially clipping gain */
+		else
+		{
+			while (samples--)
+			{
+				/* compute the sample */
+				sample  = source[(pos >> FRAC_BITS) + 0] * (FRAC_ONE - (pos & FRAC_MASK));
+				sample += source[(pos >> FRAC_BITS) + 1] * (pos & FRAC_MASK);
+				sample >>= FRAC_BITS;
+				sample = (sample * gain) >> 8;
+				pos += step;
+
+				/* clamp and store */
+				if (sample < -32768)
+					sample = -32768;
+				else if (sample > 32767)
+					sample = 32767;
+				*dest++ = sample;
+			}
+		}
+	}
+	
+	/* update the input parameters */
+	input->resample_in_pos = dest - input->resample;
+	input->source_frac = pos;
+}
+
+
+
+
+
+#if 0
 /*
 signal >--R1--+--R2--+
               |      |
@@ -37,8 +708,9 @@ signal >--R1--+--R2--+
 
 /* R1, R2, R3 in Ohm; C in pF */
 /* set C = 0 to disable the filter */
-void set_RC_filter(int channel,int R1,int R2,int R3,int C)
+void set_RC_filter(sound_stream *stream,int R1,int R2,int R3,int C)
 {
+	struct sound_stream *st = &stream[channel];
 	float f_R1,f_R2,f_R3,f_C;
 	float Req;
 
@@ -47,7 +719,7 @@ void set_RC_filter(int channel,int R1,int R2,int R3,int C)
 	if (C == 0)
 	{
 		/* filter disabled */
-		k[channel] = 0;
+		st->k = 0;
 		return;
 	}
 
@@ -61,235 +733,26 @@ void set_RC_filter(int channel,int R1,int R2,int R3,int C)
 	Req = (f_R1 * (f_R2 + f_R3)) / (f_R1 + f_R2 + f_R3);
 
 	/* k = (1-(EXP(-TIMEDELTA/RC)))    */
-	k[channel] = 0x10000 * (1 - (exp(-1 / (Req * f_C) / stream_sample_rate[channel])));
+	st->k = 0x10000 * (1 - (exp(-1 / (Req * f_C) / st->sample_rate)));
 }
 
 
 void apply_RC_filter(int channel,int len)
 {
+	struct sound_stream *st = &stream[channel];
 	int i;
-	INT16 *buf = stream_buffer[channel];
+	INT16 *buf = st->buffer;
 
-	if (len == 0 || k[channel] == 0) return;
+	if (len == 0 || st->k == 0) return;
 
 	/* Next Value = PREV + (INPUT_VALUE - PREV) * k    */
-	buf[0] = memory[channel] + ((int)(buf[0] - memory[channel]) * k[channel] / 0x10000);
+	buf[0] = st->memory + ((int)(buf[0] - st->memory) * st->k / 0x10000);
 
 	for (i = 1;i < len;i++)
-		buf[i] = buf[i-1] + ((int)(buf[i] - buf[i-1]) * k[channel] / 0x10000);
+		buf[i] = buf[i-1] + ((int)(buf[i] - buf[i-1]) * st->k / 0x10000);
 
-	memory[channel] = buf[len-1];
+	st->memory = buf[len-1];
 }
 
 
-int streams_sh_start(void)
-{
-	int i;
-
-
-	for (i = 0;i < MIXER_MAX_CHANNELS;i++)
-	{
-		stream_joined_channels[i] = 1;
-		stream_buffer[i] = 0;
-	}
-
-	return 0;
-}
-
-
-void streams_sh_stop(void)
-{
-	int i;
-
-
-	for (i = 0;i < MIXER_MAX_CHANNELS;i++)
-	{
-		free(stream_buffer[i]);
-		stream_buffer[i] = 0;
-	}
-}
-
-
-void streams_sh_update(void)
-{
-	int channel,i;
-
-
-	if (Machine->sample_rate == 0) return;
-
-	/* update all the output buffers */
-	for (channel = 0;channel < MIXER_MAX_CHANNELS;channel += stream_joined_channels[channel])
-	{
-		if (stream_buffer[channel])
-		{
-			int newpos;
-			int buflen;
-
-
-			newpos = SAMPLES_THIS_FRAME(channel);
-
-			buflen = newpos - stream_buffer_pos[channel];
-
-			if (stream_joined_channels[channel] > 1)
-			{
-				INT16 *buf[MIXER_MAX_CHANNELS];
-
-
-				if (buflen > 0)
-				{
-					for (i = 0;i < stream_joined_channels[channel];i++)
-						buf[i] = stream_buffer[channel+i] + stream_buffer_pos[channel+i];
-
-					(*stream_callback_multi[channel])(stream_param[channel],buf,buflen);
-				}
-
-				for (i = 0;i < stream_joined_channels[channel];i++)
-					stream_buffer_pos[channel+i] = 0;
-
-				for (i = 0;i < stream_joined_channels[channel];i++)
-					apply_RC_filter(channel+i,buflen);
-			}
-			else
-			{
-				if (buflen > 0)
-				{
-					INT16 *buf;
-
-
-					buf = stream_buffer[channel] + stream_buffer_pos[channel];
-
-					(*stream_callback[channel])(stream_param[channel],buf,buflen);
-				}
-
-				stream_buffer_pos[channel] = 0;
-
-				apply_RC_filter(channel,buflen);
-			}
-		}
-	}
-
-	for (channel = 0;channel < MIXER_MAX_CHANNELS;channel += stream_joined_channels[channel])
-	{
-		if (stream_buffer[channel])
-		{
-			for (i = 0;i < stream_joined_channels[channel];i++)
-				mixer_play_streamed_sample_16(channel+i,
-						stream_buffer[channel+i],sizeof(INT16)*SAMPLES_THIS_FRAME(channel+i),
-						stream_sample_rate[channel]);
-		}
-	}
-}
-
-
-int stream_init(const char *name,int default_mixing_level,
-		int sample_rate,
-		int param,void (*callback)(int param,INT16 *buffer,int length))
-{
-	int channel;
-
-
-	channel = mixer_allocate_channel(default_mixing_level);
-
-	stream_joined_channels[channel] = 1;
-
-	mixer_set_name(channel,name);
-
-	if ((stream_buffer[channel] = malloc(sizeof(INT16)*BUFFER_LEN)) == 0)
-		return -1;
-
-	stream_sample_rate[channel] = sample_rate;
-	stream_buffer_pos[channel] = 0;
-	if (sample_rate)
-		stream_sample_length[channel] = 1000000 / sample_rate;
-	else
-		stream_sample_length[channel] = 0;
-	stream_param[channel] = param;
-	stream_callback[channel] = callback;
-	set_RC_filter(channel,0,0,0,0);
-
-	return channel;
-}
-
-
-int stream_init_multi(int channels,const char **names,const int *default_mixing_levels,
-		int sample_rate,
-		int param,void (*callback)(int param,INT16 **buffer,int length))
-{
-	int channel,i;
-
-
-	channel = mixer_allocate_channels(channels,default_mixing_levels);
-
-	stream_joined_channels[channel] = channels;
-
-	for (i = 0;i < channels;i++)
-	{
-		mixer_set_name(channel+i,names[i]);
-
-		if ((stream_buffer[channel+i] = malloc(sizeof(INT16)*BUFFER_LEN)) == 0)
-			return -1;
-
-		stream_sample_rate[channel+i] = sample_rate;
-		stream_buffer_pos[channel+i] = 0;
-		if (sample_rate)
-			stream_sample_length[channel+i] = 1000000 / sample_rate;
-		else
-			stream_sample_length[channel+i] = 0;
-	}
-
-	stream_param[channel] = param;
-	stream_callback_multi[channel] = callback;
-	set_RC_filter(channel,0,0,0,0);
-
-	return channel;
-}
-
-
-/* min_interval is in usec */
-void stream_update(int channel,int min_interval)
-{
-	int newpos;
-	int buflen;
-
-
-	if (Machine->sample_rate == 0 || stream_buffer[channel] == 0)
-		return;
-
-	/* get current position based on the timer */
-	newpos = sound_scalebufferpos(SAMPLES_THIS_FRAME(channel));
-
-	buflen = newpos - stream_buffer_pos[channel];
-
-	if (buflen * stream_sample_length[channel] > min_interval)
-	{
-		if (stream_joined_channels[channel] > 1)
-		{
-			INT16 *buf[MIXER_MAX_CHANNELS];
-			int i;
-
-
-			for (i = 0;i < stream_joined_channels[channel];i++)
-				buf[i] = stream_buffer[channel+i] + stream_buffer_pos[channel+i];
-
-			profiler_mark(PROFILER_SOUND);
-			(*stream_callback_multi[channel])(stream_param[channel],buf,buflen);
-			profiler_mark(PROFILER_END);
-
-			for (i = 0;i < stream_joined_channels[channel];i++)
-				stream_buffer_pos[channel+i] += buflen;
-		}
-		else
-		{
-			INT16 *buf;
-
-
-			buf = stream_buffer[channel] + stream_buffer_pos[channel];
-
-			profiler_mark(PROFILER_SOUND);
-			(*stream_callback[channel])(stream_param[channel],buf,buflen);
-			profiler_mark(PROFILER_END);
-
-			stream_buffer_pos[channel] += buflen;
-		}
-	}
-}
+#endif

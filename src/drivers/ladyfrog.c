@@ -48,6 +48,8 @@ Notes:
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "sound/ay8910.h"
+#include "sound/msm5232.h"
 
 VIDEO_START( ladyfrog );
 VIDEO_UPDATE( ladyfrog );
@@ -121,21 +123,15 @@ static WRITE8_HANDLER(unk_w)
 
 static struct AY8910interface ay8910_interface =
 {
-	1,
-	8000000/4,
-	{ 15 },
-	{ 0 },
-	{ 0 },
-	{ unk_w },
-	{ unk_w }
+	0,
+	0,
+	unk_w,
+	unk_w
 };
 
 static struct MSM5232interface msm5232_interface =
 {
-	1,
-	2000000,
-	{ { 0.65e-6, 0.65e-6, 0.65e-6, 0.65e-6, 0.65e-6, 0.65e-6, 0.65e-6, 0.65e-6 } },
-	{ 100 }
+	{ 0.65e-6, 0.65e-6, 0.65e-6, 0.65e-6, 0.65e-6, 0.65e-6, 0.65e-6, 0.65e-6 }
 };
 
 static READ8_HANDLER( snd_flag_r )
@@ -294,6 +290,7 @@ static MACHINE_DRIVER_START( ladyfrog )
 	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,2)
 
+	/* video hardware */
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 	MDRV_INTERLEAVE(100)
@@ -313,8 +310,16 @@ static MACHINE_DRIVER_START( ladyfrog )
 	MDRV_VIDEO_START(ladyfrog)
 	MDRV_VIDEO_UPDATE(ladyfrog)
 
-	MDRV_SOUND_ADD(AY8910, ay8910_interface)
-	MDRV_SOUND_ADD(MSM5232, msm5232_interface)
+	/* sound hardware */
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	
+	MDRV_SOUND_ADD(AY8910, 8000000/4)
+	MDRV_SOUND_CONFIG(ay8910_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.15)
+
+	MDRV_SOUND_ADD(MSM5232, 2000000)
+	MDRV_SOUND_CONFIG(msm5232_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 

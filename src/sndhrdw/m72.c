@@ -43,6 +43,7 @@ Shisensho II                            1993  Rev 3.34 M81  Yes
 
 #include "driver.h"
 #include "state.h"
+#include "sound/dac.h"
 
 
 /*

@@ -19,6 +19,7 @@ Notes:
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "cpu/z80/z80.h"
+#include "sound/ay8910.h"
 
 
 extern UINT8 *popeye_background_pos;
@@ -471,13 +472,10 @@ static READ8_HANDLER( popeye_portA_r )
 
 static struct AY8910interface ay8910_interface =
 {
-	1,	/* 1 chip */
-	8000000/4,	/* 2 MHz */
-	{ 40 },
-	{ popeye_portA_r },
-	{ 0 },
-	{ 0 },
-	{ popeye_portB_w }
+	popeye_portA_r,
+	0,
+	0,
+	popeye_portB_w
 };
 
 
@@ -505,7 +503,11 @@ static MACHINE_DRIVER_START( skyskipr )
 	MDRV_VIDEO_UPDATE(popeye)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(AY8910, ay8910_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	
+	MDRV_SOUND_ADD(AY8910, 8000000/4)
+	MDRV_SOUND_CONFIG(ay8910_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.40)
 MACHINE_DRIVER_END
 
 

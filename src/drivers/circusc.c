@@ -9,6 +9,8 @@ To enter service mode, keep 1&2 pressed on reset
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "cpu/m6809/m6809.h"
+#include "sound/dac.h"
+#include "sound/sn76496.h"
 
 
 void konami1_decode(void);
@@ -238,21 +240,6 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 
 
-static struct SN76496interface sn76496_interface =
-{
-	2,      /* 2 chips */
-	{ 14318180/8, 14318180/8 },     /*  1.7897725 MHz */
-	{ 100, 100 }
-};
-
-static struct DACinterface dac_interface =
-{
-	1,
-	{ 100 }
-};
-
-
-
 static MACHINE_DRIVER_START( circusc )
 
 	/* basic machine hardware */
@@ -280,8 +267,16 @@ static MACHINE_DRIVER_START( circusc )
 	MDRV_VIDEO_UPDATE(circusc)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(SN76496, sn76496_interface)
-	MDRV_SOUND_ADD(DAC, dac_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(SN76496, 14318180/8)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
+
+	MDRV_SOUND_ADD(SN76496, 14318180/8)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
+
+	MDRV_SOUND_ADD(DAC, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 

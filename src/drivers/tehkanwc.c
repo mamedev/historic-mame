@@ -81,6 +81,8 @@ TO DO :
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "cpu/z80/z80.h"
+#include "sound/ay8910.h"
+#include "sound/msm5205.h"
 
 
 extern UINT8 *tehkanwc_videoram2;
@@ -771,24 +773,24 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 
 
-static struct AY8910interface ay8910_interface =
+static struct AY8910interface ay8910_interface_1 =
 {
-	2,	/* 2 chips */
-	1536000, 	/* ??? */
-	{ 25, 25 },
-	{ 0, tehkanwc_portA_r },
-	{ 0, tehkanwc_portB_r },
-	{ tehkanwc_portA_w, 0 },
-	{ tehkanwc_portB_w, 0 }
+	0,
+	0,
+	tehkanwc_portA_w,
+	tehkanwc_portB_w
+};
+
+static struct AY8910interface ay8910_interface_2 =
+{
+	tehkanwc_portA_r,
+	tehkanwc_portB_r
 };
 
 static struct MSM5205interface msm5205_interface =
 {
-	1,					/* 1 chip             */
-	384000,				/* 384KHz             */
-	{ tehkanwc_adpcm_int },/* interrupt function */
-	{ MSM5205_S48_4B },	/* 8KHz               */
-	{ 45 }
+	tehkanwc_adpcm_int,	/* interrupt function */
+	MSM5205_S48_4B		/* 8KHz               */
 };
 
 static MACHINE_DRIVER_START( tehkanwc )
@@ -822,8 +824,19 @@ static MACHINE_DRIVER_START( tehkanwc )
 	MDRV_VIDEO_UPDATE(tehkanwc)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(AY8910, ay8910_interface)
-	MDRV_SOUND_ADD(MSM5205, msm5205_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	
+	MDRV_SOUND_ADD(AY8910, 1536000)
+	MDRV_SOUND_CONFIG(ay8910_interface_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
+	
+	MDRV_SOUND_ADD(AY8910, 1536000)
+	MDRV_SOUND_CONFIG(ay8910_interface_2)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
+
+	MDRV_SOUND_ADD(MSM5205, 384000)
+	MDRV_SOUND_CONFIG(msm5205_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.45)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( gridiron )

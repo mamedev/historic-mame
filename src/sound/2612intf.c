@@ -18,170 +18,162 @@
 
 #ifdef BUILD_YM2612
 
-#define YM2612_NUMBUF 2
-
-/* use FM.C with stream system */
-
-static int stream[MAX_2612];
-
-/* Global Interface holder */
-static const struct YM2612interface *intf;
-
-static void *Timer[MAX_2612][2];
-static double lastfired[MAX_2612][2];
+struct ym2612_info
+{
+	sound_stream *	stream;
+	mame_timer *	timer[2];
+	double			lastfired[2];
+	void *			chip;
+	const struct YM2612interface *intf;
+};
 
 /*------------------------- TM2612 -------------------------------*/
 /* IRQ Handler */
-static void IRQHandler(int n,int irq)
+static void IRQHandler(void *param,int irq)
 {
-	if(intf->handler[n]) intf->handler[n](irq);
+	struct ym2612_info *info = param;
+	if(info->intf->handler) info->intf->handler(irq);
 }
 
 /* Timer overflow callback from timer.c */
-static void timer_callback_2612(int param)
+static void timer_callback_2612_0(void *param)
 {
-	int n=param&0x7f;
-	int c=param>>7;
+	struct ym2612_info *info = param;
+	info->lastfired[0] = timer_get_time();
+	YM2612TimerOver(info->chip,0);
+}
 
-//	logerror("2612 TimerOver %d\n",c);
-	lastfired[n][c] = timer_get_time();
-	YM2612TimerOver(n,c);
+static void timer_callback_2612_1(void *param)
+{
+	struct ym2612_info *info = param;
+	info->lastfired[1] = timer_get_time();
+	YM2612TimerOver(info->chip,1);
 }
 
 /* TimerHandler from fm.c */
-static void TimerHandler(int n,int c,int count,double stepTime)
+static void TimerHandler(void *param,int c,int count,double stepTime)
 {
+	struct ym2612_info *info = param;
 	if( count == 0 )
 	{	/* Reset FM Timer */
-		timer_enable(Timer[n][c], 0);
+		timer_enable(info->timer[c], 0);
 	}
 	else
 	{	/* Start FM Timer */
 		double timeSec = (double)count * stepTime;
 		double slack;
 
-		slack = timer_get_time() - lastfired[n][c];
+		slack = timer_get_time() - info->lastfired[c];
 		/* hackish way to make bstars intro sync without */
 		/* breaking sonicwi2 command 0x35 */
 		if (slack < 0.000050) slack = 0;
 
-		if (!timer_enable(Timer[n][c], 1))
-			timer_adjust(Timer[n][c], timeSec - slack, (c<<7)|n, 0);
-	}
-}
-
-static void FMTimerInit( void )
-{
-	int i;
-
-	for( i = 0 ; i < MAX_2612 ; i++ )
-	{
-		Timer[i][0] = timer_alloc(timer_callback_2612);
-		Timer[i][1] = timer_alloc(timer_callback_2612);
+		if (!timer_enable(info->timer[c], 1))
+			timer_adjust_ptr(info->timer[c], timeSec - slack, info, 0);
 	}
 }
 
 /* update request from fm.c */
-void YM2612UpdateRequest(int chip)
+void YM2612UpdateRequest(void *param)
 {
-	stream_update(stream[chip],100);
+	struct ym2612_info *info = param;
+	stream_update(info->stream,100);
 }
 
 /***********************************************************/
 /*    YM2612                                               */
 /***********************************************************/
-int YM2612_sh_start(const struct MachineSound *msound)
-{
-	int i,j;
-	int rate = Machine->sample_rate;
-	char buf[YM2612_NUMBUF][40];
-	const char *name[YM2612_NUMBUF];
 
-	intf = msound->sound_interface;
-	if( intf->num > MAX_2612 ) return 1;
+static void ym2612_stream_update(void *param, stream_sample_t **inputs, stream_sample_t **buffers, int length)
+{
+	struct ym2612_info *info = param;
+	YM2612UpdateOne(info->chip, buffers, length);
+}
+
+
+static void *ym2612_start(int sndindex, int clock, const void *config)
+{
+	static const struct YM2612interface dummy = { 0 };
+	int rate = Machine->sample_rate;
+	struct ym2612_info *info;
+	
+	info = auto_malloc(sizeof(*info));
+	memset(info, 0, sizeof(*info));
+
+	info->intf = config ? config : &dummy;
 
 	/* FM init */
 	/* Timer Handler set */
-	FMTimerInit();
+	info->timer[0] =timer_alloc_ptr(timer_callback_2612_0);
+	info->timer[1] =timer_alloc_ptr(timer_callback_2612_1);
+
 	/* stream system initialize */
-	for (i = 0;i < intf->num;i++)
-	{
-		int vol[YM2612_NUMBUF];
-		/* stream setup */
-		int mixed_vol = intf->mixing_level[i];
-		/* stream setup */
-		for (j = 0 ; j < YM2612_NUMBUF ; j++)
-		{
-			vol[j] = mixed_vol&0xffff;
-			name[j] = buf[j];
-			mixed_vol >>= 16;
-			sprintf(buf[j],"%s #%d Ch%d",sound_name(msound), i, j+1 );
-		}
-		stream[i] = stream_init_multi(YM2612_NUMBUF,
-			name,vol,rate,
-			i,YM2612UpdateOne);
-	}
+	info->stream = stream_create(0,2,rate,info,ym2612_stream_update);
 
 	/**** initialize YM2612 ****/
-	if (YM2612Init(intf->num,intf->baseclock,rate,TimerHandler,IRQHandler) == 0)
-	  return 0;
+	info->chip = YM2612Init(info,sndindex,clock,rate,TimerHandler,IRQHandler);
+	if (info->chip)
+		return info;
 	/* error */
-	return 1;
+	return NULL;
 }
 
-/************************************************/
-/* Sound Hardware Stop							*/
-/************************************************/
-void YM2612_sh_stop(void)
+
+static void ym2612_stop(void *token)
 {
-  YM2612Shutdown();
+	struct ym2612_info *info = token;
+	YM2612Shutdown(info->chip);
 }
 
-/* reset */
-void YM2612_sh_reset(void)
+static void ym2612_reset(void *token)
 {
-	int i;
-
-	for (i = 0;i < intf->num;i++)
-		YM2612ResetChip(i);
+	struct ym2612_info *info = token;
+	YM2612ResetChip(info->chip);
 }
+
 
 /************************************************/
 /* Status Read for YM2612 - Chip 0				*/
 /************************************************/
 READ8_HANDLER( YM2612_status_port_0_A_r )
 {
-  return YM2612Read(0,0);
+  struct ym2612_info *info = sndti_token(SOUND_YM2612,0);
+  return YM2612Read(info->chip,0);
 }
 
 READ8_HANDLER( YM2612_status_port_0_B_r )
 {
-  return YM2612Read(0,2);
+  struct ym2612_info *info = sndti_token(SOUND_YM2612,0);
+  return YM2612Read(info->chip,2);
 }
 
 /************************************************/
 /* Status Read for YM2612 - Chip 1				*/
 /************************************************/
 READ8_HANDLER( YM2612_status_port_1_A_r ) {
-  return YM2612Read(1,0);
+  struct ym2612_info *info = sndti_token(SOUND_YM2612,1);
+  return YM2612Read(info->chip,0);
 }
 
 READ8_HANDLER( YM2612_status_port_1_B_r ) {
-  return YM2612Read(1,2);
+  struct ym2612_info *info = sndti_token(SOUND_YM2612,1);
+  return YM2612Read(info->chip,2);
 }
 
 /************************************************/
 /* Port Read for YM2612 - Chip 0				*/
 /************************************************/
 READ8_HANDLER( YM2612_read_port_0_r ){
-  return YM2612Read(0,1);
+  struct ym2612_info *info = sndti_token(SOUND_YM2612,0);
+  return YM2612Read(info->chip,1);
 }
 
 /************************************************/
 /* Port Read for YM2612 - Chip 1				*/
 /************************************************/
 READ8_HANDLER( YM2612_read_port_1_r ){
-  return YM2612Read(1,1);
+  struct ym2612_info *info = sndti_token(SOUND_YM2612,1);
+  return YM2612Read(info->chip,1);
 }
 
 /************************************************/
@@ -190,12 +182,14 @@ READ8_HANDLER( YM2612_read_port_1_r ){
 /************************************************/
 WRITE8_HANDLER( YM2612_control_port_0_A_w )
 {
-  YM2612Write(0,0,data);
+  struct ym2612_info *info = sndti_token(SOUND_YM2612,0);
+  YM2612Write(info->chip,0,data);
 }
 
 WRITE8_HANDLER( YM2612_control_port_0_B_w )
 {
-  YM2612Write(0,2,data);
+  struct ym2612_info *info = sndti_token(SOUND_YM2612,0);
+  YM2612Write(info->chip,2,data);
 }
 
 /************************************************/
@@ -203,11 +197,13 @@ WRITE8_HANDLER( YM2612_control_port_0_B_w )
 /* Consists of 2 addresses						*/
 /************************************************/
 WRITE8_HANDLER( YM2612_control_port_1_A_w ){
-  YM2612Write(1,0,data);
+  struct ym2612_info *info = sndti_token(SOUND_YM2612,1);
+  YM2612Write(info->chip,0,data);
 }
 
 WRITE8_HANDLER( YM2612_control_port_1_B_w ){
-  YM2612Write(1,2,data);
+  struct ym2612_info *info = sndti_token(SOUND_YM2612,1);
+  YM2612Write(info->chip,2,data);
 }
 
 /************************************************/
@@ -216,12 +212,14 @@ WRITE8_HANDLER( YM2612_control_port_1_B_w ){
 /************************************************/
 WRITE8_HANDLER( YM2612_data_port_0_A_w )
 {
-  YM2612Write(0,1,data);
+  struct ym2612_info *info = sndti_token(SOUND_YM2612,0);
+  YM2612Write(info->chip,1,data);
 }
 
 WRITE8_HANDLER( YM2612_data_port_0_B_w )
 {
-  YM2612Write(0,3,data);
+  struct ym2612_info *info = sndti_token(SOUND_YM2612,0);
+  YM2612Write(info->chip,3,data);
 }
 
 /************************************************/
@@ -229,12 +227,186 @@ WRITE8_HANDLER( YM2612_data_port_0_B_w )
 /* Consists of 2 addresses						*/
 /************************************************/
 WRITE8_HANDLER( YM2612_data_port_1_A_w ){
-  YM2612Write(1,1,data);
+  struct ym2612_info *info = sndti_token(SOUND_YM2612,1);
+  YM2612Write(info->chip,1,data);
 }
 WRITE8_HANDLER( YM2612_data_port_1_B_w ){
-  YM2612Write(1,3,data);
+  struct ym2612_info *info = sndti_token(SOUND_YM2612,1);
+  YM2612Write(info->chip,3,data);
+}
+
+
+/************************************************/
+/* Status Read for YM3438 - Chip 0				*/
+/************************************************/
+READ8_HANDLER( YM3438_status_port_0_A_r )
+{
+  struct ym2612_info *info = sndti_token(SOUND_YM3438,0);
+  return YM2612Read(info->chip,0);
+}
+
+READ8_HANDLER( YM3438_status_port_0_B_r )
+{
+  struct ym2612_info *info = sndti_token(SOUND_YM3438,0);
+  return YM2612Read(info->chip,2);
+}
+
+/************************************************/
+/* Status Read for YM3438 - Chip 1				*/
+/************************************************/
+READ8_HANDLER( YM3438_status_port_1_A_r ) {
+  struct ym2612_info *info = sndti_token(SOUND_YM3438,1);
+  return YM2612Read(info->chip,0);
+}
+
+READ8_HANDLER( YM3438_status_port_1_B_r ) {
+  struct ym2612_info *info = sndti_token(SOUND_YM3438,1);
+  return YM2612Read(info->chip,2);
+}
+
+/************************************************/
+/* Port Read for YM3438 - Chip 0				*/
+/************************************************/
+READ8_HANDLER( YM3438_read_port_0_r ){
+  struct ym2612_info *info = sndti_token(SOUND_YM3438,0);
+  return YM2612Read(info->chip,1);
+}
+
+/************************************************/
+/* Port Read for YM3438 - Chip 1				*/
+/************************************************/
+READ8_HANDLER( YM3438_read_port_1_r ){
+  struct ym2612_info *info = sndti_token(SOUND_YM3438,1);
+  return YM2612Read(info->chip,1);
+}
+
+/************************************************/
+/* Control Write for YM3438 - Chip 0			*/
+/* Consists of 2 addresses						*/
+/************************************************/
+WRITE8_HANDLER( YM3438_control_port_0_A_w )
+{
+  struct ym2612_info *info = sndti_token(SOUND_YM3438,0);
+  YM2612Write(info->chip,0,data);
+}
+
+WRITE8_HANDLER( YM3438_control_port_0_B_w )
+{
+  struct ym2612_info *info = sndti_token(SOUND_YM3438,0);
+  YM2612Write(info->chip,2,data);
+}
+
+/************************************************/
+/* Control Write for YM3438 - Chip 1			*/
+/* Consists of 2 addresses						*/
+/************************************************/
+WRITE8_HANDLER( YM3438_control_port_1_A_w ){
+  struct ym2612_info *info = sndti_token(SOUND_YM3438,1);
+  YM2612Write(info->chip,0,data);
+}
+
+WRITE8_HANDLER( YM3438_control_port_1_B_w ){
+  struct ym2612_info *info = sndti_token(SOUND_YM3438,1);
+  YM2612Write(info->chip,2,data);
+}
+
+/************************************************/
+/* Data Write for YM3438 - Chip 0				*/
+/* Consists of 2 addresses						*/
+/************************************************/
+WRITE8_HANDLER( YM3438_data_port_0_A_w )
+{
+  struct ym2612_info *info = sndti_token(SOUND_YM3438,0);
+  YM2612Write(info->chip,1,data);
+}
+
+WRITE8_HANDLER( YM3438_data_port_0_B_w )
+{
+  struct ym2612_info *info = sndti_token(SOUND_YM3438,0);
+  YM2612Write(info->chip,3,data);
+}
+
+/************************************************/
+/* Data Write for YM3438 - Chip 1				*/
+/* Consists of 2 addresses						*/
+/************************************************/
+WRITE8_HANDLER( YM3438_data_port_1_A_w ){
+  struct ym2612_info *info = sndti_token(SOUND_YM3438,1);
+  YM2612Write(info->chip,1,data);
+}
+WRITE8_HANDLER( YM3438_data_port_1_B_w ){
+  struct ym2612_info *info = sndti_token(SOUND_YM3438,1);
+  YM2612Write(info->chip,3,data);
 }
 
 /**************** end of file ****************/
+
+/**************************************************************************
+ * Generic get_info
+ **************************************************************************/
+
+static void ym2612_set_info(void *token, UINT32 state, union sndinfo *info)
+{
+	switch (state)
+	{
+		/* no parameters to set */
+	}
+}
+
+
+void ym2612_get_info(void *token, UINT32 state, union sndinfo *info)
+{
+	switch (state)
+	{
+		/* --- the following bits of info are returned as 64-bit signed integers --- */
+
+		/* --- the following bits of info are returned as pointers to data or functions --- */
+		case SNDINFO_PTR_SET_INFO:						info->set_info = ym2612_set_info;		break;
+		case SNDINFO_PTR_START:							info->start = ym2612_start;				break;
+		case SNDINFO_PTR_STOP:							info->stop = ym2612_stop;				break;
+		case SNDINFO_PTR_RESET:							info->reset = ym2612_reset;				break;
+
+		/* --- the following bits of info are returned as NULL-terminated strings --- */
+		case SNDINFO_STR_NAME:							info->s = "YM2612";						break;
+		case SNDINFO_STR_CORE_FAMILY:					info->s = "Yamaha FM";					break;
+		case SNDINFO_STR_CORE_VERSION:					info->s = "1.0";						break;
+		case SNDINFO_STR_CORE_FILE:						info->s = __FILE__;						break;
+		case SNDINFO_STR_CORE_CREDITS:					info->s = "Copyright (c) 2004, The MAME Team"; break;
+	}
+}
+
+/**************************************************************************
+ * Generic get_info
+ **************************************************************************/
+
+static void ym3438_set_info(void *token, UINT32 state, union sndinfo *info)
+{
+	switch (state)
+	{
+		/* no parameters to set */
+	}
+}
+
+
+void ym3438_get_info(void *token, UINT32 state, union sndinfo *info)
+{
+	switch (state)
+	{
+		/* --- the following bits of info are returned as 64-bit signed integers --- */
+
+		/* --- the following bits of info are returned as pointers to data or functions --- */
+		case SNDINFO_PTR_SET_INFO:						info->set_info = ym3438_set_info;		break;
+		case SNDINFO_PTR_START:							info->start = ym2612_start;				break;
+		case SNDINFO_PTR_STOP:							info->stop = ym2612_stop;				break;
+		case SNDINFO_PTR_RESET:							info->reset = ym2612_reset;				break;
+
+		/* --- the following bits of info are returned as NULL-terminated strings --- */
+		case SNDINFO_STR_NAME:							info->s = "YM3438";						break;
+		case SNDINFO_STR_CORE_FAMILY:					info->s = "Yamaha FM";					break;
+		case SNDINFO_STR_CORE_VERSION:					info->s = "1.0";						break;
+		case SNDINFO_STR_CORE_FILE:						info->s = __FILE__;						break;
+		case SNDINFO_STR_CORE_CREDITS:					info->s = "Copyright (c) 2004, The MAME Team"; break;
+	}
+}
 
 #endif

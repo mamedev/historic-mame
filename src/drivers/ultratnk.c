@@ -18,6 +18,7 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "ultratnk.h"
+#include "sound/discrete.h"
 
 static int ultratnk_controls;
 static UINT8 *mirror_ram;
@@ -488,7 +489,11 @@ static MACHINE_DRIVER_START( ultratnk )
 	MDRV_VIDEO_UPDATE(ultratnk)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD_TAG("discrete", DISCRETE, ultratnk_discrete_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	
+	MDRV_SOUND_ADD_TAG("discrete", DISCRETE, 0)
+	MDRV_SOUND_CONFIG(ultratnk_discrete_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 

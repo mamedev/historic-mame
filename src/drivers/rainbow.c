@@ -205,6 +205,8 @@ that can be entered on the copyright screen:
 #include "vidhrdw/generic.h"
 #include "vidhrdw/taitoic.h"
 #include "sndhrdw/taitosnd.h"
+#include "sound/2203intf.h"
+#include "sound/2151intf.h"
 
 VIDEO_START( rainbow );
 VIDEO_START( jumping );
@@ -583,23 +585,8 @@ static void irqhandler(int irq)
 
 static struct YM2151interface ym2151_interface =
 {
-	1,          /* 1 chip */
-	4000000,    /* 4 MHz ? */
-	{ YM3012_VOL(50,MIXER_PAN_LEFT,50,MIXER_PAN_RIGHT) },
-	{ irqhandler },
-	{ bankswitch_w }
-};
-
-static struct YM2203interface ym2203_interface =
-{
-	2,          /* 2 chips */
-	3579545,    /* ?? MHz */
-	{ YM2203_VOL(30,30), YM2203_VOL(30,30) },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ 0 }
+	irqhandler,
+	bankswitch_w
 };
 
 
@@ -632,7 +619,12 @@ static MACHINE_DRIVER_START( rainbow )
 	MDRV_VIDEO_UPDATE(rainbow)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM2151, ym2151_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM2151, 4000000)
+	MDRV_SOUND_CONFIG(ym2151_interface)
+	MDRV_SOUND_ROUTE(0, "mono", 0.50)
+	MDRV_SOUND_ROUTE(1, "mono", 0.50)
 MACHINE_DRIVER_END
 
 
@@ -661,7 +653,13 @@ static MACHINE_DRIVER_START( jumping )
 	MDRV_VIDEO_UPDATE(jumping)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM2203, ym2203_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM2203, 3579545)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.30)
+
+	MDRV_SOUND_ADD(YM2203, 3579545)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.30)
 MACHINE_DRIVER_END
 
 

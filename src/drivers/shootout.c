@@ -40,6 +40,7 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "cpu/m6502/m6502.h"
+#include "sound/2203intf.h"
 
 UINT8 *shootout_textram;
 
@@ -266,26 +267,16 @@ static void shootout_snd2_irq(int linestate)
 
 static struct YM2203interface ym2203_interface =
 {
-	1,	/* 1 chip */
-	1500000,	/* 1.5 MHz */
-	{ YM2203_VOL(50,50) },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ shootout_snd_irq },
+	0,0,0,0,shootout_snd_irq
 };
 
 static struct YM2203interface ym2203_interface2 =
 {
-	1,	/* 1 chip */
-	1500000,	/* 1.5 MHz */
-	{ YM2203_VOL(50,50) },
-	{ 0 },
-	{ 0 },
-	{ shootout_bankswitch_w },
-	{ shootout_flipscreen_w },
-	{ shootout_snd2_irq },
+	0,
+	0,
+	shootout_bankswitch_w,
+	shootout_flipscreen_w,
+	shootout_snd2_irq
 };
 
 static INTERRUPT_GEN( shootout_interrupt )
@@ -327,7 +318,11 @@ static MACHINE_DRIVER_START( shootout )
 	MDRV_VIDEO_UPDATE(shootout)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM2203, ym2203_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM2203, 1500000)
+	MDRV_SOUND_CONFIG(ym2203_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
 MACHINE_DRIVER_END
 
 
@@ -353,7 +348,11 @@ static MACHINE_DRIVER_START( shootouj )
 	MDRV_VIDEO_UPDATE(shootouj)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM2203, ym2203_interface2)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM2203, 1500000)
+	MDRV_SOUND_CONFIG(ym2203_interface2)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
 MACHINE_DRIVER_END
 
 

@@ -13,6 +13,7 @@ Notes:
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "sound/dac.h"
 
 /* from vidhrdw */
 extern WRITE8_HANDLER( trucocl_videoram_w );
@@ -119,12 +120,6 @@ static INTERRUPT_GEN( trucocl_interrupt )
 	irq0_line_hold();
 }
 
-static struct DACinterface dac_interface =
-{
-	1,
-	{ 100 },
-};
-
 static MACHINE_DRIVER_START( trucocl )
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80, 18432000/6)
@@ -146,8 +141,10 @@ static MACHINE_DRIVER_START( trucocl )
 	MDRV_VIDEO_UPDATE(trucocl)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(DAC, dac_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
 
+	MDRV_SOUND_ADD(DAC, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 /***************************************************************************

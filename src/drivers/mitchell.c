@@ -31,6 +31,9 @@ TODO:
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "machine/eeprom.h"
+#include "sound/okim6295.h"
+#include "sound/3812intf.h"
+#include "sound/2413intf.h"
 
 /* in machine/kabuki.c */
 void mgakuen2_decode(void);
@@ -993,23 +996,6 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 
 
-static struct YM2413interface ym2413_interface =
-{
-	1,	/* 1 chip */
-	4000000,	/* fixed */
-	{ YM2413_VOL(100,MIXER_PAN_CENTER,100,MIXER_PAN_CENTER) },	/* Volume */
-};
-
-static struct OKIM6295interface okim6295_interface =
-{
-	1,			/* 1 chip */
-	{ 7500 },	/* fixed */
-	{ REGION_SOUND1 },		/* memory region 2 */
-	{ 50 }
-};
-
-
-
 static MACHINE_DRIVER_START( mgakuen )
 
 	/* basic machine hardware */
@@ -1032,8 +1018,14 @@ static MACHINE_DRIVER_START( mgakuen )
 	MDRV_VIDEO_UPDATE(pang)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(OKIM6295, okim6295_interface)
-	MDRV_SOUND_ADD(YM2413, ym2413_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(OKIM6295, 7500)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
+
+	MDRV_SOUND_ADD(YM2413, 4000000)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 
@@ -1061,8 +1053,14 @@ static MACHINE_DRIVER_START( pang )
 	MDRV_VIDEO_UPDATE(pang)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(OKIM6295, okim6295_interface)
-	MDRV_SOUND_ADD(YM2413, ym2413_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(OKIM6295, 7500)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
+
+	MDRV_SOUND_ADD(YM2413, 4000000)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 
@@ -1090,8 +1088,14 @@ static MACHINE_DRIVER_START( marukin )
 	MDRV_VIDEO_UPDATE(pang)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(OKIM6295, okim6295_interface)
-	MDRV_SOUND_ADD(YM2413, ym2413_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(OKIM6295, 7500)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
+
+	MDRV_SOUND_ADD(YM2413, 4000000)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 

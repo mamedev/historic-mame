@@ -1,4 +1,6 @@
 #include "driver.h"
+#include "sound/samples.h"
+#include "sound/streams.h"
 #include <math.h>
 
 #define VERBOSE 0
@@ -22,11 +24,11 @@
 #define TOOTHSAW_LENGTH 16
 #define TOOTHSAW_VOLUME 36
 #define STEPS 16
-#define LFO_VOLUME 6
-#define SHOOT_VOLUME 50
-#define NOISE_VOLUME 50
-#define NOISE_AMPLITUDE 70*256
-#define TOOTHSAW_AMPLITUDE 64
+#define LFO_VOLUME 0.06
+#define SHOOT_VOLUME 0.50
+#define NOISE_VOLUME 0.50
+#define NOISE_AMPLITUDE (70*256)
+#define TOOTHSAW_AMPLITUDE (64*256)
 
 /* see comments in galaxian_sh_update() */
 #define MINFREQ (139-139/3)
@@ -59,7 +61,7 @@ static int last_port1=0;
 #endif
 static int last_port2=0;
 
-static INT8 tonewave[4][TOOTHSAW_LENGTH];
+static INT16 tonewave[4][TOOTHSAW_LENGTH];
 static int pitch,vol;
 
 static INT16 backgroundwave[32] =
@@ -70,15 +72,19 @@ static INT16 backgroundwave[32] =
   -0x4000,-0x4000,-0x4000,-0x4000,-0x4000,-0x4000,-0x4000,-0x4000,
 };
 
-static int channelnoise,channelshoot,channellfo;
-static int tone_stream;
+#define CHANNEL_NOISE	0
+#define CHANNEL_SHOOT	1
+#define CHANNEL_LFO		2
+static sound_stream * tone_stream;
 
 static void lfo_timer_cb(int param);
+static void galaxian_sh_update(int dummy);
 
-static void tone_update(int ch, INT16 *buffer, int length)
+static void tone_update(void *param, stream_sample_t **input, stream_sample_t **output, int length)
 {
+	stream_sample_t *buffer = output[0];
 	int i,j;
-	INT8 *w = tonewave[vol];
+	INT16 *w = tonewave[vol];
 	static int counter, countdown;
 
 	/* only update if we have non-zero volume and frequency */
@@ -99,7 +105,7 @@ static void tone_update(int ch, INT16 *buffer, int length)
 
 				mix += w[counter];
 			}
-			*buffer++ = (mix << 8) / STEPS;
+			*buffer++ = mix / STEPS;
 		}
 	}
 	else
@@ -130,7 +136,7 @@ static void noise_timer_cb(int param)
 	if( noisevolume > 0 )
 	{
 		noisevolume -= (noisevolume / 10) + 1;
-		mixer_set_volume(channelnoise,noisevolume);
+		sample_set_volume(CHANNEL_NOISE,noisevolume / 100.0);
 	}
 }
 
@@ -140,10 +146,7 @@ WRITE8_HANDLER( galaxian_noise_enable_w )
 	if (deathsampleloaded)
 	{
 		if (data & 1 && !(last_port1 & 1))
-			mixer_play_sample(channelnoise,Machine->samples->sample[1]->data,
-					Machine->samples->sample[1]->length,
-					Machine->samples->sample[1]->smpfreq,
-					0);
+			sample_start(CHANNEL_NOISE,1,0);
 		last_port1=data;
 	}
 	else
@@ -153,7 +156,7 @@ WRITE8_HANDLER( galaxian_noise_enable_w )
 		{
 			timer_adjust(noisetimer, TIME_NEVER, 0, 0);
 			noisevolume = 100;
-			mixer_set_volume(channelnoise,noisevolume);
+			sample_set_volume(CHANNEL_NOISE,noisevolume / 100.0);
 		}
 		else
 		{
@@ -171,20 +174,17 @@ WRITE8_HANDLER( galaxian_shoot_enable_w )
 #if SAMPLES
 		if( shootsampleloaded )
 		{
-			mixer_play_sample(channelshoot,Machine->samples->sample[0]->data,
-					Machine->samples->sample[0]->length,
-					Machine->samples->sample[0]->smpfreq,
-					0);
+			sample_start(CHANNEL_SHOOT,0,0);
 		}
 		else
 #endif
 		{
 #if NEW_SHOOT
-			mixer_play_sample_16(channelshoot, shootwave, shoot_length, shoot_rate, 0);
+			sample_start_raw(CHANNEL_SHOOT, shootwave, shoot_length, shoot_rate, 0);
 #else
-			mixer_play_sample_16(channelshoot, shootwave, SHOOT_LENGTH, 10*SHOOT_RATE, 0);
+			sample_start_raw(CHANNEL_SHOOT, shootwave, SHOOT_LENGTH, 10*SHOOT_RATE, 0);
 #endif
-			mixer_set_volume(channelshoot,SHOOT_VOLUME);
+			sample_set_volume(CHANNEL_SHOOT,SHOOT_VOLUME);
 		}
 	}
 	last_port2=data;
@@ -201,50 +201,31 @@ static const char *galaxian_sample_names[] =
 };
 #endif
 
-static int galaxian_sh_start(const struct MachineSound *msound)
+static void galaxian_sh_start(void)
 {
 	int i, j, sweep, charge, countdown, generator, bit1, bit2;
-	int lfovol[3] = {LFO_VOLUME,LFO_VOLUME,LFO_VOLUME};
+
+	sample_set_volume(CHANNEL_NOISE, NOISE_VOLUME);
+	sample_set_volume(CHANNEL_SHOOT, SHOOT_VOLUME);
+	sample_set_volume(CHANNEL_LFO+0, LFO_VOLUME);
+	sample_set_volume(CHANNEL_LFO+1, LFO_VOLUME);
+	sample_set_volume(CHANNEL_LFO+2, LFO_VOLUME);
 
 #if SAMPLES
-	Machine->samples = readsamples(galaxian_sample_names,Machine->gamedrv->name);
+	shootsampleloaded = sample_loaded(0);
+	deathsampleloaded = sample_loaded(1);
 #endif
 
-	channelnoise = mixer_allocate_channel(NOISE_VOLUME);
-	mixer_set_name(channelnoise,"Noise");
-	channelshoot = mixer_allocate_channel(SHOOT_VOLUME);
-	mixer_set_name(channelshoot,"Shoot");
-	channellfo = mixer_allocate_channels(3,lfovol);
-	mixer_set_name(channellfo+0,"Background #0");
-	mixer_set_name(channellfo+1,"Background #1");
-	mixer_set_name(channellfo+2,"Background #2");
-
-#if SAMPLES
-	if (Machine->samples != 0 && Machine->samples->sample[0] != 0)	/* We should check also that Samplename[0] = 0 */
-		shootsampleloaded = 1;
-	else
-		shootsampleloaded = 0;
-
-	if (Machine->samples != 0 && Machine->samples->sample[1] != 0)	/* We should check also that Samplename[0] = 0 */
-		deathsampleloaded = 1;
-	else
-		deathsampleloaded = 0;
-#endif
-
-	if( (noisewave = auto_malloc(NOISE_LENGTH * sizeof(INT16))) == 0 )
-	{
-		return 1;
-	}
+	noisewave = auto_malloc(NOISE_LENGTH * sizeof(INT16));
 
 #if NEW_SHOOT
 #define SHOOT_SEC 2
 	shoot_rate = Machine->sample_rate;
 	shoot_length = SHOOT_SEC * shoot_rate;
-	if ((shootwave = auto_malloc(shoot_length * sizeof(INT16))) == 0)
+	shootwave = auto_malloc(shoot_length * sizeof(INT16));
 #else
-	if( (shootwave = auto_malloc(SHOOT_LENGTH * sizeof(INT16))) == 0 )
+	shootwave = auto_malloc(SHOOT_LENGTH * sizeof(INT16));
 #endif
-		return 1;
 
 	/*
 	 * The RNG shifter is clocked with RNG_RATE, bit 17 is
@@ -466,50 +447,40 @@ static int galaxian_sh_start(const struct MachineSound *msound)
 	pitch = 0xff;
 	vol = 0;
 
-	tone_stream = stream_init("Tone",TOOTHSAW_VOLUME,SOUND_CLOCK/STEPS,0,tone_update);
+	tone_stream = stream_create(0,1,SOUND_CLOCK/STEPS,NULL,tone_update);
+	stream_set_output_gain(tone_stream, 0, TOOTHSAW_VOLUME / 100.0);
 
 #if SAMPLES
 	if (!deathsampleloaded)
 #endif
 	{
-		mixer_set_volume(channelnoise,0);
-		mixer_play_sample_16(channelnoise,noisewave,NOISE_LENGTH,NOISE_RATE,1);
+		sample_set_volume(CHANNEL_NOISE,0);
+		sample_start_raw(CHANNEL_NOISE,noisewave,NOISE_LENGTH,NOISE_RATE,1);
 	}
 #if SAMPLES
 	if (!shootsampleloaded)
 #endif
 	{
-		mixer_set_volume(channelshoot,0);
-		mixer_play_sample_16(channelshoot,shootwave,SHOOT_LENGTH,SHOOT_RATE,1);
+		sample_set_volume(CHANNEL_SHOOT,0);
+		sample_start_raw(CHANNEL_SHOOT,shootwave,SHOOT_LENGTH,SHOOT_RATE,1);
 	}
 
-	mixer_set_volume(channellfo+0,0);
-	mixer_play_sample_16(channellfo+0,backgroundwave,sizeof(backgroundwave),1000,1);
-	mixer_set_volume(channellfo+1,0);
-	mixer_play_sample_16(channellfo+1,backgroundwave,sizeof(backgroundwave),1000,1);
-	mixer_set_volume(channellfo+2,0);
-	mixer_play_sample_16(channellfo+2,backgroundwave,sizeof(backgroundwave),1000,1);
+	sample_set_volume(CHANNEL_LFO+0,0);
+	sample_start_raw(CHANNEL_LFO+0,backgroundwave,sizeof(backgroundwave)/2,1000,1);
+	sample_set_volume(CHANNEL_LFO+1,0);
+	sample_start_raw(CHANNEL_LFO+1,backgroundwave,sizeof(backgroundwave)/2,1000,1);
+	sample_set_volume(CHANNEL_LFO+2,0);
+	sample_start_raw(CHANNEL_LFO+2,backgroundwave,sizeof(backgroundwave)/2,1000,1);
 
 	noisetimer = timer_alloc(noise_timer_cb);
 	lfotimer = timer_alloc(lfo_timer_cb);
-
-	return 0;
 }
 
 
-
-static void galaxian_sh_stop(void)
-{
-	mixer_stop_sample(channelnoise);
-	mixer_stop_sample(channelshoot);
-	mixer_stop_sample(channellfo+0);
-	mixer_stop_sample(channellfo+1);
-	mixer_stop_sample(channellfo+2);
-}
 
 WRITE8_HANDLER( galaxian_background_enable_w )
 {
-	mixer_set_volume(channellfo+offset,(data & 1) ? 100 : 0);
+	sample_set_volume(CHANNEL_LFO+offset,(data & 1) ? LFO_VOLUME : 0);
 }
 
 static void lfo_timer_cb(int param)
@@ -632,9 +603,11 @@ WRITE8_HANDLER( galaxian_lfo_freq_w )
 	LOG(("lfotimer bits:%d%d%d%d r0:%d, r1:%d, rx: %d, time: %9.2fus\n", lfobit[3], lfobit[2], lfobit[1], lfobit[0], (int)r0, (int)r1, (int)rx, 0.639 * rx));
 	timer_adjust(lfotimer, TIME_IN_USEC(0.639 * rx / (MAXFREQ-MINFREQ)), 0, TIME_IN_USEC(0.639 * rx / (MAXFREQ-MINFREQ)));
 #endif
+
+	timer_pulse(TIME_IN_HZ(Machine->drv->frames_per_second), 0, galaxian_sh_update);
 }
 
-static void galaxian_sh_update(void)
+static void galaxian_sh_update(int dummy)
 {
 	/*
 	 * NE555 8R, 8S and 8T are used as pulse position modulators
@@ -646,15 +619,19 @@ static void galaxian_sh_update(void)
 	 *	-> 0.693 * 540k * 0.01uF -> 3742.2us = 267Hz
 	 */
 
-	mixer_set_sample_frequency(channellfo+0, sizeof(backgroundwave)*freq*(100+2*470)/(100+2*470) );
-	mixer_set_sample_frequency(channellfo+1, sizeof(backgroundwave)*freq*(100+2*330)/(100+2*470) );
-	mixer_set_sample_frequency(channellfo+2, sizeof(backgroundwave)*freq*(100+2*220)/(100+2*470) );
+	sample_set_freq(CHANNEL_LFO+0, sizeof(backgroundwave)*freq*(100+2*470)/(100+2*470) );
+	sample_set_freq(CHANNEL_LFO+1, sizeof(backgroundwave)*freq*(100+2*330)/(100+2*470) );
+	sample_set_freq(CHANNEL_LFO+2, sizeof(backgroundwave)*freq*(100+2*220)/(100+2*470) );
 }
 
 
-struct CustomSound_interface galaxian_custom_interface =
+struct Samplesinterface galaxian_custom_interface =
 {
-	galaxian_sh_start,
-	galaxian_sh_stop,
-	galaxian_sh_update
+	5,
+#if SAMPLES
+	galaxian_sample_names,
+#else
+	NULL,
+#endif
+	galaxian_sh_start
 };

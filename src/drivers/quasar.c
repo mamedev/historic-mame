@@ -61,6 +61,7 @@ Sound Board 1b11107
 #include "cpu/s2650/s2650.h"
 #include "vidhrdw/generic.h"
 #include "cpu/i8039/i8039.h"
+#include "sound/dac.h"
 
 PALETTE_INIT( quasar );
 VIDEO_UPDATE( quasar );
@@ -424,12 +425,6 @@ static INTERRUPT_GEN( quasar_interrupt )
 	cpunum_set_input_line_and_vector(0,0,PULSE_LINE,0x03);
 }
 
-static struct DACinterface dac_interface =
-{
-	1,
-	{ 100 }
-};
-
 // ************************(***************
 // Quasar S2650 Main CPU, I8035 sound board
 // ****************************************
@@ -464,7 +459,10 @@ static MACHINE_DRIVER_START( quasar )
 	MDRV_VIDEO_UPDATE(quasar)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(DAC, dac_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(DAC, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 ROM_START( quasar )

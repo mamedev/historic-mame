@@ -47,6 +47,7 @@ X101: M53.693 KDS 745 (near CXD8654Q)
 #include "cpu/h83002/h83002.h"
 #include "includes/psx.h"
 #include "machine/at28c16.h"
+#include "sound/c352.h"
 #include <time.h>
 
 #define VERBOSE_LEVEL ( 0 )
@@ -439,9 +440,7 @@ ADDRESS_MAP_END
 
 static struct C352interface c352_interface =
 {
-	YM3012_VOL(50, MIXER_PAN_LEFT, 50, MIXER_PAN_RIGHT),
-	YM3012_VOL(50, MIXER_PAN_LEFT, 50, MIXER_PAN_RIGHT),
-	REGION_SOUND1,
+	REGION_SOUND1
 };
 
 static VIDEO_UPDATE( golgo13 )
@@ -480,8 +479,14 @@ static MACHINE_DRIVER_START( coh700 )
 	MDRV_VIDEO_STOP( psx )
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES( SOUND_SUPPORTS_STEREO )
-	MDRV_SOUND_ADD(C352, c352_interface)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+	
+	MDRV_SOUND_ADD(C352, 0)
+	MDRV_SOUND_CONFIG(c352_interface)
+	MDRV_SOUND_ROUTE(0, "left", 0.50)
+	MDRV_SOUND_ROUTE(1, "right", 0.50)
+	MDRV_SOUND_ROUTE(2, "left", 0.50)
+	MDRV_SOUND_ROUTE(3, "right", 0.50)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( golgo13 )

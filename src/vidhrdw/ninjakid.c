@@ -1,6 +1,7 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "state.h"
+#include "sound/ay8910.h"
 
 static struct tilemap *bg_tilemap, *fg_tilemap;
 static int flipscreen;

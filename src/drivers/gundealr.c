@@ -47,6 +47,7 @@ Runs in interrupt mode 0, the interrupt vectors are 0xcf (RST 08h) and
 ***************************************************************************/
 
 #include "driver.h"
+#include "sound/2203intf.h"
 
 
 extern unsigned char *gundealr_bg_videoram,*gundealr_fg_videoram;
@@ -467,18 +468,6 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 
 
-static struct YM2203interface ym2203_interface =
-{
-	1,			/* 1 chip */
-	1500000,	/* 1.5 MHz ?????? */
-	{ YM2203_VOL(25,25) },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ 0 }
-};
-
-
 
 static MACHINE_DRIVER_START( gundealr )
 
@@ -502,7 +491,10 @@ static MACHINE_DRIVER_START( gundealr )
 	MDRV_VIDEO_UPDATE(gundealr)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM2203, ym2203_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM2203, 1500000)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
 MACHINE_DRIVER_END
 
 

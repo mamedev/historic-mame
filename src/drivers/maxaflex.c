@@ -17,6 +17,8 @@
 #include "cpu/m6502/m6502.h"
 #include "includes/atari.h"
 #include "cpu/m6805/m6805.h"
+#include "sound/dac.h"
+#include "sound/pokey.h"
 
 
 /* Supervisor board emulation */
@@ -471,27 +473,10 @@ static PALETTE_INIT( atari )
 
 
 static struct POKEYinterface pokey_interface = {
-	1,
-	FREQ_17_EXACT,
-    { 100 },
-	{ 0, },
-	{ 0, },
-	{ 0, },
-	{ 0, },
-	{ 0, },
-	{ 0, },
-	{ 0, },
-	{ 0, },
-	{ 0, },
-	{ 0, },
-	{ 0, },
-	{ atari_interrupt_cb }
-};
-
-static struct DACinterface dac_interface =
-{
-	1,					/* number of DACs */
-	{ 50 }				/* volume */
+	{ 0 },
+	0,
+	0,0,
+	atari_interrupt_cb
 };
 
 static MACHINE_DRIVER_START( a600xl )
@@ -518,8 +503,14 @@ static MACHINE_DRIVER_START( a600xl )
 	MDRV_VIDEO_UPDATE(maxaflex)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(POKEY, pokey_interface)
-	MDRV_SOUND_ADD(DAC, dac_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	
+	MDRV_SOUND_ADD(POKEY, FREQ_17_EXACT)
+	MDRV_SOUND_CONFIG(pokey_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
+
+	MDRV_SOUND_ADD(DAC, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
 
 	MDRV_MACHINE_INIT( maxaflex )
 MACHINE_DRIVER_END

@@ -12,6 +12,7 @@ palazzol@home.com
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "cpu/i8085/i8085.h"
+#include "sound/samples.h"
 
 /* included from vidhrdw/starcrus.c */
 WRITE8_HANDLER( starcrus_s1_x_w );
@@ -176,7 +177,6 @@ static const char *starcrus_sample_names[] =
 static struct Samplesinterface samples_interface =
 {
     4,	/* 4 channels */
-	100,	/* volume */
 	starcrus_sample_names
 };
 
@@ -205,7 +205,11 @@ static MACHINE_DRIVER_START( starcrus )
 	MDRV_VIDEO_UPDATE(starcrus)
 
     /* sound hardware */
-	MDRV_SOUND_ADD(SAMPLES, samples_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	
+	MDRV_SOUND_ADD(SAMPLES, 0)
+	MDRV_SOUND_CONFIG(samples_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 /***************************************************************************

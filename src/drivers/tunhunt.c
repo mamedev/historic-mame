@@ -50,6 +50,7 @@
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "sound/pokey.h"
 
 
 extern WRITE8_HANDLER( tunhunt_videoram_w );
@@ -296,21 +297,15 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
  *
  *************************************/
 
-static struct POKEYinterface pokey_interface =
+static struct POKEYinterface pokey_interface_1 =
 {
-	2,	/* 2 chips */
-	1209600,
-	{ 50, 50 }, /* volume */
-	/* pot handlers */
-	{ 0, input_port_1_r },
-	{ 0, input_port_2_r },
-	{ 0, dsw2_0r },
-	{ 0, dsw2_1r },
-	{ 0, dsw2_2r },
-	{ 0, dsw2_3r },
-	{ 0, dsw2_4r },
-	{ 0, 0 },
-	{ dsw1_r, 0 },
+	{ 0 },
+	dsw1_r
+};
+
+static struct POKEYinterface pokey_interface_2 =
+{
+	{ input_port_1_r,input_port_2_r,dsw2_0r,dsw2_1r,dsw2_2r,dsw2_3r,dsw2_4r }
 };
 
 
@@ -344,7 +339,15 @@ static MACHINE_DRIVER_START( tunhunt )
 	MDRV_VIDEO_UPDATE(tunhunt)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(POKEY, pokey_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(POKEY, 1209600)
+	MDRV_SOUND_CONFIG(pokey_interface_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
+
+	MDRV_SOUND_ADD(POKEY, 1209600)
+	MDRV_SOUND_CONFIG(pokey_interface_2)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
 MACHINE_DRIVER_END
 
 

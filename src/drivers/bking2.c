@@ -18,6 +18,8 @@ ROM DM03 is missing from all known ROM sets.  This is a color palette.
 ***************************************************************************/
 
 #include "driver.h"
+#include "sound/ay8910.h"
+#include "sound/dac.h"
 
 PALETTE_INIT( bking2 );
 
@@ -508,19 +510,10 @@ static WRITE8_HANDLER( portb_w )
 
 static struct AY8910interface ay8910_interface =
 {
-	2,      /* 2 chips */
-	2000000,	/* 2 MHz */
-	{ 25, 25 },
-	{ 0, 0 },
-	{ 0, 0 },
-	{ 0, DAC_0_signed_data_w },
-	{ 0, portb_w }
-};
-
-static struct DACinterface dac_interface =
-{
-	1,
-	{ 25 }
+	0,
+	0,
+	DAC_0_signed_data_w,
+	portb_w
 };
 
 static MACHINE_DRIVER_START( bking2 )
@@ -558,8 +551,17 @@ static MACHINE_DRIVER_START( bking2 )
 	MDRV_VIDEO_EOF(bking2)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(AY8910, ay8910_interface)
-	MDRV_SOUND_ADD(DAC, dac_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(AY8910, 2000000)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
+	
+	MDRV_SOUND_ADD(AY8910, 2000000)
+	MDRV_SOUND_CONFIG(ay8910_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
+	
+	MDRV_SOUND_ADD(DAC, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
 MACHINE_DRIVER_END
 
 /***************************************************************************

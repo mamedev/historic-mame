@@ -13,6 +13,7 @@ press F1+F3 to see ROM/RAM tests and the final animation
 #include "vidhrdw/generic.h"
 #include "vidhrdw/konamiic.h"
 #include "cpu/z80/z80.h"
+#include "sound/2608intf.h"
 
 
 extern data16_t *tail2nos_bgvideoram;
@@ -251,16 +252,12 @@ static void irqhandler(int irq)
 
 static struct YM2608interface ym2608_interface =
 {
-	1,
-	8000000,	/* 8 MHz??? */
-	{ 25 },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ sound_bankswitch_w },
-	{ irqhandler },
-	{ REGION_SOUND1 },
-	{ YM3012_VOL(100,MIXER_PAN_LEFT,100,MIXER_PAN_RIGHT) }
+	0,
+	0,
+	0,
+	sound_bankswitch_w,
+	irqhandler,
+	REGION_SOUND1
 };
 
 
@@ -293,8 +290,14 @@ static MACHINE_DRIVER_START( tail2nos )
 	MDRV_VIDEO_UPDATE(tail2nos)
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(YM2608, ym2608_interface)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(YM2608, 8000000)
+	MDRV_SOUND_CONFIG(ym2608_interface)
+	MDRV_SOUND_ROUTE(0, "left",  0.25)
+	MDRV_SOUND_ROUTE(0, "right", 0.25)
+	MDRV_SOUND_ROUTE(1, "left",  1.0)
+	MDRV_SOUND_ROUTE(2, "right", 1.0)
 MACHINE_DRIVER_END
 
 

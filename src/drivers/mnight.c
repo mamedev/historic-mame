@@ -10,6 +10,7 @@ TODO:
 ***************************************************************************/
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "sound/2203intf.h"
 
 WRITE8_HANDLER( mnight_bgvideoram_w );
 WRITE8_HANDLER( mnight_fgvideoram_w );
@@ -339,18 +340,6 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 };
 
 
-static struct YM2203interface ym2203_interface =
-{
-	2,	 /* 2 chips */
-	12000000/8, // lax 11/03/1999  (1250000 -> 1500000 ???)
-	{ YM2203_VOL(25,25), YM2203_VOL(25,25)},
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ 0 }
-};
-
-
 static MACHINE_DRIVER_START( mnight )
 
 	/* basic machine hardware */
@@ -381,7 +370,13 @@ static MACHINE_DRIVER_START( mnight )
 	MDRV_VIDEO_UPDATE(mnight)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM2203, ym2203_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM2203, 12000000/8)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
+
+	MDRV_SOUND_ADD(YM2203, 12000000/8)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
 MACHINE_DRIVER_END
 
 

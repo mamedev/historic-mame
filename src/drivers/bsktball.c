@@ -24,6 +24,7 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "bsktball.h"
+#include "sound/discrete.h"
 
 extern UINT8 *bsktball_motion;
 
@@ -314,7 +315,11 @@ static MACHINE_DRIVER_START( bsktball )
 	MDRV_VIDEO_UPDATE(bsktball)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(DISCRETE, bsktball_discrete_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	
+	MDRV_SOUND_ADD(DISCRETE, 0)
+	MDRV_SOUND_CONFIG(bsktball_discrete_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 

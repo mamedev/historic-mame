@@ -34,6 +34,9 @@ Pleiads:
 ***************************************************************************/
 
 #include "driver.h"
+#include "sound/tms36xx.h"
+#include "sound/ay8910.h"
+#include "sound/custom.h"
 
 
 
@@ -53,15 +56,11 @@ VIDEO_UPDATE( phoenix );
 
 WRITE8_HANDLER( phoenix_sound_control_a_w );
 WRITE8_HANDLER( phoenix_sound_control_b_w );
-int phoenix_sh_start(const struct MachineSound *msound);
-void phoenix_sh_stop(void);
-void phoenix_sh_update(void);
+void *phoenix_sh_start(int clock, const struct CustomSound_interface *config);
 
 WRITE8_HANDLER( pleiads_sound_control_a_w );
 WRITE8_HANDLER( pleiads_sound_control_b_w );
-int pleiads_sh_start(const struct MachineSound *msound);
-void pleiads_sh_stop(void);
-void pleiads_sh_update(void);
+void *pleiads_sh_start(int clock, const struct CustomSound_interface *config);
 
 
 static ADDRESS_MAP_START( phoenix_readmem, ADDRESS_SPACE_PROGRAM, 8 )
@@ -570,52 +569,37 @@ static struct GfxDecodeInfo pleiads_gfxdecodeinfo[] =
 
 static struct TMS36XXinterface phoenix_tms36xx_interface =
 {
-	1,
-	{ 50 }, 		/* mixing levels */
-	{ MM6221AA },	/* TMS36xx subtype(s) */
-	{ 372  },		/* base frequency */
-	{ {0.50,0,0,1.05,0,0} }, /* decay times of voices */
-    { 0.21 },       /* tune speed (time between beats) */
+	MM6221AA,	/* TMS36xx subtype(s) */
+	{0.50,0,0,1.05,0,0}, /* decay times of voices */
+    0.21       /* tune speed (time between beats) */
 };
 
 static struct CustomSound_interface phoenix_custom_interface =
 {
-	phoenix_sh_start,
-	phoenix_sh_stop,
-	phoenix_sh_update
+	phoenix_sh_start
 };
 
 static struct TMS36XXinterface pleiads_tms36xx_interface =
 {
-	1,
-	{ 75		},	/* mixing levels */
-	{ TMS3615	},	/* TMS36xx subtype(s) */
-	{ 247		},	/* base frequencies (one octave below A) */
+	TMS3615,	/* TMS36xx subtype(s) */
 	/*
 	 * Decay times of the voices; NOTE: it's unknown if
 	 * the the TMS3615 mixes more than one voice internally.
 	 * A wav taken from Pop Flamer sounds like there
 	 * are at least no 'odd' harmonics (5 1/3' and 2 2/3')
      */
-	{ {0.33,0.33,0,0.33,0,0.33} }
+	{0.33,0.33,0,0.33,0,0.33}
 };
 
 static struct CustomSound_interface pleiads_custom_interface =
 {
-	pleiads_sh_start,
-	pleiads_sh_stop,
-	pleiads_sh_update
+	pleiads_sh_start
 };
 
 static struct AY8910interface survival_ay8910_interface =
 {
-	1,	/* 1 chip */
-	11000000/4,
-	{ 50 },
-	{ 0 },
-	{ survival_protection_r },
-	{ 0 },
-	{ 0 }
+	0,
+	survival_protection_r
 };
 
 
@@ -642,8 +626,15 @@ static MACHINE_DRIVER_START( phoenix )
 	MDRV_VIDEO_UPDATE(phoenix)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD_TAG("tms",  TMS36XX, phoenix_tms36xx_interface)
-	MDRV_SOUND_ADD_TAG("cust", CUSTOM, phoenix_custom_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	
+	MDRV_SOUND_ADD_TAG("tms",  TMS36XX, 372)
+	MDRV_SOUND_CONFIG(phoenix_tms36xx_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
+	
+	MDRV_SOUND_ADD_TAG("cust", CUSTOM, 0)
+	MDRV_SOUND_CONFIG(phoenix_custom_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.40)
 MACHINE_DRIVER_END
 
 
@@ -661,8 +652,13 @@ static MACHINE_DRIVER_START( pleiads )
 	MDRV_PALETTE_INIT(pleiads)
 
 	/* sound hardware */
-	MDRV_SOUND_REPLACE("tms",  TMS36XX, pleiads_tms36xx_interface)
-	MDRV_SOUND_REPLACE("cust", CUSTOM, pleiads_custom_interface)
+	MDRV_SOUND_REPLACE("tms", TMS36XX, 247)
+	MDRV_SOUND_CONFIG(pleiads_tms36xx_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.75)
+	
+	MDRV_SOUND_REPLACE("cust", CUSTOM, 0)
+	MDRV_SOUND_CONFIG(pleiads_custom_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.40)
 MACHINE_DRIVER_END
 
 
@@ -690,7 +686,11 @@ static MACHINE_DRIVER_START( survival )
 	MDRV_VIDEO_UPDATE(phoenix)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(AY8910, survival_ay8910_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(AY8910, 11000000/4)
+	MDRV_SOUND_CONFIG(survival_ay8910_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
 MACHINE_DRIVER_END
 
 

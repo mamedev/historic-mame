@@ -56,6 +56,7 @@
 #include "cpu/m6502/m6502.h"
 #include "vidhrdw/generic.h"
 #include "machine/decocass.h"
+#include "sound/ay8910.h"
 
 /***************************************************************************
  *
@@ -416,17 +417,6 @@ static struct GfxDecodeInfo decocass_gfxdecodeinfo[] =
 	{ -1 } /* end of array */
 };
 
-static struct AY8910interface ay8910_interface =
-{
-	2,		/* 2 chips */
-	1500000,		/* 1.5 MHz ? (hand tuned) */
-	{ 40, 40 },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ 0 }
-};
-
 static PALETTE_INIT( decocass )
 {
 	int i;
@@ -485,7 +475,13 @@ static MACHINE_DRIVER_START( decocass )
 	MDRV_VIDEO_UPDATE(decocass)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(AY8910, ay8910_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(AY8910, 1500000)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.40)
+
+	MDRV_SOUND_ADD(AY8910, 1500000)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.40)
 MACHINE_DRIVER_END
 
 

@@ -3,6 +3,7 @@
 /*********************************************************/
 
 #include "driver.h"
+#include "segapcm.h"
 
 struct segapcm
 {
@@ -13,26 +14,28 @@ struct segapcm
 	int rate;
 	int bankshift;
 	int bankmask;
-} spcm;
+	sound_stream * stream;
+};
 
-static void SEGAPCM_update(int num, INT16 **buffer, int length)
+static void SEGAPCM_update(void *param, stream_sample_t **inputs, stream_sample_t **buffer, int length)
 {
+	struct segapcm *spcm = param;
 	int ch;
-	memset(buffer[0], 0, length*2);
-	memset(buffer[1], 0, length*2);
+	memset(buffer[0], 0, length*sizeof(*buffer[0]));
+	memset(buffer[1], 0, length*sizeof(*buffer[1]));
 
 	for(ch=0; ch<16; ch++)
-		if(!(spcm.ram[0x86+8*ch] & 1)) {
-			UINT8 *base = spcm.ram+8*ch;
-			UINT32 addr = (base[5] << 24) | (base[4] << 16) | spcm.low[ch];
+		if(!(spcm->ram[0x86+8*ch] & 1)) {
+			UINT8 *base = spcm->ram+8*ch;
+			UINT32 addr = (base[5] << 24) | (base[4] << 16) | spcm->low[ch];
 			UINT16 loop = (base[0x85] << 8)|base[0x84];
 			UINT8 end = base[6]+1;
 			UINT8 delta = base[7];
-			UINT32 step = spcm.step[delta];
+			UINT32 step = spcm->step[delta];
 			UINT8 voll = base[2];
 			UINT8 volr = base[3];
 			UINT8 flags = base[0x86];
-			const UINT8 *rom = spcm.rom + ((flags & spcm.bankmask) << spcm.bankshift);
+			const UINT8 *rom = spcm->rom + ((flags & spcm->bankmask) << spcm->bankshift);
 			int i;
 
 			for(i=0; i<length; i++) {
@@ -47,7 +50,7 @@ static void SEGAPCM_update(int num, INT16 **buffer, int length)
 					}
 				}
 				ptr = rom + (addr >> 16);
-				if(ptr < spcm.rom_end)
+				if(ptr < spcm->rom_end)
 					v = rom[addr>>16] - 0x80;
 				else
 					v = 0;
@@ -58,34 +61,33 @@ static void SEGAPCM_update(int num, INT16 **buffer, int length)
 			base[0x86] = flags;
 			base[4] = addr >> 16;
 			base[5] = addr >> 24;
-			spcm.low[ch] = flags & 1 ? 0 : addr;
+			spcm->low[ch] = flags & 1 ? 0 : addr;
 		}
 }
 
-int SEGAPCM_sh_start( const struct MachineSound *msound )
+static void *segapcm_start(int sndindex, int clock, const void *config)
 {
-	struct SEGAPCMinterface *intf = msound->sound_interface;
-	const char *name[2];
-	int vol[2];
+	const struct SEGAPCMinterface *intf = config;
 	int mask, rom_mask;
 	int i;
+	struct segapcm *spcm;
+	
+	spcm = auto_malloc(sizeof(*spcm));
+	memset(spcm, 0, sizeof(*spcm));
 
-	spcm.rate = intf->mode == SEGAPCM_SAMPLE15K ? 4000000/256 : 4000000/128;
+	spcm->rate = clock;
 
-	spcm.rom = (const UINT8 *)memory_region(intf->region);
-	spcm.rom_end = spcm.rom + memory_region_length(intf->region);
-	spcm.ram = auto_malloc(0x800);
-	spcm.step = auto_malloc(sizeof(UINT32)*256);
-
-	if(!spcm.ram || !spcm.step)
-		return 1;
+	spcm->rom = (const UINT8 *)memory_region(intf->region);
+	spcm->rom_end = spcm->rom + memory_region_length(intf->region);
+	spcm->ram = auto_malloc(0x800);
+	spcm->step = auto_malloc(sizeof(UINT32)*256);
 
 	for(i=0; i<256; i++)
-		spcm.step[i] = i*spcm.rate*(double)(65536/128) / Machine->sample_rate;
+		spcm->step[i] = i*spcm->rate*(double)(65536/128) / Machine->sample_rate;
 
-	memset(spcm.ram, 0xff, 0x800);
+	memset(spcm->ram, 0xff, 0x800);
 
-	spcm.bankshift = (UINT8)(intf->bank);
+	spcm->bankshift = (UINT8)(intf->bank);
 	mask = intf->bank >> 16;
 	if(!mask)
 		mask = BANK_MASK7>>16;
@@ -93,28 +95,58 @@ int SEGAPCM_sh_start( const struct MachineSound *msound )
 	for(rom_mask = 1; rom_mask < memory_region_length(intf->region); rom_mask *= 2);
 	rom_mask--;
 
-	spcm.bankmask = mask & (rom_mask >> spcm.bankshift);
+	spcm->bankmask = mask & (rom_mask >> spcm->bankshift);
 
-	name[0] = "SEGAPCM L";
-	name[1] = "SEGAPCM R";
-	vol[0] = (MIXER_PAN_LEFT<<8)  | (intf->volume & 0xff);
-	vol[1] = (MIXER_PAN_RIGHT<<8) | (intf->volume & 0xff);
-	stream_init_multi(2, name, vol, Machine->sample_rate, 0, SEGAPCM_update );
+	spcm->stream = stream_create(0, 2, Machine->sample_rate, spcm, SEGAPCM_update );
 
-	return 0;
-}
-
-void SEGAPCM_sh_stop( void )
-{
+	return spcm;
 }
 
 
 WRITE8_HANDLER( SegaPCM_w )
 {
-	spcm.ram[offset & 0x07ff] = data;
+	struct segapcm *spcm = sndti_token(SOUND_SEGAPCM, 0);
+	spcm->ram[offset & 0x07ff] = data;
 }
 
 READ8_HANDLER( SegaPCM_r )
 {
-	return spcm.ram[offset & 0x07ff];
+	struct segapcm *spcm = sndti_token(SOUND_SEGAPCM, 0);
+	return spcm->ram[offset & 0x07ff];
+}
+
+
+
+/**************************************************************************
+ * Generic get_info
+ **************************************************************************/
+
+static void segapcm_set_info(void *token, UINT32 state, union sndinfo *info)
+{
+	switch (state)
+	{
+		/* no parameters to set */
+	}
+}
+
+
+void segapcm_get_info(void *token, UINT32 state, union sndinfo *info)
+{
+	switch (state)
+	{
+		/* --- the following bits of info are returned as 64-bit signed integers --- */
+
+		/* --- the following bits of info are returned as pointers to data or functions --- */
+		case SNDINFO_PTR_SET_INFO:						info->set_info = segapcm_set_info;		break;
+		case SNDINFO_PTR_START:							info->start = segapcm_start;			break;
+		case SNDINFO_PTR_STOP:							/* Nothing */							break;
+		case SNDINFO_PTR_RESET:							/* Nothing */							break;
+
+		/* --- the following bits of info are returned as NULL-terminated strings --- */
+		case SNDINFO_STR_NAME:							info->s = "Sega PCM";					break;
+		case SNDINFO_STR_CORE_FAMILY:					info->s = "Sega custom";				break;
+		case SNDINFO_STR_CORE_VERSION:					info->s = "1.0";						break;
+		case SNDINFO_STR_CORE_FILE:						info->s = __FILE__;						break;
+		case SNDINFO_STR_CORE_CREDITS:					info->s = "Copyright (c) 2004, The MAME Team"; break;
+	}
 }

@@ -97,6 +97,8 @@ write:
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "cpu/m6502/m6502.h"
+#include "sound/vlm5030.h"
+#include "sound/nes_apu.h"
 
 
 extern unsigned char *punchout_videoram2;
@@ -754,16 +756,12 @@ static struct GfxDecodeInfo armwrest_gfxdecodeinfo[] =
 
 static struct NESinterface nes_interface =
 {
-	1,
-	{ REGION_CPU2 },
-	{ 50 },
+	REGION_CPU2
 };
 
 
 static struct VLM5030interface vlm5030_interface =
 {
-	3580000,    /* master clock */
-	50,        /* volume       */
 	REGION_SOUND1,	/* memory region of speech rom */
 	0           /* memory size of speech rom */
 };
@@ -802,8 +800,15 @@ static MACHINE_DRIVER_START( punchout )
 	MDRV_VIDEO_UPDATE(punchout)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(NES, nes_interface)
-	MDRV_SOUND_ADD(VLM5030, vlm5030_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	
+	MDRV_SOUND_ADD(NES, 0)
+	MDRV_SOUND_CONFIG(nes_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
+
+	MDRV_SOUND_ADD(VLM5030, 3580000)
+	MDRV_SOUND_CONFIG(vlm5030_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
 MACHINE_DRIVER_END
 
 

@@ -219,6 +219,7 @@
 #include "driver.h"
 #include "vidhrdw/vector.h"
 #include "vidhrdw/avgdvg.h"
+#include "sound/ay8910.h"
 
 
 
@@ -500,25 +501,6 @@ INPUT_PORTS_END
 
 /*************************************
  *
- *	Sound interfaces
- *
- *************************************/
-
-static struct AY8910interface ay8910_interface =
-{
-	2,	/* 2 chips */
-	1500000,	/* 1.5 MHz */
-	{ 25, 25 },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ 0 }
-};
-
-
-
-/*************************************
- *
  *	Machine drivers
  *
  *************************************/
@@ -553,7 +535,13 @@ static MACHINE_DRIVER_START( omegrace )
 	MDRV_VIDEO_UPDATE(vector)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(AY8910, ay8910_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(AY8910, 1500000)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
+
+	MDRV_SOUND_ADD(AY8910, 1500000)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
 MACHINE_DRIVER_END
 
 

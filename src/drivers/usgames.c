@@ -25,6 +25,7 @@ Sound: AY-3-8912
 
 #include "driver.h"
 #include "vidhrdw/crtc6845.h"
+#include "sound/ay8910.h"
 
 /* vidhrdw */
 WRITE8_HANDLER( usg_videoram_w );
@@ -291,19 +292,6 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 
 
-static struct AY8910interface ay8910_interface =
-{
-	1,			/* 1 chip */
-	2000000,	/* 2 MHz? */
-	{ 30 },		/* volume */
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ 0 }
-};
-
-
-
 static MACHINE_DRIVER_START( usg )
 
 	/* basic machine hardware */
@@ -329,7 +317,10 @@ static MACHINE_DRIVER_START( usg )
 	MDRV_VIDEO_UPDATE(usg)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(AY8910, ay8910_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	
+	MDRV_SOUND_ADD(AY8910, 2000000)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.30)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( usg185 )

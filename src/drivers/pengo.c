@@ -65,6 +65,7 @@
 #include "vidhrdw/generic.h"
 #include "machine/segacrpt.h"
 #include "pacman.h"
+#include "sound/namco.h"
 
 
 
@@ -312,9 +313,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 static struct namco_interface namco_interface =
 {
-	3072000/32,	/* sample rate */
 	3,			/* number of voices */
-	100,		/* playback volume */
 	REGION_SOUND1	/* memory region */
 };
 
@@ -353,7 +352,11 @@ static MACHINE_DRIVER_START( pengo )
 	MDRV_VIDEO_UPDATE(pacman)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(NAMCO, namco_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(NAMCO, 3072000/32)
+	MDRV_SOUND_CONFIG(namco_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 

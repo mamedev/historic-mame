@@ -44,6 +44,7 @@ NOTE :
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "sound/2203intf.h"
 
 
 /**************************************************************************
@@ -624,17 +625,6 @@ static struct GfxDecodeInfo robokid_gfxdecodeinfo[] =
   Machine drivers
 **************************************************************************/
 
-static struct YM2203interface ym2203_interface =
-{
-	2,	 /* 2 chips */
-	12000000/8,
-	{ YM2203_VOL(35, 35), YM2203_VOL(35, 35)},
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ 0 }
-};
-
 static MACHINE_DRIVER_START( omegaf )
 
 	/* basic machine hardware */
@@ -663,7 +653,13 @@ static MACHINE_DRIVER_START( omegaf )
 	MDRV_VIDEO_UPDATE(omegaf)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM2203, ym2203_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM2203, 12000000/8)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.35)
+
+	MDRV_SOUND_ADD(YM2203, 12000000/8)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.35)
 MACHINE_DRIVER_END
 
 

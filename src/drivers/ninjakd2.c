@@ -220,6 +220,8 @@ The first sprite data is located at fa0b,then fa1b and so on.
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "sound/2203intf.h"
+#include "sound/samples.h"
 
 WRITE8_HANDLER( ninjakd2_bgvideoram_w );
 WRITE8_HANDLER( ninjakd2_fgvideoram_w );
@@ -239,37 +241,23 @@ extern size_t ninjakd2_foregroundram_size;
 
 static int ninjakd2_bank_latch = 255;
 
+static INT16 *sampledata[8];
+static int samplelen[8];
 
-
-int ninjakd2_init_samples(const struct MachineSound *msound)
+void ninjakd2_init_samples(void)
 {
 	int i,n;
 	unsigned char *source = memory_region(REGION_SOUND1);
-	struct GameSamples *samples;
 	int sample_info [9][2] = { {0x0000,0x0A00},{0x0A00,0x1D00},{0x2700,0x1700},
 	{0x3E00,0x1500},{0x5300,0x0B00},{0x5E00,0x0A00},{0x6800,0x0E00},{0x7600,0x1E00},{0xF000,0x0400} };
 
-	if ((Machine->samples = auto_malloc(sizeof(struct GameSamples) + 9 * sizeof(struct GameSample *))) == NULL)
-		return 1;
-
-	samples = Machine->samples;
-	samples->total = 8;
-
 	for (i=0;i<8;i++)
 	{
-		if ((samples->sample[i] = auto_malloc(sizeof(struct GameSample) + (sample_info[i][1]))) == NULL)
-			return 1;
-
-		samples->sample[i]->length = sample_info[i][1];
-		samples->sample[i]->smpfreq = 16000;	/* 16 kHz */
-		samples->sample[i]->resolution = 8;
+		sampledata[i] = auto_malloc(sample_info[i][1] * sizeof(sampledata[0]));
+		samplelen[i] = sample_info[i][1];
 		for (n=0; n<sample_info[i][1]; n++)
-			samples->sample[i]->data[n] = source[sample_info[i][0]+n] ^ 0x80;
+			sampledata[i][n] = (INT8)(source[sample_info[i][0]+n] ^ 0x80) * 256;
 	}
-
-	/*	The samples are now ready to be used.  They are a 8 bit, 16 kHz samples. 	 */
-
-	return 0;
 }
 
 
@@ -308,7 +296,7 @@ WRITE8_HANDLER( ninjakd2_pcm_play_w )
 	if (i==8)
 		sample_stop(0);
 	else
-		sample_start(0,i,0);
+		sample_start_raw(0,sampledata[i],samplelen[i],16000,0);
 }
 
 static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
@@ -489,14 +477,8 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 static struct Samplesinterface samples_interface =
 {
 	1,	/* 1 channel */
-	30	/* volume */
-};
-
-static struct CustomSound_interface custom_interface =
-{
-	ninjakd2_init_samples,
-	0,
-	0
+	NULL,
+	ninjakd2_init_samples
 };
 
 /* handler called by the 2203 emulator when the internal timers cause an IRQ */
@@ -507,14 +489,7 @@ static void irqhandler(int irq)
 
 static struct YM2203interface ym2203_interface =
 {
-	2, 	 /* 2 chips */
-	1500000, /* 12000000/8 MHz */
-	{ YM2203_VOL(30,30), YM2203_VOL(30,30) },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ irqhandler }
+	0,0,0,0,irqhandler
 };
 
 
@@ -544,9 +519,18 @@ static MACHINE_DRIVER_START( ninjakd2 )
 	MDRV_VIDEO_UPDATE(ninjakd2)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM2203, ym2203_interface)
-	MDRV_SOUND_ADD(SAMPLES, samples_interface)
-	MDRV_SOUND_ADD(CUSTOM, custom_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM2203, 1500000)
+	MDRV_SOUND_CONFIG(ym2203_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.30)
+
+	MDRV_SOUND_ADD(YM2203, 1500000)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.30)
+
+	MDRV_SOUND_ADD(SAMPLES, 0)
+	MDRV_SOUND_CONFIG(samples_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.30)
 MACHINE_DRIVER_END
 
 

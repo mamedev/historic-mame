@@ -22,6 +22,9 @@ for now. Even at 12 this slowdown still happens a little.
 #include "vidhrdw/generic.h"
 #include "cpu/z80/z80.h"
 #include "sndhrdw/seibu.h"
+#include "sound/3812intf.h"
+#include "sound/msm5205.h"
+#include "sound/3812intf.h"
 
 extern data16_t *toki_background1_videoram16;
 extern data16_t *toki_background2_videoram16;
@@ -437,23 +440,13 @@ static struct GfxDecodeInfo tokib_gfxdecodeinfo[] =
 /*****************************************************************************/
 
 /* Parameters: YM3812 frequency, Oki frequency, Oki memory region */
-SEIBU_SOUND_SYSTEM_YM3812_HARDWARE(14318180/4,8000,REGION_SOUND1);
+SEIBU_SOUND_SYSTEM_YM3812_HARDWARE;
 
-
-static struct YM3812interface ym3812_tokib_interface =
-{
-	1,			/* 1 chip (no more supported) */
-	3579545,	/* adjusted, more accurate */
-	{ 100 }		/* (not supported) */
-};
 
 static struct MSM5205interface msm5205_interface =
 {
-	1,					/* 1 chip			  */
-	384000, 			/* 384KHz			  */
-	{ toki_adpcm_int },/* interrupt function */
-	{ MSM5205_S96_4B },	/* 4KHz 			  */
-	{ 60 }	/* adjusted sound fx volume */
+	toki_adpcm_int,	/* interrupt function */
+	MSM5205_S96_4B	/* 4KHz 			  */
 };
 
 
@@ -482,7 +475,7 @@ static MACHINE_DRIVER_START( toki ) /* KOYO 20.000MHz near the cpu */
 	MDRV_VIDEO_UPDATE(toki)
 
 	/* sound hardware */
-	SEIBU_SOUND_SYSTEM_YM3812_INTERFACE
+	SEIBU_SOUND_SYSTEM_YM3812_INTERFACE(14318180/4,8000,1)
 MACHINE_DRIVER_END
 
 
@@ -512,8 +505,14 @@ static MACHINE_DRIVER_START( tokib )
 	MDRV_VIDEO_UPDATE(tokib)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM3812, ym3812_tokib_interface)
-	MDRV_SOUND_ADD(MSM5205, msm5205_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM3812, 3579545)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
+
+	MDRV_SOUND_ADD(MSM5205, 384000)
+	MDRV_SOUND_CONFIG(msm5205_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.60)
 MACHINE_DRIVER_END
 
 

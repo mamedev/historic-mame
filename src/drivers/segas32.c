@@ -36,6 +36,8 @@ there are still MANY issues with the system 32 driver, mostly video related
 #include "vidhrdw/generic.h"
 #include "machine/eeprom.h"
 #include "machine/random.h"
+#include "sound/2612intf.h"
+#include "sound/rf5c68.h"
 
 //#define S32_LOG printf
 #define S32_LOG logerror
@@ -610,20 +612,20 @@ static WRITE8_HANDLER( sys32_soundbank_hi_w )
 }
 
 static ADDRESS_MAP_START( sound_readport_32, ADDRESS_SPACE_IO, 8 )
-	AM_RANGE(0x80, 0x80) AM_READ(YM2612_status_port_0_A_r)
-	AM_RANGE(0x90, 0x90) AM_READ(YM2612_status_port_1_A_r)
+	AM_RANGE(0x80, 0x80) AM_READ(YM3438_status_port_0_A_r)
+	AM_RANGE(0x90, 0x90) AM_READ(YM3438_status_port_1_A_r)
 	AM_RANGE(0xf1, 0xf1) AM_READ(sys32_sound_prot_r)
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( sound_writeport_32, ADDRESS_SPACE_IO, 8 )
-	AM_RANGE(0x80, 0x80) AM_WRITE(YM2612_control_port_0_A_w)
-	AM_RANGE(0x81, 0x81) AM_WRITE(YM2612_data_port_0_A_w)
-	AM_RANGE(0x82, 0x82) AM_WRITE(YM2612_control_port_0_B_w)
-	AM_RANGE(0x83, 0x83) AM_WRITE(YM2612_data_port_0_B_w)
-	AM_RANGE(0x90, 0x90) AM_WRITE(YM2612_control_port_1_A_w)
-	AM_RANGE(0x91, 0x91) AM_WRITE(YM2612_data_port_1_A_w)
-	AM_RANGE(0x92, 0x92) AM_WRITE(YM2612_control_port_1_B_w)
-	AM_RANGE(0x93, 0x93) AM_WRITE(YM2612_data_port_1_B_w)
+	AM_RANGE(0x80, 0x80) AM_WRITE(YM3438_control_port_0_A_w)
+	AM_RANGE(0x81, 0x81) AM_WRITE(YM3438_data_port_0_A_w)
+	AM_RANGE(0x82, 0x82) AM_WRITE(YM3438_control_port_0_B_w)
+	AM_RANGE(0x83, 0x83) AM_WRITE(YM3438_data_port_0_B_w)
+	AM_RANGE(0x90, 0x90) AM_WRITE(YM3438_control_port_1_A_w)
+	AM_RANGE(0x91, 0x91) AM_WRITE(YM3438_data_port_1_A_w)
+	AM_RANGE(0x92, 0x92) AM_WRITE(YM3438_control_port_1_B_w)
+	AM_RANGE(0x93, 0x93) AM_WRITE(YM3438_data_port_1_B_w)
 	AM_RANGE(0xa0, 0xa0) AM_WRITE(sys32_soundbank_lo_w)
 	AM_RANGE(0xb0, 0xb0) AM_WRITE(sys32_soundbank_hi_w)
 	AM_RANGE(0xc1, 0xc1) AM_WRITE(MWA8_NOP)
@@ -636,19 +638,9 @@ static void irq_handler(int irq)
 	cpunum_set_input_line( 1, 0 , irq ? ASSERT_LINE : CLEAR_LINE );
 }
 
-struct RF5C68interface sys32_rf5c68_interface =
+struct YM3438interface sys32_ym3438_interface =
 {
-  9000000,		/* pitch matches real board, real speed is 8 MHz */
-  55
-};
-
-struct YM2612interface sys32_ym3438_interface =
-{
-	2,		/* 2 chips */
-	8000000,	/* verified on real PCB */
-	{ 40,40 },
-	{ 0 },	{ 0 },	{ 0 },	{ 0 },
-	{ irq_handler }
+	irq_handler
 };
 
 
@@ -862,9 +854,21 @@ static MACHINE_DRIVER_START( segas32 )
 	MDRV_VIDEO_START(system32)
 	MDRV_VIDEO_UPDATE(system32)
 
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(YM3438, sys32_ym3438_interface)
-	MDRV_SOUND_ADD(RF5C68, sys32_rf5c68_interface)
+	/* sound hardware */
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(YM3438, 8000000)
+	MDRV_SOUND_CONFIG(sys32_ym3438_interface)
+	MDRV_SOUND_ROUTE(0, "left", 0.40)
+	MDRV_SOUND_ROUTE(1, "right", 0.40)
+
+	MDRV_SOUND_ADD(YM3438, 8000000)
+	MDRV_SOUND_ROUTE(0, "left", 0.40)
+	MDRV_SOUND_ROUTE(1, "right", 0.40)
+	
+	MDRV_SOUND_ADD(RF5C68, 9000000) /* pitch matches real board, real speed is 8 MHz */
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.55)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 0.55)
 MACHINE_DRIVER_END
 
 /* System 32 can change modes at run time, games which use a higher mode need to start up

@@ -4,6 +4,8 @@
 
 *************************************************************************/
 
+#include "sound/custom.h"
+
 /*----------- defined in machine/cchasm.c -----------*/
 
 READ16_HANDLER( cchasm_6840_r );
@@ -20,8 +22,7 @@ WRITE8_HANDLER( cchasm_snd_io_w );
 WRITE16_HANDLER( cchasm_io_w );
 READ16_HANDLER( cchasm_io_r );
 
-int cchasm_sh_start(const struct MachineSound *msound);
-void cchasm_sh_update(void);
+void *cchasm_sh_start(int clock, const struct CustomSound_interface *config);
 
 
 /*----------- defined in vidhrdw/cchasm.c -----------*/

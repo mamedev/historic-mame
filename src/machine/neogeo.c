@@ -4,6 +4,7 @@
 #include "inptport.h"
 #include "state.h"
 #include <time.h>
+#include "sound/2610intf.h"
 
 
 static int sram_locked;
@@ -127,12 +128,12 @@ DRIVER_INIT( neogeo )
 	if (memory_region(REGION_SOUND2))
 	{
 		logerror("using memory region %d for Delta T samples\n",REGION_SOUND2);
-		neogeo_ym2610_interface.pcmromb[0] = REGION_SOUND2;
+		neogeo_ym2610_interface.pcmromb = REGION_SOUND2;
 	}
 	else
 	{
 		logerror("using memory region %d for Delta T samples\n",REGION_SOUND1);
-		neogeo_ym2610_interface.pcmromb[0] = REGION_SOUND1;
+		neogeo_ym2610_interface.pcmromb = REGION_SOUND1;
 	}
 
 	/* Allocate ram banks */

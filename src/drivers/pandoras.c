@@ -18,6 +18,8 @@ TODO:
 #include "cpu/z80/z80.h"
 #include "cpu/i8039/i8039.h"
 #include "vidhrdw/generic.h"
+#include "sound/ay8910.h"
+#include "sound/dac.h"
 
 static int irq_enable_a, irq_enable_b;
 static int firq_old_data_a, firq_old_data_b;
@@ -391,19 +393,8 @@ static READ8_HANDLER( pandoras_portB_r )
 
 static struct AY8910interface ay8910_interface =
 {
-	1,			/* 1 chip */
-	14318000/8,
-	{ 40 },
-	{ pandoras_portA_r },	// not used
-	{ pandoras_portB_r },
-	{ 0 },
-	{ 0 }
-};
-
-static struct DACinterface dac_interface =
-{
-	1,
-	{ 25 }
+	pandoras_portA_r,	// not used
+	pandoras_portB_r
 };
 
 static MACHINE_DRIVER_START( pandoras )
@@ -445,8 +436,14 @@ static MACHINE_DRIVER_START( pandoras )
 	MDRV_VIDEO_UPDATE(pandoras)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(AY8910, ay8910_interface)
-	MDRV_SOUND_ADD(DAC, dac_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	
+	MDRV_SOUND_ADD(AY8910, 14318000/8)
+	MDRV_SOUND_CONFIG(ay8910_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.40)
+
+	MDRV_SOUND_ADD(DAC, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
 MACHINE_DRIVER_END
 
 

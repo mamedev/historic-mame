@@ -58,6 +58,8 @@ register. So what is controlling priority.
 #include "vidhrdw/generic.h"
 #include "vidhrdw/taitoic.h"
 #include "sndhrdw/taitosnd.h"
+#include "sound/2151intf.h"
+#include "sound/msm5205.h"
 
 static data8_t *cchip_ram;
 
@@ -212,7 +214,7 @@ static WRITE8_HANDLER( opwolf_adpcm_b_w )
 		end   = adpcm_b[2] + adpcm_b[3]*256;
 		start *=16;
 		end   *=16;
-		ADPCM_play(0,start,(end-start)*2);
+//		ADPCM_play(0,start,(end-start)*2);
 	}
 
 	/*logerror("CPU #1     b00%i-data=%2x   pc=%4x\n",offset,data,activecpu_get_pc() );*/
@@ -232,7 +234,7 @@ static WRITE8_HANDLER( opwolf_adpcm_c_w )
 		end   = adpcm_c[2] + adpcm_c[3]*256;
 		start *=16;
 		end   *=16;
-		ADPCM_play(1,start,(end-start)*2);
+//		ADPCM_play(1,start,(end-start)*2);
 	}
 
 	/*logerror("CPU #1     c00%i-data=%2x   pc=%4x\n",offset,data,activecpu_get_pc() );*/
@@ -426,21 +428,17 @@ static void irq_handler(int irq)
 
 static struct YM2151interface ym2151_interface =
 {
-	1,			/* 1 chip */
-	4000000,	/* 4 MHz ? */
-	{ YM3012_VOL(50,MIXER_PAN_CENTER,50,MIXER_PAN_CENTER) },
-	{ irq_handler },
-	{ sound_bankswitch_w }
+	irq_handler,
+	sound_bankswitch_w
 };
 
 
-static struct ADPCMinterface adpcm_interface =
+static struct MSM5205interface msm5205_interface =
 {
-	2,			/* 2 chips ?? */
-	8000,       /* 8000Hz playback */
-	REGION_SOUND1,	/* memory region */
-	{ 60, 60 }	/* volume - guessed  */
+	NULL,				/* VCK function */
+	MSM5205_S48_4B		/* 8 kHz */
 };
+
 
 
 /***********************************************************
@@ -476,8 +474,20 @@ static MACHINE_DRIVER_START( opwolf )
 	MDRV_VIDEO_UPDATE(opwolf)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM2151, ym2151_interface)
-	MDRV_SOUND_ADD(ADPCM, adpcm_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM2151, 4000000)
+	MDRV_SOUND_CONFIG(ym2151_interface)
+	MDRV_SOUND_ROUTE(0, "mono", 0.50)
+	MDRV_SOUND_ROUTE(1, "mono", 0.50)
+
+	MDRV_SOUND_ADD(MSM5205, 384000)
+	MDRV_SOUND_CONFIG(msm5205_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.60)
+
+	MDRV_SOUND_ADD(MSM5205, 384000)
+	MDRV_SOUND_CONFIG(msm5205_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.60)
 MACHINE_DRIVER_END
 
 
@@ -510,8 +520,20 @@ static MACHINE_DRIVER_START( opwolfb )
 	MDRV_VIDEO_UPDATE(opwolf)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM2151, ym2151_interface)
-	MDRV_SOUND_ADD(ADPCM, adpcm_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM2151, 4000000)
+	MDRV_SOUND_CONFIG(ym2151_interface)
+	MDRV_SOUND_ROUTE(0, "mono", 0.50)
+	MDRV_SOUND_ROUTE(1, "mono", 0.50)
+
+	MDRV_SOUND_ADD(MSM5205, 384000)
+	MDRV_SOUND_CONFIG(msm5205_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.60)
+
+	MDRV_SOUND_ADD(MSM5205, 384000)
+	MDRV_SOUND_CONFIG(msm5205_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.60)
 MACHINE_DRIVER_END
 
 
@@ -613,5 +635,5 @@ static DRIVER_INIT( opwolfb )
 
 
 /*    year  rom       parent    machine   inp       init */
-GAME( 1987, opwolf,   0,        opwolf,   opwolf,   opwolf,   ROT0, "Taito America Corporation", "Operation Wolf (US)" )
-GAME( 1987, opwolfb,  opwolf,   opwolfb,  opwolf,   opwolfb,  ROT0, "bootleg", "Operation Bear" )
+GAMEX( 1987, opwolf,   0,        opwolf,   opwolf,   opwolf,   ROT0, "Taito America Corporation", "Operation Wolf (US)", GAME_IMPERFECT_SOUND )
+GAMEX( 1987, opwolfb,  opwolf,   opwolfb,  opwolf,   opwolfb,  ROT0, "bootleg", "Operation Bear", GAME_IMPERFECT_SOUND )

@@ -41,6 +41,7 @@ Notes:
 */
 
 #include "vidhrdw/generic.h"
+#include "sound/ay8910.h"
 
 WRITE8_HANDLER( carjmbre_flipscreen_w );
 WRITE8_HANDLER( carjmbre_bgcolor_w );
@@ -180,17 +181,6 @@ static struct GfxDecodeInfo carjmbre_gfxdecodeinfo[] =
 	{ -1 } /* end of array */
 };
 
-static struct AY8910interface carjmbre_ay8910_interface =
-{
-	2,	/* 2 chips */
-	1500000,
-	{ 12, 12 },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ 0 }
-};
-
 static MACHINE_DRIVER_START( carjmbre )
 
 	/* basic machine hardware */
@@ -220,7 +210,13 @@ static MACHINE_DRIVER_START( carjmbre )
 	MDRV_VIDEO_UPDATE(carjmbre)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(AY8910, carjmbre_ay8910_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(AY8910, 1500000)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.12)
+
+	MDRV_SOUND_ADD(AY8910, 1500000)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.12)
 MACHINE_DRIVER_END
 
 ROM_START( carjmbre )

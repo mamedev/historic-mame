@@ -261,6 +261,8 @@ TODO:
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "sound/2203intf.h"
+#include "sound/3812intf.h"
 
 /* vidhrdw/bublbobl.c */
 extern UINT8 *bublbobl_objectram;
@@ -679,33 +681,11 @@ static void irqhandler(int irq)
 
 static struct YM2203interface ym2203_interface =
 {
-	1,				// 1 chip
-	MAIN_XTAL/8,	// 3 MHz
-	{ YM2203_VOL(25,25) },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ irqhandler }
-};
-
-static struct YM3526interface ym3526_interface =
-{
-	1,				// 1 chip (no more supported)
-	MAIN_XTAL/8,	// 3 MHz
-	{ 50 }			// volume
-};
-
-static struct YM2203interface tokio_ym2203_interface =
-{
-	1,				// 1 chip
-	MAIN_XTAL/8,	// 3 MHz
-	{ YM2203_VOL(100,8) },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ irqhandler }
+	0,
+	0,
+	0,
+	0,
+	irqhandler
 };
 
 
@@ -738,7 +718,14 @@ static MACHINE_DRIVER_START( tokio )
 	MDRV_VIDEO_UPDATE(bublbobl)
 
 	// sound hardware
-	MDRV_SOUND_ADD(YM2203, tokio_ym2203_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM2203, MAIN_XTAL/8)
+	MDRV_SOUND_CONFIG(ym2203_interface)
+	MDRV_SOUND_ROUTE(0, "mono", 0.08)
+	MDRV_SOUND_ROUTE(1, "mono", 0.08)
+	MDRV_SOUND_ROUTE(2, "mono", 0.08)
+	MDRV_SOUND_ROUTE(3, "mono", 1.0)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( bublbobl )
@@ -776,8 +763,14 @@ static MACHINE_DRIVER_START( bublbobl )
 	MDRV_VIDEO_UPDATE(bublbobl)
 
 	// sound hardware
-	MDRV_SOUND_ADD(YM2203, ym2203_interface)
-	MDRV_SOUND_ADD(YM3526, ym3526_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM2203, MAIN_XTAL/8)
+	MDRV_SOUND_CONFIG(ym2203_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
+
+	MDRV_SOUND_ADD(YM3526, MAIN_XTAL/8)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( boblbobl )

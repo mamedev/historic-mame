@@ -10,6 +10,7 @@
 #include "cpu/tms34010/tms34010.h"
 #include "vidhrdw/tlc34076.h"
 #include "btoads.h"
+#include "sound/bsmt2000.h"
 
 
 
@@ -328,11 +329,8 @@ static struct tms34010_config cpu_config =
 
 static struct BSMT2000interface bsmt2000_interface =
 {
-	1,
-	{ 24000000 },
-	{ 12 },
-	{ REGION_SOUND1 },
-	{ 100 }
+	12,
+	REGION_SOUND1
 };
 
 
@@ -370,8 +368,12 @@ static MACHINE_DRIVER_START( btoads )
 	MDRV_VIDEO_UPDATE(btoads)
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(BSMT2000, bsmt2000_interface)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(BSMT2000, 24000000)
+	MDRV_SOUND_CONFIG(bsmt2000_interface)
+	MDRV_SOUND_ROUTE(0, "left", 1.0)
+	MDRV_SOUND_ROUTE(1, "right", 1.0)
 MACHINE_DRIVER_END
 
 

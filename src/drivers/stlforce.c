@@ -69,6 +69,7 @@ TO DO :
 
 #include "driver.h"
 #include "machine/eeprom.h"
+#include "sound/okim6295.h"
 
 data16_t *stlforce_bg_videoram, *stlforce_mlow_videoram, *stlforce_mhigh_videoram, *stlforce_tx_videoram;
 data16_t *stlforce_bg_scrollram, *stlforce_mlow_scrollram, *stlforce_mhigh_scrollram, *stlforce_vidattrram;
@@ -198,14 +199,6 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 	{ -1 } /* end of array */
 };
 
-static struct OKIM6295interface okim6295_interface =
-{
-	1,					/* 1 chip */
-	{ 937500 / 132 },	/* frequency (Hz) */
-	{ REGION_SOUND1 },	/* memory region */
-	{ 100 }
-};
-
 static data8_t stlforce_default_eeprom[128] = {
 	0x7e, 0x01, 0x00, 0x00, 0x01, 0x03, 0x05, 0x01, 0x01, 0x00, 0x4e, 0x20, 0x00, 0x00, 0x4a, 0x4d,
 	0x42, 0x00, 0x02, 0x01, 0x4e, 0x20, 0x00, 0x00, 0x4d, 0x41, 0x43, 0x00, 0x02, 0x01, 0x00, 0x64,
@@ -270,7 +263,11 @@ static MACHINE_DRIVER_START( stlforce )
 	MDRV_VIDEO_UPDATE(stlforce)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(OKIM6295, okim6295_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(OKIM6295, 937500 / 132)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( twinbrat )

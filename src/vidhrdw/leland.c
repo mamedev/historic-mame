@@ -9,6 +9,7 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "leland.h"
+#include "sound/dac.h"
 
 
 /* constants */

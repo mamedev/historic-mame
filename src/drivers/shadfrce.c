@@ -78,6 +78,8 @@ lev 7 : 0x7c : 0000 11d0 - just rte
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "sound/2151intf.h"
+#include "sound/okim6295.h"
 
 data16_t *shadfrce_fgvideoram, *shadfrce_bg0videoram,  *shadfrce_bg1videoram,   *shadfrce_spvideoram;
 /* data16_t *shadfrce_videoregs; */
@@ -539,18 +541,7 @@ static void irq_handler(int irq)
 
 static struct YM2151interface ym2151_interface =
 {
-	1,			/* 1 chip */
-	3579545,	/* Guess */
-	{ YM3012_VOL(50,MIXER_PAN_LEFT,50,MIXER_PAN_RIGHT) },
-	{ irq_handler }
-};
-
-static struct OKIM6295interface okim6295_interface =
-{
-	1,				/* 1 chip */
-	{ 12000 },			/* fixed */
-	{ REGION_SOUND1 },	/* memory region */
-	{ 50 }
+	irq_handler
 };
 
 static INTERRUPT_GEN( shadfrce_interrupt ) {
@@ -586,9 +577,17 @@ static MACHINE_DRIVER_START( shadfrce )
 	MDRV_VIDEO_UPDATE(shadfrce)
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(YM2151, ym2151_interface)
-	MDRV_SOUND_ADD(OKIM6295, okim6295_interface)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(YM2151, 3579545)
+	MDRV_SOUND_CONFIG(ym2151_interface)
+	MDRV_SOUND_ROUTE(0, "left", 0.50)
+	MDRV_SOUND_ROUTE(1, "right", 0.50)
+
+	MDRV_SOUND_ADD(OKIM6295, 12000)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.50)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 0.50)
 MACHINE_DRIVER_END
 
 /* Rom Defs. */

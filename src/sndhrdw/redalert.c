@@ -33,6 +33,7 @@ ask.  - Mike Balfour (mab22@po.cwru.edu)
 #include "driver.h"
 #include "cpu/m6502/m6502.h"
 #include "cpu/i8085/i8085.h"
+#include "sound/ay8910.h"
 
 static int AY8910_A_input_data = 0;
 static int c030_data = 0;

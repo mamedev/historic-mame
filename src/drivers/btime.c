@@ -49,6 +49,7 @@ can take. Should the game reset????
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "cpu/m6502/m6502.h"
+#include "sound/ay8910.h"
 
 extern unsigned char *lnc_charbank;
 extern unsigned char *bnj_backgroundram;
@@ -1289,18 +1290,6 @@ static struct GfxDecodeInfo disco_gfxdecodeinfo[] =
 
 
 
-static struct AY8910interface ay8910_interface =
-{
-	2,      /* 2 chips */
-	1500000,        /* 1.5 MHz ? (hand tuned) */
-	{ 23, 23 },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ 0 }
-};
-
-
 static MACHINE_DRIVER_START( btime )
 
 	/* basic machine hardware */
@@ -1328,7 +1317,13 @@ static MACHINE_DRIVER_START( btime )
 	MDRV_VIDEO_UPDATE(btime)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(AY8910, ay8910_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(AY8910, 1500000)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.23)
+
+	MDRV_SOUND_ADD(AY8910, 1500000)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.23)
 MACHINE_DRIVER_END
 
 

@@ -105,6 +105,7 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "atarifb.h"
+#include "sound/discrete.h"
 
 
 int atarifb_game;
@@ -546,7 +547,11 @@ static MACHINE_DRIVER_START( atarifb )
 	MDRV_VIDEO_UPDATE(atarifb)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD_TAG("discrete", DISCRETE, atarifb_discrete_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	
+	MDRV_SOUND_ADD_TAG("discrete", DISCRETE, 0)
+	MDRV_SOUND_CONFIG(atarifb_discrete_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 
@@ -566,7 +571,9 @@ static MACHINE_DRIVER_START( abaseb )
 	MDRV_IMPORT_FROM(atarifb)
 
 	/* sound hardware */
-	MDRV_SOUND_REPLACE("discrete", DISCRETE, abaseb_discrete_interface)
+	MDRV_SOUND_REPLACE("discrete", DISCRETE, 0)
+	MDRV_SOUND_CONFIG(abaseb_discrete_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 

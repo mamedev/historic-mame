@@ -105,6 +105,9 @@ ae500w07.ad1 - M6295 Samples (23c4001)
 #include "vidhrdw/generic.h"
 #include "machine/eeprom.h"
 #include "cpu/m68000/m68k.h"
+#include "sound/okim6295.h"
+#include "sound/262intf.h"
+#include "sound/ymz280b.h"
 
 static int gametype;
 
@@ -526,29 +529,14 @@ static void sound_irq(int irq)
 
 static struct YMF262interface ymf262_interface =
 {
-	1,					/* 1 chip */
-	14318180,			/* X1 ? */
-	{ YAC512_VOL(100,MIXER_PAN_LEFT,100,MIXER_PAN_RIGHT) },	/* channels A and B */
-	{ YAC512_VOL(100,MIXER_PAN_LEFT,100,MIXER_PAN_RIGHT) },	/* channels C and D */
-	{ sound_irq },		/* irq */
+	sound_irq		/* irq */
 };
 
-
-static struct OKIM6295interface okim6295_interface =
-{
-	1,					/* 1 chip */
-	{ 14318180/2048 },	/* = 6991 Hz ? */
-	{ REGION_SOUND2 },
-	{ 50 }
-};
 
 static struct YMZ280Binterface ymz280b_interface =
 {
-	1,					/* 1 chip */
-	{ 16900000 },		/* X4 ? */
-	{ REGION_SOUND1 },
-	{ YM3012_VOL(30,MIXER_PAN_LEFT,30,MIXER_PAN_RIGHT) },
-	{ 0 }	/* irq */
+	REGION_SOUND1,
+	0	/* irq */
 };
 
 static MACHINE_DRIVER_START( deroon )
@@ -576,10 +564,24 @@ static MACHINE_DRIVER_START( deroon )
 	MDRV_VIDEO_UPDATE(deroon)
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(YMF262,   ymf262_interface)
-	MDRV_SOUND_ADD(OKIM6295, okim6295_interface)
-	MDRV_SOUND_ADD(YMZ280B,  ymz280b_interface)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(YMF262, 14318180)
+	MDRV_SOUND_CONFIG(ymf262_interface)
+	MDRV_SOUND_ROUTE(0, "left", 1.0)
+	MDRV_SOUND_ROUTE(1, "right", 1.0)
+	MDRV_SOUND_ROUTE(2, "left", 1.0)
+	MDRV_SOUND_ROUTE(3, "right", 1.0)
+
+	MDRV_SOUND_ADD(OKIM6295, 14318180/2048)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.50)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 0.50)
+
+	MDRV_SOUND_ADD(YMZ280B, 16900000)
+	MDRV_SOUND_CONFIG(ymz280b_interface)
+	MDRV_SOUND_ROUTE(0, "left", 0.30)
+	MDRV_SOUND_ROUTE(1, "right", 0.30)
 MACHINE_DRIVER_END
 
 

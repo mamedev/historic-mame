@@ -168,7 +168,6 @@
 
 
 #include "driver.h"
-#include "sound/adpcm.h"
 #include "cpu/tms34010/tms34010.h"
 #include "cpu/tms32010/tms32010.h"
 #include "cpu/adsp2100/adsp2100.h"
@@ -177,6 +176,7 @@
 #include "machine/asic65.h"
 #include "sndhrdw/atarijsa.h"
 #include "harddriv.h"
+#include "sound/dac.h"
 
 /* from slapstic.c */
 void slapstic_init(int chip);
@@ -920,27 +920,6 @@ INPUT_PORTS_END
 
 /*************************************
  *
- *	Sound interfaces
- *
- *************************************/
-
-static struct DACinterface dac_interface =
-{
-	1,
-	{ MIXER(100, MIXER_PAN_CENTER) }
-};
-
-
-static struct DACinterface dac2_interface =
-{
-	2,
-	{ MIXER(100, MIXER_PAN_LEFT), MIXER(100, MIXER_PAN_RIGHT) }
-};
-
-
-
-/*************************************
- *
  *	Main board pieces
  *
  *************************************/
@@ -1092,7 +1071,13 @@ static MACHINE_DRIVER_START( ds4 )
 //	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
 //	MDRV_CPU_PROGRAM_MAP(ds3snd_program_map,0)
 
-	MDRV_SOUND_ADD(DAC, dac2_interface)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(DAC, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 1.0)
+
+	MDRV_SOUND_ADD(DAC, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 1.0)
 MACHINE_DRIVER_END
 
 
@@ -1144,7 +1129,10 @@ static MACHINE_DRIVER_START( driversnd )
 	MDRV_CPU_IO_MAP(driversnd_dsp_io_map,0)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(DAC, dac_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(DAC, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 

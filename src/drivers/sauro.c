@@ -76,6 +76,7 @@ Addition by Reip
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "cpu/z80/z80.h"
+#include "sound/3812intf.h"
 
 extern UINT8 *tecfri_videoram;
 extern UINT8 *tecfri_colorram;
@@ -331,13 +332,6 @@ static INTERRUPT_GEN( sauro_interrupt )
 	cpunum_set_input_line(1, 0, HOLD_LINE);
 }
 
-static struct YM3526interface ym3812_interface =
-{
-	1,			/* 1 chip (no more supported) */
-	3600000,	/* 3.600000 MHz ? */
-	{ 100 } 	/* volume */
-};
-
 static MACHINE_DRIVER_START( tecfri )
 	/* basic machine hardware */
 	MDRV_CPU_ADD_TAG("main", Z80, 4000000)        // 4 MHz???
@@ -354,7 +348,10 @@ static MACHINE_DRIVER_START( tecfri )
 	MDRV_PALETTE_INIT(RRRR_GGGG_BBBB)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM3812, ym3812_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM3812, 3600000)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( trckydoc )

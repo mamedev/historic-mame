@@ -15,6 +15,7 @@ TODO:
 #include "vidhrdw/system1.h"
 #include "cpu/z80/z80.h"
 #include "machine/segacrpt.h"
+#include "sound/sn76496.h"
 
 extern unsigned char *suprloco_videoram;
 
@@ -178,14 +179,6 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 };
 
 
-static struct SN76496interface sn76496_interface =
-{
-	2,		/* 2 chips */
-	{ 4000000, 2000000 },	/* 8 MHz / 4 ?*/
-	{ 100, 100 }
-};
-
-
 
 static MACHINE_DRIVER_START( suprloco )
 
@@ -214,7 +207,13 @@ static MACHINE_DRIVER_START( suprloco )
 	MDRV_VIDEO_UPDATE(suprloco)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(SN76496, sn76496_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(SN76496, 4000000)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
+
+	MDRV_SOUND_ADD(SN76496, 2000000)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 

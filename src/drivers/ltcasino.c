@@ -13,6 +13,7 @@ etc.
 */
 
 #include "driver.h"
+#include "sound/ay8910.h"
 
 data8_t *ltcasino_tile_num_ram, *ltcasino_tile_atr_ram;
 
@@ -499,17 +500,6 @@ VIDEO_UPDATE(ltcasino)
 	tilemap_draw(bitmap,cliprect,ltcasino_tilemap,0,0);
 }
 
-static struct AY8910interface ay8910_interface =
-{
-	1,	/* 1 chip */
-	1000000,	/* 1 MHz */
-	{ 100 },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ 0 }
-};
-
 
 static MACHINE_DRIVER_START( ltcasino )
 	/* basic machine hardware */
@@ -531,7 +521,10 @@ static MACHINE_DRIVER_START( ltcasino )
 	MDRV_VIDEO_UPDATE(ltcasino)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(AY8910, ay8910_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	
+	MDRV_SOUND_ADD(AY8910, 1000000)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 

@@ -33,6 +33,10 @@ Static Program ROM (48K bytes)            4000-FFFF   R    D0-D7
 #include "machine/atarigen.h"
 #include "sndhrdw/atarijsa.h"
 #include "cpu/m6502/m6502.h"
+#include "sound/5220intf.h"
+#include "sound/2151intf.h"
+#include "sound/okim6295.h"
+#include "sound/pokey.h"
 
 static UINT8 *bank_base;
 static UINT8 *bank_source_data;
@@ -773,55 +777,9 @@ ADDRESS_MAP_END
  *
  *************************************/
 
-static struct TMS5220interface tms5220_interface =
-{
-	ATARI_CLOCK_3MHz*2/11,	/* potentially ATARI_CLOCK_3MHz/9 as well */
-	100,
-	0
-};
-
-
-static struct POKEYinterface pokey_interface =
-{
-	1,			/* 1 chip */
-	ATARI_CLOCK_3MHz/2,
-	{ 40 },
-};
-
-
 static struct YM2151interface ym2151_interface =
 {
-	1,			/* 1 chip */
-	ATARI_CLOCK_3MHz,
-	{ YM3012_VOL(60,MIXER_PAN_LEFT,60,MIXER_PAN_RIGHT) },
-	{ atarigen_ym2151_irq_gen }
-};
-
-
-static struct YM2151interface ym2151_interface_swapped =
-{
-	1,			/* 1 chip */
-	ATARI_CLOCK_3MHz,
-	{ YM3012_VOL(60,MIXER_PAN_RIGHT,60,MIXER_PAN_LEFT) },
-	{ atarigen_ym2151_irq_gen }
-};
-
-
-static struct OKIM6295interface okim6295_interface =
-{
-	1,              /* 1 chip */
-	{ ATARI_CLOCK_3MHz/3/132 },
-	{ REGION_SOUND1 },
-	{ 75 }
-};
-
-
-static struct OKIM6295interface okim6295s_interface =
-{
-	2, 				/* 2 chips */
-	{ ATARI_CLOCK_3MHz/3/132, ATARI_CLOCK_3MHz/3/132 },
-	{ REGION_SOUND1, REGION_SOUND1 },
-	{ MIXER(75,MIXER_PAN_LEFT), MIXER(75,MIXER_PAN_RIGHT) }
+	atarigen_ym2151_irq_gen
 };
 
 
@@ -841,8 +799,12 @@ MACHINE_DRIVER_START( jsa_i_stereo )
 	MDRV_CPU_PERIODIC_INT(atarigen_6502_irq_gen,(UINT32)(1000000000.0/((double)ATARI_CLOCK_3MHz/4/16/16/14)))
 	
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD_TAG("ym", YM2151, ym2151_interface)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD_TAG("ym", YM2151, ATARI_CLOCK_3MHz)
+	MDRV_SOUND_CONFIG(ym2151_interface)
+	MDRV_SOUND_ROUTE(0, "left", 0.60)
+	MDRV_SOUND_ROUTE(1, "right", 0.60)
 MACHINE_DRIVER_END
 
 
@@ -853,7 +815,10 @@ MACHINE_DRIVER_START( jsa_i_stereo_swapped )
 	MDRV_IMPORT_FROM(jsa_i_stereo)
 	
 	/* sound hardware */
-	MDRV_SOUND_REPLACE("ym", YM2151, ym2151_interface_swapped)
+	MDRV_SOUND_REPLACE("ym", YM2151, ATARI_CLOCK_3MHz)
+	MDRV_SOUND_CONFIG(ym2151_interface)
+	MDRV_SOUND_ROUTE(0, "right", 0.60)
+	MDRV_SOUND_ROUTE(1, "left", 0.60)
 MACHINE_DRIVER_END
 
 
@@ -864,19 +829,30 @@ MACHINE_DRIVER_START( jsa_i_stereo_pokey )
 	MDRV_IMPORT_FROM(jsa_i_stereo)
 	
 	/* sound hardware */
-	MDRV_SOUND_ADD(POKEY, pokey_interface)
+	MDRV_SOUND_ADD(POKEY, ATARI_CLOCK_3MHz/2)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.40)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 0.40)
 MACHINE_DRIVER_END
 
 
 /* Used by Escape from the Planet of the Robot Monsters */
 MACHINE_DRIVER_START( jsa_i_mono_speech )
-
+	
 	/* basic machine hardware */
-	MDRV_IMPORT_FROM(jsa_i_stereo)
+	MDRV_CPU_ADD_TAG("jsa", M6502, ATARI_CLOCK_3MHz/2)
+	MDRV_CPU_PROGRAM_MAP(atarijsa1_readmem,atarijsa1_writemem)
+	MDRV_CPU_PERIODIC_INT(atarigen_6502_irq_gen,(UINT32)(1000000000.0/((double)ATARI_CLOCK_3MHz/4/16/16/14)))
 	
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(0)
-	MDRV_SOUND_ADD(TMS5220, tms5220_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD_TAG("ym", YM2151, ATARI_CLOCK_3MHz)
+	MDRV_SOUND_CONFIG(ym2151_interface)
+	MDRV_SOUND_ROUTE(0, "mono", 0.60)
+	MDRV_SOUND_ROUTE(1, "mono", 0.60)
+
+	MDRV_SOUND_ADD(TMS5220, ATARI_CLOCK_3MHz*2/11) /* potentially ATARI_CLOCK_3MHz/9 as well */
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 
@@ -884,13 +860,21 @@ MACHINE_DRIVER_END
 MACHINE_DRIVER_START( jsa_ii_mono )
 	
 	/* basic machine hardware */
-	MDRV_IMPORT_FROM(jsa_i_stereo)
-	MDRV_CPU_MODIFY("jsa")
+	MDRV_CPU_ADD_TAG("jsa", M6502, ATARI_CLOCK_3MHz/2)
 	MDRV_CPU_PROGRAM_MAP(atarijsa2_readmem,atarijsa2_writemem)
+	MDRV_CPU_PERIODIC_INT(atarigen_6502_irq_gen,(UINT32)(1000000000.0/((double)ATARI_CLOCK_3MHz/4/16/16/14)))
 	
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(0)
-	MDRV_SOUND_ADD_TAG("adpcm", OKIM6295, okim6295_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD_TAG("ym", YM2151, ATARI_CLOCK_3MHz)
+	MDRV_SOUND_CONFIG(ym2151_interface)
+	MDRV_SOUND_ROUTE(0, "mono", 0.60)
+	MDRV_SOUND_ROUTE(1, "mono", 0.60)
+
+	MDRV_SOUND_ADD(OKIM6295, ATARI_CLOCK_3MHz/3/132)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.75)
 MACHINE_DRIVER_END
 
 
@@ -919,11 +903,23 @@ MACHINE_DRIVER_END
 MACHINE_DRIVER_START( jsa_iiis_stereo )
 	
 	/* basic machine hardware */
-	MDRV_IMPORT_FROM(jsa_iii_mono)
-	MDRV_CPU_MODIFY("jsa")
+	MDRV_CPU_ADD_TAG("jsa", M6502, ATARI_CLOCK_3MHz/2)
 	MDRV_CPU_PROGRAM_MAP(atarijsa3s_readmem,atarijsa3s_writemem)
+	MDRV_CPU_PERIODIC_INT(atarigen_6502_irq_gen,(UINT32)(1000000000.0/((double)ATARI_CLOCK_3MHz/4/16/16/14)))
 	
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_REPLACE("adpcm", OKIM6295, okim6295s_interface)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD_TAG("ym", YM2151, ATARI_CLOCK_3MHz)
+	MDRV_SOUND_CONFIG(ym2151_interface)
+	MDRV_SOUND_ROUTE(0, "left", 0.60)
+	MDRV_SOUND_ROUTE(1, "right", 0.60)
+
+	MDRV_SOUND_ADD(OKIM6295, ATARI_CLOCK_3MHz/3/132)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.75)
+
+	MDRV_SOUND_ADD(OKIM6295, ATARI_CLOCK_3MHz/3/132)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 0.75)
 MACHINE_DRIVER_END

@@ -27,6 +27,7 @@
 #include "machine/6522via.h"
 #include "vidhrdw/generic.h"
 #include "leprechn.h"
+#include "sound/ay8910.h"
 
 
 
@@ -226,18 +227,6 @@ INPUT_PORTS_START( piratetr )
 INPUT_PORTS_END
 
 
-static struct AY8910interface ay8910_interface =
-{
-    1,      /* 1 chip */
-    14318000/8,     /* ? */
-    { 50 },
-    { 0 },
-    { 0 },
-    { 0 },
-    { 0 }
-};
-
-
 static MACHINE_DRIVER_START( leprechn )
 
 	/* basic machine hardware */
@@ -267,7 +256,10 @@ static MACHINE_DRIVER_START( leprechn )
 	MDRV_VIDEO_UPDATE(generic_bitmapped)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(AY8910, ay8910_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	
+	MDRV_SOUND_ADD(AY8910, 14318000/8)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
 MACHINE_DRIVER_END
 
 

@@ -17,7 +17,8 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "sndhrdw/seibu.h"
-
+#include "sound/2203intf.h"
+#include "sound/msm5205.h"
 
 static UINT8 *deadang_shared_ram;
 extern UINT8 *deadang_video_data, *deadang_scroll_ram;
@@ -294,7 +295,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 /* Sound Interfaces */
 
-SEIBU_SOUND_SYSTEM_YM2203_HARDWARE(14318180/4)
+SEIBU_SOUND_SYSTEM_YM2203_HARDWARE
 
 SEIBU_SOUND_SYSTEM_ADPCM_HARDWARE
 
@@ -340,7 +341,7 @@ static MACHINE_DRIVER_START( deadang )
 	MDRV_VIDEO_UPDATE(deadang)
 
 	/* sound hardware */
-	SEIBU_SOUND_SYSTEM_YM2203_INTERFACE
+	SEIBU_SOUND_SYSTEM_YM2203_INTERFACE(14318180/4)
 	SEIBU_SOUND_SYSTEM_ADPCM_INTERFACE
 MACHINE_DRIVER_END
 

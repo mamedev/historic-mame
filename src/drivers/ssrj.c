@@ -30,6 +30,7 @@ HW info :
 ************************************/
 
 #include "driver.h"
+#include "sound/ay8910.h"
 
 extern unsigned char *ssrj_vram1,*ssrj_vram2,*ssrj_vram3,*ssrj_vram4,*ssrj_scrollram;
 
@@ -164,13 +165,8 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 static struct AY8910interface ay8910_interface =
 {
-	1,
-	8000000/5,	/* guess */
-	{ 30,},
-	{ 0 }, /* not used ? */
-	{input_port_3_r},
-	{ 0 }, /* ? */
-	{ 0 }
+	0, /* not used ? */
+	input_port_3_r,
 };
 
 
@@ -199,7 +195,11 @@ static MACHINE_DRIVER_START( ssrj )
 	MDRV_MACHINE_INIT(ssrj)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(AY8910, ay8910_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	
+	MDRV_SOUND_ADD(AY8910, 8000000/5)
+	MDRV_SOUND_CONFIG(ay8910_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.30)
 MACHINE_DRIVER_END
 
 /***************************************************************************

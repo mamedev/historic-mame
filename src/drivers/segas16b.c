@@ -821,7 +821,9 @@ WW.B11    Object 5 - Even
 #include "driver.h"
 #include "system16.h"
 #include "machine/segaic16.h"
-
+#include "sound/2151intf.h"
+#include "sound/2413intf.h"
+#include "sound/upd7759.h"
 
 
 /*************************************
@@ -1198,12 +1200,12 @@ static WRITE8_HANDLER( upd7759_control_w )
 	if (size > 0)
 	{
 		int bankoffs = 0;
-		
+
 		/* it is important to write in this order: if the /START line goes low
 		   at the same time /RESET goes low, no sample should be started */
 		upd7759_start_w(0, data & 0x80);
 		upd7759_reset_w(0, data & 0x40);
-		
+
 		/* banking depends on the ROM board */
 		switch (rom_board)
 		{
@@ -1222,7 +1224,7 @@ static WRITE8_HANDLER( upd7759_control_w )
 				if (!(data & 0x20)) bankoffs = 0x30000;
 				bankoffs += (data & 0x03) * 0x4000;
 				break;
-			
+
 			case ROM_BOARD_171_5521:
 				/*
 					D5 : Unused
@@ -1235,7 +1237,7 @@ static WRITE8_HANDLER( upd7759_control_w )
 				bankoffs = ((data & 0x08) >> 3) * 0x20000;
 				bankoffs += (data & 0x07) * 0x4000;
 				break;
-			
+
 			case ROM_BOARD_171_5797:
 				/*
 					D5 : Unused
@@ -1497,7 +1499,7 @@ static READ16_HANDLER( dunkshot_custom_io_r )
 static READ16_HANDLER( hwchamp_custom_io_r )
 {
 	data16_t result;
-	
+
 	switch (offset & (0x3000/2))
 	{
 		case 0x3000/2:
@@ -2069,7 +2071,7 @@ static INPUT_PORTS_START( dunkshot )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(3)
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(4)
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(4)
-	
+
 	PORT_MODIFY("P2")
 	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
 
@@ -2766,30 +2768,10 @@ INPUT_PORTS_END
  *
  *************************************/
 
-static struct YM2151interface ym2151_interface =
-{
-	1,
-	4000000,
-	{ YM3012_VOL(43,MIXER_PAN_LEFT,43,MIXER_PAN_RIGHT) },
-	{ 0 }
-};
-
-
 static struct upd7759_interface upd7759_interface =
 {
-	1,
-	{ UPD7759_STANDARD_CLOCK },
-	{ 48 },
-	{ 0 },
-	{ upd7759_generate_nmi },
-};
-
-
-static struct YM2413interface ym2413_interface =
-{
-	1,
-	4000000,
-	{ YM2413_VOL(100,MIXER_PAN_CENTER,100,MIXER_PAN_CENTER) }
+	0,
+	upd7759_generate_nmi
 };
 
 
@@ -2855,9 +2837,16 @@ static MACHINE_DRIVER_START( system16b )
 	MDRV_VIDEO_UPDATE(system16b)
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD_TAG("2151", YM2151, ym2151_interface)
-	MDRV_SOUND_ADD_TAG("7759", UPD7759, upd7759_interface)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD_TAG("2151", YM2151, 4000000)
+	MDRV_SOUND_ROUTE(0, "left", 0.43)
+	MDRV_SOUND_ROUTE(1, "right", 0.43)
+
+	MDRV_SOUND_ADD_TAG("7759", UPD7759, UPD7759_STANDARD_CLOCK)
+	MDRV_SOUND_CONFIG(upd7759_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.48)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 0.48)
 MACHINE_DRIVER_END
 
 
@@ -2888,8 +2877,13 @@ static MACHINE_DRIVER_START( atomicp )
 	MDRV_MACHINE_INIT(atomicp)
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(0)
-	MDRV_SOUND_REPLACE("2151", YM2413, ym2413_interface)
+	MDRV_SPEAKER_REMOVE("left")
+	MDRV_SPEAKER_REMOVE("right")
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_REPLACE("2151", YM2413, 4000000)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
+
 	MDRV_SOUND_REMOVE("7759")
 MACHINE_DRIVER_END
 
@@ -2990,12 +2984,12 @@ ROM_END
 */
 ROM_START( aliensy3 )
 	ROM_REGION( 0x030000, REGION_CPU1, 0 ) /* 68000 code */
-	ROM_LOAD16_BYTE( "as_typeb.a4", 0x00000, 0x8000, CRC(17bf5304) SHA1(f6318c6c4a606d21ba43354229b60a51d8a3baa6) )
-	ROM_LOAD16_BYTE( "as_typeb.a1", 0x00001, 0x8000, CRC(4cd134df) SHA1(541377bd6eba280d7f0367694032891989762485) )
-	ROM_LOAD16_BYTE( "as_typeb.a5", 0x10000, 0x8000, CRC(c8b791b0) SHA1(7a83a6781ed5b43583d86d4ee5fb3120a650874b) )
-	ROM_LOAD16_BYTE( "as_typeb.a2", 0x10001, 0x8000, CRC(bdcf4a30) SHA1(e11264999f15cef7c35b6569407bb3dd8e2dd236) )
-	ROM_LOAD16_BYTE( "as_typeb.a6", 0x20000, 0x8000, CRC(1d0790aa) SHA1(c141b12aa7e4f86b96eabeb3f827ee26ddacde34) )
-	ROM_LOAD16_BYTE( "as_typeb.a3", 0x20001, 0x8000, CRC(1e7586b7) SHA1(be4c2c03119aee1b8f26f3dd79c99ce431a43b28) )
+	ROM_LOAD16_BYTE( "epr10816.a4", 0x00000, 0x8000, CRC(17bf5304) SHA1(f6318c6c4a606d21ba43354229b60a51d8a3baa6) )
+	ROM_LOAD16_BYTE( "epr10814.a1", 0x00001, 0x8000, CRC(4cd134df) SHA1(541377bd6eba280d7f0367694032891989762485) )
+	ROM_LOAD16_BYTE( "epr10817.a5", 0x10000, 0x8000, CRC(c8b791b0) SHA1(7a83a6781ed5b43583d86d4ee5fb3120a650874b) )
+	ROM_LOAD16_BYTE( "epr10815.a2", 0x10001, 0x8000, CRC(bdcf4a30) SHA1(e11264999f15cef7c35b6569407bb3dd8e2dd236) )
+	ROM_LOAD16_BYTE( "epr10822a.a6", 0x20000, 0x8000, CRC(1d0790aa) SHA1(c141b12aa7e4f86b96eabeb3f827ee26ddacde34) )
+	ROM_LOAD16_BYTE( "epr10819a.a3", 0x20001, 0x8000, CRC(1e7586b7) SHA1(be4c2c03119aee1b8f26f3dd79c99ce431a43b28) )
 
 	ROM_REGION( 0x30000, REGION_GFX1, ROMREGION_DISPOSE ) /* tiles */
 	ROM_LOAD( "10702.b9",  0x00000, 0x10000, CRC(393bc813) SHA1(672782c8fb2a6e454b27e073acc26130cacf3e50) )
@@ -4538,6 +4532,62 @@ ROM_START( sdib )
 	ROM_LOAD( "a7.rom", 0x0000, 0x8000, CRC(793f9f7f) SHA1(9e4fde376db9e99a83eb2fc734c6721c122ba9af) )
 ROM_END
 
+/**************************************************************************************************************************
+ **************************************************************************************************************************
+ **************************************************************************************************************************
+	Defense, Sega System 16B
+	CPU: FD1089A 317-0028
+	ROM Board: 171-5358
+*/
+
+/*
+
+The program roms pass their test but the game crashes due to Illegal code
+
+00F766: jmp     ($2,PC,D0.w)
+00F77A: bra     100ce
+0100CE: dc.w $0ee4; ILLEGAL
+
+--
+
+0100C8: 6100 1296                  bsr     11360
+0100CC: 6100 0EE4                  bsr     10fb2
+0100D0: 6100 14FC                  bsr     115ce
+0100D4: 6100 11A2                  bsr     11278
+
+this jump at the end of the first attract demo for example seems incorrect!
+
+for now we patch this problem in DRIVER_INIT, it appears that the program ROMs are
+faulty and the Sega ROM Check doesn't pick this up.
+
+*/
+
+ROM_START( defense )
+	ROM_REGION( 0x030000, REGION_CPU1, 0 ) /* 68000 code */
+	ROM_LOAD16_BYTE( "10917a.a4", 0x000000, 0x8000, BAD_DUMP CRC(d91ac47c) SHA1(298e4a9c1b00bd6090e7c4f42efd4c6e20b69d62) )
+	ROM_LOAD16_BYTE( "10915.a1",  0x000001, 0x8000, BAD_DUMP CRC(7a21656b) SHA1(f3e7dad061aebbc98c0a704ff7ed866235abc724) )
+	ROM_LOAD16_BYTE( "10918a.a5", 0x010000, 0x8000, BAD_DUMP CRC(e41befcd) SHA1(bbac5f501d215b18d34e3d366fd39cf7fa38a25c) )
+	ROM_LOAD16_BYTE( "10916a.a2", 0x010001, 0x8000, BAD_DUMP CRC(7f58ba12) SHA1(38ca3ded758a005f6bb345ffe991a7d374ddeede) )
+	ROM_LOAD16_BYTE( "10829.a6",  0x020000, 0x8000, CRC(a431ab08) SHA1(95888af6fae598c40e7fefffbfd1f0b551e9f1be) )
+	ROM_LOAD16_BYTE( "10826.a3",  0x020001, 0x8000, CRC(2ed8e4b7) SHA1(23da16e29a475d6ec7ccec8cdd18a1dc78ae69cd) )
+
+	ROM_REGION( 0x30000, REGION_GFX1, ROMREGION_DISPOSE ) /* tiles */
+	ROM_LOAD( "10919.b9",  0x00000, 0x10000, CRC(23b88f82) SHA1(6c1336c17bdd8adc39bf4eca5b3348ac7b1e6559) )
+	ROM_LOAD( "10920.b10", 0x10000, 0x10000, CRC(22b1fb4c) SHA1(f4721796155f13d472d735c646bc52f20f04debd) )
+	ROM_LOAD( "10921.b11", 0x20000, 0x10000, CRC(7788f55d) SHA1(435273196a5e812f28a2224807e842ccadff9c10) )
+
+	ROM_REGION16_BE( 0x60000, REGION_GFX2, 0 ) /* sprites */
+	ROM_LOAD16_BYTE( "10760.b1", 0x00001, 0x010000, CRC(70de327b) SHA1(11dde9cefd993f5fb02baf5809fae6c1176a58a1) )
+	ROM_LOAD16_BYTE( "10763.b5", 0x00000, 0x010000, CRC(99ec5cb5) SHA1(933a2216a2c772fc82499c739457865b1c75cdb8) )
+	ROM_LOAD16_BYTE( "10761.b2", 0x20001, 0x010000, CRC(4e80f80d) SHA1(d168235bdf09317545c999676a4adf015df32366) )
+	ROM_LOAD16_BYTE( "10764.b6", 0x20000, 0x010000, CRC(602da5d5) SHA1(d32cdde7d86c4561e7bfa547d7d7995ce9a43c24) )
+	ROM_LOAD16_BYTE( "10762.b3", 0x40001, 0x010000, CRC(464b5f78) SHA1(b730964a54e6a63fa5b7cc2cbf9ec0ab650626d5) )
+	ROM_LOAD16_BYTE( "10765.b7", 0x40000, 0x010000, CRC(0a73a057) SHA1(7f31124c67541a245e069e5b6aac59935d99a9a9) )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* sound CPU */
+	ROM_LOAD( "10775.a7", 0x0000, 0x8000, CRC(4cbd55a8) SHA1(8af2c52ab61338c8a9f1a74a05470dd3d5e0c42f) )
+ROM_END
+
 
 /**************************************************************************************************************************
  **************************************************************************************************************************
@@ -5384,6 +5434,17 @@ static DRIVER_INIT( sdi )
 	custom_io_r = sdi_custom_io_r;
 }
 
+static DRIVER_INIT( defense )
+{
+	void fd1089_decrypt_0028(void);
+	data16_t *rom = (data16_t *)memory_region(REGION_CPU1);
+
+	rom[0x0F77C/2] = rom[0x0F77C/2]^0x80; // one of the program roms is bad :-(
+
+	init_generic_5358();
+	fd1089_decrypt_0028();
+	custom_io_r = sdi_custom_io_r;
+}
 
 static DRIVER_INIT( sjryuko )
 {
@@ -5432,7 +5493,7 @@ static DRIVER_INIT( wrestwar_8751 )
 
 GAMEX(19??, aceattac, 0,        system16b,      generic,  generic_5358,  ROT0,   "Sega",           "Ace Attacker (FD1094 317-unknown)", GAME_NOT_WORKING )
 GAME( 1987, aliensyn, 0,        system16b,      aliensyn, generic_5358,  ROT0,   "Sega",           "Alien Syndrome (set 4, System 16B, unprotected)" )
-GAME( 1987, aliensy3, aliensyn, system16b,      aliensyn, aliensy3,      ROT0,   "Sega",           "Alien Syndrome (set 3, System 16B, FD1089A 317-0033?)" )
+GAME( 1987, aliensy3, aliensyn, system16b,      aliensyn, aliensy3,      ROT0,   "Sega",           "Alien Syndrome (set 3, System 16B, FD1089A 317-0033)" )
 GAME( 1988, altbeast, 0,        system16b_8751, altbeast, altbeast,      ROT0,   "Sega",           "Altered Beast (set 7, 8751 317-0078)" )
 GAME( 1988, altbeasj, altbeast, system16b_8751, altbeast, altbeasj,      ROT0,   "Sega",           "Altered Beast (set 6, Japan, 8751 317-0077)" )
 GAME( 1988, altbeas5, altbeast, system16b_8751, altbeast, altbeas5,      ROT0,   "Sega",           "Altered Beast (set 5, 8751 317-0076)" )
@@ -5471,6 +5532,7 @@ GAME( 1988, passsht,  0,        system16b,      passsht,  generic_5358,  ROT270,
 GAME( 1991, riotcity, 0,        system16b,      riotcity, generic_5704,  ROT0,   "Sega / Westone", "Riot City (Japan)" )
 GAME( 1990, ryukyu,   0,        system16b,      ryukyu,   generic_5704,  ROT0,   "Success / Sega", "RyuKyu (Japan, FD1094 317-5023)" )
 GAME( 1987, sdib,     sdi,      system16b,      sdi,      sdi,           ROT0,   "bootleg",        "SDI - Strategic Defense Initiative (bootleg)" )
+GAME( 1987, defense,  sdi,      system16b,      sdi,      defense,       ROT0,   "Sega",           "Defense (System 16B, FD1089A 317-0028)" )
 GAME( 1987, shinobi4, shinobi,  system16b,      shinobi,  generic_5521,  ROT0,   "Sega",           "Shinobi (set 4, System 16B, unprotected)" )
 GAME( 1987, shinobi3, shinobi,  system16b,      shinobi,  generic_5358,  ROT0,   "Sega",           "Shinobi (set 3, System 16B, unprotected)" )
 GAME( 1987, shinobi2, shinobi,  system16b,      shinobi,  generic_5358,  ROT0,   "Sega",           "Shinobi (set 2, System 16B, FD1094 317-0049)" )

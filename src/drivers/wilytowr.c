@@ -24,8 +24,10 @@ TODO:
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "cpu/i8039/i8039.h"
+#include "sound/ay8910.h"
+#include "sound/samples.h"
 
-extern int fghtbskt_sh_start(const struct MachineSound *msound);
+extern void fghtbskt_sh_start(void);
 extern WRITE8_HANDLER( fghtbskt_samples_w );
 
 UINT8 *wilytowr_videoram2, *wilytowr_scrollram;
@@ -519,33 +521,11 @@ static struct GfxDecodeInfo fghtbskt_gfxdecodeinfo[] =
 };
 
 
-static struct AY8910interface ay8910_interface =
+static struct Samplesinterface custom_interface =
 {
-	2,	/* 2 chips */
-	3579545/4,	/* ??? using the same as other Irem games */
-	{ 20, 20 },
-	{ 0, 0 },
-	{ 0, 0 },
-	{ 0, 0 },
-	{ 0, 0 }
-};
-
-static struct AY8910interface fghtbskt_ay8910_interface =
-{
-	1,             /* 1 chip */
-	12000000/4/2,  /* 1.5 Mhz */
-	{ 100 },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ 0 }
-};
-
-static struct CustomSound_interface custom_interface =
-{
-	fghtbskt_sh_start,
-	0,
-	0
+	1,
+	NULL,
+	fghtbskt_sh_start
 };
 
 
@@ -576,7 +556,13 @@ static MACHINE_DRIVER_START( wilytowr )
 	MDRV_VIDEO_UPDATE(wilytowr)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(AY8910, ay8910_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	
+	MDRV_SOUND_ADD(AY8910, 3579545/4)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.20)
+	
+	MDRV_SOUND_ADD(AY8910, 3579545/4)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.20)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( fghtbskt )
@@ -606,8 +592,14 @@ static MACHINE_DRIVER_START( fghtbskt )
 	MDRV_VIDEO_UPDATE(wilytowr)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(AY8910, fghtbskt_ay8910_interface)
-	MDRV_SOUND_ADD(CUSTOM, custom_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	
+	MDRV_SOUND_ADD(AY8910, 12000000/4/2)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
+	
+	MDRV_SOUND_ADD(SAMPLES, 0)
+	MDRV_SOUND_CONFIG(custom_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
 MACHINE_DRIVER_END
 
 

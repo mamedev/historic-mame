@@ -24,6 +24,9 @@ MAIN BOARD:
 #include "vidhrdw/generic.h"
 #include "cpu/m6502/m6502.h"
 #include "cpu/m6809/m6809.h"
+#include "sound/ay8910.h"
+#include "sound/dac.h"
+#include "sound/3812intf.h"
 
 extern unsigned char *matmania_videoram2,*matmania_colorram2;
 extern size_t matmania_videoram2_size;
@@ -336,25 +339,6 @@ static struct GfxDecodeInfo maniach_gfxdecodeinfo[] =
 
 
 
-static struct AY8910interface ay8910_interface =
-{
-	2,	/* 2 chips */
-	1500000,	/* 1.5 MHz?????? */
-	{ 30, 30 },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ 0 }
-};
-
-static struct DACinterface dac_interface =
-{
-	1,
-	{ 40 }
-};
-
-
-
 static MACHINE_DRIVER_START( matmania )
 
 	/* basic machine hardware */
@@ -384,8 +368,16 @@ static MACHINE_DRIVER_START( matmania )
 	MDRV_VIDEO_UPDATE(matmania)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(AY8910, ay8910_interface)
-	MDRV_SOUND_ADD(DAC, dac_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	
+	MDRV_SOUND_ADD(AY8910, 1500000)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.30)
+	
+	MDRV_SOUND_ADD(AY8910, 1500000)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.30)
+
+	MDRV_SOUND_ADD(DAC, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.40)
 MACHINE_DRIVER_END
 
 
@@ -398,10 +390,7 @@ static void irqhandler(int linestate)
 
 static struct YM3526interface ym3526_interface =
 {
-	1,			/* 1 chip (no more supported) */
-	3600000,	/* 3.6 MHz ? */
-	{ 100 },		/* (not supported) */
-	{ irqhandler },
+	irqhandler
 };
 
 
@@ -436,8 +425,14 @@ static MACHINE_DRIVER_START( maniach )
 	MDRV_VIDEO_UPDATE(maniach)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM3526, ym3526_interface)
-	MDRV_SOUND_ADD(DAC, dac_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM3526, 3600000)
+	MDRV_SOUND_CONFIG(ym3526_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
+
+	MDRV_SOUND_ADD(DAC, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.40)
 MACHINE_DRIVER_END
 
 /***************************************************************************

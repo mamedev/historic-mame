@@ -25,7 +25,6 @@
 #define NES_APU_H
 
 #include "driver.h"
-#define MAX_NESPSG 2
 
 /* AN EXPLANATION
  *
@@ -36,18 +35,12 @@
  */
 struct NESinterface
 {
-   int num;                 /* total number of chips in the machine */
-   int region[MAX_NESPSG];  /* DMC regions */
-   int volume[MAX_NESPSG];
+   int region;  /* DMC regions */
 };
 
 READ8_HANDLER( NESPSG_0_r );
 READ8_HANDLER( NESPSG_1_r );
 WRITE8_HANDLER( NESPSG_0_w );
 WRITE8_HANDLER( NESPSG_1_w );
-
-extern int NESPSG_sh_start(const struct MachineSound *);
-extern void NESPSG_sh_stop(void);
-extern void NESPSG_sh_update(void);
 
 #endif

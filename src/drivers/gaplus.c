@@ -152,6 +152,8 @@ TODO:
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "machine/namcoio.h"
+#include "sound/namco.h"
+#include "sound/samples.h"
 
 
 /* custom IO chips functions */
@@ -734,9 +736,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 static struct namco_interface namco_interface =
 {
-	24576000/1024,	/* 24000Hz sample rate */
 	8,	 			/* number of voices */
-	100,			/* playback volume */
 	REGION_SOUND1	/* memory region */
 };
 
@@ -750,7 +750,6 @@ static const char *gaplus_sample_names[] =
 static struct Samplesinterface samples_interface =
 {
 	1,	/* one channel */
-	80,	/* volume */
 	gaplus_sample_names
 };
 
@@ -790,8 +789,15 @@ static MACHINE_DRIVER_START( gaplus )
 	MDRV_VIDEO_EOF(gaplus)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(NAMCO_15XX, namco_interface)
-	MDRV_SOUND_ADD(SAMPLES, samples_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(NAMCO_15XX, 24576000/1024)
+	MDRV_SOUND_CONFIG(namco_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
+
+	MDRV_SOUND_ADD(SAMPLES, 0)
+	MDRV_SOUND_CONFIG(samples_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.80)
 MACHINE_DRIVER_END
 
 

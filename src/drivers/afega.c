@@ -28,6 +28,8 @@ The Sen Jin protection supplies some 68k code seen in the 2760-29cf range
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "sound/2151intf.h"
+#include "sound/okim6295.h"
 
 /* Variables defined in vidhrdw: */
 
@@ -551,26 +553,7 @@ static void irq_handler(int irq)
 
 static struct YM2151interface afega_ym2151_intf =
 {
-	1,
-	4000000,	/* ? */
-	{ YM3012_VOL(30,MIXER_PAN_LEFT,30,MIXER_PAN_RIGHT) },
-	{ irq_handler }
-};
-
-static struct OKIM6295interface afega_m6295_intf =
-{
-	1,
-	{ 1000000/132 },	/* ? */
-	{ REGION_SOUND1 },
-	{ 70 }
-};
-
-static struct OKIM6295interface firehawk_m6295_interface =
-{
-	2,									/* 2 chips */
-	{ 1000000/132, 1000000/132 },		/* frequency (Hz) */
-	{ REGION_SOUND1, REGION_SOUND2 },	/* memory region */
-	{ 100, 100 }
+	irq_handler
 };
 
 INTERRUPT_GEN( interrupt_afega )
@@ -607,9 +590,17 @@ static MACHINE_DRIVER_START( stagger1 )
 	MDRV_VIDEO_UPDATE(afega)
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(YM2151, afega_ym2151_intf)
-	MDRV_SOUND_ADD(OKIM6295, afega_m6295_intf)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(YM2151, 4000000)
+	MDRV_SOUND_CONFIG(afega_ym2151_intf)
+	MDRV_SOUND_ROUTE(0, "left", 0.30)
+	MDRV_SOUND_ROUTE(1, "right", 0.30)
+
+	MDRV_SOUND_ADD(OKIM6295, 1000000/132)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.70)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 0.70)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( grdnstrm )
@@ -661,7 +652,15 @@ static MACHINE_DRIVER_START( firehawk )
 	MDRV_VIDEO_UPDATE(firehawk)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(OKIM6295, firehawk_m6295_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(OKIM6295, 1000000/132)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
+
+	MDRV_SOUND_ADD(OKIM6295, 1000000/132)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_2)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 /***************************************************************************

@@ -212,14 +212,20 @@ Notes:
 
 #include "driver.h"
 #include "machine/namcoio.h"
+#include "sound/namco.h"
+#include "sound/namco52.h"
+#include "sound/namco54.h"
+#include "sound/custom.h"
+#include "sound/samples.h"
+#include "sound/sn76477.h"
 
 
 #define POLEPOS_TOGGLE	PORT_TOGGLE
 
 
 /* from sndhrdw */
-int polepos_sh_start(const struct MachineSound *msound);
-void polepos_sh_stop(void);
+void *polepos_sh_start(int clock, const struct CustomSound_interface *config);
+void polepos_sh_reset(void *token);
 WRITE8_HANDLER( polepos_engine_sound_lsb_w );
 WRITE8_HANDLER( polepos_engine_sound_msb_w );
 
@@ -822,9 +828,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 static struct namco_interface namco_interface =
 {
-	24576000/512, 	/* sample rate */
 	8,				/* number of voices */
-	80, 			/* playback volume */
 	REGION_SOUND1,	/* memory region */
 	1				/* stereo */
 };
@@ -851,8 +855,6 @@ static struct namco_interface namco_interface =
 
 static struct namco_52xx_interface namco_52xx_interface =
 {
-	24576000/16,	/* 1.536 MHz */
-	80,				/* volume */
 	REGION_SOUND3,	/* memory region */
 	0,				/* Use internal Playback frequency */
 	100,			/* High pass filter fc */
@@ -864,21 +866,19 @@ static struct namco_52xx_interface namco_52xx_interface =
 
 static struct namco_54xx_interface namco_54xx_interface =
 {
-	24576000/16,		/* 1.536 MHz */
-	80,					/* volume */
-	{ RES_K(22),	RES_K(15),		RES_K(22) },	/* R121, R133, R139 */
-	{ RES_K(12),	RES_K(15),		RES_K(22) },	/* R125, R137, R143 */
-	{ RES_K(120),	RES_K(120),		RES_K(180) },	/* R122, R134, R140 */
-	{ 470,			470,			470 },			/* R123, R135, R141 */
-	{ CAP_U(.0022),	CAP_U(.022),	CAP_U(.047) },	/* C27,  C29,  C33  */
-	{ CAP_U(.0022),	CAP_U(.022),	CAP_U(.047) },	/* C28,  C30,  C34  */
+	{ RES_K(22),	RES_K(15),		RES_K(22) },	/* R139, R133, R121 */
+	{ RES_K(22),	RES_K(15),		RES_K(12) },	/* R143, R137, R125 */
+	{ RES_K(180),	RES_K(120),		RES_K(120) },	/* R140, R134, R122 */
+	{ 470,			470,			470 },			/* R141, R135, R123 */
+	{ CAP_U(.047),	CAP_U(.022),	CAP_U(.0022) },	/* C33,  C29,  C27  */
+	{ CAP_U(.047),	CAP_U(.022),	CAP_U(.0022) },	/* C34,  C30,  C28  */
 };
 
 static struct CustomSound_interface custom_interface =
 {
 	polepos_sh_start,
-	polepos_sh_stop,
-	NULL
+	NULL,
+	polepos_sh_reset
 };
 
 static const char *polepos_sample_names[] =
@@ -891,7 +891,6 @@ static const char *polepos_sample_names[] =
 static struct Samplesinterface samples_interface =
 {
 	1,	/* 1 channel */
-	40, /* volume */
 	polepos_sample_names
 };
 
@@ -937,12 +936,32 @@ static MACHINE_DRIVER_START( polepos )
 	MDRV_VIDEO_UPDATE(polepos)
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(NAMCO, namco_interface)
-	MDRV_SOUND_ADD(NAMCO_52XX, namco_52xx_interface)
-	MDRV_SOUND_ADD(NAMCO_54XX, namco_54xx_interface)
-	MDRV_SOUND_ADD(CUSTOM, custom_interface)
-	MDRV_SOUND_ADD(SAMPLES, samples_interface)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(NAMCO, 24576000/512)
+	MDRV_SOUND_CONFIG(namco_interface)
+	MDRV_SOUND_ROUTE(0, "left", 0.80)
+	MDRV_SOUND_ROUTE(1, "right", 0.80)
+
+	MDRV_SOUND_ADD(NAMCO_52XX, 24576000/16)	/* 1.536 MHz */
+	MDRV_SOUND_CONFIG(namco_52xx_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.80)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 0.80)
+
+	MDRV_SOUND_ADD(NAMCO_54XX, 24576000/16)	/* 1.536 MHz */
+	MDRV_SOUND_CONFIG(namco_54xx_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.80)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 0.80)
+
+	MDRV_SOUND_ADD(CUSTOM, 0)
+	MDRV_SOUND_CONFIG(custom_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.77)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 0.77)
+	
+	MDRV_SOUND_ADD(SAMPLES, 0)
+	MDRV_SOUND_CONFIG(samples_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.40)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 0.40)
 MACHINE_DRIVER_END
 
 

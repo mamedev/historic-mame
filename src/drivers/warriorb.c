@@ -116,6 +116,8 @@ Colscroll effects?
 #include "vidhrdw/generic.h"
 #include "vidhrdw/taitoic.h"
 #include "sndhrdw/taitosnd.h"
+#include "sound/2610intf.h"
+#include "sound/flt_vol.h"
 
 MACHINE_INIT( taito_dualscreen );
 
@@ -166,10 +168,7 @@ WRITE8_HANDLER( warriorb_pancontrol )
 
 //	usrintf_showmessage(" pan %02x %02x %02x %02x", ninjaw_pandata[0], ninjaw_pandata[1], ninjaw_pandata[2], ninjaw_pandata[3] );
 
-	if (offset < 2)
-		mixer_set_stereo_volume( 3, ninjaw_pandata[0], ninjaw_pandata[1] );
-	else
-		mixer_set_stereo_volume( 4, ninjaw_pandata[2], ninjaw_pandata[3] );
+	flt_volume_set_volume(offset, ninjaw_pandata[offset] / 100.0);
 }
 
 
@@ -475,17 +474,9 @@ static void irqhandler(int irq)
 
 static struct YM2610interface ym2610_interface =
 {
-	1,	/* 1 chip */
-	16000000/2,	/* 8 MHz ?? */
-	{ 25 },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ irqhandler },
-	{ REGION_SOUND2 },	/* Delta-T */
-	{ REGION_SOUND1 },	/* ADPCM */
-	{ YM3012_VOL(100,MIXER_PAN_CENTER,100,MIXER_PAN_CENTER) }
+	irqhandler,
+	REGION_SOUND2,	/* Delta-T */
+	REGION_SOUND1	/* ADPCM */
 };
 
 
@@ -493,6 +484,7 @@ static struct YM2610interface ym2610_interface =
                          SUBWOOFER (SOUND)
 **************************************************************/
 
+#if 0
 static int subwoofer_sh_start(const struct MachineSound *msound)
 {
 	/* Adjust the lowpass filter of the first three YM2610 channels */
@@ -510,6 +502,7 @@ static struct CustomSound_interface subwoofer_interface =
 	0, /* none */
 	0 /* none */
 };
+#endif
 
 
 /***********************************************************
@@ -544,9 +537,25 @@ static MACHINE_DRIVER_START( darius2d )
 	MDRV_VIDEO_UPDATE(warriorb)
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(YM2610, ym2610_interface)
-	MDRV_SOUND_ADD(CUSTOM, subwoofer_interface)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(YM2610, 16000000/2)
+	MDRV_SOUND_CONFIG(ym2610_interface)
+	MDRV_SOUND_ROUTE(0, "left",  0.25)
+	MDRV_SOUND_ROUTE(0, "right", 0.25)
+	MDRV_SOUND_ROUTE(1, "2610.1.l", 1.0)
+	MDRV_SOUND_ROUTE(1, "2610.1.r", 1.0)
+	MDRV_SOUND_ROUTE(2, "2610.2.l", 1.0)
+	MDRV_SOUND_ROUTE(2, "2610.2.r", 1.0)
+	
+	MDRV_SOUND_ADD_TAG("2610.1.l", FILTER_VOLUME, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 1.0)
+	MDRV_SOUND_ADD_TAG("2610.1.r", FILTER_VOLUME, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 1.0)
+	MDRV_SOUND_ADD_TAG("2610.2.l", FILTER_VOLUME, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 1.0)
+	MDRV_SOUND_ADD_TAG("2610.2.r", FILTER_VOLUME, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 1.0)
 MACHINE_DRIVER_END
 
 
@@ -578,8 +587,25 @@ static MACHINE_DRIVER_START( warriorb )
 	MDRV_VIDEO_UPDATE(warriorb)
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(YM2610B, ym2610_interface)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(YM2610, 16000000/2)
+	MDRV_SOUND_CONFIG(ym2610_interface)
+	MDRV_SOUND_ROUTE(0, "left",  0.25)
+	MDRV_SOUND_ROUTE(0, "right", 0.25)
+	MDRV_SOUND_ROUTE(1, "2610.1.l", 1.0)
+	MDRV_SOUND_ROUTE(1, "2610.1.r", 1.0)
+	MDRV_SOUND_ROUTE(2, "2610.2.l", 1.0)
+	MDRV_SOUND_ROUTE(2, "2610.2.r", 1.0)
+	
+	MDRV_SOUND_ADD_TAG("2610.1.l", FILTER_VOLUME, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 1.0)
+	MDRV_SOUND_ADD_TAG("2610.1.r", FILTER_VOLUME, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 1.0)
+	MDRV_SOUND_ADD_TAG("2610.2.l", FILTER_VOLUME, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 1.0)
+	MDRV_SOUND_ADD_TAG("2610.2.r", FILTER_VOLUME, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 1.0)
 MACHINE_DRIVER_END
 
 
@@ -727,7 +753,7 @@ static DRIVER_INIT( warriorb )
 MACHINE_INIT( taito_dualscreen )
 {
 	/**** mixer control enable ****/
-	mixer_sound_enable_global_w( 1 );	/* mixer enabled */
+	sound_global_enable( 1 );	/* mixer enabled */
 }
 
 

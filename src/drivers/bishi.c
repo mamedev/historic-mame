@@ -15,6 +15,7 @@
 #include "vidhrdw/generic.h"
 #include "vidhrdw/konamiic.h"
 #include "cpu/m68000/m68000.h"
+#include "sound/ymz280b.h"
 
 VIDEO_START(bishi);
 VIDEO_UPDATE(bishi);
@@ -219,11 +220,8 @@ static void sound_irq_gen(int state)
 
 static struct YMZ280Binterface ymz280b_intf =
 {
-	1,
-	{ 16934400 },
-	{ REGION_SOUND1 },
-	{ YM3012_VOL(100,MIXER_PAN_LEFT,100,MIXER_PAN_RIGHT) },
-	{ sound_irq_gen }
+	REGION_SOUND1,
+	sound_irq_gen
 };
 
 static MACHINE_DRIVER_START( bishi )
@@ -249,8 +247,12 @@ static MACHINE_DRIVER_START( bishi )
 	MDRV_VIDEO_UPDATE(bishi)
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(YMZ280B, ymz280b_intf)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(YMZ280B, 16934400)
+	MDRV_SOUND_CONFIG(ymz280b_intf)
+	MDRV_SOUND_ROUTE(0, "left", 1.0)
+	MDRV_SOUND_ROUTE(1, "right", 1.0)
 MACHINE_DRIVER_END
 
 // ROM definitions

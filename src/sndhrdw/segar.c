@@ -26,6 +26,9 @@
 #include "driver.h"
 #include "cpu/i8039/i8039.h"
 #include "segar.h"
+#include "sound/samples.h"
+#include "sound/tms36xx.h"
+#include "sound/dac.h"
 
 #define TOTAL_SOUNDS 16
 

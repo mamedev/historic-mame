@@ -1,7 +1,8 @@
 #include "driver.h"
 #include "irem.h"
 #include "cpu/m6800/m6800.h"
-
+#include "sound/ay8910.h"
+#include "sound/msm5205.h"
 
 
 WRITE8_HANDLER( irem_sound_cmd_w )
@@ -97,24 +98,31 @@ if (data&0x0f) usrintf_showmessage("analog sound %x",data&0x0f);
 }
 
 
-struct AY8910interface irem_ay8910_interface =
+struct AY8910interface irem_ay8910_interface_1 =
 {
-	2,	/* 2 chips */
-	3579545/4,
-	{ 20, 20 },
-	{ soundlatch_r, 0 },
-	{ 0 },
-	{ 0, irem_analog_w },
-	{ irem_msm5205_w, 0 }
+	soundlatch_r,
+	0,
+	0,
+	irem_msm5205_w
 };
 
-struct MSM5205interface irem_msm5205_interface =
+struct AY8910interface irem_ay8910_interface_2 =
 {
-	2,					/* 2 chips            */
-	384000,				/* 384KHz             */
-	{ irem_adpcm_int, 0 },/* interrupt function */
-	{ MSM5205_S96_4B,MSM5205_SEX_4B },	/* default to 4KHz, but can be changed at run time */
-	{ 100, 100 }
+	0,
+	0,
+	irem_analog_w
+};
+
+struct MSM5205interface irem_msm5205_interface_1 =
+{
+	irem_adpcm_int,		/* interrupt function */
+	MSM5205_S96_4B		/* default to 4KHz, but can be changed at run time */
+};
+
+struct MSM5205interface irem_msm5205_interface_2 =
+{
+	0,					/* interrupt function */
+	MSM5205_S96_4B		/* default to 4KHz, but can be changed at run time */
 };
 
 
@@ -150,6 +158,21 @@ MACHINE_DRIVER_START( irem_audio )
 	MDRV_CPU_IO_MAP(irem_sound_readport,irem_sound_writeport)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(AY8910, irem_ay8910_interface)
-	MDRV_SOUND_ADD(MSM5205, irem_msm5205_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(AY8910, 3579545/4)
+	MDRV_SOUND_CONFIG(irem_ay8910_interface_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.20)
+
+	MDRV_SOUND_ADD(AY8910, 3579545/4)
+	MDRV_SOUND_CONFIG(irem_ay8910_interface_2)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.20)
+
+	MDRV_SOUND_ADD(MSM5205, 384000)
+	MDRV_SOUND_CONFIG(irem_msm5205_interface_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
+
+	MDRV_SOUND_ADD(MSM5205, 384000)
+	MDRV_SOUND_CONFIG(irem_msm5205_interface_2)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END

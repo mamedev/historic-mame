@@ -31,6 +31,7 @@ inputs + notes by stephh
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "sound/ay8910.h"
 PALETTE_INIT( fcombat );
 VIDEO_START( fcombat );
 VIDEO_UPDATE( fcombat );
@@ -289,17 +290,6 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
  *
  *************************************/
 
-static struct AY8910interface ay8910_interface =
-{
-	3,	/* 3 chips */
-	1500000,	/* 1.5 MHz?????? */
-	{ 12, 12, 12 },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ 0 }
-};
-
 /* interrupt */
 
 
@@ -340,7 +330,16 @@ static MACHINE_DRIVER_START( fcombat )
 	MDRV_VIDEO_UPDATE(fcombat)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(AY8910, ay8910_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	
+	MDRV_SOUND_ADD(AY8910, 1500000)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.12)
+	
+	MDRV_SOUND_ADD(AY8910, 1500000)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.12)
+	
+	MDRV_SOUND_ADD(AY8910, 1500000)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.12)
 MACHINE_DRIVER_END
 
 /*************************************

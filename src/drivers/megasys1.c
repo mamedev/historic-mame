@@ -124,6 +124,9 @@ RAM			RW		0f0000-0f3fff		0e0000-0effff?		<
 #include "driver.h"
 #include "megasys1.h"
 #include "vidhrdw/generic.h"
+#include "sound/2203intf.h"
+#include "sound/2151intf.h"
+#include "sound/okim6295.h"
 
 
 /* Variables only used here: */
@@ -640,18 +643,7 @@ static struct GfxDecodeInfo gfxdecodeinfo_ABC[] =
 
 static struct YM2151interface ym2151_interface =
 {
-	1,
-	7000000/2,
-	{ YM3012_VOL(80,MIXER_PAN_LEFT,80,MIXER_PAN_RIGHT) },
-	{ megasys1_sound_irq }
-};
-
-static struct OKIM6295interface okim6295_interface =
-{
-	2,
-	{ 4000000/132, 4000000/132 },	/* seems appropriate */
-	{ REGION_SOUND1, REGION_SOUND2 },
-	{ MIXER(30,MIXER_PAN_CENTER), MIXER(30,MIXER_PAN_CENTER) }
+	megasys1_sound_irq
 };
 
 static MACHINE_DRIVER_START( system_A )
@@ -684,9 +676,22 @@ static MACHINE_DRIVER_START( system_A )
 	MDRV_VIDEO_UPDATE(megasys1)
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(YM2151, ym2151_interface)
-	MDRV_SOUND_ADD(OKIM6295, okim6295_interface)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(YM2151, 7000000/2)
+	MDRV_SOUND_CONFIG(ym2151_interface)
+	MDRV_SOUND_ROUTE(0, "left", 0.80)
+	MDRV_SOUND_ROUTE(1, "right", 0.80)
+
+	MDRV_SOUND_ADD(OKIM6295, 4000000/132)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.30)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 0.30)
+
+	MDRV_SOUND_ADD(OKIM6295, 4000000/132)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_2)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.30)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 0.30)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( system_A_iganinju )
@@ -734,14 +739,6 @@ KLOV entry for peekaboo: Jaleco board no. PB-92127A. Main CPU: Motorola 68000P10
 ***************************************************************************/
 
 
-static struct OKIM6295interface okim6295_interface_D =
-{
-	1,
-	{ 12000 },
-	{ REGION_SOUND1 },
-	{ 100 }
-};
-
 static MACHINE_DRIVER_START( system_D )
 
 	/* basic machine hardware */
@@ -766,7 +763,11 @@ static MACHINE_DRIVER_START( system_D )
 	MDRV_VIDEO_UPDATE(megasys1)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(OKIM6295, okim6295_interface_D)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(OKIM6295, 12000)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 
@@ -791,14 +792,11 @@ static void irq_handler(int irq)
 
 static struct YM2203interface ym2203_interface =
 {
-	1,
-	1500000,	/* ??? */
-	{ YM2203_VOL(50,50) },
-	{ 0 },
-	{ 0 },
-	{ 0	},
-	{ 0 },
-	{ irq_handler }
+	0,
+	0,
+	0,
+	0,
+	irq_handler
 };
 
 static MACHINE_DRIVER_START( system_Z )
@@ -827,7 +825,11 @@ static MACHINE_DRIVER_START( system_Z )
 	MDRV_VIDEO_UPDATE(megasys1)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM2203, ym2203_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM2203, 1500000)
+	MDRV_SOUND_CONFIG(ym2203_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
 MACHINE_DRIVER_END
 
 
@@ -2616,7 +2618,7 @@ static WRITE16_HANDLER( protection_peekaboo_w )
 
 	if ((protection_val & 0x90) == 0x90)
 	{
-		unsigned char *RAM = memory_region(okim6295_interface_D.region[0]);
+		unsigned char *RAM = memory_region(okim6295_interface_region_1.region);
 		int new_bank = (protection_val & 0x7) % 7;
 
 		if (bank != new_bank)

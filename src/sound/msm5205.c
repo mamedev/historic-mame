@@ -22,23 +22,48 @@
 #include "msm5205.h"
 
 /*
+ *
+ *	MSM 5205 ADPCM chip:
+ *
+ *	Data is streamed from a CPU by means of a clock generated on the chip.
+ *
+ *	A reset signal is set high or low to determine whether playback (and interrupts) are occuring
+ *
+ */
+
+struct MSM5205Voice
+{
+	const struct MSM5205interface *intf;
+	sound_stream * stream;  /* number of stream system      */
+	int index;
+	int clock;				/* clock rate */
+	void *timer;              /* VCLK callback timer          */
+	int data;               /* next adpcm data              */
+	int vclk;               /* vclk signal (external mode)  */
+	int reset;              /* reset pin signal             */
+	int prescaler;          /* prescaler selector S1 and S2 */
+	int bitwidth;           /* bit width selector -3B/4B    */
+	int signal;             /* current ADPCM signal         */
+	int step;               /* current ADPCM step           */
+	int diff_lookup[49*16];
+};
+
+
+/*
  * ADPCM lockup tabe
  */
 
 /* step size index shift table */
-static int index_shift[8] = { -1, -1, -1, -1, 2, 4, 6, 8 };
-
-/* lookup table for the precomputed difference */
-static int diff_lookup[49*16];
+static const int index_shift[8] = { -1, -1, -1, -1, 2, 4, 6, 8 };
 
 /*
  *   Compute the difference table
  */
 
-static void ComputeTables (void)
+static void ComputeTables (struct MSM5205Voice *voice)
 {
 	/* nibble to bit map */
-	static int nbl2bit[16][4] =
+	static const int nbl2bit[16][4] =
 	{
 		{ 1, 0, 0, 0}, { 1, 0, 0, 1}, { 1, 0, 1, 0}, { 1, 0, 1, 1},
 		{ 1, 1, 0, 0}, { 1, 1, 0, 1}, { 1, 1, 1, 0}, { 1, 1, 1, 1},
@@ -57,7 +82,7 @@ static void ComputeTables (void)
 		/* loop over all nibbles and compute the difference */
 		for (nib = 0; nib < 16; nib++)
 		{
-			diff_lookup[step*16 + nib] = nbl2bit[nib][0] *
+			voice->diff_lookup[step*16 + nib] = nbl2bit[nib][0] *
 				(stepval   * nbl2bit[nib][1] +
 				 stepval/2 * nbl2bit[nib][2] +
 				 stepval/4 * nbl2bit[nib][3] +
@@ -66,36 +91,11 @@ static void ComputeTables (void)
 	}
 }
 
-/*
- *
- *	MSM 5205 ADPCM chip:
- *
- *	Data is streamed from a CPU by means of a clock generated on the chip.
- *
- *	A reset signal is set high or low to determine whether playback (and interrupts) are occuring
- *
- */
-
-struct MSM5205Voice
-{
-	int stream;             /* number of stream system      */
-	void *timer;              /* VCLK callback timer          */
-	int data;               /* next adpcm data              */
-	int vclk;               /* vclk signal (external mode)  */
-	int reset;              /* reset pin signal             */
-	int prescaler;          /* prescaler selector S1 and S2 */
-	int bitwidth;           /* bit width selector -3B/4B    */
-	int signal;             /* current ADPCM signal         */
-	int step;               /* current ADPCM step           */
-};
-
-static const struct MSM5205interface *msm5205_intf;
-static struct MSM5205Voice msm5205[MAX_MSM5205];
-
 /* stream update callbacks */
-static void MSM5205_update(int chip,INT16 *buffer,int length)
+static void MSM5205_update(void *param,stream_sample_t **inputs, stream_sample_t **_buffer,int length)
 {
-	struct MSM5205Voice *voice = &msm5205[chip];
+	struct MSM5205Voice *voice = param;
+	stream_sample_t *buffer = _buffer[0];
 
 	/* if this voice is active */
 	if(voice->signal)
@@ -108,17 +108,17 @@ static void MSM5205_update(int chip,INT16 *buffer,int length)
 		}
 	}
 	else
-		memset (buffer,0,length*sizeof(INT16));
+		memset (buffer,0,length*sizeof(*buffer));
 }
 
 /* timer callback at VCLK low eddge */
-static void MSM5205_vclk_callback(int num)
+static void MSM5205_vclk_callback(void *param)
 {
-	struct MSM5205Voice *voice = &msm5205[num];
+	struct MSM5205Voice *voice = param;
 	int val;
 	int new_signal;
 	/* callback user handler and latch next data */
-	if(msm5205_intf->vclk_callback[num]) (*msm5205_intf->vclk_callback[num])(num);
+	if(voice->intf->vclk_callback) (*voice->intf->vclk_callback)(voice->index);
 
 	/* reset check at last hieddge of VCLK */
 	if(voice->reset)
@@ -131,7 +131,7 @@ static void MSM5205_vclk_callback(int num)
 		/* update signal */
 		/* !! MSM5205 has internal 12bit decoding, signal width is 0 to 8191 !! */
 		val = voice->data;
-		new_signal = voice->signal + diff_lookup[voice->step * 16 + (val & 15)];
+		new_signal = voice->signal + voice->diff_lookup[voice->step * 16 + (val & 15)];
 		if (new_signal > 2047) new_signal = 2047;
 		else if (new_signal < -2048) new_signal = -2048;
 		voice->step += index_shift[val & 7];
@@ -145,80 +145,56 @@ static void MSM5205_vclk_callback(int num)
 		voice->signal = new_signal;
 	}
 }
-/*
- *    Start emulation of an MSM5205-compatible chip
- */
-
-int MSM5205_sh_start (const struct MachineSound *msound)
-{
-	int i;
-
-	/* save a global pointer to our interface */
-	msm5205_intf = msound->sound_interface;
-
-	/* compute the difference tables */
-	ComputeTables ();
-
-	/* initialize the voices */
-	memset (msm5205, 0, sizeof (msm5205));
-
-	/* stream system initialize */
-	for (i = 0;i < msm5205_intf->num;i++)
-	{
-		struct MSM5205Voice *voice = &msm5205[i];
-		char name[20];
-		sprintf(name,"MSM5205 #%d",i);
-		voice->stream = stream_init(name,msm5205_intf->mixing_level[i],
-                                Machine->sample_rate,i,
-		                        MSM5205_update);
-		voice->timer = timer_alloc(MSM5205_vclk_callback);
-	}
-	/* initialize */
-	MSM5205_sh_reset();
-	/* success */
-	return 0;
-}
-
-/*
- *    Stop emulation of an MSM5205-compatible chip
- */
-
-void MSM5205_sh_stop (void)
-{
-}
-
-/*
- *    Update emulation of an MSM5205-compatible chip
- */
-
-void MSM5205_sh_update (void)
-{
-}
-
 
 /*
  *    Reset emulation of an MSM5205-compatible chip
  */
-void MSM5205_sh_reset(void)
+static void msm5205_reset(void *chip)
 {
-	int i;
+	struct MSM5205Voice *voice = chip;
 
 	/* bail if we're not emulating sound */
 	if (Machine->sample_rate == 0)
 		return;
 
-	for (i = 0; i < msm5205_intf->num; i++)
-	{
-		struct MSM5205Voice *voice = &msm5205[i];
-		/* initialize work */
-		voice->data    = 0;
-		voice->vclk    = 0;
-		voice->reset   = 0;
-		voice->signal  = 0;
-		voice->step    = 0;
-		/* timer and bitwidth set */
-		MSM5205_playmode_w(i,msm5205_intf->select[i]);
-	}
+	/* initialize work */
+	voice->data    = 0;
+	voice->vclk    = 0;
+	voice->reset   = 0;
+	voice->signal  = 0;
+	voice->step    = 0;
+	/* timer and bitwidth set */
+	MSM5205_playmode_w(voice->index,voice->intf->select);
+}
+
+/*
+ *    Start emulation of an MSM5205-compatible chip
+ */
+
+static void *msm5205_start(int sndindex, int clock, const void *config)
+{
+	struct MSM5205Voice *voice;
+	
+	voice = auto_malloc(sizeof(*voice));
+	memset(voice, 0, sizeof(*voice));
+	sound_register_token(voice);
+
+	/* save a global pointer to our interface */
+	voice->intf = config;
+	voice->index = sndindex;
+	voice->clock = clock;
+
+	/* compute the difference tables */
+	ComputeTables (voice);
+
+	/* stream system initialize */
+	voice->stream = stream_create(0,1,Machine->sample_rate,voice,MSM5205_update);
+	voice->timer = timer_alloc_ptr(MSM5205_vclk_callback);
+
+	/* initialize */
+	msm5205_reset(voice);
+	/* success */
+	return voice;
 }
 
 /*
@@ -227,22 +203,18 @@ void MSM5205_sh_reset(void)
  */
 void MSM5205_vclk_w (int num, int vclk)
 {
-	/* range check the numbers */
-	if (num >= msm5205_intf->num)
-	{
-		logerror("error: MSM5205_vclk_w() called with chip = %d, but only %d chips allocated\n", num, msm5205_intf->num);
-		return;
-	}
-	if( msm5205[num].prescaler != 0 )
+	struct MSM5205Voice *voice = sndti_token(SOUND_MSM5205, num);
+	
+	if( voice->prescaler != 0 )
 	{
 		logerror("error: MSM5205_vclk_w() called with chip = %d, but VCLK selected master mode\n", num);
 	}
 	else
 	{
-		if( msm5205[num].vclk != vclk)
+		if( voice->vclk != vclk)
 		{
-			msm5205[num].vclk = vclk;
-			if( !vclk ) MSM5205_vclk_callback(num);
+			voice->vclk = vclk;
+			if( !vclk ) MSM5205_vclk_callback(voice);
 		}
 	}
 }
@@ -253,13 +225,8 @@ void MSM5205_vclk_w (int num, int vclk)
 
 void MSM5205_reset_w (int num, int reset)
 {
-	/* range check the numbers */
-	if (num >= msm5205_intf->num)
-	{
-		logerror("error: MSM5205_reset_w() called with chip = %d, but only %d chips allocated\n", num, msm5205_intf->num);
-		return;
-	}
-	msm5205[num].reset = reset;
+	struct MSM5205Voice *voice = sndti_token(SOUND_MSM5205, num);
+	voice->reset = reset;
 }
 
 /*
@@ -268,10 +235,11 @@ void MSM5205_reset_w (int num, int reset)
 
 void MSM5205_data_w (int num, int data)
 {
-	if( msm5205[num].bitwidth == 4)
-		msm5205[num].data = data & 0x0f;
+	struct MSM5205Voice *voice = sndti_token(SOUND_MSM5205, num);
+	if( voice->bitwidth == 4)
+		voice->data = data & 0x0f;
 	else
-		msm5205[num].data = (data & 0x07)<<1; /* unknown */
+		voice->data = (data & 0x07)<<1; /* unknown */
 }
 
 /*
@@ -280,8 +248,8 @@ void MSM5205_data_w (int num, int data)
 
 void MSM5205_playmode_w(int num,int select)
 {
-	struct MSM5205Voice *voice = &msm5205[num];
-	static int prescaler_table[4] = {96,48,64,0};
+	struct MSM5205Voice *voice = sndti_token(SOUND_MSM5205, num);
+	static const int prescaler_table[4] = {96,48,64,0};
 	int prescaler = prescaler_table[select & 3];
 	int bitwidth = (select & 4) ? 4 : 3;
 
@@ -294,11 +262,11 @@ void MSM5205_playmode_w(int num,int select)
 		/* timer set */
 		if( prescaler )
 		{
-			double period = TIME_IN_HZ(msm5205_intf->baseclock / prescaler);
-			timer_adjust(voice->timer, period, num, period);
+			double period = TIME_IN_HZ(voice->clock / prescaler);
+			timer_adjust_ptr(voice->timer, period, voice, period);
 		}
 		else
-			timer_adjust(voice->timer, TIME_NEVER, 0, 0);
+			timer_adjust_ptr(voice->timer, TIME_NEVER, voice, 0);
 	}
 
 	if( voice->bitwidth != bitwidth )
@@ -312,7 +280,45 @@ void MSM5205_playmode_w(int num,int select)
 
 void MSM5205_set_volume(int num,int volume)
 {
-	struct MSM5205Voice *voice = &msm5205[num];
+	struct MSM5205Voice *voice = sndti_token(SOUND_MSM5205, num);
 
-	mixer_set_volume(voice->stream,volume);
+	stream_set_output_gain(voice->stream,0,volume / 100.0);
 }
+
+
+
+
+/**************************************************************************
+ * Generic get_info
+ **************************************************************************/
+
+static void msm5205_set_info(void *token, UINT32 state, union sndinfo *info)
+{
+	switch (state)
+	{
+		/* no parameters to set */
+	}
+}
+
+
+void msm5205_get_info(void *token, UINT32 state, union sndinfo *info)
+{
+	switch (state)
+	{
+		/* --- the following bits of info are returned as 64-bit signed integers --- */
+
+		/* --- the following bits of info are returned as pointers to data or functions --- */
+		case SNDINFO_PTR_SET_INFO:						info->set_info = msm5205_set_info;		break;
+		case SNDINFO_PTR_START:							info->start = msm5205_start;			break;
+		case SNDINFO_PTR_STOP:							/* nothing */							break;
+		case SNDINFO_PTR_RESET:							/* nothing */							break;
+
+		/* --- the following bits of info are returned as NULL-terminated strings --- */
+		case SNDINFO_STR_NAME:							info->s = "MSM5205";					break;
+		case SNDINFO_STR_CORE_FAMILY:					info->s = "ADPCM";						break;
+		case SNDINFO_STR_CORE_VERSION:					info->s = "1.0";						break;
+		case SNDINFO_STR_CORE_FILE:						info->s = __FILE__;						break;
+		case SNDINFO_STR_CORE_CREDITS:					info->s = "Copyright (c) 2004, The MAME Team"; break;
+	}
+}
+

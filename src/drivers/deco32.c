@@ -110,6 +110,9 @@ from Dragon Gun.
 #include "decoprot.h"
 #include "machine/eeprom.h"
 #include "deco32.h"
+#include "sound/2151intf.h"
+#include "sound/okim6295.h"
+#include "sound/bsmt2000.h"
 
 static data32_t *deco32_ram;
 static int raster_enable,raster_offset;
@@ -1502,36 +1505,14 @@ static WRITE8_HANDLER( sound_bankswitch_w )
 
 static struct YM2151interface ym2151_interface =
 {
-	1,
-	32220000/9, /* Accurate, audio section crystal is 32.220 MHz */
-	{ YM3012_VOL(42,MIXER_PAN_LEFT,42,MIXER_PAN_RIGHT) },
-	{ sound_irq },
-	{ sound_bankswitch_w }
-};
-
-static struct OKIM6295interface okim6295_interface =
-{
-	2,              /* 2 chips */
-	{ 32220000/32/132, 32220000/16/132 },/* Frequency */
-	{ REGION_SOUND1, REGION_SOUND2 },
-	{ 100, 35 }
-};
-
-static struct OKIM6295interface okim6295_3_interface =
-{
-	3,              /* 3 chips */
-	{ 32220000/32/132, 32220000/16/132, 32220000/32/132 },/* Frequency */
-	{ REGION_SOUND1, REGION_SOUND2, REGION_SOUND3 },
-	{ 35, 15, 35 }
+	sound_irq,
+	sound_bankswitch_w
 };
 
 static struct BSMT2000interface bsmt2000_interface =
 {
-	1,
-	{ 24000000 },
-	{ 11 },
-	{ REGION_SOUND1 },
-	{ 100 }
+	11,
+	REGION_SOUND1
 };
 
 static const UINT8 tattass_default_eprom[0x160] =
@@ -1623,9 +1604,22 @@ static MACHINE_DRIVER_START( captaven )
 	MDRV_VIDEO_UPDATE(captaven)
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(YM2151, ym2151_interface)
-	MDRV_SOUND_ADD(OKIM6295, okim6295_interface)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(YM2151, 32220000/9)
+	MDRV_SOUND_CONFIG(ym2151_interface)
+	MDRV_SOUND_ROUTE(0, "left", 0.42)
+	MDRV_SOUND_ROUTE(1, "right", 0.42)
+
+	MDRV_SOUND_ADD(OKIM6295, 32220000/32/132)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 1.0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 1.0)
+
+	MDRV_SOUND_ADD(OKIM6295, 32220000/16/132)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_2)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.35)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 0.35)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( fghthist )
@@ -1654,9 +1648,22 @@ static MACHINE_DRIVER_START( fghthist )
 	MDRV_VIDEO_UPDATE(fghthist)
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(YM2151, ym2151_interface)
-	MDRV_SOUND_ADD(OKIM6295, okim6295_interface)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(YM2151, 32220000/9)
+	MDRV_SOUND_CONFIG(ym2151_interface)
+	MDRV_SOUND_ROUTE(0, "left", 0.42)
+	MDRV_SOUND_ROUTE(1, "right", 0.42)
+
+	MDRV_SOUND_ADD(OKIM6295, 32220000/32/132)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 1.0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 1.0)
+
+	MDRV_SOUND_ADD(OKIM6295, 32220000/16/132)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_2)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.35)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 0.35)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( fghthsta )
@@ -1685,9 +1692,22 @@ static MACHINE_DRIVER_START( fghthsta )
 	MDRV_VIDEO_UPDATE(fghthist)
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(YM2151, ym2151_interface)
-	MDRV_SOUND_ADD(OKIM6295, okim6295_interface)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(YM2151, 32220000/9)
+	MDRV_SOUND_CONFIG(ym2151_interface)
+	MDRV_SOUND_ROUTE(0, "left", 0.42)
+	MDRV_SOUND_ROUTE(1, "right", 0.42)
+
+	MDRV_SOUND_ADD(OKIM6295, 32220000/32/132)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 1.0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 1.0)
+
+	MDRV_SOUND_ADD(OKIM6295, 32220000/16/132)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_2)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.35)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 0.35)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( dragngun )
@@ -1718,9 +1738,27 @@ static MACHINE_DRIVER_START( dragngun )
 	MDRV_VIDEO_EOF(dragngun)
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(YM2151, ym2151_interface)
-	MDRV_SOUND_ADD(OKIM6295, okim6295_3_interface)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(YM2151, 32220000/9)
+	MDRV_SOUND_CONFIG(ym2151_interface)
+	MDRV_SOUND_ROUTE(0, "left", 0.42)
+	MDRV_SOUND_ROUTE(1, "right", 0.42)
+
+	MDRV_SOUND_ADD(OKIM6295, 32220000/32/132)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 1.0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 1.0)
+
+	MDRV_SOUND_ADD(OKIM6295, 32220000/16/132)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_2)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.35)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 0.35)
+
+	MDRV_SOUND_ADD(OKIM6295, 32220000/32/132)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_3)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 1.0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 1.0)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( lockload )
@@ -1751,9 +1789,27 @@ static MACHINE_DRIVER_START( lockload )
 	MDRV_VIDEO_EOF(dragngun)
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(YM2151, ym2151_interface)
-	MDRV_SOUND_ADD(OKIM6295, okim6295_3_interface)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(YM2151, 32220000/9)
+	MDRV_SOUND_CONFIG(ym2151_interface)
+	MDRV_SOUND_ROUTE(0, "left", 0.42)
+	MDRV_SOUND_ROUTE(1, "right", 0.42)
+
+	MDRV_SOUND_ADD(OKIM6295, 32220000/32/132)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 1.0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 1.0)
+
+	MDRV_SOUND_ADD(OKIM6295, 32220000/16/132)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_2)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.35)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 0.35)
+
+	MDRV_SOUND_ADD(OKIM6295, 32220000/32/132)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_3)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 1.0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 1.0)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( tattass )
@@ -1783,8 +1839,12 @@ static MACHINE_DRIVER_START( tattass )
 	MDRV_VIDEO_UPDATE(tattass)
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(BSMT2000, bsmt2000_interface)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(BSMT2000, 24000000)
+	MDRV_SOUND_CONFIG(bsmt2000_interface)
+	MDRV_SOUND_ROUTE(0, "left", 1.0)
+	MDRV_SOUND_ROUTE(1, "right", 1.0)
 MACHINE_DRIVER_END
 
 /**********************************************************************************/

@@ -12,6 +12,7 @@ Preliminary driver by:
 #include "vidhrdw/generic.h"
 #include "cpu/z80/z80.h"
 #include "vidhrdw/konamiic.h"
+#include "sound/3812intf.h"
 
 /* from vidhrdw */
 WRITE8_HANDLER( battlnts_spritebank_w );
@@ -329,14 +330,6 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 ***************************************************************************/
 
-static struct YM3812interface ym3812_interface =
-{
-	2,				/* 2 chips */
-	3000000,		/* ? */
-	{ 100, 100 },
-	{ 0, 0 },
-};
-
 static MACHINE_DRIVER_START( battlnts )
 
 	/* basic machine hardware */
@@ -362,7 +355,13 @@ static MACHINE_DRIVER_START( battlnts )
 	MDRV_VIDEO_UPDATE(battlnts)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM3812, ym3812_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM3812, 3000000)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
+
+	MDRV_SOUND_ADD(YM3812, 3000000)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 

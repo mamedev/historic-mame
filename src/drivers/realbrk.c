@@ -177,6 +177,8 @@ Notes:
 #include "vidhrdw/generic.h"
 #include "machine/tmp68301.h"
 #include "realbrk.h"
+#include "sound/2413intf.h"
+#include "sound/ymz280b.h"
 
 static data16_t *realbrk_dsw_select;
 
@@ -405,18 +407,8 @@ static struct GfxDecodeInfo realbrk_gfxdecodeinfo[] =
 
 static struct YMZ280Binterface realbrk_ymz280b_intf =
 {
-	1,
-	{ 33868800 / 2 },
-	{ REGION_SOUND1 },
-	{ YM3012_VOL(50,MIXER_PAN_LEFT,50,MIXER_PAN_RIGHT) },
-	{ 0 }
-};
-
-static struct YM2413interface realbrk_ym2413_intf =
-{
-	1,	/* 1 chip */
-	3579000,	/* 3.579 MHz */
-	{ YM2413_VOL(50,MIXER_PAN_CENTER,50,MIXER_PAN_CENTER) }
+	REGION_SOUND1,
+	0
 };
 
 static INTERRUPT_GEN( realbrk_interrupt )
@@ -453,9 +445,16 @@ static MACHINE_DRIVER_START( realbrk )
 	MDRV_VIDEO_UPDATE(realbrk)
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(YMZ280B,	realbrk_ymz280b_intf)
-	MDRV_SOUND_ADD(YM2413,	realbrk_ym2413_intf)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(YMZ280B, 33868800 / 2)
+	MDRV_SOUND_CONFIG(realbrk_ymz280b_intf)
+	MDRV_SOUND_ROUTE(0, "left", 0.50)
+	MDRV_SOUND_ROUTE(1, "right", 0.50)
+
+	MDRV_SOUND_ADD(YM2413, 3579000)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.50)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 0.50)
 MACHINE_DRIVER_END
 
 /***************************************************************************

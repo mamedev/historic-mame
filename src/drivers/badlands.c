@@ -95,6 +95,7 @@
 #include "driver.h"
 #include "machine/atarigen.h"
 #include "badlands.h"
+#include "sound/2151intf.h"
 
 
 
@@ -432,22 +433,6 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 /*************************************
  *
- *	Sound definitions
- *
- *************************************/
-
-static struct YM2151interface ym2151_interface =
-{
-	1,
-	ATARI_CLOCK_14MHz/4,
-	{ YM3012_VOL(30,MIXER_PAN_CENTER,30,MIXER_PAN_CENTER) },
-	{ 0 }
-};
-
-
-
-/*************************************
- *
  *	Machine driver
  *
  *************************************/
@@ -479,7 +464,11 @@ static MACHINE_DRIVER_START( badlands )
 	MDRV_VIDEO_UPDATE(badlands)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM2151, ym2151_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM2151, ATARI_CLOCK_14MHz/4)
+	MDRV_SOUND_ROUTE(0, "mono", 0.30)
+	MDRV_SOUND_ROUTE(1, "mono", 0.30)
 MACHINE_DRIVER_END
 
 

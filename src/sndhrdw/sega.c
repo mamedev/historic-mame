@@ -6,6 +6,7 @@
 
 #include "driver.h"
 #include "sega.h"
+#include "sound/samples.h"
 
 /* History:
 
@@ -177,10 +178,13 @@ d0      crafts joining
 
 static int roarPlaying;	/* Is the ship roar noise playing? */
 
-int tacscan_sh_start (const struct MachineSound *msound)
+static void tacscan_sh_update(int param);
+
+void * tacscan_sh_start (int clock, const struct CustomSound_interface *config)
 {
 	roarPlaying = 0;
-	return 0;
+	timer_pulse(TIME_IN_HZ(Machine->drv->frames_per_second), 0, tacscan_sh_update);
+	return auto_malloc(1);
 }
 
 WRITE8_HANDLER( tacscan_sh_w )
@@ -298,7 +302,7 @@ WRITE8_HANDLER( tacscan_sh_w )
 	}
 }
 
-void tacscan_sh_update (void)
+static void tacscan_sh_update (int param)
 {
 	/* If the ship roar has started playing but the sample stopped */
 	/* play the intermediate roar noise */
@@ -556,8 +560,6 @@ WRITE8_HANDLER( spacfury1_sh_w )
 
 WRITE8_HANDLER( spacfury2_sh_w )
 {
-	if (Machine->samples == 0) return;
-
 	data ^= 0xff;
 
 	/* craft joining */

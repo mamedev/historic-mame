@@ -192,6 +192,7 @@ Shark	Zame
 #include "cpu/m68000/m68000.h"
 #include "cpu/tms32010/tms32010.h"
 #include "twincobr.h"
+#include "sound/3812intf.h"
 
 
 
@@ -641,10 +642,7 @@ static void irqhandler(int linestate)
 
 static struct YM3812interface ym3812_interface =
 {
-	1,				/* 1 chip */
-	28000000/8,		/* 3.5MHz */
-	{ 100 },		/* volume */
-	{ irqhandler },
+	irqhandler
 };
 
 
@@ -683,7 +681,11 @@ static MACHINE_DRIVER_START( twincobr )
 	MDRV_VIDEO_UPDATE(toaplan0)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM3812, ym3812_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM3812, 28000000/8)
+	MDRV_SOUND_CONFIG(ym3812_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 

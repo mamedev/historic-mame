@@ -142,6 +142,10 @@
 #include "state.h"
 #include "segac2.h"
 #include "machine/random.h"
+#include "sound/okim6295.h"
+#include "sound/sn76496.h"
+#include "sound/2612intf.h"
+#include "sound/upd7759.h"
 
 #define LOG_PROTECTION		0
 #define LOG_PALETTE			0
@@ -409,16 +413,16 @@ static READ16_HANDLER( ym3438_r )
 {
 	switch (offset)
 	{
-		case 0: return YM2612_status_port_0_A_r(0);
-		case 1: return YM2612_read_port_0_r(0);
-		case 2: return YM2612_status_port_0_B_r(0);
+		case 0: return YM3438_status_port_0_A_r(0);
+		case 1: return YM3438_read_port_0_r(0);
+		case 2: return YM3438_status_port_0_B_r(0);
 	}
 	return 0xff;
 }
 
 static READ16_HANDLER( puckpkmn_YM3438_r )
 {
-	return	YM2612_status_port_0_A_r(0) << 8;
+	return	YM3438_status_port_0_A_r(0) << 8;
 }
 
 
@@ -439,10 +443,10 @@ static WRITE16_HANDLER( ym3438_w )
 
 		switch (offset)
 		{
-			case 0: YM2612_control_port_0_A_w(0, data & 0xff);	last_port = data;	break;
-			case 1: YM2612_data_port_0_A_w(0, data & 0xff);							break;
-			case 2: YM2612_control_port_0_B_w(0, data & 0xff);	last_port = data;	break;
-			case 3: YM2612_data_port_0_B_w(0, data & 0xff);							break;
+			case 0: YM3438_control_port_0_A_w(0, data & 0xff);	last_port = data;	break;
+			case 1: YM3438_data_port_0_A_w(0, data & 0xff);							break;
+			case 2: YM3438_control_port_0_B_w(0, data & 0xff);	last_port = data;	break;
+			case 3: YM3438_data_port_0_B_w(0, data & 0xff);							break;
 		}
 	}
 }
@@ -452,12 +456,12 @@ static WRITE16_HANDLER( puckpkmn_YM3438_w )
 	switch (offset)
 	{
 		case 0:
-			if (ACCESSING_MSB)	YM2612_control_port_0_A_w	(0,	(data >> 8) & 0xff);
-			else 				YM2612_data_port_0_A_w		(0,	(data >> 0) & 0xff);
+			if (ACCESSING_MSB)	YM3438_control_port_0_A_w	(0,	(data >> 8) & 0xff);
+			else 				YM3438_data_port_0_A_w		(0,	(data >> 0) & 0xff);
 			break;
 		case 1:
-			if (ACCESSING_MSB)	YM2612_control_port_0_B_w	(0,	(data >> 8) & 0xff);
-			else 				YM2612_data_port_0_B_w		(0,	(data >> 0) & 0xff);
+			if (ACCESSING_MSB)	YM3438_control_port_0_B_w	(0,	(data >> 8) & 0xff);
+			else 				YM3438_data_port_0_B_w		(0,	(data >> 0) & 0xff);
 			break;
 	}
 }
@@ -696,7 +700,7 @@ static WRITE16_HANDLER( iochip_w )
 		case 0x0e:
 			/* Bit  1   = YM3438 reset? no - breaks poto poto */
 /*			if (!(data & 2))
-				YM2612_sh_reset();*/
+				YM3438_sh_reset();*/
 			break;
 
 		case 0x0f:
@@ -1092,11 +1096,11 @@ static READ16_HANDLER ( genesis_68k_to_z80_r )
 		switch (offset & 3)
 		{
 		case 0:
-			if (ACCESSING_MSB)	 return YM2612_status_port_0_A_r(0) << 8;
-			else 				 return YM2612_read_port_0_r(0);
+			if (ACCESSING_MSB)	 return YM3438_status_port_0_A_r(0) << 8;
+			else 				 return YM3438_read_port_0_r(0);
 			break;
 		case 2:
-			if (ACCESSING_MSB)	return YM2612_status_port_0_B_r(0) << 8;
+			if (ACCESSING_MSB)	return YM3438_status_port_0_B_r(0) << 8;
 			else 				return 0;
 			break;
 		}
@@ -1152,11 +1156,11 @@ static READ16_HANDLER ( megaplay_68k_to_z80_r )
 		switch (offset & 3)
 		{
 		case 0:
-			if (ACCESSING_MSB)	 return YM2612_status_port_0_A_r(0) << 8;
-			else 				 return YM2612_read_port_0_r(0);
+			if (ACCESSING_MSB)	 return YM3438_status_port_0_A_r(0) << 8;
+			else 				 return YM3438_read_port_0_r(0);
 			break;
 		case 2:
-			if (ACCESSING_MSB)	return YM2612_status_port_0_B_r(0) << 8;
+			if (ACCESSING_MSB)	return YM3438_status_port_0_B_r(0) << 8;
 			else 				return 0;
 			break;
 		}
@@ -1212,12 +1216,12 @@ static WRITE16_HANDLER ( megaplay_68k_to_z80_w )
 		switch (offset & 3)
 		{
 		case 0:
-			if (ACCESSING_MSB)	YM2612_control_port_0_A_w	(0,	(data >> 8) & 0xff);
-			else 				YM2612_data_port_0_A_w		(0,	(data >> 0) & 0xff);
+			if (ACCESSING_MSB)	YM3438_control_port_0_A_w	(0,	(data >> 8) & 0xff);
+			else 				YM3438_data_port_0_A_w		(0,	(data >> 0) & 0xff);
 			break;
 		case 2:
-			if (ACCESSING_MSB)	YM2612_control_port_0_B_w	(0,	(data >> 8) & 0xff);
-			else 				YM2612_data_port_0_B_w		(0,	(data >> 0) & 0xff);
+			if (ACCESSING_MSB)	YM3438_control_port_0_B_w	(0,	(data >> 8) & 0xff);
+			else 				YM3438_data_port_0_B_w		(0,	(data >> 0) & 0xff);
 			break;
 		}
 	}
@@ -1514,9 +1518,9 @@ static READ8_HANDLER ( genesis_z80_r )
 	{
 		switch (offset & 3)
 		{
-		case 0: return YM2612_status_port_0_A_r(0);
-		case 1: return YM2612_read_port_0_r(0);
-		case 2: return YM2612_status_port_0_B_r(0);
+		case 0: return YM3438_status_port_0_A_r(0);
+		case 1: return YM3438_read_port_0_r(0);
+		case 2: return YM3438_status_port_0_B_r(0);
 		case 3: return 0;
 		}
 	}
@@ -1551,13 +1555,13 @@ static WRITE8_HANDLER ( genesis_z80_w )
 	{
 		switch (offset & 3)
 		{
-		case 0: YM2612_control_port_0_A_w	(0,	data);
+		case 0: YM3438_control_port_0_A_w	(0,	data);
 			break;
-		case 1: YM2612_data_port_0_A_w		(0, data);
+		case 1: YM3438_data_port_0_A_w		(0, data);
 			break;
-		case 2: YM2612_control_port_0_B_w	(0,	data);
+		case 2: YM3438_control_port_0_B_w	(0,	data);
 			break;
-		case 3: YM2612_data_port_0_B_w		(0,	data);
+		case 3: YM3438_data_port_0_B_w		(0,	data);
 			break;
 		}
 	}
@@ -3204,56 +3208,12 @@ INPUT_PORTS_END
 
 static struct upd7759_interface upd7759_intf =
 {
-	1,								/* One chip */
-	{ UPD7759_STANDARD_CLOCK },
-	{ 50 },							/* Volume */
-	{ REGION_SOUND1 }				/* Memory pointer (gen.h) */
+	REGION_SOUND1				/* Memory pointer (gen.h) */
 };
 
-static struct YM2612interface ym3438_intf =
+static struct YM3438interface ym3438_intf =
 {
-	1,								/* One chip */
-	MASTER_CLOCK/7,					/* Clock: 7.67 MHz */
-	{ YM3012_VOL(50,MIXER_PAN_CENTER,50,MIXER_PAN_CENTER) },	/* Volume */
-	{ 0 },							/* port I/O */
-	{ 0 },							/* port I/O */
-	{ 0 },							/* port I/O */
-	{ 0 },							/* port I/O */
-	{ ym3438_interrupt }			/* IRQ handler */
-};
-
-static struct YM2612interface gen_ym3438_intf =
-{
-	1,								/* One chip */
-	MASTER_CLOCK/7,					/* Clock: 7.67 MHz */
-	{ YM3012_VOL(50,MIXER_PAN_CENTER,50,MIXER_PAN_CENTER) },	/* Volume */
-	{ 0 },							/* port I/O */
-	{ 0 },							/* port I/O */
-	{ 0 },							/* port I/O */
-	{ 0 },							/* port I/O */
-//	{ ym3438_interrupt }			/* IRQ handler */
-};
-
-static struct SN76496interface sn76489_intf =
-{
-	1,								/* One chip */
-	{ MASTER_CLOCK/15 },			/* Clock: 3.58 MHz */
-	{ 50 }							/* Volume */
-};
-
-static struct SN76496interface megatech_sn76489_intf =
-{
-	2,		/* Two chips, one in the Genesis VDP and one in the SMS VDP */
-	{ MASTER_CLOCK/15, MASTER_CLOCK/15 },			/* Clock: 3.58 MHz */
-	{ 50, 50 }							/* Volume */
-};
-
-static struct OKIM6295interface puckpkmn_m6295_intf =
-{
-	1,
-	{ 8000 },	/* ? */
-	{ REGION_SOUND1 },
-	{ 50 }
+	ym3438_interrupt				/* IRQ handler */
 };
 
 
@@ -3292,8 +3252,15 @@ static MACHINE_DRIVER_START( segac )
 	MDRV_VIDEO_UPDATE(segac2)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM2612, ym3438_intf)
-	MDRV_SOUND_ADD(SN76496, sn76489_intf)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM3438, MASTER_CLOCK/7)
+	MDRV_SOUND_CONFIG(ym3438_intf)
+	MDRV_SOUND_ROUTE(0, "mono", 0.50)
+	MDRV_SOUND_ROUTE(1, "mono", 0.50)
+
+	MDRV_SOUND_ADD(SN76496, MASTER_CLOCK/15)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
 MACHINE_DRIVER_END
 
 
@@ -3303,7 +3270,9 @@ static MACHINE_DRIVER_START( segac2 )
 	MDRV_IMPORT_FROM( segac )
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(UPD7759, upd7759_intf)
+	MDRV_SOUND_ADD(UPD7759, UPD7759_STANDARD_CLOCK)
+	MDRV_SOUND_CONFIG(upd7759_intf)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
 MACHINE_DRIVER_END
 
 
@@ -3319,7 +3288,9 @@ static MACHINE_DRIVER_START( puckpkmn )
 	MDRV_VISIBLE_AREA(8, 319, 0, 223)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(OKIM6295, puckpkmn_m6295_intf)
+	MDRV_SOUND_ADD(OKIM6295, 8000)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( genesis_base )
@@ -3350,7 +3321,11 @@ static MACHINE_DRIVER_START( genesis_base )
 	MDRV_VIDEO_UPDATE(segac2)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM2612, gen_ym3438_intf )
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM3438, MASTER_CLOCK/7)
+	MDRV_SOUND_ROUTE(0, "mono", 0.50)
+	MDRV_SOUND_ROUTE(1, "mono", 0.50)
 MACHINE_DRIVER_END
 
 
@@ -3375,8 +3350,13 @@ static MACHINE_DRIVER_START( megatech )
 	MDRV_CPU_PROGRAM_MAP(megatech_bios_readmem, megatech_bios_writemem)
 	MDRV_CPU_IO_MAP(megatech_bios_readport,megatech_bios_writeport)
 	MDRV_CPU_VBLANK_INT(megatech_irq, 262)
-	MDRV_SOUND_ADD(SN76496, megatech_sn76489_intf)
 
+	/* sound hardware */
+	MDRV_SOUND_ADD(SN76496, MASTER_CLOCK/15)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
+
+	MDRV_SOUND_ADD(SN76496, MASTER_CLOCK/15)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( megaplay )
@@ -3402,7 +3382,11 @@ static MACHINE_DRIVER_START( megaplay )
 	MDRV_PALETTE_LENGTH(2048+32) /* +32 for megaplay bios vdp part */
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM2612, gen_ym3438_intf )
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM3438, MASTER_CLOCK/7)
+	MDRV_SOUND_ROUTE(0, "mono", 0.50)
+	MDRV_SOUND_ROUTE(1, "mono", 0.50)
 
 //	MDRV_CPU_PROGRAM_MAP(megaplay_genesis_readmem, genesis_writemem)
 
@@ -3413,7 +3397,13 @@ static MACHINE_DRIVER_START( megaplay )
 	MDRV_CPU_ADD_TAG("megaplay_bios", Z80, 53693100 / 15) /* ?? */
 	MDRV_CPU_PROGRAM_MAP(megaplay_bios_readmem, megaplay_bios_writemem)
 	MDRV_CPU_IO_MAP(megaplay_bios_readport,megaplay_bios_writeport)
-	MDRV_SOUND_ADD(SN76496, megatech_sn76489_intf)
+
+	MDRV_SOUND_ADD(SN76496, MASTER_CLOCK/15)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
+
+	MDRV_SOUND_ADD(SN76496, MASTER_CLOCK/15)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
+
 	MDRV_CPU_VBLANK_INT(megatech_irq, 262)
 MACHINE_DRIVER_END
 

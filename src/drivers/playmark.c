@@ -37,6 +37,7 @@ World Beach Volley:
 #include "vidhrdw/generic.h"
 #include "machine/eeprom.h"
 #include "cpu/pic16c5x/pic16c5x.h"
+#include "sound/okim6295.h"
 
 
 static data16_t playmark_snd_command;
@@ -533,16 +534,6 @@ static struct GfxDecodeInfo wbeachvl_gfxdecodeinfo[] =
 
 
 
-static struct OKIM6295interface okim6295_interface =
-{
-	1,						/* 1 chip */
-	{ 32000000/32/132 },	/* 7575Hz frequency? */
-	{ REGION_SOUND1 },		/* memory region */
-	{ 100 }
-};
-
-
-
 static MACHINE_DRIVER_START( bigtwin )
 
 	/* basic machine hardware */
@@ -568,7 +559,11 @@ static MACHINE_DRIVER_START( bigtwin )
 	MDRV_VIDEO_UPDATE(bigtwin)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(OKIM6295, okim6295_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(OKIM6295, 32000000/32/132)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 
@@ -595,7 +590,11 @@ static MACHINE_DRIVER_START( wbeachvl )
 	MDRV_VIDEO_UPDATE(wbeachvl)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(OKIM6295, okim6295_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(OKIM6295, 32000000/32/132)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 

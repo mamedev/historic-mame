@@ -17,8 +17,6 @@
 
 struct namco_52xx_interface
 {
-	int		baseclock;		/* clock */
-	int		mixing_level;	/* volume */
 	int		region;			/* memory region */
 	double	play_rate;		/* Playback frequency */
 	double	hp_filt_fc;
@@ -27,10 +25,6 @@ struct namco_52xx_interface
 	double	lp_filt_q;
 	double	filt_gain;
 };
-
-int namco_52xx_sh_start(const struct MachineSound *msound);
-void namco_52xx_sh_reset(void);
-void namco_52xx_sh_stop(void);
 
 void namcoio_52XX_write(int data);
 

@@ -21,6 +21,7 @@ TODO:
 
 #include "driver.h"
 #include "cpu/z80/z80.h"
+#include "sound/sn76496.h"
 
 data8_t *xyonix_vidram;
 
@@ -239,14 +240,6 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 /* MACHINE driver *************************************************************/
 
-static struct SN76496interface sn76496_interface =
-{
-	2,						/* 2 chips */
-	{ 16000000/4, 16000000/4 },	/* 4 MHz??? */
-	{ 100, 100 }
-};
-
-
 static MACHINE_DRIVER_START( xyonix )
 
 	/* basic machine hardware */
@@ -271,7 +264,13 @@ static MACHINE_DRIVER_START( xyonix )
 	MDRV_VIDEO_UPDATE(xyonix)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(SN76496, sn76496_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(SN76496, 16000000/4)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
+
+	MDRV_SOUND_ADD(SN76496, 16000000/4)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 /* ROM Loading ***************************************************************/

@@ -251,7 +251,7 @@ typedef struct {
 
 	/* external event callback handlers */
 	OPLL_UPDATEHANDLER UpdateHandler; /* stream update handler		*/
-	int UpdateParam;				/* stream update parameter		*/
+	void * UpdateParam;				/* stream update parameter		*/
 
 	UINT32	fn_tab[1024];			/* fnumber->increment counter	*/
 
@@ -1980,7 +1980,7 @@ static void OPLLDestroy(YM2413 *chip)
 
 /* Option handlers */
 
-static void OPLLSetUpdateHandler(YM2413 *chip,OPLL_UPDATEHANDLER UpdateHandler,int param)
+static void OPLLSetUpdateHandler(YM2413 *chip,OPLL_UPDATEHANDLER UpdateHandler,void * param)
 {
 	chip->UpdateHandler = UpdateHandler;
 	chip->UpdateParam = param;
@@ -2014,67 +2014,42 @@ static unsigned char OPLLRead(YM2413 *chip,int a)
 
 
 
-#define MAX_OPLL_CHIPS 4
-
-
-static YM2413 *OPLL_YM2413[MAX_OPLL_CHIPS];	/* array of pointers to the YM2413's */
-static int YM2413NumChips = 0;				/* number of chips */
-
-int YM2413Init(int num, int clock, int rate)
+void * YM2413Init(int clock, int rate)
 {
-	int i;
-
-	if (YM2413NumChips)
-		return -1;	/* duplicate init. */
-
-	YM2413NumChips = num;
-
-	for (i = 0;i < YM2413NumChips; i++)
-	{
-		/* emulator create */
-		OPLL_YM2413[i] = OPLLCreate(clock, rate);
-		if(OPLL_YM2413[i] == NULL)
-		{
-			/* it's really bad - we run out of memeory */
-			YM2413NumChips = 0;
-			return -1;
-		}
-	}
-
-	return 0;
+	/* emulator create */
+	return OPLLCreate(clock, rate);
 }
 
-void YM2413Shutdown(void)
+void YM2413Shutdown(void *chip)
 {
-	int i;
+	YM2413 *OPLL = chip;
 
-	for (i = 0;i < YM2413NumChips; i++)
-	{
-		/* emulator shutdown */
-		OPLLDestroy(OPLL_YM2413[i]);
-		OPLL_YM2413[i] = NULL;
-	}
-	YM2413NumChips = 0;
+	/* emulator shutdown */
+	OPLLDestroy(OPLL);
 }
 
-void YM2413ResetChip(int which)
+void YM2413ResetChip(void *chip)
 {
-	OPLLResetChip(OPLL_YM2413[which]);
+	YM2413 *OPLL = chip;
+	OPLLResetChip(OPLL);
 }
 
-void YM2413Write(int which, int a, int v)
+void YM2413Write(void *chip, int a, int v)
 {
-	OPLLWrite(OPLL_YM2413[which], a, v);
+	YM2413 *OPLL = chip;
+	OPLLWrite(OPLL, a, v);
 }
 
-unsigned char YM2413Read(int which, int a)
+unsigned char YM2413Read(void *chip, int a)
 {
-	return OPLLRead(OPLL_YM2413[which], a) & 0x03 ;
+	YM2413 *OPLL = chip;
+	return OPLLRead(OPLL, a) & 0x03 ;
 }
 
-void YM2413SetUpdateHandler(int which,OPLL_UPDATEHANDLER UpdateHandler,int param)
+void YM2413SetUpdateHandler(void *chip,OPLL_UPDATEHANDLER UpdateHandler,void *param)
 {
-	OPLLSetUpdateHandler(OPLL_YM2413[which], UpdateHandler, param);
+	YM2413 *OPLL = chip;
+	OPLLSetUpdateHandler(OPLL, UpdateHandler, param);
 }
 
 
@@ -2085,9 +2060,9 @@ void YM2413SetUpdateHandler(int which,OPLL_UPDATEHANDLER UpdateHandler,int param
 ** '*buffer' is the output buffer pointer
 ** 'length' is the number of samples that should be generated
 */
-void YM2413UpdateOne(int which, INT16 **buffers, int length)
+void YM2413UpdateOne(void *_chip, SAMP **buffers, int length)
 {
-	YM2413		*chip  = OPLL_YM2413[which];
+	YM2413		*chip  = _chip;
 	UINT8		rhythm = chip->rhythm&0x20;
 	SAMP		*bufMO = buffers[0];
 	SAMP		*bufRO = buffers[1];

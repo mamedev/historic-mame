@@ -43,6 +43,7 @@
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "sound/ay8910.h"
 
 
 extern WRITE8_HANDLER(mole_videoram_w);
@@ -194,18 +195,6 @@ static struct GfxDecodeInfo gfxdecode[] = {
 };
 
 
-static struct AY8910interface ay8910_interface =
-{
-	1,	/* 1 chip */
-	2000000, /* 2 MHz? */
-	{ 100 }, /* volume */
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ 0 }
-};
-
-
 static MACHINE_DRIVER_START( mole )
 	// basic machine hardware
 	MDRV_CPU_ADD(M6502, 4000000) // ???
@@ -228,7 +217,10 @@ static MACHINE_DRIVER_START( mole )
 	MDRV_VIDEO_UPDATE(mole)
 
 	// sound hardware
-	MDRV_SOUND_ADD(AY8910, ay8910_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	
+	MDRV_SOUND_ADD(AY8910, 2000000)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 

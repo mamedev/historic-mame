@@ -4,6 +4,8 @@
 
 *************************************************************************/
 
+#include "sound/custom.h"
+
 /*----------- defined in machine/sega.c -----------*/
 
 extern UINT8 *sega_mem;
@@ -33,8 +35,7 @@ WRITE8_HANDLER( spacfury2_sh_w );
 WRITE8_HANDLER( zektor1_sh_w );
 WRITE8_HANDLER( zektor2_sh_w );
 
-int tacscan_sh_start(const struct MachineSound *msound);
-void tacscan_sh_update(void);
+void * tacscan_sh_start (int clock, const struct CustomSound_interface *config);
 
 WRITE8_HANDLER( tacscan_sh_w );
 WRITE8_HANDLER( startrek_sh_w );

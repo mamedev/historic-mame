@@ -2486,28 +2486,23 @@ static int displaygameinfo(struct mame_bitmap *bitmap,int selected)
 
 	sprintf (buf2, "\n%s", ui_getstring (UI_sound));
 	strcat (buf, buf2);
-	if (Machine->drv->sound_attributes & SOUND_SUPPORTS_STEREO)
-		sprintf(&buf[strlen(buf)]," (%s)", ui_getstring (UI_stereo));
 	strcat(buf,":\n");
 
 	i = 0;
 	while (i < MAX_SOUND && Machine->drv->sound[i].sound_type)
 	{
-		if (sound_num(&Machine->drv->sound[i]))
-			sprintf(&buf[strlen(buf)],"%dx",sound_num(&Machine->drv->sound[i]));
+		sprintf(&buf[strlen(buf)],"%s",sndnum_name(i));
 
-		sprintf(&buf[strlen(buf)],"%s",sound_name(&Machine->drv->sound[i]));
-
-		if (sound_clock(&Machine->drv->sound[i]))
+		if (sndnum_clock(i))
 		{
-			if (sound_clock(&Machine->drv->sound[i]) >= 1000000)
+			if (sndnum_clock(i) >= 1000000)
 				sprintf(&buf[strlen(buf)]," %d.%06d MHz",
-						sound_clock(&Machine->drv->sound[i]) / 1000000,
-						sound_clock(&Machine->drv->sound[i]) % 1000000);
+						sndnum_clock(i) / 1000000,
+						sndnum_clock(i) % 1000000);
 			else
 				sprintf(&buf[strlen(buf)]," %d.%03d kHz",
-						sound_clock(&Machine->drv->sound[i]) / 1000,
-						sound_clock(&Machine->drv->sound[i]) % 1000);
+						sndnum_clock(i) / 1000,
+						sndnum_clock(i) % 1000);
 		}
 
 		strcat(buf,"\n");
@@ -3501,7 +3496,8 @@ static void onscrd_mixervol(struct mame_bitmap *bitmap,int increment,int arg)
 {
 	static void *driver = 0;
 	char buf[40];
-	int volume,ch;
+	float volume;
+	int ch;
 	int doallchannels = 0;
 	int proportional = 0;
 
@@ -3517,37 +3513,35 @@ static void onscrd_mixervol(struct mame_bitmap *bitmap,int increment,int arg)
 	{
 		if (proportional)
 		{
-			static int old_vol[MIXER_MAX_CHANNELS];
+			static float old_vol[100];
+			int num_vals = sound_get_user_gain_count();
 			float ratio = 1.0;
 			int overflow = 0;
 
 			if (driver != Machine->drv)
 			{
 				driver = (void *)Machine->drv;
-				for (ch = 0; ch < MIXER_MAX_CHANNELS; ch++)
-					old_vol[ch] = mixer_get_mixing_level(ch);
+				for (ch = 0; ch < num_vals; ch++)
+					old_vol[ch] = sound_get_user_gain(ch);
 			}
 
-			volume = mixer_get_mixing_level(arg);
+			volume = sound_get_user_gain(arg);
 			if (old_vol[arg])
-				ratio = (float)(volume + increment) / (float)old_vol[arg];
+				ratio = (volume + increment * 0.02) / old_vol[arg];
 
-			for (ch = 0; ch < MIXER_MAX_CHANNELS; ch++)
+			for (ch = 0; ch < num_vals; ch++)
 			{
-				if (mixer_get_name(ch) != 0)
-				{
-					volume = ratio * old_vol[ch];
-					if (volume < 0 || volume > 100)
-						overflow = 1;
-				}
+				volume = ratio * old_vol[ch];
+				if (volume < 0 || volume > 2.0)
+					overflow = 1;
 			}
 
 			if (!overflow)
 			{
-				for (ch = 0; ch < MIXER_MAX_CHANNELS; ch++)
+				for (ch = 0; ch < num_vals; ch++)
 				{
 					volume = ratio * old_vol[ch];
-					mixer_set_mixing_level(ch,volume);
+					sound_set_user_gain(ch,volume);
 				}
 			}
 		}
@@ -3555,29 +3549,30 @@ static void onscrd_mixervol(struct mame_bitmap *bitmap,int increment,int arg)
 		{
 			driver = 0; /* force reset of saved volumes */
 
-			volume = mixer_get_mixing_level(arg);
-			volume += increment;
-			if (volume > 100) volume = 100;
+			volume = sound_get_user_gain(arg);
+			volume += increment * 0.02;
+			if (volume > 2.0) volume = 2.0;
 			if (volume < 0) volume = 0;
 
 			if (doallchannels)
 			{
-				for (ch = 0;ch < MIXER_MAX_CHANNELS;ch++)
-					mixer_set_mixing_level(ch,volume);
+				int num_vals = sound_get_user_gain_count();
+				for (ch = 0;ch < num_vals;ch++)
+					sound_set_user_gain(ch,volume);
 			}
 			else
-				mixer_set_mixing_level(arg,volume);
+				sound_set_user_gain(arg,volume);
 		}
 	}
-	volume = mixer_get_mixing_level(arg);
+	volume = sound_get_user_gain(arg);
 
 	if (proportional)
-		sprintf(buf,"%s %s %3d%%", ui_getstring (UI_allchannels), ui_getstring (UI_relative), volume);
+		sprintf(buf,"%s %s %4.2f", ui_getstring (UI_allchannels), ui_getstring (UI_relative), volume);
 	else if (doallchannels)
-		sprintf(buf,"%s %s %3d%%", ui_getstring (UI_allchannels), ui_getstring (UI_volume), volume);
+		sprintf(buf,"%s %s %4.2f", ui_getstring (UI_allchannels), ui_getstring (UI_volume), volume);
 	else
-		sprintf(buf,"%s %s %3d%%",mixer_get_name(arg), ui_getstring (UI_volume), volume);
-	displayosd(bitmap,buf,volume,mixer_get_default_mixing_level(arg));
+		sprintf(buf,"%s %s %4.2f",sound_get_user_gain_name(arg), ui_getstring (UI_volume), volume);
+	displayosd(bitmap,buf,volume*50,sound_get_default_gain(arg)*50);
 }
 
 static void onscrd_brightness(struct mame_bitmap *bitmap,int increment,int arg)
@@ -3744,18 +3739,16 @@ static void onscrd_init(void)
 
 	if (Machine->sample_rate)
 	{
+		int num_vals = sound_get_user_gain_count();
 		onscrd_fnc[item] = onscrd_volume;
 		onscrd_arg[item] = 0;
 		item++;
 
-		for (ch = 0;ch < MIXER_MAX_CHANNELS;ch++)
+		for (ch = 0;ch < num_vals;ch++)
 		{
-			if (mixer_get_name(ch) != 0)
-			{
-				onscrd_fnc[item] = onscrd_mixervol;
-				onscrd_arg[item] = ch;
-				item++;
-			}
+			onscrd_fnc[item] = onscrd_mixervol;
+			onscrd_arg[item] = ch;
+			item++;
 		}
 	}
 

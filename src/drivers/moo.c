@@ -48,6 +48,9 @@ Bucky:
 #include "cpu/m68000/m68000.h"
 #include "cpu/z80/z80.h"
 #include "machine/eeprom.h"
+#include "sound/2151intf.h"
+#include "sound/okim6295.h"
+#include "sound/k054539.h"
 
 VIDEO_START(moo);
 VIDEO_UPDATE(moo);
@@ -626,28 +629,9 @@ INPUT_PORTS_START( bucky )
 INPUT_PORTS_END
 
 
-static struct YM2151interface ym2151_interface =
-{
-	1,
-	4000000,
-	{ YM3012_VOL(50,MIXER_PAN_LEFT,50,MIXER_PAN_RIGHT) },
-	{ 0 }
-};
-
 static struct K054539interface k054539_interface =
 {
-	1,			/* 1 chip */
-	48000,
-	{ REGION_SOUND1 },
-	{ { 100, 100 } },
-};
-
-static struct OKIM6295interface okim6295_interface =
-{
-	1,			/* 1 chip */
-	{ 8000 },
-	{ REGION_SOUND1 },
-	{ 100 }
+	REGION_SOUND1
 };
 
 static MACHINE_INIT( moo )
@@ -685,9 +669,16 @@ static MACHINE_DRIVER_START( moo )
 	MDRV_VIDEO_UPDATE(moo)
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(YM2151, ym2151_interface)
-	MDRV_SOUND_ADD(K054539, k054539_interface)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(YM2151, 4000000)
+	MDRV_SOUND_ROUTE(0, "left", 0.50)
+	MDRV_SOUND_ROUTE(1, "right", 0.50)
+
+	MDRV_SOUND_ADD(K054539, 48000)
+	MDRV_SOUND_CONFIG(k054539_interface)
+	MDRV_SOUND_ROUTE(0, "left", 0.75)
+	MDRV_SOUND_ROUTE(1, "right", 0.75)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( moobl )
@@ -714,8 +705,12 @@ static MACHINE_DRIVER_START( moobl )
 	MDRV_VIDEO_UPDATE(moo)
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(OKIM6295, okim6295_interface)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(OKIM6295, 8000)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 1.0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 1.0)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( bucky )

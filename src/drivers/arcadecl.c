@@ -69,7 +69,7 @@
 #include "driver.h"
 #include "machine/atarigen.h"
 #include "arcadecl.h"
-
+#include "sound/okim6295.h"
 
 
 /*************************************
@@ -336,22 +336,6 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 /*************************************
  *
- *	Sound definitions
- *
- *************************************/
-
-static struct OKIM6295interface okim6295_interface =
-{
-	1,
-	{ ATARI_CLOCK_14MHz/4/3/165 },	/* not verified -- assumed from Rampart */
-	{ REGION_SOUND1 },
-	{ 100 }
-};
-
-
-
-/*************************************
- *
  *	Machine driver
  *
  *************************************/
@@ -380,7 +364,11 @@ static MACHINE_DRIVER_START( arcadecl )
 	MDRV_VIDEO_UPDATE(arcadecl)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(OKIM6295, okim6295_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(OKIM6295, ATARI_CLOCK_14MHz/4/3/165)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 

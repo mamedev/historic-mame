@@ -26,6 +26,8 @@ TODO:
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "sound/ay8910.h"
+#include "sound/2203intf.h"
 
 /* in vidhrdw/lsasquad.c */
 extern unsigned char *lsasquad_scrollram;
@@ -311,30 +313,14 @@ static WRITE8_HANDLER( unk )
 
 }
 
-/* actually there is one AY8910 and one YM2203, but the sound core doesn't */
-/* support that so we use 2 YM2203. I think this has been corrected now,  */
-/* can this comment be removed?											*/
+
 static struct YM2203interface ym2203_interface =
 {
-	1,			/* 1 chips */
-	3000000,	/* 3 MHz???? */
-	{ YM2203_VOL(100,20) },
-	{ 0 },
-	{ 0 },
-	{ unk },
-	{ unk },
-	{ irqhandler }
-};
-
-static struct AY8910interface ay8910_interface =
-{
-	1, /* 1 chips */
-	3000000,	 /* 3 MHz ??? */
-	{ 20 },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ 0 }
+	0,
+	0,
+	unk,
+	unk,
+	irqhandler
 };
 
 
@@ -369,8 +355,17 @@ static MACHINE_DRIVER_START( lsasquad )
 	MDRV_VIDEO_UPDATE(lsasquad)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(AY8910, ay8910_interface)
-	MDRV_SOUND_ADD(YM2203, ym2203_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	
+	MDRV_SOUND_ADD(AY8910, 3000000)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.20)
+
+	MDRV_SOUND_ADD(YM2203, 3000000)
+	MDRV_SOUND_CONFIG(ym2203_interface)
+	MDRV_SOUND_ROUTE(0, "mono", 0.20)
+	MDRV_SOUND_ROUTE(1, "mono", 0.20)
+	MDRV_SOUND_ROUTE(2, "mono", 0.20)
+	MDRV_SOUND_ROUTE(3, "mono", 1.0)
 MACHINE_DRIVER_END
 
 

@@ -44,6 +44,7 @@ Notes:
 #include "driver.h"
 #include "cpu/z80/z80.h"
 #include "vidhrdw/generic.h"
+#include "sound/ay8910.h"
 
 /* from vidhrdw */
 extern PALETTE_INIT( grchamp );
@@ -354,18 +355,6 @@ ADDRESS_MAP_END
 
 /***************************************************************************/
 
-static struct AY8910interface ay8910_interface =
-{
-	3,	/* 3 chips */
-	1500000,	/* 1.5 MHz (confirmed) */
-	{ 25, 25, 25 },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ 0 }
-};
-
-
 static INTERRUPT_GEN( grchamp_interrupt )
 {
 	int cpu = cpu_getactivecpu();
@@ -412,7 +401,16 @@ static MACHINE_DRIVER_START( grchamp )
 	MDRV_VIDEO_UPDATE(grchamp)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(AY8910, ay8910_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(AY8910, 1500000)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
+
+	MDRV_SOUND_ADD(AY8910, 1500000)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
+
+	MDRV_SOUND_ADD(AY8910, 1500000)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
 MACHINE_DRIVER_END
 
 INPUT_PORTS_START( grchamp )

@@ -6,6 +6,7 @@
 
 #include "driver.h"
 #include "turbo.h"
+#include "sound/samples.h"
 
 
 #define DISCRETE_TEST (0)
@@ -314,7 +315,7 @@ WRITE8_HANDLER( subroc3d_sound_B_w )
 {
 	static UINT8 last = 0;
 
-	int volume = 16 * (15 - subroc3d_volume);
+	float volume = (15 - subroc3d_volume) / 15.0;
 
 	if ((data & 1) && !(last & 1))
 		sample_set_volume(0, volume);
@@ -342,11 +343,11 @@ WRITE8_HANDLER( subroc3d_sound_C_w )
 	if ((data & 0x10) && !(last & 0x10))
 		sample_start(5, (data & 0x20) ? 10 : 9, 0);
 
-	sample_set_volume(7, (data & 0x40) ? 0 : 255);
+	sample_set_volume(7, (data & 0x40) ? 0 : 1.0);
 
 	last = data;
 
-	mixer_sound_enable_global_w(!(data & 0x80));
+	sound_global_enable(!(data & 0x80));
 }
 
 
@@ -401,7 +402,7 @@ WRITE8_HANDLER( buckrog_sound_B_w )
 	if (!(data & 0x40) && sample_playing(0))
 		sample_stop(0);
 
-	mixer_sound_enable_global_w(data & 0x80);
+	sound_global_enable(data & 0x80);
 
 	last = data;
 }

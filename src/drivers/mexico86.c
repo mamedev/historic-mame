@@ -68,6 +68,7 @@ Revision:
 
 #include "driver.h"
 #include "cpu/z80/z80.h"
+#include "sound/2203intf.h"
 
 /* in machine/mexico86.c */
 extern unsigned char *mexico86_protection_ram;
@@ -89,7 +90,7 @@ VIDEO_UPDATE( kikikai );
 //AT
 static READ8_HANDLER( kiki_2203_r )
 {
-	return(YM2203Read(0,0) & 0x7f);
+	return(YM2203_status_port_0_r(0) & 0x7f);
 }
 //ZT
 
@@ -408,13 +409,8 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 static struct YM2203interface ym2203_interface =
 {
-	1,          /* 1 chip */
-	3000000,    /* 3 MHz ??? */
-	{ YM2203_VOL(40,40) },
-	{ input_port_3_r },
-	{ input_port_4_r },
-	{ 0 },
-	{ 0 }
+	input_port_3_r,
+	input_port_4_r
 };
 
 
@@ -453,7 +449,11 @@ static MACHINE_DRIVER_START( mexico86 )
 	MDRV_VIDEO_UPDATE(mexico86)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM2203, ym2203_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM2203, 3000000)
+	MDRV_SOUND_CONFIG(ym2203_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.40)
 MACHINE_DRIVER_END
 
 

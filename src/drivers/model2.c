@@ -54,6 +54,9 @@
 #include "vidhrdw/segaic24.h"
 #include "cpu/i960/i960.h"
 #include "cpu/m68000/m68k.h"
+#include "sound/scsp.h"
+#include "sound/multipcm.h"
+#include "sound/2612intf.h"
 
 UINT32 *model2_bufferram, *model2_colorxlat, *model2_workram, *model2_backup1, *model2_backup2;
 static data32_t model2_intreq;
@@ -985,7 +988,7 @@ static WRITE16_HANDLER( m1_snd_mpcm1_bnk_w )
 
 static READ16_HANDLER( m1_snd_ym_r )
 {
-	return YM2612_status_port_0_A_r(0);
+	return YM3438_status_port_0_A_r(0);
 }
 
 static WRITE16_HANDLER( m1_snd_ym_w )
@@ -993,19 +996,19 @@ static WRITE16_HANDLER( m1_snd_ym_w )
 	switch (offset)
 	{
 		case 0:
-			YM2612_control_port_0_A_w(0, data);
+			YM3438_control_port_0_A_w(0, data);
 			break;
 
 		case 1:
-			YM2612_data_port_0_A_w(0, data);
+			YM3438_data_port_0_A_w(0, data);
 			break;
 
 		case 2:
-			YM2612_control_port_0_B_w(0, data);
+			YM3438_control_port_0_B_w(0, data);
 			break;
 
 		case 3:
-			YM2612_data_port_0_B_w(0, data);
+			YM3438_data_port_0_B_w(0, data);
 			break;
 	}
 }
@@ -1079,29 +1082,23 @@ static void scsp_irq(int irq)
 
 static struct SCSPinterface scsp_interface =
 {
-	1,
-	{ REGION_CPU2, },
-	{ 0, },
-	{ YM3012_VOL(100, MIXER_PAN_LEFT, 100, MIXER_PAN_RIGHT) },
-	{ scsp_irq, },
+	REGION_CPU2,
+	0,
+	scsp_irq
 };
 
-static struct MultiPCM_interface m1_multipcm_interface =
+static struct MultiPCM_interface m1_multipcm_interface_1 =
 {
-	2,
-	{ 8000000, 8000000 },
-	{ MULTIPCM_MODE_MODEL1, MULTIPCM_MODE_MODEL1 },
-	{ (1024*1024), (1024*1024) },
-	{ REGION_SOUND1, REGION_SOUND2 },
-	{ YM3012_VOL(100, MIXER_PAN_LEFT, 100, MIXER_PAN_RIGHT), YM3012_VOL(100, MIXER_PAN_LEFT, 100, MIXER_PAN_RIGHT) }
+	MULTIPCM_MODE_MODEL1,
+	(1024*1024),
+	REGION_SOUND1
 };
 
-static struct YM2612interface m1_ym3438_interface =
+static struct MultiPCM_interface m1_multipcm_interface_2 =
 {
-	1,
-	8000000,
-	{ 60,60 },
-	{ 0 },	{ 0 },	{ 0 },	{ 0 }
+	MULTIPCM_MODE_MODEL1,
+	(1024*1024),
+	REGION_SOUND2
 };
 
 /* original Model 2 */
@@ -1127,9 +1124,21 @@ static MACHINE_DRIVER_START( model2o )
 	MDRV_VIDEO_START(model2)
 	MDRV_VIDEO_UPDATE(model2)
 
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(YM3438, m1_ym3438_interface)
-	MDRV_SOUND_ADD(MULTIPCM, m1_multipcm_interface)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(YM3438, 8000000)
+	MDRV_SOUND_ROUTE(0, "left", 0.60)
+	MDRV_SOUND_ROUTE(1, "right", 0.60)
+
+	MDRV_SOUND_ADD(MULTIPCM, 8000000)
+	MDRV_SOUND_CONFIG(m1_multipcm_interface_1)
+	MDRV_SOUND_ROUTE(0, "left", 1.0)
+	MDRV_SOUND_ROUTE(1, "right", 1.0)
+
+	MDRV_SOUND_ADD(MULTIPCM, 8000000)
+	MDRV_SOUND_CONFIG(m1_multipcm_interface_2)
+	MDRV_SOUND_ROUTE(0, "left", 1.0)
+	MDRV_SOUND_ROUTE(1, "right", 1.0)
 MACHINE_DRIVER_END
 
 /* 2A-CRX */
@@ -1155,8 +1164,12 @@ static MACHINE_DRIVER_START( model2a )
 	MDRV_VIDEO_START(model2)
 	MDRV_VIDEO_UPDATE(model2)
 
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(SCSP, scsp_interface)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(SCSP, 0)
+	MDRV_SOUND_CONFIG(scsp_interface)
+	MDRV_SOUND_ROUTE(0, "left", 1.0)
+	MDRV_SOUND_ROUTE(0, "right", 1.0)
 MACHINE_DRIVER_END
 
 /* 2B-CRX */
@@ -1182,8 +1195,12 @@ static MACHINE_DRIVER_START( model2b )
 	MDRV_VIDEO_START(model2)
 	MDRV_VIDEO_UPDATE(model2)
 
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(SCSP, scsp_interface)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(SCSP, 0)
+	MDRV_SOUND_CONFIG(scsp_interface)
+	MDRV_SOUND_ROUTE(0, "left", 1.0)
+	MDRV_SOUND_ROUTE(0, "right", 1.0)
 MACHINE_DRIVER_END
 
 /* 2C-CRX */
@@ -1210,8 +1227,12 @@ static MACHINE_DRIVER_START( model2c )
 	MDRV_VIDEO_START(model2)
 	MDRV_VIDEO_UPDATE(model2)
 
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(SCSP, scsp_interface)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(SCSP, 0)
+	MDRV_SOUND_CONFIG(scsp_interface)
+	MDRV_SOUND_ROUTE(0, "left", 1.0)
+	MDRV_SOUND_ROUTE(0, "right", 1.0)
 MACHINE_DRIVER_END
 
 /* ROM definitions */

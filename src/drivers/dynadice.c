@@ -33,6 +33,7 @@ dy_6.bin (near Z80)
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "sound/ay8910.h"
 
 static struct tilemap *bg_tilemap,*top_tilemap;
 static int ay_data;
@@ -192,17 +193,6 @@ VIDEO_UPDATE( dynadice )
 	tilemap_draw(bitmap,&myclip,top_tilemap,0,0);
 }
 
-static struct AY8910interface ay8910_interface =
-{
-	1,
-	2000000, /* guess */
-	{ 100 },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ 0 }
-};
-
 PALETTE_INIT( dynadice )
 {
 	int i;
@@ -237,7 +227,10 @@ static MACHINE_DRIVER_START( dynadice )
 	MDRV_VIDEO_START(dynadice)
 	MDRV_VIDEO_UPDATE(dynadice)
 
-	MDRV_SOUND_ADD(AY8910, ay8910_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(AY8910, 2000000)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 ROM_START( dynadice )

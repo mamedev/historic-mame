@@ -12,6 +12,9 @@
 */
 
 #include "driver.h"
+#include "sound/ay8910.h"
+#include "sound/namco.h"
+
 WRITE8_HANDLER( snkwave_w );
 
 extern data8_t *me_fgram;
@@ -59,17 +62,6 @@ static READ8_HANDLER( mainsnk_port_0_r )
 	if( !sound_cpu_ready ) result |= 0x20;
 	return result;
 }
-
-static struct AY8910interface ay8910_interface =
-{
-	2,
-	2000000,
-	{ 35,35 },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ 0 }
-};
 
 static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0000, 0xbfff) AM_READ(MRA8_ROM)
@@ -203,9 +195,7 @@ static struct GfxLayout sprite_layout =
 
 static struct namco_interface snkwave_interface =
 {
-	24000,
 	1,
-	8,
 	-1
 };
 
@@ -239,10 +229,17 @@ static MACHINE_DRIVER_START( mainsnk)
 	MDRV_VIDEO_START(mainsnk)
 	MDRV_VIDEO_UPDATE(mainsnk)
 
-	MDRV_SOUND_ADD(AY8910, ay8910_interface)
-	MDRV_SOUND_ADD(NAMCO, snkwave_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	
+	MDRV_SOUND_ADD(AY8910, 2000000)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.35)
+	
+	MDRV_SOUND_ADD(AY8910, 2000000)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.35)
 
-
+	MDRV_SOUND_ADD(NAMCO, 24000)
+	MDRV_SOUND_CONFIG(snkwave_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.08)
 MACHINE_DRIVER_END
 
 

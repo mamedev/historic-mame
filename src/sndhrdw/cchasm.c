@@ -8,6 +8,7 @@
 #include "cpu/z80/z80.h"
 #include "machine/z80fmly.h"
 #include "cchasm.h"
+#include "sound/ay8910.h"
 
 static int sound_flags;
 
@@ -125,7 +126,8 @@ READ16_HANDLER( cchasm_io_r )
 	}
 }
 
-static int channel[2], channel_active[2];
+static sound_stream * channel[2];
+static int channel_active[2];
 static int output[2];
 
 static void ctc_interrupt (int state)
@@ -166,8 +168,10 @@ static z80ctc_interface ctc_intf =
 	{ ctc_timer_2_w }      /* ZC/TO2 callback */
 };
 
-static void tone_update(int num,INT16 *buffer,int length)
+static void tone_update(void *param,stream_sample_t **inputs, stream_sample_t **outputs, int length)
 {
+	stream_sample_t *buffer = outputs[0];
+	int num = (int)param;
 	INT16 out = 0;
 
 	if (channel_active[num])
@@ -177,24 +181,26 @@ static void tone_update(int num,INT16 *buffer,int length)
 	channel_active[num] = 0;
 }
 
-int cchasm_sh_start(const struct MachineSound *msound)
+void cchasm_sh_update(int param)
+{
+    if ((input_port_3_r (0) & 0x70) != 0x70)
+        z80ctc_0_trg0_w (0, 1);
+}
+
+void *cchasm_sh_start(int clock, const struct CustomSound_interface *config)
 {
     sound_flags = 0;
     output[0] = 0; output[1] = 0;
 
-    channel[0] = stream_init("CTC sound 1", 50, Machine->sample_rate, 0, tone_update);
-    channel[1] = stream_init("CTC sound 2", 50, Machine->sample_rate, 1, tone_update);
+    channel[0] = stream_create(0, 1, Machine->sample_rate, (void *)0, tone_update);
+    channel[1] = stream_create(0, 1, Machine->sample_rate, (void *)1, tone_update);
 
 	ctc_intf.baseclock[0] = Machine->drv->cpu[1].cpu_clock;
 	z80ctc_init (&ctc_intf);
+	
+	timer_pulse(TIME_IN_HZ(Machine->drv->frames_per_second), 0, cchasm_sh_update);
 
-	return 0;
-}
-
-void cchasm_sh_update(void)
-{
-    if ((input_port_3_r (0) & 0x70) != 0x70)
-        z80ctc_0_trg0_w (0, 1);
+	return auto_malloc(1);
 }
 
 

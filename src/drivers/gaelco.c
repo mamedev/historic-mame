@@ -10,6 +10,8 @@
 #include "vidhrdw/generic.h"
 #include "cpu/m6809/m6809.h"
 #include "cpu/m68000/m68000.h"
+#include "sound/okim6295.h"
+#include "sound/3812intf.h"
 
 extern data16_t *gaelco_vregs;
 extern data16_t *gaelco_videoram;
@@ -210,23 +212,6 @@ TILELAYOUT16(0x100000);
 GFXDECODEINFO(0x100000,64);
 
 
-static struct YM3812interface bigkarnk_ym3812_interface =
-{
-	1,						/* 1 chip */
-	3580000,				/* 3.58 MHz? */
-	{ 100 },					/* volume */
-	{ 0 }					/* IRQ handler */
-};
-
-static struct OKIM6295interface bigkarnk_okim6295_interface =
-{
-	1,                  /* 1 chip */
-	{ 8000 },			/* 8000 KHz? */
-	{ REGION_SOUND1 },  /* memory region */
-	{ 100 }				/* volume */
-};
-
-
 static MACHINE_DRIVER_START( bigkarnk )
 
 	/* basic machine hardware */
@@ -253,8 +238,14 @@ static MACHINE_DRIVER_START( bigkarnk )
 	MDRV_VIDEO_UPDATE(bigkarnk)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM3812, bigkarnk_ym3812_interface)
-	MDRV_SOUND_ADD(OKIM6295, bigkarnk_okim6295_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM3812, 3580000)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
+
+	MDRV_SOUND_ADD(OKIM6295, 8000)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 
@@ -474,14 +465,6 @@ static INPUT_PORTS_START( biomtoy )
 INPUT_PORTS_END
 
 
-static struct OKIM6295interface maniacsq_okim6295_interface =
-{
-	1,                  /* 1 chip */
-	{ 8000 },			/* 8000 KHz? */
-	{ REGION_SOUND1 },  /* memory region */
-	{ 100 }				/* volume */
-};
-
 static MACHINE_DRIVER_START( maniacsq )
 
 	/* basic machine hardware */
@@ -503,7 +486,11 @@ static MACHINE_DRIVER_START( maniacsq )
 	MDRV_VIDEO_UPDATE(maniacsq)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(OKIM6295, maniacsq_okim6295_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(OKIM6295, 8000)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 
@@ -591,7 +578,11 @@ static MACHINE_DRIVER_START( squash )
 	MDRV_VIDEO_UPDATE(bigkarnk)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(OKIM6295, bigkarnk_okim6295_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(OKIM6295, 8000)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 /* missing DS5002FP code and encrypted video ram */

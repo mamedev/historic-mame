@@ -273,6 +273,8 @@ TODO:
 #include "vidhrdw/generic.h"
 #include "vidhrdw/konamiic.h"
 #include "cpu/m6809/m6809.h"
+#include "sound/2151intf.h"
+#include "sound/k007232.h"
 
 /* Variables only used here: */
 static data16_t *sharedram, *blitter_regs;
@@ -764,15 +766,19 @@ WRITE16_HANDLER( hotchase_soundlatch_w )
 	}
 }
 
-static struct K007232_interface hotchase_k007232_interface =
+static struct K007232_interface hotchase_k007232_interface_1 =
 {
-	3,
-	3579545,	/* clock */
-	{ REGION_SOUND1, REGION_SOUND2, REGION_SOUND3 },
-	{ K007232_VOL( 20,MIXER_PAN_CENTER, 20,MIXER_PAN_CENTER ),
-	  K007232_VOL( 20,MIXER_PAN_LEFT,   20,MIXER_PAN_RIGHT  ),
-	  K007232_VOL( 20,MIXER_PAN_LEFT,   20,MIXER_PAN_RIGHT  ) },
-	{ 0,0,0 }
+	REGION_SOUND1
+};
+
+static struct K007232_interface hotchase_k007232_interface_2 =
+{
+	REGION_SOUND2
+};
+
+static struct K007232_interface hotchase_k007232_interface_3 =
+{
+	REGION_SOUND3
 };
 
 WRITE8_HANDLER( hotchase_sound_control_w )
@@ -1126,21 +1132,9 @@ static INTERRUPT_GEN( wecleman_interrupt )
 		cpunum_set_input_line(0, 5, HOLD_LINE);	/* to read input ports */
 }
 
-static struct YM2151interface ym2151_interface =
-{
-	1,
-	3579545,	/* same as sound cpu */
-	{ YM3012_VOL(85,MIXER_PAN_LEFT,85,MIXER_PAN_RIGHT) },
-	{ 0  }
-};
-
 static struct K007232_interface wecleman_k007232_interface =
 {
-	1,
-	3579545,	/* clock */
-	{ REGION_SOUND1 },	/* but the 2 channels use different ROMs !*/
-	{ K007232_VOL( 20,MIXER_PAN_LEFT, 20,MIXER_PAN_RIGHT ) },
-	{0}
+	REGION_SOUND1	/* but the 2 channels use different ROMs !*/
 };
 
 MACHINE_INIT( wecleman )
@@ -1181,8 +1175,16 @@ static MACHINE_DRIVER_START( wecleman )
 	MDRV_VIDEO_UPDATE(wecleman)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM2151, ym2151_interface)
-	MDRV_SOUND_ADD(K007232, wecleman_k007232_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM2151, 3579545)
+	MDRV_SOUND_ROUTE(0, "mono", 0.85)
+	MDRV_SOUND_ROUTE(1, "mono", 0.85)
+	
+	MDRV_SOUND_ADD(K007232, 3579545)
+	MDRV_SOUND_CONFIG(wecleman_k007232_interface)
+	MDRV_SOUND_ROUTE(0, "mono", 0.20)
+	MDRV_SOUND_ROUTE(1, "mono", 0.20)
 MACHINE_DRIVER_END
 
 
@@ -1226,7 +1228,22 @@ static MACHINE_DRIVER_START( hotchase )
 	MDRV_VIDEO_UPDATE(hotchase)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(K007232, hotchase_k007232_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	
+	MDRV_SOUND_ADD(K007232, 3579545)
+	MDRV_SOUND_CONFIG(hotchase_k007232_interface_1)
+	MDRV_SOUND_ROUTE(0, "mono", 0.20)
+	MDRV_SOUND_ROUTE(1, "mono", 0.20)
+	
+	MDRV_SOUND_ADD(K007232, 3579545)
+	MDRV_SOUND_CONFIG(hotchase_k007232_interface_2)
+	MDRV_SOUND_ROUTE(0, "mono", 0.20)
+	MDRV_SOUND_ROUTE(1, "mono", 0.20)
+	
+	MDRV_SOUND_ADD(K007232, 3579545)
+	MDRV_SOUND_CONFIG(hotchase_k007232_interface_3)
+	MDRV_SOUND_ROUTE(0, "mono", 0.20)
+	MDRV_SOUND_ROUTE(1, "mono", 0.20)
 MACHINE_DRIVER_END
 
 

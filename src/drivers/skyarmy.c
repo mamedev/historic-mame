@@ -22,6 +22,7 @@
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "sound/ay8910.h"
 
 data8_t *skyarmy_videoram;
 data8_t *skyarmy_colorram;
@@ -262,38 +263,31 @@ static ADDRESS_MAP_START( writeport, ADDRESS_SPACE_IO, 8 )
 	AM_RANGE(0x05, 0x05) AM_WRITE(AY8910_write_port_0_w)
 ADDRESS_MAP_END
 
-static struct AY8910interface ay8910_interface =
-{
-	1, /* number of chips */
-	2500000, /* 2.5 MHz ??? */
-	{ 15 },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ 0 }
-};
-
 static MACHINE_DRIVER_START( skyarmy )
-        MDRV_CPU_ADD(Z80,4000000)
+	MDRV_CPU_ADD(Z80,4000000)
 	MDRV_CPU_PROGRAM_MAP(skyarmy_readmem,skyarmy_writemem)
 	MDRV_CPU_IO_MAP(readport,writeport)
-        MDRV_CPU_VBLANK_INT(irq0_line_pulse,1)
-        MDRV_CPU_PERIODIC_INT(skyarmy_nmi_source,650)	/* Hz */
+	MDRV_CPU_VBLANK_INT(irq0_line_pulse,1)
+	MDRV_CPU_PERIODIC_INT(skyarmy_nmi_source,650)	/* Hz */
 
+	/* video hardware */
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
 	MDRV_SCREEN_SIZE(32*8,32*8)
 	MDRV_VISIBLE_AREA(0*8,32*8-1,1*8,31*8-1) 
-        MDRV_GFXDECODE(gfxdecodeinfo)
-        MDRV_PALETTE_LENGTH(32)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(32)
 
-        MDRV_PALETTE_INIT(skyarmy)
-        MDRV_VIDEO_START(skyarmy)
-        MDRV_VIDEO_UPDATE(skyarmy)
-        
-        MDRV_SOUND_ADD(AY8910, ay8910_interface)
+	MDRV_PALETTE_INIT(skyarmy)
+	MDRV_VIDEO_START(skyarmy)
+	MDRV_VIDEO_UPDATE(skyarmy)
+
+	/* sound hardware */
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	MDRV_SOUND_ADD(AY8910, 2500000)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.15)
 MACHINE_DRIVER_END
 
 

@@ -15,6 +15,9 @@ TS 2004.12.26.:
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "sndhrdw/m72.h"
+#include "sound/dac.h"
+#include "sound/2203intf.h"
+#include "sound/2151intf.h"
 
 /* vidhrdw/vigilant.c */
 VIDEO_START( vigilant );
@@ -459,30 +462,12 @@ static struct GfxDecodeInfo kikcubic_gfxdecodeinfo[] =
 
 static struct YM2151interface ym2151_interface =
 {
-	1,			/* 1 chip */
-	3579645,	/* 3.579645 MHz */
-	{ YM3012_VOL(55,MIXER_PAN_LEFT,55,MIXER_PAN_RIGHT) },
-	{ m72_ym2151_irq_handler },
-	{ 0 }
+	m72_ym2151_irq_handler
 };
 
 static struct YM2203interface ym2203_interface =
 {
-	2,			/* 2 chips */
-	3579545,	/* guess */
-	{ YM2203_VOL(50,35), YM2203_VOL(50,35) },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{m72_ym2151_irq_handler }
-};
-
-
-static struct DACinterface dac_interface =
-{
-	1,
-	{ 100 }
+	0,0,0,0,m72_ym2151_irq_handler
 };
 
 
@@ -515,9 +500,16 @@ static MACHINE_DRIVER_START( vigilant )
 	MDRV_VIDEO_UPDATE(vigilant)
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(YM2151, ym2151_interface)
-	MDRV_SOUND_ADD(DAC, dac_interface)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(YM2151, 3579645)
+	MDRV_SOUND_CONFIG(ym2151_interface)
+	MDRV_SOUND_ROUTE(0, "left", 0.55)
+	MDRV_SOUND_ROUTE(1, "right", 0.55)
+
+	MDRV_SOUND_ADD(DAC, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 1.0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 1.0)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( buccanrs )
@@ -549,9 +541,32 @@ static MACHINE_DRIVER_START( buccanrs )
 	MDRV_VIDEO_UPDATE(vigilant)
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(YM2203, ym2203_interface)
-	MDRV_SOUND_ADD(DAC, dac_interface)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(YM2203, 3579545)
+	MDRV_SOUND_CONFIG(ym2203_interface)
+	MDRV_SOUND_ROUTE(0, "left",  0.35)
+	MDRV_SOUND_ROUTE(0, "right", 0.35)
+	MDRV_SOUND_ROUTE(1, "left",  0.35)
+	MDRV_SOUND_ROUTE(1, "right", 0.35)
+	MDRV_SOUND_ROUTE(2, "left",  0.35)
+	MDRV_SOUND_ROUTE(2, "right", 0.35)
+	MDRV_SOUND_ROUTE(3, "left",  0.50)
+	MDRV_SOUND_ROUTE(3, "right", 0.50)
+
+	MDRV_SOUND_ADD(YM2203, 3579545)
+	MDRV_SOUND_ROUTE(0, "left",  0.35)
+	MDRV_SOUND_ROUTE(0, "right", 0.35)
+	MDRV_SOUND_ROUTE(1, "left",  0.35)
+	MDRV_SOUND_ROUTE(1, "right", 0.35)
+	MDRV_SOUND_ROUTE(2, "left",  0.35)
+	MDRV_SOUND_ROUTE(2, "right", 0.35)
+	MDRV_SOUND_ROUTE(3, "left",  0.50)
+	MDRV_SOUND_ROUTE(3, "right", 0.50)
+
+	MDRV_SOUND_ADD(DAC, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 1.0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 1.0)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( kikcubic )
@@ -583,9 +598,16 @@ static MACHINE_DRIVER_START( kikcubic )
 	MDRV_VIDEO_UPDATE(kikcubic)
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(YM2151, ym2151_interface)
-	MDRV_SOUND_ADD(DAC, dac_interface)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(YM2151, 3579645)
+	MDRV_SOUND_CONFIG(ym2151_interface)
+	MDRV_SOUND_ROUTE(0, "left", 0.55)
+	MDRV_SOUND_ROUTE(1, "right", 0.55)
+
+	MDRV_SOUND_ADD(DAC, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 1.0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 1.0)
 MACHINE_DRIVER_END
 
 

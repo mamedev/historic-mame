@@ -19,6 +19,7 @@
 
 #include "driver.h"
 #include "sprint2.h"
+#include "sound/discrete.h"
 
 #define GAME_IS_SPRINT1   (game == 1)
 #define GAME_IS_SPRINT2   (game == 2)
@@ -566,8 +567,12 @@ static MACHINE_DRIVER_START( sprint2 )
 	MDRV_VIDEO_EOF(sprint2)
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD_TAG("discrete", DISCRETE, sprint2_discrete_interface)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD_TAG("discrete", DISCRETE, 0)
+	MDRV_SOUND_CONFIG(sprint2_discrete_interface)
+	MDRV_SOUND_ROUTE(0, "left", 1.0)
+	MDRV_SOUND_ROUTE(1, "right", 1.0)
 MACHINE_DRIVER_END
 
 
@@ -576,8 +581,13 @@ static MACHINE_DRIVER_START( sprint1 )
 	MDRV_IMPORT_FROM(sprint2)
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(0)
-	MDRV_SOUND_REPLACE("discrete", DISCRETE, sprint1_discrete_interface)
+	MDRV_SPEAKER_REMOVE("left")
+	MDRV_SPEAKER_REMOVE("right")
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_REPLACE("discrete", DISCRETE, 0)
+	MDRV_SOUND_CONFIG(sprint1_discrete_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 
@@ -586,8 +596,13 @@ static MACHINE_DRIVER_START( dominos )
 	MDRV_IMPORT_FROM(sprint2)
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(0)
-	MDRV_SOUND_REPLACE("discrete", DISCRETE, dominos_discrete_interface)
+	MDRV_SPEAKER_REMOVE("left")
+	MDRV_SPEAKER_REMOVE("right")
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_REPLACE("discrete", DISCRETE, 0)
+	MDRV_SOUND_CONFIG(dominos_discrete_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 

@@ -11,6 +11,7 @@ Tomasz Slanina
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "cpu/z80/z80.h"
+#include "sound/ay8910.h"
 
 static unsigned char portA_in,portA_out,ddrA; 
 static unsigned char portB_out,ddrB; 
@@ -1103,14 +1104,14 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 	{ -1 }
 };
 
-static struct AY8910interface ay8910_interface = {
-	2,			/* 2 chips */
-	1250000,	/* 1.25 MHz (H1) */
-	{ 50,50 },	/* volume */
-	{ input_port_0_r, input_port_1_r },
-	{ input_port_2_r, input_port_3_r },
-	{ 0 },
-	{ 0 }
+static struct AY8910interface ay8910_interface_1 = {
+	input_port_0_r,
+	input_port_2_r
+};
+
+static struct AY8910interface ay8910_interface_2 = {
+	input_port_1_r,
+	input_port_3_r
 };
 
 
@@ -1153,7 +1154,15 @@ static MACHINE_DRIVER_START( changela )
 	MDRV_VIDEO_START(changela)
 	MDRV_VIDEO_UPDATE(changela)
 
-	MDRV_SOUND_ADD(AY8910, ay8910_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(AY8910, 1250000)
+	MDRV_SOUND_CONFIG(ay8910_interface_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
+
+	MDRV_SOUND_ADD(AY8910, 1250000)
+	MDRV_SOUND_CONFIG(ay8910_interface_2)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)	
 MACHINE_DRIVER_END
 
 

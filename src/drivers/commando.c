@@ -44,6 +44,7 @@ Note : there is an ingame typo bug that doesn't display the bonus life values
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "sound/2203intf.h"
 
 extern UINT8 *commando_videoram2, *commando_colorram2;
 
@@ -229,17 +230,6 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 #define PHI_B		XTAL/2/2
 #define PHI_MAIN	4000000	// ??? too complicated to trace from schematics
 
-static struct YM2203interface ym2203_interface =
-{
-	2,			// 2 chips
-	PHI_B/2,	// 1.5 MHz
-	{ YM2203_VOL(15,15), YM2203_VOL(15,15) },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ 0 }
-};
-
 /* Interrupt Generator */
 
 static INTERRUPT_GEN( commando_interrupt )
@@ -276,7 +266,13 @@ static MACHINE_DRIVER_START( commando )
 	MDRV_VIDEO_EOF(commando)
 
 	// sound hardware
-	MDRV_SOUND_ADD(YM2203, ym2203_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM2203, PHI_B/2)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.15)
+
+	MDRV_SOUND_ADD(YM2203, PHI_B/2)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.15)
 MACHINE_DRIVER_END
 
 /* ROMs */

@@ -90,7 +90,9 @@
 	void construct_##game(struct InternalMachineDriver *machine)		\
 	{																	\
 		struct MachineCPU *cpu = NULL;									\
+		struct MachineSound *sound = NULL;								\
 		(void)cpu;														\
+		(void)sound;													\
 
 #define MACHINE_DRIVER_END 												\
 	}																	\
@@ -241,29 +243,57 @@
 	machine->video_update = video_update_##name;						\
 
 
-/* core sound parameters */
-#define MDRV_SOUND_ATTRIBUTES(flags)									\
-	machine->sound_attributes = (flags);								\
+/* add/remove speakers */
+#define MDRV_SPEAKER_ADD(tag, x, y, z)									\
+	machine_add_speaker(machine, (tag), (x), (y), (z));					\
+
+#define MDRV_SPEAKER_REMOVE(tag)										\
+	machine_remove_speaker(machine, (tag));								\
+
+#define MDRV_SPEAKER_STANDARD_MONO(tag)									\
+	MDRV_SPEAKER_ADD(tag, 0.0, 0.0, 1.0)								\
+
+#define MDRV_SPEAKER_STANDARD_STEREO(tagl, tagr)						\
+	MDRV_SPEAKER_ADD(tagl, -0.2, 0.0, 1.0)								\
+	MDRV_SPEAKER_ADD(tagr, 0.2, 0.0, 1.0)								\
 
 
 /* add/remove/replace sounds */
-#define MDRV_SOUND_ADD_TAG(tag, type, interface)						\
-	machine_add_sound(machine, (tag), SOUND_##type, &(interface));		\
+#define MDRV_SOUND_ADD_TAG(tag, type, clock)							\
+	sound = machine_add_sound(machine, (tag), SOUND_##type, (clock));	\
 
-#define MDRV_SOUND_ADD(type, interface)									\
-	MDRV_SOUND_ADD_TAG(NULL, type, interface)							\
+#define MDRV_SOUND_ADD(type, clock)										\
+	MDRV_SOUND_ADD_TAG(NULL, type, clock)								\
 
 #define MDRV_SOUND_REMOVE(tag)											\
 	machine_remove_sound(machine, tag);									\
 
-#define MDRV_SOUND_REPLACE(tag, type, interface)						\
+#define MDRV_SOUND_MODIFY(tag)											\
+	sound = machine_find_sound(machine, tag);							\
+	if (sound)															\
+		sound->routes = 0;												\
+
+#define MDRV_SOUND_CONFIG(_config)										\
+	if (sound)															\
+		sound->config = &(_config);										\
+
+#define MDRV_SOUND_REPLACE(tag, type, _clock)							\
+	sound = machine_find_sound(machine, tag);							\
+	if (sound)															\
 	{																	\
-		struct MachineSound *sound = machine_find_sound(machine, tag);	\
-		if (sound)														\
-		{																\
-			sound->sound_type = SOUND_##type;							\
-			sound->sound_interface = &(interface);						\
-		}																\
+		sound->sound_type = SOUND_##type;								\
+		sound->clock = (_clock);										\
+		sound->config = NULL;											\
+		sound->routes = 0;												\
+	}																	\
+
+#define MDRV_SOUND_ROUTE(_output, _target, _gain)						\
+	if (sound)															\
+	{																	\
+		sound->route[sound->routes].output = (_output);					\
+		sound->route[sound->routes].target = (_target);					\
+		sound->route[sound->routes].gain = (_gain);						\
+		sound->routes++;												\
 	}																	\
 
 
@@ -271,7 +301,11 @@ struct MachineCPU *machine_add_cpu(struct InternalMachineDriver *machine, const 
 struct MachineCPU *machine_find_cpu(struct InternalMachineDriver *machine, const char *tag);
 void machine_remove_cpu(struct InternalMachineDriver *machine, const char *tag);
 
-struct MachineSound *machine_add_sound(struct InternalMachineDriver *machine, const char *tag, int type, void *sndintf);
+struct MachineSpeaker *machine_add_speaker(struct InternalMachineDriver *machine, const char *tag, float x, float y, float z);
+struct MachineSpeaker *machine_find_speaker(struct InternalMachineDriver *machine, const char *tag);
+void machine_remove_speaker(struct InternalMachineDriver *machine, const char *tag);
+
+struct MachineSound *machine_add_sound(struct InternalMachineDriver *machine, const char *tag, int type, int clock);
 struct MachineSound *machine_find_sound(struct InternalMachineDriver *machine, const char *tag);
 void machine_remove_sound(struct InternalMachineDriver *machine, const char *tag);
 
@@ -286,8 +320,10 @@ void machine_remove_sound(struct InternalMachineDriver *machine, const char *tag
 #define MAX_CPU 8	/* MAX_CPU is the maximum number of CPUs which cpuintrf.c */
 					/* can run at the same time. Currently, 8 is enough. */
 
-#define MAX_SOUND 5	/* MAX_SOUND is the maximum number of sound subsystems */
-					/* which can run at the same time. Currently, 5 is enough. */
+#define MAX_SOUND 32/* MAX_SOUND is the maximum number of sound subsystems */
+					/* which can run at the same time. Currently, 32 is enough. */
+
+#define MAX_SPEAKER 4 /* MAX_SPEAKER is the maximum number of speakers */
 
 struct InternalMachineDriver
 {
@@ -316,8 +352,8 @@ struct InternalMachineDriver
 	void (*video_eof)(void);
 	void (*video_update)(struct mame_bitmap *bitmap,const struct rectangle *cliprect);
 
-	UINT32 sound_attributes;
 	struct MachineSound sound[MAX_SOUND];
+	struct MachineSpeaker speaker[MAX_SPEAKER];
 };
 
 
@@ -386,10 +422,6 @@ struct InternalMachineDriver
 
 /* automatically extend the palette creating a brighter copy for highlights */
 #define VIDEO_HAS_HIGHLIGHTS		0x0800
-
-
-/* ----- flags for sound_attributes ----- */
-#define	SOUND_SUPPORTS_STEREO		0x0001
 
 
 /* -----    defaults for watchdog   ----- */

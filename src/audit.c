@@ -3,6 +3,7 @@
 #include <string.h>
 #include "audit.h"
 #include "harddisk.h"
+#include "sound/samples.h"
 
 static tAuditRecord *gAudits = NULL;
 
@@ -518,7 +519,7 @@ int AuditSampleSet (int game, tMissingSample **audit)
 	{
 #if (HAS_SAMPLES)
 		if( drv.sound[j].sound_type == SOUND_SAMPLES )
-			samplenames = ((struct Samplesinterface *)drv.sound[j].sound_interface)->samplenames;
+			samplenames = ((struct Samplesinterface *)drv.sound[j].config)->samplenames;
 #endif
 	}
 #endif

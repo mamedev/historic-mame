@@ -77,6 +77,7 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "cpu/m6809/m6809.h"
+#include "sound/pokey.h"
 #include "irobot.h"
 
 
@@ -284,20 +285,8 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 static struct POKEYinterface pokey_interface =
 {
-	4,	/* 4 chips */
-	1250000,	/* 1.25 MHz??? */
-	{ 25, 25, 25, 25 },
-	/* The 8 pot handlers */
-	{ 0, 0, 0, 0 },
-	{ 0, 0, 0, 0 },
-	{ 0, 0, 0, 0 },
-	{ 0, 0, 0, 0 },
-	{ 0, 0, 0, 0 },
-	{ 0, 0, 0, 0 },
-	{ 0, 0, 0, 0 },
-	{ 0, 0, 0, 0 },
-	/* The allpot handler */
-    { input_port_4_r, 0, 0, 0 },
+	{ 0 },
+	input_port_4_r
 };
 
 
@@ -333,7 +322,20 @@ static MACHINE_DRIVER_START( irobot )
 	MDRV_VIDEO_UPDATE(irobot)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(POKEY, pokey_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(POKEY, 1250000)
+	MDRV_SOUND_CONFIG(pokey_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
+
+	MDRV_SOUND_ADD(POKEY, 1250000)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
+
+	MDRV_SOUND_ADD(POKEY, 1250000)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
+
+	MDRV_SOUND_ADD(POKEY, 1250000)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
 MACHINE_DRIVER_END
 
 

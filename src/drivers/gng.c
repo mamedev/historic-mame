@@ -20,6 +20,7 @@ Notes:
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "cpu/m6809/m6809.h"
+#include "sound/2203intf.h"
 
 
 
@@ -324,18 +325,6 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 
 
-static struct YM2203interface ym2203_interface =
-{
-	2,			/* 2 chips */
-	1500000,	/* 1.5 MHz (?) */
-	{ YM2203_VOL(20,40), YM2203_VOL(20,40) },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ 0 }
-};
-
-
 
 static MACHINE_DRIVER_START( gng )
 
@@ -364,7 +353,19 @@ static MACHINE_DRIVER_START( gng )
 	MDRV_VIDEO_UPDATE(gng)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM2203, ym2203_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM2203, 1500000)
+	MDRV_SOUND_ROUTE(0, "mono", 0.40)
+	MDRV_SOUND_ROUTE(1, "mono", 0.40)
+	MDRV_SOUND_ROUTE(2, "mono", 0.40)
+	MDRV_SOUND_ROUTE(3, "mono", 0.20)
+
+	MDRV_SOUND_ADD(YM2203, 1500000)
+	MDRV_SOUND_ROUTE(0, "mono", 0.40)
+	MDRV_SOUND_ROUTE(1, "mono", 0.40)
+	MDRV_SOUND_ROUTE(2, "mono", 0.40)
+	MDRV_SOUND_ROUTE(3, "mono", 0.20)
 MACHINE_DRIVER_END
 
 

@@ -11,6 +11,9 @@
 
 
 #include "driver.h"
+#include "sound/custom.h"
+#include "sound/discrete.h"
+#include "sound/samples.h"
 
 #ifndef M_LN2
 #define M_LN2		0.69314718055994530942
@@ -41,7 +44,7 @@ typedef struct tone
 static TONE tone_channels[CHANNELS];
 static INT32 tone_clock_expire;
 static INT32 tone_clock;
-static int tone_stream;
+static sound_stream * tone_stream;
 
 static int Sound0StopOnRollover;
 static UINT8 LastPort1;
@@ -124,8 +127,9 @@ INLINE void validate_tone_channel(int channel)
 	}
 }
 
-static void rockola_tone_update(int ch, INT16 *buffer, int len)
+static void rockola_tone_update(void *param, stream_sample_t **inputs, stream_sample_t **outputs, int len)
 {
+	stream_sample_t *buffer = outputs[0];
 	int i;
 
 	for (i = 0; i < CHANNELS; i++)
@@ -356,7 +360,7 @@ void rockola_set_music_clock(double clock_time)
 	tone_clock = 0;
 }
 
-int rockola_sh_start(const struct MachineSound *msound)
+void *rockola_sh_start(int clock, const struct CustomSound_interface *config)
 {
 	// adjusted
 	rockola_set_music_freq(43000);
@@ -364,9 +368,9 @@ int rockola_sh_start(const struct MachineSound *msound)
 	// 38.99 Hz update (according to schematic)
 	rockola_set_music_clock(M_LN2 * (RES_K(18) * 2 + RES_K(1)) * CAP_U(1));
 
-	tone_stream = stream_init(sound_name(msound), TONE_VOLUME, SAMPLE_RATE, 0, rockola_tone_update);
+	tone_stream = stream_create(0, 1, SAMPLE_RATE, NULL, rockola_tone_update);
 
-	return 0;
+	return auto_malloc(1);
 }
 
 int rockola_music0_playing(void)

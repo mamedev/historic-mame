@@ -39,6 +39,7 @@ TODO:
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "sound/es5506.h"
 
 /*** README INFO **************************************************************
 
@@ -755,15 +756,11 @@ static void irqhandler(int irq)
 
 static struct ES5506interface es5506_interface =
 {
-	1,
-	{ 16000000 },
-	{ REGION_SOUND1 },
-	{ REGION_SOUND2 },
-	{ REGION_SOUND3 },
-	{ REGION_SOUND4 },
-	{ YM3012_VOL(100,MIXER_PAN_LEFT,100,MIXER_PAN_RIGHT) },
-	{ irqhandler },
-	{ 0 }
+	REGION_SOUND1,
+	REGION_SOUND2,
+	REGION_SOUND3,
+	REGION_SOUND4,
+	irqhandler
 };
 
 
@@ -793,8 +790,12 @@ static MACHINE_DRIVER_START( macrossp )
 	MDRV_VIDEO_UPDATE(macrossp)
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(ES5506, es5506_interface)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(ES5506, 16000000)
+	MDRV_SOUND_CONFIG(es5506_interface)
+	MDRV_SOUND_ROUTE(0, "left", 1.0)
+	MDRV_SOUND_ROUTE(1, "right", 1.0)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( quizmoon )

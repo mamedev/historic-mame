@@ -9,6 +9,7 @@
 
 #include "driver.h"
 #include "cpu/m6809/m6809.h"
+#include "sound/5220intf.h"
 
 /* Sound commands from the main CPU are stored in a single byte */
 /* register.  The main CPU then interrupts the Sound CPU.       */

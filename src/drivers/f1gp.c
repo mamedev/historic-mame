@@ -22,6 +22,7 @@ f1gp2:
 #include "driver.h"
 #include "vidhrdw/konamiic.h"
 #include "f1gp.h"
+#include "sound/2610intf.h"
 
 
 
@@ -476,17 +477,9 @@ static void irqhandler(int irq)
 
 static struct YM2610interface ym2610_interface =
 {
-	1,
-	8000000,	/* 8 MHz??? */
-	{ 25 },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ irqhandler },
-	{ REGION_SOUND1 },
-	{ REGION_SOUND2 },
-	{ YM3012_VOL(100,MIXER_PAN_LEFT,100,MIXER_PAN_RIGHT) }
+	irqhandler,
+	REGION_SOUND1,
+	REGION_SOUND2
 };
 
 
@@ -521,8 +514,14 @@ static MACHINE_DRIVER_START( f1gp )
 	MDRV_VIDEO_UPDATE(f1gp)
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(YM2610, ym2610_interface)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(YM2610, 8000000)
+	MDRV_SOUND_CONFIG(ym2610_interface)
+	MDRV_SOUND_ROUTE(0, "left",  0.25)
+	MDRV_SOUND_ROUTE(0, "right", 0.25)
+	MDRV_SOUND_ROUTE(1, "left",  1.0)
+	MDRV_SOUND_ROUTE(2, "right", 1.0)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( f1gp2 )

@@ -125,6 +125,7 @@ TAKO-8
 #include "vidhrdw/generic.h"
 #include "cpu/sh2/sh2.h"
 #include "machine/eeprom.h"
+#include "sound/ymf278b.h"
 
 #include "psikyosh.h"
 
@@ -434,11 +435,8 @@ static void irqhandler(int linestate)
 
 static struct YMF278B_interface ymf278b_interface =
 {
-	1,
-	{ MASTER_CLOCK/2 },
-	{ REGION_SOUND1 },
-	{ YM3012_VOL(100, MIXER_PAN_CENTER, 100, MIXER_PAN_CENTER) },
-	{ irqhandler }
+	REGION_SOUND1,
+	irqhandler
 };
 
 static MACHINE_DRIVER_START( psikyo3v1 )
@@ -464,8 +462,12 @@ static MACHINE_DRIVER_START( psikyo3v1 )
 	MDRV_VIDEO_UPDATE(psikyosh)
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(YMF278B, ymf278b_interface)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(YMF278B, MASTER_CLOCK/2)
+	MDRV_SOUND_CONFIG(ymf278b_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 1.0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 1.0)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( psikyo5 )

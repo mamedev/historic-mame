@@ -48,6 +48,7 @@ Notes/Tidbits:
 #include "driver.h"
 #include "machine/8255ppi.h"
 #include "galaxian.h"
+#include "sound/ay8910.h"
 
 static ADDRESS_MAP_START( type1_readmem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)
@@ -1268,16 +1269,10 @@ MM_COMMON2
 INPUT_PORTS_END
 
 
-struct AY8910interface scobra_ay8910_interface =
+struct AY8910interface scobra_ay8910_interface_2 =
 {
-	2,	/* 2 chips */
-	14318000/8,	/* 1.78975 MHz */
-	/* Ant Eater clips if the volume is set higher than this */
-	{ MIXERG(16,MIXER_GAIN_2x,MIXER_PAN_CENTER), MIXERG(16,MIXER_GAIN_2x,MIXER_PAN_CENTER) },
-	{ 0, soundlatch_r },
-	{ 0, scramble_portB_r },
-	{ 0, 0 },
-	{ 0, 0 }
+	soundlatch_r,
+	scramble_portB_r
 };
 
 
@@ -1302,7 +1297,12 @@ static MACHINE_DRIVER_START( type1 )
 	MDRV_VIDEO_START(scramble)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(AY8910, scobra_ay8910_interface)
+	MDRV_SOUND_ADD(AY8910, 14318000/8)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.16)
+
+	MDRV_SOUND_ADD(AY8910, 14318000/8)
+	MDRV_SOUND_CONFIG(scobra_ay8910_interface_2)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.16)
 MACHINE_DRIVER_END
 
 
@@ -1442,7 +1442,9 @@ static MACHINE_DRIVER_START( hustler )
 	MDRV_VIDEO_START(scramble)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(AY8910, frogger_ay8910_interface)
+	MDRV_SOUND_ADD(AY8910, 14318000/8)
+	MDRV_SOUND_CONFIG(frogger_ay8910_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.33)
 MACHINE_DRIVER_END
 
 
@@ -1466,7 +1468,9 @@ static MACHINE_DRIVER_START( hustlerb )
 	MDRV_VIDEO_START(scramble)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(AY8910, frogger_ay8910_interface)
+	MDRV_SOUND_ADD(AY8910, 14318000/8)
+	MDRV_SOUND_CONFIG(frogger_ay8910_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.33)
 MACHINE_DRIVER_END
 
 

@@ -7,7 +7,7 @@
 #define YM_DELTAT_EMULATION_MODE_YM2610	1	
 
 
-typedef void (*STATUS_CHANGE_HANDLER)(UINT8 which_chip, UINT8 status_bits);
+typedef void (*STATUS_CHANGE_HANDLER)(void *chip, UINT8 status_bits);
 
 
 /* DELTA-T (adpcm type B) struct */
@@ -55,7 +55,7 @@ typedef struct deltat_adpcm_state {     /* AT: rearranged and tigntened structur
 	/* note that different chips have these flags on different
 	** bits of the status register
 	*/
-	UINT8	status_change_which_chip;	/* this chip id */
+	void *	status_change_which_chip;	/* this chip id */
 	UINT8	status_change_EOS_bit;		/* 1 on End Of Sample (record/playback/cycle time of AD/DA converting has passed)*/
 	UINT8	status_change_BRDY_bit;		/* 1 after recording 2 datas (2x4bits) or after reading/writing 1 data */
 	UINT8	status_change_ZERO_bit;		/* 1 if silence lasts for more than 290 miliseconds on ADPCM recording */

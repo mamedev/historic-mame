@@ -1,29 +1,5 @@
-#ifndef ADPCM_H
-#define ADPCM_H
-
-#define MAX_ADPCM		16
-#define MAX_OKIM6295	(MAX_ADPCM/4)	// 4 voices per chip
-
-
-/* a generic ADPCM interface, for unknown chips */
-
-struct ADPCMinterface
-{
-	int num;			       /* total number of ADPCM decoders in the machine */
-	int frequency;             /* playback frequency */
-	int region;                /* memory region where the samples come from */
-	int mixing_level[MAX_ADPCM];     /* master volume */
-};
-
-int ADPCM_sh_start(const struct MachineSound *msound);
-void ADPCM_sh_stop(void);
-void ADPCM_sh_update(void);
-
-void ADPCM_play(int num, int offset, int length);
-void ADPCM_setvol(int num, int vol);
-void ADPCM_stop(int num);
-int ADPCM_playing(int num);
-
+#ifndef OKIM6295_H
+#define OKIM6295_H
 
 /* an interface for the OKIM6295 and similar chips */
 
@@ -35,15 +11,14 @@ int ADPCM_playing(int num);
 */
 struct OKIM6295interface
 {
-	int num;                  		/* total number of chips */
-	int frequency[MAX_OKIM6295];	/* playback frequency */
-	int region[MAX_OKIM6295];		/* memory region where the sample ROM lives */
-	int mixing_level[MAX_OKIM6295];	/* master volume */
+	int region;		/* memory region where the sample ROM lives */
 };
 
-int OKIM6295_sh_start(const struct MachineSound *msound);
-void OKIM6295_sh_stop(void);
-void OKIM6295_sh_update(void);
+extern const struct OKIM6295interface okim6295_interface_region_1;
+extern const struct OKIM6295interface okim6295_interface_region_2;
+extern const struct OKIM6295interface okim6295_interface_region_3;
+extern const struct OKIM6295interface okim6295_interface_region_4;
+
 void OKIM6295_set_bank_base(int which, int base);
 void OKIM6295_set_frequency(int which, int frequency);
 

@@ -72,6 +72,9 @@ write:
 #include "vidhrdw/generic.h"
 #include "cpu/i8039/i8039.h"
 #include "state.h"
+#include "sound/dac.h"
+#include "sound/ay8910.h"
+#include "sound/samples.h"
 
 static int p[8] = { 0,0xf0,0,0,0,0,0,0 };
 static int t[2] = { 0,0 };
@@ -340,12 +343,6 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 
 
-static struct DACinterface dac_interface =
-{
-	1,
-	{ 100 }
-};
-
 static const char *mario_sample_names[] =
 {
 	"*mario",
@@ -367,19 +364,12 @@ static const char *mario_sample_names[] =
 static struct Samplesinterface samples_interface =
 {
 	3,	/* 3 channels */
-	25,	/* volume */
 	mario_sample_names
 };
 
 static struct AY8910interface ay8910_interface =
 {
-	1,      /* 1 chip */
-	14318000/6,	/* ? */
-	{ 50 },
-	{ soundlatch_r },
-	{ 0 },
-	{ 0 },
-	{ 0 }
+	soundlatch_r
 };
 
 static ADDRESS_MAP_START( masao_sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
@@ -425,8 +415,14 @@ static MACHINE_DRIVER_START( mario )
 	MDRV_VIDEO_UPDATE(mario)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(DAC, dac_interface)
-	MDRV_SOUND_ADD(SAMPLES, samples_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	
+	MDRV_SOUND_ADD(DAC, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
+	
+	MDRV_SOUND_ADD(SAMPLES, 0)
+	MDRV_SOUND_CONFIG(samples_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
 MACHINE_DRIVER_END
 
 
@@ -457,7 +453,11 @@ static MACHINE_DRIVER_START( masao )
 	MDRV_VIDEO_UPDATE(mario)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(AY8910, ay8910_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	
+	MDRV_SOUND_ADD(AY8910, 14318000/6)
+	MDRV_SOUND_CONFIG(ay8910_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
 MACHINE_DRIVER_END
 
 

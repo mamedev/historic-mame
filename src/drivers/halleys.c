@@ -160,6 +160,7 @@ Video sync   6 F   Video sync                 Post   6 F   Post
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "cpu/m6809/m6809.h"
+#include "sound/ay8910.h"
 
 #define HALLEYS_DEBUG 0
 
@@ -1951,13 +1952,10 @@ static MACHINE_INIT( halleys )
 
 static struct AY8910interface ay8910_interface =
 {
-	4,                                // 4 chips
-	6000000/4,                        // 1.5 MHz
-	{ 15, 15, 15, MIXERG(15,MIXER_GAIN_2x,MIXER_PAN_CENTER) },
-	{ /*input_port_6_r*/0, 0, 0, 0 }, // port Aread
-	{ /*input_port_7_r*/0, 0, 0, 0 }, // port Bread
-	{ 0, /*DAC_0_data_w*/0, 0, 0 },   // port Awrite
-	{ 0, 0, 0, sndnmi_msk_w } // port Bwrite
+	0,
+	0,
+	0,
+	sndnmi_msk_w // port Bwrite
 };
 
 
@@ -1987,7 +1985,20 @@ static MACHINE_DRIVER_START( halleys )
 	MDRV_VIDEO_UPDATE(halleys)
 
 	// sound hardware
-	MDRV_SOUND_ADD(AY8910, ay8910_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(AY8910, 6000000/4)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.15)
+
+	MDRV_SOUND_ADD(AY8910, 6000000/4)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.15)
+
+	MDRV_SOUND_ADD(AY8910, 6000000/4)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.15)
+
+	MDRV_SOUND_ADD(AY8910, 6000000/4)
+	MDRV_SOUND_CONFIG(ay8910_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.15)
 MACHINE_DRIVER_END
 
 

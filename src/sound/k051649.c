@@ -23,6 +23,7 @@
 ***************************************************************************/
 
 #include "driver.h"
+#include "k051649.h"
 
 #define FREQBASEBITS	16
 
@@ -36,38 +37,44 @@ typedef struct
 	signed char waveform[32];		/* 19991207.CAB */
 } k051649_sound_channel;
 
-static k051649_sound_channel channel_list[5];
+struct k051649_info
+{
+	k051649_sound_channel channel_list[5];
 
-/* global sound parameters */
-static int stream,mclock,rate;
+	/* global sound parameters */
+	sound_stream * stream;
+	int mclock,rate;
 
-/* mixer tables and internal buffers */
-static INT16 *mixer_table;
-static INT16 *mixer_lookup;
-static short *mixer_buffer;
+	/* mixer tables and internal buffers */
+	INT16 *mixer_table;
+	INT16 *mixer_lookup;
+	short *mixer_buffer;
+	
+	int f[10];
+};
 
 /* build a table to divide by the number of voices */
-static int make_mixer_table(int voices)
+static int make_mixer_table(struct k051649_info *info, int voices)
 {
 	int count = voices * 256;
 	int i;
 	int gain = 8;
 
 	/* allocate memory */
-	mixer_table = malloc(512 * voices * sizeof(INT16));
-	if (!mixer_table)
+	info->mixer_table = auto_malloc(512 * voices * sizeof(INT16));
+	if (!info->mixer_table)
 		return 1;
 
 	/* find the middle of the table */
-	mixer_lookup = mixer_table + (256 * voices);
+	info->mixer_lookup = info->mixer_table + (256 * voices);
 
 	/* fill in the table - 16 bit case */
 	for (i = 0; i < count; i++)
 	{
 		int val = i * gain * 16 / voices;
 		if (val > 32767) val = 32767;
-		mixer_lookup[ i] = val;
-		mixer_lookup[-i] = -val;
+		info->mixer_lookup[ i] = val;
+		info->mixer_lookup[-i] = -val;
 	}
 
 	return 0;
@@ -75,14 +82,16 @@ static int make_mixer_table(int voices)
 
 
 /* generate sound to the mix buffer */
-static void K051649_update(int ch, INT16 *buffer, int length)
+static void K051649_update(void *param, stream_sample_t **inputs, stream_sample_t **_buffer, int length)
 {
-	k051649_sound_channel *voice=channel_list;
+	struct k051649_info *info = param;
+	k051649_sound_channel *voice=info->channel_list;
+	stream_sample_t *buffer = _buffer[0];
 	short *mix;
 	int i,v,f,j,k;
 
 	/* zap the contents of the mixer buffer */
-	memset(mixer_buffer, 0, length * sizeof(short));
+	memset(info->mixer_buffer, 0, length * sizeof(short));
 
 	for (j=0; j<5; j++) {
 		v=voice[j].volume;
@@ -94,7 +103,7 @@ static void K051649_update(int ch, INT16 *buffer, int length)
 			const signed char *w = voice[j].waveform;			/* 19991207.CAB */
 			int c=voice[j].counter;
 
-			mix = mixer_buffer;
+			mix = info->mixer_buffer;
 
 			/* add our contribution */
 			for (i = 0; i < length; i++)
@@ -103,7 +112,7 @@ static void K051649_update(int ch, INT16 *buffer, int length)
 
 				/* Amuse source:  Cab suggests this method gives greater resolution */
 				/* Sean Young 20010417: the formula is really: f = clock/(16*(f+1))*/
-				c+=(long)((((float)mclock / (float)((f+1) * 16))*(float)(1<<FREQBASEBITS)) / (float)(rate / 32));
+				c+=(long)((((float)info->mclock / (float)((f+1) * 16))*(float)(1<<FREQBASEBITS)) / (float)(info->rate / 32));
 				offs = (c >> 16) & 0x1f;
 				*mix++ += (w[offs] * v)>>3;
 			}
@@ -114,38 +123,38 @@ static void K051649_update(int ch, INT16 *buffer, int length)
 	}
 
 	/* mix it down */
-	mix = mixer_buffer;
+	mix = info->mixer_buffer;
 	for (i = 0; i < length; i++)
-		*buffer++ = mixer_lookup[*mix++];
+		*buffer++ = info->mixer_lookup[*mix++];
 }
 
-int K051649_sh_start(const struct MachineSound *msound)
+static void *k051649_start(int sndindex, int clock, const void *config)
 {
-	const char *snd_name = "K051649";
-	const struct k051649_interface *intf = msound->sound_interface;
+	struct k051649_info *info;
+	
+	info = auto_malloc(sizeof(*info));
+	memset(info, 0, sizeof(*info));
 
 	/* get stream channels */
-	stream = stream_init(snd_name, intf->volume, Machine->sample_rate, 0, K051649_update);
-	mclock = intf->master_clock;
-	rate = Machine->sample_rate;
+	info->stream = stream_create(0, 1, Machine->sample_rate, info, K051649_update);
+	info->mclock = clock;
+	info->rate = Machine->sample_rate;
 
 	/* allocate a buffer to mix into - 1 second's worth should be more than enough */
-	if ((mixer_buffer = malloc(2 * sizeof(short) * Machine->sample_rate)) == 0)
-		return 1;
+	if ((info->mixer_buffer = auto_malloc(2 * sizeof(short) * Machine->sample_rate)) == 0)
+		return NULL;
 
 	/* build the mixer table */
-	if (make_mixer_table(5))
-	{
-		free (mixer_buffer);
-		return 1;
-	}
+	if (make_mixer_table(info, 5))
+		return NULL;
 
-	return 0;
+	return info;
 }
 
-void K051649_sh_reset(void)
+static void k051649_reset(void *chip)
 {
-	k051649_sound_channel *voice = channel_list;
+	struct k051649_info *info = chip;
+	k051649_sound_channel *voice = info->channel_list;
 	int i;
 
 	/* reset all the voices */
@@ -156,56 +165,93 @@ void K051649_sh_reset(void)
 	}
 }
 
-void K051649_sh_stop(void)
-{
-	free (mixer_table);
-	free (mixer_buffer);
-}
-
 /********************************************************************************/
 
 WRITE8_HANDLER( K051649_waveform_w )
 {
-	stream_update(stream,0);
-	channel_list[offset>>5].waveform[offset&0x1f]=data;
+	struct k051649_info *info = sndti_token(SOUND_K051649, 0);
+	stream_update(info->stream,0);
+	info->channel_list[offset>>5].waveform[offset&0x1f]=data;
 	/* SY 20001114: Channel 5 shares the waveform with channel 4 */
     if (offset >= 0x60)
-		channel_list[4].waveform[offset&0x1f]=data;
+		info->channel_list[4].waveform[offset&0x1f]=data;
 }
 
 READ8_HANDLER ( K051649_waveform_r )
 {
-	return channel_list[offset>>5].waveform[offset&0x1f];
+	struct k051649_info *info = sndti_token(SOUND_K051649, 0);
+	return info->channel_list[offset>>5].waveform[offset&0x1f];
 }
 
 /* SY 20001114: Channel 5 doesn't share the waveform with channel 4 on this chip */
 WRITE8_HANDLER( K052539_waveform_w )
 {
-	stream_update(stream,0);
-	channel_list[offset>>5].waveform[offset&0x1f]=data;
+	struct k051649_info *info = sndti_token(SOUND_K051649, 0);
+	stream_update(info->stream,0);
+	info->channel_list[offset>>5].waveform[offset&0x1f]=data;
 }
 
 WRITE8_HANDLER( K051649_volume_w )
 {
-	stream_update(stream,0);
-	channel_list[offset&0x7].volume=data&0xf;
+	struct k051649_info *info = sndti_token(SOUND_K051649, 0);
+	stream_update(info->stream,0);
+	info->channel_list[offset&0x7].volume=data&0xf;
 }
 
 WRITE8_HANDLER( K051649_frequency_w )
 {
-	static int f[10];
-	f[offset]=data;
+	struct k051649_info *info = sndti_token(SOUND_K051649, 0);
+	info->f[offset]=data;
 
-	stream_update(stream,0);
-	channel_list[offset>>1].frequency=(f[offset&0xe] + (f[offset|1]<<8))&0xfff;
+	stream_update(info->stream,0);
+	info->channel_list[offset>>1].frequency=(info->f[offset&0xe] + (info->f[offset|1]<<8))&0xfff;
 }
 
 WRITE8_HANDLER( K051649_keyonoff_w )
 {
-	stream_update(stream,0);
-	channel_list[0].key=data&1;
-	channel_list[1].key=data&2;
-	channel_list[2].key=data&4;
-	channel_list[3].key=data&8;
-	channel_list[4].key=data&16;
+	struct k051649_info *info = sndti_token(SOUND_K051649, 0);
+	stream_update(info->stream,0);
+	info->channel_list[0].key=data&1;
+	info->channel_list[1].key=data&2;
+	info->channel_list[2].key=data&4;
+	info->channel_list[3].key=data&8;
+	info->channel_list[4].key=data&16;
 }
+
+
+
+
+/**************************************************************************
+ * Generic get_info
+ **************************************************************************/
+
+static void k051649_set_info(void *token, UINT32 state, union sndinfo *info)
+{
+	switch (state)
+	{
+		/* no parameters to set */
+	}
+}
+
+
+void k051649_get_info(void *token, UINT32 state, union sndinfo *info)
+{
+	switch (state)
+	{
+		/* --- the following bits of info are returned as 64-bit signed integers --- */
+
+		/* --- the following bits of info are returned as pointers to data or functions --- */
+		case SNDINFO_PTR_SET_INFO:						info->set_info = k051649_set_info;		break;
+		case SNDINFO_PTR_START:							info->start = k051649_start;			break;
+		case SNDINFO_PTR_STOP:							/* nothing */							break;
+		case SNDINFO_PTR_RESET:							/* nothing */							break;
+
+		/* --- the following bits of info are returned as NULL-terminated strings --- */
+		case SNDINFO_STR_NAME:							info->s = "K051649";					break;
+		case SNDINFO_STR_CORE_FAMILY:					info->s = "Konami custom";				break;
+		case SNDINFO_STR_CORE_VERSION:					info->s = "1.0";						break;
+		case SNDINFO_STR_CORE_FILE:						info->s = __FILE__;						break;
+		case SNDINFO_STR_CORE_CREDITS:					info->s = "Copyright (c) 2004, The MAME Team"; break;
+	}
+}
+

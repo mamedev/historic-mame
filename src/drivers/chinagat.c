@@ -75,6 +75,8 @@ Input is unique but has a few similarities to DD2 (the coin inputs)
 #include "cpu/i8039/i8039.h"
 #include "sound/2151intf.h"
 #include "sound/2203intf.h"
+#include "sound/okim6295.h"
+#include "sound/msm5205.h"
 
 /**************** Video stuff ******************/
 
@@ -504,29 +506,15 @@ static void chinagat_irq_handler(int irq) {
 
 static struct YM2151interface ym2151_interface =
 {
-	1,			/* 1 chip */
-	3579545,	/* 3.579545 oscillator */
-	{ YM3012_VOL(80,MIXER_PAN_LEFT,80,MIXER_PAN_RIGHT) },	/* only right channel is connected */
-	{ chinagat_irq_handler }
+	chinagat_irq_handler
 };
 
-
-static struct OKIM6295interface okim6295_interface =
-{
-	1,					/* 1 chip */
-	{ 11000 },			/* ??? frequency (Hz) */
-	{ REGION_SOUND1 },	/* memory region */
-	{ 45 }
-};
 
 /* This on the bootleg board, instead of the m6295 */
 static struct MSM5205interface msm5205_interface =
 {
-	1,							/* 1 chip */
-	9263750 / 24,				/* 385989.6 Hz from the 9.26375MHz oscillator */
-	{ saiyugb1_m5205_irq_w },	/* Interrupt function */
-	{ MSM5205_S64_4B },			/* vclk input mode (6030Hz, 4-bit) */
-	{ 60 }
+	saiyugb1_m5205_irq_w,	/* Interrupt function */
+	MSM5205_S64_4B			/* vclk input mode (6030Hz, 4-bit) */
 };
 
 static INTERRUPT_GEN( chinagat_interrupt )
@@ -538,14 +526,11 @@ static INTERRUPT_GEN( chinagat_interrupt )
 /* This is only on the second bootleg board */
 static struct YM2203interface ym2203_interface =
 {
-	2,			/* 2 chips */
-	3579545,	/* 3.579545 oscillator */
-	{ YM2203_VOL(80,50), YM2203_VOL(80,50) },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ chinagat_irq_handler }
+	0,
+	0,
+	0,
+	0,
+	chinagat_irq_handler
 };
 
 static MACHINE_DRIVER_START( chinagat )
@@ -578,8 +563,16 @@ static MACHINE_DRIVER_START( chinagat )
 	MDRV_VIDEO_UPDATE(ddragon)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM2151, ym2151_interface)
-	MDRV_SOUND_ADD(OKIM6295, okim6295_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM2151, 3579545)
+	MDRV_SOUND_CONFIG(ym2151_interface)
+	MDRV_SOUND_ROUTE(0, "mono", 0.80)
+	MDRV_SOUND_ROUTE(1, "mono", 0.80)
+
+	MDRV_SOUND_ADD(OKIM6295, 11000)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.45)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( saiyugb1 )
@@ -616,8 +609,16 @@ static MACHINE_DRIVER_START( saiyugb1 )
 	MDRV_VIDEO_UPDATE(ddragon)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM2151, ym2151_interface)
-	MDRV_SOUND_ADD(MSM5205, msm5205_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM2151, 3579545)
+	MDRV_SOUND_CONFIG(ym2151_interface)
+	MDRV_SOUND_ROUTE(0, "mono", 0.80)
+	MDRV_SOUND_ROUTE(1, "mono", 0.80)
+
+	MDRV_SOUND_ADD(MSM5205, 9263750 / 24)
+	MDRV_SOUND_CONFIG(msm5205_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.60)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( saiyugb2 )
@@ -650,7 +651,20 @@ static MACHINE_DRIVER_START( saiyugb2 )
 	MDRV_VIDEO_UPDATE(ddragon)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM2203, ym2203_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM2203, 3579545)
+	MDRV_SOUND_CONFIG(ym2203_interface)
+	MDRV_SOUND_ROUTE(0, "mono", 0.50)
+	MDRV_SOUND_ROUTE(1, "mono", 0.50)
+	MDRV_SOUND_ROUTE(2, "mono", 0.50)
+	MDRV_SOUND_ROUTE(3, "mono", 0.80)
+
+	MDRV_SOUND_ADD(YM2203, 3579545)
+	MDRV_SOUND_ROUTE(0, "mono", 0.50)
+	MDRV_SOUND_ROUTE(1, "mono", 0.50)
+	MDRV_SOUND_ROUTE(2, "mono", 0.50)
+	MDRV_SOUND_ROUTE(3, "mono", 0.80)
 MACHINE_DRIVER_END
 
 

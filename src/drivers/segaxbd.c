@@ -9,7 +9,6 @@
 	Known bugs:
 		* gprider hangs due to interrupt nesting
 		* loffire usually won't let you past the first level
-		* rachero locks you to the middle of the road, worked in 0.89, maths bug?
 		* extra sound boards etc. in some smgp sets not hooked up
 
 	To do for each game:
@@ -25,6 +24,8 @@
 #include "system16.h"
 #include "cpu/m68000/m68000.h"
 #include "machine/segaic16.h"
+#include "sound/2151intf.h"
+#include "sound/segapcm.h"
 
 
 
@@ -863,6 +864,7 @@ static INPUT_PORTS_START( rachero )
 	PORT_INCLUDE( xboard_generic )
 
 	PORT_MODIFY("IO1PORTA")
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_OTHER ) PORT_NAME("Move to Center")
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_OTHER ) PORT_NAME("Suicide")
 
 	PORT_MODIFY("IO1PORTD")
@@ -944,19 +946,14 @@ INPUT_PORTS_END
 
 static struct YM2151interface ym2151_interface =
 {
-	1,
-	4000000,
-	{ YM3012_VOL(43,MIXER_PAN_LEFT,43,MIXER_PAN_RIGHT) },
-	{ sound_cpu_irq }
+	sound_cpu_irq
 };
 
 
 static struct SEGAPCMinterface segapcm_interface =
 {
-	SEGAPCM_SAMPLE15K,
 	BANK_512,
-	REGION_SOUND1,
-	100
+	REGION_SOUND1
 };
 
 
@@ -1025,9 +1022,17 @@ static MACHINE_DRIVER_START( xboard )
 	MDRV_VIDEO_UPDATE(xboard)
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD_TAG("2151", YM2151, ym2151_interface)
-	MDRV_SOUND_ADD_TAG("pcm", SEGAPCM, segapcm_interface)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD_TAG("2151", YM2151, 4000000)
+	MDRV_SOUND_CONFIG(ym2151_interface)
+	MDRV_SOUND_ROUTE(0, "left", 0.43)
+	MDRV_SOUND_ROUTE(1, "right", 0.43)
+
+	MDRV_SOUND_ADD_TAG("pcm", SEGAPCM, SEGAPCM_SAMPLE15K)
+	MDRV_SOUND_CONFIG(segapcm_interface)
+	MDRV_SOUND_ROUTE(0, "left", 1.0)
+	MDRV_SOUND_ROUTE(1, "right", 1.0)
 MACHINE_DRIVER_END
 
 

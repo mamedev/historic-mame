@@ -201,6 +201,8 @@
 #include "vidhrdw/avgdvg.h"
 #include "machine/mathbox.h"
 #include "machine/atari_vg.h"
+#include "sound/pokey.h"
+#include "sound/custom.h"
 #include "artwork.h"
 #include "bzone.h"
 
@@ -550,74 +552,34 @@ INPUT_PORTS_END
 
 static struct POKEYinterface bzone_pokey_interface =
 {
-	1,	/* 1 chip */
-	1500000,	/* 1.5 MHz??? */
-	{ 100 },
-	/* The 8 pot handlers */
 	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	/* The allpot handler */
-	{ bzone_IN3_r },
+	bzone_IN3_r
 };
 
 
 static struct POKEYinterface bradley_pokey_interface =
 {
-	1,	/* 1 chip */
-	1500000,	/* 1.5 MHz??? */
-	{ 100 },
-	/* The 8 pot handlers */
 	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	/* The allpot handler */
-	{ input_port_3_r },
+	input_port_3_r
 };
 
 
 static struct CustomSound_interface bzone_custom_interface =
 {
-	bzone_sh_start,
-	bzone_sh_stop,
-	bzone_sh_update
+	bzone_sh_start
 };
 
 
 static struct POKEYinterface redbaron_pokey_interface =
 {
-	1,	/* 1 chip */
-	1500000,	/* 1.5 MHz??? */
-	{ 100 },
-	/* The 8 pot handlers */
 	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	/* The allpot handler */
-	{ redbaron_joy_r },
+	redbaron_joy_r
 };
 
 
 static struct CustomSound_interface redbaron_custom_interface =
 {
-	redbaron_sh_start,
-	redbaron_sh_stop,
-	redbaron_sh_update
+	redbaron_sh_start
 };
 
 
@@ -648,8 +610,15 @@ static MACHINE_DRIVER_START( bzone )
 	MDRV_VIDEO_UPDATE(vector)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD_TAG("pokey",  POKEY,  bzone_pokey_interface)
-	MDRV_SOUND_ADD_TAG("custom", CUSTOM, bzone_custom_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	
+	MDRV_SOUND_ADD_TAG("pokey",  POKEY, 1500000)
+	MDRV_SOUND_CONFIG(bzone_pokey_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
+	
+	MDRV_SOUND_ADD_TAG("custom", CUSTOM, 0)
+	MDRV_SOUND_CONFIG(bzone_custom_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
 MACHINE_DRIVER_END
 
 
@@ -659,7 +628,9 @@ static MACHINE_DRIVER_START( bradley )
 	MDRV_IMPORT_FROM(bzone)
 
 	/* sound hardware */
-	MDRV_SOUND_REPLACE("pokey",  POKEY,  bradley_pokey_interface)
+	MDRV_SOUND_REPLACE("pokey", POKEY, 1500000)
+	MDRV_SOUND_CONFIG(bradley_pokey_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 
@@ -680,8 +651,13 @@ static MACHINE_DRIVER_START( redbaron )
 	MDRV_VIDEO_START(avg_redbaron)
 
 	/* sound hardware */
-	MDRV_SOUND_REPLACE("pokey",  POKEY,  redbaron_pokey_interface)
-	MDRV_SOUND_REPLACE("custom", CUSTOM, redbaron_custom_interface)
+	MDRV_SOUND_REPLACE("pokey", POKEY, 1500000)
+	MDRV_SOUND_CONFIG(redbaron_pokey_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
+
+	MDRV_SOUND_REPLACE("custom", CUSTOM, 0)
+	MDRV_SOUND_CONFIG(redbaron_custom_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
 MACHINE_DRIVER_END
 
 

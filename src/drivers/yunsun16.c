@@ -32,6 +32,8 @@ Year + Game         Board#
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "sound/okim6295.h"
+#include "sound/3812intf.h"
 
 /* Variables defined in vidhrdw: */
 
@@ -401,18 +403,7 @@ static void soundirq(int state)
 
 static struct YM3812interface magicbub_ym3812_intf =
 {
-	1,
-	4000000,		/* ? */
-	{ 20 },
-	{ soundirq },	/* IRQ Line */
-};
-
-static struct OKIM6295interface magicbub_okim6295_intf =
-{
-	1,
-	{ 8000 },		/* ? */
-	{ REGION_SOUND1 },
-	{ 80 }
+	soundirq	/* IRQ Line */
 };
 
 static MACHINE_DRIVER_START( magicbub )
@@ -441,23 +432,23 @@ static MACHINE_DRIVER_START( magicbub )
 	MDRV_VIDEO_UPDATE(yunsun16)
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(YM3812, magicbub_ym3812_intf)
-	MDRV_SOUND_ADD(OKIM6295, magicbub_okim6295_intf)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(YM3812, 4000000)
+	MDRV_SOUND_CONFIG(magicbub_ym3812_intf)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.20)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 0.20)
+
+	MDRV_SOUND_ADD(OKIM6295, 8000)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.80)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 0.80)
 MACHINE_DRIVER_END
 
 
 /***************************************************************************
 								Shocking
 ***************************************************************************/
-
-static struct OKIM6295interface shocking_okim6295_intf =
-{
-	1,
-	{ 8000 },		/* ? */
-	{ REGION_SOUND1 },
-	{ 100 }
-};
 
 static MACHINE_DRIVER_START( shocking )
 
@@ -480,8 +471,12 @@ static MACHINE_DRIVER_START( shocking )
 	MDRV_VIDEO_UPDATE(yunsun16)
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(OKIM6295, shocking_okim6295_intf)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(OKIM6295, 8000)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 1.0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 1.0)
 MACHINE_DRIVER_END
 
 

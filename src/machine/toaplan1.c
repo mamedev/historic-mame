@@ -226,7 +226,7 @@ WRITE16_HANDLER( toaplan1_reset_sound )
 	{
 		logerror("PC:%04x  Resetting Sound CPU and Sound chip (%08x)\n",activecpu_get_previouspc(),data);
 		if (Machine->drv->sound[0].sound_type == SOUND_YM3812)
-			YM3812_sh_reset();
+			sndti_reset(SOUND_YM3812, 0);
 		if (Machine->drv->cpu[1].cpu_type == CPU_Z80)
 			cpunum_set_input_line(1, INPUT_LINE_RESET, PULSE_LINE);
 	}

@@ -128,6 +128,9 @@
 #include "vidhrdw/generic.h"
 #include "machine/6821pia.h"
 #include "exidy.h"
+#include "sound/custom.h"
+#include "sound/samples.h"
+#include "sound/hc55516.h"
 
 
 /*************************************
@@ -714,30 +717,9 @@ static const char *targ_sample_names[] =
 
 static struct Samplesinterface targ_samples_interface =
 {
-	3,	/* 3 Channels */
-	25,	/* volume */
-	targ_sample_names
-};
-
-
-static struct CustomSound_interface targ_custom_interface =
-{
-	targ_sh_start,
-	targ_sh_stop
-};
-
-
-static struct DACinterface targ_DAC_interface =
-{
-	1,
-	{ 100 }
-};
-
-
-static struct hc55516_interface cvsd_interface =
-{
-	1,          /* 1 chip */
-	{ 80 }
+	4,	/* 3 Channels */
+	targ_sample_names,
+	targ_sh_start
 };
 
 
@@ -778,9 +760,14 @@ static MACHINE_DRIVER_START( targ )
 	MDRV_VIDEO_UPDATE(exidy)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD_TAG("custom", CUSTOM,  targ_custom_interface)
-	MDRV_SOUND_ADD_TAG("sample", SAMPLES, targ_samples_interface)
-	MDRV_SOUND_ADD_TAG("dac",    DAC,     targ_DAC_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	
+	MDRV_SOUND_ADD_TAG("sample", SAMPLES, 0)
+	MDRV_SOUND_CONFIG(targ_samples_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
+
+	MDRV_SOUND_ADD_TAG("dac", DAC, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 
@@ -798,8 +785,10 @@ static MACHINE_DRIVER_START( venture )
 	MDRV_INTERLEAVE(10)
 
 	/* sound hardware */
-	MDRV_SOUND_REPLACE("custom", CUSTOM, exidy_custom_interface)
-	MDRV_SOUND_REMOVE("sample")
+	MDRV_SOUND_REPLACE("sample", CUSTOM, 0)
+	MDRV_SOUND_CONFIG(exidy_custom_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
+	
 	MDRV_SOUND_REMOVE("dac")
 MACHINE_DRIVER_END
 
@@ -817,7 +806,8 @@ static MACHINE_DRIVER_START( mtrap )
 	MDRV_INTERLEAVE(32)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(HC55516, cvsd_interface)
+	MDRV_SOUND_ADD(HC55516, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.80)
 MACHINE_DRIVER_END
 
 

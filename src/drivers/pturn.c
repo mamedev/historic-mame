@@ -76,7 +76,7 @@ ROMS: All ROM labels say only "PROM" and a number.
 */
 #include "driver.h"
 #include "vidhrdw/generic.h"
-
+#include "sound/ay8910.h"
 
 struct tilemap *pturn_tilemap,*pturn_bgmap;
 static void get_pturn_tile_info(int tile_index)
@@ -156,17 +156,6 @@ static INTERRUPT_GEN( pturn_main_intgen )
 	if (nmi_main)
 		cpunum_set_input_line(0,INPUT_LINE_NMI,PULSE_LINE);
 }
-
-static struct AY8910interface ay8910_interface =
-{
-	2,
-	2000000,
-	{ 50,50 },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ 0 }
-};
 
 INPUT_PORTS_START( pturn )
 	PORT_START
@@ -278,7 +267,13 @@ static MACHINE_DRIVER_START( pturn )
 	MDRV_VIDEO_UPDATE(pturn)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(AY8910, ay8910_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	
+	MDRV_SOUND_ADD(AY8910, 2000000)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
+	
+	MDRV_SOUND_ADD(AY8910, 2000000)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
 MACHINE_DRIVER_END
 
 

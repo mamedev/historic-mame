@@ -70,6 +70,8 @@ Coin B is not used
 *************************************************************************/
 
 #include "driver.h"
+#include "sound/2203intf.h"
+#include "sound/msm5205.h"
 
 extern data16_t *ashnojoetileram16, *ashnojoetileram16_2, *ashnojoetileram16_3, *ashnojoetileram16_4, *ashnojoetileram16_5, *ashnojoetileram16_6, *ashnojoetileram16_7;
 extern data16_t *ashnojoe_tilemap_reg;
@@ -323,23 +325,17 @@ static void ashnojoe_adpcm_int (int data)
 
 static struct MSM5205interface msm5205_interface =
 {
-	1,			/* 1 chip */
-	384000, 		/* 384KHz */
-	{ ashnojoe_adpcm_int},	/* interrupt function */
-	{ MSM5205_S48_4B},	/* 4KHz 4-bit */
-	{ 50 }			/* volume */
+	ashnojoe_adpcm_int,	/* interrupt function */
+	MSM5205_S48_4B		/* 4KHz 4-bit */
 };
 
 static struct YM2203interface ym2203_interface =
 {
-	1,
-	3000000,					/* ?? */
-	{ YM2203_VOL(100,100) },
-	{ 0 },
-	{ 0 },
-	{ writeA },
-	{ writeB },
-	{ irqhandler }
+	0,
+	0,
+	writeA,
+	writeB,
+	irqhandler
 };
 
 static DRIVER_INIT( ashnojoe )
@@ -374,8 +370,15 @@ static MACHINE_DRIVER_START( ashnojoe )
 	MDRV_VIDEO_UPDATE(ashnojoe)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM2203, ym2203_interface)
-	MDRV_SOUND_ADD(MSM5205, msm5205_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM2203, 3000000)
+	MDRV_SOUND_CONFIG(ym2203_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
+
+	MDRV_SOUND_ADD(MSM5205, 384000)
+	MDRV_SOUND_CONFIG(msm5205_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
 MACHINE_DRIVER_END
 
 ROM_START( ashnojoe )

@@ -1,6 +1,7 @@
 /* Mogura Desse */
 
 #include "driver.h"
+#include "sound/dac.h"
 
 data8_t *mogura_tileram;
 data8_t* mogura_gfxram;
@@ -208,12 +209,6 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 	{ -1 }
 };
 
-static struct DACinterface dac_interface =
-{
-	2,
-	{ MIXER(50, MIXER_PAN_LEFT), MIXER(50, MIXER_PAN_RIGHT) }
-};
-
 static MACHINE_DRIVER_START( mogura )
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80,3000000)		 /* 3 MHz */
@@ -237,8 +232,13 @@ static MACHINE_DRIVER_START( mogura )
 	MDRV_VIDEO_UPDATE(mogura)
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(DAC, dac_interface)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(DAC, 0)	
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.50)
+
+	MDRV_SOUND_ADD(DAC, 0)	
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 0.50)
 MACHINE_DRIVER_END
 
 ROM_START( mogura )

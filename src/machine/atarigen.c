@@ -109,7 +109,7 @@ static void delayed_sound_reset(int param);
 static void delayed_sound_w(int param);
 static void delayed_6502_sound_w(int param);
 
-static void atarigen_set_vol(int volume, const char *string);
+static void atarigen_set_vol(int volume, int type);
 
 static void vblank_timer(int param);
 static void scanline_timer(int scanline);
@@ -783,16 +783,19 @@ static void delayed_6502_sound_w(int param)
 	changes the volume on all channels associated with it.
 ---------------------------------------------------------------*/
 
-void atarigen_set_vol(int volume, const char *string)
+void atarigen_set_vol(int volume, int type)
 {
+	int sndindex = 0;
 	int ch;
 
-	for (ch = 0; ch < MIXER_MAX_CHANNELS; ch++)
-	{
-		const char *name = mixer_get_name(ch);
-		if (name && strstr(name, string))
-			mixer_set_volume(ch, volume);
-	}
+	for (ch = 0; ch < MAX_SOUND; ch++)
+		if (Machine->drv->sound[ch].sound_type == type)
+		{
+			int output;
+			for (output = 0; output < 2; output++)
+				sndti_set_output_gain(type, sndindex, output, volume / 100.0);
+			sndindex++;
+		}
 }
 
 
@@ -803,27 +806,27 @@ void atarigen_set_vol(int volume, const char *string)
 
 void atarigen_set_ym2151_vol(int volume)
 {
-	atarigen_set_vol(volume, "2151");
+	atarigen_set_vol(volume, SOUND_YM2151);
 }
 
 void atarigen_set_ym2413_vol(int volume)
 {
-	atarigen_set_vol(volume, "2413");
+	atarigen_set_vol(volume, SOUND_YM2413);
 }
 
 void atarigen_set_pokey_vol(int volume)
 {
-	atarigen_set_vol(volume, "POKEY");
+	atarigen_set_vol(volume, SOUND_POKEY);
 }
 
 void atarigen_set_tms5220_vol(int volume)
 {
-	atarigen_set_vol(volume, "5220");
+	atarigen_set_vol(volume, SOUND_TMS5220);
 }
 
 void atarigen_set_oki6295_vol(int volume)
 {
-	atarigen_set_vol(volume, "6295");
+	atarigen_set_vol(volume, SOUND_OKIM6295);
 }
 
 

@@ -202,6 +202,8 @@ TODO:
 #include "vidhrdw/generic.h"
 #include "vidhrdw/taitoic.h"
 #include "sndhrdw/taitosnd.h"
+#include "sound/2610intf.h"
+#include "sound/flt_vol.h"
 
 VIDEO_START( othunder );
 VIDEO_UPDATE( othunder );
@@ -450,19 +452,20 @@ static WRITE8_HANDLER( othunder_TC0310FAM_w )
 	   because we are using the AY-3-8910 emulation. */
 	volr = (pan[0] + pan[2]) * 100 / (2 * 0x1f);
 	voll = (pan[1] + pan[3]) * 100 / (2 * 0x1f);
-	mixer_set_stereo_volume(0, voll, volr);
-	mixer_set_stereo_volume(1, voll, volr);
-	mixer_set_stereo_volume(2, voll, volr);
+	flt_volume_set_volume(0, voll);
+	flt_volume_set_volume(1, volr);
 
 	/* CH1 */
 	volr = pan[0] * 100 / 0x1f;
 	voll = pan[1] * 100 / 0x1f;
-	mixer_set_stereo_volume(3, voll, volr);
+	flt_volume_set_volume(2, voll);
+	flt_volume_set_volume(3, volr);
 
 	/* CH2 */
 	volr = pan[2] * 100 / 0x1f;
 	voll = pan[3] * 100 / 0x1f;
-	mixer_set_stereo_volume(4, voll, volr);
+	flt_volume_set_volume(4, voll);
+	flt_volume_set_volume(5, volr);
 }
 
 
@@ -678,17 +681,9 @@ static void irqhandler(int irq)
 
 static struct YM2610interface ym2610_interface =
 {
-	1,	/* 1 chip */
-	16000000/2,	/* 8 MHz */
-	{ 25 },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ irqhandler },
-	{ REGION_SOUND2 },	/* Delta-T */
-	{ REGION_SOUND1 },	/* ADPCM */
-	{ YM3012_VOL(100,MIXER_PAN_CENTER,100,MIXER_PAN_CENTER) }
+	irqhandler,
+	REGION_SOUND2,	/* Delta-T */
+	REGION_SOUND1	/* ADPCM */
 };
 
 
@@ -726,8 +721,33 @@ static MACHINE_DRIVER_START( othunder )
 	MDRV_VIDEO_UPDATE(othunder)
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(YM2610, ym2610_interface)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(YM2610, 16000000/2)
+	MDRV_SOUND_CONFIG(ym2610_interface)
+	MDRV_SOUND_ROUTE(0, "2610.0l", 0.25)
+	MDRV_SOUND_ROUTE(0, "2610.0r", 0.25)
+	MDRV_SOUND_ROUTE(1, "2610.1l", 1.0)
+	MDRV_SOUND_ROUTE(1, "2610.1r", 1.0)
+	MDRV_SOUND_ROUTE(2, "2610.2l", 1.0)
+	MDRV_SOUND_ROUTE(2, "2610.2r", 1.0)
+	
+	MDRV_SOUND_ADD_TAG("2610.0l", FILTER_VOLUME, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 1.0)
+	MDRV_SOUND_ADD_TAG("2610.0r", FILTER_VOLUME, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 1.0)
+	MDRV_SOUND_ADD_TAG("2610.1l", FILTER_VOLUME, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 1.0)
+	MDRV_SOUND_ADD_TAG("2610.1r", FILTER_VOLUME, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 1.0)
+	MDRV_SOUND_ADD_TAG("2610.2l", FILTER_VOLUME, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 1.0)
+	MDRV_SOUND_ADD_TAG("2610.2r", FILTER_VOLUME, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 1.0)
+	MDRV_SOUND_ADD_TAG("2610.3l", FILTER_VOLUME, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 1.0)
+	MDRV_SOUND_ADD_TAG("2610.3r", FILTER_VOLUME, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 1.0)
 MACHINE_DRIVER_END
 
 

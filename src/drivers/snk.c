@@ -219,6 +219,7 @@ Credits (in alphabetical order)
 #include "vidhrdw/generic.h"
 #include "cpu/z80/z80.h"
 #include "snk.h"
+#include "sound/3812intf.h"
 
 /*********************************************************************/
 // Variables and Interrupt Handlers Common to All SNK Triple Z80 Games
@@ -379,33 +380,21 @@ void snk_sound_callback1_w( int state ){ /* ? */
 	if( state ) snk_sound_register |= 0x02;
 }
 
-static struct YM3526interface ym3526_interface = {
-	1,			/* number of chips */
-	4000000,	/* 4 MHz */
-	{ 100 },		/* mixing level */
-	{ snk_sound_callback0_w } /* ? */
+static struct YM3526interface ym3526_interface_0 = {
+	snk_sound_callback0_w /* ? */
 };
 
-static struct YM3526interface ym3526_ym3526_interface = {
-	2,			/* number of chips */
-	4000000,	/* 4 MHz */
-	{ 100,100 },	/* mixing level */
-	{ snk_sound_callback0_w, snk_sound_callback1_w } /* ? */
+static struct YM3526interface ym3526_interface_1 = {
+	snk_sound_callback1_w /* ? */
 };
 
 static struct Y8950interface y8950_interface = {
-	1,			/* number of chips */
-	4000000,	/* 4 MHz */
-	{ 100 },		/* mixing level */
-	{ snk_sound_callback1_w }, /* ? */
-	{ REGION_SOUND1 }	/* memory region */
+	snk_sound_callback1_w, /* ? */
+	REGION_SOUND1	/* memory region */
 };
 
 static struct YM3812interface ym3812_interface = {
-	1,			/* number of chips */
-	4000000,	/* 4 MHz */
-	{ 100,100 },	/* mixing level */
-	{ snk_sound_callback0_w } /* ? */
+	snk_sound_callback0_w /* ? */
 };
 
 static WRITE8_HANDLER( snk_soundlatch_w ){
@@ -955,7 +944,11 @@ static MACHINE_DRIVER_START( tnk3 )
 	MDRV_VIDEO_UPDATE(tnk3)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM3526, ym3526_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM3526, 4000000)
+	MDRV_SOUND_CONFIG(ym3526_interface_0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 
@@ -991,7 +984,15 @@ static MACHINE_DRIVER_START( athena )
 	MDRV_VIDEO_UPDATE(tnk3)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM3526, ym3526_ym3526_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM3526, 4000000)
+	MDRV_SOUND_CONFIG(ym3526_interface_0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
+
+	MDRV_SOUND_ADD(YM3526, 4000000)
+	MDRV_SOUND_CONFIG(ym3526_interface_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 
@@ -1027,7 +1028,15 @@ static MACHINE_DRIVER_START( ikari )
 	MDRV_VIDEO_UPDATE(ikari)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM3526, ym3526_ym3526_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM3526, 4000000)
+	MDRV_SOUND_CONFIG(ym3526_interface_0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
+
+	MDRV_SOUND_ADD(YM3526, 4000000)
+	MDRV_SOUND_CONFIG(ym3526_interface_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 
@@ -1063,8 +1072,15 @@ static MACHINE_DRIVER_START( victroad )
 	MDRV_VIDEO_UPDATE(ikari)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM3526, ym3526_interface)
-	MDRV_SOUND_ADD(Y8950,y8950_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM3526, 4000000)
+	MDRV_SOUND_CONFIG(ym3526_interface_0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
+
+	MDRV_SOUND_ADD(Y8950, 4000000)
+	MDRV_SOUND_CONFIG(y8950_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 
@@ -1100,8 +1116,15 @@ static MACHINE_DRIVER_START( gwar )
 	MDRV_VIDEO_UPDATE(gwar)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM3526, ym3526_interface)
-	MDRV_SOUND_ADD(Y8950,y8950_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM3526, 4000000)
+	MDRV_SOUND_CONFIG(ym3526_interface_0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
+
+	MDRV_SOUND_ADD(Y8950, 4000000)
+	MDRV_SOUND_CONFIG(y8950_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 
@@ -1138,8 +1161,15 @@ static MACHINE_DRIVER_START( bermudat )
 	MDRV_VIDEO_UPDATE(gwar)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM3526, ym3526_interface)
-	MDRV_SOUND_ADD(Y8950,y8950_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM3526, 4000000)
+	MDRV_SOUND_CONFIG(ym3526_interface_0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
+
+	MDRV_SOUND_ADD(Y8950, 4000000)
+	MDRV_SOUND_CONFIG(y8950_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 
@@ -1175,8 +1205,15 @@ static MACHINE_DRIVER_START( psychos )
 	MDRV_VIDEO_UPDATE(gwar)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM3526, ym3526_interface)
-	MDRV_SOUND_ADD(Y8950,y8950_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM3526, 4000000)
+	MDRV_SOUND_CONFIG(ym3526_interface_0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
+
+	MDRV_SOUND_ADD(Y8950, 4000000)
+	MDRV_SOUND_CONFIG(y8950_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 
@@ -1212,8 +1249,15 @@ static MACHINE_DRIVER_START( chopper1 )
 	MDRV_VIDEO_UPDATE(gwar)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM3812, ym3812_interface)
-	MDRV_SOUND_ADD(Y8950, y8950_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM3812, 4000000)
+	MDRV_SOUND_CONFIG(ym3812_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
+
+	MDRV_SOUND_ADD(Y8950, 4000000)
+	MDRV_SOUND_CONFIG(y8950_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 
@@ -1249,8 +1293,15 @@ static MACHINE_DRIVER_START( tdfever )
 	MDRV_VIDEO_UPDATE(tdfever)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM3526, ym3526_interface)
-	MDRV_SOUND_ADD(Y8950,y8950_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM3526, 4000000)
+	MDRV_SOUND_CONFIG(ym3526_interface_0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
+
+	MDRV_SOUND_ADD(Y8950, 4000000)
+	MDRV_SOUND_CONFIG(y8950_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 
@@ -1286,8 +1337,15 @@ static MACHINE_DRIVER_START( tdfever2 )
 	MDRV_VIDEO_UPDATE(tdfever)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM3526, ym3526_interface)
-	MDRV_SOUND_ADD(Y8950,y8950_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM3526, 4000000)
+	MDRV_SOUND_CONFIG(ym3526_interface_0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
+
+	MDRV_SOUND_ADD(Y8950, 4000000)
+	MDRV_SOUND_CONFIG(y8950_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 
@@ -1323,7 +1381,11 @@ static MACHINE_DRIVER_START( ftsoccer )
 	MDRV_VIDEO_UPDATE(tdfever)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(Y8950, y8950_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(Y8950, 4000000)
+	MDRV_SOUND_CONFIG(y8950_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 

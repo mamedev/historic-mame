@@ -23,7 +23,8 @@ the variable GorfBaseFrequency, this is defaulted to 8000
 
 #include "driver.h"
 #include "cpu/z80/z80.h"
-
+#include "sound/custom.h"
+#include "sound/samples.h"
 
 
 int	GorfBaseFrequency;		/* Some games (Qbert) change this */
@@ -122,12 +123,12 @@ char totalword[256], *totalword_ptr;
 char oldword[256];
 int plural = 0;
 
-int gorf_sh_start(const struct MachineSound *msound)
+void *gorf_sh_start(int clock, const struct CustomSound_interface *config)
 {
     GorfBaseFrequency = 11025;
     GorfBaseVolume = 230;
     GorfChannel = 0;
-    return 0;
+    return auto_malloc(1);
 }
 
 READ8_HANDLER( gorf_speech_r )
@@ -208,8 +209,4 @@ READ8_HANDLER( gorf_port_2_r )
     Ans = (input_port_2_r(0) & 0x7F);
     if (gorf_status_r() != 0) Ans += 128;
     return Ans;
-}
-
-void gorf_sh_update(void)
-{
 }

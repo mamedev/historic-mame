@@ -31,6 +31,8 @@
 #include "driver.h"
 #include "machine/segaic16.h"
 #include "system16.h"
+#include "sound/2612intf.h"
+#include "sound/rf5c68.h"
 
 
 
@@ -618,14 +620,14 @@ ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( sound_portmap, ADDRESS_SPACE_IO, 8 )
 	ADDRESS_MAP_FLAGS( AMEF_UNMAP(1) )
-	AM_RANGE(0x80, 0x80) AM_MIRROR(0x0c) AM_READWRITE(YM2612_status_port_0_A_r, YM2612_control_port_0_A_w)
-	AM_RANGE(0x81, 0x81) AM_MIRROR(0x0c) AM_WRITE(YM2612_data_port_0_A_w)
-	AM_RANGE(0x82, 0x82) AM_MIRROR(0x0c) AM_WRITE(YM2612_control_port_0_B_w)
-	AM_RANGE(0x83, 0x83) AM_MIRROR(0x0c) AM_WRITE(YM2612_data_port_0_B_w)
-	AM_RANGE(0x90, 0x90) AM_MIRROR(0x0c) AM_READWRITE(YM2612_status_port_1_A_r, YM2612_control_port_1_A_w)
-	AM_RANGE(0x91, 0x91) AM_MIRROR(0x0c) AM_WRITE(YM2612_data_port_1_A_w)
-	AM_RANGE(0x92, 0x92) AM_MIRROR(0x0c) AM_WRITE(YM2612_control_port_1_B_w)
-	AM_RANGE(0x93, 0x93) AM_MIRROR(0x0c) AM_WRITE(YM2612_data_port_1_B_w)
+	AM_RANGE(0x80, 0x80) AM_MIRROR(0x0c) AM_READWRITE(YM3438_status_port_0_A_r, YM3438_control_port_0_A_w)
+	AM_RANGE(0x81, 0x81) AM_MIRROR(0x0c) AM_WRITE(YM3438_data_port_0_A_w)
+	AM_RANGE(0x82, 0x82) AM_MIRROR(0x0c) AM_WRITE(YM3438_control_port_0_B_w)
+	AM_RANGE(0x83, 0x83) AM_MIRROR(0x0c) AM_WRITE(YM3438_data_port_0_B_w)
+	AM_RANGE(0x90, 0x90) AM_MIRROR(0x0c) AM_READWRITE(YM3438_status_port_1_A_r, YM3438_control_port_1_A_w)
+	AM_RANGE(0x91, 0x91) AM_MIRROR(0x0c) AM_WRITE(YM3438_data_port_1_A_w)
+	AM_RANGE(0x92, 0x92) AM_MIRROR(0x0c) AM_WRITE(YM3438_control_port_1_B_w)
+	AM_RANGE(0x93, 0x93) AM_MIRROR(0x0c) AM_WRITE(YM3438_data_port_1_B_w)
 	AM_RANGE(0xa0, 0xa0) AM_MIRROR(0x1f) AM_WRITE(soundbank_w)
 	AM_RANGE(0xc0, 0xc0) AM_MIRROR(0x1f) AM_READWRITE(soundlatch_r, mcu_data_w)
 ADDRESS_MAP_END
@@ -1152,33 +1154,6 @@ INPUT_PORTS_END
 
 /*************************************
  *
- *	Sound definitions
- *
- *************************************/
-
-static struct RF5C68interface rf5c68_interface =
-{
-	8000000,
-	100
-};
-
-
-static struct YM2612interface ym3438_interface =
-{
-	2,
-	8000000,
-	{ YM3012_VOL(40,MIXER_PAN_CENTER,40,MIXER_PAN_CENTER),
-	  YM3012_VOL(40,MIXER_PAN_CENTER,40,MIXER_PAN_CENTER) },
-	{ NULL },
-	{ NULL },
-	{ NULL },
-	{ NULL }
-};
-
-
-
-/*************************************
- *
  *	Graphics definitions
  *
  *************************************/
@@ -1238,9 +1213,19 @@ static MACHINE_DRIVER_START( system18 )
 	MDRV_VIDEO_UPDATE(system18)
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD_TAG("3438", YM3438, ym3438_interface)
-	MDRV_SOUND_ADD_TAG("5c68", RF5C68, rf5c68_interface)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD_TAG("3438", YM3438, 8000000)
+	MDRV_SOUND_ROUTE(0, "left", 0.40)
+	MDRV_SOUND_ROUTE(1, "right", 0.40)
+
+	MDRV_SOUND_ADD_TAG("3438", YM3438, 8000000)
+	MDRV_SOUND_ROUTE(0, "left", 0.40)
+	MDRV_SOUND_ROUTE(1, "right", 0.40)
+
+	MDRV_SOUND_ADD_TAG("5c68", RF5C68, 8000000)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 1.0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 1.0)
 MACHINE_DRIVER_END
 
 
@@ -1550,9 +1535,9 @@ ROM_START( ddcrew )
 
 	ROM_REGION( 0x210000, REGION_CPU2, ROMREGION_ERASEFF ) /* sound CPU */
 	ROM_LOAD( "14133.7c",	 0x010000, 0x20000, CRC(cff96665) SHA1(b4dc7f1a03415ebebdb99a82ae89328c345e7678) )
-	ROM_LOAD( "14130.4c",    0x090000, 0x80000, CRC(948f34a1) SHA1(d4c6728d5eea06cee6ac15a34ec8cccb4cc4b982) )
+	ROM_LOAD( "14132.6c",    0x090000, 0x80000, CRC(1fae0220) SHA1(8414c74318ea915816c6b67801ac7c8c3fc905f9) )
 	ROM_LOAD( "14131.5c",    0x110000, 0x80000, CRC(be5a7d0b) SHA1(c2c598b0cf711273fdd568f3401375e9772c1d61) )
-	ROM_LOAD( "14132.6c",    0x190000, 0x80000, CRC(1fae0220) SHA1(8414c74318ea915816c6b67801ac7c8c3fc905f9) )
+	ROM_LOAD( "14130.4c",    0x190000, 0x80000, CRC(948f34a1) SHA1(d4c6728d5eea06cee6ac15a34ec8cccb4cc4b982) )
 ROM_END
 
 /**************************************************************************************************************************
@@ -1624,9 +1609,9 @@ ROM_START( ddcrew2 )
 
 	ROM_REGION( 0x210000, REGION_CPU2, ROMREGION_ERASEFF ) /* sound CPU */
 	ROM_LOAD( "14133.7c",	 0x010000, 0x20000, CRC(cff96665) SHA1(b4dc7f1a03415ebebdb99a82ae89328c345e7678) )
-	ROM_LOAD( "14130.4c",    0x090000, 0x80000, CRC(948f34a1) SHA1(d4c6728d5eea06cee6ac15a34ec8cccb4cc4b982) )
+	ROM_LOAD( "14132.6c",    0x090000, 0x80000, CRC(1fae0220) SHA1(8414c74318ea915816c6b67801ac7c8c3fc905f9) )
 	ROM_LOAD( "14131.5c",    0x110000, 0x80000, CRC(be5a7d0b) SHA1(c2c598b0cf711273fdd568f3401375e9772c1d61) )
-	ROM_LOAD( "14132.6c",    0x190000, 0x80000, CRC(1fae0220) SHA1(8414c74318ea915816c6b67801ac7c8c3fc905f9) )
+	ROM_LOAD( "14130.4c",    0x190000, 0x80000, CRC(948f34a1) SHA1(d4c6728d5eea06cee6ac15a34ec8cccb4cc4b982) )
 ROM_END
 
 /**************************************************************************************************************************

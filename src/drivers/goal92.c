@@ -12,6 +12,9 @@
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "sound/2203intf.h"
+#include "sound/okim6295.h"
+#include "sound/msm5205.h"
 
 extern WRITE16_HANDLER( goal92_background_w );
 extern WRITE16_HANDLER( goal92_foreground_w );
@@ -219,14 +222,11 @@ static void irqhandler(int irq)
 
 static struct YM2203interface ym2203_interface =
 {
-	2,			/* 2 chips */
-	2500000/2,
-	{ YM2203_VOL(25,25), YM2203_VOL(25,25) },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ irqhandler }
+	0,
+	0,
+	0,
+	0,
+	irqhandler
 };
 
 static void goal92_adpcm_int(int data)
@@ -236,19 +236,8 @@ static void goal92_adpcm_int(int data)
 
 static struct MSM5205interface msm5205_interface =
 {
-	1,						/* 1 chip */
-	400000, 				/* 400KHz */
-	{ goal92_adpcm_int },	/* interrupt function */
-	{ MSM5205_S96_4B },		/* 4KHz 4-bit */
-	{ 25 }					/* volume */
-};
-
-static struct OKIM6295interface okim6295_interface =
-{
-	1,
-	{ 2500000 },
-	{ REGION_SOUND1 },
-	{ 100 }
+	goal92_adpcm_int,	/* interrupt function */
+	MSM5205_S96_4B		/* 4KHz 4-bit */
 };
 
 static struct GfxLayout layout_8x8x4 =
@@ -332,8 +321,18 @@ static MACHINE_DRIVER_START( goal92 )
 	MDRV_VIDEO_UPDATE(goal92)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM2203, ym2203_interface)
-	MDRV_SOUND_ADD(MSM5205, msm5205_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM2203, 2500000/2)
+	MDRV_SOUND_CONFIG(ym2203_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
+
+	MDRV_SOUND_ADD(YM2203, 2500000/2)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
+
+	MDRV_SOUND_ADD(MSM5205, 400000)
+	MDRV_SOUND_CONFIG(msm5205_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( cupsocbl )
@@ -362,7 +361,11 @@ static MACHINE_DRIVER_START( cupsocbl )
 	MDRV_VIDEO_UPDATE(goal92)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(OKIM6295, okim6295_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(OKIM6295, 8000)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 /*

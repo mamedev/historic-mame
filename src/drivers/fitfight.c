@@ -83,6 +83,7 @@ Stephh's notes :
 
 #include "driver.h"
 #include "cpu/upd7810/upd7810.h"
+#include "sound/okim6295.h"
 
 
 data16_t *fitfight_spriteram;
@@ -747,14 +748,6 @@ static struct GfxDecodeInfo prot_gfxdecodeinfo[] =
 };
 
 
-static struct OKIM6295interface okim6295_interface =
-{
-	1,
-	{ 1333333/165 }, // ~8080Hz ??? TODO: find out the real frequency
-	{ REGION_SOUND1 },
-	{ 100 }
-};
-
 static MACHINE_DRIVER_START( fitfight )
 	MDRV_CPU_ADD_TAG("main",M68000, 12000000)
 	MDRV_CPU_PROGRAM_MAP(fitfight_main_map,0)
@@ -780,7 +773,11 @@ static MACHINE_DRIVER_START( fitfight )
 	MDRV_VIDEO_START(fitfight)
 	MDRV_VIDEO_UPDATE(fitfight)
 
-	MDRV_SOUND_ADD(OKIM6295, okim6295_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(OKIM6295, 1333333/165) // ~8080Hz ??? TODO: find out the real frequency
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( bbprot )
@@ -801,7 +798,11 @@ static MACHINE_DRIVER_START( bbprot )
 	MDRV_VIDEO_START(fitfight)
 	MDRV_VIDEO_UPDATE(fitfight)
 
-	MDRV_SOUND_ADD(OKIM6295, okim6295_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(OKIM6295, 1333333/165) // ~8080Hz ??? TODO: find out the real frequency
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 /***

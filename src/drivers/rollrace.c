@@ -9,6 +9,7 @@ Issues:
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "cpu/z80/z80.h"
+#include "sound/ay8910.h"
 
 
 VIDEO_UPDATE( rollrace );
@@ -236,17 +237,6 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 	{ -1 } /* end of array */
 };
 
-static struct AY8910interface ra_ay8910_interface =
-{
-	3,	  	/* 3 chips */
-	14318000/8,	/* 1.78975 MHz */
-	{ 10,10,10 },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ 0 }
-};
-
 static MACHINE_DRIVER_START( rollrace )
 
 	/* basic machine hardware */
@@ -275,7 +265,16 @@ static MACHINE_DRIVER_START( rollrace )
 	MDRV_VIDEO_UPDATE(rollrace)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(AY8910, ra_ay8910_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	
+	MDRV_SOUND_ADD(AY8910, 14318000/8)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.10)
+	
+	MDRV_SOUND_ADD(AY8910, 14318000/8)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.10)
+	
+	MDRV_SOUND_ADD(AY8910, 14318000/8)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.10)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( rollace2 )

@@ -122,6 +122,7 @@ Notes:
 #include "cpu/se3208/se3208.h"
 #include "vidhrdw/vrender0.h"
 #include "machine/ds1302.h"
+#include "sound/vrender0.h"
 
 #define IDLE_LOOP_SPEEDUP
 
@@ -801,8 +802,7 @@ INPUT_PORTS_END
 
 static struct VR0Interface vr0_interface =
 {
-	0x04800000,
-	YM3012_VOL(100, MIXER_PAN_LEFT, 100, MIXER_PAN_RIGHT)
+	0x04800000
 };
 
 
@@ -827,9 +827,12 @@ static MACHINE_DRIVER_START( crystal )
 	MDRV_VIDEO_UPDATE(crystal)
 	MDRV_VIDEO_EOF(crystal)
 
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(VRENDER0, vr0_interface)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
 
+	MDRV_SOUND_ADD(VRENDER0, 0)
+	MDRV_SOUND_CONFIG(vr0_interface)
+	MDRV_SOUND_ROUTE(0, "left", 1.0)
+	MDRV_SOUND_ROUTE(1, "right", 1.0)
 MACHINE_DRIVER_END
 
 ROM_START( crysbios )

@@ -107,6 +107,8 @@
 #include "driver.h"
 #include "cpu/m6809/m6809.h"
 #include "vidhrdw/generic.h"
+#include "sound/2151intf.h"
+#include "sound/upd7759.h"
 #include <math.h>
 
 
@@ -597,20 +599,13 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 static struct YM2151interface ym2151_interface =
 {
-	1,			/* 1 chip */
-	MASTER_CLOCK/4,
-	{ YM3012_VOL(50,MIXER_PAN_CENTER,50,MIXER_PAN_CENTER) },
-	{ ym2151_irq_gen }
+	ym2151_irq_gen
 };
 
 
 static struct upd7759_interface upd7759_interface =
 {
-	1,			/* 1 chip */
-	{ UPD7759_STANDARD_CLOCK },
-	{ 50 },
-	{ REGION_SOUND1 },
-	{ 0 }
+	REGION_SOUND1
 };
 
 
@@ -646,8 +641,16 @@ static MACHINE_DRIVER_START( rpunch )
 	MDRV_VIDEO_UPDATE(rpunch)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM2151, ym2151_interface)
-	MDRV_SOUND_ADD(UPD7759, upd7759_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM2151, MASTER_CLOCK/4)
+	MDRV_SOUND_CONFIG(ym2151_interface)
+	MDRV_SOUND_ROUTE(0, "mono", 0.50)
+	MDRV_SOUND_ROUTE(1, "mono", 0.50)
+
+	MDRV_SOUND_ADD(UPD7759, UPD7759_STANDARD_CLOCK)
+	MDRV_SOUND_CONFIG(upd7759_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
 MACHINE_DRIVER_END
 
 

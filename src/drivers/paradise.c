@@ -60,6 +60,7 @@ Notes:
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "paradise.h"
+#include "sound/okim6295.h"
 
 /***************************************************************************
 
@@ -358,14 +359,6 @@ static struct GfxDecodeInfo paradise_gfxdecodeinfo[] =
 
 ***************************************************************************/
 
-static struct OKIM6295interface paradise_okim6295_intf =
-{
-	2,
-	{ 1000000/132,1000000/132 },		/* 1Mhz / 132 verified */
-	{ REGION_SOUND1,REGION_SOUND2 },
-	{ 50,50 }
-};
-
 static MACHINE_DRIVER_START( paradise )
 
 	/* basic machine hardware */
@@ -389,7 +382,15 @@ static MACHINE_DRIVER_START( paradise )
 	MDRV_VIDEO_UPDATE(paradise)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(OKIM6295, paradise_okim6295_intf)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(OKIM6295, 1000000/132)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
+
+	MDRV_SOUND_ADD(OKIM6295, 1000000/132)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_2)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
 MACHINE_DRIVER_END
 
 

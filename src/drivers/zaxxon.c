@@ -157,6 +157,8 @@ NMI causes a ROM/RAM test.
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "machine/segacrpt.h"
+#include "sound/sn76496.h"
+#include "sound/samples.h"
 
 extern int zaxxon_vid_type;
 extern UINT8 *zaxxon_char_color_bank;
@@ -1115,7 +1117,6 @@ static const char *zaxxon_sample_names[] =
 static struct Samplesinterface zaxxon_samples_interface =
 {
 	12, /* 12 channels */
-	25, /* volume */
 	zaxxon_sample_names
 };
 
@@ -1133,17 +1134,7 @@ static const char *congo_sample_names[] =
 static struct Samplesinterface congo_samples_interface =
 {
 	5,	/* 5 channels */
-	25, /* volume */
 	congo_sample_names
-};
-
-/* Sound Interfaces */
-
-static struct SN76496interface congo_sn76496_interface =
-{
-	2,	/* 2 chips */
-	{ 4000000, 4000000 },	/* 4 MHz??? */
-	{ 100, 100 }
 };
 
 /* Interrupt Generators */
@@ -1203,7 +1194,11 @@ MACHINE_DRIVER_END
 static MACHINE_DRIVER_START( zaxxon )
 	MDRV_IMPORT_FROM(root)
 
-	MDRV_SOUND_ADD(SAMPLES, zaxxon_samples_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	
+	MDRV_SOUND_ADD(SAMPLES, 0)
+	MDRV_SOUND_CONFIG(zaxxon_samples_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( razmataz )
@@ -1244,8 +1239,17 @@ static MACHINE_DRIVER_START( congo )
 	MDRV_VIDEO_START(congo)
 	MDRV_VIDEO_UPDATE(congo)
 
-	MDRV_SOUND_ADD(SN76496, congo_sn76496_interface)
-	MDRV_SOUND_ADD(SAMPLES, congo_samples_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(SN76496, 4000000)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
+
+	MDRV_SOUND_ADD(SN76496, 4000000)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
+
+	MDRV_SOUND_ADD(SAMPLES, 0)
+	MDRV_SOUND_CONFIG(congo_samples_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( futspy )
@@ -1260,7 +1264,11 @@ static MACHINE_DRIVER_START( futspy )
 
 	MDRV_VIDEO_UPDATE(futspy)
 
-	MDRV_SOUND_ADD(SAMPLES, zaxxon_samples_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	
+	MDRV_SOUND_ADD(SAMPLES, 0)
+	MDRV_SOUND_CONFIG(zaxxon_samples_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
 MACHINE_DRIVER_END
 
 /* ROMs */

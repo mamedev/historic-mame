@@ -82,6 +82,11 @@ driver modified by Eisuke Watanabe
 #include "vidhrdw/konamiic.h"
 #include "cpu/upd7810/upd7810.h"
 #include "machine/eeprom.h"
+#include "sound/2610intf.h"
+#include "sound/2151intf.h"
+#include "sound/2413intf.h"
+#include "sound/okim6295.h"
+#include "sound/ymf278b.h"
 
 /* Variables defined in vidhrdw: */
 
@@ -508,98 +513,13 @@ static WRITE8_HANDLER( daitorid_portb_w )
 }
 
 
-/*******************/
-
-static int okim6295_command;
 static int mouja_m6295_rombank;
-static UINT32 volume_table[16];		/* M6295 volume lookup table */
-
-
-static void mouja_m6295_data_w(int data)
-{
-	/* if a command is pending, process the second half */
-	if (okim6295_command != -1)
-	{
-		int temp = data >> 4, i, start, stop;
-		data8_t *ROM = memory_region(REGION_SOUND1);
-
-		/* determine which voice(s) (voice is set by a 1 bit in the upper 4 bits of the second byte) */
-		for (i = 0; i < 4; i++, temp >>= 1)
-		{
-			if (temp & 1)
-			{
-				start = ((ROM[okim6295_command*8+0]<<16) + (ROM[okim6295_command*8+1]<<8) + ROM[okim6295_command*8+2]) & 0x3ffff;
-				stop  = ((ROM[okim6295_command*8+3]<<16) + (ROM[okim6295_command*8+4]<<8) + ROM[okim6295_command*8+5]) & 0x3ffff;
-
-				if ((start >= 0x20000) && mouja_m6295_rombank)
-				{
-					start += (mouja_m6295_rombank - 1) * 0x20000;			/* 0x00000-0x1ffff fixed rom  */
-					stop += (mouja_m6295_rombank - 1) * 0x20000;			/* 0x20000-0x3ffff banked rom */
-				}
-
-				if (start < stop)
-				{
-					if (!ADPCM_playing(i))
-					{
-						ADPCM_setvol(i, volume_table[data & 0x0f]);
-						ADPCM_play(i, start, 2 * (stop - start + 1));
-					}
-				}
-			}
-		}
-
-		/* reset the command */
-		okim6295_command = -1;
-	}
-
-	/* if this is the start of a command, remember the sample number for next time */
-	else if (data & 0x80)
-	{
-		okim6295_command = data & 0x7f;
-	}
-
-	/* otherwise, see if this is a silence command */
-	else
-	{
-		int temp = data >> 3, i;
-
-		/* determine which voice(s) (voice is set by a 1 bit in bits 3-6 of the command */
-		for (i = 0; i < 4; i++, temp >>= 1)
-		{
-			if (temp & 1)
-				ADPCM_stop(i);
-		}
-	}
-}
-
 static WRITE16_HANDLER( mouja_sound_rombank_w )
 {
 	if (ACCESSING_LSB)
 		mouja_m6295_rombank = (data >> 3) & 0x07;			/* M6295 special banked rom system */
 }
 
-static READ16_HANDLER( mouja_m6295_status_lsb_r )
-{
-	int i, result;
-
-	result = 0xf0;	/* naname expects bits 4-7 to be 1 */
-	/* set the bit to 1 if something is playing on a given channel */
-	for (i = 0; i < 4; i++)
-	{
-		if (ADPCM_playing(i))
-			result |= 1 << i;
-	}
-
-	return result;
-}
-
-static WRITE16_HANDLER( mouja_m6295_data_msb_w )
-{
-	if (ACCESSING_MSB)
-		mouja_m6295_data_w(data >> 8);
-}
-
-/*******************/
 
 static void metro_sound_irq_handler(int state)
 {
@@ -608,11 +528,7 @@ static void metro_sound_irq_handler(int state)
 
 static struct YM2151interface ym2151_interface =
 {
-	1,
-	4000000,			/* 4MHz ? */
-	{ YM3012_VOL(80,MIXER_PAN_LEFT,80,MIXER_PAN_RIGHT) },
-	{ metro_sound_irq_handler },	/* irq handler */
-	{ 0 }							/* port_write */
+	metro_sound_irq_handler	/* irq handler */
 };
 
 
@@ -648,69 +564,10 @@ static WRITE16_HANDLER( ymf278b_w )
 }
 
 
-static struct OKIM6295interface okim6295_interface =
-{
-	1,
-	{ 1200000/128 },		/* 165=7272Hz? 128=9375Hz? */
-	{ REGION_SOUND1 },
-	{ 10 }
-};
-
-static struct OKIM6295interface okim6295_intf_2151balanced =
-{
-	1,
-	{ 1200000/128 },		/* 165=7272Hz? 128=9375Hz? */
-	{ REGION_SOUND1 },
-	{ 40 }
-};
-
-static struct ADPCMinterface mouja_adpcm_interface =
-{
-	4,						/* 4 channels (M6295) */
-	16000000/1024,			/* 15625Hz */
-	REGION_SOUND1,
-	{ 35,35,35,35 }
-};
-
-
-static struct OKIM6295interface okim6295_intf_8kHz =
-{
-	1,
-	{ 8000 },
-	{ REGION_SOUND1 },
-	{ 50 }
-};
-
-static struct OKIM6295interface okim6295_intf_16kHz =
-{
-	1,
-	{ 16000 },
-	{ REGION_SOUND1 },
-	{ 50 }
-};
-
-
-static struct YM2413interface ym2413_interface =
-{
-	1,
-	3579545,
-	{ YM2413_VOL(100,MIXER_PAN_CENTER,100,MIXER_PAN_CENTER) }		/* Insufficient gain. */
-};
-
-static struct YM2413interface ym2413_intf_8MHz =
-{
-	1,
-	8000000,
-	{ YM2413_VOL(100,MIXER_PAN_CENTER,100,MIXER_PAN_CENTER) }
-};
-
 static struct YMF278B_interface ymf278b_interface =
 {
-	1,
-	{ YMF278B_STD_CLOCK },
-	{ REGION_SOUND1 },
-	{ YM3012_VOL(100, MIXER_PAN_CENTER, 100, MIXER_PAN_CENTER) },
-	{ ymf278b_interrupt }
+	REGION_SOUND1,
+	ymf278b_interrupt
 };
 
 
@@ -2048,17 +1905,9 @@ static void blzntrnd_irqhandler(int irq)
 
 static struct YM2610interface blzntrnd_ym2610_interface =
 {
-	1,
-	8000000,	/* 8 MHz??? */
-	{ 25 },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ blzntrnd_irqhandler },
-	{ REGION_SOUND1 },
-	{ REGION_SOUND2 },
-	{ YM3012_VOL(100,MIXER_PAN_LEFT,100,MIXER_PAN_RIGHT) }
+	blzntrnd_irqhandler,
+	REGION_SOUND1,
+	REGION_SOUND2
 };
 
 static ADDRESS_MAP_START( blzntrnd_sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
@@ -2152,7 +2001,7 @@ static ADDRESS_MAP_START( mouja_readmem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x478882, 0x478883) AM_READ(input_port_1_word_r	)	//
 	AM_RANGE(0x478884, 0x478885) AM_READ(input_port_2_word_r	)	//
 	AM_RANGE(0x478886, 0x478887) AM_READ(input_port_3_word_r	)	//
-	AM_RANGE(0xd00000, 0xd00001) AM_READ(mouja_m6295_status_lsb_r)
+	AM_RANGE(0xd00000, 0xd00001) AM_READ(OKIM6295_status_0_lsb_r)
 #if 0
 	AM_RANGE(0x460000, 0x46ffff) AM_READ(metro_bankedrom_r		)	// Banked ROM
 #endif
@@ -2181,7 +2030,7 @@ static ADDRESS_MAP_START( mouja_writemem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0xc00000, 0xc00001) AM_WRITE(YM2413_register_port_0_lsb_w	)
 	AM_RANGE(0xc00002, 0xc00003) AM_WRITE(YM2413_data_port_0_lsb_w		)
 	AM_RANGE(0x800000, 0x800001) AM_WRITE(mouja_sound_rombank_w			)
-	AM_RANGE(0xd00000, 0xd00001) AM_WRITE(mouja_m6295_data_msb_w		)
+	AM_RANGE(0xd00000, 0xd00001) AM_WRITE(OKIM6295_data_0_msb_w  		)
 
 #if 0
 	AM_RANGE(0x478840, 0x47884d) AM_WRITE(metro_blitter_w) AM_BASE(&metro_blitter_regs	)	// Tiles Blitter
@@ -3670,8 +3519,12 @@ static MACHINE_DRIVER_START( balcube )
 	MDRV_VIDEO_UPDATE(metro)
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(YMF278B, ymf278b_interface)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(YMF278B, YMF278B_STD_CLOCK)
+	MDRV_SOUND_CONFIG(ymf278b_interface)
+	MDRV_SOUND_ROUTE(0, "left", 1.0)
+	MDRV_SOUND_ROUTE(1, "right", 1.0)
 MACHINE_DRIVER_END
 
 
@@ -3698,8 +3551,12 @@ static MACHINE_DRIVER_START( bangball )
 	MDRV_VIDEO_UPDATE(metro)
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(YMF278B, ymf278b_interface)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(YMF278B, YMF278B_STD_CLOCK)
+	MDRV_SOUND_CONFIG(ymf278b_interface)
+	MDRV_SOUND_ROUTE(0, "left", 1.0)
+	MDRV_SOUND_ROUTE(1, "right", 1.0)
 MACHINE_DRIVER_END
 
 
@@ -3732,9 +3589,17 @@ static MACHINE_DRIVER_START( daitorid )
 	MDRV_VIDEO_UPDATE(metro)
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(YM2151, ym2151_interface)
-	MDRV_SOUND_ADD(OKIM6295, okim6295_intf_2151balanced)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(YM2151, 4000000)
+	MDRV_SOUND_CONFIG(ym2151_interface)
+	MDRV_SOUND_ROUTE(0, "left", 0.80)
+	MDRV_SOUND_ROUTE(1, "right", 0.80)
+
+	MDRV_SOUND_ADD(OKIM6295, 1200000/128)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.40)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 0.40)
 MACHINE_DRIVER_END
 
 
@@ -3767,9 +3632,16 @@ static MACHINE_DRIVER_START( dharma )
 	MDRV_VIDEO_UPDATE(metro)
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(OKIM6295, okim6295_interface)
-	MDRV_SOUND_ADD(YM2413, ym2413_interface)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(OKIM6295, 1200000/128)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.10)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 0.10)
+
+	MDRV_SOUND_ADD(YM2413, 3579545)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.90)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 0.90)
 MACHINE_DRIVER_END
 
 
@@ -3802,9 +3674,16 @@ static MACHINE_DRIVER_START( karatour )
 	MDRV_VIDEO_UPDATE(metro)
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(OKIM6295, okim6295_interface)
-	MDRV_SOUND_ADD(YM2413, ym2413_interface)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(OKIM6295, 1200000/128)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.10)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 0.10)
+
+	MDRV_SOUND_ADD(YM2413, 3579545)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.90)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 0.90)
 MACHINE_DRIVER_END
 
 
@@ -3837,9 +3716,16 @@ static MACHINE_DRIVER_START( 3kokushi )
 	MDRV_VIDEO_UPDATE(metro)
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(OKIM6295, okim6295_interface)
-	MDRV_SOUND_ADD(YM2413, ym2413_interface)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(OKIM6295, 1200000/128)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.10)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 0.10)
+
+	MDRV_SOUND_ADD(YM2413, 3579545)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.90)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 0.90)
 MACHINE_DRIVER_END
 
 
@@ -3872,9 +3758,16 @@ static MACHINE_DRIVER_START( lastfort )
 	MDRV_VIDEO_UPDATE(metro)
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(OKIM6295, okim6295_interface)
-	MDRV_SOUND_ADD(YM2413, ym2413_interface)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(OKIM6295, 1200000/128)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.10)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 0.10)
+
+	MDRV_SOUND_ADD(YM2413, 3579545)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.90)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 0.90)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( lastforg )
@@ -3906,9 +3799,16 @@ static MACHINE_DRIVER_START( lastforg )
 	MDRV_VIDEO_UPDATE(metro)
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(OKIM6295, okim6295_interface)
-	MDRV_SOUND_ADD(YM2413, ym2413_interface)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(OKIM6295, 1200000/128)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.10)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 0.10)
+
+	MDRV_SOUND_ADD(YM2413, 3579545)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.90)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 0.90)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( dokyusei )
@@ -3934,9 +3834,16 @@ static MACHINE_DRIVER_START( dokyusei )
 	MDRV_VIDEO_UPDATE(metro)
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(OKIM6295, okim6295_intf_8kHz)
-	MDRV_SOUND_ADD(YM2413, ym2413_intf_8MHz)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(OKIM6295, 8000)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.50)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 0.50)
+
+	MDRV_SOUND_ADD(YM2413, 8000000)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.90)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 0.90)
 MACHINE_DRIVER_END
 
 NVRAM_HANDLER( dokyusp )
@@ -3977,9 +3884,16 @@ static MACHINE_DRIVER_START( dokyusp )
 	MDRV_VIDEO_UPDATE(metro)
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(OKIM6295, okim6295_intf_16kHz)
-	MDRV_SOUND_ADD(YM2413, ym2413_intf_8MHz)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(OKIM6295, 16000)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.50)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 0.50)
+
+	MDRV_SOUND_ADD(YM2413, 8000000)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.90)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 0.90)
 MACHINE_DRIVER_END
 
 
@@ -4007,9 +3921,16 @@ static MACHINE_DRIVER_START( gakusai )
 	MDRV_VIDEO_UPDATE(metro)
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(OKIM6295, okim6295_intf_16kHz)
-	MDRV_SOUND_ADD(YM2413, ym2413_intf_8MHz)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(OKIM6295, 16000)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.50)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 0.50)
+
+	MDRV_SOUND_ADD(YM2413, 8000000)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.90)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 0.90)
 MACHINE_DRIVER_END
 
 
@@ -4037,9 +3958,16 @@ static MACHINE_DRIVER_START( gakusai2 )
 	MDRV_VIDEO_UPDATE(metro)
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(OKIM6295, okim6295_intf_16kHz)
-	MDRV_SOUND_ADD(YM2413, ym2413_intf_8MHz)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(OKIM6295, 16000)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.50)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 0.50)
+
+	MDRV_SOUND_ADD(YM2413, 8000000)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.90)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 0.90)
 MACHINE_DRIVER_END
 
 
@@ -4072,9 +4000,16 @@ static MACHINE_DRIVER_START( pangpoms )
 	MDRV_VIDEO_UPDATE(metro)
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(OKIM6295, okim6295_interface)
-	MDRV_SOUND_ADD(YM2413, ym2413_interface)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(OKIM6295, 1200000/128)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.10)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 0.10)
+
+	MDRV_SOUND_ADD(YM2413, 3579545)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.90)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 0.90)
 MACHINE_DRIVER_END
 
 
@@ -4107,9 +4042,16 @@ static MACHINE_DRIVER_START( poitto )
 	MDRV_VIDEO_UPDATE(metro)
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(OKIM6295, okim6295_interface)
-	MDRV_SOUND_ADD(YM2413, ym2413_interface)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(OKIM6295, 1200000/128)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.10)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 0.10)
+
+	MDRV_SOUND_ADD(YM2413, 3579545)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.90)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 0.90)
 MACHINE_DRIVER_END
 
 
@@ -4142,9 +4084,17 @@ static MACHINE_DRIVER_START( pururun )
 	MDRV_VIDEO_UPDATE(metro)
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(YM2151, ym2151_interface)
-	MDRV_SOUND_ADD(OKIM6295, okim6295_intf_2151balanced)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(YM2151, 4000000)
+	MDRV_SOUND_CONFIG(ym2151_interface)
+	MDRV_SOUND_ROUTE(0, "left", 0.80)
+	MDRV_SOUND_ROUTE(1, "right", 0.80)
+
+	MDRV_SOUND_ADD(OKIM6295, 1200000/128)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.40)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 0.40)
 MACHINE_DRIVER_END
 
 
@@ -4177,9 +4127,16 @@ static MACHINE_DRIVER_START( skyalert )
 	MDRV_VIDEO_UPDATE(metro)
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(OKIM6295, okim6295_interface)
-	MDRV_SOUND_ADD(YM2413, ym2413_interface)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(OKIM6295, 1200000/128)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.10)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 0.10)
+
+	MDRV_SOUND_ADD(YM2413, 3579545)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.90)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 0.90)
 MACHINE_DRIVER_END
 
 
@@ -4212,9 +4169,16 @@ static MACHINE_DRIVER_START( toride2g )
 	MDRV_VIDEO_UPDATE(metro)
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(OKIM6295, okim6295_interface)
-	MDRV_SOUND_ADD(YM2413, ym2413_interface)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(OKIM6295, 1200000/128)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.10)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 0.10)
+
+	MDRV_SOUND_ADD(YM2413, 3579545)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.90)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 0.90)
 MACHINE_DRIVER_END
 
 
@@ -4241,9 +4205,15 @@ static MACHINE_DRIVER_START( mouja )
 	MDRV_VIDEO_UPDATE(metro)
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(ADPCM, mouja_adpcm_interface)		/* M6295 special bankrom system */
-	MDRV_SOUND_ADD(YM2413, ym2413_interface)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+	MDRV_SOUND_ADD(OKIM6295, 1200000/128)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.10)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 0.10)
+
+	MDRV_SOUND_ADD(YM2413, 3579545)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.90)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 0.90)
 MACHINE_DRIVER_END
 
 
@@ -4275,8 +4245,14 @@ static MACHINE_DRIVER_START( blzntrnd )
 	MDRV_VIDEO_UPDATE(metro)
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(YM2610, blzntrnd_ym2610_interface)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(YM2610, 8000000)
+	MDRV_SOUND_CONFIG(blzntrnd_ym2610_interface)
+	MDRV_SOUND_ROUTE(0, "left",  0.25)
+	MDRV_SOUND_ROUTE(0, "right", 0.25)
+	MDRV_SOUND_ROUTE(1, "left",  1.0)
+	MDRV_SOUND_ROUTE(2, "right", 1.0)
 MACHINE_DRIVER_END
 
 /* like blzntrnd but new vidstart / gfxdecode for the different bg tilemap */
@@ -4308,8 +4284,14 @@ static MACHINE_DRIVER_START( gstrik2 )
 	MDRV_VIDEO_UPDATE(metro)
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(YM2610, blzntrnd_ym2610_interface)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(YM2610, 8000000)
+	MDRV_SOUND_CONFIG(blzntrnd_ym2610_interface)
+	MDRV_SOUND_ROUTE(0, "left",  0.25)
+	MDRV_SOUND_ROUTE(0, "right", 0.25)
+	MDRV_SOUND_ROUTE(1, "left",  1.0)
+	MDRV_SOUND_ROUTE(2, "right", 1.0)
 MACHINE_DRIVER_END
 
 
@@ -4422,23 +4404,8 @@ static DRIVER_INIT( blzntrnd )
 
 static DRIVER_INIT( mouja )
 {
-	int step;
-
 	metro_common();
 	irq_line = -1;	/* split interrupt handlers */
-
-	/* generate the OKI6295 volume table */
-	for (step = 0; step < 16; step++)
-	{
-		double out = 256.0;
-		int vol = step;
-
-		/* 3dB per step */
-		while (vol-- > 0)
-			out /= 1.412537545;	/* = 10 ^ (3/20) = 3dB */
-		volume_table[step] = (UINT32)out;
-	}
-
 	mouja_irq_timer = timer_alloc(mouja_irq_callback);
 }
 
@@ -5509,7 +5476,7 @@ GAMEX( 1995, puzzli,   0,        daitorid, puzzli,   daitorid, ROT0,   "Metro / 
 GAMEX( 1996, 3kokushi, 0,        3kokushi, 3kokushi, karatour, ROT0,   "Mitchell",                   "Sankokushi (Japan)",              GAME_IMPERFECT_GRAPHICS )
 GAME ( 1996, balcube,  0,        balcube,  balcube,  balcube,  ROT0,   "Metro",                      "Bal Cube"                            )
 GAME ( 1996, bangball, 0,        bangball, bangball, balcube,  ROT0,   "Banpresto / Kunihiko Tashiro+Goodhouse", "Bang Bang Ball (v1.05)"  )
-GAMEX( 1996, mouja,    0,        mouja,    mouja,    mouja,    ROT0,   "Etona",                      "Mouja (Japan)",                   GAME_NO_COCKTAIL )
+GAMEX( 1996, mouja,    0,        mouja,    mouja,    mouja,    ROT0,   "Etona",                      "Mouja (Japan)",                   GAME_NO_COCKTAIL | GAME_IMPERFECT_SOUND )
 GAMEX( 1997, gakusai,  0,        gakusai,  gakusai,  gakusai,  ROT0,   "MakeSoft",                   "Mahjong Gakuensai (Japan)",       GAME_IMPERFECT_GRAPHICS )
 GAME ( 1998, gakusai2, 0,        gakusai2, gakusai,  gakusai,  ROT0,   "MakeSoft",                   "Mahjong Gakuensai 2 (Japan)"         )
 

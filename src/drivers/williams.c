@@ -493,6 +493,7 @@
 #include "sndhrdw/williams.h"
 #include "vidhrdw/generic.h"
 #include "williams.h"
+#include "sound/dac.h"
 
 
 /**** configuration macros ****/
@@ -1297,27 +1298,6 @@ static struct GfxDecodeInfo williams2_gfxdecodeinfo[] =
 
 /*************************************
  *
- *	Sound definitions
- *
- *************************************/
-
-static struct DACinterface dac_interface =
-{
-	1,
-	{ 50 }
-};
-
-
-static struct hc55516_interface sinistar_cvsd_interface =
-{
-	1,
-	{ 80 },
-};
-
-
-
-/*************************************
- *
  *	Machine driver
  *
  *************************************/
@@ -1348,7 +1328,10 @@ static MACHINE_DRIVER_START( defender )
 	MDRV_VIDEO_UPDATE(williams)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(DAC, dac_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(DAC, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
 MACHINE_DRIVER_END
 
 
@@ -1370,7 +1353,8 @@ static MACHINE_DRIVER_START( sinistar )
 	MDRV_IMPORT_FROM(williams)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(HC55516, sinistar_cvsd_interface)
+	MDRV_SOUND_ADD(HC55516, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.80)
 MACHINE_DRIVER_END
 
 
@@ -1425,7 +1409,10 @@ static MACHINE_DRIVER_START( williams2 )
 	MDRV_VIDEO_UPDATE(williams2)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD_TAG("wmsdac", DAC, dac_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD_TAG("wmsdac", DAC, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
 MACHINE_DRIVER_END
 
 

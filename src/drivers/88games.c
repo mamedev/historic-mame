@@ -9,6 +9,8 @@
 #include "cpu/konami/konami.h"
 #include "cpu/z80/z80.h"
 #include "vidhrdw/konamiic.h"
+#include "sound/2151intf.h"
+#include "sound/upd7759.h"
 
 
 static MACHINE_INIT( 88games );
@@ -273,21 +275,14 @@ INPUT_PORTS_END
 
 
 
-static struct YM2151interface ym2151_interface =
+static struct upd7759_interface upd7759_interface_1 =
 {
-	1,			/* 1 chip */
-	3579545,	/* 3.579545 MHz */
-	{ YM3012_VOL(75,MIXER_PAN_LEFT,75,MIXER_PAN_RIGHT) },
-	{ 0 }
+	REGION_SOUND1	/* memory region */
 };
 
-static struct upd7759_interface upd7759_interface =
+static struct upd7759_interface upd7759_interface_2 =
 {
-	2,							/* number of chips */
-	{ UPD7759_STANDARD_CLOCK, UPD7759_STANDARD_CLOCK },
-	{ 30, 30 },					/* volume */
-	{ REGION_SOUND1, REGION_SOUND2 },	/* memory region */
-	{0, 0}
+	REGION_SOUND2	/* memory region */
 };
 
 
@@ -319,8 +314,19 @@ static MACHINE_DRIVER_START( 88games )
 	MDRV_VIDEO_UPDATE(88games)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM2151, ym2151_interface)
-	MDRV_SOUND_ADD(UPD7759, upd7759_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM2151, 3579545)
+	MDRV_SOUND_ROUTE(0, "mono", 0.75)
+	MDRV_SOUND_ROUTE(1, "mono", 0.75)
+	
+	MDRV_SOUND_ADD(UPD7759, UPD7759_STANDARD_CLOCK)
+	MDRV_SOUND_CONFIG(upd7759_interface_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.30)
+	
+	MDRV_SOUND_ADD(UPD7759, UPD7759_STANDARD_CLOCK)
+	MDRV_SOUND_CONFIG(upd7759_interface_2)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.30)
 MACHINE_DRIVER_END
 
 

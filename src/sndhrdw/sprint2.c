@@ -5,6 +5,7 @@
 *************************************************************************/
 #include "driver.h"
 #include "sprint2.h"
+#include "sound/discrete.h"
 
 
 /************************************************************************/
@@ -164,8 +165,8 @@ DISCRETE_SOUND_START(sprint2_discrete_interface)
 	DISCRETE_GAIN(SPRINT2_FINAL_MIX1, NODE_90, 65534.0/(846.9+1000.0+407.8))
 	DISCRETE_GAIN(SPRINT2_FINAL_MIX2, NODE_91, 65534.0/(846.9+1000.0+407.8))
 
-	DISCRETE_OUTPUT(SPRINT2_FINAL_MIX2, MIXER(100,MIXER_PAN_LEFT))
-	DISCRETE_OUTPUT(SPRINT2_FINAL_MIX1, MIXER(100,MIXER_PAN_RIGHT))
+	DISCRETE_OUTPUT(SPRINT2_FINAL_MIX2, 100)
+	DISCRETE_OUTPUT(SPRINT2_FINAL_MIX1, 100)
 DISCRETE_SOUND_END
 
 

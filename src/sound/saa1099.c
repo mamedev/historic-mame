@@ -99,7 +99,7 @@ struct saa1099_noise
 /* this structure defines a SAA1099 chip */
 struct SAA1099
 {
-	int stream;						/* our stream */
+	sound_stream * stream;			/* our stream */
 	int noise_params[2];			/* noise generators parameters */
 	int env_enable[2];				/* envelope generators enable */
 	int env_reverse_right[2];		/* envelope reversed for right channel */
@@ -112,22 +112,17 @@ struct SAA1099
 	int selected_reg;				/* selected register */
 	struct saa1099_channel channels[6];    /* channels */
 	struct saa1099_noise noise[2];	/* noise generators */
+	double sample_rate;
 };
 
-/* saa1099 chips */
-static struct SAA1099 saa1099[MAX_SAA1099];
-
-/* global parameters */
-static double sample_rate;
-
-static int amplitude_lookup[16] = {
+static const int amplitude_lookup[16] = {
 	 0*32767/16,  1*32767/16,  2*32767/16,	3*32767/16,
 	 4*32767/16,  5*32767/16,  6*32767/16,	7*32767/16,
 	 8*32767/16,  9*32767/16, 10*32767/16, 11*32767/16,
 	12*32767/16, 13*32767/16, 14*32767/16, 15*32767/16
 };
 
-static UINT8 envelope[8][64] = {
+static const UINT8 envelope[8][64] = {
 	/* zero amplitude */
 	{ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 	  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -170,9 +165,8 @@ static UINT8 envelope[8][64] = {
 	  0, 1, 2, 3, 4, 5, 6, 7, 8, 9,10,11,12,13,14,15 }
 };
 
-static void saa1099_envelope(int chip, int ch)
+static void saa1099_envelope(struct SAA1099 *saa, int ch)
 {
-	struct SAA1099 *saa = &saa1099[chip];
 	if (saa->env_enable[ch])
 	{
 		int step, mode, mask;
@@ -214,17 +208,17 @@ static void saa1099_envelope(int chip, int ch)
 }
 
 
-static void saa1099_update(int chip, INT16 **buffer, int length)
+static void saa1099_update(void *param, stream_sample_t **inputs, stream_sample_t **buffer, int length)
 {
-	struct SAA1099 *saa = &saa1099[chip];
+	struct SAA1099 *saa = param;
     int j, ch;
 
 	/* if the channels are disabled we're done */
 	if (!saa->all_ch_enable)
 	{
 		/* init output data */
-		memset(buffer[LEFT],0,length*sizeof(INT16));
-		memset(buffer[RIGHT],0,length*sizeof(INT16));
+		memset(buffer[LEFT],0,length*sizeof(*buffer[LEFT]));
+		memset(buffer[RIGHT],0,length*sizeof(*buffer[RIGHT]));
         return;
 	}
 
@@ -259,14 +253,14 @@ static void saa1099_update(int chip, INT16 **buffer, int length)
 				saa->channels[ch].freq = (double)((2 * 15625) << saa->channels[ch].octave) /
 					(511.0 - (double)saa->channels[ch].frequency);
 
-				saa->channels[ch].counter += sample_rate;
+				saa->channels[ch].counter += saa->sample_rate;
 				saa->channels[ch].level ^= 1;
 
 				/* eventually clock the envelope counters */
 				if (ch == 1 && saa->env_clock[0] == 0)
-					saa1099_envelope(chip, 0);
+					saa1099_envelope(saa, 0);
 				if (ch == 4 && saa->env_clock[1] == 0)
-					saa1099_envelope(chip, 1);
+					saa1099_envelope(saa, 1);
 			}
 
 			/* if the noise is enabled */
@@ -299,7 +293,7 @@ static void saa1099_update(int chip, INT16 **buffer, int length)
 			saa->noise[ch].counter -= saa->noise[ch].freq;
 			while (saa->noise[ch].counter < 0)
 			{
-				saa->noise[ch].counter += sample_rate;
+				saa->noise[ch].counter += saa->sample_rate;
 				if( ((saa->noise[ch].level & 0x4000) == 0) == ((saa->noise[ch].level & 0x0040) == 0) )
 					saa->noise[ch].level = (saa->noise[ch].level << 1) | 1;
 				else
@@ -314,47 +308,29 @@ static void saa1099_update(int chip, INT16 **buffer, int length)
 
 
 
-int saa1099_sh_start(const struct MachineSound *msound)
+static void *saa1099_start(int sndindex, int clock, const void *config)
 {
-	int i, j;
-	const struct SAA1099_interface *intf = msound->sound_interface;
+	struct SAA1099 *saa;
+	
+	saa = auto_malloc(sizeof(*saa));
+	memset(saa, 0, sizeof(*saa));
 
 	/* bag on a 0 sample_rate */
 	if (Machine->sample_rate == 0)
-		return 0;
+		return saa;
 
 	/* copy global parameters */
-	sample_rate = 1.0 * Machine->sample_rate;
+	saa->sample_rate = 1.0 * Machine->sample_rate;
 
 	/* for each chip allocate one stream */
-	for (i = 0; i < intf->numchips; i++)
-	{
-		int vol[2];
-		char buf[2][64];
-		const char *name[2];
-		struct SAA1099 *saa = &saa1099[i];
+	saa->stream = stream_create(0, 2, saa->sample_rate, saa, saa1099_update);
 
-		memset(saa, 0, sizeof(struct SAA1099));
-
-		for (j = 0; j < 2; j++)
-		{
-			sprintf(buf[j], "SAA1099 #%d", i);
-			name[j] = buf[j];
-			vol[j] = MIXER(intf->volume[i][j], j ? MIXER_PAN_RIGHT : MIXER_PAN_LEFT);
-		}
-		saa->stream = stream_init_multi(2, name, vol, sample_rate, i, saa1099_update);
-	}
-
-	return 0;
-}
-
-void saa1099_sh_stop(void)
-{
+	return saa;
 }
 
 static void saa1099_control_port_w( int chip, int reg, int data )
 {
-	struct SAA1099 *saa = &saa1099[chip];
+	struct SAA1099 *saa = sndti_token(SOUND_SAA1099, chip);
 
     if ((data & 0xff) > 0x1c)
 	{
@@ -367,16 +343,16 @@ static void saa1099_control_port_w( int chip, int reg, int data )
 	{
 		/* clock the envelope channels */
         if (saa->env_clock[0])
-			saa1099_envelope(chip,0);
+			saa1099_envelope(saa,0);
 		if (saa->env_clock[1])
-			saa1099_envelope(chip,1);
+			saa1099_envelope(saa,1);
     }
 }
 
 
 static void saa1099_write_port_w( int chip, int offset, int data )
 {
-	struct SAA1099 *saa = &saa1099[chip];
+	struct SAA1099 *saa = sndti_token(SOUND_SAA1099, chip);
 	int reg = saa->selected_reg;
 	int ch;
 
@@ -505,5 +481,41 @@ WRITE16_HANDLER( saa1099_write_port_1_lsb_w )
 {
 	if (ACCESSING_LSB)
 		saa1099_write_port_w(1, offset, data & 0xff);
+}
+
+
+
+/**************************************************************************
+ * Generic get_info
+ **************************************************************************/
+
+static void saa1099_set_info(void *token, UINT32 state, union sndinfo *info)
+{
+	switch (state)
+	{
+		/* no parameters to set */
+	}
+}
+
+
+void saa1099_get_info(void *token, UINT32 state, union sndinfo *info)
+{
+	switch (state)
+	{
+		/* --- the following bits of info are returned as 64-bit signed integers --- */
+
+		/* --- the following bits of info are returned as pointers to data or functions --- */
+		case SNDINFO_PTR_SET_INFO:						info->set_info = saa1099_set_info;		break;
+		case SNDINFO_PTR_START:							info->start = saa1099_start;			break;
+		case SNDINFO_PTR_STOP:							/* Nothing */							break;
+		case SNDINFO_PTR_RESET:							/* Nothing */							break;
+
+		/* --- the following bits of info are returned as NULL-terminated strings --- */
+		case SNDINFO_STR_NAME:							info->s = "SAA1099";					break;
+		case SNDINFO_STR_CORE_FAMILY:					info->s = "Philips";					break;
+		case SNDINFO_STR_CORE_VERSION:					info->s = "1.0";						break;
+		case SNDINFO_STR_CORE_FILE:						info->s = __FILE__;						break;
+		case SNDINFO_STR_CORE_CREDITS:					info->s = "Copyright (c) 2004, The MAME Team"; break;
+	}
 }
 

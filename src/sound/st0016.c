@@ -6,15 +6,22 @@
 #include <math.h>
 #include "driver.h"
 #include "cpuintrf.h"
+#include "st0016.h"
 
 #define VERBOSE (0)
 
-data8_t *st0016_sound_ram;
 data8_t *st0016_sound_regs;
-static int st0016_vpos[8], st0016_frac[8], st0016_lponce[8];
+
+struct st0016_info
+{
+	sound_stream * stream;
+	data8_t *sound_ram;
+	int vpos[8], frac[8], lponce[8];
+};
 
 WRITE8_HANDLER(st0016_snd_w)
 {
+	struct st0016_info *info = sndti_token(SOUND_ST0016, 0);
 	int voice = offset/32;
 	int reg = offset & 0x1f;
 	int oldreg = st0016_sound_regs[offset];
@@ -28,7 +35,7 @@ WRITE8_HANDLER(st0016_snd_w)
 	{
 		if ((reg == 0x16) && (data != 0))
 		{
-			st0016_vpos[voice] = st0016_frac[voice] = st0016_lponce[voice] = 0;
+			info->vpos[voice] = info->frac[voice] = info->lponce[voice] = 0;
 
 #if VERBOSE
 			logerror("Key on V%02d: st %06x-%06x lp %06x-%06x frq %x flg %x\n", voice,
@@ -43,8 +50,9 @@ WRITE8_HANDLER(st0016_snd_w)
 	}
 }
 
-static void st0016_update(int num, INT16 **outputs, int length)
+static void st0016_update(void *param, stream_sample_t **inputs, stream_sample_t **outputs, int length) 
 {
+	struct st0016_info *info = param;
 	int v, i, snum;
 	unsigned char *slot;
 	INT32 mix[48000*2];
@@ -70,38 +78,38 @@ static void st0016_update(int num, INT16 **outputs, int length)
 
 			for (snum = 0; snum < length; snum++)
 			{
-				sample = st0016_sound_ram[(sptr + st0016_vpos[v])&0x1fffff]<<8;
+				sample = info->sound_ram[(sptr + info->vpos[v])&0x1fffff]<<8;
 
 				*mixp++ += (sample * (char)slot[0x14]) >> 8;
 				*mixp++ += (sample * (char)slot[0x15]) >> 8;
 
-				st0016_frac[v] += freq;
-				st0016_vpos[v] += (st0016_frac[v]>>16);
-				st0016_frac[v] &= 0xffff;
+				info->frac[v] += freq;
+				info->vpos[v] += (info->frac[v]>>16);
+				info->frac[v] &= 0xffff;
 
 				// stop if we're at the end
-				if (st0016_lponce[v])
+				if (info->lponce[v])
 				{
 					// we've looped once, check loop end rather than sample end
-					if ((st0016_vpos[v] + sptr) >= leptr)
+					if ((info->vpos[v] + sptr) >= leptr)
 					{
-						st0016_vpos[v] = (lsptr - sptr);
+						info->vpos[v] = (lsptr - sptr);
 					}
 				}
 				else
 				{
 					// not looped yet, check sample end
-					if ((st0016_vpos[v] + sptr) >= eptr)
+					if ((info->vpos[v] + sptr) >= eptr)
 					{
 						if (slot[0x16] & 0x01)	// loop?
 						{
-							st0016_vpos[v] = (lsptr - sptr);
-							st0016_lponce[v] = 1;
+							info->vpos[v] = (lsptr - sptr);
+							info->lponce[v] = 1;
 						}
 						else
 						{
 							slot[0x16] = 0;
-							st0016_vpos[v] = st0016_frac[v] = 0;
+							info->vpos[v] = info->frac[v] = 0;
 						}
 					}
 				}
@@ -117,28 +125,54 @@ static void st0016_update(int num, INT16 **outputs, int length)
 	}
 }
 
-int st0016_sh_start(const struct MachineSound *msound)
+static void *st0016_start(int sndindex, int clock, const void *config)
 {
-	char buf[2][40];
-	const char *name[2];
-	int  vol[2];
-	struct ST0016interface *intf = msound->sound_interface;
+	const struct ST0016interface *intf = config;
+	struct st0016_info *info;
+	
+	info = auto_malloc(sizeof(*info));
+	memset(info, 0, sizeof(*info));
 
-	st0016_sound_ram = *(intf->p_soundram);
+	info->sound_ram = *(intf->p_soundram);
 
-	sprintf(buf[0], "ST-0016 L");
-	sprintf(buf[1], "ST-0016 R");
-	name[0] = buf[0];
-	name[1] = buf[1];
-	vol[0]=100;
-	vol[1]=100;
-	stream_init_multi(2, name, vol, 44100, 0, st0016_update);
+	info->stream = stream_create(0, 2, 44100, info, st0016_update);
 
-	return 0;
+	return info;
 }
 
-void st0016_sh_stop( void )
+
+
+/**************************************************************************
+ * Generic get_info
+ **************************************************************************/
+
+static void st0016_set_info(void *token, UINT32 state, union sndinfo *info)
 {
+	switch (state)
+	{
+		/* no parameters to set */
+	}
 }
 
+
+void st0016_get_info(void *token, UINT32 state, union sndinfo *info)
+{
+	switch (state)
+	{
+		/* --- the following bits of info are returned as 64-bit signed integers --- */
+
+		/* --- the following bits of info are returned as pointers to data or functions --- */
+		case SNDINFO_PTR_SET_INFO:						info->set_info = st0016_set_info;		break;
+		case SNDINFO_PTR_START:							info->start = st0016_start;				break;
+		case SNDINFO_PTR_STOP:							/* Nothing */							break;
+		case SNDINFO_PTR_RESET:							/* Nothing */							break;
+
+		/* --- the following bits of info are returned as NULL-terminated strings --- */
+		case SNDINFO_STR_NAME:							info->s = "ST0016";						break;
+		case SNDINFO_STR_CORE_FAMILY:					info->s = "Seta custom";				break;
+		case SNDINFO_STR_CORE_VERSION:					info->s = "1.0";						break;
+		case SNDINFO_STR_CORE_FILE:						info->s = __FILE__;						break;
+		case SNDINFO_STR_CORE_CREDITS:					info->s = "Copyright (c) 2004, The MAME Team"; break;
+	}
+}
 

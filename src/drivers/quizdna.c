@@ -10,6 +10,8 @@ Quiz Gekiretsu Scramble (Gakuen Paradise 2) (c) 1993 Face
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "sound/2203intf.h"
+#include "sound/okim6295.h"
 
 #define MCLK 16000000
 
@@ -442,21 +444,8 @@ static struct GfxDecodeInfo quizdna_gfxdecodeinfo[] =
 
 static struct YM2203interface ym2203_interface =
 {
-	1,
-	MCLK/4,  /* 4.000 MHz */
-	{ YM2203_VOL(40,10) },
-	{ input_port_1_r },
-	{ input_port_0_r },
-	{ 0 },
-	{ 0 }
-};
-
-static struct OKIM6295interface okim6295_interface =
-{
-	1,
-	{ MCLK/1024 },	/* 15.625KHz */
-	{ REGION_SOUND1 },
-	{ 30 }
+	input_port_1_r,
+	input_port_0_r
 };
 
 
@@ -482,9 +471,18 @@ static MACHINE_DRIVER_START( quizdna )
 	MDRV_VIDEO_UPDATE(quizdna)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM2203, ym2203_interface)
-	MDRV_SOUND_ADD(OKIM6295, okim6295_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
 
+	MDRV_SOUND_ADD(YM2203, MCLK/4)
+	MDRV_SOUND_CONFIG(ym2203_interface)
+	MDRV_SOUND_ROUTE(0, "mono", 0.10)
+	MDRV_SOUND_ROUTE(1, "mono", 0.10)
+	MDRV_SOUND_ROUTE(2, "mono", 0.10)
+	MDRV_SOUND_ROUTE(3, "mono", 0.40)
+
+	MDRV_SOUND_ADD(OKIM6295, MCLK/1024)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.30)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( gakupara )

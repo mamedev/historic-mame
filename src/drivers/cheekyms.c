@@ -8,7 +8,7 @@
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-
+#include "sound/dac.h"
 
 
 
@@ -131,13 +131,6 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 };
 
 
-static struct DACinterface dac_interface =
-{
-	1,
-	{ 100 }
-};
-
-
 static MACHINE_DRIVER_START( cheekyms )
 
 	/* basic machine hardware */
@@ -162,7 +155,10 @@ static MACHINE_DRIVER_START( cheekyms )
 	MDRV_VIDEO_UPDATE(cheekyms)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(DAC, dac_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(DAC, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 

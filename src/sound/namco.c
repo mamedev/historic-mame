@@ -12,6 +12,7 @@
 ***************************************************************************/
 
 #include "driver.h"
+#include "namco.h"
 
 
 /* 8 voices max */
@@ -32,10 +33,10 @@
 #define MIXLEVEL	((1 << (16 - 4 - 4)) / OVERSAMPLING_RATE)
 
 /* stream output level */
-#define OUTPUT_LEVEL(n)		((n) * MIXLEVEL / num_voices)
+#define OUTPUT_LEVEL(n)		((n) * MIXLEVEL / chip->num_voices)
 
 /* a position of waveform sample */
-#define WAVEFORM_POSITION(n)	(((n) >> f_fracbits) & 0x1f)
+#define WAVEFORM_POSITION(n)	(((n) >> chip->f_fracbits) & 0x1f)
 
 
 /* this structure defines the parameters for a channel */
@@ -56,27 +57,31 @@ typedef struct
 data8_t *namco_soundregs;
 data8_t *namco_wavedata;
 
-/* data about the sound system */
-static sound_channel channel_list[MAX_VOICES];
-static sound_channel *last_channel;
+struct namco_sound
+{
+	/* data about the sound system */
+	sound_channel channel_list[MAX_VOICES];
+	sound_channel *last_channel;
 
-/* global sound parameters */
-static int wave_size;
-static int num_voices;
-static int sound_enable;
-static int stream;
-static int namco_clock;
-static int sample_rate;
-static int f_fracbits;
-
-/* decoded waveform table */
-static INT16 *waveform[MAX_VOLUME];
+	/* global sound parameters */
+	int wave_size;
+	int num_voices;
+	int sound_enable;
+	sound_stream * stream;
+	int namco_clock;
+	int sample_rate;
+	int f_fracbits;
+	int stereo;
+	
+	/* decoded waveform table */
+	INT16 *waveform[MAX_VOLUME];
+};
 
 
 /* update the decoded waveform data */
-static void update_namco_waveform(int offset, data8_t data)
+static void update_namco_waveform(struct namco_sound *chip, int offset, data8_t data)
 {
-	if (wave_size == 1)
+	if (chip->wave_size == 1)
 	{
 		INT16 wdata;
 		int v;
@@ -85,9 +90,9 @@ static void update_namco_waveform(int offset, data8_t data)
 		for (v = 0; v < MAX_VOLUME; v++)
 		{
 			wdata = ((data >> 4) & 0x0f) - 8;
-			waveform[v][offset * 2] = OUTPUT_LEVEL(wdata * v);
+			chip->waveform[v][offset * 2] = OUTPUT_LEVEL(wdata * v);
 			wdata = (data & 0x0f) - 8;
-			waveform[v][offset * 2 + 1] = OUTPUT_LEVEL(wdata * v);
+			chip->waveform[v][offset * 2 + 1] = OUTPUT_LEVEL(wdata * v);
 		}
 	}
 	else
@@ -96,13 +101,13 @@ static void update_namco_waveform(int offset, data8_t data)
 
 		/* use only low 4 bits */
 		for (v = 0; v < MAX_VOLUME; v++)
-			waveform[v][offset] = OUTPUT_LEVEL(((data & 0x0f) - 8) * v);
+			chip->waveform[v][offset] = OUTPUT_LEVEL(((data & 0x0f) - 8) * v);
 	}
 }
 
 
 /* build the decoded waveform table */
-static int build_decoded_waveform(int region)
+static int build_decoded_waveform(struct namco_sound *chip, int region)
 {
 	INT16 *p;
 	int size;
@@ -110,14 +115,14 @@ static int build_decoded_waveform(int region)
 	int v;
 
 	/* 20pacgal has waves in RAM but old sound system */
-	if (region == -1 && num_voices != 3)
+	if (region == -1 && chip->num_voices != 3)
 	{
-		wave_size = 1;
+		chip->wave_size = 1;
 		size = 32 * 16;		/* 32 samples, 16 waveforms */
 	}
 	else
 	{
-		wave_size = 0;
+		chip->wave_size = 0;
 		size = 32 * 8;		/* 32 samples, 8 waveforms */
 	}
 
@@ -126,7 +131,7 @@ static int build_decoded_waveform(int region)
 
 	for (v = 0; v < MAX_VOLUME; v++)
 	{
-		waveform[v] = p;
+		chip->waveform[v] = p;
 		p += size;
 	}
 
@@ -137,7 +142,7 @@ static int build_decoded_waveform(int region)
 	if (namco_wavedata)
 	{
 		for (offset = 0; offset < 256; offset++)
-			update_namco_waveform(offset, namco_wavedata[offset]);
+			update_namco_waveform(chip, offset, namco_wavedata[offset]);
 	}
 
 	return 0;
@@ -145,7 +150,7 @@ static int build_decoded_waveform(int region)
 
 
 /* generate sound by oversampling */
-INLINE UINT32 namco_update_one(INT16 *buffer, int length, const INT16 *wave, UINT32 counter, UINT32 freq)
+INLINE UINT32 namco_update_one(struct namco_sound *chip, stream_sample_t *buffer, int length, const INT16 *wave, UINT32 counter, UINT32 freq)
 {
 	while (length-- > 0)
 	{
@@ -166,21 +171,23 @@ INLINE UINT32 namco_update_one(INT16 *buffer, int length, const INT16 *wave, UIN
 
 
 /* generate sound to the mix buffer in mono */
-static void namco_update_mono(int ch, INT16 *buffer, int length)
+static void namco_update_mono(void *param, stream_sample_t **inputs, stream_sample_t **_buffer, int length)
 {
+	struct namco_sound *chip = param;
+	stream_sample_t *buffer = _buffer[0];
 	sound_channel *voice;
 
 	/* zap the contents of the buffer */
-	memset(buffer, 0, length * sizeof(INT16));
+	memset(buffer, 0, length * sizeof(*buffer));
 
 	/* if no sound, we're done */
-	if (sound_enable == 0)
+	if (chip->sound_enable == 0)
 		return;
 
 	/* loop over each voice and add its contribution */
-	for (voice = channel_list; voice < last_channel; voice++)
+	for (voice = chip->channel_list; voice < chip->last_channel; voice++)
 	{
-		INT16 *mix = buffer;
+		stream_sample_t *mix = buffer;
 		int v = voice->volume[0];
 
 		if (voice->noise_sw)
@@ -190,7 +197,7 @@ static void namco_update_mono(int ch, INT16 *buffer, int length)
 			/* only update if we have non-zero volume and frequency */
 			if (v && f)
 			{
-				UINT32 delta = (f << (f_fracbits - 15 + 4)) * OVERSAMPLING_RATE;
+				UINT32 delta = (f << (chip->f_fracbits - 15 + 4)) * OVERSAMPLING_RATE;
 				UINT32 c = voice->noise_counter;
 				INT16 noise_data = OUTPUT_LEVEL(0x07 * (v >> 1) * OVERSAMPLING_RATE);
 				int i;
@@ -225,10 +232,10 @@ static void namco_update_mono(int ch, INT16 *buffer, int length)
 			/* only update if we have non-zero volume and frequency */
 			if (v && voice->frequency)
 			{
-				const INT16 *w = &waveform[v][voice->waveform_select * 32];
+				const INT16 *w = &chip->waveform[v][voice->waveform_select * 32];
 
 				/* generate sound into buffer and update the counter for this voice */
-				voice->counter = namco_update_one(mix, length, w, voice->counter, voice->frequency);
+				voice->counter = namco_update_one(chip, mix, length, w, voice->counter, voice->frequency);
 			}
 		}
 	}
@@ -236,23 +243,24 @@ static void namco_update_mono(int ch, INT16 *buffer, int length)
 
 
 /* generate sound to the mix buffer in stereo */
-static void namco_update_stereo(int ch, INT16 **buffer, int length)
+static void namco_update_stereo(void *param, stream_sample_t **inputs, stream_sample_t **buffer, int length)
 {
+	struct namco_sound *chip = param;
 	sound_channel *voice;
 
 	/* zap the contents of the buffers */
-	memset(buffer[0], 0, length * sizeof(INT16));
-	memset(buffer[1], 0, length * sizeof(INT16));
+	memset(buffer[0], 0, length * sizeof(*buffer[0]));
+	memset(buffer[1], 0, length * sizeof(*buffer[1]));
 
 	/* if no sound, we're done */
-	if (sound_enable == 0)
+	if (chip->sound_enable == 0)
 		return;
 
 	/* loop over each voice and add its contribution */
-	for (voice = channel_list; voice < last_channel; voice++)
+	for (voice = chip->channel_list; voice < chip->last_channel; voice++)
 	{
-		INT16 *lmix = buffer[0];
-		INT16 *rmix = buffer[1];
+		stream_sample_t *lmix = buffer[0];
+		stream_sample_t *rmix = buffer[1];
 		int lv = voice->volume[0];
 		int rv = voice->volume[1];
 
@@ -263,7 +271,7 @@ static void namco_update_stereo(int ch, INT16 **buffer, int length)
 			/* only update if we have non-zero volume and frequency */
 			if ((lv || rv) && f)
 			{
-				UINT32 delta = (f << (f_fracbits - 15 + 4)) * OVERSAMPLING_RATE;
+				UINT32 delta = (f << (chip->f_fracbits - 15 + 4)) * OVERSAMPLING_RATE;
 				UINT32 c = voice->noise_counter;
 				INT16 l_noise_data = OUTPUT_LEVEL(0x07 * (lv >> 1) * OVERSAMPLING_RATE);
 				INT16 r_noise_data = OUTPUT_LEVEL(0x07 * (rv >> 1) * OVERSAMPLING_RATE);
@@ -311,19 +319,19 @@ static void namco_update_stereo(int ch, INT16 **buffer, int length)
 				/* only update if we have non-zero left volume */
 				if (lv)
 				{
-					const INT16 *lw = &waveform[lv][voice->waveform_select * 32];
+					const INT16 *lw = &chip->waveform[lv][voice->waveform_select * 32];
 
 					/* generate sound into the buffer */
-					c = namco_update_one(lmix, length, lw, voice->counter, voice->frequency);
+					c = namco_update_one(chip, lmix, length, lw, voice->counter, voice->frequency);
 				}
 
 				/* only update if we have non-zero right volume */
 				if (rv)
 				{
-					const INT16 *rw = &waveform[rv][voice->waveform_select * 32];
+					const INT16 *rw = &chip->waveform[rv][voice->waveform_select * 32];
 
 					/* generate sound into the buffer */
-					c = namco_update_one(rmix, length, rw, voice->counter, voice->frequency);
+					c = namco_update_one(chip, rmix, length, rw, voice->counter, voice->frequency);
 				}
 
 				/* update the counter for this voice */
@@ -334,57 +342,48 @@ static void namco_update_stereo(int ch, INT16 **buffer, int length)
 }
 
 
-int namco_sh_start(const struct MachineSound *msound)
+static void *namco_start(int sndindex, int clock, const void *config)
 {
 	sound_channel *voice;
-	const struct namco_interface *intf = msound->sound_interface;
+	const struct namco_interface *intf = config;
 	int clock_multiple;
+	struct namco_sound *chip;
+
+	chip = auto_malloc(sizeof(*chip));
+	memset(chip, 0, sizeof(*chip));
 
 	/* extract globals from the interface */
-	num_voices = intf->voices;
-	last_channel = channel_list + num_voices;
+	chip->num_voices = intf->voices;
+	chip->last_channel = chip->channel_list + chip->num_voices;
+	chip->stereo = intf->stereo;
 
 	/* adjust internal clock */
-	namco_clock = intf->samplerate;
-	for (clock_multiple = 0; namco_clock < INTERNAL_RATE; clock_multiple++)
-		namco_clock *= 2;
+	chip->namco_clock = clock;
+	for (clock_multiple = 0; chip->namco_clock < INTERNAL_RATE; clock_multiple++)
+		chip->namco_clock *= 2;
 
-	f_fracbits = clock_multiple + 15;
+	chip->f_fracbits = clock_multiple + 15;
 
 	/* adjust output clock */
-	sample_rate = namco_clock / OVERSAMPLING_RATE;
+	chip->sample_rate = chip->namco_clock / OVERSAMPLING_RATE;
 
-	logerror("Namco: freq fractional bits = %d: internal freq = %d, output freq = %d\n", f_fracbits, namco_clock, sample_rate);
+	logerror("Namco: freq fractional bits = %d: internal freq = %d, output freq = %d\n", chip->f_fracbits, chip->namco_clock, chip->sample_rate);
 
 	/* build the waveform table */
-	if (build_decoded_waveform(intf->region))
-		return 1;
+	if (build_decoded_waveform(chip, intf->region))
+		return NULL;
 
 	/* get stream channels */
 	if (intf->stereo)
-	{
-		int vol[2];
-		char buf[2][40];
-		const char *name[2];
-
-		name[0] = buf[0];
-		sprintf(buf[0],"%s left",sound_name(msound));
-		name[1] = buf[1];
-		sprintf(buf[1],"%s right",sound_name(msound));
-		vol[0] = MIXER(intf->volume,MIXER_PAN_LEFT);
-		vol[1] = MIXER(intf->volume,MIXER_PAN_RIGHT);
-		stream = stream_init_multi(2, name, vol, sample_rate, 0, namco_update_stereo);
-	}
+		chip->stream = stream_create(0, 2, chip->sample_rate, chip, namco_update_stereo);
 	else
-	{
-		stream = stream_init(sound_name(msound), intf->volume, sample_rate, 0, namco_update_mono);
-	}
+		chip->stream = stream_create(0, 1, chip->sample_rate, chip, namco_update_mono);
 
 	/* start with sound enabled, many games don't have a sound enable register */
-	sound_enable = 1;
+	chip->sound_enable = 1;
 
 	/* reset all the voices */
-	for (voice = channel_list; voice < last_channel; voice++)
+	for (voice = chip->channel_list; voice < chip->last_channel; voice++)
 	{
 		voice->frequency = 0;
 		voice->volume[0] = voice->volume[1] = 0;
@@ -396,12 +395,7 @@ int namco_sh_start(const struct MachineSound *msound)
 		voice->noise_counter = 0;
 	}
 
-	return 0;
-}
-
-
-void namco_sh_stop(void)
-{
+	return chip;
 }
 
 
@@ -425,11 +419,13 @@ void namco_sh_stop(void)
 
 WRITE8_HANDLER( pacman_sound_enable_w )
 {
-	sound_enable = data;
+	struct namco_sound *chip = sndti_token(SOUND_NAMCO, 0);
+	chip->sound_enable = data;
 }
 
 WRITE8_HANDLER( pacman_sound_w )
 {
+	struct namco_sound *chip = sndti_token(SOUND_NAMCO, 0);
 	sound_channel *voice;
 	int ch;
 
@@ -438,7 +434,7 @@ WRITE8_HANDLER( pacman_sound_w )
 		return;
 
 	/* update the streams */
-	stream_update(stream, 0);
+	stream_update(chip->stream, 0);
 
 	/* set the register */
 	namco_soundregs[offset] = data;
@@ -450,11 +446,11 @@ WRITE8_HANDLER( pacman_sound_w )
 	else
 		ch = (offset - 0x11) / 5;
 
-	if (ch >= num_voices)
+	if (ch >= chip->num_voices)
 		return;
 
 	/* recompute the voice parameters */
-	voice = channel_list + ch;
+	voice = chip->channel_list + ch;
 	switch (offset - ch * 5)
 	{
 	case 0x05:
@@ -520,11 +516,13 @@ it select the 54XX/52XX outputs on those channels
 
 void polepos_sound_enable(int enable)
 {
-	sound_enable = enable;
+	struct namco_sound *chip = sndti_token(SOUND_NAMCO, 0);
+	chip->sound_enable = enable;
 }
 
 WRITE8_HANDLER( polepos_sound_w )
 {
+	struct namco_sound *chip = sndti_token(SOUND_NAMCO, 0);
 	sound_channel *voice;
 	int ch;
 
@@ -532,7 +530,7 @@ WRITE8_HANDLER( polepos_sound_w )
 		return;
 
 	/* update the streams */
-	stream_update(stream, 0);
+	stream_update(chip->stream, 0);
 
 	/* set the register */
 	namco_soundregs[offset] = data;
@@ -540,7 +538,7 @@ WRITE8_HANDLER( polepos_sound_w )
 	ch = (offset & 0x1f) / 4;
 
 	/* recompute the voice parameters */
-	voice = channel_list + ch;
+	voice = chip->channel_list + ch;
 	switch (offset & 0x23)
 	{
 	case 0x00:
@@ -596,11 +594,13 @@ WRITE8_HANDLER( polepos_sound_w )
 
 void mappy_sound_enable(int enable)
 {
-	sound_enable = enable;
+	struct namco_sound *chip = sndti_token(SOUND_NAMCO_15XX, 0);
+	chip->sound_enable = enable;
 }
 
 WRITE8_HANDLER( namco_15xx_w )
 {
+	struct namco_sound *chip = sndti_token(SOUND_NAMCO_15XX, 0);
 	sound_channel *voice;
 	int ch;
 
@@ -608,17 +608,17 @@ WRITE8_HANDLER( namco_15xx_w )
 		return;
 
 	/* update the streams */
-	stream_update(stream, 0);
+	stream_update(chip->stream, 0);
 
 	/* set the register */
 	namco_soundregs[offset] = data;
 
 	ch = offset / 8;
-	if (ch >= num_voices)
+	if (ch >= chip->num_voices)
 		return;
 
 	/* recompute the voice parameters */
-	voice = channel_list + ch;
+	voice = chip->channel_list + ch;
 	switch (offset - ch * 8)
 	{
 	case 0x03:
@@ -666,6 +666,7 @@ WRITE8_HANDLER( namco_15xx_w )
 
 static WRITE8_HANDLER( namcos1_sound_w )
 {
+	struct namco_sound *chip = sndti_token(SOUND_NAMCO_CUS30, 0);
 	sound_channel *voice;
 	int ch;
 	int nssw;
@@ -684,17 +685,17 @@ static WRITE8_HANDLER( namcos1_sound_w )
 		return;
 
 	/* update the streams */
-	stream_update(stream,0);
+	stream_update(chip->stream,0);
 
 	/* set the register */
 	namco_soundregs[offset] = data;
 
 	ch = offset / 8;
-	if (ch >= num_voices)
+	if (ch >= chip->num_voices)
 		return;
 
 	/* recompute the voice parameters */
-	voice = channel_list + ch;
+	voice = chip->channel_list + ch;
 	switch (offset - ch * 8)
 	{
 	case 0x00:
@@ -715,8 +716,8 @@ static WRITE8_HANDLER( namcos1_sound_w )
 		voice->volume[1] = data & 0x0f;
 
 		nssw = ((data & 0x80) >> 7);
-		if (++voice == last_channel)
-			voice = channel_list;
+		if (++voice == chip->last_channel)
+			voice = chip->channel_list;
 		voice->noise_sw = nssw;
 		break;
 	}
@@ -728,13 +729,14 @@ WRITE8_HANDLER( namcos1_cus30_w )
 	{
 		if (namco_wavedata[offset] != data)
 		{
+			struct namco_sound *chip = sndti_token(SOUND_NAMCO_CUS30, 0);
 			/* update the streams */
-			stream_update(stream,0);
+			stream_update(chip->stream,0);
 
 			namco_wavedata[offset] = data;
 
 			/* update the decoded waveform table */
-			update_namco_waveform(offset, data);
+			update_namco_waveform(chip, offset, data);
 		}
 	}
 	else if (offset < 0x140)
@@ -753,12 +755,13 @@ READ8_HANDLER( namcos1_cus30_r )
 
 WRITE8_HANDLER( snkwave_w )
 {
+	struct namco_sound *chip = sndti_token(SOUND_NAMCO, 0);
 	static int freq0 = 0xff;
-	sound_channel *voice = channel_list;
+	sound_channel *voice = chip->channel_list;
 	if( offset==0 ) freq0 = data;
 	if( offset==1 )
 	{
-		stream_update(stream, 0);
+		stream_update(chip->stream, 0);
 		if( data==0xff || freq0==0 )
 		{
 			voice->volume[0] = 0x0;
@@ -770,3 +773,109 @@ WRITE8_HANDLER( snkwave_w )
 		}
 	}
 }
+
+
+
+
+/**************************************************************************
+ * Generic get_info
+ **************************************************************************/
+
+static void namco_set_info(void *token, UINT32 state, union sndinfo *info)
+{
+	switch (state)
+	{
+		/* no parameters to set */
+	}
+}
+
+
+void namco_get_info(void *token, UINT32 state, union sndinfo *info)
+{
+	switch (state)
+	{
+		/* --- the following bits of info are returned as 64-bit signed integers --- */
+
+		/* --- the following bits of info are returned as pointers to data or functions --- */
+		case SNDINFO_PTR_SET_INFO:						info->set_info = namco_set_info;		break;
+		case SNDINFO_PTR_START:							info->start = namco_start;				break;
+		case SNDINFO_PTR_STOP:							/* Nothing */							break;
+		case SNDINFO_PTR_RESET:							/* Nothing */							break;
+
+		/* --- the following bits of info are returned as NULL-terminated strings --- */
+		case SNDINFO_STR_NAME:							info->s = "Namco";						break;
+		case SNDINFO_STR_CORE_FAMILY:					info->s = "Namco custom";				break;
+		case SNDINFO_STR_CORE_VERSION:					info->s = "1.0";						break;
+		case SNDINFO_STR_CORE_FILE:						info->s = __FILE__;						break;
+		case SNDINFO_STR_CORE_CREDITS:					info->s = "Copyright (c) 2004, The MAME Team"; break;
+	}
+}
+
+/**************************************************************************
+ * Generic get_info
+ **************************************************************************/
+
+static void namco_15xx_set_info(void *token, UINT32 state, union sndinfo *info)
+{
+	switch (state)
+	{
+		/* no parameters to set */
+	}
+}
+
+
+void namco_15xx_get_info(void *token, UINT32 state, union sndinfo *info)
+{
+	switch (state)
+	{
+		/* --- the following bits of info are returned as 64-bit signed integers --- */
+
+		/* --- the following bits of info are returned as pointers to data or functions --- */
+		case SNDINFO_PTR_SET_INFO:						info->set_info = namco_15xx_set_info;	break;
+		case SNDINFO_PTR_START:							info->start = namco_start;				break;
+		case SNDINFO_PTR_STOP:							/* Nothing */							break;
+		case SNDINFO_PTR_RESET:							/* Nothing */							break;
+
+		/* --- the following bits of info are returned as NULL-terminated strings --- */
+		case SNDINFO_STR_NAME:							info->s = "Namco 15XX";					break;
+		case SNDINFO_STR_CORE_FAMILY:					info->s = "Namco custom";				break;
+		case SNDINFO_STR_CORE_VERSION:					info->s = "1.0";						break;
+		case SNDINFO_STR_CORE_FILE:						info->s = __FILE__;						break;
+		case SNDINFO_STR_CORE_CREDITS:					info->s = "Copyright (c) 2004, The MAME Team"; break;
+	}
+}
+
+/**************************************************************************
+ * Generic get_info
+ **************************************************************************/
+
+static void namco_cus30_set_info(void *token, UINT32 state, union sndinfo *info)
+{
+	switch (state)
+	{
+		/* no parameters to set */
+	}
+}
+
+
+void namco_cus30_get_info(void *token, UINT32 state, union sndinfo *info)
+{
+	switch (state)
+	{
+		/* --- the following bits of info are returned as 64-bit signed integers --- */
+
+		/* --- the following bits of info are returned as pointers to data or functions --- */
+		case SNDINFO_PTR_SET_INFO:						info->set_info = namco_cus30_set_info;	break;
+		case SNDINFO_PTR_START:							info->start = namco_start;				break;
+		case SNDINFO_PTR_STOP:							/* Nothing */							break;
+		case SNDINFO_PTR_RESET:							/* Nothing */							break;
+
+		/* --- the following bits of info are returned as NULL-terminated strings --- */
+		case SNDINFO_STR_NAME:							info->s = "Namco CUS30";				break;
+		case SNDINFO_STR_CORE_FAMILY:					info->s = "Namco custom";				break;
+		case SNDINFO_STR_CORE_VERSION:					info->s = "1.0";						break;
+		case SNDINFO_STR_CORE_FILE:						info->s = __FILE__;						break;
+		case SNDINFO_STR_CORE_CREDITS:					info->s = "Copyright (c) 2004, The MAME Team"; break;
+	}
+}
+

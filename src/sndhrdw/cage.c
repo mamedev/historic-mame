@@ -11,6 +11,7 @@
 
 #include "driver.h"
 #include "cpu/tms32031/tms32031.h"
+#include "sound/dmadac.h"
 #include "cage.h"
 
 
@@ -617,18 +618,6 @@ ADDRESS_MAP_END
  *
  *************************************/
 
-/* Custom structure */
-struct dmadac_interface cage_dmadac_interface =
-{
-	DAC_BUFFER_CHANNELS,
-#if (DAC_BUFFER_CHANNELS == 4)
-	{ MIXER(50, MIXER_PAN_RIGHT), MIXER(50, MIXER_PAN_LEFT), MIXER(50, MIXER_PAN_LEFT), MIXER(50, MIXER_PAN_RIGHT) }
-#else
-	{ MIXER(100, MIXER_PAN_LEFT), MIXER(100, MIXER_PAN_RIGHT)) }
-#endif
-};
-
-
 MACHINE_DRIVER_START( cage )
 
 	/* basic machine hardware */
@@ -638,8 +627,27 @@ MACHINE_DRIVER_START( cage )
 	MDRV_CPU_PROGRAM_MAP(cage_map,0)
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(DMADAC, cage_dmadac_interface)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+	
+#if (DAC_BUFFER_CHANNELS == 4)
+	MDRV_SOUND_ADD(DMADAC, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 0.50)
+	
+	MDRV_SOUND_ADD(DMADAC, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.50)
+	
+	MDRV_SOUND_ADD(DMADAC, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.50)
+	
+	MDRV_SOUND_ADD(DMADAC, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 0.50)
+#else
+	MDRV_SOUND_ADD(DMADAC, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 1.0)
+	
+	MDRV_SOUND_ADD(DMADAC, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 1.0)
+#endif
 MACHINE_DRIVER_END
 
 

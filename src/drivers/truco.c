@@ -17,6 +17,7 @@
 
 #include "driver.h"
 #include "cpu/m6809/m6809.h"
+#include "sound/dac.h"
 
 /* from vidhrdw */
 VIDEO_UPDATE( truco );
@@ -142,12 +143,6 @@ static INTERRUPT_GEN( truco_interrupt )
 		trigger = 0;
 }
 
-static struct DACinterface dac_interface =
-{
-	1,
-	{ 80 }
-};
-
 
 static MACHINE_DRIVER_START( truco )
 
@@ -171,7 +166,10 @@ static MACHINE_DRIVER_START( truco )
 	MDRV_VIDEO_UPDATE(truco)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(DAC, dac_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(DAC, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.80)
 MACHINE_DRIVER_END
 
 

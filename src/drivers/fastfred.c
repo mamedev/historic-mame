@@ -7,6 +7,7 @@
 
 #include "driver.h"
 #include "fastfred.h"
+#include "sound/ay8910.h"
 
 
 // This routine is a big hack, but the only way I can get the game working
@@ -557,28 +558,6 @@ static struct GfxDecodeInfo imago_gfxdecodeinfo[] =
 
 #define CLOCK 18432000  /* The crystal is 18.432MHz */
 
-static struct AY8910interface fastfred_ay8910_interface =
-{
-	2,             /* 2 chips */
-	CLOCK/12,       /* ? */
-	{ 25, 25 },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ 0 }
-};
-
-static struct AY8910interface jumpcoas_ay8910_interface =
-{
-	1,             /* 1 chip */
-	CLOCK/12,       /* ? */
-	{ 25 },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ 0 }
-};
-
 
 static MACHINE_DRIVER_START( fastfred )
 
@@ -608,7 +587,13 @@ static MACHINE_DRIVER_START( fastfred )
 	MDRV_VIDEO_UPDATE(fastfred)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD_TAG("ay8910", AY8910, fastfred_ay8910_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD_TAG("ay8910.1", AY8910, CLOCK/12)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
+
+	MDRV_SOUND_ADD_TAG("ay8910.2", AY8910, CLOCK/12)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( jumpcoas )
@@ -624,7 +609,7 @@ static MACHINE_DRIVER_START( jumpcoas )
 	MDRV_GFXDECODE(jumpcoas_gfxdecodeinfo)
 
 	/* sound hardware */
-	MDRV_SOUND_REPLACE("ay8910", AY8910, jumpcoas_ay8910_interface)
+	MDRV_SOUND_REMOVE("ay8910.2")
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( imago )

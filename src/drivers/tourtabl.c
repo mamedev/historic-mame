@@ -104,12 +104,6 @@ static const struct R6532interface r6532_interface_1 =
 };
 
 
-static struct TIAinterface tia_interface =
-{
-    31400, 255, TIA_DEFAULT_GAIN
-};
-
-
 static MACHINE_INIT( tourtabl )
 {
 	r6532_init(0, &r6532_interface_0);
@@ -214,7 +208,10 @@ static MACHINE_DRIVER_START( tourtabl )
 	MDRV_VIDEO_UPDATE(tia)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(TIA, tia_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(TIA, 31400)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 

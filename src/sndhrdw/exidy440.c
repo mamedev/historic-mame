@@ -93,7 +93,7 @@ static int m6844_interrupt;
 static int m6844_chain;
 
 /* sound interface parameters */
-static int sound_stream;
+static sound_stream *stream;
 static sound_channel_data sound_channel[4];
 
 /* debugging */
@@ -113,7 +113,7 @@ static const int channel_bits[4] =
 
 
 /* function prototypes */
-static void channel_update(int ch, INT16 **buffer, int length);
+static void channel_update(void *param, stream_sample_t **inputs, stream_sample_t **outputs, int length);
 static void m6844_finished(int ch);
 static void play_cvsd(int ch);
 static void stop_cvsd(int ch);
@@ -153,15 +153,9 @@ static void finish_wav_file(void);
  *
  *************************************/
 
-int exidy440_sh_start(const struct MachineSound *msound)
+void *exidy440_sh_start(int clock, const struct CustomSound_interface *config)
 {
-	const char *names[] =
-	{
-		"Exidy 440 sound left",
-		"Exidy 440 sound right"
-	};
 	int i, length;
-	int vol[2];
 
 	/* reset the system */
 	exidy440_sound_command = 0;
@@ -178,15 +172,11 @@ int exidy440_sh_start(const struct MachineSound *msound)
 	m6844_chain = 0x00;
 
 	/* get stream channels */
-	vol[0] = MIXER(100, MIXER_PAN_LEFT);
-	vol[1] = MIXER(100, MIXER_PAN_RIGHT);
-	sound_stream = stream_init_multi(2, names, vol, SAMPLE_RATE_FAST, 0, channel_update);
+	stream = stream_create(0, 2, SAMPLE_RATE_FAST, NULL, channel_update);
 
 	/* allocate the sample cache */
 	length = memory_region_length(REGION_SOUND1) * 16 + MAX_CACHE_ENTRIES * sizeof(sound_cache_entry);
 	sound_cache = auto_malloc(length);
-	if (!sound_cache)
-		return 1;
 
 	/* determine the hard end of the cache and reset */
 	sound_cache_max = (sound_cache_entry *)((UINT8 *)sound_cache + length);
@@ -194,14 +184,12 @@ int exidy440_sh_start(const struct MachineSound *msound)
 
 	/* allocate the mixer buffer */
 	mixer_buffer_left = auto_malloc(2 * SAMPLE_RATE_FAST * sizeof(INT32));
-	if (!mixer_buffer_left)
-		return 1;
 	mixer_buffer_right = mixer_buffer_left + SAMPLE_RATE_FAST;
 
 	if (SOUND_LOG)
 		debuglog = fopen("sound.log", "w");
 
-	return 0;
+	return auto_malloc(1);
 }
 
 
@@ -212,22 +200,10 @@ int exidy440_sh_start(const struct MachineSound *msound)
  *
  *************************************/
 
-void exidy440_sh_stop(void)
+void exidy440_sh_stop(void *token)
 {
 	if (SOUND_LOG && debuglog)
 		fclose(debuglog);
-}
-
-
-
-/*************************************
- *
- *	Periodic sound update
- *
- *************************************/
-
-void exidy440_sh_update(void)
-{
 }
 
 
@@ -282,7 +258,7 @@ static void add_and_scale_samples(int ch, INT32 *dest, int samples, int volume)
  *
  *************************************/
 
-static void mix_to_16(int length, INT16 *dest_left, INT16 *dest_right)
+static void mix_to_16(int length, stream_sample_t *dest_left, stream_sample_t *dest_right)
 {
 	INT32 *mixer_left = mixer_buffer_left;
 	INT32 *mixer_right = mixer_buffer_right;
@@ -311,8 +287,10 @@ static void mix_to_16(int length, INT16 *dest_left, INT16 *dest_right)
  *
  *************************************/
 
-static void channel_update(int ch, INT16 **buffer, int length)
+static void channel_update(void *param, stream_sample_t **inputs, stream_sample_t **outputs, int length)
 {
+	int ch;
+	
 	/* reset the mixer buffers */
 	memset(mixer_buffer_left, 0, length * sizeof(INT32));
 	memset(mixer_buffer_right, 0, length * sizeof(INT32));
@@ -359,7 +337,7 @@ static void channel_update(int ch, INT16 **buffer, int length)
 	}
 
 	/* all done, time to mix it */
-	mix_to_16(length, buffer[0], buffer[1]);
+	mix_to_16(length, outputs[0], outputs[1]);
 }
 
 
@@ -393,7 +371,7 @@ WRITE8_HANDLER( exidy440_sound_volume_w )
 		fprintf(debuglog, "Volume %02X=%02X\n", offset, data);
 
 	/* update the stream */
-	stream_update(sound_stream, 0);
+	stream_update(stream, 0);
 
 	/* set the new volume */
 	exidy440_sound_volume[offset] = ~data;
@@ -423,7 +401,7 @@ WRITE8_HANDLER( exidy440_sound_interrupt_clear_w )
 void exidy440_m6844_update(void)
 {
 	/* update the stream */
-	stream_update(sound_stream, 0);
+	stream_update(stream, 0);
 }
 
 
@@ -742,7 +720,7 @@ void stop_cvsd(int ch)
 {
 	/* the DMA channel is marked inactive; that will kill the audio */
 	sound_channel[ch].remaining = 0;
-	stream_update(sound_stream, 0);
+	stream_update(stream, 0);
 
 	if (SOUND_LOG && debuglog)
 		fprintf(debuglog, "Channel %d stop\n", ch);

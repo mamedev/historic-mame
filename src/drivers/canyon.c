@@ -34,6 +34,7 @@
 
 #include "driver.h"
 #include "canyon.h"
+#include "sound/discrete.h"
 
 
 extern WRITE8_HANDLER( canyon_videoram_w );
@@ -267,8 +268,12 @@ static MACHINE_DRIVER_START( canyon )
 	MDRV_VIDEO_UPDATE(canyon)
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD_TAG("discrete", DISCRETE, canyon_discrete_interface)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+	
+	MDRV_SOUND_ADD_TAG("discrete", DISCRETE, 0)
+	MDRV_SOUND_CONFIG(canyon_discrete_interface)
+	MDRV_SOUND_ROUTE(0, "left", 1.0)
+	MDRV_SOUND_ROUTE(1, "right", 1.0)
 MACHINE_DRIVER_END
 
 

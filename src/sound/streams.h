@@ -5,19 +5,27 @@
 extern "C" {
 #endif
 
-void set_RC_filter(int channel,int R1,int R2,int R3,int C);
+typedef INT32 stream_sample_t;
+typedef struct _sound_stream sound_stream;
 
-int streams_sh_start(void);
-void streams_sh_stop(void);
-void streams_sh_update(void);
+typedef void (*stream_callback)(void *param, stream_sample_t **inputs, stream_sample_t **outputs, int samples);
 
-int stream_init(const char *name,int default_mixing_level,
-		int sample_rate,
-		int param,void (*callback)(int param,INT16 *buffer,int length));
-int stream_init_multi(int channels,const char **names,const int *default_mixing_levels,
-		int sample_rate,
-		int param,void (*callback)(int param,INT16 **buffer,int length));
-void stream_update(int channel,int min_interval);	/* min_interval is in usec */
+int streams_init(void);
+void streams_set_tag(void *streamtag);
+void streams_frame_update(void);
+
+/* core stream configuration and operation */
+sound_stream *stream_create(int inputs, int outputs, int sample_rate, void *param, stream_callback callback);
+void stream_set_input(sound_stream *stream, int index, sound_stream *input_stream, int output_index, float gain);
+void stream_update(sound_stream *stream, int min_interval);	/* min_interval is in usec */
+stream_sample_t *stream_consume_output(sound_stream *stream, int output, int samples);
+
+/* utilities for accessing a particular stream */
+sound_stream *stream_find_by_tag(void *streamtag, int streamindex);
+int stream_get_inputs(sound_stream *stream);
+int stream_get_outputs(sound_stream *stream);
+void stream_set_input_gain(sound_stream *stream, int input, float gain);
+void stream_set_output_gain(sound_stream *stream, int output, float gain);
 
 #ifdef __cplusplus
 }

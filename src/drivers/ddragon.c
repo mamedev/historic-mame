@@ -45,6 +45,9 @@ conversion kit which could be applied to a bootleg double dragon :-p?
 #include "cpu/m6809/m6809.h"
 #include "cpu/z80/z80.h"
 #include "vidhrdw/generic.h"
+#include "sound/2151intf.h"
+#include "sound/okim6295.h"
+#include "sound/msm5205.h"
 
 /* from vidhrdw */
 extern unsigned char *ddragon_bgvideoram,*ddragon_fgvideoram;
@@ -857,27 +860,13 @@ static void irq_handler(int irq)
 
 static struct YM2151interface ym2151_interface =
 {
-	1,			/* 1 chip */
-	3579545,	/* ??? */
-	{ YM3012_VOL(60,MIXER_PAN_LEFT,60,MIXER_PAN_RIGHT) },
-	{ irq_handler }
+	irq_handler
 };
 
 static struct MSM5205interface msm5205_interface =
 {
-	2,					/* 2 chips             */
-	384000,				/* 384KHz             */
-	{ dd_adpcm_int, dd_adpcm_int },/* interrupt function */
-	{ MSM5205_S48_4B, MSM5205_S48_4B },	/* 8kHz */
-	{ 50, 50 }				/* adjusted sound fx volume */
-};
-
-static struct OKIM6295interface okim6295_interface =
-{
-	1,              /* 1 chip */
-	{ 8000 },           /* frequency (Hz) */
-	{ REGION_SOUND1 },  /* memory region */
-	{ 20 }	/* adjusted sound fx volume */
+	dd_adpcm_int,	/* interrupt function */
+	MSM5205_S48_4B	/* 8kHz */
 };
 
 static INTERRUPT_GEN( ddragon_interrupt )
@@ -931,8 +920,20 @@ static MACHINE_DRIVER_START( ddragon )
 	MDRV_VIDEO_UPDATE(ddragon)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM2151, ym2151_interface)
-	MDRV_SOUND_ADD(MSM5205, msm5205_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM2151, 3579545)
+	MDRV_SOUND_CONFIG(ym2151_interface)
+	MDRV_SOUND_ROUTE(0, "mono", 0.60)
+	MDRV_SOUND_ROUTE(1, "mono", 0.60)
+
+	MDRV_SOUND_ADD(MSM5205, 384000)
+	MDRV_SOUND_CONFIG(msm5205_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
+
+	MDRV_SOUND_ADD(MSM5205, 384000)
+	MDRV_SOUND_CONFIG(msm5205_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( darktowr )
@@ -969,8 +970,20 @@ static MACHINE_DRIVER_START( darktowr )
 	MDRV_VIDEO_UPDATE(ddragon)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM2151, ym2151_interface)
-	MDRV_SOUND_ADD(MSM5205, msm5205_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM2151, 3579545)
+	MDRV_SOUND_CONFIG(ym2151_interface)
+	MDRV_SOUND_ROUTE(0, "mono", 0.60)
+	MDRV_SOUND_ROUTE(1, "mono", 0.60)
+
+	MDRV_SOUND_ADD(MSM5205, 384000)
+	MDRV_SOUND_CONFIG(msm5205_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
+
+	MDRV_SOUND_ADD(MSM5205, 384000)
+	MDRV_SOUND_CONFIG(msm5205_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( ddragonb )
@@ -1004,8 +1017,20 @@ static MACHINE_DRIVER_START( ddragonb )
 	MDRV_VIDEO_UPDATE(ddragon)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM2151, ym2151_interface)
-	MDRV_SOUND_ADD(MSM5205, msm5205_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM2151, 3579545)
+	MDRV_SOUND_CONFIG(ym2151_interface)
+	MDRV_SOUND_ROUTE(0, "mono", 0.60)
+	MDRV_SOUND_ROUTE(1, "mono", 0.60)
+
+	MDRV_SOUND_ADD(MSM5205, 384000)
+	MDRV_SOUND_CONFIG(msm5205_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
+
+	MDRV_SOUND_ADD(MSM5205, 384000)
+	MDRV_SOUND_CONFIG(msm5205_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( ddragon2 )
@@ -1039,8 +1064,16 @@ static MACHINE_DRIVER_START( ddragon2 )
 	MDRV_VIDEO_UPDATE(ddragon)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM2151, ym2151_interface)
-	MDRV_SOUND_ADD(OKIM6295, okim6295_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM2151, 3579545)
+	MDRV_SOUND_CONFIG(ym2151_interface)
+	MDRV_SOUND_ROUTE(0, "mono", 0.60)
+	MDRV_SOUND_ROUTE(1, "mono", 0.60)
+
+	MDRV_SOUND_ADD(OKIM6295, 8000)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.20)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( toffy )
@@ -1070,8 +1103,12 @@ static MACHINE_DRIVER_START( toffy )
 	MDRV_MACHINE_INIT(toffy)
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(YM2151, ym2151_interface)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(YM2151, 3579545)
+	MDRV_SOUND_CONFIG(ym2151_interface)
+	MDRV_SOUND_ROUTE(0, "left", 0.60)
+	MDRV_SOUND_ROUTE(1, "right", 0.60)
 MACHINE_DRIVER_END
 
 /***************************************************************************

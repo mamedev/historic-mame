@@ -136,6 +136,7 @@
 #include "vidhrdw/vector.h"
 #include "sndhrdw/segasnd.h"
 #include "sega.h"
+#include "sound/samples.h"
 
 
 
@@ -634,7 +635,6 @@ static const char *spacfury_sample_names[] =
 static struct Samplesinterface spacfury_samples_interface =
 {
 	8,	/* 8 channels */
-	10, /* volume */
 	spacfury_sample_names
 };
 
@@ -671,7 +671,6 @@ static const char *zektor_sample_names[] =
 static struct Samplesinterface zektor_samples_interface =
 {
 	8,
-	10, /* volume */
 	zektor_sample_names
 };
 
@@ -717,16 +716,13 @@ static const char *tacscan_sample_names[] =
 static struct Samplesinterface tacscan_samples_interface =
 {
 	12, /* 12 channels */
-	100, /* volume */
 	tacscan_sample_names
 };
 
 
 static struct CustomSound_interface tacscan_custom_interface =
 {
-	tacscan_sh_start,
-	0,
-	tacscan_sh_update
+	tacscan_sh_start
 };
 
 
@@ -758,7 +754,6 @@ static const char *elim_sample_names[] =
 static struct Samplesinterface elim2_samples_interface =
 {
 	8,	/* 8 channels */
-	100, /* volume */
 	elim_sample_names
 };
 
@@ -809,7 +804,6 @@ static const char *startrek_sample_names[] =
 static struct Samplesinterface startrek_samples_interface =
 {
 	5, /* 5 channels */
-	10, /* volume */
 	startrek_sample_names
 };
 
@@ -841,7 +835,11 @@ static MACHINE_DRIVER_START( elim2 )
 	MDRV_VIDEO_UPDATE(sega)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD_TAG("samples", SAMPLES, elim2_samples_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	
+	MDRV_SOUND_ADD_TAG("samples", SAMPLES, 0)
+	MDRV_SOUND_CONFIG(elim2_samples_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 
@@ -854,13 +852,18 @@ static MACHINE_DRIVER_START( zektor )
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
 	MDRV_CPU_PROGRAM_MAP(sega_speechboard_readmem, sega_speechboard_writemem)
 	MDRV_CPU_IO_MAP (sega_speechboard_readport,sega_speechboard_writeport)
-	MDRV_SOUND_ADD(SP0250, sega_sp0250_interface)
 
 	/* video hardware */
 	MDRV_VISIBLE_AREA(512, 1536, 624, 1432)
 
 	/* sound hardware */
-	MDRV_SOUND_REPLACE("samples", SAMPLES, zektor_samples_interface)
+	MDRV_SOUND_REPLACE("samples", SAMPLES, 0)
+	MDRV_SOUND_CONFIG(zektor_samples_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.10)
+
+	MDRV_SOUND_ADD(SP0250, 0)
+	MDRV_SOUND_CONFIG(sega_sp0250_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 
@@ -873,8 +876,12 @@ static MACHINE_DRIVER_START( tacscan )
 	MDRV_VISIBLE_AREA(496, 1552, 592, 1456)
 
 	/* sound hardware */
-	MDRV_SOUND_REPLACE("samples", SAMPLES, tacscan_samples_interface)
-	MDRV_SOUND_ADD_TAG("custom",  CUSTOM,  tacscan_custom_interface)
+	MDRV_SOUND_REPLACE("samples", SAMPLES, 0)
+	MDRV_SOUND_CONFIG(tacscan_samples_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
+	
+	MDRV_SOUND_ADD_TAG("custom",  CUSTOM, 0)
+	MDRV_SOUND_CONFIG(tacscan_custom_interface)
 MACHINE_DRIVER_END
 
 
@@ -887,13 +894,18 @@ static MACHINE_DRIVER_START( spacfury )
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
 	MDRV_CPU_PROGRAM_MAP(sega_speechboard_readmem, sega_speechboard_writemem)
 	MDRV_CPU_IO_MAP (sega_speechboard_readport,sega_speechboard_writeport)
-	MDRV_SOUND_ADD(SP0250, sega_sp0250_interface)
 
 	/* video hardware */
 	MDRV_VISIBLE_AREA(512, 1536, 552, 1464)
 
 	/* sound hardware */
-	MDRV_SOUND_REPLACE("samples", SAMPLES, spacfury_samples_interface)
+	MDRV_SOUND_REPLACE("samples", SAMPLES, 0)
+	MDRV_SOUND_CONFIG(spacfury_samples_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.10)
+
+	MDRV_SOUND_ADD(SP0250, 0)
+	MDRV_SOUND_CONFIG(sega_sp0250_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 
@@ -906,13 +918,18 @@ static MACHINE_DRIVER_START( startrek )
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
 	MDRV_CPU_PROGRAM_MAP(sega_speechboard_readmem, sega_speechboard_writemem)
 	MDRV_CPU_IO_MAP (sega_speechboard_readport,sega_speechboard_writeport)
-	MDRV_SOUND_ADD(SP0250, sega_sp0250_interface)
 
 	/* video hardware */
 	MDRV_VISIBLE_AREA(512, 1536, 616, 1464)
 
 	/* sound hardware */
-	MDRV_SOUND_REPLACE("samples", SAMPLES, startrek_samples_interface)
+	MDRV_SOUND_REPLACE("samples", SAMPLES, 0)
+	MDRV_SOUND_CONFIG(startrek_samples_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
+
+	MDRV_SOUND_ADD(SP0250, 0)
+	MDRV_SOUND_CONFIG(sega_sp0250_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 

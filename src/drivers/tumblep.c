@@ -158,6 +158,9 @@ Notes:
 #include "vidhrdw/generic.h"
 #include "cpu/h6280/h6280.h"
 #include "decocrpt.h"
+#include "sound/2151intf.h"
+#include "sound/3812intf.h"
+#include "sound/okim6295.h"
 
 #define TUMBLEP_HACK	0
 #define FNCYWLD_HACK	0
@@ -1162,65 +1165,14 @@ static struct GfxDecodeInfo jumppop_gfxdecodeinfo[] =
 
 /******************************************************************************/
 
-static struct OKIM6295interface okim6295_interface3 =
-{
-	1,          		/* 1 chip */
-	{ 875000/132 },		/* Frequency */
-	{ REGION_SOUND1 },	/* memory region */
-	{ 50 }
-};
-
-static struct OKIM6295interface okim6295_interface2 =
-{
-	1,          /* 1 chip */
-	{ 7757 },   /* 8000Hz frequency */
-	{ REGION_SOUND1 },	/* memory region */
-	{ 70 }
-};
-
-static struct OKIM6295interface okim6295_interface =
-{
-	1,          /* 1 chip */
-	{ 7757 },	/* Frequency */
-	{ REGION_SOUND1 },	/* memory region */
-	{ 50 }
-};
-
 static void sound_irq(int state)
 {
 	cpunum_set_input_line(1,1,state); /* IRQ 2 */
 }
 
-static struct YM3812interface ym3812_interface =
-{
-	1,
-	3500000,	/* verified */
-	{ 70 },
-	{ 0 },
-};
-
 static struct YM2151interface ym2151_interface =
 {
-	1,
-	32220000/9, /* May not be correct, there is another crystal near the ym2151 */
-	{ YM3012_VOL(45,MIXER_PAN_LEFT,45,MIXER_PAN_RIGHT) },
-	{ sound_irq }
-};
-
-static struct OKIM6295interface fncy_okim6295_interface =
-{
-	1,          /* 1 chip */
-	{ 7757 },	/* Frequency */
-	{ REGION_SOUND1 },	/* memory region */
-	{ 100 }
-};
-
-static struct YM2151interface fncy_ym2151_interface =
-{
-	1,
-	32220000/9,
-	{ YM3012_VOL(20,MIXER_PAN_LEFT,20,MIXER_PAN_RIGHT) },
-	{ 0 }
+	sound_irq
 };
 
 static MACHINE_DRIVER_START( tumblep )
@@ -1248,9 +1200,17 @@ static MACHINE_DRIVER_START( tumblep )
 	MDRV_VIDEO_UPDATE(tumblep)
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(YM2151, ym2151_interface)
-	MDRV_SOUND_ADD(OKIM6295, okim6295_interface)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(YM2151, 32220000/9)
+	MDRV_SOUND_CONFIG(ym2151_interface)
+	MDRV_SOUND_ROUTE(0, "left", 0.45)
+	MDRV_SOUND_ROUTE(1, "right", 0.45)
+
+	MDRV_SOUND_ADD(OKIM6295, 7757)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.50)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 0.50)
 MACHINE_DRIVER_END
 
 
@@ -1275,7 +1235,11 @@ static MACHINE_DRIVER_START( tumblepb )
 	MDRV_VIDEO_UPDATE(tumblepb)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(OKIM6295, okim6295_interface2)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(OKIM6295, 7757)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.70)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( jumpkids )
@@ -1301,7 +1265,11 @@ static MACHINE_DRIVER_START( jumpkids )
 	MDRV_VIDEO_UPDATE(jumpkids)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(OKIM6295, okim6295_interface2)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(OKIM6295, 7757)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.70)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( fncywld )
@@ -1324,9 +1292,16 @@ static MACHINE_DRIVER_START( fncywld )
 	MDRV_VIDEO_UPDATE(fncywld)
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(YM2151, fncy_ym2151_interface)
-	MDRV_SOUND_ADD(OKIM6295, fncy_okim6295_interface)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(YM2151, 32220000/9)
+	MDRV_SOUND_ROUTE(0, "left", 0.20)
+	MDRV_SOUND_ROUTE(1, "right", 0.20)
+
+	MDRV_SOUND_ADD(OKIM6295, 7757)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 1.0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 1.0)
 MACHINE_DRIVER_END
 
 
@@ -1339,18 +1314,7 @@ static void semicom_irqhandler(int irq)
 
 static struct YM2151interface semicom_ym2151_interface =
 {
-	1,
-	3427190,	/* verified */
-	{ YM3012_VOL(10,MIXER_PAN_LEFT,10,MIXER_PAN_RIGHT) },
-	{ semicom_irqhandler }
-};
-
-static struct OKIM6295interface semicom_okim6295_interface =
-{
-	1,			/* 1 chip */
-	{ 1024000/132 },		/* verified */
-	{ REGION_SOUND1 },
-	{ 100 }
+	semicom_irqhandler
 };
 
 MACHINE_INIT (htchctch)
@@ -1392,9 +1356,17 @@ static MACHINE_DRIVER_START( htchctch )
 	MDRV_VIDEO_UPDATE(semicom)
 
 	/* sound hardware - same as hyperpac */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(YM2151, semicom_ym2151_interface)
-	MDRV_SOUND_ADD(OKIM6295, semicom_okim6295_interface)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(YM2151, 3427190)
+	MDRV_SOUND_CONFIG(semicom_ym2151_interface)
+	MDRV_SOUND_ROUTE(0, "left", 0.10)
+	MDRV_SOUND_ROUTE(1, "right", 0.10)
+
+	MDRV_SOUND_ADD(OKIM6295, 1024000/132)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 1.0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 1.0)
 MACHINE_DRIVER_END
 
 
@@ -1423,9 +1395,16 @@ static MACHINE_DRIVER_START( jumppop )
 	MDRV_VIDEO_START(jumppop)
 	MDRV_VIDEO_UPDATE(jumppop)
 
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(YM3812, ym3812_interface)
-	MDRV_SOUND_ADD(OKIM6295, okim6295_interface3)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(YM3812, 3500000)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.70)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 0.70)
+
+	MDRV_SOUND_ADD(OKIM6295, 875000/132)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.50)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 0.50)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( suprtrio )
@@ -1453,8 +1432,12 @@ static MACHINE_DRIVER_START( suprtrio )
 	MDRV_VIDEO_UPDATE(suprtrio)
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(OKIM6295, semicom_okim6295_interface)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(OKIM6295, 875000/132)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.50)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 0.50)
 MACHINE_DRIVER_END
 
 

@@ -10,6 +10,7 @@
 #include "vidhrdw/generic.h"
 #include "machine/6522via.h"
 #include "cpu/m6809/m6809.h"
+#include "sound/dac.h"
 
 /* from vidhrdw/beezer.c */
 extern UINT8 *videoram;
@@ -89,12 +90,6 @@ INPUT_PORTS_START( beezer )
 	PORT_DIPSETTING(    0x00, DEF_STR( Hardest ) )
 INPUT_PORTS_END
 
-static struct DACinterface dac_interface =
-{
-	1,
-	{ 100 }
-};
-
 static MACHINE_DRIVER_START( beezer )
 
 	/* basic machine hardware */
@@ -118,7 +113,10 @@ static MACHINE_DRIVER_START( beezer )
 	MDRV_VIDEO_UPDATE(beezer)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(DAC, dac_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(DAC, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 /***************************************************************************

@@ -44,6 +44,8 @@ COLORRAM (Colors)
 #include "vidhrdw/generic.h"
 #include "cpu/z80/z80.h"
 #include "sndhrdw/seibu.h"
+#include "sound/2151intf.h"
+#include "sound/msm5205.h"
 
 extern VIDEO_START( cabal );
 extern VIDEO_UPDATE( cabal );
@@ -75,7 +77,7 @@ static void cabalbl_play_adpcm( int channel, int which ){
 			start = RAM[offset+which] + 256*RAM[offset+which+1];
 			len = (RAM[offset+start]*256 + RAM[offset+start+1])*2;
 			start+=2;
-			ADPCM_play( channel,offset+start,len );
+//			ADPCM_play( channel,offset+start,len );
 		}
 	}
 }
@@ -452,10 +454,7 @@ static struct GfxDecodeInfo cabal_gfxdecodeinfo[] =
 
 static struct YM2151interface ym2151_interface =
 {
- 	1,			/* 1 chip */
- 	3579580,	/* 3.58 MHz ? */ /* 4 MHz in raine */
-	{ YM3012_VOL(80,MIXER_PAN_LEFT,80,MIXER_PAN_RIGHT) },
-	{ seibu_ym3812_irqhandler },
+	seibu_ym3812_irqhandler
 };
 
 static void irqhandler(int irq)
@@ -465,10 +464,7 @@ static void irqhandler(int irq)
 
 static struct YM2151interface cabalbl_ym2151_interface =
 {
- 	1,			/* 1 chip */
- 	3579580,	/* 3.58 MHz ? */ /* 4 MHz in raine */
-	{ YM3012_VOL(80,MIXER_PAN_LEFT,80,MIXER_PAN_RIGHT) },
-	{ irqhandler },
+	irqhandler
 };
 
 SEIBU_SOUND_SYSTEM_ADPCM_HARDWARE
@@ -500,9 +496,17 @@ static MACHINE_DRIVER_START( cabal )
 	MDRV_VIDEO_UPDATE(cabal)
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(YM2151, ym2151_interface)
-	SEIBU_SOUND_SYSTEM_ADPCM_INTERFACE
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(YM2151, 3579580)
+	MDRV_SOUND_CONFIG(ym2151_interface)
+	MDRV_SOUND_ROUTE(0, "left", 0.80)
+	MDRV_SOUND_ROUTE(1, "right", 0.80)
+
+	MDRV_SOUND_ADD(MSM5205, 0)
+	MDRV_SOUND_CONFIG(msm5205_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.40)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 0.40)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( cabalbl )
@@ -533,9 +537,17 @@ static MACHINE_DRIVER_START( cabalbl )
 	MDRV_VIDEO_UPDATE(cabal)
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(YM2151, cabalbl_ym2151_interface)
-	MDRV_SOUND_ADD(ADPCM, adpcm_interface)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(YM2151, 3579580)
+	MDRV_SOUND_CONFIG(cabalbl_ym2151_interface)
+	MDRV_SOUND_ROUTE(0, "left", 0.80)
+	MDRV_SOUND_ROUTE(1, "right", 0.80)
+
+	MDRV_SOUND_ADD(MSM5205, 0)
+	MDRV_SOUND_CONFIG(msm5205_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.40)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 0.40)
 MACHINE_DRIVER_END
 
 

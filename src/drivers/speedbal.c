@@ -45,6 +45,7 @@ out:
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "sound/3812intf.h"
 
 
 unsigned char *speedbal_foreground_videoram;
@@ -246,15 +247,6 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 
 
-static struct YM3812interface ym3812_interface =
-{
-	1,		      /* 1 chip (no more supported) */
-	3600000,	/* 3.600000 MHz ? (partially supported) */
-	{ 100 }	 /* (not supported) */
-};
-
-
-
 static MACHINE_DRIVER_START( speedbal )
 
 	/* basic machine hardware */
@@ -282,7 +274,10 @@ static MACHINE_DRIVER_START( speedbal )
 	MDRV_VIDEO_UPDATE(speedbal)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM3812, ym3812_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM3812, 3600000)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 

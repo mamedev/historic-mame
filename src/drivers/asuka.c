@@ -106,6 +106,9 @@ the prog rom. Doesn't seem to cause problems though.
 #include "state.h"
 #include "vidhrdw/taitoic.h"
 #include "sndhrdw/taitosnd.h"
+#include "sound/2610intf.h"
+#include "sound/2151intf.h"
+#include "sound/msm5205.h"
 
 WRITE16_HANDLER( asuka_spritectrl_w );
 
@@ -991,36 +994,22 @@ static void irq_handler(int irq)
 
 static struct YM2610interface ym2610_interface =
 {
-	1,	/* 1 chip */
-	8000000,	/* 8 MHz */
-	{ 25 },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ irq_handler },
-	{ REGION_SOUND1 },	/* Delta-T */
-	{ REGION_SOUND1 },	/* ADPCM */
-	{ YM3012_VOL(100,MIXER_PAN_LEFT,100,MIXER_PAN_RIGHT) }
+	irq_handler,
+	REGION_SOUND1,	/* Delta-T */
+	REGION_SOUND1	/* ADPCM */
 };
 
 
 static struct YM2151interface ym2151_interface =
 {
-	1,			/* 1 chip */
-	4000000,	/* 4 MHz ? */
-	{ YM3012_VOL(50,MIXER_PAN_CENTER,50,MIXER_PAN_CENTER) },
-	{ irq_handler },
-	{ sound_bankswitch_w }
+	irq_handler,
+	sound_bankswitch_w
 };
 
 static struct MSM5205interface msm5205_interface =
 {
-	1,						/* 1 chip */
-	384000,					/* 384 kHz */
-	{ asuka_msm5205_vck },	/* VCK function */
-	{ MSM5205_S48_4B },		/* 8 kHz */
-	{ 100 }					/* volume */
+	asuka_msm5205_vck,	/* VCK function */
+	MSM5205_S48_4B		/* 8 kHz */
 };
 
 
@@ -1060,7 +1049,13 @@ static MACHINE_DRIVER_START( bonzeadv )
 	MDRV_VIDEO_UPDATE(bonzeadv)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM2610, ym2610_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM2610, 8000000)
+	MDRV_SOUND_CONFIG(ym2610_interface)
+	MDRV_SOUND_ROUTE(0, "mono", 0.25)
+	MDRV_SOUND_ROUTE(1, "mono", 1.0)
+	MDRV_SOUND_ROUTE(2, "mono", 1.0)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( asuka )
@@ -1089,8 +1084,16 @@ static MACHINE_DRIVER_START( asuka )
 	MDRV_VIDEO_UPDATE(asuka)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM2151, ym2151_interface)
-	MDRV_SOUND_ADD(MSM5205, msm5205_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM2151, 4000000)
+	MDRV_SOUND_CONFIG(ym2151_interface)
+	MDRV_SOUND_ROUTE(0, "mono", 0.50)
+	MDRV_SOUND_ROUTE(1, "mono", 0.50)
+
+	MDRV_SOUND_ADD(MSM5205, 384000)
+	MDRV_SOUND_CONFIG(msm5205_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( cadash )
@@ -1119,7 +1122,12 @@ static MACHINE_DRIVER_START( cadash )
 	MDRV_VIDEO_UPDATE(bonzeadv)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM2151, ym2151_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM2151, 4000000)
+	MDRV_SOUND_CONFIG(ym2151_interface)
+	MDRV_SOUND_ROUTE(0, "mono", 0.50)
+	MDRV_SOUND_ROUTE(1, "mono", 0.50)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( mofflott )
@@ -1148,8 +1156,16 @@ static MACHINE_DRIVER_START( mofflott )
 	MDRV_VIDEO_UPDATE(asuka)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM2151, ym2151_interface)
-	MDRV_SOUND_ADD(MSM5205, msm5205_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM2151, 4000000)
+	MDRV_SOUND_CONFIG(ym2151_interface)
+	MDRV_SOUND_ROUTE(0, "mono", 0.50)
+	MDRV_SOUND_ROUTE(1, "mono", 0.50)
+
+	MDRV_SOUND_ADD(MSM5205, 384000)
+	MDRV_SOUND_CONFIG(msm5205_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( galmedes )
@@ -1178,7 +1194,12 @@ static MACHINE_DRIVER_START( galmedes )
 	MDRV_VIDEO_UPDATE(asuka)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM2151, ym2151_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM2151, 4000000)
+	MDRV_SOUND_CONFIG(ym2151_interface)
+	MDRV_SOUND_ROUTE(0, "mono", 0.50)
+	MDRV_SOUND_ROUTE(1, "mono", 0.50)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( eto )
@@ -1207,7 +1228,12 @@ static MACHINE_DRIVER_START( eto )
 	MDRV_VIDEO_UPDATE(asuka)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM2151, ym2151_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM2151, 4000000)
+	MDRV_SOUND_CONFIG(ym2151_interface)
+	MDRV_SOUND_ROUTE(0, "mono", 0.50)
+	MDRV_SOUND_ROUTE(1, "mono", 0.50)
 MACHINE_DRIVER_END
 
 

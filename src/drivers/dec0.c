@@ -40,6 +40,9 @@ Boulderdash use the same graphics chips but are different pcbs.
 #include "cpu/m6502/m6502.h"
 #include "cpu/h6280/h6280.h"
 #include "dec0.h"
+#include "sound/2203intf.h"
+#include "sound/3812intf.h"
+#include "sound/okim6295.h"
 
 data16_t *dec0_ram;
 data8_t *robocop_shared_ram;
@@ -839,39 +842,14 @@ static void sound_irq2(int linestate)
 	cpunum_set_input_line(1,1,linestate); /* IRQ2 */
 }
 
-static struct YM2203interface ym2203_interface =
-{
-	1,
-	1500000,	/* 12MHz clock divided by 8 = 1.50 MHz */
-	{ YM2203_VOL(35,90) },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ 0 }
-};
-
 static struct YM3812interface ym3812_interface =
 {
-	1,			/* 1 chip */
-	3000000,	/* 12MHz clock divided by 4 = 3.00 MHz */
-	{ 80 },
-	{ sound_irq },
+	sound_irq
 };
 
 static struct YM3812interface ym3812b_interface =
 {
-	1,			/* 1 chip */
-	3000000,
-	{ 80 },
-	{ sound_irq2 },
-};
-
-static struct OKIM6295interface okim6295_interface =
-{
-	1,                  /* 1 chip */
-	{ 7757 },           /* 8000Hz frequency */
-	{ REGION_SOUND1 },	/* memory region */
-	{ 80 }
+	sound_irq2
 };
 
 /******************************************************************************/
@@ -901,9 +879,21 @@ static MACHINE_DRIVER_START( hbarrel )
 	MDRV_VIDEO_UPDATE(hbarrel)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM2203, ym2203_interface)
-	MDRV_SOUND_ADD(YM3812, ym3812_interface)
-	MDRV_SOUND_ADD(OKIM6295, okim6295_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM2203, 1500000)
+	MDRV_SOUND_ROUTE(0, "mono", 0.90)
+	MDRV_SOUND_ROUTE(1, "mono", 0.90)
+	MDRV_SOUND_ROUTE(2, "mono", 0.90)
+	MDRV_SOUND_ROUTE(3, "mono", 0.35)
+
+	MDRV_SOUND_ADD(YM3812, 3000000)
+	MDRV_SOUND_CONFIG(ym3812_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.80)
+
+	MDRV_SOUND_ADD(OKIM6295, 7757)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.80)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( baddudes )
@@ -931,9 +921,21 @@ static MACHINE_DRIVER_START( baddudes )
 	MDRV_VIDEO_UPDATE(baddudes)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM2203, ym2203_interface)
-	MDRV_SOUND_ADD(YM3812, ym3812_interface)
-	MDRV_SOUND_ADD(OKIM6295, okim6295_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM2203, 1500000)
+	MDRV_SOUND_ROUTE(0, "mono", 0.90)
+	MDRV_SOUND_ROUTE(1, "mono", 0.90)
+	MDRV_SOUND_ROUTE(2, "mono", 0.90)
+	MDRV_SOUND_ROUTE(3, "mono", 0.35)
+
+	MDRV_SOUND_ADD(YM3812, 3000000)
+	MDRV_SOUND_CONFIG(ym3812_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.80)
+
+	MDRV_SOUND_ADD(OKIM6295, 7757)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.80)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( birdtry )
@@ -961,9 +963,21 @@ static MACHINE_DRIVER_START( birdtry )
 	MDRV_VIDEO_UPDATE(birdtry)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM2203, ym2203_interface)
-	MDRV_SOUND_ADD(YM3812, ym3812_interface)
-	MDRV_SOUND_ADD(OKIM6295, okim6295_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM2203, 1500000)
+	MDRV_SOUND_ROUTE(0, "mono", 0.90)
+	MDRV_SOUND_ROUTE(1, "mono", 0.90)
+	MDRV_SOUND_ROUTE(2, "mono", 0.90)
+	MDRV_SOUND_ROUTE(3, "mono", 0.35)
+
+	MDRV_SOUND_ADD(YM3812, 3000000)
+	MDRV_SOUND_CONFIG(ym3812_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.80)
+
+	MDRV_SOUND_ADD(OKIM6295, 7757)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.80)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( robocop )
@@ -995,9 +1009,21 @@ static MACHINE_DRIVER_START( robocop )
 	MDRV_VIDEO_UPDATE(robocop)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM2203, ym2203_interface)
-	MDRV_SOUND_ADD(YM3812, ym3812_interface)
-	MDRV_SOUND_ADD(OKIM6295, okim6295_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM2203, 1500000)
+	MDRV_SOUND_ROUTE(0, "mono", 0.90)
+	MDRV_SOUND_ROUTE(1, "mono", 0.90)
+	MDRV_SOUND_ROUTE(2, "mono", 0.90)
+	MDRV_SOUND_ROUTE(3, "mono", 0.35)
+
+	MDRV_SOUND_ADD(YM3812, 3000000)
+	MDRV_SOUND_CONFIG(ym3812_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.80)
+
+	MDRV_SOUND_ADD(OKIM6295, 7757)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.80)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( robocopb )
@@ -1025,9 +1051,21 @@ static MACHINE_DRIVER_START( robocopb )
 	MDRV_VIDEO_UPDATE(robocop)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM2203, ym2203_interface)
-	MDRV_SOUND_ADD(YM3812, ym3812_interface)
-	MDRV_SOUND_ADD(OKIM6295, okim6295_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM2203, 1500000)
+	MDRV_SOUND_ROUTE(0, "mono", 0.90)
+	MDRV_SOUND_ROUTE(1, "mono", 0.90)
+	MDRV_SOUND_ROUTE(2, "mono", 0.90)
+	MDRV_SOUND_ROUTE(3, "mono", 0.35)
+
+	MDRV_SOUND_ADD(YM3812, 3000000)
+	MDRV_SOUND_CONFIG(ym3812_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.80)
+
+	MDRV_SOUND_ADD(OKIM6295, 7757)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.80)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( hippodrm )
@@ -1059,9 +1097,21 @@ static MACHINE_DRIVER_START( hippodrm )
 	MDRV_VIDEO_UPDATE(hippodrm)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM2203, ym2203_interface)
-	MDRV_SOUND_ADD(YM3812, ym3812_interface)
-	MDRV_SOUND_ADD(OKIM6295, okim6295_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM2203, 1500000)
+	MDRV_SOUND_ROUTE(0, "mono", 0.90)
+	MDRV_SOUND_ROUTE(1, "mono", 0.90)
+	MDRV_SOUND_ROUTE(2, "mono", 0.90)
+	MDRV_SOUND_ROUTE(3, "mono", 0.35)
+
+	MDRV_SOUND_ADD(YM3812, 3000000)
+	MDRV_SOUND_CONFIG(ym3812_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.80)
+
+	MDRV_SOUND_ADD(OKIM6295, 7757)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.80)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( slyspy )
@@ -1089,9 +1139,21 @@ static MACHINE_DRIVER_START( slyspy )
 	MDRV_VIDEO_UPDATE(slyspy)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM2203, ym2203_interface)
-	MDRV_SOUND_ADD(YM3812, ym3812b_interface)
-	MDRV_SOUND_ADD(OKIM6295, okim6295_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM2203, 1500000)
+	MDRV_SOUND_ROUTE(0, "mono", 0.90)
+	MDRV_SOUND_ROUTE(1, "mono", 0.90)
+	MDRV_SOUND_ROUTE(2, "mono", 0.90)
+	MDRV_SOUND_ROUTE(3, "mono", 0.35)
+
+	MDRV_SOUND_ADD(YM3812, 3000000)
+	MDRV_SOUND_CONFIG(ym3812b_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.80)
+
+	MDRV_SOUND_ADD(OKIM6295, 7757)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.80)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( midres )
@@ -1119,9 +1181,21 @@ static MACHINE_DRIVER_START( midres )
 	MDRV_VIDEO_UPDATE(midres)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM2203, ym2203_interface)
-	MDRV_SOUND_ADD(YM3812, ym3812b_interface)
-	MDRV_SOUND_ADD(OKIM6295, okim6295_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM2203, 1500000)
+	MDRV_SOUND_ROUTE(0, "mono", 0.90)
+	MDRV_SOUND_ROUTE(1, "mono", 0.90)
+	MDRV_SOUND_ROUTE(2, "mono", 0.90)
+	MDRV_SOUND_ROUTE(3, "mono", 0.35)
+
+	MDRV_SOUND_ADD(YM3812, 3000000)
+	MDRV_SOUND_CONFIG(ym3812b_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.80)
+
+	MDRV_SOUND_ADD(OKIM6295, 7757)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.80)
 MACHINE_DRIVER_END
 
 /******************************************************************************/

@@ -1351,7 +1351,7 @@ static void recompute_fps(int skipped_it)
 int updatescreen(void)
 {
 	/* update sound */
-	sound_update();
+	sound_frame_update();
 
 	/* if we're not skipping this frame, draw the screen */
 	if (osd_skip_this_frame() == 0)
@@ -1520,11 +1520,77 @@ void machine_remove_cpu(struct InternalMachineDriver *machine, const char *tag)
 
 
 /*-------------------------------------------------
+	machine_add_speaker - add a speaker during
+	machine driver expansion
+-------------------------------------------------*/
+
+struct MachineSpeaker *machine_add_speaker(struct InternalMachineDriver *machine, const char *tag, float x, float y, float z)
+{
+	int speakernum;
+
+	for (speakernum = 0; speakernum < MAX_SPEAKER; speakernum++)
+		if (machine->speaker[speakernum].tag == NULL)
+		{
+			machine->speaker[speakernum].tag = tag;
+			machine->speaker[speakernum].x = x;
+			machine->speaker[speakernum].y = y;
+			machine->speaker[speakernum].z = z;
+			return &machine->speaker[speakernum];
+		}
+
+	logerror("Out of speakers!\n");
+	return NULL;
+}
+
+
+
+/*-------------------------------------------------
+	machine_find_speaker - find a tagged speaker
+	system during machine driver expansion
+-------------------------------------------------*/
+
+struct MachineSpeaker *machine_find_speaker(struct InternalMachineDriver *machine, const char *tag)
+{
+	int speakernum;
+
+	for (speakernum = 0; speakernum < MAX_SPEAKER; speakernum++)
+		if (machine->speaker[speakernum].tag && strcmp(machine->speaker[speakernum].tag, tag) == 0)
+			return &machine->speaker[speakernum];
+
+	logerror("Can't find speaker '%s'!\n", tag);
+	return NULL;
+}
+
+
+
+/*-------------------------------------------------
+	machine_remove_speaker - remove a tagged speaker
+	system during machine driver expansion
+-------------------------------------------------*/
+
+void machine_remove_speaker(struct InternalMachineDriver *machine, const char *tag)
+{
+	int speakernum;
+
+	for (speakernum = 0; speakernum < MAX_SPEAKER; speakernum++)
+		if (machine->speaker[speakernum].tag && strcmp(machine->speaker[speakernum].tag, tag) == 0)
+		{
+			memmove(&machine->speaker[speakernum], &machine->speaker[speakernum + 1], sizeof(machine->speaker[0]) * (MAX_SPEAKER - speakernum - 1));
+			memset(&machine->speaker[MAX_SPEAKER - 1], 0, sizeof(machine->speaker[0]));
+			return;
+		}
+
+	logerror("Can't find speaker '%s'!\n", tag);
+}
+
+
+
+/*-------------------------------------------------
 	machine_add_sound - add a sound system during
 	machine driver expansion
 -------------------------------------------------*/
 
-struct MachineSound *machine_add_sound(struct InternalMachineDriver *machine, const char *tag, int type, void *sndintf)
+struct MachineSound *machine_add_sound(struct InternalMachineDriver *machine, const char *tag, int type, int clock)
 {
 	int soundnum;
 
@@ -1533,7 +1599,9 @@ struct MachineSound *machine_add_sound(struct InternalMachineDriver *machine, co
 		{
 			machine->sound[soundnum].tag = tag;
 			machine->sound[soundnum].sound_type = type;
-			machine->sound[soundnum].sound_interface = sndintf;
+			machine->sound[soundnum].clock = clock;
+			machine->sound[soundnum].config = NULL;
+			machine->sound[soundnum].routes = 0;
 			return &machine->sound[soundnum];
 		}
 
@@ -2019,7 +2087,7 @@ int mame_validitychecks(void)
 			}
 		}
 
-
+		/* consistency checks on input ports */
 		if (drivers[i]->construct_ipt)
 		{
 			begin_resource_tracking();
@@ -2120,6 +2188,48 @@ int mame_validitychecks(void)
 
 				inp++;
 			}
+
+
+			/* consistency checks on sound and speakers */
+			for (j = 0; j < MAX_SPEAKER && drv.speaker[j].tag; j++)
+			{
+				int k;
+				for (k = 0; k < MAX_SPEAKER && drv.speaker[k].tag; k++)
+					if (j != k && drv.speaker[k].tag && !strcmp(drv.speaker[j].tag, drv.speaker[k].tag))
+					{
+						printf("%s: %s has multiple speakers tagged as '%s'\n",drivers[i]->source_file,drivers[i]->name,drv.speaker[j].tag);
+						error = 1;
+					}
+				for (k = 0; k < MAX_SOUND && drv.sound[k].sound_type != SOUND_DUMMY; k++)
+					if (drv.sound[k].tag && !strcmp(drv.speaker[j].tag, drv.sound[k].tag))
+					{
+						printf("%s: %s has both a speaker and a sound chip tagged as '%s'\n",drivers[i]->source_file,drivers[i]->name,drv.speaker[j].tag);
+						error = 1;
+					}
+			}
+			
+			for (j = 0; j < MAX_SOUND && drv.sound[j].sound_type != SOUND_DUMMY; j++)
+			{
+				int k, l;
+				for (k = 0; k < drv.sound[j].routes; k++)
+				{
+					for (l = 0; l < MAX_SPEAKER && drv.speaker[l].tag; l++)
+						if (!strcmp(drv.sound[j].route[k].target, drv.speaker[l].tag))
+							break;
+					if (l >= MAX_SPEAKER || !drv.speaker[l].tag)
+					{
+						for (l = 0; l < MAX_SOUND && drv.sound[l].sound_type != SOUND_DUMMY; l++)
+							if (l != j && drv.sound[l].tag && !strcmp(drv.sound[l].tag, drv.sound[j].route[k].target))
+								break;
+						if (l >= MAX_SOUND || drv.sound[l].sound_type == SOUND_DUMMY)
+						{
+							printf("%s: %s attempting to route sound to non-existant speaker '%s'\n",drivers[i]->source_file,drivers[i]->name,drv.sound[j].route[k].target);
+							error = 1;
+						}
+					}
+				}
+			}
+			
 			end_resource_tracking();
 		}
 	}

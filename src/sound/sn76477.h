@@ -27,8 +27,6 @@
 #ifndef SN76477_SOUND_H
 #define SN76477_SOUND_H
 
-#define MAX_SN76477 4
-
 /* Little helpers for magnitude conversions */
 #define RES_K(res) ((double)res*1e3)
 #define RES_M(res) ((double)res*1e6)
@@ -38,24 +36,22 @@
 
 /* The interface structure */
 struct SN76477interface {
-	int num;
-	int mixing_level[MAX_SN76477];
-	double noise_res[MAX_SN76477];
-	double filter_res[MAX_SN76477];
-	double filter_cap[MAX_SN76477];
-	double decay_res[MAX_SN76477];
-	double attack_decay_cap[MAX_SN76477];
-	double attack_res[MAX_SN76477];
-	double amplitude_res[MAX_SN76477];
-	double feedback_res[MAX_SN76477];
-	double vco_voltage[MAX_SN76477];
-    double vco_cap[MAX_SN76477];
-    double vco_res[MAX_SN76477];
-    double pitch_voltage[MAX_SN76477];
-    double slf_res[MAX_SN76477];
-    double slf_cap[MAX_SN76477];
-    double oneshot_cap[MAX_SN76477];
-    double oneshot_res[MAX_SN76477];
+	double noise_res;
+	double filter_res;
+	double filter_cap;
+	double decay_res;
+	double attack_decay_cap;
+	double attack_res;
+	double amplitude_res;
+	double feedback_res;
+	double vco_voltage;
+    double vco_cap;
+    double vco_res;
+    double pitch_voltage;
+    double slf_res;
+    double slf_cap;
+    double oneshot_cap;
+    double oneshot_res;
 };
 
 /* Noise clock write, useful only if noise_res is zero */
@@ -98,9 +94,5 @@ void SN76477_set_vco_res(int chip, double res);
 void SN76477_set_vco_cap(int chip, double cap);
 void SN76477_set_pitch_voltage(int chip, double voltage);
 void SN76477_set_vco_voltage(int chip, double voltage);
-
-int SN76477_sh_start(const struct MachineSound *msound);
-void SN76477_sh_stop(void);
-void SN76477_sh_update(void);
 
 #endif

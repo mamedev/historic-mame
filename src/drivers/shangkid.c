@@ -51,6 +51,8 @@ Games by Nihon Game/Culture Brain:
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "cpu/z80/z80.h"
+#include "sound/ay8910.h"
+#include "sound/dac.h"
 
 /* from vidhrdw/shangkid.c */
 extern UINT8 *shangkid_videoreg;
@@ -69,23 +71,6 @@ static data8_t bbx_sound_enable;
 static data8_t bbx_AY8910_control;
 static data8_t sound_latch;
 static data8_t *shareram;
-
-/***************************************************************************************/
-
-static struct DACinterface dac_interface = {
-	1,
-	{ MIXER(50,50) }
-};
-
-static struct AY8910interface ay8910_interface = {
-	1,	/* number of chips */
-	2000000, /* 2 MHz? */
-	{ 10 }, /* volume */
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ 0 }
-};
 
 /***************************************************************************************/
 
@@ -377,8 +362,13 @@ static MACHINE_DRIVER_START( chinhero )
 	MDRV_VIDEO_UPDATE(shangkid)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(DAC, dac_interface)
-	MDRV_SOUND_ADD(AY8910, ay8910_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(DAC, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
+	
+	MDRV_SOUND_ADD(AY8910, 2000000)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.10)
 MACHINE_DRIVER_END
 
 
@@ -447,7 +437,10 @@ static MACHINE_DRIVER_START( dynamski )
 	MDRV_VIDEO_UPDATE(dynamski)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(AY8910, ay8910_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	
+	MDRV_SOUND_ADD(AY8910, 2000000)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.10)
 MACHINE_DRIVER_END
 
 /***************************************************************************************/

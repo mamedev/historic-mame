@@ -17,6 +17,7 @@
 #include "driver.h"
 #include "cpu/z80/z80.h"
 #include "vidhrdw/generic.h"
+#include "sound/ay8910.h"
 
 
 extern UINT8 *mnchmobl_vreg;
@@ -125,17 +126,6 @@ static ADDRESS_MAP_START( writemem_sound, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0xc000, 0xc000) AM_WRITE(sound_nmi_ack_w)
 	AM_RANGE(0xe000, 0xe7ff) AM_WRITE(MWA8_RAM)
 ADDRESS_MAP_END
-
-static struct AY8910interface ay8910_interface =
-{
-	2,	/* 2 chips */
-	1500000,	/* 1.5 MHz? */
-	{ 50, 50 },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ 0 }
-};
 
 INPUT_PORTS_START( mnchmobl )
 	PORT_START
@@ -320,7 +310,13 @@ static MACHINE_DRIVER_START( munchmo )
 	MDRV_VIDEO_UPDATE(mnchmobl)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(AY8910, ay8910_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	
+	MDRV_SOUND_ADD(AY8910, 1500000)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
+	
+	MDRV_SOUND_ADD(AY8910, 1500000)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
 MACHINE_DRIVER_END
 
 

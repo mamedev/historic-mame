@@ -1,6 +1,9 @@
 #include "driver.h"
 #include "cpu/m6502/m6502.h"
-
+#include "sound/samples.h"
+#include "sound/dac.h"
+#include "sound/ay8910.h"
+#include "sound/2151intf.h"
 
 
 WRITE8_HANDLER( gottlieb_sh_w )
@@ -11,7 +14,7 @@ WRITE8_HANDLER( gottlieb_sh_w )
 
 	if ((data&0x0f) != 0xf) /* interrupt trigered by four low bits (not all 1's) */
 	{
-		if (Machine->samples)
+		if (sndti_to_sndnum(SOUND_SAMPLES, 0) >= 0)
 		{
 			if (!strcmp(Machine->gamedrv->name,"reactor"))	/* reactor */
 			{
@@ -85,14 +88,11 @@ WRITE8_HANDLER( gottlieb_sh_w )
 
 void gottlieb_knocker(void)
 {
-	if (Machine->samples)
+	if (!strcmp(Machine->gamedrv->name,"reactor"))	/* reactor */
 	{
-		if (!strcmp(Machine->gamedrv->name,"reactor"))	/* reactor */
-		{
-		}
-		else	/* qbert */
-			sample_start(0,44,0);
 	}
+	else	/* qbert */
+		sample_start(0,44,0);
 }
 
 /* callback for the timer */

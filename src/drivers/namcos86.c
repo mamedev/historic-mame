@@ -178,7 +178,9 @@ TODO:
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "cpu/m6800/m6800.h"
-
+#include "sound/2151intf.h"
+#include "sound/namco.h"
+#include "sound/n63701x.h"
 
 extern data8_t *rthunder_videoram1, *rthunder_videoram2, *rthunder_spriteram;
 
@@ -1049,28 +1051,15 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 /*******************************************************************/
 
-static struct YM2151interface ym2151_interface =
-{
-	1,                      /* 1 chip */
-	3579580,                /* 3.579580 MHz ? */
-	{ YM3012_VOL(0,MIXER_PAN_CENTER,60,MIXER_PAN_CENTER) },	/* only right channel is connected */
-	{ 0 },
-	{ 0 }
-};
-
 static struct namco_interface namco_interface =
 {
-	49152000/2048,	/* 24kHz */
 	8,		/* number of voices */
-	50,     /* playback volume */
 	-1,		/* memory region */
 	0		/* stereo */
 };
 
 static struct namco_63701x_interface namco_63701x_interface =
 {
-	6000000,		/* 6 MHz */
-	MIXERG(100,MIXER_GAIN_2x,MIXER_PAN_CENTER),	/* volume */
 	REGION_SOUND1	/* memory region */
 };
 
@@ -1112,8 +1101,15 @@ static MACHINE_DRIVER_START( hopmappy )
 	MDRV_VIDEO_EOF(namcos86)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM2151, ym2151_interface)
-	MDRV_SOUND_ADD(NAMCO_CUS30, namco_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM2151, 3579580)
+	MDRV_SOUND_ROUTE(0, "mono", 0.0)
+	MDRV_SOUND_ROUTE(1, "mono", 0.60)	/* only right channel is connected */
+
+	MDRV_SOUND_ADD(NAMCO_CUS30, 49152000/2048)
+	MDRV_SOUND_CONFIG(namco_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
 MACHINE_DRIVER_END
 
 
@@ -1152,7 +1148,9 @@ static MACHINE_DRIVER_START( genpeitd )
 	MDRV_CPU_PROGRAM_MAP(genpeitd_mcu_map,0)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(NAMCO_63701X, namco_63701x_interface)
+	MDRV_SOUND_ADD(NAMCO_63701X, 6000000)
+	MDRV_SOUND_CONFIG(namco_63701x_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 
@@ -1167,7 +1165,9 @@ static MACHINE_DRIVER_START( rthunder )
 	MDRV_CPU_PROGRAM_MAP(rthunder_mcu_map,0)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(NAMCO_63701X, namco_63701x_interface)
+	MDRV_SOUND_ADD(NAMCO_63701X, 6000000)
+	MDRV_SOUND_CONFIG(namco_63701x_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 
@@ -1182,7 +1182,9 @@ static MACHINE_DRIVER_START( wndrmomo )
 	MDRV_CPU_PROGRAM_MAP(wndrmomo_mcu_map,0)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(NAMCO_63701X, namco_63701x_interface)
+	MDRV_SOUND_ADD(NAMCO_63701X, 6000000)
+	MDRV_SOUND_CONFIG(namco_63701x_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 

@@ -12,6 +12,7 @@ TODO:
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "sound/ay8910.h"
 
 /* vidhrdw */
 
@@ -232,13 +233,8 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 static struct AY8910interface ay8910_interface =
 {
-	1,	/* 1 chip */
-	1500000,	/* 1.5 MHz ???? */
-	{ 50 },
-	{ input_port_3_r },
-	{ input_port_4_r },
-	{ 0 },
-	{ 0 }
+	input_port_3_r,
+	input_port_4_r
 };
 
 
@@ -262,7 +258,11 @@ static MACHINE_DRIVER_START( hanaroku )
 	MDRV_VIDEO_UPDATE(hanaroku)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(AY8910, ay8910_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	
+	MDRV_SOUND_ADD(AY8910, 1500000)
+	MDRV_SOUND_CONFIG(ay8910_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
 MACHINE_DRIVER_END
 
 

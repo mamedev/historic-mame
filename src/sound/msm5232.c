@@ -41,6 +41,8 @@ typedef struct {
 
 
 typedef struct {
+	sound_stream *stream;
+	
 	VOICE	voi[8];
 
 	UINT32 EN_out16[2];	/* enable 16' output masks for both groups (0-disabled ; ~0 -enabled) */
@@ -78,7 +80,7 @@ typedef struct {
 /* Chip has 88x12bits ROM   (addressing (in hex) from 0x00 to 0x57) */
 #define ROM(counter,bindiv)	(counter|(bindiv<<9))
 
-static UINT16 MSM5232_ROM[88]={
+static const UINT16 MSM5232_ROM[88]={
 /* higher values are Programmable Counter data (9 bits) */
 /* lesser values are Binary Counter shift data (3 bits) */
 
@@ -122,10 +124,6 @@ static UINT16 MSM5232_ROM[88]={
 #define STEP_SH	(16)	/* step calculations accuracy */
 
 
-static MSM5232 msm5232[MAX_MSM5232];	/* array of MSM5232s */
-static unsigned int numchips;			/* total # of MSM5232s emulated */
-
-
 /* save output as raw 16-bit sample */
 /* #define SAVE_SAMPLE */
 /* #define SAVE_SEPARATE_CHANNELS */
@@ -163,10 +161,9 @@ static FILE *sample[9];
 
 
 
-static void msm5232_init_tables( int which )
+static void msm5232_init_tables( MSM5232 *chip )
 {
 	int i;
-	MSM5232 * chip = &msm5232[which];
 	double scale;
 
 	/* sample rate = chip clock !!!  But : */
@@ -237,10 +234,8 @@ static void msm5232_init_tables( int which )
 }
 
 
-static void msm5232_init_voice(int which, int i)
+static void msm5232_init_voice(MSM5232 *chip, int i)
 {
-	MSM5232 * chip = &msm5232[which];
-
 	chip->voi[i].ar_rate= chip->ar_tbl[0] * chip->external_capacity[i];
 	chip->voi[i].dr_rate= chip->dr_tbl[0] * chip->external_capacity[i];
 	chip->voi[i].rr_rate= chip->dr_tbl[0] * chip->external_capacity[i];	/* this is constant value */
@@ -251,18 +246,18 @@ static void msm5232_init_voice(int which, int i)
 }
 
 
-static void msm5232_write(int which, int ofst, int data);
+static void msm5232_write(MSM5232 *chip, int ofst, int data);
 
 
-static void msm5232_reset(int which)
+static void msm5232_reset(void *_chip)
 {
+	MSM5232 *chip = _chip;
 	int i;
-	MSM5232 * chip = &msm5232[which];
 
 	for (i=0; i<8; i++)
 	{
-		msm5232_write(which,i,0x80);
-		msm5232_write(which,i,0x00);
+		msm5232_write(chip,i,0x80);
+		msm5232_write(chip,i,0x00);
 	}
 	chip->noise_cnt		= 0;
 	chip->noise_rng		= 1;
@@ -282,38 +277,29 @@ static void msm5232_reset(int which)
 
 }
 
-static int msm5232_init(const struct MSM5232interface *intf, int rate)
+static void msm5232_init(MSM5232 *chip, const struct MSM5232interface *intf, int clock, int rate)
 {
-	int i,j;
+	int j;
 
-	numchips = intf->num;
+	chip->clock = clock;
+	chip->rate  = rate ? rate : 44100;	/* avoid division by 0 */
 
-	memset(msm5232, 0, sizeof(MSM5232) * numchips);
-
-	for (i=0; i<numchips; i++)
+	for (j=0; j<8; j++)
 	{
-		msm5232[i].clock = intf->baseclock;
-		msm5232[i].rate  = rate ? rate : 44100;	/* avoid division by 0 */
-
-		for (j=0; j<8; j++)
-		{
-			msm5232[i].external_capacity[j] = intf->capacity[i][j];
-		}
-
-		msm5232_init_tables( i );
-
-		for (j=0; j<8; j++)
-		{
-			memset(&msm5232[i].voi[j],0,sizeof(VOICE));
-			msm5232_init_voice(i,j);
-		}
-		msm5232_reset( i );
+		chip->external_capacity[j] = intf->capacity[j];
 	}
 
-	return 0;
+	msm5232_init_tables( chip );
+
+	for (j=0; j<8; j++)
+	{
+		memset(&chip->voi[j],0,sizeof(VOICE));
+		msm5232_init_voice(chip,j);
+	}
+	msm5232_reset( chip );
 }
 
-static void msm5232_shutdown(void)
+static void msm5232_shutdown(void *chip)
 {
 #ifdef SAVE_SAMPLE
 	fclose(sample[8]);
@@ -330,10 +316,8 @@ static void msm5232_shutdown(void)
 #endif
 }
 
-static void msm5232_write(int which, int ofst, int data)
+static void msm5232_write(MSM5232 *chip, int ofst, int data)
 {
-	MSM5232 * chip = &msm5232[which];
-
 	if (ofst > 0x0d)
 		return;
 
@@ -684,11 +668,11 @@ INLINE void TG_group_advance(MSM5232 *chip, int groupidx)
 #endif
 
 
-void MSM5232_update_one(int which, INT16** buffer, int samples)
+void MSM5232_update_one(void *param, stream_sample_t **inputs, stream_sample_t** buffer, int samples)
 {
-	MSM5232 *chip = &msm5232[which];
-	INT16 *buf1 = buffer[0];
-	INT16 *buf2 = buffer[1];
+	MSM5232 * chip = param;
+	stream_sample_t *buf1 = buffer[0];
+	stream_sample_t *buf2 = buffer[1];
 	int i;
 
 	for (i=0; i<samples; i++)
@@ -749,49 +733,73 @@ void MSM5232_update_one(int which, INT16** buffer, int samples)
 
 /* MAME Interface */
 
-static int stream[MAX_MSM5232];
-
-int MSM5232_sh_start (const struct MachineSound *msound)
+static void *msm5232_start(int sndindex, int clock, const void *config)
 {
-	const struct MSM5232interface *intf = msound->sound_interface;
-	int i,chip;
-	int vol[2];
-	char buf[2][40];
-	const char *name[2];
+	const struct MSM5232interface *intf = config;
+	MSM5232 *chip;
+	
+	chip = auto_malloc(sizeof(*chip));
+	memset(chip, 0, sizeof(*chip));
 
-	if ( msm5232_init(intf, Machine->sample_rate) != 0)
-		return 1;
+	msm5232_init(chip, intf, clock, Machine->sample_rate);
 
-	for (chip=0; chip < intf->num; chip++)
-	{
-		for (i=0; i<=1; i++)
-		{
-			vol[i] = intf->mixing_level[chip];
-			name[i] = buf[i];
-			sprintf(buf[i],"%s #%d Group %c",sound_name(msound),chip,'1'+i);
-		}
-		stream[chip] = stream_init_multi(2,name,vol,Machine->sample_rate,chip,MSM5232_update_one);
-	}
-	return 0;
+	chip->stream = stream_create(0,2,Machine->sample_rate,chip,MSM5232_update_one);
+	return chip;
 }
 
-void MSM5232_sh_stop (void)
+static void msm5232_stop (void *chip)
 {
-	msm5232_shutdown();
-}
-
-void MSM5232_sh_reset (void)
-{
+	msm5232_shutdown(chip);
 }
 
 WRITE8_HANDLER ( MSM5232_0_w )
 {
-	stream_update (stream[0], 0);
-	msm5232_write(0, offset, data);
+	MSM5232 *chip = sndti_token(SOUND_MSM5232, 0);
+	stream_update (chip->stream, 0);
+	msm5232_write(chip, offset, data);
 }
 
 WRITE8_HANDLER ( MSM5232_1_w )
 {
-	stream_update (stream[1], 0);
-	msm5232_write(1, offset, data);
+	MSM5232 *chip = sndti_token(SOUND_MSM5232, 1);
+	stream_update (chip->stream, 0);
+	msm5232_write(chip, offset, data);
 }
+
+
+
+
+/**************************************************************************
+ * Generic get_info
+ **************************************************************************/
+
+static void msm5232_set_info(void *token, UINT32 state, union sndinfo *info)
+{
+	switch (state)
+	{
+		/* no parameters to set */
+	}
+}
+
+
+void msm5232_get_info(void *token, UINT32 state, union sndinfo *info)
+{
+	switch (state)
+	{
+		/* --- the following bits of info are returned as 64-bit signed integers --- */
+
+		/* --- the following bits of info are returned as pointers to data or functions --- */
+		case SNDINFO_PTR_SET_INFO:						info->set_info = msm5232_set_info;		break;
+		case SNDINFO_PTR_START:							info->start = msm5232_start;			break;
+		case SNDINFO_PTR_STOP:							info->stop = msm5232_stop;				break;
+		case SNDINFO_PTR_RESET:							info->reset = msm5232_reset;			break;
+
+		/* --- the following bits of info are returned as NULL-terminated strings --- */
+		case SNDINFO_STR_NAME:							info->s = "MSM5232";					break;
+		case SNDINFO_STR_CORE_FAMILY:					info->s = "ADPCM";						break;
+		case SNDINFO_STR_CORE_VERSION:					info->s = "1.0";						break;
+		case SNDINFO_STR_CORE_FILE:						info->s = __FILE__;						break;
+		case SNDINFO_STR_CORE_CREDITS:					info->s = "Copyright (c) 2004, The MAME Team"; break;
+	}
+}
+

@@ -23,6 +23,8 @@ TODO:
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "cpu/z80/z80.h"
+#include "sound/okim6295.h"
+#include "sound/3812intf.h"
 
 
 extern data16_t *galspnbl_bgvideoram,*galspnbl_videoram,*galspnbl_colorram;
@@ -311,18 +313,7 @@ static void irqhandler(int linestate)
 
 static struct YM3812interface ym3812_interface =
 {
-	1,			/* 1 chip */
-	3579545,	/* 3.579545 MHz ? */
-	{ 100 },	/* volume */
-	{ irqhandler },
-};
-
-static struct OKIM6295interface okim6295_interface =
-{
-	1,					/* 1 chip */
-	{ 8000 },			/* 8000Hz frequency? */
-	{ REGION_SOUND1 },	/* memory region */
-	{ 50 }
+	irqhandler
 };
 
 
@@ -354,8 +345,15 @@ static MACHINE_DRIVER_START( hotpinbl )
 	MDRV_VIDEO_UPDATE(galspnbl)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM3812, ym3812_interface)
-	MDRV_SOUND_ADD(OKIM6295, okim6295_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM3812, 3579545)
+	MDRV_SOUND_CONFIG(ym3812_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
+
+	MDRV_SOUND_ADD(OKIM6295, 8000)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
 MACHINE_DRIVER_END
 
 

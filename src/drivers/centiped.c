@@ -282,6 +282,9 @@
 #include "machine/atari_vg.h"
 #include "centiped.h"
 #include "machine/random.h"
+#include "sound/ay8910.h"
+#include "sound/sn76496.h"
+#include "sound/pokey.h"
 
 
 static int oldpos[4];
@@ -1257,93 +1260,31 @@ static struct GfxDecodeInfo warlords_gfxdecodeinfo[] =
  *
  *************************************/
 
-static struct POKEYinterface centiped_pokey_interface =
-{
-	1,
-	12096000/8,
-	{ 100 },
-	/* The 8 pot handlers */
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	/* The allpot handler */
-	{ 0 },
-};
-
-
-static struct AY8910interface caterplr_ay8910_interface =
-{
-	1,
-	12096000/8,
-	{ 50 },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ 0 }
-};
-
-
 static struct AY8910interface centipdb_ay8910_interface =
 {
-	1,
-	12096000/8,
-	{ 100 },
-	{ caterplr_rand_r },
-	{ 0 },
-	{ 0 },
-	{ 0 }
+	caterplr_rand_r
 };
 
 
-static struct POKEYinterface milliped_pokey_interface =
+static struct POKEYinterface milliped_pokey_interface_1 =
 {
-	2,
-	12096000/8,
-	{ 50, 50 },
-	/* The 8 pot handlers */
-	{ 0, 0 },
-	{ 0, 0 },
-	{ 0, 0 },
-	{ 0, 0 },
-	{ 0, 0 },
-	{ 0, 0 },
-	{ 0, 0 },
-	{ 0, 0 },
-	/* The allpot handler */
-	{ input_port_4_r, input_port_5_r },
+	{ 0 },
+	input_port_4_r
+};
+
+
+static struct POKEYinterface milliped_pokey_interface_2 =
+{
+	{ 0 },
+	input_port_5_r
 };
 
 
 static struct POKEYinterface warlords_pokey_interface =
 {
-	1,
-	12096000/8,
-	{ 100 },
-	/* The 8 pot handlers */
-	{ input_port_4_r },
-	{ input_port_5_r },
-	{ input_port_6_r },
-	{ input_port_7_r },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	/* The allpot handler */
-	{ 0 },
+	{ input_port_4_r,input_port_5_r,input_port_6_r,input_port_7_r }
 };
 
-
-static struct SN76496interface sn76496_interface =
-{
-	1,
-	{ 12096000/8 },
-	{ 100 }
-};
 
 
 /*************************************
@@ -1377,7 +1318,10 @@ static MACHINE_DRIVER_START( centiped )
 	MDRV_VIDEO_UPDATE(centiped)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD_TAG("pokey", POKEY, centiped_pokey_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD_TAG("pokey", POKEY, 12096000/8)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 
@@ -1387,7 +1331,8 @@ static MACHINE_DRIVER_START( caterplr )
 	MDRV_IMPORT_FROM(centiped)
 
 	/* sound hardware */
-	MDRV_SOUND_REPLACE("pokey", AY8910, caterplr_ay8910_interface)
+	MDRV_SOUND_REPLACE("pokey", AY8910, 12096000/8)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
 MACHINE_DRIVER_END
 
 
@@ -1399,7 +1344,9 @@ static MACHINE_DRIVER_START( centipdb )
 	MDRV_CPU_PROGRAM_MAP(centipdb_map,0)
 
 	/* sound hardware */
-	MDRV_SOUND_REPLACE("pokey", AY8910, centipdb_ay8910_interface)
+	MDRV_SOUND_REPLACE("pokey", AY8910, 12096000/8)
+	MDRV_SOUND_CONFIG(centipdb_ay8910_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 
@@ -1410,7 +1357,9 @@ static MACHINE_DRIVER_START( magworm )
 	MDRV_MACHINE_INIT(magworm)
 
 	/* sound hardware */
-	MDRV_SOUND_REPLACE("pokey", AY8910, centipdb_ay8910_interface)
+	MDRV_SOUND_REPLACE("pokey", AY8910, 12096000/8)
+	MDRV_SOUND_CONFIG(centipdb_ay8910_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 
@@ -1430,7 +1379,13 @@ static MACHINE_DRIVER_START( milliped )
 	MDRV_VIDEO_START(milliped)
 
 	/* sound hardware */
-	MDRV_SOUND_REPLACE("pokey", POKEY, milliped_pokey_interface)
+	MDRV_SOUND_REPLACE("pokey", POKEY, 12096000/8)
+	MDRV_SOUND_CONFIG(milliped_pokey_interface_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
+
+	MDRV_SOUND_ADD(POKEY, 12096000/8)
+	MDRV_SOUND_CONFIG(milliped_pokey_interface_2)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
 MACHINE_DRIVER_END
 
 
@@ -1451,7 +1406,9 @@ static MACHINE_DRIVER_START( warlords )
 	MDRV_VIDEO_UPDATE(warlords)
 
 	/* sound hardware */
-	MDRV_SOUND_REPLACE("pokey", POKEY, warlords_pokey_interface)
+	MDRV_SOUND_REPLACE("pokey", POKEY, 12096000/8)
+	MDRV_SOUND_CONFIG(warlords_pokey_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 
@@ -1480,7 +1437,10 @@ static MACHINE_DRIVER_START( bullsdrt )
 	MDRV_VIDEO_UPDATE(bullsdrt)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(SN76496, sn76496_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(SN76496, 12096000/8)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 

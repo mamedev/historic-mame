@@ -41,6 +41,7 @@ PROMs : NEC B406 (1kx4) x2
 #include "vidhrdw/generic.h"
 #include "cpu/i8039/i8039.h"
 #include "vidhrdw/res_net.h"
+#include "sound/ay8910.h"
 
 
 static int bgmap = 0;
@@ -303,17 +304,6 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 };
 
 
-static struct AY8910interface ay8910_interface =
-{
-	1, 
-	19968000 / 16,
-	{ 12 },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ 0 }
-};
-
 static PALETTE_INIT( sbowling )
 {
 	int i;
@@ -371,7 +361,12 @@ static MACHINE_DRIVER_START( sbowling )
 	MDRV_PALETTE_INIT(sbowling)
 	MDRV_VIDEO_START(sbowling)
 	MDRV_VIDEO_UPDATE(sbowling)
-	MDRV_SOUND_ADD(AY8910, ay8910_interface)
+	
+	/* sound hardware */
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(AY8910, 19968000 / 16)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.12)
 MACHINE_DRIVER_END
 
 ROM_START( sbowling )

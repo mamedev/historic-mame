@@ -1,6 +1,8 @@
 #ifndef _SNES_H_
 #define _SNES_H_
 
+#include "sound/custom.h"
+
 /* Debug definitions */
 #ifdef MAME_DEBUG
 /* #define SNES_DBG_GENERAL*/		/* Display general debug info */
@@ -420,8 +422,8 @@ extern READ8_HANDLER( spc_io_r );
 extern WRITE8_HANDLER( spc_io_w );
 extern READ8_HANDLER( spc_bank_r );
 extern WRITE8_HANDLER( spc_bank_w );
-extern int snes_sh_start( const struct MachineSound *driver );
-extern void snes_sh_update( int param, INT16 **buffer, int length );
+extern void *snes_sh_start(int clock, const struct CustomSound_interface *config);
+extern void snes_sh_update( void *param, stream_sample_t **inputs, stream_sample_t **buffer, int length );
 /* Fake APU functions for when sound is disabled */
 extern READ8_HANDLER( fakespc_port_r );
 extern WRITE8_HANDLER( fakespc_port_w );

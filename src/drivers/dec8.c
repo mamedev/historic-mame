@@ -40,6 +40,9 @@ To do:
 #include "vidhrdw/generic.h"
 #include "cpu/m6809/m6809.h"
 #include "cpu/m6502/m6502.h"
+#include "sound/2203intf.h"
+#include "sound/3812intf.h"
+#include "sound/msm5205.h"
 
 PALETTE_INIT( ghostb );
 VIDEO_UPDATE( cobracom );
@@ -1998,17 +2001,6 @@ static struct GfxDecodeInfo shackled_gfxdecodeinfo[] =
 
 /******************************************************************************/
 
-static struct YM2203interface ym2203_interface =
-{
-	1,
-	1500000,	/* Should be accurate for all games, derived from 12MHz crystal */
-	{ YM2203_VOL(20,23) },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ 0 }
-};
-
 /* handler called by the 3812 emulator when the internal timers cause an IRQ */
 static void irqhandler(int linestate)
 {
@@ -2022,35 +2014,23 @@ static void oscar_irqhandler(int linestate)
 
 static struct YM3526interface ym3526_interface =
 {
-	1,			/* 1 chip */
-	3000000,	/* 3 MHz */
-	{ 70 },
-	{ irqhandler },
+	irqhandler
 };
 
 static struct YM3526interface oscar_ym3526_interface =
 {
-	1,			/* 1 chip */
-	3000000,	/* 3 MHz */
-	{ 70 },
-	{ oscar_irqhandler },
+	oscar_irqhandler
 };
 
 static struct YM3812interface ym3812_interface =
 {
-	1,			/* 1 chip */
-	3000000,	/* 3 MHz */
-	{ 70 },
-	{ irqhandler },
+	irqhandler
 };
 
 static struct MSM5205interface msm5205_interface =
 {
-	1,					/* 1 chip             */
-	384000,				/* 384KHz             */
-	{ csilver_adpcm_int },/* interrupt function */
-	{ MSM5205_S48_4B },	/* 8KHz               */
-	{ 88 }
+	csilver_adpcm_int,	/* interrupt function */
+	MSM5205_S48_4B		/* 8KHz               */
 };
 
 /******************************************************************************/
@@ -2119,8 +2099,17 @@ static MACHINE_DRIVER_START( cobracom )
 	MDRV_VIDEO_UPDATE(cobracom)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM2203, ym2203_interface)
-	MDRV_SOUND_ADD(YM3812, ym3812_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM2203, 1500000)
+	MDRV_SOUND_ROUTE(0, "mono", 0.23)
+	MDRV_SOUND_ROUTE(1, "mono", 0.23)
+	MDRV_SOUND_ROUTE(2, "mono", 0.23)
+	MDRV_SOUND_ROUTE(3, "mono", 0.20)
+
+	MDRV_SOUND_ADD(YM3812, 3000000)
+	MDRV_SOUND_CONFIG(ym3812_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.70)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( ghostb )
@@ -2150,8 +2139,17 @@ static MACHINE_DRIVER_START( ghostb )
 	MDRV_VIDEO_UPDATE(ghostb)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM2203, ym2203_interface)
-	MDRV_SOUND_ADD(YM3812, ym3812_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM2203, 1500000)
+	MDRV_SOUND_ROUTE(0, "mono", 0.23)
+	MDRV_SOUND_ROUTE(1, "mono", 0.23)
+	MDRV_SOUND_ROUTE(2, "mono", 0.23)
+	MDRV_SOUND_ROUTE(3, "mono", 0.20)
+
+	MDRV_SOUND_ADD(YM3812, 3000000)
+	MDRV_SOUND_CONFIG(ym3812_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.70)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( srdarwin )
@@ -2179,8 +2177,17 @@ static MACHINE_DRIVER_START( srdarwin )
 	MDRV_VIDEO_UPDATE(srdarwin)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM2203, ym2203_interface)
-	MDRV_SOUND_ADD(YM3812, ym3812_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM2203, 1500000)
+	MDRV_SOUND_ROUTE(0, "mono", 0.23)
+	MDRV_SOUND_ROUTE(1, "mono", 0.23)
+	MDRV_SOUND_ROUTE(2, "mono", 0.23)
+	MDRV_SOUND_ROUTE(3, "mono", 0.20)
+
+	MDRV_SOUND_ADD(YM3812, 3000000)
+	MDRV_SOUND_CONFIG(ym3812_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.70)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( gondo )
@@ -2209,8 +2216,17 @@ static MACHINE_DRIVER_START( gondo )
 	MDRV_VIDEO_UPDATE(gondo)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM2203, ym2203_interface)
-	MDRV_SOUND_ADD(YM3526, ym3526_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM2203, 1500000)
+	MDRV_SOUND_ROUTE(0, "mono", 0.23)
+	MDRV_SOUND_ROUTE(1, "mono", 0.23)
+	MDRV_SOUND_ROUTE(2, "mono", 0.23)
+	MDRV_SOUND_ROUTE(3, "mono", 0.20)
+
+	MDRV_SOUND_ADD(YM3526, 3000000)
+	MDRV_SOUND_CONFIG(ym3526_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.70)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( oscar )
@@ -2242,8 +2258,17 @@ static MACHINE_DRIVER_START( oscar )
 	MDRV_VIDEO_UPDATE(oscar)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM2203, ym2203_interface)
-	MDRV_SOUND_ADD(YM3526, oscar_ym3526_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM2203, 1500000)
+	MDRV_SOUND_ROUTE(0, "mono", 0.23)
+	MDRV_SOUND_ROUTE(1, "mono", 0.23)
+	MDRV_SOUND_ROUTE(2, "mono", 0.23)
+	MDRV_SOUND_ROUTE(3, "mono", 0.20)
+
+	MDRV_SOUND_ADD(YM3526, 3000000)
+	MDRV_SOUND_CONFIG(oscar_ym3526_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.70)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( lastmiss )
@@ -2274,8 +2299,17 @@ static MACHINE_DRIVER_START( lastmiss )
 	MDRV_VIDEO_UPDATE(lastmiss)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM2203, ym2203_interface)
-	MDRV_SOUND_ADD(YM3526, oscar_ym3526_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM2203, 1500000)
+	MDRV_SOUND_ROUTE(0, "mono", 0.23)
+	MDRV_SOUND_ROUTE(1, "mono", 0.23)
+	MDRV_SOUND_ROUTE(2, "mono", 0.23)
+	MDRV_SOUND_ROUTE(3, "mono", 0.20)
+
+	MDRV_SOUND_ADD(YM3526, 3000000)
+	MDRV_SOUND_CONFIG(oscar_ym3526_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.70)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( shackled )
@@ -2306,8 +2340,17 @@ static MACHINE_DRIVER_START( shackled )
 	MDRV_VIDEO_UPDATE(shackled)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM2203, ym2203_interface)
-	MDRV_SOUND_ADD(YM3526, oscar_ym3526_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM2203, 1500000)
+	MDRV_SOUND_ROUTE(0, "mono", 0.23)
+	MDRV_SOUND_ROUTE(1, "mono", 0.23)
+	MDRV_SOUND_ROUTE(2, "mono", 0.23)
+	MDRV_SOUND_ROUTE(3, "mono", 0.20)
+
+	MDRV_SOUND_ADD(YM3526, 3000000)
+	MDRV_SOUND_CONFIG(oscar_ym3526_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.70)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( csilver )
@@ -2339,9 +2382,21 @@ static MACHINE_DRIVER_START( csilver )
 	MDRV_VIDEO_UPDATE(lastmiss)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM2203, ym2203_interface)
-	MDRV_SOUND_ADD(YM3526, oscar_ym3526_interface)
-	MDRV_SOUND_ADD(MSM5205, msm5205_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM2203, 1500000)
+	MDRV_SOUND_ROUTE(0, "mono", 0.23)
+	MDRV_SOUND_ROUTE(1, "mono", 0.23)
+	MDRV_SOUND_ROUTE(2, "mono", 0.23)
+	MDRV_SOUND_ROUTE(3, "mono", 0.20)
+
+	MDRV_SOUND_ADD(YM3526, 3000000)
+	MDRV_SOUND_CONFIG(oscar_ym3526_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.70)
+
+	MDRV_SOUND_ADD(MSM5205, 384000)
+	MDRV_SOUND_CONFIG(msm5205_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.88)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( garyoret )
@@ -2370,8 +2425,17 @@ static MACHINE_DRIVER_START( garyoret )
 	MDRV_VIDEO_UPDATE(garyoret)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM2203, ym2203_interface)
-	MDRV_SOUND_ADD(YM3526, ym3526_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM2203, 1500000)
+	MDRV_SOUND_ROUTE(0, "mono", 0.23)
+	MDRV_SOUND_ROUTE(1, "mono", 0.23)
+	MDRV_SOUND_ROUTE(2, "mono", 0.23)
+	MDRV_SOUND_ROUTE(3, "mono", 0.20)
+
+	MDRV_SOUND_ADD(YM3526, 3000000)
+	MDRV_SOUND_CONFIG(oscar_ym3526_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.70)
 MACHINE_DRIVER_END
 
 /******************************************************************************/

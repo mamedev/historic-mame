@@ -4,6 +4,8 @@
 
 *************************************************************************/
 
+#include "sound/custom.h"
+
 #define LELAND_BATTERY_RAM_SIZE 0x4000
 #define ATAXX_EXTRA_TRAM_SIZE 0x800
 
@@ -97,12 +99,11 @@ void leland_rotate_memory(int cpunum);
 
 /*----------- defined in sndhrdw/leland.c -----------*/
 
-int leland_sh_start(const struct MachineSound *msound);
-void leland_sh_stop(void);
-void leland_dac_update(int dacnum, UINT8 sample);
+void *leland_sh_start(int clock, const struct CustomSound_interface *config);
 
-int leland_i186_sh_start(const struct MachineSound *msound);
-int redline_i186_sh_start(const struct MachineSound *msound);
+void *leland_i186_sh_start(int clock, const struct CustomSound_interface *config);
+void *redline_i186_sh_start(int clock, const struct CustomSound_interface *config);
+void leland_dac_update(int dacnum, UINT8 sample);
 
 void leland_i186_sound_init(void);
 

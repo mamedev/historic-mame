@@ -14,10 +14,8 @@ silence compression: '00 nn' must be replaced by nn+1 times '80'.
 ***************************************************************************/
 
 #include "driver.h"
+#include "n63701x.h"
 
-static int stream;		/* channel assigned by the mixer */
-static const struct namco_63701x_interface *intf;	/* pointer to our config data */
-static UINT8 *rom;		/* pointer to sample ROM */
 
 typedef struct
 {
@@ -29,7 +27,13 @@ typedef struct
 	int silence_counter;
 } voice;
 
-static voice voices[2];
+struct namco_63701x
+{
+	voice voices[2];
+	sound_stream * stream;		/* channel assigned by the mixer */
+	const struct namco_63701x_interface *intf;	/* pointer to our config data */
+	UINT8 *rom;		/* pointer to sample ROM */
+};
 
 
 /* volume control has three resistors: 22000, 10000 and 3300 Ohm.
@@ -38,21 +42,22 @@ static voice voices[2];
    0x01 to 0xfe, therefore 258 * (0x01 - 0x80) = 0x8002 just keeps us
    inside 16 bits without overflowing.
  */
-static int vol_table[4] = { 26, 84, 200, 258 };
+static const int vol_table[4] = { 26, 84, 200, 258 };
 
 
-static void namco_63701x_update(int channel, INT16 **buffer, int length)
+static void namco_63701x_update(void *param, stream_sample_t **inputs, stream_sample_t **buffer, int length)
 {
+	struct namco_63701x *chip = param;
 	int ch;
 
 	for (ch = 0;ch < 2;ch++)
 	{
-		INT16 *buf = buffer[ch];
-		voice *v = &voices[ch];
+		stream_sample_t *buf = buffer[ch];
+		voice *v = &chip->voices[ch];
 
 		if (v->playing)
 		{
-			UINT8 *base = rom + v->base_addr;
+			UINT8 *base = chip->rom + v->base_addr;
 			int pos = v->position;
 			int vol = vol_table[v->volume];
 			int p;
@@ -89,44 +94,35 @@ static void namco_63701x_update(int channel, INT16 **buffer, int length)
 			v->position = pos;
 		}
 		else
-			memset(buf, 0, length * sizeof(INT16));
+			memset(buf, 0, length * sizeof(*buf));
 	}
 }
 
 
-int namco_63701x_sh_start(const struct MachineSound *msound)
+static void *namco_63701x_start(int sndindex, int clock, const void *config)
 {
-	int vol[2];
-	char buf[2][40];
-	const char *name[2];
+	struct namco_63701x *chip;
+	
+	chip = auto_malloc(sizeof(*chip));
+	memset(chip, 0, sizeof(*chip));
 
-	intf = msound->sound_interface;
-	rom = memory_region(intf->region);
+	chip->intf = config;
+	chip->rom = memory_region(chip->intf->region);
 
-	name[0] = buf[0];
-	sprintf(buf[0],"%s ChA",sound_name(msound));
-	name[1] = buf[1];
-	sprintf(buf[1],"%s ChB",sound_name(msound));
-	vol[0] = intf->mixing_level;
-	vol[1] = intf->mixing_level;
-	stream = stream_init_multi(2, name, vol, intf->baseclock/1000, 0, namco_63701x_update);
+	chip->stream = stream_create(0, 2, clock/1000, chip, namco_63701x_update);
 
-	return 0;
-}
-
-
-void namco_63701x_sh_stop(void)
-{
+	return chip;
 }
 
 
 
 void namco_63701x_write(int offset, int data)
 {
+	struct namco_63701x *chip = sndti_token(SOUND_NAMCO_63701X, 0);
 	int ch = offset / 2;
 
 	if (offset & 1)
-		voices[ch].select = data;
+		chip->voices[ch].select = data;
 	else
 	{
 		/*
@@ -135,22 +131,62 @@ void namco_63701x_write(int offset, int data)
 		  after the continue counter reaches 0. Either we shouldn't stop
 		  the sample, or genpeitd is returning to the title screen too soon.
 		 */
-		if (voices[ch].select & 0x1f)
+		if (chip->voices[ch].select & 0x1f)
 		{
 			int rom_offs;
 
 			/* update the streams */
-			stream_update(stream,0);
+			stream_update(chip->stream,0);
 
-			voices[ch].playing = 1;
-			voices[ch].base_addr = 0x10000 * ((voices[ch].select & 0xe0) >> 5);
-			rom_offs = voices[ch].base_addr + 2 * ((voices[ch].select & 0x1f) - 1);
-			voices[ch].position = (rom[rom_offs] << 8) + rom[rom_offs+1];
+			chip->voices[ch].playing = 1;
+			chip->voices[ch].base_addr = 0x10000 * ((chip->voices[ch].select & 0xe0) >> 5);
+			rom_offs = chip->voices[ch].base_addr + 2 * ((chip->voices[ch].select & 0x1f) - 1);
+			chip->voices[ch].position = (chip->rom[rom_offs] << 8) + chip->rom[rom_offs+1];
 			/* bits 6-7 = volume */
-			voices[ch].volume = data >> 6;
+			chip->voices[ch].volume = data >> 6;
 			/* bits 0-5 = counter to indicate new sample start? we don't use them */
 
-			voices[ch].silence_counter = 0;
+			chip->voices[ch].silence_counter = 0;
 		}
 	}
 }
+
+
+
+
+
+
+/**************************************************************************
+ * Generic get_info
+ **************************************************************************/
+
+static void namco_63701x_set_info(void *token, UINT32 state, union sndinfo *info)
+{
+	switch (state)
+	{
+		/* no parameters to set */
+	}
+}
+
+
+void namco_63701x_get_info(void *token, UINT32 state, union sndinfo *info)
+{
+	switch (state)
+	{
+		/* --- the following bits of info are returned as 64-bit signed integers --- */
+
+		/* --- the following bits of info are returned as pointers to data or functions --- */
+		case SNDINFO_PTR_SET_INFO:						info->set_info = namco_63701x_set_info;	break;
+		case SNDINFO_PTR_START:							info->start = namco_63701x_start;		break;
+		case SNDINFO_PTR_STOP:							/* Nothing */							break;
+		case SNDINFO_PTR_RESET:							/* Nothing */							break;
+
+		/* --- the following bits of info are returned as NULL-terminated strings --- */
+		case SNDINFO_STR_NAME:							info->s = "Namco 63701X";				break;
+		case SNDINFO_STR_CORE_FAMILY:					info->s = "Namco custom";				break;
+		case SNDINFO_STR_CORE_VERSION:					info->s = "1.0";						break;
+		case SNDINFO_STR_CORE_FILE:						info->s = __FILE__;						break;
+		case SNDINFO_STR_CORE_CREDITS:					info->s = "Copyright (c) 2004, The MAME Team"; break;
+	}
+}
+

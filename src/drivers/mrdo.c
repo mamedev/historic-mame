@@ -15,7 +15,7 @@ VBlank duration: 1/VSYNC * (70/262) = 4368 us
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "cpu/z80/z80.h"
-
+#include "sound/sn76496.h"
 
 
 extern unsigned char *mrdo_bgvideoram,*mrdo_fgvideoram;
@@ -176,15 +176,6 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 
 
-static struct SN76496interface sn76496_interface =
-{
-	2,	/* 2 chips */
-	{ 4000000, 4000000 },	/* 4 MHz */
-	{ 50, 50 }
-};
-
-
-
 static MACHINE_DRIVER_START( mrdo )
 
 	/* basic machine hardware */
@@ -208,7 +199,13 @@ static MACHINE_DRIVER_START( mrdo )
 	MDRV_VIDEO_UPDATE(mrdo)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(SN76496, sn76496_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(SN76496, 4000000)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
+
+	MDRV_SOUND_ADD(SN76496, 4000000)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
 MACHINE_DRIVER_END
 
 

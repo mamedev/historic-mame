@@ -124,8 +124,8 @@ typedef struct
 
 #ifdef USE_MAME_TIMERS
 /* ASG 980324 -- added for tracking timers */
-	void		*timer_A;
-	void		*timer_B;
+	mame_timer	*timer_A;
+	mame_timer	*timer_B;
 	double		timer_A_time[1024];		/* timer A times for MAME */
 	double		timer_B_time[256];		/* timer B times for MAME */
 #else
@@ -171,7 +171,6 @@ typedef struct
 
 	unsigned int clock;					/* chip clock in Hz (passed from 2151intf.c) */
 	unsigned int sampfreq;				/* sampling frequency in Hz (passed from 2151intf.c) */
-
 } YM2151;
 
 
@@ -483,9 +482,6 @@ static UINT8 lfo_noise_waveform[256] = {
 };
 
 
-static YM2151 * YMPSG = NULL;	/* array of YM2151's */
-static unsigned int YMNumChips;	/* total # of YM2151's emulated */
-
 
 /* these variables stay here for speedup purposes only */
 static YM2151 * PSG;
@@ -793,10 +789,10 @@ INLINE void envelope_KONKOFF(YM2151Operator * op, int v)
 
 
 #ifdef USE_MAME_TIMERS
-static void timer_callback_a (int n)
+static void timer_callback_a (void *param)
 {
-	YM2151 *chip = &YMPSG[n];
-	timer_adjust(chip->timer_A, chip->timer_A_time[ chip->timer_A_index ], n, 0);
+	YM2151 *chip = param;
+	timer_adjust_ptr(chip->timer_A, chip->timer_A_time[ chip->timer_A_index ], chip, 0);
 	chip->timer_A_index_old = chip->timer_A_index;
 	if (chip->irq_enable & 0x04)
 	{
@@ -807,10 +803,10 @@ static void timer_callback_a (int n)
 	if (chip->irq_enable & 0x80)
 		chip->csm_req = 2;		/* request KEY ON / KEY OFF sequence */
 }
-static void timer_callback_b (int n)
+static void timer_callback_b (void *param)
 {
-	YM2151 *chip = &YMPSG[n];
-	timer_adjust(chip->timer_B, chip->timer_B_time[ chip->timer_B_index ], n, 0);
+	YM2151 *chip = param;
+	timer_adjust_ptr(chip->timer_B, chip->timer_B_time[ chip->timer_B_index ], chip, 0);
 	chip->timer_B_index_old = chip->timer_B_index;
 	if (chip->irq_enable & 0x08)
 	{
@@ -820,9 +816,9 @@ static void timer_callback_b (int n)
 	}
 }
 #if 0
-static void timer_callback_chip_busy (int n)
+static void timer_callback_chip_busy (void *param)
 {
-	YM2151 *chip = &YMPSG[n];
+	YM2151 *chip = param;
 	chip->status &= 0x7f;	/* reset busy flag */
 }
 #endif
@@ -1016,9 +1012,9 @@ INLINE void refresh_EG(YM2151Operator * op)
 
 
 /* write a register on YM2151 chip number 'n' */
-void YM2151WriteReg(int n, int r, int v)
+void YM2151WriteReg(void *_chip, int r, int v)
 {
-	YM2151 *chip = &YMPSG[n];
+	YM2151 *chip = _chip;
 	YM2151Operator *op = &chip->oper[ (r&0x07)*4+((r&0x18)>>3) ];
 
 	/* adjust bus to 8 bits */
@@ -1028,7 +1024,7 @@ void YM2151WriteReg(int n, int r, int v)
 #if 0
 	/* There is no info on what YM2151 really does when busy flag is set */
 	if ( chip->status & 0x80 ) return;
-	timer_set ( 64.0 / (double)chip->clock, n, timer_callback_chip_busy);
+	timer_set_ptr ( 64.0 / (double)chip->clock, chip, timer_callback_chip_busy);
 	chip->status |= 0x80;	/* set busy flag for 64 chip clock cycles */
 #endif
 
@@ -1050,7 +1046,7 @@ void YM2151WriteReg(int n, int r, int v)
 			break;
 
 		case 0x08:
-			PSG = &YMPSG[n]; /* PSG is used in KEY_ON macro */
+			PSG = chip; /* PSG is used in KEY_ON macro */
 			envelope_KONKOFF(&chip->oper[ (v&7)*4 ], v );
 			break;
 
@@ -1096,7 +1092,7 @@ void YM2151WriteReg(int n, int r, int v)
 				/* start timer _only_ if it wasn't already started (it will reload time value next round) */
 					if (!timer_enable(chip->timer_B, 1))
 					{
-						timer_adjust(chip->timer_B, chip->timer_B_time[ chip->timer_B_index ], n, 0);
+						timer_adjust_ptr(chip->timer_B, chip->timer_B_time[ chip->timer_B_index ], chip, 0);
 						chip->timer_B_index_old = chip->timer_B_index;
 					}
 				#else
@@ -1121,7 +1117,7 @@ void YM2151WriteReg(int n, int r, int v)
 				/* start timer _only_ if it wasn't already started (it will reload time value next round) */
 					if (!timer_enable(chip->timer_A, 1))
 					{
-						timer_adjust(chip->timer_A, chip->timer_A_time[ chip->timer_A_index ], n, 0);
+						timer_adjust_ptr(chip->timer_A, chip->timer_A_time[ chip->timer_A_index ], chip, 0);
 						chip->timer_A_index_old = chip->timer_A_index;
 					}
 				#else
@@ -1335,9 +1331,10 @@ static void cymfile_callback (int n)
 #endif
 
 
-int YM2151ReadStatus( int n )
+int YM2151ReadStatus( void *_chip )
 {
-	return YMPSG[n].status;
+	YM2151 *chip = _chip;
+	return chip->status;
 }
 
 
@@ -1351,117 +1348,116 @@ static void ym2151_postload_refresh(void)
 {
 	int i,j;
 
-	for (i=0; i<YMNumChips; i++)
+	for (i=0; i<MAX_SOUND; i++)
 	{
+		YM2151 *chip = sndti_token(SOUND_YM2151, i);
 		for (j=0; j<8; j++)
 		{
-			set_connect(&YMPSG[i].oper[j*4], YMPSG[i].connect[j], j);
+			set_connect(&chip->oper[j*4], chip->connect[j], j);
 		}
 	}
 }
 
-static void ym2151_state_save_register( int numchips )
+static void ym2151_state_save_register( YM2151 *chip, int sndindex )
 {
-	int i,j;
+	int j;
 	char buf1[20];
 
-	for (i=0; i<numchips; i++)
+	/* save all 32 operators of chip #i */
+	for (j=0; j<32; j++)
 	{
-		/* save all 32 operators of chip #i */
-		for (j=0; j<32; j++)
-		{
-			YM2151Operator *op;
+		YM2151Operator *op;
 
-			sprintf(buf1,"YM2151.op%02i",j);
-			op = &YMPSG[i].oper[(j&7)*4+(j>>3)];
+		sprintf(buf1,"YM2151.op%02i",j);
+		op = &chip->oper[(j&7)*4+(j>>3)];
 
-			state_save_register_UINT32 (buf1, i, "phase", &op->phase, 1);
-			state_save_register_UINT32 (buf1, i, "freq" , &op->freq,  1);
-			state_save_register_INT32  (buf1, i, "dt1"  , &op->dt1,   1);
-			state_save_register_UINT32 (buf1, i, "mul"  , &op->mul,   1);
-			state_save_register_UINT32 (buf1, i, "dt1_i", &op->dt1_i, 1);
-			state_save_register_UINT32 (buf1, i, "dt2"  , &op->dt2,   1);
-			/* operators connection is saved in chip data block */
-			state_save_register_INT32  (buf1, i, "mem_v" ,&op->mem_value,1);
+		state_save_register_UINT32 (buf1, i, "phase", &op->phase, 1);
+		state_save_register_UINT32 (buf1, i, "freq" , &op->freq,  1);
+		state_save_register_INT32  (buf1, i, "dt1"  , &op->dt1,   1);
+		state_save_register_UINT32 (buf1, i, "mul"  , &op->mul,   1);
+		state_save_register_UINT32 (buf1, i, "dt1_i", &op->dt1_i, 1);
+		state_save_register_UINT32 (buf1, i, "dt2"  , &op->dt2,   1);
+		/* operators connection is saved in chip data block */
+		state_save_register_INT32  (buf1, i, "mem_v" ,&op->mem_value,1);
 
-			state_save_register_UINT32 (buf1, i, "fb_sh", &op->fb_shift,   1);
-			state_save_register_INT32  (buf1, i, "fb_c" , &op->fb_out_curr,1);
-			state_save_register_INT32  (buf1, i, "fb_p" , &op->fb_out_prev,1);
-			state_save_register_UINT32 (buf1, i, "kc"   , &op->kc,    1);
-			state_save_register_UINT32 (buf1, i, "kc_i" , &op->kc_i,  1);
-			state_save_register_UINT32 (buf1, i, "pms"  , &op->pms,   1);
-			state_save_register_UINT32 (buf1, i, "ams"  , &op->ams,   1);
-			state_save_register_UINT32 (buf1, i, "AMmask",&op->AMmask,1);
+		state_save_register_UINT32 (buf1, i, "fb_sh", &op->fb_shift,   1);
+		state_save_register_INT32  (buf1, i, "fb_c" , &op->fb_out_curr,1);
+		state_save_register_INT32  (buf1, i, "fb_p" , &op->fb_out_prev,1);
+		state_save_register_UINT32 (buf1, i, "kc"   , &op->kc,    1);
+		state_save_register_UINT32 (buf1, i, "kc_i" , &op->kc_i,  1);
+		state_save_register_UINT32 (buf1, i, "pms"  , &op->pms,   1);
+		state_save_register_UINT32 (buf1, i, "ams"  , &op->ams,   1);
+		state_save_register_UINT32 (buf1, i, "AMmask",&op->AMmask,1);
 
-			state_save_register_UINT32 (buf1, i, "state" ,&op->state,     1);
-			state_save_register_UINT8  (buf1, i, "e_shAR",&op->eg_sh_ar,  1);
-			state_save_register_UINT8  (buf1, i, "e_slAR",&op->eg_sel_ar, 1);
-			state_save_register_UINT32 (buf1, i, "tl"    ,&op->tl,        1);
-			state_save_register_INT32  (buf1, i, "volume",&op->volume,    1);
-			state_save_register_UINT8  (buf1, i, "e_shD1",&op->eg_sh_d1r, 1);
-			state_save_register_UINT8  (buf1, i, "e_slD1",&op->eg_sel_d1r,1);
-			state_save_register_UINT32 (buf1, i, "d1l"   ,&op->d1l,       1);
-			state_save_register_UINT8  (buf1, i, "e_shD2",&op->eg_sh_d2r, 1);
-			state_save_register_UINT8  (buf1, i, "e_slD2",&op->eg_sel_d2r,1);
-			state_save_register_UINT8  (buf1, i, "e_shRR",&op->eg_sh_rr,  1);
-			state_save_register_UINT8  (buf1, i, "e_slRR",&op->eg_sel_rr, 1);
+		state_save_register_UINT32 (buf1, i, "state" ,&op->state,     1);
+		state_save_register_UINT8  (buf1, i, "e_shAR",&op->eg_sh_ar,  1);
+		state_save_register_UINT8  (buf1, i, "e_slAR",&op->eg_sel_ar, 1);
+		state_save_register_UINT32 (buf1, i, "tl"    ,&op->tl,        1);
+		state_save_register_INT32  (buf1, i, "volume",&op->volume,    1);
+		state_save_register_UINT8  (buf1, i, "e_shD1",&op->eg_sh_d1r, 1);
+		state_save_register_UINT8  (buf1, i, "e_slD1",&op->eg_sel_d1r,1);
+		state_save_register_UINT32 (buf1, i, "d1l"   ,&op->d1l,       1);
+		state_save_register_UINT8  (buf1, i, "e_shD2",&op->eg_sh_d2r, 1);
+		state_save_register_UINT8  (buf1, i, "e_slD2",&op->eg_sel_d2r,1);
+		state_save_register_UINT8  (buf1, i, "e_shRR",&op->eg_sh_rr,  1);
+		state_save_register_UINT8  (buf1, i, "e_slRR",&op->eg_sel_rr, 1);
 
-			state_save_register_UINT32 (buf1, i, "key"   ,&op->key, 1);
-			state_save_register_UINT32 (buf1, i, "ks"    ,&op->ks,  1);
-			state_save_register_UINT32 (buf1, i, "ar"    ,&op->ar,  1);
-			state_save_register_UINT32 (buf1, i, "d1r"   ,&op->d1r, 1);
-			state_save_register_UINT32 (buf1, i, "d2r"   ,&op->d2r, 1);
-			state_save_register_UINT32 (buf1, i, "rr"    ,&op->rr,  1);
+		state_save_register_UINT32 (buf1, i, "key"   ,&op->key, 1);
+		state_save_register_UINT32 (buf1, i, "ks"    ,&op->ks,  1);
+		state_save_register_UINT32 (buf1, i, "ar"    ,&op->ar,  1);
+		state_save_register_UINT32 (buf1, i, "d1r"   ,&op->d1r, 1);
+		state_save_register_UINT32 (buf1, i, "d2r"   ,&op->d2r, 1);
+		state_save_register_UINT32 (buf1, i, "rr"    ,&op->rr,  1);
 
-			state_save_register_UINT32 (buf1, i, "rsrvd0",&op->reserved0, 1);
-			state_save_register_UINT32 (buf1, i, "rsrvd1",&op->reserved1, 1);
-		}
-
-		sprintf(buf1,"YM2151.registers");
-
-		state_save_register_UINT32 (buf1, i, "pan"     , &YMPSG[i].pan[0], 16);
-
-		state_save_register_UINT32 (buf1, i, "eg_cnt"  , &YMPSG[i].eg_cnt,           1);
-		state_save_register_UINT32 (buf1, i, "eg_tmr"  , &YMPSG[i].eg_timer,         1);
-		state_save_register_UINT32 (buf1, i, "eg_tmra" , &YMPSG[i].eg_timer_add,     1);
-		state_save_register_UINT32 (buf1, i, "eg_ovr"  , &YMPSG[i].eg_timer_overflow,1);
-
-		state_save_register_UINT32 (buf1, i, "lfo_phas", &YMPSG[i].lfo_phase,      1);
-		state_save_register_UINT32 (buf1, i, "lfo_tmr" , &YMPSG[i].lfo_timer,      1);
-		state_save_register_UINT32 (buf1, i, "lfo_tmra", &YMPSG[i].lfo_timer_add,  1);
-		state_save_register_UINT32 (buf1, i, "lfo_ovr" , &YMPSG[i].lfo_overflow,   1);
-		state_save_register_UINT32 (buf1, i, "lfo_ctr" , &YMPSG[i].lfo_counter,    1);
-		state_save_register_UINT32 (buf1, i, "lfo_ctra", &YMPSG[i].lfo_counter_add,1);
-		state_save_register_UINT8  (buf1, i, "lfo_wsel", &YMPSG[i].lfo_wsel, 1);
-		state_save_register_UINT8  (buf1, i, "amd"     , &YMPSG[i].amd, 1);
-		state_save_register_INT8   (buf1, i, "pmd"     , &YMPSG[i].pmd, 1);
-		state_save_register_UINT32 (buf1, i, "lfa"     , &YMPSG[i].lfa, 1);
-		state_save_register_INT32  (buf1, i, "lfp"     , &YMPSG[i].lfp, 1);
-
-		state_save_register_UINT8  (buf1, i, "test"    , &YMPSG[i].test,1);
-		state_save_register_UINT8  (buf1, i, "ct"      , &YMPSG[i].ct,  1);
-
-		state_save_register_UINT32 (buf1, i, "noise"   , &YMPSG[i].noise,     1);
-		state_save_register_UINT32 (buf1, i, "noiseRNG", &YMPSG[i].noise_rng, 1);
-		state_save_register_UINT32 (buf1, i, "noise_p" , &YMPSG[i].noise_p,   1);
-		state_save_register_UINT32 (buf1, i, "noise_f" , &YMPSG[i].noise_f,   1);
-
-		state_save_register_UINT32 (buf1, i, "csm_req" , &YMPSG[i].csm_req,   1);
-		state_save_register_UINT32 (buf1, i, "irq_ena" , &YMPSG[i].irq_enable,1);
-		state_save_register_UINT32 (buf1, i, "status"  , &YMPSG[i].status,    1);
-
-		state_save_register_UINT32 (buf1, i, "TimAind" , &YMPSG[i].timer_A_index, 1);
-		state_save_register_UINT32 (buf1, i, "TimBind" , &YMPSG[i].timer_B_index, 1);
-		state_save_register_UINT32 (buf1, i, "TimAold" , &YMPSG[i].timer_A_index_old, 1);
-		state_save_register_UINT32 (buf1, i, "TimBold" , &YMPSG[i].timer_B_index_old, 1);
-
-		state_save_register_UINT8  (buf1, i, "connect" , &YMPSG[i].connect[0], 8);
+		state_save_register_UINT32 (buf1, i, "rsrvd0",&op->reserved0, 1);
+		state_save_register_UINT32 (buf1, i, "rsrvd1",&op->reserved1, 1);
 	}
 
-	state_save_register_func_postload(ym2151_postload_refresh);
+	sprintf(buf1,"YM2151.registers");
+
+	state_save_register_UINT32 (buf1, i, "pan"     , &chip->pan[0], 16);
+
+	state_save_register_UINT32 (buf1, i, "eg_cnt"  , &chip->eg_cnt,           1);
+	state_save_register_UINT32 (buf1, i, "eg_tmr"  , &chip->eg_timer,         1);
+	state_save_register_UINT32 (buf1, i, "eg_tmra" , &chip->eg_timer_add,     1);
+	state_save_register_UINT32 (buf1, i, "eg_ovr"  , &chip->eg_timer_overflow,1);
+
+	state_save_register_UINT32 (buf1, i, "lfo_phas", &chip->lfo_phase,      1);
+	state_save_register_UINT32 (buf1, i, "lfo_tmr" , &chip->lfo_timer,      1);
+	state_save_register_UINT32 (buf1, i, "lfo_tmra", &chip->lfo_timer_add,  1);
+	state_save_register_UINT32 (buf1, i, "lfo_ovr" , &chip->lfo_overflow,   1);
+	state_save_register_UINT32 (buf1, i, "lfo_ctr" , &chip->lfo_counter,    1);
+	state_save_register_UINT32 (buf1, i, "lfo_ctra", &chip->lfo_counter_add,1);
+	state_save_register_UINT8  (buf1, i, "lfo_wsel", &chip->lfo_wsel, 1);
+	state_save_register_UINT8  (buf1, i, "amd"     , &chip->amd, 1);
+	state_save_register_INT8   (buf1, i, "pmd"     , &chip->pmd, 1);
+	state_save_register_UINT32 (buf1, i, "lfa"     , &chip->lfa, 1);
+	state_save_register_INT32  (buf1, i, "lfp"     , &chip->lfp, 1);
+
+	state_save_register_UINT8  (buf1, i, "test"    , &chip->test,1);
+	state_save_register_UINT8  (buf1, i, "ct"      , &chip->ct,  1);
+
+	state_save_register_UINT32 (buf1, i, "noise"   , &chip->noise,     1);
+	state_save_register_UINT32 (buf1, i, "noiseRNG", &chip->noise_rng, 1);
+	state_save_register_UINT32 (buf1, i, "noise_p" , &chip->noise_p,   1);
+	state_save_register_UINT32 (buf1, i, "noise_f" , &chip->noise_f,   1);
+
+	state_save_register_UINT32 (buf1, i, "csm_req" , &chip->csm_req,   1);
+	state_save_register_UINT32 (buf1, i, "irq_ena" , &chip->irq_enable,1);
+	state_save_register_UINT32 (buf1, i, "status"  , &chip->status,    1);
+
+	state_save_register_UINT32 (buf1, i, "TimAind" , &chip->timer_A_index, 1);
+	state_save_register_UINT32 (buf1, i, "TimBind" , &chip->timer_B_index, 1);
+	state_save_register_UINT32 (buf1, i, "TimAold" , &chip->timer_A_index_old, 1);
+	state_save_register_UINT32 (buf1, i, "TimBold" , &chip->timer_B_index_old, 1);
+
+	state_save_register_UINT8  (buf1, i, "connect" , &chip->connect[0], 8);
+
+	if (sndindex == 0)
+		state_save_register_func_postload(ym2151_postload_refresh);
 }
 #else
-static void ym2151_state_save_register( int numchips )
+static void ym2151_state_save_register( YM2151 *chip, int sndindex )
 {
 }
 #endif
@@ -1474,51 +1470,43 @@ static void ym2151_state_save_register( int numchips )
 *	'clock' is the chip clock in Hz
 *	'rate' is sampling rate
 */
-int YM2151Init(int num, int clock, int rate)
+void * YM2151Init(int index, int clock, int rate)
 {
-	int i;
+	YM2151 *PSG;
+	
+	PSG = (YM2151 *)malloc(sizeof(YM2151));
+	if (PSG == NULL)
+		return NULL;
 
-	if (YMPSG)
-		return -1;	/* duplicate init. */
+	memset(PSG, 0, sizeof(YM2151));
 
-	YMNumChips = num;
-
-	YMPSG = (YM2151 *)malloc(sizeof(YM2151) * YMNumChips);
-	if (YMPSG == NULL)
-		return 1;
-
-	memset(YMPSG, 0, sizeof(YM2151) * YMNumChips);
-
-	ym2151_state_save_register( YMNumChips );
+	ym2151_state_save_register( PSG, index );
 
 	init_tables();
 
-	for (i=0 ; i<YMNumChips; i++)
-	{
-		YMPSG[i].clock = clock;
-		/*rate = clock/64;*/
-		YMPSG[i].sampfreq = rate ? rate : 44100;	/* avoid division by 0 in init_chip_tables() */
-		YMPSG[i].irqhandler = NULL;					/* interrupt handler  */
-		YMPSG[i].porthandler = NULL;				/* port write handler */
-		init_chip_tables( &YMPSG[i] );
+	PSG->clock = clock;
+	/*rate = clock/64;*/
+	PSG->sampfreq = rate ? rate : 44100;	/* avoid division by 0 in init_chip_tables() */
+	PSG->irqhandler = NULL;					/* interrupt handler  */
+	PSG->porthandler = NULL;				/* port write handler */
+	init_chip_tables( PSG );
 
-		YMPSG[i].lfo_timer_add = (1<<LFO_SH) * (clock/64.0) / YMPSG[i].sampfreq;
+	PSG->lfo_timer_add = (1<<LFO_SH) * (clock/64.0) / PSG->sampfreq;
 
-		YMPSG[i].eg_timer_add  = (1<<EG_SH)  * (clock/64.0) / YMPSG[i].sampfreq;
-		YMPSG[i].eg_timer_overflow = ( 3 ) * (1<<EG_SH);
-		/*logerror("YM2151[init] eg_timer_add=%8x eg_timer_overflow=%8x\n", YMPSG[i].eg_timer_add, YMPSG[i].eg_timer_overflow);*/
+	PSG->eg_timer_add  = (1<<EG_SH)  * (clock/64.0) / PSG->sampfreq;
+	PSG->eg_timer_overflow = ( 3 ) * (1<<EG_SH);
+	/*logerror("YM2151[init] eg_timer_add=%8x eg_timer_overflow=%8x\n", PSG->eg_timer_add, PSG->eg_timer_overflow);*/
 
 #ifdef USE_MAME_TIMERS
 /* this must be done _before_ a call to YM2151ResetChip() */
-		YMPSG[i].timer_A = timer_alloc(timer_callback_a);
-		YMPSG[i].timer_B = timer_alloc(timer_callback_b);
+	PSG->timer_A = timer_alloc_ptr(timer_callback_a);
+	PSG->timer_B = timer_alloc_ptr(timer_callback_b);
 #else
-		YMPSG[i].tim_A      = 0;
-		YMPSG[i].tim_B      = 0;
+	PSG->tim_A      = 0;
+	PSG->tim_B      = 0;
 #endif
-		YM2151ResetChip(i);
-		/*logerror("YM2151[init] clock=%i sampfreq=%i\n", YMPSG[i].clock, YMPSG[i].sampfreq);*/
-	}
+	YM2151ResetChip(PSG);
+	/*logerror("YM2151[init] clock=%i sampfreq=%i\n", PSG->clock, PSG->sampfreq);*/
 
 #ifdef LOG_CYM_FILE
 	cymfile = fopen("2151_.cym","wb");
@@ -1528,18 +1516,16 @@ int YM2151Init(int num, int clock, int rate)
 		logerror("Could not create file 2151_.cym\n");
 #endif
 
-	return 0;
+	return PSG;
 }
 
 
 
-void YM2151Shutdown()
+void YM2151Shutdown(void *_chip)
 {
-	if (!YMPSG)
-		return;
-
-	free (YMPSG);
-	YMPSG = NULL;
+	YM2151 *chip = _chip;
+	
+	free (chip);
 
 #ifdef LOG_CYM_FILE
 	fclose (cymfile);
@@ -1566,10 +1552,10 @@ void YM2151Shutdown()
 /*
 *	Reset chip number 'n'.
 */
-void YM2151ResetChip(int num)
+void YM2151ResetChip(void *_chip)
 {
 	int i;
-	YM2151 *chip = &YMPSG[num];
+	YM2151 *chip = _chip;
 
 
 	/* initialize hardware registers */
@@ -1618,11 +1604,11 @@ void YM2151ResetChip(int num)
 	chip->csm_req	= 0;
 	chip->status    = 0;
 
-	YM2151WriteReg(num, 0x1b, 0);	/* only because of CT1, CT2 output pins */
-	YM2151WriteReg(num, 0x18, 0);	/* set LFO frequency */
+	YM2151WriteReg(chip, 0x1b, 0);	/* only because of CT1, CT2 output pins */
+	YM2151WriteReg(chip, 0x18, 0);	/* set LFO frequency */
 	for (i=0x20; i<0x100; i++)		/* set the operators */
 	{
-		YM2151WriteReg(num, i, 0);
+		YM2151WriteReg(chip, i, 0);
 	}
 }
 
@@ -2349,7 +2335,7 @@ INLINE signed int acc_calc(signed int value)
 *	'**buffers' is table of pointers to the buffers: left and right
 *	'length' is the number of samples that should be generated
 */
-void YM2151UpdateOne(int num, INT16 **buffers, int length)
+void YM2151UpdateOne(void *chip, SAMP **buffers, int length)
 {
 	int i;
 	signed int outl,outr;
@@ -2358,7 +2344,7 @@ void YM2151UpdateOne(int num, INT16 **buffers, int length)
 	bufL = buffers[0];
 	bufR = buffers[1];
 
-	PSG = &YMPSG[num];
+	PSG = chip;
 
 #ifdef USE_MAME_TIMERS
 		/* ASG 980324 - handled by real timers now */
@@ -2462,13 +2448,15 @@ void YM2151UpdateOne(int num, INT16 **buffers, int length)
 	}
 }
 
-void YM2151SetIrqHandler(int n, void(*handler)(int irq))
+void YM2151SetIrqHandler(void *chip, void(*handler)(int irq))
 {
-	YMPSG[n].irqhandler = handler;
+	YM2151 *PSG = chip;
+	PSG->irqhandler = handler;
 }
 
-void YM2151SetPortWriteHandler(int n, write8_handler handler)
+void YM2151SetPortWriteHandler(void *chip, write8_handler handler)
 {
-	YMPSG[n].porthandler = handler;
+	YM2151 *PSG = chip;
+	PSG->porthandler = handler;
 }
 

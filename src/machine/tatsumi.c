@@ -1,6 +1,8 @@
 #include "driver.h"
 #include "state.h"
 #include "tatsumi.h"
+#include "sound/2151intf.h"
+#include "sound/okim6295.h"
 
 /*static*/ data16_t tatsumi_control_word=0;
 static data16_t tatsumi_last_control=0;

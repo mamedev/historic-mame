@@ -63,8 +63,6 @@
  */
 #define FREQ_17_APPROX  FREQ_17_EXACT
 
-#define MAXPOKEYS	4	/* max number of emulated chips */
-
 
 #ifdef __cplusplus
 extern "C" {
@@ -79,26 +77,13 @@ extern "C" {
  *****************************************************************************/
 
 struct POKEYinterface {
-	int num;    /* total number of pokeys in the machine */
-	int baseclock;
-	int mixing_level[MAXPOKEYS];
-	read8_handler pot0_r[MAXPOKEYS];
-	read8_handler pot1_r[MAXPOKEYS];
-	read8_handler pot2_r[MAXPOKEYS];
-	read8_handler pot3_r[MAXPOKEYS];
-	read8_handler pot4_r[MAXPOKEYS];
-	read8_handler pot5_r[MAXPOKEYS];
-	read8_handler pot6_r[MAXPOKEYS];
-	read8_handler pot7_r[MAXPOKEYS];
-	read8_handler allpot_r[MAXPOKEYS];
-	read8_handler serin_r[MAXPOKEYS];
-	write8_handler serout_w[MAXPOKEYS];
-	void (*interrupt_cb[MAXPOKEYS])(int mask);
+	read8_handler pot_r[8];
+	read8_handler allpot_r;
+	read8_handler serin_r;
+	write8_handler serout_w;
+	void (*interrupt_cb)(int mask);
 };
 
-
-int pokey_sh_start (const struct MachineSound *msound);
-void pokey_sh_stop (void);
 
 READ8_HANDLER( pokey1_r );
 READ8_HANDLER( pokey2_r );

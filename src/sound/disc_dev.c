@@ -279,7 +279,7 @@ void dsd_555_astbl_reset(struct node_description *node)
 		/* use values passed in structure */
 		context->threshold = (info->threshold555 == DEFAULT_555_THRESHOLD) ? info->v555 *2 /3 : info->threshold555;
 		context->trigger =  (info->trigger555 == DEFAULT_555_TRIGGER) ? info->v555 /3 : info->trigger555;
-		context->vHigh = (info->v555high == DEFAULT_555_HIGH) ? info->v555 - 1.7 : info->v555high;
+		context->vHigh = (info->v555high == DEFAULT_555_HIGH) ? info->v555 - 1.2 : info->v555high;
 	}
 
 	context->error = test_555(context->threshold, context->trigger, info->v555, node->node);
@@ -402,7 +402,7 @@ void dsd_555_mstbl_reset(struct node_description *node)
 	/* Use the supplied values or set to defaults. */
 	context->threshold = (info->threshold555 == DEFAULT_555_THRESHOLD) ? info->v555 *2 /3 : info->threshold555;
 	context->trigger =  (info->trigger555 == DEFAULT_555_TRIGGER) ? info->v555 /3 : info->trigger555;
-	context->vHigh = (info->v555high == DEFAULT_555_HIGH) ? info->v555 - 1.7 : info->v555high;
+	context->vHigh = (info->v555high == DEFAULT_555_HIGH) ? info->v555 - 1.2 : info->v555high;
 
 	context->error = test_555(context->threshold, context->trigger, info->v555, node->node);
 
@@ -717,7 +717,7 @@ void dsd_555_cc_reset(struct node_description *node)
 	/* Use the supplied values or set to defaults. */
 	context->threshold = (info->threshold555 == DEFAULT_555_THRESHOLD) ? info->v555 *2 /3 : info->threshold555;
 	context->trigger =  (info->trigger555 == DEFAULT_555_TRIGGER) ? info->v555 /3 : info->trigger555;
-	context->vHigh = (info->v555high == DEFAULT_555_HIGH) ? info->v555 - 1.7 : info->v555high;
+	context->vHigh = (info->v555high == DEFAULT_555_HIGH) ? info->v555 - 1.2 : info->v555high;
 
 	context->error = test_555(context->threshold, context->trigger, info->v555, node->node);
 

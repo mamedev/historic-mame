@@ -23,6 +23,7 @@ TODO:
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "sound/ay8910.h"
 
 static int sndlatch;
 static int prevdata=0;
@@ -339,13 +340,10 @@ INTERRUPT_GEN( enigma2_interrupt )
 
 static struct AY8910interface ay8910_interface =
 {
-	1,
-	2500000/2,
-	{ 100,},
-	{ sound_r },
-	{ 0 },
-	{ 0 },
-	{ protection_w }
+	sound_r,
+	0,
+	0,
+	protection_w
 };
 
 static MACHINE_DRIVER_START( enigma2 )
@@ -371,7 +369,11 @@ static MACHINE_DRIVER_START( enigma2 )
 
 	MDRV_VIDEO_UPDATE(enigma2)
 
-	MDRV_SOUND_ADD(AY8910, ay8910_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	
+	MDRV_SOUND_ADD(AY8910, 2500000/2)
+	MDRV_SOUND_CONFIG(ay8910_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( enigma2a )
@@ -398,7 +400,11 @@ static MACHINE_DRIVER_START( enigma2a )
 	MDRV_VIDEO_START(generic_bitmapped)
 	MDRV_VIDEO_UPDATE(generic_bitmapped)
 	
-	MDRV_SOUND_ADD(AY8910, ay8910_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	
+	MDRV_SOUND_ADD(AY8910, 2500000/2)
+	MDRV_SOUND_CONFIG(ay8910_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 ROM_START( enigma2 )

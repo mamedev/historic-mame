@@ -19,6 +19,7 @@ MAIN BOARD:
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "cpu/m6809/m6809.h"
+#include "sound/sn76496.h"
 
 extern WRITE8_HANDLER( mikie_videoram_w );
 extern WRITE8_HANDLER( mikie_colorram_w );
@@ -242,13 +243,6 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 #define OSC		18432000
 #define CLK		XTAL/4
 
-static struct SN76496interface sn76496_interface =
-{
-	2,					// 2 chips (SN76489AN)
-	{ XTAL/8, CLK },	// 1.79 MHz, 3.58 MHz
-	{ 60, 60 }
-};
-
 /* Machine Driver */
 
 static MACHINE_DRIVER_START( mikie )
@@ -277,7 +271,13 @@ static MACHINE_DRIVER_START( mikie )
 	MDRV_VIDEO_UPDATE(mikie)
 
 	// sound hardware
-	MDRV_SOUND_ADD(SN76496, sn76496_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(SN76496, XTAL/8)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.60)
+
+	MDRV_SOUND_ADD(SN76496, CLK)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.60)
 MACHINE_DRIVER_END
 
 /* ROMs */

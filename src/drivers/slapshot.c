@@ -137,6 +137,7 @@ Region byte at offset 0x031:
 #include "vidhrdw/generic.h"
 #include "vidhrdw/taitoic.h"
 #include "sndhrdw/taitosnd.h"
+#include "sound/2610intf.h"
 
 
 VIDEO_EOF( opwolf3_full_buffer_delayed );
@@ -529,17 +530,9 @@ static void irqhandler(int irq)
 
 static struct YM2610interface ym2610_interface =
 {
-	1,	/* 1 chip */
-	16000000/2,	/* 8 MHz ?? */
-	{ 25 },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ irqhandler },
-	{ REGION_SOUND2 },	/* Delta-T */
-	{ REGION_SOUND1 },	/* ADPCM */
-	{ YM3012_VOL(100,MIXER_PAN_LEFT,100,MIXER_PAN_RIGHT) }
+	irqhandler,
+	REGION_SOUND2,	/* Delta-T */
+	REGION_SOUND1	/* ADPCM */
 };
 
 
@@ -576,8 +569,14 @@ static MACHINE_DRIVER_START( slapshot )
 	MDRV_VIDEO_UPDATE(slapshot)
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(YM2610B, ym2610_interface)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(YM2610B, 16000000/2)
+	MDRV_SOUND_CONFIG(ym2610_interface)
+	MDRV_SOUND_ROUTE(0, "left",  0.25)
+	MDRV_SOUND_ROUTE(0, "right", 0.25)
+	MDRV_SOUND_ROUTE(1, "left",  1.0)
+	MDRV_SOUND_ROUTE(2, "right", 1.0)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( opwolf3 )
@@ -609,8 +608,14 @@ static MACHINE_DRIVER_START( opwolf3 )
 	MDRV_VIDEO_UPDATE(slapshot)
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(YM2610B, ym2610_interface)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(YM2610B, 16000000/2)
+	MDRV_SOUND_CONFIG(ym2610_interface)
+	MDRV_SOUND_ROUTE(0, "left",  0.25)
+	MDRV_SOUND_ROUTE(0, "right", 0.25)
+	MDRV_SOUND_ROUTE(1, "left",  1.0)
+	MDRV_SOUND_ROUTE(2, "right", 1.0)
 MACHINE_DRIVER_END
 
 /***************************************************************************

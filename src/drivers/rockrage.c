@@ -11,6 +11,8 @@ Driver by Manuel Abadia <manu@teleline.es>
 #include "cpu/hd6309/hd6309.h"
 #include "vidhrdw/generic.h"
 #include "vidhrdw/konamiic.h"
+#include "sound/2151intf.h"
+#include "sound/vlm5030.h"
 
 extern int rockrage_irq_enable;
 
@@ -244,19 +246,8 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 ***************************************************************************/
 
-static struct YM2151interface ym2151_interface =
-{
-	1,			/* 1 chip */
-	3579545,	/* 3.579545 MHz */
-	{ YM3012_VOL(60,MIXER_PAN_LEFT,60,MIXER_PAN_RIGHT) },
-	{ 0 },
-	{ 0 }
-};
-
 static struct VLM5030interface vlm5030_interface =
 {
-	3579545,	/* 3.579545 MHz */
-	60,			/* volume */
 	REGION_SOUND1,	/* memory region of speech rom */
 	0
 };
@@ -288,8 +279,15 @@ static MACHINE_DRIVER_START( rockrage )
 	MDRV_VIDEO_UPDATE(rockrage)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM2151, ym2151_interface)
-	MDRV_SOUND_ADD(VLM5030, vlm5030_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM2151, 3579545)
+	MDRV_SOUND_ROUTE(0, "mono", 0.60)
+	MDRV_SOUND_ROUTE(1, "mono", 0.60)
+
+	MDRV_SOUND_ADD(VLM5030, 3579545)
+	MDRV_SOUND_CONFIG(vlm5030_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.60)
 MACHINE_DRIVER_END
 
 

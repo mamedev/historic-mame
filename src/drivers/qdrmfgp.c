@@ -619,20 +619,14 @@ static void sound_irq(void)
 
 static struct K054539interface k054539_interface =
 {
-	1,					/* 1 chip */
-	18432000/384,		/* 48000 Hz */
-	{ REGION_SOUND1 },
-	{ { 100, 100 } },
-	{ 0 },
-	{ sound_irq }
+	REGION_SOUND1,
+	NULL,
+	sound_irq
 };
 
 static struct K054539interface gp2_k054539_interface =
 {
-	1,					/* 1 chip (not used 2nd chip & interrupt) */
-	18432000/384,		/* 48000 Hz */
-	{ REGION_SOUND1 },
-	{ { 100, 100 } },
+	REGION_SOUND1
 };
 
 
@@ -693,8 +687,12 @@ static MACHINE_DRIVER_START( qdrmfgp )
 	MDRV_VIDEO_UPDATE(qdrmfgp)
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(K054539, k054539_interface)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(K054539, 18432000/384)
+	MDRV_SOUND_CONFIG(k054539_interface)
+	MDRV_SOUND_ROUTE(0, "left", 1.0)
+	MDRV_SOUND_ROUTE(1, "right", 1.0)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( qdrmfgp2 )
@@ -720,8 +718,12 @@ static MACHINE_DRIVER_START( qdrmfgp2 )
 	MDRV_VIDEO_UPDATE(qdrmfgp)
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(K054539, gp2_k054539_interface)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(K054539, 18432000/384)
+	MDRV_SOUND_CONFIG(gp2_k054539_interface)
+	MDRV_SOUND_ROUTE(0, "left", 1.0)
+	MDRV_SOUND_ROUTE(1, "right", 1.0)
 MACHINE_DRIVER_END
 
 

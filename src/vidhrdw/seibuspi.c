@@ -13,7 +13,7 @@ int bg_size;
 static UINT32 layer_bank;
 static UINT32 layer_enable;
 
-static int rf2_layer_bank = 0;
+static int rf2_layer_bank[3];
 
 READ32_HANDLER( spi_layer_bank_r )
 {
@@ -23,6 +23,27 @@ READ32_HANDLER( spi_layer_bank_r )
 WRITE32_HANDLER( spi_layer_bank_w )
 {
 	COMBINE_DATA( &layer_bank );
+}
+
+void rf2_set_layer_banks(int banks)
+{
+	if (rf2_layer_bank[0] != BIT(banks,0))
+	{
+		rf2_layer_bank[0] = BIT(banks,0);
+		tilemap_mark_all_tiles_dirty(back_layer);
+	}
+
+	if (rf2_layer_bank[1] != BIT(banks,1))
+	{
+		rf2_layer_bank[1] = BIT(banks,1);
+		tilemap_mark_all_tiles_dirty(mid_layer);
+	}
+
+	if (rf2_layer_bank[2] != BIT(banks,2))
+	{
+		rf2_layer_bank[2] = BIT(banks,2);
+		tilemap_mark_all_tiles_dirty(fore_layer);
+	}
 }
 
 WRITE32_HANDLER( spi_layer_enable_w )
@@ -188,7 +209,7 @@ static void get_back_tile_info( int tile_index )
 
 	tile &= 0x1fff;
 
-	if( rf2_layer_bank )
+	if( rf2_layer_bank[0] )
 		tile |= 0x4000;
 
 	SET_TILE_INFO(1, tile, color, 0)
@@ -203,7 +224,7 @@ static void get_mid_tile_info( int tile_index )
 	tile &= 0x1fff;
 	tile |= 0x2000;
 
-	if( rf2_layer_bank )
+	if( rf2_layer_bank[1] )
 		tile |= 0x4000;
 
 	SET_TILE_INFO(1, tile, color + 16, 0)
@@ -223,7 +244,7 @@ static void get_fore_tile_info( int tile_index )
 		case 2: tile |= 0x8000; break;
 	}
 
-	if( rf2_layer_bank )
+	if( rf2_layer_bank[2] )
 		tile |= 0x4000;
 
 	tile |= ((layer_bank >> 27) & 0x1) << 13;
@@ -264,7 +285,6 @@ static void set_scroll(struct tilemap *layer, int scroll)
 	tilemap_set_scrolly(layer, 0, y);
 }
 
-static int tick = 0;
 
 VIDEO_UPDATE( spi )
 {
@@ -276,18 +296,6 @@ VIDEO_UPDATE( spi )
 		set_scroll(back_layer, 0);
 		set_scroll(mid_layer, 1);
 		set_scroll(fore_layer, 2);
-	}
-
-	tick++;
-	if( tick >= 5 ) {
-		tick = 0;
-
-		if( code_pressed(KEYCODE_O) )
-			rf2_layer_bank ^= 1;
-
-		tilemap_mark_all_tiles_dirty(fore_layer);
-		tilemap_mark_all_tiles_dirty(mid_layer);
-		tilemap_mark_all_tiles_dirty(back_layer);
 	}
 
 	if( layer_enable & 0x1 )

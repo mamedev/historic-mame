@@ -35,6 +35,7 @@ a000-a3ff	R/W X/Y scroll position of each character (can be scrolled up
 #include "vidhrdw/generic.h"
 #include "cpu/i8085/i8085.h"
 #include "cpu/i8039/i8039.h"
+#include "sound/sn76496.h"
 
 
 extern unsigned char *spcforce_scrollram;
@@ -250,14 +251,6 @@ static PALETTE_INIT( spcforce )
 }
 
 
-static struct SN76496interface sn76496_interface =
-{
-	3,		/* 3 chips */
-	{ 2000000, 2000000, 2000000 },	/* 8 MHz / 4 ?*/
-	{ 100, 100, 100 }
-};
-
-
 static MACHINE_DRIVER_START( spcforce )
 
 	/* basic machine hardware */
@@ -286,7 +279,16 @@ static MACHINE_DRIVER_START( spcforce )
 	MDRV_VIDEO_UPDATE(spcforce)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(SN76496, sn76496_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(SN76496, 2000000)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
+
+	MDRV_SOUND_ADD(SN76496, 2000000)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
+
+	MDRV_SOUND_ADD(SN76496, 2000000)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 

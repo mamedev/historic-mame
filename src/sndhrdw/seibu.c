@@ -34,7 +34,10 @@
 
 #include "driver.h"
 #include "sndhrdw/seibu.h"
-
+#include "sound/3812intf.h"
+#include "sound/2151intf.h"
+#include "sound/2203intf.h"
+#include "sound/okim6295.h"
 
 
 /*
@@ -157,12 +160,12 @@ WRITE8_HANDLER( seibu_adpcm_ctl_1_w )
 	switch (data)
 	{
 		case 0:
-  			ADPCM_stop(0);
+//  			ADPCM_stop(0);
 			break;
 		case 2:
 			break;
 		case 1:
-			ADPCM_play(0, start, end-start);
+//			ADPCM_play(0, start, end-start);
 			break;
 
 	}
@@ -186,14 +189,14 @@ WRITE8_HANDLER( seibu_adpcm_ctl_2_w )
 	switch (data)
 	{
 		case 0:
-  			ADPCM_stop(1);
+//  			ADPCM_stop(1);
 			break;
 		case 2:
 			break;
 		case 1:
 			start1 += 0x10000;
 			end1 += 0x10000;
-			ADPCM_play(1, start1, end1-start1);
+//			ADPCM_play(1, start1, end1-start1);
 			break;
 
 	}

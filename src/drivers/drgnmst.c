@@ -11,6 +11,7 @@ unico used for zero point etc.
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "cpu/pic16c5x/pic16c5x.h"
+#include "sound/okim6295.h"
 
 
 static data16_t drgnmst_snd_command;
@@ -354,15 +355,6 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 };
 
 
-static struct OKIM6295interface dual_okim6295_interface =
-{
-	2,										/* 2 chips */
-	{ 32000000/32/132, 32000000/32/132 },   /* Confirmed */
-	{ REGION_SOUND1, REGION_SOUND2 },		/* memory region */
-	{ 50, 50 }
-};
-
-
 static MACHINE_DRIVER_START( drgnmst )
 	MDRV_CPU_ADD(M68000, 12000000) /* Confirmed */
 	MDRV_CPU_PROGRAM_MAP(drgnmst_main_map, 0)
@@ -386,8 +378,17 @@ static MACHINE_DRIVER_START( drgnmst )
 	MDRV_VIDEO_UPDATE(drgnmst)
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(OKIM6295, dual_okim6295_interface)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(OKIM6295, 32000000/32/132)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.50)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 0.50)
+
+	MDRV_SOUND_ADD(OKIM6295, 32000000/32/132)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_2)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.50)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 0.50)
 MACHINE_DRIVER_END
 
 

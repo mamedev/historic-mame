@@ -6,6 +6,7 @@ Atari Drag Race Driver
 
 #include "driver.h"
 #include "dragrace.h"
+#include "sound/discrete.h"
 
 
 extern VIDEO_START( dragrace );
@@ -351,8 +352,12 @@ static MACHINE_DRIVER_START( dragrace )
 	MDRV_VIDEO_UPDATE(dragrace)
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD_TAG("discrete", DISCRETE, dragrace_discrete_interface)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+	
+	MDRV_SOUND_ADD_TAG("discrete", DISCRETE, 0)
+	MDRV_SOUND_CONFIG(dragrace_discrete_interface)
+	MDRV_SOUND_ROUTE(0, "left", 1.0)
+	MDRV_SOUND_ROUTE(1, "right", 1.0)
 MACHINE_DRIVER_END
 
 

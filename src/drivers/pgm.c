@@ -253,6 +253,7 @@ Notes:
 */
 
 #include "driver.h"
+#include "sound/ics2115.h"
 #include <time.h>
 
 data16_t *pgm_mainram, *pgm_bg_videoram, *pgm_tx_videoram, *pgm_videoregs, *pgm_rowscrollram;
@@ -304,7 +305,7 @@ static WRITE16_HANDLER ( z80_reset_w )
 	logerror("Z80: reset %04x @ %04x (%06x)\n", data, mem_mask, activecpu_get_pc());
 
 	if(data == 0x5050) {
-		ics2115_reset();
+		sndti_reset(SOUND_ICS2115, 0);
 		cpunum_set_input_line(1, INPUT_LINE_HALT, CLEAR_LINE);
 		cpunum_set_input_line(1, INPUT_LINE_RESET, PULSE_LINE);
 		if(0) {
@@ -342,7 +343,6 @@ static void sound_irq(int level)
 }
 
 struct ics2115_interface pgm_ics2115_interface = {
-	{ MIXER(100, MIXER_PAN_LEFT), MIXER(100, MIXER_PAN_RIGHT) },
 	REGION_SOUND1,
 	sound_irq
 };
@@ -914,7 +914,10 @@ static MACHINE_DRIVER_START( pgm )
 	MDRV_CPU_IO_MAP(z80_io, 0)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU | CPU_16BIT_PORT)
 
-	MDRV_SOUND_ADD(ICS2115, pgm_ics2115_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	MDRV_SOUND_ADD(ICS2115, 0)
+	MDRV_SOUND_CONFIG(pgm_ics2115_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)

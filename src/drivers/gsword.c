@@ -138,6 +138,8 @@ reg: 0->1 (main->2nd) /     : (1->0) 2nd->main :
 #include "vidhrdw/generic.h"
 #include "cpu/z80/z80.h"
 #include "machine/tait8741.h"
+#include "sound/ay8910.h"
+#include "sound/msm5205.h"
 
 
 extern WRITE8_HANDLER( gsword_charbank_w );
@@ -563,22 +565,16 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 static struct AY8910interface ay8910_interface =
 {
-	2,		/* 2 chips */
-	1500000,	/* 1.5 MHz */
-	{ 30, 30 },
-	{ 0,0 },
-	{ 0,0 },
-	{ 0,gsword_nmi_set_w }, /* portA write */
-	{ 0,0 }
+	0,
+	0,
+	gsword_nmi_set_w, /* portA write */
+	0
 };
 
 static struct MSM5205interface msm5205_interface =
 {
-	1,				/* 1 chip             */
-	384000,				/* 384KHz verified!   */
-	{ 0 },				/* interrupt function */
-	{ MSM5205_SEX_4B },		/* vclk input mode    */
-	{ 60 }
+	0,				/* interrupt function */
+	MSM5205_SEX_4B	/* vclk input mode    */
 };
 
 
@@ -614,8 +610,18 @@ static MACHINE_DRIVER_START( josvolly )
 	MDRV_VIDEO_UPDATE(gsword)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(AY8910, ay8910_interface)
-	MDRV_SOUND_ADD(MSM5205, msm5205_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(AY8910, 1500000)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.30)
+
+	MDRV_SOUND_ADD(AY8910, 1500000)
+	MDRV_SOUND_CONFIG(ay8910_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.30)
+
+	MDRV_SOUND_ADD(MSM5205, 384000)
+	MDRV_SOUND_CONFIG(msm5205_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.60)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( gsword )
@@ -654,8 +660,18 @@ static MACHINE_DRIVER_START( gsword )
 	MDRV_VIDEO_UPDATE(gsword)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(AY8910, ay8910_interface)
-	MDRV_SOUND_ADD(MSM5205, msm5205_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(AY8910, 1500000)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.30)
+
+	MDRV_SOUND_ADD(AY8910, 1500000)
+	MDRV_SOUND_CONFIG(ay8910_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.30)
+
+	MDRV_SOUND_ADD(MSM5205, 384000)
+	MDRV_SOUND_CONFIG(msm5205_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.60)
 MACHINE_DRIVER_END
 
 /***************************************************************************

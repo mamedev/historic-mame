@@ -20,6 +20,7 @@
 #include "driver.h"
 #include "machine/atarigen.h"
 #include "shuuz.h"
+#include "sound/okim6295.h"
 
 
 
@@ -267,22 +268,6 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 /*************************************
  *
- *	Sound definitions
- *
- *************************************/
-
-static struct OKIM6295interface okim6295_interface =
-{
-	1,
-	{ ATARI_CLOCK_14MHz/16/132 },
-	{ REGION_SOUND1 },
-	{ 100 }
-};
-
-
-
-/*************************************
- *
  *	Machine driver
  *
  *************************************/
@@ -310,7 +295,11 @@ static MACHINE_DRIVER_START( shuuz )
 	MDRV_VIDEO_UPDATE(shuuz)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(OKIM6295, okim6295_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(OKIM6295, ATARI_CLOCK_14MHz/16/132)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 

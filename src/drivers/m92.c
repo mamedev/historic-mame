@@ -198,6 +198,8 @@ Notes:
 #include "m92.h"
 #include "machine/irem_cpu.h"
 #include "state.h"
+#include "sound/2151intf.h"
+#include "sound/iremga20.h"
 
 static int irqvector;
 static int sound_status;
@@ -1214,17 +1216,12 @@ static void sound_irq(int state)
 
 static struct YM2151interface ym2151_interface =
 {
-	1,
-	14318180/4,
-	{ YM3012_VOL(40,MIXER_PAN_LEFT,40,MIXER_PAN_RIGHT) },
-	{ sound_irq }
+	sound_irq
 };
 
 static struct IremGA20_interface iremGA20_interface =
 {
-	14318180/4,
-	REGION_SOUND1,
-	{ MIXER(100,MIXER_PAN_LEFT), MIXER(100,MIXER_PAN_RIGHT) },
+	REGION_SOUND1
 };
 
 /***************************************************************************/
@@ -1294,8 +1291,16 @@ static MACHINE_DRIVER_START( raster )
 	MDRV_VIDEO_UPDATE(m92)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM2151, ym2151_interface)
-	MDRV_SOUND_ADD(IREMGA20, iremGA20_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM2151, 14318180/4)
+	MDRV_SOUND_CONFIG(ym2151_interface)
+	MDRV_SOUND_ROUTE(0, "mono", 0.40)
+	MDRV_SOUND_ROUTE(1, "mono", 0.40)
+
+	MDRV_SOUND_ADD(IREMGA20, 14318180/4)
+	MDRV_SOUND_CONFIG(iremGA20_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 
@@ -1325,8 +1330,16 @@ static MACHINE_DRIVER_START( nonraster )
 	MDRV_VIDEO_UPDATE(m92)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM2151, ym2151_interface)
-	MDRV_SOUND_ADD(IREMGA20, iremGA20_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM2151, 14318180/4)
+	MDRV_SOUND_CONFIG(ym2151_interface)
+	MDRV_SOUND_ROUTE(0, "mono", 0.40)
+	MDRV_SOUND_ROUTE(1, "mono", 0.40)
+
+	MDRV_SOUND_ADD(IREMGA20, 14318180/4)
+	MDRV_SOUND_CONFIG(iremGA20_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 
@@ -1356,8 +1369,16 @@ static MACHINE_DRIVER_START( lethalth )
 	MDRV_VIDEO_UPDATE(m92)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM2151, ym2151_interface)
-	MDRV_SOUND_ADD(IREMGA20, iremGA20_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM2151, 14318180/4)
+	MDRV_SOUND_CONFIG(ym2151_interface)
+	MDRV_SOUND_ROUTE(0, "mono", 0.40)
+	MDRV_SOUND_ROUTE(1, "mono", 0.40)
+
+	MDRV_SOUND_ADD(IREMGA20, 14318180/4)
+	MDRV_SOUND_CONFIG(iremGA20_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 
@@ -1387,8 +1408,16 @@ static MACHINE_DRIVER_START( psoldier )
 	MDRV_VIDEO_UPDATE(m92)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM2151, ym2151_interface)
-	MDRV_SOUND_ADD(IREMGA20, iremGA20_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM2151, 14318180/4)
+	MDRV_SOUND_CONFIG(ym2151_interface)
+	MDRV_SOUND_ROUTE(0, "mono", 0.40)
+	MDRV_SOUND_ROUTE(1, "mono", 0.40)
+
+	MDRV_SOUND_ADD(IREMGA20, 14318180/4)
+	MDRV_SOUND_CONFIG(iremGA20_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 /***************************************************************************/

@@ -15,6 +15,7 @@
 #include "driver.h"
 #include "cpu/z80/z80.h"
 #include "machine/7474.h"
+#include "sound/ay8910.h"
 
 
 
@@ -108,7 +109,7 @@ WRITE8_HANDLER( scramble_sh_irqtrigger_w )
 	TTL7474_update(2);
 
 	/* bit 4 is sound disable */
-	mixer_sound_enable_global_w(~data & 0x10);
+	sound_global_enable(~data & 0x10);
 }
 
 WRITE8_HANDLER( sfx_sh_irqtrigger_w )
@@ -195,7 +196,7 @@ static void filter_w(int chip, int channel, int data)
 	C = 0;
 	if (data & 1) C += 220000;	/* 220000pF = 0.220uF */
 	if (data & 2) C +=  47000;	/*  47000pF = 0.047uF */
-	set_RC_filter(3*chip + channel,1000,5100,0,C);
+/* ASG:fixme	set_RC_filter(3*chip + channel,1000,5100,0,C); */
 }
 
 WRITE8_HANDLER( scramble_filter_w )

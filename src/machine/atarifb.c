@@ -8,6 +8,7 @@
 #include "vidhrdw/generic.h"
 #include "atarifb.h"
 #include "artwork.h"
+#include "sound/discrete.h"
 
 
 static int CTRLD;

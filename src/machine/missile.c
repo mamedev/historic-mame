@@ -7,6 +7,7 @@
 #include "driver.h"
 #include "missile.h"
 #include "vidhrdw/generic.h"
+#include "sound/pokey.h"
 
 
 static int ctrld;

@@ -5,6 +5,7 @@
 *************************************************************************/
 #include "driver.h"
 #include "subs.h"
+#include "sound/discrete.h"
 
 
 /***************************************************************************
@@ -139,6 +140,6 @@ DISCRETE_SOUND_START(subs_discrete_interface)
 	DISCRETE_ADDER4(NODE_91, 1, 0, SUBS_LAUNCH_SND, SUBS_CRASH_SND, SUBS_EXPLODE_SND)
 	DISCRETE_GAIN(NODE_92, NODE_90, 65534.0/(320.8+77.5+149.2+1000.0))
 	DISCRETE_GAIN(NODE_93, NODE_91, 65534.0/(320.8+77.5+149.2+1000.0))
-	DISCRETE_OUTPUT(NODE_92, MIXER(100,MIXER_PAN_LEFT))
-	DISCRETE_OUTPUT(NODE_93, MIXER(100,MIXER_PAN_RIGHT))
+	DISCRETE_OUTPUT(NODE_92, 100)
+	DISCRETE_OUTPUT(NODE_93, 100)
 DISCRETE_SOUND_END

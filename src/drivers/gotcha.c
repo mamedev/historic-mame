@@ -19,6 +19,8 @@ TODO:
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "sound/2151intf.h"
+#include "sound/okim6295.h"
 
 
 VIDEO_START( gotcha );
@@ -227,18 +229,7 @@ static void irqhandler(int linestate)
 
 static struct YM2151interface ym2151_interface =
 {
- 	1,			/* 1 chip */
-	14318180/4,	/* 3.579545 MHz? */
-	{ YM3012_VOL(80,MIXER_PAN_LEFT,80,MIXER_PAN_RIGHT) },
-	{ irqhandler },
-};
-
-static struct OKIM6295interface m6295_interface =
-{
-	1,
-	{ 1056000/132 },	/* 8kHz */
-	{ REGION_SOUND1 },
-	{ 60 }
+	irqhandler
 };
 
 
@@ -269,8 +260,16 @@ static MACHINE_DRIVER_START( gotcha )
 	MDRV_VIDEO_UPDATE(gotcha)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM2151, ym2151_interface)
-	MDRV_SOUND_ADD(OKIM6295, m6295_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM2151, 14318180/4)
+	MDRV_SOUND_CONFIG(ym2151_interface)
+	MDRV_SOUND_ROUTE(0, "mono", 0.80)
+	MDRV_SOUND_ROUTE(1, "mono", 0.80)
+
+	MDRV_SOUND_ADD(OKIM6295, 1056000/132)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.60)
 MACHINE_DRIVER_END
 
 

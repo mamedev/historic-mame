@@ -6,7 +6,7 @@
 
 #include "driver.h"
 #include "machine/atarigen.h"
-
+#include "sound/dac.h"
 #include <math.h>
 
 
@@ -63,7 +63,7 @@ WRITE8_HANDLER( cyberbal_sound_bank_select_w )
 	coin_counter_w(1, (data >> 5) & 1);
 	coin_counter_w(0, (data >> 4) & 1);
 	cpunum_set_input_line(3, INPUT_LINE_RESET, (data & 0x08) ? CLEAR_LINE : ASSERT_LINE);
-	if (!(data & 0x01)) YM2151_sh_reset();
+	if (!(data & 0x01)) sndti_reset(SOUND_YM2151, 0);
 
 }
 

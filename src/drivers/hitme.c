@@ -16,6 +16,7 @@
 
 #include "driver.h"
 #include "hitme.h"
+#include "sound/discrete.h"
 
 static struct tilemap *hitme_tilemap;
 static mame_time timeout_time;
@@ -320,7 +321,10 @@ static MACHINE_DRIVER_START( hitme )
 	MDRV_VIDEO_UPDATE(hitme)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD_TAG("discrete", DISCRETE, hitme_discrete_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	MDRV_SOUND_ADD_TAG("discrete", DISCRETE, 0)
+	MDRV_SOUND_CONFIG(hitme_discrete_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 

@@ -21,7 +21,9 @@
 #include "machine/segaic16.h"
 #include "machine/8255ppi.h"
 #include "cpu/m68000/m68000.h"
-
+#include "sound/2203intf.h"
+#include "sound/2151intf.h"
+#include "sound/segapcm.h"
 
 
 /*************************************
@@ -749,54 +751,20 @@ INPUT_PORTS_END
 
 static struct YM2203interface ym2203_interface =
 {
-	1,
-	4000000,
-	{ YM2203_VOL(37,13) },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ sound_irq }
-};
-
-
-static struct YM2203interface ym2203x2_interface =
-{
-	2,
-	4000000,
-	{ YM2203_VOL(37,13), YM2203_VOL(37,13) },
-	{ 0,0 },
-	{ 0,0 },
-	{ 0,0 },
-	{ 0,0 },
-	{ sound_irq,0 }
+	0,0,0,0,sound_irq
 };
 
 
 static struct YM2151interface ym2151_interface =
 {
-	1,
-	4000000,
-	{ YM3012_VOL(43,MIXER_PAN_LEFT,43,MIXER_PAN_RIGHT) },
-	{ sound_irq }
+	sound_irq
 };
 
 
-static struct SEGAPCMinterface hangon_segapcm_interface =
+static struct SEGAPCMinterface segapcm_interface =
 {
-	SEGAPCM_SAMPLE32K,
 	BANK_512,
-	REGION_SOUND1,
-	100
-};
-
-
-static struct SEGAPCMinterface enduror_segapcm_interface =
-{
-	SEGAPCM_SAMPLE15K,
-	BANK_512,
-	REGION_SOUND1,
-	100
+	REGION_SOUND1
 };
 
 
@@ -884,9 +852,23 @@ static MACHINE_DRIVER_START( sound_board_2203 )
 	MDRV_CPU_IO_MAP(sound_portmap_2203,0)
 
 	/* soud hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD_TAG("2203", YM2203, ym2203_interface)
-	MDRV_SOUND_ADD_TAG("pcm", SEGAPCM, hangon_segapcm_interface)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(YM2203, 4000000)
+	MDRV_SOUND_CONFIG(ym2203_interface)
+	MDRV_SOUND_ROUTE(0, "left",  0.13)
+	MDRV_SOUND_ROUTE(0, "right", 0.13)
+	MDRV_SOUND_ROUTE(1, "left",  0.13)
+	MDRV_SOUND_ROUTE(1, "right", 0.13)
+	MDRV_SOUND_ROUTE(2, "left",  0.13)
+	MDRV_SOUND_ROUTE(2, "right", 0.13)
+	MDRV_SOUND_ROUTE(3, "left",  0.37)
+	MDRV_SOUND_ROUTE(3, "right", 0.37)
+
+	MDRV_SOUND_ADD_TAG("pcm", SEGAPCM, SEGAPCM_SAMPLE32K)
+	MDRV_SOUND_CONFIG(segapcm_interface)
+	MDRV_SOUND_ROUTE(0, "left", 1.0)
+	MDRV_SOUND_ROUTE(0, "right", 1.0)
 MACHINE_DRIVER_END
 
 
@@ -898,9 +880,33 @@ static MACHINE_DRIVER_START( sound_board_2203x2 )
 	MDRV_CPU_IO_MAP(sound_portmap_2203x2,0)
 
 	/* soud hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD_TAG("2203", YM2203, ym2203x2_interface)
-	MDRV_SOUND_ADD_TAG("pcm", SEGAPCM, enduror_segapcm_interface)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(YM2203, 4000000)
+	MDRV_SOUND_CONFIG(ym2203_interface)
+	MDRV_SOUND_ROUTE(0, "left",  0.13)
+	MDRV_SOUND_ROUTE(0, "right", 0.13)
+	MDRV_SOUND_ROUTE(1, "left",  0.13)
+	MDRV_SOUND_ROUTE(1, "right", 0.13)
+	MDRV_SOUND_ROUTE(2, "left",  0.13)
+	MDRV_SOUND_ROUTE(2, "right", 0.13)
+	MDRV_SOUND_ROUTE(3, "left",  0.37)
+	MDRV_SOUND_ROUTE(3, "right", 0.37)
+
+	MDRV_SOUND_ADD(YM2203, 4000000)
+	MDRV_SOUND_ROUTE(0, "left",  0.13)
+	MDRV_SOUND_ROUTE(0, "right", 0.13)
+	MDRV_SOUND_ROUTE(1, "left",  0.13)
+	MDRV_SOUND_ROUTE(1, "right", 0.13)
+	MDRV_SOUND_ROUTE(2, "left",  0.13)
+	MDRV_SOUND_ROUTE(2, "right", 0.13)
+	MDRV_SOUND_ROUTE(3, "left",  0.37)
+	MDRV_SOUND_ROUTE(3, "right", 0.37)
+
+	MDRV_SOUND_ADD_TAG("pcm", SEGAPCM, SEGAPCM_SAMPLE15K)
+	MDRV_SOUND_CONFIG(segapcm_interface)
+	MDRV_SOUND_ROUTE(0, "left", 1.0)
+	MDRV_SOUND_ROUTE(0, "right", 1.0)
 MACHINE_DRIVER_END
 
 
@@ -912,9 +918,17 @@ static MACHINE_DRIVER_START( sound_board_2151 )
 	MDRV_CPU_IO_MAP(sound_portmap_2151,0)
 
 	/* soud hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD_TAG("2151", YM2151, ym2151_interface)
-	MDRV_SOUND_ADD_TAG("pcm", SEGAPCM, enduror_segapcm_interface)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(YM2151, 4000000)
+	MDRV_SOUND_CONFIG(ym2151_interface)
+	MDRV_SOUND_ROUTE(0, "left", 0.43)
+	MDRV_SOUND_ROUTE(1, "right", 0.43)
+
+	MDRV_SOUND_ADD_TAG("pcm", SEGAPCM, SEGAPCM_SAMPLE15K)
+	MDRV_SOUND_CONFIG(segapcm_interface)
+	MDRV_SOUND_ROUTE(0, "left", 1.0)
+	MDRV_SOUND_ROUTE(0, "right", 1.0)
 MACHINE_DRIVER_END
 
 

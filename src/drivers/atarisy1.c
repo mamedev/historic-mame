@@ -120,6 +120,9 @@
 #include "machine/atarigen.h"
 #include "machine/6522via.h"
 #include "atarisy1.h"
+#include "sound/5220intf.h"
+#include "sound/2151intf.h"
+#include "sound/pokey.h"
 
 
 
@@ -722,26 +725,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 static struct YM2151interface ym2151_interface =
 {
-	1,
-	ATARI_CLOCK_14MHz/4,
-	{ YM3012_VOL(80,MIXER_PAN_LEFT,80,MIXER_PAN_RIGHT) },
-	{ atarigen_ym2151_irq_gen }
-};
-
-
-static struct POKEYinterface pokey_interface =
-{
-	1,
-	ATARI_CLOCK_14MHz/8,
-	{ 40 },
-};
-
-
-static struct TMS5220interface tms5220_interface =
-{
-	ATARI_CLOCK_14MHz/2/11,
-	100,
-	0
+	atarigen_ym2151_irq_gen
 };
 
 
@@ -779,10 +763,20 @@ static MACHINE_DRIVER_START( atarisy1 )
 	MDRV_VIDEO_UPDATE(atarisy1)
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(YM2151, ym2151_interface)
-	MDRV_SOUND_ADD(POKEY, pokey_interface)
-	MDRV_SOUND_ADD(TMS5220, tms5220_interface)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(YM2151, ATARI_CLOCK_14MHz/4)
+	MDRV_SOUND_CONFIG(ym2151_interface)
+	MDRV_SOUND_ROUTE(0, "left", 0.80)
+	MDRV_SOUND_ROUTE(1, "right", 0.80)
+
+	MDRV_SOUND_ADD(POKEY, ATARI_CLOCK_14MHz/8)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.40)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 0.40)
+
+	MDRV_SOUND_ADD(TMS5220, ATARI_CLOCK_14MHz/2/11)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 1.0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 1.0)
 MACHINE_DRIVER_END
 
 

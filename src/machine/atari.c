@@ -10,6 +10,7 @@
 #include "driver.h"
 #include "cpu/m6502/m6502.h"
 #include "includes/atari.h"
+#include "sound/pokey.h"
 #ifdef MESS
 #include "image.h"
 #include "state.h"

@@ -142,9 +142,15 @@ static MACHINE_DRIVER_START( rotaryf )
 	MDRV_VIDEO_UPDATE(8080bw)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(SAMPLES, invaders_samples_interface)
-	MDRV_SOUND_ADD(SN76477, invaders_sn76477_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
 
+	MDRV_SOUND_ADD(SAMPLES, 0)
+	MDRV_SOUND_CONFIG(invaders_samples_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
+
+	MDRV_SOUND_ADD(SN76477, 0)
+	MDRV_SOUND_CONFIG(invaders_sn76477_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
 MACHINE_DRIVER_END
 
 ROM_START( rotaryf )

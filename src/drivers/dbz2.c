@@ -61,6 +61,8 @@ Notes:
 #include "vidhrdw/konamiic.h"
 #include "cpu/m68000/m68000.h"
 #include "cpu/z80/z80.h"
+#include "sound/2151intf.h"
+#include "sound/okim6295.h"
 
 /* BG LAYER */
 
@@ -413,18 +415,7 @@ INPUT_PORTS_END
 
 static struct YM2151interface ym2151_interface =
 {
-	1,
-	4000000,	/* total guess */
-	{ YM3012_VOL(100,MIXER_PAN_LEFT,100,MIXER_PAN_RIGHT) },
-	{ dbz2_sound_irq }
-};
-
-static struct OKIM6295interface m6295_interface =
-{
-	1,  /* 1 chip */
-	{ 1056000/132 },	/* confirmed */
-	{ REGION_SOUND1 },
-	{ 100 }
+	dbz2_sound_irq
 };
 
 /**********************************************************************************/
@@ -477,9 +468,17 @@ static MACHINE_DRIVER_START( dbz2 )
 	MDRV_PALETTE_LENGTH(0x4000/2)
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(YM2151, ym2151_interface)
-	MDRV_SOUND_ADD(OKIM6295, m6295_interface)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(YM2151, 4000000)
+	MDRV_SOUND_CONFIG(ym2151_interface)
+	MDRV_SOUND_ROUTE(0, "left", 1.0)
+	MDRV_SOUND_ROUTE(1, "right", 1.0)
+
+	MDRV_SOUND_ADD(OKIM6295, 1056000/132)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 1.0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 1.0)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( dbz )

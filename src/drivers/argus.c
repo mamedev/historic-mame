@@ -85,7 +85,7 @@ Known issues :
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-
+#include "sound/2203intf.h"
 
 
 /***************************************************************************
@@ -164,41 +164,13 @@ static void irqhandler(int irq)
 	cpunum_set_input_line(1, 0, irq ? ASSERT_LINE : CLEAR_LINE);
 }
 
-static struct YM2203interface argus_ym2203_interface =
+static struct YM2203interface ym2203_interface =
 {
-	1,				/* 1 chip  */
-	6000000 / 4, 	/* 1.5 MHz */
-	{ YM2203_VOL(50,15) },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ irqhandler }
-};
-
-static struct YM2203interface valtric_ym2203_interface =
-{
-	2,				/* 2 chips */
-	6000000 / 4, 	/* 1.5 MHz */
-	{ YM2203_VOL(50,15), YM2203_VOL(50,15) },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ irqhandler }
-};
-
-/* Volume setting is different from the others. */
-static struct YM2203interface butasan_ym2203_interface =
-{
-	2,				/* 2 chips */
-	6000000 / 4, 	/* 1.5 MHz */
-	{ YM2203_VOL(100,30), YM2203_VOL(100,30) },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ irqhandler }
+	0,
+	0,
+	0,
+	0,
+	irqhandler
 };
 
 
@@ -786,7 +758,14 @@ static MACHINE_DRIVER_START( argus )
 	MDRV_VIDEO_UPDATE(argus)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM2203, argus_ym2203_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM2203, 6000000 / 4)
+	MDRV_SOUND_CONFIG(ym2203_interface)
+	MDRV_SOUND_ROUTE(0, "mono", 0.15)
+	MDRV_SOUND_ROUTE(1, "mono", 0.15)
+	MDRV_SOUND_ROUTE(2, "mono", 0.15)
+	MDRV_SOUND_ROUTE(3, "mono", 0.50)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( valtric )
@@ -816,7 +795,20 @@ static MACHINE_DRIVER_START( valtric )
 	MDRV_VIDEO_UPDATE(valtric)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM2203, valtric_ym2203_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM2203, 6000000 / 4)
+	MDRV_SOUND_CONFIG(ym2203_interface)
+	MDRV_SOUND_ROUTE(0, "mono", 0.15)
+	MDRV_SOUND_ROUTE(1, "mono", 0.15)
+	MDRV_SOUND_ROUTE(2, "mono", 0.15)
+	MDRV_SOUND_ROUTE(3, "mono", 0.50)
+
+	MDRV_SOUND_ADD(YM2203, 6000000 / 4)
+	MDRV_SOUND_ROUTE(0, "mono", 0.15)
+	MDRV_SOUND_ROUTE(1, "mono", 0.15)
+	MDRV_SOUND_ROUTE(2, "mono", 0.15)
+	MDRV_SOUND_ROUTE(3, "mono", 0.50)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( butasan )
@@ -846,7 +838,20 @@ static MACHINE_DRIVER_START( butasan )
 	MDRV_VIDEO_UPDATE(butasan)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM2203, butasan_ym2203_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM2203, 6000000 / 4)
+	MDRV_SOUND_CONFIG(ym2203_interface)
+	MDRV_SOUND_ROUTE(0, "mono", 0.30)
+	MDRV_SOUND_ROUTE(1, "mono", 0.30)
+	MDRV_SOUND_ROUTE(2, "mono", 0.30)
+	MDRV_SOUND_ROUTE(3, "mono", 1.0)
+
+	MDRV_SOUND_ADD(YM2203, 6000000 / 4)
+	MDRV_SOUND_ROUTE(0, "mono", 0.30)
+	MDRV_SOUND_ROUTE(1, "mono", 0.30)
+	MDRV_SOUND_ROUTE(2, "mono", 0.30)
+	MDRV_SOUND_ROUTE(3, "mono", 1.0)
 MACHINE_DRIVER_END
 
 

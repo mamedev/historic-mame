@@ -123,6 +123,8 @@ red flash effect when you die.
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "cpu/i8039/i8039.h"
+#include "sound/dac.h"
+#include "sound/samples.h"
 
 
 VIDEO_UPDATE( spacefb );
@@ -224,7 +226,6 @@ static const char *spacefb_sample_names[] =
 static struct Samplesinterface spacefb_samples_interface =
 {
 	3,	/* 3 channels */
-	100,	/* volume */
 	spacefb_sample_names
 };
 
@@ -413,13 +414,6 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 	{ -1 } /* end of array */
 };
 
-
-static struct DACinterface dac_interface =
-{
-	1,
-	{ 100 }
-};
-
 static MACHINE_DRIVER_START( spacefb )
 
 	/* basic machine hardware */
@@ -451,8 +445,14 @@ static MACHINE_DRIVER_START( spacefb )
 	MDRV_VIDEO_UPDATE(spacefb)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(DAC, dac_interface)
-	MDRV_SOUND_ADD(SAMPLES, spacefb_samples_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(DAC, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
+
+	MDRV_SOUND_ADD(SAMPLES, 0)
+	MDRV_SOUND_CONFIG(spacefb_samples_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 

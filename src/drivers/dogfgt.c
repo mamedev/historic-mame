@@ -10,6 +10,7 @@ driver by Nicola Salmoria
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "dogfgt.h"
+#include "sound/ay8910.h"
 
 
 static data8_t *sharedram;
@@ -238,18 +239,6 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 
 
-static struct AY8910interface ay8910_interface =
-{
-	2,	/* 2 chips */
-	1500000,	/* 1.5 MHz?????? */
-	{ 30, 30 },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ 0 }
-};
-
-
 
 static MACHINE_DRIVER_START( dogfgt )
 
@@ -277,7 +266,13 @@ static MACHINE_DRIVER_START( dogfgt )
 	MDRV_VIDEO_UPDATE(dogfgt)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(AY8910, ay8910_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(AY8910, 1500000)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.30)
+
+	MDRV_SOUND_ADD(AY8910, 1500000)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.30)
 MACHINE_DRIVER_END
 
 

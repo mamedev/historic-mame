@@ -43,12 +43,13 @@ struct dss_input_context
 
 READ8_HANDLER(discrete_sound_r)
 {
-	struct node_description *node = discrete_find_node(offset);
+	struct discrete_info *info = sndti_token(SOUND_DISCRETE, 0);
+	struct node_description *node = discrete_find_node(info, offset);
 	data8_t data = 0;
 
 	if (!Machine->sample_rate) return 0;
 
-	discrete_sh_update();
+	stream_update(info->discrete_stream, 0);
 
 	/* Read the node input value if allowed */
 	if (node)
@@ -68,12 +69,13 @@ READ8_HANDLER(discrete_sound_r)
 
 WRITE8_HANDLER(discrete_sound_w)
 {
-	struct node_description *node = discrete_find_node(offset);
+	struct discrete_info *info = sndti_token(SOUND_DISCRETE, 0);
+	struct node_description *node = discrete_find_node(info, offset);
 
 	if (!Machine->sample_rate) return;
 
 	/* Bring the system up to now */
-	discrete_sh_update();
+	stream_update(info->discrete_stream, 0);
 
 	/* Update the node input value if it's a proper input node */
 	if (node)

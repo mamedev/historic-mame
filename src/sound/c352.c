@@ -17,6 +17,7 @@
 #include "driver.h"
 #include "cpuintrf.h"
 #include "state.h"
+#include "c352.h"
 
 #define VERBOSE (0)
 
@@ -54,27 +55,31 @@ typedef struct
 	UINT32	pos;
 } c352_ch_t;
 
-static c352_ch_t c352_ch[32];
-static unsigned char *c352_rom_samples;
-static int c352_region;
+struct c352_info
+{
+	sound_stream *stream;
+	c352_ch_t c352_ch[32];
+	unsigned char *c352_rom_samples;
+	int c352_region;
 
-static INT16 level_table[256];
+	INT16 level_table[256];
 
-static long	channel_l[2048];
-static long	channel_r[2048];
-static long	channel_l2[2048];
-static long	channel_r2[2048];
+	long	channel_l[2048];
+	long	channel_r[2048];
+	long	channel_l2[2048];
+	long	channel_r2[2048];
 
-static short	mulaw_table[256];
-static unsigned int mseq_reg;
+	short	mulaw_table[256];
+	unsigned int mseq_reg;
+};
 
 #define SAMPLE_RATE_BASE    	(42667*2)
 
 // noise generator
-static int get_mseq_bit(void)
+static int get_mseq_bit(struct c352_info *info)
 {
 	unsigned int mask = (1 << (7 - 1));
-	unsigned int reg = mseq_reg;
+	unsigned int reg = info->mseq_reg;
 	unsigned int bit = reg & (1 << (17 - 1));
 
 	if (bit)
@@ -86,12 +91,12 @@ static int get_mseq_bit(void)
 		reg = reg << 1;
 	}
 
-	mseq_reg = reg;
+	info->mseq_reg = reg;
 
 	return (reg & 1);
 }
 
-static void c352_mix_one_channel(unsigned long ch, long sample_count)
+static void c352_mix_one_channel(struct c352_info *info, unsigned long ch, long sample_count)
 						  
 {
 														  
@@ -102,12 +107,12 @@ static void c352_mix_one_channel(unsigned long ch, long sample_count)
 	INT32 frequency, delta, offset, cnt, flag;
 	UINT32 pos;
 	
-	frequency = c352_ch[ch].pitch;
+	frequency = info->c352_ch[ch].pitch;
 	delta=(long)((float)frequency * pbase);
 
-	pos = c352_ch[ch].current_addr;	// sample pointer
-	offset = c352_ch[ch].pos;	// 16.16 fixed-point offset into the sample
-	flag = c352_ch[ch].flag;
+	pos = info->c352_ch[ch].current_addr;	// sample pointer
+	offset = info->c352_ch[ch].pos;	// 16.16 fixed-point offset into the sample
+	flag = info->c352_ch[ch].flag;
 
 	if ((flag & C352_FLG_ACTIVE) == 0) 
 	{
@@ -128,23 +133,23 @@ static void c352_mix_one_channel(unsigned long ch, long sample_count)
 		{
 			pos -= cnt;
 
-			if (pos <= c352_ch[ch].loop_point) 
+			if (pos <= info->c352_ch[ch].loop_point) 
 			{
 				if (flag & C352_FLG_LONG)
 				{
 //					printf("ch %02d: end chain part 1\n", ch);
-					c352_ch[ch].flag &= ~C352_FLG_ACTIVE;
-					c352_ch[ch].flag |= C352_FLG_LONGPHASE;
+					info->c352_ch[ch].flag &= ~C352_FLG_ACTIVE;
+					info->c352_ch[ch].flag |= C352_FLG_LONGPHASE;
 					return;
 				}
 
 				if (flag & C352_FLG_LOOP)
 				{
-					pos = c352_ch[ch].stop_addr;
+					pos = info->c352_ch[ch].stop_addr;
 				}
 				else
 				{
-					c352_ch[ch].flag &= ~C352_FLG_ACTIVE;
+					info->c352_ch[ch].flag &= ~C352_FLG_ACTIVE;
 					return;
 				}
 			}
@@ -153,35 +158,35 @@ static void c352_mix_one_channel(unsigned long ch, long sample_count)
 		{
 			pos += cnt;
 
-			if (pos >= c352_ch[ch].stop_addr) 
+			if (pos >= info->c352_ch[ch].stop_addr) 
 			{
 				if (flag & C352_FLG_LONG)
 				{
 //					printf("ch %02d: end chain part 1\n", ch);
-					c352_ch[ch].flag &= ~C352_FLG_ACTIVE;
-					c352_ch[ch].flag |= C352_FLG_LONGPHASE;
+					info->c352_ch[ch].flag &= ~C352_FLG_ACTIVE;
+					info->c352_ch[ch].flag |= C352_FLG_LONGPHASE;
 					return;
 				}
 
 				if (flag & C352_FLG_LOOP)
 				{
-					pos = c352_ch[ch].loop_point;
+					pos = info->c352_ch[ch].loop_point;
 				}
 				else
 				{
-					c352_ch[ch].flag &= ~C352_FLG_ACTIVE;
+					info->c352_ch[ch].flag &= ~C352_FLG_ACTIVE;
 					return;
 				}
 			}
 		}
 
-		if ((int)pos > memory_region_length(c352_region)) pos %= memory_region_length(c352_region);
-		sample = (char)c352_rom_samples[pos];
+		if ((int)pos > memory_region_length(info->c352_region)) pos %= memory_region_length(info->c352_region);
+		sample = (char)info->c352_rom_samples[pos];
 
 		// sample is muLaw, not 8-bit linear (Fighting Layer uses this extensively)
 		if (flag & C352_FLG_MULAW)
 		{
-			sample = mulaw_table[(unsigned char)sample];
+			sample = info->mulaw_table[(unsigned char)sample];
 		}
 		else
 		{
@@ -199,7 +204,7 @@ static void c352_mix_one_channel(unsigned long ch, long sample_count)
 		{
 			int noise_level = 0x8000;
 
-			sample = c352_ch[ch].noise = (c352_ch[ch].noise << 1) | get_mseq_bit();
+			sample = info->c352_ch[ch].noise = (info->c352_ch[ch].noise << 1) | get_mseq_bit(info);
 			sample = (sample & (noise_level - 1)) - (noise_level >> 1);
 			if (sample > 0xff)
 			{
@@ -210,52 +215,55 @@ static void c352_mix_one_channel(unsigned long ch, long sample_count)
 				sample = 0;
 			}
 
-			sample = mulaw_table[(unsigned char)sample];
+			sample = info->mulaw_table[(unsigned char)sample];
 		}
 
-		channel_l[i] += ((sample * c352_ch[ch].vol_l)>>8);  
-		channel_r[i] += ((sample * c352_ch[ch].vol_r)>>8);  
-		channel_l2[i] += ((sample * c352_ch[ch].vol_l2)>>8);  
-		channel_r2[i] += ((sample * c352_ch[ch].vol_r2)>>8);  
+		info->channel_l[i] += ((sample * info->c352_ch[ch].vol_l)>>8);  
+		info->channel_r[i] += ((sample * info->c352_ch[ch].vol_r)>>8);  
+		info->channel_l2[i] += ((sample * info->c352_ch[ch].vol_l2)>>8);  
+		info->channel_r2[i] += ((sample * info->c352_ch[ch].vol_r2)>>8);  
 	}
 
-	c352_ch[ch].pos = offset;
-	c352_ch[ch].current_addr = pos;
+	info->c352_ch[ch].pos = offset;
+	info->c352_ch[ch].current_addr = pos;
 }
 
 
-static void c352_update(int num, short **buf, int sample_count)
+static void c352_update(void *param, stream_sample_t **inputs, stream_sample_t **buf, int sample_count)
 {
+	struct c352_info *info = param;
 	int i, j;
-	short *bufferl = buf[0];
-	short *bufferr = buf[1];
-	short *bufferl2 = buf[2];
-	short *bufferr2 = buf[3];
+	stream_sample_t *bufferl = buf[0];
+	stream_sample_t *bufferr = buf[1];
+	stream_sample_t *bufferl2 = buf[2];
+	stream_sample_t *bufferr2 = buf[3];
 
 	for(i = 0 ; i < sample_count ; i++) 
 	{
-	       channel_l[i] = channel_r[i] = channel_l2[i] = channel_r2[i] = 0;
+	       info->channel_l[i] = info->channel_r[i] = info->channel_l2[i] = info->channel_r2[i] = 0;
 	}
 
 	for (j = 0 ; j < 32 ; j++)
 	{
-		c352_mix_one_channel(j, sample_count);
+		c352_mix_one_channel(info, j, sample_count);
 	}
 
 	for(i = 0 ; i < sample_count ; i++) 
 	{
-		*bufferl++ = (short) (channel_l[i] >>3);
-		*bufferr++ = (short) (channel_r[i] >>3);
-		*bufferl2++ = (short) (channel_l2[i] >>3);
-		*bufferr2++ = (short) (channel_r2[i] >>3);
+		*bufferl++ = (short) (info->channel_l[i] >>3);
+		*bufferr++ = (short) (info->channel_r[i] >>3);
+		*bufferl2++ = (short) (info->channel_l2[i] >>3);
+		*bufferr2++ = (short) (info->channel_r2[i] >>3);
 	}
 }
 
-static unsigned short c352_read_reg16(unsigned long address)
+static unsigned short c352_read_reg16(struct c352_info *info, unsigned long address)
 {
 	unsigned long	chan;
 	unsigned short	val;
 
+	stream_update(info->stream, 0);
+	
 	chan = (address >> 4) & 0xfff;
 	if (chan > 31)
 	{
@@ -265,8 +273,8 @@ static unsigned short c352_read_reg16(unsigned long address)
 	{
 		if ((address & 0xf) == 6)
 		{
-			int bits = (c352_ch[chan].flag & 0x0020) ? 0x8800 : 0x8000;
-			val = c352_ch[chan].flag;
+			int bits = (info->c352_ch[chan].flag & 0x0020) ? 0x8800 : 0x8000;
+			val = info->c352_ch[chan].flag;
 			val = (val & ~0x8800) | ((val & C352_FLG_LONGPHASE) ? bits : 0x0000);
 		}
 		else
@@ -277,12 +285,14 @@ static unsigned short c352_read_reg16(unsigned long address)
 	return val;
 }
 
-static void c352_write_reg16(unsigned long address, unsigned short val)
+static void c352_write_reg16(struct c352_info *info, unsigned long address, unsigned short val)
 {
 	unsigned long	chan;
 	unsigned long	temp;
 	chan = (address >> 4) & 0xfff;
 
+	stream_update(info->stream, 0);
+	
 	if (chan > 31)
 	{
 		#if VERBOSE
@@ -297,8 +307,8 @@ static void c352_write_reg16(unsigned long address, unsigned short val)
 		#if VERBOSE
 		logerror("CH %02d LVOL %02x RVOL %02x\n", chan, val & 0xff, val >> 8);
 		#endif
-		c352_ch[chan].vol_l = val & 0xff;
-		c352_ch[chan].vol_r = val >> 8;
+		info->c352_ch[chan].vol_l = val & 0xff;
+		info->c352_ch[chan].vol_r = val >> 8;
 		break;
 
 	case 0x2:
@@ -306,8 +316,8 @@ static void c352_write_reg16(unsigned long address, unsigned short val)
 		#if VERBOSE
 		logerror("CH %02d RLVOL %02x RRVOL %02x\n", chan, val & 0xff, val >> 8);
 		#endif
-		c352_ch[chan].vol_l2 = val & 0xff;
-		c352_ch[chan].vol_r2 = val >> 8;
+		info->c352_ch[chan].vol_l2 = val & 0xff;
+		info->c352_ch[chan].vol_r2 = val >> 8;
 		break;
 
 	case 0x4:
@@ -315,7 +325,7 @@ static void c352_write_reg16(unsigned long address, unsigned short val)
 		#if VERBOSE
 		logerror("CH %02d PITCH %04x\n", chan, val);
 		#endif
-		c352_ch[chan].pitch = val;
+		info->c352_ch[chan].pitch = val;
 		break;
 
 	case 0x6:
@@ -323,102 +333,102 @@ static void c352_write_reg16(unsigned long address, unsigned short val)
 		#if VERBOSE
 		logerror("CH %02d FLAG %02x\n", chan, val);
 		#endif
-		c352_ch[chan].flag = val;
+		info->c352_ch[chan].flag = val;
 
 		// not chain mode, normal setup
 		if ((val & 0x8020) == 0)
 		{
-			temp = c352_ch[chan].bank<<16;
-			temp += c352_ch[chan].start_addr;
-			c352_ch[chan].current_addr = temp;
+			temp = info->c352_ch[chan].bank<<16;
+			temp += info->c352_ch[chan].start_addr;
+			info->c352_ch[chan].current_addr = temp;
 
-			temp = c352_ch[chan].bank<<16;
-			temp += c352_ch[chan].end_addr;
-			c352_ch[chan].stop_addr = temp;
+			temp = info->c352_ch[chan].bank<<16;
+			temp += info->c352_ch[chan].end_addr;
+			info->c352_ch[chan].stop_addr = temp;
 
-			temp = c352_ch[chan].bank<<16;
-			temp += c352_ch[chan].loop_addr;
-			c352_ch[chan].loop_point = temp;
+			temp = info->c352_ch[chan].bank<<16;
+			temp += info->c352_ch[chan].loop_addr;
+			info->c352_ch[chan].loop_point = temp;
 
 			switch (val & 3)
 			{
 				case 0:	// normal	
 				case 2:	// loop
 				case 3:	// reverse loop
-					if (c352_ch[chan].current_addr >= c352_ch[chan].stop_addr)
+					if (info->c352_ch[chan].current_addr >= info->c352_ch[chan].stop_addr)
 					{
-						c352_ch[chan].stop_addr += 0x10000;
-						c352_ch[chan].loop_point += 0x10000;
+						info->c352_ch[chan].stop_addr += 0x10000;
+						info->c352_ch[chan].loop_point += 0x10000;
 					}
 					break;
 				case 1:	// reverse
-					if (c352_ch[chan].current_addr <= c352_ch[chan].stop_addr)
+					if (info->c352_ch[chan].current_addr <= info->c352_ch[chan].stop_addr)
 					{
-						c352_ch[chan].stop_addr -= 0x10000;
-						c352_ch[chan].loop_point -= 0x10000;
+						info->c352_ch[chan].stop_addr -= 0x10000;
+						info->c352_ch[chan].loop_point -= 0x10000;
 					}
 					break;
 			}
 	
 /*			printf("ch %02d: normal start: %06x -> (%06x -> %06x)\n", chan,
-				c352_ch[chan].current_addr,
-				c352_ch[chan].loop_point,
-				c352_ch[chan].stop_addr);*/
+				info->c352_ch[chan].current_addr,
+				info->c352_ch[chan].loop_point,
+				info->c352_ch[chan].stop_addr);*/
 
-			c352_ch[chan].pos = 0;
+			info->c352_ch[chan].pos = 0;
 		}
 		else if ((val & 0x8020) == 0x0020) // chain mode, start first part
 		{
-			int bank2 = (c352_ch[chan].loop_addr & 0xff)<<16;
+			int bank2 = (info->c352_ch[chan].loop_addr & 0xff)<<16;
 
-			c352_ch[chan].current_addr = c352_ch[chan].start_addr + (c352_ch[chan].bank<<16);
-			c352_ch[chan].stop_addr = c352_ch[chan].end_addr + bank2;
-			c352_ch[chan].pos = 0;
+			info->c352_ch[chan].current_addr = info->c352_ch[chan].start_addr + (info->c352_ch[chan].bank<<16);
+			info->c352_ch[chan].stop_addr = info->c352_ch[chan].end_addr + bank2;
+			info->c352_ch[chan].pos = 0;
 
-			c352_ch[chan].stop_addr &= 0xffffff;
+			info->c352_ch[chan].stop_addr &= 0xffffff;
 
-//			printf("ch %02d: start chain part 1: %06x -> %06x\n", chan, c352_ch[chan].current_addr, c352_ch[chan].stop_addr);
+//			printf("ch %02d: start chain part 1: %06x -> %06x\n", chan, info->c352_ch[chan].current_addr, info->c352_ch[chan].stop_addr);
 
 		}
 		else if ((val & 0x8000) == 0x8000) // chain mode, phase 2
 		{
-			int bank = (c352_ch[chan].start_addr & 0xff)<<16;
+			int bank = (info->c352_ch[chan].start_addr & 0xff)<<16;
 
-			c352_ch[chan].loop_point = c352_ch[chan].end_addr + bank; 
-			c352_ch[chan].stop_addr = c352_ch[chan].end_addr + bank; 
-			c352_ch[chan].flag &= ~(C352_FLG_LONGPHASE|C352_FLG_LONG);
-			c352_ch[chan].flag |= C352_FLG_ACTIVE;
-			c352_ch[chan].current_addr = c352_ch[chan].loop_point;
-			c352_ch[chan].pos = 0;
+			info->c352_ch[chan].loop_point = info->c352_ch[chan].end_addr + bank; 
+			info->c352_ch[chan].stop_addr = info->c352_ch[chan].end_addr + bank; 
+			info->c352_ch[chan].flag &= ~(C352_FLG_LONGPHASE|C352_FLG_LONG);
+			info->c352_ch[chan].flag |= C352_FLG_ACTIVE;
+			info->c352_ch[chan].current_addr = info->c352_ch[chan].loop_point;
+			info->c352_ch[chan].pos = 0;
 
 			switch (val & 3)
 			{
 				case 0:	// normal	
 				case 2:	// loop
 				case 3:	// reverse loop
-					if (c352_ch[chan].current_addr >= c352_ch[chan].stop_addr)
+					if (info->c352_ch[chan].current_addr >= info->c352_ch[chan].stop_addr)
 					{
-						c352_ch[chan].stop_addr += 0x10000;
+						info->c352_ch[chan].stop_addr += 0x10000;
 					}
 					break;
 				case 1:	// reverse
-					if (c352_ch[chan].current_addr <= c352_ch[chan].stop_addr)
+					if (info->c352_ch[chan].current_addr <= info->c352_ch[chan].stop_addr)
 					{
-						c352_ch[chan].stop_addr -= 0x10000;
+						info->c352_ch[chan].stop_addr -= 0x10000;
 					}
 					break;
 			}
 
-//			printf("ch %02d: start chain part 2: %06x -> %06x\n", chan, c352_ch[chan].current_addr, c352_ch[chan].stop_addr);
+//			printf("ch %02d: start chain part 2: %06x -> %06x\n", chan, info->c352_ch[chan].current_addr, info->c352_ch[chan].stop_addr);
 		}
 
 		break;
 
 	case 0x8:
 		// bank (bits 16-31 of address);
-		c352_ch[chan].bank = val & 0xff;
+		info->c352_ch[chan].bank = val & 0xff;
 		#if VERBOSE
-		logerror("CH %02d BANK %02x", chan, c352_ch[chan].bank);
+		logerror("CH %02d BANK %02x", chan, info->c352_ch[chan].bank);
 		#endif
 		break;
 
@@ -427,7 +437,7 @@ static void c352_write_reg16(unsigned long address, unsigned short val)
 		#if VERBOSE
 		logerror("CH %02d SADDR %04x\n", chan, val);
 		#endif
-		c352_ch[chan].start_addr = val;
+		info->c352_ch[chan].start_addr = val;
 		break;
 
 	case 0xc:
@@ -435,7 +445,7 @@ static void c352_write_reg16(unsigned long address, unsigned short val)
 		#if VERBOSE
 		logerror("CH %02d EADDR %04x\n", chan, val);
 		#endif
-		c352_ch[chan].end_addr = val;
+		info->c352_ch[chan].end_addr = val;
 		break;
 
 	case 0xe:
@@ -443,7 +453,7 @@ static void c352_write_reg16(unsigned long address, unsigned short val)
 		#if VERBOSE
 		logerror("CH %02d LADDR %04x\n", chan, val);
 		#endif
-		c352_ch[chan].loop_addr = val;
+		info->c352_ch[chan].loop_addr = val;
 		break;
 
 	default:
@@ -454,7 +464,7 @@ static void c352_write_reg16(unsigned long address, unsigned short val)
 	}
 }
 
-static void c352_init(void)
+static void c352_init(struct c352_info *info, int sndindex)
 {
 	int i;
 	double x_max = 25000.0;
@@ -462,7 +472,7 @@ static void c352_init(void)
 	double u = 8.0;
 
 	// clear all channels states
-	memset(c352_ch, 0, sizeof(c352_ch_t)*32);
+	memset(info->c352_ch, 0, sizeof(c352_ch_t)*32);
 
 	// generate mulaw table for mulaw format samples
 	for (i = 0; i < 256; i++)
@@ -474,11 +484,11 @@ static void c352_init(void)
 	      {
 	        x = -x;
 	      }
-	      mulaw_table[i] = (short)x;
+	      info->mulaw_table[i] = (short)x;
 	}
 
 	// init noise generator
-	mseq_reg = 0x12345678;
+	info->mseq_reg = 0x12345678;
 
 	// register save state info
 	for (i = 0; i < 32; i++)
@@ -487,80 +497,106 @@ static void c352_init(void)
 
 		sprintf(cname, "C352 v %02d", i);
 
-		state_save_register_UINT8(cname, 0, "voll1", &c352_ch[i].vol_l, 1);
-		state_save_register_UINT8(cname, 0, "volr1", &c352_ch[i].vol_r, 1);
-		state_save_register_UINT8(cname, 0, "voll2", &c352_ch[i].vol_l2, 1);
-		state_save_register_UINT8(cname, 0, "volr2", &c352_ch[i].vol_r2, 1);
-		state_save_register_UINT8(cname, 0, "unk9", &c352_ch[i].unk9, 1);
-		state_save_register_UINT8(cname, 0, "bank", &c352_ch[i].bank, 1);
-		state_save_register_INT16(cname, 0, "noise", &c352_ch[i].noise, 1);
-		state_save_register_UINT16(cname, 0, "pitch", &c352_ch[i].pitch, 1);
-		state_save_register_UINT16(cname, 0, "startaddr", &c352_ch[i].start_addr, 1);
-		state_save_register_UINT16(cname, 0, "endaddr", &c352_ch[i].end_addr, 1);
-		state_save_register_UINT32(cname, 0, "flag", &c352_ch[i].flag, 1);
-		state_save_register_UINT32(cname, 0, "curaddr", &c352_ch[i].current_addr, 1);
-		state_save_register_UINT32(cname, 0, "stopaddr", &c352_ch[i].stop_addr, 1);
-		state_save_register_UINT32(cname, 0, "loopaddr", &c352_ch[i].loop_addr, 1);
-		state_save_register_UINT32(cname, 0, "pos", &c352_ch[i].pos, 1);
+		state_save_register_UINT8(cname, sndindex, "voll1", &info->c352_ch[i].vol_l, 1);
+		state_save_register_UINT8(cname, sndindex, "volr1", &info->c352_ch[i].vol_r, 1);
+		state_save_register_UINT8(cname, sndindex, "voll2", &info->c352_ch[i].vol_l2, 1);
+		state_save_register_UINT8(cname, sndindex, "volr2", &info->c352_ch[i].vol_r2, 1);
+		state_save_register_UINT8(cname, sndindex, "unk9", &info->c352_ch[i].unk9, 1);
+		state_save_register_UINT8(cname, sndindex, "bank", &info->c352_ch[i].bank, 1);
+		state_save_register_INT16(cname, sndindex, "noise", &info->c352_ch[i].noise, 1);
+		state_save_register_UINT16(cname, sndindex, "pitch", &info->c352_ch[i].pitch, 1);
+		state_save_register_UINT16(cname, sndindex, "startaddr", &info->c352_ch[i].start_addr, 1);
+		state_save_register_UINT16(cname, sndindex, "endaddr", &info->c352_ch[i].end_addr, 1);
+		state_save_register_UINT32(cname, sndindex, "flag", &info->c352_ch[i].flag, 1);
+		state_save_register_UINT32(cname, sndindex, "curaddr", &info->c352_ch[i].current_addr, 1);
+		state_save_register_UINT32(cname, sndindex, "stopaddr", &info->c352_ch[i].stop_addr, 1);
+		state_save_register_UINT32(cname, sndindex, "loopaddr", &info->c352_ch[i].loop_addr, 1);
+		state_save_register_UINT32(cname, sndindex, "pos", &info->c352_ch[i].pos, 1);
 	}
 
 	for (i = 0; i < 256; i++)
 	{
 	      double max_level = 255.0;
 
-	      level_table[255-i] = (int) (pow (10.0, (double) i / 256.0 * -20.0 / 20.0) * max_level);
+	      info->level_table[255-i] = (int) (pow (10.0, (double) i / 256.0 * -20.0 / 20.0) * max_level);
 	}
 }
 
-int c352_sh_start(const struct MachineSound *msound)
+static void *c352_start(int sndindex, int clock, const void *config)
 {
-	char buf[4][40];
-	const char *name[4];
-	int vol[4];
-	struct C352interface *intf;
+	const struct C352interface *intf;
+	struct c352_info *info;
+	
+	info = auto_malloc(sizeof(*info));
+	memset(info, 0, sizeof(*info));
 
-	intf = msound->sound_interface;
+	intf = config;
 
-	c352_rom_samples = memory_region(intf->region);
-	c352_region = intf->region;
+	info->c352_rom_samples = memory_region(intf->region);
+	info->c352_region = intf->region;
 
-	sprintf(buf[0], "C352 L (1)"); 
-	sprintf(buf[1], "C352 R (1)"); 
-	sprintf(buf[2], "C352 L (2)"); 
-	sprintf(buf[3], "C352 R (2)"); 
-	name[0] = buf[0];
-	name[1] = buf[1];
-	name[2] = buf[2];
-	name[3] = buf[3];
-	vol[0]=intf->mixing_level >> 16;
-	vol[1]=intf->mixing_level & 0xffff;
-	vol[2]=intf->mixing_level2 >> 16;
-	vol[3]=intf->mixing_level2 & 0xffff;
-	stream_init_multi(4, name, vol, Machine->sample_rate, 0, c352_update);
+	info->stream = stream_create(0, 4, Machine->sample_rate, info, c352_update);
 
-	c352_init();
+	c352_init(info, sndindex);
 
-	return 0;
+	return info;
 }
 
-void c352_sh_stop(void)
-{
-}
 
 READ16_HANDLER( c352_0_r )
 {
-	return(c352_read_reg16(offset*2));
+	return(c352_read_reg16(sndti_token(SOUND_C352, 0), offset*2));
 }
 
 WRITE16_HANDLER( c352_0_w )
 {
 	if (mem_mask == 0)
 	{
-		c352_write_reg16(offset*2, data);
+		c352_write_reg16(sndti_token(SOUND_C352, 0), offset*2, data);
 	}
 	else
 	{
 		logerror("C352: byte-wide write unsupported at this time!\n");
+	}
+}
+
+
+
+
+
+
+
+/**************************************************************************
+ * Generic get_info
+ **************************************************************************/
+
+static void c352_set_info(void *token, UINT32 state, union sndinfo *info)
+{
+	switch (state)
+	{
+		/* no parameters to set */
+	}
+}
+
+
+void c352_get_info(void *token, UINT32 state, union sndinfo *info)
+{
+	switch (state)
+	{
+		/* --- the following bits of info are returned as 64-bit signed integers --- */
+
+		/* --- the following bits of info are returned as pointers to data or functions --- */
+		case SNDINFO_PTR_SET_INFO:						info->set_info = c352_set_info;			break;
+		case SNDINFO_PTR_START:							info->start = c352_start;				break;
+		case SNDINFO_PTR_STOP:							/* nothing */							break;
+		case SNDINFO_PTR_RESET:							/* nothing */							break;
+
+		/* --- the following bits of info are returned as NULL-terminated strings --- */
+		case SNDINFO_STR_NAME:							info->s = "C352";						break;
+		case SNDINFO_STR_CORE_FAMILY:					info->s = "Namco PCM";					break;
+		case SNDINFO_STR_CORE_VERSION:					info->s = "1.0";						break;
+		case SNDINFO_STR_CORE_FILE:						info->s = __FILE__;						break;
+		case SNDINFO_STR_CORE_CREDITS:					info->s = "Copyright (c) 2004, The MAME Team"; break;
 	}
 }
 

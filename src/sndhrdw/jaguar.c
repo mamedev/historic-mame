@@ -145,6 +145,7 @@
 #include "driver.h"
 #include "includes/jaguar.h"
 #include "cpu/jaguar/jaguar.h"
+#include "sound/dac.h"
 #include <math.h>
 
 

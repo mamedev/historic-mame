@@ -60,6 +60,9 @@ L056-6    9A          "      "      VLI-8-4 7A         "
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "sound/ay8910.h"
+#include "sound/dac.h"
+#include "sound/5220intf.h"
 
 static struct tilemap *tilemap;
 
@@ -336,26 +339,12 @@ static struct GfxDecodeInfo looping_gfxdecodeinfo[] =
 
 static struct TMS5220interface tms5220_interface =
 {
-	640000,         /* clock speed (80*samplerate) */
-	50,             /* volume */
 	looping_spcint  /* IRQ handler */
 };
 
 static struct AY8910interface ay8910_interface =
 {
-	1,
-	2000000,
-	{ 20 },
-	{ soundlatch_r },
-	{ 0 },
-	{ 0 },
-	{ 0 }
-};
-
-static struct DACinterface dac_interface =
-{
-	1,
-	{ 30 }
+	soundlatch_r,
 };
 
 static MACHINE_DRIVER_START( looping )
@@ -386,9 +375,18 @@ static MACHINE_DRIVER_START( looping )
 	MDRV_VIDEO_UPDATE(looping)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(AY8910, ay8910_interface)
-	MDRV_SOUND_ADD(TMS5220, tms5220_interface)
-	MDRV_SOUND_ADD(DAC, dac_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	
+	MDRV_SOUND_ADD(AY8910, 2000000)
+	MDRV_SOUND_CONFIG(ay8910_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.20)
+	
+	MDRV_SOUND_ADD(TMS5220, 640000)
+	MDRV_SOUND_CONFIG(tms5220_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
+
+	MDRV_SOUND_ADD(DAC, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.30)
 MACHINE_DRIVER_END
 
 #define LOOPIN0\

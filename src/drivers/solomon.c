@@ -8,6 +8,7 @@ driver by Mirko Buffoni
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "cpu/z80/z80.h"
+#include "sound/ay8910.h"
 
 extern UINT8 *solomon_videoram2;
 extern UINT8 *solomon_colorram2;
@@ -215,17 +216,6 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 	{ -1 } /* end of array */
 };
 
-static struct AY8910interface ay8910_interface =
-{
-	3,	/* 3 chips */
-	1500000,	/* 1.5 MHz?????? */
-	{ 12, 12, 12 },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ 0 }
-};
-
 static MACHINE_DRIVER_START( solomon )
 
 	/* basic machine hardware */
@@ -253,7 +243,16 @@ static MACHINE_DRIVER_START( solomon )
 	MDRV_VIDEO_UPDATE(solomon)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(AY8910, ay8910_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	
+	MDRV_SOUND_ADD(AY8910, 1500000)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.12)
+	
+	MDRV_SOUND_ADD(AY8910, 1500000)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.12)
+	
+	MDRV_SOUND_ADD(AY8910, 1500000)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.12)
 MACHINE_DRIVER_END
 
 /***************************************************************************

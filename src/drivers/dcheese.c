@@ -14,6 +14,7 @@ Notes: PCB labeled "Exit Entertainment MADMAX version 5". Title screen reports
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "sound/bsmt2000.h"
 
 /* main cpu */
 
@@ -133,11 +134,8 @@ VIDEO_UPDATE( dcheese )
 
 static struct BSMT2000interface bsmt2000_interface =
 {
-	1,
-	{ 12000000/2 },
-	{ 12 },
-	{ REGION_SOUND1 },
-	{ 100 }
+	12,
+	REGION_SOUND1
 };
 
 static MACHINE_DRIVER_START( dcheese )
@@ -165,8 +163,12 @@ static MACHINE_DRIVER_START( dcheese )
 	MDRV_VIDEO_UPDATE(dcheese)
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(BSMT2000, bsmt2000_interface)	
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(BSMT2000, 12000000/2)
+	MDRV_SOUND_CONFIG(bsmt2000_interface)	
+	MDRV_SOUND_ROUTE(0, "left", 1.0)
+	MDRV_SOUND_ROUTE(1, "right", 1.0)
 MACHINE_DRIVER_END
 
 ROM_START( dcheese )

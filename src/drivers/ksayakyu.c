@@ -65,6 +65,8 @@ SRAM:
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "sound/ay8910.h"
+#include "sound/dac.h"
 
 WRITE8_HANDLER( ksayakyu_videoram_w );
 WRITE8_HANDLER( ksayakyu_videoctrl_w );
@@ -178,21 +180,20 @@ static WRITE8_HANDLER(dummy_w)
 	//DAC ? communication with main cpu ?
 }
 
-static struct AY8910interface ay8910_interface =
+static struct AY8910interface ay8910_interface_1 =
 {
-	2, 
-	2000000, 
-	{ 35,35 },
-	{ soundlatch_r, 0 },
-	{ 0, 0 }, 
-	{ 0, dummy_w }, 
-	{ dummy_w, dummy_w },
+	soundlatch_r,
+	0,
+	0, 
+	dummy_w
 };
 
-static struct DACinterface dac_interface =
+static struct AY8910interface ay8910_interface_2 =
 {
-	1,
-	{ 20 }
+	0,
+	0, 
+	dummy_w, 
+	dummy_w
 };
 
 static struct GfxLayout charlayout =
@@ -253,6 +254,7 @@ static MACHINE_DRIVER_START( ksayakyu )
 
 	MDRV_INTERLEAVE(1000)
 
+	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER )
 	MDRV_SCREEN_SIZE(256, 256)
 	
@@ -264,8 +266,20 @@ static MACHINE_DRIVER_START( ksayakyu )
 	
 	MDRV_VIDEO_START(ksayakyu)
 	MDRV_VIDEO_UPDATE(ksayakyu)
-	MDRV_SOUND_ADD(AY8910, ay8910_interface)
-	MDRV_SOUND_ADD(DAC, dac_interface)
+	
+	/* sound hardware */
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	
+	MDRV_SOUND_ADD(AY8910, 2000000)
+	MDRV_SOUND_CONFIG(ay8910_interface_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
+	
+	MDRV_SOUND_ADD(AY8910, 2000000)
+	MDRV_SOUND_CONFIG(ay8910_interface_2)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
+
+	MDRV_SOUND_ADD(DAC, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.20)
 MACHINE_DRIVER_END
 
 ROM_START( ksayakyu )

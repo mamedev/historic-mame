@@ -68,6 +68,9 @@
  ***************************************************************************/
 
 #include "driver.h"
+#include "sound/dac.h"
+#include "sound/sn76477.h"
+#include "sound/ay8910.h"
 
 extern unsigned char *route16_sharedram;
 extern unsigned char *route16_videoram1;
@@ -369,43 +372,31 @@ INPUT_PORTS_END
 
 static struct AY8910interface ay8910_interface =
 {
-	1,	/* 1 chip */
-	10000000/8,     /* 10MHz / 8 = 1.25MHz */
-	{ 50 },
-	{ 0 },
-	{ 0 },
-	{ stratvox_sn76477_w },  /* SN76477 commands (not used in Route 16?) */
-	{ 0 }
+	0,
+	0,
+	stratvox_sn76477_w,  /* SN76477 commands (not used in Route 16?) */
+	0
 };
 
 
 static struct SN76477interface sn76477_interface =
 {
-	1,	/* 1 chip */
-	{ 50 },  /* mixing level   pin description		 */
-	{ RES_K( 47)   },		/*	4  noise_res		 */
-	{ RES_K(150)   },		/*	5  filter_res		 */
-	{ CAP_U(0.001) },		/*	6  filter_cap		 */
-	{ RES_M(3.3)   },		/*	7  decay_res		 */
-	{ CAP_U(1.0)   },		/*	8  attack_decay_cap  */
-	{ RES_K(4.7)   },		/* 10  attack_res		 */
-	{ RES_K(200)   },		/* 11  amplitude_res	 */
-	{ RES_K( 55)   },		/* 12  feedback_res 	 */
-	{ 5.0*2/(2+10) },		/* 16  vco_voltage		 */
-	{ CAP_U(0.022) },		/* 17  vco_cap			 */
-	{ RES_K(100)   },		/* 18  vco_res			 */
-	{ 5.0		   },		/* 19  pitch_voltage	 */
-	{ RES_K( 75)   },		/* 20  slf_res			 */
-	{ CAP_U(1.0)   },		/* 21  slf_cap			 */
-	{ CAP_U(2.2)   },		/* 23  oneshot_cap		 */
-	{ RES_K(4.7)   }		/* 24  oneshot_res		 */
-};
-
-
-static struct DACinterface dac_interface =
-{
-	1,
-	{ 50 }
+	RES_K( 47)   ,		/*	4  noise_res		 */
+	RES_K(150)   ,		/*	5  filter_res		 */
+	CAP_U(0.001) ,		/*	6  filter_cap		 */
+	RES_M(3.3)   ,		/*	7  decay_res		 */
+	CAP_U(1.0)   ,		/*	8  attack_decay_cap  */
+	RES_K(4.7)   ,		/* 10  attack_res		 */
+	RES_K(200)   ,		/* 11  amplitude_res	 */
+	RES_K( 55)   ,		/* 12  feedback_res 	 */
+	5.0*2/(2+10) ,		/* 16  vco_voltage		 */
+	CAP_U(0.022) ,		/* 17  vco_cap			 */
+	RES_K(100)   ,		/* 18  vco_res			 */
+	5.0		   ,		/* 19  pitch_voltage	 */
+	RES_K( 75)   ,		/* 20  slf_res			 */
+	CAP_U(1.0)   ,		/* 21  slf_cap			 */
+	CAP_U(2.2)   ,		/* 23  oneshot_cap		 */
+	RES_K(4.7)   		/* 24  oneshot_res		 */
 };
 
 
@@ -435,7 +426,10 @@ static MACHINE_DRIVER_START( route16 )
 	MDRV_VIDEO_UPDATE(route16)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(AY8910, ay8910_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	MDRV_SOUND_ADD(AY8910, 10000000/8)
+	MDRV_SOUND_CONFIG(ay8910_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( routex )
@@ -452,8 +446,12 @@ static MACHINE_DRIVER_START( stratvox )
 	MDRV_IMPORT_FROM(route16)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(SN76477, sn76477_interface)
-	MDRV_SOUND_ADD(DAC, dac_interface)
+	MDRV_SOUND_ADD(SN76477, 0)
+	MDRV_SOUND_CONFIG(sn76477_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
+
+	MDRV_SOUND_ADD(DAC, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
 MACHINE_DRIVER_END
 
 

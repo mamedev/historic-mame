@@ -3,13 +3,8 @@
 
 struct k005289_interface
 {
-	int master_clock;	/* clock speed */
-	int volume;			/* playback volume */
 	int region;			/* memory region */
 };
-
-int K005289_sh_start(const struct MachineSound *msound);
-void K005289_sh_stop(void);
 
 WRITE8_HANDLER( k005289_control_A_w );
 WRITE8_HANDLER( k005289_control_B_w );

@@ -34,6 +34,7 @@ Notes:
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "sound/ymz280b.h"
 
 
 UINT16 tetrisp2_systemregs[0x10];
@@ -651,11 +652,8 @@ static struct GfxDecodeInfo tetrisp2_gfxdecodeinfo[] =
 
 static struct YMZ280Binterface ymz280b_intf =
 {
-	1,
-	{ 16934400 },
-	{ REGION_SOUND1 },
-	{ YM3012_VOL(100,MIXER_PAN_LEFT,100,MIXER_PAN_RIGHT) },
-	{ 0 }	// irq
+	REGION_SOUND1,
+	0	// irq
 };
 
 void rockn_timer_level4_callback(int param)
@@ -704,8 +702,12 @@ static MACHINE_DRIVER_START( tetrisp2 )
 	MDRV_VIDEO_UPDATE(tetrisp2)
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(YMZ280B, ymz280b_intf)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(YMZ280B, 16934400)
+	MDRV_SOUND_CONFIG(ymz280b_intf)
+	MDRV_SOUND_ROUTE(0, "left", 1.0)
+	MDRV_SOUND_ROUTE(1, "right", 1.0)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( rockn )
@@ -731,8 +733,12 @@ static MACHINE_DRIVER_START( rockn )
 	MDRV_VIDEO_UPDATE(rockntread)
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(YMZ280B, ymz280b_intf)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(YMZ280B, 16934400)
+	MDRV_SOUND_CONFIG(ymz280b_intf)
+	MDRV_SOUND_ROUTE(0, "left", 1.0)
+	MDRV_SOUND_ROUTE(1, "right", 1.0)
 MACHINE_DRIVER_END
 
 /***************************************************************************

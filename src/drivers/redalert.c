@@ -12,6 +12,7 @@ ask.  - Mike Balfour (mab22@po.cwru.edu)
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "machine/6821pia.h"
+#include "sound/ay8910.h"
 
 /* vidhrdw/redalert.c */
 extern unsigned char *redalert_backram;
@@ -350,13 +351,10 @@ static INTERRUPT_GEN( redalert_interrupt )
 
 static struct AY8910interface redalert_ay8910_interface =
 {
-	1,			/* 1 chip */
-	2000000,	/* 2 MHz */
-	{ 50 },		/* Volume */
-	{ redalert_AY8910_A_r },		/* Port A Read */
-	{ 0 },		/* Port B Read */
-	{ 0 },		/* Port A Write */
-	{ redalert_AY8910_B_w }		/* Port B Write */
+	redalert_AY8910_A_r,		/* Port A Read */
+	0,		/* Port B Read */
+	0,		/* Port A Write */
+	redalert_AY8910_B_w		/* Port B Write */
 };
 
 static MACHINE_DRIVER_START( redalert )
@@ -392,7 +390,10 @@ static MACHINE_DRIVER_START( redalert )
 	MDRV_VIDEO_UPDATE(redalert)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(AY8910, redalert_ay8910_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	MDRV_SOUND_ADD(AY8910, 2000000)
+	MDRV_SOUND_CONFIG(redalert_ay8910_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
 MACHINE_DRIVER_END
 
 
@@ -402,17 +403,6 @@ static struct pia6821_interface pia_0_intf =
 	/*inputs : A/B,CA/B1,CA/B2 */ 0, 0, 0, 0, 0, 0,
 	/*outputs: A/B,CA/B2       */ 0, 0, 0, 0,
 	/*irqs   : A/B             */ 0, 0
-};
-
-static struct AY8910interface demoneye_ay8910_interface =
-{
-	2,			/* 2 chip */
-	3579545,	/* 3 MHz ? */
-	{ 50, 50 },		/* Volume */
-	{ 0, 0 },		/* Port A Read */
-	{ 0, 0 },		/* Port B Read */
-	{ 0, 0 },		/* Port A Write */
-	{ 0, 0 }		/* Port B Write */
 };
 
 MACHINE_INIT( demoneye )
@@ -451,7 +441,13 @@ static MACHINE_DRIVER_START( demoneye )
 	MDRV_VIDEO_UPDATE(redalert)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(AY8910, demoneye_ay8910_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	
+	MDRV_SOUND_ADD(AY8910, 3579545)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
+	
+	MDRV_SOUND_ADD(AY8910, 3579545)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
 MACHINE_DRIVER_END
 
 /***************************************************************************

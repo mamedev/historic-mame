@@ -30,6 +30,8 @@ Notes:
 #include "machine/irem_cpu.h"
 #include "sndhrdw/m72.h"
 #include "state.h"
+#include "sound/dac.h"
+#include "sound/2151intf.h"
 
 static int bankaddress;
 
@@ -511,17 +513,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 static struct YM2151interface ym2151_interface =
 {
-	1,			/* 1 chip */
-	3579545,	/* 3.579545 MHz */
-	{ YM3012_VOL(90,MIXER_PAN_LEFT,90,MIXER_PAN_RIGHT) },
-	{ m72_ym2151_irq_handler },
-	{ 0 }
-};
-
-static struct DACinterface dac_interface =
-{
-	1,	/* 1 channel */
-	{ 60 }
+	m72_ym2151_irq_handler
 };
 
 static INTERRUPT_GEN( m90_interrupt )
@@ -561,8 +553,15 @@ static MACHINE_DRIVER_START( m90 )
 	MDRV_VIDEO_UPDATE(m90)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM2151, ym2151_interface)
-	MDRV_SOUND_ADD(DAC, dac_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM2151, 3579545)
+	MDRV_SOUND_CONFIG(ym2151_interface)
+	MDRV_SOUND_ROUTE(0, "mono", 0.90)
+	MDRV_SOUND_ROUTE(1, "mono", 0.90)
+
+	MDRV_SOUND_ADD(DAC, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.60)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( quizf1 )
@@ -602,8 +601,15 @@ static MACHINE_DRIVER_START( bombrman )
 	MDRV_VIDEO_UPDATE(m90)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM2151, ym2151_interface)
-	MDRV_SOUND_ADD(DAC, dac_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM2151, 3579545)
+	MDRV_SOUND_CONFIG(ym2151_interface)
+	MDRV_SOUND_ROUTE(0, "mono", 0.90)
+	MDRV_SOUND_ROUTE(1, "mono", 0.90)
+
+	MDRV_SOUND_ADD(DAC, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.60)
 MACHINE_DRIVER_END
 
 
@@ -636,8 +642,15 @@ static MACHINE_DRIVER_START( bbmanw )
 	MDRV_VIDEO_UPDATE(m90)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM2151, ym2151_interface)
-	MDRV_SOUND_ADD(DAC, dac_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM2151, 3579545)
+	MDRV_SOUND_CONFIG(ym2151_interface)
+	MDRV_SOUND_ROUTE(0, "mono", 0.90)
+	MDRV_SOUND_ROUTE(1, "mono", 0.90)
+
+	MDRV_SOUND_ADD(DAC, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.60)
 MACHINE_DRIVER_END
 
 
@@ -670,8 +683,15 @@ static MACHINE_DRIVER_START( bootleg )
 	MDRV_VIDEO_UPDATE(m90)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM2151, ym2151_interface)
-	MDRV_SOUND_ADD(DAC, dac_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM2151, 3579545)
+	MDRV_SOUND_CONFIG(ym2151_interface)
+	MDRV_SOUND_ROUTE(0, "mono", 0.90)
+	MDRV_SOUND_ROUTE(1, "mono", 0.90)
+
+	MDRV_SOUND_ADD(DAC, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.60)
 MACHINE_DRIVER_END
 
 /***************************************************************************/

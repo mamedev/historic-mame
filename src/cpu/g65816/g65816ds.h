@@ -19,14 +19,11 @@ author (Karl Stenerud) at karl@higashiyama-unet.ocn.ne.jp.
 
 unsigned g65816_disassemble(char* buff, unsigned int pc, unsigned int pb, int m_flag, int x_flag);
 
-unsigned int g65816_read_8_disassembler(unsigned int address);
-
 #include "cpuintrf.h"
 #include "memory.h"
 #include "driver.h"
 #include "state.h"
 #include "mamedbg.h"
-#define g65816_read_8_disassembler(addr)				program_read_byte_8(addr)
 
 
 #endif /* HEADER__G65816DS */

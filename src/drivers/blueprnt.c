@@ -54,6 +54,7 @@ write:
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "cpu/z80/z80.h"
+#include "sound/ay8910.h"
 
 extern UINT8 *blueprnt_scrollram;
 
@@ -289,15 +290,18 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 /* Sound Interfaces */
 
-static struct AY8910interface ay8910_interface =
+static struct AY8910interface ay8910_interface_1 =
 {
-	2,				// 2 chips
-	10000000/2/2/2,	// the first chip should be clocked at 2H (1.25 MHz), the second one at 4H (625 kHz)
-	{ 25, 25 },
-	{            0, input_port_2_r },
-	{ soundlatch_r, input_port_3_r },
-	{ dipsw_w },
-	{ 0 }
+	0,
+	soundlatch_r,
+	dipsw_w,
+	0
+};
+
+static struct AY8910interface ay8910_interface_2 =
+{
+	input_port_2_r,
+	input_port_3_r
 };
 
 /* Machine Driver */
@@ -328,7 +332,15 @@ static MACHINE_DRIVER_START( blueprnt )
 	MDRV_VIDEO_UPDATE(blueprnt)
 
 	// sound hardware
-	MDRV_SOUND_ADD(AY8910, ay8910_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(AY8910, 10000000/2/2/2)
+	MDRV_SOUND_CONFIG(ay8910_interface_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
+	
+	MDRV_SOUND_ADD(AY8910, 10000000/2/2/2/2)
+	MDRV_SOUND_CONFIG(ay8910_interface_2)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)	
 MACHINE_DRIVER_END
 
 /* ROMs */

@@ -163,6 +163,7 @@ TODO:
 #include "cpu/hd6309/hd6309.h"
 #include "cpu/z80/z80.h"
 #include "machine/eeprom.h"
+#include "sound/k054539.h"
 
 #define GUNX( a ) (( ( readinputport( a ) * 287 ) / 0xff ) + 16)
 #define GUNY( a ) (( ( readinputport( a ) * 223 ) / 0xff ) + 10)
@@ -541,12 +542,9 @@ INPUT_PORTS_END
 
 static struct K054539interface k054539_interface =
 {
-	1,			/* 1 chip */
-	48000,
-	{ REGION_SOUND1 },
-	{ { 100, 100 } },
-	{ 0 },
-	{ sound_nmi }
+	REGION_SOUND1,
+	NULL,
+	sound_nmi
 };
 
 static MACHINE_INIT( lethalen )
@@ -585,8 +583,12 @@ static MACHINE_DRIVER_START( lethalen )
 	MDRV_VIDEO_UPDATE(lethalen)
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(K054539, k054539_interface)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(K054539, 48000)
+	MDRV_SOUND_CONFIG(k054539_interface)
+	MDRV_SOUND_ROUTE(0, "left", 1.0)
+	MDRV_SOUND_ROUTE(1, "right", 1.0)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( lethalej )

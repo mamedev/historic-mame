@@ -18,6 +18,8 @@ TODO:
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "sound/2203intf.h"
+#include "sound/okim6295.h"
 
 WRITE16_HANDLER( lastduel_vram_w );
 WRITE16_HANDLER( lastduel_flip_w );
@@ -237,24 +239,9 @@ static void irqhandler(int irq)
 	cpunum_set_input_line(1,0,irq ? ASSERT_LINE : CLEAR_LINE);
 }
 
-static struct OKIM6295interface okim6295_interface =
-{
-	1,              	/* 1 chip */
-	{ 7759 },           /* 7759Hz frequency */
-	{ REGION_SOUND1 },	/* memory region 3 */
-	{ 98 }
-};
-
 static struct YM2203interface ym2203_interface =
 {
-	2,			/* 2 chips */
-	3579545, /* Accurate */
-	{ YM2203_VOL(40,40), YM2203_VOL(40,40) },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ irqhandler }
+	0,0,0,0,irqhandler
 };
 
 static INTERRUPT_GEN( lastduel_interrupt )
@@ -295,7 +282,14 @@ static MACHINE_DRIVER_START( lastduel )
 	MDRV_VIDEO_UPDATE(lastduel)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM2203, ym2203_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM2203, 3579545)
+	MDRV_SOUND_CONFIG(ym2203_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.40)
+
+	MDRV_SOUND_ADD(YM2203, 3579545)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.40)
 MACHINE_DRIVER_END
 
 
@@ -325,8 +319,18 @@ static MACHINE_DRIVER_START( madgear )
 	MDRV_VIDEO_UPDATE(lastduel)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM2203, ym2203_interface)
-	MDRV_SOUND_ADD(OKIM6295, okim6295_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM2203, 3579545)
+	MDRV_SOUND_CONFIG(ym2203_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.40)
+
+	MDRV_SOUND_ADD(YM2203, 3579545)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.40)
+
+	MDRV_SOUND_ADD(OKIM6295, 7759)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.98)
 MACHINE_DRIVER_END
 
 /******************************************************************************/

@@ -448,6 +448,8 @@ $a00000 checks have been seen on the Final Lap boards.
 #include "cpu/m6809/m6809.h"
 #include "namcoic.h"
 #include "artwork.h"
+#include "sound/2151intf.h"
+#include "sound/c140.h"
 
 
 /*************************************************************/
@@ -1541,44 +1543,10 @@ static struct GfxDecodeInfo luckywld_gfxdecodeinfo[] =
 	{ -1 }
 };
 
-static struct YM2151interface ym2151_interface =
-{
-	1,			/* 1 chip */
-	3579580,	/* 3.58 MHz ? */
-	{ YM3012_VOL(80,MIXER_PAN_LEFT,80,MIXER_PAN_RIGHT) },
-	{ NULL }	/* YM2151 IRQ line is NOT connected on the PCB */
-};
-
-static struct YM2151interface ym2151_alt_interface =
-{
-	1,			/* 1 chip */
-	3579580,	/* 3.58 MHz ? */
-	{ YM3012_VOL(100,MIXER_PAN_LEFT,100,MIXER_PAN_RIGHT) },
-	{ NULL }	/* YM2151 IRQ line is NOT connected on the PCB */
-};
-
 static struct C140interface C140_interface =
 {
 	C140_TYPE_SYSTEM2,
-	8000000/374,
-	REGION_SOUND1,
-	75
-};
-
-static struct C140interface C140_2_interface =
-{
-	C140_TYPE_SYSTEM2,
-	8000000/374,
-	REGION_SOUND1,
-	100
-};
-
-static struct C140interface C140_alt_interface =
-{
-	C140_TYPE_SYSTEM2,
-	8000000/374,
-	REGION_SOUND1,
-	45
+	REGION_SOUND1
 };
 
 /* end */
@@ -1647,22 +1615,40 @@ static MACHINE_DRIVER_START( default )
 	MDRV_VIDEO_START(namcos2)
 	MDRV_VIDEO_UPDATE(namcos2_default)
 
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD_TAG("C140", C140, C140_interface)
-	MDRV_SOUND_ADD_TAG("2151", YM2151, ym2151_interface)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD_TAG("C140", C140, 8000000/374)
+	MDRV_SOUND_CONFIG(C140_interface)
+	MDRV_SOUND_ROUTE(0, "left", 0.75)
+	MDRV_SOUND_ROUTE(0, "right", 0.75)
+
+	MDRV_SOUND_ADD_TAG("2151", YM2151, 3579580)
+	MDRV_SOUND_ROUTE(0, "left", 0.80)
+	MDRV_SOUND_ROUTE(1, "right", 0.80)
 MACHINE_DRIVER_END
 
 /* adjusted machine driver start */
 static MACHINE_DRIVER_START( default2 )
 	MDRV_IMPORT_FROM(default)
-	MDRV_SOUND_REPLACE("C140", C140, C140_2_interface)	/* adjusted */
+
+	MDRV_SOUND_REPLACE("C140", C140, 8000000/374)
+	MDRV_SOUND_CONFIG(C140_interface)
+	MDRV_SOUND_ROUTE(0, "left", 1.0)
+	MDRV_SOUND_ROUTE(0, "right", 1.0)
 MACHINE_DRIVER_END
 /* end */
 
 static MACHINE_DRIVER_START( default3 )
 	MDRV_IMPORT_FROM(default)
-	MDRV_SOUND_REPLACE("C140", C140, C140_alt_interface)
-	MDRV_SOUND_REPLACE("2151", YM2151, ym2151_alt_interface)
+
+	MDRV_SOUND_REPLACE("C140", C140, 8000000/374)
+	MDRV_SOUND_CONFIG(C140_interface)
+	MDRV_SOUND_ROUTE(0, "left", 0.45)
+	MDRV_SOUND_ROUTE(0, "right", 0.45)
+
+	MDRV_SOUND_REPLACE("2151", YM2151, 3579580)
+	MDRV_SOUND_ROUTE(0, "left", 1.0)
+	MDRV_SOUND_ROUTE(1, "right", 1.0)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( gollygho )
@@ -1699,9 +1685,16 @@ static MACHINE_DRIVER_START( gollygho )
 	MDRV_VIDEO_START(namcos2)
 	MDRV_VIDEO_UPDATE(namcos2_default)
 
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(C140, C140_interface)
-	MDRV_SOUND_ADD(YM2151, ym2151_interface)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD_TAG("C140", C140, 8000000/374)
+	MDRV_SOUND_CONFIG(C140_interface)
+	MDRV_SOUND_ROUTE(0, "left", 0.75)
+	MDRV_SOUND_ROUTE(0, "right", 0.75)
+
+	MDRV_SOUND_ADD(YM2151, 3579580)
+	MDRV_SOUND_ROUTE(0, "left", 0.80)
+	MDRV_SOUND_ROUTE(1, "right", 0.80)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( finallap )
@@ -1739,9 +1732,16 @@ static MACHINE_DRIVER_START( finallap )
 	MDRV_VIDEO_START(finallap)
 	MDRV_VIDEO_UPDATE(finallap)
 
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(C140, C140_interface)
-	MDRV_SOUND_ADD(YM2151, ym2151_interface)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD_TAG("C140", C140, 8000000/374)
+	MDRV_SOUND_CONFIG(C140_interface)
+	MDRV_SOUND_ROUTE(0, "left", 0.75)
+	MDRV_SOUND_ROUTE(0, "right", 0.75)
+
+	MDRV_SOUND_ADD(YM2151, 3579580)
+	MDRV_SOUND_ROUTE(0, "left", 0.80)
+	MDRV_SOUND_ROUTE(1, "right", 0.80)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( sgunner )
@@ -1778,9 +1778,16 @@ static MACHINE_DRIVER_START( sgunner )
 	MDRV_VIDEO_START(sgunner)
 	MDRV_VIDEO_UPDATE(sgunner)
 
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(C140, C140_interface)
-	MDRV_SOUND_ADD(YM2151, ym2151_interface)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD_TAG("C140", C140, 8000000/374)
+	MDRV_SOUND_CONFIG(C140_interface)
+	MDRV_SOUND_ROUTE(0, "left", 0.75)
+	MDRV_SOUND_ROUTE(0, "right", 0.75)
+
+	MDRV_SOUND_ADD(YM2151, 3579580)
+	MDRV_SOUND_ROUTE(0, "left", 0.80)
+	MDRV_SOUND_ROUTE(1, "right", 0.80)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( luckywld )
@@ -1817,9 +1824,16 @@ static MACHINE_DRIVER_START( luckywld )
 	MDRV_VIDEO_START(luckywld)
 	MDRV_VIDEO_UPDATE(luckywld)
 
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(C140, C140_interface)
-	MDRV_SOUND_ADD(YM2151, ym2151_interface)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD_TAG("C140", C140, 8000000/374)
+	MDRV_SOUND_CONFIG(C140_interface)
+	MDRV_SOUND_ROUTE(0, "left", 0.75)
+	MDRV_SOUND_ROUTE(0, "right", 0.75)
+
+	MDRV_SOUND_ADD(YM2151, 3579580)
+	MDRV_SOUND_ROUTE(0, "left", 0.80)
+	MDRV_SOUND_ROUTE(1, "right", 0.80)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( metlhawk )
@@ -1858,9 +1872,16 @@ static MACHINE_DRIVER_START( metlhawk )
 	MDRV_VIDEO_START(metlhawk)
 	MDRV_VIDEO_UPDATE(metlhawk)
 
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(C140, C140_2_interface)	/* adjusted */
-	MDRV_SOUND_ADD(YM2151, ym2151_interface)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD_TAG("C140", C140, 8000000/374)
+	MDRV_SOUND_CONFIG(C140_interface)
+	MDRV_SOUND_ROUTE(0, "left", 1.0)
+	MDRV_SOUND_ROUTE(0, "right", 1.0)
+
+	MDRV_SOUND_ADD(YM2151, 3579580)
+	MDRV_SOUND_ROUTE(0, "left", 0.80)
+	MDRV_SOUND_ROUTE(1, "right", 0.80)
 MACHINE_DRIVER_END
 
 

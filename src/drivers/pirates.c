@@ -89,6 +89,7 @@ Notes:
 
 #include "driver.h"
 #include "machine/eeprom.h"
+#include "sound/okim6295.h"
 
 extern data16_t *pirates_tx_tileram, *pirates_spriteram;
 extern data16_t *pirates_fg_tileram,  *pirates_bg_tileram;
@@ -285,16 +286,6 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 /* Machine Driver + Related bits */
 
-static struct OKIM6295interface okim6295_interface =
-{
-	1,                  /* 1 chip */
-	{ 1333333/165 },     /* measured frequency */
-	{ REGION_SOUND1 },	/* memory region */
-	{ 100 }
-};
-
-
-
 static MACHINE_DRIVER_START( pirates )
 	MDRV_CPU_ADD(M68000, 16000000) /* 16mhz */
 	MDRV_CPU_PROGRAM_MAP(pirates_readmem,pirates_writemem)
@@ -315,7 +306,11 @@ static MACHINE_DRIVER_START( pirates )
 	MDRV_VIDEO_START(pirates)
 	MDRV_VIDEO_UPDATE(pirates)
 
-	MDRV_SOUND_ADD(OKIM6295, okim6295_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(OKIM6295, 1333333/165)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 

@@ -23,6 +23,7 @@ TODO:
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "cpu/m6809/m6809.h"
+#include "sound/2151intf.h"
 
 
 extern UINT8 *jackal_videoctrl;
@@ -243,16 +244,6 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 	{ -1 }
 };
 
-/* Sound Interface */
-
-static struct YM2151interface ym2151_interface =
-{
-	1,
-	3580000,	// ???
-	{ YM3012_VOL(50,MIXER_PAN_LEFT,50,MIXER_PAN_RIGHT) },
-	{ 0 },
-};
-
 /* Interrupt Generator */
 
 INTERRUPT_GEN( jackal_interrupt )
@@ -291,8 +282,11 @@ static MACHINE_DRIVER_START( jackal )
 	MDRV_VIDEO_UPDATE(jackal)
 
 	// sound hardware
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(YM2151, ym2151_interface)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(YM2151, 3580000)
+	MDRV_SOUND_ROUTE(0, "left", 0.50)
+	MDRV_SOUND_ROUTE(1, "right", 0.50)
 MACHINE_DRIVER_END
 
 /* ROMs */

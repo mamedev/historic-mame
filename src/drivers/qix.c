@@ -225,6 +225,8 @@ Interrupts:
 #include "qix.h"
 #include "machine/6821pia.h"
 #include "vidhrdw/generic.h"
+#include "sound/sn76496.h"
+#include "sound/discrete.h"
 
 
 /* Constants */
@@ -667,21 +669,6 @@ INPUT_PORTS_END
 
 /*************************************
  *
- *	Sound interfaces
- *
- *************************************/
-
-static struct SN76496interface sn76496_interface =
-{
-	2,
-	{ SLITHER_CLOCK_OSC/4/4, SLITHER_CLOCK_OSC/4/4 },
-	{ 50, 50 }
-};
-
-
-
-/*************************************
- *
  *	Machine drivers
  *
  *************************************/
@@ -716,8 +703,12 @@ static MACHINE_DRIVER_START( qix )
 	MDRV_VIDEO_UPDATE(qix)
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD_TAG("discrete", DISCRETE, qix_discrete_interface)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD_TAG("discrete", DISCRETE, 0)
+	MDRV_SOUND_CONFIG(qix_discrete_interface)
+	MDRV_SOUND_ROUTE(0, "left", 1.0)
+	MDRV_SOUND_ROUTE(1, "right", 1.0)
 MACHINE_DRIVER_END
 
 
@@ -768,8 +759,13 @@ static MACHINE_DRIVER_START( slither )
 	MDRV_VISIBLE_AREA(0, 255, 0, 255)
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(0)
-	MDRV_SOUND_REPLACE("discrete", SN76496, sn76496_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	
+	MDRV_SOUND_REPLACE("discrete", SN76496, SLITHER_CLOCK_OSC/4/4)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
+
+	MDRV_SOUND_ADD(SN76496, SLITHER_CLOCK_OSC/4/4)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
 MACHINE_DRIVER_END
 
 

@@ -166,6 +166,9 @@ Changes:
 #include "cpu/i8039/i8039.h"
 #include "cpu/s2650/s2650.h"
 #include "cpu/m6502/m6502.h"
+#include "sound/dac.h"
+#include "sound/samples.h"
+#include "sound/nes_apu.h"
 #include <math.h>
 
 static int page = 0,mcustatus;
@@ -1505,12 +1508,6 @@ static struct GfxDecodeInfo pestplce_gfxdecodeinfo[] =
 	{ -1 } /* end of array */
 };
 
-static struct DACinterface dkong_dac_interface =
-{
-	1,
-	{ 55 }
-};
-
 static const char *dkong_sample_names[] =
 {
 	"*dkong",
@@ -1543,14 +1540,12 @@ static const char *dkongjr_sample_names[] =
 static struct Samplesinterface dkong_samples_interface =
 {
 	8,	/* 8 channels */
-	25,	/* volume */
 	dkong_sample_names
 };
 
 static struct Samplesinterface dkongjr_samples_interface =
 {
 	8,	/* 8 channels */
-	25,	/* volume */
 	dkongjr_sample_names
 };
 
@@ -1582,8 +1577,13 @@ static MACHINE_DRIVER_START( radarscp )
 	MDRV_VIDEO_UPDATE(radarscp)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(DAC, dkong_dac_interface)
-	MDRV_SOUND_ADD(SAMPLES, dkong_samples_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	MDRV_SOUND_ADD(DAC, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.55)
+
+	MDRV_SOUND_ADD(SAMPLES, 0)
+	MDRV_SOUND_CONFIG(dkong_samples_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( dkong )
@@ -1614,8 +1614,13 @@ static MACHINE_DRIVER_START( dkong )
 	MDRV_VIDEO_UPDATE(dkong)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(DAC, dkong_dac_interface)
-	MDRV_SOUND_ADD(SAMPLES, dkong_samples_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	MDRV_SOUND_ADD(DAC, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.55)
+
+	MDRV_SOUND_ADD(SAMPLES, 0)
+	MDRV_SOUND_CONFIG(dkong_samples_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
 MACHINE_DRIVER_END
 
 static INTERRUPT_GEN( hunchbkd_interrupt )
@@ -1652,7 +1657,9 @@ static MACHINE_DRIVER_START( hunchbkd )
 	MDRV_VIDEO_UPDATE(dkong)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(DAC, dkong_dac_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	MDRV_SOUND_ADD(DAC, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.55)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( herbiedk )
@@ -1724,8 +1731,13 @@ static MACHINE_DRIVER_START( dkongjr )
 	MDRV_VIDEO_UPDATE(dkong)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(DAC, dkong_dac_interface)
-	MDRV_SOUND_ADD(SAMPLES, dkongjr_samples_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	MDRV_SOUND_ADD(DAC, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.55)
+
+	MDRV_SOUND_ADD(SAMPLES, 0)
+	MDRV_SOUND_CONFIG(dkongjr_samples_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( pestplce )
@@ -1756,7 +1768,9 @@ static MACHINE_DRIVER_START( pestplce )
 	MDRV_VIDEO_UPDATE(pestplce)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(DAC, dkong_dac_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	MDRV_SOUND_ADD(DAC, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.55)
 
 	/* samples*/
 MACHINE_DRIVER_END
@@ -1790,7 +1804,9 @@ static MACHINE_DRIVER_START( epos )
 	MDRV_VIDEO_UPDATE(dkong)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(DAC, dkong_dac_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	MDRV_SOUND_ADD(DAC, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.55)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( strtheat )
@@ -1805,12 +1821,8 @@ static MACHINE_DRIVER_START( drakton )
 	MDRV_MACHINE_INIT(drakton)
 MACHINE_DRIVER_END
 
-static struct NESinterface nes_interface =
-{
-	2,
-	{ REGION_CPU2, REGION_CPU3 },
-	{ 50, 50 },
-};
+static struct NESinterface nes_interface_1 = { REGION_CPU2 };
+static struct NESinterface nes_interface_2 = { REGION_CPU3 };
 
 
 static MACHINE_DRIVER_START( dkong3 )
@@ -1847,7 +1859,14 @@ static MACHINE_DRIVER_START( dkong3 )
 	MDRV_VIDEO_UPDATE(dkong)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(NES, nes_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	MDRV_SOUND_ADD(NES, N2A03_DEFAULTCLOCK)
+	MDRV_SOUND_CONFIG(nes_interface_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
+
+	MDRV_SOUND_ADD(NES, N2A03_DEFAULTCLOCK)
+	MDRV_SOUND_CONFIG(nes_interface_2)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
 MACHINE_DRIVER_END
 
 

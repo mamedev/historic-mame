@@ -276,8 +276,8 @@ static struct GfxDecodeInfo dcon_gfxdecodeinfo[] =
 /******************************************************************************/
 
 /* Parameters: YM3812 frequency, Oki frequency, Oki memory region */
-SEIBU_SOUND_SYSTEM_YM3812_HARDWARE(4000000,8000,REGION_SOUND1);
-SEIBU_SOUND_SYSTEM_YM2151_HARDWARE(14318180/4,8000,REGION_SOUND1);
+SEIBU_SOUND_SYSTEM_YM3812_HARDWARE;
+SEIBU_SOUND_SYSTEM_YM2151_HARDWARE;
 
 static MACHINE_DRIVER_START( dcon )
 
@@ -303,7 +303,7 @@ static MACHINE_DRIVER_START( dcon )
 	MDRV_VIDEO_UPDATE(dcon)
 
 	/* sound hardware */
-	SEIBU_SOUND_SYSTEM_YM3812_INTERFACE
+	SEIBU_SOUND_SYSTEM_YM3812_INTERFACE(4000000,8000,1)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( sdgndmps )
@@ -330,7 +330,7 @@ static MACHINE_DRIVER_START( sdgndmps )
 	MDRV_VIDEO_UPDATE(sdgndmps)
 
 	/* sound hardware */
-	SEIBU_SOUND_SYSTEM_YM2151_INTERFACE
+	SEIBU_SOUND_SYSTEM_YM2151_INTERFACE(14318180/4,8000,1)
 MACHINE_DRIVER_END
 
 /***************************************************************************/

@@ -6,9 +6,12 @@
 
 	Games supported:
 		* Tickee Tickats
+		* Ghost Hunter
+		* Tuts Tomb
 
 	Known bugs:
-		* gun sometimes misfires
+		* (Tickee) gun sometimes misfires
+		* Ghost Hunter + Tuts Tomb guns aren't hooked up
 
 ***************************************************************************/
 
@@ -17,6 +20,7 @@
 #include "machine/ticket.h"
 #include "vidhrdw/tlc34076.h"
 #include "tickee.h"
+#include "sound/ay8910.h"
 
 
 data16_t *tickee_control;
@@ -120,7 +124,33 @@ static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0xff000000, 0xffffffff) AM_WRITE(MWA16_ROM) AM_BASE(&code_rom)
 ADDRESS_MAP_END
 
+/* addreses in the 04x range shifted slightly...*/
+static ADDRESS_MAP_START( ghoshunt_readmem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x00000000, 0x003fffff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x02000000, 0x02ffffff) AM_READ(MRA16_BANK1)
+	AM_RANGE(0x04100000, 0x04103fff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x04200000, 0x042000ff) AM_READ(tlc34076_lsb_r)
+	AM_RANGE(0x04300000, 0x0430000f) AM_READ(AY8910_read_port_0_lsb_r)
+	AM_RANGE(0x04300100, 0x0430010f) AM_READ(AY8910_read_port_1_lsb_r)
+	AM_RANGE(0x04500040, 0x0450004f) AM_READ(input_port_3_word_r)
+	AM_RANGE(0xc0000000, 0xc00001ff) AM_READ(tms34010_io_register_r)
+	AM_RANGE(0xff000000, 0xffffffff) AM_READ(MRA16_ROM)
+ADDRESS_MAP_END
 
+
+static ADDRESS_MAP_START( ghoshunt_writemem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x00000000, 0x003fffff) AM_WRITE(MWA16_RAM) AM_BASE(&tickee_vram)
+	AM_RANGE(0x04100000, 0x04103fff) AM_WRITE(MWA16_RAM) AM_BASE(&generic_nvram16) AM_SIZE(&generic_nvram_size)
+	AM_RANGE(0x04200000, 0x042000ff) AM_WRITE(tlc34076_lsb_w)
+	AM_RANGE(0x04300000, 0x0430000f) AM_WRITE(AY8910_control_port_0_lsb_w)
+	AM_RANGE(0x04300010, 0x0430001f) AM_WRITE(AY8910_write_port_0_lsb_w)
+	AM_RANGE(0x04300100, 0x0430010f) AM_WRITE(AY8910_control_port_1_lsb_w)
+	AM_RANGE(0x04300110, 0x0430011f) AM_WRITE(AY8910_write_port_1_lsb_w)
+	AM_RANGE(0x04500000, 0x0450007f) AM_WRITE(tickee_control_w) AM_BASE(&tickee_control)
+	AM_RANGE(0xc0000000, 0xc00001ff) AM_WRITE(tms34010_io_register_w)
+	AM_RANGE(0xc0000240, 0xc000025f) AM_WRITE(MWA16_NOP)		/* seems to be a bug in their code */
+	AM_RANGE(0xff000000, 0xffffffff) AM_WRITE(MWA16_ROM) AM_BASE(&code_rom)
+ADDRESS_MAP_END
 
 /*************************************
  *
@@ -192,15 +222,15 @@ INPUT_PORTS_END
  *
  *************************************/
 
-static struct AY8910interface ay8910_interface =
+static struct AY8910interface ay8910_interface_1 =
 {
-	2,
-	40000000/16,
-	{ 50, 50 },
-	{ input_port_0_r, port1_r },
-	{ input_port_2_r, 0 },
-	{ 0 },
-	{ 0 }
+	input_port_0_r,
+ 	input_port_2_r
+};
+
+static struct AY8910interface ay8910_interface_2 =
+{
+	port1_r
 };
 
 
@@ -253,9 +283,103 @@ MACHINE_DRIVER_START( tickee )
 	MDRV_VIDEO_UPDATE(tickee)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(AY8910, ay8910_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(AY8910, 40000000/16)
+	MDRV_SOUND_CONFIG(ay8910_interface_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
+
+	MDRV_SOUND_ADD(AY8910, 40000000/16)
+	MDRV_SOUND_CONFIG(ay8910_interface_2)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
 MACHINE_DRIVER_END
 
+
+
+/*
+Ghost Hunter
+Hanaho Games, 1996
+
+PCB Layout
+----------
+
+|-----------------------------------------------|
+|VOL                              CN106  CN103  |
+|        NTE1423      ADV476KN50E    74LS175    |
+|                                               |
+|   YM2149            V52C4258Z80    74LS138    |
+|                                               |
+|   YM2149            V52C4258Z80    74LS373    |
+|                                               |
+|         DIPSW(8)    V52C4258Z80    74LS373    |
+|J                                              |
+|A         74LS161    V52C4258Z80    GHOSTHUN.7K|
+|M  74LS74                                      |
+|M         74LS273    |------|       GHOSTHUN.7J|
+|A                    |TMS   |                  |
+|          74LS74     |34010 |       GHOSTHUN.7H|
+|                     |------|                  |
+|          74LS14                    GHOSTHUN.7G|
+|   ULN2803           |---|                     |
+| TIP122   TIP122     |110|          DS1220Y    |
+| TIP122   TIP122     |---|    40MHz 14.31818MHz|
+| TIP122   TIP122    74LS273                    |
+|                              74LS245  74LS374 |
+|-------------------------------------|--CN2--|-|
+(All IC's shown)                      |-------|
+
+Notes:
+      34010 clocks - INCLK: 40.000MHz, VCLK: 7.15909MHz, HSYNC: 16.1kHz, VSYNC: 69Hz, BLANK: 69Hz
+      YM2149 clock - 1.7897725MHz [14.31818/8]
+      VSync        - 69Hz
+      HSync        - 15.78kHz
+      110          - AMD MACH110 High Density Electrically-Erasable CMOS Programmable Logic (PLCC44)
+      ADV476KN50E  - Analog Devices ADV476KN50E CMOS Monolithic 256x18 Color Palette RAM-DAC (DIP28)
+      DS1220Y      - Dallas Semiconductor DS1220Y 16K Nonvolatile SRAM (DIP24)
+      V52C4258Z80  - Vitelic V52C4258Z80 ?? possibly 256K x8 SRAM (ZIP28)
+      NTE1423      - NTE1423 5.7W Power Amplifier (SIP8)
+      CN2          - DB25 connector
+      CN103/106    - 4-pin connector for gun hookup
+      ULN2803      - Motorola ULN2803 Octal High Voltage, High Current Darlington Transistor Arrays (DIP18)
+      TIP122       - Motorola TIP122 General-Purpose NPN Darlington Transistor (TO-220)
+
+*/
+
+/* todo: correct details  */
+MACHINE_DRIVER_START( ghoshunt )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(TMS34010, 40000000/TMS34010_CLOCK_DIVIDER)
+	MDRV_CPU_CONFIG(cpu_config)
+	MDRV_CPU_PROGRAM_MAP(ghoshunt_readmem,ghoshunt_writemem)
+
+	MDRV_FRAMES_PER_SECOND(69)
+	MDRV_VBLANK_DURATION((1000000 * (232 - 200)) / (60 * 232))
+
+	MDRV_MACHINE_INIT(tickee)
+	MDRV_NVRAM_HANDLER(generic_1fill)
+
+	/* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(320, 200)
+	MDRV_VISIBLE_AREA(0, 319, 0, 199)
+
+	MDRV_PALETTE_LENGTH(256)
+
+	MDRV_VIDEO_START(tickee)
+	MDRV_VIDEO_UPDATE(tickee)
+
+	/* sound hardware - 2149! */
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(AY8910, 40000000/16)
+	MDRV_SOUND_CONFIG(ay8910_interface_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
+
+	MDRV_SOUND_ADD(AY8910, 40000000/16)
+	MDRV_SOUND_CONFIG(ay8910_interface_2)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
+MACHINE_DRIVER_END
 
 
 /*************************************
@@ -274,7 +398,26 @@ ROM_START( tickee )
 	ROM_LOAD16_BYTE( "4.ic5",  0x100001, 0x80000, CRC(ceb0f559) SHA1(61923fe09e1dfde1eaae297ccbc672bc74a70397) )
 ROM_END
 
+ROM_START( ghoshunt )
+	ROM_REGION( TOBYTE(0x800000), REGION_CPU1, 0 )		/* 34010 dummy region */
 
+	ROM_REGION16_LE( 0x200000, REGION_USER1, ROMREGION_DISPOSE )	/* 34010 code */
+	ROM_LOAD16_BYTE( "ghosthun.7g",  0x000001, 0x80000, CRC(d59716c2) SHA1(717a1a1c5c559569f9e7bc4ae4356d112f0cf4eb) )
+	ROM_LOAD16_BYTE( "ghosthun.7h",  0x000000, 0x80000, CRC(ef38bfc8) SHA1(12b8f29f4da120f14126cbcdf4019bedd97063c3) )
+	ROM_LOAD16_BYTE( "ghosthun.7j",  0x100001, 0x80000, CRC(763d7c79) SHA1(f0dec99feeeefeddda6a88276dc306a30a58f4e4) )
+	ROM_LOAD16_BYTE( "ghosthun.7k",  0x100000, 0x80000, CRC(71e6099e) SHA1(2af6f1aa304eed849c90d95d17643cb12b05baab) )
+ROM_END
+
+
+ROM_START( tutstomb )
+	ROM_REGION( TOBYTE(0x800000), REGION_CPU1, 0 )		/* 34010 dummy region */
+
+	ROM_REGION16_LE( 0x200000, REGION_USER1, ROMREGION_DISPOSE )	/* 34010 code */
+	ROM_LOAD16_BYTE( "tutstomb.7g",  0x000001, 0x80000, CRC(b74d3cf2) SHA1(2221b565362183a97a959389e8a0a026ca89e0ce) )
+	ROM_LOAD16_BYTE( "tutstomb.7h",  0x000000, 0x80000, CRC(177f3afb) SHA1(845f982a66a8b69b0ea0045399102e8bb33f7fbf) )
+	ROM_LOAD16_BYTE( "tutstomb.7j",  0x100001, 0x80000, CRC(69094f31) SHA1(eadae8847d0ff1568e63f71bf09a84dc443fdc1c))
+	ROM_LOAD16_BYTE( "tutstomb.7k",  0x100000, 0x80000, CRC(bc362df8) SHA1(7b15c646e99c916d850629e4e758b1dbb329639a) )
+ROM_END
 
 /*************************************
  *
@@ -297,3 +440,6 @@ static DRIVER_INIT( tickee )
  *************************************/
 
 GAME( 1994, tickee, 0, tickee, tickee, tickee, ROT0, "Raster Elite", "Tickee Tickats" )
+
+GAMEX( 199?, ghoshunt, 0, ghoshunt, tickee, tickee, ROT0, "Hanaho Games", "Ghost Hunter",GAME_NOT_WORKING )
+GAMEX( 199?, tutstomb, 0, ghoshunt, tickee, tickee, ROT0, "Island Design", "Tuts Tomb",GAME_NOT_WORKING )

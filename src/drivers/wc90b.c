@@ -73,6 +73,7 @@ World Cup 90 bootleg.
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "cpu/z80/z80.h"
+#include "sound/2203intf.h"
 
 
 #define TEST_DIPS false /* enable to test unmapped dip switches */
@@ -355,14 +356,7 @@ static void irqhandler(int irq)
 
 static struct YM2203interface ym2203_interface =
 {
-	2,			/* 2 chips */
-	2510000/2,	/* 2.51 MHz */
-	{ YM2203_VOL(25,25), YM2203_VOL(25,25) },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ irqhandler }
+	0,0,0,0,irqhandler
 };
 
 static MACHINE_DRIVER_START( wc90b )
@@ -394,7 +388,14 @@ static MACHINE_DRIVER_START( wc90b )
 	MDRV_VIDEO_UPDATE(wc90b)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM2203, ym2203_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM2203, 2510000/2)
+	MDRV_SOUND_CONFIG(ym2203_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
+
+	MDRV_SOUND_ADD(YM2203, 2510000/2)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
 MACHINE_DRIVER_END
 
 ROM_START( wc90b )

@@ -38,6 +38,11 @@ Notes:
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "cpu/z80/z80.h"
+#include "sound/ay8910.h"
+#include "sound/2203intf.h"
+#include "sound/3812intf.h"
+#include "sound/dac.h"
+#include "sound/samples.h"
 
 extern int suna8_text_dim; /* specifies format of text layer */
 
@@ -64,7 +69,7 @@ VIDEO_UPDATE( suna8 );
 
 WRITE8_HANDLER( suna8_play_samples_w );
 WRITE8_HANDLER( suna8_samples_number_w );
-int suna8_sh_start(const struct MachineSound *msound);
+void suna8_sh_start(void);
 
 /***************************************************************************
 
@@ -1922,28 +1927,17 @@ static void soundirq(int state)
 
 static struct AY8910interface hardhead_ay8910_interface =
 {
-	1,
-	24000000 / 16,	/* ? */
-	{ 30 },
-	{ 0 },
-	{ 0 },
-	{ suna8_play_samples_w },
-	{ suna8_samples_number_w }
-};
-
-static struct YM3812interface hardhead_ym3812_interface =
-{
-	1,
-	4000000,	/* ? */
-	{ 100 },
-	{  0 },		/* IRQ Line */
-};
-
-static struct CustomSound_interface custom_interface =
-{
-	suna8_sh_start,
 	0,
-	0
+	0,
+	suna8_play_samples_w,
+	suna8_samples_number_w
+};
+
+static struct Samplesinterface custom_interface =
+{
+	1,
+	NULL,
+	suna8_sh_start
 };
 
 static MACHINE_DRIVER_START( hardhead )
@@ -1974,10 +1968,21 @@ static MACHINE_DRIVER_START( hardhead )
 	MDRV_VIDEO_UPDATE(suna8)
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(YM3812, hardhead_ym3812_interface)
-	MDRV_SOUND_ADD(AY8910, hardhead_ay8910_interface)
-	MDRV_SOUND_ADD(CUSTOM, custom_interface)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(YM3812, 4000000)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 1.0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 1.0)
+
+	MDRV_SOUND_ADD(AY8910, 24000000 / 16)
+	MDRV_SOUND_CONFIG(hardhead_ay8910_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.30)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 0.30)
+	
+	MDRV_SOUND_ADD(SAMPLES, 0)
+	MDRV_SOUND_CONFIG(custom_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.50)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 0.50)
 MACHINE_DRIVER_END
 
 
@@ -1989,18 +1994,6 @@ MACHINE_DRIVER_END
 /* 1 x 24 MHz crystal */
 
 /* 2203 + 8910 */
-static struct YM2203interface rranger_ym2203_interface =
-{
-	2,
-	4000000,	/* ? */
-	{ YM2203_VOL(50,50), YM2203_VOL(50,50) },
-	{ 0,0 },	/* Port A Read  */
-	{ 0,0 },	/* Port B Read  */
-	{ 0,0 },	/* Port A Write */
-	{ 0,0 },	/* Port B Write */
-	{ 0,0 }		/* IRQ handler  */
-};
-
 static MACHINE_DRIVER_START( rranger )
 
 	/* basic machine hardware */
@@ -2029,8 +2022,15 @@ static MACHINE_DRIVER_START( rranger )
 	MDRV_VIDEO_UPDATE(suna8)
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(YM2203, rranger_ym2203_interface)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(YM2203, 4000000)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.50)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 0.50)
+
+	MDRV_SOUND_ADD(YM2203, 4000000)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.50)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 0.50)
 MACHINE_DRIVER_END
 
 
@@ -2040,30 +2040,9 @@ MACHINE_DRIVER_END
 
 /* 1 x 24 MHz crystal */
 
-static struct AY8910interface brickzn_ay8910_interface =
-{
-	1,
-	24000000 / 16,	/* ? */
-	{ 33 },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ 0 }
-};
-
 static struct YM3812interface brickzn_ym3812_interface =
 {
-	1,
-	4000000,	/* ? */
-	{ 33 },
-	{ soundirq },	/* IRQ Line */
-};
-
-static struct DACinterface brickzn_dac_interface =
-{
-	4,
-	{	MIXER(17,MIXER_PAN_LEFT), MIXER(17,MIXER_PAN_RIGHT),
-		MIXER(17,MIXER_PAN_LEFT), MIXER(17,MIXER_PAN_RIGHT)	}
+	soundirq	/* IRQ Line */
 };
 
 INTERRUPT_GEN( brickzn_interrupt )
@@ -2105,10 +2084,28 @@ static MACHINE_DRIVER_START( brickzn )
 	MDRV_VIDEO_UPDATE(suna8)
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(YM3812, brickzn_ym3812_interface)
-	MDRV_SOUND_ADD(AY8910, brickzn_ay8910_interface)
-	MDRV_SOUND_ADD(DAC, brickzn_dac_interface)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(YM3812, 4000000)
+	MDRV_SOUND_CONFIG(brickzn_ym3812_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 1.0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 1.0)
+	
+	MDRV_SOUND_ADD(AY8910, 24000000 / 16)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.33)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 0.33)
+
+	MDRV_SOUND_ADD(DAC, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.17)
+
+	MDRV_SOUND_ADD(DAC, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 0.17)
+
+	MDRV_SOUND_ADD(DAC, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.17)
+
+	MDRV_SOUND_ADD(DAC, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 0.17)
 MACHINE_DRIVER_END
 
 
@@ -2150,21 +2147,10 @@ MACHINE_DRIVER_END
 
 static struct AY8910interface starfigh_ay8910_interface =
 {
-	1,
-	24000000 / 16,	/* ? */
-	{ 50 },
-	{ 0 },
-	{ 0 },
-	{ suna8_play_samples_w },
-	{ suna8_samples_number_w }
-};
-
-static struct YM3812interface starfigh_ym3812_interface =
-{
-	1,
-	4000000,	/* ? */
-	{ 100 },
-	{  0 },
+	0,
+	0,
+	suna8_play_samples_w,
+	suna8_samples_number_w
 };
 
 static MACHINE_DRIVER_START( starfigh )
@@ -2196,10 +2182,21 @@ static MACHINE_DRIVER_START( starfigh )
 	MDRV_VIDEO_UPDATE(suna8)
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(YM3812, starfigh_ym3812_interface)
-	MDRV_SOUND_ADD(AY8910, starfigh_ay8910_interface)
-	MDRV_SOUND_ADD(CUSTOM, custom_interface)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(YM3812, 4000000)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 1.0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 1.0)
+	
+	MDRV_SOUND_ADD(AY8910, 24000000 / 16)
+	MDRV_SOUND_CONFIG(starfigh_ay8910_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.50)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 0.50)
+	
+	MDRV_SOUND_ADD(SAMPLES, 0)
+	MDRV_SOUND_CONFIG(custom_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.50)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 0.50)
 MACHINE_DRIVER_END
 
 
@@ -2243,10 +2240,21 @@ static MACHINE_DRIVER_START( sparkman )
 	MDRV_VIDEO_UPDATE(suna8)
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(YM3812, hardhead_ym3812_interface)
-	MDRV_SOUND_ADD(AY8910, hardhead_ay8910_interface)
-	MDRV_SOUND_ADD(CUSTOM, custom_interface)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(YM3812, 4000000)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 1.0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 1.0)
+
+	MDRV_SOUND_ADD(AY8910, 24000000 / 16)
+	MDRV_SOUND_CONFIG(hardhead_ay8910_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.30)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 0.30)
+	
+	MDRV_SOUND_ADD(SAMPLES, 0)
+	MDRV_SOUND_CONFIG(custom_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.50)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 0.50)
 MACHINE_DRIVER_END
 
 

@@ -40,6 +40,7 @@ TODO:
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "sound/sn76496.h"
 
 
 extern READ8_HANDLER( ladybug_IN0_r );
@@ -613,19 +614,6 @@ static struct GfxDecodeInfo sraider_gfxdecodeinfo[] =
 	{ -1 } /* end of array */
 };
 
-static struct SN76496interface sn76496_interface =
-{
-	2,	/* 2 chips */
-	{ 4000000, 4000000 },	/* 4 MHz */
-	{ 100, 100 }
-};
-
-static struct SN76496interface sraider_sn76496_interface =
-{
-	4,	/* 4 chips */
-	{ 4000000, 4000000, 4000000, 4000000 },	/* 4 MHz */
-	{ 100, 100, 100, 100 }
-};
 
 
 static MACHINE_DRIVER_START( ladybug )
@@ -651,7 +639,13 @@ static MACHINE_DRIVER_START( ladybug )
 	MDRV_VIDEO_UPDATE(ladybug)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(SN76496, sn76496_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(SN76496, 4000000)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
+
+	MDRV_SOUND_ADD(SN76496, 4000000)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 static READ8_HANDLER(_8005_r)
@@ -851,7 +845,19 @@ static MACHINE_DRIVER_START( sraider )
 	MDRV_VIDEO_UPDATE(sraider)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(SN76496, sraider_sn76496_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(SN76496, 4000000)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
+
+	MDRV_SOUND_ADD(SN76496, 4000000)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
+
+	MDRV_SOUND_ADD(SN76496, 4000000)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
+
+	MDRV_SOUND_ADD(SN76496, 4000000)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 

@@ -58,6 +58,7 @@
 #include "cpu/mips/r3000.h"
 #include "cpu/jaguar/jaguar.h"
 #include "machine/idectrl.h"
+#include "sound/dac.h"
 #include "jaguar.h"
 
 
@@ -762,20 +763,6 @@ INPUT_PORTS_END
 
 /*************************************
  *
- *	Sound interfaces
- *
- *************************************/
-
-static struct DACinterface dac_interface =
-{
-	2,
-	{ MIXER(100, MIXER_PAN_LEFT), MIXER(100, MIXER_PAN_RIGHT) }
-};
-
-
-
-/*************************************
- *
  *	Machine driver
  *
  *************************************/
@@ -832,8 +819,13 @@ MACHINE_DRIVER_START( cojagr3k )
 	MDRV_VIDEO_UPDATE(cojag)
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(DAC, dac_interface)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(DAC, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 1.0)
+
+	MDRV_SOUND_ADD(DAC, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 1.0)
 MACHINE_DRIVER_END
 
 
@@ -876,8 +868,13 @@ MACHINE_DRIVER_START( cojag68k )
 	MDRV_VIDEO_UPDATE(cojag)
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(DAC, dac_interface)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(DAC, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 1.0)
+
+	MDRV_SOUND_ADD(DAC, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 1.0)
 MACHINE_DRIVER_END
 
 

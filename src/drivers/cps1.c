@@ -15,6 +15,9 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "machine/eeprom.h"
+#include "sound/2151intf.h"
+#include "sound/okim6295.h"
+#include "sound/qsound.h"
 
 #include "cps1.h"       /* External CPS1 definitions */
 
@@ -155,9 +158,7 @@ static INTERRUPT_GEN( cps1_interrupt )
 
 struct QSound_interface qsound_interface =
 {
-	QSOUND_CLOCK,
-	REGION_SOUND1,
-	{ 100,100 }
+	REGION_SOUND1
 };
 
 static unsigned char *qsound_sharedram1,*qsound_sharedram2;
@@ -3646,26 +3647,7 @@ static void cps1_irq_handler_mus(int irq)
 
 static struct YM2151interface ym2151_interface =
 {
-	1,  /* 1 chip */
-	3579580,    /* 3.579580 MHz ? */
-	{ YM3012_VOL(35,MIXER_PAN_LEFT,35,MIXER_PAN_RIGHT) },
-	{ cps1_irq_handler_mus }
-};
-
-static struct OKIM6295interface okim6295_interface_6061 =
-{
-	1,  /* 1 chip */
-	{ 6061 },
-	{ REGION_SOUND1 },
-	{ 30 }
-};
-
-static struct OKIM6295interface okim6295_interface_7576 =
-{
-	1,  /* 1 chip */
-	{ 7576 },
-	{ REGION_SOUND1 },
-	{ 30 }
+	cps1_irq_handler_mus
 };
 
 
@@ -3705,8 +3687,16 @@ static MACHINE_DRIVER_START( cps1 )
 	MDRV_VIDEO_UPDATE(cps1)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD_TAG("2151", YM2151, ym2151_interface)
-	MDRV_SOUND_ADD_TAG("okim", OKIM6295, okim6295_interface_7576)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM2151, 3579580)
+	MDRV_SOUND_CONFIG(ym2151_interface)
+	MDRV_SOUND_ROUTE(0, "mono", 0.35)
+	MDRV_SOUND_ROUTE(1, "mono", 0.35)
+
+	MDRV_SOUND_ADD_TAG("okim", OKIM6295, 6061)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.30)
 MACHINE_DRIVER_END
 
 
@@ -3716,7 +3706,9 @@ static MACHINE_DRIVER_START( forgottn )
 	MDRV_IMPORT_FROM(cps1)
 
 	/* sound hardware */
-	MDRV_SOUND_REPLACE("okim", OKIM6295, okim6295_interface_6061)
+	MDRV_SOUND_REPLACE("okim", OKIM6295, 7576)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.30)
 MACHINE_DRIVER_END
 
 
@@ -3751,10 +3743,14 @@ static MACHINE_DRIVER_START( qsound )
 	MDRV_NVRAM_HANDLER(qsound)
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_REPLACE("2151", QSOUND, qsound_interface)
-	MDRV_SOUND_REMOVE("okim")
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
 
+	MDRV_SOUND_REPLACE("2151", QSOUND, QSOUND_CLOCK)
+	MDRV_SOUND_CONFIG(qsound_interface)
+	MDRV_SOUND_ROUTE(0, "left", 1.0)
+	MDRV_SOUND_ROUTE(0, "right", 1.0)
+
+	MDRV_SOUND_REMOVE("okim")
 MACHINE_DRIVER_END
 
 

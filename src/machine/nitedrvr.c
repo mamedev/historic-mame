@@ -7,6 +7,7 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "nitedrvr.h"
+#include "sound/discrete.h"
 
 static int nitedrvr_gear = 1;
 static int nitedrvr_track;

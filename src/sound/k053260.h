@@ -6,19 +6,11 @@
 #ifndef __K053260_H__
 #define __K053260_H__
 
-#define MAX_053260 2
-
 struct K053260_interface {
-	int	num;								/* number of chips */
-	int clock[MAX_053260];					/* clock */
-	int region[MAX_053260];					/* memory region of sample ROM(s) */
-	int mixing_level[MAX_053260][2];		/* volume */
-	void (*irq[MAX_053260])( int param );	/* called on SH1 complete cycle ( clock / 32 ) */
+	int region;					/* memory region of sample ROM(s) */
+	void (*irq)( int param );	/* called on SH1 complete cycle ( clock / 32 ) */
 };
 
-
-int K053260_sh_start( const struct MachineSound *msound );
-void K053260_sh_stop( void );
 
 WRITE8_HANDLER( K053260_0_w );
 WRITE8_HANDLER( K053260_1_w );

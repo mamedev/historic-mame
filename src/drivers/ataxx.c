@@ -30,6 +30,8 @@
 #include "machine/eeprom.h"
 #include "cpu/z80/z80.h"
 #include "leland.h"
+#include "sound/2151intf.h"
+#include "sound/custom.h"
 
 
 
@@ -309,14 +311,6 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
  *
  *************************************/
 
-static struct YM2151interface ym2151_interface =
-{
-	1,
-	4000000,
-	{ YM3012_VOL(40,MIXER_PAN_LEFT,40,MIXER_PAN_RIGHT) },
-	{ 0 }
-};
-
 static struct CustomSound_interface i186_custom_interface =
 {
     leland_i186_sh_start
@@ -364,7 +358,11 @@ static MACHINE_DRIVER_START( ataxx )
 	MDRV_VIDEO_UPDATE(ataxx)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(CUSTOM, i186_custom_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(CUSTOM, 0)
+	MDRV_SOUND_CONFIG(i186_custom_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 
@@ -374,7 +372,9 @@ static MACHINE_DRIVER_START( wsf )
 	MDRV_IMPORT_FROM(ataxx)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM2151, ym2151_interface)
+	MDRV_SOUND_ADD(YM2151, 4000000)
+	MDRV_SOUND_ROUTE(0, "mono", 0.40)
+	MDRV_SOUND_ROUTE(1, "mono", 0.40)
 MACHINE_DRIVER_END
 
 

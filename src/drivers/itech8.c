@@ -154,6 +154,9 @@
 #include "vidhrdw/tms34061.h"
 #include "vidhrdw/tlc34076.h"
 #include "itech8.h"
+#include "sound/2203intf.h"
+#include "sound/3812intf.h"
+#include "sound/okim6295.h"
 #include <math.h>
 
 
@@ -1348,41 +1351,17 @@ INPUT_PORTS_END
 
 static struct YM2203interface ym2203_interface =
 {
-	1,
-	CLOCK_8MHz/2,
-	{ YM2203_VOL(75,7) },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ ym2203_portb_out },
-	{ generate_sound_irq }
+	0,
+	0,
+	0,
+	ym2203_portb_out,
+	generate_sound_irq
 };
 
 
 static struct YM3812interface ym3812_interface =
 {
-	1,
-	CLOCK_8MHz/2,
-	{ 75 },
-	{ generate_sound_irq }
-};
-
-
-static struct OKIM6295interface oki6295_interface_low =
-{
-	1,
-	{ CLOCK_8MHz/8/165 },
-	{ REGION_SOUND1 },
-	{ 75 }
-};
-
-
-static struct OKIM6295interface oki6295_interface_high =
-{
-	1,
-	{ CLOCK_8MHz/8/128 },
-	{ REGION_SOUND1 },
-	{ 75 }
+	generate_sound_irq
 };
 
 
@@ -1418,7 +1397,11 @@ static MACHINE_DRIVER_START( itech8_core_lo )
 	MDRV_VIDEO_UPDATE(itech8)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD_TAG("oki", OKIM6295, oki6295_interface_high)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD_TAG("oki", OKIM6295, CLOCK_8MHz/8/128)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.75)
 MACHINE_DRIVER_END
 
 
@@ -1438,7 +1421,12 @@ static MACHINE_DRIVER_START( itech8_sound_ym2203 )
 	MDRV_CPU_PROGRAM_MAP(sound2203_map,0)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD_TAG("ym", YM2203, ym2203_interface)
+	MDRV_SOUND_ADD_TAG("ym", YM2203, CLOCK_8MHz/2)
+	MDRV_SOUND_CONFIG(ym2203_interface)
+	MDRV_SOUND_ROUTE(0, "mono", 0.07)
+	MDRV_SOUND_ROUTE(1, "mono", 0.07)
+	MDRV_SOUND_ROUTE(2, "mono", 0.07)
+	MDRV_SOUND_ROUTE(3, "mono", 0.75)
 MACHINE_DRIVER_END
 
 
@@ -1449,7 +1437,9 @@ static MACHINE_DRIVER_START( itech8_sound_ym3812 )
 	MDRV_CPU_PROGRAM_MAP(sound3812_map,0)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD_TAG("ym", YM3812, ym3812_interface)
+	MDRV_SOUND_ADD_TAG("ym", YM3812, CLOCK_8MHz/2)
+	MDRV_SOUND_CONFIG(ym3812_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.75)
 MACHINE_DRIVER_END
 
 
@@ -1503,7 +1493,9 @@ static MACHINE_DRIVER_START( arlingtn )
 	MDRV_VISIBLE_AREA(16, 389, 0, 239)
 
 	/* sound hardware */
-	MDRV_SOUND_REPLACE("oki", OKIM6295, oki6295_interface_low)
+	MDRV_SOUND_REPLACE("oki", OKIM6295, CLOCK_8MHz/8/165)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.75)
 MACHINE_DRIVER_END
 
 

@@ -150,7 +150,7 @@ enum
 
 struct upd7759_chip
 {
-	int			channel;					/* stream channel for playback */
+	sound_stream *channel;					/* stream channel for playback */
 
 	/* internal clock to Machine->sample_rate mapping */
 	UINT32		pos;						/* current output sample position */
@@ -197,9 +197,6 @@ struct upd7759_chip
 	Local variables
 
 *************************************************************/
-
-static struct upd7759_chip upd7759[MAX_UPD7759];
-
 
 const static int upd7759_step[16][16] =
 {
@@ -463,13 +460,14 @@ static void advance_state(struct upd7759_chip *chip)
 
 *************************************************************/
 
-static void upd7759_update(int which, INT16 *buffer, int samples)
+static void upd7759_update(void *param, stream_sample_t **inputs, stream_sample_t **_buffer, int samples)
 {
-	struct upd7759_chip *chip = &upd7759[which];
+	struct upd7759_chip *chip = param;
 	INT32 clocks_left = chip->clocks_left;
 	INT16 sample = chip->sample;
 	UINT32 step = chip->step;
 	UINT32 pos = chip->pos;
+	stream_sample_t *buffer = _buffer[0];
 
 	/* loop until done */
 	if (chip->state != STATE_IDLE)
@@ -525,9 +523,9 @@ static void upd7759_update(int which, INT16 *buffer, int samples)
 
 *************************************************************/
 
-static void upd7759_slave_update(int which)
+static void upd7759_slave_update(void *param)
 {
-	struct upd7759_chip *chip = &upd7759[which];
+	struct upd7759_chip *chip = param;
 	UINT8 olddrq = chip->drq;
 	
 	/* update the stream */
@@ -543,7 +541,7 @@ static void upd7759_slave_update(int which)
 	
 	/* set a timer to go off when that is done */
 	if (chip->state != STATE_IDLE)
-		timer_adjust(chip->timer, chip->clocks_left * chip->clock_period, which, 0);
+		timer_adjust_ptr(chip->timer, chip->clocks_left * chip->clock_period, chip, 0);
 }
 
 
@@ -554,51 +552,72 @@ static void upd7759_slave_update(int which)
 
 *************************************************************/
 
-int upd7759_sh_start(const struct MachineSound *msound)
+static void upd7759_reset(struct upd7759_chip *chip)
 {
-	const struct upd7759_interface *intf = msound->sound_interface;
-	int ch;
+	chip->pos                = 0;
+	chip->fifo_in            = 0;
+	chip->drq                = 0;
+	chip->state              = STATE_IDLE;
+	chip->clocks_left        = 0;
+	chip->nibbles_left       = 0;
+	chip->repeat_count       = 0;
+	chip->post_drq_state     = STATE_IDLE;
+	chip->post_drq_clocks    = 0;
+	chip->req_sample         = 0;
+	chip->last_sample        = 0;
+	chip->block_header       = 0;
+	chip->sample_rate        = 0;
+	chip->first_valid_header = 0;
+	chip->offset             = 0;
+	chip->repeat_offset      = 0;
+	chip->adpcm_state        = 0;
+	chip->adpcm_data         = 0;
+	chip->sample             = 0;
+	
+	/* turn off any timer */
+	if (chip->timer)
+		timer_adjust_ptr(chip->timer, TIME_NEVER, chip, 0);
+}
 
-	/* initialize all the chips */
-	for (ch = 0; ch < intf->num; ch++)
-	{
-		struct upd7759_chip *chip = &upd7759[ch];
-		char name[20];
 
-		memset(chip, 0, sizeof(*chip));	
+static void *upd7759_start(int sndindex, int clock, const void *config)
+{
+	const struct upd7759_interface *intf = config;
+	struct upd7759_chip *chip;
+	
+	chip = auto_malloc(sizeof(*chip));
+	memset(chip, 0, sizeof(*chip));
 
-		/* allocate a stream channel */
-		sprintf(name, "UPD7759 #%d", ch);
-		chip->channel = stream_init(name, intf->volume[ch], Machine->sample_rate, ch, upd7759_update);
-		
-		/* compute the stepping rate based on the chip's clock speed */
-		if (Machine->sample_rate != 0)
-			chip->step = ((INT64)intf->clock[ch] * (INT64)FRAC_ONE) / Machine->sample_rate;
-		
-		/* compute the clock period */
-		chip->clock_period = TIME_IN_HZ(intf->clock[ch]);
-		
-		/* set the intial state */
-		chip->state = STATE_IDLE;
-		
-		/* compute the ROM base or allocate a timer */
-		if (intf->region[ch] != 0)
-			chip->rom = chip->rombase = memory_region(intf->region[ch]);
-		else
-			chip->timer = timer_alloc(upd7759_slave_update);
-		
-		/* set the DRQ callback */
-		chip->drqcallback = intf->drqcallback[ch];
-		
-		/* assume /RESET and /START are both high */
-		chip->reset = 1;
-		chip->start = 1;
+	/* allocate a stream channel */
+	chip->channel = stream_create(0, 1, Machine->sample_rate, chip, upd7759_update);
+	
+	/* compute the stepping rate based on the chip's clock speed */
+	if (Machine->sample_rate != 0)
+		chip->step = ((INT64)clock * (INT64)FRAC_ONE) / Machine->sample_rate;
+	
+	/* compute the clock period */
+	chip->clock_period = TIME_IN_HZ(clock);
+	
+	/* set the intial state */
+	chip->state = STATE_IDLE;
+	
+	/* compute the ROM base or allocate a timer */
+	if (intf->region != 0)
+		chip->rom = chip->rombase = memory_region(intf->region);
+	else
+		chip->timer = timer_alloc_ptr(upd7759_slave_update);
+	
+	/* set the DRQ callback */
+	chip->drqcallback = intf->drqcallback;
+	
+	/* assume /RESET and /START are both high */
+	chip->reset = 1;
+	chip->start = 1;
 
-		/* toggle the reset line to finish the reset */
-		upd7759_reset_w(ch, 0);
-		upd7759_reset_w(ch, 1);
-	}
-	return 0;
+	/* toggle the reset line to finish the reset */
+	upd7759_reset(chip);
+
+	return chip;
 }
 
 
@@ -612,7 +631,7 @@ int upd7759_sh_start(const struct MachineSound *msound)
 void upd7759_reset_w(int which, UINT8 data)
 {
 	/* update the reset value */
-	struct upd7759_chip *chip = &upd7759[which];
+	struct upd7759_chip *chip = sndti_token(SOUND_UPD7759, which);
 	UINT8 oldreset = chip->reset;
 	chip->reset = (data != 0);
 
@@ -621,37 +640,13 @@ void upd7759_reset_w(int which, UINT8 data)
 	
 	/* on the falling edge, reset everything */
 	if (oldreset && !chip->reset)
-	{
-		chip->pos                = 0;
-		chip->fifo_in            = 0;
-		chip->drq                = 0;
-		chip->state              = STATE_IDLE;
-		chip->clocks_left        = 0;
-		chip->nibbles_left       = 0;
-		chip->repeat_count       = 0;
-		chip->post_drq_state     = STATE_IDLE;
-		chip->post_drq_clocks    = 0;
-		chip->req_sample         = 0;
-		chip->last_sample        = 0;
-		chip->block_header       = 0;
-		chip->sample_rate        = 0;
-		chip->first_valid_header = 0;
-		chip->offset             = 0;
-		chip->repeat_offset      = 0;
-		chip->adpcm_state        = 0;
-		chip->adpcm_data         = 0;
-		chip->sample             = 0;
-		
-		/* turn off any timer */
-		if (chip->timer)
-			timer_adjust(chip->timer, TIME_NEVER, 0, 0);
-	}
+		upd7759_reset(chip);
 }
 
 void upd7759_start_w(int which, UINT8 data)
 {
 	/* update the start value */
-	struct upd7759_chip *chip = &upd7759[which];
+	struct upd7759_chip *chip = sndti_token(SOUND_UPD7759, which);
 	UINT8 oldstart = chip->start;
 	chip->start = (data != 0);
 
@@ -667,7 +662,7 @@ void upd7759_start_w(int which, UINT8 data)
 		
 		/* for slave mode, start the timer going */
 		if (chip->timer)
-			timer_adjust(chip->timer, TIME_NOW, which, 0);
+			timer_adjust_ptr(chip->timer, TIME_NOW, chip, 0);
 	}
 }
 
@@ -675,7 +670,7 @@ void upd7759_start_w(int which, UINT8 data)
 void upd7759_port_w(int which, UINT8 data)
 {
 	/* update the FIFO value */
-	struct upd7759_chip *chip = &upd7759[which];
+	struct upd7759_chip *chip = sndti_token(SOUND_UPD7759, which);
 	chip->fifo_in = data;
 }
 
@@ -683,14 +678,14 @@ void upd7759_port_w(int which, UINT8 data)
 int upd7759_busy_r(int which)
 {
 	/* return /BUSY */
-	struct upd7759_chip *chip = &upd7759[which];
+	struct upd7759_chip *chip = sndti_token(SOUND_UPD7759, which);
 	return (chip->state == STATE_IDLE);
 }
 
 
 void upd7759_set_bank_base(int which, UINT32 base)
 {
-	struct upd7759_chip *chip = &upd7759[which];
+	struct upd7759_chip *chip = sndti_token(SOUND_UPD7759, which);
 	chip->rom = chip->rombase + base;
 }
 
@@ -724,3 +719,42 @@ READ8_HANDLER(upd7759_0_busy_r)
 {
 	return upd7759_busy_r(0);
 }
+
+
+
+
+
+/**************************************************************************
+ * Generic get_info
+ **************************************************************************/
+
+static void upd7759_set_info(void *token, UINT32 state, union sndinfo *info)
+{
+	switch (state)
+	{
+		/* no parameters to set */
+	}
+}
+
+
+void upd7759_get_info(void *token, UINT32 state, union sndinfo *info)
+{
+	switch (state)
+	{
+		/* --- the following bits of info are returned as 64-bit signed integers --- */
+
+		/* --- the following bits of info are returned as pointers to data or functions --- */
+		case SNDINFO_PTR_SET_INFO:						info->set_info = upd7759_set_info;		break;
+		case SNDINFO_PTR_START:							info->start = upd7759_start;			break;
+		case SNDINFO_PTR_STOP:							/* Nothing */							break;
+		case SNDINFO_PTR_RESET:							/* Nothing */							break;
+
+		/* --- the following bits of info are returned as NULL-terminated strings --- */
+		case SNDINFO_STR_NAME:							info->s = "UPD7759";					break;
+		case SNDINFO_STR_CORE_FAMILY:					info->s = "NEC ADPCM";					break;
+		case SNDINFO_STR_CORE_VERSION:					info->s = "1.0";						break;
+		case SNDINFO_STR_CORE_FILE:						info->s = __FILE__;						break;
+		case SNDINFO_STR_CORE_CREDITS:					info->s = "Copyright (c) 2004, The MAME Team"; break;
+	}
+}
+

@@ -35,6 +35,7 @@ write:
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "sound/sn76496.h"
 
 
 extern UINT8 *bankp_videoram2;
@@ -159,15 +160,6 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 
 
-static struct SN76496interface sn76496_interface =
-{
-	3,	/* 3 chips */
-	{ 15468480/4, 15468480/4, 15468480/4 },
-	{ 100, 100, 100 }
-};
-
-
-
 static MACHINE_DRIVER_START( bankp )
 
 	/* basic machine hardware */
@@ -192,7 +184,16 @@ static MACHINE_DRIVER_START( bankp )
 	MDRV_VIDEO_UPDATE(bankp)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(SN76496, sn76496_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(SN76496, 15468480/4)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
+
+	MDRV_SOUND_ADD(SN76496, 15468480/4)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
+
+	MDRV_SOUND_ADD(SN76496, 15468480/4)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 

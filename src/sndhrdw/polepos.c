@@ -3,13 +3,15 @@
 	Sound handler
 ****************************************************************************/
 #include "driver.h"
-#include "../sound/filter.h"
+#include "sound/filter.h"
+#include "sound/sn76477.h"
+#include "sound/custom.h"
 
 static int sample_msb = 0;
 static int sample_lsb = 0;
 static int sample_enable = 0;
 
-static int sound_stream;
+static sound_stream *stream;
 
 #define POLEPOS_R166		1000.0
 #define POLEPOS_R167		2200.0
@@ -39,18 +41,19 @@ static double r_filt_total = 1.0 / (1.0/RES_K(4.7) + 1.0/RES_K(7.5) + 1.0/RES_K(
 /************************************/
 /* Stream updater                   */
 /************************************/
-static void engine_sound_update(int num, INT16 *buffer, int length)
+static void engine_sound_update(void *param, stream_sample_t **inputs, stream_sample_t **outputs, int length)
 {
 	static UINT32 current_position;
 	UINT32 step, clock, slot;
 	UINT8 *base;
 	double volume, i_total;
+	stream_sample_t *buffer = outputs[0];
 	int loop;
 
 	/* if we're not enabled, just fill with 0 */
 	if (!sample_enable || Machine->sample_rate == 0)
 	{
-		memset(buffer, 0, length * sizeof(INT16));
+		memset(buffer, 0, length * sizeof(*buffer));
 		return;
 	}
 
@@ -91,9 +94,9 @@ static void engine_sound_update(int num, INT16 *buffer, int length)
 /************************************/
 /* Sound handler start              */
 /************************************/
-int polepos_sh_start(const struct MachineSound *msound)
+void *polepos_sh_start(int clock, const struct CustomSound_interface *config)
 {
-	sound_stream = stream_init("Engine Sound", 77, Machine->sample_rate, 0, engine_sound_update);
+	stream = stream_create(0, 1, Machine->sample_rate, NULL, engine_sound_update);
 	sample_msb = sample_lsb = 0;
 	sample_enable = 0;
 
@@ -107,23 +110,16 @@ int polepos_sh_start(const struct MachineSound *msound)
 	filter2_setup(FILTER_HIGHPASS, 950, Q_TO_DAMP(.707), 1,
 									&filter_engine[2]);
 
-	return 0;
+	return auto_malloc(1);
 }
 
 /************************************/
 /* Sound handler reset              */
 /************************************/
-void polepos_sh_reset(void)
+void polepos_sh_reset(void *token)
 {
 	int loop;
 	for (loop = 0; loop < 3; loop++) filter2_reset(&filter_engine[loop]);
-}
-
-/************************************/
-/* Sound handler stop               */
-/************************************/
-void polepos_sh_stop(void)
-{
 }
 
 /************************************/
@@ -132,7 +128,7 @@ void polepos_sh_stop(void)
 WRITE8_HANDLER( polepos_engine_sound_lsb_w )
 {
 	/* Update stream first so all samples at old frequency are updated. */
-	stream_update(sound_stream, 0);
+	stream_update(stream, 0);
 	sample_lsb = data & 62;
     sample_enable = data & 1;
 }
@@ -142,6 +138,6 @@ WRITE8_HANDLER( polepos_engine_sound_lsb_w )
 /************************************/
 WRITE8_HANDLER( polepos_engine_sound_msb_w )
 {
-	stream_update(sound_stream, 0);
+	stream_update(stream, 0);
 	sample_msb = data & 63;
 }

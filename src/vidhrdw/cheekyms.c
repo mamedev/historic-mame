@@ -10,6 +10,7 @@ Functions to emulate the video hardware of the machine.
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "sound/dac.h"
 
 
 static int redraw_man = 0;

@@ -23,18 +23,9 @@ AT08XX03:
 #include "vidhrdw/generic.h"
 #include "cpu/z80/z80.h"
 #include "snk.h"
+#include "sound/ay8910.h"
 
 static unsigned char *shared_ram, *shared_ram2;
-
-static struct AY8910interface ay8910_interface = {
-	2,	/* number of chips */
-	2000000, /* 2 MHz? */
-	{ 25,25 }, /* volume */
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ 0 }
-};
 
 static struct GfxLayout tile_layout =
 {
@@ -225,7 +216,13 @@ static MACHINE_DRIVER_START( sgladiat )
 	MDRV_VIDEO_UPDATE(sgladiat)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(AY8910, ay8910_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	
+	MDRV_SOUND_ADD(AY8910, 2000000)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
+	
+	MDRV_SOUND_ADD(AY8910, 2000000)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
 MACHINE_DRIVER_END
 
 ROM_START( sgladiat )

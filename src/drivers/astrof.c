@@ -44,6 +44,7 @@ Also....
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "machine/random.h"
+#include "sound/samples.h"
 
 extern unsigned char *astrof_color;
 extern unsigned char *tomahawk_protection;
@@ -322,7 +323,11 @@ static MACHINE_DRIVER_START( astrof )
 	MDRV_VIDEO_UPDATE(astrof)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD_TAG("samples", SAMPLES, astrof_samples_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD_TAG("samples", SAMPLES, 0)
+	MDRV_SOUND_CONFIG(astrof_samples_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( abattle )
@@ -342,7 +347,9 @@ static MACHINE_DRIVER_START( tomahawk )
 	MDRV_PALETTE_LENGTH(32)
 
 	/* sound hardware */
-	MDRV_SOUND_REPLACE("samples", SAMPLES, tomahawk_samples_interface)
+	MDRV_SOUND_REPLACE("samples", SAMPLES, 0)
+	MDRV_SOUND_CONFIG(tomahawk_samples_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
 MACHINE_DRIVER_END
 
 
@@ -466,6 +473,26 @@ ROM_START( afire )
 	ROM_LOAD( "astrf.clr",    0x0000, 0x0020, CRC(61329fd1) SHA1(15782d8757d4dda5a8b97815e94c90218f0e08dd) )
 ROM_END
 
+ROM_START( acombat )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
+	ROM_LOAD( "b.bin",        0xd000, 0x0400, CRC(16ad2bcc) SHA1(e7f55d17ee18afbb045cd0fd8d3ffc0c8300130a) )
+	ROM_LOAD( "a.bin",        0xd400, 0x0400, CRC(ce8b6e4f) SHA1(b85ab709d80324df5d2c4b0dbbc5e6aeb4003077) )
+	ROM_LOAD( "9.bin",        0xd800, 0x0400, CRC(e0f45b07) SHA1(091e1ea4b3726888dc488bb01e0bd4e588eccae5) )
+	ROM_LOAD( "8.bin",        0xdc00, 0x0400, CRC(85b96728) SHA1(dbbfbc085f19184d861c42a0307f95f9105a677b) )
+	ROM_LOAD( "4.bin",        0xe000, 0x0400, CRC(271f90ad) SHA1(fe41a0f35d30d38fc21ac19982899d93cbd292f0) )
+	ROM_LOAD( "6.bin",        0xe400, 0x0400, CRC(568efbfe) SHA1(ef39f0fc4c030fc7f688515415aedeb4c039b73a) )
+	ROM_LOAD( "5.bin",        0xe800, 0x0400, CRC(1c0b298a) SHA1(61677f8f402679fcfbb9fb12f9dfde7b6e1cdd1c) )
+	ROM_LOAD( "3.bin",        0xec00, 0x0400, CRC(2938c641) SHA1(c8655a8218818c12eca0f00a361412e4946f8b5c) )
+	ROM_LOAD( "7.bin",        0xf000, 0x0400, CRC(912c8fe1) SHA1(1ae1eb13858d39200386f59c3381eef2699e4647) )
+	ROM_LOAD( "1a",           0xf400, 0x0400, CRC(7193f999) SHA1(13ddeddb1f22cae973102203ab4917b1407b6401) )
+	ROM_LOAD( "2a",           0xf800, 0x0400, CRC(3b6ccbbe) SHA1(f9cf023557ee769bcb92df808628a39630b258f2) )
+	ROM_LOAD( "0a",           0xfc00, 0x0400, CRC(355da937) SHA1(e50f364372120926d062203bd476ff68ab3bb5cf) )
+
+	ROM_REGION( 0x0020, REGION_PROMS, 0 )
+	ROM_LOAD( "astrf.clr",    0x0000, 0x0020, CRC(61329fd1) SHA1(15782d8757d4dda5a8b97815e94c90218f0e08dd) )
+ROM_END
+
+
 ROM_START( tomahawk )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
 	ROM_LOAD( "l8-1",         0xdc00, 0x0400, CRC(7c911661) SHA1(3fc75bb0e6a89d41d76f82eeb0fde7d33809dddf) )
@@ -531,8 +558,9 @@ static DRIVER_INIT( afire )
 GAME( 1979, astrof,   0,        astrof,   astrof,   0,		 ROT90, "Data East",   "Astro Fighter (set 1)" )
 GAME( 1979, astrof2,  astrof,   astrof,   astrof,   0,		 ROT90, "Data East",   "Astro Fighter (set 2)" )
 GAME( 1979, astrof3,  astrof,   astrof,   astrof,   0,		 ROT90, "Data East",   "Astro Fighter (set 3)" )
-GAME( 1979, abattle,  astrof,	abattle,  abattle,  abattle, ROT90, "Sidam",	    "Astro Battle (set 1)" )
-GAME( 1979, abattle2, astrof,	abattle,  abattle,  abattle, ROT90, "Sidam",	    "Astro Battle (set 2)" )
+GAME( 1979, abattle,  astrof,	abattle,  abattle,  abattle, ROT90, "Sidam",	   "Astro Battle (set 1)" )
+GAME( 1979, abattle2, astrof,	abattle,  abattle,  abattle, ROT90, "Sidam",	   "Astro Battle (set 2)" )
 GAME( 1979, afire,    astrof,   abattle,  abattle,  afire,   ROT90, "René Pierre", "Astro Fire" )
+GAME( 1979, acombat,  astrof,   abattle,  abattle,  afire,   ROT90, "bootleg",     "Astro Combat" )
 GAMEX(1980, tomahawk, 0,        tomahawk, tomahawk, 0,       ROT90, "Data East",   "Tomahawk 777 (Revision 1)", GAME_NO_SOUND )
 GAMEX(1980, tomahaw5, tomahawk, tomahawk, tomahawk, 0,       ROT90, "Data East",   "Tomahawk 777 (Revision 5)", GAME_NO_SOUND )

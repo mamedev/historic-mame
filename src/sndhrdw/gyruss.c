@@ -1,5 +1,6 @@
 #include "driver.h"
 #include "cpu/i8039/i8039.h"
+#include "sound/flt_rc.h"
 
 
 
@@ -59,7 +60,7 @@ static void filter_w(int chip,int data)
 		if (data & 1) C += 47000;	/* 47000pF = 0.047uF */
 		if (data & 2) C += 220000;	/* 220000pF = 0.22uF */
 		data >>= 2;
-		set_RC_filter(3*chip + i,1000,2200,200,C);
+		filter_rc_set_RC(3*chip + i,1000,2200,200,C);
 	}
 }
 

@@ -48,6 +48,7 @@ Stephh's notes :
 #include "driver.h"
 #include "machine/8255ppi.h"
 #include "iqblock.h"
+#include "sound/2413intf.h"
 
 
 static WRITE8_HANDLER( iqblock_prot_w )
@@ -285,13 +286,6 @@ static struct GfxDecodeInfo gfxdecodeinfo_cabaret[] =
 	{ -1 } /* end of array */
 };
 
-static struct YM2413interface ym2413_interface =
-{
-	1,
-	3579545,    /* 3.579545 MHz */
-	{ YM2413_VOL(100,MIXER_PAN_CENTER,100,MIXER_PAN_CENTER) }
-};
-
 
 static MACHINE_DRIVER_START( iqblock )
 
@@ -317,7 +311,10 @@ static MACHINE_DRIVER_START( iqblock )
 	MDRV_VIDEO_UPDATE(iqblock)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM2413, ym2413_interface) // UM3567
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM2413, 3579545)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( cabaret )
@@ -344,7 +341,10 @@ static MACHINE_DRIVER_START( cabaret )
 	MDRV_VIDEO_UPDATE(iqblock)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM2413, ym2413_interface) // UM3567
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM2413, 3579545)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 

@@ -71,6 +71,8 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "tatsumi.h"
+#include "sound/2151intf.h"
+#include "sound/okim6295.h"
 
 static data16_t *cyclwarr_cpub_ram;
 data16_t *tatsumi_c_ram, *apache3_g_ram;
@@ -598,18 +600,7 @@ static void sound_irq(int state)
 
 static struct YM2151interface ym2151_interface =
 {
-	1,
-	16000000/4, // ?
-	{ YM3012_VOL(45,MIXER_PAN_LEFT,45,MIXER_PAN_RIGHT) },
-	{ sound_irq }
-};
-
-static struct OKIM6295interface okim6295_interface =
-{
-	1,
-	{ 20000000/8/132 }, /* Frequency */ // ?
-	{ REGION_SOUND1 },
-	{ 75 }
+	sound_irq
 };
 
 static INTERRUPT_GEN( roundup5_interrupt )
@@ -648,9 +639,17 @@ static MACHINE_DRIVER_START( apache3 )
 	MDRV_VIDEO_UPDATE(apache3)
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(YM2151, ym2151_interface)
-	MDRV_SOUND_ADD(OKIM6295, okim6295_interface)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(YM2151, 16000000/4)
+	MDRV_SOUND_CONFIG(ym2151_interface)
+	MDRV_SOUND_ROUTE(0, "left", 0.45)
+	MDRV_SOUND_ROUTE(1, "right", 0.45)
+
+	MDRV_SOUND_ADD(OKIM6295, 20000000/8/132)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.75)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 0.75)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( roundup5 )
@@ -681,9 +680,17 @@ static MACHINE_DRIVER_START( roundup5 )
 	MDRV_VIDEO_UPDATE(roundup5)
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(YM2151, ym2151_interface)
-	MDRV_SOUND_ADD(OKIM6295, okim6295_interface)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(YM2151, 16000000/4)
+	MDRV_SOUND_CONFIG(ym2151_interface)
+	MDRV_SOUND_ROUTE(0, "left", 0.45)
+	MDRV_SOUND_ROUTE(1, "right", 0.45)
+
+	MDRV_SOUND_ADD(OKIM6295, 20000000/8/132)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.75)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 0.75)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( cyclwarr )
@@ -715,9 +722,17 @@ static MACHINE_DRIVER_START( cyclwarr )
 	MDRV_VIDEO_UPDATE(cyclwarr)
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(YM2151, ym2151_interface)
-	MDRV_SOUND_ADD(OKIM6295, okim6295_interface)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(YM2151, 16000000/4)
+	MDRV_SOUND_CONFIG(ym2151_interface)
+	MDRV_SOUND_ROUTE(0, "left", 0.45)
+	MDRV_SOUND_ROUTE(1, "right", 0.45)
+
+	MDRV_SOUND_ADD(OKIM6295, 20000000/8/132)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.75)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 0.75)
 MACHINE_DRIVER_END
 
 /***************************************************************************/

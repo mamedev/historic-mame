@@ -14,17 +14,19 @@
 #define TMS5110_CMD_TEST_TALK   (14) /*    1     1     1     x  |     3    */
 
 
+void *tms5110_create(void);
+void tms5110_destroy(void *chip);
 
-void tms5110_reset(void);
-void tms5110_set_M0_callback(int (*func)(void));
+void tms5110_reset_chip(void *chip);
+void tms5110_set_M0_callback(void *chip, int (*func)(void));
 
-void tms5110_CTL_set(int data);
-void tms5110_PDC_set(int data);
+void tms5110_CTL_set(void *chip, int data);
+void tms5110_PDC_set(void *chip, int data);
 
-int tms5110_status_read(void);
-int tms5110_ready_read(void);
+int tms5110_status_read(void *chip);
+int tms5110_ready_read(void *chip);
 
-void tms5110_process(INT16 *buffer, unsigned int size);
+void tms5110_process(void *chip, INT16 *buffer, unsigned int size);
 
 #endif
 

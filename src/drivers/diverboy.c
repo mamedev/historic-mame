@@ -47,6 +47,7 @@
 */
 
 #include "driver.h"
+#include "sound/okim6295.h"
 
 extern data16_t *diverboy_spriteram;
 extern size_t diverboy_spriteram_size;
@@ -192,16 +193,6 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 
 
-static struct OKIM6295interface okim6295_interface =
-{
-	1,					/* 1 chip */
-	{ 10000 },			/* ???? frequency (Hz) */
-	{ REGION_SOUND1 },	/* memory region */
-	{ 50 }
-};
-
-
-
 static MACHINE_DRIVER_START( diverboy )
 	MDRV_CPU_ADD(M68000, 12000000) /* guess */
 	MDRV_CPU_PROGRAM_MAP(diverboy_readmem,diverboy_writemem)
@@ -224,7 +215,11 @@ static MACHINE_DRIVER_START( diverboy )
 	MDRV_VIDEO_START(diverboy)
 	MDRV_VIDEO_UPDATE(diverboy)
 
-	MDRV_SOUND_ADD(OKIM6295, okim6295_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(OKIM6295, 10000)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
 MACHINE_DRIVER_END
 
 

@@ -1199,6 +1199,11 @@ Notes:
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "seta.h"
+#include "sound/2203intf.h"
+#include "sound/2612intf.h"
+#include "sound/3812intf.h"
+#include "sound/okim6295.h"
+#include "sound/x1_010.h"
 
 /* Variables and functions only used here */
 
@@ -1330,22 +1335,12 @@ WRITE16_HANDLER( timer_regs_w )
 
 ***************************************************************************/
 
-static struct x1_010_interface seta_sound_intf_8MHz =
+static struct x1_010_interface seta_sound_intf =
 {
-	8000000,	/* clock */
-	YM3012_VOL(100,MIXER_PAN_LEFT,100,MIXER_PAN_RIGHT),	/* volume */
 	0x0000,		/* address */
 };
-static struct x1_010_interface seta_sound_intf_16MHz =
+static struct x1_010_interface seta_sound_intf2 =
 {
-	16000000,	/* clock */
-	YM3012_VOL(100,MIXER_PAN_LEFT,100,MIXER_PAN_RIGHT),	/* volume */
-	0x0000,		/* address */
-};
-static struct x1_010_interface seta_sound_intf_16MHz2 =
-{
-	16000000,	/* clock */
-	YM3012_VOL(100,MIXER_PAN_LEFT,100,MIXER_PAN_RIGHT),	/* volume */
 	0x1000,		/* address */
 };
 
@@ -1354,16 +1349,9 @@ static void utoukond_ym3438_interrupt(int linestate)
 	cpunum_set_input_line(1, INPUT_LINE_NMI, linestate);
 }
 
-static struct YM2612interface utoukond_ym3438_intf =
+static struct YM3438interface utoukond_ym3438_intf =
 {
-	1,
-	6000000,	// ?
-	{ YM3012_VOL(30,MIXER_PAN_LEFT,30,MIXER_PAN_RIGHT) },
-	{ 0 },		// port I/O
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ utoukond_ym3438_interrupt }	// IRQ handler
+	utoukond_ym3438_interrupt	// IRQ handler
 };
 
 /***************************************************************************
@@ -2955,14 +2943,14 @@ static ADDRESS_MAP_START( utoukond_sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( utoukond_sound_readport, ADDRESS_SPACE_IO, 8 )
-	AM_RANGE(0x00, 0x00) AM_READ(YM2612_status_port_0_A_r)
+	AM_RANGE(0x00, 0x00) AM_READ(YM3438_status_port_0_A_r)
 	AM_RANGE(0xc0, 0xc0) AM_READ(soundlatch_r)
 ADDRESS_MAP_END
 static ADDRESS_MAP_START( utoukond_sound_writeport, ADDRESS_SPACE_IO, 8 )
-	AM_RANGE(0x00, 0x00) AM_WRITE(YM2612_control_port_0_A_w)
-	AM_RANGE(0x01, 0x01) AM_WRITE(YM2612_data_port_0_A_w)
-	AM_RANGE(0x02, 0x02) AM_WRITE(YM2612_control_port_0_B_w)
-	AM_RANGE(0x03, 0x03) AM_WRITE(YM2612_data_port_0_B_w)
+	AM_RANGE(0x00, 0x00) AM_WRITE(YM3438_control_port_0_A_w)
+	AM_RANGE(0x01, 0x01) AM_WRITE(YM3438_data_port_0_A_w)
+	AM_RANGE(0x02, 0x02) AM_WRITE(YM3438_control_port_0_B_w)
+	AM_RANGE(0x03, 0x03) AM_WRITE(YM3438_data_port_0_B_w)
 	AM_RANGE(0x80, 0x80) AM_WRITE(MWA8_NOP) //?
 ADDRESS_MAP_END
 
@@ -4685,43 +4673,43 @@ bit	0		a	b	c	d	lc
 */
 
 	PORT_START_TAG("IN4")
-	PORT_BIT(0x0001, IP_ACTIVE_LOW, IPT_OTHER ) PORT_NAME("P1 LC") PORT_CODE(KEYCODE_RCONTROL)
+	PORT_BIT(0x0001, IP_ACTIVE_LOW, IPT_MAHJONG_LAST_CHANCE )
 	PORT_BIT (0x0002, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT (0x0004, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT(0x0008, IP_ACTIVE_LOW, IPT_OTHER ) PORT_NAME("P1 FF") PORT_CODE(KEYCODE_RALT)
+	PORT_BIT(0x0008, IP_ACTIVE_LOW, IPT_MAHJONG_FLIP_FLOP )
 	PORT_BIT (0xfff0, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START_TAG("IN5")
-	PORT_BIT(0x0001, IP_ACTIVE_LOW, IPT_OTHER ) PORT_NAME("P1 B") PORT_CODE(KEYCODE_B)
-	PORT_BIT(0x0002, IP_ACTIVE_LOW, IPT_OTHER ) PORT_NAME("P1 F") PORT_CODE(KEYCODE_F)
-	PORT_BIT(0x0004, IP_ACTIVE_LOW, IPT_OTHER ) PORT_NAME("P1 J") PORT_CODE(KEYCODE_J)
-	PORT_BIT(0x0008, IP_ACTIVE_LOW, IPT_OTHER ) PORT_NAME("P1 N") PORT_CODE(KEYCODE_N)
-	PORT_BIT(0x0010, IP_ACTIVE_LOW, IPT_OTHER ) PORT_NAME("P1 Reach") PORT_CODE(KEYCODE_LSHIFT)
-	PORT_BIT(0x0020, IP_ACTIVE_LOW, IPT_OTHER ) PORT_NAME("P1 BT") PORT_CODE(KEYCODE_X)
+	PORT_BIT(0x0001, IP_ACTIVE_LOW, IPT_MAHJONG_B )
+	PORT_BIT(0x0002, IP_ACTIVE_LOW, IPT_MAHJONG_F )
+	PORT_BIT(0x0004, IP_ACTIVE_LOW, IPT_MAHJONG_J )
+	PORT_BIT(0x0008, IP_ACTIVE_LOW, IPT_MAHJONG_N )
+	PORT_BIT(0x0010, IP_ACTIVE_LOW, IPT_MAHJONG_REACH )
+	PORT_BIT(0x0020, IP_ACTIVE_LOW, IPT_MAHJONG_BET )
 	PORT_BIT (0xffc0, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START_TAG("IN6")
-	PORT_BIT(0x0001, IP_ACTIVE_LOW, IPT_OTHER ) PORT_NAME("P1 A") PORT_CODE(KEYCODE_A)
-	PORT_BIT(0x0002, IP_ACTIVE_LOW, IPT_OTHER ) PORT_NAME("P1 E") PORT_CODE(KEYCODE_E)
-	PORT_BIT(0x0004, IP_ACTIVE_LOW, IPT_OTHER ) PORT_NAME("P1 I") PORT_CODE(KEYCODE_I)
-	PORT_BIT(0x0008, IP_ACTIVE_LOW, IPT_OTHER ) PORT_NAME("P1 M") PORT_CODE(KEYCODE_M)
-	PORT_BIT(0x0010, IP_ACTIVE_LOW, IPT_OTHER ) PORT_NAME("P1 Kan") PORT_CODE(KEYCODE_LCONTROL)
+	PORT_BIT(0x0001, IP_ACTIVE_LOW, IPT_MAHJONG_A )
+	PORT_BIT(0x0002, IP_ACTIVE_LOW, IPT_MAHJONG_E )
+	PORT_BIT(0x0004, IP_ACTIVE_LOW, IPT_MAHJONG_I )
+	PORT_BIT(0x0008, IP_ACTIVE_LOW, IPT_MAHJONG_M )
+	PORT_BIT(0x0010, IP_ACTIVE_LOW, IPT_MAHJONG_KAN )
 	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_START1  )
 	PORT_BIT (0xffc0, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START_TAG("IN7")
-	PORT_BIT(0x0001, IP_ACTIVE_LOW, IPT_OTHER ) PORT_NAME("P1 C") PORT_CODE(KEYCODE_C)
-	PORT_BIT(0x0002, IP_ACTIVE_LOW, IPT_OTHER ) PORT_NAME("P1 G") PORT_CODE(KEYCODE_G)
-	PORT_BIT(0x0004, IP_ACTIVE_LOW, IPT_OTHER ) PORT_NAME("P1 K") PORT_CODE(KEYCODE_K)
-	PORT_BIT(0x0008, IP_ACTIVE_LOW, IPT_OTHER ) PORT_NAME("P1 Chi") PORT_CODE(KEYCODE_SPACE)
-	PORT_BIT(0x0010, IP_ACTIVE_LOW, IPT_OTHER ) PORT_NAME("P1 Ron") PORT_CODE(KEYCODE_Z)
+	PORT_BIT(0x0001, IP_ACTIVE_LOW, IPT_MAHJONG_C )
+	PORT_BIT(0x0002, IP_ACTIVE_LOW, IPT_MAHJONG_G )
+	PORT_BIT(0x0004, IP_ACTIVE_LOW, IPT_MAHJONG_K )
+	PORT_BIT(0x0008, IP_ACTIVE_LOW, IPT_MAHJONG_CHI )
+	PORT_BIT(0x0010, IP_ACTIVE_LOW, IPT_MAHJONG_RON )
 	PORT_BIT (0xffe0, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START_TAG("IN8")
-	PORT_BIT(0x0001, IP_ACTIVE_LOW, IPT_OTHER ) PORT_NAME("P1 D") PORT_CODE(KEYCODE_D)
-	PORT_BIT(0x0002, IP_ACTIVE_LOW, IPT_OTHER ) PORT_NAME("P1 H") PORT_CODE(KEYCODE_H)
-	PORT_BIT(0x0004, IP_ACTIVE_LOW, IPT_OTHER ) PORT_NAME("P1 L") PORT_CODE(KEYCODE_L)
-	PORT_BIT(0x0008, IP_ACTIVE_LOW, IPT_OTHER ) PORT_NAME("P1 Pon") PORT_CODE(KEYCODE_LALT)
+	PORT_BIT(0x0001, IP_ACTIVE_LOW, IPT_MAHJONG_D )
+	PORT_BIT(0x0002, IP_ACTIVE_LOW, IPT_MAHJONG_H )
+	PORT_BIT(0x0004, IP_ACTIVE_LOW, IPT_MAHJONG_L )
+	PORT_BIT(0x0008, IP_ACTIVE_LOW, IPT_MAHJONG_PON )
 	PORT_BIT (0xfff0, IP_ACTIVE_LOW, IPT_UNKNOWN )
 INPUT_PORTS_END
 
@@ -6295,22 +6283,8 @@ static INTERRUPT_GEN( seta_sub_interrupt )
 
 static struct YM2203interface tndrcade_ym2203_interface =
 {
-	1,
-	2000000,		/* ? */
-	{ YM2203_VOL(35,35) },
-	{ dsw1_r },		/* input A: DSW 1 */
-	{ dsw2_r },		/* input B: DSW 2 */
-	{ 0 },
-	{ 0 },
-	{ NULL }
-};
-
-static struct YM3812interface ym3812_interface =
-{
-	1,
-	4000000,	/* ? */
-	{ 100,100 },	/* mixing level */
-	{ NULL },
+	dsw1_r,		/* input A: DSW 1 */
+	dsw2_r		/* input B: DSW 2 */
 };
 
 
@@ -6348,9 +6322,16 @@ static MACHINE_DRIVER_START( tndrcade )
 	MDRV_VIDEO_UPDATE(seta_no_layers) /* just draw the sprites */
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(YM2203, tndrcade_ym2203_interface)
-	MDRV_SOUND_ADD(YM3812, ym3812_interface)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(YM2203, 2000000)
+	MDRV_SOUND_CONFIG(tndrcade_ym2203_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.35)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 0.35)
+
+	MDRV_SOUND_ADD(YM3812, 4000000)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 1.0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 1.0)
 MACHINE_DRIVER_END
 
 
@@ -6390,8 +6371,12 @@ static MACHINE_DRIVER_START( twineagl )
 	MDRV_VIDEO_UPDATE(seta)
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(X1_010, seta_sound_intf_16MHz)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(X1_010, 16000000)
+	MDRV_SOUND_CONFIG(seta_sound_intf)
+	MDRV_SOUND_ROUTE(0, "left", 1.0)
+	MDRV_SOUND_ROUTE(1, "right", 1.0)
 MACHINE_DRIVER_END
 
 
@@ -6427,8 +6412,12 @@ static MACHINE_DRIVER_START( downtown )
 	MDRV_VIDEO_UPDATE(seta)
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(X1_010, seta_sound_intf_8MHz)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(X1_010, 8000000)
+	MDRV_SOUND_CONFIG(seta_sound_intf)
+	MDRV_SOUND_ROUTE(0, "left", 1.0)
+	MDRV_SOUND_ROUTE(1, "right", 1.0)
 MACHINE_DRIVER_END
 
 
@@ -6484,8 +6473,12 @@ static MACHINE_DRIVER_START( usclssic )
 	MDRV_VIDEO_UPDATE(seta)
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD( X1_010, seta_sound_intf_16MHz2 )
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(X1_010, 16000000)
+	MDRV_SOUND_CONFIG(seta_sound_intf2)
+	MDRV_SOUND_ROUTE(0, "left", 1.0)
+	MDRV_SOUND_ROUTE(1, "right", 1.0)
 MACHINE_DRIVER_END
 
 
@@ -6523,8 +6516,12 @@ static MACHINE_DRIVER_START( calibr50 )
 	MDRV_VIDEO_UPDATE(seta)
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(X1_010, seta_sound_intf_16MHz2)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(X1_010, 16000000)
+	MDRV_SOUND_CONFIG(seta_sound_intf2)
+	MDRV_SOUND_ROUTE(0, "left", 1.0)
+	MDRV_SOUND_ROUTE(1, "right", 1.0)
 MACHINE_DRIVER_END
 
 
@@ -6559,8 +6556,12 @@ static MACHINE_DRIVER_START( metafox )
 	MDRV_VIDEO_UPDATE(seta)
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(X1_010, seta_sound_intf_16MHz)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(X1_010, 16000000)
+	MDRV_SOUND_CONFIG(seta_sound_intf)
+	MDRV_SOUND_ROUTE(0, "left", 1.0)
+	MDRV_SOUND_ROUTE(1, "right", 1.0)
 MACHINE_DRIVER_END
 
 
@@ -6593,8 +6594,12 @@ static MACHINE_DRIVER_START( atehate )
 	MDRV_VIDEO_UPDATE(seta_no_layers) /* just draw the sprites */
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(X1_010, seta_sound_intf_16MHz)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(X1_010, 16000000)
+	MDRV_SOUND_CONFIG(seta_sound_intf)
+	MDRV_SOUND_ROUTE(0, "left", 1.0)
+	MDRV_SOUND_ROUTE(1, "right", 1.0)
 MACHINE_DRIVER_END
 
 
@@ -6633,8 +6638,12 @@ static MACHINE_DRIVER_START( blandia )
 	MDRV_VIDEO_UPDATE(seta)
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(X1_010, seta_sound_intf_16MHz)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(X1_010, 16000000)
+	MDRV_SOUND_CONFIG(seta_sound_intf)
+	MDRV_SOUND_ROUTE(0, "left", 1.0)
+	MDRV_SOUND_ROUTE(1, "right", 1.0)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( blandiap )
@@ -6661,8 +6670,12 @@ static MACHINE_DRIVER_START( blandiap )
 	MDRV_VIDEO_UPDATE(seta)
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(X1_010, seta_sound_intf_16MHz)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(X1_010, 16000000)
+	MDRV_SOUND_CONFIG(seta_sound_intf)
+	MDRV_SOUND_ROUTE(0, "left", 1.0)
+	MDRV_SOUND_ROUTE(1, "right", 1.0)
 MACHINE_DRIVER_END
 
 
@@ -6691,8 +6704,12 @@ static MACHINE_DRIVER_START( blockcar )
 	MDRV_VIDEO_UPDATE(seta_no_layers) /* just draw the sprites */
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(X1_010, seta_sound_intf_16MHz)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(X1_010, 16000000)
+	MDRV_SOUND_CONFIG(seta_sound_intf)
+	MDRV_SOUND_ROUTE(0, "left", 1.0)
+	MDRV_SOUND_ROUTE(1, "right", 1.0)
 MACHINE_DRIVER_END
 
 
@@ -6721,8 +6738,12 @@ static MACHINE_DRIVER_START( daioh )
 	MDRV_VIDEO_UPDATE(seta)
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(X1_010, seta_sound_intf_16MHz)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(X1_010, 16000000)
+	MDRV_SOUND_CONFIG(seta_sound_intf)
+	MDRV_SOUND_ROUTE(0, "left", 1.0)
+	MDRV_SOUND_ROUTE(1, "right", 1.0)
 MACHINE_DRIVER_END
 
 /***************************************************************************
@@ -6757,8 +6778,12 @@ static MACHINE_DRIVER_START( drgnunit )
 	MDRV_VIDEO_UPDATE(seta)
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(X1_010, seta_sound_intf_16MHz)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(X1_010, 16000000)
+	MDRV_SOUND_CONFIG(seta_sound_intf)
+	MDRV_SOUND_ROUTE(0, "left", 1.0)
+	MDRV_SOUND_ROUTE(1, "right", 1.0)
 MACHINE_DRIVER_END
 
 /*	Same as qzkklogy, but with a 16MHz CPU and different
@@ -6786,8 +6811,12 @@ static MACHINE_DRIVER_START( qzkklgy2 )
 	MDRV_VIDEO_UPDATE(seta)
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(X1_010, seta_sound_intf_16MHz)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(X1_010, 16000000)
+	MDRV_SOUND_CONFIG(seta_sound_intf)
+	MDRV_SOUND_ROUTE(0, "left", 1.0)
+	MDRV_SOUND_ROUTE(1, "right", 1.0)
 MACHINE_DRIVER_END
 
 
@@ -6816,8 +6845,12 @@ static MACHINE_DRIVER_START( eightfrc )
 	MDRV_VIDEO_UPDATE(seta)
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(X1_010, seta_sound_intf_16MHz)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(X1_010, 16000000)
+	MDRV_SOUND_CONFIG(seta_sound_intf)
+	MDRV_SOUND_ROUTE(0, "left", 1.0)
+	MDRV_SOUND_ROUTE(1, "right", 1.0)
 MACHINE_DRIVER_END
 
 
@@ -6853,8 +6886,12 @@ static MACHINE_DRIVER_START( extdwnhl )
 	MDRV_VIDEO_UPDATE(seta)
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(X1_010, seta_sound_intf_16MHz)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(X1_010, 16000000)
+	MDRV_SOUND_CONFIG(seta_sound_intf)
+	MDRV_SOUND_ROUTE(0, "left", 1.0)
+	MDRV_SOUND_ROUTE(1, "right", 1.0)
 MACHINE_DRIVER_END
 
 
@@ -6912,8 +6949,12 @@ static MACHINE_DRIVER_START( gundhara )
 	MDRV_VIDEO_UPDATE(seta)
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(X1_010, seta_sound_intf_16MHz)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(X1_010, 16000000)
+	MDRV_SOUND_CONFIG(seta_sound_intf)
+	MDRV_SOUND_ROUTE(0, "left", 1.0)
+	MDRV_SOUND_ROUTE(1, "right", 1.0)
 MACHINE_DRIVER_END
 
 
@@ -6948,8 +6989,12 @@ static MACHINE_DRIVER_START( jjsquawk )
 	MDRV_VIDEO_UPDATE(seta)
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(X1_010, seta_sound_intf_16MHz)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(X1_010, 16000000)
+	MDRV_SOUND_CONFIG(seta_sound_intf)
+	MDRV_SOUND_ROUTE(0, "left", 1.0)
+	MDRV_SOUND_ROUTE(1, "right", 1.0)
 MACHINE_DRIVER_END
 
 /***************************************************************************
@@ -6983,8 +7028,12 @@ static MACHINE_DRIVER_START( kamenrid )
 	MDRV_VIDEO_UPDATE(seta)
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(X1_010, seta_sound_intf_16MHz) // ?
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(X1_010, 16000000)
+	MDRV_SOUND_CONFIG(seta_sound_intf)
+	MDRV_SOUND_ROUTE(0, "left", 1.0)
+	MDRV_SOUND_ROUTE(1, "right", 1.0)
 MACHINE_DRIVER_END
 
 
@@ -7013,8 +7062,12 @@ static MACHINE_DRIVER_START( krzybowl )
 	MDRV_VIDEO_UPDATE(seta_no_layers) /* just draw the sprites */
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(X1_010, seta_sound_intf_16MHz)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(X1_010, 16000000)
+	MDRV_SOUND_CONFIG(seta_sound_intf)
+	MDRV_SOUND_ROUTE(0, "left", 1.0)
+	MDRV_SOUND_ROUTE(1, "right", 1.0)
 MACHINE_DRIVER_END
 
 
@@ -7053,8 +7106,12 @@ static MACHINE_DRIVER_START( madshark )
 	MDRV_VIDEO_UPDATE(seta)
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(X1_010, seta_sound_intf_16MHz)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(X1_010, 16000000)
+	MDRV_SOUND_CONFIG(seta_sound_intf)
+	MDRV_SOUND_ROUTE(0, "left", 1.0)
+	MDRV_SOUND_ROUTE(1, "right", 1.0)
 MACHINE_DRIVER_END
 
 /***************************************************************************
@@ -7094,8 +7151,12 @@ static MACHINE_DRIVER_START( msgundam )
 	MDRV_VIDEO_UPDATE(seta)
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(X1_010, seta_sound_intf_16MHz)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(X1_010, 16000000)
+	MDRV_SOUND_CONFIG(seta_sound_intf)
+	MDRV_SOUND_ROUTE(0, "left", 1.0)
+	MDRV_SOUND_ROUTE(1, "right", 1.0)
 MACHINE_DRIVER_END
 
 
@@ -7125,8 +7186,12 @@ static MACHINE_DRIVER_START( oisipuzl )
 	MDRV_VIDEO_UPDATE(seta)
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(X1_010, seta_sound_intf_16MHz)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(X1_010, 16000000)
+	MDRV_SOUND_CONFIG(seta_sound_intf)
+	MDRV_SOUND_ROUTE(0, "left", 1.0)
+	MDRV_SOUND_ROUTE(1, "right", 1.0)
 MACHINE_DRIVER_END
 
 /***************************************************************************
@@ -7134,14 +7199,6 @@ MACHINE_DRIVER_END
 ***************************************************************************/
 
 /* same as oisipuzl but with different interrupts and sound */
-
-static struct OKIM6295interface okim6295_interface =
-{
-	1,						/* 1 chip */
-	{ 6000 },	/* ???? */
-	{ REGION_SOUND1 },		/* memory region */
-	{ 100 }
-};
 
 static MACHINE_DRIVER_START( triplfun )
 
@@ -7164,8 +7221,12 @@ static MACHINE_DRIVER_START( triplfun )
 	MDRV_VIDEO_UPDATE(seta)
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(OKIM6295, okim6295_interface)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(OKIM6295, 6000)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 1.0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 1.0)
 MACHINE_DRIVER_END
 
 /***************************************************************************
@@ -7193,8 +7254,12 @@ static MACHINE_DRIVER_START( kiwame )
 	MDRV_VIDEO_UPDATE(seta_no_layers) /* just draw the sprites */
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(X1_010, seta_sound_intf_16MHz)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(X1_010, 16000000)
+	MDRV_SOUND_CONFIG(seta_sound_intf)
+	MDRV_SOUND_ROUTE(0, "left", 1.0)
+	MDRV_SOUND_ROUTE(1, "right", 1.0)
 MACHINE_DRIVER_END
 
 
@@ -7226,8 +7291,12 @@ static MACHINE_DRIVER_START( rezon )
 	MDRV_VIDEO_UPDATE(seta)
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(X1_010, seta_sound_intf_16MHz)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(X1_010, 16000000)
+	MDRV_SOUND_CONFIG(seta_sound_intf)
+	MDRV_SOUND_ROUTE(0, "left", 1.0)
+	MDRV_SOUND_ROUTE(1, "right", 1.0)
 MACHINE_DRIVER_END
 
 
@@ -7259,17 +7328,13 @@ static MACHINE_DRIVER_START( thunderl )
 	MDRV_VIDEO_UPDATE(seta_no_layers) /* just draw the sprites */
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(X1_010, seta_sound_intf_16MHz)
-MACHINE_DRIVER_END
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
 
-static struct OKIM6295interface wiggie_okim6295_interface =
-{
-	1,						/* 1 chip */
-	{ 1000000/132 },	/* 1Mhz / 132 (pin 7 = 5v)*/
-	{ REGION_SOUND1 },		/* memory region */
-	{ 100 }
-};
+	MDRV_SOUND_ADD(X1_010, 16000000)
+	MDRV_SOUND_CONFIG(seta_sound_intf)
+	MDRV_SOUND_ROUTE(0, "left", 1.0)
+	MDRV_SOUND_ROUTE(1, "right", 1.0)
+MACHINE_DRIVER_END
 
 
 static MACHINE_DRIVER_START( wiggie )
@@ -7296,7 +7361,11 @@ static MACHINE_DRIVER_START( wiggie )
 	MDRV_VIDEO_UPDATE(seta_no_layers) /* just draw the sprites */
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(OKIM6295, wiggie_okim6295_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(OKIM6295, 1000000/132)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 
@@ -7321,8 +7390,12 @@ static MACHINE_DRIVER_START( wits )
 	MDRV_VIDEO_UPDATE(seta_no_layers) /* just draw the sprites */
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(X1_010, seta_sound_intf_16MHz)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(X1_010, 16000000)
+	MDRV_SOUND_CONFIG(seta_sound_intf)
+	MDRV_SOUND_ROUTE(0, "left", 1.0)
+	MDRV_SOUND_ROUTE(1, "right", 1.0)
 MACHINE_DRIVER_END
 
 
@@ -7352,8 +7425,12 @@ static MACHINE_DRIVER_START( umanclub )
 	MDRV_VIDEO_UPDATE(seta_no_layers) /* just draw the sprites */
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(X1_010, seta_sound_intf_16MHz)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(X1_010, 16000000)
+	MDRV_SOUND_CONFIG(seta_sound_intf)
+	MDRV_SOUND_ROUTE(0, "left", 1.0)
+	MDRV_SOUND_ROUTE(1, "right", 1.0)
 MACHINE_DRIVER_END
 
 
@@ -7388,9 +7465,17 @@ static MACHINE_DRIVER_START( utoukond )
 	MDRV_VIDEO_UPDATE(seta)
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(X1_010, seta_sound_intf_16MHz)
-	MDRV_SOUND_ADD(YM2612, utoukond_ym3438_intf)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(X1_010, 16000000)
+	MDRV_SOUND_CONFIG(seta_sound_intf)
+	MDRV_SOUND_ROUTE(0, "left", 1.0)
+	MDRV_SOUND_ROUTE(1, "right", 1.0)
+
+	MDRV_SOUND_ADD(YM3438, 6000000)
+	MDRV_SOUND_CONFIG(utoukond_ym3438_intf)
+	MDRV_SOUND_ROUTE(0, "left", 0.30)
+	MDRV_SOUND_ROUTE(1, "right", 0.30)
 MACHINE_DRIVER_END
 
 
@@ -7428,8 +7513,12 @@ static MACHINE_DRIVER_START( wrofaero )
 	MDRV_VIDEO_UPDATE(seta)
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(X1_010, seta_sound_intf_16MHz)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(X1_010, 16000000)
+	MDRV_SOUND_CONFIG(seta_sound_intf)
+	MDRV_SOUND_ROUTE(0, "left", 1.0)
+	MDRV_SOUND_ROUTE(1, "right", 1.0)
 MACHINE_DRIVER_END
 
 
@@ -7467,8 +7556,12 @@ static MACHINE_DRIVER_START( zingzip )
 	MDRV_VIDEO_UPDATE(seta)
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(X1_010, seta_sound_intf_16MHz)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(X1_010, 16000000)
+	MDRV_SOUND_CONFIG(seta_sound_intf)
+	MDRV_SOUND_ROUTE(0, "left", 1.0)
+	MDRV_SOUND_ROUTE(1, "right", 1.0)
 MACHINE_DRIVER_END
 
 /***************************************************************************
@@ -7496,8 +7589,12 @@ static MACHINE_DRIVER_START( pairlove )
 	MDRV_VIDEO_UPDATE(seta_no_layers) /* just draw the sprites */
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(X1_010, seta_sound_intf_16MHz)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(X1_010, 16000000)
+	MDRV_SOUND_CONFIG(seta_sound_intf)
+	MDRV_SOUND_ROUTE(0, "left", 1.0)
+	MDRV_SOUND_ROUTE(1, "right", 1.0)
 MACHINE_DRIVER_END
 
 

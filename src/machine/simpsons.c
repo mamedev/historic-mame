@@ -3,6 +3,7 @@
 #include "vidhrdw/konamiic.h"
 #include "cpu/konami/konami.h"
 #include "machine/eeprom.h"
+#include "sound/k053260.h"
 
 /* from vidhrdw */
 extern void simpsons_video_banking( int select );

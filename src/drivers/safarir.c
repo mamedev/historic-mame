@@ -40,6 +40,7 @@ TODO:
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "sound/sn76477.h"
 
 
 UINT8 *safarir_ram1, *safarir_ram2;
@@ -220,26 +221,24 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 };
 
 /* the following is copied from spaceinv */
-struct SN76477interface safarir_sn76477_interface =
+struct SN76477interface sn76477_interface =
 {
-	1,	/* 1 chip */
-	{ 25 },  /* mixing level   pin description		 */
-	{ 0	/* N/C */},		/*	4  noise_res		 */
-	{ 0	/* N/C */},		/*	5  filter_res		 */
-	{ 0	/* N/C */},		/*	6  filter_cap		 */
-	{ 0	/* N/C */},		/*	7  decay_res		 */
-	{ 0	/* N/C */},		/*	8  attack_decay_cap  */
-	{ RES_K(100) },		/* 10  attack_res		 */
-	{ RES_K(56)  },		/* 11  amplitude_res	 */
-	{ RES_K(10)  },		/* 12  feedback_res 	 */
-	{ 0	/* N/C */},		/* 16  vco_voltage		 */
-	{ CAP_U(0.1) },		/* 17  vco_cap			 */
-	{ RES_K(8.2) },		/* 18  vco_res			 */
-	{ 5.0		 },		/* 19  pitch_voltage	 */
-	{ RES_K(120) },		/* 20  slf_res			 */
-	{ CAP_U(1.0) },		/* 21  slf_cap			 */
-	{ 0	/* N/C */},		/* 23  oneshot_cap		 */
-	{ 0	/* N/C */}		/* 24  oneshot_res		 */
+	0	/* N/C */,		/*	4  noise_res		 */
+	0	/* N/C */,		/*	5  filter_res		 */
+	0	/* N/C */,		/*	6  filter_cap		 */
+	0	/* N/C */,		/*	7  decay_res		 */
+	0	/* N/C */,		/*	8  attack_decay_cap  */
+	RES_K(100) ,		/* 10  attack_res		 */
+	RES_K(56)  ,		/* 11  amplitude_res	 */
+	RES_K(10)  ,		/* 12  feedback_res 	 */
+	0	/* N/C */,		/* 16  vco_voltage		 */
+	CAP_U(0.1) ,		/* 17  vco_cap			 */
+	RES_K(8.2) ,		/* 18  vco_res			 */
+	5.0		 ,		/* 19  pitch_voltage	 */
+	RES_K(120) ,		/* 20  slf_res			 */
+	CAP_U(1.0) ,		/* 21  slf_cap			 */
+	0	/* N/C */,		/* 23  oneshot_cap		 */
+	0	/* N/C */		/* 24  oneshot_res		 */
 };
 
 static MACHINE_DRIVER_START( safarir )
@@ -264,7 +263,11 @@ static MACHINE_DRIVER_START( safarir )
 	MDRV_VIDEO_UPDATE(safarir)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(SN76477, safarir_sn76477_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(SN76477, 0)
+	MDRV_SOUND_CONFIG(sn76477_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
 MACHINE_DRIVER_END
 
 /***************************************************************************

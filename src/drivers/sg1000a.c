@@ -133,13 +133,6 @@ INPUT_PORTS_START( chboxing )
 INPUT_PORTS_END
 
 
-static struct SN76496interface sn76496_interface =
-{
-    1,  		/* 1 chip 		*/
-    {3579545},  /* 3.579545 MHz */
-    { 100 }
-};
-
 static INTERRUPT_GEN( sg100a_interrupt )
 {
     TMS9928A_interrupt();
@@ -165,7 +158,11 @@ static MACHINE_DRIVER_START( sg1000a )
 	MDRV_CPU_VBLANK_INT(sg100a_interrupt,1)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 	MDRV_TMS9928A( &tms9928a_interface )
-	MDRV_SOUND_ADD(SN76496, sn76496_interface)
+
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(SN76496, 3579545)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 

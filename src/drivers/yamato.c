@@ -10,7 +10,7 @@ TODO:
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "machine/segacrpt.h"
-
+#include "sound/ay8910.h"
 
 
 extern unsigned char *cclimber_bsvideoram;
@@ -319,18 +319,6 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 
 
-static struct AY8910interface yamato_ay8910_interface =
-{
-	2,      /* 2 chips */
-	1536000,	/* 1.536 MHz??? */
-	{ 25, 25 },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ 0 }
-};
-
-
 
 static MACHINE_DRIVER_START( yamato )
 
@@ -361,7 +349,13 @@ static MACHINE_DRIVER_START( yamato )
 	MDRV_VIDEO_UPDATE(cclimber)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(AY8910, yamato_ay8910_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	
+	MDRV_SOUND_ADD(AY8910, 1536000)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
+	
+	MDRV_SOUND_ADD(AY8910, 1536000)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
 MACHINE_DRIVER_END
 
 

@@ -59,7 +59,8 @@ write:
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "cpu/m6502/m6502.h"
-
+#include "sound/3812intf.h"
+#include "sound/msm5205.h"
 
 
 extern unsigned char *firetrap_bg1videoram;
@@ -533,20 +534,10 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 
 
-static struct YM3526interface ym3526_interface =
-{
-	1,			/* 1 chip */
-	3000000,	/* 3.000000 MHz ? */
-	{ 100 }		/* volume */
-};
-
 static struct MSM5205interface msm5205_interface =
 {
-	1,					/* 1 chip             */
-	384000,				/* 384KHz ?           */
-	{ firetrap_adpcm_int },/* interrupt function */
-	{ MSM5205_S48_4B},	/* 8KHz ?             */
-	{ 30 }
+	firetrap_adpcm_int,	/* interrupt function */
+	MSM5205_S48_4B		/* 8KHz ?             */
 };
 
 static INTERRUPT_GEN( firetrap )
@@ -610,8 +601,14 @@ static MACHINE_DRIVER_START( firetrap )
 	MDRV_VIDEO_UPDATE(firetrap)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM3526, ym3526_interface)
-	MDRV_SOUND_ADD(MSM5205, msm5205_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM3526, 3000000)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
+
+	MDRV_SOUND_ADD(MSM5205, 384000)
+	MDRV_SOUND_CONFIG(msm5205_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.30)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( firetpbl )
@@ -641,8 +638,14 @@ static MACHINE_DRIVER_START( firetpbl )
 	MDRV_VIDEO_UPDATE(firetrap)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM3526, ym3526_interface)
-	MDRV_SOUND_ADD(MSM5205, msm5205_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM3526, 3000000)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
+
+	MDRV_SOUND_ADD(MSM5205, 384000)
+	MDRV_SOUND_CONFIG(msm5205_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.30)
 MACHINE_DRIVER_END
 
 

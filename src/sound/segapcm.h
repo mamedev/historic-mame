@@ -14,20 +14,13 @@
 
 struct SEGAPCMinterface
 {
-	int  mode;
 	int  bank;
 	int  region;
-	int  volume;
 };
 
-enum SEGAPCM_samplerate
-{
-	SEGAPCM_SAMPLE15K,
-	SEGAPCM_SAMPLE32K
-};
+#define SEGAPCM_SAMPLE15K (4000000/256)
+#define SEGAPCM_SAMPLE32K (4000000/128)
 
-int SEGAPCM_sh_start( const struct MachineSound *msound );
-void SEGAPCM_sh_stop( void );
 
 WRITE8_HANDLER( SegaPCM_w );
 READ8_HANDLER( SegaPCM_r );

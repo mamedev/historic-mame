@@ -58,6 +58,8 @@ and 1 SFX channel controlled by an 8039:
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "cpu/i8039/i8039.h"
+#include "sound/ay8910.h"
+#include "sound/dac.h"
 
 
 void konami1_decode_cpu2(void);
@@ -351,24 +353,25 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 
 
-static struct AY8910interface ay8910_interface =
+static struct AY8910interface ay8910_interface_1 =
 {
-	5,	/* 5 chips */
-	14318180/8,	/* 1.789772727 MHz */
-	{ MIXERG(10,MIXER_GAIN_4x,MIXER_PAN_RIGHT), MIXERG(10,MIXER_GAIN_4x,MIXER_PAN_LEFT),
-			MIXERG(20,MIXER_GAIN_4x,MIXER_PAN_RIGHT), MIXERG(20,MIXER_GAIN_4x,MIXER_PAN_RIGHT), MIXERG(20,MIXER_GAIN_4x,MIXER_PAN_LEFT) },
-	/*  R       L   |   R       R       L */
-	/*   effects    |         music       */
-	{ 0, 0, gyruss_portA_r },
-	{ 0 },
-	{ 0 },
-	{ gyruss_filter0_w, gyruss_filter1_w }
+	0,
+	0,
+	0,
+	gyruss_filter0_w
 };
 
-static struct DACinterface dac_interface =
+static struct AY8910interface ay8910_interface_2 =
 {
-	1,
-	{ MIXER(50,MIXER_PAN_LEFT) }
+	0,
+	0,
+	0,
+	gyruss_filter1_w
+};
+
+static struct AY8910interface ay8910_interface_3 =
+{
+	gyruss_portA_r
 };
 
 
@@ -410,9 +413,46 @@ static MACHINE_DRIVER_START( gyruss )
 	MDRV_VIDEO_UPDATE(gyruss)
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(AY8910, ay8910_interface)
-	MDRV_SOUND_ADD(DAC, dac_interface)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+	
+	MDRV_SOUND_ADD(AY8910, 14318180/8)
+	MDRV_SOUND_CONFIG(ay8910_interface_1)
+	MDRV_SOUND_ROUTE(0, "filter.0.0", 0.10)
+	MDRV_SOUND_ROUTE(1, "filter.0.1", 0.10)
+	MDRV_SOUND_ROUTE(2, "filter.0.2", 0.10)
+
+	MDRV_SOUND_ADD(AY8910, 14318180/8)
+	MDRV_SOUND_CONFIG(ay8910_interface_2)
+	MDRV_SOUND_ROUTE(0, "filter.1.0", 0.10)
+	MDRV_SOUND_ROUTE(1, "filter.1.1", 0.10)
+	MDRV_SOUND_ROUTE(2, "filter.1.2", 0.10)
+
+	MDRV_SOUND_ADD(AY8910, 14318180/8)
+	MDRV_SOUND_CONFIG(ay8910_interface_3)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 0.20)
+
+	MDRV_SOUND_ADD(AY8910, 14318180/8)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 0.20)
+
+	MDRV_SOUND_ADD(AY8910, 14318180/8)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.20)
+
+	MDRV_SOUND_ADD(DAC, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.50)
+
+	MDRV_SOUND_ADD_TAG("filter.0.0", FILTER_RC, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 1.0)
+	MDRV_SOUND_ADD_TAG("filter.0.1", FILTER_RC, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 1.0)
+	MDRV_SOUND_ADD_TAG("filter.0.2", FILTER_RC, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 1.0)
+
+	MDRV_SOUND_ADD_TAG("filter.1.0", FILTER_RC, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 1.0)
+	MDRV_SOUND_ADD_TAG("filter.1.1", FILTER_RC, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 1.0)
+	MDRV_SOUND_ADD_TAG("filter.1.2", FILTER_RC, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 1.0)
 MACHINE_DRIVER_END
 
 

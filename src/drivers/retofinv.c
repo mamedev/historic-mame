@@ -29,6 +29,7 @@ Notes:
 ***************************************************************************/
 
 #include "driver.h"
+#include "sound/sn76496.h"
 
 /* in machine */
 READ8_HANDLER( retofinv_68705_portA_r );
@@ -359,15 +360,6 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 
 
-static struct SN76496interface sn76496_interface =
-{
-	2,		/* 2 chips */
-	{ 18432000/6, 18432000/6 },
-	{ 80, 80 }
-};
-
-
-
 static MACHINE_DRIVER_START( retofinv )
 
 	/* basic machine hardware */
@@ -403,7 +395,13 @@ static MACHINE_DRIVER_START( retofinv )
 	MDRV_VIDEO_UPDATE(retofinv)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(SN76496, sn76496_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(SN76496, 18432000/6)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.80)
+
+	MDRV_SOUND_ADD(SN76496, 18432000/6)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.80)
 MACHINE_DRIVER_END
 
 

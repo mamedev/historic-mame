@@ -139,7 +139,7 @@ LDFLAGS = -s
 endif
 
 ifdef MAP
-MAPFLAGS = -Wl,-M >$(NAME).map
+MAPFLAGS = -Wl,-Map,$(NAME).map
 else
 MAPFLAGS =
 endif

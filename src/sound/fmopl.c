@@ -300,19 +300,19 @@ typedef struct fm_opl_f {
 	UINT8	portLatch;
 	OPL_PORTHANDLER_R porthandler_r;
 	OPL_PORTHANDLER_W porthandler_w;
-	int		port_param;
+	void *	port_param;
 	OPL_PORTHANDLER_R keyboardhandler_r;
 	OPL_PORTHANDLER_W keyboardhandler_w;
-	int		keyboard_param;
+	void *	keyboard_param;
 #endif
 
 	/* external event callback handlers */
 	OPL_TIMERHANDLER  TimerHandler;	/* TIMER handler				*/
-	int TimerParam;					/* TIMER parameter				*/
+	void *TimerParam;					/* TIMER parameter				*/
 	OPL_IRQHANDLER    IRQHandler;	/* IRQ handler					*/
-	int IRQParam;					/* IRQ parameter				*/
+	void *IRQParam;					/* IRQ parameter				*/
 	OPL_UPDATEHANDLER UpdateHandler;/* stream update handler		*/
-	int UpdateParam;				/* stream update parameter		*/
+	void *UpdateParam;				/* stream update parameter		*/
 
 	UINT8 type;						/* chip type					*/
 	UINT8 address;					/* address register				*/
@@ -1509,14 +1509,14 @@ static void OPLWriteReg(FM_OPL *OPL, int r, int v)
 				{
 					double interval = st2 ? (double)OPL->T[1]*OPL->TimerBase : 0.0;
 					OPL->st[1] = st2;
-					if (OPL->TimerHandler) (OPL->TimerHandler)(OPL->TimerParam+1,interval);
+					if (OPL->TimerHandler) (OPL->TimerHandler)(OPL->TimerParam,1,interval);
 				}
 				/* timer 1 */
 				if(OPL->st[0] != st1)
 				{
 					double interval = st1 ? (double)OPL->T[0]*OPL->TimerBase : 0.0;
 					OPL->st[0] = st1;
-					if (OPL->TimerHandler) (OPL->TimerHandler)(OPL->TimerParam+0,interval);
+					if (OPL->TimerHandler) (OPL->TimerHandler)(OPL->TimerParam,0,interval);
 				}
 			}
 			break;
@@ -1883,17 +1883,17 @@ static void OPLDestroy(FM_OPL *OPL)
 
 /* Optional handlers */
 
-static void OPLSetTimerHandler(FM_OPL *OPL,OPL_TIMERHANDLER TimerHandler,int channelOffset)
+static void OPLSetTimerHandler(FM_OPL *OPL,OPL_TIMERHANDLER TimerHandler,void *param)
 {
 	OPL->TimerHandler   = TimerHandler;
-	OPL->TimerParam = channelOffset;
+	OPL->TimerParam = param;
 }
-static void OPLSetIRQHandler(FM_OPL *OPL,OPL_IRQHANDLER IRQHandler,int param)
+static void OPLSetIRQHandler(FM_OPL *OPL,OPL_IRQHANDLER IRQHandler,void *param)
 {
 	OPL->IRQHandler     = IRQHandler;
 	OPL->IRQParam = param;
 }
-static void OPLSetUpdateHandler(FM_OPL *OPL,OPL_UPDATEHANDLER UpdateHandler,int param)
+static void OPLSetUpdateHandler(FM_OPL *OPL,OPL_UPDATEHANDLER UpdateHandler,void *param)
 {
 	OPL->UpdateHandler = UpdateHandler;
 	OPL->UpdateParam = param;
@@ -2011,7 +2011,7 @@ static int OPLTimerOver(FM_OPL *OPL,int c)
 		}
 	}
 	/* reload timer */
-	if (OPL->TimerHandler) (OPL->TimerHandler)(OPL->TimerParam+c,(double)OPL->T[c]*OPL->TimerBase);
+	if (OPL->TimerHandler) (OPL->TimerHandler)(OPL->TimerParam,c,(double)OPL->T[c]*OPL->TimerBase);
 	return OPL->status>>7;
 }
 
@@ -2021,78 +2021,60 @@ static int OPLTimerOver(FM_OPL *OPL,int c)
 
 #if (BUILD_YM3812)
 
-static FM_OPL *OPL_YM3812[MAX_OPL_CHIPS];	/* array of pointers to the YM3812's */
-static int YM3812NumChips = 0;				/* number of chips */
-
-int YM3812Init(int num, int clock, int rate)
+void * YM3812Init(int clock, int rate)
 {
-	int i;
-
-	if (YM3812NumChips)
-		return -1;	/* duplicate init. */
-
-	YM3812NumChips = num;
-
-	for (i = 0;i < YM3812NumChips; i++)
-	{
-		/* emulator create */
-		OPL_YM3812[i] = OPLCreate(OPL_TYPE_YM3812,clock,rate);
-		if(OPL_YM3812[i] == NULL)
-		{
-			/* it's really bad - we run out of memeory */
-			YM3812NumChips = 0;
-			return -1;
-		}
-		/* reset */
-		YM3812ResetChip(i);
-	}
-
-	return 0;
+	/* emulator create */
+	FM_OPL *YM3812 = OPLCreate(OPL_TYPE_YM3812,clock,rate);
+	if (YM3812)
+		YM3812ResetChip(YM3812);
+	return YM3812;
 }
 
-void YM3812Shutdown(void)
+void YM3812Shutdown(void *chip)
 {
-	int i;
+	FM_OPL *YM3812 = chip;
 
-	for (i = 0;i < YM3812NumChips; i++)
-	{
-		/* emulator shutdown */
-		OPLDestroy(OPL_YM3812[i]);
-		OPL_YM3812[i] = NULL;
-	}
-	YM3812NumChips = 0;
+	/* emulator shutdown */
+	OPLDestroy(YM3812);
 }
-void YM3812ResetChip(int which)
+void YM3812ResetChip(void *chip)
 {
-	OPLResetChip(OPL_YM3812[which]);
+	FM_OPL *YM3812 = chip;
+	OPLResetChip(YM3812);
 }
 
-int YM3812Write(int which, int a, int v)
+int YM3812Write(void *chip, int a, int v)
 {
-	return OPLWrite(OPL_YM3812[which], a, v);
+	FM_OPL *YM3812 = chip;
+	return OPLWrite(YM3812, a, v);
 }
 
-unsigned char YM3812Read(int which, int a)
+unsigned char YM3812Read(void *chip, int a)
 {
+	FM_OPL *YM3812 = chip;
 	/* YM3812 always returns bit2 and bit1 in HIGH state */
-	return OPLRead(OPL_YM3812[which], a) | 0x06 ;
+	return OPLRead(YM3812, a) | 0x06 ;
 }
-int YM3812TimerOver(int which, int c)
+int YM3812TimerOver(void *chip, int c)
 {
-	return OPLTimerOver(OPL_YM3812[which], c);
+	FM_OPL *YM3812 = chip;
+	return OPLTimerOver(YM3812, c);
 }
 
-void YM3812SetTimerHandler(int which, OPL_TIMERHANDLER TimerHandler, int channelOffset)
+void YM3812SetTimerHandler(void *chip, OPL_TIMERHANDLER TimerHandler, void *param)
 {
-	OPLSetTimerHandler(OPL_YM3812[which], TimerHandler, channelOffset);
+	FM_OPL *YM3812 = chip;
+	OPLSetTimerHandler(YM3812, TimerHandler, param);
 }
-void YM3812SetIRQHandler(int which,OPL_IRQHANDLER IRQHandler,int param)
+void YM3812SetIRQHandler(void *chip,OPL_IRQHANDLER IRQHandler,void *param)
 {
-	OPLSetIRQHandler(OPL_YM3812[which], IRQHandler, param);
+	FM_OPL *YM3812 = chip;
+	OPLSetIRQHandler(YM3812, IRQHandler, param);
 }
-void YM3812SetUpdateHandler(int which,OPL_UPDATEHANDLER UpdateHandler,int param)
+void YM3812SetUpdateHandler(void *chip,OPL_UPDATEHANDLER UpdateHandler,void *param)
 {
-	OPLSetUpdateHandler(OPL_YM3812[which], UpdateHandler, param);
+	FM_OPL *YM3812 = chip;
+	OPLSetUpdateHandler(YM3812, UpdateHandler, param);
 }
 
 
@@ -2103,9 +2085,9 @@ void YM3812SetUpdateHandler(int which,OPL_UPDATEHANDLER UpdateHandler,int param)
 ** '*buffer' is the output buffer pointer
 ** 'length' is the number of samples that should be generated
 */
-void YM3812UpdateOne(int which, INT16 *buffer, int length)
+void YM3812UpdateOne(void *chip, OPLSAMPLE *buffer, int length)
 {
-	FM_OPL		*OPL = OPL_YM3812[which];
+	FM_OPL		*OPL = chip;
 	UINT8		rhythm = OPL->rhythm&0x20;
 	OPLSAMPLE	*buf = buffer;
 	int i;
@@ -2172,78 +2154,59 @@ void YM3812UpdateOne(int which, INT16 *buffer, int length)
 
 #if (BUILD_YM3526)
 
-static FM_OPL *OPL_YM3526[MAX_OPL_CHIPS];	/* array of pointers to the YM3526's */
-static int YM3526NumChips = 0;				/* number of chips */
-
-int YM3526Init(int num, int clock, int rate)
+void *YM3526Init(int clock, int rate)
 {
-	int i;
-
-	if (YM3526NumChips)
-		return -1;	/* duplicate init. */
-
-	YM3526NumChips = num;
-
-	for (i = 0;i < YM3526NumChips; i++)
-	{
-		/* emulator create */
-		OPL_YM3526[i] = OPLCreate(OPL_TYPE_YM3526,clock,rate);
-		if(OPL_YM3526[i] == NULL)
-		{
-			/* it's really bad - we run out of memeory */
-			YM3526NumChips = 0;
-			return -1;
-		}
-		/* reset */
-		YM3526ResetChip(i);
-	}
-
-	return 0;
+	/* emulator create */
+	FM_OPL *YM3526 = OPLCreate(OPL_TYPE_YM3526,clock,rate);
+	if (YM3526)
+		YM3526ResetChip(YM3526);
+	return YM3526;
 }
 
-void YM3526Shutdown(void)
+void YM3526Shutdown(void *chip)
 {
-	int i;
-
-	for (i = 0;i < YM3526NumChips; i++)
-	{
-		/* emulator shutdown */
-		OPLDestroy(OPL_YM3526[i]);
-		OPL_YM3526[i] = NULL;
-	}
-	YM3526NumChips = 0;
+	FM_OPL *YM3526 = chip;
+	/* emulator shutdown */
+	OPLDestroy(YM3526);
 }
-void YM3526ResetChip(int which)
+void YM3526ResetChip(void *chip)
 {
-	OPLResetChip(OPL_YM3526[which]);
+	FM_OPL *YM3526 = chip;
+	OPLResetChip(YM3526);
 }
 
-int YM3526Write(int which, int a, int v)
+int YM3526Write(void *chip, int a, int v)
 {
-	return OPLWrite(OPL_YM3526[which], a, v);
+	FM_OPL *YM3526 = chip;
+	return OPLWrite(YM3526, a, v);
 }
 
-unsigned char YM3526Read(int which, int a)
+unsigned char YM3526Read(void *chip, int a)
 {
+	FM_OPL *YM3526 = chip;
 	/* YM3526 always returns bit2 and bit1 in HIGH state */
-	return OPLRead(OPL_YM3526[which], a) | 0x06 ;
+	return OPLRead(YM3526, a) | 0x06 ;
 }
-int YM3526TimerOver(int which, int c)
+int YM3526TimerOver(void *chip, int c)
 {
-	return OPLTimerOver(OPL_YM3526[which], c);
+	FM_OPL *YM3526 = chip;
+	return OPLTimerOver(YM3526, c);
 }
 
-void YM3526SetTimerHandler(int which, OPL_TIMERHANDLER TimerHandler, int channelOffset)
+void YM3526SetTimerHandler(void *chip, OPL_TIMERHANDLER TimerHandler, void *param)
 {
-	OPLSetTimerHandler(OPL_YM3526[which], TimerHandler, channelOffset);
+	FM_OPL *YM3526 = chip;
+	OPLSetTimerHandler(YM3526, TimerHandler, param);
 }
-void YM3526SetIRQHandler(int which,OPL_IRQHANDLER IRQHandler,int param)
+void YM3526SetIRQHandler(void *chip,OPL_IRQHANDLER IRQHandler,void *param)
 {
-	OPLSetIRQHandler(OPL_YM3526[which], IRQHandler, param);
+	FM_OPL *YM3526 = chip;
+	OPLSetIRQHandler(YM3526, IRQHandler, param);
 }
-void YM3526SetUpdateHandler(int which,OPL_UPDATEHANDLER UpdateHandler,int param)
+void YM3526SetUpdateHandler(void *chip,OPL_UPDATEHANDLER UpdateHandler,void *param)
 {
-	OPLSetUpdateHandler(OPL_YM3526[which], UpdateHandler, param);
+	FM_OPL *YM3526 = chip;
+	OPLSetUpdateHandler(YM3526, UpdateHandler, param);
 }
 
 
@@ -2254,9 +2217,9 @@ void YM3526SetUpdateHandler(int which,OPL_UPDATEHANDLER UpdateHandler,int param)
 ** '*buffer' is the output buffer pointer
 ** 'length' is the number of samples that should be generated
 */
-void YM3526UpdateOne(int which, INT16 *buffer, int length)
+void YM3526UpdateOne(void *chip, OPLSAMPLE *buffer, int length)
 {
-	FM_OPL		*OPL = OPL_YM3526[which];
+	FM_OPL		*OPL = chip;
 	UINT8		rhythm = OPL->rhythm&0x20;
 	OPLSAMPLE	*buf = buffer;
 	int i;
@@ -2324,99 +2287,86 @@ void YM3526UpdateOne(int which, INT16 *buffer, int length)
 
 #if BUILD_Y8950
 
-static FM_OPL *OPL_Y8950[MAX_OPL_CHIPS];	/* array of pointers to the Y8950's */
-static int Y8950NumChips = 0;				/* number of chips */
-
-static void Y8950_deltat_status_set(UINT8 which, UINT8 changebits)
+static void Y8950_deltat_status_set(void *chip, UINT8 changebits)
 {
-	OPL_STATUS_SET(OPL_Y8950[which], changebits);
+	FM_OPL *Y8950 = chip;
+	OPL_STATUS_SET(Y8950, changebits);
 }
-static void Y8950_deltat_status_reset(UINT8 which, UINT8 changebits)
+static void Y8950_deltat_status_reset(void *chip, UINT8 changebits)
 {
-	OPL_STATUS_RESET(OPL_Y8950[which], changebits);
+	FM_OPL *Y8950 = chip;
+	OPL_STATUS_RESET(Y8950, changebits);
 }
 
-int Y8950Init(int num, int clock, int rate)
+void *Y8950Init(int clock, int rate)
 {
-	int i;
-
-	if (Y8950NumChips)
-		return -1;	/* duplicate init. */
-
-	Y8950NumChips = num;
-
-	for (i = 0;i < Y8950NumChips; i++)
+	/* emulator create */
+	FM_OPL *Y8950 = OPLCreate(OPL_TYPE_Y8950,clock,rate);
+	if (Y8950)
 	{
-		/* emulator create */
-		OPL_Y8950[i] = OPLCreate(OPL_TYPE_Y8950,clock,rate);
-		if(OPL_Y8950[i] == NULL)
-		{
-			/* it's really bad - we run out of memeory */
-			Y8950NumChips = 0;
-			return -1;
-		}
-		OPL_Y8950[i]->deltat->status_set_handler = Y8950_deltat_status_set;
-		OPL_Y8950[i]->deltat->status_reset_handler = Y8950_deltat_status_reset;
-		OPL_Y8950[i]->deltat->status_change_which_chip = i;
-		OPL_Y8950[i]->deltat->status_change_EOS_bit = 0x10;		/* status flag: set bit4 on End Of Sample */
-		OPL_Y8950[i]->deltat->status_change_BRDY_bit = 0x08;	/* status flag: set bit3 on BRDY (End Of: ADPCM analysis/synthesis, memory reading/writing) */
+		Y8950->deltat->status_set_handler = Y8950_deltat_status_set;
+		Y8950->deltat->status_reset_handler = Y8950_deltat_status_reset;
+		Y8950->deltat->status_change_which_chip = Y8950;
+		Y8950->deltat->status_change_EOS_bit = 0x10;		/* status flag: set bit4 on End Of Sample */
+		Y8950->deltat->status_change_BRDY_bit = 0x08;	/* status flag: set bit3 on BRDY (End Of: ADPCM analysis/synthesis, memory reading/writing) */
 
-		/*OPL_Y8950[i]->deltat->write_time = 10.0 / clock;*/		/* a single byte write takes 10 cycles of main clock */
-		/*OPL_Y8950[i]->deltat->read_time  = 8.0 / clock;*/		/* a single byte read takes 8 cycles of main clock */
+		/*Y8950->deltat->write_time = 10.0 / clock;*/		/* a single byte write takes 10 cycles of main clock */
+		/*Y8950->deltat->read_time  = 8.0 / clock;*/		/* a single byte read takes 8 cycles of main clock */
 		/* reset */
-		Y8950ResetChip(i);
+		Y8950ResetChip(Y8950);
 	}
 
-	return 0;
+	return Y8950;
 }
 
-void Y8950Shutdown(void)
+void Y8950Shutdown(void *chip)
 {
-	int i;
-
-	for (i = 0;i < Y8950NumChips; i++)
-	{
-		/* emulator shutdown */
-		OPLDestroy(OPL_Y8950[i]);
-		OPL_Y8950[i] = NULL;
-	}
-	Y8950NumChips = 0;
+	FM_OPL *Y8950 = chip;
+	/* emulator shutdown */
+	OPLDestroy(Y8950);
 }
-void Y8950ResetChip(int which)
+void Y8950ResetChip(void *chip)
 {
-	OPLResetChip(OPL_Y8950[which]);
+	FM_OPL *Y8950 = chip;
+	OPLResetChip(Y8950);
 }
 
-int Y8950Write(int which, int a, int v)
+int Y8950Write(void *chip, int a, int v)
 {
-	return OPLWrite(OPL_Y8950[which], a, v);
+	FM_OPL *Y8950 = chip;
+	return OPLWrite(Y8950, a, v);
 }
 
-unsigned char Y8950Read(int which, int a)
+unsigned char Y8950Read(void *chip, int a)
 {
-	return OPLRead(OPL_Y8950[which], a);
+	FM_OPL *Y8950 = chip;
+	return OPLRead(Y8950, a);
 }
-int Y8950TimerOver(int which, int c)
+int Y8950TimerOver(void *chip, int c)
 {
-	return OPLTimerOver(OPL_Y8950[which], c);
-}
-
-void Y8950SetTimerHandler(int which, OPL_TIMERHANDLER TimerHandler, int channelOffset)
-{
-	OPLSetTimerHandler(OPL_Y8950[which], TimerHandler, channelOffset);
-}
-void Y8950SetIRQHandler(int which,OPL_IRQHANDLER IRQHandler,int param)
-{
-	OPLSetIRQHandler(OPL_Y8950[which], IRQHandler, param);
-}
-void Y8950SetUpdateHandler(int which,OPL_UPDATEHANDLER UpdateHandler,int param)
-{
-	OPLSetUpdateHandler(OPL_Y8950[which], UpdateHandler, param);
+	FM_OPL *Y8950 = chip;
+	return OPLTimerOver(Y8950, c);
 }
 
-void Y8950SetDeltaTMemory(int which, void * deltat_mem_ptr, int deltat_mem_size )
+void Y8950SetTimerHandler(void *chip, OPL_TIMERHANDLER TimerHandler, void *param)
 {
-	FM_OPL		*OPL = OPL_Y8950[which];
+	FM_OPL *Y8950 = chip;
+	OPLSetTimerHandler(Y8950, TimerHandler, param);
+}
+void Y8950SetIRQHandler(void *chip,OPL_IRQHANDLER IRQHandler,void *param)
+{
+	FM_OPL *Y8950 = chip;
+	OPLSetIRQHandler(Y8950, IRQHandler, param);
+}
+void Y8950SetUpdateHandler(void *chip,OPL_UPDATEHANDLER UpdateHandler,void *param)
+{
+	FM_OPL *Y8950 = chip;
+	OPLSetUpdateHandler(Y8950, UpdateHandler, param);
+}
+
+void Y8950SetDeltaTMemory(void *chip, void * deltat_mem_ptr, int deltat_mem_size )
+{
+	FM_OPL		*OPL = chip;
 	OPL->deltat->memory = (UINT8 *)(deltat_mem_ptr);
 	OPL->deltat->memory_size = deltat_mem_size;
 }
@@ -2428,10 +2378,10 @@ void Y8950SetDeltaTMemory(int which, void * deltat_mem_ptr, int deltat_mem_size 
 ** '*buffer' is the output buffer pointer
 ** 'length' is the number of samples that should be generated
 */
-void Y8950UpdateOne(int which, INT16 *buffer, int length)
+void Y8950UpdateOne(void *chip, OPLSAMPLE *buffer, int length)
 {
 	int i;
-	FM_OPL		*OPL = OPL_Y8950[which];
+	FM_OPL		*OPL = chip;
 	UINT8		rhythm  = OPL->rhythm&0x20;
 	YM_DELTAT	*DELTAT = OPL->deltat;
 	OPLSAMPLE	*buf    = buffer;
@@ -2499,17 +2449,17 @@ void Y8950UpdateOne(int which, INT16 *buffer, int length)
 
 }
 
-void Y8950SetPortHandler(int which,OPL_PORTHANDLER_W PortHandler_w,OPL_PORTHANDLER_R PortHandler_r,int param)
+void Y8950SetPortHandler(void *chip,OPL_PORTHANDLER_W PortHandler_w,OPL_PORTHANDLER_R PortHandler_r,void * param)
 {
-	FM_OPL		*OPL = OPL_Y8950[which];
+	FM_OPL		*OPL = chip;
 	OPL->porthandler_w = PortHandler_w;
 	OPL->porthandler_r = PortHandler_r;
 	OPL->port_param = param;
 }
 
-void Y8950SetKeyboardHandler(int which,OPL_PORTHANDLER_W KeyboardHandler_w,OPL_PORTHANDLER_R KeyboardHandler_r,int param)
+void Y8950SetKeyboardHandler(void *chip,OPL_PORTHANDLER_W KeyboardHandler_w,OPL_PORTHANDLER_R KeyboardHandler_r,void * param)
 {
-	FM_OPL		*OPL = OPL_Y8950[which];
+	FM_OPL		*OPL = chip;
 	OPL->keyboardhandler_w = KeyboardHandler_w;
 	OPL->keyboardhandler_r = KeyboardHandler_r;
 	OPL->keyboard_param = param;

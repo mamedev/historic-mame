@@ -696,7 +696,6 @@ int megasys1_layers_order[16];
 
 
 extern struct GameDriver driver_64street;
-extern struct GameDriver driver_bigstrik;
 extern struct GameDriver driver_chimerab;
 extern struct GameDriver driver_iganinju;
 
@@ -722,10 +721,6 @@ extern struct GameDriver driver_iganinju;
 static struct priority priorities[] =
 {
 	{	&driver_64street,
-		{ 0xfffff,0x03142,0xfffff,0x04132,0xfffff,0x04132,0xfffff,0xfffff,
-		  0xfffff,0xfffff,0xfffff,0xfffff,0xfffff,0xfffff,0xfffff,0xfffff }
-	},
-	{	&driver_bigstrik,	/* like 64street ? */
 		{ 0xfffff,0x03142,0xfffff,0x04132,0xfffff,0x04132,0xfffff,0xfffff,
 		  0xfffff,0xfffff,0xfffff,0xfffff,0xfffff,0xfffff,0xfffff,0xfffff }
 	},

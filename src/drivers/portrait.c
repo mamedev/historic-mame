@@ -87,6 +87,7 @@ DM81LS95 = TriState buffer
 #include "artwork.h"
 #include "cpu/i8039/i8039.h"
 #include "vidhrdw/generic.h"
+#include "sound/5220intf.h"
 
 extern data8_t *portrait_bgvideoram,*portrait_fgvideoram;
 
@@ -250,13 +251,6 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 	{ -1 } /* end of array */
 };
 
-static struct TMS5220interface tms5200_interface =
-{
-	640000,				/* clock speed (80*samplerate) */
-	100,				/* volume */
-	0					/* IRQ handler */
-};
-
 static MACHINE_DRIVER_START( portrait )
 	MDRV_CPU_ADD(Z80, 4000000)     /* 4 MHz ? */
 	MDRV_CPU_PROGRAM_MAP(portrait_map,0)
@@ -283,7 +277,10 @@ static MACHINE_DRIVER_START( portrait )
 	MDRV_VIDEO_UPDATE(portrait)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(TMS5220, tms5200_interface) // actually it uses a tms5200 chip
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	
+	MDRV_SOUND_ADD(TMS5220, 640000) // actually it uses a tms5200 chip
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 

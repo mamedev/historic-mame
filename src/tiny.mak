@@ -1,61 +1,56 @@
 # a tiny compile is without Neogeo games
 COREDEFS += -DTINY_COMPILE=1
-#COREDEFS += -DTINY_NAME="driver_pairsten,driver_mmcamera,driver_kanatuen,driver_idhimitu,driver_msjiken,driver_hanamomo,driver_telmahjn,driver_gionbana,driver_mjfocus,driver_mjfocusm,driver_peepshow,driver_mgmen89,driver_scandal,driver_scandalm,driver_mjnanpas,driver_mjnanpaa,driver_mjnanpau,driver_bananadr,driver_mladyhtr,driver_chinmoku,driver_maiko,driver_club90s,driver_club90sa,driver_hanaoji,driver_crystalg,driver_crystal2,driver_citylove,driver_apparel, driver_secolove,driver_housemnq,driver_housemn2,driver_seiha,   driver_seiham,  driver_bijokkoy,driver_iemoto,  driver_ojousan, driver_orangec, driver_bijokkog,driver_kaguya,  driver_otonano, driver_mjsikaku,driver_mjsikakb,driver_mjcamera,driver_korinai"
-#COREDEFS += -DTINY_POINTER="&driver_pairsten,&driver_mmcamera,&driver_kanatuen,&driver_idhimitu,&driver_msjiken,&driver_hanamomo,&driver_telmahjn,&driver_gionbana,&driver_mjfocus,&driver_mjfocusm,&driver_peepshow,&driver_mgmen89,&driver_scandal,&driver_scandalm,&driver_mjnanpas,&driver_mjnanpaa,&driver_mjnanpau,&driver_bananadr,&driver_mladyhtr,&driver_chinmoku,&driver_maiko,&driver_club90s,&driver_club90sa,&driver_hanaoji,&driver_crystalg,&driver_crystal2,&driver_citylove,&driver_apparel, &driver_secolove,&driver_housemnq,&driver_housemn2,&driver_seiha,   &driver_seiham,  &driver_bijokkoy,&driver_iemoto,  &driver_ojousan, &driver_orangec, &driver_bijokkog,&driver_kaguya,  &driver_otonano, &driver_mjsikaku,&driver_mjsikakb,&driver_mjcamera,&driver_korinai"
-#COREDEFS += -DTINY_NAME="driver_bbbxing,driver_desertwr,driver_gametngk,driver_tetrisp,driver_p47aces,driver_gratia,driver_hayaosi1,driver_kirarast,driver_f1superb,driver_tp2m32"
-#COREDEFS += -DTINY_POINTER="&driver_bbbxing,&driver_desertwr,&driver_gametngk,&driver_tetrisp,&driver_p47aces,&driver_gratia,&driver_hayaosi1,&driver_kirarast,&driver_f1superb,&driver_tp2m32"
-#COREDEFS += -DTINY_NAME="driver_drgpunch,driver_hanamai,driver_hnkochou,driver_mjdialq2,driver_hnayayoi,driver_hnfubuki,driver_untoucha,driver_hnoridur,driver_mjderngr,driver_tontonb,driver_majs101b,driver_mjifb,driver_mjfriday,driver_ddenlovr,driver_rongrong,driver_hanakanz,driver_quizchq,driver_quiz365,driver_quizchql,driver_mmpanic"
-#COREDEFS += -DTINY_POINTER="&driver_drgpunch,&driver_hanamai,&driver_hnkochou,&driver_mjdialq2,&driver_hnayayoi,&driver_hnfubuki,&driver_untoucha,&driver_hnoridur,&driver_mjderngr,&driver_tontonb,&driver_majs101b,&driver_mjifb,&driver_mjfriday,&driver_ddenlovr,&driver_rongrong,&driver_hanakanz,&driver_quizchq,&driver_quiz365,&driver_quizchql,&driver_mmpanic"
-COREDEFS += -DTINY_NAME="driver_raiga,driver_stratof"
-COREDEFS += -DTINY_POINTER="&driver_raiga,&driver_stratof"
+COREDEFS += -DTINY_NAME="driver_puckman,driver_galaxian,driver_phoenix"
+COREDEFS += -DTINY_POINTER="&driver_puckman,&driver_galaxian,&driver_phoenix"
 
 
 # uses these CPUs
-CPUS+=M68000@
-CPUS+=M68010@
-CPUS+=M68EC020@
-CPUS+=M68020@
 CPUS+=Z80@
+CPUS+=Z180@
+CPUS+=8080@
+CPUS+=8085A@
 CPUS+=M6502@
 CPUS+=M65C02@
-CPUS+=M6809@
-CPUS+=M6800@
-CPUS+=TMS34010@
-CPUS+=TMS34020@
-CPUS+=TMS32010@
-CPUS+=TMS32025@
-CPUS+=UPD7810@
-CPUS+=V70@
+#CPUS+=M65SC02@
+#CPUS+=M65CE02@
+#CPUS+=M6509@
+CPUS+=M6510@
+#CPUS+=M6510T@
+#CPUS+=M7501@
+#CPUS+=M8502@
+CPUS+=N2A03@
 
 # uses these SOUNDs
-SOUNDS+=DISCRETE@
-SOUNDS+=DAC@
+SOUNDS+=NAMCO@
 SOUNDS+=AY8910@
-SOUNDS+=YM2203@
-SOUNDS+=YM2151_ALT@
-SOUNDS+=YM2608@
-SOUNDS+=YM2610@
-SOUNDS+=YM2610B@
-SOUNDS+=YM2612@
-SOUNDS+=YM3438@
-SOUNDS+=YM2413@
-SOUNDS+=YM3812@
-SOUNDS+=YMZ280B@
-SOUNDS+=YM3526@
-SOUNDS+=Y8950@
-SOUNDS+=SN76477@
 SOUNDS+=SN76496@
-SOUNDS+=ADPCM@
-SOUNDS+=OKIM6295@
-SOUNDS+=MSM5205@
+SOUNDS+=DAC@
+SOUNDS+=NES@
+SOUNDS+=SAMPLES@
+SOUNDS+=TMS5110@
 SOUNDS+=CUSTOM@
-SOUNDS+=X1_010@
-SOUNDS+=C6280@
+SOUNDS+=TMS36XX@
 
-#OBJS = $(OBJ)/machine/nb1413m3.o $(OBJ)/vidhrdw/nbmj8688.o $(OBJ)/drivers/nbmj8688.o $(OBJ)/vidhrdw/nbmj8891.o $(OBJ)/drivers/nbmj8891.o
-#OBJS = $(OBJ)/vidhrdw/ms32.o $(OBJ)/drivers/ms32.o $(OBJ)/vidhrdw/tetrisp2.o $(OBJ)/drivers/tetrisp2.o
-#OBJS = $(OBJ)/vidhrdw/dynax.o $(OBJ)/drivers/dynax.o $(OBJ)/drivers/hnayayoi.o $(OBJ)/drivers/royalmah.o $(OBJ)/vidhrdw/hnayayoi.o $(OBJ)/drivers/ddenlovr.o
-OBJS = $(OBJ)/vidhrdw/gaiden.o $(OBJ)/drivers/gaiden.o
+OBJS = \
+	$(OBJ)/vidhrdw/pacman.o $(OBJ)/drivers/pacman.o \
+	$(OBJ)/machine/mspacman.o $(OBJ)/machine/pacplus.o \
+	$(OBJ)/machine/jumpshot.o $(OBJ)/machine/theglobp.o \
+	$(OBJ)/machine/acitya.o \
+	$(OBJ)/drivers/epos.o $(OBJ)/vidhrdw/epos.o \
+	$(OBJ)/vidhrdw/dkong.o $(OBJ)/sndhrdw/dkong.o $(OBJ)/drivers/dkong.o \
+	$(OBJ)/machine/strtheat.o $(OBJ)/machine/drakton.o \
+	$(OBJ)/machine/scramble.o $(OBJ)/sndhrdw/scramble.o $(OBJ)/drivers/scramble.o \
+	$(OBJ)/drivers/frogger.o \
+	$(OBJ)/drivers/scobra.o \
+	$(OBJ)/drivers/amidar.o \
+	$(OBJ)/vidhrdw/galaxian.o $(OBJ)/sndhrdw/galaxian.o $(OBJ)/drivers/galaxian.o \
+	$(OBJ)/vidhrdw/cclimber.o $(OBJ)/sndhrdw/cclimber.o $(OBJ)/drivers/cclimber.o \
+	$(OBJ)/drivers/cvs.o $(OBJ)/vidhrdw/cvs.o $(OBJ)/vidhrdw/s2636.o \
+	$(OBJ)/vidhrdw/mario.o $(OBJ)/sndhrdw/mario.o $(OBJ)/drivers/mario.o \
+	$(OBJ)/machine/bagman.o $(OBJ)/vidhrdw/bagman.o $(OBJ)/drivers/bagman.o \
+	$(OBJ)/vidhrdw/phoenix.o $(OBJ)/sndhrdw/phoenix.o $(OBJ)/drivers/phoenix.o \
+	$(OBJ)/sndhrdw/pleiads.o \
+	$(OBJ)/vidhrdw/ladybug.o $(OBJ)/drivers/ladybug.o \
 
 # MAME specific core objs
 COREOBJS += $(OBJ)/driver.o $(OBJ)/cheat.o

@@ -53,6 +53,8 @@ Stephh's notes (based on the games M68000 code and some tests) :
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "sound/2203intf.h"
+#include "sound/okim6295.h"
 
 #define SSHANGHA_HACK	0
 
@@ -329,14 +331,6 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 /******************************************************************************/
 
-static struct OKIM6295interface okim6295_interface =
-{
-	1,          /* 1 chip */
-	{ 7757 },	/* Frequency */
-	{ REGION_SOUND1 },      /* memory region */
-	{ 50 }
-};
-
 static void irqhandler(int state)
 {
 	cpunum_set_input_line(1,0,state);
@@ -344,14 +338,7 @@ static void irqhandler(int state)
 
 static struct YM2203interface ym2203_interface =
 {
-	1,
-	16000000/4,
-	{ YM2203_VOL(60,60) },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ irqhandler }
+	0,0,0,0,irqhandler
 };
 
 static MACHINE_DRIVER_START( sshangha )
@@ -380,9 +367,17 @@ static MACHINE_DRIVER_START( sshangha )
 	MDRV_VIDEO_UPDATE(sshangha)
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(YM2203, ym2203_interface)
-	MDRV_SOUND_ADD(OKIM6295, okim6295_interface)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(YM2203, 16000000/4)
+	MDRV_SOUND_CONFIG(ym2203_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.60)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 0.60)
+
+	MDRV_SOUND_ADD(OKIM6295, 7757)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.50)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 0.50)
 MACHINE_DRIVER_END
 
 /******************************************************************************/

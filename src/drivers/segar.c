@@ -53,7 +53,11 @@
 #include "machine/segacrpt.h"
 #include "sndhrdw/segasnd.h"
 #include "segar.h"
-
+#include "sound/dac.h"
+#include "sound/sn76496.h"
+#include "sound/samples.h"
+#include "sound/tms36xx.h"
+#include "sound/sp0250.h"
 
 
 /*************************************
@@ -1000,14 +1004,12 @@ static struct GfxDecodeInfo spaceod_gfxdecodeinfo[] =
 static struct Samplesinterface astrob_samples_interface =
 {
 	11,    /* 11 channels */
-	25,    /* volume */
 	astrob_sample_names
 };
 
 static struct Samplesinterface spaceod_samples_interface =
 {
 	12,    /* 12 channels */
-	25,    /* volume */
 	spaceod_sample_names
 };
 
@@ -1015,7 +1017,6 @@ static struct Samplesinterface spaceod_samples_interface =
 static struct Samplesinterface samples_interface_005 =
 {
 	12,    /* 12 channels */
-	25,    /* volume */
 	s005_sample_names
 };
 
@@ -1023,33 +1024,14 @@ static struct Samplesinterface samples_interface_005 =
 static struct Samplesinterface monsterb_samples_interface =
 {
 	2,    /* 2 channels */
-	25,    /* volume */
 	monsterb_sample_names
-};
-
-
-static struct DACinterface monsterb_dac_interface =
-{
-	1,
-	{ 100 }
 };
 
 
 static struct TMS36XXinterface monsterb_tms3617_interface =
 {
-	1,
-    { 50 },         /* mixing levels */
-	{ TMS3617 },	/* TMS36xx subtype(s) */
-	{ 247 },		/* base clock (one octave below A) */
-	{ {0.5,0.5,0.5,0.5,0.5,0.5} }  /* decay times of voices */
-};
-
-
-static struct SN76496interface sn76496_interface =
-{
-	2,          			/* 2 chips */
-	{ 4000000, 2000000 },    /* I'm assuming that the sound board is the same as System 1 */
-	{ 100, 100 }
+	TMS3617,	/* TMS36xx subtype(s) */
+	{0.5,0.5,0.5,0.5,0.5,0.5}  /* decay times of voices */
 };
 
 
@@ -1082,6 +1064,8 @@ static MACHINE_DRIVER_START( segar )
 	MDRV_PALETTE_INIT(segar)
 	MDRV_VIDEO_START(segar)
 	MDRV_VIDEO_UPDATE(segar)
+
+	MDRV_SPEAKER_STANDARD_MONO("mono")
 MACHINE_DRIVER_END
 
 
@@ -1094,10 +1078,15 @@ static MACHINE_DRIVER_START( astrob )
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
 	MDRV_CPU_PROGRAM_MAP(sega_speechboard_readmem, sega_speechboard_writemem)
 	MDRV_CPU_IO_MAP (sega_speechboard_readport,sega_speechboard_writeport)
-	MDRV_SOUND_ADD(SP0250, sega_sp0250_interface)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(SAMPLES, astrob_samples_interface)
+	MDRV_SOUND_ADD(SAMPLES, 0)
+	MDRV_SOUND_CONFIG(astrob_samples_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
+
+	MDRV_SOUND_ADD(SP0250, 0)
+	MDRV_SOUND_CONFIG(sega_sp0250_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 
@@ -1117,7 +1106,9 @@ static MACHINE_DRIVER_START( spaceod )
 	MDRV_VIDEO_UPDATE(spaceod)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(SAMPLES, spaceod_samples_interface)
+	MDRV_SOUND_ADD(SAMPLES, 0)
+	MDRV_SOUND_CONFIG(spaceod_samples_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
 MACHINE_DRIVER_END
 
 
@@ -1127,7 +1118,9 @@ static MACHINE_DRIVER_START( 005 )
 	MDRV_IMPORT_FROM(segar)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(SAMPLES, samples_interface_005)
+	MDRV_SOUND_ADD(SAMPLES, 0)
+	MDRV_SOUND_CONFIG(samples_interface_005)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
 MACHINE_DRIVER_END
 
 
@@ -1150,9 +1143,16 @@ static MACHINE_DRIVER_START( monsterb )
 	MDRV_VIDEO_UPDATE(monsterb)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(SAMPLES, monsterb_samples_interface)
-	MDRV_SOUND_ADD(TMS36XX, monsterb_tms3617_interface)
-	MDRV_SOUND_ADD(DAC,     monsterb_dac_interface)
+	MDRV_SOUND_ADD(SAMPLES, 0)
+	MDRV_SOUND_CONFIG(monsterb_samples_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
+
+	MDRV_SOUND_ADD(TMS36XX, 247)
+	MDRV_SOUND_CONFIG(monsterb_tms3617_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
+
+	MDRV_SOUND_ADD(DAC, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 
@@ -1200,7 +1200,13 @@ static MACHINE_DRIVER_START( sindbadm )
 	MDRV_VIDEO_UPDATE(sindbadm)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(SN76496, sn76496_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(SN76496, 4000000)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
+
+	MDRV_SOUND_ADD(SN76496, 2000000)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 

@@ -31,6 +31,8 @@ Notes:
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "sound/2151intf.h"
+#include "sound/dac.h"
 
 VIDEO_UPDATE( fantland );
 
@@ -345,20 +347,6 @@ static INTERRUPT_GEN( fantland_sound_irq )
 	cpunum_set_input_line_and_vector(1, 0, HOLD_LINE, 0x80/4);
 }
 
-static struct YM2151interface fantland_ym2151_interface =
-{
-	1,
-	3000000,	// ?
-	{ YM3012_VOL(35,MIXER_PAN_CENTER,25,MIXER_PAN_CENTER) },
-	{ 0 }
-};
-
-static struct DACinterface fantland_dac_interface =
-{
-	1,
-	{ 50 }
-};
-
 static MACHINE_DRIVER_START( fantland )
 	/* basic machine hardware */
 	MDRV_CPU_ADD(I86, 8000000)        // ?
@@ -389,8 +377,14 @@ static MACHINE_DRIVER_START( fantland )
 	MDRV_VIDEO_UPDATE(fantland)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM2151,	fantland_ym2151_interface	)
-	MDRV_SOUND_ADD(DAC,		fantland_dac_interface		)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM2151, 3000000)
+	MDRV_SOUND_ROUTE(0, "mono", 0.35)
+	MDRV_SOUND_ROUTE(1, "mono", 0.35)
+
+	MDRV_SOUND_ADD(DAC, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
 MACHINE_DRIVER_END
 
 
@@ -401,10 +395,7 @@ static void galaxygn_sound_irq(int line)
 
 static struct YM2151interface galaxygn_ym2151_interface =
 {
-	1,
-	3000000,	// ?
-	{ YM3012_VOL(100,MIXER_PAN_CENTER,100,MIXER_PAN_CENTER) },
-	{ galaxygn_sound_irq }
+	galaxygn_sound_irq
 };
 
 static MACHINE_DRIVER_START( galaxygn )
@@ -434,7 +425,12 @@ static MACHINE_DRIVER_START( galaxygn )
 	MDRV_VIDEO_UPDATE(fantland)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM2151,	galaxygn_ym2151_interface	)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM2151, 3000000)
+	MDRV_SOUND_CONFIG(galaxygn_ym2151_interface)
+	MDRV_SOUND_ROUTE(0, "mono", 1.0)
+	MDRV_SOUND_ROUTE(1, "mono", 1.0)
 MACHINE_DRIVER_END
 
 /***************************************************************************

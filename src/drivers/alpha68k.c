@@ -176,6 +176,11 @@ note: CLUT and color remap PROMs missing
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "cpu/z80/z80.h"
+#include "sound/ay8910.h"
+#include "sound/dac.h"
+#include "sound/3812intf.h"
+#include "sound/2413intf.h"
+#include "sound/2203intf.h"
 
 #define SBASEBAL_HACK	0
 
@@ -1955,56 +1960,12 @@ static struct GfxDecodeInfo jongbou_gfxdecodeinfo[] =
 
 static struct AY8910interface ay8910_interface =
 {
-	1,			/* 1 chip */
-	2000000,
-	{ 65 },
-	{ soundlatch_r },
-	{ 0 },
-	{ 0 },
-	{ 0 }
-};
-
-static struct YM2413interface ym2413_interface=
-{
-	1,
-	8000000,    /* ??? */
-	{ YM2413_VOL(100,MIXER_PAN_CENTER,100,MIXER_PAN_CENTER) }
+	soundlatch_r
 };
 
 static struct YM2203interface ym2203_interface =
 {
-	1,
-	3000000,    /* ??? */
-	{ YM2203_VOL(65,65) },
-	{ soundlatch_r },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ 0 }
-};
-
-static struct YM2203interface kyros_ym2203_interface =
-{
-	3,
-	3000000,
-	{ YM2203_VOL(35,35), YM2203_VOL(35,35), YM2203_VOL(90,90) },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ 0 }
-};
-
-static struct YM2203interface sstingry_ym2203_interface =
-{
-	3,
-	3000000,
-	{ YM2203_VOL(35,35), YM2203_VOL(35,35), YM2203_VOL(50,50) },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ 0 }
+	soundlatch_r
 };
 
 static void YM3812_irq(int param)
@@ -2014,10 +1975,7 @@ static void YM3812_irq(int param)
 
 static struct YM3812interface ym3812_interface =
 {
-	1,
-	4000000,
-	{ 100 },
-	{ YM3812_irq },
+	YM3812_irq
 };
 
 static INTERRUPT_GEN( alpha68k_interrupt )
@@ -2028,12 +1986,6 @@ static INTERRUPT_GEN( alpha68k_interrupt )
 		cpunum_set_input_line(0, 2, HOLD_LINE);
 }
 //ZT
-
-static struct DACinterface dac_interface =
-{
-	1,
-	{ 75 }
-};
 
 /******************************************************************************/
 
@@ -2072,8 +2024,19 @@ static MACHINE_DRIVER_START( sstingry )
 
 	/* sound hardware */
 //AT
-	MDRV_SOUND_ADD(YM2203, sstingry_ym2203_interface)
-	MDRV_SOUND_ADD(DAC, dac_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM2203, 3000000)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.35)
+
+	MDRV_SOUND_ADD(YM2203, 3000000)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.35)
+
+	MDRV_SOUND_ADD(YM2203, 3000000)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
+
+	MDRV_SOUND_ADD(DAC, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.75)
 //ZT
 MACHINE_DRIVER_END
 
@@ -2110,8 +2073,19 @@ static MACHINE_DRIVER_START( kyros )
 
 	/* sound hardware */
 //AT
-	MDRV_SOUND_ADD(YM2203, kyros_ym2203_interface)
-	MDRV_SOUND_ADD(DAC, dac_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM2203, 3000000)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.35)
+
+	MDRV_SOUND_ADD(YM2203, 3000000)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.35)
+
+	MDRV_SOUND_ADD(YM2203, 3000000)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.90)
+
+	MDRV_SOUND_ADD(DAC, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.75)
 //ZT
 MACHINE_DRIVER_END
 
@@ -2145,7 +2119,11 @@ static MACHINE_DRIVER_START( jongbou )
 	MDRV_VIDEO_UPDATE(kyros)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(AY8910, ay8910_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(AY8910, 2000000)
+	MDRV_SOUND_CONFIG(ay8910_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.65)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( alpha68k_I )
@@ -2175,7 +2153,11 @@ static MACHINE_DRIVER_START( alpha68k_I )
 	MDRV_VIDEO_UPDATE(alpha68k_I)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM3812, ym3812_interface) //AT
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM3812, 4000000)
+	MDRV_SOUND_CONFIG(ym3812_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( alpha68k_II )
@@ -2207,9 +2189,17 @@ static MACHINE_DRIVER_START( alpha68k_II )
 	MDRV_VIDEO_UPDATE(alpha68k_II)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM2203, ym2203_interface)
-	MDRV_SOUND_ADD(YM2413, ym2413_interface)
-	MDRV_SOUND_ADD(DAC, dac_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM2203, 3000000)
+	MDRV_SOUND_CONFIG(ym2203_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.65)
+
+	MDRV_SOUND_ADD(YM2413, 8000000)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
+
+	MDRV_SOUND_ADD(DAC, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.75)
 MACHINE_DRIVER_END
 
 //AT
@@ -2242,9 +2232,17 @@ static MACHINE_DRIVER_START( alpha68k_II_gm )
 	MDRV_VIDEO_UPDATE(alpha68k_II)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM2203, ym2203_interface)
-	MDRV_SOUND_ADD(YM2413, ym2413_interface)
-	MDRV_SOUND_ADD(DAC, dac_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM2203, 3000000)
+	MDRV_SOUND_CONFIG(ym2203_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.65)
+
+	MDRV_SOUND_ADD(YM2413, 8000000)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
+
+	MDRV_SOUND_ADD(DAC, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.75)
 MACHINE_DRIVER_END
 //ZT
 
@@ -2277,9 +2275,17 @@ static MACHINE_DRIVER_START( alpha68k_V )
 	MDRV_VIDEO_UPDATE(alpha68k_V)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM2203, ym2203_interface)
-	MDRV_SOUND_ADD(YM2413, ym2413_interface)
-	MDRV_SOUND_ADD(DAC, dac_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM2203, 3000000)
+	MDRV_SOUND_CONFIG(ym2203_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.65)
+
+	MDRV_SOUND_ADD(YM2413, 8000000)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
+
+	MDRV_SOUND_ADD(DAC, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.75)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( alpha68k_V_sb )
@@ -2311,9 +2317,17 @@ static MACHINE_DRIVER_START( alpha68k_V_sb )
 	MDRV_VIDEO_UPDATE(alpha68k_V_sb)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM2203, ym2203_interface)
-	MDRV_SOUND_ADD(YM2413, ym2413_interface)
-	MDRV_SOUND_ADD(DAC, dac_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM2203, 3000000)
+	MDRV_SOUND_CONFIG(ym2203_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.65)
+
+	MDRV_SOUND_ADD(YM2413, 8000000)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
+
+	MDRV_SOUND_ADD(DAC, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.75)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( tnexspce )
@@ -2345,7 +2359,11 @@ static MACHINE_DRIVER_START( tnexspce )
 	MDRV_VIDEO_UPDATE(alpha68k_I)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM3812, ym3812_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM3812, 4000000)
+	MDRV_SOUND_CONFIG(ym3812_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 

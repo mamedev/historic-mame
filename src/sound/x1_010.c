@@ -52,6 +52,7 @@ Hardcoded Values:
 
 #include "driver.h"
 #include "seta.h"
+#include "x1_010.h"
 
 
 
@@ -78,17 +79,20 @@ typedef struct {
 	unsigned char	reserve[2];
 } X1_010_CHANNEL;
 
-/* Variables only used here */
-static int	rate;								// Output sampling rate (Hz)
-static int	stream;								// Stream handle
-static int	address;							// address eor data
-static int	sound_enable = 0;					// sound output enable/disable
-static UINT8	x1_010_reg[0x2000];				// X1-010 Register & wave form area
-static UINT8	HI_WORD_BUF[0x2000];			// X1-010 16bit access ram check avoidance work
-static UINT32	smp_offset[SETA_NUM_CHANNELS];
-static UINT32	env_offset[SETA_NUM_CHANNELS];
+struct x1_010_info
+{
+	/* Variables only used here */
+	int	rate;								// Output sampling rate (Hz)
+	sound_stream *	stream;					// Stream handle
+	int	address;							// address eor data
+	int	sound_enable;						// sound output enable/disable
+	UINT8	reg[0x2000];				// X1-010 Register & wave form area
+	UINT8	HI_WORD_BUF[0x2000];			// X1-010 16bit access ram check avoidance work
+	UINT32	smp_offset[SETA_NUM_CHANNELS];
+	UINT32	env_offset[SETA_NUM_CHANNELS];
 
-static UINT32 base_clock;
+	UINT32 base_clock;
+};
 
 /* mixer tables and internal buffers */
 //static short	*mixer_buffer = NULL;
@@ -97,8 +101,9 @@ static UINT32 base_clock;
 /*--------------------------------------------------------------
  generate sound to the mix buffer
 --------------------------------------------------------------*/
-void seta_sh_update( int param, INT16 **buffer, int length )
+void seta_update( void *param, stream_sample_t **inputs, stream_sample_t **buffer, int length )
 {
+	struct x1_010_info *info = param;
 	X1_010_CHANNEL	*reg;
 	int		ch, i, volL, volR, freq;
 	register INT8	*start, *end, data;
@@ -106,27 +111,27 @@ void seta_sh_update( int param, INT16 **buffer, int length )
 	register UINT32	smp_offs, smp_step, env_offs, env_step, delta;
 
 	// mixer buffer zero clear
-	memset( buffer[0], 0, length*sizeof(short) );
-	memset( buffer[1], 0, length*sizeof(short) );
+	memset( buffer[0], 0, length*sizeof(*buffer[0]) );
+	memset( buffer[1], 0, length*sizeof(*buffer[1]) );
 
-//	if( sound_enable == 0 ) return;
+//	if( info->sound_enable == 0 ) return;
 
 	for( ch = 0; ch < SETA_NUM_CHANNELS; ch++ ) {
-		reg = (X1_010_CHANNEL *)&(x1_010_reg[ch*sizeof(X1_010_CHANNEL)]);
+		reg = (X1_010_CHANNEL *)&(info->reg[ch*sizeof(X1_010_CHANNEL)]);
 		if( (reg->status&1) != 0 ) {							// Key On
-			INT16 *bufL = buffer[0];
-			INT16 *bufR = buffer[1];
+			stream_sample_t *bufL = buffer[0];
+			stream_sample_t *bufR = buffer[1];
 			if( (reg->status&2) == 0 ) {						// PCM sampling
 				start    = (INT8 *)(reg->start      *0x1000+memory_region(REGION_SOUND1));
 				end      = (INT8 *)((0x100-reg->end)*0x1000+memory_region(REGION_SOUND1));
 				volL     = ((reg->volume>>4)&0xf)*VOL_BASE;
 				volR     = ((reg->volume>>0)&0xf)*VOL_BASE;
-				smp_offs = smp_offset[ch];
+				smp_offs = info->smp_offset[ch];
 				freq     = reg->frequency&0x1f;
 				// Meta Fox does not write the frequency register. Ever
 				if( freq == 0 ) freq = 4;
-				smp_step = (UINT32)((float)base_clock/8192.0
-							*freq*(1<<FREQ_BASE_BITS)/(float)rate);
+				smp_step = (UINT32)((float)info->base_clock/8192.0
+							*freq*(1<<FREQ_BASE_BITS)/(float)info->rate);
 #if LOG_SOUND
 				if( smp_offs == 0 ) {
 					logerror( "Play sample %06X - %06X, channel %X volume %d freq %X step %X offset %X\n",
@@ -145,16 +150,16 @@ void seta_sh_update( int param, INT16 **buffer, int length )
 					*bufR++ += (data*volR/256);
 					smp_offs += smp_step;
 				}
-				smp_offset[ch] = smp_offs;
+				info->smp_offset[ch] = smp_offs;
 			} else {											// Wave form
-				start    = (INT8 *)&(x1_010_reg[reg->volume*128+0x1000]);
-				smp_offs = smp_offset[ch];
+				start    = (INT8 *)&(info->reg[reg->volume*128+0x1000]);
+				smp_offs = info->smp_offset[ch];
 				freq     = (reg->pitch_hi<<8)+reg->frequency;
-				smp_step = (UINT32)((float)base_clock/128.0/1024.0/4.0*freq*(1<<FREQ_BASE_BITS)/(float)rate);
+				smp_step = (UINT32)((float)info->base_clock/128.0/1024.0/4.0*freq*(1<<FREQ_BASE_BITS)/(float)info->rate);
 
-				env      = (UINT8 *)&(x1_010_reg[reg->end*128]);
-				env_offs = env_offset[ch];
-				env_step = (UINT32)((float)base_clock/128.0/1024.0/4.0*reg->start*(1<<ENV_BASE_BITS)/(float)rate);
+				env      = (UINT8 *)&(info->reg[reg->end*128]);
+				env_offs = info->env_offset[ch];
+				env_step = (UINT32)((float)info->base_clock/128.0/1024.0/4.0*reg->start*(1<<ENV_BASE_BITS)/(float)info->rate);
 #if LOG_SOUND
 /* Print some more debug info */
 				if( smp_offs == 0 ) {
@@ -179,8 +184,8 @@ void seta_sh_update( int param, INT16 **buffer, int length )
 					smp_offs += smp_step;
 					env_offs += env_step;
 				}
-				smp_offset[ch] = smp_offs;
-				env_offset[ch] = env_offs;
+				info->smp_offset[ch] = smp_offs;
+				info->env_offset[ch] = env_offs;
 			}
 		}
 	}
@@ -188,50 +193,38 @@ void seta_sh_update( int param, INT16 **buffer, int length )
 
 
 
-int seta_sh_start( const struct MachineSound *msound )
+static void *x1_010_start(int sndindex, int clock, const void *config)
 {
-	int i,j;
-	struct x1_010_interface *intf = (struct x1_010_interface*)msound->sound_interface;
-	char buf[2][40];
-	const char *name[2];
-	int mixed_vol,vol[2];
+	int i;
+	const struct x1_010_interface *intf = config;
+	struct x1_010_info *info;
+	
+	info = auto_malloc(sizeof(*info));
+	memset(info, 0, sizeof(*info));
 
-	base_clock	= intf->clock;
-	rate		= Machine->sample_rate;
-	address		= intf->adr;
+	info->base_clock	= clock;
+	info->rate			= Machine->sample_rate;
+	info->address		= intf->adr;
 
 	for( i = 0; i < SETA_NUM_CHANNELS; i++ ) {
-		smp_offset[i] = 0;
-		env_offset[i] = 0;
+		info->smp_offset[i] = 0;
+		info->env_offset[i] = 0;
 	}
 #if LOG_SOUND
 	/* Print some more debug info */
-	logerror("masterclock = %d rate = %d\n", master_clock, rate );
+	logerror("masterclock = %d rate = %d\n", master_clock, info->rate );
 #endif
 	/* get stream channels */
-	mixed_vol = intf->volume;
-	/* stream setup */
-	for (j = 0 ; j < 2 ; j++)
-	{
-		name[j]=buf[j];
-		vol[j] = mixed_vol & 0xffff;
-		mixed_vol>>=16;
-		sprintf(buf[j],"%s Ch%d",sound_name(msound),j+1);
-	}
-	stream = stream_init_multi(2,name,vol,rate,0,seta_sh_update);
+	info->stream = stream_create(0,2,info->rate,info,seta_update);
 
-	return 0;
-}
-
-
-void seta_sh_stop( void )
-{
+	return info;
 }
 
 
 void seta_sound_enable_w(int data)
 {
-	sound_enable = data;
+	struct x1_010_info *info = sndti_token(SOUND_X1_010, 0);
+	info->sound_enable = data;
 }
 
 
@@ -241,8 +234,9 @@ void seta_sound_enable_w(int data)
 
 READ8_HANDLER( seta_sound_r )
 {
-	offset ^= address;
-	return x1_010_reg[offset];
+	struct x1_010_info *info = sndti_token(SOUND_X1_010, 0);
+	offset ^= info->address;
+	return info->reg[offset];
 }
 
 
@@ -250,21 +244,22 @@ READ8_HANDLER( seta_sound_r )
 
 WRITE8_HANDLER( seta_sound_w )
 {
+	struct x1_010_info *info = sndti_token(SOUND_X1_010, 0);
 	int channel, reg;
-	offset ^= address;
+	offset ^= info->address;
 
 	channel	= offset/sizeof(X1_010_CHANNEL);
 	reg		= offset%sizeof(X1_010_CHANNEL);
 
 	if( channel < SETA_NUM_CHANNELS && reg == 0
-	 && (x1_010_reg[offset]&1) == 0 && (data&1) != 0 ) {
-	 	smp_offset[channel] = 0;
-	 	env_offset[channel] = 0;
+	 && (info->reg[offset]&1) == 0 && (data&1) != 0 ) {
+	 	info->smp_offset[channel] = 0;
+	 	info->env_offset[channel] = 0;
 	}
 #if	LOG_REGISTER_WRITE
 	logerror("PC: %06X : offset %6X : data %2X\n", activecpu_get_pc(), offset, data );
 #endif
-	x1_010_reg[offset] = data;
+	info->reg[offset] = data;
 }
 
 
@@ -274,9 +269,10 @@ WRITE8_HANDLER( seta_sound_w )
 
 READ16_HANDLER( seta_sound_word_r )
 {
+	struct x1_010_info *info = sndti_token(SOUND_X1_010, 0);
 	UINT16	ret;
 
-	ret = HI_WORD_BUF[offset]<<8;
+	ret = info->HI_WORD_BUF[offset]<<8;
 	ret += (seta_sound_r( offset )&0xff);
 #if LOG_REGISTER_READ
 	logerror( "Read X1-010 PC:%06X Offset:%04X Data:%04X\n", activecpu_get_pc(), offset, ret );
@@ -286,9 +282,47 @@ READ16_HANDLER( seta_sound_word_r )
 
 WRITE16_HANDLER( seta_sound_word_w )
 {
-	HI_WORD_BUF[offset] = (data>>8)&0xff;
+	struct x1_010_info *info = sndti_token(SOUND_X1_010, 0);
+	info->HI_WORD_BUF[offset] = (data>>8)&0xff;
 	seta_sound_w( offset, data&0xff );
 #if	LOG_REGISTER_WRITE
 	logerror( "Write X1-010 PC:%06X Offset:%04X Data:%04X\n", activecpu_get_pc(), offset, data );
 #endif
 }
+
+
+
+/**************************************************************************
+ * Generic get_info
+ **************************************************************************/
+
+static void x1_010_set_info(void *token, UINT32 state, union sndinfo *info)
+{
+	switch (state)
+	{
+		/* no parameters to set */
+	}
+}
+
+
+void x1_010_get_info(void *token, UINT32 state, union sndinfo *info)
+{
+	switch (state)
+	{
+		/* --- the following bits of info are returned as 64-bit signed integers --- */
+
+		/* --- the following bits of info are returned as pointers to data or functions --- */
+		case SNDINFO_PTR_SET_INFO:						info->set_info = x1_010_set_info;		break;
+		case SNDINFO_PTR_START:							info->start = x1_010_start;				break;
+		case SNDINFO_PTR_STOP:							/* Nothing */							break;
+		case SNDINFO_PTR_RESET:							/* Nothing */							break;
+
+		/* --- the following bits of info are returned as NULL-terminated strings --- */
+		case SNDINFO_STR_NAME:							info->s = "X1-010";						break;
+		case SNDINFO_STR_CORE_FAMILY:					info->s = "Seta custom";				break;
+		case SNDINFO_STR_CORE_VERSION:					info->s = "1.0";						break;
+		case SNDINFO_STR_CORE_FILE:						info->s = __FILE__;						break;
+		case SNDINFO_STR_CORE_CREDITS:					info->s = "Copyright (c) 2004, The MAME Team"; break;
+	}
+}
+

@@ -48,7 +48,8 @@ f80b      ????
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "cpu/z80/z80.h"
-
+#include "sound/3812intf.h"
+#include "sound/msm5205.h"
 
 
 extern int tecmo_video_type;
@@ -553,19 +554,13 @@ static void irqhandler(int linestate)
 
 static struct YM3526interface ym3812_interface =
 {
-	1,			/* 1 chip */
-	4000000,	/* 4 MHz */
-	{ 100 },		/* volume */
-	{ irqhandler }
+	irqhandler
 };
 
 static struct MSM5205interface msm5205_interface =
 {
-	1,					/* 1 chip             */
-	384000,				/* 384KHz             */
-	{ tecmo_adpcm_int },/* interrupt function */
-	{ MSM5205_S48_4B },	/* 8KHz               */
-	{ 50 }				/* volume */
+	tecmo_adpcm_int,	/* interrupt function */
+	MSM5205_S48_4B		/* 8KHz               */
 };
 
 
@@ -595,8 +590,15 @@ static MACHINE_DRIVER_START( rygar )
 	MDRV_VIDEO_UPDATE(tecmo)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM3812, ym3812_interface)
-	MDRV_SOUND_ADD(MSM5205, msm5205_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM3812, 4000000)
+	MDRV_SOUND_CONFIG(ym3812_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
+
+	MDRV_SOUND_ADD(MSM5205, 384000)
+	MDRV_SOUND_CONFIG(msm5205_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
 MACHINE_DRIVER_END
 
 

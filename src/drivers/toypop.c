@@ -32,6 +32,7 @@ TODO:
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "machine/namcoio.h"
+#include "sound/namco.h"
 
 
 // vidhrdw\toypop.c
@@ -554,9 +555,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 static struct namco_interface namco_interface =
 {
-	24000,	/* sample rate */
 	8,		/* number of voices */
-	100,	/* playback volume */
 	REGION_SOUND1	/* memory region */
 };
 
@@ -597,7 +596,11 @@ static MACHINE_DRIVER_START( liblrabl )
 	MDRV_VIDEO_UPDATE(toypop)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(NAMCO_15XX, namco_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(NAMCO_15XX, 24000)
+	MDRV_SOUND_CONFIG(namco_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( toypop )

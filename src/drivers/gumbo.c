@@ -37,6 +37,7 @@ DSW1          6116
 */
 
 #include "driver.h"
+#include "sound/okim6295.h"
 
 data16_t *gumbo_bg_videoram;
 data16_t *gumbo_fg_videoram;
@@ -309,14 +310,6 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 };
 
 
-static struct OKIM6295interface okim6295_interface =
-{
-	1,				/* 1 chip */
-	{ 8500 },		/* frequency (Hz) */
-	{ REGION_SOUND1 },	/* memory region */
-	{ 47 }
-};
-
 static MACHINE_DRIVER_START( gumbo )
 	MDRV_CPU_ADD_TAG("main", M68000, 14318180 /2)	 // or 10mhz? ?
 	MDRV_CPU_PROGRAM_MAP(gumbo_readmem,gumbo_writemem)
@@ -335,8 +328,12 @@ static MACHINE_DRIVER_START( gumbo )
 	MDRV_VIDEO_START(gumbo)
 	MDRV_VIDEO_UPDATE(gumbo)
 
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(OKIM6295, okim6295_interface)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(OKIM6295, 8500)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.47)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 0.47)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( mspuzzle )

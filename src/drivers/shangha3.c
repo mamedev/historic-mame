@@ -21,7 +21,9 @@ blocken:
 
 #include "driver.h"
 #include "cpu/z80/z80.h"
-
+#include "sound/ay8910.h"
+#include "sound/okim6295.h"
+#include "sound/2612intf.h"
 
 extern data16_t *shangha3_ram;
 extern size_t shangha3_ram_size;
@@ -192,16 +194,16 @@ static ADDRESS_MAP_START( heberpop_sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( heberpop_sound_readport, ADDRESS_SPACE_IO, 8 )
-	AM_RANGE(0x00, 0x00) AM_READ(YM2612_status_port_0_A_r)
+	AM_RANGE(0x00, 0x00) AM_READ(YM3438_status_port_0_A_r)
 	AM_RANGE(0x80, 0x80) AM_READ(OKIM6295_status_0_r)
 	AM_RANGE(0xc0, 0xc0) AM_READ(soundlatch_r)
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( heberpop_sound_writeport, ADDRESS_SPACE_IO, 8 )
-	AM_RANGE(0x00, 0x00) AM_WRITE(YM2612_control_port_0_A_w)
-	AM_RANGE(0x01, 0x01) AM_WRITE(YM2612_data_port_0_A_w)
-	AM_RANGE(0x02, 0x02) AM_WRITE(YM2612_control_port_0_B_w)
-	AM_RANGE(0x03, 0x03) AM_WRITE(YM2612_data_port_0_B_w)
+	AM_RANGE(0x00, 0x00) AM_WRITE(YM3438_control_port_0_A_w)
+	AM_RANGE(0x01, 0x01) AM_WRITE(YM3438_data_port_0_A_w)
+	AM_RANGE(0x02, 0x02) AM_WRITE(YM3438_control_port_0_B_w)
+	AM_RANGE(0x03, 0x03) AM_WRITE(YM3438_data_port_0_B_w)
 	AM_RANGE(0x80, 0x80) AM_WRITE(OKIM6295_data_0_w)
 ADDRESS_MAP_END
 
@@ -476,13 +478,8 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 static struct AY8910interface ay8910_interface =
 {
-	1,			/* 1 chip */
-	1500000,	/* 1.5 MHz */
-	{ 30 },
-	{ input_port_3_r },
-	{ input_port_2_r },
-	{ 0 },
-	{ 0 }
+	input_port_3_r,
+	input_port_2_r
 };
 
 static void irqhandler(int linestate)
@@ -490,26 +487,10 @@ static void irqhandler(int linestate)
 	cpunum_set_input_line(1, INPUT_LINE_NMI, linestate);
 }
 
-static struct YM2612interface ym3438_interface =
+static struct YM3438interface ym3438_interface =
 {
-	1,			/* 1 chip */
-	8000000,	/* 8 MHz ?? */
-	{ YM3012_VOL(40,MIXER_PAN_CENTER,40,MIXER_PAN_CENTER) },	/* Volume */
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ irqhandler }
+	irqhandler
 };
-
-static struct OKIM6295interface okim6295_interface =
-{
-	1,                  /* 1 chip */
-	{ 8000 },           /* 8000Hz frequency ??? */
-	{ REGION_SOUND1 },	/* memory region */
-	{ 100 }
-};
-
 
 
 static MACHINE_DRIVER_START( shangha3 )
@@ -533,8 +514,15 @@ static MACHINE_DRIVER_START( shangha3 )
 	MDRV_VIDEO_UPDATE(shangha3)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(AY8910, ay8910_interface)
-	MDRV_SOUND_ADD(OKIM6295, okim6295_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	
+	MDRV_SOUND_ADD(AY8910, 1500000)
+	MDRV_SOUND_CONFIG(ay8910_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.30)
+
+	MDRV_SOUND_ADD(OKIM6295, 8000)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 
@@ -563,8 +551,16 @@ static MACHINE_DRIVER_START( heberpop )
 	MDRV_VIDEO_UPDATE(shangha3)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM3438, ym3438_interface)
-	MDRV_SOUND_ADD(OKIM6295, okim6295_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	
+	MDRV_SOUND_ADD(YM3438, 8000000)
+	MDRV_SOUND_CONFIG(ym3438_interface)
+	MDRV_SOUND_ROUTE(0, "mono", 0.40)
+	MDRV_SOUND_ROUTE(1, "mono", 0.40)
+
+	MDRV_SOUND_ADD(OKIM6295, 8000)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 
@@ -593,8 +589,16 @@ static MACHINE_DRIVER_START( blocken )
 	MDRV_VIDEO_UPDATE(shangha3)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM3438, ym3438_interface)
-	MDRV_SOUND_ADD(OKIM6295, okim6295_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	
+	MDRV_SOUND_ADD(YM3438, 8000000)
+	MDRV_SOUND_CONFIG(ym3438_interface)
+	MDRV_SOUND_ROUTE(0, "mono", 0.40)
+	MDRV_SOUND_ROUTE(1, "mono", 0.40)
+
+	MDRV_SOUND_ADD(OKIM6295, 8000)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 

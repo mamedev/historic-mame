@@ -47,6 +47,9 @@ Pop Bingo
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "sound/2203intf.h"
+#include "sound/2151intf.h"
+#include "sound/okim6295.h"
 
 
 extern unsigned char *lastday_txvideoram;
@@ -1024,42 +1027,23 @@ READ8_HANDLER( unk_r )
 	return 0;
 }
 
-static struct YM2203interface ym2203_interface =
+static struct YM2203interface ym2203_interface_1 =
 {
-	2,			/* 2 chips */
-	4000000,	/* 4 MHz ? */
-	{ YM2203_VOL(40,40), YM2203_VOL(40,40) },
-	{ unk_r, unk_r },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ irqhandler }
+	unk_r,
+	0,
+	0,
+	0,
+	irqhandler
 };
 
-static struct YM2151interface bluehawk_ym2151_interface =
+static struct YM2203interface ym2203_interface_2 =
 {
-	1,			/* 1 chip */
-	3579545,	/* 3.579545 MHz ? */
-	{ YM3012_VOL(50,MIXER_PAN_CENTER,50,MIXER_PAN_CENTER) },
-	{ irqhandler },
-	{ 0 }
+	unk_r
 };
 
-static struct YM2151interface primella_ym2151_interface =
+static struct YM2151interface ym2151_interface =
 {
-	1,			/* 1 chip */
-	4000000,	/* measured on super-x */
-	{ YM3012_VOL(40,MIXER_PAN_CENTER,40,MIXER_PAN_CENTER) },
-	{ irqhandler },
-	{ 0 }
-};
-
-static struct OKIM6295interface okim6295_interface =
-{
-	1,                  /* 1 chip */
-	{ 1000000/132 },           /* measured on super-x */
-	{ REGION_SOUND1 },	/* memory region */
-	{ 60 }
+	irqhandler
 };
 
 
@@ -1089,7 +1073,15 @@ static MACHINE_DRIVER_START( lastday )
 	MDRV_VIDEO_UPDATE(lastday)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM2203, ym2203_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM2203, 4000000)
+	MDRV_SOUND_CONFIG(ym2203_interface_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.40)
+
+	MDRV_SOUND_ADD(YM2203, 4000000)
+	MDRV_SOUND_CONFIG(ym2203_interface_2)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.40)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( gulfstrm )
@@ -1117,7 +1109,15 @@ static MACHINE_DRIVER_START( gulfstrm )
 	MDRV_VIDEO_UPDATE(gulfstrm)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM2203, ym2203_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM2203, 4000000)
+	MDRV_SOUND_CONFIG(ym2203_interface_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.40)
+
+	MDRV_SOUND_ADD(YM2203, 4000000)
+	MDRV_SOUND_CONFIG(ym2203_interface_2)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.40)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( pollux )
@@ -1145,7 +1145,15 @@ static MACHINE_DRIVER_START( pollux )
 	MDRV_VIDEO_UPDATE(pollux)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM2203, ym2203_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM2203, 4000000)
+	MDRV_SOUND_CONFIG(ym2203_interface_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.40)
+
+	MDRV_SOUND_ADD(YM2203, 4000000)
+	MDRV_SOUND_CONFIG(ym2203_interface_2)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.40)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( bluehawk )
@@ -1173,8 +1181,16 @@ static MACHINE_DRIVER_START( bluehawk )
 	MDRV_VIDEO_UPDATE(bluehawk)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM2151, bluehawk_ym2151_interface)
-	MDRV_SOUND_ADD(OKIM6295, okim6295_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM2151, 3579545)
+	MDRV_SOUND_CONFIG(ym2151_interface)
+	MDRV_SOUND_ROUTE(0, "mono", 0.50)
+	MDRV_SOUND_ROUTE(1, "mono", 0.50)
+
+	MDRV_SOUND_ADD(OKIM6295, 1000000/132)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.60)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( primella )
@@ -1202,8 +1218,16 @@ static MACHINE_DRIVER_START( primella )
 	MDRV_VIDEO_UPDATE(primella)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM2151, primella_ym2151_interface)
-	MDRV_SOUND_ADD(OKIM6295, okim6295_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM2151, 4000000)
+	MDRV_SOUND_CONFIG(ym2151_interface)
+	MDRV_SOUND_ROUTE(0, "mono", 0.40)
+	MDRV_SOUND_ROUTE(1, "mono", 0.40)
+
+	MDRV_SOUND_ADD(OKIM6295, 1000000/132)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.60)
 MACHINE_DRIVER_END
 
 static INTERRUPT_GEN( rshark_interrupt )
@@ -1239,8 +1263,16 @@ static MACHINE_DRIVER_START( rshark )
 	MDRV_VIDEO_UPDATE(rshark)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM2151, primella_ym2151_interface)
-	MDRV_SOUND_ADD(OKIM6295, okim6295_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM2151, 4000000)
+	MDRV_SOUND_CONFIG(ym2151_interface)
+	MDRV_SOUND_ROUTE(0, "mono", 0.40)
+	MDRV_SOUND_ROUTE(1, "mono", 0.40)
+
+	MDRV_SOUND_ADD(OKIM6295, 1000000/132)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.60)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( superx ) // dif mem map
@@ -1268,8 +1300,16 @@ static MACHINE_DRIVER_START( superx ) // dif mem map
 	MDRV_VIDEO_UPDATE(rshark)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM2151, primella_ym2151_interface)
-	MDRV_SOUND_ADD(OKIM6295, okim6295_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM2151, 4000000)
+	MDRV_SOUND_CONFIG(ym2151_interface)
+	MDRV_SOUND_ROUTE(0, "mono", 0.40)
+	MDRV_SOUND_ROUTE(1, "mono", 0.40)
+
+	MDRV_SOUND_ADD(OKIM6295, 1000000/132)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.60)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( popbingo )
@@ -1297,8 +1337,16 @@ static MACHINE_DRIVER_START( popbingo )
 	MDRV_VIDEO_UPDATE(popbingo)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM2151, primella_ym2151_interface)
-	MDRV_SOUND_ADD(OKIM6295, okim6295_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM2151, 4000000)
+	MDRV_SOUND_CONFIG(ym2151_interface)
+	MDRV_SOUND_ROUTE(0, "mono", 0.40)
+	MDRV_SOUND_ROUTE(1, "mono", 0.40)
+
+	MDRV_SOUND_ADD(OKIM6295, 1000000/132)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.60)
 MACHINE_DRIVER_END
 
 ROM_START( lastday )

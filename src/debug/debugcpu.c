@@ -1513,7 +1513,7 @@ UINT64 debug_read_opcode(UINT32 offset, int size)
 	/* assume a byte address coming in */
 	
 	/* if we're not mapped, just return all F's */
-	if (memory_get_read_ptr(cpu_getactivecpu(), ADDRESS_SPACE_PROGRAM, offset) == NULL)
+	if (memory_get_op_ptr(cpu_getactivecpu(), offset) == NULL)
 	{
 		switch (size)
 		{

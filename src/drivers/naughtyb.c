@@ -104,7 +104,8 @@ TODO:
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-
+#include "sound/custom.h"
+#include "sound/tms36xx.h"
 
 
 extern unsigned char *naughtyb_videoram2;
@@ -120,10 +121,8 @@ VIDEO_UPDATE( naughtyb );
 
 WRITE8_HANDLER( pleiads_sound_control_a_w );
 WRITE8_HANDLER( pleiads_sound_control_b_w );
-int naughtyb_sh_start(const struct MachineSound *msound);
-int popflame_sh_start(const struct MachineSound *msound);
-void pleiads_sh_stop(void);
-void pleiads_sh_update(void);
+void *naughtyb_sh_start(int clock, const struct CustomSound_interface *config);
+void *popflame_sh_start(int clock, const struct CustomSound_interface *config);
 
 
 static READ8_HANDLER( in0_port_r )
@@ -374,31 +373,24 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 static struct CustomSound_interface naughtyb_custom_interface =
 {
-	naughtyb_sh_start,
-	pleiads_sh_stop,
-	pleiads_sh_update
+	naughtyb_sh_start
 };
 
 static struct CustomSound_interface popflame_custom_interface =
 {
-	popflame_sh_start,
-	pleiads_sh_stop,
-	pleiads_sh_update
+	popflame_sh_start
 };
 
 static struct TMS36XXinterface tms3615_interface =
 {
-	1,
-	{ 60		},	/* mixing level */
-	{ TMS3615	},	/* TMS36xx subtype */
-	{ 350		},	/* base clock (one octave below A) */
+	TMS3615,	/* TMS36xx subtype */
 	/*
 	 * Decay times of the voices; NOTE: it's unknown if
 	 * the the TMS3615 mixes more than one voice internally.
 	 * A wav taken from Pop Flamer sounds like there
 	 * are at least no 'odd' harmonics (5 1/3' and 2 2/3')
 	 */
-	{ {0.15,0.20,0,0,0,0} }
+	{0.15,0.20,0,0,0,0}
 };
 
 
@@ -427,8 +419,15 @@ static MACHINE_DRIVER_START( naughtyb )
 
 	/* sound hardware */
 	/* uses the TMS3615NS for sound */
-	MDRV_SOUND_ADD(TMS36XX, tms3615_interface)
-	MDRV_SOUND_ADD(CUSTOM, naughtyb_custom_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(TMS36XX, 350)
+	MDRV_SOUND_CONFIG(tms3615_interface)
+	MDRV_SOUND_ROUTE(0, "mono", 0.60)
+
+	MDRV_SOUND_ADD(CUSTOM, 0)
+	MDRV_SOUND_CONFIG(naughtyb_custom_interface)
+	MDRV_SOUND_ROUTE(0, "mono", 0.40)
 MACHINE_DRIVER_END
 
 
@@ -456,8 +455,15 @@ static MACHINE_DRIVER_START( popflame )
 	MDRV_VIDEO_UPDATE(naughtyb)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(TMS36XX, tms3615_interface)
-	MDRV_SOUND_ADD(CUSTOM, popflame_custom_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(TMS36XX, 350)
+	MDRV_SOUND_CONFIG(tms3615_interface)
+	MDRV_SOUND_ROUTE(0, "mono", 0.60)
+
+	MDRV_SOUND_ADD(CUSTOM, 0)
+	MDRV_SOUND_CONFIG(popflame_custom_interface)
+	MDRV_SOUND_ROUTE(0, "mono", 1.0)
 MACHINE_DRIVER_END
 
 

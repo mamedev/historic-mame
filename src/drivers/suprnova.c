@@ -176,6 +176,7 @@ NEP-16
 #include "driver.h"
 #include "machine/random.h"
 #include "vidhrdw/generic.h"
+#include "sound/ymz280b.h"
 #include <time.h>
 
 #define BIOS_SKIP 1 // Skip Bios as it takes too long and doesn't complete atm.
@@ -1048,11 +1049,8 @@ static struct GfxDecodeInfo skns_bg_decode[] =
 
 static struct YMZ280Binterface ymz280b_intf =
 {
-	1,
-	{ 33333333/2 },
-	{ REGION_SOUND1 },
-	{ YM3012_VOL(100,MIXER_PAN_LEFT,100,MIXER_PAN_RIGHT) },
-	{ 0 }	// irq ?
+	REGION_SOUND1,
+	0	// irq ?
 };
 
 static MACHINE_DRIVER_START(skns)
@@ -1077,8 +1075,12 @@ static MACHINE_DRIVER_START(skns)
 	MDRV_VIDEO_UPDATE(skns)
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(YMZ280B, ymz280b_intf)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(YMZ280B, 33333333 / 2)
+	MDRV_SOUND_CONFIG(ymz280b_intf)
+	MDRV_SOUND_ROUTE(0, "left", 1.0)
+	MDRV_SOUND_ROUTE(1, "right", 1.0)
 MACHINE_DRIVER_END
 
 /***** BIOS SKIPPING *****/

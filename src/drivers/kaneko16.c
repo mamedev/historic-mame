@@ -66,6 +66,9 @@ To Do:
 #include "machine/random.h"
 #include "machine/kaneko16.h"
 #include "kaneko16.h"
+#include "sound/2203intf.h"
+#include "sound/2151intf.h"
+#include "sound/okim6295.h"
 
 /***************************************************************************
 
@@ -2142,63 +2145,18 @@ INTERRUPT_GEN( kaneko16_interrupt )
 	}
 }
 
-static struct OKIM6295interface okim6295_intf_12kHz =
+static struct AY8910interface ay8910_intf_dsw =
 {
-	1,
-	{ 12000000/6/165 }, /* 2MHz -> 6295 (mode A) */
-	{ REGION_SOUND1 },
-	{ 100 }
-};
-static struct OKIM6295interface okim6295_intf_15kHz =
-{
-	1,
-	{ 12000000/6/132 }, /* 2MHz -> 6295 (mode B) */
-	{ REGION_SOUND1 },
-	{ 100 }
-};
-static struct OKIM6295interface okim6295_intf_18kHz =
-{
-	1,
-	{ 12000000/4/165 }, /* 3MHz -> 6295 (mode A) */
-	{ REGION_SOUND1 },
-	{ 100 }
-};
-static struct OKIM6295interface okim6295_intf_2x12kHz =
-{
-	2,
-	{ 12000, 12000 },
-	{ REGION_SOUND1, REGION_SOUND2 },
-	{ 100, 100 }
+	input_port_4_r,	/* input A: DSW 1 */
+	input_port_5_r	/* input B: DSW 2 */
 };
 
-static struct AY8910interface ay8910_intf_2x1MHz_DSW =
+static struct AY8910interface ay8910_intf_eeprom =
 {
-	2,
-	1000000,	/* ? */
-	{ MIXER(100,MIXER_PAN_LEFT), MIXER(100,MIXER_PAN_RIGHT) },
-	{ input_port_4_r, 0 },	/* input A: DSW 1 */
-	{ input_port_5_r, 0 },	/* input B: DSW 2 */
-	{ 0, 0 },
-	{ 0, 0 }
-};
-static struct AY8910interface ay8910_intf_2x2MHz_EEPROM =
-{
-	2,
-	2000000,	/* ? */
-	{ MIXER(100,MIXER_PAN_LEFT), MIXER(100,MIXER_PAN_RIGHT) },
-	{ 0, kaneko16_eeprom_r },		/* inputs  A:  0,EEPROM bit read */
-	{ 0, 0 },						/* inputs  B */
-	{ 0, 0 },						/* outputs A */
-	{ 0, kaneko16_eeprom_reset_w }	/* outputs B:  0,EEPROM reset */
-};
-
-static struct YM2151interface ym2151_intf_blazeon =
-{
-	1,
-	4000000,			/* ? */
-	{ YM3012_VOL(100,MIXER_PAN_LEFT,100,MIXER_PAN_RIGHT) },
-	{ 0 },				/* irq handler */
-	{ 0 }				/* port_write */
+	kaneko16_eeprom_r,		/* inputs  A:  0,EEPROM bit read */
+	0,						/* inputs  B */
+	0,						/* outputs A */
+	kaneko16_eeprom_reset_w	/* outputs B:  0,EEPROM reset */
 };
 
 
@@ -2239,9 +2197,19 @@ static MACHINE_DRIVER_START( berlwall )
 	MDRV_VIDEO_UPDATE(kaneko16)
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(AY8910, ay8910_intf_2x1MHz_DSW)
-	MDRV_SOUND_ADD(OKIM6295, okim6295_intf_12kHz)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+	
+	MDRV_SOUND_ADD(AY8910, 1000000)
+	MDRV_SOUND_CONFIG(ay8910_intf_dsw)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 1.0)
+
+	MDRV_SOUND_ADD(AY8910, 1000000)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 1.0)
+
+	MDRV_SOUND_ADD(OKIM6295, 12000000/6/165)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 1.0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 1.0)
 MACHINE_DRIVER_END
 
 
@@ -2273,8 +2241,19 @@ static MACHINE_DRIVER_START( bakubrkr )
 	MDRV_VIDEO_UPDATE(kaneko16)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(AY8910, ay8910_intf_2x2MHz_EEPROM)
-	MDRV_SOUND_ADD(OKIM6295, okim6295_intf_15kHz)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(AY8910, 2000000)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
+	
+	MDRV_SOUND_ADD(AY8910, 2000000)
+	MDRV_SOUND_CONFIG(ay8910_intf_eeprom)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
+
+	MDRV_SOUND_ADD(OKIM6295, 12000000/6/132)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 
@@ -2319,8 +2298,11 @@ static MACHINE_DRIVER_START( blazeon )
 	MDRV_VIDEO_UPDATE(kaneko16)
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(YM2151, ym2151_intf_blazeon)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(YM2151, 4000000)
+	MDRV_SOUND_ROUTE(0, "left", 1.0)
+	MDRV_SOUND_ROUTE(1, "right", 1.0)
 MACHINE_DRIVER_END
 
 
@@ -2362,7 +2344,17 @@ static MACHINE_DRIVER_START( gtmr )
 	MDRV_VIDEO_UPDATE(kaneko16)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(OKIM6295, okim6295_intf_2x12kHz)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(OKIM6295, 12000)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
+
+	MDRV_SOUND_ADD(OKIM6295, 12000)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_2)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 /***************************************************************************
@@ -2446,8 +2438,19 @@ static MACHINE_DRIVER_START( mgcrystl )
 	MDRV_VIDEO_UPDATE(kaneko16)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(AY8910, ay8910_intf_2x2MHz_EEPROM)
-	MDRV_SOUND_ADD(OKIM6295, okim6295_intf_18kHz)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(AY8910, 2000000)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
+	
+	MDRV_SOUND_ADD(AY8910, 2000000)
+	MDRV_SOUND_CONFIG(ay8910_intf_eeprom)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
+
+	MDRV_SOUND_ADD(OKIM6295, 12000000/4/165)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 
@@ -2464,14 +2467,11 @@ static void irq_handler(int irq)
 
 static struct YM2203interface ym2203_intf_sandscrp =
 {
-	1,
-	4000000,	/* ? */
-	{ YM2203_VOL(100,100) },
-	{ input_port_4_r },	/* Port A Read - DSW 1 */
-	{ input_port_5_r },	/* Port B Read - DSW 2 */
-	{ 0 },	/* Port A Write */
-	{ 0 },	/* Port B Write */
-	{ irq_handler },	/* IRQ handler */
+	input_port_4_r,	/* Port A Read - DSW 1 */
+	input_port_5_r,	/* Port B Read - DSW 2 */
+	0,	/* Port A Write */
+	0,	/* Port B Write */
+	irq_handler	/* IRQ handler */
 };
 
 
@@ -2503,9 +2503,17 @@ static MACHINE_DRIVER_START( sandscrp )
 	MDRV_VIDEO_UPDATE(kaneko16)
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(OKIM6295, okim6295_intf_15kHz)
-	MDRV_SOUND_ADD(YM2203, ym2203_intf_sandscrp)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(OKIM6295, 12000000/6/132)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 1.0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 1.0)
+
+	MDRV_SOUND_ADD(YM2203, 4000000)
+	MDRV_SOUND_CONFIG(ym2203_intf_sandscrp)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 1.0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 1.0)
 MACHINE_DRIVER_END
 
 
@@ -2559,7 +2567,17 @@ static MACHINE_DRIVER_START( shogwarr )
 	MDRV_VIDEO_UPDATE(kaneko16)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(OKIM6295, okim6295_intf_2x12kHz)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(OKIM6295, 12000)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
+
+	MDRV_SOUND_ADD(OKIM6295, 12000)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_2)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 

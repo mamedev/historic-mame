@@ -157,6 +157,8 @@ To Do:
 
 #include "driver.h"
 #include "megasys1.h"
+#include "sound/2151intf.h"
+#include "sound/okim6295.h"
 
 /* Variables only used here: */
 
@@ -1568,23 +1570,6 @@ INTERRUPT_GEN( cischeat_interrupt )
 
 
 
-static struct YM2151interface ym2151_intf =
-{
-	1,
-	STD_FM_CLOCK,
-	{ YM3012_VOL(100,MIXER_PAN_LEFT,100,MIXER_PAN_RIGHT) },
-	{ 0 }
-};
-
-static struct OKIM6295interface okim6295_intf =
-{
-	2,
-	{STD_OKI_CLOCK, STD_OKI_CLOCK},
-	{REGION_SOUND1,REGION_SOUND2},
-	{ MIXER(100,MIXER_PAN_LEFT), MIXER(100,MIXER_PAN_RIGHT) }
-};
-
-
 
 static MACHINE_DRIVER_START( bigrun )
 
@@ -1621,9 +1606,21 @@ static MACHINE_DRIVER_START( bigrun )
 	MDRV_VIDEO_UPDATE(bigrun)
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(YM2151, ym2151_intf)
-	MDRV_SOUND_ADD(OKIM6295, okim6295_intf)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(YM2151, STD_FM_CLOCK)
+	MDRV_SOUND_ROUTE(0, "left", 0.75)
+	MDRV_SOUND_ROUTE(1, "right", 0.75)
+
+	MDRV_SOUND_ADD(OKIM6295, STD_OKI_CLOCK)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 1.0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 1.0)
+
+	MDRV_SOUND_ADD(OKIM6295, STD_OKI_CLOCK)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_2)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 1.0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 1.0)
 MACHINE_DRIVER_END
 
 
@@ -1698,14 +1695,6 @@ MACHINE_DRIVER_END
 								Scud Hammer
 **************************************************************************/
 
-static struct OKIM6295interface scudhamm_okim6295_intf =
-{
-	2,
-	{ 16000,16000 },
-	{ REGION_SOUND1, REGION_SOUND2 },
-	{ MIXER(100,MIXER_PAN_LEFT), MIXER(100,MIXER_PAN_RIGHT) }
-};
-
 /*
 	1, 5-7] 	busy loop
 	2]			clr.w   $fc810.l + rte
@@ -1745,8 +1734,17 @@ static MACHINE_DRIVER_START( scudhamm )
 	MDRV_VIDEO_UPDATE(scudhamm)
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(OKIM6295, scudhamm_okim6295_intf)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(OKIM6295, 16000)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 1.0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 1.0)
+
+	MDRV_SOUND_ADD(OKIM6295, 16000)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_2)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 1.0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 1.0)
 MACHINE_DRIVER_END
 
 

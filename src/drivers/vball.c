@@ -91,6 +91,8 @@ VBlank = 58Hz
 #include "vidhrdw/generic.h"
 #include "cpu/m6502/m6502.h"
 #include "cpu/z80/z80.h"
+#include "sound/2151intf.h"
+#include "sound/okim6295.h"
 
 /* from vidhrdw */
 extern unsigned char *vb_attribram;
@@ -394,18 +396,7 @@ static void vball_irq_handler(int irq)
 
 static struct YM2151interface ym2151_interface =
 {
-	1,			/* 1 chip */
-	3579545,	/* 3579545 Hz */
-	{ YM3012_VOL(60,MIXER_PAN_LEFT,60,MIXER_PAN_RIGHT) },
-	{ vball_irq_handler }
-};
-
-static struct OKIM6295interface okim6295_interface =
-{
-	1,              /* 1 chip */
-	{ 1056000/132 },           /* frequency (Hz) */
-	{ REGION_SOUND1 },  /* memory region */
-	{ 100 }
+	vball_irq_handler
 };
 
 static MACHINE_DRIVER_START( vball )
@@ -433,9 +424,17 @@ static MACHINE_DRIVER_START( vball )
 	MDRV_VIDEO_UPDATE(vb)
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(YM2151, ym2151_interface)
-	MDRV_SOUND_ADD(OKIM6295, okim6295_interface)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(YM2151, 3579545)
+	MDRV_SOUND_CONFIG(ym2151_interface)
+	MDRV_SOUND_ROUTE(0, "left", 0.60)
+	MDRV_SOUND_ROUTE(1, "right", 0.60)
+
+	MDRV_SOUND_ADD(OKIM6295, 1056000/132)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 1.0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 1.0)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( vball2pj )
@@ -463,9 +462,17 @@ static MACHINE_DRIVER_START( vball2pj )
 	MDRV_VIDEO_UPDATE(vb)
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(YM2151, ym2151_interface)
-	MDRV_SOUND_ADD(OKIM6295, okim6295_interface)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(YM2151, 3579545)
+	MDRV_SOUND_CONFIG(ym2151_interface)
+	MDRV_SOUND_ROUTE(0, "left", 0.60)
+	MDRV_SOUND_ROUTE(1, "right", 0.60)
+
+	MDRV_SOUND_ADD(OKIM6295, 1056000/132)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 1.0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 1.0)
 MACHINE_DRIVER_END
 
 

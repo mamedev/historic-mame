@@ -7,6 +7,7 @@
 ***************************************************************************/
 
 #include "driver.h"
+#include "sound/custom.h"
 
 
 /* 4 voices max */
@@ -41,7 +42,7 @@ static sound_channel *last_channel;
 static const unsigned char *sound_rom;
 static int num_voices;
 static int sound_enable;
-static int stream;
+static sound_stream *stream;
 
 /* mixer tables and internal buffers */
 static INT16 *mixer_table;
@@ -79,17 +80,18 @@ static int make_mixer_table(int voices, int gain)
 
 
 /* generate sound to the mix buffer in mono */
-static void gomoku_update_mono(int ch, INT16 *buffer, int length)
+static void gomoku_update_mono(void *param, stream_sample_t **inputs, stream_sample_t **outputs, int length)
 {
+	stream_sample_t *buffer = outputs[0];
 	sound_channel *voice;
 	short *mix;
 	int offs;
-	int i;
+	int i, ch;
 
 	/* if no sound, we're done */
 	if (sound_enable == 0)
 	{
-		memset(buffer, 0, length * 2);
+		memset(buffer, 0, length * sizeof(*buffer));
 		return;
 	}
 
@@ -157,23 +159,22 @@ static void gomoku_update_mono(int ch, INT16 *buffer, int length)
 
 
 
-int gomoku_sh_start(const struct MachineSound *msound)
+void *gomoku_sh_start(int clock, const struct CustomSound_interface *config)
 {
-	const char *mono_name = "Gomoku";
 	sound_channel *voice;
 	int ch;
 
 	/* get stream channels */
-	stream = stream_init(mono_name,100/*intf->volume*/, samplerate, 0, gomoku_update_mono);
+	stream = stream_create(0, 1, samplerate, NULL, gomoku_update_mono);
 
 	/* allocate a pair of buffers to mix into - 1 second's worth should be more than enough */
 	if ((mixer_buffer = auto_malloc(2 * sizeof(short) * samplerate)) == 0)
-		return 1;
+		return NULL;
 	mixer_buffer_2 = mixer_buffer + samplerate;
 
 	/* build the mixer table */
 	if (make_mixer_table(8, defgain))
-		return 1;
+		return NULL;
 
 	/* extract globals from the interface */
 	num_voices = MAX_VOICES;
@@ -195,12 +196,7 @@ int gomoku_sh_start(const struct MachineSound *msound)
 		voice->oneshotplaying = 0;
 	}
 
-	return 0;
-}
-
-
-void gomoku_sh_stop(void)
-{
+	return auto_malloc(1);
 }
 
 

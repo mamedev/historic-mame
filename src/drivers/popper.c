@@ -79,6 +79,7 @@ Notes:
 */
 
 #include "driver.h"
+#include "sound/ay8910.h"
 
 extern data8_t *popper_videoram, *popper_attribram, *popper_ol_videoram, *popper_ol_attribram, *popper_spriteram;
 extern size_t popper_spriteram_size;
@@ -307,17 +308,6 @@ static struct GfxDecodeInfo popper_gfxdecodeinfo[] =
 	{ -1 } /* end of array */
 };
 
-static struct AY8910interface popper_ay8910_interface =
-{
-	2,	/* 2 chips */
-	18432000/12,
-	{ 25, 25 },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ 0 }
-};
-
 static MACHINE_DRIVER_START( popper )
 
 	/* basic machine hardware */
@@ -346,7 +336,13 @@ static MACHINE_DRIVER_START( popper )
 	MDRV_VIDEO_UPDATE(popper)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(AY8910, popper_ay8910_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	
+	MDRV_SOUND_ADD(AY8910, 18432000/12)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
+	
+	MDRV_SOUND_ADD(AY8910, 18432000/12)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
 MACHINE_DRIVER_END
 
 

@@ -12,6 +12,7 @@
 ***************************************************************************/
 
 #include "driver.h"
+#include "cem3394.h"
 #include <math.h>
 
 
@@ -106,7 +107,8 @@
 /* this structure defines the parameters for a channel */
 typedef struct
 {
-	unsigned char stream;			/* our stream */
+	sound_stream * stream;			/* our stream */
+	int index;
 	void (*external)(int, int, short *);/* callback to generate external samples */
 	double vco_zero_freq;			/* frequency of VCO at 0.0V */
 	double filter_zero_freq;		/* frequency of filter at 0.0V */
@@ -127,27 +129,23 @@ typedef struct
 	INT16 last_ext;					/* last external sample we read */
 
 	UINT32 pulse_width;				/* fractional pulse width (0.FRACTION_BITS) */
+
+	double inv_sample_rate;
+	int sample_rate;
+
+	INT16 *mixer_buffer;
+	INT16 *external_buffer;
 } sound_chip;
 
 
-/* data about the sound system */
-static sound_chip chip_list[MAX_CEM3394];
-
-/* global sound parameters */
-static double inv_sample_rate;
-static int sample_rate;
-
-static INT16 *mixer_buffer;
-static INT16 *external_buffer;
-
-
 /* generate sound to the mix buffer in mono */
-static void cem3394_update(int ch, INT16 *buffer, int length)
+static void cem3394_update(void *param, stream_sample_t **inputs, stream_sample_t **_buffer, int length)
 {
-	sound_chip *chip = &chip_list[ch];
+	sound_chip *chip = param;
 	int int_volume = (chip->volume * chip->mixer_internal) / 256;
 	int ext_volume = (chip->volume * chip->mixer_external) / 256;
 	UINT32 step = chip->step, position, end_position = 0;
+	stream_sample_t *buffer = _buffer[0];
 	INT16 *mix, *ext;
 	int i;
 
@@ -162,7 +160,7 @@ static void cem3394_update(int ch, INT16 *buffer, int length)
 	/* bail if nothing's going on */
 	if (int_volume == 0 && ext_volume == 0)
 	{
-		memset(buffer, 0, sizeof(INT16) * length);
+		memset(buffer, 0, sizeof(*buffer) * length);
 		return;
 	}
 
@@ -173,7 +171,7 @@ static void cem3394_update(int ch, INT16 *buffer, int length)
 		INT16 last_ext = chip->last_ext;
 
 		/* fetch the external data */
-		(*chip->external)(ch, length, external_buffer);
+		(*chip->external)(chip->index, length, chip->external_buffer);
 
 		/* compute the modulation depth, and adjust fstep to the maximum frequency */
 		/* we lop off 13 bits of depth so that we can multiply by stepadjust, below, */
@@ -184,7 +182,7 @@ static void cem3394_update(int ch, INT16 *buffer, int length)
 
 		/* "apply" the filter: note this is pretty cheesy; it basically just downsamples the
 		   external sample to filter_freq by allowing only 2 transitions for every cycle */
-		for (i = 0, ext = external_buffer, position = chip->position; i < length; i++, ext++)
+		for (i = 0, ext = chip->external_buffer, position = chip->position; i < length; i++, ext++)
 		{
 			UINT32 newposition;
 			INT32 stepadjust;
@@ -235,7 +233,7 @@ static void cem3394_update(int ch, INT16 *buffer, int length)
 			/* if the width is wider than the step, we're guaranteed to hit it once per cycle */
 			if (pulse_width >= step)
 			{
-				for (i = 0, mix = mixer_buffer, position = chip->position; i < length; i++, mix++)
+				for (i = 0, mix = chip->mixer_buffer, position = chip->position; i < length; i++, mix++)
 				{
 					if (position < pulse_width)
 						*mix = 0x1932;
@@ -249,7 +247,7 @@ static void cem3394_update(int ch, INT16 *buffer, int length)
 			else
 			{
 				INT16 volume = 0x1932 * pulse_width / step;
-				for (i = 0, mix = mixer_buffer, position = chip->position; i < length; i++, mix++)
+				for (i = 0, mix = chip->mixer_buffer, position = chip->position; i < length; i++, mix++)
 				{
 					UINT32 newposition = position + step;
 					if ((newposition ^ position) & ~FRACTION_MASK)
@@ -264,13 +262,13 @@ static void cem3394_update(int ch, INT16 *buffer, int length)
 
 		/* otherwise, clear the mixing buffer */
 		else
-			memset(mixer_buffer, 0, sizeof(INT16) * length);
+			memset(chip->mixer_buffer, 0, sizeof(INT16) * length);
 
 		/* handle the sawtooth component; it maxes out at 0x2000, which is 27% larger */
 		/* than the pulse */
 		if (ENABLE_SAWTOOTH && (chip->wave_select & WAVE_SAWTOOTH))
 		{
-			for (i = 0, mix = mixer_buffer, position = chip->position; i < length; i++, mix++)
+			for (i = 0, mix = chip->mixer_buffer, position = chip->position; i < length; i++, mix++)
 			{
 				*mix += ((position >> (FRACTION_BITS - 14)) & 0x3fff) - 0x2000;
 				position += step;
@@ -283,7 +281,7 @@ static void cem3394_update(int ch, INT16 *buffer, int length)
 		/* a multiplication) */
 		if (ENABLE_TRIANGLE && (chip->wave_select & WAVE_TRIANGLE))
 		{
-			for (i = 0, mix = mixer_buffer, position = chip->position; i < length; i++, mix++)
+			for (i = 0, mix = chip->mixer_buffer, position = chip->position; i < length; i++, mix++)
 			{
 				INT16 value;
 				if (position & (1 << (FRACTION_BITS - 1)))
@@ -301,8 +299,8 @@ static void cem3394_update(int ch, INT16 *buffer, int length)
 	}
 
 	/* mix it down */
-	mix = mixer_buffer;
-	ext = external_buffer;
+	mix = chip->mixer_buffer;
+	ext = chip->external_buffer;
 	{
 		/* internal + external */
 		if (ext_volume != 0 && int_volume != 0)
@@ -326,47 +324,34 @@ static void cem3394_update(int ch, INT16 *buffer, int length)
 }
 
 
-int cem3394_sh_start(const struct MachineSound *msound)
+static void *cem3394_start(int sndindex, int clock, const void *config)
 {
-	const struct cem3394_interface *intf = msound->sound_interface;
-	int i;
+	const struct cem3394_interface *intf = config;
+	sound_chip *chip;
+	
+	chip = auto_malloc(sizeof(*chip));
+	memset(chip, 0, sizeof(*chip));
+	chip->index = sndindex;
 
 	/* bag on a 0 sample_rate */
 	if (Machine->sample_rate == 0)
-		return 0;
+		return chip;
 
 	/* copy global parameters */
-	sample_rate = Machine->sample_rate;
-	inv_sample_rate = 1.0 / (double)sample_rate;
+	chip->sample_rate = Machine->sample_rate;
+	chip->inv_sample_rate = 1.0 / (double)chip->sample_rate;
 
 	/* allocate stream channels, 1 per chip */
-	for (i = 0; i < intf->numchips; i++)
-	{
-		char name_buffer[100];
-
-		memset(&chip_list[i], 0, sizeof(chip_list[i]));
-		sprintf(name_buffer, "CEM3394 #%d", i);
-		chip_list[i].stream = stream_init(name_buffer, intf->volume[i], sample_rate, i, cem3394_update);
-		chip_list[i].external = intf->external[i];
-		chip_list[i].vco_zero_freq = intf->vco_zero_freq[i];
-		chip_list[i].filter_zero_freq = intf->filter_zero_freq[i];
-	}
+	chip->stream = stream_create(0, 1, chip->sample_rate, chip, cem3394_update);
+	chip->external = intf->external;
+	chip->vco_zero_freq = intf->vco_zero_freq;
+	chip->filter_zero_freq = intf->filter_zero_freq;
 
 	/* allocate memory for a mixer buffer and external buffer (1 second should do it!) */
-	mixer_buffer = malloc(2 * sample_rate * sizeof(INT16));
-	if (!mixer_buffer)
-		return 1;
-	external_buffer = mixer_buffer + sample_rate;
+	chip->mixer_buffer = auto_malloc(chip->sample_rate * sizeof(INT16));
+	chip->external_buffer = auto_malloc(chip->sample_rate * sizeof(INT16));
 
-	return 0;
-}
-
-
-void cem3394_sh_stop(void)
-{
-	if (mixer_buffer)
-		free(mixer_buffer);
-	mixer_buffer = external_buffer = NULL;
+	return chip;
 }
 
 
@@ -428,7 +413,7 @@ INLINE UINT32 compute_db_volume(double voltage)
 
 void cem3394_set_voltage(int chipnum, int input, double voltage)
 {
-	sound_chip *chip = &chip_list[chipnum];
+	sound_chip *chip = sndti_token(SOUND_CEM3394, chipnum);
 	double temp;
 
 	/* don't do anything if no change */
@@ -445,7 +430,7 @@ void cem3394_set_voltage(int chipnum, int input, double voltage)
 		/* frequency varies from -4.0 to +4.0, at 0.75V/octave */
 		case CEM3394_VCO_FREQUENCY:
 			temp = chip->vco_zero_freq * pow(2.0, -voltage * (1.0 / 0.75));
-			chip->step = (UINT32)(temp * inv_sample_rate * FRACTION_ONE_D);
+			chip->step = (UINT32)(temp * chip->inv_sample_rate * FRACTION_ONE_D);
 			break;
 
 		/* wave select determines triangle/sawtooth enable */
@@ -499,7 +484,7 @@ void cem3394_set_voltage(int chipnum, int input, double voltage)
 		/* filter frequency varies from -4.0 to +4.0, at 0.375V/octave */
 		case CEM3394_FILTER_FREQENCY:
 			temp = chip->filter_zero_freq * pow(2.0, -voltage * (1.0 / 0.375));
-			chip->filter_step = (UINT32)(temp * inv_sample_rate * FRACTION_ONE_D);
+			chip->filter_step = (UINT32)(temp * chip->inv_sample_rate * FRACTION_ONE_D);
 			break;
 
 		/* modulation depth is 0.01 at 0V and 2.0 at 3.5V; how it grows from one to the other */
@@ -522,7 +507,7 @@ void cem3394_set_voltage(int chipnum, int input, double voltage)
 
 double cem3394_get_parameter(int chipnum, int input)
 {
-	sound_chip *chip = &chip_list[chipnum];
+	sound_chip *chip = sndti_token(SOUND_CEM3394, chipnum);
 	double voltage = chip->values[input];
 
 	switch (input)
@@ -568,3 +553,41 @@ double cem3394_get_parameter(int chipnum, int input)
 	}
 	return 0.0;
 }
+
+
+
+
+/**************************************************************************
+ * Generic get_info
+ **************************************************************************/
+
+static void cem3394_set_info(void *token, UINT32 state, union sndinfo *info)
+{
+	switch (state)
+	{
+		/* no parameters to set */
+	}
+}
+
+
+void cem3394_get_info(void *token, UINT32 state, union sndinfo *info)
+{
+	switch (state)
+	{
+		/* --- the following bits of info are returned as 64-bit signed integers --- */
+
+		/* --- the following bits of info are returned as pointers to data or functions --- */
+		case SNDINFO_PTR_SET_INFO:						info->set_info = cem3394_set_info;		break;
+		case SNDINFO_PTR_START:							info->start = cem3394_start;			break;
+		case SNDINFO_PTR_STOP:							/* nothing */							break;
+		case SNDINFO_PTR_RESET:							/* nothing */							break;
+
+		/* --- the following bits of info are returned as NULL-terminated strings --- */
+		case SNDINFO_STR_NAME:							info->s = "CEM3394";					break;
+		case SNDINFO_STR_CORE_FAMILY:					info->s = "Analog Synth";				break;
+		case SNDINFO_STR_CORE_VERSION:					info->s = "1.0";						break;
+		case SNDINFO_STR_CORE_FILE:						info->s = __FILE__;						break;
+		case SNDINFO_STR_CORE_CREDITS:					info->s = "Copyright (c) 2004, The MAME Team"; break;
+	}
+}
+

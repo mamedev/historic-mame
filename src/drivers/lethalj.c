@@ -46,6 +46,7 @@ Note 2: Lethal Justice uses a TMS34010FNL-50 instead of the TMS34010FNL-40
 #include "driver.h"
 #include "cpu/tms34010/tms34010.h"
 #include "lethalj.h"
+#include "sound/okim6295.h"
 
 
 
@@ -251,22 +252,6 @@ INPUT_PORTS_END
 
 /*************************************
  *
- *	Sound definition
- *
- *************************************/
-
-static struct OKIM6295interface okim6295_interface =
-{
-	3,
-	{ 2000000/132, 2000000/132, 2000000/132 },
-	{ REGION_SOUND1, REGION_SOUND2, REGION_SOUND3 },
-	{ 75, 75, 75 }
-};
-
-
-
-/*************************************
- *
  *	34010 configuration
  *
  *************************************/
@@ -310,7 +295,19 @@ MACHINE_DRIVER_START( lethalj )
 	MDRV_VIDEO_UPDATE(lethalj)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(OKIM6295, okim6295_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(OKIM6295, 2000000/132)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.75)
+
+	MDRV_SOUND_ADD(OKIM6295, 2000000/132)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_2)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.75)
+
+	MDRV_SOUND_ADD(OKIM6295, 2000000/132)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_3)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.75)
 MACHINE_DRIVER_END
 
 

@@ -26,7 +26,10 @@
 #include "machine/6821pia.h"
 #include "cpu/m6809/m6809.h"
 #include "williams.h"
-
+#include "sound/2151intf.h"
+#include "sound/okim6295.h"
+#include "sound/hc55516.h"
+#include "sound/dac.h"
 
 
 /***************************************************************************
@@ -185,54 +188,14 @@ static struct pia6821_interface cvsd_pia_intf =
 /* YM2151 structure (CVSD variant) */
 static struct YM2151interface cvsd_ym2151_interface =
 {
-	1,			/* 1 chip */
-	3579580,
-	{ YM3012_VOL(10,MIXER_PAN_CENTER,10,MIXER_PAN_CENTER) },
-	{ cvsd_ym2151_irq }
+	cvsd_ym2151_irq
 };
 
 
 /* YM2151 structure (ADPCM variant) */
 static struct YM2151interface adpcm_ym2151_interface =
 {
-	1,			/* 1 chip */
-	3579580,
-	{ YM3012_VOL(10,MIXER_PAN_CENTER,10,MIXER_PAN_CENTER) },
-	{ adpcm_ym2151_irq }
-};
-
-
-/* DAC structure (single DAC variant) */
-static struct DACinterface single_dac_interface =
-{
-	1,
-	{ 50 }
-};
-
-
-/* DAC structure (double DAC variant) */
-static struct DACinterface double_dac_interface =
-{
-	2,
-	{ 50, 50 }
-};
-
-
-/* CVSD structure */
-static struct hc55516_interface cvsd_interface =
-{
-	1,			/* 1 chip */
-	{ 80 }
-};
-
-
-/* OKIM6295 structure(s) */
-static struct OKIM6295interface adpcm_6295_interface =
-{
-	1,          	/* 1 chip */
-	{ 8000 },       /* 8000 Hz frequency */
-	{ REGION_SOUND1 },  /* memory */
-	{ 50 }
+	adpcm_ym2151_irq
 };
 
 
@@ -246,10 +209,20 @@ MACHINE_DRIVER_START( williams_cvsd_sound )
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
 	MDRV_CPU_PROGRAM_MAP(williams_cvsd_readmem,williams_cvsd_writemem)
 
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(YM2151, cvsd_ym2151_interface)
-	MDRV_SOUND_ADD(DAC,    single_dac_interface)
-	MDRV_SOUND_ADD(HC55516,cvsd_interface)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(YM2151, 3579580)
+	MDRV_SOUND_CONFIG(cvsd_ym2151_interface)
+	MDRV_SOUND_ROUTE(0, "left", 0.10)
+	MDRV_SOUND_ROUTE(1, "right", 0.10)
+
+	MDRV_SOUND_ADD(DAC, 0)
+	MDRV_SOUND_ROUTE(0, "left", 0.50)
+	MDRV_SOUND_ROUTE(0, "right", 0.50)
+
+	MDRV_SOUND_ADD(HC55516, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.80)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 0.80)
 MACHINE_DRIVER_END
 
 
@@ -258,10 +231,21 @@ MACHINE_DRIVER_START( williams_adpcm_sound )
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
 	MDRV_CPU_PROGRAM_MAP(williams_adpcm_readmem,williams_adpcm_writemem)
 
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(YM2151,  adpcm_ym2151_interface)
-	MDRV_SOUND_ADD(DAC,     single_dac_interface)
-	MDRV_SOUND_ADD(OKIM6295,adpcm_6295_interface)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(YM2151, 3579580)
+	MDRV_SOUND_CONFIG(adpcm_ym2151_interface)
+	MDRV_SOUND_ROUTE(0, "left", 0.10)
+	MDRV_SOUND_ROUTE(1, "right", 0.10)
+
+	MDRV_SOUND_ADD(DAC, 0)
+	MDRV_SOUND_ROUTE(0, "left", 0.50)
+	MDRV_SOUND_ROUTE(0, "right", 0.50)
+
+	MDRV_SOUND_ADD(OKIM6295, 8000)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.50)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 0.50)
 MACHINE_DRIVER_END
 
 
@@ -274,10 +258,24 @@ MACHINE_DRIVER_START( williams_narc_sound )
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
 	MDRV_CPU_PROGRAM_MAP(williams_narc_slave_readmem,williams_narc_slave_writemem)
 
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(YM2151, adpcm_ym2151_interface)
-	MDRV_SOUND_ADD(DAC,    double_dac_interface)
-	MDRV_SOUND_ADD(HC55516,cvsd_interface)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(YM2151, 3579580)
+	MDRV_SOUND_CONFIG(adpcm_ym2151_interface)
+	MDRV_SOUND_ROUTE(0, "left", 0.10)
+	MDRV_SOUND_ROUTE(1, "right", 0.10)
+
+	MDRV_SOUND_ADD(DAC, 0)
+	MDRV_SOUND_ROUTE(0, "left", 0.50)
+	MDRV_SOUND_ROUTE(0, "right", 0.50)
+
+	MDRV_SOUND_ADD(DAC, 0)
+	MDRV_SOUND_ROUTE(0, "left", 0.50)
+	MDRV_SOUND_ROUTE(0, "right", 0.50)
+
+	MDRV_SOUND_ADD(HC55516, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.80)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 0.80)
 MACHINE_DRIVER_END
 
 
@@ -372,8 +370,8 @@ void williams_adpcm_init(int cpunum)
 	for (i = 0; i < MAX_SOUND; i++)
 		if (Machine->drv->sound[i].sound_type == SOUND_OKIM6295)
 		{
-			struct OKIM6295interface *intf = (struct OKIM6295interface *)Machine->drv->sound[i].sound_interface;
-			adpcm_bank_count = memory_region_length(intf->region[0]) / 0x40000;
+			struct OKIM6295interface *intf = (struct OKIM6295interface *)Machine->drv->sound[i].config;
+			adpcm_bank_count = memory_region_length(intf->region) / 0x40000;
 		}
 }
 
@@ -404,7 +402,7 @@ void williams_narc_init(int cpunum)
 static void init_audio_state(void)
 {
 	/* reset the YM2151 state */
-	YM2151_sh_reset();
+	sndti_reset(SOUND_YM2151, 0);
 
 	/* clear all the interrupts */
 	williams_sound_int_state = 0;

@@ -6,6 +6,7 @@
  */
 
 #include "driver.h"
+#include "sound/ay8910.h"
 
 /* machine/chaknpop.c */
 DRIVER_INIT( chaknpop );
@@ -104,15 +105,18 @@ static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0xc000, 0xffff) AM_WRITE(MWA8_BANK1)			// bitmap plane 1-4
 ADDRESS_MAP_END
 
-static struct AY8910interface ay8910_interface =
+static struct AY8910interface ay8910_interface_1 =
 {
-	2,		/* 2 chips */
-	18432000 / 12,	/* 1.536 MHz? */
-	{ 15, 10 },
-	{ input_port_5_r, 0 },		// DSW A
-	{ input_port_4_r, 0 },		// DSW B
-	{ 0, unknown_port_1_w },	// ??
-	{ 0, unknown_port_2_w }		// ??
+	input_port_5_r,		// DSW A
+	input_port_4_r		// DSW B
+};
+
+static struct AY8910interface ay8910_interface_2 =
+{
+	0,
+	0,
+	unknown_port_1_w,	// ??
+	unknown_port_2_w	// ??
 };
 
 
@@ -304,7 +308,15 @@ static MACHINE_DRIVER_START( chaknpop )
 	MDRV_VIDEO_UPDATE(chaknpop)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(AY8910, ay8910_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(AY8910, 18432000 / 12)
+	MDRV_SOUND_CONFIG(ay8910_interface_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.15)
+
+	MDRV_SOUND_ADD(AY8910, 18432000 / 12)
+	MDRV_SOUND_CONFIG(ay8910_interface_2)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.10)
 MACHINE_DRIVER_END
 
 

@@ -1,5 +1,6 @@
 #include "driver.h"
 #include "cpuintrf.h"
+#include "vrender0.h"
 
 /***********************************
 		VRENDER ZERO
@@ -18,21 +19,22 @@ UINT16 ENDIANCORRECT16(UINT16 v)
 }
 //#define ENDIANCORRECT16(v) (((v>>0)&0xff)<<8)|(((v>>8)&0xff)<<0)
 
-static void VR0_RenderAudio(int nsamples,signed short *l,signed short *r);
-
-static void VR0_Update(int num, short **buf, int samples)
-{
-	VR0_RenderAudio(samples,buf[0],buf[1]);
-}
-
-static struct _VR0Chip
+struct _VR0Chip
 {
 	UINT32 *TexBase;
 	UINT32 *FBBase;
 	UINT32 SOUNDREGS[0x10000/4];
 	struct VR0Interface Intf;
-	int stream;
-} VR0;
+	sound_stream * stream;
+};
+
+static void VR0_RenderAudio(struct _VR0Chip *VR0, int nsamples,stream_sample_t *l,stream_sample_t *r);
+
+static void VR0_Update(void *param, stream_sample_t **inputs, stream_sample_t **buf, int samples)
+{
+	struct _VR0Chip *VR0 = param;
+	VR0_RenderAudio(VR0, samples,buf[0],buf[1]);
+}
 
 //Correct table thanks to Evoga
 //they left a ulaw<->linear conversion tool inside the roms
@@ -73,16 +75,16 @@ static const unsigned short ULawTo16[]=
 };
 
 
-#define STATUS			VR0.SOUNDREGS[0x404/4]
-#define CURSADDR(chan)	(VR0.SOUNDREGS[(0x20/4)*chan+0x00])
-#define DSADDR(chan)	((VR0.SOUNDREGS[(0x20/4)*chan+0x08/4]>>0)&0xffff)
-#define LOOPBEGIN(chan)	(VR0.SOUNDREGS[(0x20/4)*chan+0x0c/4]&0x3fffff)
-#define LOOPEND(chan)	(VR0.SOUNDREGS[(0x20/4)*chan+0x10/4]&0x3fffff)
-#define ENVVOL(chan)	(VR0.SOUNDREGS[(0x20/4)*chan+0x04/4]&0xffffff)
+#define STATUS			VR0->SOUNDREGS[0x404/4]
+#define CURSADDR(chan)	(VR0->SOUNDREGS[(0x20/4)*chan+0x00])
+#define DSADDR(chan)	((VR0->SOUNDREGS[(0x20/4)*chan+0x08/4]>>0)&0xffff)
+#define LOOPBEGIN(chan)	(VR0->SOUNDREGS[(0x20/4)*chan+0x0c/4]&0x3fffff)
+#define LOOPEND(chan)	(VR0->SOUNDREGS[(0x20/4)*chan+0x10/4]&0x3fffff)
+#define ENVVOL(chan)	(VR0->SOUNDREGS[(0x20/4)*chan+0x04/4]&0xffffff)
 
 /*
-#define GETSOUNDREG16(Chan,Offs) program_read_word_32le(VR0.Intf.RegBase+0x20*Chan+Offs)
-#define GETSOUNDREG32(Chan,Offs) program_read_dword_32le(VR0.Intf.RegBase+0x20*Chan+Offs)
+#define GETSOUNDREG16(Chan,Offs) program_read_word_32le(VR0->Intf.RegBase+0x20*Chan+Offs)
+#define GETSOUNDREG32(Chan,Offs) program_read_dword_32le(VR0->Intf.RegBase+0x20*Chan+Offs)
 
 #define CURSADDR(chan)	GETSOUNDREG32(chan,0x00)
 #define DSADDR(chan)	GETSOUNDREG16(chan,0x08)
@@ -92,40 +94,32 @@ static const unsigned short ULawTo16[]=
 */
 void VR0_Snd_Set_Areas(UINT32 *Texture,UINT32 *Frame)
 {
-	VR0.TexBase=Texture;
-	VR0.FBBase=Frame;
+	struct _VR0Chip *VR0 = sndti_token(SOUND_VRENDER0, 0); 
+	VR0->TexBase=Texture;
+	VR0->FBBase=Frame;
 }
 
-int VR0_sh_start(const struct MachineSound *msound)
+static void *vrender0_start(int sndindex, int clock, const void *config)
 {
-	char buf[2][40];
-	const char *name[2];
-	int vol[2];
-	struct VR0Interface *intf;
-
-	intf=msound->sound_interface;
-
-	sprintf(buf[0], "VRender0 R"); 
-	sprintf(buf[1], "VRender0 L"); 
-	name[0] = buf[0];
-	name[1] = buf[1];
-	vol[1]=intf->mixing_level>>16;
-	vol[0]=intf->mixing_level&0xffff;
-
-	memcpy(&(VR0.Intf),intf,sizeof(struct VR0Interface));
-	memset(VR0.SOUNDREGS,0,0x10000);
+	const struct VR0Interface *intf;
+	struct _VR0Chip *VR0;
 	
-	VR0.stream = stream_init_multi(2, name, vol, 44100, 0, VR0_Update);
-	
-	return 0;
-}
+	VR0 = auto_malloc(sizeof(*VR0));
+	memset(VR0, 0, sizeof(*VR0));
 
-void VR0_sh_stop(void)
-{
+	intf=config;
+
+	memcpy(&(VR0->Intf),intf,sizeof(struct VR0Interface));
+	memset(VR0->SOUNDREGS,0,0x10000);
+	
+	VR0->stream = stream_create(0, 2, 44100, VR0, VR0_Update);
+	
+	return VR0;
 }
 
 WRITE32_HANDLER(VR0_Snd_Write)
 {
+	struct _VR0Chip *VR0 = sndti_token(SOUND_VRENDER0, 0); 
 	if(offset==0x404/4)
 	{
 		data&=0xffff;
@@ -143,33 +137,34 @@ WRITE32_HANDLER(VR0_Snd_Write)
 	}
 	else
 	{
-		COMBINE_DATA(&VR0.SOUNDREGS[offset]);
+		COMBINE_DATA(&VR0->SOUNDREGS[offset]);
 	}
 }
 
 
 READ32_HANDLER(VR0_Snd_Read)
 {
-	return VR0.SOUNDREGS[offset];
+	struct _VR0Chip *VR0 = sndti_token(SOUND_VRENDER0, 0); 
+	return VR0->SOUNDREGS[offset];
 }
 
-static void VR0_RenderAudio(int nsamples,signed short *l,signed short *r)
+static void VR0_RenderAudio(struct _VR0Chip *VR0, int nsamples,stream_sample_t *l,stream_sample_t *r)
 {
 	INT16 *SAMPLES;
 	UINT32 st=STATUS;
 	signed int lsample=0,rsample=0;
-	UINT32 CLK=(VR0.SOUNDREGS[0x600/4]>>0)&0xff;
-	UINT32 NCH=(VR0.SOUNDREGS[0x600/4]>>8)&0xff;
-	UINT32 CT1=(VR0.SOUNDREGS[0x600/4]>>16)&0xff;
-	UINT32 CT2=(VR0.SOUNDREGS[0x600/4]>>24)&0xff;
+	UINT32 CLK=(VR0->SOUNDREGS[0x600/4]>>0)&0xff;
+	UINT32 NCH=(VR0->SOUNDREGS[0x600/4]>>8)&0xff;
+	UINT32 CT1=(VR0->SOUNDREGS[0x600/4]>>16)&0xff;
+	UINT32 CT2=(VR0->SOUNDREGS[0x600/4]>>24)&0xff;
 	int div;
 	int s;
 
 	
 	if(CT1&0x20)
-		SAMPLES=(INT16 *)VR0.TexBase;
+		SAMPLES=(INT16 *)VR0->TexBase;
 	else
-		SAMPLES=(INT16 *)VR0.FBBase;
+		SAMPLES=(INT16 *)VR0->FBBase;
 
 	if(CLK)
 		div=((30<<16)|0x8000)/(CLK+1);
@@ -185,9 +180,9 @@ static void VR0_RenderAudio(int nsamples,signed short *l,signed short *r)
 			signed int sample;
 			UINT32 cur=CURSADDR(i);
 			UINT32 a=LOOPBEGIN(i)+(cur>>10);
-			UINT8 Mode=VR0.SOUNDREGS[(0x20/4)*i+0x8/4]>>24;
-			signed int LVOL=VR0.SOUNDREGS[(0x20/4)*i+0xc/4]>>24;
-			signed int RVOL=VR0.SOUNDREGS[(0x20/4)*i+0x10/4]>>24;
+			UINT8 Mode=VR0->SOUNDREGS[(0x20/4)*i+0x8/4]>>24;
+			signed int LVOL=VR0->SOUNDREGS[(0x20/4)*i+0xc/4]>>24;
+			signed int RVOL=VR0->SOUNDREGS[(0x20/4)*i+0x10/4]>>24;
 			
 			INT32 DSADD=(DSADDR(i)*div)>>16;
 
@@ -235,12 +230,50 @@ static void VR0_RenderAudio(int nsamples,signed short *l,signed short *r)
 		if(lsample>32767)
 			lsample=32767;
 		if(lsample<-32768)
-			lsample=32768;
+			lsample=-32768;
 		l[s]=lsample;
 		if(rsample>32767)
 			rsample=32767;
 		if(rsample<-32768)
-			rsample=32768;
+			rsample=-32768;
 		r[s]=rsample;
 	}
 }
+
+
+
+
+/**************************************************************************
+ * Generic get_info
+ **************************************************************************/
+
+static void vrender0_set_info(void *token, UINT32 state, union sndinfo *info)
+{
+	switch (state)
+	{
+		/* no parameters to set */
+	}
+}
+
+
+void vrender0_get_info(void *token, UINT32 state, union sndinfo *info)
+{
+	switch (state)
+	{
+		/* --- the following bits of info are returned as 64-bit signed integers --- */
+
+		/* --- the following bits of info are returned as pointers to data or functions --- */
+		case SNDINFO_PTR_SET_INFO:						info->set_info = vrender0_set_info;		break;
+		case SNDINFO_PTR_START:							info->start = vrender0_start;			break;
+		case SNDINFO_PTR_STOP:							/* Nothing */							break;
+		case SNDINFO_PTR_RESET:							/* Nothing */							break;
+
+		/* --- the following bits of info are returned as NULL-terminated strings --- */
+		case SNDINFO_STR_NAME:							info->s = "VRender0";					break;
+		case SNDINFO_STR_CORE_FAMILY:					info->s = "???";						break;
+		case SNDINFO_STR_CORE_VERSION:					info->s = "1.0";						break;
+		case SNDINFO_STR_CORE_FILE:						info->s = __FILE__;						break;
+		case SNDINFO_STR_CORE_CREDITS:					info->s = "Copyright (c) 2004, The MAME Team"; break;
+	}
+}
+

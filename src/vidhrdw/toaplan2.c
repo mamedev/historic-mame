@@ -1023,7 +1023,7 @@ void toaplan2_scroll_reg_data_w(offs_t offset, data16_t data, UINT32 mem_mask, i
 						if (Machine->drv->sound[0].sound_type == SOUND_YM3812)
 						{
 							cpunum_set_input_line(1, INPUT_LINE_RESET, PULSE_LINE);
-							YM3812_sh_reset();
+							sndti_reset(SOUND_YM3812, 0);
 						}
 					}
 

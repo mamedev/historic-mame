@@ -20,13 +20,14 @@ D0	explosion enable		gates a noise generator
 #include <math.h>
 #include "driver.h"
 #include "bzone.h"
+#include "sound/custom.h"
 
 
 /* Statics */
 static INT16 *discharge = NULL;
 #define EXP(charge,n) (charge ? 0x7fff - discharge[0x7fff-n] : discharge[n])
 
-static int channel;
+static sound_stream *channel;
 static int latch;
 static int poly_counter;
 static int poly_shift;
@@ -60,11 +61,12 @@ WRITE8_HANDLER( bzone_sounds_w )
 	stream_update(channel, 0);
     latch = data;
 
-    mixer_sound_enable_global_w(latch & 0x20);
+    sound_global_enable(latch & 0x20);
 }
 
-static void bzone_sound_update(int param, INT16 *buffer, int length)
+static void bzone_sound_update(void *param, stream_sample_t **inputs, stream_sample_t **outputs, int length)
 {
+	stream_sample_t *buffer = outputs[0];
 	while( length-- )
 	{
 		static int last_val = 0;
@@ -266,31 +268,15 @@ static void bzone_sound_update(int param, INT16 *buffer, int length)
 	}
 }
 
-int bzone_sh_start(const struct MachineSound *msound)
+void *bzone_sh_start(int clock, const struct CustomSound_interface *config)
 {
     int i;
 
 	discharge = (INT16 *)auto_malloc(32768 * sizeof(INT16));
-	if( !discharge )
-        return 1;
-
     for( i = 0; i < 0x8000; i++ )
 		discharge[0x7fff-i] = (INT16) (0x7fff/exp(1.0*i/4096));
 
-	channel = stream_init("Custom", 50, Machine->sample_rate, 0, bzone_sound_update);
-    if( channel == -1 )
-        return 1;
+	channel = stream_create(0, 1, Machine->sample_rate, 0, bzone_sound_update);
 
-    return 0;
+    return auto_malloc(1);
 }
-
-void bzone_sh_stop(void)
-{
-}
-
-void bzone_sh_update(void)
-{
-	stream_update(channel, 0);
-}
-
-

@@ -149,6 +149,7 @@
 #include "machine/8255ppi.h"
 #include "turbo.h"
 #include "machine/segacrpt.h"
+#include "sound/samples.h"
 
 
 /*************************************
@@ -510,7 +511,6 @@ static const char *turbo_sample_names[]=
 static struct Samplesinterface turbo_samples_interface =
 {
 	8,			/* eight channels */
-	25,			/* volume */
 	turbo_sample_names
 };
 
@@ -535,7 +535,6 @@ static const char *buckrog_sample_names[]=
 static struct Samplesinterface buckrog_samples_interface =
 {
 	6,          /* 6 channels */
-	25,         /* volume */
 	buckrog_sample_names
 };
 
@@ -560,7 +559,6 @@ static const char *subroc3d_sample_names[] =
 static struct Samplesinterface subroc3d_samples_interface =
 {
 	8,          /* eight channels */
-	50,         /* volume */
 	subroc3d_sample_names
 };
 
@@ -594,7 +592,11 @@ static MACHINE_DRIVER_START( turbo )
 	MDRV_VIDEO_UPDATE(turbo)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(SAMPLES, turbo_samples_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	
+	MDRV_SOUND_ADD(SAMPLES, 0)
+	MDRV_SOUND_CONFIG(turbo_samples_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
 MACHINE_DRIVER_END
 
 
@@ -620,7 +622,11 @@ static MACHINE_DRIVER_START( subroc3d )
 	MDRV_VIDEO_UPDATE(subroc3d)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(SAMPLES, subroc3d_samples_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	
+	MDRV_SOUND_ADD(SAMPLES, 0)
+	MDRV_SOUND_CONFIG(subroc3d_samples_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
 MACHINE_DRIVER_END
 
 
@@ -651,7 +657,11 @@ static MACHINE_DRIVER_START( buckrog )
 	MDRV_VIDEO_UPDATE(buckrog)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(SAMPLES, buckrog_samples_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	
+	MDRV_SOUND_ADD(SAMPLES, 0)
+	MDRV_SOUND_CONFIG(buckrog_samples_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
 MACHINE_DRIVER_END
 
 

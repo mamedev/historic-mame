@@ -150,6 +150,8 @@ Stephh's additional notes (based on the game Z80 code and some tests) :
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "cpu/z80/z80.h"
+#include "sound/ay8910.h"
+#include "sound/msm5232.h"
 
 VIDEO_START( nycaptor );
 VIDEO_UPDATE( nycaptor );
@@ -294,21 +296,15 @@ static WRITE8_HANDLER(unk_w)
 
 static struct AY8910interface ay8910_interface =
 {
-	2,
-	8000000/4,
-	{ 15, 15 },
-	{ 0,0 },
-	{ 0,0 },
-	{ unk_w,unk_w },
-	{ unk_w,unk_w }
+	0,
+	0,
+	unk_w,
+	unk_w
 };
 
 static struct MSM5232interface msm5232_interface =
 {
-	1, /* number of chips */
-	2000000, /* 2 MHz ??? */
-	{ { 0.65e-6, 0.65e-6, 0.65e-6, 0.65e-6, 0.65e-6, 0.65e-6, 0.65e-6, 0.65e-6 } },	/* 0.65 (???) uF capacitors (match the sample, not verified) */
-	{ 100 }	/* mixing level ??? */
+	{ 0.65e-6, 0.65e-6, 0.65e-6, 0.65e-6, 0.65e-6, 0.65e-6, 0.65e-6, 0.65e-6 }	/* 0.65 (???) uF capacitors (match the sample, not verified) */
 };
 
 
@@ -838,8 +834,19 @@ static MACHINE_DRIVER_START( nycaptor )
 	MDRV_VIDEO_UPDATE(nycaptor)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(AY8910, ay8910_interface)
-	MDRV_SOUND_ADD(MSM5232, msm5232_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	
+	MDRV_SOUND_ADD(AY8910, 8000000/4)
+	MDRV_SOUND_CONFIG(ay8910_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.15)
+	
+	MDRV_SOUND_ADD(AY8910, 8000000/4)
+	MDRV_SOUND_CONFIG(ay8910_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.15)
+
+	MDRV_SOUND_ADD(MSM5232, 2000000)
+	MDRV_SOUND_CONFIG(msm5232_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( cyclshtg )
@@ -875,8 +882,19 @@ static MACHINE_DRIVER_START( cyclshtg )
 	MDRV_VIDEO_START(nycaptor)
 	MDRV_VIDEO_UPDATE(nycaptor)
 
-	MDRV_SOUND_ADD(AY8910, ay8910_interface)
-	MDRV_SOUND_ADD(MSM5232, msm5232_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	
+	MDRV_SOUND_ADD(AY8910, 8000000/4)
+	MDRV_SOUND_CONFIG(ay8910_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.15)
+	
+	MDRV_SOUND_ADD(AY8910, 8000000/4)
+	MDRV_SOUND_CONFIG(ay8910_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.15)
+
+	MDRV_SOUND_ADD(MSM5232, 2000000)
+	MDRV_SOUND_CONFIG(msm5232_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 
@@ -911,8 +929,19 @@ static MACHINE_DRIVER_START( bronx )
 	MDRV_VIDEO_START(nycaptor)
 	MDRV_VIDEO_UPDATE(nycaptor)
 
-	MDRV_SOUND_ADD(AY8910, ay8910_interface)
-	MDRV_SOUND_ADD(MSM5232, msm5232_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	
+	MDRV_SOUND_ADD(AY8910, 8000000/4)
+	MDRV_SOUND_CONFIG(ay8910_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.15)
+	
+	MDRV_SOUND_ADD(AY8910, 8000000/4)
+	MDRV_SOUND_CONFIG(ay8910_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.15)
+
+	MDRV_SOUND_ADD(MSM5232, 2000000)
+	MDRV_SOUND_CONFIG(msm5232_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 

@@ -159,6 +159,7 @@
 #include "state.h"
 #include "cpu/z80/z80.h"
 #include "machine/segacrpt.h"
+#include "sound/sn76496.h"
 
 /*-- Variables --*/
 
@@ -723,14 +724,6 @@ INPUT_PORTS_END
  custom cpu
 *******************************************************************************/
 
-static struct SN76496interface sn76489_intf =
-{
-	2,		/* 2 chips */
-	{ 4000000, 4000000 },	/* 4 MHz? (guess) */
-	{ 50, 50 }
-};
-
-
 static MACHINE_DRIVER_START( segae )
 
 	/* basic machine hardware */
@@ -752,7 +745,13 @@ static MACHINE_DRIVER_START( segae )
 	MDRV_VIDEO_UPDATE(segae)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(SN76496, sn76489_intf)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(SN76496, 4000000)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
+
+	MDRV_SOUND_ADD(SN76496, 4000000)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
 MACHINE_DRIVER_END
 
 /*******************************************************************************

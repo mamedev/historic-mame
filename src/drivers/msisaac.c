@@ -10,6 +10,8 @@
 #include "driver.h"
 #include "cpu/z80/z80.h"
 #include "vidhrdw/generic.h"
+#include "sound/ay8910.h"
+#include "sound/msm5232.h"
 
 /*
 TO DO:
@@ -311,8 +313,8 @@ static WRITE8_HANDLER( sound_control_0_w )
 	snd_ctrl0 = data & 0xff;
 	//usrintf_showmessage("SND0 0=%2x 1=%2x", snd_ctrl0, snd_ctrl1);
 
-	mixer_set_volume (6, vol_ctrl[  snd_ctrl0     & 15 ]);	/* group1 from msm5232 */
-	mixer_set_volume (7, vol_ctrl[ (snd_ctrl0>>4) & 15 ]);	/* group2 from msm5232 */
+	sndti_set_output_gain(SOUND_MSM5232, 0, 0, vol_ctrl[  snd_ctrl0     & 15 ] / 100.0);	/* group1 from msm5232 */
+	sndti_set_output_gain(SOUND_MSM5232, 0, 1, vol_ctrl[ (snd_ctrl0>>4) & 15 ] / 100.0);	/* group2 from msm5232 */
 
 }
 static WRITE8_HANDLER( sound_control_1_w )
@@ -517,23 +519,9 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 	{ -1 }
 };
 
-static struct AY8910interface ay8910_interface =
-{
-	2, /* number of chips */
-	2000000, /* 2 MHz ??? */
-	{ 15,15 },
-	{ 0,0 },
-	{ 0,0 },
-	{ 0,0 },
-	{ 0,0 }
-};
-
 static struct MSM5232interface msm5232_interface =
 {
-	1, /* number of chips */
-	2000000, /* 2 MHz ??? */
-	{ { 0.65e-6, 0.65e-6, 0.65e-6, 0.65e-6, 0.65e-6, 0.65e-6, 0.65e-6, 0.65e-6 } },	/* 0.65 (???) uF capacitors (match the sample, not verified) */
-	{ 100 }	/* mixing level ??? */
+	{ 0.65e-6, 0.65e-6, 0.65e-6, 0.65e-6, 0.65e-6, 0.65e-6, 0.65e-6, 0.65e-6 }	/* 0.65 (???) uF capacitors (match the sample, not verified) */
 };
 
 
@@ -572,8 +560,17 @@ static MACHINE_DRIVER_START( msisaac )
 	MDRV_VIDEO_UPDATE(msisaac)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(AY8910, ay8910_interface)
-	MDRV_SOUND_ADD(MSM5232, msm5232_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	
+	MDRV_SOUND_ADD(AY8910, 2000000)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.15)
+	
+	MDRV_SOUND_ADD(AY8910, 2000000)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.15)
+
+	MDRV_SOUND_ADD(MSM5232, 2000000)
+	MDRV_SOUND_CONFIG(msm5232_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 

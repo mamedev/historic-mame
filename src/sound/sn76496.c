@@ -13,6 +13,7 @@
 ***************************************************************************/
 
 #include "driver.h"
+#include "sn76496.h"
 
 
 #define MAX_OUTPUT 0x7fff
@@ -44,7 +45,7 @@ Hope that helps the System E stuff, more news on the PSG as and when!
 
 struct SN76496
 {
-	int Channel;
+	sound_stream * Channel;
 	int SampleRate;
 	unsigned int UpdateStep;
 	int VolTable[16];	/* volume table         */
@@ -59,13 +60,10 @@ struct SN76496
 };
 
 
-static struct SN76496 sn[MAX_76496];
-
-
 
 static void SN76496Write(int chip,int data)
 {
-	struct SN76496 *R = &sn[chip];
+	struct SN76496 *R = sndti_token(SOUND_SN76496, chip);
 
 
 	/* update the output buffer before changing the registers */
@@ -145,10 +143,11 @@ WRITE8_HANDLER( SN76496_3_w ) {	SN76496Write(3,data); }
 
 
 
-static void SN76496Update(int chip,INT16 *buffer,int length)
+static void SN76496Update(void *param,stream_sample_t **inputs, stream_sample_t **_buffer,int length)
 {
 	int i;
-	struct SN76496 *R = &sn[chip];
+	struct SN76496 *R = param;
+	stream_sample_t *buffer = _buffer[0];
 
 
 	/* If the volume is 0, increase the counter */
@@ -238,9 +237,8 @@ static void SN76496Update(int chip,INT16 *buffer,int length)
 
 
 
-static void SN76496_set_clock(int chip,int clock)
+static void SN76496_set_clock(struct SN76496 *R,int clock)
 {
-	struct SN76496 *R = &sn[chip];
 
 
 	/* the base clock for the tone generators is the chip clock divided by 16; */
@@ -254,9 +252,8 @@ static void SN76496_set_clock(int chip,int clock)
 
 
 
-static void SN76496_set_gain(int chip,int gain)
+static void SN76496_set_gain(struct SN76496 *R,int gain)
 {
-	struct SN76496 *R = &sn[chip];
 	int i;
 	double out;
 
@@ -282,21 +279,14 @@ static void SN76496_set_gain(int chip,int gain)
 
 
 
-static int SN76496_init(const struct MachineSound *msound,int chip,int clock,int volume,int sample_rate)
+static int SN76496_init(struct SN76496 *R,int sndindex,int clock,int sample_rate)
 {
 	int i;
-	struct SN76496 *R = &sn[chip];
-	char name[40];
 
-
-	sprintf(name,"SN76496 #%d",chip);
-	R->Channel = stream_init(name,volume,sample_rate,chip,SN76496Update);
-
-	if (R->Channel == -1)
-		return 1;
+	R->Channel = stream_create(0,1, sample_rate,R,SN76496Update);
 
 	R->SampleRate = sample_rate;
-	SN76496_set_clock(chip,clock);
+	SN76496_set_clock(R,clock);
 
 	for (i = 0;i < 4;i++) R->Volume[i] = 0;
 
@@ -320,18 +310,54 @@ static int SN76496_init(const struct MachineSound *msound,int chip,int clock,int
 
 
 
-int SN76496_sh_start(const struct MachineSound *msound)
+static void *sn76496_start(int sndindex, int clock, const void *config)
 {
-	int chip;
-	const struct SN76496interface *intf = msound->sound_interface;
+	struct SN76496 *chip;
+	
+	chip = auto_malloc(sizeof(*chip));
+	memset(chip, 0, sizeof(*chip));
 
+	if (SN76496_init(chip,sndindex,clock,Machine->sample_rate) != 0)
+		return NULL;
+	SN76496_set_gain(chip, 0);
 
-	for (chip = 0;chip < intf->num;chip++)
-	{
-		if (SN76496_init(msound,chip,intf->baseclock[chip],intf->volume[chip] & 0xff,Machine->sample_rate) != 0)
-			return 1;
-
-		SN76496_set_gain(chip,(intf->volume[chip] >> 8) & 0xff);
-	}
-	return 0;
+	return chip;
 }
+
+
+
+
+/**************************************************************************
+ * Generic get_info
+ **************************************************************************/
+
+static void sn76496_set_info(void *token, UINT32 state, union sndinfo *info)
+{
+	switch (state)
+	{
+		/* no parameters to set */
+	}
+}
+
+
+void sn76496_get_info(void *token, UINT32 state, union sndinfo *info)
+{
+	switch (state)
+	{
+		/* --- the following bits of info are returned as 64-bit signed integers --- */
+
+		/* --- the following bits of info are returned as pointers to data or functions --- */
+		case SNDINFO_PTR_SET_INFO:						info->set_info = sn76496_set_info;		break;
+		case SNDINFO_PTR_START:							info->start = sn76496_start;			break;
+		case SNDINFO_PTR_STOP:							/* Nothing */							break;
+		case SNDINFO_PTR_RESET:							/* Nothing */							break;
+
+		/* --- the following bits of info are returned as NULL-terminated strings --- */
+		case SNDINFO_STR_NAME:							info->s = "SN76496";					break;
+		case SNDINFO_STR_CORE_FAMILY:					info->s = "TI PSG";						break;
+		case SNDINFO_STR_CORE_VERSION:					info->s = "1.0";						break;
+		case SNDINFO_STR_CORE_FILE:						info->s = __FILE__;						break;
+		case SNDINFO_STR_CORE_CREDITS:					info->s = "Copyright (c) 2004, The MAME Team"; break;
+	}
+}
+

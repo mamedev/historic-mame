@@ -52,6 +52,8 @@
 #include "vidhrdw/generic.h"
 #include "slapstic.h"
 #include "atetris.h"
+#include "sound/sn76496.h"
+#include "sound/pokey.h"
 
 
 #define ATARI_CLOCK_14MHz	14318180
@@ -305,30 +307,19 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
  *
  *************************************/
 
-static struct POKEYinterface pokey_interface =
+static struct POKEYinterface pokey_interface_1 =
 {
-	2,
-	ATARI_CLOCK_14MHz/8,
-	{ 50, 50 },
-	/* The 8 pot handlers */
-	{ 0, 0 },
-	{ 0, 0 },
-	{ 0, 0 },
-	{ 0, 0 },
-	{ 0, 0 },
-	{ 0, 0 },
-	{ 0, 0 },
-	{ 0, 0 },
-	/* The allpot handler */
-	{ input_port_0_r, input_port_1_r }
+	{ 0 },
+	input_port_0_r
 };
 
-static struct SN76496interface sn76496_interface =
+
+static struct POKEYinterface pokey_interface_2 =
 {
-	3,	/* 3 chips */
-	{ 14745600/8, 14745600/8, 14745600/8 }, /* Need correct values here */
-	{ 50, 50, 50 }
+	{ 0 },
+	input_port_1_r
 };
+
 
 
 /*************************************
@@ -360,7 +351,15 @@ static MACHINE_DRIVER_START( atetris )
 	MDRV_VIDEO_UPDATE(atetris)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(POKEY, pokey_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(POKEY, ATARI_CLOCK_14MHz/8)
+	MDRV_SOUND_CONFIG(pokey_interface_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
+
+	MDRV_SOUND_ADD(POKEY, ATARI_CLOCK_14MHz/8)
+	MDRV_SOUND_CONFIG(pokey_interface_2)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
 MACHINE_DRIVER_END
 
 
@@ -387,7 +386,16 @@ static MACHINE_DRIVER_START( atetrsb2 )
 	MDRV_VIDEO_UPDATE(atetris)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(SN76496, sn76496_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(SN76496, 14745600/8)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
+
+	MDRV_SOUND_ADD(SN76496, 14745600/8)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
+
+	MDRV_SOUND_ADD(SN76496, 14745600/8)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
 MACHINE_DRIVER_END
 
 /*************************************

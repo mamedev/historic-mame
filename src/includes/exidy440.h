@@ -4,6 +4,9 @@
 
 *************************************************************************/
 
+#include "sound/custom.h"
+
+
 /*----------- defined in drivers/exidy440.c -----------*/
 
 extern UINT8 exidy440_bank;
@@ -18,9 +21,8 @@ extern UINT8 *exidy440_m6844_data;
 extern UINT8 *exidy440_sound_banks;
 extern UINT8 *exidy440_sound_volume;
 
-int exidy440_sh_start(const struct MachineSound *msound);
-void exidy440_sh_stop(void);
-void exidy440_sh_update(void);
+void *exidy440_sh_start(int clock, const struct CustomSound_interface *config);
+void exidy440_sh_stop(void *token);
 
 READ8_HANDLER( exidy440_m6844_r );
 WRITE8_HANDLER( exidy440_m6844_w );

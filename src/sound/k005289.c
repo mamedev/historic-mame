@@ -26,6 +26,7 @@
 ***************************************************************************/
 
 #include "driver.h"
+#include "k005289.h"
 
 #define FREQBASEBITS	16
 
@@ -38,44 +39,48 @@ typedef struct
 	const unsigned char *wave;
 } k005289_sound_channel;
 
-static k005289_sound_channel channel_list[2];
+struct k005289_info
+{
+	k005289_sound_channel channel_list[2];
 
-/* global sound parameters */
-static const unsigned char *sound_prom;
-static int stream,mclock,rate;
+	/* global sound parameters */
+	const unsigned char *sound_prom;
+	sound_stream * stream;
+	int mclock,rate;
 
-/* mixer tables and internal buffers */
-static INT16 *mixer_table;
-static INT16 *mixer_lookup;
-static short *mixer_buffer;
+	/* mixer tables and internal buffers */
+	INT16 *mixer_table;
+	INT16 *mixer_lookup;
+	short *mixer_buffer;
 
-static int k005289_A_frequency,k005289_B_frequency;
-static int k005289_A_volume,k005289_B_volume;
-static int k005289_A_waveform,k005289_B_waveform;
-static int k005289_A_latch,k005289_B_latch;
+	int k005289_A_frequency,k005289_B_frequency;
+	int k005289_A_volume,k005289_B_volume;
+	int k005289_A_waveform,k005289_B_waveform;
+	int k005289_A_latch,k005289_B_latch;
+};
 
 /* build a table to divide by the number of voices */
-static int make_mixer_table(int voices)
+static int make_mixer_table(struct k005289_info *info, int voices)
 {
 	int count = voices * 128;
 	int i;
 	int gain = 16;
 
 	/* allocate memory */
-	mixer_table = malloc(256 * voices * sizeof(INT16));
-	if (!mixer_table)
+	info->mixer_table = auto_malloc(256 * voices * sizeof(INT16));
+	if (!info->mixer_table)
 		return 1;
 
 	/* find the middle of the table */
-	mixer_lookup = mixer_table + (128 * voices);
+	info->mixer_lookup = info->mixer_table + (128 * voices);
 
 	/* fill in the table - 16 bit case */
 	for (i = 0; i < count; i++)
 	{
 		int val = i * gain * 16 / voices;
 		if (val > 32767) val = 32767;
-		mixer_lookup[ i] = val;
-		mixer_lookup[-i] = -val;
+		info->mixer_lookup[ i] = val;
+		info->mixer_lookup[-i] = -val;
 	}
 
 	return 0;
@@ -83,14 +88,16 @@ static int make_mixer_table(int voices)
 
 
 /* generate sound to the mix buffer */
-static void K005289_update(int ch, INT16 *buffer, int length)
+static void K005289_update(void *param, stream_sample_t **inputs, stream_sample_t **_buffer, int length)
 {
-	k005289_sound_channel *voice=channel_list;
+	struct k005289_info *info = param;
+	k005289_sound_channel *voice=info->channel_list;
+	stream_sample_t *buffer = _buffer[0];
 	short *mix;
 	int i,v,f;
 
 	/* zap the contents of the mixer buffer */
-	memset(mixer_buffer, 0, length * sizeof(INT16));
+	memset(info->mixer_buffer, 0, length * sizeof(INT16));
 
 	v=voice[0].volume;
 	f=voice[0].frequency;
@@ -99,14 +106,14 @@ static void K005289_update(int ch, INT16 *buffer, int length)
 		const unsigned char *w = voice[0].wave;
 		int c = voice[0].counter;
 
-		mix = mixer_buffer;
+		mix = info->mixer_buffer;
 
 		/* add our contribution */
 		for (i = 0; i < length; i++)
 		{
 			int offs;
 
-			c+=(long)((((float)mclock / (float)(f * 16))*(float)(1<<FREQBASEBITS)) / (float)(rate / 32));
+			c+=(long)((((float)info->mclock / (float)(f * 16))*(float)(1<<FREQBASEBITS)) / (float)(info->rate / 32));
 			offs = (c >> 16) & 0x1f;
 			*mix++ += ((w[offs] & 0x0f) - 8) * v;
 		}
@@ -122,14 +129,14 @@ static void K005289_update(int ch, INT16 *buffer, int length)
 		const unsigned char *w = voice[1].wave;
 		int c = voice[1].counter;
 
-		mix = mixer_buffer;
+		mix = info->mixer_buffer;
 
 		/* add our contribution */
 		for (i = 0; i < length; i++)
 		{
 			int offs;
 
-			c+=(long)((((float)mclock / (float)(f * 16))*(float)(1<<FREQBASEBITS)) / (float)(rate / 32));
+			c+=(long)((((float)info->mclock / (float)(f * 16))*(float)(1<<FREQBASEBITS)) / (float)(info->rate / 32));
 			offs = (c >> 16) & 0x1f;
 			*mix++ += ((w[offs] & 0x0f) - 8) * v;
 		}
@@ -139,103 +146,142 @@ static void K005289_update(int ch, INT16 *buffer, int length)
 	}
 
 	/* mix it down */
-	mix = mixer_buffer;
+	mix = info->mixer_buffer;
 	for (i = 0; i < length; i++)
-		*buffer++ = mixer_lookup[*mix++];
+		*buffer++ = info->mixer_lookup[*mix++];
 }
 
-int K005289_sh_start(const struct MachineSound *msound)
+static void *k005289_start(int sndindex, int clock, const void *config)
 {
-	const char *snd_name = "K005289";
-	k005289_sound_channel *voice=channel_list;
-	const struct k005289_interface *intf = msound->sound_interface;
+	k005289_sound_channel *voice;
+	const struct k005289_interface *intf = config;
+	struct k005289_info *info;
+	
+	info = auto_malloc(sizeof(*info));
+	memset(info, 0, sizeof(*info));
+	voice = info->channel_list;
 
 	/* get stream channels */
-	stream = stream_init(snd_name, intf->volume, Machine->sample_rate, 0, K005289_update);
-	mclock = intf->master_clock;
-	rate = Machine->sample_rate;
+	info->stream = stream_create(0, 1, Machine->sample_rate, info, K005289_update);
+	info->mclock = clock;
+	info->rate = Machine->sample_rate;
 
 	/* allocate a pair of buffers to mix into - 1 second's worth should be more than enough */
-	if ((mixer_buffer = malloc(2 * sizeof(short) * Machine->sample_rate)) == 0)
-		return 1;
+	if ((info->mixer_buffer = auto_malloc(2 * sizeof(short) * Machine->sample_rate)) == 0)
+		return NULL;
 
 	/* build the mixer table */
-	if (make_mixer_table(2))
-	{
-		free (mixer_buffer);
-		return 1;
-	}
+	if (make_mixer_table(info, 2))
+		return NULL;
 
-	sound_prom = memory_region(intf->region);
+	info->sound_prom = memory_region(intf->region);
 
 	/* reset all the voices */
 	voice[0].frequency = 0;
 	voice[0].volume = 0;
-	voice[0].wave = &sound_prom[0];
+	voice[0].wave = &info->sound_prom[0];
 	voice[0].counter = 0;
 	voice[1].frequency = 0;
 	voice[1].volume = 0;
-	voice[1].wave = &sound_prom[0x100];
+	voice[1].wave = &info->sound_prom[0x100];
 	voice[1].counter = 0;
 
-	return 0;
+	return info;
 }
 
-
-void K005289_sh_stop(void)
-{
-	free (mixer_table);
-	free (mixer_buffer);
-}
 
 /********************************************************************************/
 
-static void k005289_recompute(void)
+static void k005289_recompute(struct k005289_info *info)
 {
-	k005289_sound_channel *voice = channel_list;
+	k005289_sound_channel *voice = info->channel_list;
 
-	stream_update(stream,0); 	/* update the streams */
+	stream_update(info->stream,0); 	/* update the streams */
 
-	voice[0].frequency = k005289_A_frequency;
-	voice[1].frequency = k005289_B_frequency;
-	voice[0].volume = k005289_A_volume;
-	voice[1].volume = k005289_B_volume;
-	voice[0].wave = &sound_prom[32 * k005289_A_waveform];
-	voice[1].wave = &sound_prom[32 * k005289_B_waveform + 0x100];
+	voice[0].frequency = info->k005289_A_frequency;
+	voice[1].frequency = info->k005289_B_frequency;
+	voice[0].volume = info->k005289_A_volume;
+	voice[1].volume = info->k005289_B_volume;
+	voice[0].wave = &info->sound_prom[32 * info->k005289_A_waveform];
+	voice[1].wave = &info->sound_prom[32 * info->k005289_B_waveform + 0x100];
 }
 
 WRITE8_HANDLER( k005289_control_A_w )
 {
-	k005289_A_volume=data&0xf;
-	k005289_A_waveform=data>>5;
-	k005289_recompute();
+	struct k005289_info *info = sndti_token(SOUND_K005289, 0);
+	info->k005289_A_volume=data&0xf;
+	info->k005289_A_waveform=data>>5;
+	k005289_recompute(info);
 }
 
 WRITE8_HANDLER( k005289_control_B_w )
 {
-	k005289_B_volume=data&0xf;
-	k005289_B_waveform=data>>5;
-	k005289_recompute();
+	struct k005289_info *info = sndti_token(SOUND_K005289, 0);
+	info->k005289_B_volume=data&0xf;
+	info->k005289_B_waveform=data>>5;
+	k005289_recompute(info);
 }
 
 WRITE8_HANDLER( k005289_pitch_A_w )
 {
-	k005289_A_latch = 0x1000 - offset;
+	struct k005289_info *info = sndti_token(SOUND_K005289, 0);
+	info->k005289_A_latch = 0x1000 - offset;
 }
 
 WRITE8_HANDLER( k005289_pitch_B_w )
 {
-	k005289_B_latch = 0x1000 - offset;
+	struct k005289_info *info = sndti_token(SOUND_K005289, 0);
+	info->k005289_B_latch = 0x1000 - offset;
 }
 
 WRITE8_HANDLER( k005289_keylatch_A_w )
 {
-	k005289_A_frequency = k005289_A_latch;
-	k005289_recompute();
+	struct k005289_info *info = sndti_token(SOUND_K005289, 0);
+	info->k005289_A_frequency = info->k005289_A_latch;
+	k005289_recompute(info);
 }
 
 WRITE8_HANDLER( k005289_keylatch_B_w )
 {
-	k005289_B_frequency = k005289_B_latch;
-	k005289_recompute();
+	struct k005289_info *info = sndti_token(SOUND_K005289, 0);
+	info->k005289_B_frequency = info->k005289_B_latch;
+	k005289_recompute(info);
 }
+
+
+
+
+/**************************************************************************
+ * Generic get_info
+ **************************************************************************/
+
+static void k005289_set_info(void *token, UINT32 state, union sndinfo *info)
+{
+	switch (state)
+	{
+		/* no parameters to set */
+	}
+}
+
+
+void k005289_get_info(void *token, UINT32 state, union sndinfo *info)
+{
+	switch (state)
+	{
+		/* --- the following bits of info are returned as 64-bit signed integers --- */
+
+		/* --- the following bits of info are returned as pointers to data or functions --- */
+		case SNDINFO_PTR_SET_INFO:						info->set_info = k005289_set_info;		break;
+		case SNDINFO_PTR_START:							info->start = k005289_start;			break;
+		case SNDINFO_PTR_STOP:							/* nothing */							break;
+		case SNDINFO_PTR_RESET:							/* nothing */							break;
+
+		/* --- the following bits of info are returned as NULL-terminated strings --- */
+		case SNDINFO_STR_NAME:							info->s = "K005289";					break;
+		case SNDINFO_STR_CORE_FAMILY:					info->s = "Konami custom";				break;
+		case SNDINFO_STR_CORE_VERSION:					info->s = "1.0";						break;
+		case SNDINFO_STR_CORE_FILE:						info->s = __FILE__;						break;
+		case SNDINFO_STR_CORE_CREDITS:					info->s = "Copyright (c) 2004, The MAME Team"; break;
+	}
+}
+

@@ -17,6 +17,7 @@ Todo :
 #include "driver.h"
 #include "machine/8255ppi.h"
 #include "vidhrdw/generic.h"
+#include "sound/2203intf.h"
 
 extern int homerun_gc_up;
 extern int homerun_gc_down;
@@ -127,14 +128,10 @@ ADDRESS_MAP_END
 
 static struct YM2203interface ym2203_interface =
 {
-	1,		
-	6000000/2,    	
-	{ YM2203_VOL(50,50), },
-	{ input_port_3_r  },
-	{ 0 },
-	{ 0 },
-	{ homerun_banking_w },
-	{ 0 }
+	input_port_3_r,
+	0,
+	0,
+	homerun_banking_w
 };
 
 
@@ -170,10 +167,13 @@ INPUT_PORTS_END
 
 static MACHINE_DRIVER_START( homerun )
 	MDRV_CPU_ADD(Z80, 5000000)
-	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
-	
 	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
 	MDRV_CPU_IO_MAP(readport,writeport)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+	
+	MDRV_MACHINE_INIT(homerun)
+
+	/* video hardware */
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
@@ -185,8 +185,13 @@ static MACHINE_DRIVER_START( homerun )
 
 	MDRV_VIDEO_START(homerun)
 	MDRV_VIDEO_UPDATE(homerun)
-	MDRV_SOUND_ADD(YM2203, ym2203_interface)
-	MDRV_MACHINE_INIT(homerun)
+
+	/* sound hardware */
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM2203, 6000000/2)
+	MDRV_SOUND_CONFIG(ym2203_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
 	
 MACHINE_DRIVER_END
 

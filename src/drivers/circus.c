@@ -30,6 +30,8 @@ D000      Paddle Position and Interrupt Reset
 #include "driver.h"
 #include "artwork.h"
 #include "vidhrdw/generic.h"
+#include "sound/dac.h"
+#include "sound/samples.h"
 
 extern WRITE8_HANDLER( circus_clown_x_w );
 extern WRITE8_HANDLER( circus_clown_y_w );
@@ -281,12 +283,6 @@ static INTERRUPT_GEN( ripcord_interrupt )
 }
 #endif
 
-static struct DACinterface dac_interface =
-{
-	1,
-	{ 255, 255 }
-};
-
 static MACHINE_DRIVER_START( circus )
 
 	/* basic machine hardware */
@@ -309,8 +305,14 @@ static MACHINE_DRIVER_START( circus )
 	MDRV_VIDEO_UPDATE(circus)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(SAMPLES, circus_samples_interface)
-	MDRV_SOUND_ADD(DAC, dac_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(SAMPLES, 0)
+	MDRV_SOUND_CONFIG(circus_samples_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
+
+	MDRV_SOUND_ADD(DAC, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 
@@ -336,7 +338,10 @@ static MACHINE_DRIVER_START( robotbwl )
 	MDRV_VIDEO_UPDATE(robotbwl)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(DAC, dac_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(DAC, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( crash )
@@ -361,7 +366,10 @@ static MACHINE_DRIVER_START( crash )
 	MDRV_VIDEO_UPDATE(crash)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(DAC, dac_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(DAC, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( ripcord )
@@ -386,7 +394,10 @@ static MACHINE_DRIVER_START( ripcord )
 	MDRV_VIDEO_UPDATE(ripcord)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(DAC, dac_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(DAC, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 

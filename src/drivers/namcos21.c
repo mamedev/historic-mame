@@ -187,6 +187,8 @@ CPU68 PCB:
 #include "cpu/m6809/m6809.h"
 #include "cpu/tms32025/tms32025.h"
 #include "namcoic.h"
+#include "sound/2151intf.h"
+#include "sound/c140.h"
 
 /* globals (shared by videohrdw/namcos21.c) */
 
@@ -779,28 +781,16 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 	{ -1 }
 };
 
-static struct YM2151interface ym2151_interface =
-{
-	1,			/* 1 chip */
-	3579580,	/* 3.58 MHz ? */
-	{ YM3012_VOL(50,MIXER_PAN_LEFT,50,MIXER_PAN_RIGHT) },
-	{ NULL }	/* YM2151 IRQ line is NOT connected on the PCB */
-};
-
 static struct C140interface C140_interface_typeA =
 {
 	C140_TYPE_SYSTEM21_A,
-	8000000/374,
-	REGION_SOUND1,
-	50
+	REGION_SOUND1
 };
 
 static struct C140interface C140_interface_typeB =
 {
 	C140_TYPE_SYSTEM21_B,
-	8000000/374,
-	REGION_SOUND1,
-	50
+	REGION_SOUND1
 };
 
 static MACHINE_DRIVER_START( s21base )
@@ -853,17 +843,31 @@ MACHINE_DRIVER_END
 static MACHINE_DRIVER_START( poly_c140_typeA )
 	MDRV_IMPORT_FROM(s21base)
 
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(C140, C140_interface_typeA)
-	MDRV_SOUND_ADD(YM2151, ym2151_interface)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(C140, 8000000/374)
+	MDRV_SOUND_CONFIG(C140_interface_typeA)
+	MDRV_SOUND_ROUTE(0, "left", 0.50)
+	MDRV_SOUND_ROUTE(0, "right", 0.50)
+
+	MDRV_SOUND_ADD(YM2151, 3579580)
+	MDRV_SOUND_ROUTE(0, "left", 0.30)
+	MDRV_SOUND_ROUTE(1, "right", 0.30)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( poly_c140_typeB )
 	MDRV_IMPORT_FROM(s21base)
 
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(C140, C140_interface_typeB)
-	MDRV_SOUND_ADD(YM2151, ym2151_interface)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(C140, 8000000/374)
+	MDRV_SOUND_CONFIG(C140_interface_typeB)
+	MDRV_SOUND_ROUTE(0, "left", 0.50)
+	MDRV_SOUND_ROUTE(0, "right", 0.50)
+
+	MDRV_SOUND_ADD(YM2151, 3579580)
+	MDRV_SOUND_ROUTE(0, "left", 0.30)
+	MDRV_SOUND_ROUTE(1, "right", 0.30)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( poly_winrun_c140_typeB )
@@ -905,9 +909,16 @@ static MACHINE_DRIVER_START( poly_winrun_c140_typeB )
 	MDRV_VIDEO_START(namcos21)
 	MDRV_VIDEO_UPDATE(namcos21_winrun)
 
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(C140, C140_interface_typeB)
-	MDRV_SOUND_ADD(YM2151, ym2151_interface)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(C140, 8000000/374)
+	MDRV_SOUND_CONFIG(C140_interface_typeB)
+	MDRV_SOUND_ROUTE(0, "left", 0.50)
+	MDRV_SOUND_ROUTE(0, "right", 0.50)
+
+	MDRV_SOUND_ADD(YM2151, 3579580)
+	MDRV_SOUND_ROUTE(0, "left", 0.30)
+	MDRV_SOUND_ROUTE(1, "right", 0.30)
 MACHINE_DRIVER_END
 
 ROM_START( aircombu )

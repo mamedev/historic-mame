@@ -50,6 +50,8 @@ The 6809 NMI is used for sound timing.
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "cpu/m6809/m6809.h"
+#include "sound/sn76496.h"
+#include "sound/vlm5030.h"
 
 extern int nmi_enable;
 
@@ -249,17 +251,8 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 
 
-struct SN76496interface sn76496_interface =
-{
-	1,			/* 1 chip */
-	{ 18432000/12 },	/*  1.536 MHz */
-	{ 100 }
-};
-
 struct VLM5030interface vlm5030_interface =
 {
-	3580000,    /* master clock  */
-	100,        /* volume        */
 	REGION_SOUND1,	/* memory region  */
 	0           /* memory size of speech rom */
 };
@@ -290,8 +283,14 @@ static MACHINE_DRIVER_START( yiear )
 	MDRV_VIDEO_UPDATE(yiear)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(SN76496, sn76496_interface)
-	MDRV_SOUND_ADD(VLM5030, vlm5030_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(SN76496, 18432000/12)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
+
+	MDRV_SOUND_ADD(VLM5030, 3580000)
+	MDRV_SOUND_CONFIG(vlm5030_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 

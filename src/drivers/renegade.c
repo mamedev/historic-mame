@@ -104,6 +104,8 @@ $8000 - $ffff	ROM
 #include "cpu/m6502/m6502.h"
 #include "cpu/m6809/m6809.h"
 #include "state.h"
+#include "sound/3812intf.h"
+#include "sound/msm5205.h"
 
 extern VIDEO_UPDATE( renegade );
 extern VIDEO_START( renegade );
@@ -138,7 +140,7 @@ static WRITE8_HANDLER( adpcm_play_w )
 		len = 0x1000;
 
 	if (offs >= 0 && offs+len <= 0x20000)
-		ADPCM_play(0, offs, len);
+		;//ADPCM_play(0, offs, len);
 	else
 		logerror("out of range adpcm command: 0x%02x\n", data);
 }
@@ -717,18 +719,13 @@ static void irqhandler(int linestate)
 
 static struct YM3526interface ym3526_interface =
 {
-	1,		/* 1 chip */
-	12000000/4,	/* 3 MHz (measured) */
-	{ 100 }, 	/* volume */
-	{ irqhandler },
+	irqhandler
 };
 
-static struct ADPCMinterface adpcm_interface =
+static struct MSM5205interface msm5205_interface =
 {
-	1,		/* 1 channel */
-	8000,		/* 8000Hz playback */
-	REGION_SOUND1,	/* memory region */
-	{ 100 } 	/* volume */
+	NULL,				/* VCK function */
+	MSM5205_S48_4B		/* 8 kHz */
 };
 
 
@@ -758,8 +755,15 @@ static MACHINE_DRIVER_START( renegade )
 	MDRV_VIDEO_UPDATE(renegade)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM3526, ym3526_interface)
-	MDRV_SOUND_ADD(ADPCM, adpcm_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM3526, 12000000/4)
+	MDRV_SOUND_CONFIG(ym3526_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
+
+	MDRV_SOUND_ADD(MSM5205, 384000)
+	MDRV_SOUND_CONFIG(msm5205_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 

@@ -55,6 +55,7 @@ Code disassembling
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "machine/eeprom.h"
+#include "sound/ay8910.h"
 
 static struct tilemap *bg_tilemap;
 
@@ -244,17 +245,6 @@ static ADDRESS_MAP_START( writeport, ADDRESS_SPACE_IO, 8 )
 	AM_RANGE(0xc0, 0xc0) AM_WRITE(port_c0_w) //watchdog write?
 ADDRESS_MAP_END
 
-static struct AY8910interface ay8910_interface =
-{
-	1,	/* 1 chip */
-	1500000,	/* 1.5 MHz ???? */
-	{ 50 },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ 0 }
-};
-
 static MACHINE_DRIVER_START( yumefuda )
 
 	/* basic machine hardware */
@@ -279,7 +269,10 @@ static MACHINE_DRIVER_START( yumefuda )
 	MDRV_VIDEO_UPDATE( yumefuda )
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(AY8910, ay8910_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	
+	MDRV_SOUND_ADD(AY8910, 1500000)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
 MACHINE_DRIVER_END
 
 /***************************************************************************************/

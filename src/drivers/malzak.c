@@ -27,6 +27,7 @@
 #include "vidhrdw/generic.h"
 #include "vidhrdw/s2636.h"
 #include "cpu/s2650/s2650.h"
+#include "sound/sn76477.h"
 
 #define SAA5050_VBLANK 2500
 
@@ -347,25 +348,23 @@ MACHINE_INIT(malzak)
 }
 
 static struct SN76477interface sn76477_intf =
-{  /* probably not correct */
-	2,	/* 2 chips */
-	{ 25,25 },  /* mixing level   pin description		 */
-	{ 0,0	/* N/C */},		/*	4  noise_res		 */
-	{ 0,0	/* N/C */},		/*	5  filter_res		 */
-	{ 0,0	/* N/C */},		/*	6  filter_cap		 */
-	{ 0,0	/* N/C */},		/*	7  decay_res		 */
-	{ 0,0	/* N/C */},		/*	8  attack_decay_cap  */
-	{ RES_K(100),RES_K(100) },		/* 10  attack_res		 */
-	{ RES_K(56), RES_K(56)  },		/* 11  amplitude_res	 */
-	{ RES_K(10), RES_K(10)  },		/* 12  feedback_res 	 */
-	{ 0,0	/* N/C */},		/* 16  vco_voltage		 */
-	{ CAP_U(0.1),CAP_U(0.1) },		/* 17  vco_cap			 */
-	{ RES_K(8.2),RES_K(8.2) },		/* 18  vco_res			 */
-	{ 5.0, 5.0		 },		/* 19  pitch_voltage	 */
-	{ RES_K(120), RES_K(120) },		/* 20  slf_res			 */
-	{ CAP_U(1.0),CAP_U(1.0) },		/* 21  slf_cap			 */
-	{ 0,0	/* N/C */},		/* 23  oneshot_cap		 */
-	{ 0,0	/* N/C */}		/* 24  oneshot_res		 */
+{
+	0,	/* N/C */		/*	4  noise_res		 */
+	0,	/* N/C */		/*	5  filter_res		 */
+	0,	/* N/C */		/*	6  filter_cap		 */
+	0,	/* N/C */		/*	7  decay_res		 */
+	0,	/* N/C */		/*	8  attack_decay_cap  */
+	RES_K(100),			/* 10  attack_res		 */
+	RES_K(56),			/* 11  amplitude_res	 */
+	RES_K(10),			/* 12  feedback_res 	 */
+	0,	/* N/C */		/* 16  vco_voltage		 */
+	CAP_U(0.1),			/* 17  vco_cap			 */
+	RES_K(8.2),			/* 18  vco_res			 */
+	5.0,				/* 19  pitch_voltage	 */
+	RES_K(120),			/* 20  slf_res			 */
+	CAP_U(1.0),			/* 21  slf_cap			 */
+	0,	/* N/C */		/* 23  oneshot_cap		 */
+	0	/* N/C */		/* 24  oneshot_res		 */
 };
 
 
@@ -394,8 +393,15 @@ static MACHINE_DRIVER_START( malzak )
 	MDRV_VIDEO_UPDATE(malzak)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(SN76477,sn76477_intf);
+	MDRV_SPEAKER_STANDARD_MONO("mono")
 
+	MDRV_SOUND_ADD(SN76477, 0)
+	MDRV_SOUND_CONFIG(sn76477_intf)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
+
+	MDRV_SOUND_ADD(SN76477, 0)
+	MDRV_SOUND_CONFIG(sn76477_intf)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
 MACHINE_DRIVER_END
 
 ROM_START( malzak )

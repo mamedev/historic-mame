@@ -82,6 +82,7 @@
 #include "driver.h"
 #include "cpu/adsp2100/adsp2100.h"
 #include "dcs.h"
+#include "sound/dmadac.h"
 
 #include <math.h>
 
@@ -353,30 +354,6 @@ ADDRESS_MAP_END
 
 
 /***************************************************************************
-	AUDIO STRUCTURES
-****************************************************************************/
-
-static struct dmadac_interface dcs_dmadac_interface =
-{
-	1,
-	{ 100 }
-};
-
-static struct dmadac_interface dcs2_dmadac_interface =
-{
-	2,
-	{ MIXER(100, MIXER_PAN_RIGHT), MIXER(100, MIXER_PAN_LEFT) }
-};
-
-static struct dmadac_interface dcs3_dmadac_interface =
-{
-	6,
-	{ MIXER(100, MIXER_PAN_RIGHT), MIXER(100, MIXER_PAN_LEFT), MIXER(100, MIXER_PAN_RIGHT), MIXER(100, MIXER_PAN_LEFT), MIXER(100, MIXER_PAN_RIGHT), MIXER(100, MIXER_PAN_LEFT) }
-};
-
-
-
-/***************************************************************************
 	MACHINE DRIVERS
 ****************************************************************************/
 
@@ -386,7 +363,10 @@ MACHINE_DRIVER_START( dcs_audio )
 	MDRV_CPU_PROGRAM_MAP(dcs_program_map,0)
 	MDRV_CPU_DATA_MAP(dcs_data_map,0)
 
-	MDRV_SOUND_ADD(DMADAC, dcs_dmadac_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(DMADAC, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 
@@ -404,8 +384,13 @@ MACHINE_DRIVER_START( dcs2_audio )
 	MDRV_CPU_PROGRAM_MAP(dcs2_program_map,0)
 	MDRV_CPU_DATA_MAP(dcs2_data_map,0)
 
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(DMADAC, dcs2_dmadac_interface)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(DMADAC, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 1.0)
+
+	MDRV_SOUND_ADD(DMADAC, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 1.0)
 MACHINE_DRIVER_END
 
 
@@ -428,8 +413,25 @@ MACHINE_DRIVER_START( dcs3_audio )
 	MDRV_CPU_PROGRAM_MAP(dcs3_program_map,0)
 	MDRV_CPU_DATA_MAP(dcs3_data_map,0)
 
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(DMADAC, dcs3_dmadac_interface)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(DMADAC, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 1.0)
+
+	MDRV_SOUND_ADD(DMADAC, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 1.0)
+
+	MDRV_SOUND_ADD(DMADAC, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 1.0)
+
+	MDRV_SOUND_ADD(DMADAC, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 1.0)
+
+	MDRV_SOUND_ADD(DMADAC, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 1.0)
+
+	MDRV_SOUND_ADD(DMADAC, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 1.0)
 MACHINE_DRIVER_END
 
 

@@ -5,7 +5,7 @@
 *************************************************************************/
 #include "driver.h"
 #include "dragrace.h"
-
+#include "sound/discrete.h"
 
 /************************************************************************/
 /* dragrace Sound System Analog emulation                                  */
@@ -186,6 +186,6 @@ DISCRETE_SOUND_START(dragrace_discrete_interface)
 	DISCRETE_GAIN(NODE_92, NODE_90, 65534.0/(593.8+581.6+1000.0+57.6))
 	DISCRETE_GAIN(NODE_93, NODE_91, 65534.0/(593.8+581.6+1000.0+57.6))
 
-	DISCRETE_OUTPUT(NODE_92, MIXER(100,MIXER_PAN_LEFT))
-	DISCRETE_OUTPUT(NODE_93, MIXER(100,MIXER_PAN_RIGHT))
+	DISCRETE_OUTPUT(NODE_92, 100)
+	DISCRETE_OUTPUT(NODE_93, 100)
 DISCRETE_SOUND_END

@@ -193,26 +193,26 @@ pin than a standard 2716.
 
 ROM_START( laserbas )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
-	ROM_LOAD( "mb8532.1",   0x0000, 0x1000, CRC(ef85e0c5)  )
-	ROM_LOAD( "mb8532.2",   0x1000, 0x1000, CRC(0ba2236c)  )
-	ROM_LOAD( "mb8532.3",   0x2000, 0x1000, CRC(83998e0b)  )
-	ROM_LOAD( "mb8532.4",   0x3000, 0x1000, CRC(00f9d909)  )
-	ROM_LOAD( "lb2532.5",   0xc000, 0x1000, CRC(6459073e)  )
-	ROM_LOAD( "lb2532.6",   0xd000, 0x1000, CRC(a2dc1e7e)  )
-	ROM_LOAD( "mb8532.7",   0xe000, 0x1000, CRC(9d2148d7)  )
-	ROM_LOAD( "mb8516.8",   0xf000, 0x0800, CRC(623f558f)  )
+	ROM_LOAD( "mb8532.1",   0x0000, 0x1000, CRC(ef85e0c5) SHA1(c26da919c206a23eb6e53ffe39acd5a5dfd47c18) )
+	ROM_LOAD( "mb8532.2",   0x1000, 0x1000, CRC(0ba2236c) SHA1(416e4be957c395b05537d2e513e0c4561d8ca7c5) )
+	ROM_LOAD( "mb8532.3",   0x2000, 0x1000, CRC(83998e0b) SHA1(ac435fb8dd67aec0737d6c750c527841b2b91a5b) )
+	ROM_LOAD( "mb8532.4",   0x3000, 0x1000, CRC(00f9d909) SHA1(90b800cc5fcea53454584f8ad93eebbd193bdd21) )
+	ROM_LOAD( "lb2532.5",   0xc000, 0x1000, CRC(6459073e) SHA1(78b8a23534826dd2d3b3c6c5d5708c8a78a4b6bf) )
+	ROM_LOAD( "lb2532.6",   0xd000, 0x1000, CRC(a2dc1e7e) SHA1(78643a3aa852c73dab12e09a6cfc53141c936d12) )
+	ROM_LOAD( "mb8532.7",   0xe000, 0x1000, CRC(9d2148d7) SHA1(24954d82a09d9fcfdc61e91b7c824daa5dd701c3) )
+	ROM_LOAD( "mb8516.8",   0xf000, 0x0800, CRC(623f558f) SHA1(be6c6565df658555f21c43a8c2459cf399794a84) )
 ROM_END
 
 ROM_START( laserbsa )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
-	ROM_LOAD( "2732.u1",       0x0000, 0x1000, CRC(f3ab00dc)  )
-	ROM_LOAD( "2732.u2",       0x1000, 0x1000, CRC(0ba2236c)  )
-	ROM_LOAD( "mb8532.u3",     0x2000, 0x1000, CRC(c58a7745)  )
-	ROM_LOAD( "mbm2732.u4",    0x3000, 0x1000, CRC(00f9d909)  )
-	ROM_LOAD( "2732.u5",       0xc000, 0x1000, CRC(6459073e)  )
-	ROM_LOAD( "2732.u6",       0xd000, 0x1000, CRC(a2dc1e7e)  )
-	ROM_LOAD( "2732.u7",       0xe000, 0x1000, CRC(9d2148d7)  )
-	ROM_LOAD( "mb8516.u8",     0xf000, 0x0800, CRC(623f558f)  )
+	ROM_LOAD( "2732.u1",       0x0000, 0x1000, CRC(f3ab00dc) SHA1(4730b13b55c93c71ed483463e180e71e506cfbd6) )
+	ROM_LOAD( "2732.u2",       0x1000, 0x1000, CRC(0ba2236c) SHA1(416e4be957c395b05537d2e513e0c4561d8ca7c5) )
+	ROM_LOAD( "mb8532.u3",     0x2000, 0x1000, CRC(c58a7745) SHA1(382e2235d89520860335c1c2760339e116c0466f) )
+	ROM_LOAD( "mbm2732.u4",    0x3000, 0x1000, CRC(00f9d909) SHA1(90b800cc5fcea53454584f8ad93eebbd193bdd21) )
+	ROM_LOAD( "2732.u5",       0xc000, 0x1000, CRC(6459073e) SHA1(78b8a23534826dd2d3b3c6c5d5708c8a78a4b6bf) )
+	ROM_LOAD( "2732.u6",       0xd000, 0x1000, CRC(a2dc1e7e) SHA1(78643a3aa852c73dab12e09a6cfc53141c936d12) )
+	ROM_LOAD( "2732.u7",       0xe000, 0x1000, CRC(9d2148d7) SHA1(24954d82a09d9fcfdc61e91b7c824daa5dd701c3) )
+	ROM_LOAD( "mb8516.u8",     0xf000, 0x0800, CRC(623f558f) SHA1(be6c6565df658555f21c43a8c2459cf399794a84) )
 ROM_END
 
 /*
@@ -223,16 +223,16 @@ as a 2716 (FF.9), a 2532 like the others (FF.9A) and a 2732 (FF.9B).
 
 ROM_START( futflash )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
-	ROM_LOAD( "ff.1",    	  	0x0000, 0x1000, CRC(bcd6b998)  )
-	ROM_LOAD( "ff.2",         0x1000, 0x1000, CRC(1b1f6953)  )
-	ROM_LOAD( "ff.3",         0x2000, 0x1000, CRC(30008f04)  )
-	ROM_LOAD( "ff.4",         0x3000, 0x1000, CRC(e559aa12)  )
-	ROM_LOAD( "ff.5",         0xc000, 0x1000, CRC(6459073e)  )
-	ROM_LOAD( "ff.6",         0xd000, 0x1000, CRC(a8b17f49)  )
-	ROM_LOAD( "ff.7",         0xe000, 0x1000, CRC(9d2148d7)  )
-	ROM_LOAD( "ff.8",         0xf000, 0x0800, CRC(623f558f)  )
+	ROM_LOAD( "ff.1",    	  0x0000, 0x1000, CRC(bcd6b998) SHA1(4a210c40ce6015e2b921558b7571b7f2a27e1815) )
+	ROM_LOAD( "ff.2",         0x1000, 0x1000, CRC(1b1f6953) SHA1(8cd7b7e2236700ce63c60b4d2286099c8091bdbd) )
+	ROM_LOAD( "ff.3",         0x2000, 0x1000, CRC(30008f04) SHA1(e03b2dbcb6d2615650cdd47ecf1d587906ce149b) )
+	ROM_LOAD( "ff.4",         0x3000, 0x1000, CRC(e559aa12) SHA1(0fecfb60b0147e8060c640f684f69503478200ff) )
+	ROM_LOAD( "ff.5",         0xc000, 0x1000, CRC(6459073e) SHA1(78b8a23534826dd2d3b3c6c5d5708c8a78a4b6bf) )
+	ROM_LOAD( "ff.6",         0xd000, 0x1000, CRC(a8b17f49) SHA1(aea349bd19d001233bfb1805e586c950275010b4) )
+	ROM_LOAD( "ff.7",         0xe000, 0x1000, CRC(9d2148d7) SHA1(24954d82a09d9fcfdc61e91b7c824daa5dd701c3) )
+	ROM_LOAD( "ff.8",         0xf000, 0x0800, CRC(623f558f) SHA1(be6c6565df658555f21c43a8c2459cf399794a84) )
 ROM_END
 
-GAMEX( 1981, laserbas, 0, laserbas, laserbas, 0, ROT270,  "Amstar/HOEI",	  "Laser Base (set 1)", GAME_NO_SOUND | GAME_NOT_WORKING)
-GAMEX( 1981, laserbsa, laserbas, laserbas, laserbas, 0, ROT270,  "Amstar/HOEI", "Laser Base (set 2)",		  GAME_NO_SOUND| GAME_NOT_WORKING )
-GAMEX( 19??, futflash, laserbas, laserbas, laserbas, 0, ROT270,  "HOEI",	  "Futur Flash", GAME_NO_SOUND | GAME_NOT_WORKING)
+GAMEX( 1981, laserbas, 0,        laserbas, laserbas, 0, ROT270, "Amstar/HOEI", "Laser Base (set 1)", GAME_NO_SOUND | GAME_NOT_WORKING)
+GAMEX( 1981, laserbsa, laserbas, laserbas, laserbas, 0, ROT270, "Amstar/HOEI", "Laser Base (set 2)", GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEX( 19??, futflash, laserbas, laserbas, laserbas, 0, ROT270, "HOEI",        "Future Flash",       GAME_NO_SOUND | GAME_NOT_WORKING)

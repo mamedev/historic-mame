@@ -71,6 +71,13 @@ Updates:
 #include "cpu/m68000/m68000.h"
 #include "cpu/z80/z80.h"
 #include "math.h"
+#include "sound/2151intf.h"
+#include "sound/okim6295.h"
+#include "sound/samples.h"
+#include "sound/k053260.h"
+#include "sound/k054539.h"
+#include "sound/k007232.h"
+#include "sound/upd7759.h"
 
 WRITE16_HANDLER( tmnt_paletteram_word_w );
 WRITE16_HANDLER( tmnt_0a0000_w );
@@ -105,6 +112,7 @@ VIDEO_EOF( detatwin );
 static int tmnt_soundlatch;
 static int cbj_snd_irqlatch, cbj_nvram_bank;
 static data16_t cbj_nvram[0x400*0x20];	// 32k paged in a 1k window
+static INT16 *sampledata;
 
 static READ16_HANDLER( K052109_word_noA12_r )
 {
@@ -310,34 +318,19 @@ WRITE8_HANDLER( tmnt_sres_w )
 	/* bit 2 plays the title music */
 	if (data & 0x04)
 	{
-		if (!sample_playing(0))	sample_start(0,0,0);
+		if (!sample_playing(0))	sample_start_raw(0,sampledata,0x40000,20000,0);
 	}
 	else sample_stop(0);
 	tmnt_soundlatch = data;
 }
 
 
-static int tmnt_decode_sample(const struct MachineSound *msound)
+static void tmnt_decode_sample(void)
 {
 	int i;
-	signed short *dest;
 	unsigned char *source = memory_region(REGION_SOUND3);
-	struct GameSamples *samples;
 
-
-	if ((Machine->samples = auto_malloc(sizeof(struct GameSamples))) == NULL)
-		return 1;
-
-	samples = Machine->samples;
-
-	if ((samples->sample[0] = auto_malloc(sizeof(struct GameSample) + (0x40000)*sizeof(short))) == NULL)
-		return 1;
-
-	samples->sample[0]->length = 0x40000*2;
-	samples->sample[0]->smpfreq = 20000;	/* 20 kHz */
-	samples->sample[0]->resolution = 16;
-	dest = (signed short *)samples->sample[0]->data;
-	samples->total = 1;
+	sampledata = auto_malloc(0x40000*sizeof(sampledata[0]));
 
 	/*	Sound sample for TMNT.D05 is stored in the following mode (ym3012 format):
 	 *
@@ -357,13 +350,8 @@ static int tmnt_decode_sample(const struct MachineSound *msound)
 
 		val <<= (expo-3);
 
-		dest[i] = val;
+		sampledata[i] = val;
 	}
-
-	/*	The sample is now ready to be used.  It's a 16 bit, 22kHz sample.
-	 */
-
-	return 0;
 }
 
 #if 0
@@ -2407,18 +2395,7 @@ static void cbj_irq_handler(int state)
 
 static struct YM2151interface ym2151_interface_cbj =
 {
-	1,			/* 1 chip */
-	3579545,	/* 3.579545 MHz */
-	{ YM3012_VOL(100,MIXER_PAN_LEFT,100,MIXER_PAN_RIGHT) },
-	{ cbj_irq_handler }
-};
-
-static struct YM2151interface ym2151_interface =
-{
-	1,			/* 1 chip */
-	3579545,	/* 3.579545 MHz */
-	{ YM3012_VOL(100,MIXER_PAN_LEFT,100,MIXER_PAN_RIGHT) },
-	{ 0 }
+	cbj_irq_handler
 };
 
 static void volume_callback(int v)
@@ -2429,77 +2406,25 @@ static void volume_callback(int v)
 
 static struct K007232_interface k007232_interface =
 {
-	1,		/* number of chips */
-	3579545,	/* clock */
-	{ REGION_SOUND1 },	/* memory regions */
-	{ K007232_VOL(20,MIXER_PAN_CENTER,20,MIXER_PAN_CENTER) },	/* volume */
-	{ volume_callback }	/* external port callback */
+	REGION_SOUND1,	/* memory regions */
+	volume_callback	/* external port callback */
 };
 
 static struct upd7759_interface upd7759_interface =
 {
-	1,		/* number of chips */
-	{ UPD7759_STANDARD_CLOCK },
-	{ 60 }, /* volume */
-	{ REGION_SOUND2 },		/* memory region */
-	{0}
+	REGION_SOUND2		/* memory region */
 };
 
 static struct Samplesinterface samples_interface =
 {
 	1,	/* 1 channel for the title music */
-	100	/* volume */
-};
-
-static struct CustomSound_interface custom_interface =
-{
-	tmnt_decode_sample,
-	0,
-	0
-};
-
-static struct K053260_interface k053260_interface_nmi =
-{
-	1,
-	{ 3579545 },
-	{ REGION_SOUND1 }, /* memory region */
-	{ { MIXER(70,MIXER_PAN_LEFT), MIXER(70,MIXER_PAN_RIGHT) } },
-//	{ sound_nmi_callback },
-};
-
-static struct K053260_interface dtk053260_interface_nmi =
-{
-	1,
-	{ 3579545 },
-	{ REGION_SOUND1 }, /* memory region */
-	{ { MIXER(75,MIXER_PAN_LEFT), MIXER(75,MIXER_PAN_RIGHT) } },
-//	{ sound_nmi_callback },
+	NULL,
+	tmnt_decode_sample
 };
 
 static struct K053260_interface k053260_interface =
 {
-	1,
-	{ 3579545 },
-	{ REGION_SOUND1 }, /* memory region */
-	{ { MIXER(70,MIXER_PAN_LEFT), MIXER(70,MIXER_PAN_RIGHT) } },
-	{ 0 }
-};
-
-static struct K053260_interface glfgreat_k053260_interface =
-{
-	1,
-	{ 3579545 },
-	{ REGION_SOUND1 }, /* memory region */
-	{ { MIXER(100,MIXER_PAN_LEFT), MIXER(100,MIXER_PAN_RIGHT) } },
-//	{ sound_nmi_callback },
-};
-
-static struct OKIM6295interface okim6295_interface =
-{
-	1,			/* 1 chip */
-	{ 8000 },
-	{ REGION_SOUND1 },
-	{ 100 }
+	REGION_SOUND1 /* memory region */
 };
 
 static MACHINE_DRIVER_START( cuebrckj )
@@ -2523,7 +2448,12 @@ static MACHINE_DRIVER_START( cuebrckj )
 	MDRV_VIDEO_UPDATE(mia)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM2151, ym2151_interface_cbj)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM2151, 3579545)
+	MDRV_SOUND_CONFIG(ym2151_interface_cbj)
+	MDRV_SOUND_ROUTE(0, "mono", 1.0)
+	MDRV_SOUND_ROUTE(1, "mono", 1.0)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( mia )
@@ -2550,8 +2480,16 @@ static MACHINE_DRIVER_START( mia )
 	MDRV_VIDEO_UPDATE(mia)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM2151, ym2151_interface)
-	MDRV_SOUND_ADD(K007232, k007232_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM2151, 3579545)
+	MDRV_SOUND_ROUTE(0, "mono", 1.0)
+	MDRV_SOUND_ROUTE(1, "mono", 1.0)
+	
+	MDRV_SOUND_ADD(K007232, 3579545)
+	MDRV_SOUND_CONFIG(k007232_interface)
+	MDRV_SOUND_ROUTE(0, "mono", 0.20)
+	MDRV_SOUND_ROUTE(1, "mono", 0.20)
 MACHINE_DRIVER_END
 
 
@@ -2579,11 +2517,24 @@ static MACHINE_DRIVER_START( tmnt )
 	MDRV_VIDEO_UPDATE(tmnt)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM2151, ym2151_interface)
-	MDRV_SOUND_ADD(K007232, k007232_interface)
-	MDRV_SOUND_ADD(UPD7759, upd7759_interface)
-	MDRV_SOUND_ADD(SAMPLES, samples_interface)
-	MDRV_SOUND_ADD(CUSTOM, custom_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM2151, 3579545)
+	MDRV_SOUND_ROUTE(0, "mono", 1.0)
+	MDRV_SOUND_ROUTE(1, "mono", 1.0)
+	
+	MDRV_SOUND_ADD(K007232, 3579545)
+	MDRV_SOUND_CONFIG(k007232_interface)
+	MDRV_SOUND_ROUTE(0, "mono", 0.20)
+	MDRV_SOUND_ROUTE(1, "mono", 0.20)
+
+	MDRV_SOUND_ADD(UPD7759, UPD7759_STANDARD_CLOCK)
+	MDRV_SOUND_CONFIG(upd7759_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.60)
+	
+	MDRV_SOUND_ADD(SAMPLES, 0)
+	MDRV_SOUND_CONFIG(samples_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 
@@ -2612,8 +2563,15 @@ static MACHINE_DRIVER_START( punkshot )
 	MDRV_VIDEO_UPDATE(punkshot)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM2151, ym2151_interface)
-	MDRV_SOUND_ADD(K053260, k053260_interface_nmi)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM2151, 3579545)
+	MDRV_SOUND_ROUTE(0, "mono", 1.0)
+	MDRV_SOUND_ROUTE(1, "mono", 1.0)
+
+	MDRV_SOUND_ADD(K053260, 3579545)
+	MDRV_SOUND_CONFIG(k053260_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.70)
 MACHINE_DRIVER_END
 
 
@@ -2641,9 +2599,16 @@ static MACHINE_DRIVER_START( lgtnfght )
 	MDRV_VIDEO_UPDATE(lgtnfght)
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(YM2151, ym2151_interface)
-	MDRV_SOUND_ADD(K053260, k053260_interface)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(YM2151, 3579545)
+	MDRV_SOUND_ROUTE(0, "left", 1.0)
+	MDRV_SOUND_ROUTE(1, "right", 1.0)
+
+	MDRV_SOUND_ADD(K053260, 3579545)
+	MDRV_SOUND_CONFIG(k053260_interface)
+	MDRV_SOUND_ROUTE(0, "left", 0.70)
+	MDRV_SOUND_ROUTE(1, "right", 0.70)
 MACHINE_DRIVER_END
 
 
@@ -2674,9 +2639,16 @@ static MACHINE_DRIVER_START( detatwin )
 	MDRV_VIDEO_EOF( detatwin ) //*
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(YM2151, ym2151_interface)
-	MDRV_SOUND_ADD(K053260, dtk053260_interface_nmi)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(YM2151, 3579545)
+	MDRV_SOUND_ROUTE(0, "left", 1.0)
+	MDRV_SOUND_ROUTE(1, "right", 1.0)
+
+	MDRV_SOUND_ADD(K053260, 3579545)
+	MDRV_SOUND_CONFIG(k053260_interface)
+	MDRV_SOUND_ROUTE(0, "left", 0.75)
+	MDRV_SOUND_ROUTE(1, "right", 0.75)
 MACHINE_DRIVER_END
 
 
@@ -2724,8 +2696,12 @@ static MACHINE_DRIVER_START( glfgreat )
 	MDRV_VIDEO_UPDATE(glfgreat)
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(K053260, glfgreat_k053260_interface)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(K053260, 3579545)
+	MDRV_SOUND_CONFIG(k053260_interface)
+	MDRV_SOUND_ROUTE(0, "left", 1.0)
+	MDRV_SOUND_ROUTE(1, "right", 1.0)
 MACHINE_DRIVER_END
 
 
@@ -2736,12 +2712,9 @@ static void sound_nmi(void)
 
 static struct K054539interface k054539_interface =
 {
-	1,			/* 1 chip */
-	48000,
-	{ REGION_SOUND1 },
-	{ { 100, 100 } },
-	{ 0 },
-	{ sound_nmi }
+	REGION_SOUND1,
+	NULL,
+	sound_nmi
 };
 
 static MACHINE_DRIVER_START( prmrsocr )
@@ -2771,8 +2744,12 @@ static MACHINE_DRIVER_START( prmrsocr )
 	MDRV_VIDEO_UPDATE(glfgreat)
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(K054539, k054539_interface)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(K054539, 48000)
+	MDRV_SOUND_CONFIG(k054539_interface)
+	MDRV_SOUND_ROUTE(0, "left", 1.0)
+	MDRV_SOUND_ROUTE(1, "right", 1.0)
 MACHINE_DRIVER_END
 
 
@@ -2806,9 +2783,16 @@ static MACHINE_DRIVER_START( tmnt2 ) //*
 	MDRV_VIDEO_UPDATE(tmnt2)
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(YM2151, ym2151_interface)
-	MDRV_SOUND_ADD(K053260, k053260_interface_nmi)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(YM2151, 3579545)
+	MDRV_SOUND_ROUTE(0, "left", 1.0)
+	MDRV_SOUND_ROUTE(1, "right", 1.0)
+
+	MDRV_SOUND_ADD(K053260, 3579545)
+	MDRV_SOUND_CONFIG(k053260_interface)
+	MDRV_SOUND_ROUTE(0, "left", 0.70)
+	MDRV_SOUND_ROUTE(1, "right", 0.70)
 MACHINE_DRIVER_END
 
 
@@ -2838,9 +2822,16 @@ static MACHINE_DRIVER_START( ssriders )
 	MDRV_VIDEO_UPDATE(tmnt2)
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(YM2151, ym2151_interface)
-	MDRV_SOUND_ADD(K053260, dtk053260_interface_nmi)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(YM2151, 3579545)
+	MDRV_SOUND_ROUTE(0, "left", 1.0)
+	MDRV_SOUND_ROUTE(1, "right", 1.0)
+
+	MDRV_SOUND_ADD(K053260, 3579545)
+	MDRV_SOUND_CONFIG(k053260_interface)
+	MDRV_SOUND_ROUTE(0, "left", 0.75)
+	MDRV_SOUND_ROUTE(1, "right", 0.75)
 MACHINE_DRIVER_END
 
 
@@ -2866,8 +2857,12 @@ static MACHINE_DRIVER_START( ssridersbl )
 	MDRV_VIDEO_UPDATE(tmnt2)
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(OKIM6295, okim6295_interface)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(OKIM6295, 8000)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 1.0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 1.0)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( thndrx2 )
@@ -2896,9 +2891,16 @@ static MACHINE_DRIVER_START( thndrx2 )
 	MDRV_VIDEO_UPDATE(thndrx2)
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(YM2151, ym2151_interface)
-	MDRV_SOUND_ADD(K053260, k053260_interface_nmi)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(YM2151, 3579545)
+	MDRV_SOUND_ROUTE(0, "left", 1.0)
+	MDRV_SOUND_ROUTE(1, "right", 1.0)
+
+	MDRV_SOUND_ADD(K053260, 3579545)
+	MDRV_SOUND_CONFIG(k053260_interface)
+	MDRV_SOUND_ROUTE(0, "left", 0.70)
+	MDRV_SOUND_ROUTE(1, "right", 0.70)
 MACHINE_DRIVER_END
 
 

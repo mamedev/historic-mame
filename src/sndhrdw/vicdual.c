@@ -6,6 +6,8 @@
 
 #include "driver.h"
 #include "vicdual.h"
+#include "sound/discrete.h"
+#include "sound/samples.h"
 
 /* Discrete Sound Input Nodes */
 #define FROGS_FLY_EN		NODE_01
@@ -111,7 +113,6 @@ static const char *frogs_sample_names[] =
 struct Samplesinterface frogs_samples_interface =
 {
 	5,	/* 5 channels */
-	35,	/* volume */
 	frogs_sample_names
 };
 

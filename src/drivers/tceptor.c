@@ -13,6 +13,9 @@
 #include "cpu/m6800/m6800.h"
 #include "cpu/m68000/m68000.h"
 #include "namcoic.h"
+#include "sound/dac.h"
+#include "sound/2151intf.h"
+#include "sound/namco.h"
 
 #ifdef TINY_COMPILE
 // to avoid link error
@@ -492,28 +495,11 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 /*******************************************************************/
 
-static struct YM2151interface ym2151_interface =
-{
-	1,			/* 1 chip */
-	14318180/4,		/* 3.579545 MHz */
-	{ YM3012_VOL(100,MIXER_PAN_LEFT,100,MIXER_PAN_RIGHT) },
-	{ 0 },
-	{ 0 }
-};
-
 static struct namco_interface namco_interface =
 {
-	49152000/2048,		/* 24000Hz */
 	8,			/* number of voices */
-	40,			/* playback volume */
 	-1,			/* memory region */
 	1			/* stereo */
-};
-
-static struct DACinterface dac_interface =
-{
-	1,			/* 1 channel */
-	{ 40 }			/* mixing level */
 };
 
 
@@ -573,10 +559,20 @@ static MACHINE_DRIVER_START( tceptor )
 	MDRV_VIDEO_UPDATE(tceptor)
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(YM2151, ym2151_interface)
-	MDRV_SOUND_ADD(NAMCO_CUS30, namco_interface)
-	MDRV_SOUND_ADD(DAC, dac_interface)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(YM2151, 14318180/4)
+	MDRV_SOUND_ROUTE(0, "left", 1.0)
+	MDRV_SOUND_ROUTE(1, "right", 1.0)
+
+	MDRV_SOUND_ADD(NAMCO_CUS30, 49152000/2048)
+	MDRV_SOUND_CONFIG(namco_interface)
+	MDRV_SOUND_ROUTE(0, "left", 0.40)
+	MDRV_SOUND_ROUTE(1, "right", 0.40)
+
+	MDRV_SOUND_ADD(DAC, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.40)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 0.40)
 MACHINE_DRIVER_END
 
 

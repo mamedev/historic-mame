@@ -218,6 +218,7 @@
 #include "vidhrdw/vector.h"
 #include "vidhrdw/avgdvg.h"
 #include "machine/atari_vg.h"
+#include "sound/pokey.h"
 #include "bzone.h"
 
 
@@ -647,22 +648,17 @@ INPUT_PORTS_END
  *
  *************************************/
 
-static struct POKEYinterface pokey_interface =
+static struct POKEYinterface pokey_interface_1 =
 {
-	2,	/* 2 chips */
-	1500000,	/* 1.5 MHz??? */
-	{ 50, 50 },
-	/* The 8 pot handlers */
-	{ 0, 0 },
-	{ 0, 0 },
-	{ 0, 0 },
-	{ 0, 0 },
-	{ 0, 0 },
-	{ 0, 0 },
-	{ 0, 0 },
-	{ 0, 0 },
-	/* The allpot handler */
-	{ input_port_1_r, input_port_2_r },
+	{ 0 },
+	input_port_1_r
+};
+
+
+static struct POKEYinterface pokey_interface_2 =
+{
+	{ 0 },
+	input_port_2_r
 };
 
 
@@ -694,7 +690,15 @@ static MACHINE_DRIVER_START( bwidow )
 	MDRV_VIDEO_UPDATE(vector)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(POKEY, pokey_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(POKEY, 1500000)
+	MDRV_SOUND_CONFIG(pokey_interface_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
+
+	MDRV_SOUND_ADD(POKEY, 1500000)
+	MDRV_SOUND_CONFIG(pokey_interface_2)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
 MACHINE_DRIVER_END
 
 

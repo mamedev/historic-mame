@@ -190,6 +190,7 @@
 #include "namcos22.h"
 #include "cpu/tms32025/tms32025.h"
 #include "cpu/m37710/m37710.h"
+#include "sound/c352.h"
 
 #define SS22_MASTER_CLOCK (49152000)	/* info from Guru */
 
@@ -2063,9 +2064,7 @@ static INTERRUPT_GEN( mcu_interrupt )
 
 static struct C352interface c352_interface =
 {
-	YM3012_VOL(50, MIXER_PAN_LEFT, 50, MIXER_PAN_RIGHT),
-	YM3012_VOL(50, MIXER_PAN_LEFT, 50, MIXER_PAN_RIGHT),
-	REGION_SOUND1,
+	REGION_SOUND1
 };
 
 static MACHINE_DRIVER_START( namcos22s )
@@ -2101,8 +2100,14 @@ static MACHINE_DRIVER_START( namcos22s )
 	MDRV_MACHINE_INIT(namcoss22)
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES( SOUND_SUPPORTS_STEREO )
-	MDRV_SOUND_ADD(C352, c352_interface)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+	
+	MDRV_SOUND_ADD(C352, 0)
+	MDRV_SOUND_CONFIG(c352_interface)
+	MDRV_SOUND_ROUTE(0, "left", 0.50)
+	MDRV_SOUND_ROUTE(1, "right", 0.50)
+	MDRV_SOUND_ROUTE(2, "left", 0.50)
+	MDRV_SOUND_ROUTE(3, "right", 0.50)
 MACHINE_DRIVER_END
 
 /*********************************************************************************/

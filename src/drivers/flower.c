@@ -33,6 +33,7 @@ CHIP #  POSITION   TYPE
 */
 
 #include "vidhrdw/generic.h"
+#include "sound/custom.h"
 
 extern data8_t *flower_textram, *flower_bg0ram, *flower_bg1ram, *flower_bg0_scroll, *flower_bg1_scroll;
 
@@ -45,8 +46,7 @@ VIDEO_START( flower );
 PALETTE_INIT( flower );
 
 extern data8_t *flower_soundregs1,*flower_soundregs2;
-int flower_sh_start(const struct MachineSound *msound);
-void flower_sh_stop(void);
+void *flower_sh_start(int clock, const struct CustomSound_interface *config);
 WRITE8_HANDLER( flower_sound1_w );
 WRITE8_HANDLER( flower_sound2_w );
 
@@ -228,9 +228,7 @@ static struct GfxDecodeInfo flower_gfxdecodeinfo[] =
 
 static struct CustomSound_interface custom_interface =
 {
-	flower_sh_start,
-	flower_sh_stop,
-	0
+	flower_sh_start
 };
 
 static MACHINE_DRIVER_START( flower )
@@ -267,7 +265,11 @@ static MACHINE_DRIVER_START( flower )
 	MDRV_VIDEO_UPDATE(flower)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(CUSTOM, custom_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	
+	MDRV_SOUND_ADD(CUSTOM, 0)
+	MDRV_SOUND_CONFIG(custom_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 

@@ -61,6 +61,9 @@ example, the protection data for that game was extracted from the bootleg.
 #include "vidhrdw/generic.h"
 #include "cpu/m68000/m68000.h"
 #include "cpu/z80/z80.h"
+#include "sound/2151intf.h"
+#include "sound/3812intf.h"
+#include "sound/okim6295.h"
 
 
 WRITE16_HANDLER( snowbros_flipscreen_w );
@@ -769,36 +772,14 @@ static void irqhandler(int irq)
 
 static struct YM3812interface ym3812_interface =
 {
-	1,			/* 1 chip */
-	3000000,	/* 3 MHz - confirmed */
-	{ 100 },	/* volume */
-	{ irqhandler },
+	irqhandler
 };
 
 /* SemiCom Sound */
 
 static struct YM2151interface ym2151_interface =
 {
-	1,
-	4000000,	/* 4 MHz??? */
-	{ YM3012_VOL(10,MIXER_PAN_LEFT,10,MIXER_PAN_RIGHT) },
-	{ irqhandler }
-};
-
-static struct OKIM6295interface okim6295_interface =
-{
-	1,			/* 1 chip */
-	{ 7575 },		/* 7575Hz playback? */
-	{ REGION_SOUND1 },
-	{ 100 }
-};
-
-static struct OKIM6295interface sb3_okim6295_interface =
-{
-	1,			/* 1 chip */
-	{ 8500 },		/* 7575Hz playback? */
-	{ REGION_SOUND1 },
-	{ 100 }
+	irqhandler
 };
 
 
@@ -836,7 +817,11 @@ static MACHINE_DRIVER_START( snowbros )
 	MDRV_VIDEO_UPDATE(snowbros)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD_TAG("3812", YM3812, ym3812_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD_TAG("3812", YM3812, 3000000)
+	MDRV_SOUND_CONFIG(ym3812_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 
@@ -865,8 +850,14 @@ static MACHINE_DRIVER_START( semicom )
 	MDRV_GFXDECODE(hyperpac_gfxdecodeinfo)
 
 	/* sound hardware */
-	MDRV_SOUND_REPLACE("3812",YM2151, ym2151_interface)
-	MDRV_SOUND_ADD(OKIM6295, okim6295_interface)
+	MDRV_SOUND_REPLACE("3812", YM2151, 4000000)
+	MDRV_SOUND_CONFIG(ym2151_interface)
+	MDRV_SOUND_ROUTE(0, "mono", 0.10)
+	MDRV_SOUND_ROUTE(1, "mono", 0.10)
+
+	MDRV_SOUND_ADD(OKIM6295, 7575)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( semiprot )
@@ -900,7 +891,11 @@ static MACHINE_DRIVER_START( snowbro3 )
 	MDRV_VIDEO_UPDATE(snowbro3)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(OKIM6295, sb3_okim6295_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(OKIM6295, 8500)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 /***************************************************************************

@@ -436,6 +436,8 @@ TODO:
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "machine/namcoio.h"
+#include "sound/dac.h"
+#include "sound/namco.h"
 
 
 /* video functions */
@@ -1493,16 +1495,8 @@ static struct GfxDecodeInfo gfxdecodeinfo_todruaga[] =
 
 static struct namco_interface namco_interface =
 {
-	18432000/768,	/* 24000 Hz sample rate */
 	8,				/* number of voices */
-	100,			/* playback volume */
 	REGION_SOUND1	/* memory region */
-};
-
-static struct DACinterface dac_interface =
-{
-	1,
-	{ 55 }
 };
 
 
@@ -1537,7 +1531,11 @@ static MACHINE_DRIVER_START( superpac )
 	MDRV_VIDEO_UPDATE(superpac)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(NAMCO_15XX, namco_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(NAMCO_15XX, 18432000/768)
+	MDRV_SOUND_CONFIG(namco_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( grobda )
@@ -1546,7 +1544,8 @@ static MACHINE_DRIVER_START( grobda )
 	MDRV_IMPORT_FROM( superpac )
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(DAC, dac_interface)
+	MDRV_SOUND_ADD(DAC, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.55)
 MACHINE_DRIVER_END
 
 
@@ -1584,7 +1583,11 @@ static MACHINE_DRIVER_START( phozon )
 	MDRV_VIDEO_UPDATE(phozon)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(NAMCO_15XX, namco_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(NAMCO_15XX, 18432000/768)
+	MDRV_SOUND_CONFIG(namco_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 
@@ -1618,7 +1621,11 @@ static MACHINE_DRIVER_START( mappy )
 	MDRV_VIDEO_UPDATE(mappy)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(NAMCO_15XX, namco_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(NAMCO_15XX, 18432000/768)
+	MDRV_SOUND_CONFIG(namco_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( todruaga )

@@ -18,128 +18,149 @@
 
 #ifdef BUILD_YM2608
 
-#define YM2608_NUMBUF 2
-/* use FM.C with stream system */
+struct ym2608_info
+{
+	sound_stream *	stream;
+	mame_timer *	timer[2];
+	void *			chip;
+	void *			psg;
+	const struct YM2608interface *intf;
+};
 
-static int stream[MAX_2608];
 
-/* Global Interface holder */
-static const struct YM2608interface *intf;
 
-static void *Timer[MAX_2608][2];
+static void psg_set_clock(void *param, int clock)
+{
+	struct ym2608_info *info = param;
+	ay8910_set_clock_ym(info->psg, clock);
+}
+
+static void psg_write(void *param, int address, int data)
+{
+	struct ym2608_info *info = param;
+	ay8910_write_ym(info->psg, address, data);
+}
+
+static int psg_read(void *param)
+{
+	struct ym2608_info *info = param;
+	return ay8910_read_ym(info->psg);
+}
+
+static void psg_reset(void *param)
+{
+	struct ym2608_info *info = param;
+	ay8910_reset_ym(info->psg);
+}
+
+static const struct ssg_callbacks psgintf =
+{
+	psg_set_clock,
+	psg_write,
+	psg_read,
+	psg_reset
+};
 
 
 /* IRQ Handler */
-static void IRQHandler(int n,int irq)
+static void IRQHandler(void *param,int irq)
 {
-	if(intf->handler[n]) intf->handler[n](irq);
+	struct ym2608_info *info = param;
+	if(info->intf->handler) info->intf->handler(irq);
 }
 
 /* Timer overflow callback from timer.c */
-static void timer_callback_2608(int param)
+static void timer_callback_2608_0(void *param)
 {
-	int n=param&0x7f;
-	int c=param>>7;
+	struct ym2608_info *info = param;
+	YM2608TimerOver(info->chip,0);
+}
 
-	YM2608TimerOver(n,c);
+static void timer_callback_2608_1(void *param)
+{
+	struct ym2608_info *info = param;
+	YM2608TimerOver(info->chip,1);
 }
 
 /* TimerHandler from fm.c */
-static void TimerHandler(int n,int c,int count,double stepTime)
+static void TimerHandler(void *param,int c,int count,double stepTime)
 {
+	struct ym2608_info *info = param;
 	if( count == 0 )
 	{	/* Reset FM Timer */
-		timer_enable(Timer[n][c], 0);
+		timer_enable(info->timer[c], 0);
 	}
 	else
 	{	/* Start FM Timer */
 		double timeSec = (double)count * stepTime;
-		if (!timer_enable(Timer[n][c], 1))
-			timer_adjust(Timer[n][c], timeSec, (c<<7)|n, 0);
-	}
-}
-
-static void FMTimerInit( void )
-{
-	int i;
-
-	for( i = 0 ; i < MAX_2608 ; i++ )
-	{
-		Timer[i][0] = timer_alloc(timer_callback_2608);
-		Timer[i][1] = timer_alloc(timer_callback_2608);
+		if (!timer_enable(info->timer[c], 1))
+			timer_adjust_ptr(info->timer[c], timeSec, info, 0);
 	}
 }
 
 /* update request from fm.c */
-void YM2608UpdateRequest(int chip)
+void YM2608UpdateRequest(void *param)
 {
-	stream_update(stream[chip],100);
+	struct ym2608_info *info = param;
+	stream_update(info->stream,100);
 }
 
-int YM2608_sh_start(const struct MachineSound *msound)
+static void ym2608_stream_update(void *param, stream_sample_t **inputs, stream_sample_t **buffers, int length)
 {
-	int i,j;
+	struct ym2608_info *info = param;
+	YM2608UpdateOne(info->chip, buffers, length);
+}
+
+
+static void *ym2608_start(int sndindex, int clock, const void *config)
+{
+	static const struct YM2608interface generic_2608 = { 0 };
+	const struct YM2608interface *intf = config ? config : &generic_2608;
 	int rate = Machine->sample_rate;
-	char buf[YM2608_NUMBUF][40];
-	const char *name[YM2608_NUMBUF];
-	int mixed_vol,vol[YM2608_NUMBUF];
-	void *pcmbufa[YM2608_NUMBUF];
-	int  pcmsizea[YM2608_NUMBUF];
+	void *pcmbufa;
+	int  pcmsizea;
 
+	struct ym2608_info *info;
+	
+	info = auto_malloc(sizeof(*info));
+	memset(info, 0, sizeof(*info));
 
-	intf = msound->sound_interface;
-	if( intf->num > MAX_2608 ) return 1;
-
-	if (AY8910_sh_start_ym(msound)) return 1;
+	info->intf = intf;
+	info->psg = ay8910_start_ym(SOUND_YM2608, sndindex, clock, 1, intf->portAread, intf->portBread, intf->portAwrite, intf->portBwrite);
+	if (!info->psg) return NULL;
 
 	/* Timer Handler set */
-	FMTimerInit();
+	info->timer[0] =timer_alloc_ptr(timer_callback_2608_0);
+	info->timer[1] =timer_alloc_ptr(timer_callback_2608_1);
 
 	/* stream system initialize */
-	for (i = 0;i < intf->num;i++)
-	{
-		/* stream setup */
-		mixed_vol = intf->volumeFM[i];
-		/* stream setup */
-		for (j = 0 ; j < YM2608_NUMBUF ; j++)
-		{
-			name[j]=buf[j];
-			vol[j] = mixed_vol & 0xffff;
-			mixed_vol>>=16;
-			sprintf(buf[j],"%s #%d Ch%d",sound_name(msound),i,j+1);
-		}
-		stream[i] = stream_init_multi(YM2608_NUMBUF,name,vol,rate,i,YM2608UpdateOne);
-		/* setup adpcm buffers */
-		pcmbufa[i]  = (void *)(memory_region(intf->pcmrom[i]));
-		pcmsizea[i] = memory_region_length(intf->pcmrom[i]);
-	}
-
+	info->stream = stream_create(0,2,rate,info,ym2608_stream_update);
+	/* setup adpcm buffers */
+	pcmbufa  = (void *)(memory_region(info->intf->pcmrom));
+	pcmsizea = memory_region_length(info->intf->pcmrom);
 
 	/* initialize YM2608 */
-	if (YM2608Init(intf->num,intf->baseclock,rate,
+	info->chip = YM2608Init(info,sndindex,clock,rate,
 		           pcmbufa,pcmsizea,
-		           TimerHandler,IRQHandler) == 0)
-		return 0;
+		           TimerHandler,IRQHandler,&psgintf);
+	if (info->chip)
+		return info;
 
 	/* error */
-	return 1;
+	return NULL;
 }
 
-/************************************************/
-/* Sound Hardware Stop							*/
-/************************************************/
-void YM2608_sh_stop(void)
+static void ym2608_stop(void *token)
 {
-	YM2608Shutdown();
-	AY8910_sh_stop_ym();
+	struct ym2608_info *info = token;
+	YM2608Shutdown(info->chip);
+	ay8910_stop_ym(info->psg);
 }
-/* reset */
-void YM2608_sh_reset(void)
-{
-	int i;
 
-	for (i = 0;i < intf->num;i++)
-		YM2608ResetChip(i);
+static void ym2608_reset(void *token)
+{
+	struct ym2608_info *info = token;
+	YM2608ResetChip(info->chip);
 }
 
 /************************************************/
@@ -147,39 +168,45 @@ void YM2608_sh_reset(void)
 /************************************************/
 READ8_HANDLER( YM2608_status_port_0_A_r )
 {
-//logerror("PC %04x: 2608 S0A=%02X\n",activecpu_get_pc(),YM2608Read(0,0));
-	return YM2608Read(0,0);
+//logerror("PC %04x: 2608 S0A=%02X\n",activecpu_get_pc(),YM2608Read(sndti_token(SOUND_YM2608, 0),0));
+	struct ym2608_info *info = sndti_token(SOUND_YM2608, 0);
+	return YM2608Read(info->chip,0);
 }
 
 READ8_HANDLER( YM2608_status_port_0_B_r )
 {
-//logerror("PC %04x: 2608 S0B=%02X\n",activecpu_get_pc(),YM2608Read(0,2));
-	return YM2608Read(0,2);
+//logerror("PC %04x: 2608 S0B=%02X\n",activecpu_get_pc(),YM2608Read(sndti_token(SOUND_YM2608, 0),2));
+	struct ym2608_info *info = sndti_token(SOUND_YM2608, 0);
+	return YM2608Read(info->chip,2);
 }
 
 /************************************************/
 /* Status Read for YM2608 - Chip 1				*/
 /************************************************/
 READ8_HANDLER( YM2608_status_port_1_A_r ) {
-	return YM2608Read(1,0);
+	struct ym2608_info *info = sndti_token(SOUND_YM2608, 1);
+	return YM2608Read(info->chip,0);
 }
 
 READ8_HANDLER( YM2608_status_port_1_B_r ) {
-	return YM2608Read(1,2);
+	struct ym2608_info *info = sndti_token(SOUND_YM2608, 1);
+	return YM2608Read(info->chip,2);
 }
 
 /************************************************/
 /* Port Read for YM2608 - Chip 0				*/
 /************************************************/
 READ8_HANDLER( YM2608_read_port_0_r ){
-	return YM2608Read(0,1);
+	struct ym2608_info *info = sndti_token(SOUND_YM2608, 0);
+	return YM2608Read(info->chip,1);
 }
 
 /************************************************/
 /* Port Read for YM2608 - Chip 1				*/
 /************************************************/
 READ8_HANDLER( YM2608_read_port_1_r ){
-	return YM2608Read(1,1);
+	struct ym2608_info *info = sndti_token(SOUND_YM2608, 1);
+	return YM2608Read(info->chip,1);
 }
 
 /************************************************/
@@ -188,12 +215,14 @@ READ8_HANDLER( YM2608_read_port_1_r ){
 /************************************************/
 WRITE8_HANDLER( YM2608_control_port_0_A_w )
 {
-	YM2608Write(0,0,data);
+	struct ym2608_info *info = sndti_token(SOUND_YM2608, 0);
+	YM2608Write(info->chip,0,data);
 }
 
 WRITE8_HANDLER( YM2608_control_port_0_B_w )
 {
-	YM2608Write(0,2,data);
+	struct ym2608_info *info = sndti_token(SOUND_YM2608, 0);
+	YM2608Write(info->chip,2,data);
 }
 
 /************************************************/
@@ -201,11 +230,13 @@ WRITE8_HANDLER( YM2608_control_port_0_B_w )
 /* Consists of 2 addresses						*/
 /************************************************/
 WRITE8_HANDLER( YM2608_control_port_1_A_w ){
-	YM2608Write(1,0,data);
+	struct ym2608_info *info = sndti_token(SOUND_YM2608, 1);
+	YM2608Write(info->chip,0,data);
 }
 
 WRITE8_HANDLER( YM2608_control_port_1_B_w ){
-	YM2608Write(1,2,data);
+	struct ym2608_info *info = sndti_token(SOUND_YM2608, 1);
+	YM2608Write(info->chip,2,data);
 }
 
 /************************************************/
@@ -214,12 +245,14 @@ WRITE8_HANDLER( YM2608_control_port_1_B_w ){
 /************************************************/
 WRITE8_HANDLER( YM2608_data_port_0_A_w )
 {
-	YM2608Write(0,1,data);
+	struct ym2608_info *info = sndti_token(SOUND_YM2608, 0);
+	YM2608Write(info->chip,1,data);
 }
 
 WRITE8_HANDLER( YM2608_data_port_0_B_w )
 {
-	YM2608Write(0,3,data);
+	struct ym2608_info *info = sndti_token(SOUND_YM2608, 0);
+	YM2608Write(info->chip,3,data);
 }
 
 /************************************************/
@@ -227,12 +260,49 @@ WRITE8_HANDLER( YM2608_data_port_0_B_w )
 /* Consists of 2 addresses						*/
 /************************************************/
 WRITE8_HANDLER( YM2608_data_port_1_A_w ){
-	YM2608Write(1,1,data);
+	struct ym2608_info *info = sndti_token(SOUND_YM2608, 1);
+	YM2608Write(info->chip,1,data);
 }
 WRITE8_HANDLER( YM2608_data_port_1_B_w ){
-	YM2608Write(1,3,data);
+	struct ym2608_info *info = sndti_token(SOUND_YM2608, 1);
+	YM2608Write(info->chip,3,data);
 }
 
 /**************** end of file ****************/
+
+
+/**************************************************************************
+ * Generic get_info
+ **************************************************************************/
+
+static void ym2608_set_info(void *token, UINT32 state, union sndinfo *info)
+{
+	switch (state)
+	{
+		/* no parameters to set */
+	}
+}
+
+
+void ym2608_get_info(void *token, UINT32 state, union sndinfo *info)
+{
+	switch (state)
+	{
+		/* --- the following bits of info are returned as 64-bit signed integers --- */
+
+		/* --- the following bits of info are returned as pointers to data or functions --- */
+		case SNDINFO_PTR_SET_INFO:						info->set_info = ym2608_set_info;		break;
+		case SNDINFO_PTR_START:							info->start = ym2608_start;				break;
+		case SNDINFO_PTR_STOP:							info->stop = ym2608_stop;				break;
+		case SNDINFO_PTR_RESET:							info->reset = ym2608_reset;				break;
+
+		/* --- the following bits of info are returned as NULL-terminated strings --- */
+		case SNDINFO_STR_NAME:							info->s = "YM2608";						break;
+		case SNDINFO_STR_CORE_FAMILY:					info->s = "Yamaha FM";					break;
+		case SNDINFO_STR_CORE_VERSION:					info->s = "1.0";						break;
+		case SNDINFO_STR_CORE_FILE:						info->s = __FILE__;						break;
+		case SNDINFO_STR_CORE_CREDITS:					info->s = "Copyright (c) 2004, The MAME Team"; break;
+	}
+}
 
 #endif

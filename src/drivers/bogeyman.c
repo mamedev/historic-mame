@@ -11,7 +11,7 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "cpu/m6502/m6502.h"
-
+#include "sound/ay8910.h"
 extern UINT8 *bogeyman_videoram2, *bogeyman_colorram2;
 
 extern WRITE8_HANDLER( bogeyman_videoram_w );
@@ -223,18 +223,6 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 	{ -1 }
 };
 
-/* Sound Interface */
-
-static struct AY8910interface ay8910_interface =
-{
-	2,      	// 2 chips
-	1500000,	// ???
-	{ 30, 30 },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ 0 }
-};
 
 /* Machine Driver */
 
@@ -261,7 +249,13 @@ static MACHINE_DRIVER_START( bogeyman )
 	MDRV_VIDEO_UPDATE(bogeyman)
 
 	// sound hardware
-	MDRV_SOUND_ADD(AY8910, ay8910_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(AY8910, 1500000)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.30)
+
+	MDRV_SOUND_ADD(AY8910, 1500000)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.30)
 MACHINE_DRIVER_END
 
 /* ROMs */

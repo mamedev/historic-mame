@@ -36,6 +36,7 @@ a small kid and even with a dog! And remember, Winners don't use Drugs ;)
 */
 
 #include "driver.h"
+#include "sound/okim6295.h"
 
 
 #define oki_time_base 0x08
@@ -512,14 +513,6 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 	{ -1 }
 };
 
-static struct OKIM6295interface okim6295_interface =
-{
-	1,							/* 1 chip */
-	{ (26000000/16)/165 },		/* frequency 9849Hz ??? */
-	{ REGION_SOUND1 },			/* memory region */
-	{ 80 }
-};
-
 
 /* Machine Driver */
 
@@ -545,7 +538,11 @@ static MACHINE_DRIVER_START( sslam )
 	MDRV_VIDEO_UPDATE(sslam)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(OKIM6295, okim6295_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(OKIM6295, 26000000/16/165)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.80)
 MACHINE_DRIVER_END
 
 /* maybe one dump is bad .. which? */

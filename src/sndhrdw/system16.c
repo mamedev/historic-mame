@@ -1,6 +1,7 @@
 // system 16 - 7751 emulation, based on monster bash code.
 #include "driver.h"
 #include "cpu/i8039/i8039.h"
+#include "sound/dac.h"
 
 static unsigned int port_8255_c03 = 0;
 static unsigned int port_8255_c47 = 0;

@@ -5,7 +5,7 @@
 *************************************************************************/
 #include "driver.h"
 #include "poolshrk.h"
-
+#include "sound/discrete.h"
 
 /************************************************************************/
 /* poolshrk Sound System Analog emulation                               */

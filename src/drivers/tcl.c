@@ -39,7 +39,7 @@ Notes:
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "machine/8255ppi.h"
-
+#include "sound/ay8910.h"
 
 
 VIDEO_START( tcl )
@@ -89,17 +89,6 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 	{ -1 }	/* end of array */
 };
 
-static struct AY8910interface ay8910_interface =
-{
-	1,
-	12000000/6,	/* guess */
-	{ 30,},
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ 0 }
-};
-
 static ppi8255_interface ppi8255_intf =
 {
 	2, 				
@@ -139,7 +128,10 @@ static MACHINE_DRIVER_START( tcl )
 	MDRV_MACHINE_INIT(tcl)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(AY8910, ay8910_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	
+	MDRV_SOUND_ADD(AY8910, 12000000/6)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.30)
 MACHINE_DRIVER_END
 
 /***************************************************************************

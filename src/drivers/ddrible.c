@@ -9,6 +9,9 @@ Driver by Manuel Abadia <manu@teleline.es>
 #include "driver.h"
 #include "cpu/m6809/m6809.h"
 #include "vidhrdw/generic.h"
+#include "sound/2203intf.h"
+#include "sound/vlm5030.h"
+#include "sound/flt_rc.h"
 
 int ddrible_int_enable_0;
 int ddrible_int_enable_1;
@@ -108,9 +111,9 @@ static WRITE8_HANDLER( ddrible_vlm5030_ctrl_w )
 	/* b2 : SSG-C rc filter enable */
 	/* b1 : SSG-B rc filter enable */
 	/* b0 : SSG-A rc filter enable */
-	set_RC_filter(2,1000,2200,1000,data & 0x04 ? 150000 : 0); /* YM2203-SSG-C */
-	set_RC_filter(1,1000,2200,1000,data & 0x02 ? 150000 : 0); /* YM2203-SSG-B */
-	set_RC_filter(0,1000,2200,1000,data & 0x01 ? 150000 : 0); /* YM2203-SSG-A */
+	filter_rc_set_RC(2,1000,2200,1000,data & 0x04 ? 150000 : 0); /* YM2203-SSG-C */
+	filter_rc_set_RC(1,1000,2200,1000,data & 0x02 ? 150000 : 0); /* YM2203-SSG-B */
+	filter_rc_set_RC(0,1000,2200,1000,data & 0x01 ? 150000 : 0); /* YM2203-SSG-A */
 }
 
 
@@ -318,19 +321,14 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 static struct YM2203interface ym2203_interface =
 {
-	1,			/* 1 chip */
-	3580000,	/* 3.58 MHz */
-	{ YM2203_VOL(25,25) },
-	{ 0 },
-	{ ddrible_vlm5030_busy_r },
-	{ ddrible_vlm5030_ctrl_w },
-	{ 0 }
+	0,
+	ddrible_vlm5030_busy_r,
+	ddrible_vlm5030_ctrl_w,
+	0
 };
 
 static struct VLM5030interface vlm5030_interface =
 {
-	3580000,    /* 3.58 MHz */
-	100,         /* volume */
 	REGION_SOUND1,/* memory region of speech rom */
 	0x10000     /* memory size 64Kbyte * 2 bank */
 };
@@ -368,8 +366,25 @@ static MACHINE_DRIVER_START( ddribble )
 	MDRV_VIDEO_UPDATE(ddrible)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM2203, ym2203_interface)
-	MDRV_SOUND_ADD(VLM5030, vlm5030_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM2203, 3580000)
+	MDRV_SOUND_CONFIG(ym2203_interface)
+	MDRV_SOUND_ROUTE(0, "filter1", 0.25)
+	MDRV_SOUND_ROUTE(1, "filter2", 0.25)
+	MDRV_SOUND_ROUTE(2, "filter3", 0.25)
+	MDRV_SOUND_ROUTE(3, "mono", 0.25)
+
+	MDRV_SOUND_ADD(VLM5030, 3580000)
+	MDRV_SOUND_CONFIG(vlm5030_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
+	
+	MDRV_SOUND_ADD_TAG("filter1", FILTER_RC, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
+	MDRV_SOUND_ADD_TAG("filter2", FILTER_RC, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
+	MDRV_SOUND_ADD_TAG("filter3", FILTER_RC, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 

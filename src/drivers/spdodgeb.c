@@ -20,7 +20,8 @@ Notes:
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "cpu/m6809/m6809.h"
-
+#include "sound/3812intf.h"
+#include "sound/msm5205.h"
 
 extern unsigned char *spdodgeb_videoram;
 
@@ -416,19 +417,13 @@ static void irq_handler(int irq)
 
 static struct YM3812interface ym3812_interface =
 {
-	1,			/* 1 chip */
-	3000000, 	/* 3MHz ? */
-	{ 100 },		/* volume */
-	{ irq_handler }
+	irq_handler
 };
 
 static struct MSM5205interface msm5205_interface =
 {
-	2,			/* 2 chips */
-	384000,		/* 384KHz */
-	{ spd_adpcm_int, spd_adpcm_int },	/* interrupt function */
-	{ MSM5205_S48_4B, MSM5205_S48_4B },	/* 8kHz? */
-	{ 50, 50 }	/* volume */
+	spd_adpcm_int,	/* interrupt function */
+	MSM5205_S48_4B	/* 8kHz? */
 };
 
 
@@ -460,9 +455,22 @@ static MACHINE_DRIVER_START( spdodgeb )
 	MDRV_VIDEO_UPDATE(spdodgeb)
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(YM3812, ym3812_interface)
-	MDRV_SOUND_ADD(MSM5205, msm5205_interface)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(YM3812, 3000000)
+	MDRV_SOUND_CONFIG(ym3812_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 1.0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 1.0)
+
+	MDRV_SOUND_ADD(MSM5205, 384000)
+	MDRV_SOUND_CONFIG(msm5205_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.50)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 0.50)
+
+	MDRV_SOUND_ADD(MSM5205, 384000)
+	MDRV_SOUND_CONFIG(msm5205_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.50)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 0.50)
 MACHINE_DRIVER_END
 
 

@@ -11,7 +11,7 @@
 #include <math.h>
 
 #include "driver.h"
-#include "adpcm.h"
+#include "es5506.h"
 
 
 
@@ -99,11 +99,12 @@ struct ES5506Voice
 	/* internal state */
 	UINT8		index;					/* index of this voice */
 	UINT8		filtcount;				/* filter count */
+	UINT32 		accum_mask;
 };
 
 struct ES5506Chip
 {
-	int			stream;					/* which stream are we using */
+	sound_stream *stream;				/* which stream are we using */
 	UINT16 *	region_base[4];			/* pointer to the base of the region */
 	UINT32 		write_latch;			/* currently accumulated data for write */
 	UINT32 		read_latch;				/* currently accumulated data for read */
@@ -128,6 +129,11 @@ struct ES5506Chip
 
 	struct 		ES5506Voice voice[32];	/* the 32 voices */
 
+	INT32 *		scratch;
+
+	INT16 *		ulaw_lookup;
+	UINT16 *	volume_lookup;
+
 #if MAKE_WAVS
 	void *		wavraw;					/* raw waveform */
 	void *		wavresample;			/* resampled waveform */
@@ -141,14 +147,6 @@ struct ES5506Chip
      GLOBALS
 
 ***********************************************************************************************/
-
-static struct ES5506Chip es5506[MAX_ES5506];
-static INT32 *accumulator;
-static INT32 *scratch;
-
-static INT16 *ulaw_lookup;
-static UINT16 *volume_lookup;
-static UINT32 accum_mask;
 
 static FILE *eslog;
 
@@ -190,15 +188,12 @@ static void update_internal_irq_state(struct ES5506Chip *chip)
 
 ***********************************************************************************************/
 
-static int compute_tables(void)
+static int compute_tables(struct ES5506Chip *chip)
 {
 	int i;
 
 	/* allocate ulaw lookup table */
-	if (!ulaw_lookup)
-		ulaw_lookup = malloc(sizeof(ulaw_lookup[0]) << ULAW_MAXBITS);
-	if (!ulaw_lookup)
-		return 0;
+	chip->ulaw_lookup = auto_malloc(sizeof(chip->ulaw_lookup[0]) << ULAW_MAXBITS);
 
 	/* generate ulaw lookup table */
 	for (i = 0; i < (1 << ULAW_MAXBITS); i++)
@@ -208,19 +203,16 @@ static int compute_tables(void)
 		UINT32 mantissa = (rawval << 3) & 0xffff;
 
 		if (exponent == 0)
-			ulaw_lookup[i] = (INT16)mantissa >> 7;
+			chip->ulaw_lookup[i] = (INT16)mantissa >> 7;
 		else
 		{
 			mantissa = (mantissa >> 1) | (~mantissa & 0x8000);
-			ulaw_lookup[i] = (INT16)mantissa >> (7 - exponent);
+			chip->ulaw_lookup[i] = (INT16)mantissa >> (7 - exponent);
 		}
 	}
 
 	/* allocate volume lookup table */
-	if (!volume_lookup)
-		volume_lookup = malloc(sizeof(volume_lookup[0]) * 4096);
-	if (!volume_lookup)
-		return 0;
+	chip->volume_lookup = auto_malloc(sizeof(chip->volume_lookup[0]) * 4096);
 
 	/* generate ulaw lookup table */
 	for (i = 0; i < 4096; i++)
@@ -228,7 +220,7 @@ static int compute_tables(void)
 		UINT8 exponent = i >> 8;
 		UINT32 mantissa = (i & 0xff) | 0x100;
 
-		volume_lookup[i] = (mantissa << 11) >> (20 - exponent);
+		chip->volume_lookup[i] = (mantissa << 11) >> (20 - exponent);
 	}
 
 	return 1;
@@ -406,18 +398,18 @@ do																					\
 																					\
 			/* uni-directional looping */											\
 			case CONTROL_LPE:														\
-				accum = (voice->start + (accum - voice->end)) & accum_mask;			\
+				accum = (voice->start + (accum - voice->end)) & voice->accum_mask;	\
 				break;																\
 																					\
 			/* trans-wave looping */												\
 			case CONTROL_BLE:														\
-				accum = (voice->start + (accum - voice->end)) & accum_mask;			\
+				accum = (voice->start + (accum - voice->end)) & voice->accum_mask;	\
 				voice->control = (voice->control & ~CONTROL_LOOPMASK) | CONTROL_LEI;\
 				break;																\
 																					\
 			/* bi-directional looping */											\
 			case CONTROL_LPE | CONTROL_BLE:											\
-				accum = (voice->end - (accum - voice->end)) & accum_mask;			\
+				accum = (voice->end - (accum - voice->end)) & voice->accum_mask;	\
 				voice->control ^= CONTROL_DIR;										\
 				goto reverse;														\
 		}																			\
@@ -445,18 +437,18 @@ do																					\
 																					\
 			/* uni-directional looping */											\
 			case CONTROL_LPE:														\
-				accum = (voice->end - (voice->start - accum)) & accum_mask;			\
+				accum = (voice->end - (voice->start - accum)) & voice->accum_mask;	\
 				break;																\
 																					\
 			/* trans-wave looping */												\
 			case CONTROL_BLE:														\
-				accum = (voice->end - (voice->start - accum)) & accum_mask;			\
+				accum = (voice->end - (voice->start - accum)) & voice->accum_mask;	\
 				voice->control = (voice->control & ~CONTROL_LOOPMASK) | CONTROL_LEI;\
 				break;																\
 																					\
 			/* bi-directional looping */											\
 			case CONTROL_LPE | CONTROL_BLE:											\
-				accum = (voice->start + (voice->start - accum)) & accum_mask;		\
+				accum = (voice->start + (voice->start - accum)) & voice->accum_mask;\
 				voice->control ^= CONTROL_DIR;										\
 				goto reverse;														\
 		}																			\
@@ -471,10 +463,10 @@ do																					\
 
 ***********************************************************************************************/
 
-static void generate_dummy(struct ES5506Voice *voice, UINT16 *base, INT32 *lbuffer, INT32 *rbuffer, int samples)
+static void generate_dummy(struct ES5506Chip *chip, struct ES5506Voice *voice, UINT16 *base, INT32 *lbuffer, INT32 *rbuffer, int samples)
 {
 	UINT32 freqcount = voice->freqcount;
-	UINT32 accum = voice->accum & accum_mask;
+	UINT32 accum = voice->accum & voice->accum_mask;
 
 	/* outer loop, in case we switch directions */
 	while (samples > 0 && !(voice->control & CONTROL_STOPMASK))
@@ -487,7 +479,7 @@ reverse:
 			while (samples--)
 			{
 				/* fetch two samples */
-				accum = (accum + freqcount) & accum_mask;
+				accum = (accum + freqcount) & voice->accum_mask;
 
 				/* update filters/volumes */
 				if (voice->ecount != 0)
@@ -505,7 +497,7 @@ reverse:
 			while (samples--)
 			{
 				/* fetch two samples */
-				accum = (accum - freqcount) & accum_mask;
+				accum = (accum - freqcount) & voice->accum_mask;
 
 				/* update filters/volumes */
 				if (voice->ecount != 0)
@@ -532,12 +524,12 @@ alldone:
 
 ***********************************************************************************************/
 
-static void generate_ulaw(struct ES5506Voice *voice, UINT16 *base, INT32 *lbuffer, INT32 *rbuffer, int samples)
+static void generate_ulaw(struct ES5506Chip *chip, struct ES5506Voice *voice, UINT16 *base, INT32 *lbuffer, INT32 *rbuffer, int samples)
 {
 	UINT32 freqcount = voice->freqcount;
-	UINT32 accum = voice->accum & accum_mask;
-	INT32 lvol = volume_lookup[voice->lvol >> 4];
-	INT32 rvol = volume_lookup[voice->rvol >> 4];
+	UINT32 accum = voice->accum & voice->accum_mask;
+	INT32 lvol = chip->volume_lookup[voice->lvol >> 4];
+	INT32 rvol = chip->volume_lookup[voice->rvol >> 4];
 
 	/* pre-add the bank offset */
 	base += voice->exbank;
@@ -554,15 +546,15 @@ reverse:
 			{
 				/* fetch two samples */
 				INT32 val1 = base[accum >> 11];
-				INT32 val2 = base[((accum + (1 << 11)) & accum_mask) >> 11];
+				INT32 val2 = base[((accum + (1 << 11)) & voice->accum_mask) >> 11];
 
 				/* decompress u-law */
-				val1 = ulaw_lookup[val1 >> (16 - ULAW_MAXBITS)];
-				val2 = ulaw_lookup[val2 >> (16 - ULAW_MAXBITS)];
+				val1 = chip->ulaw_lookup[val1 >> (16 - ULAW_MAXBITS)];
+				val2 = chip->ulaw_lookup[val2 >> (16 - ULAW_MAXBITS)];
 
 				/* interpolate */
 				val1 = interpolate(val1, val2, accum);
-				accum = (accum + freqcount) & accum_mask;
+				accum = (accum + freqcount) & voice->accum_mask;
 
 				/* apply filters */
 				apply_filters(voice, val1);
@@ -571,8 +563,8 @@ reverse:
 				if (voice->ecount != 0)
 				{
 					update_envelopes(voice, 1);
-					lvol = volume_lookup[voice->lvol >> 4];
-					rvol = volume_lookup[voice->rvol >> 4];
+					lvol = chip->volume_lookup[voice->lvol >> 4];
+					rvol = chip->volume_lookup[voice->rvol >> 4];
 				}
 
 				/* apply volumes and add */
@@ -592,15 +584,15 @@ reverse:
 			{
 				/* fetch two samples */
 				INT32 val1 = base[accum >> 11];
-				INT32 val2 = base[((accum + (1 << 11)) & accum_mask) >> 11];
+				INT32 val2 = base[((accum + (1 << 11)) & voice->accum_mask) >> 11];
 
 				/* decompress u-law */
-				val1 = ulaw_lookup[val1 >> (16 - ULAW_MAXBITS)];
-				val2 = ulaw_lookup[val2 >> (16 - ULAW_MAXBITS)];
+				val1 = chip->ulaw_lookup[val1 >> (16 - ULAW_MAXBITS)];
+				val2 = chip->ulaw_lookup[val2 >> (16 - ULAW_MAXBITS)];
 
 				/* interpolate */
 				val1 = interpolate(val1, val2, accum);
-				accum = (accum - freqcount) & accum_mask;
+				accum = (accum - freqcount) & voice->accum_mask;
 
 				/* apply filters */
 				apply_filters(voice, val1);
@@ -609,8 +601,8 @@ reverse:
 				if (voice->ecount != 0)
 				{
 					update_envelopes(voice, 1);
-					lvol = volume_lookup[voice->lvol >> 4];
-					rvol = volume_lookup[voice->rvol >> 4];
+					lvol = chip->volume_lookup[voice->lvol >> 4];
+					rvol = chip->volume_lookup[voice->rvol >> 4];
 				}
 
 				/* apply volumes and add */
@@ -638,12 +630,12 @@ alldone:
 
 ***********************************************************************************************/
 
-static void generate_pcm(struct ES5506Voice *voice, UINT16 *base, INT32 *lbuffer, INT32 *rbuffer, int samples)
+static void generate_pcm(struct ES5506Chip *chip, struct ES5506Voice *voice, UINT16 *base, INT32 *lbuffer, INT32 *rbuffer, int samples)
 {
 	UINT32 freqcount = voice->freqcount;
-	UINT32 accum = voice->accum & accum_mask;
-	INT32 lvol = volume_lookup[voice->lvol >> 4];
-	INT32 rvol = volume_lookup[voice->rvol >> 4];
+	UINT32 accum = voice->accum & voice->accum_mask;
+	INT32 lvol = chip->volume_lookup[voice->lvol >> 4];
+	INT32 rvol = chip->volume_lookup[voice->rvol >> 4];
 
 	/* pre-add the bank offset */
 	base += voice->exbank;
@@ -660,11 +652,11 @@ reverse:
 			{
 				/* fetch two samples */
 				INT32 val1 = (INT16)base[accum >> 11];
-				INT32 val2 = (INT16)base[((accum + (1 << 11)) & accum_mask) >> 11];
+				INT32 val2 = (INT16)base[((accum + (1 << 11)) & voice->accum_mask) >> 11];
 
 				/* interpolate */
 				val1 = interpolate(val1, val2, accum);
-				accum = (accum + freqcount) & accum_mask;
+				accum = (accum + freqcount) & voice->accum_mask;
 
 				/* apply filters */
 				apply_filters(voice, val1);
@@ -673,8 +665,8 @@ reverse:
 				if (voice->ecount != 0)
 				{
 					update_envelopes(voice, 1);
-					lvol = volume_lookup[voice->lvol >> 4];
-					rvol = volume_lookup[voice->rvol >> 4];
+					lvol = chip->volume_lookup[voice->lvol >> 4];
+					rvol = chip->volume_lookup[voice->rvol >> 4];
 				}
 
 				/* apply volumes and add */
@@ -694,11 +686,11 @@ reverse:
 			{
 				/* fetch two samples */
 				INT32 val1 = (INT16)base[accum >> 11];
-				INT32 val2 = (INT16)base[((accum + (1 << 11)) & accum_mask) >> 11];
+				INT32 val2 = (INT16)base[((accum + (1 << 11)) & voice->accum_mask) >> 11];
 
 				/* interpolate */
 				val1 = interpolate(val1, val2, accum);
-				accum = (accum - freqcount) & accum_mask;
+				accum = (accum - freqcount) & voice->accum_mask;
 
 				/* apply filters */
 				apply_filters(voice, val1);
@@ -707,8 +699,8 @@ reverse:
 				if (voice->ecount != 0)
 				{
 					update_envelopes(voice, 1);
-					lvol = volume_lookup[voice->lvol >> 4];
-					rvol = volume_lookup[voice->rvol >> 4];
+					lvol = chip->volume_lookup[voice->lvol >> 4];
+					rvol = chip->volume_lookup[voice->rvol >> 4];
 				}
 
 				/* apply volumes and add */
@@ -762,12 +754,12 @@ static void generate_samples(struct ES5506Chip *chip, INT32 *left, INT32 *right,
 		if (!base)
 		{
 			logerror("NULL region base %d\n",voice->control >> 14);
-			generate_dummy(voice, base, left, right, samples);
+			generate_dummy(chip, voice, base, left, right, samples);
 		}
 		else if (voice->control & 0x2000)
-			generate_ulaw(voice, base, left, right, samples);
+			generate_ulaw(chip, voice, base, left, right, samples);
 		else
-			generate_pcm(voice, base, left, right, samples);
+			generate_pcm(chip, voice, base, left, right, samples);
 
 		/* does this voice have it's IRQ bit raised? */
 		if (voice->control&CONTROL_IRQ) 
@@ -797,16 +789,16 @@ logerror("IRQ raised on voice %d!!\n",v);
 
 ***********************************************************************************************/
 
-static void es5506_update(int num, INT16 **buffer, int length)
+static void es5506_update(void *param, stream_sample_t **inputs, stream_sample_t **buffer, int length)
 {
-	struct ES5506Chip *chip = &es5506[num];
-	INT32 *lsrc = scratch, *rsrc = scratch;
+	struct ES5506Chip *chip = param;
+	INT32 *lsrc = chip->scratch, *rsrc = chip->scratch;
 	INT32 lprev = chip->last_lsample;
 	INT32 rprev = chip->last_rsample;
 	INT32 lcurr = chip->curr_lsample;
 	INT32 rcurr = chip->curr_rsample;
-	INT16 *ldest = buffer[0];
-	INT16 *rdest = buffer[1];
+	stream_sample_t *ldest = buffer[0];
+	stream_sample_t *rdest = buffer[1];
 	INT32 interp;
 	int remaining = length;
 	int samples_left = 0;
@@ -841,8 +833,8 @@ static void es5506_update(int num, INT16 **buffer, int length)
 					samples_left = MAX_SAMPLE_CHUNK;
 
 				/* determine left/right source data */
-				lsrc = scratch;
-				rsrc = scratch + samples_left;
+				lsrc = chip->scratch;
+				rsrc = chip->scratch + samples_left;
 				generate_samples(chip, lsrc, rsrc, samples_left);
 
 #if MAKE_WAVS
@@ -894,108 +886,77 @@ static void es5506_update(int num, INT16 **buffer, int length)
 }
 
 
-
 /**********************************************************************************************
 
      ES5506_sh_start -- start emulation of the ES5506
 
 ***********************************************************************************************/
 
-int ES5506_sh_start(const struct MachineSound *msound)
+static void *es5506_start_common(int sndtype, int sndindex, int clock, const void *config)
 {
-	const struct ES5506interface *intf = msound->sound_interface;
-	char stream_name[2][40];
-	const char *stream_name_ptrs[2];
-	int vol[2];
-	int i, j;
+	const struct ES5506interface *intf = config;
+	struct ES5506Chip *chip;
+	int j;
+	
+	chip = auto_malloc(sizeof(*chip));
+	memset(chip, 0, sizeof(*chip));
 
 	/* debugging */
 	if (LOG_COMMANDS && !eslog)
 		eslog = fopen("es.log", "w");
 
 	/* compute the tables */
-	if (!compute_tables())
-		return 1;
+	if (!compute_tables(chip))
+		return NULL;
 
-	/* initialize the voices */
-	memset(&es5506, 0, sizeof(es5506));
-	for (i = 0; i < intf->num; i++)
+	/* create the stream */
+	chip->stream = stream_create(0, 2, Machine->sample_rate, chip, es5506_update);
+
+	/* initialize the regions */
+	chip->region_base[0] = intf->region0 ? (UINT16 *)memory_region(intf->region0) : NULL;
+	chip->region_base[1] = intf->region1 ? (UINT16 *)memory_region(intf->region1) : NULL;
+	chip->region_base[2] = intf->region2 ? (UINT16 *)memory_region(intf->region2) : NULL;
+	chip->region_base[3] = intf->region3 ? (UINT16 *)memory_region(intf->region3) : NULL;
+
+	/* initialize the rest of the structure */
+	chip->master_clock = (double)clock;
+	chip->irq_callback = intf->irq_callback;
+	chip->irqv = 0x80;
+
+	/* init the voices */
+	for (j = 0; j < 32; j++)
 	{
-		/* generate the name and create the stream */
-		sprintf(stream_name[0], "%s #%d Ch1", sound_name(msound), i);
-		sprintf(stream_name[1], "%s #%d Ch2", sound_name(msound), i);
-		stream_name_ptrs[0] = stream_name[0];
-		stream_name_ptrs[1] = stream_name[1];
-
-		/* set the volumes */
-		vol[0] = intf->mixing_level[i] & 0xffff;
-		vol[1] = intf->mixing_level[i] >> 16;
-
-		/* create the stream */
-		es5506[i].stream = stream_init_multi(2, stream_name_ptrs, vol, Machine->sample_rate, i, es5506_update);
-		if (es5506[i].stream == -1)
-			return 1;
-
-		/* initialize the regions */
-		es5506[i].region_base[0] = intf->region0[i] ? (UINT16 *)memory_region(intf->region0[i]) : NULL;
-		es5506[i].region_base[1] = intf->region1[i] ? (UINT16 *)memory_region(intf->region1[i]) : NULL;
-		es5506[i].region_base[2] = intf->region2[i] ? (UINT16 *)memory_region(intf->region2[i]) : NULL;
-		es5506[i].region_base[3] = intf->region3[i] ? (UINT16 *)memory_region(intf->region3[i]) : NULL;
-
-		/* initialize the rest of the structure */
-		es5506[i].master_clock = (double)intf->baseclock[i];
-		es5506[i].irq_callback = intf->irq_callback[i];
-		es5506[i].irqv = 0x80;
-
-		/* init the voices */
-		for (j = 0; j < 32; j++)
-		{
-			es5506[i].voice[j].index = j;
-			es5506[i].voice[j].control = CONTROL_STOPMASK;
-			es5506[i].voice[j].lvol = 0xffff;
-			es5506[i].voice[j].rvol = 0xffff;
-			es5506[i].voice[j].exbank = 0;
-		}
+		chip->voice[j].index = j;
+		chip->voice[j].control = CONTROL_STOPMASK;
+		chip->voice[j].lvol = 0xffff;
+		chip->voice[j].rvol = 0xffff;
+		chip->voice[j].exbank = 0;
+		chip->voice[j].accum_mask = (sndtype == SOUND_ES5506) ? 0xffffffff : 0x7fffffff;
 	}
-	accum_mask = 0xffffffff;
 
 	/* allocate memory */
-	accumulator = malloc(sizeof(accumulator[0]) * 2 * MAX_SAMPLE_CHUNK);
-	scratch = malloc(sizeof(scratch[0]) * 2 * MAX_SAMPLE_CHUNK);
-	if (!accumulator || !scratch)
-		return 1;
+	chip->scratch = auto_malloc(sizeof(chip->scratch[0]) * 2 * MAX_SAMPLE_CHUNK);
 
 	/* success */
-	return 0;
+	return chip;
+}
+
+
+static void *es5506_start(int sndindex, int clock, const void *config)
+{
+	return es5506_start_common(SOUND_ES5506, sndindex, clock, config);
 }
 
 
 
 /**********************************************************************************************
 
-     ES5506_sh_stop -- stop emulation of the ES5506
+     ES5506_stop -- stop emulation of the ES5506
 
 ***********************************************************************************************/
 
-void ES5506_sh_stop(void)
+static void es5506_stop(void *chip)
 {
-	/* free memory */
-	if (accumulator)
-		free(accumulator);
-	accumulator = NULL;
-
-	if (scratch)
-		free(scratch);
-	scratch = NULL;
-
-	if (ulaw_lookup)
-		free(ulaw_lookup);
-	ulaw_lookup = NULL;
-
-	if (volume_lookup)
-		free(volume_lookup);
-	volume_lookup = NULL;
-
 	/* debugging */
 	if (LOG_COMMANDS && eslog)
 	{
@@ -1016,6 +977,11 @@ void ES5506_sh_stop(void)
 	}
 }
 #endif
+}
+
+
+static void es5506_reset(void *chip)
+{
 }
 
 
@@ -1537,22 +1503,22 @@ static data8_t es5506_reg_read(struct ES5506Chip *chip, offs_t offset)
 
 READ8_HANDLER( ES5506_data_0_r )
 {
-	return es5506_reg_read(&es5506[0], offset);
+	return es5506_reg_read(sndti_token(SOUND_ES5506, 0), offset);
 }
 
 READ8_HANDLER( ES5506_data_1_r )
 {
-	return es5506_reg_read(&es5506[1], offset);
+	return es5506_reg_read(sndti_token(SOUND_ES5506, 1), offset);
 }
 
 READ16_HANDLER( ES5506_data_0_word_r )
 {
-	return es5506_reg_read(&es5506[0], offset);
+	return es5506_reg_read(sndti_token(SOUND_ES5506, 0), offset);
 }
 
 READ16_HANDLER( ES5506_data_1_word_r )
 {
-	return es5506_reg_read(&es5506[1], offset);
+	return es5506_reg_read(sndti_token(SOUND_ES5506, 1), offset);
 }
 
 
@@ -1565,71 +1531,79 @@ READ16_HANDLER( ES5506_data_1_word_r )
 
 WRITE8_HANDLER( ES5506_data_0_w )
 {
-	es5506_reg_write(&es5506[0], offset, data);
+	es5506_reg_write(sndti_token(SOUND_ES5506, 0), offset, data);
 }
 
 WRITE8_HANDLER( ES5506_data_1_w )
 {
-	es5506_reg_write(&es5506[1], offset, data);
+	es5506_reg_write(sndti_token(SOUND_ES5506, 1), offset, data);
 }
 
 WRITE16_HANDLER( ES5506_data_0_word_w )
 {
 	if (ACCESSING_LSB)
-		es5506_reg_write(&es5506[0], offset, data);
+		es5506_reg_write(sndti_token(SOUND_ES5506, 0), offset, data);
 }
 
 WRITE16_HANDLER( ES5506_data_1_word_w )
 {
 	if (ACCESSING_LSB)
-		es5506_reg_write(&es5506[1], offset, data);
+		es5506_reg_write(sndti_token(SOUND_ES5506, 1), offset, data);
 }
 
 
 
+void ES5506_voice_bank_0_w(int voice, int bank)
+{
+	struct ES5506Chip *chip = sndti_token(SOUND_ES5505, 0);
+	chip->voice[voice].exbank=bank;
+}
+
+void ES5506_voice_bank_1_w(int voice, int bank)
+{
+	struct ES5506Chip *chip = sndti_token(SOUND_ES5505, 1);
+	chip->voice[voice].exbank=bank;
+}
+
+
 /**********************************************************************************************
 
-     ES5505_sh_start -- start emulation of the ES5505
+     ES5505_start -- start emulation of the ES5505
 
 ***********************************************************************************************/
 
-int ES5505_sh_start(const struct MachineSound *msound)
+static void *es5505_start(int sndindex, int clock, const void *config)
 {
-	const struct ES5505interface *intf = msound->sound_interface;
+	const struct ES5505interface *intf = config;
 	struct ES5506interface es5506intf;
-	struct MachineSound es5506msound;
-	int result;
 
 	memset(&es5506intf, 0, sizeof(es5506intf));
 
-	es5506intf.num = intf->num;
-	memcpy(es5506intf.baseclock, intf->baseclock, sizeof(es5506intf.baseclock));
-	memcpy(es5506intf.region0, intf->region0, sizeof(es5506intf.region0));
-	memcpy(es5506intf.region1, intf->region1, sizeof(es5506intf.region1));
-	memcpy(es5506intf.mixing_level, intf->mixing_level, sizeof(es5506intf.mixing_level));
-	memcpy(es5506intf.irq_callback, intf->irq_callback, sizeof(es5506intf.irq_callback));
-	memcpy(es5506intf.read_port, intf->read_port, sizeof(es5506intf.read_port));
+	es5506intf.region0 = intf->region0;
+	es5506intf.region1 = intf->region1;
+	es5506intf.irq_callback = intf->irq_callback;
+	es5506intf.read_port = intf->read_port;
 
-	es5506msound.sound_interface = &es5506intf;
-	es5506msound.sound_type = msound->sound_type;
-
-	result = ES5506_sh_start(&es5506msound);
-	accum_mask = 0x7fffffff;
-
-	return result;
+	return es5506_start_common(SOUND_ES5505, sndindex, clock, &es5506intf);
 }
 
 
 
 /**********************************************************************************************
 
-     ES5505_sh_stop -- stop emulation of the ES5506
+     ES5505_stop -- stop emulation of the ES5506
 
 ***********************************************************************************************/
 
-void ES5505_sh_stop(void)
+static void es5505_stop(void *chip)
 {
-	ES5506_sh_stop();
+	es5506_stop(chip);
+}
+
+
+static void es5505_reset(void *chip)
+{
+	es5506_reset(chip);
 }
 
 
@@ -2192,12 +2166,12 @@ static data16_t es5505_reg_read(struct ES5506Chip *chip, offs_t offset)
 
 READ16_HANDLER( ES5505_data_0_r )
 {
-	return es5505_reg_read(&es5506[0], offset);
+	return es5505_reg_read(sndti_token(SOUND_ES5505, 0), offset);
 }
 
 READ16_HANDLER( ES5505_data_1_r )
 {
-	return es5505_reg_read(&es5506[1], offset);
+	return es5505_reg_read(sndti_token(SOUND_ES5505, 1), offset);
 }
 
 /**********************************************************************************************
@@ -2208,26 +2182,101 @@ READ16_HANDLER( ES5505_data_1_r )
 
 WRITE16_HANDLER( ES5505_data_0_w )
 {
-	es5505_reg_write(&es5506[0], offset, data, mem_mask);
+	es5505_reg_write(sndti_token(SOUND_ES5505, 0), offset, data, mem_mask);
 }
 
 WRITE16_HANDLER( ES5505_data_1_w )
 {
-	es5505_reg_write(&es5506[1], offset, data, mem_mask);
+	es5505_reg_write(sndti_token(SOUND_ES5505, 1), offset, data, mem_mask);
 }
 
-void ES5506_voice_bank_0_w(int voice, int bank)
+void ES5505_voice_bank_0_w(int voice, int bank)
 {
+	struct ES5506Chip *chip = sndti_token(SOUND_ES5505, 0);
 #if RAINE_CHECK
-	es5506[0].voice[voice].control = CONTROL_STOPMASK;
+	chip->voice[voice].control = CONTROL_STOPMASK;
 #endif
-	es5506[0].voice[voice].exbank=bank;
+	chip->voice[voice].exbank=bank;
 }
 
-void ES5506_voice_bank_1_w(int voice, int bank)
+void ES5505_voice_bank_1_w(int voice, int bank)
 {
+	struct ES5506Chip *chip = sndti_token(SOUND_ES5505, 1);
 #if RAINE_CHECK
-	es5506[1].voice[voice].control = CONTROL_STOPMASK;
+	chip->voice[voice].control = CONTROL_STOPMASK;
 #endif
-	es5506[1].voice[voice].exbank=bank;
+	chip->voice[voice].exbank=bank;
 }
+
+
+
+
+/**************************************************************************
+ * Generic get_info
+ **************************************************************************/
+
+static void es5505_set_info(void *token, UINT32 state, union sndinfo *info)
+{
+	switch (state)
+	{
+		/* no parameters to set */
+	}
+}
+
+
+void es5505_get_info(void *token, UINT32 state, union sndinfo *info)
+{
+	switch (state)
+	{
+		/* --- the following bits of info are returned as 64-bit signed integers --- */
+
+		/* --- the following bits of info are returned as pointers to data or functions --- */
+		case SNDINFO_PTR_SET_INFO:						info->set_info = es5505_set_info;		break;
+		case SNDINFO_PTR_START:							info->start = es5505_start;				break;
+		case SNDINFO_PTR_STOP:							info->stop = es5505_stop;				break;
+		case SNDINFO_PTR_RESET:							info->reset = es5505_reset;				break;
+
+		/* --- the following bits of info are returned as NULL-terminated strings --- */
+		case SNDINFO_STR_NAME:							info->s = "ES5505";						break;
+		case SNDINFO_STR_CORE_FAMILY:					info->s = "Ensoniq Wavetable";			break;
+		case SNDINFO_STR_CORE_VERSION:					info->s = "1.0";						break;
+		case SNDINFO_STR_CORE_FILE:						info->s = __FILE__;						break;
+		case SNDINFO_STR_CORE_CREDITS:					info->s = "Copyright (c) 2004, The MAME Team"; break;
+	}
+}
+
+
+/**************************************************************************
+ * Generic get_info
+ **************************************************************************/
+
+static void es5506_set_info(void *token, UINT32 state, union sndinfo *info)
+{
+	switch (state)
+	{
+		/* no parameters to set */
+	}
+}
+
+
+void es5506_get_info(void *token, UINT32 state, union sndinfo *info)
+{
+	switch (state)
+	{
+		/* --- the following bits of info are returned as 64-bit signed integers --- */
+
+		/* --- the following bits of info are returned as pointers to data or functions --- */
+		case SNDINFO_PTR_SET_INFO:						info->set_info = es5506_set_info;		break;
+		case SNDINFO_PTR_START:							info->start = es5506_start;				break;
+		case SNDINFO_PTR_STOP:							info->stop = es5506_stop;				break;
+		case SNDINFO_PTR_RESET:							info->reset = es5506_reset;				break;
+
+		/* --- the following bits of info are returned as NULL-terminated strings --- */
+		case SNDINFO_STR_NAME:							info->s = "ES5506";						break;
+		case SNDINFO_STR_CORE_FAMILY:					info->s = "Ensoniq Wavetable";			break;
+		case SNDINFO_STR_CORE_VERSION:					info->s = "1.0";						break;
+		case SNDINFO_STR_CORE_FILE:						info->s = __FILE__;						break;
+		case SNDINFO_STR_CORE_CREDITS:					info->s = "Copyright (c) 2004, The MAME Team"; break;
+	}
+}
+

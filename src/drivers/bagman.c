@@ -58,6 +58,8 @@ I/O C  ;AY-3-8910 Data Read Reg.
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "sound/ay8910.h"
+#include "sound/5110intf.h"
 #include "sound/tms5110.h"
 
 
@@ -503,19 +505,12 @@ static struct GfxDecodeInfo pickin_gfxdecodeinfo[] =
 
 static struct AY8910interface ay8910_interface =
 {
-	1,	/* 1 chip */
-	1500000,	/* 1.5 MHz??? */
-	{ 10 },
-	{ input_port_0_r },
-	{ input_port_1_r },
-	{ 0 },
-	{ 0 }
+	input_port_0_r,
+	input_port_1_r,
 };
 
 static struct TMS5110interface tms5110_interface =
 {
-	640000, /*640 kHz clock*/
-	100,	/*100 % mixing level */
 	0,		/*irq callback function*/
 	bagman_speech_rom_read_bit	/*M0 callback function. Called whenever chip requests a single bit of data*/
 };
@@ -545,8 +540,15 @@ static MACHINE_DRIVER_START( bagman )
 	MDRV_VIDEO_UPDATE(bagman)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(AY8910, ay8910_interface)
-	MDRV_SOUND_ADD(TMS5110, tms5110_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	
+	MDRV_SOUND_ADD(AY8910, 1500000)
+	MDRV_SOUND_CONFIG(ay8910_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.10)
+
+	MDRV_SOUND_ADD(TMS5110, 640000)
+	MDRV_SOUND_CONFIG(tms5110_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( pickin )
@@ -574,7 +576,11 @@ static MACHINE_DRIVER_START( pickin )
 	MDRV_VIDEO_UPDATE(bagman)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(AY8910, ay8910_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	
+	MDRV_SOUND_ADD(AY8910, 1500000)
+	MDRV_SOUND_CONFIG(ay8910_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.10)
 MACHINE_DRIVER_END
 
 /*
@@ -620,7 +626,11 @@ static MACHINE_DRIVER_START( botanic )
 	MDRV_VIDEO_UPDATE(bagman)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(AY8910, ay8910_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	
+	MDRV_SOUND_ADD(AY8910, 1500000)
+	MDRV_SOUND_CONFIG(ay8910_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.10)
 MACHINE_DRIVER_END
 
 /***************************************************************************

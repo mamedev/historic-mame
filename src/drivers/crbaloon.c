@@ -51,6 +51,8 @@ write:
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "sound/sn76477.h"
+#include "sound/custom.h"
 
 
 extern WRITE8_HANDLER( crbaloon_videoram_w );
@@ -65,7 +67,7 @@ extern VIDEO_UPDATE( crbaloon );
 
 int val06,val08,val0a;
 
-static int crbaloon_tone_stream;
+static sound_stream *crbaloon_tone_stream;
 static UINT32 crbaloon_tone_step;
 static UINT32 crbaloon_tone_pos;
 
@@ -347,29 +349,29 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 static struct SN76477interface sn76477_interface =
 {
-	1,	/* 1 chip */
-	{ 100 }, /* mixing level   pin description		 */
-	{ RES_K( 47)   },		/*	4  noise_res		 */
-	{ RES_K(330)   },		/*	5  filter_res		 */
-	{ CAP_P(470)   },		/*	6  filter_cap		 */
-	{ RES_K(220)   },		/*	7  decay_res		 */
-	{ CAP_U(1.0)   },		/*	8  attack_decay_cap  */
-	{ RES_K(4.7)   },		/* 10  attack_res		 */
-	{ RES_M(  1)   },		/* 11  amplitude_res	 */
-	{ RES_K(200)   },		/* 12  feedback_res 	 */
-	{ 5.0		   },		/* 16  vco_voltage		 */
-	{ CAP_P(470)   },		/* 17  vco_cap			 */
-	{ RES_K(330)   },		/* 18  vco_res			 */
-	{ 5.0		   },		/* 19  pitch_voltage	 */
-	{ RES_K( 20)   },		/* 20  slf_res			 */
-	{ CAP_P(420)   },		/* 21  slf_cap			 */
-	{ CAP_U(1.0)   },		/* 23  oneshot_cap		 */
-	{ RES_K( 47)   }		/* 24  oneshot_res		 */
+	RES_K( 47)   ,		/*	4  noise_res		 */
+	RES_K(330)   ,		/*	5  filter_res		 */
+	CAP_P(470)   ,		/*	6  filter_cap		 */
+	RES_K(220)   ,		/*	7  decay_res		 */
+	CAP_U(1.0)   ,		/*	8  attack_decay_cap  */
+	RES_K(4.7)   ,		/* 10  attack_res		 */
+	RES_M(  1)   ,		/* 11  amplitude_res	 */
+	RES_K(200)   ,		/* 12  feedback_res 	 */
+	5.0		   ,		/* 16  vco_voltage		 */
+	CAP_P(470)   ,		/* 17  vco_cap			 */
+	RES_K(330)   ,		/* 18  vco_res			 */
+	5.0		   ,		/* 19  pitch_voltage	 */
+	RES_K( 20)   ,		/* 20  slf_res			 */
+	CAP_P(420)   ,		/* 21  slf_cap			 */
+	CAP_U(1.0)   ,		/* 23  oneshot_cap		 */
+	RES_K( 47)   		/* 24  oneshot_res		 */
 };
 
 
-static void crbaloon_tone_update(int ch, INT16 *buffer, int len)
+static void crbaloon_tone_update(void *param, stream_sample_t **inputs, stream_sample_t **outputs, int len)
 {
+	stream_sample_t *buffer = outputs[0];
+	
 	memset(buffer, 0, len * sizeof(INT16));
 
 	if (crbaloon_tone_step)
@@ -382,21 +384,19 @@ static void crbaloon_tone_update(int ch, INT16 *buffer, int len)
 	}
 }
 
-static int crbaloon_sh_start(const struct MachineSound *msound)
+static void *crbaloon_sh_start(int clock, const struct CustomSound_interface *config)
 {
 	crbaloon_tone_step = 0;
 	crbaloon_tone_pos = 0;
 
-	crbaloon_tone_stream = stream_init(sound_name(msound), 10, Machine->sample_rate, 0, crbaloon_tone_update);
+	crbaloon_tone_stream = stream_create(0, 1, Machine->sample_rate, NULL, crbaloon_tone_update);
 
-	return 0;
+	return auto_malloc(1);
 }
 
 struct CustomSound_interface crbaloon_custom_interface =
 {
-	crbaloon_sh_start,
-	0,
-	0
+	crbaloon_sh_start
 };
 
 
@@ -426,8 +426,15 @@ static MACHINE_DRIVER_START( crbaloon )
 	MDRV_VIDEO_UPDATE(crbaloon)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(SN76477, sn76477_interface)
-	MDRV_SOUND_ADD(CUSTOM, crbaloon_custom_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(SN76477, 0)
+	MDRV_SOUND_CONFIG(sn76477_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
+
+	MDRV_SOUND_ADD(CUSTOM, 0)
+	MDRV_SOUND_CONFIG(crbaloon_custom_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.10)
 MACHINE_DRIVER_END
 
 

@@ -12,7 +12,7 @@ Driver by Nicola Salmoria
 #include "cpu/hd6309/hd6309.h"
 #include "vidhrdw/generic.h"
 #include "vidhrdw/konamiic.h"
-
+#include "sound/2203intf.h"
 
 
 /* from vidhrdw/labyrunr.c */
@@ -224,15 +224,16 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 ***************************************************************************/
 
-static struct YM2203interface ym2203_interface =
+static struct YM2203interface ym2203_interface_1 =
 {
-	2,			/* 2 chips */
-	3000000,	/* 24MHz/8? */
-	{ YM2203_VOL(80,40), YM2203_VOL(80,40) },
-	{ input_port_0_r },
-	{ input_port_1_r, input_port_2_r },
-	{ 0 },
-	{ 0 }
+	input_port_0_r,
+	input_port_1_r
+};
+
+static struct YM2203interface ym2203_interface_2 =
+{
+	0,
+	input_port_2_r
 };
 
 
@@ -260,7 +261,21 @@ static MACHINE_DRIVER_START( labyrunr )
 	MDRV_VIDEO_UPDATE(labyrunr)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM2203, ym2203_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM2203, 3000000)
+	MDRV_SOUND_CONFIG(ym2203_interface_1)
+	MDRV_SOUND_ROUTE(0, "mono", 0.40)
+	MDRV_SOUND_ROUTE(1, "mono", 0.40)
+	MDRV_SOUND_ROUTE(2, "mono", 0.40)
+	MDRV_SOUND_ROUTE(3, "mono", 0.80)
+
+	MDRV_SOUND_ADD(YM2203, 3000000)
+	MDRV_SOUND_CONFIG(ym2203_interface_2)
+	MDRV_SOUND_ROUTE(0, "mono", 0.40)
+	MDRV_SOUND_ROUTE(1, "mono", 0.40)
+	MDRV_SOUND_ROUTE(2, "mono", 0.40)
+	MDRV_SOUND_ROUTE(3, "mono", 0.80)
 MACHINE_DRIVER_END
 
 

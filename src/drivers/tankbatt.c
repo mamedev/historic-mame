@@ -58,6 +58,7 @@ Known issues:
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "cpu/m6502/m6502.h"
+#include "sound/samples.h"
 
 extern UINT8 *tankbatt_bulletsram;
 extern size_t tankbatt_bulletsram_size;
@@ -272,7 +273,6 @@ static const char *tankbatt_sample_names[] =
 static struct Samplesinterface samples_interface =
 {
 	3,	/* 3 channels */
-	25,	/* volume */
 	tankbatt_sample_names
 };
 
@@ -301,7 +301,11 @@ static MACHINE_DRIVER_START( tankbatt )
 	MDRV_VIDEO_UPDATE(tankbatt)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(SAMPLES, samples_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	
+	MDRV_SOUND_ADD(SAMPLES, 0)
+	MDRV_SOUND_CONFIG(samples_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
 MACHINE_DRIVER_END
 
 

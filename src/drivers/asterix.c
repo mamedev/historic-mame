@@ -25,6 +25,8 @@ colour, including the word "Konami"
 #include "vidhrdw/konamiic.h"
 #include "cpu/z80/z80.h"
 #include "machine/eeprom.h"
+#include "sound/2151intf.h"
+#include "sound/k053260.h"
 
 VIDEO_START( asterix );
 VIDEO_UPDATE( asterix );
@@ -274,22 +276,9 @@ INPUT_PORTS_START( asterix )
 	PORT_BIT( 0xf800, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 INPUT_PORTS_END
 
-static struct YM2151interface ym2151_interface =
-{
-	1,			/* 1 chip */
-	4000000,	/* ??? */
-	{ YM3012_VOL(100,MIXER_PAN_LEFT,100,MIXER_PAN_RIGHT) },
-	{ 0 }
-};
-
-
 static struct K053260_interface k053260_interface =
 {
-	1,
-	{ 4000000 },
-	{ REGION_SOUND1 }, /* memory region */
-	{ { MIXER(75,MIXER_PAN_LEFT), MIXER(75,MIXER_PAN_RIGHT) } },
-	{ 0 }
+	REGION_SOUND1 /* memory region */
 };
 
 static MACHINE_DRIVER_START( asterix )
@@ -318,9 +307,16 @@ static MACHINE_DRIVER_START( asterix )
 	MDRV_VIDEO_UPDATE(asterix)
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(YM2151, ym2151_interface)
-	MDRV_SOUND_ADD(K053260, k053260_interface)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(YM2151, 4000000)
+	MDRV_SOUND_ROUTE(0, "left", 1.0)
+	MDRV_SOUND_ROUTE(1, "right", 1.0)
+
+	MDRV_SOUND_ADD(K053260, 4000000)
+	MDRV_SOUND_CONFIG(k053260_interface)
+	MDRV_SOUND_ROUTE(0, "left", 0.75)
+	MDRV_SOUND_ROUTE(1, "right", 0.75)
 MACHINE_DRIVER_END
 
 

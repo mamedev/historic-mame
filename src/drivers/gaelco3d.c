@@ -148,6 +148,7 @@ REF. 970429
 #include "cpu/tms32031/tms32031.h"
 #include "cpu/adsp2100/adsp2100.h"
 #include "machine/eeprom.h"
+#include "sound/dmadac.h"
 
 
 #define SOUND_CHANNELS	4
@@ -910,13 +911,6 @@ static struct tms32031_config tms_config =
 };
 
 
-static struct dmadac_interface audio_dmadac_interface =
-{
-	SOUND_CHANNELS,
-	{ MIXER(100, MIXER_PAN_RIGHT), MIXER(100, MIXER_PAN_CENTER), MIXER(100, MIXER_PAN_LEFT) }
-};
-
-
 MACHINE_DRIVER_START( gaelco3d )
 	
 	/* basic machine hardware */
@@ -951,7 +945,19 @@ MACHINE_DRIVER_START( gaelco3d )
 	MDRV_VIDEO_UPDATE(gaelco3d)
 	
 	/* sound hardware */
-	MDRV_SOUND_ADD(DMADAC, audio_dmadac_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(DMADAC, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
+
+	MDRV_SOUND_ADD(DMADAC, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
+
+	MDRV_SOUND_ADD(DMADAC, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
+
+	MDRV_SOUND_ADD(DMADAC, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 

@@ -17,6 +17,8 @@
 #include <math.h>
 #include "driver.h"
 #include "bzone.h"
+#include "sound/custom.h"
+#include "sound/pokey.h"
 
 /* used in drivers/redbaron.c to select joystick pot */
 extern int rb_input_select;
@@ -26,7 +28,7 @@ static INT16 *vol_lookup = NULL;
 
 static INT16 vol_crash[16];
 
-static int channel;
+static sound_stream *channel;
 static int latch;
 static int poly_counter;
 static int poly_shift;
@@ -60,8 +62,9 @@ WRITE8_HANDLER( redbaron_pokey_w )
         pokey1_w (offset, data);
 }
 
-static void redbaron_sound_update(int param, INT16 *buffer, int length)
+static void redbaron_sound_update(void *param, stream_sample_t **inputs, stream_sample_t **outputs, int length)
 {
+	stream_sample_t *buffer = outputs[0];
 	while( length-- )
 	{
 		int sum = 0;
@@ -166,14 +169,11 @@ static void redbaron_sound_update(int param, INT16 *buffer, int length)
 	}
 }
 
-int redbaron_sh_start(const struct MachineSound *msound)
+void *redbaron_sh_start(int clock, const struct CustomSound_interface *config)
 {
     int i;
 
 	vol_lookup = (INT16 *)auto_malloc(32768 * sizeof(INT16));
-	if( !vol_lookup )
-        return 1;
-
     for( i = 0; i < 0x8000; i++ )
 		vol_lookup[0x7fff-i] = (INT16) (0x7fff/exp(1.0*i/4096));
 
@@ -207,20 +207,7 @@ int redbaron_sh_start(const struct MachineSound *msound)
 		vol_crash[i] = 32767 * r0 / (r0 + r1);
     }
 
-	channel = stream_init("Custom", 50, Machine->sample_rate, 0, redbaron_sound_update);
-    if( channel == -1 )
-        return 1;
+	channel = stream_create(0, 1, Machine->sample_rate, 0, redbaron_sound_update);
 
-    return 0;
+    return auto_malloc(1);
 }
-
-void redbaron_sh_stop(void)
-{
-}
-
-void redbaron_sh_update(void)
-{
-	stream_update(channel, 0);
-}
-
-

@@ -85,6 +85,8 @@ Hardware Info
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "cpu/s2650/s2650.h"
+#include "sound/dac.h"
+#include "sound/5110intf.h"
 #include "sound/tms5110.h"
 
 INTERRUPT_GEN( cvs_interrupt );
@@ -163,7 +165,7 @@ WRITE8_HANDLER( control_port_w )
 
     /* Speech CPU stuff */
 
-    if((!tms5110_status_read()) && ((data & 0x40) == 0))
+    if((!tms5110_status_r(0)) && ((data & 0x40) == 0))
     {
    	    /* Speech Command */
 
@@ -222,16 +224,8 @@ READ8_HANDLER( CVS_393hz_Clock_r )
 
 static struct TMS5110interface tms5110_interface =
 {
-	640000, /*640 kHz clock*/
-	100,	/*100 % mixing level */
 	0,		/*irq callback function*/
 	cvs_speech_rom_read_bit	/*M0 callback function. Called whenever chip requests a single bit of data*/
-};
-
-static struct DACinterface dac_interface =
-{
-	2,
-	{ 100 }
 };
 
 static ADDRESS_MAP_START( cvs_cpu1_program, ADDRESS_SPACE_PROGRAM, 8 )
@@ -407,8 +401,17 @@ static MACHINE_DRIVER_START( cvs )
 	MDRV_VIDEO_UPDATE(cvs)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(DAC, dac_interface)
-	MDRV_SOUND_ADD(TMS5110, tms5110_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	
+	MDRV_SOUND_ADD(DAC, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
+
+	MDRV_SOUND_ADD(DAC, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
+
+	MDRV_SOUND_ADD(TMS5110, 640000)
+	MDRV_SOUND_CONFIG(tms5110_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 /***************************************************************************

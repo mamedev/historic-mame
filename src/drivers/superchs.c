@@ -39,6 +39,7 @@
 #include "vidhrdw/taitoic.h"
 #include "sndhrdw/taitosnd.h"
 #include "machine/eeprom.h"
+#include "sound/es5506.h"
 
 VIDEO_START( superchs );
 VIDEO_UPDATE( superchs );
@@ -420,12 +421,9 @@ static MACHINE_INIT( superchs )
 
 static struct ES5505interface es5505_interface =
 {
-	1,					/* total number of chips */
-	{ 13343000 },		/* freq - 26.686MHz/2??  May be 16MHz but Nancy sounds too high-pitched */
-	{ REGION_SOUND1 },	/* Bank 0: Unused by F3 games? */
-	{ REGION_SOUND1 },	/* Bank 1: All games seem to use this */
-	{ YM3012_VOL(100,MIXER_PAN_LEFT,100,MIXER_PAN_RIGHT) },		/* master volume */
-	{ 0 }				/* irq callback */
+	REGION_SOUND1,	/* Bank 0: Unused by F3 games? */
+	REGION_SOUND1,	/* Bank 1: All games seem to use this */
+	0				/* irq callback */
 };
 
 static struct EEPROM_interface superchs_eeprom_interface =
@@ -498,8 +496,12 @@ static MACHINE_DRIVER_START( superchs )
 	MDRV_VIDEO_UPDATE(superchs)
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(ES5505, es5505_interface)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(ES5505, 	13343000)
+	MDRV_SOUND_CONFIG(es5505_interface)
+	MDRV_SOUND_ROUTE(0, "left", 1.0)
+	MDRV_SOUND_ROUTE(1, "right", 1.0)
 MACHINE_DRIVER_END
 
 /***************************************************************************/

@@ -7,6 +7,7 @@
 #include "driver.h"
 #include "artwork.h"
 #include "skydiver.h"
+#include "sound/discrete.h"
 
 
 data8_t *skydiver_videoram;

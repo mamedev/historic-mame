@@ -40,6 +40,9 @@ Caveman Ninja Issues:
 #include "deco16ic.h"
 #include "decocrpt.h"
 #include "decoprot.h"
+#include "sound/2203intf.h"
+#include "sound/2151intf.h"
+#include "sound/okim6295.h"
 
 static int cninja_scanline, cninja_irq_mask;
 static void *raster_irq_timer;
@@ -832,17 +835,6 @@ static MACHINE_INIT( cninja )
 	cninja_irq_mask=0;
 }
 
-static struct YM2203interface ym2203_interface =
-{
-	1,
-	32220000/8, /* Accurate, audio section crystal is 32.220 MHz */
-	{ YM2203_VOL(60,60) },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ 0 }
-};
-
 static void sound_irq(int state)
 {
 	cpunum_set_input_line(1,1,state); /* IRQ 2 */
@@ -861,27 +853,13 @@ static WRITE8_HANDLER( sound_bankswitch_w )
 
 static struct YM2151interface ym2151_interface =
 {
-	1,
-	32220000/9, /* Accurate, audio section crystal is 32.220 MHz */
-	{ YM3012_VOL(45,MIXER_PAN_LEFT,45,MIXER_PAN_RIGHT) },
-	{ sound_irq },
-	{ sound_bankswitch_w }
+	sound_irq,
+	sound_bankswitch_w
 };
 
 static struct YM2151interface ym2151_interface2 =
 {
-	1,
-	3579545,	/* 3.579545 MHz (?) */
-	{ YM3012_VOL(50,MIXER_PAN_CENTER,50,MIXER_PAN_CENTER) },
-	{ sound_irq2 }
-};
-
-static struct OKIM6295interface okim6295_interface =
-{
-	2,              /* 2 chips */
-	{ 32220000/32/132, 32220000/16/132 },/* Frequency */
-	{ REGION_SOUND1, REGION_SOUND2 },
-	{ 75, 60 } /* Note!  Keep chip 1 (voices) louder than chip 2 */
+	sound_irq2
 };
 
 /**********************************************************************************/
@@ -913,9 +891,23 @@ static MACHINE_DRIVER_START( cninja )
 	MDRV_VIDEO_EOF(cninja)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM2203, ym2203_interface)
-	MDRV_SOUND_ADD(YM2151, ym2151_interface)
-	MDRV_SOUND_ADD(OKIM6295, okim6295_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM2203, 32220000/8)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.60)
+
+	MDRV_SOUND_ADD(YM2151, 32220000/9)
+	MDRV_SOUND_CONFIG(ym2151_interface)
+	MDRV_SOUND_ROUTE(0, "mono", 0.45)
+	MDRV_SOUND_ROUTE(1, "mono", 0.45)
+
+	MDRV_SOUND_ADD(OKIM6295, 32220000/32/132)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.75)
+
+	MDRV_SOUND_ADD(OKIM6295, 32220000/32/132)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_2)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.60)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( stoneage )
@@ -945,8 +937,20 @@ static MACHINE_DRIVER_START( stoneage )
 	MDRV_VIDEO_EOF(cninja)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM2151, ym2151_interface2)
-	MDRV_SOUND_ADD(OKIM6295, okim6295_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM2151, 32220000/9)
+	MDRV_SOUND_CONFIG(ym2151_interface2)
+	MDRV_SOUND_ROUTE(0, "mono", 0.45)
+	MDRV_SOUND_ROUTE(1, "mono", 0.45)
+
+	MDRV_SOUND_ADD(OKIM6295, 32220000/32/132)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.75)
+
+	MDRV_SOUND_ADD(OKIM6295, 32220000/32/132)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_2)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.60)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( edrandy )
@@ -976,9 +980,23 @@ static MACHINE_DRIVER_START( edrandy )
 	MDRV_VIDEO_EOF(cninja)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM2203, ym2203_interface)
-	MDRV_SOUND_ADD(YM2151, ym2151_interface)
-	MDRV_SOUND_ADD(OKIM6295, okim6295_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM2203, 32220000/8)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.60)
+
+	MDRV_SOUND_ADD(YM2151, 32220000/9)
+	MDRV_SOUND_CONFIG(ym2151_interface)
+	MDRV_SOUND_ROUTE(0, "mono", 0.45)
+	MDRV_SOUND_ROUTE(1, "mono", 0.45)
+
+	MDRV_SOUND_ADD(OKIM6295, 32220000/32/132)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.75)
+
+	MDRV_SOUND_ADD(OKIM6295, 32220000/32/132)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_2)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.60)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( robocop2 )
@@ -1008,10 +1026,26 @@ static MACHINE_DRIVER_START( robocop2 )
 	MDRV_VIDEO_EOF(cninja)
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(YM2203, ym2203_interface)
-	MDRV_SOUND_ADD(YM2151, ym2151_interface)
-	MDRV_SOUND_ADD(OKIM6295, okim6295_interface)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(YM2203, 32220000/8)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.60)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 0.60)
+
+	MDRV_SOUND_ADD(YM2151, 32220000/9)
+	MDRV_SOUND_CONFIG(ym2151_interface)
+	MDRV_SOUND_ROUTE(0, "left", 0.45)
+	MDRV_SOUND_ROUTE(1, "right", 0.45)
+
+	MDRV_SOUND_ADD(OKIM6295, 32220000/32/132)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.75)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 0.75)
+
+	MDRV_SOUND_ADD(OKIM6295, 32220000/32/132)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_2)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.60)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 0.60)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( mutantf )
@@ -1039,9 +1073,22 @@ static MACHINE_DRIVER_START( mutantf )
 	MDRV_VIDEO_UPDATE(mutantf)
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(YM2151, ym2151_interface)
-	MDRV_SOUND_ADD(OKIM6295, okim6295_interface)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(YM2151, 32220000/9)
+	MDRV_SOUND_CONFIG(ym2151_interface)
+	MDRV_SOUND_ROUTE(0, "left", 0.45)
+	MDRV_SOUND_ROUTE(1, "right", 0.45)
+
+	MDRV_SOUND_ADD(OKIM6295, 32220000/32/132)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.75)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 0.75)
+
+	MDRV_SOUND_ADD(OKIM6295, 32220000/32/132)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_2)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.60)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 0.60)
 MACHINE_DRIVER_END
 
 /**********************************************************************************/

@@ -28,6 +28,8 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "cpu/m6809/m6809.h"
+#include "sound/ay8910.h"
+#include "sound/2203intf.h"
 
 static struct tilemap *bg_tilemap, *fg_tilemap;
 
@@ -720,18 +722,6 @@ static struct GfxDecodeInfo zerotrgt_gfxdecodeinfo[] =
 
 /***************************************************************************/
 
-static struct AY8910interface ay8910_interface =
-{
-	2, /* 2 chips */
-	1500000,     /* 12 Mhz / 8 = 1.5 Mhz */
-	{ 50, 50 },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ 0 }
-};
-
-
 MACHINE_INIT( zerotrgt )
 {
 	nmimask = 0;
@@ -769,6 +759,7 @@ static MACHINE_DRIVER_START( cntsteer )
 	MDRV_VIDEO_UPDATE(zerotrgt)
 
 	/* sound hardware */
+	MDRV_SPEAKER_STANDARD_MONO("mono")
 //	MDRV_SOUND_ADD(YM2203, ym2203_interface)
 MACHINE_DRIVER_END
 
@@ -806,7 +797,13 @@ static MACHINE_DRIVER_START( zerotrgt )
 	MDRV_VIDEO_UPDATE(zerotrgt)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(AY8910, ay8910_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(AY8910, 1500000)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
+
+	MDRV_SOUND_ADD(AY8910, 1500000)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
 MACHINE_DRIVER_END
 
 /***************************************************************************/

@@ -17,6 +17,8 @@ Main CPU:
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "sound/ay8910.h"
+#include "sound/dac.h"
 
 /* from vidhrdw */
 extern UINT8 *kingofb_videoram2;
@@ -537,19 +539,7 @@ static struct GfxDecodeInfo rk_gfxdecodeinfo[] =
 
 static struct AY8910interface ay8910_interface =
 {
-	1,	/* 1 chip */
-	1500000,	/* 1.5 MHz ? */
-	{ 25 },
-	{ soundlatch_r },
-	{ 0 },
-	{ 0 },
-	{ 0 }
-};
-
-static struct DACinterface dac_interface =
-{
-	1,
-	{ 25 }
+	soundlatch_r
 };
 
 static INTERRUPT_GEN( kingofb_interrupt ) {
@@ -596,8 +586,14 @@ static MACHINE_DRIVER_START( kingofb )
 	MDRV_VIDEO_UPDATE(kingofb)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(AY8910, ay8910_interface)
-	MDRV_SOUND_ADD(DAC, dac_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	
+	MDRV_SOUND_ADD(AY8910, 1500000)
+	MDRV_SOUND_CONFIG(ay8910_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
+
+	MDRV_SOUND_ADD(DAC, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
 MACHINE_DRIVER_END
 
 
@@ -640,8 +636,14 @@ static MACHINE_DRIVER_START( ringking )
 	MDRV_VIDEO_UPDATE(ringking)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(AY8910, ay8910_interface)
-	MDRV_SOUND_ADD(DAC, dac_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	
+	MDRV_SOUND_ADD(AY8910, 1500000)
+	MDRV_SOUND_CONFIG(ay8910_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
+
+	MDRV_SOUND_ADD(DAC, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
 MACHINE_DRIVER_END
 
 

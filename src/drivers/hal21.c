@@ -1,7 +1,7 @@
 /*
 	Hal21
 	ASO
-	Alpha Mission ('p3.6d' is a bad dump)
+	Alpha Mission
 
 
 Change Log
@@ -56,6 +56,8 @@ AT08XX03:
 #include "vidhrdw/generic.h"
 #include "cpu/z80/z80.h"
 #include "snk.h"
+#include "sound/ay8910.h"
+#include "sound/3812intf.h"
 
 static UINT8 *shared_ram, *shared_auxram;
 static UINT8 *hal21_vreg, *hal21_sndfifo;
@@ -597,12 +599,6 @@ static INTERRUPT_GEN( hal21_sound_interrupt )
 
 /**************************************************************************/
 
-static struct YM3526interface ym3526_interface ={
-	1,          /* number of chips */
-	4000000,    /* 4 MHz? (hand tuned) */
-	{ 100 }
-};
-
 static ADDRESS_MAP_START( aso_readmem_sound, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0000, 0xbfff) AM_READ(MRA8_ROM)
 	AM_RANGE(0xc000, 0xc7ff) AM_READ(MRA8_RAM)
@@ -622,16 +618,6 @@ static ADDRESS_MAP_START( aso_writemem_sound, ADDRESS_SPACE_PROGRAM, 8 )
 ADDRESS_MAP_END
 
 /**************************************************************************/
-
-static struct AY8910interface ay8910_interface = {
-	2, /* number of chips */
-	1500000, // hand tuned
-	{ 25,40 },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ 0 }
-};
 
 static ADDRESS_MAP_START( hal21_readmem_sound, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0000, 0x3fff) AM_READ(MRA8_ROM)
@@ -806,7 +792,10 @@ static MACHINE_DRIVER_START( aso )
 	MDRV_VIDEO_UPDATE(aso)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM3526, ym3526_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM3526, 4000000)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( hal21 )
@@ -845,7 +834,13 @@ static MACHINE_DRIVER_START( hal21 )
 	MDRV_VIDEO_UPDATE(aso)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(AY8910, ay8910_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(AY8910, 1500000)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
+
+	MDRV_SOUND_ADD(AY8910, 1500000)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.40)
 MACHINE_DRIVER_END
 
 /**************************************************************************/
@@ -954,6 +949,41 @@ ROM_START( aso )
 	ROM_LOAD( "up02_f14.rom",  0x800, 0x00400, CRC(c3fd1dd3) SHA1(c48030cc458f0bebea0ffccf3d3c43260da6a7fb) )
 ROM_END
 
-GAMEX( 1985, aso,    0,     aso,   aso,   aso,   ROT270, "SNK", "ASO - Armored Scrum Object", GAME_NO_COCKTAIL )
-GAMEX( 1985, hal21,  0,     hal21, hal21, hal21, ROT270, "SNK", "HAL21", GAME_IMPERFECT_COLORS | GAME_NO_COCKTAIL )
-GAMEX( 1985, hal21j, hal21, hal21, hal21, hal21, ROT270, "SNK", "HAL21 (Japan)", GAME_IMPERFECT_COLORS | GAME_NO_COCKTAIL )
+ROM_START( alphamis )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )   /* 64k for cpuA code */
+	ROM_LOAD( "amp1.bin",    0x0000, 0x4000, CRC(69af874b) SHA1(11a13574614e7e3b9e33c2b2827571946a805376) )
+	ROM_LOAD( "amp2.bin",    0x4000, 0x4000, CRC(7707bfe3) SHA1(fb1f4ef862f6762d2479e537fc67a819d11ace76) )
+	ROM_LOAD( "amp3.bin",    0x8000, 0x4000, CRC(b970d642) SHA1(d3a8045f05f001e5e2fae8ef7900cf87ab17fc74) )
+
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )   /* 64k for cpuB code */
+	ROM_LOAD( "amp4.bin",    0x0000, 0x4000, CRC(91a89d3c) SHA1(46ef8718c81aac2f09dd1884538750edf9662760) )
+	ROM_LOAD( "amp5.bin",    0x4000, 0x4000, CRC(9879e506) SHA1(0bce5fcb9d05ce77cd8e9ad1cac04ef617928db0) )
+	ROM_LOAD( "aso.6"   ,    0x8000, 0x4000, CRC(c0bfdf1f) SHA1(65b15ce9c2e78df79cb603c58639421d29701633) )
+
+	ROM_REGION( 0x10000, REGION_CPU3, 0 )   /* 64k for sound code */
+	ROM_LOAD( "amp7.bin",    0x0000, 0x4000, CRC(dbc19736) SHA1(fe365d70ead8243374979d2162c395fed9870405) )  /* YM3526 */
+	ROM_LOAD( "amp8.bin",    0x4000, 0x4000, CRC(537726a9) SHA1(ddf66946be71d2e6ab2cc53150e3b36d45dde2eb) )
+	ROM_LOAD( "aso.9"   ,    0x8000, 0x4000, CRC(aef5a4f4) SHA1(e908e79e27ff892fe75d1ba5cb0bc9dc6b7b4268) )
+
+	ROM_REGION( 0x2000, REGION_GFX1, ROMREGION_DISPOSE ) /* characters */
+	ROM_LOAD( "amp14.bin",   0x0000, 0x2000, CRC(acbe29b2) SHA1(e304c6d30888fa7549d25e6329ba94d5088bd8b7) )
+
+	ROM_REGION( 0x8000, REGION_GFX2, ROMREGION_DISPOSE ) /* background tiles */
+	ROM_LOAD( "aso.10",   0x0000, 0x8000, CRC(00dff996) SHA1(4f6ce4c0f2da0d2a711bcbf9aa998b4e31d0d9bf) )
+
+	ROM_REGION( 0x18000, REGION_GFX3, ROMREGION_DISPOSE ) /* 16x16 sprites */
+	ROM_LOAD( "aso.11",   0x00000, 0x8000, CRC(7feac86c) SHA1(13b81f006ec587583416c1e7432da4c3f0375924) )
+	ROM_LOAD( "aso.12",   0x08000, 0x8000, CRC(6895990b) SHA1(e84554cae9a768021c3dc7183bc3d28e2dd768ee) )
+	ROM_LOAD( "aso.13",   0x10000, 0x8000, CRC(87a81ce1) SHA1(28c1069e6c08ecd579f99620c1cb6df01ad1aa74) )
+
+	ROM_REGION( 0x0c00, REGION_PROMS, 0 )
+	ROM_LOAD( "up02_f12.rom",  0x000, 0x00400, CRC(5b0a0059) SHA1(f61e17c8959f1cd6cc12b38f2fb7c6190ebd0e0c) )
+	ROM_LOAD( "up02_f13.rom",  0x400, 0x00400, CRC(37e28dd8) SHA1(681726e490872a574dd0295823a44d64ef3a7b45) )
+	ROM_LOAD( "up02_f14.rom",  0x800, 0x00400, CRC(c3fd1dd3) SHA1(c48030cc458f0bebea0ffccf3d3c43260da6a7fb) )
+ROM_END
+
+GAMEX( 1985, aso,      0,     aso,   aso,   aso,   ROT270, "SNK", "ASO - Armored Scrum Object", GAME_NO_COCKTAIL )
+GAMEX( 1985, alphamis, aso,   aso,   aso,   aso,   ROT270, "SNK", "Alpha Mission", GAME_NO_COCKTAIL )
+GAMEX( 1985, hal21,    0,     hal21, hal21, hal21, ROT270, "SNK", "HAL21", GAME_IMPERFECT_COLORS | GAME_NO_COCKTAIL )
+GAMEX( 1985, hal21j,   hal21, hal21, hal21, hal21, ROT270, "SNK", "HAL21 (Japan)", GAME_IMPERFECT_COLORS | GAME_NO_COCKTAIL )

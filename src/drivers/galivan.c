@@ -30,6 +30,8 @@ Driver by Takahiro Nogi (nogi@kt.rim.or.jp) 1999/12/17 -
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "sound/dac.h"
+#include "sound/3812intf.h"
 
 WRITE8_HANDLER( galivan_scrollx_w );
 WRITE8_HANDLER( galivan_scrolly_w );
@@ -551,20 +553,6 @@ static struct GfxDecodeInfo ninjemak_gfxdecodeinfo[] =
 
 
 
-static struct YM3526interface YM3526_interface =
-{
-	1,
-	8000000/2,	/* 4 MHz? */
-	{ 100 }
-};
-
-static struct DACinterface dac_interface =
-{
-	2,
-	{ 50, 50 }
-};
-
-
 static MACHINE_DRIVER_START( galivan )
 
 	/* basic machine hardware */
@@ -597,8 +585,16 @@ static MACHINE_DRIVER_START( galivan )
 	MDRV_VIDEO_UPDATE(galivan)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM3526, YM3526_interface)
-	MDRV_SOUND_ADD(DAC, dac_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM3526, 8000000/2)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
+
+	MDRV_SOUND_ADD(DAC, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
+
+	MDRV_SOUND_ADD(DAC, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( ninjemak )
@@ -633,8 +629,15 @@ static MACHINE_DRIVER_START( ninjemak )
 	MDRV_VIDEO_UPDATE(ninjemak)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM3526, YM3526_interface)
-	MDRV_SOUND_ADD(DAC, dac_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	MDRV_SOUND_ADD(YM3526, 8000000/2)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
+
+	MDRV_SOUND_ADD(DAC, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
+
+	MDRV_SOUND_ADD(DAC, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
 MACHINE_DRIVER_END
 
 

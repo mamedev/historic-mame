@@ -325,12 +325,9 @@ WRITE8_HANDLER( dday_control_w )
 
 	/* bit 4 is sound enable */
 	if (!(data & 0x10) && (control & 0x10))
-	{
-		AY8910_reset(0);
-		AY8910_reset(1);
-	}
+		sndti_reset(SOUND_AY8910, 0);
 
-	mixer_sound_enable_global_w(data & 0x10);
+	sound_global_enable(data & 0x10);
 
 	/* bit 6 is search light enable */
 	sl_enable = data & 0x40;

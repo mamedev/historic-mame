@@ -19,12 +19,12 @@
 #define STEP 0x8000
 
 
-int ay8910_index_ym;
-static int num = 0, ym_num = 0;
-
 struct AY8910
 {
-	int Channel;
+	int index;
+	int streams;
+	int ready;
+	sound_stream *Channel;
 	int SampleRate;
 	read8_handler PortAread;
 	read8_handler PortBread;
@@ -65,13 +65,8 @@ struct AY8910
 #define AY_PORTB	(15)
 
 
-static struct AY8910 AYPSG[MAX_8910];		/* array of PSG's */
-
-
-
-void _AYWriteReg(int n, int r, int v)
+void _AYWriteReg(struct AY8910 *PSG, int r, int v)
 {
-	struct AY8910 *PSG = &AYPSG[n];
 	int old;
 
 
@@ -220,11 +215,11 @@ void _AYWriteReg(int n, int r, int v)
 			if (PSG->PortAwrite)
 				(*PSG->PortAwrite)(0, PSG->Regs[AY_PORTA]);
 			else
-				logerror("PC %04x: warning - write %02x to 8910 #%d Port A\n",activecpu_get_pc(),PSG->Regs[AY_PORTA],n);
+				logerror("PC %04x: warning - write %02x to 8910 #%d Port A\n",activecpu_get_pc(),PSG->Regs[AY_PORTA],PSG->index);
 		}
 		else
 		{
-			logerror("warning: write to 8910 #%d Port A set as input - ignored\n",n);
+			logerror("warning: write to 8910 #%d Port A set as input - ignored\n",PSG->index);
 		}
 		break;
 	case AY_PORTB:
@@ -233,150 +228,94 @@ void _AYWriteReg(int n, int r, int v)
 			if (PSG->PortBwrite)
 				(*PSG->PortBwrite)(0, PSG->Regs[AY_PORTB]);
 			else
-				logerror("PC %04x: warning - write %02x to 8910 #%d Port B\n",activecpu_get_pc(),PSG->Regs[AY_PORTB],n);
+				logerror("PC %04x: warning - write %02x to 8910 #%d Port B\n",activecpu_get_pc(),PSG->Regs[AY_PORTB],PSG->index);
 		}
 		else
 		{
-			logerror("warning: write to 8910 #%d Port B set as input - ignored\n",n);
+			logerror("warning: write to 8910 #%d Port B set as input - ignored\n",PSG->index);
 		}
 		break;
 	}
 }
 
-
-/* write a register on AY8910 chip number 'n' */
-void AYWriteReg(int chip, int r, int v)
-{
-	struct AY8910 *PSG = &AYPSG[chip];
-
-
-	if (r > 15) return;
-	if (r < 14)
-	{
-		if (r == AY_ESHAPE || PSG->Regs[r] != v)
-		{
-			/* update the output buffer before changing the register */
-			stream_update(PSG->Channel,0);
-		}
-	}
-
-	_AYWriteReg(chip,r,v);
-}
-
-
-
-unsigned char AYReadReg(int n, int r)
-{
-	struct AY8910 *PSG = &AYPSG[n];
-
-
-	if (r > 15) return 0;
-
-	switch (r)
-	{
-	case AY_PORTA:
-		if ((PSG->Regs[AY_ENABLE] & 0x40) != 0)
-			logerror("warning: read from 8910 #%d Port A set as output\n",n);
-		/*
-		   even if the port is set as output, we still need to return the external
-		   data. Some games, like kidniki, need this to work.
-		 */
-		if (PSG->PortAread) PSG->Regs[AY_PORTA] = (*PSG->PortAread)(0);
-		else logerror("PC %04x: warning - read 8910 #%d Port A\n",activecpu_get_pc(),n);
-		break;
-	case AY_PORTB:
-		if ((PSG->Regs[AY_ENABLE] & 0x80) != 0)
-			logerror("warning: read from 8910 #%d Port B set as output\n",n);
-		if (PSG->PortBread) PSG->Regs[AY_PORTB] = (*PSG->PortBread)(0);
-		else logerror("PC %04x: warning - read 8910 #%d Port B\n",activecpu_get_pc(),n);
-		break;
-	}
-	return PSG->Regs[r];
-}
-
-
-void AY8910Write(int chip,int a,int data)
-{
-	struct AY8910 *PSG = &AYPSG[chip];
-
-	if (a & 1)
-	{	/* Data port */
-		AYWriteReg(chip,PSG->register_latch,data);
-	}
-	else
-	{	/* Register port */
-		PSG->register_latch = data & 0x0f;
-	}
-}
-
-int AY8910Read(int chip)
-{
-	struct AY8910 *PSG = &AYPSG[chip];
-
-	return AYReadReg(chip,PSG->register_latch);
-}
 
 
 /* AY8910 interface */
-READ8_HANDLER( AY8910_read_port_0_r ) { return AY8910Read(0); }
-READ8_HANDLER( AY8910_read_port_1_r ) { return AY8910Read(1); }
-READ8_HANDLER( AY8910_read_port_2_r ) { return AY8910Read(2); }
-READ8_HANDLER( AY8910_read_port_3_r ) { return AY8910Read(3); }
-READ8_HANDLER( AY8910_read_port_4_r ) { return AY8910Read(4); }
-READ16_HANDLER( AY8910_read_port_0_lsb_r ) { return AY8910Read(0); }
-READ16_HANDLER( AY8910_read_port_1_lsb_r ) { return AY8910Read(1); }
-READ16_HANDLER( AY8910_read_port_2_lsb_r ) { return AY8910Read(2); }
-READ16_HANDLER( AY8910_read_port_3_lsb_r ) { return AY8910Read(3); }
-READ16_HANDLER( AY8910_read_port_4_lsb_r ) { return AY8910Read(4); }
-READ16_HANDLER( AY8910_read_port_0_msb_r ) { return AY8910Read(0) << 8; }
-READ16_HANDLER( AY8910_read_port_1_msb_r ) { return AY8910Read(1) << 8; }
-READ16_HANDLER( AY8910_read_port_2_msb_r ) { return AY8910Read(2) << 8; }
-READ16_HANDLER( AY8910_read_port_3_msb_r ) { return AY8910Read(3) << 8; }
-READ16_HANDLER( AY8910_read_port_4_msb_r ) { return AY8910Read(4) << 8; }
+READ8_HANDLER( AY8910_read_port_0_r ) { return ay8910_read_ym(sndti_token(SOUND_AY8910, 0)); }
+READ8_HANDLER( AY8910_read_port_1_r ) { return ay8910_read_ym(sndti_token(SOUND_AY8910, 1)); }
+READ8_HANDLER( AY8910_read_port_2_r ) { return ay8910_read_ym(sndti_token(SOUND_AY8910, 2)); }
+READ8_HANDLER( AY8910_read_port_3_r ) { return ay8910_read_ym(sndti_token(SOUND_AY8910, 3)); }
+READ8_HANDLER( AY8910_read_port_4_r ) { return ay8910_read_ym(sndti_token(SOUND_AY8910, 4)); }
+READ16_HANDLER( AY8910_read_port_0_lsb_r ) { return ay8910_read_ym(sndti_token(SOUND_AY8910, 0)); }
+READ16_HANDLER( AY8910_read_port_1_lsb_r ) { return ay8910_read_ym(sndti_token(SOUND_AY8910, 1)); }
+READ16_HANDLER( AY8910_read_port_2_lsb_r ) { return ay8910_read_ym(sndti_token(SOUND_AY8910, 2)); }
+READ16_HANDLER( AY8910_read_port_3_lsb_r ) { return ay8910_read_ym(sndti_token(SOUND_AY8910, 3)); }
+READ16_HANDLER( AY8910_read_port_4_lsb_r ) { return ay8910_read_ym(sndti_token(SOUND_AY8910, 4)); }
+READ16_HANDLER( AY8910_read_port_0_msb_r ) { return ay8910_read_ym(sndti_token(SOUND_AY8910, 0)) << 8; }
+READ16_HANDLER( AY8910_read_port_1_msb_r ) { return ay8910_read_ym(sndti_token(SOUND_AY8910, 1)) << 8; }
+READ16_HANDLER( AY8910_read_port_2_msb_r ) { return ay8910_read_ym(sndti_token(SOUND_AY8910, 2)) << 8; }
+READ16_HANDLER( AY8910_read_port_3_msb_r ) { return ay8910_read_ym(sndti_token(SOUND_AY8910, 3)) << 8; }
+READ16_HANDLER( AY8910_read_port_4_msb_r ) { return ay8910_read_ym(sndti_token(SOUND_AY8910, 4)) << 8; }
 
-WRITE8_HANDLER( AY8910_control_port_0_w ) { AY8910Write(0,0,data); }
-WRITE8_HANDLER( AY8910_control_port_1_w ) { AY8910Write(1,0,data); }
-WRITE8_HANDLER( AY8910_control_port_2_w ) { AY8910Write(2,0,data); }
-WRITE8_HANDLER( AY8910_control_port_3_w ) { AY8910Write(3,0,data); }
-WRITE8_HANDLER( AY8910_control_port_4_w ) { AY8910Write(4,0,data); }
-WRITE16_HANDLER( AY8910_control_port_0_lsb_w ) { if (ACCESSING_LSB) AY8910Write(0,0,data & 0xff); }
-WRITE16_HANDLER( AY8910_control_port_1_lsb_w ) { if (ACCESSING_LSB) AY8910Write(1,0,data & 0xff); }
-WRITE16_HANDLER( AY8910_control_port_2_lsb_w ) { if (ACCESSING_LSB) AY8910Write(2,0,data & 0xff); }
-WRITE16_HANDLER( AY8910_control_port_3_lsb_w ) { if (ACCESSING_LSB) AY8910Write(3,0,data & 0xff); }
-WRITE16_HANDLER( AY8910_control_port_4_lsb_w ) { if (ACCESSING_LSB) AY8910Write(4,0,data & 0xff); }
-WRITE16_HANDLER( AY8910_control_port_0_msb_w ) { if (ACCESSING_MSB) AY8910Write(0,0,data >> 8); }
-WRITE16_HANDLER( AY8910_control_port_1_msb_w ) { if (ACCESSING_MSB) AY8910Write(1,0,data >> 8); }
-WRITE16_HANDLER( AY8910_control_port_2_msb_w ) { if (ACCESSING_MSB) AY8910Write(2,0,data >> 8); }
-WRITE16_HANDLER( AY8910_control_port_3_msb_w ) { if (ACCESSING_MSB) AY8910Write(3,0,data >> 8); }
-WRITE16_HANDLER( AY8910_control_port_4_msb_w ) { if (ACCESSING_MSB) AY8910Write(4,0,data >> 8); }
+WRITE8_HANDLER( AY8910_control_port_0_w ) { ay8910_write_ym(sndti_token(SOUND_AY8910, 0),0,data); }
+WRITE8_HANDLER( AY8910_control_port_1_w ) { ay8910_write_ym(sndti_token(SOUND_AY8910, 1),0,data); }
+WRITE8_HANDLER( AY8910_control_port_2_w ) { ay8910_write_ym(sndti_token(SOUND_AY8910, 2),0,data); }
+WRITE8_HANDLER( AY8910_control_port_3_w ) { ay8910_write_ym(sndti_token(SOUND_AY8910, 3),0,data); }
+WRITE8_HANDLER( AY8910_control_port_4_w ) { ay8910_write_ym(sndti_token(SOUND_AY8910, 4),0,data); }
+WRITE16_HANDLER( AY8910_control_port_0_lsb_w ) { if (ACCESSING_LSB) ay8910_write_ym(sndti_token(SOUND_AY8910, 0),0,data & 0xff); }
+WRITE16_HANDLER( AY8910_control_port_1_lsb_w ) { if (ACCESSING_LSB) ay8910_write_ym(sndti_token(SOUND_AY8910, 1),0,data & 0xff); }
+WRITE16_HANDLER( AY8910_control_port_2_lsb_w ) { if (ACCESSING_LSB) ay8910_write_ym(sndti_token(SOUND_AY8910, 2),0,data & 0xff); }
+WRITE16_HANDLER( AY8910_control_port_3_lsb_w ) { if (ACCESSING_LSB) ay8910_write_ym(sndti_token(SOUND_AY8910, 3),0,data & 0xff); }
+WRITE16_HANDLER( AY8910_control_port_4_lsb_w ) { if (ACCESSING_LSB) ay8910_write_ym(sndti_token(SOUND_AY8910, 4),0,data & 0xff); }
+WRITE16_HANDLER( AY8910_control_port_0_msb_w ) { if (ACCESSING_MSB) ay8910_write_ym(sndti_token(SOUND_AY8910, 0),0,data >> 8); }
+WRITE16_HANDLER( AY8910_control_port_1_msb_w ) { if (ACCESSING_MSB) ay8910_write_ym(sndti_token(SOUND_AY8910, 1),0,data >> 8); }
+WRITE16_HANDLER( AY8910_control_port_2_msb_w ) { if (ACCESSING_MSB) ay8910_write_ym(sndti_token(SOUND_AY8910, 2),0,data >> 8); }
+WRITE16_HANDLER( AY8910_control_port_3_msb_w ) { if (ACCESSING_MSB) ay8910_write_ym(sndti_token(SOUND_AY8910, 3),0,data >> 8); }
+WRITE16_HANDLER( AY8910_control_port_4_msb_w ) { if (ACCESSING_MSB) ay8910_write_ym(sndti_token(SOUND_AY8910, 4),0,data >> 8); }
 
-WRITE8_HANDLER( AY8910_write_port_0_w ) { AY8910Write(0,1,data); }
-WRITE8_HANDLER( AY8910_write_port_1_w ) { AY8910Write(1,1,data); }
-WRITE8_HANDLER( AY8910_write_port_2_w ) { AY8910Write(2,1,data); }
-WRITE8_HANDLER( AY8910_write_port_3_w ) { AY8910Write(3,1,data); }
-WRITE8_HANDLER( AY8910_write_port_4_w ) { AY8910Write(4,1,data); }
-WRITE16_HANDLER( AY8910_write_port_0_lsb_w ) { if (ACCESSING_LSB) AY8910Write(0,1,data & 0xff); }
-WRITE16_HANDLER( AY8910_write_port_1_lsb_w ) { if (ACCESSING_LSB) AY8910Write(1,1,data & 0xff); }
-WRITE16_HANDLER( AY8910_write_port_2_lsb_w ) { if (ACCESSING_LSB) AY8910Write(2,1,data & 0xff); }
-WRITE16_HANDLER( AY8910_write_port_3_lsb_w ) { if (ACCESSING_LSB) AY8910Write(3,1,data & 0xff); }
-WRITE16_HANDLER( AY8910_write_port_4_lsb_w ) { if (ACCESSING_LSB) AY8910Write(4,1,data & 0xff); }
-WRITE16_HANDLER( AY8910_write_port_0_msb_w ) { if (ACCESSING_MSB) AY8910Write(0,1,data >> 8); }
-WRITE16_HANDLER( AY8910_write_port_1_msb_w ) { if (ACCESSING_MSB) AY8910Write(1,1,data >> 8); }
-WRITE16_HANDLER( AY8910_write_port_2_msb_w ) { if (ACCESSING_MSB) AY8910Write(2,1,data >> 8); }
-WRITE16_HANDLER( AY8910_write_port_3_msb_w ) { if (ACCESSING_MSB) AY8910Write(3,1,data >> 8); }
-WRITE16_HANDLER( AY8910_write_port_4_msb_w ) { if (ACCESSING_MSB) AY8910Write(4,1,data >> 8); }
+WRITE8_HANDLER( AY8910_write_port_0_w ) { ay8910_write_ym(sndti_token(SOUND_AY8910, 0),1,data); }
+WRITE8_HANDLER( AY8910_write_port_1_w ) { ay8910_write_ym(sndti_token(SOUND_AY8910, 1),1,data); }
+WRITE8_HANDLER( AY8910_write_port_2_w ) { ay8910_write_ym(sndti_token(SOUND_AY8910, 2),1,data); }
+WRITE8_HANDLER( AY8910_write_port_3_w ) { ay8910_write_ym(sndti_token(SOUND_AY8910, 3),1,data); }
+WRITE8_HANDLER( AY8910_write_port_4_w ) { ay8910_write_ym(sndti_token(SOUND_AY8910, 4),1,data); }
+WRITE16_HANDLER( AY8910_write_port_0_lsb_w ) { if (ACCESSING_LSB) ay8910_write_ym(sndti_token(SOUND_AY8910, 0),1,data & 0xff); }
+WRITE16_HANDLER( AY8910_write_port_1_lsb_w ) { if (ACCESSING_LSB) ay8910_write_ym(sndti_token(SOUND_AY8910, 1),1,data & 0xff); }
+WRITE16_HANDLER( AY8910_write_port_2_lsb_w ) { if (ACCESSING_LSB) ay8910_write_ym(sndti_token(SOUND_AY8910, 2),1,data & 0xff); }
+WRITE16_HANDLER( AY8910_write_port_3_lsb_w ) { if (ACCESSING_LSB) ay8910_write_ym(sndti_token(SOUND_AY8910, 3),1,data & 0xff); }
+WRITE16_HANDLER( AY8910_write_port_4_lsb_w ) { if (ACCESSING_LSB) ay8910_write_ym(sndti_token(SOUND_AY8910, 4),1,data & 0xff); }
+WRITE16_HANDLER( AY8910_write_port_0_msb_w ) { if (ACCESSING_MSB) ay8910_write_ym(sndti_token(SOUND_AY8910, 0),1,data >> 8); }
+WRITE16_HANDLER( AY8910_write_port_1_msb_w ) { if (ACCESSING_MSB) ay8910_write_ym(sndti_token(SOUND_AY8910, 1),1,data >> 8); }
+WRITE16_HANDLER( AY8910_write_port_2_msb_w ) { if (ACCESSING_MSB) ay8910_write_ym(sndti_token(SOUND_AY8910, 2),1,data >> 8); }
+WRITE16_HANDLER( AY8910_write_port_3_msb_w ) { if (ACCESSING_MSB) ay8910_write_ym(sndti_token(SOUND_AY8910, 3),1,data >> 8); }
+WRITE16_HANDLER( AY8910_write_port_4_msb_w ) { if (ACCESSING_MSB) ay8910_write_ym(sndti_token(SOUND_AY8910, 4),1,data >> 8); }
 
 
 
-static void AY8910Update(int chip,INT16 **buffer,int length)
+static void AY8910Update(void *param,stream_sample_t **inputs, stream_sample_t **buffer,int length)
 {
-	struct AY8910 *PSG = &AYPSG[chip];
-	INT16 *buf1,*buf2,*buf3;
+	struct AY8910 *PSG = param;
+	stream_sample_t *buf1,*buf2,*buf3;
 	int outn;
 
 	buf1 = buffer[0];
-	buf2 = buffer[1];
-	buf3 = buffer[2];
+	buf2 = NULL;
+	buf3 = NULL;
+	if (PSG->streams == 3)
+	{
+		buf2 = buffer[1];
+		buf3 = buffer[2];
+	}
+	
+	/* hack to prevent us from hanging when starting filtered outputs */
+	if (!PSG->ready)
+	{
+		memset(buf1, 0, length * sizeof(*buf1));
+		if (buf2)
+			memset(buf2, 0, length * sizeof(*buf2));
+		if (buf3)
+			memset(buf3, 0, length * sizeof(*buf3));
+		return;
+	}
 
 
 	/* The 8910 has three outputs, each output is the mix of one of the three */
@@ -626,45 +565,33 @@ static void AY8910Update(int chip,INT16 **buffer,int length)
 			}
 		}
 
-		*(buf1++) = (vola * PSG->VolA) / STEP;
-		*(buf2++) = (volb * PSG->VolB) / STEP;
-		*(buf3++) = (volc * PSG->VolC) / STEP;
+		if (PSG->streams == 3)
+		{
+			*(buf1++) = (vola * PSG->VolA) / STEP;
+			*(buf2++) = (volb * PSG->VolB) / STEP;
+			*(buf3++) = (volc * PSG->VolC) / STEP;
+		}
+		else
+			*(buf1++) = (vola * PSG->VolA + volb * PSG->VolB + volc * PSG->VolC) / STEP;
 
 		length--;
 	}
 }
 
 
-void AY8910_set_clock(int chip,int clock)
-{
-	struct AY8910 *PSG = &AYPSG[chip];
-
-	/* the step clock for the tone and noise generators is the chip clock    */
-	/* divided by 8; for the envelope generator of the AY-3-8910, it is half */
-	/* that much (clock/16), but the envelope of the YM2149 goes twice as    */
-	/* fast, therefore again clock/8.                                        */
-	/* Here we calculate the number of steps which happen during one sample  */
-	/* at the given sample rate. No. of events = sample rate / (clock/8).    */
-	/* STEP is a multiplier used to turn the fraction into a fixed point     */
-	/* number.                                                               */
-	PSG->UpdateStep = ((double)STEP * PSG->SampleRate * 8 + clock/2) / clock;
-}
-
-
 void AY8910_set_volume(int chip,int channel,int volume)
 {
-	struct AY8910 *PSG = &AYPSG[chip];
+	struct AY8910 *PSG = sndti_token(SOUND_AY8910, chip);
 	int ch;
 
-	for (ch = 0; ch < 3; ch++)
-		if (channel == ch || channel == ALL_8910_CHANNELS)
-			mixer_set_volume(PSG->Channel + ch, volume);
+	for (ch = 0; ch < PSG->streams; ch++)
+		if (channel == ch || PSG->streams == 1 || channel == ALL_8910_CHANNELS)
+			stream_set_output_gain(PSG->Channel, ch, volume / 100.0);
 }
 
 
-static void build_mixer_table(int chip)
+static void build_mixer_table(struct AY8910 *PSG)
 {
-	struct AY8910 *PSG = &AYPSG[chip];
 	int i;
 	double out;
 
@@ -685,10 +612,105 @@ static void build_mixer_table(int chip)
 
 
 
-void AY8910_reset(int chip)
+void ay8910_reset(int chip)
 {
+	ay8910_reset_ym(sndti_token(SOUND_AY8910, chip));
+}
+
+static void AY8910_init(struct AY8910 *PSG, int streams,
+		int clock,int sample_rate,
+		read8_handler portAread,read8_handler portBread,
+		write8_handler portAwrite,write8_handler portBwrite)
+{
+// causes crashes with YM2610 games - overflow?
+//	if (options.use_filter)
+//		sample_rate = clock/8;
+
+	PSG->SampleRate = sample_rate;
+	PSG->PortAread = portAread;
+	PSG->PortBread = portBread;
+	PSG->PortAwrite = portAwrite;
+	PSG->PortBwrite = portBwrite;
+	PSG->Channel = stream_create(0,streams,sample_rate,PSG,AY8910Update);
+
+	ay8910_set_clock_ym(PSG,clock);
+}
+
+
+static void AY8910_statesave(struct AY8910 *PSG, int sndindex)
+{
+	state_save_register_INT32("AY8910",  sndindex, "register_latch", &PSG->register_latch, 1);
+	state_save_register_UINT8("AY8910",  sndindex, "Regs",           PSG->Regs,            8);
+	state_save_register_INT32("AY8910",  sndindex, "lastEnable",     &PSG->lastEnable,     1);
+	state_save_register_UINT32("AY8910", sndindex, "UpdateStep",     &PSG->UpdateStep,     1);
+
+	state_save_register_INT32("AY8910",  sndindex, "PeriodA",        &PSG->PeriodA,        1);
+	state_save_register_INT32("AY8910",  sndindex, "PeriodB",        &PSG->PeriodB,        1);
+	state_save_register_INT32("AY8910",  sndindex, "PeriodC",        &PSG->PeriodC,        1);
+	state_save_register_INT32("AY8910",  sndindex, "PeriodN",        &PSG->PeriodN,        1);
+	state_save_register_INT32("AY8910",  sndindex, "PeriodE",        &PSG->PeriodE,        1);
+
+	state_save_register_INT32("AY8910",  sndindex, "CountA",         &PSG->CountA,         1);
+	state_save_register_INT32("AY8910",  sndindex, "CountB",         &PSG->CountB,         1);
+	state_save_register_INT32("AY8910",  sndindex, "CountC",         &PSG->CountC,         1);
+	state_save_register_INT32("AY8910",  sndindex, "CountN",         &PSG->CountN,         1);
+	state_save_register_INT32("AY8910",  sndindex, "CountE",         &PSG->CountE,         1);
+
+	state_save_register_UINT32("AY8910", sndindex, "VolA",           &PSG->VolA,           1);
+	state_save_register_UINT32("AY8910", sndindex, "VolB",           &PSG->VolB,           1);
+	state_save_register_UINT32("AY8910", sndindex, "VolC",           &PSG->VolC,           1);
+	state_save_register_UINT32("AY8910", sndindex, "VolE",           &PSG->VolE,           1);
+
+	state_save_register_UINT8("AY8910",  sndindex, "EnvelopeA",      &PSG->EnvelopeA,      1);
+	state_save_register_UINT8("AY8910",  sndindex, "EnvelopeB",      &PSG->EnvelopeB,      1);
+	state_save_register_UINT8("AY8910",  sndindex, "EnvelopeC",      &PSG->EnvelopeC,      1);
+
+	state_save_register_UINT8("AY8910",  sndindex, "OutputA",        &PSG->OutputA,        1);
+	state_save_register_UINT8("AY8910",  sndindex, "OutputB",        &PSG->OutputB,        1);
+	state_save_register_UINT8("AY8910",  sndindex, "OutputC",        &PSG->OutputC,        1);
+	state_save_register_UINT8("AY8910",  sndindex, "OutputN",        &PSG->OutputN,        1);
+
+	state_save_register_INT8("AY8910",   sndindex, "CountEnv",       &PSG->CountEnv,       1);
+	state_save_register_UINT8("AY8910",  sndindex, "Hold",           &PSG->Hold,           1);
+	state_save_register_UINT8("AY8910",  sndindex, "Alternate",      &PSG->Alternate,      1);
+	state_save_register_UINT8("AY8910",  sndindex, "Attack",         &PSG->Attack,         1);
+	state_save_register_UINT8("AY8910",  sndindex, "Holding",        &PSG->Holding,        1);
+	state_save_register_INT32("AY8910",  sndindex, "RNG",            &PSG->RNG,            1);
+}
+
+
+void *ay8910_start_ym(int chip_type, int sndindex, int clock, int streams, 
+		read8_handler portAread, read8_handler portBread,
+		write8_handler portAwrite, write8_handler portBwrite)
+{
+	struct AY8910 *info;
+	
+	info = auto_malloc(sizeof(*info));
+	memset(info, 0, sizeof(*info));
+	info->index = sndindex;
+	info->streams = streams;
+
+	AY8910_init(info, streams, clock,
+			Machine->sample_rate,
+			portAread,portBread,
+			portAwrite,portBwrite);
+
+	build_mixer_table(info);
+	AY8910_statesave(info, sndindex);
+
+	return info;
+}
+
+void ay8910_stop_ym(void *chip)
+{
+	struct AY8910 *PSG = chip;
+	free(PSG);
+}
+
+void ay8910_reset_ym(void *chip)
+{
+	struct AY8910 *PSG = chip;
 	int i;
-	struct AY8910 *PSG = &AYPSG[chip];
 
 	PSG->register_latch = 0;
 	PSG->RNG = 1;
@@ -698,156 +720,128 @@ void AY8910_reset(int chip)
 	PSG->OutputN = 0xff;
 	PSG->lastEnable = -1;	/* force a write */
 	for (i = 0;i < AY_PORTA;i++)
-		_AYWriteReg(chip,i,0);	/* AYWriteReg() uses the timer system; we cannot */
+		_AYWriteReg(PSG,i,0);	/* AYWriteReg() uses the timer system; we cannot */
 								/* call it at this time because the timer system */
 								/* has not been initialized. */
+	PSG->ready = 1;
 }
 
-void AY8910_sh_reset(void)
+void ay8910_set_clock_ym(void *chip, int clock)
 {
-	int i;
+	struct AY8910 *PSG = chip;
 
-	for (i = 0;i < num + ym_num;i++)
-		AY8910_reset(i);
+	/* the step clock for the tone and noise generators is the chip clock    */
+	/* divided by 8; for the envelope generator of the AY-3-8910, it is half */
+	/* that much (clock/16), but the envelope of the YM2149 goes twice as    */
+	/* fast, therefore again clock/8.                                        */
+	/* Here we calculate the number of steps which happen during one sample  */
+	/* at the given sample rate. No. of events = sample rate / (clock/8).    */
+	/* STEP is a multiplier used to turn the fraction into a fixed point     */
+	/* number.                                                               */
+	PSG->UpdateStep = ((double)STEP * PSG->SampleRate * 8 + clock/2) / clock;
 }
 
-static int AY8910_init(const char *chip_name,int chip,
-		int clock,int volume,int sample_rate,
-		read8_handler portAread,read8_handler portBread,
-		write8_handler portAwrite,write8_handler portBwrite)
+void ay8910_write_ym(void *chip, int addr, int data)
 {
-	int i;
-	struct AY8910 *PSG = &AYPSG[chip];
-	char buf[3][40];
-	const char *name[3];
-	int vol[3];
+	struct AY8910 *PSG = chip;
 
+	if (addr & 1)
+	{	/* Data port */
+		int r = PSG->register_latch;
 
-// causes crashes with YM2610 games - overflow?
-//	if (options.use_filter)
-//		sample_rate = clock/8;
+		if (r > 15) return;
+		if (r < 14)
+		{
+			if (r == AY_ESHAPE || PSG->Regs[r] != data)
+			{
+				/* update the output buffer before changing the register */
+				stream_update(PSG->Channel,0);
+			}
+		}
 
-	memset(PSG,0,sizeof(struct AY8910));
-	PSG->SampleRate = sample_rate;
-	PSG->PortAread = portAread;
-	PSG->PortBread = portBread;
-	PSG->PortAwrite = portAwrite;
-	PSG->PortBwrite = portBwrite;
-	for (i = 0;i < 3;i++)
-	{
-		vol[i] = volume;
-		name[i] = buf[i];
-		sprintf(buf[i],"%s #%d Ch %c",chip_name,chip,'A'+i);
+		_AYWriteReg(PSG,r,data);
 	}
-	PSG->Channel = stream_init_multi(3,name,vol,sample_rate,chip,AY8910Update);
-
-	if (PSG->Channel == -1)
-		return 1;
-
-	AY8910_set_clock(chip,clock);
-
-	return 0;
-}
-
-
-static void AY8910_statesave(int chip)
-{
-	struct AY8910 *PSG = &AYPSG[chip];
-
-	state_save_register_INT32("AY8910",  chip, "register_latch", &PSG->register_latch, 1);
-	state_save_register_UINT8("AY8910",  chip, "Regs",           PSG->Regs,            8);
-	state_save_register_INT32("AY8910",  chip, "lastEnable",     &PSG->lastEnable,     1);
-	state_save_register_UINT32("AY8910", chip, "UpdateStep",     &PSG->UpdateStep,     1);
-
-	state_save_register_INT32("AY8910",  chip, "PeriodA",        &PSG->PeriodA,        1);
-	state_save_register_INT32("AY8910",  chip, "PeriodB",        &PSG->PeriodB,        1);
-	state_save_register_INT32("AY8910",  chip, "PeriodC",        &PSG->PeriodC,        1);
-	state_save_register_INT32("AY8910",  chip, "PeriodN",        &PSG->PeriodN,        1);
-	state_save_register_INT32("AY8910",  chip, "PeriodE",        &PSG->PeriodE,        1);
-
-	state_save_register_INT32("AY8910",  chip, "CountA",         &PSG->CountA,         1);
-	state_save_register_INT32("AY8910",  chip, "CountB",         &PSG->CountB,         1);
-	state_save_register_INT32("AY8910",  chip, "CountC",         &PSG->CountC,         1);
-	state_save_register_INT32("AY8910",  chip, "CountN",         &PSG->CountN,         1);
-	state_save_register_INT32("AY8910",  chip, "CountE",         &PSG->CountE,         1);
-
-	state_save_register_UINT32("AY8910", chip, "VolA",           &PSG->VolA,           1);
-	state_save_register_UINT32("AY8910", chip, "VolB",           &PSG->VolB,           1);
-	state_save_register_UINT32("AY8910", chip, "VolC",           &PSG->VolC,           1);
-	state_save_register_UINT32("AY8910", chip, "VolE",           &PSG->VolE,           1);
-
-	state_save_register_UINT8("AY8910",  chip, "EnvelopeA",      &PSG->EnvelopeA,      1);
-	state_save_register_UINT8("AY8910",  chip, "EnvelopeB",      &PSG->EnvelopeB,      1);
-	state_save_register_UINT8("AY8910",  chip, "EnvelopeC",      &PSG->EnvelopeC,      1);
-
-	state_save_register_UINT8("AY8910",  chip, "OutputA",        &PSG->OutputA,        1);
-	state_save_register_UINT8("AY8910",  chip, "OutputB",        &PSG->OutputB,        1);
-	state_save_register_UINT8("AY8910",  chip, "OutputC",        &PSG->OutputC,        1);
-	state_save_register_UINT8("AY8910",  chip, "OutputN",        &PSG->OutputN,        1);
-
-	state_save_register_INT8("AY8910",   chip, "CountEnv",       &PSG->CountEnv,       1);
-	state_save_register_UINT8("AY8910",  chip, "Hold",           &PSG->Hold,           1);
-	state_save_register_UINT8("AY8910",  chip, "Alternate",      &PSG->Alternate,      1);
-	state_save_register_UINT8("AY8910",  chip, "Attack",         &PSG->Attack,         1);
-	state_save_register_UINT8("AY8910",  chip, "Holding",        &PSG->Holding,        1);
-	state_save_register_INT32("AY8910",  chip, "RNG",            &PSG->RNG,            1);
-}
-
-
-int AY8910_sh_start(const struct MachineSound *msound)
-{
-	int chip;
-	const struct AY8910interface *intf = msound->sound_interface;
-
-	num = intf->num;
-
-	for (chip = 0;chip < num;chip++)
-	{
-		if (AY8910_init(sound_name(msound),chip+ym_num,intf->baseclock,
-				intf->mixing_level[chip] & 0xffff,
-				Machine->sample_rate,
-				intf->portAread[chip],intf->portBread[chip],
-				intf->portAwrite[chip],intf->portBwrite[chip]) != 0)
-			return 1;
-		build_mixer_table(chip+ym_num);
-
-		AY8910_statesave(chip+ym_num);
+	else
+	{	/* Register port */
+		PSG->register_latch = data & 0x0f;
 	}
-
-	return 0;
 }
 
-void AY8910_sh_stop(void)
+int ay8910_read_ym(void *chip)
 {
-	num = 0;
-}
+	struct AY8910 *PSG = chip;
+	int r = PSG->register_latch;
 
-int AY8910_sh_start_ym(const struct MachineSound *msound)
-{
-	int chip;
-	const struct AY8910interface *intf = msound->sound_interface;
+	if (r > 15) return 0;
 
-	ym_num = intf->num;
-	ay8910_index_ym = num;
-
-	for (chip = 0;chip < ym_num;chip++)
+	switch (r)
 	{
-		if (AY8910_init(sound_name(msound),chip+num,intf->baseclock,
-				intf->mixing_level[chip] & 0xffff,
-				Machine->sample_rate,
-				intf->portAread[chip],intf->portBread[chip],
-				intf->portAwrite[chip],intf->portBwrite[chip]) != 0)
-			return 1;
-		build_mixer_table(chip+num);
-
-
-		AY8910_statesave(chip+num);
+	case AY_PORTA:
+		if ((PSG->Regs[AY_ENABLE] & 0x40) != 0)
+			logerror("warning: read from 8910 #%d Port A set as output\n",PSG->index);
+		/*
+		   even if the port is set as output, we still need to return the external
+		   data. Some games, like kidniki, need this to work.
+		 */
+		if (PSG->PortAread) PSG->Regs[AY_PORTA] = (*PSG->PortAread)(0);
+		else logerror("PC %04x: warning - read 8910 #%d Port A\n",activecpu_get_pc(),PSG->index);
+		break;
+	case AY_PORTB:
+		if ((PSG->Regs[AY_ENABLE] & 0x80) != 0)
+			logerror("warning: read from 8910 #%d Port B set as output\n",PSG->index);
+		if (PSG->PortBread) PSG->Regs[AY_PORTB] = (*PSG->PortBread)(0);
+		else logerror("PC %04x: warning - read 8910 #%d Port B\n",activecpu_get_pc(),PSG->index);
+		break;
 	}
-	return 0;
+	return PSG->Regs[r];
 }
 
-void AY8910_sh_stop_ym(void)
+
+
+static void *ay8910_start(int sndindex, int clock, const void *config)
 {
-	ym_num = 0;
+	static const struct AY8910interface generic_ay8910 = { 0 };
+	const struct AY8910interface *intf = config ? config : &generic_ay8910;
+	return ay8910_start_ym(SOUND_AY8910, sndindex, clock, 3, intf->portAread, intf->portBread, intf->portAwrite, intf->portBwrite);
+}
+
+static void ay8910_stop(void *chip)
+{
+	ay8910_stop_ym(chip);
+}
+
+
+/**************************************************************************
+ * Generic get_info
+ **************************************************************************/
+
+static void ay8910_set_info(void *token, UINT32 state, union sndinfo *info)
+{
+	switch (state)
+	{
+		/* no parameters to set */
+	}
+}
+
+
+void ay8910_get_info(void *token, UINT32 state, union sndinfo *info)
+{
+	switch (state)
+	{
+		/* --- the following bits of info are returned as 64-bit signed integers --- */
+
+		/* --- the following bits of info are returned as pointers to data or functions --- */
+		case SNDINFO_PTR_SET_INFO:						info->set_info = ay8910_set_info;		break;
+		case SNDINFO_PTR_START:							info->start = ay8910_start;				break;
+		case SNDINFO_PTR_STOP:							info->stop = ay8910_stop;				break;
+		case SNDINFO_PTR_RESET:							info->reset = ay8910_reset_ym;			break;
+
+		/* --- the following bits of info are returned as NULL-terminated strings --- */
+		case SNDINFO_STR_NAME:							info->s = "AY8910";						break;
+		case SNDINFO_STR_CORE_FAMILY:					info->s = "PSG";						break;
+		case SNDINFO_STR_CORE_VERSION:					info->s = "1.0";						break;
+		case SNDINFO_STR_CORE_FILE:						info->s = __FILE__;						break;
+		case SNDINFO_STR_CORE_CREDITS:					info->s = "Copyright (c) 2004, The MAME Team"; break;
+	}
 }
 

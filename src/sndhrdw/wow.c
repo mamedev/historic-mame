@@ -23,7 +23,8 @@ the variable wowBaseFrequency, this is defaulted to 8000
 
 #include "driver.h"
 #include "cpu/z80/z80.h"
-
+#include "sound/samples.h"
+#include "sound/custom.h"
 
 
 int	wowBaseFrequency;		/* Some games (Qbert) change this */
@@ -115,12 +116,12 @@ extern char totalword[256], *totalword_ptr;
 extern char oldword[256];
 extern int plural;
 
-int wow_sh_start(const struct MachineSound *msound)
+void *wow_sh_start(int clock, const struct CustomSound_interface *config)
 {
 	wowBaseFrequency = 11025;
 	wowBaseVolume = 230;
 	wowChannel = 0;
-	return 0;
+	return auto_malloc(1);
 }
 
 READ8_HANDLER( wow_speech_r )
@@ -205,8 +206,4 @@ READ8_HANDLER( wow_port_2_r )
 	Ans = (input_port_2_r(0) & 0x7F);
 	if (wow_status_r() != 0) Ans += 128;
 	return Ans;
-}
-
-void wow_sh_update(void)
-{
 }

@@ -37,6 +37,7 @@ TO DO:
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "sound/ay8910.h"
 
 static data8_t *cfb_ram;
 
@@ -1467,15 +1468,18 @@ static MACHINE_INIT( greatgun )
 
 
 /* only Great Guns */
-static struct AY8910interface ay8912_interface =
+static struct AY8910interface ay8912_interface_1 =
 {
-	2,	/* 2 chips */
-	14318000 / 8,
-	{ 30, 100 },
-	{ 0, 0 },	/* port Aread */
-	{ soundcommand_r, 0 },	/* port Bread */
-	{ /*ay0_output_ctrl_w*/0,/*ay1_output_ctrl_w*/ 0 },	/* port Awrite */
-	{ 0, gg_led_ctrl_w }	/* port Bwrite */
+	0,
+	soundcommand_r
+};
+
+static struct AY8910interface ay8912_interface_2 =
+{
+	0,
+	0,
+	0,
+	gg_led_ctrl_w
 };
 
 
@@ -1558,7 +1562,15 @@ but handled differently for now
 	MDRV_VIDEO_UPDATE(greatgun)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(AY8910, ay8912_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(AY8910, 14318000 / 8)
+	MDRV_SOUND_CONFIG(ay8912_interface_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.30)
+
+	MDRV_SOUND_ADD(AY8910, 14318000 / 8)
+	MDRV_SOUND_CONFIG(ay8912_interface_2)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 

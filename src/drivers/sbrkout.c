@@ -31,6 +31,7 @@
 #include "driver.h"
 #include "artwork.h"
 #include "vidhrdw/generic.h"
+#include "sound/dac.h"
 
 extern WRITE8_HANDLER( sbrkout_serve_led_w );
 extern WRITE8_HANDLER( sbrkout_start_1_led_w );
@@ -259,20 +260,6 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 /*************************************
  *
- *	Sound interfaces
- *
- *************************************/
-
-static struct DACinterface dac_interface =
-{
-	1,
-	{ 100 }
-};
-
-
-
-/*************************************
- *
  *	Machine driver
  *
  *************************************/
@@ -301,7 +288,10 @@ static MACHINE_DRIVER_START( sbrkout )
 	MDRV_VIDEO_UPDATE(sbrkout)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(DAC, dac_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(DAC, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 

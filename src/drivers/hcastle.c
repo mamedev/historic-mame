@@ -10,6 +10,9 @@
 #include "vidhrdw/generic.h"
 #include "cpu/konami/konami.h"
 #include "cpu/z80/z80.h"
+#include "sound/3812intf.h"
+#include "sound/k007232.h"
+#include "sound/k051649.h"
 
 PALETTE_INIT( hcastle );
 VIDEO_UPDATE( hcastle );
@@ -272,25 +275,13 @@ static void volume_callback(int v)
 
 static struct K007232_interface k007232_interface =
 {
-	1,		/* number of chips */
-	3579545,	/* clock */
-	{ REGION_SOUND1 },	/* memory regions */
-	{ K007232_VOL(44,MIXER_PAN_CENTER,50,MIXER_PAN_CENTER) },	/* volume */
-	{ volume_callback }	/* external port callback */
+	REGION_SOUND1,	/* memory regions */
+	volume_callback	/* external port callback */
 };
 
 static struct YM3812interface ym3812_interface =
 {
-	1,
-	3579545,
-	{ 70 },
-	{ irqhandler },
-};
-
-static struct k051649_interface k051649_interface =
-{
-	3579545/2,	/* Clock */
-	45,			/* Volume */
+	irqhandler
 };
 
 static MACHINE_DRIVER_START( hcastle )
@@ -320,9 +311,19 @@ static MACHINE_DRIVER_START( hcastle )
 	MDRV_VIDEO_UPDATE(hcastle)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(K007232, k007232_interface)
-	MDRV_SOUND_ADD(YM3812, ym3812_interface)
-	MDRV_SOUND_ADD(K051649, k051649_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	
+	MDRV_SOUND_ADD(K007232, 3579545)
+	MDRV_SOUND_CONFIG(k007232_interface)
+	MDRV_SOUND_ROUTE(0, "mono", 0.44)
+	MDRV_SOUND_ROUTE(1, "mono", 0.50)
+
+	MDRV_SOUND_ADD(YM3812, 3579545)
+	MDRV_SOUND_CONFIG(ym3812_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.70)
+
+	MDRV_SOUND_ADD(K051649, 3579545/2)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.45)
 MACHINE_DRIVER_END
 
 /***************************************************************************/

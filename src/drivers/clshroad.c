@@ -19,6 +19,7 @@ XTAL        :	18.432 MHz
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "sound/custom.h"
 
 data8_t *clshroad_sharedram;
 
@@ -38,8 +39,7 @@ VIDEO_START( clshroad );
 VIDEO_UPDATE( clshroad );
 
 extern unsigned char *wiping_soundregs;
-int wiping_sh_start(const struct MachineSound *msound);
-void wiping_sh_stop(void);
+void *wiping_sh_start(int clock, const struct CustomSound_interface *config);
 WRITE8_HANDLER( wiping_sound_w );
 
 
@@ -301,9 +301,7 @@ static struct GfxDecodeInfo clshroad_gfxdecodeinfo[] =
 
 static struct CustomSound_interface custom_interface =
 {
-	wiping_sh_start,
-	wiping_sh_stop,
-	0
+	wiping_sh_start
 };
 
 
@@ -338,7 +336,11 @@ static MACHINE_DRIVER_START( firebatl )
 	MDRV_VIDEO_UPDATE(clshroad)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(CUSTOM, custom_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	
+	MDRV_SOUND_ADD(CUSTOM, 0)
+	MDRV_SOUND_CONFIG(custom_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( clshroad )
@@ -370,7 +372,11 @@ static MACHINE_DRIVER_START( clshroad )
 	MDRV_VIDEO_UPDATE(clshroad)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(CUSTOM, custom_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	
+	MDRV_SOUND_ADD(CUSTOM, 0)
+	MDRV_SOUND_CONFIG(custom_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 

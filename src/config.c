@@ -9,7 +9,6 @@
 #include "driver.h"
 #include "config.h"
 #include "common.h"
-#include "sound/mixer.h"
 #include "expat.h"
 
 
@@ -26,6 +25,7 @@
 #define CONFIG_VERSION			10
 #define TEMP_BUFFER_SIZE		4096
 #define MAX_DEPTH				8
+#define MAX_MIXER_CHANNELS		100
 
 enum
 {
@@ -68,8 +68,8 @@ struct config_counters
 
 struct config_mixer
 {
-	UINT16					deflevel[MIXER_MAX_CHANNELS];/* array of mixer values */
-	UINT16					newlevel[MIXER_MAX_CHANNELS];/* array of mixer values */
+	float					deflevel[MAX_MIXER_CHANNELS];/* array of mixer values */
+	float					newlevel[MAX_MIXER_CHANNELS];/* array of mixer values */
 };
 
 
@@ -516,14 +516,15 @@ static void config_element_start(void *data, const XML_Char *name, const XML_Cha
 	/* look for second-level default tag */
 	if (!stricmp(curfile.parse.tag, "/mameconfig/system/mixer/channel"))
 	{
-		int indx = -1, value;
+		int indx = -1;
+		float value;
 		for (attr = 0; attributes[attr]; attr += 2)
 		{
 			if (!stricmp(attributes[attr], "index"))
 				sscanf(attributes[attr + 1], "%d", &indx);
-			else if (!stricmp(attributes[attr], "defvol") && indx >= 0 && indx < MIXER_MAX_CHANNELS && sscanf(attributes[attr + 1], "%d", &value) == 1)
+			else if (!stricmp(attributes[attr], "defvol") && indx >= 0 && indx < MAX_MIXER_CHANNELS && sscanf(attributes[attr + 1], "%f", &value) == 1)
 				curfile.data.mixer.deflevel[indx] = value;
-			else if (!stricmp(attributes[attr], "newvol") && indx >= 0 && indx < MIXER_MAX_CHANNELS && sscanf(attributes[attr + 1], "%d", &value) == 1)
+			else if (!stricmp(attributes[attr], "newvol") && indx >= 0 && indx < MAX_MIXER_CHANNELS && sscanf(attributes[attr + 1], "%f", &value) == 1)
 				curfile.data.mixer.newlevel[indx] = value;
 		}
 	}
@@ -583,10 +584,10 @@ static int config_load_xml(void)
 	int first = 1;
 	
 	/* initialize the defaults */
-	for (mixernum = 0; mixernum < MIXER_MAX_CHANNELS; mixernum++)
+	for (mixernum = 0; mixernum < MAX_MIXER_CHANNELS; mixernum++)
 	{
-		curfile.data.mixer.deflevel[mixernum] = 0xff;
-		curfile.data.mixer.newlevel[mixernum] = 0xff;
+		curfile.data.mixer.deflevel[mixernum] = 1.0;
+		curfile.data.mixer.newlevel[mixernum] = 1.0;
 	}
 	for (remapnum = 0; remapnum < __code_max; remapnum++)
 		curfile.data.remap[remapnum] = remapnum;
@@ -748,15 +749,15 @@ static int config_save_xml(void)
 		
 		/* finally, write the mixer section */
 		doit = 0;
-		for (i = 0; i < MIXER_MAX_CHANNELS; i++)
+		for (i = 0; i < MAX_MIXER_CHANNELS; i++)
 			if (curfile.data.mixer.newlevel[i] != curfile.data.mixer.deflevel[i])
 				doit = 1;
 		if (doit)
 		{
 			mame_fprintf(curfile.file, "\t\t<mixer>\n");
-			for (i = 0; i < MIXER_MAX_CHANNELS; i++)
+			for (i = 0; i < MAX_MIXER_CHANNELS; i++)
 				if (curfile.data.mixer.newlevel[i] != curfile.data.mixer.deflevel[i])
-					mame_fprintf(curfile.file, "\t\t\t<channel index=\"%d\" defvol=\"%d\" newvol=\"%d\" />\n", i, curfile.data.mixer.deflevel[i], curfile.data.mixer.newlevel[i]);
+					mame_fprintf(curfile.file, "\t\t\t<channel index=\"%d\" defvol=\"%f\" newvol=\"%f\" />\n", i, curfile.data.mixer.deflevel[i], curfile.data.mixer.newlevel[i]);
 			mame_fprintf(curfile.file, "\t\t</mixer>\n\n");
 		}
 	}
@@ -954,16 +955,14 @@ static int apply_counters(void)
 
 static int apply_mixer(void)
 {
-	struct mixer_config mixercfg;
+	int num_vals = sound_get_user_gain_count();
 	int mixernum;
 	
-	/* copy in the mixer data */
-	for (mixernum = 0; mixernum < MIXER_MAX_CHANNELS; mixernum++)
-	{
-		mixercfg.default_levels[mixernum] = curfile.data.mixer.deflevel[mixernum];
-		mixercfg.mixing_levels[mixernum] = curfile.data.mixer.newlevel[mixernum];
-	}
-	mixer_load_config(&mixercfg);
+	/* set the mixer gain on all channels */
+	for (mixernum = 0; mixernum < num_vals; mixernum++)
+		if (curfile.data.mixer.deflevel[mixernum] == sound_get_default_gain(mixernum))
+			sound_set_user_gain(mixernum, curfile.data.mixer.newlevel[mixernum]);
+
 	return 1;
 }
 
@@ -1114,15 +1113,19 @@ static int build_counters(void)
 
 static int build_mixer(void)
 {
-	struct mixer_config mixercfg;
+	int num_vals = sound_get_user_gain_count();
 	int mixernum;
 	
 	/* copy out the mixing levels */
-	mixer_save_config(&mixercfg);
-	for (mixernum = 0; mixernum < MIXER_MAX_CHANNELS; mixernum++)
+	for (mixernum = 0; mixernum < num_vals; mixernum++)
 	{
-		curfile.data.mixer.deflevel[mixernum] = mixercfg.default_levels[mixernum];
-		curfile.data.mixer.newlevel[mixernum] = mixercfg.mixing_levels[mixernum];
+		if (mixernum < num_vals)
+		{
+			curfile.data.mixer.deflevel[mixernum] = sound_get_default_gain(mixernum);
+			curfile.data.mixer.newlevel[mixernum] = sound_get_user_gain(mixernum);
+		}
+		else
+			curfile.data.mixer.deflevel[mixernum] = curfile.data.mixer.newlevel[mixernum] = 0.0;
 	}
 	return 1;
 }

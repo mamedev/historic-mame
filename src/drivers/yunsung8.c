@@ -30,6 +30,8 @@ To Do:
 
 #include "driver.h"
 #include "cpu/z80/z80.h"
+#include "sound/3812intf.h"
+#include "sound/msm5205.h"
 
 /* Variables defined in vidhrdw: */
 
@@ -428,21 +430,10 @@ static void yunsung8_adpcm_int(int irq)
 		cpunum_set_input_line(1, INPUT_LINE_NMI, PULSE_LINE);
 }
 
-static struct YM3812interface yunsung8_ym3812_interface =
+static struct MSM5205interface yunsung8_msm5205_interface =
 {
-	1,
-	4000000,	/* ? */
-	{ 100 },
-	{  0 },
-};
-
-struct MSM5205interface yunsung8_msm5205_interface =
-{
-	1,
-	384000,
-	{ yunsung8_adpcm_int },	/* interrupt function */
-	{ MSM5205_S96_4B },		/* 4KHz, 4 Bits */
-	{ 80 }
+	yunsung8_adpcm_int,	/* interrupt function */
+	MSM5205_S96_4B		/* 4KHz, 4 Bits */
 };
 
 
@@ -475,9 +466,16 @@ static MACHINE_DRIVER_START( yunsung8 )
 	MDRV_VIDEO_UPDATE(yunsung8)
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(YM3812, yunsung8_ym3812_interface)
-	MDRV_SOUND_ADD(MSM5205, yunsung8_msm5205_interface)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(YM3812, 4000000)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 1.0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 1.0)
+
+	MDRV_SOUND_ADD(MSM5205, 384000)
+	MDRV_SOUND_CONFIG(yunsung8_msm5205_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.80)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 0.80)
 MACHINE_DRIVER_END
 
 

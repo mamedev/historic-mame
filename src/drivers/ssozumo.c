@@ -11,6 +11,8 @@ Driver by Takahiro Nogi (nogi@kt.rim.or.jp) 1999/10/04
 #include "vidhrdw/generic.h"
 #include "cpu/m6502/m6502.h"
 #include "cpu/m6809/m6809.h"
+#include "sound/ay8910.h"
+#include "sound/dac.h"
 
 extern UINT8 *ssozumo_videoram2;
 extern UINT8 *ssozumo_colorram2;
@@ -230,25 +232,6 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 };
 
 
-static struct AY8910interface ay8910_interface =
-{
-	2,		/* 2 chips */
-	1500000,	/* 1.5 MHz?????? */
-	{ 30, 30 },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ 0 }
-};
-
-
-static struct DACinterface dac_interface =
-{
-	1,
-	{ 30 }
-};
-
-
 static MACHINE_DRIVER_START( ssozumo )
 
 	/* basic machine hardware */
@@ -277,8 +260,16 @@ static MACHINE_DRIVER_START( ssozumo )
 	MDRV_VIDEO_UPDATE(ssozumo)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(AY8910, ay8910_interface)
-	MDRV_SOUND_ADD(DAC, dac_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	
+	MDRV_SOUND_ADD(AY8910, 1500000)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.30)
+	
+	MDRV_SOUND_ADD(AY8910, 1500000)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.30)
+
+	MDRV_SOUND_ADD(DAC, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.30)
 MACHINE_DRIVER_END
 
 

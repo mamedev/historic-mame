@@ -118,6 +118,7 @@ It's used in (at least) three places :
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "sound/ay8910.h"
 
 static int char_bank = 0;
 static struct tilemap *bg_tilemap, *fg_tilemap;
@@ -435,13 +436,7 @@ VIDEO_UPDATE( ddayjlc )
 
 static struct AY8910interface ay8910_interface =
 {
-	2,  /* 2 chips */
-	12000000/4,
-	{ 100, 100 },
-	{ soundlatch_r, 0 },
-	{ 0, 0 },
-	{ 0, 0 },
-	{ 0, 0 }
+	soundlatch_r
 };
 
 static INTERRUPT_GEN( ddayjlc_interrupt )
@@ -480,7 +475,14 @@ static MACHINE_DRIVER_START( ddayjlc )
 	MDRV_VIDEO_START(ddayjlc)
 	MDRV_VIDEO_UPDATE(ddayjlc)
 
-	MDRV_SOUND_ADD(AY8910, ay8910_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(AY8910, 12000000/4)
+	MDRV_SOUND_CONFIG(ay8910_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
+
+	MDRV_SOUND_ADD(AY8910, 12000000/4)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 

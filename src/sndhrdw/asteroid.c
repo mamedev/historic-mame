@@ -6,6 +6,7 @@
 
 #include <math.h>
 #include "driver.h"
+#include "sound/discrete.h"
 
 /************************************************************************/
 /* Asteroids Sound System Analog emulation by K.Wilkins Nov 2000        */

@@ -11,6 +11,7 @@
 #include "machine/eeprom.h"
 #include "cpu/z80/z80.h"
 #include "leland.h"
+#include "sound/ay8910.h"
 
 
 /*************************************

@@ -37,6 +37,9 @@ Notes:
 #include "vidhrdw/generic.h"
 #include "machine/6821pia.h"
 #include "machine/8255ppi.h"
+#include "sound/ay8910.h"
+#include "sound/dac.h"
+#include "sound/5220intf.h"
 
 
 extern data8_t *zaccaria_videoram,*zaccaria_attributesram;
@@ -641,25 +644,14 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 struct AY8910interface ay8910_interface =
 {
-	2,	/* 2 chips */
-	3580000/2,
-	{ 15, 15 },
-	{ 0, 0 },
-	{ soundlatch2_r, 0 },
-	{ ay8910_port0a_w, 0 },
-	{ 0, 0 }
-};
-
-static struct DACinterface dac_interface =
-{
-	2,
-	{ 0,80 }	/* I'm leaving the first DAC(?) off because it sounds awful */
+	0,
+	soundlatch2_r,
+	ay8910_port0a_w,
+	0
 };
 
 static struct TMS5220interface tms5220_interface =
 {
-	640000,				/* clock speed (80*samplerate) */
-	80,					/* volume */
 	tms5220_irq_handler	/* IRQ handler */
 };
 
@@ -699,9 +691,24 @@ static MACHINE_DRIVER_START( zaccaria )
 	MDRV_VIDEO_UPDATE(zaccaria)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(AY8910, ay8910_interface)
-	MDRV_SOUND_ADD(DAC, dac_interface)
-	MDRV_SOUND_ADD(TMS5220, tms5220_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	
+	MDRV_SOUND_ADD(AY8910, 3580000/2)
+	MDRV_SOUND_CONFIG(ay8910_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.15)
+	
+	MDRV_SOUND_ADD(AY8910, 3580000/2)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.15)
+
+	MDRV_SOUND_ADD(DAC, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.0)		/* first DAC sounds awful */
+
+	MDRV_SOUND_ADD(DAC, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.80)
+
+	MDRV_SOUND_ADD(TMS5220, 640000)
+	MDRV_SOUND_CONFIG(tms5220_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.80)
 MACHINE_DRIVER_END
 
 

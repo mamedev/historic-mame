@@ -41,6 +41,7 @@ TODO:
 #include "cpu/tms34010/34010ops.h"
 #include "cpu/tms32025/tms32025.h"
 #include "vidhrdw/tlc34076.h"
+#include "sound/dac.h"
 
 
 static data16_t *code_rom;
@@ -571,14 +572,6 @@ static struct tms34010_config cpu_config =
  *
  *************************************/
 
-static struct DACinterface dac_interface =
-{
-	1,
-	{ 100 }
-};
-
-
-
 MACHINE_DRIVER_START( amerdart )
 
 	/* basic machine hardware */
@@ -606,7 +599,10 @@ MACHINE_DRIVER_START( amerdart )
 	MDRV_VIDEO_UPDATE(amerdart)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(DAC, dac_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(DAC, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( coolpool )
@@ -638,7 +634,10 @@ static MACHINE_DRIVER_START( coolpool )
 	MDRV_VIDEO_UPDATE(coolpool)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(DAC, dac_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(DAC, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( 9ballsht )
@@ -670,7 +669,10 @@ static MACHINE_DRIVER_START( 9ballsht )
 	MDRV_VIDEO_UPDATE(coolpool)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(DAC, dac_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(DAC, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 

@@ -98,6 +98,7 @@
 #include "driver.h"
 #include "exidy.h"
 #include "machine/6821pia.h"
+#include "sound/5220intf.h"
 #include "vidhrdw/generic.h"
 
 
@@ -313,14 +314,6 @@ static struct CustomSound_interface custom_interface =
 };
 
 
-static struct TMS5220interface tms5220_interface =
-{
-	640000,
-	100,
-	0
-};
-
-
 
 /*************************************
  *
@@ -356,8 +349,13 @@ static MACHINE_DRIVER_START( victory )
 	MDRV_VIDEO_UPDATE(victory)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(CUSTOM, custom_interface)
-	MDRV_SOUND_ADD(TMS5220, tms5220_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	MDRV_SOUND_ADD(CUSTOM, 0)
+	MDRV_SOUND_CONFIG(custom_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
+
+	MDRV_SOUND_ADD(TMS5220, 640000)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 

@@ -6,6 +6,7 @@
 
 #include "driver.h"
 #include "firetrk.h"
+#include "sound/discrete.h"
 
 
 WRITE8_HANDLER( firetrk_skid_reset_w )

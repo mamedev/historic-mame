@@ -26,6 +26,7 @@ Memo:
 #include "cpu/z80/z80.h"
 #include "vidhrdw/generic.h"
 #include "machine/eeprom.h"
+#include "sound/2610intf.h"
 
 
 VIDEO_UPDATE( fromanc2 );
@@ -148,12 +149,12 @@ static INTERRUPT_GEN( fromanc2_interrupt )
 		usrintf_showmessage("PLAYER-%01X SIDE", fromanc2_playerside + 1);
 
 		if (!fromanc2_playerside) {
-			mixer_set_stereo_volume(3, 75, 75);	// 1P (LEFT)
-			mixer_set_stereo_volume(4,  0,  0);	// 2P (RIGHT)
+//			mixer_set_stereo_volume(3, 75, 75);	// 1P (LEFT)
+//			mixer_set_stereo_volume(4,  0,  0);	// 2P (RIGHT)
 		}
 		else {
-			mixer_set_stereo_volume(3,  0,  0);	// 1P (LEFT)
-			mixer_set_stereo_volume(4, 75, 75);	// 2P (RIGHT)
+//			mixer_set_stereo_volume(3,  0,  0);	// 1P (LEFT)
+//			mixer_set_stereo_volume(4, 75, 75);	// 2P (RIGHT)
 		}
 
 		fromanc2_set_dispvram_w(fromanc2_playerside);
@@ -726,17 +727,9 @@ static void irqhandler(int irq)
 
 static struct YM2610interface ym2610_interface =
 {
-	1,
-	8000000,
-	{ 50 },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ irqhandler },
-	{ 0 },
-	{ REGION_SOUND1 },
-	{ YM3012_VOL(75, MIXER_PAN_CENTER, 75, MIXER_PAN_CENTER) }
+	irqhandler,
+	0,
+	REGION_SOUND1
 };
 
 
@@ -777,7 +770,13 @@ static MACHINE_DRIVER_START( fromanc2 )
 	MDRV_VIDEO_UPDATE(fromanc2)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM2610, ym2610_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM2610, 8000000)
+	MDRV_SOUND_CONFIG(ym2610_interface)
+	MDRV_SOUND_ROUTE(0, "mono", 0.50)
+	MDRV_SOUND_ROUTE(1, "mono", 0.75)
+	MDRV_SOUND_ROUTE(2, "mono", 0.75)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( fromancr )
@@ -813,7 +812,13 @@ static MACHINE_DRIVER_START( fromancr )
 	MDRV_VIDEO_UPDATE(fromanc2)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM2610, ym2610_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM2610, 8000000)
+	MDRV_SOUND_CONFIG(ym2610_interface)
+	MDRV_SOUND_ROUTE(0, "mono", 0.50)
+	MDRV_SOUND_ROUTE(1, "mono", 0.75)
+	MDRV_SOUND_ROUTE(2, "mono", 0.75)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( fromanc4 )
@@ -845,7 +850,13 @@ static MACHINE_DRIVER_START( fromanc4 )
 	MDRV_VIDEO_UPDATE(fromanc2)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM2610, ym2610_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM2610, 8000000)
+	MDRV_SOUND_CONFIG(ym2610_interface)
+	MDRV_SOUND_ROUTE(0, "mono", 0.50)
+	MDRV_SOUND_ROUTE(1, "mono", 0.75)
+	MDRV_SOUND_ROUTE(2, "mono", 0.75)
 MACHINE_DRIVER_END
 
 

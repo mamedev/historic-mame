@@ -11,6 +11,8 @@ Preliminary driver by:
 #include "vidhrdw/generic.h"
 #include "cpu/konami/konami.h" /* for the callback and the firq irq definition */
 #include "vidhrdw/konamiic.h"
+#include "sound/2151intf.h"
+#include "sound/k007232.h"
 
 
 /* prototypes */
@@ -360,11 +362,8 @@ INPUT_PORTS_END
 
 static struct YM2151interface ym2151_interface =
 {
-	1,			/* 1 chip */
-	4000000,	/* adjusted to be in sync with Z80 CPU */
-	{ YM3012_VOL(100,MIXER_PAN_LEFT,100,MIXER_PAN_RIGHT) },	/* music volume */
-	{ 0 },
-	{ crimfght_snd_bankswitch_w }
+	0,
+	crimfght_snd_bankswitch_w
 };
 
 static void volume_callback(int v)
@@ -375,11 +374,8 @@ static void volume_callback(int v)
 
 static struct K007232_interface k007232_interface =
 {
-	1,		/* number of chips */
-	3579545,	/* clock */
-	{ REGION_SOUND1 },	/* memory regions */
-	{ K007232_VOL(20,MIXER_PAN_CENTER,20,MIXER_PAN_CENTER) },	/* volume */
-	{ volume_callback }	/* external port callback */
+	REGION_SOUND1,	/* memory regions */
+	volume_callback	/* external port callback */
 };
 
 
@@ -410,9 +406,19 @@ static MACHINE_DRIVER_START( crimfght )
 	MDRV_VIDEO_UPDATE(crimfght)
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(YM2151, ym2151_interface)
-	MDRV_SOUND_ADD(K007232, k007232_interface)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(YM2151, 4000000)
+	MDRV_SOUND_CONFIG(ym2151_interface)
+	MDRV_SOUND_ROUTE(0, "left", 1.0)
+	MDRV_SOUND_ROUTE(1, "right", 1.0)
+	
+	MDRV_SOUND_ADD(K007232, 3579545)
+	MDRV_SOUND_CONFIG(k007232_interface)
+	MDRV_SOUND_ROUTE(0, "left", 0.20)
+	MDRV_SOUND_ROUTE(0, "right", 0.20)
+	MDRV_SOUND_ROUTE(1, "left", 0.20)
+	MDRV_SOUND_ROUTE(1, "right", 0.20)
 MACHINE_DRIVER_END
 
 /***************************************************************************

@@ -58,6 +58,8 @@ driver by Zsolt Vasvari and Alex Pasadyn
 
 #include "driver.h"
 #include "cpu/tms34010/tms34010.h"
+#include "sound/dac.h"
+#include "sound/2151intf.h"
 
 static size_t code_rom_size;
 static data16_t *exterm_code_rom;
@@ -434,28 +436,6 @@ static struct tms34010_config slave_config =
 
 /*************************************
  *
- *	Sound configurations
- *
- *************************************/
-
-static struct DACinterface dac_interface =
-{
-	2, 			/* 2 channels on 1 chip */
-	{ 40, 40 },
-};
-
-static struct YM2151interface ym2151_interface =
-{
-	1,			/* 1 chip */
-	4000000,	/* 4 MHz */
-	{ YM3012_VOL(100,MIXER_PAN_LEFT,100,MIXER_PAN_RIGHT) },
-	{ 0 }
-};
-
-
-
-/*************************************
- *
  *	Machine drivers
  *
  *************************************/
@@ -497,9 +477,19 @@ static MACHINE_DRIVER_START( exterm )
 	MDRV_VIDEO_UPDATE(exterm)
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(DAC, dac_interface)
-	MDRV_SOUND_ADD(YM2151, ym2151_interface)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(DAC, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.40)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 0.40)
+
+	MDRV_SOUND_ADD(DAC, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.40)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 0.40)
+
+	MDRV_SOUND_ADD(YM2151, 4000000)
+	MDRV_SOUND_ROUTE(0, "left", 1.0)
+	MDRV_SOUND_ROUTE(1, "right", 1.0)
 MACHINE_DRIVER_END
 
 

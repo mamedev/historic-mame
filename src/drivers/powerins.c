@@ -23,6 +23,7 @@ TODO:
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "sound/okim6295.h"
 
 /* Variables that vidhrdw has access to */
 
@@ -355,22 +356,6 @@ MACHINE_INIT( powerins )
 	oki_bank = -1;	// samples bank "unitialised"
 }
 
-static struct OKIM6295interface powerins_okim6295_interface =
-{
-	1,
-	{ 6000 },		/* ? */
-	{ REGION_SOUND1 },
-	{ 100 }
-};
-
-static struct OKIM6295interface powerina_okim6295_interface =
-{
-	2,
-	{ 16000000/4/165, 16000000/4/165 },		/* 4 Mhz */
-	{ REGION_SOUND1, REGION_SOUND2 },
-	{ 100, 100 }
-};
-
 /**** The Z80 sound code communicates with a YM2203, but the *****/
 /**** current supported bootleg board does not have one fitted ***/
 #if 0
@@ -414,7 +399,11 @@ static MACHINE_DRIVER_START( powerins )
 	MDRV_VIDEO_UPDATE(powerins)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD_TAG("sound", OKIM6295, powerins_okim6295_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD_TAG("oki1", OKIM6295, 6000)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( powerina )
@@ -428,7 +417,14 @@ static MACHINE_DRIVER_START( powerina )
 	MDRV_CPU_IO_MAP(readport_snd,writeport_snd)
 	MDRV_CPU_PERIODIC_INT(irq0_line_hold, 120)	// YM2203 rate is at 150??
 
-	MDRV_SOUND_REPLACE("sound", OKIM6295, powerina_okim6295_interface)
+	MDRV_SOUND_REPLACE("oki1", OKIM6295, 16000000/4/165)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
+
+	MDRV_SOUND_ADD(OKIM6295, 16000000/4/165)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_2)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
+
 /*	MDRV_SOUND_ADD(YM2203, ym2203_interface)	Sound code talks to one, but */
 /*												it's not fitted on the board */
 MACHINE_DRIVER_END

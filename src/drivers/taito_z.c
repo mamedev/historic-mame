@@ -777,6 +777,7 @@ J1100256A VIDEO PCB
 #include "vidhrdw/generic.h"
 #include "vidhrdw/taitoic.h"
 #include "sndhrdw/taitosnd.h"
+#include "sound/2610intf.h"
 
 VIDEO_START( taitoz );
 VIDEO_START( spacegun );
@@ -3125,32 +3126,16 @@ static void irqhandlerb(int irq)
 
 static struct YM2610interface ym2610_interface =
 {
-	1,	/* 1 chip */
-	16000000/2,	/* 8 MHz ?? */
-	{ 25 },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ irqhandler },
-	{ REGION_SOUND2 },	/* Delta-T */
-	{ REGION_SOUND1 },	/* ADPCM */
-	{ YM3012_VOL(100,MIXER_PAN_LEFT,100,MIXER_PAN_RIGHT) }
+	irqhandler,
+	REGION_SOUND2,	/* Delta-T */
+	REGION_SOUND1	/* ADPCM */
 };
 
 static struct YM2610interface ym2610_interfaceb =
 {
-	1,	/* 1 chip */
-	16000000/2,	/* 8 MHz ?? */
-	{ 25 },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ irqhandlerb },
-	{ REGION_SOUND2 },	/* Delta-T */
-	{ REGION_SOUND1 },	/* ADPCM */
-	{ YM3012_VOL(100,MIXER_PAN_LEFT,100,MIXER_PAN_RIGHT) }
+	irqhandlerb,
+	REGION_SOUND2,	/* Delta-T */
+	REGION_SOUND1	/* ADPCM */
 };
 
 
@@ -3158,6 +3143,7 @@ static struct YM2610interface ym2610_interfaceb =
                          SUBWOOFER (SOUND)
 **************************************************************/
 
+#if 0
 static int subwoofer_sh_start(const struct MachineSound *msound)
 {
 	/* Adjust the lowpass filter of the first three YM2610 channels */
@@ -3178,6 +3164,7 @@ static struct CustomSound_interface subwoofer_interface =
 	0, /* none */
 	0 /* none */
 };
+#endif
 
 
 /***********************************************************
@@ -3243,9 +3230,16 @@ static MACHINE_DRIVER_START( contcirc )
 	MDRV_VIDEO_UPDATE(contcirc)
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(YM2610, ym2610_interface)
-	MDRV_SOUND_ADD(CUSTOM, subwoofer_interface)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(YM2610, 16000000/2)
+	MDRV_SOUND_CONFIG(ym2610_interface)
+	MDRV_SOUND_ROUTE(0, "left",  0.25)
+	MDRV_SOUND_ROUTE(0, "right", 0.25)
+	MDRV_SOUND_ROUTE(1, "left",  1.0)
+	MDRV_SOUND_ROUTE(2, "right", 1.0)
+
+//	MDRV_SOUND_ADD(CUSTOM, subwoofer_interface)
 MACHINE_DRIVER_END
 
 
@@ -3278,8 +3272,14 @@ static MACHINE_DRIVER_START( chasehq )
 	MDRV_VIDEO_UPDATE(chasehq)
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(YM2610, ym2610_interface)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(YM2610, 16000000/2)
+	MDRV_SOUND_CONFIG(ym2610_interface)
+	MDRV_SOUND_ROUTE(0, "left",  0.25)
+	MDRV_SOUND_ROUTE(0, "right", 0.25)
+	MDRV_SOUND_ROUTE(1, "left",  1.0)
+	MDRV_SOUND_ROUTE(2, "right", 1.0)
 MACHINE_DRIVER_END
 
 
@@ -3313,9 +3313,16 @@ static MACHINE_DRIVER_START( enforce )
 	MDRV_VIDEO_UPDATE(contcirc)
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(YM2610, ym2610_interface)
-	MDRV_SOUND_ADD(CUSTOM, subwoofer_interface)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(YM2610, 16000000/2)
+	MDRV_SOUND_CONFIG(ym2610_interface)
+	MDRV_SOUND_ROUTE(0, "left",  0.25)
+	MDRV_SOUND_ROUTE(0, "right", 0.25)
+	MDRV_SOUND_ROUTE(1, "left",  1.0)
+	MDRV_SOUND_ROUTE(2, "right", 1.0)
+
+//	MDRV_SOUND_ADD(CUSTOM, subwoofer_interface)
 MACHINE_DRIVER_END
 
 
@@ -3345,8 +3352,14 @@ static MACHINE_DRIVER_START( bshark )
 	MDRV_VIDEO_UPDATE(bshark)
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(YM2610, ym2610_interfaceb)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(YM2610, 16000000/2)
+	MDRV_SOUND_CONFIG(ym2610_interfaceb)
+	MDRV_SOUND_ROUTE(0, "left",  0.25)
+	MDRV_SOUND_ROUTE(0, "right", 0.25)
+	MDRV_SOUND_ROUTE(1, "left",  1.0)
+	MDRV_SOUND_ROUTE(2, "right", 1.0)
 MACHINE_DRIVER_END
 
 
@@ -3380,8 +3393,14 @@ static MACHINE_DRIVER_START( sci )
 	MDRV_VIDEO_UPDATE(sci)
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(YM2610, ym2610_interface)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(YM2610, 16000000/2)
+	MDRV_SOUND_CONFIG(ym2610_interface)
+	MDRV_SOUND_ROUTE(0, "left",  0.25)
+	MDRV_SOUND_ROUTE(0, "right", 0.25)
+	MDRV_SOUND_ROUTE(1, "left",  1.0)
+	MDRV_SOUND_ROUTE(2, "right", 1.0)
 MACHINE_DRIVER_END
 
 
@@ -3415,8 +3434,14 @@ static MACHINE_DRIVER_START( nightstr )
 	MDRV_VIDEO_UPDATE(chasehq)
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(YM2610, ym2610_interface)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(YM2610, 16000000/2)
+	MDRV_SOUND_CONFIG(ym2610_interface)
+	MDRV_SOUND_ROUTE(0, "left",  0.25)
+	MDRV_SOUND_ROUTE(0, "right", 0.25)
+	MDRV_SOUND_ROUTE(1, "left",  1.0)
+	MDRV_SOUND_ROUTE(2, "right", 1.0)
 MACHINE_DRIVER_END
 
 
@@ -3450,8 +3475,14 @@ static MACHINE_DRIVER_START( aquajack )
 	MDRV_VIDEO_UPDATE(aquajack)
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(YM2610, ym2610_interface)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(YM2610, 16000000/2)
+	MDRV_SOUND_CONFIG(ym2610_interface)
+	MDRV_SOUND_ROUTE(0, "left",  0.25)
+	MDRV_SOUND_ROUTE(0, "right", 0.25)
+	MDRV_SOUND_ROUTE(1, "left",  1.0)
+	MDRV_SOUND_ROUTE(2, "right", 1.0)
 MACHINE_DRIVER_END
 
 
@@ -3482,8 +3513,14 @@ static MACHINE_DRIVER_START( spacegun )
 	MDRV_VIDEO_UPDATE(spacegun)
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(YM2610, ym2610_interfaceb)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(YM2610, 16000000/2)
+	MDRV_SOUND_CONFIG(ym2610_interfaceb)
+	MDRV_SOUND_ROUTE(0, "left",  0.25)
+	MDRV_SOUND_ROUTE(0, "right", 0.25)
+	MDRV_SOUND_ROUTE(1, "left",  1.0)
+	MDRV_SOUND_ROUTE(2, "right", 1.0)
 MACHINE_DRIVER_END
 
 
@@ -3517,8 +3554,14 @@ static MACHINE_DRIVER_START( dblaxle )
 	MDRV_VIDEO_UPDATE(dblaxle)
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(YM2610, ym2610_interface)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(YM2610, 16000000/2)
+	MDRV_SOUND_CONFIG(ym2610_interface)
+	MDRV_SOUND_ROUTE(0, "left",  0.25)
+	MDRV_SOUND_ROUTE(0, "right", 0.25)
+	MDRV_SOUND_ROUTE(1, "left",  1.0)
+	MDRV_SOUND_ROUTE(2, "right", 1.0)
 MACHINE_DRIVER_END
 
 
@@ -3552,8 +3595,14 @@ static MACHINE_DRIVER_START( racingb )
 	MDRV_VIDEO_UPDATE(dblaxle)
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(YM2610, ym2610_interface)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(YM2610, 16000000/2)
+	MDRV_SOUND_CONFIG(ym2610_interface)
+	MDRV_SOUND_ROUTE(0, "left",  0.25)
+	MDRV_SOUND_ROUTE(0, "right", 0.25)
+	MDRV_SOUND_ROUTE(1, "left",  1.0)
+	MDRV_SOUND_ROUTE(2, "right", 1.0)
 MACHINE_DRIVER_END
 
 

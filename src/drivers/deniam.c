@@ -34,7 +34,8 @@ Notes:
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "cpu/z80/z80.h"
-
+#include "sound/okim6295.h"
+#include "sound/3812intf.h"
 
 extern data16_t *deniam_videoram,*deniam_textram;
 
@@ -315,18 +316,7 @@ static void irqhandler(int linestate)
 
 static struct YM3812interface ym3812_interface =
 {
-	1,			/* 1 chip */
-	25000000/8,	/* ??? */
-	{ 60 },	/* volume */
-	{ irqhandler },
-};
-
-static struct OKIM6295interface okim6295_interface =
-{
-	1,                  /* 1 chip */
-	{ 8000 },           /* 8000Hz frequency */
-	{ REGION_SOUND1 },	/* memory region */
-	{ 100 }				/* volume */
+	irqhandler
 };
 
 
@@ -358,8 +348,15 @@ static MACHINE_DRIVER_START( deniam16b )
 	MDRV_VIDEO_UPDATE(deniam)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM3812, ym3812_interface)
-	MDRV_SOUND_ADD(OKIM6295, okim6295_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM3812, 25000000/8)
+	MDRV_SOUND_CONFIG(ym3812_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.60)
+
+	MDRV_SOUND_ADD(OKIM6295, 8000)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( deniam16c )
@@ -385,8 +382,15 @@ static MACHINE_DRIVER_START( deniam16c )
 	MDRV_VIDEO_UPDATE(deniam)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM3812, ym3812_interface)
-	MDRV_SOUND_ADD(OKIM6295, okim6295_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM3812, 25000000/8)
+	MDRV_SOUND_CONFIG(ym3812_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.60)
+
+	MDRV_SOUND_ADD(OKIM6295, 8000)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 

@@ -39,6 +39,7 @@ Notes:
 */
 
 #include "driver.h"
+#include "sound/okim6295.h"
 
 static struct tilemap *bg_tilemap, *mlow_tilemap, *mhigh_tilemap, *tx_tilemap;
 static data16_t *bg_videoram, *mlow_videoram, *mhigh_videoram, *tx_videoram, *spriteram, *sprites_buffer;
@@ -276,14 +277,6 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 	{ -1 } /* end of array */
 };
 
-static struct OKIM6295interface okim6295_interface =
-{
-	2,									/* 2 chips */
-	{ 937500 / 132, 937500 / 132 },		/* frequency (Hz) */
-	{ REGION_SOUND1, REGION_SOUND2 },	/* memory region */
-	{ 100, 100 }
-};
-
 static void get_bg_tile_info(int tile_index)
 {
 	int tileno,colour;
@@ -488,7 +481,15 @@ static MACHINE_DRIVER_START( mwarr )
 	MDRV_VIDEO_START(mwarr)
 	MDRV_VIDEO_UPDATE(mwarr)
 
-	MDRV_SOUND_ADD(OKIM6295, okim6295_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(OKIM6295, 937500 / 132)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
+
+	MDRV_SOUND_ADD(OKIM6295, 937500 / 132)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_2)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 

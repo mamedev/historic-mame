@@ -29,6 +29,7 @@
 #include <math.h>
 #include "driver.h"
 #include "cpuintrf.h"
+#include "ymf278b.h"
 
 #undef VERBOSE
 
@@ -88,12 +89,15 @@ typedef struct
 
 	const UINT8 *rom;
 	float clock_ratio;
+
+	INT32 volume[256*4];			// precalculated attenuation values with some marging for enveloppe and pan levels
+	int pan_left[16], pan_right[16];	// pan volume offsets
+	INT32 mix_level[8];
+	
+	sound_stream * stream;
+	int index;
 } YMF278BChip;
 
-static YMF278BChip YMF278B[MAX_YMF278B];
-static INT32 volume[256*4];			// precalculated attenuation values with some marging for enveloppe and pan levels
-static int pan_left[16], pan_right[16];	// pan volume offsets
-static INT32 mix_level[8];
 
 static int ymf278b_compute_rate(YMF278BSlot *slot, int val)
 {
@@ -226,8 +230,9 @@ static void ymf278b_envelope_next(YMF278BSlot *slot, float clock_ratio)
 	}
 }
 
-static void ymf278b_pcm_update(int num, INT16 **outputs, int length)
+static void ymf278b_pcm_update(void *param, stream_sample_t **inputs, stream_sample_t **outputs, int length)
 {
+	YMF278BChip *chip = param;
 	int i, j;
 	YMF278BSlot *slot = NULL;
 	INT16 sample = 0;
@@ -238,11 +243,11 @@ static void ymf278b_pcm_update(int num, INT16 **outputs, int length)
 
 	memset(mix, 0, sizeof(mix[0])*length*2);
 
-	rombase = YMF278B[num].rom;
+	rombase = chip->rom;
 
 	for (i = 0; i < 24; i++)
 	{
-		slot = &YMF278B[num].slots[i];
+		slot = &chip->slots[i];
 
 		if (slot->active)
 		{
@@ -269,8 +274,8 @@ static void ymf278b_pcm_update(int num, INT16 **outputs, int length)
 						break;
 				}
 
-				*mixp++ += (sample * volume[slot->TL+pan_left [slot->pan]+(slot->env_vol>>23)])>>17;
-				*mixp++ += (sample * volume[slot->TL+pan_right[slot->pan]+(slot->env_vol>>23)])>>17;
+				*mixp++ += (sample * chip->volume[slot->TL+chip->pan_left [slot->pan]+(slot->env_vol>>23)])>>17;
+				*mixp++ += (sample * chip->volume[slot->TL+chip->pan_right[slot->pan]+(slot->env_vol>>23)])>>17;
 
 				// update frequency
 				slot->stepptr += slot->step;
@@ -292,14 +297,14 @@ static void ymf278b_pcm_update(int num, INT16 **outputs, int length)
 				// update envelope
 				slot->env_vol += slot->env_vol_step;
 				if(((INT32)(slot->env_vol - slot->env_vol_lim)) >= 0)
-			 		ymf278b_envelope_next(slot, YMF278B[num].clock_ratio);
+			 		ymf278b_envelope_next(slot, chip->clock_ratio);
 			}
 		}
 	}
 
 	mixp = mix;
-	vl = mix_level[YMF278B[num].pcm_l];
-	vr = mix_level[YMF278B[num].pcm_r];
+	vl = chip->mix_level[chip->pcm_l];
+	vr = chip->mix_level[chip->pcm_r];
 	for (i = 0; i < length; i++)
 	{
 		outputs[0][i] = (*mixp++ * vl) >> 16;
@@ -307,74 +312,69 @@ static void ymf278b_pcm_update(int num, INT16 **outputs, int length)
 	}
 }
 
-static void ymf278b_irq_check(int num)
+static void ymf278b_irq_check(YMF278BChip *chip)
 {
-	YMF278BChip *chip = &YMF278B[num];
 	int prev_line = chip->irq_line;
 	chip->irq_line = chip->current_irq ? ASSERT_LINE : CLEAR_LINE;
 	if(chip->irq_line != prev_line && chip->irq_callback)
 		chip->irq_callback(chip->irq_line);
 }
 
-static void ymf278b_timer_a_tick(int num)
+static void ymf278b_timer_a_tick(void *param)
 {
-	YMF278BChip *chip = &YMF278B[num];
+	YMF278BChip *chip = param;
 	if(!(chip->enable & 0x40))
 	{
 		chip->current_irq |= 0x40;
-		ymf278b_irq_check(num);
+		ymf278b_irq_check(chip);
 	}
 }
 
-static void ymf278b_timer_b_tick(int num)
+static void ymf278b_timer_b_tick(void *param)
 {
-	YMF278BChip *chip = &YMF278B[num];
+	YMF278BChip *chip = param;
 	if(!(chip->enable & 0x20))
 	{
 		chip->current_irq |= 0x20;
-		ymf278b_irq_check(num);
+		ymf278b_irq_check(chip);
 	}
 }
 
-static void ymf278b_timer_a_reset(int num)
+static void ymf278b_timer_a_reset(YMF278BChip *chip)
 {
-	YMF278BChip *chip = &YMF278B[num];
 	if(chip->enable & 1)
 	{
 		double period = (256-chip->timer_a_count) * 80.8 * chip->clock_ratio;
-		timer_adjust(chip->timer_a, TIME_IN_USEC(period), num, TIME_IN_USEC(period));
+		timer_adjust_ptr(chip->timer_a, TIME_IN_USEC(period), chip, TIME_IN_USEC(period));
 	}
 	else
-		timer_adjust(chip->timer_a, TIME_NEVER, num, 0);
+		timer_adjust_ptr(chip->timer_a, TIME_NEVER, chip, 0);
 }
 
-static void ymf278b_timer_b_reset(int num)
+static void ymf278b_timer_b_reset(YMF278BChip *chip)
 {
-	YMF278BChip *chip = &YMF278B[num];
 	if(chip->enable & 2)
 	{
 		double period = (256-chip->timer_b_count) * 323.1 * chip->clock_ratio;
-		timer_adjust(chip->timer_b, TIME_IN_USEC(period), num, TIME_IN_USEC(period));
+		timer_adjust_ptr(chip->timer_b, TIME_IN_USEC(period), chip, TIME_IN_USEC(period));
 	}
 	else
-		timer_adjust(chip->timer_b, TIME_NEVER, num, 0);
+		timer_adjust_ptr(chip->timer_b, TIME_NEVER, chip, 0);
 }
 
-static void ymf278b_A_w(int num, UINT8 reg, UINT8 data)
+static void ymf278b_A_w(YMF278BChip *chip, UINT8 reg, UINT8 data)
 {
-	YMF278BChip *chip = &YMF278B[num];
-
 	if (!Machine->sample_rate) return;
 
 	switch(reg)
 	{
 		case 0x02:
 			chip->timer_a_count = data;
-			ymf278b_timer_a_reset(num);
+			ymf278b_timer_a_reset(chip);
 			break;
 		case 0x03:
 			chip->timer_b_count = data;
-			ymf278b_timer_b_reset(num);
+			ymf278b_timer_b_reset(chip);
 			break;
 		case 0x04:
 			if(data & 0x80)
@@ -385,28 +385,26 @@ static void ymf278b_A_w(int num, UINT8 reg, UINT8 data)
 				chip->enable = data;
 				chip->current_irq &= ~data;
 				if((old_enable ^ data) & 1)
-					ymf278b_timer_a_reset(num);
+					ymf278b_timer_a_reset(chip);
 				if((old_enable ^ data) & 2)
-					ymf278b_timer_b_reset(num);
+					ymf278b_timer_b_reset(chip);
 			}
-			ymf278b_irq_check(num);
+			ymf278b_irq_check(chip);
 			break;
 		default:
 			logerror("YMF278B:  Port A write %02x, %02x\n", reg, data);
 	}
 }
 
-static void ymf278b_B_w(int num, UINT8 reg, UINT8 data)
+static void ymf278b_B_w(YMF278BChip *chip, UINT8 reg, UINT8 data)
 {
 	if (!Machine->sample_rate) return;
 
 	logerror("YMF278B:  Port B write %02x, %02x\n", reg, data);
 }
 
-static void ymf278b_C_w(int num, UINT8 reg, UINT8 data)
+static void ymf278b_C_w(YMF278BChip *chip, UINT8 reg, UINT8 data)
 {
-	YMF278BChip *chip = &YMF278B[num];
-
 	if (!Machine->sample_rate) return;
 
 	// Handle slot registers specifically
@@ -415,7 +413,7 @@ static void ymf278b_C_w(int num, UINT8 reg, UINT8 data)
 		YMF278BSlot *slot = NULL;
 		int snum;
 		snum = (reg-8) % 24;
-		slot = &YMF278B[num].slots[snum];
+		slot = &chip->slots[snum];
 		switch((reg-8) / 24)
 		{
 			case 0:
@@ -588,7 +586,8 @@ static void ymf278b_C_w(int num, UINT8 reg, UINT8 data)
 
 static UINT8 ymf278b_status_port_r(int num)
 {
-	return YMF278B[num].current_irq | (YMF278B[num].irq_line == ASSERT_LINE ? 0x80 : 0x00);
+	YMF278BChip *chip = sndti_token(SOUND_YMF278B, num);
+	return chip->current_irq | (chip->irq_line == ASSERT_LINE ? 0x80 : 0x00);
 }
 
 // Not implemented yet
@@ -599,90 +598,84 @@ static UINT8 ymf278b_data_port_r(int num)
 
 static void ymf278b_control_port_A_w(int num, UINT8 data)
 {
-	YMF278B[num].port_A = data;
+	YMF278BChip *chip = sndti_token(SOUND_YMF278B, num);
+	chip->port_A = data;
 }
 
 static void ymf278b_data_port_A_w(int num, UINT8 data)
 {
-	ymf278b_A_w(num, YMF278B[num].port_A, data);
+	YMF278BChip *chip = sndti_token(SOUND_YMF278B, num);
+	ymf278b_A_w(chip, chip->port_A, data);
 }
 
 static void ymf278b_control_port_B_w(int num, UINT8 data)
 {
-	YMF278B[num].port_B = data;
+	YMF278BChip *chip = sndti_token(SOUND_YMF278B, num);
+	chip->port_B = data;
 }
 
 static void ymf278b_data_port_B_w(int num, UINT8 data)
 {
-	ymf278b_B_w(num, YMF278B[num].port_B, data);
+	YMF278BChip *chip = sndti_token(SOUND_YMF278B, num);
+	ymf278b_B_w(chip, chip->port_B, data);
 }
 
 static void ymf278b_control_port_C_w(int num, UINT8 data)
 {
-	YMF278B[num].port_C = data;
+	YMF278BChip *chip = sndti_token(SOUND_YMF278B, num);
+	chip->port_C = data;
 }
 
 static void ymf278b_data_port_C_w(int num, UINT8 data)
 {
-	ymf278b_C_w(num, YMF278B[num].port_C, data);
+	YMF278BChip *chip = sndti_token(SOUND_YMF278B, num);
+	ymf278b_C_w(chip, chip->port_C, data);
 }
 
-static void ymf278b_init(INT8 num, UINT8 *rom, void (*cb)(int), int clock)
+static void ymf278b_init(YMF278BChip *chip, UINT8 *rom, void (*cb)(int), int clock)
 {
-	memset(&YMF278B[num], 0, sizeof(YMF278BChip));
-	YMF278B[num].rom = rom;
-	YMF278B[num].irq_callback = cb;
-	YMF278B[num].timer_a = timer_alloc(ymf278b_timer_a_tick);
-	YMF278B[num].timer_b = timer_alloc(ymf278b_timer_b_tick);
-	YMF278B[num].irq_line = CLEAR_LINE;
-	YMF278B[num].clock_ratio = (float)clock / (float)YMF278B_STD_CLOCK;
+	chip->rom = rom;
+	chip->irq_callback = cb;
+	chip->timer_a = timer_alloc_ptr(ymf278b_timer_a_tick);
+	chip->timer_b = timer_alloc_ptr(ymf278b_timer_b_tick);
+	chip->irq_line = CLEAR_LINE;
+	chip->clock_ratio = (float)clock / (float)YMF278B_STD_CLOCK;
 }
 
-int YMF278B_sh_start( const struct MachineSound *msound )
+static void *ymf278b_start(int sndindex, int clock, const void *config)
 {
-	char buf[2][40];
-	const char *name[2];
-	int  vol[2];
-	struct YMF278B_interface *intf;
+	const struct YMF278B_interface *intf;
 	int i;
+	YMF278BChip *chip;
+	
+	chip = auto_malloc(sizeof(*chip));
+	memset(chip, 0, sizeof(*chip));
+	chip->index = sndindex;
 
-	intf = msound->sound_interface;
+	intf = config;
 
-	for(i=0; i<intf->num; i++)
-	{
-		sprintf(buf[0], "YMF278B %d L", i);
-		sprintf(buf[1], "YMF278B %d R", i);
-		name[0] = buf[0];
-		name[1] = buf[1];
-		vol[0]=intf->mixing_level[i] >> 16;
-		vol[1]=intf->mixing_level[i] & 0xffff;
-		ymf278b_init(i, memory_region(intf->region[0]), intf->irq_callback[i], intf->clock[i]);
-		stream_init_multi(2, name, vol, Machine->sample_rate, i, ymf278b_pcm_update);
-	}
+	ymf278b_init(chip, memory_region(intf->region), intf->irq_callback, clock);
+	chip->stream = stream_create(0, 2, Machine->sample_rate, chip, ymf278b_pcm_update);
 
 	// Volume table, 1 = -0.375dB, 8 = -3dB, 256 = -96dB
 	for(i = 0; i < 256; i++)
-		volume[i] = 65536*pow(2.0, (-0.375/6)*i);
+		chip->volume[i] = 65536*pow(2.0, (-0.375/6)*i);
 	for(i = 256; i < 256*4; i++)
-		volume[i] = 0;
+		chip->volume[i] = 0;
 
 	// Pan values, units are -3dB, i.e. 8.
 	for(i = 0; i < 16; i++)
 	{
-		pan_left[i] = i < 7 ? i*8 : i < 9 ? 256 : 0;
-		pan_right[i] = i < 8 ? 0 : i < 10 ? 256 : (16-i)*8;
+		chip->pan_left[i] = i < 7 ? i*8 : i < 9 ? 256 : 0;
+		chip->pan_right[i] = i < 8 ? 0 : i < 10 ? 256 : (16-i)*8;
 	}
 
 	// Mixing levels, units are -3dB, and add some marging to avoid clipping
 	for(i=0; i<7; i++)
-		mix_level[i] = volume[8*i+8];
-	mix_level[7] = 0;
+		chip->mix_level[i] = chip->volume[8*i+8];
+	chip->mix_level[7] = 0;
 
-	return 0;
-}
-
-void YMF278B_sh_stop( void )
-{
+	return chip;
 }
 
 
@@ -766,3 +759,41 @@ WRITE8_HANDLER( YMF278B_data_port_1_C_w )
 {
 	ymf278b_data_port_C_w(1, data);
 }
+
+
+
+
+/**************************************************************************
+ * Generic get_info
+ **************************************************************************/
+
+static void ymf278b_set_info(void *token, UINT32 state, union sndinfo *info)
+{
+	switch (state)
+	{
+		/* no parameters to set */
+	}
+}
+
+
+void ymf278b_get_info(void *token, UINT32 state, union sndinfo *info)
+{
+	switch (state)
+	{
+		/* --- the following bits of info are returned as 64-bit signed integers --- */
+
+		/* --- the following bits of info are returned as pointers to data or functions --- */
+		case SNDINFO_PTR_SET_INFO:						info->set_info = ymf278b_set_info;		break;
+		case SNDINFO_PTR_START:							info->start = ymf278b_start;			break;
+		case SNDINFO_PTR_STOP:							/* Nothing */							break;
+		case SNDINFO_PTR_RESET:							/* Nothing */							break;
+
+		/* --- the following bits of info are returned as NULL-terminated strings --- */
+		case SNDINFO_STR_NAME:							info->s = "YMF278B";					break;
+		case SNDINFO_STR_CORE_FAMILY:					info->s = "Yamaha FM";					break;
+		case SNDINFO_STR_CORE_VERSION:					info->s = "1.0";						break;
+		case SNDINFO_STR_CORE_FILE:						info->s = __FILE__;						break;
+		case SNDINFO_STR_CORE_CREDITS:					info->s = "Copyright (c) 2004, The MAME Team"; break;
+	}
+}
+

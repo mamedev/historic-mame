@@ -20,6 +20,8 @@ Could be bad dump ('final' romset is made of two sets marked as 'bad' )
 #include "vidhrdw/generic.h"
 #include "cpu/z80/z80.h"
 #include "snk.h"
+#include "sound/ay8910.h"
+#include "sound/namco.h"
 
 data8_t *jcr_textram;
 
@@ -44,21 +46,8 @@ static WRITE8_HANDLER(sharedram_w){	jcr_sharedram[offset]=data;}
 
 static struct namco_interface snkwave_interface =
 {
-	24000,
 	1,
-	8,
 	-1
-};
-
-static struct AY8910interface ay8910_interface =
-{
-	2,
-	2000000,
-	{ 35,35 },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ 0 }
 };
 
 static WRITE8_HANDLER( sound_command_w )
@@ -320,8 +309,17 @@ static MACHINE_DRIVER_START( jcross )
 	MDRV_VIDEO_UPDATE(jcross)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(AY8910, ay8910_interface)
-	MDRV_SOUND_ADD(NAMCO, snkwave_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	
+	MDRV_SOUND_ADD(AY8910, 2000000)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.35)
+	
+	MDRV_SOUND_ADD(AY8910, 2000000)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.35)
+
+	MDRV_SOUND_ADD(NAMCO, 24000)
+	MDRV_SOUND_CONFIG(snkwave_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.08)
 MACHINE_DRIVER_END
 
 

@@ -20,6 +20,7 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "cpu/m68000/m68000.h"
+#include "sound/gaelco.h"
 
 extern data16_t *gaelco_sndregs;
 extern data16_t *gaelco2_vregs;
@@ -189,7 +190,6 @@ static struct gaelcosnd_interface maniacsq_snd_interface =
 {
 	REGION_GFX1, 							/* memory region */
 	{ 0*0x0080000, 1*0x0080000, 0, 0 },		/* start of each ROM bank */
-	{ 100, 100 }							/* volume */
 };
 
 static MACHINE_DRIVER_START( maniacsq )
@@ -213,8 +213,12 @@ static MACHINE_DRIVER_START( maniacsq )
 	MDRV_VIDEO_UPDATE(gaelco2)
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(GAELCO_GAE1, maniacsq_snd_interface)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(GAELCO_GAE1, 0)
+	MDRV_SOUND_CONFIG(maniacsq_snd_interface)
+	MDRV_SOUND_ROUTE(0, "left", 1.0)
+	MDRV_SOUND_ROUTE(1, "right", 1.0)
 MACHINE_DRIVER_END
 
 
@@ -335,8 +339,7 @@ INPUT_PORTS_END
 static struct gaelcosnd_interface bang_snd_interface =
 {
 	REGION_GFX1, 											/* memory region */
-	{ 0*0x0200000, 1*0x0200000, 2*0x0200000, 3*0x0200000 },	/* start of each ROM bank */
-	{ 100, 100 }											/* volume */
+	{ 0*0x0200000, 1*0x0200000, 2*0x0200000, 3*0x0200000 }	/* start of each ROM bank */
 };
 
 static MACHINE_DRIVER_START( bang )
@@ -362,8 +365,12 @@ static MACHINE_DRIVER_START( bang )
 	MDRV_VIDEO_UPDATE(bang)
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(GAELCO_CG1V, bang_snd_interface)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(GAELCO_CG1V, 0)
+	MDRV_SOUND_CONFIG(bang_snd_interface)
+	MDRV_SOUND_ROUTE(0, "left", 1.0)
+	MDRV_SOUND_ROUTE(1, "right", 1.0)
 MACHINE_DRIVER_END
 
 
@@ -534,8 +541,7 @@ INPUT_PORTS_END
 static struct gaelcosnd_interface alighunt_snd_interface =
 {
 	REGION_GFX1, 											/* memory region */
-	{ 0*0x0400000, 1*0x0400000, 2*0x0400000, 3*0x0400000 },	/* start of each ROM bank */
-	{ 100, 100 }											/* volume */
+	{ 0*0x0400000, 1*0x0400000, 2*0x0400000, 3*0x0400000 }	/* start of each ROM bank */
 };
 
 static MACHINE_DRIVER_START( alighunt )
@@ -559,8 +565,12 @@ static MACHINE_DRIVER_START( alighunt )
 	MDRV_VIDEO_UPDATE(gaelco2)
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(GAELCO_GAE1, alighunt_snd_interface)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(GAELCO_GAE1, 0)
+	MDRV_SOUND_CONFIG(alighunt_snd_interface)
+	MDRV_SOUND_ROUTE(0, "left", 1.0)
+	MDRV_SOUND_ROUTE(1, "right", 1.0)
 MACHINE_DRIVER_END
 
 
@@ -798,8 +808,7 @@ INPUT_PORTS_END
 static struct gaelcosnd_interface touchgo_snd_interface =
 {
 	REGION_GFX1, 							/* memory region */
-	{ 0*0x0400000, 1*0x0400000, 0, 0 },		/* start of each ROM bank */
-	{ 100, 100 }							/* volume */
+	{ 0*0x0400000, 1*0x0400000, 0, 0 }		/* start of each ROM bank */
 };
 
 static MACHINE_DRIVER_START( touchgo )
@@ -831,9 +840,12 @@ static MACHINE_DRIVER_START( touchgo )
 	/* the chip is stereo, but the game sound is mono because the right channel
 	   output is for cabinet 1 and the left channel output is for cabinet 2 */
 #ifndef ONE_MONITOR
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
 #endif
-	MDRV_SOUND_ADD(GAELCO_GAE1, touchgo_snd_interface)
+	MDRV_SOUND_ADD(GAELCO_GAE1, 0)
+	MDRV_SOUND_CONFIG(touchgo_snd_interface)
+	MDRV_SOUND_ROUTE(0, "left", 1.0)
+	MDRV_SOUND_ROUTE(1, "right", 1.0)
 MACHINE_DRIVER_END
 
 /*
@@ -969,8 +981,7 @@ INPUT_PORTS_END
 static struct gaelcosnd_interface snowboar_snd_interface =
 {
 	REGION_GFX1, 							/* memory region */
-	{ 0*0x0400000, 1*0x0400000, 0, 0 },		/* start of each ROM bank */
-	{ 100, 100 }							/* volume */
+	{ 0*0x0400000, 1*0x0400000, 0, 0 }		/* start of each ROM bank */
 };
 
 static MACHINE_DRIVER_START( snowboar )
@@ -996,8 +1007,12 @@ static MACHINE_DRIVER_START( snowboar )
 	MDRV_VIDEO_UPDATE(gaelco2)
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(GAELCO_CG1V, snowboar_snd_interface)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(GAELCO_CG1V, 0)
+	MDRV_SOUND_CONFIG(snowboar_snd_interface)
+	MDRV_SOUND_ROUTE(0, "left", 1.0)
+	MDRV_SOUND_ROUTE(1, "right", 1.0)
 MACHINE_DRIVER_END
 
 
@@ -1214,8 +1229,7 @@ INPUT_PORTS_END
 static struct gaelcosnd_interface wrally2_snd_interface =
 {
 	REGION_GFX1, 						/* memory region */
-	{ 0*0x0200000, 1*0x0200000, 0, 0 },	/* start of each ROM bank */
-	{ 100, 100 }						/* volume */
+	{ 0*0x0200000, 1*0x0200000, 0, 0 }	/* start of each ROM bank */
 };
 
 static MACHINE_DRIVER_START( wrally2 )
@@ -1249,9 +1263,12 @@ static MACHINE_DRIVER_START( wrally2 )
 	/* the chip is stereo, but the game sound is mono because the right channel
 	   output is for cabinet 1 and the left channel output is for cabinet 2 */
 #ifndef ONE_MONITOR
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
 #endif
-	MDRV_SOUND_ADD(GAELCO_GAE1, wrally2_snd_interface)
+	MDRV_SOUND_ADD(GAELCO_GAE1, 0)
+	MDRV_SOUND_CONFIG(wrally2_snd_interface)
+	MDRV_SOUND_ROUTE(0, "left", 1.0)
+	MDRV_SOUND_ROUTE(1, "right", 1.0)
 MACHINE_DRIVER_END
 
 /*

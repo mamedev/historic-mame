@@ -1,6 +1,8 @@
 
 #include "driver.h"
 #include "includes/blockade.h"
+#include "sound/discrete.h"
+#include "sound/samples.h"
 
 /*
  * This still needs the noise generator stuff,
@@ -66,6 +68,5 @@ static const char *blockade_sample_names[] =
 struct Samplesinterface blockade_samples_interface =
 {
     1,	/* 1 channel */
-	25,	/* volume */
 	blockade_sample_names
 };

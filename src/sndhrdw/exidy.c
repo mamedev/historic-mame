@@ -8,7 +8,7 @@
 #include "cpu/m6502/m6502.h"
 #include "machine/6821pia.h"
 #include "sound/hc55516.h"
-#include "sound/tms5220.h"
+#include "sound/5220intf.h"
 #include "exidy.h"
 
 
@@ -101,7 +101,7 @@ static UINT8 has_hc55516;
 static UINT8 has_tms5220;
 
 /* sound streaming variables */
-static int exidy_stream;
+static sound_stream *exidy_stream;
 static double freq_to_step;
 
 
@@ -258,9 +258,10 @@ INLINE int sh6840_update_noise(int clocks)
  *
  *************************************/
 
-static void exidy_stream_update(int param, INT16 *buffer, int length)
+static void exidy_stream_update(void *param, stream_sample_t **inputs, stream_sample_t **outputs, int length)
 {
 	int noisy = ((sh6840_timer[0].cr & sh6840_timer[1].cr & sh6840_timer[2].cr & 0x02) == 0);
+	stream_sample_t *buffer = outputs[0];
 
 	/* loop over samples */
 	while (length--)
@@ -371,7 +372,7 @@ static void exidy_stream_update(int param, INT16 *buffer, int length)
 
 static void riot_interrupt(int parm);
 
-static int common_start(void)
+static void *common_start(void)
 {
 	int i;
 
@@ -387,7 +388,7 @@ static int common_start(void)
 	}
 
 	/* allocate the stream */
-	exidy_stream = stream_init("Exidy custom", 100, Machine->sample_rate, 0, exidy_stream_update);
+	exidy_stream = stream_create(0, 1, Machine->sample_rate, NULL, exidy_stream_update);
 
 	/* Init PIA */
 	pia_reset();
@@ -413,11 +414,11 @@ static int common_start(void)
 	if (Machine->sample_rate != 0)
 		freq_to_step = (double)(1 << 24) / (double)Machine->sample_rate;
 
-	return 0;
+	return auto_malloc(1);
 }
 
 
-int exidy_sh_start(const struct MachineSound *msound)
+void *exidy_sh_start(int clock, const struct CustomSound_interface *config)
 {
 	/* Init PIA */
 	pia_config(0, PIA_STANDARD_ORDERING, &pia_0_intf);
@@ -426,7 +427,7 @@ int exidy_sh_start(const struct MachineSound *msound)
 }
 
 
-int victory_sh_start(const struct MachineSound *msound)
+void *victory_sh_start(int clock, const struct CustomSound_interface *config)
 {
 	/* Init PIA */
 	pia_config(0, PIA_STANDARD_ORDERING, &victory_pia_0_intf);

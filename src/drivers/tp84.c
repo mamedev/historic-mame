@@ -83,6 +83,8 @@ C004      76489 #4 trigger
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "sound/sn76496.h"
+#include "sound/flt_rc.h"
 
 
 extern UINT8 *tp84_videoram2, *tp84_colorram2;
@@ -136,23 +138,23 @@ static WRITE8_HANDLER( tp84_filter_w )
 	C = 0;
 	if (offset & 0x008) C +=  47000;	/*  47000pF = 0.047uF */
 	if (offset & 0x010) C += 470000;	/* 470000pF = 0.47uF */
-	set_RC_filter(0,1000,2200,1000,C);
+	filter_rc_set_RC(0,1000,2200,1000,C);
 
 	/* 76489 #1 (optional) */
 	C = 0;
 	if (offset & 0x020) C +=  47000;	/*  47000pF = 0.047uF */
 	if (offset & 0x040) C += 470000;	/* 470000pF = 0.47uF */
-//	set_RC_filter(1,1000,2200,1000,C);
+//	filter_rc_set_RC(1,1000,2200,1000,C);
 
 	/* 76489 #2 */
 	C = 0;
 	if (offset & 0x080) C += 470000;	/* 470000pF = 0.47uF */
-	set_RC_filter(1,1000,2200,1000,C);
+	filter_rc_set_RC(1,1000,2200,1000,C);
 
 	/* 76489 #3 */
 	C = 0;
 	if (offset & 0x100) C += 470000;	/* 470000pF = 0.47uF */
-	set_RC_filter(2,1000,2200,1000,C);
+	filter_rc_set_RC(2,1000,2200,1000,C);
 }
 
 static WRITE8_HANDLER( tp84_sh_irqtrigger_w )
@@ -448,15 +450,6 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 
 
-static struct SN76496interface sn76496_interface =
-{
-	3,	/* 3 chips */
-	{ 14318180/8, 14318180/8, 14318180/8 },
-	{ 75, 75, 75 }
-};
-
-
-
 static MACHINE_DRIVER_START( tp84 )
 
 	/* basic machine hardware */
@@ -490,7 +483,23 @@ static MACHINE_DRIVER_START( tp84 )
 	MDRV_VIDEO_UPDATE(tp84)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(SN76496, sn76496_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(SN76496, 14318180/8)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "filter1", 0.75)
+
+	MDRV_SOUND_ADD(SN76496, 14318180/8)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "filter2", 0.75)
+
+	MDRV_SOUND_ADD(SN76496, 14318180/8)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "filter3", 0.75)
+	
+	MDRV_SOUND_ADD_TAG("filter1", FILTER_RC, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
+	MDRV_SOUND_ADD_TAG("filter2", FILTER_RC, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
+	MDRV_SOUND_ADD_TAG("filter3", FILTER_RC, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 

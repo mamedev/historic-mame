@@ -17,6 +17,11 @@
 #include "machine/znsec.h"
 #include "machine/idectrl.h"
 #include "sndhrdw/taitosnd.h"
+#include "sound/2610intf.h"
+#include "sound/ymz280b.h"
+#include "sound/qsound.h"
+#include "sound/psx.h"
+#include "sound/ymf271.h"
 
 #define VERBOSE_LEVEL ( 0 )
 
@@ -154,6 +159,7 @@ static struct
 	{ "mgcldate", tt01, tt06 }, /* stuck in test mode */
 	{ "mgcldtex", tt01, tt06 }, /* OK */
 	{ "gdarius",  tt01, tt07 }, /* OK */
+	{ "gdariusb", tt01, tt07 }, /* OK */
 	{ "gdarius2", tt01, tt07 }, /* OK */
 	{ "taitogn",  tt10, tt16 }, /* shows gnet logo */
 	{ "sncwgltd", kn01, kn02 }, /* OK */
@@ -389,7 +395,6 @@ static void zn_driver_init( void )
 
 static struct PSXSPUinterface psxspu_interface =
 {
-	35,
 	&g_p_n_psxram,
 	psx_irq_set,
 	psx_dma_install_read_handler,
@@ -596,9 +601,7 @@ ADDRESS_MAP_END
 
 static struct QSound_interface qsound_interface =
 {
-	QSOUND_CLOCK,
-	REGION_SOUND1,
-	{ 100,100 }
+	REGION_SOUND1
 };
 
 static MACHINE_DRIVER_START( coh1000c )
@@ -631,9 +634,17 @@ static MACHINE_DRIVER_START( coh1000c )
 	MDRV_VIDEO_STOP( psx )
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES( SOUND_SUPPORTS_STEREO )
-	MDRV_SOUND_ADD( PSXSPU, psxspu_interface )
-	MDRV_SOUND_ADD( QSOUND, qsound_interface )
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD( PSXSPU, 0 )
+	MDRV_SOUND_CONFIG( psxspu_interface )
+	MDRV_SOUND_ROUTE(0, "left", 0.35)
+	MDRV_SOUND_ROUTE(1, "right", 0.35)
+	
+	MDRV_SOUND_ADD( QSOUND, QSOUND_CLOCK )
+	MDRV_SOUND_CONFIG( qsound_interface )
+	MDRV_SOUND_ROUTE(0, "left", 1.0)
+	MDRV_SOUND_ROUTE(1, "right", 1.0)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( coh1002c )
@@ -666,9 +677,17 @@ static MACHINE_DRIVER_START( coh1002c )
 	MDRV_VIDEO_STOP( psx )
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES( SOUND_SUPPORTS_STEREO )
-	MDRV_SOUND_ADD( PSXSPU, psxspu_interface )
-	MDRV_SOUND_ADD( QSOUND, qsound_interface )
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD( PSXSPU, 0 )
+	MDRV_SOUND_CONFIG( psxspu_interface )
+	MDRV_SOUND_ROUTE(0, "left", 0.35)
+	MDRV_SOUND_ROUTE(1, "right", 0.35)
+	
+	MDRV_SOUND_ADD( QSOUND, QSOUND_CLOCK )
+	MDRV_SOUND_CONFIG( qsound_interface )
+	MDRV_SOUND_ROUTE(0, "left", 1.0)
+	MDRV_SOUND_ROUTE(1, "right", 1.0)
 MACHINE_DRIVER_END
 
 /*
@@ -867,9 +886,17 @@ static MACHINE_DRIVER_START( coh3002c )
 	MDRV_VIDEO_STOP( psx )
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES( SOUND_SUPPORTS_STEREO )
-	MDRV_SOUND_ADD( PSXSPU, psxspu_interface )
-	MDRV_SOUND_ADD( QSOUND, qsound_interface )
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD( PSXSPU, 0 )
+	MDRV_SOUND_CONFIG( psxspu_interface )
+	MDRV_SOUND_ROUTE(0, "left", 0.35)
+	MDRV_SOUND_ROUTE(1, "right", 0.35)
+	
+	MDRV_SOUND_ADD( QSOUND, QSOUND_CLOCK )
+	MDRV_SOUND_CONFIG( qsound_interface )
+	MDRV_SOUND_ROUTE(0, "left", 1.0)
+	MDRV_SOUND_ROUTE(1, "right", 1.0)
 MACHINE_DRIVER_END
 
 /*
@@ -1127,6 +1154,13 @@ INTERRUPT_GEN( coh1000t_vblank )
 			psxwritebyte(0x165d53, 1);
 		}
 	}
+	if(strcmp( Machine->gamedrv->name, "gdariusb" ) == 0 )
+	{
+		if (psxreadbyte(0x165dfb) == 0)
+		{
+			psxwritebyte(0x165dfb, 1);
+		}
+	}
 	if(strcmp( Machine->gamedrv->name, "gdarius2" ) == 0 )
 	{
 		if (psxreadbyte(0x16be3b) == 0)
@@ -1251,17 +1285,9 @@ static void irq_handler(int irq)
 
 static struct YM2610interface ym2610_interface =
 {
-	1,	/* 1 chip */
-	16000000/2,	/* 8 MHz */
-	{ 25 },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ irq_handler },
-	{ REGION_SOUND1 },	/* Delta-T */
-	{ REGION_SOUND1 },	/* ADPCM */
-	{ YM3012_VOL(100,MIXER_PAN_LEFT,100,MIXER_PAN_RIGHT) }
+	irq_handler,
+	REGION_SOUND1,	/* Delta-T */
+	REGION_SOUND1	/* ADPCM */
 };
 
 static MACHINE_DRIVER_START( coh1000ta )
@@ -1292,9 +1318,19 @@ static MACHINE_DRIVER_START( coh1000ta )
 	MDRV_VIDEO_STOP( psx )
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES( SOUND_SUPPORTS_STEREO )
-	MDRV_SOUND_ADD( PSXSPU, psxspu_interface )
-	MDRV_SOUND_ADD( YM2610B, ym2610_interface )
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD( PSXSPU, 0 )
+	MDRV_SOUND_CONFIG( psxspu_interface )
+	MDRV_SOUND_ROUTE(0, "left", 0.35)
+	MDRV_SOUND_ROUTE(1, "right", 0.35)
+
+	MDRV_SOUND_ADD(YM2610B, 16000000/2)
+	MDRV_SOUND_CONFIG(ym2610_interface)
+	MDRV_SOUND_ROUTE(0, "left",  0.25)
+	MDRV_SOUND_ROUTE(0, "right", 0.25)
+	MDRV_SOUND_ROUTE(1, "left",  1.0)
+	MDRV_SOUND_ROUTE(2, "right", 1.0)
 MACHINE_DRIVER_END
 
 static WRITE32_HANDLER( taitofx1b_volume_w )
@@ -1385,8 +1421,12 @@ static MACHINE_DRIVER_START( coh1000tb )
 	MDRV_VIDEO_STOP( psx )
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES( SOUND_SUPPORTS_STEREO )
-	MDRV_SOUND_ADD( PSXSPU, psxspu_interface )
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD( PSXSPU, 0 )
+	MDRV_SOUND_CONFIG( psxspu_interface )
+	MDRV_SOUND_ROUTE(0, "left", 0.35)
+	MDRV_SOUND_ROUTE(1, "right", 0.35)
 MACHINE_DRIVER_END
 
 /*
@@ -1403,8 +1443,8 @@ Also available are...
 - Optional Communication Interface PCB
 - Optional Save PCB
 
-On power-up, the system checks for a PCMCIA cart. If the cart matches the contents of the flashROMs, 
-the game boots immediately with no delay. If the cart doesn't match, it re-flashes the flashROMs with _some_ 
+On power-up, the system checks for a PCMCIA cart. If the cart matches the contents of the flashROMs,
+the game boots immediately with no delay. If the cart doesn't match, it re-flashes the flashROMs with _some_
 of the information contained in the cart, which takes approximately 2-3 minutes. The game then resets
 and boots up.
 
@@ -1459,10 +1499,10 @@ Notes:
       CN654 - Connector for optional memory card
       S301  - Slide switch for stereo or mono sound output
       S551  - Dip switch (4 position, defaults all OFF)
-      
+
       COH3002T.353   - GNET BIOS 4MBit MaskROM type M534002 (SOP40)
       AT28C16        - Atmel AT28C16 2K x8 EEPROM
-      814260-70      - 256K x16 (4MBit) DRAM 
+      814260-70      - 256K x16 (4MBit) DRAM
       KM4132G271BQ-8 - 128K x 32Bit x 2 Banks SGRAM
       KM416V1204BT-L5- 1M x16 EDO DRAM
       EPM7064        - Altera EPM7064QC100 CPLD (QFP100)
@@ -1517,7 +1557,7 @@ Notes:
       CAT702          - Protection chip labelled 'TT16' (DIP20)
       CD PCB          - A PCMCIA cart slot connector mounted onto a small daughterboard
       *               - These parts located under the PCB
-      
+
 */
 
 static data32_t coh3002t_unknown;
@@ -1571,8 +1611,12 @@ static MACHINE_DRIVER_START( coh3002t )
 	MDRV_VIDEO_STOP( psx )
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES( SOUND_SUPPORTS_STEREO )
-	MDRV_SOUND_ADD( PSXSPU, psxspu_interface )
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD( PSXSPU, 0 )
+	MDRV_SOUND_CONFIG( psxspu_interface )
+	MDRV_SOUND_ROUTE(0, "left", 0.35)
+	MDRV_SOUND_ROUTE(1, "right", 0.35)
 MACHINE_DRIVER_END
 
 /*
@@ -1781,8 +1825,12 @@ static MACHINE_DRIVER_START( coh1000w )
 	MDRV_VIDEO_STOP( psx )
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES( SOUND_SUPPORTS_STEREO )
-	MDRV_SOUND_ADD( PSXSPU, psxspu_interface )
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD( PSXSPU, 0 )
+	MDRV_SOUND_CONFIG( psxspu_interface )
+	MDRV_SOUND_ROUTE(0, "left", 0.35)
+	MDRV_SOUND_ROUTE(1, "right", 0.35)
 MACHINE_DRIVER_END
 
 /*
@@ -1992,9 +2040,7 @@ ADDRESS_MAP_END
 
 static struct YMF271interface ymf271_interface =
 {
-	1,
-	{ REGION_SOUND1, },
-	{ YM3012_VOL(100, MIXER_PAN_LEFT, 100, MIXER_PAN_RIGHT), },
+	REGION_SOUND1
 };
 
 static MACHINE_DRIVER_START( coh1002e )
@@ -2025,9 +2071,17 @@ static MACHINE_DRIVER_START( coh1002e )
 	MDRV_VIDEO_STOP( psx )
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES( SOUND_SUPPORTS_STEREO )
-	MDRV_SOUND_ADD( PSXSPU, psxspu_interface )
-	MDRV_SOUND_ADD( YMF271, ymf271_interface )
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD( PSXSPU, 0 )
+	MDRV_SOUND_CONFIG( psxspu_interface )
+	MDRV_SOUND_ROUTE(0, "left", 0.35)
+	MDRV_SOUND_ROUTE(1, "right", 0.35)
+	
+	MDRV_SOUND_ADD( YMF271, 0 )
+	MDRV_SOUND_CONFIG( ymf271_interface )
+	MDRV_SOUND_ROUTE(0, "left", 1.0)
+	MDRV_SOUND_ROUTE(1, "right", 1.0)
 MACHINE_DRIVER_END
 
 /*
@@ -2358,8 +2412,12 @@ static MACHINE_DRIVER_START( coh1000a )
 	MDRV_VIDEO_STOP( psx )
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES( SOUND_SUPPORTS_STEREO )
-	MDRV_SOUND_ADD( PSXSPU, psxspu_interface )
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD( PSXSPU, 0 )
+	MDRV_SOUND_CONFIG( psxspu_interface )
+	MDRV_SOUND_ROUTE(0, "left", 0.35)
+	MDRV_SOUND_ROUTE(1, "right", 0.35)
 MACHINE_DRIVER_END
 
 /*
@@ -2525,8 +2583,13 @@ static MACHINE_DRIVER_START( coh1001l )
 	MDRV_VIDEO_STOP( psx )
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES( SOUND_SUPPORTS_STEREO )
-	MDRV_SOUND_ADD( PSXSPU, psxspu_interface )
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD( PSXSPU, 0 )
+	MDRV_SOUND_CONFIG( psxspu_interface )
+	MDRV_SOUND_ROUTE(0, "left", 0.35)
+	MDRV_SOUND_ROUTE(1, "right", 0.35)
+
 //	MDRV_SOUND_ADD( YMZ280B, ymz280b_intf )
 MACHINE_DRIVER_END
 
@@ -2605,8 +2668,12 @@ static MACHINE_DRIVER_START( coh1002v )
 	MDRV_VIDEO_STOP( psx )
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES( SOUND_SUPPORTS_STEREO )
-	MDRV_SOUND_ADD( PSXSPU, psxspu_interface )
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD( PSXSPU, 0 )
+	MDRV_SOUND_CONFIG( psxspu_interface )
+	MDRV_SOUND_ROUTE(0, "left", 0.35)
+	MDRV_SOUND_ROUTE(1, "right", 0.35)
 MACHINE_DRIVER_END
 
 /*
@@ -2841,11 +2908,8 @@ ADDRESS_MAP_END
 
 static struct YMZ280Binterface ymz280b_intf =
 {
-	1,
-	{ 16934400 },
-	{ REGION_SOUND1 },
-	{ YM3012_VOL(100,MIXER_PAN_LEFT,100,MIXER_PAN_RIGHT) },
-	{ 0 }
+	REGION_SOUND1,
+	0
 };
 
 static MACHINE_DRIVER_START( coh1002m )
@@ -2872,8 +2936,12 @@ static MACHINE_DRIVER_START( coh1002m )
 	MDRV_VIDEO_STOP( psx )
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES( SOUND_SUPPORTS_STEREO )
-	MDRV_SOUND_ADD( PSXSPU, psxspu_interface )
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD( PSXSPU, 0 )
+	MDRV_SOUND_CONFIG( psxspu_interface )
+	MDRV_SOUND_ROUTE(0, "left", 0.35)
+	MDRV_SOUND_ROUTE(1, "right", 0.35)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( coh1002msnd )
@@ -2905,9 +2973,17 @@ static MACHINE_DRIVER_START( coh1002msnd )
 	MDRV_VIDEO_STOP( psx )
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES( SOUND_SUPPORTS_STEREO )
-	MDRV_SOUND_ADD( PSXSPU, psxspu_interface )
-	MDRV_SOUND_ADD( YMZ280B, ymz280b_intf )
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD( PSXSPU, 0 )
+	MDRV_SOUND_CONFIG( psxspu_interface )
+	MDRV_SOUND_ROUTE(0, "left", 0.35)
+	MDRV_SOUND_ROUTE(1, "right", 0.35)
+
+	MDRV_SOUND_ADD(YMZ280B, 16934400)
+	MDRV_SOUND_CONFIG(ymz280b_intf)
+	MDRV_SOUND_ROUTE(0, "left", 1.0)
+	MDRV_SOUND_ROUTE(1, "right", 1.0)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( coh1002ml )
@@ -2937,8 +3013,12 @@ static MACHINE_DRIVER_START( coh1002ml )
 	MDRV_VIDEO_STOP( psx )
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES( SOUND_SUPPORTS_STEREO )
-	MDRV_SOUND_ADD( PSXSPU, psxspu_interface )
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD( PSXSPU, 0 )
+	MDRV_SOUND_CONFIG( psxspu_interface )
+	MDRV_SOUND_ROUTE(0, "left", 0.35)
+	MDRV_SOUND_ROUTE(1, "right", 0.35)
 MACHINE_DRIVER_END
 
 INPUT_PORTS_START( zn )
@@ -3821,6 +3901,23 @@ ROM_START( gdarius )
 	ROM_LOAD( "e39-04.27",    0x0000000, 0x400000, CRC(6ee35e68) SHA1(fdfe63203d8cecf84cb869039fb893d5b63cdd67) )
 ROM_END
 
+ROM_START( gdariusb )
+	TAITOFX1_BIOS
+
+	ROM_REGION32_LE( 0x01000000, REGION_USER2, 0 )
+	ROM_LOAD16_BYTE( "e39-08.ic4",   0x0000001, 0x100000, CRC(835049db) SHA1(2b230c8fd6c6ea4e30740fda28f631344b018b79) )
+	ROM_LOAD16_BYTE( "e39-10.ic3",   0x0000000, 0x100000, CRC(6ba4d941) SHA1(75f2d8c920d29102c09e041fc3198e32ad57dbaf) )
+	ROM_LOAD( "e39-01.1",            0x0400000, 0x400000, CRC(bdaaa251) SHA1(a42daa706ee859c2b66be179e08c0ad7990f919e) )
+	ROM_LOAD( "e39-02.2",            0x0800000, 0x400000, CRC(a47aab5d) SHA1(64b58e47035ad9d8d6dcaf475cbcc3ad85f4d82f) )
+	ROM_LOAD( "e39-03.12",           0x0c00000, 0x400000, CRC(a883b6a5) SHA1(b8d00d944c90f8cd9c2b076688f4c68b2e6d557a) )
+
+	ROM_REGION( 0x080000, REGION_CPU2, 0 )
+	ROM_LOAD( "e39-07.14",    0x0000000, 0x080000, CRC(2252c7c1) SHA1(92b9908e0d87cad6587f1acc0eef69eaae8c6a98) )
+
+	ROM_REGION( 0x400000, REGION_SOUND1, ROMREGION_SOUNDONLY )
+	ROM_LOAD( "e39-04.27",    0x0000000, 0x400000, CRC(6ee35e68) SHA1(fdfe63203d8cecf84cb869039fb893d5b63cdd67) )
+ROM_END
+
 ROM_START( gdarius2 )
 	TAITOFX1_BIOS
 
@@ -4316,6 +4413,7 @@ GAMEX( 1996, raystorj, raystorm, coh1000tb,zn, coh1000tb, ROT0, "Taito", "Ray St
 GAMEX( 1996, ftimpcta, taitofx1, coh1000tb,zn, coh1000tb, ROT0, "Taito", "Fighters' Impact A (Ver 2.00J)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND | GAME_NOT_WORKING )
 GAMEX( 1997, mgcldtex, taitofx1, coh1000ta,zn, coh1000ta, ROT0, "Taito", "Magical Date EX / Magical Date - sotsugyou kokuhaku daisakusen (Ver 2.01J)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
 GAMEX( 1997, gdarius,  taitofx1, coh1000tb,zn, coh1000tb, ROT0, "Taito", "G-Darius (Ver 2.01J)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
+GAMEX( 1997, gdariusb, gdarius,  coh1000tb,zn, coh1000tb, ROT0, "Taito", "G-Darius (Ver 2.02A)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
 GAMEX( 1997, gdarius2, gdarius,  coh1000tb,zn, coh1000tb, ROT0, "Taito", "G-Darius Ver.2 (Ver 2.03J)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
 
 /* A dummy driver, so that the bios can be debugged, and to serve as */

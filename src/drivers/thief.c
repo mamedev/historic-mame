@@ -29,6 +29,8 @@ Credits:
 #include "driver.h"
 #include "cpu/z80/z80.h"
 #include "vidhrdw/generic.h"
+#include "sound/ay8910.h"
+#include "sound/samples.h"
 
 static UINT8 thief_input_select;
 
@@ -77,7 +79,7 @@ enum
 
 static void tape_set_audio( int track, int bOn )
 {
-	sample_set_volume( track, bOn?100:0 );
+	sample_set_volume( track, bOn?1.0:0 );
 }
 
 static void tape_set_motor( int bOn )
@@ -398,18 +400,6 @@ INPUT_PORTS_START( natodef )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNUSED )
 INPUT_PORTS_END
 
-/**********************************************************/
-
-static struct AY8910interface ay8910_interface =
-{
-	2,	/* 2 chips */
-	4000000/4,	/* Z80 Clock / 4 */
-	{ 50, 50 },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ 0 }
-};
 
 /***********************************************************/
 
@@ -424,7 +414,6 @@ static const char *sharkatt_sample_names[] =
 static struct Samplesinterface sharkatt_samples_interface =
 {
 	2,	/* number of channels */
-	50,	/* volume */
 	sharkatt_sample_names
 };
 
@@ -441,7 +430,6 @@ static const char *thief_sample_names[] =
 static struct Samplesinterface thief_samples_interface =
 {
 	2,	/* number of channels */
-	50,	/* volume */
 	thief_sample_names
 };
 
@@ -458,7 +446,6 @@ static const char *natodef_sample_names[] =
 static struct Samplesinterface natodef_samples_interface =
 {
 	2,	/* number of channels */
-	50,	/* volume */
 	natodef_sample_names
 };
 
@@ -485,8 +472,17 @@ static MACHINE_DRIVER_START( sharkatt )
 	MDRV_VIDEO_UPDATE(thief)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(AY8910, ay8910_interface)
-	MDRV_SOUND_ADD(SAMPLES, sharkatt_samples_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	
+	MDRV_SOUND_ADD(AY8910, 4000000/4)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
+	
+	MDRV_SOUND_ADD(AY8910, 4000000/4)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
+	
+	MDRV_SOUND_ADD(SAMPLES, 0)
+	MDRV_SOUND_CONFIG(sharkatt_samples_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
 MACHINE_DRIVER_END
 
 
@@ -511,8 +507,17 @@ static MACHINE_DRIVER_START( thief )
 	MDRV_VIDEO_UPDATE(thief)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(AY8910, ay8910_interface)
-	MDRV_SOUND_ADD(SAMPLES, thief_samples_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	
+	MDRV_SOUND_ADD(AY8910, 4000000/4)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
+	
+	MDRV_SOUND_ADD(AY8910, 4000000/4)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
+
+	MDRV_SOUND_ADD(SAMPLES, 0)
+	MDRV_SOUND_CONFIG(thief_samples_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
 MACHINE_DRIVER_END
 
 
@@ -537,8 +542,17 @@ static MACHINE_DRIVER_START( natodef )
 	MDRV_VIDEO_UPDATE(thief)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(AY8910, ay8910_interface)
-	MDRV_SOUND_ADD(SAMPLES, natodef_samples_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	
+	MDRV_SOUND_ADD(AY8910, 4000000/4)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
+	
+	MDRV_SOUND_ADD(AY8910, 4000000/4)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
+
+	MDRV_SOUND_ADD(SAMPLES, 0)
+	MDRV_SOUND_CONFIG(natodef_samples_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
 MACHINE_DRIVER_END
 
 /**********************************************************/

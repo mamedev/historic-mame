@@ -16,6 +16,7 @@ Credits:
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "cpu/m6809/m6809.h"
+#include "sound/2151intf.h"
 
 extern unsigned char *contra_fg_vram,*contra_fg_cram;
 extern unsigned char *contra_bg_vram,*contra_bg_cram;
@@ -245,16 +246,6 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 
 
-static struct YM2151interface ym2151_interface =
-{
-	1,			/* 1 chip */
-	3582071,	/* seems to be the standard */
-	{ YM3012_VOL(60,MIXER_PAN_RIGHT,60,MIXER_PAN_LEFT) },
-	{ 0 }
-};
-
-
-
 static MACHINE_DRIVER_START( contra )
 
 	/* basic machine hardware */
@@ -283,8 +274,11 @@ static MACHINE_DRIVER_START( contra )
 	MDRV_VIDEO_UPDATE(contra)
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(YM2151, ym2151_interface)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(YM2151, 3582071)
+	MDRV_SOUND_ROUTE(0, "left", 0.60)
+	MDRV_SOUND_ROUTE(1, "right", 0.60)
 MACHINE_DRIVER_END
 
 

@@ -9,10 +9,11 @@
 
 #include <math.h>
 #include "driver.h"
+#include "sound/custom.h"
 
 static void *volume_timer = NULL;
 static UINT16 *decay = NULL;
-static int channel;
+static sound_stream *channel;
 static int sound_latch = 0;
 static int sound_signal = 0;
 static int volume = 0;
@@ -56,10 +57,11 @@ WRITE8_HANDLER( geebee_sound_w )
     }
 }
 
-static void geebee_sound_update(int param, INT16 *buffer, int length)
+static void geebee_sound_update(void *param, stream_sample_t **inputs, stream_sample_t **outputs, int length)
 {
     static int vcarry = 0;
     static int vcount = 0;
+    stream_sample_t *buffer = outputs[0];
 
     while (length--)
     {
@@ -110,28 +112,17 @@ static void geebee_sound_update(int param, INT16 *buffer, int length)
     }
 }
 
-int geebee_sh_start(const struct MachineSound *msound)
+void *geebee_sh_start(int clock, const struct CustomSound_interface *config)
 {
 	int i;
 
 	decay = (UINT16 *)auto_malloc(32768 * sizeof(INT16));
-	if( !decay )
-		return 1;
 
     for( i = 0; i < 0x8000; i++ )
 		decay[0x7fff-i] = (INT16) (0x7fff/exp(1.0*i/4096));
 
-	channel = stream_init("GeeBee", 100, Machine->sample_rate, 0, geebee_sound_update);
+	channel = stream_create(0, 1, Machine->sample_rate, NULL, geebee_sound_update);
 	
 	volume_timer = timer_alloc(volume_decay);
-    return 0;
-}
-
-void geebee_sh_stop(void)
-{
-}
-
-void geebee_sh_update(void)
-{
-	stream_update(channel,0);
+    return auto_malloc(1);
 }

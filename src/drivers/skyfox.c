@@ -15,6 +15,7 @@ To Do:	The background rendering is entirely guesswork
 ***************************************************************************/
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "sound/2203intf.h"
 
 /* Variables defined in vidhrdw: */
 
@@ -253,18 +254,6 @@ static INTERRUPT_GEN( skyfox_interrupt )
 	if ((readinputportbytag("IN4") & 3) != 3) cpunum_set_input_line(0, INPUT_LINE_NMI, PULSE_LINE);
 }
 
-static struct YM2203interface skyfox_ym2203_interface =
-{
-	2,
-	1748000,		/* ? same as sound cpu ? */
-	{ YM2203_VOL(80,80), YM2203_VOL(80,80) },
-	{ 0, 0 },
-	{ 0, 0 },
-	{ 0, 0 },
-	{ 0, 0 },
-	{ 0, 0 }
-};
-
 static MACHINE_DRIVER_START( skyfox )
 
 	/* basic machine hardware */
@@ -290,7 +279,13 @@ static MACHINE_DRIVER_START( skyfox )
 	MDRV_VIDEO_UPDATE(skyfox)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM2203, skyfox_ym2203_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM2203, 1748000)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.80)
+
+	MDRV_SOUND_ADD(YM2203, 1748000)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.80)
 MACHINE_DRIVER_END
 
 

@@ -54,8 +54,6 @@ static int decaytbl[16] =	// decay times
  14500, 17500, 21000, 25000
 };
 
-static long voltbl[128];	// pre-calculated volume table
-static long pantbl[16];		// pre-calculated panning table
 
 // sample info struct
 typedef struct PCM_t
@@ -88,6 +86,8 @@ typedef struct Voice_t
 // chip structure
 typedef struct MultiPCM_t
 {
+	sound_stream * stream;
+	
 	unsigned char registers[28][8];	// 8 registers per voice?
 	int type;			// chip type: 0=model1, 1=multi32
 	int bankL, bankR;
@@ -99,31 +99,34 @@ typedef struct MultiPCM_t
 	double freq_ratio;
 
 	long dlttbl[0x1001];		// pre-calculated pitch table
+	long voltbl[128];	// pre-calculated volume table
+	long pantbl[16];		// pre-calculated panning table
 
 	PCMInfoT samples[512];
 
 } MultiPCMT;
-
-static MultiPCMT mpcm[MAX_MULTIPCM];
 
 static void MultiPCM_postload(void)
 {
 	int i, j, inum;
 
 	// recalculate all the proper voice pointers
-	for (i = 0; i < 2; i++)
+	for (i = 0; i < MAX_SOUND; i++)
 	{
-		for (j = 0; j < 28; j++)
-		{
-			inum = mpcm[i].registers[j][1] | ((mpcm[i].registers[j][2]&0x1)<<8);
-		  	mpcm[i].Voices[j].pSamp = &mpcm[i].romptr[mpcm[i].samples[inum].st];
-		}
+		MultiPCMT *mpcm = sndti_token(SOUND_MULTIPCM, i);
+		if (mpcm)
+			for (j = 0; j < 28; j++)
+			{
+				inum = mpcm->registers[j][1] | ((mpcm->registers[j][2]&0x1)<<8);
+			  	mpcm->Voices[j].pSamp = &mpcm->romptr[mpcm->samples[inum].st];
+			}
 	}
 }
 
-static void MultiPCM_update(int chip, INT16 **buffer, int length )
+static void MultiPCM_update(void *param, stream_sample_t **inputs, stream_sample_t **buffer, int length )
 {
-	INT16  *datap[2];
+	MultiPCMT *mpcm = param;
+	stream_sample_t  *datap[2];
 	int i, j;
 	signed long lvol, rvol, mlvol, mrvol;
 	signed char *pSamp;
@@ -137,18 +140,18 @@ static void MultiPCM_update(int chip, INT16 **buffer, int length )
 	datap[0] = buffer[0];
 	datap[1] = buffer[1];
 
-	memset(datap[0], 0, sizeof(short)*length);
-	memset(datap[1], 0, sizeof(short)*length);
+	memset(datap[0], 0, sizeof(*datap[0])*length);
+	memset(datap[1], 0, sizeof(*datap[1])*length);
 
 	for (j = 0; j < 28; j++)
 	{
-		vptr = &mpcm[chip].Voices[j];
+		vptr = &mpcm->Voices[j];
 
 		// is voice playing?
 		if ((vptr->active) || (vptr->relstage))
 		{	// only calculate volume once per voice per update cycle
-			rvol = pantbl[vptr->pan];
-			lvol = pantbl[15-vptr->pan];
+			rvol = mpcm->pantbl[vptr->pan];
+			lvol = mpcm->pantbl[15-vptr->pan];
 
 			mrvol = rvol = (rvol * vptr->vol)>>8;
 			mlvol = lvol = (lvol * vptr->vol)>>8;
@@ -215,115 +218,106 @@ static void MultiPCM_update(int chip, INT16 **buffer, int length )
 	}
 }
 
-int MultiPCM_sh_start(const struct MachineSound *msound)
+static void *multipcm_start(int sndindex, int clock, const void *config)
 {
-	int i, j, chip;
+	int i, j;
 	double unity = (double)(1<<MULTIPCM_ONE);
 	unsigned char* phdr;
 	long nowadrs;
 	long idx;
-	char buf[2][40];
-	const char *name[2];
-	int vol[2];
-	struct MultiPCM_interface *intf = msound->sound_interface;
+	const struct MultiPCM_interface *intf = config;
+	MultiPCMT *mpcm;
 
 	// make volume table
 	double	max=255.0;
 	double	db=(48.0/128);
+	
+	mpcm = auto_malloc(sizeof(*mpcm));
+	memset(mpcm, 0, sizeof(*mpcm));
 
 	for (i = 0; i < 128; i++)
 	{
-		voltbl[i]=max;
+		mpcm->voltbl[i]=max;
 		max /= pow(10.0,db/20.0);
 	}
-	voltbl[127]=0;
+	mpcm->voltbl[127]=0;
 
 	// make pan table
 	for(i=0; i<16; i++)
 	{
-		pantbl[i]=(long)( (255/sqrt(15)) * sqrt(i));
+		mpcm->pantbl[i]=(long)( (255/sqrt(15)) * sqrt(i));
 	}
 
-	for (chip = 0; chip < intf->chips; chip++)
+	mpcm->type = intf->type;
+	mpcm->banksize = intf->banksize;
+
+	mpcm->curreg = mpcm->curvoice = 0;
+
+	mpcm->romptr = (signed char *)memory_region(intf->region);
+
+	mpcm->freq_ratio = ((float)clock / (float)MULTIPCM_CLOCKDIV) / (float)Machine->sample_rate;
+
+	for (i = 0; i < 28; i++)
 	{
-		mpcm[chip].type = intf->type[chip];
-		mpcm[chip].banksize = intf->banksize[chip];
+		mpcm->Voices[i].active = 0;
+		mpcm->Voices[i].ptsum = 0;
+		mpcm->Voices[i].ptoffset = 0;
+		mpcm->Voices[i].loop = 0;
+		mpcm->Voices[i].loopst = 0;
+		mpcm->Voices[i].end = 0;
+		mpcm->Voices[i].pan = 0;
+		mpcm->Voices[i].vol = 0;
+		mpcm->Voices[i].relamt = 0;
+		mpcm->Voices[i].relcount = 0;
+		mpcm->Voices[i].relstage = 0;
+	}
 
-		mpcm[chip].curreg = mpcm[chip].curvoice = 0;
+	mpcm->stream = stream_create(0, 2, Machine->sample_rate, mpcm, MultiPCM_update);
 
-		mpcm[chip].romptr = (signed char *)memory_region(intf->region[chip]);
+	// make pitch delta table (1 octave)
+	for(i=0; i<0x1001; i++)
+	{
+		mpcm->dlttbl[i] = (long)(mpcm->freq_ratio * unity * (1.0 + ((double)i / 4096.0)));
+	}
 
-		mpcm[chip].freq_ratio = ((float)intf->clock[chip] / (float)MULTIPCM_CLOCKDIV) / (float)Machine->sample_rate;
+	// precalculate the PCM data for a small speedup
+	phdr = (unsigned char *)mpcm->romptr;
+	for(i = 0; i < 511; i++)
+	{
+		idx = i*12;
+		nowadrs = (phdr[idx + 0]<<16) + (phdr[idx + 1]<<8) + (phdr[idx + 2]);
 
-		for (i = 0; i < 28; i++)
-		{
-			mpcm[chip].Voices[i].active = 0;
-			mpcm[chip].Voices[i].ptsum = 0;
-			mpcm[chip].Voices[i].ptoffset = 0;
-			mpcm[chip].Voices[i].loop = 0;
-			mpcm[chip].Voices[i].loopst = 0;
-			mpcm[chip].Voices[i].end = 0;
-			mpcm[chip].Voices[i].pan = 0;
-			mpcm[chip].Voices[i].vol = 0;
-			mpcm[chip].Voices[i].relamt = 0;
-			mpcm[chip].Voices[i].relcount = 0;
-			mpcm[chip].Voices[i].relstage = 0;
+		if((nowadrs == 0)||(nowadrs==0xffffff))
+		{	// invalid entry
+			mpcm->samples[i].st=0;
+			mpcm->samples[i].size=0;
 		}
-
-		sprintf(buf[0], "%s %d L", sound_name(msound), chip);
-		sprintf(buf[1], "%s %d R", sound_name(msound), chip);
-		name[0] = buf[0];
-		name[1] = buf[1];
-		vol[0]=intf->mixing_level[chip] >> 16;
-		vol[1]=intf->mixing_level[chip] & 0xffff;
-		stream_init_multi(2, name, vol, Machine->sample_rate, chip, MultiPCM_update);
-
-		// make pitch delta table (1 octave)
-		for(i=0; i<0x1001; i++)
+		else
 		{
-			mpcm[chip].dlttbl[i] = (long)(mpcm[chip].freq_ratio * unity * (1.0 + ((double)i / 4096.0)));
-		}
-
-		// precalculate the PCM data for a small speedup
-		phdr = (unsigned char *)mpcm[chip].romptr;
-		for(i = 0; i < 511; i++)
-		{
-			idx = i*12;
-			nowadrs = (phdr[idx + 0]<<16) + (phdr[idx + 1]<<8) + (phdr[idx + 2]);
-
-			if((nowadrs == 0)||(nowadrs==0xffffff))
-			{	// invalid entry
-				mpcm[chip].samples[i].st=0;
-				mpcm[chip].samples[i].size=0;
-			}
-			else
-			{
-				mpcm[chip].samples[i].st = nowadrs;
-				mpcm[chip].samples[i].loop = (phdr[idx + 3]<<8) + (phdr[idx + 4]);
-				mpcm[chip].samples[i].size = 0xffff - ((phdr[idx + 5]<<8) + (phdr[idx + 6]));
-				mpcm[chip].samples[i].env[0] = phdr[idx + 8];
-				mpcm[chip].samples[i].env[1] = phdr[idx + 9];
-				mpcm[chip].samples[i].env[2] = phdr[idx + 10];
-			}
+			mpcm->samples[i].st = nowadrs;
+			mpcm->samples[i].loop = (phdr[idx + 3]<<8) + (phdr[idx + 4]);
+			mpcm->samples[i].size = 0xffff - ((phdr[idx + 5]<<8) + (phdr[idx + 6]));
+			mpcm->samples[i].env[0] = phdr[idx + 8];
+			mpcm->samples[i].env[1] = phdr[idx + 9];
+			mpcm->samples[i].env[2] = phdr[idx + 10];
 		}
 	}
 
 	/* set up the save state info */
-	for (i = 0; i < MAX_MULTIPCM; i++)
 	{
 		int v;
 		char mname[20];
 
-		sprintf(mname, "MultiPCM %d", i);
+		sprintf(mname, "MultiPCM %d", sndindex);
 
-		state_save_register_int(mname, i, "bankL", &mpcm[i].bankL);
-		state_save_register_int(mname, i, "bankR", &mpcm[i].bankR);
+		state_save_register_int(mname, sndindex, "bankL", &mpcm->bankL);
+		state_save_register_int(mname, sndindex, "bankR", &mpcm->bankR);
 
 		for (v = 0; v < 28; v++)
 		{
 			char mname2[32];
 
-			sprintf(mname2, "MultiPCM %d v %d", i, v);
+			sprintf(mname2, "MultiPCM %d v %d", sndindex, v);
 
 			for (j = 0; j < 8; j++)
 			{
@@ -331,32 +325,29 @@ int MultiPCM_sh_start(const struct MachineSound *msound)
 
 				sprintf(sname, "rawreg %d", j);
 
-				state_save_register_UINT8(mname2, 1, sname, &mpcm[i].registers[v][j], 1);
+				state_save_register_UINT8(mname2, 1, sname, &mpcm->registers[v][j], 1);
 			}
-			state_save_register_INT8(mname2, 1, "active", &mpcm[i].Voices[v].active, 1);
-			state_save_register_INT8(mname2, 1, "loop", &mpcm[i].Voices[v].loop, 1);
-			state_save_register_INT32(mname2, 1, "end", &mpcm[i].Voices[v].end, 1);
-			state_save_register_INT32(mname2, 1, "lpstart", &mpcm[i].Voices[v].loopst, 1);
-			state_save_register_int(mname2, 1, "pan", &mpcm[i].Voices[v].pan);
-			state_save_register_INT32(mname2, 1, "vol", &mpcm[i].Voices[v].vol, 1);
-			state_save_register_INT32(mname2, 1, "ptdelta", &mpcm[i].Voices[v].ptdelta, 1);
-			state_save_register_INT32(mname2, 1, "ptoffset", &mpcm[i].Voices[v].ptoffset, 1);
-			state_save_register_INT32(mname2, 1, "ptsum", &mpcm[i].Voices[v].ptsum, 1);
-			state_save_register_int(mname2, 1, "relamt", &mpcm[i].Voices[v].relamt);
-			state_save_register_INT8(mname2, 1, "relstage", &mpcm[i].Voices[v].relstage, 1);
+			state_save_register_INT8(mname2, 1, "active", &mpcm->Voices[v].active, 1);
+			state_save_register_INT8(mname2, 1, "loop", &mpcm->Voices[v].loop, 1);
+			state_save_register_INT32(mname2, 1, "end", &mpcm->Voices[v].end, 1);
+			state_save_register_INT32(mname2, 1, "lpstart", &mpcm->Voices[v].loopst, 1);
+			state_save_register_int(mname2, 1, "pan", &mpcm->Voices[v].pan);
+			state_save_register_INT32(mname2, 1, "vol", &mpcm->Voices[v].vol, 1);
+			state_save_register_INT32(mname2, 1, "ptdelta", &mpcm->Voices[v].ptdelta, 1);
+			state_save_register_INT32(mname2, 1, "ptoffset", &mpcm->Voices[v].ptoffset, 1);
+			state_save_register_INT32(mname2, 1, "ptsum", &mpcm->Voices[v].ptsum, 1);
+			state_save_register_int(mname2, 1, "relamt", &mpcm->Voices[v].relamt);
+			state_save_register_INT8(mname2, 1, "relstage", &mpcm->Voices[v].relstage, 1);
 		}
 
-		state_save_register_int(mname, i, "curreg", &mpcm[i].curreg);
-		state_save_register_int(mname, i, "curvoice", &mpcm[i].curvoice);
+		state_save_register_int(mname, sndindex, "curreg", &mpcm->curreg);
+		state_save_register_int(mname, sndindex, "curvoice", &mpcm->curvoice);
 	}
 
-	state_save_register_func_postload(MultiPCM_postload);
+	if (sndindex == 0)
+		state_save_register_func_postload(MultiPCM_postload);
 
-	return 0;
-}
-
-void MultiPCM_sh_stop(void)
-{
+	return mpcm;
 }
 
 /* write register */
@@ -366,10 +357,8 @@ static void MultiPCM_reg_w(int chip, int offset, unsigned char data)
 	signed short pitch;
 	long pt_abs, pt_oct, st;
 	int vnum;
-	MultiPCMT *cptr;
+	MultiPCMT *cptr = sndti_token(SOUND_MULTIPCM, chip);
 	VoiceT *vptr;
-
-	cptr = &mpcm[chip];
 
 	switch (offset)
 	{
@@ -380,10 +369,10 @@ static void MultiPCM_reg_w(int chip, int offset, unsigned char data)
 				return;
 			}
 
-			vnum = mpcm[chip].curvoice;
+			vnum = cptr->curvoice;
 			cptr->registers[vnum][cptr->curreg] = data;
 
-			vptr = &mpcm[chip].Voices[vnum];
+			vptr = &cptr->Voices[vnum];
 
 			switch (cptr->curreg)
 			{
@@ -477,7 +466,7 @@ static void MultiPCM_reg_w(int chip, int offset, unsigned char data)
 				 	break;
 
 				case 5:	// volume/loop
-					vptr->vol = voltbl[(cptr->registers[vnum][5]>>1)&0x7f];
+					vptr->vol = cptr->voltbl[(cptr->registers[vnum][5]>>1)&0x7f];
 					vptr->loop = (cptr->registers[vnum][5]&0x1) || !vptr->loopst;
 					break;
 
@@ -548,35 +537,76 @@ WRITE8_HANDLER( MultiPCM_reg_1_w )
 
 WRITE8_HANDLER( MultiPCM_bank_0_w )
 {
-	if (mpcm[0].type == MULTIPCM_MODE_STADCROSS)	// multi32 with mono bankswitching GAL
+	struct MultiPCM_t *mpcm = sndti_token(SOUND_MULTIPCM, 0);
+
+	if (mpcm->type == MULTIPCM_MODE_STADCROSS)	// multi32 with mono bankswitching GAL
 	{
-		mpcm[0].bankL = mpcm[0].bankR = (data&0x7);
+		mpcm->bankL = mpcm->bankR = (data&0x7);
 	}
-	else if (mpcm[0].type == MULTIPCM_MODE_MULTI32)	// multi32
+	else if (mpcm->type == MULTIPCM_MODE_MULTI32)	// multi32
 	{
-		mpcm[0].bankL = (data>>3)&0x7;
-		mpcm[0].bankR = data & 0x7;
+		mpcm->bankL = (data>>3)&0x7;
+		mpcm->bankR = data & 0x7;
 	}
 	else
 	{
-		mpcm[0].bankL = data&0x1f;
+		mpcm->bankL = data&0x1f;
 	}
 }
 
 WRITE8_HANDLER( MultiPCM_bank_1_w )
 {
-	if (mpcm[1].type == MULTIPCM_MODE_STADCROSS)	// multi32 with mono bankswitching GAL
+	struct MultiPCM_t *mpcm = sndti_token(SOUND_MULTIPCM, 1);
+
+	if (mpcm->type == MULTIPCM_MODE_STADCROSS)	// multi32 with mono bankswitching GAL
 	{
-		mpcm[1].bankL = mpcm[1].bankR = (data&0x7);
+		mpcm->bankL = mpcm->bankR = (data&0x7);
 	}
-	else if (mpcm[1].type == MULTIPCM_MODE_MULTI32)	// multi32
+	else if (mpcm->type == MULTIPCM_MODE_MULTI32)	// multi32
 	{
-		mpcm[1].bankL = (data>>3)&0x7;
-		mpcm[1].bankR = data & 0x7;
+		mpcm->bankL = (data>>3)&0x7;
+		mpcm->bankR = data & 0x7;
 	}
 	else
 	{
-		mpcm[1].bankL = data&0x1f;
+		mpcm->bankL = data&0x1f;
+	}
+}
+
+
+
+
+/**************************************************************************
+ * Generic get_info
+ **************************************************************************/
+
+static void multipcm_set_info(void *token, UINT32 state, union sndinfo *info)
+{
+	switch (state)
+	{
+		/* no parameters to set */
+	}
+}
+
+
+void multipcm_get_info(void *token, UINT32 state, union sndinfo *info)
+{
+	switch (state)
+	{
+		/* --- the following bits of info are returned as 64-bit signed integers --- */
+
+		/* --- the following bits of info are returned as pointers to data or functions --- */
+		case SNDINFO_PTR_SET_INFO:						info->set_info = multipcm_set_info;		break;
+		case SNDINFO_PTR_START:							info->start = multipcm_start;			break;
+		case SNDINFO_PTR_STOP:							/* Nothing */							break;
+		case SNDINFO_PTR_RESET:							/* Nothing */							break;
+
+		/* --- the following bits of info are returned as NULL-terminated strings --- */
+		case SNDINFO_STR_NAME:							info->s = "MultiPCM";					break;
+		case SNDINFO_STR_CORE_FAMILY:					info->s = "Sega custom";				break;
+		case SNDINFO_STR_CORE_VERSION:					info->s = "1.0";						break;
+		case SNDINFO_STR_CORE_FILE:						info->s = __FILE__;						break;
+		case SNDINFO_STR_CORE_CREDITS:					info->s = "Copyright (c) 2004, The MAME Team"; break;
 	}
 }
 

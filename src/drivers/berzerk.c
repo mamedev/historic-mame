@@ -8,7 +8,7 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "includes/berzerk.h"
-
+#include "sound/samples.h"
 
 
 static ADDRESS_MAP_START( berzerk_readmem, ADDRESS_SPACE_PROGRAM, 8 )
@@ -332,8 +332,11 @@ static MACHINE_DRIVER_START( berzerk )
 	MDRV_VIDEO_UPDATE(generic_bitmapped)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(SAMPLES, berzerk_samples_interface)
-	MDRV_SOUND_ADD(CUSTOM, berzerk_custom_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(SAMPLES, 0)
+	MDRV_SOUND_CONFIG(berzerk_samples_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( frenzy )

@@ -45,6 +45,7 @@ E51-00001-A
 #include "driver.h"
 #include "cpu/z80/z80.h"
 #include "cpu/mips/r3000.h"
+#include "sound/st0016.h"
 
 WRITE8_HANDLER (st0016_sprite_bank_w);
 WRITE8_HANDLER (st0016_palette_bank_w);
@@ -285,7 +286,6 @@ INTERRUPT_GEN(st0016_int)
 extern data8_t *st0016_charram;
 static struct ST0016interface st0016_interface =
 {
-	YM3012_VOL(100, MIXER_PAN_LEFT, 100, MIXER_PAN_RIGHT),
 	&st0016_charram
 };
 
@@ -310,8 +310,12 @@ static MACHINE_DRIVER_START( st0016 )
 	MDRV_VIDEO_START(st0016)
 	MDRV_VIDEO_UPDATE(st0016)
 
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(ST0016, st0016_interface)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(ST0016, 0)
+	MDRV_SOUND_CONFIG(st0016_interface)
+	MDRV_SOUND_ROUTE(0, "left", 1.0)
+	MDRV_SOUND_ROUTE(1, "right", 1.0)
 MACHINE_DRIVER_END
 
 /*

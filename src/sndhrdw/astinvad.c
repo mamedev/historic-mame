@@ -16,6 +16,7 @@
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "sound/samples.h"
 
 extern void astinvad_set_flash(int flag);
 
@@ -53,7 +54,6 @@ enum
 struct Samplesinterface astinvad_samples_interface =
 {
 	6,   /* channels */
-	25,  /* volume   */
 	astinvad_sample_names
 };
 
@@ -64,7 +64,7 @@ WRITE8_HANDLER( astinvad_sound1_w )
 
 	int bitsGoneHi = data & ~state;
 
-	mixer_sound_enable_global_w(data & 0x20);
+	sound_global_enable(data & 0x20);
 
 	if (!(data & 1))
 	{
@@ -131,7 +131,7 @@ WRITE8_HANDLER( spaceint_sound2_w )
 
 	int bitsGoneHi = data & ~state;
 
-	mixer_sound_enable_global_w(data & 0x02);
+	sound_global_enable(data & 0x02);
 
 	if (bitsGoneHi & 0x04) sample_start(3, SND_INVADERHIT, 0);
 

@@ -133,8 +133,7 @@ SOUNDS+=DISCRETE@
 SOUNDS+=AY8910@
 SOUNDS+=YM2203@
 # enable only one of the following two
-#SOUNDS+=YM2151@
-SOUNDS+=YM2151_ALT@
+SOUNDS+=YM2151@
 SOUNDS+=YM2608@
 SOUNDS+=YM2610@
 SOUNDS+=YM2610B@
@@ -199,6 +198,7 @@ SOUNDS+=ICS2115@
 SOUNDS+=ST0016@
 SOUNDS+=C352@
 SOUNDS+=VRENDER0@
+#SOUNDS+=VOTRAX@
 
 DRVLIBS = \
 	$(OBJ)/pacman.a $(OBJ)/epos.a $(OBJ)/nichibut.a \
@@ -399,7 +399,6 @@ $(OBJ)/taito.a: \
 	$(OBJ)/vidhrdw/tsamurai.o $(OBJ)/drivers/tsamurai.o \
 	$(OBJ)/machine/flstory.o $(OBJ)/vidhrdw/flstory.o $(OBJ)/drivers/flstory.o \
 	$(OBJ)/vidhrdw/gladiatr.o $(OBJ)/drivers/gladiatr.o \
-	$(OBJ)/drivers/ppking.o \
 	$(OBJ)/machine/nycaptor.o $(OBJ)/vidhrdw/nycaptor.o $(OBJ)/drivers/nycaptor.o \
 	$(OBJ)/vidhrdw/ksayakyu.o $(OBJ)/drivers/ksayakyu.o \
 	$(OBJ)/drivers/halleys.o \
@@ -718,7 +717,7 @@ $(OBJ)/atari.a: \
 	$(OBJ)/sndhrdw/sprint2.o \
 	$(OBJ)/vidhrdw/sprint4.o $(OBJ)/drivers/sprint4.o \
 	$(OBJ)/vidhrdw/sprint8.o $(OBJ)/drivers/sprint8.o \
-	$(OBJ)/vidhrdw/tank8.o $(OBJ)/drivers/tank8.o \
+	$(OBJ)/vidhrdw/tank8.o $(OBJ)/drivers/tank8.o $(OBJ)/sndhrdw/tank8.o \
 	$(OBJ)/vidhrdw/nitedrvr.o $(OBJ)/machine/nitedrvr.o $(OBJ)/drivers/nitedrvr.o \
 	$(OBJ)/sndhrdw/nitedrvr.o \
 	$(OBJ)/vidhrdw/triplhnt.o $(OBJ)/drivers/triplhnt.o \
@@ -904,7 +903,6 @@ $(OBJ)/seibu.a: \
 	$(OBJ)/vidhrdw/mustache.o $(OBJ)/drivers/mustache.o \
 	$(OBJ)/vidhrdw/seibuspi.o $(OBJ)/machine/seibuspi.o $(OBJ)/drivers/seibuspi.o \
 	$(OBJ)/machine/ds2404.o $(OBJ)/machine/spisprit.o \
-	$(OBJ)/machine/spistab1.o $(OBJ)/machine/spistab2.o $(OBJ)/machine/spistab3.o \
 
 $(OBJ)/tad.a: \
 	$(OBJ)/vidhrdw/cabal.o $(OBJ)/drivers/cabal.o \
@@ -1161,6 +1159,7 @@ $(OBJ)/nix.a: \
 
 $(OBJ)/arcadia.a: \
 	$(OBJ)/vidhrdw/amiga.o $(OBJ)/machine/amiga.o $(OBJ)/drivers/arcadia.o \
+	$(OBJ)/drivers/mquake.o \
 
 $(OBJ)/othertrv.a: \
 	$(OBJ)/drivers/findout.o \
@@ -1257,6 +1256,7 @@ $(OBJ)/other.a: \
 	$(OBJ)/drivers/spaceg.o \
 	$(OBJ)/drivers/wldarrow.o \
 	$(OBJ)/drivers/laserbas.o \
+	$(OBJ)/drivers/turbosub.o \
 
 
 COREOBJS += $(OBJ)/driver.o $(OBJ)/cheat.o

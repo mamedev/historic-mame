@@ -75,6 +75,7 @@ Recordbr: loads of unmapped IOC reads and writes.
 #include "vidhrdw/generic.h"
 #include "sndhrdw/taitosnd.h"
 #include "vidhrdw/taitoic.h"
+#include "sound/2610intf.h"
 
 
 
@@ -108,32 +109,16 @@ static void irqhandler(int irq)
 
 static struct YM2610interface syvalion_ym2610_interface =
 {
-	1,	/* 1 chip */
-	8000000,	/* 4 MHz */
-	{ 25 },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ irqhandler },
-	{ REGION_SOUND1 },
-	{ REGION_SOUND2 },
-	{ YM3012_VOL(100,MIXER_PAN_LEFT,100,MIXER_PAN_RIGHT) }
+	irqhandler,
+	REGION_SOUND1,
+	REGION_SOUND2
 };
 
 static struct YM2610interface dleague_ym2610_interface =
 {
-	1,	/* 1 chip */
-	8000000,	/* 4 MHz */
-	{ 25 },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ irqhandler },
-	{ REGION_SOUND1 },
-	{ REGION_SOUND1 },
-	{ YM3012_VOL(100,MIXER_PAN_LEFT,100,MIXER_PAN_RIGHT) }
+	irqhandler,
+	REGION_SOUND1,
+	REGION_SOUND1
 };
 
 
@@ -613,7 +598,13 @@ static MACHINE_DRIVER_START( syvalion )
 	MDRV_VIDEO_UPDATE(syvalion)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM2610, syvalion_ym2610_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM2610, 8000000)
+	MDRV_SOUND_CONFIG(syvalion_ym2610_interface)
+	MDRV_SOUND_ROUTE(0, "mono", 0.25)
+	MDRV_SOUND_ROUTE(1, "mono", 1.0)
+	MDRV_SOUND_ROUTE(2, "mono", 1.0)
 MACHINE_DRIVER_END
 
 
@@ -642,7 +633,13 @@ static MACHINE_DRIVER_START( recordbr )
 	MDRV_VIDEO_UPDATE(recordbr)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM2610, syvalion_ym2610_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM2610, 8000000)
+	MDRV_SOUND_CONFIG(syvalion_ym2610_interface)
+	MDRV_SOUND_ROUTE(0, "mono", 0.25)
+	MDRV_SOUND_ROUTE(1, "mono", 1.0)
+	MDRV_SOUND_ROUTE(2, "mono", 1.0)
 MACHINE_DRIVER_END
 
 
@@ -671,7 +668,13 @@ static MACHINE_DRIVER_START( dleague )
 	MDRV_VIDEO_UPDATE(dleague)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM2610, dleague_ym2610_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM2610, 8000000)
+	MDRV_SOUND_CONFIG(dleague_ym2610_interface)
+	MDRV_SOUND_ROUTE(0, "mono", 0.25)
+	MDRV_SOUND_ROUTE(1, "mono", 1.0)
+	MDRV_SOUND_ROUTE(2, "mono", 1.0)
 MACHINE_DRIVER_END
 
 

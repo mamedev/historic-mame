@@ -13,6 +13,8 @@ K052591 emulation by Eddie Edwards
 #include "cpu/konami/konami.h" /* for the callback and the firq irq definition */
 #include "vidhrdw/konamiic.h"
 #include "mamedbg.h"
+#include "sound/2151intf.h"
+#include "sound/k007232.h"
 
 static MACHINE_INIT( scontra );
 static MACHINE_INIT( thunderx );
@@ -674,14 +676,6 @@ INPUT_PORTS_END
 
 ***************************************************************************/
 
-static struct YM2151interface ym2151_interface =
-{
-	1,			/* 1 chip */
-	3579545,	/* 3.579545 MHz */
-	{ YM3012_VOL(100,MIXER_PAN_LEFT,100,MIXER_PAN_RIGHT) },
-	{ 0 },
-};
-
 static void volume_callback(int v)
 {
 	K007232_set_volume(0,0,(v >> 4) * 0x11,0);
@@ -690,11 +684,8 @@ static void volume_callback(int v)
 
 static struct K007232_interface k007232_interface =
 {
-	1,		/* number of chips */
-	3579545,	/* clock */
-	{ REGION_SOUND1 },	/* memory regions */
-	{ K007232_VOL(20,MIXER_PAN_CENTER,20,MIXER_PAN_CENTER) },	/* volume */
-	{ volume_callback }	/* external port callback */
+	REGION_SOUND1,	/* memory regions */
+	volume_callback	/* external port callback */
 };
 
 
@@ -725,8 +716,16 @@ static MACHINE_DRIVER_START( scontra )
 	MDRV_VIDEO_UPDATE(scontra)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM2151, ym2151_interface)
-	MDRV_SOUND_ADD(K007232, k007232_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM2151, 3579545)
+	MDRV_SOUND_ROUTE(0, "mono", 1.0)
+	MDRV_SOUND_ROUTE(1, "mono", 1.0)
+	
+	MDRV_SOUND_ADD(K007232, 3579545)
+	MDRV_SOUND_CONFIG(k007232_interface)
+	MDRV_SOUND_ROUTE(0, "mono", 0.20)
+	MDRV_SOUND_ROUTE(1, "mono", 0.20)
 MACHINE_DRIVER_END
 
 
@@ -756,7 +755,11 @@ static MACHINE_DRIVER_START( thunderx )
 	MDRV_VIDEO_UPDATE(scontra)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM2151, ym2151_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM2151, 3579545)
+	MDRV_SOUND_ROUTE(0, "mono", 1.0)
+	MDRV_SOUND_ROUTE(1, "mono", 1.0)
 MACHINE_DRIVER_END
 
 

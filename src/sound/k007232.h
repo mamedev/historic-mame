@@ -4,21 +4,11 @@
 #ifndef __KDAC_A_H__
 #define __KDAC_A_H__
 
-#define MAX_K007232		3
-
-
 struct K007232_interface
 {
-	int num_chips;			/* Number of chips */
-	int baseclock;          /* chip clock */
-	int bank[MAX_K007232];	/* memory regions */
-	int volume[MAX_K007232];/* volume */
-	void (*portwritehandler[MAX_K007232])(int);
+	int bank;	/* memory regions */
+	void (*portwritehandler)(int);
 };
-
-#define K007232_VOL(LVol,LPan,RVol,RPan) ((LVol)|((LPan)<<8)|((RVol)<<16)|((RPan)<<24))
-
-int K007232_sh_start(const struct MachineSound *msound);
 
 WRITE8_HANDLER( K007232_write_port_0_w );
 WRITE8_HANDLER( K007232_write_port_1_w );

@@ -97,6 +97,7 @@ CRU lines:
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "sound/ay8910.h"
 
 static int supertnk_rom_bank;
 static int supertnk_video_bitplane;
@@ -271,19 +272,6 @@ ADDRESS_MAP_END
 
 
 
-static struct AY8910interface ay8910_interface =
-{
-	1,
-	2000000,	/* ? which frequency? the same as the CPU? */
-	{ 50 },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ 0 }
-};
-
-
-
 
 static MACHINE_DRIVER_START( supertnk )
 
@@ -308,7 +296,10 @@ static MACHINE_DRIVER_START( supertnk )
 	MDRV_VIDEO_UPDATE(supertnk)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(AY8910, ay8910_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	
+	MDRV_SOUND_ADD(AY8910, 2000000)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
 MACHINE_DRIVER_END
 
 

@@ -225,6 +225,7 @@
 #include "vidhrdw/generic.h"
 #include "vidhrdw/lazercmd.h"
 #include "cpu/s2650/s2650.h"
+#include "sound/dac.h"
 
 
 int marker_x, marker_y;
@@ -662,12 +663,6 @@ static PALETTE_INIT( lazercmd )
 	memcpy(colortable,colortable_source,sizeof(colortable_source));
 }
 
-static struct DACinterface lazercmd_DAC_interface =
-{
-	1,
-	{ 100 }
-};
-
 static MACHINE_DRIVER_START( lazercmd )
 
 	/* basic machine hardware */
@@ -697,7 +692,10 @@ static MACHINE_DRIVER_START( lazercmd )
 	MDRV_VIDEO_UPDATE(lazercmd)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(DAC, lazercmd_DAC_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(DAC, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 
@@ -729,7 +727,10 @@ static MACHINE_DRIVER_START( medlanes )
 	MDRV_VIDEO_UPDATE(lazercmd)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(DAC, lazercmd_DAC_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(DAC, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 
@@ -762,7 +763,10 @@ static MACHINE_DRIVER_START( bbonk )
 	MDRV_VIDEO_UPDATE(lazercmd)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(DAC, lazercmd_DAC_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(DAC, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 /***************************************************************************

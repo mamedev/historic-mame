@@ -12,6 +12,7 @@
 
 #include "driver.h"
 #include "machine/atari_vg.h"
+#include "sound/pokey.h"
 
 extern VIDEO_START( runaway );
 extern VIDEO_START( qwak );
@@ -341,20 +342,15 @@ static struct GfxDecodeInfo qwak_gfxdecodeinfo[] =
 };
 
 
-static struct POKEYinterface pokey_interface =
+static struct POKEYinterface pokey_interface_1 =
 {
-	2,
-	12096000 / 8,
-	{ 100, 100 },
-	{ 0, runaway_pot_r },
-	{ 0, runaway_pot_r },
-	{ 0, runaway_pot_r },
-	{ 0, runaway_pot_r },
-	{ 0, runaway_pot_r },
-	{ 0, runaway_pot_r },
-	{ 0, runaway_pot_r },
-	{ 0, runaway_pot_r },
-	{ input_port_3_r, 0 },
+	{ 0 },
+	input_port_3_r
+};
+
+static struct POKEYinterface pokey_interface_2 =
+{
+	{ runaway_pot_r,runaway_pot_r,runaway_pot_r,runaway_pot_r,runaway_pot_r,runaway_pot_r,runaway_pot_r,runaway_pot_r }
 };
 
 
@@ -381,7 +377,15 @@ static MACHINE_DRIVER_START( runaway )
 	MDRV_VIDEO_UPDATE(runaway)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(POKEY, pokey_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(POKEY, 12096000 / 8)
+	MDRV_SOUND_CONFIG(pokey_interface_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
+
+	MDRV_SOUND_ADD(POKEY, 12096000 / 8)
+	MDRV_SOUND_CONFIG(pokey_interface_2)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
 MACHINE_DRIVER_END
 
 

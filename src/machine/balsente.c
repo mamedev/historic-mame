@@ -10,6 +10,7 @@
 #include "cpu/m6809/m6809.h"
 #include "vidhrdw/generic.h"
 #include "balsente.h"
+#include "sound/cem3394.h"
 #include <math.h>
 
 
@@ -955,12 +956,8 @@ WRITE8_HANDLER( balsente_counter_control_w )
 	if (diff_counter_control & 0x01)
 	{
 		int ch;
-		for (ch = 0; ch < MIXER_MAX_CHANNELS; ch++)
-		{
-			const char *name = mixer_get_name(ch);
-			if (name && strstr(name, "3394"))
-				mixer_set_volume(ch, (data & 0x01) ? 100 : 0);
-		}
+		for (ch = 0; ch < 6; ch++)
+			sndti_set_output_gain(SOUND_CEM3394, ch, 0, (data & 0x01) ? 1.0 : 0);
 	}
 
 	/* bit D1 is hooked to counter 0's gate */

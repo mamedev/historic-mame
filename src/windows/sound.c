@@ -189,7 +189,7 @@ int osd_start_audio_stream(int stereo)
 	// create wav file
 	if( wavwrite != NULL )
 	{
-		wavptr = wav_open( wavwrite, Machine->sample_rate, (Machine->drv->sound_attributes & SOUND_SUPPORTS_STEREO) ? 2 : 1 );
+		wavptr = wav_open( wavwrite, Machine->sample_rate, 2);
 	}
 	else
 	{
@@ -393,14 +393,7 @@ int osd_update_audio_stream(INT16 *buffer)
 	}
 
 	if( Machine->sample_rate != 0 && wavptr != NULL )
-	{
-		int samples = samples_this_frame;
-		if( ( Machine->drv->sound_attributes & SOUND_SUPPORTS_STEREO ) != 0 )
-		{
-			samples *= 2;
-		}
-		wav_add_data_16( wavptr, buffer, samples );
-	}
+		wav_add_data_16( wavptr, buffer, samples_this_frame );
 
 	// reset underflow/overflow tracking
 	if (++total_frames == INGORE_UNDERFLOW_FRAMES)
@@ -523,7 +516,7 @@ static int dsound_init(void)
 	// make a format description for what we want
 	stream_format.wBitsPerSample	= 16;
 	stream_format.wFormatTag		= WAVE_FORMAT_PCM;
-	stream_format.nChannels			= (Machine->drv->sound_attributes & SOUND_SUPPORTS_STEREO) ? 2 : 1;
+	stream_format.nChannels			= 2;
 	stream_format.nSamplesPerSec	= Machine->sample_rate;
 	stream_format.nBlockAlign		= stream_format.wBitsPerSample * stream_format.nChannels / 8;
 	stream_format.nAvgBytesPerSec	= stream_format.nSamplesPerSec * stream_format.nBlockAlign;

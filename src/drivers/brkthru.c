@@ -48,6 +48,8 @@ Sound: YM2203 and YM3526 driven by 6809.  Sound added by Bryan McPhail, 1/4/98.
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "cpu/m6809/m6809.h"
+#include "sound/2203intf.h"
+#include "sound/3812intf.h"
 
 
 unsigned char *brkthru_nmi_enable; /* needs to be tracked down */
@@ -406,23 +408,9 @@ static void irqhandler(int linestate)
 	cpunum_set_input_line(1,M6809_IRQ_LINE,linestate);
 }
 
-static struct YM2203interface ym2203_interface =
-{
-	1,
-	1500000,	/* Unknown */
-	{ YM2203_VOL(50,10) },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ 0 }
-};
-
 static struct YM3526interface ym3526_interface =
 {
-	1,			/* 1 chip */
-	3000000,	/* 3 MHz? */
-	{ 100 },		/* volume */
-	{ irqhandler },
+	irqhandler
 };
 
 
@@ -453,8 +441,17 @@ static MACHINE_DRIVER_START( brkthru )
 	MDRV_VIDEO_UPDATE(brkthru)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM2203, ym2203_interface)
-	MDRV_SOUND_ADD(YM3526, ym3526_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM2203, 1500000)
+	MDRV_SOUND_ROUTE(0, "mono", 0.10)
+	MDRV_SOUND_ROUTE(1, "mono", 0.10)
+	MDRV_SOUND_ROUTE(2, "mono", 0.10)
+	MDRV_SOUND_ROUTE(3, "mono", 0.50)
+
+	MDRV_SOUND_ADD(YM3526, 3000000)
+	MDRV_SOUND_CONFIG(ym3526_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( darwin )
@@ -495,8 +492,17 @@ static MACHINE_DRIVER_START( darwin )
 	MDRV_VIDEO_UPDATE(brkthru)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM2203, ym2203_interface)
-	MDRV_SOUND_ADD(YM3526, ym3526_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM2203, 1500000)
+	MDRV_SOUND_ROUTE(0, "mono", 0.10)
+	MDRV_SOUND_ROUTE(1, "mono", 0.10)
+	MDRV_SOUND_ROUTE(2, "mono", 0.10)
+	MDRV_SOUND_ROUTE(3, "mono", 0.50)
+
+	MDRV_SOUND_ADD(YM3526, 3000000)
+	MDRV_SOUND_CONFIG(ym3526_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 

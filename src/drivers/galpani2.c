@@ -25,6 +25,7 @@ To Do:
 #include "vidhrdw/generic.h"
 #include "machine/eeprom.h"
 #include "kaneko16.h"
+#include "sound/okim6295.h"
 
 /***************************************************************************
 
@@ -461,15 +462,6 @@ static struct GfxDecodeInfo galpani2_gfxdecodeinfo[] =
 ***************************************************************************/
 
 
-static struct OKIM6295interface galpani2_okim6295_intf =
-{
-	2,
-	{ 12000, 12000 },		/* ? */
-	{ REGION_SOUND1, REGION_SOUND2 },
-	{ MIXER(100,MIXER_PAN_LEFT), MIXER(100,MIXER_PAN_RIGHT) },
-};
-
-
 /* CPU#1 Interrups */
 #define GALPANI2_INTERRUPTS_NUM	4
 INTERRUPT_GEN( galpani2_interrupt )
@@ -526,8 +518,15 @@ static MACHINE_DRIVER_START( galpani2 )
 	MDRV_VIDEO_UPDATE(galpani2)
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(OKIM6295, galpani2_okim6295_intf)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(OKIM6295, 12000)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 1.0)
+
+	MDRV_SOUND_ADD(OKIM6295, 12000)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_2)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 1.0)
 MACHINE_DRIVER_END
 
 

@@ -269,6 +269,10 @@ To Do / Unknowns:
 #include "cpu/m68000/m68000.h"
 #include "cpu/z80/z80.h"
 #include "machine/eeprom.h"
+#include "sound/2151intf.h"
+#include "sound/3812intf.h"
+#include "sound/okim6295.h"
+#include "sound/ymz280b.h"
 
 
 /**************** Machine stuff ******************/
@@ -4085,92 +4089,13 @@ static void irqhandler(int linestate)
 
 static struct YM3812interface ym3812_interface =
 {
-	1,				/* 1 chip  */
-	27000000/8,		/* 3.375MHz , 27MHz Oscillator */
-	{ 100 },		/* volume */
-	{ irqhandler },
-};
-
-static struct YM2151interface ym2151_interface =
-{
-	1,				/* 1 chip */
-	27000000/8,		/* 3.375MHz , 27MHz Oscillator */
-	{ YM3012_VOL(25,MIXER_PAN_LEFT,25,MIXER_PAN_RIGHT) },
-	{ 0 }
-};
-
-static struct YM2151interface raizing_ym2151_interface =
-{
-	1,				/* 1 chip */
-	32000000/8,		/* 4.00MHz , 32MHz Oscillator */
-	{ YM3012_VOL(25,MIXER_PAN_LEFT,25,MIXER_PAN_RIGHT) },
-	{ 0 }
-};
-
-
-static struct OKIM6295interface okim6295_interface =
-{
-	1,						/* 1 chip */
-	{ 27000000/10/132 },	/* 20454.54Hz , 2.7MHz to 6295 (using B mode) */
-	{ REGION_SOUND1 },		/* memory region */
-	{ 25 }
-};
-
-static struct OKIM6295interface kbash_okim6295_interface =
-{
-	1,						/* 1 chip */
-	{ 32000000/32/132 },	/* 7575.75Hz , 1.0MHz to 6295 (using B mode) */
-	{ REGION_SOUND1 },		/* memory region */
-	{ 25 }
-};
-
-static struct OKIM6295interface fixeighb_okim6295_interface =
-{
-	1,						/* 1 chip */
-	{ 14000000/16/165 },	/* 5303.03Hz , 875KHz to 6295 (using A mode) */
-	{ REGION_SOUND1 },		/* memory region */
-	{ 100 }
-};
-
-static struct OKIM6295interface batsugun_okim6295_interface =
-{
-	1,						/* 1 chip */
-	{ 32000000/8/165 },		/* 24242.42Hz , 4.0MHz to 6295 (using A mode) */
-	{ REGION_SOUND1 },		/* memory region */
-	{ 25 }
-};
-
-static struct OKIM6295interface raizing_okim6295_interface =
-{
-	1,						/* 1 chip */
-	{ 32000000/32/132 },	/* 7575.75Hz , 1MHz to 6295 (using B mode) */
-	{ REGION_SOUND1 },		/* memory region */
-	{ 25 }
-};
-
-static struct OKIM6295interface battleg_okim6295_interface =
-{
-	1,						/* 1 chip */
-	{ 32000000/16/132 },	/* 15151.51Hz , 2MHz to 6295 (using B mode) */
-	{ REGION_SOUND1 },		/* memory region */
-	{ 25 }
-};
-
-static struct OKIM6295interface batrider_okim6295_interface =
-{
-	2,										/* 2 chips */
-	{ 32000000/10/132, 32000000/10/165 },	/* 24242.42Hz & 19393.93Hz , 3.2MHz to two 6295 (using B mode / A mode) */
-	{ REGION_SOUND1, REGION_SOUND2 },		/* memory region */
-	{ 25, 25 }
+	irqhandler
 };
 
 static struct YMZ280Binterface ymz280b_interface =
 {
-	1,
-	{ 16934400 },
-	{ REGION_SOUND1 },
-	{ YM3012_VOL(100,MIXER_PAN_LEFT,100,MIXER_PAN_RIGHT) },
-	{ bbakraid_irqhandler }
+	REGION_SOUND1,
+	bbakraid_irqhandler
 };
 
 static MACHINE_DRIVER_START( tekipaki )
@@ -4202,7 +4127,11 @@ static MACHINE_DRIVER_START( tekipaki )
 	MDRV_VIDEO_UPDATE(toaplan2_0)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM3812, ym3812_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM3812, 27000000/8)
+	MDRV_SOUND_CONFIG(ym3812_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 
@@ -4235,8 +4164,11 @@ static MACHINE_DRIVER_START( ghox )
 	MDRV_VIDEO_UPDATE(toaplan2_0)
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(YM2151, ym2151_interface)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(YM2151, 27000000/8)
+	MDRV_SOUND_ROUTE(0, "left", 0.25)
+	MDRV_SOUND_ROUTE(1, "right", 0.25)
 MACHINE_DRIVER_END
 
 
@@ -4270,9 +4202,16 @@ static MACHINE_DRIVER_START( dogyuun )
 	MDRV_VIDEO_UPDATE(dogyuun_1)
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(YM2151, ym2151_interface)
-	MDRV_SOUND_ADD(OKIM6295, okim6295_interface)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(YM2151, 27000000/8)
+	MDRV_SOUND_ROUTE(0, "left", 0.25)
+	MDRV_SOUND_ROUTE(1, "right", 0.25)
+
+	MDRV_SOUND_ADD(OKIM6295, 27000000/10/132)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.25)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 0.25)
 MACHINE_DRIVER_END
 
 
@@ -4306,9 +4245,16 @@ static MACHINE_DRIVER_START( kbash )
 	MDRV_VIDEO_UPDATE(toaplan2_0)
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(YM2151, ym2151_interface)
-	MDRV_SOUND_ADD(OKIM6295, kbash_okim6295_interface)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(YM2151, 27000000/8)
+	MDRV_SOUND_ROUTE(0, "left", 0.25)
+	MDRV_SOUND_ROUTE(1, "right", 0.25)
+
+	MDRV_SOUND_ADD(OKIM6295, 32000000/32/132)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.25)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 0.25)
 MACHINE_DRIVER_END
 
 
@@ -4336,9 +4282,16 @@ static MACHINE_DRIVER_START( truxton2 )
 	MDRV_VIDEO_UPDATE(truxton2_0)
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(YM2151, ym2151_interface)
-	MDRV_SOUND_ADD(OKIM6295, okim6295_interface)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(YM2151, 27000000/8)
+	MDRV_SOUND_ROUTE(0, "left", 0.25)
+	MDRV_SOUND_ROUTE(1, "right", 0.25)
+
+	MDRV_SOUND_ADD(OKIM6295, 27000000/10/132)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.25)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 0.25)
 MACHINE_DRIVER_END
 
 
@@ -4370,7 +4323,11 @@ static MACHINE_DRIVER_START( pipibibs )
 	MDRV_VIDEO_UPDATE(toaplan2_0)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM3812, ym3812_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM3812, 27000000/8)
+	MDRV_SOUND_CONFIG(ym3812_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 
@@ -4403,7 +4360,11 @@ static MACHINE_DRIVER_START( whoopee )
 	MDRV_VIDEO_UPDATE(toaplan2_0)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM3812, ym3812_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM3812, 27000000/8)
+	MDRV_SOUND_CONFIG(ym3812_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 
@@ -4435,7 +4396,11 @@ static MACHINE_DRIVER_START( pipibibi )
 	MDRV_VIDEO_UPDATE(toaplan2_0)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM3812, ym3812_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM3812, 27000000/8)
+	MDRV_SOUND_CONFIG(ym3812_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 
@@ -4470,9 +4435,16 @@ static MACHINE_DRIVER_START( fixeight )
 	MDRV_VIDEO_UPDATE(truxton2_0)
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(YM2151, ym2151_interface)
-	MDRV_SOUND_ADD(OKIM6295, kbash_okim6295_interface)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(YM2151, 27000000/8)
+	MDRV_SOUND_ROUTE(0, "left", 0.25)
+	MDRV_SOUND_ROUTE(1, "right", 0.25)
+
+	MDRV_SOUND_ADD(OKIM6295, 32000000/32/132)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.25)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 0.25)
 MACHINE_DRIVER_END
 
 
@@ -4499,8 +4471,12 @@ static MACHINE_DRIVER_START( fixeighb )
 	MDRV_VIDEO_UPDATE(truxton2_0)
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(OKIM6295, fixeighb_okim6295_interface)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(OKIM6295, 14000000/16/165)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 1.0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 1.0)
 MACHINE_DRIVER_END
 
 
@@ -4535,8 +4511,11 @@ static MACHINE_DRIVER_START( vfive )
 	MDRV_VIDEO_UPDATE(toaplan2_0)
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(YM2151, ym2151_interface)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(YM2151, 27000000/8)
+	MDRV_SOUND_ROUTE(0, "left", 0.25)
+	MDRV_SOUND_ROUTE(1, "right", 0.25)
 MACHINE_DRIVER_END
 
 
@@ -4570,9 +4549,16 @@ static MACHINE_DRIVER_START( batsugun )
 	MDRV_VIDEO_UPDATE(batsugun_1)
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(YM2151, ym2151_interface)
-	MDRV_SOUND_ADD(OKIM6295, batsugun_okim6295_interface)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(YM2151, 27000000/8)
+	MDRV_SOUND_ROUTE(0, "left", 0.25)
+	MDRV_SOUND_ROUTE(1, "right", 0.25)
+
+	MDRV_SOUND_ADD(OKIM6295, 32000000/8/165)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.25)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 0.25)
 MACHINE_DRIVER_END
 
 
@@ -4600,9 +4586,16 @@ static MACHINE_DRIVER_START( snowbro2 )
 	MDRV_VIDEO_UPDATE(toaplan2_0)
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(YM2151, ym2151_interface)
-	MDRV_SOUND_ADD(OKIM6295, okim6295_interface)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(YM2151, 27000000/8)
+	MDRV_SOUND_ROUTE(0, "left", 0.25)
+	MDRV_SOUND_ROUTE(1, "right", 0.25)
+
+	MDRV_SOUND_ADD(OKIM6295, 27000000/10/132)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.25)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 0.25)
 MACHINE_DRIVER_END
 
 
@@ -4634,9 +4627,16 @@ static MACHINE_DRIVER_START( mahoudai )
 	MDRV_VIDEO_UPDATE(mahoudai_0)
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(YM2151, ym2151_interface)
-	MDRV_SOUND_ADD(OKIM6295, raizing_okim6295_interface)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(YM2151, 27000000/8)
+	MDRV_SOUND_ROUTE(0, "left", 0.25)
+	MDRV_SOUND_ROUTE(1, "right", 0.25)
+
+	MDRV_SOUND_ADD(OKIM6295, 32000000/32/132)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.25)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 0.25)
 MACHINE_DRIVER_END
 
 
@@ -4668,9 +4668,16 @@ static MACHINE_DRIVER_START( shippumd )
 	MDRV_VIDEO_UPDATE(truxton2_0)
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(YM2151, ym2151_interface)
-	MDRV_SOUND_ADD(OKIM6295, raizing_okim6295_interface)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(YM2151, 27000000/8)
+	MDRV_SOUND_ROUTE(0, "left", 0.25)
+	MDRV_SOUND_ROUTE(1, "right", 0.25)
+
+	MDRV_SOUND_ADD(OKIM6295, 32000000/32/132)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.25)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 0.25)
 MACHINE_DRIVER_END
 
 
@@ -4702,9 +4709,16 @@ static MACHINE_DRIVER_START( battleg )
 	MDRV_VIDEO_UPDATE(truxton2_0)
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(YM2151, raizing_ym2151_interface)
-	MDRV_SOUND_ADD(OKIM6295, battleg_okim6295_interface)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(YM2151, 32000000/8)
+	MDRV_SOUND_ROUTE(0, "left", 0.25)
+	MDRV_SOUND_ROUTE(1, "right", 0.25)
+
+	MDRV_SOUND_ADD(OKIM6295, 32000000/16/132)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.25)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 0.25)
 MACHINE_DRIVER_END
 
 
@@ -4737,9 +4751,21 @@ static MACHINE_DRIVER_START( batrider )
 	MDRV_VIDEO_UPDATE(batrider_0)
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(YM2151, raizing_ym2151_interface)
-	MDRV_SOUND_ADD(OKIM6295, batrider_okim6295_interface)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(YM2151, 32000000/8)
+	MDRV_SOUND_ROUTE(0, "left", 0.25)
+	MDRV_SOUND_ROUTE(1, "right", 0.25)
+
+	MDRV_SOUND_ADD(OKIM6295, 32000000/10/132)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.25)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 0.25)
+
+	MDRV_SOUND_ADD(OKIM6295, 32000000/10/132)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_2)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.25)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 0.25)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( bbakraid )
@@ -4771,7 +4797,12 @@ static MACHINE_DRIVER_START( bbakraid )
 	MDRV_VIDEO_UPDATE(batrider_0)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YMZ280B, ymz280b_interface)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(YMZ280B, 16934400)
+	MDRV_SOUND_CONFIG(ymz280b_interface)
+	MDRV_SOUND_ROUTE(0, "left", 1.0)
+	MDRV_SOUND_ROUTE(1, "right", 1.0)
 MACHINE_DRIVER_END
 
 

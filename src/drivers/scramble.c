@@ -25,6 +25,8 @@ Notes:
 #include "driver.h"
 #include "cpu/s2650/s2650.h"
 #include "machine/8255ppi.h"
+#include "sound/ay8910.h"
+#include "sound/dac.h"
 #include "galaxian.h"
 
 
@@ -1465,57 +1467,35 @@ struct GfxDecodeInfo sfx_gfxdecodeinfo[] =
 	{ -1 } /* end of array */
 };
 
-static struct AY8910interface triplep_ay8910_interface =
+static struct AY8910interface sfx_ay8910_interface_1 =
 {
-	1,	/* 1 chip */
-	14318000/8,	/* 1.78975 MHz */
-	{ 50 },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ 0 }
+	0,
+	0,
+	soundlatch2_w,
+	sfx_sh_irqtrigger_w
 };
 
-static struct AY8910interface sfx_ay8910_interface =
+struct AY8910interface explorer_ay8910_interface_1 =
 {
-	2,	/* 2 chips */
-	14318000/8,	/* 1.78975 MHz */
-	/* Ant Eater clips if the volume is set higher than this */
-	{ MIXERG(16,MIXER_GAIN_2x,MIXER_PAN_CENTER), MIXERG(16,MIXER_GAIN_2x,MIXER_PAN_CENTER) },
-	{ 0, soundlatch_r },
-	{ 0, scramble_portB_r },
-	{ soundlatch2_w, 0 },
-	{ sfx_sh_irqtrigger_w, 0 }
+	scramble_portB_r
 };
 
-struct AY8910interface explorer_ay8910_interface =
+struct AY8910interface explorer_ay8910_interface_2 =
 {
-	2,	/* 2 chips */
-	14318000/8,	/* 1.78975 MHz */
-	/* Ant Eater clips if the volume is set higher than this */
-	{ MIXERG(16,MIXER_GAIN_2x,MIXER_PAN_CENTER), MIXERG(16,MIXER_GAIN_2x,MIXER_PAN_CENTER) },
-	{ scramble_portB_r, soundlatch_r },
-	{ 0, 0 },
-	{ 0, 0 },
-	{ 0, 0 }
+	soundlatch_r
 };
 
-struct AY8910interface scorpion_ay8910_interface =
+struct AY8910interface scorpion_ay8910_interface_1 =
 {
-	3,	/* 3 chips */
-	14318000/8,	/* 1.78975 MHz */
-	/* Ant Eater clips if the volume is set higher than this */
-	{ MIXERG(16,MIXER_GAIN_2x,MIXER_PAN_CENTER), MIXERG(16,MIXER_GAIN_2x,MIXER_PAN_CENTER), MIXERG(16,MIXER_GAIN_2x,MIXER_PAN_CENTER) },
-	{ 0,					  0, soundlatch_r },
-	{ 0,					  0, scramble_portB_r },
-	{ scorpion_extra_sound_w, 0, 0 },
-	{ scorpion_sound_cmd_w,   0, 0 }
+	0,
+	0,
+	scorpion_extra_sound_w,
+	scorpion_sound_cmd_w,
 };
 
-static struct DACinterface sfx_dac_interface =
+struct AY8910interface triplep_ay8910_interface =
 {
-	1,	/* 1 channel */
-	{ 100 },
+	0
 };
 
 
@@ -1540,7 +1520,12 @@ static MACHINE_DRIVER_START( scramble )
 	MDRV_VIDEO_START(scramble)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD_TAG("8910", AY8910, scobra_ay8910_interface)
+	MDRV_SOUND_ADD_TAG("8910.1", AY8910, 14318000/8)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.16)
+
+	MDRV_SOUND_ADD_TAG("8910.2", AY8910, 14318000/8)
+	MDRV_SOUND_CONFIG(scobra_ay8910_interface_2)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.16)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( explorer )
@@ -1553,7 +1538,13 @@ static MACHINE_DRIVER_START( explorer )
 	MDRV_MACHINE_INIT(explorer)
 
 	/* sound hardware */
-	MDRV_SOUND_REPLACE("8910", AY8910, explorer_ay8910_interface)
+	MDRV_SOUND_MODIFY("8910.1")
+	MDRV_SOUND_CONFIG(explorer_ay8910_interface_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.16)
+
+	MDRV_SOUND_MODIFY("8910.2")
+	MDRV_SOUND_CONFIG(explorer_ay8910_interface_2)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.16)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( theend )
@@ -1581,7 +1572,11 @@ static MACHINE_DRIVER_START( froggers )
 	MDRV_VIDEO_START(froggers)
 
 	/* sound hardware */
-	MDRV_SOUND_REPLACE("8910", AY8910, frogger_ay8910_interface)
+	MDRV_SOUND_MODIFY("8910.1")
+	MDRV_SOUND_CONFIG(frogger_ay8910_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.33)
+	
+	MDRV_SOUND_REMOVE("8910.2")
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( mars )
@@ -1710,8 +1705,16 @@ static MACHINE_DRIVER_START( sfx )
 	MDRV_VIDEO_START(sfx)
 
 	/* sound hardware */
-	MDRV_SOUND_REPLACE("8910", AY8910, sfx_ay8910_interface)
-	MDRV_SOUND_ADD(DAC, sfx_dac_interface)
+	MDRV_SOUND_MODIFY("8910.1")
+	MDRV_SOUND_CONFIG(sfx_ay8910_interface_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.16)
+
+	MDRV_SOUND_MODIFY("8910.2")
+	MDRV_SOUND_CONFIG(scobra_ay8910_interface_2)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.16)
+
+	MDRV_SOUND_ADD(DAC, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( mimonscr )
@@ -1741,7 +1744,11 @@ static MACHINE_DRIVER_START( triplep )
 	MDRV_PALETTE_INIT(galaxian)
 
 	/* sound hardware */
-	MDRV_SOUND_REPLACE("8910", AY8910, triplep_ay8910_interface)
+	MDRV_SOUND_MODIFY("8910.1")
+	MDRV_SOUND_CONFIG(triplep_ay8910_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.33)
+	
+	MDRV_SOUND_REMOVE("8910.2")
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( mariner )
@@ -1794,7 +1801,17 @@ static MACHINE_DRIVER_START( scorpion )
 	MDRV_VIDEO_START(scorpion)
 
 	/* sound hardware */
-	MDRV_SOUND_REPLACE("8910", AY8910, scorpion_ay8910_interface)
+	MDRV_SOUND_MODIFY("8910.1")
+	MDRV_SOUND_CONFIG(scorpion_ay8910_interface_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.16)
+
+	MDRV_SOUND_MODIFY("8910.2")
+	MDRV_SOUND_CONFIG(triplep_ay8910_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.16)
+	
+	MDRV_SOUND_ADD(AY8910, 14318000/8)
+	MDRV_SOUND_CONFIG(scobra_ay8910_interface_2)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.16)
 MACHINE_DRIVER_END
 
 /***************************************************************************

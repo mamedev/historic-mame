@@ -62,6 +62,8 @@
 #include "vidhrdw/generic.h"
 #include "cpu/m68000/m68000.h"
 #include "cpu/z80/z80.h"
+#include "sound/2151intf.h"
+#include "sound/okim6295.h"
 
 WRITE16_HANDLER ( wwfsstar_scrollwrite );
 
@@ -335,18 +337,7 @@ static void wwfsstar_ymirq_handler(int irq)
 
 static struct YM2151interface ym2151_interface =
 {
-	1,			/* 1 chip */
-	3579545,	/* Guess */
-	{ YM3012_VOL(45,MIXER_PAN_LEFT,45,MIXER_PAN_RIGHT) },
-	{ wwfsstar_ymirq_handler }
-};
-
-static struct OKIM6295interface okim6295_interface =
-{
-	1,				/* 1 chip */
-	{ 8500 },		/* frequency (Hz) */
-	{ REGION_SOUND1 },	/* memory region */
-	{ 47 }
+	wwfsstar_ymirq_handler
 };
 
 /*******************************************************************************
@@ -380,9 +371,17 @@ static MACHINE_DRIVER_START( wwfsstar )
 	MDRV_VIDEO_UPDATE(wwfsstar)
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(YM2151, ym2151_interface)
-	MDRV_SOUND_ADD(OKIM6295, okim6295_interface)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(YM2151, 3579545)
+	MDRV_SOUND_CONFIG(ym2151_interface)
+	MDRV_SOUND_ROUTE(0, "left", 0.45)
+	MDRV_SOUND_ROUTE(1, "right", 0.45)
+
+	MDRV_SOUND_ADD(OKIM6295, 8500)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.47)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 0.47)
 MACHINE_DRIVER_END
 
 /*******************************************************************************

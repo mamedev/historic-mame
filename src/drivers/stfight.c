@@ -230,6 +230,8 @@ DONE? (check on real board)
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "sound/2203intf.h"
+#include "sound/msm5205.h"
 
 // machine
 DRIVER_INIT( empcity );
@@ -477,24 +479,10 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 	{ -1 } /* end of array */
 };
 
-static struct YM2203interface ym2203_interface =
-{
-	2,			/* 2 chips */
-	1500000,	/* 1.5 MHz */
-	{ YM2203_VOL(10,15), YM2203_VOL(10,15) },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ 0 }
-};
-
 static struct MSM5205interface msm5205_interface =
 {
-	1,					/* 1 chip            */
-	384000,				/* 384KHz             */
-	{ stfight_adpcm_int },  /* interrupt function */
-	{ MSM5205_S48_4B },	/* 8KHz               */
-	{ 50 }
+	stfight_adpcm_int,  /* interrupt function */
+	MSM5205_S48_4B		/* 8KHz               */
 };
 
 static MACHINE_DRIVER_START( stfight )
@@ -529,8 +517,23 @@ static MACHINE_DRIVER_START( stfight )
 	MDRV_VIDEO_UPDATE(stfight)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM2203, ym2203_interface)
-	MDRV_SOUND_ADD(MSM5205, msm5205_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM2203, 1500000)
+	MDRV_SOUND_ROUTE(0, "mono", 0.15)
+	MDRV_SOUND_ROUTE(1, "mono", 0.15)
+	MDRV_SOUND_ROUTE(2, "mono", 0.15)
+	MDRV_SOUND_ROUTE(3, "mono", 0.10)
+
+	MDRV_SOUND_ADD(YM2203, 1500000)
+	MDRV_SOUND_ROUTE(0, "mono", 0.15)
+	MDRV_SOUND_ROUTE(1, "mono", 0.15)
+	MDRV_SOUND_ROUTE(2, "mono", 0.15)
+	MDRV_SOUND_ROUTE(3, "mono", 0.10)
+
+	MDRV_SOUND_ADD(MSM5205, 384000)
+	MDRV_SOUND_CONFIG(msm5205_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
 MACHINE_DRIVER_END
 
 

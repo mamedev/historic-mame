@@ -42,6 +42,7 @@ Video Board
 #include "driver.h"
 #include "cpu/z80/z80.h"
 #include "vidhrdw/generic.h"
+#include "sound/ay8910.h"
 
 static int mrflea_io;
 static int mrflea_main;
@@ -58,16 +59,6 @@ extern WRITE8_HANDLER( mrflea_videoram_w );
 extern WRITE8_HANDLER( mrflea_spriteram_w );
 extern VIDEO_START( mrflea );
 extern VIDEO_UPDATE( mrflea );
-
-static struct AY8910interface ay8910_interface = {
-	3,	/* 3 chips */
-	2000000, /* 2 MHz? */
-	{ 25,25,25 }, /* volume */
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ 0 }
-};
 
 static struct GfxLayout tile_layout = {
 	8,8,
@@ -306,7 +297,16 @@ static MACHINE_DRIVER_START( mrflea )
 	MDRV_VIDEO_UPDATE(mrflea)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(AY8910, ay8910_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	
+	MDRV_SOUND_ADD(AY8910, 2000000)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
+	
+	MDRV_SOUND_ADD(AY8910, 2000000)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
+	
+	MDRV_SOUND_ADD(AY8910, 2000000)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
 MACHINE_DRIVER_END
 
 ROM_START( mrflea )

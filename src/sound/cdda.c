@@ -6,46 +6,77 @@
 #include "driver.h"
 #include "cpuintrf.h"
 #include "cdrom.h"
+#include "cdda.h"
 
-static struct cdrom_file *cdrom_disc[MAX_CDDA];
-
-static void cdda_update(int num, INT16 **outputs, int length) 
+struct cdda_info
 {
-	if (cdrom_disc[num] != (struct cdrom_file *)NULL)
+	sound_stream *		stream;
+	struct cdrom_file *	disc;
+};
+
+static void cdda_update(void *param, stream_sample_t **inputs, stream_sample_t **outputs, int length) 
+{
+	struct cdda_info *info = param;
+	if (info->disc != (struct cdrom_file *)NULL)
 	{
-		cdrom_get_audio_data(cdrom_disc[num], &outputs[0][0], &outputs[1][0], length);
+		cdrom_get_audio_data(info->disc, &outputs[0][0], &outputs[1][0], length);
 	}
 }
 
-int CDDA_sh_start( const struct MachineSound *msound )
+static void *cdda_start(int sndindex, int clock, const void *config)
 {
-	char buf[2][40];
-	const char *name[2];
-	int  vol[2];
-	struct CDDAinterface *intf;
-	int i;
+	const struct CDDAinterface *intf;
+	struct cdda_info *info;
+	
+	info = auto_malloc(sizeof(*info));
+	memset(info, 0, sizeof(*info));
 
-	intf = msound->sound_interface;
+	intf = config;
 
-	for(i=0; i<intf->num; i++)
-	{
-		sprintf(buf[0], "CD-DA %d L", i);
-		sprintf(buf[1], "CD-DA %d R", i);
-		name[0] = buf[0];
-		name[1] = buf[1];
-		vol[0]=intf->mixing_level[i] >> 16;
-		vol[1]=intf->mixing_level[i] & 0xffff;
-		stream_init_multi(2, name, vol, 44100, i, cdda_update);
-	}
+	info->stream = stream_create(0, 2, 44100, info, cdda_update);
 
-	return 0;
-}
-
-void CDDA_sh_stop( void )
-{
+	return info;
 }
 
 void CDDA_set_cdrom(int num, void *file)
 {
-	cdrom_disc[num] = (struct cdrom_file *)file;
+	struct cdda_info *info = sndti_token(SOUND_CDDA, num);
+	info->disc = (struct cdrom_file *)file;
 }
+
+
+
+/**************************************************************************
+ * Generic get_info
+ **************************************************************************/
+
+static void cdda_set_info(void *token, UINT32 state, union sndinfo *info)
+{
+	switch (state)
+	{
+		/* no parameters to set */
+	}
+}
+
+
+void cdda_get_info(void *token, UINT32 state, union sndinfo *info)
+{
+	switch (state)
+	{
+		/* --- the following bits of info are returned as 64-bit signed integers --- */
+
+		/* --- the following bits of info are returned as pointers to data or functions --- */
+		case SNDINFO_PTR_SET_INFO:						info->set_info = cdda_set_info;			break;
+		case SNDINFO_PTR_START:							info->start = cdda_start;				break;
+		case SNDINFO_PTR_STOP:							/* nothing */							break;
+		case SNDINFO_PTR_RESET:							/* nothing */							break;
+
+		/* --- the following bits of info are returned as NULL-terminated strings --- */
+		case SNDINFO_STR_NAME:							info->s = "CD/DA";						break;
+		case SNDINFO_STR_CORE_FAMILY:					info->s = "CD Audio";					break;
+		case SNDINFO_STR_CORE_VERSION:					info->s = "1.0";						break;
+		case SNDINFO_STR_CORE_FILE:						info->s = __FILE__;						break;
+		case SNDINFO_STR_CORE_CREDITS:					info->s = "Copyright (c) 2004, The MAME Team"; break;
+	}
+}
+

@@ -1,15 +1,6 @@
 #ifndef _C6280_H_
 #define _C6280_H_
 
-#define MAX_C6280 2
-
-struct C6280_interface
-{
-    int num;
-    int volume[MAX_C6280];
-    int clock[MAX_C6280];
-};
-
 typedef struct {
     UINT16 frequency;
     UINT8 control;
@@ -23,6 +14,7 @@ typedef struct {
 } t_channel;
 
 typedef struct {
+	sound_stream *stream;
     UINT8 select;
     UINT8 balance;
     UINT8 lfo_frequency;
@@ -34,8 +26,6 @@ typedef struct {
 } c6280_t;
 
 /* Function prototypes */
-int c6280_sh_start(const struct MachineSound *msound);
-void c6280_sh_stop(void);
 WRITE8_HANDLER( C6280_0_w );
 WRITE8_HANDLER( C6280_1_w );
 

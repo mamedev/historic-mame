@@ -11,6 +11,8 @@
 ***************************************************************************/
 
 #include "driver.h"
+#include "sound/ay8910.h"
+#include "sound/flt_rc.h"
 
 static READ8_HANDLER( timeplt_portB_r );
 static WRITE8_HANDLER( timeplt_filter_w );
@@ -54,13 +56,8 @@ ADDRESS_MAP_END
 
 struct AY8910interface timeplt_ay8910_interface =
 {
-	2,				/* 2 chips */
-	14318180/8,		/* 1.789772727 MHz */
-	{ MIXERG(30,MIXER_GAIN_2x,MIXER_PAN_CENTER), MIXERG(30,MIXER_GAIN_2x,MIXER_PAN_CENTER) },
-	{ soundlatch_r },
-	{ timeplt_portB_r },
-	{ 0 },
-	{ 0 }
+	soundlatch_r,
+	timeplt_portB_r
 };
 
 
@@ -111,7 +108,7 @@ static void filter_w(int chip, int channel, int data)
 
 	if (data & 1) C += 220000;	/* 220000pF = 0.220uF */
 	if (data & 2) C +=  47000;	/*  47000pF = 0.047uF */
-	set_RC_filter(3*chip + channel,1000,5100,0,C);
+	filter_rc_set_RC(3*chip + channel,1000,5100,0,C);
 }
 
 static WRITE8_HANDLER( timeplt_filter_w )

@@ -94,6 +94,7 @@ PROM  : Type MB7051
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "cpu/z80/z80.h"
+#include "sound/ay8910.h"
 
 //VIDEO_START( shougi )
 //{
@@ -363,17 +364,6 @@ INPUT_PORTS_START( shougi )
 INPUT_PORTS_END
 
 
-static struct AY8910interface ay8910_interface =
-{
-	1,
-	10000000/8,	/* ??? */
-	{ 30,},
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ 0 }
-};
-
 static MACHINE_DRIVER_START( shougi )
 
 	MDRV_CPU_ADD(Z80,10000000/4)
@@ -400,7 +390,10 @@ static MACHINE_DRIVER_START( shougi )
 	MDRV_VIDEO_UPDATE(shougi)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(AY8910, ay8910_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	
+	MDRV_SOUND_ADD(AY8910, 10000000/8)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.30)
 MACHINE_DRIVER_END
 
 

@@ -39,6 +39,7 @@ ToDo:
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "sound/2151intf.h"
 
 
 WRITE16_HANDLER( bionicc_fgvideoram_w );
@@ -325,15 +326,6 @@ static struct GfxDecodeInfo gfxdecodeinfo_bionicc[] =
 };
 
 
-static struct YM2151interface ym2151_interface =
-{
-	1,                      /* 1 chip */
-	3579545,                /* 3.579545 MHz ? */
-	{ YM3012_VOL(60,MIXER_PAN_LEFT,60,MIXER_PAN_RIGHT) },
-	{ 0 }
-};
-
-
 static MACHINE_DRIVER_START( bionicc )
 
 	/* basic machine hardware */
@@ -360,7 +352,11 @@ static MACHINE_DRIVER_START( bionicc )
 	MDRV_VIDEO_EOF(bionicc)
 	MDRV_VIDEO_UPDATE(bionicc)
 
-	MDRV_SOUND_ADD(YM2151, ym2151_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM2151, 3579545)
+	MDRV_SOUND_ROUTE(0, "mono", 0.60)
+	MDRV_SOUND_ROUTE(1, "mono", 0.60)
 MACHINE_DRIVER_END
 
 

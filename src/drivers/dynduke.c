@@ -25,6 +25,8 @@
 #include "vidhrdw/generic.h"
 #include "cpu/z80/z80.h"
 #include "sndhrdw/seibu.h"
+#include "sound/3812intf.h"
+#include "sound/okim6295.h"
 
 READ8_HANDLER( dynduke_background_r );
 READ8_HANDLER( dynduke_foreground_r );
@@ -240,7 +242,7 @@ static struct GfxDecodeInfo dynduke_gfxdecodeinfo[] =
 /******************************************************************************/
 
 /* Parameters: YM3812 frequency, Oki frequency, Oki memory region */
-SEIBU_SOUND_SYSTEM_YM3812_HARDWARE(14318180/4,8000,REGION_SOUND1);
+SEIBU_SOUND_SYSTEM_YM3812_HARDWARE;
 
 static INTERRUPT_GEN( dynduke_interrupt )
 {
@@ -283,7 +285,7 @@ static MACHINE_DRIVER_START( dynduke )
 	MDRV_VIDEO_UPDATE(dynduke)
 
 	/* sound hardware */
-	SEIBU_SOUND_SYSTEM_YM3812_INTERFACE
+	SEIBU_SOUND_SYSTEM_YM3812_INTERFACE(14318180/4,8000,1)
 MACHINE_DRIVER_END
 
 /***************************************************************************/

@@ -7,6 +7,8 @@ Based on drivers from Juno First emulator by Chris Hardy (chrish@kcbbs.gen.nz)
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "cpu/m6809/m6809.h"
+#include "sound/vlm5030.h"
+#include "sound/dac.h"
 
 
 extern void konami1_decode(void);
@@ -28,9 +30,6 @@ extern READ8_HANDLER( hyperspt_sh_timer_r );
 extern WRITE8_HANDLER( hyperspt_sound_w );
 
 /* these routines lurk in sndhrdw/trackfld.c */
-extern struct VLM5030interface konami_vlm5030_interface;
-extern struct SN76496interface konami_sn76496_interface;
-extern struct DACinterface konami_dac_interface;
 extern WRITE8_HANDLER( konami_SN76496_latch_w );
 extern WRITE8_HANDLER( konami_SN76496_0_w );
 
@@ -458,8 +457,6 @@ static struct GfxDecodeInfo roadf_gfxdecodeinfo[] =
 
 struct VLM5030interface hyperspt_vlm5030_interface =
 {
-	3580000,	/* master clock  */
-	100,		/* volume		 */
 	REGION_SOUND1,	/* memory region  */
 	0		   /* memory size	 */
 };
@@ -494,9 +491,17 @@ static MACHINE_DRIVER_START( hyperspt )
 	MDRV_VIDEO_UPDATE(hyperspt)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(DAC, konami_dac_interface)
-	MDRV_SOUND_ADD(SN76496, konami_sn76496_interface)
-	MDRV_SOUND_ADD(VLM5030, hyperspt_vlm5030_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(DAC, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.80)
+
+	MDRV_SOUND_ADD(SN76496, 14318180/8)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
+
+	MDRV_SOUND_ADD(VLM5030, 3580000)
+	MDRV_SOUND_CONFIG(hyperspt_vlm5030_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 

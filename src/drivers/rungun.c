@@ -305,11 +305,7 @@ ADDRESS_MAP_END
 
 static struct K054539interface k054539_interface =
 {
-	2,			/* 2 chips */
-	48000,
-	{ REGION_SOUND1, REGION_SOUND1 },
-	{ { 100, 100 }, { 100, 100 } },
-	{ NULL }
+	REGION_SOUND1
 };
 
 /**********************************************************************************/
@@ -364,8 +360,17 @@ static MACHINE_DRIVER_START( rng )
 	MDRV_VIDEO_UPDATE(rng)
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(K054539, k054539_interface)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(K054539, 48000)
+	MDRV_SOUND_CONFIG(k054539_interface)
+	MDRV_SOUND_ROUTE(0, "left", 1.0)
+	MDRV_SOUND_ROUTE(1, "right", 1.0)
+
+	MDRV_SOUND_ADD(K054539, 48000)
+	MDRV_SOUND_CONFIG(k054539_interface)
+	MDRV_SOUND_ROUTE(0, "left", 1.0)
+	MDRV_SOUND_ROUTE(1, "right", 1.0)
 MACHINE_DRIVER_END
 
 INPUT_PORTS_START( rng )
@@ -638,7 +643,7 @@ ROM_END
 
 static DRIVER_INIT( rng )
 {
-	K054539_init_flags(K054539_REVERSE_STEREO);
+	K054539_init_flags(0, K054539_REVERSE_STEREO);
 }
 
 MACHINE_INIT( rng )

@@ -26,6 +26,8 @@
 //#include "vidhrdw/generic.h"
 #include "vidhrdw/vector.h"
 #include "vidhrdw/avgdvg.h"
+#include "sound/5220intf.h"
+#include "sound/pokey.h"
 #include "starwars.h"
 #include "slapstic.h"
 
@@ -387,40 +389,6 @@ INPUT_PORTS_END
 
 /*************************************
  *
- *	Sound definitions
- *
- *************************************/
-
-static struct POKEYinterface pokey_interface =
-{
-	4,			/* 4 chips */
-	1500000,	/* 1.5 MHz? */
-	{ 20, 20, 20, 20 },	/* volume */
-	/* The 8 pot handlers */
-	{ 0, 0, 0, 0 },
-	{ 0, 0, 0, 0 },
-	{ 0, 0, 0, 0 },
-	{ 0, 0, 0, 0 },
-	{ 0, 0, 0, 0 },
-	{ 0, 0, 0, 0 },
-	{ 0, 0, 0, 0 },
-	{ 0, 0, 0, 0 },
-	/* The allpot handler */
-	{ 0, 0, 0, 0 },
-};
-
-
-static struct TMS5220interface tms5220_interface =
-{
-	640000,     /* clock speed (80*samplerate) */
-	50,         /* volume */
-	0           /* IRQ handler */
-};
-
-
-
-/*************************************
- *
  *	Machine driver
  *
  *************************************/
@@ -451,8 +419,22 @@ static MACHINE_DRIVER_START( starwars )
 	MDRV_VIDEO_UPDATE(vector)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(POKEY, pokey_interface)
-	MDRV_SOUND_ADD(TMS5220, tms5220_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(POKEY, 1500000)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.20)
+
+	MDRV_SOUND_ADD(POKEY, 1500000)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.20)
+
+	MDRV_SOUND_ADD(POKEY, 1500000)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.20)
+
+	MDRV_SOUND_ADD(POKEY, 1500000)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.20)
+
+	MDRV_SOUND_ADD(TMS5220, 640000)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
 MACHINE_DRIVER_END
 
 

@@ -576,6 +576,7 @@ the encryption loops on 0x20000 boundries.
 #include "driver.h"
 #include "machine/eeprom.h"
 #include "cpu/m68000/m68000.h"
+#include "sound/qsound.h"
 
 #include "cps1.h"       /* External CPS1 definitions */
 
@@ -1332,8 +1333,12 @@ static MACHINE_DRIVER_START( cps2 )
 	MDRV_VIDEO_UPDATE(cps1)
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(QSOUND, qsound_interface)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(QSOUND, QSOUND_CLOCK)
+	MDRV_SOUND_CONFIG(qsound_interface)
+	MDRV_SOUND_ROUTE(0, "left", 1.0)
+	MDRV_SOUND_ROUTE(0, "right", 1.0)
 MACHINE_DRIVER_END
 
 ROM_START( 1944 )

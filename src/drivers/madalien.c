@@ -86,6 +86,7 @@ Input port 2, mapped to memory address $9002:
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "sound/ay8910.h"
 
 static struct tilemap *fg_tilemap, *bg_tilemap_l, *bg_tilemap_r;
 
@@ -573,18 +574,6 @@ static struct GfxDecodeInfo madalien_gfxdecodeinfo[] =
 };
 
 
-static struct AY8910interface ay8910_interface =
-{
-	1,		/* 1 chip */
-	500000,		/* 500 kHz like sound CPU (?) */
-	{ 23, 23 },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ 0 }
-};
-
-
 static ADDRESS_MAP_START( madalien_readmem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0000, 0x03ff) AM_READ(MRA8_RAM)			/* Program RAM */
 	AM_RANGE(0x6000, 0x63ff) AM_READ(madalien_videoram_r)		/* Video RAM   */
@@ -710,8 +699,10 @@ static MACHINE_DRIVER_START( madalien )
 	MDRV_VIDEO_UPDATE(madalien)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(AY8910, ay8910_interface)
-
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	
+	MDRV_SOUND_ADD(AY8910, 500000)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.23)
 MACHINE_DRIVER_END
 
 

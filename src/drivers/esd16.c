@@ -29,6 +29,8 @@ Head Panic
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "machine/eeprom.h"
+#include "sound/okim6295.h"
+#include "sound/3812intf.h"
 
 /* Variables defined in vidhrdw: */
 
@@ -460,22 +462,6 @@ static struct GfxDecodeInfo hedpanic_gfxdecodeinfo[] =
 
 ***************************************************************************/
 
-static struct YM3812interface esd16_ym3812_intf =
-{
-	1,
-	4000000,	/* ? */
-	{ 40 },
-	{  0 },		/* IRQ Line */
-};
-
-static struct OKIM6295interface esd16_m6295_intf =
-{
-	1,
-	{ 8000 },	/* ? */
-	{ REGION_SOUND1 },
-	{ 80 }
-};
-
 static MACHINE_DRIVER_START( multchmp )
 
 	/* basic machine hardware */
@@ -503,8 +489,14 @@ static MACHINE_DRIVER_START( multchmp )
 	MDRV_VIDEO_UPDATE(esd16)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM3812, esd16_ym3812_intf)
-	MDRV_SOUND_ADD(OKIM6295, esd16_m6295_intf)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM3812, 4000000)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.40)
+
+	MDRV_SOUND_ADD(OKIM6295, 8000)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.80)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( hedpanic )

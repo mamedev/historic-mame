@@ -50,6 +50,8 @@ Credits:
 #include "driver.h"
 #include "appoooh.h"
 #include "machine/segacrpt.h"
+#include "sound/msm5205.h"
+#include "sound/sn76496.h"
 
 static unsigned char *adpcmptr = 0;
 static int appoooh_adpcm_data;
@@ -212,20 +214,10 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 
 
-static struct SN76496interface sn76496_interface =
-{
-	3,	/* 3 chips */
-	{ 18432000/6, 18432000/6, 18432000/6 },	/* ??? */
-	{ 30, 30, 30 }
-};
-
 static struct MSM5205interface msm5205_interface =
 {
-	1,					/* 1 chip             */
-	384000,				/* 384KHz             */
-	{ appoooh_adpcm_int },/* interrupt function */
-	{ MSM5205_S64_4B },	/* 6KHz               */
-	{ 50 }
+	appoooh_adpcm_int,/* interrupt function */
+	MSM5205_S64_4B	/* 6KHz               */
 };
 
 
@@ -254,8 +246,20 @@ static MACHINE_DRIVER_START( appoooh )
 	MDRV_VIDEO_UPDATE(appoooh)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(SN76496, sn76496_interface)
-	MDRV_SOUND_ADD(MSM5205, msm5205_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(SN76496, 18432000/6)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.30)
+
+	MDRV_SOUND_ADD(SN76496, 18432000/6)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.30)
+
+	MDRV_SOUND_ADD(SN76496, 18432000/6)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.30)
+
+	MDRV_SOUND_ADD(MSM5205, 384000)
+	MDRV_SOUND_CONFIG(msm5205_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
 MACHINE_DRIVER_END
 
 /*
@@ -488,8 +492,20 @@ static MACHINE_DRIVER_START( robowres )
 	MDRV_VIDEO_UPDATE(robowres)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(SN76496, sn76496_interface)
-	MDRV_SOUND_ADD(MSM5205, msm5205_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(SN76496, 18432000/6)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.30)
+
+	MDRV_SOUND_ADD(SN76496, 18432000/6)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.30)
+
+	MDRV_SOUND_ADD(SN76496, 18432000/6)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.30)
+
+	MDRV_SOUND_ADD(MSM5205, 384000)
+	MDRV_SOUND_CONFIG(msm5205_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
 MACHINE_DRIVER_END
 
 /***************************************************************************

@@ -15,6 +15,7 @@ Sound:	YM2151
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "sound/2151intf.h"
 
 /* Variables & functions defined in vidhrdw: */
 
@@ -251,10 +252,7 @@ static void irq_handler(int irq)
 
 static struct YM2151interface amspdwy_ym2151_interface =
 {
-	1,
-	3000000,	/* ? */
-	{ YM3012_VOL(100,MIXER_PAN_LEFT,100,MIXER_PAN_RIGHT) },
-	{ irq_handler }
+	irq_handler
 };
 
 
@@ -284,8 +282,12 @@ static MACHINE_DRIVER_START( amspdwy )
 	MDRV_VIDEO_UPDATE(amspdwy)
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(YM2151, amspdwy_ym2151_interface)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(YM2151, 3000000)
+	MDRV_SOUND_CONFIG(amspdwy_ym2151_interface)
+	MDRV_SOUND_ROUTE(0, "left", 1.0)
+	MDRV_SOUND_ROUTE(1, "right", 1.0)
 MACHINE_DRIVER_END
 
 

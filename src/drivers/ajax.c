@@ -12,6 +12,8 @@ TO DO:
 
 #include "driver.h"
 #include "vidhrdw/konamiic.h"
+#include "sound/2151intf.h"
+#include "sound/k007232.h"
 
 extern unsigned char *ajax_sharedram;
 
@@ -202,14 +204,6 @@ INPUT_PORTS_END
 
 
 
-static struct YM2151interface ym2151_interface =
-{
-	1,
-	3579545,	/* 3.58 MHz */
-	{ YM3012_VOL(100,MIXER_PAN_LEFT,100,MIXER_PAN_RIGHT) },
-	{ 0 },
-};
-
 /*	sound_bank_w:
 	Handled by the LS273 Octal +ve edge trigger D-type Flip-flop with Reset at B11:
 
@@ -258,14 +252,16 @@ static void volume_callback1(int v)
 	K007232_set_volume(1,1,(v & 0x0f) * 0x11/2,(v >> 4) * 0x11/2);
 }
 
-static struct K007232_interface k007232_interface =
+static struct K007232_interface k007232_interface_1 =
 {
-	2,			/* number of chips */
-	3579545,	/* clock */
-	{ REGION_SOUND1, REGION_SOUND2 },	/* memory regions */
-	{ K007232_VOL(20,MIXER_PAN_CENTER,20,MIXER_PAN_CENTER),
-		K007232_VOL(50,MIXER_PAN_LEFT,50,MIXER_PAN_RIGHT) },/* volume */
-	{ volume_callback0,  volume_callback1 }	/* external port callback */
+	REGION_SOUND1,
+	volume_callback0
+};
+
+static struct K007232_interface k007232_interface_2 =
+{
+	REGION_SOUND2,
+	volume_callback1
 };
 
 
@@ -299,9 +295,23 @@ static MACHINE_DRIVER_START( ajax )
 	MDRV_VIDEO_UPDATE(ajax)
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(YM2151, ym2151_interface)
-	MDRV_SOUND_ADD(K007232, k007232_interface)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(YM2151, 3579545)
+	MDRV_SOUND_ROUTE(0, "left", 1.0)
+	MDRV_SOUND_ROUTE(1, "right", 1.0)
+	
+	MDRV_SOUND_ADD(K007232, 3579545)
+	MDRV_SOUND_CONFIG(k007232_interface_1)
+	MDRV_SOUND_ROUTE(0, "left", 0.20)
+	MDRV_SOUND_ROUTE(0, "right", 0.20)
+	MDRV_SOUND_ROUTE(1, "left", 0.20)
+	MDRV_SOUND_ROUTE(1, "right", 0.20)
+	
+	MDRV_SOUND_ADD(K007232, 3579545)
+	MDRV_SOUND_CONFIG(k007232_interface_2)
+	MDRV_SOUND_ROUTE(0, "left", 0.50)
+	MDRV_SOUND_ROUTE(1, "right", 0.50)
 MACHINE_DRIVER_END
 
 

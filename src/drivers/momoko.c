@@ -18,6 +18,7 @@ Flipped screen looks wrong, but it is correct.
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "sound/2203intf.h"
 
 extern data8_t *momoko_bg_scrollx;
 extern data8_t *momoko_bg_scrolly;
@@ -247,13 +248,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 static struct YM2203interface ym2203_interface =
 {
-	2,          /* 2 chips */
-	1250000,    /* 1.25 MHz */
-	{ YM2203_VOL(40,15), YM2203_VOL(40,15) },
-	{ 0, soundlatch_r },
-	{ 0 },
-	{ 0 },
-	{ 0 }
+	soundlatch_r
 };
 
 static MACHINE_DRIVER_START( momoko )
@@ -281,7 +276,20 @@ static MACHINE_DRIVER_START( momoko )
 	MDRV_VIDEO_UPDATE(momoko)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM2203, ym2203_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM2203, 1250000)
+	MDRV_SOUND_ROUTE(0, "mono", 0.15)
+	MDRV_SOUND_ROUTE(1, "mono", 0.15)
+	MDRV_SOUND_ROUTE(2, "mono", 0.15)
+	MDRV_SOUND_ROUTE(3, "mono", 0.40)
+
+	MDRV_SOUND_ADD(YM2203, 1250000)
+	MDRV_SOUND_CONFIG(ym2203_interface)
+	MDRV_SOUND_ROUTE(0, "mono", 0.15)
+	MDRV_SOUND_ROUTE(1, "mono", 0.15)
+	MDRV_SOUND_ROUTE(2, "mono", 0.15)
+	MDRV_SOUND_ROUTE(3, "mono", 0.40)
 MACHINE_DRIVER_END
 
 /****************************************************************************/

@@ -30,6 +30,7 @@ Take the following observations with a grain of salt (might not be true):
 #include "vidhrdw/generic.h"
 #include "cpu/z80/z80.h"
 #include "cpu/m6805/m6805.h"
+#include "sound/2203intf.h"
 
 
 extern unsigned char *lkage_scroll, *lkage_vreg;
@@ -341,14 +342,11 @@ static void irqhandler(int irq)
 
 static struct YM2203interface ym2203_interface =
 {
-	2,          /* 2 chips */
-	4000000,    /* 4 MHz ? (hand tuned) */
-	{ YM2203_VOL(40,15), YM2203_VOL(40,15) },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ irqhandler }
+	0,
+	0,
+	0,
+	0,
+	irqhandler
 };
 
 
@@ -387,7 +385,20 @@ static MACHINE_DRIVER_START( lkage )
 	MDRV_VIDEO_UPDATE(lkage)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM2203, ym2203_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM2203, 4000000)
+	MDRV_SOUND_CONFIG(ym2203_interface)
+	MDRV_SOUND_ROUTE(0, "mono", 0.15)
+	MDRV_SOUND_ROUTE(1, "mono", 0.15)
+	MDRV_SOUND_ROUTE(2, "mono", 0.15)
+	MDRV_SOUND_ROUTE(3, "mono", 0.40)
+
+	MDRV_SOUND_ADD(YM2203, 4000000)
+	MDRV_SOUND_ROUTE(0, "mono", 0.15)
+	MDRV_SOUND_ROUTE(1, "mono", 0.15)
+	MDRV_SOUND_ROUTE(2, "mono", 0.15)
+	MDRV_SOUND_ROUTE(3, "mono", 0.40)
 MACHINE_DRIVER_END
 
 
@@ -422,7 +433,20 @@ static MACHINE_DRIVER_START( lkageb )
 	MDRV_VIDEO_UPDATE(lkage)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM2203, ym2203_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM2203, 4000000)
+	MDRV_SOUND_CONFIG(ym2203_interface)
+	MDRV_SOUND_ROUTE(0, "mono", 0.15)
+	MDRV_SOUND_ROUTE(1, "mono", 0.15)
+	MDRV_SOUND_ROUTE(2, "mono", 0.15)
+	MDRV_SOUND_ROUTE(3, "mono", 0.40)
+
+	MDRV_SOUND_ADD(YM2203, 4000000)
+	MDRV_SOUND_ROUTE(0, "mono", 0.15)
+	MDRV_SOUND_ROUTE(1, "mono", 0.15)
+	MDRV_SOUND_ROUTE(2, "mono", 0.15)
+	MDRV_SOUND_ROUTE(3, "mono", 0.40)
 MACHINE_DRIVER_END
 
 

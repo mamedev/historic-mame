@@ -43,6 +43,7 @@
 #include "machine/eeprom.h"
 #include "taito_f3.h"
 #include "state.h"
+#include "sound/es5506.h"
 
 VIDEO_START( f3 );
 VIDEO_UPDATE( f3 );
@@ -455,11 +456,8 @@ static MACHINE_INIT( f3 )
 
 static struct ES5505interface es5505_interface =
 {
-	1,					/* total number of chips */
-	{ 30476100/2 },		/* freq */
-	{ REGION_SOUND1 },	/* Bank 0: Unused by F3 games? */
-	{ REGION_SOUND1 },	/* Bank 1: All games seem to use this */
-	{ YM3012_VOL(100,MIXER_PAN_LEFT,100,MIXER_PAN_RIGHT) },		/* master volume */
+	REGION_SOUND1,	/* Bank 0: Unused by F3 games? */
+	REGION_SOUND1	/* Bank 1: All games seem to use this */
 };
 
 NVRAM_HANDLER( taito_f3 )
@@ -518,8 +516,12 @@ static MACHINE_DRIVER_START( f3 )
 	MDRV_VIDEO_STOP(f3)
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(ES5505, es5505_interface)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(ES5505, 30476100/2)
+	MDRV_SOUND_CONFIG(es5505_interface)
+	MDRV_SOUND_ROUTE(0, "left", 1.0)
+	MDRV_SOUND_ROUTE(1, "right", 1.0)
 MACHINE_DRIVER_END
 
 /* These games reprogram the video output registers to display different scanlines,

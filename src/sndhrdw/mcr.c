@@ -13,6 +13,9 @@
 #include "sndhrdw/williams.h"
 #include "cpu/m6800/m6800.h"
 #include "cpu/m6809/m6809.h"
+#include "sound/5220intf.h"
+#include "sound/ay8910.h"
+#include "sound/dac.h"
 #include "mcr.h"
 
 
@@ -197,7 +200,7 @@ static WRITE8_HANDLER( ssio_porta1_w )
 static WRITE8_HANDLER( ssio_portb1_w )
 {
 	ssio_duty_cycle[1][2] = data & 15;
-	mixer_sound_enable_global_w(!(data & 0x80));
+	sound_global_enable(!(data & 0x80));
 	ssio_update_volumes();
 }
 
@@ -233,15 +236,20 @@ void ssio_reset_w(int state)
 
 
 /********* sound interfaces ***********/
-struct AY8910interface ssio_ay8910_interface =
+struct AY8910interface ssio_ay8910_interface_1 =
 {
-	2,			/* 2 chips */
-	2000000,	/* 2 MHz ?? */
-	{ MIXER(33,MIXER_PAN_LEFT), MIXER(33,MIXER_PAN_RIGHT) },	/* dotron clips with anything higher */
-	{ 0 },
-	{ 0 },
-	{ ssio_porta0_w, ssio_porta1_w },
-	{ ssio_portb0_w, ssio_portb1_w }
+	0,
+	0,
+	ssio_porta0_w,
+	ssio_portb0_w
+};
+
+struct AY8910interface ssio_ay8910_interface_2 =
+{
+	0,
+	0,
+	ssio_porta1_w,
+	ssio_portb1_w
 };
 
 
@@ -275,8 +283,15 @@ MACHINE_DRIVER_START(mcr_ssio)
 	MDRV_CPU_PROGRAM_MAP(ssio_readmem,ssio_writemem)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,26)
 	
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD_TAG("ssio", AY8910, ssio_ay8910_interface)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD_TAG("ssio.1", AY8910, 2000000)
+	MDRV_SOUND_CONFIG(ssio_ay8910_interface_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.33)
+
+	MDRV_SOUND_ADD_TAG("ssio.2", AY8910, 2000000)
+	MDRV_SOUND_CONFIG(ssio_ay8910_interface_2)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 0.33)
 MACHINE_DRIVER_END
 
 
@@ -326,20 +341,6 @@ void csdeluxe_reset_w(int state)
 }
 
 
-/********* sound interfaces ***********/
-struct DACinterface mcr_dac_interface =
-{
-	1,
-	{ 100 }
-};
-
-struct DACinterface mcr_dual_dac_interface =
-{
-	2,
-	{ 75, 75 }
-};
-
-
 /********* memory interfaces ***********/
 ADDRESS_MAP_START( csdeluxe_readmem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x000000, 0x007fff) AM_READ(MRA16_ROM)
@@ -369,7 +370,9 @@ MACHINE_DRIVER_START(chip_squeak_deluxe)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
 	MDRV_CPU_PROGRAM_MAP(csdeluxe_readmem,csdeluxe_writemem)
 	
-	MDRV_SOUND_ADD_TAG("csd", DAC, mcr_dac_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	MDRV_SOUND_ADD_TAG("csd", DAC, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 
@@ -425,14 +428,6 @@ void soundsgood_reset_w(int state)
 }
 
 
-/********* sound interfaces ***********/
-struct DACinterface turbocs_plus_soundsgood_dac_interface =
-{
-	2,
-	{ 80, 80 }
-};
-
-
 /********* memory interfaces ***********/
 ADDRESS_MAP_START( soundsgood_readmem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x000000, 0x03ffff) AM_READ(MRA16_ROM)
@@ -465,7 +460,9 @@ MACHINE_DRIVER_START(sounds_good)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
 	MDRV_CPU_PROGRAM_MAP(soundsgood_readmem,soundsgood_writemem)
 	
-	MDRV_SOUND_ADD_TAG("sg", DAC, mcr_dac_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	MDRV_SOUND_ADD_TAG("sg", DAC, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 
@@ -552,16 +549,22 @@ MACHINE_DRIVER_START(turbo_chip_squeak)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
 	MDRV_CPU_PROGRAM_MAP(turbocs_readmem,turbocs_writemem)
 	
-	MDRV_SOUND_ADD_TAG("tcs", DAC, mcr_dac_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	MDRV_SOUND_ADD_TAG("tcs", DAC, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 
 MACHINE_DRIVER_START(turbo_chip_squeak_plus_sounds_good)
 	MDRV_IMPORT_FROM(turbo_chip_squeak)
+	MDRV_SPEAKER_REMOVE("mono")
 	MDRV_IMPORT_FROM(sounds_good)
 	
-	MDRV_SOUND_REPLACE("tcs", DAC, mcr_dual_dac_interface)
-	MDRV_SOUND_REMOVE("sg")
+	MDRV_SOUND_REPLACE("tcs", DAC, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.80)
+
+	MDRV_SOUND_REPLACE("sg", DAC, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.80)
 MACHINE_DRIVER_END
 
 
@@ -638,15 +641,6 @@ void squawkntalk_reset_w(int state)
 }
 
 
-/********* sound interfaces ***********/
-struct TMS5220interface squawkntalk_tms5220_interface =
-{
-	640000,
-	MIXER(60,MIXER_PAN_LEFT),
-	0
-};
-
-
 /********* memory interfaces ***********/
 ADDRESS_MAP_START( squawkntalk_readmem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0000, 0x007f) AM_READ(MRA8_RAM)
@@ -685,5 +679,8 @@ MACHINE_DRIVER_START(squawk_n_talk)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
 	MDRV_CPU_PROGRAM_MAP(squawkntalk_readmem,squawkntalk_writemem)
 	
-	MDRV_SOUND_ADD_TAG("snt", TMS5220, squawkntalk_tms5220_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	
+	MDRV_SOUND_ADD_TAG("snt", TMS5220, 640000)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.60)
 MACHINE_DRIVER_END

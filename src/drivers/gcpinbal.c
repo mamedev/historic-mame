@@ -34,6 +34,8 @@ Stephh's notes (based on the game M68000 code and some tests) :
 #include "cpu/m68000/m68000.h"
 #include "vidhrdw/generic.h"
 #include "gcpinbal.h"
+#include "sound/okim6295.h"
+#include "sound/msm5205.h"
 
 /* M6585 */
 
@@ -51,7 +53,7 @@ void gcpinbal_interrupt1(int x)
 void gcpinbal_interrupt3(int x)
 {
 	// IRQ3 is from the M6585
-	if (!ADPCM_playing(0))
+//	if (!ADPCM_playing(0))
 	{
 		cpunum_set_input_line(0,3,HOLD_LINE);
 	}
@@ -177,8 +179,8 @@ static WRITE16_HANDLER( ioc_w )
 		case 0x66:
 			if (start < end)
 			{
-				ADPCM_stop(0);
-				ADPCM_play(0, start+bank, end-start);
+//				ADPCM_stop(0);
+//				ADPCM_play(0, start+bank, end-start);
 			}
 			break;
 
@@ -365,20 +367,10 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
                             (SOUND)
 **************************************************************/
 
-static struct OKIM6295interface m6295_interface =
+static struct MSM5205interface msm5205_interface =
 {
-	1,  /* 1 chip */
-	{ 1056000/132 },	/* bogus value */
-	{ REGION_SOUND1 },
-	{ 30 }
-};
-
-static struct ADPCMinterface adpcm_interface =
-{
-	1,
-	8000,
-	REGION_SOUND2,
-	{ 100, }
+	NULL,				/* VCK function */
+	MSM5205_S48_4B		/* 8 kHz */
 };
 
 /***********************************************************
@@ -412,8 +404,15 @@ static MACHINE_DRIVER_START( gcpinbal )
 	MDRV_VIDEO_UPDATE(gcpinbal)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(OKIM6295, m6295_interface)
-	MDRV_SOUND_ADD(ADPCM, adpcm_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(OKIM6295, 1056000/132)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.30)
+
+	MDRV_SOUND_ADD(MSM5205, 384000)
+	MDRV_SOUND_CONFIG(msm5205_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 

@@ -19,6 +19,7 @@ Notes:
 
 #include "driver.h"
 #include "news.h"
+#include "sound/okim6295.h"
 
 
 static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
@@ -98,16 +99,6 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 
 
-static struct OKIM6295interface okim6295_interface =
-{
-	1,                  /* 1 chip */
-	{ 8000 },           /* ? frequency */
-	{ REGION_SOUND1 },	/* memory region */
-	{ 100 }
-};
-
-
-
 static MACHINE_DRIVER_START( news )
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80,8000000)		 /* ? MHz */
@@ -128,7 +119,11 @@ static MACHINE_DRIVER_START( news )
 	MDRV_VIDEO_UPDATE(news)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(OKIM6295, okim6295_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(OKIM6295, 8000)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 

@@ -127,6 +127,8 @@ more sprite tiles, it also has a MSM5205 chip for sample playback.
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "sound/msm5205.h"
+#include "sound/sn76496.h"
 
 
 extern READ8_HANDLER( docastle_shared0_r );
@@ -636,20 +638,10 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 /* Sound Interfaces */
 
-static struct SN76496interface sn76496_interface =
-{
-	4,	// 4 chips
-	{ 4000000, 4000000, 4000000, 4000000 },	// 4 MHz
-	{ 25, 25, 25, 25 }
-};
-
 static struct MSM5205interface msm5205_interface =
 {
-	1,						// 1 chip
-	384000,					// 384 kHz	???
-	{ idsoccer_adpcm_int },	// interrupt function
-	{ MSM5205_S64_4B },		// 6 kHz	???
-	{ 40 }					// volume	???
+	idsoccer_adpcm_int,	// interrupt function
+	MSM5205_S64_4B		// 6 kHz	???
 };
 
 /* Machine Drivers */
@@ -686,7 +678,19 @@ static MACHINE_DRIVER_START( docastle )
 	MDRV_VIDEO_UPDATE(docastle)
 
 	// sound hardware
-	MDRV_SOUND_ADD(SN76496, sn76496_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(SN76496, 4000000)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
+
+	MDRV_SOUND_ADD(SN76496, 4000000)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
+
+	MDRV_SOUND_ADD(SN76496, 4000000)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
+
+	MDRV_SOUND_ADD(SN76496, 4000000)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( dorunrun )
@@ -717,7 +721,9 @@ static MACHINE_DRIVER_START( idsoccer )
 	MDRV_PALETTE_INIT(dorunrun)
 
 	// sound hardware
-	MDRV_SOUND_ADD(MSM5205, msm5205_interface)
+	MDRV_SOUND_ADD(MSM5205, 384000)
+	MDRV_SOUND_CONFIG(msm5205_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.40)
 MACHINE_DRIVER_END
 
 /* ROMs */

@@ -25,6 +25,9 @@
 #include "cpu/tms34010/tms34010.h"
 #include "cpu/tms34010/34010ops.h"
 #include "cpu/i8051/i8051.h"
+#include "sound/2151intf.h"
+#include "sound/upd7759.h"
+#include "sound/dac.h"
 
 #define M68681_CLK 3686400
 #define M68901_CLK 4000000
@@ -445,8 +448,8 @@ int bit=1 << (source-8*(int)(source/8));
 static WRITE16_HANDLER( m68901_w )
 {
 
-m68901_base[offset]=data;
 UINT8 value = (data>>8)& 0xff;
+m68901_base[offset]=data;
 
 switch(offset)
 {
@@ -822,27 +825,9 @@ ADDRESS_MAP_END
 
 
 
-static struct YM2151interface ym2151_interface =
-{
-	1,			/* 1 chip */
-	3579545,	        /* 3.579545 MHz */
-	{ YM3012_VOL(100,MIXER_PAN_LEFT,100,MIXER_PAN_RIGHT) },
-	{ 0 }
-};
-
 static struct upd7759_interface upd7759_interface =
 {
-	1,
-	{ 100 },
- 	{ UPD7759_STANDARD_CLOCK },
-	{ REGION_SOUND1 },
-	{0}
-};
-
-static struct DACinterface dac_interface =
-{
-        2,
-        { 0, 15 }                               /* Mute DAC A - I don't think it's output is directly amplified. */
+	REGION_SOUND1
 };
 
 static struct tms34010_config vgb_config =
@@ -883,11 +868,23 @@ static MACHINE_DRIVER_START( micro3d )
 	MDRV_VIDEO_START(micro3d)
 	MDRV_VIDEO_UPDATE(micro3d)
 
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(UPD7759, upd7759_interface)
-	MDRV_SOUND_ADD(YM2151, ym2151_interface)
-	MDRV_SOUND_ADD(DAC, dac_interface)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+	
+	MDRV_SOUND_ADD(UPD7759, UPD7759_STANDARD_CLOCK)
+	MDRV_SOUND_CONFIG(upd7759_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.50)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 0.50)
 
+	MDRV_SOUND_ADD(YM2151, 3579545)
+	MDRV_SOUND_ROUTE(0, "left", 1.0)
+	MDRV_SOUND_ROUTE(1, "right", 1.0)
+
+	MDRV_SOUND_ADD(DAC, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.0)	/* muted - I don't think it's directly used */
+
+	MDRV_SOUND_ADD(DAC, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.15)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 0.15)
 MACHINE_DRIVER_END
 
 

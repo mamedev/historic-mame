@@ -1,6 +1,8 @@
 #ifndef _discrete_h_
 #define _discrete_h_
 
+#include "sn76477.h"
+
 /***********************************************************************
  *
  *  MAME - Discrete sound system emulation library
@@ -154,7 +156,6 @@
  * DISCRETE_COMP_ADDER(NODE,ENAB,DATA,TABLE)
  * DISCRETE_DAC_R1(NODE,ENAB,DATA,VDATA,LADDER)
  * DISCRETE_INTEGRATE(NODE,TRG0,TRG1,INFO)
- * DISCRETE_LADDER(NODE,ENAB,IN0,GAIN,LADDER)
  * DISCRETE_MIXER2(NODE,ENAB,IN0,IN1,INFO)
  * DISCRETE_MIXER3(NODE,ENAB,IN0,IN1,IN2,INFO)
  * DISCRETE_MIXER4(NODE,ENAB,IN0,IN1,IN2,IN3,INFO)
@@ -189,6 +190,7 @@
  * DISCRETE_OP_AMP_FILTER(NODE,ENAB,INP0,INP1,TYPE,INFO)
  * DISCRETE_RCDISC(NODE,ENAB,IN0,RVAL,CVAL)
  * DISCRETE_RCDISC2(NODE,IN0,RVAL0,IN1,RVAL1,CVAL)
+ * DISCRETE_RCDISC3(NODE,ENAB,INP0,RVAL0,RVAL1,CVAL)
  * DISCRETE_RCFILTER(NODE,ENAB,IN0,RVAL,CVAL)
  * DISCRETE_RCFILTER_VREF(NODE,ENAB,IN0,RVAL,CVAL,VREF)
  *
@@ -1304,20 +1306,45 @@
  *                        trigger 1 node or static value,
  *                        address of discrete_integrate_info)
  *
- *     discrete_integrate_info = {type, r1, r2, r3, c, vP, f0, f1, f2}
+ *     discrete_integrate_info = {type, r1, r2, r3, c, v1, vP, f0, f1, f2}
  *
  * Note: Set all unused components to 0.
+ *       These are all single supply circuits going from gnd(0V) to vP(B+),
+ *       so be sure to specify the vP power source.
  *
  *  Types:
  *
+ *     DISC_INTEGRATE_OP_AMP_1
+ *
+ *       v1 >----+-------.
+ *               |       |           c
+ *               Z       Z      .---||----.
+ *               Z r1    Z r2   |         |
+ *               Z       Z      |  |\     |
+ *               |       |      |  | \    |
+ *               +--------------+--|- \   |
+ *               |       |         |   >--+----> Netlist Node
+ *              /        +---------|+ /
+ *            |/         |         | /
+ *   Trig0 >--| NPN      Z         |/
+ *            |\         Z r3
+ *              >        Z
+ *               |       |
+ *              gnd     gnd
+ *
+ *
+ * EXAMPLES: see Tank8
+ *
+ *          --------------------------------------------------
+ *
  *     DISC_INTEGRATE_OP_AMP_1 | DISC_OP_AMP_IS_NORTON
  *
-*                               c
+ *                               c
  *                          .---||----.
  *                          |         |
  *                          |  |\     |
  *               r1         |  | \    |
- *      vP >----ZZZZ--------+--|- \   |
+ *      v1 >----ZZZZ--------+--|- \   |
  *                             |   >--+----> Netlist Node
  *               r2         .--|+ /
  *   Trig0 >----ZZZZ--------'  | /
@@ -1332,17 +1359,17 @@
  *                                       c
  *                                  .---||----.
  *            r1a                   |         |
- *   vP >----ZZZZ---.               |  |\     |
+ *   v1 >----ZZZZ---.               |  |\     |
  *          .----.  |   r1b   Diode |  | \    |
  *          | F0 |--+--ZZZZ----|>|--+--|- \   |
  *          '----'                     |   >--+----> Netlist Node
  *            r2a       r2b         .--|+ /
- *   vP >----ZZZZ---+--ZZZZ---------+  | /
+ *   v1 >----ZZZZ---+--ZZZZ---------+  | /
  *          .----.  |               |  |/
  *          | F1 |--'               |
  *          '----'                  |
  *            r3a       r3b   Diode |
- *   vP >----ZZZZ---+--ZZZZ----|>|--'
+ *   v1 >----ZZZZ---+--ZZZZ----|>|--'
  *          .----.  |
  *          | F2 |--'
  *          '----'
@@ -1775,8 +1802,44 @@
  *     DISCRETE_RCDISC(NODE_9,NODE_10,10.0,100,0.0,100,CAP_U(1))
  *
  *  When switched by NODE_10, C charges/discharges from 10v/0v
- *  as dicated by RC0 & RC1 combos respectively
+ *  as dictated by R0/C & R1/C combos respectively
  *  of 100R & 1uF.
+ *
+ ***********************************************************************
+ *
+ * DISCRETE_RCDISC3 - Simple single pole RC discharge network
+ *
+ *                        .-----------------.
+ *                        |                 |
+ *    ENAB       -0------>|                 |
+ *                        |    diode  R2    |
+ *    INPUT1     -1------>| -+-|<|--ZZZZ-+- |---->   Netlist node
+ *                        |  |           |  |
+ *    RVAL1      -2------>|  '-ZZZZ-+----'  |
+ *                        |     R1  |       |
+ *    RVAL2      -3------>|        ---      |
+ *                        |        ---C     |
+ *    CVAL       -4------>|         |       |
+ *                        |        gnd      |
+ *                        '-----------------'
+ *
+ *  Declaration syntax
+ *
+ *     DISCRETE_RCDISC3(name of node,
+ *                      enable,
+ *                      input node (or value),
+ *                      R1 resistor value in OHMS,
+ *                      R2 resistor value in OHMS,
+ *                      capacitor value in FARADS)
+ *
+ *  Example config line
+ *
+ *     DISCRETE_RCDISC3(NODE_11,NODE_10,10,100,220,CAP_U(1))
+ *
+ *  When enabled by NODE_10, C charges from 10v as indicated by RC
+ *  of 100R & 1uF.
+ *
+ * EXAMPLES: see Tank8
  *
  ***********************************************************************
  *
@@ -1880,7 +1943,7 @@
  *
  * The last 3 options of discrete_555_desc can use the following defaults
  * unless otherwise needed.
- *     DEFAULT_555_V_LOGIC_1, DEFAULT_555_THRESHOLD, DEFAULT_555_TRIGGER
+ *     DEFAULT_555_HIGH, DEFAULT_555_THRESHOLD, DEFAULT_555_TRIGGER
  * or all 3 combined as:
  *     DEFAULT_555_VALUES
  *
@@ -2318,23 +2381,15 @@ struct discrete_module
  *
  *************************************/
 
-struct r_node
-{
-	double			r;					/* resistance of this node */
-	int				r_is_variable;		/* TRUE if the resistance varies */
-};
-
 struct node_description
 {
 	int				node;							/* The node's index number in the node list */
 	struct	discrete_module module;					/* Copy of the node's module info */
 	double			output;							/* The node's last output value */
-	struct r_node	node_r;							/* info about the node's resistance */
 
 	int				active_inputs;					/* Number of active inputs on this node type */
 	int				input_is_node;					/* Bit Flags.  1 in bit location means input_is_node */
 	const double *	input[DISCRETE_MAX_INPUTS];		/* Addresses of Input values */
-	const struct r_node * input_r[DISCRETE_MAX_INPUTS];	/* Addresses of Input resistance info */
 
 	void *			context;						/* Contextual information specific to this node type */
 	const char *	name;							/* Text name string for identification/debug */
@@ -2428,6 +2483,7 @@ struct discrete_integrate_info
 	double	r2;		// r2a + r2b
 	double	r3;		// r3a + r3b
 	double	c;
+	double	v1;
 	double	vP;
 	double	f0;
 	double	f1;
@@ -2672,6 +2728,7 @@ enum
 	DST_OP_AMP_FILT,	/* Op Amp filters */
 	DST_RCDISC,			/* Simple RC discharge */
 	DST_RCDISC2,		/* Switched 2 Input RC discharge */
+	DST_RCDISC3,		/* Charge/discharge with diode */
 	DST_RCFILTER,		/* Simple RC Filter network */
 	/* For testing - seem to be buggered.  Use versions not ending in N. */
 	DST_RCFILTERN,		/* Simple RC Filter network */
@@ -2801,6 +2858,7 @@ enum
 #define DISCRETE_OP_AMP_FILTER(NODE,ENAB,INP0,INP1,TYPE,INFO)           { NODE, DST_OP_AMP_FILT , 4, { ENAB,INP0,INP1,NODE_NC }, { ENAB,INP0,INP1,TYPE }, INFO, "Op Amp Filter" },
 #define DISCRETE_RCDISC(NODE,ENAB,INP0,RVAL,CVAL)                       { NODE, DST_RCDISC      , 4, { ENAB,INP0,NODE_NC,NODE_NC }, { ENAB,INP0,RVAL,CVAL }, NULL, "RC Discharge" },
 #define DISCRETE_RCDISC2(NODE,SWITCH,INP0,RVAL0,INP1,RVAL1,CVAL)        { NODE, DST_RCDISC2     , 6, { SWITCH,INP0,NODE_NC,INP1,NODE_NC,NODE_NC }, { SWITCH,INP0,RVAL0,INP1,RVAL1,CVAL }, NULL, "RC Discharge 2" },
+#define DISCRETE_RCDISC3(NODE,ENAB,INP0,RVAL0,RVAL1,CVAL)               { NODE, DST_RCDISC3     , 5, { ENAB,INP0,NODE_NC,NODE_NC,NODE_NC }, { ENAB,INP0,RVAL0,RVAL1,CVAL }, NULL, "RC Discharge 3" },
 #define DISCRETE_RCFILTER(NODE,ENAB,INP0,RVAL,CVAL)                     { NODE, DST_RCFILTER    , 4, { ENAB,INP0,NODE_NC,NODE_NC }, { ENAB,INP0,RVAL,CVAL }, NULL, "RC Filter" },
 #define DISCRETE_RCFILTER_VREF(NODE,ENAB,INP0,RVAL,CVAL,VREF)           { NODE, DST_RCFILTER    , 5, { ENAB,INP0,NODE_NC,NODE_NC,NODE_NC }, { ENAB,INP0,RVAL,CVAL,VREF }, NULL, "RC Filter to VREF" },
 /* For testing - seem to be buggered.  Use versions not ending in N. */
@@ -2831,12 +2889,7 @@ enum
  *
  *************************************/
 
-struct node_description *discrete_find_node(int node);
-
-int discrete_sh_start(const struct MachineSound *msound);
-void discrete_sh_stop(void);
-void discrete_sh_reset(void);
-void discrete_sh_update(void);
+struct node_description *discrete_find_node(void *chip, int node);
 
 WRITE8_HANDLER(discrete_sound_w);
 READ8_HANDLER(discrete_sound_r);

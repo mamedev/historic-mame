@@ -12,6 +12,8 @@
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "sound/okim6295.h"
+#include "sound/3812intf.h"
 
 static struct tilemap *fg_tilemap,*bg_tilemap;
 data16_t *nmg5_bitmap;
@@ -457,18 +459,7 @@ static void soundirq(int state)
 
 static struct YM3812interface ym3812_intf =
 {
-	1,
-	4000000,
-	{ 100 },
-	{ soundirq },	/* IRQ Line */
-};
-
-static struct OKIM6295interface okim6295_intf =
-{
-	1,
-	{ 1000000 / 132 },
-	{ REGION_SOUND1 },
-	{ 100 }
+	soundirq	/* IRQ Line */
 };
 
 static MACHINE_DRIVER_START( nmg5 )
@@ -497,8 +488,15 @@ static MACHINE_DRIVER_START( nmg5 )
 	MDRV_VIDEO_UPDATE(nmg5)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM3812, ym3812_intf)
-	MDRV_SOUND_ADD(OKIM6295, okim6295_intf)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM3812, 4000000)
+	MDRV_SOUND_CONFIG(ym3812_intf)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
+
+	MDRV_SOUND_ADD(OKIM6295, 1000000 / 132)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( pclubys )

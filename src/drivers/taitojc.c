@@ -342,6 +342,7 @@ Notes:
 #include "driver.h"
 #include "machine/random.h"
 #include "taito_f3.h"
+#include "sound/es5506.h"
 
 /* from Machine.c */
 READ16_HANDLER(f3_68000_share_r);
@@ -579,11 +580,8 @@ static MACHINE_INIT( jc )
 
 static struct ES5505interface es5505_interface =
 {
-	1,					/* total number of chips */
-	{ 30476100/2 },		/* freq */
-	{ REGION_SOUND1 },	/* Bank 0: Unused by F3 games? */
-	{ REGION_SOUND1 },	/* Bank 1: All games seem to use this */
-	{ YM3012_VOL(100,MIXER_PAN_LEFT,100,MIXER_PAN_RIGHT) },		/* master volume */
+	REGION_SOUND1,	/* Bank 0: Unused by F3 games? */
+	REGION_SOUND1	/* Bank 1: All games seem to use this */
 };
 
 static MACHINE_DRIVER_START( taitojc )
@@ -610,8 +608,12 @@ static MACHINE_DRIVER_START( taitojc )
 	MDRV_VIDEO_START(taitojc)
 	MDRV_VIDEO_UPDATE(taitojc)
 
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(ES5505, es5505_interface)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(ES5505, 30476100/2)
+	MDRV_SOUND_CONFIG(es5505_interface)
+	MDRV_SOUND_ROUTE(0, "left", 1.0)
+	MDRV_SOUND_ROUTE(0, "right", 1.0)
 MACHINE_DRIVER_END
 
 ROM_START( sidebs )

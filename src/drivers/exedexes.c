@@ -11,6 +11,8 @@ Notes:
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "sound/ay8910.h"
+#include "sound/sn76496.h"
 
 
 extern UINT8 *exedexes_bg_scroll;
@@ -220,26 +222,6 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 
 
-static struct AY8910interface ay8910_interface =
-{
-	2,	/* 2 chips */
-	1500000,	/* 1.5 MHz ? */
-	{ 10, 10 },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ 0 }
-};
-
-static struct SN76496interface sn76496_interface =
-{
-	2,	/* 2 chips */
-	{ 3000000, 3000000 },	/* 3 MHz????? */
-	{ 36, 36 }
-};
-
-
-
 static MACHINE_DRIVER_START( exedexes )
 
 	/* basic machine hardware */
@@ -269,8 +251,19 @@ static MACHINE_DRIVER_START( exedexes )
 	MDRV_VIDEO_UPDATE(exedexes)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(AY8910, ay8910_interface)
-	MDRV_SOUND_ADD(SN76496, sn76496_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	
+	MDRV_SOUND_ADD(AY8910, 1500000)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.10)
+	
+	MDRV_SOUND_ADD(AY8910, 1500000)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.10)
+
+	MDRV_SOUND_ADD(SN76496, 3000000)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.36)
+
+	MDRV_SOUND_ADD(SN76496, 3000000)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.36)
 MACHINE_DRIVER_END
 
 

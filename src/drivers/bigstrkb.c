@@ -13,6 +13,7 @@
 */
 
 #include "driver.h"
+#include "sound/okim6295.h"
 
 /*
 
@@ -224,14 +225,6 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 /* Machine Driver */
 
-static struct OKIM6295interface okim6295_interface =
-{
-	2,
-	{ 4000000/132, 4000000/132 },
-	{ REGION_SOUND1, REGION_SOUND2 },
-	{ MIXER(30,MIXER_PAN_LEFT), MIXER(30,MIXER_PAN_RIGHT) }
-};
-
 static MACHINE_DRIVER_START( bigstrkb )
 	MDRV_CPU_ADD(M68000, 12000000)
 	MDRV_CPU_PROGRAM_MAP(bigstrkb_readmem,bigstrkb_writemem)
@@ -252,9 +245,18 @@ static MACHINE_DRIVER_START( bigstrkb )
 	MDRV_VIDEO_START(bigstrkb)
 	MDRV_VIDEO_UPDATE(bigstrkb)
 
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
 //	MDRV_SOUND_ADD(YM2151, ym2151_interface)
-	MDRV_SOUND_ADD(OKIM6295, okim6295_interface)
+
+	MDRV_SOUND_ADD(OKIM6295, 4000000/132)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.30)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 0.30)
+
+	MDRV_SOUND_ADD(OKIM6295, 4000000/132)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_2)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.30)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 0.30)
 MACHINE_DRIVER_END
 
 /* Rom Loading */

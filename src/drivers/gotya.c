@@ -29,6 +29,7 @@ TODO: Emulated sound
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "sound/samples.h"
 
 
 extern UINT8 *gotya_scroll;
@@ -187,7 +188,6 @@ static const char *sample_names[] =
 static struct Samplesinterface samples_interface =
 {
 	4,	/* 4 channels */
-	50,	/* volume */
 	sample_names
 };
 
@@ -215,7 +215,11 @@ static MACHINE_DRIVER_START( gotya )
 	MDRV_VIDEO_UPDATE(gotya)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(SAMPLES, samples_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	
+	MDRV_SOUND_ADD(SAMPLES, 0)
+	MDRV_SOUND_CONFIG(samples_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 /***************************************************************************

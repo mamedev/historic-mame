@@ -32,12 +32,23 @@ but when they get close to top of the screen they go in front of them.
 --
 To display score, priority of upper part is always lower.
 So this is the correct behavior of real hardware, not an emulation bug.
+- hcrash:
+Coin mechs doesn't work properly.
+--
+There's a graphic glitch on the car.
 
 ***************************************************************************/
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "cpu/z80/z80.h"
+#include "sound/ay8910.h"
+#include "sound/2151intf.h"
+#include "sound/3812intf.h"
+#include "sound/vlm5030.h"
+#include "sound/k005289.h"
+#include "sound/k007232.h"
+#include "sound/k051649.h"
 
 static data16_t *ram;
 static data16_t *ram2;
@@ -254,12 +265,12 @@ static WRITE16_HANDLER( selected_ip_w )
 
 static READ16_HANDLER( selected_ip_r )
 {
-	switch ( (hcrash_selected_ip >> 5) & 3 )
+	switch (hcrash_selected_ip & 0xf)
 	{												// From WEC Le Mans Schems:
-		case 0:  return input_port_8_r(offset);		// Accel - Schems: Accelevr
-		case 1:  return ~0;							// ????? - Schems: Not Used
-		case 2:  return input_port_9_r(offset);		// Wheel - Schems: Handlevr
-		case 3:  return ~0;							// Table - Schems: Turnvr
+		case 0xc:  return input_port_8_r(offset);	// Accel - Schems: Accelevr
+		case 0:    return input_port_8_r(offset);
+		case 0xd:  return input_port_9_r(offset);	// Wheel - Schems: Handlevr
+		case 1:    return input_port_9_r(offset);
 
 		default: return ~0;
 	}
@@ -1826,15 +1837,36 @@ INPUT_PORTS_END
 INPUT_PORTS_START( hcrash )
 	PORT_START /*IN0*/
 	PORT_BIT( 0xfb, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_SERVICE( 0x04, IP_ACTIVE_LOW )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_SERVICE1 )
 
 	PORT_START /*DSW0*/
-	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_DIPNAME( 0x0003, 0x0001, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(      0x0003, "Konami GT w/o brake" )
+	PORT_DIPSETTING(      0x0002, "WEC Le Mans 24 Upright" )
+	PORT_DIPSETTING(      0x0001, "Konami GT with brake" )
+	//0x0003 WEC Le Mans 24 Upright again
+	PORT_DIPNAME( 0x0004, 0x0004, DEF_STR( Unused ) )
+	PORT_DIPSETTING(      0x0004, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0008, 0x0008, DEF_STR( Unused ) )
+	PORT_DIPSETTING(      0x0008, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0010, 0x0010, DEF_STR( Unused ) )
+	PORT_DIPSETTING(      0x0010, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x60, 0x40, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(    0x60, DEF_STR( Easy ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Normal ) )
+	PORT_DIPSETTING(    0x20, "Difficult" )
+	PORT_DIPSETTING(    0x00, "Very Difficult" )
+	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
 	PORT_START /*DSW1,Coinage*/
-	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	GX400_COINAGE_DIP
 
-	PORT_START /*DSW0*/
+	PORT_START /*DSW2*/
 	PORT_DIPNAME( 0x0001, 0x0000, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0001, DEF_STR( On ) )
@@ -1860,10 +1892,10 @@ INPUT_PORTS_START( hcrash )
 	PORT_DIPSETTING(      0x0000, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0080, DEF_STR( On ) )
 
-	PORT_START /*DSW1*/
+	PORT_START /*DSW3*/
 	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
-	PORT_START /*DSW2,ACTIVE HIGH*/
+	PORT_START /*DSW4,ACTIVE HIGH*/
 	PORT_DIPNAME( 0x0001, 0x0000, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0001, DEF_STR( On ) )
@@ -1872,8 +1904,8 @@ INPUT_PORTS_START( hcrash )
 	PORT_DIPSETTING(      0x0002, DEF_STR( On ) )
 	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_SERVICE1 )
 	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_START1 )
-	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_COIN1 )
-	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_COIN2 )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_COIN1 ) PORT_IMPULSE(1)
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_COIN2 ) PORT_IMPULSE(1)
 	PORT_DIPNAME( 0x0040, 0x0000, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0040, DEF_STR( On ) )
@@ -1895,7 +1927,7 @@ INPUT_PORTS_START( hcrash )
 	PORT_BIT( 0xff, 0, IPT_PEDAL ) PORT_MINMAX(0,0x80) PORT_SENSITIVITY(30) PORT_KEYDELTA(10)
 
 	PORT_START	/* IN9 - Steering*/
-	PORT_BIT( 0xff, 0x80, IPT_PADDLE ) PORT_MINMAX(0,0xff) PORT_SENSITIVITY(50) PORT_KEYDELTA(5)
+	PORT_BIT( 0xff, 0x7f, IPT_DIAL ) PORT_MINMAX(0x33,0xa3) PORT_SENSITIVITY(50) PORT_KEYDELTA(5)
 INPUT_PORTS_END
 
 /******************************************************************************/
@@ -2037,43 +2069,23 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 /******************************************************************************/
 
-static struct AY8910interface ay8910_interface =
+static struct AY8910interface ay8910_interface_1 =
 {
-	2,      		/* 2 chips */
-	14318180/8,     /* 1.78975 MHz */
-	{ 85, 80 },		/* adjusted */
-	{ nemesis_portA_r, 0 },
-	{ 0, 0 },
-	{ 0, k005289_control_A_w },
-	{ 0, k005289_control_B_w }
+	nemesis_portA_r
+};
+
+static struct AY8910interface ay8910_interface_2 =
+{
+	0,
+	0,
+	k005289_control_A_w,
+	k005289_control_B_w
 };
 
 static struct k005289_interface k005289_interface =
 {
-	3579545/2,		/* clock speed */
-	60,			/* playback volume adjusted */
 	REGION_SOUND1	/* prom memory region */
 };
-
-/* Adjusted chips */
-static struct AY8910interface gx400_ay8910_interface =
-{
-	2,      		/* 2 chips */
-	14318180/8,     /* 1.78975 MHz */
-	{ 95, 60 },		/* adjusted */
-	{ nemesis_portA_r, 0 },
-	{ 0, 0 },
-	{ 0, k005289_control_A_w },
-	{ 0, k005289_control_B_w }
-};
-
-static struct k005289_interface gx400_k005289_interface =
-{
-	3579545/2,		/* clock speed */
-	80,				/* playback volume */
-	REGION_SOUND1	/* prom memory region */
-};
-/* end */
 
 static void sound_irq(int state)
 {
@@ -2083,38 +2095,16 @@ static void sound_irq(int state)
 
 static struct YM2151interface ym2151_interface =
 {
-	1,
-	3579545,
-	{ YM3012_VOL(100,MIXER_PAN_LEFT,100,MIXER_PAN_RIGHT) },
-	{ sound_irq }
+	sound_irq
 };
 
 static struct YM3812interface ym3812_interface =
 {
-	1,
-	3579545,
-	{ 100 },
-	{ sound_irq },
-};
-
-static struct k051649_interface k051649_interface =
-{
-	3579545/2,	/* Clock */
-	38,			/* Volume */
+	sound_irq
 };
 
 static struct VLM5030interface vlm5030_interface =
 {
-    3579545,       /* master clock  */
-    60,            /* volume        */
-    REGION_SOUND1, /* memory region  */
-    0              /* memory length */
-};
-
-static struct VLM5030interface gx400_vlm5030_interface =
-{
-    3579545,       /* master clock  */
-    70,            /* volume adjusted */
     REGION_SOUND1, /* memory region  */
     0              /* memory length */
 };
@@ -2127,20 +2117,8 @@ static void volume_callback(int v)
 
 static struct K007232_interface k007232_interface =
 {
-	1,		/* number of chips */
-	3579545,	/* clock */
-	{ REGION_SOUND2 },	/* memory regions */
-	{ K007232_VOL(10,MIXER_PAN_CENTER,10,MIXER_PAN_CENTER) },	/* volume */
-	{ volume_callback }	/* external port callback */
-};
-
-static struct K007232_interface nyanpani_k007232_interface =
-{
-	1,		/* number of chips */
-	3579545,	/* clock */
-	{ REGION_SOUND2 },	/* memory regions */
-	{ K007232_VOL(30,MIXER_PAN_CENTER,30,MIXER_PAN_CENTER) },	/* volume */
-	{ volume_callback }	/* external port callback */
+	REGION_SOUND2,	/* memory regions */
+	volume_callback	/* external port callback */
 };
 
 /******************************************************************************/
@@ -2173,9 +2151,24 @@ static MACHINE_DRIVER_START( nemesis )
 	MDRV_VIDEO_UPDATE(nemesis)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(AY8910, ay8910_interface)
-	MDRV_SOUND_ADD(K005289, k005289_interface)
-	MDRV_SOUND_ADD(VLM5030, vlm5030_interface)	/* adjusted */
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	
+	MDRV_SOUND_ADD(AY8910, 14318180/8)
+	MDRV_SOUND_CONFIG(ay8910_interface_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.85)
+	
+	MDRV_SOUND_ADD(AY8910, 14318180/8)
+	MDRV_SOUND_CONFIG(ay8910_interface_2)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.80)
+	
+	MDRV_SOUND_ADD(K007232, 3579545)
+	MDRV_SOUND_CONFIG(k007232_interface)
+	MDRV_SOUND_ROUTE(0, "mono", 0.10)
+	MDRV_SOUND_ROUTE(1, "mono", 0.10)
+
+	MDRV_SOUND_ADD(VLM5030, 3579545)
+	MDRV_SOUND_CONFIG(vlm5030_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.60)
 MACHINE_DRIVER_END
 
 
@@ -2206,8 +2199,19 @@ static MACHINE_DRIVER_START( konamigt )
 	MDRV_VIDEO_UPDATE(nemesis)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(AY8910, ay8910_interface)
-	MDRV_SOUND_ADD(K005289, k005289_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	
+	MDRV_SOUND_ADD(AY8910, 14318180/8)
+	MDRV_SOUND_CONFIG(ay8910_interface_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.85)
+	
+	MDRV_SOUND_ADD(AY8910, 14318180/8)
+	MDRV_SOUND_CONFIG(ay8910_interface_2)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.80)
+
+	MDRV_SOUND_ADD(K005289, 3579545/2)
+	MDRV_SOUND_CONFIG(k005289_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.60)
 MACHINE_DRIVER_END
 
 
@@ -2238,10 +2242,24 @@ static MACHINE_DRIVER_START( salamand )
 	MDRV_VIDEO_UPDATE(salamand)
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(VLM5030, vlm5030_interface)
-	MDRV_SOUND_ADD(K007232, k007232_interface)
-	MDRV_SOUND_ADD(YM2151, ym2151_interface)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(VLM5030, 3579545)
+	MDRV_SOUND_CONFIG(vlm5030_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.60)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 0.60)
+	
+	MDRV_SOUND_ADD(K007232, 3579545)
+	MDRV_SOUND_CONFIG(k007232_interface)
+	MDRV_SOUND_ROUTE(0, "left", 0.10)
+	MDRV_SOUND_ROUTE(0, "right", 0.10)
+	MDRV_SOUND_ROUTE(1, "left", 0.10)
+	MDRV_SOUND_ROUTE(1, "right", 0.10)
+
+	MDRV_SOUND_ADD(YM2151, 3579545)
+	MDRV_SOUND_CONFIG(ym2151_interface)
+	MDRV_SOUND_ROUTE(0, "left", 1.0)
+	MDRV_SOUND_ROUTE(1, "right", 1.0)
 MACHINE_DRIVER_END
 
 
@@ -2272,9 +2290,19 @@ static MACHINE_DRIVER_START( blkpnthr )
 	MDRV_VIDEO_UPDATE(salamand)
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(K007232, k007232_interface)
-	MDRV_SOUND_ADD(YM2151, ym2151_interface)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+	
+	MDRV_SOUND_ADD(K007232, 3579545)
+	MDRV_SOUND_CONFIG(k007232_interface)
+	MDRV_SOUND_ROUTE(0, "left", 0.10)
+	MDRV_SOUND_ROUTE(0, "right", 0.10)
+	MDRV_SOUND_ROUTE(1, "left", 0.10)
+	MDRV_SOUND_ROUTE(1, "right", 0.10)
+
+	MDRV_SOUND_ADD(YM2151, 3579545)
+	MDRV_SOUND_CONFIG(ym2151_interface)
+	MDRV_SOUND_ROUTE(0, "left", 1.0)
+	MDRV_SOUND_ROUTE(1, "right", 1.0)
 MACHINE_DRIVER_END
 
 
@@ -2305,10 +2333,23 @@ static MACHINE_DRIVER_START( citybomb )
 	MDRV_VIDEO_UPDATE(salamand)
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(K007232, nyanpani_k007232_interface)
-	MDRV_SOUND_ADD(YM3812, ym3812_interface)
-	MDRV_SOUND_ADD(K051649, k051649_interface)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+	
+	MDRV_SOUND_ADD(K007232, 3579545)
+	MDRV_SOUND_CONFIG(k007232_interface)
+	MDRV_SOUND_ROUTE(0, "left", 0.30)
+	MDRV_SOUND_ROUTE(0, "right", 0.30)
+	MDRV_SOUND_ROUTE(1, "left", 0.30)
+	MDRV_SOUND_ROUTE(1, "right", 0.30)
+
+	MDRV_SOUND_ADD(YM3812, 3579545)
+	MDRV_SOUND_CONFIG(ym3812_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 1.0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 1.0)
+
+	MDRV_SOUND_ADD(K051649, 3579545/2)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.38)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 0.38)
 MACHINE_DRIVER_END
 
 
@@ -2339,10 +2380,23 @@ static MACHINE_DRIVER_START( nyanpani )
 	MDRV_VIDEO_UPDATE(salamand)
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(K007232, nyanpani_k007232_interface)
-	MDRV_SOUND_ADD(YM3812, ym3812_interface)
-	MDRV_SOUND_ADD(K051649, k051649_interface)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+	
+	MDRV_SOUND_ADD(K007232, 3579545)
+	MDRV_SOUND_CONFIG(k007232_interface)
+	MDRV_SOUND_ROUTE(0, "left", 0.30)
+	MDRV_SOUND_ROUTE(0, "right", 0.30)
+	MDRV_SOUND_ROUTE(1, "left", 0.30)
+	MDRV_SOUND_ROUTE(1, "right", 0.30)
+
+	MDRV_SOUND_ADD(YM3812, 3579545)
+	MDRV_SOUND_CONFIG(ym3812_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 1.0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 1.0)
+
+	MDRV_SOUND_ADD(K051649, 3579545/2)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.38)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 0.38)
 MACHINE_DRIVER_END
 
 
@@ -2373,9 +2427,23 @@ static MACHINE_DRIVER_START( gx400 )
 	MDRV_VIDEO_UPDATE(nemesis)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(AY8910, gx400_ay8910_interface)		/* adjusted */
-	MDRV_SOUND_ADD(K005289, gx400_k005289_interface)	/* adjusted */
-	MDRV_SOUND_ADD(VLM5030, gx400_vlm5030_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	
+	MDRV_SOUND_ADD(AY8910, 14318180/8)
+	MDRV_SOUND_CONFIG(ay8910_interface_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.95)
+	
+	MDRV_SOUND_ADD(AY8910, 14318180/8)
+	MDRV_SOUND_CONFIG(ay8910_interface_2)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.60)
+
+	MDRV_SOUND_ADD(K005289, 3579545/2)
+	MDRV_SOUND_CONFIG(k005289_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.80)
+
+	MDRV_SOUND_ADD(VLM5030, 3579545)
+	MDRV_SOUND_CONFIG(vlm5030_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.70)
 MACHINE_DRIVER_END
 
 
@@ -2407,9 +2475,23 @@ static MACHINE_DRIVER_START( rf2_gx400 )
 	MDRV_VIDEO_UPDATE(nemesis)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(AY8910, ay8910_interface)
-	MDRV_SOUND_ADD(K005289, k005289_interface)
-	MDRV_SOUND_ADD(VLM5030, gx400_vlm5030_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	
+	MDRV_SOUND_ADD(AY8910, 14318180/8)
+	MDRV_SOUND_CONFIG(ay8910_interface_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.85)
+	
+	MDRV_SOUND_ADD(AY8910, 14318180/8)
+	MDRV_SOUND_CONFIG(ay8910_interface_2)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.80)
+
+	MDRV_SOUND_ADD(K005289, 3579545/2)
+	MDRV_SOUND_CONFIG(k005289_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.60)
+
+	MDRV_SOUND_ADD(VLM5030, 3579545)
+	MDRV_SOUND_CONFIG(vlm5030_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.70)
 MACHINE_DRIVER_END
 
 
@@ -2479,7 +2561,8 @@ static ADDRESS_MAP_START( hcrash_writemem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x0A0000, 0x0A0001) AM_WRITE(nemesis_irq_enable_word_w)          /* irq enable */
 	AM_RANGE(0x0c0008, 0x0c0009) AM_WRITE(gx400_irq2_enable_word_w)          /* irq enable */
 	AM_RANGE(0x0c0000, 0x0c0001) AM_WRITE(salamand_soundlatch_word_w)
-	AM_RANGE(0x0c4002, 0x0c4003) AM_WRITE(selected_ip_w)
+	AM_RANGE(0x0c4000, 0x0c4001) AM_WRITE(selected_ip_w)
+	//0x0c4002, 0x0c4003 latches the value read previously.
 	AM_RANGE(0x080000, 0x083fff) AM_WRITE(MWA16_RAM)
 ADDRESS_MAP_END
 
@@ -2511,10 +2594,24 @@ static MACHINE_DRIVER_START( hcrash )
 	MDRV_VIDEO_UPDATE(salamand)
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(VLM5030, vlm5030_interface)
-	MDRV_SOUND_ADD(K007232, k007232_interface)
-	MDRV_SOUND_ADD(YM2151, ym2151_interface)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(VLM5030, 3579545)
+	MDRV_SOUND_CONFIG(vlm5030_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.60)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 0.60)
+	
+	MDRV_SOUND_ADD(K007232, 3579545)
+	MDRV_SOUND_CONFIG(k007232_interface)
+	MDRV_SOUND_ROUTE(0, "left", 0.10)
+	MDRV_SOUND_ROUTE(0, "right", 0.10)
+	MDRV_SOUND_ROUTE(1, "left", 0.10)
+	MDRV_SOUND_ROUTE(1, "right", 0.10)
+
+	MDRV_SOUND_ADD(YM2151, 3579545)
+	MDRV_SOUND_CONFIG(ym2151_interface)
+	MDRV_SOUND_ROUTE(0, "left", 1.0)
+	MDRV_SOUND_ROUTE(1, "right", 1.0)
 MACHINE_DRIVER_END
 
 /***************************************************************************
@@ -2819,6 +2916,6 @@ GAMEX(1986, lifefrcj, salamand, salamand,      lifefrcj, 0, ROT0,   "Konami", "L
 GAMEX(1987, blkpnthr, 0,        blkpnthr,      blkpnthr, 0, ROT0,   "Konami", "Black Panther", GAME_NO_COCKTAIL )
 GAMEX(1987, citybomb, 0,        citybomb,      citybomb, 0, ROT270, "Konami", "City Bomber (World)", GAME_NO_COCKTAIL )
 GAMEX(1987, citybmrj, citybomb, citybomb,      citybomb, 0, ROT270, "Konami", "City Bomber (Japan)", GAME_NO_COCKTAIL )
-GAMEX(1987, hcrash,   0,        hcrash ,       hcrash,  0, ROT0,   "Konami",  "Hyper Crash", GAME_NO_COCKTAIL | GAME_NOT_WORKING )
+GAMEX(1987, hcrash,   0,        hcrash ,       hcrash,   0, ROT0,   "Konami", "Hyper Crash (version D)", GAME_NO_COCKTAIL | GAME_NOT_WORKING )
 GAMEX(1988, kittenk,  0,        nyanpani,      nyanpani, 0, ROT0,   "Konami", "Kitten Kaboodle", GAME_NO_COCKTAIL )
 GAMEX(1988, nyanpani, kittenk,  nyanpani,      nyanpani, 0, ROT0,   "Konami", "Nyan Nyan Panic (Japan)", GAME_NO_COCKTAIL )

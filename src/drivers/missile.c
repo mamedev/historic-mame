@@ -143,11 +143,16 @@
 								On	( Unused )
 								Off ( Unused )
 
+	-there are 2 different versions of the Super Missile Attack board.  It's not known if
+ 	the roms are different.  The SMA manual mentions a set 3(035822-03E) that will work
+	as well as set 2. Missile Command set 1 will not work with the SMA board. It would
+        appear set 1 and set 2 as labeled by mame are reversed.
+
 ******************************************************************************************/
 
 #include "driver.h"
 #include "missile.h"
-
+#include "sound/pokey.h"
 
 
 /*************************************
@@ -352,20 +357,8 @@ INPUT_PORTS_END
 
 static struct POKEYinterface pokey_interface =
 {
-	1,	/* 1 chip */
-	1250000,	/* 1.25 MHz??? */
-	{ 100 },
-	/* The 8 pot handlers */
 	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	/* The allpot handler */
-	{ input_port_3_r },
+	input_port_3_r
 };
 
 
@@ -398,7 +391,11 @@ static MACHINE_DRIVER_START( missile )
 	MDRV_VIDEO_UPDATE(missile)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(POKEY, pokey_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(POKEY, 1250000)
+	MDRV_SOUND_CONFIG(pokey_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 
@@ -439,7 +436,7 @@ ROM_START( missile2 )
 ROM_END
 
 
-ROM_START( suprmatk )
+ROM_START( sprmatkd )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 ) /* 64k for code */
 	ROM_LOAD( "035820.sma",   0x5000, 0x0800, CRC(75f01b87) SHA1(32ed71b6a869d7b361f244c384bbe6f407f6c6d7) )
 	ROM_LOAD( "035821.sma",   0x5800, 0x0800, CRC(3320d67e) SHA1(5bb04b985421af6309818b94676298f4b90495cf) )
@@ -453,6 +450,102 @@ ROM_START( suprmatk )
 	ROM_LOAD( "035826.01",   0x0000, 0x0020, CRC(86a22140) SHA1(2beebf7855e29849ada1823eae031fc98220bc43) )
 ROM_END
 
+ROM_START( suprmatk )
+	ROM_REGION( 0x20000, REGION_CPU1, 0 ) /* 64k for code */
+	ROM_LOAD( "035820.02",    0x5000, 0x0800, CRC(7a62ce6a) SHA1(9a39978138dc28fdefe193bfae1b226391e471db) )
+	ROM_LOAD( "035821.02",    0x5800, 0x0800, CRC(df3bd57f) SHA1(0916925d3c94d766d33f0e4badf6b0add835d748) )
+	ROM_LOAD( "035822.02",    0x6000, 0x0800, CRC(a1cd384a) SHA1(a1dd0953423750a0fbc6e3dccbf2ca64ef5a1f54) )
+	ROM_LOAD( "035823.02",    0x6800, 0x0800, CRC(82e552bb) SHA1(d0f22894f779c74ceef644c9f03d840d9545efea) )
+	ROM_LOAD( "035824.02",    0x7000, 0x0800, CRC(606e42e0) SHA1(9718f84a73c66b4e8ef7805a7ab638a7380624e1) )
+	ROM_LOAD( "035825.02",    0x7800, 0x0800, CRC(f752eaeb) SHA1(0339a6ce6744d2091cc7e07675e509b202b0f380) )
+	ROM_RELOAD( 		      0xF800, 0x0800 ) 	/* for interrupt vectors  */
+	ROM_LOAD( "e0.rom", 0x10000, 0x0800, CRC(d0b20179) SHA1(e2a9855899b6ff96b8dba169e0ab83f00a95919f) )
+	ROM_LOAD( "e1.rom", 0x10800, 0x0800, CRC(c6c818a3) SHA1(b9c92a85c07dd343d990e196d37b92d92a85a5e0) )
+
+	ROM_REGION( 0x0020, REGION_PROMS, 0 )
+	ROM_LOAD( "035826.01",   0x0000, 0x0020, CRC(86a22140) SHA1(2beebf7855e29849ada1823eae031fc98220bc43) )
+ROM_END
+
+
+/*************************************
+ *
+ *	Driver initialization
+ *
+ *************************************/
+
+static DRIVER_INIT( suprmatk )
+{
+	int i;
+	unsigned char *rom = memory_region(REGION_CPU1);
+
+	for (i = 0; i < 0x40; i++)
+	{
+        rom[0x7CC0+i] = rom[0x10000+i];
+        rom[0x5440+i] = rom[0x10040+i];
+        rom[0x5B00+i] = rom[0x10080+i];
+        rom[0x5740+i] = rom[0x100C0+i];
+        rom[0x6000+i] = rom[0x10100+i];
+        rom[0x6540+i] = rom[0x10140+i];
+        rom[0x7500+i] = rom[0x10180+i];
+        rom[0x7100+i] = rom[0x101C0+i];
+        rom[0x7800+i] = rom[0x10200+i];
+        rom[0x5580+i] = rom[0x10240+i];
+        rom[0x5380+i] = rom[0x10280+i];
+        rom[0x6900+i] = rom[0x102C0+i];
+        rom[0x6E00+i] = rom[0x10300+i];
+        rom[0x6CC0+i] = rom[0x10340+i];
+        rom[0x7DC0+i] = rom[0x10380+i];
+        rom[0x5B80+i] = rom[0x103C0+i];
+        rom[0x5000+i] = rom[0x10400+i];
+        rom[0x7240+i] = rom[0x10440+i];
+        rom[0x7040+i] = rom[0x10480+i];
+        rom[0x62C0+i] = rom[0x104C0+i];
+        rom[0x6840+i] = rom[0x10500+i];
+        rom[0x7EC0+i] = rom[0x10540+i];
+        rom[0x7D40+i] = rom[0x10580+i];
+        rom[0x66C0+i] = rom[0x105C0+i];
+        rom[0x72C0+i] = rom[0x10600+i];
+        rom[0x7080+i] = rom[0x10640+i];
+        rom[0x7D00+i] = rom[0x10680+i];
+        rom[0x5F00+i] = rom[0x106C0+i];
+        rom[0x55C0+i] = rom[0x10700+i];
+        rom[0x5A80+i] = rom[0x10740+i];
+        rom[0x6080+i] = rom[0x10780+i];
+        rom[0x7140+i] = rom[0x107C0+i];
+        rom[0x7000+i] = rom[0x10800+i];
+        rom[0x6100+i] = rom[0x10840+i];
+        rom[0x5400+i] = rom[0x10880+i];
+        rom[0x5BC0+i] = rom[0x108C0+i];
+        rom[0x7E00+i] = rom[0x10900+i];
+        rom[0x71C0+i] = rom[0x10940+i];
+        rom[0x6040+i] = rom[0x10980+i];
+        rom[0x6E40+i] = rom[0x109C0+i];
+        rom[0x5800+i] = rom[0x10A00+i];
+        rom[0x7D80+i] = rom[0x10A40+i];
+        rom[0x7A80+i] = rom[0x10A80+i];
+        rom[0x53C0+i] = rom[0x10AC0+i];
+        rom[0x6140+i] = rom[0x10B00+i];
+        rom[0x6700+i] = rom[0x10B40+i];
+        rom[0x7280+i] = rom[0x10B80+i];
+        rom[0x7F00+i] = rom[0x10BC0+i];
+        rom[0x5480+i] = rom[0x10C00+i];
+        rom[0x70C0+i] = rom[0x10C40+i];
+        rom[0x7F80+i] = rom[0x10C80+i];
+        rom[0x5780+i] = rom[0x10CC0+i];
+        rom[0x6680+i] = rom[0x10D00+i];
+        rom[0x7200+i] = rom[0x10D40+i];
+        rom[0x7E40+i] = rom[0x10D80+i];
+        rom[0x7AC0+i] = rom[0x10DC0+i];
+        rom[0x6300+i] = rom[0x10E00+i];
+        rom[0x7180+i] = rom[0x10E40+i];
+        rom[0x7E80+i] = rom[0x10E80+i];
+        rom[0x6280+i] = rom[0x10EC0+i];
+        rom[0x7F40+i] = rom[0x10F00+i];
+        rom[0x6740+i] = rom[0x10F40+i];
+        rom[0x74C0+i] = rom[0x10F80+i];
+        rom[0x7FC0+i] = rom[0x10FC0+i];
+	}
+}
 
 
 /*************************************
@@ -461,6 +554,7 @@ ROM_END
  *
  *************************************/
 
-GAME( 1980, missile,  0,       missile, missile,  0, ROT0, "Atari", "Missile Command (set 1)" )
-GAME( 1980, missile2, missile, missile, missile,  0, ROT0, "Atari", "Missile Command (set 2)" )
-GAME( 1981, suprmatk, missile, missile, suprmatk, 0, ROT0, "Atari + Gencomp", "Super Missile Attack" )
+GAME( 1980, missile,  0,       missile, missile,         0, ROT0, "Atari", "Missile Command (set 1)" )
+GAME( 1980, missile2, missile, missile, missile,         0, ROT0, "Atari", "Missile Command (set 2)" )
+GAME( 1981, suprmatk, missile, missile, suprmatk, suprmatk, ROT0, "Atari + Gencomp", "Super Missile Attack (for set 2)" )
+GAME( 1981, sprmatkd, missile, missile, suprmatk,        0, ROT0, "Atari + Gencomp", "Super Missile Attack (not encrypted)" )

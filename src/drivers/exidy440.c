@@ -1074,8 +1074,7 @@ INPUT_PORTS_END
 static struct CustomSound_interface custom_interface =
 {
 	exidy440_sh_start,
-	exidy440_sh_stop,
-	exidy440_sh_update
+	exidy440_sh_stop
 };
 
 
@@ -1115,8 +1114,12 @@ static MACHINE_DRIVER_START( exidy440 )
 	MDRV_VIDEO_UPDATE(exidy440)
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(CUSTOM, custom_interface)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(CUSTOM, 0)
+	MDRV_SOUND_CONFIG(custom_interface)
+	MDRV_SOUND_ROUTE(0, "left", 1.0)
+	MDRV_SOUND_ROUTE(1, "right", 1.0)
 MACHINE_DRIVER_END
 
 

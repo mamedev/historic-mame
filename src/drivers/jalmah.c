@@ -110,6 +110,7 @@ OSC:	12.000MHz
 #include "vidhrdw/generic.h"
 #include "cpu/m68000/m68000.h"
 #include "machine/random.h"
+#include "sound/okim6295.h"
 
 static struct tilemap *tx_tilemap, *fg_tilemap,*md_tilemap,*bg_tilemap;
 data16_t *jm_txvideoram, *jm_fgvideoram,*jm_mdvideoram,*jm_bgvideoram;
@@ -958,14 +959,6 @@ static MACHINE_INIT (daireika)
 	respcount = 0;
 }
 
-static struct OKIM6295interface m6295_interface =
-{
-	1,              	/* 1 chip */
-	{ 4000000/165 },	/* unknown,but this sounds decently */
-	{ REGION_SOUND1 },	/* memory region */
-	{ 100 }				/* volume */
-};
-
 static MACHINE_DRIVER_START( jalmah )
 	MDRV_CPU_ADD_TAG("main" , M68000, 8000000) /* 68000-8 */
 	MDRV_CPU_PROGRAM_MAP(jalmah,0)
@@ -985,7 +978,11 @@ static MACHINE_DRIVER_START( jalmah )
 	MDRV_VIDEO_START(jalmah)
 	MDRV_VIDEO_UPDATE(jalmah)
 
-	MDRV_SOUND_ADD(OKIM6295, m6295_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(OKIM6295, 4000000/165)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 /*

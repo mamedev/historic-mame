@@ -27,6 +27,7 @@
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "sound/ay8910.h"
 
 
 extern WRITE8_HANDLER( hanaawas_videoram_w );
@@ -195,13 +196,10 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 static struct AY8910interface ay8910_interface =
 {
-	1,	/* 1 chip */
-	18432000/12,	/* 1.5 MHz ? */
-	{ 50 },
-	{ input_port_1_r },
-	{ 0 },
-	{ 0 },
-	{ hanaawas_portB_w }
+	input_port_1_r,
+	0,
+	0,
+	hanaawas_portB_w
 };
 
 
@@ -229,7 +227,11 @@ static MACHINE_DRIVER_START( hanaawas )
 	MDRV_VIDEO_UPDATE(hanaawas)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(AY8910, ay8910_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	
+	MDRV_SOUND_ADD(AY8910, 18432000/12)
+	MDRV_SOUND_CONFIG(ay8910_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
 MACHINE_DRIVER_END
 
 

@@ -30,6 +30,8 @@ Notes:
 #include "cpu/hd6309/hd6309.h"
 #include "vidhrdw/generic.h"
 #include "vidhrdw/konamiic.h"
+#include "sound/2203intf.h"
+#include "sound/upd7759.h"
 
 /* from vidhrdw */
 int bladestl_spritebank;
@@ -418,22 +420,15 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 static struct YM2203interface ym2203_interface =
 {
-	1,						/* 1 chip */
-	3579545,				/* 3.579545 MHz? */
-	{ YM2203_VOL(45,45) },
-	{ 0 },
-	{ 0 },
-	{ upd7759_0_port_w },
-	{ bladestl_port_B_w }
+	0,
+	0,
+	upd7759_0_port_w,
+	bladestl_port_B_w
 };
 
 static struct upd7759_interface upd7759_interface =
 {
-	1,							/* number of chips */
-	{ UPD7759_STANDARD_CLOCK },
-	{ 60  },					/* volume */
-	{ REGION_SOUND1 },					/* memory regions */
-	{ 0 }
+	REGION_SOUND1					/* memory regions */
 };
 
 static MACHINE_DRIVER_START( bladestl )
@@ -466,8 +461,15 @@ static MACHINE_DRIVER_START( bladestl )
 	/* sound hardware */
 	/* the initialization order is important, the port callbacks being
 	   called at initialization time */
-	MDRV_SOUND_ADD(UPD7759, upd7759_interface)
-	MDRV_SOUND_ADD(YM2203, ym2203_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	
+	MDRV_SOUND_ADD(UPD7759, UPD7759_STANDARD_CLOCK)
+	MDRV_SOUND_CONFIG(upd7759_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.60)
+
+	MDRV_SOUND_ADD(YM2203, 3579545)
+	MDRV_SOUND_CONFIG(ym2203_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.45)
 MACHINE_DRIVER_END
 
 /***************************************************************************

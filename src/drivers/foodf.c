@@ -76,6 +76,7 @@
 #include "driver.h"
 #include "machine/atarigen.h"
 #include "vidhrdw/generic.h"
+#include "sound/pokey.h"
 #include "foodf.h"
 
 
@@ -331,20 +332,7 @@ static READ8_HANDLER( pot_r )
 
 static struct POKEYinterface pokey_interface =
 {
-	3,
-	600000,
-	{ 33, 33, 33 },
-	/* The 8 pot handlers */
-	{ pot_r, 0, 0 },
-	{ pot_r, 0, 0 },
-	{ pot_r, 0, 0 },
-	{ pot_r, 0, 0 },
-	{ pot_r, 0, 0 },
-	{ pot_r, 0, 0 },
-	{ pot_r, 0, 0 },
-	{ pot_r, 0, 0 },
-	/* The allpot handler */
-	{ 0, 0, 0 }
+	{ pot_r,pot_r,pot_r,pot_r,pot_r,pot_r,pot_r,pot_r }
 };
 
 
@@ -379,7 +367,17 @@ static MACHINE_DRIVER_START( foodf )
 	MDRV_VIDEO_UPDATE(foodf)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(POKEY, pokey_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(POKEY, 600000)
+	MDRV_SOUND_CONFIG(pokey_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.33)
+
+	MDRV_SOUND_ADD(POKEY, 600000)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.33)
+
+	MDRV_SOUND_ADD(POKEY, 600000)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.33)
 MACHINE_DRIVER_END
 
 

@@ -6,8 +6,7 @@
 
 /*----------- defined in sndhrdw/meadows.c -----------*/
 
-int meadows_sh_start(const struct MachineSound *msound);
-void meadows_sh_stop(void);
+void meadows_sh_start(void);
 void meadows_sh_dac_w(int data);
 void meadows_sh_update(void);
 extern UINT8 meadows_0c00;

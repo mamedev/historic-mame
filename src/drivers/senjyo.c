@@ -71,6 +71,8 @@ I/O read/write
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "machine/z80fmly.h"
+#include "sound/sn76496.h"
+#include "sound/samples.h"
 
 
 
@@ -96,9 +98,7 @@ DRIVER_INIT( senjyo );
 VIDEO_START( senjyo );
 VIDEO_UPDATE( senjyo );
 
-int senjyo_sh_start(const struct MachineSound *msound);
-void senjyo_sh_stop(void);
-void senjyo_sh_update(void);
+void senjyo_sh_start(void);
 
 WRITE8_HANDLER( senjyo_sh_0_w );
 WRITE8_HANDLER( senjyo_sh_1_w );
@@ -547,18 +547,11 @@ static Z80_DaisyChain daisy_chain[] =
 
 
 
-static struct SN76496interface sn76496_interface =
+static struct Samplesinterface custom_interface =
 {
-	3,	/* 3 chips */
-	{ 2000000, 2000000, 2000000 },	/* 2 MHz? */
-	{ 50, 50, 50 }
-};
-
-static struct CustomSound_interface custom_interface =
-{
-	senjyo_sh_start,
-	senjyo_sh_stop,
-	senjyo_sh_update
+	1,
+	NULL,
+	senjyo_sh_start
 };
 
 
@@ -592,8 +585,20 @@ static MACHINE_DRIVER_START( senjyo )
 	MDRV_VIDEO_UPDATE(senjyo)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(SN76496, sn76496_interface)
-	MDRV_SOUND_ADD(CUSTOM, custom_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(SN76496, 2000000)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
+
+	MDRV_SOUND_ADD(SN76496, 2000000)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
+
+	MDRV_SOUND_ADD(SN76496, 2000000)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
+
+	MDRV_SOUND_ADD(SAMPLES, 0)
+	MDRV_SOUND_CONFIG(custom_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
 MACHINE_DRIVER_END
 
 

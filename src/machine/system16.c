@@ -1,5 +1,6 @@
 #include "driver.h"
 #include "system16.h"
+#include "sound/upd7759.h"
 
 data16_t *sys16_workingram;
 data16_t *sys16_workingram2;
@@ -59,41 +60,10 @@ static void sound_cause_nmi( int chip ){
 }
 
 
-struct YM2151interface sys16_ym2151_interface = {
-	1,			/* 1 chip */
-	4000000,	/* 3.58 MHz ? */
-	{ YM3012_VOL(32,MIXER_PAN_LEFT,32,MIXER_PAN_RIGHT) },
-	{ 0 }
-};
-
-struct DACinterface sys16_7751_dac_interface =
-{
-	1,
-	{ 80 }
-};
-
-
 struct upd7759_interface sys16_upd7759_interface =
 {
-	1,			/* 1 chip */
-	{ UPD7759_STANDARD_CLOCK },
-	{ 48 }, 	/* volumes */
-	{ 0 },			/* memory region 3 contains the sample data */
-	{ sound_cause_nmi },
-};
-
-struct RF5C68interface sys18_rf5c68_interface = {
-  8000000,
-  100
-};
-
-struct YM2612interface sys18_ym3438_interface =
-{
-	2,	/* 2 chips */
-	8000000,
-	{ YM3012_VOL(40,MIXER_PAN_CENTER,40,MIXER_PAN_CENTER),
-			YM3012_VOL(40,MIXER_PAN_CENTER,40,MIXER_PAN_CENTER) },	/* Volume */
-	{ 0 },	{ 0 },	{ 0 },	{ 0 }
+	0,			/* memory region 3 contains the sample data */
+	sound_cause_nmi
 };
 
 int sys18_sound_info[4*2];

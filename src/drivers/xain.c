@@ -144,6 +144,7 @@ TODO:
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "cpu/m6809/m6809.h"
+#include "sound/2203intf.h"
 
 static unsigned char *xain_sharedram;
 static int vblank;
@@ -463,14 +464,7 @@ static void irqhandler(int irq)
 
 static struct YM2203interface ym2203_interface =
 {
-	2,			/* 2 chips */
-	3000000,	/* Confirmed 3 MHz */
-	{ YM2203_VOL(40,50), YM2203_VOL(40,50) },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ irqhandler }
+	0,0,0,0,irqhandler
 };
 
 
@@ -506,7 +500,20 @@ static MACHINE_DRIVER_START( xsleena )
 	MDRV_VIDEO_UPDATE(xain)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM2203, ym2203_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM2203, 3000000)
+	MDRV_SOUND_CONFIG(ym2203_interface)
+	MDRV_SOUND_ROUTE(0, "mono", 0.50)
+	MDRV_SOUND_ROUTE(1, "mono", 0.50)
+	MDRV_SOUND_ROUTE(2, "mono", 0.50)
+	MDRV_SOUND_ROUTE(3, "mono", 0.40)
+
+	MDRV_SOUND_ADD(YM2203, 3000000)
+	MDRV_SOUND_ROUTE(0, "mono", 0.50)
+	MDRV_SOUND_ROUTE(1, "mono", 0.50)
+	MDRV_SOUND_ROUTE(2, "mono", 0.50)
+	MDRV_SOUND_ROUTE(3, "mono", 0.40)
 MACHINE_DRIVER_END
 
 

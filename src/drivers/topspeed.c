@@ -197,6 +197,8 @@ Maybe the second area for each layer contains colscroll ?
 #include "vidhrdw/generic.h"
 #include "vidhrdw/taitoic.h"
 #include "sndhrdw/taitosnd.h"
+#include "sound/2151intf.h"
+#include "sound/msm5205.h"
 
 WRITE16_HANDLER( rainbow_spritectrl_w );
 WRITE16_HANDLER( rastan_spriteflip_w );
@@ -803,20 +805,14 @@ static void irq_handler(int irq)	/* assumes Z80 sandwiched between 68Ks */
 
 static struct YM2151interface ym2151_interface =
 {
-	1,			/* 1 chip */
-	4000000,	/* 4 MHz ? */
-	{ YM3012_VOL(30,MIXER_PAN_CENTER,30,MIXER_PAN_CENTER) },
-	{ irq_handler },
-	{ sound_bankswitch_w }
+	irq_handler,
+	sound_bankswitch_w
 };
 
 static struct MSM5205interface msm5205_interface =
 {
-	1,						/* 1 chip */
-	384000,					/* 384 kHz */
-	{ topspeed_msm5205_vck },	/* VCK function */
-	{ MSM5205_S96_4B },		/* 4 kHz? */
-	{ 60 }					/* volume */
+	topspeed_msm5205_vck,	/* VCK function */
+	MSM5205_S96_4B			/* 4 kHz? */
 };
 
 
@@ -853,8 +849,16 @@ static MACHINE_DRIVER_START( topspeed )
 	MDRV_VIDEO_UPDATE(topspeed)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM2151, ym2151_interface)
-	MDRV_SOUND_ADD(MSM5205, msm5205_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM2151, 4000000)
+	MDRV_SOUND_CONFIG(ym2151_interface)
+	MDRV_SOUND_ROUTE(0, "mono", 0.30)
+	MDRV_SOUND_ROUTE(1, "mono", 0.30)
+
+	MDRV_SOUND_ADD(MSM5205, 384000)
+	MDRV_SOUND_CONFIG(msm5205_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.60)
 MACHINE_DRIVER_END
 
 

@@ -16,7 +16,8 @@
 #include "vidhrdw/vector.h"
 #include "machine/z80fmly.h"
 #include "cchasm.h"
-
+#include "sound/custom.h"
+#include "sound/ay8910.h"
 
 
 /*************************************
@@ -139,23 +140,9 @@ INPUT_PORTS_END
  *
  *************************************/
 
-static struct AY8910interface ay8910_interface =
-{
-	2,	/* 2 chips */
-	1818182,	/* 1.82 MHz */
-	{ 20, 20 },
-	{ 0, 0 },
-	{ 0, 0 },
-	{ 0, 0 },
-	{ 0, 0 }
-};
-
-
 static struct CustomSound_interface custom_interface =
 {
-	cchasm_sh_start,
-    0,
-	cchasm_sh_update
+	cchasm_sh_start
 };
 
 
@@ -203,8 +190,17 @@ static MACHINE_DRIVER_START( cchasm )
 	MDRV_VIDEO_UPDATE(vector)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(AY8910, ay8910_interface)
-	MDRV_SOUND_ADD(CUSTOM, custom_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(AY8910, 1818182)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.20)
+
+	MDRV_SOUND_ADD(AY8910, 1818182)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.20)
+
+	MDRV_SOUND_ADD(CUSTOM, 0)
+	MDRV_SOUND_CONFIG(custom_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
 MACHINE_DRIVER_END
 
 

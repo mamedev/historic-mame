@@ -11,6 +11,7 @@
 #include <unzip.h>
 #include <zlib.h>
 #include <tchar.h>
+#include "sound/samples.h"
 
 #ifndef MESS
 enum { LIST_SHORT = 1, LIST_XML, LIST_FULL, LIST_SAMDIR, LIST_ROMS, LIST_SAMPLES,
@@ -504,6 +505,7 @@ int frontend_help (const char *gamename)
 
 	/* since the cpuintrf structure is filled dynamically now, we have to init first */
 	cpuintrf_init();
+	sndintrf_init();
 
 	/* sort the list if requested */
 	if (sortby)
@@ -615,7 +617,7 @@ int frontend_help (const char *gamename)
 						const char **samplenames = NULL;
 #if (HAS_SAMPLES)
 						if( drv.sound[j].sound_type == SOUND_SAMPLES )
-							samplenames = ((struct Samplesinterface *)drv.sound[j].sound_interface)->samplenames;
+							samplenames = ((struct Samplesinterface *)drv.sound[j].config)->samplenames;
 #endif
 						if (samplenames != 0 && samplenames[0] != 0)
 						{
@@ -654,7 +656,7 @@ int frontend_help (const char *gamename)
 					const char **samplenames = NULL;
 #if (HAS_SAMPLES)
 					if( drv.sound[k].sound_type == SOUND_SAMPLES )
-							samplenames = ((struct Samplesinterface *)drv.sound[k].sound_interface)->samplenames;
+							samplenames = ((struct Samplesinterface *)drv.sound[k].config)->samplenames;
 #endif
 					if (samplenames != 0 && samplenames[0] != 0)
 					{
@@ -757,13 +759,7 @@ int frontend_help (const char *gamename)
 
 					for(j=0;j<MAX_SOUND;j++)
 					{
-						if (sound_num(&x_sound[j]))
-						{
-							printf("%dx",sound_num(&x_sound[j]));
-							printf("%-9s ",sound_name(&x_sound[j]));
-						}
-						else
-							printf("%-11s ",sound_name(&x_sound[j]));
+						printf("%-11s ",sndtype_name(x_sound[j].sound_type));
 					}
 
 					/* Lastly, the name of the game and a \newline */
@@ -901,7 +897,7 @@ int frontend_help (const char *gamename)
 #if (HAS_SAMPLES)
 							if (drv.sound[j].sound_type == SOUND_SAMPLES)
 							{
-								samplenames = ((struct Samplesinterface *)drv.sound[j].sound_interface)->samplenames;
+								samplenames = ((struct Samplesinterface *)drv.sound[j].config)->samplenames;
 								break;
 							}
 #endif
@@ -1585,7 +1581,7 @@ j = 0;	// count only the main cpu
 
 					if (count)
 //						printf("%s (%d-%d)\t%d\n",soundtype_name(type),minyear,maxyear,count);
-						printf("%s\t%d\n",soundtype_name(type),count);
+						printf("%s\t%d\n",sndtype_name(type),count);
 				}
 			}
 
@@ -1684,7 +1680,7 @@ j = 0;	// count only the main cpu
 				{
 #if (HAS_SAMPLES)
  					if( drv.sound[j].sound_type == SOUND_SAMPLES )
- 						samplenames = ((struct Samplesinterface *)drv.sound[j].sound_interface)->samplenames;
+ 						samplenames = ((struct Samplesinterface *)drv.sound[j].config)->samplenames;
 #endif
 				}
 #endif

@@ -7,6 +7,7 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "subs.h"
+#include "sound/discrete.h"
 
 WRITE8_HANDLER( subs_invert1_w )
 {

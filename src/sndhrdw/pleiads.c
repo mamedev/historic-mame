@@ -7,11 +7,13 @@
  *
  ****************************************************************************/
 #include "driver.h"
+#include "sound/custom.h"
+#include "sound/tms36xx.h"
 
 #define VMIN	0
 #define VMAX	32767
 
-static int channel;
+static sound_stream * channel;
 
 static int sound_latch_a;
 static int sound_latch_b;
@@ -392,9 +394,10 @@ INLINE int noise(int samplerate)
 	return sum / 2;
 }
 
-static void pleiads_sound_update(int param, INT16 *buffer, int length)
+static void pleiads_sound_update(void *param, stream_sample_t **inputs, stream_sample_t **outputs, int length)
 {
 	int rate = Machine->sample_rate;
+	stream_sample_t *buffer = outputs[0];
 
 	while( length-- > 0 )
 	{
@@ -449,15 +452,12 @@ WRITE8_HANDLER( pleiads_sound_control_c_w )
 	sound_latch_c = data;
 }
 
-static int common_sh_start(const struct MachineSound *msound, const char *name)
+static void *common_sh_start(const struct CustomSound_interface *config, const char *name)
 {
 	int i, j;
 	UINT32 shiftreg;
 
 	poly18 = (UINT32 *)auto_malloc((1ul << (18-5)) * sizeof(UINT32));
-
-	if( !poly18 )
-		return 1;
 
 	shiftreg = 0;
 	for( i = 0; i < (1ul << (18-5)); i++ )
@@ -474,14 +474,13 @@ static int common_sh_start(const struct MachineSound *msound, const char *name)
 		poly18[i] = bits;
 	}
 
-	channel = stream_init(name, 40, Machine->sample_rate, 0, pleiads_sound_update);
-	if( channel == -1 )
-		return 1;
+	channel = stream_create(0, 1, Machine->sample_rate, NULL, pleiads_sound_update);
 
-	return 0;
+	/* just a dummy alloc to make the caller happy */
+	return auto_malloc(1);
 }
 
-int pleiads_sh_start(const struct MachineSound *msound)
+void *pleiads_sh_start(int clock, const struct CustomSound_interface *config)
 {
 	/* The real values are _unknown_!
 	 * I took the ones from Naughty Boy / Pop Flamer
@@ -539,10 +538,10 @@ int pleiads_sh_start(const struct MachineSound *msound)
 	  freq = 1.44 / ((100000+2*1000) * 0.01e-6) = approx. 1412 Hz */
 	noise_freq = 1412;	/* higher noise rate than popflame/naughtyb??? */
 
-	return common_sh_start(msound, "Custom (Pleiads)");
+	return common_sh_start(config, "Custom (Pleiads)");
 }
 
-int naughtyb_sh_start(const struct MachineSound *msound)
+void *naughtyb_sh_start(int clock, const struct CustomSound_interface *config)
 {
 	/* charge 10u??? through 330K (R??) -> 3.3s */
 	pa5_charge_time = 3.3;
@@ -596,10 +595,10 @@ int naughtyb_sh_start(const struct MachineSound *msound)
 	  freq = 1.44 / ((200000+2*1000) * 0.01e-6) = approx. 713 Hz */
 	noise_freq = 713;
 
-	return common_sh_start(msound, "Custom (Naughty Boy)");
+	return common_sh_start(config, "Custom (Naughty Boy)");
 }
 
-int popflame_sh_start(const struct MachineSound *msound)
+void *popflame_sh_start(int clock, const struct CustomSound_interface *config)
 {
 	/* charge 10u (C63 in Pop Flamer) through 330K -> 3.3s */
 	pa5_charge_time = 3.3;
@@ -653,16 +652,5 @@ int popflame_sh_start(const struct MachineSound *msound)
 	  freq = 1.44 / ((200000+2*1000) * 0.01e-6) = approx. 713 Hz */
 	noise_freq = 713;
 
-	return common_sh_start(msound, "Custom (Pop Flamer)");
+	return common_sh_start(config, "Custom (Pop Flamer)");
 }
-
-void pleiads_sh_stop(void)
-{
-}
-
-void pleiads_sh_update(void)
-{
-	stream_update(channel, 0);
-}
-
-

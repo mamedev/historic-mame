@@ -88,7 +88,7 @@ int cdrom_audio_active(struct cdrom_file *file);
 int cdrom_audio_paused(struct cdrom_file *file);
 int cdrom_audio_ended(struct cdrom_file *file);
 
-void cdrom_get_audio_data(struct cdrom_file *file, INT16 *bufL, INT16 *bufR, UINT32 bytes_wanted);
+void cdrom_get_audio_data(struct cdrom_file *file, stream_sample_t *bufL, stream_sample_t *bufR, UINT32 bytes_wanted);
 
 #endif	// _MAME_CDROM_H_
 

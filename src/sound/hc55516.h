@@ -1,15 +1,6 @@
 #ifndef HC55516_H
 #define HC55516_H
 
-#define MAX_HC55516		4
-
-struct hc55516_interface
-{
-	int num;
-	int volume[MAX_HC55516];
-};
-
-int hc55516_sh_start(const struct MachineSound *msound);
 
 /* sets the databit (0 or 1) */
 void hc55516_digit_w(int num, int data);

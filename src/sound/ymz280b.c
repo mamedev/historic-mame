@@ -11,8 +11,8 @@
 #include <math.h>
 
 #include "driver.h"
-#include "adpcm.h"
 #include "state.h"
+#include "ymz280b.h"
 
 
 #define MAX_SAMPLE_CHUNK	10000
@@ -66,7 +66,7 @@ struct YMZ280BVoice
 
 struct YMZ280BChip
 {
-	int stream;						/* which stream are we using */
+	sound_stream * stream;			/* which stream are we using */
 	UINT8 *region_base;				/* pointer to the base of the region */
 	UINT8 current_register;			/* currently accessible register */
 	UINT8 status_register;			/* current status register */
@@ -90,21 +90,38 @@ struct YMZ280BChip
 #if MAKE_WAVS
 	void *		wavresample;			/* resampled waveform */
 #endif
+
+	INT32 *accumulator;
+	INT16 *scratch;
 };
 
-static struct YMZ280BChip ymz280b[MAX_YMZ280B];
-static INT32 *accumulator;
-static INT16 *scratch;
-static int chip_num;
-
 /* step size index shift table */
-static int index_scale[8] = { 0x0e6, 0x0e6, 0x0e6, 0x0e6, 0x133, 0x199, 0x200, 0x266 };
+static const int index_scale[8] = { 0x0e6, 0x0e6, 0x0e6, 0x0e6, 0x133, 0x199, 0x200, 0x266 };
 
 /* lookup table for the precomputed difference */
 static int diff_lookup[16];
 
 /* timer callback */
-static void update_irq_state_timer(int param);
+static void update_irq_state_timer_0(void *param);
+static void update_irq_state_timer_1(void *param);
+static void update_irq_state_timer_2(void *param);
+static void update_irq_state_timer_3(void *param);
+static void update_irq_state_timer_4(void *param);
+static void update_irq_state_timer_5(void *param);
+static void update_irq_state_timer_6(void *param);
+static void update_irq_state_timer_7(void *param);
+
+static void (*update_irq_state_cb[])(void *) =
+{
+	update_irq_state_timer_0,
+	update_irq_state_timer_1,
+	update_irq_state_timer_2,
+	update_irq_state_timer_3,
+	update_irq_state_timer_4,
+	update_irq_state_timer_5,
+	update_irq_state_timer_6,
+	update_irq_state_timer_7
+};
 
 
 
@@ -177,26 +194,27 @@ INLINE void update_volumes(struct YMZ280BVoice *voice)
 static void YMZ280B_state_save_update_step(void)
 {
 	int i,j;
-	for (i = 0; i < chip_num; i++)
+	for (i = 0; i < MAX_SOUND; i++)
 	{
-		struct YMZ280BChip *chip = &ymz280b[i];
-		for (j = 0; j < 8; j++)
+		struct YMZ280BChip *chip = sndti_token(SOUND_YMZ280B, i);
+		if (chip)
 		{
-			struct YMZ280BVoice *voice = &chip->voice[j];
-			update_step(chip, voice);
-			if(voice->irq_schedule)
-				timer_set(0, (i<<3) | j, update_irq_state_timer);
+			for (j = 0; j < 8; j++)
+			{
+				struct YMZ280BVoice *voice = &chip->voice[j];
+				update_step(chip, voice);
+				if(voice->irq_schedule)
+					timer_set_ptr(0, chip, update_irq_state_cb[j]);
+			}
+			timer_adjust(chip->update_timer, TIME_NEVER, 0, 0);
 		}
-		timer_adjust(chip->update_timer, TIME_NEVER, 0, 0);
 	}
 }
 
 
-static void update_irq_state_timer(int param)
+static void update_irq_state_timer_common(void *param, int voicenum)
 {
-	int chipnum = param>>3;
-	int voicenum = param & 7;
-	struct YMZ280BChip *chip = &ymz280b[chipnum];
+	struct YMZ280BChip *chip = param;
 	struct YMZ280BVoice *voice = &chip->voice[voicenum];
 
 	if(!voice->irq_schedule) return;
@@ -206,6 +224,15 @@ static void update_irq_state_timer(int param)
 	update_irq_state(chip);
 	voice->irq_schedule = 0;
 }
+
+static void update_irq_state_timer_0(void *param) { update_irq_state_timer_common(param, 0); }
+static void update_irq_state_timer_1(void *param) { update_irq_state_timer_common(param, 1); }
+static void update_irq_state_timer_2(void *param) { update_irq_state_timer_common(param, 2); }
+static void update_irq_state_timer_3(void *param) { update_irq_state_timer_common(param, 3); }
+static void update_irq_state_timer_4(void *param) { update_irq_state_timer_common(param, 4); }
+static void update_irq_state_timer_5(void *param) { update_irq_state_timer_common(param, 5); }
+static void update_irq_state_timer_6(void *param) { update_irq_state_timer_common(param, 6); }
+static void update_irq_state_timer_7(void *param) { update_irq_state_timer_common(param, 7); }
 
 
 /**********************************************************************************************
@@ -468,11 +495,10 @@ static int generate_pcm16(struct YMZ280BVoice *voice, UINT8 *base, INT16 *buffer
 
 ***********************************************************************************************/
 
-static void ymz280b_force_update(int num)
+static void ymz280b_force_update(struct YMZ280BChip *chip)
 {
 	int length;
 
-	struct YMZ280BChip *chip = &ymz280b[num];
 	INT32 *lacc;
 	INT32 *racc;
 	int v;
@@ -488,11 +514,11 @@ static void ymz280b_force_update(int num)
 	length = (int)(chip->samples_left_over + time_last_update * INTERNAL_SAMPLE_RATE) - chip->ibuffer_samples;
 	if(length <= 0) return;
 
-	lacc = accumulator;
-	racc = accumulator + length;
+	lacc = chip->accumulator;
+	racc = chip->accumulator + length;
 
 	/* clear out the accumulator */
-	memset(accumulator, 0, 2 * length * sizeof(accumulator[0]));
+	memset(chip->accumulator, 0, 2 * length * sizeof(chip->accumulator[0]));
 
 	/* loop over voices */
 	for (v = 0; v < 8; v++)
@@ -500,7 +526,7 @@ static void ymz280b_force_update(int num)
 		struct YMZ280BVoice *voice = &chip->voice[v];
 		INT16 prev = voice->last_sample;
 		INT16 curr = voice->curr_sample;
-		INT16 *curr_data = scratch;
+		INT16 *curr_data = chip->scratch;
 		INT32 *ldest = lacc;
 		INT32 *rdest = racc;
 		UINT32 new_samples, samples_left;
@@ -545,11 +571,11 @@ static void ymz280b_force_update(int num)
 		{
 			switch (voice->mode)
 			{
-				case 1:	samples_left = generate_adpcm(voice, chip->region_base, scratch, new_samples);	break;
-				case 2:	samples_left = generate_pcm8(voice, chip->region_base, scratch, new_samples);	break;
-				case 3:	samples_left = generate_pcm16(voice, chip->region_base, scratch, new_samples);	break;
+				case 1:	samples_left = generate_adpcm(voice, chip->region_base, chip->scratch, new_samples);	break;
+				case 2:	samples_left = generate_pcm8(voice, chip->region_base, chip->scratch, new_samples);	break;
+				case 3:	samples_left = generate_pcm16(voice, chip->region_base, chip->scratch, new_samples);	break;
 				default:
-				case 0:	samples_left = 0; memset(scratch, 0, new_samples * sizeof(scratch[0]));			break;
+				case 0:	samples_left = 0; memset(chip->scratch, 0, new_samples * sizeof(chip->scratch[0]));			break;
 			}
 		}
 
@@ -557,12 +583,12 @@ static void ymz280b_force_update(int num)
 		if (samples_left)
 		{
 			int base = new_samples - samples_left;
-			int i, t = (base == 0) ? curr : scratch[base - 1];
+			int i, t = (base == 0) ? curr : chip->scratch[base - 1];
 			for (i = 0; i < samples_left; i++)
 			{
 				if (t < 0) t = -((-t * 15) >> 4);
 				else if (t > 0) t = (t * 15) >> 4;
-				scratch[base + i] = t;
+				chip->scratch[base + i] = t;
 			}
 
 			/* if we hit the end and IRQs are enabled, signal it */
@@ -571,7 +597,7 @@ static void ymz280b_force_update(int num)
 				voice->playing = 0;
 
 				/* set update_irq_state_timer. IRQ is signaled on next CPU execution. */
-				timer_set(0, (num<<3) | v, update_irq_state_timer);
+				timer_set_ptr(0, chip, update_irq_state_cb[v]);
 				voice->irq_schedule = 1;
 			}
 		}
@@ -628,16 +654,16 @@ static void ymz280b_force_update(int num)
 }
 
 
-static void ymz280b_update(int num, INT16 **buffer, int length)
+static void ymz280b_update(void *param, stream_sample_t **inputs, stream_sample_t **buffer, int length)
 {
-	struct YMZ280BChip *chip = &ymz280b[num];
+	struct YMZ280BChip *chip = param;
 	int step = chip->ibuffer_step;
 	int samples_per_frame = chip->ibuffer_samples_per_frame;
 	UINT32 pos1,pos2,internal_samples;
 	int pos_dif;
 	double time_last_update;
 
-	ymz280b_force_update(num);
+	ymz280b_force_update(chip);
 
 	/* elapsed time since the last callback */
 	time_last_update = timer_timeelapsed(chip->update_timer);
@@ -698,111 +724,89 @@ static void ymz280b_update(int num, INT16 **buffer, int length)
 
 ***********************************************************************************************/
 
-int YMZ280B_sh_start(const struct MachineSound *msound)
+static void *ymz280b_start(int sndindex, int clock, const void *config)
 {
-	const struct YMZ280Binterface *intf = msound->sound_interface;
-	char stream_name[2][40];
-	const char *stream_name_ptrs[2];
-	int vol[2];
-	int i;
+	const struct YMZ280Binterface *intf = config;
+	struct YMZ280BChip *chip;
+	
+	chip = auto_malloc(sizeof(*chip));
+	memset(chip, 0, sizeof(*chip));
 
 	/* compute ADPCM tables */
 	compute_tables();
 
-	/* initialize the voices */
-	memset(&ymz280b, 0, sizeof(ymz280b));
-	for (i = 0; i < intf->num; i++)
-	{
-		struct YMZ280BChip *chip = &ymz280b[i];
+	/* create the stream */
+	chip->stream = stream_create(0, 2, Machine->sample_rate, chip, ymz280b_update);
 
-		/* generate the name and create the stream */
-		sprintf(stream_name[0], "%s #%d Ch1", sound_name(msound), i);
-		sprintf(stream_name[1], "%s #%d Ch2", sound_name(msound), i);
-		stream_name_ptrs[0] = stream_name[0];
-		stream_name_ptrs[1] = stream_name[1];
+	/* initialize the rest of the structure */
+	chip->master_clock = (double)clock / 384.0;
+	chip->region_base = memory_region(intf->region);
+	chip->irq_callback = intf->irq_callback;
 
-		/* set the volumes */
-		vol[0] = intf->mixing_level[i] & 0xffff;
-		vol[1] = intf->mixing_level[i] >> 16;
+	chip->update_timer = timer_alloc(NULL);
+	timer_adjust(chip->update_timer, TIME_NEVER, 0, 0);
 
-		/* create the stream */
-		chip->stream = stream_init_multi(2, stream_name_ptrs, vol, Machine->sample_rate, i, ymz280b_update);
-		if (chip->stream == -1)
-			return 1;
+	chip->ibuffer[0] = auto_malloc(sizeof(chip->ibuffer[0][0]) * 2 * INTERNAL_BUFFER_SIZE);
+	if (!chip->ibuffer[0]) return NULL;
+	chip->ibuffer[1] = chip->ibuffer[0] + INTERNAL_BUFFER_SIZE;
 
-		/* initialize the rest of the structure */
-		chip->master_clock = (double)intf->baseclock[i] / 384.0;
-		chip->region_base = memory_region(intf->region[i]);
-		chip->irq_callback = intf->irq_callback[i];
-
-		chip->update_timer = timer_alloc(NULL);
-		timer_adjust(chip->update_timer, TIME_NEVER, 0, 0);
-
-		chip->ibuffer[0] = auto_malloc(sizeof(ymz280b[0].ibuffer[0][0]) * 2 * INTERNAL_BUFFER_SIZE);
-		if (!chip->ibuffer[0]) return 1;
-		chip->ibuffer[1] = chip->ibuffer[0] + INTERNAL_BUFFER_SIZE;
-
-		if (Machine->sample_rate == 0) chip->ibuffer_step = 0;
-		else chip->ibuffer_step = (UINT32)(INTERNAL_SAMPLE_RATE * (double)FRAC_ONE / (double)Machine->sample_rate + 0.5);
-		chip->ibuffer_samples_per_frame = (UINT32)(INTERNAL_SAMPLE_RATE * (double)FRAC_ONE / Machine->drv->frames_per_second + 0.5);
-		chip->ibuffer_pos_in = (chip->ibuffer_step * 24)>>FRAC_BITS;
-		chip->ibuffer_pos_out = 0;
-	}
+	if (Machine->sample_rate == 0) chip->ibuffer_step = 0;
+	else chip->ibuffer_step = (UINT32)(INTERNAL_SAMPLE_RATE * (double)FRAC_ONE / (double)Machine->sample_rate + 0.5);
+	chip->ibuffer_samples_per_frame = (UINT32)(INTERNAL_SAMPLE_RATE * (double)FRAC_ONE / Machine->drv->frames_per_second + 0.5);
+	chip->ibuffer_pos_in = (chip->ibuffer_step * 24)>>FRAC_BITS;
+	chip->ibuffer_pos_out = 0;
 
 	/* allocate memory */
-	accumulator = auto_malloc(sizeof(accumulator[0]) * 2 * MAX_SAMPLE_CHUNK);
-	scratch = auto_malloc(sizeof(scratch[0]) * MAX_SAMPLE_CHUNK);
-	if (!accumulator || !scratch)
-		return 1;
+	chip->accumulator = auto_malloc(sizeof(chip->accumulator[0]) * 2 * MAX_SAMPLE_CHUNK);
+	chip->scratch = auto_malloc(sizeof(chip->scratch[0]) * MAX_SAMPLE_CHUNK);
 
 	/* state save */
-	for (i = 0; i < intf->num; i++)
 	{
 		int j;
-		state_save_register_UINT8("YMZ280B", i, "current_register", &ymz280b[i].current_register,1);
-		state_save_register_UINT8("YMZ280B", i, "status_register", &ymz280b[i].status_register,1);
-		state_save_register_UINT8("YMZ280B", i, "irq_state", &ymz280b[i].irq_state,1);
-		state_save_register_UINT8("YMZ280B", i, "irq_mask", &ymz280b[i].irq_mask,1);
-		state_save_register_UINT8("YMZ280B", i, "irq_enable", &ymz280b[i].irq_enable,1);
-		state_save_register_UINT8("YMZ280B", i, "keyon_enable", &ymz280b[i].keyon_enable,1);
-		state_save_register_double("YMZ280B", i, "samples_left_over", &ymz280b[i].samples_left_over,1);
+		state_save_register_UINT8("YMZ280B", sndindex, "current_register", &chip->current_register,1);
+		state_save_register_UINT8("YMZ280B", sndindex, "status_register", &chip->status_register,1);
+		state_save_register_UINT8("YMZ280B", sndindex, "irq_state", &chip->irq_state,1);
+		state_save_register_UINT8("YMZ280B", sndindex, "irq_mask", &chip->irq_mask,1);
+		state_save_register_UINT8("YMZ280B", sndindex, "irq_enable", &chip->irq_enable,1);
+		state_save_register_UINT8("YMZ280B", sndindex, "keyon_enable", &chip->keyon_enable,1);
+		state_save_register_double("YMZ280B", sndindex, "samples_left_over", &chip->samples_left_over,1);
 		for (j = 0; j < 8; j++)
 		{
-			state_save_register_UINT8 ("YMZ280B.voice", i*8+j, "playing", &ymz280b[i].voice[j].playing,1);
-			state_save_register_UINT8 ("YMZ280B.voice", i*8+j, "keyon", &ymz280b[i].voice[j].keyon,1);
-			state_save_register_UINT8 ("YMZ280B.voice", i*8+j, "looping", &ymz280b[i].voice[j].looping,1);
-			state_save_register_UINT8 ("YMZ280B.voice", i*8+j, "mode", &ymz280b[i].voice[j].mode,1);
-			state_save_register_UINT16 ("YMZ280B.voice", i*8+j, "fnum", &ymz280b[i].voice[j].fnum,1);
-			state_save_register_UINT8 ("YMZ280B.voice", i*8+j, "level", &ymz280b[i].voice[j].level,1);
-			state_save_register_UINT8 ("YMZ280B.voice", i*8+j, "pan", &ymz280b[i].voice[j].pan,1);
-			state_save_register_UINT32 ("YMZ280B.voice", i*8+j, "start", &ymz280b[i].voice[j].start,1);
-			state_save_register_UINT32 ("YMZ280B.voice", i*8+j, "stop", &ymz280b[i].voice[j].stop,1);
-			state_save_register_UINT32 ("YMZ280B.voice", i*8+j, "loop_start", &ymz280b[i].voice[j].loop_start,1);
-			state_save_register_UINT32 ("YMZ280B.voice", i*8+j, "loop_end", &ymz280b[i].voice[j].loop_end,1);
-			state_save_register_UINT32 ("YMZ280B.voice", i*8+j, "position", &ymz280b[i].voice[j].position,1);
-			state_save_register_INT32 ("YMZ280B.voice", i*8+j, "signal", &ymz280b[i].voice[j].signal,1);
-			state_save_register_INT32 ("YMZ280B.voice", i*8+j, "step", &ymz280b[i].voice[j].step,1);
-			state_save_register_INT32 ("YMZ280B.voice", i*8+j, "loop_signal", &ymz280b[i].voice[j].loop_signal,1);
-			state_save_register_INT32 ("YMZ280B.voice", i*8+j, "loop_step", &ymz280b[i].voice[j].loop_step,1);
-			state_save_register_UINT32 ("YMZ280B.voice", i*8+j, "loop_count", &ymz280b[i].voice[j].loop_count,1);
-			state_save_register_INT32 ("YMZ280B.voice", i*8+j, "output_left", &ymz280b[i].voice[j].output_left,1);
-			state_save_register_INT32 ("YMZ280B.voice", i*8+j, "output_right", &ymz280b[i].voice[j].output_right,1);
-			state_save_register_INT32 ("YMZ280B.voice", i*8+j, "output_pos", &ymz280b[i].voice[j].output_pos,1);
-			state_save_register_INT16 ("YMZ280B.voice", i*8+j, "last_sample", &ymz280b[i].voice[j].last_sample,1);
-			state_save_register_INT16 ("YMZ280B.voice", i*8+j, "curr_sample", &ymz280b[i].voice[j].curr_sample,1);
-			state_save_register_UINT8 ("YMZ280B.voice", i*8+j, "irq_schedule", &ymz280b[i].voice[j].irq_schedule,1);
+			state_save_register_UINT8 ("YMZ280B.voice", sndindex*8+j, "playing", &chip->voice[j].playing,1);
+			state_save_register_UINT8 ("YMZ280B.voice", sndindex*8+j, "keyon", &chip->voice[j].keyon,1);
+			state_save_register_UINT8 ("YMZ280B.voice", sndindex*8+j, "looping", &chip->voice[j].looping,1);
+			state_save_register_UINT8 ("YMZ280B.voice", sndindex*8+j, "mode", &chip->voice[j].mode,1);
+			state_save_register_UINT16 ("YMZ280B.voice", sndindex*8+j, "fnum", &chip->voice[j].fnum,1);
+			state_save_register_UINT8 ("YMZ280B.voice", sndindex*8+j, "level", &chip->voice[j].level,1);
+			state_save_register_UINT8 ("YMZ280B.voice", sndindex*8+j, "pan", &chip->voice[j].pan,1);
+			state_save_register_UINT32 ("YMZ280B.voice", sndindex*8+j, "start", &chip->voice[j].start,1);
+			state_save_register_UINT32 ("YMZ280B.voice", sndindex*8+j, "stop", &chip->voice[j].stop,1);
+			state_save_register_UINT32 ("YMZ280B.voice", sndindex*8+j, "loop_start", &chip->voice[j].loop_start,1);
+			state_save_register_UINT32 ("YMZ280B.voice", sndindex*8+j, "loop_end", &chip->voice[j].loop_end,1);
+			state_save_register_UINT32 ("YMZ280B.voice", sndindex*8+j, "position", &chip->voice[j].position,1);
+			state_save_register_INT32 ("YMZ280B.voice", sndindex*8+j, "signal", &chip->voice[j].signal,1);
+			state_save_register_INT32 ("YMZ280B.voice", sndindex*8+j, "step", &chip->voice[j].step,1);
+			state_save_register_INT32 ("YMZ280B.voice", sndindex*8+j, "loop_signal", &chip->voice[j].loop_signal,1);
+			state_save_register_INT32 ("YMZ280B.voice", sndindex*8+j, "loop_step", &chip->voice[j].loop_step,1);
+			state_save_register_UINT32 ("YMZ280B.voice", sndindex*8+j, "loop_count", &chip->voice[j].loop_count,1);
+			state_save_register_INT32 ("YMZ280B.voice", sndindex*8+j, "output_left", &chip->voice[j].output_left,1);
+			state_save_register_INT32 ("YMZ280B.voice", sndindex*8+j, "output_right", &chip->voice[j].output_right,1);
+			state_save_register_INT32 ("YMZ280B.voice", sndindex*8+j, "output_pos", &chip->voice[j].output_pos,1);
+			state_save_register_INT16 ("YMZ280B.voice", sndindex*8+j, "last_sample", &chip->voice[j].last_sample,1);
+			state_save_register_INT16 ("YMZ280B.voice", sndindex*8+j, "curr_sample", &chip->voice[j].curr_sample,1);
+			state_save_register_UINT8 ("YMZ280B.voice", sndindex*8+j, "irq_schedule", &chip->voice[j].irq_schedule,1);
 		}
 	}
 
-	state_save_register_func_postload(YMZ280B_state_save_update_step);
-	chip_num = intf->num;
+	if (sndindex == 0)
+		state_save_register_func_postload(YMZ280B_state_save_update_step);
 
 #if MAKE_WAVS
-	ymz280b[0].wavresample = wav_open("resamp.wav", Machine->sample_rate, 2);
+	chip->wavresample = wav_open("resamp.wav", Machine->sample_rate, 2);
 #endif
 
 	/* success */
-	return 0;
+	return chip;
 }
 
 
@@ -840,10 +844,9 @@ static void write_to_register(struct YMZ280BChip *chip, int data)
 {
 	struct YMZ280BVoice *voice;
 	int i;
-	int chipnum = chip - ymz280b;
 
 	/* force an update */
-	ymz280b_force_update(chipnum);
+	ymz280b_force_update(chip);
 
 	/* lower registers follow a pattern */
 	if (chip->current_register < 0x80)
@@ -1000,10 +1003,9 @@ static void write_to_register(struct YMZ280BChip *chip, int data)
 static int compute_status(struct YMZ280BChip *chip)
 {
 	UINT8 result;
-	int chipnum = chip - ymz280b;
 
 	/* force an update */
-	ymz280b_force_update(chipnum);
+	ymz280b_force_update(chip);
 
 	result = chip->status_register;
 
@@ -1024,32 +1026,38 @@ static int compute_status(struct YMZ280BChip *chip)
 
 READ8_HANDLER( YMZ280B_status_0_r )
 {
-	return compute_status(&ymz280b[0]);
+	struct YMZ280BChip *chip = sndti_token(SOUND_YMZ280B, 0);
+	return compute_status(chip);
 }
 
 READ8_HANDLER( YMZ280B_status_1_r )
 {
-	return compute_status(&ymz280b[1]);
+	struct YMZ280BChip *chip = sndti_token(SOUND_YMZ280B, 1);
+	return compute_status(chip);
 }
 
 READ16_HANDLER( YMZ280B_status_0_lsb_r )
 {
-	return compute_status(&ymz280b[0]);
+	struct YMZ280BChip *chip = sndti_token(SOUND_YMZ280B, 0);
+	return compute_status(chip);
 }
 
 READ16_HANDLER( YMZ280B_status_0_msb_r )
 {
-	return compute_status(&ymz280b[0]) << 8;
+	struct YMZ280BChip *chip = sndti_token(SOUND_YMZ280B, 0);
+	return compute_status(chip) << 8;
 }
 
 READ16_HANDLER( YMZ280B_status_1_lsb_r )
 {
-	return compute_status(&ymz280b[1]);
+	struct YMZ280BChip *chip = sndti_token(SOUND_YMZ280B, 1);
+	return compute_status(chip);
 }
 
 READ16_HANDLER( YMZ280B_status_1_msb_r )
 {
-	return compute_status(&ymz280b[1]) << 8;
+	struct YMZ280BChip *chip = sndti_token(SOUND_YMZ280B, 1);
+	return compute_status(chip) << 8;
 }
 
 /**********************************************************************************************
@@ -1060,32 +1068,38 @@ READ16_HANDLER( YMZ280B_status_1_msb_r )
 
 WRITE8_HANDLER( YMZ280B_register_0_w )
 {
-	ymz280b[0].current_register = data;
+	struct YMZ280BChip *chip = sndti_token(SOUND_YMZ280B, 0);
+	chip->current_register = data;
 }
 
 WRITE8_HANDLER( YMZ280B_register_1_w )
 {
-	ymz280b[1].current_register = data;
+	struct YMZ280BChip *chip = sndti_token(SOUND_YMZ280B, 1);
+	chip->current_register = data;
 }
 
 WRITE16_HANDLER( YMZ280B_register_0_lsb_w )
 {
-	if (ACCESSING_LSB)	ymz280b[0].current_register = data & 0xff;
+	struct YMZ280BChip *chip = sndti_token(SOUND_YMZ280B, 0);
+	if (ACCESSING_LSB)	chip->current_register = data & 0xff;
 }
 
 WRITE16_HANDLER( YMZ280B_register_0_msb_w )
 {
-	if (ACCESSING_MSB)	ymz280b[0].current_register = (data >> 8) & 0xff;
+	struct YMZ280BChip *chip = sndti_token(SOUND_YMZ280B, 0);
+	if (ACCESSING_MSB)	chip->current_register = (data >> 8) & 0xff;
 }
 
 WRITE16_HANDLER( YMZ280B_register_1_lsb_w )
 {
-	if (ACCESSING_LSB)	ymz280b[1].current_register = data & 0xff;
+	struct YMZ280BChip *chip = sndti_token(SOUND_YMZ280B, 1);
+	if (ACCESSING_LSB)	chip->current_register = data & 0xff;
 }
 
 WRITE16_HANDLER( YMZ280B_register_1_msb_w )
 {
-	if (ACCESSING_MSB)	ymz280b[1].current_register = (data >> 8) & 0xff;
+	struct YMZ280BChip *chip = sndti_token(SOUND_YMZ280B, 1);
+	if (ACCESSING_MSB)	chip->current_register = (data >> 8) & 0xff;
 }
 
 /**********************************************************************************************
@@ -1096,31 +1110,74 @@ WRITE16_HANDLER( YMZ280B_register_1_msb_w )
 
 WRITE8_HANDLER( YMZ280B_data_0_w )
 {
-	write_to_register(&ymz280b[0], data);
+	struct YMZ280BChip *chip = sndti_token(SOUND_YMZ280B, 0);
+	write_to_register(chip, data);
 }
 
 WRITE8_HANDLER( YMZ280B_data_1_w )
 {
-	write_to_register(&ymz280b[1], data);
+	struct YMZ280BChip *chip = sndti_token(SOUND_YMZ280B, 1);
+	write_to_register(chip, data);
 }
 
 WRITE16_HANDLER( YMZ280B_data_0_lsb_w )
 {
-	if (ACCESSING_LSB)	write_to_register(&ymz280b[0], data & 0xff);
+	struct YMZ280BChip *chip = sndti_token(SOUND_YMZ280B, 0);
+	if (ACCESSING_LSB)	write_to_register(chip, data & 0xff);
 }
 
 WRITE16_HANDLER( YMZ280B_data_0_msb_w )
 {
-	if (ACCESSING_MSB)	write_to_register(&ymz280b[0], (data >> 8) & 0xff);
+	struct YMZ280BChip *chip = sndti_token(SOUND_YMZ280B, 0);
+	if (ACCESSING_MSB)	write_to_register(chip, (data >> 8) & 0xff);
 }
 
 WRITE16_HANDLER( YMZ280B_data_1_lsb_w )
 {
-	if (ACCESSING_LSB)	write_to_register(&ymz280b[1], data & 0xff);
+	struct YMZ280BChip *chip = sndti_token(SOUND_YMZ280B, 1);
+	if (ACCESSING_LSB)	write_to_register(chip, data & 0xff);
 }
 
 WRITE16_HANDLER( YMZ280B_data_1_msb_w )
 {
-	if (ACCESSING_MSB)	write_to_register(&ymz280b[1], (data >> 8) & 0xff);
+	struct YMZ280BChip *chip = sndti_token(SOUND_YMZ280B, 1);
+	if (ACCESSING_MSB)	write_to_register(chip, (data >> 8) & 0xff);
+}
+
+
+
+
+/**************************************************************************
+ * Generic get_info
+ **************************************************************************/
+
+static void ymz280b_set_info(void *token, UINT32 state, union sndinfo *info)
+{
+	switch (state)
+	{
+		/* no parameters to set */
+	}
+}
+
+
+void ymz280b_get_info(void *token, UINT32 state, union sndinfo *info)
+{
+	switch (state)
+	{
+		/* --- the following bits of info are returned as 64-bit signed integers --- */
+
+		/* --- the following bits of info are returned as pointers to data or functions --- */
+		case SNDINFO_PTR_SET_INFO:						info->set_info = ymz280b_set_info;		break;
+		case SNDINFO_PTR_START:							info->start = ymz280b_start;			break;
+		case SNDINFO_PTR_STOP:							/* Nothing */							break;
+		case SNDINFO_PTR_RESET:							/* Nothing */							break;
+
+		/* --- the following bits of info are returned as NULL-terminated strings --- */
+		case SNDINFO_STR_NAME:							info->s = "YMZ280B";					break;
+		case SNDINFO_STR_CORE_FAMILY:					info->s = "Yamaha Wavetable";			break;
+		case SNDINFO_STR_CORE_VERSION:					info->s = "1.0";						break;
+		case SNDINFO_STR_CORE_FILE:						info->s = __FILE__;						break;
+		case SNDINFO_STR_CORE_CREDITS:					info->s = "Copyright (c) 2004, The MAME Team"; break;
+	}
 }
 

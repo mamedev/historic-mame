@@ -331,7 +331,9 @@ Boards:
 #include "vidhrdw/generic.h"
 #include "pacman.h"
 #include "cpu/s2650/s2650.h"
-
+#include "sound/namco.h"
+#include "sound/ay8910.h"
+#include "sound/sn76496.h"
 
 
 /*************************************
@@ -2756,39 +2758,10 @@ static struct GfxDecodeInfo s2650games_gfxdecodeinfo[] =
 
 static struct namco_interface namco_interface =
 {
-	3072000/32,	/* sample rate */
 	3,			/* number of voices */
-	100,		/* playback volume */
 	REGION_SOUND1	/* memory region */
 };
 
-
-static struct SN76496interface sn76496_interface =
-{
-	2,
-	{ 1789750, 1789750 },	/* 1.78975 MHz ? */
-	{ 75, 75 }
-};
-
-
-static struct AY8910interface dremshpr_ay8910_interface =
-{
-	1,	/* 1 chip */
-	14318000/8,	/* 1.78975 MHz ??? */
-	{ 50 },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ 0 }
-};
-
-
-static struct SN76496interface sn76489_interface =
-{
-	1,	/* 1 chip */
-	{ 18432000/6/2/3 },	/* ? MHz */
-	{ 100 }
-};
 
 
 /*************************************
@@ -2822,7 +2795,11 @@ static MACHINE_DRIVER_START( pacman )
 	MDRV_VIDEO_UPDATE(pacman)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD_TAG("namco", NAMCO, namco_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD_TAG("namco", NAMCO, 3072000/32)
+	MDRV_SOUND_CONFIG(namco_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 
@@ -2891,7 +2868,8 @@ static MACHINE_DRIVER_START( dremshpr )
 	MDRV_CPU_VBLANK_INT(nmi_line_pulse,1)
 
 	/* sound hardware */
-	MDRV_SOUND_REPLACE("namco", AY8910, dremshpr_ay8910_interface)
+	MDRV_SOUND_REPLACE("namco", AY8910, 14318000/8)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 
@@ -2935,7 +2913,10 @@ static MACHINE_DRIVER_START( vanvan )
 	MDRV_VISIBLE_AREA(2*8, 34*8-1, 0*8, 28*8-1)
 
 	/* sound hardware */
-	MDRV_SOUND_REPLACE("namco", SN76496, sn76496_interface)
+	MDRV_SOUND_REPLACE("namco", SN76496, 1789750)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.75)
+	MDRV_SOUND_ADD(SN76496, 1789750)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.75)
 MACHINE_DRIVER_END
 
 
@@ -2974,7 +2955,10 @@ static MACHINE_DRIVER_START( s2650games )
 	MDRV_VIDEO_UPDATE(s2650games)
 
 	/* sound hardware */
-	MDRV_SOUND_REPLACE("namco", SN76496, sn76489_interface)
+	MDRV_SOUND_REPLACE("namco", SN76496, 18432000/6/2/3)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.75)
+	MDRV_SOUND_ADD(SN76496, 18432000/6/2/3)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.75)
 MACHINE_DRIVER_END
 
 

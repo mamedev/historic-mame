@@ -258,16 +258,8 @@ extern data16_t *sys16_textram;
 extern data16_t *sys16_spriteram;
 
 /* sound */
-extern struct YM2151interface sys16_ym2151_interface;
-
-extern struct DACinterface datsu_dac_interface;
-extern struct DACinterface sys16_7751_dac_interface;
-
 extern struct upd7759_interface sys16_upd7759_interface;
 extern struct upd7759_interface aliensyn_upd7759_interface;
-
-extern struct RF5C68interface sys18_rf5c68_interface;
-extern struct YM2612interface sys18_ym3438_interface;
 
 extern int sys18_sound_info[4*2];
 

@@ -1,5 +1,6 @@
 #include "driver.h"
 #include "cpu/i8039/i8039.h"
+#include "sound/samples.h"
 
 static int walk = 0; /* used to determine if dkongjr is walking or climbing? */
 

@@ -80,6 +80,8 @@ dcxx = /SPOSI (S36)
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "cpu/z80/z80.h"
+#include "sound/ay8910.h"
+#include "sound/msm5232.h"
 
 
 /* in machine */
@@ -150,7 +152,7 @@ static WRITE8_HANDLER( nmi_enable_w )
 
 static WRITE8_HANDLER( sound_enable_w )
 {
-	mixer_sound_enable_global_w(data & 1);
+	sound_global_enable(data & 1);
 }
 
 
@@ -403,23 +405,25 @@ static WRITE8_HANDLER( portB_1_w )
 }
 
 
-static struct AY8910interface ay8910_interface =
+static struct AY8910interface ay8910_interface_1 =
 {
-	2,	/* 2 chips */
-	8000000/4,	/* 2 MHz */
-	{ 30, 30 },
-	{ 0 },
-	{ 0 },
-	{ portA_0_w, portA_1_w },
-	{ portB_0_w, portB_1_w }
+	0,
+	0,
+	portA_0_w,
+	portB_0_w
+};
+
+static struct AY8910interface ay8910_interface_2 =
+{
+	0,
+	0,
+	portA_1_w,
+	portB_1_w
 };
 
 static struct MSM5232interface msm5232_interface =
 {
-	1, /* number of chips */
-	2000000, /* 2 MHz ? */
-	{ { 0.39e-6, 0.39e-6, 0.39e-6, 0.39e-6, 0.39e-6, 0.39e-6, 0.39e-6, 0.39e-6 } },	/* default 0.39 uF capacitors (not verified) */
-	{ 100 } /* ? */
+	{ 0.39e-6, 0.39e-6, 0.39e-6, 0.39e-6, 0.39e-6, 0.39e-6, 0.39e-6, 0.39e-6 }	/* default 0.39 uF capacitors (not verified) */
 };
 
 
@@ -455,8 +459,19 @@ static MACHINE_DRIVER_START( buggychl )
 	MDRV_VIDEO_UPDATE(buggychl)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(AY8910, ay8910_interface)
-	MDRV_SOUND_ADD(MSM5232, msm5232_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(AY8910, 8000000/4)
+	MDRV_SOUND_CONFIG(ay8910_interface_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.30)
+
+	MDRV_SOUND_ADD(AY8910, 8000000/4)
+	MDRV_SOUND_CONFIG(ay8910_interface_2)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.30)
+
+	MDRV_SOUND_ADD(MSM5232, 2000000)
+	MDRV_SOUND_CONFIG(msm5232_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 /***************************************************************************

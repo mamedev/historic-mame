@@ -25,6 +25,7 @@ Notes:
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "sound/ay8910.h"
 
 VIDEO_UPDATE( raiders5 );
 
@@ -242,15 +243,16 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 /****************************************************************************/
 
-static struct AY8910interface ay8910_interface =
+static struct AY8910interface ay8910_interface_1 =
 {
-	2,          /* 2 chips */
-	12000000/8,    /* 1.5 MHz? */
-	{ 25, 25 },
-	{ input_port_0_r , input_port_2_r },
-	{ input_port_1_r , input_port_3_r },
-	{ 0, 0 },
-	{ 0, 0 },
+	input_port_0_r,
+	input_port_1_r
+};
+
+static struct AY8910interface ay8910_interface_2 =
+{
+	input_port_2_r,
+	input_port_3_r
 };
 
 static MACHINE_DRIVER_START( raiders5 )
@@ -280,7 +282,15 @@ static MACHINE_DRIVER_START( raiders5 )
 	MDRV_VIDEO_UPDATE(raiders5)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(AY8910, ay8910_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(AY8910, 12000000/8)
+	MDRV_SOUND_CONFIG(ay8910_interface_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
+
+	MDRV_SOUND_ADD(AY8910, 12000000/8)
+	MDRV_SOUND_CONFIG(ay8910_interface_2)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
 MACHINE_DRIVER_END
 
 /****************************************************************************/

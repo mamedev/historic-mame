@@ -669,7 +669,11 @@ TODO:
 #include "machine/atari_vg.h"
 #include "machine/namcoio.h"
 #include "includes/galaga.h"
-
+#include "sound/namco.h"
+#include "sound/namco52.h"
+#include "sound/namco54.h"
+#include "sound/sn76477.h"
+#include "sound/samples.h"
 
 
 static INTERRUPT_GEN( galaga_cpu3_nmi )
@@ -1790,9 +1794,7 @@ static struct GfxDecodeInfo gfxdecodeinfo_digdug[] =
  */
 static struct namco_interface namco_interface =
 {
-	18432000/6/32,	/* 96 kHz sample rate */
 	3,				/* number of voices */
-	90*10/16,		/* playback volume */
 	REGION_SOUND1	/* memory region */
 };
 
@@ -1802,8 +1804,6 @@ static struct namco_interface namco_interface =
  */
 static struct namco_52xx_interface namco_52xx_interface =
 {
-	18432000/12,	/* 1.536 MHz */
-	90,				/* volume */
 	REGION_SOUND2,	/* memory region */
 	4000,			/* Playback frequency - from 555 timer 6M */
 	80,				/* High pass filter fc */
@@ -1815,14 +1815,12 @@ static struct namco_52xx_interface namco_52xx_interface =
 
 static struct namco_54xx_interface namco_54xx_interface =
 {
-	18432000/12,	/* 1.536 MHz */
-	90,				/* volume */
-	{ RES_K(100),	RES_K(47),		RES_K(150) },	/* R24, R33, R42 */
-	{ RES_K(22),	RES_K(10),		RES_K(22) },	/* R23, R34, R41 */
-	{ RES_K(220),	RES_K(150),		RES_K(470) },	/* R22, R35, R40 */
-	{ RES_K(33),	RES_K(33),		RES_K(10)},		/* R21, R36, R37 */
-	{ CAP_U(.001),	CAP_U(.01),		CAP_U(.01) },	/* C31, C29, C27 */
-	{ CAP_U(.001),	CAP_U(.01),		CAP_U(.01) },	/* C30, C28, C26 */
+	{ RES_K(150),	RES_K(47),		RES_K(100) },	/* R42, R33, R24 */
+	{ RES_K(22),	RES_K(10),		RES_K(22) },	/* R41, R34, R23 */
+	{ RES_K(470),	RES_K(150),		RES_K(220) },	/* R40, R35, R22 */
+	{ RES_K(10),	RES_K(33),		RES_K(33)},		/* R37, R36, R21 */
+	{ CAP_U(.01),	CAP_U(.01),		CAP_U(.001) },	/* C27, C29, C31 */
+	{ CAP_U(.01),	CAP_U(.01),		CAP_U(.001) },	/* C26, C28, C30 */
 };
 
 static const char *bosco_sample_names[] =
@@ -1835,7 +1833,6 @@ static const char *bosco_sample_names[] =
 static struct Samplesinterface samples_interface_bosco =
 {
 	1,	/* 3 channel1 */
-	95,	/* volume */
 	bosco_sample_names
 };
 
@@ -1850,7 +1847,6 @@ static const char *battles_sample_names[] =
 struct Samplesinterface samples_interface_battles =
 {
 	1,	/* one channel */
-	80,	/* volume */
 	battles_sample_names
 };
 
@@ -1891,10 +1887,23 @@ static MACHINE_DRIVER_START( bosco )
 	MDRV_VIDEO_EOF(bosco)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(NAMCO, namco_interface)
-	MDRV_SOUND_ADD(NAMCO_52XX, namco_52xx_interface)
-	MDRV_SOUND_ADD(NAMCO_54XX, namco_54xx_interface)
-	MDRV_SOUND_ADD(SAMPLES, samples_interface_bosco)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(NAMCO, 18432000/6/32)
+	MDRV_SOUND_CONFIG(namco_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.90 * 10.0 / 16.0)
+
+	MDRV_SOUND_ADD(NAMCO_52XX, 18432000/12)	/* 1.536 MHz */
+	MDRV_SOUND_CONFIG(namco_52xx_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.90)
+
+	MDRV_SOUND_ADD(NAMCO_54XX, 18432000/12)	/* 1.536 MHz */
+	MDRV_SOUND_CONFIG(namco_54xx_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.90)
+
+	MDRV_SOUND_ADD(SAMPLES, 0)
+	MDRV_SOUND_CONFIG(samples_interface_bosco)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.95)
 MACHINE_DRIVER_END
 
 
@@ -1933,8 +1942,15 @@ static MACHINE_DRIVER_START( galaga )
 	MDRV_VIDEO_EOF(galaga)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(NAMCO, namco_interface)
-	MDRV_SOUND_ADD(NAMCO_54XX, namco_54xx_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(NAMCO, 18432000/6/32)
+	MDRV_SOUND_CONFIG(namco_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.90 * 10.0 / 16.0)
+
+	MDRV_SOUND_ADD(NAMCO_54XX, 18432000/12)	/* 1.536 MHz */
+	MDRV_SOUND_CONFIG(namco_54xx_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.90)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( galagab )
@@ -1981,8 +1997,15 @@ static MACHINE_DRIVER_START( xevious )
 	MDRV_VIDEO_UPDATE(xevious)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(NAMCO, namco_interface)
-	MDRV_SOUND_ADD_TAG("54xx",NAMCO_54XX, namco_54xx_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(NAMCO, 18432000/6/32)
+	MDRV_SOUND_CONFIG(namco_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.90 * 10.0 / 16.0)
+
+	MDRV_SOUND_ADD_TAG("54xx", NAMCO_54XX, 18432000/12)	/* 1.536 MHz */
+	MDRV_SOUND_CONFIG(namco_54xx_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.90)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( battles )
@@ -2001,7 +2024,10 @@ static MACHINE_DRIVER_START( battles )
 
 	/* sound hardware */
 	MDRV_SOUND_REMOVE("54xx")
-	MDRV_SOUND_ADD(SAMPLES, samples_interface_battles)
+
+	MDRV_SOUND_ADD(SAMPLES, 0)
+	MDRV_SOUND_CONFIG(samples_interface_battles)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.80)
 MACHINE_DRIVER_END
 
 
@@ -2040,7 +2066,11 @@ static MACHINE_DRIVER_START( digdug )
 	MDRV_VIDEO_UPDATE(digdug)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(NAMCO, namco_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(NAMCO, 18432000/6/32)
+	MDRV_SOUND_CONFIG(namco_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.90 * 10.0 / 16.0)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( dzigzag )

@@ -12,6 +12,7 @@ driver by Nicola Salmoria
 #include "vidhrdw/generic.h"
 #include "cpu/m6809/m6809.h"
 #include "vidhrdw/konamiic.h"
+#include "sound/k007232.h"
 
 
 extern int bottom9_video_enable;
@@ -383,14 +384,16 @@ static void volume_callback1(int v)
 	K007232_set_volume(1,1,0,(v & 0x0f) * 0x11);
 }
 
-static struct K007232_interface k007232_interface =
+static struct K007232_interface k007232_interface_1 =
 {
-	2,			/* number of chips */
-	3579545,	/* clock */
-	{ REGION_SOUND1, REGION_SOUND2 },	/* memory regions */
-	{ K007232_VOL(40,MIXER_PAN_CENTER,40,MIXER_PAN_CENTER),
-			K007232_VOL(40,MIXER_PAN_CENTER,40,MIXER_PAN_CENTER) },	/* volume */
-	{ volume_callback0, volume_callback1 }	/* external port callback */
+	REGION_SOUND1,
+	volume_callback0
+};
+
+static struct K007232_interface k007232_interface_2 =
+{
+	REGION_SOUND2,
+	volume_callback1
 };
 
 
@@ -420,7 +423,17 @@ static MACHINE_DRIVER_START( bottom9 )
 	MDRV_VIDEO_UPDATE(bottom9)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(K007232, k007232_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	
+	MDRV_SOUND_ADD(K007232, 3579545)
+	MDRV_SOUND_CONFIG(k007232_interface_1)
+	MDRV_SOUND_ROUTE(0, "mono", 0.40)
+	MDRV_SOUND_ROUTE(1, "mono", 0.40)
+	
+	MDRV_SOUND_ADD(K007232, 3579545)
+	MDRV_SOUND_CONFIG(k007232_interface_2)
+	MDRV_SOUND_ROUTE(0, "mono", 0.40)
+	MDRV_SOUND_ROUTE(1, "mono", 0.40)
 MACHINE_DRIVER_END
 
 

@@ -10,7 +10,7 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "machine/namcoio.h"
-
+#include "sound/samples.h"
 
 data8_t *gaplus_customio_3;
 

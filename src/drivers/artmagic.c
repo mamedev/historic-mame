@@ -20,6 +20,7 @@
 #include "vidhrdw/tlc34076.h"
 #include "artmagic.h"
 #include "machine/random.h"
+#include "sound/okim6295.h"
 
 
 static data16_t *control;
@@ -729,22 +730,6 @@ INPUT_PORTS_END
 
 /*************************************
  *
- *	Sound definition
- *
- *************************************/
-
-static struct OKIM6295interface okim6295_interface =
-{
-	1,
-	{ 40000000/3/10/165 },
-	{ REGION_SOUND1 },
-	{ 100 }
-};
-
-
-
-/*************************************
- *
  *	Machine driver
  *
  *************************************/
@@ -783,7 +768,11 @@ MACHINE_DRIVER_START( artmagic )
 	MDRV_VIDEO_UPDATE(artmagic)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(OKIM6295, okim6295_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(OKIM6295, 40000000/3/10/165)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 

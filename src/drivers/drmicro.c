@@ -10,6 +10,8 @@ Quite similar to Appoooh
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "sound/msm5205.h"
+#include "sound/sn76496.h"
 
 #define MCLK 18432000
 
@@ -218,20 +220,10 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 	{ -1 } /* end of array */
 };
 
-static struct SN76496interface sn76496_interface =
-{
-	3,							/* 3 chips */
-	{ MCLK/4, MCLK/4, MCLK/4 }, /* 4.608MHz? */
-	{ 50, 50, 50 }				/* volume */
-};
-
 static struct MSM5205interface msm5205_interface =
 {
-	1,					/* 1 chip */
-	384000,				/* 384 KHz */
-	{ pcm_w },			/* IRQ handler */
-	{ MSM5205_S64_4B },	/* 6 KHz */
-	{ 75 }				/* volume */
+	pcm_w,			/* IRQ handler */
+	MSM5205_S64_4B	/* 6 KHz */
 };
 
 /****************************************************************************/
@@ -261,8 +253,20 @@ static MACHINE_DRIVER_START( drmicro )
 	MDRV_VIDEO_UPDATE(drmicro)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(SN76496, sn76496_interface)
-	MDRV_SOUND_ADD(MSM5205, msm5205_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(SN76496, MCLK/4)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
+
+	MDRV_SOUND_ADD(SN76496, MCLK/4)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
+
+	MDRV_SOUND_ADD(SN76496, MCLK/4)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
+
+	MDRV_SOUND_ADD(MSM5205, 384000)
+	MDRV_SOUND_CONFIG(msm5205_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.75)
 MACHINE_DRIVER_END
 
 /****************************************************************************/

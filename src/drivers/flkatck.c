@@ -14,6 +14,8 @@ TO DO:
 #include "cpu/z80/z80.h"
 #include "cpu/hd6309/hd6309.h"
 #include "vidhrdw/generic.h"
+#include "sound/2151intf.h"
+#include "sound/k007232.h"
 
 /* from vidhrdw/flkatck.c */
 VIDEO_START( flkatck );
@@ -255,14 +257,6 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 	{ -1 } /* end of array */
 };
 
-static struct YM2151interface ym2151_interface =
-{
-	1,
-	3579545,	/* 3.579545 MHz */
-	{ YM3012_VOL(100,MIXER_PAN_LEFT,100,MIXER_PAN_RIGHT) },
-	{ 0 },
-};
-
 static void volume_callback0(int v)
 {
 	K007232_set_volume(0,0,(v >> 4) * 0x11,0);
@@ -271,11 +265,8 @@ static void volume_callback0(int v)
 
 static struct K007232_interface k007232_interface =
 {
-	1,			/* number of chips */
-	3579545,	/* clock */
-	{ REGION_SOUND1 },		/* memory region */
-	{ K007232_VOL(50,MIXER_PAN_CENTER,50,MIXER_PAN_CENTER) },	/* volume */
-	{ volume_callback0 }	/* external port callback */
+	REGION_SOUND1,		/* memory region */
+	volume_callback0	/* external port callback */
 };
 
 
@@ -306,9 +297,18 @@ static MACHINE_DRIVER_START( flkatck )
 	MDRV_VIDEO_UPDATE(flkatck)
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(YM2151, ym2151_interface)
-	MDRV_SOUND_ADD(K007232, k007232_interface)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(YM2151, 3579545)
+	MDRV_SOUND_ROUTE(0, "left", 1.0)
+	MDRV_SOUND_ROUTE(1, "right", 1.0)
+	
+	MDRV_SOUND_ADD(K007232, 3579545)
+	MDRV_SOUND_CONFIG(k007232_interface)
+	MDRV_SOUND_ROUTE(0, "left", 0.50)
+	MDRV_SOUND_ROUTE(0, "right", 0.50)
+	MDRV_SOUND_ROUTE(1, "left", 0.50)
+	MDRV_SOUND_ROUTE(1, "right", 0.50)
 MACHINE_DRIVER_END
 
 

@@ -7,6 +7,7 @@ Atari Fire Truck + Super Bug + Monte Carlo driver
 
 #include "driver.h"
 #include "firetrk.h"
+#include "sound/discrete.h"
 
 #define FIRETRK_CPU_CLOCK_1MHZ		(12096000 / 12)
 #define FIRETRK_CPU_CLOCK_750KZ		(12096000 /16)
@@ -1081,7 +1082,11 @@ static MACHINE_DRIVER_START( firetrk )
 	MDRV_VIDEO_UPDATE(firetrk)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD_TAG("discrete", DISCRETE, firetrk_discrete_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	
+	MDRV_SOUND_ADD_TAG("discrete", DISCRETE, 0)
+	MDRV_SOUND_CONFIG(firetrk_discrete_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 
@@ -1100,7 +1105,9 @@ static MACHINE_DRIVER_START( superbug )
 	MDRV_COLORTABLE_LENGTH(28)
 
 	/* sound hardware */
-	MDRV_SOUND_REPLACE("discrete", DISCRETE, superbug_discrete_interface)
+	MDRV_SOUND_REPLACE("discrete", DISCRETE, 0)
+	MDRV_SOUND_CONFIG(superbug_discrete_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 
@@ -1119,7 +1126,9 @@ static MACHINE_DRIVER_START( montecar )
 	MDRV_COLORTABLE_LENGTH(46)
 
 	/* sound hardware */
-	MDRV_SOUND_REPLACE("discrete", DISCRETE, montecar_discrete_interface)
+	MDRV_SOUND_REPLACE("discrete", DISCRETE, 0)
+	MDRV_SOUND_CONFIG(montecar_discrete_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 

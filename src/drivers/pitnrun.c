@@ -65,6 +65,7 @@ K1000233A
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "sound/ay8910.h"
 
 WRITE8_HANDLER (pitnrun_68705_portA_w);
 WRITE8_HANDLER (pitnrun_68705_portB_w);
@@ -271,13 +272,8 @@ static struct GfxLayout charlayout =
 
 static struct AY8910interface ay8910_interface =
 {
-	2,
-	18432000/12,
-	{ 50, 50 },
-	{ soundlatch_r, soundlatch_r },
-	{ soundlatch_r, soundlatch_r },
-	{ 0, 0 },
-	{ 0, 0 }
+	soundlatch_r,
+	soundlatch_r
 };
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
@@ -310,6 +306,7 @@ static MACHINE_DRIVER_START( pitnrun )
 
 	MDRV_INTERLEAVE(100)
 
+	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER )
 	MDRV_SCREEN_SIZE(256, 256)
 	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
@@ -319,8 +316,17 @@ static MACHINE_DRIVER_START( pitnrun )
 	MDRV_PALETTE_INIT(pitnrun)
 	MDRV_VIDEO_START(pitnrun)
 	MDRV_VIDEO_UPDATE(pitnrun)
-	MDRV_SOUND_ADD(AY8910, ay8910_interface)
+	
+	/* sound hardware */
+	MDRV_SPEAKER_STANDARD_MONO("mono")
 
+	MDRV_SOUND_ADD(AY8910, 18432000/12)
+	MDRV_SOUND_CONFIG(ay8910_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
+
+	MDRV_SOUND_ADD(AY8910, 18432000/12)
+	MDRV_SOUND_CONFIG(ay8910_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
 MACHINE_DRIVER_END
 
 

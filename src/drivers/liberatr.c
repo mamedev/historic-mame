@@ -135,6 +135,7 @@
 
 #include "driver.h"
 #include "machine/atari_vg.h"
+#include "sound/pokey.h"
 #include "liberatr.h"
 
 static UINT8 trackball_offset;
@@ -356,22 +357,17 @@ INPUT_PORTS_END
  *
  *************************************/
 
-static struct POKEYinterface pokey_interface =
+static struct POKEYinterface pokey_interface_1 =
 {
-	2,				/* 2 chips */
-	FREQ_17_APPROX,	/* 1.7 MHz */
-	{ 50, 50 },
-	/* The 8 pot handlers */
-	{ 0, 0 },
-	{ 0, 0 },
-	{ 0, 0 },
-	{ 0, 0 },
-	{ 0, 0 },
-	{ 0, 0 },
-	{ 0, 0 },
-	{ 0, 0 },
-	/* The allpot handler */
-	{ input_port_3_r, input_port_2_r }
+	{ 0 },
+	input_port_3_r
+};
+
+
+static struct POKEYinterface pokey_interface_2 =
+{
+	{ 0 },
+	input_port_2_r
 };
 
 
@@ -404,7 +400,15 @@ static MACHINE_DRIVER_START( liberatr )
 	MDRV_VIDEO_UPDATE(liberatr)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(POKEY, pokey_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(POKEY, FREQ_17_APPROX)
+	MDRV_SOUND_CONFIG(pokey_interface_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
+
+	MDRV_SOUND_ADD(POKEY, FREQ_17_APPROX)
+	MDRV_SOUND_CONFIG(pokey_interface_2)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
 MACHINE_DRIVER_END
 
 

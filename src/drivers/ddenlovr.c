@@ -78,6 +78,9 @@ TODO:
 
 #include "driver.h"
 #include "cpu/z80/z80.h"
+#include "sound/ay8910.h"
+#include "sound/okim6295.h"
+#include "sound/2413intf.h"
 
 
 static UINT8 *pixmap[8];
@@ -2006,30 +2009,12 @@ INPUT_PORTS_END
 							Don Den Lover Vol.1
 ***************************************************************************/
 
-static struct YM2413interface ym2413_interface =
-{
-	1,
-	3579545,	/* ???? */
-	{ YM2413_VOL(80,MIXER_PAN_CENTER,80,MIXER_PAN_CENTER) }
-};
-
 static struct AY8910interface ay8910_interface =
 {
-	1,			/* 1 chip */
-	2000000,	/* ??? */
-	{ 30 },
-	{ quiz365_input_r },
-	{ 0 },
-	{ 0 },
-	{ quiz365_select_w }
-};
-
-static struct OKIM6295interface okim6295_interface =
-{
-	1,
-	{ 8000 },	/* ? */
-	{ REGION_SOUND1 },
-	{ 80 }
+	quiz365_input_r,
+	0,
+	0,
+	quiz365_select_w
 };
 
 static MACHINE_DRIVER_START( ddenlovr )
@@ -2052,9 +2037,18 @@ static MACHINE_DRIVER_START( ddenlovr )
 	MDRV_VIDEO_UPDATE(ddenlovr)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM2413, ym2413_interface)
-	MDRV_SOUND_ADD(AY8910, ay8910_interface)
-	MDRV_SOUND_ADD(OKIM6295, okim6295_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM2413, 3579545)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.80)
+
+	MDRV_SOUND_ADD(AY8910, 2000000)
+	MDRV_SOUND_CONFIG(ay8910_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.30)
+
+	MDRV_SOUND_ADD(OKIM6295, 8000)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.80)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( quiz365 )
@@ -2131,8 +2125,14 @@ static MACHINE_DRIVER_START( quizchq )
 	MDRV_VIDEO_UPDATE(ddenlovr)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM2413, ym2413_interface)
-	MDRV_SOUND_ADD(OKIM6295, okim6295_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM2413, 3579545)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.80)
+
+	MDRV_SOUND_ADD(OKIM6295, 8000)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.80)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( rongrong )
@@ -2196,9 +2196,18 @@ static MACHINE_DRIVER_START( mmpanic )
 	MDRV_VIDEO_UPDATE(ddenlovr)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM2413, ym2413_interface)
-	MDRV_SOUND_ADD(AY8910, ay8910_interface)
-	MDRV_SOUND_ADD(OKIM6295, okim6295_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM2413, 3579545)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.80)
+
+	MDRV_SOUND_ADD(AY8910, 2000000)
+	MDRV_SOUND_CONFIG(ay8910_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.30)
+
+	MDRV_SOUND_ADD(OKIM6295, 8000)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.80)
 MACHINE_DRIVER_END
 
 

@@ -9,6 +9,8 @@ driver by Mirko Buffoni
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "cpu/m6809/m6809.h"
+#include "sound/2203intf.h"
+#include "sound/flt_rc.h"
 
 
 extern UINT8 *ironhors_scroll;
@@ -46,9 +48,9 @@ static WRITE8_HANDLER( ironhors_sh_irqtrigger_w )
 
 static WRITE8_HANDLER( ironhors_filter_w )
 {
-	set_RC_filter(0,1000,2200,1000,data & 0x04 ? 220000 : 0); /* YM2203-SSG-A */
-	set_RC_filter(1,1000,2200,1000,data & 0x02 ? 220000 : 0); /* YM2203-SSG-B */
-	set_RC_filter(2,1000,2200,1000,data & 0x01 ? 220000 : 0); /* YM2203-SSG-C */
+	filter_rc_set_RC(0,1000,2200,1000,data & 0x04 ? 220000 : 0); /* YM2203-SSG-A */
+	filter_rc_set_RC(1,1000,2200,1000,data & 0x02 ? 220000 : 0); /* YM2203-SSG-B */
+	filter_rc_set_RC(2,1000,2200,1000,data & 0x01 ? 220000 : 0); /* YM2203-SSG-C */
 }
 
 
@@ -383,13 +385,10 @@ static struct GfxDecodeInfo farwest_gfxdecodeinfo[] =
 
 static struct YM2203interface ym2203_interface =
 {
-	1,			/* 1 chip */
-	18432000/6,		/* 3.072 MHz */
-	{ YM2203_VOL(40,40) },
-	{ 0 },
-	{ 0 },
-	{ ironhors_filter_w },
-	{ 0 }
+	0,
+	0,
+	ironhors_filter_w,
+	0
 };
 
 
@@ -421,7 +420,21 @@ static MACHINE_DRIVER_START( ironhors )
 	MDRV_VIDEO_UPDATE(ironhors)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM2203, ym2203_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM2203, 18432000/6)
+	MDRV_SOUND_CONFIG(ym2203_interface)
+	MDRV_SOUND_ROUTE(0, "filter1", 0.40)
+	MDRV_SOUND_ROUTE(1, "filter2", 0.40)
+	MDRV_SOUND_ROUTE(2, "filter3", 0.40)
+	MDRV_SOUND_ROUTE(3, "mono", 0.40)
+	
+	MDRV_SOUND_ADD_TAG("filter1", FILTER_RC, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
+	MDRV_SOUND_ADD_TAG("filter2", FILTER_RC, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
+	MDRV_SOUND_ADD_TAG("filter3", FILTER_RC, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 

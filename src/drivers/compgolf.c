@@ -12,6 +12,7 @@ as well.
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "sound/2203intf.h"
 
 extern data8_t *compgolf_bg_ram;
 extern int compgolf_scrollx_lo, compgolf_scrolly_lo, compgolf_scrollx_hi, compgolf_scrolly_hi;
@@ -203,14 +204,11 @@ static void sound_irq(int linestate)
 
 static struct YM2203interface ym2203_interface =
 {
-	1,
-	1500000,
-	{ YM2203_VOL(100,100) },
-	{ 0 },
-	{ 0 },
-	{ compgolf_scrollx_lo_w },
-	{ compgolf_scrolly_lo_w },
-	{ sound_irq }
+	0,
+	0,
+	compgolf_scrollx_lo_w,
+	compgolf_scrolly_lo_w,
+	sound_irq
 };
 
 static MACHINE_DRIVER_START( compgolf )
@@ -232,7 +230,11 @@ static MACHINE_DRIVER_START( compgolf )
 	MDRV_VIDEO_START(compgolf)
 	MDRV_VIDEO_UPDATE(compgolf)
 
-	MDRV_SOUND_ADD(YM2203, ym2203_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM2203, 1500000)
+	MDRV_SOUND_CONFIG(ym2203_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 /***************************************************************************/

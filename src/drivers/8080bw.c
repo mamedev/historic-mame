@@ -175,8 +175,15 @@ static MACHINE_DRIVER_START( invaders )
 	MDRV_VISIBLE_AREA(1*8, 31*8-1, 4*8, 32*8-1)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(SAMPLES, invaders_samples_interface)
-	MDRV_SOUND_ADD(SN76477, invaders_sn76477_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(SAMPLES, 0)
+	MDRV_SOUND_CONFIG(invaders_samples_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
+
+	MDRV_SOUND_ADD(SN76477, 0)
+	MDRV_SOUND_CONFIG(invaders_sn76477_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
 MACHINE_DRIVER_END
 
 
@@ -609,8 +616,19 @@ static MACHINE_DRIVER_START( invad2ct )
 	MDRV_MACHINE_INIT(invad2ct)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(SAMPLES, invad2ct_samples_interface)
-	MDRV_SOUND_ADD(SN76477, invad2ct_sn76477_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	
+	MDRV_SOUND_ADD(SAMPLES, 0)
+	MDRV_SOUND_CONFIG(invad2ct_samples_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
+
+	MDRV_SOUND_ADD(SN76477, 0)
+	MDRV_SOUND_CONFIG(invad2ct_sn76477_interface_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
+
+	MDRV_SOUND_ADD(SN76477, 0)
+	MDRV_SOUND_CONFIG(invad2ct_sn76477_interface_2)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
 MACHINE_DRIVER_END
 
 
@@ -693,8 +711,15 @@ static MACHINE_DRIVER_START( sstrangr )
 	MDRV_VISIBLE_AREA(1*8, 31*8-1, 4*8, 32*8-1)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(SAMPLES, invaders_samples_interface)
-	MDRV_SOUND_ADD(SN76477, invaders_sn76477_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(SAMPLES, 0)
+	MDRV_SOUND_CONFIG(invaders_samples_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
+
+	MDRV_SOUND_ADD(SN76477, 0)
+	MDRV_SOUND_CONFIG(invaders_sn76477_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
 MACHINE_DRIVER_END
 
 
@@ -781,8 +806,15 @@ static MACHINE_DRIVER_START( sstrngr2 )
 	MDRV_VISIBLE_AREA(1*8, 31*8-1, 4*8, 32*8-1)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(SAMPLES, invaders_samples_interface)
-	MDRV_SOUND_ADD(SN76477, invaders_sn76477_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(SAMPLES, 0)
+	MDRV_SOUND_CONFIG(invaders_samples_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
+
+	MDRV_SOUND_ADD(SN76477, 0)
+	MDRV_SOUND_CONFIG(invaders_sn76477_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
 MACHINE_DRIVER_END
 
 
@@ -1490,7 +1522,11 @@ static MACHINE_DRIVER_START( boothill )
 	MDRV_MACHINE_INIT(boothill)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(SAMPLES, boothill_samples_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(SAMPLES, 0)
+	MDRV_SOUND_CONFIG(boothill_samples_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
 MACHINE_DRIVER_END
 
 
@@ -1579,9 +1615,18 @@ static MACHINE_DRIVER_START( schaser )
 	MDRV_VISIBLE_AREA(0*8, 31*8-1, 4*8, 32*8-1)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(SN76477, schaser_sn76477_interface)
-	MDRV_SOUND_ADD(DAC, schaser_dac_interface)
-	MDRV_SOUND_ADD(CUSTOM, schaser_custom_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(SN76477, 0)
+	MDRV_SOUND_CONFIG(schaser_sn76477_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
+
+	MDRV_SOUND_ADD(DAC, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
+
+	MDRV_SOUND_ADD(SAMPLES, 0)
+	MDRV_SOUND_CONFIG(schaser_custom_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
 MACHINE_DRIVER_END
 
 
@@ -1812,7 +1857,11 @@ static MACHINE_DRIVER_START( clowns )
 	MDRV_MACHINE_INIT(clowns)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(SAMPLES, circus_samples_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(SAMPLES, 0)
+	MDRV_SOUND_CONFIG(circus_samples_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
 MACHINE_DRIVER_END
 
 
@@ -2075,7 +2124,11 @@ static MACHINE_DRIVER_START( polaris )
 	MDRV_VISIBLE_AREA(1*8, 31*8-1, 4*8, 32*8-1)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD_TAG("discrete", DISCRETE, polaris_discrete_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	
+	MDRV_SOUND_ADD_TAG("discrete", DISCRETE, 0)
+	MDRV_SOUND_CONFIG(polaris_discrete_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 
@@ -2416,7 +2469,11 @@ static MACHINE_DRIVER_START( seawolf )
 	MDRV_MACHINE_INIT(seawolf)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(SAMPLES, seawolf_samples_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	
+	MDRV_SOUND_ADD(SAMPLES, 0)
+	MDRV_SOUND_CONFIG(seawolf_samples_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
 MACHINE_DRIVER_END
 
 

@@ -57,6 +57,8 @@ J1100072A
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "sound/ay8910.h"
+#include "sound/msm5232.h"
 
 VIDEO_START( bigevglf );
 VIDEO_UPDATE( bigevglf );
@@ -454,23 +456,9 @@ MACHINE_INIT( bigevglf )
 }
 
 
-static struct AY8910interface ay8910_interface =
-{
-	1,	/* 1 chip */
-	8000000/4,	/* 2 MHz ? */
-	{ 15 },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ 0 }
-};
-
 static struct MSM5232interface msm5232_interface =
 {
-	1,	/* 1 chip */
-	8000000/4,	/* 2 MHz ? */
-	{ { 0.65e-6, 0.65e-6, 0.65e-6, 0.65e-6, 0.65e-6, 0.65e-6, 0.65e-6, 0.65e-6 } },	/* 0.65 (???) uF capacitors */
-	{ 100 }	/* mixing level ??? */
+	{ 0.65e-6, 0.65e-6, 0.65e-6, 0.65e-6, 0.65e-6, 0.65e-6, 0.65e-6, 0.65e-6 }	/* 0.65 (???) uF capacitors */
 };
 
 static MACHINE_DRIVER_START( bigevglf )
@@ -510,8 +498,14 @@ static MACHINE_DRIVER_START( bigevglf )
 	MDRV_VIDEO_UPDATE(bigevglf)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(AY8910, ay8910_interface) /* YM2149 really */
-	MDRV_SOUND_ADD(MSM5232, msm5232_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(AY8910, 8000000/4)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.15) /* YM2149 really */
+
+	MDRV_SOUND_ADD(MSM5232, 8000000/4)
+	MDRV_SOUND_CONFIG(msm5232_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 /***************************************************************************

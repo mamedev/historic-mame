@@ -120,6 +120,9 @@
 
 #include "driver.h"
 #include "machine/atarigen.h"
+#include "sound/5220intf.h"
+#include "sound/2151intf.h"
+#include "sound/pokey.h"
 #include "gauntlet.h"
 
 
@@ -313,7 +316,7 @@ static WRITE8_HANDLER( sound_ctl_w )
 
 		case 2:	/* speech reset, bit D7, active low */
 			if (((data ^ last_speech_write) & 0x80) && (data & 0x80))
-				tms5220_reset();
+				sndti_reset(SOUND_TMS5220, 0);
 			break;
 
 		case 3:	/* speech squeak, bit D7 */
@@ -563,38 +566,6 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 /*************************************
  *
- *	Sound definitions
- *
- *************************************/
-
-static struct YM2151interface ym2151_interface =
-{
-	1,
-	ATARI_CLOCK_14MHz/4,
-	{ YM3012_VOL(48,MIXER_PAN_LEFT,48,MIXER_PAN_RIGHT) },
-	{ 0 }
-};
-
-
-static struct POKEYinterface pokey_interface =
-{
-	1,
-	ATARI_CLOCK_14MHz/8,
-	{ 32 },
-};
-
-
-static struct TMS5220interface tms5220_interface =
-{
-	ATARI_CLOCK_14MHz/2/11,	/* potentially ATARI_CLOCK_14MHz/2/9 as well */
-	80,
-	0
-};
-
-
-
-/*************************************
- *
  *	Machine driver
  *
  *************************************/
@@ -626,10 +597,19 @@ static MACHINE_DRIVER_START( gauntlet )
 	MDRV_VIDEO_UPDATE(gauntlet)
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(YM2151, ym2151_interface)
-	MDRV_SOUND_ADD(POKEY, pokey_interface)
-	MDRV_SOUND_ADD(TMS5220, tms5220_interface)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(YM2151, ATARI_CLOCK_14MHz/4)
+	MDRV_SOUND_ROUTE(0, "left", 0.48)
+	MDRV_SOUND_ROUTE(1, "right", 0.48)
+
+	MDRV_SOUND_ADD(POKEY, ATARI_CLOCK_14MHz/8)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.32)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 0.32)
+	
+	MDRV_SOUND_ADD(TMS5220, ATARI_CLOCK_14MHz/2/11)	/* potentially ATARI_CLOCK_14MHz/2/9 as well */
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.80)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 0.80)
 MACHINE_DRIVER_END
 
 

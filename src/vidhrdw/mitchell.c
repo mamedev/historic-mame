@@ -6,6 +6,7 @@
 
 #include "vidhrdw/generic.h"
 #include "palette.h"
+#include "sound/okim6295.h"
 
 
 /* Globals */

@@ -8,6 +8,7 @@ Taxi Driver  (c) 1984 Graphic Techno
 #include "vidhrdw/generic.h"
 #include "machine/8255ppi.h"
 #include "taxidrvr.h"
+#include "sound/ay8910.h"
 
 
 
@@ -342,15 +343,17 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 
 
-static struct AY8910interface ay8910_interface =
+static struct AY8910interface ay8910_interface_1 =
 {
-	2,	/* 2 chips */
-	1250000,	/* 1.25 MHz ??? */
-	{ 25, 25 },
-	{ p8910_0a_r, p8910_1a_r },
-	{ 0, 0 },
-	{ 0, 0 },
-	{ p8910_0b_w, 0 }
+	p8910_0a_r,
+	0,
+	0,
+	p8910_0b_w
+};
+
+static struct AY8910interface ay8910_interface_2 =
+{
+	p8910_1a_r
 };
 
 
@@ -387,7 +390,15 @@ static MACHINE_DRIVER_START( taxidrvr )
 	MDRV_VIDEO_UPDATE(taxidrvr)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(AY8910, ay8910_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	
+	MDRV_SOUND_ADD(AY8910, 1250000)
+	MDRV_SOUND_CONFIG(ay8910_interface_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
+	
+	MDRV_SOUND_ADD(AY8910, 1250000)
+	MDRV_SOUND_CONFIG(ay8910_interface_2)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
 MACHINE_DRIVER_END
 
 

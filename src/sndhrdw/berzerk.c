@@ -18,6 +18,7 @@
 
 #include "driver.h"
 #include "includes/berzerk.h"
+#include "sound/samples.h"
 
 
 static const char *sample_names[] =
@@ -84,28 +85,33 @@ static int lastvoice = 0;
 
 /* sound controls */
 static int berzerknoisemulate = 0;
-static int voicevolume = 100;
+static float voicevolume = 1.0;
 static long samplefrequency = 22320;
 static int voice_playing;
 static int deathsound = 0;          /* trigger for playing collision sound */
 static int nextdata5 = -1;
 
-static int berzerk_sh_start(const struct MachineSound *msound)
+static void berzerk_sh_update(int param)
+{
+	voice_playing = !sample_playing(VOICE_CHANNEL);
+	if (deathsound==3 && sample_playing(DEATH_CHANNEL) == 0 && lastnoise != 70)
+		deathsound=0;               /* reset death sound */
+}
+
+
+static void berzerk_sh_start(void)
 {
 	int i;
 
-
 	berzerknoisemulate = 1;
 
-	if (Machine->samples)
+	for (i = 0;i < 5;i++)
 	{
-		for (i = 0;i < 5;i++)
-		{
-			if (Machine->samples->sample[i])
-				berzerknoisemulate = 0;
-		}
+		if (sample_loaded(i))
+			berzerknoisemulate = 0;
 	}
-	return 0;
+	
+	timer_pulse(TIME_IN_HZ(Machine->drv->frames_per_second), 0, berzerk_sh_update);
 }
 
 WRITE8_HANDLER( berzerk_sound_control_a_w )
@@ -130,8 +136,7 @@ WRITE8_HANDLER( berzerk_sound_control_a_w )
 		else
 		{
 			/* We should use the volume and frequency on the voice samples */
-			voicevolume = ((data & 0x38) >> 3);
-			if (voicevolume > 0) voicevolume=255;
+			voicevolume = ((data & 0x38) >> 3) ? 1.0 : 0;
 
 			voicefrequency = (data & 0x07);
 #ifdef VOICE_PITCH_MODULATION
@@ -219,7 +224,7 @@ WRITE8_HANDLER( berzerk_sound_control_a_w )
 		if (voicefrequency != 1750*(4-noise))
 		{
 			voicefrequency = 1750*(4-noise);
-			voicevolume = 85*noise;
+			voicevolume = 0.33*noise;
 		}
 
 		if (noise)
@@ -292,13 +297,6 @@ WRITE8_HANDLER( berzerk_sound_control_b_w )
 	logerror("B Data value %d and offset %d at %d\n", data, offset, lastfreq);
 }
 
-static void berzerk_sh_update(void)
-{
-	voice_playing = !sample_playing(VOICE_CHANNEL);
-	if (deathsound==3 && sample_playing(DEATH_CHANNEL) == 0 && lastnoise != 70)
-		deathsound=0;               /* reset death sound */
-}
-
 
 READ8_HANDLER( berzerk_voiceboard_r )
 {
@@ -312,13 +310,6 @@ READ8_HANDLER( berzerk_voiceboard_r )
 struct Samplesinterface berzerk_samples_interface =
 {
 	8,	/* 8 channels */
-	25,	/* volume */
-	sample_names
-};
-
-struct CustomSound_interface berzerk_custom_interface =
-{
-	berzerk_sh_start,
-	0,
-	berzerk_sh_update
+	sample_names,
+	berzerk_sh_start
 };

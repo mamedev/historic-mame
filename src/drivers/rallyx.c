@@ -182,7 +182,8 @@ TODO:
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "sndhrdw/timeplt.h"
-
+#include "sound/namco.h"
+#include "sound/samples.h"
 
 
 extern data8_t *rallyx_videoram,*rallyx_radarattr;
@@ -809,9 +810,7 @@ static struct GfxDecodeInfo jungler_gfxdecodeinfo[] =
 
 static struct namco_interface namco_interface =
 {
-	18432000/6/32,	/* 96 kHz sample rate */
 	3,				/* number of voices */
-	100,			/* playback volume */
 	REGION_SOUND1	/* memory region */
 };
 
@@ -825,7 +824,6 @@ static const char *rallyx_sample_names[] =
 static struct Samplesinterface samples_interface =
 {
 	1,	/* 1 channel */
-	80, /* volume */
 	rallyx_sample_names
 };
 
@@ -855,8 +853,15 @@ static MACHINE_DRIVER_START( rallyx )
 	MDRV_VIDEO_UPDATE(rallyx)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(NAMCO, namco_interface)
-	MDRV_SOUND_ADD(SAMPLES, samples_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(NAMCO, 18432000/6/32)
+	MDRV_SOUND_CONFIG(namco_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
+
+	MDRV_SOUND_ADD(SAMPLES, 0)
+	MDRV_SOUND_CONFIG(samples_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.80)
 MACHINE_DRIVER_END
 
 
@@ -887,7 +892,32 @@ static MACHINE_DRIVER_START( tactcian )
 	MDRV_VIDEO_UPDATE(rallyx)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(AY8910, timeplt_ay8910_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(AY8910, 14318180/8)
+	MDRV_SOUND_CONFIG(timeplt_ay8910_interface)
+	MDRV_SOUND_ROUTE(0, "filter.0.0", 0.60)
+	MDRV_SOUND_ROUTE(1, "filter.0.1", 0.60)
+	MDRV_SOUND_ROUTE(2, "filter.0.2", 0.60)
+
+	MDRV_SOUND_ADD(AY8910, 14318180/8)
+	MDRV_SOUND_ROUTE(0, "filter.1.0", 0.60)
+	MDRV_SOUND_ROUTE(1, "filter.1.1", 0.60)
+	MDRV_SOUND_ROUTE(2, "filter.1.2", 0.60)
+	
+	MDRV_SOUND_ADD_TAG("filter.0.0", FILTER_RC, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
+	MDRV_SOUND_ADD_TAG("filter.0.1", FILTER_RC, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
+	MDRV_SOUND_ADD_TAG("filter.0.2", FILTER_RC, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
+
+	MDRV_SOUND_ADD_TAG("filter.1.0", FILTER_RC, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
+	MDRV_SOUND_ADD_TAG("filter.1.1", FILTER_RC, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
+	MDRV_SOUND_ADD_TAG("filter.1.2", FILTER_RC, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 

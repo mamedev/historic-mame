@@ -59,7 +59,7 @@ static struct
 	UINT16 counter;
 	void *timer;
 } timers[3];
-static int channel;
+static sound_stream *channel;
 UINT8 spc_usefakeapu = 0;				/* Fake the APU behaviour. */
 static UINT8 spc_showrom = 1;			/* Is the IPL ROM visible or not */
 static UINT8 spc_iplrom[IPLROM_SIZE];	/* Storage for the IPL rom */
@@ -79,17 +79,15 @@ static void snes_spc_timer( int t )
 	}
 }
 
-int snes_sh_start( const struct MachineSound *driver )
+void *snes_sh_start(int clock, const struct CustomSound_interface *config)
 {
 	UINT8 ii;
-	const char *names[2] = { "SNES", "SNES" };
-	const int volume[2] = { MIXER( 50, MIXER_PAN_LEFT ), MIXER( 50, MIXER_PAN_RIGHT ) };
 
 	/* If sound is disabled then we'd better use the SPC skipper */
 	if( Machine->sample_rate == 0 )
 	{
 		spc_usefakeapu = 1;
-		return 0;
+		return auto_malloc(1);
 	}
 
 	/* Copy the IPL ROM into storage */
@@ -117,7 +115,7 @@ int snes_sh_start( const struct MachineSound *driver )
 		snes_dsp.voice[ii].pos = 0;
 	}
 
-	channel = stream_init_multi( 2, names, volume, Machine->sample_rate, 0, snes_sh_update );
+	channel = stream_create( 0, 2, Machine->sample_rate, NULL, snes_sh_update );
 
 	/* Initialize the timers */
 	timers[0].timer = timer_alloc( snes_spc_timer );
@@ -130,12 +128,12 @@ int snes_sh_start( const struct MachineSound *driver )
 	timer_adjust( timers[2].timer, TIME_IN_USEC(15.6), 2, TIME_IN_USEC(15.6) );
 	timer_enable( timers[2].timer, 0 );
 
-	return 0;
+	return auto_malloc(1);
 }
 
-void snes_sh_update( int param, INT16 **buffer, int length )
+void snes_sh_update( void *param, stream_sample_t **inputs, stream_sample_t **buffer, int length )
 {
-	INT16 left, right;
+	stream_sample_t left, right;
 
 	while( length-- > 0 )
 	{

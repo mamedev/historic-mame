@@ -115,6 +115,8 @@ Notes:
 #include "machine/eeprom.h"
 #include "machine/intelfsh.h"
 #include "machine/am53cf96.h"
+#include "sound/psx.h"
+#include "sound/cdda.h"
 
 /* EEPROM handlers */
 
@@ -302,29 +304,22 @@ static DRIVER_INIT( konamigv )
 	am53cf96_init(&scsi_intf);
 	psx_dma_install_read_handler(5, scsi_dma_read);
 	psx_dma_install_write_handler(5, scsi_dma_write);
-
-	/* also hook up CDDA audio to the CD-ROM drive */
-	CDDA_set_cdrom(0, am53cf96_get_device());
 }
 
 static MACHINE_INIT( konamigv )
 {
 	psx_machine_init();
+
+	/* also hook up CDDA audio to the CD-ROM drive */
+	CDDA_set_cdrom(0, am53cf96_get_device());
 }
 
 static struct PSXSPUinterface konamigv_psxspu_interface =
 {
-	75,
 	&g_p_n_psxram,
 	psx_irq_set,
 	psx_dma_install_read_handler,
 	psx_dma_install_write_handler
-};
-
-static struct CDDAinterface konamigv_cdda_interface =
-{
-	1,
-	{ YM3012_VOL(100,MIXER_PAN_LEFT,100,MIXER_PAN_RIGHT),},
 };
 
 static MACHINE_DRIVER_START( konamigv )
@@ -351,9 +346,16 @@ static MACHINE_DRIVER_START( konamigv )
 	MDRV_VIDEO_STOP( psx )
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES( SOUND_SUPPORTS_STEREO )
-	MDRV_SOUND_ADD( PSXSPU, konamigv_psxspu_interface )
-	MDRV_SOUND_ADD( CDDA, konamigv_cdda_interface )
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+	
+	MDRV_SOUND_ADD( PSXSPU, 0 )
+	MDRV_SOUND_CONFIG( konamigv_psxspu_interface )
+	MDRV_SOUND_ROUTE( 0, "left", 0.75 )
+	MDRV_SOUND_ROUTE( 1, "right", 0.75 )
+	
+	MDRV_SOUND_ADD( CDDA, 0 )
+	MDRV_SOUND_ROUTE( 0, "left", 1.0 )
+	MDRV_SOUND_ROUTE( 1, "right", 1.0 )
 MACHINE_DRIVER_END
 
 INPUT_PORTS_START( konamigv )

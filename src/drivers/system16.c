@@ -153,6 +153,9 @@ Notes:
 #include "system16.h"
 #include "cpu/m68000/m68000.h"
 #include "machine/fd1094.h"
+#include "sound/msm5205.h"
+#include "sound/2151intf.h"
+#include "sound/upd7759.h"
 
 void fd1094_machine_init(void);
 void fd1094_driver_init(void);
@@ -264,11 +267,8 @@ static void tturfbl_msm5205_callback(int data)
 
 static struct MSM5205interface tturfbl_msm5205_interface =
 {
-	1,
-	220000, /* 220KHz */
-	{ tturfbl_msm5205_callback },
-	{ MSM5205_S48_4B},
-	{ 80 }
+	tturfbl_msm5205_callback,
+	MSM5205_S48_4B
 };
 
 
@@ -494,8 +494,11 @@ static MACHINE_DRIVER_START( system16 )
 	MDRV_VIDEO_UPDATE(system16)
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD_TAG("2151", YM2151, sys16_ym2151_interface)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD_TAG("2151", YM2151, 4000000)
+	MDRV_SOUND_ROUTE(0, "left", 0.32)
+	MDRV_SOUND_ROUTE(1, "right", 0.32)
 MACHINE_DRIVER_END
 
 
@@ -509,7 +512,10 @@ static MACHINE_DRIVER_START( system16_7759 )
 	MDRV_CPU_IO_MAP(sound_readport,sound_writeport_7759)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD_TAG("7759", UPD7759, sys16_upd7759_interface)
+	MDRV_SOUND_ADD_TAG("7759", UPD7759, UPD7759_STANDARD_CLOCK)
+	MDRV_SOUND_CONFIG(sys16_upd7759_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.48)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 0.48)
 MACHINE_DRIVER_END
 
 
@@ -528,7 +534,9 @@ static MACHINE_DRIVER_START( system16_7751 )
 	MDRV_CPU_IO_MAP(readport_7751,writeport_7751)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(DAC, sys16_7751_dac_interface)
+	MDRV_SOUND_ADD(DAC, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.80)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 0.80)
 MACHINE_DRIVER_END
 
 /***************************************************************************/
@@ -2152,7 +2160,10 @@ static MACHINE_DRIVER_START( tturfbl )
 	MDRV_CPU_IO_MAP(tturfbl_sound_readport,tturfbl_sound_writeport)
 
 	MDRV_SOUND_REMOVE("7759")
-	MDRV_SOUND_ADD_TAG("5205", MSM5205, tturfbl_msm5205_interface)
+	MDRV_SOUND_ADD_TAG("5205", MSM5205, 220000)
+	MDRV_SOUND_CONFIG(tturfbl_msm5205_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.80)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 0.80)
 
 	MDRV_MACHINE_INIT(tturfbl)
 MACHINE_DRIVER_END

@@ -578,41 +578,67 @@ const unsigned char dsoccr94_decryption_table[256] = {
 // 0x60 (0x01) guess (wrong?)
 
 
-
+/* preliminary table by Pierpaolo Prazzoli */
 const unsigned char shisen2_decryption_table[256] = {
 	xxxx,0x86,0x0a,xxxx,0x32,0x01,0x81,0xbe, 0xea,xxxx,0xbb,xxxx,xxxx,xxxx,0xa5,0xf6, /* 00 */
-//       new  new       new  new  new  new             new                 ???? new
-	0x5d,0x8c,0xf3,0xc4,xxxx,0x5a,xxxx,0x26, xxxx,0x58,xxxx,xxxx,0x59,0x53,0x80,xxxx, /* 10 */
-//  new  new  new  new       new                  new            new  new  new
+//       new  new       new  new  new  new             new                 new  new
+	0x5d,0x8c,0xf3,0xc4,0x42,0x5a,0x1c,0x26, xxxx,0x58,xxxx,xxxx,0x59,0x53,0x80,0x09, /* 10 */
+//  new  new  new  new  !!!! new  ????            new            new  new  new  ????
 	xxxx,0x1e,0x48,0xe2,0x50,xxxx,0xc3,0x23, xxxx,xxxx,0xe9,xxxx,0x40,0x83,0xa3,0x46, /* 20 */
 //       new  new  new  new       new  new             new       new  new  new
-	xxxx,xxxx,0xa9,xxxx,xxxx,0x8b,0xe8,0xb8, 0xa0,xxxx,xxxx,xxxx,0x84,xxxx,xxxx,xxxx, /* 30 */
-//            new            new  new        new                 new
+	0x49,0xb4,0xa9,xxxx,0xd3,0x8b,0xe8,0xb8, 0xa0,xxxx,xxxx,xxxx,0x84,xxxx,xxxx,xxxx, /* 30 */
+//  !!!! ???? new       ^^^^ new  new        new                 new
 	xxxx,xxxx,xxxx,xxxx,0x14,xxxx,0x25,xxxx, xxxx,0x5e,xxxx,0x87,0x56,0xb9,xxxx,0x39, /* 40 */
 //                      new       new             new       new  new  new       new
-	0x89,xxxx,xxxx,xxxx,xxxx,0x1f,xxxx,xxxx, 0xf8,0x5f,xxxx,0xb3,0x5b,xxxx,0x8d,xxxx, /* 50 */
-//  new                      new             new  new       new            new
-	xxxx,0xc5,xxxx,0x07,xxxx,0x88,0xba,0x47, 0x35,0xfb,xxxx,xxxx,xxxx,xxxx,0xc6,0xeb, /* 60 */
-//       new       new       new  new  ????  new  new                           new
-	xxxx,0xc7,xxxx,xxxx,xxxx,0xa1,0x72,0x79, 0xfe,0x24,0xab,0x2a,0xbc,0x0d,0x8f,xxxx, /* 70 */
-//                           new  new  new   new  ???? new  new       new  new
-	xxxx,xxxx,xxxx,0xe7,0x2d,xxxx,xxxx,0x57, 0x0b,0xa2,xxxx,0x9d,xxxx,xxxx,0x74,0x85, /* 80 */
-//                 new  new            new   new  new       new            new  new
-	0xaf,xxxx,0x8a,0xe6,0x08,xxxx,0xff,xxxx, xxxx,xxxx,xxxx,xxxx,0x02,xxxx,xxxx,xxxx, /* 90 */
-//  new       new  new  new       new                            new
-	xxxx,0x04,xxxx,xxxx,0xbf,0x3b,xxxx,0x38, xxxx,xxxx,xxxx,0x77,xxxx,0xb0,xxxx,0x3a, /* A0 */
-//       ????           new  new       new                  new       new       new
-	0xfc,xxxx,0xb5,xxxx,xxxx,xxxx,xxxx,0x05, 0x52,0x76,0x2b,0xe5,0xbd,xxxx,0x0e,xxxx, /* B0 */
-//  new       new                      ????  new  new  new  new  new       new
-	0x73,xxxx,xxxx,0x45,xxxx,0x99,xxxx,0xf7, 0x3d,0xd0,xxxx,0x36,0xf9,0xfa,0x0f,xxxx, /* C0 */
-//  new            ^^^^      new       new   new  new       new  new
-	0x75,xxxx,xxxx,0x9c,xxxx,0x11,xxxx,xxxx, 0x27,0x4b,xxxx,0x2c,0x51,0x2e,xxxx,xxxx, /* D0 */
-//	new	           new		 new			 new  new		new  new  new
-	0x55,0x3c,xxxx,0xb7,xxxx,0xd1,0x8e,xxxx, 0xb2,xxxx,0x76,xxxx,0x12,xxxx,0x29,0x0c, /* E0 */
-//  new  new       new                       new       double!   ????      new  new
+	0x89,xxxx,xxxx,xxxx,xxxx,0x1f,0xa4,xxxx, 0xf8,0x5f,xxxx,0xb3,0x5b,xxxx,0x8d,xxxx, /* 50 */
+//  new                      new  !!!!       new  new  ???? new            new
+	xxxx,0xc5,0x7c,0x07,xxxx,0x88,0xba,0x47, 0x35,0xfb,xxxx,0x7f,xxxx,xxxx,0xc6,0xeb, /* 60 */
+//       new  !!!! new       new  new  new   new  new       !!!!                new
+	xxxx,0xc7,xxxx,xxxx,0xd2,0xa1,0x72,0x79, 0xfe,0x24,0xab,0x2a,0xbc,0x0d,0x8f,0x7e, /* 70 */
+//                      ^^^^ new  new  new   new  new  new  new       new  new  !!!!
+	xxxx,0x7d,xxxx,0xe7,0x2d,xxxx,xxxx,0x57, 0x0b,0xa2,xxxx,0x9d,xxxx,xxxx,0x74,0x85, /* 80 */
+//       !!!!      new  new            new   new  new       new            new  new
+	0xaf,0x2f,0x8a,0xe6,0x08,xxxx,0xff,xxxx, xxxx,xxxx,xxxx,xxxx,0x02,xxxx,xxxx,xxxx, /* 90 */
+//  new  !!!! new  new  new       new             ????           new
+	0x43,0x04,xxxx,xxxx,0xbf,0x3b,0x93,0x38, xxxx,xxxx,xxxx,0x77,xxxx,0xb0,xxxx,0x3a, /* A0 */
+//  new  new            new  new  new  new                  new       new       new
+	0xfc,xxxx,0xb5,xxxx,xxxx,xxxx,xxxx,0x05, 0x52,0x76,0x2b,0xe5,0xbd,xxxx,0x0e,0xb1, /* B0 */
+//  new       new                      new   new  new  new  new  new       new  !!!!
+	0x73,xxxx,xxxx,0x45,0x92,0x99,xxxx,0xf7, 0x3d,0xd0,0xb6,0x36,0xf9,0xfa,0x0f,xxxx, /* C0 */
+//  new            new  new  new       new   new  new  !!!! new  new
+	0x75,xxxx,xxxx,0x9c,xxxx,0x11,xxxx,xxxx, 0x27,0x4b,xxxx,0x2c,0x51,0x2e,0xfd,xxxx, /* D0 */
+//	new	           new		 new			 new  new		new  new  new  !!!!
+	0x55,0x3c,xxxx,0xb7,xxxx,0xd1,0x8e,xxxx, 0xb2,xxxx,0x78,xxxx,0x12,xxxx,0x29,0x0c, /* E0 */
+//  new  new       new  ???? new  new        new       new       new       new  new
 	0x33,xxxx,0xf2,xxxx,xxxx,xxxx,xxxx,xxxx, xxxx,0x03,0x06,0xa8,xxxx,xxxx,0xcf,xxxx, /* F0 */
 //  new       new                                 new  new  new            new
 };
+/*
+Unknown (marked "????")
+16 -> pc: 1714, 1804, 1a70, 1cc3 (00 10 13 1C 20 21 22 34 D4 D5 after a match)
+5A -> pc: ae83 (after an item is selected) (00 10 13 15 1B 1C 1D 21 28)
+99 -> pc: 96f7, 9702 (after undo button is pressed)
+E4 -> pc: b08; f458, 1920 (99% 1 byte at boot and sometimes when a piece is selected)
+
+Found (marked "!!!!")
+14 -> pc: 8b2a -> 42
+1F -> pc: f30, f35, af74, 153a, 6dd8, 674f -> 09
+30 -> pc: 19af, 1986 -> 49
+31 -> pc: c804, c813, c822, 1358, c303, c312, c321, 1315, 1338 (2 bytes opcode) -> B4
+34 -> pc: 42cd -> D3
+56 -> pc: 6587 (can be 6C, 6D, 6E, 6F, A4, A6, A7, AA, AC, AD, AE at boot) -> A4
+62 -> pc: 5b3f (jump 71, 7C) -> 7C
+6B -> pc: 1810, 1936 (jump) -> 7F
+74 -> pc: ca75 -> D2
+7F -> pc: 6b7e, 51d7, 5a8c, 5a9a, 5996 (jump: 7C, 7E) -> 7E
+81 -> pc: 599d (jump: 7D, 7F) -> 7D
+91 -> pc: 6e0c, 96ef, 96d0 (1 byte opcode) -> 2F
+BF -> pc: 6af3, 6b01, ca73, ab39 (2 bytes opcode) -> B1
+C4 -> pc: deb4 -> 92 from bbmanw
+EC -> pc: 966e, 9679 -> 12 from bbmanw
+
+the ones marked with "new" are checked against dynablst and bomberman tables
+*/
 
 
 
@@ -658,7 +684,7 @@ void irem_cpu_decrypt(int cpu,const unsigned char *decryption_table)
 {
 	int A,diff;
 	unsigned char *rom;
-	int t[256];
+//	int t[256];
 #ifdef MAME_DEBUG
 //    extern char *opmap1[];
 #endif
@@ -670,6 +696,7 @@ void irem_cpu_decrypt(int cpu,const unsigned char *decryption_table)
 	for (A = 0;A < diff;A++)
 		rom[A + diff] = decryption_table[rom[A]];
 
+/*
 	for (A=0; A<256; A++) {
 		t[A]=0;
 		for (diff=0; diff<256; diff++)
@@ -684,11 +711,5 @@ void irem_cpu_decrypt(int cpu,const unsigned char *decryption_table)
         if (t[A]>1) logerror("DUPLICATE: %02x\n",A);
 #endif
     }
-
-/*	FILE *fp;
-
-	fp = fopen("shisen2.bin","wb+");
-	fwrite(rom,0x80000,1,fp);
-	fclose(fp);
 */
 }

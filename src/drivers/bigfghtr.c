@@ -110,6 +110,9 @@ Notes:
 **********************************************************************/
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "sound/dac.h"
+#include "sound/okim6295.h"
+#include "sound/3812intf.h"
 
 static data16_t vreg;
 
@@ -416,20 +419,6 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 
 
-static struct YM3812interface ym3812_interface =
-{
-	1,				/* 1 chip (no more supported) */
-	4000000,        /* 4 MHz */
-	{ 50 }         /* (not supported) */
-};
-
-static struct DACinterface dac_interface =
-{
-	2,	/* 2 channels */
-	{ 100,100 },
-};
-
-
 static MACHINE_DRIVER_START( bigfghtr )
 	MDRV_CPU_ADD(M68000, 8000000) /* 8 MHz?? */
 	MDRV_CPU_PROGRAM_MAP(mainmem,0)
@@ -457,8 +446,16 @@ static MACHINE_DRIVER_START( bigfghtr )
 	MDRV_VIDEO_UPDATE(bigfghtr)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM3812, ym3812_interface)
-	MDRV_SOUND_ADD(DAC, dac_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM3812, 4000000)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
+
+	MDRV_SOUND_ADD(DAC, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
+
+	MDRV_SOUND_ADD(DAC, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 INPUT_PORTS_START( bigfghtr )

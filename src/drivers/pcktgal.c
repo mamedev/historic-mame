@@ -15,6 +15,9 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "cpu/m6502/m6502.h"
+#include "sound/2203intf.h"
+#include "sound/3812intf.h"
+#include "sound/msm5205.h"
 
 extern WRITE8_HANDLER( pcktgal_videoram_w );
 extern WRITE8_HANDLER( pcktgal_flipscreen_w );
@@ -230,31 +233,10 @@ static struct GfxDecodeInfo bootleg_gfxdecodeinfo[] =
 
 /***************************************************************************/
 
-static struct YM2203interface ym2203_interface =
-{
-	1,	  /* 1 chip */
-	1500000,		/* 1.5 MHz */
-	{ YM2203_VOL(60,60) },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ 0 }
-};
-
-static struct YM3812interface ym3812_interface =
-{
-	1,			/* 1 chip (no more supported) */
-	3000000,	/* 3 MHz */
-	{ 100 }
-};
-
 static struct MSM5205interface msm5205_interface =
 {
-	1,					/* 1 chip			 */
-	384000,				/* 384KHz			 */
-	{ pcktgal_adpcm_int },/* interrupt function */
-	{ MSM5205_S48_4B},	/* 8KHz			   */
-	{ 70 }
+	pcktgal_adpcm_int,	/* interrupt function */
+	MSM5205_S48_4B		/* 8KHz			   */
 };
 
 /***************************************************************************/
@@ -286,9 +268,17 @@ static MACHINE_DRIVER_START( pcktgal )
 	MDRV_VIDEO_UPDATE(pcktgal)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM2203, ym2203_interface)
-	MDRV_SOUND_ADD(YM3812, ym3812_interface)
-	MDRV_SOUND_ADD(MSM5205, msm5205_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM2203, 1500000)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.60)
+
+	MDRV_SOUND_ADD(YM3812, 3000000)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
+
+	MDRV_SOUND_ADD(MSM5205, 384000)
+	MDRV_SOUND_CONFIG(msm5205_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.70)
 MACHINE_DRIVER_END
 
 

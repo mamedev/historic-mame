@@ -36,6 +36,8 @@
 
 #include "driver.h"
 #include "wavwrite.h"
+#include "discrete.h"
+#include "sn76477.h"
 #include <stdio.h>
 #include <stdarg.h>
 #include <math.h>
@@ -58,22 +60,27 @@
  *
  *************************************/
 
-/* internal node tracking */
-static int node_count;
-static struct node_description **running_order;
-static struct node_description **indexed_node;
-static struct node_description *node_list;
+struct discrete_info
+{
+	/* internal node tracking */
+	int node_count;
+	struct node_description **running_order;
+	struct node_description **indexed_node;
+	struct node_description *node_list;
 
-/* output node tracking */
-static int discrete_outputs;
-static struct node_description *output_node[DISCRETE_MAX_OUTPUTS];
+	/* output node tracking */
+	int discrete_outputs;
+	struct node_description *output_node[DISCRETE_MAX_OUTPUTS];
 
-/* the output stream */
-static int discrete_stream;
+	/* the output stream */
+	sound_stream *discrete_stream;
+};
+
+static struct discrete_info *discrete_current_context;
 
 /* debugging statics */
-static void *wav_file[DISCRETE_MAX_OUTPUTS];
-static FILE *disclogfile = NULL;
+void *wav_file[DISCRETE_MAX_OUTPUTS];
+FILE *disclogfile = NULL;
 
 
 
@@ -83,9 +90,10 @@ static FILE *disclogfile = NULL;
  *
  *************************************/
 
-static void init_nodes(struct discrete_sound_block *block_list);
-static void find_input_nodes(struct discrete_sound_block *block_list);
-static void setup_output_nodes(void);
+static void init_nodes(struct discrete_info *info, struct discrete_sound_block *block_list);
+static void find_input_nodes(struct discrete_info *info, struct discrete_sound_block *block_list);
+static void setup_output_nodes(struct discrete_info *info);
+static void discrete_reset(void *chip);
 
 
 
@@ -202,6 +210,7 @@ struct discrete_module module_list[] =
 	{ DST_OP_AMP_FILT ,"DST_OP_AMP_FILT" ,sizeof(struct dst_op_amp_filt_context) ,dst_op_amp_filt_reset ,dst_op_amp_filt_step },
 	{ DST_RCDISC      ,"DST_RCDISC"      ,sizeof(struct dst_rcdisc_context)      ,dst_rcdisc_reset      ,dst_rcdisc_step      },
 	{ DST_RCDISC2     ,"DST_RCDISC2"     ,sizeof(struct dst_rcdisc_context)      ,dst_rcdisc2_reset     ,dst_rcdisc2_step     },
+	{ DST_RCDISC3     ,"DST_RCDISC3"     ,sizeof(struct dst_rcdisc_context)      ,dst_rcdisc3_reset     ,dst_rcdisc3_step     },
 	{ DST_RCFILTER    ,"DST_RCFILTER"    ,sizeof(struct dst_rcfilter_context)    ,dst_rcfilter_reset    ,dst_rcfilter_step    },
 	/* For testing - seem to be buggered.  Use versions not ending in N. */
 	{ DST_RCFILTERN   ,"DST_RCFILTERN"   ,sizeof(struct dss_filter1_context)     ,dst_rcfilterN_reset   ,dst_filter1_step     },
@@ -229,10 +238,11 @@ struct discrete_module module_list[] =
  *
  *************************************/
 
-struct node_description *discrete_find_node(int node)
+struct node_description *discrete_find_node(void *chip, int node)
 {
+	struct discrete_info *info = chip ? chip : discrete_current_context;
 	if (node < NODE_START || node > NODE_END) return NULL;
-	return indexed_node[node - NODE_START];
+	return info->indexed_node[node - NODE_START];
 }
 
 
@@ -243,13 +253,17 @@ struct node_description *discrete_find_node(int node)
  *
  *************************************/
 
-int discrete_sh_start(const struct MachineSound *msound)
+static void *discrete_start(int sndindex, int clock, const void *config)
 {
-	struct discrete_sound_block *intf = msound->sound_interface;
+	struct discrete_sound_block *intf = (struct discrete_sound_block *)config;
+	struct discrete_info *info;
+	
+	info = auto_malloc(sizeof(*info));
+	memset(info, 0, sizeof(*info));
 
 	/* do nothing if sound is disabled */
 	if (!Machine->sample_rate)
-		return 0;
+		return info;
 
 	/* create the logfile */
 	if (DISCRETE_DEBUGLOG && !disclogfile)
@@ -257,53 +271,53 @@ int discrete_sh_start(const struct MachineSound *msound)
 
 	/* first pass through the nodes: sanity check, fill in the indexed_nodes, and make a total count */
 	discrete_log("discrete_sh_start() - Doing node list sanity check");
-	for (node_count = 0; intf[node_count].type != DSS_NULL; node_count++)
+	for (info->node_count = 0; intf[info->node_count].type != DSS_NULL; info->node_count++)
 	{
 		/* make sure we don't have too many nodes overall */
-		if (node_count > DISCRETE_MAX_NODES)
+		if (info->node_count > DISCRETE_MAX_NODES)
 			osd_die("discrete_sh_start() - Upper limit of %d nodes exceeded, have you terminated the interface block.", DISCRETE_MAX_NODES);
 
 		/* make sure the node number is in range */
-		if (intf[node_count].node < NODE_START || intf[node_count].node > NODE_END)
-			osd_die("discrete_sh_start() - Invalid node number on node %02d descriptor\n", node_count);
+		if (intf[info->node_count].node < NODE_START || intf[info->node_count].node > NODE_END)
+			osd_die("discrete_sh_start() - Invalid node number on node %02d descriptor\n", info->node_count);
 
 		/* make sure the node type is valid */
-		if (intf[node_count].type > DSO_OUTPUT)
-			osd_die("discrete_sh_start() - Invalid function type on NODE_%02d\n", intf[node_count].node - NODE_START);
+		if (intf[info->node_count].type > DSO_OUTPUT)
+			osd_die("discrete_sh_start() - Invalid function type on NODE_%02d\n", intf[info->node_count].node - NODE_START);
 	}
-	node_count++;
-	discrete_log("discrete_sh_start() - Sanity check counted %d nodes", node_count);
+	info->node_count++;
+	discrete_log("discrete_sh_start() - Sanity check counted %d nodes", info->node_count);
 
 	/* allocate memory for the array of actual nodes */
-	node_list = auto_malloc(node_count * sizeof(node_list[0]));
-	if (!node_list)
-		osd_die("discrete_sh_start() - Out of memory allocating node_list\n");
-	memset(node_list, 0, node_count * sizeof(node_list[0]));
+	info->node_list = auto_malloc(info->node_count * sizeof(info->node_list[0]));
+	if (!info->node_list)
+		osd_die("discrete_sh_start() - Out of memory allocating info->node_list\n");
+	memset(info->node_list, 0, info->node_count * sizeof(info->node_list[0]));
 
 	/* allocate memory for the node execution order array */
-	running_order = auto_malloc(node_count * sizeof(running_order[0]));
-	if (!running_order)
-		osd_die("discrete_sh_start() - Out of memory allocating running_order\n");
-	memset(running_order, 0, node_count * sizeof(running_order[0]));
+	info->running_order = auto_malloc(info->node_count * sizeof(info->running_order[0]));
+	if (!info->running_order)
+		osd_die("discrete_sh_start() - Out of memory allocating info->running_order\n");
+	memset(info->running_order, 0, info->node_count * sizeof(info->running_order[0]));
 
 	/* allocate memory to hold pointers to nodes by index */
-	indexed_node = auto_malloc(DISCRETE_MAX_NODES * sizeof(indexed_node[0]));
-	if (!indexed_node)
+	info->indexed_node = auto_malloc(DISCRETE_MAX_NODES * sizeof(info->indexed_node[0]));
+	if (!info->indexed_node)
 		osd_die("discrete_sh_start() - Out of memory allocating indexed_node\n");
-	memset(indexed_node, 0, DISCRETE_MAX_NODES * sizeof(indexed_node[0]));
+	memset(info->indexed_node, 0, DISCRETE_MAX_NODES * sizeof(info->indexed_node[0]));
 
 	/* initialize the node data */
-	init_nodes(intf);
+	init_nodes(info, intf);
 
 	/* now go back and find pointers to all input nodes */
-	find_input_nodes(intf);
+	find_input_nodes(info, intf);
 
 	/* then set up the output nodes */
-	setup_output_nodes();
+	setup_output_nodes(info);
 
 	/* reset the system, which in turn resets all the nodes and steps them forward one */
-	discrete_sh_reset();
-	return 0;
+	discrete_reset(info);
+	return info;
 }
 
 
@@ -314,14 +328,15 @@ int discrete_sh_start(const struct MachineSound *msound)
  *
  *************************************/
 
-void discrete_sh_stop (void)
+static void discrete_stop(void *chip)
 {
+	struct discrete_info *info = chip;
 	if (DISCRETE_WAVELOG)
 	{
 		int outputnum;
 
 		/* close any wave files */
-		for (outputnum = 0; outputnum < discrete_outputs; outputnum++)
+		for (outputnum = 0; outputnum < info->discrete_outputs; outputnum++)
 			if (wav_file[outputnum])
 				wav_close(wav_file[outputnum]);
 	}
@@ -339,31 +354,21 @@ void discrete_sh_stop (void)
 
 /*************************************
  *
- *	Master discrete system update
- *
- *************************************/
-
-void discrete_sh_update(void)
-{
-	stream_update(discrete_stream, 0);
-}
-
-
-
-/*************************************
- *
  *	Master reset of all nodes
  *
  *************************************/
 
-void discrete_sh_reset(void)
+static void discrete_reset(void *chip)
 {
+	struct discrete_info *info = chip;
 	int nodenum;
 
+	discrete_current_context = info;
+
 	/* loop over all nodes */
-	for (nodenum = 0; nodenum < node_count; nodenum++)
+	for (nodenum = 0; nodenum < info->node_count; nodenum++)
 	{
-		struct node_description *node = running_order[nodenum];
+		struct node_description *node = info->running_order[nodenum];
 
 		/* if the node has a reset function, call it */
 		if (node->module.reset)
@@ -373,6 +378,8 @@ void discrete_sh_reset(void)
 		else if (node->module.step)
 			(*node->module.step)(node);
 	}
+
+	discrete_current_context = NULL;
 }
 
 
@@ -383,17 +390,20 @@ void discrete_sh_reset(void)
  *
  *************************************/
 
-static void discrete_stream_update(int ch, INT16 **buffer, int length)
+static void discrete_stream_update(void *param, stream_sample_t **inputs, stream_sample_t **buffer, int length)
 {
+	struct discrete_info *info = param;
 	int samplenum, nodenum, outputnum;
+
+	discrete_current_context = info;
 
 	/* Now we must do length iterations of the node list, one output for each step */
 	for (samplenum = 0; samplenum < length; samplenum++)
 	{
 		/* loop over all nodes */
-		for (nodenum = 0; nodenum < node_count; nodenum++)
+		for (nodenum = 0; nodenum < info->node_count; nodenum++)
 		{
-			struct node_description *node = running_order[nodenum];
+			struct node_description *node = info->running_order[nodenum];
 
 			/* Now step the node */
 			if (node->module.step)
@@ -401,23 +411,25 @@ static void discrete_stream_update(int ch, INT16 **buffer, int length)
 		}
 
 		/* Now put the output into the buffers */
-		for (outputnum = 0; outputnum < discrete_outputs; outputnum++)
+		for (outputnum = 0; outputnum < info->discrete_outputs; outputnum++)
 		{
-			double val = *output_node[outputnum]->input[0];
+			double val = *info->output_node[outputnum]->input[0];
 			buffer[outputnum][samplenum] = (val < -32768) ? -32768 : (val > 32767) ? 32767 : val;
 		}
 	}
 
+	discrete_current_context = NULL;
+
 	/* add each stream to the logging wavfile */
 	if (DISCRETE_WAVELOG)
-		for (outputnum = 0; outputnum < discrete_outputs; outputnum++)
-			wav_add_data_16(wav_file[outputnum], buffer[outputnum], length);
-}
-
-
-static void discrete_stream_update_one(int ch, INT16 *buffer, int length)
-{
-	discrete_stream_update(ch, &buffer, length);
+	{
+		if (sizeof(stream_sample_t) == 2)
+			for (outputnum = 0; outputnum < info->discrete_outputs; outputnum++)
+				wav_add_data_16(wav_file[outputnum], (INT16 *)buffer[outputnum], length);
+		else
+			for (outputnum = 0; outputnum < info->discrete_outputs; outputnum++)
+				wav_add_data_32(wav_file[outputnum], (INT32 *)buffer[outputnum], length, 0);
+	}
 }
 
 
@@ -428,33 +440,33 @@ static void discrete_stream_update_one(int ch, INT16 *buffer, int length)
  *
  *************************************/
 
-static void init_nodes(struct discrete_sound_block *block_list)
+static void init_nodes(struct discrete_info *info, struct discrete_sound_block *block_list)
 {
 	int nodenum;
 
 	/* start with no outputs */
-	discrete_outputs = 0;
+	info->discrete_outputs = 0;
 
 	/* loop over all nodes */
-	for (nodenum = 0; nodenum < node_count; nodenum++)
+	for (nodenum = 0; nodenum < info->node_count; nodenum++)
 	{
 		struct discrete_sound_block *block = &block_list[nodenum];
-		struct node_description *node = &node_list[nodenum];
+		struct node_description *node = &info->node_list[nodenum];
 		int inputnum, modulenum;
 
 		/* our running order just follows the order specified */
-		running_order[nodenum] = node;
+		info->running_order[nodenum] = node;
 
 		/* if we are an output node, track that */
 		if (block->node == NODE_OP)
-			output_node[discrete_outputs++] = node;
+			info->output_node[info->discrete_outputs++] = node;
 
 		/* otherwise, make sure we are not a duplicate, and put ourselves into the indexed list */
 		else
 		{
-			if (indexed_node[block->node - NODE_START])
+			if (info->indexed_node[block->node - NODE_START])
 				osd_die("init_nodes() - Duplicate entries for NODE_%02d\n", block->node - NODE_START);
-			indexed_node[block->node - NODE_START] = node;
+			info->indexed_node[block->node - NODE_START] = node;
 		}
 
 		/* find the requested module */
@@ -473,7 +485,6 @@ static void init_nodes(struct discrete_sound_block *block_list)
 		for (inputnum = 0; inputnum < DISCRETE_MAX_INPUTS; inputnum++)
 		{
 			node->input[inputnum] = &(block->initial[inputnum]);
-			node->input_r[inputnum] = NULL;
 		}
 
 		node->context = NULL;
@@ -491,7 +502,7 @@ static void init_nodes(struct discrete_sound_block *block_list)
 	}
 
 	/* if no outputs, give an error */
-	if (discrete_outputs == 0)
+	if (info->discrete_outputs == 0)
 		osd_die("init_nodes() - Couldn't find an output node");
 }
 
@@ -503,14 +514,14 @@ static void init_nodes(struct discrete_sound_block *block_list)
  *
  *************************************/
 
-static void find_input_nodes(struct discrete_sound_block *block_list)
+static void find_input_nodes(struct discrete_info *info, struct discrete_sound_block *block_list)
 {
 	int nodenum, inputnum;
 
 	/* loop over all nodes */
-	for (nodenum = 0; nodenum < node_count; nodenum++)
+	for (nodenum = 0; nodenum < info->node_count; nodenum++)
 	{
-		struct node_description *node = &node_list[nodenum];
+		struct node_description *node = &info->node_list[nodenum];
 		struct discrete_sound_block *block = &block_list[nodenum];
 
 		/* loop over all active inputs */
@@ -521,12 +532,11 @@ static void find_input_nodes(struct discrete_sound_block *block_list)
 			/* if this input is node-based, find the node in the indexed list */
 			if ((inputnode > NODE_START) && (inputnode <= NODE_END))
 			{
-				struct node_description *node_ref = indexed_node[inputnode - NODE_START];
+				struct node_description *node_ref = info->indexed_node[inputnode - NODE_START];
 				if (!node_ref)
 					osd_die("discrete_sh_start - Node NODE_%02d referenced a non existent node NODE_%02d\n", node->node - NODE_START, inputnode - NODE_START);
 
 				node->input[inputnum] = &(node_ref->output);	// Link referenced node out to input
-				node->input_r[inputnum] = &(node_ref->node_r);	// Link referenced node r to input r
 				node->input_is_node |= 1 << inputnum;			// Bit flag if input is node
 			}
 		}
@@ -541,23 +551,13 @@ static void find_input_nodes(struct discrete_sound_block *block_list)
  *
  *************************************/
 
-static void setup_output_nodes(void)
+static void setup_output_nodes(struct discrete_info *info)
 {
-	const char *channel_names[DISCRETE_MAX_OUTPUTS];
-	char channel_name_data[DISCRETE_MAX_OUTPUTS][32];
-	int channel_vol[DISCRETE_MAX_OUTPUTS];
 	int outputnum;
 
 	/* loop over output nodes */
-	for (outputnum = 0; outputnum < discrete_outputs; outputnum++)
+	for (outputnum = 0; outputnum < info->discrete_outputs; outputnum++)
 	{
-		/* make up a name for this output channel */
-		sprintf(&channel_name_data[outputnum][0], "Discrete CH%d", outputnum);
-		channel_names[outputnum] = &channel_name_data[outputnum][0];
-
-		/* set the initial volume */
-		channel_vol[outputnum] = *(output_node[outputnum]->input[1]);
-
 		/* create a logging file */
 		if (DISCRETE_WAVELOG)
 		{
@@ -568,12 +568,42 @@ static void setup_output_nodes(void)
 	}
 
 	/* initialize the stream(s) */
-	if (discrete_outputs > 1)
-		discrete_stream = stream_init_multi(discrete_outputs, channel_names, channel_vol, Machine->sample_rate, 0, discrete_stream_update);
-	else
-		discrete_stream = stream_init(channel_names[0], channel_vol[0], Machine->sample_rate, 0, discrete_stream_update_one);
-
-	/* handle failure */
-	if (discrete_stream == -1)
-		osd_die("setup_output_nodes - Stream init returned an error\n");
+	info->discrete_stream = stream_create(0, info->discrete_outputs, Machine->sample_rate, info, discrete_stream_update);
 }
+
+
+
+/**************************************************************************
+ * Generic get_info
+ **************************************************************************/
+
+static void discrete_set_info(void *token, UINT32 state, union sndinfo *info)
+{
+	switch (state)
+	{
+		/* no parameters to set */
+	}
+}
+
+
+void discrete_get_info(void *token, UINT32 state, union sndinfo *info)
+{
+	switch (state)
+	{
+		/* --- the following bits of info are returned as 64-bit signed integers --- */
+
+		/* --- the following bits of info are returned as pointers to data or functions --- */
+		case SNDINFO_PTR_SET_INFO:						info->set_info = discrete_set_info;		break;
+		case SNDINFO_PTR_START:							info->start = discrete_start;			break;
+		case SNDINFO_PTR_STOP:							info->stop = discrete_stop;				break;
+		case SNDINFO_PTR_RESET:							info->reset = discrete_reset;			break;
+
+		/* --- the following bits of info are returned as NULL-terminated strings --- */
+		case SNDINFO_STR_NAME:							info->s = "Discrete";					break;
+		case SNDINFO_STR_CORE_FAMILY:					info->s = "Analog";						break;
+		case SNDINFO_STR_CORE_VERSION:					info->s = "1.0";						break;
+		case SNDINFO_STR_CORE_FILE:						info->s = __FILE__;						break;
+		case SNDINFO_STR_CORE_CREDITS:					info->s = "Copyright (c) 2004, The MAME Team"; break;
+	}
+}
+

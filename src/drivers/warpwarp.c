@@ -129,6 +129,7 @@ TODO:
 #include "driver.h"
 #include "artwork.h"
 #include "vidhrdw/generic.h"
+#include "sound/custom.h"
 
 
 /* from vidhrdw/warpwarp.c */
@@ -151,17 +152,13 @@ WRITE8_HANDLER( geebee_videoram_w );
 
 /* from sndhrdw/geebee.c */
 WRITE8_HANDLER( geebee_sound_w );
-int geebee_sh_start(const struct MachineSound *msound);
-void geebee_sh_stop(void);
-void geebee_sh_update(void);
+void *geebee_sh_start(int clock, const struct CustomSound_interface *config);
 
 /* from sndhrdw/warpwarp.c */
 WRITE8_HANDLER( warpwarp_sound_w );
 WRITE8_HANDLER( warpwarp_music1_w );
 WRITE8_HANDLER( warpwarp_music2_w );
-int warpwarp_sh_start(const struct MachineSound *msound);
-void warpwarp_sh_stop(void);
-void warpwarp_sh_update(void);
+void *warpwarp_sh_start(int clock, const struct CustomSound_interface *config);
 
 
 /*******************************************************
@@ -885,16 +882,12 @@ static struct GfxDecodeInfo gfxdecodeinfo_color[] =
 
 static struct CustomSound_interface geebee_custom_interface =
 {
-	geebee_sh_start,
-	geebee_sh_stop,
-	geebee_sh_update
+	geebee_sh_start
 };
 
 static struct CustomSound_interface warpwarp_custom_interface =
 {
-	warpwarp_sh_start,
-	warpwarp_sh_stop,
-	warpwarp_sh_update
+	warpwarp_sh_start
 };
 
 
@@ -923,7 +916,11 @@ static MACHINE_DRIVER_START( geebee )
 	MDRV_VIDEO_UPDATE(geebee)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(CUSTOM, geebee_custom_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	
+	MDRV_SOUND_ADD(CUSTOM, 0)
+	MDRV_SOUND_CONFIG(geebee_custom_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( navarone )
@@ -961,7 +958,11 @@ static MACHINE_DRIVER_START( bombbee )
 	MDRV_VIDEO_UPDATE(warpwarp)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(CUSTOM, warpwarp_custom_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	
+	MDRV_SOUND_ADD(CUSTOM, 0)
+	MDRV_SOUND_CONFIG(warpwarp_custom_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( warpwarp )

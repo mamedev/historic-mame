@@ -297,6 +297,8 @@ Notes & Todo:
 #include "vidhrdw/ppu2c03b.h"
 #include "cpu/z80/z80.h"
 #include "machine/rp5h01.h"
+#include "sound/dac.h"
+#include "sound/nes_apu.h"
 
 /* clock frequency */
 #define N2A03_DEFAULTCLOCK (21477272.724 / 12)
@@ -695,15 +697,7 @@ static INTERRUPT_GEN( playch10_interrupt ) {
 
 static struct NESinterface nes_interface =
 {
-	1,
-	{ REGION_CPU2 },
-	{ 50 },
-};
-
-static struct DACinterface nes_dac_interface =
-{
-	1,
-	{ 50 },
+	REGION_CPU2
 };
 
 
@@ -736,8 +730,13 @@ static MACHINE_DRIVER_START( playch10 )
 	MDRV_VIDEO_UPDATE(playch10)
 
 	// sound hardware
-	MDRV_SOUND_ADD(NES, nes_interface)
-	MDRV_SOUND_ADD(DAC, nes_dac_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	MDRV_SOUND_ADD(NES, 0)
+	MDRV_SOUND_CONFIG(nes_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
+
+	MDRV_SOUND_ADD(DAC, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( playchnv )

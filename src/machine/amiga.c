@@ -1533,7 +1533,10 @@ void amiga_m68k_reset( void )
 {
 	logerror( "Executed RESET at PC=%06x\n", activecpu_get_pc() );
 	amiga_cia_w( 0x1001/2, 1, 0 );	/* enable overlay */
-	memory_set_opbase(0);
+	if ( activecpu_get_pc() < 0x80000 )
+	{
+		memory_set_opbase(0);
+	}
 }
 
 MACHINE_INIT(amiga)

@@ -13,6 +13,7 @@ Notes:
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "sound/okim6295.h"
 
 
 extern data16_t *ohmygod_videoram;
@@ -358,16 +359,6 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 
 
-static struct OKIM6295interface okim6295_interface =
-{
-	1,          /* 1 chip */
-	{ 14000000/8/132 },	/* 13.257 kHz ??? COMPLETE GUESS!! (not even sure about the xtal) */
-	{ REGION_SOUND1 },	/* memory region */
-	{ 100 }
-};
-
-
-
 static MACHINE_DRIVER_START( ohmygod )
 
 	/* basic machine hardware */
@@ -391,7 +382,11 @@ static MACHINE_DRIVER_START( ohmygod )
 	MDRV_VIDEO_UPDATE(ohmygod)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(OKIM6295, okim6295_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(OKIM6295, 14000000/8/132)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 

@@ -50,6 +50,9 @@ TODO:
 #include "driver.h"
 #include "cpu/z80/z80.h"
 #include "sndhrdw/taitosnd.h"
+#include "sound/2203intf.h"
+#include "sound/2610intf.h"
+#include "sound/msm5205.h"
 
 VIDEO_EOF( taitol );
 VIDEO_START( taitol );
@@ -573,7 +576,7 @@ static WRITE8_HANDLER( champwr_adpcm_hi_w )
 		i += 4;
 	length = i - champwr_adpcm_start;
 
-	ADPCM_play(0,champwr_adpcm_start,length*2);
+//	ADPCM_play(0,champwr_adpcm_start,length*2);
 }
 
 
@@ -2160,76 +2163,31 @@ static WRITE8_HANDLER( portA_w )
 
 static struct YM2203interface ym2203_interface_triple =
 {
-	1,			/* 1 chip */
-	3000000,	/* ??? */
-	{ YM2203_VOL(80,20) },
-	{ 0 },
-	{ 0 },
-	{ portA_w },
-	{ 0 },
-	{ irqhandler }
+	0,
+	0,
+	portA_w,
+	0,
+	irqhandler
 };
 
-static struct ADPCMinterface adpcm_interface =
+
+static struct MSM5205interface msm5205_interface =
 {
-	1,			/* 1 channel */
-	8000,		/* 8000Hz playback? */
-	REGION_SOUND1,	/* memory region */
-	{ 80 } 	/* volume */
+	NULL,				/* VCK function */
+	MSM5205_S48_4B		/* 8 kHz */
 };
-
 
 static struct YM2610interface ym2610_interface =
 {
-	1,	/* 1 chip */
-	8000000,	/* 8 MHz */
-	{ 25 },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ irqhandler },
-	{ REGION_SOUND1 },
-	{ REGION_SOUND1 },
-	{ YM3012_VOL(100,MIXER_PAN_LEFT,100,MIXER_PAN_RIGHT) }
+	irqhandler,
+	REGION_SOUND1,
+	REGION_SOUND1
 };
-
-static struct YM2203interface ym2203_interface_double =
-{
-	1,			/* 1 chip */
-	3000000,	/* ??? */
-	{ YM2203_VOL(80,20) },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ 0 }
-};
-
-static struct YM2203interface ym2203_interface_evilston =
-{
-	1,			/* 1 chip */
-	3000000,	/* ??? */
-	{ YM2203_VOL(80,0) },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ 0 }
-};
-
-
 
 static struct YM2203interface ym2203_interface_single =
 {
-	1,			/* 1 chip */
-	3000000,	/* ??? */
-	{ YM2203_VOL(80,20) },
-	{ portA_r },
-	{ portB_r },
-	{ 0 },
-	{ 0 },
-	{ 0 }
+	portA_r,
+	portB_r
 };
 
 
@@ -2266,7 +2224,14 @@ static MACHINE_DRIVER_START( fhawk )
 	MDRV_VIDEO_UPDATE(taitol)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD_TAG("2203", YM2203, ym2203_interface_triple)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	
+	MDRV_SOUND_ADD_TAG("2203", YM2203, 3000000)
+	MDRV_SOUND_CONFIG(ym2203_interface_triple)
+	MDRV_SOUND_ROUTE(0, "mono", 0.20)
+	MDRV_SOUND_ROUTE(1, "mono", 0.20)
+	MDRV_SOUND_ROUTE(2, "mono", 0.20)
+	MDRV_SOUND_ROUTE(3, "mono", 0.80)
 MACHINE_DRIVER_END
 
 
@@ -2286,8 +2251,11 @@ static MACHINE_DRIVER_START( champwr )
 	MDRV_MACHINE_INIT(champwr)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(ADPCM, adpcm_interface)
+	MDRV_SOUND_ADD(MSM5205, 384000)
+	MDRV_SOUND_CONFIG(msm5205_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.80)
 MACHINE_DRIVER_END
+
 
 
 static MACHINE_DRIVER_START( raimais )
@@ -2306,7 +2274,11 @@ static MACHINE_DRIVER_START( raimais )
 	MDRV_MACHINE_INIT(raimais)
 
 	/* sound hardware */
-	MDRV_SOUND_REPLACE("2203", YM2610, ym2610_interface)
+	MDRV_SOUND_REPLACE("2203", YM2610, 8000000)
+	MDRV_SOUND_CONFIG(ym2610_interface)
+	MDRV_SOUND_ROUTE(0, "mono", 0.25)
+	MDRV_SOUND_ROUTE(1, "mono", 1.0)
+	MDRV_SOUND_ROUTE(2, "mono", 1.0)
 MACHINE_DRIVER_END
 
 
@@ -2339,7 +2311,13 @@ static MACHINE_DRIVER_START( kurikint )
 	MDRV_VIDEO_UPDATE(taitol)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM2203, ym2203_interface_double)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	
+	MDRV_SOUND_ADD_TAG("2203", YM2203, 3000000)
+	MDRV_SOUND_ROUTE(0, "mono", 0.20)
+	MDRV_SOUND_ROUTE(1, "mono", 0.20)
+	MDRV_SOUND_ROUTE(2, "mono", 0.20)
+	MDRV_SOUND_ROUTE(3, "mono", 0.80)
 MACHINE_DRIVER_END
 
 
@@ -2377,7 +2355,14 @@ static MACHINE_DRIVER_START( plotting )
 	MDRV_VIDEO_UPDATE(taitol)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM2203, ym2203_interface_single)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	
+	MDRV_SOUND_ADD_TAG("2203", YM2203, 3000000)
+	MDRV_SOUND_CONFIG(ym2203_interface_single)
+	MDRV_SOUND_ROUTE(0, "mono", 0.20)
+	MDRV_SOUND_ROUTE(1, "mono", 0.20)
+	MDRV_SOUND_ROUTE(2, "mono", 0.20)
+	MDRV_SOUND_ROUTE(3, "mono", 0.80)
 MACHINE_DRIVER_END
 
 
@@ -2453,7 +2438,13 @@ static MACHINE_DRIVER_START( evilston )
 	MDRV_VIDEO_UPDATE(taitol)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM2203, ym2203_interface_evilston)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	
+	MDRV_SOUND_ADD_TAG("2203", YM2203, 3000000)
+	MDRV_SOUND_ROUTE(0, "mono", 0.00)
+	MDRV_SOUND_ROUTE(1, "mono", 0.00)
+	MDRV_SOUND_ROUTE(2, "mono", 0.00)
+	MDRV_SOUND_ROUTE(3, "mono", 0.80)
 MACHINE_DRIVER_END
 
 
@@ -2815,9 +2806,9 @@ static DRIVER_INIT( evilston )
 GAME( 1988, raimais,  0,        raimais,  raimais,  0,        ROT0,   "Taito Corporation", "Raimais (Japan)" )
 GAME( 1988, fhawk,    0,        fhawk,    fhawk,    0,        ROT270, "Taito Corporation Japan", "Fighting Hawk (World)" )
 GAME( 1988, fhawkj,   fhawk,    fhawk,    fhawkj,   0,        ROT270, "Taito Corporation", "Fighting Hawk (Japan)" )
-GAME( 1989, champwr,  0,        champwr,  champwr,  0,        ROT0,   "Taito Corporation Japan", "Champion Wrestler (World)" )
-GAME( 1989, champwru, champwr,  champwr,  champwru, 0,        ROT0,   "Taito America Corporation", "Champion Wrestler (US)" )
-GAME( 1989, champwrj, champwr,  champwr,  champwrj, 0,        ROT0,   "Taito Corporation", "Champion Wrestler (Japan)" )
+GAMEX(1989, champwr,  0,        champwr,  champwr,  0,        ROT0,   "Taito Corporation Japan", "Champion Wrestler (World)", GAME_IMPERFECT_SOUND )
+GAMEX(1989, champwru, champwr,  champwr,  champwru, 0,        ROT0,   "Taito America Corporation", "Champion Wrestler (US)", GAME_IMPERFECT_SOUND )
+GAMEX(1989, champwrj, champwr,  champwr,  champwrj, 0,        ROT0,   "Taito Corporation", "Champion Wrestler (Japan)", GAME_IMPERFECT_SOUND )
 GAME( 1988, kurikint, 0,        kurikint, kurikint, 0,        ROT0,   "Taito Corporation Japan", "Kuri Kinton (World)" )
 GAME( 1988, kurikinu, kurikint, kurikint, kurikinj, 0,        ROT0,   "Taito America Corporation", "Kuri Kinton (US)" )
 GAME( 1988, kurikinj, kurikint, kurikint, kurikinj, 0,        ROT0,   "Taito Corporation", "Kuri Kinton (Japan)" )

@@ -11,6 +11,8 @@ driver by Nicola Salmoria
 #include "vidhrdw/konamiic.h"
 #include "cpu/konami/konami.h" /* for the callback and the firq irq definition */
 #include "machine/eeprom.h"
+#include "sound/3812intf.h"
+#include "sound/k053260.h"
 
 /* prototypes */
 static MACHINE_INIT( rollerg );
@@ -236,21 +238,9 @@ INPUT_PORTS_END
 
 ***************************************************************************/
 
-static struct YM3812interface ym3812_interface =
-{
-	1,
-	3579545,
-	{ 100 },
-	{ 0 },
-};
-
 static struct K053260_interface k053260_interface =
 {
-	1,
-	{ 3579545 },
-	{ REGION_SOUND1 }, /* memory region */
-	{ { MIXER(70,MIXER_PAN_LEFT), MIXER(70,MIXER_PAN_RIGHT) } },
-	{ 0 }
+	REGION_SOUND1 /* memory region */
 };
 
 static MACHINE_DRIVER_START( rollerg )
@@ -278,8 +268,14 @@ static MACHINE_DRIVER_START( rollerg )
 	MDRV_VIDEO_UPDATE(rollerg)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM3812, ym3812_interface)
-	MDRV_SOUND_ADD(K053260, k053260_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM3812, 3579545)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
+
+	MDRV_SOUND_ADD(K053260, 3579545)
+	MDRV_SOUND_CONFIG(k053260_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.70)
 MACHINE_DRIVER_END
 
 

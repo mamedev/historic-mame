@@ -56,6 +56,7 @@ Notes:
 
 #include "driver.h"
 #include "state.h"
+#include "sound/sn76496.h"
 
 extern data8_t *sprcros2_fgvideoram, *sprcros2_spriteram, *sprcros2_bgvideoram;
 extern size_t sprcros2_spriteram_size;
@@ -270,13 +271,6 @@ static struct GfxDecodeInfo sprcros2_gfxdecodeinfo[] =
 	{ -1 } /* end of array */
 };
 
-static struct SN76496interface sprcros2_sn76496_interface =
-{
-	3,
-	{ 10000000/4, 10000000/4, 10000000/4 },
-	{ 50, 50, 50 }
-};
-
 static INTERRUPT_GEN( sprcros2_m_interrupt )
 {
 	if (cpu_getiloops() == 0)
@@ -326,7 +320,16 @@ static MACHINE_DRIVER_START( sprcros2 )
 	MDRV_VIDEO_UPDATE(sprcros2)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(SN76496, sprcros2_sn76496_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(SN76496, 10000000/4)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
+
+	MDRV_SOUND_ADD(SN76496, 10000000/4)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
+
+	MDRV_SOUND_ADD(SN76496, 10000000/4)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
 MACHINE_DRIVER_END
 
 static DRIVER_INIT( sprcros2 )
@@ -371,4 +374,42 @@ ROM_START( sprcros2 )
 	ROM_LOAD( "sc-60.4k",    0x0320, 0x0100, CRC(d7a4e57d) SHA1(6db02ec6aa55b05422cb505e63c71e36b4b11b4a) )	//fg clut
 ROM_END
 
-GAME( 1986, sprcros2, 0, sprcros2, sprcros2, sprcros2, ROT0, "GM Shoji", "Super Cross 2 (Japan)" )
+/* this is probably an old revision */
+ROM_START( sprcrs2a )
+	ROM_REGION( 0x14000, REGION_CPU1, 0 )
+	ROM_LOAD( "15.bin",     0x00000, 0x4000, CRC(b9d02558) SHA1(775404c6c7648d9dab02b496541739ea700cd481) )
+	ROM_LOAD( "scm-02.10j", 0x04000, 0x4000, CRC(849c5c87) SHA1(0e02c4990e371d6a290efa53301818e769648945) )
+	ROM_LOAD( "scm-01.10k", 0x08000, 0x4000, CRC(385a62de) SHA1(847bf9d97ab3fa8949d9198e4e509948a940d6aa) )
+
+	ROM_LOAD( "scm-00.10l", 0x10000, 0x4000, CRC(13fa3684) SHA1(611b7a237e394f285dcc5beb027dacdbdd58a7a0) )	//banked into c000-dfff
+
+	ROM_REGION( 0x14000, REGION_CPU2, 0 )
+	ROM_LOAD( "scs-30.5f",  0x00000, 0x4000, CRC(c0a40e41) SHA1(e74131b353855749258dffa45091c825ccdbf05a) )
+	ROM_LOAD( "scs-29.5h",  0x04000, 0x4000, CRC(83d49fa5) SHA1(7112110df2f382bbc0e651adcec975054a485b9b) )
+	ROM_LOAD( "scs-28.5j",  0x08000, 0x4000, CRC(480d351f) SHA1(d1b86f441ae0e58b30e0f089ab25de219d5f30e3) )
+
+	ROM_LOAD( "scs-27.5k",  0x10000, 0x4000, CRC(2cf720cb) SHA1(a95c5b8c88371cf597bb7d80afeca6a48c7b74e6) )	//banked into c000-dfff
+
+	ROM_REGION( 0xc000, REGION_GFX1, ROMREGION_DISPOSE )	//bg
+	ROM_LOAD( "scs-26.4b",   0x0000, 0x4000, CRC(f958b56d) SHA1(a1973179d336d2ba57294155550515f2b8a33a09) )
+	ROM_LOAD( "scs-25.4c",   0x4000, 0x4000, CRC(d6fd7ba5) SHA1(1c26c4c1655b2be9cb6103e75386cc2f0cf27fc5) )
+	ROM_LOAD( "scs-24.4e",   0x8000, 0x4000, CRC(87783c36) SHA1(7102be795afcddd76b4d41823e95c65fe1ffbca0) )
+
+	ROM_REGION( 0xc000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_LOAD( "scm-23.5b",   0x0000, 0x4000, CRC(ab42f8e3) SHA1(8c2213b7c47a48e223fc3f7d323d16c0e4cd0457) )	//sprites
+	ROM_LOAD( "scm-22.5e",   0x4000, 0x4000, CRC(0cad254c) SHA1(36e30e30b652b3a388a3c4a82251196f79368f59) )
+	ROM_LOAD( "scm-21.5g",   0x8000, 0x4000, CRC(b6b68998) SHA1(cc3c6d996beeedcc7e5199f10d65c5b1d3c6e666) )
+
+	ROM_REGION( 0x4000, REGION_GFX3, ROMREGION_DISPOSE )	//fg
+	ROM_LOAD( "scm-20.5k",   0x0000, 0x4000, CRC(67a099a6) SHA1(43981abdcaa0ff36183027a3c691ce2df7f06ec7) )
+
+	ROM_REGION( 0x0420, REGION_PROMS, 0 )
+	ROM_LOAD( "sc-64.6a",    0x0000, 0x0020, CRC(336dd1c0) SHA1(f0a0d2c13617fd84ee55c0cb96643761a8735147) )	//palette
+	ROM_LOAD( "sc-63.3b",    0x0020, 0x0100, CRC(9034a059) SHA1(1801965b4f0f3e04ca4b3faf0ba3a27dbb008474) )	//bg clut lo nibble
+	ROM_LOAD( "sc-62.3a",    0x0120, 0x0100, CRC(3c78a14f) SHA1(8f9c196a3e18bdce2d4855bc285bd5bde534bf09) )	//bg clut hi nibble
+	ROM_LOAD( "sc-61.5a",    0x0220, 0x0100, CRC(2f71185d) SHA1(974fbb52285f01f4353e9acb1992dcd6fdefedcb) )	//sprite clut
+	ROM_LOAD( "sc-60.4k",    0x0320, 0x0100, CRC(d7a4e57d) SHA1(6db02ec6aa55b05422cb505e63c71e36b4b11b4a) )	//fg clut
+ROM_END
+
+GAME( 1986, sprcros2, 0,        sprcros2, sprcros2, sprcros2, ROT0, "GM Shoji", "Super Cross 2 (Japan set 1)" )
+GAME( 1986, sprcrs2a, sprcros2, sprcros2, sprcros2, sprcros2, ROT0, "GM Shoji", "Super Cross 2 (Japan set 2)" )

@@ -42,6 +42,7 @@ XTAL: 10.0 MHz
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "sound/ay8910.h"
 
 
 extern WRITE8_HANDLER( battlex_palette_w );
@@ -202,19 +203,6 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 	{ -1 } /* end of array */
 };
 
-/*** SOUND *******************************************************************/
-
-static struct AY8910interface battlex_ay8910_interface =
-{
-	1,	/* 1 chip */
-	10000000/8,
-	{ 40 },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ 0 }
-};
-
 /*** MACHINE DRIVERS *********************************************************/
 
 static MACHINE_DRIVER_START( battlex )
@@ -240,7 +228,9 @@ static MACHINE_DRIVER_START( battlex )
 	MDRV_VIDEO_UPDATE(battlex)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(AY8910, battlex_ay8910_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	MDRV_SOUND_ADD(AY8910, 10000000/8)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.40)
 MACHINE_DRIVER_END
 
 

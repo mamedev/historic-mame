@@ -51,6 +51,8 @@ Mighty Guy board layout:
 ***************************************************************************/
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "sound/ay8910.h"
+#include "sound/3812intf.h"
 
 #define MIGHTGUY_HACK	0
 
@@ -405,26 +407,6 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 
 
-static struct AY8910interface ay8910_interface =
-{
-	3,	/* 3 chips */
-	1500000,	/* 1.5 MHz?????? */
-	{ 15, 15, 15 },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ 0 }
-};
-
-static struct YM3526interface YM3526_interface =
-{
-	1,
-	4000000,	/* 4 MHz??? */
-	{ 100 }
-};
-
-
-
 static MACHINE_DRIVER_START( cop01 )
 
 	/* basic machine hardware */
@@ -454,7 +436,16 @@ static MACHINE_DRIVER_START( cop01 )
 	MDRV_VIDEO_UPDATE(cop01)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(AY8910, ay8910_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(AY8910, 1500000)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.15)
+
+	MDRV_SOUND_ADD(AY8910, 1500000)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.15)
+
+	MDRV_SOUND_ADD(AY8910, 1500000)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.15)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( mightguy )
@@ -486,7 +477,10 @@ static MACHINE_DRIVER_START( mightguy )
 	MDRV_VIDEO_UPDATE(cop01)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM3526, YM3526_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM3526, 4000000)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 

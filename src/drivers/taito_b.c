@@ -174,6 +174,9 @@ Notes:
 #include "machine/eeprom.h"
 #include "machine/mb87078.h"
 #include "sndhrdw/taitosnd.h"
+#include "sound/2203intf.h"
+#include "sound/2610intf.h"
+#include "sound/okim6295.h"
 
 extern data16_t *taitob_scroll;
 extern data16_t *TC0180VCU_ram;
@@ -2589,59 +2592,25 @@ static void irqhandler(int irq)
 
 static struct YM2610interface ym2610_interface_rsaga2 =
 {
-	1,	/* 1 chip */
-	8000000,	/* 8 MHz */
-	{ 25 },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ irqhandler },
-	{ REGION_SOUND1 },
-	{ REGION_SOUND2 },
-	{ YM3012_VOL(100,MIXER_PAN_LEFT,100,MIXER_PAN_RIGHT) }
+	irqhandler,
+	REGION_SOUND1,
+	REGION_SOUND2
 };
 
 static struct YM2610interface ym2610_interface_crimec =
 {
-	1,	/* 1 chip */
-	8000000,	/* 8 MHz */
-	{ 25 },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ irqhandler },
-	{ REGION_SOUND1 },
-	{ REGION_SOUND1 },
-	{ YM3012_VOL(100,MIXER_PAN_LEFT,100,MIXER_PAN_RIGHT) }
+	irqhandler,
+	REGION_SOUND1,
+	REGION_SOUND1
 };
 
 static struct YM2203interface ym2203_interface =
 {
-	1,
-	3000000,				/* 3 MHz (verified on Viofight PCB) */
-	{ YM2203_VOL(80,25) },	/* ?? */
-	{ 0 },
-	{ 0 },
-	{ bankswitch_w },
-	{ 0 },
-	{ irqhandler }
-};
-
-static struct OKIM6295interface okim6295_interface =
-{
-	2,
-	{ 8000,8000 },			/* ?? */
-	{ REGION_SOUND1,REGION_SOUND1 }, /* memory regions */
-	{ 50,65 }				/* ?? */
-};
-static struct OKIM6295interface okim6295_interface_viofight =
-{
-	1,	/* 1 chip */
-	{ 8000 },			/* 8KHz, verified on viofight PCB */
-	{ REGION_SOUND1 }, /* memory region */
-	{ 50 }				/* ?? */
+	0,
+	0,
+	bankswitch_w,
+	0,
+	irqhandler
 };
 
 /*
@@ -2659,11 +2628,10 @@ static void mb87078_gain_changed(int channel, int percent)
 {
 	if (channel==1)
 	{
-		mixer_set_volume(0,percent);
-		mixer_set_volume(1,percent);
-		mixer_set_volume(2,percent);
-		mixer_set_volume(3,percent);
-		mixer_set_volume(4,percent);
+		int type = Machine->drv->sound[0].sound_type;
+		sndti_set_output_gain(type, 0, 0, percent / 100.0);
+		sndti_set_output_gain(type, 1, 0, percent / 100.0);
+		sndti_set_output_gain(type, 2, 0, percent / 100.0);
 		//usrintf_showmessage("MB87078 gain ch#%i percent=%i",channel,percent);
 	}
 }
@@ -2714,7 +2682,13 @@ static MACHINE_DRIVER_START( rastsag2 )
 	MDRV_VIDEO_UPDATE(taitob)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM2610, ym2610_interface_rsaga2)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM2610, 8000000)
+	MDRV_SOUND_CONFIG(ym2610_interface_rsaga2)
+	MDRV_SOUND_ROUTE(0, "mono", 0.25)
+	MDRV_SOUND_ROUTE(1, "mono", 1.0)
+	MDRV_SOUND_ROUTE(2, "mono", 1.0)
 MACHINE_DRIVER_END
 
 
@@ -2744,7 +2718,13 @@ static MACHINE_DRIVER_START( ashura )
 	MDRV_VIDEO_UPDATE(taitob)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM2610, ym2610_interface_crimec)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM2610, 8000000)
+	MDRV_SOUND_CONFIG(ym2610_interface_crimec)
+	MDRV_SOUND_ROUTE(0, "mono", 0.25)
+	MDRV_SOUND_ROUTE(1, "mono", 1.0)
+	MDRV_SOUND_ROUTE(2, "mono", 1.0)
 MACHINE_DRIVER_END
 
 
@@ -2774,7 +2754,13 @@ static MACHINE_DRIVER_START( crimec )
 	MDRV_VIDEO_UPDATE(taitob)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM2610, ym2610_interface_crimec)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM2610, 8000000)
+	MDRV_SOUND_CONFIG(ym2610_interface_crimec)
+	MDRV_SOUND_ROUTE(0, "mono", 0.25)
+	MDRV_SOUND_ROUTE(1, "mono", 1.0)
+	MDRV_SOUND_ROUTE(2, "mono", 1.0)
 MACHINE_DRIVER_END
 
 
@@ -2804,7 +2790,13 @@ static MACHINE_DRIVER_START( tetrist )
 	MDRV_VIDEO_UPDATE(taitob)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM2610, ym2610_interface_rsaga2)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM2610, 8000000)
+	MDRV_SOUND_CONFIG(ym2610_interface_rsaga2)
+	MDRV_SOUND_ROUTE(0, "mono", 0.25)
+	MDRV_SOUND_ROUTE(1, "mono", 1.0)
+	MDRV_SOUND_ROUTE(2, "mono", 1.0)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( tetrista )
@@ -2833,7 +2825,14 @@ static MACHINE_DRIVER_START( tetrista )
 	MDRV_VIDEO_UPDATE(taitob)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM2203, ym2203_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM2203, 3000000)
+	MDRV_SOUND_CONFIG(ym2203_interface)
+	MDRV_SOUND_ROUTE(0, "mono", 0.25)
+	MDRV_SOUND_ROUTE(1, "mono", 0.25)
+	MDRV_SOUND_ROUTE(2, "mono", 0.25)
+	MDRV_SOUND_ROUTE(3, "mono", 0.80)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( hitice )
@@ -2862,8 +2861,22 @@ static MACHINE_DRIVER_START( hitice )
 	MDRV_VIDEO_UPDATE(taitob)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM2203, ym2203_interface)
-	MDRV_SOUND_ADD(OKIM6295, okim6295_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM2203, 3000000)
+	MDRV_SOUND_CONFIG(ym2203_interface)
+	MDRV_SOUND_ROUTE(0, "mono", 0.25)
+	MDRV_SOUND_ROUTE(1, "mono", 0.25)
+	MDRV_SOUND_ROUTE(2, "mono", 0.25)
+	MDRV_SOUND_ROUTE(3, "mono", 0.80)
+
+	MDRV_SOUND_ADD(OKIM6295, 8000)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
+
+	MDRV_SOUND_ADD(OKIM6295, 8000)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.65)
 MACHINE_DRIVER_END
 
 
@@ -2893,7 +2906,13 @@ static MACHINE_DRIVER_START( rambo3 )
 	MDRV_VIDEO_UPDATE(taitob)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM2610, ym2610_interface_crimec)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM2610, 8000000)
+	MDRV_SOUND_CONFIG(ym2610_interface_crimec)
+	MDRV_SOUND_ROUTE(0, "mono", 0.25)
+	MDRV_SOUND_ROUTE(1, "mono", 1.0)
+	MDRV_SOUND_ROUTE(2, "mono", 1.0)
 MACHINE_DRIVER_END
 
 
@@ -2923,7 +2942,13 @@ static MACHINE_DRIVER_START( rambo3a )
 	MDRV_VIDEO_UPDATE(taitob)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM2610, ym2610_interface_crimec)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM2610, 8000000)
+	MDRV_SOUND_CONFIG(ym2610_interface_crimec)
+	MDRV_SOUND_ROUTE(0, "mono", 0.25)
+	MDRV_SOUND_ROUTE(1, "mono", 1.0)
+	MDRV_SOUND_ROUTE(2, "mono", 1.0)
 MACHINE_DRIVER_END
 
 
@@ -2956,7 +2981,13 @@ static MACHINE_DRIVER_START( pbobble )
 	MDRV_VIDEO_UPDATE(taitob)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM2610B, ym2610_interface_crimec)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM2610B, 8000000)
+	MDRV_SOUND_CONFIG(ym2610_interface_crimec)
+	MDRV_SOUND_ROUTE(0, "mono", 0.25)
+	MDRV_SOUND_ROUTE(1, "mono", 1.0)
+	MDRV_SOUND_ROUTE(2, "mono", 1.0)
 MACHINE_DRIVER_END
 
 
@@ -2989,7 +3020,13 @@ static MACHINE_DRIVER_START( spacedx )
 	MDRV_VIDEO_UPDATE(taitob)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM2610, ym2610_interface_crimec)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM2610, 8000000)
+	MDRV_SOUND_CONFIG(ym2610_interface_crimec)
+	MDRV_SOUND_ROUTE(0, "mono", 0.25)
+	MDRV_SOUND_ROUTE(1, "mono", 1.0)
+	MDRV_SOUND_ROUTE(2, "mono", 1.0)
 MACHINE_DRIVER_END
 
 
@@ -3019,7 +3056,13 @@ static MACHINE_DRIVER_START( spacedxo )
 	MDRV_VIDEO_UPDATE(taitob)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM2610, ym2610_interface_crimec)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM2610, 8000000)
+	MDRV_SOUND_CONFIG(ym2610_interface_crimec)
+	MDRV_SOUND_ROUTE(0, "mono", 0.25)
+	MDRV_SOUND_ROUTE(1, "mono", 1.0)
+	MDRV_SOUND_ROUTE(2, "mono", 1.0)
 MACHINE_DRIVER_END
 
 
@@ -3052,7 +3095,13 @@ static MACHINE_DRIVER_START( qzshowby )
 	MDRV_VIDEO_UPDATE(taitob)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM2610B, ym2610_interface_crimec)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM2610B, 8000000)
+	MDRV_SOUND_CONFIG(ym2610_interface_crimec)
+	MDRV_SOUND_ROUTE(0, "mono", 0.25)
+	MDRV_SOUND_ROUTE(1, "mono", 1.0)
+	MDRV_SOUND_ROUTE(2, "mono", 1.0)
 MACHINE_DRIVER_END
 
 
@@ -3082,8 +3131,18 @@ static MACHINE_DRIVER_START( viofight )
 	MDRV_VIDEO_UPDATE(taitob)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM2203, ym2203_interface)
-	MDRV_SOUND_ADD(OKIM6295, okim6295_interface_viofight)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM2203, 3000000)
+	MDRV_SOUND_CONFIG(ym2203_interface)
+	MDRV_SOUND_ROUTE(0, "mono", 0.25)
+	MDRV_SOUND_ROUTE(1, "mono", 0.25)
+	MDRV_SOUND_ROUTE(2, "mono", 0.25)
+	MDRV_SOUND_ROUTE(3, "mono", 0.80)
+
+	MDRV_SOUND_ADD(OKIM6295, 8000)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
 MACHINE_DRIVER_END
 
 #if 0
@@ -3120,7 +3179,14 @@ static MACHINE_DRIVER_START( masterw )
 	MDRV_VIDEO_UPDATE(taitob)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM2203, ym2203_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM2203, 3000000)
+	MDRV_SOUND_CONFIG(ym2203_interface)
+	MDRV_SOUND_ROUTE(0, "mono", 0.25)
+	MDRV_SOUND_ROUTE(1, "mono", 0.25)
+	MDRV_SOUND_ROUTE(2, "mono", 0.25)
+	MDRV_SOUND_ROUTE(3, "mono", 0.80)
 MACHINE_DRIVER_END
 
 
@@ -3150,7 +3216,13 @@ static MACHINE_DRIVER_START( silentd )
 	MDRV_VIDEO_UPDATE(taitob)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM2610, ym2610_interface_rsaga2)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM2610, 8000000)
+	MDRV_SOUND_CONFIG(ym2610_interface_rsaga2)
+	MDRV_SOUND_ROUTE(0, "mono", 0.25)
+	MDRV_SOUND_ROUTE(1, "mono", 1.0)
+	MDRV_SOUND_ROUTE(2, "mono", 1.0)
 MACHINE_DRIVER_END
 
 
@@ -3180,7 +3252,13 @@ static MACHINE_DRIVER_START( selfeena )
 	MDRV_VIDEO_UPDATE(taitob)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM2610, ym2610_interface_crimec)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM2610, 8000000)
+	MDRV_SOUND_CONFIG(ym2610_interface_crimec)
+	MDRV_SOUND_ROUTE(0, "mono", 0.25)
+	MDRV_SOUND_ROUTE(1, "mono", 1.0)
+	MDRV_SOUND_ROUTE(2, "mono", 1.0)
 MACHINE_DRIVER_END
 
 #if 0
@@ -3219,7 +3297,13 @@ static MACHINE_DRIVER_START( ryujin )
 	MDRV_VIDEO_UPDATE(taitob)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM2610, ym2610_interface_crimec)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM2610, 8000000)
+	MDRV_SOUND_CONFIG(ym2610_interface_crimec)
+	MDRV_SOUND_ROUTE(0, "mono", 0.25)
+	MDRV_SOUND_ROUTE(1, "mono", 1.0)
+	MDRV_SOUND_ROUTE(2, "mono", 1.0)
 MACHINE_DRIVER_END
 
 #if 0
@@ -3256,7 +3340,13 @@ static MACHINE_DRIVER_START( sbm )
 	MDRV_VIDEO_UPDATE(taitob)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM2610B, ym2610_interface_crimec)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM2610B, 8000000)
+	MDRV_SOUND_CONFIG(ym2610_interface_crimec)
+	MDRV_SOUND_ROUTE(0, "mono", 0.25)
+	MDRV_SOUND_ROUTE(1, "mono", 1.0)
+	MDRV_SOUND_ROUTE(2, "mono", 1.0)
 MACHINE_DRIVER_END
 
 /***************************************************************************

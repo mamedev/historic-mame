@@ -126,6 +126,8 @@ one for shoot and one for select.
 */
 
 #include "driver.h"
+#include "sound/3812intf.h"
+#include "sound/2413intf.h"
 
 static struct tilemap *ppmast93_fg_tilemap, *ppmast93_bg_tilemap;
 data8_t *ppmast93_fgram, *ppmast93_bgram;
@@ -333,13 +335,6 @@ VIDEO_UPDATE( ppmast93 )
 	tilemap_draw(bitmap,cliprect,ppmast93_fg_tilemap,0,0);
 }
 
-static struct YM2413interface ym2413_interface =
-{
-	1,
-	5000000/2,	/* 2.5 MHz */
-	{ YM2413_VOL(100,MIXER_PAN_CENTER,100,MIXER_PAN_CENTER) }
-};
-
 static MACHINE_DRIVER_START( ppmast93 )
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80,5000000)		 /* 5 MHz */
@@ -367,7 +362,10 @@ static MACHINE_DRIVER_START( ppmast93 )
 	MDRV_VIDEO_START(ppmast93)
 	MDRV_VIDEO_UPDATE(ppmast93)
 
-	MDRV_SOUND_ADD(YM2413, ym2413_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM2413, 5000000/2)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 ROM_START( ppmast93 )

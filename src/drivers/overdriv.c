@@ -22,6 +22,8 @@ Notes:
 #include "vidhrdw/konamiic.h"
 #include "machine/eeprom.h"
 #include "cpu/m6809/m6809.h"
+#include "sound/2151intf.h"
+#include "sound/k053260.h"
 
 
 VIDEO_START( overdriv );
@@ -385,21 +387,9 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 
 
-static struct YM2151interface ym2151_interface =
-{
-	1,			/* 1 chip */
-	3579545,	/* 3.579545 MHz */
-	{ YM3012_VOL(100,MIXER_PAN_LEFT,100,MIXER_PAN_RIGHT) },
-	{ 0 }
-};
-
 static struct K053260_interface k053260_interface =
 {
-	2,
-	{ 3579545, 3579545 },
-	{ REGION_SOUND1, REGION_SOUND1 }, /* memory region */
-	{ { MIXER(70,MIXER_PAN_LEFT), MIXER(70,MIXER_PAN_RIGHT) }, { MIXER(70,MIXER_PAN_LEFT), MIXER(70,MIXER_PAN_RIGHT) } },
-	{ 0, 0 }
+	REGION_SOUND1
 };
 
 
@@ -439,9 +429,21 @@ static MACHINE_DRIVER_START( overdriv )
 	MDRV_VIDEO_UPDATE(overdriv)
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(YM2151, ym2151_interface)
-	MDRV_SOUND_ADD(K053260, k053260_interface)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(YM2151, 3579545)
+	MDRV_SOUND_ROUTE(0, "left", 1.0)
+	MDRV_SOUND_ROUTE(1, "right", 1.0)
+
+	MDRV_SOUND_ADD(K053260, 3579545)
+	MDRV_SOUND_CONFIG(k053260_interface)
+	MDRV_SOUND_ROUTE(0, "left", 0.70)
+	MDRV_SOUND_ROUTE(1, "right", 0.70)
+
+	MDRV_SOUND_ADD(K053260, 3579545)
+	MDRV_SOUND_CONFIG(k053260_interface)
+	MDRV_SOUND_ROUTE(0, "left", 0.70)
+	MDRV_SOUND_ROUTE(1, "right", 0.70)
 MACHINE_DRIVER_END
 
 

@@ -6,7 +6,8 @@
 
 #include "driver.h"
 #include "gridlee.h"
-
+#include "sound/custom.h"
+#include "sound/samples.h"
 
 
 /*************************************
@@ -29,7 +30,7 @@ static UINT32 tone_fraction;
 static UINT8 tone_volume;
 
 /* sound streaming variables */
-static int gridlee_stream;
+static sound_stream *gridlee_stream;
 static double freq_to_step;
 
 
@@ -40,8 +41,10 @@ static double freq_to_step;
  *
  *************************************/
 
-static void gridlee_stream_update(int param, INT16 *buffer, int length)
+static void gridlee_stream_update(void *param, stream_sample_t **inputs, stream_sample_t **outputs, int length)
 {
+	stream_sample_t *buffer = outputs[0];
+	
 	/* loop over samples */
 	while (length--)
 	{
@@ -59,15 +62,15 @@ static void gridlee_stream_update(int param, INT16 *buffer, int length)
  *
  *************************************/
 
-int gridlee_sh_start(const struct MachineSound *msound)
+void *gridlee_sh_start(int clock, const struct CustomSound_interface *config)
 {
 	/* allocate the stream */
-	gridlee_stream = stream_init("Gridlee custom", 100, Machine->sample_rate, 0, gridlee_stream_update);
+	gridlee_stream = stream_create(0, 1, Machine->sample_rate, NULL, gridlee_stream_update);
 
 	if (Machine->sample_rate != 0)
 		freq_to_step = (double)(1 << 24) / (double)Machine->sample_rate;
 
-	return 0;
+	return auto_malloc(1);
 }
 
 

@@ -20,7 +20,7 @@ TODO: - background is misplaced in wbmlju
 #include "vidhrdw/system1.h"
 #include "cpu/z80/z80.h"
 #include "machine/segacrpt.h"
-
+#include "sound/sn76496.h"
 
 
 static MACHINE_INIT( system1 )
@@ -2125,15 +2125,6 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 
 
-static struct SN76496interface sn76496_interface =
-{
-	2,      /* 2 chips */
-	{ 2000000, 4000000 },   /* 8 MHz / 4 ?*/
-	{ 50, 50 }
-};
-
-
-
 static MACHINE_DRIVER_START( system1 )
 
 	/* basic machine hardware */
@@ -2165,7 +2156,13 @@ static MACHINE_DRIVER_START( system1 )
 	MDRV_VIDEO_UPDATE(system1)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(SN76496, sn76496_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(SN76496, 2000000)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
+
+	MDRV_SOUND_ADD(SN76496, 4000000)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
 MACHINE_DRIVER_END
 
 /* driver with reduced visible area for scrolling games */
@@ -2265,6 +2262,15 @@ static MACHINE_DRIVER_START( blockgal )
 
 MACHINE_DRIVER_END
 
+static MACHINE_DRIVER_START( ufosensi )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM( wbml )
+
+	/* video hardware */
+	MDRV_VISIBLE_AREA(1*8, 31*8-1, 1*8, 27*8-1)
+
+MACHINE_DRIVER_END
 
 /***************************************************************************
 
@@ -3879,10 +3885,40 @@ ROM_START( dakkochn )
 ROM_END
 
 ROM_START( ufosensi )
-	ROM_REGION( 0x20000, REGION_CPU1, 0 ) /* 128k for code */
+	ROM_REGION( 2*0x20000, REGION_CPU1, 0 )
 	ROM_LOAD( "epr11661.90",  0x00000, 0x8000, CRC(f3e394e2) SHA1(a295a2aa80a164a548995822c46f32fd9fad7a0b) ) /* encrypted */
 	ROM_LOAD( "epr11662.91",  0x10000, 0x8000, CRC(0c2e4120) SHA1(d81fbefa95868e3efd29ef3bacf108329781ca17) ) /* encrypted */
 	ROM_LOAD( "epr11663.92",  0x18000, 0x8000, CRC(4515ebae) SHA1(9b823f10999746292762c2f0a1ca9039efa22506) ) /* encrypted */
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* 64k for sound cpu */
+	ROM_LOAD( "epr11667.126", 0x0000, 0x8000, CRC(110baba9) SHA1(e14cf5af11ac9691eca897bbae7c238665cd2a4d) )
+
+	ROM_REGION( 0x18000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "epr11664.4",   0x00000, 0x8000, CRC(1b1bc3d5) SHA1(2a09e0dbe2d467c151dce705f249367df849eaeb) )
+	ROM_LOAD( "epr11665.5",   0x08000, 0x8000, CRC(3659174a) SHA1(176d2436abb45827a8d387241082854f55dc0314) )
+	ROM_LOAD( "epr11666.6",   0x10000, 0x8000, CRC(99dcc793) SHA1(ad1d0acb60e7c1a7016955e142ebca1cf07b4908) )
+
+	ROM_REGION( 0x20000, REGION_GFX2, 0 ) /* 128k for sprites data */
+	ROM_LOAD( "epr11658.87",  0x00000, 0x8000, CRC(3b5a20f7) SHA1(03e0934b0913c3a2cadf1d28b8a700d70b80fbac) )
+	ROM_LOAD( "epr11657.86",  0x08000, 0x8000, CRC(010f81a9) SHA1(1b7ee05c80edfa403e32c216fa69387ca556895e) )
+	ROM_LOAD( "epr11660.89",  0x10000, 0x8000, CRC(e1e2e7c5) SHA1(434039a70049a6e74e2a2f48b60345f720e6b1af) )
+	ROM_LOAD( "epr11659.88",  0x18000, 0x8000, CRC(286c7286) SHA1(449a19ea9a9f9df47005e8dac1b8eacaebc515e7) )
+
+	ROM_REGION( 0x0400, REGION_PROMS, 0 )
+	ROM_LOAD( "pr11656.20",   0x0000, 0x0100, CRC(640740eb) SHA1(9a601a3665f612d00c70019d33c7abd3cca9434b) ) /* palette red component */
+	ROM_LOAD( "pr11655.14",   0x0100, 0x0100, CRC(a0c3fa77) SHA1(cdffa1de06d30ec421323145dfc3271803fc25d4) ) /* palette green component */
+	ROM_LOAD( "pr11654.8",    0x0200, 0x0100, CRC(ba624305) SHA1(eb1d0dde60f81ff510ac8c1212e0ed5703febaf3) ) /* palette blue component */
+	ROM_LOAD( "pr5317.28",    0x0300, 0x0100, CRC(648350b8) SHA1(c7986aa9127ef5b50b845434cb4e81dff9861cd2) ) /* timing? (not used) */
+ROM_END
+
+ROM_START( ufosensb )
+	ROM_REGION( 2*0x20000, REGION_CPU1, 0 ) /* 256k for code + 256k for decrypted opcodes */
+	ROM_LOAD( "k108.bin",     0x20000, 0x8000, CRC(6b1d0955) SHA1(dbda145d40eaecd30c1d55a9675c58a2967c20c4) )
+	ROM_CONTINUE(             0x00000, 0x8000 )             /* Now load the operands in RAM */
+	ROM_LOAD( "k109.bin",     0x30000, 0x8000, CRC(fc543b26) SHA1(b9e1d2ca6f9811bf341edf104fe209dbf56e4b2d) )
+	ROM_CONTINUE(             0x10000, 0x8000 )
+	ROM_LOAD( "k110.bin",     0x38000, 0x8000, CRC(6ba2dc77) SHA1(09a65f55988ae28e285d402af9a2a1f1dc05a82c) )
+	ROM_CONTINUE(             0x18000, 0x8000 )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* 64k for sound cpu */
 	ROM_LOAD( "epr11667.126", 0x0000, 0x8000, CRC(110baba9) SHA1(e14cf5af11ac9691eca897bbae7c238665cd2a4d) )
@@ -3954,6 +3990,9 @@ static DRIVER_INIT( gardiab )	{ gardiab_decode(); }
 
 void mc8123_decrypt_0043(void);
 static DRIVER_INIT( wbml )		{ mc8123_decrypt_0043(); }
+
+void mc8123_decrypt_0064(void);
+static DRIVER_INIT( ufosensi )  { mc8123_decrypt_0064(); }
 
 
 DRIVER_INIT( myherok )
@@ -4093,4 +4132,5 @@ GAMEX(1987, wbmljo,   wbml,     wbml,     wbml,     wbml,     ROT0,   "Sega / We
 GAMEX(1987, wbmljb,   wbml,     wbml,     wbml,     bootleg,  ROT0,   "bootleg", 		 	   "Wonder Boy in Monster Land (Japan not encrypted)", GAME_NO_COCKTAIL )
 GAMEX(1987, wbmlb,    wbml,     wbml,     wbml,     bootleg,  ROT0,   "bootleg", 		 	   "Wonder Boy in Monster Land", GAME_NO_COCKTAIL )
 GAMEX(1987, dakkochn, 0,        chplft,   chplft,   0,        ROT0,   "Sega", 			 	   "DakkoChan Jansoh", GAME_NOT_WORKING | GAME_NO_COCKTAIL )
-GAMEX(1988, ufosensi, 0,        chplft,   chplft,   0,        ROT0,   "Sega", 			 	   "Ufo Senshi Yohko Chan", GAME_NOT_WORKING | GAME_NO_COCKTAIL )
+GAME( 1988, ufosensi, 0,        ufosensi, chplft,   ufosensi, ROT0,   "Sega", 			 	   "Ufo Senshi Yohko Chan" )
+GAME( 1988, ufosensb, ufosensi, ufosensi, chplft,   bootleg,  ROT0,   "bootleg", 			   "Ufo Senshi Yohko Chan (not encrypted)" )

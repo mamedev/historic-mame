@@ -149,9 +149,21 @@ SNK/Eastern  1985 (ACT) Gekisoh          Œƒ‘–
 	MDRV_CPU_PROGRAM_MAP(equites_s_readmem, equites_s_writemem) \
 	MDRV_CPU_IO_MAP(0, equites_s_writeport) \
 	MDRV_CPU_PERIODIC_INT(nmi_line_pulse, 4000) \
-	MDRV_SOUND_ADD(MSM5232, equites_5232intf) \
-	MDRV_SOUND_ADD(AY8910, equites_8910intf) \
-	MDRV_SOUND_ADD(DAC, equites_dacintf)
+	MDRV_SPEAKER_STANDARD_MONO("mono") \
+	\
+	MDRV_SOUND_ADD(MSM5232, 2500000) \
+	MDRV_SOUND_CONFIG(equites_5232intf) \
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.75) \
+	\
+	MDRV_SOUND_ADD(AY8910, 6144444/4) \
+	MDRV_SOUND_CONFIG(equites_8910intf) \
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50) \
+	\
+	MDRV_SOUND_ADD(DAC, 0) \
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.75) \
+	\
+	MDRV_SOUND_ADD(DAC, 0) \
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.75) \
 
 extern void equites_8404init(void);
 extern void equites_8404rule(unsigned pc, int offset, int data);
@@ -166,7 +178,6 @@ extern WRITE8_HANDLER(equites_dac1_w);
 extern data16_t *equites_8404ram;
 extern struct MSM5232interface equites_5232intf;
 extern struct AY8910interface equites_8910intf;
-extern struct DACinterface equites_dacintf;
 
 static ADDRESS_MAP_START( equites_s_readmem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0000, 0xbfff) AM_READ(MRA8_ROM) // sound program

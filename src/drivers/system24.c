@@ -338,6 +338,8 @@ Notes:
 #include "vidhrdw/segaic24.h"
 #include "sound/ym2151.h"
 #include "debug/debugcpu.h"
+#include "sound/dac.h"
+#include "sound/2151intf.h"
 
 data16_t* s24_mainram1;
 
@@ -1890,16 +1892,7 @@ ROM_END
 
 static struct YM2151interface ym2151_interface =
 {
-	1,
-	4000000,
-	{ YM3012_VOL(50, MIXER_PAN_LEFT, 50, MIXER_PAN_RIGHT) },
-	{ irq_ym }
-};
-
-static struct DACinterface dac_interface =
-{
-	1,
-	{ 50 }
+	irq_ym
 };
 
 static MACHINE_DRIVER_START( system24 )
@@ -1925,9 +1918,16 @@ static MACHINE_DRIVER_START( system24 )
 	MDRV_VIDEO_START(system24)
 	MDRV_VIDEO_UPDATE(system24)
 
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(YM2151, ym2151_interface)
-	MDRV_SOUND_ADD(DAC,    dac_interface)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(YM2151, 4000000)
+	MDRV_SOUND_CONFIG(ym2151_interface)
+	MDRV_SOUND_ROUTE(0, "left", 0.50)
+	MDRV_SOUND_ROUTE(1, "right", 0.50)
+
+	MDRV_SOUND_ADD(DAC, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.50)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 0.50)
 MACHINE_DRIVER_END
 
 GAME( 1988, hotrod,   0,        system24, hotrod,   hotrod,   ROT0,   "Sega", "Hot Rod (World, 3 Players, Turbo set 1)")

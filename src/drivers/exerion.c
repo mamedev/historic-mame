@@ -16,6 +16,7 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "exerion.h"
+#include "sound/ay8910.h"
 
 
 
@@ -291,13 +292,10 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 static struct AY8910interface ay8910_interface =
 {
-	2,  /* 2 chips */
-	10000000/6, /* 1.666 MHz */
-	{ 30, 30 },
-	{ 0, exerion_porta_r },
-	{ 0 },
-	{ 0 },
-	{ 0, exerion_portb_w }
+	exerion_porta_r,
+	0,
+	0,
+	exerion_portb_w
 };
 
 
@@ -332,7 +330,14 @@ static MACHINE_DRIVER_START( exerion )
 	MDRV_VIDEO_UPDATE(exerion)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(AY8910, ay8910_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(AY8910, 10000000/6)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.30)
+
+	MDRV_SOUND_ADD(AY8910, 10000000/6)
+	MDRV_SOUND_CONFIG(ay8910_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.30)
 MACHINE_DRIVER_END
 
 

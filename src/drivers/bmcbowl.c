@@ -107,6 +107,8 @@ Main board:
 #include "machine/random.h"
 #include "cpu/m68000/m68000.h"
 #include "machine/6522via.h"
+#include "sound/ay8910.h"
+#include "sound/okim6295.h"
 
 data16_t *bmcbowl_vid1;
 data16_t *bmcbowl_vid2;
@@ -445,14 +447,6 @@ INPUT_PORTS_START( bmcbowl )
 
 INPUT_PORTS_END
 
-static struct OKIM6295interface okim6295_interface =
-{
-	1,				/* 1 chip */
-	{ 8500 },		/* frequency (Hz) */
-	{ REGION_SOUND1 },	/* memory region */
-	{ 50 }
-};
-
 static READ8_HANDLER(dips1_r)
 {
 	switch(bmc_input)
@@ -473,13 +467,10 @@ static WRITE8_HANDLER(input_mux_w)
 
 static struct AY8910interface ay8910_interface =
 {
-	1,			/* 1 chip */
-	3579545/2,	/* ??? */
-	{ 50 },
-	{ dips1_r },
-	{ 0 },
-	{ 0 },
-	{ input_mux_w }
+	dips1_r,
+	0,
+	0,
+	input_mux_w
 };
 
 
@@ -522,9 +513,17 @@ static MACHINE_DRIVER_START( bmcbowl )
 	MDRV_NVRAM_HANDLER(bmc_nvram)
 	MDRV_MACHINE_INIT(bmcbowl)
 
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(AY8910, ay8910_interface)
-	MDRV_SOUND_ADD(OKIM6295, okim6295_interface)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(AY8910, 3579545/2)
+	MDRV_SOUND_CONFIG(ay8910_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.50)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 0.50)
+
+	MDRV_SOUND_ADD(OKIM6295, 8500)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.50)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 0.50)
 MACHINE_DRIVER_END
 
 ROM_START( bmcbowl )

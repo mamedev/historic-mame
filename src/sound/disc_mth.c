@@ -12,7 +12,7 @@
  * DST_ADDDER            - Multichannel adder
  * DST_COMP_ADDER        - Selectable parallel component circuit
  * DST_DAC_R1            - R1 Ladder DAC with cap filtering
- * DST_DIVIDER           - Division function
+ * DST_DIVIDE            - Division function
  * DST_GAIN              - Gain Factor
  * DST_INTEGRATE         - Integration circuits
  * DST_LOGIC_INV         - Logic level invertor
@@ -49,8 +49,10 @@ struct dst_dflipflop_context
 
 struct dst_integrate_context
 {
-	double	vMaxIn;		// vP - norton VBE
-	double	vMaxInD;	// vP - norton VBE - diode drop
+	double	change;
+	double	vMaxIn;		// v1 - norton VBE
+	double	vMaxInD;	// v1 - norton VBE - diode drop
+	double	vMaxOut;
 };
 
 #define DISC_MIXER_MAX_INPS	8
@@ -448,10 +450,23 @@ void dst_integrate_step(struct node_description *node)
 
 	switch (info->type)
 	{
+		case DISC_INTEGRATE_OP_AMP_1:
+			if (DST_INTEGRATE__TRG0 != 0)
+			{
+				/* This forces the cap to completely charge,
+				 * and the output to go to it's max value.
+				 */
+				node->output = context->vMaxOut;
+				return;
+			}
+			node->output -= context->change;
+			break;
+
 		case DISC_INTEGRATE_OP_AMP_1 | DISC_OP_AMP_IS_NORTON:
 			iNeg = context->vMaxIn / info->r1;
 			iPos = (DST_INTEGRATE__TRG0 - OP_AMP_NORTON_VBE) / info->r2;
 			if (iPos < 0) iPos = 0;
+			node->output += iPos / Machine->sample_rate / info->c;
 			break;
 
 		case DISC_INTEGRATE_OP_AMP_2 | DISC_OP_AMP_IS_NORTON:
@@ -460,22 +475,36 @@ void dst_integrate_step(struct node_description *node)
 			iNeg = dst_trigger_function(trig0, trig1, 0, info->f0) ? context->vMaxInD / info->r1 : 0;
 			iPos =  dst_trigger_function(trig0, trig1, 0, info->f1) ? context->vMaxIn / info->r2 : 0;
 			iPos +=  dst_trigger_function(trig0, trig1, 0, info->f2) ? context->vMaxInD / info->r3 : 0;
+			node->output += (iPos - iNeg) / Machine->sample_rate / info->c;
 			break;
 	}
 
-	node->output += (iPos - iNeg) / Machine->sample_rate / info->c;
 	/* Clip the output. */
 	if (node->output < 0) node->output = 0;
-	if (node->output > context->vMaxIn) node->output = context->vMaxIn;
+	if (node->output > context->vMaxOut) node->output = context->vMaxOut;
 }
 
 void dst_integrate_reset(struct node_description *node)
 {
 	const struct discrete_integrate_info *info = node->custom;
 	struct dst_integrate_context *context = node->context;
+	double	i, v;
 
-	context->vMaxIn = info->vP - OP_AMP_NORTON_VBE;
-	context->vMaxInD = context->vMaxIn - 0.6;
+	if (info->type & DISC_OP_AMP_IS_NORTON)
+	{
+		context->vMaxOut = info->vP - OP_AMP_NORTON_VBE;
+		context->vMaxIn  = info->v1 - OP_AMP_NORTON_VBE;
+		context->vMaxInD = context->vMaxIn - 0.6;
+	}
+	else
+	{
+		context->vMaxOut =  info->vP - OP_AMP_VP_RAIL_OFFSET;
+
+		v = info->v1 * info->r3 / (info->r2 + info->r3);	/* vRef */
+		v = info->v1 - v;	/* actual charging voltage */
+		i = v / info->r1;
+		context->change = i / Machine->sample_rate / info->c;
+	}
 	node->output = 0;
 }
 
@@ -894,7 +923,7 @@ void dst_mixer_reset(struct node_description *node)
 		if (info->rNode[bit])
 		{
 			context->type = context->type | DISC_MIXER_HAS_R_NODE;
-			context->rNode[bit] = discrete_find_node(info->rNode[bit]);	// get node pointers
+			context->rNode[bit] = discrete_find_node(NULL, info->rNode[bit]);	// get node pointers
 		}
 		else
 			context->rNode[bit] = NULL;

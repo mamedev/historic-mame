@@ -36,6 +36,7 @@ dip: 6.7 7.7
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "cpu/z80/z80.h"
+#include "sound/custom.h"
 
 
 WRITE8_HANDLER( wiping_flipscreen_w );
@@ -43,8 +44,7 @@ PALETTE_INIT( wiping );
 VIDEO_UPDATE( wiping );
 
 extern unsigned char *wiping_soundregs;
-int wiping_sh_start(const struct MachineSound *msound);
-void wiping_sh_stop(void);
+void *wiping_sh_start(int clock, const struct CustomSound_interface *config);
 WRITE8_HANDLER( wiping_sound_w );
 
 
@@ -302,9 +302,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 static struct CustomSound_interface custom_interface =
 {
-	wiping_sh_start,
-	wiping_sh_stop,
-	0
+	wiping_sh_start
 };
 
 
@@ -337,7 +335,11 @@ static MACHINE_DRIVER_START( wiping )
 	MDRV_VIDEO_UPDATE(wiping)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(CUSTOM, custom_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	
+	MDRV_SOUND_ADD(CUSTOM, 0)
+	MDRV_SOUND_CONFIG(custom_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 

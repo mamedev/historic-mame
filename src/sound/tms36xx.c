@@ -1,4 +1,5 @@
 #include "driver.h"
+#include "tms36xx.h"
 
 #define VERBOSE 1
 
@@ -16,7 +17,7 @@
 
 struct TMS36XX {
 	char *subtype;		/* subtype name MM6221AA, TMS3615 or TMS3617 */
-	int channel;		/* returned by stream_init() */
+	sound_stream * channel;	/* returned by stream_create() */
 
 	int samplerate; 	/* from Machine->sample_rate */
 
@@ -41,10 +42,9 @@ struct TMS36XX {
 	int tune_num;		/* tune currently playing */
 	int tune_ofs;		/* note currently playing */
 	int tune_max;		/* end of tune */
-};
 
-static struct TMS36XXinterface *intf;
-static struct TMS36XX *tms36xx[MAX_TMS36XX];
+	const struct TMS36XXinterface *intf;
+};
 
 #define C(n)	(int)((FSCALE<<(n-1))*1.18921)	/* 2^(3/12) */
 #define Cx(n)	(int)((FSCALE<<(n-1))*1.25992)	/* 2^(4/12) */
@@ -65,7 +65,7 @@ static struct TMS36XX *tms36xx[MAX_TMS36XX];
  * trigger sound #1 of the Phoenix PCB sound chip I put just something
  * 'alarming' in here.
  */
-static int tune1[96*6] = {
+static const int tune1[96*6] = {
 	C(3),	0,		0,		C(2),	0,		0,
 	G(3),	0,		0,		0,		0,		0,
 	C(3),	0,		0,		0,		0,		0,
@@ -104,7 +104,7 @@ static int tune1[96*6] = {
  * Fuer Elise, Beethoven
  * (Excuse my non-existent musical skill, Mr. B ;-)
  */
-static int tune2[96*6] = {
+static const int tune2[96*6] = {
 	D(3),	D(4),	D(5),	0,		0,		0,
 	Cx(3),	Cx(4),	Cx(5),	0,		0,		0,
 	D(3),	D(4),	D(5),	0,		0,		0,
@@ -168,7 +168,7 @@ static int tune2[96*6] = {
  * Magic*:
  *	 This song is a classical piece called "ESTUDIO" from M.A.Robira.
  */
-static int tune3[96*6] = {
+static const int tune3[96*6] = {
 	A(2),	A(3),	A(4),	D(1),	 D(2),	  D(3),
 	0,		0,		0,		0,		 0, 	  0,
 	A(2),	A(3),	A(4),	0,		 0, 	  0,
@@ -283,7 +283,7 @@ static int tune3[96*6] = {
 };
 
 /* This is used to play single notes for the TMS3615/TMS3617 */
-static int tune4[13*6] = {
+static const int tune4[13*6] = {
 /*	16'     8'      5 1/3'  4'      2 2/3'  2'      */
 	B(0),	B(1),	Dx(2),	B(2),	Dx(3),	B(3),
 	C(1),	C(2),	E(2),	C(3),	E(3),	C(4),
@@ -300,7 +300,7 @@ static int tune4[13*6] = {
 	B(1),	B(2),	Dx(3),	B(3),	Dx(4),	B(4)
 };
 
-static int *tunes[] = {NULL,tune1,tune2,tune3,tune4};
+static const int *tunes[] = {NULL,tune1,tune2,tune3,tune4};
 
 #define DECAY(voice)											\
 	if( tms->vol[voice] > VMIN )								\
@@ -344,10 +344,11 @@ static int *tunes[] = {NULL,tune1,tune2,tune3,tune4};
 
 
 
-static void tms36xx_sound_update(int param, INT16 *buffer, int length)
+static void tms36xx_sound_update(void *param, stream_sample_t **inputs, stream_sample_t **_buffer, int length)
 {
-	struct TMS36XX *tms = tms36xx[param];
+	struct TMS36XX *tms = param;
 	int samplerate = tms->samplerate;
+	stream_sample_t *buffer = _buffer[0];
 
     /* no tune played? */
 	if( !tunes[tms->tune_num] || tms->voices == 0 )
@@ -395,9 +396,8 @@ static void tms36xx_sound_update(int param, INT16 *buffer, int length)
 	}
 }
 
-static void tms36xx_reset_counters(int chip)
+static void tms36xx_reset_counters(struct TMS36XX *tms)
 {
-    struct TMS36XX *tms = tms36xx[chip];
     tms->tune_counter = 0;
     tms->note_counter = 0;
 	memset(tms->vol_counter, 0, sizeof(tms->vol_counter));
@@ -406,7 +406,7 @@ static void tms36xx_reset_counters(int chip)
 
 void mm6221aa_tune_w(int chip, int tune)
 {
-    struct TMS36XX *tms = tms36xx[chip];
+	struct TMS36XX *tms = sndti_token(SOUND_TMS36XX, chip);
 
     /* which tune? */
     tune &= 3;
@@ -425,7 +425,7 @@ void mm6221aa_tune_w(int chip, int tune)
 
 void tms36xx_note_w(int chip, int octave, int note)
 {
-	struct TMS36XX *tms = tms36xx[chip];
+	struct TMS36XX *tms = sndti_token(SOUND_TMS36XX, chip);
 
 	octave &= 3;
 	note &= 15;
@@ -439,16 +439,15 @@ void tms36xx_note_w(int chip, int octave, int note)
     stream_update(tms->channel,0);
 
 	/* play a single note from 'tune 4', a list of the 13 tones */
-	tms36xx_reset_counters(chip);
+	tms36xx_reset_counters(tms);
 	tms->octave = octave;
     tms->tune_num = 4;
 	tms->tune_ofs = note;
 	tms->tune_max = note + 1;
 }
 
-void tms3617_enable_w(int chip, int enable)
+void tms3617_enable(struct TMS36XX *tms, int enable)
 {
-	struct TMS36XX *tms = tms36xx[chip];
 	int i, bits = 0;
 
 	/* duplicate the 6 voice enable bits */
@@ -484,82 +483,82 @@ void tms3617_enable_w(int chip, int enable)
 	LOG(("%s\n", bits ? "" : " none"));
 }
 
-int tms36xx_sh_start(const struct MachineSound *msound)
+void tms3617_enable_w(int chip, int enable)
 {
-	int i, j;
-	intf = msound->sound_interface;
-
-	for( i = 0; i < intf->num; i++ )
-	{
-		int enable;
-		struct TMS36XX *tms;
-		char name[16];
-
-		if (intf->subtype[i] == MM6221AA)
-			sprintf(name, "MM6221AA #%d", i);
-		else
-			sprintf(name, "TMS36%02d #%d", intf->subtype[i], i);
-		tms36xx[i] = malloc(sizeof(struct TMS36XX));
-		if( !tms36xx[i] )
-		{
-			logerror("%s failed to malloc struct TMS36XX\n", name);
-            return 1;
-        }
-		tms = tms36xx[i];
-		memset(tms, 0, sizeof(struct TMS36XX));
-
-		tms->subtype = malloc(strlen(name) + 1);
-		strcpy(tms->subtype, name);
-        tms->channel = stream_init(name, intf->mixing_level[i], Machine->sample_rate, i, tms36xx_sound_update);
-
-        if( tms->channel == -1 )
-		{
-			logerror("%s stream_init failed\n", name);
-			return 1;
-		}
-		tms->samplerate = Machine->sample_rate ? Machine->sample_rate : 1;
-		tms->basefreq = intf->basefreq[i];
-		enable = 0;
-        for (j = 0; j < 6; j++)
-		{
-			if( intf->decay[i][j] > 0 )
-			{
-				tms->decay[j+0] = tms->decay[j+6] = VMAX / intf->decay[i][j];
-				enable |= 0x41 << j;
-			}
-		}
-		tms->speed = (intf->speed[i] > 0) ? VMAX / intf->speed[i] : VMAX;
-		tms3617_enable_w(i,enable);
-
-        LOG(("%s samplerate    %d\n", name, tms->samplerate));
-		LOG(("%s basefreq      %d\n", name, tms->basefreq));
-		LOG(("%s decay         %d,%d,%d,%d,%d,%d\n", name,
-			tms->decay[0], tms->decay[1], tms->decay[2],
-			tms->decay[3], tms->decay[4], tms->decay[5]));
-        LOG(("%s speed         %d\n", name, tms->speed));
-    }
-    return 0;
+	struct TMS36XX *tms = sndti_token(SOUND_TMS36XX, chip);
+	tms3617_enable(tms, enable);
 }
 
-void tms36xx_sh_stop(void)
+static void *tms36xx_start(int sndindex, int clock, const void *config)
 {
-	int i;
-	for( i = 0; i < intf->num; i++ )
+	int j;
+	struct TMS36XX *tms;
+	int enable;
+	
+	tms = auto_malloc(sizeof(*tms));
+	memset(tms, 0, sizeof(*tms));
+	
+	tms->intf = config;
+
+   tms->channel = stream_create(0, 1, Machine->sample_rate, tms, tms36xx_sound_update);
+	tms->samplerate = Machine->sample_rate ? Machine->sample_rate : 1;
+	tms->basefreq = clock;
+	enable = 0;
+   for (j = 0; j < 6; j++)
 	{
-		if( tms36xx[i] )
+		if( tms->intf->decay[j] > 0 )
 		{
-			if (tms36xx[i]->subtype)
-				free(tms36xx[i]->subtype);
-            free(tms36xx[i]);
+			tms->decay[j+0] = tms->decay[j+6] = VMAX / tms->intf->decay[j];
+			enable |= 0x41 << j;
 		}
-		tms36xx[i] = NULL;
+	}
+	tms->speed = (tms->intf->speed > 0) ? VMAX / tms->intf->speed : VMAX;
+	tms3617_enable(tms,enable);
+
+   LOG(("TMS36xx samplerate    %d\n", tms->samplerate));
+	LOG(("TMS36xx basefreq      %d\n", tms->basefreq));
+	LOG(("TMS36xx decay         %d,%d,%d,%d,%d,%d\n", 
+		tms->decay[0], tms->decay[1], tms->decay[2],
+		tms->decay[3], tms->decay[4], tms->decay[5]));
+   LOG(("TMS36xx speed         %d\n", tms->speed));
+
+    return tms;
+}
+
+
+
+
+/**************************************************************************
+ * Generic get_info
+ **************************************************************************/
+
+static void tms36xx_set_info(void *token, UINT32 state, union sndinfo *info)
+{
+	switch (state)
+	{
+		/* no parameters to set */
 	}
 }
 
-void tms36xx_sh_update(void)
+
+void tms36xx_get_info(void *token, UINT32 state, union sndinfo *info)
 {
-	int i;
-    for( i = 0; i < intf->num; i++ )
-		stream_update(i,0);
+	switch (state)
+	{
+		/* --- the following bits of info are returned as 64-bit signed integers --- */
+
+		/* --- the following bits of info are returned as pointers to data or functions --- */
+		case SNDINFO_PTR_SET_INFO:						info->set_info = tms36xx_set_info;		break;
+		case SNDINFO_PTR_START:							info->start = tms36xx_start;			break;
+		case SNDINFO_PTR_STOP:							/* Nothing */							break;
+		case SNDINFO_PTR_RESET:							/* Nothing */							break;
+
+		/* --- the following bits of info are returned as NULL-terminated strings --- */
+		case SNDINFO_STR_NAME:							info->s = "TMS36XX";					break;
+		case SNDINFO_STR_CORE_FAMILY:					info->s = "TI PSG";						break;
+		case SNDINFO_STR_CORE_VERSION:					info->s = "1.0";						break;
+		case SNDINFO_STR_CORE_FILE:						info->s = __FILE__;						break;
+		case SNDINFO_STR_CORE_CREDITS:					info->s = "Copyright (c) 2004, The MAME Team"; break;
+	}
 }
 

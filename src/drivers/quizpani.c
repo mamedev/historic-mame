@@ -33,6 +33,7 @@
 *************************************************************************/
 
 #include "driver.h"
+#include "sound/okim6295.h"
 
 extern data16_t *quizpani_bg_videoram, *quizpani_txt_videoram;
 extern data16_t *quizpani_scrollreg;
@@ -256,14 +257,6 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 	{ -1 } /* end of array */
 };
 
-static struct OKIM6295interface okim6295_interface =
-{
-	1,					/* 1 chip */
-	{ 16000000/4/165 },	/* frequency (Hz) */
-	{ REGION_SOUND1 },	/* memory region */
-	{ 100 }
-};
-
 
 static MACHINE_DRIVER_START( quizpani )
 	MDRV_CPU_ADD(M68000, 10000000)
@@ -284,7 +277,11 @@ static MACHINE_DRIVER_START( quizpani )
 	MDRV_VIDEO_START(quizpani)
 	MDRV_VIDEO_UPDATE(quizpani)
 
-	MDRV_SOUND_ADD(OKIM6295, okim6295_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(OKIM6295, 16000000/4/165)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 ROM_START( quizpani )

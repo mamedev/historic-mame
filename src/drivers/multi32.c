@@ -154,6 +154,8 @@ Stadium Cross EPR15093  EPR15094  EPR15018  EPR15019  EPR15192  EPR15020  EPR150
 #include "vidhrdw/generic.h"
 #include "machine/eeprom.h"
 #include "machine/random.h"
+#include "sound/multipcm.h"
+#include "sound/2612intf.h"
 
 #define OSC_A	(32215900)	// System 32 master crystal is 32215900 Hz
 #define Z80_CLOCK (OSC_A/4)
@@ -767,46 +769,36 @@ static WRITE8_HANDLER( sys32_soundbank_w )
 }
 
 static ADDRESS_MAP_START( multi32_sound_readport, ADDRESS_SPACE_IO, 8 )
-	AM_RANGE(0x80, 0x80) AM_READ(YM2612_status_port_0_A_r)
+	AM_RANGE(0x80, 0x80) AM_READ(YM3438_status_port_0_A_r)
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( multi32_sound_writeport, ADDRESS_SPACE_IO, 8 )
-	AM_RANGE(0x80, 0x80) AM_WRITE(YM2612_control_port_0_A_w)
-	AM_RANGE(0x81, 0x81) AM_WRITE(YM2612_data_port_0_A_w)
-	AM_RANGE(0x82, 0x82) AM_WRITE(YM2612_control_port_0_B_w)
-	AM_RANGE(0x83, 0x83) AM_WRITE(YM2612_data_port_0_B_w)
+	AM_RANGE(0x80, 0x80) AM_WRITE(YM3438_control_port_0_A_w)
+	AM_RANGE(0x81, 0x81) AM_WRITE(YM3438_data_port_0_A_w)
+	AM_RANGE(0x82, 0x82) AM_WRITE(YM3438_control_port_0_B_w)
+	AM_RANGE(0x83, 0x83) AM_WRITE(YM3438_data_port_0_B_w)
 	AM_RANGE(0xa0, 0xa0) AM_WRITE(sys32_soundbank_w)
 	AM_RANGE(0xb0, 0xb0) AM_WRITE(MultiPCM_bank_0_w)
 	AM_RANGE(0xc1, 0xc1) AM_WRITE(MWA8_NOP)
 ADDRESS_MAP_END
 
-struct YM2612interface mul32_ym3438_interface =
+struct YM3438interface mul32_ym3438_interface =
 {
-	1,
-	Z80_CLOCK,
-	{ 60,60 },
-	{ 0 },	{ 0 },	{ 0 },	{ 0 },
-	{ irq_handler }
+	irq_handler
 };
 
 static struct MultiPCM_interface mul32_multipcm_interface =
 {
-	1,		// 1 chip
-	{ Z80_CLOCK },	// clock
-	{ MULTIPCM_MODE_MULTI32 },	// banking mode
-	{ (512*1024) },	// bank size
-	{ REGION_SOUND1 },	// sample region
-	{ YM3012_VOL(100, MIXER_PAN_CENTER, 100, MIXER_PAN_CENTER) }
+	MULTIPCM_MODE_MULTI32,	// banking mode
+	(512*1024),	// bank size
+	REGION_SOUND1,	// sample region
 };
 
 static struct MultiPCM_interface scross_multipcm_interface =
 {
-	1,		// 1 chip
-	{ Z80_CLOCK },	// clock
-	{ MULTIPCM_MODE_STADCROSS },	// banking mode
-	{ (512*1024) },	// bank size
-	{ REGION_SOUND1 },	// sample region
-	{ YM3012_VOL(100, MIXER_PAN_CENTER, 100, MIXER_PAN_CENTER) }
+	MULTIPCM_MODE_STADCROSS,	// banking mode
+	(512*1024),	// bank size
+	REGION_SOUND1	// sample region
 };
 
 static MACHINE_DRIVER_START( base )
@@ -837,18 +829,28 @@ static MACHINE_DRIVER_START( base )
 	MDRV_VIDEO_START(system32)
 	MDRV_VIDEO_UPDATE(system32)
 
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(YM3438, mul32_ym3438_interface)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(YM3438, Z80_CLOCK)
+	MDRV_SOUND_CONFIG(mul32_ym3438_interface)
+	MDRV_SOUND_ROUTE(0, "left", 0.60)
+	MDRV_SOUND_ROUTE(1, "right", 0.60)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( multi32 )
 	MDRV_IMPORT_FROM(base)
-	MDRV_SOUND_ADD(MULTIPCM, mul32_multipcm_interface)
+	MDRV_SOUND_ADD(MULTIPCM, Z80_CLOCK)
+	MDRV_SOUND_CONFIG(mul32_multipcm_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 1.0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 1.0)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( scross )
 	MDRV_IMPORT_FROM(base)
-	MDRV_SOUND_ADD(MULTIPCM, scross_multipcm_interface)
+	MDRV_SOUND_ADD(MULTIPCM, Z80_CLOCK)
+	MDRV_SOUND_CONFIG(scross_multipcm_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 1.0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 1.0)
 MACHINE_DRIVER_END
 
 static DRIVER_INIT(orunners)

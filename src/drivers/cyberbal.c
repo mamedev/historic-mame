@@ -23,6 +23,7 @@
 #include "machine/atarigen.h"
 #include "sndhrdw/atarijsa.h"
 #include "cyberbal.h"
+#include "sound/2151intf.h"
 
 
 
@@ -438,25 +439,7 @@ static struct GfxDecodeInfo gfxdecodeinfo_interleaved[] =
 
 static struct YM2151interface ym2151_interface =
 {
-	1,
-	ATARI_CLOCK_14MHz/4,
-#if (CYBERBALL_DUAL_MODE)
-	{ YM3012_VOL(60,MIXER_PAN_LEFT,60,MIXER_PAN_RIGHT) },
-#else
-	{ YM3012_VOL(30,MIXER_PAN_CENTER,30,MIXER_PAN_CENTER) },
-#endif
-	{ atarigen_ym2151_irq_gen }
-};
-
-
-static struct DACinterface dac_interface =
-{
-	2,
-#if (CYBERBALL_DUAL_MODE)
-	{ MIXER(100,MIXER_PAN_RIGHT), MIXER(100,MIXER_PAN_LEFT) }
-#else
-	{ MIXER(50,MIXER_PAN_CENTER), MIXER(50,MIXER_PAN_CENTER) }
-#endif
+	atarigen_ym2151_irq_gen
 };
 
 
@@ -509,9 +492,18 @@ static MACHINE_DRIVER_START( cyberbal )
 	MDRV_VIDEO_UPDATE(cyberbal)
 	
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(YM2151, ym2151_interface)
-	MDRV_SOUND_ADD(DAC, dac_interface)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(YM2151, ATARI_CLOCK_14MHz/4)
+	MDRV_SOUND_CONFIG(ym2151_interface)
+	MDRV_SOUND_ROUTE(0, "left", 0.60)
+	MDRV_SOUND_ROUTE(1, "right", 0.60)
+
+	MDRV_SOUND_ADD(DAC, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 1.0)
+
+	MDRV_SOUND_ADD(DAC, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 1.0)
 MACHINE_DRIVER_END
 
 

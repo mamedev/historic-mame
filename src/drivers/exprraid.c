@@ -63,6 +63,8 @@ sign is intact, however Credit is spelt incorrectly.
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "cpu/m6809/m6809.h"
+#include "sound/2203intf.h"
+#include "sound/3812intf.h"
 
 
 extern WRITE8_HANDLER( exprraid_videoram_w );
@@ -282,23 +284,9 @@ static void irqhandler(int linestate)
 	cpunum_set_input_line_and_vector(1,0,linestate,0xff);
 }
 
-static struct YM2203interface ym2203_interface =
-{
-    1,      /* 1 chip */
-    1500000,        /* 1.5 MHz ??? */
-    { YM2203_VOL(30,30) },
-    { 0 },
-    { 0 },
-    { 0 },
-    { 0 }
-};
-
 static struct YM3526interface ym3526_interface =
 {
-	1,                      /* 1 chip (no more supported) */
-	3600000,	/* 3.600000 MHz ? (partially supported) */
-	{ 60 },		/* volume */
-	{ irqhandler }
+	irqhandler
 };
 
 static INTERRUPT_GEN( exprraid_interrupt )
@@ -339,8 +327,14 @@ static MACHINE_DRIVER_START( exprraid )
 	MDRV_VIDEO_UPDATE(exprraid)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM2203, ym2203_interface)
-	MDRV_SOUND_ADD(YM3526, ym3526_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM2203, 1500000)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.30)
+
+	MDRV_SOUND_ADD(YM3526, 3600000)
+	MDRV_SOUND_CONFIG(ym3526_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.60)
 MACHINE_DRIVER_END
 
 

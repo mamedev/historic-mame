@@ -83,6 +83,7 @@
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "sound/pokey.h"
 #include "ccastles.h"
 
 
@@ -235,20 +236,8 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 static struct POKEYinterface pokey_interface =
 {
-	2,	/* 2 chips */
-	1250000,	/* 1.25 MHz??? */
-	{ 50, 50 },
-	/* The 8 pot handlers */
-	{ 0, 0 },
-	{ 0, 0 },
-	{ 0, 0 },
-	{ 0, 0 },
-	{ 0, 0 },
-	{ 0, 0 },
-	{ 0, 0 },
-	{ 0, 0 },
-	/* The allpot handler */
-	{ 0, input_port_1_r },
+	{ 0 },
+	input_port_1_r
 };
 
 
@@ -282,7 +271,14 @@ static MACHINE_DRIVER_START( ccastles )
 	MDRV_VIDEO_UPDATE(ccastles)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(POKEY, pokey_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(POKEY, 1250000)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
+
+	MDRV_SOUND_ADD(POKEY, 1250000)
+	MDRV_SOUND_CONFIG(pokey_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
 MACHINE_DRIVER_END
 
 

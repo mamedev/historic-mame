@@ -10,6 +10,8 @@
 
 data8_t *st0016_charram,*st0016_spriteram,*st0016_paletteram;
 
+#define ISMACS (st0016_game&0x80)
+
 #define ST0016_MAX_SPR_BANK   0x10
 #define ST0016_MAX_CHAR_BANK  0x10000
 #define ST0016_MAX_PAL_BANK   4
@@ -165,7 +167,10 @@ READ8_HANDLER(st0016_vregs_r)
 READ8_HANDLER(st0016_dma_r)
 {
 	/* bits 0 and 1 = 0 -> DMA transfer complete */
-	return 0;
+	if(ISMACS)
+		return rand();
+	else
+		return 0;
 }
 
 
@@ -267,22 +272,29 @@ static void drawsprites( struct mame_bitmap *bitmap, const struct rectangle *cli
 
 	int i,j,lx,ly,x,y,code,offset,length,sx,sy,color,flipx,flipy,scrollx,scrolly;
 
+
 	for(i=0;i<ST0016_SPR_BANK_SIZE*ST0016_MAX_SPR_BANK;i+=8)
 	{
 		x=st0016_spriteram[i+4]+((st0016_spriteram[i+5]&3)<<8);
-  		y=st0016_spriteram[i+6]+((st0016_spriteram[i+7]&3)<<8);
+  	y=st0016_spriteram[i+6]+((st0016_spriteram[i+7]&3)<<8);
 
-  		scrollx=(st0016_vregs[(((st0016_spriteram[i+1]&0x0f)>>1)<<2)+0x40]+256*st0016_vregs[(((st0016_spriteram[i+1]&0x0f)>>1)<<2)+1+0x40])&0x3ff;
-  		scrolly=(st0016_vregs[(((st0016_spriteram[i+1]&0x0f)>>1)<<2)+2+0x40]+256*st0016_vregs[(((st0016_spriteram[i+1]&0x0f)>>1)<<2)+3+0x40])&0x3ff;
+  	scrollx=(st0016_vregs[(((st0016_spriteram[i+1]&0x0f)>>1)<<2)+0x40]+256*st0016_vregs[(((st0016_spriteram[i+1]&0x0f)>>1)<<2)+1+0x40])&0x3ff;
+  	scrolly=(st0016_vregs[(((st0016_spriteram[i+1]&0x0f)>>1)<<2)+2+0x40]+256*st0016_vregs[(((st0016_spriteram[i+1]&0x0f)>>1)<<2)+3+0x40])&0x3ff;
 
-  		if (x & 0x200) x-= 0x400; //sign
+		if(!ISMACS)
+		{
+	  	if (x & 0x200) x-= 0x400; //sign
   		if (y & 0x200) y-= 0x400;
 
   		if (scrollx & 0x200) scrollx-= 0x400; //sign
   		if (scrolly & 0x200) scrolly-= 0x400;
+  	}
 
-  		x+=scrollx;
-  		y+=scrolly;
+  	x+=scrollx;
+  	y+=scrolly;
+
+  	if(ISMACS)
+  		y+=0x20;
 
 		if( st0016_spriteram[i+3]&0x80 ) /* end of list */
 			break;
@@ -299,6 +311,10 @@ static void drawsprites( struct mame_bitmap *bitmap, const struct rectangle *cli
 				code=st0016_spriteram[offset]+256*st0016_spriteram[offset+1];
 				sx=st0016_spriteram[offset+4]+((st0016_spriteram[offset+5]&1)<<8);
 				sy=st0016_spriteram[offset+6]+((st0016_spriteram[offset+7]&1)<<8);
+
+				if(ISMACS)
+					sy=0xe0-sy;
+
 				sx+=x;
 				sy+=y;
 				color=st0016_spriteram[offset+2]&0x3f;
@@ -306,6 +322,10 @@ static void drawsprites( struct mame_bitmap *bitmap, const struct rectangle *cli
 				ly=(st0016_spriteram[offset+7]>>2)&3;
 				flipx=st0016_spriteram[offset+3]&0x80;
 				flipy=st0016_spriteram[offset+3]&0x40;
+
+				if(ISMACS)
+					sy-=(1<<ly)*8;
+
 				{
 					int x0,y0,i0=0;
 					for(x0=(flipx?((1<<lx)-1):0);x0!=(flipx?-1:(1<<lx));x0+=(flipx?-1:1))
@@ -415,7 +435,7 @@ VIDEO_START( st0016 )
 	Machine->gfx[gfx_index]->total_colors = 0x40;
 	st0016_ramgfx = gfx_index;
 
-	switch(st0016_game)
+	switch(st0016_game&0x3f)
 	{
 		case 0: //renju kizoku
 			set_visible_area(0, 40*8-1, 0, 30*8-1);
@@ -434,7 +454,7 @@ VIDEO_START( st0016 )
 		break;
 
 		case 10:
-			set_visible_area(0,599,0,319);
+			set_visible_area(0,383,0,319);
 		break;
 
 		default:

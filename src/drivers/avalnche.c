@@ -29,6 +29,7 @@
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "sound/discrete.h"
 #include "artwork.h"
 #include "avalnche.h"
 
@@ -158,7 +159,11 @@ static MACHINE_DRIVER_START( avalnche )
 	MDRV_VIDEO_UPDATE(avalnche)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(DISCRETE, avalnche_discrete_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	
+	MDRV_SOUND_ADD(DISCRETE, 0)
+	MDRV_SOUND_CONFIG(avalnche_discrete_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 

@@ -6,6 +6,7 @@
  */
 
 #include "driver.h"
+#include "sound/samples.h"
 
 
 /* output port 0x01 definitions - sound effect drive outputs */

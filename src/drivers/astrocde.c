@@ -72,6 +72,8 @@ OUT:
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "includes/astrocde.h"
+#include "sound/samples.h"
+#include "sound/astrocde.h"
 
 static int game_on = 0;
 
@@ -661,63 +663,31 @@ static const char *seawolf_sample_names[] =
 struct Samplesinterface seawolf2_samples_interface =
 {
 	10,	/* 5*2 channels */
-	25,	/* volume */
 	seawolf_sample_names
 };
 
 static struct Samplesinterface wow_samples_interface =
 {
 	8,	/* 8 channels */
-	MIXER(25,MIXER_PAN_CENTER),	/* volume */
 	wow_sample_names
 };
 
 static struct Samplesinterface gorf_samples_interface =
 {
 	8,	/* 8 channels */
-	MIXER(25,MIXER_PAN_LEFT),	/* volume */
 	gorf_sample_names
-};
-
-/* Speech is on the center speaker */
-static struct astrocade_interface wow_2chip_interface =
-{
-	2,			/* Number of chips */
-	1789773,	/* Clock speed */
-	{MIXER(100,MIXER_PAN_RIGHT),MIXER(100,MIXER_PAN_LEFT)}			/* Volume */
-};
-
-/* For Gorf, Left is actually Upper Speaker, */
-/*          Right is actually Lower Speaker, */
-/*   and speech is mixed into Upper Speaker */
-static struct astrocade_interface astrocade_2chip_interface =
-{
-	2,			/* Number of chips */
-	1789773,	/* Clock speed */
-	{MIXER(100,MIXER_PAN_LEFT),MIXER(100,MIXER_PAN_RIGHT)}			/* Volume */
-};
-
-static struct astrocade_interface astrocade_1chip_interface =
-{
-	1,			/* Number of chips */
-	1789773,	/* Clock speed */
-	{100}			/* Volume */
 };
 
 /* For speech */
 static struct CustomSound_interface gorf_custom_interface =
 {
-	gorf_sh_start,
-	0,
-	gorf_sh_update
+	gorf_sh_start
 };
 
 /* For speech */
 static struct CustomSound_interface wow_custom_interface =
 {
-	wow_sh_start,
-	0,
-	wow_sh_update
+	wow_sh_start
 };
 
 
@@ -746,7 +716,11 @@ static MACHINE_DRIVER_START( seawolf2 )
 	MDRV_VIDEO_UPDATE(seawolf2)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(SAMPLES, seawolf2_samples_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	
+	MDRV_SOUND_ADD(SAMPLES, 0)
+	MDRV_SOUND_CONFIG(seawolf2_samples_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( spacezap )
@@ -772,7 +746,10 @@ static MACHINE_DRIVER_START( spacezap )
 	MDRV_VIDEO_UPDATE(astrocde)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(ASTROCADE, astrocade_1chip_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(ASTROCADE, 1789773)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( ebases )
@@ -798,7 +775,10 @@ static MACHINE_DRIVER_START( ebases )
 	MDRV_VIDEO_UPDATE(astrocde)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(ASTROCADE, astrocade_1chip_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(ASTROCADE, 1789773)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( wow )
@@ -824,10 +804,24 @@ static MACHINE_DRIVER_START( wow )
 	MDRV_VIDEO_UPDATE(astrocde)
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(ASTROCADE, astrocade_2chip_interface)
-	MDRV_SOUND_ADD(SAMPLES, wow_samples_interface)
-	MDRV_SOUND_ADD(CUSTOM, wow_custom_interface)
+/* For Gorf, Left is actually Upper Speaker, */
+/*          Right is actually Lower Speaker, */
+/*   and speech is mixed into Upper Speaker */
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(ASTROCADE, 1789773)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 1.0)
+
+	MDRV_SOUND_ADD(ASTROCADE, 1789773)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 1.0)
+
+	MDRV_SOUND_ADD(SAMPLES, 0)
+	MDRV_SOUND_CONFIG(wow_samples_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.25)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 0.25)
+
+	MDRV_SOUND_ADD(CUSTOM, 0)
+	MDRV_SOUND_CONFIG(wow_custom_interface)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( gorf )
@@ -856,10 +850,20 @@ static MACHINE_DRIVER_START( gorf )
 	MDRV_VIDEO_UPDATE(astrocde)
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(ASTROCADE, wow_2chip_interface)
-	MDRV_SOUND_ADD(SAMPLES, gorf_samples_interface)
-	MDRV_SOUND_ADD(CUSTOM, gorf_custom_interface)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(ASTROCADE, 1789773)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 1.0)
+
+	MDRV_SOUND_ADD(ASTROCADE, 1789773)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 1.0)
+
+	MDRV_SOUND_ADD(SAMPLES, 0)
+	MDRV_SOUND_CONFIG(gorf_samples_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.25)
+
+	MDRV_SOUND_ADD(CUSTOM, 0)
+	MDRV_SOUND_CONFIG(gorf_custom_interface)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( robby )
@@ -887,8 +891,13 @@ static MACHINE_DRIVER_START( robby )
 	MDRV_VIDEO_UPDATE(astrocde)
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(ASTROCADE, astrocade_2chip_interface)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(ASTROCADE, 1789773)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 1.0)
+
+	MDRV_SOUND_ADD(ASTROCADE, 1789773)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 1.0)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( profpac )
@@ -916,8 +925,13 @@ static MACHINE_DRIVER_START( profpac )
 	MDRV_VIDEO_UPDATE(profpac)
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(ASTROCADE, astrocade_2chip_interface)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(ASTROCADE, 1789773)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 1.0)
+
+	MDRV_SOUND_ADD(ASTROCADE, 1789773)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 1.0)
 MACHINE_DRIVER_END
 
 

@@ -22,6 +22,8 @@ sub68k is performing not only processing of sound but assistance of main68k.
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "sound/2151intf.h"
+#include "sound/okim6295.h"
 
 #define RASTER_LINES 262
 #define FIRST_VISIBLE_LINE 0
@@ -637,19 +639,7 @@ static void sound_irq(int state)
 
 static struct YM2151interface ym2151_interface =
 {
-	1,			/* 1 chip */
-	4000000,	/* 4 MHz */
-	{ YM3012_VOL(80,MIXER_PAN_LEFT,80,MIXER_PAN_RIGHT) },
-	{ sound_irq },
-	{ 0 }
-};
-
-static struct OKIM6295interface okim6295_interface =
-{
-	1,
-	{ 4000000/16/16 },	/* 15625 Hz */
-	{ REGION_SOUND1 },
-	{ 57 }
+	sound_irq
 };
 
 /***************************************************************************
@@ -682,9 +672,17 @@ static MACHINE_DRIVER_START( hyprduel )
 	MDRV_VIDEO_UPDATE(hyprduel)
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(YM2151, ym2151_interface)
-	MDRV_SOUND_ADD(OKIM6295, okim6295_interface)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(YM2151, 4000000)
+	MDRV_SOUND_CONFIG(ym2151_interface)
+	MDRV_SOUND_ROUTE(0, "left", 0.80)
+	MDRV_SOUND_ROUTE(1, "right", 0.80)
+
+	MDRV_SOUND_ADD(OKIM6295, 4000000/16/16)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.57)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 0.57)
 MACHINE_DRIVER_END
 
 
@@ -730,10 +728,10 @@ ROM_START( hyprduel )
 	ROM_REGION( 0x8000, REGION_CPU2, 0 )
 
 	ROM_REGION( 0x400000, REGION_GFX1, 0 )	/* Gfx + Prg + Data (Addressable by CPU & Blitter) */
-	ROMX_LOAD( "hd_m1.rom", 0x000000, 0x100000, BAD_DUMP CRC(582aab46) SHA1(b94bd7aee717c5e449c9138fd82ca9a6423cd382) , ROM_GROUPWORD | ROM_SKIP(6) )	// BAD ADDRESS LINES (mask=000100)
-	ROMX_LOAD( "hd_m2.rom", 0x000002, 0x100000, BAD_DUMP CRC(63da509e) SHA1(b7254fab2d6d68bf52b0cdbf4e32d990420e4627) , ROM_GROUPWORD | ROM_SKIP(6) )	// BAD ADDRESS LINES (mask=000100)
-	ROMX_LOAD( "hd_m3.rom", 0x000004, 0x100000, BAD_DUMP CRC(4dbb5a79) SHA1(5df5cfe7ab404ec97822c3edd86728b03aeb33d1) , ROM_GROUPWORD | ROM_SKIP(6) )	// BAD ADDRESS LINES (mask=000100)
-	ROMX_LOAD( "hd_m4.rom", 0x000006, 0x100000, BAD_DUMP CRC(8061d5dd) SHA1(1d953ba8d85e0513683e0094eb1f5bbfda4576bf) , ROM_GROUPWORD | ROM_SKIP(6) )	// BAD ADDRESS LINES (mask=000100)
+	ROMX_LOAD( "hyper-1.4", 0x000000, 0x100000, CRC(4b3b2d3c) SHA1(5e9e8ec853f71aeff3910b93dadbaeae2b61717b) , ROM_GROUPWORD | ROM_SKIP(6) )
+	ROMX_LOAD( "hyper-2.6", 0x000002, 0x100000, CRC(dc230116) SHA1(a3c447657d8499764f52c81382961f425c56037b) , ROM_GROUPWORD | ROM_SKIP(6) )
+	ROMX_LOAD( "hyper-3.3", 0x000004, 0x100000, CRC(2d770dd0) SHA1(27f9e7f67e96210d3710ab4f940c5d7ae13f8bbf) , ROM_GROUPWORD | ROM_SKIP(6) )
+	ROMX_LOAD( "hyper-4.5", 0x000006, 0x100000, CRC(f88c6d33) SHA1(277b56df40a17d7dd9f1071b0d498635a5b783cd) , ROM_GROUPWORD | ROM_SKIP(6) )
 
 	ROM_REGION( 0x40000, REGION_SOUND1, 0 )	/* Samples */
 	ROM_LOAD( "97.11", 0x00000, 0x40000, CRC(bf3f8574) SHA1(9e743f05e53256c886d43e1f0c43d7417134b9b3) )
@@ -757,6 +755,6 @@ ROM_START( hyprdelj )
 ROM_END
 
 
-GAMEX( 1993, hyprduel, 0,        hyprduel, hyprduel, hyprduel, ROT0, "Technosoft", "Hyper Duel (World)", GAME_NOT_WORKING )
-GAME ( 1993, hyprdelj, hyprduel, hyprduel, hyprduel, hyprduel, ROT0, "Technosoft", "Hyper Duel (Japan)" )
+GAME( 1993, hyprduel, 0,        hyprduel, hyprduel, hyprduel, ROT0, "Technosoft", "Hyper Duel (Japan set 1)" )
+GAME( 1993, hyprdelj, hyprduel, hyprduel, hyprduel, hyprduel, ROT0, "Technosoft", "Hyper Duel (Japan set 2)" )
 

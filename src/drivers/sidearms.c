@@ -37,6 +37,8 @@ Notes:
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "sound/2203intf.h"
+#include "sound/2151intf.h"
 
 extern UINT8 *sidearms_bg_scrollx;
 extern UINT8 *sidearms_bg_scrolly;
@@ -705,22 +707,12 @@ static void irqhandler(int irq)
 
 static struct YM2203interface ym2203_interface =
 {
-	2,			/* 2 chips */
-	4000000,	/* 4 MHz ? (hand tuned) */
-	{ YM2203_VOL(15,25), YM2203_VOL(15,25) },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ irqhandler }
+	0,0,0,0,irqhandler
 };
 
 static struct YM2151interface whizz_ym2151_interface =
 {
-	1,
-	4000000,	/* ? */
-	{ YM3012_VOL(100,MIXER_PAN_CENTER,100,MIXER_PAN_CENTER) },
-	{ irqhandler }
+	irqhandler
 };
 
 static MACHINE_DRIVER_START( sidearms )
@@ -749,7 +741,20 @@ static MACHINE_DRIVER_START( sidearms )
 	MDRV_VIDEO_UPDATE(sidearms)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM2203, ym2203_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM2203, 4000000)
+	MDRV_SOUND_CONFIG(ym2203_interface)
+	MDRV_SOUND_ROUTE(0, "mono", 0.15)
+	MDRV_SOUND_ROUTE(1, "mono", 0.15)
+	MDRV_SOUND_ROUTE(2, "mono", 0.15)
+	MDRV_SOUND_ROUTE(3, "mono", 0.25)
+
+	MDRV_SOUND_ADD(YM2203, 4000000)
+	MDRV_SOUND_ROUTE(0, "mono", 0.15)
+	MDRV_SOUND_ROUTE(1, "mono", 0.15)
+	MDRV_SOUND_ROUTE(2, "mono", 0.15)
+	MDRV_SOUND_ROUTE(3, "mono", 0.25)
 MACHINE_DRIVER_END
 
 
@@ -779,7 +784,20 @@ static MACHINE_DRIVER_START( turtship )
 	MDRV_VIDEO_UPDATE(sidearms)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM2203, ym2203_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM2203, 4000000)
+	MDRV_SOUND_CONFIG(ym2203_interface)
+	MDRV_SOUND_ROUTE(0, "mono", 0.15)
+	MDRV_SOUND_ROUTE(1, "mono", 0.15)
+	MDRV_SOUND_ROUTE(2, "mono", 0.15)
+	MDRV_SOUND_ROUTE(3, "mono", 0.25)
+
+	MDRV_SOUND_ADD(YM2203, 4000000)
+	MDRV_SOUND_ROUTE(0, "mono", 0.15)
+	MDRV_SOUND_ROUTE(1, "mono", 0.15)
+	MDRV_SOUND_ROUTE(2, "mono", 0.15)
+	MDRV_SOUND_ROUTE(3, "mono", 0.25)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( whizz )
@@ -811,7 +829,12 @@ static MACHINE_DRIVER_START( whizz )
 	MDRV_VIDEO_EOF(sidearms)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM2151, whizz_ym2151_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM2151, 4000000)
+	MDRV_SOUND_CONFIG(whizz_ym2151_interface)
+	MDRV_SOUND_ROUTE(0, "mono", 1.0)
+	MDRV_SOUND_ROUTE(1, "mono", 1.0)
 MACHINE_DRIVER_END
 
 

@@ -15,6 +15,8 @@ OKI M6295 sound ROM dump is bad.
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "sound/okim6295.h"
+#include "sound/3812intf.h"
 
 UINT8 *bg_paletteram, *missb2_bgvram;
 
@@ -357,18 +359,7 @@ static void irqhandler(int irq)
 
 static struct YM3526interface ym3526_interface =
 {
-	1,				// 1 chip (no more supported)
-	MAIN_XTAL/8,	// 3 MHz
-	{ 50 },			// volume
-	{ irqhandler }
-};
-
-static struct OKIM6295interface okim6295_interface =
-{
-	1,					// 1 chip
-	{ 8000 },			// ??? frequency
-	{ REGION_SOUND1 },	// memory region
-	{ 100 }
+	irqhandler
 };
 
 /* Interrupt Generator */
@@ -410,8 +401,15 @@ static MACHINE_DRIVER_START( missb2 )
 	MDRV_VIDEO_UPDATE(missb2)
 
 	// sound hardware
-	MDRV_SOUND_ADD(YM3526, ym3526_interface)
-	MDRV_SOUND_ADD(OKIM6295, okim6295_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM3526, MAIN_XTAL/8)
+	MDRV_SOUND_CONFIG(ym3526_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
+
+	MDRV_SOUND_ADD(OKIM6295, 8000)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 /* ROMs */

@@ -13,6 +13,9 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "cpu/h6280/h6280.h"
+#include "sound/2203intf.h"
+#include "sound/2151intf.h"
+#include "sound/okim6295.h"
 
 VIDEO_START( darkseal );
 VIDEO_UPDATE( darkseal );
@@ -273,25 +276,6 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 /******************************************************************************/
 
-static struct OKIM6295interface okim6295_interface =
-{
-	2,              /* 2 chips */
-	{ 32220000/32/132, 32220000/16/132 },/* Frequency */
-	{ REGION_SOUND1, REGION_SOUND2 },
-	{ 100, 60 } /* Note!  Keep chip 1 (voices) louder than chip 2 */
-};
-
-static struct YM2203interface ym2203_interface =
-{
-	1,
-	32220000/8, /* Accurate, audio section crystal is 32.220 MHz */
-	{ YM2203_VOL(45,45) },	/* adjusted */
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ 0 }
-};
-
 static void sound_irq(int state)
 {
 	cpunum_set_input_line(1,1,state); /* IRQ 2 */
@@ -299,10 +283,7 @@ static void sound_irq(int state)
 
 static struct YM2151interface ym2151_interface =
 {
-	1,
-	32220000/9, /* Accurate, audio section crystal is 32.220 MHz */
-	{ YM3012_VOL(55,MIXER_PAN_LEFT,55,MIXER_PAN_RIGHT) },	/* adjusted */
-	{ sound_irq }
+	sound_irq
 };
 
 static MACHINE_DRIVER_START( darkseal )
@@ -330,9 +311,23 @@ static MACHINE_DRIVER_START( darkseal )
 	MDRV_VIDEO_UPDATE(darkseal)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM2203, ym2203_interface)
-	MDRV_SOUND_ADD(YM2151, ym2151_interface)
-	MDRV_SOUND_ADD(OKIM6295, okim6295_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM2203, 32220000/8)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.45)
+
+	MDRV_SOUND_ADD(YM2151, 32220000/9)
+	MDRV_SOUND_CONFIG(ym2151_interface)
+	MDRV_SOUND_ROUTE(0, "mono", 0.55)
+	MDRV_SOUND_ROUTE(1, "mono", 0.55)
+
+	MDRV_SOUND_ADD(OKIM6295, 32220000/32/132)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
+
+	MDRV_SOUND_ADD(OKIM6295, 32220000/32/132)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_2)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.60)
 MACHINE_DRIVER_END
 
 /******************************************************************************/

@@ -49,6 +49,7 @@ Electronic Devices was printed on rom labels
 */
 
 #include "driver.h"
+#include "sound/ay8910.h"
 
 static data8_t *twins_videoram;
 static data16_t *twins_pal;
@@ -172,13 +173,8 @@ INPUT_PORTS_END
 
 static struct AY8910interface ay8910_interface =
 {
-	1,
-	2000000, /* 2 MHz */
-	{ 100 },
-	{ input_port_0_r },
-	{ input_port_1_r },
-	{ 0 },
-	{ 0 }
+	input_port_0_r,
+	input_port_1_r
 };
 
 static MACHINE_DRIVER_START( twins )
@@ -201,7 +197,11 @@ static MACHINE_DRIVER_START( twins )
 	MDRV_VIDEO_UPDATE(twins)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(AY8910, ay8910_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	
+	MDRV_SOUND_ADD(AY8910, 2000000)
+	MDRV_SOUND_CONFIG(ay8910_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 ROM_START( twins )

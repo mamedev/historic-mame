@@ -5,6 +5,8 @@
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "sound/ay8910.h"
+#include "sound/2203intf.h"
 
 
 extern data8_t *citycon_videoram;
@@ -197,26 +199,10 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 
 
-static struct AY8910interface ay8910_interface =
-{
-	1,			/* 1 chip */
-	1250000,	/* 1.25 MHz */
-	{ MIXERG(20,MIXER_GAIN_2x,MIXER_PAN_CENTER) },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ 0 }
-};
-
 static struct YM2203interface ym2203_interface =
 {
-	1,			/* 1 chip */
-	1250000,	/* 1.25 MHz */
-	{ YM2203_VOL(20,MIXERG(20,MIXER_GAIN_2x,MIXER_PAN_CENTER)) },
-	{ soundlatch_r },
-	{ soundlatch2_r },
-	{ 0 },
-	{ 0 }
+	soundlatch_r,
+	soundlatch2_r,
 };
 
 
@@ -247,8 +233,17 @@ static MACHINE_DRIVER_START( citycon )
 	MDRV_VIDEO_UPDATE(citycon)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(AY8910, ay8910_interface)
-	MDRV_SOUND_ADD(YM2203, ym2203_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(AY8910, 1250000)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.40)
+
+	MDRV_SOUND_ADD(YM2203, 1250000)
+	MDRV_SOUND_CONFIG(ym2203_interface)
+	MDRV_SOUND_ROUTE(0, "mono", 0.40)
+	MDRV_SOUND_ROUTE(1, "mono", 0.40)
+	MDRV_SOUND_ROUTE(2, "mono", 0.40)
+	MDRV_SOUND_ROUTE(3, "mono", 0.20)
 MACHINE_DRIVER_END
 
 

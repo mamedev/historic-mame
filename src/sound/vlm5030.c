@@ -86,52 +86,54 @@ chirp 12-..: vokume   0   : silent
 #define IP_SIZE_FAST    (120/FR_SIZE)
 #define IP_SIZE_FASTER  ( 80/FR_SIZE)
 
-static const struct VLM5030interface *intf;
+struct vlm5030_info
+{
+	const struct VLM5030interface *intf;
 
-static int channel;
-static int schannel;
+	sound_stream * channel;
 
-/* need to save state */
+	/* need to save state */
 
-static UINT8 *VLM5030_rom;
-static int VLM5030_address_mask;
-static UINT16 VLM5030_address;
-static UINT8 pin_BSY;
-static UINT8 pin_ST;
-static UINT8 pin_VCU;
-static UINT8 pin_RST;
-static UINT8 latch_data;
-static UINT16 vcu_addr_h;
-static UINT8 VLM5030_parameter;
-static UINT8 VLM5030_phase;
+	UINT8 *rom;
+	int address_mask;
+	UINT16 address;
+	UINT8 pin_BSY;
+	UINT8 pin_ST;
+	UINT8 pin_VCU;
+	UINT8 pin_RST;
+	UINT8 latch_data;
+	UINT16 vcu_addr_h;
+	UINT8 parameter;
+	UINT8 phase;
 
-/* state of option paramter */
-static int VLM5030_frame_size;
-static int pitch_offset;
-static UINT8 interp_step;
+	/* state of option paramter */
+	int frame_size;
+	int pitch_offset;
+	UINT8 interp_step;
 
-static UINT8 interp_count;       /* number of interp periods    */
-static UINT8 sample_count;       /* sample number within interp */
-static UINT8 pitch_count;
+	UINT8 interp_count;       /* number of interp periods    */
+	UINT8 sample_count;       /* sample number within interp */
+	UINT8 pitch_count;
 
-/* these contain data describing the current and previous voice frames */
-static UINT16 old_energy;
-static UINT8 old_pitch;
-static INT16  old_k[10];
-static UINT16 target_energy;
-static UINT8 target_pitch;
-static INT16 target_k[10];
+	/* these contain data describing the current and previous voice frames */
+	UINT16 old_energy;
+	UINT8 old_pitch;
+	INT16  old_k[10];
+	UINT16 target_energy;
+	UINT8 target_pitch;
+	INT16 target_k[10];
 
-static UINT16 new_energy;
-static UINT8 new_pitch;
-static INT16 new_k[10];
+	UINT16 new_energy;
+	UINT8 new_pitch;
+	INT16 new_k[10];
 
-/* these are all used to contain the current state of the sound generation */
-static unsigned int current_energy;
-static unsigned int current_pitch;
-static int current_k[10];
+	/* these are all used to contain the current state of the sound generation */
+	unsigned int current_energy;
+	unsigned int current_pitch;
+	int current_k[10];
 
-static INT32 x[10];
+	INT32 x[10];
+};
 
 /* phase value */
 enum {
@@ -215,13 +217,13 @@ static const INT16 K5_table[] = {
        0,   -8127,  -16384,  -24511,   32638,   24511,   16254,    8127
 };
 
-static int get_bits(int sbit,int bits)
+static int get_bits(struct vlm5030_info *chip, int sbit,int bits)
 {
-	int offset = VLM5030_address + (sbit>>3);
+	int offset = chip->address + (sbit>>3);
 	int data;
 
-	data = VLM5030_rom[offset&VLM5030_address_mask] +
-	       (((int)VLM5030_rom[(offset+1)&VLM5030_address_mask])*256);
+	data = chip->rom[offset&chip->address_mask] +
+	       (((int)chip->rom[(offset+1)&chip->address_mask])*256);
 	data >>= (sbit&7);
 	data &= (0xff>>(8-bits));
 
@@ -229,70 +231,72 @@ static int get_bits(int sbit,int bits)
 }
 
 /* get next frame */
-static int parse_frame (void)
+static int parse_frame (struct vlm5030_info *chip)
 {
 	unsigned char cmd;
 	int i;
 
 	/* remember previous frame */
-	old_energy = new_energy;
-	old_pitch = new_pitch;
+	chip->old_energy = chip->new_energy;
+	chip->old_pitch = chip->new_pitch;
 	for(i=0;i<=9;i++)
-		old_k[i] = new_k[i];
+		chip->old_k[i] = chip->new_k[i];
 
 	/* command byte check */
-	cmd = VLM5030_rom[VLM5030_address&VLM5030_address_mask];
+	cmd = chip->rom[chip->address&chip->address_mask];
 	if( cmd & 0x01 )
 	{	/* extend frame */
-		new_energy = new_pitch = 0;
+		chip->new_energy = chip->new_pitch = 0;
 		for(i=0;i<=9;i++)
-			new_k[i] = 0;
-		VLM5030_address++;
+			chip->new_k[i] = 0;
+		chip->address++;
 		if( cmd & 0x02 )
 		{	/* end of speech */
 
-			/* logerror("VLM5030 %04X end \n",VLM5030_address ); */
+			/* logerror("VLM5030 %04X end \n",chip->address ); */
 			return 0;
 		}
 		else
 		{	/* silent frame */
 			int nums = ( (cmd>>2)+1 )*2;
-			/* logerror("VLM5030 %04X silent %d frame\n",VLM5030_address,nums ); */
+			/* logerror("VLM5030 %04X silent %d frame\n",chip->address,nums ); */
 			return nums * FR_SIZE;
 		}
 	}
 	/* pitch */
-	new_pitch  = ( pitchtable[get_bits( 1,5)] + pitch_offset )&0xff;
+	chip->new_pitch  = ( pitchtable[get_bits(chip, 1,5)] + chip->pitch_offset )&0xff;
 	/* energy */
-	new_energy = energytable[get_bits( 6,5)];
+	chip->new_energy = energytable[get_bits(chip, 6,5)];
 
 	/* 10 K's */
-	new_k[9] = K5_table[get_bits(11,3)];
-	new_k[8] = K5_table[get_bits(14,3)];
-	new_k[7] = K5_table[get_bits(17,3)];
-	new_k[6] = K5_table[get_bits(20,3)];
-	new_k[5] = K5_table[get_bits(23,3)];
-	new_k[4] = K5_table[get_bits(26,3)];
-	new_k[3] = K3_table[get_bits(29,4)];
-	new_k[2] = K3_table[get_bits(33,4)];
-	new_k[1] = K2_table[get_bits(37,5)];
-	new_k[0] = K1_table[get_bits(42,6)];
+	chip->new_k[9] = K5_table[get_bits(chip,11,3)];
+	chip->new_k[8] = K5_table[get_bits(chip,14,3)];
+	chip->new_k[7] = K5_table[get_bits(chip,17,3)];
+	chip->new_k[6] = K5_table[get_bits(chip,20,3)];
+	chip->new_k[5] = K5_table[get_bits(chip,23,3)];
+	chip->new_k[4] = K5_table[get_bits(chip,26,3)];
+	chip->new_k[3] = K3_table[get_bits(chip,29,4)];
+	chip->new_k[2] = K3_table[get_bits(chip,33,4)];
+	chip->new_k[1] = K2_table[get_bits(chip,37,5)];
+	chip->new_k[0] = K1_table[get_bits(chip,42,6)];
 
-	VLM5030_address+=6;
-	logerror("VLM5030 %04X voice \n",VLM5030_address );
+	chip->address+=6;
+	logerror("VLM5030 %04X voice \n",chip->address );
 	return FR_SIZE;
 }
 
 /* decode and buffering data */
-static void vlm5030_update_callback(int num,INT16 *buffer, int length)
+static void vlm5030_update_callback(void *param,stream_sample_t **inputs, stream_sample_t **_buffer, int length)
 {
+	struct vlm5030_info *chip = param;
 	int buf_count=0;
 	int interp_effect;
 	int i;
 	int u[11];
+	stream_sample_t *buffer = _buffer[0];
 
 	/* running */
-	if( VLM5030_phase == PH_RUN || VLM5030_phase == PH_STOP )
+	if( chip->phase == PH_RUN || chip->phase == PH_STOP )
 	{
 		/* playing speech */
 		while (length > 0)
@@ -300,85 +304,85 @@ static void vlm5030_update_callback(int num,INT16 *buffer, int length)
 			int current_val;
 
 			/* check new interpolator or  new frame */
-			if( sample_count == 0 )
+			if( chip->sample_count == 0 )
 			{
-				if( VLM5030_phase == PH_STOP )
+				if( chip->phase == PH_STOP )
 				{
-					VLM5030_phase = PH_END;
-					sample_count = 1;
+					chip->phase = PH_END;
+					chip->sample_count = 1;
 					goto phase_stop; /* continue to end phase */
 				}
-				sample_count = VLM5030_frame_size;
+				chip->sample_count = chip->frame_size;
 				/* interpolator changes */
-				if ( interp_count == 0 )
+				if ( chip->interp_count == 0 )
 				{
 					/* change to new frame */
-					interp_count = parse_frame(); /* with change phase */
-					if ( interp_count == 0 )
+					chip->interp_count = parse_frame(chip); /* with change phase */
+					if ( chip->interp_count == 0 )
 					{	/* end mark found */
-						interp_count = FR_SIZE;
-						sample_count = VLM5030_frame_size; /* end -> stop time */
-						VLM5030_phase = PH_STOP;
+						chip->interp_count = FR_SIZE;
+						chip->sample_count = chip->frame_size; /* end -> stop time */
+						chip->phase = PH_STOP;
 					}
 					/* Set old target as new start of frame */
-					current_energy = old_energy;
-					current_pitch = old_pitch;
+					chip->current_energy = chip->old_energy;
+					chip->current_pitch = chip->old_pitch;
 					for(i=0;i<=9;i++)
-						current_k[i] = old_k[i];
+						chip->current_k[i] = chip->old_k[i];
 					/* is this a zero energy frame? */
-					if (current_energy == 0)
+					if (chip->current_energy == 0)
 					{
 						/*printf("processing frame: zero energy\n");*/
-						target_energy = 0;
-						target_pitch = current_pitch;
+						chip->target_energy = 0;
+						chip->target_pitch = chip->current_pitch;
 						for(i=0;i<=9;i++)
-							target_k[i] = current_k[i];
+							chip->target_k[i] = chip->current_k[i];
 					}
 					else
 					{
 						/*printf("processing frame: Normal\n");*/
-						/*printf("*** Energy = %d\n",current_energy);*/
+						/*printf("*** Energy = %d\n",chip->current_energy);*/
 						/*printf("proc: %d %d\n",last_fbuf_head,fbuf_head);*/
-						target_energy = new_energy;
-						target_pitch = new_pitch;
+						chip->target_energy = chip->new_energy;
+						chip->target_pitch = chip->new_pitch;
 						for(i=0;i<=9;i++)
-							target_k[i] = new_k[i];
+							chip->target_k[i] = chip->new_k[i];
 					}
 				}
 				/* next interpolator */
 				/* Update values based on step values 25% , 50% , 75% , 100% */
-				interp_count -= interp_step;
+				chip->interp_count -= chip->interp_step;
 				/* 3,2,1,0 -> 1,2,3,4 */
-				interp_effect = FR_SIZE - (interp_count%FR_SIZE);
-				current_energy = old_energy + (target_energy - old_energy) * interp_effect / FR_SIZE;
-				if (old_pitch > 1)
-					current_pitch = old_pitch + (target_pitch - old_pitch) * interp_effect / FR_SIZE;
+				interp_effect = FR_SIZE - (chip->interp_count%FR_SIZE);
+				chip->current_energy = chip->old_energy + (chip->target_energy - chip->old_energy) * interp_effect / FR_SIZE;
+				if (chip->old_pitch > 1)
+					chip->current_pitch = chip->old_pitch + (chip->target_pitch - chip->old_pitch) * interp_effect / FR_SIZE;
 				for (i = 0; i <= 9 ; i++)
-					current_k[i] = old_k[i] + (target_k[i] - old_k[i]) * interp_effect / FR_SIZE;
+					chip->current_k[i] = chip->old_k[i] + (chip->target_k[i] - chip->old_k[i]) * interp_effect / FR_SIZE;
 			}
 			/* calcrate digital filter */
-			if (old_energy == 0)
+			if (chip->old_energy == 0)
 			{
 				/* generate silent samples here */
 				current_val = 0x00;
 			}
-			else if (old_pitch <= 1)
+			else if (chip->old_pitch <= 1)
 			{	/* generate unvoiced samples here */
-				current_val = (rand()&1) ? current_energy : -current_energy;
+				current_val = (rand()&1) ? chip->current_energy : -chip->current_energy;
 			}
 			else
 			{
 				/* generate voiced samples here */
-				current_val = ( pitch_count == 0) ? current_energy : 0;
+				current_val = ( chip->pitch_count == 0) ? chip->current_energy : 0;
 			}
 
 			/* Lattice filter here */
 			u[10] = current_val;
 			for (i = 9; i >= 0; i--)
-				u[i] = u[i+1] - ((current_k[i] * x[i]) / 32768);
+				u[i] = u[i+1] - ((chip->current_k[i] * chip->x[i]) / 32768);
 			for (i = 9; i >= 1; i--)
-				x[i] = x[i-1] + ((current_k[i-1] * u[i-1]) / 32768);
-			x[0] = u[0];
+				chip->x[i] = chip->x[i-1] + ((chip->current_k[i-1] * u[i-1]) / 32768);
+			chip->x[0] = u[0];
 
 			/* clipping, buffering */
 			if (u[0] > 511)
@@ -390,11 +394,11 @@ static void vlm5030_update_callback(int num,INT16 *buffer, int length)
 			buf_count++;
 
 			/* sample count */
-			sample_count--;
+			chip->sample_count--;
 			/* pitch */
-			pitch_count++;
-			if (pitch_count >= current_pitch )
-				pitch_count = 0;
+			chip->pitch_count++;
+			if (chip->pitch_count >= chip->current_pitch )
+				chip->pitch_count = 0;
 			/* size */
 			length--;
 		}
@@ -402,32 +406,32 @@ static void vlm5030_update_callback(int num,INT16 *buffer, int length)
 	}
 	/* stop phase */
 phase_stop:
-	switch( VLM5030_phase )
+	switch( chip->phase )
 	{
 	case PH_SETUP:
-		if( sample_count <= length)
+		if( chip->sample_count <= length)
 		{
-			sample_count = 0;
+			chip->sample_count = 0;
 			/* logerror("VLM5030 BSY=H\n" ); */
 			/* pin_BSY = 1; */
-			VLM5030_phase = PH_WAIT;
+			chip->phase = PH_WAIT;
 		}
 		else
 		{
-			sample_count -= length;
+			chip->sample_count -= length;
 		}
 		break;
 	case PH_END:
-		if( sample_count <= length)
+		if( chip->sample_count <= length)
 		{
-			sample_count = 0;
+			chip->sample_count = 0;
 			/* logerror("VLM5030 BSY=L\n" ); */
-			pin_BSY = 0;
-			VLM5030_phase = PH_IDLE;
+			chip->pin_BSY = 0;
+			chip->phase = PH_IDLE;
 		}
 		else
 		{
-			sample_count -= length;
+			chip->sample_count -= length;
 		}
 	}
 	/* silent buffering */
@@ -439,114 +443,125 @@ phase_stop:
 }
 
 /* realtime update */
-static void VLM5030_update(void)
+static void VLM5030_update(struct vlm5030_info *chip)
 {
-	stream_update(channel,0);
+	stream_update(chip->channel,0);
 }
 
 /* setup parameteroption when RST=H */
-static void VLM5030_setup_parameter(UINT8 param)
+static void VLM5030_setup_parameter(struct vlm5030_info *chip, UINT8 param)
 {
 	/* latch parameter value */
-	VLM5030_parameter = param;
+	chip->parameter = param;
 
 	/* bit 0,1 : 4800bps / 9600bps , interporator step */
 	if(param&2) /* bit 1 = 1 , 9600bps */
-		interp_step = 4; /* 9600bps : no interporator */
+		chip->interp_step = 4; /* 9600bps : no interporator */
 	else if(param&1) /* bit1 = 0 & bit0 = 1 , 4800bps */
-		interp_step = 2; /* 4800bps : 2 interporator */
+		chip->interp_step = 2; /* 4800bps : 2 interporator */
 	else	/* bit1 = bit0 = 0 : 2400bps */
-		interp_step = 1; /* 2400bps : 4 interporator */
+		chip->interp_step = 1; /* 2400bps : 4 interporator */
 
 	/* bit 3,4,5 : speed (frame size) */
-	VLM5030_frame_size = VLM5030_speed_table[(param>>3) &7];
+	chip->frame_size = VLM5030_speed_table[(param>>3) &7];
 
 	/* bit 6,7 : low / high pitch */
 	if(param&0x80)	/* bit7=1 , high pitch */
-		pitch_offset = -8;
+		chip->pitch_offset = -8;
 	else if(param&0x40)	/* bit6=1 , low pitch */
-		pitch_offset = 8;
+		chip->pitch_offset = 8;
 	else
-		pitch_offset = 0;
+		chip->pitch_offset = 0;
 }
 
 #ifdef _STATE_H
 static void VLM5030_resotore_state(void)
 {
-	int interp_effect = FR_SIZE - (interp_count%FR_SIZE);
-	int i;
+	int i, ch;
+	
+	for (ch = 0; ch < MAX_SOUND; ch++)
+	{
+		struct vlm5030_info *chip = sndti_token(SOUND_VLM5030, ch);
+		if (chip)
+		{
+			int interp_effect = FR_SIZE - (chip->interp_count%FR_SIZE);
+			/* restore parameter data */
+			VLM5030_setup_parameter(chip, chip->parameter);
 
-	/* restore parameter data */
-	VLM5030_setup_parameter(VLM5030_parameter);
-
-	/* restore current energy,pitch & filter */
-	current_energy = old_energy + (target_energy - old_energy) * interp_effect / FR_SIZE;
-	if (old_pitch > 1)
-		current_pitch = old_pitch + (target_pitch - old_pitch) * interp_effect / FR_SIZE;
-	for (i = 0; i <= 9 ; i++)
-		current_k[i] = old_k[i] + (target_k[i] - old_k[i]) * interp_effect / FR_SIZE;
+			/* restore current energy,pitch & filter */
+			chip->current_energy = chip->old_energy + (chip->target_energy - chip->old_energy) * interp_effect / FR_SIZE;
+			if (chip->old_pitch > 1)
+				chip->current_pitch = chip->old_pitch + (chip->target_pitch - chip->old_pitch) * interp_effect / FR_SIZE;
+			for (i = 0; i <= 9 ; i++)
+				chip->current_k[i] = chip->old_k[i] + (chip->target_k[i] - chip->old_k[i]) * interp_effect / FR_SIZE;
+		}
+	}
 }
 #endif
 
-static void VLM5030_reset(void)
+static void VLM5030_reset(struct vlm5030_info *chip)
 {
-	VLM5030_phase = PH_RESET;
-	VLM5030_address = 0;
-	vcu_addr_h = 0;
-	pin_BSY = 0;
+	chip->phase = PH_RESET;
+	chip->address = 0;
+	chip->vcu_addr_h = 0;
+	chip->pin_BSY = 0;
 
-	old_energy = old_pitch = 0;
-	new_energy = new_pitch = 0;
-	current_energy = current_pitch = 0;
-	target_energy = target_pitch = 0;
-	memset(old_k, 0, sizeof(old_k));
-	memset(new_k, 0, sizeof(new_k));
-	memset(current_k, 0, sizeof(current_k));
-	memset(target_k, 0, sizeof(target_k));
-	interp_count = sample_count = pitch_count = 0;
-	memset(x, 0, sizeof(x));
+	chip->old_energy = chip->old_pitch = 0;
+	chip->new_energy = chip->new_pitch = 0;
+	chip->current_energy = chip->current_pitch = 0;
+	chip->target_energy = chip->target_pitch = 0;
+	memset(chip->old_k, 0, sizeof(chip->old_k));
+	memset(chip->new_k, 0, sizeof(chip->new_k));
+	memset(chip->current_k, 0, sizeof(chip->current_k));
+	memset(chip->target_k, 0, sizeof(chip->target_k));
+	chip->interp_count = chip->sample_count = chip->pitch_count = 0;
+	memset(chip->x, 0, sizeof(chip->x));
 	/* reset parameters */
-	VLM5030_setup_parameter(0x00);
+	VLM5030_setup_parameter(chip, 0x00);
 }
 
 /* set speech rom address */
 void VLM5030_set_rom(void *speech_rom)
 {
-	VLM5030_rom = (UINT8 *)speech_rom;
+	struct vlm5030_info *chip = sndti_token(SOUND_VLM5030, 0);
+	chip->rom = (UINT8 *)speech_rom;
 }
 
 /* get BSY pin level */
 int VLM5030_BSY(void)
 {
-	VLM5030_update();
-	return pin_BSY;
+	struct vlm5030_info *chip = sndti_token(SOUND_VLM5030, 0);
+	VLM5030_update(chip);
+	return chip->pin_BSY;
 }
 
 /* latch contoll data */
 WRITE8_HANDLER( VLM5030_data_w )
 {
-	latch_data = (UINT8)data;
+	struct vlm5030_info *chip = sndti_token(SOUND_VLM5030, 0);
+	chip->latch_data = (UINT8)data;
 }
 
 /* set RST pin level : reset / set table address A8-A15 */
 void VLM5030_RST (int pin )
 {
-	if( pin_RST )
+	struct vlm5030_info *chip = sndti_token(SOUND_VLM5030, 0);
+	if( chip->pin_RST )
 	{
 		if( !pin )
 		{	/* H -> L : latch parameters */
-			pin_RST = 0;
-			VLM5030_setup_parameter(latch_data);
+			chip->pin_RST = 0;
+			VLM5030_setup_parameter(chip, chip->latch_data);
 		}
 	}
 	else
 	{
 		if( pin )
 		{	/* L -> H : reset chip */
-			pin_RST = 1;
-			if( pin_BSY )
+			chip->pin_RST = 1;
+			if( chip->pin_BSY )
 			{
-				VLM5030_reset();
+				VLM5030_reset(chip);
 			}
 		}
 	}
@@ -555,136 +570,165 @@ void VLM5030_RST (int pin )
 /* set VCU pin level : ?? unknown */
 void VLM5030_VCU(int pin)
 {
+	struct vlm5030_info *chip = sndti_token(SOUND_VLM5030, 0);
 	/* direct mode / indirect mode */
-	pin_VCU = pin;
+	chip->pin_VCU = pin;
 	return;
 }
 
 /* set ST pin level  : set table address A0-A7 / start speech */
 void VLM5030_ST(int pin )
 {
+	struct vlm5030_info *chip = sndti_token(SOUND_VLM5030, 0);
 	int table;
 
-	if( pin_ST != pin )
+	if( chip->pin_ST != pin )
 	{
 		/* pin level is change */
 		if( !pin )
 		{	/* H -> L */
-			pin_ST = 0;
+			chip->pin_ST = 0;
 
-			if( pin_VCU )
+			if( chip->pin_VCU )
 			{	/* direct access mode & address High */
-				vcu_addr_h = ((int)latch_data<<8) + 0x01;
+				chip->vcu_addr_h = ((int)chip->latch_data<<8) + 0x01;
 			}
 			else
 			{
 				/* start speech */
 				if (Machine->sample_rate == 0)
 				{
-					pin_BSY = 0;
+					chip->pin_BSY = 0;
 					return;
 				}
 				/* check access mode */
-				if( vcu_addr_h )
+				if( chip->vcu_addr_h )
 				{	/* direct access mode */
-					VLM5030_address = (vcu_addr_h&0xff00) + latch_data;
-					vcu_addr_h = 0;
+					chip->address = (chip->vcu_addr_h&0xff00) + chip->latch_data;
+					chip->vcu_addr_h = 0;
 				}
 				else
 				{	/* indirect accedd mode */
-					table = (latch_data&0xfe) + (((int)latch_data&1)<<8);
-					VLM5030_address = (((int)VLM5030_rom[table&VLM5030_address_mask])<<8)
-					                |        VLM5030_rom[(table+1)&VLM5030_address_mask];
+					table = (chip->latch_data&0xfe) + (((int)chip->latch_data&1)<<8);
+					chip->address = (((int)chip->rom[table&chip->address_mask])<<8)
+					                |        chip->rom[(table+1)&chip->address_mask];
 #if 0
 /* show unsupported parameter message */
-if( interp_step != 1)
-	usrintf_showmessage("No %d %dBPS parameter",table/2,interp_step*2400);
+if( chip->interp_step != 1)
+	usrintf_showmessage("No %d %dBPS parameter",table/2,chip->interp_step*2400);
 #endif
 				}
-				VLM5030_update();
-				/* logerror("VLM5030 %02X start adr=%04X\n",table/2,VLM5030_address ); */
+				VLM5030_update(chip);
+				/* logerror("VLM5030 %02X start adr=%04X\n",table/2,chip->address ); */
 				/* reset process status */
-				sample_count = VLM5030_frame_size;
-				interp_count = FR_SIZE;
+				chip->sample_count = chip->frame_size;
+				chip->interp_count = FR_SIZE;
 				/* clear filter */
 				/* start after 3 sampling cycle */
-				VLM5030_phase = PH_RUN;
+				chip->phase = PH_RUN;
 			}
 		}
 		else
 		{	/* L -> H */
-			pin_ST = 1;
+			chip->pin_ST = 1;
 			/* setup speech , BSY on after 30ms? */
-			VLM5030_phase = PH_SETUP;
-			sample_count = 1; /* wait time for busy on */
-			pin_BSY = 1; /* */
+			chip->phase = PH_SETUP;
+			chip->sample_count = 1; /* wait time for busy on */
+			chip->pin_BSY = 1; /* */
 		}
 	}
 }
 
 /* start VLM5030 with sound rom              */
 /* speech_rom == 0 -> use sampling data mode */
-int VLM5030_sh_start(const struct MachineSound *msound)
+static void *vlm5030_start(int sndindex, int clock, const void *config)
 {
 	int emulation_rate;
+	struct vlm5030_info *chip;
+	
+	chip = auto_malloc(sizeof(*chip));
+	memset(chip, 0, sizeof(*chip));
 
-	intf = msound->sound_interface;
+	chip->intf = config;
 
-	emulation_rate = intf->baseclock / 440;
+	emulation_rate = clock / 440;
 
 	/* reset input pins */
-	pin_RST = pin_ST = pin_VCU= 0;
-	latch_data = 0;
+	chip->pin_RST = chip->pin_ST = chip->pin_VCU= 0;
+	chip->latch_data = 0;
 
-	VLM5030_reset();
-	VLM5030_phase = PH_IDLE;
+	VLM5030_reset(chip);
+	chip->phase = PH_IDLE;
 
-	VLM5030_rom = memory_region(intf->memory_region);
+	chip->rom = memory_region(chip->intf->memory_region);
 	/* memory size */
-	if( intf->memory_size == 0)
-		VLM5030_address_mask = memory_region_length(intf->memory_region)-1;
+	if( chip->intf->memory_size == 0)
+		chip->address_mask = memory_region_length(chip->intf->memory_region)-1;
 	else
-		VLM5030_address_mask = intf->memory_size-1;
+		chip->address_mask = chip->intf->memory_size-1;
 
-	channel = stream_init(VLM_NAME,intf->volume,emulation_rate,0,vlm5030_update_callback);
-	if (channel == -1) return 1;
-
-	schannel = mixer_allocate_channel(intf->volume);
+	chip->channel = stream_create(0, 1, emulation_rate,chip,vlm5030_update_callback);
 
 #ifdef _STATE_H
-	/* don't restore "UINT8 *VLM5030_rom" when use VLM5030_set_rom() */
+	/* don't restore "UINT8 *chip->rom" when use VLM5030_set_rom() */
 
-	state_save_register_UINT16 (VLM_NAME,0,"address", &VLM5030_address, 1);
-	state_save_register_UINT8  (VLM_NAME,0,"busy"   , &pin_BSY        , 1);
-	state_save_register_UINT8  (VLM_NAME,0,"start"  , &pin_ST         , 1);
-	state_save_register_UINT8  (VLM_NAME,0,"vcu"    , &pin_VCU        , 1);
-	state_save_register_UINT8  (VLM_NAME,0,"reset"  , &pin_RST        , 1);
-	state_save_register_UINT8  (VLM_NAME,0,"data"   , &latch_data     , 1);
-	state_save_register_UINT16 (VLM_NAME,0,"vcu_addr", &vcu_addr_h    , 1);
-	state_save_register_UINT8  (VLM_NAME,0,"parameter", &VLM5030_parameter, 1);
-	state_save_register_UINT8  (VLM_NAME,0,"phase"   , &VLM5030_phase , 1);
-	state_save_register_UINT8  (VLM_NAME,0,"interporator"  , &interp_count , 1);
-	state_save_register_UINT8  (VLM_NAME,0,"sample count"  , &sample_count , 1);
-	state_save_register_UINT8  (VLM_NAME,0,"pitch count"   , &pitch_count , 1);
-	state_save_register_UINT16 (VLM_NAME,0,"old energy"    , &old_energy  , 1);
-	state_save_register_UINT8  (VLM_NAME,0,"old pitch"     , &old_pitch   , 1);
-	state_save_register_INT16  (VLM_NAME,0,"old K"         , old_k        ,10);
-	state_save_register_UINT16 (VLM_NAME,0,"tartget energy", &target_energy, 1);
-	state_save_register_UINT8  (VLM_NAME,0,"tartget pitch" , &target_pitch , 1);
-	state_save_register_INT16  (VLM_NAME,0,"tartget K"     , target_k      ,10);
-	state_save_register_INT32  (VLM_NAME,0,"x"             , x             ,10);
-	state_save_register_func_postload(VLM5030_resotore_state);
+	state_save_register_UINT16 (VLM_NAME,sndindex,"address", &chip->address, 1);
+	state_save_register_UINT8  (VLM_NAME,sndindex,"busy"   , &chip->pin_BSY        , 1);
+	state_save_register_UINT8  (VLM_NAME,sndindex,"start"  , &chip->pin_ST         , 1);
+	state_save_register_UINT8  (VLM_NAME,sndindex,"vcu"    , &chip->pin_VCU        , 1);
+	state_save_register_UINT8  (VLM_NAME,sndindex,"reset"  , &chip->pin_RST        , 1);
+	state_save_register_UINT8  (VLM_NAME,sndindex,"data"   , &chip->latch_data     , 1);
+	state_save_register_UINT16 (VLM_NAME,sndindex,"vcu_addr", &chip->vcu_addr_h    , 1);
+	state_save_register_UINT8  (VLM_NAME,sndindex,"parameter", &chip->parameter, 1);
+	state_save_register_UINT8  (VLM_NAME,sndindex,"phase"   , &chip->phase , 1);
+	state_save_register_UINT8  (VLM_NAME,sndindex,"interporator"  , &chip->interp_count , 1);
+	state_save_register_UINT8  (VLM_NAME,sndindex,"sample count"  , &chip->sample_count , 1);
+	state_save_register_UINT8  (VLM_NAME,sndindex,"pitch count"   , &chip->pitch_count , 1);
+	state_save_register_UINT16 (VLM_NAME,sndindex,"old energy"    , &chip->old_energy  , 1);
+	state_save_register_UINT8  (VLM_NAME,sndindex,"old pitch"     , &chip->old_pitch   , 1);
+	state_save_register_INT16  (VLM_NAME,sndindex,"old K"         , chip->old_k        ,10);
+	state_save_register_UINT16 (VLM_NAME,sndindex,"tartget energy", &chip->target_energy, 1);
+	state_save_register_UINT8  (VLM_NAME,sndindex,"tartget pitch" , &chip->target_pitch , 1);
+	state_save_register_INT16  (VLM_NAME,sndindex,"tartget K"     , chip->target_k      ,10);
+	state_save_register_INT32  (VLM_NAME,sndindex,"x"             , chip->x             ,10);
+	if (sndindex == 0)
+		state_save_register_func_postload(VLM5030_resotore_state);
 #endif
-	return 0;
+	return chip;
 }
 
-/* update VLM5030 */
-void VLM5030_sh_update( void )
+
+/**************************************************************************
+ * Generic get_info
+ **************************************************************************/
+
+static void vlm5030_set_info(void *token, UINT32 state, union sndinfo *info)
 {
-	VLM5030_update();
+	switch (state)
+	{
+		/* no parameters to set */
+	}
 }
 
-/* stop VLM5030 */
-void VLM5030_sh_stop( void )
+
+void vlm5030_get_info(void *token, UINT32 state, union sndinfo *info)
 {
+	switch (state)
+	{
+		/* --- the following bits of info are returned as 64-bit signed integers --- */
+
+		/* --- the following bits of info are returned as pointers to data or functions --- */
+		case SNDINFO_PTR_SET_INFO:						info->set_info = vlm5030_set_info;		break;
+		case SNDINFO_PTR_START:							info->start = vlm5030_start;			break;
+		case SNDINFO_PTR_STOP:							/* Nothing */							break;
+		case SNDINFO_PTR_RESET:							/* Nothing */							break;
+
+		/* --- the following bits of info are returned as NULL-terminated strings --- */
+		case SNDINFO_STR_NAME:							info->s = "VLM5030";					break;
+		case SNDINFO_STR_CORE_FAMILY:					info->s = "VLM speech";					break;
+		case SNDINFO_STR_CORE_VERSION:					info->s = "1.0";						break;
+		case SNDINFO_STR_CORE_FILE:						info->s = __FILE__;						break;
+		case SNDINFO_STR_CORE_CREDITS:					info->s = "Copyright (c) 2004, The MAME Team"; break;
+	}
 }
+

@@ -67,6 +67,7 @@ To Do:
 #include "vidhrdw/generic.h"
 #include "cpu/tms32010/tms32010.h"
 #include "toaplan1.h"
+#include "sound/3812intf.h"
 
 
 
@@ -1429,10 +1430,7 @@ static void irqhandler(int linestate)
 
 static struct YM3812interface ym3812_interface =
 {
-	1,
-	28000000/8,		/* 3.5MHz (28MHz Oscillator) */
-	{ 100 },
-	{ irqhandler },
+	irqhandler
 };
 
 
@@ -1466,7 +1464,11 @@ static MACHINE_DRIVER_START( rallybik )
 	MDRV_VIDEO_UPDATE(rallybik)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM3812, ym3812_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM3812, 28000000/8)
+	MDRV_SOUND_CONFIG(ym3812_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 
@@ -1499,7 +1501,11 @@ static MACHINE_DRIVER_START( truxton )
 	MDRV_VIDEO_UPDATE(toaplan1)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM3812, ym3812_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM3812, 28000000/8)
+	MDRV_SOUND_CONFIG(ym3812_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 
@@ -1532,7 +1538,11 @@ static MACHINE_DRIVER_START( hellfire )
 	MDRV_VIDEO_UPDATE(toaplan1)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM3812, ym3812_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM3812, 28000000/8)
+	MDRV_SOUND_CONFIG(ym3812_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 
@@ -1565,7 +1575,11 @@ static MACHINE_DRIVER_START( zerowing )
 	MDRV_VIDEO_UPDATE(zerowing)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM3812, ym3812_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM3812, 28000000/8)
+	MDRV_SOUND_CONFIG(ym3812_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 
@@ -1602,7 +1616,11 @@ static MACHINE_DRIVER_START( demonwld )
 	MDRV_VIDEO_UPDATE(demonwld)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM3812, ym3812_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM3812, 28000000/8)
+	MDRV_SOUND_CONFIG(ym3812_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 
@@ -1630,7 +1648,11 @@ static MACHINE_DRIVER_START( samesame )
 	MDRV_VIDEO_UPDATE(toaplan1)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM3812, ym3812_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM3812, 28000000/8)
+	MDRV_SOUND_CONFIG(ym3812_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 
@@ -1663,7 +1685,11 @@ static MACHINE_DRIVER_START( outzone )
 	MDRV_VIDEO_UPDATE(toaplan1)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM3812, ym3812_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM3812, 28000000/8)
+	MDRV_SOUND_CONFIG(ym3812_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 
@@ -1691,7 +1717,11 @@ static MACHINE_DRIVER_START( vimana )
 	MDRV_VIDEO_UPDATE(toaplan1)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM3812, ym3812_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM3812, 28000000/8)
+	MDRV_SOUND_CONFIG(ym3812_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 

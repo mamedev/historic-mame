@@ -116,6 +116,8 @@ DSW2 stored @ $f237
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "sound/ay8910.h"
+#include "sound/samples.h"
 
 
 extern data8_t *superqix_videoram;
@@ -136,22 +138,17 @@ VIDEO_UPDATE( superqix );
 
 
 /* pbillian sample playback */
-static int channel;
-static INT8 *samplebuf;
+static INT16 *samplebuf;
 
-int pbillian_sh_start(const struct MachineSound *msound)
+void pbillian_sh_start(void)
 {
+	UINT8 *src = memory_region(REGION_SOUND1);
 	int i;
 
-	channel = mixer_allocate_channel(50);
-	mixer_set_name(channel,"Samples");
-
 	/* convert 8-bit unsigned samples to 8-bit signed */
-	samplebuf = (INT8 *)memory_region(REGION_SOUND1);
+	samplebuf = auto_malloc(memory_region_length(REGION_SOUND1) * 2);
 	for (i = 0;i < memory_region_length(REGION_SOUND1);i++)
-		samplebuf[i] ^= 0x80;
-
-	return 0;
+		samplebuf[i] = (INT8)(src[i] ^ 0x80) * 256;
 }
 
 static WRITE8_HANDLER( pbillian_sample_trigger_w )
@@ -164,7 +161,7 @@ static WRITE8_HANDLER( pbillian_sample_trigger_w )
 	while (end < 0x8000 && samplebuf[end] != (0xff^0x80))
 		end++;
 
-	mixer_play_sample(channel, samplebuf + start, end - start, 5000, 0); // 5khz ?
+	sample_start_raw(0, samplebuf + start, end - start, 5000, 0); // 5khz ?
 }
 
 
@@ -805,44 +802,43 @@ static struct GfxDecodeInfo sqix_gfxdecodeinfo[] =
 
 
 
-static struct CustomSound_interface custom_interface =
+static struct Samplesinterface custom_interface =
 {
-	pbillian_sh_start,
-	0,
-	0
+	1,
+	NULL,
+	pbillian_sh_start
 };
 
 static struct AY8910interface pbillian_ay8910_interface =
 {
-	1,	/* 1 chip */
-	12000000/8,	/* 1.5 MHz */
-	{ 30 },
-	{ ay_port_a_r },					/* port Aread */
-	{ input_port_2_r },					/* port Bread */
-	{ 0 },								/* port Awrite */
-	{ 0 }								/* port Bwrite */
+	ay_port_a_r,					/* port Aread */
+	input_port_2_r					/* port Bread */
 };
 
-static struct AY8910interface sqix_ay8910_interface =
+static struct AY8910interface sqix_ay8910_interface_1 =
 {
-	2,	/* 2 chips */
-	12000000/8,	/* 1.5 MHz */
-	{ 25, 25 },
-	{ input_port_3_r, input_port_1_r },	/* port Aread */
-	{ in4_mcu_r, sqix_from_mcu_r },		/* port Bread */
-	{ 0 },								/* port Awrite */
-	{ 0, sqix_z80_mcu_w }				/* port Bwrite */
+	input_port_3_r,	/* port Aread */
+	in4_mcu_r,		/* port Bread */
 };
 
-static struct AY8910interface bootleg_ay8910_interface =
+static struct AY8910interface sqix_ay8910_interface_2 =
 {
-	2,	/* 2 chips */
-	12000000/8,	/* 1.5 MHz */
-	{ 25, 25 },
-	{ input_port_3_r, input_port_1_r },	/* port Aread */
-	{ input_port_4_r, bootleg_in0_r },	/* port Bread */
-	{ 0 },								/* port Awrite */
-	{ 0 }								/* port Bwrite */
+	input_port_1_r,	/* port Aread */
+	sqix_from_mcu_r,		/* port Bread */
+	0,								/* port Awrite */
+	sqix_z80_mcu_w				/* port Bwrite */
+};
+
+static struct AY8910interface bootleg_ay8910_interface_1 =
+{
+	input_port_3_r,	/* port Aread */
+	input_port_4_r	/* port Bread */
+};
+
+static struct AY8910interface bootleg_ay8910_interface_2 =
+{
+	input_port_1_r,	/* port Aread */
+	bootleg_in0_r	/* port Bread */
 };
 
 
@@ -883,8 +879,15 @@ static MACHINE_DRIVER_START( pbillian )
 	MDRV_VIDEO_START(pbillian)
 	MDRV_VIDEO_UPDATE(pbillian)
 
-	MDRV_SOUND_ADD(AY8910, pbillian_ay8910_interface)
-	MDRV_SOUND_ADD(CUSTOM, custom_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	
+	MDRV_SOUND_ADD(AY8910, 12000000/8)
+	MDRV_SOUND_CONFIG(pbillian_ay8910_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.30)
+	
+	MDRV_SOUND_ADD(SAMPLES, 0)
+	MDRV_SOUND_CONFIG(custom_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
 MACHINE_DRIVER_END
 
 
@@ -916,7 +919,15 @@ static MACHINE_DRIVER_START( sqix )
 	MDRV_VIDEO_UPDATE(superqix)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(AY8910, sqix_ay8910_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	
+	MDRV_SOUND_ADD(AY8910, 12000000/8)
+	MDRV_SOUND_CONFIG(sqix_ay8910_interface_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
+	
+	MDRV_SOUND_ADD(AY8910, 12000000/8)
+	MDRV_SOUND_CONFIG(sqix_ay8910_interface_2)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
 MACHINE_DRIVER_END
 
 
@@ -943,7 +954,15 @@ static MACHINE_DRIVER_START( sqixbl )
 	MDRV_VIDEO_UPDATE(superqix)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(AY8910, bootleg_ay8910_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(AY8910, 12000000/8)
+	MDRV_SOUND_CONFIG(bootleg_ay8910_interface_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
+
+	MDRV_SOUND_ADD(AY8910, 12000000/8)
+	MDRV_SOUND_CONFIG(bootleg_ay8910_interface_2)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
 MACHINE_DRIVER_END
 
 

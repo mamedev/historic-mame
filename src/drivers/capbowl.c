@@ -92,6 +92,8 @@
 #include "machine/ticket.h"
 #include "cpu/m6809/m6809.h"
 #include "capbowl.h"
+#include "sound/2203intf.h"
+#include "sound/dac.h"
 
 #define MASTER_CLOCK		8000000		/* 8MHz crystal */
 
@@ -306,21 +308,11 @@ INPUT_PORTS_END
 
 static struct YM2203interface ym2203_interface =
 {
-	1,				/* 1 chip */
-	MASTER_CLOCK/2,	/* 4 MHz */
-	{ YM2203_VOL(75,7) },
-	{ ticket_dispenser_r },
-	{ 0 },
-	{ 0 },
-	{ ticket_dispenser_w },  /* Also a status LED. See memory map above */
-	{ firqhandler }
-};
-
-
-static struct DACinterface dac_interface =
-{
-	1,
-	{ 100 }
+	ticket_dispenser_r,
+	0,
+	0,
+	ticket_dispenser_w,  /* Also a status LED. See memory map above */
+	firqhandler
 };
 
 
@@ -357,8 +349,17 @@ static MACHINE_DRIVER_START( capbowl )
 	MDRV_VIDEO_UPDATE(capbowl)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM2203, ym2203_interface)
-	MDRV_SOUND_ADD(DAC,    dac_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM2203, MASTER_CLOCK/2)
+	MDRV_SOUND_CONFIG(ym2203_interface)
+	MDRV_SOUND_ROUTE(0, "mono", 0.07)
+	MDRV_SOUND_ROUTE(1, "mono", 0.07)
+	MDRV_SOUND_ROUTE(2, "mono", 0.07)
+	MDRV_SOUND_ROUTE(3, "mono", 0.75)
+
+	MDRV_SOUND_ADD(DAC, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 

@@ -39,6 +39,7 @@ The 2 ay-8910 read ports are responsible for reading the sound commands.
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "cpu/z80/z80.h"
+#include "sound/ay8910.h"
 
 
 extern WRITE8_HANDLER( jack_videoram_w );
@@ -672,13 +673,8 @@ static struct GfxDecodeInfo joinem_gfxdecodeinfo[] =
 
 static struct AY8910interface ay8910_interface =
 {
-	1,	/* 1 chip */
-	18000000/12,	/* 1.5 MHz */
-	{ 100 },
-	{ soundlatch_r },
-	{ timer_r },
-	{ 0 },
-	{ 0 }
+	soundlatch_r,
+	timer_r
 };
 
 
@@ -708,7 +704,11 @@ static MACHINE_DRIVER_START( jack )
 	MDRV_VIDEO_UPDATE(jack)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(AY8910, ay8910_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	
+	MDRV_SOUND_ADD(AY8910, 18000000/12)
+	MDRV_SOUND_CONFIG(ay8910_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( tripool )

@@ -64,6 +64,7 @@ Preliminary COP MCU memory map
 #include "vidhrdw/generic.h"
 #include "cpu/z80/z80.h"
 #include "sndhrdw/seibu.h"
+#include "sound/3812intf.h"
 
 extern WRITE16_HANDLER( legionna_background_w );
 extern WRITE16_HANDLER( legionna_foreground_w );
@@ -1443,9 +1444,9 @@ static struct GfxDecodeInfo heatbrl_gfxdecodeinfo[] =
 /*****************************************************************************/
 
 /* Parameters: YM3812 frequency, Oki frequency, Oki memory region */
-SEIBU_SOUND_SYSTEM_YM3812_HARDWARE(14318180/4,8000,REGION_SOUND1);
+SEIBU_SOUND_SYSTEM_YM3812_HARDWARE;
 
-SEIBU_SOUND_SYSTEM_YM2151_HARDWARE(14318180/4,8000,REGION_SOUND1);
+SEIBU_SOUND_SYSTEM_YM2151_HARDWARE;
 
 /*****************************************************************************/
 
@@ -1474,7 +1475,7 @@ static MACHINE_DRIVER_START( legionna )
 	MDRV_VIDEO_UPDATE(legionna)
 
 	/* sound hardware */
-	SEIBU_SOUND_SYSTEM_YM3812_INTERFACE
+	SEIBU_SOUND_SYSTEM_YM3812_INTERFACE(14318180/4,8000,1)
 MACHINE_DRIVER_END
 
 
@@ -1503,7 +1504,7 @@ static MACHINE_DRIVER_START( heatbrl )
 	MDRV_VIDEO_UPDATE(legionna)
 
 	/* sound hardware */
-	SEIBU_SOUND_SYSTEM_YM3812_INTERFACE
+	SEIBU_SOUND_SYSTEM_YM3812_INTERFACE(14318180/4,8000,1)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( godzilla )
@@ -1531,7 +1532,7 @@ static MACHINE_DRIVER_START( godzilla )
 	MDRV_VIDEO_UPDATE(godzilla)
 
 	/* sound hardware */
-	SEIBU_SOUND_SYSTEM_YM2151_INTERFACE
+	SEIBU_SOUND_SYSTEM_YM2151_INTERFACE(14318180/4,8000,1)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( sdgndmrb )
@@ -1559,7 +1560,7 @@ static MACHINE_DRIVER_START( sdgndmrb )
 	MDRV_VIDEO_UPDATE(sdgndmrb)
 
 	/* sound hardware */
-	SEIBU_SOUND_SYSTEM_YM2151_INTERFACE
+	SEIBU_SOUND_SYSTEM_YM2151_INTERFACE(14318180/4,8000,1)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( cupsoc )
@@ -1587,7 +1588,7 @@ static MACHINE_DRIVER_START( cupsoc )
 	MDRV_VIDEO_UPDATE(sdgndmrb)
 
 	/* sound hardware */
-	SEIBU_SOUND_SYSTEM_YM3812_INTERFACE
+	SEIBU_SOUND_SYSTEM_YM3812_INTERFACE(14318180/4,8000,1)
 MACHINE_DRIVER_END
 
 /***************************************************************************

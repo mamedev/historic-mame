@@ -8,6 +8,8 @@
 #include "system16.h"
 #include "vidhrdw/segaic24.h"
 #include "cpu/m68000/m68k.h"
+#include "sound/multipcm.h"
+#include "sound/2612intf.h"
 
 WRITE16_HANDLER( model1_paletteram_w );
 VIDEO_START(model1);
@@ -321,7 +323,7 @@ static WRITE16_HANDLER( m1_snd_mpcm1_bnk_w )
 
 static READ16_HANDLER( m1_snd_ym_r )
 {
-	return YM2612_status_port_0_A_r(0);
+	return YM3438_status_port_0_A_r(0);
 }
 
 static WRITE16_HANDLER( m1_snd_ym_w )
@@ -329,19 +331,19 @@ static WRITE16_HANDLER( m1_snd_ym_w )
 	switch (offset)
 	{
 		case 0:
-			YM2612_control_port_0_A_w(0, data);
+			YM3438_control_port_0_A_w(0, data);
 			break;
 
 		case 1:
-			YM2612_data_port_0_A_w(0, data);
+			YM3438_data_port_0_A_w(0, data);
 			break;
 
 		case 2:
-			YM2612_control_port_0_B_w(0, data);
+			YM3438_control_port_0_B_w(0, data);
 			break;
 
 		case 3:
-			YM2612_data_port_0_B_w(0, data);
+			YM3438_data_port_0_B_w(0, data);
 			break;
 	}
 }
@@ -367,22 +369,18 @@ static ADDRESS_MAP_START( model1_snd, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0xf00000, 0xf0ffff) AM_RAM
 ADDRESS_MAP_END
 
-static struct MultiPCM_interface m1_multipcm_interface =
+static struct MultiPCM_interface m1_multipcm_interface_1 =
 {
-	2,
-	{ 8000000, 8000000 },
-	{ MULTIPCM_MODE_MODEL1, MULTIPCM_MODE_MODEL1 },
-	{ (1024*1024), (1024*1024) },
-	{ REGION_SOUND1, REGION_SOUND2 },
-	{ YM3012_VOL(100, MIXER_PAN_LEFT, 100, MIXER_PAN_RIGHT), YM3012_VOL(100, MIXER_PAN_LEFT, 100, MIXER_PAN_RIGHT) }
+	MULTIPCM_MODE_MODEL1,
+	(1024*1024),
+	REGION_SOUND1
 };
 
-static struct YM2612interface m1_ym3438_interface =
+static struct MultiPCM_interface m1_multipcm_interface_2 =
 {
-	1,
-	8000000,
-	{ 60,60 },
-	{ 0 },	{ 0 },	{ 0 },	{ 0 }
+	MULTIPCM_MODE_MODEL1,
+	(1024*1024),
+	REGION_SOUND2
 };
 
 INPUT_PORTS_START( vf )
@@ -843,9 +841,21 @@ static MACHINE_DRIVER_START( model1 )
 	MDRV_VIDEO_UPDATE(model1)
 	MDRV_VIDEO_EOF(model1)
 
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(YM3438, m1_ym3438_interface)
-	MDRV_SOUND_ADD(MULTIPCM, m1_multipcm_interface)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(YM3438, 8000000)
+	MDRV_SOUND_ROUTE(0, "left", 0.60)
+	MDRV_SOUND_ROUTE(1, "right", 0.60)
+
+	MDRV_SOUND_ADD(MULTIPCM, 8000000)
+	MDRV_SOUND_CONFIG(m1_multipcm_interface_1)
+	MDRV_SOUND_ROUTE(0, "left", 1.0)
+	MDRV_SOUND_ROUTE(1, "right", 1.0)
+
+	MDRV_SOUND_ADD(MULTIPCM, 8000000)
+	MDRV_SOUND_CONFIG(m1_multipcm_interface_2)
+	MDRV_SOUND_ROUTE(0, "left", 1.0)
+	MDRV_SOUND_ROUTE(1, "right", 1.0)
 MACHINE_DRIVER_END
 
 GAMEX( 1993, vf,      0, model1, vf,      0, ROT0, "Sega", "Virtua Fighter", GAME_IMPERFECT_GRAPHICS )

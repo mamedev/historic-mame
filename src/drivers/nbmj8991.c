@@ -31,6 +31,9 @@ Notes:
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "nb1413m3.h"
+#include "sound/ay8910.h"
+#include "sound/3812intf.h"
+#include "sound/dac.h"
 
 
 #define SIGNED_DAC	0		// 0:unsigned DAC, 1:signed DAC
@@ -1743,41 +1746,10 @@ INPUT_PORTS_START( av2mj2rg )
 INPUT_PORTS_END
 
 
-static struct YM3812interface ym3812_type1_interface =
-{
-	1,						/* 1 chip */
-	25000000/10,			/* 2.50 MHz */
-	{ 70 }
-};
-
-static struct YM3812interface ym3812_type2_interface =
-{
-	1,						/* 1 chip */
-	25000000/6.25,			/* 4.00 MHz */
-	{ 70 }
-};
-
 static struct AY8910interface ay8910_interface =
 {
-	1,						/* 1 chip */
-	1250000,				/* 1.25 MHz ?? */
-	{ 35 },
-	{ input_port_0_r },		// DIPSW-A read
-	{ input_port_1_r },		// DIPSW-B read
-	{ 0 },
-	{ 0 }
-};
-
-static struct DACinterface dac_type1_interface =
-{
-	1,						/* 1 channel */
-	{ 50 },
-};
-
-static struct DACinterface dac_type2_interface =
-{
-	2,						/* 2 channels */
-	{ 50, 50 },
+	input_port_0_r,		// DIPSW-A read
+	input_port_1_r		// DIPSW-B read
 };
 
 
@@ -1804,8 +1776,12 @@ static MACHINE_DRIVER_START( nbmjdrv1 )	// galkoku
 	MDRV_VIDEO_UPDATE(nbmj8991_type1)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD_TAG("3812", YM3812, ym3812_type1_interface)
-	MDRV_SOUND_ADD_TAG("dac",  DAC, dac_type1_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	MDRV_SOUND_ADD_TAG("3812", YM3812, 25000000/10)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.70)
+
+	MDRV_SOUND_ADD_TAG("dac", DAC, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
 MACHINE_DRIVER_END
 
 
@@ -1837,8 +1813,16 @@ static MACHINE_DRIVER_START( nbmjdrv2 )	// pstadium
 	MDRV_VIDEO_UPDATE(nbmj8991_type2)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM3812, ym3812_type2_interface)
-	MDRV_SOUND_ADD(DAC, dac_type2_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM3812, 25000000/6.25)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.70)
+
+	MDRV_SOUND_ADD(DAC, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
+
+	MDRV_SOUND_ADD(DAC, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
 MACHINE_DRIVER_END
 
 
@@ -1848,7 +1832,9 @@ static MACHINE_DRIVER_START( nbmjdrv3 )
 	MDRV_IMPORT_FROM(nbmjdrv1)
 
 	/* sound hardware */
-	MDRV_SOUND_REPLACE("3812", AY8910, ay8910_interface)
+	MDRV_SOUND_REPLACE("3812", AY8910, 1250000)
+	MDRV_SOUND_CONFIG(ay8910_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.35)
 MACHINE_DRIVER_END
 
 

@@ -16,6 +16,7 @@ Might be some priority glitches
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "cpu/z80/z80.h"
+#include "sound/3812intf.h"
 
 /* in vidhrdw/tbowl.c */
 extern data8_t *tbowl_txvideoram, *tbowl_bgvideoram, *tbowl_bg2videoram;
@@ -524,10 +525,7 @@ static void irqhandler(int linestate)
 
 static struct YM3526interface ym3812_interface =
 {
-	2,			/* 2 chips */
-	4000000,	/* 4 MHz */
-	{ 80, 80 },		/* volume */
-	{ irqhandler }
+	irqhandler
 };
 
 /*** Machine Driver
@@ -575,7 +573,15 @@ static MACHINE_DRIVER_START( tbowl )
 	MDRV_VIDEO_UPDATE(tbowl)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM3812, ym3812_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM3812, 4000000)
+	MDRV_SOUND_CONFIG(ym3812_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.80)
+
+	MDRV_SOUND_ADD(YM3812, 4000000)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.80)
+
 	/* something for the samples? */
 MACHINE_DRIVER_END
 

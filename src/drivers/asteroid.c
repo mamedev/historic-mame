@@ -145,6 +145,8 @@
 #include "vidhrdw/avgdvg.h"
 #include "machine/atari_vg.h"
 #include "asteroid.h"
+#include "sound/discrete.h"
+#include "sound/pokey.h"
 
 
 
@@ -583,20 +585,8 @@ INPUT_PORTS_END
 
 static struct POKEYinterface pokey_interface =
 {
-	1,	/* 1 chip */
-	1500000,	/* 1.5 MHz??? */
-	{ 100 },
-	/* The 8 pot handlers */
 	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	/* The allpot handler */
-	{ input_port_3_r }
+	input_port_3_r
 };
 
 
@@ -628,7 +618,11 @@ static MACHINE_DRIVER_START( asteroid )
 	MDRV_VIDEO_UPDATE(vector)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD_TAG("disc", DISCRETE, asteroid_discrete_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	
+	MDRV_SOUND_ADD_TAG("disc", DISCRETE, 0)
+	MDRV_SOUND_CONFIG(asteroid_discrete_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( asterock )
@@ -650,8 +644,13 @@ static MACHINE_DRIVER_START( astdelux )
 	MDRV_NVRAM_HANDLER(atari_vg)
 
 	/* sound hardware */
-	MDRV_SOUND_REPLACE("disc", DISCRETE, astdelux_discrete_interface)
-	MDRV_SOUND_ADD(POKEY, pokey_interface)
+	MDRV_SOUND_REPLACE("disc", DISCRETE, 0)
+	MDRV_SOUND_CONFIG(astdelux_discrete_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
+
+	MDRV_SOUND_ADD(POKEY, 1500000)
+	MDRV_SOUND_CONFIG(pokey_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 
@@ -674,7 +673,9 @@ static MACHINE_DRIVER_START( llander )
 	MDRV_VIDEO_UPDATE(vector)
 
 	/* sound hardware */
-	MDRV_SOUND_REPLACE("disc", DISCRETE, llander_discrete_interface)
+	MDRV_SOUND_REPLACE("disc", DISCRETE, 0)
+	MDRV_SOUND_CONFIG(llander_discrete_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 

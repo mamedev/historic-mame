@@ -24,6 +24,7 @@ added external port callback, and functions to set the volume of the channels
 
 
 #include "driver.h"
+#include "k007232.h"
 #include <math.h>
 
 
@@ -44,13 +45,12 @@ typedef struct kdacApcm
 
   unsigned int  clock;          /* chip clock */
   unsigned int  pcmlimit;
+
+  sound_stream * stream;
+	const struct K007232_interface *intf;
+  float fncode[0x200];
 } KDAC_A_PCM;
 
-static KDAC_A_PCM    kpcm[MAX_K007232];
-
-static int pcm_chan[MAX_K007232];
-
-static const struct K007232_interface *intf;
 
 #define   BASE_SHIFT    (12)
 
@@ -167,9 +167,8 @@ static float kdaca_fn[][2] = {
 };
 #endif
 
-static float fncode[0x200];
 /*************************************************************/
-static void KDAC_A_make_fncode( void ){
+static void KDAC_A_make_fncode( struct kdacApcm *info ){
   int i;
 #if 0
   int i, j, k;
@@ -202,7 +201,7 @@ static void KDAC_A_make_fncode( void ){
 #else
   for( i = 0; i < 0x200; i++ ){
     //fncode[i] = (0x200 * 55) / (0x200 - i);
-    fncode[i] = ((0x200 * 55.2) / (0x200 - i)) / (440.00 / 2);
+    info->fncode[i] = ((0x200 * 55.2) / (0x200 - i)) / (440.00 / 2);
     //    logerror("2 : fncode[%04x] = %.2f\n", i, fncode[i] );
   }
 
@@ -214,25 +213,26 @@ static void KDAC_A_make_fncode( void ){
 /*    Konami PCM update                         */
 /************************************************/
 
-static void KDAC_A_update(int chip, INT16 **buffer, int buffer_len)
+static void KDAC_A_update(void *param, stream_sample_t **inputs, stream_sample_t **buffer, int buffer_len)
 {
+  struct kdacApcm *info = param;
   int i;
 
-  memset(buffer[0],0,buffer_len * sizeof(INT16));
-  memset(buffer[1],0,buffer_len * sizeof(INT16));
+  memset(buffer[0],0,buffer_len * sizeof(*buffer[0]));
+  memset(buffer[1],0,buffer_len * sizeof(*buffer[1]));
 
   for( i = 0; i < KDAC_A_PCM_MAX; i++ )
     {
-      if (kpcm[chip].play[i])
+      if (info->play[i])
 	{
 	  int volA,volB,j,out;
 	  unsigned int addr, old_addr;
 	  //int cen;
 
 	  /**** PCM setup ****/
-	  addr = kpcm[chip].start[i] + ((kpcm[chip].addr[i]>>BASE_SHIFT)&0x000fffff);
-	  volA = kpcm[chip].vol[i][0] * 2;
-	  volB = kpcm[chip].vol[i][1] * 2;
+	  addr = info->start[i] + ((info->addr[i]>>BASE_SHIFT)&0x000fffff);
+	  volA = info->vol[i][0] * 2;
+	  volB = info->vol[i][1] * 2;
 #if 0
 	   cen = (volA + volB) / 2;
 	  volA = (volA + cen) < 0x1fe ? (volA + cen) : 0x1fe;
@@ -242,29 +242,29 @@ static void KDAC_A_update(int chip, INT16 **buffer, int buffer_len)
 	  for( j = 0; j < buffer_len; j++ )
 	    {
 	      old_addr = addr;
-	      addr = kpcm[chip].start[i] + ((kpcm[chip].addr[i]>>BASE_SHIFT)&0x000fffff);
+	      addr = info->start[i] + ((info->addr[i]>>BASE_SHIFT)&0x000fffff);
 	      while (old_addr <= addr)
 		{
-		  if( (kpcm[chip].pcmbuf[i][old_addr] & 0x80) || old_addr >= kpcm[chip].pcmlimit )
+		  if( (info->pcmbuf[i][old_addr] & 0x80) || old_addr >= info->pcmlimit )
 		    {
 		      /* end of sample */
 
-		      if( kpcm[chip].wreg[0x0d]&(1<<i) )
+		      if( info->wreg[0x0d]&(1<<i) )
 			{
 			  /* loop to the beginning */
-			  kpcm[chip].start[i] =
-			    ((((unsigned int)kpcm[chip].wreg[i*0x06 + 0x04]<<16)&0x00010000) |
-			     (((unsigned int)kpcm[chip].wreg[i*0x06 + 0x03]<< 8)&0x0000ff00) |
-			     (((unsigned int)kpcm[chip].wreg[i*0x06 + 0x02]    )&0x000000ff) |
-			     kpcm[chip].bank[i]);
-			  addr = kpcm[chip].start[i];
-			  kpcm[chip].addr[i] = 0;
+			  info->start[i] =
+			    ((((unsigned int)info->wreg[i*0x06 + 0x04]<<16)&0x00010000) |
+			     (((unsigned int)info->wreg[i*0x06 + 0x03]<< 8)&0x0000ff00) |
+			     (((unsigned int)info->wreg[i*0x06 + 0x02]    )&0x000000ff) |
+			     info->bank[i]);
+			  addr = info->start[i];
+			  info->addr[i] = 0;
 			  old_addr = addr; /* skip loop */
 			}
 		      else
 			{
 			  /* stop sample */
-			  kpcm[chip].play[i] = 0;
+			  info->play[i] = 0;
 			}
 		      break;
 		    }
@@ -272,12 +272,12 @@ static void KDAC_A_update(int chip, INT16 **buffer, int buffer_len)
 		  old_addr++;
 		}
 
-	      if (kpcm[chip].play[i] == 0)
+	      if (info->play[i] == 0)
 		break;
 
-	      kpcm[chip].addr[i] += kpcm[chip].step[i];
+	      info->addr[i] += info->step[i];
 
-	      out = (kpcm[chip].pcmbuf[i][addr] & 0x7f) - 0x40;
+	      out = (info->pcmbuf[i][addr] & 0x7f) - 0x40;
 
 	      buffer[0][j] += out * volA;
 	      buffer[1][j] += out * volB;
@@ -290,62 +290,43 @@ static void KDAC_A_update(int chip, INT16 **buffer, int buffer_len)
 /************************************************/
 /*    Konami PCM start                          */
 /************************************************/
-int K007232_sh_start(const struct MachineSound *msound)
+static void *k007232_start(int sndindex, int clock, const void *config)
 {
-  int i,j;
+  int i;
+  struct kdacApcm *info;
+  
+  info = auto_malloc(sizeof(*info));
+  memset(info, 0, sizeof(*info));
 
-  intf = msound->sound_interface;
+  info->intf = config;
 
   /* Set up the chips */
-  for (j=0; j<intf->num_chips; j++)
-    {
-      char buf[2][40];
-      const char *name[2];
-      int vol[2];
 
-      kpcm[j].pcmbuf[0] = (unsigned char *)memory_region(intf->bank[j]);
-      kpcm[j].pcmbuf[1] = (unsigned char *)memory_region(intf->bank[j]);
-      kpcm[j].pcmlimit  = (unsigned int)memory_region_length(intf->bank[j]);
+      info->pcmbuf[0] = (unsigned char *)memory_region(info->intf->bank);
+      info->pcmbuf[1] = (unsigned char *)memory_region(info->intf->bank);
+      info->pcmlimit  = (unsigned int)memory_region_length(info->intf->bank);
 
-	kpcm[j].clock = intf->baseclock;
+	info->clock = clock;
 
       for( i = 0; i < KDAC_A_PCM_MAX; i++ )
 	{
-	  kpcm[j].start[i] = 0;
-	  kpcm[j].step[i] = 0;
-	  kpcm[j].play[i] = 0;
-	  kpcm[j].bank[i] = 0;
+	  info->start[i] = 0;
+	  info->step[i] = 0;
+	  info->play[i] = 0;
+	  info->bank[i] = 0;
 	}
-      kpcm[j].vol[0][0] = 255;	/* channel A output to output A */
-      kpcm[j].vol[0][1] = 0;
-      kpcm[j].vol[1][0] = 0;
-      kpcm[j].vol[1][1] = 255;	/* channel B output to output B */
+      info->vol[0][0] = 255;	/* channel A output to output A */
+      info->vol[0][1] = 0;
+      info->vol[1][0] = 0;
+      info->vol[1][1] = 255;	/* channel B output to output B */
 
-      for( i = 0; i < 0x10; i++ )  kpcm[j].wreg[i] = 0;
+      for( i = 0; i < 0x10; i++ )  info->wreg[i] = 0;
 
-      if( (intf->volume[j]&0xff00) == MIXER_PAN_CENTER ){
-	for (i = 0;i < 2;i++){
-	  name[i] = buf[i];
-	  sprintf(buf[i],"007232 #%d Ch %c",j,'A'+i);
-	}
-      }
-      else{
-	for (i = 0;i < 2;i++){
-	  name[i] = buf[i];
-	  sprintf( buf[i], "007232 #%d Ch A&B", j );
-	}
-      }
+      info->stream = stream_create(0,2,Machine->sample_rate,info,KDAC_A_update);
 
-      vol[0]=intf->volume[j] & 0xffff;
-      vol[1]=intf->volume[j] >> 16;
+  KDAC_A_make_fncode(info);
 
-      pcm_chan[j] = stream_init_multi(2,name,vol,Machine->sample_rate,
-				      j,KDAC_A_update);
-    }
-
-  KDAC_A_make_fncode();
-
-  return 0;
+  return info;
 }
 
 /************************************************/
@@ -353,17 +334,18 @@ int K007232_sh_start(const struct MachineSound *msound)
 /************************************************/
 static void K007232_WriteReg( int r, int v, int chip )
 {
+  struct kdacApcm *info = sndti_token(SOUND_K007232, chip);
   int  data;
 
   if (Machine->sample_rate == 0) return;
 
-  stream_update(pcm_chan[chip],0);
+  stream_update(info->stream,0);
 
-  kpcm[chip].wreg[r] = v;			/* stock write data */
+  info->wreg[r] = v;			/* stock write data */
 
   if (r == 0x0c){
     /* external port, usually volume control */
-    if (intf->portwritehandler[chip]) (*intf->portwritehandler[chip])(v);
+    if (info->intf->portwritehandler) (*info->intf->portwritehandler)(v);
     return;
   }
   else if( r == 0x0d ){
@@ -383,16 +365,16 @@ static void K007232_WriteReg( int r, int v, int chip )
     case 0x00:
     case 0x01:
 				/**** address step ****/
-      data = (((((unsigned int)kpcm[chip].wreg[reg_port*0x06 + 0x01])<<8)&0x0100) | (((unsigned int)kpcm[chip].wreg[reg_port*0x06 + 0x00])&0x00ff));
+      data = (((((unsigned int)info->wreg[reg_port*0x06 + 0x01])<<8)&0x0100) | (((unsigned int)info->wreg[reg_port*0x06 + 0x00])&0x00ff));
 #if 0
       if( !reg_port && r == 1 )
 	logerror("%04x\n" ,data );
 #endif
 
-      kpcm[chip].step[reg_port] =
+      info->step[reg_port] =
 	( (7850.0 / (float)Machine->sample_rate) ) *
-	fncode[data] *
-	( (float)kpcm[chip].clock / (float)4000000 ) *
+	info->fncode[data] *
+	( (float)info->clock / (float)4000000 ) *
 	(1<<BASE_SHIFT);
       break;
 
@@ -402,14 +384,14 @@ static void K007232_WriteReg( int r, int v, int chip )
       break;
     case 0x05:
 				/**** start address ****/
-      kpcm[chip].start[reg_port] =
-	((((unsigned int)kpcm[chip].wreg[reg_port*0x06 + 0x04]<<16)&0x00010000) |
-	 (((unsigned int)kpcm[chip].wreg[reg_port*0x06 + 0x03]<< 8)&0x0000ff00) |
-	 (((unsigned int)kpcm[chip].wreg[reg_port*0x06 + 0x02]    )&0x000000ff) |
-	 kpcm[chip].bank[reg_port]);
-      if (kpcm[chip].start[reg_port] < kpcm[chip].pcmlimit ){
-	kpcm[chip].play[reg_port] = 1;
-	kpcm[chip].addr[reg_port] = 0;
+      info->start[reg_port] =
+	((((unsigned int)info->wreg[reg_port*0x06 + 0x04]<<16)&0x00010000) |
+	 (((unsigned int)info->wreg[reg_port*0x06 + 0x03]<< 8)&0x0000ff00) |
+	 (((unsigned int)info->wreg[reg_port*0x06 + 0x02]    )&0x000000ff) |
+	 info->bank[reg_port]);
+      if (info->start[reg_port] < info->pcmlimit ){
+	info->play[reg_port] = 1;
+	info->addr[reg_port] = 0;
       }
       break;
     }
@@ -421,21 +403,22 @@ static void K007232_WriteReg( int r, int v, int chip )
 /************************************************/
 static int K007232_ReadReg( int r, int chip )
 {
+  struct kdacApcm *info = sndti_token(SOUND_K007232, chip);
   int  ch = 0;
 
   if( r == 0x0005 || r == 0x000b ){
     ch = r/0x0006;
     r  = ch * 0x0006;
 
-    kpcm[chip].start[ch] =
-      ((((unsigned int)kpcm[chip].wreg[r + 0x04]<<16)&0x00010000) |
-       (((unsigned int)kpcm[chip].wreg[r + 0x03]<< 8)&0x0000ff00) |
-       (((unsigned int)kpcm[chip].wreg[r + 0x02]    )&0x000000ff) |
-       kpcm[chip].bank[ch]);
+    info->start[ch] =
+      ((((unsigned int)info->wreg[r + 0x04]<<16)&0x00010000) |
+       (((unsigned int)info->wreg[r + 0x03]<< 8)&0x0000ff00) |
+       (((unsigned int)info->wreg[r + 0x02]    )&0x000000ff) |
+       info->bank[ch]);
 
-    if (kpcm[chip].start[ch] <  kpcm[chip].pcmlimit ){
-      kpcm[chip].play[ch] = 1;
-      kpcm[chip].addr[ch] = 0;
+    if (info->start[ch] <  info->pcmlimit ){
+      info->play[ch] = 1;
+      info->addr[ch] = 0;
     }
   }
   return 0;
@@ -475,14 +458,55 @@ READ8_HANDLER( K007232_read_port_2_r )
 
 void K007232_set_volume(int chip,int channel,int volumeA,int volumeB)
 {
-  kpcm[chip].vol[channel][0] = volumeA;
-  kpcm[chip].vol[channel][1] = volumeB;
+  struct kdacApcm *info = sndti_token(SOUND_K007232, chip);
+  info->vol[channel][0] = volumeA;
+  info->vol[channel][1] = volumeB;
 }
 
 void K007232_set_bank( int chip, int chABank, int chBBank )
 {
-  kpcm[chip].bank[0] = chABank<<17;
-  kpcm[chip].bank[1] = chBBank<<17;
+  struct kdacApcm *info = sndti_token(SOUND_K007232, chip);
+  info->bank[0] = chABank<<17;
+  info->bank[1] = chBBank<<17;
 }
 
 /*****************************************************************************/
+
+
+
+
+
+/**************************************************************************
+ * Generic get_info
+ **************************************************************************/
+
+static void k007232_set_info(void *token, UINT32 state, union sndinfo *info)
+{
+	switch (state)
+	{
+		/* no parameters to set */
+	}
+}
+
+
+void k007232_get_info(void *token, UINT32 state, union sndinfo *info)
+{
+	switch (state)
+	{
+		/* --- the following bits of info are returned as 64-bit signed integers --- */
+
+		/* --- the following bits of info are returned as pointers to data or functions --- */
+		case SNDINFO_PTR_SET_INFO:						info->set_info = k007232_set_info;		break;
+		case SNDINFO_PTR_START:							info->start = k007232_start;			break;
+		case SNDINFO_PTR_STOP:							/* nothing */							break;
+		case SNDINFO_PTR_RESET:							/* nothing */							break;
+
+		/* --- the following bits of info are returned as NULL-terminated strings --- */
+		case SNDINFO_STR_NAME:							info->s = "K007232";					break;
+		case SNDINFO_STR_CORE_FAMILY:					info->s = "Konami custom";				break;
+		case SNDINFO_STR_CORE_VERSION:					info->s = "1.0";						break;
+		case SNDINFO_STR_CORE_FILE:						info->s = __FILE__;						break;
+		case SNDINFO_STR_CORE_CREDITS:					info->s = "Copyright (c) 2004, The MAME Team"; break;
+	}
+}
+

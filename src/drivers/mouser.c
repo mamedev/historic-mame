@@ -14,6 +14,7 @@
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "sound/ay8910.h"
 
 unsigned char mouser_sound_byte;
 unsigned char mouser_nmi_enable;
@@ -196,18 +197,6 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 };
 
 
-static struct AY8910interface ay8910_interface =
-{
-	2,	/* 2 chips */
-	4000000/2,	/* 2 MHz ? */
-	{ 50, 50 },
-	{ 0, 0 },
-	{ 0, 0 },
-	{ 0 },
-	{ 0 },
-	{ 0 }
-};
-
 static MACHINE_DRIVER_START( mouser )
 
 	/* basic machine hardware */
@@ -236,7 +225,13 @@ static MACHINE_DRIVER_START( mouser )
 	MDRV_VIDEO_UPDATE(mouser)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(AY8910, ay8910_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	
+	MDRV_SOUND_ADD(AY8910, 4000000/2)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
+	
+	MDRV_SOUND_ADD(AY8910, 4000000/2)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
 MACHINE_DRIVER_END
 
 

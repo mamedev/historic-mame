@@ -512,8 +512,12 @@ static MACHINE_DRIVER_START( yboard )
 	MDRV_VIDEO_UPDATE(yboard)
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-//	MDRV_SOUND_ADD(YM2151, sys16_ym2151_interface)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+//	MDRV_SOUND_ADD(YM2151, 4000000)
+//	MDRV_SOUND_ROUTE(0, "left", 0.32)
+//	MDRV_SOUND_ROUTE(1, "right", 0.32)
+
 //	MDRV_SOUND_ADD(SEGAPCM, sys16_segapcm_interface_15k_yboard)
 MACHINE_DRIVER_END
 

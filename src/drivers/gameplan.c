@@ -68,6 +68,7 @@ TODO:
 #include "vidhrdw/generic.h"
 #include "machine/6532riot.h"
 #include "machine/6522via.h"
+#include "sound/ay8910.h"
 
 
 /***************************************************************************
@@ -933,13 +934,8 @@ static PALETTE_INIT( gameplan )
 
 static struct AY8910interface ay8910_interface =
 {
-	1,	/* 1 chips */
-	3579000 / 2,	/* 1.7895 MHz */
-	{ 50 },
-	{ input_port_6_r },
-	{ input_port_7_r },
-	{ 0 },
-	{ 0 }
+	input_port_6_r,
+	input_port_7_r,
 };
 
 
@@ -971,7 +967,12 @@ static MACHINE_DRIVER_START( gameplan )
 	MDRV_VIDEO_START(generic_bitmapped)
 	MDRV_VIDEO_UPDATE(generic_bitmapped)
 
-	MDRV_SOUND_ADD(AY8910, ay8910_interface)
+	/* sound hardware */
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(AY8910, 3579000 / 2)
+	MDRV_SOUND_CONFIG(ay8910_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
 MACHINE_DRIVER_END
 
 

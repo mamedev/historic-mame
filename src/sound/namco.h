@@ -3,15 +3,10 @@
 
 struct namco_interface
 {
-	int samplerate;	/* sample rate */
 	int voices;		/* number of voices */
-	int volume;		/* playback volume */
 	int region;		/* memory region; -1 to use RAM (pointed to by namco_wavedata) */
 	int stereo;		/* set to 1 to indicate stereo (e.g., System 1) */
 };
-
-int namco_sh_start(const struct MachineSound *msound);
-void namco_sh_stop(void);
 
 WRITE8_HANDLER( pacman_sound_enable_w );
 WRITE8_HANDLER( pacman_sound_w );

@@ -9,6 +9,7 @@ Notes:
 
 #include "driver.h"
 #include "cpu/z180/z180.h"
+#include "sound/2203intf.h"
 
 
 extern data8_t *mosaic_fgvideoram;
@@ -273,14 +274,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 static struct YM2203interface ym2203_interface =
 {
-	1,
-	3000000,	/* ??? */
-	{ YM2203_VOL(50,50) },
-	{ input_port_2_r },
-	{ 0 },
-	{ 0	},
-	{ 0 },
-	{ 0 }
+	input_port_2_r
 };
 
 
@@ -305,7 +299,11 @@ static MACHINE_DRIVER_START( mosaic )
 	MDRV_VIDEO_UPDATE(mosaic)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM2203, ym2203_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM2203, 3000000)
+	MDRV_SOUND_CONFIG(ym2203_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( gfire2 )

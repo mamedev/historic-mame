@@ -126,6 +126,8 @@ TODO:
 ***************************************************************************/
 
 #include "driver.h"
+#include "sound/ay8910.h"
+#include "sound/samples.h"
 #include "vidhrdw/generic.h"
 
 
@@ -140,8 +142,7 @@ PALETTE_INIT( cclimber );
 VIDEO_UPDATE( cclimber );
 
 extern struct AY8910interface cclimber_ay8910_interface;
-extern struct AY8910interface swimmer_ay8910_interface;
-extern struct CustomSound_interface cclimber_custom_interface;
+extern struct Samplesinterface cclimber_custom_interface;
 WRITE8_HANDLER( cclimber_sample_trigger_w );
 WRITE8_HANDLER( cclimber_sample_rate_w );
 WRITE8_HANDLER( cclimber_sample_volume_w );
@@ -614,8 +615,15 @@ static MACHINE_DRIVER_START( cclimber )
 	MDRV_VIDEO_UPDATE(cclimber)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(AY8910, cclimber_ay8910_interface)
-	MDRV_SOUND_ADD(CUSTOM, cclimber_custom_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(AY8910, 1536000)
+	MDRV_SOUND_CONFIG(cclimber_ay8910_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
+	
+	MDRV_SOUND_ADD(SAMPLES, 0)
+	MDRV_SOUND_CONFIG(cclimber_custom_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
 MACHINE_DRIVER_END
 
 
@@ -645,8 +653,15 @@ static MACHINE_DRIVER_START( cannonb )
 	MDRV_VIDEO_UPDATE(cclimber)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(AY8910, cclimber_ay8910_interface)
-	MDRV_SOUND_ADD(CUSTOM, cclimber_custom_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(AY8910, 1536000)
+	MDRV_SOUND_CONFIG(cclimber_ay8910_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
+	
+	MDRV_SOUND_ADD(SAMPLES, 0)
+	MDRV_SOUND_CONFIG(cclimber_custom_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
 MACHINE_DRIVER_END
 
 
@@ -1428,7 +1443,12 @@ static MACHINE_DRIVER_START( swimmer )
 	MDRV_VIDEO_UPDATE(swimmer)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(AY8910, swimmer_ay8910_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	MDRV_SOUND_ADD(AY8910, 4000000/2)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
+
+	MDRV_SOUND_ADD(AY8910, 4000000/2)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
 MACHINE_DRIVER_END
 
 

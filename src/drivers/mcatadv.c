@@ -137,6 +137,7 @@ Stephh's notes (based on the games M68000 code and some tests) :
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "sound/2610intf.h"
 
 VIDEO_UPDATE( mcatadv );
 VIDEO_START( mcatadv );
@@ -481,17 +482,9 @@ static void sound_irq( int irq )
 }
 struct YM2610interface mcatadv_ym2610_interface =
 {
-	1,
-	16000000/2,	/* ? */
-	{ MIXERG(8,MIXER_GAIN_4x,MIXER_PAN_CENTER) }, // volume of AY-3-8910 voices
-	{ 0 },	/* A_r */
-	{ 0 },	/* B_r */
-	{ 0 },	/* A_w */
-	{ 0 },	/* B_w */
-	{ sound_irq },	/* irq */
-	{ REGION_SOUND1 },	/* delta_t */
-	{ REGION_SOUND1 },	/* adpcm */
-	{ YM3012_VOL(100,MIXER_PAN_LEFT,100,MIXER_PAN_RIGHT) }
+	sound_irq,	/* irq */
+	REGION_SOUND1,	/* delta_t */
+	REGION_SOUND1	/* adpcm */
 };
 
 static MACHINE_INIT( mcatadv )
@@ -528,8 +521,14 @@ static MACHINE_DRIVER_START( mcatadv )
 	MDRV_VIDEO_UPDATE(mcatadv)
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(YM2610, mcatadv_ym2610_interface)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(YM2610, 16000000/2)
+	MDRV_SOUND_CONFIG(mcatadv_ym2610_interface)
+	MDRV_SOUND_ROUTE(0, "left",  0.32)
+	MDRV_SOUND_ROUTE(0, "right", 0.32)
+	MDRV_SOUND_ROUTE(1, "left",  1.0)
+	MDRV_SOUND_ROUTE(2, "right", 1.0)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( nost )

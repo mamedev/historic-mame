@@ -19,6 +19,9 @@
 #include "vidhrdw/generic.h"
 #include "cpu/m6502/m6502.h"
 #include "cpu/h6280/h6280.h"
+#include "sound/2203intf.h"
+#include "sound/3812intf.h"
+#include "sound/okim6295.h"
 
 VIDEO_UPDATE( actfancr );
 VIDEO_UPDATE( triothep );
@@ -375,31 +378,9 @@ static void sound_irq(int linestate)
 	cpunum_set_input_line(1,0,linestate); /* IRQ */
 }
 
-static struct YM2203interface ym2203_interface =
-{
-	1,
-	1500000, /* Should be accurate */
-	{ YM2203_VOL(50,90) },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ 0 }
-};
-
 static struct YM3812interface ym3812_interface =
 {
-	1,			/* 1 chip */
-	3000000,	/* 3.000000 MHz (Should be accurate) */
-	{ 90 },
-	{ sound_irq },
-};
-
-static struct OKIM6295interface okim6295_interface =
-{
-	1,              /* 1 chip */
-	{ 7759 },       /* frequency */
-	{ REGION_SOUND1 },
-	{ 85 }
+	sound_irq
 };
 
 /******************************************************************************/
@@ -429,9 +410,21 @@ static MACHINE_DRIVER_START( actfancr )
 	MDRV_VIDEO_UPDATE(actfancr)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM2203, ym2203_interface)
-	MDRV_SOUND_ADD(YM3812, ym3812_interface)
-	MDRV_SOUND_ADD(OKIM6295, okim6295_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM2203, 1500000)
+	MDRV_SOUND_ROUTE(0, "mono", 0.90)
+	MDRV_SOUND_ROUTE(1, "mono", 0.90)
+	MDRV_SOUND_ROUTE(2, "mono", 0.90)
+	MDRV_SOUND_ROUTE(3, "mono", 0.50)
+
+	MDRV_SOUND_ADD(YM3812, 3000000)
+	MDRV_SOUND_CONFIG(ym3812_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.90)
+
+	MDRV_SOUND_ADD(OKIM6295, 7759)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.85)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( triothep )
@@ -459,9 +452,21 @@ static MACHINE_DRIVER_START( triothep )
 	MDRV_VIDEO_UPDATE(triothep)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM2203, ym2203_interface)
-	MDRV_SOUND_ADD(YM3812, ym3812_interface)
-	MDRV_SOUND_ADD(OKIM6295, okim6295_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM2203, 1500000)
+	MDRV_SOUND_ROUTE(0, "mono", 0.90)
+	MDRV_SOUND_ROUTE(1, "mono", 0.90)
+	MDRV_SOUND_ROUTE(2, "mono", 0.90)
+	MDRV_SOUND_ROUTE(3, "mono", 0.50)
+
+	MDRV_SOUND_ADD(YM3812, 3000000)
+	MDRV_SOUND_CONFIG(ym3812_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.90)
+
+	MDRV_SOUND_ADD(OKIM6295, 7759)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.85)
 MACHINE_DRIVER_END
 
 /******************************************************************************/

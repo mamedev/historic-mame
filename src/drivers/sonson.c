@@ -50,6 +50,7 @@ TODO:
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "cpu/m6809/m6809.h"
+#include "sound/ay8910.h"
 
 extern WRITE8_HANDLER( sonson_videoram_w );
 extern WRITE8_HANDLER( sonson_colorram_w );
@@ -232,18 +233,6 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 
 
-static struct AY8910interface ay8910_interface =
-{
-	2,	/* 2 chips */
-	12000000/8,	/* 1.5 MHz ? */
-	{ 30, 30 },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ 0 }
-};
-
-
 
 static MACHINE_DRIVER_START( sonson )
 
@@ -273,7 +262,13 @@ static MACHINE_DRIVER_START( sonson )
 	MDRV_VIDEO_UPDATE(sonson)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(AY8910, ay8910_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	
+	MDRV_SOUND_ADD(AY8910, 12000000/8)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.30)
+	
+	MDRV_SOUND_ADD(AY8910, 12000000/8)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.30)
 MACHINE_DRIVER_END
 
 

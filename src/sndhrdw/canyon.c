@@ -5,6 +5,7 @@
 *************************************************************************/
 #include "driver.h"
 #include "canyon.h"
+#include "sound/discrete.h"
 
 
 /*************************************
@@ -208,6 +209,6 @@ DISCRETE_SOUND_START(canyon_discrete_interface)
 	DISCRETE_GAIN(CANYON_FINAL_MIX1, NODE_90, 77)
 	DISCRETE_GAIN(CANYON_FINAL_MIX2, NODE_91, 77)
 
-	DISCRETE_OUTPUT(CANYON_FINAL_MIX1, MIXER(100,MIXER_PAN_LEFT))
-	DISCRETE_OUTPUT(CANYON_FINAL_MIX2, MIXER(100,MIXER_PAN_RIGHT))
+	DISCRETE_OUTPUT(CANYON_FINAL_MIX1, 100)
+	DISCRETE_OUTPUT(CANYON_FINAL_MIX2, 100)
 DISCRETE_SOUND_END

@@ -1,5 +1,6 @@
 
 #include "driver.h"
+#include "sound/samples.h"
 
 /* Make sure that the sample name definitions in drivers/astrof.c matches these */
 
@@ -40,7 +41,6 @@ static const char *astrof_sample_names[] =
 struct Samplesinterface astrof_samples_interface =
 {
 	4,	/* 4 channels */
-	25,	/* volume */
 	astrof_sample_names
 };
 
@@ -56,7 +56,6 @@ static const char *tomahawk_sample_names[] =
 struct Samplesinterface tomahawk_samples_interface =
 {
 	1,	/* 1 channel for now */
-	25,	/* volume */
 	0,//tomahawk_sample_names
 };
 

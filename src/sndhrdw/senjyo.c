@@ -1,5 +1,6 @@
 #include "driver.h"
 #include "machine/z80fmly.h"
+#include "sound/samples.h"
 #include <math.h>
 
 
@@ -39,25 +40,20 @@ static z80ctc_interface ctc_intf =
 #define SINGLE_LENGTH 10000
 #define SINGLE_DIVIDER 8
 
-static signed char *_single;
+static INT16 *_single;
 static int single_rate = 1000;
 static int single_volume = 0;
-static int channel;
 
 
 WRITE8_HANDLER( senjyo_volume_w )
 {
 	single_volume = data & 0x0f;
-	mixer_set_volume(channel,single_volume * 100 / 15);
+	sample_set_volume(0,single_volume / 15.0);
 }
 
-int senjyo_sh_start(const struct MachineSound *msound)
+void senjyo_sh_start(void)
 {
     int i;
-
-
-	channel = mixer_allocate_channel(15);
-	mixer_set_name(channel,"Tone");
 
 	/* z80 ctc init */
 	ctc_intf.baseclock[0] = Machine->drv->cpu[1].cpu_clock;
@@ -66,25 +62,15 @@ int senjyo_sh_start(const struct MachineSound *msound)
 	/* z80 pio init */
 	z80pio_init (&pio_intf);
 
-	if ((_single = (signed char *)auto_malloc(SINGLE_LENGTH)) == 0)
-		return 1;
+	_single = (INT16 *)auto_malloc(SINGLE_LENGTH);
 
 	for (i = 0;i < SINGLE_LENGTH;i++)		/* freq = ctc2 zco / 8 */
-		_single[i] = ((i/SINGLE_DIVIDER)&0x01)*127;
+		_single[i] = ((i/SINGLE_DIVIDER)&0x01)*127*256;
 
 	/* CTC2 single tone generator */
-	mixer_set_volume(channel,0);
-	mixer_play_sample(channel,_single,SINGLE_LENGTH,single_rate,1);
-
-	return 0;
+	sample_set_volume(0,0);
+	sample_start_raw(0,_single,SINGLE_LENGTH,single_rate,1);
 }
-
-
-
-void senjyo_sh_stop(void)
-{
-}
-
 
 
 void senjyo_sh_update(void)
@@ -99,5 +85,5 @@ void senjyo_sh_update(void)
 	if( period != 0 ) single_rate = (int)(1.0 / period );
 	else single_rate = 0;
 
-	mixer_set_sample_frequency(channel,single_rate);
+	sample_set_freq(0,single_rate);
 }

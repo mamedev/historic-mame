@@ -8,6 +8,8 @@ driver by Nicola Salmoria
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "sndhrdw/m72.h"
+#include "sound/dac.h"
+#include "sound/2151intf.h"
 
 extern WRITE8_HANDLER( sichuan2_videoram_w );
 extern WRITE8_HANDLER( sichuan2_bankswitch_w );
@@ -223,17 +225,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 static struct YM2151interface ym2151_interface =
 {
-	1,			/* 1 chip */
-	3579545,	/* 3.579545 MHz */
-	{ YM3012_VOL(100,MIXER_PAN_LEFT,100,MIXER_PAN_RIGHT) },
-	{ m72_ym2151_irq_handler },
-	{ 0 }
-};
-
-static struct DACinterface dac_interface =
-{
-	1,	/* 1 channel */
-	{ 50 }
+	m72_ym2151_irq_handler
 };
 
 
@@ -268,9 +260,16 @@ static MACHINE_DRIVER_START( shisen )
 	MDRV_VIDEO_UPDATE(sichuan2)
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(YM2151, ym2151_interface)
-	MDRV_SOUND_ADD(DAC, dac_interface)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(YM2151, 3579545)
+	MDRV_SOUND_CONFIG(ym2151_interface)
+	MDRV_SOUND_ROUTE(0, "left", 1.0)
+	MDRV_SOUND_ROUTE(1, "right", 1.0)
+
+	MDRV_SOUND_ADD(DAC, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.50)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 0.50)
 MACHINE_DRIVER_END
 
 

@@ -27,6 +27,7 @@ Notes:
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "thedeep.h"
+#include "sound/2203intf.h"
 
 /***************************************************************************
 
@@ -329,14 +330,8 @@ static void irqhandler(int irq)
 
 static struct YM2203interface thedeep_ym2203_intf =
 {
-	1,
-	3000000,	/* ? */
-	{ YM2203_VOL(100,100) },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ irqhandler }
+	0,0,0,0,
+	irqhandler
 };
 
 static INTERRUPT_GEN( thedeep_interrupt )
@@ -397,7 +392,11 @@ static MACHINE_DRIVER_START( thedeep )
 	MDRV_VIDEO_UPDATE(thedeep)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM2203, thedeep_ym2203_intf)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM2203, 3000000)
+	MDRV_SOUND_CONFIG(thedeep_ym2203_intf)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 

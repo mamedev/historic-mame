@@ -41,6 +41,7 @@ Notes:
 */
 
 #include "driver.h"
+#include "sound/okim6295.h"
 
 static data16_t* k3_spriteram_1;
 static data16_t* k3_spriteram_2;
@@ -246,14 +247,6 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 };
 
 
-static struct OKIM6295interface okim6295_interface =
-{
-	2,									/* 2 chips */
-	{ 1000000/132, 1000000/132 },		/* frequency (Hz) */
-	{ REGION_SOUND2, REGION_SOUND1 },	/* memory region */
-	{ 100, 100 }
-};
-
 static MACHINE_DRIVER_START( k3 )
 	MDRV_CPU_ADD(M68000, 16000000)
 	MDRV_CPU_PROGRAM_MAP(k3_readmem,k3_writemem)
@@ -272,8 +265,17 @@ static MACHINE_DRIVER_START( k3 )
 	MDRV_VIDEO_START(k3)
 	MDRV_VIDEO_UPDATE(k3)
 
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(OKIM6295, okim6295_interface)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(OKIM6295, 1000000/132)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_2)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 1.0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 1.0)
+
+	MDRV_SOUND_ADD(OKIM6295, 1000000/132)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 1.0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 1.0)
 MACHINE_DRIVER_END
 
 

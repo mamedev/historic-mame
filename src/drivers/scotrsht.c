@@ -8,6 +8,7 @@
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "sound/2203intf.h"
 
 extern UINT8 *scotrsht_scroll;
 
@@ -227,17 +228,6 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 	{ -1 } /* end of array */
 };
 
-static struct YM2203interface ym2203_interface =
-{
-	1,			/* 1 chip */
-	18432000/6,		/* 3.072 MHz */
-	{ YM2203_VOL(40,40) },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ 0 }
-};
-
 static MACHINE_DRIVER_START( scotrsht )
 
 	/* basic machine hardware */
@@ -266,7 +256,10 @@ static MACHINE_DRIVER_START( scotrsht )
 	MDRV_VIDEO_UPDATE(scotrsht)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM2203, ym2203_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM2203, 18432000/6)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.40)
 MACHINE_DRIVER_END
 
 

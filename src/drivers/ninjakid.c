@@ -23,6 +23,7 @@ Change Log:
 #include "vidhrdw/generic.h"
 #include "cpu/z80/z80.h"
 #include "state.h"
+#include "sound/ay8910.h"
 
 extern WRITE8_HANDLER( ninjakid_bg_videoram_w );
 extern WRITE8_HANDLER( ninjakid_fg_videoram_w );
@@ -175,13 +176,6 @@ static struct GfxDecodeInfo ninjakid_gfxdecodeinfo[] =
  Machine Driver Structure(s)
 *******************************************************************************/
 
-static struct AY8910interface ay8910_interface =
-{
-	2,	/* 2 chips */
-	6000000/2,	/* 3 MHz */
-	{ 50, 50 }
-};
-
 static MACHINE_DRIVER_START( ninjakid )
 
 	/* basic machine hardware */
@@ -208,7 +202,13 @@ static MACHINE_DRIVER_START( ninjakid )
 	MDRV_VIDEO_UPDATE(ninjakid)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(AY8910, ay8910_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	
+	MDRV_SOUND_ADD(AY8910, 6000000/2)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
+	
+	MDRV_SOUND_ADD(AY8910, 6000000/2)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
 MACHINE_DRIVER_END
 
 /*******************************************************************************

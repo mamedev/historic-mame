@@ -50,6 +50,7 @@ KISEKAE -- info
 
 #include "driver.h"
 #include "cpu/z80/z80.h"
+#include "sound/st0016.h"
 
 WRITE8_HANDLER (st0016_sprite_bank_w);
 WRITE8_HANDLER (st0016_palette_bank_w);
@@ -86,7 +87,7 @@ static ADDRESS_MAP_START( st0016_mem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0xea00, 0xebff) AM_READ(st0016_palette_ram_r) AM_WRITE(st0016_palette_ram_w)
 	AM_RANGE(0xec00, 0xec1f) AM_READ(st0016_character_ram_r) AM_WRITE(st0016_character_ram_w)
 	//AM_RANGE(0xf800, 0xffff) AM_RAM
-	AM_RANGE(0xf000, 0xffff) AM_RAMBANK(2)// AM_READ(rbank_r) AM_WRITE(rbank_w) /* common /backup ram ?*/
+	AM_RANGE(0xf000, 0xffff) AM_RAMBANK(2)//AD(rbank_r) AM_WRITE(rbank_w) /* common /backup ram ?*/
 ADDRESS_MAP_END
 
 /*
@@ -121,30 +122,30 @@ static WRITE8_HANDLER(st0016_rom_bank_w)
 
 READ8_HANDLER(st0016_dma_r);
 
-static READ8_HANDLER(random_r)
+static READ8_HANDLER(macs_dips)
 {
 	//printf("[%x] %x\n",offset,activecpu_get_previouspc());
-	return 0;//xff;
+	return 0xff;//xff;
 }
 
 static WRITE8_HANDLER(rambank_w)
 {
-	printf("RAMBANK [%x] %x\n",data,activecpu_get_previouspc());
-	//cpu_setbank( 2, &extraram[(data&1)*0x1000] );
+	//printf("RAMBANK [%x] %x\n",data,activecpu_get_previouspc());
+	cpu_setbank( 2, &extraram[(data&1)*0x1000] );
 	//rambank=data;
 }
 
 static WRITE8_HANDLER(rambank2_w)
 {
-	printf("RAMBANK2 [%x] %x\n",data,activecpu_get_previouspc());
-	cpu_setbank( 2, &extraram[((data>>5)&1)*0x1000] );
+	//printf("RAMBANK2 [%x] %x\n",data,activecpu_get_previouspc());
+	//cpu_setbank( 2, &extraram[((data>>5)&1)*0x1000] );
 	//rambank=data;
 }
 
 
 //2d4 !!!
 
-static READ8_HANDLER(rand_r)
+static READ8_HANDLER(macs_rand_r)
 {
 	//printf("[%x] %x\n",offset,activecpu_get_previouspc());
 	return rand();
@@ -152,14 +153,14 @@ static READ8_HANDLER(rand_r)
 
 static ADDRESS_MAP_START( st0016_io, ADDRESS_SPACE_IO, 8 )
 	AM_RANGE(0x00, 0xbf) AM_READ(st0016_vregs_r) AM_WRITE(st0016_vregs_w) /* video/crt regs ? */
-	AM_RANGE(0xc0, 0xc0) AM_READ(random_r) AM_WRITE(rambank2_w) //AM_WRITENOP
-	AM_RANGE(0xc1, 0xc1)	AM_READ(random_r) AM_WRITENOP
+	AM_RANGE(0xc0, 0xc0) AM_READ(macs_dips) AM_WRITE(rambank2_w) //AM_WRITENOP
+	AM_RANGE(0xc1, 0xc1)	AM_READ(macs_dips) AM_WRITENOP
 	AM_RANGE(0xc2, 0xc2) AM_READ(input_port_0_r) AM_WRITENOP //switch a ds1
 	AM_RANGE(0xc3, 0xc3)	AM_READ(input_port_0_r) AM_WRITENOP //switch a ds 2
 	AM_RANGE(0xc4, 0xc4) AM_READ(input_port_0_r) AM_WRITENOP//a ds 3
 	AM_RANGE(0xc5, 0xc5) AM_READ(input_port_0_r) AM_WRITENOP//a ds 4
 	AM_RANGE(0xc6, 0xc6) AM_READ(input_port_1_r) AM_WRITENOP
-	AM_RANGE(0xc7, 0xc7) AM_READ(random_r) AM_WRITENOP
+	AM_RANGE(0xc7, 0xc7) AM_READ(macs_dips) AM_WRITENOP //dipswitches here !
 
 
 	//AM_RANGE(0xc0, 0xc7) AM_READ(random_r) AM_WRITENOP
@@ -171,7 +172,7 @@ static ADDRESS_MAP_START( st0016_io, ADDRESS_SPACE_IO, 8 )
 	AM_RANGE(0xe5, 0xe5) AM_WRITE(st0016_palette_bank_w)
 	AM_RANGE(0xe6, 0xe6) AM_WRITE(rambank_w) /* banking ? ram bank ? shared rambank ? */
 	AM_RANGE(0xe7, 0xe7) AM_WRITENOP /* watchdog */
-	AM_RANGE(0xf0, 0xf0) AM_READ(rand_r)//AM_READ(st0016_dma_r)
+	AM_RANGE(0xf0, 0xf0) AM_READ(st0016_dma_r)
 ADDRESS_MAP_END
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
@@ -269,7 +270,6 @@ INPUT_PORTS_END
 extern data8_t *st0016_charram;
 static struct ST0016interface st0016_interface =
 {
-	YM3012_VOL(100, MIXER_PAN_LEFT, 100, MIXER_PAN_RIGHT),
 	&st0016_charram
 };
 
@@ -294,8 +294,12 @@ static MACHINE_DRIVER_START(macs )
 	MDRV_VIDEO_START(st0016)
 	MDRV_VIDEO_UPDATE(st0016)
 
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(ST0016, st0016_interface)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+	
+	MDRV_SOUND_ADD(ST0016, 0)
+	MDRV_SOUND_CONFIG(st0016_interface)
+	MDRV_SOUND_ROUTE(0, "left", 1.0)
+	MDRV_SOUND_ROUTE(1, "right", 1.0)
 MACHINE_DRIVER_END
 
 
@@ -315,10 +319,11 @@ ROM_START( kisekaem )
 	MACS_BIOS
 
 	ROM_REGION( 0x400000, REGION_USER2, 0 ) // Slot A
-	ROM_LOAD16_BYTE( "am-mj.u6", 0x000001, 0x100000, CRC(23b3aa24) SHA1(bfabdb16f9b1b60230bb636a944ab46fdfda49d7) )
-	ROM_LOAD16_BYTE( "am-mj.u5", 0x000000, 0x100000, CRC(b4d53e29) SHA1(d7683fdd5531bf1aa0ef1e4e6f517b31e2d5829e) )
-	ROM_LOAD16_BYTE( "am-mj.u8", 0x200001, 0x100000, CRC(3cf85151) SHA1(e05400065c384730f04ef565db5ba27eb3973d15) )
-	ROM_LOAD16_BYTE( "am-mj.u7", 0x200000, 0x100000, CRC(4b645354) SHA1(1dbf9141c3724e5dff2cd8066117fb1b94671a80) )
+	ROM_LOAD16_BYTE( "am-mj.u8", 0x000000, 0x100000, CRC(3cf85151) SHA1(e05400065c384730f04ef565db5ba27eb3973d15) )
+	ROM_LOAD16_BYTE( "am-mj.u7", 0x000001, 0x100000, CRC(4b645354) SHA1(1dbf9141c3724e5dff2cd8066117fb1b94671a80) )
+	ROM_LOAD16_BYTE( "am-mj.u6", 0x200000, 0x100000, CRC(23b3aa24) SHA1(bfabdb16f9b1b60230bb636a944ab46fdfda49d7) )
+	ROM_LOAD16_BYTE( "am-mj.u5", 0x200001, 0x100000, CRC(b4d53e29) SHA1(d7683fdd5531bf1aa0ef1e4e6f517b31e2d5829e) )
+
 
 	ROM_REGION( 0x400000, REGION_USER3, 0 ) // Slot B
 
@@ -331,10 +336,11 @@ ROM_START( kisekaeh )
 	MACS_BIOS
 
 	ROM_REGION( 0x400000, REGION_USER2, 0 ) // Slot A
-	ROM_LOAD16_BYTE( "kh-u6.bin", 0x000001, 0x100000, CRC(8e700204) SHA1(876e5530d749828de077293cb109a71b67cef140) )
-	ROM_LOAD16_BYTE( "kh-u5.bin", 0x000000, 0x100000, CRC(709bf7c8) SHA1(0a93e0c4f9be22a3302a1c5d2a6ec4739b202ea8) )
-	ROM_LOAD16_BYTE( "kh-u8.bin", 0x200001, 0x100000, CRC(601b9e6a) SHA1(54508a6db3928f78897df64ce400791e4789d0f6) )
-	ROM_LOAD16_BYTE( "kh-u7.bin", 0x200000, 0x100000, CRC(8f6e4bb3) SHA1(361545189feeda0887f930727d25655309b84629) )
+	ROM_LOAD16_BYTE( "kh-u8.bin", 0x000000, 0x100000, CRC(601b9e6a) SHA1(54508a6db3928f78897df64ce400791e4789d0f6) )
+	ROM_LOAD16_BYTE( "kh-u7.bin", 0x000001, 0x100000, CRC(8f6e4bb3) SHA1(361545189feeda0887f930727d25655309b84629) )
+	ROM_LOAD16_BYTE( "kh-u6.bin", 0x200000, 0x100000, CRC(8e700204) SHA1(876e5530d749828de077293cb109a71b67cef140) )
+	ROM_LOAD16_BYTE( "kh-u5.bin", 0x200001, 0x100000, CRC(709bf7c8) SHA1(0a93e0c4f9be22a3302a1c5d2a6ec4739b202ea8) )
+
 
 	ROM_REGION( 0x400000, REGION_USER3, 0 ) // Slot B
 
@@ -347,20 +353,22 @@ ROM_START( cultname ) // uses printer
 	MACS_BIOS
 
 	ROM_REGION( 0x400000, REGION_USER2, 0 ) // Slot A
-	ROM_LOAD16_BYTE( "cult-d2.u6", 0x000001, 0x100000, CRC(c5521bc6) SHA1(7554b56b0201b7d81754defa2244fb7ff7452bf6) )
-	ROM_LOAD16_BYTE( "cult-d3.u5", 0x000000, 0x100000, CRC(4325b09b) SHA1(45699a0444a221f893724754c917d33041cabcb9) )
-	ROM_LOAD16_BYTE( "cult-d0.u8", 0x200001, 0x100000, CRC(394bc1a6) SHA1(98df5406862234815b46c7b0ac0b19e4b597d1b6) )
-	ROM_LOAD16_BYTE( "cult-d1.u7", 0x200000, 0x100000, CRC(f628133b) SHA1(f06e20212074e5d95cc7d419ac8ce98fb9be3b62) )
+	ROM_LOAD16_BYTE( "cult-d0.u8", 0x000000, 0x100000, CRC(394bc1a6) SHA1(98df5406862234815b46c7b0ac0b19e4b597d1b6) )
+	ROM_LOAD16_BYTE( "cult-d1.u7", 0x000001, 0x100000, CRC(f628133b) SHA1(f06e20212074e5d95cc7d419ac8ce98fb9be3b62) )
+	ROM_LOAD16_BYTE( "cult-d2.u6", 0x200000, 0x100000, CRC(c5521bc6) SHA1(7554b56b0201b7d81754defa2244fb7ff7452bf6) )
+	ROM_LOAD16_BYTE( "cult-d3.u5", 0x200001, 0x100000, CRC(4325b09b) SHA1(45699a0444a221f893724754c917d33041cabcb9) )
+
 
 	ROM_REGION( 0x400000, REGION_USER3, 0 ) // Slot B
-	ROM_LOAD16_BYTE( "cult-g2.u6", 0x000001, 0x100000, CRC(30ed056d) SHA1(71735339bb501b94402ef403b5a2a60effa39c36) )
-	ROM_LOAD16_BYTE( "cult-g3.u5", 0x000000, 0x100000, CRC(fe58b418) SHA1(512f5c544cfafaa98bd2b3791ff1cf67adecec8d) )
-	ROM_LOAD16_BYTE( "cult-g0.u8", 0x200001, 0x100000, CRC(f5ab977b) SHA1(e7ee758cc2864500b339e236b944f98df9a1c10e) )
-	ROM_LOAD16_BYTE( "cult-g1.u7", 0x200000, 0x100000, CRC(32ae15a4) SHA1(061992efec1ed5527f200bf4c111344b156e759d) )
+	ROM_LOAD16_BYTE( "cult-g0.u8", 0x000000, 0x100000, CRC(f5ab977b) SHA1(e7ee758cc2864500b339e236b944f98df9a1c10e) )
+	ROM_LOAD16_BYTE( "cult-g1.u7", 0x000001, 0x100000, CRC(32ae15a4) SHA1(061992efec1ed5527f200bf4c111344b156e759d) )
+	ROM_LOAD16_BYTE( "cult-g2.u6", 0x200000, 0x100000, CRC(30ed056d) SHA1(71735339bb501b94402ef403b5a2a60effa39c36) )
+	ROM_LOAD16_BYTE( "cult-g3.u5", 0x200001, 0x100000, CRC(fe58b418) SHA1(512f5c544cfafaa98bd2b3791ff1cf67adecec8d) )
+
 
 	ROM_REGION( 0x1000000, REGION_CPU1, 0 )
-	ROM_COPY( REGION_USER2,   0x00000, 0x000000, 0x08000 )
-	ROM_COPY( REGION_USER2,   0x00000, 0x010000, 0x400000 )
+	ROM_COPY( REGION_USER3,   0x00000, 0x000000, 0x08000 )
+	ROM_COPY( REGION_USER3,   0x00000, 0x010000, 0x400000 )
 ROM_END
 
 /* these are listed as MACS2 sub-boards, is it the same? */
@@ -399,19 +407,9 @@ ROM_END
 
 static DRIVER_INIT(macs)
 {
-	st0016_game=10;
+	st0016_game=10|0x80;
 }
 
-static DRIVER_INIT(yujan)
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
-	RAM[0xc26]=0;
-	RAM[0xc27]=0;
-	RAM[0xc2c]=0;
-	RAM[0xc2d]=0;
-
-	st0016_game=10;
-}
 
 
 
@@ -420,4 +418,4 @@ GAMEX( 1995, kisekaem, macsbios, macs, macs, macs, ROT0, "I'Max", "Kisekae Mahjo
 GAMEX( 1995, kisekaeh, macsbios, macs, macs, macs, ROT0, "I'Max", "Kisekae Hanafuda",  GAME_NOT_WORKING |GAME_NO_SOUND)
 GAMEX( 1996, cultname, macsbios, macs, macs, macs, ROT0, "I'Max", "Seimei-Kantei-Meimei-Ki Cult Name",  GAME_NOT_WORKING |GAME_NO_SOUND)
 GAMEX( 1999, yuka,     macsbios, macs, macs, macs, ROT0, "Yubis / T.System", "Yu-Ka",  GAME_NOT_WORKING|GAME_NO_SOUND )
-GAMEX( 1999, yujan,    macsbios, macs, macs, yujan, ROT0, "Yubis / T.System", "Yu-Jan",  GAME_NOT_WORKING |GAME_NO_SOUND ) // shows *something* with hack
+GAMEX( 1999, yujan,    macsbios, macs, macs, macs, ROT0, "Yubis / T.System", "Yu-Jan",  GAME_NOT_WORKING |GAME_NO_SOUND ) // shows *something* with hack

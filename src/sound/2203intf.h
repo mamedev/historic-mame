@@ -3,12 +3,15 @@
 
 #include "ay8910.h"
 
-#define MAX_2203 4
+struct YM2203interface
+{
+	read8_handler portAread;
+	read8_handler portBread;
+	write8_handler portAwrite;
+	write8_handler portBwrite;
+	void (*handler)(int irq);
+};
 
-#define YM2203interface AY8910interface
-
-/* volume level for YM2203 */
-#define YM2203_VOL(FM_VOLUME,SSG_VOLUME) (((FM_VOLUME)<<16)+(SSG_VOLUME))
 
 READ8_HANDLER( YM2203_status_port_0_r );
 READ8_HANDLER( YM2203_status_port_1_r );
@@ -36,11 +39,5 @@ WRITE8_HANDLER( YM2203_write_port_4_w );
 
 WRITE8_HANDLER( YM2203_word_0_w );
 WRITE8_HANDLER( YM2203_word_1_w );
-
-int YM2203_sh_start(const struct MachineSound *msound);
-void YM2203_sh_stop(void);
-void YM2203_sh_reset(void);
-
-void YM2203UpdateRequest(int chip);
 
 #endif

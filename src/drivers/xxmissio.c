@@ -10,6 +10,7 @@ XX Mission (c) 1986 UPL
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "sound/2203intf.h"
 
 VIDEO_UPDATE( xxmissio );
 
@@ -321,15 +322,18 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 /****************************************************************************/
 
-static struct YM2203interface ym2203_interface =
+static struct YM2203interface ym2203_interface_1 =
 {
-	2,          /* 2 chips */
-	12000000/8,    /* 1.5 MHz */
-	{ YM2203_VOL(40,15), YM2203_VOL(40,15) },
-	{ input_port_2_r,0 },
-	{ input_port_3_r,0 },
-	{ 0,xxmissio_scroll_x_w },
-	{ 0,xxmissio_scroll_y_w }
+	input_port_2_r,
+	input_port_3_r
+};
+
+static struct YM2203interface ym2203_interface_2 =
+{
+	0,
+	0,
+	xxmissio_scroll_x_w,
+	xxmissio_scroll_y_w
 };
 
 static MACHINE_DRIVER_START( xxmissio )
@@ -358,7 +362,21 @@ static MACHINE_DRIVER_START( xxmissio )
 	MDRV_VIDEO_UPDATE(xxmissio)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM2203, ym2203_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM2203, 12000000/8)
+	MDRV_SOUND_CONFIG(ym2203_interface_1)
+	MDRV_SOUND_ROUTE(0, "mono", 0.15)
+	MDRV_SOUND_ROUTE(1, "mono", 0.15)
+	MDRV_SOUND_ROUTE(2, "mono", 0.15)
+	MDRV_SOUND_ROUTE(3, "mono", 0.40)
+
+	MDRV_SOUND_ADD(YM2203, 12000000/8)
+	MDRV_SOUND_CONFIG(ym2203_interface_2)
+	MDRV_SOUND_ROUTE(0, "mono", 0.15)
+	MDRV_SOUND_ROUTE(1, "mono", 0.15)
+	MDRV_SOUND_ROUTE(2, "mono", 0.15)
+	MDRV_SOUND_ROUTE(3, "mono", 0.40)
 MACHINE_DRIVER_END
 
 /****************************************************************************/

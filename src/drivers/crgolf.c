@@ -27,6 +27,7 @@ WHO AM I?      (In place of "ARIES ELECA")
 
 #include "driver.h"
 #include "crgolf.h"
+#include "sound/ay8910.h"
 
 
 /* constants */
@@ -291,25 +292,6 @@ INPUT_PORTS_END
 
 /*************************************
  *
- *	Sound definitions
- *
- *************************************/
-
-static struct AY8910interface ay8910_interface =
-{
-	1,
-	MASTER_CLOCK/3/2/2,
-	{ 100 },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ 0 }
-};
-
-
-
-/*************************************
- *
  *	Machine driver
  *
  *************************************/
@@ -342,7 +324,9 @@ static MACHINE_DRIVER_START( crgolf )
 	MDRV_VIDEO_UPDATE(crgolf)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(AY8910, ay8910_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	MDRV_SOUND_ADD(AY8910, MASTER_CLOCK/3/2/2)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 

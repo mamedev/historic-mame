@@ -39,6 +39,8 @@ fedcba98
 #include "vidhrdw/crtc6845.h"
 #include "cpu/m6800/m6800.h"
 #include "cpu/m6809/m6809.h"
+#include "sound/ay8910.h"
+#include "sound/dac.h"
 
 PALETTE_INIT( nyny );
 VIDEO_UPDATE( nyny );
@@ -319,21 +321,18 @@ INPUT_PORTS_END
 
 
 
-static struct AY8910interface ay8910_interface =
+static struct AY8910interface ay8910_interface_1 =
 {
-	3,	/* 3 chips */
-	1000000,	/* 1 MHz */
-	{ 25, 25, 3 },
-	{ 0, input_port_2_r, 0 },
-	{ 0, input_port_3_r, 0 },
-	{ ay8910_porta_w, 0 },
-	{ ay8910_portb_w, 0 }
+	0,
+	0,
+	ay8910_porta_w,
+	ay8910_portb_w
 };
 
-static struct DACinterface dac_interface =
+static struct AY8910interface ay8910_interface_2 =
 {
-	2,
-	{ 25, 25 }
+	input_port_2_r,
+	input_port_3_r
 };
 
 
@@ -368,8 +367,24 @@ static MACHINE_DRIVER_START( nyny )
 	MDRV_VIDEO_UPDATE(nyny)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(AY8910, ay8910_interface)
-	MDRV_SOUND_ADD(DAC, dac_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	
+	MDRV_SOUND_ADD(AY8910, 1000000)
+	MDRV_SOUND_CONFIG(ay8910_interface_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
+	
+	MDRV_SOUND_ADD(AY8910, 1000000)
+	MDRV_SOUND_CONFIG(ay8910_interface_2)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
+	
+	MDRV_SOUND_ADD(AY8910, 1000000)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.03)
+
+	MDRV_SOUND_ADD(DAC, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
+
+	MDRV_SOUND_ADD(DAC, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
 MACHINE_DRIVER_END
 
 /***************************************************************************

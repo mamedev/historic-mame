@@ -15,6 +15,7 @@ TODO:
 #include "cpu/hd6309/hd6309.h"
 #include "vidhrdw/generic.h"
 #include "vidhrdw/konamiic.h"
+#include "sound/k007232.h"
 
 /* from vidhrdw/fastlane.c */
 extern unsigned char *fastlane_k007121_regs,*fastlane_videoram1,*fastlane_videoram2;
@@ -264,14 +265,16 @@ static void volume_callback1(int v)
 	K007232_set_volume(1,1,0,(v & 0x0f) * 0x11);
 }
 
-static struct K007232_interface k007232_interface =
+static struct K007232_interface k007232_interface_1 =
 {
-	2,			/* number of chips */
-	3579545,	/* clock */
-	{ REGION_SOUND1, REGION_SOUND2 },	/* memory regions */
-	{ K007232_VOL(50,MIXER_PAN_CENTER,50,MIXER_PAN_CENTER),
-			K007232_VOL(50,MIXER_PAN_LEFT,50,MIXER_PAN_RIGHT) },	/* volume */
-	{ volume_callback0,  volume_callback1 } /* external port callback */
+	REGION_SOUND1,
+	volume_callback0
+};
+
+static struct K007232_interface k007232_interface_2 =
+{
+	REGION_SOUND2,
+	volume_callback1
 };
 
 static MACHINE_DRIVER_START( fastlane )
@@ -297,7 +300,17 @@ static MACHINE_DRIVER_START( fastlane )
 	MDRV_VIDEO_UPDATE(fastlane)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(K007232, k007232_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	
+	MDRV_SOUND_ADD(K007232, 3579545)
+	MDRV_SOUND_CONFIG(k007232_interface_1)
+	MDRV_SOUND_ROUTE(0, "mono", 0.50)
+	MDRV_SOUND_ROUTE(1, "mono", 0.50)
+	
+	MDRV_SOUND_ADD(K007232, 3579545)
+	MDRV_SOUND_CONFIG(k007232_interface_2)
+	MDRV_SOUND_ROUTE(0, "mono", 0.50)
+	MDRV_SOUND_ROUTE(1, "mono", 0.50)
 MACHINE_DRIVER_END
 
 

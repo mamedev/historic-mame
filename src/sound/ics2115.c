@@ -8,6 +8,7 @@
 #include <math.h>
 #include "driver.h"
 #include "cpuintrf.h"
+#include "ics2115.h"
 #include "cpu/z80/z80.h"
 
 // a:401ae90.000 l:1c23c.0 e:1e1d8.0  09  tone
@@ -37,8 +38,9 @@
 
 enum { V_ON = 1, V_DONE = 2 };
 
-static struct {
-	struct ics2115_interface *intf;
+struct ics2115{
+	const struct ics2115_interface *intf;
+	int index;
 	UINT8 *rom;
 	INT16 *ulaw;
 
@@ -58,8 +60,8 @@ static struct {
 	UINT8 reg, osc;
 	UINT8 irq_en, irq_pend;
 	int irq_on;
-	int stream;
-} ics2115;
+	sound_stream * stream;
+};
 
 static int caller_get_pc(void)
 {
@@ -75,49 +77,50 @@ static int caller_get_pc(void)
 	return pc;
 }
 
-static void recalc_irq(void)
+static void recalc_irq(struct ics2115 *chip)
 {
 	int i;
     int irq = 0;
-	if(ics2115.irq_en & ics2115.irq_pend)
+	if(chip->irq_en & chip->irq_pend)
 		irq = 1;
 	for(i=0; !irq && i<32; i++)
-		if(ics2115.voice[i].state & V_DONE)
+		if(chip->voice[i].state & V_DONE)
 			irq = 1;
-	if(irq != ics2115.irq_on) {
-		ics2115.irq_on = irq;
-		if(ics2115.intf->irq_cb)
-			ics2115.intf->irq_cb(irq ? ASSERT_LINE : CLEAR_LINE);
+	if(irq != chip->irq_on) {
+		chip->irq_on = irq;
+		if(chip->intf->irq_cb)
+			chip->intf->irq_cb(irq ? ASSERT_LINE : CLEAR_LINE);
 	}
 }
 
 
-static void update(int param, INT16 **buffer, int length)
+static void update(void *param, stream_sample_t **inputs, stream_sample_t **buffer, int length)
 {
+	struct ics2115 *chip = param;
 	int osc, i;
 	int rec_irq = 0;
 
-	memset(buffer[0], 0, length*2);
-	memset(buffer[1], 0, length*2);
+	memset(buffer[0], 0, length*sizeof(*buffer[0]));
+	memset(buffer[1], 0, length*sizeof(*buffer[0]));
 
 	for(osc = 0; osc < 32; osc++)
-		if(ics2115.voice[osc].state & V_ON) {
-			UINT32 adr = (ics2115.voice[osc].addrh << 16) | ics2115.voice[osc].addrl;
-			UINT32 end = (ics2115.voice[osc].endh << 16) | (ics2115.voice[osc].endl << 8);
-			UINT32 loop = (ics2115.voice[osc].strth << 16) | (ics2115.voice[osc].strtl << 8);
-			UINT32 badr = (ics2115.voice[osc].saddr << 20) & 0xffffff;
-			UINT32 delta = (ics2115.voice[osc].fc << 2)*(33075.0/44100.0);
-			UINT8 conf = ics2115.voice[osc].conf;
-			INT32 vol = ics2115.voice[osc].volacc;
+		if(chip->voice[osc].state & V_ON) {
+			UINT32 adr = (chip->voice[osc].addrh << 16) | chip->voice[osc].addrl;
+			UINT32 end = (chip->voice[osc].endh << 16) | (chip->voice[osc].endl << 8);
+			UINT32 loop = (chip->voice[osc].strth << 16) | (chip->voice[osc].strtl << 8);
+			UINT32 badr = (chip->voice[osc].saddr << 20) & 0xffffff;
+			UINT32 delta = (chip->voice[osc].fc << 2)*(33075.0/44100.0);
+			UINT8 conf = chip->voice[osc].conf;
+			INT32 vol = chip->voice[osc].volacc;
 			vol = (((vol & 0xff0)|0x1000)<<(vol>>12))>>12;
 
 			logerror("ICS2115: KEYRUN %02d adr=%08x end=%08x delta=%08x\n",
 					 osc, adr, end, delta);
 
 			for(i=0; i<length; i++) {
-				INT32 v = ics2115.rom[badr|(adr >> 12)];
+				INT32 v = chip->rom[badr|(adr >> 12)];
 				if(conf & 1)
-					v = ics2115.ulaw[v];
+					v = chip->ulaw[v];
 				else
 					v = ((INT8)v) << 6;
 
@@ -128,46 +131,54 @@ static void update(int param, INT16 **buffer, int length)
 				if(adr >= end) {
 					logerror("ICS2115: KEYDONE %2d\n", osc);
 					adr -= (end-loop);
-					ics2115.voice[osc].state &= ~V_ON;
-					ics2115.voice[osc].state |= V_DONE;
+					chip->voice[osc].state &= ~V_ON;
+					chip->voice[osc].state |= V_DONE;
 					rec_irq = 1;
 					break;
 				}
 			}
-			ics2115.voice[osc].addrh = adr >> 16;
-			ics2115.voice[osc].addrl = adr;
+			chip->voice[osc].addrh = adr >> 16;
+			chip->voice[osc].addrl = adr;
 		}
 	if(rec_irq)
-		recalc_irq();
+		recalc_irq(chip);
 }
 
-static void keyon(int osc)
+static void keyon(struct ics2115 *chip, int osc)
 {
 	logerror("ICS2115: KEYON %2d conf:%02x vctl:%02x a:%07x.%03x l:%05x.%x e:%05x.%x v:%03x f:%d\n",
 			 osc,
-			 ics2115.voice[ics2115.osc].conf,
-			 ics2115.voice[ics2115.osc].vctl,
-			 (ics2115.voice[osc].saddr << 20)|(ics2115.voice[osc].addrh << 4)|(ics2115.voice[osc].addrl >> 12),
-			 (ics2115.voice[osc].addrl >> 3) & 0x1ff,
-			 (ics2115.voice[osc].strth << 4)|(ics2115.voice[osc].strtl >> 4),
-			 ics2115.voice[osc].strtl & 0xf,
-			 (ics2115.voice[osc].endh << 4)|(ics2115.voice[osc].endl >> 4),
-			 ics2115.voice[osc].endl & 0xf,
-			 ics2115.voice[osc].volacc>>4,
-			 (ics2115.voice[ics2115.osc].fc*33075+512)/1024);
-	ics2115.voice[osc].state |= V_ON;
+			 chip->voice[chip->osc].conf,
+			 chip->voice[chip->osc].vctl,
+			 (chip->voice[osc].saddr << 20)|(chip->voice[osc].addrh << 4)|(chip->voice[osc].addrl >> 12),
+			 (chip->voice[osc].addrl >> 3) & 0x1ff,
+			 (chip->voice[osc].strth << 4)|(chip->voice[osc].strtl >> 4),
+			 chip->voice[osc].strtl & 0xf,
+			 (chip->voice[osc].endh << 4)|(chip->voice[osc].endl >> 4),
+			 chip->voice[osc].endl & 0xf,
+			 chip->voice[osc].volacc>>4,
+			 (chip->voice[chip->osc].fc*33075+512)/1024);
+	chip->voice[osc].state |= V_ON;
 }
 
 
-static void timer_cb(int timer)
+static void timer_cb_0(void *param)
 {
-	ics2115.irq_pend |= 1<<timer;
-	recalc_irq();
+	struct ics2115 *chip = param;
+	chip->irq_pend |= 1<<0;
+	recalc_irq(chip);
 }
 
-static void recalc_timer(int timer)
+static void timer_cb_1(void *param)
 {
-	double period = ics2115.timer[timer].scale*ics2115.timer[timer].preset / 33868800.0;
+	struct ics2115 *chip = param;
+	chip->irq_pend |= 1<<1;
+	recalc_irq(chip);
+}
+
+static void recalc_timer(struct ics2115 *chip, int timer)
+{
+	double period = chip->timer[timer].scale*chip->timer[timer].preset / 33868800.0;
 	if(period)
 		period = 1/62.8206;
 	if(period)
@@ -175,193 +186,193 @@ static void recalc_timer(int timer)
 	else
 		logerror("ICS2115: timer %d off\n", timer);
 
-	if(ics2115.timer[timer].period != period) {
-		ics2115.timer[timer].period = period;
+	if(chip->timer[timer].period != period) {
+		chip->timer[timer].period = period;
 		if(period)
-			timer_adjust(ics2115.timer[timer].timer, TIME_IN_SEC(period), timer, TIME_IN_SEC(period));
+			timer_adjust_ptr(chip->timer[timer].timer, TIME_IN_SEC(period), chip, TIME_IN_SEC(period));
 		else
-			timer_adjust(ics2115.timer[timer].timer, TIME_NEVER, timer, 0);
+			timer_adjust_ptr(chip->timer[timer].timer, TIME_NEVER, chip, 0);
 	}
 }
 
 
-static void ics2115_reg_w(UINT8 reg, UINT8 data, int msb)
+static void ics2115_reg_w(struct ics2115 *chip, UINT8 reg, UINT8 data, int msb)
 {
 	switch(reg) {
 	case 0x00: // [osc] Oscillator Configuration
 		if(msb) {
-			ics2115.voice[ics2115.osc].conf = data;
-			logerror("ICS2115: %2d: conf = %02x (%04x)\n", ics2115.osc,
-					 ics2115.voice[ics2115.osc].conf, caller_get_pc());
+			chip->voice[chip->osc].conf = data;
+			logerror("ICS2115: %2d: conf = %02x (%04x)\n", chip->osc,
+					 chip->voice[chip->osc].conf, caller_get_pc());
 		}
 		break;
 
 	case 0x01: // [osc] Wavesample frequency
 		// freq = fc*33075/1024 in 32 voices mode, fc*44100/1024 in 24 voices mode
 		if(msb)
-			ics2115.voice[ics2115.osc].fc = (ics2115.voice[ics2115.osc].fc & 0xff)|(data << 8);
+			chip->voice[chip->osc].fc = (chip->voice[chip->osc].fc & 0xff)|(data << 8);
 		else
-			ics2115.voice[ics2115.osc].fc = (ics2115.voice[ics2115.osc].fc & 0xff00)|data;
-		logerror("ICS2115: %2d: fc = %04x (%dHz) (%04x)\n", ics2115.osc,
-				 ics2115.voice[ics2115.osc].fc, ics2115.voice[ics2115.osc].fc*33075/1024, caller_get_pc());
+			chip->voice[chip->osc].fc = (chip->voice[chip->osc].fc & 0xff00)|data;
+		logerror("ICS2115: %2d: fc = %04x (%dHz) (%04x)\n", chip->osc,
+				 chip->voice[chip->osc].fc, chip->voice[chip->osc].fc*33075/1024, caller_get_pc());
 		break;
 
 	case 0x02: // [osc] Wavesample loop start address 19-4
 		if(msb)
-			ics2115.voice[ics2115.osc].strth = (ics2115.voice[ics2115.osc].strth & 0xff)|(data << 8);
+			chip->voice[chip->osc].strth = (chip->voice[chip->osc].strth & 0xff)|(data << 8);
 		else
-			ics2115.voice[ics2115.osc].strth = (ics2115.voice[ics2115.osc].strth & 0xff00)|data;
-		logerror("ICS2115: %2d: strth = %04x (%04x)\n", ics2115.osc,
-				 ics2115.voice[ics2115.osc].strth, caller_get_pc());
+			chip->voice[chip->osc].strth = (chip->voice[chip->osc].strth & 0xff00)|data;
+		logerror("ICS2115: %2d: strth = %04x (%04x)\n", chip->osc,
+				 chip->voice[chip->osc].strth, caller_get_pc());
 		break;
 
 	case 0x03: // [osc] Wavesample loop start address 3-0.3-0
 		if(msb) {
-			ics2115.voice[ics2115.osc].strtl = data;
-			logerror("ICS2115: %2d: strtl = %02x (%04x)\n", ics2115.osc,
-					 ics2115.voice[ics2115.osc].strtl, caller_get_pc());
+			chip->voice[chip->osc].strtl = data;
+			logerror("ICS2115: %2d: strtl = %02x (%04x)\n", chip->osc,
+					 chip->voice[chip->osc].strtl, caller_get_pc());
 		}
 		break;
 
 	case 0x04: // [osc] Wavesample loop end address 19-4
 		if(msb)
-			ics2115.voice[ics2115.osc].endh = (ics2115.voice[ics2115.osc].endh & 0xff)|(data << 8);
+			chip->voice[chip->osc].endh = (chip->voice[chip->osc].endh & 0xff)|(data << 8);
 		else
-			ics2115.voice[ics2115.osc].endh = (ics2115.voice[ics2115.osc].endh & 0xff00)|data;
-		logerror("ICS2115: %2d: endh = %04x (%04x)\n", ics2115.osc,
-				 ics2115.voice[ics2115.osc].endh, caller_get_pc());
+			chip->voice[chip->osc].endh = (chip->voice[chip->osc].endh & 0xff00)|data;
+		logerror("ICS2115: %2d: endh = %04x (%04x)\n", chip->osc,
+				 chip->voice[chip->osc].endh, caller_get_pc());
 		break;
 
 	case 0x05: // [osc] Wavesample loop end address 3-0.3-0
 		if(msb) {
-			ics2115.voice[ics2115.osc].endl = data;
-			logerror("ICS2115: %2d: endl = %02x (%04x)\n", ics2115.osc,
-					 ics2115.voice[ics2115.osc].endl, caller_get_pc());
+			chip->voice[chip->osc].endl = data;
+			logerror("ICS2115: %2d: endl = %02x (%04x)\n", chip->osc,
+					 chip->voice[chip->osc].endl, caller_get_pc());
 		}
 		break;
 
 	case 0x07: // [osc] Volume Start
 		if(msb) {
-			ics2115.voice[ics2115.osc].vstart = data;
-			logerror("ICS2115: %2d: vstart = %02x (%04x)\n", ics2115.osc,
-					 ics2115.voice[ics2115.osc].vstart, caller_get_pc());
+			chip->voice[chip->osc].vstart = data;
+			logerror("ICS2115: %2d: vstart = %02x (%04x)\n", chip->osc,
+					 chip->voice[chip->osc].vstart, caller_get_pc());
 		}
 		break;
 
 	case 0x08: // [osc] Volume End
 		if(msb) {
-			ics2115.voice[ics2115.osc].vend = data;
-			logerror("ICS2115: %2d: vend = %02x (%04x)\n", ics2115.osc,
-					 ics2115.voice[ics2115.osc].vend, caller_get_pc());
+			chip->voice[chip->osc].vend = data;
+			logerror("ICS2115: %2d: vend = %02x (%04x)\n", chip->osc,
+					 chip->voice[chip->osc].vend, caller_get_pc());
 		}
 		break;
 
 	case 0x09: // [osc] Volume accumulator
 		if(msb)
-			ics2115.voice[ics2115.osc].volacc = (ics2115.voice[ics2115.osc].volacc & 0xff)|(data << 8);
+			chip->voice[chip->osc].volacc = (chip->voice[chip->osc].volacc & 0xff)|(data << 8);
 		else
-			ics2115.voice[ics2115.osc].volacc = (ics2115.voice[ics2115.osc].volacc & 0xff00)|data;
-		logerror("ICS2115: %2d: volacc = %04x (%04x)\n", ics2115.osc,
-				 ics2115.voice[ics2115.osc].volacc, caller_get_pc());
+			chip->voice[chip->osc].volacc = (chip->voice[chip->osc].volacc & 0xff00)|data;
+		logerror("ICS2115: %2d: volacc = %04x (%04x)\n", chip->osc,
+				 chip->voice[chip->osc].volacc, caller_get_pc());
 		break;
 
 	case 0x0a: // [osc] Wavesample address 19-4
 		if(msb)
-			ics2115.voice[ics2115.osc].addrh = (ics2115.voice[ics2115.osc].addrh & 0xff)|(data << 8);
+			chip->voice[chip->osc].addrh = (chip->voice[chip->osc].addrh & 0xff)|(data << 8);
 		else
-			ics2115.voice[ics2115.osc].addrh = (ics2115.voice[ics2115.osc].addrh & 0xff00)|data;
-		logerror("ICS2115: %2d: addrh = %04x (%04x)\n", ics2115.osc,
-				 ics2115.voice[ics2115.osc].addrh, caller_get_pc());
+			chip->voice[chip->osc].addrh = (chip->voice[chip->osc].addrh & 0xff00)|data;
+		logerror("ICS2115: %2d: addrh = %04x (%04x)\n", chip->osc,
+				 chip->voice[chip->osc].addrh, caller_get_pc());
 		break;
 
 	case 0x0b: // [osc] Wavesample address 3-0.8-0
 		if(msb)
-			ics2115.voice[ics2115.osc].addrl = (ics2115.voice[ics2115.osc].addrl & 0xff)|(data << 8);
+			chip->voice[chip->osc].addrl = (chip->voice[chip->osc].addrl & 0xff)|(data << 8);
 		else
-			ics2115.voice[ics2115.osc].addrl = (ics2115.voice[ics2115.osc].addrl & 0xff00)|data;
-		logerror("ICS2115: %2d: addrl = %04x (%04x)\n", ics2115.osc,
-				 ics2115.voice[ics2115.osc].addrl, caller_get_pc());
+			chip->voice[chip->osc].addrl = (chip->voice[chip->osc].addrl & 0xff00)|data;
+		logerror("ICS2115: %2d: addrl = %04x (%04x)\n", chip->osc,
+				 chip->voice[chip->osc].addrl, caller_get_pc());
 		break;
 
 
 	case 0x0c: // [osc] Pan
 		if(msb) {
-			ics2115.voice[ics2115.osc].pan = data;
-			logerror("ICS2115: %2d: pan = %02x (%04x)\n", ics2115.osc,
-					 ics2115.voice[ics2115.osc].pan, caller_get_pc());
+			chip->voice[chip->osc].pan = data;
+			logerror("ICS2115: %2d: pan = %02x (%04x)\n", chip->osc,
+					 chip->voice[chip->osc].pan, caller_get_pc());
 		}
 		break;
 
 	case 0x0d: // [osc] Volume Enveloppe Control
 		if(msb) {
-			ics2115.voice[ics2115.osc].vctl = data;
-			logerror("ICS2115: %2d: vctl = %02x (%04x)\n", ics2115.osc,
-					 ics2115.voice[ics2115.osc].vctl, caller_get_pc());
+			chip->voice[chip->osc].vctl = data;
+			logerror("ICS2115: %2d: vctl = %02x (%04x)\n", chip->osc,
+					 chip->voice[chip->osc].vctl, caller_get_pc());
 		}
 		break;
 
 	case 0x10: // [osc] Oscillator Control
 		if(msb) {
-			ics2115.voice[ics2115.osc].ctl = data;
-			logerror("ICS2115: %2d: ctl = %02x (%04x)\n", ics2115.osc,
-					 ics2115.voice[ics2115.osc].ctl, caller_get_pc());
+			chip->voice[chip->osc].ctl = data;
+			logerror("ICS2115: %2d: ctl = %02x (%04x)\n", chip->osc,
+					 chip->voice[chip->osc].ctl, caller_get_pc());
 			if(data == 0)
-				keyon(ics2115.osc);
+				keyon(chip, chip->osc);
 		}
 		break;
 
 	case 0x11: // [osc] Wavesample static address 27-20
 		if(msb) {
-			ics2115.voice[ics2115.osc].saddr = data;
-			logerror("ICS2115: %2d: saddr = %02x (%04x)\n", ics2115.osc,
-					 ics2115.voice[ics2115.osc].saddr, caller_get_pc());
+			chip->voice[chip->osc].saddr = data;
+			logerror("ICS2115: %2d: saddr = %02x (%04x)\n", chip->osc,
+					 chip->voice[chip->osc].saddr, caller_get_pc());
 		}
 		break;
 
 	case 0x40: // Timer 1 Preset
 		if(!msb) {
-			ics2115.timer[0].preset = data;
-			logerror("ICS2115: t1preset = %d (%04x)\n", ics2115.timer[0].preset, caller_get_pc());
-			recalc_timer(0);
+			chip->timer[0].preset = data;
+			logerror("ICS2115: t1preset = %d (%04x)\n", chip->timer[0].preset, caller_get_pc());
+			recalc_timer(chip, 0);
 		}
 		break;
 
 	case 0x41: // Timer 2 Preset
 		if(!msb) {
-			ics2115.timer[1].preset = data;
-			logerror("ICS2115: t2preset = %d (%04x)\n", ics2115.timer[1].preset, caller_get_pc());
-			recalc_timer(1);
+			chip->timer[1].preset = data;
+			logerror("ICS2115: t2preset = %d (%04x)\n", chip->timer[1].preset, caller_get_pc());
+			recalc_timer(chip, 1);
 		}
 		break;
 
 	case 0x42: // Timer 1 Prescaler
 		if(!msb) {
-			ics2115.timer[0].scale = data;
-			logerror("ICS2115: t1scale = %d (%04x)\n", ics2115.timer[0].scale, caller_get_pc());
-			recalc_timer(0);
+			chip->timer[0].scale = data;
+			logerror("ICS2115: t1scale = %d (%04x)\n", chip->timer[0].scale, caller_get_pc());
+			recalc_timer(chip, 0);
 		}
 		break;
 
 	case 0x43: // Timer 2 Prescaler
 		if(!msb) {
-			ics2115.timer[1].scale = data;
-			logerror("ICS2115: t2scale = %d (%04x)\n", ics2115.timer[1].scale, caller_get_pc());
-			recalc_timer(1);
+			chip->timer[1].scale = data;
+			logerror("ICS2115: t2scale = %d (%04x)\n", chip->timer[1].scale, caller_get_pc());
+			recalc_timer(chip, 1);
 		}
 		break;
 
 	case 0x4a: // IRQ Enable
 		if(!msb) {
-			ics2115.irq_en = data;
-			logerror("ICS2115: irq_en = %02x (%04x)\n", ics2115.irq_en, caller_get_pc());
-			recalc_irq();
+			chip->irq_en = data;
+			logerror("ICS2115: irq_en = %02x (%04x)\n", chip->irq_en, caller_get_pc());
+			recalc_irq(chip);
 		}
 		break;
 
 	case 0x4f: // Oscillator Address being Programmed
 		if(!msb) {
-			ics2115.osc = data & 31;
-			logerror("ICS2115: oscnumber = %d (%04x)\n", ics2115.osc, caller_get_pc());
+			chip->osc = data & 31;
+			logerror("ICS2115: oscnumber = %d (%04x)\n", chip->osc, caller_get_pc());
 		}
 		break;
 
@@ -370,12 +381,12 @@ static void ics2115_reg_w(UINT8 reg, UINT8 data, int msb)
 	}
 }
 
-static UINT16 ics2115_reg_r(UINT8 reg)
+static UINT16 ics2115_reg_r(struct ics2115 *chip, UINT8 reg)
 {
 	switch(reg) {
 	case 0x0d: // [osc] Volume Enveloppe Control
-		logerror("ICS2115: %2d: read vctl (%04x)\n", ics2115.osc, caller_get_pc());
-		//		res = ics2115.voice[ics2115.osc].vctl << 8;
+		logerror("ICS2115: %2d: read vctl (%04x)\n", chip->osc, caller_get_pc());
+		//		res = chip->voice[chip->osc].vctl << 8;
 		// may expect |8 on voice irq with &40 == 0
 		// may expect |8 on reg 0 on voice irq with &80 == 0
 		return 0x100;
@@ -384,10 +395,10 @@ static UINT16 ics2115_reg_r(UINT8 reg)
 		int osc;
 		UINT8 res = 0xff;
 		for(osc = 0; osc < 32; osc++)
-			if(ics2115.voice[osc].state & V_DONE) {
-				ics2115.voice[osc].state &= ~V_DONE;
+			if(chip->voice[osc].state & V_DONE) {
+				chip->voice[osc].state &= ~V_DONE;
 				logerror("ICS2115: KEYOFF %2d\n", osc);
-				recalc_irq();
+				recalc_irq(chip);
 				res = 0x40 | osc; // 0x40 ? 0x80 ?
 				break;
 			}
@@ -397,26 +408,26 @@ static UINT16 ics2115_reg_r(UINT8 reg)
 		
 	case 0x40: // Timer 0 clear irq
 		//		logerror("ICS2115: clear timer 0 (%04x)\n", caller_get_pc());
-		ics2115.irq_pend &= ~(1<<0);
-		recalc_irq();
-		return ics2115.timer[0].preset;
+		chip->irq_pend &= ~(1<<0);
+		recalc_irq(chip);
+		return chip->timer[0].preset;
 
 	case 0x41: // Timer 1 clear irq
 		logerror("ICS2115: clear timer 1 (%04x)\n", caller_get_pc());
-		ics2115.irq_pend &= ~(1<<1);
-		recalc_irq();
-		return ics2115.timer[1].preset;
+		chip->irq_pend &= ~(1<<1);
+		recalc_irq(chip);
+		return chip->timer[1].preset;
 
 	case 0x43: // Timer status
-		//		logerror("ICS2115: read timer status %02x (%04x)\n", ics2115.irq_pend & 3, caller_get_pc());
-		return ics2115.irq_pend & 3;
+		//		logerror("ICS2115: read timer status %02x (%04x)\n", chip->irq_pend & 3, caller_get_pc());
+		return chip->irq_pend & 3;
 
 	case 0x4a: // IRQ Pending
-		logerror("ICS2115: read irq_pend %02x (%04x)\n", ics2115.irq_pend, caller_get_pc());
-		return ics2115.irq_pend;
+		logerror("ICS2115: read irq_pend %02x (%04x)\n", chip->irq_pend, caller_get_pc());
+		return chip->irq_pend;
 
 	case 0x4b: // Address of Interrupting Oscillator
-		logerror("ICS2115: %2d: read intoscaddr (%04x)\n", ics2115.osc, caller_get_pc());
+		logerror("ICS2115: %2d: read intoscaddr (%04x)\n", chip->osc, caller_get_pc());
 		return 0x80;
 
 	case 0x4c: // Chip revision
@@ -430,21 +441,24 @@ static UINT16 ics2115_reg_r(UINT8 reg)
 }
 
 
-int ics2115_sh_start( const struct MachineSound *msound )
+static void *ics2115_start(int sndindex, int clock, const void *config)
 {
-	const char *bufp[2] = { "ICS2115 L", "ICS2115 R" };
+	struct ics2115 *chip;
 	int i;
+	
+	chip = auto_malloc(sizeof(*chip));
+	memset(chip, 0, sizeof(*chip));
 
-	memset(&ics2115, 0, sizeof(ics2115));
-	ics2115.intf = msound->sound_interface;
-	ics2115.rom = memory_region(ics2115.intf->region);
-	ics2115.timer[0].timer = timer_alloc(timer_cb);
-	ics2115.timer[1].timer = timer_alloc(timer_cb);
-	ics2115.ulaw = auto_malloc(256*sizeof(INT16));
-	ics2115.stream = stream_init_multi(2, bufp, ics2115.intf->mixing_level, Machine->sample_rate, 0, update);
+	chip->intf = config;
+	chip->index = sndindex;
+	chip->rom = memory_region(chip->intf->region);
+	chip->timer[0].timer = timer_alloc_ptr(timer_cb_0);
+	chip->timer[1].timer = timer_alloc_ptr(timer_cb_1);
+	chip->ulaw = auto_malloc(256*sizeof(INT16));
+	chip->stream = stream_create(0, 2, Machine->sample_rate, chip, update);
 
-	if(!ics2115.timer[0].timer || !ics2115.timer[1].timer || !ics2115.ulaw)
-		return 1;
+	if(!chip->timer[0].timer || !chip->timer[1].timer || !chip->ulaw)
+		return NULL;
 
 	for(i=0; i<256; i++) {
 		UINT8 c = ~i;
@@ -455,28 +469,25 @@ int ics2115_sh_start( const struct MachineSound *msound )
 			v = 33-v;
 		else
 			v = v-33;
-		ics2115.ulaw[i] = v;
+		chip->ulaw[i] = v;
 	}
 
-	return 0;
-}
-
-void ics2115_sh_stop( void )
-{
+	return chip;
 }
 
 READ8_HANDLER( ics2115_r )
 {
+	struct ics2115 *chip = sndti_token(SOUND_ICS2115, 0);
 	switch(offset) {
 	case 0: {
 		UINT8 res = 0;
-		if(ics2115.irq_on) {
+		if(chip->irq_on) {
 			int i;
 			res |= 0x80;
-			if(ics2115.irq_en & ics2115.irq_pend & 3)
+			if(chip->irq_en & chip->irq_pend & 3)
 				res |= 1; // Timer irq
 			for(i=0; i<32; i++)
-				if(ics2115.voice[i].state & V_DONE) {
+				if(chip->voice[i].state & V_DONE) {
 					res |= 2;
 					break;
 				}
@@ -486,39 +497,79 @@ READ8_HANDLER( ics2115_r )
 		return res;
 	}
 	case 1:
-	    return ics2115.reg;
+	    return chip->reg;
 	case 2:
-		return ics2115_reg_r(ics2115.reg);
+		return ics2115_reg_r(chip, chip->reg);
 	case 3:
 	default:
-		return ics2115_reg_r(ics2115.reg) >> 8;
+		return ics2115_reg_r(chip, chip->reg) >> 8;
 	}
 }
 
 WRITE8_HANDLER( ics2115_w )
 {
+	struct ics2115 *chip = sndti_token(SOUND_ICS2115, 0);
 	switch(offset) {
 	case 1:
-		ics2115.reg = data;
+		chip->reg = data;
 		break;
 	case 2:
-		ics2115_reg_w(ics2115.reg, data, 0);
+		ics2115_reg_w(chip, chip->reg, data, 0);
 		break;
 	case 3:
-		ics2115_reg_w(ics2115.reg, data, 1);
+		ics2115_reg_w(chip, chip->reg, data, 1);
 		break;
 	}
 	//	logerror("ICS2115: wi %d, %02x (%04x)\n", offset, data, caller_get_pc());
 }
 
-void ics2115_reset(void)
+void ics2115_reset(void *_chip)
 {
-	ics2115.irq_en = 0;
-	ics2115.irq_pend = 0;
-	memset(ics2115.voice, 0, sizeof(ics2115.voice));
-	timer_adjust(ics2115.timer[0].timer, TIME_NEVER, 0, 0);
-	timer_adjust(ics2115.timer[1].timer, TIME_NEVER, 1, 0);
-	ics2115.timer[0].period = 0;
-	ics2115.timer[1].period = 0;
-	recalc_irq();
+	struct ics2115 *chip = _chip;
+	chip->irq_en = 0;
+	chip->irq_pend = 0;
+	memset(chip->voice, 0, sizeof(chip->voice));
+	timer_adjust_ptr(chip->timer[0].timer, TIME_NEVER, chip, 0);
+	timer_adjust_ptr(chip->timer[1].timer, TIME_NEVER, chip, 0);
+	chip->timer[0].period = 0;
+	chip->timer[1].period = 0;
+	recalc_irq(chip);
 }
+
+
+
+
+/**************************************************************************
+ * Generic get_info
+ **************************************************************************/
+
+static void ics2115_set_info(void *token, UINT32 state, union sndinfo *info)
+{
+	switch (state)
+	{
+		/* no parameters to set */
+	}
+}
+
+
+void ics2115_get_info(void *token, UINT32 state, union sndinfo *info)
+{
+	switch (state)
+	{
+		/* --- the following bits of info are returned as 64-bit signed integers --- */
+
+		/* --- the following bits of info are returned as pointers to data or functions --- */
+		case SNDINFO_PTR_SET_INFO:						info->set_info = ics2115_set_info;		break;
+		case SNDINFO_PTR_START:							info->start = ics2115_start;			break;
+		case SNDINFO_PTR_STOP:							/* nothing */							break;
+		case SNDINFO_PTR_RESET:							info->reset = ics2115_reset;			break;
+
+		/* --- the following bits of info are returned as NULL-terminated strings --- */
+		case SNDINFO_STR_NAME:							info->s = "ICS2115";					break;
+		case SNDINFO_STR_CORE_FAMILY:					info->s = "ICS";						break;
+		case SNDINFO_STR_CORE_VERSION:					info->s = "1.0";						break;
+		case SNDINFO_STR_CORE_FILE:						info->s = __FILE__;						break;
+		case SNDINFO_STR_CORE_CREDITS:					info->s = "Copyright (c) 2004, The MAME Team"; break;
+	}
+}
+

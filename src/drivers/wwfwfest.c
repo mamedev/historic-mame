@@ -42,6 +42,8 @@
 #include "cpu/m68000/m68000.h"
 #include "cpu/z80/z80.h"
 #include "wwfwfest.h"
+#include "sound/2151intf.h"
+#include "sound/okim6295.h"
 
 /*- in this file -*/
 static READ16_HANDLER( wwfwfest_paletteram16_xxxxBBBBGGGGRRRR_word_r );
@@ -391,18 +393,7 @@ static void dd3_ymirq_handler(int irq)
 
 static struct YM2151interface ym2151_interface =
 {
-	1,			/* 1 chip */
-	3579545,
-	{ YM3012_VOL(45,MIXER_PAN_LEFT,45,MIXER_PAN_RIGHT) },
-	{ dd3_ymirq_handler }
-};
-
-static struct OKIM6295interface okim6295_interface =
-{
-	1,				/* 1 chip */
-	{ 7759 },		/* frequency (Hz) */
-	{ REGION_SOUND1 },	/* memory region */
-	{ 90 }
+	dd3_ymirq_handler
 };
 
 VIDEO_EOF( wwfwfest )
@@ -440,8 +431,16 @@ static MACHINE_DRIVER_START( wwfwfest )
 	MDRV_VIDEO_UPDATE(wwfwfest)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM2151, ym2151_interface)
-	MDRV_SOUND_ADD(OKIM6295, okim6295_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM2151, 3579545)
+	MDRV_SOUND_CONFIG(ym2151_interface)
+	MDRV_SOUND_ROUTE(0, "mono", 0.45)
+	MDRV_SOUND_ROUTE(1, "mono", 0.45)
+
+	MDRV_SOUND_ADD(OKIM6295, 7759)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.90)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( wwfwfstb )

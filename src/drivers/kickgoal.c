@@ -26,7 +26,7 @@ lev 7 : 0x7c : 0000 0000 - x
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "machine/eeprom.h"
-
+#include "sound/okim6295.h"
 
 
 data16_t *kickgoal_fgram, *kickgoal_bgram, *kickgoal_bg2ram, *kickgoal_scrram;
@@ -235,6 +235,7 @@ static MACHINE_DRIVER_START( kickgoal )
 	MDRV_VIDEO_UPDATE(kickgoal)
 
 	/* sound hardware */
+	MDRV_SPEAKER_STANDARD_MONO("mono")
 //	MDRV_SOUND_ADD(OKIM6295, okim6295_interface)
 MACHINE_DRIVER_END
 

@@ -1477,6 +1477,7 @@ endif
 SOUND=$(strip $(findstring CUSTOM@,$(SOUNDS)))
 ifneq ($(SOUND),)
 SOUNDDEFS += -DHAS_CUSTOM=1
+SOUNDOBJS += $(OBJ)/sound/custom.o
 else
 SOUNDDEFS += -DHAS_CUSTOM=0
 endif
@@ -1535,17 +1536,9 @@ endif
 SOUND=$(strip $(findstring YM2151@,$(SOUNDS)))
 ifneq ($(SOUND),)
 SOUNDDEFS += -DHAS_YM2151=1
-SOUNDOBJS += $(OBJ)/sound/2151intf.o $(OBJ)/sound/ym2151.o $(OBJ)/sound/fm.o
-else
-SOUNDDEFS += -DHAS_YM2151=0
-endif
-
-SOUND=$(strip $(findstring YM2151_ALT@,$(SOUNDS)))
-ifneq ($(SOUND),)
-SOUNDDEFS += -DHAS_YM2151_ALT=1
 SOUNDOBJS += $(OBJ)/sound/2151intf.o $(OBJ)/sound/ym2151.o
 else
-SOUNDDEFS += -DHAS_YM2151_ALT=0
+SOUNDDEFS += -DHAS_YM2151=0
 endif
 
 SOUND=$(strip $(findstring YM2608@,$(SOUNDS)))
@@ -1768,18 +1761,10 @@ else
 SOUNDDEFS += -DHAS_VLM5030=0
 endif
 
-SOUND=$(strip $(findstring ADPCM@,$(SOUNDS)))
-ifneq ($(SOUND),)
-SOUNDDEFS += -DHAS_ADPCM=1
-SOUNDOBJS += $(OBJ)/sound/adpcm.o
-else
-SOUNDDEFS += -DHAS_ADPCM=0
-endif
-
 SOUND=$(strip $(findstring OKIM6295@,$(SOUNDS)))
 ifneq ($(SOUND),)
 SOUNDDEFS += -DHAS_OKIM6295=1
-SOUNDOBJS += $(OBJ)/sound/adpcm.o
+SOUNDOBJS += $(OBJ)/sound/okim6295.o
 else
 SOUNDDEFS += -DHAS_OKIM6295=0
 endif
@@ -2054,6 +2039,14 @@ SOUNDDEFS += -DHAS_VRENDER0=1
 SOUNDOBJS += $(OBJ)/sound/vrender0.o
 else
 SOUNDDEFS += -DHAS_VRENDER0=0
+endif
+
+SOUND=$(strip $(findstring VOTRAX@,$(SOUNDS)))
+ifneq ($(SOUND),)
+SOUNDDEFS += -DHAS_VOTRAX=1
+SOUNDOBJS += $(OBJ)/sound/votrax.o
+else
+SOUNDDEFS += -DHAS_VOTRAX=0
 endif
 
 

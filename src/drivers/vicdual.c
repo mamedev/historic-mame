@@ -73,7 +73,9 @@ write:
 #include "vidhrdw/generic.h"
 #include "cpu/i8039/i8039.h"
 #include "vicdual.h"
-
+#include "sound/ay8910.h"
+#include "sound/samples.h"
+#include "sound/discrete.h"
 
 
 #define	PSG_CLOCK_CARNIVAL	( 3579545 / 3 )	/* Hz */
@@ -1125,28 +1127,24 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 static struct Samplesinterface samples_interface_carnival =
 {
  	12,	/* 12 channels */
- 	50,	/* volume */
 	carnival_sample_names
 };
 
 static struct Samplesinterface samples_interface_depthch =
 {
 	12,	/* 12 channels */
-	50,	/* volume */
 	depthch_sample_names
 };
 
 static struct Samplesinterface samples_interface_invinco3 =
 {
 	12,	/* 12 channels */
-	50,	/* volume */
 	invinco_sample_names
 };
 
 static struct Samplesinterface samples_interface_pulsar =
 {
 	12,	/* 12 channels */
-	50,	/* volume */
 	pulsar_sample_names
 };
 
@@ -1174,6 +1172,7 @@ static MACHINE_DRIVER_START( 2ports )
 	MDRV_VIDEO_UPDATE(vicdual)
 
 	/* sound hardware */
+	MDRV_SPEAKER_STANDARD_MONO("mono")
 MACHINE_DRIVER_END
 
 
@@ -1201,7 +1200,9 @@ static MACHINE_DRIVER_START( depthch )
 	MDRV_IMPORT_FROM(2ports)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(SAMPLES, samples_interface_depthch)
+	MDRV_SOUND_ADD(SAMPLES, 0)
+	MDRV_SOUND_CONFIG(samples_interface_depthch)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
 MACHINE_DRIVER_END
 
 mame_timer *croak_timer;
@@ -1218,8 +1219,13 @@ static MACHINE_DRIVER_START( frogs )
 	MDRV_MACHINE_INIT(frogs)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(SAMPLES, frogs_samples_interface)
-	MDRV_SOUND_ADD(DISCRETE, frogs_discrete_interface)
+	MDRV_SOUND_ADD(SAMPLES, 0)
+	MDRV_SOUND_CONFIG(frogs_samples_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.35)
+
+	MDRV_SOUND_ADD(DISCRETE, 0)
+	MDRV_SOUND_CONFIG(frogs_discrete_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 
@@ -1229,7 +1235,9 @@ static MACHINE_DRIVER_START( invinco3 )
 	MDRV_IMPORT_FROM(3ports)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(SAMPLES, samples_interface_invinco3)
+	MDRV_SOUND_ADD(SAMPLES, 0)
+	MDRV_SOUND_CONFIG(samples_interface_invinco3)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
 MACHINE_DRIVER_END
 
 
@@ -1239,7 +1247,9 @@ static MACHINE_DRIVER_START( invinco4 )
 	MDRV_IMPORT_FROM(4ports)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(SAMPLES, samples_interface_invinco3)
+	MDRV_SOUND_ADD(SAMPLES, 0)
+	MDRV_SOUND_CONFIG(samples_interface_invinco3)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
 MACHINE_DRIVER_END
 
 
@@ -1249,7 +1259,9 @@ static MACHINE_DRIVER_START( pulsar )
 	MDRV_IMPORT_FROM(4ports)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(SAMPLES, samples_interface_pulsar)
+	MDRV_SOUND_ADD(SAMPLES, 0)
+	MDRV_SOUND_CONFIG(samples_interface_pulsar)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
 MACHINE_DRIVER_END
 
 
@@ -1262,18 +1274,6 @@ static MACHINE_DRIVER_START( safari )
 	MDRV_CPU_IO_MAP(readport_safari,writeport)
 MACHINE_DRIVER_END
 
-
-
-static struct AY8910interface carnival_ay8910_interface =
-{
-	1,	/* 1 chips */
-	PSG_CLOCK_CARNIVAL,
-	{ 35 },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ 0 }
-};
 
 
 /* don't know if any of the other games use the 8048 music board */
@@ -1307,8 +1307,14 @@ static MACHINE_DRIVER_START( carnival )
 	MDRV_VIDEO_UPDATE(vicdual)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(AY8910, carnival_ay8910_interface)
-	MDRV_SOUND_ADD(SAMPLES, samples_interface_carnival)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	
+	MDRV_SOUND_ADD(AY8910, PSG_CLOCK_CARNIVAL)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.35)
+	
+	MDRV_SOUND_ADD(SAMPLES, 0)
+	MDRV_SOUND_CONFIG(samples_interface_carnival)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
 MACHINE_DRIVER_END
 
 

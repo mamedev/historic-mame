@@ -20,7 +20,8 @@
 #include "driver.h"
 #include "machine/atarigen.h"
 #include "relief.h"
-
+#include "sound/okim6295.h"
+#include "sound/2413intf.h"
 
 
 /*************************************
@@ -327,30 +328,6 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 /*************************************
  *
- *	Sound definitions
- *
- *************************************/
-
-static struct OKIM6295interface okim6295_interface =
-{
-	1,
-	{ ATARI_CLOCK_14MHz/4/3/165 },
-	{ REGION_SOUND1 },
-	{ 50 }
-};
-
-
-static struct YM2413interface ym2413_interface =
-{
-	1,
-	ATARI_CLOCK_14MHz/4,
-	{ YM2413_VOL(100,MIXER_PAN_CENTER,100,MIXER_PAN_CENTER) }
-};
-
-
-
-/*************************************
- *
  *	Machine driver
  *
  *************************************/
@@ -379,8 +356,14 @@ static MACHINE_DRIVER_START( relief )
 	MDRV_VIDEO_UPDATE(relief)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(OKIM6295, okim6295_interface)
-	MDRV_SOUND_ADD(YM2413,   ym2413_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(OKIM6295, ATARI_CLOCK_14MHz/4/3/165)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
+
+	MDRV_SOUND_ADD(YM2413, ATARI_CLOCK_14MHz/4)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 

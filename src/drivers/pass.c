@@ -100,6 +100,8 @@
  */
 
 #include "driver.h"
+#include "sound/2203intf.h"
+#include "sound/okim6295.h"
 
 data16_t *pass_bg_videoram;
 data16_t *pass_fg_videoram;
@@ -267,25 +269,6 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 
 
-static struct YM2203interface ym2203_interface =
-{
-	1,
-	14318180/4, /* guess */
-	{ YM2203_VOL(60,60) },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-};
-
-static struct OKIM6295interface okim6295_interface =
-{
-	1,
-	{ 6000 },	/* ? guess */
-	{ REGION_SOUND1 },
-	{ 60 }
-};
-
 static MACHINE_DRIVER_START( pass )
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M68000, 14318180/2 )
@@ -312,10 +295,14 @@ static MACHINE_DRIVER_START( pass )
 	MDRV_VIDEO_UPDATE(pass)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM2203, ym2203_interface)
-	MDRV_SOUND_ADD(OKIM6295, okim6295_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
 
+	MDRV_SOUND_ADD(YM2203, 14318180/4)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.60)
 
+	MDRV_SOUND_ADD(OKIM6295, 6000)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.60)
 MACHINE_DRIVER_END
 
 

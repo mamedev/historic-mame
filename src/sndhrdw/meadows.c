@@ -9,6 +9,8 @@
 #include "driver.h"
 #include "cpu/s2650/s2650.h"
 #include "meadows.h"
+#include "sound/samples.h"
+#include "sound/dac.h"
 
 
 unsigned char meadows_0c00 = 0;
@@ -30,31 +32,21 @@ static int dac_enable;
 static	int channel;
 static	int freq1 = 1000;
 static	int freq2 = 1000;
-static	signed char waveform[2] = { -120, 120 };
+static	INT16 waveform[2] = { -120*256, 120*256 };
 
 /************************************/
 /* Sound handler start				*/
 /************************************/
-int meadows_sh_start(const struct MachineSound *msound)
+void meadows_sh_start(void)
 {
 	int vol[2];
 
 	vol[0]=vol[1]=255;
-	channel = mixer_allocate_channels(2,vol);
-	mixer_set_volume(channel,0);
-	mixer_play_sample(channel,waveform,sizeof(waveform),freq1,1);
-	mixer_set_volume(channel+1,0);
-	mixer_play_sample(channel+1,waveform,sizeof(waveform),freq2,1);
-    return 0;
-}
 
-/************************************/
-/* Sound handler stop				*/
-/************************************/
-void meadows_sh_stop(void)
-{
-	mixer_stop_sample(channel);
-    mixer_stop_sample(channel+1);
+	sample_set_volume(0,0);
+	sample_start_raw(0,waveform,sizeof(waveform)/2,freq1,1);
+	sample_set_volume(1,0);
+	sample_start_raw(1,waveform,sizeof(waveform)/2,freq2,1);
 }
 
 /************************************/
@@ -81,8 +73,8 @@ int preset, amp;
 			freq1 = BASE_CTR1 / (preset + 1);
 		else amp = 0;
 		logerror("meadows ctr1 channel #%d preset:%3d freq:%5d amp:%d\n", channel, preset, freq1, amp);
-		mixer_set_sample_frequency(channel, freq1 * sizeof(waveform));
-		mixer_set_volume(channel,amp*100/255);
+		sample_set_freq(0, freq1 * sizeof(waveform)/2);
+		sample_set_volume(0,amp/255.0);
     }
 
 	if (latched_0c02 != meadows_0c02 || latched_0c03 != meadows_0c03)
@@ -99,8 +91,8 @@ int preset, amp;
 		}
 		else amp = 0;
 		logerror("meadows ctr2 channel #%d preset:%3d freq:%5d amp:%d\n", channel+1, preset, freq2, amp);
-		mixer_set_sample_frequency(channel+1, freq2 * sizeof(waveform));
-		mixer_set_volume(channel+1,amp*100/255);
+		sample_set_freq(1, freq2 * sizeof(waveform));
+		sample_set_volume(1,amp/255.0);
     }
 
 	if (latched_0c03 != meadows_0c03)

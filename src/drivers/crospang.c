@@ -22,6 +22,8 @@ some bits by David Haywood
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "sound/okim6295.h"
+#include "sound/3812intf.h"
 
 extern data16_t *crospang_bg_videoram,*crospang_fg_videoram;
 
@@ -204,18 +206,7 @@ static void irqhandler(int linestate)
 
 static struct YM3812interface ym3812_interface =
 {
-	1,
-	14318180/4,
-	{ 100 },		/* volume */
-	{ irqhandler },	/* IRQ Line */
-};
-
-static struct OKIM6295interface okim6295_interface =
-{
-	1,
-	{ 8000 },	/* ? guess */
-	{ REGION_SOUND1 },
-	{ 100 }
+	irqhandler	/* IRQ Line */
 };
 
 static MACHINE_DRIVER_START( crospang )
@@ -245,8 +236,15 @@ static MACHINE_DRIVER_START( crospang )
 	MDRV_VIDEO_UPDATE(crospang)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM3812, ym3812_interface)
-	MDRV_SOUND_ADD(OKIM6295, okim6295_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM3812, 14318180/4)
+	MDRV_SOUND_CONFIG(ym3812_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
+
+	MDRV_SOUND_ADD(OKIM6295, 8000)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 ROM_START( crospang )

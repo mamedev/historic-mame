@@ -235,11 +235,7 @@ ADDRESS_MAP_END
 
 static struct K054539interface k054539_interface =
 {
-	2,			/* 2 chips */
-	48000,
-	{ REGION_SOUND1, REGION_SOUND1 },
-	{ { 100, 100 }, { 100, 100 } },
-	{ NULL }
+	REGION_SOUND1
 };
 
 /********************************************************************/
@@ -271,8 +267,17 @@ static MACHINE_DRIVER_START( zr107 )
 	MDRV_VIDEO_START(zr107)
 	MDRV_VIDEO_UPDATE(zr107)
 
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(K054539, k054539_interface)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(K054539, 48000)
+	MDRV_SOUND_CONFIG(k054539_interface)
+	MDRV_SOUND_ROUTE(0, "left", 0.75)
+	MDRV_SOUND_ROUTE(1, "right", 0.75)
+
+	MDRV_SOUND_ADD(K054539, 48000)
+	MDRV_SOUND_CONFIG(k054539_interface)
+	MDRV_SOUND_ROUTE(0, "left", 0.75)
+	MDRV_SOUND_ROUTE(1, "right", 0.75)
 MACHINE_DRIVER_END
 
 /*************************************************************************/

@@ -82,6 +82,9 @@ Blitter source graphics
 #include "cpu/m6809/m6809.h"
 #include "cpu/i8039/i8039.h"
 #include "cpu/z80/z80.h"
+#include "sound/ay8910.h"
+#include "sound/dac.h"
+#include "sound/flt_rc.h"
 
 
 void konami1_decode(void);
@@ -137,7 +140,7 @@ static WRITE8_HANDLER( junofrst_portB_w )
 		if (data & 1) C += 47000;	/* 47000pF = 0.047uF */
 		if (data & 2) C += 220000;	/* 220000pF = 0.22uF */
 		data >>= 2;
-		set_RC_filter(i,1000,2200,200,C);
+		filter_rc_set_RC(i,1000,2200,200,C);
 	}
 }
 
@@ -341,19 +344,10 @@ INPUT_PORTS_END
 
 static struct AY8910interface ay8910_interface =
 {
-	1,	/* 1 chip */
-	14318000/8,	/* 1.78975 MHz */
-	{ 30 },
-	{ junofrst_portA_r },
-	{ 0 },
-	{ 0 },
-	{ junofrst_portB_w }
-};
-
-static struct DACinterface dac_interface =
-{
-	1,
-	{ 50 }
+	junofrst_portA_r,
+	0,
+	0,
+	junofrst_portB_w
 };
 
 
@@ -386,8 +380,23 @@ static MACHINE_DRIVER_START( junofrst )
 	MDRV_VIDEO_UPDATE(tutankhm)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(AY8910, ay8910_interface)
-	MDRV_SOUND_ADD(DAC, dac_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	
+	MDRV_SOUND_ADD(AY8910, 14318000/8)
+	MDRV_SOUND_CONFIG(ay8910_interface)
+	MDRV_SOUND_ROUTE(0, "filter.0.0", 0.30)
+	MDRV_SOUND_ROUTE(1, "filter.0.1", 0.30)
+	MDRV_SOUND_ROUTE(2, "filter.0.2", 0.30)
+
+	MDRV_SOUND_ADD(DAC, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
+
+	MDRV_SOUND_ADD_TAG("filter.0.0", FILTER_RC, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
+	MDRV_SOUND_ADD_TAG("filter.0.1", FILTER_RC, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
+	MDRV_SOUND_ADD_TAG("filter.0.2", FILTER_RC, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 

@@ -37,7 +37,7 @@ write
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-
+#include "sound/ay8910.h"
 
 
 extern unsigned char *marineb_column_scroll;
@@ -540,29 +540,6 @@ static struct GfxDecodeInfo hopprobo_gfxdecodeinfo[] =
 };
 
 
-static struct AY8910interface marineb_ay8910_interface =
-{
-	1,	/* 1 chip */
-	1500000,	/* 1.5 MHz ? */
-	{ 50 },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ 0 }
-};
-
-static struct AY8910interface wanted_ay8910_interface =
-{
-	2,	/* 2 chips */
-	1500000,	/* 1.5 MHz ? */
-	{ 25, 25 },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ 0 }
-};
-
-
 static MACHINE_DRIVER_START( marineb )
 
 	/* basic machine hardware */
@@ -588,7 +565,9 @@ static MACHINE_DRIVER_START( marineb )
 	MDRV_VIDEO_UPDATE(marineb)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD_TAG("8910", AY8910, marineb_ay8910_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	MDRV_SOUND_ADD_TAG("8910", AY8910, 1500000)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
 MACHINE_DRIVER_END
 
 
@@ -638,7 +617,11 @@ static MACHINE_DRIVER_START( wanted )
 	MDRV_VIDEO_UPDATE(springer)
 
 	/* sound hardware */
-	MDRV_SOUND_REPLACE("8910", AY8910, wanted_ay8910_interface)
+	MDRV_SOUND_REPLACE("8910", AY8910, 1500000)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
+
+	MDRV_SOUND_ADD(AY8910, 1500000)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
 MACHINE_DRIVER_END
 
 
@@ -677,7 +660,13 @@ static MACHINE_DRIVER_START( bcruzm12 )
 	MDRV_VIDEO_UPDATE(springer)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(AY8910, wanted_ay8910_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	
+	MDRV_SOUND_REPLACE("8910", AY8910, 1500000)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
+
+	MDRV_SOUND_ADD(AY8910, 1500000)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
 MACHINE_DRIVER_END
 
 /***************************************************************************

@@ -36,6 +36,7 @@
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "sound/discrete.h"
 #include "nitedrvr.h"
 
 extern READ8_HANDLER( nitedrvr_in0_r );
@@ -179,7 +180,11 @@ static MACHINE_DRIVER_START( nitedrvr )
 	MDRV_VIDEO_UPDATE(nitedrvr)
 
 	// sound hardware
-	MDRV_SOUND_ADD_TAG("discrete", DISCRETE, nitedrvr_discrete_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	
+	MDRV_SOUND_ADD_TAG("discrete", DISCRETE, 0)
+	MDRV_SOUND_CONFIG(nitedrvr_discrete_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 /* ROMs */

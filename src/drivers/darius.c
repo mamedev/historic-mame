@@ -138,6 +138,9 @@ sounds.
 #include "vidhrdw/taitoic.h"
 #include "cpu/z80/z80.h"
 #include "sndhrdw/taitosnd.h"
+#include "sound/2203intf.h"
+#include "sound/msm5205.h"
+#include "sound/flt_vol.h"
 
 
 MACHINE_INIT( darius );
@@ -366,7 +369,8 @@ static void update_fm0( void )
 	int left, right;
 	left  = (        darius_pan[0]  * darius_vol[6])>>8;
 	right = ((0xff - darius_pan[0]) * darius_vol[6])>>8;
-	mixer_set_stereo_volume( 6, left, right ); /* FM #0 */
+	flt_volume_set_volume(6, left / 100.0);
+	flt_volume_set_volume(7, right / 100.0); /* FM #0 */
 }
 
 static void update_fm1( void )
@@ -374,7 +378,8 @@ static void update_fm1( void )
 	int left, right;
 	left  = (        darius_pan[1]  * darius_vol[7])>>8;
 	right = ((0xff - darius_pan[1]) * darius_vol[7])>>8;
-	mixer_set_stereo_volume( 7, left, right ); /* FM #1 */
+	flt_volume_set_volume(14, left / 100.0);
+	flt_volume_set_volume(15, right / 100.0); /* FM #1 */
 }
 
 static void update_psg0( int port )
@@ -382,7 +387,8 @@ static void update_psg0( int port )
 	int left, right;
 	left  = (        darius_pan[2]  * darius_vol[port])>>8;
 	right = ((0xff - darius_pan[2]) * darius_vol[port])>>8;
-	mixer_set_stereo_volume( port, left, right );
+	flt_volume_set_volume(port*2+0, left / 100.0);
+	flt_volume_set_volume(port*2+1, right / 100.0);
 }
 
 static void update_psg1( int port )
@@ -390,7 +396,8 @@ static void update_psg1( int port )
 	int left, right;
 	left  = (        darius_pan[3]  * darius_vol[port + 3])>>8;
 	right = ((0xff - darius_pan[3]) * darius_vol[port + 3])>>8;
-	mixer_set_stereo_volume( port + 3, left, right );
+	flt_volume_set_volume(port*2+0+8, left / 100.0);
+	flt_volume_set_volume(port*2+1+8, right / 100.0);
 }
 
 static void update_da( void )
@@ -398,7 +405,8 @@ static void update_da( void )
 	int left, right;
 	left  = darius_def_vol[(darius_pan[4]>>4)&0x0f];
 	right = darius_def_vol[(darius_pan[4]>>0)&0x0f];
-	mixer_set_stereo_volume( 8, left, right );
+	flt_volume_set_volume(16, left / 100.0);
+	flt_volume_set_volume(17, right / 100.0); /* FM #1 */
 }
 
 static WRITE8_HANDLER( darius_fm0_pan )
@@ -534,11 +542,8 @@ static void darius_adpcm_int (int data)
 
 static struct MSM5205interface msm5205_interface =
 {
-	1,				/* 1 chip */
-	384000, 			/* 384KHz */
-	{ darius_adpcm_int},	/* interrupt function */
-	{ MSM5205_S48_4B},	/* 8KHz   */
-	{ 100 }			/* volume */
+	darius_adpcm_int,	/* interrupt function */
+	MSM5205_S48_4B		/* 8KHz   */
 };
 
 static READ8_HANDLER( adpcm_command_read )
@@ -820,16 +825,21 @@ static void irqhandler(int irq)	/* assumes Z80 sandwiched between 68Ks */
 	cpunum_set_input_line(1,0,irq ? ASSERT_LINE : CLEAR_LINE);
 }
 
-static struct YM2203interface ym2203_interface =
+static struct YM2203interface ym2203_interface_1 =
 {
-	2,			/* 2 chips */
-	4000000,	/* 4 MHz ??? */
-	{ YM2203_VOL(60,8), YM2203_VOL(60,8) },
-	{ 0, 0 },		/* portA read */
-	{ 0, 0 },
-	{ darius_write_portA0, darius_write_portA1 },	/* portA write */
-	{ darius_write_portB0, darius_write_portB1 },	/* portB write */
-	{ irqhandler, 0 }
+	0,		/* portA read */
+	0,
+	darius_write_portA0,	/* portA write */
+	darius_write_portB0,	/* portB write */
+	irqhandler
+};
+
+static struct YM2203interface ym2203_interface_2 =
+{
+	0,		/* portA read */
+	0,
+	darius_write_portA1,	/* portA write */
+	darius_write_portB1		/* portB write */
 };
 
 
@@ -875,9 +885,73 @@ static MACHINE_DRIVER_START( darius )
 	MDRV_VIDEO_UPDATE(darius)
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(YM2203, ym2203_interface)
-	MDRV_SOUND_ADD(MSM5205, msm5205_interface)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(YM2203, 4000000)
+	MDRV_SOUND_CONFIG(ym2203_interface_1)
+	MDRV_SOUND_ROUTE(0, "filter.2203.0.0l", 0.08)
+	MDRV_SOUND_ROUTE(0, "filter.2203.0.0r", 0.08)
+	MDRV_SOUND_ROUTE(1, "filter.2203.0.1l", 0.08)
+	MDRV_SOUND_ROUTE(1, "filter.2203.0.1r", 0.08)
+	MDRV_SOUND_ROUTE(2, "filter.2203.0.2l", 0.08)
+	MDRV_SOUND_ROUTE(2, "filter.2203.0.2r", 0.08)
+	MDRV_SOUND_ROUTE(3, "filter.2203.0.3l", 0.60)
+	MDRV_SOUND_ROUTE(3, "filter.2203.0.3r", 0.60)
+
+	MDRV_SOUND_ADD(YM2203, 4000000)
+	MDRV_SOUND_CONFIG(ym2203_interface_2)
+	MDRV_SOUND_ROUTE(0, "filter.2203.1.0l", 0.08)
+	MDRV_SOUND_ROUTE(0, "filter.2203.1.0r", 0.08)
+	MDRV_SOUND_ROUTE(1, "filter.2203.1.1l", 0.08)
+	MDRV_SOUND_ROUTE(1, "filter.2203.1.1r", 0.08)
+	MDRV_SOUND_ROUTE(2, "filter.2203.1.2l", 0.08)
+	MDRV_SOUND_ROUTE(2, "filter.2203.1.2r", 0.08)
+	MDRV_SOUND_ROUTE(3, "filter.2203.1.3l", 0.60)
+	MDRV_SOUND_ROUTE(3, "filter.2203.1.3r", 0.60)
+
+	MDRV_SOUND_ADD(MSM5205, 384000)
+	MDRV_SOUND_CONFIG(msm5205_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "msm5205.l", 1.0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "msm5205.r", 1.0)
+
+	MDRV_SOUND_ADD_TAG("filter.2203.0.0l", FILTER_VOLUME, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 1.0)
+	MDRV_SOUND_ADD_TAG("filter.2203.0.0r", FILTER_VOLUME, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 1.0)
+	MDRV_SOUND_ADD_TAG("filter.2203.0.1l", FILTER_VOLUME, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 1.0)
+	MDRV_SOUND_ADD_TAG("filter.2203.0.1r", FILTER_VOLUME, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 1.0)
+	MDRV_SOUND_ADD_TAG("filter.2203.0.2l", FILTER_VOLUME, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 1.0)
+	MDRV_SOUND_ADD_TAG("filter.2203.0.2r", FILTER_VOLUME, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 1.0)
+	MDRV_SOUND_ADD_TAG("filter.2203.0.3l", FILTER_VOLUME, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 1.0)
+	MDRV_SOUND_ADD_TAG("filter.2203.0.3r", FILTER_VOLUME, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 1.0)
+
+	MDRV_SOUND_ADD_TAG("filter.2203.1.0l", FILTER_VOLUME, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 1.0)
+	MDRV_SOUND_ADD_TAG("filter.2203.1.0r", FILTER_VOLUME, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 1.0)
+	MDRV_SOUND_ADD_TAG("filter.2203.1.1l", FILTER_VOLUME, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 1.0)
+	MDRV_SOUND_ADD_TAG("filter.2203.1.1r", FILTER_VOLUME, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 1.0)
+	MDRV_SOUND_ADD_TAG("filter.2203.1.2l", FILTER_VOLUME, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 1.0)
+	MDRV_SOUND_ADD_TAG("filter.2203.1.2r", FILTER_VOLUME, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 1.0)
+	MDRV_SOUND_ADD_TAG("filter.2203.1.3l", FILTER_VOLUME, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 1.0)
+	MDRV_SOUND_ADD_TAG("filter.2203.1.3r", FILTER_VOLUME, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 1.0)
+
+	MDRV_SOUND_ADD_TAG("msm5205.l", FILTER_VOLUME, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 1.0)
+	MDRV_SOUND_ADD_TAG("msm5205.r", FILTER_VOLUME, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 1.0)
 MACHINE_DRIVER_END
 
 
@@ -1139,7 +1213,7 @@ MACHINE_INIT( darius )
 		memcpy( RAM + 0x8000*i + 0x14000, RAM + 0x4000*i, 0x4000 );
 	}
 
-	mixer_sound_enable_global_w( 1 );	/* mixer enabled */
+	sound_global_enable( 1 );	/* mixer enabled */
 
 	for( i = 0; i < DARIUS_VOL_MAX; i++ ){
 		darius_vol[i] = 0x00;	/* min volume */

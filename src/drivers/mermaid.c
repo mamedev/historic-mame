@@ -85,6 +85,7 @@ Notes:
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "sound/ay8910.h"
 
 extern UINT8* mermaid_videoram2;
 extern UINT8* mermaid_bg_scrollram;
@@ -251,17 +252,6 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 /* Sound Interface */
 
-static struct AY8910interface ay8910_interface =
-{
-	2,			// 2 chips
-	1500000,	// ???
-	{ 25, 25 },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ 0 }
-};
-
 /* Machine Driver */
 
 static MACHINE_DRIVER_START( mermaid )
@@ -286,7 +276,13 @@ static MACHINE_DRIVER_START( mermaid )
 	MDRV_VIDEO_UPDATE(mermaid)
 
 	// sound hardware
-	MDRV_SOUND_ADD(AY8910, ay8910_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(AY8910, 1500000)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
+
+	MDRV_SOUND_ADD(AY8910, 1500000)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
 MACHINE_DRIVER_END
 
 /* ROMs */

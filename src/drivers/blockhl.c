@@ -23,6 +23,7 @@ found it.
 #include "vidhrdw/generic.h"
 #include "cpu/konami/konami.h" /* for the callback and the firq irq definition */
 #include "vidhrdw/konamiic.h"
+#include "sound/2151intf.h"
 
 /* prototypes */
 static MACHINE_INIT( blockhl );
@@ -216,15 +217,6 @@ INPUT_PORTS_END
 
 ***************************************************************************/
 
-static struct YM2151interface ym2151_interface =
-{
-	1, /* 1 chip */
-	3579545, /* 3.579545 MHz */
-	{ YM3012_VOL(60,MIXER_PAN_LEFT,60,MIXER_PAN_RIGHT) },
-	{ 0 },
-	{ 0 }
-};
-
 static MACHINE_DRIVER_START( blockhl )
 
 	/* basic machine hardware */
@@ -250,7 +242,11 @@ static MACHINE_DRIVER_START( blockhl )
 	MDRV_VIDEO_UPDATE(blockhl)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM2151, ym2151_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM2151, 3579545)
+	MDRV_SOUND_ROUTE(0, "mono", 0.60)
+	MDRV_SOUND_ROUTE(1, "mono", 0.60)
 MACHINE_DRIVER_END
 
 

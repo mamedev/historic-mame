@@ -20,6 +20,7 @@ convert to tilemaps
 
 
 #include "driver.h"
+#include "sound/okim6295.h"
 
 /* vidhrdw/funybubl.c */
 extern data8_t* funybubl_banked_videoram;
@@ -205,14 +206,6 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 
 
-static struct OKIM6295interface okim6295_interface =
-{
-	1,					/* 1 chip */
-	{ 8000 },			/* ? frequency */
-	{ REGION_SOUND1 },	/* memory region */
-	{ 100 }
-};
-
 DRIVER_INIT( funybubl )
 {
 	funybubl_banked_videoram = auto_malloc (0x2000);
@@ -248,7 +241,11 @@ static MACHINE_DRIVER_START( funybubl )
 	MDRV_VIDEO_UPDATE(funybubl)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(OKIM6295, okim6295_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(OKIM6295, 8000)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 

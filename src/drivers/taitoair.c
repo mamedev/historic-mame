@@ -183,6 +183,7 @@ cpu #2 (PC=0000060E): unmapped memory word read from 0000683A & FFFF
 #include "sndhrdw/taitosnd.h"
 #include "vidhrdw/taitoic.h"
 #include "cpu/tms32025/tms32025.h"
+#include "sound/2610intf.h"
 
 static int dsp_HOLD_signal;
 
@@ -625,17 +626,9 @@ static void irqhandler(int irq)
 
 static struct YM2610interface airsys_ym2610_interface =
 {
-	1,	/* 1 chip */
-	8000000,	/* 4 MHz */
-	{ 30 },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ irqhandler },
-	{ REGION_SOUND2 },
-	{ REGION_SOUND1 },
-	{ YM3012_VOL(60,MIXER_PAN_LEFT,60,MIXER_PAN_RIGHT) }
+	irqhandler,
+	REGION_SOUND2,
+	REGION_SOUND1
 };
 
 
@@ -673,7 +666,13 @@ static MACHINE_DRIVER_START( airsys )
 	MDRV_VIDEO_UPDATE(taitoair)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM2610, airsys_ym2610_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM2610, 8000000)
+	MDRV_SOUND_CONFIG(airsys_ym2610_interface)
+	MDRV_SOUND_ROUTE(0, "mono", 0.30)
+	MDRV_SOUND_ROUTE(1, "mono", 0.60)
+	MDRV_SOUND_ROUTE(2, "mono", 0.60)
 MACHINE_DRIVER_END
 
 

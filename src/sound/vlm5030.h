@@ -3,16 +3,9 @@
 
 struct VLM5030interface
 {
-	int baseclock;      /* master clock (normaly 3.58MHz) */
-	int volume;         /* volume                         */
 	int memory_region;  /* memory region of speech rom    */
 	int memory_size;    /* memory size of speech rom (0=memory region length) */
 };
-
-/* use sampling data when speech_rom == 0 */
-int VLM5030_sh_start(const struct MachineSound *msound);
-void VLM5030_sh_stop (void);
-void VLM5030_sh_update (void);
 
 /* set speech rom address */
 void VLM5030_set_rom(void *speech_rom);

@@ -7,12 +7,13 @@
 ***************************************************************************/
 
 #include "driver.h"
+#include "sound/custom.h"
 
 
 /*----------- defined in sndhrdw/gridlee.c -----------*/
 
 WRITE8_HANDLER( gridlee_sound_w );
-int gridlee_sh_start(const struct MachineSound *msound);
+void *gridlee_sh_start(int clock, const struct CustomSound_interface *config);
 
 
 /*----------- defined in vidhrdw/gridlee.c -----------*/

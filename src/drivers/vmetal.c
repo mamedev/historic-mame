@@ -37,6 +37,8 @@ roms are 23C160 except for code and OKI 27C4001
 */
 
 #include "driver.h"
+#include "sound/okim6295.h"
+#include "sound/msm5205.h"
 
 int vmetal_es8712_start;
 int vmetal_es8712_end;
@@ -267,7 +269,7 @@ static WRITE16_HANDLER( vmetal_es8712_w )
 
 	if ((offset == 0) && (ACCESSING_MSB))
 	{
-		ADPCM_stop(0);
+//		ADPCM_stop(0);
 		vmetal_es8712_start = 0;
 		vmetal_es8712_end = 0;
 	}
@@ -309,8 +311,8 @@ static WRITE16_HANDLER( vmetal_es8712_w )
 
 		if (vmetal_es8712_start < vmetal_es8712_end)
 		{
-			ADPCM_stop(0);
-			ADPCM_play(0, vmetal_es8712_start, vmetal_es8712_end - vmetal_es8712_start);
+//			ADPCM_stop(0);
+//			ADPCM_play(0, vmetal_es8712_start, vmetal_es8712_end - vmetal_es8712_start);
 		}
 	}
 }
@@ -318,10 +320,10 @@ static WRITE16_HANDLER( vmetal_es8712_w )
 static INTERRUPT_GEN( vmetal_interrupt )
 {
 	/* Loop any music playback - probably wrong */
-	if (vmetal_es8712_end && (ADPCM_playing(0) == 0))
-	{
-		ADPCM_play(0, vmetal_es8712_start, vmetal_es8712_end - vmetal_es8712_start);
-	}
+//	if (vmetal_es8712_end && (ADPCM_playing(0) == 0))
+//	{
+//		ADPCM_play(0, vmetal_es8712_start, vmetal_es8712_end - vmetal_es8712_start);
+//	}
 }
 
 
@@ -480,20 +482,10 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 };
 
 
-static struct OKIM6295interface okim6295_interface =
+static struct MSM5205interface msm5205_interface =
 {
-	1,					/* 1 chip */
-	{ 10000 },			/* frequency (Hz) */
-	{ REGION_SOUND1 },	/* memory region */
-	{ 75 }
-};
-
-static struct ADPCMinterface adpcm_interface =
-{
-	1,
-	12000,
-	REGION_SOUND2,
-	{ 75 }
+	NULL,				/* VCK function */
+	MSM5205_S48_4B		/* 8 kHz */
 };
 
 static void get_vmetal_texttilemap_tile_info(int tile_index)
@@ -577,9 +569,17 @@ static MACHINE_DRIVER_START( varia )
 	MDRV_VIDEO_UPDATE(varia)
 	MDRV_VIDEO_EOF(varia)
 
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(OKIM6295, okim6295_interface)
-	MDRV_SOUND_ADD(ADPCM, adpcm_interface)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(OKIM6295, 10000)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.75)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 0.75)
+
+	MDRV_SOUND_ADD(MSM5205, 12000*48)
+	MDRV_SOUND_CONFIG(msm5205_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.50)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 0.50)
 MACHINE_DRIVER_END
 
 

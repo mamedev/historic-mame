@@ -39,6 +39,8 @@
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "sound/2203intf.h"
+#include "sound/3812intf.h"
 
 PALETTE_INIT( karnov );
 VIDEO_UPDATE( karnov );
@@ -672,23 +674,9 @@ static void sound_irq(int linestate)
 	cpunum_set_input_line(1,0,linestate); /* IRQ */
 }
 
-static struct YM2203interface ym2203_interface =
-{
-	1,
-	1500000,	/* Accurate */
-	{ YM2203_VOL(25,25) },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ 0 }
-};
-
 static struct YM3526interface ym3526_interface =
 {
-	1,			/* 1 chip */
-	3000000,	/* Accurate */
-	{ 100 },	/*  */
-	{ sound_irq },
+	sound_irq
 };
 
 /******************************************************************************/
@@ -726,8 +714,14 @@ static MACHINE_DRIVER_START( karnov )
 	MDRV_VIDEO_UPDATE(karnov)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM2203, ym2203_interface)
-	MDRV_SOUND_ADD(YM3526, ym3526_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM2203, 1500000)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
+
+	MDRV_SOUND_ADD(YM3526, 3000000)
+	MDRV_SOUND_CONFIG(ym3526_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 
@@ -759,8 +753,14 @@ static MACHINE_DRIVER_START( wndrplnt )
 	MDRV_VIDEO_UPDATE(karnov)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM2203, ym2203_interface)
-	MDRV_SOUND_ADD(YM3526, ym3526_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM2203, 1500000)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
+
+	MDRV_SOUND_ADD(YM3526, 3000000)
+	MDRV_SOUND_CONFIG(ym3526_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 /******************************************************************************/

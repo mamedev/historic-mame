@@ -3,6 +3,7 @@
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "sound/samples.h"
 
 static struct mame_bitmap *ship1_vid;
 static struct mame_bitmap *ship2_vid;

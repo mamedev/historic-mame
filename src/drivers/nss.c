@@ -193,7 +193,7 @@ INPUT_PORTS_START( snes )
 INPUT_PORTS_END
 
 static struct CustomSound_interface snes_sound_interface =
-{ snes_sh_start, 0, 0 };
+{ snes_sh_start };
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
@@ -247,8 +247,12 @@ static MACHINE_DRIVER_START( snes )
 	MDRV_PALETTE_INIT( snes )
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(CUSTOM, snes_sound_interface)
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(CUSTOM, 0)
+	MDRV_SOUND_CONFIG(snes_sound_interface)
+	MDRV_SOUND_ROUTE(0, "left", 0.50)
+	MDRV_SOUND_ROUTE(0, "right", 0.50)
 MACHINE_DRIVER_END
 
 /***************************************************************************

@@ -33,6 +33,11 @@
 #include "machine/74123.h"
 #include "vidhrdw/generic.h"
 #include "8080bw.h"
+#include "sound/samples.h"
+#include "sound/sn76477.h"
+#include "sound/discrete.h"
+#include "sound/dac.h"
+#include "sound/custom.h"
 
 static WRITE8_HANDLER( invad2ct_sh_port1_w );
 static WRITE8_HANDLER( invaders_sh_port3_w );
@@ -51,9 +56,7 @@ static WRITE8_HANDLER( seawolf_sh_port5_w );
 
 static WRITE8_HANDLER( schaser_sh_port3_w );
 static WRITE8_HANDLER( schaser_sh_port5_w );
-static int  schaser_sh_start(const struct MachineSound *msound);
-static void schaser_sh_stop(void);
-static void schaser_sh_update(void);
+static void schaser_sh_start(void);
 
 static WRITE8_HANDLER( polaris_sh_port2_w );
 static WRITE8_HANDLER( polaris_sh_port4_w );
@@ -62,24 +65,22 @@ static WRITE8_HANDLER( polaris_sh_port6_w );
 
 struct SN76477interface invaders_sn76477_interface =
 {
-	1,	/* 1 chip */
-	{ 25 },  /* mixing level   pin description		 */
-	{ 0	/* N/C */},		/*	4  noise_res		 */
-	{ 0	/* N/C */},		/*	5  filter_res		 */
-	{ 0	/* N/C */},		/*	6  filter_cap		 */
-	{ 0	/* N/C */},		/*	7  decay_res		 */
-	{ 0	/* N/C */},		/*	8  attack_decay_cap  */
-	{ RES_K(100) },		/* 10  attack_res		 */
-	{ RES_K(56)  },		/* 11  amplitude_res	 */
-	{ RES_K(10)  },		/* 12  feedback_res 	 */
-	{ 0	/* N/C */},		/* 16  vco_voltage		 */
-	{ CAP_U(0.1) },		/* 17  vco_cap			 */
-	{ RES_K(8.2) },		/* 18  vco_res			 */
-	{ 5.0		 },		/* 19  pitch_voltage	 */
-	{ RES_K(120) },		/* 20  slf_res			 */
-	{ CAP_U(1.0) },		/* 21  slf_cap			 */
-	{ 0	/* N/C */},		/* 23  oneshot_cap		 */
-	{ 0	/* N/C */}		/* 24  oneshot_res		 */
+	0	/* N/C */,		/*	4  noise_res		 */
+	0	/* N/C */,		/*	5  filter_res		 */
+	0	/* N/C */,		/*	6  filter_cap		 */
+	0	/* N/C */,		/*	7  decay_res		 */
+	0	/* N/C */,		/*	8  attack_decay_cap  */
+	RES_K(100) ,		/* 10  attack_res		 */
+	RES_K(56)  ,		/* 11  amplitude_res	 */
+	RES_K(10)  ,		/* 12  feedback_res 	 */
+	0	/* N/C */,		/* 16  vco_voltage		 */
+	CAP_U(0.1) ,		/* 17  vco_cap			 */
+	RES_K(8.2) ,		/* 18  vco_res			 */
+	5.0		 ,		/* 19  pitch_voltage	 */
+	RES_K(120) ,		/* 20  slf_res			 */
+	CAP_U(1.0) ,		/* 21  slf_cap			 */
+	0	/* N/C */,		/* 23  oneshot_cap		 */
+	0	/* N/C */		/* 24  oneshot_res		 */
 };
 
 static const char *invaders_sample_names[] =
@@ -100,31 +101,48 @@ static const char *invaders_sample_names[] =
 struct Samplesinterface invaders_samples_interface =
 {
 	4,	/* 4 channels */
-	25,	/* volume */
 	invaders_sample_names
 };
 
 
-struct SN76477interface invad2ct_sn76477_interface =
+struct SN76477interface invad2ct_sn76477_interface_1 =
 {
-	2,	/* 2 chips */
-	{ 25,         25 },  /* mixing level   pin description		 */
-	{ 0,          0	/* N/C */  },	/*	4  noise_res		 */
-	{ 0,          0	/* N/C */  },	/*	5  filter_res		 */
-	{ 0,          0	/* N/C */  },	/*	6  filter_cap		 */
-	{ 0,          0	/* N/C */  },	/*	7  decay_res		 */
-	{ 0,          0	/* N/C */  },	/*	8  attack_decay_cap  */
-	{ RES_K(100), RES_K(100)   },	/* 10  attack_res		 */
-	{ RES_K(56),  RES_K(56)    },	/* 11  amplitude_res	 */
-	{ RES_K(10),  RES_K(10)    },	/* 12  feedback_res 	 */
-	{ 0,          0	/* N/C */  },	/* 16  vco_voltage		 */
-	{ CAP_U(0.1), CAP_U(0.047) },	/* 17  vco_cap			 */
-	{ RES_K(8.2), RES_K(39)    },	/* 18  vco_res			 */
-	{ 5.0,        5.0		   },	/* 19  pitch_voltage	 */
-	{ RES_K(120), RES_K(120)   },	/* 20  slf_res			 */
-	{ CAP_U(1.0), CAP_U(1.0)   },	/* 21  slf_cap			 */
-	{ 0,          0	/* N/C */  },	/* 23  oneshot_cap		 */
-	{ 0,          0	/* N/C */  }	/* 24  oneshot_res		 */
+	0,    /* N/C */	/*	4  noise_res		 */
+	0,    /* N/C */	/*	5  filter_res		 */
+	0,    /* N/C */	/*	6  filter_cap		 */
+	0,    /* N/C */	/*	7  decay_res		 */
+	0,    /* N/C */	/*	8  attack_decay_cap  */
+	RES_K(100), 	/* 10  attack_res		 */
+	RES_K(56),  	/* 11  amplitude_res	 */
+	RES_K(10),  	/* 12  feedback_res 	 */
+	0,    /* N/C */	/* 16  vco_voltage		 */
+	CAP_U(0.1), 	/* 17  vco_cap			 */
+	RES_K(8.2), 	/* 18  vco_res			 */
+	5.0,        	/* 19  pitch_voltage	 */
+	RES_K(120), 	/* 20  slf_res			 */
+	CAP_U(1.0), 	/* 21  slf_cap			 */
+	0,    /* N/C */	/* 23  oneshot_cap		 */
+	0,    /* N/C */	/* 24  oneshot_res		 */
+};
+
+struct SN76477interface invad2ct_sn76477_interface_2 =
+{
+	0	/* N/C */  ,	/*	4  noise_res		 */
+	0	/* N/C */  ,	/*	5  filter_res		 */
+	0	/* N/C */  ,	/*	6  filter_cap		 */
+	0	/* N/C */  ,	/*	7  decay_res		 */
+	0	/* N/C */  ,	/*	8  attack_decay_cap  */
+	RES_K(100)   ,	/* 10  attack_res		 */
+	RES_K(56)    ,	/* 11  amplitude_res	 */
+	RES_K(10)    ,	/* 12  feedback_res 	 */
+	0	/* N/C */  ,	/* 16  vco_voltage		 */
+	CAP_U(0.047) ,	/* 17  vco_cap			 */
+	RES_K(39)    ,	/* 18  vco_res			 */
+	5.0		   ,	/* 19  pitch_voltage	 */
+	RES_K(120)   ,	/* 20  slf_res			 */
+	CAP_U(1.0)   ,	/* 21  slf_cap			 */
+	0	/* N/C */,	/* 23  oneshot_cap		 */
+	0	/* N/C */	/* 24  oneshot_res		 */
 };
 
 static const char *invad2ct_sample_names[] =
@@ -153,7 +171,6 @@ static const char *invad2ct_sample_names[] =
 struct Samplesinterface invad2ct_samples_interface =
 {
 	8,	/* 8 channels */
-	25,	/* volume */
 	invad2ct_sample_names
 };
 
@@ -325,7 +342,6 @@ static const char *boothill_sample_names[] =
 struct Samplesinterface boothill_samples_interface =
 {
 	9,	/* 9 channels */
-	25,	/* volume */
 	boothill_sample_names
 };
 
@@ -460,7 +476,7 @@ const struct discrete_op_amp_tvca_info polaris_hit_tvca_info =
 
 // The schematic shows a 1uF cap but Guru's board has a 2.2uF
 const struct discrete_integrate_info polaris_plane_integrate_info =
-	{DISC_INTEGRATE_OP_AMP_2 | DISC_OP_AMP_IS_NORTON, RES_K(1001), RES_K(1001), RES_K(101), CAP_U(2.2), 12, DISC_OP_AMP_TRIGGER_FUNCTION_TRG0, DISC_OP_AMP_TRIGGER_FUNCTION_TRG0_INV, DISC_OP_AMP_TRIGGER_FUNCTION_TRG1_INV};
+	{DISC_INTEGRATE_OP_AMP_2 | DISC_OP_AMP_IS_NORTON, RES_K(1001), RES_K(1001), RES_K(101), CAP_U(2.2), 12, 12, DISC_OP_AMP_TRIGGER_FUNCTION_TRG0, DISC_OP_AMP_TRIGGER_FUNCTION_TRG0_INV, DISC_OP_AMP_TRIGGER_FUNCTION_TRG1_INV};
 
 // A bit of a cheat.  The schematic show the cap as 47p, but that makes the frequency too high.
 // Guru's board has a .01 cap, which would make the freq sub-sonic using the other schematic values.
@@ -813,7 +829,6 @@ static const char *seawolf_sample_names[] =
 struct Samplesinterface seawolf_samples_interface =
 {
 	5,	/* 5 channels */
-	25,	/* volume */
 	seawolf_sample_names
 };
 
@@ -914,41 +929,31 @@ MACHINE_INIT( desertgu )
  *  for 4V, it's double at 2294.12Hz
  */
 
-static int channel_dot;
-
 struct SN76477interface schaser_sn76477_interface =
 {
-	1,	/* 1 chip */
-	{ 50 },  /* mixing level   pin description		 */
-	{ RES_K( 47)   },		/*	4  noise_res		 */
-	{ RES_K(330)   },		/*	5  filter_res		 */
-	{ CAP_P(470)   },		/*	6  filter_cap		 */
-	{ RES_M(2.2)   },		/*	7  decay_res		 */
-	{ CAP_U(1.0)   },		/*	8  attack_decay_cap  */
-	{ RES_K(4.7)   },		/* 10  attack_res		 */
-	{ 0			   },		/* 11  amplitude_res (variable)	 */
-	{ RES_K(33)    },		/* 12  feedback_res 	 */
-	{ 0            },		/* 16  vco_voltage		 */
-	{ CAP_U(0.1)   },		/* 17  vco_cap			 */
-	{ RES_K(39)    },		/* 18  vco_res			 */
-	{ 5.0		   },		/* 19  pitch_voltage	 */
-	{ RES_K(120)   },		/* 20  slf_res			 */
-	{ CAP_U(1.0)   },		/* 21  slf_cap			 */
-	{ 0 		   },		/* 23  oneshot_cap (variable) */
-	{ RES_K(220)   }		/* 24  oneshot_res		 */
+	RES_K( 47)   ,		/*	4  noise_res		 */
+	RES_K(330)   ,		/*	5  filter_res		 */
+	CAP_P(470)   ,		/*	6  filter_cap		 */
+	RES_M(2.2)   ,		/*	7  decay_res		 */
+	CAP_U(1.0)   ,		/*	8  attack_decay_cap  */
+	RES_K(4.7)   ,		/* 10  attack_res		 */
+	0			   ,		/* 11  amplitude_res (variable)	 */
+	RES_K(33)    ,		/* 12  feedback_res 	 */
+	0            ,		/* 16  vco_voltage		 */
+	CAP_U(0.1)   ,		/* 17  vco_cap			 */
+	RES_K(39)    ,		/* 18  vco_res			 */
+	5.0		   ,		/* 19  pitch_voltage	 */
+	RES_K(120)   ,		/* 20  slf_res			 */
+	CAP_U(1.0)   ,		/* 21  slf_cap			 */
+	0 		   ,		/* 23  oneshot_cap (variable) */
+	RES_K(220)   		/* 24  oneshot_res		 */
 };
 
-struct DACinterface schaser_dac_interface =
+struct Samplesinterface schaser_custom_interface =
 {
 	1,
-	{ 50 }
-};
-
-struct CustomSound_interface schaser_custom_interface =
-{
-	schaser_sh_start,
-	schaser_sh_stop,
-	schaser_sh_update
+	NULL,
+	schaser_sh_start
 };
 
 static INT16 backgroundwave[32] =
@@ -982,14 +987,13 @@ static WRITE8_HANDLER( schaser_sh_port3_w )
 	   bit 4 - Effect Sound C (SX4)
 	   bit 5 - Explosion (SX5) */
 
-	if (channel_dot)
 	{
 		int freq;
 
-		mixer_set_volume(channel_dot, (data & 0x01) ? 100 : 0);
+		sample_set_volume(0, (data & 0x01) ? 1.0 : 0.0);
 
 		freq = 19968000 / 2 / 2 / (256+16) / ((data & 0x02) ? 8 : 4) / 2;
-		mixer_set_sample_frequency(channel_dot, freq);
+		sample_set_freq(0, freq);
 	}
 
 	explosion = (data >> 5) & 0x01;
@@ -1019,31 +1023,17 @@ static WRITE8_HANDLER( schaser_sh_port5_w )
 
 	DAC_data_w(0, data & 0x01 ? 0xff : 0x00);
 
-	mixer_sound_enable_global_w(data & 0x02);
+	sound_global_enable(data & 0x02);
 
 	coin_lockout_global_w(data & 0x04);
 
 	c8080bw_flip_screen_w(data & 0x20);
 }
 
-static int schaser_sh_start(const struct MachineSound *msound)
+static void schaser_sh_start(void)
 {
-	channel_dot = mixer_allocate_channel(50);
-	mixer_set_name(channel_dot,"Dot Sound");
-
-	mixer_set_volume(channel_dot,0);
-	mixer_play_sample_16(channel_dot,backgroundwave,sizeof(backgroundwave),1000,1);
-
-	return 0;
-}
-
-static void schaser_sh_stop(void)
-{
-	mixer_stop_sample(channel_dot);
-}
-
-static void schaser_sh_update(void)
-{
+	sample_set_volume(0,0);
+	sample_start_raw(0,backgroundwave,sizeof(backgroundwave)/2,1000,1);
 }
 
 

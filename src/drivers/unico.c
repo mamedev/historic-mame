@@ -26,6 +26,9 @@ Year + Game			PCB				Notes
 #include "vidhrdw/generic.h"
 #include "machine/eeprom.h"
 #include "unico.h"
+#include "sound/2151intf.h"
+#include "sound/3812intf.h"
+#include "sound/okim6295.h"
 
 /* Variables needed by vidhrdw: */
 
@@ -646,38 +649,6 @@ MACHINE_INIT( unico )
 	unico_has_lightgun = 0;
 }
 
-static struct YM3812interface unico_ym3812_intf =
-{
-	1,
-	3579545,		/* ? */ //Would guess it as identical to zeropt2, any samples for confirmation?
-	{ 40 },
-	{ 0 },	/* IRQ Line */
-};
-
-static struct OKIM6295interface unico_m6295_intf =
-{
-	1,
-	{ 8000 },		/* ? */
-	{ REGION_SOUND1 },
-	{ 80 }
-};
-
-static struct OKIM6295interface zeropnt2_m6295_intf =
-{
-	2,
-	{ 8000, 30000 },		/* Appears to be spot on for both interfaces. */
-	{ REGION_SOUND1, REGION_SOUND2 },
-	{ MIXER(40,MIXER_PAN_LEFT), MIXER(20,MIXER_PAN_RIGHT) }
-};
-
-static struct YM2151interface zeropnt2_ym2151_intf =
-{
-	1,
-	3579545, /* measured on actual PCB*/
-	{ YM3012_VOL(70,MIXER_PAN_LEFT,70,MIXER_PAN_RIGHT) },
-	{ 0 }
-};
-
 
 struct EEPROM_interface zeropnt2_eeprom_interface =
 {
@@ -731,9 +702,16 @@ static MACHINE_DRIVER_START( burglarx )
 	MDRV_VIDEO_UPDATE(unico)
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(YM3812, unico_ym3812_intf)
-	MDRV_SOUND_ADD(OKIM6295, unico_m6295_intf)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(YM3812, 3579545)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.40)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 0.40)
+
+	MDRV_SOUND_ADD(OKIM6295, 8000)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.80)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 0.80)
 MACHINE_DRIVER_END
 
 
@@ -771,9 +749,16 @@ static MACHINE_DRIVER_START( zeropnt )
 	MDRV_VIDEO_UPDATE(unico)
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(YM3812, unico_ym3812_intf)
-	MDRV_SOUND_ADD(OKIM6295, unico_m6295_intf)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(YM3812, 3579545)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.40)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 0.40)
+
+	MDRV_SOUND_ADD(OKIM6295, 8000)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.80)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 0.80)
 MACHINE_DRIVER_END
 
 
@@ -807,9 +792,19 @@ static MACHINE_DRIVER_START( zeropnt2 )
 	MDRV_VIDEO_UPDATE(zeropnt2)
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD( YM2151,		zeropnt2_ym2151_intf )
-	MDRV_SOUND_ADD( OKIM6295,	zeropnt2_m6295_intf  )
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(YM2151, 3579545)
+	MDRV_SOUND_ROUTE(0, "left", 0.70)
+	MDRV_SOUND_ROUTE(1, "right", 0.70)
+
+	MDRV_SOUND_ADD(OKIM6295, 8000)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.40)
+
+	MDRV_SOUND_ADD(OKIM6295, 30000)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_2)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 0.20)
 MACHINE_DRIVER_END
 
 

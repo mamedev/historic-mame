@@ -1,37 +1,10 @@
 #include "driver.h"
+#include "sound/vlm5030.h"
+#include "sound/msm5205.h"
+#include "sound/sn76496.h"
 
 
 #define TIMER_RATE (4096/4)
-
-
-struct VLM5030interface konami_vlm5030_interface =
-{
-    3580000,    /* master clock  */
-    255,        /* volume        */
-    4,          /* memory region  */
-    0           /* memory size    */
-};
-
-struct SN76496interface konami_sn76496_interface =
-{
-    1,  /* 1 chip */
-    { 14318180/8 }, /*  1.7897725 MHz */
-    { 0x2064 }
-};
-
-struct DACinterface konami_dac_interface =
-{
-    1,
-    { 80 }
-};
-
-struct ADPCMinterface hyprolyb_adpcm_interface =
-{
-	1,          /* 1 channel */
-	4000,       /* 4000Hz playback */
-	REGION_CPU3,	/* memory region */
-	{ 100 }
-};
 
 
 static int SN76496_latch;
@@ -139,7 +112,8 @@ WRITE8_HANDLER( konami_SN76496_0_w )
 
 READ8_HANDLER( hyprolyb_speech_r )
 {
-    return ADPCM_playing(0) ? 0x10 : 0x00;
+	return 0x00;
+//    return ADPCM_playing(0) ? 0x10 : 0x00;
 }
 
 WRITE8_HANDLER( hyprolyb_ADPCM_data_w )
@@ -152,6 +126,6 @@ WRITE8_HANDLER( hyprolyb_ADPCM_data_w )
     cmd = RAM[0xfe01 + data] + 256 * RAM[0xfe00 + data];
     start = RAM[cmd + 1] + 256 * RAM[cmd];
     end = RAM[cmd + 3] + 256 * RAM[cmd + 2];
-    if (end > start)
-        ADPCM_play(0,start,(end - start)*2);
+//    if (end > start)
+  //      ADPCM_play(0,start,(end - start)*2);
 }

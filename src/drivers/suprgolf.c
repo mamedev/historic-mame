@@ -16,6 +16,7 @@
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "sound/2203intf.h"
 
 static struct tilemap *suprgolf_tilemap;
 
@@ -262,14 +263,11 @@ static void irqhandler(int irq)
 
 static struct YM2203interface ym2203_interface =
 {
-	1,
-	3000000,					/* ?? */
-	{ YM2203_VOL(100,100) },
-	{ input_port_5_r },
-	{ input_port_6_r },
-	{ suprgolf_writeA },
-	{ suprgolf_writeB },
-	{ irqhandler }
+	input_port_5_r,
+	input_port_6_r,
+	suprgolf_writeA,
+	suprgolf_writeB,
+	irqhandler
 };
 static struct GfxLayout gfxlayout =
 {
@@ -312,7 +310,11 @@ static MACHINE_DRIVER_START( suprgolf )
 	MDRV_PALETTE_LENGTH(512)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM2203, ym2203_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM2203, 3000000)
+	MDRV_SOUND_CONFIG(ym2203_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 

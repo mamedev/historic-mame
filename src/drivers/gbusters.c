@@ -11,6 +11,8 @@ Preliminary driver by:
 #include "vidhrdw/generic.h"
 #include "cpu/konami/konami.h" /* for the callback and the firq irq definition */
 #include "vidhrdw/konamiic.h"
+#include "sound/2151intf.h"
+#include "sound/k007232.h"
 
 /* prototypes */
 static MACHINE_INIT( gbusters );
@@ -288,20 +290,8 @@ static void volume_callback(int v)
 
 static struct K007232_interface k007232_interface =
 {
-	1,		/* number of chips */
-	3579545,	/* clock */
-	{ REGION_SOUND1 },	/* memory regions */
-	{ K007232_VOL(30,MIXER_PAN_CENTER,30,MIXER_PAN_CENTER) },	/* volume */
-	{ volume_callback }	/* external port callback */
-};
-
-static struct YM2151interface ym2151_interface =
-{
-	1, /* 1 chip */
-	3579545, /* 3.579545 MHz */
-	{ YM3012_VOL(60,MIXER_PAN_LEFT,60,MIXER_PAN_RIGHT) },
-	{ 0 },
-	{ 0 }
+	REGION_SOUND1,	/* memory regions */
+	volume_callback	/* external port callback */
 };
 
 static MACHINE_DRIVER_START( gbusters )
@@ -330,8 +320,16 @@ static MACHINE_DRIVER_START( gbusters )
 	MDRV_VIDEO_UPDATE(gbusters)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM2151, ym2151_interface)
-	MDRV_SOUND_ADD(K007232, k007232_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM2151, 3579545)
+	MDRV_SOUND_ROUTE(0, "mono", 0.60)
+	MDRV_SOUND_ROUTE(1, "mono", 0.60)
+	
+	MDRV_SOUND_ADD(K007232, 3579545)
+	MDRV_SOUND_CONFIG(k007232_interface)
+	MDRV_SOUND_ROUTE(0, "mono", 0.30)
+	MDRV_SOUND_ROUTE(1, "mono", 0.30)
 MACHINE_DRIVER_END
 
 

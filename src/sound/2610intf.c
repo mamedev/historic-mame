@@ -13,185 +13,206 @@
 
 #include "driver.h"
 #include "ay8910.h"
+#include "2610intf.h"
 #include "fm.h"
 
 #if BUILD_YM2610
 
-#define YM2610_NUMBUF 2
-/* use FM.C with stream system */
+static int sound_type = SOUND_YM2610;
+struct ym2610_info
+{
+	sound_stream *	stream;
+	mame_timer *	timer[2];
+	void *			chip;
+	void *			psg;
+	const struct YM2610interface *intf;
+};
 
-static int stream[MAX_2610];
 
-/* Global Interface holder */
-static const struct YM2610interface *intf;
+static void psg_set_clock(void *param, int clock)
+{
+	struct ym2610_info *info = param;
+	ay8910_set_clock_ym(info->psg, clock);
+}
 
-static void *Timer[MAX_2610][2];
+static void psg_write(void *param, int address, int data)
+{
+	struct ym2610_info *info = param;
+	ay8910_write_ym(info->psg, address, data);
+}
+
+static int psg_read(void *param)
+{
+	struct ym2610_info *info = param;
+	return ay8910_read_ym(info->psg);
+}
+
+static void psg_reset(void *param)
+{
+	struct ym2610_info *info = param;
+	ay8910_reset_ym(info->psg);
+}
+
+static const struct ssg_callbacks psgintf =
+{
+	psg_set_clock,
+	psg_write,
+	psg_read,
+	psg_reset
+};
 
 /*------------------------- TM2610 -------------------------------*/
 /* IRQ Handler */
-static void IRQHandler(int n,int irq)
+static void IRQHandler(void *param,int irq)
 {
-	if(intf->handler[n]) intf->handler[n](irq);
+	struct ym2610_info *info = param;
+	if(info->intf->handler) info->intf->handler(irq);
 }
 
 /* Timer overflow callback from timer.c */
-static void timer_callback_2610(int param)
+static void timer_callback_0(void *param)
 {
-	int n=param&0x7f;
-	int c=param>>7;
+	struct ym2610_info *info = param;
+	YM2610TimerOver(info->chip,0);
+}
 
-//	logerror("2610 TimerOver %d\n",c);
-	YM2610TimerOver(n,c);
+static void timer_callback_1(void *param)
+{
+	struct ym2610_info *info = param;
+	YM2610TimerOver(info->chip,1);
 }
 
 /* TimerHandler from fm.c */
-static void TimerHandler(int n,int c,int count,double stepTime)
+static void TimerHandler(void *param,int c,int count,double stepTime)
 {
+	struct ym2610_info *info = param;
 	if( count == 0 )
 	{	/* Reset FM Timer */
-		timer_enable(Timer[n][c], 0);
+		timer_enable(info->timer[c], 0);
 	}
 	else
 	{	/* Start FM Timer */
 		double timeSec = (double)count * stepTime;
-		if (!timer_enable(Timer[n][c], 1))
-			timer_adjust(Timer[n][c], timeSec, (c<<7)|n, 0);
-	}
-}
-
-static void FMTimerInit( void )
-{
-	int i;
-
-	for( i = 0 ; i < MAX_2610 ; i++ )
-	{
-		Timer[i][0] = timer_alloc(timer_callback_2610);
-		Timer[i][1] = timer_alloc(timer_callback_2610);
+		if (!timer_enable(info->timer[c], 1))
+			timer_adjust_ptr(info->timer[c], timeSec, info, 0);
 	}
 }
 
 /* update request from fm.c */
-void YM2610UpdateRequest(int chip)
+void YM2610UpdateRequest(void *param)
 {
-	stream_update(stream[chip],100);
+	struct ym2610_info *info = param;
+	stream_update(info->stream,100);
 }
 
-int YM2610_sh_start(const struct MachineSound *msound)
+static void ym2610_stream_update(void *param, stream_sample_t **inputs, stream_sample_t **buffers, int length)
 {
-	int i,j;
+	struct ym2610_info *info = param;
+	YM2610UpdateOne(info->chip, buffers, length);
+}
+
+
+static void *ym2610_start(int sndindex, int clock, const void *config)
+{
+	static const struct YM2610interface generic_2610 = { 0 };
+	const struct YM2610interface *intf = config ? config : &generic_2610;
 	int rate = Machine->sample_rate;
-	char buf[YM2610_NUMBUF][40];
-	const char *name[YM2610_NUMBUF];
-	int mixed_vol,vol[YM2610_NUMBUF];
-	void *pcmbufa[YM2610_NUMBUF],*pcmbufb[YM2610_NUMBUF];
-	int  pcmsizea[YM2610_NUMBUF],pcmsizeb[YM2610_NUMBUF];
+	void *pcmbufa,*pcmbufb;
+	int  pcmsizea,pcmsizeb;
+	struct ym2610_info *info;
+	
+	sound_type = SOUND_YM2610;
+	
+	info = auto_malloc(sizeof(*info));
+	memset(info, 0, sizeof(*info));
 
-	intf = msound->sound_interface;
-	if( intf->num > MAX_2610 ) return 1;
-
-	if (AY8910_sh_start(msound)) return 1;
+	info->intf = intf;
+	info->psg = ay8910_start_ym(SOUND_YM2610, sndindex, clock, 1, NULL, NULL, NULL, NULL);
+	if (!info->psg) return NULL;
 
 	/* Timer Handler set */
-	FMTimerInit();
+	info->timer[0] =timer_alloc_ptr(timer_callback_0);
+	info->timer[1] =timer_alloc_ptr(timer_callback_1);
 
 	/* stream system initialize */
-	for (i = 0;i < intf->num;i++)
-	{
-		/* stream setup */
-		mixed_vol = intf->volumeFM[i];
-		/* stream setup */
-		for (j = 0 ; j < YM2610_NUMBUF ; j++)
-		{
-			name[j]=buf[j];
-			vol[j] = mixed_vol & 0xffff;
-			mixed_vol>>=16;
-			sprintf(buf[j],"%s #%d Ch%d",sound_name(msound),i,j+1);
-		}
-		stream[i] = stream_init_multi(YM2610_NUMBUF,name,vol,rate,i,YM2610UpdateOne);
-		/* setup adpcm buffers */
-		pcmbufa[i]  = (void *)(memory_region(intf->pcmroma[i]));
-		pcmsizea[i] = memory_region_length(intf->pcmroma[i]);
-		pcmbufb[i]  = (void *)(memory_region(intf->pcmromb[i]));
-		pcmsizeb[i] = memory_region_length(intf->pcmromb[i]);
-	}
+	info->stream = stream_create(0,2,rate,info,ym2610_stream_update);
+	/* setup adpcm buffers */
+	pcmbufa  = (void *)(memory_region(info->intf->pcmroma));
+	pcmsizea = memory_region_length(info->intf->pcmroma);
+	pcmbufb  = (void *)(memory_region(info->intf->pcmromb));
+	pcmsizeb = memory_region_length(info->intf->pcmromb);
 
 	/**** initialize YM2610 ****/
-	if (YM2610Init(intf->num,intf->baseclock,rate,
+	info->chip = YM2610Init(info,sndindex,clock,rate,
 		           pcmbufa,pcmsizea,pcmbufb,pcmsizeb,
-		           TimerHandler,IRQHandler) == 0)
-		return 0;
+		           TimerHandler,IRQHandler,&psgintf);
+	if (info->chip)
+		return info;
 
 	/* error */
-	return 1;
+	return NULL;
 }
 
 #if BUILD_YM2610B
-int YM2610B_sh_start(const struct MachineSound *msound)
+static void ym2610b_stream_update(void *param, stream_sample_t **inputs, stream_sample_t **buffers, int length)
 {
-	int i,j;
+	struct ym2610_info *info = param;
+	YM2610BUpdateOne(info->chip, buffers, length);
+}
+
+static void *ym2610b_start(int sndindex, int clock, const void *config)
+{
+	static const struct YM2610interface generic_2610 = { 0 };
+	const struct YM2610interface *intf = config ? config : &generic_2610;
 	int rate = Machine->sample_rate;
-	char buf[YM2610_NUMBUF][40];
-	const char *name[YM2610_NUMBUF];
-	int mixed_vol,vol[YM2610_NUMBUF];
-	void *pcmbufa[YM2610_NUMBUF],*pcmbufb[YM2610_NUMBUF];
-	int  pcmsizea[YM2610_NUMBUF],pcmsizeb[YM2610_NUMBUF];
+	void *pcmbufa,*pcmbufb;
+	int  pcmsizea,pcmsizeb;
+	struct ym2610_info *info;
+	
+	sound_type = SOUND_YM2610B;
 
-	intf = msound->sound_interface;
-	if( intf->num > MAX_2610 ) return 1;
+	info = auto_malloc(sizeof(*info));
+	memset(info, 0, sizeof(*info));
 
-	if (AY8910_sh_start_ym(msound)) return 1;
+	info->intf = intf;
+	info->psg = ay8910_start_ym(SOUND_YM2610B, sndindex, clock, 1, NULL, NULL, NULL, NULL);
+	if (!info->psg) return NULL;
 
 	/* Timer Handler set */
-	FMTimerInit();
+	info->timer[0] =timer_alloc_ptr(timer_callback_0);
+	info->timer[1] =timer_alloc_ptr(timer_callback_1);
 
 	/* stream system initialize */
-	for (i = 0;i < intf->num;i++)
-	{
-		/* stream setup */
-		mixed_vol = intf->volumeFM[i];
-		/* stream setup */
-		for (j = 0 ; j < YM2610_NUMBUF ; j++)
-		{
-			name[j]=buf[j];
-			vol[j] = mixed_vol & 0xffff;
-			mixed_vol>>=16;
-			sprintf(buf[j],"%s #%d Ch%d",sound_name(msound),i,j+1);
-		}
-		stream[i] = stream_init_multi(YM2610_NUMBUF,name,vol,rate,i,YM2610BUpdateOne);
-		/* setup adpcm buffers */
-		pcmbufa[i]  = (void *)(memory_region(intf->pcmroma[i]));
-		pcmsizea[i] = memory_region_length(intf->pcmroma[i]);
-		pcmbufb[i]  = (void *)(memory_region(intf->pcmromb[i]));
-		pcmsizeb[i] = memory_region_length(intf->pcmromb[i]);
-	}
+	info->stream = stream_create(0,2,rate,info,ym2610b_stream_update);
+	/* setup adpcm buffers */
+	pcmbufa  = (void *)(memory_region(info->intf->pcmroma));
+	pcmsizea = memory_region_length(info->intf->pcmroma);
+	pcmbufb  = (void *)(memory_region(info->intf->pcmromb));
+	pcmsizeb = memory_region_length(info->intf->pcmromb);
 
 	/**** initialize YM2610 ****/
-	if (YM2610Init(intf->num,intf->baseclock,rate,
+	info->chip = YM2610Init(info,sndindex,clock,rate,
 		           pcmbufa,pcmsizea,pcmbufb,pcmsizeb,
-		           TimerHandler,IRQHandler) == 0)
-		return 0;
+		           TimerHandler,IRQHandler,&psgintf);
+	if (info->chip)
+		return info;
 
 	/* error */
-	return 1;
+	return NULL;
 }
 #endif
 
-/************************************************/
-/* Sound Hardware Stop							*/
-/************************************************/
-void YM2610_sh_stop(void)
+static void ym2610_stop(void *token)
 {
-	YM2610Shutdown();
-	AY8910_sh_stop_ym();
+	struct ym2610_info *info = token;
+	YM2610Shutdown(info->chip);
+	ay8910_stop_ym(info->psg);
 }
 
-/* reset */
-void YM2610_sh_reset(void)
+static void ym2610_reset(void *token)
 {
-	int i;
-
-	for (i = 0;i < intf->num;i++)
-		YM2610ResetChip(i);
+	struct ym2610_info *info = token;
+	YM2610ResetChip(info->chip);
 }
 
 /************************************************/
@@ -199,67 +220,79 @@ void YM2610_sh_reset(void)
 /************************************************/
 READ8_HANDLER( YM2610_status_port_0_A_r )
 {
-//logerror("PC %04x: 2610 S0A=%02X\n",activecpu_get_pc(),YM2610Read(0,0));
-	return YM2610Read(0,0);
+//logerror("PC %04x: 2610 S0A=%02X\n",activecpu_get_pc(),YM2610Read(sndti_token(sound_type,0,0));
+	struct ym2610_info *info = sndti_token(sound_type,0);
+	return YM2610Read(info->chip,0);
 }
 
 READ16_HANDLER( YM2610_status_port_0_A_lsb_r )
 {
-//logerror("PC %04x: 2610 S0A=%02X\n",activecpu_get_pc(),YM2610Read(0,0));
-	return YM2610Read(0,0);
+//logerror("PC %04x: 2610 S0A=%02X\n",activecpu_get_pc(),YM2610Read(sndti_token(sound_type,0,0));
+	struct ym2610_info *info = sndti_token(sound_type,0);
+	return YM2610Read(info->chip,0);
 }
 
 READ8_HANDLER( YM2610_status_port_0_B_r )
 {
-//logerror("PC %04x: 2610 S0B=%02X\n",activecpu_get_pc(),YM2610Read(0,2));
-	return YM2610Read(0,2);
+//logerror("PC %04x: 2610 S0B=%02X\n",activecpu_get_pc(),YM2610Read(sndti_token(sound_type,0,2));
+	struct ym2610_info *info = sndti_token(sound_type,0);
+	return YM2610Read(info->chip,2);
 }
 
 READ16_HANDLER( YM2610_status_port_0_B_lsb_r )
 {
-//logerror("PC %04x: 2610 S0B=%02X\n",activecpu_get_pc(),YM2610Read(0,2));
-	return YM2610Read(0,2);
+//logerror("PC %04x: 2610 S0B=%02X\n",activecpu_get_pc(),YM2610Read(sndti_token(sound_type,0,2));
+	struct ym2610_info *info = sndti_token(sound_type,0);
+	return YM2610Read(info->chip,2);
 }
 
 /************************************************/
 /* Status Read for YM2610 - Chip 1				*/
 /************************************************/
 READ8_HANDLER( YM2610_status_port_1_A_r ) {
-	return YM2610Read(1,0);
+	struct ym2610_info *info = sndti_token(sound_type,1);
+	return YM2610Read(info->chip,0);
 }
 
 READ16_HANDLER( YM2610_status_port_1_A_lsb_r ) {
-	return YM2610Read(1,0);
+	struct ym2610_info *info = sndti_token(sound_type,1);
+	return YM2610Read(info->chip,0);
 }
 
 READ8_HANDLER( YM2610_status_port_1_B_r ) {
-	return YM2610Read(1,2);
+	struct ym2610_info *info = sndti_token(sound_type,1);
+	return YM2610Read(info->chip,2);
 }
 
 READ16_HANDLER( YM2610_status_port_1_B_lsb_r ) {
-	return YM2610Read(1,2);
+	struct ym2610_info *info = sndti_token(sound_type,1);
+	return YM2610Read(info->chip,2);
 }
 
 /************************************************/
 /* Port Read for YM2610 - Chip 0				*/
 /************************************************/
 READ8_HANDLER( YM2610_read_port_0_r ){
-	return YM2610Read(0,1);
+	struct ym2610_info *info = sndti_token(sound_type,0);
+	return YM2610Read(info->chip,1);
 }
 
 READ16_HANDLER( YM2610_read_port_0_lsb_r ){
-	return YM2610Read(0,1);
+	struct ym2610_info *info = sndti_token(sound_type,0);
+	return YM2610Read(info->chip,1);
 }
 
 /************************************************/
 /* Port Read for YM2610 - Chip 1				*/
 /************************************************/
 READ8_HANDLER( YM2610_read_port_1_r ){
-	return YM2610Read(1,1);
+	struct ym2610_info *info = sndti_token(sound_type,1);
+	return YM2610Read(info->chip,1);
 }
 
 READ16_HANDLER( YM2610_read_port_1_lsb_r ){
-	return YM2610Read(1,1);
+	struct ym2610_info *info = sndti_token(sound_type,1);
+	return YM2610Read(info->chip,1);
 }
 
 /************************************************/
@@ -269,7 +302,8 @@ READ16_HANDLER( YM2610_read_port_1_lsb_r ){
 WRITE8_HANDLER( YM2610_control_port_0_A_w )
 {
 //logerror("PC %04x: 2610 Reg A %02X",activecpu_get_pc(),data);
-	YM2610Write(0,0,data);
+	struct ym2610_info *info = sndti_token(sound_type,0);
+	YM2610Write(info->chip,0,data);
 }
 
 WRITE16_HANDLER( YM2610_control_port_0_A_lsb_w )
@@ -277,14 +311,16 @@ WRITE16_HANDLER( YM2610_control_port_0_A_lsb_w )
 //logerror("PC %04x: 2610 Reg A %02X",activecpu_get_pc(),data);
 	if (ACCESSING_LSB)
 	{
-		YM2610Write(0,0,data);
+		struct ym2610_info *info = sndti_token(sound_type,0);
+		YM2610Write(info->chip,0,data);
 	}
 }
 
 WRITE8_HANDLER( YM2610_control_port_0_B_w )
 {
 //logerror("PC %04x: 2610 Reg B %02X",activecpu_get_pc(),data);
-	YM2610Write(0,2,data);
+	struct ym2610_info *info = sndti_token(sound_type,0);
+	YM2610Write(info->chip,2,data);
 }
 
 WRITE16_HANDLER( YM2610_control_port_0_B_lsb_w )
@@ -292,7 +328,8 @@ WRITE16_HANDLER( YM2610_control_port_0_B_lsb_w )
 //logerror("PC %04x: 2610 Reg B %02X",activecpu_get_pc(),data);
 	if (ACCESSING_LSB)
 	{
-		YM2610Write(0,2,data);
+		struct ym2610_info *info = sndti_token(sound_type,0);
+		YM2610Write(info->chip,2,data);
 	}
 }
 
@@ -301,24 +338,28 @@ WRITE16_HANDLER( YM2610_control_port_0_B_lsb_w )
 /* Consists of 2 addresses						*/
 /************************************************/
 WRITE8_HANDLER( YM2610_control_port_1_A_w ){
-	YM2610Write(1,0,data);
+	struct ym2610_info *info = sndti_token(sound_type,1);
+	YM2610Write(info->chip,0,data);
 }
 
 WRITE16_HANDLER( YM2610_control_port_1_A_lsb_w ){
 	if (ACCESSING_LSB)
 	{
-		YM2610Write(1,0,data);
+		struct ym2610_info *info = sndti_token(sound_type,1);
+		YM2610Write(info->chip,0,data);
 	}
 }
 
 WRITE8_HANDLER( YM2610_control_port_1_B_w ){
-	YM2610Write(1,2,data);
+	struct ym2610_info *info = sndti_token(sound_type,1);
+	YM2610Write(info->chip,2,data);
 }
 
 WRITE16_HANDLER( YM2610_control_port_1_B_lsb_w ){
 	if (ACCESSING_LSB)
 	{
-		YM2610Write(1,2,data);
+		struct ym2610_info *info = sndti_token(sound_type,1);
+		YM2610Write(info->chip,2,data);
 	}
 }
 
@@ -329,7 +370,8 @@ WRITE16_HANDLER( YM2610_control_port_1_B_lsb_w ){
 WRITE8_HANDLER( YM2610_data_port_0_A_w )
 {
 //logerror(" =%02X\n",data);
-	YM2610Write(0,1,data);
+	struct ym2610_info *info = sndti_token(sound_type,0);
+	YM2610Write(info->chip,1,data);
 }
 
 WRITE16_HANDLER( YM2610_data_port_0_A_lsb_w )
@@ -337,14 +379,16 @@ WRITE16_HANDLER( YM2610_data_port_0_A_lsb_w )
 //logerror(" =%02X\n",data);
 	if (ACCESSING_LSB)
 	{
-		YM2610Write(0,1,data);
+		struct ym2610_info *info = sndti_token(sound_type,0);
+		YM2610Write(info->chip,1,data);
 	}
 }
 
 WRITE8_HANDLER( YM2610_data_port_0_B_w )
 {
 //logerror(" =%02X\n",data);
-	YM2610Write(0,3,data);
+	struct ym2610_info *info = sndti_token(sound_type,0);
+	YM2610Write(info->chip,3,data);
 }
 
 WRITE16_HANDLER( YM2610_data_port_0_B_lsb_w )
@@ -352,7 +396,8 @@ WRITE16_HANDLER( YM2610_data_port_0_B_lsb_w )
 //logerror(" =%02X\n",data);
 	if (ACCESSING_LSB)
 	{
-		YM2610Write(0,3,data);
+		struct ym2610_info *info = sndti_token(sound_type,0);
+		YM2610Write(info->chip,3,data);
 	}
 }
 
@@ -361,27 +406,101 @@ WRITE16_HANDLER( YM2610_data_port_0_B_lsb_w )
 /* Consists of 2 addresses						*/
 /************************************************/
 WRITE8_HANDLER( YM2610_data_port_1_A_w ){
-	YM2610Write(1,1,data);
+	struct ym2610_info *info = sndti_token(sound_type,1);
+	YM2610Write(info->chip,1,data);
 }
 
 WRITE16_HANDLER( YM2610_data_port_1_A_lsb_w ){
 	if (ACCESSING_LSB)
 	{
-		YM2610Write(1,1,data);
+		struct ym2610_info *info = sndti_token(sound_type,1);
+		YM2610Write(info->chip,1,data);
 	}
 }
 
 WRITE8_HANDLER( YM2610_data_port_1_B_w ){
-	YM2610Write(1,3,data);
+	struct ym2610_info *info = sndti_token(sound_type,1);
+	YM2610Write(info->chip,3,data);
 }
 
 WRITE16_HANDLER( YM2610_data_port_1_B_lsb_w ){
 	if (ACCESSING_LSB)
 	{
-		YM2610Write(1,3,data);
+		struct ym2610_info *info = sndti_token(sound_type,1);
+		YM2610Write(info->chip,3,data);
 	}
 }
 
 /**************** end of file ****************/
+
+
+/**************************************************************************
+ * Generic get_info
+ **************************************************************************/
+
+static void ym2610_set_info(void *token, UINT32 state, union sndinfo *info)
+{
+	switch (state)
+	{
+		/* no parameters to set */
+	}
+}
+
+
+void ym2610_get_info(void *token, UINT32 state, union sndinfo *info)
+{
+	switch (state)
+	{
+		/* --- the following bits of info are returned as 64-bit signed integers --- */
+
+		/* --- the following bits of info are returned as pointers to data or functions --- */
+		case SNDINFO_PTR_SET_INFO:						info->set_info = ym2610_set_info;		break;
+		case SNDINFO_PTR_START:							info->start = ym2610_start;				break;
+		case SNDINFO_PTR_STOP:							info->stop = ym2610_stop;				break;
+		case SNDINFO_PTR_RESET:							info->reset = ym2610_reset;				break;
+
+		/* --- the following bits of info are returned as NULL-terminated strings --- */
+		case SNDINFO_STR_NAME:							info->s = "YM2610";						break;
+		case SNDINFO_STR_CORE_FAMILY:					info->s = "Yamaha FM";					break;
+		case SNDINFO_STR_CORE_VERSION:					info->s = "1.0";						break;
+		case SNDINFO_STR_CORE_FILE:						info->s = __FILE__;						break;
+		case SNDINFO_STR_CORE_CREDITS:					info->s = "Copyright (c) 2004, The MAME Team"; break;
+	}
+}
+
+
+/**************************************************************************
+ * Generic get_info
+ **************************************************************************/
+
+static void ym2610b_set_info(void *token, UINT32 state, union sndinfo *info)
+{
+	switch (state)
+	{
+		/* no parameters to set */
+	}
+}
+
+
+void ym2610b_get_info(void *token, UINT32 state, union sndinfo *info)
+{
+	switch (state)
+	{
+		/* --- the following bits of info are returned as 64-bit signed integers --- */
+
+		/* --- the following bits of info are returned as pointers to data or functions --- */
+		case SNDINFO_PTR_SET_INFO:						info->set_info = ym2610b_set_info;		break;
+		case SNDINFO_PTR_START:							info->start = ym2610b_start;			break;
+		case SNDINFO_PTR_STOP:							info->stop = ym2610_stop;				break;
+		case SNDINFO_PTR_RESET:							info->reset = ym2610_reset;				break;
+
+		/* --- the following bits of info are returned as NULL-terminated strings --- */
+		case SNDINFO_STR_NAME:							info->s = "YM2610B";					break;
+		case SNDINFO_STR_CORE_FAMILY:					info->s = "Yamaha FM";					break;
+		case SNDINFO_STR_CORE_VERSION:					info->s = "1.0";						break;
+		case SNDINFO_STR_CORE_FILE:						info->s = __FILE__;						break;
+		case SNDINFO_STR_CORE_CREDITS:					info->s = "Copyright (c) 2004, The MAME Team"; break;
+	}
+}
 
 #endif

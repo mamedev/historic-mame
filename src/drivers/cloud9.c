@@ -60,6 +60,7 @@
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "sound/pokey.h"
 #include "cloud9.h"
 
 
@@ -217,22 +218,16 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
  *
  *************************************/
 
-static struct POKEYinterface pokey_interface =
+static struct POKEYinterface pokey_interface_1 =
 {
-	2,	/* 2 chips */
-	1500000,	/* 1.5 MHz??? */
-	{ 50, 50 },
-	/* The 8 pot handlers */
-	{ 0, 0 },
-	{ 0, 0 },
-	{ 0, 0 },
-	{ 0, 0 },
-	{ 0, 0 },
-	{ 0, 0 },
-	{ 0, 0 },
-	{ 0, 0 },
-	/* The allpot handler */
-	{ input_port_4_r, input_port_5_r },
+	{ 0 },
+	input_port_4_r
+};
+
+static struct POKEYinterface pokey_interface_2 =
+{
+	{ 0 },
+	input_port_5_r
 };
 
 
@@ -266,7 +261,15 @@ static MACHINE_DRIVER_START( cloud9 )
 	MDRV_VIDEO_UPDATE(cloud9)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(POKEY, pokey_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(POKEY, 1500000)
+	MDRV_SOUND_CONFIG(pokey_interface_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
+
+	MDRV_SOUND_ADD(POKEY, 1500000)
+	MDRV_SOUND_CONFIG(pokey_interface_2)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
 MACHINE_DRIVER_END
 
 /*************************************

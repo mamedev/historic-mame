@@ -34,6 +34,7 @@ EEPROM chip: 93C46
 #include "machine/eeprom.h"
 #include "vidhrdw/generic.h"
 #include "cpu/m68000/m68000.h"
+#include "sound/saa1099.h"
 
 
 extern WRITE16_HANDLER(xorworld_videoram16_w);
@@ -193,13 +194,6 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 };
 
 
-static struct SAA1099_interface	saa1099_interface = 
-{
-	1,					/* number of chips */
-	{ { 100, 100 } }	/* volume (left, right) */
-};
-
-
 static INTERRUPT_GEN( xorworld_interrupt )
 {
 	if (cpu_getiloops() == 0)
@@ -238,7 +232,9 @@ static MACHINE_DRIVER_START( xorworld )
 	MDRV_VIDEO_UPDATE(xorworld)
 
 	// sound hardware
-	MDRV_SOUND_ADD(SAA1099, saa1099_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	MDRV_SOUND_ADD(SAA1099, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 

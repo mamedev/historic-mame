@@ -119,6 +119,7 @@ interrupts:
 #include "driver.h"
 #include "kangaroo.h"
 #include "cpu/z80/z80.h"
+#include "sound/ay8910.h"
 
 
 
@@ -386,25 +387,6 @@ INPUT_PORTS_END
 
 /*************************************
  *
- *	Sound definitions
- *
- *************************************/
-
-static struct AY8910interface ay8910_interface =
-{
-	1,  /* 1 chip */
-	10000000/8,     /* 1.25 MHz */
-	{ 50 },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ 0 }
-};
-
-
-
-/*************************************
- *
  *	Machine driver
  *
  *************************************/
@@ -438,7 +420,9 @@ static MACHINE_DRIVER_START( kangaroo )
 	MDRV_VIDEO_UPDATE(kangaroo)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(AY8910, ay8910_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	MDRV_SOUND_ADD(AY8910, 10000000/8)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
 MACHINE_DRIVER_END
 
 

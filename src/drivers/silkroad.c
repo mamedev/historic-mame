@@ -1,4 +1,6 @@
 #include "driver.h"
+#include "sound/2151intf.h"
+#include "sound/okim6295.h"
 
 /* The Legend of Silk Road - Unico 1999 */
 
@@ -377,21 +379,6 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 	{ -1 }
 };
 
-static struct YM2151interface ym2151_interface =
-{
-	1,
-	3579545,/* unknown, fixme */
-	{ YM3012_VOL(100,MIXER_PAN_LEFT,100,MIXER_PAN_RIGHT) },
-};
-
-static struct OKIM6295interface m6295_interface =
-{
-	2,  /* 2 chips */
-	{ 8000, 16000 }, /* unknown, but sounds good */
-	{ REGION_SOUND1, REGION_SOUND2 },
-	{ 45,45 }
-};
-
 static MACHINE_DRIVER_START( silkroad )
 
 	/* basic machine hardware */
@@ -413,9 +400,21 @@ static MACHINE_DRIVER_START( silkroad )
 	MDRV_VIDEO_UPDATE(silkroad)
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(YM2151, ym2151_interface)
-	MDRV_SOUND_ADD(OKIM6295, m6295_interface)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(YM2151, 3579545)
+	MDRV_SOUND_ROUTE(0, "left", 1.0)
+	MDRV_SOUND_ROUTE(1, "right", 1.0)
+
+	MDRV_SOUND_ADD(OKIM6295, 8000)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.45)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 0.45)
+
+	MDRV_SOUND_ADD(OKIM6295, 16000)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_2)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.45)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 0.45)
 MACHINE_DRIVER_END
 
 

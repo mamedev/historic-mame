@@ -35,9 +35,10 @@
 #ifndef TIASOUND_H
 #define TIASOUND_H
 
-void tia_sound_init(int clock, int sample_rate, int gain);
-void tia_process (int param, INT16 *buffer, int length);
-WRITE8_HANDLER( tia_sound_w );
+void *tia_sound_init(int clock, int sample_rate, int gain);
+void tia_sound_free(void *chip);
+void tia_process (void *chip, stream_sample_t *buffer, int length);
+void tia_write(void *chip, offs_t offset, data8_t data);
 
 #endif	/* TIASOUND_H */
 

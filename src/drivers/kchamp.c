@@ -64,6 +64,9 @@ IO ports and memory map changes. Dip switches differ too.
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "cpu/z80/z80.h"
+#include "sound/ay8910.h"
+#include "sound/dac.h"
+#include "sound/msm5205.h"
 
 
 /* from vidhrdw */
@@ -412,24 +415,10 @@ static void msmint( int data ) {
 	}
 }
 
-static struct AY8910interface ay8910_interface =
-{
-	2, /* 2 chips */
-	1500000,			/* 12 MHz / 8 = 1.5 MHz */
-	{ 30, 30 },			// Modified by T.Nogi 1999/11/08
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ 0 }
-};
-
 static struct MSM5205interface msm_interface =
 {
-	1,				/* 1 chip */
-	375000,				/* 12MHz / 16 / 2 */
-	{ msmint },			/* interrupt function */
-	{ MSM5205_S96_4B },		/* 1 / 96 = 3906.25Hz playback */
-	{ 100 }
+	msmint,			/* interrupt function */
+	MSM5205_S96_4B	/* 1 / 96 = 3906.25Hz playback */
 };
 
 /********************
@@ -441,12 +430,6 @@ static INTERRUPT_GEN( sound_int ) {
 	if ( sound_nmi_enable )
 		cpunum_set_input_line(1, INPUT_LINE_NMI, PULSE_LINE);
 }
-
-static struct DACinterface dac_interface =
-{
-	1,
-	{ 50 }
-};
 
 
 static MACHINE_DRIVER_START( kchampvs )
@@ -479,8 +462,17 @@ static MACHINE_DRIVER_START( kchampvs )
 	MDRV_VIDEO_UPDATE(kchampvs)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(AY8910, ay8910_interface)
-	MDRV_SOUND_ADD(MSM5205, msm_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	
+	MDRV_SOUND_ADD(AY8910, 1500000)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.30)
+	
+	MDRV_SOUND_ADD(AY8910, 1500000)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.30)
+
+	MDRV_SOUND_ADD(MSM5205, 375000)
+	MDRV_SOUND_CONFIG(msm_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 /********************
@@ -518,8 +510,16 @@ static MACHINE_DRIVER_START( kchamp )
 	MDRV_VIDEO_UPDATE(kchamp)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(AY8910, ay8910_interface)
-	MDRV_SOUND_ADD(DAC, dac_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	
+	MDRV_SOUND_ADD(AY8910, 1500000)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.30)
+	
+	MDRV_SOUND_ADD(AY8910, 1500000)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.30)
+
+	MDRV_SOUND_ADD(DAC, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
 MACHINE_DRIVER_END
 
 

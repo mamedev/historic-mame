@@ -136,6 +136,7 @@ Note:	if MAME_DEBUG is defined, pressing Z with:
 ***************************************************************************/
 
 #include "vidhrdw/generic.h"
+#include "sound/x1_010.h"
 #include "seta.h"
 
 /* Variables only used here */

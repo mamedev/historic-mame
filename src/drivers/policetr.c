@@ -9,7 +9,6 @@
 		* Sharpshooter
 
 	Known bugs:
-		* perspective on the floor in some levels is not drawn correctly
 		* flip screen not supported
 
 Note:	Police Trainer v1.3B is on the same revision PCB as Sharpshooter - Rev 0.5B
@@ -64,6 +63,7 @@ Note #3: Bt481A 256-Word Color Palette 15, 16 & 24-bit Color Power-Down RAMDAC
 #include "cpu/mips/r3000.h"
 #include "machine/eeprom.h"
 #include "policetr.h"
+#include "sound/bsmt2000.h"
 
 
 /* constants */
@@ -403,11 +403,8 @@ INPUT_PORTS_END
 
 static struct BSMT2000interface bsmt2000_interface =
 {
-	1,
-	{ MASTER_CLOCK/2 },
-	{ 11 },
-	{ REGION_SOUND1 },
-	{ 100 }
+	11,
+	REGION_SOUND1
 };
 
 
@@ -449,8 +446,12 @@ MACHINE_DRIVER_START( policetr )
 	MDRV_VIDEO_UPDATE(policetr)
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(BSMT2000, bsmt2000_interface)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+	
+	MDRV_SOUND_ADD(BSMT2000, MASTER_CLOCK/2)
+	MDRV_SOUND_CONFIG(bsmt2000_interface)
+	MDRV_SOUND_ROUTE(0, "left", 1.0)
+	MDRV_SOUND_ROUTE(1, "right", 1.0)
 MACHINE_DRIVER_END
 
 

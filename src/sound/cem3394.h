@@ -1,16 +1,13 @@
 #ifndef cem3394_h
 #define cem3394_h
 
-#define MAX_CEM3394 6
 
 /* interface */
 struct cem3394_interface
 {
-	int numchips;									/* number of chips */
-	int volume[MAX_CEM3394];						/* playback volume */
-	double vco_zero_freq[MAX_CEM3394];				/* frequency at 0V for VCO */
-	double filter_zero_freq[MAX_CEM3394];			/* frequency at 0V for filter */
-	void (*external[MAX_CEM3394])(int, int, short *);/* external input source (at Machine->sample_rate) */
+	double vco_zero_freq;				/* frequency at 0V for VCO */
+	double filter_zero_freq;			/* frequency at 0V for filter */
+	void (*external)(int, int, short *);/* external input source (at Machine->sample_rate) */
 };
 
 /* inputs */
@@ -25,9 +22,6 @@ enum
 	CEM3394_FILTER_FREQENCY,
 	CEM3394_FINAL_GAIN
 };
-
-int cem3394_sh_start(const struct MachineSound *msound);
-void cem3394_sh_stop(void);
 
 /* set the voltage going to a particular parameter */
 void cem3394_set_voltage(int chip, int input, double voltage);

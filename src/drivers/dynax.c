@@ -71,7 +71,11 @@ TODO:
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "includes/dynax.h"
-
+#include "sound/ay8910.h"
+#include "sound/2203intf.h"
+#include "sound/3812intf.h"
+#include "sound/msm5205.h"
+#include "sound/2413intf.h"
 
 /***************************************************************************
 
@@ -2189,8 +2193,8 @@ INPUT_PORTS_START( mjelct3 )
 	PORT_BIT(0x02, IP_ACTIVE_LOW, IPT_MAHJONG_SCORE )
 	PORT_BIT(0x04, IP_ACTIVE_LOW, IPT_MAHJONG_DOUBLE_UP )
 	PORT_BIT(0x08, IP_ACTIVE_LOW, IPT_MAHJONG_FLIP_FLOP )
-	PORT_BIT(0x10, IP_ACTIVE_LOW, IPT_OTHER ) PORT_NAME("P1 Mahjong Big") PORT_CODE(KEYCODE_ENTER)//Not in the common list
-	PORT_BIT(0x20, IP_ACTIVE_LOW, IPT_OTHER ) PORT_NAME("P1 Mahjong Small") PORT_CODE(KEYCODE_BACKSPACE)//Not in the common list
+	PORT_BIT(0x10, IP_ACTIVE_LOW, IPT_MAHJONG_BIG )
+	PORT_BIT(0x20, IP_ACTIVE_LOW, IPT_MAHJONG_SMALL )
 
 	PORT_START_TAG("DSW3")	// 7c22 (select = 80)
 	PORT_DIPNAME( 0x07, 0x07, "YAKUMAN Bonus" )
@@ -2322,8 +2326,8 @@ INPUT_PORTS_START( mjelctrn )
 	PORT_BIT(0x02, IP_ACTIVE_LOW, IPT_MAHJONG_SCORE )
 	PORT_BIT(0x04, IP_ACTIVE_LOW, IPT_MAHJONG_DOUBLE_UP )
 	PORT_BIT(0x08, IP_ACTIVE_LOW, IPT_MAHJONG_FLIP_FLOP )
-	PORT_BIT(0x10, IP_ACTIVE_LOW, IPT_OTHER ) PORT_NAME("P1 Mahjong Big") PORT_CODE(KEYCODE_ENTER)//Not in the common list
-	PORT_BIT(0x20, IP_ACTIVE_LOW, IPT_OTHER ) PORT_NAME("P1 Mahjong Small") PORT_CODE(KEYCODE_BACKSPACE)//Not in the common list
+	PORT_BIT(0x10, IP_ACTIVE_LOW, IPT_MAHJONG_BIG )
+	PORT_BIT(0x20, IP_ACTIVE_LOW, IPT_MAHJONG_SMALL )
 
 	PORT_START_TAG("DSW3") // 7c22 (select = 80)
 	PORT_DIPNAME( 0x07, 0x07, "YAKUMAN Bonus" )
@@ -2459,36 +2463,19 @@ INPUT_PORTS_END
 								Hana no Mai
 ***************************************************************************/
 
-static struct AY8910interface hanamai_ay8910_interface =
-{
-	1,			/* 1 chip */
-	22000000 / 8,	/* 2.75MHz ??? */
-	{ 20 },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ 0 }
-};
-
 static struct YM2203interface hanamai_ym2203_interface =
 {
-	1,
-	22000000 / 8,					/* 2.75MHz */
-	{ YM2203_VOL(50,20) },
-	{ input_port_1_r },				/* Port A Read: DSW */
-	{ input_port_0_r },				/* Port B Read: DSW */
-	{ 0 },							/* Port A Write */
-	{ 0 },							/* Port B Write */
-	{ sprtmtch_sound_callback },	/* IRQ handler */
+	input_port_1_r,				/* Port A Read: DSW */
+	input_port_0_r,				/* Port B Read: DSW */
+	0,							/* Port A Write */
+	0,							/* Port B Write */
+	sprtmtch_sound_callback		/* IRQ handler */
 };
 
-struct MSM5205interface hanamai_msm5205_interface =
+static struct MSM5205interface hanamai_msm5205_interface =
 {
-	1,
-	384000,
-	{ adpcm_int },			/* IRQ handler */
-	{ MSM5205_S48_4B },		/* 8 KHz, 4 Bits  */
-	{ 100 }
+	adpcm_int,			/* IRQ handler */
+	MSM5205_S48_4B		/* 8 KHz, 4 Bits  */
 };
 
 
@@ -2518,9 +2505,21 @@ static MACHINE_DRIVER_START( hanamai )
 	MDRV_VIDEO_UPDATE(hanamai)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(AY8910, hanamai_ay8910_interface)
-	MDRV_SOUND_ADD(YM2203, hanamai_ym2203_interface)
-	MDRV_SOUND_ADD(MSM5205, hanamai_msm5205_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	
+	MDRV_SOUND_ADD(AY8910, 22000000 / 8)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.20)
+
+	MDRV_SOUND_ADD(YM2203, 22000000 / 8)
+	MDRV_SOUND_CONFIG(hanamai_ym2203_interface)
+	MDRV_SOUND_ROUTE(0, "mono", 0.20)
+	MDRV_SOUND_ROUTE(1, "mono", 0.20)
+	MDRV_SOUND_ROUTE(2, "mono", 0.20)
+	MDRV_SOUND_ROUTE(3, "mono", 0.50)
+
+	MDRV_SOUND_ADD(MSM5205, 384000)
+	MDRV_SOUND_CONFIG(hanamai_msm5205_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 
@@ -2531,20 +2530,7 @@ MACHINE_DRIVER_END
 
 static struct AY8910interface hnoridur_ay8910_interface =
 {
-	1,			/* 1 chip */
-	22000000 / 8,	/* 2.75MHz ??? */
-	{ 20 },
-	{ input_port_0_r },		/* Port A Read: DSW */
-	{ 0 },
-	{ 0 },
-	{ 0 }
-};
-
-static struct YM2413interface hnoridur_ym2413_interface=
-{
-	1,	/* 1 chip */
-	3580000,	/* 3.58 MHz */
-	{ YM2413_VOL(100,MIXER_PAN_CENTER,100,MIXER_PAN_CENTER) }
+	input_port_0_r		/* Port A Read: DSW */
 };
 
 static MACHINE_DRIVER_START( hnoridur )
@@ -2571,9 +2557,18 @@ static MACHINE_DRIVER_START( hnoridur )
 	MDRV_VIDEO_UPDATE(hnoridur)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(AY8910, hnoridur_ay8910_interface)
-	MDRV_SOUND_ADD(YM2413, hnoridur_ym2413_interface)
-	MDRV_SOUND_ADD(MSM5205, hanamai_msm5205_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(AY8910, 22000000 / 8)
+	MDRV_SOUND_CONFIG(hnoridur_ay8910_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.20)
+
+	MDRV_SOUND_ADD(YM2413, 3580000)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
+
+	MDRV_SOUND_ADD(MSM5205, 384000)
+	MDRV_SOUND_CONFIG(hanamai_msm5205_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 
@@ -2583,14 +2578,11 @@ MACHINE_DRIVER_END
 
 static struct YM2203interface sprtmtch_ym2203_interface =
 {
-	1,
-	22000000 / 8,					/* 2.75MHz */
-	{ YM2203_VOL(100,20) },
-	{ input_port_3_r },				/* Port A Read: DSW */
-	{ input_port_4_r },				/* Port B Read: DSW */
-	{ 0 },							/* Port A Write */
-	{ 0 },							/* Port B Write */
-	{ sprtmtch_sound_callback },	/* IRQ handler */
+	input_port_3_r,				/* Port A Read: DSW */
+	input_port_4_r,				/* Port B Read: DSW */
+	0,							/* Port A Write */
+	0,							/* Port B Write */
+	sprtmtch_sound_callback,	/* IRQ handler */
 };
 
 static MACHINE_DRIVER_START( sprtmtch )
@@ -2617,20 +2609,20 @@ static MACHINE_DRIVER_START( sprtmtch )
 	MDRV_VIDEO_UPDATE(sprtmtch)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM2203, sprtmtch_ym2203_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM2203, 22000000 / 8)
+	MDRV_SOUND_CONFIG(sprtmtch_ym2203_interface)
+	MDRV_SOUND_ROUTE(0, "mono", 0.20)
+	MDRV_SOUND_ROUTE(1, "mono", 0.20)
+	MDRV_SOUND_ROUTE(2, "mono", 0.20)
+	MDRV_SOUND_ROUTE(3, "mono", 1.0)
 MACHINE_DRIVER_END
 
 
 /***************************************************************************
 							Mahjong Friday
 ***************************************************************************/
-
-static struct YM2413interface mjfriday_ym2413_interface=
-{
-	1,	/* 1 chip */
-	24000000/6,	/* ???? */
-	{ YM2413_VOL(100,MIXER_PAN_CENTER,100,MIXER_PAN_CENTER) }
-};
 
 static MACHINE_DRIVER_START( mjfriday )
 
@@ -2656,7 +2648,10 @@ static MACHINE_DRIVER_START( mjfriday )
 	MDRV_VIDEO_UPDATE(mjdialq2)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM2413, mjfriday_ym2413_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM2413, 24000000/6)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 
@@ -2750,23 +2745,17 @@ MACHINE_DRIVER_END
 
 static struct YM2203interface jantouki_ym2203_interface =
 {
-	1,
-	22000000 / 8,					/* 2.75MHz */
-	{ YM2203_VOL(50,20) },
-	{ 0 },							/* Port A Read: DSW */
-	{ 0 },							/* Port B Read: DSW */
-	{ 0 },							/* Port A Write */
-	{ 0 },							/* Port B Write */
-	{ jantouki_sound_callback },	/* IRQ handler */
+	0,							/* Port A Read: DSW */
+	0,							/* Port B Read: DSW */
+	0,							/* Port A Write */
+	0,							/* Port B Write */
+	jantouki_sound_callback		/* IRQ handler */
 };
 
-struct MSM5205interface jantouki_msm5205_interface =
+static struct MSM5205interface jantouki_msm5205_interface =
 {
-	1,
-	384000,
-	{ adpcm_int_cpu1 },			/* IRQ handler */
-	{ MSM5205_S48_4B },		/* 8 KHz, 4 Bits  */
-	{ 100 }
+	adpcm_int_cpu1,			/* IRQ handler */
+	MSM5205_S48_4B		/* 8 KHz, 4 Bits  */
 };
 
 static MACHINE_DRIVER_START( jantouki )
@@ -2800,9 +2789,21 @@ static MACHINE_DRIVER_START( jantouki )
 	MDRV_VIDEO_UPDATE(jantouki)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(AY8910,  hanamai_ay8910_interface)
-	MDRV_SOUND_ADD(YM2203,  jantouki_ym2203_interface)
-	MDRV_SOUND_ADD(MSM5205, jantouki_msm5205_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(AY8910, 22000000 / 8)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.20)
+
+	MDRV_SOUND_ADD(YM2203, 22000000 / 8)
+	MDRV_SOUND_CONFIG(jantouki_ym2203_interface)
+	MDRV_SOUND_ROUTE(0, "mono", 0.20)
+	MDRV_SOUND_ROUTE(1, "mono", 0.20)
+	MDRV_SOUND_ROUTE(2, "mono", 0.20)
+	MDRV_SOUND_ROUTE(3, "mono", 0.50)
+
+	MDRV_SOUND_ADD(MSM5205, 384000)
+	MDRV_SOUND_CONFIG(jantouki_msm5205_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 

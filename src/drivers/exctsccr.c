@@ -26,6 +26,8 @@ based on wich Coin input was connected.
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "sound/ay8910.h"
+#include "sound/dac.h"
 
 /* from vidhrdw */
 extern WRITE8_HANDLER( exctsccr_videoram_w );
@@ -293,46 +295,6 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 	{ -1 } /* end of array */
 };
 
-/***************************************************************************
-
-	Sound interface(s)
-
-***************************************************************************/
-
-static struct AY8910interface ay8910_interface =
-{
-	4,	/* 4 chips */
-	1500000,	/* 1.5 MHz ? */
-	{ 15, 15, 15, 15 }, /* volume */
-	{ 0, 0, 0, 0 },
-	{ 0, 0, 0, 0 },
-	{ 0, 0, 0, 0 }, /* it writes 0s thru port A, no clue what for */
-	{ 0, 0, 0, 0 }
-};
-
-static struct DACinterface dac_interface =
-{
-	2,
-	{ 50, 50 }
-};
-
-/* Bootleg */
-static struct AY8910interface bl_ay8910_interface =
-{
-	1,	/* 1 chip */
-	1500000,	/* 1.5 MHz ? */
-	{ 50 }, /* volume */
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ 0 }
-};
-
-static struct DACinterface bl_dac_interface =
-{
-	1,
-	{ 100 }
-};
 
 /***************************************************************************
 
@@ -368,8 +330,25 @@ static MACHINE_DRIVER_START( exctsccr )
 	MDRV_VIDEO_UPDATE(exctsccr)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(AY8910, ay8910_interface)
-	MDRV_SOUND_ADD(DAC, dac_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(AY8910, 1500000)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.15)
+
+	MDRV_SOUND_ADD(AY8910, 1500000)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.15)
+
+	MDRV_SOUND_ADD(AY8910, 1500000)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.15)
+
+	MDRV_SOUND_ADD(AY8910, 1500000)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.15)
+	
+	MDRV_SOUND_ADD(DAC, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
+
+	MDRV_SOUND_ADD(DAC, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
 MACHINE_DRIVER_END
 
 /* Bootleg */
@@ -399,8 +378,13 @@ static MACHINE_DRIVER_START( exctsccb )
 	MDRV_VIDEO_UPDATE(exctsccr)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(AY8910, bl_ay8910_interface)
-	MDRV_SOUND_ADD(DAC, bl_dac_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	
+	MDRV_SOUND_ADD(AY8910, 1500000)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.15)
+
+	MDRV_SOUND_ADD(DAC, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 /***************************************************************************

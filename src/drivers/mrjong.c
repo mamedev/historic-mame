@@ -44,6 +44,7 @@ ROMs 6A, 7A, 8A, 9A: 2764
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "sound/sn76496.h"
 
 
 extern WRITE8_HANDLER( mrjong_videoram_w );
@@ -176,14 +177,6 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 };
 
 
-static struct SN76496interface sn76496_interface =
-{
-	2,				/* 2 chips (SN76489) */
-	{ 15468000/6, 15468000/6 },	/* 2.578 MHz */
-	{ 100, 100 }
-};
-
-
 static MACHINE_DRIVER_START( mrjong )
 
 	/* basic machine hardware */
@@ -208,7 +201,13 @@ static MACHINE_DRIVER_START( mrjong )
 	MDRV_VIDEO_UPDATE(mrjong)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(SN76496, sn76496_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(SN76496, 15468000/6)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
+
+	MDRV_SOUND_ADD(SN76496, 15468000/6)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 

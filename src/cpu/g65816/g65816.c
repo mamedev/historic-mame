@@ -262,13 +262,14 @@ static void g65816_set_context(void *src_context)
 /* Get the current Program Counter */
 static unsigned g65816_get_pc(void)
 {
-	return REGISTER_PC;
+	return REGISTER_PB | REGISTER_PC;
 }
 
 /* Set the Program Counter */
 static void g65816_set_pc(unsigned val)
 {
 	REGISTER_PC = MAKE_UINT_16(val);
+	REGISTER_PB = (val >> 16) & 0xFF;
 	g65816_jumping(REGISTER_PB | REGISTER_PC);
 }
 
@@ -320,9 +321,9 @@ static void g65816_set_irq_callback(int (*callback)(int))
 static unsigned g65816_dasm(char *buffer, unsigned pc)
 {
 #ifdef MAME_DEBUG
-	return g65816_disassemble(buffer, (pc&0xffff), REGISTER_PB>>16, FLAG_M, FLAG_X);
+	return g65816_disassemble(buffer, (pc & 0x00ffff), (pc & 0xff0000) >> 16, FLAG_M, FLAG_X);
 #else
-	sprintf(buffer, "$%02X", g65816_read_8_immediate(REGISTER_PB | (pc&0xffff)));
+	sprintf(buffer, "$%02X", g65816_read_8_immediate((pc & 0xff0000) | (pc & 0x00ffff)));
 	return 1;
 #endif
 }
@@ -412,7 +413,7 @@ void g65816_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_PC:							info->i = g65816_get_pc();				break;
 		case CPUINFO_INT_SP:							info->i = g65816_get_sp();				break;
 
-		case CPUINFO_INT_REGISTER + G65816_PC:			info->i = g65816_get_reg(G65816_PC);	break;
+		case CPUINFO_INT_REGISTER + G65816_PC:			info->i = g65816_get_pc();	break;
 		case CPUINFO_INT_REGISTER + G65816_S:			info->i = g65816_get_reg(G65816_S);		break;
 		case CPUINFO_INT_REGISTER + G65816_P:			info->i = g65816_get_reg(G65816_P);		break;
 		case CPUINFO_INT_REGISTER + G65816_A:			info->i = g65816_get_reg(G65816_A);		break;
@@ -460,7 +461,7 @@ void g65816_get_info(UINT32 state, union cpuinfo *info)
 				g65816i_cpu.flag_c & CFLAG_SET ? 'C':'.');
 			break;
 
-		case CPUINFO_STR_REGISTER + G65816_PC:			sprintf(info->s = cpuintrf_temp_str(), "PC:%04X", g65816i_cpu.pc); break;
+		case CPUINFO_STR_REGISTER + G65816_PC:			sprintf(info->s = cpuintrf_temp_str(), "PC:%06X", g65816_get_pc()); break;
 		case CPUINFO_STR_REGISTER + G65816_PB:			sprintf(info->s = cpuintrf_temp_str(), "PB:%02X", g65816i_cpu.pb>>16); break;
 		case CPUINFO_STR_REGISTER + G65816_DB:			sprintf(info->s = cpuintrf_temp_str(), "DB:%02X", g65816i_cpu.db>>16); break;
 		case CPUINFO_STR_REGISTER + G65816_D:			sprintf(info->s = cpuintrf_temp_str(), "D:%04X", g65816i_cpu.d); break;

@@ -9,12 +9,13 @@
 
 #include <math.h>
 #include "driver.h"
+#include "sound/custom.h"
 
 #define CLOCK_16H	(18432000/3/2/16)
 #define CLOCK_1V    (18432000/3/2/384)
 
 static INT16 *decay = NULL;
-static int channel;
+static sound_stream *channel;
 static int sound_latch = 0;
 static int music1_latch = 0;
 static int music2_latch = 0;
@@ -113,12 +114,13 @@ WRITE8_HANDLER( warpwarp_music2_w )
 
 }
 
-static void warpwarp_sound_update(int param, INT16 *buffer, int length)
+static void warpwarp_sound_update(void *param, stream_sample_t **inputs, stream_sample_t **outputs, int length)
 {
     static int vcarry = 0;
     static int vcount = 0;
     static int mcarry = 0;
 	static int mcount = 0;
+	stream_sample_t *buffer = outputs[0];
 
     while (length--)
     {
@@ -197,30 +199,18 @@ static void warpwarp_sound_update(int param, INT16 *buffer, int length)
     }
 }
 
-int warpwarp_sh_start(const struct MachineSound *msound)
+void *warpwarp_sh_start(int clock, const struct CustomSound_interface *config)
 {
 	int i;
 
 	decay = (INT16 *) auto_malloc(32768 * sizeof(INT16));
-	if( !decay )
-		return 1;
 
     for( i = 0; i < 0x8000; i++ )
 		decay[0x7fff-i] = (INT16) (0x7fff/exp(1.0*i/4096));
 
-	channel = stream_init("WarpWarp", 100, Machine->sample_rate, 0, warpwarp_sound_update);
+	channel = stream_create(0, 1, Machine->sample_rate, NULL, warpwarp_sound_update);
 
 	sound_volume_timer = timer_alloc(sound_volume_decay);
 	music_volume_timer = timer_alloc(music_volume_decay);
-    return 0;
+    return auto_malloc(1);
 }
-
-void warpwarp_sh_stop(void)
-{
-}
-
-void warpwarp_sh_update(void)
-{
-	stream_update(channel,0);
-}
-

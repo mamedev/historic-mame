@@ -22,6 +22,8 @@ Memory Overview:
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "cpu/z80/z80.h"
+#include "sound/2203intf.h"
+#include "sound/msm5205.h"
 
 
 extern WRITE16_HANDLER( tigeroad_videoram_w );
@@ -531,23 +533,13 @@ static void irqhandler(int irq)
 
 static struct YM2203interface ym2203_interface =
 {
-	2,          /* 2 chips */
-	3579545,    /* 3.579 MHz ? */
-	{ YM2203_VOL(25,25), YM2203_VOL(25,25) },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ irqhandler }
+	0,0,0,0,irqhandler
 };
 
 static struct MSM5205interface msm5205_interface =
 {
-	1,		/* 1 chip */
-	384000,	/* 384KHz ? */
-	{ 0 },	/* interrupt function */
-	{ MSM5205_SEX_4B },	/* 4KHz playback ?  */
-	{ 100 }
+	0,				/* interrupt function */
+	MSM5205_SEX_4B	/* 4KHz playback ?  */
 };
 
 
@@ -578,7 +570,14 @@ static MACHINE_DRIVER_START( tigeroad )
 	MDRV_VIDEO_UPDATE(tigeroad)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM2203, ym2203_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM2203, 3579545)
+	MDRV_SOUND_CONFIG(ym2203_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
+
+	MDRV_SOUND_ADD(YM2203, 3579545)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
 MACHINE_DRIVER_END
 
 
@@ -595,7 +594,9 @@ static MACHINE_DRIVER_START( toramich )
 	MDRV_CPU_PERIODIC_INT(irq0_line_hold,4000)	/* ? */
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(MSM5205, msm5205_interface)
+	MDRV_SOUND_ADD(MSM5205, 384000)
+	MDRV_SOUND_CONFIG(msm5205_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 

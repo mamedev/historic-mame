@@ -140,6 +140,8 @@ TODO:
 
 #include "driver.h"
 #include "machine/namcoio.h"
+#include "sound/namco52.h"
+#include "sound/namco54.h"
 
 #define VERBOSE 0
 

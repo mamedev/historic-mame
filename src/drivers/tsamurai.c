@@ -44,6 +44,8 @@ TODO:
 #include "driver.h"
 #include "cpu/z80/z80.h"
 #include "vidhrdw/generic.h"
+#include "sound/ay8910.h"
+#include "sound/dac.h"
 
 WRITE8_HANDLER( vsgongf_color_w );
 
@@ -62,29 +64,6 @@ extern unsigned char *tsamurai_videoram;
 
 extern VIDEO_START( vsgongf );
 extern VIDEO_UPDATE( vsgongf );
-
-static struct AY8910interface ay8910_interface =
-{
-	1, /* number of chips */
-	2000000, /* 2 MHz */
-	{ 10 },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ 0 }
-};
-
-static struct DACinterface dac_interface =
-{
-	2,			/* number of chips */
-	{ 20, 20 }
-};
-
-static struct DACinterface vsgongf_dac_interface =
-{
-	1,			/* number of chips */
-	{ 20 }
-};
 
 static int nmi_enabled;
 static int sound_command1, sound_command2, sound_command3;
@@ -795,8 +774,16 @@ static MACHINE_DRIVER_START( tsamurai )
 	MDRV_VIDEO_UPDATE(tsamurai)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(AY8910, ay8910_interface)
-	MDRV_SOUND_ADD(DAC, dac_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	
+	MDRV_SOUND_ADD(AY8910, 2000000)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.10)
+
+	MDRV_SOUND_ADD(DAC, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.20)
+
+	MDRV_SOUND_ADD(DAC, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.20)
 MACHINE_DRIVER_END
 
 
@@ -837,8 +824,16 @@ static MACHINE_DRIVER_START( m660 )
 	MDRV_VIDEO_UPDATE(tsamurai)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(AY8910, ay8910_interface)
-	MDRV_SOUND_ADD(DAC, dac_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	
+	MDRV_SOUND_ADD(AY8910, 2000000)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.10)
+
+	MDRV_SOUND_ADD(DAC, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.20)
+
+	MDRV_SOUND_ADD(DAC, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.20)
 MACHINE_DRIVER_END
 
 
@@ -869,8 +864,13 @@ static MACHINE_DRIVER_START( vsgongf )
 	MDRV_VIDEO_UPDATE(vsgongf)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(AY8910, ay8910_interface)
-	MDRV_SOUND_ADD(DAC, vsgongf_dac_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	
+	MDRV_SOUND_ADD(AY8910, 2000000)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.10)
+
+	MDRV_SOUND_ADD(DAC, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.20)
 MACHINE_DRIVER_END
 
 /*******************************************************************************/

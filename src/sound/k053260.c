@@ -27,24 +27,21 @@ struct K053260_channel_def {
 	int					ppcm_data;
 };
 struct K053260_chip_def {
-	int								channel;
+	sound_stream *					channel;
 	int								mode;
 	int								regs[0x30];
 	unsigned char					*rom;
 	int								rom_size;
 	unsigned long					*delta_table;
 	struct K053260_channel_def		channels[4];
+	const struct K053260_interface	*intf;
 };
 
-static struct K053260_chip_def *K053260_chip;
 
-/* local copy of the interface */
-static const struct K053260_interface	*intf;
-
-static void InitDeltaTable( int chip ) {
+static void InitDeltaTable( struct K053260_chip_def *ic, int clock ) {
 	int		i;
 	double	base = ( double )Machine->sample_rate;
-	double	max = (double)( intf->clock[chip] ); /* Hz */
+	double	max = (double)(clock); /* Hz */
 	unsigned long val;
 
 	for( i = 0; i < 0x1000; i++ ) {
@@ -60,25 +57,26 @@ static void InitDeltaTable( int chip ) {
 		} else
 			val = 1;
 
-		K053260_chip[chip].delta_table[i] = val;
+		ic->delta_table[i] = val;
 	}
 }
 
-static void K053260_reset( int chip ) {
+static void K053260_reset( void *chip ) {
+	struct K053260_chip_def *ic = chip;
 	int i;
 
 	for( i = 0; i < 4; i++ ) {
-		K053260_chip[chip].channels[i].rate = 0;
-		K053260_chip[chip].channels[i].size = 0;
-		K053260_chip[chip].channels[i].start = 0;
-		K053260_chip[chip].channels[i].bank = 0;
-		K053260_chip[chip].channels[i].volume = 0;
-		K053260_chip[chip].channels[i].play = 0;
-		K053260_chip[chip].channels[i].pan = 0;
-		K053260_chip[chip].channels[i].pos = 0;
-		K053260_chip[chip].channels[i].loop = 0;
-		K053260_chip[chip].channels[i].ppcm = 0;
-		K053260_chip[chip].channels[i].ppcm_data = 0;
+		ic->channels[i].rate = 0;
+		ic->channels[i].size = 0;
+		ic->channels[i].start = 0;
+		ic->channels[i].bank = 0;
+		ic->channels[i].volume = 0;
+		ic->channels[i].play = 0;
+		ic->channels[i].pan = 0;
+		ic->channels[i].pos = 0;
+		ic->channels[i].loop = 0;
+		ic->channels[i].ppcm = 0;
+		ic->channels[i].ppcm_data = 0;
 	}
 }
 
@@ -94,7 +92,7 @@ INLINE int limit( int val, int max, int min ) {
 #define MAXOUT 0x7fff
 #define MINOUT -0x8000
 
-void K053260_update( int param, INT16 **buffer, int length ) {
+void K053260_update( void * param, stream_sample_t **inputs, stream_sample_t **buffer, int length ) {
 	static long dpcmcnv[] = { 0,1,2,4,8,16,32,64, -128, -64, -32, -16, -8, -4, -2, -1};
 
 	int i, j, lvol[4], rvol[4], play[4], loop[4], ppcm_data[4], ppcm[4];
@@ -102,7 +100,7 @@ void K053260_update( int param, INT16 **buffer, int length ) {
 	unsigned long delta[4], end[4], pos[4];
 	int dataL, dataR;
 	signed char d;
-	struct K053260_chip_def *ic = &K053260_chip[param];
+	struct K053260_chip_def *ic = param;
 
 	/* precache some values */
 	for ( i = 0; i < 4; i++ ) {
@@ -193,77 +191,43 @@ void K053260_update( int param, INT16 **buffer, int length ) {
 	}
 }
 
-int K053260_sh_start(const struct MachineSound *msound) {
-	const char *names[2];
-	char ch_names[2][40];
-	int i, ics;
+static void *k053260_start(int sndindex, int clock, const void *config)
+{
+	struct K053260_chip_def *ic;
+	int i;
+	
+	ic = auto_malloc(sizeof(*ic));
+	memset(ic, 0, sizeof(*ic));
 
 	/* Initialize our chip structure */
-	intf = msound->sound_interface;
+	ic->intf = config;
 
-	if ( intf->num > MAX_053260 )
-		return -1;
+	ic->mode = 0;
+	ic->rom = memory_region(ic->intf->region);
+	ic->rom_size = memory_region_length(ic->intf->region) - 1;
 
-	K053260_chip = ( struct K053260_chip_def * )malloc( sizeof( struct K053260_chip_def ) * intf->num );
+	K053260_reset( ic );
 
-	if ( K053260_chip == 0 )
-		return -1;
+	for ( i = 0; i < 0x30; i++ )
+		ic->regs[i] = 0;
 
-	for( ics = 0; ics < intf->num; ics++ ) {
-		struct K053260_chip_def *ic = &K053260_chip[ics];
+	ic->delta_table = ( unsigned long * )auto_malloc( 0x1000 * sizeof( unsigned long ) );
 
-		ic->mode = 0;
-		ic->rom = memory_region(intf->region[ics]);
-		ic->rom_size = memory_region_length(intf->region[ics]) - 1;
+	if ( ic->delta_table == 0 )
+		return NULL;
 
-		K053260_reset( ics );
+	ic->channel = stream_create( 0, 2, Machine->sample_rate, ic, K053260_update );
 
-		for ( i = 0; i < 0x30; i++ )
-			ic->regs[i] = 0;
+	InitDeltaTable( ic, clock );
 
-		ic->delta_table = ( unsigned long * )malloc( 0x1000 * sizeof( unsigned long ) );
+	/* setup SH1 timer if necessary */
+	if ( ic->intf->irq )
+		timer_pulse( TIME_IN_HZ( ( clock / 32 ) ), 0, ic->intf->irq );
 
-		if ( ic->delta_table == 0 )
-			return -1;
-
-		for ( i = 0; i < 2; i++ ) {
-			names[i] = ch_names[i];
-			sprintf(ch_names[i],"%s #%d Ch %d",sound_name(msound),ics,i);
-		}
-
-		ic->channel = stream_init_multi( 2, names, intf->mixing_level[ics], Machine->sample_rate, ics, K053260_update );
-
-		InitDeltaTable( ics );
-
-		/* setup SH1 timer if necessary */
-		if ( intf->irq[ics] )
-			timer_pulse( TIME_IN_HZ( ( intf->clock[ics] / 32 ) ), 0, intf->irq[ics] );
-	}
-
-    return 0;
+    return ic;
 }
 
-void K053260_sh_stop( void ) {
-	int ics;
-
-	if ( K053260_chip ) {
-		for( ics = 0; ics < intf->num; ics++ ) {
-			struct K053260_chip_def *ic = &K053260_chip[ics];
-
-			if ( ic->delta_table )
-				free( ic->delta_table );
-
-			ic->delta_table = 0;
-		}
-
-		free( K053260_chip );
-
-		K053260_chip = 0;
-	}
-}
-
-INLINE void check_bounds( int chip, int channel ) {
-	struct K053260_chip_def *ic = &K053260_chip[chip];
+INLINE void check_bounds( struct K053260_chip_def *ic, int channel ) {
 
 	int channel_start = ( ic->channels[channel].bank << 16 ) + ic->channels[channel].start;
 	int channel_end = channel_start + ic->channels[channel].size - 1;
@@ -292,7 +256,7 @@ void K053260_write( int chip, offs_t offset, data8_t data )
 	int r = offset;
 	int v = data;
 
-	struct K053260_chip_def *ic = &K053260_chip[chip];
+	struct K053260_chip_def *ic = sndti_token(SOUND_K053260, chip);
 
 	if ( r > 0x2f ) {
 		logerror("K053260: Writing past registers\n" );
@@ -312,7 +276,7 @@ void K053260_write( int chip, offs_t offset, data8_t data )
 					ic->channels[i].play = 1;
 					ic->channels[i].pos = 0;
 					ic->channels[i].ppcm_data = 0;
-					check_bounds( chip, i );
+					check_bounds( ic, i );
 				} else
 					ic->channels[i].play = 0;
 			}
@@ -406,7 +370,7 @@ void K053260_write( int chip, offs_t offset, data8_t data )
 
 data8_t K053260_read( int chip, offs_t offset )
 {
-	struct K053260_chip_def *ic = &K053260_chip[chip];
+	struct K053260_chip_def *ic = sndti_token(SOUND_K053260, chip);
 
 	switch ( offset ) {
 		case 0x29: /* channel status */
@@ -484,3 +448,41 @@ READ16_HANDLER( K053260_1_lsb_r )
 {
 	return K053260_1_r(offset);
 }
+
+
+
+
+/**************************************************************************
+ * Generic get_info
+ **************************************************************************/
+
+static void k053260_set_info(void *token, UINT32 state, union sndinfo *info)
+{
+	switch (state)
+	{
+		/* no parameters to set */
+	}
+}
+
+
+void k053260_get_info(void *token, UINT32 state, union sndinfo *info)
+{
+	switch (state)
+	{
+		/* --- the following bits of info are returned as 64-bit signed integers --- */
+
+		/* --- the following bits of info are returned as pointers to data or functions --- */
+		case SNDINFO_PTR_SET_INFO:						info->set_info = k053260_set_info;		break;
+		case SNDINFO_PTR_START:							info->start = k053260_start;			break;
+		case SNDINFO_PTR_STOP:							/* nothing */							break;
+		case SNDINFO_PTR_RESET:							/* nothing */							break;
+
+		/* --- the following bits of info are returned as NULL-terminated strings --- */
+		case SNDINFO_STR_NAME:							info->s = "K053260";					break;
+		case SNDINFO_STR_CORE_FAMILY:					info->s = "Konami custom";				break;
+		case SNDINFO_STR_CORE_VERSION:					info->s = "1.0";						break;
+		case SNDINFO_STR_CORE_FILE:						info->s = __FILE__;						break;
+		case SNDINFO_STR_CORE_CREDITS:					info->s = "Copyright (c) 2004, The MAME Team"; break;
+	}
+}
+

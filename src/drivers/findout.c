@@ -10,7 +10,7 @@ driver by Nicola Salmoria
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "machine/8255ppi.h"
-
+#include "sound/dac.h"
 
 
 VIDEO_UPDATE( findout )
@@ -247,13 +247,6 @@ INPUT_PORTS_END
 
 
 
-static struct DACinterface dac_interface =
-{
-	1,
-	{ 100 }
-};
-
-
 
 static MACHINE_DRIVER_START( findout )
 
@@ -278,7 +271,10 @@ static MACHINE_DRIVER_START( findout )
 	MDRV_VIDEO_UPDATE(findout)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(DAC, dac_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(DAC, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 

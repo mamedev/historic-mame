@@ -119,6 +119,8 @@ e000-e001	YM2203
 
 #include "driver.h"
 #include "cpu/z80/z80.h"
+#include "sound/2203intf.h"
+#include "sound/upd7759.h"
 
 extern unsigned char* banked_area;
 
@@ -236,7 +238,7 @@ static mame_timer *combasc_interleave_timer;
 static READ8_HANDLER ( combasc_YM2203_status_port_0_r )
 {
 	static int boost = 1;
-	int status = YM2203Read(0,0);
+	int status = YM2203_status_port_0_r(0);
 
 	if (activecpu_get_pc() == 0x334)
 	{
@@ -645,22 +647,16 @@ static struct GfxDecodeInfo combascb_gfxdecodeinfo[] =
 
 static struct YM2203interface ym2203_interface =
 {
-	1,							/* 1 chip */
-	3000000,					/* 24MHz(XTAL)/8 = 3MHz */
-	{ YM2203_VOL(20,20) },
-	{ 0 },
-	{ 0 },
-	{ combasc_portA_w },
-	{ 0 }
+	0,
+	0,
+	combasc_portA_w,
+	0
 };
 
 static struct upd7759_interface upd7759_interface =
 {
-	1,							/* number of chips */
-	{ UPD7759_STANDARD_CLOCK },
-	{ 70 },						/* volume */
-	{ REGION_SOUND1 },			/* memory region */
-	{0}
+	REGION_SOUND1,			/* memory region */
+	0
 };
 
 
@@ -696,8 +692,15 @@ static MACHINE_DRIVER_START( combasc )
 	MDRV_VIDEO_UPDATE(combasc)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM2203, ym2203_interface)
-	MDRV_SOUND_ADD(UPD7759, upd7759_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM2203, 3000000)
+	MDRV_SOUND_CONFIG(ym2203_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.20)
+
+	MDRV_SOUND_ADD(UPD7759, UPD7759_STANDARD_CLOCK)
+	MDRV_SOUND_CONFIG(upd7759_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.70)
 MACHINE_DRIVER_END
 
 /* combat school (bootleg on different hardware) */
@@ -731,8 +734,15 @@ static MACHINE_DRIVER_START( combascb )
 	MDRV_VIDEO_UPDATE(combascb)
 
 	/* We are using the original sound subsystem */
-	MDRV_SOUND_ADD(YM2203, ym2203_interface)
-	MDRV_SOUND_ADD(UPD7759, upd7759_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM2203, 3000000)
+	MDRV_SOUND_CONFIG(ym2203_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.20)
+
+	MDRV_SOUND_ADD(UPD7759, UPD7759_STANDARD_CLOCK)
+	MDRV_SOUND_CONFIG(upd7759_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.70)
 MACHINE_DRIVER_END
 
 

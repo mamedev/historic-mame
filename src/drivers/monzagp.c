@@ -78,6 +78,7 @@ Known issues:
 #include "vidhrdw/generic.h"
 #include "cpu/z80/z80.h"
 #include "machine/8255ppi.h"
+#include "sound/ay8910.h"
 
 VIDEO_START( monzagp )
 {
@@ -139,16 +140,6 @@ ADDRESS_MAP_END
 
 /***************************************************************************/
 
-static struct AY8910interface ay8910_interface = {
-	1,	/* 1 chip */
-	2000000, /* 2 MHz? */
-	{ 100 }, /* volume */
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ 0 }
-};
-
 static struct GfxLayout tile_layout =
 {
 	// game doesn't appear to use character-based graphics, but this allows us to view contents of the data
@@ -199,6 +190,7 @@ static MACHINE_DRIVER_START( monzagp )
 	MDRV_CPU_IO_MAP(readport_slave,0)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
+	/* video hardware */
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 	MDRV_INTERLEAVE(300)
@@ -212,7 +204,11 @@ static MACHINE_DRIVER_START( monzagp )
 	MDRV_VIDEO_START(monzagp)
 	MDRV_VIDEO_UPDATE(monzagp)
 
-	MDRV_SOUND_ADD(AY8910, ay8910_interface)
+	/* sound hardware */
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	
+	MDRV_SOUND_ADD(AY8910, 2000000)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 INPUT_PORTS_START( monzagp )

@@ -105,6 +105,8 @@ TP-S.1 TP-S.2 TP-S.3 TP-B.1  8212 TP-B.2 TP-B.3          TP-B.4
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "cpu/z80/z80.h"
+#include "sound/ay8910.h"
+#include "sound/msm5205.h"
 
 #include "tubep.h"
 
@@ -760,24 +762,34 @@ static struct GfxDecodeInfo rjammer_gfxdecodeinfo[] =
 	{ -1 }
 };
 
-static struct AY8910interface ay8910_interface =
+static struct AY8910interface ay8910_interface_1 =
 {
-	3,					/* 3 chips */
-	19968000 / 8 / 2,	/* Xtal3 div by LS669 Q2, div by LS669 Q0 (signal RH1) */
-	{ 15, 15, 15 },		/* volume */
-	{ 0, 0, 0 },		/* read port A */
-	{ 0, 0, 0 },		/* read port B */
-	{ ay8910_portA_0_w, ay8910_portA_1_w, ay8910_portA_2_w }, /* write port A */
-	{ ay8910_portB_0_w, ay8910_portB_1_w, ay8910_portB_2_w }  /* write port B */
+	0,
+	0,
+	ay8910_portA_0_w, /* write port A */
+	ay8910_portB_0_w  /* write port B */
+};
+
+static struct AY8910interface ay8910_interface_2 =
+{
+	0,
+	0,
+	ay8910_portA_1_w, /* write port A */
+	ay8910_portB_1_w  /* write port B */
+};
+
+static struct AY8910interface ay8910_interface_3 =
+{
+	0,
+	0,
+	ay8910_portA_2_w, /* write port A */
+	ay8910_portB_2_w  /* write port B */
 };
 
 static struct MSM5205interface msm5205_interface =
 {
-	1,								/* 1 chip */
-	384000, 						/* 384 KHz */
-	{ rjammer_adpcm_vck },			/* VCK function */
-	{ MSM5205_S48_4B},				/* 8 KHz (changes at run time) */
-	{ 100 }							/* volume */
+	rjammer_adpcm_vck,			/* VCK function */
+	MSM5205_S48_4B				/* 8 KHz (changes at run time) */
 };
 
 
@@ -822,7 +834,19 @@ static MACHINE_DRIVER_START( tubep )
 	MDRV_VIDEO_UPDATE(tubep)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(AY8910, ay8910_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	
+	MDRV_SOUND_ADD(AY8910, 19968000 / 8 / 2)
+	MDRV_SOUND_CONFIG(ay8910_interface_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.15)
+	
+	MDRV_SOUND_ADD(AY8910, 19968000 / 8 / 2)
+	MDRV_SOUND_CONFIG(ay8910_interface_2)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.15)
+	
+	MDRV_SOUND_ADD(AY8910, 19968000 / 8 / 2)
+	MDRV_SOUND_CONFIG(ay8910_interface_3)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.15)
 MACHINE_DRIVER_END
 
 
@@ -866,8 +890,23 @@ static MACHINE_DRIVER_START( rjammer )
 	MDRV_VIDEO_UPDATE(rjammer)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(AY8910, ay8910_interface)
-	MDRV_SOUND_ADD(MSM5205, msm5205_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	
+	MDRV_SOUND_ADD(AY8910, 19968000 / 8 / 2)
+	MDRV_SOUND_CONFIG(ay8910_interface_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.15)
+	
+	MDRV_SOUND_ADD(AY8910, 19968000 / 8 / 2)
+	MDRV_SOUND_CONFIG(ay8910_interface_2)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.15)
+	
+	MDRV_SOUND_ADD(AY8910, 19968000 / 8 / 2)
+	MDRV_SOUND_CONFIG(ay8910_interface_3)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.15)
+
+	MDRV_SOUND_ADD(MSM5205, 384000)
+	MDRV_SOUND_CONFIG(msm5205_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 

@@ -14,6 +14,8 @@ Devil Zone      - 8022
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "cpu/z80/z80.h"
+#include "sound/samples.h"
+#include "sound/dac.h"
 
 
 PALETTE_INIT( panic );
@@ -947,12 +949,6 @@ static struct GfxDecodeInfo cosmica_gfxdecodeinfo[] =
 };
 
 
-static struct DACinterface dac_interface =
-{
-	1,
-	{ 100 }
-};
-
 static const char *panic_sample_names[] =
 {
 	"*panic",
@@ -973,7 +969,6 @@ static const char *panic_sample_names[] =
 static struct Samplesinterface panic_samples_interface =
 {
 	9,	/* 9 channels */
-	25,	/* volume */
 	panic_sample_names
 };
 
@@ -1001,7 +996,6 @@ static const char *cosmicg_sample_names[] =
 static struct Samplesinterface cosmicg_samples_interface =
 {
 	9,	/* 9 channels */
-	25,	/* volume */
 	cosmicg_sample_names
 };
 
@@ -1039,8 +1033,14 @@ static MACHINE_DRIVER_START( panic )
 	MDRV_VIDEO_UPDATE(panic)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(SAMPLES, panic_samples_interface)
-	MDRV_SOUND_ADD(DAC, dac_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(SAMPLES, 0)
+	MDRV_SOUND_CONFIG(panic_samples_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
+
+	MDRV_SOUND_ADD(DAC, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 
@@ -1088,8 +1088,14 @@ static MACHINE_DRIVER_START( cosmicg )
 	MDRV_VIDEO_UPDATE(cosmicg)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(SAMPLES, cosmicg_samples_interface)
-	MDRV_SOUND_ADD(DAC, dac_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(SAMPLES, 0)
+	MDRV_SOUND_CONFIG(cosmicg_samples_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
+
+	MDRV_SOUND_ADD(DAC, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 
@@ -1111,7 +1117,10 @@ static MACHINE_DRIVER_START( magspot2 )
 	MDRV_VIDEO_UPDATE(magspot2)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(DAC, dac_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(DAC, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 
@@ -1143,7 +1152,10 @@ static MACHINE_DRIVER_START( nomnlnd )
 	MDRV_VIDEO_UPDATE(nomnlnd)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(DAC, dac_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(DAC, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 

@@ -11,6 +11,7 @@
 #include <math.h>
 
 #include "driver.h"
+#include "bsmt2000.h"
 
 
 
@@ -68,7 +69,7 @@ struct BSMT2000Voice
 
 struct BSMT2000Chip
 {
-	int			stream;					/* which stream are we using */
+	sound_stream *stream;				/* which stream are we using */
 	INT8 *		region_base;			/* pointer to the base of the region */
 	int			total_banks;			/* number of total banks in the region */
 	int			voices;					/* number of voices */
@@ -84,23 +85,13 @@ struct BSMT2000Chip
 	struct BSMT2000Voice *voice;		/* the voices */
 	struct BSMT2000Voice compressed;	/* the compressed voice */
 	
+	INT32 *scratch;
+
 #if MAKE_WAVS
 	void *		wavraw;					/* raw waveform */
 	void *		wavresample;			/* resampled waveform */
 #endif
 };
-
-
-
-/**********************************************************************************************
-
-     GLOBALS
-
-***********************************************************************************************/
-
-static struct BSMT2000Chip bsmt2000[MAX_BSMT2000];
-static INT32 *accumulator;
-static INT32 *scratch;
 
 
 
@@ -230,16 +221,16 @@ static void generate_samples(struct BSMT2000Chip *chip, INT32 *left, INT32 *righ
 
 ***********************************************************************************************/
 
-static void bsmt2000_update(int num, INT16 **buffer, int length)
+static void bsmt2000_update(void *param, stream_sample_t **inputs, stream_sample_t **buffer, int length)
 {
-	struct BSMT2000Chip *chip = &bsmt2000[num];
-	INT32 *lsrc = scratch, *rsrc = scratch;
+	struct BSMT2000Chip *chip = param;
+	INT32 *lsrc = chip->scratch, *rsrc = chip->scratch;
 	INT32 lprev = chip->last_lsample;
 	INT32 rprev = chip->last_rsample;
 	INT32 lcurr = chip->curr_lsample;
 	INT32 rcurr = chip->curr_rsample;
-	INT16 *ldest = buffer[0];
-	INT16 *rdest = buffer[1];
+	stream_sample_t *ldest = buffer[0];
+	stream_sample_t *rdest = buffer[1];
 	INT32 interp;
 	int remaining = length;
 	int samples_left = 0;
@@ -274,8 +265,8 @@ static void bsmt2000_update(int num, INT16 **buffer, int length)
 					samples_left = MAX_SAMPLE_CHUNK;
 
 				/* determine left/right source data */
-				lsrc = scratch;
-				rsrc = scratch + samples_left;
+				lsrc = chip->scratch;
+				rsrc = chip->scratch + samples_left;
 				generate_samples(chip, lsrc, rsrc, samples_left);
 
 #if MAKE_WAVS
@@ -330,7 +321,7 @@ static void bsmt2000_update(int num, INT16 **buffer, int length)
 
 /**********************************************************************************************
 
-     BSMT2000_sh_start -- start emulation of the BSMT2000
+     bsmt2000_start -- start emulation of the BSMT2000
 
 ***********************************************************************************************/
 
@@ -357,111 +348,53 @@ INLINE void init_all_voices(struct BSMT2000Chip *chip)
  	chip->compressed.adjusted_rate = 0x02aa << 4;
  }
  
-int BSMT2000_sh_start(const struct MachineSound *msound)
+static void *bsmt2000_start(int sndindex, int clock, const void *config)
 {
-	const struct BSMT2000interface *intf = msound->sound_interface;
-	char stream_name[2][40];
-	const char *stream_name_ptrs[2];
-	int vol[2];
-	int i;
+	const struct BSMT2000interface *intf = config;
+	struct BSMT2000Chip *chip;
 	
-	/* initialize the chips */
-	memset(&bsmt2000, 0, sizeof(bsmt2000));
-	for (i = 0; i < intf->num; i++)
-	{
-		/* allocate the voices */
-		bsmt2000[i].voices = intf->voices[i];
-		bsmt2000[i].voice = malloc(bsmt2000[i].voices * sizeof(struct BSMT2000Voice));
-		if (!bsmt2000[i].voice)
-			return 1;
+	chip = auto_malloc(sizeof(*chip));
+	memset(chip, 0, sizeof(*chip));
+	
+	/* allocate the voices */
+	chip->voices = intf->voices;
+	chip->voice = auto_malloc(chip->voices * sizeof(struct BSMT2000Voice));
+	if (!chip->voice)
+		return NULL;
 
-		/* generate the name and create the stream */
-		sprintf(stream_name[0], "%s #%d Ch1", sound_name(msound), i);
-		sprintf(stream_name[1], "%s #%d Ch2", sound_name(msound), i);
-		stream_name_ptrs[0] = stream_name[0];
-		stream_name_ptrs[1] = stream_name[1];
+	/* create the stream */
+	chip->stream = stream_create(0, 2, Machine->sample_rate, chip, bsmt2000_update);
 
-		/* set the volumes */
-		vol[0] = MIXER(intf->mixing_level[i], MIXER_PAN_LEFT);
-		vol[1] = MIXER(intf->mixing_level[i], MIXER_PAN_RIGHT);
+	/* initialize the regions */
+	chip->region_base = (INT8 *)memory_region(intf->region);
+	chip->total_banks = memory_region_length(intf->region) / 0x10000;
 
-		/* create the stream */
-		bsmt2000[i].stream = stream_init_multi(2, stream_name_ptrs, vol, Machine->sample_rate, i, bsmt2000_update);
-		if (bsmt2000[i].stream == -1)
-			return 1;
+	/* initialize the rest of the structure */
+	chip->master_clock = (double)clock;
+	chip->output_step = (int)((double)clock / 1024.0 * (double)(1 << FRAC_BITS) / (double)Machine->sample_rate);
 
-		/* initialize the regions */
-		bsmt2000[i].region_base = (INT8 *)memory_region(intf->region[i]);
-		bsmt2000[i].total_banks = memory_region_length(intf->region[i]) / 0x10000;
-
-		/* initialize the rest of the structure */
-		bsmt2000[i].master_clock = (double)intf->baseclock[i];
-		bsmt2000[i].output_step = (int)((double)intf->baseclock[i] / 1024.0 * (double)(1 << FRAC_BITS) / (double)Machine->sample_rate);
-
-		/* init the voices */
-		init_all_voices(&bsmt2000[i]);
-	}
+	/* init the voices */
+	init_all_voices(chip);
 
 	/* allocate memory */
-	accumulator = malloc(sizeof(accumulator[0]) * 2 * MAX_SAMPLE_CHUNK);
-	scratch = malloc(sizeof(scratch[0]) * 2 * MAX_SAMPLE_CHUNK);
-	if (!accumulator || !scratch)
-		return 1;
+	chip->scratch = auto_malloc(sizeof(chip->scratch[0]) * 2 * MAX_SAMPLE_CHUNK);
 
 	/* success */
-	return 0;
+	return chip;
 }
 
 
 
 /**********************************************************************************************
 
-     BSMT2000_sh_stop -- stop emulation of the BSMT2000
+     bsmt2000_reset -- reset emulation of the BSMT2000
 
 ***********************************************************************************************/
 
-void BSMT2000_sh_stop(void)
+static void bsmt2000_reset(void *_chip)
 {
-	int i;
-
-	/* free memory */
-	if (accumulator)
-		free(accumulator);
-	accumulator = NULL;
-
-	if (scratch)
-		free(scratch);
-	scratch = NULL;
-
-	for (i = 0; i < MAX_BSMT2000; i++)
-	{
-		if (bsmt2000[i].voice)
-			free(bsmt2000[i].voice);
-		bsmt2000[i].voice = NULL;
-		
-#if MAKE_WAVS
-		if (bsmt2000[i].wavraw)
-			wav_close(bsmt2000[i].wavraw);
-		if (bsmt2000[i].wavresample)
-			wav_close(bsmt2000[i].wavresample);
-#endif
-	}
-}
-
-
-
-/**********************************************************************************************
-
-     BSMT2000_sh_reset -- reset emulation of the BSMT2000
-
-***********************************************************************************************/
-
-void BSMT2000_sh_reset(void)
-{
-	int i;
-	
-	for (i = 0; i < MAX_BSMT2000; i++)
-		init_all_voices(&bsmt2000[i]);
+	struct BSMT2000Chip *chip = _chip;
+	init_all_voices(chip);
 }
 
 
@@ -553,5 +486,44 @@ static void bsmt2000_reg_write(struct BSMT2000Chip *chip, offs_t offset, data16_
 
 WRITE16_HANDLER( BSMT2000_data_0_w )
 {
-	bsmt2000_reg_write(&bsmt2000[0], offset, data, mem_mask);
+	bsmt2000_reg_write(sndti_token(SOUND_BSMT2000, 0), offset, data, mem_mask);
 }
+
+
+
+
+
+/**************************************************************************
+ * Generic get_info
+ **************************************************************************/
+
+static void bsmt2000_set_info(void *token, UINT32 state, union sndinfo *info)
+{
+	switch (state)
+	{
+		/* no parameters to set */
+	}
+}
+
+
+void bsmt2000_get_info(void *token, UINT32 state, union sndinfo *info)
+{
+	switch (state)
+	{
+		/* --- the following bits of info are returned as 64-bit signed integers --- */
+
+		/* --- the following bits of info are returned as pointers to data or functions --- */
+		case SNDINFO_PTR_SET_INFO:						info->set_info = bsmt2000_set_info;		break;
+		case SNDINFO_PTR_START:							info->start = bsmt2000_start;			break;
+		case SNDINFO_PTR_STOP:							/* nothing */							break;
+		case SNDINFO_PTR_RESET:							info->reset = bsmt2000_reset;			break;
+
+		/* --- the following bits of info are returned as NULL-terminated strings --- */
+		case SNDINFO_STR_NAME:							info->s = "BSMT2000";					break;
+		case SNDINFO_STR_CORE_FAMILY:					info->s = "Data East Wavetable";		break;
+		case SNDINFO_STR_CORE_VERSION:					info->s = "1.0";						break;
+		case SNDINFO_STR_CORE_FILE:						info->s = __FILE__;						break;
+		case SNDINFO_STR_CORE_CREDITS:					info->s = "Copyright (c) 2004, The MAME Team"; break;
+	}
+}
+

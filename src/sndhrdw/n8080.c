@@ -7,6 +7,8 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "cpu/i8039/i8039.h"
+#include "sound/sn76477.h"
+#include "sound/dac.h"
 #include <math.h>
 
 extern int helifire_flash;
@@ -35,55 +37,45 @@ static int mono_flop[3];
 
 
 
-static struct DACinterface n8080_dac_interface =
-{
-	1, { 30 }
-};
-
-
 struct SN76477interface sheriff_sn76477_interface =
 {
-	1,
-	{ 35 },
-	{ RES_K(36)  },  /* 04 */
-	{ RES_K(100) },  /* 05 */
-	{ CAP_N(1)   },  /* 06 */
-	{ RES_K(620) },  /* 07 */
-	{ CAP_U(1)   },  /* 08 */
-	{ RES_K(20)  },  /* 10 */
-	{ RES_K(150) },  /* 11 */
-	{ RES_K(47)  },  /* 12 */
-	{ 0          },  /* 16 */
-	{ CAP_N(1)   },  /* 17 */
-	{ RES_M(1.5) },  /* 18 */
-	{ 0          },  /* 19 */
-	{ RES_M(1.5) },  /* 20 */
-	{ CAP_N(47)  },  /* 21 */
-	{ CAP_N(47)  },  /* 23 */
-	{ RES_K(560) },  /* 24 */
+	RES_K(36)  ,  /* 04 */
+	RES_K(100) ,  /* 05 */
+	CAP_N(1)   ,  /* 06 */
+	RES_K(620) ,  /* 07 */
+	CAP_U(1)   ,  /* 08 */
+	RES_K(20)  ,  /* 10 */
+	RES_K(150) ,  /* 11 */
+	RES_K(47)  ,  /* 12 */
+	0          ,  /* 16 */
+	CAP_N(1)   ,  /* 17 */
+	RES_M(1.5) ,  /* 18 */
+	0          ,  /* 19 */
+	RES_M(1.5) ,  /* 20 */
+	CAP_N(47)  ,  /* 21 */
+	CAP_N(47)  ,  /* 23 */
+	RES_K(560) ,  /* 24 */
 };
 
 
 struct SN76477interface spacefev_sn76477_interface =
 {
-	1,
-	{ 35 },
-	{ RES_K(36)  },  /* 04 */
-	{ RES_K(150) },  /* 05 */
-	{ CAP_N(1)   },  /* 06 */
-	{ RES_M(1)   },  /* 07 */
-	{ CAP_U(1)   },  /* 08 */
-	{ RES_K(20)  },  /* 10 */
-	{ RES_K(150) },  /* 11 */
-	{ RES_K(47)  },  /* 12 */
-	{ 0          },  /* 16 */
-	{ CAP_N(1)   },  /* 17 */
-	{ RES_M(1.5) },  /* 18 */
-	{ 0          },  /* 19 */
-	{ RES_M(1)   },  /* 20 */
-	{ CAP_N(47)  },  /* 21 */
-	{ CAP_N(47)  },  /* 23 */
-	{ RES_K(820) },  /* 24 */
+	RES_K(36)  ,  /* 04 */
+	RES_K(150) ,  /* 05 */
+	CAP_N(1)   ,  /* 06 */
+	RES_M(1)   ,  /* 07 */
+	CAP_U(1)   ,  /* 08 */
+	RES_K(20)  ,  /* 10 */
+	RES_K(150) ,  /* 11 */
+	RES_K(47)  ,  /* 12 */
+	0          ,  /* 16 */
+	CAP_N(1)   ,  /* 17 */
+	RES_M(1.5) ,  /* 18 */
+	0          ,  /* 19 */
+	RES_M(1)   ,  /* 20 */
+	CAP_N(47)  ,  /* 21 */
+	CAP_N(47)  ,  /* 23 */
+	RES_K(820) ,  /* 24 */
 };
 
 
@@ -551,8 +543,14 @@ MACHINE_DRIVER_START( spacefev_sound )
 	MDRV_MACHINE_INIT(spacefev_sound)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(DAC, n8080_dac_interface)
-	MDRV_SOUND_ADD(SN76477, spacefev_sn76477_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(DAC, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.30)
+
+	MDRV_SOUND_ADD(SN76477, 0)
+	MDRV_SOUND_CONFIG(spacefev_sn76477_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.35)
 MACHINE_DRIVER_END
 
 
@@ -567,8 +565,14 @@ MACHINE_DRIVER_START( sheriff_sound )
 	MDRV_MACHINE_INIT(sheriff_sound)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(DAC, n8080_dac_interface)
-	MDRV_SOUND_ADD(SN76477, sheriff_sn76477_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(DAC, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.30)
+
+	MDRV_SOUND_ADD(SN76477, 0)
+	MDRV_SOUND_CONFIG(sheriff_sn76477_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.35)
 MACHINE_DRIVER_END
 
 
@@ -583,5 +587,8 @@ MACHINE_DRIVER_START( helifire_sound )
 	MDRV_MACHINE_INIT(helifire_sound)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(DAC, n8080_dac_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(DAC, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.30)
 MACHINE_DRIVER_END

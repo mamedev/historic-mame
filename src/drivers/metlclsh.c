@@ -34,6 +34,8 @@ metlclsh:
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "cpu/m6809/m6809.h"
+#include "sound/2203intf.h"
+#include "sound/3812intf.h"
 
 /* Variables defined in vidhrdw: */
 
@@ -292,23 +294,9 @@ static void metlclsh_irqhandler(int linestate)
 	cpunum_set_input_line(0,M6809_IRQ_LINE,linestate);
 }
 
-static struct YM2203interface metlclsh_ym2203_interface =
+static struct YM3526interface ym3526_interface =
 {
-	1,
-	1500000,	// ?
-	{ YM2203_VOL(50,10) },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ 0 }
-};
-
-static struct YM3526interface metlclsh_ym3526_interface =
-{
-	1,
-	3000000,	// ?
-	{ 50 },
-	{ metlclsh_irqhandler },
+	metlclsh_irqhandler
 };
 
 INTERRUPT_GEN( metlclsh_interrupt2 )
@@ -353,8 +341,17 @@ static MACHINE_DRIVER_START( metlclsh )
 	MDRV_VIDEO_UPDATE(metlclsh)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM2203, metlclsh_ym2203_interface)
-	MDRV_SOUND_ADD(YM3526, metlclsh_ym3526_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM2203, 1500000)
+	MDRV_SOUND_ROUTE(0, "mono", 0.10)
+	MDRV_SOUND_ROUTE(1, "mono", 0.10)
+	MDRV_SOUND_ROUTE(2, "mono", 0.10)
+	MDRV_SOUND_ROUTE(3, "mono", 0.50)
+
+	MDRV_SOUND_ADD(YM3526, 3000000)
+	MDRV_SOUND_CONFIG(ym3526_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
 MACHINE_DRIVER_END
 
 

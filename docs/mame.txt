@@ -1,6 +1,6 @@
 
                  M.A.M.E.  -  Multiple Arcade Machine Emulator
-          Copyright (C) 1997-2004 by Nicola Salmoria and The MAME Team
+          Copyright (C) 1997-2005 by Nicola Salmoria and The MAME Team
 
 Many people have helped with this project--directly, or by releasing the source
 code for the drivers they have written. We are not trying to take credit that
@@ -107,8 +107,10 @@ latest release there, including beta versions and information on things being
 worked on. Also, a totally legal and free ROM set of Robby Roto is available
 on the same page.
 
+Submissions should be sent to Santeri Saarimaa ( gridle@mbnet.fi )
+
 If you have bugs to report, check the MAME Testing Project at
-http://www.mametesters.com
+http://www.mametesters.org
 
 If you can't get the emulator to work, you are on your own. First of all, read
 the docs carefully. If you still can't find an answer to your question, try
@@ -125,7 +127,7 @@ http://www.mameworld.net
 Acknowledgments
 ---------------
 
-First of all, thanks to Allard van der Bas (avdbas@wi.leidenuniv.nl) for
+First of all, thanks to Allard van der Bas for
 starting the Arcade Emulation Programming Repository at
 http://valhalla.ph.tn.tudelft.nl/emul8
 Without the Repository, I would never have even tried to write an emulator.
@@ -134,8 +136,8 @@ on in MAME.
 
 Z80 emulator Copyright (c) 1998 Juergen Buchmueller, all rights reserved.
 M6502 emulator Copyright (c) 1998 Juergen Buchmueller, all rights reserved.
-Hu6280 Copyright (c) 1999 Bryan McPhail, mish@tendril.force9.net
-I86 emulator by David Hedley, modified by Fabrice Frances (frances@ensica.fr)
+Hu6280 Copyright (c) 1999 Bryan McPhail
+I86 emulator by David Hedley, modified by Fabrice Frances
 M6809 emulator by John Butler, based on L.C. Benschop's 6809 Simulator V09.
 M6808 based on L.C. Benschop's 6809 Simulator V09.
 M68000 emulator Copyright 1999 Karl Stenerud.  All rights reserved.
@@ -158,7 +160,7 @@ Many thanks to Eric Smith, Hedley Rainnie and Sean Trowbridge for information
 NES sound hardware info by Matthew Conte.
 YM2610 emulation by Hiromitsu Shioya.
 
-Background art by Peter Hirschberg (PeterH@cronuscom.com).
+Background art by Peter Hirschberg
 
 Allegro library by Shawn Hargreaves, 1994/97
 SEAL Synthetic Audio Library API Interface Copyright (C) 1995, 1996
@@ -170,7 +172,7 @@ Video modes created using Tweak 1.6b by Robert Schmidt, who also wrote
 DOS executable compressed with UPX by Markus F.X.J. Oberhumer & Laszlo Molnar,
     http://upx.sourceforge.net/
 
-Big thanks to Gary Walton (garyw@excels-w.demon.co.uk) for too many things
+Big thanks to Gary Walton for too many things
    to mention.
 
 Thanks to Brian Deuel, Neil Bradley, and the Retrocade dev team for allowing us

@@ -46,17 +46,7 @@ Revisions:
 	}
 //ZT
 
-static struct IremGA20_chip_def
-{
-	const struct IremGA20_interface *intf;
-	unsigned char *rom;
-	int rom_size;
-	int channel;
-	int mode;
-	int regs[0x40];
-} IremGA20_chip;
-
-static struct IremGA20_channel_def
+struct IremGA20_channel_def
 {
 	unsigned long rate;
 	unsigned long size;
@@ -67,14 +57,26 @@ static struct IremGA20_channel_def
 	unsigned long pan;
 	unsigned long effect;
 	unsigned long play;
-} IremGA20_channel[4];
+};
 
-static int sr_table[256];
-
-void IremGA20_update( int param, INT16 **buffer, int length )
+struct IremGA20_chip_def
 {
+	const struct IremGA20_interface *intf;
+	unsigned char *rom;
+	int rom_size;
+	sound_stream * stream;
+	int mode;
+	int regs[0x40];
+	struct IremGA20_channel_def channel[4];
+	int sr_table[256];
+};
+
+void IremGA20_update( void *param, stream_sample_t **inputs, stream_sample_t **buffer, int length )
+{
+	struct IremGA20_chip_def *chip = param;
 	unsigned long rate[4], pos[4], end[4], vol[4], play[4];
-	unsigned long edi, ebp, esi;
+	unsigned long esi;
+	stream_sample_t *edi, *ebp;
 	int eax, ebx, ecx, edx;
 
 	if (!Machine->sample_rate) return;
@@ -82,22 +84,22 @@ void IremGA20_update( int param, INT16 **buffer, int length )
 	/* precache some values */
 	for (ecx=0; ecx<4; ecx++)
 	{
-		rate[ecx] = IremGA20_channel[ecx].rate;
-		pos[ecx] = IremGA20_channel[ecx].pos;
-		end[ecx] = (IremGA20_channel[ecx].end - 0x20) << 8;
-		vol[ecx] = IremGA20_channel[ecx].volume;
-		play[ecx] = IremGA20_channel[ecx].play;
+		rate[ecx] = chip->channel[ecx].rate;
+		pos[ecx] = chip->channel[ecx].pos;
+		end[ecx] = (chip->channel[ecx].end - 0x20) << 8;
+		vol[ecx] = chip->channel[ecx].volume;
+		play[ecx] = chip->channel[ecx].play;
 	}
 
-	ecx = length << 1;
-	esi = (unsigned long)IremGA20_chip.rom;
-	edi = (unsigned long)buffer[0];
-	ebp = (unsigned long)buffer[1];
+	ecx = length;
+	esi = (unsigned long)chip->rom;
+	edi = buffer[0];
+	ebp = buffer[1];
 	edi += ecx;
 	ebp += ecx;
 	ecx = -ecx;
 
-	for (; ecx; ecx+=2)
+	for (; ecx; ecx++)
 	{
 		edx = 0;
 
@@ -107,21 +109,22 @@ void IremGA20_update( int param, INT16 **buffer, int length )
 		MIX_CH(3);
 
 		edx >>= 2;
-		*(short *)(edi + ecx) = (short)edx;
-		*(short *)(ebp + ecx) = (short)edx;
+		edi[ecx] = edx;
+		ebp[ecx] = edx;
 	}
 
 	/* update the regs now */
 	for (ecx=0; ecx< 4; ecx++)
 	{
-		IremGA20_channel[ecx].pos = pos[ecx];
-		IremGA20_channel[ecx].play = play[ecx];
+		chip->channel[ecx].pos = pos[ecx];
+		chip->channel[ecx].play = play[ecx];
 	}
 }
 //ZT
 
 WRITE8_HANDLER( IremGA20_w )
 {
+	struct IremGA20_chip_def *chip = sndti_token(SOUND_IREMGA20, 0);
 	int channel;
 
 	//logerror("GA20:  Offset %02x, data %04x\n",offset,data);
@@ -129,60 +132,61 @@ WRITE8_HANDLER( IremGA20_w )
 	if (!Machine->sample_rate)
 		return;
 
-	stream_update(IremGA20_chip.channel, 0);
+	stream_update(chip->stream, 0);
 
 	channel = offset >> 4;
 
-	IremGA20_chip.regs[offset] = data;
+	chip->regs[offset] = data;
 
 	switch (offset & 0xf)
 	{
 	case 0: /* start address low */
-		IremGA20_channel[channel].start = ((IremGA20_channel[channel].start)&0xff000) | (data<<4);
+		chip->channel[channel].start = ((chip->channel[channel].start)&0xff000) | (data<<4);
 	break;
 
 	case 2: /* start address high */
-		IremGA20_channel[channel].start = ((IremGA20_channel[channel].start)&0x00ff0) | (data<<12);
+		chip->channel[channel].start = ((chip->channel[channel].start)&0x00ff0) | (data<<12);
 	break;
 
 	case 4: /* end address low */
-		IremGA20_channel[channel].end = ((IremGA20_channel[channel].end)&0xff000) | (data<<4);
+		chip->channel[channel].end = ((chip->channel[channel].end)&0xff000) | (data<<4);
 	break;
 
 	case 6: /* end address high */
-		IremGA20_channel[channel].end = ((IremGA20_channel[channel].end)&0x00ff0) | (data<<12);
+		chip->channel[channel].end = ((chip->channel[channel].end)&0x00ff0) | (data<<12);
 	break;
 
 	case 8:
-		IremGA20_channel[channel].rate = (sr_table[data]<<8) / Machine->sample_rate;
+		chip->channel[channel].rate = (chip->sr_table[data]<<8) / Machine->sample_rate;
 	break;
 
 	case 0xa: //AT: gain control
-		IremGA20_channel[channel].volume = (data * MAX_VOL) / (data + 10);
+		chip->channel[channel].volume = (data * MAX_VOL) / (data + 10);
 	break;
 
 	case 0xc: //AT: this is always written 2(enabling both channels?)
-		IremGA20_channel[channel].play = data;
-		IremGA20_channel[channel].pos = IremGA20_channel[channel].start << 8;
+		chip->channel[channel].play = data;
+		chip->channel[channel].pos = chip->channel[channel].start << 8;
 	break;
 	}
 }
 
 READ8_HANDLER( IremGA20_r )
 {
+	struct IremGA20_chip_def *chip = sndti_token(SOUND_IREMGA20, 0);
 	int channel;
 
 	if (!Machine->sample_rate)
 		return 0;
 
-	stream_update(IremGA20_chip.channel, 0);
+	stream_update(chip->stream, 0);
 
 	channel = offset >> 4;
 
 	switch (offset & 0xf)
 	{
 		case 0xe:	// voice status.  bit 0 is 1 if active. (routine around 0xccc in rtypeleo)
-			return IremGA20_channel[channel].play ? 1 : 0;
+			return chip->channel[channel].play ? 1 : 0;
 			break;
 
 		default:
@@ -193,67 +197,97 @@ READ8_HANDLER( IremGA20_r )
 	return 0;
 }
 
-static void IremGA20_reset( void )
+static void iremga20_reset( void *_chip )
 {
+	struct IremGA20_chip_def *chip = _chip;
 	int i;
 
 	for( i = 0; i < 4; i++ ) {
-	IremGA20_channel[i].rate = 0;
-	IremGA20_channel[i].size = 0;
-	IremGA20_channel[i].start = 0;
-	IremGA20_channel[i].pos = 0;
-	IremGA20_channel[i].end = 0;
-	IremGA20_channel[i].volume = 0;
-	IremGA20_channel[i].pan = 0;
-	IremGA20_channel[i].effect = 0;
-	IremGA20_channel[i].play = 0;
+	chip->channel[i].rate = 0;
+	chip->channel[i].size = 0;
+	chip->channel[i].start = 0;
+	chip->channel[i].pos = 0;
+	chip->channel[i].end = 0;
+	chip->channel[i].volume = 0;
+	chip->channel[i].pan = 0;
+	chip->channel[i].effect = 0;
+	chip->channel[i].play = 0;
 	}
 }
 
-int IremGA20_sh_start(const struct MachineSound *msound)
-{
-	const char *names[2];
-	char ch_names[2][40];
-	int i;
 
-	if (!Machine->sample_rate) return 0;
+static void *iremga20_start(int sndindex, int clock, const void *config)
+{
+	struct IremGA20_chip_def *chip;
+	int i;
+	
+	chip = auto_malloc(sizeof(*chip));
+	memset(chip, 0, sizeof(*chip));
+
+	if (!Machine->sample_rate) return chip;
 
 	/* Initialize our chip structure */
-	IremGA20_chip.intf = msound->sound_interface;
-	IremGA20_chip.mode = 0;
-	IremGA20_chip.rom = memory_region(IremGA20_chip.intf->region);
-	IremGA20_chip.rom_size = memory_region_length(IremGA20_chip.intf->region);
+	chip->intf = config;
+	chip->mode = 0;
+	chip->rom = memory_region(chip->intf->region);
+	chip->rom_size = memory_region_length(chip->intf->region);
 
 	/* Initialize our pitch table */
 	for (i = 0; i < 255; i++)
 	{
-		sr_table[i] = (IremGA20_chip.intf->clock / (256-i) / 4);
+		chip->sr_table[i] = (clock / (256-i) / 4);
 	}
 
 	/* change signedness of PCM samples in advance */
-	for (i=0; i<IremGA20_chip.rom_size; i++)
-		IremGA20_chip.rom[i] -= 0x80;
+	for (i=0; i<chip->rom_size; i++)
+		chip->rom[i] -= 0x80;
 
-	IremGA20_reset();
+	iremga20_reset(chip);
 
 	for ( i = 0; i < 0x40; i++ )
-	IremGA20_chip.regs[i] = 0;
+	chip->regs[i] = 0;
 
-	for ( i = 0; i < 2; i++ ) {
-	names[i] = ch_names[i];
-	sprintf(ch_names[i],"%s Ch %d",sound_name(msound),i);
-	}
+	chip->stream = stream_create( 0, 2, Machine->sample_rate, chip, IremGA20_update );
 
-	IremGA20_chip.channel = stream_init_multi( 2, names,
-			IremGA20_chip.intf->mixing_level, Machine->sample_rate,
-			0, IremGA20_update );
+	state_save_register_UINT8("sound", sndindex, "IremGA20_chip",    (UINT8*) chip,   sizeof(*chip));
 
-	state_save_register_UINT8("sound", 0, "IremGA20_channel", (UINT8*) IremGA20_channel, sizeof(IremGA20_channel));
-	state_save_register_UINT8("sound", 0, "IremGA20_chip",    (UINT8*) &IremGA20_chip,   sizeof(IremGA20_chip));
-
-	return 0;
+	return chip;
 }
 
-void IremGA20_sh_stop( void )
+
+
+
+/**************************************************************************
+ * Generic get_info
+ **************************************************************************/
+
+static void iremga20_set_info(void *token, UINT32 state, union sndinfo *info)
 {
+	switch (state)
+	{
+		/* no parameters to set */
+	}
 }
+
+
+void iremga20_get_info(void *token, UINT32 state, union sndinfo *info)
+{
+	switch (state)
+	{
+		/* --- the following bits of info are returned as 64-bit signed integers --- */
+
+		/* --- the following bits of info are returned as pointers to data or functions --- */
+		case SNDINFO_PTR_SET_INFO:						info->set_info = iremga20_set_info;		break;
+		case SNDINFO_PTR_START:							info->start = iremga20_start;			break;
+		case SNDINFO_PTR_STOP:							/* nothing */							break;
+		case SNDINFO_PTR_RESET:							info->reset = iremga20_reset;			break;
+
+		/* --- the following bits of info are returned as NULL-terminated strings --- */
+		case SNDINFO_STR_NAME:							info->s = "Irem GA20";					break;
+		case SNDINFO_STR_CORE_FAMILY:					info->s = "Irem custom";				break;
+		case SNDINFO_STR_CORE_VERSION:					info->s = "1.0";						break;
+		case SNDINFO_STR_CORE_FILE:						info->s = __FILE__;						break;
+		case SNDINFO_STR_CORE_CREDITS:					info->s = "Copyright (c) 2004, The MAME Team"; break;
+	}
+}
+

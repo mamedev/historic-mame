@@ -145,6 +145,7 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "balsente.h"
+#include "sound/cem3394.h"
 
 
 
@@ -1527,11 +1528,9 @@ INPUT_PORTS_END
 
 static struct cem3394_interface cem_interface =
 {
-	6,
-	{ 90, 90, 90, 90, 90, 90 },
-	{ 431.894, 431.894, 431.894, 431.894, 431.894, 431.894 },
-	{ 1300.0, 1300.0, 1300.0, 1300.0, 1300.0, 1300.0 },
-	{ balsente_noise_gen, balsente_noise_gen, balsente_noise_gen, balsente_noise_gen, balsente_noise_gen, balsente_noise_gen }
+	431.894,
+	1300.0,
+	balsente_noise_gen
 };
 
 
@@ -1571,7 +1570,31 @@ static MACHINE_DRIVER_START( balsente )
 	MDRV_VIDEO_UPDATE(balsente)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(CEM3394, cem_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(CEM3394, 0)
+	MDRV_SOUND_CONFIG(cem_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.90)
+
+	MDRV_SOUND_ADD(CEM3394, 0)
+	MDRV_SOUND_CONFIG(cem_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.90)
+
+	MDRV_SOUND_ADD(CEM3394, 0)
+	MDRV_SOUND_CONFIG(cem_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.90)
+
+	MDRV_SOUND_ADD(CEM3394, 0)
+	MDRV_SOUND_CONFIG(cem_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.90)
+
+	MDRV_SOUND_ADD(CEM3394, 0)
+	MDRV_SOUND_CONFIG(cem_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.90)
+
+	MDRV_SOUND_ADD(CEM3394, 0)
+	MDRV_SOUND_CONFIG(cem_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.90)
 MACHINE_DRIVER_END
 
 

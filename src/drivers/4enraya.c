@@ -51,6 +51,7 @@ Sound :
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "cpu/z80/z80.h"
+#include "sound/ay8910.h"
 
 VIDEO_START( 4enraya );
 VIDEO_UPDATE( 4enraya );
@@ -165,18 +166,6 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 };
 
 
-static struct AY8910interface ay8910_interface =
-{
-	1,
-	8000000/4,	/* guess */
-	{ 30,},
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ 0 }
-};
-
-
 static MACHINE_DRIVER_START( 4enraya )
 
 	/* basic machine hardware */
@@ -199,7 +188,9 @@ static MACHINE_DRIVER_START( 4enraya )
 	MDRV_VIDEO_UPDATE(4enraya)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(AY8910, ay8910_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	MDRV_SOUND_ADD(AY8910, 8000000/4 /* guess */)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.30)
 MACHINE_DRIVER_END
 
 /***************************************************************************

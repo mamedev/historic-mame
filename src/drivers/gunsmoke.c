@@ -68,6 +68,7 @@ Stephh's notes (based on the games Z80 code and some tests) :
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "sound/2203intf.h"
 
 extern UINT8 *gunsmoke_scrollx;
 extern UINT8 *gunsmoke_scrolly;
@@ -283,19 +284,6 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 	{ -1 }
 };
 
-/* Sound Interfaces */
-
-static struct YM2203interface ym2203_interface =
-{
-	2,			// 2 chips
-	1500000,	// 1.5 MHz
-	{ YM2203_VOL(14,22), YM2203_VOL(14,22) },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ 0 }
-};
-
 /* Machine Driver */
 
 static MACHINE_DRIVER_START( gunsmoke )
@@ -325,7 +313,19 @@ static MACHINE_DRIVER_START( gunsmoke )
 	MDRV_VIDEO_UPDATE(gunsmoke)
 
 	// sound hardware
-	MDRV_SOUND_ADD_TAG("ym2203", YM2203, ym2203_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM2203, 1500000)
+	MDRV_SOUND_ROUTE(0, "mono", 0.22)
+	MDRV_SOUND_ROUTE(1, "mono", 0.22)
+	MDRV_SOUND_ROUTE(2, "mono", 0.22)
+	MDRV_SOUND_ROUTE(3, "mono", 0.14)
+
+	MDRV_SOUND_ADD(YM2203, 1500000)
+	MDRV_SOUND_ROUTE(0, "mono", 0.22)
+	MDRV_SOUND_ROUTE(1, "mono", 0.22)
+	MDRV_SOUND_ROUTE(2, "mono", 0.22)
+	MDRV_SOUND_ROUTE(3, "mono", 0.14)
 MACHINE_DRIVER_END
 
 /* ROMs */

@@ -113,6 +113,7 @@
 #include "machine/ticket.h"
 #include "vidhrdw/generic.h"
 #include "itech32.h"
+#include "sound/es5506.h"
 #include <math.h>
 
 
@@ -269,7 +270,7 @@ static READ16_HANDLER( special_port4_r )
 static READ16_HANDLER( trackball_r )
 {
 	int lower = readinputportbytag("TRACKX1");
-	int upper = readinputportbytag("TRACKX2");
+	int upper = readinputportbytag("TRACKY1");
 
 	return (lower & 15) | ((upper & 15) << 4);
 }
@@ -1382,14 +1383,10 @@ INPUT_PORTS_END
 
 static struct ES5506interface es5506_interface =
 {
-	1,
-	{ 16000000 },
-	{ REGION_SOUND1 },
-	{ REGION_SOUND2 },
-	{ REGION_SOUND3 },
-	{ REGION_SOUND4 },
-	{ YM3012_VOL(100,MIXER_PAN_LEFT,100,MIXER_PAN_RIGHT) },
-	{ 0 }
+	REGION_SOUND1,
+	REGION_SOUND2,
+	REGION_SOUND3,
+	REGION_SOUND4
 };
 
 
@@ -1426,7 +1423,11 @@ static MACHINE_DRIVER_START( timekill )
 	MDRV_VIDEO_UPDATE(itech32)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(ES5506, es5506_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(ES5506, 16000000)
+	MDRV_SOUND_CONFIG(es5506_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 

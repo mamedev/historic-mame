@@ -6,6 +6,7 @@
 
 #include "driver.h"
 #include "galaxian.h"
+#include "sound/ay8910.h"
 
 
 
@@ -102,13 +103,8 @@ INPUT_PORTS_END
 
 struct AY8910interface frogger_ay8910_interface =
 {
-	1,	/* 1 chip */
-	14318000/8,	/* 1.78975 MHz */
-	{ MIXERG(80,MIXER_GAIN_2x,MIXER_PAN_CENTER) },
-	{ soundlatch_r },
-	{ frogger_portB_r },
-	{ 0 },
-	{ 0 }
+	soundlatch_r,
+	frogger_portB_r
 };
 
 
@@ -133,7 +129,9 @@ static MACHINE_DRIVER_START( frogger )
 	MDRV_VIDEO_START(frogger)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(AY8910, frogger_ay8910_interface)
+	MDRV_SOUND_ADD(AY8910, 14318000/8)
+	MDRV_SOUND_CONFIG(frogger_ay8910_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.33)
 MACHINE_DRIVER_END
 
 

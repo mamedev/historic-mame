@@ -100,6 +100,7 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "machine/eeprom.h"
+#include "sound/ymz280b.h"
 
 VIDEO_START( avengrgs );
 VIDEO_UPDATE( avengrgs );
@@ -320,11 +321,8 @@ static void sound_irq_gen(int state)
 
 static struct YMZ280Binterface ymz280b_intf =
 {
-	1,
-	{ 42000000 / 3 }, /* Confirmed on real board */
-	{ REGION_SOUND1 },
-	{ YM3012_VOL(100,MIXER_PAN_LEFT,100,MIXER_PAN_RIGHT) },
-	{ sound_irq_gen }
+	REGION_SOUND1,
+	sound_irq_gen
 };
 
 static INTERRUPT_GEN(avengrgs_interrupt)
@@ -359,8 +357,12 @@ static MACHINE_DRIVER_START( avengrgs )
 	MDRV_VIDEO_STOP(avengrgs)
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(YMZ280B, ymz280b_intf)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(YMZ280B, 42000000 / 3)
+	MDRV_SOUND_CONFIG(ymz280b_intf)
+	MDRV_SOUND_ROUTE(0, "left", 1.0)
+	MDRV_SOUND_ROUTE(1, "right", 1.0)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( mlc )
@@ -387,8 +389,12 @@ static MACHINE_DRIVER_START( mlc )
 	MDRV_VIDEO_STOP(avengrgs)
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(YMZ280B, ymz280b_intf)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(YMZ280B, 42000000 / 3)
+	MDRV_SOUND_CONFIG(ymz280b_intf)
+	MDRV_SOUND_ROUTE(0, "left", 1.0)
+	MDRV_SOUND_ROUTE(1, "right", 1.0)
 MACHINE_DRIVER_END
 
 /***************************************************************************/

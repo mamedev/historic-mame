@@ -23,6 +23,7 @@ always false - counter was reloaded and incremented before interrupt occurs
 
 #include "driver.h"
 #include "machine/6821pia.h"
+#include "sound/ay8910.h"
 
 
 data8_t *tugboat_ram,*tugboat_score;
@@ -300,18 +301,6 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 
 
-static struct AY8910interface ay8910_interface =
-{
-	1,			/* 1 chip */
-	2000000,	/* 2 MHz???? */
-	{ 35 },		/* volume */
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ 0 }
-};
-
-
 
 static MACHINE_DRIVER_START( tugboat )
 	MDRV_CPU_ADD_TAG("main", M6502, 2000000)	/* 2 MHz ???? */
@@ -333,7 +322,10 @@ static MACHINE_DRIVER_START( tugboat )
 	MDRV_VIDEO_UPDATE(tugboat)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(AY8910, ay8910_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	
+	MDRV_SOUND_ADD(AY8910, 2000000)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.35)
 MACHINE_DRIVER_END
 
 

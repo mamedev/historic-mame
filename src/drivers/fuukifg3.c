@@ -89,6 +89,8 @@ FG-3J ROM-J 507KA0301P04       Rev:1.3
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "sound/262intf.h"
+#include "sound/ymf278b.h"
 
 static int fuuki32_raster_enable = 1; /* Enabled by default */
 static data8_t fuuki32_shared_ram[16];
@@ -497,20 +499,12 @@ static void irqhandler(int irq)
 
 static struct YMF278B_interface ymf278b_interface =
 {
-	1,
-	{ YMF278B_STD_CLOCK },
-	{ REGION_SOUND1 },
-	{ YM3012_VOL(50, MIXER_PAN_LEFT, 50, MIXER_PAN_RIGHT) },
-	{ 0 }
+	REGION_SOUND1
 };
 
 static struct YMF262interface ymf262_interface =
 {
-	1,					/* 1 chip */
-	14318180,			/* X1 ? */
-	{ YAC512_VOL(50,MIXER_PAN_LEFT,50,MIXER_PAN_RIGHT) },	/* channels A and B */
-	{ YAC512_VOL(50,MIXER_PAN_LEFT,50,MIXER_PAN_RIGHT) },	/* channels C and D */
-	{ irqhandler },		/* irq */
+	irqhandler		/* irq */
 };
 
 static MACHINE_DRIVER_START( fuuki32 )
@@ -539,9 +533,19 @@ static MACHINE_DRIVER_START( fuuki32 )
 	MDRV_VIDEO_EOF(fuuki32)
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(YMF262, ymf262_interface)
-	MDRV_SOUND_ADD(YMF278B, ymf278b_interface)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(YMF262, 14318180)
+	MDRV_SOUND_CONFIG(ymf262_interface)
+	MDRV_SOUND_ROUTE(0, "left", 0.50)
+	MDRV_SOUND_ROUTE(1, "right", 0.50)
+	MDRV_SOUND_ROUTE(2, "left", 0.50)
+	MDRV_SOUND_ROUTE(3, "right", 0.50)
+
+	MDRV_SOUND_ADD(YMF278B, YMF278B_STD_CLOCK)
+	MDRV_SOUND_CONFIG(ymf278b_interface)
+	MDRV_SOUND_ROUTE(0, "left", 0.50)
+	MDRV_SOUND_ROUTE(1, "right", 0.50)
 MACHINE_DRIVER_END
 
 /***************************************************************************

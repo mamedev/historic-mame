@@ -15,6 +15,7 @@
 #include <math.h>
 #include "driver.h"
 #include "cpuintrf.h"
+#include "ymf271.h"
 
 #define VERBOSE		(1)
 
@@ -83,23 +84,23 @@ typedef struct
 	read8_handler ext_mem_read;
 	write8_handler ext_mem_write;
 	void (*irq_callback)(int);
+
+	INT32 volume[256*4];			// precalculated attenuation values with some marging for enveloppe and pan levels
+	int index;
+	sound_stream * stream;
 } YMF271Chip;
 
 // slot mapping assists
-static int fm_tab[] = { 0, 1, 2, -1, 3, 4, 5, -1, 6, 7, 8, -1, 9, 10, 11, -1 };
-static int pcm_tab[] = { 0, 4, 8, -1, 12, 16, 20, -1, 24, 28, 32, -1, 36, 40, 44, -1 };
+static const int fm_tab[] = { 0, 1, 2, -1, 3, 4, 5, -1, 6, 7, 8, -1, 9, 10, 11, -1 };
+static const int pcm_tab[] = { 0, 4, 8, -1, 12, 16, 20, -1, 24, 28, 32, -1, 36, 40, 44, -1 };
 
-static YMF271Chip YMF271[MAX_YMF271];
-
-static INT32 volume[256*4];			// precalculated attenuation values with some marging for enveloppe and pan levels
-
-static void ymf271_pcm_update(int num, INT16 **outputs, int length)
+static void ymf271_pcm_update(void *param, stream_sample_t **inputs, stream_sample_t **outputs, int length)
 {
 	int i, j;
 	INT32 mix[48000*2];
 	INT32 *mixp;
 	INT16 sample = 0;
-	YMF271Chip *chip = &YMF271[num];
+	YMF271Chip *chip = param;
 	YMF271Slot *slot;
 	const UINT8 *rombase;
 
@@ -128,8 +129,8 @@ static void ymf271_pcm_update(int num, INT16 **outputs, int length)
 						sample = rombase[slot->startaddr + (slot->stepptr>>17)*3]<<8 | (rombase[slot->startaddr + (slot->stepptr>>17)*3 + 1] & 0xf0);
 				}
 
-				*mixp++ += (sample * volume[slot->tl])>>16;
-				*mixp++ += (sample * volume[slot->tl])>>16;
+				*mixp++ += (sample * chip->volume[slot->tl])>>16;
+				*mixp++ += (sample * chip->volume[slot->tl])>>16;
 
 				slot->stepptr += slot->step << slot-> multiple;
 				if ((slot->stepptr>>16) > slot->endaddr)
@@ -331,11 +332,9 @@ static void ymf271_write_pcm(YMF271Chip *chip, int data)
 	}
 }
 
-static void ymf271_timer_a_tick(int num)
+static void ymf271_timer_a_tick(void *param)
 {
-	YMF271Chip *chip;
-	
-	chip = &YMF271[num];	
+	YMF271Chip *chip = param;
 
 	chip->status |= 1;
 
@@ -346,12 +345,10 @@ static void ymf271_timer_a_tick(int num)
 	}
 }
 
-static void ymf271_timer_b_tick(int num)
+static void ymf271_timer_b_tick(void *param)
 {
-	YMF271Chip *chip;
+	YMF271Chip *chip = param;
 	
-	chip = &YMF271[num];	
-
 	chip->status |= 2;
 
 	if (chip->enable & 8)
@@ -361,32 +358,29 @@ static void ymf271_timer_b_tick(int num)
 	}
 }
 
-static UINT8 ymf271_read_ext_memory(int chipnum, UINT32 address)
+static UINT8 ymf271_read_ext_memory(YMF271Chip *chip, UINT32 address)
 {
-	if( YMF271[chipnum].ext_mem_read ) {
-		return YMF271[chipnum].ext_mem_read(address);
+	if( chip->ext_mem_read ) {
+		return chip->ext_mem_read(address);
 	} else {
 		if( address < 0x800000)
-			return YMF271[chipnum].rom[address];
+			return chip->rom[address];
 	}
 	return 0xff;
 }
 
-static void ymf271_write_ext_memory(int chipnum, UINT32 address, UINT8 data)
+static void ymf271_write_ext_memory(YMF271Chip *chip, UINT32 address, UINT8 data)
 {
-	if( YMF271[chipnum].ext_mem_write ) {
-		YMF271[chipnum].ext_mem_write(address, data);
+	if( chip->ext_mem_write ) {
+		chip->ext_mem_write(address, data);
 	}
 }
 
-static void ymf271_write_timer(int chipnum, int data)
+static void ymf271_write_timer(YMF271Chip *chip, int data)
 {
 	int slotnum;
-	YMF271Chip *chip;
 	YMF271Group *group;
 	double period;
-
-	chip = &YMF271[chipnum];
 
 	slotnum = fm_tab[chip->timerreg & 0xf];
 	group = &chip->groups[slotnum];
@@ -442,7 +436,7 @@ static void ymf271_write_timer(int chipnum, int data)
 
 					period = (double)(256.0 - chip->timerAVal ) * ( 384.0 * 4.0 / (double)CLOCK);
 
-					timer_adjust(chip->timA, TIME_IN_SEC(period), chipnum, TIME_IN_SEC(period));
+					timer_adjust_ptr(chip->timA, TIME_IN_SEC(period), chip, TIME_IN_SEC(period));
 				}
 				if (data & 0x20)
 				{	// timer B reset
@@ -453,7 +447,7 @@ static void ymf271_write_timer(int chipnum, int data)
 
 					period = 6144.0 * (256.0 - (double)chip->timerBVal) / (double)CLOCK;
 
-					timer_adjust(chip->timB, TIME_IN_SEC(period), chipnum, TIME_IN_SEC(period));
+					timer_adjust_ptr(chip->timB, TIME_IN_SEC(period), chip, TIME_IN_SEC(period));
 				}
 
 				break;
@@ -474,7 +468,7 @@ static void ymf271_write_timer(int chipnum, int data)
 					chip->ext_address = (chip->ext_address + 1) & 0x7fffff;
 				break;
 			case 0x17:
-				ymf271_write_ext_memory( chipnum, chip->ext_address, data );
+				ymf271_write_ext_memory( chip, chip->ext_address, data );
 				chip->ext_address = (chip->ext_address + 1) & 0x7fffff;
 				break;
 		}
@@ -483,7 +477,7 @@ static void ymf271_write_timer(int chipnum, int data)
 
 static void ymf271_w(int chipnum, int offset, int data)
 {
-	YMF271Chip *chip = &YMF271[chipnum];
+	YMF271Chip *chip = sndti_token(SOUND_YMF271, chipnum);
 
 	switch (offset)
 	{
@@ -521,7 +515,7 @@ static void ymf271_w(int chipnum, int offset, int data)
 			chip->timerreg = data;
 			break;
 		case 0xd:
-			ymf271_write_timer(chipnum, data);
+			ymf271_write_timer(chip, data);
 			break;
 	}
 }
@@ -529,7 +523,7 @@ static void ymf271_w(int chipnum, int offset, int data)
 static int ymf271_r(int chipnum, int offset)
 {
 	UINT8 value;
-	YMF271Chip *chip = &YMF271[chipnum];
+	YMF271Chip *chip = sndti_token(SOUND_YMF271, chipnum);
 
 	switch(offset)
 	{
@@ -537,7 +531,7 @@ static int ymf271_r(int chipnum, int offset)
 			return chip->status;
 
 		case 2:
-			value = ymf271_read_ext_memory( chipnum, chip->ext_address );
+			value = ymf271_read_ext_memory( chip, chip->ext_address );
 			chip->ext_address = (chip->ext_address + 1) & 0x7fffff;
 			return value;
 	}
@@ -545,53 +539,40 @@ static int ymf271_r(int chipnum, int offset)
 	return 0;
 }
 
-static void ymf271_init(int i, UINT8 *rom, void (*cb)(int), read8_handler ext_read, write8_handler ext_write)
+static void ymf271_init(YMF271Chip *chip, UINT8 *rom, void (*cb)(int), read8_handler ext_read, write8_handler ext_write)
 {
-	memset(&YMF271[i], 0, sizeof(YMF271Chip));
-
-	YMF271[i].timA = timer_alloc(ymf271_timer_a_tick);
-	YMF271[i].timB = timer_alloc(ymf271_timer_b_tick);
+	chip->timA = timer_alloc_ptr(ymf271_timer_a_tick);
+	chip->timB = timer_alloc_ptr(ymf271_timer_b_tick);
 	
-	YMF271[i].rom = rom;
-	YMF271[i].irq_callback = cb;
+	chip->rom = rom;
+	chip->irq_callback = cb;
 
-	YMF271[i].ext_mem_read = ext_read;
-	YMF271[i].ext_mem_write = ext_write;
+	chip->ext_mem_read = ext_read;
+	chip->ext_mem_write = ext_write;
 }
 
-int YMF271_sh_start( const struct MachineSound *msound )
+static void *ymf271_start(int sndindex, int clock, const void *config)
 {
-	char buf[2][40];
-	const char *name[2];
-	int  vol[2];
-	struct YMF271interface *intf;
+	const struct YMF271interface *intf;
 	int i;
+	YMF271Chip *chip;
 
-	intf = msound->sound_interface;
+	chip = auto_malloc(sizeof(*chip));
+	memset(chip, 0, sizeof(*chip));
+	chip->index = sndindex;
+	
+	intf = config;
 
-	for(i=0; i<intf->num; i++)
-	{
-		sprintf(buf[0], "YMF271 %d L", i);
-		sprintf(buf[1], "YMF271 %d R", i);
-		name[0] = buf[0];
-		name[1] = buf[1];
-		vol[0]=intf->mixing_level[i] >> 16;
-		vol[1]=intf->mixing_level[i] & 0xffff;
-		ymf271_init(i, memory_region(intf->region[0]), intf->irq_callback[i], intf->ext_read[i], intf->ext_write[i]);
-		stream_init_multi(2, name, vol, Machine->sample_rate, i, ymf271_pcm_update);
-	}
+	ymf271_init(chip, memory_region(intf->region), intf->irq_callback, intf->ext_read, intf->ext_write);
+	chip->stream = stream_create(0, 2, Machine->sample_rate, chip, ymf271_pcm_update);
 
 	// Volume table, 1 = -0.375dB, 8 = -3dB, 256 = -96dB
 	for(i = 0; i < 256; i++)
-		volume[i] = 65536*pow(2.0, (-0.375/6)*i);
+		chip->volume[i] = 65536*pow(2.0, (-0.375/6)*i);
 	for(i = 256; i < 256*4; i++)
-		volume[i] = 0;
+		chip->volume[i] = 0;
 
-	return 0;
-}
-
-void YMF271_sh_stop( void )
-{
+	return chip;
 }
 
 READ8_HANDLER( YMF271_0_r )
@@ -614,3 +595,39 @@ WRITE8_HANDLER( YMF271_1_w )
 	ymf271_w(1, offset, data);
 }
 
+
+
+
+/**************************************************************************
+ * Generic get_info
+ **************************************************************************/
+
+static void ymf271_set_info(void *token, UINT32 state, union sndinfo *info)
+{
+	switch (state)
+	{
+		/* no parameters to set */
+	}
+}
+
+
+void ymf271_get_info(void *token, UINT32 state, union sndinfo *info)
+{
+	switch (state)
+	{
+		/* --- the following bits of info are returned as 64-bit signed integers --- */
+
+		/* --- the following bits of info are returned as pointers to data or functions --- */
+		case SNDINFO_PTR_SET_INFO:						info->set_info = ymf271_set_info;		break;
+		case SNDINFO_PTR_START:							info->start = ymf271_start;				break;
+		case SNDINFO_PTR_STOP:							/* Nothing */							break;
+		case SNDINFO_PTR_RESET:							/* Nothing */							break;
+
+		/* --- the following bits of info are returned as NULL-terminated strings --- */
+		case SNDINFO_STR_NAME:							info->s = "YMF271";						break;
+		case SNDINFO_STR_CORE_FAMILY:					info->s = "Yamaha FM";					break;
+		case SNDINFO_STR_CORE_VERSION:					info->s = "1.0";						break;
+		case SNDINFO_STR_CORE_FILE:						info->s = __FILE__;						break;
+		case SNDINFO_STR_CORE_CREDITS:					info->s = "Copyright (c) 2004, The MAME Team"; break;
+	}
+}

@@ -11,6 +11,7 @@ Additional tweaking by Jarek Burczynski
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "cpu/m68000/m68000.h"
+#include "sound/ay8910.h"
 
 PALETTE_INIT( magmax );
 VIDEO_UPDATE( magmax );
@@ -83,7 +84,7 @@ static int gain_control = 0;
 
 WRITE8_HANDLER( ay8910_portA_0_w )
 {
-int percent;
+float percent;
 
 /*There are three AY8910 chips and four(!) separate amplifiers on the board
 * Each of AY channels is hardware mapped in following way:
@@ -136,27 +137,27 @@ bit3 - SOUND Chan#8 name=AY-3-8910 #2 Ch C
 
 	/*usrintf_showmessage("gain_ctrl = %2x",data&0x0f);*/
 
-	percent = (gain_control & 1) ? 100 : 50;
-	mixer_set_volume(0,percent);
-	set_RC_filter(0,10000,100000000,0,10000);	/* 10K, 10000pF = 0.010uF */
+	percent = (gain_control & 1) ? 1.0 : 0.50;
+	sndti_set_output_gain(SOUND_AY8910, 0, 0, percent);
+//fixme:	set_RC_filter(0,10000,100000000,0,10000);	/* 10K, 10000pF = 0.010uF */
 
-	percent = (gain_control & 2) ? 45 : 23;
-	mixer_set_volume(1,percent);
-	mixer_set_volume(2,percent);
-	mixer_set_volume(3,percent);
-	mixer_set_volume(4,percent);
-	set_RC_filter(1,4700,100000000,0,4700);	/*  4.7K, 4700pF = 0.0047uF */
-	set_RC_filter(2,4700,100000000,0,4700);	/*  4.7K, 4700pF = 0.0047uF */
-	set_RC_filter(3,4700,100000000,0,4700);	/*  4.7K, 4700pF = 0.0047uF */
-	set_RC_filter(4,4700,100000000,0,4700);	/*  4.7K, 4700pF = 0.0047uF */
+	percent = (gain_control & 2) ? 0.45 : 0.23;
+	sndti_set_output_gain(SOUND_AY8910, 0, 1, percent);
+	sndti_set_output_gain(SOUND_AY8910, 0, 2, percent);
+	sndti_set_output_gain(SOUND_AY8910, 1, 0, percent);
+	sndti_set_output_gain(SOUND_AY8910, 1, 1, percent);
+//fixme:	set_RC_filter(1,4700,100000000,0,4700);	/*  4.7K, 4700pF = 0.0047uF */
+//fixme:	set_RC_filter(2,4700,100000000,0,4700);	/*  4.7K, 4700pF = 0.0047uF */
+//fixme:	set_RC_filter(3,4700,100000000,0,4700);	/*  4.7K, 4700pF = 0.0047uF */
+//fixme:	set_RC_filter(4,4700,100000000,0,4700);	/*  4.7K, 4700pF = 0.0047uF */
 
-	percent = (gain_control & 4) ? 45 : 23;
-	mixer_set_volume(5,percent);
-	mixer_set_volume(6,percent);
+	percent = (gain_control & 4) ? 0.45 : 0.23;
+	sndti_set_output_gain(SOUND_AY8910, 1, 2, percent);
+	sndti_set_output_gain(SOUND_AY8910, 2, 0, percent);
 
-	percent = (gain_control & 8) ? 45 : 23;
-	mixer_set_volume(7,percent);
-	mixer_set_volume(8,percent);
+	percent = (gain_control & 8) ? 0.45 : 0.23;
+	sndti_set_output_gain(SOUND_AY8910, 2, 1, percent);
+	sndti_set_output_gain(SOUND_AY8910, 2, 2, percent);
 }
 
 static WRITE16_HANDLER( magmax_vreg_w )
@@ -335,13 +336,10 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 static struct AY8910interface ay8910_interface =
 {
-	3,			/* 3 chips */
-	10000000/8,		/* 1.25 MHz */
-	{ 40, 40, 40 },
-	{ 0, 0, 0 }, /*read port A*/
-	{ 0, 0, 0 }, /*read port B*/
-	{ ay8910_portA_0_w, 0, 0 }, /*write port A*/
-	{ ay8910_portB_0_w, 0, 0 }  /*write port B*/
+	0,
+	0,
+	ay8910_portA_0_w, /*write port A*/
+	ay8910_portB_0_w  /*write port B*/
 };
 
 
@@ -376,7 +374,17 @@ static MACHINE_DRIVER_START( magmax )
 	MDRV_VIDEO_UPDATE(magmax)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(AY8910, ay8910_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(AY8910, 10000000/8)
+	MDRV_SOUND_CONFIG(ay8910_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.40)
+
+	MDRV_SOUND_ADD(AY8910, 10000000/8)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.40)
+
+	MDRV_SOUND_ADD(AY8910, 10000000/8)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.40)
 MACHINE_DRIVER_END
 
 

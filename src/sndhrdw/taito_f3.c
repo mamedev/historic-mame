@@ -1,4 +1,5 @@
 #include "driver.h"
+#include "sound/es5506.h"
 
 static int counter,vector_reg,imr_status;
 static data16_t es5510_dsp_ram[0x200];
@@ -45,7 +46,7 @@ WRITE16_HANDLER( f3_es5505_bank_w )
 
 	/* mask out unused bits */
 	data &= max_banks_this_game;
-	ES5506_voice_bank_0_w(offset,data<<20);
+	ES5505_voice_bank_0_w(offset,data<<20);
 }
 
 WRITE16_HANDLER( f3_volume_w )

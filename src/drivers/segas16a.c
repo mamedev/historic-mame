@@ -134,6 +134,8 @@ Tetris         -         -         -         -         EPR12169  EPR12170  -    
 #include "system16.h"
 #include "machine/8255ppi.h"
 #include "cpu/i8039/i8039.h"
+#include "sound/dac.h"
+#include "sound/2151intf.h"
 
 
 
@@ -1473,26 +1475,8 @@ INPUT_PORTS_END
 
 static struct YM2151interface ym2151_interface =
 {
-	1,
-	4000000,
-	{ YM3012_VOL(43,MIXER_PAN_LEFT,43,MIXER_PAN_RIGHT) },
-	{ NULL },
-	{ n7751_control_w }
-};
-
-static struct YM2151interface ym2151_interface_topvolume =
-{
-	1,
-	4000000,
-	{ YM3012_VOL(100,MIXER_PAN_LEFT,100,MIXER_PAN_RIGHT) },
-	{ 0 }
-};
-
-
-struct DACinterface n7751_dac_interface =
-{
-	1,
-	{ 80 }
+	NULL,
+	n7751_control_w
 };
 
 
@@ -1563,9 +1547,16 @@ static MACHINE_DRIVER_START( system16a )
 	MDRV_VIDEO_UPDATE(system16a)
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD_TAG("2151", YM2151, ym2151_interface)
-	MDRV_SOUND_ADD_TAG("dac", DAC, n7751_dac_interface)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD_TAG("2151", YM2151, 4000000)
+	MDRV_SOUND_CONFIG(ym2151_interface)
+	MDRV_SOUND_ROUTE(0, "left", 0.43)
+	MDRV_SOUND_ROUTE(1, "right", 0.43)
+
+	MDRV_SOUND_ADD_TAG("dac", DAC, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.80)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 0.80)
 MACHINE_DRIVER_END
 
 
@@ -1573,7 +1564,10 @@ static MACHINE_DRIVER_START( system16a_no7751 )
 	MDRV_IMPORT_FROM(system16a)
 	MDRV_CPU_REMOVE("n7751")
 	MDRV_SOUND_REMOVE("dac")
-	MDRV_SOUND_REPLACE("2151", YM2151, ym2151_interface_topvolume)
+
+	MDRV_SOUND_REPLACE("2151", YM2151, 4000000)
+	MDRV_SOUND_ROUTE(0, "left", 1.0)
+	MDRV_SOUND_ROUTE(1, "right", 1.0)
 MACHINE_DRIVER_END
 
 
@@ -2687,8 +2681,8 @@ static DRIVER_INIT( timesca1 )
  *************************************/
 
 /* "Pre-System 16" */
-GAME( 1987, aliensy2, aliensyn, system16a,        aliensyn, aliensy1,    ROT0,   "Sega",           "Alien Syndrome (set 2, System16A, FD1089A 317-0033?)" )
-GAME( 1987, aliensy1, aliensyn, system16a,        aliensyn, aliensy1,    ROT0,   "Sega",           "Alien Syndrome (set 1, System16A, FD1089A 317-0033)" )
+GAME( 1987, aliensy2, aliensyn, system16a,        aliensyn, aliensy1,    ROT0,   "Sega",           "Alien Syndrome (set 2, System 16A, FD1089A 317-0033)" )
+GAME( 1987, aliensy1, aliensyn, system16a,        aliensyn, aliensy1,    ROT0,   "Sega",           "Alien Syndrome (set 1, System 16A, FD1089A 317-0033)" )
 GAME( 1986, bodyslam, 0,        system16a_8751,   bodyslam, bodyslam,    ROT0,   "Sega",           "Body Slam (8751 317-unknown)" )
 GAME( 1986, dumpmtmt, bodyslam, system16a_8751,   bodyslam, bodyslam,    ROT0,   "Sega",           "Dump Matsumoto (Japan, 8751 317-unknown))" )
 GAME( 1985, mjleague, 0,        system16a,        mjleague, mjleague,    ROT270, "Sega",           "Major League" )
@@ -2703,7 +2697,7 @@ GAME( 1986, alexkidd, 0,        system16a,        alexkidd, generic_16a, ROT0,  
 GAME( 1986, alexkid1, alexkidd, system16a,        alexkidd, alexkid1,    ROT0,   "Sega",           "Alex Kidd: The Lost Stars (set 1, FD1089A 317-unknown)" )
 GAME( 1986, fantzone, 0,        system16a_no7751, fantzone, generic_16a, ROT0,   "Sega",           "Fantasy Zone (set 2, unprotected)" )
 GAME( 1986, fantzon1, fantzone, system16a_no7751, fantzone, generic_16a, ROT0,   "Sega",           "Fantasy Zone (set 1, unprotected)" )
-GAME( 1987, sdi,      0,        system16a_no7751, sdi,      sdi,         ROT0,   "Sega",           "SDI - Strategic Defense Initiative (Europe, System 16A, FD1089A 317-0027)" )
+GAME( 1987, sdi,      0,        system16a_no7751, sdi,      sdi,         ROT0,   "Sega",           "SDI - Strategic Defense Initiative (Europe, System 16A, FD1089B 317-0027)" )
 GAME( 1987, shinobi,  0,        system16a,        shinobi,  generic_16a, ROT0,   "Sega",           "Shinobi (set 5, System 16A, unprotected)" )
 GAME( 1987, shinobi1, shinobi,  system16a,        shinobi,  generic_16a, ROT0,   "Sega",           "Shinobi (set 1, System 16A, FD1094 317-0050)" )
 GAME( 1987, sjryuko1, sjryuko,  system16a,        sjryuko,  sjryukoa,    ROT0,   "White Board",    "Sukeban Jansi Ryuko (set 1, System 16A, FD1089B 317-5021)" )

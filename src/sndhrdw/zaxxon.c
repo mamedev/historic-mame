@@ -67,6 +67,7 @@ FF3F Should be written an 0x80 for Mode 0
 ***************************************************************************/
 
 #include "driver.h"
+#include "sound/samples.h"
 
 #define TOTAL_SOUNDS 22
 int soundplaying[TOTAL_SOUNDS];
@@ -125,7 +126,7 @@ WRITE8_HANDLER( zaxxon_sound_w )
 					soundplaying[21] = 1;
 					sample_start(sa[21].channel,sa[21].num,sa[21].looped);
 				}
-				sample_set_volume(sa[21].channel,128 + 40 * (data & 0x03));
+				sample_set_volume(sa[21].channel,0.5 + 0.157 * (data & 0x03));
 				break;
 			case 0x00:
 			case 0x08:
@@ -134,7 +135,7 @@ WRITE8_HANDLER( zaxxon_sound_w )
 					soundplaying[20] = 1;
 					sample_start(sa[20].channel,sa[20].num,sa[20].looped);
 				}
-				sample_set_volume(sa[20].channel,128 + 40 * (data & 0x03));
+				sample_set_volume(sa[20].channel,0.5 + 0.157 * (data & 0x03));
 				soundplaying[21] = 0;
 				sample_stop(sa[21].channel);
 				break;

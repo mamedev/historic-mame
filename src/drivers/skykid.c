@@ -18,6 +18,7 @@ Notes:
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "cpu/m6800/m6800.h"
+#include "sound/namco.h"
 
 extern data8_t *skykid_textram, *skykid_videoram, *skykid_spriteram;
 
@@ -362,9 +363,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 static struct namco_interface namco_interface =
 {
-	49152000/2048, 		/* 24000 Hz */
 	8,					/* number of voices */
-	100,				/* playback volume */
 	-1,					/* memory region */
 	0					/* stereo */
 };
@@ -400,7 +399,11 @@ static MACHINE_DRIVER_START( skykid )
 	MDRV_VIDEO_UPDATE(skykid)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(NAMCO_CUS30, namco_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(NAMCO_CUS30, 49152000/2048)
+	MDRV_SOUND_CONFIG(namco_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 

@@ -14,6 +14,9 @@ drivers by Acho A. Tang
 #include "driver.h"
 #include "cpu/i8085/i8085.h"
 #include "machine/random.h"
+#include "sound/ay8910.h"
+#include "sound/msm5232.h"
+#include "sound/dac.h"
 
 #define MCU_RTNMSB 0x80
 
@@ -26,9 +29,20 @@ drivers by Acho A. Tang
 	MDRV_CPU_PROGRAM_MAP(equites_s_readmem, equites_s_writemem) \
 	MDRV_CPU_IO_MAP(0, equites_s_writeport) \
 	MDRV_CPU_PERIODIC_INT(nmi_line_pulse, 4000) \
-	MDRV_SOUND_ADD(MSM5232, equites_5232intf) \
-	MDRV_SOUND_ADD(AY8910, equites_8910intf) \
-	MDRV_SOUND_ADD(DAC, equites_dacintf)
+	\
+	MDRV_SOUND_ADD(MSM5232, 2500000) \
+	MDRV_SOUND_CONFIG(equites_5232intf) \
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.75) \
+	\
+	MDRV_SOUND_ADD(AY8910, 6144444/4) \
+	MDRV_SOUND_CONFIG(equites_8910intf) \
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50) \
+	\
+	MDRV_SOUND_ADD(DAC, 0) \
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.75) \
+	\
+	MDRV_SOUND_ADD(DAC, 0) \
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.75) \
 
 extern void equites_8404init(void);
 extern void equites_8404rule(unsigned pc, int offset, int data);
@@ -43,7 +57,6 @@ extern WRITE8_HANDLER(equites_dac1_w);
 extern data16_t *equites_8404ram;
 extern struct MSM5232interface equites_5232intf;
 extern struct AY8910interface equites_8910intf;
-extern struct DACinterface equites_dacintf;
 
 static ADDRESS_MAP_START( equites_s_readmem, ADDRESS_SPACE_PROGRAM, 8 )
 	{ 0x0000, 0xbfff, MRA8_ROM }, // sound program
@@ -385,12 +398,12 @@ WRITE8_HANDLER(equites_5232_w)
 
 WRITE8_HANDLER(equites_8910control_w)
 {
-	AY8910Write(0, 0, data);
+	AY8910_control_port_0_w(0, data);
 }
 
 WRITE8_HANDLER(equites_8910data_w)
 {
-	AY8910Write(0, 1, data);
+	AY8910_write_port_0_w(0, data);
 }
 
 static WRITE8_HANDLER(equites_8910porta_w)
@@ -418,28 +431,15 @@ WRITE8_HANDLER(equites_dac1_w)
 
 struct MSM5232interface equites_5232intf =
 {
-	1,
-	2500000, // 2.5MHz
-	{ { 0.39e-6, 0.39e-6, 0.39e-6, 0.39e-6, 0.39e-6, 0.39e-6, 0.39e-6, 0.39e-6 } }, // needs verification
-	{ 75 }
+	{ 0.39e-6, 0.39e-6, 0.39e-6, 0.39e-6, 0.39e-6, 0.39e-6, 0.39e-6, 0.39e-6 } // needs verification
 };
 
 struct AY8910interface equites_8910intf =
 {
-	1,
-	6144444/4, // OSC: 6.144MHz
-	{ 50 },
-	{ 0 },
-	{ 0 },
-	{ equites_8910porta_w },
-	{ equites_8910portb_w },
-	{ 0 }
-};
-
-struct DACinterface equites_dacintf =
-{
-	2,
-	{ 75, 75 }
+	0,
+	0,
+	equites_8910porta_w,
+	equites_8910portb_w
 };
 
 /******************************************************************************/

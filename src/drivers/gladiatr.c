@@ -1,6 +1,7 @@
-/*
-Taito Gladiator (1986)
-Known ROM SETS: Golden Castle, Ohgon no Siro
+/***************************************************************************
+
+Ping Pong King  (c) Taito 1985
+Gladiator       (c) Taito 1986
 
 Credits:
 - Victor Trucco: original emulation and MAME driver
@@ -9,6 +10,8 @@ Credits:
 		  Golden Castle Rom Set Support
 - Phil Stroffolino: palette, sprites, misc video driver fixes
 - Tatsuyuki Satoh: YM2203 sound improvements, NEC 8741 simulation,ADPCM with MC6809
+- Tomasz Slanina   preliminary Ping POng King driver
+- Nicola Salmoria  clean up
 
 special thanks to:
 - Camilty for precious hardware information and screenshots
@@ -16,142 +19,213 @@ special thanks to:
 - Joe Rounceville for schematics
 - and everyone else who'se offered support along the way!
 
-Issues:
+
+***************************************************************************
+
+PING PONG KING
+TAITO 1985
+M6100094A
+
+-------------
+P0-003
+
+
+X Q0_10 Q0_9 Q0_8 Q0_7 Q0_6 6116 Q0_5 Q0_4 Q0_3 Q1_2 Q1_1
+                                                 Q1
+                                   Z80B
+                                       8251
+ 2009 2009 2009
+               AQ-001
+          Q2
+              2116
+              2116
+                                 AQ-003
+-------------
+P1-004
+
+
+ QO_15 TMM2009 Q0_14 Q0_13 Q0_12     2128 2128
+
+
+                                                           SW1
+                                                    AQ-004
+
+                                              SW2          SW3
+   6809 X Q0_19 Q0_18
+                           Z80  Q0_17 Q0_16 2009 AQ-003 YM2203
+
+
+***************************************************************************
+
+Gladiator Memory Map
+--------------------
+
+Main CPU (Z80)
+--------------
+The address decoding is done by two PROMs, Q3 @ 2B and Q4 @ 5S.
+
+Address          Dir Data     Name      Description
+---------------- --- -------- --------- -----------------------
+00xxxxxxxxxxxxxx R   xxxxxxxx ROM 1F    program ROM
+010xxxxxxxxxxxxx R   xxxxxxxx ROM 1D    program ROM
+011xxxxxxxxxxxxx R   xxxxxxxx ROM 1A    program ROM (paged)
+10xxxxxxxxxxxxxx R   xxxxxxxx ROM 1C    program ROM (paged)
+110000xxxxxxxxxx R/W xxxxxxxx RAM 4S    sprite RAM [1]
+110001xxxxxxxxxx R/W xxxxxxxx RAM 4U    sprite RAM
+110010xxxxxxxxxx R/W xxxxxxxx RAM 4T    sprite RAM
+110011000-------   W xxxxxxxx VCSA2     fg relative scroll Y?
+110011001-------   W ------xx           fg tile bank select
+110011001-------   W -----x--           bg scroll X msb
+110011001-------   W ----x---           fg scroll X msb
+110011001-------   W ---x----           bg tile bank select
+110011001-------   W --x-----           blank screen?
+11001101--------   W xxxxxxxx VCSA1     fg scroll X
+11001110--------   W xxxxxxxx           fg+bg scroll Y?
+11001111--------   W xxxxxxxx VCSA3     bg scroll X
+11010xxxxxxxxxxx R/W xxxxxxxx CCS       palette RAM
+11011xxxxxxxxxxx R/W xxxxxxxx VCS1      bg tilemap RAM
+11100xxxxxxxxxxx R/W xxxxxxxx VCS2      bg tilemap RAM
+11101xxxxxxxxxxx R/W xxxxxxxx VCS3      fg tilemap RAM
+11110xxxxxxxxxxx R/W xxxxxxxx RAM 1H    work RAM (battery backed)
+11111-----------              n.c.
+
+[1] only the first 256 bytes of each RAM actually contain sprite data (two buffers
+    of 128 bytes).
+
+I/O ports:
+
+Address          Dir Data     Name      Description
+---------------- --- -------- --------- -----------------------
+--------000--000   W -------x OBJACS ?  select active sprite buffer
+--------000--001   W -------x OBJCGBK   sprite bank select
+--------000--010   W -------x PR.BK     ROM bank select
+--------000--011   W -------x NMIFG     NMI enable/acknowledge (NMI not used by Gladiator)
+--------000--100   W -------x SRST      reset sound CPU
+--------000--101   W -------x CBK0      unknown
+--------000--110   W -------x LOBJ      unknown (related to sprites)
+--------000--111   W -------x REVERS    flip screen
+--------001-----              n.c.
+--------010-----              n.c.
+--------011-----              n.c.
+--------100----x R/W xxxxxxxx CIOMCS    8741 #0 (communication with 2nd Z80, DIPSW1)
+--------101----- R/W          ARST      watchdog reset
+--------110----x R/W xxxxxxxx SI/.CS    8251 (serial communication for debug purposes)
+--------111-----              n.c.
+
+
+Sound CPU (Z80)
+---------------
+
+Address          Dir Data     Name      Description
+---------------- --- -------- --------- -----------------------
+00xxxxxxxxxxxxxx R   xxxxxxxx ROM 6F    program ROM
+01xxxxxxxxxxxxxx R   xxxxxxxx ROM 6E    program ROM
+10----xxxxxxxxxx R/W xxxxxxxx RAM 6D    work RAM
+11--------------              n.c.
+
+I/O ports:
+
+Address          Dir Data     Name      Description
+---------------- --- -------- --------- -----------------------
+--------000----x R/W xxxxxxxx OPNCS     YM2203 (portA: SSRST, unknown; portB: DIPSW3)
+--------001----x R/W xxxxxxxx CIOSCS    8741 #1 (communication with main Z80, DIPSW2)
+--------010----- R/W -------- INTCS     irq enable/acknowledge
+--------011----x R/W xxxxxxxx AX1       8741 #2 (digital inputs, coins)
+--------100----x R/W xxxxxxxx AX2       8741 #3 (digital inputs)
+--------101--xxx   W -------x FCS       control filters in sound output section
+--------110-----              n.c.
+--------111-----   W xxxxxxxx ADCS      command to 6809
+
+
+Third CPU (6809)
+----------------
+
+Address          Dir Data     Name      Description
+---------------- --- -------- --------- -----------------------
+0000------------              n.c.
+0001------------   W ----xxxx           MSM5205 data
+0001------------   W ---x----           MSM5205 clock
+0001------------   W --x-----           MSM5205 reset
+0001------------   W -x------ ADBR      ROM bank select
+0010------------ R   xxxxxxxx           command from Z80
+0011------------              n.c.
+01xxxxxxxxxxxxxx R   xxxxxxxx ROM 5P    program ROM (banked)
+10xxxxxxxxxxxxxx R   xxxxxxxx ROM 5N    program ROM (banked)
+11xxxxxxxxxxxxxx R   xxxxxxxx ROM 5M    program ROM (banked)
+
+
+***************************************************************************
+
+Notes:
+------
+- The fg tilemap is a 1bpp layer which selects the second palette bank when
+  active, so it could be used for some cool effects. Gladiator just sets the
+  whole palette to white so we can just treat it as a monochromatic layer.
+- tilemap Y scroll is not implemented because the game doesn't use it so I can't
+  verify it's right.
+
+TODO:
+-----
+- gladiatr_irq_patch_w, which triggers irq on the second CPU, is a kludge. It
+  shouldn't work that way, that address should actually reset the second CPU
+  (but the main CPU never asserts the line). The schematics are too fuzzy to
+  understand what should trigger irq on the second CPU. Just using a vblank
+  interrupt doesn't work, probably because the CPU expects interrupts to only
+  begin happening when the main CPU has finished the self test.
 - YM2203 mixing problems (loss of bass notes)
 - YM2203 some sound effects just don't sound correct
 - Audio Filter Switch not hooked up (might solve YM2203 mixing issue)
 - Ports 60,61,80,81 not fully understood yet...
-- CPU speed may not be accurate
-- some sprites linger on later stages (perhaps a sprite enable bit?)
-- Flipscreen not implemented
-- Scrolling issues in Test mode!
 - The four 8741 ROMs are available but not used.
 
-Preliminary Gladiator Memory Map
 
-Main CPU (Z80)
-
-$0000-$3FFF	QB0-5
-$4000-$5FFF	QB0-4
-
-$6000-$7FFF	QB0-1 Paged
-$8000-$BFFF	QC0-3 Paged
-
-    if port 02 = 00     QB0-1 offset (0000-1fff) at location 6000-7fff
-                        QC0-3 offset (0000-3fff) at location 8000-bfff
-
-    if port 02 = 01     QB0-1 offset (2000-3fff) at location 6000-7fff
-                        QC0-3 offset (4000-7fff) at location 8000-bfff
-
-$C000-$C3FF	sprite RAM
-$C400-$C7FF	sprite attributes
-$C800-$CBFF	more sprite attributes
-
-$CC00-$D7FF	video registers
-
-(scrolling, 2 screens wide)
-$D800-DFFF	background layer VRAM (tiles)
-$E000-E7FF	background layer VRAM (attributes)
-$E800-EFFF	foreground text layer VRAM
-
-$F000-$F3FF	Battery Backed RAM
-$F400-$F7FF	Work RAM
-
-Audio CPU (Z80)
-$0000-$3FFF	QB0-17
-$8000-$83FF	Work RAM 2.CPU
-
-
-Preliminary Descriptions of I/O Ports.
-
-Main z80
-8 pins of LS259:
-  00 - OBJACS ? (I can't read the name in schematics)
-  01 - OBJCGBK (Sprite banking)
-  02 - PR.BK (ROM banking)
-  03 - NMIFG (connects to NMI of main Z80, but there's no code in 0066)
-  04 - SRST (probably some type of reset)
-  05 - CBK0 (unknown)
-  06 - LOBJ (connected near graphic ROMs)
-  07 - REVERS
-  9E - Send data to NEC 8741-0 (comunicate with 2nd z80)
-		(dip switch 1 is read in these ports too)
-  9F - Send commands to NEC 8741-0
-
-  C0-DF 8251 (Debug port ?)
-
-2nd z80
-
-00 - YM2203 Control Reg.
-01 - YM2203 Data Read / Write Reg.
-		Port B of the YM2203 is connected to dip switch 3
-20 - Send data to NEC 8741-1 (comunicate with Main z80)
-		(dip switch 2 is read in these ports too)
-21 - Send commands to NEC 8741-1 (comunicate with Main z80)
-40 - Clear Interrupt latch
-60 - Send data to NEC 8741-2 (Read Joystick and Coin Slot (both players)
-61 - Send commands to NEC 8741-2
-80 - Send data to NEC 8741-3 (Read buttons (Fire 1, 2 and 3 (both players), service button) )
-81 - Send commands to NEC 8741-3
-
-A0-BF  - Audio mixer control ?
-E0     - Comunication port to 6809
-*/
+***************************************************************************/
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "machine/tait8741.h"
 #include "cpu/z80/z80.h"
+#include "sound/2203intf.h"
+#include "sound/msm5205.h"
+
 
 /*Video functions*/
-extern unsigned char *gladiator_text;
+extern data8_t *gladiatr_videoram, *gladiatr_colorram,*gladiatr_textram;
+WRITE8_HANDLER( gladiatr_videoram_w );
+WRITE8_HANDLER( gladiatr_colorram_w );
+WRITE8_HANDLER( gladiatr_textram_w );
+WRITE8_HANDLER( gladiatr_paletteram_w );
+WRITE8_HANDLER( ppking_video_registers_w );
 WRITE8_HANDLER( gladiatr_video_registers_w );
-READ8_HANDLER( gladiatr_video_registers_r );
-WRITE8_HANDLER( gladiatr_paletteram_rg_w );
-WRITE8_HANDLER( gladiatr_paletteram_b_w );
-extern VIDEO_START( gladiatr );
-extern VIDEO_UPDATE( gladiatr );
+WRITE8_HANDLER( gladiatr_spritebuffer_w );
 WRITE8_HANDLER( gladiatr_spritebank_w );
+VIDEO_START( ppking );
+VIDEO_UPDATE( ppking );
+VIDEO_START( gladiatr );
+VIDEO_UPDATE( gladiatr );
+
 
 /*Rom bankswitching*/
-static int banka;
-WRITE8_HANDLER( gladiatr_bankswitch_w );
-READ8_HANDLER( gladiatr_bankswitch_r );
+WRITE8_HANDLER( gladiatr_bankswitch_w )
+{
+	data8_t *rom = memory_region(REGION_CPU1) + 0x10000;
 
-/*Rom bankswitching*/
-WRITE8_HANDLER( gladiatr_bankswitch_w ){
-	static int bank1[2] = { 0x10000, 0x12000 };
-	static int bank2[2] = { 0x14000, 0x18000 };
-	unsigned char *RAM = memory_region(REGION_CPU1);
-	banka = data;
-	cpu_setbank(1,&RAM[bank1[(data & 0x03)]]);
-	cpu_setbank(2,&RAM[bank2[(data & 0x03)]]);
+	cpu_setbank(1, rom + 0x6000 * (data & 0x01));
 }
 
-READ8_HANDLER( gladiatr_bankswitch_r ){
-	return banka;
-}
 
 static READ8_HANDLER( gladiator_dsw1_r )
 {
-	int orig = readinputportbytag("DSW1");
-/*Reverse all bits for Input Port 0 (DSW1)*/
-/*ie..Bit order is: 0,1,2,3,4,5,6,7*/
-return   ((orig&0x01)<<7) | ((orig&0x02)<<5)
-       | ((orig&0x04)<<3) | ((orig&0x08)<<1)
-       | ((orig&0x10)>>1) | ((orig&0x20)>>3)
-       | ((orig&0x40)>>5) | ((orig&0x80)>>7);;
+	int orig = readinputportbytag("DSW1")^0xff;
+
+	return BITSWAP8(orig, 0,1,2,3,4,5,6,7);
 }
 
 static READ8_HANDLER( gladiator_dsw2_r )
 {
-	int orig = readinputportbytag("DSW2");
-/*Bits 2-7 are reversed for Input Port 1 (DSW2)*/
-/*ie..Bit order is: 2,3,4,5,6,7,1,0*/
-return	  (orig&0x01) | (orig&0x02)
-	| ((orig&0x04)<<5) | ((orig&0x08)<<3)
-	| ((orig&0x10)<<1) | ((orig&0x20)>>1)
-	| ((orig&0x40)>>3) | ((orig&0x80)>>5);
+	int orig = readinputportbytag("DSW2")^0xff;
+
+	return BITSWAP8(orig, 2,3,4,5,6,7,1,0);
 }
 
 static READ8_HANDLER( gladiator_controll_r )
@@ -196,25 +270,15 @@ static MACHINE_INIT( gladiator )
 	TAITO8741_start(&gsword_8741interface);
 	/* 6809 bank memory set */
 	{
-		unsigned char *RAM = memory_region(REGION_CPU3);
-		cpu_setbank(3,&RAM[0x10000]);
-		cpu_setbank(4,&RAM[0x18000]);
-		cpu_setbank(5,&RAM[0x20000]);
+		data8_t *rom = memory_region(REGION_CPU3) + 0x10000;
+		cpu_setbank(2,rom);
 	}
 }
-
-#if 1
-/* !!!!! patch to IRQ timming for 2nd CPU !!!!! */
-WRITE8_HANDLER( gladiatr_irq_patch_w )
-{
-	cpunum_set_input_line(1,0,HOLD_LINE);
-}
-#endif
 
 /* YM2203 port A handler (input) */
 static READ8_HANDLER( gladiator_dsw3_r )
 {
-	return input_port_2_r(offset)^0xff;
+	return readinputportbytag("DSW3");
 }
 /* YM2203 port B handler (output) */
 static WRITE8_HANDLER( gladiator_int_control_w )
@@ -233,12 +297,10 @@ static void gladiator_ym_irq(int irq)
 /*Sound Functions*/
 static WRITE8_HANDLER( glad_adpcm_w )
 {
-	unsigned char *RAM = memory_region(REGION_CPU3);
+	data8_t *rom = memory_region(REGION_CPU3) + 0x10000;
+
 	/* bit6 = bank offset */
-	int bankoffset = data&0x40 ? 0x4000 : 0;
-	cpu_setbank(3,&RAM[0x10000+bankoffset]);
-	cpu_setbank(4,&RAM[0x18000+bankoffset]);
-	cpu_setbank(5,&RAM[0x20000+bankoffset]);
+	cpu_setbank(2,rom + ((data & 0x40) ? 0xc000 : 0));
 
 	MSM5205_data_w(0,data);         /* bit0..3  */
 	MSM5205_reset_w(0,(data>>5)&1); /* bit 5    */
@@ -257,146 +319,228 @@ static READ8_HANDLER( glad_cpu_sound_command_r )
 	return soundlatch_r(0);
 }
 
+static WRITE8_HANDLER( gladiatr_flipscreen_w )
+{
+	flip_screen_set(data & 1);
+}
+
+
+#if 1
+/* !!!!! patch to IRQ timming for 2nd CPU !!!!! */
+WRITE8_HANDLER( gladiatr_irq_patch_w )
+{
+	cpunum_set_input_line(1,0,HOLD_LINE);
+}
+#endif
 
 
 
-static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x5fff) AM_READ(MRA8_ROM)
-	AM_RANGE(0x6000, 0x7fff) AM_READ(MRA8_BANK1)
-	AM_RANGE(0x8000, 0xbfff) AM_READ(MRA8_BANK2)
-	AM_RANGE(0xc000, 0xcbff) AM_READ(MRA8_RAM)
-	AM_RANGE(0xcc00, 0xcfff) AM_READ(gladiatr_video_registers_r)
-	AM_RANGE(0xd000, 0xffff) AM_READ(MRA8_RAM)
+
+
+
+static int data1,data2,flag1=1,flag2=1;
+
+static WRITE8_HANDLER(qx0_w)
+{
+	if(!offset)
+	{
+		data2=data;
+		flag2=1;
+	}
+}
+
+static WRITE8_HANDLER(qx1_w)
+{
+	if(!offset)
+	{
+		data1=data;
+		flag1=1;
+	}
+}
+
+static WRITE8_HANDLER(qx2_w){ }
+
+static WRITE8_HANDLER(qx3_w){ }
+
+static READ8_HANDLER(qx2_r){ return rand(); }
+
+static READ8_HANDLER(qx3_r){ return rand()&0xf; }
+
+static READ8_HANDLER(qx0_r)
+{
+	if(!offset)
+		 return data1;
+	else
+		return flag2;
+}
+
+static READ8_HANDLER(qx1_r)
+{
+	if(!offset)
+		return data2;
+	else
+		return flag1;
+}
+
+static ADDRESS_MAP_START( ppking_cpu1_map, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xbfff) AM_ROM
+	AM_RANGE(0xc000, 0xcbff) AM_RAM AM_BASE(&spriteram)
+	AM_RANGE(0xcc00, 0xcfff) AM_WRITE(ppking_video_registers_w)
+	AM_RANGE(0xd000, 0xd7ff) AM_READWRITE(MRA8_RAM, gladiatr_paletteram_w) AM_BASE(&paletteram)
+	AM_RANGE(0xd800, 0xdfff) AM_READWRITE(MRA8_RAM, gladiatr_videoram_w) AM_BASE(&gladiatr_videoram)
+	AM_RANGE(0xe000, 0xe7ff) AM_READWRITE(MRA8_RAM, gladiatr_colorram_w) AM_BASE(&gladiatr_colorram)
+	AM_RANGE(0xe800, 0xefff) AM_READWRITE(MRA8_RAM, gladiatr_textram_w) AM_BASE(&gladiatr_textram)
+	AM_RANGE(0xf000, 0xf7ff) AM_RAM AM_BASE(&generic_nvram) AM_SIZE(&generic_nvram_size) /* battery backed RAM */
 ADDRESS_MAP_END
 
-static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0xbfff) AM_WRITE(MWA8_ROM)
-	AM_RANGE(0xc000, 0xcbff) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram)
+
+static ADDRESS_MAP_START( ppking_cpu3_map, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x2000, 0x2fff) AM_ROM
+	AM_RANGE(0xc000, 0xffff) AM_ROM
+ADDRESS_MAP_END
+
+static ADDRESS_MAP_START( ppking_cpu1_io, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0x00) AM_WRITE(gladiatr_spritebuffer_w)
+	AM_RANGE(0x04, 0x04) AM_NOP	// WRITE(ppking_irq_patch_w)
+	AM_RANGE(0x9e, 0x9f) AM_READ(qx0_r) AM_WRITE(qx0_w)
+	AM_RANGE(0xbf, 0xbf) AM_NOP
+ADDRESS_MAP_END
+
+static ADDRESS_MAP_START( ppking_cpu2_io, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0x00) AM_READ(YM2203_status_port_0_r) AM_WRITE(YM2203_control_port_0_w)
+	AM_RANGE(0x01, 0x01) AM_READ(YM2203_read_port_0_r) AM_WRITE(YM2203_write_port_0_w)
+	AM_RANGE(0x20, 0x21) AM_READ(qx1_r) AM_WRITE(qx1_w)
+	AM_RANGE(0x40, 0x40) AM_READ(MRA8_NOP)
+	AM_RANGE(0x60, 0x61) AM_READ(qx2_r) AM_WRITE(qx2_w)
+	AM_RANGE(0x80, 0x81) AM_READ(qx3_r) AM_WRITE(qx3_w)
+ADDRESS_MAP_END
+
+
+
+
+static ADDRESS_MAP_START( gladiatr_cpu1_map, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x5fff) AM_ROM
+	AM_RANGE(0x6000, 0xbfff) AM_ROMBANK(1)
+	AM_RANGE(0xc000, 0xcbff) AM_RAM AM_BASE(&spriteram)
 	AM_RANGE(0xcc00, 0xcfff) AM_WRITE(gladiatr_video_registers_w)
-	AM_RANGE(0xd000, 0xd1ff) AM_WRITE(gladiatr_paletteram_rg_w) AM_BASE(&paletteram)
-	AM_RANGE(0xd200, 0xd3ff) AM_WRITE(MWA8_RAM)
-	AM_RANGE(0xd400, 0xd5ff) AM_WRITE(gladiatr_paletteram_b_w) AM_BASE(&paletteram_2)
-	AM_RANGE(0xd600, 0xd7ff) AM_WRITE(MWA8_RAM)
-	AM_RANGE(0xd800, 0xdfff) AM_WRITE(videoram_w) AM_BASE(&videoram)
-	AM_RANGE(0xe000, 0xe7ff) AM_WRITE(colorram_w) AM_BASE(&colorram)
-	AM_RANGE(0xe800, 0xefff) AM_WRITE(MWA8_RAM) AM_BASE(&gladiator_text)
-	AM_RANGE(0xf000, 0xf3ff) AM_WRITE(MWA8_RAM) AM_BASE(&generic_nvram) AM_SIZE(&generic_nvram_size) /* battery backed RAM */
-	AM_RANGE(0xf400, 0xffff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0xd000, 0xd7ff) AM_READWRITE(MRA8_RAM, gladiatr_paletteram_w) AM_BASE(&paletteram)
+	AM_RANGE(0xd800, 0xdfff) AM_READWRITE(MRA8_RAM, gladiatr_videoram_w) AM_BASE(&gladiatr_videoram)
+	AM_RANGE(0xe000, 0xe7ff) AM_READWRITE(MRA8_RAM, gladiatr_colorram_w) AM_BASE(&gladiatr_colorram)
+	AM_RANGE(0xe800, 0xefff) AM_READWRITE(MRA8_RAM, gladiatr_textram_w) AM_BASE(&gladiatr_textram)
+	AM_RANGE(0xf000, 0xf7ff) AM_RAM AM_BASE(&generic_nvram) AM_SIZE(&generic_nvram_size) /* battery backed RAM */
 ADDRESS_MAP_END
 
-static ADDRESS_MAP_START( readmem_cpu2, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x3fff) AM_READ(MRA8_ROM)
-	AM_RANGE(0x8000, 0x83ff) AM_READ(MRA8_RAM)
+static ADDRESS_MAP_START( cpu2_map, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_ROM
+	AM_RANGE(0x8000, 0x83ff) AM_RAM
 ADDRESS_MAP_END
 
-static ADDRESS_MAP_START( writemem_cpu2, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x3fff) AM_WRITE(MWA8_ROM)
-	AM_RANGE(0x8000, 0x83ff) AM_WRITE(MWA8_RAM)
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x2000, 0x2fff) AM_READ(glad_cpu_sound_command_r)
-	AM_RANGE(0x4000, 0x7fff) AM_READ(MRA8_BANK3) /* BANKED ROM */
-	AM_RANGE(0x8000, 0xbfff) AM_READ(MRA8_BANK4) /* BANKED ROM */
-	AM_RANGE(0xc000, 0xffff) AM_READ(MRA8_BANK5) /* BANKED ROM */
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+static ADDRESS_MAP_START( gladiatr_cpu3_map, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x1000, 0x1fff) AM_WRITE(glad_adpcm_w)
+	AM_RANGE(0x2000, 0x2fff) AM_READ(glad_cpu_sound_command_r)
+	AM_RANGE(0x4000, 0xffff) AM_ROMBANK(2)
 ADDRESS_MAP_END
 
 
-static ADDRESS_MAP_START( readport, ADDRESS_SPACE_IO, 8 )
-	AM_RANGE(0x02, 0x02) AM_READ(gladiatr_bankswitch_r)
-	AM_RANGE(0x9e, 0x9f) AM_READ(TAITO8741_0_r)
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( writeport, ADDRESS_SPACE_IO, 8 )
+static ADDRESS_MAP_START( gladiatr_cpu1_io, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0x00) AM_WRITE(gladiatr_spritebuffer_w)
 	AM_RANGE(0x01, 0x01) AM_WRITE(gladiatr_spritebank_w)
 	AM_RANGE(0x02, 0x02) AM_WRITE(gladiatr_bankswitch_w)
 	AM_RANGE(0x04, 0x04) AM_WRITE(gladiatr_irq_patch_w) /* !!! patch to 2nd CPU IRQ !!! */
-	AM_RANGE(0x9e, 0x9f) AM_WRITE(TAITO8741_0_w)
-	AM_RANGE(0xbf, 0xbf) AM_WRITE(MWA8_NOP)
+	AM_RANGE(0x07, 0x07) AM_WRITE(gladiatr_flipscreen_w)
+	AM_RANGE(0x9e, 0x9f) AM_READWRITE(TAITO8741_0_r, TAITO8741_0_w)
+	AM_RANGE(0xbf, 0xbf) AM_NOP	// watchdog_reset_w doesn't work
 ADDRESS_MAP_END
 
-static ADDRESS_MAP_START( readport_cpu2, ADDRESS_SPACE_IO, 8 )
-	AM_RANGE(0x00, 0x00) AM_READ(YM2203_status_port_0_r)
-	AM_RANGE(0x01, 0x01) AM_READ(YM2203_read_port_0_r)
-	AM_RANGE(0x20, 0x21) AM_READ(TAITO8741_1_r)
-	AM_RANGE(0x40, 0x40) AM_READ(MRA8_NOP)
-	AM_RANGE(0x60, 0x61) AM_READ(TAITO8741_2_r)
-	AM_RANGE(0x80, 0x81) AM_READ(TAITO8741_3_r)
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( writeport_cpu2, ADDRESS_SPACE_IO, 8 )
-	AM_RANGE(0x00, 0x00) AM_WRITE(YM2203_control_port_0_w)
-	AM_RANGE(0x01, 0x01) AM_WRITE(YM2203_write_port_0_w)
-	AM_RANGE(0x20, 0x21) AM_WRITE(TAITO8741_1_w)
-	AM_RANGE(0x60, 0x61) AM_WRITE(TAITO8741_2_w)
-	AM_RANGE(0x80, 0x81) AM_WRITE(TAITO8741_3_w)
-/*	AM_RANGE(0x40, 0x40) AM_WRITE(glad_sh_irq_clr) */
+static ADDRESS_MAP_START( gladiatr_cpu2_io, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0x00) AM_READWRITE(YM2203_status_port_0_r, YM2203_control_port_0_w)
+	AM_RANGE(0x01, 0x01) AM_READWRITE(YM2203_read_port_0_r, YM2203_write_port_0_w)
+	AM_RANGE(0x20, 0x21) AM_READWRITE(TAITO8741_1_r, TAITO8741_1_w)
+	AM_RANGE(0x40, 0x40) AM_NOP	// WRITE(sub_irq_ack_w)
+	AM_RANGE(0x60, 0x61) AM_READWRITE(TAITO8741_2_r, TAITO8741_2_w)
+	AM_RANGE(0x80, 0x81) AM_READWRITE(TAITO8741_3_r, TAITO8741_3_w)
+	AM_RANGE(0xa0, 0xa7) AM_NOP	// filters on sound output
 	AM_RANGE(0xe0, 0xe0) AM_WRITE(glad_cpu_sound_command_w)
 ADDRESS_MAP_END
 
+
+
+INPUT_PORTS_START( ppking )
+
+INPUT_PORTS_END
+
+
 INPUT_PORTS_START( gladiatr )
 	PORT_START_TAG("DSW1")		/* (8741-0 parallel port)*/
-	PORT_DIPNAME( 0x03, 0x01, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Easy ) )
-	PORT_DIPSETTING(    0x01, DEF_STR( Medium ) )
-	PORT_DIPSETTING(    0x02, DEF_STR( Hard ) )
-	PORT_DIPSETTING(    0x03, DEF_STR( Hardest ) )
+	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(    0x03, DEF_STR( Easy ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( Medium ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Hard ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Hardest ) )
 	PORT_DIPNAME( 0x04, 0x04, "After 4 Stages" )
-	PORT_DIPSETTING(    0x04, DEF_STR( Continues ) )
-	PORT_DIPSETTING(    0x00, "Ends" )
-	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Bonus_Life ) )   /*NOTE: Actual manual has these settings reversed(typo?)! */
-	PORT_DIPSETTING(    0x00, "Only at 100000" )
-	PORT_DIPSETTING(    0x08, "Every 100000" )
-	PORT_DIPNAME( 0x30, 0x20, DEF_STR( Lives ) )
-	PORT_DIPSETTING(    0x00, "1" )
-	PORT_DIPSETTING(    0x10, "2" )
-	PORT_DIPSETTING(    0x20, "3" )
-	PORT_DIPSETTING(    0x30, "4" )
-	PORT_DIPNAME( 0x40, 0x00, DEF_STR( Allow_Continue ) )
-	PORT_DIPSETTING(    0x40, DEF_STR( No ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Yes ) )
-	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Demo_Sounds ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Continues ) )
+	PORT_DIPSETTING(    0x04, "Ends" )
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Bonus_Life ) )   /*NOTE: Actual manual has these settings reversed(typo?)! */
+	PORT_DIPSETTING(    0x08, "Only at 100000" )
+	PORT_DIPSETTING(    0x00, "Every 100000" )
+	PORT_DIPNAME( 0x30, 0x10, DEF_STR( Lives ) )
+	PORT_DIPSETTING(    0x30, "1" )
+	PORT_DIPSETTING(    0x20, "2" )
+	PORT_DIPSETTING(    0x10, "3" )
+	PORT_DIPSETTING(    0x00, "4" )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Allow_Continue ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( No ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Yes ) )
+	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
 	PORT_START_TAG("DSW2")      /* (8741-1 parallel port) - Dips 6 Unused */
-	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Coin_A ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
-	PORT_DIPSETTING(    0x01, DEF_STR( 1C_2C ) )
-	PORT_DIPSETTING(    0x02, DEF_STR( 1C_4C ) )
-	PORT_DIPSETTING(    0x03, DEF_STR( 1C_5C ) )
-	PORT_DIPNAME( 0x0c, 0x00, DEF_STR( Coin_B ) )
-	PORT_DIPSETTING(    0x0c, DEF_STR( 5C_1C ) )
-	PORT_DIPSETTING(    0x08, DEF_STR( 4C_1C ) )
-	PORT_DIPSETTING(    0x04, DEF_STR( 3C_1C ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( 2C_1C ) )
-	PORT_DIPNAME( 0x10, 0x00, DEF_STR( Free_Play ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x10, DEF_STR( On ) )
-	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Cabinet ) )
-	PORT_DIPSETTING(    0x40, DEF_STR( Upright ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Cocktail ) )
-	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Flip_Screen ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
+	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Coin_A ) )
+	PORT_DIPSETTING(    0x03, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( 1C_4C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 1C_5C ) )
+	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Coin_B ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 5C_1C ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0x0c, DEF_STR( 2C_1C ) )
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Free_Play ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unused ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x00, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Cocktail ) )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Flip_Screen ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
 	PORT_START_TAG("DSW3")      /* (YM2203 port B) - Dips 5,6,7 Unused */
-	PORT_DIPNAME( 0x01, 0x00, "Invulnerability (Cheat)")
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x01, DEF_STR( On ) )
-	PORT_DIPNAME( 0x02, 0x00, "Memory Backup" )
-	PORT_DIPSETTING(    0x00, DEF_STR( Normal ) )
-	PORT_DIPSETTING(    0x02, "Clear" )
-	PORT_DIPNAME( 0x0c, 0x00, "Starting Stage" )
-	PORT_DIPSETTING(    0x00, "1" )
-	PORT_DIPSETTING(    0x04, "2" )
-	PORT_DIPSETTING(    0x08, "3" )
-	PORT_DIPSETTING(    0x0c, "4" )
-	PORT_SERVICE( 0x80, IP_ACTIVE_HIGH )
+	PORT_DIPNAME( 0x01, 0x01, "Invulnerability (Cheat)")
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x02, 0x02, "Memory Backup" )
+	PORT_DIPSETTING(    0x02, DEF_STR( Normal ) )
+	PORT_DIPSETTING(    0x00, "Clear" )
+	PORT_DIPNAME( 0x0c, 0x0c, "Starting Stage" )
+	PORT_DIPSETTING(    0x0c, "1" )
+	PORT_DIPSETTING(    0x08, "2" )
+	PORT_DIPSETTING(    0x04, "3" )
+	PORT_DIPSETTING(    0x00, "4" )
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unused ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unused ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unused ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_SERVICE( 0x80, IP_ACTIVE_LOW )
 
 	PORT_START_TAG("IN0")	/*(8741-3 parallel port 1) */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_START1 )
@@ -452,117 +596,153 @@ INPUT_PORTS_END
 
 /*******************************************************************/
 
-static struct GfxLayout gladiator_text_layout  =   /* gfxset 0 */
+static struct GfxLayout charlayout  =
 {
-	8,8,	/* 8*8 tiles */
-	1024,	/* number of tiles */
-	1,		/* bits per pixel */
-	{ 0 },	/* plane offsets */
-	{ 0,1,2,3,4,5,6,7 }, /* x offsets */
-	{ 0*8,1*8,2*8,3*8,4*8,5*8,6*8,7*8 }, /* y offsets */
-	64 /* offset to next tile */
+	8,8,
+	RGN_FRAC(1,1),
+	1,
+	{ 0 },
+	{ 0, 1, 2, 3, 4, 5, 6, 7 },
+	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
+	8*8
 };
 
-/*******************************************************************/
-
-#define DEFINE_LAYOUT( NAME,P0,P1,P2) static struct GfxLayout NAME = { \
-	8,8,512,3, \
-	{ P0, P1, P2}, \
-	{ 0,1,2,3,64+0,64+1,64+2,64+3 }, \
-	{ 0*8,1*8,2*8,3*8,4*8,5*8,6*8,7*8 }, \
-	128 \
+static struct GfxLayout tilelayout  =
+{
+	8,8,
+	RGN_FRAC(1,2),
+	3,
+	{ 4, RGN_FRAC(1,2), RGN_FRAC(1,2)+4 },
+	{ 0, 1, 2, 3, 8*8+0, 8*8+1, 8*8+2, 8*8+3 },
+	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
+	16*8
 };
 
-DEFINE_LAYOUT( gladiator_tile0, 4,			0x08000*8, 0x08000*8+4 )
-DEFINE_LAYOUT( gladiator_tile1, 0,			0x0A000*8, 0x0A000*8+4 )
-DEFINE_LAYOUT( gladiator_tile2, 4+0x2000*8, 0x10000*8, 0x10000*8+4 )
-DEFINE_LAYOUT( gladiator_tile3, 0+0x2000*8, 0x12000*8, 0x12000*8+4 )
-DEFINE_LAYOUT( gladiator_tile4, 4+0x4000*8, 0x0C000*8, 0x0C000*8+4 )
-DEFINE_LAYOUT( gladiator_tile5, 0+0x4000*8, 0x0E000*8, 0x0E000*8+4 )
-DEFINE_LAYOUT( gladiator_tile6, 4+0x6000*8, 0x14000*8, 0x14000*8+4 )
-DEFINE_LAYOUT( gladiator_tile7, 0+0x6000*8, 0x16000*8, 0x16000*8+4 )
-DEFINE_LAYOUT( gladiator_tileA, 4+0x2000*8, 0x0A000*8, 0x0A000*8+4 )
-DEFINE_LAYOUT( gladiator_tileB, 0,			0x10000*8, 0x10000*8+4 )
-DEFINE_LAYOUT( gladiator_tileC, 4+0x6000*8, 0x0E000*8, 0x0E000*8+4 )
-DEFINE_LAYOUT( gladiator_tileD, 0+0x4000*8, 0x14000*8, 0x14000*8+4 )
-
-static struct GfxDecodeInfo gfxdecodeinfo[] =
+static struct GfxLayout spritelayout  =
 {
-	/* monochrome text layer */
-	{ REGION_GFX1, 0x00000, &gladiator_text_layout, 512, 1 },
+	16,16,
+	RGN_FRAC(1,2),
+	3,
+	{ 4, RGN_FRAC(1,2), RGN_FRAC(1,2)+4 },
+	{ 0, 1, 2, 3, 8*8+0, 8*8+1, 8*8+2, 8*8+3,
+			16*8+0, 16*8+1, 16*8+2, 16*8+3, 24*8+0, 24*8+1, 24*8+2, 24*8+3 },
+	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8,
+			32*8, 33*8, 34*8, 35*8, 36*8, 37*8, 38*8, 39*8 },
+	64*8
+};
 
-	/* background tiles */
-	{ REGION_GFX2, 0x00000, &gladiator_tile0, 0, 64 },
-	{ REGION_GFX2, 0x00000, &gladiator_tile1, 0, 64 },
-	{ REGION_GFX2, 0x00000, &gladiator_tile2, 0, 64 },
-	{ REGION_GFX2, 0x00000, &gladiator_tile3, 0, 64 },
-	{ REGION_GFX2, 0x00000, &gladiator_tile4, 0, 64 },
-	{ REGION_GFX2, 0x00000, &gladiator_tile5, 0, 64 },
-	{ REGION_GFX2, 0x00000, &gladiator_tile6, 0, 64 },
-	{ REGION_GFX2, 0x00000, &gladiator_tile7, 0, 64 },
+static struct GfxDecodeInfo ppking_gfxdecodeinfo[] =
+{
+	{ REGION_GFX1, 0, &charlayout, 0, 1 },
+	{ REGION_GFX2, 0, &tilelayout, 0, 32 },
+	{ REGION_GFX3, 0, &spritelayout, 0x100, 32 },
+	{ -1 }
+};
 
-	/* sprites */
-	{ REGION_GFX3, 0x00000, &gladiator_tile0, 0, 64 },
-	{ REGION_GFX3, 0x00000, &gladiator_tileB, 0, 64 },
-	{ REGION_GFX3, 0x00000, &gladiator_tileA, 0, 64 },
-	{ REGION_GFX3, 0x00000, &gladiator_tile3, 0, 64 }, /* "GLAD..." */
-	{ REGION_GFX3, 0x18000, &gladiator_tile0, 0, 64 },
-	{ REGION_GFX3, 0x18000, &gladiator_tileB, 0, 64 },
-	{ REGION_GFX3, 0x18000, &gladiator_tileA, 0, 64 },
-	{ REGION_GFX3, 0x18000, &gladiator_tile3, 0, 64 }, /* ...DIATOR */
-	{ REGION_GFX3, 0x18000, &gladiator_tile4, 0, 64 },
-	{ REGION_GFX3, 0x18000, &gladiator_tileD, 0, 64 },
-	{ REGION_GFX3, 0x18000, &gladiator_tileC, 0, 64 },
-	{ REGION_GFX3, 0x18000, &gladiator_tile7, 0, 64 },
-
+static struct GfxDecodeInfo gladiatr_gfxdecodeinfo[] =
+{
+	{ REGION_GFX1, 0, &charlayout,   0x200, 1 },
+	{ REGION_GFX2, 0, &tilelayout,   0x000, 32 },
+	{ REGION_GFX3, 0, &spritelayout, 0x100, 32 },
 	{ -1 } /* end of array */
 };
 
-#undef DEFINE_LAYOUT
 
 
-
-static struct YM2203interface ym2203_interface =
+static READ8_HANDLER(f1_r)
 {
-	1,		/* 1 chip */
-	1500000,	/* 1.5 MHz? */
-	{ YM2203_VOL(25,25) },
-	{ 0 },
-	{ gladiator_dsw3_r },         /* port B read */
-	{ gladiator_int_control_w }, /* port A write */
-	{ 0 },
-	{ gladiator_ym_irq }          /* NMI request for 2nd cpu */
+	return rand();
+}
+
+static struct YM2203interface ppking_ym2203_interface =
+{
+	f1_r,
+	f1_r
+};
+
+static struct YM2203interface gladiatr_ym2203_interface =
+{
+	0,
+	gladiator_dsw3_r,         /* port B read */
+	gladiator_int_control_w, /* port A write */
+	0,
+	gladiator_ym_irq          /* NMI request for 2nd cpu */
 };
 
 static struct MSM5205interface msm5205_interface =
 {
-	1,					/* 1 chip             */
-	455000,				/* 455KHz ??          */
-	{ 0 },				/* interrupt function */
-	{ MSM5205_SEX_4B},	/* vclk input mode    */
-	{ 60 }
+	0,				/* interrupt function */
+	MSM5205_SEX_4B	/* vclk input mode    */
 };
 
 
 
+static MACHINE_DRIVER_START( ppking )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(Z80, 12000000/2) /* 6 MHz */
+	MDRV_CPU_PROGRAM_MAP(ppking_cpu1_map,0)
+	MDRV_CPU_IO_MAP(ppking_cpu1_io,0)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+
+	MDRV_CPU_ADD(Z80, 12000000/4) /* 3 MHz */
+	MDRV_CPU_PROGRAM_MAP(cpu2_map,0)
+	MDRV_CPU_IO_MAP(ppking_cpu2_io,0)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+
+	MDRV_CPU_ADD(M6809, 12000000/16) /* 750 kHz */
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	MDRV_CPU_PROGRAM_MAP(ppking_cpu3_map,0)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(100)
+
+	MDRV_NVRAM_HANDLER(generic_0fill)
+
+	/* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(ppking_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(1024)
+
+	MDRV_VIDEO_START(ppking)
+	MDRV_VIDEO_UPDATE(ppking)
+
+	/* sound hardware */
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM2203, 12000000/8)
+	MDRV_SOUND_CONFIG(ppking_ym2203_interface)
+	MDRV_SOUND_ROUTE(0, "mono", 0.60)
+	MDRV_SOUND_ROUTE(1, "mono", 0.60)
+	MDRV_SOUND_ROUTE(2, "mono", 0.60)
+	MDRV_SOUND_ROUTE(3, "mono", 0.50)
+
+	MDRV_SOUND_ADD(MSM5205, 12000000/32)
+	MDRV_SOUND_CONFIG(msm5205_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.60)
+MACHINE_DRIVER_END
+
 static MACHINE_DRIVER_START( gladiatr )
 
 	/* basic machine hardware */
-	MDRV_CPU_ADD(Z80, 6000000) /* 6 MHz? */
-	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
-	MDRV_CPU_IO_MAP(readport,writeport)
+	MDRV_CPU_ADD(Z80, 12000000/2) /* 6 MHz */
+	MDRV_CPU_PROGRAM_MAP(gladiatr_cpu1_map,0)
+	MDRV_CPU_IO_MAP(gladiatr_cpu1_io,0)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
-	MDRV_CPU_ADD(Z80, 3000000) /* 3 MHz? */
-	MDRV_CPU_PROGRAM_MAP(readmem_cpu2,writemem_cpu2)
-	MDRV_CPU_IO_MAP(readport_cpu2,writeport_cpu2)
+	MDRV_CPU_ADD(Z80, 12000000/4) /* 3 MHz */
+	MDRV_CPU_PROGRAM_MAP(cpu2_map,0)
+	MDRV_CPU_IO_MAP(gladiatr_cpu2_io,0)
 
-	MDRV_CPU_ADD(M6809, 750000)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU) /* 750 kHz (hand tuned) */
-	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
+	MDRV_CPU_ADD(M6809, 12000000/16) /* 750 kHz */
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	MDRV_CPU_PROGRAM_MAP(gladiatr_cpu3_map,0)
 
 	MDRV_FRAMES_PER_SECOND(60)
-	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION) /* fps, vblank duration */
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 	MDRV_INTERLEAVE(10)
 
 	MDRV_MACHINE_INIT(gladiator)
@@ -571,16 +751,26 @@ static MACHINE_DRIVER_START( gladiatr )
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
 	MDRV_SCREEN_SIZE(32*8, 32*8)
-	MDRV_VISIBLE_AREA(0, 255, 0+16, 255-16)
-	MDRV_GFXDECODE(gfxdecodeinfo)
-	MDRV_PALETTE_LENGTH(512+2)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(gladiatr_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(1024)
 
 	MDRV_VIDEO_START(gladiatr)
 	MDRV_VIDEO_UPDATE(gladiatr)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM2203, ym2203_interface)
-	MDRV_SOUND_ADD(MSM5205, msm5205_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM2203, 12000000/8)
+	MDRV_SOUND_CONFIG(gladiatr_ym2203_interface)
+	MDRV_SOUND_ROUTE(0, "mono", 0.60)
+	MDRV_SOUND_ROUTE(1, "mono", 0.60)
+	MDRV_SOUND_ROUTE(2, "mono", 0.60)
+	MDRV_SOUND_ROUTE(3, "mono", 0.50)
+
+	MDRV_SOUND_ADD(MSM5205, 12000000/32)
+	MDRV_SOUND_CONFIG(msm5205_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.60)
 MACHINE_DRIVER_END
 
 /***************************************************************************
@@ -589,39 +779,86 @@ MACHINE_DRIVER_END
 
 ***************************************************************************/
 
+ROM_START( ppking )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )
+	ROM_LOAD( "q1_1.a1",        0x00000, 0x2000, CRC(b74b2718) SHA1(29833439211076873324ccfa5897eb1e6aa9d134) )
+	ROM_LOAD( "q1_2.b1",        0x02000, 0x2000, CRC(1b1e4cd4) SHA1(34c6cf5e0775c0c834dda34a3a2a4685465daa8e) )
+	ROM_LOAD( "q0_3.c1",        0x04000, 0x2000, CRC(6a7acf8e) SHA1(06d37e813605f507ea1c720764fc554e58defdf8) )
+	ROM_LOAD( "q0_4.d1",        0x06000, 0x2000, CRC(b83eb6d5) SHA1(f112d3c0d701977dcc5c312ad74d78b44882201b) )
+	ROM_LOAD( "q0_5.e1",        0x08000, 0x4000, CRC(4d2007e2) SHA1(973ef0e6ff6065b753402489a3d10a9b68164969) )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )
+	ROM_LOAD( "q0_17.6f",       0x0000, 0x2000, CRC(f7fe0d24) SHA1(6dcb23aa7fc08fc892a8b3843ccb982997c20571) )
+	ROM_LOAD( "q0_16.6e",       0x4000, 0x2000, CRC(b1e32588) SHA1(13c74479238a34a08e249f9120b42a52d80f8274) )
+
+	ROM_REGION( 0x10000, REGION_CPU3, 0 )
+	ROM_LOAD( "q0_19.5n",       0x0c000, 0x2000, CRC(4bcf896d) SHA1(f587a66fcc63e989742ce2d5f4cf2bb464987038) )
+	ROM_LOAD( "q0_18.5m",       0x0e000, 0x2000, CRC(89ba64f8) SHA1(fa01316ea744b4277ee64d5f14cb6d7e3a949f2b) )
+
+	ROM_REGION( 0x02000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "q0_15.1r",       0x00000, 0x2000, CRC(fbd33219) SHA1(78b9bb327ededaa818d26c41c5e8fd1c041ef142) )
+
+	ROM_REGION( 0x8000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_LOAD( "q0_12.1j",       0x00000, 0x2000, CRC(b1a44482) SHA1(84cc40976aa9b015a9f970a878bbde753651b3ba) )	/* plane 3 */
+	/* space to unpack plane 3 */
+	ROM_LOAD( "q0_13.1k",       0x04000, 0x2000, CRC(468f35e6) SHA1(8e28481910663fe525cefd4ad406468b7736900e) ) /* planes 1,2 */
+	ROM_LOAD( "q0_14.1m",       0x06000, 0x2000, CRC(eed04a7f) SHA1(d139920889653c33ded38a85510789380dd0aa9e) ) /* planes 1,2 */
+
+	ROM_REGION( 0x10000, REGION_GFX3, ROMREGION_DISPOSE )
+	ROM_LOAD( "q0_6.k1",        0x00000, 0x2000, CRC(bb3d666c) SHA1(a689c7a1e75b916d69f396db7c4688ac355c2aff) )	/* plane 3 */
+	ROM_LOAD( "q0_7.l1",        0x02000, 0x2000, CRC(16a2550e) SHA1(adb54b70a6db660b5f29ad66da02afd8e99884bb) )	/* plane 3 */
+	/* space to unpack plane 3 */
+	ROM_LOAD( "q0_8.m1",        0x08000, 0x2000, CRC(41235b22) SHA1(4d9702efe0ea320dab7c0d889f4d03f196b32661) ) /* planes 1,2 */
+	ROM_LOAD( "q0_9.p1",        0x0a000, 0x2000, CRC(74cc94b2) SHA1(2cb981ecb2487dfa5c0974e036106fc06c2c1880) ) /* planes 1,2 */
+	ROM_LOAD( "q0_10.r1",       0x0c000, 0x2000, CRC(af438cc6) SHA1(cf79c8d3f2a0c489a756b341f8df747f6654764b) ) /* planes 1,2 */
+	/* empty! */
+
+	ROM_REGION( 0x040, REGION_PROMS, 0 )
+	ROM_LOAD( "q1",             0x0000, 0x0020, CRC(cca9ae7b) SHA1(e18416fbe2a5b09db749cc9a14fa89186ed8f4ba) )
+	ROM_LOAD( "q2",             0x0020, 0x0020, CRC(da952b5e) SHA1(0863ad8fdcf69435a7455cd345d3d0af0b0c0a0a) )
+ROM_END
+
+
 ROM_START( gladiatr )
 	ROM_REGION( 0x1c000, REGION_CPU1, 0 )
 	ROM_LOAD( "qb0-5",          0x00000, 0x4000, CRC(25b19efb) SHA1(c41344278f6c7f3d6527aced3e459ed1ba86dea5) )
 	ROM_LOAD( "qb0-4",          0x04000, 0x2000, CRC(347ec794) SHA1(51100f9fef2e96f00e94fce709eed6583b01a2eb) )
-	ROM_LOAD( "qb0-1",          0x10000, 0x4000, CRC(040c9839) SHA1(8c0d9a246847461a59eb5e6a53a94218e701d6c3) )
-	ROM_LOAD( "qc0-3",          0x14000, 0x8000, CRC(8d182326) SHA1(f0af3757c2cf9e1e8035272567adee6efc733319) )
+	ROM_LOAD( "qb0-1",          0x10000, 0x2000, CRC(040c9839) SHA1(8c0d9a246847461a59eb5e6a53a94218e701d6c3) )
+	ROM_CONTINUE(               0x16000, 0x2000 )
+	ROM_LOAD( "qc0-3",          0x12000, 0x4000, CRC(8d182326) SHA1(f0af3757c2cf9e1e8035272567adee6efc733319) )
+	ROM_CONTINUE(               0x18000, 0x4000 )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* Code for the 2nd CPU */
 	ROM_LOAD( "qb0-17",       	0x0000, 0x4000, CRC(e78be010) SHA1(157231d858d13a006b57a4ab419368168e64edb7) )
 
 	ROM_REGION( 0x28000, REGION_CPU3, 0 )  /* 6809 Code & ADPCM data */
-	ROM_LOAD( "qb0-20",         0x10000, 0x8000, CRC(15916eda) SHA1(6558bd2ae6f14d630ae93e66ce7d09be33870cce) )
-	ROM_LOAD( "qb0-19",         0x18000, 0x8000, CRC(79caa7ed) SHA1(57adc8429ad016c4da41deda6b7b6fe36de5a225) )
-	ROM_LOAD( "qb0-18",         0x20000, 0x8000, CRC(e9591260) SHA1(e427aa10c683fbeb98171f6d1820781d21075a24) )
+	ROM_LOAD( "qb0-20",         0x10000, 0x4000, CRC(15916eda) SHA1(6558bd2ae6f14d630ae93e66ce7d09be33870cce) )
+	ROM_CONTINUE(               0x1c000, 0x4000 )
+	ROM_LOAD( "qb0-19",         0x14000, 0x4000, CRC(79caa7ed) SHA1(57adc8429ad016c4da41deda6b7b6fe36de5a225) )
+	ROM_CONTINUE(               0x20000, 0x4000 )
+	ROM_LOAD( "qb0-18",         0x18000, 0x4000, CRC(e9591260) SHA1(e427aa10c683fbeb98171f6d1820781d21075a24) )
+	ROM_CONTINUE(               0x24000, 0x4000 )
 
 	ROM_REGION( 0x02000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "qc0-15",       	0x00000, 0x2000, CRC(a7efa340) SHA1(f87e061b8e4d8cd0834fab301779a8493549419b) ) /* (monochrome) */
 
-	ROM_REGION( 0x18000, REGION_GFX2, ROMREGION_DISPOSE )	/* tiles */
+	ROM_REGION( 0x20000, REGION_GFX2, ROMREGION_DISPOSE )	/* tiles */
 	ROM_LOAD( "qb0-12",       	0x00000, 0x8000, CRC(0585d9ac) SHA1(e3cb07e9dc5ec2fcfa0c90294d32f0b751f67752) ) /* plane 3 */
-	ROM_LOAD( "qb0-13",       	0x08000, 0x8000, CRC(a6bb797b) SHA1(852e9993270e5557c1a0350007d0beaec5ca6286) ) /* planes 1,2 */
-	ROM_LOAD( "qb0-14",       	0x10000, 0x8000, CRC(85b71211) SHA1(81545cd168da4a707e263fdf0ee9902e3a13ba93) ) /* planes 1,2 */
+	/* space to unpack plane 3 */
+	ROM_LOAD( "qb0-13",       	0x10000, 0x8000, CRC(a6bb797b) SHA1(852e9993270e5557c1a0350007d0beaec5ca6286) ) /* planes 1,2 */
+	ROM_LOAD( "qb0-14",       	0x18000, 0x8000, CRC(85b71211) SHA1(81545cd168da4a707e263fdf0ee9902e3a13ba93) ) /* planes 1,2 */
 
 	ROM_REGION( 0x30000, REGION_GFX3, ROMREGION_DISPOSE )	/* sprites */
 	ROM_LOAD( "qc1-6",        	0x00000, 0x4000, CRC(651e6e44) SHA1(78ce576e6c29e43d590c42f0d4926cff82fd0268) ) /* plane 3 */
-	ROM_LOAD( "qc0-8",        	0x08000, 0x4000, CRC(1c7ffdad) SHA1(b224fd4cce078186f22e6393a38c7a2d84dc0066) ) /* planes 1,2 */
-	ROM_LOAD( "qc1-9",        	0x10000, 0x4000, CRC(01043e03) SHA1(6a6dddc0a036873135dceaa989e757bdd2455ae7) ) /* planes 1,2 */
-	ROM_LOAD( "qc2-7",        	0x18000, 0x8000, CRC(c992c4f7) SHA1(3263973474af07c8b93c4ec97924568848cb7201) ) /* plane 3 */
+	ROM_LOAD( "qc2-7",        	0x04000, 0x8000, CRC(c992c4f7) SHA1(3263973474af07c8b93c4ec97924568848cb7201) ) /* plane 3 */
+	/* space to unpack plane 3 */
+	ROM_LOAD( "qc0-8",        	0x18000, 0x4000, CRC(1c7ffdad) SHA1(b224fd4cce078186f22e6393a38c7a2d84dc0066) ) /* planes 1,2 */
+	ROM_LOAD( "qc1-9",        	0x1c000, 0x4000, CRC(01043e03) SHA1(6a6dddc0a036873135dceaa989e757bdd2455ae7) ) /* planes 1,2 */
 	ROM_LOAD( "qc1-10",       	0x20000, 0x8000, CRC(364cdb58) SHA1(4d8548f9dfa9d105dd277c61cf3d56583a5ebbcb) ) /* planes 1,2 */
 	ROM_LOAD( "qc2-11",       	0x28000, 0x8000, CRC(c9fecfff) SHA1(7c13ace4293fbfab7fe924b7b24c498d8cefc7ac) ) /* planes 1,2 */
 
 	ROM_REGION( 0x00040, REGION_PROMS, 0 )	/* unused */
-	ROM_LOAD( "q3.2b",          0x00000, 0x0020, CRC(6a7c3c60) SHA1(5125bfeb03752c8d76b140a4e74d5cac29dcdaa6) )
+	ROM_LOAD( "q3.2b",          0x00000, 0x0020, CRC(6a7c3c60) SHA1(5125bfeb03752c8d76b140a4e74d5cac29dcdaa6) )	/* address decoding */
 	ROM_LOAD( "q4.5s",          0x00020, 0x0020, CRC(e325808e) SHA1(5fd92ad4eff24f6ccf2df19d268a6cafba72202e) )
 ROM_END
 
@@ -629,67 +866,85 @@ ROM_START( ogonsiro )
 	ROM_REGION( 0x1c000, REGION_CPU1, 0 )
 	ROM_LOAD( "qb0-5",          0x00000, 0x4000, CRC(25b19efb) SHA1(c41344278f6c7f3d6527aced3e459ed1ba86dea5) )
 	ROM_LOAD( "qb0-4",          0x04000, 0x2000, CRC(347ec794) SHA1(51100f9fef2e96f00e94fce709eed6583b01a2eb) )
-	ROM_LOAD( "qb0-1",          0x10000, 0x4000, CRC(040c9839) SHA1(8c0d9a246847461a59eb5e6a53a94218e701d6c3) )
-	ROM_LOAD( "qb0_3",          0x14000, 0x8000, CRC(d6a342e7) SHA1(96274ae3bda4679108a25fcc514b625552abda30) )
+	ROM_LOAD( "qb0-1",          0x10000, 0x2000, CRC(040c9839) SHA1(8c0d9a246847461a59eb5e6a53a94218e701d6c3) )
+	ROM_CONTINUE(               0x16000, 0x2000 )
+	ROM_LOAD( "qb0_3",          0x12000, 0x4000, CRC(d6a342e7) SHA1(96274ae3bda4679108a25fcc514b625552abda30) )
+	ROM_CONTINUE(               0x18000, 0x4000 )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* Code for the 2nd CPU */
 	ROM_LOAD( "qb0-17",       	0x0000, 0x4000, CRC(e78be010) SHA1(157231d858d13a006b57a4ab419368168e64edb7) )
 
 	ROM_REGION( 0x28000, REGION_CPU3, 0 )  /* 6809 Code & ADPCM data */
-	ROM_LOAD( "qb0-20",         0x10000, 0x8000, CRC(15916eda) SHA1(6558bd2ae6f14d630ae93e66ce7d09be33870cce) )
-	ROM_LOAD( "qb0-19",         0x18000, 0x8000, CRC(79caa7ed) SHA1(57adc8429ad016c4da41deda6b7b6fe36de5a225) )
-	ROM_LOAD( "qb0-18",         0x20000, 0x8000, CRC(e9591260) SHA1(e427aa10c683fbeb98171f6d1820781d21075a24) )
+	ROM_LOAD( "qb0-20",         0x10000, 0x4000, CRC(15916eda) SHA1(6558bd2ae6f14d630ae93e66ce7d09be33870cce) )
+	ROM_CONTINUE(               0x1c000, 0x4000 )
+	ROM_LOAD( "qb0-19",         0x14000, 0x4000, CRC(79caa7ed) SHA1(57adc8429ad016c4da41deda6b7b6fe36de5a225) )
+	ROM_CONTINUE(               0x20000, 0x4000 )
+	ROM_LOAD( "qb0-18",         0x18000, 0x4000, CRC(e9591260) SHA1(e427aa10c683fbeb98171f6d1820781d21075a24) )
+	ROM_CONTINUE(               0x24000, 0x4000 )
 
 	ROM_REGION( 0x02000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "qb0_15",       	0x00000, 0x2000, CRC(5e1332b8) SHA1(fab6e2c7ea9bc94c1245bf759b4004a70c57d666) ) /* (monochrome) */
 
-	ROM_REGION( 0x18000, REGION_GFX2, ROMREGION_DISPOSE )	/* tiles */
+	ROM_REGION( 0x20000, REGION_GFX2, ROMREGION_DISPOSE )	/* tiles */
 	ROM_LOAD( "qb0-12",       	0x00000, 0x8000, CRC(0585d9ac) SHA1(e3cb07e9dc5ec2fcfa0c90294d32f0b751f67752) ) /* plane 3 */
-	ROM_LOAD( "qb0-13",       	0x08000, 0x8000, CRC(a6bb797b) SHA1(852e9993270e5557c1a0350007d0beaec5ca6286) ) /* planes 1,2 */
-	ROM_LOAD( "qb0-14",       	0x10000, 0x8000, CRC(85b71211) SHA1(81545cd168da4a707e263fdf0ee9902e3a13ba93) ) /* planes 1,2 */
+	/* space to unpack plane 3 */
+	ROM_LOAD( "qb0-13",       	0x10000, 0x8000, CRC(a6bb797b) SHA1(852e9993270e5557c1a0350007d0beaec5ca6286) ) /* planes 1,2 */
+	ROM_LOAD( "qb0-14",       	0x18000, 0x8000, CRC(85b71211) SHA1(81545cd168da4a707e263fdf0ee9902e3a13ba93) ) /* planes 1,2 */
 
 	ROM_REGION( 0x30000, REGION_GFX3, ROMREGION_DISPOSE )	/* sprites */
 	ROM_LOAD( "qb0_6",        	0x00000, 0x4000, CRC(1a2bc769) SHA1(498861f4d0cffeaff90609c8000c921a114756b6) ) /* plane 3 */
-	ROM_LOAD( "qc0-8",        	0x08000, 0x4000, CRC(1c7ffdad) SHA1(b224fd4cce078186f22e6393a38c7a2d84dc0066) ) /* planes 1,2 */
-	ROM_LOAD( "qb0_9",        	0x10000, 0x4000, CRC(38f5152d) SHA1(fbb7b13a625999807d180a3212e6e12870629438) ) /* planes 1,2 */
-	ROM_LOAD( "qb0_7",        	0x18000, 0x8000, CRC(4b677bd9) SHA1(3314ef58ff5307faf0ecd8f99950d43d571c91a6) ) /* plane 3 */
+	ROM_LOAD( "qb0_7",        	0x04000, 0x8000, CRC(4b677bd9) SHA1(3314ef58ff5307faf0ecd8f99950d43d571c91a6) ) /* plane 3 */
+	/* space to unpack plane 3 */
+	ROM_LOAD( "qc0-8",        	0x18000, 0x4000, CRC(1c7ffdad) SHA1(b224fd4cce078186f22e6393a38c7a2d84dc0066) ) /* planes 1,2 */
+	ROM_LOAD( "qb0_9",        	0x1c000, 0x4000, CRC(38f5152d) SHA1(fbb7b13a625999807d180a3212e6e12870629438) ) /* planes 1,2 */
 	ROM_LOAD( "qb0_10",       	0x20000, 0x8000, CRC(87ab6cc4) SHA1(50bc1108ff5609c0e7dad615e92e16eb72b7bc03) ) /* planes 1,2 */
 	ROM_LOAD( "qb0_11",       	0x28000, 0x8000, CRC(25eaa4ff) SHA1(3547fc600a617ba7fe5240a7830edb90230b6c51) ) /* planes 1,2 */
+
+	ROM_REGION( 0x00040, REGION_PROMS, 0 ) /* unused */
+	ROM_LOAD( "q3.2b",          0x00000, 0x0020, CRC(6a7c3c60) SHA1(5125bfeb03752c8d76b140a4e74d5cac29dcdaa6) )	/* address decoding */
+	ROM_LOAD( "q4.5s",          0x00020, 0x0020, CRC(e325808e) SHA1(5fd92ad4eff24f6ccf2df19d268a6cafba72202e) )
 ROM_END
 
 ROM_START( greatgur )
 	ROM_REGION( 0x1c000, REGION_CPU1, 0 )
 	ROM_LOAD( "qb0-5",          0x00000, 0x4000, CRC(25b19efb) SHA1(c41344278f6c7f3d6527aced3e459ed1ba86dea5) )
 	ROM_LOAD( "qb0-4",          0x04000, 0x2000, CRC(347ec794) SHA1(51100f9fef2e96f00e94fce709eed6583b01a2eb) )
-	ROM_LOAD( "qb0-1",          0x10000, 0x4000, CRC(040c9839) SHA1(8c0d9a246847461a59eb5e6a53a94218e701d6c3) )
-	ROM_LOAD( "qb0_3",          0x14000, 0x8000, CRC(d6a342e7) SHA1(96274ae3bda4679108a25fcc514b625552abda30) )
+	ROM_LOAD( "qb0-1",          0x10000, 0x2000, CRC(040c9839) SHA1(8c0d9a246847461a59eb5e6a53a94218e701d6c3) )
+	ROM_CONTINUE(               0x16000, 0x2000 )
+	ROM_LOAD( "qb0_3",          0x12000, 0x4000, CRC(d6a342e7) SHA1(96274ae3bda4679108a25fcc514b625552abda30) )
+	ROM_CONTINUE(               0x18000, 0x4000 )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* Code for the 2nd CPU */
-	ROM_LOAD( "qb0-17",        0x0000, 0x4000, CRC(e78be010) SHA1(157231d858d13a006b57a4ab419368168e64edb7) )
+	ROM_LOAD( "qb0-17",         0x0000, 0x4000, CRC(e78be010) SHA1(157231d858d13a006b57a4ab419368168e64edb7) )
 
 	ROM_REGION( 0x28000, REGION_CPU3, 0 )  /* 6809 Code & ADPCM data */
-	ROM_LOAD( "qb0-20",         0x10000, 0x8000, CRC(15916eda) SHA1(6558bd2ae6f14d630ae93e66ce7d09be33870cce) )
-	ROM_LOAD( "qb0-19",         0x18000, 0x8000, CRC(79caa7ed) SHA1(57adc8429ad016c4da41deda6b7b6fe36de5a225) )
-	ROM_LOAD( "qb0-18",         0x20000, 0x8000, CRC(e9591260) SHA1(e427aa10c683fbeb98171f6d1820781d21075a24) )
+	ROM_LOAD( "qb0-20",         0x10000, 0x4000, CRC(15916eda) SHA1(6558bd2ae6f14d630ae93e66ce7d09be33870cce) )
+	ROM_CONTINUE(               0x1c000, 0x4000 )
+	ROM_LOAD( "qb0-19",         0x14000, 0x4000, CRC(79caa7ed) SHA1(57adc8429ad016c4da41deda6b7b6fe36de5a225) )
+	ROM_CONTINUE(               0x20000, 0x4000 )
+	ROM_LOAD( "qb0-18",         0x18000, 0x4000, CRC(e9591260) SHA1(e427aa10c683fbeb98171f6d1820781d21075a24) )
+	ROM_CONTINUE(               0x24000, 0x4000 )
 
 	ROM_REGION( 0x02000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "qb0_15",        0x00000, 0x2000, CRC(5e1332b8) SHA1(fab6e2c7ea9bc94c1245bf759b4004a70c57d666) ) /* (monochrome) */
+	ROM_LOAD( "qb0_15",         0x00000, 0x2000, CRC(5e1332b8) SHA1(fab6e2c7ea9bc94c1245bf759b4004a70c57d666) ) /* (monochrome) */
 
-	ROM_REGION( 0x18000, REGION_GFX2, ROMREGION_DISPOSE ) /* tiles */
-	ROM_LOAD( "qb0-12",        0x00000, 0x8000, CRC(0585d9ac) SHA1(e3cb07e9dc5ec2fcfa0c90294d32f0b751f67752) ) /* plane 3 */
-	ROM_LOAD( "qb0-13",        0x08000, 0x8000, CRC(a6bb797b) SHA1(852e9993270e5557c1a0350007d0beaec5ca6286) ) /* planes 1,2 */
-	ROM_LOAD( "qb0-14",        0x10000, 0x8000, CRC(85b71211) SHA1(81545cd168da4a707e263fdf0ee9902e3a13ba93) ) /* planes 1,2 */
+	ROM_REGION( 0x20000, REGION_GFX2, ROMREGION_DISPOSE )	/* tiles */
+	ROM_LOAD( "qb0-12",       	0x00000, 0x8000, CRC(0585d9ac) SHA1(e3cb07e9dc5ec2fcfa0c90294d32f0b751f67752) ) /* plane 3 */
+	/* space to unpack plane 3 */
+	ROM_LOAD( "qb0-13",       	0x10000, 0x8000, CRC(a6bb797b) SHA1(852e9993270e5557c1a0350007d0beaec5ca6286) ) /* planes 1,2 */
+	ROM_LOAD( "qb0-14",       	0x18000, 0x8000, CRC(85b71211) SHA1(81545cd168da4a707e263fdf0ee9902e3a13ba93) ) /* planes 1,2 */
 
-	ROM_REGION( 0x30000, REGION_GFX3, ROMREGION_DISPOSE ) /* sprites */
-	ROM_LOAD( "qc0-06.bin",    0x00000, 0x4000, CRC(96b20201) SHA1(212270d3ba72974f22e96744c752860cc5ffba5b) ) /* plane 3 */
-	ROM_LOAD( "qc0-8",         0x08000, 0x4000, CRC(1c7ffdad) SHA1(b224fd4cce078186f22e6393a38c7a2d84dc0066) ) /* planes 1,2 */
-	ROM_LOAD( "qc0-09.bin",    0x10000, 0x4000, CRC(204cd385) SHA1(e7a8720feeac8ced581d72190345daed5750379f) ) /* planes 1,2 */
-	ROM_LOAD( "qc0-07.bin",    0x18000, 0x8000, CRC(9e89fa8f) SHA1(b133ae2ac62f43a7a51fa0d1a023a4f95fef2996) ) /* plane 3 */
-	ROM_LOAD( "qc1-10",        0x20000, 0x8000, CRC(364cdb58) SHA1(4d8548f9dfa9d105dd277c61cf3d56583a5ebbcb) ) /* planes 1,2 */
-	ROM_LOAD( "qc1-11.bin",    0x28000, 0x8000, CRC(b2aabbf5) SHA1(9eb4d80f38a30f6e45231a9bfd1aff7a124c6ee9) ) /* planes 1,2 */
+	ROM_REGION( 0x30000, REGION_GFX3, ROMREGION_DISPOSE )	/* sprites */
+	ROM_LOAD( "qc0-06.bin",     0x00000, 0x4000, CRC(96b20201) SHA1(212270d3ba72974f22e96744c752860cc5ffba5b) ) /* plane 3 */
+	ROM_LOAD( "qc0-07.bin",     0x04000, 0x8000, CRC(9e89fa8f) SHA1(b133ae2ac62f43a7a51fa0d1a023a4f95fef2996) ) /* plane 3 */
+	/* space to unpack plane 3 */
+	ROM_LOAD( "qc0-8",        	0x18000, 0x4000, CRC(1c7ffdad) SHA1(b224fd4cce078186f22e6393a38c7a2d84dc0066) ) /* planes 1,2 */
+	ROM_LOAD( "qc0-09.bin",     0x1c000, 0x4000, CRC(204cd385) SHA1(e7a8720feeac8ced581d72190345daed5750379f) ) /* planes 1,2 */
+	ROM_LOAD( "qc1-10",         0x20000, 0x8000, CRC(364cdb58) SHA1(4d8548f9dfa9d105dd277c61cf3d56583a5ebbcb) ) /* planes 1,2 */
+	ROM_LOAD( "qc1-11.bin",     0x28000, 0x8000, CRC(b2aabbf5) SHA1(9eb4d80f38a30f6e45231a9bfd1aff7a124c6ee9) ) /* planes 1,2 */
 
 	ROM_REGION( 0x00040, REGION_PROMS, 0 ) /* unused */
-	ROM_LOAD( "q3.2b",          0x00000, 0x0020, CRC(6a7c3c60) SHA1(5125bfeb03752c8d76b140a4e74d5cac29dcdaa6) )
+	ROM_LOAD( "q3.2b",          0x00000, 0x0020, CRC(6a7c3c60) SHA1(5125bfeb03752c8d76b140a4e74d5cac29dcdaa6) )	/* address decoding */
 	ROM_LOAD( "q4.5s",          0x00020, 0x0020, CRC(e325808e) SHA1(5fd92ad4eff24f6ccf2df19d268a6cafba72202e) )
 
 	ROM_REGION( 0x0400, REGION_USER1, 0 ) /* ROMs for the four 8741 (not emulated yet) */
@@ -700,6 +955,92 @@ ROM_START( greatgur )
 ROM_END
 
 
-GAMEX( 1986, gladiatr, 0,        gladiatr, gladiatr, 0, ROT0, "Taito America Corporation", "Gladiator (US)", GAME_NO_COCKTAIL )
-GAMEX( 1986, ogonsiro, gladiatr, gladiatr, gladiatr, 0, ROT0, "Taito Corporation", "Ohgon no Siro (Japan)", GAME_NO_COCKTAIL )
-GAMEX( 1986, greatgur, gladiatr, gladiatr, gladiatr, 0, ROT0, "Taito Corporation", "Great Gurianos (Japan?)", GAME_NO_COCKTAIL )
+static void swap_block(data8_t *src1,data8_t *src2,int len)
+{
+	int i,t;
+
+	for (i = 0;i < len;i++)
+	{
+		t = src1[i];
+		src1[i] = src2[i];
+		src2[i] = t;
+	}
+}
+
+static DRIVER_INIT( gladiatr )
+{
+	data8_t *rom;
+	int i,j;
+
+	rom = memory_region(REGION_GFX2);
+	// unpack 3bpp graphics
+	for (j = 3; j >= 0; j--)
+	{
+		for (i = 0; i < 0x2000; i++)
+		{
+			rom[i+(2*j+1)*0x2000] = rom[i+j*0x2000] >> 4;
+			rom[i+2*j*0x2000] = rom[i+j*0x2000];
+		}
+	}
+	// sort data
+	swap_block(rom + 0x14000, rom + 0x18000, 0x4000);
+
+
+	rom = memory_region(REGION_GFX3);
+	// unpack 3bpp graphics
+	for (j = 5; j >= 0; j--)
+	{
+		for (i = 0; i < 0x2000; i++)
+		{
+			rom[i+(2*j+1)*0x2000] = rom[i+j*0x2000] >> 4;
+			rom[i+2*j*0x2000] = rom[i+j*0x2000];
+		}
+	}
+	// sort data
+	swap_block(rom + 0x1a000, rom + 0x1c000, 0x2000);
+	swap_block(rom + 0x22000, rom + 0x28000, 0x2000);
+	swap_block(rom + 0x26000, rom + 0x2c000, 0x2000);
+	swap_block(rom + 0x24000, rom + 0x28000, 0x4000);
+}
+
+
+static READ8_HANDLER(f6a3_r)
+{
+	if(activecpu_get_previouspc()==0x8e)
+		generic_nvram[0x6a3]=1;
+
+	return generic_nvram[0x6a3];
+}
+
+static DRIVER_INIT(ppking)
+{
+	data8_t *rom;
+	int i,j;
+
+	rom = memory_region(REGION_GFX2);
+	// unpack 3bpp graphics
+	for (i = 0; i < 0x2000; i++)
+	{
+		rom[i+0x2000] = rom[i] >> 4;
+	}
+
+	rom = memory_region(REGION_GFX3);
+	// unpack 3bpp graphics
+	for (j = 1; j >= 0; j--)
+	{
+		for (i = 0; i < 0x2000; i++)
+		{
+			rom[i+(2*j+1)*0x2000] = rom[i+j*0x2000] >> 4;
+			rom[i+2*j*0x2000] = rom[i+j*0x2000];
+		}
+	}
+
+	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0xf6a3,0xf6a3,0,0, f6a3_r );
+}
+
+
+
+GAMEX(1985, ppking,   0,        ppking,   ppking,   ppking,   ROT90, "Taito America Corporation", "Ping-Pong King", GAME_NOT_WORKING)
+GAME( 1986, gladiatr, 0,        gladiatr, gladiatr, gladiatr, ROT0,  "Taito America Corporation", "Gladiator (US)" )
+GAME( 1986, ogonsiro, gladiatr, gladiatr, gladiatr, gladiatr, ROT0,  "Taito Corporation", "Ohgon no Siro (Japan)" )
+GAME( 1986, greatgur, gladiatr, gladiatr, gladiatr, gladiatr, ROT0,  "Taito Corporation", "Great Gurianos (Japan?)" )

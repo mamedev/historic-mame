@@ -10,6 +10,7 @@ Markham (c) 1983 Sun Electronics
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "sound/sn76496.h"
 
 extern WRITE8_HANDLER( markham_videoram_w );
 extern WRITE8_HANDLER( markham_scroll_x_w );
@@ -218,13 +219,6 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 };
 
 
-static struct SN76496interface sn76496_interface =
-{
-	2,	/* 2 chips */
-	{ 8000000/2, 8000000/2 },
-	{ 75, 75 }
-};
-
 static MACHINE_DRIVER_START( markham )
 
 	/* basic machine hardware */
@@ -253,7 +247,13 @@ static MACHINE_DRIVER_START( markham )
 	MDRV_VIDEO_UPDATE(markham)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(SN76496, sn76496_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(SN76496, 8000000/2)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.75)
+
+	MDRV_SOUND_ADD(SN76496, 8000000/2)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.75)
 MACHINE_DRIVER_END
 
 /****************************************************************************/

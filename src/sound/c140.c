@@ -22,6 +22,7 @@ Unmapped registers:
 
 #include <math.h>
 #include "driver.h"
+#include "c140.h"
 
 #define MAX_VOICE 24
 
@@ -41,19 +42,6 @@ struct voice_registers
 	UINT8 loop_lsb;
 	UINT8 reserved[4];
 };
-
-static int sample_rate;
-static int stream;
-static int banking_type;
-/* internal buffers */
-static INT16 *mixer_buffer_left;
-static INT16 *mixer_buffer_right;
-
-static int baserate;
-static void *pRom;
-static UINT8 REG[0x200];
-
-static INT16 pcmtbl[8];		//2000.06.26 CAB
 
 typedef struct
 {
@@ -76,7 +64,23 @@ typedef struct
 	long	sample_loop;
 } VOICE;
 
-VOICE voi[MAX_VOICE];
+struct c140_info
+{
+	int sample_rate;
+	sound_stream *stream;
+	int banking_type;
+	/* internal buffers */
+	INT16 *mixer_buffer_left;
+	INT16 *mixer_buffer_right;
+
+	int baserate;
+	void *pRom;
+	UINT8 REG[0x200];
+
+	INT16 pcmtbl[8];		//2000.06.26 CAB
+
+	VOICE voi[MAX_VOICE];
+};
 
 static void init_voice( VOICE *v )
 {
@@ -93,8 +97,9 @@ static void init_voice( VOICE *v )
 }
 READ8_HANDLER( C140_r )
 {
+	struct c140_info *info = sndti_token(SOUND_C140, 0);
 	offset&=0x1ff;
-	return REG[offset];
+	return info->REG[offset];
 }
 
 /*
@@ -105,13 +110,13 @@ READ8_HANDLER( C140_r )
    is done by a small PAL or GAL external to the sound chip, which can be switched
    per-game or at least per-PCB revision as addressing range needs grow.
  */
-static long find_sample( long adrs, long bank)
+static long find_sample(struct c140_info *info, long adrs, long bank)
 {
 	long newadr = 0;
 
 	adrs=(bank<<16)+adrs;
 
-	switch (banking_type)
+	switch (info->banking_type)
 	{
 		case C140_TYPE_SYSTEM2:
 			// System 2 banking
@@ -150,19 +155,20 @@ static long find_sample( long adrs, long bank)
 }
 WRITE8_HANDLER( C140_w )
 {
-	stream_update(stream, 0);
+	struct c140_info *info = sndti_token(SOUND_C140, 0);
+	stream_update(info->stream, 0);
 
 	offset&=0x1ff;
 
-	REG[offset]=data;
+	info->REG[offset]=data;
 	if( offset<0x180 )
 	{
-		VOICE *v = &voi[offset>>4];
+		VOICE *v = &info->voi[offset>>4];
 		if( (offset&0xf)==0x5 )
 		{
 			if( data&0x80 )
 			{
-				const struct voice_registers *vreg = (struct voice_registers *) &REG[offset&0x1f0];
+				const struct voice_registers *vreg = (struct voice_registers *) &info->REG[offset&0x1f0];
 				v->key=1;
 				v->ptoffset=0;
 				v->pos=0;
@@ -190,8 +196,9 @@ INLINE int limit(INT32 in)
 	return in;
 }
 
-static void update_stereo(int ch, INT16 **buffer, int length)
+static void update_stereo(void *param, stream_sample_t **inputs, stream_sample_t **buffer, int length)
 {
+	struct c140_info *info = param;
 	int		i,j;
 
 	INT32	rvol,lvol;
@@ -203,21 +210,21 @@ static void update_stereo(int ch, INT16 **buffer, int length)
 	INT32	frequency,delta,offset,pos;
 	INT32	cnt;
 	INT32	lastdt,prevdt,dltdt;
-	float	pbase=(float)baserate*2.0 / (float)sample_rate;
+	float	pbase=(float)info->baserate*2.0 / (float)info->sample_rate;
 
 	INT16	*lmix, *rmix;
 
-	if(length>sample_rate) length=sample_rate;
+	if(length>info->sample_rate) length=info->sample_rate;
 
 	/* zap the contents of the mixer buffer */
-	memset(mixer_buffer_left, 0, length * sizeof(INT16));
-	memset(mixer_buffer_right, 0, length * sizeof(INT16));
+	memset(info->mixer_buffer_left, 0, length * sizeof(INT16));
+	memset(info->mixer_buffer_right, 0, length * sizeof(INT16));
 
 	//--- audio update
 	for( i=0;i<MAX_VOICE;i++ )
 	{
-		VOICE *v = &voi[i];
-		const struct voice_registers *vreg = (struct voice_registers *)&REG[i*16];
+		VOICE *v = &info->voi[i];
+		const struct voice_registers *vreg = (struct voice_registers *)&info->REG[i*16];
 
 		if( v->key )
 		{
@@ -234,8 +241,8 @@ static void update_stereo(int ch, INT16 **buffer, int length)
 			rvol=(vreg->volume_right*32)/MAX_VOICE;
 
 			/* Set mixer buffer base pointers */
-			lmix = mixer_buffer_left;
-			rmix = mixer_buffer_right;
+			lmix = info->mixer_buffer_left;
+			rmix = info->mixer_buffer_right;
 
 			/* Retrieve sample start/end and calculate size */
 			st=v->sample_start;
@@ -243,7 +250,7 @@ static void update_stereo(int ch, INT16 **buffer, int length)
 			sz=ed-st;
 
 			/* Retrieve base pointer to the sample data */
-			pSampleData=(signed char*)((unsigned long)pRom + find_sample(st,v->bank));
+			pSampleData=(signed char*)((unsigned long)info->pRom + find_sample(info, st,v->bank));
 
 			/* Fetch back previous data pointers */
 			offset=v->ptoffset;
@@ -285,8 +292,8 @@ static void update_stereo(int ch, INT16 **buffer, int length)
 
 						/* decompress to 13bit range */		//2000.06.26 CAB
 						sdt=dt>>3;				//signed
-						if(sdt<0)	sdt = (sdt<<(dt&7)) - pcmtbl[dt&7];
-						else		sdt = (sdt<<(dt&7)) + pcmtbl[dt&7];
+						if(sdt<0)	sdt = (sdt<<(dt&7)) - info->pcmtbl[dt&7];
+						else		sdt = (sdt<<(dt&7)) + info->pcmtbl[dt&7];
 
 						prevdt=lastdt;
 						lastdt=sdt;
@@ -352,11 +359,11 @@ static void update_stereo(int ch, INT16 **buffer, int length)
 	}
 
 	/* render to MAME's stream buffer */
-	lmix = mixer_buffer_left;
-	rmix = mixer_buffer_right;
+	lmix = info->mixer_buffer_left;
+	rmix = info->mixer_buffer_right;
 	{
-		INT16 *dest1 = buffer[0];
-		INT16 *dest2 = buffer[1];
+		stream_sample_t *dest1 = buffer[0];
+		stream_sample_t *dest2 = buffer[1];
 		for (i = 0; i < length; i++)
 		{
 			*dest1++ = limit(8*(*lmix++));
@@ -365,22 +372,21 @@ static void update_stereo(int ch, INT16 **buffer, int length)
 	}
 }
 
-int C140_sh_start( const struct MachineSound *msound )
+static void *c140_start(int sndindex, int clock, const void *config)
 {
-	const struct C140interface *intf = msound->sound_interface;
-	int vol[2];
-	const char *stereo_names[2] = { "C140 Left", "C140 Right" };
+	const struct C140interface *intf = config;
+	struct c140_info *info;
+	
+	info = auto_malloc(sizeof(*info));
+	memset(info, 0, sizeof(*info));
 
-	vol[0] = MIXER(intf->mixing_level,MIXER_PAN_LEFT);
-	vol[1] = MIXER(intf->mixing_level,MIXER_PAN_RIGHT);
+	info->sample_rate=info->baserate=clock;
 
-	sample_rate=baserate=intf->frequency;
+	info->banking_type = intf->banking_type;
 
-	banking_type = intf->banking_type;
+	info->stream = stream_create(0,2,info->sample_rate,info,update_stereo);
 
-	stream = stream_init_multi(2,stereo_names,vol,sample_rate,0,update_stereo);
-
-	pRom=memory_region(intf->region);
+	info->pRom=memory_region(intf->region);
 
 	/* make decompress pcm table */		//2000.06.26 CAB
 	{
@@ -388,28 +394,61 @@ int C140_sh_start( const struct MachineSound *msound )
 		INT32 segbase=0;
 		for(i=0;i<8;i++)
 		{
-			pcmtbl[i]=segbase;	//segment base value
+			info->pcmtbl[i]=segbase;	//segment base value
 			segbase += 16<<i;
 		}
 	}
 
-	memset(REG,0,0x200 );
+	memset(info->REG,0,0x200 );
 	{
 		int i;
-		for(i=0;i<MAX_VOICE;i++) init_voice( &voi[i] );
+		for(i=0;i<MAX_VOICE;i++) init_voice( &info->voi[i] );
 	}
 
 	/* allocate a pair of buffers to mix into - 1 second's worth should be more than enough */
-	mixer_buffer_left = malloc(2 * sizeof(INT16)*sample_rate );
-	if( mixer_buffer_left )
+	info->mixer_buffer_left = auto_malloc(2 * sizeof(INT16)*info->sample_rate );
+	if( info->mixer_buffer_left )
 	{
-		mixer_buffer_right = mixer_buffer_left + sample_rate;
-		return 0;
+		info->mixer_buffer_right = info->mixer_buffer_left + info->sample_rate;
+		return info;
 	}
-	return 1;
+	return NULL;
 }
 
-void C140_sh_stop( void )
+
+
+
+/**************************************************************************
+ * Generic get_info
+ **************************************************************************/
+
+static void c140_set_info(void *token, UINT32 state, union sndinfo *info)
 {
-	free( mixer_buffer_left );
+	switch (state)
+	{
+		/* no parameters to set */
+	}
 }
+
+
+void c140_get_info(void *token, UINT32 state, union sndinfo *info)
+{
+	switch (state)
+	{
+		/* --- the following bits of info are returned as 64-bit signed integers --- */
+
+		/* --- the following bits of info are returned as pointers to data or functions --- */
+		case SNDINFO_PTR_SET_INFO:						info->set_info = c140_set_info;			break;
+		case SNDINFO_PTR_START:							info->start = c140_start;				break;
+		case SNDINFO_PTR_STOP:							/* nothing */							break;
+		case SNDINFO_PTR_RESET:							/* nothing */							break;
+
+		/* --- the following bits of info are returned as NULL-terminated strings --- */
+		case SNDINFO_STR_NAME:							info->s = "C140";						break;
+		case SNDINFO_STR_CORE_FAMILY:					info->s = "Namco PCM";					break;
+		case SNDINFO_STR_CORE_VERSION:					info->s = "1.0";						break;
+		case SNDINFO_STR_CORE_FILE:						info->s = __FILE__;						break;
+		case SNDINFO_STR_CORE_CREDITS:					info->s = "Copyright (c) 2004, The MAME Team"; break;
+	}
+}
+

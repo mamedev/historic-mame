@@ -36,6 +36,7 @@ Notes:
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "machine/z80fmly.h"
+#include "sound/ay8910.h"
 
 
 extern UINT8 *pbaction_videoram2,*pbaction_colorram2;
@@ -252,18 +253,6 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 };
 
 
-static struct AY8910interface ay8910_interface =
-{
-	3,	/* 3 chips */
-	1500000,	/* 1.5 MHz?????? */
-	{ 25, 25, 25 },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ 0 }
-};
-
-
 INTERRUPT_GEN( pbaction_interrupt )
 {
 	cpunum_set_input_line_and_vector(1, 0, HOLD_LINE, 0x02);	/* the CPU is in Interrupt Mode 2 */
@@ -297,7 +286,16 @@ static MACHINE_DRIVER_START( pbaction )
 	MDRV_VIDEO_UPDATE(pbaction)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(AY8910, ay8910_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	
+	MDRV_SOUND_ADD(AY8910, 1500000)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
+	
+	MDRV_SOUND_ADD(AY8910, 1500000)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
+	
+	MDRV_SOUND_ADD(AY8910, 1500000)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
 MACHINE_DRIVER_END
 
 

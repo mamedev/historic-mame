@@ -1449,6 +1449,34 @@ ROM_START( hiimpac3 )
 ROM_END
 
 
+ROM_START( hiimpacp )
+	ROM_REGION( 0x70000, REGION_CPU2, 0 )	/* sound CPU */
+	ROM_LOAD (  "sl1u4.bin", 0x10000, 0x20000, CRC(28effd6a) SHA1(4a839f15e1b453a22fdef7b1801b8cc5cfdf3c29) )
+	ROM_LOAD ( "sl1u19.bin", 0x30000, 0x20000, CRC(0ea22c89) SHA1(6d4579f6b10cac685be01348451b3537a0626034) )
+	ROM_LOAD ( "sl1u20.bin", 0x50000, 0x20000, CRC(4e747ab5) SHA1(82040f40aac7dae577376a742eadaaa9644500c1) )
+
+	ROM_REGION16_LE( 0x100000, REGION_USER1, 0 )	/* 34010 code */
+	ROM_LOAD16_BYTE( "pa1u105.bin",  0xc0000, 0x20000, CRC(79ef9a35) SHA1(200d50b108401e889b6200c53c203ee5041d1423) )
+	ROM_LOAD16_BYTE( "pa1u89.bin",   0xc0001, 0x20000, CRC(2bd3de30) SHA1(ee3615c1cc5b948731eb258887641f059b942b25) )
+
+	ROM_REGION( 0x800000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD ( "la1u111.bin",  0x000000, 0x20000, CRC(49560560) SHA1(03d51e6019afa9a396c91a484969be4922fa4c99) )
+	ROM_LOAD ( "la1u112.bin",  0x020000, 0x20000, CRC(4dd879dc) SHA1(ac4f02fcb933df38f1ebf51b109092b77563b684) )
+	ROM_LOAD ( "la1u113.bin",  0x040000, 0x20000, CRC(b67aeb70) SHA1(dd1512329c46da4254712712b6f847544f4487bd) )
+	ROM_LOAD ( "la1u114.bin",  0x060000, 0x20000, CRC(9a4bc44b) SHA1(309eb5214fe5e1fe64d724d515190a31fc524aae) )
+
+	ROM_LOAD (  "la1u95.bin",  0x200000, 0x20000, CRC(e1352dc0) SHA1(7faa2cfa9ebaf2d99b243232316221b672869703) )
+	ROM_LOAD (  "la1u96.bin",  0x220000, 0x20000, CRC(197d0f34) SHA1(2d544588c3241423188ac7fb7aff87043fdd063d) )
+	ROM_LOAD (  "la1u97.bin",  0x240000, 0x20000, CRC(908ea575) SHA1(79802d8df4e016d178be98333d2b1d047a27eccc) )
+	ROM_LOAD (  "la1u98.bin",  0x260000, 0x20000, CRC(6dcbab11) SHA1(7432172810fd4b922b61769c68d86f24769a42cf) )
+
+ 	ROM_LOAD ( "la1u106.bin",  0x400000, 0x20000, CRC(7d0ead0d) SHA1(1e65b6e7e629021d70603df37db5fa89cfe93175) )
+	ROM_LOAD ( "la1u107.bin",  0x420000, 0x20000, CRC(ef48e8fa) SHA1(538de37cd8342085ec27f67292a7eeb1007e3b1f) )
+	ROM_LOAD ( "la1u108.bin",  0x440000, 0x20000, CRC(5f363e12) SHA1(da398c0204f785aad4c52007d2f25031ecc1c63f) )
+	ROM_LOAD ( "la1u109.bin",  0x460000, 0x20000, CRC(3689fbbc) SHA1(d95c0a2e3abf977ba7a899e419c22d004020c560) )
+ROM_END
+
+
 ROM_START( shimpact )
 	ROM_REGION( 0x70000, REGION_CPU2, 0 )	/* sound CPU */
 	ROM_LOAD (   "shiu4.bin", 0x10000, 0x20000, CRC(1e5a012c) SHA1(4077fc266799a01738b7f88e867535f1fbacd557) )
@@ -1861,6 +1889,7 @@ GAME( 1990, smashtv5, smashtv, smashtv,  smashtv, smashtv,  ROT0, "Williams", "S
 GAME( 1990, smashtv4, smashtv, smashtv,  smashtv, smashtv,  ROT0, "Williams", "Smash T.V. (rev 4.00)" )
 GAME( 1990, hiimpact, 0,       hiimpact, trog,    hiimpact, ROT0, "Williams", "High Impact Football (rev LA4 02/04/91)" )
 GAME( 1990, hiimpac3, hiimpact,hiimpact, trog,    hiimpact, ROT0, "Williams", "High Impact Football (rev LA3 12/27/90)" )
+GAME( 1990, hiimpacp, hiimpact,hiimpact, trog,    hiimpact, ROT0, "Williams", "High Impact Football (prototype, rev 8.6 12/09/90)" )
 GAMEX(1991, shimpact, 0,       hiimpact, trog,    shimpact, ROT0, "Midway",   "Super High Impact (rev LA1 09/30/91)", GAME_NOT_WORKING )
 GAMEX(1991, shimpacp, shimpact,hiimpact, trog,    shimpact, ROT0, "Midway",   "Super High Impact (prototype, rev 5.0 09/15/91)", GAME_NOT_WORKING )
 

@@ -13,6 +13,7 @@
 #include "driver.h"
 #include "artwork.h"
 #include "videopin.h"
+#include "sound/discrete.h"
 
 extern UINT8* videopin_video_ram;
 
@@ -366,7 +367,11 @@ static MACHINE_DRIVER_START( videopin )
 	MDRV_VIDEO_UPDATE(videopin)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD_TAG("discrete", DISCRETE, videopin_discrete_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	
+	MDRV_SOUND_ADD_TAG("discrete", DISCRETE, 0)
+	MDRV_SOUND_CONFIG(videopin_discrete_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 

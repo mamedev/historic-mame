@@ -118,13 +118,15 @@ TO DO :
 #include "cpu/z80/z80.h"
 #include "cpu/s2650/s2650.h"
 #include "galaxian.h"
+#include "sound/ay8910.h"
+#include "sound/sn76496.h"
+#include "sound/dac.h"
 
 
 DRIVER_INIT( cclimbrj );
 
 extern struct AY8910interface cclimber_ay8910_interface;
-extern struct AY8910interface swimmer_ay8910_interface;
-extern struct CustomSound_interface cclimber_custom_interface;
+extern struct Samplesinterface cclimber_custom_interface;
 WRITE8_HANDLER( cclimber_sample_trigger_w );
 WRITE8_HANDLER( cclimber_sample_rate_w );
 WRITE8_HANDLER( cclimber_sample_volume_w );
@@ -3568,60 +3570,14 @@ static struct GfxDecodeInfo _4in1_gfxdecodeinfo[] =
 	{ -1 } /* end of array */
 };
 
-static struct AY8910interface jumpbug_ay8910_interface =
-{
-	1,	/* 1 chip */
-	1789750,	/* 1.78975 MHz? */
-	{ 50 },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ 0 }
-};
-
 static struct AY8910interface checkmaj_ay8910_interface =
 {
-	1,	/* 1 chip */
-	1620000,	/* 1.62 MHz? (Used the same as Moon Cresta) */
-	{ 50 },
-	{ soundlatch_r },
-	{ 0 },
-	{ 0 },
-	{ 0 }
+	soundlatch_r
 };
 
 static struct AY8910interface bongo_ay8910_interface =
 {
-	1,	/* 1 chip */
-	1789750,	/* 1.78975 MHz? */
-	{ 50 },
-	{ input_port_3_r },
-	{ 0 },
-	{ 0 },
-	{ 0 }
-};
-
-static struct AY8910interface harem_ay8910_interface = {
-	3,            /* number of chips */
-	2000000,      /* 2 MHz? */
-	{ 33,33,33 }, /* volume */
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ 0 }
-};
-
-static struct DACinterface kingball_dac_interface =
-{
-	1,
-	{ 100 }
-};
-
-static struct SN76496interface sn76496_interface =
-{
-	3,										/* 3 chips */
-	{ 18432000/6, 18432000/6, 18432000/6 },	/* ? MHz */
-	{ 100, 100, 100 }
+	input_port_3_r
 };
 
 
@@ -3646,6 +3602,9 @@ MACHINE_DRIVER_START( galaxian_base )
 	MDRV_PALETTE_INIT(galaxian)
 	MDRV_VIDEO_START(galaxian)
 	MDRV_VIDEO_UPDATE(galaxian)
+
+	/* sound hardware */
+	MDRV_SPEAKER_STANDARD_MONO("mono")
 MACHINE_DRIVER_END
 
 
@@ -3655,7 +3614,9 @@ static MACHINE_DRIVER_START( galaxian )
 	MDRV_IMPORT_FROM(galaxian_base)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(CUSTOM, galaxian_custom_interface)
+	MDRV_SOUND_ADD(SAMPLES, 0)
+	MDRV_SOUND_CONFIG(galaxian_custom_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 
@@ -3789,8 +3750,13 @@ static MACHINE_DRIVER_START( mshuttle )
 	MDRV_VIDEO_START(mshuttle)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(AY8910, cclimber_ay8910_interface)
-	MDRV_SOUND_ADD(CUSTOM, cclimber_custom_interface)
+	MDRV_SOUND_ADD(AY8910, 1536000)
+	MDRV_SOUND_CONFIG(cclimber_ay8910_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
+	
+	MDRV_SOUND_ADD(SAMPLES, 0)
+	MDRV_SOUND_CONFIG(cclimber_custom_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.5)
 MACHINE_DRIVER_END
 
 
@@ -3824,7 +3790,8 @@ static MACHINE_DRIVER_START( zigzag )
 	MDRV_VIDEO_START(galaxian_plain)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(AY8910, jumpbug_ay8910_interface)
+	MDRV_SOUND_ADD(AY8910, 1789750)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
 MACHINE_DRIVER_END
 
 
@@ -3841,7 +3808,8 @@ static MACHINE_DRIVER_START( jumpbug )
 	MDRV_VIDEO_START(jumpbug)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(AY8910, jumpbug_ay8910_interface)
+	MDRV_SOUND_ADD(AY8910, 1789750)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
 MACHINE_DRIVER_END
 
 
@@ -3865,8 +3833,12 @@ static MACHINE_DRIVER_START( checkman )
 	MDRV_VIDEO_START(mooncrst)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(CUSTOM, galaxian_custom_interface)
-	MDRV_SOUND_ADD(AY8910, jumpbug_ay8910_interface)
+	MDRV_SOUND_ADD(AY8910, 1789750)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
+
+	MDRV_SOUND_ADD(SAMPLES, 0)
+	MDRV_SOUND_CONFIG(galaxian_custom_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 
@@ -3887,7 +3859,9 @@ static MACHINE_DRIVER_START( checkmaj )
 	MDRV_PALETTE_LENGTH(32+2+64)	/* 32 for the characters, 2 for the bullets, 64 for the stars */
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(AY8910, checkmaj_ay8910_interface)
+	MDRV_SOUND_ADD(AY8910, 1620000)
+	MDRV_SOUND_CONFIG(checkmaj_ay8910_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( dingoe )
@@ -3908,7 +3882,8 @@ static MACHINE_DRIVER_START( dingoe )
 	MDRV_PALETTE_LENGTH(32+2+64)	/* 32 for the characters, 2 for the bullets, 64 for the stars */
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(AY8910, jumpbug_ay8910_interface)
+	MDRV_SOUND_ADD(AY8910, 1789750)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( kingball )
@@ -3927,7 +3902,8 @@ static MACHINE_DRIVER_START( kingball )
 	MDRV_PALETTE_LENGTH(32+2+64)	/* 32 for the characters, 2 for the bullets, 64 for the stars */
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(DAC, kingball_dac_interface)
+	MDRV_SOUND_ADD(DAC, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 
@@ -4007,7 +3983,9 @@ static MACHINE_DRIVER_START( froggrmc )
 	MDRV_VIDEO_START(froggrmc)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(AY8910, frogger_ay8910_interface)
+	MDRV_SOUND_ADD(AY8910, 14318000/8)
+	MDRV_SOUND_CONFIG(frogger_ay8910_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.33)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( rockclim )
@@ -4039,7 +4017,8 @@ static MACHINE_DRIVER_START( ozon1 )
 	MDRV_PALETTE_LENGTH(32)
 
 	MDRV_VIDEO_START(galaxian_plain)
-	MDRV_SOUND_ADD(AY8910, jumpbug_ay8910_interface)
+	MDRV_SOUND_ADD(AY8910, 1789750)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( drivfrcg )
@@ -4067,7 +4046,10 @@ static MACHINE_DRIVER_START( drivfrcg )
 	MDRV_VIDEO_UPDATE(galaxian)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(CUSTOM, galaxian_custom_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	MDRV_SOUND_ADD(SAMPLES, 0)
+	MDRV_SOUND_CONFIG(galaxian_custom_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( bongo )
@@ -4080,7 +4062,9 @@ static MACHINE_DRIVER_START( bongo )
 	MDRV_VIDEO_START(bongo)
 	MDRV_VIDEO_UPDATE(galaxian)
 
-	MDRV_SOUND_ADD(AY8910, bongo_ay8910_interface)
+	MDRV_SOUND_ADD(AY8910, 1789750)
+	MDRV_SOUND_CONFIG(bongo_ay8910_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( hunchbkg )
@@ -4107,7 +4091,10 @@ static MACHINE_DRIVER_START( hunchbkg )
 	MDRV_VIDEO_START(galaxian_plain)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(CUSTOM, galaxian_custom_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	MDRV_SOUND_ADD(SAMPLES, 0)
+	MDRV_SOUND_CONFIG(galaxian_custom_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( harem )
@@ -4128,7 +4115,15 @@ static MACHINE_DRIVER_START( harem )
 	MDRV_PALETTE_LENGTH(32)
 
 	MDRV_VIDEO_START(galaxian_plain)
-	MDRV_SOUND_ADD(AY8910, harem_ay8910_interface)
+
+	MDRV_SOUND_ADD(AY8910, 2000000)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.33/3)
+
+	MDRV_SOUND_ADD(AY8910, 2000000)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.33/3)
+
+	MDRV_SOUND_ADD(AY8910, 2000000)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.33/3)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( tazzmang )
@@ -4161,7 +4156,15 @@ static MACHINE_DRIVER_START( racknrol )
 	MDRV_VIDEO_START(racknrol)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(SN76496, sn76496_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	MDRV_SOUND_ADD(SN76496, 18432000/6)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
+
+	MDRV_SOUND_ADD(SN76496, 18432000/6)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
+
+	MDRV_SOUND_ADD(SN76496, 18432000/6)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 /***************************************************************************

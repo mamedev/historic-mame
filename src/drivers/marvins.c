@@ -28,6 +28,8 @@ AT08XX03:
 #include "vidhrdw/generic.h"
 #include "cpu/z80/z80.h"
 #include "snk.h"
+#include "sound/ay8910.h"
+#include "sound/namco.h"
 
 #define CREDITS "Phil Stroffolino\nTim Lindquist\nCarlos A. Lozano"
 
@@ -102,21 +104,8 @@ static int sound_cpu_busy;
 
 static struct namco_interface snkwave_interface =
 {
-	8000000/256,	/* (wave generator has a 8MHz clock near it) */
 	1,				/* number of voices */
-	10,				/* playback volume */
 	-1				/* memory region */
-};
-
-static struct AY8910interface ay8910_interface =
-{
-	2,			/* number of chips */
-	2000000,	/* 2 MHz */
-	{ 25,25 },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ 0 }
 };
 
 static void init_sound( int busy_bit )
@@ -594,8 +583,17 @@ static MACHINE_DRIVER_START( marvins )
 	MDRV_VIDEO_UPDATE(marvins)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(AY8910, ay8910_interface)
-	MDRV_SOUND_ADD(NAMCO, snkwave_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(AY8910, 2000000)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
+
+	MDRV_SOUND_ADD(AY8910, 2000000)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
+
+	MDRV_SOUND_ADD(NAMCO, 8000000/256)
+	MDRV_SOUND_CONFIG(snkwave_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.10)
 MACHINE_DRIVER_END
 
 
@@ -631,8 +629,17 @@ static MACHINE_DRIVER_START( vangrd2 )
 	MDRV_VIDEO_UPDATE(madcrash)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(AY8910, ay8910_interface)
-	MDRV_SOUND_ADD(NAMCO, snkwave_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(AY8910, 2000000)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
+
+	MDRV_SOUND_ADD(AY8910, 2000000)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
+
+	MDRV_SOUND_ADD(NAMCO, 8000000/256)
+	MDRV_SOUND_CONFIG(snkwave_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.10)
 MACHINE_DRIVER_END
 
 

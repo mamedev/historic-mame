@@ -441,7 +441,7 @@ static void print_game_sampleof(FILE* out, const struct GameDriver* game)
 	{
 		const char **samplenames = NULL;
 		if( drv.sound[i].sound_type == SOUND_SAMPLES )
-			samplenames = ((struct Samplesinterface *)drv.sound[i].sound_interface)->samplenames;
+			samplenames = ((struct Samplesinterface *)drv.sound[i].config)->samplenames;
 		if (samplenames != 0 && samplenames[0] != 0) {
 			int k = 0;
 			if (samplenames[k][0]=='*')
@@ -468,7 +468,7 @@ static void print_game_sample(FILE* out, const struct GameDriver* game)
 	{
 		const char **samplenames = NULL;
 		if( drv.sound[i].sound_type == SOUND_SAMPLES )
-			samplenames = ((struct Samplesinterface *)drv.sound[i].sound_interface)->samplenames;
+			samplenames = ((struct Samplesinterface *)drv.sound[i].config)->samplenames;
 		if (samplenames != 0 && samplenames[0] != 0) {
 			int k = 0;
 			if (samplenames[k][0]=='*')
@@ -524,20 +524,12 @@ static void print_game_micro(FILE* out, const struct GameDriver* game)
 	{
 		if (sound[j].sound_type)
 		{
-			int num = sound_num(&sound[j]);
-			int l;
-
-			if (num == 0) num = 1;
-
-			for(l=0;l<num;++l)
-			{
-				fprintf(out, "\t\t<chip");
-				fprintf(out, " type=\"audio\"");
-				fprintf(out, " name=\"%s\"", normalize_string(sound_name(&sound[j])));
-				if (sound_clock(&sound[j]))
-					fprintf(out, " clock=\"%d\"", sound_clock(&sound[j]));
-				fprintf(out, "/>\n");
-			}
+			fprintf(out, "\t\t<chip");
+			fprintf(out, " type=\"audio\"");
+			fprintf(out, " name=\"%s\"", normalize_string(sndtype_name(sound[j].sound_type)));
+			if (sound[j].clock)
+				fprintf(out, " clock=\"%d\"", sound[j].clock);
+			fprintf(out, "/>\n");
 		}
 	}
 }
@@ -640,10 +632,11 @@ static void print_game_sound(FILE* out, const struct GameDriver* game)
 	/* sound channel */
 	if (has_sound)
 	{
-		if (driver.sound_attributes & SOUND_SUPPORTS_STEREO)
-			fprintf(out, " channels=\"2\"");
-		else
-			fprintf(out, " channels=\"1\"");
+		int speakers;
+		for (speakers = 0; speakers < MAX_SPEAKER; speakers++)
+			if (driver.speaker[speakers].tag == NULL)
+				break;
+		fprintf(out, " channels=\"%d\"", speakers);
 	}
 	else
 		fprintf(out, " channels=\"0\"");

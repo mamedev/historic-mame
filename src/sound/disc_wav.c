@@ -1159,22 +1159,22 @@ void dss_squarewave2_step(struct node_description *node)
 	struct dss_squarewave_context *context = node->context;
 	double newphase;
 
-	/* Establish trigger phase from time periods */
-	context->trigger=(DSS_SQUAREWAVE2__T_OFF / (DSS_SQUAREWAVE2__T_OFF + DSS_SQUAREWAVE2__T_ON)) * (2.0 * PI);
-
-	/* Work out the phase step based on phase/freq & sample rate */
-	/* The enable input only curtails output, phase rotation     */
-	/* still occurs                                              */
-
-	/*     phase step = 2Pi/(output period/sample period)        */
-	/*                    boils out to                           */
-	/*     phase step = 2Pi/(output period*sample freq)          */
-	newphase = context->phase + ((2.0 * PI) / ((DSS_SQUAREWAVE2__T_OFF + DSS_SQUAREWAVE2__T_ON) * Machine->sample_rate));
-	/* Keep the new phasor in the 2Pi range.*/
-	context->phase = fmod(newphase, 2.0 * PI);
-
 	if(DSS_SQUAREWAVE2__ENABLE)
 	{
+		/* Establish trigger phase from time periods */
+		context->trigger=(DSS_SQUAREWAVE2__T_OFF / (DSS_SQUAREWAVE2__T_OFF + DSS_SQUAREWAVE2__T_ON)) * (2.0 * PI);
+
+		/* Work out the phase step based on phase/freq & sample rate */
+		/* The enable input only curtails output, phase rotation     */
+		/* still occurs                                              */
+
+		/*     phase step = 2Pi/(output period/sample period)        */
+		/*                    boils out to                           */
+		/*     phase step = 2Pi/(output period*sample freq)          */
+		newphase = context->phase + ((2.0 * PI) / ((DSS_SQUAREWAVE2__T_OFF + DSS_SQUAREWAVE2__T_ON) * Machine->sample_rate));
+		/* Keep the new phasor in the 2Pi range.*/
+		context->phase = fmod(newphase, 2.0 * PI);
+
 		if(context->phase>context->trigger)
 			node->output=(DSS_SQUAREWAVE2__AMP/2.0);
 		else
@@ -1195,7 +1195,11 @@ void dss_squarewave2_reset(struct node_description *node)
 	double start;
 
 	/* Establish starting phase, convert from degrees to radians */
-	start = (DSS_SQUAREWAVE2__SHIFT / (DSS_SQUAREWAVE2__T_OFF + DSS_SQUAREWAVE2__T_ON)) * (2.0 * PI);
+	/* Only valid if we have set the on/off time                 */
+	if((DSS_SQUAREWAVE2__T_OFF + DSS_SQUAREWAVE2__T_ON) != 0.0)
+		start = (DSS_SQUAREWAVE2__SHIFT / (DSS_SQUAREWAVE2__T_OFF + DSS_SQUAREWAVE2__T_ON)) * (2.0 * PI);
+	else
+		start = 0.0;
 	/* Make sure its always mod 2Pi */
 	context->phase = fmod(start, 2.0 * PI);
 

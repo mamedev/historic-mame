@@ -46,6 +46,7 @@
 #include "driver.h"
 #include "vidhrdw/vector.h"
 #include "vidhrdw/avgdvg.h"
+#include "sound/pokey.h"
 
 
 
@@ -227,22 +228,14 @@ INPUT_PORTS_END
  *
  *************************************/
 
-static struct POKEYinterface pokey_interface =
+static struct POKEYinterface pokey_interface_1 =
 {
-	2,	/* 2 chips */
-	600000,        /* .6 MHz? (hand tuned) */
-	{ 50, 50 },
-	/* The 8 pot handlers */
-	{ input_1_r, input_2_r },
-	{ input_1_r, input_2_r },
-	{ input_1_r, input_2_r },
-	{ input_1_r, input_2_r },
-	{ input_1_r, input_2_r },
-	{ input_1_r, input_2_r },
-	{ input_1_r, input_2_r },
-	{ input_1_r, input_2_r },
-	/* The allpot handler */
-	{ 0, 0 },
+	{ input_1_r,input_1_r,input_1_r,input_1_r,input_1_r,input_1_r,input_1_r,input_1_r }
+};
+
+static struct POKEYinterface pokey_interface_2 =
+{
+	{ input_2_r,input_2_r,input_2_r,input_2_r,input_2_r,input_2_r,input_2_r,input_2_r }
 };
 
 
@@ -274,7 +267,15 @@ static MACHINE_DRIVER_START( quantum )
 	MDRV_VIDEO_UPDATE(vector)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(POKEY, pokey_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(POKEY, 600000)
+	MDRV_SOUND_CONFIG(pokey_interface_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
+
+	MDRV_SOUND_ADD(POKEY, 600000)
+	MDRV_SOUND_CONFIG(pokey_interface_2)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
 MACHINE_DRIVER_END
 
 

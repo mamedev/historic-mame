@@ -13,6 +13,8 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "artwork.h"
+#include "sound/samples.h"
+#include "sound/dac.h"
 
 static int clown_x=0,clown_y=0,clown_z=0;
 
@@ -33,7 +35,6 @@ static const char *circus_sample_names[] =
 struct Samplesinterface circus_samples_interface =
 {
 	3,	/* 3 channels */
-	25,	/* volume */
 	circus_sample_names
 };
 

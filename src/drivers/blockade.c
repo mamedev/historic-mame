@@ -31,6 +31,8 @@ Notes:  Support is complete with the exception of the noise generator.
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "includes/blockade.h"
+#include "sound/samples.h"
+#include "sound/discrete.h"
 
 /* #define BLOCKADE_LOG 1 */
 
@@ -479,8 +481,15 @@ static MACHINE_DRIVER_START( blockade )
 	MDRV_VIDEO_UPDATE(blockade)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(SAMPLES, blockade_samples_interface)
-	MDRV_SOUND_ADD(DISCRETE, blockade_discrete_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(SAMPLES, 0)
+	MDRV_SOUND_CONFIG(blockade_samples_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
+	
+	MDRV_SOUND_ADD(DISCRETE, 0)
+	MDRV_SOUND_CONFIG(blockade_discrete_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( comotion )

@@ -21,6 +21,8 @@ Year + Game					By		Hardware
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "sound/dac.h"
+#include "sound/2151intf.h"
 
 /* Variables and functions defined in vidhrdw: */
 
@@ -563,22 +565,6 @@ static struct GfxDecodeInfo suna16_gfxdecodeinfo[] =
 							Back Street Soccer
 ***************************************************************************/
 
-static struct YM2151interface bssoccer_ym2151_interface =
-{
-	1,
-	3579545,	/* ? */
-	{ YM3012_VOL(20,MIXER_PAN_LEFT, 20,MIXER_PAN_RIGHT) },
-	{ 0 },		/* irq handler */
-	{ 0 }		/* port write handler */
-};
-
-static struct DACinterface bssoccer_dac_interface =
-{
-	4,
-	{	MIXER(40,MIXER_PAN_LEFT), MIXER(40,MIXER_PAN_RIGHT),
-		MIXER(40,MIXER_PAN_LEFT), MIXER(40,MIXER_PAN_RIGHT)	}
-};
-
 INTERRUPT_GEN( bssoccer_interrupt )
 {
 	switch (cpu_getiloops())
@@ -624,9 +610,23 @@ static MACHINE_DRIVER_START( bssoccer )
 	MDRV_VIDEO_UPDATE(suna16)
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(YM2151, bssoccer_ym2151_interface)
-	MDRV_SOUND_ADD(DAC, bssoccer_dac_interface)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(YM2151, 3579545)
+	MDRV_SOUND_ROUTE(0, "left", 0.20)
+	MDRV_SOUND_ROUTE(1, "right", 0.20)
+
+	MDRV_SOUND_ADD(DAC, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.40)
+
+	MDRV_SOUND_ADD(DAC, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 0.40)
+
+	MDRV_SOUND_ADD(DAC, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.40)
+
+	MDRV_SOUND_ADD(DAC, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 0.40)
 MACHINE_DRIVER_END
 
 
@@ -634,21 +634,6 @@ MACHINE_DRIVER_END
 /***************************************************************************
 								Ultra Balloon
 ***************************************************************************/
-
-static struct YM2151interface uballoon_ym2151_interface =
-{
-	1,
-	3579545,	/* ? */
-	{ YM3012_VOL(50,MIXER_PAN_LEFT,50,MIXER_PAN_RIGHT) },
-	{ 0 },		/* irq handler */
-	{ 0 }		/* port write handler */
-};
-
-static struct DACinterface uballoon_dac_interface =
-{
-	2,
-	{ MIXER(50,MIXER_PAN_LEFT), MIXER(50,MIXER_PAN_RIGHT) }
-};
 
 static MACHINE_DRIVER_START( uballoon )
 
@@ -683,9 +668,17 @@ static MACHINE_DRIVER_START( uballoon )
 	MDRV_VIDEO_UPDATE(suna16)
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(YM2151, uballoon_ym2151_interface)
-	MDRV_SOUND_ADD(DAC, uballoon_dac_interface)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(YM2151, 3579545)
+	MDRV_SOUND_ROUTE(0, "left", 0.50)
+	MDRV_SOUND_ROUTE(1, "right", 0.50)
+
+	MDRV_SOUND_ADD(DAC, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.50)
+
+	MDRV_SOUND_ADD(DAC, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 0.50)
 MACHINE_DRIVER_END
 
 /***************************************************************************

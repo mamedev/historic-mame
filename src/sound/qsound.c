@@ -34,6 +34,7 @@
 #include <math.h>
 #include "driver.h"
 #include "state.h"
+#include "qsound.h"
 
 /*
 Two Q sound drivers:
@@ -70,7 +71,7 @@ typedef signed short QSOUND_SRC_SAMPLE;
 
 #define QSOUND_CLOCKDIV 166			 /* Clock divider */
 #define QSOUND_CHANNELS 16
-typedef INT16 QSOUND_SAMPLE;
+typedef stream_sample_t QSOUND_SAMPLE;
 
 struct QSOUND_CHANNEL
 {
@@ -103,56 +104,62 @@ struct QSOUND_CHANNEL
 #endif
 };
 
+struct qsound_info
+{
+	/* Private variables */
+	const struct QSound_interface *intf;	/* Interface  */
+	sound_stream * stream;				/* Audio stream */
+	struct QSOUND_CHANNEL channel[QSOUND_CHANNELS];
+	int data;				  /* register latch data */
+	QSOUND_SRC_SAMPLE *sample_rom;	/* Q sound sample ROM */
 
-/* Private variables */
-static struct QSound_interface *intf;	/* Interface  */
-static int qsound_stream;				/* Audio stream */
-static struct QSOUND_CHANNEL qsound_channel[QSOUND_CHANNELS];
-static int qsound_data;				  /* register latch data */
-QSOUND_SRC_SAMPLE *qsound_sample_rom;	/* Q sound sample ROM */
+	#if QSOUND_DRIVER1
+	int pan_table[33];		 /* Pan volume table */
+	float frq_ratio;		   /* Frequency ratio */
+	#endif
 
-#if QSOUND_DRIVER1
-static int qsound_pan_table[33];		 /* Pan volume table */
-static float qsound_frq_ratio;		   /* Frequency ratio */
-#endif
-
-#if LOG_WAVE
-static FILE *fpRawDataL;
-static FILE *fpRawDataR;
-#endif
+	#if LOG_WAVE
+	FILE *fpRawDataL;
+	FILE *fpRawDataR;
+	#endif
+};
 
 /* Function prototypes */
-void qsound_update( int num, INT16 **buffer, int length );
-void qsound_set_command(int data, int value);
+void qsound_update( void *param, stream_sample_t **inputs, stream_sample_t **outputs, int length );
+void qsound_set_command(struct qsound_info *chip, int data, int value);
 
 #if QSOUND_DRIVER2
 void setchannel(int channel,signed short *buffer,int length,int vol,int pan);
 void setchloop(int channel,int loops,int loope);
 void stopchan(int channel);
-void calcula_mix(int channel);
+void calcula_mix(struct qsound_info *chip, int channel);
 #endif
 
-int qsound_sh_start(const struct MachineSound *msound)
+static void *qsound_start(int sndindex, int clock, const void *config)
 {
+	struct qsound_info *chip;
 	int i;
+	
+	chip = auto_malloc(sizeof(*chip));
+	memset(chip, 0, sizeof(chip));
 
 	if (Machine->sample_rate == 0) return 0;
 
-	intf = msound->sound_interface;
+	chip->intf = config;
 
-	qsound_sample_rom = (QSOUND_SRC_SAMPLE *)memory_region(intf->region);
+	chip->sample_rom = (QSOUND_SRC_SAMPLE *)memory_region(chip->intf->region);
 
-	memset(qsound_channel, 0, sizeof(qsound_channel));
+	memset(chip->channel, 0, sizeof(chip->channel));
 
 #if QSOUND_DRIVER1
-	qsound_frq_ratio = ((float)intf->clock / (float)QSOUND_CLOCKDIV) /
+	chip->frq_ratio = ((float)clock / (float)QSOUND_CLOCKDIV) /
 						(float) Machine->sample_rate;
-	qsound_frq_ratio *= 16.0;
+	chip->frq_ratio *= 16.0;
 
 	/* Create pan table */
 	for (i=0; i<33; i++)
 	{
-		qsound_pan_table[i]=(int)((256/sqrt(32)) * sqrt(i));
+		chip->pan_table[i]=(int)((256/sqrt(32)) * sqrt(i));
 	}
 #else
 	i=0;
@@ -161,35 +168,24 @@ int qsound_sh_start(const struct MachineSound *msound)
 #if LOG_QSOUND
 	logerror("Pan table\n");
 	for (i=0; i<33; i++)
-		logerror("%02x ", qsound_pan_table[i]);
+		logerror("%02x ", chip->pan_table[i]);
 #endif
 	{
 		/* Allocate stream */
 #define CHANNELS ( 2 )
-		char buf[CHANNELS][40];
-		const char *name[CHANNELS];
-		int  vol[2];
-		name[0] = buf[0];
-		name[1] = buf[1];
-		sprintf( buf[0], "%s L", sound_name(msound) );
-		sprintf( buf[1], "%s R", sound_name(msound) );
-		vol[0]=MIXER(intf->mixing_level[0], MIXER_PAN_LEFT);
-		vol[1]=MIXER(intf->mixing_level[1], MIXER_PAN_RIGHT);
-		qsound_stream = stream_init_multi(
-			CHANNELS,
-			name,
-			vol,
+		chip->stream = stream_create(
+			0, CHANNELS,
 			Machine->sample_rate,
-			0,
+			chip,
 			qsound_update );
 	}
 
 #if LOG_WAVE
-	fpRawDataR=fopen("qsoundr.raw", "w+b");
-	fpRawDataL=fopen("qsoundl.raw", "w+b");
-	if (!fpRawDataR || !fpRawDataL)
+	chip->fpRawDataR=fopen("qsoundr.raw", "w+b");
+	chip->fpRawDataL=fopen("qsoundl.raw", "w+b");
+	if (!chip->fpRawDataR || !chip->fpRawDataL)
 	{
-		return 1;
+		return NULL;
 	}
 #endif
 
@@ -197,52 +193,55 @@ int qsound_sh_start(const struct MachineSound *msound)
 	/* state save (DRIVER1) */
 	for (i=0; i<QSOUND_CHANNELS; i++)
 	{
-		state_save_register_int("QSound", i, "bank", &qsound_channel[i].bank);
-		state_save_register_int("QSound", i, "address", &qsound_channel[i].address);
-		state_save_register_int("QSound", i, "pitch", &qsound_channel[i].pitch);
-		state_save_register_int("QSound", i, "loop", &qsound_channel[i].loop);
-		state_save_register_int("QSound", i, "end", &qsound_channel[i].end);
-		state_save_register_int("QSound", i, "vol", &qsound_channel[i].vol);
-		state_save_register_int("QSound", i, "pan", &qsound_channel[i].pan);
-		state_save_register_int("QSound", i, "key", &qsound_channel[i].key);
-		state_save_register_int("QSound", i, "lvol", &qsound_channel[i].lvol);
-		state_save_register_int("QSound", i, "rvol", &qsound_channel[i].rvol);
-		state_save_register_int("QSound", i, "lastdt", &qsound_channel[i].lastdt);
-		state_save_register_int("QSound", i, "offset", &qsound_channel[i].offset);
+		state_save_register_int("QSound", sndindex*QSOUND_CHANNELS+i, "bank", &chip->channel[i].bank);
+		state_save_register_int("QSound", sndindex*QSOUND_CHANNELS+i, "address", &chip->channel[i].address);
+		state_save_register_int("QSound", sndindex*QSOUND_CHANNELS+i, "pitch", &chip->channel[i].pitch);
+		state_save_register_int("QSound", sndindex*QSOUND_CHANNELS+i, "loop", &chip->channel[i].loop);
+		state_save_register_int("QSound", sndindex*QSOUND_CHANNELS+i, "end", &chip->channel[i].end);
+		state_save_register_int("QSound", sndindex*QSOUND_CHANNELS+i, "vol", &chip->channel[i].vol);
+		state_save_register_int("QSound", sndindex*QSOUND_CHANNELS+i, "pan", &chip->channel[i].pan);
+		state_save_register_int("QSound", sndindex*QSOUND_CHANNELS+i, "key", &chip->channel[i].key);
+		state_save_register_int("QSound", sndindex*QSOUND_CHANNELS+i, "lvol", &chip->channel[i].lvol);
+		state_save_register_int("QSound", sndindex*QSOUND_CHANNELS+i, "rvol", &chip->channel[i].rvol);
+		state_save_register_int("QSound", sndindex*QSOUND_CHANNELS+i, "lastdt", &chip->channel[i].lastdt);
+		state_save_register_int("QSound", sndindex*QSOUND_CHANNELS+i, "offset", &chip->channel[i].offset);
 	}
 #endif
 
-	return 0;
+	return chip;
 }
 
-void qsound_sh_stop (void)
+static void qsound_stop (void *_chip)
 {
 	if (Machine->sample_rate == 0) return;
 #if LOG_WAVE
-	if (fpRawDataR)
+	if (chip->fpRawDataR)
 	{
-		fclose(fpRawDataR);
+		fclose(chip->fpRawDataR);
 	}
-	if (fpRawDataL)
+	if (chip->fpRawDataL)
 	{
-		fclose(fpRawDataL);
+		fclose(chip->fpRawDataL);
 	}
 #endif
 }
 
 WRITE8_HANDLER( qsound_data_h_w )
 {
-	qsound_data=(qsound_data&0xff)|(data<<8);
+	struct qsound_info *chip = sndti_token(SOUND_QSOUND, 0);
+	chip->data=(chip->data&0xff)|(data<<8);
 }
 
 WRITE8_HANDLER( qsound_data_l_w )
 {
-	qsound_data=(qsound_data&0xff00)|data;
+	struct qsound_info *chip = sndti_token(SOUND_QSOUND, 0);
+	chip->data=(chip->data&0xff00)|data;
 }
 
 WRITE8_HANDLER( qsound_cmd_w )
 {
-	qsound_set_command(data, qsound_data);
+	struct qsound_info *chip = sndti_token(SOUND_QSOUND, 0);
+	qsound_set_command(chip, data, chip->data);
 }
 
 READ8_HANDLER( qsound_status_r )
@@ -251,7 +250,7 @@ READ8_HANDLER( qsound_status_r )
 	return 0x80;
 }
 
-void qsound_set_command(int data, int value)
+void qsound_set_command(struct qsound_info *chip, int data, int value)
 {
 	int ch=0,reg=0;
 	if (data < 0x80)
@@ -286,8 +285,8 @@ void qsound_set_command(int data, int value)
 	{
 		case 0: /* Bank */
 			ch=(ch+1)&0x0f;	/* strange ... */
-			qsound_channel[ch].bank=(value&0x7f)<<16;
-			qsound_channel[ch].bank /= LENGTH_DIV;
+			chip->channel[ch].bank=(value&0x7f)<<16;
+			chip->channel[ch].bank /= LENGTH_DIV;
 #ifdef MAME_DEBUG
 			if (!value & 0x8000)
 				usrintf_showmessage("Register3=%04x",value);
@@ -295,60 +294,60 @@ void qsound_set_command(int data, int value)
 
 			break;
 		case 1: /* start */
-			qsound_channel[ch].address=value;
-			qsound_channel[ch].address/=LENGTH_DIV;
+			chip->channel[ch].address=value;
+			chip->channel[ch].address/=LENGTH_DIV;
 			break;
 		case 2: /* pitch */
 #if QSOUND_DRIVER1
-			qsound_channel[ch].pitch=(long)
-					((float)value * qsound_frq_ratio );
-			qsound_channel[ch].pitch/=LENGTH_DIV;
+			chip->channel[ch].pitch=(long)
+					((float)value * chip->frq_ratio );
+			chip->channel[ch].pitch/=LENGTH_DIV;
 #else
-			qsound_channel[ch].factor=((float) (value*(6/LENGTH_DIV)) /
+			chip->channel[ch].factor=((float) (value*(6/LENGTH_DIV)) /
 									  (float) Machine->sample_rate)*256.0;
 
 #endif
 			if (!value)
 			{
 				/* Key off */
-				qsound_channel[ch].key=0;
+				chip->channel[ch].key=0;
 			}
 			break;
 		case 3: /* unknown */
-			qsound_channel[ch].reg3=value;
+			chip->channel[ch].reg3=value;
 #ifdef MAME_DEBUG
 			if (value != 0x8000)
 				usrintf_showmessage("Register3=%04x",value);
 #endif
 			break;
 		case 4: /* loop offset */
-			qsound_channel[ch].loop=value/LENGTH_DIV;
+			chip->channel[ch].loop=value/LENGTH_DIV;
 			break;
 		case 5: /* end */
-			qsound_channel[ch].end=value/LENGTH_DIV;
+			chip->channel[ch].end=value/LENGTH_DIV;
 			break;
 		case 6: /* master volume */
 			if (value==0)
 			{
 				/* Key off */
-				qsound_channel[ch].key=0;
+				chip->channel[ch].key=0;
 			}
-			else if (qsound_channel[ch].key==0)
+			else if (chip->channel[ch].key==0)
 			{
 				/* Key on */
-				qsound_channel[ch].key=1;
+				chip->channel[ch].key=1;
 #if QSOUND_DRIVER1
-				qsound_channel[ch].offset=0;
-				qsound_channel[ch].lastdt=0;
+				chip->channel[ch].offset=0;
+				chip->channel[ch].lastdt=0;
 #else
-				qsound_channel[ch].cursor=qsound_channel[ch].address <<8 ;
-				qsound_channel[ch].buffer=qsound_sample_rom+
-										 qsound_channel[ch].bank;
+				chip->channel[ch].cursor=chip->channel[ch].address <<8 ;
+				chip->channel[ch].buffer=chip->sample_rom+
+										 chip->channel[ch].bank;
 #endif
 			}
-			qsound_channel[ch].vol=value;
+			chip->channel[ch].vol=value;
 #if QSOUND_DRIVER2
-			calcula_mix(ch);
+			calcula_mix(chip, ch);
 #endif
 			break;
 
@@ -366,17 +365,17 @@ void qsound_set_command(int data, int value)
 			   {
 					pandata=32;
 			   }
-			   qsound_channel[ch].rvol=qsound_pan_table[pandata];
-			   qsound_channel[ch].lvol=qsound_pan_table[32-pandata];
+			   chip->channel[ch].rvol=chip->pan_table[pandata];
+			   chip->channel[ch].lvol=chip->pan_table[32-pandata];
 #endif
-			   qsound_channel[ch].pan = value;
+			   chip->channel[ch].pan = value;
 #if QSOUND_DRIVER2
-			   calcula_mix(ch);
+			   calcula_mix(chip, ch);
 #endif
 			}
 			break;
 		 case 9:
-			qsound_channel[ch].reg9=value;
+			chip->channel[ch].reg9=value;
 /*
 #ifdef MAME_DEBUG
 			usrintf_showmessage("QSOUND REG 9=%04x",value);
@@ -393,20 +392,21 @@ void qsound_set_command(int data, int value)
 
 /* Driver 1 - based on the Amuse source */
 
-void qsound_update( int num, INT16 **buffer, int length )
+void qsound_update( void *param, stream_sample_t **inputs, stream_sample_t **buffer, int length )
 {
+	struct qsound_info *chip = param;
 	int i,j;
 	int rvol, lvol, count;
-	struct QSOUND_CHANNEL *pC=&qsound_channel[0];
+	struct QSOUND_CHANNEL *pC=&chip->channel[0];
 	QSOUND_SRC_SAMPLE * pST;
-	QSOUND_SAMPLE  *datap[2];
+	stream_sample_t  *datap[2];
 
 	if (Machine->sample_rate == 0) return;
 
 	datap[0] = buffer[0];
 	datap[1] = buffer[1];
-	memset( datap[0], 0x00, length * sizeof(QSOUND_SAMPLE) );
-	memset( datap[1], 0x00, length * sizeof(QSOUND_SAMPLE) );
+	memset( datap[0], 0x00, length * sizeof(*datap[0]) );
+	memset( datap[1], 0x00, length * sizeof(*datap[1]) );
 
 	for (i=0; i<QSOUND_CHANNELS; i++)
 	{
@@ -414,7 +414,7 @@ void qsound_update( int num, INT16 **buffer, int length )
 		{
 			QSOUND_SAMPLE *pOutL=datap[0];
 			QSOUND_SAMPLE *pOutR=datap[1];
-			pST=qsound_sample_rom+pC->bank;
+			pST=chip->sample_rom+pC->bank;
 			rvol=(pC->rvol*pC->vol)>>(8*LENGTH_DIV);
 			lvol=(pC->lvol*pC->vol)>>(8*LENGTH_DIV);
 
@@ -450,8 +450,8 @@ void qsound_update( int num, INT16 **buffer, int length )
 	}
 
 #if LOG_WAVE
-	fwrite(datap[0], length*sizeof(QSOUND_SAMPLE), 1, fpRawDataL);
-	fwrite(datap[1], length*sizeof(QSOUND_SAMPLE), 1, fpRawDataR);
+	fwrite(datap[0], length*sizeof(QSOUND_SAMPLE), 1, chip->fpRawDataL);
+	fwrite(datap[1], length*sizeof(QSOUND_SAMPLE), 1, chip->fpRawDataR);
 #endif
 }
 
@@ -464,10 +464,10 @@ void qsound_update( int num, INT16 **buffer, int length )
  ------------------------------------------------------------------ */
 
 
-void calcula_mix(int channel)
+void calcula_mix(struct qsound_info *chip, int channel)
 {
 	int factl,factr;
-	struct QSOUND_CHANNEL *pC=&qsound_channel[channel];
+	struct QSOUND_CHANNEL *pC=&chip->channel[channel];
 	int vol=pC->vol>>5;
 	int pan=((pC->pan&0xFF)-0x10)<<3;
 	pC->mixl=vol;
@@ -482,11 +482,12 @@ void calcula_mix(int channel)
 #endif
 }
 
-void qsound_update(int num,void **buffer,int length)
+void qsound_update(void *param,void **buffer,int length)
 {
+	struct qsound_info *chip = param;
 	int i,j;
 	QSOUND_SAMPLE *bufL,*bufR, sample;
-	struct QSOUND_CHANNEL *pC=qsound_channel;
+	struct QSOUND_CHANNEL *pC=chip->channel;
 
 	memset( buffer[0], 0x00, length * sizeof(QSOUND_SAMPLE) );
 	memset( buffer[1], 0x00, length * sizeof(QSOUND_SAMPLE) );
@@ -523,5 +524,41 @@ void qsound_update(int num,void **buffer,int length)
 }
 #endif
 
+
+
+
+/**************************************************************************
+ * Generic get_info
+ **************************************************************************/
+
+static void qsound_set_info(void *token, UINT32 state, union sndinfo *info)
+{
+	switch (state)
+	{
+		/* no parameters to set */
+	}
+}
+
+
+void qsound_get_info(void *token, UINT32 state, union sndinfo *info)
+{
+	switch (state)
+	{
+		/* --- the following bits of info are returned as 64-bit signed integers --- */
+
+		/* --- the following bits of info are returned as pointers to data or functions --- */
+		case SNDINFO_PTR_SET_INFO:						info->set_info = qsound_set_info;		break;
+		case SNDINFO_PTR_START:							info->start = qsound_start;				break;
+		case SNDINFO_PTR_STOP:							/* Nothing */							break;
+		case SNDINFO_PTR_RESET:							/* Nothing */							break;
+
+		/* --- the following bits of info are returned as NULL-terminated strings --- */
+		case SNDINFO_STR_NAME:							info->s = "Q-Sound";					break;
+		case SNDINFO_STR_CORE_FAMILY:					info->s = "Capcom custom";				break;
+		case SNDINFO_STR_CORE_VERSION:					info->s = "1.0";						break;
+		case SNDINFO_STR_CORE_FILE:						info->s = __FILE__;						break;
+		case SNDINFO_STR_CORE_CREDITS:					info->s = "Copyright (c) 2004, The MAME Team"; break;
+	}
+}
 
 /**************** end of file ****************/

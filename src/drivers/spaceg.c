@@ -1,7 +1,8 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "cpu/z80/z80.h"
-
+#include "sound/dac.h"
+#include "sound/sn76496.h"
 
 
 /*
@@ -415,22 +416,6 @@ INPUT_PORTS_START( spaceg )
 
 INPUT_PORTS_END
 
-#if 0
-static struct SN76496interface sn76496_interface =
-{
-	3,	/* 3 chips */
-	{ 15468480/4, 15468480/4, 15468480/4 },
-	{ 100, 100, 100 }
-};
-
-static struct DACinterface dac_interface =
-{
-	1,
-	{ 100},
-};
-#endif
-
-
 
 static MACHINE_DRIVER_START( spaceg )
 
@@ -452,10 +437,19 @@ static MACHINE_DRIVER_START( spaceg )
 	MDRV_VIDEO_UPDATE( spaceg )
 
 	/* sound hardware */
-	//MDRV_SOUND_ADD(SN76496, sn76496_interface)
-	//MDRV_SOUND_ADD(DAC, dac_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
 
+//	MDRV_SOUND_ADD(SN76496, 15468480/4)
+//	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 
+//	MDRV_SOUND_ADD(SN76496, 15468480/4)
+//	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
+
+//	MDRV_SOUND_ADD(SN76496, 15468480/4)
+//	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
+
+//	MDRV_SOUND_ADD(DAC, 0)
+//	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 

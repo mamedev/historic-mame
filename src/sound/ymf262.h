@@ -19,33 +19,35 @@ typedef signed short	INT16;   /* signed 16bit   */
 typedef signed int		INT32;   /* signed 32bit   */
 #endif
 
+typedef stream_sample_t OPL3SAMPLE;
+/*
 #if (OPL3_SAMPLE_BITS==16)
 typedef INT16 OPL3SAMPLE;
 #endif
 #if (OPL3_SAMPLE_BITS==8)
 typedef INT8 OPL3SAMPLE;
 #endif
+*/
 
-
-typedef void (*OPL3_TIMERHANDLER)(int channel,double interval_Sec);
-typedef void (*OPL3_IRQHANDLER)(int param,int irq);
-typedef void (*OPL3_UPDATEHANDLER)(int param,int min_interval_us);
+typedef void (*OPL3_TIMERHANDLER)(void *param,int timer,double interval_Sec);
+typedef void (*OPL3_IRQHANDLER)(void *param,int irq);
+typedef void (*OPL3_UPDATEHANDLER)(void *param,int min_interval_us);
 
 
 
 #if BUILD_YMF262
 
-int  YMF262Init(int num, int clock, int rate);
-void YMF262Shutdown(void);
-void YMF262ResetChip(int which);
-int  YMF262Write(int which, int a, int v);
-unsigned char YMF262Read(int which, int a);
-int  YMF262TimerOver(int which, int c);
-void YMF262UpdateOne(int which, INT16 **buffers, int length);
+void *YMF262Init(int clock, int rate);
+void YMF262Shutdown(void *chip);
+void YMF262ResetChip(void *chip);
+int  YMF262Write(void *chip, int a, int v);
+unsigned char YMF262Read(void *chip, int a);
+int  YMF262TimerOver(void *chip, int c);
+void YMF262UpdateOne(void *chip, OPL3SAMPLE **buffers, int length);
 
-void YMF262SetTimerHandler(int which, OPL3_TIMERHANDLER TimerHandler, int channelOffset);
-void YMF262SetIRQHandler(int which, OPL3_IRQHANDLER IRQHandler, int param);
-void YMF262SetUpdateHandler(int which, OPL3_UPDATEHANDLER UpdateHandler, int param);
+void YMF262SetTimerHandler(void *chip, OPL3_TIMERHANDLER TimerHandler, void *param);
+void YMF262SetIRQHandler(void *chip, OPL3_IRQHANDLER IRQHandler, void *param);
+void YMF262SetUpdateHandler(void *chip, OPL3_UPDATEHANDLER UpdateHandler, void *param);
 
 #endif
 

@@ -32,6 +32,7 @@ RAM: 6117on ROM board and (24) MCM4517s on main board
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "machine/8255ppi.h"
+#include "sound/dac.h"
 
 static data8_t *drawctrl;
 
@@ -289,12 +290,6 @@ static ppi8255_interface gselect_ppi8255_intf =
 	{ NULL,		      sound_w },		/* Port C write */
 };
 
-static struct DACinterface dac_interface =
-{
-	1,
-	{ 100 }
-};
-
 static MACHINE_INIT( getrivia )
 {
 	ppi8255_init(&getrivia_ppi8255_intf);
@@ -326,7 +321,10 @@ static MACHINE_DRIVER_START( getrivia )
 	MDRV_VIDEO_UPDATE(generic_bitmapped)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(DAC, dac_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(DAC, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( gselect )

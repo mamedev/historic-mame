@@ -1,4 +1,5 @@
 #include "driver.h"
+#include "sound/samples.h"
 
 struct gotya_sample
 {

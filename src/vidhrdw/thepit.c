@@ -177,7 +177,7 @@ READ8_HANDLER( thepit_input_port_0_r )
 
 WRITE8_HANDLER( thepit_sound_enable_w )
 {
-	mixer_sound_enable_global_w(data);
+	sound_global_enable(data);
 }
 
 

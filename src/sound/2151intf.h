@@ -1,20 +1,10 @@
 #ifndef YM2151INTF_H
 #define YM2151INTF_H
 
-#define MAX_2151 2
-
-#ifndef YM3012_VOL
-/* YM2151interface->volume macro */
-#define YM3012_VOL(LVol,LPan,RVol,RPan) (MIXER(LVol,LPan)|(MIXER(RVol,RPan) << 16))
-#endif
-
 struct YM2151interface
 {
-	int num;
-	int baseclock;
-	int volume[MAX_2151]; /* use YM3012_VOL() macro to fill this field */
-	void (*irqhandler[MAX_2151])(int irq);
-	write8_handler portwritehandler[MAX_2151];
+	void (*irqhandler)(int irq);
+	write8_handler portwritehandler;
 };
 
 READ8_HANDLER( YM2151_status_port_0_r );
@@ -44,9 +34,4 @@ WRITE16_HANDLER( YM2151_data_port_0_lsb_w );
 WRITE16_HANDLER( YM2151_data_port_1_lsb_w );
 WRITE16_HANDLER( YM2151_data_port_2_lsb_w );
 
-int YM2151_sh_start(const struct MachineSound *msound);
-void YM2151_sh_stop(void);
-void YM2151_sh_reset(void);
-
-void YM2151UpdateRequest(int chip);
 #endif

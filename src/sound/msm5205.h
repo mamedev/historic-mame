@@ -3,8 +3,6 @@
 
 /* an interface for the MSM5205 and similar chips */
 
-#define MAX_MSM5205 4
-
 /* priscaler selector defines   */
 /* default master clock is 384KHz */
 #define MSM5205_S96_3B 0     /* prsicaler 1/96(4KHz) , data 3bit */
@@ -18,17 +16,9 @@
 
 struct MSM5205interface
 {
-	int num;                       /* total number of chips                 */
-	int baseclock;                 /* master clock (default = 384KHz)       */
-	void (*vclk_callback[MAX_MSM5205])(int);   /* VCLK callback  			*/
-	int select[MAX_MSM5205];       /* prescaler / bit width selector        */
-	int mixing_level[MAX_MSM5205]; /* master volume                         */
+	void (*vclk_callback)(int);   /* VCLK callback  			*/
+	int select;       /* prescaler / bit width selector        */
 };
-
-int MSM5205_sh_start (const struct MachineSound *msound);
-void MSM5205_sh_stop (void);   /* empty this function */
-void MSM5205_sh_update (void); /* empty this function */
-void MSM5205_sh_reset (void);
 
 /* reset signal should keep for 2cycle of VCLK      */
 void MSM5205_reset_w (int num, int reset);

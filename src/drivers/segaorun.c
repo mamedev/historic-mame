@@ -20,6 +20,8 @@
 #include "system16.h"
 #include "machine/segaic16.h"
 #include "cpu/m68000/m68000.h"
+#include "sound/2151intf.h"
+#include "sound/segapcm.h"
 
 
 
@@ -627,21 +629,10 @@ INPUT_PORTS_END
  *
  *************************************/
 
-static struct YM2151interface ym2151_interface =
-{
-	1,
-	4000000,
-	{ YM3012_VOL(43,MIXER_PAN_LEFT,43,MIXER_PAN_RIGHT) },
-	{ 0 }
-};
-
-
 static struct SEGAPCMinterface segapcm_interface =
 {
-	SEGAPCM_SAMPLE15K,
 	BANK_512,
-	REGION_SOUND1,
-	100
+	REGION_SOUND1
 };
 
 
@@ -712,9 +703,16 @@ static MACHINE_DRIVER_START( outrun )
 	MDRV_VIDEO_UPDATE(outrun)
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD_TAG("2151", YM2151, ym2151_interface)
-	MDRV_SOUND_ADD_TAG("pcm", SEGAPCM, segapcm_interface)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(YM2151, 4000000)
+	MDRV_SOUND_ROUTE(0, "left", 0.43)
+	MDRV_SOUND_ROUTE(1, "right", 0.43)
+
+	MDRV_SOUND_ADD_TAG("pcm", SEGAPCM,SEGAPCM_SAMPLE15K)
+	MDRV_SOUND_CONFIG(segapcm_interface)
+	MDRV_SOUND_ROUTE(0, "left", 1.0)
+	MDRV_SOUND_ROUTE(0, "right", 1.0)
 MACHINE_DRIVER_END
 
 
@@ -1368,8 +1366,8 @@ ROM_START( shangon1 )
 	ROM_REGION( 0x60000, REGION_CPU1, 0 ) /* 68000 code - protected */
 	ROM_LOAD16_BYTE( "ic133", 0x000000, 0x10000, CRC(e52721fe) SHA1(21f0aa14d0cbda3d762bca86efe089646031aef5) )
 	ROM_LOAD16_BYTE( "ic118", 0x000001, 0x10000, BAD_DUMP CRC(5fee09f6) SHA1(b97a08ba75d8c617aceff2b03c1f2bfcb16181ef) )
-	ROM_LOAD16_BYTE( "ic132", 0x020000, 0x10000, BAD_DUMP CRC(5d55d65f) SHA1(d02d76b98d74746b078b0f49f0320b8be48e4c47) )
-	ROM_LOAD16_BYTE( "ic117", 0x020001, 0x10000, BAD_DUMP CRC(b967e8c3) SHA1(00224b337b162daff03bbfabdcf8541025220d46) )
+	ROM_LOAD16_BYTE( "ic132", 0x020000, 0x10000, CRC(5d55d65f) SHA1(d02d76b98d74746b078b0f49f0320b8be48e4c47) )
+	ROM_LOAD16_BYTE( "ic117", 0x020001, 0x10000, CRC(b967e8c3) SHA1(00224b337b162daff03bbfabdcf8541025220d46) )
 
 	ROM_REGION( 0x60000, REGION_CPU2, 0 ) /* second 68000 CPU */
 	ROM_LOAD16_BYTE( "ep10640.76", 0x00000, 0x10000, CRC(02be68db) SHA1(8c9f98ee49db54ee53b721ecf53f91737ae6cd73) )

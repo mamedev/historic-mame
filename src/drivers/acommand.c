@@ -54,6 +54,7 @@ JALCF1   BIN     1,048,576  02-07-99  1:11a JALCF1.BIN
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "sound/okim6295.h"
 
 static struct tilemap *tx_tilemap,*bg_tilemap;
 data16_t *ac_txvram,*ac_bgvram;
@@ -528,14 +529,6 @@ static struct GfxDecodeInfo acommand_gfxdecodeinfo[] =
 	{ -1 } /* end of array */
 };
 
-static struct OKIM6295interface m6295_interface =
-{
-	2,              	/* 2 chips? */
-	{ 2400000/165 , 2400000/165 },	/* unknown */
-	{ REGION_SOUND1, REGION_SOUND2 },	/* memory region */
-	{ 100,100 }				/* volume */
-};
-
 static INTERRUPT_GEN( acommand_irq )
 {
 	if (cpu_getiloops() == 0)
@@ -565,7 +558,15 @@ static MACHINE_DRIVER_START( acommand )
 	MDRV_VIDEO_UPDATE(acommand)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(OKIM6295, m6295_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(OKIM6295, 2400000/165)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
+
+	MDRV_SOUND_ADD(OKIM6295, 2400000/165)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_2)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 /***************************************************************************

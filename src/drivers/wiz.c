@@ -159,6 +159,8 @@ Stephh's notes (based on the games Z80 code and some tests) :
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "sound/ay8910.h"
+#include "sound/discrete.h"
 
 extern unsigned char *wiz_videoram2;
 extern unsigned char *wiz_colorram2;
@@ -634,28 +636,6 @@ static struct GfxDecodeInfo stinger_gfxdecodeinfo[] =
 };
 
 
-static struct AY8910interface wiz_ay8910_interface =
-{
-	3,				/* 3 chips */
-	18432000/12,	/* ? */
-	{ 10, 10, 10 },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ 0 }
-};
-
-static struct AY8910interface stinger_ay8910_interface =
-{
-	2,				/* 2 chips */
-	18432000/12,	/* ? */
-	{ 12, 12 },		// 25 causes clipping
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ 0 }
-};
-
 
 //* ANALOG SOUND STARTS
 
@@ -754,8 +734,16 @@ static MACHINE_DRIVER_START( wiz )
 	MDRV_VIDEO_UPDATE(wiz)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD_TAG("8910", AY8910, wiz_ay8910_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
 
+	MDRV_SOUND_ADD_TAG("8910.1", AY8910, 18432000/12)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.10)
+
+	MDRV_SOUND_ADD_TAG("8910.2", AY8910, 18432000/12)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.10)
+
+	MDRV_SOUND_ADD_TAG("8910.3", AY8910, 18432000/12)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.10)
 MACHINE_DRIVER_END
 
 
@@ -769,9 +757,17 @@ static MACHINE_DRIVER_START( stinger )
 	MDRV_VIDEO_UPDATE(stinger)
 
 	/* sound hardware */
-	MDRV_SOUND_REPLACE("8910", AY8910, stinger_ay8910_interface)
-	MDRV_SOUND_ADD(DISCRETE, stinger_discrete_interface)
+	MDRV_SOUND_MODIFY("8910.1")
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.12)
+	
+	MDRV_SOUND_MODIFY("8910.2")
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.12)
+	
+	MDRV_SOUND_REMOVE("8910.3")
 
+	MDRV_SOUND_ADD(DISCRETE, 0)
+	MDRV_SOUND_CONFIG(stinger_discrete_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 

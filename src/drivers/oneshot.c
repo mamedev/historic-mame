@@ -30,6 +30,10 @@ TO DO :
 */
 
 #include "driver.h"
+#include "sound/okim6295.h"
+#include "sound/3812intf.h"
+
+
 data16_t *oneshot_sprites;
 data16_t *oneshot_bg_videoram;
 data16_t *oneshot_mid_videoram;
@@ -365,18 +369,7 @@ static void irq_handler(int irq)
 
 static struct YM3812interface ym3812_interface =
 {
-	1,
-	3500000,	/* ??? music tempo in maddonna */
-	{ 100 },
-	{ irq_handler }
-};
-
-static struct OKIM6295interface okim6295_interface =
-{
-	1,
-	{ 8000 },	/* ? */
-	{ REGION_SOUND1 },
-	{ 100 }
+	irq_handler
 };
 
 static MACHINE_DRIVER_START( oneshot )
@@ -403,8 +396,15 @@ static MACHINE_DRIVER_START( oneshot )
 	MDRV_VIDEO_START(oneshot)
 	MDRV_VIDEO_UPDATE(oneshot)
 
-	MDRV_SOUND_ADD(YM3812, ym3812_interface)
-	MDRV_SOUND_ADD(OKIM6295, okim6295_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM3812, 3500000)
+	MDRV_SOUND_CONFIG(ym3812_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
+
+	MDRV_SOUND_ADD(OKIM6295, 8000)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( maddonna )

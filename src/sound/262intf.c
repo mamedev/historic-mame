@@ -10,132 +10,185 @@
 #include "ymf262.h"
 
 
-
-
 #if (HAS_YMF262)
 
-static int  stream_262[MAX_262];
-static void *Timer_262[MAX_262*2];
-static const struct YMF262interface *intf_262 = NULL;
-static void IRQHandler_262(int n,int irq)
+struct ymf262_info
 {
-	if (intf_262->handler[n]) (intf_262->handler[n])(irq);
-}
-static void timer_callback_262(int param)
+	sound_stream *	stream;
+	mame_timer *	timer[2];
+	void *			chip;
+	const struct YMF262interface *intf;
+};
+
+
+
+
+static void IRQHandler_262(void *param,int irq)
 {
-	int n=param>>1;
-	int c=param&1;
-	YMF262TimerOver(n,c);
+	struct ymf262_info *info = param;
+	if (info->intf->handler) (info->intf->handler)(irq);
 }
 
-static void TimerHandler_262(int c,double period)
+static void timer_callback_262_0(void *param)
 {
+	struct ymf262_info *info = param;
+	YMF262TimerOver(info->chip, 0);
+}
+
+static void timer_callback_262_1(void *param)
+{
+	struct ymf262_info *info = param;
+	YMF262TimerOver(info->chip, 1);
+}
+
+static void TimerHandler_262(void *param,int timer,double period)
+{
+	struct ymf262_info *info = param;
 	if( period == 0 )
 	{	/* Reset FM Timer */
-		timer_enable(Timer_262[c], 0);
+		timer_enable(info->timer[timer], 0);
 	}
 	else
 	{	/* Start FM Timer */
-		timer_adjust(Timer_262[c], period, c, 0);
+		timer_adjust_ptr(info->timer[timer], period, info, 0);
 	}
 }
 
-
-int YMF262_sh_start(const struct MachineSound *msound)
+static void ymf262_stream_update(void *param, stream_sample_t **inputs, stream_sample_t **buffers, int length)
 {
-	int i,chip;
-	int rate = Machine->sample_rate;
+	struct ymf262_info *info = param;
+	YMF262UpdateOne(info->chip, buffers, length);
+}
 
-	intf_262 = msound->sound_interface;
-	if( intf_262->num > MAX_262 ) return 1;
+static void _stream_update(void *param, int interval)
+{
+	struct ymf262_info *info = param;
+	stream_update(info->stream, interval);
+}
+
+
+static void *ymf262_start(int sndindex, int clock, const void *config)
+{
+	static const struct YMF262interface dummy = { 0 };
+	int rate = Machine->sample_rate;
+	struct ymf262_info *info;
+	
+	info = auto_malloc(sizeof(*info));
+	memset(info, 0, sizeof(*info));
+
+	info->intf = config ? config : &dummy;
 
 	if (options.use_filter)
-		rate = intf_262->baseclock/288;
-
-	/* Timer state clear */
-	memset(Timer_262,0,sizeof(Timer_262));
+		rate = clock/288;
 
 	/* stream system initialize */
-	if ( YMF262Init(intf_262->num,intf_262->baseclock,rate) != 0)
-		return 1;
+	info->chip = YMF262Init(clock,rate);
+	if (info->chip == NULL)
+		return NULL;
 
-	for (chip = 0;chip < intf_262->num; chip++)
-	{
-		int mixed_vol;
-		int vol[4];		/* four separate outputs */
-		char buf[4][40];
-		const char *name[4];
+	info->stream = stream_create(0,4,rate,info,ymf262_stream_update);
 
-		mixed_vol = intf_262->mixing_levelAB[chip];
-		for (i=0; i<4; i++)
-		{
-			if (i==2) /*channels C ad D use separate field */
-				mixed_vol = intf_262->mixing_levelCD[chip];
-			vol[i] = mixed_vol & 0xffff;
-			mixed_vol >>= 16;
-			name[i] = buf[i];
-			sprintf(buf[i],"%s #%d ch%c",sound_name(msound),chip,'A'+i);
-			logerror("%s #%d ch%c",sound_name(msound),chip,'A'+i);
-		}
-		stream_262[chip] = stream_init_multi(4,name,vol,rate,chip,YMF262UpdateOne);
+	/* YMF262 setup */
+	YMF262SetTimerHandler (info->chip, TimerHandler_262, info);
+	YMF262SetIRQHandler   (info->chip, IRQHandler_262, info);
+	YMF262SetUpdateHandler(info->chip, _stream_update, info);
 
-		/* YMF262 setup */
-		YMF262SetTimerHandler (chip, TimerHandler_262, chip*2);
-		YMF262SetIRQHandler   (chip, IRQHandler_262, chip);
-		YMF262SetUpdateHandler(chip, stream_update, stream_262[chip]);
+	info->timer[0] = timer_alloc_ptr(timer_callback_262_0);
+	info->timer[1] = timer_alloc_ptr(timer_callback_262_1);
 
-		Timer_262[chip*2+0] = timer_alloc(timer_callback_262);
-		Timer_262[chip*2+1] = timer_alloc(timer_callback_262);
-	}
-	return 0;
+	return info;
 }
 
-void YMF262_sh_stop(void)
+static void ymf262_stop(void *token)
 {
-	YMF262Shutdown();
+	struct ymf262_info *info = token;
+	YMF262Shutdown(info->chip);
 }
 
 /* reset */
-void YMF262_sh_reset(void)
+static void ymf262_reset(void *token)
 {
-	int i;
-
-	for (i = 0;i < intf_262->num;i++)
-		YMF262ResetChip(i);
+	struct ymf262_info *info = token;
+	YMF262ResetChip(info->chip);
 }
 
 /* chip #0 */
 READ8_HANDLER( YMF262_status_0_r ) {
-	return YMF262Read(0, 0);
+	struct ymf262_info *info = sndti_token(SOUND_YMF262, 0);
+	return YMF262Read(info->chip, 0);
 }
 WRITE8_HANDLER( YMF262_register_A_0_w ) {
-	YMF262Write(0, 0, data);
+	struct ymf262_info *info = sndti_token(SOUND_YMF262, 0);
+	YMF262Write(info->chip, 0, data);
 }
 WRITE8_HANDLER( YMF262_data_A_0_w ) {
-	YMF262Write(0, 1, data);
+	struct ymf262_info *info = sndti_token(SOUND_YMF262, 0);
+	YMF262Write(info->chip, 1, data);
 }
 WRITE8_HANDLER( YMF262_register_B_0_w ) {
-	YMF262Write(0, 2, data);
+	struct ymf262_info *info = sndti_token(SOUND_YMF262, 0);
+	YMF262Write(info->chip, 2, data);
 }
 WRITE8_HANDLER( YMF262_data_B_0_w ) {
-	YMF262Write(0, 3, data);
+	struct ymf262_info *info = sndti_token(SOUND_YMF262, 0);
+	YMF262Write(info->chip, 3, data);
 }
 
 /* chip #1 */
 READ8_HANDLER( YMF262_status_1_r ) {
-	return YMF262Read(1, 0);
+	struct ymf262_info *info = sndti_token(SOUND_YMF262, 1);
+	return YMF262Read(info->chip, 0);
 }
 WRITE8_HANDLER( YMF262_register_A_1_w ) {
-	YMF262Write(1, 0, data);
+	struct ymf262_info *info = sndti_token(SOUND_YMF262, 1);
+	YMF262Write(info->chip, 0, data);
 }
 WRITE8_HANDLER( YMF262_data_A_1_w ) {
-	YMF262Write(1, 1, data);
+	struct ymf262_info *info = sndti_token(SOUND_YMF262, 1);
+	YMF262Write(info->chip, 1, data);
 }
 WRITE8_HANDLER( YMF262_register_B_1_w ) {
-	YMF262Write(1, 2, data);
+	struct ymf262_info *info = sndti_token(SOUND_YMF262, 1);
+	YMF262Write(info->chip, 2, data);
 }
 WRITE8_HANDLER( YMF262_data_B_1_w ) {
-	YMF262Write(1, 3, data);
+	struct ymf262_info *info = sndti_token(SOUND_YMF262, 1);
+	YMF262Write(info->chip, 3, data);
+}
+
+
+/**************************************************************************
+ * Generic get_info
+ **************************************************************************/
+
+static void ymf262_set_info(void *token, UINT32 state, union sndinfo *info)
+{
+	switch (state)
+	{
+		/* no parameters to set */
+	}
+}
+
+
+void ymf262_get_info(void *token, UINT32 state, union sndinfo *info)
+{
+	switch (state)
+	{
+		/* --- the following bits of info are returned as 64-bit signed integers --- */
+
+		/* --- the following bits of info are returned as pointers to data or functions --- */
+		case SNDINFO_PTR_SET_INFO:						info->set_info = ymf262_set_info;		break;
+		case SNDINFO_PTR_START:							info->start = ymf262_start;				break;
+		case SNDINFO_PTR_STOP:							info->stop = ymf262_stop;				break;
+		case SNDINFO_PTR_RESET:							info->reset = ymf262_reset;				break;
+
+		/* --- the following bits of info are returned as NULL-terminated strings --- */
+		case SNDINFO_STR_NAME:							info->s = "YMF262";						break;
+		case SNDINFO_STR_CORE_FAMILY:					info->s = "Yamaha FM";					break;
+		case SNDINFO_STR_CORE_VERSION:					info->s = "1.0";						break;
+		case SNDINFO_STR_CORE_FILE:						info->s = __FILE__;						break;
+		case SNDINFO_STR_CORE_CREDITS:					info->s = "Copyright (c) 2004, The MAME Team"; break;
+	}
 }
 
 #endif

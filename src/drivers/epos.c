@@ -31,6 +31,7 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "machine/8255ppi.h"
+#include "sound/ay8910.h"
 #include "epos.h"
 
 
@@ -352,25 +353,6 @@ INPUT_PORTS_END
 
 /*************************************
  *
- *	Sound interfaces
- *
- *************************************/
-
-static struct AY8910interface ay8912_interface =
-{
-	1,	/* 1 chip */
-	11000000/4,	/* 2.75 MHz */
-	{ 50 },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ 0 }
-};
-
-
-
-/*************************************
- *
  *	Machine drivers
  *
  *************************************/
@@ -397,7 +379,9 @@ static MACHINE_DRIVER_START( epos )
 	MDRV_VIDEO_UPDATE(epos)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(AY8910, ay8912_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	MDRV_SOUND_ADD(AY8910, 11000000/4)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 
@@ -423,7 +407,9 @@ static MACHINE_DRIVER_START( dealer )
 	MDRV_MACHINE_INIT(dealer)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(AY8910, ay8912_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	MDRV_SOUND_ADD(AY8910, 11000000/4)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 

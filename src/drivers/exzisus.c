@@ -30,6 +30,7 @@ TODO:
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "sndhrdw/taitosnd.h"
+#include "sound/2151intf.h"
 
 
 /***************************************************************************
@@ -358,10 +359,7 @@ static void irqhandler(int irq)
 
 static struct YM2151interface ym2151_interface =
 {
-	1,			/* 1 chip */
-	4000000,	/* 4 MHz ? */
-	{ YM3012_VOL(50,MIXER_PAN_CENTER,50,MIXER_PAN_CENTER) },
-	{ irqhandler },
+	irqhandler
 };
 
 
@@ -399,7 +397,12 @@ static MACHINE_DRIVER_START( exzisus )
 	MDRV_VIDEO_UPDATE(exzisus)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM2151, ym2151_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM2151, 4000000)
+	MDRV_SOUND_CONFIG(ym2151_interface)
+	MDRV_SOUND_ROUTE(0, "mono", 0.50)
+	MDRV_SOUND_ROUTE(1, "mono", 0.50)
 MACHINE_DRIVER_END
 
 

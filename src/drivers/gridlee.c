@@ -81,6 +81,8 @@
 #include "cpu/m6809/m6809.h"
 #include "vidhrdw/generic.h"
 #include "gridlee.h"
+#include "sound/custom.h"
+#include "sound/samples.h"
 #include <math.h>
 
 
@@ -420,7 +422,6 @@ static const char *sample_names[] =
 static struct Samplesinterface samples_interface =
 {
 	8,	/* 8 channels */
-	40, /* volume */
 	sample_names
 };
 
@@ -455,8 +456,15 @@ static MACHINE_DRIVER_START( gridlee )
 	MDRV_VIDEO_UPDATE(gridlee)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(CUSTOM,  custom_interface)
-	MDRV_SOUND_ADD(SAMPLES, samples_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	
+	MDRV_SOUND_ADD(CUSTOM, 0)
+	MDRV_SOUND_CONFIG(custom_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
+
+	MDRV_SOUND_ADD(SAMPLES, 0)
+	MDRV_SOUND_CONFIG(samples_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.40)
 MACHINE_DRIVER_END
 
 

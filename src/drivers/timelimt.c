@@ -12,6 +12,7 @@ Notes:
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "sound/ay8910.h"
 
 /* from vidhrdw */
 extern VIDEO_START( timelimt );
@@ -242,13 +243,7 @@ static struct GfxDecodeInfo progress_gfxdecodeinfo[] =
 
 static struct AY8910interface ay8910_interface =
 {
-	2,	/* 2 chips */
-	18432000/12,
-	{ 25, 25 },
-	{ 0, soundlatch_r },
-	{ 0 },
-	{ 0 },
-	{ 0 }
+	soundlatch_r
 };
 
 static INTERRUPT_GEN( timelimt_irq ) {
@@ -291,7 +286,14 @@ static MACHINE_DRIVER_START( timelimt )
 	MDRV_VIDEO_UPDATE(timelimt)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(AY8910, ay8910_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	
+	MDRV_SOUND_ADD(AY8910, 18432000/12)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
+	
+	MDRV_SOUND_ADD(AY8910, 18432000/12)
+	MDRV_SOUND_CONFIG(ay8910_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( progress )

@@ -10,6 +10,8 @@
 
 #include <math.h>
 #include "driver.h"
+#include "sound/custom.h"
+#include "sound/tms36xx.h"
 
 /****************************************************************************
  * 4006
@@ -47,7 +49,7 @@
 static int sound_latch_a;
 static int sound_latch_b;
 
-static int channel;
+static sound_stream * channel;
 
 static int tone1_vco1_cap;
 static int tone1_level;
@@ -541,9 +543,10 @@ INLINE int noise(int samplerate)
 	return sum;
 }
 
-static void phoenix_sound_update(int param, INT16 *buffer, int length)
+static void phoenix_sound_update(void *param, stream_sample_t **inputs, stream_sample_t **outputs, int length)
 {
 	int samplerate = Machine->sample_rate;
+	stream_sample_t *buffer = outputs[0];
 
 	while( length-- > 0 )
 	{
@@ -585,15 +588,12 @@ WRITE8_HANDLER( phoenix_sound_control_b_w )
 	mm6221aa_tune_w(0, sound_latch_b >> 6);
 }
 
-int phoenix_sh_start(const struct MachineSound *msound)
+void *phoenix_sh_start(const struct CustomSound_interface *config)
 {
 	int i, j;
 	UINT32 shiftreg;
 
 	poly18 = (UINT32 *)auto_malloc((1ul << (18-5)) * sizeof(UINT32));
-
-	if( !poly18 )
-		return 1;
 
     shiftreg = 0;
 	for( i = 0; i < (1ul << (18-5)); i++ )
@@ -610,20 +610,8 @@ int phoenix_sh_start(const struct MachineSound *msound)
 		poly18[i] = bits;
 	}
 
-	channel = stream_init("Custom", 50, Machine->sample_rate, 0, phoenix_sound_update);
-	if( channel == -1 )
-		return 1;
+	channel = stream_create(0, 1, Machine->sample_rate, 0, phoenix_sound_update);
 
-	return 0;
+	/* a dummy token */
+	return auto_malloc(1);
 }
-
-void phoenix_sh_stop(void)
-{
-}
-
-void phoenix_sh_update(void)
-{
-	stream_update(channel, 0);
-}
-
-

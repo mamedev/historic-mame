@@ -43,6 +43,8 @@
 #include "machine/eeprom.h"
 #include "cpu/z80/z80.h"
 #include "leland.h"
+#include "sound/ay8910.h"
+#include "sound/custom.h"
 
 
 /*************************************
@@ -660,20 +662,16 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 static struct AY8910interface ay8910_interface =
 {
-	2,
-	10000000/6, /* 1.666 MHz */
-	{ 25, 25 },
-    { leland_sound_port_r, leland_sound_port_r },
-	{ 0 },
-    { leland_sound_port_w, leland_sound_port_w },
-	{ 0 }
+    leland_sound_port_r,
+	0,
+    leland_sound_port_w,
+	0
 };
 
 
 static struct CustomSound_interface dac_custom_interface =
 {
-    leland_sh_start,
-    leland_sh_stop
+    leland_sh_start
 };
 
 
@@ -726,8 +724,19 @@ static MACHINE_DRIVER_START( leland )
 	MDRV_VIDEO_UPDATE(leland)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD_TAG("ay8910", AY8910, ay8910_interface)
-	MDRV_SOUND_ADD_TAG("custom", CUSTOM, dac_custom_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD_TAG("ay8910.1", AY8910, 10000000/6)
+	MDRV_SOUND_CONFIG(ay8910_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
+	
+	MDRV_SOUND_ADD_TAG("ay8910.2", AY8910, 10000000/6)
+	MDRV_SOUND_CONFIG(ay8910_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
+	
+	MDRV_SOUND_ADD_TAG("custom", CUSTOM, 0)
+	MDRV_SOUND_CONFIG(dac_custom_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
 MACHINE_DRIVER_END
 
 
@@ -741,7 +750,9 @@ static MACHINE_DRIVER_START( redline )
 	MDRV_CPU_IO_MAP(redline_i86_map_io,0)
 
 	/* sound hardware */
-	MDRV_SOUND_REPLACE("custom", CUSTOM, redline_custom_interface)
+	MDRV_SOUND_REPLACE("custom", CUSTOM, 0)
+	MDRV_SOUND_CONFIG(redline_custom_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 
@@ -753,7 +764,9 @@ static MACHINE_DRIVER_START( quarterb )
 	MDRV_CPU_IO_MAP(leland_i86_map_io,0)
 
 	/* sound hardware */
-	MDRV_SOUND_REPLACE("custom", CUSTOM, i186_custom_interface)
+	MDRV_SOUND_REPLACE("custom", CUSTOM, 0)
+	MDRV_SOUND_CONFIG(i186_custom_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 
