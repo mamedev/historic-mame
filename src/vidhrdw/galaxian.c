@@ -786,6 +786,14 @@ VIDEO_START( newsin7 )
 	return ret;
 }
 
+VIDEO_START( scorpion )
+{
+	int ret = video_start_scramble();
+
+	modify_spritecode = batman2_modify_spritecode;
+
+	return ret;
+}
 
 static void rockclim_draw_background(struct mame_bitmap *bitmap)
 {

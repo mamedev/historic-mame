@@ -56,6 +56,9 @@ struct debug_trace_info
 	offs_t			history[TRACE_LOOPS];		/* history of recent PCs */
 	int				loops;						/* number of instructions in a loop */
 	int				nextdex;					/* next index */
+	offs_t			trace_over_target;			/* target for tracing over
+													(0 = not tracing over,
+													~0 = not currently tracing over) */
 };
 
 
@@ -125,16 +128,22 @@ void				debug_refresh_display(void);
 int					debug_get_execution_state(void);
 UINT32				debug_get_execution_counter(void);
 
+/* CPU execution hooks */
+void				debug_vblank_hook(void);
+void				debug_interrupt_hook(int cpunum, int irqline);
+
 /* execution control */
 void				debug_cpu_single_step(int numsteps);
 void				debug_cpu_single_step_over(int numsteps);
 void				debug_cpu_single_step_out(void);
 void				debug_cpu_go(offs_t targetpc);
+void				debug_cpu_go_vblank(void);
+void				debug_cpu_go_interrupt(int irqline);
 void				debug_cpu_next_cpu(void);
 void				debug_cpu_ignore_cpu(int cpunum, int ignore);
 
 /* tracing support */
-void				debug_cpu_trace(int cpunum, FILE *file, const char *action);
+void				debug_cpu_trace(int cpunum, FILE *file, int trace_over, const char *action);
 
 /* breakpoints */
 void				debug_check_breakpoints(int cpunum, offs_t pc);

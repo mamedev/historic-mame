@@ -15,6 +15,7 @@
 #include "debugexp.h"
 #include "debughlp.h"
 #include "debugvw.h"
+#include "artwork.h"
 #include <stdarg.h>
 
 
@@ -62,6 +63,8 @@ static void execute_step(int ref, int params, const char **param);
 static void execute_over(int ref, int params, const char **param);
 static void execute_out(int ref, int params, const char **param);
 static void execute_go(int ref, int params, const char **param);
+static void execute_go_vblank(int ref, int params, const char **param);
+static void execute_go_interrupt(int ref, int params, const char **param);
 static void execute_focus(int ref, int params, const char **param);
 static void execute_ignore(int ref, int params, const char **param);
 static void execute_observe(int ref, int params, const char **param);
@@ -78,6 +81,8 @@ static void execute_save(int ref, int params, const char **param);
 static void execute_dump(int ref, int params, const char **param);
 static void execute_dasm(int ref, int params, const char **param);
 static void execute_trace(int ref, int params, const char **param);
+static void execute_traceover(int ref, int params, const char **param);
+static void execute_snap(int ref, int params, const char **param);
 
 
 
@@ -110,6 +115,10 @@ void debug_command_init(void)
 	debug_console_register_command("out" ,      0, 0, 0, execute_out);
 	debug_console_register_command("go",        0, 0, 1, execute_go);
 	debug_console_register_command("g",         0, 0, 1, execute_go);
+	debug_console_register_command("gvblank",   0, 0, 0, execute_go_vblank);
+	debug_console_register_command("gv",        0, 0, 0, execute_go_vblank);
+	debug_console_register_command("gint",      0, 0, 1, execute_go_interrupt);
+	debug_console_register_command("gi",        0, 0, 1, execute_go_interrupt);
 	debug_console_register_command("next",      0, 0, 0, execute_next);
 	debug_console_register_command("n",         0, 0, 0, execute_next);
 	debug_console_register_command("focus",     0, 1, 1, execute_focus);
@@ -144,7 +153,10 @@ void debug_command_init(void)
 
 	debug_console_register_command("dasm",      0, 3, 5, execute_dasm);
 
-	debug_console_register_command("trace",     0, 2, 3, execute_trace);
+	debug_console_register_command("trace",     0, 1, 3, execute_trace);
+	debug_console_register_command("traceover", 0, 1, 3, execute_traceover);
+
+	debug_console_register_command("snap",      0, 0, 1, execute_snap);
 }
 
 
@@ -484,6 +496,33 @@ static void execute_go(int ref, int params, const char *param[])
 		return;
 
 	debug_cpu_go(addr);
+}
+
+
+/*-------------------------------------------------
+	execute_go_vblank - execute the govblank
+	command
+-------------------------------------------------*/
+
+static void execute_go_vblank(int ref, int params, const char *param[])
+{
+	debug_cpu_go_vblank();
+}
+
+
+/*-------------------------------------------------
+	execute_go_interrupt - execute the goint command
+-------------------------------------------------*/
+
+static void execute_go_interrupt(int ref, int params, const char *param[])
+{
+	UINT64 irqline = -1;
+	
+	/* if we have a parameter, use it instead */
+	if (params > 0 && !validate_parameter_number(param[0], &irqline))
+		return;
+
+	debug_cpu_go_interrupt(irqline);
 }
 
 
@@ -1309,17 +1348,20 @@ static void execute_dasm(int ref, int params, const char *param[])
 
 
 /*-------------------------------------------------
-	execute_trace - execute the trace command
+	execute_trace_internal - functionality for
+	trace over and trace info
 -------------------------------------------------*/
 
-static void execute_trace(int ref, int params, const char *param[])
+static void execute_trace_internal(int ref, int params, const char *param[], int trace_over)
 {
 	const char *action = NULL, *filename = param[0];
 	FILE *f = NULL;
 	UINT64 cpunum;
 
+	cpunum = cpu_getactivecpu();
+
 	/* validate parameters */
-	if (!validate_parameter_number(param[1], &cpunum))
+	if (params > 1 && !validate_parameter_number(param[1], &cpunum))
 		return;
 	if (params > 2 && !validate_parameter_command(action = param[2]))
 		return;
@@ -1345,10 +1387,61 @@ static void execute_trace(int ref, int params, const char *param[])
 	}
 
 	/* do it */
-	debug_cpu_trace(cpunum, f, action);
+	debug_cpu_trace(cpunum, f, trace_over, action);
 	if (f)
 		debug_console_printf("Tracing CPU %d to file %s\n", (int)cpunum, filename);
 	else
 		debug_console_printf("Stopped tracing on CPU %d\n", (int)cpunum);
 }
+
+
+/*-------------------------------------------------
+	execute_trace - execute the trace command
+-------------------------------------------------*/
+
+static void execute_trace(int ref, int params, const char *param[])
+{
+	execute_trace_internal(ref, params, param, 0);
+}
+
+
+/*-------------------------------------------------
+	execute_traceover - execute the trace over command
+-------------------------------------------------*/
+
+static void execute_traceover(int ref, int params, const char *param[])
+{
+	execute_trace_internal(ref, params, param, 1);
+}
+
+
+/*-------------------------------------------------
+	execute_snap - execute the trace over command
+-------------------------------------------------*/
+
+static void execute_snap(int ref, int params, const char *param[])
+{
+	/* if no params, use the default behavior */
+	if (params == 0)
+	{
+		save_screen_snapshot(artwork_get_ui_bitmap());
+		debug_console_printf("Saved snapshot\n");
+	}
+	
+	/* otherwise, we have to open the file ourselves */
+	else
+	{
+		mame_file *fp = mame_fopen(Machine->gamedrv->name, param[0], FILETYPE_SCREENSHOT, 1);
+		if (!fp)
+			debug_console_printf("Error creating file '%s'\n", param[0]);
+		else
+		{
+			save_screen_snapshot_as(fp, artwork_get_ui_bitmap());
+			mame_fclose(fp);
+			debug_console_printf("Saved snapshot as '%s'\n", param[0]);
+		}
+	}
+}
+
+
 

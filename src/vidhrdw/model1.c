@@ -681,7 +681,7 @@ static float max4f(float a, float b, float c, float d)
 	return m;
 }
 
-static const unsigned char times[]={1,1,1,1,2,2,2,3};
+static const unsigned char num_of_times[]={1,1,1,1,2,2,2,3};
 static float compute_specular(struct vector *normal, struct vector *light,float diffuse,int lmode)
 {
 #if 0
@@ -692,7 +692,7 @@ static float compute_specular(struct vector *normal, struct vector *light,float 
 
 	//This is how it should be according to model2 geo program, but doesn't work fine
 	s=2*(diffuse*normal->z-light->z);
-	for(i=0;i<times[p];++i)
+	for(i=0;i<num_of_times[p];++i)
 		s*=s;
 	s*=sv;
 	if(s<0.0)

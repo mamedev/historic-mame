@@ -214,7 +214,7 @@ static READ32_HANDLER((*hold_eram_iaddr_callback));
  * Read a byte from External Code Memory (Usually Program Rom(s) Space)
  *****************************************************************************
  This area is mapped from 0-FFFF internally (64K) */
-#define CODEMEM_R(a)	(UINT8)program_read_byte_16le(a)
+#define CODEMEM_R(a)	(UINT8)program_read_byte_8(a)
 /*****************************************************************************
  * Read/Write a byte from/to External Data Memory (Usually RAM or other I/O)
  *****************************************************************************
@@ -225,8 +225,8 @@ static READ32_HANDLER((*hold_eram_iaddr_callback));
  addresses, w/o any contention.
  As far as the 8051 program code which is executing knows data memory still lives
  in the 0-FFFF range.*/
-#define DATAMEM_R(a)	(UINT8)data_read_byte_16le(a)
-#define DATAMEM_W(a,v)	data_write_byte_16le(a,v)
+#define DATAMEM_R(a)	(UINT8)data_read_byte_8(a)
+#define DATAMEM_W(a,v)	data_write_byte_8(a,v)
 
 /***************************************************************
  * Read/Write a byte from/to the Internal RAM
@@ -2391,6 +2391,12 @@ static void i8051_set_info(UINT32 state, union cpuinfo *info)
 		/* --- the following bits of info are set as 64-bit signed integers --- */
 		case CPUINFO_INT_PC:					PC = info->i;	break;
 		case CPUINFO_INT_SP:					i8051.sp = info->i;	     			break;
+
+		case CPUINFO_INT_INPUT_STATE + I8051_INT0_LINE:	i8051_set_irq_line(I8051_INT0_LINE, info->i); break;
+		case CPUINFO_INT_INPUT_STATE + I8051_INT1_LINE:	i8051_set_irq_line(I8051_INT1_LINE, info->i); break;
+		case CPUINFO_INT_INPUT_STATE + I8051_T0_LINE:	i8051_set_irq_line(I8051_T0_LINE, info->i); break;
+		case CPUINFO_INT_INPUT_STATE + I8051_T1_LINE:	i8051_set_irq_line(I8051_T1_LINE, info->i); break;
+		case CPUINFO_INT_INPUT_STATE + I8051_RX_LINE:	i8051_set_irq_line(I8051_RX_LINE, info->i); break;
 
 		case CPUINFO_INT_REGISTER + I8051_PC: 			PC = info->i; break;
 		case CPUINFO_INT_REGISTER + I8051_SP: 			R_SP = info->i; break;

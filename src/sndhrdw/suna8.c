@@ -46,7 +46,7 @@ int suna8_sh_start(const struct MachineSound *msound)
 		return 1;
 
 	for(i=0;i<memory_region_length(REGION_SOUND1);i++)
-		samplebuf[i] = ROM[i] - 0x80;
+		samplebuf[i] = ROM[i] ^ 0x80;
 
 	return 0;
 }

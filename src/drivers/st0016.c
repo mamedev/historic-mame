@@ -282,9 +282,11 @@ INTERRUPT_GEN(st0016_int)
 			cpunum_set_input_line(0, INPUT_LINE_NMI, PULSE_LINE );
 }
 
+extern data8_t *st0016_charram;
 static struct ST0016interface st0016_interface =
 {
 	YM3012_VOL(100, MIXER_PAN_LEFT, 100, MIXER_PAN_RIGHT),
+	&st0016_charram
 };
 
 static MACHINE_DRIVER_START( st0016 )

@@ -632,6 +632,7 @@ static UINT32 Mask(int mb, int me)
  * the instruction failed.
  */
 
+#if 0
 static int Check(UINT32 op, int flags)
 {
 	int nb, rt, ra;
@@ -686,7 +687,7 @@ static int Check(UINT32 op, int flags)
 
 	return 0;   // passed checks
 }
-
+#endif
 /*
  * Simplified():
  *

@@ -172,6 +172,7 @@ int parity_table[256];
 
 #define PROTECTED_MODE		(I.cr[0] & 0x1)
 #define STACK_32BIT			(I.sreg[SS].d)
+#define V8086_MODE			(I.eflags & 0x00020000)
 
 #define SetOF_Add32(r,s,d)	(I.OF = (((r) ^ (s)) & ((r) ^ (d)) & 0x80000000) ? 1: 0)
 #define SetOF_Add16(r,s,d)	(I.OF = (((r) ^ (s)) & ((r) ^ (d)) & 0x8000) ? 1 : 0)
@@ -234,6 +235,14 @@ MODRM_TABLE MODRM_table[256];
 INLINE void CHANGE_PC(UINT32 pc)
 {
 	I.pc = i386_translate( CS, pc );
+	change_pc(I.pc);
+}
+
+INLINE void NEAR_BRANCH(INT32 offs)
+{
+	/* TODO: limit */
+	I.eip += offs;
+	I.pc += offs;
 	change_pc(I.pc);
 }
 

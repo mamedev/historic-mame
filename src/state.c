@@ -167,6 +167,7 @@ void state_save_reset(void)
 			}
 		}
 		free(m->name);
+		free(m);
 		m = mn;
 	}
 	ss_registry = 0;
@@ -551,7 +552,7 @@ int state_save_check_file(mame_file *file, const char *gamename, void (CLIB_DECL
 	unsigned char header[0x18];
 
 	mame_fseek(file, 0, SEEK_SET);
-	
+
 	if (mame_fread(file, header, sizeof(header)) != sizeof(header))
 	{
 		if (errormsg)

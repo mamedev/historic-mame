@@ -9,8 +9,7 @@
 
 #define VERBOSE (0)
 
-extern data8_t *st0016_charram;
-
+data8_t *st0016_sound_ram;
 data8_t *st0016_sound_regs;
 static int st0016_vpos[8], st0016_frac[8], st0016_lponce[8];
 
@@ -51,7 +50,6 @@ static void st0016_update(int num, INT16 **outputs, int length)
 	INT32 mix[48000*2];
 	INT32 *mixp;
 	INT16 sample;
-	char *sndrom = (char *)st0016_charram;
 	int sptr, eptr, freq, lsptr, leptr;
 
 	memset(mix, 0, sizeof(mix[0])*length*2);
@@ -72,7 +70,7 @@ static void st0016_update(int num, INT16 **outputs, int length)
 
 			for (snum = 0; snum < length; snum++)
 			{
-				sample = sndrom[sptr + st0016_vpos[v]]<<8;
+				sample = st0016_sound_ram[sptr + st0016_vpos[v]]<<8;
 
 				*mixp++ += (sample * (char)slot[0x14]) >> 8;
 				*mixp++ += (sample * (char)slot[0x15]) >> 8;
@@ -124,6 +122,9 @@ int st0016_sh_start(const struct MachineSound *msound)
 	char buf[2][40];
 	const char *name[2];
 	int  vol[2];
+	struct ST0016interface *intf = msound->sound_interface;
+
+	st0016_sound_ram = *(intf->p_soundram);
 
 	sprintf(buf[0], "ST-0016 L");
 	sprintf(buf[1], "ST-0016 R");

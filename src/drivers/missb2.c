@@ -23,9 +23,6 @@ extern UINT8 *bublbobl_objectram;
 extern size_t bublbobl_objectram_size;
 
 /* machine/bublbobl.c */
-extern UINT8 *bublbobl_sharedram2;
-READ8_HANDLER( bublbobl_sharedram2_r );
-WRITE8_HANDLER( bublbobl_sharedram2_w );
 WRITE8_HANDLER( bublbobl_bankswitch_w );
 WRITE8_HANDLER( bublbobl_nmitrigger_w );
 WRITE8_HANDLER( bublbobl_sound_command_w );
@@ -174,7 +171,7 @@ static ADDRESS_MAP_START( master_map, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0xfa03, 0xfa03) AM_WRITENOP // sound cpu reset
 	AM_RANGE(0xfa80, 0xfa80) AM_WRITENOP
 	AM_RANGE(0xfb40, 0xfb40) AM_WRITE(bublbobl_bankswitch_w)
-	AM_RANGE(0xfc00, 0xfcff) AM_READWRITE(bublbobl_sharedram2_r, bublbobl_sharedram2_w) AM_BASE(&bublbobl_sharedram2)
+	AM_RANGE(0xfc00, 0xfcff) AM_RAM
 	AM_RANGE(0xfd00, 0xfdff) AM_RAM			// ???
 	AM_RANGE(0xfe00, 0xfe03) AM_RAM			// ???
 	AM_RANGE(0xfe80, 0xfe83) AM_RAM			// ???

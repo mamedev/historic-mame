@@ -1233,7 +1233,7 @@ READ8_HANDLER( decocass_type4_r )
 			UINT8 *prom = memory_region(REGION_USER1);
 
 			data = prom[type4_ctrs];
-			LOG(3,("%9.7f 6502-PC: %04x decocass_type5_r(%02x): $%02x '%c' <- PROM[%04x]\n", timer_get_time(), activecpu_get_previouspc(), offset, data, (data >= 32) ? data : '.', type4_ctrs));
+			LOG(3,("%9.7f 6502-PC: %04x decocass_type4_r(%02x): $%02x '%c' <- PROM[%04x]\n", timer_get_time(), activecpu_get_previouspc(), offset, data, (data >= 32) ? data : '.', type4_ctrs));
 			type4_ctrs = (type4_ctrs+1) & 0x7fff;
 		}
 		else
@@ -1362,6 +1362,48 @@ WRITE8_HANDLER( decocass_type5_w )
 
 /***************************************************************************
  *
+ *	NO DONGLE
+ *	- Flying Ball
+ *	A NOP dongle returning the data read from cassette as is.
+ *
+ ***************************************************************************/
+
+READ8_HANDLER( decocass_nodong_r )
+{
+	data8_t data;
+
+	if (1 == (offset & 1))
+	{
+		if (0 == (offset & E5XX_MASK))
+		{
+			data = cpunum_get_reg(2, I8X41_STAT);
+			LOG(4,("%9.7f 6502-PC: %04x decocass_nodong_r(%02x): $%02x <- 8041 STATUS\n", timer_get_time(), activecpu_get_previouspc(), offset, data));
+		}
+		else
+		{
+			data = 0xff;	/* open data bus? */
+			LOG(4,("%9.7f 6502-PC: %04x decocass_nodong_r(%02x): $%02x <- open bus\n", timer_get_time(), activecpu_get_previouspc(), offset, data));
+		}
+	}
+	else
+	{
+		if (0 == (offset & E5XX_MASK))
+		{
+			data = cpunum_get_reg(2, I8X41_DATA);
+			LOG(3,("%9.7f 6502-PC: %04x decocass_nodong_r(%02x): $%02x '%c' <- open bus (D0 replaced with latch)\n", timer_get_time(), activecpu_get_previouspc(), offset, data, (data >= 32) ? data : '.'));
+		}
+		else
+		{
+			data = 0xff;	/* open data bus? */
+			LOG(4,("%9.7f 6502-PC: %04x decocass_nodong_r(%02x): $%02x <- open bus\n", timer_get_time(), activecpu_get_previouspc(), offset, data));
+		}
+	}
+
+	return data;
+}
+
+/***************************************************************************
+ *
  *	Main dongle and 8041 interface
  *
  ***************************************************************************/
@@ -1430,7 +1472,7 @@ WRITE8_HANDLER( decocass_e5xx_w )
 
 /***************************************************************************
  *
- *	init machine functions (select dongle and determine tape image size)
+ *	state save setup
  *
  ***************************************************************************/
 static void decocass_state_save_postload(void)
@@ -1447,6 +1489,46 @@ static void decocass_state_save_postload(void)
 	if (0 != tape_dir)
 		timer_adjust(tape_timer, TIME_NEVER, 0, 0);
 }
+
+/* To be called once from driver_init, i.e. decocass_init */
+void decocass_machine_state_save_init(void)
+{
+	state_save_register_func_postload(decocass_state_save_postload);
+	state_save_register_int 	("decocass", 0, "tape_dir", &tape_dir);
+	state_save_register_int 	("decocass", 0, "tape_speed", &tape_speed);
+	state_save_register_double	("decocass", 0, "tape_time0", &tape_time0, 1);
+	state_save_register_int 	("decocass", 0, "firsttime", &firsttime);
+	state_save_register_int 	("decocass", 0, "tape_present", &tape_present);
+	state_save_register_int 	("decocass", 0, "tape_blocks", &tape_blocks);
+	state_save_register_int 	("decocass", 0, "tape_length", &tape_length);
+	state_save_register_int 	("decocass", 0, "tape_bot_eot", &tape_bot_eot);
+	state_save_register_UINT8	("decocass", 0, "crc16_lsb", &crc16_lsb, 1);
+	state_save_register_UINT8	("decocass", 0, "crc16_msb", &crc16_msb, 1);
+	state_save_register_UINT8	("decocass", 0, "tape_crc16_lsb", tape_crc16_lsb, 256);
+	state_save_register_UINT8	("decocass", 0, "tape_crc16_msb", tape_crc16_msb, 256);
+	state_save_register_UINT8	("decocass", 0, "decocass_reset", &decocass_reset, 1);
+	state_save_register_UINT8	("decocass", 0, "i8041_p1", &i8041_p1, 1);
+	state_save_register_UINT8	("decocass", 0, "i8041_p2", &i8041_p2, 1);
+	state_save_register_UINT32	("decocass", 0, "type1_inmap", &type1_inmap, 1);
+	state_save_register_UINT32	("decocass", 0, "type1_outmap", &type1_outmap, 1);
+	state_save_register_int 	("decocass", 0, "type2_d2_latch", &type2_d2_latch);
+	state_save_register_int 	("decocass", 0, "type2_xx_latch", &type2_xx_latch);
+	state_save_register_int 	("decocass", 0, "type2_promaddr", &type2_promaddr);
+	state_save_register_int 	("decocass", 0, "type3_ctrs", &type3_ctrs);
+	state_save_register_int 	("decocass", 0, "type3_d0_latch", &type3_d0_latch);
+	state_save_register_int 	("decocass", 0, "type3_pal_19", &type3_pal_19);
+	state_save_register_int 	("decocass", 0, "type3_swap", &type3_swap);
+	state_save_register_int 	("decocass", 0, "type4_ctrs", &type4_ctrs);
+	state_save_register_int 	("decocass", 0, "type4_latch", &type4_latch);
+	state_save_register_int 	("decocass", 0, "type5_latch", &type5_latch);
+	state_save_register_UINT8	("decocass", 0, "decocass_sound_ack", &decocass_sound_ack, 1);
+}
+
+/***************************************************************************
+ *
+ *	init machine functions (select dongle and determine tape image size)
+ *
+ ***************************************************************************/
 
 void decocass_init_common(void)
 {
@@ -1510,37 +1592,6 @@ void decocass_init_common(void)
 	memset(decocass_quadrature_decoder, 0, sizeof(decocass_quadrature_decoder));
 	decocass_sound_ack = 0;
 	decocass_sound_timer = timer_alloc(decocass_sound_nmi_pulse);
-
-	/* state saving code */
-	state_save_register_func_postload(decocass_state_save_postload);
-	state_save_register_int 	("decocass", 0, "tape_dir", &tape_dir);
-	state_save_register_int 	("decocass", 0, "tape_speed", &tape_speed);
-	state_save_register_double	("decocass", 0, "tape_time0", &tape_time0, 1);
-	state_save_register_int 	("decocass", 0, "firsttime", &firsttime);
-	state_save_register_int 	("decocass", 0, "tape_present", &tape_present);
-	state_save_register_int 	("decocass", 0, "tape_blocks", &tape_blocks);
-	state_save_register_int 	("decocass", 0, "tape_length", &tape_length);
-	state_save_register_int 	("decocass", 0, "tape_bot_eot", &tape_bot_eot);
-	state_save_register_UINT8	("decocass", 0, "crc16_lsb", &crc16_lsb, 1);
-	state_save_register_UINT8	("decocass", 0, "crc16_msb", &crc16_msb, 1);
-	state_save_register_UINT8	("decocass", 0, "tape_crc16_lsb", tape_crc16_lsb, 256);
-	state_save_register_UINT8	("decocass", 0, "tape_crc16_msb", tape_crc16_msb, 256);
-	state_save_register_UINT8	("decocass", 0, "decocass_reset", &decocass_reset, 1);
-	state_save_register_UINT8	("decocass", 0, "i8041_p1", &i8041_p1, 1);
-	state_save_register_UINT8	("decocass", 0, "i8041_p2", &i8041_p2, 1);
-	state_save_register_UINT32	("decocass", 0, "type1_inmap", &type1_inmap, 1);
-	state_save_register_UINT32	("decocass", 0, "type1_outmap", &type1_outmap, 1);
-	state_save_register_int 	("decocass", 0, "type2_d2_latch", &type2_d2_latch);
-	state_save_register_int 	("decocass", 0, "type2_xx_latch", &type2_xx_latch);
-	state_save_register_int 	("decocass", 0, "type2_promaddr", &type2_promaddr);
-	state_save_register_int 	("decocass", 0, "type3_ctrs", &type3_ctrs);
-	state_save_register_int 	("decocass", 0, "type3_d0_latch", &type3_d0_latch);
-	state_save_register_int 	("decocass", 0, "type3_pal_19", &type3_pal_19);
-	state_save_register_int 	("decocass", 0, "type3_swap", &type3_swap);
-	state_save_register_int 	("decocass", 0, "type4_ctrs", &type4_ctrs);
-	state_save_register_int 	("decocass", 0, "type4_latch", &type4_latch);
-	state_save_register_int 	("decocass", 0, "type5_latch", &type5_latch);
-	state_save_register_UINT8	("decocass", 0, "decocass_sound_ack", &decocass_sound_ack, 1);
 }
 
 MACHINE_INIT( decocass )
@@ -1759,6 +1810,13 @@ MACHINE_INIT( cbdash )
 	LOG(0,("dongle type #5 (NOP)\n"));
 	decocass_dongle_r = decocass_type5_r;
 	decocass_dongle_w = decocass_type5_w;
+}
+
+MACHINE_INIT( cflyball )
+{
+	decocass_init_common();
+	LOG(0,("no dongle\n"));
+	decocass_dongle_r = decocass_nodong_r;
 }
 
 /***************************************************************************

@@ -472,6 +472,8 @@ int frontend_help (const char *gamename)
 	struct InternalMachineDriver drv;
 	int i, j;
 	const char *all_games = "*";
+	char *pdest = NULL;
+	int result = 0;
 
 	/* display help unless a game or an utility are specified */
 	if (!gamename && !help && !list && !ident && !verify)
@@ -589,7 +591,9 @@ int frontend_help (const char *gamename)
 					/* print the additional description only if we are listing clones */
 					if (listclones)
 					{
-						if (strchr(drivers[i]->description,'('))
+						pdest = strchr(drivers[i]->description,'(');
+						result = pdest - drivers[i]->description;
+						if (pdest != NULL && result > 0 )
 							printf(" %s",strchr(drivers[i]->description,'('));
 					}
 					printf("\"\n");
@@ -841,7 +845,9 @@ int frontend_help (const char *gamename)
 					/* print the additional description only if we are listing clones */
 					if (listclones)
 					{
-						if (strchr(drivers[i]->description,'('))
+						pdest = strchr(drivers[i]->description,'(');
+						result = pdest - drivers[i]->description;
+						if (pdest != NULL && result > 0 )
 							strcat(name_ref,strchr(drivers[i]->description,'('));
 					}
 
@@ -951,7 +957,9 @@ int frontend_help (const char *gamename)
 					/* print the additional description only if we are listing clones */
 					if (listclones)
 					{
-						if (strchr(drivers[i]->description,'('))
+						pdest = strchr(drivers[i]->description,'(');
+						result = pdest - drivers[i]->description;
+						if (pdest != NULL && result > 0 )
 							printf(" %s",strchr(drivers[i]->description,'('));
 					}
 					printf("\n");

@@ -624,7 +624,7 @@ static MACHINE_DRIVER_START( rainbow )
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
 	MDRV_SCREEN_SIZE(40*8, 32*8)
-	MDRV_VISIBLE_AREA(0*8, 40*8-1, 1*8, 31*8-1) /* is Y visible correct ? */
+	MDRV_VISIBLE_AREA(0*8, 40*8-1, 2*8, 30*8-1)
 	MDRV_GFXDECODE(rainbow_gfxdecodeinfo)
 	MDRV_PALETTE_LENGTH(8192)
 
@@ -653,7 +653,7 @@ static MACHINE_DRIVER_START( jumping )
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
 	MDRV_SCREEN_SIZE(40*8, 32*8)
-	MDRV_VISIBLE_AREA(0*8, 40*8-1, 1*8, 31*8-1) /* is Y visible correct ? */
+	MDRV_VISIBLE_AREA(0*8, 40*8-1, 2*8, 30*8-1)
 	MDRV_GFXDECODE(jumping_gfxdecodeinfo)
 	MDRV_PALETTE_LENGTH(8192)
 

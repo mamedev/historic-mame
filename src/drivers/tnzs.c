@@ -1,6 +1,40 @@
 /***************************************************************************
 
-The New Zealand Story driver, used for tnzs & tnzs2.
+
+Notes:
+- There are three versions of TNZS supported.
+  1) "tnzs". New hardware revision. 3 Z80 and no M-Chip (8742 MPU).
+  2) "tnzsj". Standard hardware. 2 Z80 and the M-Chip.
+  3) "tnzso". Standard hardware. Harder gameplay, old Taito logo. Maybe a prototype?
+  The three versions all have different levels!
+
+
+Hardware datails for the newer tnzs board (from pictures):
+
+  Main board
+  M6100409A N.ZEALAND STORY (written on label)
+  M6100356A (written on pcb)
+  (note: Taito logo is the old version)
+  SETA X1-001A 8740KX
+  SETA X1-002A 8712KX
+  SETA X1-004  815100
+  SETA X1-006  8136KX
+  SETA X1-007  805100
+  these custom ics are also used in many other games (see drivers/seta.c, drivers/taito_x.c)
+  Main xtal 12.0000 MHZ
+  2xZ80-B
+  YM2203C
+  sockets for U2 (Z80-B) and U35/U39/U43/U46 (LH534000) are empty and the sub board
+  connects to them.
+
+  SUB PCB
+  K9100209A N.Z.LAND STORY (written on label)
+  K9100209A (written on pcb)
+  J9100159A (written on pcb)
+  (note: Taito logo is the new version)
+  Z80-B
+
+
 
 TODO: - Find out how the hardware credit-counter works (MPU)
 	  - Verify dip switches
@@ -422,6 +456,21 @@ static ADDRESS_MAP_START( tnzsb_writemem1, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0xf000, 0xf3ff) AM_WRITE(paletteram_xRRRRRGGGGGBBBBB_w) AM_BASE(&paletteram)
 ADDRESS_MAP_END
 
+static ADDRESS_MAP_START( kabukiz_cpu1_map, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_ROM
+	AM_RANGE(0x8000, 0x9fff) AM_ROMBANK(2)
+	AM_RANGE(0xa000, 0xa000) AM_WRITE(tnzs_bankswitch1_w)
+	AM_RANGE(0xb002, 0xb002) AM_READ(input_port_0_r)
+	AM_RANGE(0xb003, 0xb003) AM_READ(input_port_1_r)
+	AM_RANGE(0xb004, 0xb004) AM_WRITE(tnzsb_sound_command_w)
+	AM_RANGE(0xc000, 0xc000) AM_READ(input_port_2_r)
+	AM_RANGE(0xc001, 0xc001) AM_READ(input_port_3_r)
+	AM_RANGE(0xc002, 0xc002) AM_READ(input_port_4_r)
+	AM_RANGE(0xd000, 0xdfff) AM_RAM
+	AM_RANGE(0xe000, 0xefff) AM_READ(tnzs_workram_sub_r) AM_WRITE(tnzs_workram_sub_w)
+	AM_RANGE(0xf800, 0xfbff) AM_WRITE(paletteram_xRRRRRGGGGGBBBBB_w) AM_BASE(&paletteram)
+ADDRESS_MAP_END
+
 static ADDRESS_MAP_START( tnzsb_readmem2, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)
 	AM_RANGE(0xc000, 0xdfff) AM_READ(MRA8_RAM)
@@ -430,6 +479,11 @@ ADDRESS_MAP_END
 static ADDRESS_MAP_START( tnzsb_writemem2, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0000, 0x7fff) AM_WRITE(MWA8_ROM)
 	AM_RANGE(0xc000, 0xdfff) AM_WRITE(MWA8_RAM)
+ADDRESS_MAP_END
+
+static ADDRESS_MAP_START( kabukiz_cpu2_map, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_ROM
+	AM_RANGE(0xe000, 0xffff) AM_RAM
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( tnzsb_readport, ADDRESS_SPACE_IO, 8 )
@@ -556,7 +610,7 @@ INPUT_PORTS_START( extrmatn )
 	PORT_DIPSETTING(    0x80, "*1.5" )
 	PORT_DIPSETTING(    0x40, "*2" )
 	PORT_DIPSETTING(    0x00, "*3" )
-	
+
 	PORT_START_TAG("IN0")
 	TNZS_PLAYER_INPUT(1)
 
@@ -767,7 +821,7 @@ INPUT_PORTS_START( drtoppel )
 	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x08, DEF_STR( On ) )
-	TAITO_COINAGE_WORLD_8	
+	TAITO_COINAGE_WORLD_8
 	DRTOPP_COMMON
 INPUT_PORTS_END
 
@@ -928,7 +982,7 @@ INPUT_PORTS_START( tnzsb )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_COCKTAIL
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START2)
-	
+
 	PORT_START_TAG("IN2")
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_SERVICE1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_TILT )
@@ -980,13 +1034,77 @@ INPUT_PORTS_START( tnzs2 )
 
 	PORT_START_TAG("IN0")
 	TNZS_PLAYER_INPUT(1)
-	
+
 	PORT_START_TAG("IN1")
 	TNZS_PLAYER_INPUT(2)
-	
+
 	COMMON_IN2
 	COMMON_COIN1(IP_ACTIVE_LOW)
 	COMMON_COIN2(IP_ACTIVE_LOW)
+INPUT_PORTS_END
+
+INPUT_PORTS_START( kabukiz )
+	PORT_START_TAG("DSWA")
+	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Cocktail ) )
+	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Flip_Screen ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_SERVICE( 0x04, IP_ACTIVE_LOW )
+	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Allow_Continue ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( No ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Yes ) )
+
+	PORT_START_TAG("DSWB")
+	PORT_DIPNAME( 0x03, 0x02, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(    0x03, DEF_STR( Easy ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( Normal ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Medium ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Hard ) )
+	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	TAITO_COINAGE_JAPAN_8
+
+	PORT_START_TAG("IN0")
+	TNZS_PLAYER_INPUT(1)
+
+	PORT_START_TAG("IN1")
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_COCKTAIL
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_COCKTAIL
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_COCKTAIL
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_COCKTAIL
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_COCKTAIL
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_COCKTAIL
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START2)
+
+	PORT_START_TAG("IN2")
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_SERVICE1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
 INPUT_PORTS_END
 
 INPUT_PORTS_START( insectx )
@@ -1030,7 +1148,7 @@ INPUT_PORTS_START( insectx )
 	TNZS_PLAYER_INPUT(1)
 	PORT_START_TAG("IN1")
 	TNZS_PLAYER_INPUT(2)
-	
+
 	PORT_START_TAG("IN2")
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_SERVICE1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_TILT )
@@ -1085,7 +1203,7 @@ INPUT_PORTS_START( kageki )
 	TNZS_PLAYER_INPUT(1)
 	PORT_START_TAG("IN1")
 	TNZS_PLAYER_INPUT(2)
-	
+
 	PORT_START_TAG("IN2")
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_SERVICE1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_TILT )
@@ -1097,26 +1215,12 @@ INPUT_PORTS_START( kageki )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 INPUT_PORTS_END
 
-
-static struct GfxLayout arknoid2_charlayout =
-{
-	16,16,
-	4096,
-	4,
-	{ 3*4096*32*8, 2*4096*32*8, 1*4096*32*8, 0*4096*32*8 },
-	{ 0, 1, 2, 3, 4, 5, 6, 7,
-			8*8+0,8*8+1,8*8+2,8*8+3,8*8+4,8*8+5,8*8+6,8*8+7},
-	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8,
-			16*8, 17*8, 18*8, 19*8, 20*8, 21*8, 22*8, 23*8 },
-	32*8
-};
-
 static struct GfxLayout tnzs_charlayout =
 {
 	16,16,
-	8192,
+	RGN_FRAC(1,4),
 	4,
-	{ 3*8192*32*8, 2*8192*32*8, 1*8192*32*8, 0*8192*32*8 },
+	{ RGN_FRAC(3,4), RGN_FRAC(2,4), RGN_FRAC(1,4), RGN_FRAC(0,4) },
 	{ 0, 1, 2, 3, 4, 5, 6, 7,
 			8*8+0, 8*8+1, 8*8+2, 8*8+3, 8*8+4, 8*8+5, 8*8+6, 8*8+7 },
 	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8,
@@ -1137,12 +1241,6 @@ static struct GfxLayout insectx_charlayout =
 	64*8
 };
 
-static struct GfxDecodeInfo arknoid2_gfxdecodeinfo[] =
-{
-	{ REGION_GFX1, 0, &arknoid2_charlayout, 0, 32 },
-	{ -1 } /* end of array */
-};
-
 static struct GfxDecodeInfo tnzs_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &tnzs_charlayout, 0, 32 },
@@ -1156,11 +1254,10 @@ static struct GfxDecodeInfo insectx_gfxdecodeinfo[] =
 };
 
 
-
 static struct YM2203interface ym2203_interface =
 {
 	1,			/* 1 chip */
-	3000000,	/* 3 MHz ??? */
+	3000000,	/* 3 MHz  */
 	{ YM2203_VOL(30,30) },
 	{ input_port_0_r },		/* DSW1 connected to port A */
 	{ input_port_1_r },		/* DSW2 connected to port B */
@@ -1234,7 +1331,7 @@ static MACHINE_DRIVER_START( arknoid2 )
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
 	MDRV_SCREEN_SIZE(32*8, 32*8)
 	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
-	MDRV_GFXDECODE(arknoid2_gfxdecodeinfo)
+	MDRV_GFXDECODE(tnzs_gfxdecodeinfo)
 	MDRV_PALETTE_LENGTH(512)
 
 	MDRV_PALETTE_INIT(arknoid2)
@@ -1315,15 +1412,15 @@ MACHINE_DRIVER_END
 static MACHINE_DRIVER_START( tnzsb )
 
 	/* basic machine hardware */
-	MDRV_CPU_ADD(Z80, 6000000)		/* 6 MHz(?) */
+	MDRV_CPU_ADD(Z80, 6000000)		/* 6 MHz */
 	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
-	MDRV_CPU_ADD(Z80, 6000000)		/* 6 MHz(?) */
+	MDRV_CPU_ADD(Z80, 6000000)		/* 6 MHz */
 	MDRV_CPU_PROGRAM_MAP(tnzsb_readmem1,tnzsb_writemem1)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
-	MDRV_CPU_ADD(Z80, 4000000)		/* 4 MHz??? */
+	MDRV_CPU_ADD(Z80, 6000000)		/* 6 MHz */
 	MDRV_CPU_PROGRAM_MAP(tnzsb_readmem2,tnzsb_writemem2)
 	MDRV_CPU_IO_MAP(tnzsb_readport,tnzsb_writeport)
 
@@ -1411,6 +1508,39 @@ static MACHINE_DRIVER_START( kageki )
 MACHINE_DRIVER_END
 
 
+static MACHINE_DRIVER_START( kabukiz )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(Z80, 6000000)		/* 6 MHz */
+	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+
+	MDRV_CPU_ADD(Z80, 6000000)		/* 6 MHz */
+	MDRV_CPU_PROGRAM_MAP(kabukiz_cpu1_map,0)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+
+	MDRV_CPU_ADD(Z80, 6000000)		/* 6 MHz */
+	MDRV_CPU_PROGRAM_MAP(kabukiz_cpu2_map,0)
+	MDRV_CPU_IO_MAP(tnzsb_readport,tnzsb_writeport)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(500)	/* 500 CPU slices per frame - heavy sync required in order to*/
+							/* avoid crashes/hangs -kal 14 jul 2002 */
+	MDRV_MACHINE_INIT(tnzs)
+
+	/* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(tnzs_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(512)
+
+	MDRV_VIDEO_UPDATE(tnzs)
+
+	/* sound hardware */
+	MDRV_SOUND_ADD(YM2203, ym2203_interface)
+MACHINE_DRIVER_END
 
 /***************************************************************************
 
@@ -1756,11 +1886,34 @@ ROM_END
 
 ROM_START( tnzs )
 	ROM_REGION( 0x30000, REGION_CPU1, 0 )	/* 64k + bankswitch areas for the first CPU */
-	ROM_LOAD( "b53_10.32", 0x00000, 0x08000, CRC(a73745c6) SHA1(73eb38e75e08312d752332f988dc655084b4a86d) )
+	ROM_LOAD( "b53-24.1",   0x00000, 0x08000, CRC(d66824c6) SHA1(fd381ac0dc52ce670c3fde320ea60a209e288a52) )
+	ROM_CONTINUE(           0x18000, 0x18000 )		/* banked at 8000-bfff */
+
+	ROM_REGION( 0x18000, REGION_CPU2, 0 )	/* 64k for the second CPU */
+	ROM_LOAD( "b53-25.3",   0x00000, 0x08000, CRC(d6ac4e71) SHA1(f3e71624a8a5e4e4c8a6aa01711ed26bdd5abf5a) )
+	ROM_CONTINUE(           0x10000, 0x08000 )		/* banked at 8000-9fff */
+
+	ROM_REGION( 0x10000, REGION_CPU3, 0 )	/* 64k for the third CPU */
+	ROM_LOAD( "b53-26.34",  0x00000, 0x10000, CRC(cfd5649c) SHA1(4f6afccd535d39b41661dc3ccd17af125bfac015) )
+
+	ROM_REGION( 0x100000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "b53-08.8",	0x00000, 0x20000, CRC(c3519c2a) SHA1(30fe7946fbc95ab6b3ccb6944fb24bf47bf3d743) )	// b53-16
+	ROM_LOAD( "b53-07.7",	0x20000, 0x20000, CRC(2bf199e8) SHA1(4ed73e4f00ae2f5f4028a0ea5ae3cd238863a370) )	// b53-17
+	ROM_LOAD( "b53-06.6",	0x40000, 0x20000, CRC(92f35ed9) SHA1(5fdd8d6ddbb7be9887af3c8dea9ad3b58c4e86f9) )	// b53-18
+	ROM_LOAD( "b53-05.5",	0x60000, 0x20000, CRC(edbb9581) SHA1(539396a01ca0b69455f000d446759b232530b542) )	// b53-19
+	ROM_LOAD( "b53-04.4",	0x80000, 0x20000, CRC(59d2aef6) SHA1(b657b7603c3eb5f169000d38497ebb93f26f7832) )	// b53-22
+	ROM_LOAD( "b53-03.3",	0xa0000, 0x20000, CRC(74acfb9b) SHA1(90b544ed7ede7565660bdd13c94c15c54423cda9) )	// b53-23
+	ROM_LOAD( "b53-02.2",	0xc0000, 0x20000, CRC(095d0dc0) SHA1(ced2937d0594fa00ae344a4e3a3cba23772dc160) )	// b53-20
+	ROM_LOAD( "b53-01.1",	0xe0000, 0x20000, CRC(9800c54d) SHA1(761647177d621ac2cdd8b009876eed35809f3c92) )	// b53-21
+ROM_END
+
+ROM_START( tnzsj )
+	ROM_REGION( 0x30000, REGION_CPU1, 0 )	/* 64k + bankswitch areas for the first CPU */
+	ROM_LOAD( "b53-10.32", 0x00000, 0x08000, CRC(a73745c6) SHA1(73eb38e75e08312d752332f988dc655084b4a86d) )
 	ROM_CONTINUE(          0x18000, 0x18000 )		/* banked at 8000-bfff */
 
 	ROM_REGION( 0x18000, REGION_CPU2, 0 )	/* 64k for the second CPU */
-	ROM_LOAD( "b53_11.38", 0x00000, 0x08000, CRC(9784d443) SHA1(bc3647aac9974031dbe4898417fbaa99841f9548) )
+	ROM_LOAD( "b53-11.38", 0x00000, 0x08000, CRC(9784d443) SHA1(bc3647aac9974031dbe4898417fbaa99841f9548) )
 	ROM_CONTINUE(          0x10000, 0x08000 )		/* banked at 8000-9fff */
 
 	ROM_REGION( 0x10000, REGION_CPU3, 0 )	/* M-Chip (i8742 internal ROM) */
@@ -1778,31 +1931,7 @@ ROM_START( tnzs )
 	ROM_LOAD( "b53-01.1",	0xe0000, 0x20000, CRC(9800c54d) SHA1(761647177d621ac2cdd8b009876eed35809f3c92) )
 ROM_END
 
-ROM_START( tnzsb )
-	ROM_REGION( 0x30000, REGION_CPU1, 0 )	/* 64k + bankswitch areas for the first CPU */
-	ROM_LOAD( "nzsb5324.bin", 0x00000, 0x08000, CRC(d66824c6) SHA1(fd381ac0dc52ce670c3fde320ea60a209e288a52) )
-	ROM_CONTINUE(             0x18000, 0x18000 )		/* banked at 8000-bfff */
-
-	ROM_REGION( 0x18000, REGION_CPU2, 0 )	/* 64k for the second CPU */
-	ROM_LOAD( "nzsb5325.bin", 0x00000, 0x08000, CRC(d6ac4e71) SHA1(f3e71624a8a5e4e4c8a6aa01711ed26bdd5abf5a) )
-	ROM_CONTINUE(             0x10000, 0x08000 )		/* banked at 8000-9fff */
-
-	ROM_REGION( 0x10000, REGION_CPU3, 0 )	/* 64k for the third CPU */
-	ROM_LOAD( "nzsb5326.bin", 0x00000, 0x10000, CRC(cfd5649c) SHA1(4f6afccd535d39b41661dc3ccd17af125bfac015) )
-
-	ROM_REGION( 0x100000, REGION_GFX1, ROMREGION_DISPOSE )
-	/* ROMs taken from another set (the ones from this set were read incorrectly) */
-	ROM_LOAD( "b53-08.8",	0x00000, 0x20000, CRC(c3519c2a) SHA1(30fe7946fbc95ab6b3ccb6944fb24bf47bf3d743) )
-	ROM_LOAD( "b53-07.7",	0x20000, 0x20000, CRC(2bf199e8) SHA1(4ed73e4f00ae2f5f4028a0ea5ae3cd238863a370) )
-	ROM_LOAD( "b53-06.6",	0x40000, 0x20000, CRC(92f35ed9) SHA1(5fdd8d6ddbb7be9887af3c8dea9ad3b58c4e86f9) )
-	ROM_LOAD( "b53-05.5",	0x60000, 0x20000, CRC(edbb9581) SHA1(539396a01ca0b69455f000d446759b232530b542) )
-	ROM_LOAD( "b53-04.4",	0x80000, 0x20000, CRC(59d2aef6) SHA1(b657b7603c3eb5f169000d38497ebb93f26f7832) )
-	ROM_LOAD( "b53-03.3",	0xa0000, 0x20000, CRC(74acfb9b) SHA1(90b544ed7ede7565660bdd13c94c15c54423cda9) )
-	ROM_LOAD( "b53-02.2",	0xc0000, 0x20000, CRC(095d0dc0) SHA1(ced2937d0594fa00ae344a4e3a3cba23772dc160) )
-	ROM_LOAD( "b53-01.1",	0xe0000, 0x20000, CRC(9800c54d) SHA1(761647177d621ac2cdd8b009876eed35809f3c92) )
-ROM_END
-
-ROM_START( tnzs2 )
+ROM_START( tnzso )
 	ROM_REGION( 0x30000, REGION_CPU1, 0 )	/* 64k + bankswitch areas for the first CPU */
 	ROM_LOAD( "ns_c-11.rom", 0x00000, 0x08000, CRC(3c1dae7b) SHA1(0004fccc171714c80565326f8690f9662c5b75d9) )
 	ROM_CONTINUE(            0x18000, 0x18000 )		/* banked at 8000-bfff */
@@ -1823,6 +1952,70 @@ ROM_START( tnzs2 )
 	ROM_LOAD( "ns_a05.rom",   0xa0000, 0x20000, CRC(6e762e20) SHA1(66731fe4053b9c09bc9c95d10aba212db08b4636) )
 	ROM_LOAD( "ns_a04.rom",   0xc0000, 0x20000, CRC(e1fd1b9d) SHA1(6027491b927c2ab9c77fbf8895da1abcfbe32d62) )
 	ROM_LOAD( "ns_a02.rom",   0xe0000, 0x20000, CRC(2ab06bda) SHA1(2b208b564e55c258665e1f66b26fe14a6c68eb96) )
+ROM_END
+
+/*
+Kabuki Z
+Taito, 1988
+
+This PCB runs on Taito/Seta hardware and the exact same PCB as The New Zealand Story.
+As such, everything here also applies to The New Zealand Story.
+
+PCB Layout
+----------
+
+M6100356A (on PCB)
+M6100356A (on sticker)
+PO-043A (Seta number; on PCB)
+|---------------------------------------------------|
+|     VOL  HA17408           B50-07.U34  DSWB DSWA  |
+|      4558       YM2203 Z80  62256              Z80|
+|      4558 YM3014                                  |
+|                                                   |
+|                                  B06-13           |
+|                                   (PAL)           |
+|                                                   |
+|                                                   |
+|                               6264       B50-06.U3|
+|J     TESTSW                                       |
+|A                                                  |
+|M                                                  |
+|M                                                  |
+|A                                 B06-101          |
+|                                    (PAL)          |
+|                                                Z80|
+|               X1-001A                             |
+|                                                   |
+|    X1-004                                         |
+|               X1-002A       12MHz                 |
+|                                                   |
+|         B50-01.U46    B50-03.U39                  |
+|   X1-006                         6264             |
+|X1-007        B50-02.U43   B50-04.U35     B50-05.U1|
+|---------------------------------------------------|
+Notes:
+      All Z80 CPU's running at 6.000MHz (12/2)
+      YM2203 running at 3.000Mz (12/4)
+      VSync 60Hz
+*/
+
+ROM_START( kabukiz )
+	ROM_REGION( 0x30000, REGION_CPU1, 0 )	/* 64k + bankswitch areas for the first CPU */
+	ROM_LOAD( "b50_05.u1",  0x00000, 0x08000, CRC(9cccb129) SHA1(054faf7657bad7237182e36bcc4388b1748af935) )
+	ROM_CONTINUE(           0x18000, 0x18000 )		/* banked at 8000-bfff */
+
+	ROM_REGION( 0x18000, REGION_CPU2, 0 )	/* 64k for the second CPU */
+	ROM_LOAD( "b50_06.u3",  0x00000, 0x08000, CRC(45650aab) SHA1(00d1fc6044a6ad1e82476ccbe730907b4d780cb9) )
+	ROM_CONTINUE(           0x10000, 0x08000 )		/* banked at 8000-9fff */
+
+	ROM_REGION( 0x10000, REGION_CPU3, 0 )	/* 64k for the third CPU */
+	ROM_LOAD( "b50_07.u34", 0x00000, 0x10000, CRC(fdc300c9) SHA1(1b576662b7b824c8f20a45aad6f88b90c82c5553) )
+
+	ROM_REGION( 0x200000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "b50-04.u35", 0x000000, 0x80000, CRC(04829aa9) SHA1(a501ec7c802478fc41ec8ef4270b1a6872bcbf34) )
+	ROM_LOAD( "b50-03.u39", 0x080000, 0x80000, CRC(31489a4c) SHA1(a4b7e00e2074287b47c7e16add963c1470534376) )
+	ROM_LOAD( "b50-02.u43", 0x100000, 0x80000, CRC(90b8a8e7) SHA1(a55e327307606142fbb9d500e757655b35e1f252) )
+	ROM_LOAD( "b50-01.u46", 0x180000, 0x80000, CRC(f4277751) SHA1(8f50f843f0eda30d639ba397889236ff0a3edce5) )
 ROM_END
 
 ROM_START( insectx )
@@ -1854,7 +2047,8 @@ GAME( 1988, kagekij,  kageki,   kageki,   kageki,   kageki,   ROT90,  "Taito Cor
 GAME( 1988, chukatai, 0,        tnzs,     chukatai, chukatai, ROT0,   "Taito Corporation Japan", "Chuka Taisen (World)" )
 GAME( 1988, chukatau, chukatai, tnzs,     chukatau, chukatai, ROT0,   "Taito America Corporation", "Chuka Taisen (US)" )
 GAME( 1988, chukataj, chukatai, tnzs,     chukatau, chukatai, ROT0,   "Taito Corporation", "Chuka Taisen (Japan)" )
-GAME( 1988, tnzs,     0,        tnzs,     tnzs,     tnzs,     ROT0,   "Taito Corporation", "The NewZealand Story (Japan)" )
-GAME( 1988, tnzsb,    tnzs,     tnzsb,    tnzsb,    tnzsb,    ROT0,   "bootleg", "The NewZealand Story (World, bootleg)" )
-GAME( 1988, tnzs2,    tnzs,     tnzs,     tnzs2,    tnzs,     ROT0,   "Taito Corporation Japan", "The NewZealand Story 2 (World)" )
+GAME( 1988, tnzs,     0,        tnzsb,    tnzsb,    tnzsb,    ROT0,   "Taito Corporation Japan", "The NewZealand Story (World, newer)" )
+GAME( 1988, tnzsj,    tnzs,     tnzs,     tnzs,     tnzs,     ROT0,   "Taito Corporation", "The NewZealand Story (Japan)" )
+GAME( 1988, tnzso,    tnzs,     tnzs,     tnzs2,    tnzs,     ROT0,   "Taito Corporation Japan", "The NewZealand Story (World, older)" )
+GAMEX(1988, kabukiz,  0,		kabukiz,  kabukiz,  tnzsb,    ROT0,   "Taito Corporation", "Kabuki-Z (Japan)", GAME_IMPERFECT_GRAPHICS | GAME_NO_SOUND )
 GAME( 1989, insectx,  0,        insectx,  insectx,  insectx,  ROT0,   "Taito Corporation Japan", "Insector X (World)" )

@@ -1284,6 +1284,18 @@ struct snd_interface sndintf[] =
 		0
 	},
 #endif
+#if (HAS_VRENDER0)
+	{
+		SOUND_VRENDER0,
+		"VRender Zero",
+		0,
+		0,
+		VR0_sh_start,
+		VR0_sh_stop,
+		0,
+		0
+	},
+#endif
 
 
 

@@ -377,7 +377,7 @@ static struct SN76477interface sn76477_intf =
 static MACHINE_DRIVER_START( malzak )
 
 	/* basic machine hardware */
-	MDRV_CPU_ADD(S2650, 3800000/4/3)
+	MDRV_CPU_ADD(S2650, 3800000/4)
 	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
 	MDRV_CPU_IO_MAP(readport,writeport)
 //	MDRV_CPU_VBLANK_INT(malzak_interrupt,1)

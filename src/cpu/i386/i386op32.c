@@ -1588,17 +1588,15 @@ static void I386OP(sbb_rm32_r32)(void)		// Opcode 0x19
 	UINT32 src, dst;
 	UINT8 modrm = FETCH();
 	if( modrm >= 0xc0 ) {
-		src = LOAD_REG32(modrm);
+		src = LOAD_REG32(modrm) + I.CF;
 		dst = LOAD_RM32(modrm);
-		src = SUB32(src, I.CF);
 		dst = SUB32(dst, src);
 		STORE_RM32(modrm, dst);
 		CYCLES(C_ALU_REG_REG);
 	} else {
 		UINT32 ea = GetEA(modrm);
-		src = LOAD_REG32(modrm);
+		src = LOAD_REG32(modrm) + I.CF;
 		dst = READ32(ea);
-		src = SUB32(src, I.CF);
 		dst = SUB32(dst, src);
 		WRITE32(ea, dst);
 		CYCLES(C_ALU_REG_MEM);
@@ -1610,17 +1608,15 @@ static void I386OP(sbb_r32_rm32)(void)		// Opcode 0x1b
 	UINT32 src, dst;
 	UINT8 modrm = FETCH();
 	if( modrm >= 0xc0 ) {
-		src = LOAD_RM32(modrm);
+		src = LOAD_RM32(modrm) + I.CF;
 		dst = LOAD_REG32(modrm);
-		src = SUB32(src, I.CF);
 		dst = SUB32(dst, src);
 		STORE_REG32(modrm, dst);
 		CYCLES(C_ALU_REG_REG);
 	} else {
 		UINT32 ea = GetEA(modrm);
-		src = READ32(ea);
+		src = READ32(ea) + I.CF;
 		dst = LOAD_REG32(modrm);
-		src = SUB32(src, I.CF);
 		dst = SUB32(dst, src);
 		STORE_REG32(modrm, dst);
 		CYCLES(C_ALU_MEM_REG);
@@ -1630,9 +1626,8 @@ static void I386OP(sbb_r32_rm32)(void)		// Opcode 0x1b
 static void I386OP(sbb_eax_i32)(void)		// Opcode 0x1d
 {
 	UINT32 src, dst;
-	src = FETCH32();
+	src = FETCH32() + I.CF;
 	dst = REG32(EAX);
-	src = SUB32(src, I.CF);
 	dst = SUB32(dst, src);
 	REG32(EAX) = dst;
 	CYCLES(C_ALU_I_ACC);
@@ -2073,16 +2068,14 @@ static void I386OP(group81_32)(void)		// Opcode 0x81
 		case 3:		// SBB Rm32, i32
 			if( modrm >= 0xc0 ) {
 				dst = LOAD_RM32(modrm);
-				src = FETCH32();
-				src = SUB32(src, I.CF);
+				src = FETCH32() + I.CF;
 				dst = SUB32(dst, src);
 				STORE_RM32(modrm, dst);
 				CYCLES(C_ALU_REG_REG);
 			} else {
 				ea = GetEA(modrm);
 				dst = READ32(ea);
-				src = FETCH32();
-				src = SUB32(src, I.CF);
+				src = FETCH32() + I.CF;
 				dst = SUB32(dst, src);
 				WRITE32(ea, dst);
 				CYCLES(C_ALU_REG_MEM);
@@ -2214,16 +2207,14 @@ static void I386OP(group83_32)(void)		// Opcode 0x83
 		case 3:		// SBB Rm32, i32
 			if( modrm >= 0xc0 ) {
 				dst = LOAD_RM32(modrm);
-				src = (UINT32)(INT32)(INT8)FETCH();
-				src = SUB32(src, I.CF);
+				src = ((UINT32)(INT32)(INT8)FETCH()) + I.CF;
 				dst = SUB32(dst, src);
 				STORE_RM32(modrm, dst);
 				CYCLES(C_ALU_REG_REG);
 			} else {
 				ea = GetEA(modrm);
 				dst = READ32(ea);
-				src = (UINT32)(INT32)(INT8)FETCH();
-				src = SUB32(src, I.CF);
+				src = ((UINT32)(INT32)(INT8)FETCH()) + I.CF;
 				dst = SUB32(dst, src);
 				WRITE32(ea, dst);
 				CYCLES(C_ALU_REG_MEM);
@@ -2586,6 +2577,53 @@ static void I386OP(groupFF_32)(void)		// Opcode 0xff
 	}
 }
 
+static void I386OP(group0F00_32)(void)			// Opcode 0x0f 00
+{
+	UINT32 address, ea;
+	UINT8 modrm = FETCH();
+
+	switch( (modrm >> 3) & 0x7 )
+	{
+		case 2:			/* LLDT */
+			if ( PROTECTED_MODE && !V8086_MODE )
+			{
+				if( modrm >= 0xc0 ) {
+					address = LOAD_RM32(modrm);
+					ea = i386_translate( CS, address );
+				} else {
+					ea = GetEA(modrm);
+				}
+				I.ldtr.segment = READ32(ea);
+			}
+			else
+			{
+				i386_trap(6);
+			}
+			break;
+
+		case 3:			/* LTR */
+			if ( PROTECTED_MODE && !V8086_MODE )
+			{
+				if( modrm >= 0xc0 ) {
+					address = LOAD_RM32(modrm);
+					ea = i386_translate( CS, address );
+				} else {
+					ea = GetEA(modrm);
+				}
+				I.task.segment = READ32(ea);
+			}
+			else
+			{
+				i386_trap(6);
+			}
+			break;
+
+		default:
+			osd_die("i386: group0F00_32 /%d unimplemented\n", (modrm >> 3) & 0x7);
+			break;
+	}
+}
+
 static void I386OP(group0F01_32)(void)		// Opcode 0x0f 01
 {
 	UINT8 modrm = FETCH();
@@ -2815,4 +2853,45 @@ static void I386OP(xlat32)(void)			// Opcode 0xd7
 		ea = i386_translate( DS, REG32(EBX) + REG8(AL) );
 	}
 	REG8(AL) = READ8(ea);
+}
+
+static void I386OP(load_far_pointer32)(int s)
+{
+	UINT8 modrm = FETCH();
+
+	if( modrm >= 0xc0 ) {
+		osd_die("NYI");
+	} else {
+		UINT32 ea = GetEA(modrm);
+		STORE_REG32(modrm, READ32(ea + 0));
+		I.sreg[s].selector = READ16(ea + 4);
+		i386_load_segment_descriptor( s );
+	}
+
+	CYCLES(1);	// TODO: Figure out exact cycle count
+}
+
+static void I386OP(lds32)(void)				// Opcode 0xc5
+{
+	I386OP(load_far_pointer32)(DS);
+}
+
+static void I386OP(lss32)(void)				// Opcode 0x0f 0xb2
+{
+	I386OP(load_far_pointer32)(SS);
+}
+
+static void I386OP(les32)(void)				// Opcode 0xc4
+{
+	I386OP(load_far_pointer16)(ES);
+}
+
+static void I386OP(lfs32)(void)				// Opcode 0x0f 0xb4
+{
+	I386OP(load_far_pointer16)(FS);
+}
+
+static void I386OP(lgs32)(void)				// Opcode 0x0f 0xb5
+{
+	I386OP(load_far_pointer32)(GS);
 }

@@ -203,7 +203,7 @@ struct rc_option input_opts[] =
 	{ "joystick", "joy", rc_bool, &use_joystick, "0", 0, 0, NULL, "enable joystick input" },
 	{ "lightgun", "gun", rc_bool, &use_lightgun, "0", 0, 0, NULL, "enable lightgun input" },
 	{ "dual_lightgun", "dual", rc_bool, &use_lightgun_dual, "0", 0, 0, NULL, "enable dual lightgun input" },
-	{ "offscreen_reload", "reload", rc_bool, &use_lightgun_reload, "0", 0, 0, NULL, "offscreen shots reload" },				
+	{ "offscreen_reload", "reload", rc_bool, &use_lightgun_reload, "0", 0, 0, NULL, "offscreen shots reload" },
 	{ "steadykey", "steady", rc_bool, &steadykey, "0", 0, 0, NULL, "enable steadykey support" },
 	{ "keyboard_leds", "leds", rc_bool, &use_keyboard_leds, "1", 0, 0, NULL, "enable keyboard LED emulation" },
 	{ "led_mode", NULL, rc_string, &ledmode, "ps/2", 0, 0, decode_ledmode, "LED mode (ps/2|usb)" },
@@ -667,18 +667,18 @@ static int decode_digital(struct rc_option *option, const char *arg, int priorit
 		{
 			int joynum = 0;
 			int axisnum = 0;
-			
+
 			/* stop if we hit the end */
 			if (arg[0] == 0)
 				break;
-			
+
 			/* we require the next bits to be j<N> */
 			if (tolower(arg[0]) != 'j' || sscanf(&arg[1], "%d", &joynum) != 1)
 				goto usage;
 			arg++;
 			while (arg[0] != 0 && isdigit(arg[0]))
 				arg++;
-			
+
 			/* if we are followed by a comma or an end, mark all the axes digital */
 			if (arg[0] == 0 || arg[0] == ',')
 			{
@@ -696,21 +696,21 @@ static int decode_digital(struct rc_option *option, const char *arg, int priorit
 				/* stop if we hit the end */
 				if (arg[0] == 0)
 					break;
-				
+
 				/* if we hit a comma, skip it and break out */
 				if (arg[0] == ',')
 				{
 					arg++;
 					break;
 				}
-				
+
 				/* we require the next bits to be a<N> */
 				if (tolower(arg[0]) != 'a' || sscanf(&arg[1], "%d", &axisnum) != 1)
 					goto usage;
 				arg++;
 				while (arg[0] != 0 && isdigit(arg[0]))
 					arg++;
-				
+
 				/* set that axis to digital */
 				if (joynum != 0 && joynum - 1 < MAX_JOYSTICKS && axisnum < MAX_AXES)
 					joystick_digital[joynum - 1][axisnum] = 1;
@@ -743,9 +743,9 @@ static void autoselect_analog_devices(const struct InputPort *inp, int type1, in
 {
 	// loop over input ports
 	for ( ; inp->type != IPT_END; inp++)
-	
+
 		// if this port type is in use, apply the autoselect criteria
-		if ((type1 != 0 && inp->type == type1) || 
+		if ((type1 != 0 && inp->type == type1) ||
 			(type2 != 0 && inp->type == type2) ||
 			(type3 != 0 && inp->type == type3))
 		{
@@ -756,7 +756,7 @@ static void autoselect_analog_devices(const struct InputPort *inp, int type1, in
 				if (verbose)
 					printf("Autoenabling mice due to presence of a %s\n", ananame);
 			}
-				
+
 			// autoenable joystick devices
 			if (analog_type[anatype] == SELECT_TYPE_JOYSTICK && !use_joystick)
 			{
@@ -764,7 +764,7 @@ static void autoselect_analog_devices(const struct InputPort *inp, int type1, in
 				if (verbose)
 					printf("Autoenabling joysticks due to presence of a %s\n", ananame);
 			}
-				
+
 			// autoenable lightgun devices
 			if (analog_type[anatype] == SELECT_TYPE_LIGHTGUN && !use_lightgun)
 			{
@@ -772,10 +772,10 @@ static void autoselect_analog_devices(const struct InputPort *inp, int type1, in
 				if (verbose)
 					printf("Autoenabling lightguns due to presence of a %s\n", ananame);
 			}
-			
+
 			// all done
 			break;
-		}	
+		}
 }
 
 
@@ -791,7 +791,7 @@ static BOOL CALLBACK enum_keyboard_callback(LPCDIDEVICEINSTANCE instance, LPVOID
 	// if we're not out of mice, log this one
 	if (keyboard_count >= MAX_KEYBOARDS)
 		goto out_of_keyboards;
-	
+
 	// attempt to create a device
 	result = IDirectInput_CreateDevice(dinput, &instance->guidInstance, &keyboard_device[keyboard_count], NULL);
 	if (result != DI_OK)
@@ -934,7 +934,7 @@ static BOOL CALLBACK enum_joystick_callback(LPCDIDEVICEINSTANCE instance, LPVOID
 	result = IDirectInputDevice_QueryInterface(joystick_device[joystick_count], &IID_IDirectInputDevice2, (void **)&joystick_device2[joystick_count]);
 	if (result != DI_OK)
 		joystick_device2[joystick_count] = NULL;
-	
+
 	// remember the name
 	strcpy(joystick_name[joystick_count], instance->tszInstanceName);
 
@@ -1008,7 +1008,7 @@ int win_init_input(void)
 	}
 	if (verbose)
 		fprintf(stderr, "Using DirectInput %d\n", dinput_version >> 8);
-	
+
 	// enable devices based on autoselect
 	if (Machine != NULL && Machine->gamedrv != NULL)
 	{
@@ -1117,6 +1117,13 @@ void win_shutdown_input(void)
 		if (mouse_device2[i])
 			IDirectInputDevice_Release(mouse_device2[i]);
 		mouse_device2[i]=0;
+	}
+
+	// free allocated strings
+	for (i = 0; i < total_codes; i++)
+	{
+		free(codelist[i].name);
+		codelist[i].name = NULL;
 	}
 
 	// release DirectInput
@@ -1255,7 +1262,7 @@ void win_poll_input(void)
 				result = IDirectInputDevice_GetDeviceState(joystick_device[i], sizeof(joystick_state[i]), &joystick_state[i]);
 		}
 	}
-	
+
 	// update joystick axis history
 	update_joystick_axes();
 
@@ -1278,7 +1285,7 @@ void win_poll_input(void)
 					result = IDirectInputDevice_GetDeviceState(mouse_device[i], sizeof(mouse_state[i]), &mouse_state[i]);
 			}
 		}
-	
+
 	// poll the lightguns
 	poll_lightguns();
 }
@@ -1455,18 +1462,18 @@ static void init_keycodes(void)
 static void update_joystick_axes(void)
 {
 	int joynum, axis;
-	
+
 	for (joynum = 0; joynum < joystick_count; joynum++)
 		for (axis = 0; axis < MAX_AXES; axis++)
 		{
 			struct axis_history *history = &joystick_history[joynum][axis][0];
 			LONG curval = ((LONG *)&joystick_state[joynum].lX)[axis];
 			int newtype;
-			
+
 			/* if same as last time (within a small tolerance), update the count */
 			if (history[0].count > 0 && (history[0].value - curval) > -4 && (history[0].value - curval) < 4)
 				history[0].count++;
-			
+
 			/* otherwise, update the history */
 			else
 			{
@@ -1474,22 +1481,22 @@ static void update_joystick_axes(void)
 				history[0].count = 1;
 				history[0].value = curval;
 			}
-			
+
 			/* if we've only ever seen one value here, or if we've been stuck at the same value for a long */
 			/* time (1 minute), mark the axis as dead or invalid */
 			if (history[1].count == 0 || history[0].count > Machine->refresh_rate * 60)
 				newtype = AXIS_TYPE_INVALID;
-			
+
 			/* scan the history and count unique values; if we get more than 3, it's analog */
 			else
 			{
 				int bucketsize = (joystick_range[joynum][axis].lMax - joystick_range[joynum][axis].lMin) / 3;
 				LONG uniqueval[3] = { 1234567890, 1234567890, 1234567890 };
 				int histnum;
-				
+
 				/* assume digital unless we figure out otherwise */
 				newtype = AXIS_TYPE_DIGITAL;
-				
+
 				/* loop over the whole history, bucketing the values */
 				for (histnum = 0; histnum < HISTORY_LENGTH; histnum++)
 					if (history[histnum].count > 0)
@@ -1502,12 +1509,12 @@ static void update_joystick_axes(void)
 							newtype = AXIS_TYPE_ANALOG;
 							break;
 						}
-						
+
 						/* remember this value */
 						uniqueval[bucket] = history[histnum].value;
 					}
 			}
-			
+
 			/* if the type doesn't match, switch it */
 			if (joystick_type[joynum][axis] != newtype)
 			{
@@ -1611,7 +1618,7 @@ static void init_joycodes(void)
 		{
 			DIDEVICEOBJECTINSTANCE instance = { 0 };
 			HRESULT result;
-			
+
 			// reset the type
 			joystick_type[stick][axis] = AXIS_TYPE_INVALID;
 
@@ -1726,7 +1733,7 @@ static INT32 get_joycode_value(os_code_t joycode)
 				}
 				return lightgun_dual_player_state[joyindex];
 			}
-						
+
 			if (use_lightgun) {
 				if (use_lightgun_reload && joynum==0) {
 					if (joyindex==0 && (mouse_state[0].rgbButtons[1]&0x80))
@@ -1812,7 +1819,7 @@ static INT32 get_joycode_value(os_code_t joycode)
 			if (joyindex == 1)
 				return mouse_state[joynum].lY * 512;
 			return 0;
-		
+
 		// analog gun axis
 		case CODETYPE_GUNAXIS:
 			// return the latest gun info

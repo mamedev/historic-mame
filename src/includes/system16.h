@@ -8,6 +8,8 @@ VIDEO_UPDATE( system16a );
 
 void system16a_set_draw_enable(int enable);
 void system16a_set_screen_flip(int flip);
+void system16a_set_rowscroll(int enable);
+void system16a_set_colscroll(int enable);
 
 WRITE16_HANDLER( system16a_textram_w );
 
@@ -17,6 +19,7 @@ VIDEO_START( system16b );
 VIDEO_START( timscanr );
 VIDEO_UPDATE( system16b );
 
+void system16b_reset_video(void);
 void system16b_set_draw_enable(int enable);
 void system16b_set_screen_flip(int flip);
 void system16b_configure_sprite_banks(int use_default);
@@ -29,6 +32,7 @@ WRITE16_HANDLER( system16b_textram_w );
 VIDEO_START( system18 );
 VIDEO_UPDATE( system18 );
 
+void system18_reset_video(void);
 void system18_set_draw_enable(int enable);
 void system18_set_screen_flip(int flip);
 void system18_set_tile_bank(int which, int bank);
@@ -38,6 +42,23 @@ void system18_set_vdp_mixing(int mixing);
 void system18_set_sprite_bank(int which, int bank);
 
 WRITE16_HANDLER( system18_textram_w );
+
+
+/* from vidhrdw/segaxbd.c */
+extern UINT16 *xboard_roadram;
+VIDEO_START( xboard );
+VIDEO_UPDATE( xboard );
+
+void xboard_reset_video(void);
+void xboard_set_draw_enable(int enable);
+void xboard_set_screen_flip(int flip);
+void xboard_set_tile_bank(int which, int bank);
+void xboard_set_road_priority(int priority);
+
+WRITE16_HANDLER( xboard_textram_w );
+WRITE16_HANDLER( xboard_render_start_w );
+READ16_HANDLER( xboard_road_latch_r );
+WRITE16_HANDLER( xboard_road_control_w );
 
 
 

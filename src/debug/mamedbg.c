@@ -1142,6 +1142,7 @@ INLINE unsigned xtou( char **parg, int *size)
 	return val;
 }
 
+#ifndef NEW_DEBUGGER
 const char *set_ea_info( int what, unsigned value, int size, int access )
 {
 	static char buffer[8][63+1];
@@ -1261,7 +1262,7 @@ const char *set_ea_info( int what, unsigned value, int size, int access )
 	sprintf( buffer[which], "%s$%0*X", sign, width, result );
 	return buffer[which];
 }
-
+#endif /*NEW_DEBUGGER*/
 /**************************************************************************
  * lower
  * Convert string into all lower case.
@@ -5236,6 +5237,7 @@ void CLIB_DECL mame_debug_trace_write (int cpunum, const char *fmt, ...)
  *	mame_debug_init
  *	This function is called from cpu_run to startup the debugger
  **************************************************************************/
+#ifndef NEW_DEBUGGER
 void mame_debug_init(void)
 {
 	char filename[127+1];
@@ -5524,6 +5526,6 @@ void MAME_Debug(void)
 				DBGREGS.newval, DBGREGS.count * sizeof(UINT32) );
 	}
 }
-
+#endif /* NEW_DEBUGGER */
 #endif /* MAME_DEBUG */
 

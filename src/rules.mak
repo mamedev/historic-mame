@@ -1431,6 +1431,29 @@ else
 CPUDEFS += -DHAS_PPC403=0
 endif
 
+CPU=$(strip $(findstring PPC603@,$(CPUS)))
+ifneq ($(CPU),)
+OBJDIRS += $(OBJ)/cpu/powerpc
+CPUDEFS += -DHAS_PPC603=1
+CPUOBJS += $(OBJ)/cpu/powerpc/ppc.o
+DBGOBJS += $(OBJ)/cpu/powerpc/ppc_dasm.o
+$(OBJ)/cpu/powerpc/ppc.o: ppc.c ppc.h ppc_ops.c ppc_ops.h ppc403.c
+else
+CPUDEFS += -DHAS_PPC603=0
+endif
+
+CPU=$(strip $(findstring SE3208@,$(CPUS)))
+ifneq ($(CPU),)
+OBJDIRS += $(OBJ)/cpu/se3208
+CPUDEFS += -DHAS_SE3208=1
+CPUOBJS += $(OBJ)/cpu/se3208/se3208.o
+DBGOBJS += $(OBJ)/cpu/se3208/se3208dis.o
+$(OBJ)/cpu/se3208/se3208.o: se3208.c se3208.h se3208dis.c
+else
+CPUDEFS += -DHAS_SE3208=0
+endif
+
+
 SOUND=$(strip $(findstring CDDA@,$(SOUNDS)))
 ifneq ($(SOUND),)
 SOUNDDEFS += -DHAS_CDDA=1
@@ -2012,4 +2035,13 @@ SOUNDOBJS += $(OBJ)/sound/c352.o
 else
 SOUNDDEFS += -DHAS_C352=0
 endif
+
+SOUND=$(strip $(findstring VRENDER0@,$(SOUNDS)))
+ifneq ($(SOUND),)
+SOUNDDEFS += -DHAS_VRENDER0=1
+SOUNDOBJS += $(OBJ)/sound/vrender0.o
+else
+SOUNDDEFS += -DHAS_VRENDER0=0
+endif
+
 

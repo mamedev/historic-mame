@@ -105,6 +105,7 @@ VIDEO_START( sfx );
 VIDEO_START( rockclim );
 VIDEO_START( drivfrcg );
 VIDEO_START( bongo );
+VIDEO_START( scorpion );
 
 VIDEO_UPDATE( galaxian );
 
@@ -165,6 +166,7 @@ DRIVER_INIT( mimonscr );
 DRIVER_INIT( sfx );
 DRIVER_INIT( gmgalax );
 DRIVER_INIT( ladybugg );
+DRIVER_INIT( scorpion );
 
 MACHINE_INIT( scramble );
 MACHINE_INIT( sfx );

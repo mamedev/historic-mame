@@ -1626,7 +1626,7 @@ static INTERRUPT_GEN( hunchbkd_interrupt )
 static MACHINE_DRIVER_START( hunchbkd )
 
 	/* basic machine hardware */
-	MDRV_CPU_ADD_TAG("main", S2650, 3072000/2/3)	/* ??? */
+	MDRV_CPU_ADD_TAG("main", S2650, 3072000/2)	/* ??? */
 	MDRV_CPU_PROGRAM_MAP(hunchbkd_readmem,hunchbkd_writemem)
 	MDRV_CPU_IO_MAP(hunchbkd_readport,hunchbkd_writeport)
 	MDRV_CPU_VBLANK_INT(hunchbkd_interrupt,1)

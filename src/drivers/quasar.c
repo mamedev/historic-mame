@@ -436,7 +436,7 @@ static struct DACinterface dac_interface =
 
 static MACHINE_DRIVER_START( quasar )
 
-	MDRV_CPU_ADD_TAG("main", S2650, (14318000/4) / 3)	/* 14 mhz crystal divide by 4 on board, 3 in CPU */
+	MDRV_CPU_ADD_TAG("main", S2650, 14318000/4)	/* 14 mhz crystal divide by 4 on board */
 	MDRV_CPU_PROGRAM_MAP(quasar,0)
 	MDRV_CPU_IO_MAP(quasar_io,0)
 	MDRV_CPU_VBLANK_INT(quasar_interrupt,1)

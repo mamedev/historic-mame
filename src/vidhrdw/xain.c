@@ -1,15 +1,39 @@
 /***************************************************************************
 
-  vidhrdw.c
+	xain.c
 
-  Functions to emulate the video hardware of the machine.
+	The priority prom has 7 inputs:
+
+	A0: Text layer (MAP)
+	A1: Sprite layer (OBJ)
+	A2: BG1
+	A3: BG2
+	A4-A6:	From CPU priority register
+
+	The 2 bit data output from the prom selects:
+
+	0 - Text layer
+	1 - Sprite layer
+	2 - BG1
+	3 - BG2
+
+	Decoding the prom manually gives the following rules:
+
+	PRI mode 0 - text (top) -> sprite -> bg1 -> bg2 (bottom)
+	PRI mode 1 - text (top) -> sprite -> bg2 -> bg1 (bottom)
+	PRI mode 2 - bg1 (top) -> sprite -> bg2 -> text (bottom)
+	PRI mode 3 - bg2 (top) -> sprite -> bg1 -> text (bottom)
+	PRI mode 4 - bg1 (top) -> sprite -> text -> bg2 (bottom)
+	PRI mode 5 - bg2 (top) -> sprite -> text -> bg1 (bottom)
+	PRI mode 6 - text (top) -> bg1 -> sprite -> bg2 (bottom)
+	PRI mode 7 - text (top) -> bg2 -> sprite -> bg1 (bottom)
 
 ***************************************************************************/
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-unsigned char *xain_charram, *xain_bgram0, *xain_bgram1;
+unsigned char *xain_charram, *xain_bgram0, *xain_bgram1, xain_pri;
 
 static struct tilemap *char_tilemap, *bgram0_tilemap, *bgram1_tilemap;
 
@@ -65,13 +89,14 @@ static void get_char_tile_info(int tile_index)
 
 VIDEO_START( xain )
 {
-	bgram0_tilemap = tilemap_create(get_bgram0_tile_info,back_scan,    TILEMAP_OPAQUE,     16,16,32,32);
+	bgram0_tilemap = tilemap_create(get_bgram0_tile_info,back_scan,    TILEMAP_TRANSPARENT,16,16,32,32);
 	bgram1_tilemap = tilemap_create(get_bgram1_tile_info,back_scan,    TILEMAP_TRANSPARENT,16,16,32,32);
 	char_tilemap = tilemap_create(get_char_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT, 8, 8,32,32);
 
 	if (!bgram0_tilemap || !bgram1_tilemap || !char_tilemap)
 		return 1;
 
+	tilemap_set_transparent_pen(bgram0_tilemap,0);
 	tilemap_set_transparent_pen(bgram1_tilemap,0);
 	tilemap_set_transparent_pen(char_tilemap,0);
 
@@ -210,8 +235,55 @@ static void draw_sprites(struct mame_bitmap *bitmap,const struct rectangle *clip
 
 VIDEO_UPDATE( xain )
 {
-	tilemap_draw(bitmap,cliprect,bgram0_tilemap,0,0);
-	tilemap_draw(bitmap,cliprect,bgram1_tilemap,0,0);
-	draw_sprites(bitmap,cliprect);
-	tilemap_draw(bitmap,cliprect,char_tilemap,0,0);
+	switch (xain_pri&0x7)
+	{
+	case 0:
+		tilemap_draw(bitmap,cliprect,bgram0_tilemap,TILEMAP_IGNORE_TRANSPARENCY,0);
+		tilemap_draw(bitmap,cliprect,bgram1_tilemap,0,0);
+		draw_sprites(bitmap,cliprect);
+		tilemap_draw(bitmap,cliprect,char_tilemap,0,0);
+		break;
+	case 1:
+		tilemap_draw(bitmap,cliprect,bgram1_tilemap,TILEMAP_IGNORE_TRANSPARENCY,0);
+		tilemap_draw(bitmap,cliprect,bgram0_tilemap,0,0);
+		draw_sprites(bitmap,cliprect);
+		tilemap_draw(bitmap,cliprect,char_tilemap,0,0);
+		break;
+	case 2:
+		tilemap_draw(bitmap,cliprect,char_tilemap,TILEMAP_IGNORE_TRANSPARENCY,0);
+		tilemap_draw(bitmap,cliprect,bgram0_tilemap,0,0);
+		draw_sprites(bitmap,cliprect);
+		tilemap_draw(bitmap,cliprect,bgram1_tilemap,0,0);
+		break;
+	case 3:
+		tilemap_draw(bitmap,cliprect,char_tilemap,TILEMAP_IGNORE_TRANSPARENCY,0);
+		tilemap_draw(bitmap,cliprect,bgram1_tilemap,0,0);
+		draw_sprites(bitmap,cliprect);
+		tilemap_draw(bitmap,cliprect,bgram0_tilemap,0,0);
+		break;
+	case 4:
+		tilemap_draw(bitmap,cliprect,bgram0_tilemap,TILEMAP_IGNORE_TRANSPARENCY,0);
+		tilemap_draw(bitmap,cliprect,char_tilemap,0,0);
+		draw_sprites(bitmap,cliprect);
+		tilemap_draw(bitmap,cliprect,bgram1_tilemap,0,0);
+		break;
+	case 5:
+		tilemap_draw(bitmap,cliprect,bgram1_tilemap,TILEMAP_IGNORE_TRANSPARENCY,0);
+		tilemap_draw(bitmap,cliprect,char_tilemap,0,0);
+		draw_sprites(bitmap,cliprect);
+		tilemap_draw(bitmap,cliprect,bgram0_tilemap,0,0);
+		break;
+	case 6:
+		tilemap_draw(bitmap,cliprect,bgram0_tilemap,TILEMAP_IGNORE_TRANSPARENCY,0);
+		draw_sprites(bitmap,cliprect);
+		tilemap_draw(bitmap,cliprect,bgram1_tilemap,0,0);
+		tilemap_draw(bitmap,cliprect,char_tilemap,0,0);
+		break;
+	case 7:
+		tilemap_draw(bitmap,cliprect,bgram1_tilemap,TILEMAP_IGNORE_TRANSPARENCY,0);
+		draw_sprites(bitmap,cliprect);
+		tilemap_draw(bitmap,cliprect,bgram0_tilemap,0,0);
+		tilemap_draw(bitmap,cliprect,char_tilemap,0,0);
+		break;
+	}
 }

@@ -27,7 +27,7 @@
 
 #define ICLIP16(x) (x<-32768)?-32768:((x>32767)?32767:x)
 
-static signed short *bufferl;		
+static signed short *bufferl;
 static signed short *bufferr;
 
 static int length;
@@ -206,7 +206,7 @@ struct _SCSP
 	struct _SLOT Slots[32];
 	signed short RINGBUF[64];
 	unsigned char BUFPTR;
-	unsigned char *SCSPRAM;	
+	unsigned char *SCSPRAM;
 	char Master;
 	void (*Int68kCB)(int irq);
 	int stream;
@@ -362,7 +362,7 @@ static data32_t SCSP_Step(struct _SLOT *slot)
 	return Fn/(44100);
 }
 
-		 
+
 static void Compute_LFO(struct _SLOT *slot)
 {
 	if(PLFOS(slot)!=0)
@@ -376,7 +376,7 @@ static void SCSP_StartSlot(struct _SLOT *slot)
 	slot->active=1;
 	slot->base=SCSP->SCSPRAM+SA(slot);
 	slot->cur_addr=0;
-	slot->step=SCSP_Step(slot);	
+	slot->step=SCSP_Step(slot);
 	Compute_EG(slot);
 	slot->EG.state=ATTACK;
 	slot->EG.volume=0;
@@ -470,7 +470,7 @@ static void SCSP_Init(int n, struct SCSPinterface *intf)
 			fSDL=pow(10.0,(SDLT[iSDL])/20.0);
 		else
 			fSDL=0.0;
-		
+
 		LPANTABLE[i]=FIX((4.0*LPAN*TL*fSDL));
 		RPANTABLE[i]=FIX((4.0*RPAN*TL*fSDL));
 	}
@@ -496,7 +496,7 @@ static void SCSP_Init(int n, struct SCSPinterface *intf)
 		DRTABLE[i]=(int) (step*scale);
 	}
 
-	// make sure all the slots are off	
+	// make sure all the slots are off
 	for(i=0;i<32;++i)
 	{
 		SCSPs[0].Slots[i].slot=i;
@@ -552,7 +552,7 @@ static void SCSP_UpdateSlotReg(int s,int r)
 			break;
 		case 0x10:
 		case 0x11:
-			slot->step=SCSP_Step(slot);	
+			slot->step=SCSP_Step(slot);
 			break;
 		case 0xA:
 		case 0xB:
@@ -583,7 +583,7 @@ static void SCSP_UpdateReg(int reg)
 			break;
 		case 0x18:
 		case 0x19:
-			if(SCSP->Master)	
+			if(SCSP->Master)
 			{
 				TimPris[0]=1<<((SCSP->udata.data[0x18/2]>>8)&0x7);
 				TimCnt[0]=(SCSP->udata.data[0x18/2]&0xff)<<8;
@@ -591,7 +591,7 @@ static void SCSP_UpdateReg(int reg)
 			break;
 		case 0x1a:
 		case 0x1b:
-			if(SCSP->Master)	
+			if(SCSP->Master)
 			{
 				TimPris[1]=1<<((SCSP->udata.data[0x1A/2]>>8)&0x7);
 				TimCnt[1]=(SCSP->udata.data[0x1A/2]&0xff)<<8;
@@ -599,7 +599,7 @@ static void SCSP_UpdateReg(int reg)
 			break;
 		case 0x1C:
 		case 0x1D:
-			if(SCSP->Master)	
+			if(SCSP->Master)
 			{
 				TimPris[2]=1<<((SCSP->udata.data[0x1C/2]>>8)&0x7);
 				TimCnt[2]=(SCSP->udata.data[0x1C/2]&0xff)<<8;
@@ -607,8 +607,8 @@ static void SCSP_UpdateReg(int reg)
 			break;
 		case 0x22:	//SCIRE
 		case 0x23:
-		
-			if(SCSP->Master) 
+
+			if(SCSP->Master)
 			{
 				SCSP->udata.data[0x20/2]&=~SCSP->udata.data[0x22/2];
 				CheckPendingIRQ();
@@ -657,7 +657,7 @@ static void SCSP_UpdateRegR(int reg)
 		case 8:
 		case 9:
 			{
-				unsigned char slot=SCSP->udata.data[0x8/2]>>11;	
+				unsigned char slot=SCSP->udata.data[0x8/2]>>11;
 				unsigned int CA=SCSP->Slots[slot&0x1f].cur_addr>>(SHIFT+12);
 				SCSP->udata.data[0x8/2]&=~(0x780);
 				SCSP->udata.data[0x8/2]|=CA<<7;
@@ -686,7 +686,7 @@ static void SCSP_w16(unsigned int addr,unsigned short val)
 		{
 			SCSP_UpdateReg(addr&0xff);
 		}
-	}	
+	}
 	else if(addr<0x700)
 		SCSP->RINGBUF[(addr-0x600)/2]=val;
 }
@@ -712,7 +712,7 @@ static unsigned short SCSP_r16(unsigned int addr)
 			SCSP_UpdateRegR(addr&0xff);
 		}
 		v= *((unsigned short *) (SCSP->udata.datab+((addr&0xff))));
-	}	
+	}
 	else if(addr<0x700)
 		v=SCSP->RINGBUF[(addr-0x600)/2];
 	return v;
@@ -734,12 +734,12 @@ void SCSP_TimersAddTicks(int ticks)
 		SCSPs[0].udata.data[0x18/2]&=0xff00;
 		SCSPs[0].udata.data[0x18/2]|=TimCnt[0]>>8;
 	}
-	
+
 	if(TimCnt[1]<=0xff00)
 	{
 		TimCnt[1] += ticks << (8-((SCSPs[0].udata.data[0x1a/2]>>8)&0x7));
 		if (TimCnt[1] > 0xFF00)
-		{ 
+		{
 			TimCnt[1] = 0xFFFF;
 			SCSPs[0].udata.data[0x20/2]|=0x80;
 		}
@@ -847,37 +847,37 @@ SCSPNAME(_8bit,lfo,alfo,loop)\
 	}\
 }
 
-SCSPTMPL(0,0,0,0) 
-SCSPTMPL(0,0,0,1) 
-SCSPTMPL(0,0,0,2) 
+SCSPTMPL(0,0,0,0)
+SCSPTMPL(0,0,0,1)
+SCSPTMPL(0,0,0,2)
 SCSPTMPL(0,0,0,3)
-SCSPTMPL(0,0,1,0) 
-SCSPTMPL(0,0,1,1) 
-SCSPTMPL(0,0,1,2) 
+SCSPTMPL(0,0,1,0)
+SCSPTMPL(0,0,1,1)
+SCSPTMPL(0,0,1,2)
 SCSPTMPL(0,0,1,3)
-SCSPTMPL(0,1,0,0) 
-SCSPTMPL(0,1,0,1) 
-SCSPTMPL(0,1,0,2) 
+SCSPTMPL(0,1,0,0)
+SCSPTMPL(0,1,0,1)
+SCSPTMPL(0,1,0,2)
 SCSPTMPL(0,1,0,3)
-SCSPTMPL(0,1,1,0) 
-SCSPTMPL(0,1,1,1) 
-SCSPTMPL(0,1,1,2) 
+SCSPTMPL(0,1,1,0)
+SCSPTMPL(0,1,1,1)
+SCSPTMPL(0,1,1,2)
 SCSPTMPL(0,1,1,3)
-SCSPTMPL(1,0,0,0) 
-SCSPTMPL(1,0,0,1) 
-SCSPTMPL(1,0,0,2) 
+SCSPTMPL(1,0,0,0)
+SCSPTMPL(1,0,0,1)
+SCSPTMPL(1,0,0,2)
 SCSPTMPL(1,0,0,3)
-SCSPTMPL(1,0,1,0) 
-SCSPTMPL(1,0,1,1) 
-SCSPTMPL(1,0,1,2) 
+SCSPTMPL(1,0,1,0)
+SCSPTMPL(1,0,1,1)
+SCSPTMPL(1,0,1,2)
 SCSPTMPL(1,0,1,3)
-SCSPTMPL(1,1,0,0) 
-SCSPTMPL(1,1,0,1) 
-SCSPTMPL(1,1,0,2) 
+SCSPTMPL(1,1,0,0)
+SCSPTMPL(1,1,0,1)
+SCSPTMPL(1,1,0,2)
 SCSPTMPL(1,1,0,3)
-SCSPTMPL(1,1,1,0) 
-SCSPTMPL(1,1,1,1) 
-SCSPTMPL(1,1,1,2) 
+SCSPTMPL(1,1,1,0)
+SCSPTMPL(1,1,1,1)
+SCSPTMPL(1,1,1,2)
 SCSPTMPL(1,1,1,3)
 
 #undef SCSPTMPL
@@ -889,37 +889,37 @@ typedef void (*_SCSPUpdateModes)(struct _SLOT *,unsigned int,unsigned int);
 
 _SCSPUpdateModes SCSPUpdateModes[]=
 {
-	SCSPTMPL(0,0,0,0) 
-	SCSPTMPL(0,0,0,1) 
-	SCSPTMPL(0,0,0,2) 
+	SCSPTMPL(0,0,0,0)
+	SCSPTMPL(0,0,0,1)
+	SCSPTMPL(0,0,0,2)
 	SCSPTMPL(0,0,0,3)
-	SCSPTMPL(0,0,1,0) 
-	SCSPTMPL(0,0,1,1) 
-	SCSPTMPL(0,0,1,2) 
+	SCSPTMPL(0,0,1,0)
+	SCSPTMPL(0,0,1,1)
+	SCSPTMPL(0,0,1,2)
 	SCSPTMPL(0,0,1,3)
-	SCSPTMPL(0,1,0,0) 
-	SCSPTMPL(0,1,0,1) 
-	SCSPTMPL(0,1,0,2) 
+	SCSPTMPL(0,1,0,0)
+	SCSPTMPL(0,1,0,1)
+	SCSPTMPL(0,1,0,2)
 	SCSPTMPL(0,1,0,3)
-	SCSPTMPL(0,1,1,0) 
-	SCSPTMPL(0,1,1,1) 
-	SCSPTMPL(0,1,1,2) 
+	SCSPTMPL(0,1,1,0)
+	SCSPTMPL(0,1,1,1)
+	SCSPTMPL(0,1,1,2)
 	SCSPTMPL(0,1,1,3)
-	SCSPTMPL(1,0,0,0) 
-	SCSPTMPL(1,0,0,1) 
-	SCSPTMPL(1,0,0,2) 
+	SCSPTMPL(1,0,0,0)
+	SCSPTMPL(1,0,0,1)
+	SCSPTMPL(1,0,0,2)
 	SCSPTMPL(1,0,0,3)
-	SCSPTMPL(1,0,1,0) 
-	SCSPTMPL(1,0,1,1) 
-	SCSPTMPL(1,0,1,2) 
+	SCSPTMPL(1,0,1,0)
+	SCSPTMPL(1,0,1,1)
+	SCSPTMPL(1,0,1,2)
 	SCSPTMPL(1,0,1,3)
-	SCSPTMPL(1,1,0,0) 
-	SCSPTMPL(1,1,0,1) 
-	SCSPTMPL(1,1,0,2) 
+	SCSPTMPL(1,1,0,0)
+	SCSPTMPL(1,1,0,1)
+	SCSPTMPL(1,1,0,2)
 	SCSPTMPL(1,1,0,3)
-	SCSPTMPL(1,1,1,0) 
-	SCSPTMPL(1,1,1,1) 
-	SCSPTMPL(1,1,1,2) 
+	SCSPTMPL(1,1,1,0)
+	SCSPTMPL(1,1,1,1)
+	SCSPTMPL(1,1,1,2)
 	SCSPTMPL(1,1,1,3)
 };
 
@@ -1068,8 +1068,8 @@ int SCSP_sh_start(const struct MachineSound *msound)
 	{
 		SCSPs[i].Int68kCB = intf->irq_callback[i];
 
-		sprintf(buf[0], "SCSP %d R", i); 
-		sprintf(buf[1], "SCSP %d L", i); 
+		sprintf(buf[0], "SCSP %d R", i);
+		sprintf(buf[1], "SCSP %d L", i);
 		name[0] = buf[0];
 		name[1] = buf[1];
 		vol[1]=intf->mixing_level[i] >> 16;
@@ -1089,11 +1089,13 @@ void SCSP_sh_stop(void)
 READ16_HANDLER( SCSP_0_r )
 {
 	SCSP = &SCSPs[0];
-	
+
 	stream_update(SCSPs[0].stream, 0);
 
 	return SCSP_r16(offset*2);
 }
+
+extern data32_t* stv_scu;
 
 WRITE16_HANDLER( SCSP_0_w )
 {
@@ -1108,9 +1110,9 @@ WRITE16_HANDLER( SCSP_0_w )
 
 	scsp_regs = (UINT16 *)SCSP->udata.datab;
 
-	// check DMA
 	switch(offset*2)
 	{
+		// check DMA
 		case 0x412:
 		/*DMEA [15:1]*/
 		/*Sound memory address*/
@@ -1138,6 +1140,18 @@ WRITE16_HANDLER( SCSP_0_w )
 			dma_scsp();
 			scsp_regs[0x416/2]^=0x1000;//disable starting bit
 		}
+		break;
+		//check main cpu IRQ
+		case 0x42a:
+			if(!(stv_scu[40] & 0x40) /*&& scsp_regs[0x42c/2] & 0x20*/)/*Main CPU allow sound irq*/
+			{
+				cpunum_set_input_line_and_vector(0, 9, HOLD_LINE , 0x46);
+			    logerror("SCSP: Main CPU interrupt\n");
+			}
+		break;
+		case 0x42c:
+		break;
+		case 0x42e:
 		break;
 	}
 }

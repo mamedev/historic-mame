@@ -4,11 +4,13 @@
 #include "ppc.h"
 #include "mamedbg.h"
 
+#define RD				((op >> 21) & 0x1F)
 #define RT				((op >> 21) & 0x1f)
 #define RS				((op >> 21) & 0x1f)
 #define RA				((op >> 16) & 0x1f)
 #define RB				((op >> 11) & 0x1f)
 #define RC				((op >> 6) & 0x1f)
+
 #define MB				((op >> 6) & 0x1f)
 #define ME				((op >> 1) & 0x1f)
 #define SH				((op >> 11) & 0x1f)
@@ -38,6 +40,36 @@
 #define EVPR			(ppc.evpr)
 #define EXIER			(ppc.exier)
 #define EXISR			(ppc.exisr)
+#define DEC				(ppc.dec)
+
+
+// Stuff added for the 6xx
+#define FPR(x)			(ppc.fpr[x])
+#define FM				((op >> 17) & 0xFF)
+#define SPRF			(((op >> 6) & 0x3E0) | ((op >> 16) & 0x1F))
+
+
+#define CHECK_SUPERVISOR()			\
+	if((ppc.msr & 0x4000) != 0){	\
+	}
+
+#define CHECK_FPU_AVAILABLE()		\
+	if((ppc.msr & 0x2000) == 0){	\
+	}
+
+static UINT32		ppc_field_xlat[256];
+
+
+
+#define FPSCR_FX		0x80000000
+#define FPSCR_FEX		0x40000000
+#define FPSCR_VX		0x20000000
+#define FPSCR_OX		0x10000000
+#define FPSCR_UX		0x08000000
+#define FPSCR_ZX		0x04000000
+#define FPSCR_XX		0x02000000
+
+
 
 #define BITMASK_0(n)	(UINT32)(((UINT64)1 << n) - 1)
 #define CRBIT(x)		((ppc.cr[x / 4] & (1 << (3 - (x % 4)))) ? 1 : 0)
@@ -59,6 +91,7 @@
 #define MSR_PR			0x00004000
 #define MSR_ME			0x00001000
 #define MSR_DE			0x00000200
+#define MSR_IP			0x00000040
 #define MSR_PE			0x00000008
 #define MSR_PX			0x00000004
 #define MSR_LE			0x00000001
@@ -85,6 +118,10 @@ typedef struct {
 	UINT8 sptb;
 } SPU_REGS;
 
+typedef union {
+	UINT64	id;
+	double	fd;
+} FPR;
 
 
 typedef struct {
@@ -121,6 +158,16 @@ typedef struct {
 	UINT64 tb;			/* 56-bit timebase register */
 
 	int (*irq_callback)(int irqline);
+
+
+	// STUFF added for the 6xx series 
+	UINT32 dec;
+	UINT32 fpscr;
+	
+	FPR	fpr[32];
+	UINT32 sr[16];
+
+	int is603;	
 } PPC_REGS;
 
 
@@ -137,7 +184,8 @@ static int ppc_icount;
 static PPC_REGS ppc;
 static UINT32 ppc_rotate_mask[32][32];
 
-#define ROPCODE(pc)		cpu_readop32(pc)
+#define ROPCODE(pc)			cpu_readop32(pc)
+#define ROPCODE64(pc)		cpu_readop64(DWORD_XOR_BE(pc))
 
 INLINE void SET_CR0(INT32 rd)
 {
@@ -151,6 +199,11 @@ INLINE void SET_CR0(INT32 rd)
 
 	if( XER & XER_SO )
 		CR(0) |= 0x1;
+}
+
+INLINE void SET_CR1(void)
+{
+	CR(1) = (ppc.fpscr >> 28) & 0xf;
 }
 
 INLINE void SET_ADD_OV(UINT32 rd, UINT32 ra, UINT32 rb)
@@ -207,7 +260,7 @@ INLINE UINT32 check_condition_code(UINT32 bo, UINT32 bi)
 
 INLINE void ppc_set_spr(int spr, UINT32 value)
 {
-	switch(spr)
+	switch (spr)
 	{
 		case SPR_LR:		LR = value; break;
 		case SPR_CTR:		CTR = value; break;
@@ -227,10 +280,42 @@ INLINE void ppc_set_spr(int spr, UINT32 value)
 		case SPR_SPRG2:		ppc.spr[SPR_SPRG2] = value; break;
 		case SPR_SPRG3:		ppc.spr[SPR_SPRG3] = value; break;
 
-		default:
-			osd_die("ppc: set_spr: Unimplemented SPR %X\n", spr);
+		case SPR_DEC:
+
+			if((value & 0x80000000) && !(ppc.spr[SPR_DEC] & 0x80000000))
+			{
+				/* trigger interrupt */
+		
+				printf("ERROR: set_spr to DEC triggers IRQ\n");
+				exit(1);
+			}
+
+			DEC = value;
 			break;
+
+		case SPR_PVR:
+			return;
+
+		case SPR_TSR:
+			ppc.spr[spr] &= ~value; // 1 clears, 0 does nothing
+			return;
+
+		case SPR_TBL_W:
+		case SPR_TBL_R: // special 603e case
+			ppc.tb &= U64(0xFFFFFFFF00000000);
+			ppc.tb |= (UINT64)(value);
+			return;
+
+		case SPR_TBU_R:
+		case SPR_TBU_W: // special 603e case
+			osd_die("ERROR: set_spr - TBU_W = %08X\n", value);
+			break;
+
+		default:
+			ppc.spr[spr] = value;
+			break ;
 	}
+
 }
 
 INLINE UINT32 ppc_get_spr(int spr)
@@ -256,19 +341,56 @@ INLINE UINT32 ppc_get_spr(int spr)
 		case SPR_SPRG3:		return ppc.spr[SPR_SPRG3];
 		case SPR_PVR:		return ppc.pvr;
 
-		default:
-			osd_die("ppc: get_spr: Unimplemented SPR %X\n", spr);
-			break;
+		case SPR_DBSR:		return ppc.spr[SPR_DBSR];
 	}
+
+#if (HAS_PPC403)
+	if (!ppc.is603)
+	{
+		switch (spr)
+		{
+			case SPR_TBLO: return (ppc.tb & 0xffffffff); break;
+			case SPR_TBHI: return ((ppc.tb >> 32) & 0xffffff); break;
+			default: 
+				return(ppc.spr[spr]);
+				break;
+		}
+	}
+#endif
+
+#if (HAS_PPC603)
+	if (ppc.is603)
+	{
+		switch (spr)
+		{
+			case SPR_TBL_R:
+				osd_die("ppc: get_spr: TBL_R \n");
+				break;
+
+			case SPR_TBU_R:
+				osd_die("ppc: get_spr: TBU_R \n");
+				break;
+
+			case SPR_TBL_W:
+				osd_die("ppc: get_spr: TBL_W \n");
+				break;
+
+			case SPR_TBU_W:
+				osd_die("ppc: get_spr: TBU_W \n");
+				break;
+
+			default: 
+				return(ppc.spr[spr]);
+				break;
+		}
+	}
+#endif
 	return 0;
 }
 
 INLINE void ppc_set_msr(UINT32 value)
 {
 	/* TODO */
-	if( value & 0x8000 )
-		logerror("ppc: External IRQ enable\n");
-
 	if( value & (MSR_ILE | MSR_LE) )
 		osd_die("ppc: set_msr: little_endian mode not supported !\n");
 	MSR = value;
@@ -308,10 +430,18 @@ static void (* optable[64])(UINT32);
 #include "ppc403.c"
 #endif
 
+#if (HAS_PPC603)
+#include "ppc603.c"
+#endif
 
 INLINE UINT8 READ8(UINT32 a)
 {
-	if( a >= 0x40000000 && a <= 0x4000000f ) {		/* Serial Port */
+	if (ppc.is603)
+	{
+		return program_read_byte_64be(a);
+	}
+
+	if(a >= 0x40000000 && a <= 0x4000000f ) {		/* Serial Port */
 		return ppc403_spu_r(a);
 	} else {
 		return program_read_byte_32be(a);
@@ -320,20 +450,58 @@ INLINE UINT8 READ8(UINT32 a)
 
 INLINE UINT16 READ16(UINT32 a)
 {
-	if( a & 0x1 )
+	if (ppc.is603) {
+		if( a & 0x1 ) {
+			return (program_read_byte_64be(a+0) << 8) | (program_read_byte_64be(a+1) << 0);
+		}
+		return program_read_word_64be(a);
+	}
+
+	if( a & 0x1 ) {
 		osd_die("ppc: Unaligned read16 %08X\n", a);
-	return program_read_word_32be(a);
+	} else {
+		return program_read_word_32be(a);
+	}
 }
 
 INLINE UINT32 READ32(UINT32 a)
 {
-	if( a & 0x3 )
+	if (ppc.is603) {
+		if( a & 0x3 ) {
+			return (program_read_byte_64be(a+0) << 24) | (program_read_byte_64be(a+1) << 16) |
+				   (program_read_byte_64be(a+2) << 8) | (program_read_byte_64be(a+3) << 0);
+		}
+		return program_read_dword_64be(a);
+	}
+
+	if( a & 0x3 ) {
 		osd_die("ppc: Unaligned read32 %08X\n", a);
-	return program_read_dword_32be(a);
+	} else {
+		return program_read_dword_32be(a);
+	}
 }
+
+INLINE UINT64 READ64(UINT32 a)
+{
+#if (HAS_PPC603)
+	if( a & 0x7 ) {
+		return ((UINT64)READ32(a+0) << 32) | (UINT64)(READ32(a+4));
+	}
+	return program_read_qword_64be(a);
+#else
+	return 0
+#endif
+}
+
 
 INLINE void WRITE8(UINT32 a, UINT8 d)
 {
+	if (ppc.is603)
+	{
+		program_write_byte_64be(a, d&0xff);
+		return;
+	}
+
 	if( a >= 0x40000000 && a <= 0x4000000f ) {		/* Serial Port */
 		ppc403_spu_w(a, d);
 	} else {
@@ -343,6 +511,17 @@ INLINE void WRITE8(UINT32 a, UINT8 d)
 
 INLINE void WRITE16(UINT32 a, UINT16 d)
 {
+	if (ppc.is603)
+	{
+		if( a & 0x1 ) {
+			program_write_byte_64be(a+0, (UINT8)(d >> 8));
+			program_write_byte_64be(a+1, (UINT8)(d));
+			return;
+		}
+		program_write_word_64be(a, d);
+		return;
+	}
+
 	if( a & 0x1 ) {
 		osd_die("ppc: Unaligned write16 %08X, %04X\n", a, d);
 	} else {
@@ -352,6 +531,19 @@ INLINE void WRITE16(UINT32 a, UINT16 d)
 
 INLINE void WRITE32(UINT32 a, UINT32 d)
 {
+	if (ppc.is603)
+	{
+		if( a & 0x3 ) {
+			program_write_byte_64be(a+0, (UINT8)(d >> 24));
+			program_write_byte_64be(a+1, (UINT8)(d >> 16));
+			program_write_byte_64be(a+2, (UINT8)(d >> 8));
+			program_write_byte_64be(a+3, (UINT8)(d >> 0));
+			return;
+		}
+		program_write_dword_64be(a, d);
+		return;
+	}
+
 	if( a & 0x3 ) {
 		osd_die("ppc: Unaligned write32 %08X, %08X\n", a, d);
 	} else {
@@ -362,6 +554,20 @@ INLINE void WRITE32(UINT32 a, UINT32 d)
 		}
 		program_write_dword_32be(a, d);
 	}
+}
+
+INLINE void WRITE64(UINT32 a, UINT64 d)
+{
+#if (HAS_PPC603)
+	if( a & 0x7 ) {
+		WRITE32(a+0, (UINT32)(d >> 32));
+		WRITE32(a+4, (UINT32)(d));
+		return;
+	}
+	program_write_qword_64be(a, d);
+#else
+	return 0;
+#endif
 }
 
 /********************************************************************/
@@ -423,6 +629,8 @@ void ppc_init(void)
 	}
 }
 
+
+// !!! probably should move this stuff elsewhere !!!
 static void ppc403_init(void)
 {
 	ppc_init();
@@ -435,12 +643,116 @@ static void ppc403_init(void)
 	optable31[998] = ppc_icread;
 	optable31[323] = ppc_mfdcr;
 	optable31[451] = ppc_mtdcr;
-	optable19[51] = ppc_rfci;
 	optable31[131] = ppc_wrtee;
 	optable31[163] = ppc_wrteei;
+
+	// !!! why is rfci here !!!
+	optable19[51] = ppc_rfci;
+
+	ppc.is603 = 0;
 }
 
 static void ppc403_exit(void)
+{
+
+}
+
+
+static void ppc603_init(void)
+{
+	int i ;
+	
+	ppc_init() ;
+
+	optable[48] = ppc_lfs;
+	optable[49] = ppc_lfsu;
+	optable[50] = ppc_lfd;
+	optable[51] = ppc_lfdu;
+	optable[52] = ppc_stfs;
+	optable[53] = ppc_stfsu;
+	optable[54] = ppc_stfd;
+	optable[55] = ppc_stfdu;
+	optable31[631] = ppc_lfdux;
+	optable31[599] = ppc_lfdx;
+	optable31[567] = ppc_lfsux;
+	optable31[535] = ppc_lfsx;
+	optable31[595] = ppc_mfsr;
+	optable31[659] = ppc_mfsrin;
+	optable31[371] = ppc_mftb;
+	optable31[210] = ppc_mtsr;
+	optable31[242] = ppc_mtsrin;
+	optable31[758] = ppc_dcba;
+	optable31[759] = ppc_stfdux;
+	optable31[727] = ppc_stfdx;
+	optable31[983] = ppc_stfiwx;
+	optable31[695] = ppc_stfsux;
+	optable31[663] = ppc_stfsx;
+	optable31[370] = ppc_tlbia;
+	optable31[306] = ppc_tlbie;
+	optable31[566] = ppc_tlbsync;
+	optable31[310] = ppc_eciwx;
+	optable31[438] = ppc_ecowx;
+
+	optable63[264] = ppc_fabsx;
+	optable63[21] = ppc_faddx;
+	optable63[32] = ppc_fcmpo;
+	optable63[0] = ppc_fcmpu;
+	optable63[14] = ppc_fctiwx;
+	optable63[15] = ppc_fctiwzx;
+	optable63[18] = ppc_fdivx;
+	optable63[72] = ppc_fmrx;
+	optable63[136] = ppc_fnabsx;
+	optable63[40] = ppc_fnegx;
+	optable63[12] = ppc_frspx;
+	optable63[26] = ppc_frsqrtex;
+	optable63[22] = ppc_fsqrtx;
+	optable63[20] = ppc_fsubx;
+	optable63[583] = ppc_mffsx;
+	optable63[70] = ppc_mtfsb0x;
+	optable63[38] = ppc_mtfsb1x;
+	optable63[711] = ppc_mtfsfx;
+	optable63[134] = ppc_mtfsfix;
+	optable63[64] = ppc_mcrfs;
+
+	optable59[21] = ppc_faddsx;
+	optable59[18] = ppc_fdivsx;
+	optable59[24] = ppc_fresx;
+	optable59[22] = ppc_fsqrtsx;
+	optable59[20] = ppc_fsubsx;
+
+	for(i = 0; i < 32; i++)
+	{
+		optable63[i * 32 | 29] = ppc_fmaddx;
+		optable63[i * 32 | 28] = ppc_fmsubx;
+		optable63[i * 32 | 25] = ppc_fmulx;
+		optable63[i * 32 | 31] = ppc_fnmaddx;
+		optable63[i * 32 | 30] = ppc_fnmsubx;
+		optable63[i * 32 | 23] = ppc_fselx;
+
+		optable59[i * 32 | 29] = ppc_fmaddsx;
+		optable59[i * 32 | 28] = ppc_fmsubsx;
+		optable59[i * 32 | 25] = ppc_fmulsx;
+		optable59[i * 32 | 31] = ppc_fnmaddsx;
+		optable59[i * 32 | 30] = ppc_fnmsubsx;
+	}
+
+	for(i = 0; i < 256; i++)
+	{
+		ppc_field_xlat[i] =
+			((i & 0x80) ? 0xF0000000 : 0) |
+			((i & 0x40) ? 0x0F000000 : 0) |
+			((i & 0x20) ? 0x00F00000 : 0) |
+			((i & 0x10) ? 0x000F0000 : 0) |
+			((i & 0x08) ? 0x0000F000 : 0) |
+			((i & 0x04) ? 0x00000F00 : 0) |
+			((i & 0x02) ? 0x000000F0 : 0) |
+			((i & 0x01) ? 0x0000000F : 0);
+	}
+
+	ppc.is603 = 1;
+}
+
+static void ppc603_exit(void)
 {
 
 }
@@ -508,6 +820,15 @@ static offs_t ppc_dasm(char *buffer, offs_t pc)
 #endif
 }
 
+static offs_t ppc_dasm64(char *buffer, offs_t pc)
+{
+#ifdef MAME_DEBUG
+	return ppc_dasm_one(buffer, pc, ROPCODE64(pc));
+#else
+	sprintf(buffer, "$%08X", (UINT32)ROPCODE64(pc));
+	return 4;
+#endif
+}
 
 /**************************************************************************
  * Generic set_info
@@ -578,6 +899,20 @@ void ppc403_set_info(UINT32 state, union cpuinfo *info)
 }
 #endif
 
+#if (HAS_PPC603)
+void ppc603_set_info(UINT32 state, union cpuinfo *info)
+{
+	if (state >= CPUINFO_INT_INPUT_STATE && state <= CPUINFO_INT_INPUT_STATE + 5)
+	{
+		ppc603_set_irq_line(state-CPUINFO_INT_INPUT_STATE, info->i);
+		return;
+	}
+	switch(state)
+	{
+		default:	ppc_set_info(state, info);		break;
+	}
+}
+#endif
 
 void ppc_get_info(UINT32 state, union cpuinfo *info)
 {
@@ -652,7 +987,6 @@ void ppc_get_info(UINT32 state, union cpuinfo *info)
 
 
 		/* --- the following bits of info are returned as pointers to data or functions --- */
-		case CPUINFO_PTR_SET_INFO:						info->setinfo = ppc403_set_info;		break;
 		case CPUINFO_PTR_GET_CONTEXT:					info->getcontext = ppc_get_context;		break;
 		case CPUINFO_PTR_SET_CONTEXT:					info->setcontext = ppc_set_context;		break;
 		case CPUINFO_PTR_INIT:							info->init = ppc403_init;				break;
@@ -727,6 +1061,7 @@ void ppc403_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_ENDIANNESS:					info->i = CPU_IS_BE;					break;
 		
 		/* --- the following bits of info are returned as pointers to data or functions --- */
+		case CPUINFO_PTR_SET_INFO:						info->setinfo = ppc403_set_info;		break;
 		case CPUINFO_PTR_INIT:							info->init = ppc403_init;				break;
 		case CPUINFO_PTR_RESET:							info->reset = ppc403_reset;				break;
 		case CPUINFO_PTR_EXIT:							info->exit = ppc403_exit;				break;
@@ -734,6 +1069,34 @@ void ppc403_get_info(UINT32 state, union cpuinfo *info)
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
 		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "PPC403"); break;
+
+		default:	ppc_get_info(state, info);		break;
+	}
+}
+#endif
+
+#if (HAS_PPC603)
+void ppc603_get_info(UINT32 state, union cpuinfo *info)
+{
+	switch(state)
+	{
+		/* --- the following bits of info are returned as 64-bit signed integers --- */
+		case CPUINFO_INT_INPUT_LINES:					info->i = 5;				break;
+		case CPUINFO_INT_ENDIANNESS:					info->i = CPU_IS_BE;			break;
+
+		case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_PROGRAM:	info->i = 64;					break;
+		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_PROGRAM: info->i = 32;					break;
+		
+		/* --- the following bits of info are returned as pointers to data or functions --- */
+		case CPUINFO_PTR_SET_INFO:					info->setinfo = ppc603_set_info;		break;
+		case CPUINFO_PTR_INIT:						info->init = ppc603_init;				break;
+		case CPUINFO_PTR_RESET:						info->reset = ppc603_reset;				break;
+		case CPUINFO_PTR_EXIT:						info->exit = ppc603_exit;				break;
+		case CPUINFO_PTR_EXECUTE:					info->execute = ppc603_execute;			break;
+		case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = ppc_dasm64;			break;
+
+		/* --- the following bits of info are returned as NULL-terminated strings --- */
+		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "PPC603"); break;
 
 		default:	ppc_get_info(state, info);		break;
 	}

@@ -541,7 +541,7 @@ static void draw_raw(UINT16 *base, UINT16 color)
 					{
 						int pixel = rowsrc[x >> 8];
 						if (pixel != transparent_pen)
-							dstbase[sx >> 8] = pixel | color;
+							dstbase[((sx >> 8) & vram_xmask)] = pixel | color;
 					}
 				}
 				else
@@ -557,7 +557,7 @@ static void draw_raw(UINT16 *base, UINT16 color)
 					{
 						int pixel = rowsrc[x >> 8];
 						if (pixel != transparent_pen)
-							dstbase[sx >> 8] = pixel | color;
+							dstbase[((sx >> 8) & vram_xmask)] = pixel | color;
 					}
 				}
 			}

@@ -986,7 +986,8 @@ static struct NAMCONAinterface NAMCONA_interface =
 {
 	4*8000,
 	REGION_CPU1,
-	100
+	100,
+	0x70000/2
 };
 
 /* cropped at sides */
@@ -1028,12 +1029,13 @@ MACHINE_DRIVER_END
 
 
 static void
-init_namcona1( void )
+init_namcona1( int gametype )
 {
 	data16_t *pMem = (data16_t *)memory_region( REGION_CPU1 );
 	pMem[0] = 0x0007; pMem[1] = 0xfffc; /* (?) stack */
 	pMem[2] = 0x00c0; pMem[3] = 0x0000; /* reset vector */
 
+	namcona1_gametype = gametype;
 	mpBank0 = &pMem[0x80000/2];
 	mpBank1 = mpBank0 +  0x200000/2;
 
@@ -1043,19 +1045,24 @@ init_namcona1( void )
 	mCoinCount[0] = mCoinCount[1] = mCoinCount[2] = mCoinCount[3] = 0;
 	mCoinState = 0;
 	mEnableInterrupts = 0;
+
+	if (namcona1_gametype == NAMCO_KNCKHEAD)
+		NAMCONA_interface.metadata_offset = 0x10000/2;
+	else
+		NAMCONA_interface.metadata_offset = 0x70000/2;
 }
 
-DRIVER_INIT( bkrtmaq ){		init_namcona1(); namcona1_gametype = NAMCO_BKRTMAQ; }
-DRIVER_INIT( cgangpzl ){	init_namcona1(); namcona1_gametype = NAMCO_CGANGPZL; }
-DRIVER_INIT( emeralda ){	init_namcona1(); namcona1_gametype = NAMCO_EMERALDA; }
-DRIVER_INIT( exbania ){		init_namcona1(); namcona1_gametype = NAMCO_EXBANIA; }
-DRIVER_INIT( fa ){			init_namcona1(); namcona1_gametype = NAMCO_FA; }
-DRIVER_INIT( knckhead ){	init_namcona1(); namcona1_gametype = NAMCO_KNCKHEAD; }
-DRIVER_INIT( numanath ){	init_namcona1(); namcona1_gametype = NAMCO_NUMANATH; }
-DRIVER_INIT( quiztou ){		init_namcona1(); namcona1_gametype = NAMCO_QUIZTOU; }
-DRIVER_INIT( swcourt ){		init_namcona1(); namcona1_gametype = NAMCO_SWCOURT; }
-DRIVER_INIT( tinklpit ){	init_namcona1(); namcona1_gametype = NAMCO_TINKLPIT; }
-DRIVER_INIT( xday2 ){		init_namcona1(); namcona1_gametype = NAMCO_XDAY2; }
+DRIVER_INIT( bkrtmaq ){		init_namcona1(NAMCO_BKRTMAQ); }
+DRIVER_INIT( cgangpzl ){	init_namcona1(NAMCO_CGANGPZL); }
+DRIVER_INIT( emeralda ){	init_namcona1(NAMCO_EMERALDA); }
+DRIVER_INIT( exbania ){		init_namcona1(NAMCO_EXBANIA); }
+DRIVER_INIT( fa ){	init_namcona1(NAMCO_FA); }
+DRIVER_INIT( knckhead ){	init_namcona1(NAMCO_KNCKHEAD); }
+DRIVER_INIT( numanath ){	init_namcona1(NAMCO_NUMANATH); }
+DRIVER_INIT( quiztou ){		init_namcona1(NAMCO_QUIZTOU); }
+DRIVER_INIT( swcourt ){		init_namcona1(NAMCO_SWCOURT); }
+DRIVER_INIT( tinklpit ){	init_namcona1(NAMCO_TINKLPIT); }
+DRIVER_INIT( xday2 ){		init_namcona1(NAMCO_XDAY2); }
 
 ROM_START( bkrtmaq )
 	ROM_REGION( 0xa80000, REGION_CPU1, 0 )

@@ -671,7 +671,7 @@ static struct DACinterface lazercmd_DAC_interface =
 static MACHINE_DRIVER_START( lazercmd )
 
 	/* basic machine hardware */
-	MDRV_CPU_ADD(S2650,8064000/12/3)				/* 672 kHz? */
+	MDRV_CPU_ADD(S2650,8064000/12)				/* 672 kHz? */
 /*			Main Clock is 8MHz divided by 12
 			but memory and IO access is only possible
 			within the line and frame blanking period
@@ -704,7 +704,7 @@ MACHINE_DRIVER_END
 static MACHINE_DRIVER_START( medlanes )
 
 	/* basic machine hardware */
-	MDRV_CPU_ADD(S2650,8064000/12/3)				/* 672 kHz? */
+	MDRV_CPU_ADD(S2650,8064000/12)				/* 672 kHz? */
 /*			Main Clock is 8MHz divided by 12
 			but memory and IO access is only possible
 			within the line and frame blanking period
@@ -736,7 +736,7 @@ MACHINE_DRIVER_END
 static MACHINE_DRIVER_START( bbonk )
 
 	/* basic machine hardware */
-	MDRV_CPU_ADD(S2650,8064000/12/3)				/* 672 kHz? */
+	MDRV_CPU_ADD(S2650,8064000/12)				/* 672 kHz? */
 /*			Main Clock is 8MHz divided by 12
 			but memory and IO access is only possible
 			within the line and frame blanking period

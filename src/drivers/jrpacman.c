@@ -4,6 +4,7 @@
 
     Games supported:
 		* Jr. Pac-Man
+		* Jr. Pac-Man (on different hardware, maybe bootleg)
 	
 	Known issues:
 		* none
@@ -134,6 +135,29 @@ static ADDRESS_MAP_START( main_map, ADDRESS_SPACE_PROGRAM, 8 )
 ADDRESS_MAP_END
 
 
+static ADDRESS_MAP_START( jrpacmbl_map, ADDRESS_SPACE_PROGRAM, 8 ) /* memory map is similar to Pengo */
+	AM_RANGE(0x0000, 0x7fff) AM_ROM
+	AM_RANGE(0x8000, 0x87ff) AM_READWRITE(MRA8_RAM, jrpacman_videoram_w) AM_BASE(&videoram) AM_SIZE(&videoram_size)
+	AM_RANGE(0x8800, 0x8fef) AM_RAM
+	AM_RANGE(0x8ff0, 0x8fff) AM_RAM AM_BASE(&spriteram) AM_SIZE(&spriteram_size)
+	AM_RANGE(0x9000, 0x901f) AM_WRITE(pengo_sound_w) AM_BASE(&pengo_soundregs)
+	AM_RANGE(0x9020, 0x902f) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram_2)
+	AM_RANGE(0x9030, 0x9030) AM_WRITE(MWA8_RAM) AM_BASE(&jrpacman_scroll)
+	AM_RANGE(0x9040, 0x904f) AM_READ(input_port_2_r)	/* DSW1 */
+	AM_RANGE(0x9040, 0x9040) AM_WRITE(interrupt_enable_w)
+	AM_RANGE(0x9041, 0x9041) AM_WRITE(pengo_sound_enable_w)
+	AM_RANGE(0x9042, 0x9042) AM_WRITE(jrpacman_palettebank_w) AM_BASE(&jrpacman_palettebank)
+	AM_RANGE(0x9043, 0x9043) AM_WRITE(jrpacman_flipscreen_w)
+	AM_RANGE(0x9044, 0x9044) AM_WRITE(MWA8_RAM) AM_BASE(&jrpacman_bgpriority)
+	AM_RANGE(0x9045, 0x9045) AM_WRITE(MWA8_RAM) AM_BASE(&jrpacman_spritebank)
+	AM_RANGE(0x9046, 0x9046) AM_WRITE(jrpacman_colortablebank_w) AM_BASE(&jrpacman_colortablebank)
+	AM_RANGE(0x9047, 0x9047) AM_WRITE(jrpacman_charbank_w) AM_BASE(&jrpacman_charbank)
+	AM_RANGE(0x9070, 0x9070) AM_WRITE(MWA8_NOP)
+	AM_RANGE(0x9080, 0x90bf) AM_READ(input_port_1_r)	/* IN1 */
+	AM_RANGE(0x90c0, 0x90ff) AM_READ(input_port_0_r)	/* IN0 */
+ADDRESS_MAP_END
+
+
 static ADDRESS_MAP_START( port_map, ADDRESS_SPACE_IO, 8 )
 	AM_RANGE(0, 0) AM_WRITE(interrupt_vector_w)
 ADDRESS_MAP_END
@@ -152,8 +176,8 @@ INPUT_PORTS_START( jrpacman )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_4WAY
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_4WAY
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_4WAY
-	PORT_BIT( 0x10, 0x10, IPT_DIPSWITCH_NAME ) PORT_NAME("Rack Test (Cheat)") PORT_CODE(KEYCODE_F1) //Funny looking, I know
-	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )// But this is currently the only way to assign a key to a dipswitch
+	PORT_BIT( 0x10, 0x10, IPT_DIPSWITCH_NAME ) PORT_NAME("Rack Test (Cheat)") PORT_CODE(KEYCODE_F1)
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN2 )
@@ -193,6 +217,52 @@ INPUT_PORTS_START( jrpacman )
 	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+INPUT_PORTS_END
+
+
+INPUT_PORTS_START( jrpacmbl )
+	PORT_START_TAG("IN0")
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_4WAY
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_4WAY
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_4WAY
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT )	PORT_4WAY
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN3 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START_TAG("IN1")
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_4WAY PORT_COCKTAIL
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_4WAY PORT_COCKTAIL
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_4WAY PORT_COCKTAIL
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_4WAY PORT_COCKTAIL
+	PORT_SERVICE( 0x10, IP_ACTIVE_LOW )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START_TAG("DSW0")
+	PORT_DIPNAME( 0x03, 0x01, DEF_STR( Coinage ) )
+	PORT_DIPSETTING(    0x03, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Free_Play ) )
+	PORT_DIPNAME( 0x0c, 0x08, DEF_STR( Lives ) )
+	PORT_DIPSETTING(    0x00, "1" )
+	PORT_DIPSETTING(    0x04, "2" )
+	PORT_DIPSETTING(    0x08, "3" )
+	PORT_DIPSETTING(    0x0c, "5" )
+	PORT_DIPNAME( 0x30, 0x00, DEF_STR( Bonus_Life ) )
+	PORT_DIPSETTING(    0x00, "10000" )
+	PORT_DIPSETTING(    0x10, "15000" )
+	PORT_DIPSETTING(    0x20, "20000" )
+	PORT_DIPSETTING(    0x30, "30000" )
+	PORT_BIT( 0x40, 0x40, IPT_DIPSWITCH_NAME ) PORT_NAME("Rack Test (Cheat)") PORT_CODE(KEYCODE_F1)
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Cocktail ) )
 INPUT_PORTS_END
 
 
@@ -263,7 +333,7 @@ static struct namco_interface namco_interface =
 static MACHINE_DRIVER_START( jrpacman )
 
 	/* basic machine hardware */
-	MDRV_CPU_ADD(Z80, 18432000/6)	/* 3.072 MHz */
+	MDRV_CPU_ADD_TAG("main", Z80, 18432000/6)	/* 3.072 MHz */
 	MDRV_CPU_PROGRAM_MAP(main_map,0)
 	MDRV_CPU_IO_MAP(port_map,0)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
@@ -288,6 +358,16 @@ static MACHINE_DRIVER_START( jrpacman )
 MACHINE_DRIVER_END
 
 
+static MACHINE_DRIVER_START( jrpacmbl )
+
+	MDRV_IMPORT_FROM(jrpacman)
+
+	/* basic machine hardware */
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_PROGRAM_MAP(jrpacmbl_map,0)
+MACHINE_DRIVER_END
+
+
 
 /*************************************
  *
@@ -302,6 +382,34 @@ ROM_START( jrpacman )
 	ROM_LOAD( "jrp8h.bin",    0x8000, 0x2000, CRC(35f1fc6e) SHA1(b84b34560b9aae18b24274712b052283faa01730) )
 	ROM_LOAD( "jrp8j.bin",    0xa000, 0x2000, CRC(9737099e) SHA1(07d912a61824323c8fc1b8bd0da89172d4f70b91) )
 	ROM_LOAD( "jrp8k.bin",    0xc000, 0x2000, CRC(5252dd97) SHA1(18bd4d5381656120e4242811006c20776774de4d) )
+
+	ROM_REGION( 0x2000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "jrp2c.bin",    0x0000, 0x2000, CRC(0527ff9b) SHA1(37fe3176b0d125b7d629e108e7ebdc1196e4a132) )
+
+	ROM_REGION( 0x2000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_LOAD( "jrp2e.bin",    0x0000, 0x2000, CRC(73477193) SHA1(f00a488958ea0438642d345693787bdf771219ad) )
+
+	ROM_REGION( 0x0300, REGION_PROMS, 0 )
+	ROM_LOAD( "jrprom.9e",    0x0000, 0x0100, CRC(029d35c4) SHA1(d9aa2dc442e9ac36cf3c346b9fb1aa745eaf3cb8) ) /* palette low bits */
+	ROM_LOAD( "jrprom.9f",    0x0100, 0x0100, CRC(eee34a79) SHA1(7561f8ccab2af85c111af6a02af6986eb67503e5) ) /* palette high bits */
+	ROM_LOAD( "jrprom.9p",    0x0200, 0x0100, CRC(9f6ea9d8) SHA1(62cf15513934d34641433c891a7f73bef82e2fb1) ) /* color lookup table */
+
+	ROM_REGION( 0x0200, REGION_SOUND1, 0 )	/* sound prom */
+	ROM_LOAD( "jrprom.7p",    0x0000, 0x0100, CRC(a9cc86bf) SHA1(bbcec0570aeceb582ff8238a4bc8546a23430081) )
+	ROM_LOAD( "jrprom.5s",    0x0100, 0x0100, CRC(77245b66) SHA1(0c4d0bee858b97632411c440bea6948a74759746) )	/* timing - not used */
+ROM_END
+
+
+ROM_START( jrpacmbl )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
+	ROM_LOAD( "05.ic8",       0x0000, 0x1000, CRC(98049df4) SHA1(4ea022c8664dd9ec185f9d5990a548e867e5071f) )
+	ROM_LOAD( "01.ic7",       0x1000, 0x1000, CRC(b7a5cef8) SHA1(c315970f0dd698a1036df12502e3fe3ec7f81d53) )
+	ROM_LOAD( "06.ic6",       0x2000, 0x1000, CRC(ecf39785) SHA1(9e47f29f4cadb5d8fd3790c7e16c653fc0a96a88) )
+	ROM_LOAD( "02.ic5",       0x3000, 0x1000, CRC(c090145c) SHA1(918d32267379b99f898fdcd987b3a65f9ec4f088) )
+	ROM_LOAD( "07.ic4",       0x4000, 0x1000, CRC(659b9956) SHA1(5576d4d95ced804e8abdd870662574bfdd6df18f) )
+	ROM_LOAD( "03.ic3",       0x5000, 0x1000, CRC(0ebcfac9) SHA1(4da01169768e35601e04df7004ae7496f08a709a) )
+	ROM_LOAD( "08.ic2",       0x6000, 0x1000, CRC(0624ffd6) SHA1(8209ab633242f2c8952a5afe2b7cd399bab08f0a) )
+	ROM_LOAD( "04.ic1",       0x7000, 0x1000, CRC(d3a8448c) SHA1(f58aed6ebdb45ed38613b336a517b87745831e24) )
 
 	ROM_REGION( 0x2000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "jrp2c.bin",    0x0000, 0x2000, CRC(0527ff9b) SHA1(37fe3176b0d125b7d629e108e7ebdc1196e4a132) )
@@ -380,4 +488,5 @@ static DRIVER_INIT( jrpacman )
  *
  *************************************/
 
-GAME( 1983, jrpacman, 0, jrpacman, jrpacman, jrpacman, ROT90, "Bally Midway", "Jr. Pac-Man" )
+GAME ( 1983, jrpacman, 0,        jrpacman, jrpacman, jrpacman, ROT90, "Bally Midway", "Jr. Pac-Man" )
+GAMEX( 1983, jrpacmbl, jrpacman, jrpacmbl, jrpacmbl,        0, ROT90, "Bally Midway", "Jr. Pac-Man (bootleg?)", GAME_NO_COCKTAIL )

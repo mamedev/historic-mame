@@ -183,44 +183,7 @@ c760	rom bank
 - incomplete DSW's
 - Spriteram low 0x300 bytes (priority?)
 
-***************************************************************************/
-
-#include "driver.h"
-#include "cpu/z80/z80.h"
-
-unsigned char *devram, *sharedram;
-int soundlatch_status, soundlatch2_status;
-
-/* Variables that vidhrdw has access to */
-extern unsigned char *spriteram;
-int flipscreen;
-
-/* Variables defined in vidhrdw */
-extern unsigned char *airbustr_bgram, *airbustr_fgram;
-
-/* Functions defined in vidhrdw */
-WRITE8_HANDLER( airbustr_bgram_w );
-WRITE8_HANDLER( airbustr_fgram_w );
-WRITE8_HANDLER( airbustr_scrollregs_w );
-extern VIDEO_START( airbustr );
-extern VIDEO_UPDATE( airbustr );
-
-/* Debug stuff (bound to go away sometime) */
-int u1, u2, u3, u4;
-
-
-static WRITE8_HANDLER( bankswitch_w );
-static WRITE8_HANDLER( bankswitch2_w );
-static WRITE8_HANDLER( sound_bankswitch_w );
-
-static MACHINE_INIT( airbustr )
-{
-	soundlatch_status = soundlatch2_status = 0;
-	bankswitch_w(0,2);
-	bankswitch2_w(0,2);
-	sound_bankswitch_w(0,2);
-}
-
+*/
 
 /*
 **
@@ -231,109 +194,6 @@ static MACHINE_INIT( airbustr )
 /*	Runs in IM 2	fd-fe	address of int: 0x38
 					ff-100	address of int: 0x16	*/
 
-INTERRUPT_GEN( airbustr_interrupt )
-{
-static int addr = 0xff;
-
-	addr ^= 0x02;
-	cpunum_set_input_line_and_vector(0, 0, HOLD_LINE, addr);
-}
-
-
-static READ8_HANDLER( sharedram_r )	{ return sharedram[offset]; }
-static WRITE8_HANDLER( sharedram_w )	{ sharedram[offset] = data; }
-
-
-/* There's an MCU here, possibly */
-READ8_HANDLER( devram_r )
-{
-	switch (offset)
-	{
-		/* Reading efe0 probably resets a watchdog mechanism
-		   that would reset the main cpu. We avoid this and patch
-		   the rom instead (main cpu has to be reset once at startup) */
-		case 0xfe0:
-			return 0/*watchdog_reset_r(0)*/;
-			break;
-
-		/* Reading a word at eff2 probably yelds the product
-   		   of the words written to eff0 and eff2 */
-		case 0xff2:
-		case 0xff3:
-		{
-			int	x = (devram[0xff0] + devram[0xff1] * 256) *
-					(devram[0xff2] + devram[0xff3] * 256);
-			if (offset == 0xff2)	return (x & 0x00FF) >> 0;
-			else				return (x & 0xFF00) >> 8;
-		}	break;
-
-		/* Reading eff4, F0 times must yield at most 80-1 consecutive
-		   equal values */
-		case 0xff4:
-		{
-			return rand();
-		}	break;
-
-		default:	{ return devram[offset]; break;}
-	}
-
-}
-WRITE8_HANDLER( devram_w )	{	devram[offset] = data; }
-
-
-static WRITE8_HANDLER( bankswitch_w )
-{
-unsigned char *RAM = memory_region(REGION_CPU1);
-
-	if ((data & 7) <  3)	RAM = &RAM[0x4000 * (data & 7)];
-	else					RAM = &RAM[0x10000 + 0x4000 * ((data & 7)-3)];
-
-	cpu_setbank(1,RAM);
-//	if (data > 7)	logerror("CPU #0 - suspicious bank: %d ! - PC = %04X\n", data, activecpu_get_pc());
-
-	u1 = data & 0xf8;
-}
-
-/* Memory */
-
-static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)
-	AM_RANGE(0x8000, 0xbfff) AM_READ(MRA8_BANK1)
-	AM_RANGE(0xc000, 0xcfff) AM_READ(MRA8_RAM)
-	AM_RANGE(0xd000, 0xdfff) AM_READ(MRA8_RAM)
-	AM_RANGE(0xe000, 0xefff) AM_READ(devram_r)
-	AM_RANGE(0xf000, 0xffff) AM_READ(sharedram_r)
-ADDRESS_MAP_END
-static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0xbfff) AM_WRITE(MWA8_ROM)	// writing at 0 should cause a reset
-	AM_RANGE(0xc000, 0xcfff) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram)			// RAM 0/1
-	AM_RANGE(0xd000, 0xdfff) AM_WRITE(MWA8_RAM)						// RAM 2
-	AM_RANGE(0xe000, 0xefff) AM_WRITE(devram_w) AM_BASE(&devram)				// RAM 3
-	AM_RANGE(0xf000, 0xffff) AM_WRITE(sharedram_w) AM_BASE(&sharedram)
-ADDRESS_MAP_END
-
-/* Ports */
-
-static WRITE8_HANDLER( cause_nmi_w )
-{
-	cpunum_set_input_line(1, INPUT_LINE_NMI, PULSE_LINE);
-}
-
-static ADDRESS_MAP_START( writeport, ADDRESS_SPACE_IO, 8 )
-	AM_RANGE(0x00, 0x00) AM_WRITE(bankswitch_w)
-//	AM_RANGE(0x01, 0x01) AM_WRITE(MWA8_NOP)	// ?? only 2 (see 378b)
-	AM_RANGE(0x02, 0x02) AM_WRITE(cause_nmi_w)	// always 0. Cause a nmi to sub cpu
-ADDRESS_MAP_END
-
-
-
-
-
-
-
-
-
-
 /*
 **
 **				Sub cpu data
@@ -343,80 +203,6 @@ ADDRESS_MAP_END
 
 /*	Runs in IM 2	fd-fe	address of int: 0x36e	(same as 0x38)
 					ff-100	address of int: 0x4b0	(only writes to port 38h)	*/
-
-INTERRUPT_GEN( airbustr_interrupt2 )
-{
-static int addr = 0xfd;
-
-	addr ^= 0x02;
-	cpunum_set_input_line_and_vector(1, 0, HOLD_LINE, addr);
-}
-
-
-static WRITE8_HANDLER( bankswitch2_w )
-{
-unsigned char *RAM = memory_region(REGION_CPU2);
-
-	if ((data & 7) <  3)	RAM = &RAM[0x4000 * (data & 7)];
-	else					RAM = &RAM[0x10000 + 0x4000 * ((data & 7)-3)];
-
-	cpu_setbank(2,RAM);
-//	if (data > 7)	logerror("CPU #1 - suspicious bank: %d ! - PC = %04X\n", data, activecpu_get_pc());
-
-	flipscreen = data & 0x10;	// probably..
-	tilemap_set_flip(ALL_TILEMAPS,flipscreen ? (TILEMAP_FLIPY | TILEMAP_FLIPX) : 0);
-
-	u2 = data & 0xf8;
-}
-
-
-WRITE8_HANDLER( airbustr_paletteram_w )
-{
-	int r,g,b;
-	int val;
-
-	/*	! byte 1 ! ! byte 0 !	*/
-	/*	xGGG GGRR 	RRRB BBBB	*/
-	/*	x432 1043 	2104 3210	*/
-
-	paletteram[offset] = data;
-	val = (paletteram[offset | 1] << 8) | paletteram[offset & ~1];
-
-	g = (val >> 10) & 0x1f;
-	r = (val >>  5) & 0x1f;
-	b = (val >>  0) & 0x1f;
-
-	palette_set_color(offset/2,	(r * 0xff) / 0x1f,
-									(g * 0xff) / 0x1f,
-									(b * 0xff) / 0x1f );
-}
-
-
-/* Memory */
-
-static ADDRESS_MAP_START( readmem2, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)
-	AM_RANGE(0x8000, 0xbfff) AM_READ(MRA8_BANK2)
-	AM_RANGE(0xc000, 0xcfff) AM_READ(MRA8_RAM)
-	AM_RANGE(0xd000, 0xd5ff) AM_READ(paletteram_r)
-	AM_RANGE(0xd600, 0xdfff) AM_READ(MRA8_RAM)
-	AM_RANGE(0xe000, 0xefff) AM_READ(MRA8_RAM)
-	AM_RANGE(0xf000, 0xffff) AM_READ(sharedram_r)
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( writemem2, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0xbfff) AM_WRITE(MWA8_ROM)
-	AM_RANGE(0xc000, 0xc7ff) AM_WRITE(airbustr_fgram_w) AM_BASE(&airbustr_fgram)
-	AM_RANGE(0xc800, 0xcfff) AM_WRITE(airbustr_bgram_w) AM_BASE(&airbustr_bgram)
-	AM_RANGE(0xd000, 0xd5ff) AM_WRITE(airbustr_paletteram_w) AM_BASE(&paletteram)
-	AM_RANGE(0xd600, 0xdfff) AM_WRITE(MWA8_RAM)
-	AM_RANGE(0xe000, 0xefff) AM_WRITE(MWA8_RAM)
-	AM_RANGE(0xf000, 0xffff) AM_WRITE(sharedram_w)
-ADDRESS_MAP_END
-
-
-/* Ports */
-
 /*
    Sub cpu and Sound cpu communicate bidirectionally:
 
@@ -432,166 +218,233 @@ Code at 505: waits for bit 1 to go low, writes command, waits for bit
 
 */
 
+#include "driver.h"
+#include "vidhrdw/generic.h"
+#include "cpu/z80/z80.h"
 
-static READ8_HANDLER( soundcommand_status_r )
+static UINT8 *devram;
+static int soundlatch_status, soundlatch2_status;
+
+extern UINT8 *airbustr_videoram2, *airbustr_colorram2;
+
+extern WRITE8_HANDLER( airbustr_videoram_w );
+extern WRITE8_HANDLER( airbustr_colorram_w );
+extern WRITE8_HANDLER( airbustr_videoram2_w );
+extern WRITE8_HANDLER( airbustr_colorram2_w );
+extern WRITE8_HANDLER( airbustr_scrollregs_w );
+extern VIDEO_START( airbustr );
+extern VIDEO_UPDATE( airbustr );
+
+/* Read/Write Handlers */
+
+static READ8_HANDLER( devram_r )
 {
-/* bits: 2 <-> ?	1 <-> soundlatch full	0 <-> soundlatch2 empty */
-	return 4 + soundlatch_status * 2 + (1-soundlatch2_status);
+	// There's an MCU here, possibly
+	
+	switch (offset)
+	{
+		/* Reading efe0 probably resets a watchdog mechanism
+		   that would reset the main cpu. We avoid this and patch
+		   the rom instead (main cpu has to be reset once at startup) */
+		case 0xfe0:
+			return 0/*watchdog_reset_r(0)*/;
+
+		/* Reading a word at eff2 probably yelds the product
+   		   of the words written to eff0 and eff2 */
+		case 0xff2:
+		case 0xff3:
+		{
+			int	x = (devram[0xff0] + devram[0xff1] * 256) *
+					(devram[0xff2] + devram[0xff3] * 256);
+			if (offset == 0xff2)	return (x & 0x00FF) >> 0;
+			else				return (x & 0xFF00) >> 8;
+		}	break;
+
+		/* Reading eff4, F0 times must yield at most 80-1 consecutive
+		   equal values */
+		case 0xff4:
+			return rand();
+
+		default:
+			return devram[offset];
+	}
 }
 
-
-static READ8_HANDLER( soundcommand2_r )
+static WRITE8_HANDLER( master_nmi_trigger_w )
 {
-	soundlatch2_status = 0;				// soundlatch2 has been read
-	return soundlatch2_r(0);
+	cpunum_set_input_line(1, INPUT_LINE_NMI, PULSE_LINE);
 }
 
-
-static WRITE8_HANDLER( soundcommand_w )
+static void airbustr_bankswitch(int cpunum, int data)
 {
-	soundlatch_w(0,data);
-	soundlatch_status = 1;				// soundlatch has been written
-	cpunum_set_input_line(2, INPUT_LINE_NMI, PULSE_LINE);	// cause a nmi to sub cpu
+	UINT8 *ROM = memory_region(REGION_CPU1 + cpunum);
+
+	if ((data & 0x07) <  3)
+		ROM = &ROM[0x4000 * (data & 0x07)];
+	else
+		ROM = &ROM[0x10000 + 0x4000 * ((data & 0x07) - 3)];
+
+	cpu_setbank(cpunum + 1, ROM);
 }
 
+static WRITE8_HANDLER( master_bankswitch_w )
+{
+	airbustr_bankswitch(0, data);
+}
 
-WRITE8_HANDLER( port_38_w )	{	u4 = data; } // for debug
+static WRITE8_HANDLER( slave_bankswitch_w )
+{
+	airbustr_bankswitch(1, data);
 
-
-static ADDRESS_MAP_START( readport2, ADDRESS_SPACE_IO, 8 )
-	AM_RANGE(0x02, 0x02) AM_READ(soundcommand2_r)		// from sound cpu
-	AM_RANGE(0x0e, 0x0e) AM_READ(soundcommand_status_r)	// status of the latches ?
-	AM_RANGE(0x20, 0x20) AM_READ(input_port_0_r)			// player 1
-	AM_RANGE(0x22, 0x22) AM_READ(input_port_1_r)			// player 2
-	AM_RANGE(0x24, 0x24) AM_READ(input_port_2_r)			// service
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( writeport2, ADDRESS_SPACE_IO, 8 )
-	AM_RANGE(0x00, 0x00) AM_WRITE(bankswitch2_w)			// bits 2-0 bank, bit 4 (on if dsw1-1 active)?,  bit 5?
-	AM_RANGE(0x02, 0x02) AM_WRITE(soundcommand_w)			// to sound cpu
-	AM_RANGE(0x04, 0x0c) AM_WRITE(airbustr_scrollregs_w)	// Scroll values
-//	AM_RANGE(0x28, 0x28) AM_WRITE(port_38_w)				// ??
-//	AM_RANGE(0x38, 0x38) AM_WRITE(MWA8_NOP)				// ?? Followed by EI. Value isn't important
-ADDRESS_MAP_END
-
-
-
-
-
-
-
-
-
-
-/*
-**
-** 				Sound cpu data
-**
-*/
+	flip_screen_set(data & 0x10);
+}
 
 static WRITE8_HANDLER( sound_bankswitch_w )
 {
-unsigned char *RAM = memory_region(REGION_CPU3);
-
-	if ((data & 7) <  3)	RAM = &RAM[0x4000 * (data & 7)];
-	else					RAM = &RAM[0x10000 + 0x4000 * ((data & 7)-3)];
-
-	cpu_setbank(3,RAM);
-//	if (data > 7)	logerror("CPU #2 - suspicious bank: %d ! - PC = %04X\n", data, activecpu_get_pc());
-
-	u3 = data & 0xf8;
+	airbustr_bankswitch(2, data);
 }
 
-
-/* Memory */
-
-static ADDRESS_MAP_START( sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)
-	AM_RANGE(0x8000, 0xbfff) AM_READ(MRA8_BANK3)
-	AM_RANGE(0xc000, 0xdfff) AM_READ(MRA8_RAM)
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0xbfff) AM_WRITE(MWA8_ROM)
-	AM_RANGE(0xc000, 0xdfff) AM_WRITE(MWA8_RAM)
-ADDRESS_MAP_END
-
-
-/* Ports */
-
-READ8_HANDLER( soundcommand_r )
+static READ8_HANDLER( soundcommand_status_r )
 {
-	soundlatch_status = 0;		// soundlatch has been read
+	// bits: 2 <-> ?	1 <-> soundlatch full	0 <-> soundlatch2 empty
+	return 4 + soundlatch_status * 2 + (1 - soundlatch2_status);
+}
+
+static READ8_HANDLER( soundcommand_r )
+{
+	soundlatch_status = 0;	// soundlatch has been read
 	return soundlatch_r(0);
 }
 
-
-WRITE8_HANDLER( soundcommand2_w )
+static READ8_HANDLER( soundcommand2_r )
 {
-	soundlatch2_status = 1;		// soundlatch2 has been written
-	soundlatch2_w(0,data);
+	soundlatch2_status = 0;	// soundlatch2 has been read
+	return soundlatch2_r(0);
 }
 
+static WRITE8_HANDLER( soundcommand_w )
+{
+	soundlatch_w(0, data);
+	soundlatch_status = 1;	// soundlatch has been written
+	cpunum_set_input_line(2, INPUT_LINE_NMI, PULSE_LINE);	// cause a nmi to sub cpu
+}
 
-static ADDRESS_MAP_START( sound_readport, ADDRESS_SPACE_IO, 8 )
-	AM_RANGE(0x02, 0x02) AM_READ(YM2203_status_port_0_r)
-	AM_RANGE(0x03, 0x03) AM_READ(YM2203_read_port_0_r)
-	AM_RANGE(0x04, 0x04) AM_READ(OKIM6295_status_0_r)
-	AM_RANGE(0x06, 0x06) AM_READ(soundcommand_r)			// read command from sub cpu
+static WRITE8_HANDLER( soundcommand2_w )
+{
+	soundlatch2_w(0, data);
+	soundlatch2_status = 1;	// soundlatch2 has been written
+}
+
+static WRITE8_HANDLER( airbustr_paletteram_w )
+{
+	int r, g, b;
+	int val;
+
+	/*	! byte 1 ! ! byte 0 !	*/
+	/*	xGGG GGRR 	RRRB BBBB	*/
+	/*	x432 1043 	2104 3210	*/
+
+	paletteram[offset] = data;
+	val = (paletteram[offset | 1] << 8) | paletteram[offset & ~1];
+
+	g = (val >> 10) & 0x1f;
+	r = (val >>  5) & 0x1f;
+	b = (val >>  0) & 0x1f;
+
+	palette_set_color(offset/2, (r * 0xff) / 0x1f, (g * 0xff) / 0x1f, (b * 0xff) / 0x1f);
+}
+
+/* Memory Maps */
+
+static ADDRESS_MAP_START( master_map, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_ROM
+	AM_RANGE(0x8000, 0xbfff) AM_ROMBANK(1)
+	AM_RANGE(0xc000, 0xcfff) AM_RAM AM_BASE(&spriteram)
+	AM_RANGE(0xd000, 0xdfff) AM_RAM
+	AM_RANGE(0xe000, 0xefff) AM_RAM AM_READ(devram_r) AM_BASE(&devram)
+	AM_RANGE(0xf000, 0xffff) AM_RAM AM_SHARE(1)
 ADDRESS_MAP_END
 
-static ADDRESS_MAP_START( sound_writeport, ADDRESS_SPACE_IO, 8 )
+static ADDRESS_MAP_START( master_io_map, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0x00) AM_WRITE(master_bankswitch_w)
+	AM_RANGE(0x01, 0x01) AM_WRITENOP // ???
+	AM_RANGE(0x02, 0x02) AM_WRITE(master_nmi_trigger_w)
+ADDRESS_MAP_END
+
+static ADDRESS_MAP_START( slave_map, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_ROM
+	AM_RANGE(0x8000, 0xbfff) AM_ROMBANK(2)
+	AM_RANGE(0xc000, 0xc3ff) AM_RAM AM_WRITE(airbustr_videoram2_w) AM_BASE(&airbustr_videoram2)
+	AM_RANGE(0xc400, 0xc7ff) AM_RAM AM_WRITE(airbustr_colorram2_w) AM_BASE(&airbustr_colorram2)
+	AM_RANGE(0xc800, 0xcbff) AM_RAM AM_WRITE(airbustr_videoram_w) AM_BASE(&videoram)
+	AM_RANGE(0xcc00, 0xcfff) AM_RAM AM_WRITE(airbustr_colorram_w) AM_BASE(&colorram)
+	AM_RANGE(0xd000, 0xd5ff) AM_RAM AM_WRITE(airbustr_paletteram_w) AM_BASE(&paletteram)
+	AM_RANGE(0xd600, 0xdfff) AM_RAM
+	AM_RANGE(0xe000, 0xefff) AM_RAM
+	AM_RANGE(0xf000, 0xffff) AM_RAM AM_SHARE(1)
+ADDRESS_MAP_END
+
+static ADDRESS_MAP_START( slave_io_map, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0x00) AM_WRITE(slave_bankswitch_w)
+	AM_RANGE(0x02, 0x02) AM_READWRITE(soundcommand2_r, soundcommand_w)
+	AM_RANGE(0x04, 0x0c) AM_WRITE(airbustr_scrollregs_w)
+	AM_RANGE(0x0e, 0x0e) AM_READ(soundcommand_status_r)
+	AM_RANGE(0x20, 0x20) AM_READ(input_port_0_r)
+	AM_RANGE(0x22, 0x22) AM_READ(input_port_1_r)
+	AM_RANGE(0x24, 0x24) AM_READ(input_port_2_r)
+	AM_RANGE(0x28, 0x28) AM_WRITENOP // ???
+	AM_RANGE(0x38, 0x38) AM_WRITENOP // ???
+ADDRESS_MAP_END
+
+static ADDRESS_MAP_START( sound_map, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_ROM
+	AM_RANGE(0x8000, 0xbfff) AM_ROMBANK(3)
+	AM_RANGE(0xc000, 0xdfff) AM_RAM
+ADDRESS_MAP_END
+
+static ADDRESS_MAP_START( sound_io_map, ADDRESS_SPACE_IO, 8 )
 	AM_RANGE(0x00, 0x00) AM_WRITE(sound_bankswitch_w)
-	AM_RANGE(0x02, 0x02) AM_WRITE(YM2203_control_port_0_w)
-	AM_RANGE(0x03, 0x03) AM_WRITE(YM2203_write_port_0_w)
-	AM_RANGE(0x04, 0x04) AM_WRITE(OKIM6295_data_0_w)
-	AM_RANGE(0x06, 0x06) AM_WRITE(soundcommand2_w)		// write command result to sub cpu
+	AM_RANGE(0x02, 0x02) AM_READWRITE(YM2203_status_port_0_r, YM2203_control_port_0_w)
+	AM_RANGE(0x03, 0x03) AM_READWRITE(YM2203_read_port_0_r, YM2203_write_port_0_w)
+	AM_RANGE(0x04, 0x04) AM_READWRITE(OKIM6295_status_0_r, OKIM6295_data_0_w)
+	AM_RANGE(0x06, 0x06) AM_READWRITE(soundcommand_r, soundcommand2_w)
 ADDRESS_MAP_END
 
-
-
-
-/*	Input Ports:
-	[0] Player 1		[1] Player 2
-	[2] Service
-	[3] Dsw 1			[4] Dsw 2	*/
+/* Input Ports */
 
 INPUT_PORTS_START( airbustr )
-
-	PORT_START_TAG("IN0")	// Player 1
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_8WAY
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_8WAY
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_8WAY
+	PORT_START_TAG("IN0")
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    ) PORT_8WAY
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  ) PORT_8WAY
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  ) PORT_8WAY
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_8WAY
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
-	PORT_START_TAG("IN1")	// Player 2
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_8WAY PORT_PLAYER(2)
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_8WAY PORT_PLAYER(2)
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_8WAY PORT_PLAYER(2)
+	PORT_START_TAG("IN1")
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    ) PORT_8WAY PORT_PLAYER(2)
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  ) PORT_8WAY PORT_PLAYER(2)
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  ) PORT_8WAY PORT_PLAYER(2)
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_8WAY PORT_PLAYER(2)
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(2)
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(2)
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
-	PORT_START_TAG("IN2")	//  Service
+	PORT_START_TAG("IN2")
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START2 )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_COIN2 )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_SERVICE )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_SERVICE1 )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )		// used
 
-	PORT_START_TAG("IN3")	// DSW-1
-	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unused ) )
-	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_START_TAG("DSW1")
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Flip_Screen ) )
 	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
@@ -600,33 +453,31 @@ INPUT_PORTS_START( airbustr )
 	PORT_DIPSETTING(    0x08, "Mode 1" )			//     11 21 12 16 (bit 3 active)
 	PORT_DIPSETTING(    0x00, "Mode 2" )			//     11 21 13 14 (bit 3 not active)
 	PORT_DIPNAME( 0x30, 0x30, DEF_STR( Coin_A ) )
-	PORT_DIPSETTING(    0x20, DEF_STR( 2C_1C ) )	PORT_DIPCONDITION(3,0x08,PORTCOND_NOTEQUALS,0x00)
-	PORT_DIPSETTING(    0x30, DEF_STR( 1C_1C ) )	PORT_DIPCONDITION(3,0x08,PORTCOND_NOTEQUALS,0x00)
-	PORT_DIPSETTING(    0x10, DEF_STR( 1C_2C ) )	PORT_DIPCONDITION(3,0x08,PORTCOND_NOTEQUALS,0x00)
-	PORT_DIPSETTING(    0x00, DEF_STR( 1C_6C ) )	PORT_DIPCONDITION(3,0x08,PORTCOND_NOTEQUALS,0x00)
-	PORT_DIPSETTING(    0x20, DEF_STR( 2C_1C ) )	PORT_DIPCONDITION(3,0x08,PORTCOND_EQUALS,0x00)
-	PORT_DIPSETTING(    0x30, DEF_STR( 1C_1C ) )	PORT_DIPCONDITION(3,0x08,PORTCOND_EQUALS,0x00)
-	PORT_DIPSETTING(    0x10, DEF_STR( 1C_3C ) )	PORT_DIPCONDITION(3,0x08,PORTCOND_EQUALS,0x00)
-	PORT_DIPSETTING(    0x00, DEF_STR( 1C_4C ) )	PORT_DIPCONDITION(3,0x08,PORTCOND_EQUALS,0x00)
+	PORT_DIPSETTING(    0x20, DEF_STR( 2C_1C ) )	PORT_DIPCONDITION(3, 0x08, PORTCOND_NOTEQUALS, 0x00)
+	PORT_DIPSETTING(    0x30, DEF_STR( 1C_1C ) )	PORT_DIPCONDITION(3, 0x08, PORTCOND_NOTEQUALS, 0x00)
+	PORT_DIPSETTING(    0x10, DEF_STR( 1C_2C ) )	PORT_DIPCONDITION(3, 0x08, PORTCOND_NOTEQUALS, 0x00)
+	PORT_DIPSETTING(    0x00, DEF_STR( 1C_6C ) )	PORT_DIPCONDITION(3, 0x08, PORTCOND_NOTEQUALS, 0x00)
+	PORT_DIPSETTING(    0x20, DEF_STR( 2C_1C ) )	PORT_DIPCONDITION(3, 0x08, PORTCOND_EQUALS, 0x00)
+	PORT_DIPSETTING(    0x30, DEF_STR( 1C_1C ) )	PORT_DIPCONDITION(3, 0x08, PORTCOND_EQUALS, 0x00)
+	PORT_DIPSETTING(    0x10, DEF_STR( 1C_3C ) )	PORT_DIPCONDITION(3, 0x08, PORTCOND_EQUALS, 0x00)
+	PORT_DIPSETTING(    0x00, DEF_STR( 1C_4C ) )	PORT_DIPCONDITION(3, 0x08, PORTCOND_EQUALS, 0x00)
 	PORT_DIPNAME( 0xc0, 0xc0, DEF_STR( Coin_B ) )
-	PORT_DIPSETTING(    0x80, DEF_STR( 2C_1C ) )	PORT_DIPCONDITION(3,0x08,PORTCOND_NOTEQUALS,0x00)
-	PORT_DIPSETTING(    0xc0, DEF_STR( 1C_1C ) )	PORT_DIPCONDITION(3,0x08,PORTCOND_NOTEQUALS,0x00)
-	PORT_DIPSETTING(    0x40, DEF_STR( 1C_2C ) )	PORT_DIPCONDITION(3,0x08,PORTCOND_NOTEQUALS,0x00)
-	PORT_DIPSETTING(    0x00, DEF_STR( 1C_6C ) )	PORT_DIPCONDITION(3,0x08,PORTCOND_NOTEQUALS,0x00)	
-	PORT_DIPSETTING(    0x80, DEF_STR( 2C_1C ) )	PORT_DIPCONDITION(3,0x08,PORTCOND_EQUALS,0x00)
-	PORT_DIPSETTING(    0xc0, DEF_STR( 1C_1C ) )	PORT_DIPCONDITION(3,0x08,PORTCOND_EQUALS,0x00)
-	PORT_DIPSETTING(    0x40, DEF_STR( 1C_3C ) )	PORT_DIPCONDITION(3,0x08,PORTCOND_EQUALS,0x00)
-	PORT_DIPSETTING(    0x00, DEF_STR( 1C_4C ) )	PORT_DIPCONDITION(3,0x08,PORTCOND_EQUALS,0x00)
+	PORT_DIPSETTING(    0x80, DEF_STR( 2C_1C ) )	PORT_DIPCONDITION(3, 0x08, PORTCOND_NOTEQUALS, 0x00)
+	PORT_DIPSETTING(    0xc0, DEF_STR( 1C_1C ) )	PORT_DIPCONDITION(3, 0x08, PORTCOND_NOTEQUALS, 0x00)
+	PORT_DIPSETTING(    0x40, DEF_STR( 1C_2C ) )	PORT_DIPCONDITION(3, 0x08, PORTCOND_NOTEQUALS, 0x00)
+	PORT_DIPSETTING(    0x00, DEF_STR( 1C_6C ) )	PORT_DIPCONDITION(3, 0x08, PORTCOND_NOTEQUALS, 0x00)	
+	PORT_DIPSETTING(    0x80, DEF_STR( 2C_1C ) )	PORT_DIPCONDITION(3, 0x08, PORTCOND_EQUALS, 0x00)
+	PORT_DIPSETTING(    0xc0, DEF_STR( 1C_1C ) )	PORT_DIPCONDITION(3, 0x08, PORTCOND_EQUALS, 0x00)
+	PORT_DIPSETTING(    0x40, DEF_STR( 1C_3C ) )	PORT_DIPCONDITION(3, 0x08, PORTCOND_EQUALS, 0x00)
+	PORT_DIPSETTING(    0x00, DEF_STR( 1C_4C ) )	PORT_DIPCONDITION(3, 0x08, PORTCOND_EQUALS, 0x00)
 
-	PORT_START_TAG("IN4")	// DSW-2
+	PORT_START_TAG("DSW2")
 	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Difficulty ) )
 	PORT_DIPSETTING(    0x02, DEF_STR( Easy ) )
 	PORT_DIPSETTING(    0x03, DEF_STR( Normal ) )
-	PORT_DIPSETTING(    0x01, DEF_STR( Hard ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Hardest ) )
-	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unused ) )
-	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPSETTING(    0x01, "Difficult" )
+	PORT_DIPSETTING(    0x00, "Very Difficult" )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_DIPNAME( 0x08, 0x08, "Freeze" )
 	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
@@ -638,55 +489,14 @@ INPUT_PORTS_START( airbustr )
 	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( On ) )
-	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unused ) )
-	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNUSED )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( airbustj )
+	PORT_INCLUDE(airbustr)
 
-	PORT_START_TAG("IN0")	// Player 1
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_8WAY
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_8WAY
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_8WAY
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_8WAY
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
-
-	PORT_START_TAG("IN1")	// Player 2
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_8WAY PORT_PLAYER(2)
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_8WAY PORT_PLAYER(2)
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_8WAY PORT_PLAYER(2)
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_8WAY PORT_PLAYER(2)
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(2)
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(2)
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
-
-	PORT_START_TAG("IN2")	// Service
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1 )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START2 )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN1 )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_COIN2 )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_SERVICE )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )		// used
-
-	PORT_START_TAG("IN3")	// DSW-1
-	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unused ) )
-	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Flip_Screen ) )
-	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_SERVICE( 0x04, IP_ACTIVE_LOW )
-	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unused ) )
-	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_MODIFY("DSW1")
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_DIPNAME( 0x30, 0x30, DEF_STR( Coin_A ) )		// routine at 0x0546 : 11 12 21 23
 	PORT_DIPSETTING(    0x10, DEF_STR( 2C_1C ) )
 	PORT_DIPSETTING(    0x30, DEF_STR( 1C_1C ) )
@@ -697,77 +507,41 @@ INPUT_PORTS_START( airbustj )
 	PORT_DIPSETTING(    0xc0, DEF_STR( 1C_1C ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( 2C_3C ) )
 	PORT_DIPSETTING(    0x80, DEF_STR( 1C_2C ) )
-
-	PORT_START_TAG("IN4")	// DSW-2
-	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(    0x02, DEF_STR( Easy ) )
-	PORT_DIPSETTING(    0x03, DEF_STR( Normal ) )
-	PORT_DIPSETTING(    0x01, DEF_STR( Hard ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Hardest ) )
-	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unused ) )
-	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x08, 0x08, "Freeze" )
-	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x30, 0x30, DEF_STR( Lives ) )
-	PORT_DIPSETTING(    0x30, "3" )
-	PORT_DIPSETTING(    0x20, "4" )
-	PORT_DIPSETTING(    0x10, "5" )
-	PORT_DIPSETTING(    0x00, "7" )
-	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Demo_Sounds ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x40, DEF_STR( On ) )
-	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unused ) )
-	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-
 INPUT_PORTS_END
 
+/* Graphics Layout */
 
-
-/*
-**
-** 				Gfx data
-**
-*/
-
-
-/* displacement in bits to lower part of gfx */
-#define lo (8*8*4*2)
-#define layout16x16(_name_,_romsize_) \
-static struct GfxLayout _name_ =\
-{\
-	16,16,\
-	(_romsize_)*8/(16*16*4),\
-	4,\
-	{0, 1, 2, 3},\
-	{0*4,1*4,2*4,3*4,4*4,5*4,6*4,7*4, \
-	 0*4+32*8,1*4+32*8,2*4+32*8,3*4+32*8,4*4+32*8,5*4+32*8,6*4+32*8,7*4+32*8},\
-	{0*32,1*32,2*32,3*32,4*32,5*32,6*32,7*32,\
-	 0*32+lo,1*32+lo,2*32+lo,3*32+lo,4*32+lo,5*32+lo,6*32+lo,7*32+lo}, \
-	16*16*4\
+static struct GfxLayout gfxlayout =
+{
+	16, 16,
+	RGN_FRAC(1,1),
+	4,
+	{ 0, 1, 2, 3 },
+	{ 0*4, 1*4, 2*4, 3*4, 4*4, 5*4, 6*4, 7*4,
+	  0*4+32*8, 1*4+32*8, 2*4+32*8, 3*4+32*8, 4*4+32*8, 5*4+32*8, 6*4+32*8, 7*4+32*8 },
+	{ 0*32, 1*32, 2*32, 3*32, 4*32, 5*32, 6*32, 7*32,
+	  0*32+64*8, 1*32+64*8, 2*32+64*8, 3*32+64*8, 4*32+64*8, 5*32+64*8, 6*32+64*8, 7*32+64*8 },
+	16*16*4
 };
 
-layout16x16(tilelayout,  0x080000)
-layout16x16(spritelayout,0x100000)
+/* Graphics Decode Information */
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ REGION_GFX1, 0, &tilelayout,   256*0, (256*2) / 16 }, // [0] Layers
-	{ REGION_GFX2, 0, &spritelayout, 256*2, (256*1) / 16 }, // [1] Sprites
+	{ REGION_GFX1, 0, &gfxlayout,   0, 32 }, // tiles
+	{ REGION_GFX2, 0, &gfxlayout, 512, 16 }, // sprites
 	{ -1 }
 };
 
-
+/* Sound Interfaces */
 
 static struct YM2203interface ym2203_interface =
 {
 	1,
-	3000000,				/* ?? */
-	{ YM2203_VOL(50,25) },			/* gain,volume - adjusted */
-	{ input_port_3_r },			/* DSW-1 connected to port A */
-	{ input_port_4_r },			/* DSW-2 connected to port B */
+	3000000,				// ???
+	{ YM2203_VOL(50,25) },	// gain,volume - adjusted
+	{ input_port_3_r },		// DSW-1 connected to port A
+	{ input_port_4_r },		// DSW-2 connected to port B
 	{ 0 },
 	{ 0 },
 	{ 0 }
@@ -776,78 +550,100 @@ static struct YM2203interface ym2203_interface =
 static struct OKIM6295interface okim6295_interface =
 {
 	1,
-	{ 12000000/4/165 }, /* 3MHz -> 6295 (mode A) */
+	{ 12000000/4/165 }, 	// 3MHz -> 6295 (mode A)
 	{ REGION_SOUND1 },
-	{ 80 }	/* adjusted */
+	{ 80 }					// adjusted
 };
 
+/* Interrupt Generators */
+
+static INTERRUPT_GEN( master_interrupt )
+{
+	static int addr = 0xff;
+
+	addr ^= 0x02;
+	cpunum_set_input_line_and_vector(0, 0, HOLD_LINE, addr);
+}
+
+static INTERRUPT_GEN( slave_interrupt )
+{
+	static int addr = 0xfd;
+
+	addr ^= 0x02;
+	cpunum_set_input_line_and_vector(1, 0, HOLD_LINE, addr);
+}
+
+/* Machine Initialization */
+
+static MACHINE_INIT( airbustr )
+{
+	soundlatch_status = soundlatch2_status = 0;
+	master_bankswitch_w(0, 0x02);
+	slave_bankswitch_w(0, 0x02);
+	sound_bankswitch_w(0, 0x02);
+}
+
+/* Machine Driver */
 
 static MACHINE_DRIVER_START( airbustr )
+	// basic machine hardware
+	MDRV_CPU_ADD(Z80, 6000000)	// ???
+	MDRV_CPU_PROGRAM_MAP(master_map, 0)
+	MDRV_CPU_IO_MAP(master_io_map, 0)
+	MDRV_CPU_VBLANK_INT(master_interrupt, 2)	// nmi caused by sub cpu?, ?
 
-	/* basic machine hardware */
-	MDRV_CPU_ADD(Z80, 6000000)	/* ?? */
-	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
-	MDRV_CPU_IO_MAP(0,writeport)
-	MDRV_CPU_VBLANK_INT(airbustr_interrupt,2)	/* nmi caused by sub cpu?, ? */
+	MDRV_CPU_ADD(Z80, 6000000)	// ???
+	MDRV_CPU_PROGRAM_MAP(slave_map, 0)
+	MDRV_CPU_IO_MAP(slave_io_map, 0)
+	MDRV_CPU_VBLANK_INT(slave_interrupt, 2)		// nmi caused by main cpu, ?
 
-	MDRV_CPU_ADD(Z80, 6000000)	/* ?? */
-	MDRV_CPU_PROGRAM_MAP(readmem2,writemem2)
-	MDRV_CPU_IO_MAP(readport2,writeport2)
-	MDRV_CPU_VBLANK_INT(airbustr_interrupt2,2)	/* nmi caused by main cpu, ? */
-
-	MDRV_CPU_ADD(Z80, 6000000)	/* ?? */
-	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
-	MDRV_CPU_IO_MAP(sound_readport,sound_writeport)
-	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)	/* nmi are caused by sub cpu writing a sound command */
+	MDRV_CPU_ADD(Z80, 6000000)	// ???
+	MDRV_CPU_PROGRAM_MAP(sound_map, 0)
+	MDRV_CPU_IO_MAP(sound_io_map, 0)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold, 1)		// nmi are caused by sub cpu writing a sound command
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
-	MDRV_INTERLEAVE(100)	/* Palette RAM is filled by sub cpu with data supplied by main cpu */
-							/* Maybe an high value is safer in order to avoid glitches */
+	MDRV_INTERLEAVE(100)	// Palette RAM is filled by sub cpu with data supplied by main cpu
+							// Maybe a high value is safer in order to avoid glitches
 	MDRV_MACHINE_INIT(airbustr)
 
-	/* video hardware */
+	// video hardware
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
-	MDRV_SCREEN_SIZE(256, 256)
-	MDRV_VISIBLE_AREA(0, 256-1, 0+16, 256-16-1)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0, 32*8-1, 2*8, 30*8-1)
 	MDRV_GFXDECODE(gfxdecodeinfo)
 	MDRV_PALETTE_LENGTH(768)
 
 	MDRV_VIDEO_START(airbustr)
 	MDRV_VIDEO_UPDATE(airbustr)
 
-	/* sound hardware */
+	// sound hardware
 	MDRV_SOUND_ADD(YM2203, ym2203_interface)
 	MDRV_SOUND_ADD(OKIM6295, okim6295_interface)
 MACHINE_DRIVER_END
 
-
-
-/***************************************************************************
-
-  Game driver(s)
-
-***************************************************************************/
+/* ROMs */
 
 ROM_START( airbustr )
 	ROM_REGION( 0x24000, REGION_CPU1, 0 )
-	ROM_LOAD( "pr12.h19", 0x00000, 0x0c000, CRC(91362eb2) SHA1(cd85acfa6542af68dd1cad46f9426a95cfc9432e) )
+	ROM_LOAD( "pr12.h19",   0x00000, 0x0c000, CRC(91362eb2) SHA1(cd85acfa6542af68dd1cad46f9426a95cfc9432e) )
 	ROM_CONTINUE(           0x10000, 0x14000 )
 
 	ROM_REGION( 0x24000, REGION_CPU2, 0 )
-	ROM_LOAD( "pr13.l15", 0x00000, 0x0c000, CRC(13b2257b) SHA1(325efa54e757a1f08caf81801930d61ea4e7b6d4) )
+	ROM_LOAD( "pr13.l15",   0x00000, 0x0c000, CRC(13b2257b) SHA1(325efa54e757a1f08caf81801930d61ea4e7b6d4) )
 	ROM_CONTINUE(           0x10000, 0x14000 )
 
 	ROM_REGION( 0x24000, REGION_CPU3, 0 )
 	ROM_LOAD( "pr-21.bin",  0x00000, 0x0c000, CRC(6e0a5df0) SHA1(616b7c7aaf52a9a55b63c60717c1866940635cd4) )
 	ROM_CONTINUE(           0x10000, 0x14000 )
 
-	ROM_REGION( 0x080000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "pr-000.bin", 0x000000, 0x80000, CRC(8ca68f0d) SHA1(d60389e7e63e9850bcddecb486558de1414f1276) ) // scrolling layers
+	ROM_REGION( 0x80000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "pr-000.bin", 0x00000, 0x80000, CRC(8ca68f0d) SHA1(d60389e7e63e9850bcddecb486558de1414f1276) ) // scrolling layers
 
 	ROM_REGION( 0x100000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "pr-001.bin", 0x000000, 0x80000, CRC(7e6cb377) SHA1(005290f9f53a0c3a6a9d04486b16b7fd52cc94b6) ) // sprites
-	ROM_LOAD( "pr-02.bin",  0x080000, 0x10000, CRC(6bbd5e46) SHA1(26563737f3f91ee0a056d35ce42217bb57d8a081) )
+	ROM_LOAD( "pr-001.bin", 0x00000, 0x80000, CRC(7e6cb377) SHA1(005290f9f53a0c3a6a9d04486b16b7fd52cc94b6) ) // sprites
+	ROM_LOAD( "pr-02.bin",  0x80000, 0x10000, CRC(6bbd5e46) SHA1(26563737f3f91ee0a056d35ce42217bb57d8a081) )
 
 	ROM_REGION( 0x40000, REGION_SOUND1, 0 )	/* OKI-M6295 samples */
 	ROM_LOAD( "pr-200.bin", 0x00000, 0x40000, CRC(a4dd3390) SHA1(2d72b46b4979857f6b66489bebda9f48799f59cf) )
@@ -866,8 +662,8 @@ ROM_START( airbustj )
 	ROM_LOAD( "pr-21.bin",  0x00000, 0x0c000, CRC(6e0a5df0) SHA1(616b7c7aaf52a9a55b63c60717c1866940635cd4) )
 	ROM_CONTINUE(           0x10000, 0x14000 )
 
-	ROM_REGION( 0x080000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "pr-000.bin", 0x000000, 0x80000, CRC(8ca68f0d) SHA1(d60389e7e63e9850bcddecb486558de1414f1276) ) // scrolling layers
+	ROM_REGION( 0x80000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "pr-000.bin", 0x00000, 0x80000, CRC(8ca68f0d) SHA1(d60389e7e63e9850bcddecb486558de1414f1276) ) // scrolling layers
 
 	ROM_REGION( 0x100000, REGION_GFX2, ROMREGION_DISPOSE )
 	ROM_LOAD( "pr-001.bin", 0x000000, 0x80000, CRC(7e6cb377) SHA1(005290f9f53a0c3a6a9d04486b16b7fd52cc94b6) ) // sprites
@@ -877,53 +673,51 @@ ROM_START( airbustj )
 	ROM_LOAD( "pr-200.bin", 0x00000, 0x40000, CRC(a4dd3390) SHA1(2d72b46b4979857f6b66489bebda9f48799f59cf) )
 ROM_END
 
-
+/* Driver Initialization */
 
 DRIVER_INIT( airbustr )
 {
 	int i;
-	unsigned char *RAM;
+	UINT8 *ROM = memory_region(REGION_GFX1);
 
-	/* One gfx rom seems to have scrambled data (bad read?): */
-	/* let's swap even and odd nibbles */
-	RAM = memory_region(REGION_GFX1) + 0x000000;
-	for (i = 0; i < 0x80000; i ++)
+	// One gfx rom seems to have scrambled data (bad read?): let's swap even and odd nibbles
+	for (i = 0; i < 0x80000; i++)
 	{
-		RAM[i] = ((RAM[i] & 0xF0)>>4) + ((RAM[i] & 0x0F)<<4);
+		ROM[i] = ((ROM[i] & 0xf0) >> 4) + ((ROM[i] & 0x0f) << 4);
 	}
 
-	RAM = memory_region(REGION_CPU1);
-	RAM[0x37e4] = 0x00;	RAM[0x37e5] = 0x00;	// startup check. We need a reset
-									// so I patch a busy loop with jp 0
+	// Startup check. We need a reset so I patch a busy loop with jp 0
+	ROM = memory_region(REGION_CPU1);
+	ROM[0x37e4] = 0x00;	
+	ROM[0x37e5] = 0x00;	
 
-	RAM = memory_region(REGION_CPU2);
-	RAM[0x0258] = 0x53; 					// include EI in the busy loop.
-									// It's an hack to repair nested nmi troubles
+	// Include EI in the busy loop. It's a hack to repair nested nmi troubles
+	ROM = memory_region(REGION_CPU2);
+	ROM[0x0258] = 0x53; 					
 }
 
 DRIVER_INIT( airbustj )
 {
 	int i;
-	unsigned char *RAM;
+	UINT8 *ROM = memory_region(REGION_GFX1);
 
-	/* One gfx rom seems to have scrambled data (bad read?): */
-	/* let's swap even and odd nibbles */
-	RAM = memory_region(REGION_GFX1) + 0x000000;
-	for (i = 0; i < 0x80000; i ++)
+	// One gfx rom seems to have scrambled data (bad read?): let's swap even and odd nibbles
+	for (i = 0; i < 0x80000; i++)
 	{
-		RAM[i] = ((RAM[i] & 0xF0)>>4) + ((RAM[i] & 0x0F)<<4);
+		ROM[i] = ((ROM[i] & 0xf0) >> 4) + ((ROM[i] & 0x0f) << 4);
 	}
 
-	RAM = memory_region(REGION_CPU1);
-	RAM[0x37f4] = 0x00;	RAM[0x37f5] = 0x00;	// startup check. We need a reset
-									// so I patch a busy loop with jp 0
+	// Startup check. We need a reset so I patch a busy loop with jp 0
+	ROM = memory_region(REGION_CPU1);
+	ROM[0x37f4] = 0x00;	
+	ROM[0x37f5] = 0x00;
 
-	RAM = memory_region(REGION_CPU2);
-	RAM[0x0258] = 0x53; 					// include EI in the busy loop.
-									// It's an hack to repair nested nmi troubles
+	// Include EI in the busy loop. It's a hack to repair nested nmi troubles
+	ROM = memory_region(REGION_CPU2);
+	ROM[0x0258] = 0x53; 					
 }
 
+/* Game Drivers */
 
-
-GAME( 1990, airbustr, 0,        airbustr, airbustr, airbustr, ROT0, "Kaneko (Namco license)", "Air Buster" )	// 891220
-GAME( 1990, airbustj, airbustr, airbustr, airbustj, airbustj, ROT0, "Kaneko (Namco license)", "Air Buster (Japan)" )	// 891229
+GAME( 1990, airbustr, 0,        airbustr, airbustr, airbustr, ROT0, "Kaneko (Namco license)", "Air Buster: Trouble Specialty Raid Unit (World)" )	// 891220
+GAME( 1990, airbustj, airbustr, airbustr, airbustj, airbustj, ROT0, "Kaneko (Namco license)", "Air Buster: Trouble Specialty Raid Unit (Japan)" )	// 891229

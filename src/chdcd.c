@@ -183,7 +183,7 @@ int cdrom_parse_toc(char *tocfname, struct cdrom_toc *outtoc, struct cdrom_track
 
 					/* we're using this token, go on */
 					EATWHITESPACE
-					TOKENIZETOCOLON
+					TOKENIZETOCOLONINC
 				}
 				else
 				{

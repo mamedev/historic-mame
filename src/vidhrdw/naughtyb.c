@@ -26,6 +26,8 @@ static unsigned char palreg;
 /* used in Naughty Boy to select video bank */
 static int bankreg;
 
+// true if cabinet == cocktail -AND- handling player 2
+int naughtyb_cocktail;
 
 static struct rectangle scrollvisiblearea =
 {
@@ -182,15 +184,19 @@ WRITE8_HANDLER( naughtyb_videoram2_w )
 
 WRITE8_HANDLER( naughtyb_videoreg_w )
 {
-	/* bits 4+5 control the sound circuit */
+	// bits 4+5 control the sound circuit
+
 	pleiads_sound_control_c_w(offset,data);
 
     if ((videoreg & 0x0f) != (data & 0x0f))
 	{
 		videoreg = data;
 
-		palreg  = (data >> 1) & 0x03;	/* pallette sel is bit 1 & 2 */
-		bankreg = (data >> 2) & 0x01;	/* banksel is just bit 2 */
+		naughtyb_cocktail =
+			( ( input_port_2_r(0) & 0x80 ) &&	// cabinet == cocktail
+			  ( data & 0x01 ) );				// handling player 2
+		palreg  = (data >> 1) & 0x03;			// pallette sel is bit 1 & 2
+		bankreg = (data >> 2) & 0x01;			// banksel is just bit 2
 
 		memset (dirtybuffer, 1, videoram_size);
 	}
@@ -198,15 +204,19 @@ WRITE8_HANDLER( naughtyb_videoreg_w )
 
 WRITE8_HANDLER( popflame_videoreg_w )
 {
-	/* bits 4+5 control the sound circuit */
+	// bits 4+5 control the sound circuit
+
 	pleiads_sound_control_c_w(offset,data);
 
     if ((videoreg & 0x0f) != (data & 0x0f))
 	{
 		videoreg = data;
 
-		palreg  = (data >> 1) & 0x03;	/* pallette sel is bit 1 & 2 */
-		bankreg = (data >> 3) & 0x01;	/* banksel is just bit 3 */
+		naughtyb_cocktail =
+			( ( input_port_2_r(0) & 0x80 ) &&	// cabinet == cocktail
+			  ( data & 0x01 ) );				// handling player 2
+		palreg  = (data >> 1) & 0x03;			// pallette sel is bit 1 & 2
+		bankreg = (data >> 3) & 0x01;			// banksel is just bit 3
 
 		memset (dirtybuffer, 1, videoram_size);
 	}
@@ -266,55 +276,68 @@ VIDEO_UPDATE( naughtyb )
 {
 	int offs;
 
+	// for every character in the Video RAM, check if it has been modified
+	// since last time and update it accordingly.
 
-	/* for every character in the Video RAM, check if it has been modified */
-	/* since last time and update it accordingly. */
 	for (offs = videoram_size - 1;offs >= 0;offs--)
 	{
 		if (dirtybuffer[offs])
 		{
 			int sx,sy;
 
-
 			dirtybuffer[offs] = 0;
 
-			if (offs < 0x700)
+			if ( naughtyb_cocktail )
 			{
-				sx = offs % 64;
-				sy = offs / 64;
+				if (offs < 0x700)
+				{
+					sx = 63 - offs % 64;
+					sy = 27 - offs / 64;
+				}
+				else
+				{
+					sx = 64 + ( 3 - (offs - 0x700) % 4 );
+					sy = 27 - (offs - 0x700) / 4;
+				}
 			}
 			else
 			{
-				sx = 64 + (offs - 0x700) % 4;
-				sy = (offs - 0x700) / 4;
+				if (offs < 0x700)
+				{
+					sx = offs % 64;
+					sy = offs / 64;
+				}
+				else
+				{
+					sx = 64 + (offs - 0x700) % 4;
+					sy = (offs - 0x700) / 4;
+				}
 			}
 
 			drawgfx(tmpbitmap,Machine->gfx[0],
 					naughtyb_videoram2[offs] + 256 * bankreg,
 					(naughtyb_videoram2[offs] >> 5) + 8 * palreg,
-					0,0,
+					naughtyb_cocktail,naughtyb_cocktail,
 					8*sx,8*sy,
 					0,TRANSPARENCY_NONE,0);
 
 			drawgfx(tmpbitmap,Machine->gfx[1],
 					videoram[offs] + 256*bankreg,
 					(videoram[offs] >> 5) + 8 * palreg,
-					0,0,
+					naughtyb_cocktail,naughtyb_cocktail,
 					8*sx,8*sy,
 					0,TRANSPARENCY_PEN,0);
 		}
 	}
 
-
-	/* copy the temporary bitmap to the screen */
+	// copy the temporary bitmap to the screen
 	{
 		int scrollx;
-
 
 		copybitmap(bitmap,tmpbitmap,0,0,-66*8,0,&leftvisiblearea,TRANSPARENCY_NONE,0);
 		copybitmap(bitmap,tmpbitmap,0,0,-30*8,0,&rightvisiblearea,TRANSPARENCY_NONE,0);
 
-		scrollx = -*naughtyb_scrollreg + 16;
+		scrollx = ( naughtyb_cocktail ) ? *naughtyb_scrollreg - 239 : -*naughtyb_scrollreg + 16;
 		copyscrollbitmap(bitmap,tmpbitmap,1,&scrollx,0,0,&scrollvisiblearea,TRANSPARENCY_NONE,0);
 	}
 }

@@ -130,7 +130,7 @@ static void (*i386_opcode_table1_16[256])(void) =
 	I386OP(jg_rel8),			/* 0x7f */
 	I386OP(group80_8),			/* 0x80 */
 	I386OP(group81_16),			/* 0x81 */
-	I386OP(unimplemented),		/* 0x82 */		/* TODO: Group 82, same as 0x80 ? */
+	I386OP(group80_8),			/* 0x82 */
 	I386OP(group83_16),			/* 0x83 */
 	I386OP(test_rm8_r8),		/* 0x84 */
 	I386OP(test_rm16_r16),		/* 0x85 */
@@ -155,7 +155,7 @@ static void (*i386_opcode_table1_16[256])(void) =
 	I386OP(cbw),				/* 0x98 */
 	I386OP(cwd),				/* 0x99 */
 	I386OP(call_abs16),			/* 0x9a */
-	I386OP(unimplemented),		/* 0x9b */		/* TODO: WAIT */
+	I386OP(wait),				/* 0x9b */
 	I386OP(pushf),				/* 0x9c */
 	I386OP(popf),				/* 0x9d */
 	I386OP(sahf),				/* 0x9e */
@@ -194,10 +194,10 @@ static void (*i386_opcode_table1_16[256])(void) =
 	I386OP(mov_di_i16),			/* 0xbf */
 	I386OP(groupC0_8),			/* 0xc0 */
 	I386OP(groupC1_16),			/* 0xc1 */
-	I386OP(unimplemented),		/* 0xc2 */		/* TODO: RET */
+	I386OP(ret_near16_i16),		/* 0xc2 */
 	I386OP(ret_near16),			/* 0xc3 */
-	I386OP(les),				/* 0xc4 */
-	I386OP(lds),				/* 0xc5 */
+	I386OP(les16),				/* 0xc4 */
+	I386OP(lds16),				/* 0xc5 */
 	I386OP(mov_rm8_i8),			/* 0xc6 */
 	I386OP(mov_rm16_i16),		/* 0xc7 */
 	I386OP(unimplemented),		/* 0xc8 */		/* TODO: ENTER */
@@ -262,13 +262,13 @@ static void (*i386_opcode_table1_16[256])(void) =
 
 static void (*i386_opcode_table2_16[256])(void) =
 {
-	I386OP(unimplemented),		/* 0x00 */		/* TODO: Group 0F00 */
+	I386OP(group0F00_16),		/* 0x00 */
 	I386OP(group0F01_16),		/* 0x01 */
 	I386OP(unimplemented),		/* 0x02 */		/* TODO: LAR */
 	I386OP(unimplemented),		/* 0x03 */		/* TODO: LSL */
 	I386OP(invalid),			/* 0x04 */
 	I386OP(invalid),			/* 0x05 */
-	I386OP(unimplemented),		/* 0x06 */		/* TODO: CLTS */
+	I386OP(clts),				/* 0x06 */
 	I386OP(invalid),			/* 0x07 */		
 	I386OP(invalid),			/* 0x08 */		/* INVD (486) */
 	I386OP(invalid),			/* 0x09 */		/* WBINVD (486) */
@@ -295,9 +295,9 @@ static void (*i386_opcode_table2_16[256])(void) =
 	I386OP(invalid),			/* 0x1e */
 	I386OP(invalid),			/* 0x1f */
 	I386OP(mov_r32_cr),			/* 0x20 */
-	I386OP(unimplemented),		/* 0x21 */		/* TODO: MOV R32, DR */
+	I386OP(mov_r32_dr),			/* 0x21 */
 	I386OP(mov_cr_r32),			/* 0x22 */
-	I386OP(unimplemented),		/* 0x23 */		/* TODO: MOV DR, R32 */
+	I386OP(mov_dr_r32),			/* 0x23 */
 	I386OP(unimplemented),		/* 0x24 */		/* TODO: MOV R32, TR */
 	I386OP(invalid),			/* 0x25 */
 	I386OP(unimplemented),		/* 0x26 */		/* TODO: MOV TR, R32 */
@@ -440,10 +440,10 @@ static void (*i386_opcode_table2_16[256])(void) =
 	I386OP(imul_r16_rm16),		/* 0xaf */
 	I386OP(invalid),			/* 0xb0 */		/* CMPXCHG (486) */
 	I386OP(invalid),			/* 0xb1 */		/* CMPXCHG (486) */
-	I386OP(lss),				/* 0xb2 */
+	I386OP(lss16),				/* 0xb2 */
 	I386OP(btr_rm16_r16),		/* 0xb3 */
-	I386OP(lfs),				/* 0xb4 */
-	I386OP(lgs),				/* 0xb5 */
+	I386OP(lfs16),				/* 0xb4 */
+	I386OP(lgs16),				/* 0xb5 */
 	I386OP(movzx_r16_rm8),		/* 0xb6 */
 	I386OP(invalid),			/* 0xb7 */
 	I386OP(invalid),			/* 0xb8 */

@@ -99,7 +99,6 @@ Game style		Table |   |   |   |   |   |   |   |OFF|
 
 TODO:
 	* sounds are a little skanky
-	* Figure out how cocktail/upright mode works
 
  ***************************************************************************/
 
@@ -126,6 +125,31 @@ int popflame_sh_start(const struct MachineSound *msound);
 void pleiads_sh_stop(void);
 void pleiads_sh_update(void);
 
+
+static READ8_HANDLER( in0_port_r )
+{
+	extern int naughtyb_cocktail;
+
+	int in0 = input_port_0_r(0);
+
+	if ( naughtyb_cocktail )
+	{
+		// cabinet == cocktail -AND- handling player 2
+
+		in0 = ( in0 & 0x03 ) |				// start buttons
+			  ( input_port_1_r(0) & 0xFC );	// cocktail inputs
+	}
+
+	return in0;
+}
+
+static READ8_HANDLER( dsw0_port_r )
+{
+	// vblank replaces the cabinet dip
+
+	return ( ( input_port_2_r(0) & 0x7F ) |		// dsw0
+   			 ( input_port_3_r(0) & 0x80 ) );	// vblank
+}
 
 /* Pop Flamer
    1st protection relies on reading values from a device at $9000 and writing to 400A-400D (See $26A9).
@@ -174,8 +198,8 @@ READ8_HANDLER( popflame_protection_r ) /* Not used by bootleg/hack */
 static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0000, 0x3fff) AM_READ(MRA8_ROM)
 	AM_RANGE(0x4000, 0x8fff) AM_READ(MRA8_RAM)
-	AM_RANGE(0xb000, 0xb7ff) AM_READ(input_port_0_r) 	/* IN0 */
-	AM_RANGE(0xb800, 0xbfff) AM_READ(input_port_1_r) 	/* DSW */
+	AM_RANGE(0xb000, 0xb7ff) AM_READ(in0_port_r)	// IN0
+	AM_RANGE(0xb800, 0xbfff) AM_READ(dsw0_port_r)	// DSW0
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
@@ -212,12 +236,12 @@ ADDRESS_MAP_END
 
 INTERRUPT_GEN( naughtyb_interrupt )
 {
-	if (readinputport(2) & 1)
+	if (readinputport(3) & 1)
 		cpunum_set_input_line(0, INPUT_LINE_NMI, PULSE_LINE);
 }
 
 INPUT_PORTS_START( naughtyb )
-	PORT_START	/* IN0 */
+	PORT_START_TAG(	"IN0" )
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START2 )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
@@ -227,7 +251,17 @@ INPUT_PORTS_START( naughtyb )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_4WAY
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_4WAY
 
-	PORT_START	/* DSW0 & VBLANK */
+	PORT_START_TAG(	"IN0_COCKTAIL" )
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN ) // IPT_START1
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN ) // IPT_START2
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_COCKTAIL
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_4WAY PORT_COCKTAIL
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_4WAY PORT_COCKTAIL
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_4WAY PORT_COCKTAIL
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_4WAY PORT_COCKTAIL
+
+	PORT_START_TAG( "DSW0" )
 	PORT_DIPNAME( 0x03, 0x01, DEF_STR( Lives ) )
 	PORT_DIPSETTING(	0x00, "2" )
 	PORT_DIPSETTING(	0x01, "3" )
@@ -246,17 +280,72 @@ INPUT_PORTS_START( naughtyb )
 	PORT_DIPNAME( 0x40, 0x00, DEF_STR( Difficulty ) )
 	PORT_DIPSETTING(	0x00, DEF_STR( Easy ) )
 	PORT_DIPSETTING(	0x40, DEF_STR( Hard ) )
-	/* This is a bit of a mystery. Bit 0x80 is read as the vblank, but
-	   it apparently also controls cocktail/table mode. */
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_VBLANK )
+	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Cocktail ) )
 
-	PORT_START	/* FAKE */
-	/* The coin slots are not memory mapped. */
-	/* This fake input port is used by the interrupt */
-	/* handler to be notified of coin insertions. We use IMPULSE to */
-	/* trigger exactly one interrupt, without having to check when the */
-	/* user releases the key. */
-		PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 ) PORT_IMPULSE(1)
+	PORT_START_TAG( "FAKE" )
+	// The coin slots are not memory mapped.
+	// This fake input port is used by the interrupt
+	// handler to be notified of coin insertions. We use IMPULSE to
+	// trigger exactly one interrupt, without having to check when the
+	// user releases the key.
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 ) PORT_IMPULSE(1)
+	// when reading DSW0, bit 7 doesn't read cabinet, but vblank
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_VBLANK )
+INPUT_PORTS_END
+
+INPUT_PORTS_START( trvmstr )
+	PORT_START_TAG(	"IN0" )
+	PORT_SERVICE(0x0f, IP_ACTIVE_LOW )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON4 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON3 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON2 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON1 )
+
+	PORT_START_TAG(	"IN0_COCKTAIL" )
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON4 ) PORT_COCKTAIL
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON3 ) PORT_COCKTAIL
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_COCKTAIL
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_COCKTAIL
+
+	PORT_START_TAG( "DSW0" )
+	PORT_DIPNAME( 0x03, 0x00, "Screen Orientation" )
+	PORT_DIPSETTING(	0x00, "0°" )
+	PORT_DIPSETTING(	0x02, "90°" )
+	PORT_DIPSETTING(	0x01, "180°" )
+	PORT_DIPSETTING(	0x03, "270°" )
+	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(	0x04, DEF_STR( Off ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x08, 0x00, "Show Correct Answer" )
+	PORT_DIPSETTING(	0x08, DEF_STR( No ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( Yes ) )
+	PORT_DIPNAME( 0x30, 0x00, DEF_STR( Coinage ) )
+	PORT_DIPSETTING(	0x10, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(	0x20, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(	0x30, DEF_STR( Free_Play ) )
+	PORT_DIPNAME( 0x40, 0x40, "Number of Questions" )
+	PORT_DIPSETTING(	0x00, "5" )
+	PORT_DIPSETTING(	0x40, "7" )
+	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Cocktail ) )
+
+	PORT_START_TAG( "FAKE" )
+	// The coin slots are not memory mapped.
+	// This fake input port is used by the interrupt
+	// handler to be notified of coin insertions. We use IMPULSE to
+	// trigger exactly one interrupt, without having to check when the
+	// user releases the key.
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 ) PORT_IMPULSE(1)
+	// when reading DSW0, bit 7 doesn't read cabinet, but vblank
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_VBLANK )
 INPUT_PORTS_END
 
 
@@ -523,6 +612,65 @@ ROM_START( popflamb )
 	ROM_LOAD( "ic54",		  0x0100, 0x0100, CRC(236bc771) SHA1(5c078eecdd9df2fbc791e440f96bc4c79476b211) ) /* palette high bits */
 ROM_END
 
+ROM_START( trvmstr )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */	
+	ROM_LOAD( "ic30.bin",     0x0000, 0x1000, CRC(4ccd0537) SHA1(f0991581c2efeb54626dd1f8acf33a28ed1b6f80) )
+	ROM_LOAD( "ic28.bin",     0x1000, 0x1000, CRC(782a2b8c) SHA1(611be829470c2fcbb301f48f5e80ad97e51ef821) )
+	ROM_LOAD( "ic26.bin",     0x2000, 0x1000, CRC(1362010a) SHA1(d721e051329b823e79515a631244eb77b77c731a) )
+
+	ROM_REGION( 0x2000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "ic44.bin",     0x0000, 0x1000, CRC(dac8cff7) SHA1(21da2b2ceb4a726d03b2e49a2df75ca66b89a197) )
+	ROM_LOAD( "ic46.bin",     0x1000, 0x1000, CRC(a97ab879) SHA1(67b86d056896f10e0c055fb58c97341cf75c3d17) )
+
+	ROM_REGION( 0x2000, REGION_GFX2, ROMREGION_DISPOSE )	
+	ROM_LOAD( "ic48.bin",     0x0000, 0x1000, CRC(79952015) SHA1(8407c2bab476a60d945d82201f01bf59ae9e0dad) )
+	ROM_LOAD( "ic50.bin",     0x1000, 0x1000, CRC(f09da428) SHA1(092d0eea41c8bbd48d7a3aff54c15f85262b21ff) )
+
+	ROM_REGION( 0x0200, REGION_PROMS, 0 )
+	ROM_LOAD( "ic63.bin",     0x0000, 0x0100, NO_DUMP )  /* palette low bits */
+	ROM_LOAD( "ic64.bin",     0x0100, 0x0100, CRC(e9915da8) SHA1(7c64ea76e39eaff724179d52ff5482df363fcf56) )  /* palette high bits */
+
+	ROM_REGION( 0x20000, REGION_USER1, 0 )	/* Questions roms */
+	ROM_LOAD( "sport_lo.u2",  0x00000, 0x4000, CRC(24f30489) SHA1(b34ecd485bccb7b78332196e6dffd18721177ac3) )
+	ROM_LOAD( "sport_hi.u1",  0x04000, 0x4000, CRC(d64a7480) SHA1(4239c7142d783cbd4242ff58d74e87d87f3535e6) )
+	ROM_LOAD( "etain_lo.u4",  0x08000, 0x4000, CRC(a2af9709) SHA1(24858ab58a8a6577446215e261da877cb48c03df) )
+	ROM_LOAD( "etain_hi.u3",  0x0c000, 0x4000, CRC(82a60dea) SHA1(2b03a67507c5a5c343804cf40b8b8147df070002) )
+	ROM_LOAD( "scien_lo.u8",  0x10000, 0x4000, CRC(01a01ff1) SHA1(d3b62ae466681ae01ab1beaf2958af94c9c4cbcb) )
+	ROM_LOAD( "scien_hi.u7",  0x14000, 0x4000, CRC(0bc68078) SHA1(910cd1a8ca68cff87c93a8ffa810d77338fc710b) )
+	ROM_LOAD( "sex_lo.u6",    0x18000, 0x4000, CRC(f2ecfa88) SHA1(15e9ce1be8b868a99b72426abbdf086fcf134517) )
+	ROM_LOAD( "sex_hi.u5",    0x1c000, 0x4000, CRC(de4a6c4b) SHA1(ba12193eabcee7e4d354678ddd780e1e338efbb1) )
+ROM_END
+
+ROM_START( trvgns )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )	
+	ROM_LOAD( "trvgns.30",   0x0000, 0x1000, CRC(a17f172c) SHA1(b831673f860f6b7566e248b13b349d82379b5e72) )
+	ROM_LOAD( "trvgns.28",   0x1000, 0x1000, CRC(681a1bff) SHA1(53da179185ae3bfb30502706cc623c2f4cc57128) )
+	ROM_LOAD( "trvgns.26",   0x2000, 0x1000, CRC(5b4068b8) SHA1(3b424dd8e2a6fa1e4628790f60c51d44f9a535a1) )
+
+	ROM_REGION( 0x2000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "trvgns.44",   0x0000, 0x1000, CRC(cd67f2cb) SHA1(22d9d8509fd44fbeb313f5120e692d7a30e3ca54) )
+	ROM_LOAD( "trvgns.46",   0x1000, 0x1000, CRC(f4021941) SHA1(81a93b5b2bf46e2f5254a86b14e31b31b7821d4f) )
+
+	ROM_REGION( 0x2000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_LOAD( "trvgns.48",   0x0000, 0x1000, NO_DUMP )
+	ROM_LOAD( "trvgns.50",   0x1000, 0x1000, CRC(ac292be8) SHA1(41f95273907b27158af0631c716fdb9301852e27) )
+	ROM_RELOAD(				 0x0000, 0x1000 )	//until the rom is redumped
+
+	ROM_REGION( 0x0200, REGION_PROMS, 0 )
+	/* wrong! from naughtyb just to see the game */
+	ROM_LOAD( "ic63.bin", 0x0000, 0x0100, BAD_DUMP CRC(98ad89a1) SHA1(ddee7dcb003b66fbc7d6d6e90d499ed090c59227) ) /* palette low bits */
+	ROM_LOAD( "ic64.bin", 0x0100, 0x0100, BAD_DUMP CRC(909107d4) SHA1(138ace7845424bc3ca86b0889be634943c8c2d19) ) /* palette high bits */
+
+	ROM_REGION( 0x20000, REGION_USER1, 0 ) /* Question roms */
+	ROM_LOAD( "trvgns.u2",   0x00000, 0x4000, CRC(109bd359) SHA1(ea8cb4b0a14a3ef4932947afdfa773ecc34c2b9b) )
+	ROM_LOAD( "trvgns.u1",   0x04000, 0x4000, CRC(8e8b5f71) SHA1(71514af2af2468a13cf5cc4237fa2590d7a16b27) )
+	ROM_LOAD( "trvgns.u4",   0x08000, 0x4000, CRC(b73f2e31) SHA1(4390152e053118c31ed74fe850ea7124c0e7b731) )
+	ROM_LOAD( "trvgns.u3",   0x0c000, 0x4000, CRC(bf654110) SHA1(5229f5e6973a04c53572ea94c14d79a238c0e90f) )
+	ROM_LOAD( "trvgns.u6",   0x10000, 0x4000, CRC(4a2263a7) SHA1(63f2f79261d508c9bba3d73d78f7dce5d348b6d4) )
+	ROM_LOAD( "trvgns.u5",   0x14000, 0x4000, CRC(bd31f382) SHA1(ec04a5d4a5fc8be059abf3c21c65cd970e569d44) )
+	ROM_LOAD( "trvgns.u8",   0x18000, 0x4000, CRC(dbfce45f) SHA1(5d96186c96dee810b0ef63964cb3614fd486aefa) )
+	ROM_LOAD( "trvgns.u7",   0x1c000, 0x4000, CRC(c8f5a02d) SHA1(8a566f83f9bd39ab508085af942957a7ed941813) )
+ROM_END
 
 
 DRIVER_INIT( popflame )
@@ -531,10 +679,42 @@ DRIVER_INIT( popflame )
 	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x9000, 0x9000, 0, 0, popflame_protection_r);
 }
 
+static int question_offset = 0;
 
-GAMEX( 1982, naughtyb, 0,		 naughtyb, naughtyb, 0,        ROT90, "Jaleco", "Naughty Boy", GAME_NO_COCKTAIL )
-GAMEX( 1982, naughtya, naughtyb, naughtyb, naughtyb, 0,        ROT90, "bootleg", "Naughty Boy (bootleg)", GAME_NO_COCKTAIL )
-GAMEX( 1982, naughtyc, naughtyb, naughtyb, naughtyb, 0,        ROT90, "Jaleco (Cinematronics license)", "Naughty Boy (Cinematronics)", GAME_NO_COCKTAIL )
-GAMEX( 1982, popflame, 0,		 popflame, naughtyb, popflame, ROT90, "Jaleco", "Pop Flamer (protected)", GAME_NO_COCKTAIL )
-GAMEX( 1982, popflama, popflame, popflame, naughtyb, 0,        ROT90, "Jaleco", "Pop Flamer (not protected)", GAME_NO_COCKTAIL )
-GAMEX( 1982, popflamb, popflame, popflame, naughtyb, 0,        ROT90, "Jaleco", "Pop Flamer (hack?)", GAME_NO_COCKTAIL )
+static READ8_HANDLER( trvmstr_questions_r )
+{
+	return memory_region(REGION_USER1)[question_offset];
+}
+
+static WRITE8_HANDLER( trvmstr_questions_w )
+{
+	switch(offset)
+	{
+	case 0:
+		question_offset = (question_offset & 0xffff00) | data;
+		break;
+	case 1:
+		question_offset = (question_offset & 0xff00ff) | (data << 8);
+		break;
+	case 2:
+		question_offset = (question_offset & 0x00ffff) | (data << 16);
+		break;
+	}
+}
+
+DRIVER_INIT( trvmstr )
+{
+	/* install questions' handlers  */
+	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0xc000, 0xc000, 0, 0, trvmstr_questions_r);
+	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xc000, 0xc002, 0, 0, trvmstr_questions_w);
+}
+
+
+GAME( 1982, naughtyb, 0,		naughtyb, naughtyb, 0,        ROT90, "Jaleco", "Naughty Boy" )
+GAME( 1982, naughtya, naughtyb, naughtyb, naughtyb, 0,        ROT90, "bootleg", "Naughty Boy (bootleg)" )
+GAME( 1982, naughtyc, naughtyb, naughtyb, naughtyb, 0,        ROT90, "Jaleco (Cinematronics license)", "Naughty Boy (Cinematronics)" )
+GAME( 1982, popflame, 0,		popflame, naughtyb, popflame, ROT90, "Jaleco", "Pop Flamer (protected)" )
+GAME( 1982, popflama, popflame, popflame, naughtyb, 0,        ROT90, "Jaleco", "Pop Flamer (not protected)" )
+GAME( 1982, popflamb, popflame, popflame, naughtyb, 0,        ROT90, "Jaleco", "Pop Flamer (hack?)" )
+GAMEX(1985, trvmstr,  0,		naughtyb, trvmstr,  trvmstr,  ROT90, "Enerdyne Technologies Inc.", "Trivia Master", GAME_WRONG_COLORS )
+GAMEX(198?, trvgns,   0,		naughtyb, trvmstr,  trvmstr,  ROT90, "Enerdyne Technologies Inc.", "Trivia Genius", GAME_WRONG_COLORS )

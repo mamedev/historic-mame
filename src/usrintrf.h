@@ -9,6 +9,23 @@
 #ifndef USRINTRF_H
 #define USRINTRF_H
 
+struct MEMCARDinterface
+{
+	int (*create)(int);
+	int (*load)(int);
+	void (*save)(void);
+	void (*eject)(void);
+};
+extern struct MEMCARDinterface memcard_intf;
+
+extern int	mcd_action;
+extern int	mcd_number;
+extern int	memcard_status;
+extern int	memcard_number;
+extern int	memcard_manager;
+
+#define init_memcard() memset(&memcard_intf, 0, sizeof(struct MEMCARDinterface))
+
 struct DisplayText
 {
 	const char *text;	/* 0 marks the end of the array */

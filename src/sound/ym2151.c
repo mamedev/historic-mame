@@ -1342,7 +1342,8 @@ int YM2151ReadStatus( int n )
 
 
 
-#ifdef USE_MAME_TIMERS
+//#ifdef USE_MAME_TIMERS
+#if 0 // disabled for now due to crashing in debug+map+symbols build
 /*
 *	state save support for MAME
 */

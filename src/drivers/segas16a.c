@@ -1,16 +1,137 @@
 /***************************************************************************
 
-	Sega System 16A hardware
+	Sega pre-System 16 & System 16A hardware
 
 ****************************************************************************
 
 	Known bugs:
-		* Glitches in high score scrolling in Quartet
 		* Major League controls not hooked up
 		* Screen flip only sort of works
 		* Need to revisit/clean up 7751 sound banking
+		* mirroring code can't handle the proper mirroring
 
-***************************************************************************/
+***************************************************************************
+
+System16A Hardware Overview
+---------------------------
+
+The games on this system include... (there may be more??)
+Action Fighter (C) Sega 1985
+Alex Kidd      (C) Sega 1986
+Fantasy Zone   (C) Sega 1986
+SDI            (C) Sega 1987
+Shinobi        (C) Sega 1987
+Tetris         (C) Sega 1988
+
+PCB Layout
+----------
+
+Top PCB
+
+171-5306 (number under PCB, no numbers on top)
+         |----------|     |-----------|     |-----------|
+  |------|----------|-----|-----------|-----|-----------|------|
+|-|      16MHz    25.1478MHz                                   |
+| |                                  315-5149                  |
+|-|    YM3012 YM2151  ROM.IC24 ROM.IC41                        |
+  | VOL                                                        |
+  |                   ROM.IC25 ROM.IC42  MB3771                |
+|-|         D8255                           315-5155           |
+|                     ROM.IC26 ROM.IC43     315-5155  ROM.IC93 |
+|S                                                             |
+|E          Z80A      TC5565   TC5565       315-5155  ROM.IC94 |
+|G                315-5141                  315-5155           |
+|A         ROM.IC12                                   ROM.IC95 |
+|5                                          315-5155           |
+|6          2016                            315-5155           |
+|                                                     2016     |
+|-|                                       8751                 |
+  |        DSW2        |-------------|                2016     |
+|-|                    |    68000    | 315-5244                |
+|                      |-------------|       315-5142          |
+|          DSW1                                                |
+|                        10MHz                                 |
+|--------------------------------------------------------------|
+Notes:
+      68000    - running at 10.000MHz. Is replaced with a Hitachi FD1094 in some games.
+      Z80      - running at 4.000MHz [16/4]
+      YM2151   - running at 4.000MHz [16/4]
+      2016     - Fujitsu MB8128 2K x8 SRAM (DIP24)
+      TC5565   - Toshiba TC5565 8K x8 SRAM (DIP28)
+      8751     - Intel 8751 Microcontroller. It appears to be not used, and instead, games use a small plug-in board
+                 containing only one 74HC04 TTL IC. The daughterboard has Sega part number '837-0068' & '171-5468' stamped onto it.
+      315-5141 - Signetics CK2605 stamped '315-5141' (DIP20)
+      315-5149 - 82S153 Field Programmable Logic Array, sticker '315-5149'(DIP20)
+      315-5244 - 82S153 Field Programmable Logic Array, sticker '315-5244'(DIP20)
+      315-5142 - Signetics CK2605 stamped '315-5142' (DIP20)
+      315-5155 - Custom Sega IC (DIP20)
+
+                         Sound     |---------------------- Main Program --------------------|  |---------- Tiles ---------|
+                         Program
+Game           CPU       IC12      IC24      IC25      IC26      IC41      IC42      IC43      IC93      IC94      IC95
+---------------------------------------------------------------------------------------------------------------------------
+Action Fighter 317-0018  EPR10284  EPR10353  EPR10351  EPR10349  EPR10352  EPR10350  EPR10348  EPR10283  EPR10282  EPR10281
+Alex Kid       317-0021  EPR10434  -         EPR10428  EPR10427  -         EPR10429  EPR10430  EPR10433  EPR10432  EPR10431
+Alex Kid (Alt) 317-0021  EPR10434  -         EPR10446  EPR10445  -         EPR10448  EPR10447  EPR10433  EPR10432  EPR10431
+Fantasy Zone   68000     EPR7535   EPR7384   EPR7383   EPR7382   EPR7387   EPR7386   EPR7385   EPR7390   EPR7389   EPR7388
+SDI            317-0027  EPR10759  EPR10752  EPR10969  EPR10968  EPR10755  EPR10971  EPR10970  EPR10758  EPR10757  EPR10756
+Shinobi        317-0050  EPR11267  -         EPR11261  EPR11260  -         EPR11262  EPR11263  EPR11266  EPR11265  EPR11264
+Tetris         317-0093  EPR12205  -         -         EPR12200  -         -         EPR12201  EPR12204  EPR12203  EPR12202
+
+
+Bottom PCB
+
+171-5307 (number under PCB, no numbers on top)
+         |----------|     |-----------|     |-----------|
+|--------|----------|-----|-----------|-----|-----------|------|
+|                                           315-5144           |-|
+|                                                              | |
+|                                                              |-|
+|        2148 2148 2148                                        |
+|                              ROM.IC24    ROM.IC11            |
+|        2148 2148 2148  ROM.IC30   ROM.IC18                   |
+|                                                   D7751      |
+|                                                        6MHz  |
+|                              ROM.IC23    ROM.IC10     D8243C |
+|            315-5049    ROM.IC29   ROM.IC17                   |
+|                                                              |
+|                  315-5106    315-5108                        |
+|                        315-5107     2018  2018               |
+|                                                              |
+|            315-5049                                          |
+|                                              ROM.IC5 ROM.IC2 |
+|TC5565 TC5565                  315-5011                       |
+|                                                              |
+|               2016  315-5143       315-5012  ROM.IC4 ROM.IC1 |
+|TC5565 TC5565  2016                                           |
+|--------------------------------------------------------------|
+Notes:
+      D7751    - NEC uPD7751C Microcontroller, running at 6.000MHz. This is a clone of an 8048 MCU
+      D8243C   - NEC D8243C (DIP24)
+      2016     - Fujitsu MB8128 2K x8 SRAM (DIP24)
+      2018     - Sony CXD5813 2K x8 SRAM
+      TC5565   - Toshiba TC5565 8K x8 SRAM (DIP28)
+      2148     - Fujitsu MBM2148 1K x4 SRAM (DIP18)
+      315-5144 - Signetics CK2605 stamped '315-5144' (DIP20)
+      315-5143 - Signetics CK2605 stamped '315-5143' (DIP20)
+      315-5106 - PAL16R6 stamped '315-5106' (DIP20)
+      315-5107 - PAL16R6 stamped '315-5107' (DIP20)
+      315-5108 - PAL16R6 stamped '315-5108' (DIP20)
+      315-5011 - Custom Sega IC (DIP40)
+      315-5012 - Custom Sega IC (DIP48)
+      315-5049 - Custom Sega IC (SDIP64)
+
+               |---------- 7751 Sound Data ---------|  |--------------------------------- Sprites ----------------------------------|
+
+Game           IC1       IC2       IC4       IC5       IC10      IC11      IC17      IC18      IC23      IC24      IC29      IC30
+-------------------------------------------------------------------------------------------------------------------------------------
+Action Fighter -         -         -         -         EPR10285  EPR10289  EPR10286  EPR10290  EPR10287  EPR10291  EPR10288  EPR10292
+Alex Kid       EPR10435  EPR10436  -         -         EPR10437  EPR10441  EPR10438  EPR10442  EPR10439  EPR10443  EPR10440  EPR10444
+Fantasy Zone   -         -         -         -         EPR7392   EPR7396   EPR7393   EPR7397   EPR7394   EPR7398   -         -
+SDI            -         -         -         -         EPR10760  EPR10763  EPR10761  EPR10764  EPR10762  EPR10765  -         -
+Shinobi        EPR11268  -         -         -         EPR11290  EPR11294  EPR11291  EPR11295  EPR11292  EPR11296  EPR11293  EPR11297
+Tetris         -         -         -         -         EPR12169  EPR12170  -         -         -         -         -         -
+*/
 
 #include "driver.h"
 #include "system16.h"
@@ -25,12 +146,14 @@
  *
  *************************************/
 
+static data16_t *workram;
+
 static UINT8 has_n7759;
 
 static read16_handler custom_io_r;
 static write16_handler custom_io_w;
 
-static void (*i8751_callback)(void);
+static void (*i8751_vblank_hook)(void);
 
 
 
@@ -79,8 +202,6 @@ static ppi8255_interface single_ppi_intf =
 
 static void system16a_generic_init(void)
 {
-//	int rgnum, soundnum;
-
 	/* call the generic init */
 	machine_init_sys16_onetime();
 
@@ -90,15 +211,13 @@ static void system16a_generic_init(void)
 	/* reset the custom handlers and other pointers */
 	custom_io_r = NULL;
 	custom_io_w = NULL;
+	i8751_vblank_hook = NULL;
 
 	/* see if we have an N7759 chip */
 	has_n7759 = (mame_find_cpu_index("n7751") != -1);
 
 	/* configure the 8255 interface */
 	ppi8255_init(&single_ppi_intf);
-
-	/* reset globals */
-	i8751_callback = NULL;
 }
 
 
@@ -109,20 +228,13 @@ static void system16a_generic_init(void)
  *
  *************************************/
 
-static void generic_i8751_callback(int param)
-{
-	(*i8751_callback)();
-	timer_set(cpu_getscanlinetime(260), 0, generic_i8751_callback);
-}
-
-
 MACHINE_INIT( system16a )
 {
 	fd1094_machine_init();
 
-	/* set up any i8751 hacks */
-	if (i8751_callback)
-		timer_set(cpu_getscanlinetime(260), 0, generic_i8751_callback);
+	/* if we have a fake i8751 handler, disable the actual 8751 */
+	if (i8751_vblank_hook != NULL)
+		cpunum_suspend(mame_find_cpu_index("mcu"), SUSPEND_REASON_DISABLE, 1);
 }
 
 
@@ -230,6 +342,8 @@ static WRITE8_HANDLER( sound_control_w )
 	      0= Sound is disabled
 	      1= sound is enabled
 	*/
+	system16a_set_colscroll(~data & 0x04);
+	system16a_set_rowscroll(~data & 0x02);
 }
 
 
@@ -343,17 +457,35 @@ WRITE8_HANDLER( n7751_rom_select_w )
 
 /*************************************
  *
- *	8751 simulators
+ *	I8751 interrupt generation
+ *
+ *************************************/
+
+static INTERRUPT_GEN( i8751_main_cpu_vblank )
+{
+	/* if we have a fake 8751 handler, call it on VBLANK */
+	if (i8751_vblank_hook != NULL)
+		(*i8751_vblank_hook)();
+}
+
+
+
+/*************************************
+ *
+ *	Per-game I8751 workarounds
  *
  *************************************/
 
 static void bodyslam_i8751_sim(void)
 {
-	UINT8 flag = sys16_workingram[0x200/2] >> 8;
-	UINT8 tick = sys16_workingram[0x200/2] & 0xff;
-	UINT8 sec = sys16_workingram[0x202/2] >> 8;
-	UINT8 min = sys16_workingram[0x202/2] & 0xff;
+	UINT8 flag = workram[0x200/2] >> 8;
+	UINT8 tick = workram[0x200/2] & 0xff;
+	UINT8 sec = workram[0x202/2] >> 8;
+	UINT8 min = workram[0x202/2] & 0xff;
 
+	/* signal a VBLANK to the main CPU */
+	cpunum_set_input_line(0, 4, HOLD_LINE);
+	
 	/* out of time? set the flag */
 	if (tick == 0 && sec == 0 && min == 0)
 		flag = 1;
@@ -384,20 +516,39 @@ static void bodyslam_i8751_sim(void)
 			}
 		}
 	}
-	sys16_workingram[0x200/2] = (flag << 8) + tick;
-	sys16_workingram[0x202/2] = (sec << 8) + min;
+	workram[0x200/2] = (flag << 8) + tick;
+	workram[0x202/2] = (sec << 8) + min;
 }
 
 
 static void quartet_i8751_sim(void)
 {
+	/* signal a VBLANK to the main CPU */
+	cpunum_set_input_line(0, 4, HOLD_LINE);
+	
 	/* X scroll values */
-	system16a_textram_w(0xff8/2, sys16_workingram[0x0d14/2], 0);
-	system16a_textram_w(0xffa/2, sys16_workingram[0x0d18/2], 0);
+	system16a_textram_w(0xff8/2, workram[0x0d14/2], 0);
+	system16a_textram_w(0xffa/2, workram[0x0d18/2], 0);
 
 	/* page values */
-	system16a_textram_w(0xe9e/2, sys16_workingram[0x0d1c/2], 0);
-	system16a_textram_w(0xe9c/2, sys16_workingram[0x0d1e/2], 0);
+	system16a_textram_w(0xe9e/2, workram[0x0d1c/2], 0);
+	system16a_textram_w(0xe9c/2, workram[0x0d1e/2], 0);
+}
+
+
+
+/*************************************
+ *
+ *	Capacitor-backed RAM
+ *
+ *************************************/
+
+static NVRAM_HANDLER( system16a )
+{
+	if (read_or_write)
+		mame_fwrite(file, workram, 0x4000);
+	else if (file)
+		mame_fread(file, workram, 0x4000);
 }
 
 
@@ -416,7 +567,7 @@ static ADDRESS_MAP_START( system16a_map, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x440000, 0x4407ff) AM_RAM AM_BASE(&segaic16_spriteram)
 	AM_RANGE(0x840000, 0x840fff) AM_READWRITE(paletteram16_word_r, segaic16_paletteram_w) AM_BASE(&paletteram16)
 	AM_RANGE(0xc40000, 0xc43fff) AM_READWRITE(misc_io_r, misc_io_w)
-	AM_RANGE(0xffc000, 0xffffff) AM_RAM AM_BASE(&sys16_workingram)
+	AM_RANGE(0xffc000, 0xffffff) AM_RAM AM_BASE(&workram)
 
 //	AM_RANGE(0x000000, 0x05ffff) AM_MIRROR(0x380000) AM_ROM
 //	AM_RANGE(0x400000, 0x407fff) AM_MIRROR(0xb88000) AM_READWRITE(MRA16_RAM, segaic16_tileram_w) AM_BASE(&segaic16_tileram)
@@ -424,7 +575,7 @@ static ADDRESS_MAP_START( system16a_map, ADDRESS_SPACE_PROGRAM, 16 )
 //	AM_RANGE(0x440000, 0x4407ff) AM_MIRROR(0x3bf800) AM_RAM AM_BASE(&segaic16_spriteram)
 //	AM_RANGE(0x840000, 0x840fff) AM_MIRROR(0x3bf000) AM_READWRITE(paletteram16_word_r, segaic16_paletteram_w) AM_BASE(&paletteram16)
 //	AM_RANGE(0xc40000, 0xc43fff) AM_MIRROR(0x39c000) AM_READWRITE(misc_io_r, misc_io_w)
-//	AM_RANGE(0xc70000, 0xc73fff) AM_MIRROR(0x38c000) AM_RAM AM_BASE(&sys16_workingram)
+//	AM_RANGE(0xc70000, 0xc73fff) AM_MIRROR(0x38c000) AM_RAM AM_BASE(&workram)
 ADDRESS_MAP_END
 
 
@@ -474,6 +625,23 @@ static ADDRESS_MAP_START( n7751_portmap, ADDRESS_SPACE_IO, 8 )
 	AM_RANGE(I8039_p5, I8039_p5)  AM_WRITE(n7751_offset_a4_a7_w)
 	AM_RANGE(I8039_p6, I8039_p6)  AM_WRITE(n7751_offset_a8_a11_w)
 	AM_RANGE(I8039_p7, I8039_p7)  AM_WRITE(n7751_rom_select_w)
+ADDRESS_MAP_END
+
+
+
+/*************************************
+ *
+ *	i8751 MCU memory handlers
+ *
+ *************************************/
+
+static ADDRESS_MAP_START( mcu_map, ADDRESS_SPACE_PROGRAM, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_UNMAP(1) )
+	AM_RANGE(0x0000, 0x0fff) AM_ROM
+ADDRESS_MAP_END
+
+static ADDRESS_MAP_START( mcu_data_map, ADDRESS_SPACE_DATA, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_UNMAP(1) )
 ADDRESS_MAP_END
 
 
@@ -950,9 +1118,13 @@ static INPUT_PORTS_START( wb3 )
 	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Bonus_Life ) )		//??
 	PORT_DIPSETTING(    0x10, "5000/10000/18000/30000" )
 	PORT_DIPSETTING(    0x00, "5000/15000/30000" )
-	PORT_DIPNAME( 0x40, 0x40, "Allow Round Select" )
-	PORT_DIPSETTING(    0x40, DEF_STR( No ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Yes ) )			// no collision though
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Normal ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Hard ) )
+	PORT_DIPNAME( 0x40, 0x40, "Test Mode" )
+	PORT_DIPSETTING(    0x40, DEF_STR( No ) )	/* Normal game */
+	PORT_DIPSETTING(    0x00, DEF_STR( Yes ) )	/* Levels are selectable / Player is Invincible */
+	/* Swtches 1 & 8 are listed as "Always off" */
 INPUT_PORTS_END
 
 
@@ -1016,18 +1188,24 @@ static MACHINE_DRIVER_START( system16a )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD_TAG("main", M68000, 10000000)
-	MDRV_CPU_VBLANK_INT(irq4_line_hold,1)
 	MDRV_CPU_PROGRAM_MAP(system16a_map,0)
+	MDRV_CPU_VBLANK_INT(irq4_line_hold,1)
 
-	MDRV_CPU_ADD_TAG("sound", Z80, 5000000)
+	MDRV_CPU_ADD_TAG("sound", Z80, 4000000)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
 	MDRV_CPU_PROGRAM_MAP(sound_map,0)
 	MDRV_CPU_IO_MAP(sound_portmap,0)
+
+	MDRV_CPU_ADD_TAG("n7751", N7751, 6000000/15)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	MDRV_CPU_PROGRAM_MAP(n7751_map,0)
+	MDRV_CPU_IO_MAP(n7751_portmap,0)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(1000000 * (262 - 224) / (262 * 60))
 
 	MDRV_MACHINE_INIT(system16a)
+	MDRV_NVRAM_HANDLER(system16a)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
@@ -1042,20 +1220,26 @@ static MACHINE_DRIVER_START( system16a )
 	/* sound hardware */
 	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
 	MDRV_SOUND_ADD_TAG("2151", YM2151, ym2151_interface)
+	MDRV_SOUND_ADD_TAG("dac", DAC, n7751_dac_interface)
 MACHINE_DRIVER_END
 
 
-static MACHINE_DRIVER_START( system16a_7751 )
+static MACHINE_DRIVER_START( system16a_no7751 )
 	MDRV_IMPORT_FROM(system16a)
+	MDRV_CPU_REMOVE("n7751")
+	MDRV_SOUND_REMOVE("dac")
+MACHINE_DRIVER_END
 
-	/* basic machine hardware */
-	MDRV_CPU_ADD_TAG("n7751", N7751, 6000000/15)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
-	MDRV_CPU_PROGRAM_MAP(n7751_map,0)
-	MDRV_CPU_IO_MAP(n7751_portmap,0)
 
-	/* sound hardware */
-	MDRV_SOUND_ADD(DAC, n7751_dac_interface)
+static MACHINE_DRIVER_START( system16a_8751 )
+	MDRV_IMPORT_FROM(system16a)
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_VBLANK_INT(i8751_main_cpu_vblank,1)
+
+	MDRV_CPU_ADD_TAG("mcu", I8751, 8000000)
+	MDRV_CPU_PROGRAM_MAP(mcu_map,0)
+	MDRV_CPU_DATA_MAP(mcu_data_map,0)
+	MDRV_CPU_VBLANK_INT(irq0_line_pulse,1)
 MACHINE_DRIVER_END
 
 
@@ -1308,8 +1492,10 @@ ROM_START( bodyslam )
 	ROM_LOAD( "epr10030.c2", 0x08000, 0x8000, CRC(dcc1df0b) SHA1(a82a557fa48f4b3e1ab38f61b84d749cd417e80f) )
 	ROM_LOAD( "epr10031.c3", 0x10000, 0x8000, CRC(ea3c4472) SHA1(ad8eac2d3d14fd6aba713f4d624861c17aabf757) )
 	ROM_LOAD( "epr10032.c4", 0x18000, 0x8000, CRC(0aabebce) SHA1(fab12df8f4eab270be491c6c025d832c338e1e83) )
-ROM_END
 
+	ROM_REGION( 0x10000, REGION_CPU4, 0 )	/* protection MCU */
+	ROM_LOAD( "mcu.bin", 0x00000, 0x1000, NO_DUMP )
+ROM_END
 
 /**************************************************************************************************************************
 	Dump Matsumoto, pre-System 16
@@ -1350,6 +1536,9 @@ ROM_START( dumpmtmt )
 	ROM_LOAD( "7712.bin", 0x08000, 0x8000, CRC(7bcd85cf) SHA1(9acba6998327e1074d7311a9b6d06da9baf69aa0) )
 	ROM_LOAD( "7713.bin", 0x10000, 0x8000, CRC(33f292e7) SHA1(4358cd3922a0dcbf109d2d697c7b8c4e090c3d52) )
 	ROM_LOAD( "7714.bin", 0x18000, 0x8000, CRC(8fd48c47) SHA1(1cba63a9e7e0b477683b7758d124f4949558ba7a) )
+
+	ROM_REGION( 0x10000, REGION_CPU4, 0 )	/* protection MCU */
+	ROM_LOAD( "mcu.bin", 0x00000, 0x1000, NO_DUMP )
 ROM_END
 
 
@@ -1501,6 +1690,9 @@ ROM_START( quartet )
 	ROM_LOAD( "epr7475.2c", 0x08000, 0x8000, CRC(7abd1206) SHA1(54d52dc0b9c245cd2df647e714310a71b803cbcf) )
 	ROM_LOAD( "epr7474.3c", 0x10000, 0x8000, CRC(dbf853b8) SHA1(e82f497e1144f23f3233b5c45ef182bfc7923715) )
 	ROM_LOAD( "epr7476.4c", 0x18000, 0x8000, CRC(5eba655a) SHA1(6713ef12037cba3139d0f469c82bd90b44bae8ce) )
+
+	ROM_REGION( 0x10000, REGION_CPU4, 0 )	/* protection MCU */
+	ROM_LOAD( "mcu.bin", 0x00000, 0x1000, NO_DUMP )
 ROM_END
 
 /**************************************************************************************************************************
@@ -1542,6 +1734,9 @@ ROM_START( quartetj )
 	ROM_LOAD( "epr7475.2c", 0x08000, 0x8000, CRC(7abd1206) SHA1(54d52dc0b9c245cd2df647e714310a71b803cbcf) )
 	ROM_LOAD( "epr7474.3c", 0x10000, 0x8000, CRC(dbf853b8) SHA1(e82f497e1144f23f3233b5c45ef182bfc7923715) )
 	ROM_LOAD( "epr7476.4c", 0x18000, 0x8000, CRC(5eba655a) SHA1(6713ef12037cba3139d0f469c82bd90b44bae8ce) )
+
+	ROM_REGION( 0x10000, REGION_CPU4, 0 )	/* protection MCU */
+	ROM_LOAD( "mcu.bin", 0x00000, 0x1000, NO_DUMP )
 ROM_END
 
 
@@ -1586,6 +1781,9 @@ ROM_START( quartet2 )
 	ROM_LOAD( "epr7475.2c", 0x08000, 0x8000, CRC(7abd1206) SHA1(54d52dc0b9c245cd2df647e714310a71b803cbcf) )
 	ROM_LOAD( "epr7474.3c", 0x10000, 0x8000, CRC(dbf853b8) SHA1(e82f497e1144f23f3233b5c45ef182bfc7923715) )
 	ROM_LOAD( "epr7476.4c", 0x18000, 0x8000, CRC(5eba655a) SHA1(6713ef12037cba3139d0f469c82bd90b44bae8ce) )
+
+	ROM_REGION( 0x10000, REGION_CPU4, 0 )	/* protection MCU */
+	ROM_LOAD( "mcu.bin", 0x00000, 0x1000, NO_DUMP )
 ROM_END
 
 /**************************************************************************************************************************
@@ -1627,6 +1825,9 @@ ROM_START( quartt2j )
 	ROM_LOAD( "epr7475.2c", 0x08000, 0x8000, CRC(7abd1206) SHA1(54d52dc0b9c245cd2df647e714310a71b803cbcf) )
 	ROM_LOAD( "epr7474.3c", 0x10000, 0x8000, CRC(dbf853b8) SHA1(e82f497e1144f23f3233b5c45ef182bfc7923715) )
 	ROM_LOAD( "epr7476.4c", 0x18000, 0x8000, CRC(5eba655a) SHA1(6713ef12037cba3139d0f469c82bd90b44bae8ce) )
+
+	ROM_REGION( 0x10000, REGION_CPU4, 0 )	/* protection MCU */
+	ROM_LOAD( "mcu.bin", 0x00000, 0x1000, NO_DUMP )
 ROM_END
 
 
@@ -1682,6 +1883,9 @@ ROM_START( shinobia )
 	ROM_LOAD16_BYTE( "epr11263.43", 0x020000, 0x10000, CRC(a2a620bd) SHA1(f8b135ce14d6c5eac5e40ddfd5ad2f1e6f2bc7a6) )
 	ROM_LOAD16_BYTE( "epr11261.25", 0x020001, 0x10000, CRC(a3ceda52) SHA1(97a1c52a162fb1d43b3f8f16613b70ce582a8d26) )
 
+	ROM_REGION( 0x2000, REGION_USER1, 0 )	/* decryption key */
+	ROM_LOAD( "317-0050.key", 0x0000, 0x2000, CRC(82c39ced) SHA1(5490237ff7f20f9ebfa3e46eedd5afd4f1c28548) )
+
 	ROM_REGION( 0x30000, REGION_GFX1, ROMREGION_DISPOSE ) /* tiles */
 	ROM_LOAD( "epr11264.95", 0x00000, 0x10000, CRC(46627e7d) SHA1(66bb5b22a2100e7b9df303007a837bc2d52cf7ba) )
 	ROM_LOAD( "epr11265.94", 0x10000, 0x10000, CRC(87d0f321) SHA1(885b38eaff2dcaeab4eeaa20cc8a2885d520abd6) )
@@ -1715,18 +1919,66 @@ ROM_START( shinobia )
 	ROM_LOAD( "epr11268.1", 0x0000, 0x8000, CRC(6d7966da) SHA1(90f55a99f784c21d7c135e630f4e8b1d4d043d66) )
 ROM_END
 
-/*
+/**************************************************************************************************************************
+	Shinobi, Sega System 16A
+	CPU: 68000 (unprotected)
+ */
+ROM_START( shinobaa )
+	ROM_REGION( 0x040000, REGION_CPU1, 0 ) /* 68000 code */
+	ROM_LOAD16_BYTE( "epr12010.43", 0x000000, 0x10000, CRC(7df7f4a2) SHA1(86ac00a3a8ecc1a7fcb00533ea12a6cb6d59089b) )
+	ROM_LOAD16_BYTE( "epr12008.26", 0x000001, 0x10000, CRC(f5ae64cd) SHA1(33c9f25fcaff80b03d074d9d44d94976162411bf) )
+	ROM_LOAD16_BYTE( "epr12011.42", 0x020000, 0x10000, CRC(9d46e707) SHA1(37ab25b3b37365c9f45837bfb6ec80652691dd4c) ) // == epr11283
+	ROM_LOAD16_BYTE( "epr12009.25", 0x020001, 0x10000, CRC(7961d07e) SHA1(38cbdab35f901532c0ad99ad0083513abd2ff182) ) // == epr11281
 
-Sukeban Jansi Ryuko (JPN Ver.)
-(c)1988 White Board
+	ROM_REGION( 0x30000, REGION_GFX1, ROMREGION_DISPOSE ) /* tiles */
+	ROM_LOAD( "epr11264.95", 0x00000, 0x10000, CRC(46627e7d) SHA1(66bb5b22a2100e7b9df303007a837bc2d52cf7ba) )
+	ROM_LOAD( "epr11265.94", 0x10000, 0x10000, CRC(87d0f321) SHA1(885b38eaff2dcaeab4eeaa20cc8a2885d520abd6) )
+	ROM_LOAD( "epr11266.93", 0x20000, 0x10000, CRC(efb4af87) SHA1(0b8a905023e1bc808fd2b1c3cfa3778cde79e659) )
 
-Sega System 16A/16B
+	ROM_REGION16_BE( 0x080000, REGION_GFX2, 0 ) /* sprites */
+	ROM_LOAD16_BYTE( "epr11290.10", 0x00001, 0x08000, CRC(611f413a) SHA1(180f83216e2dfbfd77b0fb3be83c3042954d12df) )
+	ROM_CONTINUE(                   0x40001, 0x08000 )
+	ROM_LOAD16_BYTE( "epr11294.11", 0x00000, 0x08000, CRC(5eb00fc1) SHA1(97e02eee74f61fabcad2a9e24f1868cafaac1d51) )
+	ROM_CONTINUE(                   0x40000, 0x08000 )
+	ROM_LOAD16_BYTE( "epr11291.17", 0x10001, 0x08000, CRC(3c0797c0) SHA1(df18c7987281bd9379026c6cf7f96f6ae49fd7f9) )
+	ROM_CONTINUE(                   0x50001, 0x08000 )
+	ROM_LOAD16_BYTE( "epr11295.18", 0x10000, 0x08000, CRC(25307ef8) SHA1(91ffbe436f80d583524ee113a8b7c0cf5d8ab286) )
+	ROM_CONTINUE(                   0x50000, 0x08000 )
+	ROM_LOAD16_BYTE( "epr11292.23", 0x20001, 0x08000, CRC(c29ac34e) SHA1(b5e9b8c3233a7d6797f91531a0d9123febcf1660) )
+	ROM_CONTINUE(                   0x60001, 0x08000 )
+	ROM_LOAD16_BYTE( "epr11296.24", 0x20000, 0x08000, CRC(04a437f8) SHA1(ea5fed64443236e3404fab243761e60e2e48c84c) )
+	ROM_CONTINUE(                   0x60000, 0x08000 )
+	ROM_LOAD16_BYTE( "epr11293.29", 0x30001, 0x08000, CRC(41f41063) SHA1(5cc461e9738dddf9eea06831fce3702d94674163) )
+	ROM_CONTINUE(                   0x70001, 0x08000 )
+	ROM_LOAD16_BYTE( "epr11297.30", 0x30000, 0x08000, CRC(b6e1fd72) SHA1(eb86e4bf880bd1a1d9bcab3f2f2e917bcaa06172) )
+	ROM_CONTINUE(                   0x70000, 0x08000 )
 
-IC61:	839-0068 (16A)
-IC69:	315-5150 (16A)
+	ROM_REGION( 0x20000, REGION_CPU2, 0 ) /* sound CPU */
+	ROM_LOAD( "epr11267.12", 0x0000, 0x8000, CRC(dd50b745) SHA1(52e1977569d3713ad864d607170c9a61cd059a65) )
 
-CPU:	317-5021 (16A/16B)
+	ROM_REGION( 0x1000, REGION_CPU3, 0 )      /* 4k for 7751 onboard ROM */
+	ROM_LOAD( "7751.bin",     0x0000, 0x0400, CRC(6a9534fc) SHA1(67ad94674db5c2aab75785668f610f6f4eccd158) ) /* 7751 - U34 */
 
+	ROM_REGION( 0x08000, REGION_SOUND1, 0 ) /* 7751 sound data */
+	ROM_LOAD( "epr11268.1", 0x0000, 0x8000, CRC(6d7966da) SHA1(90f55a99f784c21d7c135e630f4e8b1d4d043d66) )
+ROM_END
+
+
+/**************************************************************************************************************************
+ **************************************************************************************************************************
+ **************************************************************************************************************************
+	Sukeban Jansi Ryuko, Sega System 16A
+	CPU: FD1094 (317-5021)
+
+	 (JPN Ver.)
+	(c)1988 White Board
+
+	Sega System 16A/16B
+
+	IC61:	839-0068 (16A)
+	IC69:	315-5150 (16A)
+
+	CPU:	317-5021 (16A/16B)
 */
 
 ROM_START( sjryukoa )
@@ -1825,54 +2077,81 @@ ROM_START( tetris )
 	ROM_LOAD( "epr12205.rom", 0x0000, 0x8000, CRC(6695dc99) SHA1(08123aa24c302bc9243329384bd9c2545a4d50c3) )
 ROM_END
 
-/*
-TIME SCANNER	SEGA 1987
+/**************************************************************************************************************************
+	Tetris, Sega System 16A
+	CPU: FD1094 (317-0093a)
+*/
+ROM_START( tetrisaa )
+	ROM_REGION( 0x040000, REGION_CPU1, ROMREGION_ERASEFF ) /* 68000 code */
+	ROM_LOAD16_BYTE( "epr12201a.43", 0x000000, 0x8000, CRC(9250e5cf) SHA1(e848a8279ce35f516754eec33b3b443d2e819eaa) )
+	ROM_LOAD16_BYTE( "epr12200a.26", 0x000001, 0x8000, CRC(85d4b0ff) SHA1(f9d8e1ebb0c02a6c3c0b0acc78a6bea081ffc6f7) )
 
-BOARD: SYSTEM 16A
+	ROM_REGION( 0x2000, REGION_USER1, 0 ) /* decryption key */
+	ROM_LOAD( "317-0093a.key", 0x0000, 0x2000, CRC(7ca4a8ee) SHA1(c85763b7c5d606ee72181d9baba7de5e2c457fd8) )
 
-GAME NUMBER: TOP 837-5941-01, BOTTOM 837-5942-01
-CPU: FD1089B 6J2 317-0024
+	ROM_REGION( 0x30000, REGION_GFX1, ROMREGION_DISPOSE ) /* tiles */
+	ROM_LOAD( "epr12202.rom", 0x00000, 0x10000, CRC(2f7da741) SHA1(51a685673b4a57a13818eca65d122230f20bd9a0) )
+	ROM_LOAD( "epr12203.rom", 0x10000, 0x10000, CRC(a6e58ec5) SHA1(5a6c43c989768270e0ab61cfaa5ef86d4607fe20) )
+	ROM_LOAD( "epr12204.rom", 0x20000, 0x10000, CRC(0ae98e23) SHA1(f067b81b85f9e03a6373c7c53ff52d5395b8a985) )
 
-BOARD: SYSTEM 16B
+	ROM_REGION16_BE( 0x10000, REGION_GFX2, 0 ) /* sprites */
+	ROM_LOAD16_BYTE( "epr12169.b1", 0x00001, 0x8000, CRC(dacc6165) SHA1(87b1a7643e3630ff73b2b117752496e1ea5da23d) )
+	ROM_LOAD16_BYTE( "epr12170.b5", 0x00000, 0x8000, CRC(87354e42) SHA1(e7fd55aee59b51d82cb9b619fbb815ad6839560c) )
 
-GAME NUMBER: ???-????-??
-CPU: MC68000
+	ROM_REGION( 0x40000, REGION_CPU2, 0 ) /* sound CPU */
+	ROM_LOAD( "epr12205.rom", 0x0000, 0x8000, CRC(6695dc99) SHA1(08123aa24c302bc9243329384bd9c2545a4d50c3) )
+ROM_END
 
-IC POSITIONS	EPROMS		EPROMS
-S16A	S16B	NUMBERS		FUNCTIONS
 
-26	-	EPR10537A	PROGRAM 317-0024
-25	-	EPR10538	"
-24	-	EPR10539	"
-43	-	EPR10540A	"
-42	-	EPR10541	"
-41	-	EPR10542	"
+/**************************************************************************************************************************
+ **************************************************************************************************************************
+ **************************************************************************************************************************
+	Time Scanner, Sega System 16A
+	CPU: FD1089a (317-????)
 
-95	B9	EPR10543	SCREEN
-94	B10	EPR10544	"
-93	B11	EPR10545	"
+	GAME NUMBER: TOP 837-5941-01, BOTTOM 837-5942-01
+	CPU: FD1089B 6J2 317-0024
 
-12	-	EPR10546	SOUND PROGRAM
-1	-	EPR10547	SPEECH
+	BOARD: SYSTEM 16B
 
-10	B1	EPR10548	OBJECT
-17	B2	EPR10549	"
-23	B3	EPR10550	"
-29	B4	EPR10551	"
-11	B5	EPR10552	"
-18	B6	EPR10553	"
-24	B7	EPR10554	"
-30	B8	EPR10555	"
+	GAME NUMBER: ???-????-??
+	CPU: MC68000
 
--	A7	EPR10562	SOUND PROGRAM
--	A8	EPR10563	SPEECH
+	IC POSITIONS	EPROMS		EPROMS
+	S16A	S16B	NUMBERS		FUNCTIONS
 
--	A1	EPR10850	PROGRAM MC68000
--	A2	EPR10851	"
--	A3	EPR10852	"
--	A4	EPR10853	"
--	A5	EPR10854	"
--	A6	EPR10855	"
+	26	-	EPR10537A	PROGRAM 317-0024
+	25	-	EPR10538	"
+	24	-	EPR10539	"
+	43	-	EPR10540A	"
+	42	-	EPR10541	"
+	41	-	EPR10542	"
+
+	95	B9	EPR10543	SCREEN
+	94	B10	EPR10544	"
+	93	B11	EPR10545	"
+
+	12	-	EPR10546	SOUND PROGRAM
+	1	-	EPR10547	SPEECH
+
+	10	B1	EPR10548	OBJECT
+	17	B2	EPR10549	"
+	23	B3	EPR10550	"
+	29	B4	EPR10551	"
+	11	B5	EPR10552	"
+	18	B6	EPR10553	"
+	24	B7	EPR10554	"
+	30	B8	EPR10555	"
+
+	-	A7	EPR10562	SOUND PROGRAM
+	-	A8	EPR10563	SPEECH
+
+	-	A1	EPR10850	PROGRAM MC68000
+	-	A2	EPR10851	"
+	-	A3	EPR10852	"
+	-	A4	EPR10853	"
+	-	A5	EPR10854	"
+	-	A6	EPR10855	"
 */
 
 ROM_START( timescna )
@@ -1970,7 +2249,7 @@ static DRIVER_INIT( generic_16a )
 static DRIVER_INIT( bodyslam )
 {
 	system16a_generic_init();
-	i8751_callback = bodyslam_i8751_sim;
+	i8751_vblank_hook = bodyslam_i8751_sim;
 }
 
 
@@ -1985,7 +2264,7 @@ static DRIVER_INIT( mjleague )
 static DRIVER_INIT( quartet )
 {
 	system16a_generic_init();
-	i8751_callback = quartet_i8751_sim;
+	i8751_vblank_hook = quartet_i8751_sim;
 }
 
 
@@ -1997,25 +2276,27 @@ static DRIVER_INIT( quartet )
  *************************************/
 
 /* "Pre-System 16" */
-GAMEX(1987, aliensyj, aliensyn, system16a_7751, aliensyn, generic_16a, ROT0,   "Sega",           "Alien Syndrome (Japan)", GAME_NOT_WORKING )
-GAMEX(1987, aliensya, aliensyn, system16a_7751, aliensyn, generic_16a, ROT0,   "Sega",           "Alien Syndrome (set 2)", GAME_NOT_WORKING )
-GAME( 1986, bodyslam, 0,        system16a_7751, bodyslam, bodyslam,    ROT0,   "Sega",           "Body Slam (8751 317-unknown)" )
-GAME( 1986, dumpmtmt, bodyslam, system16a_7751, bodyslam, bodyslam,    ROT0,   "Sega",           "Dump Matsumoto (Japan, 8751 317-unknown))" )
-GAME( 1985, mjleague, 0,        system16a_7751, mjleague, mjleague,    ROT270, "Sega",           "Major League" )
-GAME( 1986, quartet,  0,        system16a_7751, quartet,  quartet,     ROT0,   "Sega",           "Quartet (8751 317-unknown)" )
-GAME( 1986, quartetj, quartet,  system16a_7751, quartet,  quartet,     ROT0,   "Sega",           "Quartet (Japan, 8751 317-unknown))" )
-GAME( 1986, quartet2, quartet,  system16a_7751, quartet2, quartet,     ROT0,   "Sega",           "Quartet 2 (8751 317-unknown)" )
-GAME( 1986, quartt2j, quartet,  system16a_7751, quartet2, quartet,     ROT0,   "Sega",           "Quartet 2 (Japan, 8751 317-unknown)" )
+GAMEX(1987, aliensyj, aliensyn, system16a,        aliensyn, generic_16a, ROT0,   "Sega",           "Alien Syndrome (Japan)", GAME_NOT_WORKING )
+GAMEX(1987, aliensya, aliensyn, system16a,        aliensyn, generic_16a, ROT0,   "Sega",           "Alien Syndrome (set 2)", GAME_NOT_WORKING )
+GAME( 1986, bodyslam, 0,        system16a_8751,   bodyslam, bodyslam,    ROT0,   "Sega",           "Body Slam (8751 317-unknown)" )
+GAME( 1986, dumpmtmt, bodyslam, system16a_8751,   bodyslam, bodyslam,    ROT0,   "Sega",           "Dump Matsumoto (Japan, 8751 317-unknown))" )
+GAME( 1985, mjleague, 0,        system16a,        mjleague, mjleague,    ROT270, "Sega",           "Major League" )
+GAME( 1986, quartet,  0,        system16a_8751,   quartet,  quartet,     ROT0,   "Sega",           "Quartet (8751 317-unknown)" )
+GAME( 1986, quartetj, quartet,  system16a_8751,   quartet,  quartet,     ROT0,   "Sega",           "Quartet (Japan, 8751 317-unknown))" )
+GAME( 1986, quartet2, quartet,  system16a_8751,   quartet2, quartet,     ROT0,   "Sega",           "Quartet 2 (8751 317-unknown)" )
+GAME( 1986, quartt2j, quartet,  system16a_8751,   quartet2, quartet,     ROT0,   "Sega",           "Quartet 2 (Japan, 8751 317-unknown)" )
 
 /* System 16A */
-GAMEX(19??, afighter, 0,        system16a,      generic,  generic_16a, ROT270, "Sega",           "Action Fighter, FD1089A 317-0018", GAME_NOT_WORKING )
-GAMEX(1986, alexkidd, 0,        system16a_7751, alexkidd, generic_16a, ROT0,   "Sega",           "Alex Kidd: The Lost Stars (set 1, FD1094? 317-unknown)", GAME_NOT_WORKING )
-GAME( 1986, alexkida, alexkidd, system16a_7751, alexkidd, generic_16a, ROT0,   "Sega",           "Alex Kidd: The Lost Stars (set 2, unprotected)" )
-GAME( 1986, fantzone, 0,        system16a,      fantzone, generic_16a, ROT0,   "Sega",           "Fantasy Zone (Japan New Ver., unprotected)" )
-GAME( 1986, fantzono, fantzone, system16a,      fantzone, generic_16a, ROT0,   "Sega",           "Fantasy Zone (Old Ver., unprotected)" )
-GAMEX(1987, sdioj,    sdi,      system16a,      sdi,      generic_16a, ROT0,   "Sega",           "SDI - Strategic Defense Initiative (Japan, System 16A, FD1094 317-0027)", GAME_NOT_WORKING )
-GAMEX(1987, shinobia, shinobi,  system16a_7751, shinobi,  generic_16a, ROT0,   "Sega",           "Shinobi (set 2, System 16A, FD1094 317-0050)", GAME_NOT_WORKING )
-GAMEX(1987, sjryukoa, sjryuko,  system16a_7751, shinobi,  generic_16a, ROT0,   "White Board",    "Sukeban Jansi Ryuko (System 16A, FD1094 317-5021)", GAME_NOT_WORKING )
-GAME( 1988, tetris,   0,        system16a,      tetris,   generic_16a, ROT0,   "Sega",           "Tetris (Japan, System 16A, FD1094 317-0093)" )
-GAMEX(1987, timescna, timescn,  system16a_7751, shinobi,  generic_16a, ROT270, "Sega",           "Time Scanner (System 16A, FD1094 317-0024)", GAME_NOT_WORKING )
-GAME( 1988, wb3a,     wb3b,     system16a,      wb3,      generic_16a, ROT0,   "Sega / Westone", "Wonder Boy III - Monster Lair (System 16A, FD1094 317-0084)" )
+GAMEX(19??, afighter, 0,        system16a_no7751, generic,  generic_16a, ROT270, "Sega",           "Action Fighter, FD1089A 317-0018", GAME_NOT_WORKING )
+GAMEX(1986, alexkidd, 0,        system16a,        alexkidd, generic_16a, ROT0,   "Sega",           "Alex Kidd: The Lost Stars (set 1, FD1094? 317-unknown)", GAME_NOT_WORKING )
+GAME( 1986, alexkida, alexkidd, system16a,        alexkidd, generic_16a, ROT0,   "Sega",           "Alex Kidd: The Lost Stars (set 2, unprotected)" )
+GAME( 1986, fantzone, 0,        system16a_no7751, fantzone, generic_16a, ROT0,   "Sega",           "Fantasy Zone (Japan New Ver., unprotected)" )
+GAME( 1986, fantzono, fantzone, system16a_no7751, fantzone, generic_16a, ROT0,   "Sega",           "Fantasy Zone (Old Ver., unprotected)" )
+GAMEX(1987, sdioj,    sdi,      system16a_no7751, sdi,      generic_16a, ROT0,   "Sega",           "SDI - Strategic Defense Initiative (Japan, System 16A, FD1094 317-0027)", GAME_NOT_WORKING )
+GAME( 1987, shinobia, shinobi,  system16a,        shinobi,  generic_16a, ROT0,   "Sega",           "Shinobi (set 2, System 16A, FD1094 317-0050)" )
+GAME( 1987, shinobaa, shinobi,  system16a,        shinobi,  generic_16a, ROT0,   "Sega",           "Shinobi (set 3, System 16A, unprotected)" )
+GAMEX(1987, sjryukoa, sjryuko,  system16a,        shinobi,  generic_16a, ROT0,   "White Board",    "Sukeban Jansi Ryuko (System 16A, FD1089 317-5021)", GAME_NOT_WORKING )
+GAME( 1988, tetris,   0,        system16a_no7751, tetris,   generic_16a, ROT0,   "Sega",           "Tetris (Japan, System 16A, FD1094 317-0093)" )
+GAME( 1988, tetrisaa, tetris,   system16a_no7751, tetris,   generic_16a, ROT0,   "Sega",           "Tetris (Japan, System 16A, FD1094 317-0093a)" )
+GAMEX(1987, timescna, timescn,  system16a,        shinobi,  generic_16a, ROT270, "Sega",           "Time Scanner (System 16A, FD1089a 317-0024)", GAME_NOT_WORKING )
+GAME( 1988, wb3a,     wb3b,     system16a_no7751, wb3,      generic_16a, ROT0,   "Sega / Westone", "Wonder Boy III - Monster Lair (System 16A, FD1094 317-0084)" )

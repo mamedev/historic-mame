@@ -5,6 +5,12 @@
 
     Lee Taylor 28/11/1997
 
+*** Astro Battle added by HIGHWAYMAN with help from Reip.
+
+2 sets, 1 may be a bad set, or they may simply be different - dont know yet.
+protection involves the eprom datalines being routed through an 8bit x 256byte prom.
+it *may* have a more complex palette, it needs to be investigated when i get more time.
+
 
 	Astro Fighter Sets:
 
@@ -37,6 +43,7 @@ Also....
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "machine/random.h"
 
 extern unsigned char *astrof_color;
 extern unsigned char *tomahawk_protection;
@@ -56,33 +63,66 @@ WRITE8_HANDLER( astrof_sample2_w );
 extern struct Samplesinterface astrof_samples_interface;
 extern struct Samplesinterface tomahawk_samples_interface;
 
-static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x03ff) AM_READ(MRA8_RAM)
-	AM_RANGE(0x4000, 0x5fff) AM_READ(MRA8_RAM)
-	AM_RANGE(0xa000, 0xa000) AM_READ(input_port_0_r)
-	AM_RANGE(0xa001, 0xa001) AM_READ(input_port_1_r)	/* IN1 */
-	AM_RANGE(0xa003, 0xa003) AM_READ(tomahawk_protection_r)   // Only on Tomahawk
-	AM_RANGE(0xd000, 0xffff) AM_READ(MRA8_ROM)
-ADDRESS_MAP_END
+static int abattle_count;
 
-static ADDRESS_MAP_START( astrof_writemem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x03ff) AM_WRITE(MWA8_RAM)
-	AM_RANGE(0x4000, 0x5fff) AM_WRITE(astrof_videoram_w) AM_BASE(&videoram) AM_SIZE(&videoram_size)
+static READ8_HANDLER( shoot_r )
+{
+	/* not really sure about this */
+	return mame_rand() & 8;
+}
+static READ8_HANDLER( abattle_coin_prot_r )
+{
+	if(abattle_count < 0x100)
+	{
+		abattle_count++;
+		return 7;
+	}
+	else
+	{
+		abattle_count = 0;
+		return 0;
+	}
+}
+
+static READ8_HANDLER( afire_coin_prot_r )
+{
+	if(!abattle_count)
+	{
+		abattle_count++;
+		return 7;
+	}
+	else
+	{
+		abattle_count = 0;
+		return 0;
+	}
+}
+
+static ADDRESS_MAP_START( astrof_map, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x03ff) AM_RAM AM_MIRROR(0x3c00)
+	AM_RANGE(0x4000, 0x5fff) AM_RAM AM_WRITE(astrof_videoram_w) AM_BASE(&videoram) AM_SIZE(&videoram_size)
 	AM_RANGE(0x8003, 0x8003) AM_WRITE(MWA8_RAM) AM_BASE(&astrof_color)
 	AM_RANGE(0x8004, 0x8004) AM_WRITE(astrof_video_control1_w)
 	AM_RANGE(0x8005, 0x8005) AM_WRITE(astrof_video_control2_w)
 	AM_RANGE(0x8006, 0x8006) AM_WRITE(astrof_sample1_w)
 	AM_RANGE(0x8007, 0x8007) AM_WRITE(astrof_sample2_w)
+	AM_RANGE(0xa000, 0xa000) AM_READ(input_port_0_r)
+	AM_RANGE(0xa001, 0xa001) AM_READ(input_port_1_r)	/* IN1 */
+	AM_RANGE(0xd000, 0xffff) AM_ROM
 ADDRESS_MAP_END
 
-static ADDRESS_MAP_START( tomahawk_writemem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x03ff) AM_WRITE(MWA8_RAM)
-	AM_RANGE(0x4000, 0x5fff) AM_WRITE(tomahawk_videoram_w) AM_BASE(&videoram) AM_SIZE(&videoram_size)
+static ADDRESS_MAP_START( tomahawk_map, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x03ff) AM_RAM
+	AM_RANGE(0x4000, 0x5fff) AM_RAM AM_WRITE(tomahawk_videoram_w) AM_BASE(&videoram) AM_SIZE(&videoram_size)
 	AM_RANGE(0x8003, 0x8003) AM_WRITE(MWA8_RAM) AM_BASE(&astrof_color)
 	AM_RANGE(0x8004, 0x8004) AM_WRITE(astrof_video_control1_w)
 	AM_RANGE(0x8005, 0x8005) AM_WRITE(tomahawk_video_control2_w)
 	AM_RANGE(0x8006, 0x8006) AM_WRITE(MWA8_NOP)                        // Sound triggers
 	AM_RANGE(0x8007, 0x8007) AM_WRITE(MWA8_RAM) AM_BASE(&tomahawk_protection)
+	AM_RANGE(0xa000, 0xa000) AM_READ(input_port_0_r)
+	AM_RANGE(0xa001, 0xa001) AM_READ(input_port_1_r)	/* IN1 */
+	AM_RANGE(0xa003, 0xa003) AM_READ(tomahawk_protection_r)
+	AM_RANGE(0xd000, 0xffff) AM_ROM
 ADDRESS_MAP_END
 
 
@@ -98,6 +138,11 @@ static INTERRUPT_GEN( astrof_interrupt )
 {
 	if (readinputportbytag("FAKE") & 1)	/* Coin */
 		cpunum_set_input_line(0, INPUT_LINE_NMI, PULSE_LINE);
+}
+
+static MACHINE_INIT( abattle )
+{
+	abattle_count = 0;
 }
 
 
@@ -153,6 +198,57 @@ INPUT_PORTS_START( astrof )
 	PORT_DIPSETTING(    0x02, DEF_STR( Cocktail ) )
 INPUT_PORTS_END
 
+INPUT_PORTS_START( abattle )
+	PORT_START_TAG("IN0")
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_START1 )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_START2 )
+/* Player 1 Controls */
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT ) PORT_2WAY
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT ) PORT_2WAY
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 )
+/* Player 2 Controls */
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT ) PORT_2WAY PORT_COCKTAIL
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT ) PORT_2WAY PORT_COCKTAIL
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_BUTTON1 ) PORT_COCKTAIL
+
+	PORT_START_TAG("DSW")
+	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Lives ) )
+	PORT_DIPSETTING(    0x00, "3" )
+	PORT_DIPSETTING(    0x01, "4" )
+	PORT_DIPSETTING(    0x02, "5" )
+	PORT_DIPSETTING(    0x03, "6" )
+
+	PORT_DIPNAME( 0x0c, 0x00, DEF_STR( Coinage ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( 1C_2C ) )
+/* 0x0c gives 2 Coins/1 Credit */
+
+	PORT_DIPNAME( 0x30, 0x00, DEF_STR( Bonus_Life ) )
+	PORT_DIPSETTING(    0x00, "5000" )
+	PORT_DIPSETTING(    0x10, "7000" )
+	PORT_DIPSETTING(    0x20, "10000" )
+	PORT_DIPSETTING(    0x30, DEF_STR( None ) )
+
+	PORT_DIPNAME( 0x40, 0x00, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Easy ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Hard ) )
+
+	PORT_BIT ( 0x80, IP_ACTIVE_LOW, IPT_VBLANK )
+
+	PORT_START_TAG("FAKE")
+	/* The coin slots are not memory mapped. Coin insertion causes a NMI. */
+	/* This fake input port is used by the interrupt */
+	/* handler to be notified of coin insertions. We use IMPULSE to */
+	/* trigger exactly one interrupt, without having to check when the */
+	/* user releases the key. */
+	/* The cabinet selector is not memory mapped, but just disables the */
+	/* screen flip logic */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 ) PORT_IMPULSE(1)
+	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( Cocktail ) )
+INPUT_PORTS_END
 
 INPUT_PORTS_START( tomahawk )
 	PORT_START_TAG("IN0")
@@ -209,7 +305,7 @@ static MACHINE_DRIVER_START( astrof )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD_TAG("main", M6502, 10595000/16)	/* 0.66 MHz */
-	MDRV_CPU_PROGRAM_MAP(readmem,astrof_writemem)
+	MDRV_CPU_PROGRAM_MAP(astrof_map,0)
 	MDRV_CPU_VBLANK_INT(astrof_interrupt,1)
 
 	MDRV_FRAMES_PER_SECOND(60)
@@ -229,13 +325,18 @@ static MACHINE_DRIVER_START( astrof )
 	MDRV_SOUND_ADD_TAG("samples", SAMPLES, astrof_samples_interface)
 MACHINE_DRIVER_END
 
+static MACHINE_DRIVER_START( abattle )
+	MDRV_IMPORT_FROM(astrof)
+	MDRV_MACHINE_INIT(abattle)
+MACHINE_DRIVER_END
+
 
 static MACHINE_DRIVER_START( tomahawk )
 
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(astrof)
 	MDRV_CPU_MODIFY("main")
-	MDRV_CPU_PROGRAM_MAP(readmem,tomahawk_writemem)
+	MDRV_CPU_PROGRAM_MAP(tomahawk_map,0)
 
 	/* video hardware */
 	MDRV_PALETTE_LENGTH(32)
@@ -243,7 +344,6 @@ static MACHINE_DRIVER_START( tomahawk )
 	/* sound hardware */
 	MDRV_SOUND_REPLACE("samples", SAMPLES, tomahawk_samples_interface)
 MACHINE_DRIVER_END
-
 
 
 /***************************************************************************
@@ -303,6 +403,69 @@ ROM_START( astrof3 )
 	ROM_LOAD( "astrf.clr",    0x0000, 0x0020, CRC(61329fd1) SHA1(15782d8757d4dda5a8b97815e94c90218f0e08dd) )
 ROM_END
 
+ROM_START( abattle )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
+	ROM_LOAD( "10405-b.bin",  0xd000, 0x0400, CRC(9ba57987) SHA1(becf89b7d474f86839f13f9be5502c91491e8584) )
+	ROM_LOAD( "10405-a.bin",  0xd400, 0x0400, CRC(3fbbeeba) SHA1(1c9f519a0797f90524adf187b0761f150db0828d) )
+	ROM_LOAD( "10405-9.bin",  0xd800, 0x0400, CRC(354cf432) SHA1(138956ea8064eba0dcd8b2f175d4981b689a2077) )
+	ROM_LOAD( "10405-8.bin",  0xdc00, 0x0400, CRC(4cee0c8b) SHA1(98bfdda9d2d368db16d6e9090536b09d8337c0e5) )
+	ROM_LOAD( "10405-4.bin",  0xe000, 0x0400, CRC(9cb477f3) SHA1(6866264aa8d0479cee237a00e4a919e3981144a5) )
+	ROM_LOAD( "10405-6.bin",  0xe400, 0x0400, CRC(272de8f1) SHA1(e917b3b8bb96fedacd6d5cb3d1c30977818f2e85) )
+	ROM_LOAD( "10405-5.bin",  0xe800, 0x0400, CRC(ff25acaa) SHA1(5cb360c556c9b36039ae05702e6900b82fe5676b) )
+	ROM_LOAD( "10405-3.bin",  0xec00, 0x0400, CRC(6edf202d) SHA1(a4cab2f10a99e0a4b1c571168e17cbee1d18cf06) )
+	ROM_LOAD( "10405-7.bin",  0xf000, 0x0400, CRC(02a35ad9) SHA1(d54afff13f8d5a6544dda49c766a147fa0172cfa) )
+	ROM_LOAD( "10405-1.bin",  0xf400, 0x0400, CRC(c68f6657) SHA1(a38c24670fcbbf7844ca15f918efcb467bae7bef) )
+	ROM_LOAD( "10405-2.bin",  0xf800, 0x0400, CRC(b206deda) SHA1(9ab52920c06ed6beb38bc7f97ffd00e8ad46c17d) )
+	ROM_LOAD( "10405-0.bin",  0xfc00, 0x0400, CRC(c836a152) SHA1(418b64d50bb2f849b1e7177c7bf2fdd0cc99e079) )
+
+	ROM_REGION( 0x0100, REGION_PROMS, 0 )
+	ROM_LOAD( "8f-clr.bin",   0x0000, 0x0100, CRC(3bf3ccb0) SHA1(d61d19d38045f42a9adecf295e479fee239bed48) )
+
+	ROM_REGION( 0x0100, REGION_USER1, 0 )	/* decryption table */
+	ROM_LOAD( "2h-prot.bin",  0x0000, 0x0100, CRC(a6bdd18c) SHA1(438bfc543730afdb531204585f17a68ddc03ded0) )
+ROM_END
+
+ROM_START( abattle2 )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
+	ROM_LOAD( "10405-b.bin",  0xd000, 0x0400, CRC(9ba57987) SHA1(becf89b7d474f86839f13f9be5502c91491e8584) )
+	ROM_LOAD( "10405-a.bin",  0xd400, 0x0400, CRC(3fbbeeba) SHA1(1c9f519a0797f90524adf187b0761f150db0828d) )
+	ROM_LOAD( "10405-9.bin",  0xd800, 0x0400, CRC(354cf432) SHA1(138956ea8064eba0dcd8b2f175d4981b689a2077) )
+	ROM_LOAD( "10405-8.bin",  0xdc00, 0x0400, CRC(4cee0c8b) SHA1(98bfdda9d2d368db16d6e9090536b09d8337c0e5) )
+	ROM_LOAD( "sidam-4.bin",  0xe000, 0x0400, CRC(f6998053) SHA1(f1a868e68db1ca89c54ee179aa4c922ec49b686b) )
+	ROM_LOAD( "10405-6.bin",  0xe400, 0x0400, CRC(272de8f1) SHA1(e917b3b8bb96fedacd6d5cb3d1c30977818f2e85) )
+	ROM_LOAD( "sidam-5.bin",  0xe800, 0x0400, CRC(6ddd78ff) SHA1(2fdf3fd145446f174293818aa81463097227361e) )
+	ROM_LOAD( "10405-3.bin",  0xec00, 0x0400, CRC(6edf202d) SHA1(a4cab2f10a99e0a4b1c571168e17cbee1d18cf06) )
+	ROM_LOAD( "10405-7.bin",  0xf000, 0x0400, CRC(02a35ad9) SHA1(d54afff13f8d5a6544dda49c766a147fa0172cfa) )
+	ROM_LOAD( "10405-1.bin",  0xf400, 0x0400, CRC(c68f6657) SHA1(a38c24670fcbbf7844ca15f918efcb467bae7bef) )
+	ROM_LOAD( "10405-2.bin",  0xf800, 0x0400, CRC(b206deda) SHA1(9ab52920c06ed6beb38bc7f97ffd00e8ad46c17d) )
+	ROM_LOAD( "10405-0.bin",  0xfc00, 0x0400, CRC(c836a152) SHA1(418b64d50bb2f849b1e7177c7bf2fdd0cc99e079) )
+
+	ROM_REGION( 0x0100, REGION_PROMS, 0 )
+	ROM_LOAD( "8f-clr.bin",   0x0000, 0x0100, CRC(3bf3ccb0) SHA1(d61d19d38045f42a9adecf295e479fee239bed48) )
+
+	ROM_REGION( 0x0100, REGION_USER1, 0 )	/* decryption table */
+	ROM_LOAD( "2h-prot.bin",  0x0000, 0x0100, CRC(a6bdd18c) SHA1(438bfc543730afdb531204585f17a68ddc03ded0) )
+ROM_END
+
+ROM_START( afire )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
+	ROM_LOAD( "b.bin",        0xd000, 0x0400, CRC(16ad2bcc) SHA1(e7f55d17ee18afbb045cd0fd8d3ffc0c8300130a) )
+	ROM_LOAD( "a.bin",        0xd400, 0x0400, CRC(ce8b6e4f) SHA1(b85ab709d80324df5d2c4b0dbbc5e6aeb4003077) )
+	ROM_LOAD( "9.bin",        0xd800, 0x0400, CRC(e0f45b07) SHA1(091e1ea4b3726888dc488bb01e0bd4e588eccae5) )
+	ROM_LOAD( "8.bin",        0xdc00, 0x0400, CRC(85b96728) SHA1(dbbfbc085f19184d861c42a0307f95f9105a677b) )
+	ROM_LOAD( "4.bin",        0xe000, 0x0400, CRC(271f90ad) SHA1(fe41a0f35d30d38fc21ac19982899d93cbd292f0) )
+	ROM_LOAD( "6.bin",        0xe400, 0x0400, CRC(568efbfe) SHA1(ef39f0fc4c030fc7f688515415aedeb4c039b73a) )
+	ROM_LOAD( "5.bin",        0xe800, 0x0400, CRC(1c0b298a) SHA1(61677f8f402679fcfbb9fb12f9dfde7b6e1cdd1c) )
+	ROM_LOAD( "3.bin",        0xec00, 0x0400, CRC(2938c641) SHA1(c8655a8218818c12eca0f00a361412e4946f8b5c) )
+	ROM_LOAD( "7.bin",        0xf000, 0x0400, CRC(912c8fe1) SHA1(1ae1eb13858d39200386f59c3381eef2699e4647) )
+	ROM_LOAD( "1.bin",        0xf400, 0x0400, CRC(0ef045d8) SHA1(c41b284ccdf5da3a5e9b4732324b3d61440ce9db) )
+	ROM_LOAD( "2.bin",        0xf800, 0x0400, CRC(d4ea2760) SHA1(57c9a4d21fbb28019fcd2f60c0424b3c9ae1055c) )
+	ROM_LOAD( "0.bin",        0xfc00, 0x0400, CRC(fe695575) SHA1(b12587a4de624ab712ed6336bd2eb69b12bde563) )
+
+	ROM_REGION( 0x0020, REGION_PROMS, 0 )
+	ROM_LOAD( "astrf.clr",    0x0000, 0x0020, CRC(61329fd1) SHA1(15782d8757d4dda5a8b97815e94c90218f0e08dd) )
+ROM_END
+
 ROM_START( tomahawk )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
 	ROM_LOAD( "l8-1",         0xdc00, 0x0400, CRC(7c911661) SHA1(3fc75bb0e6a89d41d76f82eeb0fde7d33809dddf) )
@@ -335,10 +498,41 @@ ROM_START( tomahaw5 )
 	ROM_LOAD( "t777.clr",     0x0000, 0x0020, CRC(d6a528fd) SHA1(5fc08252a2d7c5405f601efbfb7d84bec328d733) )
 ROM_END
 
+static DRIVER_INIT( abattle )
+{
+	/* use the protection prom to decrypt the roms */
+	data8_t *rom = memory_region(REGION_CPU1);
+	data8_t *prom = memory_region(REGION_USER1);
+	int i;
 
+	for(i = 0xd000; i < 0x10000; i++)
+	{
+		rom[i] = prom[rom[i]];
+	}
 
-GAME( 1979, astrof,   0,        astrof,   astrof,   0, ROT90, "Data East", "Astro Fighter (set 1)" )
-GAME( 1979, astrof2,  astrof,   astrof,   astrof,   0, ROT90, "Data East", "Astro Fighter (set 2)" )
-GAME( 1979, astrof3,  astrof,   astrof,   astrof,   0, ROT90, "Data East", "Astro Fighter (set 3)" )
-GAMEX(1980, tomahawk, 0,        tomahawk, tomahawk, 0, ROT90, "Data East", "Tomahawk 777 (Revision 1)", GAME_NO_SOUND )
-GAMEX(1980, tomahaw5, tomahawk, tomahawk, tomahawk, 0, ROT90, "Data East", "Tomahawk 777 (Revision 5)", GAME_NO_SOUND )
+	/* set up protection handlers */
+	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0xa003, 0xa003, 0, 0, shoot_r);
+	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0xa004, 0xa004, 0, 0, abattle_coin_prot_r);
+}
+
+static DRIVER_INIT( afire )
+{
+	data8_t *rom = memory_region(REGION_CPU1);
+	int i;
+
+	for(i = 0xd000; i < 0x10000; i++)
+		rom[i] = rom[i] ^ 0xff;
+
+	/* set up protection handlers */
+	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0xa003, 0xa003, 0, 0, shoot_r);
+	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0xa004, 0xa004, 0, 0, afire_coin_prot_r);
+}
+
+GAME( 1979, astrof,   0,        astrof,   astrof,   0,		 ROT90, "Data East",   "Astro Fighter (set 1)" )
+GAME( 1979, astrof2,  astrof,   astrof,   astrof,   0,		 ROT90, "Data East",   "Astro Fighter (set 2)" )
+GAME( 1979, astrof3,  astrof,   astrof,   astrof,   0,		 ROT90, "Data East",   "Astro Fighter (set 3)" )
+GAME( 1979, abattle,  astrof,	abattle,  abattle,  abattle, ROT90, "Sidam",	    "Astro Battle (set 1)" )
+GAME( 1979, abattle2, astrof,	abattle,  abattle,  abattle, ROT90, "Sidam",	    "Astro Battle (set 2)" )
+GAME( 1979, afire,    astrof,   abattle,  abattle,  afire,   ROT90, "René Pierre", "Astro Fire" )
+GAMEX(1980, tomahawk, 0,        tomahawk, tomahawk, 0,       ROT90, "Data East",   "Tomahawk 777 (Revision 1)", GAME_NO_SOUND )
+GAMEX(1980, tomahaw5, tomahawk, tomahawk, tomahawk, 0,       ROT90, "Data East",   "Tomahawk 777 (Revision 5)", GAME_NO_SOUND )

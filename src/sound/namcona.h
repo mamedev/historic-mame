@@ -9,6 +9,7 @@ struct NAMCONAinterface {
     int frequency;
     int region;
     int mixing_level;
+    int metadata_offset;
 };
 
 #endif

@@ -55,6 +55,7 @@ void apply_RC_filter(int channel,INT16 *buf,int len,int sample_rate)
 	int K;
 	int i;
 
+	if (len == 0) return;
 
 	if (c[channel] == 0) return;	/* filter disabled */
 

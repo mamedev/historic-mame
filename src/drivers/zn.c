@@ -390,6 +390,10 @@ static void zn_driver_init( void )
 static struct PSXSPUinterface psxspu_interface =
 {
 	35,
+	&g_p_n_psxram,
+	psx_irq_set,
+	psx_dma_install_read_handler,
+	psx_dma_install_write_handler
 };
 
 static void zn_machine_init( void )

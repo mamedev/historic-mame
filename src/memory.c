@@ -262,7 +262,7 @@ UINT8		 				opcode_entry;					/* opcode readmem entry */
 
 struct address_space_t		address_space[ADDRESS_SPACES];	/* address space data */
 
-static UINT8 *				bank_ptr[MAX_BANKS + 1];		/* array of bank pointers */
+static UINT8 *				bank_ptr[STATIC_COUNT];			/* array of bank pointers */
 static void *				shared_ptr[MAX_SHARED_POINTERS];/* array of shared pointers */
 
 static struct memory_block_t memory_block[MAX_MEMORY_BLOCKS];/* array of memory blocks we are tracking */
@@ -275,7 +275,7 @@ static opbase_handler		opbasefunc;						/* opcode base override */
 static int					debugger_access;				/* treat accesses as coming from the debugger */
 
 static struct cpu_data_t	cpudata[MAX_CPU];				/* data gathered for each CPU */
-static struct bank_data_t 	bankdata[MAX_BANKS + 1];		/* data gathered for each bank */
+static struct bank_data_t 	bankdata[STATIC_COUNT];			/* data gathered for each bank */
 
 #if defined(MAME_DEBUG) && defined(NEW_DEBUGGER)
 static const int *			watchpoint_count;				/* pointer to the count of watchpoints */

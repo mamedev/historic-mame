@@ -141,6 +141,7 @@ struct RunningMachine
 
 	/* font used by the user interface */
 	struct GfxElement *		uifont;
+	struct GfxElement *		uirotfont;
 
 	/* font parameters */
 	int 					uifontwidth, uifontheight;
@@ -243,7 +244,7 @@ struct GameOptions
 	int		debug_width;	/* requested width of debugger bitmap */
 	int		debug_height;	/* requested height of debugger bitmap */
 	int		debug_depth;	/* requested depth of debugger bitmap */
-	
+
 	const char *controller;	/* controller-specific cfg to load */
 
 	#ifdef MESS

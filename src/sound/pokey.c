@@ -844,6 +844,7 @@ int pokey_register_r(int chip, int offs)
 {
 	struct POKEYregisters *p = &pokey[chip];
     int data = 0, pot;
+	UINT32 adjust = 0;
 
 #ifdef MAME_DEBUG
 	if( chip >= intf.num )
@@ -917,12 +918,13 @@ int pokey_register_r(int chip, int offs)
 		 ****************************************************************/
 		if( p->SKCTL & SK_RESET )
 		{
-			UINT32 adjust = (UINT32)(timer_timeelapsed(p->rtimer) * intf.baseclock + 0.5);
+			adjust = (UINT32)(timer_timeelapsed(p->rtimer) * intf.baseclock + 0.5);
 			p->r9 = (p->r9 + adjust) % 0x001ff;
 			p->r17 = (p->r17 + adjust) % 0x1ffff;
 		}
 		else
 		{
+			adjust = 1;
 			p->r9 = 0;
 			p->r17 = 0;
             LOG_RAND(("POKEY #%d rand17 freezed (SKCTL): $%02x\n", chip, p->RANDOM));
@@ -937,7 +939,8 @@ int pokey_register_r(int chip, int offs)
 			p->RANDOM = rand17[p->r17];
 			LOG_RAND(("POKEY #%d adjust %u rand17[$%05x]: $%02x\n", chip, adjust, p->r17, p->RANDOM));
 		}
-        timer_adjust(p->rtimer, TIME_NEVER, 0, 0);
+		if (adjust > 0)
+        	timer_adjust(p->rtimer, TIME_NEVER, 0, 0);
 		data = p->RANDOM ^ 0xff;
 		break;
 

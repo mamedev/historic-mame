@@ -61,6 +61,8 @@ enum
 	ID_NEW_DISASM_WND,
 	ID_RUN,
 	ID_RUN_AND_HIDE,
+	ID_RUN_VBLANK,
+	ID_RUN_IRQ,
 	ID_NEXT_CPU,
 	ID_STEP,
 	ID_STEP_OVER,
@@ -1368,8 +1370,10 @@ static LRESULT CALLBACK debug_edit_proc(HWND wnd, UINT message, WPARAM wparam, L
 				case VK_DOWN:
 					if (info->last_history > 0)
 						info->last_history--;
-					else
+					else if (info->history_count > 0)
 						info->last_history = info->history_count - 1;
+					else
+						info->last_history = 0;
 					SendMessage(wnd, WM_SETTEXT, (WPARAM)0, (LPARAM)&info->history[info->last_history][0]);
 					SendMessage(wnd, EM_SETSEL, (WPARAM)MAX_EDIT_STRING, (LPARAM)MAX_EDIT_STRING);
 					break;
@@ -2264,6 +2268,8 @@ static HMENU create_standard_menubar(void)
 	AppendMenu(debugmenu, MF_ENABLED, ID_RUN, "Run\tF5");
 	AppendMenu(debugmenu, MF_ENABLED, ID_RUN_AND_HIDE, "Run and Hide Debugger\tF12");
 	AppendMenu(debugmenu, MF_ENABLED, ID_NEXT_CPU, "Run to Next CPU\tF6");
+	AppendMenu(debugmenu, MF_ENABLED, ID_RUN_IRQ, "Run until Next Interrupt on This CPU\tF7");
+	AppendMenu(debugmenu, MF_ENABLED, ID_RUN_VBLANK, "Run until Next VBLANK\tF8");
 	AppendMenu(debugmenu, MF_DISABLED | MF_SEPARATOR, 0, "");
 	AppendMenu(debugmenu, MF_ENABLED, ID_STEP, "Step Into\tF11");
 	AppendMenu(debugmenu, MF_ENABLED, ID_STEP, "Step Over\tF10");
@@ -2308,6 +2314,14 @@ static int global_handle_command(struct debugwin_info *info, WPARAM wparam, LPAR
 
 			case ID_NEXT_CPU:
 				debug_cpu_next_cpu();
+				return 1;
+
+			case ID_RUN_VBLANK:
+				debug_cpu_go_vblank();
+				return 1;
+
+			case ID_RUN_IRQ:
+				debug_cpu_go_interrupt(-1);
 				return 1;
 
 			case ID_STEP:
@@ -2357,6 +2371,14 @@ static int global_handle_key(struct debugwin_info *info, WPARAM wparam, LPARAM l
 
 		case VK_F6:
 			SendMessage(info->wnd, WM_COMMAND, ID_NEXT_CPU, 0);
+			return 1;
+
+		case VK_F7:
+			SendMessage(info->wnd, WM_COMMAND, ID_RUN_IRQ, 0);
+			return 1;
+
+		case VK_F8:
+			SendMessage(info->wnd, WM_COMMAND, ID_RUN_VBLANK, 0);
 			return 1;
 
 		case 'M':

@@ -61,11 +61,8 @@ frame.
 Game level maps,additional code and data are available to main
 program via CPU banking at lacations 8000-bf00
 
-The encryption scheme for ROM 6(alternate version) is very simple,
-I was surprised by such a large ROM (64k) for sound.
-The first half contains opcodes only (see machine 1 pin)
-while the second 32k chunk is for immediate data.
-Opcode and Data keep their relative positions as well.
+In two of the sets, the encrypted sound program ROM is replaced with a
+double-sized decrypted version. I don0t know if they are bootlegs or originals.
 
 
 
@@ -492,7 +489,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 static struct Samplesinterface samples_interface =
 {
 	1,	/* 1 channel */
-	25	/* volume */
+	30	/* volume */
 };
 
 static struct CustomSound_interface custom_interface =
@@ -512,7 +509,7 @@ static struct YM2203interface ym2203_interface =
 {
 	2, 	 /* 2 chips */
 	1500000, /* 12000000/8 MHz */
-	{ YM2203_VOL(25,25), YM2203_VOL(25,25) },
+	{ YM2203_VOL(30,30), YM2203_VOL(30,30) },
 	{ 0 },
 	{ 0 },
 	{ 0 },
@@ -524,43 +521,17 @@ static struct YM2203interface ym2203_interface =
 static MACHINE_DRIVER_START( ninjakd2 )
 
 	/* basic machine hardware */
-	MDRV_CPU_ADD(Z80, 6000000)		/* 12000000/2 ??? */
+	MDRV_CPU_ADD(Z80, 12000000/2)		/* 12000000/2 ??? */
 	MDRV_CPU_PROGRAM_MAP(readmem,writemem)	/* very sensitive to these settings */
 	MDRV_CPU_VBLANK_INT(ninjakd2_interrupt,1)
 
-	MDRV_FRAMES_PER_SECOND(60)
-	MDRV_VBLANK_DURATION(10000)
-
-	/* video hardware */
-	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
-	MDRV_SCREEN_SIZE(32*8, 32*8)
-	MDRV_VISIBLE_AREA(0*8, 32*8-1, 4*8, 28*8-1)
-	MDRV_GFXDECODE(gfxdecodeinfo)
-	MDRV_PALETTE_LENGTH(768)
-
-	MDRV_VIDEO_START(ninjakd2)
-	MDRV_VIDEO_UPDATE(ninjakd2)
-
-	/* sound hardware */
-	MDRV_SOUND_ADD(YM2203, ym2203_interface)
-MACHINE_DRIVER_END
-
-
-static MACHINE_DRIVER_START( ninjak2a )
-
-	/* basic machine hardware */
-	MDRV_CPU_ADD(Z80, 6000000)		/* 12000000/2 ??? */
-	MDRV_CPU_PROGRAM_MAP(readmem,writemem)	/* very sensitive to these settings */
-	MDRV_CPU_VBLANK_INT(ninjakd2_interrupt,1)
-
-	MDRV_CPU_ADD(Z80, 4000000)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)		/* 12000000/3 ??? */
+	MDRV_CPU_ADD(Z80, 5000000)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)		/* 5mhz crystal ??? */
 	MDRV_CPU_PROGRAM_MAP(snd_readmem,snd_writemem)
 	MDRV_CPU_IO_MAP(0,snd_writeport)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(10000)
-	MDRV_INTERLEAVE(10)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
@@ -588,7 +559,7 @@ ROM_START( ninjakd2 )
 	ROM_LOAD( "nk2_04.rom",   0x20000, 0x8000, CRC(e7692a77) SHA1(84beb8b02c564bffa9cc00313214e8f109bd40f9) )
 	ROM_LOAD( "nk2_05.rom",   0x28000, 0x8000, CRC(5dac9426) SHA1(0916cddbbe1e93c32b96fe28e145d34b2a892e80) )
 
-	ROM_REGION( 0x10000, REGION_CPU2, 0 )
+	ROM_REGION( 2*0x10000, REGION_CPU2, 0 )
 	ROM_LOAD( "nk2_06.rom",   0x0000, 0x10000, CRC(d3a18a79) SHA1(e4df713f89d8a8b43ef831b14864c50ec9b53f0b) )  // sound z80 code encrypted
 
 	ROM_REGION( 0x20000, REGION_GFX1, ROMREGION_DISPOSE )
@@ -714,8 +685,7 @@ ROM_START( rdaction )
 	ROM_LOAD( "nk2_05.bin",   0x28000, 0x8000, CRC(960725fb) SHA1(160c8bfaf089cbeeef2023f12379793079bff93b) )
 
 	ROM_REGION( 2*0x10000, REGION_CPU2, 0 )	/* 64k for code + 64k for decrypted opcodes */
-	ROM_LOAD( "nk2_06.bin",   0x10000, 0x8000, CRC(7bfe6c9e) SHA1(aef8cbeb0024939bf65f77113a5cf777f6613722) )	/* decrypted opcodes */
-	ROM_CONTINUE(             0x00000, 0x8000 )				/* decrypted data */
+	ROM_LOAD( "nk2_06.rom",   0x0000, 0x10000, CRC(d3a18a79) SHA1(e4df713f89d8a8b43ef831b14864c50ec9b53f0b) )  // sound z80 code encrypted
 
 	ROM_REGION( 0x20000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "nk2_11.rom",   0x00000, 0x4000, CRC(41a714b3) SHA1(b05f48d71a9837914c12c13e0b479c8a6dc8c25e) )	/* background tiles */
@@ -749,9 +719,16 @@ ROM_END
 
 
 
-DRIVER_INIT( ninjak2a )
+void mc8123_decrypt_ninjakid2(void);
+
+DRIVER_INIT( ninjakd2 )
 {
-	unsigned char *rom = memory_region(REGION_CPU2);
+	mc8123_decrypt_ninjakid2();
+}
+
+DRIVER_INIT( bootleg )
+{
+	UINT8 *rom = memory_region(REGION_CPU2);
 	int diff = memory_region_length(REGION_CPU2) / 2;
 
 	memory_set_opcode_base(1,rom+diff);
@@ -759,7 +736,7 @@ DRIVER_INIT( ninjak2a )
 
 
 
-GAMEX(1987, ninjakd2, 0,        ninjakd2, ninjakd2, 0,        ROT0, "UPL", "Ninja-Kid II (set 1)", GAME_NO_SOUND )	/* sound program is encrypted */
-GAME( 1987, ninjak2a, ninjakd2, ninjak2a, ninjakd2, ninjak2a, ROT0, "UPL", "Ninja-Kid II (set 2)" )
-GAME( 1987, ninjak2b, ninjakd2, ninjak2a, ninjakd2, ninjak2a, ROT0, "UPL", "Ninja-Kid II (set 3)" )
-GAME( 1987, rdaction, ninjakd2, ninjak2a, ninjakd2, ninjak2a, ROT0, "UPL (World Games license)", "Rad Action" )
+GAME( 1987, ninjakd2, 0,        ninjakd2, ninjakd2, ninjakd2, ROT0, "UPL", "Ninja-Kid II (set 1)" )
+GAME( 1987, ninjak2a, ninjakd2, ninjakd2, ninjakd2, bootleg,  ROT0, "UPL", "Ninja-Kid II (set 2)" )
+GAME( 1987, ninjak2b, ninjakd2, ninjakd2, ninjakd2, bootleg,  ROT0, "UPL", "Ninja-Kid II (set 3)" )
+GAME( 1987, rdaction, ninjakd2, ninjakd2, ninjakd2, ninjakd2, ROT0, "UPL (World Games license)", "Rad Action" )

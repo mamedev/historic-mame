@@ -631,18 +631,14 @@ void bonkadv_mcu_run(void)
 
 		case 0x02:	// Read from NVRAM
 		{
-			memcpy(&mcu_ram[mcu_offset],memory_region(REGION_USER1),128);
-
-			// update eeprom checksum (bytesum) according (fake) dsw region
+			mame_file *f;
+			if ((f = mame_fopen(Machine->gamedrv->name,0,FILETYPE_NVRAM,0)) != 0)
 			{
-				int i;
-				data8_t *mcu_ram8 = (data8_t *)&mcu_ram[mcu_offset];
-			
-				mcu_ram8[BYTE_XOR_BE(40)] = readinputport(5);	// set new region
-				mcu_ram8[BYTE_XOR_BE(127)] = 0x00;				// clear checksum
-				for (i=0; i<127; i++)						// recompute
-					mcu_ram8[BYTE_XOR_BE(127)] += mcu_ram8[BYTE_XOR_BE(i)];
+				mame_fread(f,&mcu_ram[mcu_offset], 128);
+				mame_fclose(f);
 			}
+			else
+				memcpy(&mcu_ram[mcu_offset],memory_region(REGION_USER1),128);
 			logerror("PC=%06X : MCU executed command: %04X %04X (load NVRAM settings)\n",activecpu_get_pc(),mcu_command,mcu_offset*2);
 		}
 		break;
@@ -659,7 +655,11 @@ void bonkadv_mcu_run(void)
 		}
 		break;
 
-		case 0x43:	// Read Factory Default Settings ?
+		case 0x43:	// Restore Default Data Set
+		{
+			memcpy(&mcu_ram[mcu_offset],memory_region(REGION_USER1),128);
+			logerror("PC=%06X : MCU executed command: %04X %04X (restore default settings)\n",activecpu_get_pc(),mcu_command,mcu_offset*2);
+		}
 		break;
 
 		case 0x03:	// DSW

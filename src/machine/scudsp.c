@@ -381,14 +381,14 @@ static void dsp_operation(void)
 			dsp_reg.alu = i3;
 			SET_Z(i3 == 0);
 			SET_S(i3 < 0);
-			SET_C(i3 & 0x100000000);
+			SET_C(i3 & S64(0x100000000));
 			SET_V(((i3) ^ (dsp_reg.acl.si)) & ((i3) ^ (dsp_reg.pl.si)) & 0x80000000);
 			break;
 		case 0x5:	/* SUB */
 			i3 = dsp_reg.acl.si - dsp_reg.pl.si;
 			dsp_reg.alu = i3;
 			SET_Z(i3 == 0);
-			SET_C(i3 & 0x100000000);
+			SET_C(i3 & S64(0x100000000));
 			SET_S(i3 < 0);
 			SET_V(((dsp_reg.pl.si) ^ (dsp_reg.acl.si)) & ((dsp_reg.pl.si) ^ (i3)) & 0x80000000);
 			break;
@@ -398,8 +398,8 @@ static void dsp_operation(void)
 			dsp_reg.alu = i1 + i2;
 			SET_Z(dsp_reg.alu == 0);
 			SET_S(dsp_reg.alu < 0);
-			SET_C((dsp_reg.alu) & 0x1000000000000);
-			SET_V(((dsp_reg.alu) ^ (i1)) & ((dsp_reg.alu) ^ (i2)) & 0x800000000000);
+			SET_C((dsp_reg.alu) & S64(0x1000000000000));
+			SET_V(((dsp_reg.alu) ^ (i1)) & ((dsp_reg.alu) ^ (i2)) & S64(0x800000000000));
 			break;
 		case 0x7:	/* ??? */
 			/* Unrecognized opcode */

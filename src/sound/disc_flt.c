@@ -51,8 +51,11 @@ struct dst_op_amp_filt_context
 	double	vC1b;		// Charge on C1, part of C1 charge if needed
 	double	vC2;		// Charge on C2
 	double	vC3;		// Charge on C2
-	double	vF_last;	// Last output voltage relative to vRef.
 	double	gain;		// Gain of the filter
+	double  x1, x2;		/* x[k-1], x[k-2], previous 2 input values */
+	double  y1, y2;		/* y[k-1], y[k-2], previous 2 output values */
+	double  a1,a2;		/* digital filter coefficients, denominator */
+	double  b0,b1,b2;	/* digital filter coefficients, numerator */
 };
 
 struct dst_rcdisc_context
@@ -225,7 +228,7 @@ static void calculate_filter2_coefficients(double fc, double d, double type,
 	}
 	else if (type == DISC_FILTER_BANDPASS)
 	{
-		*b0 = w*two_over_T/den;
+		*b0 = d*w*two_over_T/den;
 		*b1 = 0.0;
 		*b2 = -(*b0);
 	}
@@ -293,7 +296,7 @@ void dst_op_amp_filt_step(struct node_description *node)
 	const struct discrete_op_amp_filt_info *info = node->custom;
 	struct dst_op_amp_filt_context *context = node->context;
 
-	double i, v, vMid;
+	double i, v=0;
 
 	if (DST_OP_AMP_FILT__ENABLE)
 	{
@@ -349,108 +352,12 @@ void dst_op_amp_filt_step(struct node_description *node)
 				break;
 
 			case DISC_OP_AMP_FILTER_IS_BAND_PASS_1M:
-				/* Only the code in this case is bad.  All other filter code is good.
-				 * In the reset I tell the module to use DISC_OP_AMP_FILTER_IS_BAND_PASS_1 for now.
-				 */
-				/* What a feedback nightmare, but these are facts I do know.
-				 * vRef is not shown because v is assumed to be refrenced to it all ready.
-				 * The arrows show relative current flow.
-				 *
-				 *                     c1
-				 *                .----||----.------------------.
-				 *                |          |                  |
-				 *              v |        v |                  | ^
-				 *              v |        v Z                  | ^    -i1 + i2 + i3 = 0
-				 *             i2 |       i3 Z rF               | i1    i1 = i2 + i3
-				 *              v |        v Z                  | ^     i2 = i1 - i3
-				 *              v |        v |        |\        | ^     i3 = i1 - i2
-				 *      rTotal    |    c2    |        | \       |
-				 * v >--/\/\/\----+----||----+--------|- \      |
-				 *     << i1 <<     << i3 <<    i=0   |   \     |
-				 *                                    |    >----+---> vOut = -i3 * rF
-				 *
-				 * At init c1 & c2 have no charge so i1 = v / rTotal.
-				 * The output needs to source or sink this total amount of current.
-				 * No current is available to put a voltage across rF, so vOut = 0V.
-				 * The current feed back into the (-) input must cancel out the current in to give 0 current.
-				 * This means the current across rF tracks the current charge of C2.
-				 * At init there is no current charge stored in c2, so no current is feed back through rF.
-				 * This confirms that vOut = 0V at init.
-				 * Note that i3 tracks the current stored in c2.
-				 *
-				 *                     c1    v1
-				 *                .----||----.------------------.
-				 *                |   vC1    |                  |
-				 *                |          |                  |
-				 *                |          Z                  |       v0 = vC2
-				 *                |          Z rF               |       i1 = (v - v0) / rTotal
-				 *                |          Z                  |
-				 *                |          |        |\        |
-				 *      rTotal    |    c2    |        | \       |
-				 * v >--/\/\/\----+----||----+--------|- \      |
-				 *     << i1 <<   v0  vC2    v2 = 0V  |   \     |
-				 *                        virtual GND |    >----+---> vOut
-				 *
-				 * From here I get lost.
-				 */
-
-// Test stuff
-v=1;
-context->vF_last=-3;
-				/* First we need to work out the passive components. */
-				/* Step 1 - Work out the voltage mid-point between out and in.
-				 *
-				 *         rTotal         rF
-				 *    v >--/\/\/\---+---/\/\/\--< vF_last (vOut without bias)
-				 *                  |
-				 *                  '-----------> vMid
-				 */
-				vMid = (v - context->vF_last) * context->rRatio + context->vF_last;
-
-				/* Step 2 - RC filter C1.
-				 *          This is done in 2 parts to get the voltage on both sides of C1.
-				 *          One side of the cap heads towards v.  The other heads towards vF.
-				 *
-				 *       rTotal + rF                       rTotal + rF
-				 *    v >--/\/\/\---+---> vC1   vC1b <---+---/\/\/\--< vF_last
-				 *                  |                    |
-				 *                 ---                  ---
-				 *                 --- c1               --- c1
-				 *                  |                    |
-				 *                vMid                 vMid
-				 */
-				context->vC1 += (v - context->vC1 - vMid) * context->exponentC1 + vMid;
-				context->vC1b += (context->vF_last - context->vC1b - vMid) * context->exponentC1 + vMid;
-
-				/* Step 3 - RC filter C2.
-				 *
-				 *         rTotal || rF
-				 *    vC1 >--/\/\/\---+---> vC2
-				 *                    |
-				 *                   ---
-				 *                   --- c2
-				 *                    |
-				 *                  vGnd (virtual ground)
-				 */
-				context->vC2 += (context->vC1 - context->vC2) * context->exponentC2;
-
-				/* Now we work out the active parts.  This is done through adding the current paths.
-				 * Then the gain will be -I * rF.  Add vRef to get final amp out.
-				 *
-				 *                 rF      c1
-				 *    vF_last >--/\/\/\----||------.
-				 *             >>>>>>I1>>>>>>      |    c2
-				 *                                 +----||-------< vGnd
-				 *               rTotal    c1      |  >>>I=I1+I2>>>
-				 *          v >--/\/\/\----||------'
-				 *             >>>>>>I2>>>>>>
-				 */
-				node->output = -((v - context->vC2) / context->rTotal			// I1
-					+ (context->vF_last - context->vC2 - context->vC1b) / info->rF)	// I2
-					* info->rF + info->vRef;
-// Test stuff
-node->output=context->vC2;
-
+				node->output = -context->a1*context->y1 - context->a2*context->y2 +
+				                context->b0*v + context->b1*context->x1 + context->b2*context->x2 +
+				                + info->vRef;
+				context->x2 = context->x1;
+				context->x1 = v;
+				context->y2 = context->y1;
 				break;
 		}
 
@@ -459,10 +366,11 @@ node->output=context->vC2;
 		 */
 		if (node->output > context->vP) node->output = context->vP;
 		if (node->output < context->vN) node->output = context->vN;
-		context->vF_last = node->output - info->vRef;
+		context->y1 = node->output - info->vRef;
 	}
 	else
 		node->output = 0;
+
 }
 
 void dst_op_amp_filt_reset(struct node_description *node)
@@ -473,9 +381,6 @@ void dst_op_amp_filt_reset(struct node_description *node)
 	/* Convert the passed filter type into an int for easy use. */
 	context->type = (int)DST_OP_AMP_FILT__TYPE & DISC_OP_AMP_FILTER_TYPE_MASK;
 	context->is_norton = (int)DST_OP_AMP_FILT__TYPE & DISC_OP_AMP_IS_NORTON;
-
-	/* Remove this when DISC_OP_AMP_FILTER_IS_BAND_PASS_1M works. */
-	if (context->type == DISC_OP_AMP_FILTER_IS_BAND_PASS_1M) context->type = DISC_OP_AMP_FILTER_IS_BAND_PASS_1;
 
 	if (context->is_norton)
 	{
@@ -497,19 +402,15 @@ void dst_op_amp_filt_reset(struct node_description *node)
 		context->vRef = info->vRef;
 		/* Set the output max. */
 		context->vP =  info->vP - OP_AMP_VP_RAIL_OFFSET;
-		context->vN =  info->vP + OP_AMP_VP_RAIL_OFFSET;
+		context->vN =  info->vN + OP_AMP_VP_RAIL_OFFSET;
 
 		/* Work out the input resistance.  It is all input and bias resistors in parallel. */
 		context->rTotal  = 1.0 / info->r1;			// There has to be an R1.  Otherwise the table is wrong.
 		if (info->r2 != 0) context->rTotal += 1.0 / info->r2;
 		if (info->r3 != 0) context->rTotal += 1.0 / info->r3;
-		if (info->r4 != 0) context->rTotal += 1.0 / info->r4;
 		context->rTotal = 1.0 / context->rTotal;
 
-		/* Work out the current of the bias circuit if used. */
 		context->iFixed = 0;
-		if (info->r3 != 0) context->iFixed  = (info->vP - info->vRef) / info->r3;
-		if (info->r4 != 0) context->iFixed += (info->vN - info->vRef) / info->r4;
 
 		context->rRatio = info->rF / (context->rTotal + info->rF);
 		context->gain = -info->rF / context->rTotal;
@@ -534,11 +435,19 @@ void dst_op_amp_filt_reset(struct node_description *node)
 			context->exponentC2 = 1.0 - exp(context->exponentC2);
 			break;
 		case DISC_OP_AMP_FILTER_IS_BAND_PASS_1M:
-			context->exponentC1 = -1.0 / ((context->rTotal + info->rF) * info->c1 * Machine->sample_rate);
-			context->exponentC1 = 1.0 - exp(context->exponentC1);
-			context->exponentC2 = -1.0 / ((1.0 / ( 1.0 / context->rTotal + 1.0 / info->rF)) * info->c2 * Machine->sample_rate);
-			context->exponentC2 = 1.0 - exp(context->exponentC2);
+		{
+			double fc = 1.0 / (2 * M_PI * sqrt(context->rTotal * info->rF * info->c1 * info->c2));
+			double d = (info->c1 + info->c2) / sqrt(info->rF / context->rTotal * info->c1 * info->c2);
+			double gain = -info->rF / context->rTotal * info->c2 / (info->c1 + info->c2);
+
+			calculate_filter2_coefficients(fc, d, DISC_FILTER_BANDPASS,
+                                           &context->a1, &context->a2,
+                                           &context->b0, &context->b1, &context->b2);
+            context->b0 *= gain;
+            context->b1 *= gain;
+            context->b2 *= gain;
 			break;
+		}
 		case DISC_OP_AMP_FILTER_IS_BAND_PASS_0 | DISC_OP_AMP_IS_NORTON:
 			context->exponentC1 = -1.0 / ((1.0 / (1.0 / info->r1 + 1.0 / (info->r2 + info->r3 + info->r4))) * info->c1 * Machine->sample_rate);
 			context->exponentC1 = 1.0 - exp(context->exponentC1);
@@ -558,7 +467,6 @@ void dst_op_amp_filt_reset(struct node_description *node)
 	context->vC1b = 0;
 	context->vC2 = 0;
 	context->vC3 = 0;
-	context->vF_last = 0;
 
 	node->output = info->vRef;
 }

@@ -136,7 +136,7 @@ typedef struct
 	UINT32    test_irq;
 	irq_entry     irq_queue[16];
 
-	INT8	irq_line_state[16];
+	INT8	irq_line_state[17];
 	int 	(*irq_callback)(int irqline);
 	UINT32	*m;
 	INT8  nmi_line_state;

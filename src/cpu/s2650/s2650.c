@@ -1,8 +1,15 @@
+/* ex: set tabstop=4 noexpandtab: */
 /*************************************************************************
  *
  *      Portable Signetics 2650 cpu emulation
  *
  *		Written by Juergen Buchmueller for use with MAME
+ *
+ *  Version 1.2
+ *  - changed to clock cycle counts from machine cycles
+ *  - replaced cycle table with inline code (M_RET conditional case)
+ *  - removed wrong distinct add/sub CC and OVF handling
+ *  - cosmetics, readability
  *
  *************************************************************************/
 
@@ -63,39 +70,71 @@ typedef struct {
 static s2650_Regs S;
 
 /* condition code changes for a byte */
-static	UINT8 ccc[0x200] = {
-	0x00,0x40,0x40,0x40,0x40,0x40,0x40,0x40,0x40,0x40,0x40,0x40,0x40,0x40,0x40,0x40,
-	0x40,0x40,0x40,0x40,0x40,0x40,0x40,0x40,0x40,0x40,0x40,0x40,0x40,0x40,0x40,0x40,
-	0x40,0x40,0x40,0x40,0x40,0x40,0x40,0x40,0x40,0x40,0x40,0x40,0x40,0x40,0x40,0x40,
-	0x40,0x40,0x40,0x40,0x40,0x40,0x40,0x40,0x40,0x40,0x40,0x40,0x40,0x40,0x40,0x40,
-	0x40,0x40,0x40,0x40,0x40,0x40,0x40,0x40,0x40,0x40,0x40,0x40,0x40,0x40,0x40,0x40,
-	0x40,0x40,0x40,0x40,0x40,0x40,0x40,0x40,0x40,0x40,0x40,0x40,0x40,0x40,0x40,0x40,
-	0x40,0x40,0x40,0x40,0x40,0x40,0x40,0x40,0x40,0x40,0x40,0x40,0x40,0x40,0x40,0x40,
-	0x40,0x40,0x40,0x40,0x40,0x40,0x40,0x40,0x40,0x40,0x40,0x40,0x40,0x40,0x40,0x40,
-	0x80,0x80,0x80,0x80,0x80,0x80,0x80,0x80,0x80,0x80,0x80,0x80,0x80,0x80,0x80,0x80,
-	0x80,0x80,0x80,0x80,0x80,0x80,0x80,0x80,0x80,0x80,0x80,0x80,0x80,0x80,0x80,0x80,
-	0x80,0x80,0x80,0x80,0x80,0x80,0x80,0x80,0x80,0x80,0x80,0x80,0x80,0x80,0x80,0x80,
-	0x80,0x80,0x80,0x80,0x80,0x80,0x80,0x80,0x80,0x80,0x80,0x80,0x80,0x80,0x80,0x80,
-	0x80,0x80,0x80,0x80,0x80,0x80,0x80,0x80,0x80,0x80,0x80,0x80,0x80,0x80,0x80,0x80,
-	0x80,0x80,0x80,0x80,0x80,0x80,0x80,0x80,0x80,0x80,0x80,0x80,0x80,0x80,0x80,0x80,
-	0x80,0x80,0x80,0x80,0x80,0x80,0x80,0x80,0x80,0x80,0x80,0x80,0x80,0x80,0x80,0x80,
-	0x80,0x80,0x80,0x80,0x80,0x80,0x80,0x80,0x80,0x80,0x80,0x80,0x80,0x80,0x80,0x80,
-	0x04,0x44,0x44,0x44,0x44,0x44,0x44,0x44,0x44,0x44,0x44,0x44,0x44,0x44,0x44,0x44,
-	0x44,0x44,0x44,0x44,0x44,0x44,0x44,0x44,0x44,0x44,0x44,0x44,0x44,0x44,0x44,0x44,
-	0x44,0x44,0x44,0x44,0x44,0x44,0x44,0x44,0x44,0x44,0x44,0x44,0x44,0x44,0x44,0x44,
-	0x44,0x44,0x44,0x44,0x44,0x44,0x44,0x44,0x44,0x44,0x44,0x44,0x44,0x44,0x44,0x44,
-	0x44,0x44,0x44,0x44,0x44,0x44,0x44,0x44,0x44,0x44,0x44,0x44,0x44,0x44,0x44,0x44,
-	0x44,0x44,0x44,0x44,0x44,0x44,0x44,0x44,0x44,0x44,0x44,0x44,0x44,0x44,0x44,0x44,
-	0x44,0x44,0x44,0x44,0x44,0x44,0x44,0x44,0x44,0x44,0x44,0x44,0x44,0x44,0x44,0x44,
-	0x44,0x44,0x44,0x44,0x44,0x44,0x44,0x44,0x44,0x44,0x44,0x44,0x44,0x44,0x44,0x44,
-	0x84,0x84,0x84,0x84,0x84,0x84,0x84,0x84,0x84,0x84,0x84,0x84,0x84,0x84,0x84,0x84,
-	0x84,0x84,0x84,0x84,0x84,0x84,0x84,0x84,0x84,0x84,0x84,0x84,0x84,0x84,0x84,0x84,
-	0x84,0x84,0x84,0x84,0x84,0x84,0x84,0x84,0x84,0x84,0x84,0x84,0x84,0x84,0x84,0x84,
-	0x84,0x84,0x84,0x84,0x84,0x84,0x84,0x84,0x84,0x84,0x84,0x84,0x84,0x84,0x84,0x84,
-	0x84,0x84,0x84,0x84,0x84,0x84,0x84,0x84,0x84,0x84,0x84,0x84,0x84,0x84,0x84,0x84,
-	0x84,0x84,0x84,0x84,0x84,0x84,0x84,0x84,0x84,0x84,0x84,0x84,0x84,0x84,0x84,0x84,
-	0x84,0x84,0x84,0x84,0x84,0x84,0x84,0x84,0x84,0x84,0x84,0x84,0x84,0x84,0x84,0x84,
-	0x84,0x84,0x84,0x84,0x84,0x84,0x84,0x84,0x84,0x84,0x84,0x84,0x84,0x84,0x84,0x84,
+static const UINT8 ccc[0x200] = {
+	0x00,0x40,0x40,0x40,0x40,0x40,0x40,0x40,
+	0x40,0x40,0x40,0x40,0x40,0x40,0x40,0x40,
+	0x40,0x40,0x40,0x40,0x40,0x40,0x40,0x40,
+	0x40,0x40,0x40,0x40,0x40,0x40,0x40,0x40,
+	0x40,0x40,0x40,0x40,0x40,0x40,0x40,0x40,
+	0x40,0x40,0x40,0x40,0x40,0x40,0x40,0x40,
+	0x40,0x40,0x40,0x40,0x40,0x40,0x40,0x40,
+	0x40,0x40,0x40,0x40,0x40,0x40,0x40,0x40,
+	0x40,0x40,0x40,0x40,0x40,0x40,0x40,0x40,
+	0x40,0x40,0x40,0x40,0x40,0x40,0x40,0x40,
+	0x40,0x40,0x40,0x40,0x40,0x40,0x40,0x40,
+	0x40,0x40,0x40,0x40,0x40,0x40,0x40,0x40,
+	0x40,0x40,0x40,0x40,0x40,0x40,0x40,0x40,
+	0x40,0x40,0x40,0x40,0x40,0x40,0x40,0x40,
+	0x40,0x40,0x40,0x40,0x40,0x40,0x40,0x40,
+	0x40,0x40,0x40,0x40,0x40,0x40,0x40,0x40,
+	0x80,0x80,0x80,0x80,0x80,0x80,0x80,0x80,
+	0x80,0x80,0x80,0x80,0x80,0x80,0x80,0x80,
+	0x80,0x80,0x80,0x80,0x80,0x80,0x80,0x80,
+	0x80,0x80,0x80,0x80,0x80,0x80,0x80,0x80,
+	0x80,0x80,0x80,0x80,0x80,0x80,0x80,0x80,
+	0x80,0x80,0x80,0x80,0x80,0x80,0x80,0x80,
+	0x80,0x80,0x80,0x80,0x80,0x80,0x80,0x80,
+	0x80,0x80,0x80,0x80,0x80,0x80,0x80,0x80,
+	0x80,0x80,0x80,0x80,0x80,0x80,0x80,0x80,
+	0x80,0x80,0x80,0x80,0x80,0x80,0x80,0x80,
+	0x80,0x80,0x80,0x80,0x80,0x80,0x80,0x80,
+	0x80,0x80,0x80,0x80,0x80,0x80,0x80,0x80,
+	0x80,0x80,0x80,0x80,0x80,0x80,0x80,0x80,
+	0x80,0x80,0x80,0x80,0x80,0x80,0x80,0x80,
+	0x80,0x80,0x80,0x80,0x80,0x80,0x80,0x80,
+	0x80,0x80,0x80,0x80,0x80,0x80,0x80,0x80,
+	0x04,0x44,0x44,0x44,0x44,0x44,0x44,0x44,
+	0x44,0x44,0x44,0x44,0x44,0x44,0x44,0x44,
+	0x44,0x44,0x44,0x44,0x44,0x44,0x44,0x44,
+	0x44,0x44,0x44,0x44,0x44,0x44,0x44,0x44,
+	0x44,0x44,0x44,0x44,0x44,0x44,0x44,0x44,
+	0x44,0x44,0x44,0x44,0x44,0x44,0x44,0x44,
+	0x44,0x44,0x44,0x44,0x44,0x44,0x44,0x44,
+	0x44,0x44,0x44,0x44,0x44,0x44,0x44,0x44,
+	0x44,0x44,0x44,0x44,0x44,0x44,0x44,0x44,
+	0x44,0x44,0x44,0x44,0x44,0x44,0x44,0x44,
+	0x44,0x44,0x44,0x44,0x44,0x44,0x44,0x44,
+	0x44,0x44,0x44,0x44,0x44,0x44,0x44,0x44,
+	0x44,0x44,0x44,0x44,0x44,0x44,0x44,0x44,
+	0x44,0x44,0x44,0x44,0x44,0x44,0x44,0x44,
+	0x44,0x44,0x44,0x44,0x44,0x44,0x44,0x44,
+	0x44,0x44,0x44,0x44,0x44,0x44,0x44,0x44,
+	0x84,0x84,0x84,0x84,0x84,0x84,0x84,0x84,
+	0x84,0x84,0x84,0x84,0x84,0x84,0x84,0x84,
+	0x84,0x84,0x84,0x84,0x84,0x84,0x84,0x84,
+	0x84,0x84,0x84,0x84,0x84,0x84,0x84,0x84,
+	0x84,0x84,0x84,0x84,0x84,0x84,0x84,0x84,
+	0x84,0x84,0x84,0x84,0x84,0x84,0x84,0x84,
+	0x84,0x84,0x84,0x84,0x84,0x84,0x84,0x84,
+	0x84,0x84,0x84,0x84,0x84,0x84,0x84,0x84,
+	0x84,0x84,0x84,0x84,0x84,0x84,0x84,0x84,
+	0x84,0x84,0x84,0x84,0x84,0x84,0x84,0x84,
+	0x84,0x84,0x84,0x84,0x84,0x84,0x84,0x84,
+	0x84,0x84,0x84,0x84,0x84,0x84,0x84,0x84,
+	0x84,0x84,0x84,0x84,0x84,0x84,0x84,0x84,
+	0x84,0x84,0x84,0x84,0x84,0x84,0x84,0x84,
+	0x84,0x84,0x84,0x84,0x84,0x84,0x84,0x84,
+	0x84,0x84,0x84,0x84,0x84,0x84,0x84,0x84
 };
 
 static void s2650_set_sense(int state);
@@ -147,18 +186,8 @@ static void s2650_set_sense(int state);
 	S.psl = (S.psl & ~(OVF+CC)) |								\
 		ccc[result + ( ( (result^value) << 1) & 256 )]
 
-#if 1
 #define SET_CC_OVF_ADD(result,value1,value2) SET_CC_OVF(result,value1)
 #define SET_CC_OVF_SUB(result,value1,value2) SET_CC_OVF(result,value1)
-#else
-#define SET_CC_OVF_ADD(result,value1,value2)                    \
-	S.psl = (S.psl & ~(OVF+CC)) |								\
-		ccc[result + ( ( (~(value1^value2) & (result^value1)) << 1) & 256 )]
-
-#define SET_CC_OVF_SUB(result,value1,value2)                    \
-	S.psl = (S.psl & ~(OVF+CC)) |								\
-		ccc[result + ( ( ((value1^value2) & (result^value1)) << 1) & 256 )]
-#endif
 
 /***************************************************************
  * ROP
@@ -459,6 +488,7 @@ static	int 	S2650_relative[0x100] =
 {																\
 	if( cond )													\
 	{															\
+		s2650_ICount -= 2;										\
 		S.ea = S.ras[S.psu & SP];								\
 		S.psu = (S.psu & ~SP) | ((S.psu - 1) & SP); 			\
 		S.page = S.ea & PAGE;									\
@@ -830,25 +860,6 @@ static int s2650_get_sense(void)
     return (((S.psu & SI) ? 1 : 0) | ((io_read_byte_8(S2650_SENSE_PORT) & SI) ? 1 : 0));
 }
 
-static  int S2650_Cycles[0x100] = {
-	2,2,2,2, 2,2,2,2, 3,3,3,3, 4,4,4,4,
-	2,2,2,2, 2,2,2,2, 3,3,3,3, 3,3,3,3,
-	2,2,2,2, 2,2,2,2, 3,3,3,3, 4,4,4,4,
-	2,2,2,2, 3,3,3,3, 3,3,3,3, 3,3,3,3,
-	2,2,2,2, 2,2,2,2, 3,3,3,3, 4,4,4,4,
-	2,2,2,2, 3,3,3,3, 3,3,3,3, 3,3,3,3,
-	2,2,2,2, 2,2,2,2, 3,3,3,3, 4,4,4,4,
-	2,2,2,2, 2,2,2,2, 3,3,3,3, 3,3,3,3,
-	2,2,2,2, 2,2,2,2, 3,3,3,3, 4,4,4,4,
-	2,2,2,2, 2,2,2,2, 3,3,3,3, 3,3,3,3,
-	2,2,2,2, 2,2,2,2, 3,3,3,3, 4,4,4,4,
-	2,2,2,2, 2,2,2,2, 3,3,3,3, 3,3,3,3,
-	2,2,2,2, 2,2,2,2, 3,3,3,3, 4,4,4,4,
-	2,2,2,2, 3,3,3,3, 3,3,3,3, 3,3,3,3,
-	2,2,2,2, 2,2,2,2, 3,3,3,3, 4,4,4,4,
-	2,2,2,2, 3,3,3,3, 3,3,3,3, 3,3,3,3
-};
-
 static int s2650_execute(int cycles)
 {
 	s2650_ICount = cycles;
@@ -859,13 +870,13 @@ static int s2650_execute(int cycles)
 		CALL_MAME_DEBUG;
 
 		S.ir = ROP();
-		s2650_ICount -= S2650_Cycles[S.ir];
 		S.r = S.ir & 3; 		/* register / value */
 		switch (S.ir) {
 			case 0x00:		/* LODZ,0 */
 			case 0x01:		/* LODZ,1 */
 			case 0x02:		/* LODZ,2 */
 			case 0x03:		/* LODZ,3 */
+				s2650_ICount -= 7;
 				M_LOD( R0, S.reg[S.r] );
 				break;
 
@@ -873,6 +884,7 @@ static int s2650_execute(int cycles)
 			case 0x05:		/* LODI,1 v */
 			case 0x06:		/* LODI,2 v */
 			case 0x07:		/* LODI,3 v */
+				s2650_ICount -= 10;
 				M_LOD( S.reg[S.r], ARG() );
 				break;
 
@@ -880,6 +892,7 @@ static int s2650_execute(int cycles)
 			case 0x09:		/* LODR,1 (*)a */
 			case 0x0a:		/* LODR,2 (*)a */
 			case 0x0b:		/* LODR,3 (*)a */
+				s2650_ICount -= 8;
 				REL_EA( S.page );
 				M_LOD( S.reg[S.r], RDMEM(S.ea) );
 				break;
@@ -888,44 +901,54 @@ static int s2650_execute(int cycles)
 			case 0x0d:		/* LODA,1 (*)a(,X) */
 			case 0x0e:		/* LODA,2 (*)a(,X) */
 			case 0x0f:		/* LODA,3 (*)a(,X) */
+				s2650_ICount -= 11;
 				ABS_EA();
 				M_LOD( S.reg[S.r], RDMEM(S.ea) );
 				break;
 
 			case 0x10:		/* illegal */
 			case 0x11:		/* illegal */
+				s2650_ICount -= 7;
 				break;
 			case 0x12:		/* SPSU */
+				s2650_ICount -= 7;
 				M_SPSU();
 				break;
 			case 0x13:		/* SPSL */
+				s2650_ICount -= 7;
 				M_SPSL();
 				break;
 
 			case 0x14:		/* RETC,0	(zero)	*/
 			case 0x15:		/* RETC,1	(plus)	*/
 			case 0x16:		/* RETC,2	(minus) */
+				s2650_ICount -= 5;	/* +2 cycles if condition is true */
 				M_RET( (S.psl >> 6) == S.r );
 				break;
 			case 0x17:		/* RETC,3	(always) */
+				s2650_ICount -= 5;	/* +2 cycles if condition is true */
 				M_RET( 1 );
 				break;
 
 			case 0x18:		/* BCTR,0  (*)a */
 			case 0x19:		/* BCTR,1  (*)a */
 			case 0x1a:		/* BCTR,2  (*)a */
+				s2650_ICount -= 8;
 				M_BRR( (S.psl >> 6) == S.r );
 				break;
 			case 0x1b:		/* BCTR,3  (*)a */
+				s2650_ICount -= 8;
 				M_BRR( 1 );
 				break;
 
 			case 0x1c:		/* BCTA,0  (*)a */
 			case 0x1d:		/* BCTA,1  (*)a */
 			case 0x1e:		/* BCTA,2  (*)a */
+				s2650_ICount -= 11;
 				M_BRA( (S.psl >> 6) == S.r );
 				break;
 			case 0x1f:		/* BCTA,3  (*)a */
+				s2650_ICount -= 11;
 				M_BRA( 1 );
 				break;
 
@@ -933,6 +956,7 @@ static int s2650_execute(int cycles)
 			case 0x21:		/* EORZ,1 */
 			case 0x22:		/* EORZ,2 */
 			case 0x23:		/* EORZ,3 */
+				s2650_ICount -= 7;
 				M_EOR( R0, S.reg[S.r] );
 				break;
 
@@ -940,6 +964,7 @@ static int s2650_execute(int cycles)
 			case 0x25:		/* EORI,1 v */
 			case 0x26:		/* EORI,2 v */
 			case 0x27:		/* EORI,3 v */
+				s2650_ICount -= 10;
 				M_EOR( S.reg[S.r], ARG() );
 				break;
 
@@ -947,6 +972,7 @@ static int s2650_execute(int cycles)
 			case 0x29:		/* EORR,1 (*)a */
 			case 0x2a:		/* EORR,2 (*)a */
 			case 0x2b:		/* EORR,3 (*)a */
+				s2650_ICount -= 8;
 				REL_EA( S.page );
 				M_EOR( S.reg[S.r], RDMEM(S.ea) );
 				break;
@@ -955,6 +981,7 @@ static int s2650_execute(int cycles)
 			case 0x2d:		/* EORA,1 (*)a(,X) */
 			case 0x2e:		/* EORA,2 (*)a(,X) */
 			case 0x2f:		/* EORA,3 (*)a(,X) */
+				s2650_ICount -= 11;
 				ABS_EA();
 				M_EOR( S.reg[S.r], RDMEM(S.ea) );
 				break;
@@ -963,6 +990,7 @@ static int s2650_execute(int cycles)
 			case 0x31:		/* REDC,1 */
 			case 0x32:		/* REDC,2 */
 			case 0x33:		/* REDC,3 */
+				s2650_ICount -= 7;
 				S.reg[S.r] = io_read_byte_8(S2650_CTRL_PORT);
 				SET_CC( S.reg[S.r] );
 				break;
@@ -970,31 +998,38 @@ static int s2650_execute(int cycles)
 			case 0x34:		/* RETE,0 */
 			case 0x35:		/* RETE,1 */
 			case 0x36:		/* RETE,2 */
+				s2650_ICount -= 7;
 				M_RETE( (S.psl >> 6) == S.r );
 				break;
 			case 0x37:		/* RETE,3 */
+				s2650_ICount -= 7;
 				M_RETE( 1 );
 				break;
 
 			case 0x38:		/* BSTR,0 (*)a */
 			case 0x39:		/* BSTR,1 (*)a */
 			case 0x3a:		/* BSTR,2 (*)a */
+				s2650_ICount -= 8;
 				M_BSR( (S.psl >> 6) == S.r );
 				break;
 			case 0x3b:		/* BSTR,R3 (*)a */
+				s2650_ICount -= 8;
 				M_BSR( 1 );
 				break;
 
 			case 0x3c:		/* BSTA,0 (*)a */
 			case 0x3d:		/* BSTA,1 (*)a */
 			case 0x3e:		/* BSTA,2 (*)a */
+				s2650_ICount -= 11;
 				M_BSA( (S.psl >> 6) == S.r );
 				break;
 			case 0x3f:		/* BSTA,3 (*)a */
+				s2650_ICount -= 11;
 				M_BSA( 1 );
 				break;
 
 			case 0x40:		/* HALT */
+				s2650_ICount -= 7;
 				S.iar = (S.iar - 1) & PMSK;
 				S.halt = 1;
 				if (s2650_ICount > 0)
@@ -1003,6 +1038,7 @@ static int s2650_execute(int cycles)
 			case 0x41:		/* ANDZ,1 */
 			case 0x42:		/* ANDZ,2 */
 			case 0x43:		/* ANDZ,3 */
+				s2650_ICount -= 7;
 				M_AND( R0, S.reg[S.r] );
 				break;
 
@@ -1010,6 +1046,7 @@ static int s2650_execute(int cycles)
 			case 0x45:		/* ANDI,1 v */
 			case 0x46:		/* ANDI,2 v */
 			case 0x47:		/* ANDI,3 v */
+				s2650_ICount -= 10;
 				M_AND( S.reg[S.r], ARG() );
 				break;
 
@@ -1017,6 +1054,7 @@ static int s2650_execute(int cycles)
 			case 0x49:		/* ANDR,1 (*)a */
 			case 0x4a:		/* ANDR,2 (*)a */
 			case 0x4b:		/* ANDR,3 (*)a */
+				s2650_ICount -= 8;
 				REL_EA( S.page );
 				M_AND( S.reg[S.r], RDMEM(S.ea) );
 				break;
@@ -1025,6 +1063,7 @@ static int s2650_execute(int cycles)
 			case 0x4d:		/* ANDA,1 (*)a(,X) */
 			case 0x4e:		/* ANDA,2 (*)a(,X) */
 			case 0x4f:		/* ANDA,3 (*)a(,X) */
+				s2650_ICount -= 11;
 				ABS_EA();
 				M_AND( S.reg[S.r], RDMEM(S.ea) );
 				break;
@@ -1033,6 +1072,7 @@ static int s2650_execute(int cycles)
 			case 0x51:		/* RRR,1 */
 			case 0x52:		/* RRR,2 */
 			case 0x53:		/* RRR,3 */
+				s2650_ICount -= 7;
 				M_RRR( S.reg[S.r] );
 				break;
 
@@ -1040,6 +1080,7 @@ static int s2650_execute(int cycles)
 			case 0x55:		/* REDE,1 v */
 			case 0x56:		/* REDE,2 v */
 			case 0x57:		/* REDE,3 v */
+				s2650_ICount -= 10;
 				S.reg[S.r] = io_read_byte_8( ARG() );
 				SET_CC(S.reg[S.r]);
 				break;
@@ -1048,6 +1089,7 @@ static int s2650_execute(int cycles)
 			case 0x59:		/* BRNR,1 (*)a */
 			case 0x5a:		/* BRNR,2 (*)a */
 			case 0x5b:		/* BRNR,3 (*)a */
+				s2650_ICount -= 8;
 				M_BRR( S.reg[S.r] );
 				break;
 
@@ -1055,6 +1097,7 @@ static int s2650_execute(int cycles)
 			case 0x5d:		/* BRNA,1 (*)a */
 			case 0x5e:		/* BRNA,2 (*)a */
 			case 0x5f:		/* BRNA,3 (*)a */
+				s2650_ICount -= 11;
 				M_BRA( S.reg[S.r] );
 				break;
 
@@ -1062,6 +1105,7 @@ static int s2650_execute(int cycles)
 			case 0x61:		/* IORZ,1 */
 			case 0x62:		/* IORZ,2 */
 			case 0x63:		/* IORZ,3 */
+				s2650_ICount -= 7;
 				M_IOR( R0, S.reg[S.r] );
 				break;
 
@@ -1069,6 +1113,7 @@ static int s2650_execute(int cycles)
 			case 0x65:		/* IORI,1 v */
 			case 0x66:		/* IORI,2 v */
 			case 0x67:		/* IORI,3 v */
+				s2650_ICount -= 10;
 				M_IOR( S.reg[S.r], ARG() );
 				break;
 
@@ -1076,6 +1121,7 @@ static int s2650_execute(int cycles)
 			case 0x69:		/* IORR,1 (*)a */
 			case 0x6a:		/* IORR,2 (*)a */
 			case 0x6b:		/* IORR,3 (*)a */
+				s2650_ICount -= 8;
 				REL_EA( S.page );
 				M_IOR( S.reg[S. r],RDMEM(S.ea) );
 				break;
@@ -1084,6 +1130,7 @@ static int s2650_execute(int cycles)
 			case 0x6d:		/* IORA,1 (*)a(,X) */
 			case 0x6e:		/* IORA,2 (*)a(,X) */
 			case 0x6f:		/* IORA,3 (*)a(,X) */
+				s2650_ICount -= 11;
 				ABS_EA();
 				M_IOR( S.reg[S.r], RDMEM(S.ea) );
 				break;
@@ -1092,20 +1139,25 @@ static int s2650_execute(int cycles)
 			case 0x71:		/* REDD,1 */
 			case 0x72:		/* REDD,2 */
 			case 0x73:		/* REDD,3 */
+				s2650_ICount -= 7;
 				S.reg[S.r] = io_read_byte_8(S2650_DATA_PORT);
 				SET_CC(S.reg[S.r]);
 				break;
 
 			case 0x74:		/* CPSU */
+				s2650_ICount -= 7;
 				M_CPSU();
 				break;
 			case 0x75:		/* CPSL */
+				s2650_ICount -= 7;
 				M_CPSL();
 				break;
 			case 0x76:		/* PPSU */
+				s2650_ICount -= 7;
 				M_PPSU();
 				break;
 			case 0x77:		/* PPSL */
+				s2650_ICount -= 7;
 				M_PPSL();
 				break;
 
@@ -1113,6 +1165,7 @@ static int s2650_execute(int cycles)
 			case 0x79:		/* BSNR,1 (*)a */
 			case 0x7a:		/* BSNR,2 (*)a */
 			case 0x7b:		/* BSNR,3 (*)a */
+				s2650_ICount -= 8;
 				M_BSR( S.reg[S.r] );
 				break;
 
@@ -1120,6 +1173,7 @@ static int s2650_execute(int cycles)
 			case 0x7d:		/* BSNA,1 (*)a */
 			case 0x7e:		/* BSNA,2 (*)a */
 			case 0x7f:		/* BSNA,3 (*)a */
+				s2650_ICount -= 11;
 				M_BSA( S.reg[S.r] );
 				break;
 
@@ -1127,6 +1181,7 @@ static int s2650_execute(int cycles)
 			case 0x81:		/* ADDZ,1 */
 			case 0x82:		/* ADDZ,2 */
 			case 0x83:		/* ADDZ,3 */
+				s2650_ICount -= 7;
 				M_ADD( R0,S.reg[S.r] );
 				break;
 
@@ -1134,6 +1189,7 @@ static int s2650_execute(int cycles)
 			case 0x85:		/* ADDI,1 v */
 			case 0x86:		/* ADDI,2 v */
 			case 0x87:		/* ADDI,3 v */
+				s2650_ICount -= 10;
 				M_ADD( S.reg[S.r], ARG() );
 				break;
 
@@ -1141,6 +1197,7 @@ static int s2650_execute(int cycles)
 			case 0x89:		/* ADDR,1 (*)a */
 			case 0x8a:		/* ADDR,2 (*)a */
 			case 0x8b:		/* ADDR,3 (*)a */
+				s2650_ICount -= 8;
 				REL_EA(S.page);
 				M_ADD( S.reg[S.r], RDMEM(S.ea) );
 				break;
@@ -1149,17 +1206,21 @@ static int s2650_execute(int cycles)
 			case 0x8d:		/* ADDA,1 (*)a(,X) */
 			case 0x8e:		/* ADDA,2 (*)a(,X) */
 			case 0x8f:		/* ADDA,3 (*)a(,X) */
+				s2650_ICount -= 11;
 				ABS_EA();
 				M_ADD( S.reg[S.r], RDMEM(S.ea) );
 				break;
 
 			case 0x90:		/* illegal */
 			case 0x91:		/* illegal */
+				s2650_ICount -= 7;
 				break;
 			case 0x92:		/* LPSU */
+				s2650_ICount -= 7;
 				S.psu = R0 & ~PSU34;
 				break;
 			case 0x93:		/* LPSL */
+				s2650_ICount -= 7;
 				/* change register set ? */
 				if ((S.psl ^ R0) & RS)
 					SWAP_REGS;
@@ -1170,24 +1231,29 @@ static int s2650_execute(int cycles)
 			case 0x95:		/* DAR,1 */
 			case 0x96:		/* DAR,2 */
 			case 0x97:		/* DAR,3 */
+				s2650_ICount -= 7;
 				M_DAR( S.reg[S.r] );
 				break;
 
 			case 0x98:		/* BCFR,0 (*)a */
 			case 0x99:		/* BCFR,1 (*)a */
 			case 0x9a:		/* BCFR,2 (*)a */
+				s2650_ICount -= 8;
 				M_BRR( (S.psl >> 6) != S.r );
 				break;
 			case 0x9b:		/* ZBRR    (*)a */
+				s2650_ICount -= 8;
 				M_ZBRR();
 				break;
 
 			case 0x9c:		/* BCFA,0 (*)a */
 			case 0x9d:		/* BCFA,1 (*)a */
 			case 0x9e:		/* BCFA,2 (*)a */
+				s2650_ICount -= 11;
 				M_BRA( (S.psl >> 6) != S.r );
 				break;
 			case 0x9f:		/* BXA	   (*)a */
+				s2650_ICount -= 11;
 				M_BXA();
 				break;
 
@@ -1195,6 +1261,7 @@ static int s2650_execute(int cycles)
 			case 0xa1:		/* SUBZ,1 */
 			case 0xa2:		/* SUBZ,2 */
 			case 0xa3:		/* SUBZ,3 */
+				s2650_ICount -= 7;
 				M_SUB( R0, S.reg[S.r] );
 				break;
 
@@ -1202,6 +1269,7 @@ static int s2650_execute(int cycles)
 			case 0xa5:		/* SUBI,1 v */
 			case 0xa6:		/* SUBI,2 v */
 			case 0xa7:		/* SUBI,3 v */
+				s2650_ICount -= 10;
 				M_SUB( S.reg[S.r], ARG() );
 				break;
 
@@ -1209,6 +1277,7 @@ static int s2650_execute(int cycles)
 			case 0xa9:		/* SUBR,1 (*)a */
 			case 0xaa:		/* SUBR,2 (*)a */
 			case 0xab:		/* SUBR,3 (*)a */
+				s2650_ICount -= 8;
 				REL_EA(S.page);
 				M_SUB( S.reg[S.r], RDMEM(S.ea) );
 				break;
@@ -1217,6 +1286,7 @@ static int s2650_execute(int cycles)
 			case 0xad:		/* SUBA,1 (*)a(,X) */
 			case 0xae:		/* SUBA,2 (*)a(,X) */
 			case 0xaf:		/* SUBA,3 (*)a(,X) */
+				s2650_ICount -= 11;
 				ABS_EA();
 				M_SUB( S.reg[S.r], RDMEM(S.ea) );
 				break;
@@ -1225,42 +1295,52 @@ static int s2650_execute(int cycles)
 			case 0xb1:		/* WRTC,1 */
 			case 0xb2:		/* WRTC,2 */
 			case 0xb3:		/* WRTC,3 */
+				s2650_ICount -= 5;
 				io_write_byte_8(S2650_CTRL_PORT,S.reg[S.r]);
 				break;
 
 			case 0xb4:		/* TPSU */
+				s2650_ICount -= 7;
 				M_TPSU();
 				break;
 			case 0xb5:		/* TPSL */
+				s2650_ICount -= 7;
 				M_TPSL();
 				break;
 			case 0xb6:		/* illegal */
 			case 0xb7:		/* illegal */
+				s2650_ICount -= 7;
 				break;
 
 			case 0xb8:		/* BSFR,0 (*)a */
 			case 0xb9:		/* BSFR,1 (*)a */
 			case 0xba:		/* BSFR,2 (*)a */
+				s2650_ICount -= 8;
 				M_BSR( (S.psl >> 6) != S.r );
 				break;
 			case 0xbb:		/* ZBSR    (*)a */
+				s2650_ICount -= 8;
 				M_ZBSR();
 				break;
 
 			case 0xbc:		/* BSFA,0 (*)a */
 			case 0xbd:		/* BSFA,1 (*)a */
 			case 0xbe:		/* BSFA,2 (*)a */
+				s2650_ICount -= 11;
 				M_BSA( (S.psl >> 6) != S.r );
 				break;
 			case 0xbf:		/* BSXA    (*)a */
+				s2650_ICount -= 11;
 				M_BSXA();
 				break;
 
 			case 0xc0:		/* NOP */
+				s2650_ICount -= 7;
 				break;
 			case 0xc1:		/* STRZ,1 */
 			case 0xc2:		/* STRZ,2 */
 			case 0xc3:		/* STRZ,3 */
+				s2650_ICount -= 7;
 				M_LOD( S.reg[S.r], R0 );
 				break;
 
@@ -1268,12 +1348,14 @@ static int s2650_execute(int cycles)
 			case 0xc5:		/* illegal */
 			case 0xc6:		/* illegal */
 			case 0xc7:		/* illegal */
+				s2650_ICount -= 7;
 				break;
 
 			case 0xc8:		/* STRR,0 (*)a */
 			case 0xc9:		/* STRR,1 (*)a */
 			case 0xca:		/* STRR,2 (*)a */
 			case 0xcb:		/* STRR,3 (*)a */
+				s2650_ICount -= 8;
 				REL_EA(S.page);
 				M_STR( S.ea, S.reg[S.r] );
 				break;
@@ -1282,6 +1364,7 @@ static int s2650_execute(int cycles)
 			case 0xcd:		/* STRA,1 (*)a(,X) */
 			case 0xce:		/* STRA,2 (*)a(,X) */
 			case 0xcf:		/* STRA,3 (*)a(,X) */
+				s2650_ICount -= 11;
 				ABS_EA();
 				M_STR( S.ea, S.reg[S.r] );
 				break;
@@ -1290,6 +1373,7 @@ static int s2650_execute(int cycles)
 			case 0xd1:		/* RRL,1 */
 			case 0xd2:		/* RRL,2 */
 			case 0xd3:		/* RRL,3 */
+				s2650_ICount -= 7;
 				M_RRL( S.reg[S.r] );
 				break;
 
@@ -1297,6 +1381,7 @@ static int s2650_execute(int cycles)
 			case 0xd5:		/* WRTE,1 v */
 			case 0xd6:		/* WRTE,2 v */
 			case 0xd7:		/* WRTE,3 v */
+				s2650_ICount -= 10;
 				io_write_byte_8( ARG(), S.reg[S.r] );
 				break;
 
@@ -1304,6 +1389,7 @@ static int s2650_execute(int cycles)
 			case 0xd9:		/* BIRR,1 (*)a */
 			case 0xda:		/* BIRR,2 (*)a */
 			case 0xdb:		/* BIRR,3 (*)a */
+				s2650_ICount -= 8;
 				M_BRR( ++S.reg[S.r] );
 				break;
 
@@ -1311,6 +1397,7 @@ static int s2650_execute(int cycles)
 			case 0xdd:		/* BIRA,1 (*)a */
 			case 0xde:		/* BIRA,2 (*)a */
 			case 0xdf:		/* BIRA,3 (*)a */
+				s2650_ICount -= 11;
 				M_BRA( ++S.reg[S.r] );
 				break;
 
@@ -1318,6 +1405,7 @@ static int s2650_execute(int cycles)
 			case 0xe1:		/* COMZ,1 */
 			case 0xe2:		/* COMZ,2 */
 			case 0xe3:		/* COMZ,3 */
+				s2650_ICount -= 7;
 				M_COM( R0, S.reg[S.r] );
 				break;
 
@@ -1325,6 +1413,7 @@ static int s2650_execute(int cycles)
 			case 0xe5:		/* COMI,1 v */
 			case 0xe6:		/* COMI,2 v */
 			case 0xe7:		/* COMI,3 v */
+				s2650_ICount -= 9;
 				M_COM( S.reg[S.r], ARG() );
 				break;
 
@@ -1332,6 +1421,7 @@ static int s2650_execute(int cycles)
 			case 0xe9:		/* COMR,1 (*)a */
 			case 0xea:		/* COMR,2 (*)a */
 			case 0xeb:		/* COMR,3 (*)a */
+				s2650_ICount -= 8;
 				REL_EA(S.page);
 				M_COM( S.reg[S.r], RDMEM(S.ea) );
 				break;
@@ -1340,6 +1430,7 @@ static int s2650_execute(int cycles)
 			case 0xed:		/* COMA,1 (*)a(,X) */
 			case 0xee:		/* COMA,2 (*)a(,X) */
 			case 0xef:		/* COMA,3 (*)a(,X) */
+				s2650_ICount -= 11;
 				ABS_EA();
 				M_COM( S.reg[S.r], RDMEM(S.ea) );
 				break;
@@ -1348,6 +1439,7 @@ static int s2650_execute(int cycles)
 			case 0xf1:		/* WRTD,1 */
 			case 0xf2:		/* WRTD,2 */
 			case 0xf3:		/* WRTD,3 */
+				s2650_ICount -= 5;
 				io_write_byte_8(S2650_DATA_PORT, S.reg[S.r]);
 				break;
 
@@ -1355,6 +1447,7 @@ static int s2650_execute(int cycles)
 			case 0xf5:		/* TMI,1  v */
 			case 0xf6:		/* TMI,2  v */
 			case 0xf7:		/* TMI,3  v */
+				s2650_ICount -= 9;
 				M_TMI( S.reg[S.r] );
 				break;
 
@@ -1362,6 +1455,7 @@ static int s2650_execute(int cycles)
 			case 0xf9:		/* BDRR,1 (*)a */
 			case 0xfa:		/* BDRR,2 (*)a */
 			case 0xfb:		/* BDRR,3 (*)a */
+				s2650_ICount -= 8;
 				M_BRR( --S.reg[S.r] );
 				break;
 
@@ -1369,6 +1463,7 @@ static int s2650_execute(int cycles)
 			case 0xfd:		/* BDRA,1 (*)a */
 			case 0xfe:		/* BDRA,2 (*)a */
 			case 0xff:		/* BDRA,3 (*)a */
+				s2650_ICount -= 11;
 				M_BRA( --S.reg[S.r] );
 				break;
 		}
@@ -1463,67 +1558,173 @@ void s2650_get_info(UINT32 state, union cpuinfo *info)
 	switch (state)
 	{
 		/* --- the following bits of info are returned as 64-bit signed integers --- */
-		case CPUINFO_INT_CONTEXT_SIZE:					info->i = sizeof(S);					break;
-		case CPUINFO_INT_INPUT_LINES:					info->i = 2;							break;
-		case CPUINFO_INT_DEFAULT_IRQ_VECTOR:			info->i = 0;							break;
-		case CPUINFO_INT_ENDIANNESS:					info->i = CPU_IS_LE;					break;
-		case CPUINFO_INT_CLOCK_DIVIDER:					info->i = 1;							break;
-		case CPUINFO_INT_MIN_INSTRUCTION_BYTES:			info->i = 1;							break;
-		case CPUINFO_INT_MAX_INSTRUCTION_BYTES:			info->i = 3;							break;
-		case CPUINFO_INT_MIN_CYCLES:					info->i = 2;							break;
-		case CPUINFO_INT_MAX_CYCLES:					info->i = 4;							break;
+		case CPUINFO_INT_CONTEXT_SIZE:
+				info->i = sizeof(S);
+				break;
+		case CPUINFO_INT_INPUT_LINES:
+				info->i = 2;
+				break;
+		case CPUINFO_INT_DEFAULT_IRQ_VECTOR:
+				info->i = 0;
+				break;
+		case CPUINFO_INT_ENDIANNESS:
+				info->i = CPU_IS_LE;
+				break;
+		case CPUINFO_INT_CLOCK_DIVIDER:
+				info->i = 1;
+				break;
+		case CPUINFO_INT_MIN_INSTRUCTION_BYTES:
+				info->i = 1;
+				break;
+		case CPUINFO_INT_MAX_INSTRUCTION_BYTES:
+				info->i = 3;
+				break;
+		case CPUINFO_INT_MIN_CYCLES:
+				info->i = 5;
+				break;
+		case CPUINFO_INT_MAX_CYCLES:
+				info->i = 13;
+				break;
 		
-		case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_PROGRAM:	info->i = 8;					break;
-		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_PROGRAM: info->i = 15;					break;
-		case CPUINFO_INT_ADDRBUS_SHIFT + ADDRESS_SPACE_PROGRAM: info->i = 0;					break;
-		case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_DATA:	info->i = 0;					break;
-		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_DATA: 	info->i = 0;					break;
-		case CPUINFO_INT_ADDRBUS_SHIFT + ADDRESS_SPACE_DATA: 	info->i = 0;					break;
-		case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_IO:		info->i = 8;					break;
-		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_IO: 		info->i = 9;					break;
-		case CPUINFO_INT_ADDRBUS_SHIFT + ADDRESS_SPACE_IO: 		info->i = 0;					break;
+		case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_PROGRAM:
+				info->i = 8;
+				break;
+		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_PROGRAM:
+				info->i = 15;
+				break;
+		case CPUINFO_INT_ADDRBUS_SHIFT + ADDRESS_SPACE_PROGRAM:
+				info->i = 0;
+				break;
 
-		case CPUINFO_INT_INPUT_STATE + 0:				info->i = S.irq_state;					break;
-		case CPUINFO_INT_INPUT_STATE + 1:				info->i = s2650_get_sense() ? ASSERT_LINE : CLEAR_LINE; break;
+		case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_DATA:
+				info->i = 0;
+				break;
+		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_DATA:
+				info->i = 0;
+				break;
+		case CPUINFO_INT_ADDRBUS_SHIFT + ADDRESS_SPACE_DATA:
+				info->i = 0;
+				break;
 
-		case CPUINFO_INT_PREVIOUSPC:					info->i = S.ppc;						break;
+		case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_IO:
+				info->i = 8;
+				break;
+		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_IO:
+				info->i = 9;
+				break;
+		case CPUINFO_INT_ADDRBUS_SHIFT + ADDRESS_SPACE_IO:
+				info->i = 0;
+				break;
+
+		case CPUINFO_INT_INPUT_STATE + 0:
+				info->i = S.irq_state;
+				break;
+		case CPUINFO_INT_INPUT_STATE + 1:
+				info->i = s2650_get_sense() ? ASSERT_LINE : CLEAR_LINE;
+				break;
+
+		case CPUINFO_INT_PREVIOUSPC:
+				info->i = S.ppc;
+				break;
 
 		case CPUINFO_INT_PC:
-		case CPUINFO_INT_REGISTER + S2650_PC:			info->i = S.page + S.iar;				break;
-		case CPUINFO_INT_SP:							info->i = S.psu & SP;					break;
-		case CPUINFO_INT_REGISTER + S2650_PS:			info->i = (S.psu << 8) | S.psl;			break;
-		case CPUINFO_INT_REGISTER + S2650_R0:			info->i = S.reg[0];						break;
-		case CPUINFO_INT_REGISTER + S2650_R1:			info->i = S.reg[1];						break;
-		case CPUINFO_INT_REGISTER + S2650_R2:			info->i = S.reg[2];						break;
-		case CPUINFO_INT_REGISTER + S2650_R3:			info->i = S.reg[3];						break;
-		case CPUINFO_INT_REGISTER + S2650_R1A:			info->i = S.reg[4];						break;
-		case CPUINFO_INT_REGISTER + S2650_R2A:			info->i = S.reg[5];						break;
-		case CPUINFO_INT_REGISTER + S2650_R3A:			info->i = S.reg[6];						break;
-		case CPUINFO_INT_REGISTER + S2650_HALT:			info->i = S.halt;						break;
-		case CPUINFO_INT_REGISTER + S2650_SI:			info->i = s2650_get_sense();			break;
-		case CPUINFO_INT_REGISTER + S2650_FO:			info->i = s2650_get_flag();				break;
+		case CPUINFO_INT_REGISTER + S2650_PC:
+				info->i = S.page + S.iar;
+				break;
+		case CPUINFO_INT_SP:
+				info->i = S.psu & SP;
+				break;
+		case CPUINFO_INT_REGISTER + S2650_PS:
+				info->i = (S.psu << 8) | S.psl;
+				break;
+		case CPUINFO_INT_REGISTER + S2650_R0:
+				info->i = S.reg[0];
+				break;
+		case CPUINFO_INT_REGISTER + S2650_R1:
+				info->i = S.reg[1];
+				break;
+		case CPUINFO_INT_REGISTER + S2650_R2:
+				info->i = S.reg[2];
+				break;
+		case CPUINFO_INT_REGISTER + S2650_R3:
+				info->i = S.reg[3];
+				break;
+		case CPUINFO_INT_REGISTER + S2650_R1A:
+				info->i = S.reg[4];
+				break;
+		case CPUINFO_INT_REGISTER + S2650_R2A:
+				info->i = S.reg[5];
+				break;
+		case CPUINFO_INT_REGISTER + S2650_R3A:
+				info->i = S.reg[6];
+				break;
+		case CPUINFO_INT_REGISTER + S2650_HALT:
+				info->i = S.halt;
+				break;
+		case CPUINFO_INT_REGISTER + S2650_SI:
+				info->i = s2650_get_sense();
+				break;
+		case CPUINFO_INT_REGISTER + S2650_FO:
+				info->i = s2650_get_flag();
+				break;
 
 		/* --- the following bits of info are returned as pointers to data or functions --- */
-		case CPUINFO_PTR_SET_INFO:						info->setinfo = s2650_set_info;			break;
-		case CPUINFO_PTR_GET_CONTEXT:					info->getcontext = s2650_get_context;	break;
-		case CPUINFO_PTR_SET_CONTEXT:					info->setcontext = s2650_set_context;	break;
-		case CPUINFO_PTR_INIT:							info->init = s2650_init;				break;
-		case CPUINFO_PTR_RESET:							info->reset = s2650_reset;				break;
-		case CPUINFO_PTR_EXIT:							info->exit = s2650_exit;				break;
-		case CPUINFO_PTR_EXECUTE:						info->execute = s2650_execute;			break;
-		case CPUINFO_PTR_BURN:							info->burn = NULL;						break;
-		case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = s2650_dasm;			break;
-		case CPUINFO_PTR_IRQ_CALLBACK:					info->irqcallback = S.irq_callback;		break;
-		case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &s2650_ICount;			break;
-		case CPUINFO_PTR_REGISTER_LAYOUT:				info->p = s2650_reg_layout;				break;
-		case CPUINFO_PTR_WINDOW_LAYOUT:					info->p = s2650_win_layout;				break;
+		case CPUINFO_PTR_SET_INFO:
+				info->setinfo = s2650_set_info;
+				break;
+		case CPUINFO_PTR_GET_CONTEXT:
+				info->getcontext = s2650_get_context;
+				break;
+		case CPUINFO_PTR_SET_CONTEXT:
+				info->setcontext = s2650_set_context;
+				break;
+		case CPUINFO_PTR_INIT:
+				info->init = s2650_init;
+				break;
+		case CPUINFO_PTR_RESET:
+				info->reset = s2650_reset;
+				break;
+		case CPUINFO_PTR_EXIT:
+				info->exit = s2650_exit;
+				break;
+		case CPUINFO_PTR_EXECUTE:
+				info->execute = s2650_execute;
+				break;
+		case CPUINFO_PTR_BURN:
+				info->burn = NULL;
+				break;
+		case CPUINFO_PTR_DISASSEMBLE:
+				info->disassemble = s2650_dasm;
+				break;
+		case CPUINFO_PTR_IRQ_CALLBACK:
+				info->irqcallback = S.irq_callback;
+				break;
+		case CPUINFO_PTR_INSTRUCTION_COUNTER:
+				info->icount = &s2650_ICount;
+				break;
+		case CPUINFO_PTR_REGISTER_LAYOUT:
+				info->p = s2650_reg_layout;
+				break;
+		case CPUINFO_PTR_WINDOW_LAYOUT:
+				info->p = s2650_win_layout;
+				break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
-		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "S2650"); break;
-		case CPUINFO_STR_CORE_FAMILY:					strcpy(info->s = cpuintrf_temp_str(), "Signetics 2650"); break;
-		case CPUINFO_STR_CORE_VERSION:					strcpy(info->s = cpuintrf_temp_str(), "1.1"); break;
-		case CPUINFO_STR_CORE_FILE:						strcpy(info->s = cpuintrf_temp_str(), __FILE__); break;
-		case CPUINFO_STR_CORE_CREDITS:					strcpy(info->s = cpuintrf_temp_str(), "Written by Juergen Buchmueller for use with MAME"); break;
+		case CPUINFO_STR_NAME:
+				strcpy(info->s = cpuintrf_temp_str(), "S2650");
+				break;
+		case CPUINFO_STR_CORE_FAMILY:
+				strcpy(info->s = cpuintrf_temp_str(), "Signetics 2650");
+				break;
+		case CPUINFO_STR_CORE_VERSION:
+				strcpy(info->s = cpuintrf_temp_str(), "1.2");
+				break;
+		case CPUINFO_STR_CORE_FILE:
+				strcpy(info->s = cpuintrf_temp_str(), __FILE__);
+				break;
+		case CPUINFO_STR_CORE_CREDITS:
+				strcpy(info->s = cpuintrf_temp_str(), "Written by Juergen Buchmueller for use with MAME");
+				break;
 
 		case CPUINFO_STR_FLAGS:
 			sprintf(info->s = cpuintrf_temp_str(), "%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c",
@@ -1545,17 +1746,41 @@ void s2650_get_info(UINT32 state, union cpuinfo *info)
 				S.psl & 0x01 ? 'C':'.');
 			break;
 
-		case CPUINFO_STR_REGISTER + S2650_PC:			sprintf(info->s = cpuintrf_temp_str(), "PC:%04X", S.page + S.iar); break;
-		case CPUINFO_STR_REGISTER + S2650_PS:			sprintf(info->s = cpuintrf_temp_str(), "PS:%02X%02X", S.psu, S.psl); break;
-		case CPUINFO_STR_REGISTER + S2650_R0:			sprintf(info->s = cpuintrf_temp_str(), "R0:%02X", S.reg[0]); break;
-		case CPUINFO_STR_REGISTER + S2650_R1:			sprintf(info->s = cpuintrf_temp_str(), "R1:%02X", S.reg[1]); break;
-		case CPUINFO_STR_REGISTER + S2650_R2:			sprintf(info->s = cpuintrf_temp_str(), "R2:%02X", S.reg[2]); break;
-		case CPUINFO_STR_REGISTER + S2650_R3:			sprintf(info->s = cpuintrf_temp_str(), "R3:%02X", S.reg[3]); break;
-		case CPUINFO_STR_REGISTER + S2650_R1A:			sprintf(info->s = cpuintrf_temp_str(), "R1'%02X", S.reg[4]); break;
-		case CPUINFO_STR_REGISTER + S2650_R2A:			sprintf(info->s = cpuintrf_temp_str(), "R2'%02X", S.reg[5]); break;
-		case CPUINFO_STR_REGISTER + S2650_R3A:			sprintf(info->s = cpuintrf_temp_str(), "R3'%02X", S.reg[6]); break;
-		case CPUINFO_STR_REGISTER + S2650_HALT:			sprintf(info->s = cpuintrf_temp_str(), "HALT:%X", S.halt); break;
-		case CPUINFO_STR_REGISTER + S2650_SI:			sprintf(info->s = cpuintrf_temp_str(), "SI:%X", (S.psu & SI) ? 1 : 0); break;
-		case CPUINFO_STR_REGISTER + S2650_FO:			sprintf(info->s = cpuintrf_temp_str(), "FO:%X", (S.psu & FO) ? 1 : 0); break;
+		case CPUINFO_STR_REGISTER + S2650_PC:
+				sprintf(info->s = cpuintrf_temp_str(), "PC:%04X", S.page + S.iar);
+				break;
+		case CPUINFO_STR_REGISTER + S2650_PS:
+				sprintf(info->s = cpuintrf_temp_str(), "PS:%02X%02X", S.psu, S.psl);
+				break;
+		case CPUINFO_STR_REGISTER + S2650_R0:
+				sprintf(info->s = cpuintrf_temp_str(), "R0:%02X", S.reg[0]);
+				break;
+		case CPUINFO_STR_REGISTER + S2650_R1:
+				sprintf(info->s = cpuintrf_temp_str(), "R1:%02X", S.reg[1]);
+				break;
+		case CPUINFO_STR_REGISTER + S2650_R2:
+				sprintf(info->s = cpuintrf_temp_str(), "R2:%02X", S.reg[2]);
+				break;
+		case CPUINFO_STR_REGISTER + S2650_R3:
+				sprintf(info->s = cpuintrf_temp_str(), "R3:%02X", S.reg[3]);
+				break;
+		case CPUINFO_STR_REGISTER + S2650_R1A:
+				sprintf(info->s = cpuintrf_temp_str(), "R1'%02X", S.reg[4]);
+				break;
+		case CPUINFO_STR_REGISTER + S2650_R2A:
+				sprintf(info->s = cpuintrf_temp_str(), "R2'%02X", S.reg[5]);
+				break;
+		case CPUINFO_STR_REGISTER + S2650_R3A:
+				sprintf(info->s = cpuintrf_temp_str(), "R3'%02X", S.reg[6]);
+				break;
+		case CPUINFO_STR_REGISTER + S2650_HALT:
+				sprintf(info->s = cpuintrf_temp_str(), "HALT:%X", S.halt);
+				break;
+		case CPUINFO_STR_REGISTER + S2650_SI:
+				sprintf(info->s = cpuintrf_temp_str(), "SI:%X", (S.psu & SI) ? 1 : 0);
+				break;
+		case CPUINFO_STR_REGISTER + S2650_FO:
+				sprintf(info->s = cpuintrf_temp_str(), "FO:%X", (S.psu & FO) ? 1 : 0);
+				break;
 	}
 }

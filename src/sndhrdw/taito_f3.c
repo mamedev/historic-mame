@@ -38,18 +38,14 @@ WRITE16_HANDLER( f3_es5505_bank_w )
 #if 0
 {
 	static char count[10];
-	char t[32];
 	count[data&7]++;
-	sprintf(t,"%d %d %d %d %d %d %d %d",count[0],count[1],count[2],count[3],count[4],count[5],count[6],count[7]);
-	usrintf_showmessage(t);
+	usrintf_showmessage("%x %x %x %x %x %x %x %x (%d)",count[0]&0xf,count[1]&0xf,count[2]&0xf,count[3]&0xf,count[4]&0xf,count[5]&0xf,count[6]&0xf,count[7]&0xf, max_banks_this_game);
 }
 #endif
 
-	/* If game is using a out of range (empty) bank - just set it to the last empty bank */
-	if ((data&0x7)>max_banks_this_game)
-		ES5506_voice_bank_0_w(offset,max_banks_this_game<<20);
-	else
-		ES5506_voice_bank_0_w(offset,(data&0x7)<<20);
+	/* mask out unused bits */
+	data &= max_banks_this_game;
+	ES5506_voice_bank_0_w(offset,data<<20);
 }
 
 WRITE16_HANDLER( f3_volume_w )

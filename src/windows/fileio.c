@@ -329,12 +329,43 @@ static void expand_pathlist(struct pathdata *list)
 
 	// when finished, reset the path info, so that future INI parsing will
 	// cause us to get called again
+	free((void *)list->rawpath);
 	list->rawpath = NULL;
 	return;
 
 out_of_memory:
 	fprintf(stderr, "Out of memory!\n");
 	exit(1);
+}
+
+
+
+//============================================================
+//	get_path_for_filetype
+//============================================================
+
+void free_pathlists(void)
+{
+	int i;
+
+	for (i = 0;i < FILETYPE_end;i++)
+	{
+		struct pathdata *list = &pathlist[i];
+
+		// free any existing paths
+		if (list->pathcount != 0)
+		{
+			int pathindex;
+
+			for (pathindex = 0; pathindex < list->pathcount; pathindex++)
+				free((void *)list->path[pathindex]);
+			free(list->path);
+		}
+
+		// by default, start with an empty list
+		list->path = NULL;
+		list->pathcount = 0;
+	}
 }
 
 
@@ -371,6 +402,7 @@ static const char *get_path_for_filetype(int filetype, int pathindex, DWORD *cou
 			const char *rawpath = (list->rawpath) ? list->rawpath : "";
 			char *newpath = malloc(strlen(rompath_extra) + strlen(rawpath) + 2);
 			sprintf(newpath, "%s;%s", rompath_extra, rawpath);
+			free((void *)list->rawpath);
 			list->rawpath = newpath;
 		}
 
@@ -772,6 +804,7 @@ void set_pathlist(int file_type, const char *new_rawpath)
 	list->path = NULL;
 	list->pathcount = 0;
 
+	free((void *)list->rawpath);
 	list->rawpath = new_rawpath;
 
 }

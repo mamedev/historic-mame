@@ -58,7 +58,7 @@ CC = @gcc
 LD = @gcc
 ASM = @nasm
 ASMFLAGS = -f coff
-MD = -mkdir
+MD = -mkdir.exe
 RM = @rm -f
 #PERL = @perl -w
 
@@ -110,11 +110,11 @@ endif
 CFLAGS = -std=gnu99 -Isrc -Isrc/includes -Isrc/debug -Isrc/$(MAMEOS) -I$(OBJ)/cpu/m68000 -Isrc/cpu/m68000
 
 ifdef SYMBOLS
-CFLAGS += -O0 -Werror -Wall -Wno-unused -g
+CFLAGS += -O0 -Wall -Wno-unused -g
 else
 CFLAGS += -DNDEBUG \
 	$(ARCH) -O3 -fomit-frame-pointer -fstrict-aliasing \
-	-Werror -Wall -Wno-sign-compare -Wunused \
+	-Wall -Wno-sign-compare -Wunused \
 	-Wpointer-arith -Wbad-function-cast -Wcast-align \
 	-Wstrict-prototypes -Wundef \
 	-Wformat-security -Wwrite-strings \

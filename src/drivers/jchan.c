@@ -1,10 +1,19 @@
-/* Jackie Chan - Kung Fu Master
-
-(c) Kaneko 1995
+/*
+	Jackie Chan The Kung-Fu Master
+	Jackie Chan in Fists of Fire
+	(c) Kaneko 1995
 
 WIP Driver by Sebastien Volpe, based on "this does nothing" by Haze ;)
 
  started: May 12 2004
+
+Checks done by main code:
+- as part of EEPROM data
+jchan  : "95/05/24 Jackie ChanVer 1.20"
+jchan2 : "95/11/28 Jackie ChanVer 2.31"
+- as (one of) MCU protection cmd
+jchan  : "1995/05/24 The kung-Fu Master Jackie Chan   "
+jchan2 : "1995/10/24 Fists Of Fire"
 
 STILL TO DO:
   - video registers meaning:
@@ -39,6 +48,14 @@ DONE:
  - $400000(W) : subcpu writes cmd.w, which triggers IT3 on main68k (*)
 
 (*) this happens @ $5b4(cmd 3),$5f2(cmd 1) (diagnostic routine), IT4(cmd 7), and inside subcpu routines $18,$19
+
+99.99% of main->sub communication is done the following:
+
+		clr.w   $400002.l			; clear (shared ram) sub-cpu busy status word
+		move.w  #cmd, $403ffe.l		; call subcpu 
+wait	tst.w   $400002.l			; read (shared ram) sub-cpu busy status word
+		beq     wait				; active wait-loop
+
 
 ********
 
@@ -220,6 +237,9 @@ This will benefit galpani3 and other kaneko16 games with TOYBOX MCU.
 ***************************************************************************/
 static data16_t *mcu_ram, jchan_mcu_com[4];
 
+extern const struct GameDriver driver_jchan;
+extern const struct GameDriver driver_jchan2;
+
 void jchan_mcu_run(void)
 {
 	data16_t mcu_command = mcu_ram[0x0010/2];		/* command nb */
@@ -249,19 +269,33 @@ void jchan_mcu_run(void)
 					mcu_ram[mcu_offset + 4] = 0x2D54; mcu_ram[mcu_offset + 5] = 0x4231;
 					mcu_ram[mcu_offset + 6] = 0x3939; mcu_ram[mcu_offset + 7] = 0x3420;
 					break;
-				case 0x3e: /* $f72 ($f6a-$fc6) */
-					/* MCU writes the string "1995/05/24 The kung-Fu Master Jackie Chan   " to shared ram */
-					mcu_ram[mcu_offset +  0] = 0x3139; mcu_ram[mcu_offset +  1] = 0x3935;
-					mcu_ram[mcu_offset +  2] = 0x2F30; mcu_ram[mcu_offset +  3] = 0x352F;
-					mcu_ram[mcu_offset +  4] = 0x3234; mcu_ram[mcu_offset +  5] = 0x2054;
-					mcu_ram[mcu_offset +  6] = 0x6865; mcu_ram[mcu_offset +  7] = 0x206B;
-					mcu_ram[mcu_offset +  8] = 0x756E; mcu_ram[mcu_offset +  9] = 0x672D;
-					mcu_ram[mcu_offset + 10] = 0x4675; mcu_ram[mcu_offset + 11] = 0x204D;
-					mcu_ram[mcu_offset + 12] = 0x6173; mcu_ram[mcu_offset + 13] = 0x7465;
-					mcu_ram[mcu_offset + 14] = 0x7220; mcu_ram[mcu_offset + 15] = 0x4A61;
-					mcu_ram[mcu_offset + 16] = 0x636B; mcu_ram[mcu_offset + 17] = 0x6965;
-					mcu_ram[mcu_offset + 18] = 0x2043; mcu_ram[mcu_offset + 19] = 0x6861;
-					mcu_ram[mcu_offset + 20] = 0x6E20; mcu_ram[mcu_offset + 21] = 0x2020;
+				case 0x3e:
+					if ( (Machine->gamedrv == &driver_jchan) ) /* $f72 ($f6a-$fc6) */
+					{
+						/* MCU writes the string "1995/05/24 The kung-Fu Master Jackie Chan   " to shared ram */
+						mcu_ram[mcu_offset +  0] = 0x3139; mcu_ram[mcu_offset +  1] = 0x3935;
+						mcu_ram[mcu_offset +  2] = 0x2F30; mcu_ram[mcu_offset +  3] = 0x352F;
+						mcu_ram[mcu_offset +  4] = 0x3234; mcu_ram[mcu_offset +  5] = 0x2054;
+						mcu_ram[mcu_offset +  6] = 0x6865; mcu_ram[mcu_offset +  7] = 0x206B;
+						mcu_ram[mcu_offset +  8] = 0x756E; mcu_ram[mcu_offset +  9] = 0x672D;
+						mcu_ram[mcu_offset + 10] = 0x4675; mcu_ram[mcu_offset + 11] = 0x204D;
+						mcu_ram[mcu_offset + 12] = 0x6173; mcu_ram[mcu_offset + 13] = 0x7465;
+						mcu_ram[mcu_offset + 14] = 0x7220; mcu_ram[mcu_offset + 15] = 0x4A61;
+						mcu_ram[mcu_offset + 16] = 0x636B; mcu_ram[mcu_offset + 17] = 0x6965;
+						mcu_ram[mcu_offset + 18] = 0x2043; mcu_ram[mcu_offset + 19] = 0x6861;
+						mcu_ram[mcu_offset + 20] = 0x6E20; mcu_ram[mcu_offset + 21] = 0x2020;
+					}
+					else if ( (Machine->gamedrv == &driver_jchan2) )
+					{
+						/* MCU writes the string "1995/10/24 Fists Of Fire" to shared ram */
+						mcu_ram[mcu_offset +  0] = 0x3139; mcu_ram[mcu_offset +  1] = 0x3935;
+						mcu_ram[mcu_offset +  2] = 0x2F31; mcu_ram[mcu_offset +  3] = 0x302F;
+						mcu_ram[mcu_offset +  4] = 0x3234; mcu_ram[mcu_offset +  5] = 0x2046;
+						mcu_ram[mcu_offset +  6] = 0x6973; mcu_ram[mcu_offset +  7] = 0x7473;
+						mcu_ram[mcu_offset +  8] = 0x204F; mcu_ram[mcu_offset +  9] = 0x6620;
+						mcu_ram[mcu_offset + 10] = 0x4669; mcu_ram[mcu_offset + 11] = 0x7265;
+						mcu_ram[mcu_offset + 12] = 0x6173; mcu_ram[mcu_offset + 13] = 0x7465;
+					}
 					break;
 				case 0x3f: /* $fd2 ($fca-$101a) */
 					/* MCU writes the string "(C)1995 KANEKO // TEAM JACKIE CHAN  " to shared ram */
@@ -286,10 +320,10 @@ void jchan_mcu_run(void)
 		}
 		break;
 
-		case 0x03: /* MCU writes Coins status ($101e-$108c) */
+		case 0x03: 	// DSW
 		{
 			mcu_ram[mcu_offset] = readinputport(3);
-			logerror("(read DSW)\n");
+			logerror("PC=%06X : MCU executed command: %04X %04X (read DSW)\n",activecpu_get_pc(),mcu_command,mcu_offset*2);
 		}
 		break;
 
@@ -305,7 +339,9 @@ are loaded in RAM then saved with cmd 0x42 (see code @ $5196 & $50d4)
 			int	i;
 
 			/* MCU writes 128 bytes to shared ram: last byte is the byte-sum */
-			/* first 32 bytes (header): 0x8BE08E71.L, then the string "95/05/24 Jackie ChanVer 1.20"; */
+			/* first 32 bytes (header): 0x8BE08E71.L, then the string:       */
+			/* "95/05/24 Jackie ChanVer 1.20" for jchan (the one below)      */
+			/* "95/11/28 Jackie ChanVer 2.31" for jchan2                     */
 			mcu_ram[mcu_offset +  0] = 0x8BE0; mcu_ram[mcu_offset +  1] = 0x8E71;
 			mcu_ram[mcu_offset +  2] = 0x3935; mcu_ram[mcu_offset +  3] = 0x2F30;
 			mcu_ram[mcu_offset +  4] = 0x352F; mcu_ram[mcu_offset +  5] = 0x3234;
@@ -421,7 +457,7 @@ VIDEO_UPDATE(jchan)
 /*
 	controls handling routine is $21e2a, part of IT 1
 	player 1/2 controls are read from $f00000/$f00002 resp.
-	$f00006 is read and impacts controls 'decoding' 
+	$f00006 is read and impacts controls 'decoding'
 	$f00000 is the only location also written
 */
 static data16_t *jchan_ctrl;
@@ -447,50 +483,6 @@ READ16_HANDLER ( jchan_ctrl_r )
 	}
 	return jchan_ctrl[offset];
 }
-
-/***************************************************************************
-
- sound attempt
-
-***************************************************************************/
-#undef ENABLE_SOUND
-
-#ifdef ENABLE_SOUND
-static data16_t *sound_ram;
-
-READ16_HANDLER ( jchan_sound_r )
-{
-	if (activecpu_get_previouspc() > 0x88A) // should be 'if cpu.irqlevel != NMI'
-	{
-		if (offset == (0x600e/2)) // $10600e
-		{
-			logerror("cpu #%d (PC=%06X): YMZ280B_status_0_r: %04x\n", cpu_getactivecpu(), activecpu_get_previouspc(), YMZ280B_status_0_r(0));
-			return YMZ280B_status_0_r(0);
-		}
-	}
-	return sound_ram[offset];
-}
-WRITE16_HANDLER( jchan_sound_w )
-{
-	if (activecpu_get_previouspc() > 0x88A) // should be 'if cpu.irqlevel != NMI'
-	{
-		if (offset == (0x600e/2)) // $10600e
-		{
-			logerror("cpu #%d (PC=%06X): YMZ280B_data_0_w: %04x\n", cpu_getactivecpu(), activecpu_get_previouspc(), data & 0xff);
-			YMZ280B_data_0_w(0, data & 0xff);
-		}
-		else if (offset == (0x6012/2)) // $106012
-		{
-			logerror("cpu #%d (PC=%06X): YMZ280B_register_0_w: %04x\n", cpu_getactivecpu(), activecpu_get_previouspc(), data & 0xff);
-			YMZ280B_register_0_w(0, data & 0xff);
-		}
-		else
-			COMBINE_DATA(&sound_ram[offset]);
-	}
-	else
-		COMBINE_DATA(&sound_ram[offset]);
-}
-#endif
 
 /***************************************************************************
 
@@ -577,9 +569,9 @@ WRITE16_HANDLER( jchan_suprnova_sprite32regs_w )
 
 static ADDRESS_MAP_START( jchan_main, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x000000, 0x1fffff) AM_ROM
-	AM_RANGE(0x200000, 0x20ffff) AM_RAM // [A] grid tested, cleared ($9d6-$a54)
+	AM_RANGE(0x200000, 0x20ffff) AM_RAM // Work RAM - [A] grid tested, cleared ($9d6-$a54)
 
-	AM_RANGE(0x300000, 0x30ffff) AM_RAM AM_BASE(&mcu_ram)	// [G] mcu ??? grid tested, cleared ($a5a-$ad8)
+	AM_RANGE(0x300000, 0x30ffff) AM_RAM AM_BASE(&mcu_ram)	// MCU [G] grid tested, cleared ($a5a-$ad8)
 	AM_RANGE(0x330000, 0x330001) AM_WRITE(jchan_mcu_com0_w)	// _[ these 2 are set to 0xFFFF
 	AM_RANGE(0x340000, 0x340001) AM_WRITE(jchan_mcu_com1_w)	//  [ to trigger mcu to run cmd ?
 	AM_RANGE(0x350000, 0x350001) AM_WRITE(jchan_mcu_com2_w)	// _[ these 2 are set to 0xFFFF
@@ -594,14 +586,13 @@ static ADDRESS_MAP_START( jchan_main, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x403c02, 0x403c09) AM_WRITE(main2sub_param_w) // probably much more, see subcpu routine $7 @ $14aa
 	AM_RANGE(0x403ffe, 0x403fff) AM_WRITE(main2sub_cmd_w)
 
-	/* (0x500000, 0x503fff) = spriteram as a hole ? makes sense: 1024 sprites, each sprite being 16 bytes long */
+	/* 1st sprite layer */
 //	AM_RANGE(0x500000, 0x5005ff) AM_RAM //     grid tested ($924-$97c), cleared ($982-$9a4) until $503fff
 //	AM_RANGE(0x500600, 0x503fff) AM_RAM // [B] grid tested, cleared ($b68-$be6)
-	AM_RANGE(0x500000, 0x503fff) AM_RAM AM_WRITE(jchan_suprnova_sprite32_w) AM_BASE(&jchan_spriteram) 
+	AM_RANGE(0x500000, 0x503fff) AM_RAM AM_WRITE(jchan_suprnova_sprite32_w) AM_BASE(&jchan_spriteram)
+	AM_RANGE(0x600000, 0x60003f) AM_RAM AM_WRITE(jchan_suprnova_sprite32regs_w) AM_BASE(&jchan_sprregs)
 
-	AM_RANGE(0x600000, 0x60003f) AM_RAM AM_WRITE(jchan_suprnova_sprite32regs_w) AM_BASE(&jchan_sprregs) 
-
-	/* (0x700000, 0x707fff) = palette zone  - but there seems to be 'sub-zones' used differently */
+	/* (0x700000, 0x707fff) = palette zone - but there seems to be 'sub-zones' used differently */
 //	AM_RANGE(0x700000, 0x707fff) AM_RAM //     grid tested, cleared ($dbc-$e3a), $2000 bytes (8Kb) copied from $aae40 ($e40-$e56)
 //	AM_RANGE(0x708000, 0x70ffff) AM_RAM // [E] grid tested, cleared ($d1c-$d9a), $8000 bytes (32Kb) copied from $a2e40 ($da0-$db6)
 	AM_RANGE(0x700000, 0x707fff) AM_RAM // palette for tilemaps?
@@ -612,40 +603,33 @@ static ADDRESS_MAP_START( jchan_main, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0xf00004, 0xf00005) AM_READ(input_port_2_word_r) // DSW2
 	AM_RANGE(0xf00006, 0xf00007) AM_RAM // ???
 
-	AM_RANGE(0xf80000, 0xf80001) AM_RAM // [F] watchdog ? always written (after each grid test, IT #2, plus elsewhere)
+	AM_RANGE(0xf80000, 0xf80001) AM_READWRITE(watchdog_reset16_r, watchdog_reset16_w)	// watchdog
 ADDRESS_MAP_END
 
 
 static ADDRESS_MAP_START( jchan_sub, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x000000, 0x0fffff) AM_ROM
-
-#ifndef ENABLE_SOUND
-	AM_RANGE(0x100000, 0x10ffff) AM_RAM // grid tested, cleared ($612-$6dc)
-#else
-	AM_RANGE(0x100000, 0x10ffff) AM_READWRITE(jchan_sound_r,jchan_sound_w) AM_BASE(&sound_ram)
-#endif
+	AM_RANGE(0x100000, 0x10ffff) AM_RAM // Work RAM - grid tested, cleared ($612-$6dc)
 
 	/* (0x400000, 0x403fff) = mainsub_shared_ram */
 	AM_RANGE(0x400000, 0x400001) AM_WRITE(sub2main_cmd_w) AM_BASE(&mainsub_shared_ram)
 	AM_RANGE(0x400002, 0x403fff) AM_RAM
 
-	/* (0x500000, 0x503fff) = [D] grid tested, cleared ($1d84), also cleared at startup ($810-$826) */
-	/* anywhere else in the code this area is seen as 4 distinct ones */
-	AM_RANGE(0x500000, 0x500fff) AM_RAM
-	AM_RANGE(0x501000, 0x501fff) AM_RAM
-	AM_RANGE(0x502000, 0x502fff) AM_RAM
-	AM_RANGE(0x503000, 0x503fff) AM_RAM
+	/* VIEW2 Tilemap - [D] grid tested, cleared ($1d84), also cleared at startup ($810-$826) */
+	AM_RANGE(0x500000, 0x500fff) AM_RAM // AM_READWRITE(MRA16_RAM, kaneko16_vram_1_w) AM_BASE(&kaneko16_vram_1)	// Layers 0
+	AM_RANGE(0x501000, 0x501fff) AM_RAM // AM_READWRITE(MRA16_RAM, kaneko16_vram_0_w) AM_BASE(&kaneko16_vram_0)	//
+	AM_RANGE(0x502000, 0x502fff) AM_RAM // AM_RAM AM_BASE(&kaneko16_vscroll_1)									//
+	AM_RANGE(0x503000, 0x503fff) AM_RAM // AM_RAM AM_BASE(&kaneko16_vscroll_0)									//
+	AM_RANGE(0x600000, 0x60001f) AM_RAM // AM_READWRITE(MRA16_RAM, kaneko16_layers_0_regs_w) AM_BASE(&kaneko16_layers_0_regs)	// Layers 0 Regs
 
-//	AM_RANGE(0x600000, 0x60000f) // video registers (tilemap)???
+	/* 2nd sprite layer? - [C] grid tested, cleared ($1e2a), also cleared at startup ($7dc-$80a) */
+	AM_RANGE(0x700000, 0x703fff) AM_RAM // AM_BASE(&jchan_spriteram) AM_WRITE(jchan_suprnova_sprite32_w)
+	AM_RANGE(0x780000, 0x78003f) AM_RAM // AM_BASE(&jchan_sprregs) AM_WRITE(jchan_suprnova_sprite32regs_w)
 
-/* 500000-503fff should be spriteram, since 700000-703fff is probably tilemap ram, see $11d2 */
-	AM_RANGE(0x700000, 0x703fff) AM_RAM // [C] grid tested, cleared ($1e2a), also cleared at startup ($7dc-$80a)
-//	AM_RANGE(0x700000, 0x703fff) AM_RAM AM_BASE(&jchan_spriteram) AM_WRITE(jchan_suprnova_sprite32_w)
-	AM_RANGE(0x780000, 0x78003f) // video registers (sprites)???
-//	AM_RANGE(0x780000, 0x78003f) AM_RAM AM_BASE(&jchan_sprregs) AM_WRITE(jchan_suprnova_sprite32regs_w)
+	AM_RANGE(0x800000, 0x800001) AM_WRITE(YMZ280B_register_0_lsb_w) // sound
+	AM_RANGE(0x800002, 0x800003) AM_WRITE(YMZ280B_data_0_lsb_w) 	//
 
-	AM_RANGE(0x800000, 0x800003) AM_NOP // sound related ??? see $21a44
-	AM_RANGE(0xa00000, 0xa00001) AM_RAM // watchdog ? always written (after each grid test, interrupt #2, plus elsewhere)
+	AM_RANGE(0xa00000, 0xa00001) AM_READWRITE(watchdog_reset16_r, watchdog_reset16_w)	// watchdog
 ADDRESS_MAP_END
 
 /* video registers ?!? according values, can be seen as 2 functionnal blocks: 780000-780014 & 780018-780034
@@ -683,24 +667,9 @@ cpu #1 (PC=000007B6): unmapped program memory word write to 00600006 = 0140 & FF
 (2) seems to be grouped - see subcpu routine $0A @ $172c
 */
 
-#ifdef ENABLE_SOUND
-static void sound_irq_gen(int state)
-{
-	logerror("sound irq\n");
-}
-
-static struct YMZ280Binterface ymz280b_intf =
-{
-	1,
-	{ 28636400 / 2 }, /* complete guess */
-	{ REGION_SOUND1 },
-	{ YM3012_VOL(100,MIXER_PAN_LEFT,100,MIXER_PAN_RIGHT) },
-	{ sound_irq_gen }
-};
-#endif
 
 /* gfx decode , this one seems ok */
-static struct GfxLayout charlayout =
+static struct GfxLayout tilelayout =
 {
 	16,16,
 	RGN_FRAC(1,1),
@@ -711,26 +680,13 @@ static struct GfxLayout charlayout =
 	32*32
 };
 
-#if 0
 // we don't decode the sprites, they are non-tile based and RLE encoded!, see suprnova.c */
-/* wrong */
-static struct GfxLayout char2layout =
-{
-	8,8,
-	RGN_FRAC(1,1),
-	1,
-	{ 0 },
-	{ 0, 1, 2, 3, 4, 5, 6, 7 },
-	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
-	8*8
-};
-#endif
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
 //	{ REGION_GFX1, 0, &char2layout,   0, 512  },
 //	{ REGION_GFX2, 0, &char2layout,   0, 512  },
-	{ REGION_GFX3, 0, &charlayout,   16384, 16384  },
+	{ REGION_GFX3, 0, &tilelayout,   16384, 16384  },
 	{ -1 } /* end of array */
 };
 
@@ -743,34 +699,34 @@ INPUT_PORTS_START( jchan )
 /* TO BE VERIFIED: dips assignements according infos by BrianT at http://www.crazykong.com - seems ok */
 
 	PORT_START_TAG("IN0")	// Player Controls - $f00000.w (-> $2000b1.b)
-	PORT_BIT(  0x0100, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_8WAY PORT_PLAYER(1)
-	PORT_BIT(  0x0200, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_8WAY PORT_PLAYER(1)
-	PORT_BIT(  0x0400, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_8WAY PORT_PLAYER(1)
-	PORT_BIT(  0x0800, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_8WAY PORT_PLAYER(1)
-	PORT_BIT(  0x1000, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(1)
-	PORT_BIT(  0x2000, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(1)
-	PORT_BIT(  0x4000, IP_ACTIVE_LOW, IPT_BUTTON3 ) PORT_PLAYER(1)
-	PORT_BIT(  0x8000, IP_ACTIVE_LOW, IPT_BUTTON4 ) PORT_PLAYER(1)
+	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_JOYSTICK_UP	) PORT_8WAY PORT_PLAYER(1)
+	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN	) PORT_8WAY PORT_PLAYER(1)
+	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT	) PORT_8WAY PORT_PLAYER(1)
+	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT	) PORT_8WAY PORT_PLAYER(1)
+	PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(1)
+	PORT_BIT( 0x2000, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(1)
+	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_BUTTON3 ) PORT_PLAYER(1)
+	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_BUTTON4 ) PORT_PLAYER(1)
 
 	PORT_START_TAG("IN1")	// Player Controls - $f00002.w (-> $2000b5.b)
-	PORT_BIT(  0x0100, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_8WAY PORT_PLAYER(2)
-	PORT_BIT(  0x0200, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_8WAY PORT_PLAYER(2)
-	PORT_BIT(  0x0400, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_8WAY PORT_PLAYER(2)
-	PORT_BIT(  0x0800, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_8WAY PORT_PLAYER(2)
-	PORT_BIT(  0x1000, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(2)
-	PORT_BIT(  0x2000, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(2)
-	PORT_BIT(  0x4000, IP_ACTIVE_LOW, IPT_BUTTON3 ) PORT_PLAYER(2)
-	PORT_BIT(  0x8000, IP_ACTIVE_LOW, IPT_BUTTON4 ) PORT_PLAYER(2)
+	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_JOYSTICK_UP	) PORT_8WAY PORT_PLAYER(2)
+	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN	) PORT_8WAY PORT_PLAYER(2)
+	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT	) PORT_8WAY PORT_PLAYER(2)
+	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT	) PORT_8WAY PORT_PLAYER(2)
+	PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(2)
+	PORT_BIT( 0x2000, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(2)
+	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_BUTTON3 ) PORT_PLAYER(2)
+	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_BUTTON4 ) PORT_PLAYER(2)
 
 	PORT_START_TAG("IN2")	// Coins - f00004.b
-	PORT_BIT(  0x0100, IP_ACTIVE_LOW, IPT_START1	)
-	PORT_BIT(  0x0200, IP_ACTIVE_LOW, IPT_START2	)
+	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_START1	)
+	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_START2	)
 	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_COIN1 ) PORT_IMPULSE(2)
 	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_COIN2 ) PORT_IMPULSE(2)
-	PORT_SERVICE_NO_TOGGLE( 0x1000, IP_ACTIVE_LOW)
-	PORT_BIT(  0x2000, IP_ACTIVE_LOW, IPT_TILT		)
-	PORT_BIT(  0x4000, IP_ACTIVE_LOW, IPT_SERVICE1	)
-	PORT_BIT(  0x8000, IP_ACTIVE_LOW, IPT_UNKNOWN	)
+	PORT_SERVICE_NO_TOGGLE( 0x1000, IP_ACTIVE_LOW	)
+	PORT_BIT( 0x2000, IP_ACTIVE_LOW, IPT_TILT		)
+	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_SERVICE1	)
+	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_UNKNOWN	)
 
 	PORT_START_TAG("IN3")	// DSW provided by the MCU - $200098.b <- $300200
 	PORT_DIPNAME( 0x0100, 0x0100, "Test Mode" )
@@ -800,7 +756,18 @@ INPUT_PORTS_START( jchan )
 
 INPUT_PORTS_END
 
+
 /* sound stuff */
+
+static struct YMZ280Binterface ymz280b_intf =
+{
+	1,
+	{ 28636400 / 2 }, /* complete guess */
+	{ REGION_SOUND1 },
+	{ YM3012_VOL(100,MIXER_PAN_LEFT,100,MIXER_PAN_RIGHT) },
+	{ 0 }	// irq ?
+};
+
 
 /* machine driver */
 
@@ -827,11 +794,9 @@ static MACHINE_DRIVER_START( jchan )
 	MDRV_VIDEO_START(jchan)
 	MDRV_VIDEO_UPDATE(jchan)
 
-#ifdef ENABLE_SOUND
 	/* sound hardware */
 	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
 	MDRV_SOUND_ADD(YMZ280B, ymz280b_intf)
-#endif
 MACHINE_DRIVER_END
 
 /* rom loading */
@@ -847,7 +812,7 @@ ROM_START( jchan )
 	ROM_LOAD16_BYTE( "jsp1x3.u86", 0x000001, 0x080000, CRC(d15d2b8e) SHA1(e253f2d64fee6627f68833b441f41ea6bbb3ab07) ) // 1xxxxxxxxxxxxxxxxxx = 0xFF
 	ROM_LOAD16_BYTE( "jsp0x3.u87", 0x000000, 0x080000, CRC(ebec50b1) SHA1(57d7bd728349c2b9d662bcf20a3be92902cb3ffb) ) // 1xxxxxxxxxxxxxxxxxx = 0xFF
 
-	ROM_REGION( 0x2000000, REGION_GFX1, 0 ) /* SPA GFX? */
+	ROM_REGION( 0x2000000, REGION_GFX1, 0 ) /* SPA GFX */
 	ROM_LOAD( "jc-100-00.179", 0x0000000, 0x0400000, CRC(578d928c) SHA1(1cfe04f9b02c04f95a85d6fe7c4306a535ff969f) ) // SPA0 kaneko logo
 	ROM_LOAD( "jc-101-00.180", 0x0400000, 0x0400000, CRC(7f5e1aca) SHA1(66ed3deedfd55d88e7dcd017b9c2ce523ccb421a) ) // SPA1
 	ROM_LOAD( "jc-102-00.181", 0x0800000, 0x0400000, CRC(72caaa68) SHA1(f6b98aa949768a306ac9bc5f9c05a1c1a3fb6c3f) ) // SPA2
@@ -858,16 +823,16 @@ ROM_START( jchan )
 	ROM_LOAD16_BYTE( "jcs0x3.164", 0x1600000, 0x040000, CRC(9a012cbc) SHA1(b3e7390220c90d55dccfb96397f0af73925e36f9) ) // SPA-7A female portraits
 	ROM_LOAD16_BYTE( "jcs1x3.165", 0x1600001, 0x040000, CRC(57ae7c8d) SHA1(4086f638c2aabcee84e838243f0fd15cec5c040d) ) // SPA-7B female portraits
 
-	ROM_REGION( 0x1000000, REGION_GFX2, ROMREGION_DISPOSE ) /* SPB GFX (we haven't used yet, not sure where they map, 2nd sprite layer maybe?) */
+	ROM_REGION( 0x1000000, REGION_GFX2, 0 ) /* SPB GFX (we haven't used yet, not sure where they map, 2nd sprite layer maybe?) */
 	ROM_LOAD( "jc-106-00.171", 0x000000, 0x200000, CRC(bc65661b) SHA1(da28b8fcd7c7a0de427a54be2cf41a1d6a295164) ) // SPB0
 	ROM_LOAD( "jc-107-00.172", 0x200000, 0x200000, CRC(92a86e8b) SHA1(c37eddbc9d84239deb543504e27b5bdaf2528f79) ) // SPB1
 
-	ROM_REGION( 0x100000, REGION_GFX3, ROMREGION_DISPOSE ) /* BG GFX? */
+	ROM_REGION( 0x100000, REGION_GFX3, ROMREGION_DISPOSE ) /* BG GFX */
 	ROM_LOAD( "jc-200.00", 0x000000, 0x100000, CRC(1f30c24e) SHA1(0c413fc67c3ec020e6786e7157d82aa242c8d2ad) )
 
 	ROM_REGION( 0x300000, REGION_SOUND1, 0 ) /* Audio 1? */
 	ROM_LOAD( "jc-300-00.84", 0x000000, 0x200000, CRC(13d5b1eb) SHA1(b047594d0f1a71d89b8f072879ccba480f54a483) )
-	ROM_LOAD( "jc-301-00.85", 0x000000, 0x100000, CRC(9c5b3077) SHA1(db9a31e1c65d9f12d0f2fb316ced48a02aae089d) )
+	ROM_LOAD( "jc-301-00.85", 0x200000, 0x100000, CRC(9c5b3077) SHA1(db9a31e1c65d9f12d0f2fb316ced48a02aae089d) )
 
 	ROM_REGION( 0x040000, REGION_SOUND2, 0 ) /* Audio 2? */
 	ROM_LOAD( "jcw0x0.u56", 0x000000, 0x040000, CRC(bcf25c2a) SHA1(b57a563ab5c05b05d133eed3d099c4de997f37e4) )
@@ -879,41 +844,58 @@ ROM_END
 /* the program code of gurus set is the same, the graphic roms were split up, and might be bad but they should be the same since
 the code was, decoding the gfx on the second set they appear to be partly bad. */
 
+/* some kind of semi-sequel? mask roms not dumped but might be the same */
+ROM_START( jchan2 )
+	ROM_REGION( 0x200000, REGION_CPU1, 0 ) /* 68000 Code */
+	ROM_LOAD16_BYTE( "j2p1x1.u67", 0x000001, 0x080000, CRC(5448c4bc) SHA1(447835275d5454f86a51879490a6b22b06a23e81) )
+	ROM_LOAD16_BYTE( "j2p1x2.u68", 0x000000, 0x080000, CRC(52104ab9) SHA1(d6647e628662bdb832270540ece18b265b7ce62d) )
+	ROM_LOAD16_BYTE( "j2p1x3.u69", 0x100001, 0x080000, CRC(8763ebca) SHA1(daf6af42a34802ef9aa996e340e218779bad695f) )
+	ROM_LOAD16_BYTE( "j2p1x4.u70", 0x100000, 0x080000, CRC(0f8e5e69) SHA1(1f71042458f76b7d99382db6412fb6c362cd3ded) )
+
+	ROM_REGION( 0x100000, REGION_CPU2, 0 ) /* 68000 Code */
+	ROM_LOAD16_BYTE( "j2p1x5.u86", 0x000001, 0x080000, CRC(dc897725) SHA1(d3e94bac96497deb2f79996c2d4a349f6da5b1d6) ) // 1xxxxxxxxxxxxxxxxxx = 0xFF
+	ROM_LOAD16_BYTE( "j2p1x6.u87", 0x000000, 0x080000, CRC(594224f9) SHA1(bc546a98c5f3c5b08f521c54a4b0e9e2cdf83ced) ) // 1xxxxxxxxxxxxxxxxxx = 0xFF
+
+	ROM_REGION( 0x2000000, REGION_GFX1, 0 ) /* SPA GFX */
+	#if 1 // NOT verified as being the same yet
+	ROM_LOAD( "jc-100-00.179", 0x0000000, 0x0400000, CRC(578d928c) SHA1(1cfe04f9b02c04f95a85d6fe7c4306a535ff969f) ) // SPA0 kaneko logo
+	ROM_LOAD( "jc-101-00.180", 0x0400000, 0x0400000, CRC(7f5e1aca) SHA1(66ed3deedfd55d88e7dcd017b9c2ce523ccb421a) ) // SPA1
+	ROM_LOAD( "jc-102-00.181", 0x0800000, 0x0400000, CRC(72caaa68) SHA1(f6b98aa949768a306ac9bc5f9c05a1c1a3fb6c3f) ) // SPA2
+	ROM_LOAD( "jc-103-00.182", 0x0c00000, 0x0400000, CRC(4e9e9fc9) SHA1(bf799cdee930b7f71aea4d55c3dd6a760f7478bb) ) // SPA3 title logo? + char select
+	ROM_LOAD( "jc-104-00.183", 0x1000000, 0x0200000, CRC(6b2a2e93) SHA1(e34010e39043b67493bcb23a04828ab7cda8ba4d) ) // SPA4
+	ROM_LOAD( "jc-105-00.184", 0x1200000, 0x0200000, CRC(73cad1f0) SHA1(5dbe4e318948e4f74bfc2d0d59455d43ba030c0d) ) // SPA5 11xxxxxxxxxxxxxxxxxxx = 0xFF
+	ROM_LOAD( "jc-108-00.185", 0x1400000, 0x0200000, CRC(67dd1131) SHA1(96f334378ae0267bdb3dc528635d8d03564bd859) ) // SPA6 text
+	#endif
+	ROM_LOAD16_BYTE( "j2g1x1.164", 0x1600000, 0x080000, CRC(66a7ea6a) SHA1(605cbc1eb50fb0decbea790f2a11e999d5fde762) ) // SPA-7A female portraits
+	ROM_LOAD16_BYTE( "j2g1x2.165", 0x1600001, 0x080000, CRC(660e770c) SHA1(1e385a6ee83559b269d2179e6c247238c0f3c850) ) // SPA-7B female portraits
+
+	#if 1 // NOT verified as being the same yet
+	ROM_REGION( 0x1000000, REGION_GFX2, 0 ) /* SPB GFX (we haven't used yet, not sure where they map, 2nd sprite layer maybe?) */
+	ROM_LOAD( "jc-106-00.171", 0x000000, 0x200000, CRC(bc65661b) SHA1(da28b8fcd7c7a0de427a54be2cf41a1d6a295164) ) // SPB0
+	ROM_LOAD( "jc-107-00.172", 0x200000, 0x200000, CRC(92a86e8b) SHA1(c37eddbc9d84239deb543504e27b5bdaf2528f79) ) // SPB1
+
+	ROM_REGION( 0x100000, REGION_GFX3, ROMREGION_DISPOSE ) /* BG GFX */
+	ROM_LOAD( "jc-200.00", 0x000000, 0x100000, CRC(1f30c24e) SHA1(0c413fc67c3ec020e6786e7157d82aa242c8d2ad) )
+
+	ROM_REGION( 0x300000, REGION_SOUND1, 0 ) /* Audio 1? */
+	ROM_LOAD( "jc-300-00.84", 0x000000, 0x200000, CRC(13d5b1eb) SHA1(b047594d0f1a71d89b8f072879ccba480f54a483) )
+	ROM_LOAD( "jc-301-00.85", 0x200000, 0x100000, CRC(9c5b3077) SHA1(db9a31e1c65d9f12d0f2fb316ced48a02aae089d) )
+	#endif
+
+	ROM_REGION( 0x040000, REGION_SOUND2, 0 ) /* Audio 2? */
+	ROM_LOAD( "j2m1x1.u56", 0x000000, 0x040000, CRC(baf6e25e) SHA1(6b02f3eb1eafcd43022a9f60f98573d02277adfe) )
+
+	ROM_REGION( 0x020000, REGION_USER1, 0 ) /* MCU Code? */
+	ROM_LOAD( "j2d1x1.u13", 0x000000, 0x020000, CRC(b2b7fc90) SHA1(1b90c13bb41a313c4ed791a15d56073a7c29928b) )
+ROM_END
+
 DRIVER_INIT( jchan )
 {
 	memset(jchan_mcu_com, 0, 4 * sizeof( data16_t) );
 }
 
+
 /* game drivers */
-GAMEX( 1995, jchan, 0, jchan, jchan, jchan, ROT0, "Kaneko", "Jackie Chan - Kung Fu Master", GAME_NOT_WORKING | GAME_NO_SOUND )
+GAMEX( 1995, jchan,      0, jchan, jchan, jchan, ROT0, "Kaneko", "Jackie Chan - The Kung-Fu Master", GAME_NOT_WORKING )
+GAMEX( 1995, jchan2, jchan, jchan, jchan, jchan, ROT0, "Kaneko", "Jackie Chan in Fists of Fire", GAME_NOT_WORKING )
 
-/* other jchan copy / paste bits */
-
-/*
-static void get_jchan_tile_info(int tile_index)
-{
-	int tileno;
-
-	tileno = jchan_videoram[tile_index*2];
-
-	SET_TILE_INFO(0,tileno,0,0)
-}
-
-WRITE16_HANDLER( jchan_videoram_w )
-{
-	if (jchan_videoram[offset] != data)
-	{
-		jchan_videoram[offset] = data;
-		tilemap_mark_tile_dirty(jchan_tilemap,offset/2);
-	}
-}
-
-	static struct tilemap *jchan_tilemap;
-	data16_t *jchan_videoram;
-
-	jchan_tilemap = tilemap_create(get_jchan_tile_info,tilemap_scan_rows,TILEMAP_OPAUQE, 8, 8,64,64);
-
-	tilemap_draw(bitmap,cliprect,jchan_tilemap,0,0);
-
-
-*/

@@ -463,6 +463,8 @@ static void draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cl
 			gfx = sprite.gfx + pitch * mod_h + mod_x;
 			if (gfx >= gfx_rom_size) gfx %= gfx_rom_size;
 
+			gfx &= 0x1fffff; // temp kludge to stop line of fire crashing
+
 			draw_sprite(
 				bitmap,cliprect,
 				base_gfx + gfx, pitch,

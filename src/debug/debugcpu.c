@@ -62,6 +62,10 @@ static offs_t step_overout_breakpoint;
 static int step_overout_cpunum;
 static int key_check_counter;
 static cycles_t last_periodic_update_time;
+static int break_on_vblank;
+static int break_on_interrupt;
+static int break_on_interrupt_cpunum;
+static int break_on_interrupt_irqline;
 
 static struct debug_cpu_info debug_cpuinfo[MAX_CPU];
 
@@ -411,6 +415,38 @@ void debug_cpu_go(offs_t targetpc)
 
 
 /*-------------------------------------------------
+	debug_cpu_go_vblank - run until the next
+	VBLANK
+-------------------------------------------------*/
+
+void debug_cpu_go_vblank(void)
+{
+	if (!within_debugger_code)
+		return;
+	execution_state = EXECUTION_STATE_RUNNING;
+	debug_cpuinfo[cpu_getactivecpu()].temp_breakpoint_pc = ~0;
+	break_on_vblank = 1;
+}
+
+
+/*-------------------------------------------------
+	debug_cpu_go_interrupt - run until the 
+	specified interrupt fires
+-------------------------------------------------*/
+
+void debug_cpu_go_interrupt(int irqline)
+{
+	if (!within_debugger_code)
+		return;
+	execution_state = EXECUTION_STATE_RUNNING;
+	debug_cpuinfo[cpu_getactivecpu()].temp_breakpoint_pc = ~0;
+	break_on_interrupt = 1;
+	break_on_interrupt_cpunum = cpu_getactivecpu();
+	break_on_interrupt_irqline = irqline;
+}
+
+
+/*-------------------------------------------------
 	debug_cpu_next_cpu - execute until we hit
 	the next CPU
 -------------------------------------------------*/
@@ -443,7 +479,7 @@ void debug_cpu_ignore_cpu(int cpunum, int ignore)
 	CPU
 -------------------------------------------------*/
 
-void debug_cpu_trace(int cpunum, FILE *file, const char *action)
+void debug_cpu_trace(int cpunum, FILE *file, int trace_over, const char *action)
 {
 	/* close existing files and delete expressions */
 	if (debug_cpuinfo[cpunum].trace.file)
@@ -463,6 +499,9 @@ void debug_cpu_trace(int cpunum, FILE *file, const char *action)
 		if (debug_cpuinfo[cpunum].trace.action)
 			strcpy(debug_cpuinfo[cpunum].trace.action, action);
 	}
+
+	/* specify trace over */
+	debug_cpuinfo[cpunum].trace.trace_over_target = trace_over ? ~0 : 0;
 }
 
 
@@ -648,6 +687,14 @@ void MAME_Debug(void)
 	/* check for execution breakpoints */
 	if (execution_state != EXECUTION_STATE_STOPPED)
 	{
+		/* see if we hit an interrupt break */
+		if (break_on_interrupt == 2 && break_on_interrupt_cpunum == cpunum)
+		{
+			debug_console_printf("Stopped on interrupt (CPU %d, IRQ %d)\n", break_on_interrupt_cpunum, break_on_interrupt_irqline);
+			break_on_interrupt = 0;
+			execution_state = EXECUTION_STATE_STOPPED;
+		}
+	
 		/* see if the CPU changed and break if we are waiting for that to happen */
 		if (cpunum != last_cpunum)
 		{
@@ -719,9 +766,11 @@ void MAME_Debug(void)
 		debug_view_update_all();
 		debug_refresh_display();
 		
-		/* wait for the debugger */
+		/* wait for the debugger; during this time, disable sound output */
+		osd_sound_enable(0);
 		while (execution_state == EXECUTION_STATE_STOPPED)
 			osd_wait_for_debugger();
+		osd_sound_enable(1);
 		
 		/* remember the last cpunum where we stopped */
 		last_stopped_cpunum = cpunum;
@@ -746,6 +795,15 @@ static void perform_trace(struct debug_cpu_info *info)
 	offs_t pc = activecpu_get_pc();
 	int offset, count, i;
 	char buffer[100];
+	offs_t dasmresult;
+
+	/* are we in trace over mode and in a subroutine? */
+	if (info->trace.trace_over_target && (info->trace.trace_over_target != ~0))
+	{
+		if (info->trace.trace_over_target != pc)
+			return;
+		info->trace.trace_over_target = ~0;
+	}
 	
 	/* check for a loop condition */
 	for (i = count = 0; i < TRACE_LOOPS; i++)
@@ -768,10 +826,24 @@ static void perform_trace(struct debug_cpu_info *info)
 		offset = sprintf(buffer, "%0*X: ", info->space[ADDRESS_SPACE_PROGRAM].addrchars, pc);
 		
 		/* print the disassembly */
-		activecpu_dasm(&buffer[offset], pc);
+		dasmresult = activecpu_dasm(&buffer[offset], pc);
 		
 		/* output the result */
 		fprintf(info->trace.file, "%s\n", buffer);
+
+		/* do we need to step the trace over this instruction? */
+		if (info->trace.trace_over_target && (dasmresult & DASMFLAG_SUPPORTED)
+			&& (dasmresult & DASMFLAG_STEP_OVER))
+		{
+			int extraskip = (dasmresult & DASMFLAG_OVERINSTMASK) >> DASMFLAG_OVERINSTSHIFT;
+			offs_t trace_over_target = pc + (dasmresult & DASMFLAG_LENGTHMASK);
+					
+			/* if we need to skip additional instructions, advance as requested */
+			while (extraskip-- > 0)
+				trace_over_target += activecpu_dasm(buffer, trace_over_target) & DASMFLAG_LENGTHMASK;
+				
+			info->trace.trace_over_target = trace_over_target;
+		}
 
 		/* log this PC */
 		info->trace.nextdex = (info->trace.nextdex + 1) % TRACE_LOOPS;
@@ -820,6 +892,40 @@ static void prepare_for_step_overout(void)
 	}
 }
 	
+
+/*-------------------------------------------------
+	debug_vblank_hook - called when the real
+	VBLANK hits
+-------------------------------------------------*/
+
+void debug_vblank_hook(void)
+{
+	/* if we're configured to stop on VBLANK, break */
+	if (break_on_vblank)
+	{
+		execution_state = EXECUTION_STATE_STOPPED;
+		debug_console_printf("Stopped at VBLANK\n");
+		break_on_vblank = 0;
+	}
+}
+
+
+/*-------------------------------------------------
+	debug_vblank_hook - called when an interrupt
+	is acknowledged
+-------------------------------------------------*/
+
+void debug_interrupt_hook(int cpunum, int irqline)
+{
+	/* if we're configured to stop on interrupt, break */
+	if (break_on_interrupt && cpunum == break_on_interrupt_cpunum && (break_on_interrupt_irqline == -1 || irqline == break_on_interrupt_irqline))
+	{
+		break_on_interrupt = 2;
+		break_on_interrupt_irqline = irqline;
+	}
+}
+
+
 
 /*###################################################################################################
 **	BREAKPOINTS
@@ -1446,6 +1552,7 @@ UINT64 debug_read_opcode(UINT32 offset, int size)
 			osd_die("debug_read_opcode: unknown type = %d\n", info->space[ADDRESS_SPACE_PROGRAM].databytes * 10 + size);
 			break;
 	}
+	return 0;	/* appease compiler */
 }
 
 

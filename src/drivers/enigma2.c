@@ -16,9 +16,7 @@ Writes to ROM/unmapped area = only durning gfx scrolling
 					  (enigma and zilec logo, big spaceships)
 					    Probably a bit buggy game code 
 TODO:
- - enigma2 - More accurate starfield emulation (screen flipping , blinking freq measured at 0.001 kHz)
- - enigma2 & 2a - is there upright mode ? dipswitch marked in manual as cocktail/upright is unused
- - enigma2 - are colors ok ? 
+ - enigma2  - More accurate starfield emulation (screen flipping , blinking freq measured at 0.001 kHz)
  - enigma2a - bad sound ROM
 
 *********************************************************************/
@@ -63,18 +61,28 @@ static WRITE8_HANDLER(protection_w)
 
 static WRITE8_HANDLER(videoctrl_w)
 {
-	flipscreen=data&0x20;
+	if((data & 0x20) == 0x20 && (readinputport(2) & 0x20) == 0x20)
+		flipscreen = 1;
+	else
+		flipscreen = 0;
 }
 
 static WRITE8_HANDLER(videoctrl2a_w)
 {
-	if(flipscreen != (data&0x20))
+	int i, old_flip;
+
+	old_flip = flipscreen;
+
+	if((data & 0x20) == 0x20 && (readinputport(2) & 0x20) == 0x20)
+		flipscreen = 1;
+	else
+		flipscreen = 0;
+
+	if(old_flip != flipscreen)
 	{
-		int i;
-		flipscreen=data&0x20;
 		/* redraw screen */
 		for(i=0;i<0x1c00;i++)
-			videoram_w(i,videoram[i]); 
+			videoram_w(i,videoram[i]);
 	}
 }
 
@@ -96,7 +104,7 @@ WRITE8_HANDLER( enigma2a_videoram_w )
 	}
 }
 
-/* unknown reads - protection ? mirrors ?*/
+/* unknown reads - protection ? mirrors ? */
 
 static READ8_HANDLER( unknown_r1 )
 {
@@ -121,6 +129,14 @@ static READ8_HANDLER( unknown_r4 )
 	return 0x38;
 }
 
+static READ8_HANDLER( enigma2_player2_r )
+{
+	if(flipscreen)
+		return input_port_1_r(0);
+	else
+		return input_port_0_r(0);
+}
+
 /* Enigma 2 */
 
 static ADDRESS_MAP_START( main_cpu, ADDRESS_SPACE_PROGRAM, 8 )
@@ -137,7 +153,7 @@ static ADDRESS_MAP_START( main_cpu, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x5051, 0x5051) AM_READ(unknown_r3)		
 	AM_RANGE(0x5079, 0x5079) AM_READ(unknown_r4)		
 	AM_RANGE(0x5801, 0x5801) AM_READ(input_port_0_r)
-	AM_RANGE(0x5802, 0x5802) AM_READ(input_port_1_r)
+	AM_RANGE(0x5802, 0x5802) AM_READ(enigma2_player2_r)
 ADDRESS_MAP_END
 
 /* Enigma 2a */
@@ -156,7 +172,7 @@ ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( portmap, ADDRESS_SPACE_IO, 8 )
 	AM_RANGE(0x01, 0x01) AM_READ(input_port_0_r)
-	AM_RANGE(0x02, 0x02) AM_READ(input_port_1_r)
+	AM_RANGE(0x02, 0x02) AM_READ(enigma2_player2_r)
 	AM_RANGE(0x03, 0x03) AM_WRITE(sound_w)
 	AM_RANGE(0x05, 0x05) AM_WRITE(videoctrl2a_w) 
 	AM_RANGE(0x06, 0x06) AM_WRITE(MWA8_NOP) 
@@ -175,12 +191,12 @@ ADDRESS_MAP_END
 PALETTE_INIT( enigma2 )
 {
 	palette_set_color(0,0,0,0);
-	palette_set_color(1,0,0,0xff);
-	palette_set_color(2,0xff,0xff,0);
+	palette_set_color(1,0,0xff,0);
+	palette_set_color(2,0xff,0,0xff);
 	palette_set_color(3,0,0xff,0xff);
 	palette_set_color(4,0xff,0,0);
-	palette_set_color(5,0xff,0,0xff);
-	palette_set_color(6,0,0xff,0);
+	palette_set_color(5,0xff,0xff,0);
+	palette_set_color(6,0,0,0xff);
 	palette_set_color(7,0xff,0xff,0xff);
 }
 
@@ -194,8 +210,8 @@ VIDEO_UPDATE( enigma2 )
 	for(y=0;y<32;y++)
 		for(x=0;x<32;x++)
 		{
-		 	offs=y*32+x   + 1024 *((blink_cnt>>3)&1);
-		  	plot_pixel(bitmap,x*8,255-y*8,Machine->pens[memory_region(REGION_USER1)[offs]]);
+		 	offs = y * 32 + x + 1024 * ((blink_cnt>>3)&1);
+			plot_pixel(bitmap,x*8,255-y*8,Machine->pens[memory_region(REGION_USER1)[offs]]);
 		}
 		
 	/* gfx */
@@ -238,10 +254,10 @@ INPUT_PORTS_START( enigma2 )
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_UNUSED )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_UNUSED )
 	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_UNUSED )
-	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_BUTTON2 ) PORT_PLAYER(2)
-	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 ) PORT_PLAYER(2)
-	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT ) PORT_2WAY PORT_PLAYER(2)
-	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT ) PORT_2WAY PORT_PLAYER(2)
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_BUTTON2 ) PORT_COCKTAIL
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 ) PORT_COCKTAIL
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT ) PORT_2WAY PORT_COCKTAIL
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT ) PORT_2WAY PORT_COCKTAIL
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNUSED )
 
 	PORT_START
@@ -257,9 +273,9 @@ INPUT_PORTS_START( enigma2 )
 	PORT_DIPSETTING(    0x08, "4" )
 	PORT_DIPSETTING(    0x10, "5" )
 	PORT_DIPSETTING(    0x14, "6" )
-	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Unknown ) ) /* cocktail/upright ??? */
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x20, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Cocktail ) )
 	PORT_DIPNAME( 0x40, 0x40, "Number of invaders" )
 	PORT_DIPSETTING(    0x40, "16" )
 	PORT_DIPSETTING(    0x00, "32" )
@@ -267,8 +283,6 @@ INPUT_PORTS_START( enigma2 )
 	PORT_DIPSETTING(    0x80, DEF_STR( 2C_1C ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
 INPUT_PORTS_END
-
-
 
 INPUT_PORTS_START( enigma2a )
 	PORT_START
@@ -286,9 +300,9 @@ INPUT_PORTS_START( enigma2a )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_UNUSED )
 	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_UNUSED )
 	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_UNUSED )
-	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 ) PORT_PLAYER(2)
-	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT ) PORT_2WAY PORT_PLAYER(2)
-	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT ) PORT_2WAY PORT_PLAYER(2)
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 ) PORT_COCKTAIL
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT ) PORT_2WAY PORT_COCKTAIL
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT ) PORT_2WAY PORT_COCKTAIL
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNUSED )
 
 	PORT_START
@@ -304,9 +318,9 @@ INPUT_PORTS_START( enigma2a )
 	PORT_DIPSETTING(    0x08, "4" )
 	PORT_DIPSETTING(    0x10, "5" )
 	PORT_DIPSETTING(    0x14, "6" )
-	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x20, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Cocktail ) )
 	PORT_DIPNAME( 0x40, 0x00, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( On ) )
@@ -335,7 +349,7 @@ static struct AY8910interface ay8910_interface =
 };
 
 static MACHINE_DRIVER_START( enigma2 )
-	MDRV_CPU_ADD_TAG("main",Z80, 2500000)
+	MDRV_CPU_ADD_TAG("main", Z80, 2500000)
 	MDRV_CPU_PROGRAM_MAP(main_cpu,0)
 	MDRV_CPU_VBLANK_INT(enigma2_interrupt,2)
 	
@@ -349,19 +363,19 @@ static MACHINE_DRIVER_START( enigma2 )
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER )
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
 	MDRV_SCREEN_SIZE(256, 256)
 	MDRV_VISIBLE_AREA(2*8, 32*8-1, 4*8, 32*8-1)
 	MDRV_PALETTE_LENGTH(8)
 	MDRV_PALETTE_INIT(enigma2)
 
 	MDRV_VIDEO_UPDATE(enigma2)
-	MDRV_SOUND_ADD(AY8910, ay8910_interface)
 
+	MDRV_SOUND_ADD(AY8910, ay8910_interface)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( enigma2a )
-	MDRV_CPU_ADD_TAG("main",8080, 2000000)
+	MDRV_CPU_ADD_TAG("main", 8080, 2000000)
 	MDRV_CPU_PROGRAM_MAP(main2a_cpu,0)
 	MDRV_CPU_IO_MAP(portmap,0)
 	MDRV_CPU_VBLANK_INT(enigma2_interrupt,2)
@@ -375,7 +389,7 @@ static MACHINE_DRIVER_START( enigma2a )
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER )
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
 	MDRV_SCREEN_SIZE(256, 256)
 	MDRV_VISIBLE_AREA(2*8, 32*8-1, 4*8, 32*8-1)
 	MDRV_PALETTE_LENGTH(2)
@@ -397,15 +411,14 @@ ROM_START( enigma2 )
 	ROM_LOAD( "6.13d",   	  0x4800, 0x0800, CRC(240a9d4b) SHA1(ca1c69fafec0471141ce1254ddfaef54fecfcbf0) )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )
-
-	ROM_LOAD( "enigma2.s",         0x0000, 0x1000, CRC(68fd8c54) SHA1(69996d5dfd996f0aacb26e397bef314204a2a88a) )
+	ROM_LOAD( "enigma2.s",    0x0000, 0x1000, CRC(68fd8c54) SHA1(69996d5dfd996f0aacb26e397bef314204a2a88a) )
 
 	 /* Color Map */
 	ROM_REGION( 0x800, REGION_PROMS, 0 )
 	ROM_LOAD( "7.11f",        0x0000, 0x0800, CRC(409b5aad) SHA1(1b774a70f725637458ed68df9ed42476291b0e43) )
 
 	/* Star Map */
-	ROM_REGION( 0x10000, REGION_USER1, 0 )
+	ROM_REGION( 0x800, REGION_USER1, 0 )
 	ROM_LOAD( "8.13f",        0x0000, 0x0800, CRC(e9cb116d) SHA1(41da4f46c5614ec3345c233467ebad022c6b0bf5) )
 ROM_END
 
@@ -432,5 +445,5 @@ static DRIVER_INIT(enigma2)
 		memory_region(REGION_CPU2)[i]=BITSWAP8(memory_region(REGION_CPU2)[i],4,5,6,0,7,1,3,2);
 }
 
-GAME( 1981, enigma2,  0,		enigma2,  enigma2,  enigma2, ROT90, "GamePlan (Zilec Electronics license)", "Enigma 2")
-GAME( 1984, enigma2a, enigma2,  enigma2a, enigma2a, enigma2, ROT90, "Zilec Electronics", "Enigma 2 (Space Invaders Hardware)")
+GAME( 1981, enigma2,  0,	   enigma2,  enigma2,  enigma2, ROT90, "GamePlan (Zilec Electronics license)", "Enigma 2" )
+GAME( 1984, enigma2a, enigma2, enigma2a, enigma2a, enigma2, ROT90, "Zilec Electronics", "Enigma 2 (Space Invaders Hardware)" )

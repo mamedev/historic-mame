@@ -118,6 +118,8 @@ CPUS+=H83002@
 CPUS+=V810@
 CPUS+=M37710@
 CPUS+=PPC403@
+CPUS+=PPC603@
+CPUS+=SE3208@
 
 # uncomment the following lines to include a sound core
 SOUNDS+=CUSTOM@
@@ -193,6 +195,7 @@ SOUNDS+=CDDA@
 SOUNDS+=ICS2115@
 SOUNDS+=ST0016@
 SOUNDS+=C352@
+SOUNDS+=VRENDER0@
 
 DRVLIBS = \
 	$(OBJ)/pacman.a $(OBJ)/epos.a $(OBJ)/nichibut.a \
@@ -216,9 +219,8 @@ DRVLIBS = \
 	$(OBJ)/usgames.a $(OBJ)/sanritsu.a $(OBJ)/rare.a \
 	$(OBJ)/nihonsys.a $(OBJ)/alba.a $(OBJ)/homedata.a $(OBJ)/artmagic.a \
 	$(OBJ)/taiyo.a $(OBJ)/edevices.a $(OBJ)/other.a $(OBJ)/excelent.a $(OBJ)/nix.a \
-	$(OBJ)/othertrv.a $(OBJ)/other68k.a $(OBJ)/otherz80.a \
-	$(OBJ)/hyprston.a $(OBJ)/other.a \
-	$(OBJ)/neogeo.a \
+	$(OBJ)/arcadia.a $(OBJ)/othertrv.a $(OBJ)/other68k.a $(OBJ)/otherz80.a \
+	$(OBJ)/hyprston.a $(OBJ)/crystal.a $(OBJ)/neogeo.a \
 
 $(OBJ)/pacman.a: \
 	$(OBJ)/drivers/pacman.o $(OBJ)/machine/mspacman.o \
@@ -407,7 +409,6 @@ $(OBJ)/taito.a: \
 	$(OBJ)/vidhrdw/topspeed.o $(OBJ)/drivers/topspeed.o \
 	$(OBJ)/machine/arkanoid.o $(OBJ)/vidhrdw/arkanoid.o $(OBJ)/drivers/arkanoid.o \
 	$(OBJ)/vidhrdw/superqix.o $(OBJ)/drivers/superqix.o \
-	$(OBJ)/vidhrdw/pbillian.o $(OBJ)/drivers/pbillian.o $(OBJ)/sndhrdw/pbillian.o \
 	$(OBJ)/vidhrdw/exzisus.o $(OBJ)/drivers/exzisus.o \
 	$(OBJ)/drivers/taito_x.o $(OBJ)/machine/cchip.o \
 	$(OBJ)/vidhrdw/minivadr.o $(OBJ)/drivers/minivadr.o \
@@ -506,19 +507,25 @@ $(OBJ)/sega.a: \
 	$(OBJ)/vidhrdw/system1.o $(OBJ)/drivers/system1.o \
 	$(OBJ)/vidhrdw/segasyse.o $(OBJ)/drivers/segasyse.o \
 	$(OBJ)/machine/system16.o $(OBJ)/vidhrdw/system16.o $(OBJ)/vidhrdw/sys16spr.o \
-	$(OBJ)/sndhrdw/system16.o $(OBJ)/vidhrdw/segaic16.o \
+	$(OBJ)/sndhrdw/system16.o $(OBJ)/vidhrdw/segaic16.o $(OBJ)/machine/segaic16.o \
 	$(OBJ)/vidhrdw/segas16a.o $(OBJ)/drivers/segas16a.o \
 	$(OBJ)/vidhrdw/segas16b.o $(OBJ)/drivers/segas16b.o \
 	$(OBJ)/vidhrdw/segas18.o $(OBJ)/drivers/segas18.o \
 	$(OBJ)/machine/fd1094.o $(OBJ)/machine/s16fd.o \
-	$(OBJ)/drivers/system16.o $(OBJ)/drivers/segas16b.o $(OBJ)/drivers/aburner.o $(OBJ)/drivers/outrun.o \
+	$(OBJ)/machine/mc8123.o \
+	$(OBJ)/drivers/system16.o $(OBJ)/drivers/segas16b.o \
+	$(OBJ)/drivers/segaxbd.o $(OBJ)/vidhrdw/segaxbd.o \
+	$(OBJ)/drivers/outrun.o \
 	$(OBJ)/drivers/sharrier.o $(OBJ)/drivers/system18.o \
 	$(OBJ)/drivers/yboard.o $(OBJ)/vidhrdw/yboard.o $(OBJ)/machine/s16math.o \
 	$(OBJ)/drivers/system24.o $(OBJ)/machine/system24.o $(OBJ)/vidhrdw/system24.o \
 	$(OBJ)/machine/s24fd.o $(OBJ)/vidhrdw/segaic24.o \
-	$(OBJ)/drivers/system32.o $(OBJ)/drivers/multi32.o $(OBJ)/vidhrdw/system32.o \
+	$(OBJ)/drivers/segas32.o $(OBJ)/machine/segas32.o $(OBJ)/drivers/multi32.o \
+	$(OBJ)/vidhrdw/system32.o \
 	$(OBJ)/drivers/model1.o $(OBJ)/machine/model1.o $(OBJ)/vidhrdw/model1.o \
 	$(OBJ)/drivers/model2.o \
+	$(OBJ)/vidhrdw/model3.o $(OBJ)/machine/model3.o $(OBJ)/drivers/model3.o \
+	$(OBJ)/machine/53c810.o \
 	$(OBJ)/vidhrdw/segac2.o $(OBJ)/drivers/segac2.o \
 	$(OBJ)/drivers/coolridr.o \
 	$(OBJ)/drivers/stv.o $(OBJ)/drivers/stvhacks.o $(OBJ)/machine/stvcd.o \
@@ -984,6 +991,7 @@ $(OBJ)/seta.a: \
 	$(OBJ)/vidhrdw/ssv.o $(OBJ)/drivers/ssv.o \
 	$(OBJ)/vidhrdw/st0016.o $(OBJ)/drivers/st0016.o \
 	$(OBJ)/drivers/macs.o \
+	$(OBJ)/drivers/srmp6.o \
 
 $(OBJ)/atlus.a: \
 	$(OBJ)/vidhrdw/powerins.o $(OBJ)/drivers/powerins.o \
@@ -1152,12 +1160,14 @@ $(OBJ)/nix.a: \
 	$(OBJ)/vidhrdw/pirates.o $(OBJ)/drivers/pirates.o \
 	$(OBJ)/vidhrdw/fitfight.o $(OBJ)/drivers/fitfight.o \
 
+$(OBJ)/arcadia.a: \
+	$(OBJ)/vidhrdw/amiga.o $(OBJ)/machine/amiga.o $(OBJ)/drivers/arcadia.o \
+
 $(OBJ)/othertrv.a: \
 	$(OBJ)/drivers/findout.o \
 	$(OBJ)/drivers/getrivia.o \
-	$(OBJ)/drivers/trvgns.o \
 	$(OBJ)/drivers/merit.o \
-	$(OBJ)/drivers/strvmstr.o \
+	$(OBJ)/drivers/ettrivia.o \
 	$(OBJ)/drivers/statriv2.o \
 
 $(OBJ)/other68k.a: \
@@ -1217,6 +1227,9 @@ $(OBJ)/hyprston.a: \
 	$(OBJ)/drivers/vamphalf.o \
 	$(OBJ)/drivers/dgpix.o \
 	$(OBJ)/drivers/eolith.o \
+
+$(OBJ)/crystal.a: \
+	$(OBJ)/drivers/crystal.o $(OBJ)/vidhrdw/vrender0.o $(OBJ)/machine/ds1302.o \
 
 $(OBJ)/other.a: \
 	$(OBJ)/vidhrdw/redalert.o $(OBJ)/sndhrdw/redalert.o $(OBJ)/drivers/redalert.o \

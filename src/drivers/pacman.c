@@ -2741,7 +2741,7 @@ static MACHINE_DRIVER_START( s2650games )
 	MDRV_IMPORT_FROM(pacman)
 
 	MDRV_CPU_REMOVE("main")
-	MDRV_CPU_ADD_TAG("main", S2650, 18432000/6/2/3)	/* ??? */
+	MDRV_CPU_ADD_TAG("main", S2650, 18432000/6/2)	/* ??? */
 	MDRV_CPU_PROGRAM_MAP(s2650games_readmem,s2650games_writemem)
 	MDRV_CPU_VBLANK_INT(s2650_interrupt,1)
 

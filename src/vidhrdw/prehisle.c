@@ -52,8 +52,8 @@ READ16_HANDLER( prehisle_control16_r )
 
 WRITE16_HANDLER( prehisle_control16_w )
 {
-	int scroll;
-
+	int scroll = 0;
+	
 	COMBINE_DATA(&scroll);
 
 	switch (offset)
@@ -63,6 +63,8 @@ WRITE16_HANDLER( prehisle_control16_w )
 	case 0x10: tilemap_set_scrolly(bg2_tilemap, 0, scroll); break;
 	case 0x18: tilemap_set_scrollx(bg2_tilemap, 0, scroll); break;
 	case 0x23: invert_controls = data ? 0xff : 0x00; break;
+	case 0x28: coin_counter_w(0, data & 1); break;
+	case 0x29: coin_counter_w(1, data & 1); break;
 	case 0x30: flip_screen_set(data & 0x01); break;
 	}
 }

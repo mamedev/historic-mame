@@ -2,6 +2,7 @@
 
   Ganbare Ginkun  (Japan)  (c)1995 TECMO
   Final StarForce (US)     (c)1992 TECMO
+  Riot			  (Japan)  (c)1992 NMK
 
   Based on sprite drivers from vidhrdw/wc90.c by Ernesto Corvi (ernesto@imagina.com)
 
@@ -17,7 +18,9 @@ data16_t *tecmo16_colorram2;
 data16_t *tecmo16_charram;
 
 static struct tilemap *fg_tilemap,*bg_tilemap,*tx_tilemap;
-static int flipscreen;
+static struct mame_bitmap *sprite_bitmap, *tile_bitmap_bg, *tile_bitmap_fg;
+
+static int flipscreen, game_is_riot;
 
 /******************************************************************************/
 
@@ -26,10 +29,13 @@ static void fg_get_tile_info(int tile_index)
 	int tile = tecmo16_videoram[tile_index] & 0x1fff;
 	int color = tecmo16_colorram[tile_index] & 0x0f;
 
+	/* bit 4 controls blending */
+	tile_info.priority = (tecmo16_colorram[tile_index] & 0x10) >> 4;
+
 	SET_TILE_INFO(
 			1,
 			tile,
-			color,
+			color | (tile_info.priority ? 0x70 : 0x00),
 			0)
 }
 
@@ -59,6 +65,18 @@ static void tx_get_tile_info(int tile_index)
 
 VIDEO_START( fstarfrc )
 {
+	tile_bitmap_bg = auto_bitmap_alloc_depth(Machine->drv->screen_width, Machine->drv->screen_height, 16);
+	tile_bitmap_fg = auto_bitmap_alloc_depth(Machine->drv->screen_width, Machine->drv->screen_height, 16);
+
+	if (!tile_bitmap_bg || !tile_bitmap_fg)
+		return 1;
+
+	/* set up sprites */
+	sprite_bitmap = auto_bitmap_alloc_depth(Machine->drv->screen_width, Machine->drv->screen_height, 16);
+
+	if (!sprite_bitmap)
+		return 1;
+
 	fg_tilemap = tilemap_create(fg_get_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,16,16,32,32);
 	bg_tilemap = tilemap_create(bg_get_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,16,16,32,32);
 	tx_tilemap = tilemap_create(tx_get_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT, 8, 8,64,32);
@@ -72,12 +90,25 @@ VIDEO_START( fstarfrc )
 
 	tilemap_set_scrolly(tx_tilemap,0,-16);
 	flipscreen = 0;
+	game_is_riot = 0;
 
 	return 0;
 }
 
 VIDEO_START( ginkun )
 {
+	tile_bitmap_bg = auto_bitmap_alloc_depth(Machine->drv->screen_width, Machine->drv->screen_height, 16);
+	tile_bitmap_fg = auto_bitmap_alloc_depth(Machine->drv->screen_width, Machine->drv->screen_height, 16);
+
+	if (!tile_bitmap_bg || !tile_bitmap_fg)
+		return 1;
+
+	/* set up sprites */
+	sprite_bitmap = auto_bitmap_alloc_depth(Machine->drv->screen_width, Machine->drv->screen_height, 16);
+
+	if (!sprite_bitmap)
+		return 1;
+
 	fg_tilemap = tilemap_create(fg_get_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,16,16,64,32);
 	bg_tilemap = tilemap_create(bg_get_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,16,16,64,32);
 	tx_tilemap = tilemap_create(tx_get_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT, 8, 8,64,32);
@@ -89,6 +120,39 @@ VIDEO_START( ginkun )
 	tilemap_set_transparent_pen(bg_tilemap,0);
 	tilemap_set_transparent_pen(tx_tilemap,0);
 	flipscreen = 0;
+	game_is_riot = 0;
+
+	return 0;
+}
+
+VIDEO_START( riot )
+{
+	/* set up tile layers */
+	tile_bitmap_bg = auto_bitmap_alloc_depth(Machine->drv->screen_width, Machine->drv->screen_height, 16);
+	tile_bitmap_fg = auto_bitmap_alloc_depth(Machine->drv->screen_width, Machine->drv->screen_height, 16);
+
+	if (!tile_bitmap_bg || !tile_bitmap_fg)
+		return 1;
+
+	/* set up sprites */
+	sprite_bitmap = auto_bitmap_alloc_depth(Machine->drv->screen_width, Machine->drv->screen_height, 16);
+
+	if (!sprite_bitmap)
+		return 1;
+
+	fg_tilemap = tilemap_create(fg_get_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,16,16,64,32);
+	bg_tilemap = tilemap_create(bg_get_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,16,16,64,32);
+	tx_tilemap = tilemap_create(tx_get_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT, 8, 8,64,32);
+
+	if (!fg_tilemap || !bg_tilemap || !tx_tilemap)
+		return 1;
+
+	tilemap_set_transparent_pen(fg_tilemap,0);
+	tilemap_set_transparent_pen(bg_tilemap,0);
+	tilemap_set_transparent_pen(tx_tilemap,0);
+	tilemap_set_scrolldy(tx_tilemap,-16,-16);
+	flipscreen = 0;
+	game_is_riot = 1;
 
 	return 0;
 }
@@ -188,20 +252,132 @@ WRITE16_HANDLER( tecmo16_scroll_char_y_w )
 
 /******************************************************************************/
 
-static void draw_sprites(struct mame_bitmap *bitmap,const struct rectangle *cliprect)
+/* mix & blend the paletted 16-bit tile and sprite bitmaps into an RGB 32-bit bitmap */
+static void blendbitmaps(
+		struct mame_bitmap *dest,struct mame_bitmap *src1,struct mame_bitmap *src2,struct mame_bitmap *src3,
+		int sx,int sy,const struct rectangle *clip)
+{
+	int ox;
+	int oy;
+	int ex;
+	int ey;
+
+	/* check bounds */
+	ox = sx;
+	oy = sy;
+
+	ex = sx + src1->width - 1;
+	if (sx < 0) sx = 0;
+	if (sx < clip->min_x) sx = clip->min_x;
+	if (ex >= dest->width) ex = dest->width - 1;
+	if (ex > clip->max_x) ex = clip->max_x;
+	if (sx > ex) return;
+
+	ey = sy + src1->height - 1;
+	if (sy < 0) sy = 0;
+	if (sy < clip->min_y) sy = clip->min_y;
+	if (ey >= dest->height) ey = dest->height - 1;
+	if (ey > clip->max_y) ey = clip->max_y;
+	if (sy > ey) return;
+
+	{
+		pen_t *paldata = Machine->pens;
+		UINT32 *end;
+
+		UINT16 *sd1 = ((UINT16 *)src1->line[0]);								/* source data   */
+		UINT16 *sd2 = ((UINT16 *)src2->line[0]);
+		UINT16 *sd3 = ((UINT16 *)src3->line[0]);
+
+		int sw = ex-sx+1;														/* source width  */
+		int sh = ey-sy+1;														/* source height */
+		int sm = ((UINT16 *)src1->line[1]) - ((UINT16 *)src1->line[0]);			/* source modulo */
+
+		UINT32 *dd = ((UINT32 *)dest->line[sy]) + sx;							/* dest data     */
+		int dm = ((UINT32 *)dest->line[1]) - ((UINT32 *)dest->line[0]);			/* dest modulo   */
+
+		sd1 += (sx-ox);
+		sd1 += sm * (sy-oy);
+		sd2 += (sx-ox);
+		sd2 += sm * (sy-oy);
+		sd3 += (sx-ox);
+		sd3 += sm * (sy-oy);
+
+		sm -= sw;
+		dm -= sw;
+
+		while (sh)
+		{
+
+#define BLENDPIXEL(x)	if (sd3[x]) {														\
+							if (sd2[x]) {													\
+								dd[x] = paldata[sd2[x] | 0x0400] + paldata[sd3[x]];			\
+							} else {														\
+								dd[x] = paldata[sd1[x] | 0x0400] + paldata[sd3[x]];			\
+							}																\
+						} else {															\
+							if (sd2[x]) {													\
+								if (sd2[x] & 0x0800) {										\
+									dd[x] = paldata[sd1[x] | 0x0400] + paldata[sd2[x]];		\
+								} else {													\
+									dd[x] = paldata[sd2[x]];								\
+								}															\
+							} else {														\
+								dd[x] = paldata[sd1[x]];									\
+							}																\
+						}
+
+			end = dd + sw;
+			while (dd <= end - 8)
+			{
+				BLENDPIXEL(0);
+				BLENDPIXEL(1);
+				BLENDPIXEL(2);
+				BLENDPIXEL(3);
+				BLENDPIXEL(4);
+				BLENDPIXEL(5);
+				BLENDPIXEL(6);
+				BLENDPIXEL(7);
+				dd += 8;
+				sd1 += 8;
+				sd2 += 8;
+				sd3 += 8;
+			}
+			while (dd < end)
+			{
+				BLENDPIXEL(0);
+				dd++;
+				sd1++;
+				sd2++;
+				sd3++;
+			}
+			dd += dm;
+			sd1 += sm;
+			sd2 += sm;
+			sd3 += sm;
+			sh--;
+
+#undef BLENDPIXEL
+
+		}
+	}
+}
+
+static void draw_sprites(struct mame_bitmap *bitmap_bg, struct mame_bitmap *bitmap_fg, struct mame_bitmap *bitmap_sp, const struct rectangle *cliprect)
 {
 	int offs;
 	const UINT8 layout[8][8] =
 	{
-		{0,1,4,5,16,17,20,21},
-		{2,3,6,7,18,19,22,23},
-		{8,9,12,13,24,25,28,29},
+		{ 0, 1, 4, 5,16,17,20,21},
+		{ 2, 3, 6, 7,18,19,22,23},
+		{ 8, 9,12,13,24,25,28,29},
 		{10,11,14,15,26,27,30,31},
 		{32,33,36,37,48,49,52,53},
 		{34,35,38,39,50,51,54,55},
 		{40,41,44,45,56,57,60,61},
 		{42,43,46,47,58,59,62,63}
 	};
+
+	struct mame_bitmap *bitmap = bitmap_bg;
 
 	for (offs = spriteram_size/2 - 8;offs >= 0;offs -= 8)
 	{
@@ -213,7 +389,12 @@ static void draw_sprites(struct mame_bitmap *bitmap,const struct rectangle *clip
 			code = spriteram16[offs+1];
 			color = (spriteram16[offs+2] & 0xf0) >> 4;
 			sizex = 1 << ((spriteram16[offs+2] & 0x03) >> 0);
-			sizey = 1 << ((spriteram16[offs+2] & 0x0c) >> 2);
+
+			if(game_is_riot)
+				sizey = sizex;
+			else
+				sizey = 1 << ((spriteram16[offs+2] & 0x0c) >> 2);
+
 			if (sizex >= 2) code &= ~0x01;
 			if (sizey >= 2) code &= ~0x02;
 			if (sizex >= 4) code &= ~0x04;
@@ -244,27 +425,79 @@ static void draw_sprites(struct mame_bitmap *bitmap,const struct rectangle *clip
 				flipy = !flipy;
 			}
 
-			for (y = 0;y < sizey;y++)
+			/* blending */
+			if (spriteram16[offs] & 0x20)
 			{
-				for (x = 0;x < sizex;x++)
-				{
-					int sx,sy;
+				color |= 0x80;
 
-					if (!flipscreen)
+				for (y = 0;y < sizey;y++)
+				{
+					for (x = 0;x < sizex;x++)
 					{
-						sx = xpos + 8*(flipx?(sizex-1-x):x);
-						sy = ypos + 8*(flipy?(sizey-1-y):y);
-					} else {
-						sx = 256 - (xpos + 8*(!flipx?(sizex-1-x):x) + 8);
-						sy = 256 - (ypos + 8*(!flipy?(sizey-1-y):y) + 8);
+						int sx,sy;
+
+						if (!flipscreen)
+						{
+							sx = xpos + 8*(flipx?(sizex-1-x):x);
+							sy = ypos + 8*(flipy?(sizey-1-y):y);
+						} else {
+							sx = 256 - (xpos + 8*(!flipx?(sizex-1-x):x) + 8);
+							sy = 256 - (ypos + 8*(!flipy?(sizey-1-y):y) + 8);
+						}
+						pdrawgfx(bitmap,Machine->gfx[2],
+								code + layout[y][x],
+								color,
+								flipx,flipy,
+								sx,sy,
+								cliprect,TRANSPARENCY_PEN,0,
+								priority_mask);
+
+						/* wrap around x */
+						pdrawgfx(bitmap,Machine->gfx[2],
+								code + layout[y][x],
+								color,
+								flipx,flipy,
+								sx-512,sy,
+								cliprect,TRANSPARENCY_PEN,0,
+								priority_mask);
 					}
-					pdrawgfx(bitmap,Machine->gfx[2],
-							code + layout[y][x],
-							color,
-							flipx,flipy,
-							sx,sy,
-							cliprect,TRANSPARENCY_PEN,0,
-							priority_mask);
+				}
+			}
+			else
+			{
+				bitmap = (priority >= 2) ? bitmap_bg : bitmap_fg;
+
+				for (y = 0;y < sizey;y++)
+				{
+					for (x = 0;x < sizex;x++)
+					{
+						int sx,sy;
+
+						if (!flipscreen)
+						{
+							sx = xpos + 8*(flipx?(sizex-1-x):x);
+							sy = ypos + 8*(flipy?(sizey-1-y):y);
+						} else {
+							sx = 256 - (xpos + 8*(!flipx?(sizex-1-x):x) + 8);
+							sy = 256 - (ypos + 8*(!flipy?(sizey-1-y):y) + 8);
+						}
+						pdrawgfx(bitmap,Machine->gfx[2],
+								code + layout[y][x],
+								color,
+								flipx,flipy,
+								sx,sy,
+								cliprect,TRANSPARENCY_PEN,0,
+								priority_mask);
+
+						/* wrap around x */
+						pdrawgfx(bitmap,Machine->gfx[2],
+								code + layout[y][x],
+								color,
+								flipx,flipy,
+								sx-512,sy,
+								cliprect,TRANSPARENCY_PEN,0,
+								priority_mask);
+					}
 				}
 			}
 		}
@@ -276,10 +509,22 @@ static void draw_sprites(struct mame_bitmap *bitmap,const struct rectangle *clip
 VIDEO_UPDATE( tecmo16 )
 {
 	fillbitmap(priority_bitmap,0,cliprect);
-	fillbitmap(bitmap,Machine->pens[0x300],cliprect);
-	tilemap_draw(bitmap,cliprect,bg_tilemap,0,1);
-	tilemap_draw(bitmap,cliprect,fg_tilemap,0,2);
-	tilemap_draw(bitmap,cliprect,tx_tilemap,0,4);
 
-	draw_sprites(bitmap,cliprect);
+	fillbitmap(tile_bitmap_bg, 0x300, cliprect);
+	fillbitmap(tile_bitmap_fg,     0, cliprect);
+	fillbitmap(sprite_bitmap,      0, cliprect);
+
+	/* draw tilemaps into a 16-bit bitmap */
+	tilemap_draw(tile_bitmap_bg, cliprect,bg_tilemap, 0, 1);
+	tilemap_draw(tile_bitmap_fg, cliprect,fg_tilemap, 0, 2);
+	/* draw the blended tiles at a lower priority
+	   so sprites covered by them will still be drawn */
+	tilemap_draw(tile_bitmap_fg, cliprect,fg_tilemap, 1, 0);
+	tilemap_draw(tile_bitmap_fg, cliprect,tx_tilemap, 0, 4);
+
+	/* draw sprites into a 16-bit bitmap */
+	draw_sprites(tile_bitmap_bg, tile_bitmap_fg, sprite_bitmap, cliprect);
+
+	/* mix & blend the tilemaps and sprites into a 32-bit bitmap */
+	blendbitmaps(bitmap, tile_bitmap_bg, tile_bitmap_fg, sprite_bitmap, 0, 0, cliprect);
 }

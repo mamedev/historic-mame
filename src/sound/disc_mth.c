@@ -1275,6 +1275,26 @@ void dst_transform_step(struct node_description *node)
 					result=number1-number2;
 					dst_transform_push(trans_stack,&trans_stack_ptr,result);
 					break;
+				case '0':
+					dst_transform_push(trans_stack,&trans_stack_ptr,DST_TRANSFORM__IN0);
+					break;
+				case '1':
+					dst_transform_push(trans_stack,&trans_stack_ptr,DST_TRANSFORM__IN1);
+					break;
+				case '2':
+					dst_transform_push(trans_stack,&trans_stack_ptr,DST_TRANSFORM__IN2);
+					break;
+				case '3':
+					dst_transform_push(trans_stack,&trans_stack_ptr,DST_TRANSFORM__IN3);
+					break;
+				case '4':
+					dst_transform_push(trans_stack,&trans_stack_ptr,DST_TRANSFORM__IN4);
+					break;
+				case 'P':
+					result=dst_transform_pop(trans_stack,&trans_stack_ptr);
+					dst_transform_push(trans_stack,&trans_stack_ptr,result);
+					dst_transform_push(trans_stack,&trans_stack_ptr,result);
+					break;
 				case 'i':	// * -1
 					number1=dst_transform_pop(trans_stack,&trans_stack_ptr);
 					result=-number1;
@@ -1320,21 +1340,6 @@ void dst_transform_step(struct node_description *node)
 					number1=dst_transform_pop(trans_stack,&trans_stack_ptr);
 					result=(int)number1 ^ (int)number2;
 					dst_transform_push(trans_stack,&trans_stack_ptr,result);
-					break;
-				case '0':
-					dst_transform_push(trans_stack,&trans_stack_ptr,DST_TRANSFORM__IN0);
-					break;
-				case '1':
-					dst_transform_push(trans_stack,&trans_stack_ptr,DST_TRANSFORM__IN1);
-					break;
-				case '2':
-					dst_transform_push(trans_stack,&trans_stack_ptr,DST_TRANSFORM__IN2);
-					break;
-				case '3':
-					dst_transform_push(trans_stack,&trans_stack_ptr,DST_TRANSFORM__IN3);
-					break;
-				case '4':
-					dst_transform_push(trans_stack,&trans_stack_ptr,DST_TRANSFORM__IN4);
 					break;
 				default:
 					discrete_log("dst_transform_step - Invalid function type/variable passed");

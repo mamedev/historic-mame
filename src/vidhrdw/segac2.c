@@ -672,7 +672,7 @@ static void vdp_data_w(int data)
 static int vdp_control_r(void)
 {
 	int beampos = cpu_gethorzbeampos();
-	int status = 0x3400;
+	int status = 0x3600; // wwally needs fifo empty set
 
 	/* kill 2nd write pending flag */
 	vdp_cmdpart = 0;

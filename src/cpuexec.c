@@ -12,10 +12,10 @@
 #include "state.h"
 #include "mamedbg.h"
 #include "hiscore.h"
-
-#if (HAS_M68000 || HAS_M68008 || HAS_M68010 || HAS_M68020 || HAS_M68EC020)
-#include "cpu/m68000/m68000.h"
+#if defined(MAME_DEBUG) && defined(NEW_DEBUGGER)
+#include "debugcpu.h"
 #endif
+
 
 
 /*************************************
@@ -1750,6 +1750,11 @@ static void cpu_vblankcallback(int param)
 
 		/* reset the counter */
 		vblank_countdown = vblank_multiplier;
+		
+#if defined(MAME_DEBUG) && defined(NEW_DEBUGGER)
+		/* notify the debugger */
+		debug_vblank_hook();
+#endif
 	}
 }
 

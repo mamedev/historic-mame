@@ -521,10 +521,10 @@ static void find_input_nodes(struct discrete_sound_block *block_list)
 			/* if this input is node-based, find the node in the indexed list */
 			if ((inputnode > NODE_START) && (inputnode <= NODE_END))
 			{
-				if (!indexed_node[inputnode - NODE_START])
-					osd_die("discrete_sh_start - Node NODE_%02d referenced a non existant node NODE_%02d\n", node->node - NODE_START, inputnode - NODE_START);
-
 				struct node_description *node_ref = indexed_node[inputnode - NODE_START];
+				if (!node_ref)
+					osd_die("discrete_sh_start - Node NODE_%02d referenced a non existent node NODE_%02d\n", node->node - NODE_START, inputnode - NODE_START);
+
 				node->input[inputnum] = &(node_ref->output);	// Link referenced node out to input
 				node->input_r[inputnum] = &(node_ref->node_r);	// Link referenced node r to input r
 				node->input_is_node |= 1 << inputnum;			// Bit flag if input is node

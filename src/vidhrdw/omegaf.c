@@ -305,7 +305,7 @@ VIDEO_START( robokid )
 
 	/*                           Info               Offset             Type                         w   h  col  row */
 	fg_tilemap  = tilemap_create(        get_fg_tile_info,  tilemap_scan_rows, TILEMAP_TRANSPARENT, 8,  8,  32, 32);
-	bg0_tilemap = tilemap_create(robokid_get_bg0_tile_info, tilemap_scan_rows, TILEMAP_TRANSPARENT, 16, 16, 32, 32);
+	bg0_tilemap = tilemap_create(robokid_get_bg0_tile_info, tilemap_scan_rows, TILEMAP_OPAQUE,		16, 16, 32, 32);
 	bg1_tilemap = tilemap_create(robokid_get_bg1_tile_info, tilemap_scan_rows, TILEMAP_TRANSPARENT, 16, 16, 32, 32);
 	bg2_tilemap = tilemap_create(robokid_get_bg2_tile_info, tilemap_scan_rows, TILEMAP_TRANSPARENT, 16, 16, 32, 32);
 
@@ -313,7 +313,6 @@ VIDEO_START( robokid )
 		return 1;
 
 	tilemap_set_transparent_pen( fg_tilemap,  15 );
-	tilemap_set_transparent_pen( bg0_tilemap, 15 );
 	tilemap_set_transparent_pen( bg1_tilemap, 15 );
 	tilemap_set_transparent_pen( bg2_tilemap, 15 );
 
@@ -596,7 +595,7 @@ static void draw_sprites(struct mame_bitmap *bitmap,const struct rectangle *clip
 
 VIDEO_UPDATE( omegaf )
 {
-	fillbitmap(bitmap,Machine->pens[15],cliprect);	// ??
+	fillbitmap(bitmap,Machine->pens[0],cliprect);
 
 	if (bg0_enabled)	tilemap_draw(bitmap,cliprect, bg0_tilemap, 0, 0);
 	if (bg1_enabled)	tilemap_draw(bitmap,cliprect, bg1_tilemap, 0, 0);

@@ -86,7 +86,7 @@ ToDo / Notes:
 
 (Main issues)
 -complete the Master/Slave communication.
--fix properly the IC13 issue,some games still fails their booting.
+-fix properly the IC13 issue,several games still fails their booting.
 -any rom which has a non-plain loaded rom at 0x2200000 (or 0x2000000, i think it
  recognises a cart at either) appears to fail its self check, reason unknown, the roms
  are almost certainly not bad its a mystery.
@@ -95,33 +95,43 @@ ToDo / Notes:
  sound CPU,I don't think that really use NMIs but I'm not sure... -AS
 -Clean-ups and split the various chips(SCU,SMPC)into their respective files.
 -CD block:complete it & add proper CD image support into MAME.
--the Cart-Dev mode...why it hangs?
+-the Cart-Dev mode...why it hangs?And what is for?
 -fix some strange sound cpu memory accesses,there are various issues about this.
 -finish the DSP core.
 -Complete the window system in VDP2 (Still in progress).
+-Add the RS232c interface (serial port).
+-(PCB owners) check if the clocks documented in the manuals are really right.
+-SCSP to master irq: see if there is a sound cpu mask bit.
 
 (per-game issues)
 -groovef: hangs soon after loaded,caused by two memory addresses in the Work RAM-H range.
  Kludged for now to work.
 -various: find idle skip if possible.
--vmahjong: locks up the emulation due to DMA/irq issues.
 -hanagumi + others: why do we get 2 credits on startup with sound enabled
  (game doesn't work with sound disabled but thats known, we removed the hacks)
 -colmns97/puyosun/mausuke/cotton2/cottonbm: interrupt issues? we can't check the SCU mask
  on SMPC or controls fail
 -mausuke/bakubaku/grdforce: need to sort out transparency on the colour mapped sprites
--bakubaku/colmns97/vfkids: no sound?
+-bakubaku/colmns97/vfkids: no sound? Caused by missing irq?
 -most: static for sounds
--some games (rsgun,myfairld) don't pass a sound ram address check if you
- enter then exit from the BIOS test mode,it is a recent issue as before wasn't like
- this...
+-myfairld: Currently broken,can't understand why...
 -grdforce: missing roz on RBG0 layer.
 -kiwames: locks up after one match.
--suikoenb: why the color RAM format doesn't change when you exit the test menu?
--elandore: fix the bitmap transparency,heavily used (or not used) by this.
--introdon: game initializes palette RAM *without* the IC13 hack
--pblbeach: not working due to missing timer 1 irq.
--decathlt: sets invalid DMA size for the sound cpu and crashes due of that.
+-suikoenb/winterht: why the color RAM format doesn't change when you exit the test menu?
+-introdon: game works *without* the IC13 hack.
+-pblbeach: T&E Soft logo animation then hangs...
+-decathlt: isn't getting proper DMA parameters,as a result of this there are
+ missing/wrong graphics bugs,and no sound (obviously because there isn't any
+ proper program loaded).
+-vmahjong: sets a strange resolution mode during gameplay,the vdp1 textures are too
+ dark(women).
+-suikoenb: hangs/crashes at a map screen,I haven't investigated on it.
+ My current best guess is that there isn't any MINIT triggered...
+-maruchan: hangs at the Sega logo.
+-sokyugrt: Has wrong vector reading with the Work Ram-H,caused by IC13 or some funky rom
+ loading.
+-introdon: Note that the working button in this game is BUTTON2 and not BUTTON1,weird
+ design choice.
 
 */
 
@@ -137,6 +147,15 @@ extern data32_t* stv_vdp2_vram;
 extern data32_t* stv_vdp2_cram;
 
 #define USE_SLAVE 1
+
+#define LOG_CDB  0
+#define LOG_SMPC 1
+#define LOG_SCU  1
+#define LOG_IRQ  0
+#define LOG_IOGA 1
+
+/*TODO: Find a way to change the clock dynamically*/
+#define MASTER_CLOCK 57272700
 
 /* stvhacks.c */
 DRIVER_INIT( ic13 );
@@ -222,7 +241,7 @@ static void CD_refresh_timer(int param)
 	//CD_period at every call
 	CD_com_update(1);
 
-	//logerror("CD refresh timer adj\n");
+	//if(LOG_CDB) logerror("CD refresh timer adj\n");
 	//timer_adjust(CD_refresh, CD_period, 0, CD_period);
 }
 
@@ -251,15 +270,15 @@ void cdb_reset(void){
 
 	iso_reset();
 
-	logerror("ISO_RESET() just executed\n");
+	if(LOG_CDB) logerror("ISO_RESET() just executed\n");
 
 	cdb_build_toc();
 
-	logerror("BUILD_TOC() just executed\n");
+	if(LOG_CDB) logerror("BUILD_TOC() just executed\n");
 
 	cdb_build_ftree();
 
-	logerror("BUILD_FTREE() just executed\n");
+	if(LOG_CDB) logerror("BUILD_FTREE() just executed\n");
 	CD_com		= -1; // no command being processed
 
 	//CD_hirq		= 0x07d3;
@@ -365,7 +384,7 @@ void do_cd_command(void){
 
 		case 0x00:
 				//get status
-				logerror("CDBLOCK Command 0x%02x\n", (CR1>>8));
+				if(LOG_CDB) logerror("CDBLOCK Command 0x%02x\n", (CR1>>8));
 
 				CD_hirq |= HIRQ_CMOK;
 
@@ -379,7 +398,7 @@ void do_cd_command(void){
 
 		case 0x01:
 				//get hardware info
-				logerror("CDBLOCK Command 0x%02x\n", (CR1>>8));
+				if(LOG_CDB) logerror("CDBLOCK Command 0x%02x\n", (CR1>>8));
 
 				CR1 = (CD_status << 8);
 				CR2 = 0x0201;			// hardware flag (0x80=hw error 0x02=mpeg present) | version
@@ -394,7 +413,7 @@ void do_cd_command(void){
 
 		case 0x02:
 				//get toc
-				logerror("CDBLOCK Command 0x%02x\n", (CR1>>8));
+				if(LOG_CDB) logerror("CDBLOCK Command 0x%02x\n", (CR1>>8));
 
 				CR1 = (CD_status << 8);
 				CR2 = 0xcc;
@@ -413,7 +432,7 @@ void do_cd_command(void){
 				break;
 		case 0x03:
 				//get session info
-				logerror("CDBLOCK Command 0x%02x\n", (CR1>>8));
+				if(LOG_CDB) logerror("CDBLOCK Command 0x%02x\n", (CR1>>8));
 
 				CD_hirq |= HIRQ_CMOK; // PEND ?
 				//	cdb_stat = CDB_STAT_PAUSE;
@@ -422,7 +441,7 @@ void do_cd_command(void){
 
 				case 0: // total session information
 
-					logerror("get session info (all)\n");
+					if(LOG_CDB) logerror("get session info (all)\n");
 
 					CR1 = (CD_status << 8);
 					CR2 = 0;
@@ -432,7 +451,7 @@ void do_cd_command(void){
 
 				case 1: // local session information (exists)
 
-					logerror("get session info (first)\n");
+					if(LOG_CDB) logerror("get session info (first)\n");
 
 					//	cdb_cr3 = (1 << 8) | (cdb_toc.track[0].fad >> 16);	// starts with track #1, starting fad
 					//	cdb_cr4 = (cdb_toc.track[0].fad & 0xffff);		// starting fad
@@ -445,7 +464,7 @@ void do_cd_command(void){
 					break;
 
 				default: // local session information (doesn't exist)
-					logerror("get session info (other)\n");
+					if(LOG_CDB) logerror("get session info (other)\n");
 
 					CR1 = (CD_status << 8);
 					CR2 = 0;
@@ -457,7 +476,7 @@ void do_cd_command(void){
 				break;
 		case 0x04:
 				//init system  //Based on old source
-				logerror("CDBLOCK Command 0x%02x\n", (CR1>>8));
+				if(LOG_CDB) logerror("CDBLOCK Command 0x%02x\n", (CR1>>8));
 				// note: this is called by the Satun BIOS if DCHG is
 				// not set at reset. probabily manages DCHG flag as well.
 
@@ -469,7 +488,7 @@ void do_cd_command(void){
 						case 0:
 					//	case 2: CD_drive_speed = 2; CD_update_timings(2); break;
 					//	case 1: CD_drive_speed = 1; CD_update_timings(1); break;
-						default: logerror("ERROR: invalid drive speed\n");
+						default: if(LOG_CDB) logerror("ERROR: invalid drive speed\n");
 					}
 
 					if(CR1 & 0x01){ 				// software reset
@@ -522,12 +541,12 @@ void do_cd_command(void){
 				break;
 		case 0x05:
 				//open tray
-				logerror("CDBLOCK Command 0x%02x\n", (CR1>>8));
+				if(LOG_CDB) logerror("CDBLOCK Command 0x%02x\n", (CR1>>8));
 				//NOT USED
 				break;
 		case 0x06:
 				//end data transfer
-				logerror("CDBLOCK Command 0x%02x\n", (CR1>>8));
+				if(LOG_CDB) logerror("CDBLOCK Command 0x%02x\n", (CR1>>8));
 
 				switch(CD_trans_type){
 				case -1:	count = 0xffffff; break;			// no transfer
@@ -548,7 +567,7 @@ void do_cd_command(void){
 				break;
 		case 0x10:
 				//play
-				logerror("CDBLOCK Command 0x%02x\n", (CR1>>8));
+				if(LOG_CDB) logerror("CDBLOCK Command 0x%02x\n", (CR1>>8));
 
 				// sthief: must be rewritten!
 
@@ -563,7 +582,7 @@ void do_cd_command(void){
 					// resume
 					// bad!
 
-					logerror("play : resume , track=%i fad=%i\n", CD_cur_track, CD_cur_fad);
+					if(LOG_CDB) logerror("play : resume , track=%i fad=%i\n", CD_cur_track, CD_cur_fad);
 
 					CD_status = CDB_STAT_PLAY;
 					CD_flag = (CD_cur_ctrl & 0x40) ? CDB_FLAG_CDROM : 0;
@@ -599,7 +618,7 @@ void do_cd_command(void){
 
 						// play default
 
-						logerror("play default\n");
+						if(LOG_CDB) logerror("play default\n");
 						exit(1);
 
 					}else{
@@ -614,10 +633,10 @@ void do_cd_command(void){
 						idx0 = CR2 & 0xff;
 						idx1 = CR4 & 0xff;
 
-						logerror("play : pm=%02x track=%i idx=%i -> track=%i idx=%i\n", pm, tn0, idx0, tn1, idx1);
+						if(LOG_CDB) logerror("play : pm=%02x track=%i idx=%i -> track=%i idx=%i\n", pm, tn0, idx0, tn1, idx1);
 
 						if(tn1 < tn0 || (tn1 == tn0 && idx1 < idx0)){
-							logerror("ERROR: play track negative range\n");
+							if(LOG_CDB) logerror("ERROR: play track negative range\n");
 							exit(1);
 						}
 
@@ -633,7 +652,7 @@ void do_cd_command(void){
 						}
 
 						if(CD_cur_ctrl & 0x40){
-							logerror("ERROR: play data track\n");
+							if(LOG_CDB) logerror("ERROR: play data track\n");
 							exit(1);
 						}
 
@@ -694,7 +713,7 @@ void do_cd_command(void){
 
 				}else{
 
-					logerror("ERROR: invalid play command\n");
+					if(LOG_CDB) logerror("ERROR: invalid play command\n");
 					exit(1);
 				}
 
@@ -705,12 +724,12 @@ void do_cd_command(void){
 				break;
 		case 0x11:
 				//seek
-				logerror("CDBLOCK Command 0x%02x\n", (CR1>>8));
+				if(LOG_CDB) logerror("CDBLOCK Command 0x%02x\n", (CR1>>8));
 				if((CR1 & 0xff) == 0xff){
 
 					// pause
 
-					logerror("seek : pause\n");
+					if(LOG_CDB) logerror("seek : pause\n");
 
 					CD_hirq |= HIRQ_CMOK;
 
@@ -724,7 +743,7 @@ void do_cd_command(void){
 
 						// stop
 
-						logerror("seek : stop\n");
+						if(LOG_CDB) logerror("seek : stop\n");
 
 						CD_hirq |= HIRQ_CMOK;
 
@@ -745,11 +764,11 @@ void do_cd_command(void){
 						CD_flag = 0;
 
 						if(CD_cur_ctrl & 0x40){
-							logerror("ERROR: seek data track\n");
+							if(LOG_CDB) logerror("ERROR: seek data track\n");
 							exit(1);
 						}
 
-						logerror("seek : track %i (ctrl=%x idx=%i fad=%06x fid=%i)\n",
+						if(LOG_CDB) logerror("seek : track %i (ctrl=%x idx=%i fad=%06x fid=%i)\n",
 						CD_cur_track, CD_cur_ctrl, CD_cur_idx, CD_cur_fad, CD_cur_fid);
 					}
 
@@ -758,7 +777,7 @@ void do_cd_command(void){
 
 					// seek fad
 
-					logerror("seek / fad\n");
+					if(LOG_CDB) logerror("seek / fad\n");
 
 					CD_cur_track	= 0;
 					CD_cur_ctrl	= 0;
@@ -771,12 +790,12 @@ void do_cd_command(void){
 					CD_status = CDB_STAT_PAUSE;
 					CD_flag = 0;
 
-					logerror("ERROR: seek / fad\n");
+					if(LOG_CDB) logerror("ERROR: seek / fad\n");
 					exit(1);
 
 				}else{
 
-					logerror("ERROR: invalid seek command\n");
+					if(LOG_CDB) logerror("ERROR: invalid seek command\n");
 					exit(1);
 				}
 
@@ -784,12 +803,12 @@ void do_cd_command(void){
 				break;
 		case 0x12:
 				//scan
-				logerror("CDBLOCK Command 0x%02x\n", (CR1>>8));
+				if(LOG_CDB) logerror("CDBLOCK Command 0x%02x\n", (CR1>>8));
 				//NOT USED???
 				break;
 		case 0x20:
 				//get current subcode
-				logerror("CDBLOCK Command 0x%02x\n", (CR1>>8));
+				if(LOG_CDB) logerror("CDBLOCK Command 0x%02x\n", (CR1>>8));
 
 				CD_hirq |= HIRQ_CMOK | HIRQ_DRDY;
 
@@ -797,7 +816,7 @@ void do_cd_command(void){
 
 					case 0: // subcode q
 
-						logerror("get current subcode q\n");
+						if(LOG_CDB) logerror("get current subcode q\n");
 
 						CR1 = ( CD_status << 8);
 						CR2 = 5;
@@ -814,7 +833,7 @@ void do_cd_command(void){
 
 					case 1: // subcode rw
 
-						logerror("get current subcode rw\n");
+						if(LOG_CDB) logerror("get current subcode rw\n");
 						//Used???
 						//error("ERROR: get current subcode rw\n");
 						//exit(1);
@@ -833,14 +852,14 @@ void do_cd_command(void){
 						return;
 
 					default:
-						logerror("invalid getcurrentsubcode\n");
+						if(LOG_CDB) logerror("invalid getcurrentsubcode\n");
 						exit(1);
 				}
 
 				break;
 		case 0x30:
 				//set connection
-				logerror("CDBLOCK Command 0x%02x\n", (CR1>>8));
+				if(LOG_CDB) logerror("CDBLOCK Command 0x%02x\n", (CR1>>8));
 
 				CD_hirq |= HIRQ_CMOK | HIRQ_ESEL;
 
@@ -850,7 +869,7 @@ void do_cd_command(void){
 				break;
 		case 0x31:
 				//get connection
-				logerror("CDBLOCK Command 0x%02x\n", (CR1>>8));
+				if(LOG_CDB) logerror("CDBLOCK Command 0x%02x\n", (CR1>>8));
 
 				CR1 = (CD_status << 8);
 				CR2 = 0;
@@ -861,7 +880,7 @@ void do_cd_command(void){
 				break;
 		case 0x32:
 				//get last buff dest
-				logerror("CDBLOCK Command 0x%02x\n", (CR1>>8));
+				if(LOG_CDB) logerror("CDBLOCK Command 0x%02x\n", (CR1>>8));
 
 				CR1 = (CD_status << 8);
 				CR2 = 0;
@@ -872,7 +891,7 @@ void do_cd_command(void){
 				break;
 		case 0x40:
 				//set filter range
-				logerror("CDBLOCK Command 0x%02x\n", (CR1>>8));
+				if(LOG_CDB) logerror("CDBLOCK Command 0x%02x\n", (CR1>>8));
 
 
 				CD_hirq |= HIRQ_CMOK | HIRQ_ESEL;
@@ -881,7 +900,7 @@ void do_cd_command(void){
 
 				if(fn >= CDB_SEL_NUM){
 
-					logerror("ERROR: invalid selector\n");
+					if(LOG_CDB) logerror("ERROR: invalid selector\n");
 				}
 
 				CD_filt[fn].fad	 = ((CR1 & 0xff) << 16) | CR2;
@@ -892,12 +911,12 @@ void do_cd_command(void){
 				break;
 		case 0x41:
 				//get filter range
-				logerror("CDBLOCK Command 0x%02x\n", (CR1>>8));
+				if(LOG_CDB) logerror("CDBLOCK Command 0x%02x\n", (CR1>>8));
 
 				fn = CR3 >> 8;
 
 				if(fn >= CDB_SEL_NUM){
-					logerror("ERROR: invalid selector\n");
+					if(LOG_CDB) logerror("ERROR: invalid selector\n");
 				}
 
 				CR1 = (CD_status << 8) | (CD_filt[fn].fad >> 16);
@@ -910,7 +929,7 @@ void do_cd_command(void){
 				break;
 		case 0x42:
 				//set filter sh cond
-				logerror("CDBLOCK Command 0x%02x\n", (CR1>>8));
+				if(LOG_CDB) logerror("CDBLOCK Command 0x%02x\n", (CR1>>8));
 
 
 				CD_hirq |= HIRQ_CMOK | HIRQ_ESEL;
@@ -918,7 +937,7 @@ void do_cd_command(void){
 				fn = CR3 >> 8;
 
 				if(fn >= CDB_SEL_NUM){
-					logerror("ERROR: invalid selector\n");
+					if(LOG_CDB) logerror("ERROR: invalid selector\n");
 				}
 
 				CD_filt[fn].chan	= CR1 & 0xff;
@@ -932,12 +951,12 @@ void do_cd_command(void){
 				break;
 		case 0x43:
 				//get filter sh cond
-				logerror("CDBLOCK Command 0x%02x\n", (CR1>>8));
+				if(LOG_CDB) logerror("CDBLOCK Command 0x%02x\n", (CR1>>8));
 
 				fn = CR3 >> 8;
 
 				if(fn >= CDB_SEL_NUM){
-					logerror("ERROR: invalid selector\n");
+					if(LOG_CDB) logerror("ERROR: invalid selector\n");
 				}
 
 				CR1 = (CD_status << 8) | CD_filt[fn].chan;
@@ -950,14 +969,14 @@ void do_cd_command(void){
 				break;
 		case 0x44:
 				//set filter mode
-				logerror("CDBLOCK Command 0x%02x\n", (CR1>>8));
+				if(LOG_CDB) logerror("CDBLOCK Command 0x%02x\n", (CR1>>8));
 
 				CD_hirq |= HIRQ_CMOK | HIRQ_ESEL;
 
 				fn = CR3 >> 8;
 
 				if(fn >= CDB_SEL_NUM){
-					logerror("ERROR: invalid selector\n");
+					if(LOG_CDB) logerror("ERROR: invalid selector\n");
 				}
 
 				if(CR1 & 0x80){
@@ -980,12 +999,12 @@ void do_cd_command(void){
 				break;
 		case 0x45:
 				//get filter mode
-				logerror("CDBLOCK Command 0x%02x\n", (CR1>>8));
+				if(LOG_CDB) logerror("CDBLOCK Command 0x%02x\n", (CR1>>8));
 
 				fn = CR3 >> 8;
 
 				if(fn >= CDB_SEL_NUM){
-					logerror("ERROR: invalid selector\n");
+					if(LOG_CDB) logerror("ERROR: invalid selector\n");
 				}
 
 				CR1 = (CD_status << 8) | CD_filt[fn].mode;
@@ -997,14 +1016,14 @@ void do_cd_command(void){
 				break;
 		case 0x46:
 				//set filter con
-				logerror("CDBLOCK Command 0x%02x\n", (CR1>>8));
+				if(LOG_CDB) logerror("CDBLOCK Command 0x%02x\n", (CR1>>8));
 
 				CD_hirq |= HIRQ_CMOK | HIRQ_ESEL;
 
 				fn = CR3 >> 8;
 
 				if(fn >= CDB_SEL_NUM){
-					logerror("ERROR: invalid selector\n");
+					if(LOG_CDB) logerror("ERROR: invalid selector\n");
 				}
 
 				if(CR1 & 0x01){ CD_filt[fn].true_ = CR2 >> 8; }
@@ -1015,12 +1034,12 @@ void do_cd_command(void){
 				break;
 		case 0x47:
 				//get filter conn
-				logerror("CDBLOCK Command 0x%02x\n", (CR1>>8));
+				if(LOG_CDB) logerror("CDBLOCK Command 0x%02x\n", (CR1>>8));
 
 				fn = CR3 >> 8;
 
 				if(fn >= CDB_SEL_NUM){
-					logerror("ERROR: invalid selector\n");
+					if(LOG_CDB) logerror("ERROR: invalid selector\n");
 				}
 
 				CR1 = (CD_status << 8);
@@ -1033,7 +1052,7 @@ void do_cd_command(void){
 				break;
 		case 0x48:
 				//reset selector
-				logerror("CDBLOCK Command 0x%02x\n", (CR1>>8));
+				if(LOG_CDB) logerror("CDBLOCK Command 0x%02x\n", (CR1>>8));
 
 				// reset flag:
 				//
@@ -1093,7 +1112,7 @@ void do_cd_command(void){
 					if(pn != 0xff){
 
 						if(pn >= CDB_SEL_NUM){
-							logerror("ERROR: invalid selector\n");
+							if(LOG_CDB) logerror("ERROR: invalid selector\n");
 							//exit(1);
 						}
 
@@ -1129,7 +1148,7 @@ void do_cd_command(void){
 				break;
 		case 0x50:
 				//get block size
-				logerror("CDBLOCK Command 0x%02x\n", (CR1>>8));
+				if(LOG_CDB) logerror("CDBLOCK Command 0x%02x\n", (CR1>>8));
 				CD_hirq |= HIRQ_CMOK | HIRQ_ESEL;
 
 				CR1 = (CD_status << 8);
@@ -1137,19 +1156,19 @@ void do_cd_command(void){
 				CR3 = 0x18 <<8;		// fixme
 				CR4 = 200;
 
-				logerror("get cd block size : free=%i total=200 partitions=24\n", CD_free_space);
+				if(LOG_CDB) logerror("get cd block size : free=%i total=200 partitions=24\n", CD_free_space);
 
 				break;
 		case 0x51:
 				//get buffer size
-				logerror("CDBLOCK Command 0x%02x\n", (CR1>>8));
+				if(LOG_CDB) logerror("CDBLOCK Command 0x%02x\n", (CR1>>8));
 
 				pn= CR3 >> 8;;
 
 				CD_hirq |= HIRQ_CMOK | HIRQ_ESEL;
 
 				if(pn >= CDB_SEL_NUM){
-					logerror("ERROR: invalid selector\n");
+					if(LOG_CDB) logerror("ERROR: invalid selector\n");
 					exit(1);
 				}
 
@@ -1158,12 +1177,12 @@ void do_cd_command(void){
 				CR3 = 0;
 				CR4 = 0x0001;//CD_part[pn].size; // sectors
 //HACK
-				logerror("get buffer %02i size = %03i sectors\n", pn, CD_part[pn].size);
+				if(LOG_CDB) logerror("get buffer %02i size = %03i sectors\n", pn, CD_part[pn].size);
 
 				break;
 		case 0x52:
 				//calc actual size
-				logerror("CDBLOCK Command 0x%02x\n", (CR1>>8));
+				if(LOG_CDB) logerror("CDBLOCK Command 0x%02x\n", (CR1>>8));
 
 				CD_hirq |= HIRQ_CMOK | HIRQ_ESEL;
 
@@ -1172,12 +1191,12 @@ void do_cd_command(void){
 				sn = CR4;
 
 				if(pn >= CDB_SEL_NUM){
-					logerror("ERROR: invalid selector\n");
+					if(LOG_CDB) logerror("ERROR: invalid selector\n");
 					exit(1);
 				}
 
-				if(sp == 0xffff){ logerror("ERROR: SPOS_END on calcactualsize\n"); exit(1); }
-				if(sn == 0xffff){ logerror("ERROR: SNUM_END on calcactualsize\n"); exit(1); }
+				if(sp == 0xffff){ if(LOG_CDB) logerror("ERROR: SPOS_END on calcactualsize\n"); exit(1); }
+				if(sn == 0xffff){ if(LOG_CDB) logerror("ERROR: SNUM_END on calcactualsize\n"); exit(1); }
 
 				CD_actual_size = 0;
 
@@ -1191,7 +1210,7 @@ void do_cd_command(void){
 				break;
 		case 0x53:
 				//get actual block size
-				logerror("CDBLOCK Command 0x%02x\n", (CR1>>8));
+				if(LOG_CDB) logerror("CDBLOCK Command 0x%02x\n", (CR1>>8));
 
 				CD_hirq |= HIRQ_CMOK | HIRQ_ESEL;
 
@@ -1203,18 +1222,18 @@ void do_cd_command(void){
 				CR3 = 0;
 				CR4 = 0;
 
-				logerror("get actual block size : %i words\n", CD_actual_size);
+				if(LOG_CDB) logerror("get actual block size : %i words\n", CD_actual_size);
 				break;
 		case 0x54:
 				//get sector info
-				logerror("CDBLOCK Command 0x%02x\n", (CR1>>8));
+				if(LOG_CDB) logerror("CDBLOCK Command 0x%02x\n", (CR1>>8));
 
 
 				pn = CR3 >> 8;
 				sn = CR2 & 0xff;
 
 				if(pn >= CDB_SEL_NUM){
-					logerror("ERROR: invalid selector\n");
+					if(LOG_CDB) logerror("ERROR: invalid selector\n");
 					exit(1);
 				}
 
@@ -1228,7 +1247,7 @@ void do_cd_command(void){
 				break;
 		case 0x55:
 				//execute fad search
-				logerror("CDBLOCK Command 0x%02x\n", (CR1>>8));
+				if(LOG_CDB) logerror("CDBLOCK Command 0x%02x\n", (CR1>>8));
 
 				CD_hirq |= HIRQ_CMOK | HIRQ_ESEL;
 
@@ -1237,13 +1256,13 @@ void do_cd_command(void){
 				fad = ((CR3 & 0xff) << 8) | CR4;
 
 				if(pn >= CDB_SEL_NUM){
-					logerror("ERROR: invalid selector\n");
+					if(LOG_CDB) logerror("ERROR: invalid selector\n");
 					exit(1);
 				}
 
 				if(sp >= CD_part[pn].size){
 					// SECT_SPOS_END or something ...
-					logerror("ERROR: invalid sector\n");
+					if(LOG_CDB) logerror("ERROR: invalid sector\n");
 					exit(1);
 				}
 
@@ -1283,7 +1302,7 @@ void do_cd_command(void){
 				break;
 		case 0x56:
 				//get fad search res
-				logerror("CDBLOCK Command 0x%02x\n", (CR1>>8));
+				if(LOG_CDB) logerror("CDBLOCK Command 0x%02x\n", (CR1>>8));
 
 
 				CD_hirq |= HIRQ_CMOK | HIRQ_ESEL;
@@ -1296,21 +1315,21 @@ void do_cd_command(void){
 				break;
 		case 0x60:
 				//set sector length
-				logerror("CDBLOCK Command 0x%02x\n", (CR1>>8));
+				if(LOG_CDB) logerror("CDBLOCK Command 0x%02x\n", (CR1>>8));
 /*
 				switch(CR1 & 0xff){
 				case 0: cdb_get_sect_size = 2048; break;
-				case 1: cdb_get_sect_size = 2336; logerror("ERROR: get len = 2336\n"); exit(1); break;
-				case 2: cdb_get_sect_size = 2340; logerror("ERROR: get len = 2340\n"); exit(1); break;
-				case 3: cdb_get_sect_size = 2352; logerror("ERROR: get len = 2352\n"); exit(1); break;
+				case 1: cdb_get_sect_size = 2336; if(LOG_CDB) logerror("ERROR: get len = 2336\n"); exit(1); break;
+				case 2: cdb_get_sect_size = 2340; if(LOG_CDB) logerror("ERROR: get len = 2340\n"); exit(1); break;
+				case 3: cdb_get_sect_size = 2352; if(LOG_CDB) logerror("ERROR: get len = 2352\n"); exit(1); break;
 				case 0xff: break;
 				}
 
 				switch(CR2 >> 8){
 				case 0: cdb_put_sect_size = 2048; break;
-				case 1: cdb_put_sect_size = 2336; logerror("ERROR: put len = 2336\n"); exit(1); break;
-				case 2: cdb_put_sect_size = 2340; logerror("ERROR: put len = 2340\n"); exit(1); break;
-				case 3: cdb_put_sect_size = 2352; logerror("ERROR: put len = 2352\n"); exit(1); break;
+				case 1: cdb_put_sect_size = 2336; if(LOG_CDB) logerror("ERROR: put len = 2336\n"); exit(1); break;
+				case 2: cdb_put_sect_size = 2340; if(LOG_CDB) logerror("ERROR: put len = 2340\n"); exit(1); break;
+				case 3: cdb_put_sect_size = 2352; if(LOG_CDB) logerror("ERROR: put len = 2352\n"); exit(1); break;
 				case 0xff: break;
 				}
 */
@@ -1318,12 +1337,12 @@ void do_cd_command(void){
 
 				CDB_SEND_REPORT();
 
-//				logerror("set sector length : get=%i put=%i\n", cdb_get_sect_size, cdb_put_sect_size);
+//				if(LOG_CDB) logerror("set sector length : get=%i put=%i\n", cdb_get_sect_size, cdb_put_sect_size);
 
 				break;
 		case 0x61:
 				//get sector data
-				logerror("CDBLOCK Command 0x%02x\n", (CR1>>8));
+				if(LOG_CDB) logerror("CDBLOCK Command 0x%02x\n", (CR1>>8));
 
 
 				pn = (CR3 >> 8);
@@ -1331,7 +1350,7 @@ void do_cd_command(void){
 				sn = CR4;
 
 				if(pn >= CDB_SEL_NUM){
-					logerror("ERROR: invalid selector\n");
+					if(LOG_CDB) logerror("ERROR: invalid selector\n");
 					exit(1);
 				}
 
@@ -1352,28 +1371,28 @@ void do_cd_command(void){
 				break;
 		case 0x62:
 				//delete sector data
-				logerror("CDBLOCK Command 0x%02x\n", (CR1>>8));
+				if(LOG_CDB) logerror("CDBLOCK Command 0x%02x\n", (CR1>>8));
 
 				pn = (CR3 >> 8);
 				sp = CR2;
 				sn = CR4;
 
 /*				if(pn >= CDB_SEL_NUM){
-					logerror("ERROR: invalid selector\n");
+					if(LOG_CDB) logerror("ERROR: invalid selector\n");
 					exit(1);
 				}
 */
-				if(sp == 0xffff){ logerror("ERROR: delete sector data : sp = SPOS_END\n"); exit(1); }
-				if(sn == 0xffff){ logerror("ERROR: delete sector data : sn = SNUM_END\n"); exit(1); }
+				if(sp == 0xffff){ if(LOG_CDB) logerror("ERROR: delete sector data : sp = SPOS_END\n"); exit(1); }
+				if(sn == 0xffff){ if(LOG_CDB) logerror("ERROR: delete sector data : sn = SNUM_END\n"); exit(1); }
 
 				if((sp > CD_part[pn].size) ||
 				   (sp+sn > CD_part[pn].size)){
-					logerror("ERROR: invalid delete sector data\n");
+					if(LOG_CDB) logerror("ERROR: invalid delete sector data\n");
 //					exit(1);
 				}
 
 				if(sn != 1 && sp != 0){
-					logerror("ERROR: complex delete sector data\n");
+					if(LOG_CDB) logerror("ERROR: complex delete sector data\n");
 //					exit(1);
 				}
 
@@ -1389,14 +1408,14 @@ void do_cd_command(void){
 				break;
 		case 0x63:
 				//get then delete sd
-				logerror("CDBLOCK Command 0x%02x\n", (CR1>>8));
+				if(LOG_CDB) logerror("CDBLOCK Command 0x%02x\n", (CR1>>8));
 
 				pn = (CR3 >> 8);
 				sp = CR2;
 				sn = CR4;
 
 				if(pn >= CDB_SEL_NUM){
-					logerror("ERROR: invalid selector\n");
+					if(LOG_CDB) logerror("ERROR: invalid selector\n");
 					exit(1);
 				}
 
@@ -1417,17 +1436,17 @@ void do_cd_command(void){
 				break;
 		case 0x65:
 				//copy sector data
-				logerror("CDBLOCK Command 0x%02x\n", (CR1>>8));
+				if(LOG_CDB) logerror("CDBLOCK Command 0x%02x\n", (CR1>>8));
 				//NOTUSED???
 				break;
 		case 0x66:
 				//move sector data
-				logerror("CDBLOCK Command 0x%02x\n", (CR1>>8));
+				if(LOG_CDB) logerror("CDBLOCK Command 0x%02x\n", (CR1>>8));
 				//NOUSE???
 				break;
 		case 0x67:
 				//get copy error
-				logerror("CDBLOCK Command 0x%02x\n", (CR1>>8));
+				if(LOG_CDB) logerror("CDBLOCK Command 0x%02x\n", (CR1>>8));
 
 				// return copy/mode sector error code:
 				// - 0x00 = okay
@@ -1445,17 +1464,17 @@ void do_cd_command(void){
 				break;
 		case 0x70:
 				//change dir
-				logerror("CDBLOCK Command 0x%02x\n", (CR1>>8));
+				if(LOG_CDB) logerror("CDBLOCK Command 0x%02x\n", (CR1>>8));
 				//NOUSE???
 				break;
 		case 0x71:
 				//read dir
-				logerror("CDBLOCK Command 0x%02x\n", (CR1>>8));
+				if(LOG_CDB) logerror("CDBLOCK Command 0x%02x\n", (CR1>>8));
 				//NOUSE
 				break;
 		case 0x72:
 				//get file sys scope
-				logerror("CDBLOCK Command 0x%02x\n", (CR1>>8));
+				if(LOG_CDB) logerror("CDBLOCK Command 0x%02x\n", (CR1>>8));
 
 
 				CD_hirq |= HIRQ_CMOK | HIRQ_EFLS;
@@ -1470,7 +1489,7 @@ void do_cd_command(void){
 				break;
 		case 0x73:
 				//get file info
-				logerror("CDBLOCK Command 0x%02x\n", (CR1>>8));
+				if(LOG_CDB) logerror("CDBLOCK Command 0x%02x\n", (CR1>>8));
 
 				// check if out of scope
 
@@ -1483,7 +1502,7 @@ void do_cd_command(void){
 					// obtain "all-files-in-scope" 's info (queued)
 					// needs file-scope emulation though
 
-					logerror("ERROR: getfileinfo all-files-in-scope\n");
+					if(LOG_CDB) logerror("ERROR: getfileinfo all-files-in-scope\n");
 					exit(1);
 
 				}else{
@@ -1509,7 +1528,7 @@ void do_cd_command(void){
 				break;
 		case 0x74:
 				//read file
-				logerror("CDBLOCK Command 0x%02x\n", (CR1>>8));
+				if(LOG_CDB) logerror("CDBLOCK Command 0x%02x\n", (CR1>>8));
 
 				CD_com_play = CD_com;
 
@@ -1518,17 +1537,17 @@ void do_cd_command(void){
 				off = ((CR1 & 0xff) << 16) | CR2;
 
 				if(fn >= CDB_SEL_NUM){
-					logerror("ERROR: invalid selector\n");
+					if(LOG_CDB) logerror("ERROR: invalid selector\n");
 					exit(1);
 				}
 
 				if(fid >= CD_file_num+1){
-					logerror("ERROR: invalid file id (fid=%i file num=%i)\n", fid, CD_file_num);
+					if(LOG_CDB) logerror("ERROR: invalid file id (fid=%i file num=%i)\n", fid, CD_file_num);
 					exit(1);
 				}
 
 				if(CD_file[fid].attr & 0x02){
-					logerror("ERROR: file id %i is a directory\n", fid);
+					if(LOG_CDB) logerror("ERROR: file id %i is a directory\n", fid);
 					exit(1);
 				}
 
@@ -1557,7 +1576,7 @@ void do_cd_command(void){
 				break;
 		case 0x75:
 				//abort file
-				logerror("CDBLOCK Command 0x%02x\n", (CR1>>8));
+				if(LOG_CDB) logerror("CDBLOCK Command 0x%02x\n", (CR1>>8));
 
 				// stop file info hold
 				// stop file read , destroy file info hold
@@ -1576,7 +1595,7 @@ void do_cd_command(void){
 				CDB_SEND_REPORT();
 				break;
 		case 0x93:
-				logerror("CDBLOCK Command 0x%02x\n", (CR1>>8));
+				if(LOG_CDB) logerror("CDBLOCK Command 0x%02x\n", (CR1>>8));
 				CD_hirq |= HIRQ_CMOK | HIRQ_MPED;
 
 				CR1 = (CD_status << 8) | 0x01;
@@ -1586,7 +1605,7 @@ void do_cd_command(void){
 				break;
 		case 0xe0:
 				usrintf_showmessage("cpu #%d (PC=%08X) CDBLOCK_COMMAND 0xe0",  cpu_getactivecpu(),activecpu_get_pc());
-				logerror("CDBLOCK Command 0x%02x\n", (CR1>>8));
+				if(LOG_CDB) logerror("CDBLOCK Command 0x%02x\n", (CR1>>8));
 				CD_hirq |= HIRQ_CMOK | HIRQ_EFLS | HIRQ_CSCT;
 				//CDB_SEND_REPORT();
 				CR1 = (CD_status <<8);
@@ -1595,7 +1614,7 @@ void do_cd_command(void){
 				CR4 = 0x0000;
 				break;
 		case 0xe1:
-				logerror("CDBLOCK Command 0x%02x\n", (CR1>>8));
+				if(LOG_CDB) logerror("CDBLOCK Command 0x%02x\n", (CR1>>8));
 				CD_hirq |= HIRQ_CMOK;
 
 				CR1 = (CD_status << 8);
@@ -1605,7 +1624,7 @@ void do_cd_command(void){
 				break;
 	}
 
-	logerror("Command executed,register status: CD_hirq %08x CD_mask %08x CR1 %08x, CR2 %08x, CR3 %08x, CR4 %08x\n", CD_hirq,CD_mask,CR1,CR2,CR3,CR4);
+	if(LOG_CDB) logerror("Command executed,register status: CD_hirq %08x CD_mask %08x CR1 %08x, CR2 %08x, CR3 %08x, CR4 %08x\n", CD_hirq,CD_mask,CR1,CR2,CR3,CR4);
 }
 
 
@@ -1617,7 +1636,7 @@ static READ32_HANDLER ( cdregister_r ){
 
 	offset=offset*4;
 
-	//logerror("read from cd block offset=%08x\n", offset);
+	//if(LOG_CDB) logerror("read from cd block offset=%08x\n", offset);
 	switch(offset){
 
 		case 0x90008:
@@ -1627,19 +1646,19 @@ static READ32_HANDLER ( cdregister_r ){
 			return CD_mask <<16 | CD_mask;
 
 		case 0x90018:
-			//logerror("SH-1: PC(%08x) CR1 = %08x\n", activecpu_get_pc(), CR1<<16 | CR1);
+			//if(LOG_CDB) logerror("SH-1: PC(%08x) CR1 = %08x\n", activecpu_get_pc(), CR1<<16 | CR1);
 			//return 0xffff0000 | CR1;
 			return CR1 <<16 | CR1;
 		case 0x9001c:
-			//logerror("SH-1: PC(%08x) CR2 = %08x\n", activecpu_get_pc(), CR2<<16 | CR2);
+			//if(LOG_CDB) logerror("SH-1: PC(%08x) CR2 = %08x\n", activecpu_get_pc(), CR2<<16 | CR2);
 			//return 0xffff0000 | CR2;
 			return CR2 <<16 | CR2;
 		case 0x90020:
-			//logerror("SH-1: PC(%08x) CR3 = %08x\n", activecpu_get_pc(), CR3<<16 | CR3);
+			//if(LOG_CDB) logerror("SH-1: PC(%08x) CR3 = %08x\n", activecpu_get_pc(), CR3<<16 | CR3);
 			//return 0xffff0000 | CR3;
 			return CR3 <<16 | CR3;
 		case 0x90024:
-			//logerror("SH-1: PC(%08x) CR4 = %08x\n", activecpu_get_pc(), CR4<<16 | CR4);
+			//if(LOG_CDB) logerror("SH-1: PC(%08x) CR4 = %08x\n", activecpu_get_pc(), CR4<<16 | CR4);
 			CD_cr_first = 0;
 			//return 0xffff0000 | CR4;
 			//usrintf_showmessage("cpu #%d (PC=%08X) CDBLOCK_READ",  cpu_getactivecpu(),activecpu_get_pc());
@@ -1651,7 +1670,7 @@ static READ32_HANDLER ( cdregister_r ){
 			//return data...
 /*
 			if(CD_info_count >= CD_info_size){
-				logerror("ERROR: dataout overbound\n");
+				if(LOG_CDB) logerror("ERROR: dataout overbound\n");
 				exit(1);
 			}
 */
@@ -1665,7 +1684,7 @@ static READ32_HANDLER ( cdregister_r ){
 			return(d<<16|d);
 
 		default:
-			logerror("CD Block Unknown read %08x\n", offset);
+			if(LOG_CDB) logerror("CD Block Unknown read %08x\n", offset);
 			return 0xffff0000 | 0xffff;
 	}
 
@@ -1678,7 +1697,7 @@ static READ32_HANDLER ( cdregister_r ){
 static WRITE32_HANDLER ( cdregister_w ){
 
 	offset=offset*4;
-	logerror("write to cd block data=%08x offset=%08x\n",data, offset);
+	if(LOG_CDB) logerror("write to cd block data=%08x offset=%08x\n",data, offset);
 	switch(offset){
 
 		case 0x90008:
@@ -1703,12 +1722,12 @@ static WRITE32_HANDLER ( cdregister_w ){
 		case 0x90024:
 			CR4=data>>16;
 			CD_cr_writing = 0;
-			logerror("CD_hirq %08x CD_mask %08x CR1 %08x, CR2 %08x, CR3 %08x, CR4 %08x ------ command execution\n",CD_hirq,CD_mask,CR1,CR2,CR3,CR4);
+			if(LOG_CDB) logerror("CD_hirq %08x CD_mask %08x CR1 %08x, CR2 %08x, CR3 %08x, CR4 %08x ------ command execution\n",CD_hirq,CD_mask,CR1,CR2,CR3,CR4);
 			//usrintf_showmessage("cpu #%d (PC=%08X) CDBLOCK_COMMAND",  cpu_getactivecpu(),activecpu_get_pc());
 			do_cd_command();
 			break;
 		default:
-			logerror("CD Block Unknown write to %08x data %08x\n", offset,data);
+			if(LOG_CDB) logerror("CD Block Unknown write to %08x data %08x\n", offset,data);
 
 	}
 
@@ -1897,7 +1916,7 @@ static UINT8 stv_SMPC_r8 (int offset)
 
 	if (activecpu_get_pc()==0x060020E6) return_data = 0x10;
 
-	//logerror ("cpu #%d (PC=%08X) SMPC: Read from Byte Offset %02x Returns %02x\n", cpu_getactivecpu(), activecpu_get_pc(), offset, return_data);
+	//if(LOG_SMPC) logerror ("cpu #%d (PC=%08X) SMPC: Read from Byte Offset %02x Returns %02x\n", cpu_getactivecpu(), activecpu_get_pc(), offset, return_data);
 
 
 	return return_data;
@@ -1910,7 +1929,7 @@ static void stv_SMPC_w8 (int offset, UINT8 data)
 	time(&ltime);
 	today = localtime(&ltime);
 
-//	logerror ("8-bit SMPC Write to Offset %02x with Data %02x\n", offset, data);
+//	if(LOG_SMPC) logerror ("8-bit SMPC Write to Offset %02x with Data %02x\n", offset, data);
 	smpc_ram[offset] = data;
 
 	if(offset == 0x75)
@@ -1921,11 +1940,11 @@ static void stv_SMPC_w8 (int offset, UINT8 data)
 
 
 //		if (data & 0x01)
-//			logerror("bit 0 active\n");
+//			if(LOG_SMPC) logerror("bit 0 active\n");
 //		if (data & 0x02)
-//			logerror("bit 1 active\n");
+//			if(LOG_SMPC) logerror("bit 1 active\n");
 //		if (data & 0x10)
-			//logerror("bit 4 active\n");//LOT
+			//if(LOG_SMPC) logerror("bit 4 active\n");//LOT
 		PDR1 = (data & 0x60);
 	}
 
@@ -1938,14 +1957,14 @@ static void stv_SMPC_w8 (int offset, UINT8 data)
 		//usrintf_showmessage("PDR2 = %02x",smpc_ram[0x77]);
 		if(!(smpc_ram[0x77] & 0x10))
 		{
-			logerror("SMPC: M68k on\n");
+			if(LOG_SMPC) logerror("SMPC: M68k on\n");
 			cpunum_set_input_line(2, INPUT_LINE_RESET, PULSE_LINE);
 			cpunum_set_input_line(2, INPUT_LINE_HALT, CLEAR_LINE);
 			en_68k = 1;
 		}
 		else
 		{
-			logerror("SMPC: M68k off\n");
+			if(LOG_SMPC) logerror("SMPC: M68k off\n");
 			cpunum_set_input_line(2, INPUT_LINE_HALT, ASSERT_LINE);
 			en_68k = 0;
 		}
@@ -1970,6 +1989,12 @@ static void stv_SMPC_w8 (int offset, UINT8 data)
 		//enable PAD irq & VDP2 external latch for port 1/2
 		EXLE1 = smpc_ram[0x7f] & 1 ? 1 : 0;
 		EXLE2 = smpc_ram[0x7f] & 2 ? 1 : 0;
+		if(EXLE1 || EXLE2)
+			if(!(stv_scu[40] & 0x0100)) /*Pad irq*/
+			{
+				if(LOG_SMPC) logerror ("Interrupt: PAD irq at scanline %04x, Vector 0x48 Level 0x08\n",scanline);
+				cpunum_set_input_line_and_vector(0, 8, HOLD_LINE , 0x48);
+			}
 	}
 
 	if (offset == 0x1f)
@@ -1977,12 +2002,12 @@ static void stv_SMPC_w8 (int offset, UINT8 data)
 		switch (data)
 		{
 			case 0x00:
-				logerror ("SMPC: Master ON\n");
+				if(LOG_SMPC) logerror ("SMPC: Master ON\n");
 				smpc_ram[0x5f]=0x00;
 				break;
 			//in theory 0x01 is for Master OFF,but obviously is not used.
 			case 0x02:
-				logerror ("SMPC: Slave ON\n");
+				if(LOG_SMPC) logerror ("SMPC: Slave ON\n");
 				smpc_ram[0x5f]=0x02;
 				#if USE_SLAVE
 				cpunum_set_input_line(1, INPUT_LINE_RESET, PULSE_LINE);
@@ -1990,43 +2015,43 @@ static void stv_SMPC_w8 (int offset, UINT8 data)
 				#endif
 				break;
 			case 0x03:
-				logerror ("SMPC: Slave OFF\n");
+				if(LOG_SMPC) logerror ("SMPC: Slave OFF\n");
 				smpc_ram[0x5f]=0x03;
 				cpunum_set_input_line(1, INPUT_LINE_HALT, ASSERT_LINE);
 				break;
 			case 0x06:
-				logerror ("SMPC: Sound ON\n");
+				if(LOG_SMPC) logerror ("SMPC: Sound ON\n");
 				/* wrong? */
 				smpc_ram[0x5f]=0x06;
 				cpunum_set_input_line(2, INPUT_LINE_RESET, PULSE_LINE);
 				cpunum_set_input_line(2, INPUT_LINE_HALT, CLEAR_LINE);
 				break;
 			case 0x07:
-				logerror ("SMPC: Sound OFF\n");
+				if(LOG_SMPC) logerror ("SMPC: Sound OFF\n");
 				smpc_ram[0x5f]=0x07;
 				break;
 			/*CD (SH-1) ON/OFF,guess that this is needed for Sports Fishing games...*/
 			//case 0x08:
 			//case 0x09:
 			case 0x0d:
-				logerror ("SMPC: System Reset\n");
+				if(LOG_SMPC) logerror ("SMPC: System Reset\n");
 				smpc_ram[0x5f]=0x0d;
 				cpunum_set_input_line(0, INPUT_LINE_RESET, PULSE_LINE);
 				system_reset();
 				break;
 			case 0x0e:
-				logerror ("SMPC: Change Clock to 352\n");
+				if(LOG_SMPC) logerror ("SMPC: Change Clock to 352\n");
 				smpc_ram[0x5f]=0x0e;
 				cpunum_set_input_line(0, INPUT_LINE_NMI, PULSE_LINE); // ff said this causes nmi, should we set a timer then nmi?
 				break;
 			case 0x0f:
-				logerror ("SMPC: Change Clock to 320\n");
+				if(LOG_SMPC) logerror ("SMPC: Change Clock to 320\n");
 				smpc_ram[0x5f]=0x0f;
 				cpunum_set_input_line(0, INPUT_LINE_NMI, PULSE_LINE); // ff said this causes nmi, should we set a timer then nmi?
 				break;
 			/*"Interrupt Back"*/
 			case 0x10:
-				logerror ("SMPC: Status Acquire\n");
+				if(LOG_SMPC) logerror ("SMPC: Status Acquire\n");
 				smpc_ram[0x5f]=0x10;
 				smpc_ram[0x21]=0x80;
 			  	smpc_ram[0x23] = DectoBCD((today->tm_year + 1900)/100);
@@ -2067,13 +2092,13 @@ static void stv_SMPC_w8 (int offset, UINT8 data)
 			//	/*This is for RTC,cartridge code and similar stuff...*/
 			//	if(!(stv_scu[40] & 0x0080)) /*System Manager(SMPC) irq*/ /* we can't check this .. breaks controls .. probably issues elsewhere? */
 				{
-					logerror ("Interrupt: System Manager (SMPC) at scanline %04x, Vector 0x47 Level 0x08\n",scanline);
+					if(LOG_SMPC) logerror ("Interrupt: System Manager (SMPC) at scanline %04x, Vector 0x47 Level 0x08\n",scanline);
 					cpunum_set_input_line_and_vector(0, 8, HOLD_LINE , 0x47);
 				}
 			break;
 			/* RTC write*/
 			case 0x16:
-				logerror("SMPC: RTC write\n");
+				if(LOG_SMPC) logerror("SMPC: RTC write\n");
 				smpc_ram[0x2f] = smpc_ram[0x0d];
 				smpc_ram[0x2d] = smpc_ram[0x0b];
 				smpc_ram[0x2b] = smpc_ram[0x09];
@@ -2085,27 +2110,27 @@ static void stv_SMPC_w8 (int offset, UINT8 data)
 			break;
 			/* SMPC memory setting*/
 			case 0x17:
-				logerror ("SMPC: memory setting\n");
+				if(LOG_SMPC) logerror ("SMPC: memory setting\n");
 				smpc_ram[0x5f]=0x17;
 			break;
 			case 0x18:
-				logerror ("SMPC: NMI request\n");
+				if(LOG_SMPC) logerror ("SMPC: NMI request\n");
 				smpc_ram[0x5f]=0x18;
 				/*NMI is unconditionally requested for the Sound CPU?*/
 				cpunum_set_input_line(2, INPUT_LINE_NMI, PULSE_LINE);
 				break;
 			case 0x19:
-				logerror ("SMPC: NMI Enable\n");
+				if(LOG_SMPC) logerror ("SMPC: NMI Enable\n");
 				smpc_ram[0x5f]=0x19;
 				SCSP_reset = 1;
 				break;
 			case 0x1a:
-				logerror ("SMPC: NMI Disable\n");
+				if(LOG_SMPC) logerror ("SMPC: NMI Disable\n");
 				smpc_ram[0x5f]=0x1a;
 				SCSP_reset = 0;
 				break;
 			default:
-				logerror ("cpu #%d (PC=%08X) SMPC: undocumented Command %02x\n", cpu_getactivecpu(), activecpu_get_pc(), data);
+				if(LOG_SMPC) logerror ("cpu #%d (PC=%08X) SMPC: undocumented Command %02x\n", cpu_getactivecpu(), activecpu_get_pc(), data);
 		}
 
 		// we've processed the command, clear status flag
@@ -2183,7 +2208,7 @@ static INTERRUPT_GEN( stv_interrupt )
 	{
 		if(!(stv_scu[40] & 2))/*VBLANK-OUT*/
 		{
-			logerror ("Interrupt: VBlank-OUT at scanline %04x, Vector 0x41 Level 0x0e\n",scanline);
+			if(LOG_IRQ) logerror ("Interrupt: VBlank-OUT at scanline %04x, Vector 0x41 Level 0x0e\n",scanline);
 			cpunum_set_input_line_and_vector(0, 0xe, HOLD_LINE , 0x41);
 			stv_vblank = 0;
 			return;
@@ -2197,7 +2222,7 @@ static INTERRUPT_GEN( stv_interrupt )
 		{
 			if(!(stv_scu[40] & 8))/*Timer 0*/
 			{
-				logerror ("Interrupt: Timer 0 at scanline %04x, Vector 0x43 Level 0x0c\n",scanline);
+				if(LOG_IRQ) logerror ("Interrupt: Timer 0 at scanline %04x, Vector 0x43 Level 0x0c\n",scanline);
 				cpunum_set_input_line_and_vector(0, 0xc, HOLD_LINE, 0x43 );
 				return;
 			}
@@ -2206,7 +2231,7 @@ static INTERRUPT_GEN( stv_interrupt )
 		/*TODO:use this *at the end* of the draw line.*/
 		if(!(stv_scu[40] & 4))/*HBLANK-IN*/
 		{
-			logerror ("Interrupt: HBlank-In at scanline %04x, Vector 0x42 Level 0x0d\n",scanline);
+			if(LOG_IRQ) logerror ("Interrupt: HBlank-In at scanline %04x, Vector 0x42 Level 0x0d\n",scanline);
 			cpunum_set_input_line_and_vector(0, 0xd, HOLD_LINE , 0x42);
 		}
 	}
@@ -2216,7 +2241,7 @@ static INTERRUPT_GEN( stv_interrupt )
 
 		if(!(stv_scu[40] & 1))/*VBLANK-IN*/
 		{
-			logerror ("Interrupt: VBlank IN at scanline %04x, Vector 0x40 Level 0x0f\n",scanline);
+			if(LOG_IRQ) logerror ("Interrupt: VBlank IN at scanline %04x, Vector 0x40 Level 0x0f\n",scanline);
 			cpunum_set_input_line_and_vector(0, 0xf, HOLD_LINE , 0x40);
 			stv_vblank = 1;
 			return;
@@ -2226,15 +2251,12 @@ static INTERRUPT_GEN( stv_interrupt )
 		{
 			if(!(stv_scu[40] & 8))/*Timer 0*/
 			{
-				logerror ("Interrupt: Timer 0 at scanline %04x, Vector 0x43 Level 0x0c\n",scanline);
+				if(LOG_IRQ) logerror ("Interrupt: Timer 0 at scanline %04x, Vector 0x43 Level 0x0c\n",scanline);
 				cpunum_set_input_line_and_vector(0, 0xc, HOLD_LINE, 0x43 );
 				return;
 			}
 		}
-
-
 	}
-
 }
 
 /*
@@ -2280,7 +2302,7 @@ static UINT8 port_sel,mux_data;
 READ32_HANDLER ( stv_io_r32 )
 {
 	static int i= -1;
-//	logerror("(PC=%08X): I/O r %08X & %08X\n", activecpu_get_pc(), offset*4, mem_mask);
+//	if(LOG_IOGA) logerror("(PC=%08X): I/O r %08X & %08X\n", activecpu_get_pc(), offset*4, mem_mask);
 
 	switch(offset)
 	{
@@ -2341,6 +2363,8 @@ READ32_HANDLER ( stv_io_r32 )
 		}
 		break;
 		case 7:
+		if(LOG_IOGA) logerror("(PC %d=%06x)Warning: READ from PORT_AD\n",cpu_getactivecpu(), activecpu_get_pc());
+		usrintf_showmessage("Read from PORT_AD");
 		i++;
 		return port_ad[i & 7];
 		default:
@@ -2350,7 +2374,7 @@ READ32_HANDLER ( stv_io_r32 )
 
 WRITE32_HANDLER ( stv_io_w32 )
 {
-	//logerror("(PC=%08X): I/O w %08X = %08X & %08X\n", activecpu_get_pc(), offset*4, data, mem_mask);
+	//if(LOG_IOGA) logerror("(PC=%08X): I/O w %08X = %08X & %08X\n", activecpu_get_pc(), offset*4, data, mem_mask);
 
 	switch(offset)
 	{
@@ -2482,6 +2506,7 @@ DMA TODO:
 -Add level priority & DMA status register.
 -Add DMA start factor conditions that are different than 7.
 -Add byte data type transfer.
+-Set boundaries.
 */
 
 #define DIRECT_MODE(_lv_)			(!(stv_scu[5+(_lv_*8)] & 0x01000000))
@@ -2498,18 +2523,26 @@ DMA TODO:
 #define SET_D1MV_FROM_1_TO_0	if(DMA_STATUS & 0x100) 	    DMA_STATUS^=0x100
 #define SET_D2MV_FROM_1_TO_0	if(DMA_STATUS & 0x1000)     DMA_STATUS^=0x1000
 
+UINT32 scu_index_0,scu_index_1,scu_index_2;
+
 READ32_HANDLER( stv_scu_r32 )
 {
 	/*TODO: write only registers must return 0...*/
 	//usrintf_showmessage("%02x",DMA_STATUS);
 	if ( offset == 35 )
 	{
-        logerror( "DSP mem read at %08X\n", stv_scu[34]);
+        if(LOG_SCU) logerror( "DSP mem read at %08X\n", stv_scu[34]);
         return dsp_ram_addr_r();
     }
+    else if( offset == 41 )
+    {
+		logerror("(PC=%08x) IRQ status reg read\n",activecpu_get_pc());
+		/*TODO:for now we're activating everything here,but we need to return the proper active irqs*/
+		return 0xffffffff;
+	}
     else
     {
-    	logerror("SCU reg read at %d = %08x\n",offset,stv_scu[offset]);
+    	if(LOG_SCU) logerror("SCU reg read at %d = %08x\n",offset,stv_scu[offset]);
     	return stv_scu[offset];
    	}
 }
@@ -2529,7 +2562,7 @@ WRITE32_HANDLER( stv_scu_w32 )
 			if(stv_scu[3] & 0x100)
 				scu_src_add_0 = 4;
 			else
-				scu_src_add_0 = 0;
+				scu_src_add_0 = 1;
 
 			/*Write address add value for DMA lv 0*/
 			switch(stv_scu[3] & 7)
@@ -2566,11 +2599,14 @@ WRITE32_HANDLER( stv_scu_w32 )
 		break;
 		case 5:
 		if(INDIRECT_MODE(0))
-			logerror("Indirect Mode DMA lv 0 set\n");
+		{
+			if(LOG_SCU) logerror("Indirect Mode DMA lv 0 set\n");
+			if(!DWUP(0)) scu_index_0 = scu_dst_0;
+		}
 
 		/*Start factor enable bits,bit 2,bit 1 and bit 0*/
 		if((stv_scu[5] & 7) != 7)
-			logerror("Start factor chosen for lv 0 = %d\n",stv_scu[5] & 7);
+			if(LOG_SCU) logerror("Start factor chosen for lv 0 = %d\n",stv_scu[5] & 7);
 		break;
 		/*LV 1 DMA*/
 		case 8:	 scu_src_1  = ((stv_scu[8] &  0x07ffffff) >> 0);  break;
@@ -2581,7 +2617,7 @@ WRITE32_HANDLER( stv_scu_w32 )
 		if(stv_scu[11] & 0x100)
 			scu_src_add_1 = 4;
 		else
-			scu_src_add_1 = 0;
+			scu_src_add_1 = 1;
 
 		/*Write address add value for DMA lv 1*/
 		switch(stv_scu[11] & 7)
@@ -2609,10 +2645,13 @@ WRITE32_HANDLER( stv_scu_w32 )
 		break;
 		case 13:
 		if(INDIRECT_MODE(1))
-			logerror("Indirect Mode DMA lv 1 set\n");
+		{
+			if(LOG_SCU) logerror("Indirect Mode DMA lv 1 set\n");
+			if(!DWUP(1)) scu_index_1 = scu_dst_1;
+		}
 
 		if((stv_scu[13] & 7) != 7)
-			logerror("Start factor chosen for lv 1 = %d\n",stv_scu[13] & 7);
+			if(LOG_SCU) logerror("Start factor chosen for lv 1 = %d\n",stv_scu[13] & 7);
 		break;
 		/*LV 2 DMA*/
 		case 16: scu_src_2  = ((stv_scu[16] & 0x07ffffff) >> 0);  break;
@@ -2623,7 +2662,7 @@ WRITE32_HANDLER( stv_scu_w32 )
 		if(stv_scu[19] & 0x100)
 			scu_src_add_2 = 4;
 		else
-			scu_src_add_2 = 0;
+			scu_src_add_2 = 1;
 
 		/*Write address add value for DMA lv 2*/
 		switch(stv_scu[19] & 7)
@@ -2651,31 +2690,37 @@ WRITE32_HANDLER( stv_scu_w32 )
 		break;
 		case 21:
 		if(INDIRECT_MODE(2))
-			logerror("Indirect Mode DMA lv 2 set\n");
+		{
+			if(LOG_SCU) logerror("Indirect Mode DMA lv 2 set\n");
+			if(!DWUP(2)) scu_index_2 = scu_dst_2;
+		}
 
 		if((stv_scu[21] & 7) != 7)
-			logerror("Start factor chosen for lv 2 = %d\n",stv_scu[21] & 7);
+			if(LOG_SCU) logerror("Start factor chosen for lv 2 = %d\n",stv_scu[21] & 7);
 		break;
-		case 31: logerror("Warning: DMA status WRITE! Offset %02x(%d)\n",offset*4,offset); break;
+		case 24:
+		if(LOG_SCU) logerror("DMA Forced Stop Register set = %02x\n",stv_scu[24]);
+		break;
+		case 31: if(LOG_SCU) logerror("Warning: DMA status WRITE! Offset %02x(%d)\n",offset*4,offset); break;
 		/*DSP section*/
 		/*Use functions so it is easier to work out*/
 		case 32:
 		dsp_prg_ctrl(data);
-		logerror("SCU DSP: Program Control Port Access %08x\n",data);
+		if(LOG_SCU) logerror("SCU DSP: Program Control Port Access %08x\n",data);
 		break;
 		case 33:
 		dsp_prg_data(data);
-		logerror("SCU DSP: Program RAM Data Port Access %08x\n",data);
+		if(LOG_SCU) logerror("SCU DSP: Program RAM Data Port Access %08x\n",data);
 		break;
 		case 34:
 		dsp_ram_addr_ctrl(data);
-		logerror("SCU DSP: Data RAM Address Port Access %08x\n",data);
+		if(LOG_SCU) logerror("SCU DSP: Data RAM Address Port Access %08x\n",data);
 		break;
 		case 35:
 		dsp_ram_addr_w(data);
-		logerror("SCU DSP: Data RAM Data Port Access %08x\n",data);
+		if(LOG_SCU) logerror("SCU DSP: Data RAM Data Port Access %08x\n",data);
 		break;
-		case 36: logerror("timer 0 compare data = %03x\n",stv_scu[36]);break;
+		case 36: if(LOG_SCU) logerror("timer 0 compare data = %03x\n",stv_scu[36]);break;
 		case 40:
 		/*An interrupt is masked when his specific bit is 1.*/
 		/*Are bit 16-bit 31 for External A-Bus irq mask like the status register?*/
@@ -2684,7 +2729,7 @@ WRITE32_HANDLER( stv_scu_w32 )
 		   stv_scu[40] != 0xfffffffc &&
 		   stv_scu[40] != 0xffffffff)
 		{
-			logerror("cpu #%d (PC=%08X) IRQ mask reg set %08x = %d%d%d%d|%d%d%d%d|%d%d%d%d|%d%d%d%d\n",
+			if(LOG_SCU) logerror("cpu #%d (PC=%08X) IRQ mask reg set %08x = %d%d%d%d|%d%d%d%d|%d%d%d%d|%d%d%d%d\n",
 			cpu_getactivecpu(), activecpu_get_pc(),
 			stv_scu[offset],
 			stv_scu[offset] & 0x8000 ? 1 : 0, /*A-Bus irq*/
@@ -2694,7 +2739,7 @@ WRITE32_HANDLER( stv_scu_w32 )
 			stv_scu[offset] & 0x0800 ? 1 : 0, /*Lv 0 DMA end irq*/
 			stv_scu[offset] & 0x0400 ? 1 : 0, /*Lv 1 DMA end irq*/
 			stv_scu[offset] & 0x0200 ? 1 : 0, /*Lv 2 DMA end irq*/
-			stv_scu[offset] & 0x0100 ? 1 : 0, /*Pad irq*/
+			stv_scu[offset] & 0x0100 ? 1 : 0, /*PAD irq*/
 			stv_scu[offset] & 0x0080 ? 1 : 0, /*System Manager(SMPC) irq*/
 			stv_scu[offset] & 0x0040 ? 1 : 0, /*Snd req*/
 			stv_scu[offset] & 0x0020 ? 1 : 0, /*DSP irq end*/
@@ -2707,23 +2752,70 @@ WRITE32_HANDLER( stv_scu_w32 )
 		break;
 		case 41:
 		/*This is r/w by introdon...*/
-		logerror("IRQ status reg set:%08x\n",stv_scu[41]);
+		if(LOG_SCU) logerror("IRQ status reg set:%08x\n",stv_scu[41]);
 		break;
-		case 42: logerror("A-Bus IRQ ACK\n"); break;
+		case 42: if(LOG_SCU) logerror("A-Bus IRQ ACK\n"); break;
 		case 49: /*This sets the SDRAM size*/ break;
-		default: logerror("Warning: unused SCU reg set %d = %08x\n",offset,data);
+		default: if(LOG_SCU) logerror("Warning: unused SCU reg set %d = %08x\n",offset,data);
 	}
 }
 
+static UINT32 scu_add_tmp;
+
+#define ABUS(_lv_)       scu_##_lv_ >= 0x02000000 && scu_##_lv_ <= 0x04ffffff
+#define BBUS(_lv_)       scu_##_lv_ >= 0x05a00000 && scu_##_lv_ <= 0x05ffffff
+#define VDP1_REGS(_lv_)  scu_##_lv_ >= 0x05d00000 && scu_##_lv_ <= 0x05dfffff
+#define VDP2(_lv_)       scu_##_lv_ >= 0x05e00000 && scu_##_lv_ <= 0x05fdffff
+#define WORK_RAM_L(_lv_) scu_##_lv_ >= 0x00200000 && scu_##_lv_ <= 0x002fffff
 
 static void dma_direct_lv0()
 {
 	static UINT32 tmp_src,tmp_dst,tmp_size;
-	logerror("DMA lv 0 transfer START\n"
-			 "Start %08x End %08x Size %04x\n",scu_src_0,scu_dst_0,scu_size_0);
-	logerror("Start Add %04x Destination Add %04x\n",scu_src_add_0,scu_dst_add_0);
+	if(LOG_SCU) logerror("DMA lv 0 transfer START\n"
+			             "Start %08x End %08x Size %04x\n",scu_src_0,scu_dst_0,scu_size_0);
+	if(LOG_SCU) logerror("Start Add %04x Destination Add %04x\n",scu_src_add_0,scu_dst_add_0);
 
 	SET_D0MV_FROM_0_TO_1;
+
+	/*set here the boundaries checks*/
+
+	if((scu_dst_add_0 != scu_src_add_0) && (ABUS(src_0)))
+	{
+		logerror("A-Bus invalid transfer,sets to default\n");
+		scu_add_tmp = (scu_dst_add_0*0x100) | (scu_src_add_0);
+		scu_dst_add_0 = scu_src_add_0 = 4;
+		scu_add_tmp |= 0x80000000;
+	}
+	/*Let me know if you encounter any of these three*/
+	if(ABUS(dst_0))
+	{
+		logerror("A-Bus invalid write\n");
+		/*...*/
+	}
+	if(WORK_RAM_L(dst_0))
+	{
+		logerror("WorkRam-L invalid write\n");
+		/*...*/
+	}
+	if(VDP2(src_0))
+	{
+		logerror("VDP-2 invalid read\n");
+		/*...*/
+	}
+	if(VDP1_REGS(dst_0))
+	{
+		logerror("VDP1 register access,must be in word units\n");
+		scu_add_tmp = (scu_dst_add_0*0x100) | (scu_src_add_0);
+		scu_dst_add_0 = scu_src_add_0 = 2;
+		scu_add_tmp |= 0x80000000;
+	}
+	if(DRUP(0))
+	{
+		logerror("Data read update = 1,read address add value must be 1 too\n");
+		scu_add_tmp = (scu_dst_add_0*0x100) | (scu_src_add_0);
+		scu_src_add_0 = 4;
+		scu_add_tmp |= 0x80000000;
+	}
 
 	tmp_size = scu_size_0;
 	if(!(DRUP(0))) tmp_src = scu_src_0;
@@ -2754,9 +2846,16 @@ static void dma_direct_lv0()
 	if(!(DRUP(0))) scu_src_0 = tmp_src;
 	if(!(DWUP(0))) scu_dst_0 = tmp_dst;
 
-	logerror("DMA transfer END\n");
+	if(LOG_SCU) logerror("DMA transfer END\n");
 	if(!(stv_scu[40] & 0x800))/*Lv 0 DMA end irq*/
 		cpunum_set_input_line_and_vector(0, 5, HOLD_LINE , 0x4b);
+
+	if(scu_add_tmp & 0x80000000)
+	{
+		scu_dst_add_0 = (scu_add_tmp & 0xff00) >> 8;
+		scu_src_add_0 = (scu_add_tmp & 0x00ff) >> 0;
+		scu_add_tmp^=0x80000000;
+	}
 
 	SET_D0MV_FROM_1_TO_0;
 }
@@ -2764,11 +2863,51 @@ static void dma_direct_lv0()
 static void dma_direct_lv1()
 {
 	static UINT32 tmp_src,tmp_dst,tmp_size;
-	logerror("DMA lv 1 transfer START\n"
+	if(LOG_SCU) logerror("DMA lv 1 transfer START\n"
 			 "Start %08x End %08x Size %04x\n",scu_src_1,scu_dst_1,scu_size_1);
-	logerror("Start Add %04x Destination Add %04x\n",scu_src_add_1,scu_dst_add_1);
+	if(LOG_SCU) logerror("Start Add %04x Destination Add %04x\n",scu_src_add_1,scu_dst_add_1);
 
 	SET_D1MV_FROM_0_TO_1;
+
+	/*set here the boundaries checks*/
+	if((scu_dst_add_1 != scu_src_add_1) && (ABUS(src_1)))
+	{
+		logerror("A-Bus invalid transfer,sets to default\n");
+		scu_add_tmp = (scu_dst_add_1*0x100) | (scu_src_add_1);
+		scu_dst_add_1 = scu_src_add_1 = 4;
+		scu_add_tmp |= 0x80000000;
+	}
+	/*Let me know if you encounter any of these ones*/
+	if(ABUS(dst_1))
+	{
+		logerror("A-Bus invalid write\n");
+		/*...*/
+	}
+	if(WORK_RAM_L(dst_1))
+	{
+		logerror("WorkRam-L invalid write\n");
+		/*...*/
+	}
+	if(VDP1_REGS(dst_1))
+	{
+		logerror("VDP1 register access,must be in word units\n");
+		scu_add_tmp = (scu_dst_add_1*0x100) | (scu_src_add_1);
+		scu_dst_add_1 = scu_src_add_1 = 2;
+		scu_add_tmp |= 0x80000000;
+	}
+	if(VDP2(src_1))
+	{
+		logerror("VDP-2 invalid read\n");
+		/*...*/
+	}
+	if(DRUP(1))
+	{
+		logerror("Data read update = 1,read address add value must be 1 too\n");
+		scu_add_tmp = (scu_dst_add_1*0x100) | (scu_src_add_1);
+		scu_src_add_1 = 4;
+		scu_add_tmp |= 0x80000000;
+	}
+
 
 	tmp_size = scu_size_1;
 	if(!(DRUP(1))) tmp_src = scu_src_1;
@@ -2792,9 +2931,16 @@ static void dma_direct_lv1()
 	if(!(DRUP(1))) scu_src_1 = tmp_src;
 	if(!(DWUP(1))) scu_dst_1 = tmp_dst;
 
-	logerror("DMA transfer END\n");
+	if(LOG_SCU) logerror("DMA transfer END\n");
 	if(!(stv_scu[40] & 0x400))/*Lv 1 DMA end irq*/
 		cpunum_set_input_line_and_vector(0, 6, HOLD_LINE , 0x4a);
+
+	if(scu_add_tmp & 0x80000000)
+	{
+		scu_dst_add_1 = (scu_add_tmp & 0xff00) >> 8;
+		scu_src_add_1 = (scu_add_tmp & 0x00ff) >> 0;
+		scu_add_tmp^=0x80000000;
+	}
 
 	SET_D1MV_FROM_1_TO_0;
 }
@@ -2802,11 +2948,50 @@ static void dma_direct_lv1()
 static void dma_direct_lv2()
 {
 	static UINT32 tmp_src,tmp_dst,tmp_size;
-	logerror("DMA lv 2 transfer START\n"
+	if(LOG_SCU) logerror("DMA lv 2 transfer START\n"
 			 "Start %08x End %08x Size %04x\n",scu_src_2,scu_dst_2,scu_size_2);
-	logerror("Start Add %04x Destination Add %04x\n",scu_src_add_2,scu_dst_add_2);
+	if(LOG_SCU) logerror("Start Add %04x Destination Add %04x\n",scu_src_add_2,scu_dst_add_2);
 
 	SET_D2MV_FROM_0_TO_1;
+
+	/*set here the boundaries checks*/
+	if((scu_dst_add_2 != scu_src_add_2) && (ABUS(src_2)))
+	{
+		logerror("A-Bus invalid transfer,sets to default\n");
+		scu_add_tmp = (scu_dst_add_2*0x100) | (scu_src_add_2);
+		scu_dst_add_2 = scu_src_add_2 = 4;
+		scu_add_tmp |= 0x80000000;
+	}
+	/*Let me know if you encounter any of these ones*/
+	if(ABUS(dst_2))
+	{
+		logerror("A-Bus invalid write\n");
+		/*...*/
+	}
+	if(WORK_RAM_L(dst_2))
+	{
+		logerror("WorkRam-L invalid write\n");
+		/*...*/
+	}
+	if(VDP1_REGS(dst_2))
+	{
+		logerror("VDP1 register access,must be in word units\n");
+		scu_add_tmp = (scu_dst_add_2*0x100) | (scu_src_add_2);
+		scu_dst_add_2 = scu_src_add_2 = 2;
+		scu_add_tmp |= 0x80000000;
+	}
+	if(VDP2(src_2))
+	{
+		logerror("VDP-2 invalid read\n");
+		/*...*/
+	}
+	if(DRUP(2))
+	{
+		logerror("Data read update = 1,read address add value must be 1 too\n");
+		scu_add_tmp = (scu_dst_add_2*0x100) | (scu_src_add_2);
+		scu_src_add_2 = 4;
+		scu_add_tmp |= 0x80000000;
+	}
 
 	tmp_size = scu_size_2;
 	if(!(DRUP(2))) tmp_src = scu_src_2;
@@ -2830,9 +3015,16 @@ static void dma_direct_lv2()
 	if(!(DRUP(2))) scu_src_2 = tmp_src;
 	if(!(DWUP(2))) scu_dst_2 = tmp_dst;
 
-	logerror("DMA transfer END\n");
+	if(LOG_SCU) logerror("DMA transfer END\n");
 	if(!(stv_scu[40] & 0x200))/*Lv 2 DMA end irq*/
 		cpunum_set_input_line_and_vector(0, 6, HOLD_LINE , 0x49);
+
+	if(scu_add_tmp & 0x80000000)
+	{
+		scu_dst_add_2 = (scu_add_tmp & 0xff00) >> 8;
+		scu_src_add_2 = (scu_add_tmp & 0x00ff) >> 0;
+		scu_add_tmp^=0x80000000;
+	}
 
 	SET_D2MV_FROM_1_TO_0;
 }
@@ -2846,21 +3038,23 @@ static void dma_indirect_lv0()
 
 	SET_D0MV_FROM_0_TO_1;
 
+	if(scu_index_0 == 0) { scu_index_0 = scu_dst_0; }
+
 	do{
-		tmp_src = scu_dst_0;
+		tmp_src = scu_index_0;
 
 		/*Thanks for Runik of Saturnin for pointing this out...*/
-		scu_size_0 = program_read_dword(scu_dst_0);
-		scu_src_0 =  program_read_dword(scu_dst_0+8);
-		scu_dst_0 =  program_read_dword(scu_dst_0+4);
+		scu_size_0 = program_read_dword(scu_index_0);
+		scu_src_0 =  program_read_dword(scu_index_0+8);
+		scu_dst_0 =  program_read_dword(scu_index_0+4);
 
 		/*Indirect Mode end factor*/
 		if(scu_src_0 & 0x80000000)
 			job_done = 1;
 
-		logerror("DMA lv 0 indirect mode transfer START\n"
+		if(LOG_SCU) logerror("DMA lv 0 indirect mode transfer START\n"
 			 	 "Start %08x End %08x Size %04x\n",scu_src_0,scu_dst_0,scu_size_0);
-		logerror("Start Add %04x Destination Add %04x\n",scu_src_add_0,scu_dst_add_0);
+		if(LOG_SCU) logerror("Start Add %04x Destination Add %04x\n",scu_src_add_0,scu_dst_add_0);
 
 		//guess,but I believe it's right.
 		scu_src_0 &=0x07ffffff;
@@ -2885,10 +3079,10 @@ static void dma_indirect_lv0()
 			scu_src_0+=scu_src_add_0;
 		}
 
-		if(DRUP(0))	program_write_dword(tmp_src+8,scu_src_0|job_done ? 0x80000000 : 0);
-		if(DWUP(0)) program_write_dword(tmp_src+4,scu_dst_0);
+		//if(DRUP(0))	program_write_dword(tmp_src+8,scu_src_0|job_done ? 0x80000000 : 0);
+		//if(DWUP(0)) program_write_dword(tmp_src+4,scu_dst_0);
 
-		scu_dst_0 = tmp_src+0xc;
+		scu_index_0 = tmp_src+0xc;
 
 	}while(job_done == 0);
 
@@ -2907,20 +3101,22 @@ static void dma_indirect_lv1()
 
 	SET_D1MV_FROM_0_TO_1;
 
-	do{
-		tmp_src = scu_dst_1;
+	if(scu_index_1 == 0) { scu_index_1 = scu_dst_1; }
 
-		scu_size_1 = program_read_dword(scu_dst_1);
-		scu_src_1 =  program_read_dword(scu_dst_1+8);
-		scu_dst_1 =  program_read_dword(scu_dst_1+4);
+	do{
+		tmp_src = scu_index_1;
+
+		scu_size_1 = program_read_dword(scu_index_1);
+		scu_src_1 =  program_read_dword(scu_index_1+8);
+		scu_dst_1 =  program_read_dword(scu_index_1+4);
 
 		/*Indirect Mode end factor*/
 		if(scu_src_1 & 0x80000000)
 			job_done = 1;
 
-		logerror("DMA lv 1 indirect mode transfer START\n"
+		if(LOG_SCU) logerror("DMA lv 1 indirect mode transfer START\n"
 			 	 "Start %08x End %08x Size %04x\n",scu_src_1,scu_dst_1,scu_size_1);
-		logerror("Start Add %04x Destination Add %04x\n",scu_src_add_1,scu_dst_add_1);
+		if(LOG_SCU) logerror("Start Add %04x Destination Add %04x\n",scu_src_add_1,scu_dst_add_1);
 
 		//guess,but I believe it's right.
 		scu_src_1 &=0x07ffffff;
@@ -2947,10 +3143,10 @@ static void dma_indirect_lv1()
 			scu_src_1+=scu_src_add_1;
 		}
 
-		if(DRUP(1))	program_write_dword(tmp_src+8,scu_src_1|job_done ? 0x80000000 : 0);
-		if(DWUP(1)) program_write_dword(tmp_src+4,scu_dst_1);
+		//if(DRUP(1))	program_write_dword(tmp_src+8,scu_src_1|job_done ? 0x80000000 : 0);
+		//if(DWUP(1)) program_write_dword(tmp_src+4,scu_dst_1);
 
-		scu_dst_1 = tmp_src+0xc;
+		scu_index_1 = tmp_src+0xc;
 
 	}while(job_done == 0);
 
@@ -2969,20 +3165,22 @@ static void dma_indirect_lv2()
 
 	SET_D2MV_FROM_0_TO_1;
 
-	do{
-		tmp_src = scu_dst_2;
+	if(scu_index_2 == 0) { scu_index_2 = scu_dst_2; }
 
-		scu_size_2 = program_read_dword(scu_dst_2);
-		scu_src_2 =  program_read_dword(scu_dst_2+8);
-		scu_dst_2 =  program_read_dword(scu_dst_2+4);
+	do{
+		tmp_src = scu_index_2;
+
+		scu_size_2 = program_read_dword(scu_index_2);
+		scu_src_2 =  program_read_dword(scu_index_2+8);
+		scu_dst_2 =  program_read_dword(scu_index_2+4);
 
 		/*Indirect Mode end factor*/
 		if(scu_src_2 & 0x80000000)
 			job_done = 1;
 
-		logerror("DMA lv 2 indirect mode transfer START\n"
+		if(LOG_SCU) logerror("DMA lv 2 indirect mode transfer START\n"
 			 	 "Start %08x End %08x Size %04x\n",scu_src_2,scu_dst_2,scu_size_2);
-		logerror("Start Add %04x Destination Add %04x\n",scu_src_add_2,scu_dst_add_2);
+		if(LOG_SCU) logerror("Start Add %04x Destination Add %04x\n",scu_src_add_2,scu_dst_add_2);
 
 		//guess,but I believe it's right.
 		scu_src_2 &=0x07ffffff;
@@ -3008,10 +3206,10 @@ static void dma_indirect_lv2()
 			scu_src_2+=scu_src_add_2;
 		}
 
-		if(DRUP(2))	program_write_dword(tmp_src+8,scu_src_2|job_done ? 0x80000000 : 0);
-		if(DWUP(2)) program_write_dword(tmp_src+4,scu_dst_2);
+		//if(DRUP(2))	program_write_dword(tmp_src+8,scu_src_2|job_done ? 0x80000000 : 0);
+		//if(DWUP(2)) program_write_dword(tmp_src+4,scu_dst_2);
 
-		scu_dst_2 = tmp_src+0xc;
+		scu_index_2 = tmp_src+0xc;
 
 	}while(job_done == 0);
 
@@ -3066,9 +3264,18 @@ static WRITE32_HANDLER( sinit_w )
 	cpunum_set_info_int(0, CPUINFO_INT_SH2_FRT_INPUT, PULSE_LINE);
 }
 
-static WRITE32_HANDLER ( a_bus_ctrl )
+static UINT32 a_bus[4];
+
+static READ32_HANDLER( a_bus_ctrl_r )
 {
-	usrintf_showmessage("%04x %04x",data,offset/4);
+	usrintf_showmessage("A-Bus control [%04x] read at %06x",offset,activecpu_get_pc());
+	return a_bus[offset];
+}
+
+static WRITE32_HANDLER ( a_bus_ctrl_w )
+{
+	COMBINE_DATA(&a_bus[offset]);
+	//usrintf_showmessage("%04x %04x",data,offset/4);
 }
 
 
@@ -3098,15 +3305,16 @@ extern READ32_HANDLER ( stv_vdp1_framebuffer1_r );
 static ADDRESS_MAP_START( stv_mem, ADDRESS_SPACE_PROGRAM, 32 )
 	AM_RANGE(0x00000000, 0x0007ffff) AM_ROM   // bios
 	AM_RANGE(0x00100000, 0x0010007f) AM_READWRITE(stv_SMPC_r32, stv_SMPC_w32)
+	AM_RANGE(0x001000b8, 0x001000bb) AM_WRITE(minit_w)
 	AM_RANGE(0x00180000, 0x0018ffff) AM_RAM AM_SHARE(1) AM_BASE(&stv_backupram)
 	AM_RANGE(0x00200000, 0x002fffff) AM_RAM AM_SHARE(2) AM_BASE(&stv_workram_l)
 	AM_RANGE(0x00400000, 0x0040001f) AM_READWRITE(stv_io_r32, stv_io_w32) AM_BASE(&ioga) AM_SHARE(4)
 	AM_RANGE(0x01000000, 0x01000003) AM_WRITE(minit_w)
 	AM_RANGE(0x01406f40, 0x01406f43) AM_WRITE(minit_w) // prikura seems to write here ..
-//	AM_RANGE(0x01000000, 0x01000003) AM_WRITE(minit_w) AM_MIRROR(0x0007ffffc)
+//	AM_RANGE(0x01000000, 0x01000003) AM_WRITE(minit_w) AM_MIRROR(0x00080000)
 	AM_RANGE(0x01800000, 0x01800003) AM_WRITE(sinit_w)
-	AM_RANGE(0x02000000, 0x04ffffff) AM_ROM AM_ROMBANK(1)// cartridge
-	AM_RANGE(0x04fffff0, 0x04ffffff) AM_WRITE(a_bus_ctrl)
+	AM_RANGE(0x02000000, 0x04ffffef) AM_ROM AM_ROMBANK(1)// cartridge
+	AM_RANGE(0x04fffff0, 0x04ffffff) AM_READWRITE(a_bus_ctrl_r,a_bus_ctrl_w)
 	AM_RANGE(0x05800000, 0x0589ffff) AM_READWRITE(cdregister_r, cdregister_w)
 	/* Sound */
 	AM_RANGE(0x05a00000, 0x05a7ffff) AM_READWRITE(stv_sh2_soundram_r, stv_sh2_soundram_w)
@@ -3477,6 +3685,7 @@ WRITE32_HANDLER ( w60ffc48_write )
 
 }
 
+static void print_game_info(void);
 
 DRIVER_INIT ( stv )
 {
@@ -3511,6 +3720,48 @@ DRIVER_INIT ( stv )
     smpc_ram[0x31] = 0x00; //CTG1=0 CTG0=0 (correct??)
 //  smpc_ram[0x33] = readinputport(7);
  	smpc_ram[0x5f] = 0x10;
+
+ 	#ifdef MAME_DEBUG
+ 	/*Uncomment this to enable header info*/
+ 	print_game_info();
+	#endif
+}
+
+#define DATA_TRANSFER(_max_) \
+	for(dst_i=0;dst_i<_max_;dst_i++,src_i++) 	\
+		STR[(dst_i & 0xfc) | (~dst_i & 3)] = ROM[src_i];
+
+#define DATA_DELETE \
+	for(dst_i=0;dst_i<0x100;dst_i++) \
+		STR[dst_i] = 0x00;
+
+static void print_game_info(void)
+{
+	UINT8 *ROM = memory_region(REGION_USER1);
+	static FILE *print_file = NULL;
+	UINT8 STR[0x100];
+	UINT32 src_i,dst_i;
+
+	if(print_file == NULL)
+		print_file = fopen( "stvinfo.txt", "a" );
+
+	src_i = 0;
+
+	/*IC13?*/
+	if(ROM[src_i] == 0x00)
+		src_i+=0x200000;
+
+	DATA_TRANSFER(0x100);
+	for(src_i=0;src_i<0x100;src_i++)
+	{
+		if((src_i % 0x10) == 0) fprintf( print_file, "\n");
+		if(src_i < 0xc0)		fprintf( print_file, "%c",STR[src_i] );
+		else                    fprintf( print_file, "%02x",STR[src_i] );
+	}
+	DATA_DELETE;
+
+	fclose(print_file);
+	print_file = NULL;
 }
 
 MACHINE_INIT( stv )
@@ -3651,16 +3902,16 @@ static struct SCSPinterface scsp_interface =
 static MACHINE_DRIVER_START( stv )
 
 	/* basic machine hardware */
-	MDRV_CPU_ADD(SH2, 28000000) // 28MHz
+	MDRV_CPU_ADD(SH2, MASTER_CLOCK/2) // 28.6364 MHz
 	MDRV_CPU_PROGRAM_MAP(stv_mem, 0)
 	MDRV_CPU_VBLANK_INT(stv_interrupt,264)/*264 lines,224 display lines*/
 	MDRV_CPU_CONFIG(sh2_conf_master)
 
-	MDRV_CPU_ADD(SH2, 28000000) // 28MHz
+	MDRV_CPU_ADD(SH2, MASTER_CLOCK/2) // 28.6364 MHz
 	MDRV_CPU_PROGRAM_MAP(stv_mem, 0)
 	MDRV_CPU_CONFIG(sh2_conf_slave)
 
-	MDRV_CPU_ADD(M68000, 12000000)
+	MDRV_CPU_ADD(M68000, MASTER_CLOCK/5) //11.46 MHz
 	MDRV_CPU_PROGRAM_MAP(sound_mem, 0)
 
 	MDRV_FRAMES_PER_SECOND(60)
@@ -3797,6 +4048,7 @@ ROM_START( cotton2 )
 	STV_BIOS
 
 	ROM_REGION32_BE( 0x2000000, REGION_USER1, 0 ) /* SH2 code */
+	ROM_FILL(                              0x0000000, 0x0200000, 0x00 )
 	ROM_LOAD16_WORD_SWAP( "mpr20122.7",    0x0200000, 0x0200000, CRC(d616f78a) SHA1(8039dcdfdafb8327a19a1da46a67c0b3f7eee53a) ) // good
 	ROM_LOAD16_WORD_SWAP( "mpr20117.2",    0x0400000, 0x0400000, CRC(893656ea) SHA1(11e3160083ba018fbd588f07061a4e55c1efbebb) ) // good
 	ROM_LOAD16_WORD_SWAP( "mpr20118.3",    0x0800000, 0x0400000, CRC(1b6a1d4c) SHA1(6b234d6b2d24df7f6d400a56698c0af2f78ce0e7) ) // good
@@ -3811,6 +4063,7 @@ ROM_START( cottonbm )
 	STV_BIOS
 
 	ROM_REGION32_BE( 0x1c00000, REGION_USER1, 0 ) /* SH2 code */
+	ROM_FILL(                              0x0000000, 0x0200000, 0x00 )
 	ROM_LOAD16_WORD_SWAP( "mpr21075.7",    0x0200000, 0x0200000, CRC(200b58ba) SHA1(6daad6d70a3a41172e8d9402af775c03e191232d) ) // good
 	ROM_LOAD16_WORD_SWAP( "mpr21070.2",    0x0400000, 0x0400000, CRC(56c0bf1d) SHA1(c2b564ce536c637bb723ed96683b27596e87ebe7) ) // good
 	ROM_LOAD16_WORD_SWAP( "mpr21071.3",    0x0800000, 0x0400000, CRC(2bb18df2) SHA1(e900adb94ad3f48be00a4ce33e915147dc6a8737) ) // good
@@ -3869,6 +4122,7 @@ ROM_START( elandore )
 	STV_BIOS
 
 	ROM_REGION32_BE( 0x2000000, REGION_USER1, 0 ) /* SH2 code */
+	ROM_FILL(                              0x0000000, 0x0200000, 0x00 )
 	ROM_LOAD16_WORD_SWAP( "mpr21307.7",    0x0200000, 0x0200000, CRC(966ad472) SHA1(d6db41d1c40d08eb6bce8a8a2f491e7533daf670) ) // good (was .11s)
 	ROM_LOAD16_WORD_SWAP( "mpr21301.2",    0x0400000, 0x0400000, CRC(1a23b0a0) SHA1(f9dbc7ba96dadfb00e5827622b557080449acd83) ) // good (was .12)
 	ROM_LOAD16_WORD_SWAP( "mpr21302.3",    0x0800000, 0x0400000, CRC(1c91ca33) SHA1(ae11209088e3bf8fc4a92dca850d7303ce949b29) ) // good (was .13)
@@ -3883,6 +4137,7 @@ ROM_START( ffreveng )
 	STV_BIOS
 
 	ROM_REGION32_BE( 0x1c00000, REGION_USER1, 0 ) /* SH2 code */
+	ROM_FILL(                              0x0000000, 0x0200000, 0x00 )
 	ROM_LOAD16_WORD_SWAP( "opr21872.7",   0x0200000, 0x0200000, CRC(32d36fee) SHA1(441c4254ef2e9301e1006d69462a850ce339314b) ) // good (was .11s)
 	ROM_LOAD16_WORD_SWAP( "mpr21873.2",   0x0400000, 0x0400000, CRC(dac5bd98) SHA1(6102035ce9eb2f83d7d9b20f989a151f45087c67) ) // good (was .12)
 	ROM_LOAD16_WORD_SWAP( "mpr21874.3",   0x0800000, 0x0400000, CRC(0a7be2f1) SHA1(e2d13f36e54d1e2cb9d584db829c04a6ff65108c) ) // good (was .13)
@@ -3966,6 +4221,7 @@ ROM_START( grdforce )
 	STV_BIOS
 
 	ROM_REGION32_BE( 0x1800000, REGION_USER1, 0 ) /* SH2 code */
+	ROM_FILL(                              0x0000000, 0x0200000, 0x00 )
 	ROM_LOAD16_WORD_SWAP( "mpr20844.7",    0x0200000, 0x0200000, CRC(283e7587) SHA1(477fabc27cfe149ad17757e31f10665dcf8c0860) ) // good
 	ROM_LOAD16_WORD_SWAP( "mpr20839.2",    0x0400000, 0x0400000, CRC(facd4dd8) SHA1(2582894c98b31ab719f1865d4623dad6736dc877) ) // good
 	ROM_LOAD16_WORD_SWAP( "mpr20840.3",    0x0800000, 0x0400000, CRC(fe0158e6) SHA1(73460effe69fb8f16dd952271542b7803471a599) ) // good
@@ -3978,6 +4234,7 @@ ROM_START( groovef )
 	STV_BIOS
 
 	ROM_REGION32_BE( 0x2400000, REGION_USER1, 0 ) /* SH2 code */
+	ROM_FILL(                              0x0000000, 0x0200000, 0x00 )
 	ROM_LOAD16_WORD_SWAP( "mpr19820.7",    0x0200000, 0x0100000, CRC(e93c4513) SHA1(f9636529224880c49bd2cc5572bd5bf41dbf911a) ) // good
 	ROM_LOAD16_WORD_SWAP( "mpr19815.2",    0x0400000, 0x0400000, CRC(1b9b14e6) SHA1(b1828c520cb108e2927a23273ebd2939dca52304) ) // good
 	ROM_LOAD16_WORD_SWAP( "mpr19816.3",    0x0800000, 0x0400000, CRC(83f5731c) SHA1(2f645737f945c59a1a2fabf3b21a761be9e8c8a6) ) // good
@@ -3993,6 +4250,7 @@ ROM_START( hanagumi )
 	STV_BIOS
 
 	ROM_REGION32_BE( 0x3000000, REGION_USER1, 0 ) /* SH2 code */
+	ROM_FILL(                              0x0000000, 0x0200000, 0x00 )
 	ROM_LOAD16_WORD_SWAP( "mpr20143.7",    0x0200000, 0x0100000, CRC(7bfc38d0) SHA1(66f223e7ff2b5456a6f4185b7ab36f9cd833351a) ) // good
 	ROM_LOAD16_WORD_SWAP( "mpr20138.2",    0x0400000, 0x0400000, CRC(fdcf1046) SHA1(cbb1f03879833c17feffdd6f5a4fbff06e1059a2) ) // good
 	ROM_LOAD16_WORD_SWAP( "mpr20139.3",    0x0800000, 0x0400000, CRC(7f0140e5) SHA1(f2f7de7620d66a596d552e1af491a0592ebc4e51) ) // good
@@ -4052,6 +4310,7 @@ ROM_START( myfairld )
 	STV_BIOS
 
 	ROM_REGION32_BE( 0x2000000, REGION_USER1, 0 ) /* SH2 code */
+	ROM_FILL(                              0x0000000, 0x0200000, 0x00 )
 	ROM_LOAD16_WORD_SWAP( "mpr21000.7",    0x0200000, 0x0200000, CRC(2581c560) SHA1(5fb64f0e09583d50dfea7ad613d45aad30b677a5) ) // good
 	ROM_LOAD16_WORD_SWAP( "mpr20995.2",    0x0400000, 0x0400000, CRC(1bb73f24) SHA1(8773654810de760c5dffbb561f43e259b074a61b) ) // good
 	ROM_LOAD16_WORD_SWAP( "mpr20996.3",    0x0800000, 0x0400000, CRC(993c3859) SHA1(93f95e3e080a08961784482607919c1ab3eeb5e5) ) // good
@@ -4066,6 +4325,7 @@ ROM_START( othellos )
 	STV_BIOS
 
 	ROM_REGION32_BE( 0x1400000, REGION_USER1, 0 ) /* SH2 code */
+	ROM_FILL(                              0x0000000, 0x0200000, 0x00 )
 	ROM_LOAD16_WORD_SWAP( "mpr20967.7",    0x0200000, 0x0200000, CRC(efc05b97) SHA1(a533366c3aaba90dcac8f3654db9ad902efca258) ) // good
 	ROM_LOAD16_WORD_SWAP( "mpr20963.2",    0x0400000, 0x0400000, CRC(2cc4f141) SHA1(8bd1998aff8615b34d119fab3637a08ed6e8e1e4) ) // good
 	ROM_LOAD16_WORD_SWAP( "mpr20964.3",    0x0800000, 0x0400000, CRC(5f5cda94) SHA1(616be219a2512e80c875eddf05137c23aedf6f65) ) // good
@@ -4088,6 +4348,7 @@ ROM_START( prikura )
 	STV_BIOS
 
 	ROM_REGION32_BE( 0x1400000, REGION_USER1, 0 ) /* SH2 code */
+	ROM_FILL(                              0x0000000, 0x0200000, 0x00 )
 	ROM_LOAD16_WORD_SWAP( "mpr19337.7",    0x0200000, 0x0200000, CRC(76f69ff3) SHA1(5af2e1eb3288d70c2a1c71d0b6370125d65c7757) ) // good
 	ROM_LOAD16_WORD_SWAP( "mpr19333.2",    0x0400000, 0x0400000, CRC(eb57a6a6) SHA1(cdacaa7a2fb1a343195e2ac5fd02eabf27f89ccd) ) // good
 	ROM_LOAD16_WORD_SWAP( "mpr19334.3",    0x0800000, 0x0400000, CRC(c9979981) SHA1(be491a4ac118d5025d6a6f2d9267a6d52f21d2b6) ) // good
@@ -4114,6 +4375,7 @@ ROM_START( rsgun )
 	STV_BIOS
 
 	ROM_REGION32_BE( 0x2000000, REGION_USER1, 0 ) /* SH2 code */
+	ROM_FILL(                             0x0000000, 0x0200000, 0x00 )
 	ROM_LOAD16_WORD_SWAP( "mpr20958.7",   0x0200000, 0x0200000, CRC(cbe5a449) SHA1(b4744ab71ccbadda1921ba43dd1148e57c0f84c5) ) // good (was .11s)
 	ROM_LOAD16_WORD_SWAP( "mpr20959.2",   0x0400000, 0x0400000, CRC(a953330b) SHA1(965274a7297cb88e281fcbdd3ec5025c6463cc7b) ) // good (was .12)
 	ROM_LOAD16_WORD_SWAP( "mpr20960.3",   0x0800000, 0x0400000, CRC(b5ab9053) SHA1(87c5d077eb1219c35fa65b4e11d5b62e826f5236) ) // good (was .13)
@@ -4182,6 +4444,7 @@ ROM_START( shanhigw )
 	STV_BIOS
 
 	ROM_REGION32_BE( 0x0800000, REGION_USER1, 0 ) /* SH2 code */
+	ROM_FILL(                              0x0000000, 0x0200000, 0x00 )
 	ROM_LOAD16_WORD_SWAP( "mpr18341.7",    0x0200000, 0x0200000, CRC(cc5e8646) SHA1(a733616c118140ff3887d30d595533f9a1beae06) ) // good
 	ROM_LOAD16_WORD_SWAP( "mpr18340.2",    0x0400000, 0x0200000, CRC(8db23212) SHA1(85d604a5c6ab97188716dbcd77d365af12a238fe) ) // good
 ROM_END
@@ -4190,6 +4453,7 @@ ROM_START( shienryu )
 	STV_BIOS
 
 	ROM_REGION32_BE( 0x0c00000, REGION_USER1, 0 ) /* SH2 code */
+	ROM_FILL(                              0x0000000, 0x0200000, 0x00 )
 	ROM_LOAD16_WORD_SWAP( "mpr19631.7",    0x0200000, 0x0200000, CRC(3a4b1abc) SHA1(3b14b7fdebd4817da32ea374c15a38c695ffeff1) ) // good
 	ROM_LOAD16_WORD_SWAP( "mpr19632.2",    0x0400000, 0x0400000, CRC(985fae46) SHA1(f953bde91805b97b60d2ab9270f9d2933e064d95) ) // good
 	ROM_LOAD16_WORD_SWAP( "mpr19633.3",    0x0800000, 0x0400000, CRC(e2f0b037) SHA1(97861d09e10ce5d2b10bf5559574b3f489e28077) ) // good
@@ -4293,6 +4557,7 @@ ROM_START( vmahjong )
 	STV_BIOS
 
 	ROM_REGION32_BE( 0x2000000, REGION_USER1, 0 ) /* SH2 code */
+	ROM_FILL(                              0x0000000, 0x0200000, 0x00 )
 	ROM_LOAD16_WORD_SWAP( "mpr19620.7",    0x0200000, 0x0200000, CRC(c98de7e5) SHA1(5346f884793bcb080aa01967e91b54ced4a9802f) ) // good
 	ROM_LOAD16_WORD_SWAP( "mpr19615.2",    0x0400000, 0x0400000, CRC(c62896da) SHA1(52a5b10ca8af31295d2d700349eca038c418b522) ) // good
 	ROM_LOAD16_WORD_SWAP( "mpr19616.3",    0x0800000, 0x0400000, CRC(f62207c7) SHA1(87e60183365c6f7e62c7a0667f88df0c7f5457fd) ) // good
@@ -4337,6 +4602,7 @@ ROM_START( danchih )
 	STV_BIOS
 
 	ROM_REGION32_BE( 0x1400000, REGION_USER1, 0 ) /* SH2 code */
+	ROM_FILL(                              0x0000000, 0x0200000, 0x00 )
 	ROM_LOAD16_WORD_SWAP( "mpr21974.7",    0x0200000, 0x0200000, CRC(e7472793) SHA1(11b7b11cf492eb9cf69b50e7cfac46a5b86849ac) )// good
 	ROM_LOAD16_WORD_SWAP( "mpr21970.2",    0x0400000, 0x0400000, CRC(34dd7f4d) SHA1(d5c45da94ec5b6584049caf09516f1ad4ba3adb5) )// good
 	ROM_LOAD16_WORD_SWAP( "mpr21971.3",    0x0800000, 0x0400000, CRC(8995158c) SHA1(fbbd171d67eebf43630d6054bc1b9132f6b38183) )// good
@@ -4472,76 +4738,87 @@ DRIVER_INIT( sfish2j )
 }
 
 
-/* TODO: add country codes */
-
-//GBX   YEAR, NAME,      PARENT,  BIOS,    MACH,INP,  INIT,      MONITOR
-/* Playable */
-GAMEBX( 1998, hanagumi,  stvbios, stvbios, stv, stv,  hanagumi,  ROT0,   "Sega",     "Hanagumi Taisen Columns - Sakura Wars", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
-GAMEBX( 1996, bakubaku,  stvbios, stvbios, stv, stv,  bakubaku,  ROT0,   "Sega",     "Baku Baku Animal", GAME_NO_SOUND | GAME_IMPERFECT_GRAPHICS )
-GAMEBX( 1997, shienryu,  stvbios, stvbios, stv, stv,  shienryu,  ROT270, "Warashi",  "Shienryu", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
-GAMEBX( 1995, mausuke,   stvbios, stvbios, stv, stv,  mausuke,   ROT0,   "Data East","Mausuke no Ojama the World", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
-GAMEBX( 1996, puyosun,   stvbios, stvbios, stv, stv,  puyosun,   ROT0,   "Compile",  "Puyo Puyo Sun", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
-GAMEBX( 1997, cotton2,   stvbios, stvbios, stv, stv,  cotton2,   ROT0,   "Success",  "Cotton 2", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
-GAMEBX( 1998, cottonbm,  stvbios, stvbios, stv, stv,  cottonbm,  ROT0,   "Success",  "Cotton Boomerang", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
-GAMEBX( 1996, vfkids,    stvbios, stvbios, stv, stv,  ic13,      ROT0,   "Sega", 	 "Virtua Fighter Kids", GAME_NO_SOUND | GAME_IMPERFECT_GRAPHICS )
-GAMEBX( 1995, ejihon,    stvbios, stvbios, stv, stv,  ic13,      ROT0,   "Sega", 	 "Ejihon Tantei Jimusyo", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
-GAMEBX( 1996, colmns97,  stvbios, stvbios, stv, stv,  ic13,      ROT0,   "Sega", 	 "Columns 97", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
-GAMEBX( 1996, diehard,   stvbios, stvbios, stv, stv,  ic13,      ROT0,   "Sega", 	 "Die Hard Arcade (US)", GAME_NO_SOUND | GAME_IMPERFECT_GRAPHICS  )
-GAMEBX( 1996, dnmtdeka,  diehard, stvbios, stv, stv,  dnmtdeka,  ROT0,   "Sega", 	 "Dynamite Deka (Japan)", GAME_NO_SOUND | GAME_IMPERFECT_GRAPHICS  )
-GAMEBX( 1997, winterht,  stvbios, stvbios, stv, stv,  ic13,      ROT0,   "Sega", 	 "Winter Heat", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS  )
-GAMEBX( 1996, prikura,   stvbios, stvbios, stv, stv,  prikura,   ROT0,   "Atlus",    "Princess Clara Daisakusen", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
-GAMEBX( 1996, groovef,   stvbios, stvbios, stv, stv,  groovef,   ROT0,   "Atlus",    "Power Instinct 3 - Groove On Fight", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
-GAMEBX( 1998, othellos,  stvbios, stvbios, stv, stv,  stv,       ROT0,   "Success",  "Othello Shiyouyo", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
-GAMEBX( 1999, danchih,   stvbios, stvbios, stv, stvmp,danchih,   ROT0, "Altron (Tecmo license)", "Danchi de Hanafuoda", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
-GAMEBX( 1995, shanhigw,  stvbios, stvbios, stv, stv,  stv,	     ROT0,   "Sunsoft / Activision", "Shanghai - The Great Wall / Shanghai Triple Threat", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
-GAMEBX( 1998, grdforce,  stvbios, stvbios, stv, stv,  stv,       ROT0,   "Success",  "Guardian Force", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
-
-/* Almost */
-GAMEBX( 1995, fhboxers,  stvbios, stvbios, stv, stv,  fhboxers,  ROT0,   "Sega", 	 "Funky Head Boxers", GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEBX( 1995, kiwames,   stvbios, stvbios, stv, stvmp,ic13,      ROT0,   "Athena",   "Pro Mahjong Kiwame S", GAME_IMPERFECT_SOUND | GAME_NOT_WORKING )
-
-/* Doing Something.. but not enough yet */
-GAMEBX( 1998, elandore,  stvbios, stvbios, stv, stv,  stv,       ROT0, "Sai-Mate",   "Fighting Dragon Legend Elan Doree", GAME_IMPERFECT_SOUND | GAME_NOT_WORKING )
-GAMEBX( 1998, myfairld,  stvbios, stvbios, stv, stvmp,stv,       ROT0, "Micronet",   "Virtual Mahjong 2 - My Fair Lady", GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEBX( 1998, rsgun,     stvbios, stvbios, stv, stv,  stv,       ROT0, "Treasure",   "Radiant Silvergun", GAME_IMPERFECT_SOUND | GAME_NOT_WORKING )
-GAMEBX( 1996, sassisu,   stvbios, stvbios, stv, stv,  ic13,      ROT0, "Sega", 	     "Taisen Tanto-R Sashissu!!", GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEBX( 1995, sleague,   stvbios, stvbios, stv, stv,  ic13,      ROT0, "Sega", 	     "Super Major League (US)", GAME_IMPERFECT_SOUND | GAME_NOT_WORKING )
-GAMEBX( 1995, finlarch,  sleague, stvbios, stv, stv,  ic13,      ROT0, "Sega", 	     "Final Arch (Japan)", GAME_IMPERFECT_SOUND | GAME_NOT_WORKING )
-
-/* Sega Logo - hang */
-GAMEBX( 1997, maruchan,  stvbios, stvbios, stv, stv,  ic13,      ROT0, "Sega", 	     "Maru-Chan de Goo!", GAME_IMPERFECT_SOUND | GAME_NOT_WORKING )
-
-
-// crashes
-GAMEBX( 1995, suikoenb,  stvbios, stvbios, stv, stv,  ic13,      ROT0, "Data East",  "Suikoenbu", GAME_NO_SOUND | GAME_NOT_WORKING )
-
-// this needs the dsp
-GAMEBX( 1995, vfremix,   stvbios, stvbios, stv, stv,  ic13,      ROT0, "Sega", 	     "Virtua Fighter Remix", GAME_IMPERFECT_SOUND | GAME_NOT_WORKING )
-
-/* not working */
+/*
+country codes:
+J = Japan
+U = United States
+E = Europe
+T = Taiwan
+L = Latin America
+B = Brazil
+K = Korea
+A = PAL Asia
+date codes:
+(Original is yyyy/mm/dd,changed to reflect Capcom's one (yy/mm/dd))
+Version codes:
+V = Version(obviously ;)
+(number before the dot) = game status (0=Sample,1=Master,2=Upgrade)
+(number after the dot) = game version/release
+There is also another internal code (called the "Product Number"),but AFAIK it's only used
+by introdon in ST-V ("SG0000000"),and according to the manual it's even wrong! (SG is used
+by Sega titles,and this is a Sunsoft game)It's likely to be a left-over...
+*/
 
 GAMEBX( 1996, stvbios,   0,       stvbios, stv, stv,  stv,       ROT0, "Sega",       "ST-V Bios", NOT_A_DRIVER )
 
-GAMEBX( 1998, astrass,   stvbios, stvbios, stv, stv,  ic13,      ROT0, "Sunsoft",    "Astra SuperStars", GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEBX( 1996, batmanfr,  stvbios, stvbios, stv, stv,  ic13,      ROT0, "Acclaim",    "Batman Forever", GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEBX( 1995, decathlt,  stvbios, stvbios, stv, stv,  ic13,      ROT0, "Sega", 	     "Decathlete", GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEBX( 1999, ffreveng,  stvbios, stvbios, stv, stv,  stv,       ROT0, "Capcom",     "Final Fight Revenge", GAME_UNEMULATED_PROTECTION | GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEBX( 1996, findlove,  stvbios, stvbios, stv, stv,  ic13,      ROT0, "Daiki",	     "Find Love", GAME_IMPERFECT_SOUND | GAME_NOT_WORKING )
-GAMEBX( 1994, gaxeduel,  stvbios, stvbios, stv, stv,  ic13,      ROT0, "Sega", 	     "Golden Axe - The Duel", GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEBX( 1996, introdon,  stvbios, stvbios, stv, stv,  ic13,      ROT0, "Sunsoft / Success", "Karaoke Quiz Intro Don Don!", GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEBX( 1995, pblbeach,  stvbios, stvbios, stv, stv,  ic13,      ROT0, "T&E Soft",   "Pebble Beach - The Great Shot", GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEBX( 1995, sandor,    stvbios, stvbios, stv, stv,  ic13,      ROT0, "Sega", 	     "Sando-R", GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEBX( 1995, thunt,     sandor,  stvbios, stv, stv,  ic13,      ROT0, "Sega", 	     "Treasure Hunt", GAME_NO_SOUND | GAME_NOT_WORKING ) // this one actually does something if you use the sandor gfx
-GAMEBX( 1998, seabass,   stvbios, stvbios, stv, stv,  ic13,      ROT0, "A Wave inc. (Able license)", "Sea Bass Fishing", GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEBX( 1996, sokyugrt,  stvbios, stvbios, stv, stv,  ic13,      ROT0, "Raizing",    "Soukyugurentai / Terra Diver", GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEBX( 1998, sss,       stvbios, stvbios, stv, stv,  ic13,      ROT0, "Victor / Cave / Capcom", "Steep Slope Sliders", GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEBX( 1998, twcup98,   stvbios, stvbios, stv, stv,  ic13,      ROT0, "Tecmo",      "Tecmo World Cup '98", GAME_IMPERFECT_SOUND | GAME_NOT_WORKING ) // protected?
-GAMEBX( 1997, vmahjong,  stvbios, stvbios, stv, stvmp,stv,       ROT0, "Micronet",   "Virtual Mahjong", GAME_IMPERFECT_SOUND | GAME_NOT_WORKING )
-GAMEBX( 1997, znpwfv,    stvbios, stvbios, stv, stv,  ic13,      ROT0, "Sega", 	     "Zen Nippon Pro-Wrestling Featuring Virtua", GAME_NO_SOUND | GAME_NOT_WORKING )
+//GBX   YEAR, NAME,      PARENT,  BIOS,    MACH,INP,  INIT,      MONITOR
+/* Playable */
+GAMEBX( 1996, bakubaku,  stvbios, stvbios, stv, stv,  bakubaku,  ROT0,   "Sega",     				 "Baku Baku Animal (J 950407 V1.000)", GAME_NO_SOUND | GAME_IMPERFECT_GRAPHICS )
+GAMEBX( 1996, colmns97,  stvbios, stvbios, stv, stv,  ic13,      ROT0,   "Sega", 	 				 "Columns 97", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
+GAMEBX( 1997, cotton2,   stvbios, stvbios, stv, stv,  cotton2,   ROT0,   "Success",  				 "Cotton 2 (JUET 970902 V1.000)", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
+GAMEBX( 1998, cottonbm,  stvbios, stvbios, stv, stv,  cottonbm,  ROT0,   "Success",  				 "Cotton Boomerang", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
+GAMEBX( 1995, ejihon,    stvbios, stvbios, stv, stv,  ic13,      ROT0,   "Sega", 	 				 "Ejihon Tantei Jimusyo", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
+GAMEBX( 1999, danchih,   stvbios, stvbios, stv, stvmp,danchih,   ROT0,   "Altron (Tecmo license)", 	 "Danchi de Hanafuoda", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
+GAMEBX( 1996, diehard,   stvbios, stvbios, stv, stv,  ic13,      ROT0,   "Sega", 	 				 "Die Hard Arcade (US)", GAME_NO_SOUND | GAME_IMPERFECT_GRAPHICS  )
+GAMEBX( 1996, dnmtdeka,  diehard, stvbios, stv, stv,  dnmtdeka,  ROT0,   "Sega", 	 				 "Dynamite Deka (Japan)", GAME_NO_SOUND | GAME_IMPERFECT_GRAPHICS  )
+GAMEBX( 1998, grdforce,  stvbios, stvbios, stv, stv,  stv,       ROT0,   "Success",  				 "Guardian Force", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
+GAMEBX( 1996, groovef,   stvbios, stvbios, stv, stv,  groovef,   ROT0,   "Atlus",    				 "Power Instinct 3 - Groove On Fight", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
+GAMEBX( 1998, hanagumi,  stvbios, stvbios, stv, stv,  hanagumi,  ROT0,   "Sega",     				 "Hanagumi Taisen Columns - Sakura Wars (J 971007 V1.010)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
+GAMEBX( 1996, introdon,  stvbios, stvbios, stv, stv,  stv, 		 ROT0,   "Sunsoft / Success", 		 "Karaoke Quiz Intro Don Don! (J 960213 V1.000)", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
+GAMEBX( 1995, mausuke,   stvbios, stvbios, stv, stv,  mausuke,   ROT0,   "Data East",				 "Mausuke no Ojama the World", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
+GAMEBX( 1998, othellos,  stvbios, stvbios, stv, stv,  stv,       ROT0,   "Success",  				 "Othello Shiyouyo", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
+GAMEBX( 1996, prikura,   stvbios, stvbios, stv, stv,  prikura,   ROT0,   "Atlus",    				 "Princess Clara Daisakusen", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
+GAMEBX( 1996, puyosun,   stvbios, stvbios, stv, stv,  puyosun,   ROT0,   "Compile",  				 "Puyo Puyo Sun", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
+GAMEBX( 1995, shanhigw,  stvbios, stvbios, stv, stv,  stv,	     ROT0,   "Sunsoft / Activision", 	 "Shanghai - The Great Wall / Shanghai Triple Threat (JUE 950623 V1.005)", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
+GAMEBX( 1997, shienryu,  stvbios, stvbios, stv, stv,  shienryu,  ROT270, "Warashi",  				 "Shienryu", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
+GAMEBX( 1996, vfkids,    stvbios, stvbios, stv, stv,  ic13,      ROT0,   "Sega", 	 				 "Virtua Fighter Kids", GAME_NO_SOUND | GAME_IMPERFECT_GRAPHICS )
+GAMEBX( 1997, winterht,  stvbios, stvbios, stv, stv,  ic13,      ROT0,   "Sega", 	 				 "Winter Heat", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS  )
+
+/* Almost */
+GAMEBX( 1995, fhboxers,  stvbios, stvbios, stv, stv,  fhboxers,  ROT0,   "Sega", 	 				 "Funky Head Boxers", GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEBX( 1995, kiwames,   stvbios, stvbios, stv, stvmp,ic13,      ROT0,   "Athena",   				 "Pro Mahjong Kiwame S", GAME_IMPERFECT_SOUND | GAME_NOT_WORKING )
+GAMEBX( 1997, vmahjong,  stvbios, stvbios, stv, stvmp,stv,       ROT0,   "Micronet",   				 "Virtual Mahjong", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
+GAMEBX( 1996, sassisu,   stvbios, stvbios, stv, stv,  ic13,      ROT0,   "Sega", 	     			 "Taisen Tanto-R Sashissu!! (J 980216 V1.000)", GAME_NO_SOUND | GAME_NOT_WORKING )//missing roz layer,but it seems working to me... -AS
+
+/* Doing Something.. but not enough yet */
+GAMEBX( 1998, elandore,  stvbios, stvbios, stv, stv,  stv,       ROT0,   "Sai-Mate",   				 "Fighting Dragon Legend Elan Doree", GAME_IMPERFECT_SOUND | GAME_NOT_WORKING )
+GAMEBX( 1998, myfairld,  stvbios, stvbios, stv, stvmp,stv,       ROT0,   "Micronet",   				 "Virtual Mahjong 2 - My Fair Lady (J 980608 V1.000)", GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEBX( 1998, rsgun,     stvbios, stvbios, stv, stv,  stv,       ROT0,   "Treasure",   				 "Radiant Silvergun (JTUE 980523 V1.000)", GAME_IMPERFECT_SOUND | GAME_NOT_WORKING )
+GAMEBX( 1995, sleague,   stvbios, stvbios, stv, stv,  ic13,      ROT0,   "Sega", 	     			 "Super Major League (U 960108 V1.000)", GAME_IMPERFECT_SOUND | GAME_NOT_WORKING )
+GAMEBX( 1995, finlarch,  sleague, stvbios, stv, stv,  ic13,      ROT0,   "Sega", 	     			 "Final Arch (Japan)", GAME_IMPERFECT_SOUND | GAME_NOT_WORKING )
+GAMEBX( 1997, maruchan,  stvbios, stvbios, stv, stv,  ic13,      ROT0,   "Sega", 	     			 "Maru-Chan de Goo! (J 971216 V1.000)", GAME_IMPERFECT_SOUND | GAME_NOT_WORKING )
+GAMEBX( 1995, vfremix,   stvbios, stvbios, stv, stv,  ic13,      ROT0,   "Sega", 	     			 "Virtua Fighter Remix (JTUEBKAL 950428 V1.000)", GAME_IMPERFECT_SOUND | GAME_NOT_WORKING )
+GAMEBX( 1995, suikoenb,  stvbios, stvbios, stv, stv,  ic13,      ROT0,   "Data East",  				 "Suikoenbu (J 950314 V2.001)", GAME_IMPERFECT_SOUND | GAME_NOT_WORKING )
+GAMEBX( 1995, pblbeach,  stvbios, stvbios, stv, stv,  ic13,      ROT0,   "T&E Soft",   				 "Pebble Beach - The Great Shot (JUE 950913 V0.990)", GAME_NO_SOUND | GAME_NOT_WORKING )
+
+/* not working */
+GAMEBX( 1998, astrass,   stvbios, stvbios, stv, stv,  ic13,      ROT0,   "Sunsoft",    				 "Astra SuperStars", GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEBX( 1996, batmanfr,  stvbios, stvbios, stv, stv,  ic13,      ROT0,   "Acclaim",    				 "Batman Forever (JUE 960507 V1.000)", GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEBX( 1995, decathlt,  stvbios, stvbios, stv, stv,  ic13,      ROT0,   "Sega", 	     			 "Decathlete (JUET 960424 V1.000)", GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEBX( 1999, ffreveng,  stvbios, stvbios, stv, stv,  stv,       ROT0,   "Capcom",     				 "Final Fight Revenge (JUET 990714 V1.000)", GAME_UNEMULATED_PROTECTION | GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEBX( 1996, findlove,  stvbios, stvbios, stv, stv,  ic13,      ROT0,   "Daiki / FCF",    			 "Find Love (J 971212 V1.000)", GAME_IMPERFECT_SOUND | GAME_NOT_WORKING )
+GAMEBX( 1994, gaxeduel,  stvbios, stvbios, stv, stv,  ic13,      ROT0,   "Sega", 	     			 "Golden Axe - The Duel (JUETL 950117 V1.000)", GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEBX( 1995, sandor,    stvbios, stvbios, stv, stv,  ic13,      ROT0,   "Sega", 	     			 "Sando-R", GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEBX( 1995, thunt,     sandor,  stvbios, stv, stv,  ic13,      ROT0,   "Sega", 	     			 "Treasure Hunt", GAME_NO_SOUND | GAME_NOT_WORKING ) // this one actually does something if you use the sandor gfx
+GAMEBX( 1998, seabass,   stvbios, stvbios, stv, stv,  ic13,      ROT0,   "A Wave inc. (Able license)", "Sea Bass Fishing", GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEBX( 1996, sokyugrt,  stvbios, stvbios, stv, stv,  ic13,      ROT0,   "Raizing / 8ing",    		 "Soukyugurentai / Terra Diver (JUET 960821 V1.000)", GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEBX( 1998, sss,       stvbios, stvbios, stv, stv,  ic13,      ROT0,   "Capcom", 	 				 "Steep Slope Sliders (JUET 981110 V1.000)", GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEBX( 1998, twcup98,   stvbios, stvbios, stv, stv,  ic13,      ROT0,   "Tecmo",      				 "Tecmo World Cup '98 (JUET 980410 V1.000)", GAME_IMPERFECT_SOUND | GAME_NOT_WORKING ) // protected?
+GAMEBX( 1997, znpwfv,    stvbios, stvbios, stv, stv,  ic13,      ROT0,   "Sega", 	     			 "Zen Nippon Pro-Wrestling Featuring Virtua (J 971123 V1.000)", GAME_NO_SOUND | GAME_NOT_WORKING )
 
 /* there are probably a bunch of other games (some fishing games with cd-rom,Print Club 2 etc.) */
 
 /* CD games */
 
-GAMEBX( 1995, sfish2,    0,       stvbios, stv, stv,  sfish2,    ROT0, "Sega",	     "Sport Fishing 2", GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEBX( 1995, sfish2j,   sfish2,  stvbios, stv, stv,  sfish2j,   ROT0, "Sega",	     "Sport Fishing 2 (Japan)", GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEBX( 1995, sfish2,    0,       stvbios, stv, stv,  sfish2,    ROT0,   "Sega",	     "Sport Fishing 2", GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEBX( 1995, sfish2j,   sfish2,  stvbios, stv, stv,  sfish2j,   ROT0,   "Sega",	     "Sport Fishing 2 (Japan)", GAME_NO_SOUND | GAME_NOT_WORKING )

@@ -1,12 +1,18 @@
 /***************************************************************************
-Bubble Bobble / Tokio
+
+Tokio          (c) 1986 Taito
+Bubble Bobble  (c) 1986 Taito
+
+driver by Chris Moore, Nicola Salmoria
+also based on Tokio driver by Marcelo de G. Malheiros <malheiro@dca.fee.unicamp.br>
+
 
 Main clock: XTAL = 24 MHz
 Horizontal video frequency: HSYNC = XTAL/4/384 = 15.625 kHz
 Video frequency: VSYNC = HSYNC/264 = 59.185606 Hz
 VBlank duration: 1/VSYNC * (40/264) = 2560 us
 
-***************************************************************************
+****************************************************************************
 
 Bubble Bobble ROM info
 
@@ -14,7 +20,7 @@ CPU Board
 ---------
            | Taito  |Romstar | ?????  |Romstar |
            |        |        |missing |mode sel|
-17  CU1    | A78-01 |   ->   |   ->   |   ->   |   protection mcu
+17  CU1    | A78-01 |   ->   |   ->   |   ->   |   protection mcu (JPH1011P)
 49  PAL1   | A78-02 |   ->   |   ->   |   ->   |   address decoder
 43  PAL2   | A78-03 |   ->   |   ->   |   ->   |   address decoder
 12  PAL3   | A78-04 |   ->   |   ->   |   ->   |   address decoder
@@ -47,88 +53,209 @@ Video Board
 
 Bobble Bobble memory map
 
-driver by Chris Moore
+most of the address decoding is done by various PALs which haven't been read, so
+the memory map is inferred by program behaviour
 
 CPU #1
-0000-bfff ROM (8000-bfff is banked)
-c000-dcff Graphic RAM. This contains pointers to the video RAM columns and
-          to the sprites are contained in Object RAM.
-dd00-dfff Object RAM (groups of four bytes: X position, code [offset in the
-          Graphic RAM], Y position, gfx bank)
+
+Address          Dir Data     Name      Description
+---------------- --- -------- --------- -----------------------
+0xxxxxxxxxxxxxxx R   xxxxxxxx ROM 51    program ROM
+10xxxxxxxxxxxxxx R   xxxxxxxx ROM 52/53 program ROM (banked)
+110xxxxxxxxxxxxx R/W xxxxxxxx VRAM      video RAM
+11100xxxxxxxxxxx R/W xxxxxxxx WORK      RAM shared with CPU #2
+11101xxxxxxxxxxx R/W xxxxxxxx WORK      RAM shared with CPU #2
+11110xxxxxxxxxxx R/W xxxxxxxx WORK      RAM shared with CPU #2
+1111100xxxxxxxxx R/W xxxxxxxx COLOR     palette RAM
+111110100-----00   W xxxxxxxx SOUND     command for sound CPU
+111110100-----01   W --------           n.c.
+111110100-----10   W --------           n.c.
+111110100-----11   W -------x SRESET    reset sound CPU and sound chips
+111110100-----00 R   xxxxxxxx           answer from sound CPU (not used)
+111110100-----01 R   -------x           message pending from sound CPU to CPU #1 (not used)
+111110100-----01 R   ------x-           message pending from CPU #1 to sound CPU (not used)
+111110100-----10 R                      n.c.
+111110100-----11 R                      n.c.
+111110101-------   W -------- TRES?     watchdog reset
+1111101100------   W -------- NMIRQ     trigger NMI on CPU #2 (not used)
+1111101101------   W -----xxx           ROM bank
+1111101101------   W ----x---           n.c.
+1111101101------   W ---x---- SBRES     reset CPU #2
+1111101101------   W --x----- SEQRES    reset MCU
+1111101101------   W -x------ BLACK     blank screen
+1111101101------   W x------- VHINV     flip screen
+1111101110------   W --------           n.c.
+1111101111------   W --------           n.c.
+111110111-------   W --------           n.c.
+111111xxxxxxxxxx R/W xxxxxxxx MCRAM     RAM shared with MCU
+
+
 CPU #2
-0000-7fff ROM
 
-CPU #1 AND #2
-e000-f7fe RAM
-f800-f9ff Palette RAM
-fc01-fdff RAM
+Address          Dir Data     Name      Description
+---------------- --- -------- --------- -----------------------
+0xxxxxxxxxxxxxxx R   xxxxxxxx ROM 37    program ROM
+111xxxxxxxxxxxxx R/W xxxxxxxx WORK      RAM shared with CPU #1 [1]
 
-read:
-ff00      DSWA
-ff01      DSWB
-ff02      IN0
-ff03      IN1
+[1] The last 2kB could be used exclusively by this CPU, but they are not used at all.
 
 
-Service mode works only if the language switch is set to Japanese.
+Sound CPU
 
-- The protection feature which randomizes the EXTEND letters in the original
-  version is not emulated properly.
-
-***************************************************************************
-
-Tokio memory map
-
-CPU 1
-0000-bfff ROM (8000-bfff is banked)
-c000-dcff Graphic RAM. This contains pointers to the video RAM columns and
-          to the sprites contained in Object RAM.
-dd00-dfff Object RAM (groups of four bytes: X position, code [offset in the
-          Graphic RAM], Y position, gfx bank)
-e000-f7ff RAM (Shared)
-f800-f9ff Palette RAM
-
-fa03 - DSW0
-fa04 - DSW1
-fa05 - Coins
-fa06 - Controls Player 1
-fa07 - Controls Player 1
-
-CPU 2
-0000-7fff ROM
-8000-97ff RAM (Shared)
-
-CPU 3
-0000-7fff ROM
-8000-8fff RAM
+Address          Dir Data     Name      Description
+---------------- --- -------- --------- -----------------------
+0xxxxxxxxxxxxxxx R   xxxxxxxx ROM 46    program ROM
+1000xxxxxxxxxxxx R/W xxxxxxxx RAM 47    work RAM
+1001-----------x R/W xxxxxxxx FMA       YM2203
+1010-----------x R/W xxxxxxxx FMB       YM3526
+1011----------00 R   xxxxxxxx           command from CPU #1
+1011----------01 R   -------x           message pending from sound CPU to CPU #1
+1011----------01 R   ------x-           message pending from CPU #1 to sound CPU
+1011----------10 R                      n.c.
+1011----------11 R                      n.c.
+1011----------00   W xxxxxxxx           answer to CPU #1
+1011----------01   W --------           sound NMI enable
+1011----------10   W --------           sound NMI disable
+1011----------11   W                    n.c.
+111------------- R   xxxxxxxx           space for diagnostic ROM?
 
 
-  Here goes a list of known deficiencies of our drivers:
+****************************************************************************
 
-  - The bootleg romset is functional. The original one hangs at
-    the title screen (protection).
 
-  - Sound support is probably incomplete. There are a couple of unknown
-    accesses done by the CPU, including to the YM2203 I/O ports. At the
-	very least, there should be some filters.
+Tokio
+1986, Taito (Romstar License)
 
-  - "fake-r" routine make the "original" roms to restart the game after
-    some seconds.
+PCB Layout                                                                   G Pinout
+----------                                                                   --------
+                                                                   Component Side  Solder Side
+Top Board                                                         ----------------|----------------
+                                                                       Ground   1 | A  Ground
+J1100069A CPU BOARD                                                 Video Red   2 | B  Video Ground
+K1100157A                                                         Video Green   3 | C  Video Blue
+M4300053A (sticker)                                                Video Sync   4 | D
+  |------------------------------------------------------|          Speaker +   5 | E  Speaker -
+  |   VOL      TL074          YM2203              Z80A   |                Key   6 | F  Key
+|-|                                                      |                      7 | H
+|     MB3731  PC010SA                      A71_07.IC10   |            Coin Sw   8 | J
+|H                                                       |         Coin Meter   9 | K
+|     TL7700                                      2016   |                     10 | L
+|-|                                                      |            Service  11 | M  Slam Switch
+  |   MC68705P5                           A71_06-1.IC8  |-|          1P Start  12 | N  2P Start
+|-| (A71_24.IC57)                                       | |                    13 | P
+|                                           A71_05.IC7  | |                    14 | R
+|                                                       | |          1P Right  15 | S  2P Right
+|                                           A71_04.IC6  | |          1P Left   16 | T  2P Left
+|   PC030CM                   PAL                       | |                    17 | U
+|                                         A71_28-1.IC5  | |                    18 | V
+|G                                                      | |                    19 | W
+|                                         A71_27-1.IC4  | |                    20 | X
+|                                                       | |           1P Fire  21 | Y  2P Fire
+|                                                       | |                    22 | Z
+|                                                 Z80B  | |
+|-|                                                     |-|
+  |                                                      |                   H Pinout
+  |                    2016                       Z80B   |                   --------
+  |                                                      |                   1   Ground
+  |                    2016                              |                   2   Ground
+  |                                         A71_01.IC1   |                   3   Ground
+  |   DSWB(8) DSWA(8)  2016                              |                   4   Ground
+  |------------------------------------------------------|                   5   +5VDC
+Notes:                                                                       6   +5VDC
+        H - 12-pin Connector for Power Input                                 7   +5VDC
+        G - 22-Way Edge Connector                                            8   -5VDC
+      PAL - MMI PAL16L8B stamped 'A71-26' (DIP20)                            9   +12VDC
+  PC030CM - Taito Custom Ceramic IC, possibly contains a smt logic IC,       10  Key
+            smt resistors and smt capacitors (SIP20)                         11  +12VDC
+  PC010SA - Taito Custom Ceramic IC, possibly contains                       12  +12VDC
+            smt resistors and smt capacitors, sound DAC (SIP14)
+   MB3731 - Fujitsu MB3731 18W Power Amplifier (SIP12)
+   TL7700 - Texas Instruments TL7700 Supply-Voltage Supervisor/Power-On Reset IC (DIP8)
+MC68705P5 - Motorola MC68705P5 Microcontroller with 2K Internal EPROM,
+            clock input 3.000MHz [24/8] (DIP28)
+     2016 - Toshiba TMM2016BP-10 2K x8 SRAM (DIP24)
+     Z80A - Zilog Z8400APS Z80A CPU, clock input 3.000MHz [24/8] (DIP40)
+     Z80B - Zilog Z8400BPS Z80B CPU, clock input 6.000MHz [24/4] (DIP40)
+   YM2203 - Yamaha YM2203 Sound Chip, clock input 3.000MHz [24/8] (DIP40)
+    VSync - 60Hz
 
-    Well, we know very little about the 0xFE00 address. It could be
-    some watchdog or a synchronization timer.
+     ROMs - (All EPROMs are 27C256)
+            A71_07.IC10    Sound CPU Program
 
-    I remember scanning the main CPU code to find how it was
-    used on the bootleg set. Then I just figured out a constant value
-    that made the game run (it hang if just set unhandled, that is,
-    returning zero).
+            A71_06-1.IC8 \
+            A71_05.IC7   |
+            A71_04.IC6   | Main CPU Program
+            A71_28-1.IC5 |
+            A71_27-1.IC4 /
 
-    Maybe the solution is to patch the bootleg ROMs to skip some tests
-    at this location (I remember some of them being in the
-    initialization routine of the main CPU).
+            A71_01.IC1     Sub CPU Program
 
-                       Marcelo de G. Malheiros <malheiro@dca.fee.unicamp.br>
-                                                                   1998.9.25
+            A71_24.IC57    68705 Microcontroller Program (Protected, Not Dumped)
+
+
+
+Bottom Board
+
+J1100070A VIDEO BOARD
+K1100158A
+K1100172A (sticker)
+  |------------------------------------------------------|                   T Pinout
+  |                                     24MHz            |                   --------
+  |                                                      |         Component Side  Solder Side
+  |                                     2018             |        ----------------|-----------
+  |                                     2018             |             Ground   1 | A  Ground
+  |                     A71_25.IC41                      |             Ground   2 | B  Ground
+  |                                     2018             |             Ground   3 | C  Ground
+  |                                     2018            |-|            Ground   4 | D  Ground
+  |                                                     | |                     5 | E
+|-|                                                     | |                     6 | F
+|                                                       | |                     7 | H
+|    A71_08.IC12  A71_16.IC30                           | |                     8 | J
+|                                                       | |                     9 | K
+|T   A71_09.IC13  A71_17.IC31                           | |                    10 | L
+|                                                       | |                    11 | M
+|    A71_10.IC14  A71_18.IC32                           | |                    12 | N
+|                                                       | |                    13 | P
+|    A71_11.IC15  A71_19.IC33                           | |                    14 | R
+|-|                                     2018            | |               +5V  15 | S  +5V
+  |  A71_12.IC16  A71_20.IC34           2018            |-|               +5V  16 | T  +5V
+  |                                                      |                +5V  17 | U  +5V
+  |  A71_13.IC17  A71_21.IC35           2018             |                +5V  18 | V  +5V
+  |                                     2018             |
+  |  A71_14.IC18  A71_22.IC36           PC040DA          |
+  |                                     PC040DA          |
+  |  A71_15.IC19  A71_23.IC37           PC040DA          |
+  |------------------------------------------------------|
+Notes:
+        T - 36-Way Edge Connector
+  PC040DA - Taito Custom Ceramic IC, Video DAC (SIP19)
+     2018 - Toshiba TMM2018D-45 2K x8 SRAM (DIP24)
+
+     ROMs -
+            A71_25.IC41    MMI 63S141 Bipolar PROM (DIP16)
+            All EPROMs are 27C256
+
+
+****************************************************************************
+
+
+Notes:
+- Bubble Bobble: service mode works only if the language switch is set to Japanese.
+- the original bubble bobble board has a 68701 protection MCU, which hasn't been
+  read. Its behaviour is simulated and should be a good approximation but not
+  100% accurate.
+- The coin inputs are handled by a custom called PC030. It would be responsible of
+  handling the coin counters.
+
+TODO:
+- bublbobl: the randomization of EXTEND letters is handled by the MCU. The simulation
+  is probably not accurate and the same letter might appear too many times.
+- emulate the CPU #1 <-> sound CPU communication status flags (which are not used)
+- why does emulating the sound CPU reset port (fa03) cause sound to stop working?
+- tokio: doesn't work due to missing MCU protection emulation.
+- tokio: sound support is probably incomplete. There are a couple of unknown
+  accesses done by the CPU, including to the YM2203 I/O ports. At the
+  very least, there should be some filters.
 
 ***************************************************************************/
 
@@ -141,9 +268,23 @@ extern size_t bublbobl_objectram_size;
 VIDEO_UPDATE( bublbobl );
 
 /* machine/bublbobl.c */
-extern UINT8 *bublbobl_sharedram2;
-READ8_HANDLER( bublbobl_sharedram2_r );
-WRITE8_HANDLER( bublbobl_sharedram2_w );
+extern UINT8 *bublbobl_mcu_sharedram;
+WRITE8_HANDLER( bublbobl_bankswitch_w );
+WRITE8_HANDLER( tokio_bankswitch_w );
+WRITE8_HANDLER( tokio_videoctrl_w );
+WRITE8_HANDLER( bublbobl_nmitrigger_w );
+READ8_HANDLER( tokio_mcu_r );
+READ8_HANDLER( tokiob_mcu_r );
+WRITE8_HANDLER( bublbobl_sound_command_w );
+WRITE8_HANDLER( bublbobl_sh_nmi_disable_w );
+WRITE8_HANDLER( bublbobl_sh_nmi_enable_w );
+INTERRUPT_GEN( bublbobl_interrupt );
+READ8_HANDLER( boblbobl_ic43_a_r );
+WRITE8_HANDLER( boblbobl_ic43_a_w );
+READ8_HANDLER( boblbobl_ic43_b_r );
+WRITE8_HANDLER( boblbobl_ic43_b_w );
+#if 0
+// left for reference. The 68705 was from a bootleg, the original MCU is a 68701
 INTERRUPT_GEN( bublbobl_m68705_interrupt );
 READ8_HANDLER( bublbobl_68705_portA_r );
 WRITE8_HANDLER( bublbobl_68705_portA_w );
@@ -151,16 +292,15 @@ WRITE8_HANDLER( bublbobl_68705_ddrA_w );
 READ8_HANDLER( bublbobl_68705_portB_r );
 WRITE8_HANDLER( bublbobl_68705_portB_w );
 WRITE8_HANDLER( bublbobl_68705_ddrB_w );
-WRITE8_HANDLER( bublbobl_bankswitch_w );
-WRITE8_HANDLER( tokio_bankswitch_w );
-WRITE8_HANDLER( tokio_videoctrl_w );
-WRITE8_HANDLER( bublbobl_nmitrigger_w );
-READ8_HANDLER( tokio_fake_r );
-WRITE8_HANDLER( bublbobl_sound_command_w );
-WRITE8_HANDLER( bublbobl_sh_nmi_disable_w );
-WRITE8_HANDLER( bublbobl_sh_nmi_enable_w );
+#endif
 
-/* Memory Maps */
+
+static WRITE8_HANDLER(soundcpu_reset_w)
+{
+	cpunum_set_input_line(2, INPUT_LINE_RESET, (data & 0x01) ? ASSERT_LINE : CLEAR_LINE);
+}
+
+
 
 static ADDRESS_MAP_START( master_map, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0000, 0x7fff) AM_ROM
@@ -170,10 +310,10 @@ static ADDRESS_MAP_START( master_map, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0xe000, 0xf7ff) AM_RAM AM_SHARE(1)
 	AM_RANGE(0xf800, 0xf9ff) AM_RAM AM_WRITE(paletteram_RRRRGGGGBBBBxxxx_swap_w) AM_BASE(&paletteram)
 	AM_RANGE(0xfa00, 0xfa00) AM_WRITE(bublbobl_sound_command_w)
-	AM_RANGE(0xfa03, 0xfa03) AM_WRITENOP // sound cpu reset
+//	AM_RANGE(0xfa03, 0xfa03) AM_WRITE(soundcpu_reset_w)	// doesn't work for some reason
 	AM_RANGE(0xfa80, 0xfa80) AM_WRITE(watchdog_reset_w)
 	AM_RANGE(0xfb40, 0xfb40) AM_WRITE(bublbobl_bankswitch_w)
-	AM_RANGE(0xfc00, 0xffff) AM_READWRITE(bublbobl_sharedram2_r, bublbobl_sharedram2_w) AM_BASE(&bublbobl_sharedram2)
+	AM_RANGE(0xfc00, 0xffff) AM_RAM AM_BASE(&bublbobl_mcu_sharedram)
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( slave_map, ADDRESS_SPACE_PROGRAM, 8 )
@@ -188,12 +328,14 @@ static ADDRESS_MAP_START( sound_map, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x9001, 0x9001) AM_READWRITE(YM2203_read_port_0_r, YM2203_write_port_0_w)
 	AM_RANGE(0xa000, 0xa000) AM_READWRITE(YM3526_status_port_0_r, YM3526_control_port_0_w)
 	AM_RANGE(0xa001, 0xa001) AM_WRITE(YM3526_write_port_0_w)
-	AM_RANGE(0xb000, 0xb000) AM_READ(soundlatch_r) AM_WRITENOP // message for main cpu
-	AM_RANGE(0xb001, 0xb001) AM_READNOP AM_WRITE(bublbobl_sh_nmi_enable_w) 	// bit 0: message pending for main cpu, bit 1: message pending for sound cpu
+	AM_RANGE(0xb000, 0xb000) AM_READ(soundlatch_r) AM_WRITENOP
+	AM_RANGE(0xb001, 0xb001) AM_WRITE(bublbobl_sh_nmi_enable_w) AM_READNOP
 	AM_RANGE(0xb002, 0xb002) AM_WRITE(bublbobl_sh_nmi_disable_w)
-	AM_RANGE(0xe000, 0xefff) AM_ROM	// space for diagnostic ROM?
+	AM_RANGE(0xe000, 0xffff) AM_ROM	// space for diagnostic ROM?
 ADDRESS_MAP_END
 
+#if 0
+// left for reference. The 68705 was from a bootleg, the original MCU is a 68701
 static ADDRESS_MAP_START( mcu_map, ADDRESS_SPACE_PROGRAM, 8 )
 	ADDRESS_MAP_FLAGS( AMEF_ABITS(11) )
 	AM_RANGE(0x000, 0x000) AM_READWRITE(bublbobl_68705_portA_r, bublbobl_68705_portA_w)
@@ -205,7 +347,7 @@ static ADDRESS_MAP_START( mcu_map, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x010, 0x07f) AM_RAM
 	AM_RANGE(0x080, 0x7ff) AM_ROM
 ADDRESS_MAP_END
-
+#endif
 
 static ADDRESS_MAP_START( bootleg_map, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0000, 0x7fff) AM_ROM
@@ -218,8 +360,10 @@ static ADDRESS_MAP_START( bootleg_map, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0xfa03, 0xfa03) AM_WRITENOP // sound cpu reset
 	AM_RANGE(0xfa80, 0xfa80) AM_WRITENOP // ???
 	AM_RANGE(0xfb40, 0xfb40) AM_WRITE(bublbobl_bankswitch_w)
-	AM_RANGE(0xfc00, 0xfcff) AM_READWRITE(bublbobl_sharedram2_r, bublbobl_sharedram2_w) AM_BASE(&bublbobl_sharedram2)
-	AM_RANGE(0xfd00, 0xfeff) AM_RAM
+	AM_RANGE(0xfc00, 0xfcff) AM_RAM
+	AM_RANGE(0xfd00, 0xfdff) AM_RAM
+	AM_RANGE(0xfe00, 0xfe03) AM_READWRITE(boblbobl_ic43_a_r,boblbobl_ic43_a_w)
+	AM_RANGE(0xfe80, 0xfe83) AM_READWRITE(boblbobl_ic43_b_r,boblbobl_ic43_b_w)
 	AM_RANGE(0xff00, 0xff00) AM_READ(input_port_0_r)
 	AM_RANGE(0xff01, 0xff01) AM_READ(input_port_1_r)
 	AM_RANGE(0xff02, 0xff02) AM_READ(input_port_2_r)
@@ -246,7 +390,7 @@ static ADDRESS_MAP_START( tokio_map, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0xfb00, 0xfb00) AM_WRITE(tokio_videoctrl_w)
 	AM_RANGE(0xfb80, 0xfb80) AM_WRITE(bublbobl_nmitrigger_w)
 	AM_RANGE(0xfc00, 0xfc00) AM_READNOP AM_WRITE(bublbobl_sound_command_w) // ???
-	AM_RANGE(0xfe00, 0xfe00) AM_READ(tokio_fake_r) AM_WRITENOP // ???
+	AM_RANGE(0xfe00, 0xfe00) AM_READ(tokio_mcu_r) AM_WRITENOP // ???
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( tokio_slave_map, ADDRESS_SPACE_PROGRAM, 8 )
@@ -263,10 +407,10 @@ static ADDRESS_MAP_START( tokio_sound_map, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0xa800, 0xa800) AM_WRITE(bublbobl_sh_nmi_enable_w)
 	AM_RANGE(0xb000, 0xb000) AM_READWRITE(YM2203_status_port_0_r, YM2203_control_port_0_w)
 	AM_RANGE(0xb001, 0xb001) AM_READWRITE(YM2203_read_port_0_r, YM2203_write_port_0_w)
-	AM_RANGE(0xe000, 0xefff) AM_ROM	// space for diagnostic ROM?
+	AM_RANGE(0xe000, 0xffff) AM_ROM	// space for diagnostic ROM?
 ADDRESS_MAP_END
 
-/* Input Ports */
+
 
 INPUT_PORTS_START( bublbobl )
 	PORT_START_TAG("IN0")
@@ -409,69 +553,19 @@ INPUT_PORTS_START( boblbobl )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( sboblbob )
-	PORT_START_TAG("DSW0")
+	PORT_INCLUDE( boblbobl )
+
+	PORT_MODIFY( "DSW0" )
 	PORT_DIPNAME( 0x01, 0x00, "Game" )
 	PORT_DIPSETTING(    0x01, "Bobble Bobble" )
 	PORT_DIPSETTING(    0x00, "Super Bobble Bobble" )
-	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Flip_Screen ) )
-	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_SERVICE( 0x04, IP_ACTIVE_LOW )
-	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Demo_Sounds ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x08, DEF_STR( On ) )
-	PORT_DIPNAME( 0x30, 0x30, DEF_STR( Coin_A ) )
-	PORT_DIPSETTING(    0x10, DEF_STR( 2C_1C ) )
-	PORT_DIPSETTING(    0x30, DEF_STR( 1C_1C ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( 2C_3C ) )
-	PORT_DIPSETTING(    0x20, DEF_STR( 1C_2C ) )
-	PORT_DIPNAME( 0xc0, 0xc0, DEF_STR( Coin_B ) )
-	PORT_DIPSETTING(    0x40, DEF_STR( 2C_1C ) )
-	PORT_DIPSETTING(    0xc0, DEF_STR( 1C_1C ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( 2C_3C ) )
-	PORT_DIPSETTING(    0x80, DEF_STR( 1C_2C ) )
 
-	PORT_START_TAG("DSW1")
-	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(    0x02, DEF_STR( Easy ) )
-	PORT_DIPSETTING(    0x03, DEF_STR( Normal ) )
-	PORT_DIPSETTING(    0x01, DEF_STR( Hard ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Very_Hard ) )
-	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Bonus_Life ) )
-	PORT_DIPSETTING(    0x08, "20K 80K" )
-	PORT_DIPSETTING(    0x0c, "30K 100K" )
-	PORT_DIPSETTING(    0x04, "40K 200K" )
-	PORT_DIPSETTING(    0x00, "50K 250K" )
+	PORT_MODIFY( "DSW1" )
 	PORT_DIPNAME( 0x30, 0x30, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x10, "1" )
 	PORT_DIPSETTING(    0x00, "2" )
 	PORT_DIPSETTING(    0x30, "3" )
 	PORT_DIPSETTING(    0x20, "100 (Cheat)")
-	PORT_DIPNAME( 0xc0, 0x00, "Monster Speed" )
-	PORT_DIPSETTING(    0x00, DEF_STR( Normal ) )
-	PORT_DIPSETTING(    0x40, DEF_STR( Medium ) )
-	PORT_DIPSETTING(    0x80, DEF_STR( High ) )
-	PORT_DIPSETTING(    0xc0, DEF_STR( Very_High ) )
-
-	PORT_START_TAG("IN0")
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  ) PORT_2WAY
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_2WAY
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN2 )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_COIN1 )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON2 )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON1 )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START1 )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
-
-	PORT_START_TAG("IN1")
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  ) PORT_2WAY PORT_PLAYER(2)
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_2WAY PORT_PLAYER(2)
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_TILT ) // ???
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_SERVICE1 )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(2)
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(2)
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START2 )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( tokio )
@@ -526,7 +620,7 @@ INPUT_PORTS_START( tokio )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_COIN2 )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_SPECIAL )	// data ready from MCU
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
@@ -551,33 +645,31 @@ INPUT_PORTS_START( tokio )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 INPUT_PORTS_END
 
-/* Graphics Layout */
+
 
 static struct GfxLayout charlayout =
 {
-	8, 8,	/* the characters are 8x8 pixels */
-	256*8*8,	/* 256 chars per bank * 8 banks per ROM pair * 8 ROM pairs */
-	4,	/* 4 bits per pixel */
-	{ 0, 4, 8*0x8000*8, 8*0x8000*8+4 },
+	8, 8,
+	RGN_FRAC(1,2),
+	4,
+	{ 0, 4, RGN_FRAC(1,2), RGN_FRAC(1,2)+4 },
 	{ 3, 2, 1, 0, 8+3, 8+2, 8+1, 8+0 },
 	{ 0*16, 1*16, 2*16, 3*16, 4*16, 5*16, 6*16, 7*16 },
-	16*8	/* every char takes 16 bytes in two ROMs */
+	16*8
 };
-
-/* Graphics Decode Information */
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ REGION_GFX1, 0x00000, &charlayout, 0, 16 },
+	{ REGION_GFX1, 0, &charlayout, 0, 16 },
 	{ -1 }
 };
+
+
 
 #define MAIN_XTAL 	24000000
 #define HSYNC 		MAIN_XTAL / 4 / 384
 #define VSYNC		HSYNC / 264
 #define VBLANK		1 / VSYNC * (40 / 264)
-
-/* Sound Interfaces */
 
 // handler called by the 2203 emulator when the internal timers cause an IRQ
 static void irqhandler(int irq)
@@ -608,7 +700,7 @@ static struct YM2203interface tokio_ym2203_interface =
 {
 	1,				// 1 chip
 	MAIN_XTAL/8,	// 3 MHz
-	{ YM2203_VOL(100,20) },
+	{ YM2203_VOL(100,8) },
 	{ 0 },
 	{ 0 },
 	{ 0 },
@@ -616,53 +708,7 @@ static struct YM2203interface tokio_ym2203_interface =
 	{ irqhandler }
 };
 
-/* Machine Drivers */
 
-static MACHINE_DRIVER_START( bublbobl )
-	// basic machine hardware
-	MDRV_CPU_ADD_TAG("main", Z80, MAIN_XTAL/4)	// 6 MHz
-	MDRV_CPU_PROGRAM_MAP(master_map, 0)
-
-	MDRV_CPU_ADD(Z80, MAIN_XTAL/4)	// 6 MHz
-	MDRV_CPU_PROGRAM_MAP(slave_map, 0)
-	MDRV_CPU_VBLANK_INT(irq0_line_hold, 1)
-
-	MDRV_CPU_ADD(Z80, MAIN_XTAL/8)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	// 3 MHz
-	MDRV_CPU_PROGRAM_MAP(sound_map, 0) // IRQs are triggered by the YM2203
-
-	MDRV_CPU_ADD_TAG("mcu", M68705, 4000000/2)	// xtal is 4MHz, I think it's divided by 2 internally
-	MDRV_CPU_PROGRAM_MAP(mcu_map, 0)
-	MDRV_CPU_VBLANK_INT(bublbobl_m68705_interrupt, 2) // ??? should come from the same clock which latches the INT pin on the second Z80
-
-	MDRV_FRAMES_PER_SECOND(VSYNC)	// 59.185606 Hz
-	MDRV_VBLANK_DURATION(VBLANK) 	// 2560 µs
-	MDRV_INTERLEAVE(100) // 100 CPU slices per frame - a high value to ensure proper synchronization of the CPUs
-
-	// video hardware
-	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
-	MDRV_SCREEN_SIZE(32*8, 32*8)
-	MDRV_VISIBLE_AREA(0, 32*8-1, 2*8, 30*8-1)
-	MDRV_GFXDECODE(gfxdecodeinfo)
-	MDRV_PALETTE_LENGTH(256)
-
-	MDRV_VIDEO_UPDATE(bublbobl)
-
-	// sound hardware
-	MDRV_SOUND_ADD(YM2203, ym2203_interface)
-	MDRV_SOUND_ADD(YM3526, ym3526_interface)
-MACHINE_DRIVER_END
-
-static MACHINE_DRIVER_START( boblbobl )
-	MDRV_IMPORT_FROM(bublbobl)
-
-	// basic machine hardware
-	MDRV_CPU_MODIFY("main")
-	MDRV_CPU_PROGRAM_MAP(bootleg_map, 0)
-	MDRV_CPU_VBLANK_INT(irq0_line_hold, 1)	// interrupt mode 1, unlike Bubble Bobble
-
-	MDRV_CPU_REMOVE("mcu")
-MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( tokio )
 	// basic machine hardware
@@ -695,7 +741,137 @@ static MACHINE_DRIVER_START( tokio )
 	MDRV_SOUND_ADD(YM2203, tokio_ym2203_interface)
 MACHINE_DRIVER_END
 
-/* ROMs */
+static MACHINE_DRIVER_START( bublbobl )
+	// basic machine hardware
+	MDRV_CPU_ADD_TAG("main", Z80, MAIN_XTAL/4)	// 6 MHz
+	MDRV_CPU_PROGRAM_MAP(master_map, 0)
+	MDRV_CPU_VBLANK_INT(bublbobl_interrupt, 1) // IRQs should be triggered by the MCU, but we don't have it
+
+	MDRV_CPU_ADD(Z80, MAIN_XTAL/4)	// 6 MHz
+	MDRV_CPU_PROGRAM_MAP(slave_map, 0)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold, 1)
+
+	MDRV_CPU_ADD(Z80, MAIN_XTAL/8)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	// 3 MHz
+	MDRV_CPU_PROGRAM_MAP(sound_map, 0) // IRQs are triggered by the YM2203
+
+#if 0
+	// left for reference. The 68705 was from a bootleg, the original MCU is a 68701
+	MDRV_CPU_ADD_TAG("mcu", M68705, 4000000/2)	// xtal is 4MHz, I think it's divided by 2 internally
+	MDRV_CPU_PROGRAM_MAP(mcu_map, 0)
+	MDRV_CPU_VBLANK_INT(bublbobl_m68705_interrupt, 2) // ??? should come from the same clock which latches the INT pin on the second Z80
+#endif
+
+	MDRV_FRAMES_PER_SECOND(VSYNC)	// 59.185606 Hz
+	MDRV_VBLANK_DURATION(VBLANK) 	// 2560 µs
+	MDRV_INTERLEAVE(100) // 100 CPU slices per frame - a high value to ensure proper synchronization of the CPUs
+
+	// video hardware
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0, 32*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(256)
+
+	MDRV_VIDEO_UPDATE(bublbobl)
+
+	// sound hardware
+	MDRV_SOUND_ADD(YM2203, ym2203_interface)
+	MDRV_SOUND_ADD(YM3526, ym3526_interface)
+MACHINE_DRIVER_END
+
+static MACHINE_DRIVER_START( boblbobl )
+	MDRV_IMPORT_FROM(bublbobl)
+
+	// basic machine hardware
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_PROGRAM_MAP(bootleg_map, 0)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold, 1)	// interrupt mode 1, unlike Bubble Bobble
+
+//	MDRV_CPU_REMOVE("mcu")
+MACHINE_DRIVER_END
+
+
+
+ROM_START( tokio )
+	ROM_REGION( 0x30000, REGION_CPU1, 0 )	/* main CPU */
+	ROM_LOAD( "a71-27-1.4",   0x00000, 0x8000, CRC(8c180896) SHA1(bc8aeb42da4bae7db6f65b9874224f60a9bc4500) )
+    /* ROMs banked at 8000-bfff */
+	ROM_LOAD( "a71-28-1.5",   0x10000, 0x8000, CRC(1b447527) SHA1(6939e6c1b8492825d18f4e96f39ff45f4c96eea2) )
+	ROM_LOAD( "a71-04.6",     0x18000, 0x8000, CRC(a0a4ce0e) SHA1(c49bdcd85c760a5e7327d1b424772e1560f1a318) )
+	ROM_LOAD( "a71-05.7",     0x20000, 0x8000, CRC(6da0b945) SHA1(6c80b8333dd95657f99e6ba5b6e877733ac02a8c) )
+	ROM_LOAD( "a71-06-1.8",   0x28000, 0x8000, CRC(56927b3f) SHA1(33fb4e71b95664ecff1f35f6782a14101982a56d) )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* video CPU */
+	ROM_LOAD( "a71-01.1",     0x00000, 0x8000, CRC(0867c707) SHA1(7129974f1252b28e9e338bd3c7fcb87210dcf412) )
+
+	ROM_REGION( 0x10000, REGION_CPU3, 0 )	/* audio CPU */
+	ROM_LOAD( "a71-07.10",    0x0000, 0x08000, CRC(f298cc7b) SHA1(ebf5c804aa07b7f198ec3e1f8d1e111cd89ebdf3) )
+
+	ROM_REGION( 0x0800, REGION_CPU4, 0 )	/* 2k for the microcontroller (68705P5) */
+	ROM_LOAD( "a71-24.57",    0x0000, 0x0800, NO_DUMP )
+
+	ROM_REGION( 0x80000, REGION_GFX1, ROMREGION_DISPOSE | ROMREGION_INVERT )
+	ROM_LOAD( "a71-08.12",    0x00000, 0x8000, CRC(0439ab13) SHA1(84142220a6a29f0e34f7c7c751b583bf394df8ce) )    /* 1st plane */
+	ROM_LOAD( "a71-09.13",    0x08000, 0x8000, CRC(edb3d2ff) SHA1(0c6e4bbc786a097f9d99220e72f98c1c795a7292) )
+	ROM_LOAD( "a71-10.14",    0x10000, 0x8000, CRC(69f0888c) SHA1(1704ab6339981195cd09d581e83094c75037d18e) )
+	ROM_LOAD( "a71-11.15",    0x18000, 0x8000, CRC(4ae07c31) SHA1(452d1eb5a70e7853791cd05e4578c1454477bdec) )
+	ROM_LOAD( "a71-12.16",    0x20000, 0x8000, CRC(3f6bd706) SHA1(b03c534a95b71941331d3ffd9aa7069b5f05687e) )
+	ROM_LOAD( "a71-13.17",    0x28000, 0x8000, CRC(f2c92aaa) SHA1(7dfdc473794a298032405ba918df8085b0bbe174) )
+	ROM_LOAD( "a71-14.18",    0x30000, 0x8000, CRC(c574b7b2) SHA1(9839adce60c0017ae3997603a2aece511af226d2) )
+	ROM_LOAD( "a71-15.19",    0x38000, 0x8000, CRC(12d87e7f) SHA1(327a80f08207ee66721738f7e1c53f75b5659be0) )
+	ROM_LOAD( "a71-16.30",    0x40000, 0x8000, CRC(0bce35b6) SHA1(3f0496db6681c7be1e36ba41296115d158d7457a) )    /* 2nd plane */
+	ROM_LOAD( "a71-17.31",    0x48000, 0x8000, CRC(deda6387) SHA1(40f0be3a71b0a03f0275da72f4124424b162318a) )
+	ROM_LOAD( "a71-18.32",    0x50000, 0x8000, CRC(330cd9d7) SHA1(919f78036b760938d6aa72754be1a615f568b470) )
+	ROM_LOAD( "a71-19.33",    0x58000, 0x8000, CRC(fc4b29e0) SHA1(d11393a24b5c6c04f5058b299e4b0fc773a03e4b) )
+	ROM_LOAD( "a71-20.34",    0x60000, 0x8000, CRC(65acb265) SHA1(2ef940f994e76d4387be6e0d53a565813cc59636) )
+	ROM_LOAD( "a71-21.35",    0x68000, 0x8000, CRC(33cde9b2) SHA1(9b227ab609e3c7c6be90c29739a57ea4959cd68e) )
+	ROM_LOAD( "a71-22.36",    0x70000, 0x8000, CRC(fb98eac0) SHA1(57615c3934de5510eeeb0ba16024abda8ee95303) )
+	ROM_LOAD( "a71-23.37",    0x78000, 0x8000, CRC(30bd46ad) SHA1(6e1618ed237c769d1a8d329fbd7a9f7216993215) )
+
+	ROM_REGION( 0x0100, REGION_PROMS, 0 )
+	ROM_LOAD( "a71-25.41",    0x0000, 0x0100, CRC(2d0f8545) SHA1(089c31e2f614145ef2743164f7b52ae35bc06808) )	/* video timing */
+ROM_END
+
+ROM_START( tokiob )
+	ROM_REGION( 0x30000, REGION_CPU1, 0 ) /* main CPU */
+	ROM_LOAD( "2",            0x00000, 0x8000, CRC(f583b1ef) SHA1(a97b36299b51792953516224191f11decc579a38) )
+    /* ROMs banked at 8000-bfff */
+	ROM_LOAD( "3",            0x10000, 0x8000, CRC(69dacf44) SHA1(ee8c33702749c0e2562951f9f80c897d3fbd7dd7) )
+	ROM_LOAD( "a71-04.6",     0x18000, 0x8000, CRC(a0a4ce0e) SHA1(c49bdcd85c760a5e7327d1b424772e1560f1a318) )
+	ROM_LOAD( "a71-05.7",     0x20000, 0x8000, CRC(6da0b945) SHA1(6c80b8333dd95657f99e6ba5b6e877733ac02a8c) )
+	ROM_LOAD( "6",            0x28000, 0x8000, CRC(1490e95b) SHA1(a73e1857a1029156f0b5f7f7fe34a37870e72209) )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* video CPU */
+	ROM_LOAD( "a71-01.1",     0x00000, 0x8000, CRC(0867c707) SHA1(7129974f1252b28e9e338bd3c7fcb87210dcf412) )
+
+	ROM_REGION( 0x10000, REGION_CPU3, 0 )	/* audio CPU */
+	ROM_LOAD( "a71-07.10",    0x0000, 0x08000, CRC(f298cc7b) SHA1(ebf5c804aa07b7f198ec3e1f8d1e111cd89ebdf3) )
+
+	ROM_REGION( 0x80000, REGION_GFX1, ROMREGION_DISPOSE | ROMREGION_INVERT )
+	ROM_LOAD( "a71-08.12",    0x00000, 0x8000, CRC(0439ab13) SHA1(84142220a6a29f0e34f7c7c751b583bf394df8ce) )    /* 1st plane */
+	ROM_LOAD( "a71-09.13",    0x08000, 0x8000, CRC(edb3d2ff) SHA1(0c6e4bbc786a097f9d99220e72f98c1c795a7292) )
+	ROM_LOAD( "a71-10.14",    0x10000, 0x8000, CRC(69f0888c) SHA1(1704ab6339981195cd09d581e83094c75037d18e) )
+	ROM_LOAD( "a71-11.15",    0x18000, 0x8000, CRC(4ae07c31) SHA1(452d1eb5a70e7853791cd05e4578c1454477bdec) )
+	ROM_LOAD( "a71-12.16",    0x20000, 0x8000, CRC(3f6bd706) SHA1(b03c534a95b71941331d3ffd9aa7069b5f05687e) )
+	ROM_LOAD( "a71-13.17",    0x28000, 0x8000, CRC(f2c92aaa) SHA1(7dfdc473794a298032405ba918df8085b0bbe174) )
+	ROM_LOAD( "a71-14.18",    0x30000, 0x8000, CRC(c574b7b2) SHA1(9839adce60c0017ae3997603a2aece511af226d2) )
+	ROM_LOAD( "a71-15.19",    0x38000, 0x8000, CRC(12d87e7f) SHA1(327a80f08207ee66721738f7e1c53f75b5659be0) )
+	ROM_LOAD( "a71-16.30",    0x40000, 0x8000, CRC(0bce35b6) SHA1(3f0496db6681c7be1e36ba41296115d158d7457a) )    /* 2nd plane */
+	ROM_LOAD( "a71-17.31",    0x48000, 0x8000, CRC(deda6387) SHA1(40f0be3a71b0a03f0275da72f4124424b162318a) )
+	ROM_LOAD( "a71-18.32",    0x50000, 0x8000, CRC(330cd9d7) SHA1(919f78036b760938d6aa72754be1a615f568b470) )
+	ROM_LOAD( "a71-19.33",    0x58000, 0x8000, CRC(fc4b29e0) SHA1(d11393a24b5c6c04f5058b299e4b0fc773a03e4b) )
+	ROM_LOAD( "a71-20.34",    0x60000, 0x8000, CRC(65acb265) SHA1(2ef940f994e76d4387be6e0d53a565813cc59636) )
+	ROM_LOAD( "a71-21.35",    0x68000, 0x8000, CRC(33cde9b2) SHA1(9b227ab609e3c7c6be90c29739a57ea4959cd68e) )
+	ROM_LOAD( "a71-22.36",    0x70000, 0x8000, CRC(fb98eac0) SHA1(57615c3934de5510eeeb0ba16024abda8ee95303) )
+	ROM_LOAD( "a71-23.37",    0x78000, 0x8000, CRC(30bd46ad) SHA1(6e1618ed237c769d1a8d329fbd7a9f7216993215) )
+
+	ROM_REGION( 0x0100, REGION_PROMS, 0 )
+	ROM_LOAD( "a71-25.41",    0x0000, 0x0100, CRC(2d0f8545) SHA1(089c31e2f614145ef2743164f7b52ae35bc06808) )	/* video timing */
+ROM_END
+
+// left for reference. The 68705 was from a bootleg, the original MCU is a 68701
+//	ROM_LOAD( "68705.bin",    0x0000, 0x0800, CRC(78caa635) SHA1(a756e45b25b007843ba4f2204cad6081cf7260e9) )	/* from a pirate board */
 
 ROM_START( bublbobl )
 	ROM_REGION( 0x30000, REGION_CPU1, 0 )
@@ -711,7 +887,7 @@ ROM_START( bublbobl )
 	ROM_LOAD( "a78-07.46",    0x0000, 0x08000, CRC(4f9a26e8) SHA1(3105b34b88a7134493c2b3f584729f8b0407a011) )
 
 	ROM_REGION( 0x0800, REGION_CPU4, 0 )	/* 2k for the microcontroller */
-	ROM_LOAD( "68705.bin",    0x0000, 0x0800, CRC(78caa635) SHA1(a756e45b25b007843ba4f2204cad6081cf7260e9) )	/* from a pirate board */
+	ROM_LOAD( "68701.bin",    0x0000, 0x0800, NO_DUMP )
 
 	ROM_REGION( 0x80000, REGION_GFX1, ROMREGION_DISPOSE | ROMREGION_INVERT )
 	ROM_LOAD( "a78-09.12",    0x00000, 0x8000, CRC(20358c22) SHA1(2297af6c53d5807bf90a8e081075b8c72a994fc5) )    /* 1st plane */
@@ -747,7 +923,7 @@ ROM_START( bublbobr )
 	ROM_LOAD( "a78-07.46",    0x0000, 0x08000, CRC(4f9a26e8) SHA1(3105b34b88a7134493c2b3f584729f8b0407a011) )
 
 	ROM_REGION( 0x0800, REGION_CPU4, 0 )	/* 2k for the microcontroller */
-	ROM_LOAD( "68705.bin",    0x0000, 0x0800, CRC(78caa635) SHA1(a756e45b25b007843ba4f2204cad6081cf7260e9) )	/* from a pirate board */
+	ROM_LOAD( "68701.bin",    0x0000, 0x0800, NO_DUMP )
 
 	ROM_REGION( 0x80000, REGION_GFX1, ROMREGION_DISPOSE | ROMREGION_INVERT )
 	ROM_LOAD( "a78-09.12",    0x00000, 0x8000, CRC(20358c22) SHA1(2297af6c53d5807bf90a8e081075b8c72a994fc5) )    /* 1st plane */
@@ -783,7 +959,7 @@ ROM_START( bubbobr1 )
 	ROM_LOAD( "a78-07.46",    0x0000, 0x08000, CRC(4f9a26e8) SHA1(3105b34b88a7134493c2b3f584729f8b0407a011) )
 
 	ROM_REGION( 0x0800, REGION_CPU4, 0 )	/* 2k for the microcontroller */
-	ROM_LOAD( "68705.bin",    0x0000, 0x0800, CRC(78caa635) SHA1(a756e45b25b007843ba4f2204cad6081cf7260e9) )	/* from a pirate board */
+	ROM_LOAD( "68701.bin",    0x0000, 0x0800, NO_DUMP )
 
 	ROM_REGION( 0x80000, REGION_GFX1, ROMREGION_DISPOSE | ROMREGION_INVERT )
 	ROM_LOAD( "a78-09.12",    0x00000, 0x8000, CRC(20358c22) SHA1(2297af6c53d5807bf90a8e081075b8c72a994fc5) )    /* 1st plane */
@@ -873,84 +1049,7 @@ ROM_START( sboblbob )
 	ROM_LOAD( "a71-25.41",    0x0000, 0x0100, CRC(2d0f8545) SHA1(089c31e2f614145ef2743164f7b52ae35bc06808) )	/* video timing */
 ROM_END
 
-ROM_START( tokio )
-	ROM_REGION( 0x30000, REGION_CPU1, 0 )	/* main CPU */
-	ROM_LOAD( "a71-27-1.256", 0x00000, 0x8000, CRC(8c180896) SHA1(bc8aeb42da4bae7db6f65b9874224f60a9bc4500) )
-    /* ROMs banked at 8000-bfff */
-	ROM_LOAD( "a71-28-1.256", 0x10000, 0x8000, CRC(1b447527) SHA1(6939e6c1b8492825d18f4e96f39ff45f4c96eea2) )
-	ROM_LOAD( "a71-04.256",   0x18000, 0x8000, CRC(a0a4ce0e) SHA1(c49bdcd85c760a5e7327d1b424772e1560f1a318) )
-	ROM_LOAD( "a71-05.256",   0x20000, 0x8000, CRC(6da0b945) SHA1(6c80b8333dd95657f99e6ba5b6e877733ac02a8c) )
-	ROM_LOAD( "a71-06-1.256", 0x28000, 0x8000, CRC(56927b3f) SHA1(33fb4e71b95664ecff1f35f6782a14101982a56d) )
 
-	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* video CPU */
-	ROM_LOAD( "a71-01.256",   0x00000, 0x8000, CRC(0867c707) SHA1(7129974f1252b28e9e338bd3c7fcb87210dcf412) )
-
-	ROM_REGION( 0x10000, REGION_CPU3, 0 )	/* audio CPU */
-	ROM_LOAD( "a71-07.256",   0x0000, 0x08000, CRC(f298cc7b) SHA1(ebf5c804aa07b7f198ec3e1f8d1e111cd89ebdf3) )
-
-	ROM_REGION( 0x0800, REGION_CPU4, 0 )	/* 2k for the microcontroller */
-	ROM_LOAD( "68705.bin",    0x0000, 0x0800, NO_DUMP )
-
-	ROM_REGION( 0x80000, REGION_GFX1, ROMREGION_DISPOSE | ROMREGION_INVERT )
-	ROM_LOAD( "a71-08.256",   0x00000, 0x8000, CRC(0439ab13) SHA1(84142220a6a29f0e34f7c7c751b583bf394df8ce) )    /* 1st plane */
-	ROM_LOAD( "a71-09.256",   0x08000, 0x8000, CRC(edb3d2ff) SHA1(0c6e4bbc786a097f9d99220e72f98c1c795a7292) )
-	ROM_LOAD( "a71-10.256",   0x10000, 0x8000, CRC(69f0888c) SHA1(1704ab6339981195cd09d581e83094c75037d18e) )
-	ROM_LOAD( "a71-11.256",   0x18000, 0x8000, CRC(4ae07c31) SHA1(452d1eb5a70e7853791cd05e4578c1454477bdec) )
-	ROM_LOAD( "a71-12.256",   0x20000, 0x8000, CRC(3f6bd706) SHA1(b03c534a95b71941331d3ffd9aa7069b5f05687e) )
-	ROM_LOAD( "a71-13.256",   0x28000, 0x8000, CRC(f2c92aaa) SHA1(7dfdc473794a298032405ba918df8085b0bbe174) )
-	ROM_LOAD( "a71-14.256",   0x30000, 0x8000, CRC(c574b7b2) SHA1(9839adce60c0017ae3997603a2aece511af226d2) )
-	ROM_LOAD( "a71-15.256",   0x38000, 0x8000, CRC(12d87e7f) SHA1(327a80f08207ee66721738f7e1c53f75b5659be0) )
-	ROM_LOAD( "a71-16.256",   0x40000, 0x8000, CRC(0bce35b6) SHA1(3f0496db6681c7be1e36ba41296115d158d7457a) )    /* 2nd plane */
-	ROM_LOAD( "a71-17.256",   0x48000, 0x8000, CRC(deda6387) SHA1(40f0be3a71b0a03f0275da72f4124424b162318a) )
-	ROM_LOAD( "a71-18.256",   0x50000, 0x8000, CRC(330cd9d7) SHA1(919f78036b760938d6aa72754be1a615f568b470) )
-	ROM_LOAD( "a71-19.256",   0x58000, 0x8000, CRC(fc4b29e0) SHA1(d11393a24b5c6c04f5058b299e4b0fc773a03e4b) )
-	ROM_LOAD( "a71-20.256",   0x60000, 0x8000, CRC(65acb265) SHA1(2ef940f994e76d4387be6e0d53a565813cc59636) )
-	ROM_LOAD( "a71-21.256",   0x68000, 0x8000, CRC(33cde9b2) SHA1(9b227ab609e3c7c6be90c29739a57ea4959cd68e) )
-	ROM_LOAD( "a71-22.256",   0x70000, 0x8000, CRC(fb98eac0) SHA1(57615c3934de5510eeeb0ba16024abda8ee95303) )
-	ROM_LOAD( "a71-23.256",   0x78000, 0x8000, CRC(30bd46ad) SHA1(6e1618ed237c769d1a8d329fbd7a9f7216993215) )
-
-	ROM_REGION( 0x0100, REGION_PROMS, 0 )
-	ROM_LOAD( "a71-25.bin",   0x0000, 0x0100, CRC(2d0f8545) SHA1(089c31e2f614145ef2743164f7b52ae35bc06808) )	/* video timing */
-ROM_END
-
-ROM_START( tokiob )
-	ROM_REGION( 0x30000, REGION_CPU1, 0 ) /* main CPU */
-	ROM_LOAD( "2",            0x00000, 0x8000, CRC(f583b1ef) SHA1(a97b36299b51792953516224191f11decc579a38) )
-    /* ROMs banked at 8000-bfff */
-	ROM_LOAD( "3",            0x10000, 0x8000, CRC(69dacf44) SHA1(ee8c33702749c0e2562951f9f80c897d3fbd7dd7) )
-	ROM_LOAD( "a71-04.256",   0x18000, 0x8000, CRC(a0a4ce0e) SHA1(c49bdcd85c760a5e7327d1b424772e1560f1a318) )
-	ROM_LOAD( "a71-05.256",   0x20000, 0x8000, CRC(6da0b945) SHA1(6c80b8333dd95657f99e6ba5b6e877733ac02a8c) )
-	ROM_LOAD( "6",            0x28000, 0x8000, CRC(1490e95b) SHA1(a73e1857a1029156f0b5f7f7fe34a37870e72209) )
-
-	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* video CPU */
-	ROM_LOAD( "a71-01.256",   0x00000, 0x8000, CRC(0867c707) SHA1(7129974f1252b28e9e338bd3c7fcb87210dcf412) )
-
-	ROM_REGION( 0x10000, REGION_CPU3, 0 )	/* audio CPU */
-	ROM_LOAD( "a71-07.256",   0x0000, 0x08000, CRC(f298cc7b) SHA1(ebf5c804aa07b7f198ec3e1f8d1e111cd89ebdf3) )
-
-	ROM_REGION( 0x80000, REGION_GFX1, ROMREGION_DISPOSE | ROMREGION_INVERT )
-	ROM_LOAD( "a71-08.256",   0x00000, 0x8000, CRC(0439ab13) SHA1(84142220a6a29f0e34f7c7c751b583bf394df8ce) )    /* 1st plane */
-	ROM_LOAD( "a71-09.256",   0x08000, 0x8000, CRC(edb3d2ff) SHA1(0c6e4bbc786a097f9d99220e72f98c1c795a7292) )
-	ROM_LOAD( "a71-10.256",   0x10000, 0x8000, CRC(69f0888c) SHA1(1704ab6339981195cd09d581e83094c75037d18e) )
-	ROM_LOAD( "a71-11.256",   0x18000, 0x8000, CRC(4ae07c31) SHA1(452d1eb5a70e7853791cd05e4578c1454477bdec) )
-	ROM_LOAD( "a71-12.256",   0x20000, 0x8000, CRC(3f6bd706) SHA1(b03c534a95b71941331d3ffd9aa7069b5f05687e) )
-	ROM_LOAD( "a71-13.256",   0x28000, 0x8000, CRC(f2c92aaa) SHA1(7dfdc473794a298032405ba918df8085b0bbe174) )
-	ROM_LOAD( "a71-14.256",   0x30000, 0x8000, CRC(c574b7b2) SHA1(9839adce60c0017ae3997603a2aece511af226d2) )
-	ROM_LOAD( "a71-15.256",   0x38000, 0x8000, CRC(12d87e7f) SHA1(327a80f08207ee66721738f7e1c53f75b5659be0) )
-	ROM_LOAD( "a71-16.256",   0x40000, 0x8000, CRC(0bce35b6) SHA1(3f0496db6681c7be1e36ba41296115d158d7457a) )    /* 2nd plane */
-	ROM_LOAD( "a71-17.256",   0x48000, 0x8000, CRC(deda6387) SHA1(40f0be3a71b0a03f0275da72f4124424b162318a) )
-	ROM_LOAD( "a71-18.256",   0x50000, 0x8000, CRC(330cd9d7) SHA1(919f78036b760938d6aa72754be1a615f568b470) )
-	ROM_LOAD( "a71-19.256",   0x58000, 0x8000, CRC(fc4b29e0) SHA1(d11393a24b5c6c04f5058b299e4b0fc773a03e4b) )
-	ROM_LOAD( "a71-20.256",   0x60000, 0x8000, CRC(65acb265) SHA1(2ef940f994e76d4387be6e0d53a565813cc59636) )
-	ROM_LOAD( "a71-21.256",   0x68000, 0x8000, CRC(33cde9b2) SHA1(9b227ab609e3c7c6be90c29739a57ea4959cd68e) )
-	ROM_LOAD( "a71-22.256",   0x70000, 0x8000, CRC(fb98eac0) SHA1(57615c3934de5510eeeb0ba16024abda8ee95303) )
-	ROM_LOAD( "a71-23.256",   0x78000, 0x8000, CRC(30bd46ad) SHA1(6e1618ed237c769d1a8d329fbd7a9f7216993215) )
-
-	ROM_REGION( 0x0100, REGION_PROMS, 0 )
-	ROM_LOAD( "a71-25.bin",   0x0000, 0x0100, CRC(2d0f8545) SHA1(089c31e2f614145ef2743164f7b52ae35bc06808) )	/* video timing */
-ROM_END
-
-/* Driver Initialization */
 
 static DRIVER_INIT( bublbobl )
 {
@@ -959,22 +1058,6 @@ static DRIVER_INIT( bublbobl )
 	/* in Bubble Bobble, bank 0 has code falling from 7fff to 8000, */
 	/* so I have to copy it there because bank switching wouldn't catch it */
 	memcpy(ROM + 0x08000, ROM + 0x10000, 0x4000);
-}
-
-static DRIVER_INIT( boblbobl )
-{
-	#define MOD_PAGE(page,addr,data) memory_region(REGION_CPU1)[addr-0x8000+0x10000+0x4000*page] = data;
-    /* these shouldn't be necessary, surely - this is a bootleg ROM
-     * with the protection removed - so what are all these JP's to
-     * 0xa288 doing?  and why does the emulator fail the ROM checks?
-     */
-
-	MOD_PAGE(3,0x9a71,0x00); MOD_PAGE(3,0x9a72,0x00); MOD_PAGE(3,0x9a73,0x00);
-	MOD_PAGE(3,0xa4af,0x00); MOD_PAGE(3,0xa4b0,0x00); MOD_PAGE(3,0xa4b1,0x00);
-	MOD_PAGE(3,0xa55d,0x00); MOD_PAGE(3,0xa55e,0x00); MOD_PAGE(3,0xa55f,0x00);
-	MOD_PAGE(3,0xb561,0x00); MOD_PAGE(3,0xb562,0x00); MOD_PAGE(3,0xb563,0x00);
-
-	init_bublbobl();
 }
 
 static DRIVER_INIT( tokio )
@@ -986,12 +1069,19 @@ static DRIVER_INIT( tokio )
 	bublbobl_video_enable = 1;
 }
 
-/* Game Drivers */
+static DRIVER_INIT( tokiob )
+{
+	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0xfe00, 0xfe00, 0, 0, tokiob_mcu_r );
 
-GAMEX(1986, bublbobl, 0,        bublbobl, bublbobl, bublbobl, ROT0,  "Taito Corporation", "Bubble Bobble", GAME_IMPERFECT_GRAPHICS | GAME_UNEMULATED_PROTECTION )
-GAMEX(1986, bublbobr, bublbobl, bublbobl, bublbobl, bublbobl, ROT0,  "Taito America Corporation (Romstar license)", "Bubble Bobble (US with mode select)", GAME_IMPERFECT_GRAPHICS | GAME_UNEMULATED_PROTECTION )
-GAMEX(1986, bubbobr1, bublbobl, bublbobl, bublbobl, bublbobl, ROT0,  "Taito America Corporation (Romstar license)", "Bubble Bobble (US)", GAME_IMPERFECT_GRAPHICS | GAME_UNEMULATED_PROTECTION )
-GAME( 1986, boblbobl, bublbobl, boblbobl, boblbobl, boblbobl, ROT0,  "bootleg", "Bobble Bobble" )
+	init_tokio();
+}
+
+
+
+GAMEX(1986, tokio,    0,        tokio,    tokio,    tokio,    ROT90, "Taito America Corporation (Romstar license)", "Tokio / Scramble Formation (US)", GAME_NOT_WORKING )
+GAME( 1986, tokiob,   tokio,    tokio,    tokio,    tokiob,   ROT90, "bootleg", "Tokio / Scramble Formation (bootleg)" )
+GAME( 1986, bublbobl, 0,        bublbobl, bublbobl, bublbobl, ROT0,  "Taito Corporation", "Bubble Bobble" )
+GAME( 1986, bublbobr, bublbobl, bublbobl, bublbobl, bublbobl, ROT0,  "Taito America Corporation (Romstar license)", "Bubble Bobble (US with mode select)" )
+GAME( 1986, bubbobr1, bublbobl, bublbobl, bublbobl, bublbobl, ROT0,  "Taito America Corporation (Romstar license)", "Bubble Bobble (US)" )
+GAME( 1986, boblbobl, bublbobl, boblbobl, boblbobl, bublbobl, ROT0,  "bootleg", "Bobble Bobble" )
 GAME( 1986, sboblbob, bublbobl, boblbobl, sboblbob, bublbobl, ROT0,  "bootleg", "Super Bobble Bobble" )
-GAMEX(1986, tokio,    0,        tokio,    tokio,    tokio,    ROT90, "Taito", "Tokio / Scramble Formation", GAME_NOT_WORKING )
-GAMEX(1986, tokiob,   tokio,    tokio,    tokio,    tokio,    ROT90, "bootleg", "Tokio / Scramble Formation (bootleg)", GAME_IMPERFECT_SOUND )

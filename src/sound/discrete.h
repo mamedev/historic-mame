@@ -1212,6 +1212,7 @@
  *   & - Pop two values from stack, binary AND and push result to stack
  *   | - Pop two values from stack, binary OR and push result to stack
  *   ^ - Pop two values from stack, binary XOR and push result to stack
+ *   P - Push a duplicate of the last stack value back on the stack
  *
  * EXAMPLES: see Polaris
  *
@@ -1594,7 +1595,7 @@
  *      discrete_op_amp_filt_info = {r1, r2, r3, r4, rF, c1, c2, c3, vRef, vP, vN}
  *
  * Note: Set all unused components to 0.
- *       vP and vN are bias voltages if needed.
+ *       vP and vN are the +/- op-amp power supplies.
  *       vRef is 0 if Gnd.
  *
  *  Types:
@@ -1602,17 +1603,17 @@
  *     DISC_OP_AMP_FILTER_IS_LOW_PASS_1
  *          First Order Low Pass Filter
  *
- *          r3                  c1
- *   vP >--ZZZZ--.      .-------||---------.
- *               |      |                  |
- *          r1   |      |       rF         |
- *  IN0 >--ZZZZ--+      +------ZZZZ--------+
+ *                              c1
+ *                      .-------||---------.
+ *                      |                  |
+ *          r1          |       rF         |
+ *  IN0 >--ZZZZ--.      +------ZZZZ--------+
  *               |      |                  |
  *          r2   |      |           |\     |
  *  IN1 >--ZZZZ--+------+--------+  | \    |
  *               |               '--|- \   |
- *          r4   |                  |   >--+----------> Netlist Node
- *   vN >--ZZZZ--'               .--|+ /
+ *          r3   |                  |   >--+----------> Netlist Node
+ * vRef >--ZZZZ--'               .--|+ /
  *                               |  | /
  *  vRef >-----------------------'  |/
  *
@@ -1621,17 +1622,14 @@
  *     DISC_OP_AMP_FILTER_IS_HIGH_PASS_1
  *          First Order High Pass Filter
  *
- *          r3
- *   vP >--ZZZZ--.
- *               |
- *          r1   |              rF
- *  IN0 >--ZZZZ--+      .------ZZZZ--------.
+ *          r1                  rF
+ *  IN0 >--ZZZZ--.      .------ZZZZ--------.
  *               |      |                  |
  *          r2   |  c1  |           |\     |
  *  IN1 >--ZZZZ--+--||--+--------+  | \    |
  *               |               '--|- \   |
- *          r4   |                  |   >--+----------> Netlist Node
- *   vN >--ZZZZ--'               .--|+ /
+ *          r3   |                  |   >--+----------> Netlist Node
+ * vRef >--ZZZZ--'               .--|+ /
  *                               |  | /
  *  vRef >-----------------------'  |/
  *
@@ -1640,17 +1638,17 @@
  *     DISC_OP_AMP_FILTER_IS_BAND_PASS_1
  *          First Order Band Pass Filter
  *
- *          r3                  c1
- *   vP >--ZZZZ--.      .-------||---------.
- *               |      |                  |
- *          r1   |      |       rF         |
- *  IN0 >--ZZZZ--+      +------ZZZZ--------+
+ *                              c1
+ *                      .-------||---------.
+ *                      |                  |
+ *          r1          |       rF         |
+ *  IN0 >--ZZZZ--.      +------ZZZZ--------+
  *               |      |                  |
  *          r2   |  c2  |           |\     |
  *  IN1 >--ZZZZ--+--||--+--------+  | \    |
  *               |               '--|- \   |
- *          r4   |                  |   >--+----------> Netlist Node
- *   vN >--ZZZZ--'               .--|+ /
+ *          r3   |                  |   >--+----------> Netlist Node
+ * vRef >--ZZZZ--'               .--|+ /
  *                               |  | /
  *  vRef >-----------------------'  |/
  *
@@ -1659,29 +1657,19 @@
  *     DISC_OP_AMP_FILTER_IS_BAND_PASS_1M
  *          Single Pole Multiple Feedback Band Pass Filter
  *
- *  Note: This filter does not currently work.
- *
- *          r3             c1
- *   vP >--ZZZZ--.      .--||----+---------.
- *               |      |        |         |
- *          r1   |      |        Z         |
- *  IN0 >--ZZZZ--+      |        Z rF      |
+ *                         c1
+ *                      .--||----+---------.
+ *                      |        |         |
+ *          r1          |        Z         |
+ *  IN0 >--ZZZZ--.      |        Z rF      |
  *               |      |        Z         |
  *          r2   |      |  c2    |  |\     |
  *  IN1 >--ZZZZ--+------+--||----+  | \    |
  *               |               '--|- \   |
- *          r4   |                  |   >--+----------> Netlist Node
- *   vN >--ZZZZ--'               .--|+ /
+ *          r3   |                  |   >--+----------> Netlist Node
+ * vRef >--ZZZZ--'               .--|+ /
  *                               |  | /
  *  vRef >-----------------------'  |/
- *
- * Here is how to calculate the filter info, even though there is no way to use it.
- * This will only be usefull if C1 = C2.
- *   rA = 1/(1/rP + 1/r1 +1/r2 + 1/rN)  = all input resistors in parallel.
- *    C = c1 = c2
- *   fC = 1/(2 * PI * C * sqrt(rA * rF))
- *    Q = .5 * sqrt(rF / rA)
- * gain = -2 * Q*Q
  *
  *          --------------------------------------------------
  *

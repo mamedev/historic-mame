@@ -4,6 +4,7 @@
 struct ST0016interface 
 {
 	int mixing_level;			/* volume */
+	data8_t **p_soundram;
 };
 
 int st0016_sh_start( const struct MachineSound *msound );

@@ -506,12 +506,10 @@ static void taito_f2_tc360_spritemixdraw( struct mame_bitmap *dest_bmp,const str
 						{
 							dest[x]=(dest[x]&0xffef); // Could be ^0x10 rather than &~0x10
 						}
-						// Blend mode 2 - Sprite over tilemap, use sprite data with tilemap palette
-						else if ((f2_spriteblendmode&0x80)==0xc0 && sprite_priority==(tilemap_priority+1))
+						// Blend mode 2 - Sprite over tilemap, don't know if this is right
+						else if ((f2_spriteblendmode&0xc0)==0x80 && sprite_priority==(tilemap_priority+1))
 						{
-							// Unknown mode - do any games use it??
-							if (sprite_priority>tilemap_priority)
-								dest[x]=pal[c];
+							dest[x]=(dest[x]&0xffe0) | 0x10 | (pal[c]&0xf); // Pulirula level 2, Liquid Kids attract mode
 						}
 						// No blending
 						else
@@ -1134,26 +1132,23 @@ VIDEO_UPDATE( taitof2_pri )
 
 
 
-static void draw_roz_layer(struct mame_bitmap *bitmap,const struct rectangle *cliprect)
+static void draw_roz_layer(struct mame_bitmap *bitmap,const struct rectangle *cliprect,UINT32 priority)
 {
 	if (has_TC0280GRD())
-		TC0280GRD_zoom_draw(bitmap,cliprect,f2_pivot_xdisp,f2_pivot_ydisp,8);
+		TC0280GRD_zoom_draw(bitmap,cliprect,f2_pivot_xdisp,f2_pivot_ydisp,priority);
 
 	if (has_TC0430GRW())
-		TC0430GRW_zoom_draw(bitmap,cliprect,f2_pivot_xdisp,f2_pivot_ydisp,8);
+		TC0430GRW_zoom_draw(bitmap,cliprect,f2_pivot_xdisp,f2_pivot_ydisp,priority);
 }
-
 
 VIDEO_UPDATE( taitof2_pri_roz )
 {
 	int tilepri[3];
-	int spritepri[4];
 	int rozpri;
 	int layer[3];
 	int drawn;
-	int lastpri;
+	int i,j;
 	int roz_base_color = (TC0360PRI_regs[1] & 0x3f) << 2;
-
 
 	taitof2_handle_sprite_buffering();
 
@@ -1165,54 +1160,49 @@ VIDEO_UPDATE( taitof2_pri_roz )
 
 	TC0100SCN_tilemap_update();
 
+	rozpri = (TC0360PRI_regs[1] & 0xc0) >> 6;
+	rozpri = (TC0360PRI_regs[8 + rozpri/2] >> 4*(rozpri & 1)) & 0x0f;
+
 	layer[0] = TC0100SCN_bottomlayer(0);
 	layer[1] = layer[0]^1;
 	layer[2] = 2;
+
 	tilepri[layer[0]] = TC0360PRI_regs[5] & 0x0f;
 	tilepri[layer[1]] = TC0360PRI_regs[5] >> 4;
 	tilepri[layer[2]] = TC0360PRI_regs[4] >> 4;
 
-	spritepri[0] = TC0360PRI_regs[6] & 0x0f;
-	spritepri[1] = TC0360PRI_regs[6] >> 4;
-	spritepri[2] = TC0360PRI_regs[7] & 0x0f;
-	spritepri[3] = TC0360PRI_regs[7] >> 4;
+	f2_spritepri[0] = TC0360PRI_regs[6] & 0x0f;
+	f2_spritepri[1] = TC0360PRI_regs[6] >> 4;
+	f2_spritepri[2] = TC0360PRI_regs[7] & 0x0f;
+	f2_spritepri[3] = TC0360PRI_regs[7] >> 4;
 
-	rozpri = (TC0360PRI_regs[1] & 0xc0) >> 6;
-	rozpri = (TC0360PRI_regs[8 + rozpri/2] >> 4*(rozpri & 1)) & 0x0f;
+	f2_spriteblendmode = TC0360PRI_regs[0]&0xc0;
 
 	fillbitmap(priority_bitmap,0,cliprect);
 	fillbitmap(bitmap,Machine->pens[0],cliprect);	/* wrong color? */
 
-	drawn = 0;
-	lastpri = 0;
-	while (drawn < 3)
+	drawn=0;
+	for (i=0; i<16; i++)
 	{
-		if (rozpri > lastpri && rozpri <= tilepri[drawn])
+		if (rozpri==i)
 		{
-			draw_roz_layer(bitmap,cliprect);
-			lastpri = rozpri;
-		}
-		TC0100SCN_tilemap_draw(bitmap,cliprect,0,layer[drawn],0,1<<drawn);
-		lastpri = tilepri[drawn];
-		drawn++;
-	}
-	if (rozpri > lastpri)
-		draw_roz_layer(bitmap,cliprect);
-
-	{
-		int primasks[4] = {0,0,0,0};
-		int i;
-
-		for (i = 0;i < 4;i++)
-		{
-			if (spritepri[i] < tilepri[0]) primasks[i] |= 0xaaaa;
-			if (spritepri[i] < tilepri[1]) primasks[i] |= 0xcccc;
-			if (spritepri[i] < tilepri[2]) primasks[i] |= 0xf0f0;
-			if (spritepri[i] < rozpri)     primasks[i] |= 0xff00;
+			draw_roz_layer(bitmap,cliprect,1 << drawn);
+			f2_tilepri[drawn]=i;
+			drawn++;
 		}
 
-		draw_sprites(bitmap,cliprect,primasks,0);
+		for (j=0; j<3; j++)
+		{
+			if (tilepri[layer[j]]==i)
+			{
+				TC0100SCN_tilemap_draw(bitmap,cliprect,0,layer[j],0,1<<drawn);
+				f2_tilepri[drawn]=i;
+				drawn++;
+			}
+		}
 	}
+
+	draw_sprites(bitmap,cliprect,NULL,1);
 }
 
 

@@ -29,6 +29,8 @@
 // overruns
 #define ALIGN_START		0
 
+// set this to 1 to record all mallocs and frees in the logfile
+#define LOG_CALLS		0
 
 
 //============================================================
@@ -40,6 +42,7 @@ typedef struct
 	UINT32			size;
 	void *			base;
 	void *			vbase;
+	int				id;
 } memory_entry;
 
 
@@ -49,6 +52,7 @@ typedef struct
 //============================================================
 
 static memory_entry memory_list[MAX_ALLOCS];
+static int current_id;
 
 
 //============================================================
@@ -61,8 +65,13 @@ INLINE memory_entry *allocate_entry(void)
 
 	// find an empty entry
 	for (i = 0; i < MAX_ALLOCS; i++)
+	{
 		if (memory_list[i].vbase == NULL)
+		{
+			memory_list[i].id = current_id++;
 			return &memory_list[i];
+		}
+	}
 
 	// if none, error out in a fatal way
 	fprintf(stderr, "Out of allocation blocks!\n");
@@ -125,6 +134,9 @@ void* CLIB_DECL malloc(size_t size)
 	entry->size = size;
 	entry->base = block_base;
 	entry->vbase = page_base - PAGE_SIZE;
+#if LOG_CALLS
+	logerror("malloc #%06d size = %d\n",entry->id,entry->size);
+#endif
 	return block_base;
 }
 
@@ -190,6 +202,9 @@ void CLIB_DECL free(void *memory)
 
 	// free the memory
 	VirtualFree(entry->vbase, 0, MEM_RELEASE);
+#if LOG_CALLS
+	logerror("free #%06d size = %d\n",entry->id,entry->size);
+#endif
 	free_entry(entry);
 }
 
@@ -207,3 +222,22 @@ size_t CLIB_DECL _msize(void *memory)
 }
 
 
+void check_unfreed_mem(void)
+{
+	int i,total = 0;
+
+	// check for leaked memory
+	for (i = 0; i < MAX_ALLOCS; i++)
+	{
+		if (memory_list[i].base != NULL)
+		{
+			if (total == 0)
+				printf("--- memory leak warning ---\n");
+			total += memory_list[i].size;
+			printf("allocation #%06d, %d bytes\n",memory_list[i].id,memory_list[i].size);
+		}
+	}
+
+	if (total > 0)
+		printf("a total of %d bytes were not free()'d\n",total);
+}

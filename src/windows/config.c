@@ -749,12 +749,34 @@ int cli_frontend_init (int argc, char **argv)
 
 void cli_frontend_exit(void)
 {
-	/* close open files */
-	if (logfile) fclose(logfile);
+	free(gamename);
+	gamename = NULL;
 
-	if (options.playback) mame_fclose(options.playback);
-	if (options.record)   mame_fclose(options.record);
-	if (options.language_file) mame_fclose(options.language_file);
+	rc_destroy(rc);
+	rc = NULL;
+
+	/* close open files */
+	if (logfile)
+	{
+		fclose(logfile);
+		logfile = NULL;
+	}
+
+	if (options.playback)
+	{
+		mame_fclose(options.playback);
+		options.playback = NULL;
+	}
+	if (options.record)
+	{
+		mame_fclose(options.record);
+		options.record = NULL;
+	}
+	if (options.language_file)
+	{
+		mame_fclose(options.language_file);
+		options.language_file = NULL;
+	}
 
 #ifdef MESS
 	if (win_write_config)

@@ -53,7 +53,7 @@ void i386_load_segment_descriptor( int segment )
 
 	I.sreg[segment].base = (v2 & 0xff000000) | ((v2 & 0xff) << 16) | ((v1 >> 16) & 0xffff);
 	I.sreg[segment].limit = ((v2 << 16) & 0xf0000) | (v1 & 0xffff);
-	I.sreg[segment].d = (v2 & 0x800000) ? 1 : 0;
+	I.sreg[segment].d = ((v2 & 0x400000) && PROTECTED_MODE && !V8086_MODE) ? 1 : 0;
 }
 
 UINT32 get_flags(void)

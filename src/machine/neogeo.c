@@ -18,11 +18,6 @@ data16_t *neogeo_sram16;
 
 
 /***************** MEMCARD GLOBAL VARIABLES ******************/
-int mcd_action=0;
-int mcd_number=0;
-int memcard_status=0;		/* 1=Inserted 0=No card */
-int memcard_number=0;		/* 000...999, -1=None */
-int memcard_manager=0;		/* 0=Normal boot 1=Call memcard manager */
 UINT8 *neogeo_memcard;		/* Pointer to 2kb RAM zone */
 
 data8_t *neogeo_game_vectors;
@@ -192,6 +187,10 @@ DRIVER_INIT( neogeo )
 	memcard_status=0;
 	memcard_number=0;
 
+	memcard_intf.create = neogeo_memcard_create;
+	memcard_intf.load = neogeo_memcard_load;
+	memcard_intf.save = neogeo_memcard_save;
+	memcard_intf.eject = neogeo_memcard_eject;
 
 	mem16 = (data16_t *)memory_region(REGION_USER1);
 

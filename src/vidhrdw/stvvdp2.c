@@ -98,6 +98,8 @@ static void stv_vdp2_dynamic_res_change(void);
 static void stv_vdp2_fade_effects(void);
 static int stv_vdp2_window_process(int x,int y);
 
+#define LOG_VDP2 0
+
 /*
 
 -------------------------------------------------|-----------------------------|------------------------------
@@ -1912,16 +1914,16 @@ static void stv_vdp2_fill_rotation_parameter_table( UINT8 rot_parameter )
 
 #define RP	stv_current_rotation_parameter_table
 
-	logerror( "Rotation parameter table (%d)\n", rot_parameter );
-	logerror( "xst = %x, yst = %x, zst = %x\n", RP.xst, RP.yst, RP.zst );
-	logerror( "dxst = %x, dyst = %x\n", RP.dxst, RP.dyst );
-	logerror( "dx = %x, dy = %x\n", RP.dx, RP.dy );
-	logerror( "A = %x, B = %x, C = %x, D = %x, E = %x, F = %x\n", RP.A, RP.B, RP.C, RP.D, RP.E, RP.F );
-	logerror( "px = %x, py = %x, pz = %x\n", RP.px, RP.py, RP.pz );
-	logerror( "cx = %x, cy = %x, cz = %x\n", RP.cx, RP.cy, RP.cz );
-	logerror( "mx = %x, my = %x\n", RP.mx, RP.my );
-	logerror( "kx = %x, ky = %x\n", RP.kx, RP.ky );
-	logerror( "kast = %x, dkast = %x, dkax = %x\n", RP.kast, RP.dkast, RP.dkax );
+	if(LOG_VDP2) logerror( "Rotation parameter table (%d)\n", rot_parameter );
+	if(LOG_VDP2) logerror( "xst = %x, yst = %x, zst = %x\n", RP.xst, RP.yst, RP.zst );
+	if(LOG_VDP2) logerror( "dxst = %x, dyst = %x\n", RP.dxst, RP.dyst );
+	if(LOG_VDP2) logerror( "dx = %x, dy = %x\n", RP.dx, RP.dy );
+	if(LOG_VDP2) logerror( "A = %x, B = %x, C = %x, D = %x, E = %x, F = %x\n", RP.A, RP.B, RP.C, RP.D, RP.E, RP.F );
+	if(LOG_VDP2) logerror( "px = %x, py = %x, pz = %x\n", RP.px, RP.py, RP.pz );
+	if(LOG_VDP2) logerror( "cx = %x, cy = %x, cz = %x\n", RP.cx, RP.cy, RP.cz );
+	if(LOG_VDP2) logerror( "mx = %x, my = %x\n", RP.mx, RP.my );
+	if(LOG_VDP2) logerror( "kx = %x, ky = %x\n", RP.kx, RP.ky );
+	if(LOG_VDP2) logerror( "kast = %x, dkast = %x, dkax = %x\n", RP.kast, RP.dkast, RP.dkax );
 }
 
 #define STV_VDP2_CP_NBG0_PNMDR		0x0
@@ -1933,14 +1935,14 @@ static void stv_vdp2_fill_rotation_parameter_table( UINT8 rot_parameter )
 #define STV_VDP2_CP_NBG2_CPDR		0x6
 #define STV_VDP2_CP_NBG3_CPDR		0x7
 
-static UINT8 stv_vdp2_check_vram_cycle_pattern_registers( 
-								UINT8 access_command_pnmdr, 
+static UINT8 stv_vdp2_check_vram_cycle_pattern_registers(
+								UINT8 access_command_pnmdr,
 								UINT8 access_command_cpdr,
 								UINT8 bitmap_enable )
 {
 	int i;
 	UINT8  access_command_ok = 0;
-	UINT16 cp_regs[8]; 
+	UINT16 cp_regs[8];
 	cp_regs[0] = STV_VDP2_CYCA0L;
 	cp_regs[1] = STV_VDP2_CYCA0U;
 	cp_regs[2] = STV_VDP2_CYCA1L;
@@ -2232,7 +2234,7 @@ static void stv_vdp2_compute_color_offset_RGB555( int *r, int *g, int *b, int co
 
 static void stv_vdp2_draw_basic_bitmap(struct mame_bitmap *bitmap, const struct rectangle *cliprect)
 {
-//	logerror ("bitmap enable %02x size %08x depth %08x\n",	stv2_current_tilemap.layer_name, stv2_current_tilemap.bitmap_size, stv2_current_tilemap.colour_depth);
+//	if(LOG_VDP2) logerror ("bitmap enable %02x size %08x depth %08x\n",	stv2_current_tilemap.layer_name, stv2_current_tilemap.bitmap_size, stv2_current_tilemap.colour_depth);
 //	usrintf_showmessage ("bitmap enable %02x size %08x depth %08x number %02x",	stv2_current_tilemap.layer_name, stv2_current_tilemap.bitmap_size, stv2_current_tilemap.colour_depth,stv2_current_tilemap.bitmap_palette_number);
 
 	int xsize = 0;
@@ -2402,7 +2404,7 @@ static void stv_vdp2_draw_basic_bitmap(struct mame_bitmap *bitmap, const struct 
 		--------BBBBBBBBGGGGGGGGRRRRRRRR
 		*/
 		case 4:
-			usrintf_showmessage("BITMAP type 4 enabled"); // shanhigw 'sunsoft' after gameover
+			//usrintf_showmessage("BITMAP type 4 enabled"); // shanhigw 'sunsoft' after gameover
 			for (ycnt = 0; ycnt <ysize;ycnt++)
 			{
 				destline = (UINT16 *)(bitmap->line[ycnt]);
@@ -3497,7 +3499,7 @@ WRITE32_HANDLER ( stv_vdp2_regs_w )
 extern int stv_vblank,stv_hblank;
 READ32_HANDLER ( stv_vdp2_regs_r )
 {
-//	if (offset!=1) logerror ("VDP2: Read from Registers, Offset %04x\n",offset);
+//	if (offset!=1) if(LOG_VDP2) logerror ("VDP2: Read from Registers, Offset %04x\n",offset);
 
 	switch(offset)
 	{
@@ -3510,7 +3512,7 @@ READ32_HANDLER ( stv_vdp2_regs_r )
 		/*H/V Counter Register*/
 								     /*H-Counter                               V-Counter                                         */
 			stv_vdp2_regs[offset] = (((Machine->visible_area.max_x - 1)<<16)&0x3ff0000)|(((Machine->visible_area.max_y - 1)<<0)&0x3ff);
-			logerror("CPU #%d PC(%08x) = VDP2: H/V counter read : %08x\n",cpu_getactivecpu(),activecpu_get_pc(),stv_vdp2_regs[offset]);
+			if(LOG_VDP2) logerror("CPU #%d PC(%08x) = VDP2: H/V counter read : %08x\n",cpu_getactivecpu(),activecpu_get_pc(),stv_vdp2_regs[offset]);
 		break;
 	}
 	return stv_vdp2_regs[offset];
@@ -3561,7 +3563,7 @@ static void stv_vdp2_dynamic_res_change()
 		case 1: vert = 240; break;
 		case 2: vert = 256; break;
 		case 3:
-			logerror("WARNING: V Res setting (3) not allowed!\n");
+			if(LOG_VDP2) logerror("WARNING: V Res setting (3) not allowed!\n");
 			vert = 256;
 			break;
 	}
@@ -3936,7 +3938,7 @@ void stv_vdp2_drawsprites(struct mame_bitmap *bitmap, const struct rectangle *cl
 				priority = sprite_priorities[(pix >> sprite_priority_shift) & sprite_priority_mask];
 				if ( priority != pri ) continue;
 
-				if ( alpha_enabled ) 						
+				if ( alpha_enabled )
 					ccr = sprite_ccr[ (pix >> sprite_ccrr_shift) & sprite_ccrr_mask ];
 
 				pix &= sprite_colormask;

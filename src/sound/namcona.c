@@ -33,7 +33,6 @@
 
 #include <math.h>
 #include "driver.h"
-#include "namcona1.h" /* for namcona1_gametype; used for game-specific hacks */
 
 #define kTwelfthRootTwo 1.059463094
 #define FIXED_POINT_SHIFT (10) /* for mixing */
@@ -612,14 +611,7 @@ NAMCONA_sh_start( const struct MachineSound *msound )
 	mSampleRate = intf->frequency;
 	mStream = stream_init_multi(2, name, vol, mSampleRate, 0, UpdateSound);
 	mpROM = (data16_t *)memory_region(REGION_CPU1);
-	if( namcona1_gametype==NAMCO_KNCKHEAD )
-	{ /* game-specific hack; the music metadata is in an unusual place */
-		mpMetaData = mpROM+0x10000/2;
-	}
-	else
-	{
-		mpMetaData = mpROM+0x70000/2;
-	}
+	mpMetaData = mpROM+intf->metadata_offset;
 
 	memset( mVoice, 0x00, sizeof(mVoice) );
 	memset( mSequence, 0x00, sizeof(mSequence) );

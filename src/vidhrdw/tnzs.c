@@ -113,7 +113,7 @@ void tnzs_vh_draw_background(struct mame_bitmap *bitmap,unsigned char *m)
 				int i = 32*(column^8) + 2*y + x;
 
 
-				code = m[i] + ((m[i + 0x1000] & 0x1f) << 8);
+				code = m[i] + ((m[i + 0x1000] & 0x3f) << 8);
 				color = (m[i + 0x1200] & 0xf8) >> 3; /* colours at d600-d7ff */
 				sx = x*16;
 				sy = y*16;
@@ -155,7 +155,7 @@ void tnzs_vh_draw_foreground(struct mame_bitmap *bitmap,
 	{
 		int code,color,sx,sy,flipx,flipy;
 
-		code = char_pointer[i] + ((ctrl_pointer[i] & 0x1f) << 8);
+		code = char_pointer[i] + ((ctrl_pointer[i] & 0x3f) << 8);
 		color = (color_pointer[i] & 0xf8) >> 3;
 		sx = x_pointer[i] - ((color_pointer[i] & 1) << 8);
 		sy = 240 - y_pointer[i];

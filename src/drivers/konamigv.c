@@ -10,6 +10,7 @@ Known Dumps
 
 Game       Description                  Mother Board   Code       Version       Date   Time
 
+kdeadeye   Dead Eye    			GV999          ?       ?            ?         ?
 pbball96   Powerful Pro Baseball '96    GV999          GV017   JAPAN 1.03   96.05.27  18:00
 hyperath   Hyper Athlete                ZV610          GV021   JAPAN 1.00   96.06.09  19:00
 susume     Susume! Taisen Puzzle-Dama   ZV610          GV027   JAPAN 1.20   96.03.04  12:00
@@ -313,7 +314,11 @@ static MACHINE_INIT( konamigv )
 
 static struct PSXSPUinterface konamigv_psxspu_interface =
 {
-	75
+	75,
+	&g_p_n_psxram,
+	psx_irq_set,
+	psx_dma_install_read_handler,
+	psx_dma_install_write_handler
 };
 
 static struct CDDAinterface konamigv_cdda_interface =
@@ -442,7 +447,7 @@ static READ32_HANDLER( flash_r )
 
 	if (reg == 0)
 	{
-		int chip = (flash_address >= 0x200000) ? 2 : 0; 
+		int chip = (flash_address >= 0x200000) ? 2 : 0;
 		int ret;
 
 		ret = intelflash_read_byte(chip, flash_address & 0x1fffff) & 0xff;
@@ -468,7 +473,7 @@ static WRITE32_HANDLER( flash_w )
 	switch (reg)
 	{
 		case 0:
-			chip = (flash_address >= 0x200000) ? 2 : 0; 
+			chip = (flash_address >= 0x200000) ? 2 : 0;
 			intelflash_write_byte(chip, flash_address & 0x1fffff, data&0xff);
 			intelflash_write_byte(chip+1, flash_address & 0x1fffff, (data>>8)&0xff);
 			break;
@@ -670,7 +675,7 @@ static MACHINE_INIT( btchamp )
 	memory_install_write32_handler(0, ADDRESS_SPACE_PROGRAM, 0x1f380000, 0x1f4fffff, 0, 0, btcflash_w );
 
 	psx_machine_init();
-}						      
+}
 
 static MACHINE_DRIVER_START( btchamp )
 	MDRV_IMPORT_FROM( konamigv )
@@ -823,9 +828,20 @@ ROM_START( btchamp )
 	DISK_IMAGE_READONLY( "btchamp", 0, MD5(edc387207bc878b3a4044441e77d25f7) SHA1(e1a75a034d83cffa44268eb30653ba334cc6252d) )
 ROM_END
 
+ROM_START( kdeadeye )
+	GV_BIOS
+
+	ROM_REGION( 0x0000080, REGION_USER2, 0 ) /* default eeprom */
+	ROM_LOAD( "kdeadeye.25c", 0x000000, 0x000080, CRC(3935d2df) SHA1(cbb855c475269077803c380dbc3621e522efe51e) )
+
+	DISK_REGION( REGION_DISKS )
+	DISK_IMAGE_READONLY( "kdeadeye", 0, MD5(5109d61ab8791a6d622499b51e613a8c) SHA1(2b413a2a22e1959fb4f71b67ba51c6c8e0d58970) )
+ROM_END
+
 /* BIOS placeholder */
 GAMEX( 1995, konamigv, 0, konamigv, konamigv, konamigv, ROT0, "Konami", "Baby Phoenix/GV System", NOT_A_DRIVER )
 
+GAMEX( 1996, kdeadeye, konamigv, btchamp,  konamigv, konamigv, ROT0, "Konami", "Dead Eye (Konami)", GAME_NOT_WORKING | GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
 GAMEX( 1996, pbball96, konamigv, konamigv, konamigv, konamigv, ROT0, "Konami", "Powerful Baseball '96 (GV017 JAPAN 1.03)", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
 GAMEX( 1996, hyperath, konamigv, konamigv, konamigv, konamigv, ROT0, "Konami", "Hyper Athlete (GV021 JAPAN 1.00)", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
 GAMEX( 1996, susume,   konamigv, konamigv, konamigv, konamigv, ROT0, "Konami", "Susume! Taisen Puzzle-Dama (GV027 JAPAN 1.20)", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )

@@ -3,7 +3,6 @@
 
 todo:
 
-colors, probably missing proms
 fix sound
 improve interrupts
 sprite flipping is incorrect for one of the enemies so its probably wrong
@@ -43,7 +42,7 @@ WRITE8_HANDLER( flower_bg1ram_w );
 WRITE8_HANDLER( flower_flipscreen_w );
 VIDEO_UPDATE( flower );
 VIDEO_START( flower );
-
+PALETTE_INIT( flower );
 
 extern data8_t *flower_soundregs1,*flower_soundregs2;
 int flower_sh_start(const struct MachineSound *msound);
@@ -208,7 +207,7 @@ static struct GfxLayout flower_charlayout =
 	8*8*2
 };
 
-static struct GfxLayout flower_spritelayout =
+static struct GfxLayout flower_tilelayout =
 {
 	16,16,
 	RGN_FRAC(1,2),
@@ -221,13 +220,11 @@ static struct GfxLayout flower_spritelayout =
 
 static struct GfxDecodeInfo flower_gfxdecodeinfo[] =
 {
-	{ REGION_GFX1, 0, &flower_charlayout,   0,  8 },
-	{ REGION_GFX2, 0, &flower_spritelayout, 0,  8 },
-	{ REGION_GFX3, 0, &flower_spritelayout, 0,  8 },
+	{ REGION_GFX1, 0, &flower_charlayout, 0,  64 },
+	{ REGION_GFX2, 0, &flower_tilelayout, 0,  16 },
+	{ REGION_GFX3, 0, &flower_tilelayout, 0,  16 },
 	{ -1 }
 };
-
-
 
 static struct CustomSound_interface custom_interface =
 {
@@ -261,7 +258,10 @@ static MACHINE_DRIVER_START( flower )
 	MDRV_SCREEN_SIZE(34*8, 33*8)
 	MDRV_VISIBLE_AREA(0*8, 34*8-1, 0*8, 28*8-1)
 	MDRV_GFXDECODE(flower_gfxdecodeinfo)
-	MDRV_PALETTE_LENGTH(0x8000)
+
+	MDRV_PALETTE_INIT(flower)
+	MDRV_PALETTE_LENGTH(256)
+	MDRV_COLORTABLE_LENGTH(384)
 
 	MDRV_VIDEO_START(flower)
 	MDRV_VIDEO_UPDATE(flower)
@@ -281,16 +281,16 @@ ROM_START( flower )
 	ROM_REGION( 0x10000, REGION_CPU3, 0 ) /* sound cpu */
 	ROM_LOAD( "3.d9",   0x0000, 0x4000, CRC(8866c2b0) SHA1(d00f31994673e8087a1406f98e8832d07cedeb66) ) // 1xxxxxxxxxxxxx = 0xFF
 
-	ROM_REGION( 0x2000, REGION_GFX1, 0 ) /* tx layer */
+	ROM_REGION( 0x2000, REGION_GFX1, ROMREGION_INVERT | ROMREGION_DISPOSE ) /* tx layer */
 	ROM_LOAD( "10.13e", 0x0000, 0x2000, CRC(62f9b28c) SHA1(d57d06b99e72a4f68f197a5b6c042c926cc70ca0) ) // FIRST AND SECOND HALF IDENTICAL
 
-	ROM_REGION( 0x8000, REGION_GFX2, 0 ) /* sprites */
-	ROM_LOAD( "12.16e", 0x0000, 0x2000, CRC(e3779f7f) SHA1(8e12d06b3cdc2fcb7b77cc35f8eca45544cc4873) )
-	ROM_LOAD( "11.14e", 0x2000, 0x2000, CRC(8801b34f) SHA1(256059fcd16b21e076db1c18fd9669128df1d658) )
-	ROM_LOAD( "14.19e", 0x4000, 0x2000, CRC(11b491c5) SHA1(be1c4a0fbe8fd4e124c21e0f700efa0428376691) )
-	ROM_LOAD( "13.17e", 0x6000, 0x2000, CRC(ea743986) SHA1(bbef4fd0f7d21cc89a52061fa50d7c2ea37287bd) )
+	ROM_REGION( 0x8000, REGION_GFX2, ROMREGION_INVERT | ROMREGION_DISPOSE ) /* sprites */
+	ROM_LOAD( "14.19e", 0x0000, 0x2000, CRC(11b491c5) SHA1(be1c4a0fbe8fd4e124c21e0f700efa0428376691) )
+	ROM_LOAD( "13.17e", 0x2000, 0x2000, CRC(ea743986) SHA1(bbef4fd0f7d21cc89a52061fa50d7c2ea37287bd) )
+	ROM_LOAD( "12.16e", 0x4000, 0x2000, CRC(e3779f7f) SHA1(8e12d06b3cdc2fcb7b77cc35f8eca45544cc4873) )
+	ROM_LOAD( "11.14e", 0x6000, 0x2000, CRC(8801b34f) SHA1(256059fcd16b21e076db1c18fd9669128df1d658) )
 
-	ROM_REGION( 0x8000, REGION_GFX3, 0 ) /* bg layers */
+	ROM_REGION( 0x8000, REGION_GFX3, ROMREGION_INVERT | ROMREGION_DISPOSE ) /* bg layers */
 	ROM_LOAD( "8.10e",  0x0000, 0x2000, CRC(f85eb20f) SHA1(699edc970c359143dee6de2a97cc2a552454785b) )
 	ROM_LOAD( "6.7e",   0x2000, 0x2000, CRC(3e97843f) SHA1(4e4e5625dbf78eca97536b1428b2e49ad58c618f) )
 	ROM_LOAD( "9.12e",  0x4000, 0x2000, CRC(f1d9915e) SHA1(158e1cc8c402f9ae3906363d99f2b25c94c64212) )
@@ -302,8 +302,16 @@ ROM_START( flower )
 	ROM_REGION( 0x4000, REGION_SOUND2, 0 )
 	ROM_LOAD( "5.16a",  0x0000, 0x4000, CRC(42fa2853) SHA1(cc1e8b8231d6f27f48b05d59390e93ea1c1c0e4c) )	/* volume tables? */
 
-	ROM_REGION( 0x100, REGION_PROMS, 0 )
-	ROM_LOAD( "proms",  0x0000, 0x0100, NO_DUMP )
+	ROM_REGION( 0x300, REGION_PROMS, 0 ) /* RGB proms */
+	ROM_LOAD( "82s129.k1",  0x0200, 0x0100, CRC(d311ed0d) SHA1(1d530c874aecf93133d610ab3ce668548712913a) ) // r?
+	ROM_LOAD( "82s129.k2",  0x0100, 0x0100, CRC(ababb072) SHA1(a9d46d12534c8662c6b54df94e96907f3a156968) ) // g?
+	ROM_LOAD( "82s129.k3",  0x0000, 0x0100, CRC(5aab7b41) SHA1(8d44639c7c9f1ba34fe9c4e74c8a38b6453f7ac0) ) // b?
+
+	ROM_REGION( 0x0520, REGION_USER1, 0 ) /* Other proms, (zoom table?) */
+	ROM_LOAD( "82s147.d7",  0x0000, 0x0200, CRC(f0dbb2a7) SHA1(03cd8fd41d6406894c6931e883a9ac6a4a4effc9) )
+	ROM_LOAD( "82s147.j18", 0x0200, 0x0200, CRC(d7de0860) SHA1(5d3d8c5476b1edffdacde09d592c64e78d2b90c0) )
+	ROM_LOAD( "82s123.k7",  0x0400, 0x0020, CRC(ea9c65e4) SHA1(1bdd77a7f3ef5f8ec4dbb9524498c0c4a356f089) )
+	ROM_LOAD( "82s129.a1",  0x0420, 0x0100, CRC(c8dad3fc) SHA1(8e852efac70223d02e45b20ed8a12e38c5010a78) )
 ROM_END
 
 ROM_START( flowerbl )
@@ -316,20 +324,20 @@ ROM_START( flowerbl )
 	ROM_REGION( 0x10000, REGION_CPU3, 0 ) /* sound cpu */
 	ROM_LOAD( "3.d9",   0x0000, 0x4000, CRC(8866c2b0) SHA1(d00f31994673e8087a1406f98e8832d07cedeb66) ) // 1xxxxxxxxxxxxx = 0xFF
 
-	ROM_REGION( 0x2000, REGION_GFX1, 0 ) /* tx layer */
+	ROM_REGION( 0x2000, REGION_GFX1, ROMREGION_INVERT | ROMREGION_DISPOSE ) /* tx layer */
 	ROM_LOAD( "10.13e", 0x0000, 0x2000, CRC(62f9b28c) SHA1(d57d06b99e72a4f68f197a5b6c042c926cc70ca0) ) // FIRST AND SECOND HALF IDENTICAL
 
-	ROM_REGION( 0x8000, REGION_GFX2, 0 ) /* sprites */
-	ROM_LOAD( "12.16e", 0x0000, 0x2000, CRC(e3779f7f) SHA1(8e12d06b3cdc2fcb7b77cc35f8eca45544cc4873) )
-	ROM_LOAD( "11.14e", 0x2000, 0x2000, CRC(8801b34f) SHA1(256059fcd16b21e076db1c18fd9669128df1d658) )
-	ROM_LOAD( "14.19e", 0x4000, 0x2000, CRC(11b491c5) SHA1(be1c4a0fbe8fd4e124c21e0f700efa0428376691) )
-	ROM_LOAD( "13.17e", 0x6000, 0x2000, CRC(ea743986) SHA1(bbef4fd0f7d21cc89a52061fa50d7c2ea37287bd) )
+	ROM_REGION( 0x8000, REGION_GFX2, ROMREGION_INVERT | ROMREGION_DISPOSE ) /* sprites */
+	ROM_LOAD( "14.19e", 0x0000, 0x2000, CRC(11b491c5) SHA1(be1c4a0fbe8fd4e124c21e0f700efa0428376691) )
+	ROM_LOAD( "13.17e", 0x2000, 0x2000, CRC(ea743986) SHA1(bbef4fd0f7d21cc89a52061fa50d7c2ea37287bd) )
+	ROM_LOAD( "12.16e", 0x4000, 0x2000, CRC(e3779f7f) SHA1(8e12d06b3cdc2fcb7b77cc35f8eca45544cc4873) )
+	ROM_LOAD( "11.14e", 0x6000, 0x2000, CRC(8801b34f) SHA1(256059fcd16b21e076db1c18fd9669128df1d658) )
 
-	ROM_REGION( 0x8000, REGION_GFX3, 0 ) /* bg layers */
+	ROM_REGION( 0x8000, REGION_GFX3, ROMREGION_INVERT | ROMREGION_DISPOSE ) /* bg layers */
 	ROM_LOAD( "8.10e",  0x0000, 0x2000, CRC(f85eb20f) SHA1(699edc970c359143dee6de2a97cc2a552454785b) )
 	ROM_LOAD( "6.7e",   0x2000, 0x2000, CRC(3e97843f) SHA1(4e4e5625dbf78eca97536b1428b2e49ad58c618f) )
 	ROM_LOAD( "9.12e",  0x4000, 0x2000, CRC(f1d9915e) SHA1(158e1cc8c402f9ae3906363d99f2b25c94c64212) )
-	ROM_LOAD( "7",  0x6000, 0x2000, CRC(e350f36c) SHA1(f97204dc95b4000c268afc053a2333c1629e07d8) )
+	ROM_LOAD( "7",      0x6000, 0x2000, CRC(e350f36c) SHA1(f97204dc95b4000c268afc053a2333c1629e07d8) )
 
 	ROM_REGION( 0x8000, REGION_SOUND1, 0 )
 	ROM_LOAD( "4.12a",  0x0000, 0x8000, CRC(851ed9fd) SHA1(5dc048b612e45da529502bf33d968737a7b0a646) )	/* 8-bit samples */
@@ -337,18 +345,18 @@ ROM_START( flowerbl )
 	ROM_REGION( 0x4000, REGION_SOUND2, 0 )
 	ROM_LOAD( "5.16a",  0x0000, 0x4000, CRC(42fa2853) SHA1(cc1e8b8231d6f27f48b05d59390e93ea1c1c0e4c) )	/* volume tables? */
 
-	ROM_REGION( 0x300, REGION_PROMS, 0 )
-	ROM_LOAD( "82s129.k1",  0x0000, 0x0100, CRC(d311ed0d) SHA1(1d530c874aecf93133d610ab3ce668548712913a) ) // r?
+	ROM_REGION( 0x300, REGION_PROMS, 0 ) /* RGB proms */
+	ROM_LOAD( "82s129.k1",  0x0200, 0x0100, CRC(d311ed0d) SHA1(1d530c874aecf93133d610ab3ce668548712913a) ) // r?
 	ROM_LOAD( "82s129.k2",  0x0100, 0x0100, CRC(ababb072) SHA1(a9d46d12534c8662c6b54df94e96907f3a156968) ) // g?
-	ROM_LOAD( "82s129.k3",  0x0200, 0x0100, CRC(5aab7b41) SHA1(8d44639c7c9f1ba34fe9c4e74c8a38b6453f7ac0) ) // b?
+	ROM_LOAD( "82s129.k3",  0x0000, 0x0100, CRC(5aab7b41) SHA1(8d44639c7c9f1ba34fe9c4e74c8a38b6453f7ac0) ) // b?
 
-	ROM_LOAD( "82s123.k7",  0x0000, 0x020, CRC(ea9c65e4) SHA1(1bdd77a7f3ef5f8ec4dbb9524498c0c4a356f089) )
-	ROM_LOAD( "82s129.a1",  0x0000, 0x0100, CRC(c8dad3fc) SHA1(8e852efac70223d02e45b20ed8a12e38c5010a78) )
+	ROM_REGION( 0x0520, REGION_USER1, 0 ) /* Other proms, (zoom table?) */
 	ROM_LOAD( "82s147.d7",  0x0000, 0x0200, CRC(f0dbb2a7) SHA1(03cd8fd41d6406894c6931e883a9ac6a4a4effc9) )
-	ROM_LOAD( "82s147.j18",  0x0000, 0x0200, CRC(d7de0860) SHA1(5d3d8c5476b1edffdacde09d592c64e78d2b90c0) )
-
+	ROM_LOAD( "82s147.j18", 0x0200, 0x0200, CRC(d7de0860) SHA1(5d3d8c5476b1edffdacde09d592c64e78d2b90c0) )
+	ROM_LOAD( "82s123.k7",  0x0400, 0x0020, CRC(ea9c65e4) SHA1(1bdd77a7f3ef5f8ec4dbb9524498c0c4a356f089) )
+	ROM_LOAD( "82s129.a1",  0x0420, 0x0100, CRC(c8dad3fc) SHA1(8e852efac70223d02e45b20ed8a12e38c5010a78) )
 ROM_END
 
 
-GAMEX( 1986, flower, 0, flower, flower, 0, ROT0, "Komax", "Flower", GAME_WRONG_COLORS | GAME_IMPERFECT_SOUND )
-GAMEX( 1986, flowerbl,flower, flower, flower, 0, ROT0, "bootleg", "Flower (bootleg)", GAME_WRONG_COLORS | GAME_IMPERFECT_SOUND )
+GAMEX( 1986, flower, 0, flower, flower, 0, ROT0, "Komax", "Flower", GAME_IMPERFECT_SOUND )
+GAMEX( 1986, flowerbl, flower, flower, flower, 0, ROT0, "bootleg", "Flower (bootleg)", GAME_IMPERFECT_SOUND )

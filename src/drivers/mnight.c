@@ -354,12 +354,12 @@ static struct YM2203interface ym2203_interface =
 static MACHINE_DRIVER_START( mnight )
 
 	/* basic machine hardware */
-	MDRV_CPU_ADD(Z80, 6000000)		/* 12000000/2 ??? */
+	MDRV_CPU_ADD(Z80, 12000000/2)		/* 12000000/2 ??? */
 	MDRV_CPU_PROGRAM_MAP(readmem,writemem)	/* very sensitive to these settings */
 	MDRV_CPU_VBLANK_INT(mnight_interrupt,1)
 
-	MDRV_CPU_ADD(Z80, 4000000)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)		/* 12000000/3 ??? */
+	MDRV_CPU_ADD(Z80, 5000000)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)		/* 5mhz crystal ??? */
 	MDRV_CPU_PROGRAM_MAP(snd_readmem,snd_writemem)
 	MDRV_CPU_IO_MAP(0,snd_writeport)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,2)

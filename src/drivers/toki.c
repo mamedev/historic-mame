@@ -457,14 +457,14 @@ static struct MSM5205interface msm5205_interface =
 };
 
 
-static MACHINE_DRIVER_START( toki )
+static MACHINE_DRIVER_START( toki ) /* KOYO 20.000MHz near the cpu */
 
 	/* basic machine hardware */
-	MDRV_CPU_ADD(M68000,20000000/2) 	/* Accurate?  There is a 20MHz near the cpu, but a 12MHz elsewhere */
+	MDRV_CPU_ADD(M68000,20000000/2) 	/* 10 MHz Toshiba TMP68000P-10 */
 	MDRV_CPU_PROGRAM_MAP(toki_readmem,toki_writemem)
 	MDRV_CPU_VBLANK_INT(irq1_line_hold,1)/* VBL */
 
-	SEIBU_SOUND_SYSTEM_CPU(14318180/4)
+	SEIBU_SOUND_SYSTEM_CPU(20000000/5)	/* 4MHz Zilog Z0840004PSC */
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)

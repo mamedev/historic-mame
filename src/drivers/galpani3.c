@@ -1,4 +1,22 @@
-/* Gals Panic 3 */
+/*
+	Gals Panic 3
+	(c) Kaneko 1995
+
+	Skeleton driver by Haze
+	WIP Driver by Sebastien Volpe
+
+Check done by main code, as part of EEPROM data:
+'Gals Panic 3 v0.96 95/08/29(Tue)'
+
+
+TODO:
+- find a working board to dump MCU provided code & data, as code is
+  involved just after initial checks; the game currently goes nowhere.
+- finish emulation, mainly backgounds
+
+What's been done lately:
+- palette, inputs, sound, backgounds 'decoded' (RLE)
+*/
 
 /*
 
@@ -8,15 +26,15 @@ Gals Panic 3 (JPN Ver.)
 CPU:	68000-16
 Sound:	YMZ280B-F
 OSC:	28.6363MHz
-	33.3333MHz
+		33.3333MHz
 EEPROM:	93C46
-Chips.:	GRAP2 x3
-	APRIO-GL
-	BABY004
-	GCNT2
-	TBSOP01
-	CG24173 6186
-	CG24143 4181
+Chips.:	GRAP2 x3				<- R/G/B Chips?
+		APRIO-GL
+		BABY004					<- Sprites, see suprnova.c
+		GCNT2
+		TBSOP01					<- ToyBox MCU
+		CG24173 6186
+		CG24143 4181
 
 
 G3P0J1.71     prg.
@@ -57,18 +75,18 @@ extern data32_t* skns_spc_regs;
 
 static data16_t *galpani3_sprregs, *galpani3_spriteram;
 
-#if 0
 INTERRUPT_GEN( galpani3_vblank ) // 2, 3, 5 ?
 {
-	if (!cpu_getiloops())
-		cpunum_set_input_line(0, 2, HOLD_LINE);
-	else
-		cpunum_set_input_line(0, 3, HOLD_LINE);
+	switch ( cpu_getiloops() )
+	{
+		case 2:  cpunum_set_input_line(0, 2, HOLD_LINE); break;
+		case 1:  cpunum_set_input_line(0, 3, HOLD_LINE); break;
+		case 0:  cpunum_set_input_line(0, 5, HOLD_LINE); break;
+	}
 }
-#endif
+
 
 #include "vidhrdw/generic.h"
-
 
 VIDEO_START(galpani3)
 {
@@ -90,61 +108,62 @@ VIDEO_UPDATE(galpani3)
 	skns_drawsprites (bitmap,cliprect);
 }
 
-INPUT_PORTS_START( galpani3 ) /* everything is assumption except IN3 */
+
+INPUT_PORTS_START( galpani3 )
 
 	PORT_START	// IN0 - Player Controls
-	PORT_BIT(  0x0100, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_8WAY PORT_PLAYER(1)
-	PORT_BIT(  0x0200, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_8WAY PORT_PLAYER(1)
-	PORT_BIT(  0x0400, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_8WAY PORT_PLAYER(1)
-	PORT_BIT(  0x0800, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_8WAY PORT_PLAYER(1)
-	PORT_BIT(  0x1000, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(1)
-	PORT_BIT(  0x2000, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(1)
-	PORT_BIT(  0x4000, IP_ACTIVE_LOW, IPT_BUTTON3 ) PORT_PLAYER(1)
-	PORT_BIT(  0x8000, IP_ACTIVE_LOW, IPT_BUTTON4 ) PORT_PLAYER(1)
+	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_JOYSTICK_UP	) PORT_8WAY PORT_PLAYER(1)
+	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN	) PORT_8WAY PORT_PLAYER(1)
+	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT	) PORT_8WAY PORT_PLAYER(1)
+	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT	) PORT_8WAY PORT_PLAYER(1)
+	PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(1)
+	PORT_BIT( 0x2000, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_UNKNOWN ) // ?
+	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START	// IN1 - Player Controls
-	PORT_BIT(  0x0100, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_8WAY PORT_PLAYER(2)
-	PORT_BIT(  0x0200, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_8WAY PORT_PLAYER(2)
-	PORT_BIT(  0x0400, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_8WAY PORT_PLAYER(2)
-	PORT_BIT(  0x0800, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_8WAY PORT_PLAYER(2)
-	PORT_BIT(  0x1000, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(2)
-	PORT_BIT(  0x2000, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(2)
-	PORT_BIT(  0x4000, IP_ACTIVE_LOW, IPT_BUTTON3 ) PORT_PLAYER(2)
-	PORT_BIT(  0x8000, IP_ACTIVE_LOW, IPT_BUTTON4 ) PORT_PLAYER(2)
+	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_JOYSTICK_UP	) PORT_8WAY PORT_PLAYER(2)
+	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN	) PORT_8WAY PORT_PLAYER(2)
+	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT	) PORT_8WAY PORT_PLAYER(2)
+	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT	) PORT_8WAY PORT_PLAYER(2)
+	PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(2)
+	PORT_BIT( 0x2000, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_UNKNOWN ) // ?
+	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START	// IN2 - Coins
-	PORT_BIT(  0x0100, IP_ACTIVE_LOW, IPT_START1	)
-	PORT_BIT(  0x0200, IP_ACTIVE_LOW, IPT_START2	)
-	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_COIN1 ) PORT_IMPULSE(2)
-	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_COIN2 ) PORT_IMPULSE(2)
-	PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_SERVICE ) PORT_NAME( DEF_STR( Service_Mode )) PORT_CODE(KEYCODE_F2)
-	PORT_BIT(  0x2000, IP_ACTIVE_LOW, IPT_TILT		)
-	PORT_BIT(  0x4000, IP_ACTIVE_LOW, IPT_SERVICE1	)
-	PORT_BIT(  0x8000, IP_ACTIVE_LOW, IPT_UNKNOWN	)
+	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_COIN1  ) PORT_IMPULSE(2)
+	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_COIN2  ) PORT_IMPULSE(2)
+	PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_SERVICE  ) PORT_NAME( DEF_STR( Service_Mode )) PORT_CODE(KEYCODE_F2)
+	PORT_BIT( 0x2000, IP_ACTIVE_LOW, IPT_TILT     )
+	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_SERVICE1 )
+	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_UNUSED	)
 
 	PORT_START	// IN3 - DSW provided by the MCU - $200386.b <- $400200
-	PORT_DIPNAME( 0x0100, 0x0100, DEF_STR( Unknown ) )
+	PORT_DIPNAME( 0x0100, 0x0100, "Test Mode" )
 	PORT_DIPSETTING(      0x0100, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0200, 0x0200, DEF_STR( Free_Play ) )
+	PORT_DIPNAME( 0x0200, 0x0200, DEF_STR( Flip_Screen ) )
 	PORT_DIPSETTING(      0x0200, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0400, 0x0400, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0400, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0800, 0x0800, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0800, DEF_STR( On ) )
-	PORT_DIPNAME( 0x1000, 0x1000, DEF_STR( Unknown ) )
+	PORT_DIPNAME( 0x0400, 0x0400, DEF_STR( Unknown ) ) // ?
+	PORT_DIPSETTING(      0x0400, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0800, 0x0800, DEF_STR( Unknown ) )	// unused
+	PORT_DIPSETTING(      0x0800, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x1000, 0x1000, DEF_STR( Unknown ) )	// unused
 	PORT_DIPSETTING(      0x1000, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x2000, 0x2000, DEF_STR( Unknown ) )
+	PORT_DIPNAME( 0x2000, 0x2000, DEF_STR( Unknown ) )	// unused
 	PORT_DIPSETTING(      0x2000, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x4000, 0x4000, DEF_STR( Unknown ) )
+	PORT_DIPNAME( 0x4000, 0x4000, DEF_STR( Unknown ) )	// unused
 	PORT_DIPSETTING(      0x4000, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x8000, 0x0000, DEF_STR( Unknown ) )
+	PORT_DIPNAME( 0x8000, 0x8000, DEF_STR( Unknown ) )	// unused ?
 	PORT_DIPSETTING(      0x8000, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
 
@@ -181,9 +200,9 @@ static data16_t *mcu_ram, galpani3_mcu_com[4];
 
 void galpani3_mcu_run(void)
 {
-	data16_t mcu_command = mcu_ram[0x0010/2];
-	data16_t mcu_offset  = mcu_ram[0x0012/2] / 2; // 'param1' where MCU writes result
-	data16_t mcu_data    = mcu_ram[0x0014/2];
+	data16_t mcu_command = mcu_ram[0x0010/2];		/* command nb */
+	data16_t mcu_offset  = mcu_ram[0x0012/2] / 2;	/* offset in shared RAM where MCU will write */
+	data16_t mcu_subcmd  = mcu_ram[0x0014/2];		/* sub-command parameter, happens only for command #4 */
 
 	logerror("(PC=%06X): MCU executed command : %04X %04X\n",activecpu_get_pc(),mcu_command,mcu_offset*2);
 
@@ -195,10 +214,10 @@ void galpani3_mcu_run(void)
  	*/
 	switch (mcu_command >> 8)
 	{
-		case 0x03: // $388D2
+		case 0x03:	// DSW
 		{
-			/* MCU writes Coins? status */
 			mcu_ram[mcu_offset] = readinputport(3);
+			logerror("PC=%06X : MCU executed command: %04X %04X (read DSW)\n",activecpu_get_pc(),mcu_command,mcu_offset*2);
 		}
 		break;
 
@@ -230,13 +249,22 @@ void galpani3_mcu_run(void)
 		}
 		break;
 
-		case 0x04: // $38842 - provides code/data?
+		case 0x04: // $38842 - provides code/data
 		{
-			switch(mcu_data)
+			switch(mcu_subcmd)
 			{
-				case 0x00: /* $1a9c - provides code @ $40f000 */
+				int i;
+				case 0x00: /* $1a9c - provides code @ $40f000, length probably 0x1000 max (contains many code snippets, many 'jsr $40fxxx') */
+					for (i=0;i<0x1000/2;i++)
+						mcu_ram[mcu_offset+i] = 0x4e75; // fill 'code page' with RTS
+					//mcu_ram[mcu_offset+0x0098/2] = 0x4e91; // wrong assumption: jsr (A1) :/
 					break;
-				case 0x01: /* $1aa8 - provides data @ $400400 */
+
+				case 0x01: /* $1aa8 - provides data @ $400400, length? */
+					break;
+
+				default: /* most likely never happen, unless it's done by code provided by MCU itself */
+					logerror("- UNKNOWN PARAMETER %02X", mcu_subcmd);
 					break;
 			}
 		}
@@ -284,13 +312,12 @@ READ16_HANDLER( galpani3_mcu_status_r )
 
 
 
-/* NOTE: $24c8 = 'Gals Panic 3 v0.96 95/08/29(Tue)' */
 
 static ADDRESS_MAP_START( galpani3_map, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x000000, 0x0fffff) AM_ROM
 
-	AM_RANGE(0x200000, 0x20ffff) AM_RAM // area [B]
-	AM_RANGE(0x280000, 0x287fff) AM_RAM // area [A]
+	AM_RANGE(0x200000, 0x20ffff) AM_RAM // area [B] - Work RAM
+	AM_RANGE(0x280000, 0x287fff) AM_RAM AM_WRITE(paletteram16_xGGGGGRRRRRBBBBB_word_w) AM_BASE(&paletteram16) // area [A] - palette for sprites
 
 	AM_RANGE(0x300000, 0x303fff) AM_RAM AM_BASE(&galpani3_spriteram) AM_WRITE(galpani3_suprnova_sprite32_w)
 	AM_RANGE(0x380000, 0x38003f) AM_RAM AM_BASE(&galpani3_sprregs) AM_WRITE(galpani3_suprnova_sprite32regs_w)
@@ -301,107 +328,107 @@ static ADDRESS_MAP_START( galpani3_map, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x600000, 0x600001) AM_WRITE(galpani3_mcu_com1_w)	// ] then bit #0 of $780000.l is tested: 0 = OK!
 	AM_RANGE(0x680000, 0x680001) AM_WRITE(galpani3_mcu_com2_w)	// ] see $387e8: these 2 locations are written (w.#$ffff)
 	AM_RANGE(0x700000, 0x700001) AM_WRITE(galpani3_mcu_com3_w)	// ] then bit #0 of $780000.l is tested: 0 = OK!
-	AM_RANGE(0x780000, 0x780003) AM_READ(galpani3_mcu_status_r)
+	AM_RANGE(0x780000, 0x780001) AM_READ(galpani3_mcu_status_r)
 
-//	AM_RANGE(0x800C02, 0x800C03) AM_RAM // ??? see subroutine $3a03e
-//	AM_RANGE(0xa00C02, 0xa00C03) AM_RAM // ??? see subroutine $3a03e
-//	AM_RANGE(0xc00C02, 0xc00C03) AM_RAM // ??? see subroutine $3a03e
+	AM_RANGE(0x800c00, 0x800c1f) AM_RAM // ? R layer regs ? see subroutine $3a03e
+	AM_RANGE(0xa00c00, 0xa00c1f) AM_RAM // ? G layer regs ? see subroutine $3a03e
+	AM_RANGE(0xc00c00, 0xc00c1f) AM_RAM // ? B layer regs ? see subroutine $3a03e
 
-	AM_RANGE(0x880000, 0x8801ff) AM_RAM // area [G]
-	AM_RANGE(0x900000, 0x97ffff) AM_RAM // area [D]
-	AM_RANGE(0xa80000, 0xa801ff) AM_RAM // area [H]
-	AM_RANGE(0xb00000, 0xb7ffff) AM_RAM // area [E]
-	AM_RANGE(0xc80000, 0xc801ff) AM_RAM // area [I]
-	AM_RANGE(0xd00000, 0xd7ffff) AM_RAM // area [F]
-	AM_RANGE(0xe00000, 0xe7ffff) AM_RAM // area [J]
+	AM_RANGE(0x800000, 0x8003ff) AM_RAM // ??? see subroutine $39f42 (R?)
+	AM_RANGE(0x800800, 0x800bff) AM_RAM // ??? see subroutine $39f42 (R?)
+	AM_RANGE(0xa00000, 0xa003ff) AM_RAM // ??? see subroutine $39f42 (G?)
+	AM_RANGE(0xa00800, 0xa00bff) AM_RAM // ??? see subroutine $39f42 (G?)
+	AM_RANGE(0xc00000, 0xc003ff) AM_RAM // ??? see subroutine $39f42 (B?)
+	AM_RANGE(0xc00800, 0xc00bff) AM_RAM // ??? see subroutine $39f42 (B?)
 
-	AM_RANGE(0xf00040, 0xf00041) AM_RAM // probably watchdog
+	AM_RANGE(0x900000, 0x97ffff) AM_RAM // area [D] - R area ? odd bytes only, initialized 00..ff,00..ff,...
+	AM_RANGE(0xb00000, 0xb7ffff) AM_RAM // area [E] - G area ? odd bytes only, initialized 00..ff,00..ff,...
+	AM_RANGE(0xd00000, 0xd7ffff) AM_RAM // area [F] - B area ? odd bytes only, initialized 00..ff,00..ff,...
+	AM_RANGE(0xe00000, 0xe7ffff) AM_RAM // area [J] - A area ? odd bytes only, initialized 00..ff,00..ff,..., then cleared
+
+	AM_RANGE(0x880000, 0x8801ff) AM_RAM // area [G] - R area ? linescroll ?
+	AM_RANGE(0xa80000, 0xa801ff) AM_RAM // area [H] - G area ? linescroll ?
+	AM_RANGE(0xc80000, 0xc801ff) AM_RAM // area [I] - B area ? linescroll ?
+
+	AM_RANGE(0xf00000, 0xf00001) AM_NOP // ? written once (2nd opcode, $1.b)
+	AM_RANGE(0xf00050, 0xf00051) AM_NOP // ? written once (3rd opcode, $30.b)
+
+	AM_RANGE(0xf00010, 0xf00011) AM_READ(input_port_0_word_r)
+	AM_RANGE(0xf00012, 0xf00013) AM_READ(input_port_1_word_r)
+	AM_RANGE(0xf00014, 0xf00015) AM_READ(input_port_2_word_r)
+	AM_RANGE(0xf00016, 0xf00017) AM_NOP // ? read, but overwritten
+
+	AM_RANGE(0xf00020, 0xf00021) AM_WRITE(YMZ280B_register_0_lsb_w)	// sound
+	AM_RANGE(0xf00022, 0xf00023) AM_WRITE(YMZ280B_data_0_lsb_w)		//
+	AM_RANGE(0xf00040, 0xf00041) AM_READWRITE(watchdog_reset16_r, watchdog_reset16_w)	// watchdog
 ADDRESS_MAP_END
 
-/* probably sprite registers (suprnova.c), very similar to jchan (thanks Haze!)
 
-cpu #0 (PC=00001868): unmapped program memory word write to 00380000 = 0040 & FFFF
-cpu #0 (PC=0000186E): unmapped program memory word write to 00380004 = 0000 & FFFF
-cpu #0 (PC=00001874): unmapped program memory word write to 00380008 = 0000 & FFFF
-cpu #0 (PC=0000187A): unmapped program memory word write to 0038000C = 0000 & FFFF
-cpu #0 (PC=00001880): unmapped program memory word write to 00380010 = 0000 & FFFF
-cpu #0 (PC=00001886): unmapped program memory word write to 00380014 = 0000 & FFFF
-cpu #0 (PC=0000188C): unmapped program memory word write to 00380018 = 0000 & FFFF
-cpu #0 (PC=00001892): unmapped program memory word write to 0038001C = 0000 & FFFF
-cpu #0 (PC=00001898): unmapped program memory word write to 00380020 = 0000 & FFFF
-cpu #0 (PC=0000189E): unmapped program memory word write to 00380024 = 0000 & FFFF
-cpu #0 (PC=000018A4): unmapped program memory word write to 00380028 = 0000 & FFFF
-cpu #0 (PC=000018AA): unmapped program memory word write to 0038002C = 0000 & FFFF
-cpu #0 (PC=000018B0): unmapped program memory word write to 00380030 = 0000 & FFFF
-cpu #0 (PC=000018B6): unmapped program memory word write to 00380034 = 0000 & FFFF
-*/
-
-/* none of the gfx are tile based? */
-static struct GfxLayout charlayout =
+static struct YMZ280Binterface ymz280b_intf =
 {
-	16,16,
-	RGN_FRAC(1,1),
-	4,
-	{ 0,1,2,3 },
-	{ 4, 0, 12, 8, 20, 16, 28, 24, 8*32+4, 8*32+0, 8*32+12, 8*32+8, 8*32+20, 8*32+16, 8*32+28, 8*32+24 },
-	{ 0*32, 1*32, 2*32, 3*32, 4*32, 5*32, 6*32, 7*32, 16*32,17*32, 18*32, 19*32, 20*32, 21*32, 22*32, 23*32 },
-	32*32
+	1,
+	{ 28636400 / 2 }, /* complete guess */
+	{ REGION_SOUND1 },
+	{ YM3012_VOL(100,MIXER_PAN_LEFT,100,MIXER_PAN_RIGHT) },
+	{ 0 }	// irq ?
 };
-
-static struct GfxDecodeInfo gfxdecodeinfo[] =
-{
-	{ REGION_GFX1, 0, &charlayout,   0, 1  },
-	{ REGION_GFX2, 0, &charlayout,   0, 1  },
-	{ -1 } /* end of array */
-};
-
 
 static MACHINE_DRIVER_START( galpani3 )
 	MDRV_CPU_ADD_TAG("main", M68000, 16000000)	 // ? (from which clock?)
 	MDRV_CPU_PROGRAM_MAP(galpani3_map,0)
-//	MDRV_CPU_VBLANK_INT(galpani3_vblank, 2)
+	MDRV_CPU_VBLANK_INT(galpani3_vblank, 3)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
-	MDRV_GFXDECODE(gfxdecodeinfo)
-
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
 	MDRV_SCREEN_SIZE(64*8, 64*8)
-	MDRV_VISIBLE_AREA(0*8, 64*8-1, 0*8, 64*8-1)
-	MDRV_PALETTE_LENGTH(0x200)
+	MDRV_VISIBLE_AREA(0*8, 40*8-1, 0*8, 30*8-1)
+	MDRV_PALETTE_LENGTH(0x4000)
 
 	MDRV_VIDEO_START(galpani3)
 	MDRV_VIDEO_UPDATE(galpani3)
+
+	/* sound hardware */
+	MDRV_SOUND_ADD(YMZ280B, ymz280b_intf)
 MACHINE_DRIVER_END
+
 
 ROM_START( galpani3 )
 	ROM_REGION( 0x100000, REGION_CPU1, 0 ) /* 68000 Code */
 	ROM_LOAD16_BYTE( "g3p0j1.71",  0x000000, 0x080000, CRC(52893326) SHA1(78fdbf3436a4ba754d7608fedbbede5c719a4505) )
 	ROM_LOAD16_BYTE( "g3p1j1.102", 0x000001, 0x080000, CRC(05f935b4) SHA1(81e78875585bcdadad1c302614b2708e60563662) )
 
-	ROM_REGION( 0x20000, REGION_CPU2, 0 ) /* MCU data rom */
-	ROM_LOAD( "g3d0x0.134", 0x000000, 0x020000, CRC(4ace10f9) SHA1(d19e4540d535ce10d23cb0844be03a3239b3402e) )
+	ROM_REGION( 0x200000, REGION_GFX1, 0 ) /* Sprites - RLE encoded */
+	ROM_LOAD( "gp320000.1", 0x000000, 0x200000, CRC(a0112827) SHA1(0a6c78d71b75a1d78215aab3104176aa1769b14f) )
+
+	ROM_REGION( 0xa00000, REGION_GFX2, 0 ) /* Backgrounds - RLE encoded */
+	ROM_LOAD( "gp340000.123", 0x000000, 0x200000, CRC(a58a26b1) SHA1(832d70cce1b4f04fa50fc221962ff6cc4287cb92) )		// 19950414GROMACap
+	ROM_LOAD( "gp340100.122", 0x200000, 0x200000, CRC(746fe4a8) SHA1(a5126ae9e83d556277d31b166296a708c311a902) )		// 19950414GROMBCap
+	ROM_LOAD( "gp340200.121", 0x400000, 0x200000, CRC(e9bc15c8) SHA1(2c6a10e768709d1937d9206970553f4101ce9016) )		// 19950414GROMCCap
+	ROM_LOAD( "gp340300.120", 0x600000, 0x200000, CRC(59062eef) SHA1(936977c20d83540c1e0f65d429c7ebea201ef991) )		// 19950414GROMDCap
+	ROM_LOAD16_BYTE( "g3g0j0.101", 0x800000, 0x040000, CRC(fbb1e0dc) SHA1(14f6377afd93054aa5dc38af235ae12b932e847f) )	// 19950523GROMECap
+	ROM_LOAD16_BYTE( "g3g1j0.100", 0x800001, 0x040000, CRC(18edb5f0) SHA1(5e2ed0105b3e6037f6116494d3b186a368824171) )	//
 
 	ROM_REGION( 0x300000, REGION_SOUND1, 0 ) /* Samples */
 	ROM_LOAD( "gp310100.40", 0x000000, 0x200000, CRC(6a0b1d12) SHA1(11fed80b96d07fddb27599743991c58c12c048e0) )
 	ROM_LOAD( "gp310000.41", 0x200000, 0x100000, CRC(641062ef) SHA1(c8902fc46319eac94b3f95d18afa24bd895078d6) )
 
-	ROM_REGION( 0x200000, REGION_GFX1, 0 ) /* Sprites? */
-	ROM_LOAD( "gp320000.1", 0x000000, 0x200000, CRC(a0112827) SHA1(0a6c78d71b75a1d78215aab3104176aa1769b14f) )
-
-	ROM_REGION( 0xa00000, REGION_GFX2, 0 ) /* Tilemaps? */
-	ROM_LOAD( "gp340000.123", 0x000000, 0x200000, CRC(a58a26b1) SHA1(832d70cce1b4f04fa50fc221962ff6cc4287cb92) )
-	ROM_LOAD( "gp340100.122", 0x200000, 0x200000, CRC(746fe4a8) SHA1(a5126ae9e83d556277d31b166296a708c311a902) )
-	ROM_LOAD( "gp340200.121", 0x400000, 0x200000, CRC(e9bc15c8) SHA1(2c6a10e768709d1937d9206970553f4101ce9016) )
-	ROM_LOAD( "gp340300.120", 0x600000, 0x200000, CRC(59062eef) SHA1(936977c20d83540c1e0f65d429c7ebea201ef991) )
-	ROM_LOAD16_BYTE( "g3g0j0.101", 0x800000, 0x040000, CRC(fbb1e0dc) SHA1(14f6377afd93054aa5dc38af235ae12b932e847f) )
-	ROM_LOAD16_BYTE( "g3g1j0.100", 0x800001, 0x040000, CRC(18edb5f0) SHA1(5e2ed0105b3e6037f6116494d3b186a368824171) )
+	ROM_REGION( 0x20000, REGION_USER1, 0 ) /* MCU Code? */
+	ROM_LOAD( "g3d0x0.134", 0x000000, 0x020000, CRC(4ace10f9) SHA1(d19e4540d535ce10d23cb0844be03a3239b3402e) )
 ROM_END
+
 
 DRIVER_INIT( galpani3 )
 {
+	data16_t *patchrom = (data16_t *)memory_region(REGION_CPU1);
+
+	// weird checks of supposed tilemap registers
+	patchrom[0x3a0c6/2] = 0x4e71;
+	patchrom[0x3a0d6/2] = 0x4e71;
+	patchrom[0x3a0e0/2] = 0x4e71;
+
 	memset(galpani3_mcu_com, 0, 4 * sizeof( data16_t) );
 }
 
-GAMEX( 1995, galpani3, 0, galpani3, galpani3, 0, ROT90, "Kaneko", "Gals Panic 3", GAME_NOT_WORKING | GAME_NO_SOUND )
+GAMEX( 1995, galpani3, 0, galpani3, galpani3, galpani3, ROT90, "Kaneko", "Gals Panic 3", GAME_NOT_WORKING )

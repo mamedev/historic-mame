@@ -803,6 +803,45 @@ ROM_START( umk3r11 )
 ROM_END
 
 
+ROM_START( umk3r10 )
+	ROM_REGION16_LE( 0x800000, REGION_SOUND1, ROMREGION_ERASEFF )	/* sound data */
+	ROM_LOAD16_BYTE( "umk3-u2.bin",  0x000000, 0x100000, CRC(3838cfe5) SHA1(e3d2901f3bae1362742fc6ee0aa31c9f63b4dfa3) )
+	ROM_LOAD16_BYTE( "umk3-u3.bin",  0x200000, 0x100000, CRC(856fe411) SHA1(6165ebecfce7500e948d84492ffa19eed7f47091) )
+	ROM_LOAD16_BYTE( "umk3-u4.bin",  0x400000, 0x100000, CRC(428a406f) SHA1(e70ec83cd054de0da1e178720ed0035b8887f797) )
+	ROM_LOAD16_BYTE( "umk3-u5.bin",  0x600000, 0x100000, CRC(3b98a09f) SHA1(edf1d02a56dcf3349e6b4bb4097acfe7592305f4) )
+
+	ROM_REGION16_LE( 0x100000, REGION_USER1, 0 )	/* 34010 code */
+	ROM_LOAD16_BYTE( "um310u54.bin",  0x00000, 0x80000, CRC(dfd735da) SHA1(bcb6d80dbde407d0042ec2f225b2f98740a79203) )
+	ROM_LOAD16_BYTE( "um310u63.bin",  0x00001, 0x80000, CRC(2dff0c83) SHA1(8942ffa3addf134085ea8d77d56e82593312e7a5) )
+
+	ROM_REGION( 0x2000000, REGION_GFX1, 0 )
+	ROM_LOAD( "umk-u133.bin",  0x0000000, 0x100000, CRC(79b94667) SHA1(31bba640c351fdccc6685cadb74dd79a3f910ce8) )
+	ROM_LOAD( "umk-u132.bin",  0x0100000, 0x100000, CRC(13e95228) SHA1(405b05f5a5a55667c2be17d4b399129bdacefd90) )
+	ROM_LOAD( "umk-u131.bin",  0x0200000, 0x100000, CRC(41001e30) SHA1(2cec91116771951c0380cec5debf4cbb40c14c61) )
+	ROM_LOAD( "umk-u130.bin",  0x0300000, 0x100000, CRC(49379dd7) SHA1(e6dfab4e23d9cc38ae56c1bbf10ccd160e8fad5e) )
+
+	ROM_LOAD( "umk-u129.bin",  0x0400000, 0x100000, CRC(a8b41803) SHA1(9697e35e8bb51d6d36b1d7ae47377b446e57682f) )
+	ROM_LOAD( "umk-u128.bin",  0x0500000, 0x100000, CRC(b410d72f) SHA1(ac5c1c6f744186540f4ab100d9bd4ce6007e600b) )
+	ROM_LOAD( "umk-u127.bin",  0x0600000, 0x100000, CRC(bd985be7) SHA1(f5183abea2e5eb2c2c8cefa72c9ed321679f5128) )
+	ROM_LOAD( "umk-u126.bin",  0x0700000, 0x100000, CRC(e7c32cf4) SHA1(94ea7b2eed7dae66f5dd676c20d6b360140e3e0e) )
+
+	ROM_LOAD( "umk-u125.bin",  0x0800000, 0x100000, CRC(9a52227e) SHA1(0474a14fa8dbfea0b0889c1d1756b86391683558) )
+	ROM_LOAD( "umk-u124.bin",  0x0900000, 0x100000, CRC(5c750ebc) SHA1(45d68af1a56994376e086d840502453c8d6be700) )
+	ROM_LOAD( "umk-u123.bin",  0x0a00000, 0x100000, CRC(f0ab88a8) SHA1(cdc9dc12e162255845c6627b1e35182b7e8502d0) )
+	ROM_LOAD( "umk-u122.bin",  0x0b00000, 0x100000, CRC(9b87cdac) SHA1(a5f8db559293978f23e6f105543d8b2e170a2e0d) )
+
+	ROM_LOAD( "umk-u121.bin",  0x0c00000, 0x100000, CRC(cc4b95db) SHA1(3d53180eec649e9616c4b87db55573f12d9bfee3) )
+	ROM_LOAD( "umk-u120.bin",  0x0d00000, 0x100000, CRC(1c8144cd) SHA1(77cdc1eaf630ccb7233f5532f8b08191d00f0816) )
+	ROM_LOAD( "umk-u119.bin",  0x0e00000, 0x100000, CRC(5f10c543) SHA1(24dc83b7aa531ebd399258ffa7b2e028f1c4a28e) )
+	ROM_LOAD( "umk-u118.bin",  0x0f00000, 0x100000, CRC(de0c4488) SHA1(227cab34798c440b2a45223567113df5f17d913f) )
+
+	ROM_LOAD( "umk-u113.bin",  0x1400000, 0x100000, CRC(99d74a1e) SHA1(ed3068afa98287ea290d1f537f5009d3b6d683da) )
+	ROM_LOAD( "umk-u112.bin",  0x1500000, 0x100000, CRC(b5a46488) SHA1(dbf22e55d200eb9ff550f48b223cf0c6114a9357) )
+	ROM_LOAD( "umk-u111.bin",  0x1600000, 0x100000, CRC(a87523c8) SHA1(e70b7599fef82001f762fc2c48f7b85474431ccc) )
+	ROM_LOAD( "umk-u110.bin",  0x1700000, 0x100000, CRC(0038f205) SHA1(059c1c71a2d92ee6db36c09831d213a48a7e81d0) )
+ROM_END
+
+
 ROM_START( openice )
 	ROM_REGION16_LE( 0x800000, REGION_SOUND1, ROMREGION_ERASEFF )	/* sound data */
 	ROM_LOAD16_BYTE( "oiceu2.bin",  0x000000, 0x100000, CRC(8adb5aab) SHA1(4c25bc051c90947f3366f83ac5ca8dc78e26b8a4) )
@@ -1067,6 +1106,7 @@ GAME( 1994, mk3r20,  mk3,       wunit, mk3,     mk3r20,  ROT0, "Midway", "Mortal
 GAME( 1994, mk3r10,  mk3,       wunit, mk3,     mk3r10,  ROT0, "Midway", "Mortal Kombat 3 (rev 1.0)" )
 GAME( 1994, umk3,    mk3,       wunit, mk3,     umk3,    ROT0, "Midway", "Ultimate Mortal Kombat 3 (rev 1.2)" )
 GAME( 1994, umk3r11, mk3,       wunit, mk3,     umk3r11, ROT0, "Midway", "Ultimate Mortal Kombat 3 (rev 1.1)" )
+GAME( 1994, umk3r10, mk3,       wunit, mk3,     umk3r11, ROT0, "Midway", "Ultimate Mortal Kombat 3 (rev 1.0)" )
 
 GAME( 1995, wwfmania,0,         wunit, wwfmania,wwfmania,ROT0, "Midway", "WWF: Wrestlemania (rev 1.30 08/10/95)" )
 GAME( 1995, openice, 0,         wunit, openice, openice, ROT0, "Midway", "2 On 2 Open Ice Challenge (rev 1.21)" )

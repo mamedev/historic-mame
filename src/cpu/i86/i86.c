@@ -253,7 +253,7 @@ static int i86_execute(int num_cycles)
 static offs_t i86_dasm(char *buffer, offs_t pc)
 {
 #ifdef MAME_DEBUG
-	return i386_dasm_one(buffer, pc, I.sregs[CS], I.sregs[CS]);
+	return i386_dasm_one(buffer, pc, 0, 0);
 #else
 	sprintf(buffer, "$%02X", cpu_readop(pc));
 	return 1;
@@ -312,7 +312,7 @@ static int i186_execute(int num_cycles)
 static offs_t i186_dasm(char *buffer, offs_t pc)
 {
 #ifdef MAME_DEBUG
-	return i386_dasm_one(buffer, pc, I.sregs[CS], I.sregs[CS]);
+	return i386_dasm_one(buffer, pc, 0, 0);
 #else
 	sprintf(buffer, "$%02X", cpu_readop(pc));
 	return 1;
@@ -440,7 +440,7 @@ static int v30_execute(int num_cycles)
 static offs_t v30_dasm(char *buffer, offs_t pc)
 {
 #ifdef MAME_DEBUG
-	return i386_dasm_one(buffer, pc, I.sregs[CS], I.sregs[CS]);
+	return i386_dasm_one(buffer, pc, 0, 0);
 #else
 	sprintf(buffer, "$%02X", cpu_readop(pc));
 	return 1;

@@ -81,6 +81,25 @@ static UINT32 tile_offset[32*32] = {
 };
 
 /********************************************
+	state saving setup
+ ********************************************/
+void decocass_video_state_save_init(void)
+{
+	state_save_register_int("decocass", 0, "watchdog_count", &watchdog_count);
+	state_save_register_int("decocass", 0, "watchdog_flip", &watchdog_flip);
+	state_save_register_int("decocass", 0, "color_missiles", &color_missiles);
+	state_save_register_int("decocass", 0, "color_center_bot", &color_center_bot);
+	state_save_register_int("decocass", 0, "mode_set", &mode_set);
+	state_save_register_int("decocass", 0, "back_h_shift", &back_h_shift);
+	state_save_register_int("decocass", 0, "back_vl_shift", &back_vl_shift);
+	state_save_register_int("decocass", 0, "back_vr_shift", &back_vr_shift);
+	state_save_register_int("decocass", 0, "part_h_shift", &part_h_shift);
+	state_save_register_int("decocass", 0, "part_v_shift", &part_v_shift);
+	state_save_register_int("decocass", 0, "center_h_shift_space", &center_h_shift_space);
+	state_save_register_int("decocass", 0, "center_v_shift", &center_v_shift);
+}
+
+/********************************************
 	tilemap callbacks
  ********************************************/
 
@@ -623,19 +642,6 @@ VIDEO_START( decocass )
 	/* background videroam bits D0-D3 are shared with the tileram */
 	decocass_bgvideoram = decocass_tileram;
 	decocass_bgvideoram_size = 0x0400;	/* d000-d3ff */
-
-	state_save_register_int("decocass", 0, "watchdog_count", &watchdog_count);
-	state_save_register_int("decocass", 0, "watchdog_flip", &watchdog_flip);
-	state_save_register_int("decocass", 0, "color_missiles", &color_missiles);
-	state_save_register_int("decocass", 0, "color_center_bot", &color_center_bot);
-	state_save_register_int("decocass", 0, "mode_set", &mode_set);
-	state_save_register_int("decocass", 0, "back_h_shift", &back_h_shift);
-	state_save_register_int("decocass", 0, "back_vl_shift", &back_vl_shift);
-	state_save_register_int("decocass", 0, "back_vr_shift", &back_vr_shift);
-	state_save_register_int("decocass", 0, "part_h_shift", &part_h_shift);
-	state_save_register_int("decocass", 0, "part_v_shift", &part_v_shift);
-	state_save_register_int("decocass", 0, "center_h_shift_space", &center_h_shift_space);
-	state_save_register_int("decocass", 0, "center_v_shift", &center_v_shift);
 
 	return 0;
 }

@@ -651,7 +651,7 @@ static struct OKIM6295interface okim6295_interface =
 	2,
 	{ 4000000/132, 4000000/132 },	/* seems appropriate */
 	{ REGION_SOUND1, REGION_SOUND2 },
-	{ MIXER(30,MIXER_PAN_LEFT), MIXER(30,MIXER_PAN_RIGHT) }
+	{ MIXER(30,MIXER_PAN_CENTER), MIXER(30,MIXER_PAN_CENTER) }
 };
 
 static MACHINE_DRIVER_START( system_A )

@@ -1,16 +1,143 @@
 /***************************************************************************
-Xain'd Sleena (TECHNOS), Solar Warrior (TAITO).
-By Carlos A. Lozano & Rob Rosenbrock & Phil Stroffolino
 
-	- MC68B09EP (2)
-	- 6809EP (1)
-	- 68705 (dump not available; patched out in the bootleg)
-	- ym2203 (2)
+Solar Warrior / Xain'd Sleena
+Technos, 1986
+
+PCB Layout
+----------
+
+Top Board
+
+TA-0019-P1-03
+|------------------------------------------------------------------------|
+|M51516 YM3014 YM2203 YM2203 68A09 P2-0.49                               |
+|       YM3014                                                           |
+|                                  6116                                 |--|
+|                                                                       |  |
+|        2018                      *                                    |  |
+|        6148                                                           |  |
+|                           PT-0.59                                     |  |
+|                                  P3-0.46                              |  |
+|                                                                       |  |
+|J                                                                      |  |
+|A    DSW2                         P4-0.45                              |--|
+|M                                                     2018              |
+|M                                                                       |
+|A                                 P5-0.44                               |
+|     DSW1                                                               |
+|                                                                       |--|
+|                                  P6-0.43                              |  |
+|            68B09                                                      |  |
+|                                              68B09                    |  |
+|                   P9-02.66       P7-0.42                              |  |
+|                                                                       |  |
+|                                                                       |  |
+| 68705             PA-03.65       P8-0.41                              |  |
+| (PZ-0.113)                                P1-02.29  P0-02.15   6264   |--|
+|                                                                        |
+|                                  *                                     |
+|------------------------------------------------------------------------|
+Notes:
+        6809 - Hitachi HD68A09 / HD68B09 CPU, running at 1.500MHz [12/8] (x3, DIP40)
+      YM2203 - Yamaha YM2203C sound chip, running at 3.000MHz [12/4] (x2, DIP40)
+       68705 - Motorola MC68705P5S Microcontroller, running at 3.000MHz [12/4] (labelled 'PZ-0, DIP28)
+           * - Empty socket
+        6264 - Hitachi HM6264LP-15 8K x8 SRAM (DIP28)
+        2018 - Toshiba TMM2018D-45 2K x8 SRAM (DIP24)
+        6148 - Hitachi HM6148HP-45 1K x4 SRAM (DIP18)
+        6116 - Hitachi HM6116LP-3 2K x8 SRAM (DIP24)
+
+       VSync - 57Hz
+
+        ROMs - Name         Device       Use
+               P9-02.66     TMM24256   \ CPU1 program
+               PA-03.65     MBM27256   /
+
+               P0-02.15     TMM24256   \ CPU2 program
+               P1-02.29     TMM24256   /
+
+               P2-0.49      TMM24256     Sound CPU program
+
+               P3-0.46      TMM24256   / GFX
+               P4-0.45      TMM24256   |
+               P5-0.44      TMM24256   |
+               P6-0.43      TMM24256   |
+               P7-0.42      TMM24256   |
+               P8-0.41      TMM24256   /
+
+Bottom Board
+
+TA-0019-P2-03
+|------------------------------------------------------------------------|
+|    PK-0.136  PC-0.114                                                  |
+|    PL-0.135  PD-0.113                                                  |
+|                                                                       |--|
+|    PM-0.134  PE-0.112                                                 |  |
+|    PN-02.133 PF-02.111                                                |  |
+|                                                                       |  |
+|           2018                                                        |  |
+|                                                                       |  |
+|    PO-0.131  PG-0.109                                                 |  |
+|                                                                       |  |
+|    PP-0.130  PH-0.108                                                 |--|
+|                                                                  12MHz |
+|    PQ-0.129  PI-0.107                                PB-0.24           |
+|                                                                        |
+|    PR-0.128  PJ-0.106                                6116              |
+|                                                                       |--|
+|         2018                                                          |  |
+|                                                                       |  |
+|                                                                       |  |
+|                                                                       |  |
+|                                                                       |  |
+|                                                                       |  |
+|         2018                                                   2018   |  |
+|                                                                       |--|
+|             2018                                                       |
+|             2018                                                       |
+|------------------------------------------------------------------------|
+Notes:
+        2018 - Toshiba TMM2018D-45 2K x8 SRAM (DIP24)
+
+        ROMs - Name         Device       Use
+               PB-0.24      TMM24256   / GFX
+               PC-0.114     TMM24256   |
+               PD-0.113     TMM24256   |
+               PE-0.112     TMM24256   |
+               PF-02.111    MBM27256   |
+               PG-0.109     TMM24256   |
+               PH-0.108     TMM24256   |
+               PI-0.107     TMM24256   |
+               PJ-0.106     TMM24256   |
+               PK-0.136     TMM24256   |
+               PL-0.135     TMM24256   |
+               PM-0.134     TMM24256   |
+               PN-02.133    MBM27256   |
+               PO-0.131     TMM24256   |
+               PP-0.130     TMM24256   |
+               PQ-0.129     TMM24256   |
+               PR-0.128     TMM24256   /
+
+
+Driver by Carlos A. Lozano & Rob Rosenbrock & Phil Stroffolino
+Updates by Bryan McPhail, 12/12/2004:
+	Fixed NMI & FIRQ handling according to schematics.
+	Fixed clock speeds.
+	Implemented GFX priority register/priority PROM
+
+	Xain has a semi-bug that shows up in MAME - at 0xa26b there is a tight
+	loop that checks for the VBLANK input bit going high.  However at the
+	start of a game the VBLANK interrupt routine doesn't return before
+	the VBLANK input bit goes low (VBLANK is held high for 8 scanlines only).
+	This would cause the emulation to hang, but it would work on the real
+	board because the instruction currently being decoded would finish
+	before the NMI was taken, so the VBLANK bit and NMI are not actually
+	exactly synchronised in practice.  This is currently hacked in MAME
+	by raising the VBLANK bit a scanline early.
+
 
 TODO:
-	- understand how the vblank bit really works
-	- understand who triggers NMI and FIRQ on the first CPU
-	- 68705 protection (currently patched out, causes partial missing sprites)
+	- 68705 microcontroller not dumped, patched out.
 
 ***************************************************************************/
 
@@ -19,6 +146,7 @@ TODO:
 #include "cpu/m6809/m6809.h"
 
 static unsigned char *xain_sharedram;
+static int vblank;
 
 VIDEO_UPDATE( xain );
 VIDEO_START( xain );
@@ -31,7 +159,7 @@ WRITE8_HANDLER( xain_bgram0_w );
 WRITE8_HANDLER( xain_bgram1_w );
 WRITE8_HANDLER( xain_flipscreen_w );
 
-extern unsigned char *xain_charram, *xain_bgram0, *xain_bgram1;
+extern unsigned char *xain_charram, *xain_bgram0, *xain_bgram1, xain_pri;
 
 
 static READ8_HANDLER( xain_sharedram_r )
@@ -53,6 +181,8 @@ static WRITE8_HANDLER( xainCPUA_bankswitch_w )
 {
 	unsigned char *RAM = memory_region(REGION_CPU1);
 
+	xain_pri=data&0x7;
+
 	if (data & 0x08) {cpu_setbank(1,&RAM[0x10000]);}
 	else {cpu_setbank(1,&RAM[0x4000]);}
 }
@@ -71,24 +201,28 @@ static WRITE8_HANDLER( xain_sound_command_w )
 	cpunum_set_input_line(2,M6809_IRQ_LINE,HOLD_LINE);
 }
 
+static WRITE8_HANDLER( xain_main_irq_w )
+{
+	switch (offset)
+	{
+	case 0: /* 0x3a09 - NMI clear */
+		cpunum_set_input_line(0,INPUT_LINE_NMI,CLEAR_LINE);
+		break;
+	case 1: /* 0x3a0a - FIRQ clear */
+		cpunum_set_input_line(0,M6809_FIRQ_LINE,CLEAR_LINE);
+		break;
+	case 2: /* 0x3a0b - IRQ clear */
+		cpunum_set_input_line(0,M6809_IRQ_LINE,CLEAR_LINE);
+		break;
+	case 3: /* 0x3a0c - IRQB assert */
+		cpunum_set_input_line(1,M6809_IRQ_LINE,ASSERT_LINE);
+		break;
+	}
+}
+
 static WRITE8_HANDLER( xain_irqA_assert_w )
 {
 	cpunum_set_input_line(0,M6809_IRQ_LINE,ASSERT_LINE);
-}
-
-static WRITE8_HANDLER( xain_irqA_clear_w )
-{
-	cpunum_set_input_line(0,M6809_IRQ_LINE,CLEAR_LINE);
-}
-
-static WRITE8_HANDLER( xain_firqA_clear_w )
-{
-	cpunum_set_input_line(0,M6809_FIRQ_LINE,CLEAR_LINE);
-}
-
-static WRITE8_HANDLER( xain_irqB_assert_w )
-{
-	cpunum_set_input_line(1,M6809_IRQ_LINE,ASSERT_LINE);
 }
 
 static WRITE8_HANDLER( xain_irqB_clear_w )
@@ -107,18 +241,29 @@ static WRITE8_HANDLER( xain_68705_w )
 //	logerror("write %02x to 68705\n",data);
 }
 
-static INTERRUPT_GEN( xainA_interrupt )
+static READ8_HANDLER( xain_input_port_4_r )
 {
-	/* returning nmi on iloops() == 0 will cause lockups because the nmi handler */
-	/* waits for the vblank bit to be clear and there are other places in the code */
-	/* that wait for it to be set */
-	if (cpu_getiloops() == 2)
-		cpunum_set_input_line(0, INPUT_LINE_NMI, PULSE_LINE);
-	else
-		cpunum_set_input_line(0,M6809_FIRQ_LINE,ASSERT_LINE);
+	return readinputport(4) | vblank;
 }
 
+static INTERRUPT_GEN( xain_interrupt )
+{
+	int scanline=255-cpu_getiloops();
 
+	/* FIRQ (IMS) fires every on every 8th scanline (except 0) */
+	if (scanline&0x08)
+		cpunum_set_input_line(0, M6809_FIRQ_LINE, ASSERT_LINE);
+
+	/* NMI fires on scanline 248 (VBL) and is latched */
+	if (scanline==248)
+		cpunum_set_input_line(0, INPUT_LINE_NMI, ASSERT_LINE);
+
+	/* VBLANK input bit is held high from scanlines 248-255 */
+	if (scanline>=248-1) // -1 is a hack - see notes above
+		vblank=0x20;
+	else
+		vblank=0;
+}
 
 static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0000, 0x1fff) AM_READ(xain_sharedram_r)
@@ -128,7 +273,7 @@ static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x3a02, 0x3a02) AM_READ(input_port_2_r)
 	AM_RANGE(0x3a03, 0x3a03) AM_READ(input_port_3_r)
 	AM_RANGE(0x3a04, 0x3a04) AM_READ(xain_68705_r)	/* from the 68705 */
-	AM_RANGE(0x3a05, 0x3a05) AM_READ(input_port_4_r)
+	AM_RANGE(0x3a05, 0x3a05) AM_READ(xain_input_port_4_r)
 //	AM_RANGE(0x3a06, 0x3a06) AM_READ(MRA8_NOP)	/* ?? read (and discarded) on startup. Maybe reset the 68705 */
 	AM_RANGE(0x4000, 0x7fff) AM_READ(MRA8_BANK1)
 	AM_RANGE(0x8000, 0xffff) AM_READ(MRA8_ROM)
@@ -145,10 +290,7 @@ static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x3a04, 0x3a05) AM_WRITE(xain_scrollxP0_w)
 	AM_RANGE(0x3a06, 0x3a07) AM_WRITE(xain_scrollyP0_w)
 	AM_RANGE(0x3a08, 0x3a08) AM_WRITE(xain_sound_command_w)
-	AM_RANGE(0x3a09, 0x3a09) AM_WRITE(MWA8_NOP)	/* NMI acknowledge */
-	AM_RANGE(0x3a0a, 0x3a0a) AM_WRITE(xain_firqA_clear_w)
-	AM_RANGE(0x3a0b, 0x3a0b) AM_WRITE(xain_irqA_clear_w)
-	AM_RANGE(0x3a0c, 0x3a0c) AM_WRITE(xain_irqB_assert_w)
+	AM_RANGE(0x3a09, 0x3a0c) AM_WRITE(xain_main_irq_w)
 	AM_RANGE(0x3a0d, 0x3a0d) AM_WRITE(xain_flipscreen_w)
 	AM_RANGE(0x3a0e, 0x3a0e) AM_WRITE(xain_68705_w)	/* to 68705 */
 	AM_RANGE(0x3a0f, 0x3a0f) AM_WRITE(xainCPUA_bankswitch_w)
@@ -169,6 +311,16 @@ static ADDRESS_MAP_START( writememB, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x2800, 0x2800) AM_WRITE(xain_irqB_clear_w)
 	AM_RANGE(0x3000, 0x3000) AM_WRITE(xainCPUB_bankswitch_w)
 	AM_RANGE(0x4000, 0xffff) AM_WRITE(MWA8_ROM)
+ADDRESS_MAP_END
+
+static ADDRESS_MAP_START( mcu_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0010, 0x007f) AM_READ(MRA8_RAM)
+	AM_RANGE(0x0080, 0x07ff) AM_READ(MRA8_ROM)
+ADDRESS_MAP_END
+
+static ADDRESS_MAP_START( mcu_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0010, 0x007f) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x0080, 0x07ff) AM_WRITE(MWA8_ROM)
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
@@ -260,7 +412,7 @@ INPUT_PORTS_START( xsleena )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW,  IPT_COIN3 )
 	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_UNKNOWN )	/* when 0, 68705 is ready to send data */
 	PORT_BIT( 0x10, IP_ACTIVE_LOW,  IPT_UNKNOWN )	/* when 1, 68705 is ready to receive data */
-	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_VBLANK )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_SPECIAL )	/* VBLANK */
 	PORT_BIT( 0xc0, IP_ACTIVE_LOW,  IPT_UNUSED )
 INPUT_PORTS_END
 
@@ -310,7 +462,7 @@ static void irqhandler(int irq)
 static struct YM2203interface ym2203_interface =
 {
 	2,			/* 2 chips */
-	3000000,	/* 3 MHz ??? */
+	3000000,	/* Confirmed 3 MHz */
 	{ YM2203_VOL(40,50), YM2203_VOL(40,50) },
 	{ 0 },
 	{ 0 },
@@ -324,23 +476,21 @@ static struct YM2203interface ym2203_interface =
 static MACHINE_DRIVER_START( xsleena )
 
 	/* basic machine hardware */
-	MDRV_CPU_ADD(M6809, 2000000)	/* 2 MHz ??? */
+	MDRV_CPU_ADD(M6809, 1500000)	/* Confirmed 1.5MHz */
 	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
-	MDRV_CPU_VBLANK_INT(xainA_interrupt,4)	/* wrong, this is just a hack */
-								/* IRQs are caused by CPU B */
-								/* FIRQs are caused by ? */
-								/* NMIs are caused by... vblank it seems, but it checks */
-								/* the vblank bit before RTI, and there are other places in */
-								/* the code that check that bit, so it would cause lockups */
-	MDRV_CPU_ADD(M6809, 2000000)	/* 2 MHz ??? */
+	MDRV_CPU_VBLANK_INT(xain_interrupt,256)
+
+	MDRV_CPU_ADD(M6809, 1500000)	/* Confirmed 1.5MHz */
 	MDRV_CPU_PROGRAM_MAP(readmemB,writememB)
 
-	MDRV_CPU_ADD(M6809, 2000000)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 2 MHz ??? */
+	MDRV_CPU_ADD(M6809, 1500000)	/* Confirmed 1.5MHz */
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
 	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
-								/* FIRQs are caused by the YM2203 */
-	MDRV_FRAMES_PER_SECOND(60)
-	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+
+//	MDRV_CPU_ADD(M68705, 300000)	/* Confirmed 3MHz */
+//	MDRV_CPU_PROGRAM_MAP(mcu_readmem,mcu_writemem)
+
+	MDRV_FRAMES_PER_SECOND(57)
 	MDRV_INTERLEAVE(100)
 
 	/* video hardware */
@@ -379,6 +529,9 @@ ROM_START( xsleena )
 	ROM_REGION( 0x10000, REGION_CPU3, 0 )	/* 64k for code */
 	ROM_LOAD( "s-3.4s",       0x8000, 0x8000, CRC(a5318cb8) SHA1(35fb28c5598e39f22552bb036ae356b78422f080) )
 
+//	ROM_REGION( 0x800, REGION_CPU4, 0 )
+//	ROM_LOAD( "pz-0.113",       0x000, 0x800, CRC(0) SHA1(0) )
+
 	ROM_REGION( 0x08000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "s-12.8b",      0x00000, 0x8000, CRC(83c00dd8) SHA1(8e9b19281039b63072270c7a63d9fb30cda570fd) ) /* chars */
 
@@ -412,7 +565,7 @@ ROM_START( xsleena )
 	ROM_LOAD( "s-19.8g",      0x30000, 0x8000, CRC(76641ee3) SHA1(8fba0fa6639e7bdfb3f7be5e945a55b64411d242) )
 	ROM_LOAD( "s-20.7g",      0x38000, 0x8000, CRC(37671f36) SHA1(1494eec4ecde9ae1f1101aa13eb301b3f3d06602) )
 
-	ROM_REGION( 0x0100, REGION_PROMS, 0 )
+	ROM_REGION( 0x0100, REGION_PROMS, 0 ) /* Priority */
 	ROM_LOAD( "mb7114e.59",   0x0000, 0x0100, CRC(fed32888) SHA1(4e9330456b20f7198c1e27ca1ae7200f25595599) )	/* timing? (not used) */
 ROM_END
 
@@ -463,7 +616,7 @@ ROM_START( xsleenab )
 	ROM_LOAD( "s-19.8g",      0x30000, 0x8000, CRC(76641ee3) SHA1(8fba0fa6639e7bdfb3f7be5e945a55b64411d242) )
 	ROM_LOAD( "s-20.7g",      0x38000, 0x8000, CRC(37671f36) SHA1(1494eec4ecde9ae1f1101aa13eb301b3f3d06602) )
 
-	ROM_REGION( 0x0100, REGION_PROMS, 0 )
+	ROM_REGION( 0x0100, REGION_PROMS, 0 ) /* Priority */
 	ROM_LOAD( "mb7114e.59",   0x0000, 0x0100, CRC(fed32888) SHA1(4e9330456b20f7198c1e27ca1ae7200f25595599) )	/* timing? (not used) */
 ROM_END
 
@@ -480,6 +633,9 @@ ROM_START( solarwar )
 
 	ROM_REGION( 0x10000, REGION_CPU3, 0 )	/* 64k for code */
 	ROM_LOAD( "s-3.4s",       0x8000, 0x8000, CRC(a5318cb8) SHA1(35fb28c5598e39f22552bb036ae356b78422f080) )
+
+//	ROM_REGION( 0x800, REGION_CPU4, 0 )
+//	ROM_LOAD( "pz-0.113",       0x000, 0x800, CRC(0) SHA1(0) )
 
 	ROM_REGION( 0x08000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "s-12.8b",      0x00000, 0x8000, CRC(83c00dd8) SHA1(8e9b19281039b63072270c7a63d9fb30cda570fd) ) /* chars */
@@ -514,7 +670,7 @@ ROM_START( solarwar )
 	ROM_LOAD( "s-19.8g",      0x30000, 0x8000, CRC(76641ee3) SHA1(8fba0fa6639e7bdfb3f7be5e945a55b64411d242) )
 	ROM_LOAD( "s-20.7g",      0x38000, 0x8000, CRC(37671f36) SHA1(1494eec4ecde9ae1f1101aa13eb301b3f3d06602) )
 
-	ROM_REGION( 0x0100, REGION_PROMS, 0 )
+	ROM_REGION( 0x0100, REGION_PROMS, 0 ) /* Priority */
 	ROM_LOAD( "mb7114e.59",   0x0000, 0x0100, CRC(fed32888) SHA1(4e9330456b20f7198c1e27ca1ae7200f25595599) )	/* timing? (not used) */
 ROM_END
 

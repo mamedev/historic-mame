@@ -67,6 +67,7 @@ typedef struct {
 	UINT32 param1;
 	UINT32 param2;
 	UINT32 param3;
+	offs_t dasm_flags;
 } I386_OPCODE;
 
 typedef struct {
@@ -240,7 +241,7 @@ static I386_OPCODE opcode_table1[256] =
 	{"xchg",			0,				PARAM_EAX,			PARAM_EDI,			0				},
 	{"cbw\0cwde",		VAR_NAME,		0,					0,					0				},
 	{"cwd\0cdq",		VAR_NAME,		0,					0,					0				},
-	{"call",			0,				PARAM_ADDR,			0,					0				},
+	{"call",			0,				PARAM_ADDR,			0,					0,				DASMFLAG_STEP_OVER},
 	{"wait",			0,				0,					0,					0				},
 	{"pushf\0pushfd",	VAR_NAME,		0,					0,					0				},
 	{"popf\0popfd",		VAR_NAME,		0,					0,					0				},
@@ -283,20 +284,20 @@ static I386_OPCODE opcode_table1[256] =
 	// 0xc0
 	{"groupC0",			GROUP,			0,					0,					0				},
 	{"groupC1",			GROUP,			0,					0,					0				},
-	{"ret",				0,				PARAM_I16,			0,					0				},
-	{"ret",				0,				0,					0,					0				},
+	{"ret",				0,				PARAM_I16,			0,					0,				DASMFLAG_STEP_OUT},
+	{"ret",				0,				0,					0,					0,				DASMFLAG_STEP_OUT},
 	{"les",				MODRM,			PARAM_REG,			PARAM_RM,			0				},
 	{"lds",				MODRM,			PARAM_REG,			PARAM_RM,			0				},
 	{"mov",				MODRM,			PARAM_RM8,			PARAM_I8,			0				},
 	{"mov",				MODRM,			PARAM_RM,			PARAM_IMM,			0				},
 	{"enter",			0,				PARAM_I16,			PARAM_I8,			0				},
 	{"leave",			0,				0,					0,					0				},
-	{"retf",			0,				PARAM_I16,			0,					0				},
-	{"retf",			0,				0,					0,					0				},
-	{"int 3",			0,				0,					0,					0				},
-	{"int",				0,				PARAM_I8,			0,					0				},
+	{"retf",			0,				PARAM_I16,			0,					0,				DASMFLAG_STEP_OUT},
+	{"retf",			0,				0,					0,					0,				DASMFLAG_STEP_OUT},
+	{"int 3",			0,				0,					0,					0,				DASMFLAG_STEP_OVER},
+	{"int",				0,				PARAM_I8,			0,					0,				DASMFLAG_STEP_OVER},
 	{"into",			0,				0,					0,					0				},
-	{"iret",			0,				0,					0,					0				},
+	{"iret",			0,				0,					0,					0,				DASMFLAG_STEP_OUT},
 	// 0xd0
 	{"groupD0",			GROUP,			0,					0,					0				},
 	{"groupD1",			GROUP,			0,					0,					0				},
@@ -323,7 +324,7 @@ static I386_OPCODE opcode_table1[256] =
 	{"in",				0,				PARAM_EAX,			PARAM_I8,			0				},
 	{"out",				0,				PARAM_AL,			PARAM_I8,			0				},
 	{"out",				0,				PARAM_EAX,			PARAM_I8,			0				},
-	{"call",			0,				PARAM_REL,			0,					0				},
+	{"call",			0,				PARAM_REL,			0,					0,				DASMFLAG_STEP_OVER},
 	{"jmp",				0,				PARAM_REL,			0,					0				},
 	{"jmp",				0,				PARAM_ADDR,			0,					0				},
 	{"jmp",				0,				PARAM_REL8,			0,					0				},
@@ -553,7 +554,7 @@ static I386_OPCODE opcode_table2[256] =
 	{"group0FBA",		GROUP,			0,					0,					0				},
 	{"btc",				MODRM,			PARAM_RM,			PARAM_REG,			0				},
 	{"bsf",				MODRM,			PARAM_REG,			PARAM_RM,			0				},
-	{"bsr",				MODRM,			PARAM_REG,			PARAM_RM,			0				},
+	{"bsr",				MODRM,			PARAM_REG,			PARAM_RM,			0,				DASMFLAG_STEP_OVER},
 	{"movsx",			MODRM,			PARAM_REG,			PARAM_RM8,			0				},
 	{"movsx",			MODRM,			PARAM_REG,			PARAM_RM16,			0				},
 	// 0xc0
@@ -774,8 +775,8 @@ static I386_OPCODE groupFF_table[8] =
 {
 	{"inc",				0,				PARAM_RM,			0,					0				},
 	{"dec",				0,				PARAM_RM,			0,					0				},
-	{"call",			0,				PARAM_RM,			0,					0				},
-	{"call",			0,				PARAM_RM,			0,					0				},
+	{"call",			0,				PARAM_RM,			0,					0,				DASMFLAG_STEP_OVER},
+	{"call",			0,				PARAM_RM,			0,					0,				DASMFLAG_STEP_OVER},
 	{"jmp",				0,				PARAM_RM,			0,					0				},
 	{"jmp",				0,				PARAM_RM,			0,					0				},
 	{"push",			0,				PARAM_RM,			0,					0				},
@@ -853,6 +854,8 @@ static int address_size;
 static int operand_size;
 static UINT32 pc;
 static UINT8 modrm;
+static UINT32 segment;
+static offs_t dasm_flags;
 static char modrm_string[256];
 
 #define MODRM_REG1	((modrm >> 3) & 0x7)
@@ -937,6 +940,16 @@ static void handle_modrm(char* s)
 	if( modrm >= 0xc0 )
 		return;
 
+	switch(segment)
+	{
+		case SEG_CS: s += sprintf( s, "cs:" ); break;
+		case SEG_DS: s += sprintf( s, "ds:" ); break;
+		case SEG_ES: s += sprintf( s, "es:" ); break;
+		case SEG_FS: s += sprintf( s, "fs:" ); break;
+		case SEG_GS: s += sprintf( s, "gs:" ); break;
+		case SEG_SS: s += sprintf( s, "ss:" ); break;
+	}
+
 	s += sprintf( s, "[" );
 	if( address_size ) {
 		switch( rm )
@@ -976,7 +989,7 @@ static void handle_modrm(char* s)
 			case 6:
 				if( mod == 0 ) {
 					disp16 = FETCH16();
-					s += sprintf( s, "$%04X", disp16 );
+					s += sprintf( s, "$%04X", (unsigned) (UINT16) disp16 );
 				} else {
 					s += sprintf( s, "bp" );
 				}
@@ -1178,6 +1191,7 @@ static void decode_opcode(char *s, I386_OPCODE *op)
 		case SEG_FS:
 		case SEG_GS:
 		case SEG_SS:
+			segment = op->flags;
 			op2 = FETCH();
 			decode_opcode( s, &opcode_table1[op2] );
 			return;
@@ -1217,6 +1231,7 @@ static void decode_opcode(char *s, I386_OPCODE *op)
 	}
 
 	s += sprintf( s, "%s ", op->mnemonic );
+	dasm_flags = op->dasm_flags;
 
 handle_params:
 	if( op->param1 != 0 ) {
@@ -1245,9 +1260,11 @@ int i386_dasm_one(char *buffer, UINT32 eip, int addr_size, int op_size)
 	address_size = addr_size;
 	operand_size = op_size;
 	pc = eip;
+	dasm_flags = 0;
+	segment = 0;
 
 	op = FETCH();
 
 	decode_opcode( buffer, &opcode_table1[op] );
-	return pc-eip;
+	return (pc-eip) | dasm_flags | DASMFLAG_SUPPORTED;
 }

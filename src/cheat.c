@@ -7904,20 +7904,16 @@ static UINT8 DefaultEnableRegion(SearchRegion * region, SearchInfo * info)
 				return 1;
 
 #ifndef MESS
-#ifndef TINY_COMPILE
 
 			{
-				extern struct GameDriver	driver_neogeo;
-
 				// for neogeo, search bank one
-				if(	(Machine->gamedrv->clone_of == &driver_neogeo) &&
+				if(	(!strcmp(Machine->gamedrv->clone_of->name, "neogeo")) &&
 					(info->targetType == kRegionType_CPU) &&
 					(info->targetIdx == 0) &&
 					(handler == MWA8_BANK1))
 					return 1;
 			}
 
-#endif
 #endif
 
 #if HAS_TMS34010

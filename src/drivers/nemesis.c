@@ -14,8 +14,10 @@
 	Black Panther			GX604
 	City Bomber (World)		GX787
 	City Bomber (Japan)		GX787
+	Hyper Crash				GX790
 	Kitten Kaboodle			GX712
 	Nyan Nyan Panic (Japan)	GX712
+
 
 driver by Bryan McPhail
 modified by Eisuke Watanabe
@@ -240,6 +242,27 @@ READ16_HANDLER( konamigt_input_word_r )
 	ret|=data2&0x7f;					// steering wheel, not exactly sure if DIAL works ok.
 
 	return ret;
+}
+
+/*Copied from WEC Le Mans 24 driver,explicity needed for Hyper Crash*/
+static UINT16 hcrash_selected_ip;
+
+static WRITE16_HANDLER( selected_ip_w )
+{
+	if (ACCESSING_LSB) hcrash_selected_ip = data & 0xff;	// latch the value
+}
+
+static READ16_HANDLER( selected_ip_r )
+{
+	switch ( (hcrash_selected_ip >> 5) & 3 )
+	{												// From WEC Le Mans Schems:
+		case 0:  return input_port_8_r(offset);		// Accel - Schems: Accelevr
+		case 1:  return ~0;							// ????? - Schems: Not Used
+		case 2:  return input_port_9_r(offset);		// Wheel - Schems: Handlevr
+		case 3:  return ~0;							// Table - Schems: Turnvr
+
+		default: return ~0;
+	}
 }
 
 WRITE16_HANDLER( nemesis_soundlatch_word_w )
@@ -731,54 +754,6 @@ static ADDRESS_MAP_START( nyanpani_writemem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x310f80, 0x310fff) AM_WRITE(gx400_yscroll1_word_w) AM_BASE(&nemesis_yscroll1)
 	AM_RANGE(0x311000, 0x311fff) AM_WRITE(MWA16_RAM)			/* not used */
 ADDRESS_MAP_END
-
-
-static ADDRESS_MAP_START( hcrash_readmem, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x000000, 0x00ffff) AM_READ(MRA16_ROM)
-	AM_RANGE(0x040000, 0x05ffff) AM_READ(MRA16_ROM)	/* ROM */
-	AM_RANGE(0x120000, 0x12ffff) AM_READ(nemesis_characterram_word_r)
-	AM_RANGE(0x090000, 0x091fff) AM_READ(MRA16_RAM)
-	AM_RANGE(0x100000, 0x100fff) AM_READ(nemesis_videoram1b_word_r)
-	AM_RANGE(0x101000, 0x101fff) AM_READ(nemesis_videoram1f_word_r)
-	AM_RANGE(0x102000, 0x102fff) AM_READ(nemesis_videoram2b_word_r)
-	AM_RANGE(0x103000, 0x103fff) AM_READ(nemesis_videoram2f_word_r)
-	AM_RANGE(0x080000, 0x083fff) AM_READ(MRA16_RAM)
-	AM_RANGE(0x190000, 0x1903ff) AM_READ(gx400_xscroll1_word_r)
-	AM_RANGE(0x190400, 0x1907ff) AM_READ(gx400_xscroll2_word_r)
-	AM_RANGE(0x190800, 0x190eff) AM_READ(MRA16_RAM)
-	AM_RANGE(0x190f00, 0x190f7f) AM_READ(gx400_yscroll1_word_r)
-	AM_RANGE(0x190f80, 0x190fff) AM_READ(gx400_yscroll2_word_r)
-	AM_RANGE(0x191000, 0x191fff) AM_READ(MRA16_RAM)
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( hcrash_writemem, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x000000, 0x00ffff) AM_WRITE(MWA16_ROM)	/* ROM */
-	AM_RANGE(0x040000, 0x05ffff) AM_WRITE(MWA16_ROM)	/* ROM */
-	AM_RANGE(0x050000, 0x0503ff) AM_WRITE(MWA16_RAM) AM_BASE(&nemesis_xscroll1)
-	AM_RANGE(0x050400, 0x0507ff) AM_WRITE(MWA16_RAM) AM_BASE(&nemesis_xscroll2)
-	AM_RANGE(0x050800, 0x050bff) AM_WRITE(MWA16_RAM)
-	AM_RANGE(0x050c00, 0x050fff) AM_WRITE(MWA16_RAM) AM_BASE(&nemesis_yscroll)
-	AM_RANGE(0x051000, 0x051fff) AM_RAM //AM_WRITE(MWA16_NOP)		/* used, but written to with 0's */
-	AM_RANGE(0x090000, 0x091fff) AM_WRITE(salamander_palette_word_w) AM_BASE(&paletteram16)
-	AM_RANGE(0x100000, 0x100fff) AM_WRITE(nemesis_videoram1b_word_w) AM_BASE(&nemesis_videoram1b)	/* VRAM 1 */
-	AM_RANGE(0x101000, 0x101fff) AM_WRITE(nemesis_videoram1f_word_w) AM_BASE(&nemesis_videoram1f)	/* VRAM 1 */
-	AM_RANGE(0x102000, 0x102fff) AM_WRITE(nemesis_videoram2b_word_w) AM_BASE(&nemesis_videoram2b)	/* VRAM 2 */
-	AM_RANGE(0x103000, 0x103fff) AM_WRITE(nemesis_videoram2f_word_w) AM_BASE(&nemesis_videoram2f)	/* VRAM 2 */
-	AM_RANGE(0x120000, 0x12ffff) AM_WRITE(nemesis_characterram_word_w) AM_BASE(&nemesis_characterram) AM_SIZE(&nemesis_characterram_size)
-	AM_RANGE(0x180000, 0x180fff) AM_WRITE(MWA16_RAM) AM_BASE(&spriteram16) AM_SIZE(&spriteram_size)		/* more sprite ram ??? */
-	AM_RANGE(0x190000, 0x1903ff) AM_WRITE(gx400_xscroll1_word_w) AM_BASE(&nemesis_xscroll1)
-	AM_RANGE(0x190400, 0x1907ff) AM_WRITE(gx400_xscroll2_word_w) AM_BASE(&nemesis_xscroll2)
-	AM_RANGE(0x190800, 0x190eff) AM_WRITE(MWA16_RAM)			/* not used */
-	AM_RANGE(0x190f00, 0x190f7f) AM_WRITE(gx400_yscroll1_word_w) AM_BASE(&nemesis_yscroll1)
-	AM_RANGE(0x190f80, 0x190fff) AM_WRITE(gx400_yscroll2_word_w) AM_BASE(&nemesis_yscroll2)
-	AM_RANGE(0x191000, 0x191fff) AM_WRITE(MWA16_RAM)			/* not used */
-//	AM_RANGE(0x05c000, 0x05c001) AM_WRITE(nemesis_soundlatch_word_w)
-	AM_RANGE(0x05c800, 0x05c801) AM_WRITE(watchdog_reset16_w)	/* probably */
-	AM_RANGE(0x0A0000, 0x0A0001) AM_WRITE(nemesis_irq_enable_word_w)          /* irq enable? */
-	AM_RANGE(0x0c0008, 0x0c0009) AM_WRITE(gx400_irq2_enable_word_w)          /* irq enable? */
-	AM_RANGE(0x080000, 0x083fff) AM_WRITE(MWA16_RAM)
-ADDRESS_MAP_END
-
 
 static READ8_HANDLER( wd_r )
 {
@@ -1848,6 +1823,81 @@ INPUT_PORTS_START( nyanpani )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 INPUT_PORTS_END
 
+INPUT_PORTS_START( hcrash )
+	PORT_START /*IN0*/
+	PORT_BIT( 0xfb, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_SERVICE( 0x04, IP_ACTIVE_LOW )
+
+	PORT_START /*DSW0*/
+	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START /*DSW1,Coinage*/
+	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START /*DSW0*/
+	PORT_DIPNAME( 0x0001, 0x0000, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0001, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0002, 0x0000, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0002, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0004, 0x0000, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0004, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0008, 0x0000, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0008, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0010, 0x0000, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0010, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0020, 0x0000, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0020, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0040, 0x0000, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0040, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0080, 0x0000, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0080, DEF_STR( On ) )
+
+	PORT_START /*DSW1*/
+	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START /*DSW2,ACTIVE HIGH*/
+	PORT_DIPNAME( 0x0001, 0x0000, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0001, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0002, 0x0000, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0002, DEF_STR( On ) )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_SERVICE1 )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_START1 )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_COIN1 )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_COIN2 )
+	PORT_DIPNAME( 0x0040, 0x0000, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0040, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0080, 0x0000, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0080, DEF_STR( On ) )
+
+	/*Konami GT specific control*/
+	PORT_START	/* IN6 */
+	PORT_BIT( 0xff, 0x40, IPT_DIAL ) PORT_MINMAX(0x00,0x7f) PORT_SENSITIVITY(25) PORT_KEYDELTA(10)
+
+	PORT_START	/* IN7 */
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_BUTTON2 )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_BUTTON1 )
+//	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_BUTTON4 )
+
+	/*WEC Le Mans 24 specific control*/
+	PORT_START	/* IN8 - Accelerator*/
+	PORT_BIT( 0xff, 0, IPT_PEDAL ) PORT_MINMAX(0,0x80) PORT_SENSITIVITY(30) PORT_KEYDELTA(10)
+
+	PORT_START	/* IN9 - Steering*/
+	PORT_BIT( 0xff, 0x80, IPT_PADDLE ) PORT_MINMAX(0,0xff) PORT_SENSITIVITY(50) PORT_KEYDELTA(5)
+INPUT_PORTS_END
+
 /******************************************************************************/
 
 static struct GfxLayout charlayout =
@@ -2362,6 +2412,77 @@ static MACHINE_DRIVER_START( rf2_gx400 )
 	MDRV_SOUND_ADD(VLM5030, gx400_vlm5030_interface)
 MACHINE_DRIVER_END
 
+
+static ADDRESS_MAP_START( hcrash_readmem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x01ffff) AM_READ(MRA16_ROM)
+	AM_RANGE(0x040000, 0x05ffff) AM_READ(MRA16_ROM)	/* ROM */
+	AM_RANGE(0x120000, 0x12ffff) AM_READ(nemesis_characterram_word_r)
+
+
+	AM_RANGE(0x090000, 0x091fff) AM_READ(MRA16_RAM)
+
+	AM_RANGE(0x100000, 0x100fff) AM_READ(nemesis_videoram1b_word_r)
+	AM_RANGE(0x101000, 0x101fff) AM_READ(nemesis_videoram1f_word_r)
+	AM_RANGE(0x102000, 0x102fff) AM_READ(nemesis_videoram2b_word_r)
+	AM_RANGE(0x103000, 0x103fff) AM_READ(nemesis_videoram2f_word_r)
+	AM_RANGE(0x0c0000, 0x0c0001) AM_READ(input_port_4_word_r)	/* DSW1 */
+	AM_RANGE(0x0c0002, 0x0c0003) AM_READ(input_port_2_word_r)	/* IN2 */
+	AM_RANGE(0x0c0004, 0x0c0005) AM_READ(input_port_1_word_r)	/* IN1 */
+	AM_RANGE(0x0c0006, 0x0c0007) AM_READ(input_port_0_word_r)	/* Coins, start buttons, test mode */
+	AM_RANGE(0x0c0008, 0x0c0009) AM_READ(input_port_3_word_r)	/* DSW0 */
+	AM_RANGE(0x0c000a, 0x0c000b) AM_READ(input_port_5_word_r)	/* DSW2 */
+	AM_RANGE(0x0c2000, 0x0c2001) AM_READ(konamigt_input_word_r)/*0x0c2000: Konami GT control*/
+	AM_RANGE(0x0c4002, 0x0c4003) AM_READ(selected_ip_r)/*0x0c4000: WEC Le Mans 24 control*/
+
+
+	AM_RANGE(0x080000, 0x083fff) AM_READ(MRA16_RAM)
+
+	AM_RANGE(0x190000, 0x1903ff) AM_READ(gx400_xscroll1_word_r)
+	AM_RANGE(0x190400, 0x1907ff) AM_READ(gx400_xscroll2_word_r)
+	AM_RANGE(0x190800, 0x190eff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x190f00, 0x190f7f) AM_READ(gx400_yscroll1_word_r)
+	AM_RANGE(0x190f80, 0x190fff) AM_READ(gx400_yscroll2_word_r)
+	AM_RANGE(0x191000, 0x191fff) AM_READ(MRA16_RAM)
+
+ADDRESS_MAP_END
+
+static ADDRESS_MAP_START( hcrash_writemem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x01ffff) AM_WRITE(MWA16_ROM)	/* ROM */
+	AM_RANGE(0x040000, 0x05ffff) AM_WRITE(MWA16_ROM)	/* ROM */
+
+	AM_RANGE(0x050000, 0x0503ff) AM_WRITE(MWA16_RAM) AM_BASE(&nemesis_xscroll1)
+	AM_RANGE(0x050400, 0x0507ff) AM_WRITE(MWA16_RAM) AM_BASE(&nemesis_xscroll2)
+	AM_RANGE(0x050800, 0x050bff) AM_WRITE(MWA16_RAM)
+	AM_RANGE(0x050c00, 0x050fff) AM_WRITE(MWA16_RAM) AM_BASE(&nemesis_yscroll)
+	AM_RANGE(0x051000, 0x051fff) AM_RAM //AM_WRITE(MWA16_NOP)		/* used, but written to with 0's */
+
+
+	AM_RANGE(0x090000, 0x091fff) AM_WRITE(salamander_palette_word_w) AM_BASE(&paletteram16)
+
+	AM_RANGE(0x100000, 0x100fff) AM_WRITE(nemesis_videoram1b_word_w) AM_BASE(&nemesis_videoram1b)	/* VRAM 1 */
+	AM_RANGE(0x101000, 0x101fff) AM_WRITE(nemesis_videoram1f_word_w) AM_BASE(&nemesis_videoram1f)	/* VRAM 1 */
+	AM_RANGE(0x102000, 0x102fff) AM_WRITE(nemesis_videoram2b_word_w) AM_BASE(&nemesis_videoram2b)	/* VRAM 2 */
+	AM_RANGE(0x103000, 0x103fff) AM_WRITE(nemesis_videoram2f_word_w) AM_BASE(&nemesis_videoram2f)	/* VRAM 2 */
+	AM_RANGE(0x120000, 0x12ffff) AM_WRITE(nemesis_characterram_word_w) AM_BASE(&nemesis_characterram) AM_SIZE(&nemesis_characterram_size)
+
+	AM_RANGE(0x180000, 0x180fff) AM_WRITE(MWA16_RAM) AM_BASE(&spriteram16) AM_SIZE(&spriteram_size)		/* more sprite ram ??? */
+	AM_RANGE(0x190000, 0x1903ff) AM_WRITE(gx400_xscroll1_word_w) AM_BASE(&nemesis_xscroll1)
+	AM_RANGE(0x190400, 0x1907ff) AM_WRITE(gx400_xscroll2_word_w) AM_BASE(&nemesis_xscroll2)
+	AM_RANGE(0x190800, 0x190eff) AM_WRITE(MWA16_RAM)			/* not used */
+	AM_RANGE(0x190f00, 0x190f7f) AM_WRITE(gx400_yscroll1_word_w) AM_BASE(&nemesis_yscroll1)
+	AM_RANGE(0x190f80, 0x190fff) AM_WRITE(gx400_yscroll2_word_w) AM_BASE(&nemesis_yscroll2)
+	AM_RANGE(0x191000, 0x191fff) AM_WRITE(MWA16_RAM)			/* not used */
+
+//	AM_RANGE(0x05c000, 0x05c001) AM_WRITE(nemesis_soundlatch_word_w)
+	AM_RANGE(0x05c800, 0x05c801) AM_WRITE(watchdog_reset16_w)	/* probably */
+
+	AM_RANGE(0x0A0000, 0x0A0001) AM_WRITE(nemesis_irq_enable_word_w)          /* irq enable */
+	AM_RANGE(0x0c0008, 0x0c0009) AM_WRITE(gx400_irq2_enable_word_w)          /* irq enable */
+	AM_RANGE(0x0c0000, 0x0c0001) AM_WRITE(salamand_soundlatch_word_w)
+	AM_RANGE(0x0c4002, 0x0c4003) AM_WRITE(selected_ip_w)
+	AM_RANGE(0x080000, 0x083fff) AM_WRITE(MWA16_RAM)
+ADDRESS_MAP_END
+
 static MACHINE_DRIVER_START( hcrash )
 
 	/* basic machine hardware */
@@ -2370,9 +2491,9 @@ static MACHINE_DRIVER_START( hcrash )
 	MDRV_CPU_VBLANK_INT(nemesis_interrupt,1)
 //	MDRV_CPU_VBLANK_INT(konamigt_interrupt,2)
 
-//	MDRV_CPU_ADD(Z80,14318180/4)
-//	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)        /* 3.579545 MHz */
-//	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
+	MDRV_CPU_ADD(Z80,14318180/4)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)        /* 3.579545 MHz */
+	MDRV_CPU_PROGRAM_MAP(sal_sound_readmem,sal_sound_writemem)
 
 	MDRV_FRAMES_PER_SECOND((18432000.0/4)/(288*264))		/* 60.606060 Hz */
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
@@ -2387,13 +2508,14 @@ static MACHINE_DRIVER_START( hcrash )
 	MDRV_PALETTE_LENGTH(2048)
 
 	MDRV_VIDEO_START(nemesis)
-	MDRV_VIDEO_UPDATE(nemesis)
+	MDRV_VIDEO_UPDATE(salamand)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(AY8910, ay8910_interface)
-	MDRV_SOUND_ADD(K005289, k005289_interface)
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(VLM5030, vlm5030_interface)
+	MDRV_SOUND_ADD(K007232, k007232_interface)
+	MDRV_SOUND_ADD(YM2151, ym2151_interface)
 MACHINE_DRIVER_END
-
 
 /***************************************************************************
 
@@ -2666,14 +2788,6 @@ ROM_START( nyanpani )
 	ROM_LOAD(      "712b01.1k",   0x00000, 0x80000, CRC(f65b5d95) SHA1(12701be68629844720cd16af857ce38ef06af61c) )
 ROM_END
 
-/*
-It's marked GX790 on one side (CPU board) and GX400 (video
-board) on the other.
-
--- not really much work done on this one yet ;-)
-
-*/
-
 ROM_START( hcrash )
 	ROM_REGION( 0x140000, REGION_CPU1, 0 )    /* 64k for code */
 	ROM_LOAD16_BYTE( "790-d03.t9",   0x000000, 0x08000, CRC(10177dce) SHA1(e46f75e3206eff5299e08e5258e67b68efc4c20c) )
@@ -2682,16 +2796,14 @@ ROM_START( hcrash )
 	ROM_LOAD16_BYTE( "790-c05.s7",   0x040001, 0x10000, CRC(c214f77b) SHA1(c5754c3da2a3820d8d06f8ff171be6c2aea92ecc) )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )    /* 64k for sound */
+	ROM_LOAD( "790-c09.n2",   0x000000, 0x08000, CRC(a68a8cce) SHA1(a54966b9cbbe37b2be6a2276ee09c81452d9c0ca) )
 
 	ROM_REGION( 0x80000, REGION_SOUND1, 0 )    /* ? data */
+	ROM_LOAD( "790-c08.j4",   0x000000, 0x08000, CRC(cfb844bc) SHA1(43b7adb6093e707212204118087ef4f79b0dbc1f) )
 
 	ROM_REGION( 0x80000, REGION_SOUND2, 0 )    /* 007232 data */
-
-	ROM_LOAD( "790-c08.j4",   0x000000, 0x08000, CRC(cfb844bc) SHA1(43b7adb6093e707212204118087ef4f79b0dbc1f) )
-	ROM_LOAD( "790-c09.n2",   0x000000, 0x08000, CRC(a68a8cce) SHA1(a54966b9cbbe37b2be6a2276ee09c81452d9c0ca) )
 	ROM_LOAD( "790-c01.m10",  0x000000, 0x20000, CRC(07976bc3) SHA1(9341ac6084fbbe17c4e7bbefade9a3f1dec3f132) )
 ROM_END
-
 
 GAME( 1985, nemesis,  0,        nemesis,       nemesis,  0, ROT0,   "Konami", "Nemesis" )
 GAME( 1985, nemesuk,  nemesis,  nemesis,       nemesuk,  0, ROT0,   "Konami", "Nemesis (World?)" )
@@ -2707,6 +2819,6 @@ GAMEX(1986, lifefrcj, salamand, salamand,      lifefrcj, 0, ROT0,   "Konami", "L
 GAMEX(1987, blkpnthr, 0,        blkpnthr,      blkpnthr, 0, ROT0,   "Konami", "Black Panther", GAME_NO_COCKTAIL )
 GAMEX(1987, citybomb, 0,        citybomb,      citybomb, 0, ROT270, "Konami", "City Bomber (World)", GAME_NO_COCKTAIL )
 GAMEX(1987, citybmrj, citybomb, citybomb,      citybomb, 0, ROT270, "Konami", "City Bomber (Japan)", GAME_NO_COCKTAIL )
+GAMEX(1987, hcrash,   0,        hcrash ,       hcrash,  0, ROT0,   "Konami",  "Hyper Crash", GAME_NO_COCKTAIL | GAME_NOT_WORKING )
 GAMEX(1988, kittenk,  0,        nyanpani,      nyanpani, 0, ROT0,   "Konami", "Kitten Kaboodle", GAME_NO_COCKTAIL )
 GAMEX(1988, nyanpani, kittenk,  nyanpani,      nyanpani, 0, ROT0,   "Konami", "Nyan Nyan Panic (Japan)", GAME_NO_COCKTAIL )
-GAMEX(1985, hcrash,   0,        hcrash ,       nemesis,  0, ROT0,   "Konami", "Hyper Crash", GAME_NOT_WORKING)

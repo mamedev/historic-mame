@@ -939,7 +939,7 @@ static void set_irq_line(int irqline, int state)
 static offs_t nec_dasm(char *buffer, offs_t pc)
 {
 #ifdef MAME_DEBUG
-	return i386_dasm_one(buffer, pc, I.sregs[CS], I.sregs[CS]);
+	return i386_dasm_one(buffer, pc, 0, 0);
 #else
 	sprintf( buffer, "$%02X", cpu_readop(pc) );
 	return 1;
@@ -1115,7 +1115,7 @@ static void nec_set_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_REGISTER + NEC_SS:				I.sregs[SS] = info->i;					break;
 		case CPUINFO_INT_REGISTER + NEC_DS:				I.sregs[DS] = info->i;					break;
 		case CPUINFO_INT_REGISTER + NEC_VECTOR:			I.int_vector = info->i;					break;
-		
+
 		/* --- the following bits of info are set as pointers to data or functions --- */
 		case CPUINFO_PTR_IRQ_CALLBACK:					I.irq_callback = info->irqcallback;		break;
 	}
@@ -1143,7 +1143,7 @@ void nec_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_MAX_INSTRUCTION_BYTES:			info->i = 5;							break;
 		case CPUINFO_INT_MIN_CYCLES:					info->i = 1;							break;
 		case CPUINFO_INT_MAX_CYCLES:					info->i = 80;							break;
-		
+
 		case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_PROGRAM:	info->i = 8;					break;
 		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_PROGRAM: info->i = 20;					break;
 		case CPUINFO_INT_ADDRBUS_SHIFT + ADDRESS_SPACE_PROGRAM: info->i = 0;					break;

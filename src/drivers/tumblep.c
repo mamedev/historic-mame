@@ -1552,7 +1552,7 @@ ROM_START( bcstrya )
 
 	ROM_REGION( 0x200, REGION_USER1, 0 ) /* Data from Shared RAM */
 	/* this is not a real rom but instead the data extracted from
-	   shared ram, the MCU puts it there - not confirmed as correct yet.. game doesn't work yet..*/
+	   shared ram, the MCU puts it there */
 	ROM_LOAD16_WORD_SWAP( "protdata.bin", 0x00000, 0x200 , CRC(e84e328c) SHA1(ce21988980654acb573bfb7396fd2f536204ecf0) )
 
 	ROM_REGION( 0x040000, REGION_SOUND1, 0 ) /* Samples */

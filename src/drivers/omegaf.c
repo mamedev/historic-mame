@@ -642,8 +642,8 @@ static MACHINE_DRIVER_START( omegaf )
 	MDRV_CPU_PROGRAM_MAP(omegaf_readmem,omegaf_writemem)	/* very sensitive to these settings */
 	MDRV_CPU_VBLANK_INT(omegaf_interrupt,1)
 
-	MDRV_CPU_ADD(Z80, 4000000)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)		/* 12000000/3 ??? */
+	MDRV_CPU_ADD(Z80, 5000000)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)		/* 5 mhz crystal ??? */
 	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
 	MDRV_CPU_IO_MAP(sound_readport,sound_writeport)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,2)

@@ -681,11 +681,15 @@ static void seta_draw_sprites_map(struct mame_bitmap *bitmap,const struct rectan
 
 	/* Number of columns to draw - the value 1 seems special, meaning:
 	   draw every column */
-	if (numcol == 1)	numcol = 16;
+	if (numcol == 1)
+		numcol = 16;
 
 
-	/* The first column is the frontmost, see twineagl test mode */
-	for ( col = numcol - 1 ; col >= 0; col -- )
+	/* The first column is the frontmost, see twineagl test mode
+		BM 071204 - first column frontmost breaks superman.
+	*/
+//	for ( col = numcol - 1 ; col >= 0; col -- )
+	for ( col = 0 ; col < numcol; col ++ )
 	{
 		int x	=	spriteram16[(col * 0x20 + 0x08 + 0x400)/2] & 0xff;
 		int y	=	spriteram16[(col * 0x20 + 0x00 + 0x400)/2] & 0xff;
@@ -712,6 +716,9 @@ thunderl:	010 06c 00 ff	(always?)
 krzybowl:	011 028 c0 ff	(game)
 kiwame  :	016 021 7f 00	(logo)
 oisipuzl:	059 020 00 00	(game - yes, flip on!)
+
+superman:	010 021 07 38	(game)
+twineagl:	000 027 00 0f	(test mode)
 */
 
 			int sx		=	  x + xoffs  + (offs & 1) * 16;

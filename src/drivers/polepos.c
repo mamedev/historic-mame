@@ -852,14 +852,13 @@ static struct CustomSound_interface custom_interface =
 static const char *polepos_sample_names[] =
 {
 	"*polepos",
-	"pp2_17.wav",
 	"pp2_18.wav",
 	0	/* end of array */
 };
 
 static struct Samplesinterface samples_interface =
 {
-	2,	/* 2 channels */
+	1,	/* 1 channel */
 	40, /* volume */
 	polepos_sample_names
 };

@@ -1481,6 +1481,32 @@ DRIVER_INIT( gmgalax )
 	gmgalax_select_game(input_port_6_r(0) & 0x01);
 }
 
+static READ8_HANDLER( scorpion_prot_r )
+{
+	/* HACK! return register C */
+	return activecpu_get_reg(4) & 0xff;
+}
+
+static READ8_HANDLER( scorpion_sound_status_r )
+{
+	return 1;
+}
+
+DRIVER_INIT( scorpion )
+{
+	ppi8255_init(&ppi8255_intf);
+
+	ppi8255_set_portCread(1, scorpion_prot_r);
+
+	/* extra ROM */
+	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x5800, 0x67ff, 0, 0, MRA8_ROM);
+	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x5800, 0x67ff, 0, 0, MWA8_ROM);
+	
+	/* no background related */
+	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x6803, 0x6803, 0, 0, MWA8_NOP);
+
+	memory_install_read8_handler(1, ADDRESS_SPACE_PROGRAM, 0x3000, 0x3000, 0, 0, scorpion_sound_status_r);
+}
 
 INTERRUPT_GEN( hunchbks_vh_interrupt )
 {

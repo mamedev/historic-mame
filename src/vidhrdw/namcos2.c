@@ -522,16 +522,14 @@ VIDEO_UPDATE( sgunner )
 	fillbitmap( bitmap, get_black_pen(), cliprect );
 	ApplyClip( &clip, cliprect );
 
-	for( pri=0; pri<16; pri++ )
+	for( pri=0; pri<8; pri++ )
 	{
-		if( (pri&1)==0 )
-		{
-			namco_tilemap_draw( bitmap, &clip, pri/2 );
-		}
+		namco_tilemap_draw( bitmap, &clip, pri );
 		namco_obj_draw( bitmap, &clip, pri );
 	}
 	DrawCrossshair( bitmap,&clip );
 }
+
 
 /**************************************************************************/
 

@@ -65,6 +65,7 @@ extern MACHINE_INIT( cnightst );
 extern MACHINE_INIT( cprosocc );
 extern MACHINE_INIT( cppicf );
 extern MACHINE_INIT( cscrtry );
+extern MACHINE_INIT( cflyball );
 extern MACHINE_INIT( cbdash );
 
 extern WRITE8_HANDLER( i8041_p1_w );
@@ -116,3 +117,5 @@ extern size_t decocass_bgvideoram_size;
 extern size_t decocass_tileram_size;
 extern size_t decocass_objectram_size;
 
+void decocass_machine_state_save_init(void);
+void decocass_video_state_save_init(void);

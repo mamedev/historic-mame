@@ -113,6 +113,7 @@
 #include "mamedbg.h"
 #include "artwork.h"
 #include "state.h"
+#include "unzip.h"
 #include "vidhrdw/generic.h"
 #include "vidhrdw/vector.h"
 #include "palette.h"
@@ -332,6 +333,9 @@ int run_game(int game)
 			shutdown_machine();
 		}
 
+		/* clear the zip cache (I don't know what would be the bestplace to do this) */
+		unzip_cache_clear();
+
 		/* stop tracking resources and exit the OSD layer */
 		end_resource_tracking();
 		osd_exit();
@@ -422,6 +426,9 @@ static int init_machine(void)
 		logerror("memory_init failed\n");
 		goto cant_init_memory;
 	}
+
+	/* clear out the memcard interface */
+	init_memcard();
 
 	/* call the game driver's init function */
 	if (gamedrv->driver_init)
@@ -819,6 +826,11 @@ static void vh_close(void)
 		freegfx(Machine->uifont);
 		Machine->uifont = NULL;
 	}
+	if (Machine->uirotfont)
+	{
+		freegfx(Machine->uirotfont);
+		Machine->uirotfont = NULL;
+	}
 	if (Machine->debugger_font)
 	{
 		freegfx(Machine->debugger_font);
@@ -989,7 +1001,7 @@ static void scale_vectorgames(int gfx_width, int gfx_height, int *width, int *he
 	/* compute the scale values */
 	x_scale = (double)gfx_width  / *width;
 	y_scale = (double)gfx_height / *height;
-	
+
 	/* pick the smaller scale factor */
 	scale = (x_scale < y_scale) ? x_scale : y_scale;
 

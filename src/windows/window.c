@@ -16,7 +16,7 @@
 #endif
 
 // hack for older header sets - unsafe
-#ifndef WM_XBUTTONDOWN 
+#ifndef WM_XBUTTONDOWN
 #define WM_XBUTTONDOWN 0x020B
 #endif
 
@@ -431,7 +431,7 @@ int win_init_window(void)
 	static int classes_created = 0;
 	TCHAR title[256];
 	HMENU menu = NULL;
-	
+
 #ifdef MAME_DEBUG
 	// if we are in debug mode, never go full screen
 	if (options.mame_debug)
@@ -514,11 +514,6 @@ int win_create_window(int width, int height, int depth, int attributes, double a
 
 	// handle failure if we couldn't create the video window
 	if (!win_video_window)
-		return 1;
-
-	// allocate a temporary bitmap in case we need it
-	converted_bitmap = malloc(MAX_VIDEO_WIDTH * MAX_VIDEO_HEIGHT * 4);
-	if (!converted_bitmap)
 		return 1;
 
 	// adjust the window position
@@ -1561,6 +1556,12 @@ static void dib_draw_window(HDC dc, struct mame_bitmap *bitmap, const struct rec
 	GetClientRect(win_video_window, &client);
 	win_compute_multipliers(&client, &xmult, &ymult);
 
+	// allocate a temporary bitmap in case we need it
+	if (!converted_bitmap)
+		converted_bitmap = auto_malloc(MAX_VIDEO_WIDTH * MAX_VIDEO_HEIGHT * 4);
+	if (!converted_bitmap)
+		return;
+
 	// blit to our temporary bitmap
 	params.dstdata		= (void *)(((UINT32)converted_bitmap + 15) & ~15);
 	params.dstpitch		= (((win_visible_width * xmult) + 3) & ~3) * depth / 8;
@@ -1770,7 +1771,7 @@ int debugwin_init_windows(void)
 		// register the class; fail if we can't
 		if (!RegisterClass(&wc))
 			return 1;
-		
+
 		class_registered = 1;
 	}
 
@@ -1945,7 +1946,7 @@ static LRESULT CALLBACK debug_window_proc(HWND wnd, UINT message, WPARAM wparam,
 //============================================================
 
 void debugwin_show(int type)
-{	
+{
 	if (win_debug_window)
 		ShowWindow(win_debug_window, type);
 }

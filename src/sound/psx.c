@@ -10,7 +10,8 @@
 
 #include "driver.h"
 #include "state.h"
-#include "includes/psx.h"
+
+struct PSXSPUinterface *intf;
 
 #define VERBOSE_LEVEL ( 0 )
 
@@ -32,6 +33,7 @@ INLINE void verboselog( int n_level, const char *s_fmt, ... )
 #define SAMPLES_PER_BLOCK ( 28 )
 #define PITCH_SHIFT ( 12 )
 
+static data32_t *g_p_n_psxram;
 static data16_t m_n_mainvolumeleft;
 static data16_t m_n_mainvolumeright;
 static data16_t m_n_reverberationdepthleft;
@@ -143,7 +145,7 @@ static void PSXSPU_update(int num, INT16 **buffer, int length)
 					( m_n_irqaddress * 4 ) >= m_p_n_blockaddress[ n_channel ] &&
 					( m_n_irqaddress * 4 ) <= m_p_n_blockaddress[ n_channel ] + 7 )
 				{
-					psx_irq_set( 0x0200 );
+					intf->irq_set( 0x0200 );
 				}
 
 				n_shift =   ( m_p_n_spuram[ m_p_n_blockaddress[ n_channel ] ] >> 0 ) & 0x0f;
@@ -239,9 +241,11 @@ int PSX_sh_start( const struct MachineSound *msound )
 {
 	int n_effect;
 	int n_channel;
-	struct PSXSPUinterface *intf = msound->sound_interface;
 	const char *name[2];
 	int vol[2];
+
+	intf = msound->sound_interface;
+	g_p_n_psxram = *(intf->p_psxram);
 
 	m_n_mainvolumeleft = 0;
 	m_n_mainvolumeright = 0;
@@ -332,8 +336,8 @@ int PSX_sh_start( const struct MachineSound *msound )
 	state_save_register_INT16( "psx", 0, "m_p_n_s2", m_p_n_s2, MAX_CHANNEL );
 	state_save_register_UINT32( "psx", 0, "m_n_loop", m_n_loop, MAX_CHANNEL );
 
-	psx_dma_install_read_handler( 4, spu_read );
-	psx_dma_install_write_handler( 4, spu_write );
+	intf->spu_install_read_handler( 4, spu_read );
+	intf->spu_install_write_handler( 4, spu_write );
 
 	name[ 0 ] = "PSX SPU L";
 	name[ 1 ] = "PSX SPU R";

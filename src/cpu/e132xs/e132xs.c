@@ -30,6 +30,12 @@
 
 
  CHANGELOG:
+
+ Tomasz Slanina
+ - Fixed delayed branching for delay instructions longer than 2 bytes
+ 
+ Pierpaolo Prazzoli
+ - Added and fixed Timer without hack
  
  Tomasz Slanina
  - Fixed MULU/MULS 
@@ -443,6 +449,11 @@ typedef struct
 	UINT16	op;		// opcode
 	UINT32	trap_entry; // entry point to get trap address
 
+	UINT8	n;
+	void	*timer;
+	double	time;
+	int		delay_timer;
+
 	struct delay *delay_tail;
 
 	int	(*irq_callback)(int irqline);
@@ -498,8 +509,8 @@ static data32_t program_read_dword_16be(offs_t address)
 
 static void program_write_dword_16be(offs_t address, data32_t data)
 {
-	program_write_word_16be((address & ~1)+2, data & 0xffff);
 	program_write_word_16be(address & ~1, (data & 0xffff0000)>>16);
+	program_write_word_16be((address & ~1)+2, data & 0xffff);
 }
 
 static data32_t io_read_dword_16be(offs_t address)
@@ -509,8 +520,8 @@ static data32_t io_read_dword_16be(offs_t address)
 
 static void io_write_dword_16be(offs_t address, data32_t data)
 {
-	io_write_word_16be((address & ~1)+2, data & 0xffff);
 	io_write_word_16be(address & ~1, (data & 0xffff0000)>>16);
+	io_write_word_16be((address & ~1)+2, data & 0xffff);
 }
 
 /* Opcodes table */
@@ -582,9 +593,19 @@ static void (*hyperstone_op[0x100])(void) = {
 };
 
 // 4Kb IRAM (On-Chip Memory)
+#if 1
+
+static ADDRESS_MAP_START( e116_4k_iram_map, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0xc0000000, 0xc0000fff) AM_RAM
+ADDRESS_MAP_END
+
+#else
+
 static ADDRESS_MAP_START( e116_4k_iram_map, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0xc0000000, 0xdfffffff) AM_RAM AM_MASK(0xfff)
 ADDRESS_MAP_END
+
+#endif
 
 static ADDRESS_MAP_START( e132_4k_iram_map, ADDRESS_SPACE_PROGRAM, 32 )
 	AM_RANGE(0xc0000000, 0xdfffffff) AM_RAM AM_MASK(0xfff)
@@ -596,7 +617,7 @@ static ADDRESS_MAP_START( e116_8k_iram_map, ADDRESS_SPACE_PROGRAM, 16 )
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( e132_8k_iram_map, ADDRESS_SPACE_PROGRAM, 32 )
-	AM_RANGE(0xc0000000, 0xdfffffff) AM_RAM AM_MASK(0x1fff)
+//	AM_RANGE(0xc0000000, 0xdfffffff) AM_RAM AM_MASK(0x1fff)
 ADDRESS_MAP_END
 
 // 16Kb IRAM (On-Chip Memory)
@@ -747,6 +768,18 @@ void hyperstone_set_trap_entry(int which)
 //other bits are reversed, in particular 7 - 5 for the operating system.
 //the user program can only changes the above 2 flags
 
+/* Timer */
+static void hyperstone_timer(int num)
+{
+	TR = (TR + 1) & ((((UINT64)1)<<32) - 1);
+
+	if( hyperstone.delay_timer )
+	{
+		hyperstone.delay_timer = 0;
+		timer_adjust(hyperstone.timer,TIME_IN_HZ(hyperstone.time),0,TIME_IN_HZ(hyperstone.time));
+	}
+}
+
 UINT32 get_global_register(UINT8 code)
 {
 	if( code >= 16 )
@@ -849,7 +882,20 @@ void set_global_register(UINT8 code, UINT32 val)
 				break;
 
 			case TPR_REGISTER:
-				//printf("written %08X to TPR register\n",val);
+				
+				hyperstone.n = (val & 0xff0000) >> 16;
+				hyperstone.time = cpunum_get_clock(cpu_getactivecpu()) / (hyperstone.n + 2);
+
+				if(!(val & 0x80000000)) /* change immediately */
+				{
+					hyperstone.delay_timer = 0;
+					timer_adjust(hyperstone.timer,TIME_IN_HZ(hyperstone.time),0,TIME_IN_HZ(hyperstone.time));
+				}
+				else
+				{
+					hyperstone.delay_timer = 1;
+				}
+
 				break;
 
 			case FCR_REGISTER:
@@ -1538,6 +1584,72 @@ void execute_software(void)
 	change_pc(PC);
 }
 
+
+/*
+	IRQ lines :
+		0 - IO2 	(trap 48)
+		1 - IO1 	(trap 49)
+		2 - INT4 	(trap 50)
+		3 - INT3	(trap 51)
+		4 - INT2	(trap 52)
+		5 - INT1	(trap 53)
+		6 - IO3		(trap 54)
+		7 - TIMER	(trap 55)
+*/
+static void set_irq_line(int irqline, int state)
+{
+	/* Interrupt-Lock flag isn't set */
+
+	if(hyperstone.intblock)
+		return;
+
+	if( !GET_L && state )
+	{
+		int execint=0;
+		switch(irqline)
+		{
+			case 0:	 if( (FCR&(1<<6)) && (!(FCR&(1<<4))) ) execint=1; // IO2
+				break;
+			case 1:	 if( (FCR&(1<<2)) && (!(FCR&(1<<0))) ) execint=1; // IO1
+				break;
+			case 2:	 if( !(FCR&(1<<31)) ) execint=1; //  int 4
+				break;
+			case 3:	 if( !(FCR&(1<<30)) ) execint=1; //  int 3
+				break;
+			case 4:	 if( !(FCR&(1<<29)) ) execint=1; //  int 2
+				break;
+			case 5:	 if( !(FCR&(1<<28)) ) execint=1; //  int 1
+				break;
+			case 6:	 if( (FCR&(1<<10)) && (!(FCR&(1<<8))) ) execint=1; // IO3
+				break;
+			case 7:	 if( !(FCR&(1<<23)) ) execint=1; //  timer
+				break;
+		}
+/*
+		if( (FCR&(1<<6)) && (!(FCR&(1<<4))) ) printf("IO2 en\n"); // IO2
+
+		if( (FCR&(1<<2)) && (!(FCR&(1<<0))) ) printf("IO1 en\n"); // IO1
+
+		if( !(FCR&(1<<31)) ) printf("int4 en\n"); //  int 4
+
+		if( !(FCR&(1<<30)) ) printf("int3 en\n"); //  int 3
+
+		if( !(FCR&(1<<29)) ) printf("int2 en\n"); //  int 2
+
+		if( !(FCR&(1<<28)) ) printf("int1 en\n"); //  int 1
+
+		if( (FCR&(1<<10)) && (!(FCR&(1<<8))) ) printf("IO3 en\n"); // IO3		
+
+		if( !(FCR&(1<<23)) ) printf("timer irq!\n"); //  timer
+*/
+		if(execint)
+		{
+			execute_int(get_trap_addr(irqline + 48));
+			(*hyperstone.irq_callback)(irqline);
+		}
+	}
+}
+
 static void hyperstone_init(void)
 {
 	int cpu = cpu_getactivecpu();
@@ -1547,9 +1659,15 @@ static void hyperstone_init(void)
 	state_save_register_UINT32("E132XS", cpu, "ppc",        &hyperstone.ppc, 1);
 	state_save_register_UINT32("E132XS", cpu, "trap_entry", &hyperstone.trap_entry, 1);
 	state_save_register_UINT16("E132XS", cpu, "op",         &hyperstone.op, 1);
+	state_save_register_UINT8( "E132XS", cpu, "n",	        &hyperstone.n, 1);
 	state_save_register_int(   "E132XS", cpu, "h_clear",    &hyperstone.h_clear);
 	state_save_register_int(   "E132XS", cpu, "ilc",        &hyperstone.instruction_length);
 	state_save_register_int(   "E132XS", cpu, "intblock",   &hyperstone.intblock);
+	state_save_register_int(   "E132XS", cpu, "delay_timer",&hyperstone.delay_timer);
+	state_save_register_double("E132XS", cpu, "time",       &hyperstone.time, 1);
+
+	hyperstone.timer = timer_alloc(hyperstone_timer);
+	timer_adjust(hyperstone.timer, TIME_NEVER, 0, 0);
 
 	hyperstone.delay_tail = NULL;
 }
@@ -1592,20 +1710,23 @@ static void hyperstone_reset(void *param)
 {
 	//TODO: Add different reset initializations for BCR, MCR, FCR, TPR
 
+	void *hyp_timer;
+	
 	check_and_remove_delays();
 
+	hyp_timer = hyperstone.timer;
 	memset(&hyperstone, 0, sizeof(hyperstone_regs));
+	hyperstone.timer = hyp_timer;
 
 	hyperstone.h_clear = 0;
 	hyperstone.instruction_length = 0;
 
 	hyperstone_set_trap_entry(E132XS_ENTRY_MEM3); /* default entry point @ MEM3 */
 
-	BCR = ~0;
-	MCR = ~0;
-	FCR = ~0;
-
-	TPR = 0x8000000;
+	set_global_register(BCR_REGISTER, ~0);
+	set_global_register(MCR_REGISTER, ~0);
+	set_global_register(FCR_REGISTER, ~0);
+	set_global_register(TPR_REGISTER, 0xc000000);
 
 	PC = get_trap_addr(RESET);
 	change_pc(PC);
@@ -1637,7 +1758,6 @@ static int hyperstone_execute(int cycles)
 
 	do
 	{
-		TR++; //hack!
 		PPC = PC;	/* copy PC to previous PC */
 
 		CALL_MAME_DEBUG;
@@ -1673,7 +1793,7 @@ static int hyperstone_execute(int cycles)
 
 		if(hyperstone.delay_tail)
 		{
-			if( (hyperstone.delay_tail)->delay_cmd == DELAY_EXECUTE && (hyperstone.delay_tail)->no_delay_pc == PC )
+			if( (hyperstone.delay_tail)->delay_cmd == DELAY_EXECUTE &&  PC>= (hyperstone.delay_tail)->no_delay_pc && PC< ( (hyperstone.delay_tail)->no_delay_pc + 6))
 			{
 				struct delay *tmp;
 				PC = (hyperstone.delay_tail)->delay_pc;
@@ -1688,7 +1808,17 @@ static int hyperstone_execute(int cycles)
 		}
 
 		if(hyperstone.intblock > 0)
+		{
 			hyperstone.intblock--;
+		}
+		else
+		{
+			if( !((TR - TCR) & 0x80000000) )
+			{
+				/* generate a timer interrupt */
+				set_irq_line(7, PULSE_LINE);
+			}
+		}
 
 	} while( hyperstone_ICount > 0 );
 
@@ -1707,70 +1837,6 @@ static void hyperstone_set_context(void *regs)
 	/* copy the context */
 	if (regs)
 		hyperstone = *(hyperstone_regs *)regs;
-}
-
-/*
-	IRQ lines :
-		0 - IO2 	(trap 48)
-		1 - IO1 	(trap 49)
-		2 - INT4 	(trap 50)
-		3 - INT3	(trap 51)
-		4 - INT2	(trap 52)
-		5 - INT1	(trap 53)
-		6 - IO3		(trap 54)
-		7 - TIMER	(trap 55)
-*/
-static void set_irq_line(int irqline, int state)
-{
-	/* Interrupt-Lock flag isn't set */
-
-	if(hyperstone.intblock)
-		return;
-
-	if( !GET_L && state )
-	{
-		int execint=0;
-		switch(irqline)
-		{
-			case 0:	 if( (FCR&(1<<6)) && (!(FCR&(1<<4))) ) execint=1; // IO2
-				break;
-			case 1:	 if( (FCR&(1<<2)) && (!(FCR&(1<<0))) ) execint=1; // IO1
-				break;
-			case 2:	 if( !(FCR&(1<<31)) ) execint=1; //  int 4
-				break;
-			case 3:	 if( !(FCR&(1<<30)) ) execint=1; //  int 3
-				break;
-			case 4:	 if( !(FCR&(1<<29)) ) execint=1; //  int 2
-				break;
-			case 5:	 if( !(FCR&(1<<28)) ) execint=1; //  int 1
-				break;
-			case 6:	 if( (FCR&(1<<10)) && (!(FCR&(1<<8))) ) execint=1; // IO3
-				break;
-			case 7:	 if( !(FCR&(1<<23)) ) execint=1; //  timer
-				break;
-		}
-
-/*		
-			if( (FCR&(1<<6)) && (!(FCR&(1<<4))) ) printf("IO2 en\n"); // IO2
-			
-			if( (FCR&(1<<2)) && (!(FCR&(1<<0))) ) printf("IO1 en\n"); // IO1
-
-			if( !(FCR&(1<<31)) ) printf("int4 en\n"); //  int 4
-			
-			if( !(FCR&(1<<30)) ) printf("int3 en\n"); //  int 3
-			
-			if( !(FCR&(1<<29)) ) printf("int2 en\n"); //  int 2
-			
-			if( !(FCR&(1<<28)) ) printf("int1 en\n"); //  int 1
-				
-			if( (FCR&(1<<10)) && (!(FCR&(1<<8))) ) printf("IO3 en\n"); // IO3		
-*/
-		if(execint)
-		{
-			execute_int(get_trap_addr(irqline+48));
-			(*hyperstone.irq_callback)(irqline);
-		}
-	}
 }
 
 static offs_t hyperstone_dasm(char *buffer, offs_t pc)
@@ -5146,7 +5212,7 @@ void hyperstone_get_info(UINT32 state, union cpuinfo *info)
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
 		case CPUINFO_STR_CORE_FAMILY:					strcpy(info->s = cpuintrf_temp_str(), "Hyperstone CPU"); break;
-		case CPUINFO_STR_CORE_VERSION:					strcpy(info->s = cpuintrf_temp_str(), "0.8"); break;
+		case CPUINFO_STR_CORE_VERSION:					strcpy(info->s = cpuintrf_temp_str(), "0.9"); break;
 		case CPUINFO_STR_CORE_FILE:						strcpy(info->s = cpuintrf_temp_str(), __FILE__); break;
 		case CPUINFO_STR_CORE_CREDITS:					strcpy(info->s = cpuintrf_temp_str(), "Copyright Pierpaolo Prazzoli and Ryan Holtz"); break;
 

@@ -304,7 +304,7 @@ extern int i386_dasm_one(char *buffer, UINT32 eip, int addr_size, int op_size);
 static offs_t i286_dasm(char *buffer, offs_t pc)
 {
 #ifdef MAME_DEBUG
-	return i386_dasm_one(buffer, pc, I.sregs[CS], I.sregs[CS]);
+	return i386_dasm_one(buffer, pc, 0, 0);
 #else
 	sprintf( buffer, "$%02X", cpu_readop(pc) );
 	return 1;

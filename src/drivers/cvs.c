@@ -381,12 +381,12 @@ static struct GfxDecodeInfo cvs_gfxdecodeinfo[] =
 static MACHINE_DRIVER_START( cvs )
 
 	/* basic machine hardware */
-	MDRV_CPU_ADD(S2650,894886.25/3)
+	MDRV_CPU_ADD(S2650,894886.25)
 	MDRV_CPU_PROGRAM_MAP(cvs_cpu1_program,0)
 	MDRV_CPU_IO_MAP(cvs_cpu1_io,0)
 	MDRV_CPU_VBLANK_INT(cvs_interrupt,1)
 
-	MDRV_CPU_ADD(S2650,894886.25/3)
+	MDRV_CPU_ADD(S2650,894886.25)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
 	MDRV_CPU_PROGRAM_MAP(cvs_cpu2_program,0)
 	MDRV_CPU_IO_MAP(cvs_cpu2_io,0)

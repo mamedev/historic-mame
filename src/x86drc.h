@@ -324,6 +324,12 @@ do { OP1(0x9F); } while(0);
 #define _sahf() \
 do { OP1(0x9E); } while(0);
 
+#define _pushfd() \
+do { OP1(0x9c); } while(0);
+
+#define _popfd() \
+do { OP1(0x9d); } while(0);
+
 #define _bswap_r32(reg) \
 do { OP1(0x0F); OP1(0xC8+(reg)); } while (0)
 

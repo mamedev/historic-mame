@@ -33,28 +33,18 @@
 extern char build_version[];
 
 /* MARTINEZ.F 990207 Memory Card */
-#ifndef MESS
-#ifndef TINY_COMPILE
-int 		memcard_menu(struct mame_bitmap *bitmap, int);
-extern int	mcd_action;
-extern int	mcd_number;
-extern int	memcard_status;
-extern int	memcard_number;
-extern int	memcard_manager;
-extern struct GameDriver driver_neogeo;
-#endif
-#endif
+
+struct MEMCARDinterface memcard_intf;
+int	mcd_action;
+int	mcd_number;
+int	memcard_status;
+int	memcard_number;
+int	memcard_manager;
 
 #if defined(__sgi) && !defined(MESS)
 static int game_paused = 0; /* not zero if the game is paused */
 #endif
-
-extern int neogeo_memcard_load(int);
-extern void neogeo_memcard_save(void);
-extern void neogeo_memcard_eject(void);
-extern int neogeo_memcard_create(int);
 /* MARTINEZ.F 990207 Memory Card End */
-
 
 
 /***************************************************************************
@@ -62,8 +52,6 @@ extern int neogeo_memcard_create(int);
 	Local variables
 
 ***************************************************************************/
-
-static struct GfxElement *uirotfont;
 
 /* raw coordinates, relative to the real scrbitmap */
 static struct rectangle uirawbounds;
@@ -396,8 +384,8 @@ struct GfxElement *builduifont(void)
 	/* free any existing fonts */
 	if (Machine->uifont)
 		freegfx(Machine->uifont);
-	if (uirotfont)
-		freegfx(uirotfont);
+	if (Machine->uirotfont)
+		freegfx(Machine->uirotfont);
 
 	/* first decode a straight on version for games */
 	Machine->uifont = font = decodegfx(uifontdata, &layout);
@@ -451,7 +439,7 @@ struct GfxElement *builduifont(void)
 	}
 
 	/* decode rotated font */
-	uirotfont = decodegfx(uifontdata, &layout);
+	Machine->uirotfont = decodegfx(uifontdata, &layout);
 
 	/* set the raw and rotated character width/height */
 	uirawcharwidth = layout.width;
@@ -467,8 +455,8 @@ struct GfxElement *builduifont(void)
 		/* colortable will be set at run time */
 		font->colortable = colortable;
 		font->total_colors = 2;
-		uirotfont->colortable = colortable;
-		uirotfont->total_colors = 2;
+		Machine->uirotfont->colortable = colortable;
+		Machine->uirotfont->total_colors = 2;
 	}
 
 	return font;
@@ -497,7 +485,7 @@ void ui_drawchar(struct mame_bitmap *dest, int ch, int color, int sx, int sy)
 	ui_rot2raw_rect(&bounds);
 
 	/* now render */
-	drawgfx(dest, uirotfont, ch, color, 0, 0, bounds.min_x, bounds.min_y, &uirawbounds, TRANSPARENCY_NONE, 0);
+	drawgfx(dest, Machine->uirotfont, ch, color, 0, 0, bounds.min_x, bounds.min_y, &uirawbounds, TRANSPARENCY_NONE, 0);
 
 	/* mark dirty */
 	ui_markdirty(&bounds);
@@ -713,8 +701,8 @@ void ui_drawbox(struct mame_bitmap *bitmap, int leftx, int topy, int width, int 
 	sect_rect(&bounds, &uirotbounds);
 
 	/* pick colors from the colortable */
-	black = uirotfont->colortable[0];
-	white = uirotfont->colortable[1];
+	black = Machine->uirotfont->colortable[0];
+	white = Machine->uirotfont->colortable[1];
 
 	/* top edge */
 	tbounds = bounds;
@@ -773,8 +761,8 @@ static void drawbar(struct mame_bitmap *bitmap, int leftx, int topy, int width, 
 	sect_rect(&bounds, &uirotbounds);
 
 	/* pick colors from the colortable */
-	black = uirotfont->colortable[0];
-	white = uirotfont->colortable[1];
+	black = Machine->uirotfont->colortable[0];
+	white = Machine->uirotfont->colortable[1];
 
 	/* draw the top default percentage marker */
 	tbounds = bounds;
@@ -1757,7 +1745,7 @@ static int setdefcodesettings(struct mame_bitmap *bitmap,int selected)
 		indef = get_input_port_list_backup();
 
 		total = 0;
-		
+
 		while (in->type != IPT_END)
 		{
 			if (in->name != 0 && in->type != IPT_UNKNOWN && in->type != IPT_DIPSWITCH_NAME && in->name[0] != 0 && in->group == menugroup)
@@ -1849,7 +1837,7 @@ static int setdefcodesettings(struct mame_bitmap *bitmap,int selected)
 
 		ui_displaymenu(bitmap,menu_item,menu_subitem,flag,sel,0);
 	}
-	
+
 	if (input_ui_pressed_repeat(IPT_UI_DOWN,8))
 	{
 		sel = (sel + 1) % total;
@@ -1942,7 +1930,7 @@ static int setcodesettings(struct mame_bitmap *bitmap,int selected)
 	total = 0;
 	while (in->type != IPT_END)
 	{
-		if (input_port_name(in) != NULL && 
+		if (input_port_name(in) != NULL &&
 #ifdef MESS
 			(in->category == 0 || input_category_active(in->category)) &&
 #endif /* MESS */
@@ -3018,9 +3006,6 @@ static int displayhistory (struct mame_bitmap *bitmap, int selected)
 
 }
 
-
-#ifndef MESS
-#ifndef TINY_COMPILE
 int memcard_menu(struct mame_bitmap *bitmap, int selection)
 {
 	int sel;
@@ -3035,9 +3020,6 @@ int memcard_menu(struct mame_bitmap *bitmap, int selection)
 	menuitem[menutotal++] = buf;
 	menuitem[menutotal++] = ui_getstring (UI_ejectcard);
 	menuitem[menutotal++] = ui_getstring (UI_createcard);
-#ifdef MESS
-	menuitem[menutotal++] = ui_getstring (UI_resetcard);
-#endif
 	menuitem[menutotal++] = ui_getstring (UI_returntomain);
 	menuitem[menutotal] = 0;
 
@@ -3095,8 +3077,8 @@ int memcard_menu(struct mame_bitmap *bitmap, int selection)
 			switch(sel)
 			{
 			case 0:
-				neogeo_memcard_eject();
-				if (neogeo_memcard_load(mcd_number))
+				memcard_intf.eject();
+				if (memcard_intf.load(mcd_number))
 				{
 					memcard_status=1;
 					memcard_number=mcd_number;
@@ -3106,11 +3088,11 @@ int memcard_menu(struct mame_bitmap *bitmap, int selection)
 					mcd_action = 1;
 				break;
 			case 1:
-				neogeo_memcard_eject();
+				memcard_intf.eject();
 				mcd_action = 3;
 				break;
 			case 2:
-				if (neogeo_memcard_create(mcd_number))
+				if (memcard_intf.create(mcd_number))
 					mcd_action = 4;
 				else
 					mcd_action = 5;
@@ -3148,8 +3130,6 @@ int memcard_menu(struct mame_bitmap *bitmap, int selection)
 
 	return sel + 1;
 }
-#endif
-#endif
 
 
 #ifndef MESS
@@ -3261,7 +3241,7 @@ static void setup_menu_init(void)
 
 	if (has_analog())
 		append_menu(UI_analogcontrols, UI_ANALOG);
-  
+
   	/* Joystick calibration possible? */
   	if ((osd_joystick_needs_calibration()) != 0)
 	{
@@ -3286,16 +3266,13 @@ static void setup_menu_init(void)
 		append_menu(UI_cheat, UI_CHEAT);
 	}
 
-#ifndef MESS
-#ifndef TINY_COMPILE
-	if (Machine->gamedrv->clone_of == &driver_neogeo ||
-			(Machine->gamedrv->clone_of &&
-				Machine->gamedrv->clone_of->clone_of == &driver_neogeo))
+	if (	memcard_intf.create != NULL &&
+		memcard_intf.load != NULL &&
+		memcard_intf.save != NULL &&
+		memcard_intf.eject != NULL)
 	{
 		append_menu(UI_memorycard, UI_MEMCARD);
 	}
-#endif
-#endif
 
 	append_menu(UI_resetgame, UI_RESET);
 	append_menu(UI_returntogame, UI_EXIT);
@@ -3365,13 +3342,9 @@ static int setup_menu(struct mame_bitmap *bitmap, int selected)
 			case UI_CHEAT:
 				res = cheat_menu(bitmap, sel >> SEL_BITS);
 				break;
-#ifndef MESS
-#ifndef TINY_COMPILE
 			case UI_MEMCARD:
 				res = memcard_menu(bitmap, sel >> SEL_BITS);
 				break;
-#endif
-#endif
 		}
 
 		if (res == -1)
@@ -3746,7 +3719,7 @@ static void onscrd_refresh(struct mame_bitmap *bitmap,int increment,int arg)
 			delta = 10;
 		if (delta < -10)
 			delta = -10;
-			
+
 		newrate = Machine->drv->frames_per_second;
 		if (delta != 0)
 			newrate = (floor(newrate * 1000) / 1000) + delta;
@@ -3793,7 +3766,7 @@ static void onscrd_init(void)
 			onscrd_arg[item] = in - Machine->input_ports;
 			item++;
 		}
-	
+
 	if (options.cheat)
 	{
 		for (ch = 0;ch < cpu_gettotalcpu();ch++)
@@ -4063,7 +4036,7 @@ void ui_display_fps(struct mame_bitmap *bitmap)
 		y += uirotcharheight;
 		len_hash += (y / uirotcharheight) * x;
 	}
-	
+
 	if ((old_len_hash != -1) &&
 	    (old_len_hash != len_hash))
 	{

@@ -254,7 +254,7 @@ READ8_HANDLER( RF5C68_r )
 {
 	unsigned int  bank;
 	bank = wreg[0x7] & 0x40 ? rpcm.start[reg_port] >> BASE_SHIFT : (wreg[0x7] & 0xf) << 12;
-	return pcmbuf[bank + offset];
+	return pcmbuf[(bank + offset) & 0xffff];
 }
 /************************************************/
 /*    RF5C68 write memory                       */
@@ -263,7 +263,7 @@ WRITE8_HANDLER( RF5C68_w )
 {
 	unsigned int  bank;
 	bank = wreg[0x7] & 0x40 ? rpcm.start[reg_port] >> BASE_SHIFT : (wreg[0x7] & 0xf) << 12;
-	pcmbuf[bank + offset] = data;
+	pcmbuf[(bank + offset) & 0xffff] = data;
 }
 
 

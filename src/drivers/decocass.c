@@ -250,7 +250,7 @@ INPUT_PORTS_START( decocass )
 	PORT_START		/* IN6 */
 	PORT_BIT( 0xff, 0x80, IPT_AD_STICK_Y ) PORT_MINMAX(0x10,0xf0) PORT_SENSITIVITY(100) PORT_KEYDELTA(10) PORT_PLAYER(2)
 
-	PORT_START		/* DSW1 */
+	PORT_START_TAG("DSW1")
 	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Coin_A ) )
 	PORT_DIPSETTING(	0x00, DEF_STR( 2C_1C ) )
 	PORT_DIPSETTING(	0x03, DEF_STR( 1C_1C ) )
@@ -271,7 +271,37 @@ INPUT_PORTS_START( decocass )
 	PORT_DIPSETTING(	0x40, DEF_STR( Cocktail ) )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_VBLANK	)
 
-	PORT_START		/* DSW2 */
+	PORT_START_TAG("DSW2")
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(	0x80, DEF_STR( On ) )
+INPUT_PORTS_END
+
+INPUT_PORTS_START( dc_btime )
+	PORT_INCLUDE( decocass )
+
+	PORT_MODIFY("DSW2")
 	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Lives ) )
 	PORT_DIPSETTING(	0x01, "3" )
 	PORT_DIPSETTING(	0x00, "5" )
@@ -439,7 +469,7 @@ static MACHINE_DRIVER_START( decocass )
 	MDRV_FRAMES_PER_SECOND(57)
 	MDRV_VBLANK_DURATION(3072)		/* frames per second, vblank duration */
 	MDRV_INTERLEAVE(7)				/* interleave CPUs */
-	
+
 	MDRV_MACHINE_INIT(decocass)
 
 	/* video hardware */
@@ -659,13 +689,26 @@ static MACHINE_DRIVER_START( cscrtry )
 MACHINE_DRIVER_END
 
 
+static MACHINE_DRIVER_START( cflyball )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(decocass)
+	MDRV_MACHINE_INIT(cflyball)
+MACHINE_DRIVER_END
+
+
+#define ROM_LOAD_BIOS(bios,name,offset,length,hash) \
+		ROMX_LOAD(name, offset, length, hash, ROM_BIOS(bios+1)) /* Note '+1' */
+
+
+#define DECOCASS_BIOS \
+	ROM_REGION( 2*0x10000, REGION_CPU1, 0 ) /* 64k for code + 64k for decrypted opcodes */ \
+	ROM_LOAD_BIOS( 0, "rms8.cpu",     0xf000, 0x1000, CRC(23d929b7) SHA1(063f83020ba3d6f43ab8471f95ca919767b93aa4) ) \
+	ROM_LOAD_BIOS( 1, "dsp3.p0b",     0xf000, 0x0800, CRC(b67a91d9) SHA1(681c040be0f0ed1ba0a50161b36d0ad8e1c8c5cb) ) \
+	ROM_LOAD_BIOS( 1, "dsp3.p1b",     0xf800, 0x0800, CRC(3bfff5f3) SHA1(4e9437cb1b76d64da6b37f01bd6e879fb399e8ce) ) \
 
 #define DECOCASS_COMMON_ROMS	\
-	ROM_REGION( 2*0x10000, REGION_CPU1, 0 ) /* 64k for code + 64k for decrypted opcodes */ \
-	ROM_LOAD( "rms8.cpu",     0xf000, 0x1000, CRC(23d929b7) SHA1(063f83020ba3d6f43ab8471f95ca919767b93aa4) ) \
-/* the following two are just about the same stuff as the one above */ \
-/*	ROM_LOAD( "dsp3.p0b",     0xf000, 0x0800, CRC(b67a91d9) ) */ \
-/*	ROM_LOAD( "dsp3.p1b",     0xf800, 0x0800, CRC(3bfff5f3) ) */ \
+	DECOCASS_BIOS \
 \
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )	  /* 64k for the audio CPU */ \
 	ROM_LOAD( "rms8.snd",     0xf800, 0x0800, CRC(b66b2c2a) SHA1(0097f38beb4872e735e560148052e258a26b08fd) ) \
@@ -678,6 +721,11 @@ MACHINE_DRIVER_END
 	ROM_LOAD( "dsp8.10d",     0x0020, 0x0020, CRC(3b5836b4) SHA1(b630bb277d9ec09d46ef26b944014dd6165b35d8) ) \
 	ROM_LOAD( "rms8.j3",      0x0040, 0x0020, CRC(51eef657) SHA1(eaedce5caf55624ad6ae706aedf82c5717c60f1f) ) /* DRAM banking and timing */ \
 
+
+SYSTEM_BIOS_START( decocass )
+	SYSTEM_BIOS_ADD( 0, "bios0",       "rms8.cpu" )
+	SYSTEM_BIOS_ADD( 1, "bios1",       "dsp3.p0b & dsp3.p1b" )
+SYSTEM_BIOS_END
 
 ROM_START( decocass )
 	DECOCASS_COMMON_ROMS
@@ -715,6 +763,12 @@ ROM_START( ctisland )
 
 	ROM_REGION( 0x10000, REGION_USER2, 0 )	  /* (max) 64k for cassette image */
 	ROM_LOAD( "ctisland.cas", 0x0000, 0x8000, CRC(3f63b8f8) SHA1(2fd0679ef9750a228ebb098672ab6091fda75804) )
+
+	ROM_REGION( 0x4000, REGION_USER3, 0 )	  /* roms from the overlay pcb (not used yet) */
+	ROM_LOAD( "deco-ti.x1",   0x0000, 0x1000, CRC(a7f8aeba) SHA1(0c9ba1a46d0636b36f40fad31638db89f374f778) )
+	ROM_LOAD( "deco-ti.x2",   0x1000, 0x1000, CRC(2a0d3c91) SHA1(552d08fcddddbea5b52fa1e8decd188ae49c86ea) )
+	ROM_LOAD( "deco-ti.x3",   0x2000, 0x1000, CRC(3a26b97c) SHA1(f57e76077806e149a9e455c85e5431eac2d42bc3) )
+	ROM_LOAD( "deco-ti.x4",   0x3000, 0x1000, CRC(1cbe43de) SHA1(8f26ad224e96c87da810c60d3dd88d415400b9fc) )
 ROM_END
 
 ROM_START( ctislnd2 )
@@ -725,6 +779,12 @@ ROM_START( ctislnd2 )
 
 	ROM_REGION( 0x10000, REGION_USER2, 0 )	  /* (max) 64k for cassette image */
 	ROM_LOAD( "ctislnd3.cas", 0x0000, 0x8000, CRC(2854b4c0) SHA1(d3b4e0031dbb2340fbbe396a1ff9b8fbfd63663e) )
+
+	ROM_REGION( 0x4000, REGION_USER3, 0 )	  /* roms from the overlay pcb (not used yet) */
+	ROM_LOAD( "deco-ti.x1",   0x0000, 0x1000, CRC(a7f8aeba) SHA1(0c9ba1a46d0636b36f40fad31638db89f374f778) )
+	ROM_LOAD( "deco-ti.x2",   0x1000, 0x1000, CRC(2a0d3c91) SHA1(552d08fcddddbea5b52fa1e8decd188ae49c86ea) )
+	ROM_LOAD( "deco-ti.x3",   0x2000, 0x1000, CRC(3a26b97c) SHA1(f57e76077806e149a9e455c85e5431eac2d42bc3) )
+	ROM_LOAD( "deco-ti.x4",   0x3000, 0x1000, CRC(1cbe43de) SHA1(8f26ad224e96c87da810c60d3dd88d415400b9fc) )
 ROM_END
 
 ROM_START( ctislnd3 )
@@ -735,6 +795,12 @@ ROM_START( ctislnd3 )
 
 	ROM_REGION( 0x10000, REGION_USER2, 0 )	  /* (max) 64k for cassette image */
 	ROM_LOAD( "ctislnd2.cas", 0x0000, 0x8000, CRC(45464e1e) SHA1(03275694d963c7ab0e0f5525e248e69da5f9b591) )
+
+	ROM_REGION( 0x4000, REGION_USER3, 0 )	  /* roms from the overlay pcb (not used yet) */
+	ROM_LOAD( "deco-ti.x1",   0x0000, 0x1000, CRC(a7f8aeba) SHA1(0c9ba1a46d0636b36f40fad31638db89f374f778) )
+	ROM_LOAD( "deco-ti.x2",   0x1000, 0x1000, CRC(2a0d3c91) SHA1(552d08fcddddbea5b52fa1e8decd188ae49c86ea) )
+	ROM_LOAD( "deco-ti.x3",   0x2000, 0x1000, CRC(3a26b97c) SHA1(f57e76077806e149a9e455c85e5431eac2d42bc3) )
+	ROM_LOAD( "deco-ti.x4",   0x3000, 0x1000, CRC(1cbe43de) SHA1(8f26ad224e96c87da810c60d3dd88d415400b9fc) )
 ROM_END
 
 ROM_START( csuperas )
@@ -1054,7 +1120,7 @@ ROM_END
 ROM_START( cflyball )
 	DECOCASS_COMMON_ROMS
 
-	/* no dumped dongle data */
+	/* no dongle data */
 
 	ROM_REGION( 0x10000, REGION_USER2, 0 )	  /* (max) 64k for cassette image */
 	ROM_LOAD( "cflyball.cas",   0x0000, 0x10000, CRC(cb40d043) SHA1(57698bac7e0d552167efa99d08116bf19a3b29c9) )
@@ -1081,45 +1147,50 @@ static DRIVER_INIT( decocass )
 	/* Swap bits 5 & 6 for opcodes */
 	for (A = 0;A < diff;A++)
 		rom[A+diff] = swap_bits_5_6(rom[A]);
+
+	/* Call the state save setup code in machine/decocass.c */
+	decocass_machine_state_save_init();
+	/* and in vidhrdw/decocass.c, too */
+	decocass_video_state_save_init();
 }
 
-GAMEX( 1981, decocass, 0,		 decocass, decocass, decocass, ROT270, "DECO", "Cassette System", NOT_A_DRIVER )
-GAME ( 1981, ctsttape, decocass, ctsttape, decocass, decocass, ROT270, "DECO", "Test Tape (Cassette)" )
-GAME ( 1981, clocknch, decocass, clocknch, decocass, decocass, ROT270, "DECO", "Lock'n'Chase (Cassette)" )
-GAMEX( 1981, ctisland, decocass, ctisland, decocass, decocass, ROT270, "DECO", "Treasure Island (Cassette, set 1)", GAME_IMPERFECT_GRAPHICS )
-GAMEX( 1981, ctislnd2, ctisland, ctisland, decocass, decocass, ROT270, "DECO", "Treasure Island (Cassette, set 2)", GAME_IMPERFECT_GRAPHICS )
-GAMEX( 1981, ctislnd3, ctisland, ctisland, decocass, decocass, ROT270, "DECO", "Treasure Island (Cassette, set 3)", GAME_IMPERFECT_GRAPHICS | GAME_NOT_WORKING ) /* Different Bitswap? */
-GAME ( 1981, csuperas, decocass, csuperas, decocass, decocass, ROT270, "DECO", "Super Astro Fighter (Cassette)" )
-GAME ( 1981, castfant, decocass, castfant, decocass, decocass, ROT270, "DECO", "Astro Fantasia (Cassette)" )
-GAME ( 1981, cluckypo, decocass, cluckypo, decocass, decocass, ROT270, "DECO", "Lucky Poker (Cassette)" )
-GAME ( 1981, cterrani, decocass, cterrani, decocass, decocass, ROT270, "DECO", "Terranean (Cassette)" )
-GAMEX( 1982, cexplore, decocass, cexplore, decocass, decocass, ROT270, "DECO", "Explorer (Cassette)", GAME_NOT_WORKING )
-GAME ( 1981, cprogolf, decocass, cprogolf, decocass, decocass, ROT270, "DECO", "Pro Golf (Cassette)" )
-GAME ( 1982, cmissnx,  decocass, cmissnx,  decocass, decocass, ROT270, "DECO", "Mission-X (Cassette)" )
-GAME ( 1982, cdiscon1, decocass, cdiscon1, decocass, decocass, ROT270, "DECO", "Disco No.1 (Cassette)" )
-GAME ( 1982, csweetht, cdiscon1, cdiscon1, decocass, decocass, ROT270, "DECO", "Sweet Heart (Cassette)" )
-GAME ( 1982, cptennis, decocass, cptennis, decocass, decocass, ROT270, "DECO", "Pro Tennis (Cassette)" )
-GAME ( 1982, ctornado, decocass, ctornado, decocass, decocass, ROT270, "DECO", "Tornado (Cassette)" )
-GAME ( 1982, cburnrub, decocass, cburnrub, decocass, decocass, ROT270, "DECO", "Burnin' Rubber (Cassette, set 1)" )
-GAME ( 1982, cburnrb2, cburnrub, cburnrub, decocass, decocass, ROT270, "DECO", "Burnin' Rubber (Cassette, set 2)" )
-GAME ( 1982, cbnj,	   cburnrub, cbnj,	   decocass, decocass, ROT270, "DECO", "Bump N Jump (Cassette)" )
-GAME ( 1983, cbtime,   decocass, cbtime,   decocass, decocass, ROT270, "DECO", "Burger Time (Cassette)" )
-GAME ( 1983, cgraplop, decocass, cgraplop, decocass, decocass, ROT270, "DECO", "Graplop (aka Cluster Buster) (Cassette, set 1)" )
-GAMEX( 1983, cgraplp2, cgraplop, cgraplop, decocass, decocass, ROT270, "DECO", "Graplop (aka Cluster Buster) (Cassette, set 2)", GAME_NOT_WORKING ) /* Different Protection / Bitswap? */
-GAME ( 1983, clapapa,  decocass, clapapa,  decocass, decocass, ROT270, "DECO", "Rootin' Tootin' (aka La.Pa.Pa) (Cassette)" ) /* Displays 'LaPaPa during attract */
-GAME ( 1983, clapapa2, clapapa,  clapapa,  decocass, decocass, ROT270, "DECO", "Rootin' Tootin' (Cassette)" )				/* Displays 'Rootin' Tootin' during attract */
-GAME ( 1984, cfghtice, decocass, cfghtice, decocass, decocass, ROT270, "DECO", "Fighting Ice Hockey (Cassette)" )
-GAME ( 1983, cprobowl, decocass, cprobowl, decocass, decocass, ROT270, "DECO", "Pro Bowling (Cassette)" )
-GAME ( 1983, cnightst, decocass, cnightst, decocass, decocass, ROT270, "DECO", "Night Star (Cassette, set 1)" )
-GAME ( 1983, cnights2, cnightst, cnightst, decocass, decocass, ROT270, "DECO", "Night Star (Cassette, set 2)" )
-GAME ( 1983, cprosocc, decocass, cprosocc, decocass, decocass, ROT270, "DECO", "Pro Soccer (Cassette)" )
-GAME ( 1984, cppicf,   decocass, cppicf,   decocass, decocass, ROT270, "DECO", "Peter Pepper's Ice Cream Factory (Cassette, set 1)" )
-GAME ( 1984, cppicf2,  cppicf,   cppicf,   decocass, decocass, ROT270, "DECO", "Peter Pepper's Ice Cream Factory (Cassette, set 2)" )
-GAME ( 1984, cscrtry,  decocass, cscrtry,  decocass, decocass, ROT270, "DECO", "Scrum Try (Cassette, set 1)" )
-GAME ( 1984, cscrtry2, cscrtry,  cscrtry,  decocass, decocass, ROT270, "DECO", "Scrum Try (Cassette, set 2)" )
-GAME ( 1985, cbdash,   decocass, cbdash,   decocass, decocass, ROT270, "DECO", "Boulder Dash (Cassette)" )
+GAMEBX( 1981, decocass, 0,       decocass, decocass, decocass, decocass, ROT270, "DECO", "Cassette System", NOT_A_DRIVER )
+GAMEB ( 1981, ctsttape, decocass, decocass, ctsttape, decocass, decocass, ROT270, "DECO", "Test Tape (Cassette)" )
+GAMEB ( 1981, clocknch, decocass, decocass, clocknch, decocass, decocass, ROT270, "DECO", "Lock'n'Chase (Cassette)" )
+GAMEBX( 1981, ctisland, decocass, decocass, ctisland, decocass, decocass, ROT270, "DECO", "Treasure Island (Cassette, set 1)", GAME_IMPERFECT_GRAPHICS )
+GAMEBX( 1981, ctislnd2, ctisland, decocass, ctisland, decocass, decocass, ROT270, "DECO", "Treasure Island (Cassette, set 2)", GAME_IMPERFECT_GRAPHICS )
+GAMEBX( 1981, ctislnd3, ctisland, decocass, ctisland, decocass, decocass, ROT270, "DECO", "Treasure Island (Cassette, set 3)", GAME_IMPERFECT_GRAPHICS | GAME_NOT_WORKING ) /* Different Bitswap? */
+GAMEB ( 1981, csuperas, decocass, decocass, csuperas, decocass, decocass, ROT270, "DECO", "Super Astro Fighter (Cassette)" )
+GAMEB ( 1981, castfant, decocass, decocass, castfant, decocass, decocass, ROT270, "DECO", "Astro Fantasia (Cassette)" )
+GAMEB ( 1981, cluckypo, decocass, decocass, cluckypo, decocass, decocass, ROT270, "DECO", "Lucky Poker (Cassette)" )
+GAMEB ( 1981, cterrani, decocass, decocass, cterrani, decocass, decocass, ROT270, "DECO", "Terranean (Cassette)" )
+GAMEBX( 1982, cexplore, decocass, decocass, cexplore, decocass, decocass, ROT270, "DECO", "Explorer (Cassette)", GAME_NOT_WORKING )
+GAMEB ( 1981, cprogolf, decocass, decocass, cprogolf, decocass, decocass, ROT270, "DECO", "Pro Golf (Cassette)" )
+GAMEB ( 1982, cmissnx,  decocass, decocass, cmissnx,  decocass, decocass, ROT270, "DECO", "Mission-X (Cassette)" )
+GAMEB ( 1982, cdiscon1, decocass, decocass, cdiscon1, decocass, decocass, ROT270, "DECO", "Disco No.1 (Cassette)" )
+GAMEB ( 1982, csweetht, cdiscon1, decocass, cdiscon1, decocass, decocass, ROT270, "DECO", "Sweet Heart (Cassette)" )
+GAMEB ( 1982, cptennis, decocass, decocass, cptennis, decocass, decocass, ROT270, "DECO", "Pro Tennis (Cassette)" )
+GAMEB ( 1982, ctornado, decocass, decocass, ctornado, decocass, decocass, ROT270, "DECO", "Tornado (Cassette)" )
+GAMEB ( 1982, cburnrub, decocass, decocass, cburnrub, decocass, decocass, ROT270, "DECO", "Burnin' Rubber (Cassette, set 1)" )
+GAMEB ( 1982, cburnrb2, cburnrub, decocass, cburnrub, decocass, decocass, ROT270, "DECO", "Burnin' Rubber (Cassette, set 2)" )
+GAMEB ( 1982, cbnj,     cburnrub, decocass, cbnj,     decocass, decocass, ROT270, "DECO", "Bump N Jump (Cassette)" )
+GAMEB ( 1983, cbtime,   decocass, decocass, cbtime,   dc_btime, decocass, ROT270, "DECO", "Burger Time (Cassette)" )
+GAMEB ( 1983, cgraplop, decocass, decocass, cgraplop, decocass, decocass, ROT270, "DECO", "Graplop (aka Cluster Buster) (Cassette, set 1)" )
+GAMEBX( 1983, cgraplp2, cgraplop, decocass, cgraplop, decocass, decocass, ROT270, "DECO", "Graplop (aka Cluster Buster) (Cassette, set 2)", GAME_NOT_WORKING ) /* Different Protection / Bitswap? */
+GAMEB ( 1983, clapapa,  decocass, decocass, clapapa,  decocass, decocass, ROT270, "DECO", "Rootin' Tootin' (aka La.Pa.Pa) (Cassette)" ) /* Displays 'LaPaPa during attract */
+GAMEB ( 1983, clapapa2, clapapa,  decocass, clapapa,  decocass, decocass, ROT270, "DECO", "Rootin' Tootin' (Cassette)" )				/* Displays 'Rootin' Tootin' during attract */
+GAMEB ( 1984, cfghtice, decocass, decocass, cfghtice, decocass, decocass, ROT270, "DECO", "Fighting Ice Hockey (Cassette)" )
+GAMEB ( 1983, cprobowl, decocass, decocass, cprobowl, decocass, decocass, ROT270, "DECO", "Pro Bowling (Cassette)" )
+GAMEB ( 1983, cnightst, decocass, decocass, cnightst, decocass, decocass, ROT270, "DECO", "Night Star (Cassette, set 1)" )
+GAMEB ( 1983, cnights2, cnightst, decocass, cnightst, decocass, decocass, ROT270, "DECO", "Night Star (Cassette, set 2)" )
+GAMEB ( 1983, cprosocc, decocass, decocass, cprosocc, decocass, decocass, ROT270, "DECO", "Pro Soccer (Cassette)" )
+GAMEB ( 1984, cppicf,   decocass, decocass, cppicf,   decocass, decocass, ROT270, "DECO", "Peter Pepper's Ice Cream Factory (Cassette, set 1)" )
+GAMEB ( 1984, cppicf2,  cppicf,   decocass, cppicf,   decocass, decocass, ROT270, "DECO", "Peter Pepper's Ice Cream Factory (Cassette, set 2)" )
+GAMEB ( 1984, cscrtry,  decocass, decocass, cscrtry,  decocass, decocass, ROT270, "DECO", "Scrum Try (Cassette, set 1)" )
+GAMEB ( 1984, cscrtry2, cscrtry,  decocass, cscrtry,  decocass, decocass, ROT270, "DECO", "Scrum Try (Cassette, set 2)" )
+GAMEB ( 1985, cflyball, decocass, decocass, cflyball, decocass, decocass, ROT270, "DECO", "Flying Ball? (Cassette)" )
+GAMEB ( 1985, cbdash,   decocass, decocass, cbdash,   decocass, decocass, ROT270, "DECO", "Boulder Dash (Cassette)" )
 
 /* The following may be missing dongle data if they're not Type 1 */
-GAMEX( 1985, chwy,     decocass, decocass,   decocass, decocass, ROT270, "DECO", "Highway Chase? (Cassette)", GAME_NOT_WORKING )
-GAMEX( 1985, cflyball, decocass, decocass,   decocass, decocass, ROT270, "DECO", "Flying Ball? (Cassette)", GAME_NOT_WORKING )
-GAMEX( 1985, czeroize, decocass, decocass,   decocass, decocass, ROT270, "DECO", "Zeroize? (Cassette)", GAME_NOT_WORKING )
+GAMEBX( 1985, chwy,     decocass, decocass, decocass,   decocass, decocass, ROT270, "DECO", "Highway Chase? (Cassette)", GAME_NOT_WORKING )
+GAMEBX( 1985, czeroize, decocass, decocass, decocass,   decocass, decocass, ROT270, "DECO", "Zeroize? (Cassette)", GAME_NOT_WORKING )

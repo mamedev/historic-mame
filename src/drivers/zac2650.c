@@ -323,7 +323,7 @@ static struct GfxDecodeInfo tinvader_gfxdecodeinfo[] =
 static MACHINE_DRIVER_START( tinvader )
 
 	/* basic machine hardware */
-	MDRV_CPU_ADD(S2650, 3800000/4/3)
+	MDRV_CPU_ADD(S2650, 3800000/4)
 	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
 	MDRV_CPU_IO_MAP(readport,0)
 

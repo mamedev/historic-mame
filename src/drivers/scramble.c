@@ -240,6 +240,7 @@ static ADDRESS_MAP_START( hunchbks_readmem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x1400, 0x14ff) AM_READ(MRA8_RAM)
 	AM_RANGE(0x1500, 0x1503) AM_READ(ppi8255_0_r)
 	AM_RANGE(0x1680, 0x1680) AM_READ(watchdog_reset_r)
+	AM_RANGE(0x1780, 0x1780) AM_READ(watchdog_reset_r)
 	AM_RANGE(0x1800, 0x1fff) AM_READ(MRA8_RAM)
 	AM_RANGE(0x2000, 0x2fff) AM_READ(MRA8_ROM)
 	AM_RANGE(0x3000, 0x3fff) AM_READ(hunchbks_mirror_r)
@@ -378,8 +379,40 @@ static ADDRESS_MAP_START( hotshock_sound_writeport, ADDRESS_SPACE_IO, 8 )
 	AM_RANGE(0x80, 0x80) AM_WRITE(AY8910_control_port_1_w)
 ADDRESS_MAP_END
 
+static WRITE8_HANDLER( scorpion_extra_sound_w )
+{
+	if(data != 0xff)
+		usrintf_showmessage("Played sample/speech %02X",data);
+}
+
+static WRITE8_HANDLER( scorpion_sound_cmd_w )
+{
+	// data == 0xfc -> don't play anything
+	if(data == 0xf8)
+	{
+		/* play the sample/speech */
+	}
+}
+
+static ADDRESS_MAP_START( scorpion_sound_io, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x04, 0x04) AM_WRITE(AY8910_control_port_0_w)
+	AM_RANGE(0x08, 0x08) AM_READWRITE(AY8910_read_port_0_r, AY8910_write_port_0_w)
+	AM_RANGE(0x10, 0x10) AM_WRITE(AY8910_control_port_1_w)
+	AM_RANGE(0x20, 0x20) AM_READWRITE(AY8910_read_port_1_r, AY8910_write_port_1_w)
+	AM_RANGE(0x40, 0x40) AM_WRITE(AY8910_control_port_2_w)
+	AM_RANGE(0x80, 0x80) AM_READWRITE(AY8910_read_port_2_r, AY8910_write_port_2_w)
+ADDRESS_MAP_END
+
+static READ8_HANDLER( hncholms_prot_r )
+{
+	if(activecpu_get_pc() == 0x2b || activecpu_get_pc() == 0xa27)
+		return 1;
+	else
+		return 0;
+}
 
 static ADDRESS_MAP_START( hunchbks_readport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0x00) AM_READ(hncholms_prot_r)
     AM_RANGE(S2650_SENSE_PORT, S2650_SENSE_PORT) AM_READ(input_port_3_r)
 ADDRESS_MAP_END
 
@@ -1098,6 +1131,50 @@ INPUT_PORTS_START( hunchbks )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_VBLANK )
 INPUT_PORTS_END
 
+INPUT_PORTS_START( hncholms )
+	PORT_START_TAG("IN0")
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_8WAY PORT_COCKTAIL
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_8WAY
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_8WAY
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN1 )
+
+	PORT_START_TAG("IN1")
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Lives ) )
+	PORT_DIPSETTING(    0x01, "3" )
+	PORT_DIPSETTING(    0x00, "5" )
+	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Coinage ) )
+	PORT_DIPSETTING(    0x00, "A 2/1 B 1/3" )
+	PORT_DIPSETTING(    0x02, "A 1/1 B 1/5" )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_COCKTAIL
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_COCKTAIL
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_8WAY PORT_COCKTAIL
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_8WAY PORT_COCKTAIL
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START1 )
+
+	PORT_START_TAG("IN2")
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_8WAY PORT_COCKTAIL
+	PORT_DIPNAME( 0x06, 0x00, DEF_STR( Bonus_Life ) )
+	PORT_DIPSETTING(    0x00, "10000" )
+	PORT_DIPSETTING(    0x02, "20000" )
+	PORT_DIPSETTING(    0x04, "40000" )
+	PORT_DIPSETTING(    0x06, "80000" )
+	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( Cocktail ) )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_8WAY
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* protection check? */
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_8WAY
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* protection check? */
+
+    PORT_START_TAG("SENSE")
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_VBLANK )
+INPUT_PORTS_END
+
 INPUT_PORTS_START( cavelon )
 	PORT_START_TAG("IN0")
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_8WAY PORT_COCKTAIL
@@ -1222,6 +1299,50 @@ INPUT_PORTS_START( mimonscr )
 	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Unknown ) )   /* used, something to do with the bullets */
 	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+INPUT_PORTS_END
+
+INPUT_PORTS_START( scorpion )
+	PORT_START_TAG("IN0")
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_8WAY PORT_COCKTAIL
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_8WAY
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_8WAY
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN1 )
+
+	PORT_START_TAG("IN1")
+	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Lives ) )
+	PORT_DIPSETTING(    0x03, "3")
+	PORT_DIPSETTING(    0x02, "4" )
+	PORT_DIPSETTING(    0x01, "5" )
+	PORT_DIPSETTING(    0x00, "255" )	
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_COCKTAIL
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_COCKTAIL
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_8WAY PORT_COCKTAIL
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_8WAY PORT_COCKTAIL
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START1 )
+
+	PORT_START_TAG("IN2")
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_8WAY PORT_COCKTAIL
+	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x04, 0x00, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( Cocktail ) )
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Coinage ) )
+	PORT_DIPSETTING(    0x08, "A 1/1  B 1/1" )
+	PORT_DIPSETTING(    0x00, "A 1/1  B 1/3" )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_8WAY
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_8WAY
+	PORT_DIPNAME( 0xa0, 0xa0, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(    0xa0, DEF_STR( Normal ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Medium ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Hard ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Very_Hard ) )
 INPUT_PORTS_END
 
 
@@ -1377,6 +1498,18 @@ struct AY8910interface explorer_ay8910_interface =
 	{ 0, 0 },
 	{ 0, 0 },
 	{ 0, 0 }
+};
+
+struct AY8910interface scorpion_ay8910_interface =
+{
+	3,	/* 3 chips */
+	14318000/8,	/* 1.78975 MHz */
+	/* Ant Eater clips if the volume is set higher than this */
+	{ MIXERG(16,MIXER_GAIN_2x,MIXER_PAN_CENTER), MIXERG(16,MIXER_GAIN_2x,MIXER_PAN_CENTER), MIXERG(16,MIXER_GAIN_2x,MIXER_PAN_CENTER) },
+	{ 0,					  0, soundlatch_r },
+	{ 0,					  0, scramble_portB_r },
+	{ scorpion_extra_sound_w, 0, 0 },
+	{ scorpion_sound_cmd_w,   0, 0 }
 };
 
 static struct DACinterface sfx_dac_interface =
@@ -1641,6 +1774,28 @@ static MACHINE_DRIVER_START( hunchbks )
 	MDRV_PALETTE_INIT(galaxian)
 MACHINE_DRIVER_END
 
+static MACHINE_DRIVER_START( hncholms )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(hunchbks)
+	MDRV_CPU_REPLACE("main", S2650, 18432000/6/2/2)
+
+	MDRV_VIDEO_START(scorpion)
+MACHINE_DRIVER_END
+
+static MACHINE_DRIVER_START( scorpion )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(scramble)
+
+	MDRV_CPU_MODIFY("audio")
+	MDRV_CPU_IO_MAP(scorpion_sound_io,0)
+
+	MDRV_VIDEO_START(scorpion)
+
+	/* sound hardware */
+	MDRV_SOUND_REPLACE("8910", AY8910, scorpion_ay8910_interface)
+MACHINE_DRIVER_END
 
 /***************************************************************************
 
@@ -2147,7 +2302,7 @@ ROM_START( conquer )
 ROM_END
 
 ROM_START( hunchbks )
-	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
+	ROM_REGION( 0x8000, REGION_CPU1, 0 )	/* 32k for code */
 	ROM_LOAD( "2c_hb01.bin",  0x0000, 0x0800, CRC(8bebd834) SHA1(08f2ce732d2d8754bf559260e1f656a33e2a06a5) )
 	ROM_LOAD( "2e_hb02.bin",  0x0800, 0x0800, CRC(07de4229) SHA1(9f333509ae3d6c579f6d96caa172a0abe9eefb30) )
 	ROM_LOAD( "2f_hb03.bin",  0x2000, 0x0800, CRC(b75a0dfc) SHA1(c60c833f28c6de027d46f5a2a54ad5646ec58453) )
@@ -2166,6 +2321,31 @@ ROM_START( hunchbks )
 
 	ROM_REGION( 0x0020, REGION_PROMS, 0 )
 	ROM_LOAD( "6e_prom.bin",  0x0000, 0x0020, CRC(01004d3f) SHA1(e53cbc54ea96e846481a67bbcccf6b1726e70f9c) )
+ROM_END
+
+ROM_START( hncholms )
+	ROM_REGION( 0x8000, REGION_CPU1, 0 )	/* 32k for code */
+	ROM_LOAD( "hncholym.2d",  0x0000, 0x0800, CRC(fb453f9c) SHA1(e4c059b10af1aa8405958c0fd139fb84d08ec9f3) )
+	ROM_LOAD( "hncholym.2e",  0x0800, 0x0800, CRC(b1429420) SHA1(9e393750e5651c8b14acc11e3591db0a0a599a4d) )
+	ROM_LOAD( "hncholym.2f",  0x2000, 0x0800, CRC(afc98e28) SHA1(efc7918a95d9011cbc0c5fbaee3793d95ecbcf89) )
+	ROM_LOAD( "hncholym.2h",  0x2800, 0x0800, CRC(6785bf17) SHA1(e0dadda7d55d2046312a87ed700654952662a6b3) )
+	ROM_LOAD( "hncholym.2j",  0x4000, 0x0800, CRC(0e1e4133) SHA1(84c3b8e3e81f6ef3311f1272ee6633cec10b796e) )
+	ROM_LOAD( "hncholym.2l",  0x4800, 0x0800, CRC(6e982609) SHA1(2d2aa16ad27f6de486eebfd82b23f7ac706faee5) )
+	ROM_LOAD( "hncholym.2m",  0x6000, 0x0800, CRC(b9141914) SHA1(955f7b909b3ec27a07817d031fcbb4029e1cff81) )
+	ROM_LOAD( "hncholym.2p",  0x6800, 0x0800, CRC(ca37b55b) SHA1(cb423c1aac91654657e72d0a0cbc311cffc9df0c) )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for the audio CPU */
+	ROM_LOAD( "hncholym.5c",  0x0000, 0x0800, CRC(e7758775) SHA1(3ca843e7519d7f38812e6e2e7b5bb78ac3c02676) )
+
+	ROM_REGION( 0x2000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "hncholym.5f",  0x0000, 0x1000, CRC(75ad3542) SHA1(1094a30861c68c1f4fc85fbfd5606c5feec3843b) )
+	ROM_LOAD( "hncholym.5h",  0x1000, 0x1000, CRC(6fec9dd3) SHA1(2366b10e8f9ba58a565ef2e1a6eddf7c4b51fe79) )
+
+	ROM_REGION( 0x0020, REGION_PROMS, 0 )
+	ROM_LOAD( "prom.6e",      0x0000, 0x0020, CRC(4e3caeab) SHA1(a25083c3e36d28afdefe4af6e6d4f3155e303625) )
+
+	ROM_REGION( 0x0200, REGION_USER1, 0 ) /* unknown - from the custom module */
+	ROM_LOAD( "82s147.1a",    0x0000, 0x0200, CRC(d461a48b) SHA1(832fc1de4875d5f19e53d72ccf5dcdb5bcbee1af) )
 ROM_END
 
 ROM_START( cavelon )
@@ -2271,6 +2451,59 @@ ROM_START( mimonscr )
 	ROM_LOAD( "c01s.6e",    0x0000, 0x0020, CRC(4e3caeab) SHA1(a25083c3e36d28afdefe4af6e6d4f3155e303625) )
 ROM_END
 
+ROM_START( scorpion )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
+	ROM_LOAD( "1.2d",         0x0000, 0x1000, CRC(ba1219b4) SHA1(33c7843dba44152a8bc3223ea0c30b13609b80ba) )
+	ROM_LOAD( "2.2f",         0x1000, 0x1000, CRC(c3909ab6) SHA1(0bec902ae4291fa0530f4c89ad45cc7aab888b7a) )
+	ROM_LOAD( "3.2g",         0x2000, 0x1000, CRC(43261352) SHA1(49468cbed7e0286b260eef297bd5fad0ab9fd45b) )
+	ROM_LOAD( "4.2h",         0x3000, 0x1000, CRC(aba2276a) SHA1(42b0378f06d2bdb4faaaa95274a6c0f965716877) )
+	ROM_LOAD( "5.2k",         0x6000, 0x0800, CRC(952f78f2) SHA1(9562037b104fc1852c2d2650209a77ffce2cb90e) )
+	ROM_CONTINUE(             0x5800, 0x0800 )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for the audio CPU */
+	ROM_LOAD( "32_a4.7c",     0x0000, 0x1000, CRC(361b8a36) SHA1(550ac5f721aaa9fea5f6d63ba590d6b367525c23) )
+	ROM_LOAD( "32_a5.7d",     0x1000, 0x1000, CRC(addecdd4) SHA1(ba28f1d9c7c6b5e8ecef56a4b3f64be13fc10d43) )
+
+	ROM_REGION( 0x2000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "32_f5.5f",     0x0000, 0x1000, CRC(1e5da9d6) SHA1(ca8b27e6dd40e4ca13e7e6b5f813bafca78b62f4) )
+	ROM_LOAD( "32_h5.5h",     0x1000, 0x1000, CRC(a57adb0a) SHA1(d97c7dc4a6c5efb59cc0148e2498156c682c6714) )
+
+	ROM_REGION( 0x3000, REGION_SOUND1, 0 ) /* Samples? / Speech? */
+	ROM_LOAD( "32_a3.6e",     0x0000, 0x1000, CRC(279ae6f9) SHA1(a93b1d68c9f4b6ad62fdb8816285e61bd3b4b884) )
+	ROM_LOAD( "32_a2.6d",     0x1000, 0x1000, CRC(90352dd4) SHA1(62c261a2f2fbd8eff31d5c72cf532d5e43d86dd3) )
+	ROM_LOAD( "32_a1.6c",     0x2000, 0x1000, CRC(3bf2452d) SHA1(7a163e0ef108dd40d3beab5e9805886e45be744b) )
+
+	ROM_REGION( 0x0020, REGION_PROMS, 0 )
+	ROM_LOAD( "prom.6e",      0x0000, 0x0020, CRC(4e3caeab) SHA1(a25083c3e36d28afdefe4af6e6d4f3155e303625) )
+ROM_END
+
+ROM_START( scrpiona )
+	/* this dump is bad (at least one rom) */
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
+	ROM_LOAD( "scor_d2.bin",  0x0000, 0x1000, CRC(c5b9daeb) SHA1(faf7a22013dd5f063eb8f506f3722cfd5522539a) )
+	ROM_LOAD( "scor_e2.bin",  0x1000, 0x1000, CRC(82308d05) SHA1(26bc7c8b3ea0020fd1b93f6aaa29d82d04ae64b2) )
+	ROM_LOAD( "scor_g2.bin",  0x2000, 0x1000, CRC(756b09cd) SHA1(9aec34e063fe8c0d1392db09daea2875d06eec46) )
+	ROM_LOAD( "scor_h2.bin",  0x3000, 0x1000, CRC(a0457b93) SHA1(5ed32e117a97660dae001bd97fcb3f31e0debb24) )
+	ROM_LOAD( "scor_k2.bin",  0x5800, 0x0800, CRC(42ec34d8) SHA1(b358d10a96490f325420b992e8e03bb3884e415a) )
+	ROM_LOAD( "scor_l2.bin",  0x6000, 0x0800, CRC(6623da33) SHA1(99110005d00c80d674bde5d21608f50b85ee488c) )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for the audio CPU */
+	ROM_LOAD( "32_a4.7c",     0x0000, 0x1000, CRC(361b8a36) SHA1(550ac5f721aaa9fea5f6d63ba590d6b367525c23) )
+	ROM_LOAD( "32_a5.7d",     0x1000, 0x1000, CRC(addecdd4) SHA1(ba28f1d9c7c6b5e8ecef56a4b3f64be13fc10d43) )
+
+	ROM_REGION( 0x2000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "scor_f5.bin",  0x0000, 0x1000, CRC(60180a38) SHA1(518c1267523139aa4e27860012a722b67fe25b6d) )
+	ROM_LOAD( "32_h5.5h",     0x1000, 0x1000, CRC(a57adb0a) SHA1(d97c7dc4a6c5efb59cc0148e2498156c682c6714) )
+
+	ROM_REGION( 0x3000, REGION_SOUND1, 0 ) /* Samples? / Speech? */
+	ROM_LOAD( "scor_a3.bin",  0x0000, 0x1000, CRC(04abf178) SHA1(2e7f231413d9ec461ca21840f31d1d6b8b17c4d5) )
+	ROM_LOAD( "scor_a2.bin",  0x1000, 0x1000, CRC(452d6354) SHA1(3d5397fddcc17b4d03b9cdc53a6439f159d1bfcc) )
+	ROM_LOAD( "32_a1.6c",     0x2000, 0x1000, CRC(3bf2452d) SHA1(7a163e0ef108dd40d3beab5e9805886e45be744b) )
+
+	ROM_REGION( 0x0020, REGION_PROMS, 0 )
+	ROM_LOAD( "prom.6e",      0x0000, 0x0020, CRC(4e3caeab) SHA1(a25083c3e36d28afdefe4af6e6d4f3155e303625) )
+ROM_END
+
 
 GAME( 1981, scramble, 0,        scramble, scramble, scramble,     ROT90, "Konami", "Scramble" )
 GAME( 1981, scrambls, scramble, scramble, scramble, scrambls,     ROT90, "[Konami] (Stern license)", "Scramble (Stern)" )
@@ -2296,7 +2529,10 @@ GAME( 1983, mrkougb,  mrkougar, mrkougb,  mrkougar, mrkougb,      ROT90, "bootle
 GAME( 1982, hotshock, 0,        hotshock, hotshock, hotshock,     ROT90, "E.G. Felaco", "Hot Shocker" )
 GAMEX(1982, conquer,  0,        hotshock, hotshock, 0,            ROT90, "<unknown>", "Conquer", GAME_NOT_WORKING )
 GAME( 1983, hunchbks, hunchbak, hunchbks, hunchbks, scramble_ppi, ROT90, "Century Electronics", "Hunchback (Scramble hardware)" )
+GAME( 1984, hncholms, huncholy, hncholms, hncholms, scramble_ppi, ROT90, "Century Electronics", "Hunchback Olympic (Scramble hardware)" )
 GAME( 1983, cavelon,  0,        cavelon,  cavelon,  cavelon,      ROT90, "Jetsoft", "Cavelon" )
 GAME( 1983, sfx,      0,        sfx,      sfx,      sfx,          ORIENTATION_FLIP_X, "Nichibutsu", "SF-X" )
 GAMEX(1983, skelagon, sfx,      sfx,      sfx,      sfx,          ORIENTATION_FLIP_X, "Nichibutsu USA", "Skelagon", GAME_NOT_WORKING )
 GAME( 198?, mimonscr, mimonkey, mimonscr, mimonscr, mimonscr,     ROT90, "bootleg", "Mighty Monkey (bootleg on Scramble hardware)" )
+GAMEX(1982, scorpion, 0,		scorpion, scorpion, scorpion,	  ROT90, "Zaccaria", "Scorpion (set 1)", GAME_IMPERFECT_SOUND )
+GAMEX(1982, scrpiona, scorpion, scorpion, scorpion, scorpion,	  ROT90, "Zaccaria", "Scorpion (set 2)", GAME_NOT_WORKING | GAME_IMPERFECT_SOUND )
