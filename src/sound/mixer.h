@@ -49,15 +49,7 @@ const char *mixer_get_name(int channel);
   which is a private value set only at startup.
   By default, all channels play at volume 100 (the maximum). If there is some
   external circuitry which can alter the volume of the sound source, you can
-  use this function to emulate that. The resolution provided by this function
-  is VERY LOW, lower than the 100 steps it allows. That's because it is
-  scaled by the mixing level (which is typically around 25%) before being sent
-  to the OS dependant code, and because the resolution provided by the OS
-  dependant code is not guaranteed (for example, the DOS port only has 64
-  levels).
-  Therefore, this function should only be used for rough control of the output,
-  or to just turn channels on and off. If precise control is needed, it should
-  be implemented in the stream generation.
+  use this function to emulate that.
 */
 void mixer_set_volume(int channel,int volume);
 
@@ -66,9 +58,11 @@ void mixer_play_sample_16(int channel,INT16 *data,int len,int freq,int loop);
 void mixer_stop_sample(int channel);
 int mixer_is_sample_playing(int channel);
 void mixer_set_sample_frequency(int channel,int freq);
+void mixer_sound_enable_global_w(int enable);
 
 void mixer_play_streamed_sample_16(int channel,INT16 *data,int len,int freq);
 int mixer_samples_this_frame(void);
+int mixer_need_samples_this_frame(int channel,int freq);
 
 /* private functions for user interface only - don't call them from drivers! */
 void mixer_set_mixing_level(int channel,int level);

@@ -69,6 +69,9 @@ enum
 #if (HAS_M65CE02)
 	CPU_M65CE02,
 #endif
+#if (HAS_M6509)
+    CPU_M6509,
+#endif
 #if (HAS_M6510)
 	CPU_M6510,
 #endif
@@ -373,6 +376,7 @@ struct GameDriver
 #define GAME_NO_SOUND			0x0040	/* sound is missing */
 #define GAME_IMPERFECT_SOUND	0x0080	/* sound is known to be wrong */
 #define	GAME_REQUIRES_16BIT		0x0100	/* cannot fit in 256 colors */
+#define GAME_NO_COCKTAIL		0x0200	/* screen flip support is missing */
 #define NOT_A_DRIVER			0x4000	/* set by the fake "root" driver_ and by "containers" */
 										/* e.g. driver_neogeo. */
 #ifdef MESS

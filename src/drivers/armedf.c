@@ -1105,8 +1105,8 @@ ROM_END
 
 
 
-GAME( 1987, terraf,   0,      terraf,   terraf,   0, ROT0,   "Nichibutsu", "Terra Force" )
-GAME( 1987, terrafu,  terraf, terraf,   terraf,   0, ROT0,   "Nichibutsu USA", "Terra Force (US)" )
-GAME( 1987, kodure,   0,      kodure,   kodure,   0, ROT0,   "Nichibutsu", "Kodure Ookami (Japan)" )
-GAME( 1988, armedf,   0,      armedf,   armedf,   0, ROT270, "Nichibutsu", "Armed Formation" )
-GAME( 1988, cclimbr2, 0,      cclimbr2, cclimbr2, 0, ROT0,   "Nichibutsu", "Crazy Climber 2 (Japan)" )
+GAMEX( 1987, terraf,   0,      terraf,   terraf,   0, ROT0,   "Nichibutsu", "Terra Force", GAME_NO_COCKTAIL )
+GAMEX( 1987, terrafu,  terraf, terraf,   terraf,   0, ROT0,   "Nichibutsu USA", "Terra Force (US)", GAME_NO_COCKTAIL )
+GAMEX( 1987, kodure,   0,      kodure,   kodure,   0, ROT0,   "Nichibutsu", "Kodure Ookami (Japan)", GAME_NO_COCKTAIL )
+GAMEX( 1988, armedf,   0,      armedf,   armedf,   0, ROT270, "Nichibutsu", "Armed Formation", GAME_NO_COCKTAIL )
+GAMEX( 1988, cclimbr2, 0,      cclimbr2, cclimbr2, 0, ROT0,   "Nichibutsu", "Crazy Climber 2 (Japan)", GAME_NO_COCKTAIL )

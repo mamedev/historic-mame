@@ -311,7 +311,7 @@ static struct YM2151interface ym2151_interface =
 {
 	1,			/* 1 chip */
 	3579545,	/* 3.579545 MHz */
-	{ YM3012_VOL(50,MIXER_PAN_LEFT,50,MIXER_PAN_RIGHT) },
+	{ YM3012_VOL(100,MIXER_PAN_LEFT,100,MIXER_PAN_RIGHT) },
 	{ 0 },
 };
 
@@ -319,7 +319,7 @@ static struct K053260_interface k053260_interface =
 {
 	3579545,
 	REGION_SOUND1, /* memory region */
-	{ MIXER(75,MIXER_PAN_LEFT), MIXER(75,MIXER_PAN_RIGHT) },
+	{ MIXER(70,MIXER_PAN_LEFT), MIXER(70,MIXER_PAN_RIGHT) },
 //	sound_nmi_callback
 };
 

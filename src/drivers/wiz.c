@@ -69,6 +69,10 @@ TODO:
 
 - Verify/Fix colors
 - Sprite banking in Wiz. I have a hack in wiz_vh_screenrefresh
+- background noise in scion (but not scionc). Note that the sound program is
+  almost identical, except for three patches affecting noise period, noise
+  channel C enable and channel C volume. So it looks just like a bug in the
+  original (weird), or some strange form of protection.
 
 ***************************************************************************/
 

@@ -500,6 +500,6 @@ static void init_exerionb(void)
 
 
 
-GAMEX( 1983, exerion,  0,       exerion, exerion, exerion,  ROT90, "Jaleco", "Exerion", GAME_WRONG_COLORS )
-GAMEX( 1983, exeriont, exerion, exerion, exerion, exerion,  ROT90, "Jaleco (Taito America license)", "Exerion (Taito)", GAME_WRONG_COLORS )
-GAMEX( 1983, exerionb, exerion, exerion, exerion, exerionb, ROT90, "Jaleco", "Exerion (bootleg)", GAME_WRONG_COLORS )
+GAMEX( 1983, exerion,  0,       exerion, exerion, exerion,  ROT90, "Jaleco", "Exerion", GAME_WRONG_COLORS | GAME_NO_COCKTAIL )
+GAMEX( 1983, exeriont, exerion, exerion, exerion, exerion,  ROT90, "Jaleco (Taito America license)", "Exerion (Taito)", GAME_WRONG_COLORS | GAME_NO_COCKTAIL )
+GAMEX( 1983, exerionb, exerion, exerion, exerion, exerionb, ROT90, "Jaleco", "Exerion (bootleg)", GAME_WRONG_COLORS | GAME_NO_COCKTAIL )

@@ -39,7 +39,7 @@ void arkanoid_Z80_mcu_w(int offset,int data)
 	fromz80 = data;
 
 	/* give up a little bit of time to let the 68705 detect the write */
-	cpu_yielduntil_trigger (700);
+	cpu_spinuntil_trigger(700);
 }
 
 int arkanoid_68705_portA_r(int offset)
@@ -76,7 +76,7 @@ void arkanoid_68705_portC_w(int offset,int data)
 	if ((ddrC & 0x04) && (~data & 0x04) && (portC_out & 0x04))
 	{
 		/* mark that the command has been seen */
-		cpu_trigger (700);
+		cpu_trigger(700);
 
 		/* return the last value the Z80 wrote */
 		z80write = 0;

@@ -22,26 +22,6 @@ int crimfght_vh_start( void );
 void crimfght_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 
-
-static int paletteram_selected;
-static unsigned char *ram;
-
-static int bankedram_r(int offset)
-{
-	if (paletteram_selected)
-		return paletteram_r(offset);
-	else
-		return ram[offset];
-}
-
-static void bankedram_w(int offset,int data)
-{
-	if (paletteram_selected)
-		paletteram_xBBBBBGGGGGRRRRR_swap_w(offset,data);
-	else
-		ram[offset] = data;
-}
-
 static void crimfght_coin_w(int offset,int data)
 {
 	coin_counter_w(0,data & 1);
@@ -88,7 +68,7 @@ static int speedup_r( int offs )
 
 static struct MemoryReadAddress crimfght_readmem[] =
 {
-	{ 0x0000, 0x03ff, bankedram_r },		/* banked RAM */
+	{ 0x0000, 0x03ff, MRA_BANK1 },			/* banked RAM */
 	{ 0x0414, 0x0414, speedup_r },
 	{ 0x0400, 0x1fff, MRA_RAM },			/* RAM */
 	{ 0x3f80, 0x3f80, input_port_7_r },		/* Coinsw */
@@ -101,14 +81,14 @@ static struct MemoryReadAddress crimfght_readmem[] =
 	{ 0x3f87, 0x3f87, input_port_0_r },		/* DSW #1 */
 	{ 0x3f88, 0x3f88, watchdog_reset_r },	/* watchdog reset */
 	{ 0x2000, 0x5fff, K052109_051960_r },	/* video RAM + sprite RAM */
-	{ 0x6000, 0x7fff, MRA_BANK1 },			/* banked ROM */
+	{ 0x6000, 0x7fff, MRA_BANK2 },			/* banked ROM */
 	{ 0x8000, 0xffff, MRA_ROM },			/* ROM */
 	{ -1 }	/* end of table */
 };
 
 static struct MemoryWriteAddress crimfght_writemem[] =
 {
-	{ 0x0000, 0x03ff, bankedram_w, &ram },			/* banked RAM */
+	{ 0x0000, 0x03ff, MWA_BANK1 },					/* banked RAM */
 	{ 0x0400, 0x1fff, MWA_RAM },					/* RAM */
 	{ 0x3f88, 0x3f88, crimfght_coin_w },			/* coin counters */
 	{ 0x3f8c, 0x3f8c, crimfght_sh_irqtrigger_w },	/* cause interrupt on audio CPU? */
@@ -308,7 +288,7 @@ INPUT_PORTS_START( crimfgtj )
 //	PORT_DIPSETTING(    0x00, "Invalid" )
 
 	PORT_START	/* DSW #2 */
-	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Lives ) )
+	PORT_DIPNAME( 0x03, 0x02, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x03, "1" )
 	PORT_DIPSETTING(    0x02, "2" )
 	PORT_DIPSETTING(    0x01, "3" )
@@ -514,6 +494,28 @@ ROM_START( crimfgtj )
 	ROM_LOAD( "821k03.e5",  0x00000, 0x40000, 0xfef8505a )
 ROM_END
 
+ROM_START( crimfgt2 )
+ROM_REGION( 0x28000, REGION_CPU1 ) /* code + banked roms */
+	ROM_LOAD( "crimefb.r02", 0x10000, 0x18000, 0x4ecdd923 )
+	ROM_CONTINUE(           0x08000, 0x08000 )
+
+	ROM_REGION( 0x10000, REGION_CPU2 ) /* 64k for the sound CPU */
+	ROM_LOAD( "821l01.h4",  0x0000, 0x8000, 0x0faca89e )
+
+	ROM_REGION( 0x080000, REGION_GFX1 ) /* graphics ( don't dispose as the program can read them ) */
+	ROM_LOAD( "821k06.k13", 0x000000, 0x040000, 0xa1eadb24 )	/* characters */
+	ROM_LOAD( "821k07.k19", 0x040000, 0x040000, 0x060019fa )
+
+	ROM_REGION( 0x100000, REGION_GFX2 ) /* graphics ( don't dispose as the program can read them ) */
+	ROM_LOAD( "821k04.k2",  0x000000, 0x080000, 0x00e0291b )	/* sprites */
+	ROM_LOAD( "821k05.k8",  0x080000, 0x080000, 0xe09ea05d )
+
+	ROM_REGION( 0x0100, REGION_PROMS )
+	ROM_LOAD( "821a08.i15", 0x0000, 0x0100, 0x7da55800 )	/* priority encoder (not used) */
+
+	ROM_REGION( 0x40000, REGION_SOUND1 )	/* data for the 007232 */
+	ROM_LOAD( "821k03.e5",  0x00000, 0x40000, 0xfef8505a )
+ROM_END
 
 /***************************************************************************
 
@@ -527,13 +529,20 @@ static void crimfght_banking( int lines )
 	int offs = 0;
 
 	/* bit 5 = select work RAM or palette */
-	paletteram_selected = lines & 0x20;
+	if (lines & 0x20){
+		cpu_setbankhandler_r (1, paletteram_r);							/* palette */
+		cpu_setbankhandler_w (1, paletteram_xBBBBBGGGGGRRRRR_swap_w);	/* palette */
+	}
+	else{
+		cpu_setbankhandler_r (1, MRA_RAM);								/* RAM */
+		cpu_setbankhandler_w (1, MWA_RAM);								/* RAM */
+	}
 
 	/* bit 6 = enable char ROM reading through the video RAM */
 	K052109_set_RMRD_line((lines & 0x40) ? ASSERT_LINE : CLEAR_LINE);
 
 	offs = 0x10000 + ( ( lines & 0x0f ) * 0x2000 );
-	cpu_setbank( 1, &RAM[offs] );
+	cpu_setbank( 2, &RAM[offs] );
 }
 
 static void crimfght_init_machine( void )
@@ -541,10 +550,9 @@ static void crimfght_init_machine( void )
 	unsigned char *RAM = memory_region(REGION_CPU1);
 
 	konami_cpu_setlines_callback = crimfght_banking;
-	paletteram_selected = 0;
 
 	/* init the default bank */
-	cpu_setbank( 1, &RAM[0x10000] );
+	cpu_setbank( 2, &RAM[0x10000] );
 }
 
 static void init_crimfght(void)
@@ -555,5 +563,6 @@ static void init_crimfght(void)
 
 
 
-GAME( 1989, crimfght, 0,        crimfght, crimfght, crimfght, ROT0, "Konami", "Crime Fighters (US)" )
-GAME( 1989, crimfgtj, crimfght, crimfght, crimfgtj, crimfght, ROT0, "Konami", "Crime Fighters (Japan)" )
+GAME( 1989, crimfght, 0,        crimfght, crimfght, crimfght, ROT0, "Konami", "Crime Fighters (US 4 players)" )
+GAME( 1989, crimfgt2, crimfght, crimfght, crimfgtj, crimfght, ROT0, "Konami", "Crime Fighters (World 2 Players)" )
+GAME( 1989, crimfgtj, crimfght, crimfght, crimfgtj, crimfght, ROT0, "Konami", "Crime Fighters (Japan 2 Players)" )

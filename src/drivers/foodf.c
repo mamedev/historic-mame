@@ -201,7 +201,7 @@ static struct POKEYinterface pokey_interface =
 {
 	3,	/* 3 chips */
 	600000,	/* .6 Mhz */
-	{ 50, 50, 50 },
+	{ 33, 33, 33 },
 	/* The 8 pot handlers */
 	{ 0, 0, 0 },
 	{ 0, 0, 0 },
@@ -285,4 +285,4 @@ ROM_END
 
 
 
-GAME( 1982, foodf, 0, foodf, foodf, 0, ROT0, "Atari", "Food Fight" )
+GAMEX( 1982, foodf, 0, foodf, foodf, 0, ROT0, "Atari", "Food Fight", GAME_NO_COCKTAIL )

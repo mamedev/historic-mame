@@ -237,6 +237,39 @@ int readroms(void)
 							printf("Unable to read ROM %s\n",name);
 						}
 					}
+					else if (romp->length & ROMFLAG_QUAD) {
+						static int which_quad=0; /* This is multi session friendly, as we only care about the modulus */
+						unsigned char *temp;
+						int base=0;
+
+						temp = malloc(length);	/* Need to load rom to temporary space */
+						osd_fread(f,temp,length);
+
+						/* Copy quad to region */
+						c = Machine->memory_region[region] + romp->offset;
+
+					#ifdef LSB_FIRST
+						switch (which_quad%4) {
+							case 0: base=1; break;
+							case 1: base=0; break;
+							case 2: base=3; break;
+							case 3: base=2; break;
+						}
+					#else
+						switch (which_quad%4) {
+							case 0: base=0; break;
+							case 1: base=1; break;
+							case 2: base=2; break;
+							case 3: base=3; break;
+						}
+					#endif
+
+						for (i=base; i< length*4; i += 4)
+							c[i]=temp[i/4];
+
+						which_quad++;
+						free(temp);
+					}
 					else
 					{
 						int wide = romp->length & ROMFLAG_WIDE;
@@ -570,6 +603,8 @@ struct GameSamples *readsamples(const char **samplenames,const char *basename)
 
 	i = 0;
 	while (samplenames[i+skipfirst] != 0) i++;
+
+	if (!i) return 0;
 
 	if ((samples = malloc(sizeof(struct GameSamples) + (i-1)*sizeof(struct GameSample))) == 0)
 		return 0;

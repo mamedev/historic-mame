@@ -865,5 +865,5 @@ static void init_vangrd2( void )
 
 
 GAME( 1983, marvins,  0, marvins,  marvins,  marvins,  ROT270, "SNK", "Marvin's Maze" )
-GAME( 1984, madcrash, 0, madcrash, madcrash, madcrash, ROT0,   "SNK", "Mad Crasher" )
+GAMEX(1984, madcrash, 0, madcrash, madcrash, madcrash, ROT0,   "SNK", "Mad Crasher", GAME_IMPERFECT_SOUND )
 GAME( 1984, vangrd2,  0, madcrash, vangrd2,  vangrd2,  ROT270, "SNK", "Vanguard II" )

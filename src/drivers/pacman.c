@@ -113,6 +113,12 @@ Reads:  $01C8, $01D2, $0260, $030E, $040E, $0416, $046E, $0474,
 	$2AAE, $2BF4, $2E0A, $39D5, $39DA, $3AE2, $3AEA, $3EE0,
 	$3EE9, $3F07, $3F0D
 
+
+
+Notes:
+
+- The mystery items in Ali Baba don't work correctly because of protection
+
 ***************************************************************************/
 
 #include "driver.h"
@@ -148,6 +154,26 @@ static void alibaba_sound_w(int offset, int data)
 		spriteram_2[offset - 0x10] = data;
 	else
 		pengo_sound_w(offset - 0x10, data);
+}
+
+
+static int alibaba_mystery_1_r(int offset)
+{
+	// The return value determines what the mystery item is.  Each bit corresponds
+	// to a question mark
+
+	return rand() & 0x0f;
+}
+
+static int alibaba_mystery_2_r(int offset)
+{
+	static int mystery = 0;
+
+	// The single bit return value determines when the mystery is lit up.
+	// This is certainly wrong
+
+	mystery++;
+	return (mystery >> 10) & 1;
 }
 
 
@@ -203,7 +229,8 @@ static struct MemoryReadAddress alibaba_readmem[] =
 	{ 0x5000, 0x503f, input_port_0_r },	/* IN0 */
 	{ 0x5040, 0x507f, input_port_1_r },	/* IN1 */
 	{ 0x5080, 0x50bf, input_port_2_r },	/* DSW1 */
-	{ 0x50c0, 0x50ff, input_port_3_r },	/* DSW2 */
+	{ 0x50c0, 0x50c0, alibaba_mystery_1_r },
+	{ 0x50c1, 0x50c1, alibaba_mystery_2_r },
 	{ 0x8000, 0x8fff, MRA_ROM },
 	{ 0x9000, 0x93ff, MRA_RAM },
 	{ 0xa000, 0xa7ff, MRA_ROM },
@@ -658,6 +685,54 @@ INPUT_PORTS_START( eyes )
 	PORT_BIT( 0xff, IP_ACTIVE_HIGH, IPT_UNUSED )
 INPUT_PORTS_END
 
+INPUT_PORTS_START( mrtnt )
+	PORT_START  /* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_4WAY )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_4WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_4WAY )
+	PORT_SERVICE( 0x10, IP_ACTIVE_LOW )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_TILT )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN2 )
+
+	PORT_START	/* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
+
+	PORT_START	/* DSW 1 */
+	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Coinage ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x03, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Free_Play ) )
+	PORT_DIPNAME( 0x0c, 0x08, DEF_STR( Lives ) )
+	PORT_DIPSETTING(    0x0c, "2" )
+	PORT_DIPSETTING(    0x08, "3" )
+	PORT_DIPSETTING(    0x04, "4" )
+	PORT_DIPSETTING(    0x00, "5" )
+	PORT_DIPNAME( 0x30, 0x30, DEF_STR( Bonus_Life ) )
+	PORT_DIPSETTING(    0x30, "75000" )
+	PORT_DIPSETTING(    0x20, "100000" )
+	PORT_DIPSETTING(    0x10, "125000" )
+	PORT_DIPSETTING(    0x00, "150000" )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Cocktail ) )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+
+	PORT_START	/* DSW 2 */
+	PORT_BIT( 0xff, IP_ACTIVE_HIGH, IPT_UNUSED )
+INPUT_PORTS_END
+
 INPUT_PORTS_START( lizwiz )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY )
@@ -969,17 +1044,15 @@ INPUT_PORTS_START( alibaba )
 	PORT_DIPSETTING(0x10, DEF_STR( Off ) )
 	PORT_DIPSETTING(0x00, DEF_STR( On ) )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_COIN1 )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN2 )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN3 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN2 )
 
 	PORT_START	/* IN1 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_4WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_4WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_4WAY | IPF_COCKTAIL )
-	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x10, DEF_STR( Off) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START2 )
 	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Cabinet ) )
@@ -1008,9 +1081,6 @@ INPUT_PORTS_START( alibaba )
 	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x80, DEF_STR( Off) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-
-	PORT_START	/* DSW 2 */
-	PORT_BIT( 0xff, IP_ACTIVE_HIGH, IPT_UNUSED )
 INPUT_PORTS_END
 
 
@@ -1855,8 +1925,8 @@ ROM_START( mrtnt )
 	ROM_LOAD( "tnt.6",        0x0000, 0x1000, 0x97634d8b )
 
 	ROM_REGION( 0x0120, REGION_PROMS )
-	ROM_LOAD( "mrtnt08.bin",  0x0000, 0x0020, 0x00000000 )	/* wrong! from Pac-Man */
-	ROM_LOAD( "mrtnt04.bin",  0x0020, 0x0100, 0x00000000 )	/* wrong! from Pac-Man */
+	ROM_LOAD( "mrtnt08.bin",  0x0000, 0x0020, 0x00000000 )
+	ROM_LOAD( "mrtnt04.bin",  0x0020, 0x0100, 0x00000000 )
 
 	ROM_REGION( 0x0200, REGION_SOUND1 )	/* sound PROMs */
 	ROM_LOAD( "82s126.1m",    0x0000, 0x0100, 0xa9cc86bf )
@@ -2227,7 +2297,7 @@ GAME( 1982, ponpoko,  0,        pacman,   ponpoko,  ponpoko,  ROT0,   "Sigma Ent
 GAME( 1982, ponpokov, ponpoko,  pacman,   ponpoko,  ponpoko,  ROT0,   "Sigma Ent. Inc. (Venture Line license)", "Ponpoko (Venture Line)" )
 GAME( 1982, eyes,     0,        pacman,   eyes,     eyes,     ROT90,  "Digitrex Techstar (Rock-ola license)", "Eyes (Digitrex Techstar)" )
 GAME( 1982, eyes2,    eyes,     pacman,   eyes,     eyes,     ROT90,  "Techstar Inc. (Rock-ola license)", "Eyes (Techstar Inc.)" )
-GAME( 1983, mrtnt,    0,        pacman,   eyes,     eyes,     ROT90,  "Telko", "Mr. TNT" )
+GAME( 1983, mrtnt,    0,        pacman,   mrtnt,    eyes,     ROT90,  "Telko", "Mr. TNT" )
 GAME( 1985, lizwiz,   0,        pacman,   lizwiz,   0,        ROT90,  "Techstar (Sunn license)", "Lizard Wizard" )
 GAME( 1983, theglob,  0,        theglob,  theglob,  0,        ROT90,  "Epos Corporation", "The Glob" )
 GAME( 1984, beastf,   theglob,  theglob,  theglob,  0,        ROT90,  "Epos Corporation", "Beastie Feastie" )

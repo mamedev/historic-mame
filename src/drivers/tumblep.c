@@ -8,7 +8,7 @@
 
   Bootleg sound is not quite correct yet (Nothing on bootleg 2).
 
-  Emulation by Bryan McPhail, mish@tendril.force9.net
+  Emulation by Bryan McPhail, mish@tendril.co.uk
 
 ***************************************************************************/
 
@@ -358,7 +358,7 @@ static struct MachineDriver machine_driver_tumblepop =
 			ignore_interrupt,0
 		}
 	},
-	58, DEFAULT_REAL_60HZ_VBLANK_DURATION,
+	58, 529,
 	1,
 	0,
 
@@ -400,7 +400,7 @@ static struct MachineDriver machine_driver_tumblepb =
 			m68_level6_irq,1
 		},
 	},
-	58, DEFAULT_REAL_60HZ_VBLANK_DURATION,
+	58, 529,
 	1,
 	0,
 

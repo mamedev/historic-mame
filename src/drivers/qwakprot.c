@@ -268,4 +268,4 @@ ROM_END
 
 
 
-GAME( 1982, qwakprot, 0, qwakprot, qwakprot, 0, ROT270, "Atari", "Qwak (prototype)" )
+GAMEX( 1982, qwakprot, 0, qwakprot, qwakprot, 0, ROT270, "Atari", "Qwak (prototype)", GAME_NO_COCKTAIL )

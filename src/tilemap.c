@@ -45,8 +45,8 @@ Optimizations/Features TBA:
 #include "driver.h"
 #include "tilemap.h"
 
-static UINT8 flip_bit_table[0x100];
-static struct tilemap *first_tilemap;
+static UINT8 flip_bit_table[0x100]; /* horizontal flip for 8 pixels */
+static struct tilemap *first_tilemap; /* resource tracking */
 static int screen_width, screen_height;
 struct tile_info tile_info;
 
@@ -898,6 +898,8 @@ void tilemap_render( struct tilemap *tilemap ){
 /***********************************************************************************/
 
 void tilemap_draw( struct osd_bitmap *dest, struct tilemap *tilemap, int priority ){
+	int xpos,ypos;
+
 	if( tilemap->enable ){
 		void (*draw)( int, int );
 
@@ -961,176 +963,233 @@ void tilemap_draw( struct osd_bitmap *dest, struct tilemap *tilemap, int priorit
 			draw( 0,0 );
 		}
 		else if( rows == 0 ){ /* scrolling columns */
-			int col,colwidth;
-
-			colwidth = blit.source_width / cols;
+			int col = 0;
+			int colwidth = blit.source_width / cols;
 
 			blit.clip_top = top;
 			blit.clip_bottom = bottom;
 
-			col = 0;
 			while( col < cols ){
-				int cons,scroll;
+				int cons = 1;
+				int scrolly = colscroll[col];
 
 	 			/* count consecutive columns scrolled by the same amount */
-				scroll = colscroll[col];
-				cons = 1;
-				if(scroll != TILE_LINE_DISABLED)
-				{
-					while( col + cons < cols &&	colscroll[col + cons] == scroll ) cons++;
+				if( scrolly != TILE_LINE_DISABLED ){
+					while( col + cons < cols &&	colscroll[col + cons] == scrolly ) cons++;
 
-					if (scroll < 0) scroll = blit.source_height - (-scroll) % blit.source_height;
-					else scroll %= blit.source_height;
+					if (scrolly < 0){
+						scrolly = blit.source_height - (-scrolly) % blit.source_height;
+					}
+					else {
+						scrolly %= blit.source_height;
+					}
 
 					blit.clip_left = col * colwidth;
-					if (blit.clip_left < left) blit.clip_left = left;
+					if( blit.clip_left < left ) blit.clip_left = left;
 					blit.clip_right = (col + cons) * colwidth;
-					if (blit.clip_right > right) blit.clip_right = right;
+					if( blit.clip_right > right ) blit.clip_right = right;
 
-					draw( 0,scroll );
-					draw( 0,scroll - blit.source_height );
+					for(
+						ypos = scrolly - blit.source_height;
+						ypos < blit.clip_bottom;
+						ypos += blit.source_height )
+					{
+						draw( 0,ypos );
+					}
 				}
 				col += cons;
 			}
 		}
 		else if( cols == 0 ){ /* scrolling rows */
-			int row,rowheight;
-
-			rowheight = blit.source_height / rows;
+			int row = 0;
+			int rowheight = blit.source_height / rows;
 
 			blit.clip_left = left;
 			blit.clip_right = right;
 
-			row = 0;
 			while( row < rows ){
-				int cons,scroll;
+				int cons = 1;
+				int scrollx = rowscroll[row];
 
 				/* count consecutive rows scrolled by the same amount */
-				scroll = rowscroll[row];
-				cons = 1;
-				if(scroll != TILE_LINE_DISABLED)
-				{
-					while( row + cons < rows &&	rowscroll[row + cons] == scroll ) cons++;
+				if( scrollx != TILE_LINE_DISABLED ){
+					while( row + cons < rows &&	rowscroll[row + cons] == scrollx ) cons++;
 
-					if (scroll < 0) scroll = blit.source_width - (-scroll) % blit.source_width;
-					else scroll %= blit.source_width;
+					if( scrollx < 0 ){
+						scrollx = blit.source_width - (-scrollx) % blit.source_width;
+					}
+					else {
+						scrollx %= blit.source_width;
+					}
 
 					blit.clip_top = row * rowheight;
 					if (blit.clip_top < top) blit.clip_top = top;
 					blit.clip_bottom = (row + cons) * rowheight;
 					if (blit.clip_bottom > bottom) blit.clip_bottom = bottom;
 
-					draw( scroll,0 );
-					draw( scroll - blit.source_width,0 );
+					for(
+						xpos = scrollx - blit.source_width;
+						xpos<blit.clip_right;
+						xpos += blit.source_width
+					){
+						draw( xpos,0 );
+					}
 				}
 				row += cons;
 			}
 		}
 		else if( rows == 1 && cols == 1 ){ /* XY scrolling playfield */
-			int scrollx,scrolly;
+			int scrollx = rowscroll[0];
+			int scrolly = colscroll[0];
 
-			if (rowscroll[0] < 0) scrollx = blit.source_width - (-rowscroll[0]) % blit.source_width;
-			else scrollx = rowscroll[0] % blit.source_width;
+			if( scrollx < 0 ){
+				scrollx = blit.source_width - (-scrollx) % blit.source_width;
+			}
+			else {
+				scrollx = scrollx % blit.source_width;
+			}
 
-			if (colscroll[0] < 0) scrolly = blit.source_height - (-colscroll[0]) % blit.source_height;
-			else scrolly = colscroll[0] % blit.source_height;
+			if( scrolly < 0 ){
+				scrolly = blit.source_height - (-scrolly) % blit.source_height;
+			}
+			else {
+				scrolly = scrolly % blit.source_height;
+			}
 
 	 		blit.clip_left = left;
 	 		blit.clip_top = top;
 	 		blit.clip_right = right;
 	 		blit.clip_bottom = bottom;
 
-			draw( scrollx,scrolly );
-			draw( scrollx,scrolly - blit.source_height );
-			draw( scrollx - blit.source_width,scrolly );
-			draw( scrollx - blit.source_width,scrolly - blit.source_height );
+			for(
+				ypos = scrolly - blit.source_height;
+				ypos < blit.clip_bottom;
+				ypos += blit.source_height
+			){
+				for(
+					xpos = scrollx - blit.source_width;
+					xpos < blit.clip_right;
+					xpos += blit.source_width
+				){
+					draw( xpos,ypos );
+				}
+			}
 		}
 		else if( rows == 1 ){ /* scrolling columns + horizontal scroll */
-			int col,colwidth;
-			int scrollx;
+			int col = 0;
+			int colwidth = blit.source_width / cols;
+			int scrollx = rowscroll[0];
 
-			if (rowscroll[0] < 0) scrollx = blit.source_width - (-rowscroll[0]) % blit.source_width;
-			else scrollx = rowscroll[0] % blit.source_width;
-
-			colwidth = blit.source_width / cols;
+			if( scrollx < 0 ){
+				scrollx = blit.source_width - (-scrollx) % blit.source_width;
+			}
+			else {
+				scrollx = scrollx % blit.source_width;
+			}
 
 			blit.clip_top = top;
 			blit.clip_bottom = bottom;
 
-			col = 0;
 			while( col < cols ){
-				int cons,scroll;
+				int cons = 1;
+				int scrolly = colscroll[col];
 
 	 			/* count consecutive columns scrolled by the same amount */
-				scroll = colscroll[col];
-				cons = 1;
-				if(scroll != TILE_LINE_DISABLED)
-				{
-					while( col + cons < cols &&	colscroll[col + cons] == scroll ) cons++;
+				if( scrolly != TILE_LINE_DISABLED ){
+					while( col + cons < cols &&	colscroll[col + cons] == scrolly ) cons++;
 
-					if (scroll < 0) scroll = blit.source_height - (-scroll) % blit.source_height;
-					else scroll %= blit.source_height;
+					if( scrolly < 0 ){
+						scrolly = blit.source_height - (-scrolly) % blit.source_height;
+					}
+					else {
+						scrolly %= blit.source_height;
+					}
 
 					blit.clip_left = col * colwidth + scrollx;
 					if (blit.clip_left < left) blit.clip_left = left;
 					blit.clip_right = (col + cons) * colwidth + scrollx;
 					if (blit.clip_right > right) blit.clip_right = right;
 
-					draw( scrollx,scroll );
-					draw( scrollx,scroll - blit.source_height );
+					for(
+						ypos = scrolly - blit.source_height;
+						ypos < blit.clip_bottom;
+						ypos += blit.source_height
+					){
+						draw( scrollx,ypos );
+					}
 
 					blit.clip_left = col * colwidth + scrollx - blit.source_width;
 					if (blit.clip_left < left) blit.clip_left = left;
 					blit.clip_right = (col + cons) * colwidth + scrollx - blit.source_width;
 					if (blit.clip_right > right) blit.clip_right = right;
 
-					draw( scrollx - blit.source_width,scroll );
-					draw( scrollx - blit.source_width,scroll - blit.source_height );
+					for(
+						ypos = scrolly - blit.source_height;
+						ypos < blit.clip_bottom;
+						ypos += blit.source_height
+					){
+						draw( scrollx - blit.source_width,ypos );
+					}
 				}
 				col += cons;
 			}
 		}
 		else if( cols == 1 ){ /* scrolling rows + vertical scroll */
-			int row,rowheight;
-			int scrolly;
+			int row = 0;
+			int rowheight = blit.source_height / rows;
+			int scrolly = colscroll[0];
 
-			if (colscroll[0] < 0) scrolly = blit.source_height - (-colscroll[0]) % blit.source_height;
-			else scrolly = colscroll[0] % blit.source_height;
-
-			rowheight = blit.source_height / rows;
+			if( scrolly < 0 ){
+				scrolly = blit.source_height - (-scrolly) % blit.source_height;
+			}
+			else {
+				scrolly = scrolly % blit.source_height;
+			}
 
 			blit.clip_left = left;
 			blit.clip_right = right;
 
-			row = 0;
 			while( row < rows ){
-				int cons,scroll;
+				int cons = 1;
+				int scrollx = rowscroll[row];
 
 				/* count consecutive rows scrolled by the same amount */
-				scroll = rowscroll[row];
-				cons = 1;
-				if(scroll != TILE_LINE_DISABLED)
-				{
-					while (row + cons < rows &&	rowscroll[row + cons] == scroll) cons++;
 
-					if (scroll < 0) scroll = blit.source_width - (-scroll) % blit.source_width;
-					else scroll %= blit.source_width;
+				if( scrollx != TILE_LINE_DISABLED ){
+					while( row + cons < rows &&	rowscroll[row + cons] == scrollx ) cons++;
+
+					if( scrollx < 0){
+						scrollx = blit.source_width - (-scrollx) % blit.source_width;
+					}
+					else {
+						scrollx %= blit.source_width;
+					}
 
 					blit.clip_top = row * rowheight + scrolly;
 					if (blit.clip_top < top) blit.clip_top = top;
 					blit.clip_bottom = (row + cons) * rowheight + scrolly;
 					if (blit.clip_bottom > bottom) blit.clip_bottom = bottom;
 
-					draw( scroll,scrolly );
-					draw( scroll - blit.source_width,scrolly );
+					for(
+						xpos = scrollx - blit.source_width;
+						xpos < blit.clip_right;
+						xpos += blit.source_width
+					){
+						draw( xpos,scrolly );
+					}
 
 					blit.clip_top = row * rowheight + scrolly - blit.source_height;
 					if (blit.clip_top < top) blit.clip_top = top;
 					blit.clip_bottom = (row + cons) * rowheight + scrolly - blit.source_height;
 					if (blit.clip_bottom > bottom) blit.clip_bottom = bottom;
 
-					draw( scroll,scrolly - blit.source_height );
-					draw( scroll - blit.source_width,scrolly - blit.source_height );
+					for(
+						xpos = scrollx - blit.source_width;
+						xpos < blit.clip_right;
+						xpos += blit.source_width
+					){
+						draw( xpos,scrolly - blit.source_height );
+					}
 				}
 				row += cons;
 			}

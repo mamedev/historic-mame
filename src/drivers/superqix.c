@@ -303,5 +303,5 @@ ROM_END
 
 
 
-GAMEX(1987, superqix, 0,        superqix, superqix, 0, ROT90, "Taito", "Super Qix", GAME_NOT_WORKING )
-GAME( 1987, sqixbl,   superqix, superqix, superqix, 0, ROT90, "bootleg", "Super Qix (bootleg)" )
+GAMEX( 1987, superqix, 0,        superqix, superqix, 0, ROT90, "Taito", "Super Qix", GAME_NOT_WORKING | GAME_NO_COCKTAIL )
+GAMEX( 1987, sqixbl,   superqix, superqix, superqix, 0, ROT90, "bootleg", "Super Qix (bootleg)", GAME_NO_COCKTAIL )

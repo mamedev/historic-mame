@@ -30,6 +30,9 @@
 #if (HAS_M65CE02)
 #include "cpu/m6502/m65ce02.h"
 #endif
+#if (HAS_M6509)
+#include "cpu/m6502/m6509.h"
+#endif
 #if (HAS_H6280)
 #include "cpu/h6280/h6280.h"
 #endif
@@ -328,6 +331,9 @@ struct cpu_interface cpuintf[] =
 #endif
 #if (HAS_M65CE02)
 	CPU0(M65CE02,  m65ce02,  1,  0,1.00,M65CE02_INT_NONE,  M65CE02_INT_IRQ,M65CE02_INT_NMI,16,	  0,16,LE,1, 3,16	),
+#endif
+#if (HAS_M6509)
+	CPU0(M6509,    m6509,	 1,  0,1.00,M6509_INT_NONE,    M6509_INT_IRQ,  M6509_INT_NMI,  20,	  0,20,LE,1, 3,20	),
 #endif
 #if (HAS_M6510)
 	CPU0(M6510,    m6510,	 1,  0,1.00,M6510_INT_NONE,    M6510_INT_IRQ,  M6510_INT_NMI,  16,	  0,16,LE,1, 3,16	),
@@ -1598,6 +1604,9 @@ static void cpu_generate_interrupt(int cpunum, int (*func)(void), int num)
 #endif
 #if (HAS_M65CE02)
 			case CPU_M65CE02:			irq_line = 0; LOG((errorlog,"M65CE02 IRQ\n")); break;
+#endif
+#if (HAS_M6509)
+			case CPU_M6509: 			irq_line = 0; LOG((errorlog,"M6509 IRQ\n")); break;
 #endif
 #if (HAS_M6510)
 			case CPU_M6510: 			irq_line = 0; LOG((errorlog,"M6510 IRQ\n")); break;

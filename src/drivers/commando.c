@@ -194,6 +194,84 @@ INPUT_PORTS_START( commando )
 	PORT_DIPSETTING(    0xc0, DEF_STR( Cocktail ) )
 INPUT_PORTS_END
 
+/* service mode replaces demo sounds, different bonus */
+INPUT_PORTS_START( commandu )
+	PORT_START	/* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN2 )
+
+	PORT_START	/* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START	/* IN2 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_COCKTAIL )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START	/* DSW0 */
+	PORT_DIPNAME( 0x03, 0x03, "Starting Stage" )
+	PORT_DIPSETTING(    0x03, "1" )
+	PORT_DIPSETTING(    0x01, "3" )
+	PORT_DIPSETTING(    0x02, "5" )
+	PORT_DIPSETTING(    0x00, "7" )
+	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Lives ) )
+	PORT_DIPSETTING(    0x04, "2" )
+	PORT_DIPSETTING(    0x0c, "3" )
+	PORT_DIPSETTING(    0x08, "4" )
+	PORT_DIPSETTING(    0x00, "5" )
+	PORT_DIPNAME( 0x30, 0x30, DEF_STR( Coin_A ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x30, DEF_STR( 1C_1C ) )
+	PORT_DIPNAME( 0xc0, 0xc0, DEF_STR( Coin_B ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0xc0, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( 1C_3C ) )
+
+	PORT_START      /* DSW1 */
+	PORT_DIPNAME( 0x07, 0x07, DEF_STR( Bonus_Life ) )
+	PORT_DIPSETTING(    0x07, "10000 50000" )
+	PORT_DIPSETTING(    0x03, "10000 60000" )
+	PORT_DIPSETTING(    0x05, "20000 60000" )
+	PORT_DIPSETTING(    0x01, "20000 70000" )
+	PORT_DIPSETTING(    0x06, "30000 70000" )
+	PORT_DIPSETTING(    0x02, "30000 80000" )
+	PORT_DIPSETTING(    0x04, "40000 100000" )
+	PORT_DIPSETTING(    0x00, "None" )
+	PORT_SERVICE( 0x08, IP_ACTIVE_LOW )
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(    0x10, "Normal" )
+	PORT_DIPSETTING(    0x00, "Difficult" )
+	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Flip_Screen ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( On ) )
+	PORT_DIPNAME( 0xc0, 0x00, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x00, "Upright One Player" )
+	PORT_DIPSETTING(    0x40, "Upright Two Players" )
+/*	PORT_DIPSETTING(    0x80, DEF_STR( Cocktail ) ) */
+	PORT_DIPSETTING(    0xc0, DEF_STR( Cocktail ) )
+INPUT_PORTS_END
+
 
 
 static struct GfxLayout charlayout =
@@ -335,10 +413,13 @@ ROM_START( commando )
 	ROM_LOAD( "h08_vt09.bin", 0x10000, 0x4000, 0x98703982 )
 	ROM_LOAD( "h09_vt10.bin", 0x14000, 0x4000, 0xf069d2f8 )
 
-	ROM_REGION( 0x0300, REGION_PROMS )
-	ROM_LOAD( "01d_vtb1.bin", 0x0000, 0x0100, 0x3aba15a1 )
-	ROM_LOAD( "02d_vtb2.bin", 0x0100, 0x0100, 0x88865754 )
-	ROM_LOAD( "03d_vtb3.bin", 0x0200, 0x0100, 0x4c14c3f6 )
+	ROM_REGION( 0x0600, REGION_PROMS )
+	ROM_LOAD( "01d_vtb1.bin", 0x0000, 0x0100, 0x3aba15a1 )	/* red */
+	ROM_LOAD( "02d_vtb2.bin", 0x0100, 0x0100, 0x88865754 )	/* green */
+	ROM_LOAD( "03d_vtb3.bin", 0x0200, 0x0100, 0x4c14c3f6 )	/* blue */
+	ROM_LOAD( "01h_vtb4.bin", 0x0300, 0x0100, 0xb388c246 )	/* palette selector (not used) */
+	ROM_LOAD( "06l_vtb5.bin", 0x0400, 0x0100, 0x712ac508 )	/* interrupt timing (not used) */
+	ROM_LOAD( "06e_vtb6.bin", 0x0500, 0x0100, 0x0eaf5158 )	/* video timing (not used) */
 ROM_END
 
 ROM_START( commandu )
@@ -368,10 +449,13 @@ ROM_START( commandu )
 	ROM_LOAD( "h08_vt09.bin", 0x10000, 0x4000, 0x98703982 )
 	ROM_LOAD( "h09_vt10.bin", 0x14000, 0x4000, 0xf069d2f8 )
 
-	ROM_REGION( 0x0300, REGION_PROMS )
-	ROM_LOAD( "01d_vtb1.bin", 0x0000, 0x0100, 0x3aba15a1 )
-	ROM_LOAD( "02d_vtb2.bin", 0x0100, 0x0100, 0x88865754 )
-	ROM_LOAD( "03d_vtb3.bin", 0x0200, 0x0100, 0x4c14c3f6 )
+	ROM_REGION( 0x0600, REGION_PROMS )
+	ROM_LOAD( "01d_vtb1.bin", 0x0000, 0x0100, 0x3aba15a1 )	/* red */
+	ROM_LOAD( "02d_vtb2.bin", 0x0100, 0x0100, 0x88865754 )	/* green */
+	ROM_LOAD( "03d_vtb3.bin", 0x0200, 0x0100, 0x4c14c3f6 )	/* blue */
+	ROM_LOAD( "01h_vtb4.bin", 0x0300, 0x0100, 0xb388c246 )	/* palette selector (not used) */
+	ROM_LOAD( "06l_vtb5.bin", 0x0400, 0x0100, 0x712ac508 )	/* interrupt timing (not used) */
+	ROM_LOAD( "06e_vtb6.bin", 0x0500, 0x0100, 0x0eaf5158 )	/* video timing (not used) */
 ROM_END
 
 ROM_START( commandj )
@@ -401,10 +485,13 @@ ROM_START( commandj )
 	ROM_LOAD( "h08_vt09.bin", 0x10000, 0x4000, 0x98703982 )
 	ROM_LOAD( "h09_vt10.bin", 0x14000, 0x4000, 0xf069d2f8 )
 
-	ROM_REGION( 0x0300, REGION_PROMS )
-	ROM_LOAD( "01d_vtb1.bin", 0x0000, 0x0100, 0x3aba15a1 )
-	ROM_LOAD( "02d_vtb2.bin", 0x0100, 0x0100, 0x88865754 )
-	ROM_LOAD( "03d_vtb3.bin", 0x0200, 0x0100, 0x4c14c3f6 )
+	ROM_REGION( 0x0600, REGION_PROMS )
+	ROM_LOAD( "01d_vtb1.bin", 0x0000, 0x0100, 0x3aba15a1 )	/* red */
+	ROM_LOAD( "02d_vtb2.bin", 0x0100, 0x0100, 0x88865754 )	/* green */
+	ROM_LOAD( "03d_vtb3.bin", 0x0200, 0x0100, 0x4c14c3f6 )	/* blue */
+	ROM_LOAD( "01h_vtb4.bin", 0x0300, 0x0100, 0xb388c246 )	/* palette selector (not used) */
+	ROM_LOAD( "06l_vtb5.bin", 0x0400, 0x0100, 0x712ac508 )	/* interrupt timing (not used) */
+	ROM_LOAD( "06e_vtb6.bin", 0x0500, 0x0100, 0x0eaf5158 )	/* video timing (not used) */
 ROM_END
 
 ROM_START( spaceinv )
@@ -434,10 +521,13 @@ ROM_START( spaceinv )
 	ROM_LOAD( "h08_vt09.bin", 0x10000, 0x4000, 0x98703982 )
 	ROM_LOAD( "h09_vt10.bin", 0x14000, 0x4000, 0xf069d2f8 )
 
-	ROM_REGION( 0x0300, REGION_PROMS )
-	ROM_LOAD( "01d_vtb1.bin", 0x0000, 0x0100, 0x3aba15a1 )
-	ROM_LOAD( "02d_vtb2.bin", 0x0100, 0x0100, 0x88865754 )
-	ROM_LOAD( "03d_vtb3.bin", 0x0200, 0x0100, 0x4c14c3f6 )
+	ROM_REGION( 0x0600, REGION_PROMS )
+	ROM_LOAD( "01d_vtb1.bin", 0x0000, 0x0100, 0x3aba15a1 )	/* red */
+	ROM_LOAD( "02d_vtb2.bin", 0x0100, 0x0100, 0x88865754 )	/* green */
+	ROM_LOAD( "03d_vtb3.bin", 0x0200, 0x0100, 0x4c14c3f6 )	/* blue */
+	ROM_LOAD( "01h_vtb4.bin", 0x0300, 0x0100, 0xb388c246 )	/* palette selector (not used) */
+	ROM_LOAD( "06l_vtb5.bin", 0x0400, 0x0100, 0x712ac508 )	/* interrupt timing (not used) */
+	ROM_LOAD( "06e_vtb6.bin", 0x0500, 0x0100, 0x0eaf5158 )	/* video timing (not used) */
 ROM_END
 
 
@@ -484,6 +574,6 @@ static void init_spaceinv(void)
 
 
 GAME( 1985, commando, 0,        commando, commando, commando, ROT90, "Capcom", "Commando (World)" )
-GAME( 1985, commandu, commando, commando, commando, commando, ROT90, "Capcom (Data East USA license)", "Commando (US)" )
+GAME( 1985, commandu, commando, commando, commandu, commando, ROT90, "Capcom (Data East USA license)", "Commando (US)" )
 GAME( 1985, commandj, commando, commando, commando, commando, ROT90, "Capcom", "Senjo no Ookami" )
 GAME( 1985, spaceinv, commando, commando, commando, spaceinv, ROT90, "bootleg", "Space Invasion" )

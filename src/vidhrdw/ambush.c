@@ -61,8 +61,10 @@ void ambush_vh_convert_color_prom(unsigned char *palette, unsigned short *colort
 
 static void draw_chars(struct osd_bitmap *bitmap, int priority)
 {
-	int offs;
+	int offs, transparency;
 
+
+	transparency = (priority == 0) ? TRANSPARENCY_NONE : TRANSPARENCY_PEN;
 
 	for (offs = 0; offs < videoram_size; offs++)
 	{
@@ -93,7 +95,7 @@ static void draw_chars(struct osd_bitmap *bitmap, int priority)
 				(col & 0x0f) | ((*ambush_colorbank & 0x03) << 4),
 				*flip_screen,*flip_screen,
 				8*sx, (8*sy + scroll) & 0xff,
-				&Machine->drv->visible_area,TRANSPARENCY_COLOR,0);
+				&Machine->drv->visible_area,transparency,0);
 	}
 }
 

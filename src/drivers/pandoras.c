@@ -523,4 +523,4 @@ ROM_END
 
 
 
-GAME( 1984, pandoras, 0, pandoras, pandoras, 0, ROT270, "Konami/Interlogic", "Pandora's Palace" )
+GAMEX( 1984, pandoras, 0, pandoras, pandoras, 0, ROT270, "Konami/Interlogic", "Pandora's Palace", GAME_NO_COCKTAIL )

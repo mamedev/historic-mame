@@ -3,7 +3,7 @@
  *	 tbl65c02.c
  *	 65c02 opcode functions and function pointer table
  *
- *	 Copyright (c) 1998 Juergen Buchmueller, all rights reserved.
+ *	 Copyright (c) 1998,1999,2000 Juergen Buchmueller, all rights reserved.
  *
  *	 - This source code is released as freeware for non-commercial purposes.
  *	 - You are free to use and redistribute this code in modified or
@@ -14,11 +14,10 @@
  *	 - If you wish to use this for commercial purposes, please contact me at
  *	   pullmoll@t-online.de
  *	 - The author of this copywritten work reserves the right to change the
- *     terms of its usage and license at any time, including retroactively
- *   - This entire notice must remain in the source code.
+ *	   terms of its usage and license at any time, including retroactively
+ *	 - This entire notice must remain in the source code.
  *
  *****************************************************************************/
-/* 94 b4 bc redefined (without change) */
 
 #undef	OP
 #define OP(nn) INLINE void m65c02_##nn(void)
@@ -107,9 +106,7 @@ OP(f2) { int tmp; m6502_ICount -= 3; RD_ZPI; SBC;		  } /* 3 SBC ZPI */
 OP(04) { int tmp; m6502_ICount -= 3; RD_ZPG; TSB; WB_EA;  } /* 3 TSB ZPG */
 #define m65c02_24 m6502_24									/* 3 BIT ZPG */
 #define m65c02_44 m6502_44									/* 2 ILL */
-#ifndef CORE_M65CE02
 OP(64) { int tmp; m6502_ICount -= 2;		 STZ; WR_ZPG; } /* 3 STZ ZPG */
-#endif
 #define m65c02_84 m6502_84									/* 3 STY ZPG */
 #define m65c02_a4 m6502_a4									/* 3 LDY ZPG */
 #define m65c02_c4 m6502_c4									/* 3 CPY ZPG */
@@ -118,14 +115,9 @@ OP(64) { int tmp; m6502_ICount -= 2;		 STZ; WR_ZPG; } /* 3 STZ ZPG */
 OP(14) { int tmp; m6502_ICount -= 3; RD_ZPG; TRB; WB_EA;  } /* 3 TRB ZPG */
 OP(34) { int tmp; m6502_ICount -= 4; RD_ZPX; BIT;		  } /* 4 BIT ZPX */
 #define m65c02_54 m6502_54									/* 2 ILL */
-#ifndef CORE_M65CE02
 OP(74) { int tmp; m6502_ICount -= 4;		 STZ; WR_ZPX; } /* 4 STZ ZPX */
-#endif
-#ifndef CORE_M65CE02
-/* the same already in m6502 */
-OP(94) { int tmp; m6502_ICount -= 4;		 STY; WR_ZPX; } /* 4 STY ZPX */
-OP(b4) { int tmp; m6502_ICount -= 4; RD_ZPX; LDY;		  } /* 4 LDY ZPX */
-#endif
+#define m65c02_94 m6502_94									/* 4 STY ZPX */
+#define m65c02_b4 m6502_b4									/* 4 LDY ZPX */
 #define m65c02_d4 m6502_d4									/* 2 ILL */
 #define m65c02_f4 m6502_f4									/* 2 ILL */
 
@@ -183,7 +175,7 @@ OP(b7) { int tmp; m6502_ICount -= 5; RD_ZPG; SMB(3);WB_EA;} /* 5 SMB3 ZPG */
 OP(d7) { int tmp; m6502_ICount -= 5; RD_ZPG; SMB(5);WB_EA;} /* 5 SMB5 ZPG */
 OP(f7) { int tmp; m6502_ICount -= 5; RD_ZPG; SMB(7);WB_EA;} /* 5 SMB7 ZPG */
 
-#define m65c02_08 m6502_08                                  /* 3 PHP */
+#define m65c02_08 m6502_08									/* 3 PHP */
 #define m65c02_28 m6502_28									/* 4 PLP */
 #define m65c02_48 m6502_48									/* 3 PHA */
 #define m65c02_68 m6502_68									/* 4 PLA */
@@ -268,13 +260,8 @@ OP(1c) { int tmp; m6502_ICount -= 4; RD_ABS; TRB; WB_EA;  } /* 4 TRB ABS */
 OP(3c) { int tmp; m6502_ICount -= 4; RD_ABX; BIT;		  } /* 4 BIT ABX */
 #define m65c02_5c m6502_5c									/* 2 ILL */
 OP(7c) { int tmp; m6502_ICount -= 2; EA_IAX; JMP;		  } /* 6 JMP IAX */
-#ifndef CORE_M65CE02
 OP(9c) { int tmp; m6502_ICount -= 4;		 STZ; WR_ABS; } /* 4 STZ ABS */
-#endif
-#ifndef CORE_M65CE02
-/* the same already in m6502 */
-OP(bc) { int tmp; m6502_ICount -= 4; RD_ABX; LDY;		  } /* 4 LDY ABX */
-#endif
+#define m65c02_bc m6502_bc									/* 4 LDY ABX */
 #define m65c02_dc m6502_dc									/* 2 ILL */
 #define m65c02_fc m6502_fc									/* 2 ILL */
 
@@ -309,9 +296,7 @@ OP(bc) { int tmp; m6502_ICount -= 4; RD_ABX; LDY;		  } /* 4 LDY ABX */
 #define m65c02_3e m6502_3e									/* 7 ROL ABX */
 #define m65c02_5e m6502_5e									/* 7 LSR ABX */
 #define m65c02_7e m6502_7e									/* 7 ROR ABX */
-#ifndef CORE_M65CE02
 OP(9e) { int tmp; m6502_ICount -= 5;		 STZ; WR_ABX; } /* 5 STZ ABX */
-#endif
 #define m65c02_be m6502_be									/* 4 LDX ABY */
 #define m65c02_de m6502_de									/* 7 DEC ABX */
 #define m65c02_fe m6502_fe									/* 7 INC ABX */
@@ -334,7 +319,6 @@ OP(bf) { int tmp; m6502_ICount -= 5; RD_ZPG; BBS(3);	  } /* 5 BBS3 ZPG */
 OP(df) { int tmp; m6502_ICount -= 5; RD_ZPG; BBS(5);	  } /* 5 BBS5 ZPG */
 OP(ff) { int tmp; m6502_ICount -= 5; RD_ZPG; BBS(7);	  } /* 5 BBS7 ZPG */
 
-#ifndef CORE_M65CE02
 static void (*insn65c02[0x100])(void) = {
 	m65c02_00,m65c02_01,m65c02_02,m65c02_03,m65c02_04,m65c02_05,m65c02_06,m65c02_07,
 	m65c02_08,m65c02_09,m65c02_0a,m65c02_0b,m65c02_0c,m65c02_0d,m65c02_0e,m65c02_0f,
@@ -370,4 +354,4 @@ static void (*insn65c02[0x100])(void) = {
 	m65c02_f8,m65c02_f9,m65c02_fa,m65c02_fb,m65c02_fc,m65c02_fd,m65c02_fe,m65c02_ff
 };
 
-#endif
+

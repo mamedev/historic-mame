@@ -243,10 +243,7 @@ static struct MachineDriver machine_driver_starfire =
     starfire_vh_screenrefresh,
 
 	/* sound hardware */
-    0,
-    0,
-    0,
-    0
+    0,0,0,0
 };
 
 static struct MachineDriver machine_driver_fireone =
@@ -321,5 +318,5 @@ ROM_START( fireone )
 ROM_END
 
 
-GAME( 1979, starfire, 0, starfire, starfire, 0, ROT0, "Exidy", "Star Fire" )
-GAME( 1979, fireone,  0, fireone,  fireone,  0, ROT0, "Exidy", "Fire One" )
+GAMEX( 1979, starfire, 0, starfire, starfire, 0, ROT0, "Exidy", "Star Fire", GAME_NOT_WORKING | GAME_NO_SOUND )
+GAMEX( 1979, fireone,  0, fireone,  fireone,  0, ROT0, "Exidy", "Fire One", GAME_NOT_WORKING | GAME_NO_SOUND )

@@ -85,7 +85,7 @@ int xbit, ybit, size;
 		{
 			if (x+xbit < 0 || x+xbit >= HORZ_RES * HORZ_CHR)
 				continue;
-				plot_pixel(tmpbitmap, x+xbit, y+ybit, Machine->pens[x_y_color(x+xbit,y+ybit)+12]);
+				plot_pixel(tmpbitmap, x+xbit, y+ybit, Machine->pens[x_y_color(x+xbit,y+ybit)+6]);
 		}
 	}
 }

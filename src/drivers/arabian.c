@@ -325,5 +325,5 @@ ROM_END
 
 
 
-GAMEX( 1983, arabian,  0,       arabian, arabian, 0, ROT270, "Sun Electronics", "Arabian", GAME_IMPERFECT_COLORS )
-GAMEX( 1983, arabiana, arabian, arabian, arabian, 0, ROT270, "[Sun Electronics] (Atari license)", "Arabian (Atari)", GAME_IMPERFECT_COLORS )
+GAMEX( 1983, arabian,  0,       arabian, arabian, 0, ROT270, "Sun Electronics", "Arabian", GAME_IMPERFECT_COLORS | GAME_NO_COCKTAIL )
+GAMEX( 1983, arabiana, arabian, arabian, arabian, 0, ROT270, "[Sun Electronics] (Atari license)", "Arabian (Atari)", GAME_IMPERFECT_COLORS | GAME_NO_COCKTAIL )

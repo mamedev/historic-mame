@@ -1,6 +1,6 @@
 /*****************************************************************************
  *
- *	POKEY chip emulator 4.2
+ *	POKEY chip emulator 4.3
  *	Copyright (c) 2000 by The MAME Team
  *
  *	Based on original info found in Ron Fries' Pokey emulator,
@@ -12,6 +12,11 @@
  *  things means it is distributed as is, no warranties whatsoever.
  *	For more details read the readme.txt that comes with MAME.
  *
+ *	4.3:
+ *	- for POT inputs returning zero, immediately assert the ALLPOT
+ *	  bit after POTGO is written, otherwise start trigger timer
+ *	  depending on SK_PADDLE mode, either 1-228 scanlines or 1-2
+ *	  scanlines, depending on the SK_PADDLE bit of SKCTL.
  *	4.2:
  *	- half volume for channels which are inaudible (this should be
  *	  close to the real thing).
@@ -753,24 +758,58 @@ static void pokey_serout_complete(int chip)
 	}
 }
 
-void pokey_pot_trigger(int param)
+static void pokey_pot_trigger(int param)
 {
 	int chip = param >> 3;
     int pot = param & 7;
 	struct POKEYregisters *p = &pokey[chip];
 
+	LOG((errorlog, "POKEY #%d POT%d triggers after %dus\n", chip, pot, (int)(1000000ul*timer_timeelapsed(p->ptimer[pot]))));
 	p->ptimer[pot] = NULL;
 	p->ALLPOT &= ~(1 << pot);	/* set the enabled timer irq status bits */
 }
 
 /* A/D conversion time:
  * In normal, slow mode (SKCTL bit SK_PADDLE is clear) the conversion
- * takes N scanlines, where N is the paddle value. A singled scanline
- * takes approximately 64us to finish.
+ * takes N scanlines, where N is the paddle value. A single scanline
+ * takes approximately 64us to finish (1.78979MHz clock).
  * In quick mode (SK_PADDLE set) the conversion is done very fast
- * (within one scaline?) but the result is not as accurate.
+ * (takes two scalines) but the result is not as accurate.
  */
-#define AD_TIME (double)(((p->SKCTL & SK_PADDLE) ? 0.25 : 64.0) * FREQ_17_EXACT / intf.baseclock)
+#define AD_TIME (double)(((p->SKCTL & SK_PADDLE) ? 64.0*2/228 : 64.0) * FREQ_17_EXACT / intf.baseclock)
+
+static void pokey_potgo(int chip)
+{
+	struct POKEYregisters *p = &pokey[chip];
+    int pot;
+
+	LOG((errorlog, "POKEY #%d pokey_potgo\n", chip));
+
+    p->ALLPOT = 0xff;
+
+    for( pot = 0; pot < 8; pot++ )
+	{
+        if( p->ptimer[pot] )
+		{
+			timer_remove(p->ptimer[pot]);
+			p->ptimer[pot] = NULL;
+			p->POTx[pot] = 0xff;
+		}
+		if( p->pot_r[pot] )
+		{
+			int r = (*p->pot_r[pot])(pot);
+			LOG((errorlog, "POKEY #%d pot_r(%d) returned $%02x\n", chip, pot, r));
+			if( r != -1 )
+			{
+				if (r > 228)
+                    r = 228;
+                /* final value */
+                p->POTx[pot] = r;
+				p->ptimer[pot] = timer_set(TIME_IN_USEC(r * AD_TIME), (chip<<3)|pot, pokey_pot_trigger);
+			}
+		}
+	}
+}
 
 int pokey_register_r(int chip, int offs)
 {
@@ -923,7 +962,7 @@ int quad_pokey_r (int offset)
 void pokey_register_w(int chip, int offs, int data)
 {
 	struct POKEYregisters *p = &pokey[chip];
-    int ch_mask = 0, pot, new_val;
+	int ch_mask = 0, new_val;
 
 #ifdef MAME_DEBUG
 	if( chip >= intf.num )
@@ -1113,27 +1152,7 @@ void pokey_register_w(int chip, int offs, int data)
 
     case POTGO_C:
 		LOG((errorlog, "POKEY #%d POTGO  $%02x\n", chip, data));
-        for( pot = 0; pot < 8; pot++ )
-        {
-			if( p->ptimer[pot] )
-            {
-				timer_remove(p->ptimer[pot]);
-				p->ptimer[pot] = NULL;
-				p->POTx[pot] = 0xff;
-            }
-			if( p->pot_r[pot] )
-            {
-				int r = (*p->pot_r[pot])(offs);
-				LOG((errorlog, "POKEY #%d POT0 value $%02x\n", chip, r));
-                if( r != -1 )
-                {
-                    /* final value */
-					p->POTx[pot] = r;
-					p->ptimer[pot] = timer_set(TIME_IN_USEC((r+1) * AD_TIME), (chip<<3)|pot, pokey_pot_trigger);
-					p->ALLPOT |= 1 << pot;
-                }
-            }
-        }
+		pokey_potgo(chip);
         break;
 
     case SEROUT_C:

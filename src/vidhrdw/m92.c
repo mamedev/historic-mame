@@ -1,6 +1,6 @@
 /*****************************************************************************
 
-	Irem M92 video hardware, Bryan McPhail, mish@tendril.force9.net
+	Irem M92 video hardware, Bryan McPhail, mish@tendril.co.uk
 
 	Brief Overview:
 

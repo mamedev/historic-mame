@@ -312,4 +312,4 @@ static void init_jailbrek(void)
 }
 
 
-GAME( 1986, jailbrek, 0, jailbrek, jailbrek, jailbrek, ROT0, "Konami", "Jail Break" )
+GAMEX( 1986, jailbrek, 0, jailbrek, jailbrek, jailbrek, ROT0, "Konami", "Jail Break", GAME_NO_COCKTAIL )

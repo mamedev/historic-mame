@@ -109,13 +109,13 @@ int msdos_init_sound(void)
 	/*                              info.nDeviceId = AUDIO_DEVICE_MAPPER;*/
 	info.nDeviceId = soundcard;
 	/* always use 16 bit mixing if possible - better quality and same speed of 8 bit */
-	info.wFormat = AUDIO_FORMAT_16BITS | AUDIO_FORMAT_MONO;
+	info.wFormat = AUDIO_FORMAT_16BITS | AUDIO_FORMAT_MONO | AUDIO_FORMAT_RAW_SAMPLE;
 
 	/* use stereo output if supported */
 	if (usestereo)
 	{
 		if (Machine->drv->sound_attributes & SOUND_SUPPORTS_STEREO)
-			info.wFormat = AUDIO_FORMAT_16BITS | AUDIO_FORMAT_STEREO;
+			info.wFormat = AUDIO_FORMAT_16BITS | AUDIO_FORMAT_STEREO | AUDIO_FORMAT_RAW_SAMPLE;
 	}
 
 	info.nSampleRate = Machine->sample_rate;
@@ -244,9 +244,9 @@ int msdos_init_sound(void)
 #endif
 
 #ifdef USE_ALLEGRO
+	reserve_voices(1,0);
 	if (install_sound(DIGI_AUTODETECT,MIDI_NONE,0) != 0)
 	{
-		reserve_voices(1,0);
 		if (errorlog) fprintf(errorlog,"Allegro install_sound error: %s\n",allegro_error);
 		return 1;
 	}

@@ -25,7 +25,7 @@
 
 	(*What on earth _is_ the YM3931??  There are no unknown memory writes)
 
-	Emulation by Bryan McPhail, mish@tendril.force9.net
+	Emulation by Bryan McPhail, mish@tendril.co.uk
 
 ***************************************************************************/
 

@@ -414,5 +414,5 @@ ROM_END
 
 
 
-GAME( 1990, ssi,      0,   ssi, ssi,      0, ROT270, "Taito Corporation Japan", "Super Space Invaders '91 (World)" )
-GAME( 1990, majest12, ssi, ssi, majest12, 0, ROT270, "Taito Corporation", "Majestic Twelve - The Space Invaders Part IV (Japan)" )
+GAMEX( 1990, ssi,      0,   ssi, ssi,      0, ROT270, "Taito Corporation Japan", "Super Space Invaders '91 (World)", GAME_NO_COCKTAIL )
+GAMEX( 1990, majest12, ssi, ssi, majest12, 0, ROT270, "Taito Corporation", "Majestic Twelve - The Space Invaders Part IV (Japan)", GAME_NO_COCKTAIL )

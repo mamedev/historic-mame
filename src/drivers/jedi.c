@@ -382,4 +382,4 @@ ROM_END
 
 
 
-GAME( 1984, jedi, 0, jedi, jedi, 0, ROT0, "Atari", "Return of the Jedi" )
+GAMEX( 1984, jedi, 0, jedi, jedi, 0, ROT0, "Atari", "Return of the Jedi", GAME_NO_COCKTAIL )

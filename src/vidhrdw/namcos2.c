@@ -895,7 +895,6 @@ static void draw_sprites_finallap( struct osd_bitmap *bitmap, int priority )
 	int offset,offset0,offset2,offset4,offset6;
 	int loop,spr_region;
 	struct rectangle rect;
-	int fubar;
 
 	offset=(namcos2_68k_sprite_bank_r(0)&0x000f)*(128*8);
 
@@ -906,13 +905,13 @@ static void draw_sprites_finallap( struct osd_bitmap *bitmap, int priority )
 		*                                       *
 		* Offset 0,1                            *
 		*   Sprite Y position           D00-D08 *
-		*   Sprite Size 16/32           D09     *   CHANGED - ALWAYS 32
+		*   Sprite ROM Bank select      D09     * DIFFERENT FROM DEFAULT SPRITES
 		*   Sprite Size Y               D10-D15 *
 		*                                       *
 		* Offset 2,3                            *
 		*   Sprite Quadrant             D00-D01 *
 		*   Sprite Number               D02-D12 *
-		*   Sprite ROM Bank select      D13     *   CHANGED
+		*   Sprite Size 16/32           D13     * DIFFERENT FROM DEFAULT SPRITES
 		*   Sprite flip X               D14     *
 		*   Sprite flip Y               D15     *
 		*                                       *
@@ -920,7 +919,7 @@ static void draw_sprites_finallap( struct osd_bitmap *bitmap, int priority )
 		*   Sprite X position           D00-D10 *
 		*                                       *
 		* Offset 6,7                            *
-		*   Sprite priority             D00-D02 *
+		*   Sprite priority             D00-D03 * DIFFERENT FROM DEFAULT SPRITES 4 BIT
 		*   Sprite colour index         D04-D07 *
 		*   Sprite Size X               D10-D15 *
 		*                                       *
@@ -931,38 +930,23 @@ static void draw_sprites_finallap( struct osd_bitmap *bitmap, int priority )
 		offset4 = READ_WORD(&namcos2_sprite_ram[offset+(loop*8)+4]);
 		offset6 = READ_WORD(&namcos2_sprite_ram[offset+(loop*8)+6]);
 
-// Final lap requires this bit to be inverted, it must have a diffent meaning with
-// the final lap gfx board....
-		fubar=offset0&0x0200;
-		offset0|=0x200;
-
 		/* Fetch sprite size registers */
 
 		sizey=((offset0>>10)&0x3f)+1;
 		sizex=(offset6>>10)&0x3f;
 
-		if((offset0&0x0200)==0) sizex>>=1;
+		if((offset2&0x2000)==0) sizex>>=1;
 
-		if((sizey-1) && sizex && (offset6&0x0007)==priority)
+		if((sizey-1) && sizex && (offset6&0x000f)==priority)
 		{
 			rect=Machine->drv->visible_area;
 
 			sprn=(offset2>>2)&0x7ff;
-			spr_region=(offset2&0x2000)?GFX_OBJ2:GFX_OBJ1;
+			spr_region=(offset0&0x0200)?GFX_OBJ2:GFX_OBJ1;
+			spr_region=GFX_OBJ1;	// Always fixed on Final Lap
 
-//			ypos=(0x1ff-(offset0&0x01ff))-0x50+0x02;
-//			xpos=(offset4&0x03ff)-0x50+0x07;
-
-// Kludge....
-			if(fubar)
+			if(offset0&0x0200)
 			{
-//				ypos=(((offset0&0x01ff))-0x50)&0xff;
-//				xpos=(offset4&0x03ff)+0x50;
-
-//				ypos=((offset0&0x0100)?-0x100:0)+(offset0&0x00ff)+0x0100;
-//				xpos=((offset4&0x0200)?-0x200:0)+(offset4&0x01ff)+0x0200;
-
-//				ypos=(((offset0&0x00ff))-0x50);
 				ypos=((offset0&0x0100)?-0x100:0)+(offset0&0x00ff)+0xa8;	// 0x70
 				xpos=((offset4&0x0200)?-0x200:0)+(offset4&0x01ff)+0x90;	// 0x90
 			}
@@ -972,11 +956,12 @@ static void draw_sprites_finallap( struct osd_bitmap *bitmap, int priority )
 				xpos=(offset4&0x03ff)-0x50+0x07;
 			}
 
+
 			flipy=offset2&0x8000;
 			flipx=offset2&0x4000;
 
-			scalex=((sizex<<16)/((offset0&0x0200)?0x20:0x10));
-			scaley=((sizey<<16)/((offset0&0x0200)?0x20:0x10));
+			scalex=((sizex<<16)/((offset2&0x2000)?0x20:0x10));
+			scaley=((sizey<<16)/((offset2&0x2000)?0x20:0x10));
 
 			/* Set the clipping rect to mask off the other portion of the sprite */
 			rect.min_x=xpos;
@@ -984,7 +969,7 @@ static void draw_sprites_finallap( struct osd_bitmap *bitmap, int priority )
 			rect.min_y=ypos;
 			rect.max_y=ypos+(sizey-1);
 
-			if((offset0&0x0200)==0)
+			if((offset2&0x2000)==0)
 			{
 				if(((offset2&0x0001) && !flipx) || (!(offset2&0x0001) && flipx)) xpos-=sizex;
 				if(((offset2&0x0002) && !flipy) || (!(offset2&0x0002) && flipy)) ypos-=sizey;
@@ -1148,14 +1133,15 @@ void namcos2_vh_update_finallap(struct osd_bitmap *bitmap, int full_refresh)
 	fillbitmap(bitmap,Machine->pens[0],&Machine->drv->visible_area);
 
 	/* Render the screen */
-	for(priority=0;priority<=7;priority++)
+	for(priority=0;priority<=15;priority++)
 	{
-		if((namcos2_68k_vram_ctrl_r(0x20)&0x07)==priority && show[0]) tilemap_draw(bitmap,namcos2_tilemap0,0);
-		if((namcos2_68k_vram_ctrl_r(0x22)&0x07)==priority && show[1]) tilemap_draw(bitmap,namcos2_tilemap1,0);
-		if((namcos2_68k_vram_ctrl_r(0x24)&0x07)==priority && show[2]) tilemap_draw(bitmap,namcos2_tilemap2,0);
-		if((namcos2_68k_vram_ctrl_r(0x26)&0x07)==priority && show[3]) tilemap_draw(bitmap,namcos2_tilemap3,0);
-		if((namcos2_68k_vram_ctrl_r(0x28)&0x07)==priority && show[4]) tilemap_draw(bitmap,namcos2_tilemap4,0);
-		if((namcos2_68k_vram_ctrl_r(0x2a)&0x07)==priority && show[5]) tilemap_draw(bitmap,namcos2_tilemap5,0);
+		if((namcos2_68k_vram_ctrl_r(0x20)&0x0f)==priority && show[0]) tilemap_draw(bitmap,namcos2_tilemap0,0);
+		if((namcos2_68k_vram_ctrl_r(0x22)&0x0f)==priority && show[1]) tilemap_draw(bitmap,namcos2_tilemap1,0);
+		if((namcos2_68k_vram_ctrl_r(0x24)&0x0f)==priority && show[2]) tilemap_draw(bitmap,namcos2_tilemap2,0);
+		if((namcos2_68k_vram_ctrl_r(0x26)&0x0f)==priority && show[3]) tilemap_draw(bitmap,namcos2_tilemap3,0);
+		if((namcos2_68k_vram_ctrl_r(0x28)&0x0f)==priority && show[4]) tilemap_draw(bitmap,namcos2_tilemap4,0);
+		if((namcos2_68k_vram_ctrl_r(0x2a)&0x0f)==priority && show[5]) tilemap_draw(bitmap,namcos2_tilemap5,0);
+		/* Not sure if priority should be 0x07 or 0x0f */
 
 		/* Sprites */
 		draw_sprites_finallap( bitmap,priority );

@@ -546,6 +546,13 @@ int timer_schedule_cpu(int *cpu, int *cycles)
 	/* reset scheduling so it starts with CPU 0 */
 	last_activecpu = lastcpu;
 
+#ifdef MAME_DEBUG
+{
+	extern int debug_key_delay;
+	debug_key_delay = 0x7ffe;
+}
+#endif
+
 	/* go back to scheduling */
 	return pick_cpu(cpu, cycles, timer_head->expire);
 }

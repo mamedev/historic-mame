@@ -10,10 +10,10 @@
 #include <math.h>
 
 
-#define BUFFER_LEN 8192
+#define BUFFER_LEN 16384
 
 #define SAMPLES_THIS_FRAME(channel) \
-	((mixer_samples_this_frame() * stream_sample_rate[(channel)] + Machine->sample_rate/2) / Machine->sample_rate)
+	mixer_need_samples_this_frame((channel),stream_sample_rate[(channel)])
 
 static int stream_joined_channels[MIXER_MAX_CHANNELS];
 static INT16 *stream_buffer[MIXER_MAX_CHANNELS];

@@ -4,7 +4,7 @@
 	Prehistoric Isle in 1930 (USA)			(c) 1989 SNK
 	Genshi-Tou 1930's (Japan)				(c) 1989 SNK
 
- 	Emulation by Bryan McPhail, mish@tendril.force9.net
+ 	Emulation by Bryan McPhail, mish@tendril.co.uk
 
 ***************************************************************************/
 
@@ -441,6 +441,6 @@ static void init_gensitou(void)
 
 /******************************************************************************/
 
-GAME( 1989, prehisle, 0,        prehisle, prehisle, prehisle, ROT0, "SNK", "Prehistoric Isle in 1930 (World)" )
-GAME( 1989, prehislu, prehisle, prehisle, prehisle, prehislu, ROT0, "SNK of America", "Prehistoric Isle in 1930 (US)" )
-GAME( 1989, gensitou, prehisle, prehisle, prehisle, gensitou, ROT0, "SNK", "Genshi-Tou 1930's" )
+GAMEX( 1989, prehisle, 0,        prehisle, prehisle, prehisle, ROT0, "SNK", "Prehistoric Isle in 1930 (World)", GAME_NO_COCKTAIL )
+GAMEX( 1989, prehislu, prehisle, prehisle, prehisle, prehislu, ROT0, "SNK of America", "Prehistoric Isle in 1930 (US)", GAME_NO_COCKTAIL )
+GAMEX( 1989, gensitou, prehisle, prehisle, prehisle, gensitou, ROT0, "SNK", "Genshi-Tou 1930's", GAME_NO_COCKTAIL )

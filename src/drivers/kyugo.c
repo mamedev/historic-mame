@@ -475,7 +475,7 @@ static struct AY8910interface ay8910_interface =
 {
 	2,      /* 2 chips */
 	1500000,        /* 1.5 MHz ? */
-	{ MIXER(50,MIXER_PAN_LEFT), MIXER(50,MIXER_PAN_RIGHT) },	/* ?? */
+	{ 30, 30 },
 	{ input_port_0_r, 0 },
 	{ input_port_1_r, 0 },
 	{ 0, 0 },
@@ -522,7 +522,7 @@ static struct MachineDriver machine_driver_##name =											\
 	kyugo_vh_screenrefresh,																	\
 																							\
 	/* sound hardware */																	\
-	SOUND_SUPPORTS_STEREO,0,0,0,															\
+	0,0,0,0,																				\
 	{																						\
 		{																					\
 			SOUND_AY8910,																	\

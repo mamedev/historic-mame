@@ -167,6 +167,7 @@ void llander_sh_stop(void);
 void llander_sh_update(void);
 
 int asteroid_IN0_r(int offset);
+int asteroib_IN0_r(int offset);
 int asteroid_IN1_r(int offset);
 int asteroid_DSW1_r(int offset);
 int llander_IN0_r(int offset);
@@ -206,6 +207,20 @@ static struct MemoryReadAddress asteroid_readmem[] =
 	{ 0x6800, 0x7fff, MRA_ROM },
 	{ 0xf800, 0xffff, MRA_ROM }, /* for the reset / interrupt vectors */
 	{ -1 }	/* end of table */
+};
+
+static struct MemoryReadAddress asteroib_readmem[] =
+{
+	{ 0x0000, 0x03ff, MRA_RAM },
+	{ 0x2000, 0x2000, asteroib_IN0_r }, /* IN0 */
+	{ 0x2003, 0x2003, input_port_3_r }, /* hyperspace */
+	{ 0x2400, 0x2407, asteroid_IN1_r }, /* IN1 */
+	{ 0x2800, 0x2803, asteroid_DSW1_r }, /* DSW1 */
+	{ 0x4000, 0x47ff, MRA_RAM },
+	{ 0x5000, 0x57ff, MRA_ROM }, /* vector rom */
+	{ 0x6800, 0x7fff, MRA_ROM },
+	{ 0xf800, 0xffff, MRA_ROM }, /* for the reset / interrupt vectors */
+	{ -1 }  /* end of table */
 };
 
 static struct MemoryWriteAddress asteroid_writemem[] =
@@ -288,26 +303,26 @@ static struct MemoryWriteAddress llander_writemem[] =
 
 INPUT_PORTS_START( asteroid )
 	PORT_START /* IN0 */
-	PORT_BIT ( 0x01, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	/* Bit 2 and 3 are handled in the machine dependent part. */
         /* Bit 2 is the 3 KHz source and Bit 3 the VG_HALT bit    */
-	PORT_BIT ( 0x02, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-	PORT_BIT ( 0x04, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-	PORT_BIT ( 0x08, IP_ACTIVE_HIGH, IPT_BUTTON3 )
-	PORT_BIT ( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 )
-	PORT_BITX( 0x20, IP_ACTIVE_HIGH, IPT_SERVICE, "Diagnostic Step", KEYCODE_F1, IP_JOY_NONE )
-	PORT_BIT ( 0x40, IP_ACTIVE_HIGH, IPT_TILT )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_BUTTON3 )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 )
+	PORT_BITX(0x20, IP_ACTIVE_HIGH, IPT_SERVICE, "Diagnostic Step", KEYCODE_F1, IP_JOY_NONE )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_TILT )
 	PORT_SERVICE( 0x80, IP_ACTIVE_HIGH )
 
 	PORT_START /* IN1 */
-	PORT_BIT ( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 )
-	PORT_BIT ( 0x02, IP_ACTIVE_HIGH, IPT_COIN2 )
-	PORT_BIT ( 0x04, IP_ACTIVE_HIGH, IPT_COIN3 )
-	PORT_BIT ( 0x08, IP_ACTIVE_HIGH, IPT_START1 )
-	PORT_BIT ( 0x10, IP_ACTIVE_HIGH, IPT_START2 )
-	PORT_BIT ( 0x20, IP_ACTIVE_HIGH, IPT_BUTTON2 )
-	PORT_BIT ( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_2WAY )
-	PORT_BIT ( 0x80, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_2WAY )
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_COIN2 )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_COIN3 )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_START1 )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_START2 )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_BUTTON2 )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_2WAY )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_2WAY )
 
 	PORT_START /* DSW1 */
 	PORT_DIPNAME( 0x03, 0x00, "Language" )
@@ -315,7 +330,7 @@ INPUT_PORTS_START( asteroid )
 	PORT_DIPSETTING (   0x01, "German" )
 	PORT_DIPSETTING (   0x02, "French" )
 	PORT_DIPSETTING (   0x03, "Spanish" )
-	PORT_DIPNAME( 0x04, 0x00, DEF_STR( Lives ) )
+	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Lives ) )
 	PORT_DIPSETTING (   0x04, "3" )
 	PORT_DIPSETTING (   0x00, "4" )
 	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Unknown ) )
@@ -334,28 +349,79 @@ INPUT_PORTS_START( asteroid )
 	PORT_DIPSETTING (   0x00, DEF_STR( Free_Play ) )
 INPUT_PORTS_END
 
+INPUT_PORTS_START( asteroib )
+	PORT_START /* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* resets */
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* resets */
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_TILT )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	/* Bit 7 is VG_HALT, handled in the machine dependant part */
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+
+	PORT_START /* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_START1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_BUTTON2 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_START2 )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_BUTTON1 )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_2WAY )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_2WAY )
+
+	PORT_START /* DSW1 */
+	PORT_DIPNAME( 0x03, 0x00, "Language" )
+	PORT_DIPSETTING (   0x00, "English" )
+	PORT_DIPSETTING (   0x01, "German" )
+	PORT_DIPSETTING (   0x02, "French" )
+	PORT_DIPSETTING (   0x03, "Spanish" )
+	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Lives ) )
+	PORT_DIPSETTING (   0x04, "3" )
+	PORT_DIPSETTING (   0x00, "4" )
+	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING (   0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING (   0x08, DEF_STR( On ) )
+	PORT_DIPNAME( 0x10, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING (   0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING (   0x10, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING (   0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING (   0x20, DEF_STR( On ) )
+	PORT_DIPNAME( 0xc0, 0x80, DEF_STR( Coinage ) )
+	PORT_DIPSETTING (   0xc0, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING (   0x80, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING (   0x40, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING (   0x00, DEF_STR( Free_Play ) )
+
+	PORT_START /* hyperspace */
+	PORT_BIT( 0x7f, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON3 )
+INPUT_PORTS_END
+
 INPUT_PORTS_START( astdelux )
 	PORT_START /* IN0 */
-	PORT_BIT ( 0x01, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	/* Bit 2 and 3 are handled in the machine dependent part. */
 	/* Bit 2 is the 3 KHz source and Bit 3 the VG_HALT bit    */
-	PORT_BIT ( 0x02, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-	PORT_BIT ( 0x04, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-	PORT_BIT ( 0x08, IP_ACTIVE_HIGH, IPT_BUTTON3 )
-	PORT_BIT ( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 )
-	PORT_BITX ( 0x20, IP_ACTIVE_HIGH, IPT_SERVICE, "Diagnostic Step", KEYCODE_F1, IP_JOY_NONE )
-	PORT_BIT ( 0x40, IP_ACTIVE_HIGH, IPT_TILT )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_BUTTON3 )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 )
+	PORT_BITX( 0x20, IP_ACTIVE_HIGH, IPT_SERVICE, "Diagnostic Step", KEYCODE_F1, IP_JOY_NONE )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_TILT )
 	PORT_SERVICE( 0x80, IP_ACTIVE_HIGH )
 
 	PORT_START /* IN1 */
-	PORT_BIT ( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 )
-	PORT_BIT ( 0x02, IP_ACTIVE_HIGH, IPT_COIN2 )
-	PORT_BIT ( 0x04, IP_ACTIVE_HIGH, IPT_COIN3 )
-	PORT_BIT ( 0x08, IP_ACTIVE_HIGH, IPT_START1 )
-	PORT_BIT ( 0x10, IP_ACTIVE_HIGH, IPT_START2 )
-	PORT_BIT ( 0x20, IP_ACTIVE_HIGH, IPT_BUTTON2 )
-	PORT_BIT ( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_2WAY )
-	PORT_BIT ( 0x80, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_2WAY )
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_COIN2 )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_COIN3 )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_START1 )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_START2 )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_BUTTON2 )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_2WAY )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_2WAY )
 
 	PORT_START /* DSW 1 */
 	PORT_DIPNAME( 0x03, 0x00, "Language" )
@@ -405,22 +471,22 @@ INPUT_PORTS_END
 INPUT_PORTS_START( llander )
 	PORT_START /* IN0 */
 	/* Bit 0 is VG_HALT, handled in the machine dependant part */
-	PORT_BIT ( 0x01, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	PORT_SERVICE( 0x02, IP_ACTIVE_LOW )
-	PORT_BIT ( 0x04, IP_ACTIVE_LOW, IPT_TILT )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_TILT )
 	/* Of the rest, Bit 6 is the 3KHz source. 3,4 and 5 are unknown */
-	PORT_BIT ( 0x78, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BITX (0x80, IP_ACTIVE_LOW, IPT_SERVICE, "Diagnostic Step", KEYCODE_F1, IP_JOY_NONE )
+	PORT_BIT( 0x78, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BITX(0x80, IP_ACTIVE_LOW, IPT_SERVICE, "Diagnostic Step", KEYCODE_F1, IP_JOY_NONE )
 
 	PORT_START /* IN1 */
-	PORT_BIT ( 0x01, IP_ACTIVE_HIGH, IPT_START1 )
-	PORT_BIT ( 0x02, IP_ACTIVE_LOW, IPT_COIN1 )
-	PORT_BIT ( 0x04, IP_ACTIVE_HIGH, IPT_COIN2 )
-	PORT_BIT ( 0x08, IP_ACTIVE_LOW, IPT_COIN3 )
-	PORT_BITX( 0x10, IP_ACTIVE_HIGH, IPT_START2, "Select Game", IP_KEY_DEFAULT, IP_JOY_DEFAULT )
-	PORT_BITX( 0x20, IP_ACTIVE_HIGH, IPT_BUTTON1, "Abort", IP_KEY_DEFAULT, IP_JOY_DEFAULT )
-	PORT_BIT ( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_2WAY )
-	PORT_BIT ( 0x80, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_2WAY )
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_START1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_COIN2 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_COIN3 )
+	PORT_BITX(0x10, IP_ACTIVE_HIGH, IPT_START2, "Select Game", IP_KEY_DEFAULT, IP_JOY_DEFAULT )
+	PORT_BITX(0x20, IP_ACTIVE_HIGH, IPT_BUTTON1, "Abort", IP_KEY_DEFAULT, IP_JOY_DEFAULT )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_2WAY )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_2WAY )
 
 	PORT_START /* DSW1 */
 	PORT_DIPNAME( 0x03, 0x01, "Right Coin" )
@@ -454,22 +520,22 @@ INPUT_PORTS_END
 INPUT_PORTS_START( llander1 )
 	PORT_START /* IN0 */
 	/* Bit 0 is VG_HALT, handled in the machine dependant part */
-	PORT_BIT ( 0x01, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	PORT_SERVICE( 0x02, IP_ACTIVE_LOW )
-	PORT_BIT ( 0x04, IP_ACTIVE_LOW, IPT_TILT )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_TILT )
 	/* Of the rest, Bit 6 is the 3KHz source. 3,4 and 5 are unknown */
-	PORT_BIT ( 0x78, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BITX (0x80, IP_ACTIVE_LOW, IPT_SERVICE, "Diagnostic Step", KEYCODE_F1, IP_JOY_NONE )
+	PORT_BIT( 0x78, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BITX(0x80, IP_ACTIVE_LOW, IPT_SERVICE, "Diagnostic Step", KEYCODE_F1, IP_JOY_NONE )
 
 	PORT_START /* IN1 */
-	PORT_BIT ( 0x01, IP_ACTIVE_HIGH, IPT_START1 )
-	PORT_BIT ( 0x02, IP_ACTIVE_LOW, IPT_COIN1 )
-	PORT_BIT ( 0x04, IP_ACTIVE_HIGH, IPT_COIN2 )
-	PORT_BIT ( 0x08, IP_ACTIVE_LOW, IPT_COIN3 )
-	PORT_BITX( 0x10, IP_ACTIVE_HIGH, IPT_START2, "Select Game", IP_KEY_DEFAULT, IP_JOY_DEFAULT )
-	PORT_BITX( 0x20, IP_ACTIVE_HIGH, IPT_BUTTON1, "Abort", IP_KEY_DEFAULT, IP_JOY_DEFAULT )
-	PORT_BIT ( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_2WAY )
-	PORT_BIT ( 0x80, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_2WAY )
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_START1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_COIN2 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_COIN3 )
+	PORT_BITX(0x10, IP_ACTIVE_HIGH, IPT_START2, "Select Game", IP_KEY_DEFAULT, IP_JOY_DEFAULT )
+	PORT_BITX(0x20, IP_ACTIVE_HIGH, IPT_BUTTON1, "Abort", IP_KEY_DEFAULT, IP_JOY_DEFAULT )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_2WAY )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_2WAY )
 
 	PORT_START /* DSW1 */
 	PORT_DIPNAME( 0x03, 0x01, "Right Coin" )
@@ -574,6 +640,43 @@ static struct MachineDriver machine_driver_asteroid =
 	}
 };
 
+static struct MachineDriver machine_driver_asteroib =
+{
+	/* basic machine hardware */
+	{
+		{
+			CPU_M6502,
+			1500000,	/* 1.5 Mhz */
+			asteroib_readmem,asteroid_writemem,0,0,
+			asteroid_interrupt,4	/* 250 Hz */
+		}
+	},
+	60, 0,	/* frames per second, vblank duration (vector game, so no vblank) */
+	1,
+	asteroid_init_machine,
+
+	/* video hardware */
+	400, 300, { 0, 1040, 70, 950 },
+	0,
+	256, 256,
+	avg_init_palette_white,
+
+	VIDEO_TYPE_VECTOR,
+	0,
+	dvg_start,
+	dvg_stop,
+	dvg_screenrefresh,
+
+	/* sound hardware */
+	0,0,0,0,
+	{
+		{
+			SOUND_CUSTOM,
+			&asteroid_custom_interface
+		}
+	}
+};
+
 
 
 static struct POKEYinterface pokey_interface =
@@ -619,7 +722,7 @@ static struct MachineDriver machine_driver_astdelux =
 	400, 300, { 0, 1040, 70, 950 },
 	0,
 	256, 256,
-	avg_init_palette_aqua,
+	avg_init_palette_astdelux,
 
 	VIDEO_TYPE_VECTOR,
 	0,
@@ -695,6 +798,16 @@ static struct MachineDriver machine_driver_llander =
 
 ***************************************************************************/
 
+ROM_START( asteroid )
+	ROM_REGION( 0x10000, REGION_CPU1 )	/* 64k for code */
+	ROM_LOAD( "035145.02",    0x6800, 0x0800, 0x0cc75459 )
+	ROM_LOAD( "035144.02",    0x7000, 0x0800, 0x096ed35c )
+	ROM_LOAD( "035143.02",    0x7800, 0x0800, 0x312caa02 )
+	ROM_RELOAD(            0xf800, 0x0800 )	/* for reset/interrupt vectors */
+	/* Vector ROM */
+	ROM_LOAD( "035127.02",    0x5000, 0x0800, 0x8b71fd9e )
+ROM_END
+
 ROM_START( asteroi1 )
 	ROM_REGION( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "035145.01",    0x6800, 0x0800, 0xe9bfda64 )
@@ -705,11 +818,11 @@ ROM_START( asteroi1 )
 	ROM_LOAD( "035127.01",    0x5000, 0x0800, 0x99699366 )
 ROM_END
 
-ROM_START( asteroid )
+ROM_START( asteroib )
 	ROM_REGION( 0x10000, REGION_CPU1 )	/* 64k for code */
-	ROM_LOAD( "035145.02",    0x6800, 0x0800, 0x0cc75459 )
-	ROM_LOAD( "035144.02",    0x7000, 0x0800, 0x096ed35c )
-	ROM_LOAD( "035143.02",    0x7800, 0x0800, 0x312caa02 )
+	ROM_LOAD( "035145ll.bin", 0x6800, 0x0800, 0x605fc0f2 )
+	ROM_LOAD( "035144ll.bin", 0x7000, 0x0800, 0xe106de77 )
+	ROM_LOAD( "035143ll.bin", 0x7800, 0x0800, 0x6b1d8594 )
 	ROM_RELOAD(            0xf800, 0x0800 )	/* for reset/interrupt vectors */
 	/* Vector ROM */
 	ROM_LOAD( "035127.02",    0x5000, 0x0800, 0x8b71fd9e )
@@ -773,6 +886,7 @@ ROM_END
 
 GAME( 1979, asteroid, 0,        asteroid, asteroid, 0, ROT0, "Atari", "Asteroids (rev 2)" )
 GAME( 1979, asteroi1, asteroid, asteroid, asteroid, 0, ROT0, "Atari", "Asteroids (rev 1)" )
+GAME( 1979, asteroib, asteroid, asteroib, asteroib, 0, ROT0, "bootleg", "Asteroids (bootleg on Lunar Lander hardware)" )
 GAME( 1980, astdelux, 0,        astdelux, astdelux, 0, ROT0, "Atari", "Asteroids Deluxe (rev 2)" )
 GAME( 1980, astdelu1, astdelux, astdelux, astdelux, 0, ROT0, "Atari", "Asteroids Deluxe (rev 1)" )
 GAME( 1979, llander,  0,        llander,  llander,  0, ROT0, "Atari", "Lunar Lander (rev 2)" )

@@ -3540,13 +3540,13 @@ static struct OKIM6295interface okim6295_interface_7576 =
 *
 ********************************************************************/
 
-#define MACHINE_DRIVER(DRVNAME,CPU_FRQ,OKI_FREQ,NVRAM) \
+#define MACHINE_DRIVER(DRVNAME,CPU,CPU_FRQ,OKI_FREQ,NVRAM) \
 static struct MachineDriver machine_driver_##DRVNAME =           \
 {                                                                        \
 	/* basic machine hardware */                                     \
 	{                                                                \
 		{                                                        \
-			CPU_M68000,                                      \
+			CPU,                                      \
 			CPU_FRQ,                                    \
 			cps1_readmem,cps1_writemem,0,0,                  \
 			cps1_interrupt, 1										\
@@ -3631,10 +3631,11 @@ static struct MachineDriver machine_driver_qsound =
 };
 
 
-MACHINE_DRIVER( forgottn,  10000000, 6061, 0 )
-MACHINE_DRIVER( cps1,      10000000, 7576, 0 )  /* 10 MHz?? */
-MACHINE_DRIVER( sf2,       12000000, 7576, 0 )	/* 12 MHz */
-MACHINE_DRIVER( pang3,     10000000, 7576, pang3_nvram_handler )  /* 10 MHz?? */
+MACHINE_DRIVER( forgottn, CPU_M68000,   10000000, 6061, 0 )
+MACHINE_DRIVER( cps1,     CPU_M68000,   10000000, 7576, 0 )  /* 10 MHz?? */
+MACHINE_DRIVER( sf2,      CPU_M68000,   12000000, 7576, 0 )	/* 12 MHz */
+MACHINE_DRIVER( sf2accp2, CPU_M68EC020, 12000000, 7576, 0 )	/* 12 MHz */
+MACHINE_DRIVER( pang3,    CPU_M68000,   10000000, 7576, pang3_nvram_handler )  /* 10 MHz?? */
 
 
 
@@ -6011,18 +6012,18 @@ GAME( 1991, wonder3,  3wonders, cps1,     3wonders, 0,        ROT0,       "Capco
 GAME( 1991, kod,      0,        cps1,     kod,      0,        ROT0,       "Capcom", "The King of Dragons (World)" )
 GAME( 1991, kodj,     kod,      cps1,     kod,      0,        ROT0,       "Capcom", "The King of Dragons (Japan)" )
 GAMEX(1991, kodb,     kod,      cps1,     kod,      0,        ROT0,       "Capcom", "The King of Dragons (bootleg)", GAME_NOT_WORKING )
-GAME( 1991, captcomm, 0,        cps1,     captcomm, 0,        ROT0,       "Capcom", "Captain Commando (World)" )
-GAME( 1991, captcomu, captcomm, cps1,     captcomm, 0,        ROT0,       "Capcom", "Captain Commando (US)" )
-GAME( 1991, captcomj, captcomm, cps1,     captcomm, 0,        ROT0,       "Capcom", "Captain Commando (Japan)" )
-GAME( 1991, knights,  0,        cps1,     knights,  0,        ROT0,       "Capcom", "Knights of the Round (World)" )
-GAME( 1991, knightsj, knights,  cps1,     knights,  0,        ROT0,       "Capcom", "Knights of the Round (Japan)" )
+GAME( 1991, captcomm, 0,        cps1,     captcomm, 0,        ROT0_16BIT, "Capcom", "Captain Commando (World)" )
+GAME( 1991, captcomu, captcomm, cps1,     captcomm, 0,        ROT0_16BIT, "Capcom", "Captain Commando (US)" )
+GAME( 1991, captcomj, captcomm, cps1,     captcomm, 0,        ROT0_16BIT, "Capcom", "Captain Commando (Japan)" )
+GAME( 1991, knights,  0,        cps1,     knights,  0,        ROT0_16BIT, "Capcom", "Knights of the Round (World)" )
+GAME( 1991, knightsj, knights,  cps1,     knights,  0,        ROT0_16BIT, "Capcom", "Knights of the Round (Japan)" )
 GAME( 1992, sf2ce,    0,        sf2,      sf2,      0,        ROT0,       "Capcom", "Street Fighter II' - Champion Edition (World)" )
 GAME( 1992, sf2cea,   sf2ce,    sf2,      sf2,      0,        ROT0,       "Capcom", "Street Fighter II' - Champion Edition (US rev A)" )
 GAME( 1992, sf2ceb,   sf2ce,    sf2,      sf2,      0,        ROT0,       "Capcom", "Street Fighter II' - Champion Edition (US rev B)" )
 GAME( 1992, sf2cej,   sf2ce,    sf2,      sf2,      0,        ROT0,       "Capcom", "Street Fighter II' - Champion Edition (Japan)" )
 GAME( 1992, sf2rb,    sf2ce,    sf2,      sf2,      0,        ROT0,       "hack",  "Street Fighter II' - Champion Edition (Rainbow)" )
 GAME( 1992, sf2red,   sf2ce,    sf2,      sf2,      0,        ROT0,       "hack",  "Street Fighter II' - Champion Edition (Red Wave)" )
-GAME( 1992, sf2accp2, sf2ce,    sf2,      sf2,      0,        ROT0,       "hack",  "Street Fighter II' - Champion Edition (Accelerator Pt.II)" )
+GAME( 1992, sf2accp2, sf2ce,    sf2accp2, sf2,      0,        ROT0,       "hack",  "Street Fighter II' - Champion Edition (Accelerator Pt.II)" )
 GAME( 1992, varth,    0,        cps1,     varth,    0,        ROT270,     "Capcom", "Varth - Operation Thunderstorm (World)" )
 GAME( 1992, varthu,   varth,    cps1,     varth,    0,        ROT270,     "Capcom (Romstar license)", "Varth - Operation Thunderstorm (US)" )
 GAME( 1992, varthj,   varth,    cps1,     varth,    0,        ROT270,     "Capcom", "Varth - Operation Thunderstorm (Japan)" )

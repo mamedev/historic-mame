@@ -198,4 +198,4 @@ ROM_END
 
 
 
-GAME( 1977, dominos, 0, dominos, dominos, 0, ROT0, "Atari", "Dominos" )
+GAMEX( 1977, dominos, 0, dominos, dominos, 0, ROT0, "Atari", "Dominos", GAME_NO_SOUND )

@@ -717,5 +717,5 @@ ROM_END
 
 
 
-GAME( 1986, gladiatr, 0,        gladiatr, gladiatr, 0, ROT0, "Taito America Corporation", "Gladiator (US)" )
-GAME( 1986, ogonsiro, gladiatr, gladiatr, gladiatr, 0, ROT0, "Taito Corporation", "Ohgon no Siro (Japan)" )
+GAMEX( 1986, gladiatr, 0,        gladiatr, gladiatr, 0, ROT0, "Taito America Corporation", "Gladiator (US)", GAME_NO_COCKTAIL )
+GAMEX( 1986, ogonsiro, gladiatr, gladiatr, gladiatr, 0, ROT0, "Taito Corporation", "Ohgon no Siro (Japan)", GAME_NO_COCKTAIL )

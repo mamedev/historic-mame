@@ -8,7 +8,7 @@
 
 	Pocket Gal (Bootleg) is often called 'Sexy Billiards'
 
-	Emulation by Bryan McPhail, mish@tendril.force9.net
+	Emulation by Bryan McPhail, mish@tendril.co.uk
 
 ***************************************************************************/
 

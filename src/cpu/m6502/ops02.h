@@ -1,9 +1,10 @@
 /*****************************************************************************
  *
  *	 m6502ops.h
- *	 Addressing mode and opcode macros for 6502,65c02,6510 CPUs
+ *	 Addressing mode and opcode macros for 6502,65c02,65sc02,6510,n2a03 CPUs
  *
- *	 Copyright (c) 1998 Juergen Buchmueller, all rights reserved.
+ *	 Copyright (c) 1998,1999,2000 Juergen Buchmueller, all rights reserved.
+ *	 65sc02 core Copyright (c) 2000 Peter Trauner, all rights reserved.
  *
  *	 - This source code is released as freeware for non-commercial purposes.
  *	 - You are free to use and redistribute this code in modified or
@@ -14,8 +15,8 @@
  *	 - If you wish to use this for commercial purposes, please contact me at
  *	   pullmoll@t-online.de
  *	 - The author of this copywritten work reserves the right to change the
- *     terms of its usage and license at any time, including retroactively
- *   - This entire notice must remain in the source code.
+ *	   terms of its usage and license at any time, including retroactively
+ *	 - This entire notice must remain in the source code.
  *
  *****************************************************************************/
 
@@ -37,12 +38,12 @@
 #define S	m6502.sp.b.l
 #define SPD m6502.sp.d
 
-#define NZ  m6502.nz
+#define NZ	m6502.nz
 
 #define SET_NZ(n)				\
 	if ((n) == 0) P = (P & ~F_N) | F_Z; else P = (P & ~(F_N | F_Z)) | ((n) & F_N)
 
-#define SET_Z(n)                \
+#define SET_Z(n)				\
 	if ((n) == 0) P |= F_Z; else P &= ~F_Z
 
 #define EAL m6502.ea.b.l
@@ -63,26 +64,26 @@
 #define PPC m6502.ppc.d
 
 #if FAST_MEMORY
-extern  MHELE   *cur_mwhard;
+extern	MHELE	*cur_mwhard;
 extern	MHELE	*cur_mrhard;
 extern	UINT8	*RAM;
 #endif
 
 /***************************************************************
- *  RDOP    read an opcode
+ *	RDOP	read an opcode
  ***************************************************************/
 #define RDOP() cpu_readop(PCW++)
 
 /***************************************************************
- *  RDOPARG read an opcode argument
+ *	RDOPARG read an opcode argument
  ***************************************************************/
 #define RDOPARG() cpu_readop_arg(PCW++)
 
 /***************************************************************
- *  RDMEM   read memory
+ *	RDMEM	read memory
  ***************************************************************/
 #if FAST_MEMORY
-#define RDMEM(addr)                                             \
+#define RDMEM(addr) 											\
 	((cur_mrhard[(addr) >> (ABITS2_16 + ABITS_MIN_16)]) ?		\
 		cpu_readmem16(addr) : RAM[addr])
 #else
@@ -90,10 +91,10 @@ extern	UINT8	*RAM;
 #endif
 
 /***************************************************************
- *  WRMEM   write memory
+ *	WRMEM	write memory
  ***************************************************************/
 #if FAST_MEMORY
-#define WRMEM(addr,data)                                        \
+#define WRMEM(addr,data)										\
 	if (cur_mwhard[(addr) >> (ABITS2_16 + ABITS_MIN_16)])		\
 		cpu_writemem16(addr,data);								\
 	else														\
@@ -106,7 +107,7 @@ extern	UINT8	*RAM;
  *	BRA  branch relative
  *	extra cycle if page boundary is crossed
  ***************************************************************/
-#define BRA(cond)                                               \
+#define BRA(cond)												\
 	if (cond)													\
 	{															\
 		tmp = RDOPARG();										\
@@ -128,44 +129,44 @@ extern	UINT8	*RAM;
  ***************************************************************/
 
 /***************************************************************
- *  EA = zero page address
+ *	EA = zero page address
  ***************************************************************/
 #define EA_ZPG													\
 	ZPL = RDOPARG();											\
 	EAD = ZPD
 
 /***************************************************************
- *  EA = zero page address + X
+ *	EA = zero page address + X
  ***************************************************************/
 #define EA_ZPX													\
 	ZPL = RDOPARG() + X;										\
 	EAD = ZPD
 
 /***************************************************************
- *  EA = zero page address + Y
+ *	EA = zero page address + Y
  ***************************************************************/
 #define EA_ZPY													\
 	ZPL = RDOPARG() + Y;										\
 	EAD = ZPD
 
 /***************************************************************
- *  EA = absolute address
+ *	EA = absolute address
  ***************************************************************/
 #define EA_ABS													\
 	EAL = RDOPARG();											\
 	EAH = RDOPARG()
 
 /***************************************************************
- *  EA = absolute address + X
+ *	EA = absolute address + X
  ***************************************************************/
 #define EA_ABX													\
-    EA_ABS;                                                     \
-    EAW += X
+	EA_ABS; 													\
+	EAW += X
 
 /***************************************************************
  *	EA = absolute address + Y
  ***************************************************************/
-#define EA_ABY                                                  \
+#define EA_ABY													\
 	EA_ABS; 													\
 	EAW += Y
 
@@ -179,16 +180,16 @@ extern	UINT8	*RAM;
 	EAH = RDMEM(ZPD)
 
 /***************************************************************
- *  EA = zero page + X indirect (pre indexed)
+ *	EA = zero page + X indirect (pre indexed)
  ***************************************************************/
 #define EA_IDX													\
 	ZPL = RDOPARG() + X;										\
 	EAL = RDMEM(ZPD);											\
 	ZPL++;														\
-    EAH = RDMEM(ZPD)
+	EAH = RDMEM(ZPD)
 
 /***************************************************************
- *  EA = zero page indirect + Y (post indexed)
+ *	EA = zero page indirect + Y (post indexed)
  *	subtract 1 cycle if page boundary is crossed
  ***************************************************************/
 #define EA_IDY													\
@@ -196,7 +197,7 @@ extern	UINT8	*RAM;
 	EAL = RDMEM(ZPD);											\
 	ZPL++;														\
 	EAH = RDMEM(ZPD);											\
-    if (EAL + Y > 0xff)                                         \
+	if (EAL + Y > 0xff) 										\
 		m6502_ICount--; 										\
 	EAW += Y
 
@@ -213,11 +214,11 @@ extern	UINT8	*RAM;
 /***************************************************************
  *	EA = indirect plus x (only used by 65c02 JMP)
  ***************************************************************/
-#define EA_IAX                                                  \
+#define EA_IAX													\
 	EA_IND; 													\
 	if (EAL + X > 0xff) /* assumption; probably wrong ? */		\
 		m6502_ICount--; 										\
-    EAW += X
+	EAW += X
 
 /* read a value into tmp */
 #define RD_IMM	tmp = RDOPARG()
@@ -583,7 +584,7 @@ extern	UINT8	*RAM;
 		PULL(P);												\
 		if ((m6502.irq_state != CLEAR_LINE) && !(P & F_I)) {	\
 			LOG((errorlog, "M6502#%d PLP sets after_cli\n",cpu_getactivecpu())); \
-            m6502.after_cli = 1;                                \
+			m6502.after_cli = 1;								\
 		}														\
 	} else {													\
 		PULL(P);												\
@@ -618,14 +619,14 @@ extern	UINT8	*RAM;
 #define RTI 													\
 	PULL(P);													\
 	PULL(PCL);													\
-    PULL(PCH);                                                  \
+	PULL(PCH);													\
 	P |= F_T;													\
 	if( (m6502.irq_state != CLEAR_LINE) && !(P & F_I) ) 		\
 	{															\
 		LOG((errorlog, "M6502#%d RTI sets after_cli\n",cpu_getactivecpu())); \
-        m6502.after_cli = 1;                                    \
+		m6502.after_cli = 1;									\
 	}															\
-    change_pc16(PCD)
+	change_pc16(PCD)
 
 /* 6502 ********************************************************
  *	RTS Return from subroutine
@@ -822,13 +823,13 @@ extern	UINT8	*RAM;
 /* 65C02 *******************************************************
  * STZ	Store zero
  ***************************************************************/
-#define STZ                                                     \
-    tmp = 0
+#define STZ 													\
+	tmp = 0
 
 /* 65C02 *******************************************************
  * TRB	Test and reset bits
  ***************************************************************/
-#define TRB                                                     \
+#define TRB 													\
 	SET_Z(tmp&A);												\
 	tmp &= ~A
 
@@ -918,10 +919,10 @@ extern	UINT8	*RAM;
  ***************************************************************/
 #define ISB 													\
 	tmp = (UINT8)++tmp; 										\
-    SBC
+	SBC
 
 /* 6510 ********************************************************
- *  LAX load accumulator and index X
+ *	LAX load accumulator and index X
  ***************************************************************/
 #define LAX 													\
 	A = X = (UINT8)tmp; 										\
@@ -936,17 +937,17 @@ extern	UINT8	*RAM;
 	P = (P & ~F_C) | ((tmp >> 8) & F_C);						\
 	tmp = (UINT8)tmp;											\
 	A &= tmp;													\
-    SET_NZ(A)
+	SET_NZ(A)
 
 /* 6510 ********************************************************
  * RRA	rotate right and add with carry
- *  C -> [7][6][5][4][3][2][1][0] -> C
+ *	C -> [7][6][5][4][3][2][1][0] -> C
  ***************************************************************/
 #define RRA 													\
 	tmp |= (P & F_C) << 8;										\
 	P = (P & ~F_C) | (tmp & F_C);								\
 	tmp = (UINT8)(tmp >> 1);									\
-    ADC
+	ADC
 
 /* 6510 ********************************************************
  * SAX	logical and accumulator with index X and store
@@ -962,17 +963,17 @@ extern	UINT8	*RAM;
 	P = (P & ~F_C) | ((tmp >> 7) & F_C);						\
 	tmp = (UINT8)(tmp << 1);									\
 	A |= tmp;													\
-    SET_NZ(A)
+	SET_NZ(A)
 
 /* 6510 ********************************************************
  *	SRE logical shift right and logical exclusive or
- *  0 -> [7][6][5][4][3][2][1][0] -> C
+ *	0 -> [7][6][5][4][3][2][1][0] -> C
  ***************************************************************/
 #define SRE 													\
 	P = (P & ~F_C) | (tmp & F_C);								\
 	tmp = (UINT8)tmp >> 1;										\
 	A ^= tmp;													\
-    SET_NZ(A)
+	SET_NZ(A)
 
 /* 6510 ********************************************************
  * SAH	store accumulator and index X and high + 1
@@ -1018,7 +1019,7 @@ extern	UINT8	*RAM;
 	{															\
 		int c = (P & F_C);										\
 		int sum = A + tmp + c;									\
-        P &= ~(F_V | F_C);                                      \
+		P &= ~(F_V | F_C);										\
 		if (~(A^tmp) & (A^sum) & F_N)							\
 			P |= F_V;											\
 		if (sum & 0xff00)										\
@@ -1042,5 +1043,17 @@ extern	UINT8	*RAM;
 		A = (UINT8) sum;										\
 	}															\
 	SET_NZ(A)
+
+/* 65sc02 ********************************************************
+ *	BSR Branch to subroutine
+ ***************************************************************/
+#define BSR 													\
+	EAL = RDOPARG();											\
+	PUSH(PCH);													\
+	PUSH(PCL);													\
+	EAH = RDOPARG();											\
+	EAW = PCW + (short)(EAW-1); 								\
+	PCD = EAD;													\
+	change_pc16(PCD)
 
 

@@ -205,6 +205,7 @@ INLINE void daa( void )
 
 /* $1a ILLEGAL */
 
+#if (HAS_HD63701)
 /* $1a SLP */ /* HD63701YO only */
 INLINE void slp (void)
 {
@@ -212,6 +213,7 @@ INLINE void slp (void)
 	m6808.wai_state |= HD63701_SLP;
 	EAT_CYCLES;
 }
+#endif
 
 /* $1b ABA inherent ***** */
 INLINE void aba (void)

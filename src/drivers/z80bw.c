@@ -37,14 +37,19 @@ TODO:
 
 int  astinvad_interrupt(void);
 
-void z80bw_init_palette(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-void astinvad_videoram_w(int offset,int data);
-void spaceint_videoram_w (int offset,int data);
-void astinvad_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
-void spaceint_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+int invaders_vh_start(void);
+void invaders_vh_stop(void);
+
+void astinvad_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
+void invaders_videoram_w(int offset,int data);
+void invaders_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+
 void astinvad_sh_port_4_w(int offset,int data);
 void astinvad_sh_port_5_w(int offset,int data);
 void astinvad_sh_update(void);
+
+void init_astinvad(void);
+void init_spaceint(void);
 
 extern struct Samplesinterface astinvad_samples_interface;
 
@@ -60,7 +65,7 @@ static struct MemoryWriteAddress astinvad_writemem[] =
 {
 	{ 0x0000, 0x1bff, MWA_ROM },
 	{ 0x1c00, 0x23ff, MWA_RAM },
-	{ 0x2400, 0x3fff, astinvad_videoram_w, &videoram, &videoram_size },
+	{ 0x2400, 0x3fff, invaders_videoram_w, &videoram, &videoram_size },
 	{ -1 }  /* end of table */
 };
 
@@ -144,13 +149,13 @@ static struct MachineDriver machine_driver_astinvad = /* LT */
 	32*8, 32*8, { 0*8, 32*8-1, 0*8, 28*8-1 },
 	0,      /* no gfxdecodeinfo - bitmapped display */
 	8, 0,
-	z80bw_init_palette,
+	astinvad_vh_convert_color_prom,
 
 	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY | VIDEO_MODIFIES_PALETTE,
 	0,
-	0,
-	0,
-	astinvad_vh_screenrefresh,
+	invaders_vh_start,
+	invaders_vh_stop,
+	invaders_vh_screenrefresh,
 
 	/* sound hardware */
 	0, 0, 0, 0,
@@ -199,7 +204,7 @@ static struct MemoryWriteAddress spaceint_writemem[] =
 	{ 0x0000, 0x17ff, MWA_ROM },
 	{ 0x2000, 0x23ff, MWA_RAM },
 	{ 0x4000, 0x40ff, MWA_RAM },
-	{ 0x4100, 0x5fff, spaceint_videoram_w, &videoram, &videoram_size },
+	{ 0x4100, 0x5fff, invaders_videoram_w, &videoram, &videoram_size },
 	{ -1 }  /* end of table */
 };
 
@@ -289,13 +294,13 @@ static struct MachineDriver machine_driver_spaceint = /* 20-12-1998 LT */
 	32*8, 32*8, { 0*8, 32*8-1, 0*8, 32*8-1 },
 	0,      /* no gfxdecodeinfo - bitmapped display */
 	8, 0,
-	z80bw_init_palette,
+	astinvad_vh_convert_color_prom,
 
 	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY | VIDEO_MODIFIES_PALETTE,
 	0,
-	0,
-	0,
-	spaceint_vh_screenrefresh,
+	invaders_vh_start,
+	invaders_vh_stop,
+	invaders_vh_screenrefresh,
 
 	/* sound hardware */
 	0, 0, 0, 0,
@@ -352,6 +357,6 @@ ROM_END
 
 
 
-GAME( 1980, astinvad, 0,        astinvad, astinvad, 0, ROT270, "Stern", "Astro Invader" )
-GAME( 1979, kamikaze, astinvad, astinvad, astinvad, 0, ROT270, "Leijac Corporation", "Kamikaze" )
-GAMEX(1980, spaceint, 0,        spaceint, spaceint, 0, ROT0,   "Shoei", "Space Intruder", GAME_WRONG_COLORS | GAME_NO_SOUND )
+GAME( 1980, astinvad, 0,        astinvad, astinvad, astinvad, ROT270, "Stern", "Astro Invader" )
+GAME( 1979, kamikaze, astinvad, astinvad, astinvad, astinvad, ROT270, "Leijac Corporation", "Kamikaze" )
+GAMEX(1980, spaceint, 0,        spaceint, spaceint, spaceint, ROT0,   "Shoei", "Space Intruder", GAME_WRONG_COLORS | GAME_NO_SOUND )

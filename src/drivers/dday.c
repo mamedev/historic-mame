@@ -60,8 +60,6 @@ void dday_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 void dday_colorram_w(int offset, int data);
 int  dday_colorram_r(int offset);
 void dday_control_w (int offset, int data);
-void dday_AY8910_0_w(int offset, int data);
-void dday_AY8910_1_w(int offset, int data);
 void dday_searchlight_w(int offset, int data);
 void dday_decode(void);
 
@@ -120,8 +118,22 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x5800, 0x5bff, MWA_RAM, &videoram, &videoram_size },
 	{ 0x5c00, 0x5fff, dday_colorram_w, &colorram },
 	{ 0x6000, 0x63ff, MWA_RAM },
-	{ 0x6400, 0x640d, dday_AY8910_0_w },
-	{ 0x6800, 0x6801, dday_AY8910_1_w },
+	{ 0x6400, 0x6400, AY8910_control_port_0_w },
+	{ 0x6401, 0x6401, AY8910_write_port_0_w },
+	{ 0x6402, 0x6402, AY8910_control_port_0_w },
+	{ 0x6403, 0x6403, AY8910_write_port_0_w },
+	{ 0x6404, 0x6404, AY8910_control_port_0_w },
+	{ 0x6405, 0x6405, AY8910_write_port_0_w },
+	{ 0x6406, 0x6406, AY8910_control_port_0_w },
+	{ 0x6407, 0x6407, AY8910_write_port_0_w },
+	{ 0x6408, 0x6408, AY8910_control_port_0_w },
+	{ 0x6409, 0x6409, AY8910_write_port_0_w },
+	{ 0x640a, 0x640a, AY8910_control_port_0_w },
+	{ 0x640b, 0x640b, AY8910_write_port_0_w },
+	{ 0x640c, 0x640c, AY8910_control_port_0_w },
+	{ 0x640d, 0x640d, AY8910_write_port_0_w },
+	{ 0x6800, 0x6800, AY8910_control_port_1_w },
+	{ 0x6801, 0x6801, AY8910_write_port_1_w },
 	{ 0x7800, 0x7800, dday_control_w },
 	{ -1 }  /* end of table */
 };

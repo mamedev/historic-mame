@@ -349,7 +349,7 @@ ROM_START( 1943 )
 	ROM_LOAD( "1943.14",      0x0000, 0x8000, 0x4d3c6401 )	/* front background */
 	ROM_LOAD( "1943.23",      0x8000, 0x8000, 0xa52aecbd )	/* back background */
 
-	ROM_REGION( 0x0a00, REGION_PROMS )
+	ROM_REGION( 0x0c00, REGION_PROMS )
 	ROM_LOAD( "bmprom.01",    0x0000, 0x0100, 0x74421f18 )	/* red component */
 	ROM_LOAD( "bmprom.02",    0x0100, 0x0100, 0xac27541f )	/* green component */
 	ROM_LOAD( "bmprom.03",    0x0200, 0x0100, 0x251fb6ff )	/* blue component */
@@ -360,6 +360,8 @@ ROM_START( 1943 )
 	ROM_LOAD( "bmprom.11",    0x0700, 0x0100, 0x405aae37 )	/* background palette bank */
 	ROM_LOAD( "bmprom.08",    0x0800, 0x0100, 0xc2010a9e )	/* sprite lookup table */
 	ROM_LOAD( "bmprom.07",    0x0900, 0x0100, 0xb56f30c3 )	/* sprite palette bank */
+	ROM_LOAD( "bmprom.04",    0x0a00, 0x0100, 0x91a8a2e1 )	/* priority encoder / palette selector (not used) */
+	ROM_LOAD( "bmprom.06",    0x0b00, 0x0100, 0x0eaf5158 )	/* video timing (not used) */
 ROM_END
 
 ROM_START( 1943j )
@@ -402,7 +404,7 @@ ROM_START( 1943j )
 	ROM_LOAD( "1943.14",      0x0000, 0x8000, 0x4d3c6401 )	/* front background */
 	ROM_LOAD( "1943.23",      0x8000, 0x8000, 0xa52aecbd )	/* back background */
 
-	ROM_REGION( 0x0a00, REGION_PROMS )
+	ROM_REGION( 0x0c00, REGION_PROMS )
 	ROM_LOAD( "bmprom.01",    0x0000, 0x0100, 0x74421f18 )	/* red component */
 	ROM_LOAD( "bmprom.02",    0x0100, 0x0100, 0xac27541f )	/* green component */
 	ROM_LOAD( "bmprom.03",    0x0200, 0x0100, 0x251fb6ff )	/* blue component */
@@ -413,6 +415,8 @@ ROM_START( 1943j )
 	ROM_LOAD( "bmprom.11",    0x0700, 0x0100, 0x405aae37 )	/* background palette bank */
 	ROM_LOAD( "bmprom.08",    0x0800, 0x0100, 0xc2010a9e )	/* sprite lookup table */
 	ROM_LOAD( "bmprom.07",    0x0900, 0x0100, 0xb56f30c3 )	/* sprite palette bank */
+	ROM_LOAD( "bmprom.04",    0x0a00, 0x0100, 0x91a8a2e1 )	/* priority encoder / palette selector (not used) */
+	ROM_LOAD( "bmprom.06",    0x0b00, 0x0100, 0x0eaf5158 )	/* video timing (not used) */
 ROM_END
 
 ROM_START( 1943kai )
@@ -455,7 +459,7 @@ ROM_START( 1943kai )
 	ROM_LOAD( "1943kai.14",   0x0000, 0x8000, 0xcf0f5a53 )	/* front background */
 	ROM_LOAD( "1943kai.23",   0x8000, 0x8000, 0x17f77ef9 )	/* back background */
 
-	ROM_REGION( 0x0a00, REGION_PROMS )
+	ROM_REGION( 0x0c00, REGION_PROMS )
 	ROM_LOAD( "bmk01.bin",    0x0000, 0x0100, 0xe001ea33 )	/* red component */
 	ROM_LOAD( "bmk02.bin",    0x0100, 0x0100, 0xaf34d91a )	/* green component */
 	ROM_LOAD( "bmk03.bin",    0x0200, 0x0100, 0x43e9f6ef )	/* blue component */
@@ -466,10 +470,12 @@ ROM_START( 1943kai )
 	ROM_LOAD( "bmk11.bin",    0x0700, 0x0100, 0x87a8854e )	/* background palette bank */
 	ROM_LOAD( "bmk08.bin",    0x0800, 0x0100, 0xdad17e2d )	/* sprite lookup table */
 	ROM_LOAD( "bmk07.bin",    0x0900, 0x0100, 0x76307f8d )	/* sprite palette bank */
+	ROM_LOAD( "bmprom.04",    0x0a00, 0x0100, 0x91a8a2e1 )	/* priority encoder / palette selector (not used) */
+	ROM_LOAD( "bmprom.06",    0x0b00, 0x0100, 0x0eaf5158 )	/* video timing (not used) */
 ROM_END
 
 
 
-GAME( 1987, 1943,    0,    1943, 1943, 0, ROT270, "Capcom", "1943 - The Battle of Midway (US)" )
-GAME( 1987, 1943j,   1943, 1943, 1943, 0, ROT270, "Capcom", "1943 - The Battle of Midway (Japan)" )
-GAME( 1987, 1943kai, 0,    1943, 1943, 0, ROT270, "Capcom", "1943 Kai" )
+GAMEX( 1987, 1943,    0,    1943, 1943, 0, ROT270, "Capcom", "1943 - The Battle of Midway (US)", GAME_NO_COCKTAIL )
+GAMEX( 1987, 1943j,   1943, 1943, 1943, 0, ROT270, "Capcom", "1943 - The Battle of Midway (Japan)", GAME_NO_COCKTAIL )
+GAMEX( 1987, 1943kai, 0,    1943, 1943, 0, ROT270, "Capcom", "1943 Kai", GAME_NO_COCKTAIL )

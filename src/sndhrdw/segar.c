@@ -25,11 +25,6 @@ TODO:
 #include "driver.h"
 #include "cpu/i8039/i8039.h"
 
-extern void TMS3617_voice_enable(int voice, int enable);
-extern void TMS3617_pitch_w(int offset, int pitch);
-extern void TMS3617_doupdate(void);
-
-
 #define TOTAL_SOUNDS 16
 
 struct sa
@@ -421,51 +416,44 @@ enum
 /* Monster Bash uses an 8255 to control the sounds, much like Zaxxon */
 void monsterb_audio_8255_w( int offset, int data )
 {
-		/* Port A controls the special TMS3617 music chip */
-		if (offset == 0)
-		{
-				int enable_val,i;
+	/* Port A controls the special TMS3617 music chip */
+	if (offset == 0)
+	{
+		int enable_val;
 
-				TMS3617_doupdate();
+		/* Lower four data lines get decoded into 13 control lines */
+		tms3617_note_w(0, 0, data & 15);
 
-				/* Lower four data lines get decoded into 13 control lines */
-				TMS3617_pitch_w(0, ((data & 0x0F)+1) % 16);
+		/* Top four data lines address an 82S123 ROM that enables/disables voices */
+		enable_val = memory_region(REGION_SOUND2)[(data & 0xF0) >> 4];
+		tms3617_enable_w(0,enable_val >> 2);
+	}
+	/* Port B controls the two discrete sound circuits */
+	else if (offset == 1)
+	{
+		if (!(data & 0x01))
+			sample_start(0, mbzap, 0);
 
-				/* Top four data lines address an 82S123 ROM that enables/disables voices */
-                enable_val = memory_region(REGION_SOUND2)[(data & 0xF0) >> 4];
+		if (!(data & 0x02))
+			sample_start(1, mbjumpdown, 0);
 
-				for (i=2; i<8; i++)
-				{
-						if (enable_val & (1<<i))
-								TMS3617_voice_enable(i-2,1);
-						else
-								TMS3617_voice_enable(i-2,0);
-				}
-		}
-		/* Port B controls the two discrete sound circuits */
-		else if (offset == 1)
-		{
-				if (!(data & 0x01))     sample_start(0, mbzap, 0);
+        /* TODO: D7 on Port B might affect TMS3617 output (mute?) */
+	}
+	/* Port C controls a NEC7751, which is an 8048 CPU with onboard ROM */
+	else if (offset == 2)
+	{
+		// D0-D2 = P24-P26, D3 = INT
+		port_8255_c03 = data & 0x0F;
+		if ((data & 0x08) == 0)
+			cpu_cause_interrupt(1,I8039_EXT_INT);
 
-				if (!(data & 0x02))     sample_start(1, mbjumpdown, 0);
-
-				/* TODO: D7 on Port B might affect TMS3617 output (mute?) */
-		}
-		/* Port C controls a NEC7751, which is an 8048 CPU with onboard ROM */
-		else if (offset == 2)
-		{
-			// D0-D2 = P24-P26, D3 = INT
-			port_8255_c03 = data & 0x0F;
-			if ((data & 0x08) == 0)
-				cpu_cause_interrupt(1,I8039_EXT_INT);
-
-		}
-		/* Write to 8255 control port, this should be 0x80 for "simple mode" */
-		else
-		{
-				if ((errorlog) && (data != 0x80))
-						fprintf(errorlog,"8255 Control Port Write = %02X\n",data);
-		}
+	}
+	/* Write to 8255 control port, this should be 0x80 for "simple mode" */
+	else
+	{
+		if ((errorlog) && (data != 0x80))
+			fprintf(errorlog,"8255 Control Port Write = %02X\n",data);
+	}
 }
 
 int monsterb_audio_8255_r( int offset )

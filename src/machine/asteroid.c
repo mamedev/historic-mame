@@ -29,16 +29,8 @@ int llander_interrupt (void)
 		return ignore_interrupt();
 }
 
-/*
- * We catch the following busy loop in Asteroids:
- * 6812 lda $2002
- * 6815 bmi $6812
- *
- * and the following busy loop in Asteroid Deluxe
- * 6014 bit $2002
- * 6017 bmi $6014
- */
-int asteroid_IN0_r (int offset) {
+int asteroid_IN0_r (int offset)
+{
 
 	int res;
 	int bitmask;
@@ -49,18 +41,27 @@ int asteroid_IN0_r (int offset) {
 
 	if (cpu_gettotalcycles() & 0x100)
 		res |= 0x02;
-	if (!avgdvg_done()) {
-		if (cpu_get_pc()==0x6815)
-			cpu_spinuntil_int();
-		if (cpu_get_pc()==0x6017)
-			cpu_spinuntil_int();
+	if (!avgdvg_done())
 		res |= 0x04;
-	}
 
 	if (res & bitmask)
 		res = 0x80;
 	else
 		res = ~0x80;
+
+	return res;
+}
+
+int asteroib_IN0_r (int offset)
+{
+	int res;
+
+	res=readinputport(0);
+
+//	if (cpu_gettotalcycles() & 0x100)
+//		res |= 0x02;
+	if (!avgdvg_done())
+		res |= 0x80;
 
 	return res;
 }
@@ -155,17 +156,10 @@ void asteroid_init_machine(void)
 
 /*
  * This is Lunar Lander's Inputport 0.
- * We also catch the following busyloop:
- * 6531 lda $2000
- * 6534 lsr
- * 6535 bcc 6531
  */
 int llander_IN0_r (int offset)
 {
 	int res;
-
-	if (cpu_get_pc()==0x6534)
-		cpu_spinuntil_int();
 
 	res = readinputport(0);
 

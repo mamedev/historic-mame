@@ -1,6 +1,6 @@
 /***************************************************************************
 
-   Alpha 68k video emulation - Bryan McPhail, mish@tendril.force9.net
+   Alpha 68k video emulation - Bryan McPhail, mish@tendril.co.uk
 
 ****************************************************************************/
 

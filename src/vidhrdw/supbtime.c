@@ -1,6 +1,6 @@
 /***************************************************************************
 
-   Super Burger Time Video emulation - Bryan McPhail, mish@tendril.force9.net
+   Super Burger Time Video emulation - Bryan McPhail, mish@tendril.co.uk
 
 *********************************************************************
 

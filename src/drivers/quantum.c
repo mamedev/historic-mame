@@ -248,7 +248,7 @@ ROM_END
 
 
 
-GAME( 1982, quantum,  0,       quantum, quantum, 0, ROT0, "Atari", "Quantum (rev 2)" )
-GAME( 1982, quantum1, quantum, quantum, quantum, 0, ROT0, "Atari", "Quantum (rev 1)" )
-GAME( 1982, quantump, quantum, quantum, quantum, 0, ROT0, "Atari", "Quantum (prototype)" )
+GAMEX( 1982, quantum,  0,       quantum, quantum, 0, ROT0, "Atari", "Quantum (rev 2)", GAME_WRONG_COLORS )
+GAMEX( 1982, quantum1, quantum, quantum, quantum, 0, ROT0, "Atari", "Quantum (rev 1)", GAME_WRONG_COLORS )
+GAMEX( 1982, quantump, quantum, quantum, quantum, 0, ROT0, "Atari", "Quantum (prototype)", GAME_WRONG_COLORS )
 

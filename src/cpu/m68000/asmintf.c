@@ -466,6 +466,49 @@ unsigned m68010_dasm(char *buffer, unsigned pc)
  * M68020 section
  ****************************************************************************/
 
+#if HAS_M68EC020
+
+void m68ec020_reset(void *param)
+{
+	m68000_reset(param);
+    regs.CPUtype=2;
+}
+
+void m68ec020_exit(void) { m68000_exit(); }
+int  m68ec020_execute(int cycles) { return m68000_execute(cycles); }
+unsigned m68ec020_get_context(void *dst) { return m68000_get_context(dst); }
+void m68ec020_set_context(void *src) { m68000_set_context(src); }
+unsigned m68ec020_get_pc(void) { return m68000_get_pc(); }
+void m68ec020_set_pc(unsigned val) { m68000_set_pc(val); }
+unsigned m68ec020_get_sp(void) { return m68000_get_sp(); }
+void m68ec020_set_sp(unsigned val) { m68000_set_sp(val); }
+unsigned m68ec020_get_reg(int regnum) { return m68000_get_reg(regnum); }
+void m68ec020_set_reg(int regnum, unsigned val) { m68000_set_reg(regnum,val); }
+void m68ec020_set_nmi_line(int state) { m68000_set_nmi_line(state); }
+void m68ec020_set_irq_line(int irqline, int state)  { m68000_set_irq_line(irqline,state); }
+void m68ec020_set_irq_callback(int (*callback)(int irqline))  { m68000_set_irq_callback(callback); }
+
+const char *m68ec020_info(void *context, int regnum)
+{
+	switch( regnum )
+	{
+		case CPU_INFO_NAME: return "68EC020";
+	}
+	return m68000_info(context,regnum);
+}
+
+unsigned m68ec020_dasm(char *buffer, unsigned pc)
+{
+	change_pc24(pc);
+#ifdef MAME_DEBUG
+    return m68k_disassemble(buffer, pc);
+#else
+	sprintf(buffer, "$%04X", cpu_readop16(pc) );
+	return 2;
+#endif
+}
+#endif
+
 #if HAS_M68020
 
 void m68020_reset(void *param)

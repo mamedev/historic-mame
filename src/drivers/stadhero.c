@@ -2,7 +2,7 @@
 
 	Stadium Hero (Japan)			(c) 1988 Data East Corporation
 
-	Emulation by Bryan McPhail, mish@tendril.force9.net
+	Emulation by Bryan McPhail, mish@tendril.co.uk
 
 ***************************************************************************/
 
@@ -323,7 +323,7 @@ static struct MachineDriver machine_driver_stadhero =
 			ignore_interrupt,0
 		}
 	},
-	58, DEFAULT_REAL_60HZ_VBLANK_DURATION,
+	58, 529,
 	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
 	0,
 

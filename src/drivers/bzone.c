@@ -197,7 +197,6 @@ All different denominations                         |Off |Off |    |    |
 #define IN0_VG_HALT (1<<6)
 
 void redbaron_sounds_w (int offset,int data);
-void bzone_pokey_w (int offset, int data);
 void bzone_sounds_w (int offset, int data);
 int bzone_sh_start(const struct MachineSound *msound);
 void bzone_sh_stop(void);
@@ -283,9 +282,9 @@ static struct MemoryWriteAddress bzone_writemem[] =
 	{ 0x0000, 0x03ff, MWA_RAM },
 	{ 0x1000, 0x1000, coin_counter_w },
 	{ 0x1200, 0x1200, avgdvg_go },
-	{ 0x1400, 0x1400, MWA_NOP }, /* watchdog clear */
+	{ 0x1400, 0x1400, watchdog_reset_w },
 	{ 0x1600, 0x1600, avgdvg_reset },
-	{ 0x1820, 0x182f, bzone_pokey_w },
+	{ 0x1820, 0x182f, pokey1_w },
 	{ 0x1840, 0x1840, bzone_sounds_w },
 	{ 0x1860, 0x187f, mb_go },
 	{ 0x2000, 0x2fff, MWA_RAM, &vectorram, &vectorram_size },

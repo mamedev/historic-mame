@@ -16,6 +16,8 @@ unsigned char *gng_bgvideoram,*gng_bgcolorram;
 static struct tilemap *bg_tilemap,*fg_tilemap;
 static int flipscreen;
 
+
+
 /***************************************************************************
 
   Callbacks for the TileMap code
@@ -38,11 +40,14 @@ static void get_bg_tile_info( int col, int row )
 	tile_info.flags = TILE_FLIPYX((attr & 0x30) >> 4) | TILE_SPLIT((attr & 0x08) >> 3);
 }
 
+
+
 /***************************************************************************
 
   Start the video hardware emulation.
 
 ***************************************************************************/
+
 int gng_vh_start(void)
 {
 	fg_tilemap = tilemap_create(
@@ -72,29 +77,37 @@ int gng_vh_start(void)
 	return 1;
 }
 
-void gng_fgvideoram_w(int offset,int data){
-	if (gng_fgvideoram[offset] != data){
+void gng_fgvideoram_w(int offset,int data)
+{
+	if (gng_fgvideoram[offset] != data)
+	{
 		gng_fgvideoram[offset] = data;
 		tilemap_mark_tile_dirty(fg_tilemap,offset%32,offset/32);
 	}
 }
 
-void gng_fgcolorram_w(int offset,int data){
-	if (gng_fgcolorram[offset] != data){
+void gng_fgcolorram_w(int offset,int data)
+{
+	if (gng_fgcolorram[offset] != data)
+	{
 		gng_fgcolorram[offset] = data;
 		tilemap_mark_tile_dirty(fg_tilemap,offset%32,offset/32);
 	}
 }
 
-void gng_bgvideoram_w(int offset,int data){
-	if (gng_bgvideoram[offset] != data){
+void gng_bgvideoram_w(int offset,int data)
+{
+	if (gng_bgvideoram[offset] != data)
+	{
 		gng_bgvideoram[offset] = data;
 		tilemap_mark_tile_dirty(bg_tilemap,offset/32,offset%32);
 	}
 }
 
-void gng_bgcolorram_w(int offset,int data){
-	if (gng_bgcolorram[offset] != data){
+void gng_bgcolorram_w(int offset,int data)
+{
+	if (gng_bgcolorram[offset] != data)
+	{
 		gng_bgcolorram[offset] = data;
 		tilemap_mark_tile_dirty(bg_tilemap,offset/32,offset%32);
 	}
@@ -102,13 +115,15 @@ void gng_bgcolorram_w(int offset,int data){
 
 
 
-void gng_bgscrollx_w(int offset,int data){
+void gng_bgscrollx_w(int offset,int data)
+{
 	static unsigned char scrollx[2];
 	scrollx[offset] = data;
 	tilemap_set_scrollx( bg_tilemap, 0, scrollx[0] + 256 * scrollx[1] );
 }
 
-void gng_bgscrolly_w(int offset,int data){
+void gng_bgscrolly_w(int offset,int data)
+{
 	static unsigned char scrolly[2];
 	scrolly[offset] = data;
 	tilemap_set_scrolly( bg_tilemap, 0, scrolly[0] + 256 * scrolly[1] );
@@ -122,11 +137,10 @@ void gng_flipscreen_w(int offset,int data)
 }
 
 
+
 /***************************************************************************
 
-  Draw the game screen in the given osd_bitmap.
-  Do NOT call osd_update_display() from this function, it will be called by
-  the main emulation engine.
+  Display refresh
 
 ***************************************************************************/
 

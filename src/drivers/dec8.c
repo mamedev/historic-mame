@@ -2,7 +2,8 @@
 
 Various Data East 8 bit games:
 
-	Cobra Command               (c) 1988 Data East Corporation (6809)
+	Cobra Command (World)       (c) 1988 Data East Corporation (6809)
+	Cobra Command (Japan)       (c) 1988 Data East Corporation (6809)
 	The Real Ghostbusters (2p)  (c) 1987 Data East USA (6809 + I8751)
 	The Real Ghostbusters (3p)  (c) 1987 Data East USA (6809 + I8751)
 	Meikyuu Hunter G            (c) 1987 Data East Corporation (6809 + I8751)
@@ -24,7 +25,7 @@ Various Data East 8 bit games:
 
 	Meikyuu Hunter G was formerly known as Mazehunter.
 
-	Emulation by Bryan McPhail, mish@tendril.force9.net
+	Emulation by Bryan McPhail, mish@tendril.co.uk
 
 To do:
 	Slight graphics glitches in Captain Silver, Breywood, Shackled.
@@ -147,7 +148,7 @@ static void ghostb_i8751_w(int offset, int data)
 
 	if (i8751_value==0x00aa) i8751_return=0x655;
 	if (i8751_value==0x021a) i8751_return=0x6e5; /* Ghostbusters ID */
-	if (i8751_value==0x021b) i8751_return=0x6e4; /* Mazehunter ID */
+	if (i8751_value==0x021b) i8751_return=0x6e4; /* Meikyuu Hunter G ID */
 }
 
 static void srdarwin_i8751_w(int offset, int data)
@@ -375,7 +376,7 @@ static void dec8_bank_w(int offset, int data)
 	cpu_setbank(1,&RAM[bankaddress]);
 }
 
-/* Used by Ghostbusters, Mazehunter & Gondomania */
+/* Used by Ghostbusters, Meikyuu Hunter G & Gondomania */
 static void ghostb_bank_w(int offset, int data)
 {
  	int bankaddress;
@@ -522,8 +523,8 @@ static struct MemoryReadAddress cobra_readmem[] =
 
 static struct MemoryWriteAddress cobra_writemem[] =
 {
- 	{ 0x0000, 0x07ff, MWA_RAM },
- 	{ 0x0800, 0x17ff, dec8_video_w },
+	{ 0x0000, 0x07ff, MWA_RAM },
+	{ 0x0800, 0x17ff, dec8_video_w },
 	{ 0x1800, 0x1fff, MWA_RAM },
 	{ 0x2000, 0x27ff, MWA_RAM, &videoram, &videoram_size },
 	{ 0x2800, 0x2fff, MWA_RAM, &spriteram, &spriteram_size },
@@ -1084,7 +1085,7 @@ INPUT_PORTS_START( cobracom )
 	PORT_DIPSETTING(    0x04, DEF_STR( 2C_1C ) )
 	PORT_DIPSETTING(    0x0c, DEF_STR( 1C_1C ) )
 	PORT_DIPSETTING(    0x08, DEF_STR( 1C_2C ) )
-	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
+	PORT_DIPNAME( 0x10, 0x00, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x10, DEF_STR( On ) )
 	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Demo_Sounds ) )
@@ -1093,7 +1094,7 @@ INPUT_PORTS_START( cobracom )
 	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Flip_Screen ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Cabinet ) )
+	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Cabinet ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
 	PORT_DIPSETTING(    0x80, DEF_STR( Cocktail ) )
 
@@ -1111,13 +1112,13 @@ INPUT_PORTS_START( cobracom )
 	PORT_DIPNAME( 0x10, 0x10, "Allow Continue" )
 	PORT_DIPSETTING(    0x00, DEF_STR( No ) )
 	PORT_DIPSETTING(    0x10, DEF_STR( Yes ) )
-	PORT_DIPNAME( 0x20, 0x20, "Unknown" )
+	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x20, DEF_STR( On ) )
-	PORT_DIPNAME( 0x40, 0x40, "Unknown" )
+	PORT_DIPNAME( 0x40, 0x00, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( On ) )
-	PORT_DIPNAME( 0x80, 0x80, "Unknown" )
+	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
 INPUT_PORTS_END
@@ -1152,7 +1153,7 @@ INPUT_PORTS_START( ghostb )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START2 )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_START3 )
 	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_VBLANK )
-	PORT_DIPNAME( 0x10, 0x10, "Unknown" )
+	PORT_DIPNAME( 0x10, 0x00, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x10, DEF_STR( On ) )
 	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Demo_Sounds ) )
@@ -1161,7 +1162,7 @@ INPUT_PORTS_START( ghostb )
 	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Flip_Screen ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x80, 0x80, "Unknown" )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
 
@@ -1193,9 +1194,78 @@ INPUT_PORTS_START( ghostb )
 	PORT_DIPNAME( 0x80, 0x80, "Beam Energy Pickup" ) /* Ghostb only */
 	PORT_DIPSETTING(    0x00, "Up 1.5%" )
 	PORT_DIPSETTING(    0x80, "Normal" )
-//	PORT_DIPNAME( 0x80, 0x80, "Freeze" ) /* Mazeh only */
-//	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
-//	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+INPUT_PORTS_END
+
+
+INPUT_PORTS_START( meikyuh )
+	PORT_START	/* Player 1 controls */
+	PLAYER1_JOYSTICK
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START	/* Player 2 controls */
+	PLAYER2_JOYSTICK
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START	/* Player 3 controls */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER3 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER3 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER3 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER3 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER3 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER3 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_START3 )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_VBLANK )
+	PORT_DIPNAME( 0x10, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Flip_Screen ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
+
+	PORT_START	/* Dummy input for i8751 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN4 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN3 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_COIN1 )
+
+	PORT_START	/* Dip switch */
+	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Lives ) )
+	PORT_DIPSETTING(    0x01, "1" )
+	PORT_DIPSETTING(    0x03, "3" )
+	PORT_DIPSETTING(    0x02, "5" )
+	PORT_BITX( 0,       0x00, IPT_DIPSWITCH_SETTING | IPF_CHEAT, "Infinite", IP_KEY_NONE, IP_JOY_NONE )
+	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(    0x04, "Easy" )
+	PORT_DIPSETTING(    0x0c, "Normal" )
+	PORT_DIPSETTING(    0x08, "Hard" )
+	PORT_DIPSETTING(    0x00, "Hardest" )
+	PORT_DIPNAME( 0x10, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x00, "Allow Continue" )
+	PORT_DIPSETTING(    0x40, DEF_STR( No ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Yes ) )
+	PORT_DIPNAME( 0x80, 0x80, "Freeze" )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( srdarwin )
@@ -1222,7 +1292,7 @@ INPUT_PORTS_START( srdarwin )
 	PORT_START
 	/* The bottom bits of this dip (coinage) are for the i8751 */
 	PORT_BIT( 0x0f, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unused ) )
+	PORT_DIPNAME( 0x10, 0x00, DEF_STR( Unused ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x10, DEF_STR( On ) )
 	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Demo_Sounds ) )
@@ -1246,13 +1316,13 @@ INPUT_PORTS_START( srdarwin )
 	PORT_DIPSETTING(    0x0c, "Normal" )
 	PORT_DIPSETTING(    0x08, "Hard" )
 	PORT_DIPSETTING(    0x00, "Hardest" )
-	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
+	PORT_DIPNAME( 0x10, 0x00, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
+	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
+	PORT_DIPNAME( 0x40, 0x00, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x80, 0x80, "Continues" )
@@ -1313,7 +1383,7 @@ INPUT_PORTS_START( gondo )
 	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Flip_Screen ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x80, 0x80, "Unknown" )
+	PORT_DIPNAME( 0x80, 0x00, "Unknown" )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
 
@@ -1328,16 +1398,16 @@ INPUT_PORTS_START( gondo )
 	PORT_DIPSETTING(    0x0c, "Normal" )
 	PORT_DIPSETTING(    0x08, "Hard" )
 	PORT_DIPSETTING(    0x00, "Hardest" )
-	PORT_DIPNAME( 0x10, 0x00, "Allow Continue" )
+	PORT_DIPNAME( 0x10, 0x10, "Allow Continue" )
 	PORT_DIPSETTING(    0x10, DEF_STR( No ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Yes ) )
-	PORT_DIPNAME( 0x20, 0x20, "Unknown" )
+	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x20, DEF_STR( On ) )
-	PORT_DIPNAME( 0x40, 0x40, "Unknown" )
+	PORT_DIPNAME( 0x40, 0x00, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( On ) )
-	PORT_DIPNAME( 0x80, 0x80, "Unknown" )
+	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
 INPUT_PORTS_END
@@ -1387,7 +1457,7 @@ INPUT_PORTS_START( oscar )
 	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Flip_Screen ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Cabinet ) )
+	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Cabinet ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
 	PORT_DIPSETTING(    0x80, DEF_STR( Cocktail ) )
 
@@ -1407,7 +1477,7 @@ INPUT_PORTS_START( oscar )
 	PORT_DIPSETTING(    0x20, "Every 60000" )
 	PORT_DIPSETTING(    0x10, "Every 90000" )
 	PORT_DIPSETTING(    0x00, "50000 only" )
-	PORT_DIPNAME( 0x40, 0x40, "Unknown" )
+	PORT_DIPNAME( 0x40, 0x00, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( On ) )
 	PORT_DIPNAME( 0x80, 0x80, "Allow Continue" )
@@ -1445,7 +1515,7 @@ INPUT_PORTS_START( lastmiss )
 	PORT_DIPNAME( 0x10, 0x00, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x20, 0x20, "Unknown" )
+	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x20, DEF_STR( On ) )
 	PORT_BITX( 0x40,    0x40, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Invulnerability", IP_KEY_NONE, IP_JOY_NONE )
@@ -1469,13 +1539,13 @@ INPUT_PORTS_START( lastmiss )
 	PORT_DIPNAME( 0x10, 0x10, "Allow Continue?" )
 	PORT_DIPSETTING(    0x00, DEF_STR( No ) )
 	PORT_DIPSETTING(    0x10, DEF_STR( Yes ) )
-	PORT_DIPNAME( 0x20, 0x20, "Unknown" )
+	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x20, DEF_STR( On ) )
-	PORT_DIPNAME( 0x40, 0x40, "Unknown" )
+	PORT_DIPNAME( 0x40, 0x00, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( On ) )
-	PORT_DIPNAME( 0x80, 0x80, "Unknown" )
+	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
 INPUT_PORTS_END
@@ -1507,7 +1577,7 @@ INPUT_PORTS_START( shackled )
 
 	PORT_START	/* Dip switch bank 1 */
 	/* Coinage not supported */
-	PORT_DIPNAME( 0x10, 0x10, "Unknown" )
+	PORT_DIPNAME( 0x10, 0x00, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x10, DEF_STR( On ) )
 	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Demo_Sounds ) )
@@ -1534,13 +1604,13 @@ INPUT_PORTS_START( shackled )
 	PORT_DIPNAME( 0x10, 0x10, "Allow Continue" )
 	PORT_DIPSETTING(    0x00, DEF_STR( No ) )
 	PORT_DIPSETTING(    0x10, DEF_STR( Yes ) )
-	PORT_DIPNAME( 0x20, 0x20, "Unknown" )
+	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x20, DEF_STR( On ) )
-	PORT_DIPNAME( 0x40, 0x40, "Unknown" )
+	PORT_DIPNAME( 0x40, 0x00, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( On ) )
-	PORT_DIPNAME( 0x80, 0x80, "Unknown" )
+	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
 INPUT_PORTS_END
@@ -1572,7 +1642,7 @@ INPUT_PORTS_START( csilver )
 
 	PORT_START	/* Dip switch bank 1 */
 	/* Coinage not supported */
-	PORT_DIPNAME( 0x10, 0x10, "Unknown" )
+	PORT_DIPNAME( 0x10, 0x00, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x10, DEF_STR( On ) )
 	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Demo_Sounds ) )
@@ -1599,13 +1669,13 @@ INPUT_PORTS_START( csilver )
 	PORT_DIPNAME( 0x10, 0x10, "Allow Continue" )
 	PORT_DIPSETTING(    0x00, DEF_STR( No ) )
 	PORT_DIPSETTING(    0x10, DEF_STR( Yes ) )
-	PORT_DIPNAME( 0x20, 0x20, "Unknown" )
+	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x20, DEF_STR( On ) )
-	PORT_DIPNAME( 0x40, 0x40, "Unknown" )
+	PORT_DIPNAME( 0x40, 0x00, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( On ) )
-	PORT_DIPNAME( 0x80, 0x80, "Unknown" )
+	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
 INPUT_PORTS_END
@@ -1770,7 +1840,7 @@ static struct GfxLayout tiles_r =
 
 static struct GfxDecodeInfo cobracom_gfxdecodeinfo[] =
 {
-	{ REGION_GFX1, 0, &charlayout_32k, 0, 4 },
+	{ REGION_GFX1, 0, &charlayout_32k, 0, 8 },
 	{ REGION_GFX2, 0, &tiles,         64, 4 },
 	{ REGION_GFX3, 0, &tiles,        192, 4 },
 	{ REGION_GFX4, 0, &tiles,        128, 4 },
@@ -1942,7 +2012,7 @@ static struct MachineDriver machine_driver_cobracom =
 								/* NMIs are caused by the main CPU */
 		}
 	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
+	58, 529, /* 58Hz, 529ms Vblank duration */
 	1,
 	0,	/* init machine */
 
@@ -1991,7 +2061,7 @@ static struct MachineDriver machine_driver_ghostb =
 								/* NMIs are caused by the main CPU */
 		}
 	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
+	58, 529, /* 58Hz, 529ms Vblank duration */
 	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
 	0,	/* init machine */
 
@@ -2040,7 +2110,7 @@ static struct MachineDriver machine_driver_srdarwin =
 								/* NMIs are caused by the main CPU */
 		}
 	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
+	58, 529, /* 58Hz, 529ms Vblank duration */
 	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
 	0,	/* init machine */
 
@@ -2089,7 +2159,7 @@ static struct MachineDriver machine_driver_gondo =
 								/* NMIs are caused by the main CPU */
 		}
 	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
+	58, 529, /* 58Hz, 529ms Vblank duration */
 	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
 	0,	/* init machine */
 
@@ -2144,7 +2214,7 @@ static struct MachineDriver machine_driver_oscar =
 								/* NMIs are caused by the main CPU */
 		}
 	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
+	58, 529, /* 58Hz, 529ms Vblank duration */
 	40, /* 40 CPU slices per frame */
 	0,	/* init machine */
 
@@ -2199,7 +2269,7 @@ static struct MachineDriver machine_driver_lastmiss =
 								/* NMIs are caused by the main CPU */
 		}
 	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
+	58, 529, /* 58Hz, 529ms Vblank duration */
 	200,
 	0,	/* init machine */
 
@@ -2254,7 +2324,7 @@ static struct MachineDriver machine_driver_shackled =
 								/* NMIs are caused by the main CPU */
 		}
 	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
+	58, 529, /* 58Hz, 529ms Vblank duration */
 	80,
 	0,	/* init machine */
 
@@ -2309,7 +2379,7 @@ static struct MachineDriver machine_driver_csilver =
 								/* NMIs are caused by the main CPU */
 		}
 	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
+	58, 529, /* 58Hz, 529ms Vblank duration */
 	60,
 	0,	/* init machine */
 
@@ -2362,7 +2432,7 @@ static struct MachineDriver machine_driver_garyoret =
 								/* NMIs are caused by the main CPU */
 		}
 	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION*2,	/* frames per second, vblank duration */
+	58, 529, /* 58Hz, 529ms Vblank duration */
 	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
 	0,	/* init machine */
 
@@ -2397,15 +2467,46 @@ static struct MachineDriver machine_driver_garyoret =
 
 ROM_START( cobracom )
 	ROM_REGION( 0x30000, REGION_CPU1 )
- 	ROM_LOAD( "eh-11.rom",    0x08000, 0x08000, 0x868637e1 )
- 	ROM_LOAD( "eh-12.rom",    0x10000, 0x10000, 0x7c878a83 )
- 	ROM_LOAD( "eh-13.rom",    0x20000, 0x10000, 0x04505acb )
+	ROM_LOAD( "el11-5.bin",  0x08000, 0x08000, 0xaf0a8b05 )
+	ROM_LOAD( "el12-4.bin",  0x10000, 0x10000, 0x7a44ef38 )
+	ROM_LOAD( "el13.bin",    0x20000, 0x10000, 0x04505acb )
+
+	ROM_REGION( 0x10000, REGION_CPU2 )	/* 64K for sound CPU */
+	ROM_LOAD( "el10-4.bin",  0x8000,  0x8000,  0xedfad118 )
+
+	ROM_REGION( 0x08000, REGION_GFX1 | REGIONFLAG_DISPOSE )	/* characters */
+	ROM_LOAD( "el14.bin",    0x00000, 0x08000, 0x47246177 )
+
+	ROM_REGION( 0x80000, REGION_GFX2 | REGIONFLAG_DISPOSE )	/* sprites */
+	ROM_LOAD( "el00-4.bin",  0x00000, 0x10000, 0x122da2a8 )
+	ROM_LOAD( "el01-4.bin",  0x20000, 0x10000, 0x27bf705b )
+	ROM_LOAD( "el02-4.bin",  0x40000, 0x10000, 0xc86fede6 )
+	ROM_LOAD( "el03-4.bin",  0x60000, 0x10000, 0x1d8a855b )
+
+	ROM_REGION( 0x80000, REGION_GFX3 | REGIONFLAG_DISPOSE )	/* tiles 1 */
+	ROM_LOAD( "el05.bin",    0x00000, 0x10000, 0x1c4f6033 )
+	ROM_LOAD( "el06.bin",    0x20000, 0x10000, 0xd24ba794 )
+	ROM_LOAD( "el04.bin",    0x40000, 0x10000, 0xd80a49ce )
+	ROM_LOAD( "el07.bin",    0x60000, 0x10000, 0x6d771fc3 )
+
+	ROM_REGION( 0x80000, REGION_GFX4 | REGIONFLAG_DISPOSE )	/* tiles 2 */
+	ROM_LOAD( "el08.bin",    0x00000, 0x08000, 0xcb0dcf4c )
+	ROM_CONTINUE(            0x40000, 0x08000 )
+	ROM_LOAD( "el09.bin",    0x20000, 0x08000, 0x1fae5be7 )
+	ROM_CONTINUE(            0x60000, 0x08000 )
+ROM_END
+
+ROM_START( cobracmj )
+	ROM_REGION( 0x30000, REGION_CPU1 )
+	ROM_LOAD( "eh-11.rom",    0x08000, 0x08000, 0x868637e1 )
+	ROM_LOAD( "eh-12.rom",    0x10000, 0x10000, 0x7c878a83 )
+	ROM_LOAD( "el13.bin",     0x20000, 0x10000, 0x04505acb )
 
 	ROM_REGION( 0x10000, REGION_CPU2 )	/* 64K for sound CPU */
 	ROM_LOAD( "eh-10.rom",    0x8000,  0x8000,  0x62ca5e89 )
 
 	ROM_REGION( 0x08000, REGION_GFX1 | REGIONFLAG_DISPOSE )	/* characters */
-	ROM_LOAD( "eh-14.rom",    0x00000, 0x08000, 0x47246177 )
+	ROM_LOAD( "el14.bin",    0x00000, 0x08000, 0x47246177 )
 
 	ROM_REGION( 0x80000, REGION_GFX2 | REGIONFLAG_DISPOSE )	/* sprites */
 	ROM_LOAD( "eh-00.rom",    0x00000, 0x10000, 0xd96b6797 )
@@ -2414,22 +2515,22 @@ ROM_START( cobracom )
 	ROM_LOAD( "eh-03.rom",    0x60000, 0x10000, 0xd56790f8 )
 
 	ROM_REGION( 0x80000, REGION_GFX3 | REGIONFLAG_DISPOSE )	/* tiles 1 */
-	ROM_LOAD( "eh-05.rom",    0x00000, 0x10000, 0x1c4f6033 )
-	ROM_LOAD( "eh-06.rom",    0x20000, 0x10000, 0xd24ba794 )
-	ROM_LOAD( "eh-04.rom",    0x40000, 0x10000, 0xd80a49ce )
-	ROM_LOAD( "eh-07.rom",    0x60000, 0x10000, 0x6d771fc3 )
+	ROM_LOAD( "el05.bin",    0x00000, 0x10000, 0x1c4f6033 )
+	ROM_LOAD( "el06.bin",    0x20000, 0x10000, 0xd24ba794 )
+	ROM_LOAD( "el04.bin",    0x40000, 0x10000, 0xd80a49ce )
+	ROM_LOAD( "el07.bin",    0x60000, 0x10000, 0x6d771fc3 )
 
 	ROM_REGION( 0x80000, REGION_GFX4 | REGIONFLAG_DISPOSE )	/* tiles 2 */
-	ROM_LOAD( "eh-08.rom",    0x00000, 0x08000, 0xcb0dcf4c )
-	ROM_CONTINUE(             0x20000, 0x08000 )
-	ROM_LOAD( "eh-09.rom",    0x40000, 0x08000, 0x1fae5be7 )
-	ROM_CONTINUE(             0x60000, 0x08000 )
+	ROM_LOAD( "el08.bin",    0x00000, 0x08000, 0xcb0dcf4c )
+	ROM_CONTINUE(            0x40000, 0x08000 )
+	ROM_LOAD( "el09.bin",    0x20000, 0x08000, 0x1fae5be7 )
+	ROM_CONTINUE(            0x60000, 0x08000 )
 ROM_END
 
 ROM_START( ghostb )
 	ROM_REGION( 0x50000, REGION_CPU1 )
- 	ROM_LOAD( "dz-01.rom", 0x08000, 0x08000, 0x7c5bb4b1 )
- 	ROM_LOAD( "dz-02.rom", 0x10000, 0x10000, 0x8e117541 )
+	ROM_LOAD( "dz-01.rom", 0x08000, 0x08000, 0x7c5bb4b1 )
+	ROM_LOAD( "dz-02.rom", 0x10000, 0x10000, 0x8e117541 )
 	ROM_LOAD( "dz-03.rom", 0x20000, 0x10000, 0x5606a8f4 )
 	ROM_LOAD( "dz-04.rom", 0x30000, 0x10000, 0xd09bad99 )
 	ROM_LOAD( "dz-05.rom", 0x40000, 0x10000, 0x0315f691 )
@@ -2452,8 +2553,8 @@ ROM_START( ghostb )
 
 	ROM_REGION( 0x40000, REGION_GFX3 | REGIONFLAG_DISPOSE )	/* tiles */
 	ROM_LOAD( "dz-07.rom", 0x00000, 0x10000, 0xe7455167 )
- 	ROM_LOAD( "dz-08.rom", 0x10000, 0x10000, 0x32f9ddfe )
- 	ROM_LOAD( "dz-09.rom", 0x20000, 0x10000, 0xbb6efc02 )
+	ROM_LOAD( "dz-08.rom", 0x10000, 0x10000, 0x32f9ddfe )
+	ROM_LOAD( "dz-09.rom", 0x20000, 0x10000, 0xbb6efc02 )
 	ROM_LOAD( "dz-10.rom", 0x30000, 0x10000, 0x6ef9963b )
 
 	ROM_REGION( 0x0800, REGION_PROMS )
@@ -2463,8 +2564,8 @@ ROM_END
 
 ROM_START( ghostb3 )
 	ROM_REGION( 0x50000, REGION_CPU1 )
- 	ROM_LOAD( "dz01-3b",   0x08000, 0x08000, 0xc8cc862a )
- 	ROM_LOAD( "dz-02.rom", 0x10000, 0x10000, 0x8e117541 )
+	ROM_LOAD( "dz01-3b",   0x08000, 0x08000, 0xc8cc862a )
+	ROM_LOAD( "dz-02.rom", 0x10000, 0x10000, 0x8e117541 )
 	ROM_LOAD( "dz-03.rom", 0x20000, 0x10000, 0x5606a8f4 )
 	ROM_LOAD( "dz04-1",    0x30000, 0x10000, 0x3c3eb09f )
 	ROM_LOAD( "dz05",      0x40000, 0x10000, 0xb4971d33 )
@@ -2487,8 +2588,8 @@ ROM_START( ghostb3 )
 
 	ROM_REGION( 0x40000, REGION_GFX3 | REGIONFLAG_DISPOSE )	/* tiles */
 	ROM_LOAD( "dz-07.rom", 0x00000, 0x10000, 0xe7455167 )
- 	ROM_LOAD( "dz-08.rom", 0x10000, 0x10000, 0x32f9ddfe )
- 	ROM_LOAD( "dz-09.rom", 0x20000, 0x10000, 0xbb6efc02 )
+	ROM_LOAD( "dz-08.rom", 0x10000, 0x10000, 0x32f9ddfe )
+	ROM_LOAD( "dz-09.rom", 0x20000, 0x10000, 0xbb6efc02 )
 	ROM_LOAD( "dz-10.rom", 0x30000, 0x10000, 0x6ef9963b )
 
 	ROM_REGION( 0x0800, REGION_PROMS )
@@ -2498,10 +2599,10 @@ ROM_END
 
 ROM_START( meikyuh )
 	ROM_REGION( 0x40000, REGION_CPU1 )
- 	ROM_LOAD( "dw-01.rom", 0x08000, 0x08000, 0x87610c39 )
- 	ROM_LOAD( "dw-02.rom", 0x10000, 0x10000, 0x40c9b0b8 )
- 	ROM_LOAD( "dz-03.rom", 0x20000, 0x10000, 0x5606a8f4 )
- 	ROM_LOAD( "dw-04.rom", 0x30000, 0x10000, 0x235c0c36 )
+	ROM_LOAD( "dw-01.rom", 0x08000, 0x08000, 0x87610c39 )
+	ROM_LOAD( "dw-02.rom", 0x10000, 0x10000, 0x40c9b0b8 )
+	ROM_LOAD( "dz-03.rom", 0x20000, 0x10000, 0x5606a8f4 )
+	ROM_LOAD( "dw-04.rom", 0x30000, 0x10000, 0x235c0c36 )
 
 	ROM_REGION( 0x10000, REGION_CPU2 )	/* 64K for sound CPU */
 	ROM_LOAD( "dw-05.rom", 0x8000, 0x8000, 0xc28c4d82 )
@@ -2532,9 +2633,9 @@ ROM_END
 
 ROM_START( srdarwin )
 	ROM_REGION( 0x28000, REGION_CPU1 )
- 	ROM_LOAD( "dy_01.rom", 0x20000, 0x08000, 0x1eeee4ff )
+	ROM_LOAD( "dy_01.rom", 0x20000, 0x08000, 0x1eeee4ff )
 	ROM_CONTINUE(          0x08000, 0x08000 )
- 	ROM_LOAD( "dy_00.rom", 0x10000, 0x10000, 0x2bf6b461 )
+	ROM_LOAD( "dy_00.rom", 0x10000, 0x10000, 0x2bf6b461 )
 
 	ROM_REGION( 2*0x10000, REGION_CPU2 )	/* 64K for sound CPU + 64k for decrypted opcodes */
 	ROM_LOAD( "dy_04.rom", 0x8000, 0x8000, 0x2ae3591c )
@@ -2563,8 +2664,8 @@ ROM_END
 
 ROM_START( gondo )
 	ROM_REGION( 0x40000, REGION_CPU1 )
- 	ROM_LOAD( "dt-00.256", 0x08000, 0x08000, 0xa8cf9118 )
- 	ROM_LOAD( "dt-01.512", 0x10000, 0x10000, 0xc39bb877 )
+	ROM_LOAD( "dt-00.256", 0x08000, 0x08000, 0xa8cf9118 )
+	ROM_LOAD( "dt-01.512", 0x10000, 0x10000, 0xc39bb877 )
 	ROM_LOAD( "dt-02.512", 0x20000, 0x10000, 0xbb5e674b )
 	ROM_LOAD( "dt-03.512", 0x30000, 0x10000, 0x99c32b13 )
 
@@ -2601,8 +2702,8 @@ ROM_END
 
 ROM_START( makyosen )
 	ROM_REGION( 0x40000, REGION_CPU1 )
- 	ROM_LOAD( "ds00",      0x08000, 0x08000, 0x33bb16fe )
- 	ROM_LOAD( "dt-01.512", 0x10000, 0x10000, 0xc39bb877 )
+	ROM_LOAD( "ds00",      0x08000, 0x08000, 0x33bb16fe )
+	ROM_LOAD( "dt-01.512", 0x10000, 0x10000, 0xc39bb877 )
 	ROM_LOAD( "ds02",      0x20000, 0x10000, 0x925307a4 )
 	ROM_LOAD( "ds03",      0x30000, 0x10000, 0x9c0fcbf6 )
 
@@ -2639,8 +2740,8 @@ ROM_END
 
 ROM_START( oscar )
 	ROM_REGION( 0x20000, REGION_CPU1 )
- 	ROM_LOAD( "ed10", 0x08000, 0x08000, 0xf9b0d4d4 )
- 	ROM_LOAD( "ed09", 0x10000, 0x10000, 0xe2d4bba9 )
+	ROM_LOAD( "ed10", 0x08000, 0x08000, 0xf9b0d4d4 )
+	ROM_LOAD( "ed09", 0x10000, 0x10000, 0xe2d4bba9 )
 
 	ROM_REGION( 0x10000, REGION_CPU2 )	/* CPU 2, 1st 16k is empty */
 	ROM_LOAD( "ed11", 0x0000, 0x10000,  0x10e5d919 )
@@ -2666,8 +2767,8 @@ ROM_END
 
 ROM_START( oscarj )
 	ROM_REGION( 0x20000, REGION_CPU1 )
- 	ROM_LOAD( "du10", 0x08000, 0x08000, 0x120040d8 )
- 	ROM_LOAD( "ed09", 0x10000, 0x10000, 0xe2d4bba9 )
+	ROM_LOAD( "du10", 0x08000, 0x08000, 0x120040d8 )
+	ROM_LOAD( "ed09", 0x10000, 0x10000, 0xe2d4bba9 )
 
 	ROM_REGION( 0x10000, REGION_CPU2 )	/* CPU 2, 1st 16k is empty */
 	ROM_LOAD( "du11", 0x0000, 0x10000, 0xff45c440 )
@@ -2693,8 +2794,8 @@ ROM_END
 
 ROM_START( lastmiss )
 	ROM_REGION( 0x20000, REGION_CPU1 )
- 	ROM_LOAD( "dl03-6",      0x08000, 0x08000, 0x47751a5e ) /* Rev 6 roms */
- 	ROM_LOAD( "lm_dl04.rom", 0x10000, 0x10000, 0x7dea1552 )
+	ROM_LOAD( "dl03-6",      0x08000, 0x08000, 0x47751a5e ) /* Rev 6 roms */
+	ROM_LOAD( "lm_dl04.rom", 0x10000, 0x10000, 0x7dea1552 )
 
 	ROM_REGION( 0x10000, REGION_CPU2 )	/* CPU 2, 1st 16k is empty */
 	ROM_LOAD( "lm_dl02.rom", 0x0000, 0x10000, 0xec9b5daf )
@@ -2723,8 +2824,8 @@ ROM_END
 
 ROM_START( lastmss2 )
 	ROM_REGION( 0x20000, REGION_CPU1 )
- 	ROM_LOAD( "lm_dl03.rom", 0x08000, 0x08000, 0x357f5f6b ) /* Rev 5 roms */
- 	ROM_LOAD( "lm_dl04.rom", 0x10000, 0x10000, 0x7dea1552 )
+	ROM_LOAD( "lm_dl03.rom", 0x08000, 0x08000, 0x357f5f6b ) /* Rev 5 roms */
+	ROM_LOAD( "lm_dl04.rom", 0x10000, 0x10000, 0x7dea1552 )
 
 	ROM_REGION( 0x10000, REGION_CPU2 )	/* CPU 2, 1st 16k is empty */
 	ROM_LOAD( "lm_dl02.rom", 0x0000, 0x10000, 0xec9b5daf )
@@ -2753,11 +2854,11 @@ ROM_END
 
 ROM_START( shackled )
 	ROM_REGION( 0x48000, REGION_CPU1 )
- 	ROM_LOAD( "dk-02.rom", 0x08000, 0x08000, 0x87f8fa85 )
+	ROM_LOAD( "dk-02.rom", 0x08000, 0x08000, 0x87f8fa85 )
 	ROM_LOAD( "dk-06.rom", 0x10000, 0x10000, 0x69ad62d1 )
 	ROM_LOAD( "dk-05.rom", 0x20000, 0x10000, 0x598dd128 )
 	ROM_LOAD( "dk-04.rom", 0x30000, 0x10000, 0x36d305d4 )
-    ROM_LOAD( "dk-03.rom", 0x40000, 0x08000, 0x6fd90fd1 )
+	ROM_LOAD( "dk-03.rom", 0x40000, 0x08000, 0x6fd90fd1 )
 
 	ROM_REGION( 0x10000, REGION_CPU2 )	/* CPU 2, 1st 16k is empty */
 	ROM_LOAD( "dk-01.rom", 0x00000, 0x10000, 0x71fe3bda )
@@ -2787,11 +2888,11 @@ ROM_END
 
 ROM_START( breywood )
 	ROM_REGION( 0x48000, REGION_CPU1 )
- 	ROM_LOAD( "7.bin", 0x08000, 0x08000, 0xc19856b9 )
-   	ROM_LOAD( "3.bin", 0x10000, 0x10000, 0x2860ea02 )
+	ROM_LOAD( "7.bin", 0x08000, 0x08000, 0xc19856b9 )
+	ROM_LOAD( "3.bin", 0x10000, 0x10000, 0x2860ea02 )
 	ROM_LOAD( "4.bin", 0x20000, 0x10000, 0x0fdd915e )
 	ROM_LOAD( "5.bin", 0x30000, 0x10000, 0x71036579 )
-    ROM_LOAD( "6.bin", 0x40000, 0x08000, 0x308f4893 )
+	ROM_LOAD( "6.bin", 0x40000, 0x08000, 0x308f4893 )
 
 	ROM_REGION( 0x10000, REGION_CPU2 )	/* CPU 2, 1st 16k is empty */
 	ROM_LOAD( "8.bin", 0x0000, 0x10000,  0x3d9fb623 )
@@ -2821,8 +2922,8 @@ ROM_END
 
 ROM_START( csilver )
 	ROM_REGION( 0x48000, REGION_CPU1 )
- 	ROM_LOAD( "a4", 0x08000, 0x08000, 0x02dd8cfc )
-   	ROM_LOAD( "a2", 0x10000, 0x10000, 0x570fb50c )
+	ROM_LOAD( "a4", 0x08000, 0x08000, 0x02dd8cfc )
+	ROM_LOAD( "a2", 0x10000, 0x10000, 0x570fb50c )
 	ROM_LOAD( "a3", 0x20000, 0x10000, 0x58625890 )
 
 	ROM_REGION( 0x10000, REGION_CPU2 )	/* CPU 2, 1st 16k is empty */
@@ -2855,7 +2956,7 @@ ROM_END
 
 ROM_START( garyoret )
 	ROM_REGION( 0x58000, REGION_CPU1 )
- 	ROM_LOAD( "dv00", 0x08000, 0x08000, 0xcceaaf05 )
+	ROM_LOAD( "dv00", 0x08000, 0x08000, 0xcceaaf05 )
 	ROM_LOAD( "dv01", 0x10000, 0x10000, 0xc33fc18a )
 	ROM_LOAD( "dv02", 0x20000, 0x10000, 0xf9e26ce7 )
 	ROM_LOAD( "dv03", 0x30000, 0x10000, 0x55d8d699 )
@@ -2938,19 +3039,19 @@ static void init_ghostb(void)
 
 /******************************************************************************/
 
-GAME( 1988, cobracom, 0,        cobracom, cobracom, 0,       ROT0,   "Data East Corporation", "Cobra-Command (Japan)" )
-GAME( 1987, ghostb,   0,        ghostb,   ghostb,   ghostb,  ROT0,   "Data East USA", "The Real Ghostbusters (US 2 Players)" )
-GAME( 1987, ghostb3,  ghostb,   ghostb,   ghostb,   ghostb,  ROT0,   "Data East USA", "The Real Ghostbusters (US 3 Players)" )
-GAME( 1987, meikyuh,  ghostb,   ghostb,   ghostb,   meikyuh, ROT0,   "Data East Corporation", "Meikyuu Hunter G (Japan)" )
-GAME( 1987, srdarwin, 0,        srdarwin, srdarwin, deco222, ROT270, "Data East Corporation", "Super Real Darwin (Japan)" )
-GAME( 1987, gondo,    0,        gondo,    gondo,    0,       ROT270, "Data East USA", "Gondomania (US)" )
-GAME( 1987, makyosen, gondo,    gondo,    gondo,    0,       ROT270, "Data East Corporation", "Makyou Senshi (Japan)" )
-GAME( 1988, oscar,    0,        oscar,    oscar,    deco222, ROT0,   "Data East USA", "Psycho-Nics Oscar (US)" )
-GAME( 1987, oscarj,   oscar,    oscar,    oscar,    deco222, ROT0,   "Data East Corporation", "Psycho-Nics Oscar (Japan)" )
-GAME( 1986, lastmiss, 0,        lastmiss, lastmiss, 0,       ROT270, "Data East USA", "Last Mission (US revision 6)" )
-GAME( 1986, lastmss2, lastmiss, lastmiss, lastmiss, 0,       ROT270, "Data East USA", "Last Mission (US revision 5)" )
-GAME( 1986, shackled, 0,        shackled, shackled, 0,       ROT0,   "Data East USA", "Shackled (US)" )
-GAME( 1986, breywood, shackled, shackled, shackled, 0,       ROT0,   "Data East Corporation", "Breywood (Japan)" )
-GAME( 1987, csilver,  0,        csilver,  csilver,  0,       ROT0,   "Data East Corporation", "Captain Silver (Japan)" )
-GAME( 1987, garyoret, 0,        garyoret, garyoret, 0,       ROT0,   "Data East Corporation", "Garyo Retsuden (Japan)" )
-
+GAMEX( 1988, cobracom, 0,        cobracom, cobracom, 0,       ROT0,   "Data East Corporation", "Cobra-Command (World revision 5)", GAME_NO_COCKTAIL )
+GAMEX( 1988, cobracmj, cobracom, cobracom, cobracom, 0,       ROT0,   "Data East Corporation", "Cobra-Command (Japan)", GAME_NO_COCKTAIL )
+GAMEX( 1987, ghostb,   0,        ghostb,   ghostb,   ghostb,  ROT0,   "Data East USA", "The Real Ghostbusters (US 2 Players)", GAME_NO_COCKTAIL )
+GAMEX( 1987, ghostb3,  ghostb,   ghostb,   ghostb,   ghostb,  ROT0,   "Data East USA", "The Real Ghostbusters (US 3 Players)", GAME_NO_COCKTAIL )
+GAMEX( 1987, meikyuh,  ghostb,   ghostb,   meikyuh,  meikyuh, ROT0,   "Data East Corporation", "Meikyuu Hunter G (Japan)", GAME_NO_COCKTAIL )
+GAMEX( 1987, srdarwin, 0,        srdarwin, srdarwin, deco222, ROT270, "Data East Corporation", "Super Real Darwin (Japan)", GAME_NO_COCKTAIL )
+GAMEX( 1987, gondo,    0,        gondo,    gondo,    0,       ROT270, "Data East USA", "Gondomania (US)", GAME_NO_COCKTAIL )
+GAMEX( 1987, makyosen, gondo,    gondo,    gondo,    0,       ROT270, "Data East Corporation", "Makyou Senshi (Japan)", GAME_NO_COCKTAIL )
+GAMEX( 1988, oscar,    0,        oscar,    oscar,    deco222, ROT0,   "Data East USA", "Psycho-Nics Oscar (US)", GAME_NO_COCKTAIL )
+GAMEX( 1987, oscarj,   oscar,    oscar,    oscar,    deco222, ROT0,   "Data East Corporation", "Psycho-Nics Oscar (Japan)", GAME_NO_COCKTAIL )
+GAMEX( 1986, lastmiss, 0,        lastmiss, lastmiss, 0,       ROT270, "Data East USA", "Last Mission (US revision 6)", GAME_NO_COCKTAIL )
+GAMEX( 1986, lastmss2, lastmiss, lastmiss, lastmiss, 0,       ROT270, "Data East USA", "Last Mission (US revision 5)", GAME_NO_COCKTAIL )
+GAMEX( 1986, shackled, 0,        shackled, shackled, 0,       ROT0,   "Data East USA", "Shackled (US)", GAME_NO_COCKTAIL )
+GAMEX( 1986, breywood, shackled, shackled, shackled, 0,       ROT0,   "Data East Corporation", "Breywood (Japan revision 2)", GAME_NO_COCKTAIL )
+GAMEX( 1987, csilver,  0,        csilver,  csilver,  0,       ROT0,   "Data East Corporation", "Captain Silver (Japan)", GAME_NO_COCKTAIL )
+GAMEX( 1987, garyoret, 0,        garyoret, garyoret, 0,       ROT0,   "Data East Corporation", "Garyo Retsuden (Japan)", GAME_NO_COCKTAIL )

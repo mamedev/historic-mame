@@ -4,7 +4,7 @@
 
 	Success seems related to Seibu - this game runs on Seibu hardware.
 
-	Emulation by Bryan McPhail, mish@tendril.force9.net
+	Emulation by Bryan McPhail, mish@tendril.co.uk
 
 ***************************************************************************/
 
@@ -330,4 +330,4 @@ static void init_dcon(void)
 
 /***************************************************************************/
 
-GAME( 1992, dcon, 0, dcon, dcon, dcon, ROT0, "Success (Seibu hardware)", "D-Con" )
+GAMEX( 1992, dcon, 0, dcon, dcon, dcon, ROT0, "Success (Seibu hardware)", "D-Con", GAME_NO_COCKTAIL )

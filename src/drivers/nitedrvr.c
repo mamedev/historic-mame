@@ -222,4 +222,4 @@ ROM_END
 
 
 
-GAME( 1976, nitedrvr, 0, nitedrv, nitedrvr, 0, ROT0, "Atari", "Night Driver" )
+GAMEX( 1976, nitedrvr, 0, nitedrv, nitedrvr, 0, ROT0, "Atari", "Night Driver", GAME_NO_SOUND )

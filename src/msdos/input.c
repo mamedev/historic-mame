@@ -184,7 +184,7 @@ int osd_wait_keypress(void)
 
 
 #define MAX_JOY 256
-#define MAX_JOY_NAME_LEN 20
+#define MAX_JOY_NAME_LEN 40
 
 static struct JoystickInfo joylist[MAX_JOY] =
 {
@@ -192,7 +192,7 @@ static struct JoystickInfo joylist[MAX_JOY] =
 	{ 0, 0, 0 }	/* end of table */
 };
 
-static char joynames[MAX_JOY_NAME_LEN+1][MAX_JOY];	/* will be used to store names for the above */
+static char joynames[MAX_JOY][MAX_JOY_NAME_LEN+1];	/* will be used to store names for the above */
 
 
 static int joyequiv[][2] =
@@ -537,9 +537,9 @@ void osd_customize_inputport_defaults(struct ipd *defaults)
 
 #ifndef NEOFREE
 #ifndef TINY_COMPILE
-			if (Machine->gamedrv->clone_of == &driver_neogeo ||
-					(Machine->gamedrv->clone_of &&
-						Machine->gamedrv->clone_of->clone_of == &driver_neogeo))
+			if (use_hotrod == 2 &&
+					(Machine->gamedrv->clone_of == &driver_neogeo ||
+					(Machine->gamedrv->clone_of && Machine->gamedrv->clone_of->clone_of == &driver_neogeo)))
 			{
 				if (defaults->type == (IPT_BUTTON1 | IPF_PLAYER1)) seq_set_1(&defaults->seq,KEYCODE_C);
 				if (defaults->type == (IPT_BUTTON2 | IPF_PLAYER1)) seq_set_1(&defaults->seq,KEYCODE_LSHIFT);

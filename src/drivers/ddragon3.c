@@ -865,7 +865,7 @@ ROM_END
 
 /**************************************************************************/
 
-GAME( 1990, ddragon3, 0,        ddragon3, ddragon3, 0, ROT0, "Technos", "Double Dragon 3 - The Rosetta Stone" )
-GAME( 1990, ddrago3b, ddragon3, ddrago3b, ddrago3b, 0, ROT0, "bootleg", "Double Dragon 3 - The Rosetta Stone (bootleg)" )
-GAME( 1990, ctribe,   0,        ctribe,   ctribe,   0, ROT0, "Technos", "The Combatribes (US)" )
-GAME( 1990, ctribeb,  ctribe,   ctribe,   ctribe,   0, ROT0, "bootleg", "The Combatribes (bootleg)" )
+GAMEX( 1990, ddragon3, 0,        ddragon3, ddragon3, 0, ROT0, "Technos", "Double Dragon 3 - The Rosetta Stone", GAME_NO_COCKTAIL )
+GAMEX( 1990, ddrago3b, ddragon3, ddrago3b, ddrago3b, 0, ROT0, "bootleg", "Double Dragon 3 - The Rosetta Stone (bootleg)", GAME_NO_COCKTAIL )
+GAMEX( 1990, ctribe,   0,        ctribe,   ctribe,   0, ROT0, "Technos", "The Combatribes (US)", GAME_NO_COCKTAIL )
+GAMEX( 1990, ctribeb,  ctribe,   ctribe,   ctribe,   0, ROT0, "bootleg", "The Combatribes (bootleg)", GAME_NO_COCKTAIL )

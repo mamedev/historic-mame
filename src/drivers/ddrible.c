@@ -479,4 +479,4 @@ ROM_END
 
 
 
-GAME( 1986, ddribble, 0, ddribble, ddribble, 0, ROT0, "Konami", "Double Dribble" )
+GAMEX( 1986, ddribble, 0, ddribble, ddribble, 0, ROT0, "Konami", "Double Dribble", GAME_NO_COCKTAIL )

@@ -188,7 +188,9 @@ INLINE void sbcb_ix(void);
 INLINE void sec(void);
 INLINE void sei(void);
 INLINE void sev(void);
+#if (HAS_HD63701)
 INLINE void slp(void);
+#endif
 INLINE void sta_di(void);
 INLINE void sta_ex(void);
 INLINE void sta_im(void);
@@ -316,6 +318,7 @@ subb_ex,cmpb_ex,sbcb_ex,addd_ex,andb_ex,bitb_ex,ldb_ex, stb_ex,
 eorb_ex,adcb_ex,orb_ex, addb_ex,ldd_ex, std_ex, ldx_ex, stx_ex
 };
 
+#if (HAS_HD63701)
 static void (*hd63701_insn[0x100])(void) = {
 trap	,nop,	trap	,trap	,lsrd,	asld,	tap,	tpa,
 inx,	dex,	clv,	sev,	clc,	sec,	cli,	sei,
@@ -350,7 +353,9 @@ eorb_ix,adcb_ix,orb_ix, addb_ix,ldd_ix, std_ix, ldx_ix, stx_ix,
 subb_ex,cmpb_ex,sbcb_ex,addd_ex,andb_ex,bitb_ex,ldb_ex, stb_ex,
 eorb_ex,adcb_ex,orb_ex, addb_ex,ldd_ex, std_ex, ldx_ex, stx_ex
 };
+#endif
 
+#if (HAS_NSC8105)
 static void (*nsc8105_insn[0x100])(void) = {
 illegal,illegal,nop,	illegal,illegal,tap,	illegal,tpa,
 inx,	clv,	dex,	sev,	clc,	cli,	sec,	sei,
@@ -385,3 +390,4 @@ eorb_ix,orb_ix, adcb_ix,addb_ix,illegal,ldx_ix, illegal,stx_ix,
 subb_ex,sbcb_ex,cmpb_ex,illegal,andb_ex,ldb_ex, bitb_ex,stb_ex,
 eorb_ex,orb_ex, adcb_ex,addb_ex,addx_ex,ldx_ex, illegal,stx_ex
 };
+#endif

@@ -3,11 +3,11 @@
  *	 tbl2a03.c
  *	 2a03 opcode functions and function pointer table
  *
- *   The 2a03 is a 6502 CPU that does not support the decimal mode
+ *	 The 2a03 is a 6502 CPU that does not support the decimal mode
  *	 of the ADC and SBC instructions, so all opcodes except ADC/SBC
  *	 are simply mapped to the m6502 ones.
  *
- *	 Copyright (c) 1998 Juergen Buchmueller, all rights reserved.
+ *	 Copyright (c) 1998,1999,2000 Juergen Buchmueller, all rights reserved.
  *
  *	 - This source code is released as freeware for non-commercial purposes.
  *	 - You are free to use and redistribute this code in modified or
@@ -32,7 +32,7 @@
  *	 overrides for 2a03 opcodes
  *
  *****************************************************************************
- ********** insn   temp     cycles             rdmem   opc  wrmem   **********/
+ ********** insn   temp 	cycles			   rdmem   opc	wrmem	**********/
 #define n2a03_00 m6502_00									/* 7 BRK */
 #define n2a03_20 m6502_20									/* 6 JSR */
 #define n2a03_40 m6502_40									/* 6 RTI */
@@ -355,3 +355,4 @@ static void (*insn2a03[0x100])(void) = {
 	n2a03_f0,n2a03_f1,n2a03_f2,n2a03_f3,n2a03_f4,n2a03_f5,n2a03_f6,n2a03_f7,
 	n2a03_f8,n2a03_f9,n2a03_fa,n2a03_fb,n2a03_fc,n2a03_fd,n2a03_fe,n2a03_ff
 };
+

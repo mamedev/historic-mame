@@ -39,6 +39,7 @@ static UINT16 dacval;
 static UINT8 ssio_sound_cpu;
 static UINT8 ssio_data[4];
 static UINT8 ssio_status;
+static UINT8 ssio_duty_cycle[2][3];
 
 /* Chip Squeak Deluxe-specific globals */
 static UINT8 csdeluxe_sound_cpu;
@@ -163,6 +164,40 @@ static void ssio_delayed_data_w(int param)
 	ssio_data[param >> 8] = param & 0xff;
 }
 
+static void ssio_update_volumes(void)
+{
+	int chip, chan;
+	for (chip = 0; chip < 2; chip++)
+		for (chan = 0; chan < 3; chan++)
+			AY8910_set_volume(chip, chan, (ssio_duty_cycle[chip][chan] ^ 15) * 100 / 15);
+}
+
+static void ssio_porta0_w(int offset, int data)
+{
+	ssio_duty_cycle[0][0] = data & 15;
+	ssio_duty_cycle[0][1] = data >> 4;
+	ssio_update_volumes();
+}
+
+static void ssio_portb0_w(int offset, int data)
+{
+	ssio_duty_cycle[0][2] = data & 15;
+	ssio_update_volumes();
+}
+
+static void ssio_porta1_w(int offset, int data)
+{
+	ssio_duty_cycle[1][0] = data & 15;
+	ssio_duty_cycle[1][1] = data >> 4;
+	ssio_update_volumes();
+}
+
+static void ssio_portb1_w(int offset, int data)
+{
+	ssio_duty_cycle[1][2] = data & 15;
+	mixer_sound_enable_global_w(!(data & 0x80));
+	ssio_update_volumes();
+}
 
 /********* external interfaces ***********/
 void ssio_data_w(int offset, int data)
@@ -182,7 +217,7 @@ void ssio_reset_w(int state)
 	{
 		int i;
 
-		cpu_set_reset_line(ssio_sound_cpu,ASSERT_LINE);
+		cpu_set_reset_line(ssio_sound_cpu, ASSERT_LINE);
 
 		/* latches also get reset */
 		for (i = 0; i < 4; i++)
@@ -191,7 +226,7 @@ void ssio_reset_w(int state)
 	}
 	/* going low resets and reactivates the CPU */
 	else
-		cpu_set_reset_line(ssio_sound_cpu,CLEAR_LINE);
+		cpu_set_reset_line(ssio_sound_cpu, CLEAR_LINE);
 }
 
 
@@ -203,8 +238,8 @@ struct AY8910interface ssio_ay8910_interface =
 	{ MIXER(33,MIXER_PAN_LEFT), MIXER(33,MIXER_PAN_RIGHT) },	/* dotron clips with anything higher */
 	{ 0 },
 	{ 0 },
-	{ 0 },
-	{ 0 }
+	{ ssio_porta0_w, ssio_porta1_w },
+	{ ssio_portb0_w, ssio_portb1_w }
 };
 
 

@@ -481,32 +481,30 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 /* some colors for the frontend */
 static unsigned char palette[] = {
+/*  Red Green Blue */
 	0x00,0x00,0x00,		/* 0 black */
-	0xc0,0xc0,0xc0,		/* 1 white */
-	0x20,0xc0,0x20,		/* 2 jade green */
-	0x02,0x0c,0x02,		/* 3 very dark green */
-	0xc0,0x90,0x20,		/* 4 mustard yellow */
-	0x0c,0x09,0x02,		/* 5 very dark yellow */
-	0xff,0xff,0xff,		/* 6 white bright */
-	0x2a,0xff,0x2a,		/* 7 bright jade */
-	0xff,0xc0,0x2a		/* 8 bright yellow */
+	0xb0,0xb0,0xb0,		/* 1 white */
+	0x20,0xb0,0x20,		/* 2 jade green */
+	0x02,0x0b,0x02,		/* 3 very dark green */
+	0xb0,0x80,0x20,		/* 4 mustard yellow */
+	0x0b,0x08,0x02,		/* 5 very dark yellow */
+	0x33,0xff,0x33,		/* 6 bright jade */
+	0xff,0xcc,0x33,		/* 7 bright yellow */
+	0xff,0xff,0xff,		/* 8 bright white */
+	0x33,0xff,0x33,		/* 9 bright jade */
+	0xff,0xcc,0x33,		/* 10 bright yellow */
+	0xff,0xff,0xff		/* 11 bright white */
 };
 
-enum { BLACK,WHITE,JADE,DARK_GREEN,MUSTARD,DARK_YELLOW,BRIGHT_WHITE,BRIGHT_JADE,BRIGHT_MUSTARD };
+enum { BLACK,WHITE,JADE,DARK_GREEN,MUSTARD,DARK_YELLOW };
 
 static unsigned short colortable[] = {
-	 JADE,          DARK_GREEN,		/* 0  1 very dark green on jade green */
-	 MUSTARD,       DARK_YELLOW,	/* 2  3 very dark yellow on mustard yellow */
-	 BLACK,         WHITE,			/* 4  5 black on white */
-	 DARK_GREEN,    JADE,			/* 6  7 above inverted */
-	 DARK_YELLOW,   MUSTARD,		/* 8  9   "      " */
-	 WHITE,         BLACK,			/* 10 11  "      " */
-	 BRIGHT_MUSTARD,				/* 12 marker bright mustard */
-	 BRIGHT_JADE,					/* 13 marker bright jade */
-	 BRIGHT_WHITE,					/* 14 marker bright white */
-	 BRIGHT_MUSTARD,			    /* 15 marker bright mustard */
-	 BRIGHT_JADE,					/* 16 marker bright jade */
-	 BRIGHT_WHITE					/* 17 marker bright white */
+	 JADE,          DARK_GREEN,		/* 0  very dark green on jade green */
+	 MUSTARD,       DARK_YELLOW,	/* 1  very dark yellow on mustard yellow */
+	 WHITE,         BLACK,			/* 2  black on white */
+	 DARK_GREEN,    JADE,			/* 3  above inverted */
+	 DARK_YELLOW,   MUSTARD,		/* 4    "      " */
+	 BLACK,         WHITE			/* 5    "      " */
 };
 static void init_palette(unsigned char *game_palette, unsigned short *game_colortable,const unsigned char *color_prom)
 {

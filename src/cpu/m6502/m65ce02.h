@@ -3,9 +3,7 @@
  *	 m65ce02.c
  *	 Portable 65ce02 emulator V1.0beta
  *
- *	 Copyright (c) 1998 Juergen Buchmueller
- *	 Copyright (c) 2000 Peter Trauner
- *   all rights reserved.
+ *	 Copyright (c) 2000 Peter Trauner, all rights reserved.
  *
  *	 - This source code is released as freeware for non-commercial purposes.
  *	 - You are free to use and redistribute this code in modified or
@@ -16,8 +14,8 @@
  *	 - If you wish to use this for commercial purposes, please contact me at
  *	   pullmoll@t-online.de
  *	 - The author of this copywritten work reserves the right to change the
- *     terms of its usage and license at any time, including retroactively
- *   - This entire notice must remain in the source code.
+ *	   terms of its usage and license at any time, including retroactively
+ *	 - This entire notice must remain in the source code.
  *
  *****************************************************************************/
 
@@ -95,43 +93,35 @@ additional command (some from the 65816)
 #ifndef _M65CE02_H
 #define _M65CE02_H
 
-#include "m6502.h"
 #include "cpuintrf.h"
 #include "osd_cpu.h"
+#include "m6502.h"
 
-#define M65CE02_A                        M6502_A
-#define M65CE02_X						M6502_X
-#define M65CE02_Y						M6502_Y
-#define M65CE02_Z (M6502_SUBTYPE+1) 
-#define M65CE02_B (M65CE02_Z+1)
-#define M65CE02_S						M6502_S
-#define M65CE02_PC						M6502_PC
-#define M65CE02_P						M6502_P
-#define M65CE02_EA						M6502_EA
-#define M65CE02_ZP						M6502_ZP
+enum {
+	M65CE02_PC=1, M65CE02_S, M65CE02_P, M65CE02_A, M65CE02_X, M65CE02_Y,
+	M65CE02_Z, M65CE02_B, M65CE02_EA, M65CE02_ZP,
+	M65CE02_NMI_STATE, M65CE02_IRQ_STATE, M65CE02_SUBTYPE
+};
 
-#define M65CE02_NMI_STATE				M6502_NMI_STATE
-#define M65CE02_IRQ_STATE				M6502_IRQ_STATE
+#define M65CE02_INT_NONE	M6502_INT_NONE
+#define M65CE02_INT_IRQ 	M6502_INT_IRQ
+#define M65CE02_INT_NMI 	M6502_INT_NMI
 
-#define M65CE02_INT_NONE                 M6502_INT_NONE
-#define M65CE02_INT_IRQ					M6502_INT_IRQ
-#define M65CE02_INT_NMI					M6502_INT_NMI
-
-#define M65CE02_NMI_VEC					M6502_NMI_VEC
-#define M65CE02_RST_VEC					M6502_RST_VEC
-#define M65CE02_IRQ_VEC					M6502_IRQ_VEC
+#define M65CE02_NMI_VEC 	M6502_NMI_VEC
+#define M65CE02_RST_VEC 	M6502_RST_VEC
+#define M65CE02_IRQ_VEC 	M6502_IRQ_VEC
 
 extern int m65ce02_ICount;				/* cycle count */
 
-extern void m65ce02_reset (void *param);			/* Reset registers to the initial values */
-extern void m65ce02_exit	(void); 				/* Shut down CPU core */
-extern int	m65ce02_execute(int cycles);			/* Execute cycles - returns number of cycles actually run */
-extern unsigned m65ce02_get_context (void *dst); /* Get registers, return context size */
-extern void m65ce02_set_context (void *src); 	/* Set registers */
-extern unsigned m65ce02_get_pc (void); 			/* Get program counter */
-extern void m65ce02_set_pc (unsigned val); 		/* Set program counter */
-extern unsigned m65ce02_get_sp (void); 			/* Get stack pointer */
-extern void m65ce02_set_sp (unsigned val); 		/* Set stack pointer */
+extern void m65ce02_reset(void *param);
+extern void m65ce02_exit(void);
+extern int	m65ce02_execute(int cycles);
+extern unsigned m65ce02_get_context (void *dst);
+extern void m65ce02_set_context (void *src);
+extern unsigned m65ce02_get_pc (void);
+extern void m65ce02_set_pc (unsigned val);
+extern unsigned m65ce02_get_sp (void);
+extern void m65ce02_set_sp (unsigned val);
 extern unsigned m65ce02_get_reg (int regnum);
 extern void m65ce02_set_reg (int regnum, unsigned val);
 extern void m65ce02_set_nmi_line(int state);

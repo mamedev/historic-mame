@@ -871,4 +871,4 @@ GAME( 1982, kroozr,   0,       mcr2,    kroozr,   kroozr,   ROT0,  "Bally Midway
 GAME( 1982, domino,   0,       mcr2,    domino,   domino,   ROT0,  "Bally Midway", "Domino Man" )
 GAME( 1982, wacko,    0,       mcr2,    wacko,    wacko,    ROT0,  "Bally Midway", "Wacko" )
 GAME( 1984, twotiger, 0,       mcr2,    twotiger, twotiger, ROT0,  "Bally Midway", "Two Tigers" )
-GAME( 1983, journey,  0,       journey, domino,   journey,  ROT90, "Bally Midway", "Journey" )
+GAMEX(1983, journey,  0,       journey, domino,   journey,  ROT90, "Bally Midway", "Journey", GAME_IMPERFECT_SOUND )

@@ -1,17 +1,31 @@
-/*
-Shoot Out - (c) 1985 Data East
+/*******************************************************************************
 
-Preliminary driver by:
-Ernesto Corvi (ernesto@imagina.com)
-Phil Stroffolino
+	Shoot Out (USA)				(c) 1985 Data East USA		DE-0219
+	Shoot Out (Japan)			(c) 1985 Data East USA		DE-0203
+	Shoot Out (Korean bootleg)	(c) 1985 Data East USA		DE-0203 bootleg
 
-TODO:
-- Verify Controls and Dipswitches mapped correctly ( eg: No sound on attract mode, even when its on ).
-- Add cocktail support.
-*/
+	Shoot Out (Japan) is an interesting board, it runs on an earlier PCB design
+	than the USA version, has no sound CPU, uses half as many sprites and
+	unusually for a Deco Japanese game it is credited to 'Data East USA'.
+	Perhaps the USA arm of Deco designed this game rather than the Japanese
+	arm?
 
-extern void btime_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
+	Shoot Out (Japan) uses the YM2203 ports for CPU bankswitching so it does
+	not work with sound turned off.
 
+	Shoot Out (Korean bootleg) is based on the earlier DE-0203 board but
+	strangely features the same encryption as used on the DE-0219 board.  It
+	also has some edited graphics.
+
+	Driver by:
+		Ernesto Corvi (ernesto@imagina.com)
+		Phil Stroffolino
+		Shoot Out (Japan) and fixes added by Bryan McPhail (mish@tendril.co.uk)
+
+	Todo:
+	- Add cocktail support.
+
+*******************************************************************************/
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
@@ -20,35 +34,43 @@ extern void btime_vh_convert_color_prom(unsigned char *palette, unsigned short *
 /* externals: from vidhrdw */
 extern int shootout_vh_start( void );
 extern void shootout_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+extern void shootouj_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 unsigned char *shootout_textram;
 
+extern void btime_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 
+/*******************************************************************************/
 
-static void shootout_bankswitch_w( int offset, int v ) {
+static void shootout_bankswitch_w( int offset, int v )
+{
 	int bankaddress;
 	unsigned char *RAM;
 
+	v=v&0xf;
 	RAM = memory_region(REGION_CPU1);
 	bankaddress = 0x10000 + ( 0x4000 * v );
 
 	cpu_setbank(1,&RAM[bankaddress]);
 }
 
-static void sound_cpu_command_w( int offset, int v ) {
+static void sound_cpu_command_w( int offset, int v )
+{
 	soundlatch_w( offset, v );
 	cpu_cause_interrupt( 1, M6502_INT_NMI );
 }
 
 /* stub for reading input ports as active low (makes building ports much easier) */
-static int low_input_r( int offset ) {
+static int low_input_r( int offset )
+{
 	return ~readinputport( offset );
 }
+
+/*******************************************************************************/
 
 static struct MemoryReadAddress readmem[] =
 {
 	{ 0x0000, 0x0fff, MRA_RAM },
 	{ 0x1000, 0x1003, low_input_r },
-	{ 0x1004, 0x1fff, MRA_RAM },
 	{ 0x2000, 0x27ff, MRA_RAM },	/* foreground */
 	{ 0x2800, 0x2bff, videoram_r }, /* background videoram */
 	{ 0x2c00, 0x2fff, colorram_r }, /* background colorram */
@@ -59,12 +81,11 @@ static struct MemoryReadAddress readmem[] =
 
 static struct MemoryWriteAddress writemem[] =
 {
-	{ 0x0000, 0x01ef, MWA_RAM },
-	{ 0x01f0, 0x01ff, MWA_RAM },
-	{ 0x0200, 0x0fff, MWA_RAM },
-//	{ 0x1000, 0x1002, MWA_RAM }, /* these do get written to - see error log */
+	{ 0x0000, 0x0fff, MWA_RAM },
+	{ 0x1000, 0x1000, shootout_bankswitch_w },
+	{ 0x1001, 0x1001, MWA_NOP }, /* Todo:  Flipscreen */
+	{ 0x1002, 0x1002, coin_counter_w },
 	{ 0x1003, 0x1003, sound_cpu_command_w },
-	{ 0x1000, 0x1000, shootout_bankswitch_w }, /* not entirely sure about this */
 	{ 0x1004, 0x17ff, MWA_RAM },
 	{ 0x1800, 0x19ff, MWA_RAM, &spriteram, &spriteram_size },
 	{ 0x2000, 0x27ff, MWA_RAM, &shootout_textram },
@@ -73,6 +94,36 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x4000, 0xffff, MWA_ROM },
 	{ -1 }	/* end of table */
 };
+
+static struct MemoryReadAddress readmem_alt[] =
+{
+	{ 0x0000, 0x0fff, MRA_RAM },
+	{ 0x1000, 0x1003, low_input_r },
+	{ 0x2000, 0x21ff, MRA_RAM },
+	{ 0x2800, 0x2800, YM2203_status_port_0_r },
+	{ 0x3000, 0x37ff, MRA_RAM },	/* foreground */
+	{ 0x3800, 0x3bff, videoram_r }, /* background videoram */
+	{ 0x3c00, 0x3fff, colorram_r }, /* background colorram */
+	{ 0x4000, 0x7fff, MRA_BANK1 },
+	{ 0x8000, 0xffff, MRA_ROM },
+	{ -1 }	/* end of table */
+};
+
+static struct MemoryWriteAddress writemem_alt[] =
+{
+	{ 0x0000, 0x0fff, MWA_RAM },
+	{ 0x1800, 0x1800, coin_counter_w },
+	{ 0x2000, 0x21ff, MWA_RAM, &spriteram, &spriteram_size },
+	{ 0x2800, 0x2800, YM2203_control_port_0_w },
+	{ 0x2801, 0x2801, YM2203_write_port_0_w },
+	{ 0x3000, 0x37ff, MWA_RAM, &shootout_textram },
+	{ 0x3800, 0x3bff, videoram_w, &videoram, &videoram_size },
+	{ 0x3c00, 0x3fff, colorram_w, &colorram },
+	{ 0x4000, 0xffff, MWA_ROM },
+	{ -1 }	/* end of table */
+};
+
+/*******************************************************************************/
 
 static struct MemoryReadAddress sound_readmem[] =
 {
@@ -92,6 +143,8 @@ static struct MemoryWriteAddress sound_writemem[] =
 	{ 0xc000, 0xffff, MWA_ROM },
 	{ -1 }	/* end of table */
 };
+
+/*******************************************************************************/
 
 INPUT_PORTS_START( shootout )
 	PORT_START	/* DSW1 */
@@ -198,15 +251,38 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 	{ -1 } /* end of array */
 };
 
+static void shootout_snd_irq(int linestate)
+{
+	cpu_set_irq_line(1,0,linestate);
+}
+
+static void shootout_snd2_irq(int linestate)
+{
+	cpu_set_irq_line(0,0,linestate);
+}
+
 static struct YM2203interface ym2203_interface =
 {
 	1,	/* 1 chip */
-	1500000,	/* 1.5 MHz ??? */
-	{ YM2203_VOL(25,25) },
+	1500000,	/* 1.5 MHz */
+	{ YM2203_VOL(50,50) },
 	{ 0 },
 	{ 0 },
 	{ 0 },
-	{ 0 }
+	{ 0 },
+	{ shootout_snd_irq },
+};
+
+static struct YM2203interface ym2203_interface2 =
+{
+	1,	/* 1 chip */
+	1500000,	/* 1.5 MHz */
+	{ YM2203_VOL(50,50) },
+	{ 0 },
+	{ 0 },
+	{ shootout_bankswitch_w },
+	{ 0 }, /* Todo:  Port B write is flipscreen */
+	{ shootout_snd2_irq },
 };
 
 static int shootout_interrupt(void)
@@ -221,7 +297,7 @@ static int shootout_interrupt(void)
 	} else
 		coin = 0;
 
-	return ignore_interrupt();
+	return 0;
 }
 
 static struct MachineDriver machine_driver_shootout =
@@ -236,9 +312,9 @@ static struct MachineDriver machine_driver_shootout =
 		},
 		{
 			CPU_M6502 | CPU_AUDIO_CPU,
-			2000000,	/* 2 Mhz? */
+			1500000,
 			sound_readmem,sound_writemem,0,0,
-			interrupt,8 /* this is a guess, but sounds just about right */
+			ignore_interrupt,0 /* this is a guess, but sounds just about right */
 		}
 	},
 	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
@@ -267,6 +343,42 @@ static struct MachineDriver machine_driver_shootout =
 	}
 };
 
+static struct MachineDriver machine_driver_shootouj =
+{
+	/* basic machine hardware */
+	{
+		{
+			CPU_M6502,
+			2000000,	/* 2 Mhz? */
+			readmem_alt,writemem_alt,0,0,
+			shootout_interrupt,1 /* nmi's are triggered at coin up */
+		}
+	},
+	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
+	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
+	0,
+
+	/* video hardware */
+	32*8, 32*8, { 0*8, 32*8-1, 1*8, 31*8-1 },
+	gfxdecodeinfo,
+	256,256,
+	btime_vh_convert_color_prom,
+
+	VIDEO_TYPE_RASTER,
+	0,
+	shootout_vh_start,
+	generic_vh_stop,
+	shootouj_vh_screenrefresh,
+
+	/* sound hardware */
+	0,0,0,0,
+	{
+		{
+			SOUND_YM2203,
+			&ym2203_interface2
+		}
+	}
+};
 
 
 ROM_START( shootout )
@@ -301,7 +413,55 @@ ROM_START( shootout )
 	ROM_LOAD( "gb09.k6",        0x0100, 0x0100, 0xaa090565 )	/* unknown */
 ROM_END
 
+ROM_START( shootouj )
+	ROM_REGION( 0x20000, REGION_CPU1 )	/* 2 * 128k for code  */
+	ROM_LOAD( "cg02.bin",    0x08000, 0x8000, 0x8fc5d632 )
+	ROM_LOAD( "cg00.bin",    0x10000, 0x8000, 0xef6ced1e )
+	ROM_LOAD( "cg01.bin",    0x18000, 0x4000, 0x74cf11ca )
 
+	ROM_REGION( 0x04000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "cu11.h19",       0x00000, 0x4000, 0xeff00460 ) /* foreground characters */
+
+	ROM_REGION( 0x30000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "cg03.bin",    0x00000, 0x8000, 0x5252ec19 )	/* sprites */
+	ROM_LOAD( "cg04.bin",    0x10000, 0x8000, 0xdb06cfe9 )
+	ROM_LOAD( "cg05.bin",    0x20000, 0x8000, 0xd634d6b8 )
+
+	ROM_REGION( 0x08000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "cu10.h17",       0x00000, 0x2000, 0x3854c877 ) /* background tiles */
+	ROM_CONTINUE(               0x04000, 0x2000 )
+	ROM_CONTINUE(               0x02000, 0x2000 )
+	ROM_CONTINUE(               0x06000, 0x2000 )
+
+	ROM_REGION( 0x0200, REGION_PROMS )
+	ROM_LOAD( "gb08.k10",       0x0000, 0x0100, 0x509c65b6 )
+	ROM_LOAD( "gb09.k6",        0x0100, 0x0100, 0xaa090565 )	/* unknown */
+ROM_END
+
+ROM_START( shootoub )
+	ROM_REGION( 2 * 0x20000, REGION_CPU1 )	/* 128k for code  */
+	ROM_LOAD( "shootout.006", 0x08000, 0x8000, 0x2c054888 )
+	ROM_LOAD( "shootout.008", 0x10000, 0x8000, 0x9651b656 )
+	ROM_LOAD( "cg01.bin",     0x18000, 0x4000, 0x74cf11ca )
+
+	ROM_REGION( 0x04000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "cu11.h19",       0x00000, 0x4000, 0xeff00460 ) /* foreground characters */
+
+	ROM_REGION( 0x30000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "shootout.005",   0x00000, 0x8000, 0xe6357ba3 )	/* sprites */
+	ROM_LOAD( "shootout.004",   0x10000, 0x8000, 0x7f422c93 )
+	ROM_LOAD( "shootout.003",   0x20000, 0x8000, 0xeea94535 )
+
+	ROM_REGION( 0x08000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "cu10.h17",       0x00000, 0x2000, 0x3854c877 ) /* background tiles */
+	ROM_CONTINUE(               0x04000, 0x2000 )
+	ROM_CONTINUE(               0x02000, 0x2000 )
+	ROM_CONTINUE(               0x06000, 0x2000 )
+
+	ROM_REGION( 0x0200, REGION_PROMS )
+	ROM_LOAD( "gb08.k10",       0x0000, 0x0100, 0x509c65b6 )
+	ROM_LOAD( "gb09.k6",        0x0100, 0x0100, 0xaa090565 )	/* unknown */
+ROM_END
 
 static void init_shootout(void)
 {
@@ -309,13 +469,12 @@ static void init_shootout(void)
 	int diff = memory_region_length(REGION_CPU1) / 2;
 	int A;
 
-
 	memory_set_opcode_base(0,rom+diff);
 
 	for (A = 0;A < diff;A++)
 		rom[A+diff] = (rom[A] & 0x9f) | ((rom[A] & 0x40) >> 1) | ((rom[A] & 0x20) << 1);
 }
 
-
-
-GAME( 1985, shootout, 0, shootout, shootout, shootout, ROT0, "Data East USA", "Shoot Out (US)" )
+GAMEX( 1985, shootout, 0,        shootout, shootout, shootout, ROT0, "Data East USA", "Shoot Out (US)", GAME_NO_COCKTAIL )
+GAMEX( 1985, shootouj, shootout, shootouj, shootout, 0,        ROT0, "Data East USA", "Shoot Out (Japan)", GAME_NO_COCKTAIL )
+GAMEX( 1985, shootoub, shootout, shootouj, shootout, shootout, ROT0, "bootleg", "Shoot Out (Korean Bootleg)", GAME_NO_COCKTAIL )

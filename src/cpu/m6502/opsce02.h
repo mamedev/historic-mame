@@ -1,13 +1,11 @@
 /*****************************************************************************
  *
- *	 m6502ops.h
- *	 Addressing mode and opcode macros for 6502,65c02,6510 CPUs
+ *	 opsce02.h
+ *	 Addressing mode and opcode macros for 65ce02 CPU
  *
- *	 Copyright (c) 1998 Juergen Buchmueller
- *	 Copyright (c) 2000 Peter Trauner
- *   all rights reserved.
- *   documentation by michael steil mist@c64.org
- *   available at ftp://ftp.funet.fi/pub/cbm/c65
+ *	 Copyright (c) 2000 Peter Trauner, all rights reserved.
+ *	 documentation by michael steil mist@c64.org
+ *	 available at ftp://ftp.funet.fi/pub/cbm/c65
  *
  *	 - This source code is released as freeware for non-commercial purposes.
  *	 - You are free to use and redistribute this code in modified or
@@ -18,8 +16,8 @@
  *	 - If you wish to use this for commercial purposes, please contact me at
  *	   pullmoll@t-online.de
  *	 - The author of this copywritten work reserves the right to change the
- *     terms of its usage and license at any time, including retroactively
- *   - This entire notice must remain in the source code.
+ *	   terms of its usage and license at any time, including retroactively
+ *	 - This entire notice must remain in the source code.
  *
  *****************************************************************************/
 
@@ -29,8 +27,8 @@
 /* some shortcuts for improved readability */
 #define Z	m65ce02.z
 #define B	m65ce02.zp.b.h
-#define SPL	m6502.sp.b.l
-#define SPH	m6502.sp.b.h
+#define SPL m6502.sp.b.l
+#define SPH m6502.sp.b.h
 
 #define RDMEM_WORD(addr, pair) \
    pair.b.l=cpu_readmem16(addr); \
@@ -45,10 +43,10 @@
 
 #define SET_NZ_WORD(n)				\
 	if ((n.w.l) == 0) P = (P & ~F_N) | F_Z; \
-    else P = (P & ~(F_N | F_Z)) | ((n.b.h) & F_N)
+	else P = (P & ~(F_N | F_Z)) | ((n.b.h) & F_N)
 
 /***************************************************************
- *  EA = zero page indirect + Z (post indexed)
+ *	EA = zero page indirect + Z (post indexed)
  *	subtract 1 cycle if page boundary is crossed
  ***************************************************************/
 #define EA_IDZ													\
@@ -56,39 +54,39 @@
 	EAL = RDMEM(ZPD);											\
 	ZPL++;														\
 	EAH = RDMEM(ZPD);											\
-    if (EAL + Z > 0xff)                                         \
+	if (EAL + Z > 0xff) 										\
 		m6502_ICount--; 										\
 	EAW += Z
 
 /***************************************************************
- *  EA = zero page indexed stack, indirect + Y (post indexed)
+ *	EA = zero page indexed stack, indirect + Y (post indexed)
  *	subtract 1 cycle if page boundary is crossed
  ***************************************************************/
 /* i think its based on on stack high byte instead of of bank register */
-#define EA_ZP_INSP_INY													\
-{\
-    PAIR pair={{0}};\
-	pair.b.l = SPL+RDOPARG();											\
-    pair.b.h = SPH;\
-	EAL = RDMEM(pair.d);											\
-	pair.b.l++;														\
-	EAH = RDMEM(pair.d);											\
-    if (EAL + Y > 0xff)                                         \
+#define EA_ZP_INSP_INY											\
+{																\
+	PAIR pair={{0}};											\
+	pair.b.l = SPL+RDOPARG();									\
+	pair.b.h = SPH; 											\
+	EAL = RDMEM(pair.d);										\
+	pair.b.l++; 												\
+	EAH = RDMEM(pair.d);										\
+	if (EAL + Y > 0xff) 										\
 		m6502_ICount--; 										\
 	EAW += Y;\
 }
 
-#define RD_IMM_WORD	tmp.b.l = RDOPARG(); tmp.b.h=RDOPARG()
+#define RD_IMM_WORD tmp.b.l = RDOPARG(); tmp.b.h=RDOPARG()
 #define RD_IDZ	EA_IDZ; tmp = RDMEM(EAD)
 #define WR_IDZ	EA_IDZ; WRMEM(EAD, tmp)
 
 #define RD_INSY EA_ZP_INSP_INY; tmp = RDMEM(EAD)
 #define WR_INSY EA_ZP_INSP_INY; WRMEM(EAD, tmp)
 
-#define RD_ABS_WORD	EA_ABS; RDMEM_WORD(EAD, tmp)
+#define RD_ABS_WORD EA_ABS; RDMEM_WORD(EAD, tmp)
 #define WR_ABS_WORD EA_ABS; WRMEM_WORD(EAD, tmp)
 
-#define RD_ZPG_WORD	EA_ZPG; RDMEM_WORD(EAD, tmp)
+#define RD_ZPG_WORD EA_ZPG; RDMEM_WORD(EAD, tmp)
 #define WR_ZPG_WORD EA_ZPG; WRMEM_WORD(EAD, tmp)
 
 /* the order in which the args are pushed is correct! */
@@ -98,19 +96,19 @@
  *	BRA  branch relative
  *	extra cycle if page boundary is crossed
  ***************************************************************/
-#define BRA_WORD(cond)                                               \
+#define BRA_WORD(cond)											\
 	if (cond)													\
 	{															\
 		EAL = RDOPARG();										\
-        EAH = RDOPARG();\
-		EAW = PCW + (short)(EAW-1);							\
+		EAH = RDOPARG();										\
+		EAW = PCW + (short)(EAW-1); 							\
 		m6502_ICount -= (PCH == EAH) ? 4 : 5;					\
 		PCD = EAD;												\
 		change_pc16(PCD);										\
 	}															\
 	else														\
 	{															\
-		PCW+=2;													\
+		PCW+=2; 												\
 		m6502_ICount -= 2;										\
 	}
 
@@ -118,16 +116,16 @@
  *	cle clear emu flag
  ***************************************************************/
 /* who knows */
-#define CLE \
-if (errorlog) \
+#define CLE 													\
+if (errorlog)													\
  fprintf(errorlog,"m65ce02 at pc:%.4x unknown op cle\n",m65ce02.pc.w.l-1);
 
 /* 65ce02 ********************************************************
  *	see set emu flag
  ***************************************************************/
 /* who knows */
-#define SEE \
-if (errorlog) \
+#define SEE 													\
+if (errorlog)													\
  fprintf(errorlog,"m65ce02 at pc:%.4x unknown op see\n",m65ce02.pc.w.l-1);
 
 /* 65ce02 ********************************************************
@@ -135,11 +133,11 @@ if (errorlog) \
  ***************************************************************/
 /* who knows */
 #if 1
-#define MAP \
+#define MAP 													\
  c65_map(m65ce02.a, m65ce02.x, m65ce02.y, m65ce02.z);
 #else
-if (errorlog) \
- fprintf(errorlog,"m65ce02 at pc:%.4x unknown op map a:%.2x x:%.2x y:%.2x z:%.2x\n",\
+if (errorlog)													\
+ fprintf(errorlog,"m65ce02 at pc:%.4x unknown op map a:%.2x x:%.2x y:%.2x z:%.2x\n", \
   m65ce02.pc.w.l-1, m65ce02.a, m65ce02.x, m65ce02.y, m65ce02.z);
 #endif
 
@@ -147,9 +145,9 @@ if (errorlog) \
  *	rts imm
  ***************************************************************/
 /* who knows */
-#define RTS_IMM \
- RD_IMM; \
-if (errorlog) \
+#define RTS_IMM 												\
+ RD_IMM;														\
+if (errorlog)													\
  fprintf(errorlog,"m65ce02 at pc:%.4x unknown op rts %.2x\n",m65ce02.pc.w.l-2,tmp);
 
 /* 65ce02 ********************************************************
@@ -159,22 +157,22 @@ if (errorlog) \
 /* not sure about this */
 #if 1
 #define NEG 													\
-if (errorlog) \
+if (errorlog)													\
  fprintf(errorlog,"m65ce02 at pc:%.4x not sure neg\n",m65ce02.pc.w.l-1); \
-A= (A^0xff)+1;\
+	A= (A^0xff)+1;												\
 	SET_NZ(A)
-#else 
+#else
 #define NEG 													\
-    tmp = A; A=0; SBC;
+	tmp = A; A=0; SBC;
 #endif
 
 /* 65ce02 ********************************************************
  *	ASR arithmetic (signed) shift right
  *	[7] -> [7][6][5][4][3][2][1][0] -> C
  ***************************************************************/
-#define ASR_65CE02 													\
+#define ASR_65CE02												\
 	P = (P & ~F_C) | (tmp & F_C);								\
-	tmp = (signed char)tmp >> 1;										\
+	tmp = (signed char)tmp >> 1;								\
 	SET_NZ(tmp)
 
 /* 65ce02 ********************************************************
@@ -184,11 +182,12 @@ A= (A^0xff)+1;\
 /* not sure about how 16 bit memory modifying is executed */
 /* or arithmetic shift left word!?*/
 #define ASW 													\
-	tmp.w.l = tmp.w.l << 1;										\
-	P = (P & ~F_C) | (tmp.b.h2 & F_C);								\
-	SET_NZ_WORD(tmp);\
-if (errorlog) \
- fprintf(errorlog,"m65ce02 at pc:%.4x not sure asw %.2x\n",m65ce02.pc.w.l-2, ZPL);
+	tmp.w.l = tmp.w.l << 1; 									\
+	P = (P & ~F_C) | (tmp.b.h2 & F_C);							\
+	SET_NZ_WORD(tmp);											\
+if (errorlog)													\
+	fprintf(errorlog,"m65ce02 at pc:%.4x not sure asw %.2x\n",  \
+		m65ce02.pc.w.l-2, ZPL);
 
 /* 65ce02 ********************************************************
  *	ROW arithmetic (signed) shift right word
@@ -198,10 +197,11 @@ if (errorlog) \
 #define ROW 													\
 	tmp.d =(tmp.d << 1);										\
 	tmp.w.l |= (P & F_C);										\
-	P = (P & ~F_C) | (tmp.w.l & F_C);								\
-	SET_NZ_WORD(tmp); \
-if (errorlog) \
- fprintf(errorlog,"m65ce02 at pc:%.4x not sure row %.2x\n",m65ce02.pc.w.l-2,ZPL);
+	P = (P & ~F_C) | (tmp.w.l & F_C);							\
+	SET_NZ_WORD(tmp);											\
+if (errorlog)													\
+	fprintf(errorlog,"m65ce02 at pc:%.4x not sure row %.2x\n",  \
+		m65ce02.pc.w.l-2,ZPL);
 
 /* 65ce02 ********************************************************
  *	CPZ Compare index Z
@@ -224,7 +224,7 @@ if (errorlog) \
  ***************************************************************/
 /* not sure about this */
 #define DEW 													\
-	tmp.w.l = --tmp.w.l; 										\
+	tmp.w.l = --tmp.w.l;										\
 	SET_NZ_WORD(tmp)
 
 /* 65ce02 ********************************************************
@@ -239,7 +239,7 @@ if (errorlog) \
  ***************************************************************/
 /* not sure about this */
 #define INW 													\
-	tmp.w.l = ++tmp.w.l; 										\
+	tmp.w.l = ++tmp.w.l;										\
 	SET_NZ_WORD(tmp)
 
 /* 65ce02 ********************************************************
@@ -252,7 +252,7 @@ if (errorlog) \
 /* 65ce02 ********************************************************
  * STZ	Store index Z
  ***************************************************************/
-#define STZ_65CE02 													\
+#define STZ_65CE02												\
 	tmp = Z
 
 /* 65ce02 ********************************************************
@@ -265,7 +265,7 @@ if (errorlog) \
  *	PLA Pull accumulator
  ***************************************************************/
 #define PLZ 													\
-	PULL(Z)													
+	PULL(Z)
 
 /* 65ce02 ********************************************************
  * TAZ	Transfer accumulator to index z
@@ -285,14 +285,14 @@ if (errorlog) \
  * TSY	Transfer stack pointer to index y
  ***************************************************************/
 #define TSY 													\
-	Y = SPH;														\
+	Y = SPH;													\
 	SET_NZ(Y)
 
 /* 65ce02 ********************************************************
  * TYS	Transfer index y to stack pointer
  ***************************************************************/
 #define TYS 													\
-	SPH = Y;														
+	SPH = Y;
 
 /* 65ce02 ********************************************************
  * TAB	Transfer accumulator to Direct Page
@@ -368,7 +368,7 @@ if (errorlog) \
  *	decrement PC (sic!) push PC hi, push PC lo and set
  *	PC to the effective address
  ***************************************************************/
-#define JSR_INDX 												\
+#define JSR_INDX												\
 	EAL = RDOPARG()+X;											\
 	PUSH(PCH);													\
 	PUSH(PCL);													\

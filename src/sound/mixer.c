@@ -22,6 +22,8 @@
 #define FRACTION_MASK			((1 << FRACTION_BITS) - 1)
 
 
+static int mixer_sound_enabled;
+
 
 /* holds all the data for the a mixer channel */
 struct mixer_channel_data
@@ -113,6 +115,8 @@ int mixer_sh_start(void)
 	memset(right_accum, 0, ACCUMULATOR_SAMPLES * sizeof(INT32));
 
 	samples_this_frame = osd_start_audio_stream(is_stereo);
+
+	mixer_sound_enabled = 1;
 
 	return 0;
 }
@@ -470,7 +474,10 @@ void mixer_play_streamed_sample_16(int ch, INT16 *data, int len, int freq)
 	profiler_mark(PROFILER_MIXER);
 
 	/* compute the overall mixing volume */
-	mixing_volume = ((channel->volume * channel->mixing_level * 256) << channel->gain) / (100*100);
+	if (mixer_sound_enabled)
+		mixing_volume = ((channel->volume * channel->mixing_level * 256) << channel->gain) / (100*100);
+	else
+		mixing_volume = 0;
 
 	/* compute the step size for sample rate conversion */
 	if (freq != channel->frequency)
@@ -541,6 +548,17 @@ void mixer_play_streamed_sample_16(int ch, INT16 *data, int len, int freq)
 int mixer_samples_this_frame(void)
 {
 	return samples_this_frame;
+}
+
+
+/***************************************************************************
+	mixer_need_samples_this_frame
+***************************************************************************/
+#define EXTRA_SAMPLES 1    // safety margin for sampling rate conversion
+int mixer_need_samples_this_frame(int channel,int freq)
+{
+	return (samples_this_frame - mixer_channel[channel].samples_available + EXTRA_SAMPLES)
+			* freq / Machine->sample_rate;
 }
 
 
@@ -656,6 +674,25 @@ void mixer_set_sample_frequency(int ch, int freq)
 
 
 /***************************************************************************
+	mixer_sound_enable_global_w
+***************************************************************************/
+
+void mixer_sound_enable_global_w(int enable)
+{
+	int i;
+	struct mixer_channel_data *channel;
+
+	/* update all channels (for streams this is a no-op) */
+	for (i = 0, channel = mixer_channel; i < first_free_channel; i++, channel++)
+	{
+		mixer_update_channel(channel, sound_scalebufferpos(samples_this_frame));
+	}
+
+	mixer_sound_enabled = enable;
+}
+
+
+/***************************************************************************
 	mix_sample_8
 ***************************************************************************/
 
@@ -666,7 +703,10 @@ void mix_sample_8(struct mixer_channel_data *channel, int samples_to_generate)
 	INT32 mixing_volume;
 
 	/* compute the overall mixing volume */
-	mixing_volume = ((channel->volume * channel->mixing_level * 256) << channel->gain) / (100*100);
+	if (mixer_sound_enabled)
+		mixing_volume = ((channel->volume * channel->mixing_level * 256) << channel->gain) / (100*100);
+	else
+		mixing_volume = 0;
 
 	/* get the initial state */
 	step_size = channel->step_size;
@@ -755,7 +795,10 @@ void mix_sample_16(struct mixer_channel_data *channel, int samples_to_generate)
 	INT32 mixing_volume;
 
 	/* compute the overall mixing volume */
-	mixing_volume = ((channel->volume * channel->mixing_level * 256) << channel->gain) / (100*100);
+	if (mixer_sound_enabled)
+		mixing_volume = ((channel->volume * channel->mixing_level * 256) << channel->gain) / (100*100);
+	else
+		mixing_volume = 0;
 
 	/* get the initial state */
 	step_size = channel->step_size;

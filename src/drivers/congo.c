@@ -140,9 +140,9 @@ static int congo_interrupt(void)
 INPUT_PORTS_START( congo )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_4WAY )
-	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_4WAY )
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_4WAY )
-	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_4WAY )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_4WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP    | IPF_4WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN  | IPF_4WAY )
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 )
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN )	/* probably unused (the self test doesn't mention it) */
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )	/* probably unused (the self test doesn't mention it) */
@@ -150,9 +150,9 @@ INPUT_PORTS_START( congo )
 
 	PORT_START	/* IN1 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_4WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_4WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_4WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP    | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN  | IPF_4WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_COCKTAIL )
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN )	/* probably unused (the self test doesn't mention it) */
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )	/* probably unused (the self test doesn't mention it) */
@@ -170,7 +170,7 @@ INPUT_PORTS_START( congo )
 	PORT_BIT_IMPULSE( 0x40, IP_ACTIVE_HIGH, IPT_COIN2, 1 )
 	/* Coin Aux doesn't need IMPULSE to pass the test, but it still needs it */
 	/* to avoid the freeze. */
-	PORT_BIT_IMPULSE( 0x80, IP_ACTIVE_HIGH, IPT_COIN3, 1 )
+	PORT_BIT_IMPULSE( 0x80, IP_ACTIVE_HIGH, IPT_SERVICE1, 1 )
 
 	PORT_START	/* DSW0 */
 	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Bonus_Life ) )
@@ -196,40 +196,142 @@ INPUT_PORTS_START( congo )
 	PORT_DIPSETTING(    0x80, DEF_STR( Cocktail ) )
 
 	PORT_START	/* DSW1 */
- 	PORT_DIPNAME( 0x0f, 0x03, "B Coin/Cred" )
-	PORT_DIPSETTING(    0x0f, "4/1" )
-	PORT_DIPSETTING(    0x07, "3/1" )
-	PORT_DIPSETTING(    0x0b, "2/1" )
-	PORT_DIPSETTING(    0x06, "2/1+Bonus each 5" )
-	PORT_DIPSETTING(    0x0a, "2/1+Bonus each 2" )
-	PORT_DIPSETTING(    0x03, "1/1" )
-	PORT_DIPSETTING(    0x02, "1/1+Bonus each 5" )
-	PORT_DIPSETTING(    0x0c, "1/1+Bonus each 4" )
-	PORT_DIPSETTING(    0x04, "1/1+Bonus each 2" )
-	PORT_DIPSETTING(    0x0d, "1/2" )
-	PORT_DIPSETTING(    0x08, "1/2+Bonus each 5" )
-	PORT_DIPSETTING(    0x00, "1/2+Bonus each 4" )
-	PORT_DIPSETTING(    0x05, "1/3" )
-	PORT_DIPSETTING(    0x09, "1/4" )
-	PORT_DIPSETTING(    0x01, "1/5" )
-	PORT_DIPSETTING(    0x0e, "1/6" )
-	PORT_DIPNAME( 0xf0, 0x30, "A Coin/Cred" )
-	PORT_DIPSETTING(    0xf0, "4/1" )
-	PORT_DIPSETTING(    0x70, "3/1" )
-	PORT_DIPSETTING(    0xb0, "2/1" )
-	PORT_DIPSETTING(    0x60, "2/1+Bonus each 5" )
-	PORT_DIPSETTING(    0xa0, "2/1+Bonus each 2" )
-	PORT_DIPSETTING(    0x30, "1/1" )
-	PORT_DIPSETTING(    0x20, "1/1+Bonus each 5" )
-	PORT_DIPSETTING(    0xc0, "1/1+Bonus each 4" )
-	PORT_DIPSETTING(    0x40, "1/1+Bonus each 2" )
-	PORT_DIPSETTING(    0xd0, "1/2" )
-	PORT_DIPSETTING(    0x80, "1/2+Bonus each 5" )
-	PORT_DIPSETTING(    0x00, "1/2+Bonus each 4" )
-	PORT_DIPSETTING(    0x50, "1/3" )
-	PORT_DIPSETTING(    0x90, "1/4" )
-	PORT_DIPSETTING(    0x10, "1/5" )
-	PORT_DIPSETTING(    0xe0, "1/6" )
+	PORT_DIPNAME( 0x0f, 0x03, DEF_STR( Coin_B ) )
+	PORT_DIPSETTING(    0x0f, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(    0x07, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0x0b, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x06, "2C/1C 5C/3C 6C/4C" )
+	PORT_DIPSETTING(    0x0a, "2C/1C 3C/2C 4C/3C" )
+	PORT_DIPSETTING(    0x03, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x02, "1C/1C 5C/6C" )
+	PORT_DIPSETTING(    0x0c, "1C/1C 4C/5C" )
+	PORT_DIPSETTING(    0x04, "1C/1C 2C/3C" )
+	PORT_DIPSETTING(    0x0d, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x08, "1C/2C 5C/11C" )
+	PORT_DIPSETTING(    0x00, "1C/2C 4C/9C" )
+	PORT_DIPSETTING(    0x05, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(    0x09, DEF_STR( 1C_4C ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( 1C_5C ) )
+	PORT_DIPSETTING(    0x0e, DEF_STR( 1C_6C ) )
+	PORT_DIPNAME( 0xf0, 0x30, DEF_STR( Coin_A ) )
+	PORT_DIPSETTING(    0xf0, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(    0x70, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0xb0, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x60, "2C/1C 5C/3C 6C/4C" )
+	PORT_DIPSETTING(    0xa0, "2C/1C 3C/2C 4C/3C" )
+	PORT_DIPSETTING(    0x30, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x20, "1C/1C 5C/6C" )
+	PORT_DIPSETTING(    0xc0, "1C/1C 4C/5C" )
+	PORT_DIPSETTING(    0x40, "1C/1C 2C/3C" )
+	PORT_DIPSETTING(    0xd0, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x80, "1C/2C 5C/11C" )
+	PORT_DIPSETTING(    0x00, "1C/2C 4C/9C" )
+	PORT_DIPSETTING(    0x50, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(    0x90, DEF_STR( 1C_4C ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( 1C_5C ) )
+	PORT_DIPSETTING(    0xe0, DEF_STR( 1C_6C ) )
+
+	PORT_START	/* FAKE */
+	/* This fake input port is used to get the status of the F2 key, */
+	/* and activate the test mode, which is triggered by a NMI */
+	PORT_BITX(0x01, IP_ACTIVE_HIGH, IPT_SERVICE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE )
+INPUT_PORTS_END
+
+/* Same as Congo Bongo, except the Demo Sounds dip, that here turns the
+   sound off in the whole game. */
+INPUT_PORTS_START( tiptop )
+	PORT_START	/* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_4WAY )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_4WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP    | IPF_4WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN  | IPF_4WAY )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN )	/* probably unused (the self test doesn't mention it) */
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )	/* probably unused (the self test doesn't mention it) */
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )	/* probably unused (the self test doesn't mention it) */
+
+	PORT_START	/* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP    | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN  | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_COCKTAIL )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN )	/* probably unused (the self test doesn't mention it) */
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )	/* probably unused (the self test doesn't mention it) */
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )	/* probably unused (the self test doesn't mention it) */
+
+	PORT_START	/* IN2 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_UNKNOWN )	/* probably unused (the self test doesn't mention it) */
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_UNKNOWN )	/* probably unused (the self test doesn't mention it) */
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_START1 )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_START2 )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_UNKNOWN )	/* probably unused (the self test doesn't mention it) */
+	/* the coin inputs must stay active for exactly one frame, otherwise */
+	/* the game will keep inserting coins. */
+	PORT_BIT_IMPULSE( 0x20, IP_ACTIVE_HIGH, IPT_COIN1, 1 )
+	PORT_BIT_IMPULSE( 0x40, IP_ACTIVE_HIGH, IPT_COIN2, 1 )
+	/* Coin Aux doesn't need IMPULSE to pass the test, but it still needs it */
+	/* to avoid the freeze. */
+	PORT_BIT_IMPULSE( 0x80, IP_ACTIVE_HIGH, IPT_SERVICE1, 1 )
+
+	PORT_START	/* DSW0 */
+	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Bonus_Life ) )
+	PORT_DIPSETTING(    0x03, "10000" )
+	PORT_DIPSETTING(    0x01, "20000" )
+	PORT_DIPSETTING(    0x02, "30000" )
+	PORT_DIPSETTING(    0x00, "40000" )
+	PORT_DIPNAME( 0x0c, 0x0c, "Difficulty???" )
+	PORT_DIPSETTING(    0x0c, "Easy?" )
+	PORT_DIPSETTING(    0x04, "Medium?" )
+	PORT_DIPSETTING(    0x08, "Hard?" )
+	PORT_DIPSETTING(    0x00, "Hardest?" )
+	PORT_DIPNAME( 0x30, 0x30, DEF_STR( Lives ) )
+	PORT_DIPSETTING(    0x30, "3" )
+	PORT_DIPSETTING(    0x10, "4" )
+	PORT_DIPSETTING(    0x20, "5" )
+	PORT_BITX( 0,       0x00, IPT_DIPSWITCH_SETTING | IPF_CHEAT, "Infinite", IP_KEY_NONE, IP_JOY_NONE )
+	PORT_DIPNAME( 0x40, 0x40, "Sound" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Cocktail ) )
+
+	PORT_START	/* DSW1 */
+	PORT_DIPNAME( 0x0f, 0x03, DEF_STR( Coin_B ) )
+	PORT_DIPSETTING(    0x0f, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(    0x07, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0x0b, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x06, "2C/1C 5C/3C 6C/4C" )
+	PORT_DIPSETTING(    0x0a, "2C/1C 3C/2C 4C/3C" )
+	PORT_DIPSETTING(    0x03, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x02, "1C/1C 5C/6C" )
+	PORT_DIPSETTING(    0x0c, "1C/1C 4C/5C" )
+	PORT_DIPSETTING(    0x04, "1C/1C 2C/3C" )
+	PORT_DIPSETTING(    0x0d, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x08, "1C/2C 5C/11C" )
+	PORT_DIPSETTING(    0x00, "1C/2C 4C/9C" )
+	PORT_DIPSETTING(    0x05, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(    0x09, DEF_STR( 1C_4C ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( 1C_5C ) )
+	PORT_DIPSETTING(    0x0e, DEF_STR( 1C_6C ) )
+	PORT_DIPNAME( 0xf0, 0x30, DEF_STR( Coin_A ) )
+	PORT_DIPSETTING(    0xf0, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(    0x70, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0xb0, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x60, "2C/1C 5C/3C 6C/4C" )
+	PORT_DIPSETTING(    0xa0, "2C/1C 3C/2C 4C/3C" )
+	PORT_DIPSETTING(    0x30, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x20, "1C/1C 5C/6C" )
+	PORT_DIPSETTING(    0xc0, "1C/1C 4C/5C" )
+	PORT_DIPSETTING(    0x40, "1C/1C 2C/3C" )
+	PORT_DIPSETTING(    0xd0, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x80, "1C/2C 5C/11C" )
+	PORT_DIPSETTING(    0x00, "1C/2C 4C/9C" )
+	PORT_DIPSETTING(    0x50, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(    0x90, DEF_STR( 1C_4C ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( 1C_5C ) )
+	PORT_DIPSETTING(    0xe0, DEF_STR( 1C_6C ) )
 
 	PORT_START	/* FAKE */
 	/* This fake input port is used to get the status of the F2 key, */
@@ -429,5 +531,5 @@ ROM_END
 
 
 
-GAME( 1983, congo,  0,     congo, congo, 0, ROT90, "Sega", "Congo Bongo" )
-GAME( 1983, tiptop, congo, congo, congo, 0, ROT90, "Sega", "Tip Top" )
+GAME( 1983, congo,  0,     congo, congo,  0, ROT90, "Sega", "Congo Bongo" )
+GAME( 1983, tiptop, congo, congo, tiptop, 0, ROT90, "Sega", "Tip Top" )

@@ -435,5 +435,5 @@ ROM_END
 
 
 
-GAME( 1980, crbaloon, 0,		crbaloon, crbaloon, 0, ROT90, "Taito Corporation", "Crazy Balloon (set 1)" )
-GAME( 1980, crbalon2, crbaloon, crbaloon, crbaloon, 0, ROT90, "Taito Corporation", "Crazy Balloon (set 2)" )
+GAMEX( 1980, crbaloon, 0,		crbaloon, crbaloon, 0, ROT90, "Taito Corporation", "Crazy Balloon (set 1)", GAME_IMPERFECT_SOUND )
+GAMEX( 1980, crbalon2, crbaloon, crbaloon, crbaloon, 0, ROT90, "Taito Corporation", "Crazy Balloon (set 2)", GAME_IMPERFECT_SOUND )

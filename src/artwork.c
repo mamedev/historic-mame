@@ -1265,7 +1265,7 @@ static struct osd_bitmap *create_circle (int r, int pen)
 		for (i = 0; i < twox; i++)
 		{
 			plot_pixel(circle, r-x+i, r-y  , pen);
-			plot_pixel(circle, r-x+i, r+y+1, pen);
+			plot_pixel(circle, r-x+i, r+y-1, pen);
 		}
 
 		for (i = 0; i < twoy; i++)

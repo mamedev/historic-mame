@@ -19,7 +19,6 @@ static int flipscreen = 0;
 static int force_refresh = 0;
 static int do_modify_palette = 0;
 static int palette_bank = -1, red_on = -1;
-static int protection_value;
 static const unsigned char *prom;
 
 
@@ -220,16 +219,18 @@ void tomahawk_video_control2_w(int offset,int data)
 
 int tomahawk_protection_r(int offset)
 {
-	switch (*tomahawk_protection)
-	{
-	case 0xeb: 	return 0xd7;
-	case 0x58:	return 0x1a;
-	case 0x43:	return 0xc2;
+	/* flip the byte */
 
-	default:
-		if (errorlog) fprintf(errorlog, "Unknown protection read %02X\n", protection_value);
-		return 0x00;
-	}
+	int res = ((*tomahawk_protection & 0x01) << 7) |
+			((*tomahawk_protection & 0x02) << 5) |
+			((*tomahawk_protection & 0x04) << 3) |
+			((*tomahawk_protection & 0x08) << 1) |
+			((*tomahawk_protection & 0x10) >> 1) |
+			((*tomahawk_protection & 0x20) >> 3) |
+			((*tomahawk_protection & 0x40) >> 5) |
+			((*tomahawk_protection & 0x80) >> 7);
+
+	return res;
 }
 /***************************************************************************
 

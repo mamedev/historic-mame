@@ -1,6 +1,6 @@
 /***************************************************************************
 
-   Vapour Trail Video emulation - Bryan McPhail, mish@tendril.force9.net
+   Vapour Trail Video emulation - Bryan McPhail, mish@tendril.co.uk
 
 ****************************************************************************
 

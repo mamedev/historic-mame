@@ -1,6 +1,6 @@
 /***************************************************************************
 
-  stadhero video emulation - Bryan McPhail, mish@tendril.force9.net
+  stadhero video emulation - Bryan McPhail, mish@tendril.co.uk
 
 *********************************************************************
 

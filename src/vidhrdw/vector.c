@@ -55,7 +55,7 @@ static int vector_scale_x;                /* scaling to screen */
 static int vector_scale_y;                /* scaling to screen */
 
 static float gamma_correction = 1.2;
-static float intensity_correction = 1.0;
+static float intensity_correction = 1.5;
 
 /* The vectices are buffered here */
 typedef struct

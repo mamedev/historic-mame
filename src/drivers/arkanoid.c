@@ -252,7 +252,7 @@ static struct GfxLayout charlayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ REGION_GFX1, 0x00000, &charlayout,  0, 64 },
+	{ REGION_GFX1, 0, &charlayout,  0, 64 },
 	/* sprites use the same characters above, but are 16x8 */
 	{ -1 } /* end of array */
 };

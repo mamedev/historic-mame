@@ -26,7 +26,7 @@ Sound (Bootleg):
 Caveman Ninja Issues:
   End of level 2 is corrupt.
 
-  Emulation by Bryan McPhail, mish@tendril.force9.net
+  Emulation by Bryan McPhail, mish@tendril.co.uk
 
 ***************************************************************************/
 
@@ -750,7 +750,7 @@ static struct MachineDriver machine_driver_cninja =
 			ignore_interrupt,0
 		}
 	},
-	58, DEFAULT_REAL_60HZ_VBLANK_DURATION,
+	58, 529,
 	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
 	0,
 
@@ -802,7 +802,7 @@ static struct MachineDriver machine_driver_stoneage =
 			ignore_interrupt,0
 		}
 	},
-	58, DEFAULT_REAL_60HZ_VBLANK_DURATION,
+	58, 529,
 	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
 	0,
 
@@ -850,7 +850,7 @@ static struct MachineDriver machine_driver_edrandy =
 			ignore_interrupt,0
 		}
 	},
-	58, DEFAULT_REAL_60HZ_VBLANK_DURATION,
+	58, 529,
 	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
 	0,
 

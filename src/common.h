@@ -23,13 +23,14 @@ struct RomModule
 /* that marks the start of a new memory region. Confused? Well, don't worry, just use */
 /* the macros below. */
 
-#define ROMFLAG_MASK          0xf0000000           /* 4 bits worth of flags in the high nibble */
+#define ROMFLAG_MASK          0xf8000000           /* 5 bits worth of flags in the high nibble */
 
 /* Masks for individual ROMs */
 #define ROMFLAG_ALTERNATE     0x80000000           /* Alternate bytes, either even or odd, or nibbles, low or high */
 #define ROMFLAG_WIDE          0x40000000           /* 16-bit ROM; may need byte swapping */
 #define ROMFLAG_SWAP          0x20000000           /* 16-bit ROM with bytes in wrong order */
 #define ROMFLAG_NIBBLE        0x10000000           /* Nibble-wide ROM image */
+#define ROMFLAG_QUAD          0x08000000           /* 32-bit data arranged as 4 interleaved 8-bit roms */
 
 /* start of table */
 #define ROM_START(name) static struct RomModule rom_##name[] = {
@@ -74,7 +75,7 @@ enum {
 	REGION_MAX
 };
 
-#define REGIONFLAG_MASK			0xf0000000
+#define REGIONFLAG_MASK			0xf8000000
 #define REGIONFLAG_DISPOSE		0x80000000           /* Dispose of this region when done */
 #define REGIONFLAG_SOUNDONLY	0x40000000           /* load only if sound emulation is turned on */
 
@@ -106,6 +107,8 @@ enum {
 #define ROM_RELOAD_WIDE(offset,length) { (char *)-1, offset, (length) | ROMFLAG_WIDE, 0 },
 #define ROM_LOAD_WIDE_SWAP(name,offset,length,crc) { name, offset, (length) | ROMFLAG_WIDE | ROMFLAG_SWAP, crc },
 #define ROM_RELOAD_WIDE_SWAP(offset,length) { (char *)-1, offset, (length) | ROMFLAG_WIDE | ROMFLAG_SWAP, 0 },
+/* Data is split between 4 roms, always use this in groups of 4! */
+#define ROM_LOAD_QUAD(name,offset,length,crc) { name, offset, length | ROMFLAG_QUAD, crc },
 
 #ifdef LSB_FIRST
 #define ROM_LOAD_V20_EVEN	ROM_LOAD_EVEN

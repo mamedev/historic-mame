@@ -1,6 +1,6 @@
 /***************************************************************************
 
-  Data East 16 bit games - Bryan McPhail, mish@tendril.force9.net
+  Data East 16 bit games - Bryan McPhail, mish@tendril.co.uk
 
   This file contains drivers for:
 
@@ -32,20 +32,6 @@ Boulderdash use the same graphics chips but are different pcbs.
   Thanks to Gouky & Richard Bush for information along the way, especially
   Gouky's patch for Bad Dudes & YM3812 information!
 	Thanks to JC Alexander for fix to Robocop ending!
-
-Cheats:
-
-Hippodrome: Level number held in 0xFF8011
-
-Bad Dudes: level number held in FF821D
-Put a bpx at 0x1b94 to halt at level check and choose level or end-seq
-Sly Spy: bpx at 5d8 for level check, can go to any level.
-(see comments in patch section below).
-
-Mid res: bpx at c02 for level check, can go straight to credits.
-         Level number held in 100006 (word)
-         bpx 10a6 - so you can choose level at start of game.
-         Put PC to 0xa1e in game to trigger continue screen
 
 ***************************************************************************/
 
@@ -992,7 +978,7 @@ static struct MachineDriver machine_driver_hbarrel =
 			ignore_interrupt,0
 		}
 	},
-	58, DEFAULT_REAL_60HZ_VBLANK_DURATION,
+	58, 529, /* 58 Hz, 529ms Vblank */
 	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
 	0,
 
@@ -1044,7 +1030,7 @@ static struct MachineDriver machine_driver_baddudes =
 			ignore_interrupt,0
 		}
 	},
-	58, DEFAULT_REAL_60HZ_VBLANK_DURATION,
+	58, 529, /* 58 Hz, 529ms Vblank */
 	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
 	0,
 
@@ -1096,7 +1082,7 @@ static struct MachineDriver machine_driver_birdtry =
 			ignore_interrupt,0
 		}
 	},
-	58, DEFAULT_REAL_60HZ_VBLANK_DURATION,
+	58, 529, /* 58 Hz, 529ms Vblank */
 	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
 	0,
 
@@ -1154,7 +1140,7 @@ static struct MachineDriver machine_driver_robocop =
 			ignore_interrupt,0
 		},
 	},
-	58, DEFAULT_REAL_60HZ_VBLANK_DURATION,
+	58, 529, /* 58 Hz, 529ms Vblank */
 	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
 	0,
 
@@ -1206,7 +1192,7 @@ static struct MachineDriver machine_driver_robocopb =
 			ignore_interrupt,0
 		}
 	},
-	58, DEFAULT_REAL_60HZ_VBLANK_DURATION,
+	58, 529, /* 58 Hz, 529ms Vblank */
 	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
 	0,
 
@@ -1264,7 +1250,7 @@ static struct MachineDriver machine_driver_hippodrm =
 			ignore_interrupt,0
 		}
 	},
-	58, DEFAULT_REAL_60HZ_VBLANK_DURATION,
+	58, 529, /* 58 Hz, 529ms Vblank */
 	5,	/* Interleave between H6280 & 68000 */
 	0,
 
@@ -1316,7 +1302,7 @@ static struct MachineDriver machine_driver_slyspy =
 			ignore_interrupt,0
 		}
 	},
-	58, DEFAULT_REAL_60HZ_VBLANK_DURATION,
+	58, 529, /* 58 Hz, 529ms Vblank */
 	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
 	0,
 
@@ -1368,7 +1354,7 @@ static struct MachineDriver machine_driver_midres =
 			ignore_interrupt,0
 		}
 	},
-	58, DEFAULT_REAL_60HZ_VBLANK_DURATION,
+	58, 529, /* 58 Hz, 529ms Vblank */
 	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
 	0,
 
@@ -1604,7 +1590,7 @@ ROM_START( birdtry )
 	ROM_LOAD( "ek-23.bin",     0x70000, 0x10000, 0xd0ed0116 )
 
 	ROM_REGION( 0x10000, REGION_GFX3 | REGIONFLAG_DISPOSE ) /* tiles */
-	/* This game doesn't seem to have the extra playfield chip, so no roms */
+	/* This game doesn't have the extra playfield chip, so no roms */
 
 	ROM_REGION( 0x80000, REGION_GFX4 | REGIONFLAG_DISPOSE ) /* sprites */
 	ROM_LOAD( "ek-15.bin",     0x00000, 0x10000, 0xa6a041a3 )
@@ -1799,12 +1785,12 @@ ROM_START( hippodrm )
 	ROM_REGION( 0x10000, REGION_CPU2 )	/* 6502 sound */
 	ROM_LOAD( "ew04",         0x8000, 0x8000, 0x9871b98d )
 
-	ROM_REGION( 0x10000, REGION_CPU3 ) /* Encrypted code bank */
+	ROM_REGION( 0x10000, REGION_CPU3 ) /* HuC6280 CPU */
 	ROM_LOAD( "ew08",         0x00000, 0x10000, 0x53010534 )
 
 	ROM_REGION( 0x20000, REGION_GFX1 | REGIONFLAG_DISPOSE ) /* chars */
-	ROM_LOAD( "ev14",         0x00000, 0x10000, 0x686f72c1 )
-	ROM_LOAD( "ev13",         0x10000, 0x10000, 0xb787dcc9 )
+	ROM_LOAD( "ew14",         0x00000, 0x10000, 0x71ca593d )
+	ROM_LOAD( "ew13",         0x10000, 0x10000, 0x86be5fa7 )
 
 	ROM_REGION( 0x20000, REGION_GFX2 | REGIONFLAG_DISPOSE ) /* tiles */
 	ROM_LOAD( "ew19",         0x00000, 0x08000, 0x6b80d7a3 )
@@ -1842,12 +1828,12 @@ ROM_START( ffantasy )
 	ROM_REGION( 0x10000, REGION_CPU2 )	/* 6502 sound */
 	ROM_LOAD( "ew04",         0x8000, 0x8000, 0x9871b98d )
 
-	ROM_REGION( 0x10000, REGION_CPU3 ) /* Encrypted code bank */
+	ROM_REGION( 0x10000, REGION_CPU3 ) /* HuC6280 CPU */
 	ROM_LOAD( "ew08",         0x00000, 0x10000, 0x53010534 )
 
 	ROM_REGION( 0x20000, REGION_GFX1 | REGIONFLAG_DISPOSE ) /* chars */
-	ROM_LOAD( "ew14",         0x00000, 0x10000, 0x71ca593d )
-	ROM_LOAD( "ew13",         0x10000, 0x10000, 0x86be5fa7 )
+	ROM_LOAD( "ev14",         0x00000, 0x10000, 0x686f72c1 )
+	ROM_LOAD( "ev13",         0x10000, 0x10000, 0xb787dcc9 )
 
 	ROM_REGION( 0x20000, REGION_GFX2 | REGIONFLAG_DISPOSE ) /* tiles */
 	ROM_LOAD( "ew19",         0x00000, 0x08000, 0x6b80d7a3 )
@@ -2202,22 +2188,22 @@ static void init_slyspy(void)
 
 /******************************************************************************/
 
-GAME( 1987, hbarrel,  0,        hbarrel,  hbarrel,  dec0,     ROT270, "Data East USA", "Heavy Barrel (US)" )
-GAME( 1987, hbarrelw, hbarrel,  hbarrel,  hbarrel,  dec0,     ROT270, "Data East Corporation", "Heavy Barrel (World)" )
-GAME( 1988, baddudes, 0,        baddudes, baddudes, dec0,     ROT0,   "Data East USA", "Bad Dudes vs. Dragonninja (US)" )
-GAME( 1988, drgninja, baddudes, baddudes, baddudes, dec0,     ROT0,   "Data East Corporation", "Dragonninja (Japan)" )
-GAMEX(1988, birdtry,  0,        birdtry,  hbarrel,  dec0,     ROT270, "Data East Corporation", "Birdie Try (Japan)", GAME_NOT_WORKING )
-GAMEX(1988, robocop,  0,        robocop,  robocop,  dec0,     ROT0,   "Data East Corporation", "Robocop (World revision 3)", GAME_NOT_WORKING )
-GAMEX(1988, robocopu, robocop,  robocop,  robocop,  dec0,     ROT0,   "Data East USA", "Robocop (US revision 1)", GAME_NOT_WORKING )
-GAMEX(1988, robocpu0, robocop,  robocop,  robocop,  dec0,     ROT0,   "Data East USA", "Robocop (US revision 0)", GAME_NOT_WORKING )
-GAME( 1988, robocopb, robocop,  robocopb, robocop,  dec0,     ROT0,   "bootleg", "Robocop (World bootleg)" )
-GAME( 1989, hippodrm, 0,        hippodrm, hippodrm, hippodrm, ROT0,   "Data East USA", "Hippodrome (US)" )
-GAME( 1989, ffantasy, hippodrm, hippodrm, hippodrm, hippodrm, ROT0,   "Data East Corporation", "Fighting Fantasy (Japan)" )
-GAME( 1989, slyspy,   0,        slyspy,   slyspy,   slyspy,   ROT0,   "Data East USA", "Sly Spy (US revision 3)" )
-GAME( 1989, slyspy2,  slyspy,   slyspy,   slyspy,   slyspy,   ROT0,   "Data East USA", "Sly Spy (US revision 2)" )
-GAME( 1989, secretag, slyspy,   slyspy,   slyspy,   slyspy,   ROT0,   "Data East Corporation", "Secret Agent (World)" )
-GAME( 1989, secretab, slyspy,   slyspy,   slyspy,   dec0,     ROT0,   "Data East USA", "Sly Spy (revision 2)" )
-GAME( 1989, midres,   0,        midres,   midres,   dec0,     ROT0,   "Data East Corporation", "Midnight Resistance (World)" )
-GAME( 1989, midresu,  midres,   midres,   midres,   dec0,     ROT0,   "Data East USA", "Midnight Resistance (US)" )
-GAME( 1989, midresj,  midres,   midres,   midres,   dec0,     ROT0,   "Data East Corporation", "Midnight Resistance (Japan)" )
-GAME( 1990, bouldash, 0,        slyspy,   bouldash, slyspy,   ROT0,   "Data East Corporation (licensed from First Star)", "Boulder Dash / Boulder Dash Part 2 (World)" )
+GAMEX( 1987, hbarrel,  0,        hbarrel,  hbarrel,  dec0,     ROT270, "Data East USA", "Heavy Barrel (US)", GAME_NO_COCKTAIL )
+GAMEX( 1987, hbarrelw, hbarrel,  hbarrel,  hbarrel,  dec0,     ROT270, "Data East Corporation", "Heavy Barrel (World)", GAME_NO_COCKTAIL )
+GAMEX( 1988, baddudes, 0,        baddudes, baddudes, dec0,     ROT0,   "Data East USA", "Bad Dudes vs. Dragonninja (US)", GAME_NO_COCKTAIL )
+GAMEX( 1988, drgninja, baddudes, baddudes, baddudes, dec0,     ROT0,   "Data East Corporation", "Dragonninja (Japan)", GAME_NO_COCKTAIL )
+GAMEX( 1988, birdtry,  0,        birdtry,  hbarrel,  dec0,     ROT270, "Data East Corporation", "Birdie Try (Japan)", GAME_NOT_WORKING | GAME_NO_COCKTAIL)
+GAMEX( 1988, robocop,  0,        robocop,  robocop,  dec0,     ROT0,   "Data East Corporation", "Robocop (World revision 3)", GAME_NOT_WORKING | GAME_NO_COCKTAIL )
+GAMEX( 1988, robocopu, robocop,  robocop,  robocop,  dec0,     ROT0,   "Data East USA", "Robocop (US revision 1)", GAME_NOT_WORKING | GAME_NO_COCKTAIL )
+GAMEX( 1988, robocpu0, robocop,  robocop,  robocop,  dec0,     ROT0,   "Data East USA", "Robocop (US revision 0)", GAME_NOT_WORKING | GAME_NO_COCKTAIL )
+GAMEX( 1988, robocopb, robocop,  robocopb, robocop,  dec0,     ROT0,   "bootleg", "Robocop (World bootleg)", GAME_NO_COCKTAIL )
+GAMEX( 1989, hippodrm, 0,        hippodrm, hippodrm, hippodrm, ROT0,   "Data East USA", "Hippodrome (US)", GAME_NO_COCKTAIL )
+GAMEX( 1989, ffantasy, hippodrm, hippodrm, hippodrm, hippodrm, ROT0,   "Data East Corporation", "Fighting Fantasy (Japan)", GAME_NO_COCKTAIL )
+GAMEX( 1989, slyspy,   0,        slyspy,   slyspy,   slyspy,   ROT0,   "Data East USA", "Sly Spy (US revision 3)", GAME_NO_COCKTAIL )
+GAMEX( 1989, slyspy2,  slyspy,   slyspy,   slyspy,   slyspy,   ROT0,   "Data East USA", "Sly Spy (US revision 2)", GAME_NO_COCKTAIL )
+GAMEX( 1989, secretag, slyspy,   slyspy,   slyspy,   slyspy,   ROT0,   "Data East Corporation", "Secret Agent (World)", GAME_NO_COCKTAIL )
+GAMEX( 1989, secretab, slyspy,   slyspy,   slyspy,   dec0,     ROT0,   "Data East USA", "Sly Spy (revision 2)", GAME_NO_COCKTAIL )
+GAMEX( 1989, midres,   0,        midres,   midres,   dec0,     ROT0,   "Data East Corporation", "Midnight Resistance (World)", GAME_NO_COCKTAIL )
+GAMEX( 1989, midresu,  midres,   midres,   midres,   dec0,     ROT0,   "Data East USA", "Midnight Resistance (US)", GAME_NO_COCKTAIL )
+GAMEX( 1989, midresj,  midres,   midres,   midres,   dec0,     ROT0,   "Data East Corporation", "Midnight Resistance (Japan)", GAME_NO_COCKTAIL )
+GAMEX( 1990, bouldash, 0,        slyspy,   bouldash, slyspy,   ROT0,   "Data East Corporation (licensed from First Star)", "Boulder Dash / Boulder Dash Part 2 (World)", GAME_NO_COCKTAIL )

@@ -71,7 +71,11 @@ static void get_fg_tile_info( int col, int row )
 			((attr >> (bit0+2)) & 0x02) |
 			((attr >> (bit1+1)) & 0x04) |
 			((attr >> (bit2  )) & 0x08) |
-			((attr >> (bit3-1)) & 0x10);
+			((attr >> (bit3-1)) & 0x10) |
+			((K007121_ctrlram[0][0x03] & 0x01) << 5);
+	int mask = (K007121_ctrlram[0][0x04] & 0xf0) >> 4;
+
+	bank = (bank & ~(mask << 1)) | ((K007121_ctrlram[0][0x04] & mask) << 1);
 
 	SET_TILE_INFO(0, contra_fg_vram[offs]+bank*256, ((K007121_ctrlram[0][6]&0x30)*2+16)+(attr&7) )
 }
@@ -88,7 +92,11 @@ static void get_bg_tile_info( int col, int row )
 			((attr >> (bit0+2)) & 0x02) |
 			((attr >> (bit1+1)) & 0x04) |
 			((attr >> (bit2  )) & 0x08) |
-			((attr >> (bit3-1)) & 0x10);
+			((attr >> (bit3-1)) & 0x10) |
+			((K007121_ctrlram[1][0x03] & 0x01) << 5);
+	int mask = (K007121_ctrlram[1][0x04] & 0xf0) >> 4;
+
+	bank = (bank & ~(mask << 1)) | ((K007121_ctrlram[0][0x04] & mask) << 1);
 
 	SET_TILE_INFO(1, contra_bg_vram[offs]+bank*256, ((K007121_ctrlram[1][6]&0x30)*2+16)+(attr&7) )
 }
@@ -144,21 +152,17 @@ void contra_bg_cram_w(int offset,int data){
 }
 
 void contra_text_vram_w(int offset,int data){
-	int col = offset%32;
-	if( col<5 ){
-		if( contra_text_vram[offset] == data) return;
-		tilemap_mark_tile_dirty( text_tilemap, col, offset/32 );
+	if (contra_text_vram[offset] != data){
+		tilemap_mark_tile_dirty( text_tilemap, offset%32, offset/32 );
+		contra_text_vram[offset] = data;
 	}
-	contra_text_vram[offset] = data;
 }
 
 void contra_text_cram_w(int offset,int data){
-	int col = offset%32;
-	if( col<5 ){
-		if( contra_text_cram[offset] == data) return;
-		tilemap_mark_tile_dirty( text_tilemap, col, offset/32 );
+	if (contra_text_cram[offset] != data){
+		tilemap_mark_tile_dirty( text_tilemap, offset%32, offset/32 );
+		contra_text_cram[offset] = data;
 	}
-	contra_text_cram[offset] = data;
 }
 
 void contra_K007121_ctrl_0_w( int offset, int data )
@@ -226,7 +230,7 @@ int contra_vh_start(void){
 		get_text_tile_info,
 		TILEMAP_OPAQUE,
 		8,8,	/* tile width, tile height */
-		5,32	/* number of columns, number of rows */
+		32,32	/* number of columns, number of rows */
 	);
 
 	private_spriteram=malloc (0x800);
@@ -238,7 +242,7 @@ int contra_vh_start(void){
 		tilemap_set_clip( bg_tilemap, &clip );
 		tilemap_set_clip( fg_tilemap, &clip );
 
-		clip.max_x = 40;
+		clip.max_x = 39;
 		clip.min_x = 0;
 		tilemap_set_clip( text_tilemap, &clip );
 
@@ -259,7 +263,7 @@ void contra_vh_stop(void)
 static void draw_sprites( struct osd_bitmap *bitmap, int bank )
 {
 	const unsigned char *source;
-	int base_color = bank ? (K007121_ctrlram[1][6]&0x30)*2 : (K007121_ctrlram[0][6]&0x30)*2;
+	int base_color = (K007121_ctrlram[bank][6]&0x30)*2;
 
 	if (bank==0) source=private_spriteram;
 	else source=private_spriteram_2;

@@ -405,5 +405,5 @@ ROM_END
 
 
 
-GAME( 1985, exedexes, 0,        exedexes, exedexes, 0, ROT270, "Capcom", "Exed Exes" )
-GAME( 1985, savgbees, exedexes, exedexes, exedexes, 0, ROT270, "Capcom (Memetron license)", "Savage Bees" )
+GAMEX( 1985, exedexes, 0,        exedexes, exedexes, 0, ROT270, "Capcom", "Exed Exes", GAME_NO_COCKTAIL )
+GAMEX( 1985, savgbees, exedexes, exedexes, exedexes, 0, ROT270, "Capcom (Memetron license)", "Savage Bees", GAME_NO_COCKTAIL )

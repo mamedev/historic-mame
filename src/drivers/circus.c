@@ -78,24 +78,29 @@ INPUT_PORTS_START( circus )
 	PORT_START /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_START1 )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_START2 )
+	PORT_BIT( 0x7c, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_COIN1 )
 
 	PORT_START      /* Dip Switch */
-	PORT_DIPNAME( 0x03, 0x00, "Jumps" )
+	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x00, "3" )
 	PORT_DIPSETTING(    0x01, "5" )
 	PORT_DIPSETTING(    0x02, "7" )
 	PORT_DIPSETTING(    0x03, "9" )
-	PORT_DIPNAME( 0x0C, 0x04, DEF_STR( Coinage ) )
-	PORT_DIPSETTING(    0x00, "2 Player - 1 Coin" )
-	PORT_DIPSETTING(    0x04, "1 Player - 1 Coin" )
-	PORT_DIPSETTING(    0x08, "1 Player - 2 Coin" )
+	PORT_DIPNAME( 0x0c, 0x04, DEF_STR( Coinage ) )
+//	PORT_DIPSETTING(    0x08, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x0c, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 1C_2C ) )
 	PORT_DIPNAME( 0x10, 0x00, "Top Score" )
 	PORT_DIPSETTING(    0x10, "Credit Awarded" )
 	PORT_DIPSETTING(    0x00, "No Award" )
 	PORT_DIPNAME( 0x20, 0x00, "Bonus" )
 	PORT_DIPSETTING(    0x00, "Single Line" )
 	PORT_DIPSETTING(    0x20, "Super Bonus" )
+	PORT_DIPNAME( 0x40, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( On ) )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_VBLANK )
 
 	PORT_START      /* IN2 - paddle */
@@ -109,24 +114,31 @@ INPUT_PORTS_START( robotbwl )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_BUTTON1 )
 	PORT_BITX(0x04, IP_ACTIVE_HIGH, 0,"Hook Right", KEYCODE_X, 0 )
 	PORT_BITX(0x08, IP_ACTIVE_HIGH, 0,"Hook Left", KEYCODE_Z, 0 )
-    PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON2 )
-    PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT )
-    PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON2 )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_COIN1 )
 
 	PORT_START      /* Dip Switch */
-	PORT_DIPNAME( 0x60, 0x00, "Bowl Timer" )
-	PORT_DIPSETTING(    0x00, "3" )
-	PORT_DIPSETTING(    0x20, "5" )
-	PORT_DIPSETTING(    0x40, "7" )
-	PORT_DIPSETTING(    0x60, "9" )
-	PORT_DIPNAME( 0x18, 0x08, DEF_STR( Coinage ) )
-	PORT_DIPSETTING(    0x00, "2 Player - 1 Coin" )
-	PORT_DIPSETTING(    0x08, "1 Player - 1 Coin" )
-	PORT_DIPSETTING(    0x10, "1 Player - 2 Coin" )
+	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( On ) )
+	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( On ) )
 	PORT_DIPNAME( 0x04, 0x04, "Beer Frame" )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x04, DEF_STR( On ) )
+	PORT_DIPNAME( 0x18, 0x08, DEF_STR( Coinage ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x00, "1 Coin - 2 Players game" )
+//	PORT_DIPSETTING(    0x18, "1 Coin - 2 Players game" )
+	PORT_DIPNAME( 0x60, 0x00, "Bowl Timer" )
+	PORT_DIPSETTING(    0x00, "3 seconds" )
+	PORT_DIPSETTING(    0x20, "5 seconds" )
+	PORT_DIPSETTING(    0x40, "7 seconds" )
+	PORT_DIPSETTING(    0x60, "9 seconds" )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_VBLANK )
 INPUT_PORTS_END
 
@@ -136,10 +148,10 @@ INPUT_PORTS_START( crash )
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_START1 )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_START2 )
 	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_4WAY )
-	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_4WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_4WAY )
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1)
-	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_4WAY )
-	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_4WAY )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP    | IPF_4WAY )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN  | IPF_4WAY )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_COIN1 )
 
 	PORT_START      /* Dip Switch */
@@ -172,15 +184,16 @@ INPUT_PORTS_START( ripcord )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_COIN1 )
 
 	PORT_START      /* Dip Switch */
-	PORT_DIPNAME( 0x03, 0x03, "Jumps" )
+	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x00, "3" )
 	PORT_DIPSETTING(    0x01, "5" )
 	PORT_DIPSETTING(    0x02, "7" )
 	PORT_DIPSETTING(    0x03, "9" )
-	PORT_DIPNAME( 0x0C, 0x04, DEF_STR( Coinage ) )
+	PORT_DIPNAME( 0x0c, 0x04, DEF_STR( Coinage ) )
 	PORT_DIPSETTING(    0x00, "2 Player - 1 Coin" )
 	PORT_DIPSETTING(    0x04, "1 Player - 1 Coin" )
 	PORT_DIPSETTING(    0x08, "1 Player - 2 Coin" )
+//	PORT_DIPSETTING(    0x0c, "1 Player - ? Coin" )
 	PORT_DIPNAME( 0x10, 0x10, "Top Score" )
 	PORT_DIPSETTING(    0x10, "Credit Awarded" )
 	PORT_DIPSETTING(    0x00, "No Award" )
@@ -241,15 +254,15 @@ static struct GfxLayout robotlayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ REGION_GFX1, 0, &charlayout,  0, 2 },
-	{ REGION_GFX2, 0, &clownlayout, 0, 2 },
+	{ REGION_GFX1, 0, &charlayout,  0, 1 },
+	{ REGION_GFX2, 0, &clownlayout, 0, 1 },
 	{ -1 } /* end of array */
 };
 
 static struct GfxDecodeInfo robotbowl_gfxdecodeinfo[] =
 {
-	{ REGION_GFX1, 0, &charlayout,  0, 2 },
-	{ REGION_GFX2, 0, &robotlayout, 0, 2 },
+	{ REGION_GFX1, 0, &charlayout,  0, 1 },
+	{ REGION_GFX2, 0, &robotlayout, 0, 1 },
 	{ -1 } /* end of array */
 };
 
@@ -524,7 +537,7 @@ ROM_END
 
 
 
-GAME( 1977, circus,   0, circus,   circus,   0,        ROT0, "Exidy", "Circus" )
-GAME( 1977, robotbwl, 0, robotbwl, robotbwl, robotbwl, ROT0, "Exidy", "Robot Bowl" )
-GAME( 1979, crash,    0, crash,    crash,    0,        ROT0, "Exidy", "Crash" )
-GAMEX(1977, ripcord,  0, ripcord,  ripcord,  0,        ROT0, "Exidy", "Rip Cord", GAME_NOT_WORKING )
+GAMEX( 1977, circus,   0, circus,   circus,   0,        ROT0, "Exidy", "Circus", GAME_IMPERFECT_SOUND )
+GAMEX( 1977, robotbwl, 0, robotbwl, robotbwl, robotbwl, ROT0, "Exidy", "Robot Bowl", GAME_IMPERFECT_SOUND )
+GAMEX( 1979, crash,    0, crash,    crash,    0,        ROT0, "Exidy", "Crash", GAME_IMPERFECT_SOUND )
+GAMEX( 1977, ripcord,  0, ripcord,  ripcord,  0,        ROT0, "Exidy", "Rip Cord", GAME_NOT_WORKING )

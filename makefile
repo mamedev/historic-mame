@@ -52,6 +52,7 @@ CPUS+=M6502@
 CPUS+=M65C02@
 #CPUS+=M65SC02@
 #CPUS+=M65CE02@
+#CPUS+=M6509@
 CPUS+=M6510@
 CPUS+=N2A03@
 CPUS+=H6280@
@@ -78,6 +79,7 @@ CPUS+=M6809@
 CPUS+=KONAMI@
 CPUS+=M68000@
 CPUS+=M68010@
+CPUS+=M68EC020@
 CPUS+=M68020@
 CPUS+=T11@
 CPUS+=S2650@
@@ -121,6 +123,7 @@ SOUNDS+=POKEY@
 SOUNDS+=NES@
 SOUNDS+=ASTROCADE@
 SOUNDS+=NAMCO@
+SOUNDS+=TMS36XX@
 SOUNDS+=TMS5220@
 SOUNDS+=VLM5030@
 SOUNDS+=ADPCM@
@@ -222,6 +225,13 @@ CPU=$(strip $(findstring M65CE02@,$(CPUS)))
 ifneq ($(CPU),)
 CPUDEFS += -DHAS_M65CE02=1
 CPUOBJS += obj/cpu/m6502/m65ce02.o
+DBGOBJS += obj/cpu/m6502/6502dasm.o
+endif
+
+CPU=$(strip $(findstring M6509@,$(CPUS)))
+ifneq ($(CPU),)
+CPUDEFS += -DHAS_M6509=1
+CPUOBJS += obj/cpu/m6502/m6509.o
 DBGOBJS += obj/cpu/m6502/6502dasm.o
 endif
 
@@ -410,6 +420,20 @@ endif
 CPU=$(strip $(findstring M68010@,$(CPUS)))
 ifneq ($(CPU),)
 CPUDEFS += -DHAS_M68010=1
+ifdef X86_ASM_68K
+CPUOBJS += obj/cpu/m68000/asmintf.o obj/cpu/m68000/68kem.oa
+ASMDEFS += -DA68KEM
+else
+CPUOBJS += obj/cpu/m68000/m68kops.og obj/cpu/m68000/m68kopac.og \
+           obj/cpu/m68000/m68kopdm.og obj/cpu/m68000/m68kopnz.og \
+           obj/cpu/m68000/m68kcpu.o obj/cpu/m68000/m68kmame.o
+endif
+DBGOBJS += obj/cpu/m68000/d68k.o
+endif
+
+CPU=$(strip $(findstring M68EC020@,$(CPUS)))
+ifneq ($(CPU),)
+CPUDEFS += -DHAS_M68EC020=1
 ifdef X86_ASM_68K
 CPUOBJS += obj/cpu/m68000/asmintf.o obj/cpu/m68000/68kem.oa
 ASMDEFS += -DA68KEM
@@ -686,6 +710,12 @@ SOUNDDEFS += -DHAS_NAMCO=1
 SOUNDOBJS += obj/sound/namco.o
 endif
 
+SOUND=$(strip $(findstring TMS36XX@,$(SOUNDS)))
+ifneq ($(SOUND),)
+SOUNDDEFS += -DHAS_TMS36XX=1
+SOUNDOBJS += obj/sound/tms36xx.o
+endif
+
 SOUND=$(strip $(findstring TMS5220@,$(SOUNDS)))
 ifneq ($(SOUND),)
 SOUNDDEFS += -DHAS_TMS5220=1
@@ -853,7 +883,7 @@ COREOBJS = obj/version.o obj/driver.o obj/mame.o \
          obj/machine/8255ppi.o \
          obj/vidhrdw/generic.o obj/vidhrdw/vector.o \
          obj/vidhrdw/avgdvg.o obj/machine/mathbox.o \
-         obj/machine/ticket.o \
+         obj/machine/ticket.o obj/machine/eeprom.o \
          obj/mamedbg.o obj/window.o \
          obj/profiler.o \
          $(sort $(DBGOBJS)) \
@@ -861,7 +891,7 @@ COREOBJS = obj/version.o obj/driver.o obj/mame.o \
 DRVLIBS = obj/pacman.a \
          obj/nichibut.a \
          obj/phoenix.a obj/namco.a obj/univers.a obj/nintendo.a \
-         obj/midw8080.a obj/midwz80.a obj/meadows.a obj/midway.a \
+         obj/midw8080.a obj/meadows.a obj/midway.a \
          obj/irem.a obj/gottlieb.a obj/taito.a obj/toaplan.a \
          obj/kyugo.a obj/williams.a obj/gremlin.a obj/vicdual.a \
          obj/capcom.a obj/capbowl.a obj/leland.a \
@@ -905,6 +935,9 @@ $(EMULATOR_EXE):  $(COREOBJS) $(MSDOSOBJS) $(OBJS) $(LIBS)
 	$(LD) $(LDFLAGS) $(COREOBJS) $(MSDOSOBJS) $(OBJS) $(LIBS) -o $@
 ifndef DEBUG
 	upx $(EMULATOR_EXE)
+	$(EMULATOR_EXE) -gamelistheader -noclones > gamelist.txt
+	$(EMULATOR_EXE) -gamelist -noclones | sort >> gamelist.txt
+	$(EMULATOR_EXE) -gamelistfooter >> gamelist.txt
 endif
 
 romcmp.exe: obj/romcmp.o obj/unzip.o
@@ -1006,9 +1039,7 @@ obj/midw8080.a: \
          obj/machine/8080bw.o obj/machine/74123.o \
          obj/vidhrdw/8080bw.o obj/sndhrdw/8080bw.o obj/drivers/8080bw.o \
          obj/vidhrdw/m79amb.o obj/drivers/m79amb.o \
-
-obj/midwz80.a: \
-         obj/vidhrdw/z80bw.o obj/sndhrdw/z80bw.o obj/drivers/z80bw.o \
+         obj/sndhrdw/z80bw.o obj/drivers/z80bw.o \
 
 obj/meadows.a: \
          obj/drivers/lazercmd.o obj/vidhrdw/lazercmd.o \
@@ -1098,7 +1129,7 @@ obj/capcom.a: \
          obj/vidhrdw/tigeroad.o obj/drivers/tigeroad.o \
          obj/vidhrdw/lastduel.o obj/drivers/lastduel.o \
          obj/vidhrdw/sf1.o obj/drivers/sf1.o \
-         obj/machine/kabuki.o obj/machine/eeprom.o \
+         obj/machine/kabuki.o \
          obj/vidhrdw/mitchell.o obj/drivers/mitchell.o \
          obj/vidhrdw/cbasebal.o obj/drivers/cbasebal.o \
          obj/vidhrdw/cps1.o obj/drivers/cps1.o \
@@ -1118,7 +1149,6 @@ obj/sega.a: \
          obj/machine/segacrpt.o \
          obj/vidhrdw/sega.o obj/sndhrdw/sega.o obj/machine/sega.o obj/drivers/sega.o \
          obj/vidhrdw/segar.o obj/sndhrdw/segar.o obj/machine/segar.o obj/drivers/segar.o \
-         obj/sndhrdw/monsterb.o \
          obj/vidhrdw/zaxxon.o obj/sndhrdw/zaxxon.o obj/drivers/zaxxon.o \
          obj/sndhrdw/congo.o obj/drivers/congo.o \
          obj/machine/turbo.o obj/vidhrdw/turbo.o obj/drivers/turbo.o \
@@ -1300,6 +1330,7 @@ obj/atari.a: \
 
 obj/snk.a: \
          obj/vidhrdw/rockola.o obj/sndhrdw/rockola.o obj/drivers/rockola.o \
+         obj/vidhrdw/lasso.o obj/drivers/lasso.o \
          obj/drivers/munchmo.o \
          obj/vidhrdw/marvins.o obj/drivers/marvins.o \
 		 obj/drivers/hal21.o \
@@ -1409,7 +1440,7 @@ obj/other.a: \
          obj/vidhrdw/spacefb.o obj/sndhrdw/spacefb.o obj/drivers/spacefb.o \
          obj/vidhrdw/blueprnt.o obj/drivers/blueprnt.o \
          obj/drivers/omegrace.o \
-         obj/vidhrdw/dday.o obj/sndhrdw/dday.o obj/drivers/dday.o \
+         obj/vidhrdw/dday.o obj/drivers/dday.o \
          obj/vidhrdw/gundealr.o obj/drivers/gundealr.o \
          obj/machine/leprechn.o obj/vidhrdw/leprechn.o obj/drivers/leprechn.o \
          obj/vidhrdw/hexa.o obj/drivers/hexa.o \
@@ -1432,6 +1463,7 @@ obj/other.a: \
          obj/vidhrdw/bjtwin.o obj/drivers/bjtwin.o \
          obj/vidhrdw/aztarac.o obj/sndhrdw/aztarac.o obj/drivers/aztarac.o \
          obj/vidhrdw/mole.o obj/drivers/mole.o \
+         obj/vidhrdw/gotya.o obj/drivers/gotya.o \
 
 # dependencies
 obj/cpu/z80/z80.o: z80.c z80.h z80daa.h
@@ -1442,8 +1474,9 @@ obj/cpu/i8039/i8039.o: i8039.c i8039.h
 obj/cpu/i8085/i8085.o: i8085.c i8085.h i8085cpu.h i8085daa.h
 obj/cpu/i86/i86.o: i86.c i86.h i86intrf.h ea.h host.h instr.h modrm.h
 obj/cpu/nec/nec.o: nec.c nec.h necintrf.h necea.h nechost.h necinstr.h necmodrm.h
-obj/cpu/m6502/m6502.o: m6502.c m6502.h ops02.h t6502.c t65c02.c t65sc02.c t6510.c tn2a03.c
-obj/cpu/m65ce02/m65ce02.o: m65ce02.c m65ce02.h opsce02.h t6ce502.c
+obj/cpu/m6502/m6502.o: m6502.c m6502.h ops02.h t6502.c t65c02.c t65sc02.c t6510.c
+obj/cpu/m6502/m65ce02.o: m65ce02.c m65ce02.h opsce02.h t65ce02.c
+obj/cpu/m6502/m6509.o: m6509.c m6509.h ops09.h t6509.c
 obj/cpu/m6800/m6800.o: m6800.c m6800.h 6800ops.c 6800tbl.c
 obj/cpu/m6805/m6805.o: m6805.c m6805.h 6805ops.c
 obj/cpu/m6809/m6809.o: m6809.c m6809.h 6809ops.c 6809tbl.c

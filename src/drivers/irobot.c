@@ -368,4 +368,4 @@ ROM_END
 
 
 
-GAME( 1983, irobot, 0, irobot, irobot, irobot, ROT0, "Atari", "I, Robot" )
+GAMEX( 1983, irobot, 0, irobot, irobot, irobot, ROT0, "Atari", "I, Robot", GAME_NO_COCKTAIL )

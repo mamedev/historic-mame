@@ -4335,6 +4335,34 @@ ROM_START( kof99 )
 	ROM_LOAD_GFX_ODD ( "kof99_c8.rom", 0x3000000, 0x800000, 0x00000000 ) /* Plane 2,3 */
 ROM_END
 
+ROM_START( garou )
+	ROM_REGION( 0x500000, REGION_CPU1 )
+	ROM_LOAD_WIDE_SWAP( "motw_p1.rom", 0x000000, 0x100000, 0x00000000 )
+	ROM_LOAD_WIDE_SWAP( "motw_p2.rom", 0x100000, 0x400000, 0x00000000 )
+
+	NEO_SFIX_128K( "motw_s1.rom", 0x00000000 )
+
+	NEO_BIOS_SOUND_256K( "motw_m1.rom", 0x00000000 )
+
+	ROM_REGION( 0x1000000, REGION_SOUND1 | REGIONFLAG_SOUNDONLY )
+	ROM_LOAD( "motw_v1.rom", 0x000000, 0x400000, 0x00000000 )
+	ROM_LOAD( "motw_v2.rom", 0x400000, 0x400000, 0x00000000 )
+	ROM_LOAD( "motw_v3.rom", 0x800000, 0x400000, 0x00000000 )
+	ROM_LOAD( "motw_v4.rom", 0xc00000, 0x400000, 0x00000000 )
+
+	NO_DELTAT_REGION
+
+	ROM_REGION( 0x4000000, REGION_GFX2 )
+	ROM_LOAD_GFX_EVEN( "motw_c1.rom", 0x0000000, 0x800000, 0x00000000 ) /* Plane 0,1 */
+	ROM_LOAD_GFX_ODD ( "motw_c2.rom", 0x0000000, 0x800000, 0x00000000 ) /* Plane 2,3 */
+	ROM_LOAD_GFX_EVEN( "motw_c3.rom", 0x1000000, 0x800000, 0x00000000 ) /* Plane 0,1 */
+	ROM_LOAD_GFX_ODD ( "motw_c4.rom", 0x1000000, 0x800000, 0x00000000 ) /* Plane 2,3 */
+	ROM_LOAD_GFX_EVEN( "motw_c5.rom", 0x2000000, 0x800000, 0x00000000 ) /* Plane 0,1 */
+	ROM_LOAD_GFX_ODD ( "motw_c6.rom", 0x2000000, 0x800000, 0x00000000 ) /* Plane 2,3 */
+	ROM_LOAD_GFX_EVEN( "motw_c7.rom", 0x3000000, 0x800000, 0x00000000 ) /* Plane 0,1 */
+	ROM_LOAD_GFX_ODD ( "motw_c8.rom", 0x3000000, 0x800000, 0x00000000 ) /* Plane 2,3 */
+ROM_END
+
 /******************************************************************************/
 
 /* dummy entry for the dummy bios driver */
@@ -4454,7 +4482,7 @@ GAME( 1993, sengoku2, neogeo,   raster, neogeo,  neogeo, ROT0_16BIT, "SNK", "Sen
 GAME( 1992, bstars2,  neogeo,   neogeo, neogeo,  neogeo, ROT0,       "SNK", "Baseball Stars 2" )
 GAME( 1992, quizdai2, neogeo,   neogeo, neogeo,  neogeo, ROT0,       "SNK", "Quiz Meintantei Neo Geo - Quiz Daisousa Sen Part 2" )
 GAME( 1993, 3countb,  neogeo,   neogeo, neogeo,  neogeo, ROT0_16BIT, "SNK", "3 Count Bout / Fire Suplex" )
-GAME( 1992, aof,      neogeo,   neogeo, neogeo,  neogeo, ROT0,       "SNK", "Art of Fighting / Ryuuko no Ken" )
+GAME( 1992, aof,      neogeo,   neogeo, neogeo,  neogeo, ROT0_16BIT, "SNK", "Art of Fighting / Ryuuko no Ken" )
 GAME( 1993, samsho,   neogeo,   neogeo, neogeo,  neogeo, ROT0_16BIT, "SNK", "Samurai Shodown / Samurai Spirits" )
 GAME( 1994, tophuntr, neogeo,   neogeo, neogeo,  neogeo, ROT0_16BIT, "SNK", "Top Hunter - Roddy & Cathy" )
 GAME( 1992, fatfury2, neogeo,   neogeo, neogeo,  neogeo, ROT0,       "SNK", "Fatal Fury 2 / Garou Densetsu 2 - arata-naru tatakai" )
@@ -4486,6 +4514,7 @@ GAME( 1998, lastbld2, neogeo,   neogeo, neogeo,  neogeo, ROT0_16BIT, "SNK", "The
 GAME( 1998, neocup98, neogeo,   raster, neogeo,  neogeo, ROT0_16BIT, "SNK", "Neo-Geo Cup '98 - The Road to the Victory" )
 GAME( 1999, mslugx,   neogeo,   neogeo, neogeo,  neogeo, ROT0_16BIT, "SNK", "Metal Slug X - Super Vehicle-001" )
 GAME( 1999, kof99,    neogeo,   neogeo, neogeo,  neogeo, ROT0_16BIT, "SNK", "The King of Fighters '99 - Millennium Battle" )
+GAME( 1999, garou,    neogeo,   neogeo, neogeo,  neogeo, ROT0_16BIT, "SNK", "Garou - Mark of the Wolves" )
 
 /* Alpha Denshi Co / ADK (changed name in 1993) */
 GAME( 1990, maglord,  neogeo,   neogeo, neogeo,  neogeo, ROT0,       "Alpha Denshi Co", "Magician Lord (set 1)" )
@@ -4507,7 +4536,7 @@ GAME( 1996, twinspri, neogeo,   neogeo, neogeo,  neogeo, ROT0_16BIT, "ADK",     
 
 /* Aicom */
 GAME( 1994, janshin,  neogeo,   neogeo, neogeo,  neogeo, ROT0,       "Aicom", "Jyanshin Densetsu - Quest of Jongmaster" )
-GAME( 1995, pulstar,  neogeo,   neogeo, neogeo,  neogeo, ROT0,       "Aicom", "Pulstar" )
+GAME( 1995, pulstar,  neogeo,   neogeo, neogeo,  neogeo, ROT0_16BIT, "Aicom", "Pulstar" )
 
 /* Data East Corporation */
 GAME( 1993, spinmast, neogeo,   raster, neogeo,  neogeo, ROT0_16BIT, "Data East Corporation", "Spinmaster / Miracle Adventure" )

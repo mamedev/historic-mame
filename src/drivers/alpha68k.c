@@ -40,7 +40,7 @@ General notes:
 	Paddle Mania is (c) 1988 but is crude hardware and there are probably
 	several earlier games running on it.
 
-	Emulation by Bryan McPhail, mish@tendril.force9.net
+	Emulation by Bryan McPhail, mish@tendril.co.uk
 
 ***************************************************************************/
 
@@ -1909,16 +1909,16 @@ static void init_btlfield(void)
 
 /******************************************************************************/
 
-GAMEX(1987, kyros,    0,        kyros,         timesold, 0,        ROT90,      "World Games Inc", "Kyros", GAME_NOT_WORKING )
-GAMEX(1988, sstingry, 0,        kyros,         sstingry, 0,        ROT90,      "SNK", "Super Stingray", GAME_NOT_WORKING )
-GAMEX(1988, paddlema, 0,        alpha68k_I,    timesold, 0,        ROT90,      "SNK", "Paddle Mania", GAME_NOT_WORKING )
-GAME( 1987, timesold, 0,        alpha68k_II,   timesold, timesold, ROT90,      "SNK / Romstar", "Time Soldiers (Rev 3)" )
-GAMEX(1987, timesol1, timesold, alpha68k_II,   timesold, 0,        ROT90,      "SNK / Romstar", "Time Soldiers (Rev 1)", GAME_NOT_WORKING )
-GAMEX(1987, btlfield, timesold, alpha68k_II,   timesold, btlfield, ROT90,      "SNK / Romstar", "Battlefield (Japan)", GAME_NOT_WORKING )
-GAME( 1988, skysoldr, 0,        alpha68k_II,   skysoldr, skysoldr, ROT90,      "SNK / Romstar", "Sky Soldiers" )
-GAMEX(1988, goldmedl, 0,        alpha68k_II,   goldmedl, 0,        ROT0,       "SNK", "Gold Medalist", GAME_NOT_WORKING )
-GAMEX(1988, goldmedb, goldmedl, alpha68k_II,   goldmedl, goldmedb, ROT0,       "bootleg", "Gold Medalist (bootleg)", GAME_NOT_WORKING )
-GAME( 1989, skyadvnt, 0,        alpha68k_V,    skyadvnt, 0,        ROT90,      "SNK of America (licensed from Alpha)", "Sky Adventure" )
-GAMEX(1989, gangwars, 0,        alpha68k_V,    gangwars, gangwars, ROT0_16BIT, "Alpha", "Gang Wars", GAME_NOT_WORKING )
-GAME( 1989, gangwarb, gangwars, alpha68k_V,    gangwars, gangwarb, ROT0_16BIT, "bootleg", "Gang Wars (bootleg)" )
-GAMEX(1989, sbasebal, 0,        alpha68k_V_sb, sbasebal, 0,        ROT0,       "SNK of America (licensed from Alpha)", "Super Champion Baseball", GAME_NOT_WORKING )
+GAMEX( 1987, kyros,    0,        kyros,         timesold, 0,        ROT90,      "World Games Inc", "Kyros", GAME_NOT_WORKING | GAME_NO_COCKTAIL )
+GAMEX( 1988, sstingry, 0,        kyros,         sstingry, 0,        ROT90,      "SNK", "Super Stingray", GAME_NOT_WORKING | GAME_NO_COCKTAIL )
+GAMEX( 1988, paddlema, 0,        alpha68k_I,    timesold, 0,        ROT90,      "SNK", "Paddle Mania", GAME_NOT_WORKING | GAME_NO_COCKTAIL )
+GAMEX( 1987, timesold, 0,        alpha68k_II,   timesold, timesold, ROT90,      "SNK / Romstar", "Time Soldiers (Rev 3)", GAME_NO_COCKTAIL )
+GAMEX( 1987, timesol1, timesold, alpha68k_II,   timesold, 0,        ROT90,      "SNK / Romstar", "Time Soldiers (Rev 1)", GAME_NOT_WORKING | GAME_NO_COCKTAIL )
+GAMEX( 1987, btlfield, timesold, alpha68k_II,   timesold, btlfield, ROT90,      "SNK / Romstar", "Battlefield (Japan)", GAME_NOT_WORKING | GAME_NO_COCKTAIL )
+GAMEX( 1988, skysoldr, 0,        alpha68k_II,   skysoldr, skysoldr, ROT90,      "SNK / Romstar", "Sky Soldiers", GAME_NO_COCKTAIL )
+GAMEX( 1988, goldmedl, 0,        alpha68k_II,   goldmedl, 0,        ROT0,       "SNK", "Gold Medalist", GAME_NOT_WORKING | GAME_NO_COCKTAIL )
+GAMEX( 1988, goldmedb, goldmedl, alpha68k_II,   goldmedl, goldmedb, ROT0,       "bootleg", "Gold Medalist (bootleg)", GAME_NOT_WORKING | GAME_NO_COCKTAIL )
+GAMEX( 1989, skyadvnt, 0,        alpha68k_V,    skyadvnt, 0,        ROT90,      "SNK of America (licensed from Alpha)", "Sky Adventure", GAME_NO_COCKTAIL )
+GAMEX( 1989, gangwars, 0,        alpha68k_V,    gangwars, gangwars, ROT0_16BIT, "Alpha", "Gang Wars", GAME_NOT_WORKING | GAME_NO_COCKTAIL )
+GAMEX( 1989, gangwarb, gangwars, alpha68k_V,    gangwars, gangwarb, ROT0_16BIT, "bootleg", "Gang Wars (bootleg)", GAME_NO_COCKTAIL )
+GAMEX( 1989, sbasebal, 0,        alpha68k_V_sb, sbasebal, 0,        ROT0,       "SNK of America (licensed from Alpha)", "Super Champion Baseball", GAME_NOT_WORKING | GAME_NO_COCKTAIL )

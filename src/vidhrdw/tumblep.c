@@ -1,6 +1,6 @@
 /***************************************************************************
 
-   Tumblepop Video emulation - Bryan McPhail, mish@tendril.force9.net
+   Tumblepop Video emulation - Bryan McPhail, mish@tendril.co.uk
 
 *********************************************************************
 

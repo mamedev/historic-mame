@@ -6,7 +6,7 @@
 
 /* Please don't move these #define : they'll be easier to find at the top of the file :) */
 
-#define LAST_UPDATE	"99.07.17"
+#define LAST_UPDATE "99.07.17"
 #define LAST_CODER	"JCK"
 #define CHEAT_VERSION	"v1.00"
 
@@ -19,637 +19,637 @@
 /*|*\
 |*|  Modifications by John Butler
 |*|
-|*|	JB 980407:	Changes to support 68K processor and 24-bit addresses.
-|*|			This also provided a way to make the cheat system "aware" of
-|*|			RAM areas and have it ignores ROM areas.
+|*| JB 980407:	Changes to support 68K processor and 24-bit addresses.
+|*| 		This also provided a way to make the cheat system "aware" of
+|*| 		RAM areas and have it ignores ROM areas.
 |*|
-|*|	JB 980424:	Many changes for more flexibility and more safeguards:
-|*|			- RD_GAMERAM now calls cpu_readmemXX (after swapping in the
-|*|			  correct cpu memory context) for safer memory accesses.
-|*|			- References to addresses are limited to appropriate ranges
-|*|			  for the cpu involved.
-|*|			- Watches are still only allowed for cpu 0, but adding
-|*|			  support for other cpus will be much easier now.
-|*|			- I86 cpu (which uses 20-bit addresses) should be handled
-|*|			  properly now.
-|*|			- CPUs addressing more than 24-bits will not work as-is,
-|*|			  but support wouldn't be too difficult to add (if MAME
-|*|			  ever emulates a cpu like that).
-|*|			- Searches for new cheats are still only allowed for cpu 0,
-|*|			  but adding support for other cpus will be easier now.
-|*|			  However, cheats are allowed for other cpus, and should
-|*|			  always be correctly handled now.
-|*|			- Optimized some code for readability and code size.
+|*| JB 980424:	Many changes for more flexibility and more safeguards:
+|*| 		- RD_GAMERAM now calls cpu_readmemXX (after swapping in the
+|*| 		  correct cpu memory context) for safer memory accesses.
+|*| 		- References to addresses are limited to appropriate ranges
+|*| 		  for the cpu involved.
+|*| 		- Watches are still only allowed for cpu 0, but adding
+|*| 		  support for other cpus will be much easier now.
+|*| 		- I86 cpu (which uses 20-bit addresses) should be handled
+|*| 		  properly now.
+|*| 		- CPUs addressing more than 24-bits will not work as-is,
+|*| 		  but support wouldn't be too difficult to add (if MAME
+|*| 		  ever emulates a cpu like that).
+|*| 		- Searches for new cheats are still only allowed for cpu 0,
+|*| 		  but adding support for other cpus will be easier now.
+|*| 		  However, cheats are allowed for other cpus, and should
+|*| 		  always be correctly handled now.
+|*| 		- Optimized some code for readability and code size.
 |*|
-|*|			CAVEATS:
-|*|			  - Code is now heavily dependent on certain structures,
-|*|			    defines, functions and assumptions in the main code,
-|*|				particulary memory-related. Watch out if they change!
+|*| 		CAVEATS:
+|*| 		  - Code is now heavily dependent on certain structures,
+|*| 			defines, functions and assumptions in the main code,
+|*| 			particulary memory-related. Watch out if they change!
 |*|
-|*|	JB 980505:	Changes to help functions to make more readable, easier
-|*|			to maintain, less redundant.
+|*| JB 980505:	Changes to help functions to make more readable, easier
+|*| 		to maintain, less redundant.
 |*|
 |*|   JB 980506:	New tables KEYCODE_chars[] and KEYCODE_caps[], rewrite
-|*|			in EditCheat() to reduce code size, improve readability.
+|*| 		in EditCheat() to reduce code size, improve readability.
 |*|
-|*|	Modifications/Thoughts By James R. Twine
+|*| Modifications/Thoughts By James R. Twine
 |*|
-|*|	JRT1:	These modifications fix the redraw problem with the watches,
-|*|			a drawing bug that can sometimes cause a crash, and adjusts
-|*|			the drawing location when a watch is added, if the added
-|*|			watch would be drawn off screen.
+|*| JRT1:	These modifications fix the redraw problem with the watches,
+|*| 		a drawing bug that can sometimes cause a crash, and adjusts
+|*| 		the drawing location when a watch is added, if the added
+|*| 		watch would be drawn off screen.
 |*|
-|*|	JRT2:	These modifications allow checking for Hex values when
-|*|			searching for cheats.  Having a decimal limit limits the
-|*|			values that can be found.
+|*| JRT2:	These modifications allow checking for Hex values when
+|*| 		searching for cheats.  Having a decimal limit limits the
+|*| 		values that can be found.
 |*|
-|*|	JRT3:	This modification clears the screen after using <F7> to
-|*|			enable and disable cheats on the fly.  This prevents the
-|*|			"CHEAT ON/OFF" message from hanging around on the vector
-|*|			games.	It causes a slight "blink", but does no more harm
-|*|			than using "Pause" on the vector games.  It also prevents
-|*|			handling <F7> if no cheats are loaded.
+|*| JRT3:	This modification clears the screen after using <F7> to
+|*| 		enable and disable cheats on the fly.  This prevents the
+|*| 		"CHEAT ON/OFF" message from hanging around on the vector
+|*| 		games.	It causes a slight "blink", but does no more harm
+|*| 		than using "Pause" on the vector games.  It also prevents
+|*| 		handling <F7> if no cheats are loaded.
 |*|
-|*|	JRT5:	Geeze...  Where to start?  Changed some of the text/
-|*|			prompts to make terms consistant.  "Special" changed to
-|*|			"Type", because it IS the type of cheat.  Menu prompts
-|*|			changed, and spacing altered.  In-Application help added
-|*|			for the Cheat List and the Cheat Search pages.
+|*| JRT5:	Geeze...  Where to start?  Changed some of the text/
+|*| 		prompts to make terms consistant.  "Special" changed to
+|*| 		"Type", because it IS the type of cheat.  Menu prompts
+|*| 		changed, and spacing altered.  In-Application help added
+|*| 		for the Cheat List and the Cheat Search pages.
 |*|
-|*|			Support for <SHIFT> modified characters in Edit Mode, name
-|*|			limit reduced to 25 while editing, to prevent problems.
-|*|			When an edit is started, the existing name comes in and
-|*|			is the default new name.  Makes editing mistakes faster.
+|*| 		Support for <SHIFT> modified characters in Edit Mode, name
+|*| 		limit reduced to 25 while editing, to prevent problems.
+|*| 		When an edit is started, the existing name comes in and
+|*| 		is the default new name.  Makes editing mistakes faster.
 |*|
-|*|			Changes made that display different text depending on
-|*|			if a search is first continued (after initialization), or
-|*|			further down the line, to prevent confusion.
+|*| 		Changes made that display different text depending on
+|*| 		if a search is first continued (after initialization), or
+|*| 		further down the line, to prevent confusion.
 |*|
-|*|			Changed all UPPERCASE ONLY TEXT to Mixed Case Text, so
-|*|			that the prompts are a little more friendly.
+|*| 		Changed all UPPERCASE ONLY TEXT to Mixed Case Text, so
+|*| 		that the prompts are a little more friendly.
 |*|
-|*|			Some of the Menus that I modified could be better, if you
-|*|			have a better design, please...  IMPLEMENT IT!!! :)
+|*| 		Some of the Menus that I modified could be better, if you
+|*| 		have a better design, please...  IMPLEMENT IT!!! :)
 |*|
-|*|			Most of the changes are bracketed by "JRT5", but I KNOW
-|*|			that I missed a few...	Sorry.
+|*| 		Most of the changes are bracketed by "JRT5", but I KNOW
+|*| 		that I missed a few...	Sorry.
 |*|
-|*|	JRT6:	Slight modifications to change display and manipulation
-|*|			of Addresses so that the user cannot manipulate addresses
-|*|			that are out of the CPUs memory space.
+|*| JRT6:	Slight modifications to change display and manipulation
+|*| 		of Addresses so that the user cannot manipulate addresses
+|*| 		that are out of the CPUs memory space.
 |*|
-|*|			Additional Variables created for data display and
-|*|			manipulation.
+|*| 		Additional Variables created for data display and
+|*| 		manipulation.
 |*|
 |*|
-|*|	Thoughts:
-|*|			Could the cheat system become "aware" of the RAM and ROM
-|*|			area(s) of the games it is working with?  If yes, it would
-|*|			prevent the cheat system from checking ROM areas (unless
-|*|			specifically requested to do so).  This would prevent false
-|*|			(static) locations from popping up in searches.
+|*| Thoughts:
+|*| 		Could the cheat system become "aware" of the RAM and ROM
+|*| 		area(s) of the games it is working with?  If yes, it would
+|*| 		prevent the cheat system from checking ROM areas (unless
+|*| 		specifically requested to do so).  This would prevent false
+|*| 		(static) locations from popping up in searches.
 |*|
-|*|			Or, could the user specify a specific area to limit the
-|*|			search to?  This would provide the same effect, but would
-|*|			require the user to know what (s)he is doing.
+|*| 		Or, could the user specify a specific area to limit the
+|*| 		search to?	This would provide the same effect, but would
+|*| 		require the user to know what (s)he is doing.
 |*|
-|*|	James R. Twine (JRT)
+|*| James R. Twine (JRT)
 |*|
 |*|  Modifications by JCK from The Ultimate Patchers
 |*|
-|*|	JCK 980917:	Possibility of "circular" values in search method 1 :
-|*|			  - if you press KEYCODE_LEFT or KEYCODE_DOWN when value is 0,
-|*|			    it turns to 0xFF
-|*|			  - if you press KEYCODE_RIGHT or KEYCODE_UP when value is 0xFF,
-|*|			    it turns to 0.
-|*|			Added new #define (MAX_LOADEDCHEATS, MAX_ACTIVECHEATS, MAX_DISPLAYCHEATS,
-|*|			  MAX_MATCHES and MAX_WATCHES) to improve readability and upgradibility
-|*|			  (changes where it was needed)
-|*|			Added the possibility of toggling the watches display
-|*|			  ON (KEYCODE_INSERT) and OFF (KEYCODE_DEL) .
-|*|			Possibility to work on another cheat file (CHEAT.DAT is just the default one)
-|*|			  (have a look in confic.c)
-|*|			Added new types of cheats : 20 to 24 and 40 to 44 (see below)
+|*| JCK 980917: Possibility of "circular" values in search method 1 :
+|*| 		  - if you press KEYCODE_LEFT or KEYCODE_DOWN when value is 0,
+|*| 			it turns to 0xFF
+|*| 		  - if you press KEYCODE_RIGHT or KEYCODE_UP when value is 0xFF,
+|*| 			it turns to 0.
+|*| 		Added new #define (MAX_LOADEDCHEATS, MAX_ACTIVECHEATS, MAX_DISPLAYCHEATS,
+|*| 		  MAX_MATCHES and MAX_WATCHES) to improve readability and upgradibility
+|*| 		  (changes where it was needed)
+|*| 		Added the possibility of toggling the watches display
+|*| 		  ON (KEYCODE_INSERT) and OFF (KEYCODE_DEL) .
+|*| 		Possibility to work on another cheat file (CHEAT.DAT is just the default one)
+|*| 		  (have a look in confic.c)
+|*| 		Added new types of cheats : 20 to 24 and 40 to 44 (see below)
 |*|
-|*|	JCK 981006:	15 active cheats instead of 10
-|*|			Possibility of searches in CPUs other than 0 :
-|*|			  a question is asked to the user to choose a CPU (0 default) when he starts
-|*|			  a new search and the game has more than one CPU
-|*|			Possibility to copy a cheat code by pressing KEYCODE_F4
-|*|			Possibility to save all the cheat codes to disk by pressing KEYCODE_F6
-|*|			Possibility to remove all the cheat codes from the active list
-|*|			  by pressing KEYCODE_F7
-|*|			In the edit cheat, on the data line :
-|*|			  - KEYCODE_HOME sets the value to 0
-|*|			  - KEYCODE_END sets the value to 0x80
-|*|			Possibility to use to use KEYCODE_HOME, KEYCODE_END, KEYCODE_PGDN and
-|*|			  KEYCODE_PGUP to select a cheat code in the list
+|*| JCK 981006: 15 active cheats instead of 10
+|*| 		Possibility of searches in CPUs other than 0 :
+|*| 		  a question is asked to the user to choose a CPU (0 default) when he starts
+|*| 		  a new search and the game has more than one CPU
+|*| 		Possibility to copy a cheat code by pressing KEYCODE_F4
+|*| 		Possibility to save all the cheat codes to disk by pressing KEYCODE_F6
+|*| 		Possibility to remove all the cheat codes from the active list
+|*| 		  by pressing KEYCODE_F7
+|*| 		In the edit cheat, on the data line :
+|*| 		  - KEYCODE_HOME sets the value to 0
+|*| 		  - KEYCODE_END sets the value to 0x80
+|*| 		Possibility to use to use KEYCODE_HOME, KEYCODE_END, KEYCODE_PGDN and
+|*| 		  KEYCODE_PGUP to select a cheat code in the list
 |*|
-|*|	JCK 981008:	Data is saved on 2 hex digits (%02X)
-|*|			Possibility to view watches for CPUs other than 0
-|*|			Free memory before the start of a new search
+|*| JCK 981008: Data is saved on 2 hex digits (%02X)
+|*| 		Possibility to view watches for CPUs other than 0
+|*| 		Free memory before the start of a new search
 |*|
-|*|	JCK 981009:	CPU is displayed with the watches
-|*|			Possibility to change the CPU of a watch by pressing KEYCODE_9 or KEYCODE_0
+|*| JCK 981009: CPU is displayed with the watches
+|*| 		Possibility to change the CPU of a watch by pressing KEYCODE_9 or KEYCODE_0
 |*|
-|*|	JCK 981016:	Added a new help for CheatListHelp and CheatListHelpEmpty
-|*|			Corrected a minor bug in SelectCheat for KEYCODE_HOME and KEYCODE_END
-|*|			Possibility to rename the cheat filename is now by pressing KEYCODE_F9
-|*|			Possibility to reload the cheat database by pressing KEYCODE_F8
-|*|			Possibility to rename the cheat filename and reload the cheat database
-|*|			  by pressing KEYCODE_F5 (same as KEYCODE_F9 + KEYCODE_F8)
-|*|			Moved while (keyboard_pressed(key)) after each case when there was the possibility
-|*|			  to use KEYCODE_F10 (this key wasn't removed from the buffer as well as the
-|*|			  other functions keys). The modified functions are EditCheat and SelectCheat
-|*|			Added while (keyboard_pressed(key)) in function ShowHelp
-|*|			Possibility to invoke help on StartCheat by pressing KEYCODE_F10
-|*|			New functions :
-|*|			  - int RenameCheatFile(void) : returns 1 if the cheat file has been renamed, else 0
-|*|			  - int IsBCD(int ParamValue) : returns 1 if ParamValue is a BCD value, else 0
-|*|			  - void LoadCheat(void) : loads the cheats for a game
-|*|				(this function is called by InitCheat and SelectCheat)
-|*|			Added Minimum and Maximum to struct cheat_struct (used by types 60-65 & 70-75)
+|*| JCK 981016: Added a new help for CheatListHelp and CheatListHelpEmpty
+|*| 		Corrected a minor bug in SelectCheat for KEYCODE_HOME and KEYCODE_END
+|*| 		Possibility to rename the cheat filename is now by pressing KEYCODE_F9
+|*| 		Possibility to reload the cheat database by pressing KEYCODE_F8
+|*| 		Possibility to rename the cheat filename and reload the cheat database
+|*| 		  by pressing KEYCODE_F5 (same as KEYCODE_F9 + KEYCODE_F8)
+|*| 		Moved while (keyboard_pressed(key)) after each case when there was the possibility
+|*| 		  to use KEYCODE_F10 (this key wasn't removed from the buffer as well as the
+|*| 		  other functions keys). The modified functions are EditCheat and SelectCheat
+|*| 		Added while (keyboard_pressed(key)) in function ShowHelp
+|*| 		Possibility to invoke help on StartCheat by pressing KEYCODE_F10
+|*| 		New functions :
+|*| 		  - int RenameCheatFile(void) : returns 1 if the cheat file has been renamed, else 0
+|*| 		  - int IsBCD(int ParamValue) : returns 1 if ParamValue is a BCD value, else 0
+|*| 		  - void LoadCheat(void) : loads the cheats for a game
+|*| 			(this function is called by InitCheat and SelectCheat)
+|*| 		Added Minimum and Maximum to struct cheat_struct (used by types 60-65 & 70-75)
 |*|
-|*|	JCK 981020:	Added new types of cheats : 60 to 65 and 70 to 75 (see below)
-|*|			Possibility to change the maximum value when the user edits a cheat
-|*|			New functions :
-|*|			  - int SelectValue(int v, int BCDOnly, int ZeroPoss, int Mini, int Maxi) :
-|*|			      returns the value selected
+|*| JCK 981020: Added new types of cheats : 60 to 65 and 70 to 75 (see below)
+|*| 		Possibility to change the maximum value when the user edits a cheat
+|*| 		New functions :
+|*| 		  - int SelectValue(int v, int BCDOnly, int ZeroPoss, int Mini, int Maxi) :
+|*| 			  returns the value selected
 |*|
-|*|	JCK 981021:	Added the corrections made by Brad Oliver :
-|*|			  - fixed the bug that didn't allow users to find cheats
-|*|			  - changed function build_tables : it has now int ParamCpuNo as parameter
-|*|			  - use KEYCODE_CHEAT_TOGGLE (= KEYCODE_F5) to to toggle cheats ON/OFF
+|*| JCK 981021: Added the corrections made by Brad Oliver :
+|*| 		  - fixed the bug that didn't allow users to find cheats
+|*| 		  - changed function build_tables : it has now int ParamCpuNo as parameter
+|*| 		  - use KEYCODE_CHEAT_TOGGLE (= KEYCODE_F5) to to toggle cheats ON/OFF
 |*|
-|*|	JCK 981022:	Possibility to copy any watch is the first empty space by pressing KEYCODE_F4
-|*|			Possibility to add the selected watch to the cheat list by pressing KEYCODE_F1
-|*|			Possibility to add all the watches to the cheat list by pressing KEYCODE_F6
-|*|			Possibility to reset all the watches by pressing KEYCODE_F7
-|*|			Possibility to invoke help on ChooseWatch by pressing KEYCODE_F10
-|*|			Corrected help text in function CheatListHelp (F6 and F7 keys were inverted)
-|*|			Added while (keyboard_pressed(key)) to remove the function keys from the buffer
-|*|			  in the edit part of functions RenameCheatFile and EditCheat
-|*|			Matches and Watches are added to the cheat list with a new format if many CPUs :
-|*|			  %04X (%01X) = %02X   (Address (CPU) = Data)
-|*|			New variables :
-|*|			  - MachHeight = ( Machine -> uiheight );
-|*|			  - MachWidth  = ( Machine -> uiwidth );
-|*|			  - FontHeight = ( Machine -> uifont -> height );
-|*|			  - FontWidth  = ( Machine -> uifont -> width );
-|*|			  - ManyCpus   = ( cpu_gettotalcpu() > 1 );
-|*|			Changed function xprintf : it has now int ForEdit as first parameter
-|*|			  (if ForEdit=1 then add a cursor at the end of the text)
-|*|			Removed function xprintfForEdit (use now the new xprintf function)
-|*|			Renamed function DisplayCheats into DisplayActiveCheats
-|*|			Rewritten functions :
-|*|			  - int cheat_menu(void)
-|*|			  - void EditCheat(int CheatNo)
-|*|			  - void ChooseWatch(void)
-|*|			New functions :
-|*|			  - int EditCheatHeader(void)
-|*|			  - int ChooseWatchHeader(void)
-|*|			  - int ChooseWatchFooter(int y)
-|*|			  - void ChooseWatchHelp(void)
+|*| JCK 981022: Possibility to copy any watch is the first empty space by pressing KEYCODE_F4
+|*| 		Possibility to add the selected watch to the cheat list by pressing KEYCODE_F1
+|*| 		Possibility to add all the watches to the cheat list by pressing KEYCODE_F6
+|*| 		Possibility to reset all the watches by pressing KEYCODE_F7
+|*| 		Possibility to invoke help on ChooseWatch by pressing KEYCODE_F10
+|*| 		Corrected help text in function CheatListHelp (F6 and F7 keys were inverted)
+|*| 		Added while (keyboard_pressed(key)) to remove the function keys from the buffer
+|*| 		  in the edit part of functions RenameCheatFile and EditCheat
+|*| 		Matches and Watches are added to the cheat list with a new format if many CPUs :
+|*| 		  %04X (%01X) = %02X   (Address (CPU) = Data)
+|*| 		New variables :
+|*| 		  - MachHeight = ( Machine -> uiheight );
+|*| 		  - MachWidth  = ( Machine -> uiwidth );
+|*| 		  - FontHeight = ( Machine -> uifont -> height );
+|*| 		  - FontWidth  = ( Machine -> uifont -> width );
+|*| 		  - ManyCpus   = ( cpu_gettotalcpu() > 1 );
+|*| 		Changed function xprintf : it has now int ForEdit as first parameter
+|*| 		  (if ForEdit=1 then add a cursor at the end of the text)
+|*| 		Removed function xprintfForEdit (use now the new xprintf function)
+|*| 		Renamed function DisplayCheats into DisplayActiveCheats
+|*| 		Rewritten functions :
+|*| 		  - int cheat_menu(void)
+|*| 		  - void EditCheat(int CheatNo)
+|*| 		  - void ChooseWatch(void)
+|*| 		New functions :
+|*| 		  - int EditCheatHeader(void)
+|*| 		  - int ChooseWatchHeader(void)
+|*| 		  - int ChooseWatchFooter(int y)
+|*| 		  - void ChooseWatchHelp(void)
 |*|
-|*|	JCK 981023:	New #define : NOVALUE -0x0100 (if no value is selected)
-|*|			CPU is added to the watches only if many CPUs
-|*|			Changed keys in the matches list :
-|*|			  - KEYCODE_F1 adds the selected match to the cheat list (old key was KEYCODE_ENTER)
-|*|			  - KEYCODE_F6 adds all the matches to the cheat list	 (old key was KEYCODE_F2)
-|*|			Changed function SelectValue :
-|*|			  - int SelectValue(int v, int BCDOnly, int ZeroPoss, int WrapPoss, int DispTwice,
-|*|						  int Mini, int Maxi, char *fmt, char *msg, int ClrScr, int yPos)
-|*|				* if BCDOnly=1 it accepts only BCD values
-|*|				* if ZeroPoss=1 the user can select 0
-|*|				* if WrapPoss=1 the user can have wrap from Mini to Maxi and from Maxi to Mini
-|*|				* if DispTwice=1 the value is displayed twice when BCDOnly=0
-|*|				* fmt is the format of the number when BCDOnly=0
-|*|				* msg is displayed in the function
-|*|				* if ClrScr=1 it clears the screen
-|*|			  - it also returns NOVALUE if KEYCODE_ESC or KEYCODE_TAB is pressed
-|*|			Renamed functions :
-|*|			  - StartCheat into StartSearch
-|*|			  - ContinueCheat into ContinueSearch
-|*|			Rewritten functions :
-|*|			  - void StartSearch(void)
-|*|			  - void ContinueSearch(void)
-|*|			New functions :
-|*|			  - int SelectMenu(int *s, struct DisplayText *dt,
-|*|						 int ArrowsOnly, int WaitForKey,
-|*|						 int Mini, int Maxi, int ClrScr, int *done) :
-|*|				returns the key pressed as well as the selected item
-|*|			  - void AddCpuToWatch(int NoWatch,char *buffer)
-|*|			  - int StartSearchHeader(void)
-|*|			  - int ContinueSearchHeader(void)
-|*|			  - int ContinueSearchMatchHeader(int count)
-|*|			  - int ContinueSearchMatchFooter(int count, int idx, int y)
+|*| JCK 981023: New #define : NOVALUE -0x0100 (if no value is selected)
+|*| 		CPU is added to the watches only if many CPUs
+|*| 		Changed keys in the matches list :
+|*| 		  - KEYCODE_F1 adds the selected match to the cheat list (old key was KEYCODE_ENTER)
+|*| 		  - KEYCODE_F6 adds all the matches to the cheat list	 (old key was KEYCODE_F2)
+|*| 		Changed function SelectValue :
+|*| 		  - int SelectValue(int v, int BCDOnly, int ZeroPoss, int WrapPoss, int DispTwice,
+|*| 					  int Mini, int Maxi, char *fmt, char *msg, int ClrScr, int yPos)
+|*| 			* if BCDOnly=1 it accepts only BCD values
+|*| 			* if ZeroPoss=1 the user can select 0
+|*| 			* if WrapPoss=1 the user can have wrap from Mini to Maxi and from Maxi to Mini
+|*| 			* if DispTwice=1 the value is displayed twice when BCDOnly=0
+|*| 			* fmt is the format of the number when BCDOnly=0
+|*| 			* msg is displayed in the function
+|*| 			* if ClrScr=1 it clears the screen
+|*| 		  - it also returns NOVALUE if KEYCODE_ESC or KEYCODE_TAB is pressed
+|*| 		Renamed functions :
+|*| 		  - StartCheat into StartSearch
+|*| 		  - ContinueCheat into ContinueSearch
+|*| 		Rewritten functions :
+|*| 		  - void StartSearch(void)
+|*| 		  - void ContinueSearch(void)
+|*| 		New functions :
+|*| 		  - int SelectMenu(int *s, struct DisplayText *dt,
+|*| 					 int ArrowsOnly, int WaitForKey,
+|*| 					 int Mini, int Maxi, int ClrScr, int *done) :
+|*| 			returns the key pressed as well as the selected item
+|*| 		  - void AddCpuToWatch(int NoWatch,char *buffer)
+|*| 		  - int StartSearchHeader(void)
+|*| 		  - int ContinueSearchHeader(void)
+|*| 		  - int ContinueSearchMatchHeader(int count)
+|*| 		  - int ContinueSearchMatchFooter(int count, int idx, int y)
 |*|
-|*|	JCK 981026:	New #define : FIRSTPOS (FontHeight*3/2) (yPos of the 1st string displayed)
-|*|			Display [S] instead of (Saved) to fit the screen when KEYCODE_F1 is pressed
-|*|			Display [W] instead of (Watch) to fit the screen when KEYCODE_F2 is pressed
-|*|			Corrected digit change in function ChooseWatch : based on CPU instead of 0
-|*|			Matches are displayed using function pShortAddrTemplate
-|*|			Matches list and watches list are centered according to variable length of text
+|*| JCK 981026: New #define : FIRSTPOS (FontHeight*3/2) (yPos of the 1st string displayed)
+|*| 		Display [S] instead of (Saved) to fit the screen when KEYCODE_F1 is pressed
+|*| 		Display [W] instead of (Watch) to fit the screen when KEYCODE_F2 is pressed
+|*| 		Corrected digit change in function ChooseWatch : based on CPU instead of 0
+|*| 		Matches are displayed using function pShortAddrTemplate
+|*| 		Matches list and watches list are centered according to variable length of text
 |*|
-|*|	JCK 981027:	Trapped function build_tables()
-|*|			Modified functions to support 32 bits CPU :
-|*|			  - static char * pAddrTemplate (int cpu)
-|*|			  - static char * pShortAddrTemplate (int cpu)
-|*|			  - void EditCheat(int CheatNo)
-|*|			  - void ChooseWatch(void)
-|*|			  - int EditCheatHeader(void)
-|*|			  - int ChooseWatchHeader(void)
-|*|			  - void EditCheatHelp (void)
-|*|			  - void ChooseWatchHelp (void)
+|*| JCK 981027: Trapped function build_tables()
+|*| 		Modified functions to support 32 bits CPU :
+|*| 		  - static char * pAddrTemplate (int cpu)
+|*| 		  - static char * pShortAddrTemplate (int cpu)
+|*| 		  - void EditCheat(int CheatNo)
+|*| 		  - void ChooseWatch(void)
+|*| 		  - int EditCheatHeader(void)
+|*| 		  - int ChooseWatchHeader(void)
+|*| 		  - void EditCheatHelp (void)
+|*| 		  - void ChooseWatchHelp (void)
 |*|
-|*|	JCK 981030:	Fixed a bug to scroll through descriptions of cheats
-|*|			The active cheats are displayed with a check
-|*|			Added the possibility to add a watch when result of a search is displayed
-|*|			  by pressing KEYCODE_F2
-|*|			New functions :
-|*|			  - void AddCheckToName(int NoCheat,char *buffer)
+|*| JCK 981030: Fixed a bug to scroll through descriptions of cheats
+|*| 		The active cheats are displayed with a check
+|*| 		Added the possibility to add a watch when result of a search is displayed
+|*| 		  by pressing KEYCODE_F2
+|*| 		New functions :
+|*| 		  - void AddCheckToName(int NoCheat,char *buffer)
 |*|
-|*|	JCK 981123:	Removed ParamCpuNo in function build_tables (now use the static SearchCpuNo)
-|*|			Added new #define : JCK - Please do not remove ! Just comment it out !
+|*| JCK 981123: Removed ParamCpuNo in function build_tables (now use the static SearchCpuNo)
+|*| 		Added new #define : JCK - Please do not remove ! Just comment it out !
 |*|
-|*|	JCK 981125:	MEMORY_WRITE instead of memory_find_base in function write_gameram
-|*|			New functions :
-|*|			  - int ConvertAddr(int ParamCpuNo, int ParamAddr) :
-|*|				returns a converted address to fit low endianess
+|*| JCK 981125: MEMORY_WRITE instead of memory_find_base in function write_gameram
+|*| 		New functions :
+|*| 		  - int ConvertAddr(int ParamCpuNo, int ParamAddr) :
+|*| 			returns a converted address to fit low endianess
 |*|
-|*|	JCK 981126:	The region of ext tables is the one of the CPU (no more crash)
+|*| JCK 981126: The region of ext tables is the one of the CPU (no more crash)
 |*|
-|*|	JCK 981203:	Change context before writing into memory
+|*| JCK 981203: Change context before writing into memory
 |*|
-|*|	JCK 981204:	New text when cheats are saved to file or added as watch
-|*|			Changed type of cheat (special field in cheat_struct) to match
-|*|			  AddCheckToName function
+|*| JCK 981204: New text when cheats are saved to file or added as watch
+|*| 		Changed type of cheat (special field in cheat_struct) to match
+|*| 		  AddCheckToName function
 |*|
-|*|	JCK 981206:	Ext memory is scanned only if search in a different CPU
+|*| JCK 981206: Ext memory is scanned only if search in a different CPU
 |*|
-|*|	JCK 981207:	Possibility to get info on a cheat by pressing KEYCODE_F12
-|*|			Changed function CheatListHelp to include the new KEYCODE_F12 key
-|*|			Fixed display (not in function ChooseWatch because of rotation)
-|*|			New functions :
-|*|			  - void ClearTextLine(int addskip, int ypos)
-|*|			  - void ClearArea(int addskip, int ystart, int yend)
+|*| JCK 981207: Possibility to get info on a cheat by pressing KEYCODE_F12
+|*| 		Changed function CheatListHelp to include the new KEYCODE_F12 key
+|*| 		Fixed display (not in function ChooseWatch because of rotation)
+|*| 		New functions :
+|*| 		  - void ClearTextLine(int addskip, int ypos)
+|*| 		  - void ClearArea(int addskip, int ystart, int yend)
 |*|
-|*|	JCK 981208: Integrated some of VM's changes (see below)
-|*|			Added new #define : FAST_SEARCH 1 (speed-up search of cheat codes)
-|*|			Speed-up search of cheat codes for TMS34010 and NEOGEO games
-|*|			Added messages to show that a search is in progress
-|*|			Error message in function build_tables is more user-friendly
+|*| JCK 981208: Integrated some of VM's changes (see below)
+|*| 		Added new #define : FAST_SEARCH 1 (speed-up search of cheat codes)
+|*| 		Speed-up search of cheat codes for TMS34010 and NEOGEO games
+|*| 		Added messages to show that a search is in progress
+|*| 		Error message in function build_tables is more user-friendly
 |*|
-|*|	JCK 981209:	Fixed display in ContinueSearch function
+|*| JCK 981209: Fixed display in ContinueSearch function
 |*|
-|*|	JCK 981210: Integrated some of VM's changes : scan mwa instead of mra
-|*|			In searches, read memory instead of contents of ext. memories
-|*|			One loop to verify memory locations and count them
-|*|			New functions :
-|*|			  - void ShowSearchInProgress(void)
-|*|			  - void HideSearchInProgress(void)
-|*|			Removed functions :
-|*|			  - int ConvertAddr(int ParamCpuNo, int ParamAddr)
-|*|			  - static unsigned char read_ram (struct ExtMemory *table, int offset)
-|*|			Removed #define :
-|*|			  - RD_STARTRAM(a)	read_ram(StartRam,a)
-|*|			  - WR_STARTRAM(a,v)	write_ram(StartRam,a,v)
-|*|			  - RD_BACKUPRAM(a)	read_ram(BackupRam,a)
-|*|			  - WR_BACKUPRAM(a,v)	write_ram(BackupRam,a,v)
-|*|			  - RD_FLAGTABLE(a)	read_ram(FlagTable,a)
-|*|			  - WR_FLAGTABLE(a,v)	write_ram(FlagTable,a,v)
+|*| JCK 981210: Integrated some of VM's changes : scan mwa instead of mra
+|*| 		In searches, read memory instead of contents of ext. memories
+|*| 		One loop to verify memory locations and count them
+|*| 		New functions :
+|*| 		  - void ShowSearchInProgress(void)
+|*| 		  - void HideSearchInProgress(void)
+|*| 		Removed functions :
+|*| 		  - int ConvertAddr(int ParamCpuNo, int ParamAddr)
+|*| 		  - static unsigned char read_ram (struct ExtMemory *table, int offset)
+|*| 		Removed #define :
+|*| 		  - RD_STARTRAM(a)	read_ram(StartRam,a)
+|*| 		  - WR_STARTRAM(a,v)	write_ram(StartRam,a,v)
+|*| 		  - RD_BACKUPRAM(a) read_ram(BackupRam,a)
+|*| 		  - WR_BACKUPRAM(a,v)	write_ram(BackupRam,a,v)
+|*| 		  - RD_FLAGTABLE(a) read_ram(FlagTable,a)
+|*| 		  - WR_FLAGTABLE(a,v)	write_ram(FlagTable,a,v)
 |*|
-|*|	JCK 981211:	Added new #define : COMMENTCHEAT 999 (type of cheat for comments)
-|*|			Added new type of cheat : 999 (comment)
-|*|			Comment is marked # in function AddCheckToName
-|*|			Cheat structure for a comment :
-|*|			  - .Address	= 0
-|*|			  - .Data		= 0
-|*|			  - .Special	= COMMENTCHEAT
-|*|			  - other fields as usual
-|*|			New functions :
-|*|			  - void EditComment(int CheatNo, int ypos)
+|*| JCK 981211: Added new #define : COMMENTCHEAT 999 (type of cheat for comments)
+|*| 		Added new type of cheat : 999 (comment)
+|*| 		Comment is marked # in function AddCheckToName
+|*| 		Cheat structure for a comment :
+|*| 		  - .Address	= 0
+|*| 		  - .Data		= 0
+|*| 		  - .Special	= COMMENTCHEAT
+|*| 		  - other fields as usual
+|*| 		New functions :
+|*| 		  - void EditComment(int CheatNo, int ypos)
 |*|
-|*|	JCK 981212:	Added More to struct cheat_struct (more description on a cheat)
-|*|			Fields Name and More of struct cheat_struct are only 40 chars long
-|*|			Possibility to get a cheat comment by pressing KEYCODE_PLUS_PAD
-|*|		  KEYCODE_DEL initialises string in xedit function
-|*|		  Special is saved on 3 digits (%03d)
-|*|			Added linked cheats (types 100-144 same as types 0-44)
-|*|			Variable int fastsearch instead of #define FAST_SEARCH
-|*|			  (this variable can be modified via options or command-line)
-|*|			Renamed CheatTotal to ActiveCheatTotal (variable and struct)
-|*|			Possibility to add codes from another filename by pressing
-|*|		    (KEYCODE_LEFT_SHIFT or KEYCODE_RIGHT_SHIFT) + KEYCODE_F5
-|*|		  15 matches instead of 10
-|*|			New functions :
-|*|			  - int xedit(int x,int y,char *inputs,int maxlen)
-|*|			  - static char *FormatAddr(int cpu, int addtext)
-|*|			  - void SearchInProgress(int yPos, int ShowMsg)
-|*|			  - void DisplayWatches(int ClrScr, int *x,int *y, char *buffer)
-|*|			  - void DeleteActiveCheatFromTable(int NoCheat)
-|*|			  - void DeleteLoadedCheatFromTable(int NoCheat)
-|*|			Removed functions :
-|*|			  - void EditComment(int CheatNo, int ypos)
-|*|			  - static char * pAddrTemplate (int cpu)
-|*|			  - static char * pShortAddrTemplate (int cpu)
-|*|			  - void ShowSearchInProgress(void)
-|*|			  - void HideSearchInProgress(void)
-|*|			Rewritten functions :
-|*|			  - void DoCheat(void)
-|*|			  - void LoadCheat(int merge, char *filename)
-|*|			  - int RenameCheatFile(int DisplayFileName, char *filename)
-|*|			  - void EditCheat(int CheatNo)
-|*|			  - void DisplayActiveCheats(int y)
+|*| JCK 981212: Added More to struct cheat_struct (more description on a cheat)
+|*| 		Fields Name and More of struct cheat_struct are only 40 chars long
+|*| 		Possibility to get a cheat comment by pressing KEYCODE_PLUS_PAD
+|*| 	  KEYCODE_DEL initialises string in xedit function
+|*| 	  Special is saved on 3 digits (%03d)
+|*| 		Added linked cheats (types 100-144 same as types 0-44)
+|*| 		Variable int fastsearch instead of #define FAST_SEARCH
+|*| 		  (this variable can be modified via options or command-line)
+|*| 		Renamed CheatTotal to ActiveCheatTotal (variable and struct)
+|*| 		Possibility to add codes from another filename by pressing
+|*| 		(KEYCODE_LEFT_SHIFT or KEYCODE_RIGHT_SHIFT) + KEYCODE_F5
+|*| 	  15 matches instead of 10
+|*| 		New functions :
+|*| 		  - int xedit(int x,int y,char *inputs,int maxlen)
+|*| 		  - static char *FormatAddr(int cpu, int addtext)
+|*| 		  - void SearchInProgress(int yPos, int ShowMsg)
+|*| 		  - void DisplayWatches(int ClrScr, int *x,int *y, char *buffer)
+|*| 		  - void DeleteActiveCheatFromTable(int NoCheat)
+|*| 		  - void DeleteLoadedCheatFromTable(int NoCheat)
+|*| 		Removed functions :
+|*| 		  - void EditComment(int CheatNo, int ypos)
+|*| 		  - static char * pAddrTemplate (int cpu)
+|*| 		  - static char * pShortAddrTemplate (int cpu)
+|*| 		  - void ShowSearchInProgress(void)
+|*| 		  - void HideSearchInProgress(void)
+|*| 		Rewritten functions :
+|*| 		  - void DoCheat(void)
+|*| 		  - void LoadCheat(int merge, char *filename)
+|*| 		  - int RenameCheatFile(int DisplayFileName, char *filename)
+|*| 		  - void EditCheat(int CheatNo)
+|*| 		  - void DisplayActiveCheats(int y)
 |*|
-|*|	JCK 981213:	Variable int sologame to load cheats for one player only
-|*|			  (this variable can be modified via options or command-line)
-|*|			Fixed display in EditCheat function
-|*|			Possibility to edit the More field in EditCheat function
-|*|			Possibility to toggle cheats for one player only ON/OFF
-|*|			  by pressing KEYCODE_F11
-|*|			Possibility to scan many banks of memory
-|*|			Possibility to press KEYCODE_F1 in SelectValue function
-|*|			New functions :
-|*|			  - int SkipBank(int CpuToScan, int *BankToScanTable, void (*handler)(int,int))
-|*|			Rewritten functions :
-|*|			  - static int build_tables (void)
+|*| JCK 981213: Variable int sologame to load cheats for one player only
+|*| 		  (this variable can be modified via options or command-line)
+|*| 		Fixed display in EditCheat function
+|*| 		Possibility to edit the More field in EditCheat function
+|*| 		Possibility to toggle cheats for one player only ON/OFF
+|*| 		  by pressing KEYCODE_F11
+|*| 		Possibility to scan many banks of memory
+|*| 		Possibility to press KEYCODE_F1 in SelectValue function
+|*| 		New functions :
+|*| 		  - int SkipBank(int CpuToScan, int *BankToScanTable, void (*handler)(int,int))
+|*| 		Rewritten functions :
+|*| 		  - static int build_tables (void)
 |*|
-|*|	JCK 981214: Integrated some of VM's changes : function SelectCheat has been rewritten
-|*|			No more reference to HardRefresh in SelectCheat function (label has been deleted)
-|*|			One function to save one or all cheats to the cheatfile (SaveCheat)
-|*|			New #define :
-|*|			  - NEW_CHEAT ((struct cheat_struct *) -1)
-|*|			  - YHEAD_SELECT (FontHeight * 9)
-|*|			  - YFOOT_SELECT (MachHeight - (FontHeight * 2))
-|*|			  - YFOOT_MATCH  (MachHeight - (FontHeight * 8))
-|*|			  - YFOOT_WATCH  (MachHeight - (FontHeight * 3))
-|*|			Rewritten functions :
-|*|			  - void ContinueSearchMatchFooter(int count, int idx)
-|*|			  - void ChooseWatchFooter(void)
-|*|			New functions :
-|*|			  - void set_cheat(struct cheat_struct *dest, struct cheat_struct *src)
-|*|			  - int build_cheat_list(int Index, struct DisplayText ext_dt[60],
-|*|									char ext_str2[MAX_DISPLAYCHEATS + 1][40])
-|*|			  - int SelectCheatHeader(void)
-|*|			  - int SaveCheat(int NoCheat)
-|*|			  - int FindFreeWatch(void)
-|*|			  - void AddCpuToAddr(int cpu, int addr, int data, char *buffer)
-|*|			Modified functions to use the new set_cheat function :
-|*|			  - void DeleteActiveCheatFromTable(int NoCheat)
-|*|			  - void DeleteLoadedCheatFromTable(int NoCheat)
-|*|			  - void ContinueSearch(void)
-|*|			  - void ChooseWatch(void)
+|*| JCK 981214: Integrated some of VM's changes : function SelectCheat has been rewritten
+|*| 		No more reference to HardRefresh in SelectCheat function (label has been deleted)
+|*| 		One function to save one or all cheats to the cheatfile (SaveCheat)
+|*| 		New #define :
+|*| 		  - NEW_CHEAT ((struct cheat_struct *) -1)
+|*| 		  - YHEAD_SELECT (FontHeight * 9)
+|*| 		  - YFOOT_SELECT (MachHeight - (FontHeight * 2))
+|*| 		  - YFOOT_MATCH  (MachHeight - (FontHeight * 8))
+|*| 		  - YFOOT_WATCH  (MachHeight - (FontHeight * 3))
+|*| 		Rewritten functions :
+|*| 		  - void ContinueSearchMatchFooter(int count, int idx)
+|*| 		  - void ChooseWatchFooter(void)
+|*| 		New functions :
+|*| 		  - void set_cheat(struct cheat_struct *dest, struct cheat_struct *src)
+|*| 		  - int build_cheat_list(int Index, struct DisplayText ext_dt[60],
+|*| 								char ext_str2[MAX_DISPLAYCHEATS + 1][40])
+|*| 		  - int SelectCheatHeader(void)
+|*| 		  - int SaveCheat(int NoCheat)
+|*| 		  - int FindFreeWatch(void)
+|*| 		  - void AddCpuToAddr(int cpu, int addr, int data, char *buffer)
+|*| 		Modified functions to use the new set_cheat function :
+|*| 		  - void DeleteActiveCheatFromTable(int NoCheat)
+|*| 		  - void DeleteLoadedCheatFromTable(int NoCheat)
+|*| 		  - void ContinueSearch(void)
+|*| 		  - void ChooseWatch(void)
 |*|
-|*|	JCK 981215: Fixed the -sologame option : cheats for players 2, 3 and 4 are not loaded
-|*|			dt strcuture is correctly filled in SelectCheat function
+|*| JCK 981215: Fixed the -sologame option : cheats for players 2, 3 and 4 are not loaded
+|*| 		dt strcuture is correctly filled in SelectCheat function
 |*|
-|*|	JCK 981216: Partially fixed display for the watches : the last watch is now removed
-|*|			Fixed message when user wants to add a cheatfile (SHIFT + KEYCODE_F5)
-|*|			Name of an active cheat changes according to the name of the loaded cheat
-|*|			Added a new help for CheatListHelp and CheatListHelpEmpty
-|*|			Help is now centered according to the max. length of help text
-|*|			SelectCheatHeader is now correctly called
-|*|			Possibility to activate more than one cheat for types 20-24 and 40-44
-|*|			Possibility to change the speed of search in the "Start Search" menu
-|*|			Check is made to see that a user hasn't pressed KEYCODE_xSHIFT in combinaison
-|*|			  with the function keys (KEYCODE_Fx) in the following functions :
-|*|			  - void SelectCheat(void)
-|*|			  - void ContinueSearch(void)
-|*|			  - void ChooseWatch(void)
-|*|			New functions :
-|*|			  - int SelectFastSearchHeader(void)
-|*|			  - void SelectFastSearchHelp(void)
-|*|			Rewritten functions :
-|*|			  - void CheatListHelp (void)
-|*|			  - void CheatListHelpEmpty (void)
+|*| JCK 981216: Partially fixed display for the watches : the last watch is now removed
+|*| 		Fixed message when user wants to add a cheatfile (SHIFT + KEYCODE_F5)
+|*| 		Name of an active cheat changes according to the name of the loaded cheat
+|*| 		Added a new help for CheatListHelp and CheatListHelpEmpty
+|*| 		Help is now centered according to the max. length of help text
+|*| 		SelectCheatHeader is now correctly called
+|*| 		Possibility to activate more than one cheat for types 20-24 and 40-44
+|*| 		Possibility to change the speed of search in the "Start Search" menu
+|*| 		Check is made to see that a user hasn't pressed KEYCODE_xSHIFT in combinaison
+|*| 		  with the function keys (KEYCODE_Fx) in the following functions :
+|*| 		  - void SelectCheat(void)
+|*| 		  - void ContinueSearch(void)
+|*| 		  - void ChooseWatch(void)
+|*| 		New functions :
+|*| 		  - int SelectFastSearchHeader(void)
+|*| 		  - void SelectFastSearchHelp(void)
+|*| 		Rewritten functions :
+|*| 		  - void CheatListHelp (void)
+|*| 		  - void CheatListHelpEmpty (void)
 |*|
-|*|	JCK 981217: Use of keyboard_pressed_memory() instead of keyboard_pressed() to test
-|*|			  KEYCODE_CHEAT_TOGGLE, KEYCODE_INSERT and KEYCODE_DEL in DoCheat function
-|*|			dt strcuture is correctly filled in SelectCheat function
+|*| JCK 981217: Use of keyboard_pressed_memory() instead of keyboard_pressed() to test
+|*| 		  KEYCODE_CHEAT_TOGGLE, KEYCODE_INSERT and KEYCODE_DEL in DoCheat function
+|*| 		dt strcuture is correctly filled in SelectCheat function
 |*|
-|*|	JCK 990115: Fixed the AddCheckToName function (linked cheats)
-|*|			Sound OFF when entering the cheat menu and ON when exiting it
-|*|			Frameskip, autoframeskip, showfps and showprofile are set to 0
-|*|			  while in the cheat menu then set back to the original values
-|*|			Possibility to view the last results of a search
-|*|			Changed function ContinueSearch : it has now int ViewLast as parameter
-|*|			  (if ViewLast=1 then only the results are displayed)
+|*| JCK 990115: Fixed the AddCheckToName function (linked cheats)
+|*| 		Sound OFF when entering the cheat menu and ON when exiting it
+|*| 		Frameskip, autoframeskip, showfps and showprofile are set to 0
+|*| 		  while in the cheat menu then set back to the original values
+|*| 		Possibility to view the last results of a search
+|*| 		Changed function ContinueSearch : it has now int ViewLast as parameter
+|*| 		  (if ViewLast=1 then only the results are displayed)
 |*|
-|*|	JCK 990120: Fixed bit-related linked cheats (types 120-124 and 140-144)
+|*| JCK 990120: Fixed bit-related linked cheats (types 120-124 and 140-144)
 |*|
-|*|	JCK 990128: Type of cheat is displayed on 3 digits
-|*|			In the edit cheat, on the type line :
-|*|			  - KEYCODE_HOME adds 0x100
-|*|			  - KEYCODE_END subs 0x100
-|*|			In functions DoCheat and AddCheckToName, special cases linked
-|*|			  with types 5-11 and 60-65 use 1000+ instead of 200+
+|*| JCK 990128: Type of cheat is displayed on 3 digits
+|*| 		In the edit cheat, on the type line :
+|*| 		  - KEYCODE_HOME adds 0x100
+|*| 		  - KEYCODE_END subs 0x100
+|*| 		In functions DoCheat and AddCheckToName, special cases linked
+|*| 		  with types 5-11 and 60-65 use 1000+ instead of 200+
 |*|
-|*|	JCK 990131:	200 cheats instead of 150
-|*|			New message if no match at the end of first search
-|*|			Number of match is correctly displayed when view last results
-|*|			Positions of the menus are saved
-|*|			Possibility of selecting specific memory areas :
-|*|			  - keys when the list is displayed :
-|*|				* KEYCODE_ENTER : toggle memory area scanned ON/OFF
-|*|				* KEYCODE_F6 : all memory areas scanned ON
-|*|				* KEYCODE_F7 : all memory areas scanned OFF
-|*|				* KEYCODE_F12 : display info on a memory area
-|*|			  - the tables are built each time the list is displayed
-|*|			New #define :
-|*|			  - MAX_DISPLAYMEM 16
-|*|			  - YHEAD_MEMORY (FontHeight * 8)
-|*|			  - YFOOT_MEMORY (MachHeight - (FontHeight * 2))
-|*|			New struct : memory_struct
-|*|			New functions :
-|*|			  - void AddCheckToMemArea(int NoMemArea,char *buffer)
-|*|			  - void InitMemoryAreas(void)
-|*|			  - int build_mem_list(int Index, struct DisplayText ext_dt[60],
-|*|					       char ext_str2[MAX_DISPLAYMEM + 1][40])
-|*|			  - int SelectMemoryHeader(void)
-|*|			  - void SelectMemoryAreas(void)
-|*|			Possibility to use KEYCODE_SPACE in the following functions :
-|*|			  - void SelectCheat(void)
-|*|			  - void SelectMemoryAreas(void)
+|*| JCK 990131: 200 cheats instead of 150
+|*| 		New message if no match at the end of first search
+|*| 		Number of match is correctly displayed when view last results
+|*| 		Positions of the menus are saved
+|*| 		Possibility of selecting specific memory areas :
+|*| 		  - keys when the list is displayed :
+|*| 			* KEYCODE_ENTER : toggle memory area scanned ON/OFF
+|*| 			* KEYCODE_F6 : all memory areas scanned ON
+|*| 			* KEYCODE_F7 : all memory areas scanned OFF
+|*| 			* KEYCODE_F12 : display info on a memory area
+|*| 		  - the tables are built each time the list is displayed
+|*| 		New #define :
+|*| 		  - MAX_DISPLAYMEM 16
+|*| 		  - YHEAD_MEMORY (FontHeight * 8)
+|*| 		  - YFOOT_MEMORY (MachHeight - (FontHeight * 2))
+|*| 		New struct : memory_struct
+|*| 		New functions :
+|*| 		  - void AddCheckToMemArea(int NoMemArea,char *buffer)
+|*| 		  - void InitMemoryAreas(void)
+|*| 		  - int build_mem_list(int Index, struct DisplayText ext_dt[60],
+|*| 					   char ext_str2[MAX_DISPLAYMEM + 1][40])
+|*| 		  - int SelectMemoryHeader(void)
+|*| 		  - void SelectMemoryAreas(void)
+|*| 		Possibility to use KEYCODE_SPACE in the following functions :
+|*| 		  - void SelectCheat(void)
+|*| 		  - void SelectMemoryAreas(void)
 |*|
-|*|	JCK 990201:	Header correctly displayed in fuction SelectCheat
-|*|			Position of the selectcheat menu is saved
+|*| JCK 990201: Header correctly displayed in fuction SelectCheat
+|*| 		Position of the selectcheat menu is saved
 |*|
-|*|	JCK 990220:	New cheat descriptions in the EditCheat window
-|*|			Rename the #define of the methods of search :
-|*|			  - SEARCH_VALUE  1   (old Method_1)
-|*|			  - SEARCH_TIME   2   (old Method_2)
-|*|			  - SEARCH_ENERGY 3   (old Method_3)
-|*|			  - SEARCH_BIT	  4   (old Method_4)
-|*|			  - SEARCH_BYTE   5   (old Method_5)
-|*|			Message displayed when KEYCODE_CHEAT_TOGGLE is pressed lasts for 0.5 seconds
-|*|			  (in fact, Machine->drv->frames_per_second / 2)
+|*| JCK 990220: New cheat descriptions in the EditCheat window
+|*| 		Rename the #define of the methods of search :
+|*| 		  - SEARCH_VALUE  1   (old Method_1)
+|*| 		  - SEARCH_TIME   2   (old Method_2)
+|*| 		  - SEARCH_ENERGY 3   (old Method_3)
+|*| 		  - SEARCH_BIT	  4   (old Method_4)
+|*| 		  - SEARCH_BYTE   5   (old Method_5)
+|*| 		Message displayed when KEYCODE_CHEAT_TOGGLE is pressed lasts for 0.5 seconds
+|*| 		  (in fact, Machine->drv->frames_per_second / 2)
 |*|
-|*|	JCK 990221:	20 watches instead of 10
-|*|			Possibility to select a starting value for search methods 3, 4 and 5
-|*|		  Possibility to restore the previous values of a search
-|*|		  Possibility to add al matches to the watches by pressing KEYCODE_F8
-|*|			New functions :
-|*|			  - int SelectSearchValue(void)
-|*|			  - int SelectSearchValueHeader(void)
-|*|			  - static void copy_ram (struct ExtMemory *dest, struct ExtMemory *src)
+|*| JCK 990221: 20 watches instead of 10
+|*| 		Possibility to select a starting value for search methods 3, 4 and 5
+|*| 	  Possibility to restore the previous values of a search
+|*| 	  Possibility to add al matches to the watches by pressing KEYCODE_F8
+|*| 		New functions :
+|*| 		  - int SelectSearchValue(void)
+|*| 		  - int SelectSearchValueHeader(void)
+|*| 		  - static void copy_ram (struct ExtMemory *dest, struct ExtMemory *src)
 |*|
-|*|	JCK 990224:	Added messages in the restoration of the previous values of a search
-|*|			New #define :
-|*|			  - #define RESTORE_NOINIT  0
-|*|			  - #define RESTORE_NOSAVE  1
-|*|			  - #define RESTORE_DONE    2
-|*|			  - #define RESTORE_OK	    3
-|*|			New functions :
-|*|			  - void RestoreSearch(void)
-|*|			Rewritten functions :
-|*|			  - int cheat_readkey(void)
+|*| JCK 990224: Added messages in the restoration of the previous values of a search
+|*| 		New #define :
+|*| 		  - #define RESTORE_NOINIT	0
+|*| 		  - #define RESTORE_NOSAVE	1
+|*| 		  - #define RESTORE_DONE	2
+|*| 		  - #define RESTORE_OK		3
+|*| 		New functions :
+|*| 		  - void RestoreSearch(void)
+|*| 		Rewritten functions :
+|*| 		  - int cheat_readkey(void)
 |*|
-|*|	JCK 990228:	Fixed old key for menus
-|*|			Added new #define : WATCHCHEAT 998 (type of cheat for "watch-only" cheats)
-|*|			Added new type of cheat : 998 ("watch-only" cheats)
+|*| JCK 990228: Fixed old key for menus
+|*| 		Added new #define : WATCHCHEAT 998 (type of cheat for "watch-only" cheats)
+|*| 		Added new type of cheat : 998 ("watch-only" cheats)
 |*|
-|*|	JCK 990303:	Added the corrections from the original MAME 035B4 source file :
-|*|			  unused variables have been removed
-|*|			New #define :
-|*|			  - LAST_UPDATE (date of the last modifications to the cheat engine)
-|*|			  - LAST_CODER	(initials (3 letters max) of the coder who made the modifications)
-|*|			  - CHEAT_VERSION (version of the cheat engine)
+|*| JCK 990303: Added the corrections from the original MAME 035B4 source file :
+|*| 		  unused variables have been removed
+|*| 		New #define :
+|*| 		  - LAST_UPDATE (date of the last modifications to the cheat engine)
+|*| 		  - LAST_CODER	(initials (3 letters max) of the coder who made the modifications)
+|*| 		  - CHEAT_VERSION (version of the cheat engine)
 |*|
-|*|	JCK 990305:	New functions :
-|*|			  - void DisplayVersion(void)
-|*|			  - void cheat_clearbitmap(void)
-|*|			Replaced calls to function osd_clearbitmap() by cheat_clearbitmap()
+|*| JCK 990305: New functions :
+|*| 		  - void DisplayVersion(void)
+|*| 		  - void cheat_clearbitmap(void)
+|*| 		Replaced calls to function osd_clearbitmap() by cheat_clearbitmap()
 |*|
-|*|	JCK 990307:	New functions :
-|*|			  - void LoadDatabases(int InCheat)
-|*|			Added to possibility to merge many cheatfiles :
-|*|			  - separate them by a semi-colon (;) in MAME.CFG (ex: cheatfile=CHEAT.DAT;CHEAT_UP.DAT)
-|*|			  - line must not exceed 127 chars
-|*|			Possibility to select all cheats by pressing
-|*|			  (KEYCODE_LEFT_SHIFT or KEYCODE_RIGHT_SHIFT) + KEYCODE_F7
-|*|			Possibility to select a starting value for search method 2
+|*| JCK 990307: New functions :
+|*| 		  - void LoadDatabases(int InCheat)
+|*| 		Added to possibility to merge many cheatfiles :
+|*| 		  - separate them by a semi-colon (;) in MAME.CFG (ex: cheatfile=CHEAT.DAT;CHEAT_UP.DAT)
+|*| 		  - line must not exceed 127 chars
+|*| 		Possibility to select all cheats by pressing
+|*| 		  (KEYCODE_LEFT_SHIFT or KEYCODE_RIGHT_SHIFT) + KEYCODE_F7
+|*| 		Possibility to select a starting value for search method 2
 |*|
-|*|	JCK 990308:	Smaller space between each watch to have more watches on screen
-|*|			Modified functions affected by the space between watches :
-|*|			  - void DisplayWatches(int ClrScr, int *x,int *y,char *buffer)
-|*|			  - void ChooseWatch(void)
+|*| JCK 990308: Smaller space between each watch to have more watches on screen
+|*| 		Modified functions affected by the space between watches :
+|*| 		  - void DisplayWatches(int ClrScr, int *x,int *y,char *buffer)
+|*| 		  - void ChooseWatch(void)
 |*|
-|*|	JCK 990312:	General help in an external file (CHEAT.HLP)
-|*|			New #define :
-|*|			  - MAX_TEXT_LINE 1000
-|*|			New struct : TextLine
-|*|			New functions :
-|*|			  - static void reset_texttable (struct TextLine *table)
-|*|			  - void LoadHelp(char *filename, struct TextLine *table)
-|*|			  - void DisplayHelpFile(struct TextLine *table)
-|*|			Cheats, Matches and Memory Areas are limited to the height of the screen
-|*|			Possibility to access directly in the main menu by pressing KEYCODE_HOME
-|*|			Possibility to access directly in "Continue Search" sub-menu by pressing KEYCODE_END
-|*|			Changed function ContinueSearch : void ContinueSearch(int selected, int ViewLast)
+|*| JCK 990312: General help in an external file (CHEAT.HLP)
+|*| 		New #define :
+|*| 		  - MAX_TEXT_LINE 1000
+|*| 		New struct : TextLine
+|*| 		New functions :
+|*| 		  - static void reset_texttable (struct TextLine *table)
+|*| 		  - void LoadHelp(char *filename, struct TextLine *table)
+|*| 		  - void DisplayHelpFile(struct TextLine *table)
+|*| 		Cheats, Matches and Memory Areas are limited to the height of the screen
+|*| 		Possibility to access directly in the main menu by pressing KEYCODE_HOME
+|*| 		Possibility to access directly in "Continue Search" sub-menu by pressing KEYCODE_END
+|*| 		Changed function ContinueSearch : void ContinueSearch(int selected, int ViewLast)
 |*|
-|*|	JCK 990316:	New functions :
-|*|			  - void cheat_save_frameskips(void)
-|*|			  - void cheat_rest_frameskips(void)
-|*|			Sound is fixed when entering the cheat engine by pressing KEYCODE_HOME or KEYCODE_END
-|*|			No search of (value-1) for search methods other than 1 (value)
-|*|			Fixed the info display in function SelectMemoryAreas
+|*| JCK 990316: New functions :
+|*| 		  - void cheat_save_frameskips(void)
+|*| 		  - void cheat_rest_frameskips(void)
+|*| 		Sound is fixed when entering the cheat engine by pressing KEYCODE_HOME or KEYCODE_END
+|*| 		No search of (value-1) for search methods other than 1 (value)
+|*| 		Fixed the info display in function SelectMemoryAreas
 |*|
-|*|	JCK 990318:	Possibility to edit the addresses by pressing KEYCODE_F3
-|*|		  Changed function xedit : it has now int hexaonly as last parameter
-|*|			Modified functions to edit the addresses
-|*|			  - void EditCheat(int CheatNo)
-|*|			  - void ChooseWatch(void)
+|*| JCK 990318: Possibility to edit the addresses by pressing KEYCODE_F3
+|*| 	  Changed function xedit : it has now int hexaonly as last parameter
+|*| 		Modified functions to edit the addresses
+|*| 		  - void EditCheat(int CheatNo)
+|*| 		  - void ChooseWatch(void)
 |*|
-|*|	JCK 990319:	Fixed display for rotation and flip
-|*|			Modified variables :
-|*|			  - FontHeight = ( Machine -> uifontheight );
-|*|			  - FontWidth  = ( Machine -> uifontwidth );
-|*|		  Changed function DisplayWatches : it has now int highlight, dx and dy as parameters
-|*|			  - highlights watch highlight or none if highlight = MAX_WATCHES)
-|*|			  - dx and dy are the variations since last display
-|*|			Rewritten functions :
-|*|			  - void ClearTextLine(int addskip, int ypos)
-|*|			  - void ClearArea(int addskip, int ystart, int yend)
+|*| JCK 990319: Fixed display for rotation and flip
+|*| 		Modified variables :
+|*| 		  - FontHeight = ( Machine -> uifontheight );
+|*| 		  - FontWidth  = ( Machine -> uifontwidth );
+|*| 	  Changed function DisplayWatches : it has now int highlight, dx and dy as parameters
+|*| 		  - highlights watch highlight or none if highlight = MAX_WATCHES)
+|*| 		  - dx and dy are the variations since last display
+|*| 		Rewritten functions :
+|*| 		  - void ClearTextLine(int addskip, int ypos)
+|*| 		  - void ClearArea(int addskip, int ystart, int yend)
 |*|
-|*|	JCK 990321: Added new #define : USENEWREADKEY - Please do not remove ! Just comment it out !
-|*|			New or changed keys in function xedit :
-|*|			  - KEYCODE_LEFT and KEYCODE_RIGHT moves the cursor one car. left/right
-|*|			  - KEYCODE_HOME and KEYCODE_END moves the cursor at the begining/end of the text
-|*|			  - KEYCODE_BACKSPACE dels the car. under the cursor
-|*|			  - KEYCODE_INSERT adds a space in the text
-|*|			  - KEYCODE_DEL erases all the text
+|*| JCK 990321: Added new #define : USENEWREADKEY - Please do not remove ! Just comment it out !
+|*| 		New or changed keys in function xedit :
+|*| 		  - KEYCODE_LEFT and KEYCODE_RIGHT moves the cursor one car. left/right
+|*| 		  - KEYCODE_HOME and KEYCODE_END moves the cursor at the begining/end of the text
+|*| 		  - KEYCODE_BACKSPACE dels the car. under the cursor
+|*| 		  - KEYCODE_INSERT adds a space in the text
+|*| 		  - KEYCODE_DEL erases all the text
 |*|
-|*|	JCK 990404: Fixed function IsBCD
-|*|		  Fixed display in function ContinueSearch
-|*|		  Modified function LoadHelp : it now returns a int
-|*|			In the edit cheat, on the data line :
-|*|			  - KEYCODE_HOME subs 0x80 to the value
-|*|			  - KEYCODE_END adds 0x80 to the value
-|*|			Help has been completely rewritten
-|*|			New functions :
-|*|			  - int CreateHelp (char **paDisplayText, struct TextLine *table)
-|*|			Rewritten functions :
-|*|			  - void ShowHelp(int LastHelpLine, struct TextLine *table)
-|*|			  - void CheatListHelp (void)
-|*|			  - void CheatListHelpEmpty (void)
-|*|			  - void StartSearchHelp (void)
-|*|			  - void EditCheatHelp (void)
-|*|			  - void ChooseWatchHelp (void)
-|*|			  - void SelectFastSearchHelp (void)
-|*|			New #define :
-|*|			  - MAX_DT 130
-|*|			  - OFFSET_LINK_CHEAT 500
-|*|			Modified #define :
-|*|			  - TOTAL_CHEAT_TYPES 75
-|*|			Linked cheats are now 500+ instead of 100+
+|*| JCK 990404: Fixed function IsBCD
+|*| 	  Fixed display in function ContinueSearch
+|*| 	  Modified function LoadHelp : it now returns a int
+|*| 		In the edit cheat, on the data line :
+|*| 		  - KEYCODE_HOME subs 0x80 to the value
+|*| 		  - KEYCODE_END adds 0x80 to the value
+|*| 		Help has been completely rewritten
+|*| 		New functions :
+|*| 		  - int CreateHelp (char **paDisplayText, struct TextLine *table)
+|*| 		Rewritten functions :
+|*| 		  - void ShowHelp(int LastHelpLine, struct TextLine *table)
+|*| 		  - void CheatListHelp (void)
+|*| 		  - void CheatListHelpEmpty (void)
+|*| 		  - void StartSearchHelp (void)
+|*| 		  - void EditCheatHelp (void)
+|*| 		  - void ChooseWatchHelp (void)
+|*| 		  - void SelectFastSearchHelp (void)
+|*| 		New #define :
+|*| 		  - MAX_DT 130
+|*| 		  - OFFSET_LINK_CHEAT 500
+|*| 		Modified #define :
+|*| 		  - TOTAL_CHEAT_TYPES 75
+|*| 		Linked cheats are now 500+ instead of 100+
 |*|
-|*|	JCK 990529: Fixed function ContinueSearch (frameskips)
+|*| JCK 990529: Fixed function ContinueSearch (frameskips)
 |*|
-|*|	JCK 990701: Fixed cheat types 061 & 071
-|*|			Added a message in function SelectValue if value is out of range
+|*| JCK 990701: Fixed cheat types 061 & 071
+|*| 		Added a message in function SelectValue if value is out of range
 |*|
-|*|	JCK 990717: Cheat types 060 to 075 are now correctly saved to the text file
-|*|			Watches are correctly dipslayed when you move them with the I,J,K,L keys
+|*| JCK 990717: Cheat types 060 to 075 are now correctly saved to the text file
+|*| 		Watches are correctly dipslayed when you move them with the I,J,K,L keys
 |*|
 |*|
 |*|  Modifications by Felipe de Almeida Leme (FAL)
 |*|
-|*|	FAL 981029:	Pointer checking to avoid segmentation fault when reading an incorrect cheat file
+|*| FAL 981029: Pointer checking to avoid segmentation fault when reading an incorrect cheat file
 |*|
 |*|  Modifications by MSH
 |*|
-|*|	MSH 990217:	New function int cheat_readkey(void) to fix the keyboard_read_sync under Windows
-|*|			Replaced calls to function keyboard_read_sync() by cheat_readkey() when it was necessary
+|*| MSH 990217: New function int cheat_readkey(void) to fix the keyboard_read_sync under Windows
+|*| 		Replaced calls to function keyboard_read_sync() by cheat_readkey() when it was necessary
 |*|
-|*|	MSH 990310:	Use of the #ifdef WIN32 to fix the keyboard under Windows
+|*| MSH 990310: Use of the #ifdef WIN32 to fix the keyboard under Windows
 |*|
 |*|
-|*|	MLR 991114:	Support for gzipped cheat files
+|*| MLR 991114: Support for gzipped cheat files
 |*|
 \*|*/
 
 /*\
 |*|  TO DO list by JCK from The Ultimate Patchers
 |*|
-|*|	JCK 990712: Possibility to search for BCD values in search method 2 (timer)
-|*|			Rewrite the help (general and other) and try to use the functions in DATAFILE.C
-|*|			Fix function DisplayWatches (more than one line of watches)
-|*|			Trap the Shift keys : correct bug when they are pressed in xedit function
-|*|			Merge functions DeleteActiveCheatFromTable and DeleteLoadedCheatFromTable
-|*|			Rewrite function FormatAddr ?
+|*| JCK 990712: Possibility to search for BCD values in search method 2 (timer)
+|*| 		Rewrite the help (general and other) and try to use the functions in DATAFILE.C
+|*| 		Fix function DisplayWatches (more than one line of watches)
+|*| 		Trap the Shift keys : correct bug when they are pressed in xedit function
+|*| 		Merge functions DeleteActiveCheatFromTable and DeleteLoadedCheatFromTable
+|*| 		Rewrite function FormatAddr ?
 \*|*/
 
 #include "driver.h"
 #include <zlib.h>
 #include <stdarg.h>
-#include <ctype.h>  /* for toupper() and tolower() */
+#include <ctype.h>	/* for toupper() and tolower() */
 
 /*
  The CHEAT.DAT file:
  -This file should be in the same directory of MAME.EXE .
  -This file can be edited with a text editor, but keep the same format:
-    all fields are separated by a colon (:)
+	all fields are separated by a colon (:)
    * Name of the game (short name)
    * No of the CPU
    * Address in Hexadecimal
@@ -665,7 +665,7 @@ Types of cheats:
  003-Wait 2 second between 2 writes
  004-Wait 5 second between 2 writes
  005-When the original value is not like the cheat, wait 1 second then write it
-    Needed by Tempest for the Super Zapper
+	Needed by Tempest for the Super Zapper
  006-When the original value is not like the cheat, wait 2 second then write it
  007-When the original value is not like the cheat, wait 5 second then write it
  008-Do not change if value decrease by 1 each frames
@@ -679,29 +679,29 @@ JCK 980917
 
 JCK 981020
  060-Select a decimal value from 0 to maximum (0 is allowed - display 0 ... maximum)
-       this value is written in memory when it changes then delete cheat from active list
+	   this value is written in memory when it changes then delete cheat from active list
  061-Select a decimal value from 0 to maximum (0 isn't allowed - display 1 ... maximum+1)
-       this value is written in memory when it changes then delete cheat from active list
+	   this value is written in memory when it changes then delete cheat from active list
  062-Select a decimal value from 1 to maximum
-       this value is written in memory when it changes then delete cheat from active list
+	   this value is written in memory when it changes then delete cheat from active list
  063-Select a BCD value from 0 to maximum (0 is allowed - display 0 ... maximum)
-       this value is written in memory when it changes then delete cheat from active list
+	   this value is written in memory when it changes then delete cheat from active list
  064-Select a BCD value from 0 to maximum (0 isn't allowed - display 1 ... maximum+1)
-       this value is written in memory when it changes then delete cheat from active list
+	   this value is written in memory when it changes then delete cheat from active list
  065-Select a BCD value from 1 to maximum
-       this value is written in memory when it changes then delete cheat from active list
+	   this value is written in memory when it changes then delete cheat from active list
  070-Select a decimal value from 0 to maximum (0 is allowed - display 0 ... maximum)
-       this value is written once in memory then delete cheat from active list
+	   this value is written once in memory then delete cheat from active list
  071-Select a decimal value from 0 to maximum (0 isn't allowed - display 1 ... maximum+1)
-       this value is written once in memory then delete cheat from active list
+	   this value is written once in memory then delete cheat from active list
  072-Select a decimal value from 1 to maximum
-       this value is written once in memory then delete cheat from active list
+	   this value is written once in memory then delete cheat from active list
  073-Select a BCD value from 0 to maximum (0 is allowed - display 0 ... maximum)
-       this value is written once in memory then delete cheat from active list
+	   this value is written once in memory then delete cheat from active list
  074-Select a BCD value from 0 to maximum (0 isn't allowed - display 1 ... maximum+1)
-       this value is written once in memory then delete cheat from active list
+	   this value is written once in memory then delete cheat from active list
  075-Select a BCD value from 1 to maximum
-       this value is written once in memory then delete cheat from active list
+	   this value is written once in memory then delete cheat from active list
 
 JCK 990404
  500 to 544-Used for linked cheats; same as 0 to 44 otherwize
@@ -763,20 +763,20 @@ static struct TextLine HelpLine[MAX_TEXT_LINE];
 /* macros stolen from memory.c for our nefarious purposes: */
 #define MEMORY_READ(index,offset)	((*cpuintf[Machine->drv->cpu[index].cpu_type & ~CPU_FLAGS_MASK].memory_read)(offset))
 #define MEMORY_WRITE(index,offset,data) ((*cpuintf[Machine->drv->cpu[index].cpu_type & ~CPU_FLAGS_MASK].memory_write)(offset,data))
-#define ADDRESS_BITS(index)		(cpuintf[Machine->drv->cpu[index].cpu_type & ~CPU_FLAGS_MASK].address_bits)
+#define ADDRESS_BITS(index) 	(cpuintf[Machine->drv->cpu[index].cpu_type & ~CPU_FLAGS_MASK].address_bits)
 
 #define MAX_ADDRESS(cpu)	(0xFFFFFFFF >> (32-ADDRESS_BITS(cpu)))
 
 #define RD_GAMERAM(cpu,a)	read_gameram(cpu,a)
-#define WR_GAMERAM(cpu,a,v)	write_gameram(cpu,a,v)
+#define WR_GAMERAM(cpu,a,v) write_gameram(cpu,a,v)
 
 #define MAX_LOADEDCHEATS	200
 #define MAX_ACTIVECHEATS	15
-#define MAX_WATCHES		20
-#define MAX_MATCHES		(MachHeight / FontHeight - 13)
+#define MAX_WATCHES 	20
+#define MAX_MATCHES 	(MachHeight / FontHeight - 13)
 #define MAX_DISPLAYCHEATS	(MachHeight / FontHeight - 12)
 
-#define MAX_DISPLAYMEM	      (MachHeight / FontHeight - 10)
+#define MAX_DISPLAYMEM		  (MachHeight / FontHeight - 10)
 
 #define MAX_DT			130
 
@@ -787,10 +787,10 @@ static struct TextLine HelpLine[MAX_TEXT_LINE];
 #define CHEAT_FILENAME_MAXLEN	255
 
 #define SEARCH_VALUE	1
-#define SEARCH_TIME	2
+#define SEARCH_TIME 2
 #define SEARCH_ENERGY	3
 #define SEARCH_BIT	4
-#define SEARCH_BYTE	5
+#define SEARCH_BYTE 5
 
 #define RESTORE_NOINIT	0
 #define RESTORE_NOSAVE	1
@@ -801,8 +801,8 @@ static struct TextLine HelpLine[MAX_TEXT_LINE];
 
 #define FIRSTPOS			(FontHeight*3/2)	/* yPos of the 1st string displayed */
 
-#define COMMENTCHEAT		999		  /* Type of cheat for comments */
-#define WATCHCHEAT		998		  /* Type of cheat for "watch-only" */
+#define COMMENTCHEAT		999 	  /* Type of cheat for comments */
+#define WATCHCHEAT		998 	  /* Type of cheat for "watch-only" */
 
 /* VM 981213 BEGIN */
 /* Q: Would 0/NULL be better than -1? */
@@ -868,9 +868,6 @@ static int SaveContinueSearch;
 
 static int SaveIndex;
 
-static int cheat_framecounter;
-static int cheat_updatescreen;
-
 static int StartValue;
 static int CurrentMethod;
 static int SaveMethod;
@@ -918,41 +915,41 @@ static char CWatch[2]	= "?";
 
 /* These variables are also declared in function displaymenu (USRINTRF.C) */
 /* They should be moved somewhere else, so we could use them as extern :) */
-static char lefthilight[2]   = "\x1A";
+static char lefthilight[2]	 = "\x1A";
 static char righthilight[2]  = "\x1B";
-static char uparrow[2]	     = "\x18";
-static char downarrow[2]     = "\x19";
+static char uparrow[2]		 = "\x18";
+static char downarrow[2]	 = "\x19";
 
 static unsigned char KEYCODE_chars[] =
 {
-/* 0	1    2	  3    4    5	 6    7    8	9 */
-   0 , 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i',    /* 0 */
-  'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's',    /* 1 */
-  't', 'u', 'v', 'w', 'x', 'y', 'z', '0', '1', '2',    /* 2 */
-  '3', '4', '5', '6', '7', '8', '9',  0 ,  0 ,	0 ,    /* 3 */
-   0 ,	0 ,  0 ,  0 ,  0 ,  0 ,  0 ,  0 ,  0 ,	0 ,    /* 4 */
-   0 ,	0 ,  0 ,  0 ,  0 ,  0 ,  0 ,  0 ,  0 ,	0 ,    /* 5 */
-  '`', '-', '=',  0 ,  0 , '[', ']',  0 , ';', '\'',   /* 6 */
- '\\',	0 , ',', '.', '/', ' ',  0 ,  0 ,  0 ,	0 ,    /* 7 */
-   0 ,	0 ,  0 ,  0 ,  0 ,  0 , '/', '*', '-', '+',    /* 8 */
-   0 ,	0 ,  0 ,  0 ,  0 ,  0 ,  0 ,  0 ,  0 ,	0 ,    /* 9 */
-   0 ,	0 ,  0 ,  0 ,  0			       /* 10 */
+/* 0	1	 2	  3    4	5	 6	  7    8	9 */
+   0 , 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 	/* 0 */
+  'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 	/* 1 */
+  't', 'u', 'v', 'w', 'x', 'y', 'z', '0', '1', '2', 	/* 2 */
+  '3', '4', '5', '6', '7', '8', '9',  0 ,  0 ,	0 , 	/* 3 */
+   0 ,	0 ,  0 ,  0 ,  0 ,	0 ,  0 ,  0 ,  0 ,	0 , 	/* 4 */
+   0 ,	0 ,  0 ,  0 ,  0 ,	0 ,  0 ,  0 ,  0 ,	0 , 	/* 5 */
+  '`', '-', '=',  0 ,  0 , '[', ']',  0 , ';', '\'',    /* 6 */
+ '\\',	0 , ',', '.', '/', ' ',  0 ,  0 ,  0 ,	0 , 	/* 7 */
+   0 ,	0 ,  0 ,  0 ,  0 ,	0 , '/', '*', '-', '+', 	/* 8 */
+   0 ,	0 ,  0 ,  0 ,  0 ,	0 ,  0 ,  0 ,  0 ,	0 , 	/* 9 */
+   0 ,	0 ,  0 ,  0 ,  0 ,	0							/* 10 */
 };
 
 static unsigned char KEYCODE_caps[] =
 {
-/* 0	1    2	  3    4    5	 6    7    8	9 */
-   0 , 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I',    /* 0 */
-  'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S',    /* 1 */
-  'T', 'U', 'V', 'W', 'X', 'Y', 'Z', ')', '!', '@',    /* 2 */
-  '#', '$', '%', '^', '&', '*', '(',  0 ,  0 ,	0 ,    /* 3 */
-   0 ,	0 ,  0 ,  0 ,  0 ,  0 ,  0 ,  0 ,  0 ,	0 ,    /* 4 */
-   0 ,	0 ,  0 ,  0 ,  0 ,  0 ,  0 ,  0 ,  0 ,	0 ,    /* 5 */
-  '~', '_', '+',  0 ,  0 , '{', '}',  0 , ':', '"',    /* 6 */
-  '|',	0 , '<', '>', '?', ' ',  0 ,  0 ,  0 ,	0 ,    /* 7 */
-   0 ,	0 ,  0 ,  0 ,  0 ,  0 , '/', '*', '-', '+',    /* 8 */
-   0 ,	0 ,  0 ,  0 ,  0 ,  0 ,  0 ,  0 ,  0 ,	0 ,    /* 9 */
-   0 ,	0 ,  0 ,  0 ,  0			       /* 10 */
+/* 0	1	 2	  3    4	5	 6	  7    8	9 */
+   0 , 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 	/* 0 */
+  'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 	/* 1 */
+  'T', 'U', 'V', 'W', 'X', 'Y', 'Z', ')', '!', '@', 	/* 2 */
+  '#', '$', '%', '^', '&', '*', '(',  0 ,  0 ,	0 , 	/* 3 */
+   0 ,	0 ,  0 ,  0 ,  0 ,	0 ,  0 ,  0 ,  0 ,	0 , 	/* 4 */
+   0 ,	0 ,  0 ,  0 ,  0 ,	0 ,  0 ,  0 ,  0 ,	0 , 	/* 5 */
+  '~', '_', '+',  0 ,  0 , '{', '}',  0 , ':', '"',     /* 6 */
+  '|',	0 , '<', '>', '?', ' ',  0 ,  0 ,  0 ,	0 , 	/* 7 */
+   0 ,	0 ,  0 ,  0 ,  0 ,	0 , '/', '*', '-', '+', 	/* 8 */
+   0 ,	0 ,  0 ,  0 ,  0 ,	0 ,  0 ,  0 ,  0 ,	0 , 	/* 9 */
+   0 ,	0 ,  0 ,  0 ,  0 ,	0							/* 10 */
 };
 
 void cheat_save_frameskips(void)
@@ -960,23 +957,23 @@ void cheat_save_frameskips(void)
 	saveframeskip	  = frameskip;
 	saveautoframeskip = autoframeskip;
 	#ifdef JCK
-	saveshowfps	  = showfps;
+	saveshowfps   = showfps;
 	saveshowprofile   = showprofile;
 	#endif
 	frameskip	  = 0;
 	autoframeskip	  = 0;
 	#ifdef JCK
 	showfps 	  = 0;
-	showprofile	  = 0;
+	showprofile   = 0;
 	#endif
 }
 
 void cheat_rest_frameskips(void)
 {
-	frameskip     = saveframeskip;
+	frameskip	  = saveframeskip;
 	autoframeskip = saveautoframeskip;
 	#ifdef JCK
-	showfps       = saveshowfps;
+	showfps 	  = saveshowfps;
 	showprofile   = saveshowprofile;
 	#endif
 }
@@ -985,9 +982,9 @@ void cheat_rest_frameskips(void)
 int cheat_readkey(void)
 {
 #ifdef WIN32	/* MSH 990310 */
-    int key = keyboard_read_sync();
-    while (keyboard_pressed(key));
-    return key;
+	int key = keyboard_read_sync();
+	while (keyboard_pressed(key));
+	return key;
 #else
   int key = 0;
 
@@ -1105,10 +1102,10 @@ void DisplayVersion(void)
   strcpy(buffer, LAST_CODER);
   strcat(buffer, " - ");
   strcat(buffer, LAST_UPDATE);
-/*  xprintf(0, 1, MachHeight-FontHeight, buffer); */
+/*	xprintf(0, 1, MachHeight-FontHeight, buffer); */
   #else
   strcpy(buffer, CHEAT_VERSION);
-/*  xprintf(0, 1, MachHeight-FontHeight, buffer); */
+/*	xprintf(0, 1, MachHeight-FontHeight, buffer); */
   #endif
   xprintf(0, 1, MachHeight-FontHeight, "");
 
@@ -1137,7 +1134,7 @@ int xedit(int x,int y,char *inputs,int maxlen,int hexaonly)
   int trueorientation;
 
   if ((buffer = malloc(maxlen+1)) == NULL)
-	return(2);    /* Cancel as if used pressed Esc */
+	return(2);	  /* Cancel as if used pressed Esc */
 
   memset (buffer, '\0', sizeof(buffer));
   strncpy (buffer, inputs, maxlen+1);
@@ -1166,7 +1163,7 @@ int xedit(int x,int y,char *inputs,int maxlen,int hexaonly)
 		drawgfx(Machine->scrbitmap,Machine->uifont,c,CarColor,0,0,
 			xpos+Machine->uixmin+(i * FontWidth),ypos+Machine->uiymin,0,TRANSPARENCY_NONE,0);
 	}
-	DisplayVersion();    /* Hack to update the video */
+	DisplayVersion();	 /* Hack to update the video */
 
 	key = keyboard_read_sync();
 #ifdef WIN32	/* MSH 990310 */
@@ -1246,7 +1243,7 @@ int xedit(int x,int y,char *inputs,int maxlen,int hexaonly)
 						case KEYCODE_7:
 						case KEYCODE_8:
 						case KEYCODE_9:
-							c = KEYCODE_chars[key];
+							c = KEYCODE_chars[key+1];
 							break;
 						case KEYCODE_A:
 						case KEYCODE_B:
@@ -1254,7 +1251,7 @@ int xedit(int x,int y,char *inputs,int maxlen,int hexaonly)
 						case KEYCODE_D:
 						case KEYCODE_E:
 						case KEYCODE_F:
-							c = KEYCODE_caps[key];
+							c = KEYCODE_caps[key+1];
 							break;
 					}
 				}
@@ -1262,9 +1259,9 @@ int xedit(int x,int y,char *inputs,int maxlen,int hexaonly)
 				{
 					if (keyboard_pressed (KEYCODE_LSHIFT) ||
 						 keyboard_pressed (KEYCODE_RSHIFT))
-						c = KEYCODE_caps[key];
+						c = KEYCODE_caps[key+1];
 					else
-						c = KEYCODE_chars[key];
+						c = KEYCODE_chars[key+1];
 				}
 
 				if (c)
@@ -1396,7 +1393,7 @@ int SelectMenu(int *s, struct DisplayText *dt, int ArrowsOnly, int WaitForKey,
 				(*s)++;
 			else
 				*s = Mini;
-			while ((*s < Maxi) && (!dt[*s].text[0]))    /* For Space In Menu */
+			while ((*s < Maxi) && (!dt[*s].text[0]))	/* For Space In Menu */
 				(*s)++;
 			*done = 3;
 			break;
@@ -1406,7 +1403,7 @@ int SelectMenu(int *s, struct DisplayText *dt, int ArrowsOnly, int WaitForKey,
 				(*s)--;
 			else
 				*s = Maxi;
-			while ((*s > Mini) && (!dt[*s].text[0]))    /* For Space In Menu */
+			while ((*s > Mini) && (!dt[*s].text[0]))	/* For Space In Menu */
 				(*s)--;
 			*done = 3;
 			break;
@@ -1477,7 +1474,7 @@ int SelectValue(int v, int BCDOnly, int ZeroPoss, int WrapPoss, int DispTwice,
 	Maxi ++;
 	while ((IsBCD(Maxi) == 0) && (BCDOnly == 1))  Maxi++ ;	  /* JCK 990701 */
 	w = v + 1;
-	while ((IsBCD(w) == 0) && (BCDOnly == 1))  w++ ;    /* JCK 990701 */
+	while ((IsBCD(w) == 0) && (BCDOnly == 1))  w++ ;	/* JCK 990701 */
   }
   else
 	w = v;
@@ -1525,7 +1522,7 @@ int SelectValue(int v, int BCDOnly, int ZeroPoss, int WrapPoss, int DispTwice,
 
 #ifdef WIN32	/* MSH 990310 */
 	key = keyboard_read_sync();
-      if (!keyboard_pressed_memory_repeat(key,8))
+	  if (!keyboard_pressed_memory_repeat(key,8))
 	key = 0;
 #else
 	key = cheat_readkey();	  /* MSH 990217 */
@@ -1620,7 +1617,7 @@ static char *FormatAddr(int cpu, int addtext)
 {
 	static char bufadr[10];
 	static char buffer[18];
-      int i;
+	  int i;
 
 	memset (buffer, '\0', strlen(buffer));
 	switch ((ADDRESS_BITS(cpu)+3) >> 2)
@@ -1644,13 +1641,13 @@ static char *FormatAddr(int cpu, int addtext)
 			strcpy (bufadr, "%X");
 			break;
 	}
-      if (addtext)
-      {
+	  if (addtext)
+	  {
 	strcpy (buffer, "Addr:  ");
-	    for (i = strlen(bufadr) + 1; i < 8; i ++)
+		for (i = strlen(bufadr) + 1; i < 8; i ++)
 		strcat (buffer, " ");
-      }
-      strcat (buffer,bufadr);
+	  }
+	  strcat (buffer,bufadr);
 	return buffer;
 }
 
@@ -1899,17 +1896,17 @@ static int build_tables (void)
 
 	int NoMemArea = 0;
 
-      /* Trap memory allocation errors */
+	  /* Trap memory allocation errors */
 	int MemoryNeeded = 0;
 
 	/* Search speedup : (the games should be dasmed to confirm this) */
-      /* Games based on Exterminator driver should scan BANK1	       */
-      /* Games based on SmashTV driver should scan BANK2	       */
-      /* NEOGEO games should only scan BANK1 (0x100000 -> 0x01FFFF)    */
+	  /* Games based on Exterminator driver should scan BANK1		   */
+	  /* Games based on SmashTV driver should scan BANK2		   */
+	  /* NEOGEO games should only scan BANK1 (0x100000 -> 0x01FFFF)    */
 	int CpuToScan = -1;
-      int BankToScanTable[9];	 /* 0 for RAM & 1-8 for Banks 1-8 */
+	  int BankToScanTable[9];	 /* 0 for RAM & 1-8 for Banks 1-8 */
 
-      for (i = 0; i < 9;i ++)
+	  for (i = 0; i < 9;i ++)
 	BankToScanTable[i] = ( fastsearch != 2 );
 
 #if (HAS_TMS34010)
@@ -1937,26 +1934,26 @@ static int build_tables (void)
 #endif
 #endif
 
-      /* No CPU so we scan RAM & BANKn */
-      if ((CpuToScan == -1) && (fastsearch == 2))
+	  /* No CPU so we scan RAM & BANKn */
+	  if ((CpuToScan == -1) && (fastsearch == 2))
 	for (i = 0; i < 9;i ++)
 		BankToScanTable[i] = 1;
 
 	/* free memory that was previously allocated if no error occured */
-      /* it must also be there because mwa varies from one CPU to another */
-      if (!MallocFailure)
-      {
+	  /* it must also be there because mwa varies from one CPU to another */
+	  if (!MallocFailure)
+	  {
 		reset_table (StartRam);
 		reset_table (BackupRam);
 		reset_table (FlagTable);
 
 		reset_table (OldBackupRam);
 		reset_table (OldFlagTable);
-      }
+	  }
 
-      MallocFailure = 0;
+	  MallocFailure = 0;
 
-      /* Message to show that something is in progress */
+	  /* Message to show that something is in progress */
 	cheat_clearbitmap();
 	yPos = (MachHeight - FontHeight) / 2;
 	xprintf(0, 0, yPos, "Allocating Memory...");
@@ -2040,8 +2037,8 @@ static int build_tables (void)
 	}
 
 	/* free memory that was previously allocated if an error occured */
-      if (MallocFailure)
-      {
+	  if (MallocFailure)
+	  {
 		int key;
 
 		reset_table (StartRam);
@@ -2052,7 +2049,7 @@ static int build_tables (void)
 		reset_table (OldFlagTable);
 
 		cheat_clearbitmap();
-	    yPos = (MachHeight - 10 * FontHeight) / 2;
+		yPos = (MachHeight - 10 * FontHeight) / 2;
 		xprintf(0, 0, yPos, "Error while allocating memory !");
 		yPos += (2 * FontHeight);
 		xprintf(0, 0, yPos, "You need %d more bytes", MemoryNeeded);
@@ -2065,7 +2062,7 @@ static int build_tables (void)
 		key = keyboard_read_sync();
 		while (keyboard_pressed(key)) ; /* wait for key release */
 		cheat_clearbitmap();
-      }
+	  }
 
 	ClearTextLine (1, yPos);
 
@@ -2109,16 +2106,16 @@ int RenameCheatFile(int merge, int DisplayFileName, char *filename)
   if (done == 1)
   {
 	strcpy (filename, buffer);
-      if (DisplayFileName)
-      {
+	  if (DisplayFileName)
+	  {
 		cheat_clearbitmap();
-	      xprintf (0, 0, EditYPos-(FontHeight*2), "Cheat Filename is now:");
+		  xprintf (0, 0, EditYPos-(FontHeight*2), "Cheat Filename is now:");
 		xprintf (0, 0, EditYPos, "%s", buffer);
 		EditYPos += 4*FontHeight;
 		xprintf(0, 0,EditYPos,"Press A Key To Continue...");
 		key = keyboard_read_sync();
 		while (keyboard_pressed(key)) ; /* wait for key release */
-      }
+	  }
   }
   cheat_clearbitmap();
   return(done);
@@ -2164,13 +2161,13 @@ int SaveCheat(int NoCheat)
 				/* form fmt string, adjusting length of address field for cpu address range */
 				sprintf(fmt, "%%s:%%d:%s:%%02X:%%03d:%%s%s\n",
 						FormatAddr(LoadedCheatTable[i].CpuNo,0),
-				      (addmore ? ":%s" : ""));
+					  (addmore ? ":%s" : ""));
 
 				#ifdef macintosh
 				if (uncompressed)
-					fprintf(f, "\r");     /* force DOS-style line enders */
+					fprintf(f, "\r");	  /* force DOS-style line enders */
 				else
-					gzprintf(gz, "\r");	/* force DOS-style line enders */
+					gzprintf(gz, "\r"); /* force DOS-style line enders */
 				#endif
 
 				/* JCK 990717 BEGIN */
@@ -2258,12 +2255,12 @@ void LoadCheat(int merge, char *filename)
   {
 	yPos = (MachHeight - FontHeight) / 2 - FontHeight;
 /*	xprintf(0, 0, yPos, "Loading cheats from file"); */
-      yPos += FontHeight;
+	  yPos += FontHeight;
 /*	xprintf(0, 0, yPos, "%s...",filename); */
 
 	for(;;)
 	{
-	      if (gzgets(f,str,90) == NULL)
+		  if (gzgets(f,str,90) == NULL)
 		break;
 
 		#ifdef macintosh  /* JB 971004 */
@@ -2407,7 +2404,7 @@ void LoadDatabases(int InCheat)
 		memset (filename, '\0', sizeof(filename));
 		strncpy(filename, &str[pos1], (pos2 - pos1));
 		LoadCheat(1, filename);
-	    pos1 = pos2 + 1;
+		pos1 = pos2 + 1;
 	}
   }
 
@@ -2437,7 +2434,7 @@ int LoadHelp(char *filename, struct TextLine *table)
 	txt = table;
 	for(;;)
 	{
-	      if (gzgets(f,str,32) == NULL)
+		  if (gzgets(f,str,32) == NULL)
 		break;
 
 		#ifdef macintosh  /* JB 971004 */
@@ -2473,18 +2470,18 @@ int LoadHelp(char *filename, struct TextLine *table)
 void InitMemoryAreas(void)
 {
 	const struct MemoryWriteAddress *mwa = Machine->drv->cpu[SearchCpuNo].memory_write;
-    char buffer[40];
+	char buffer[40];
 
 	MemoryAreasSelected = 0;
-      MemoryAreasTotal = 0;
+	  MemoryAreasTotal = 0;
 	while (mwa->start != -1)
 	{
 		sprintf (buffer, FormatAddr(SearchCpuNo,0), mwa->start);
-	    strcpy (MemToScanTable[MemoryAreasTotal].Name, buffer);
-	    strcat (MemToScanTable[MemoryAreasTotal].Name," -> ");
+		strcpy (MemToScanTable[MemoryAreasTotal].Name, buffer);
+		strcat (MemToScanTable[MemoryAreasTotal].Name," -> ");
 		sprintf (buffer, FormatAddr(SearchCpuNo,0), mwa->end);
-	    strcat (MemToScanTable[MemoryAreasTotal].Name, buffer);
-	    MemToScanTable[MemoryAreasTotal].handler = mwa->handler;
+		strcat (MemToScanTable[MemoryAreasTotal].Name, buffer);
+		MemToScanTable[MemoryAreasTotal].handler = mwa->handler;
 		MemToScanTable[MemoryAreasTotal].Enabled = 0;
 		MemoryAreasTotal++;
 		mwa++;
@@ -2513,16 +2510,13 @@ void InitCheat(void)
   FontHeight = ( Machine -> uifontheight );
   FontWidth  = ( Machine -> uifontwidth );
 
-  ManyCpus   = ( cpu_gettotalcpu() > 1 );
+  ManyCpus	 = ( cpu_gettotalcpu() > 1 );
 
   SaveMenu = 0;
   SaveStartSearch = 0;
   SaveContinueSearch = 0;
 
   SaveIndex = 0;
-
-  cheat_framecounter = 0;
-  cheat_updatescreen = 0;
 
   reset_table (StartRam);
   reset_table (BackupRam);
@@ -2583,10 +2577,10 @@ void DisplayActiveCheats(int y)
 void DisplayWatches(int ClrScr, int *x,int *y,char *buffer,
 				int highlight, int dx, int dy)
 {
-      int i;
-      char bufadr[4];
+	  int i;
+	  char bufadr[4];
 
-      int FirstWatch = 1;
+	  int FirstWatch = 1;
 
 	int WatchColor = DT_COLOR_WHITE;
 
@@ -2622,7 +2616,7 @@ void DisplayWatches(int ClrScr, int *x,int *y,char *buffer,
 		{
 			if ( Watches[i] != MAX_ADDRESS(WatchesCpuNo[i]))
 			{
-			if (!FirstWatch)    /* If not 1st watch add a space */
+			if (!FirstWatch)	/* If not 1st watch add a space */
 			{
 				strcat(buffer," ");
 				WatchGfxLen += (FontWidth / 2);
@@ -2640,7 +2634,7 @@ void DisplayWatches(int ClrScr, int *x,int *y,char *buffer,
 			}
 		}
 
-	    /* Adjust x offset to fit the screen */
+		/* Adjust x offset to fit the screen */
 		/* while (	(*x >= (MachWidth - (FontWidth * (int)strlen(buffer)))) && */
 		while ( (*x >= (MachWidth - WatchGfxLen)) &&
 			(*x > Machine->uixmin)	)
@@ -2697,11 +2691,11 @@ void set_cheat(struct cheat_struct *dest, struct cheat_struct *src)
 		src = &new_cheat;
 	}
 
-	dest->CpuNo	= src->CpuNo;
+	dest->CpuNo = src->CpuNo;
 	dest->Address	= src->Address;
 	dest->Data		= src->Data;
 	dest->Special	= src->Special;
-	dest->Count	= src->Count;
+	dest->Count = src->Count;
 	dest->Backup	= src->Backup;
 	dest->Minimum	= src->Minimum;
 	dest->Maximum	= src->Maximum;
@@ -3159,7 +3153,7 @@ void EditCheat(int CheatNo)
 						LoadedCheatTable[CheatNo].Address);
 					cheat_clearbitmap();
 					y = EditCheatHeader();
-			      break;
+				  break;
 			}
 			break;
 
@@ -3187,7 +3181,7 @@ void EditCheat(int CheatNo)
 						sprintf(str2[0],"%s",LoadedCheatTable[CheatNo].Name);
 					cheat_clearbitmap();
 					y = EditCheatHeader();
-			      break;
+				  break;
 				case 5:    /* More */
 					for (i = 0; i < total; i++)
 						dt[i].color = DT_COLOR_WHITE;
@@ -3199,7 +3193,7 @@ void EditCheat(int CheatNo)
 						sprintf(str2[5],"%s",LoadedCheatTable[CheatNo].More);
 					cheat_clearbitmap();
 					y = EditCheatHeader();
-			      break;
+				  break;
 			}
 			break;
 
@@ -3546,7 +3540,7 @@ void SelectCheat(void)
 					xprintf (0, 0, YFOOT_SELECT, "%s", LoadedCheatTable[highlighted + Index].More);
 				break;
 
-			case KEYCODE_F1:    /* Save cheat to file */
+			case KEYCODE_F1:	/* Save cheat to file */
 				while (keyboard_pressed(key));
 			  oldkey = 0;
 				if (LoadedCheatTotal == 0)
@@ -3564,7 +3558,7 @@ void SelectCheat(void)
 
 				break;
 
-			case KEYCODE_F2:     /* Add to watch list */
+			case KEYCODE_F2:	 /* Add to watch list */
 				while (keyboard_pressed(key));
 			  oldkey = 0;
 				if (LoadedCheatTotal == 0)
@@ -3605,7 +3599,7 @@ void SelectCheat(void)
 				}
 				break;
 
-			case KEYCODE_F3:    /* Edit current cheat */
+			case KEYCODE_F3:	/* Edit current cheat */
 				while (keyboard_pressed(key));
 			  oldkey = 0;
 				if (LoadedCheatTotal == 0)
@@ -3631,7 +3625,7 @@ void SelectCheat(void)
 
 				break;
 
-			case KEYCODE_F4:    /* Copy the current cheat */
+			case KEYCODE_F4:	/* Copy the current cheat */
 				while (keyboard_pressed(key));
 			  oldkey = 0;
 				if (LoadedCheatTotal == 0)
@@ -3660,7 +3654,7 @@ void SelectCheat(void)
 
 				break;
 
-			case KEYCODE_F5:    /* Rename the cheatfile and reload the database */
+			case KEYCODE_F5:	/* Rename the cheatfile and reload the database */
 				while (keyboard_pressed(key));
 			  oldkey = 0;
 
@@ -3690,7 +3684,7 @@ void SelectCheat(void)
 
 				break;
 
-			case KEYCODE_F6:    /* Save all cheats to file */
+			case KEYCODE_F6:	/* Save all cheats to file */
 				while (keyboard_pressed(key));
 			  oldkey = 0;
 				if (LoadedCheatTotal == 0)
@@ -3708,7 +3702,7 @@ void SelectCheat(void)
 
 				break;
 
-			case KEYCODE_F7:    /* Remove all active cheats from the list */
+			case KEYCODE_F7:	/* Remove all active cheats from the list */
 				while (keyboard_pressed(key));
 			  oldkey = 0;
 				if (LoadedCheatTotal == 0)
@@ -3729,7 +3723,7 @@ void SelectCheat(void)
 						}
 
 						if (	(LoadedCheatTable[i].Special != COMMENTCHEAT)	&&
-							(LoadedCheatTable[i].Special != WATCHCHEAT)	)
+							(LoadedCheatTable[i].Special != WATCHCHEAT) )
 						{
 							set_cheat(&ActiveCheatTable[ActiveCheatTotal], &LoadedCheatTable[i]);
 							ActiveCheatTable[ActiveCheatTotal].Count = 0;
@@ -3744,7 +3738,7 @@ void SelectCheat(void)
 				total = build_cheat_list(Index, dt, str2);
 				break;
 
-			case KEYCODE_F8:    /* Reload the database */
+			case KEYCODE_F8:	/* Reload the database */
 				while (keyboard_pressed(key));
 			  oldkey = 0;
 
@@ -3763,7 +3757,7 @@ void SelectCheat(void)
 
 				break;
 
-			case KEYCODE_F9:    /* Rename the cheatfile */
+			case KEYCODE_F9:	/* Rename the cheatfile */
 				while (keyboard_pressed(key));
 			  oldkey = 0;
 
@@ -3778,7 +3772,7 @@ void SelectCheat(void)
 
 				break;
 
-			case KEYCODE_F10:    /* Invoke help */
+			case KEYCODE_F10:	 /* Invoke help */
 				while (keyboard_pressed(key));
 			  oldkey = 0;
 
@@ -3795,7 +3789,7 @@ void SelectCheat(void)
 
 				break;
 
-			case KEYCODE_F11:    /* Toggle sologame ON/OFF then reload the database */
+			case KEYCODE_F11:	 /* Toggle sologame ON/OFF then reload the database */
 				while (keyboard_pressed(key));
 			  oldkey = 0;
 
@@ -3815,7 +3809,7 @@ void SelectCheat(void)
 
 				break;
 
-			case KEYCODE_F12:    /* Display info about a cheat */
+			case KEYCODE_F12:	 /* Display info about a cheat */
 				while (keyboard_pressed(key));
 			  oldkey = 0;
 				if (LoadedCheatTotal == 0)
@@ -3947,7 +3941,7 @@ void SelectCheat(void)
 						ActiveCheatTable[ActiveCheatTotal].Data =
 							RD_GAMERAM (ActiveCheatTable[ActiveCheatTotal].CpuNo,
 									ActiveCheatTable[ActiveCheatTotal].Address);
-						BCDOnly = (	(ActiveCheatTable[ActiveCheatTotal].Special == 63)	||
+						BCDOnly = ( (ActiveCheatTable[ActiveCheatTotal].Special == 63)	||
 								(ActiveCheatTable[ActiveCheatTotal].Special == 64)	||
 								(ActiveCheatTable[ActiveCheatTotal].Special == 65)	||
 								(ActiveCheatTable[ActiveCheatTotal].Special == 73)	||
@@ -4008,7 +4002,7 @@ void SelectCheat(void)
 
 	while (keyboard_pressed(key));
 
-      SaveIndex = Index + highlighted;
+	  SaveIndex = Index + highlighted;
 
 	/* clear the screen before returning */
 	cheat_clearbitmap();
@@ -4187,7 +4181,7 @@ int SelectMemoryHeader(void)
 
 void SelectMemoryAreas(void)
 {
-      int SaveMemoryAreas[MAX_EXT_MEMORY];
+	  int SaveMemoryAreas[MAX_EXT_MEMORY];
 
 	int i, x, y, highlighted, key, done, total;
 	struct DisplayText dt[MAX_DT + 1];
@@ -4195,10 +4189,10 @@ void SelectMemoryAreas(void)
 
 	char str2[60][40];
 
-      char buffer[40];
+	  char buffer[40];
 
 	for (i = 0; i < MemoryAreasTotal; i++)
-	      SaveMemoryAreas[i] = MemToScanTable[i].Enabled;
+		  SaveMemoryAreas[i] = MemToScanTable[i].Enabled;
 
 	cheat_clearbitmap();
 
@@ -4361,7 +4355,7 @@ void SelectMemoryAreas(void)
 				total = build_mem_list(Index, dt, str2);
 				break;
 
-			case KEYCODE_F12:    /* Display info about a cheat */
+			case KEYCODE_F12:	 /* Display info about a cheat */
 				while (keyboard_pressed(key));
 			  oldkey = 0;
 			strcpy (buffer,str2[Index + highlighted]);
@@ -4434,14 +4428,14 @@ void SelectMemoryAreas(void)
 	/* clear the screen before returning */
 	cheat_clearbitmap();
 
-      MemoryAreasSelected = 0;
+	  MemoryAreasSelected = 0;
 	for (i = 0; i < MemoryAreasTotal; i++)
 	{
-	      if (SaveMemoryAreas[i] != MemToScanTable[i].Enabled)
+		  if (SaveMemoryAreas[i] != MemToScanTable[i].Enabled)
 		{
 			RebuildTables = 1;
 		}
-	      if (MemToScanTable[i].Enabled)
+		  if (MemToScanTable[i].Enabled)
 		{
 			MemoryAreasSelected = 1;
 		}
@@ -4547,7 +4541,7 @@ void SelectFastSearch(void)
 
 				case 3:
 					fastsearch = 3;
-			      SelectMemoryAreas();
+				  SelectMemoryAreas();
 					done = 1;
 					break;
 
@@ -4606,16 +4600,16 @@ int SelectSearchValue(void)
  * In all cases, backup the ram.
  *
  * Ask the user to select one of the following:
- *  1 - Lives or other number (byte) (exact)	   ask a start value , ask new value
- *  2 - Timers (byte) (+ or - X)		   nothing at start, ask +-X
- *  3 - Energy (byte) (less, equal or greater)	   nothing at start, ask less, equal or greater
- *  4 - Status (bit)  (true or false)		   nothing at start, ask same or opposite
- *  5 - Slow but sure (Same as start or different) nothing at start, ask same or different
+ *	1 - Lives or other number (byte) (exact)	   ask a start value , ask new value
+ *	2 - Timers (byte) (+ or - X)		   nothing at start, ask +-X
+ *	3 - Energy (byte) (less, equal or greater)	   nothing at start, ask less, equal or greater
+ *	4 - Status (bit)  (true or false)		   nothing at start, ask same or opposite
+ *	5 - Slow but sure (Same as start or different) nothing at start, ask same or different
  *
  * Another method is used in the Pro action Replay the Energy method
- *  you can tell that the value is now 25%/50%/75%/100% as the start
- *  the problem is that I probably cannot search for exactly 50%, so
- *  that do I do? search +/- 10% ?
+ *	you can tell that the value is now 25%/50%/75%/100% as the start
+ *	the problem is that I probably cannot search for exactly 50%, so
+ *	that do I do? search +/- 10% ?
  * If you think of other way to search for codes, let me know.
  */
 
@@ -4671,64 +4665,64 @@ void StartSearch(void)
 				case 0:
 					SaveMethod = CurrentMethod;
 					CurrentMethod = SEARCH_VALUE;
-			      StartValueNeeded = 1;
+				  StartValueNeeded = 1;
 					done = 1;
 					break;
 
 				case 1:
 					SaveMethod = CurrentMethod;
 					CurrentMethod = SEARCH_TIME;
-			      StartValueNeeded = SelectSearchValue();
-			      if (StartValueNeeded == 2)
-			      {
+				  StartValueNeeded = SelectSearchValue();
+				  if (StartValueNeeded == 2)
+				  {
 						done = 0;
-			      }
-			      else
-			      {
+				  }
+				  else
+				  {
 						done = 1;
-			      }
+				  }
 					break;
 
 				case 2:
 					SaveMethod = CurrentMethod;
 					CurrentMethod = SEARCH_ENERGY;
-			      StartValueNeeded = SelectSearchValue();
-			      if (StartValueNeeded == 2)
-			      {
+				  StartValueNeeded = SelectSearchValue();
+				  if (StartValueNeeded == 2)
+				  {
 						done = 0;
-			      }
-			      else
-			      {
+				  }
+				  else
+				  {
 						done = 1;
-			      }
+				  }
 					break;
 
 				case 3:
 					SaveMethod = CurrentMethod;
 					CurrentMethod = SEARCH_BIT;
-			      StartValueNeeded = SelectSearchValue();
-			      if (StartValueNeeded == 2)
-			      {
+				  StartValueNeeded = SelectSearchValue();
+				  if (StartValueNeeded == 2)
+				  {
 						done = 0;
-			      }
-			      else
-			      {
+				  }
+				  else
+				  {
 						done = 1;
-			      }
+				  }
 					break;
 
 				case 4:
 					SaveMethod = CurrentMethod;
 					CurrentMethod = SEARCH_BYTE;
-			      StartValueNeeded = SelectSearchValue();
-			      if (StartValueNeeded == 2)
-			      {
+				  StartValueNeeded = SelectSearchValue();
+				  if (StartValueNeeded == 2)
+				  {
 						done = 0;
-			      }
-			      else
-			      {
+				  }
+				  else
+				  {
 						done = 1;
-			      }
+				  }
 					break;
 
 				case 6:
@@ -4739,7 +4733,7 @@ void StartSearch(void)
 
 				case 8:
 					done = 2;
-			      s = 0;
+				  s = 0;
 					break;
 			}
 			break;
@@ -4758,7 +4752,7 @@ void StartSearch(void)
   {
 	ValTmp = SelectValue(SearchCpuNo, 0, 1, 1, 0, 0, cpu_gettotalcpu()-1,
 					"%01X", "Enter CPU To Search In:", 1,
-			      FIRSTPOS + 3 * FontHeight);
+				  FIRSTPOS + 3 * FontHeight);
 
 	cheat_clearbitmap();
 
@@ -4794,10 +4788,10 @@ void StartSearch(void)
   if (SearchCpuNoOld != SearchCpuNo)
   {
 	RebuildTables = 1;
-      if (SearchCpuNoOld != -1)
-      {
+	  if (SearchCpuNoOld != -1)
+	  {
 		InitMemoryAreas();
-      }
+	  }
   }
   if ((fastsearch == 3) && (!MemoryAreasSelected))
 	SelectMemoryAreas();
@@ -4805,7 +4799,7 @@ void StartSearch(void)
   {
 	if (!build_tables())
 		SearchCpuNoOld = SearchCpuNo;
-      else
+	  else
 	{
 		CurrentMethod = 0;
 		return;
@@ -4858,7 +4852,7 @@ void StartSearch(void)
   if (StartValueNeeded)
   {
 	struct ExtMemory *ext;
-      count = 0;
+	  count = 0;
 	for (ext = FlagTable; ext->data; ext++)
 	{
 		for (i=0; i <= ext->end - ext->start; i++)
@@ -4878,7 +4872,7 @@ void StartSearch(void)
   else
   {
 	struct ExtMemory *ext;
-      count = 0;
+	  count = 0;
 	for (ext = FlagTable; ext->data; ext++)
 		count += ext->end - ext->start + 1;
 
@@ -5052,14 +5046,14 @@ void ContinueSearch(int selected, int ViewLast)
 	if (CurrentMethod == SEARCH_ENERGY)
 	{
 		char *paDisplayText[] =
-	      {
+		  {
 			"New Value is Less",
 			"New Value is Equal",
 			"New Value is Greater",
 			"",
 			"Return To Cheat Menu",
 			0
-	      };
+		  };
 
 		total = create_menu(paDisplayText, dt, y);
 		y = dt[total-1].y + ( 3 * FontHeight );
@@ -5092,7 +5086,7 @@ void ContinueSearch(int selected, int ViewLast)
 
 		cheat_clearbitmap();
 
-	    SaveContinueSearch = s;
+		SaveContinueSearch = s;
 
 		/* User select to return to the previous menu */
 		if (done == 2)
@@ -5115,13 +5109,13 @@ void ContinueSearch(int selected, int ViewLast)
 	if (CurrentMethod == SEARCH_BIT)
 	{
 		char *paDisplayText[] =
-	      {
+		  {
 			"Bit is Same as Start",
 			"Bit is Opposite from Start",
 			"",
 			"Return To Cheat Menu",
 			0
-	      };
+		  };
 
 		total = create_menu(paDisplayText, dt, y);
 		y = dt[total-1].y + ( 3 * FontHeight );
@@ -5152,7 +5146,7 @@ void ContinueSearch(int selected, int ViewLast)
 			}
 		} while ((done != 1) && (done != 2));
 
-	    SaveContinueSearch = s;
+		SaveContinueSearch = s;
 
 		cheat_clearbitmap();
 
@@ -5177,13 +5171,13 @@ void ContinueSearch(int selected, int ViewLast)
 	if (CurrentMethod == SEARCH_BYTE)
 	{
 		char *paDisplayText[] =
-	      {
+		  {
 			"Memory is Same as Start",
 			"Memory is Different from Start",
 			"",
 			"Return To Cheat Menu",
 			0
-	      };
+		  };
 
 		total = create_menu(paDisplayText, dt, y);
 		y = dt[total-1].y + ( 3 * FontHeight );
@@ -5216,7 +5210,7 @@ void ContinueSearch(int selected, int ViewLast)
 
 		cheat_clearbitmap();
 
-	    SaveContinueSearch = s;
+		SaveContinueSearch = s;
 
 		/* User select to return to the previous menu */
 		if (done == 2)
@@ -5247,7 +5241,7 @@ void ContinueSearch(int selected, int ViewLast)
 	for (ext = FlagTable, ext_sr = StartRam, ext_br = BackupRam; ext->data; ext++, ext_sr++, ext_br++)
 	{
 		for (i=0; i <= ext->end - ext->start; i++)
-	      {
+		  {
 			if (ext->data[i] != 0)
 			{
 			int ValRead = RD_GAMERAM(SearchCpuNo, i+ext->start);
@@ -5261,7 +5255,7 @@ void ContinueSearch(int selected, int ViewLast)
 						if (ValRead != (ext_br->data[i] + s))
 							ext->data[i] = 0;
 						break;
-					case SEARCH_ENERGY:			   /* Energy */
+					case SEARCH_ENERGY: 		   /* Energy */
 					switch (s)
 					{
 						case 0:    /* Less */
@@ -5311,7 +5305,7 @@ void ContinueSearch(int selected, int ViewLast)
 			}
 			if (ext->data[i] != 0)
 			count ++;
-	      }
+		  }
 	}
 	if ((CurrentMethod == SEARCH_TIME) || (CurrentMethod == SEARCH_ENERGY))
 		backup_ram (BackupRam);
@@ -5323,11 +5317,11 @@ void ContinueSearch(int selected, int ViewLast)
   }
 
   /* For all methods:
-    - Display how much locations we have found
-    - Display them
-    - The user can press F2 to add one to the watches
-    - The user can press F1 to add one to the cheat list
-    - The user can press F6 to add all to the cheat list */
+	- Display how much locations we have found
+	- Display them
+	- The user can press F2 to add one to the watches
+	- The user can press F1 to add one to the cheat list
+	- The user can press F6 to add all to the cheat list */
 
   cheat_clearbitmap();
 
@@ -5709,7 +5703,7 @@ void RestoreSearch(void)
 	copy_ram (FlagTable, OldFlagTable);
 	MatchFound = OldMatchFound;
 	CurrentMethod = SaveMethod;
-      RestoreStatus = RESTORE_DONE;
+	  RestoreStatus = RESTORE_DONE;
 	strcpy(msg2, "Restoration Successful :)");
   }
   else
@@ -5808,20 +5802,20 @@ void ChooseWatch(void)
 
 	dt[total].text = str2[ i ];
 
-      if (i < MAX_WATCHES / 2)
-      {
+	  if (i < MAX_WATCHES / 2)
+	  {
 		dt[total].x = ((MachWidth / 2) - FontWidth * strlen(dt[total].text)) / 2;
-      }
-      else
-      {
+	  }
+	  else
+	  {
 		dt[total].x = ((MachWidth / 2) - FontWidth * strlen(dt[total].text)) / 2 + (MachWidth / 2);
-      }
+	  }
 
 	dt[total].y = y;
 	dt[total].color = DT_COLOR_WHITE;
 	total++;
 	y += FontHeight;
-      if (i == (MAX_WATCHES / 2 - 1))
+	  if (i == (MAX_WATCHES / 2 - 1))
 		y = savey;
   }
   dt[total].text = 0; /* terminate array */
@@ -6020,14 +6014,14 @@ void ChooseWatch(void)
 					ClearTextLine(0, dt[s].y);
 
 					/* dt[s].x = (MachWidth - FontWidth * strlen(str2[ s ])) / 2; */
-				      if (s < MAX_WATCHES / 2)
-				      {
+					  if (s < MAX_WATCHES / 2)
+					  {
 						dt[s].x = ((MachWidth / 2) - FontWidth * strlen(str2[ s ])) / 2;
-				      }
-				      else
-				      {
+					  }
+					  else
+					  {
 						dt[s].x = ((MachWidth / 2) - FontWidth * strlen(str2[ s ])) / 2 + (MachWidth / 2);
-				      }
+					  }
 
 					cheat_clearbitmap();
 
@@ -6059,14 +6053,14 @@ void ChooseWatch(void)
 					ClearTextLine(0, dt[s].y);
 
 					/* dt[s].x = (MachWidth - FontWidth * strlen(str2[ s ])) / 2; */
-				      if (s < MAX_WATCHES / 2)
-				      {
+					  if (s < MAX_WATCHES / 2)
+					  {
 						dt[s].x = ((MachWidth / 2) - FontWidth * strlen(str2[ s ])) / 2;
-				      }
-				      else
-				      {
+					  }
+					  else
+					  {
 						dt[s].x = ((MachWidth / 2) - FontWidth * strlen(str2[ s ])) / 2 + (MachWidth / 2);
-				      }
+					  }
 
 					cheat_clearbitmap();
 
@@ -6092,14 +6086,14 @@ void ChooseWatch(void)
 				ClearTextLine(0, dt[s].y);
 
 				/* dt[s].x = (MachWidth - FontWidth * strlen(str2[ s ])) / 2; */
-			      if (s < MAX_WATCHES / 2)
-			      {
+				  if (s < MAX_WATCHES / 2)
+				  {
 					dt[s].x = ((MachWidth / 2) - FontWidth * strlen(str2[ s ])) / 2;
-			      }
-			      else
-			      {
+				  }
+				  else
+				  {
 					dt[s].x = ((MachWidth / 2) - FontWidth * strlen(str2[ s ])) / 2 + (MachWidth / 2);
-			      }
+				  }
 
 				cheat_clearbitmap();
 
@@ -6192,14 +6186,14 @@ void ChooseWatch(void)
 						ClearTextLine(0, dt[i].y);
 
 						/* dt[i].x = (MachWidth - FontWidth * strlen(str2[ i ])) / 2; */
-					      if (i < MAX_WATCHES / 2)
-					      {
+						  if (i < MAX_WATCHES / 2)
+						  {
 							dt[i].x = ((MachWidth / 2) - FontWidth * strlen(str2[ i ])) / 2;
-					      }
-					      else
-					      {
+						  }
+						  else
+						  {
 							dt[i].x = ((MachWidth / 2) - FontWidth * strlen(str2[ i ])) / 2 + (MachWidth / 2);
-					      }
+						  }
 
 						cheat_clearbitmap();
 
@@ -6298,14 +6292,14 @@ void ChooseWatch(void)
 				ClearTextLine(0, dt[s].y);
 
 				/* dt[s].x = (MachWidth - FontWidth * strlen(str2[ s ])) / 2; */
-			      if (s < MAX_WATCHES / 2)
-			      {
+				  if (s < MAX_WATCHES / 2)
+				  {
 					dt[s].x = ((MachWidth / 2) - FontWidth * strlen(str2[ s ])) / 2;
-			      }
-			      else
-			      {
+				  }
+				  else
+				  {
 					dt[s].x = ((MachWidth / 2) - FontWidth * strlen(str2[ s ])) / 2 + (MachWidth / 2);
-			      }
+				  }
 
 				cheat_clearbitmap();
 
@@ -6422,7 +6416,7 @@ int cheat_menu(void)
 
 				case 9:
 					done = 1;
-			      s = 0;
+				  s = 0;
 					break;
 			}
 			break;
@@ -6457,11 +6451,11 @@ void StopCheat(void)
 
 void DoCheat(void)
 {
-	int i,y;
+	int i;
 	char buf[80];
 
 
-    DisplayWatches(0, &WatchX, &WatchY, buf, MAX_WATCHES, 0, 0);
+	DisplayWatches(0, &WatchX, &WatchY, buf, MAX_WATCHES, 0, 0);
 
 	/* Affect the memory */
 	for (i = 0; CheatEnabled == 1 && i < ActiveCheatTotal;i ++)
@@ -6485,7 +6479,7 @@ void DoCheat(void)
 						WR_GAMERAM (ActiveCheatTable[i].CpuNo,
 						ActiveCheatTable[i].Address,
 								ActiveCheatTable[i].Data);
-				    DeleteActiveCheatFromTable(i);
+					DeleteActiveCheatFromTable(i);
 						break;
 					case 2:
 					case 2 + OFFSET_LINK_CHEAT:
@@ -6510,7 +6504,7 @@ void DoCheat(void)
 						break;
 
 					/* 5,6,7 check if the value has changed, if yes, start a timer
-					    when the timer end, change the location*/
+						when the timer end, change the location*/
 					case 5:
 					case 5 + OFFSET_LINK_CHEAT:
 						if (	RD_GAMERAM (ActiveCheatTable[i].CpuNo,
@@ -6614,7 +6608,7 @@ void DoCheat(void)
 								RD_GAMERAM (ActiveCheatTable[i].CpuNo,
 								ActiveCheatTable[i].Address) |
 									ActiveCheatTable[i].Data);
-				    DeleteActiveCheatFromTable(i);
+					DeleteActiveCheatFromTable(i);
 						break;
 					case 22:
 					case 22 + OFFSET_LINK_CHEAT:
@@ -6658,7 +6652,7 @@ void DoCheat(void)
 								RD_GAMERAM (ActiveCheatTable[i].CpuNo,
 								ActiveCheatTable[i].Address) &
 									~ActiveCheatTable[i].Data);
-				    DeleteActiveCheatFromTable(i);
+					DeleteActiveCheatFromTable(i);
 						break;
 					case 42:
 					case 42 + OFFSET_LINK_CHEAT:
@@ -6709,7 +6703,7 @@ void DoCheat(void)
 						WR_GAMERAM (ActiveCheatTable[i].CpuNo,
 						ActiveCheatTable[i].Address,
 								ActiveCheatTable[i].Data);
-				    DeleteActiveCheatFromTable(i);
+					DeleteActiveCheatFromTable(i);
 						break;
 
 						/*Special case, linked with 5,6,7 */
@@ -6809,24 +6803,8 @@ void DoCheat(void)
   /* KEYCODE_CHEAT_TOGGLE Enable/Disable the active cheats on the fly. Required for some cheat */
   if (input_ui_pressed(IPT_UI_TOGGLE_CHEAT) && ActiveCheatTotal)
   {
-      CheatEnabled ^= 1;
-      cheat_framecounter = Machine->drv->frames_per_second / 2;
-      cheat_updatescreen = 1;
-  }
-
-  if (cheat_updatescreen)
-  {
-	if (--cheat_framecounter > 0)
-      {
-		y = (MachHeight - FontHeight) / 2;
-	      xprintf(0, 0,y,"Cheats %s", (CheatEnabled ? "On" : "Off"));
-      }
-	else
-	{
-		osd_clearbitmap( Machine -> scrbitmap );	/* Clear Screen */
-		(Machine->drv->vh_update)(Machine->scrbitmap,1);  /* Make Game Redraw Screen */
-	      cheat_updatescreen = 0;
-	}
+	  CheatEnabled ^= 1;
+	  usrintf_showmessage("Cheats %s", (CheatEnabled ? "On" : "Off"));
   }
 
   /* KEYCODE_INSERT toggles the Watch display ON */

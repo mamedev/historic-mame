@@ -1041,9 +1041,9 @@ static void init_razmataz(void)
 }
 
 
-GAME( 1982, zaxxon,   0,      zaxxon,   zaxxon,   0,        ROT90,  "Sega",    "Zaxxon (set 1)" )
-GAME( 1982, zaxxon2,  zaxxon, zaxxon,   zaxxon,   0,        ROT90,  "Sega",    "Zaxxon (set 2)" )
-GAME( 1982, zaxxonb,  zaxxon, zaxxon,   zaxxon,   zaxxonb,  ROT90,  "bootleg", "Jackson" )
-GAME( 1982, szaxxon,  0,      zaxxon,   zaxxon,   szaxxon,  ROT90,  "Sega",    "Super Zaxxon" )
-GAME( 1984, futspy,   0,      futspy,   futspy,   futspy,   ROT270, "Sega",    "Future Spy" )
-GAME( 1983, razmataz, 0,      razmataz, razmataz, razmataz, ROT270, "Sega",    "Razzmatazz" )
+GAMEX( 1982, zaxxon,   0,      zaxxon,   zaxxon,   0,        ROT90,  "Sega",    "Zaxxon (set 1)", GAME_NO_COCKTAIL )
+GAMEX( 1982, zaxxon2,  zaxxon, zaxxon,   zaxxon,   0,        ROT90,  "Sega",    "Zaxxon (set 2)", GAME_NO_COCKTAIL )
+GAMEX( 1982, zaxxonb,  zaxxon, zaxxon,   zaxxon,   zaxxonb,  ROT90,  "bootleg", "Jackson", GAME_NO_COCKTAIL )
+GAMEX( 1982, szaxxon,  0,      zaxxon,   zaxxon,   szaxxon,  ROT90,  "Sega",    "Super Zaxxon", GAME_NO_COCKTAIL )
+GAMEX( 1984, futspy,   0,      futspy,   futspy,   futspy,   ROT270, "Sega",    "Future Spy", GAME_NO_COCKTAIL )
+GAMEX( 1983, razmataz, 0,      razmataz, razmataz, razmataz, ROT270, "Sega",    "Razzmatazz", GAME_NO_SOUND | GAME_NO_COCKTAIL )

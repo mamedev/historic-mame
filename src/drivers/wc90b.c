@@ -477,4 +477,4 @@ void init_wc90b(void)
 }
 
 
-GAME( 1989, wc90b, wc90, wc90b, wc90b, wc90b, ROT0, "bootleg", "Euro League" )
+GAMEX( 1989, wc90b, wc90, wc90b, wc90b, wc90b, ROT0, "bootleg", "Euro League", GAME_NO_COCKTAIL )

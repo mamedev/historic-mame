@@ -5,6 +5,10 @@ Bagman memory map (preliminary)
 driver by Nicola Salmoria
 protection emulation by Jarek Burczynski and Andrew Deschenes
 
+TODO:
+- speech
+
+
 0000-5fff ROM
 6000-67ff RAM
 9000-93ff Video RAM
@@ -676,10 +680,10 @@ ROM_END
 
 
 
-GAME( 1982, bagman,   0,       bagman, bagman,  0, ROT270, "Valadon Automation", "Bagman" )
-GAME( 1982, bagnard,  bagman,  bagman, bagman,  0, ROT270, "Valadon Automation", "Le Bagnard" )
-GAME( 1982, bagmans,  bagman,  bagman, bagmans, 0, ROT270, "Valadon Automation (Stern license)", "Bagman (Stern set 1)" )
-GAME( 1982, bagmans2, bagman,  bagman, bagman,  0, ROT270, "Valadon Automation (Stern license)", "Bagman (Stern set 2)" )
-GAME( 1984, sbagman,  0,       bagman, sbagman, 0, ROT270, "Valadon Automation", "Super Bagman" )
-GAME( 1984, sbagmans, sbagman, bagman, sbagman, 0, ROT270, "Valadon Automation (Stern license)", "Super Bagman (Stern)" )
+GAMEX(1982, bagman,   0,       bagman, bagman,  0, ROT270, "Valadon Automation", "Bagman", GAME_IMPERFECT_SOUND )
+GAMEX(1982, bagnard,  bagman,  bagman, bagman,  0, ROT270, "Valadon Automation", "Le Bagnard", GAME_IMPERFECT_SOUND )
+GAMEX(1982, bagmans,  bagman,  bagman, bagmans, 0, ROT270, "Valadon Automation (Stern license)", "Bagman (Stern set 1)", GAME_IMPERFECT_SOUND )
+GAMEX(1982, bagmans2, bagman,  bagman, bagman,  0, ROT270, "Valadon Automation (Stern license)", "Bagman (Stern set 2)", GAME_IMPERFECT_SOUND )
+GAMEX(1984, sbagman,  0,       bagman, sbagman, 0, ROT270, "Valadon Automation", "Super Bagman", GAME_IMPERFECT_SOUND )
+GAMEX(1984, sbagmans, sbagman, bagman, sbagman, 0, ROT270, "Valadon Automation (Stern license)", "Super Bagman (Stern)", GAME_IMPERFECT_SOUND )
 GAME( 1983, pickin,   0,       pickin, pickin,  0, ROT270, "Valadon Automation", "Pickin'" )

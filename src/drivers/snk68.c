@@ -11,7 +11,7 @@
 
 	For some strange reason version 2 of Street Smart runs on Pow hardware!
 
-	Emulation by Bryan McPhail, mish@tendril.force9.net
+	Emulation by Bryan McPhail, mish@tendril.co.uk
 
 	To Do:
 
@@ -149,8 +149,7 @@ static struct MemoryReadAddress searchar_readmem[] =
 {
 	{ 0x000000, 0x03ffff, MRA_ROM },
 	{ 0x040000, 0x043fff, MRA_BANK1 },
-	{ 0x080000, 0x080003, protcontrols_r }, /* Player 1 & 2 */
-	{ 0x080004, 0x080005, input_port_2_r }, /* Coins */
+	{ 0x080000, 0x080005, protcontrols_r }, /* Player 1 & 2 */
 	{ 0x0c0000, 0x0c0001, rotary_1_r }, /* Player 1 rotary */
 	{ 0x0c8000, 0x0c8001, rotary_2_r }, /* Player 2 rotary */
 	{ 0x0d0000, 0x0d0001, rotary_lsb_r }, /* Extra rotary bits */
@@ -245,8 +244,8 @@ INPUT_PORTS_START( pow )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START2  )
 
 	PORT_START
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN3 ) /* Service button */
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_SERVICE )
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_SERVICE1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_SERVICE )	/* same as the service mode dsw */
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_COIN1 )
@@ -324,8 +323,8 @@ INPUT_PORTS_START( powj )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START2  )
 
 	PORT_START
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN3 ) /* Service button */
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_SERVICE )
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_SERVICE1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_SERVICE )	/* same as the service mode dsw */
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_COIN1 )
@@ -402,8 +401,8 @@ INPUT_PORTS_START( searchar )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START2  )
 
 	PORT_START	/* coin */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN3 )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_SERVICE )
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_SERVICE1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_SERVICE )	/* same as the service mode dsw */
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_COIN1 )
@@ -486,8 +485,8 @@ INPUT_PORTS_START( streetsm )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START2  )
 
 	PORT_START	/* coin */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN3 )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_SERVICE )
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_SERVICE1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_SERVICE )	/* same as the service mode dsw */
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_COIN1 )
@@ -571,8 +570,8 @@ INPUT_PORTS_START( streetsj )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START2  )
 
 	PORT_START	/* coin */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN3 )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_SERVICE )
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_SERVICE1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_SERVICE )	/* same as the service mode dsw */
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_COIN1 )
@@ -642,7 +641,7 @@ INPUT_PORTS_START( ikari3 )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON3 )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON2 )
-	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_START1 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START1 )
 
 	PORT_START	/* Player 2 controls */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER2 )
@@ -652,11 +651,11 @@ INPUT_PORTS_START( ikari3 )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER2 )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
-	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_START2  )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START2  )
 
 	PORT_START	/* coin */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN3 )
-	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_SERVICE )
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_SERVICE1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_SERVICE )	/* same as the service mode dsw */
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_COIN1 )
@@ -1263,11 +1262,11 @@ static void init_searchar(void)
 
 /******************************************************************************/
 
-GAME( 1988, pow,      0,        pow,      pow,      0,        ROT0,  "SNK", "P.O.W. - Prisoners of War (US)" )
-GAME( 1988, powj,     pow,      pow,      powj,     0,        ROT0,  "SNK", "Datsugoku - Prisoners of War (Japan)" )
-GAME( 1989, searchar, 0,        searchar, searchar, searchar, ROT90, "SNK", "SAR - Search And Rescue (World)" )
-GAME( 1989, sercharu, searchar, searchar, searchar, searchar, ROT90, "SNK", "SAR - Search And Rescue (US)" )
-GAME( 1989, streetsm, 0,        streetsm, streetsm, 0,        ROT0,  "SNK", "Street Smart (US version 2)" )
-GAME( 1989, streets1, streetsm, searchar, streetsm, 0,        ROT0,  "SNK", "Street Smart (US version 1)" )
-GAME( 1989, streetsj, streetsm, searchar, streetsj, 0,        ROT0,  "SNK", "Street Smart (Japan version 1)" )
-GAME( 1989, ikari3,   0,        ikari3,   ikari3,   searchar, ROT0,  "SNK", "Ikari III - The Rescue" )
+GAMEX( 1988, pow,      0,        pow,      pow,      0,        ROT0,  "SNK", "P.O.W. - Prisoners of War (US)", GAME_NO_COCKTAIL )
+GAMEX( 1988, powj,     pow,      pow,      powj,     0,        ROT0,  "SNK", "Datsugoku - Prisoners of War (Japan)", GAME_NO_COCKTAIL )
+GAMEX( 1989, searchar, 0,        searchar, searchar, searchar, ROT90, "SNK", "SAR - Search And Rescue (World)", GAME_NO_COCKTAIL )
+GAMEX( 1989, sercharu, searchar, searchar, searchar, searchar, ROT90, "SNK", "SAR - Search And Rescue (US)", GAME_NO_COCKTAIL )
+GAMEX( 1989, streetsm, 0,        streetsm, streetsm, 0,        ROT0,  "SNK", "Street Smart (US version 2)", GAME_NO_COCKTAIL )
+GAMEX( 1989, streets1, streetsm, searchar, streetsm, 0,        ROT0,  "SNK", "Street Smart (US version 1)", GAME_NO_COCKTAIL )
+GAMEX( 1989, streetsj, streetsm, searchar, streetsj, 0,        ROT0,  "SNK", "Street Smart (Japan version 1)", GAME_NO_COCKTAIL )
+GAMEX( 1989, ikari3,   0,        ikari3,   ikari3,   searchar, ROT0,  "SNK", "Ikari III - The Rescue", GAME_NO_COCKTAIL )

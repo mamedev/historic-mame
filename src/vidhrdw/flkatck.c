@@ -27,8 +27,19 @@ static void get_tile_info_A( int col, int row )
 	int offs = row*32 + col;
 	int attr = k007121_ram[offs];
 	int code = k007121_ram[offs+0x400];
-	int bank =	((attr & 0x80) >> 7) | ((attr & 0x10) >> 3) |
-				((attr & 0x40) >> 4) | ((K007121_ctrlram[0][4] & 0x0c) << 1);
+	int bit0 = (K007121_ctrlram[0][0x05] >> 0) & 0x03;
+	int bit1 = (K007121_ctrlram[0][0x05] >> 2) & 0x03;
+	int bit2 = (K007121_ctrlram[0][0x05] >> 4) & 0x03;
+	int bit3 = (K007121_ctrlram[0][0x05] >> 6) & 0x03;
+	int bank = ((attr & 0x80) >> 7) |
+			((attr >> (bit0+2)) & 0x02) |
+			((attr >> (bit1+1)) & 0x04) |
+			((attr >> (bit2  )) & 0x08) |
+			((attr >> (bit3-1)) & 0x10) |
+			((K007121_ctrlram[0][0x03] & 0x01) << 5);
+	int mask = (K007121_ctrlram[0][0x04] & 0xf0) >> 4;
+
+	bank = (bank & ~(mask << 1)) | ((K007121_ctrlram[0][0x04] & mask) << 1);
 
 	if ((attr == 0x0d) && (!(K007121_ctrlram[0][0])) && (!(K007121_ctrlram[0][2])))
 		bank = 0;	/*	this allows the game to print text
@@ -106,7 +117,7 @@ int flkatck_vh_start(void)
 	if (k007121_tilemap[0] && k007121_tilemap[1])
 	{
 		struct rectangle clip = Machine->drv->visible_area;
-		clip.min_x += 39;
+		clip.min_x += 40;
 		tilemap_set_clip(k007121_tilemap[0],&clip);
 
 		clip.max_x = 39;

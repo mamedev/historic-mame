@@ -1328,11 +1328,10 @@ ROM_END
 
 
 
-GAME( 1980, wow,      0,    wow,      wow,      0, ROT0,   "Midway", "Wizard of Wor" )
-GAME( 1981, robby,    0,    robby,    robby,    0, ROT0,   "Bally Midway", "Robby Roto" )
-GAME( 1981, gorf,     0,    gorf,     gorf,     0, ROT270, "Midway", "Gorf" )
-GAME( 1981, gorfpgm1, gorf, gorf,     gorf,     0, ROT270, "Midway", "Gorf (Program 1)" )
-GAME( 1980, spacezap, 0,    spacezap, spacezap, 0, ROT0,   "Midway", "Space Zap" )
-GAME( 1978, seawolf2, 0,    seawolf,  seawolf2, 0, ROT0,   "Midway", "Sea Wolf II" )
-GAMEX(1980, ebases,   0,    ebases,   ebases,   0, ROT0,   "Midway", "Extra Bases", GAME_WRONG_COLORS )
-
+GAMEX( 1980, wow,      0,    wow,      wow,      0, ROT0,   "Midway", "Wizard of Wor", GAME_IMPERFECT_COLORS )
+GAMEX( 1981, robby,    0,    robby,    robby,    0, ROT0,   "Bally Midway", "Robby Roto", GAME_IMPERFECT_COLORS )
+GAMEX( 1981, gorf,     0,    gorf,     gorf,     0, ROT270, "Midway", "Gorf", GAME_IMPERFECT_COLORS )
+GAMEX( 1981, gorfpgm1, gorf, gorf,     gorf,     0, ROT270, "Midway", "Gorf (Program 1)", GAME_IMPERFECT_COLORS )
+GAMEX( 1980, spacezap, 0,    spacezap, spacezap, 0, ROT0,   "Midway", "Space Zap", GAME_IMPERFECT_COLORS )
+GAMEX( 1978, seawolf2, 0,    seawolf,  seawolf2, 0, ROT0,   "Midway", "Sea Wolf II", GAME_IMPERFECT_COLORS )
+GAMEX( 1980, ebases,   0,    ebases,   ebases,   0, ROT0,   "Midway", "Extra Bases", GAME_WRONG_COLORS )

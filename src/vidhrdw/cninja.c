@@ -1,6 +1,6 @@
 /***************************************************************************
 
-   Caveman Ninja Video emulation - Bryan McPhail, mish@tendril.force9.net
+   Caveman Ninja Video emulation - Bryan McPhail, mish@tendril.co.uk
 
 ****************************************************************************
 

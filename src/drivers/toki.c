@@ -683,8 +683,8 @@ void init_tokib(void)
 
 
 
-GAMEX(1989, toki,  0,    toki,  toki, 0,     ROT0, "Tad", "Toki (set 1)", GAME_NOT_WORKING )
-GAMEX(1989, toki2, toki, toki,  toki, 0,     ROT0, "Tad", "Toki (set 2)", GAME_NOT_WORKING )
-GAMEX(1989, toki3, toki, toki,  toki, 0,     ROT0, "Tad", "Toki (set 3)", GAME_NOT_WORKING )
-GAMEX(1989, tokiu, toki, toki,  toki, 0,     ROT0, "Tad (Fabtek license)", "Toki (US)", GAME_NOT_WORKING )
-GAME( 1989, tokib, toki, tokib, toki, tokib, ROT0, "bootleg", "Toki (bootleg)" )
+GAMEX( 1989, toki,  0,    toki,  toki, 0,     ROT0, "Tad", "Toki (set 1)", GAME_NOT_WORKING | GAME_NO_COCKTAIL )
+GAMEX( 1989, toki2, toki, toki,  toki, 0,     ROT0, "Tad", "Toki (set 2)", GAME_NOT_WORKING | GAME_NO_COCKTAIL )
+GAMEX( 1989, toki3, toki, toki,  toki, 0,     ROT0, "Tad", "Toki (set 3)", GAME_NOT_WORKING | GAME_NO_COCKTAIL )
+GAMEX( 1989, tokiu, toki, toki,  toki, 0,     ROT0, "Tad (Fabtek license)", "Toki (US)", GAME_NOT_WORKING | GAME_NO_COCKTAIL )
+GAMEX( 1989, tokib, toki, tokib, toki, tokib, ROT0, "bootleg", "Toki (bootleg)", GAME_NO_COCKTAIL )

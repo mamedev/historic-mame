@@ -337,10 +337,7 @@ static struct MachineDriver machine_driver_sprint2 =
 	sprint2_vh_screenrefresh,
 
 	/* sound hardware */
-	0,
-	0,
-	0,
-	0
+	0,0,0,0
 };
 
 static struct MachineDriver machine_driver_sprint1 =
@@ -371,10 +368,7 @@ static struct MachineDriver machine_driver_sprint1 =
 	sprint1_vh_screenrefresh,
 
 	/* sound hardware */
-	0,
-	0,
-	0,
-	0
+	0,0,0,0
 
 };
 
@@ -426,5 +420,5 @@ ROM_END
 
 
 
-GAME( 1978, sprint1, 0,       sprint1, sprint1, 0, ROT0, "Atari", "Sprint 1" )
-GAME( 1976, sprint2, sprint1, sprint2, sprint2, 0, ROT0, "Atari", "Sprint 2" )
+GAMEX( 1978, sprint1, 0,       sprint1, sprint1, 0, ROT0, "Atari", "Sprint 1", GAME_NO_SOUND )
+GAMEX( 1976, sprint2, sprint1, sprint2, sprint2, 0, ROT0, "Atari", "Sprint 2", GAME_NO_SOUND )

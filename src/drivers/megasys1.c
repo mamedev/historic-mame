@@ -698,7 +698,7 @@ static struct YM2151interface ym2151_interface_##_shortname_ = \
 { \
 	1, \
 	_fm_clock_, \
-	{ YM3012_VOL(50,MIXER_PAN_LEFT,50,MIXER_PAN_RIGHT) }, \
+	{ YM3012_VOL(80,MIXER_PAN_LEFT,80,MIXER_PAN_RIGHT) }, \
 	{ 0 } \
 }; \
  \
@@ -707,7 +707,7 @@ static struct OKIM6295interface okim6295_interface_##_shortname_ = \
 	2, \
 	{_oki1_clock_, _oki2_clock_},\
 	{ REGION_SOUND1, REGION_SOUND2 }, \
-	{ 50, 50 } \
+	{ 30, 30 } \
 }; \
  \
 static struct MachineDriver machine_driver_##_shortname_ = \

@@ -10,7 +10,7 @@
 
 static struct osd_bitmap *pf1_bitmap;
 static struct osd_bitmap *pf2_bitmap;
-static unsigned char *dirty_pf1,*dirty_pf2,*private_spriteram_2,*private_spriteram;
+static unsigned char *dirty_pf1,*dirty_pf2;
 unsigned char *hcastle_pf1_videoram,*hcastle_pf2_videoram;
 static int gfx_bank;
 
@@ -54,12 +54,8 @@ int hcastle_vh_start(void)
 
 	dirty_pf1=malloc (0x1000);
 	dirty_pf2=malloc (0x1000);
-	private_spriteram=malloc (0x800);
-	private_spriteram_2=malloc (0x800);
 	memset(dirty_pf1,1,0x1000);
 	memset(dirty_pf2,1,0x1000);
-	memset(private_spriteram,0,0x800);
-	memset(private_spriteram_2,0,0x800);
 
 	return 0;
 }
@@ -70,10 +66,7 @@ void hcastle_vh_stop(void)
 	osd_free_bitmap(pf2_bitmap);
 	free(dirty_pf1);
 	free(dirty_pf2);
-	free(private_spriteram);
-	free(private_spriteram_2);
 }
-
 
 
 
@@ -104,9 +97,9 @@ void hcastle_pf1_control_w(int offset,int data)
 	if (offset==3)
 	{
 		if ((data&0x8)==0)
-			memcpy(private_spriteram,spriteram+0x800,0x800);
+			buffer_spriteram(spriteram+0x800,0x800);
 		else
-			memcpy(private_spriteram,spriteram,0x800);
+			buffer_spriteram(spriteram,0x800);
 	}
 	K007121_ctrl_0_w(offset,data);
 }
@@ -116,9 +109,9 @@ void hcastle_pf2_control_w(int offset,int data)
 	if (offset==3)
 	{
 		if ((data&0x8)==0)
-			memcpy(private_spriteram_2,spriteram_2+0x800,0x800);
+			buffer_spriteram_2(spriteram_2+0x800,0x800);
 		else
-			memcpy(private_spriteram_2,spriteram_2,0x800);
+			buffer_spriteram_2(spriteram_2,0x800);
 	}
 	K007121_ctrl_1_w(offset,data);
 }
@@ -241,8 +234,8 @@ void hcastle_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		scrollx = -((K007121_ctrlram[1][1]<<8)+K007121_ctrlram[1][0]);
 		copyscrollbitmap(bitmap,pf2_bitmap,1,&scrollx,1,&scrolly,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
 
-		draw_sprites( bitmap, private_spriteram, 0 );
-		draw_sprites( bitmap, private_spriteram_2, 1 );
+		draw_sprites( bitmap, buffered_spriteram, 0 );
+		draw_sprites( bitmap, buffered_spriteram_2, 1 );
 
 		scrolly = -K007121_ctrlram[0][2];
 		scrollx = -((K007121_ctrlram[0][1]<<8)+K007121_ctrlram[0][0]);
@@ -258,7 +251,7 @@ void hcastle_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		scrollx = -((K007121_ctrlram[0][1]<<8)+K007121_ctrlram[0][0]);
 		copyscrollbitmap(bitmap,pf1_bitmap,1,&scrollx,1,&scrolly,&Machine->drv->visible_area,TRANSPARENCY_PEN,palette_transparent_pen);
 
-		draw_sprites( bitmap, private_spriteram, 0 );
-		draw_sprites( bitmap, private_spriteram_2, 1 );
+		draw_sprites( bitmap, buffered_spriteram, 0 );
+		draw_sprites( bitmap, buffered_spriteram_2, 1 );
 	}
 }

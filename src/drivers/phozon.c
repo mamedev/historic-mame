@@ -351,4 +351,4 @@ ROM_END
 
 
 
-GAME( 1983, phozon, 0, phozon, phozon, 0, ROT90, "Namco", "Phozon" )
+GAMEX( 1983, phozon, 0, phozon, phozon, 0, ROT90, "Namco", "Phozon", GAME_NO_COCKTAIL )

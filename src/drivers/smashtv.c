@@ -2353,10 +2353,80 @@ ROM_START( nbajam )
 	ROM_LOAD ( "nbau13.bin",  0x080000, 0x80000, 0xb6fe24bd )
 ROM_END
 
+ROM_START( nbajamr2 )
+	ROM_REGION( 0x100000, REGION_CPU1 )     /* 34010 code */
+	ROM_LOAD_ODD ( "jam2uj12.bin",  0x00000, 0x80000, 0x0fe80b36 )  /* even */
+	ROM_LOAD_EVEN( "jam2ug12.bin",  0x00000, 0x80000, 0x5d106315 )  /* odd  */
+
+	ROM_REGION( 0x50000, REGION_CPU2 ) /* sound CPU */
+	ROM_LOAD (  "nbau3.bin",  0x010000, 0x20000, 0x3a3ea480 )
+	ROM_RELOAD (              0x030000, 0x20000 )
+
+	ROM_REGION( 0xc00000, REGION_GFX1 )      /* graphics */
+	ROM_LOAD ( "nbaug14.bin",  0x000000, 0x80000, 0x04bb9f64 )  /* even */
+	ROM_LOAD ( "nbaug16.bin",  0x080000, 0x80000, 0x8591c572 )  /* even */
+	ROM_LOAD ( "nbaug17.bin",  0x100000, 0x80000, 0x6f921886 )  /* even */
+	ROM_LOAD ( "nbaug18.bin",  0x180000, 0x80000, 0x5162d3d6 )  /* even */
+
+	ROM_LOAD ( "nbauj14.bin",  0x300000, 0x80000, 0xb34b7af3 )  /* odd  */
+	ROM_LOAD ( "nbauj16.bin",  0x380000, 0x80000, 0xd2e554f1 )  /* odd  */
+	ROM_LOAD ( "nbauj17.bin",  0x400000, 0x80000, 0xb2e14981 )  /* odd  */
+	ROM_LOAD ( "nbauj18.bin",  0x480000, 0x80000, 0xfdee0037 )  /* odd  */
+
+	ROM_LOAD ( "nbaug19.bin",  0x600000, 0x80000, 0xa8f22fbb )  /* even */
+	ROM_LOAD ( "nbaug20.bin",  0x680000, 0x80000, 0x44fd6221 )  /* even */
+	ROM_LOAD ( "nbaug22.bin",  0x700000, 0x80000, 0xab05ed89 )  /* even */
+	ROM_LOAD ( "nbaug23.bin",  0x780000, 0x80000, 0x7b934c7a )  /* even */
+
+	ROM_LOAD ( "nbauj19.bin",  0x900000, 0x80000, 0x8130a8a2 )  /* odd  */
+	ROM_LOAD ( "nbauj20.bin",  0x980000, 0x80000, 0xf9cebbb6 )  /* odd  */
+	ROM_LOAD ( "nbauj22.bin",  0xa00000, 0x80000, 0x59a95878 )  /* odd  */
+	ROM_LOAD ( "nbauj23.bin",  0xa80000, 0x80000, 0x427d2eee )  /* odd  */
+
+	ROM_REGION( 0x100000, REGION_SOUND1 ) /* ADPCM sample */
+	ROM_LOAD ( "nbau12.bin",  0x000000, 0x80000, 0xb94847f1 )
+	ROM_LOAD ( "nbau13.bin",  0x080000, 0x80000, 0xb6fe24bd )
+ROM_END
+
+ROM_START( nbajamte )
+	ROM_REGION( 0x100000, REGION_CPU1 )     /* 34010 code */
+	ROM_LOAD_ODD ( "te-uj12.bin",  0x00000, 0x80000, 0xd7c21bc4 )  /* even */
+	ROM_LOAD_EVEN( "te-ug12.bin",  0x00000, 0x80000, 0x7ad49229 )  /* odd  */
+
+	ROM_REGION( 0x50000, REGION_CPU2 ) /* sound CPU */
+	ROM_LOAD (  "te-u3.bin",  0x010000, 0x20000, 0xd4551195 )
+	ROM_RELOAD (              0x030000, 0x20000 )
+
+	ROM_REGION( 0xc00000, REGION_GFX1 )      /* graphics */
+	ROM_LOAD ( "nbaug14.bin",  0x000000, 0x80000, 0x04bb9f64 )  /* even  same as nbajam */
+	ROM_LOAD ( "te-ug16.bin",  0x080000, 0x80000, 0xc7ce74d0 )  /* even */
+	ROM_LOAD ( "te-ug17.bin",  0x100000, 0x80000, 0x9401be62 )  /* even */
+	ROM_LOAD ( "te-ug18.bin",  0x180000, 0x80000, 0x6fd08f57 )  /* even */
+
+	ROM_LOAD ( "nbauj14.bin",  0x300000, 0x80000, 0xb34b7af3 )  /* odd  same as nbajam */
+	ROM_LOAD ( "te-uj16.bin",  0x380000, 0x80000, 0x905ad88b )  /* odd  */
+	ROM_LOAD ( "te-uj17.bin",  0x400000, 0x80000, 0x44cf3151 )  /* odd  */
+	ROM_LOAD ( "te-uj18.bin",  0x480000, 0x80000, 0x4eb73c26 )  /* odd  */
+
+	ROM_LOAD ( "nbaug19.bin",  0x600000, 0x80000, 0xa8f22fbb )  /* even  same as nbajam */
+	ROM_LOAD ( "te-ug20.bin",  0x680000, 0x80000, 0x8a48728c )  /* even */
+	ROM_LOAD ( "te-ug22.bin",  0x700000, 0x80000, 0x3b05133b )  /* even */
+	ROM_LOAD ( "te-ug23.bin",  0x780000, 0x80000, 0x854f73bc )  /* even */
+
+	ROM_LOAD ( "nbauj19.bin",  0x900000, 0x80000, 0x8130a8a2 )  /* odd  same as nbajam */
+	ROM_LOAD ( "te-uj20.bin",  0x980000, 0x80000, 0xbf263d61 )  /* odd  */
+	ROM_LOAD ( "te-uj22.bin",  0xa00000, 0x80000, 0x39791051 )  /* odd  */
+	ROM_LOAD ( "te-uj23.bin",  0xa80000, 0x80000, 0xf8c30998 )  /* odd  */
+
+	ROM_REGION( 0x100000, REGION_SOUND1 ) /* ADPCM sample */
+	ROM_LOAD ( "te-u12.bin",  0x000000, 0x80000, 0x4fac97bc )
+	ROM_LOAD ( "te-u13.bin",  0x080000, 0x80000, 0x6f27b202 )
+ROM_END
+
 
 
 GAME( 1988, narc,     0,       narc,    narc,    narc,     ROT0_16BIT, "Williams", "Narc (rev 7.00)" )
-GAME( 1988, narc3,    narc,    narc,    narc,    narc,     ROT0_16BIT, "Williams", "Narc (rev 3.00)" )
+GAMEX(1988, narc3,    narc,    narc,    narc,    narc,     ROT0_16BIT, "Williams", "Narc (rev 3.00)", GAME_NOT_WORKING )
 GAME( 1990, smashtv,  0,       smashtv, smashtv, smashtv,  ROT0_16BIT, "Williams", "Smash T.V. (rev 8.00)" )
 GAME( 1990, smashtv6, smashtv, smashtv, smashtv, smashtv,  ROT0_16BIT, "Williams", "Smash T.V. (rev 6.00)" )
 GAME( 1990, smashtv5, smashtv, smashtv, smashtv, smashtv,  ROT0_16BIT, "Williams", "Smash T.V. (rev 5.00)" )
@@ -2379,3 +2449,5 @@ GAMEX(1993, mk2,      0,       mk2,     mk2,     mk2,      ROT0_16BIT, "Midway",
 GAMEX(1993, mk2r32,   mk2,     mk2,     mk2,     mk2,      ROT0_16BIT, "Midway",   "Mortal Kombat II (rev L3.2 (European))", GAME_NOT_WORKING )
 GAMEX(1993, mk2r14,   mk2,     mk2,     mk2,     mk2r14,   ROT0_16BIT, "Midway",   "Mortal Kombat II (rev L1.4)", GAME_NOT_WORKING )
 GAMEX(1993, nbajam,   0,       nbajam,  nbajam,  nbajam,   ROT0_16BIT, "Midway",   "NBA Jam (rev 3.01 04/07/93)", GAME_NOT_WORKING )
+GAMEX(1993, nbajamr2, nbajam,  nbajam,  nbajam,  nbajam,   ROT0_16BIT, "Midway",   "NBA Jam (rev 2.00 02/10/93)", GAME_NOT_WORKING )
+GAMEX(1994, nbajamte, nbajam,  nbajam,  nbajam,  nbajam,   ROT0_16BIT, "Midway",   "NBA Jam TE (rev 4.0 03/23/94)", GAME_NOT_WORKING )

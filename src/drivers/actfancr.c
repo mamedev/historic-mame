@@ -11,7 +11,7 @@
 
 	I believe the USA version of Act Fancer is called 'Out Fencer'
 
-	Emulation by Bryan McPhail, mish@tendril.force9.net
+	Emulation by Bryan McPhail, mish@tendril.co.uk
 
 *******************************************************************************/
 
@@ -411,8 +411,8 @@ static struct YM3812interface ym3812_interface =
 static struct OKIM6295interface okim6295_interface =
 {
 	1,              /* 1 chip */
-	{ 8000 },       /* 8000Hz frequency */
-	{ REGION_SOUND1 },          /* memory region 3 */
+	{ 7759 },       /* frequency */
+	{ REGION_SOUND1 },
 	{ 85 }
 };
 
@@ -440,7 +440,7 @@ static struct MachineDriver machine_driver_actfancr =
 			ignore_interrupt,0	/* Interrupts from OPL chip */
 		}
 	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION*2,
+	60, 529,
 	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written*/
 	0,
 
@@ -492,7 +492,7 @@ static struct MachineDriver machine_driver_triothep =
 			ignore_interrupt,0	/* Interrupts from OPL chip */
 		}
 	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION*2,
+	60, 529,
 	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written*/
 	0,
 
@@ -530,6 +530,39 @@ static struct MachineDriver machine_driver_triothep =
 /******************************************************************************/
 
 ROM_START( actfancr )
+	ROM_REGION( 0x200000, REGION_CPU1 ) /* Need to allow full RAM allocation for now */
+	ROM_LOAD( "fe08-2.bin", 0x00000, 0x10000, 0x0d36fbfa )
+	ROM_LOAD( "fe09-2.bin", 0x10000, 0x10000, 0x27ce2bb1 )
+	ROM_LOAD( "10",   0x20000, 0x10000, 0xcabad137 )
+
+	ROM_REGION( 0x10000, REGION_CPU2 ) /* 6502 Sound CPU */
+	ROM_LOAD( "17-1", 0x08000, 0x8000, 0x289ad106 )
+
+	ROM_REGION( 0x20000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "15", 0x00000, 0x10000, 0xa1baf21e ) /* Chars */
+	ROM_LOAD( "16", 0x10000, 0x10000, 0x22e64730 )
+
+	ROM_REGION( 0x60000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "02", 0x00000, 0x10000, 0xb1db0efc ) /* Sprites */
+	ROM_LOAD( "03", 0x10000, 0x08000, 0xf313e04f )
+	ROM_LOAD( "06", 0x18000, 0x10000, 0x8cb6dd87 )
+	ROM_LOAD( "07", 0x28000, 0x08000, 0xdd345def )
+	ROM_LOAD( "00", 0x30000, 0x10000, 0xd50a9550 )
+	ROM_LOAD( "01", 0x40000, 0x08000, 0x34935e93 )
+	ROM_LOAD( "04", 0x48000, 0x10000, 0xbcf41795 )
+	ROM_LOAD( "05", 0x58000, 0x08000, 0xd38b94aa )
+
+	ROM_REGION( 0x40000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "14", 0x00000, 0x10000, 0xd6457420 ) /* Tiles */
+	ROM_LOAD( "12", 0x10000, 0x10000, 0x08787b7a )
+	ROM_LOAD( "13", 0x20000, 0x10000, 0xc30c37dc )
+	ROM_LOAD( "11", 0x30000, 0x10000, 0x1f006d9f )
+
+	ROM_REGION( 0x10000, REGION_SOUND1 ) /* ADPCM sounds */
+	ROM_LOAD( "18",   0x00000, 0x10000, 0x5c55b242 )
+ROM_END
+
+ROM_START( actfanc1 )
 	ROM_REGION( 0x200000, REGION_CPU1 ) /* Need to allow full RAM allocation for now */
 	ROM_LOAD( "08-1", 0x00000, 0x10000, 0x3bf214a4 )
 	ROM_LOAD( "09-1", 0x10000, 0x10000, 0x13ae78d5 )
@@ -672,6 +705,7 @@ static void init_actfancj(void)
 
 
 
-GAME( 1989, actfancr, 0,        actfancr, actfancr, actfancr, ROT0, "Data East Corporation", "Act-Fancer Cybernetick Hyper Weapon (World)" )
-GAME( 1989, actfancj, actfancr, actfancr, actfancr, actfancj, ROT0, "Data East Corporation", "Act-Fancer Cybernetick Hyper Weapon (Japan)" )
+GAME( 1989, actfancr, 0,        actfancr, actfancr, actfancr, ROT0, "Data East Corporation", "Act-Fancer Cybernetick Hyper Weapon (World revision 2)" )
+GAME( 1989, actfanc1, actfancr, actfancr, actfancr, actfancr, ROT0, "Data East Corporation", "Act-Fancer Cybernetick Hyper Weapon (World revision 1)" )
+GAME( 1989, actfancj, actfancr, actfancr, actfancr, actfancj, ROT0, "Data East Corporation", "Act-Fancer Cybernetick Hyper Weapon (Japan revision 1)" )
 GAME( 1989, triothep, 0,        triothep, triothep, 0,        ROT0, "Data East Corporation", "Trio The Punch - Never Forget Me... (Japan)" )

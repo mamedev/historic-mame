@@ -8,7 +8,7 @@ Notes:
 
 	Seems to be controlled in same byte as flipscreen.
 
-	Emulation by Bryan McPhail, mish@tendril.force9.net
+	Emulation by Bryan McPhail, mish@tendril.co.uk
 
 ***************************************************************************/
 

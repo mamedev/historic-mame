@@ -34,8 +34,8 @@
 #include "driver.h"
 
 
-void z80bw_flipscreen_w(int data);
-void z80bw_screen_red_w(int data);
+void invaders_flipscreen_w(int data);
+void invaders_screen_red_w(int data);
 
 
 /* output port 0x04 definitions - sound effect drive outputs */
@@ -124,13 +124,13 @@ void astinvad_sh_port_4_w(int offset, int data)
 	{
 		PLAY( SND_BASEHIT, 0 );
     	/* turn all colours red here */
-    	z80bw_screen_red_w(1);
+    	invaders_screen_red_w(1);
     }
 	if ( bitsGoneLow & OUT_PORT_4_BASEHIT )
 	{
 		STOP( SND_BASEHIT );
     	/* restore colours here */
-    	z80bw_screen_red_w(0);
+    	invaders_screen_red_w(0);
     }
 
 	if ( bitsGoneHigh & OUT_PORT_4_INVADERHIT )  PLAY( SND_INVADERHIT, 0 );
@@ -168,7 +168,7 @@ void astinvad_sh_port_5_w(int offset, int data)
 	if ( bitsGoneHigh & OUT_PORT_5_UFO2 )  PLAY( SND_UFO2, 0 );
 	if ( bitsGoneLow  & OUT_PORT_5_UFO2 )  STOP( SND_UFO2 );
 
-	if ( bitsChanged  & OUT_PORT_5_FLIP )  z80bw_flipscreen_w(data & 0x20);
+	if ( bitsChanged  & OUT_PORT_5_FLIP )  invaders_flipscreen_w(data & 0x20);
 
 	if ((bitsChanged  & OUT_PORT_5_UNUSED) && errorlog)  fprintf(errorlog, "Snd Port 5 = %02X\n", data & OUT_PORT_5_UNUSED);
 }

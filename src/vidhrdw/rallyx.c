@@ -64,6 +64,9 @@ static struct rectangle radarvisibleareaflip =
         -- 470 ohm resistor  -- RED
   bit 0 -- 1  kohm resistor  -- RED
 
+  In Rally-X there is a 1 kohm pull-down on B only, in Locomotion the
+  1 kohm pull-down is an all three RGB outputs.
+
 ***************************************************************************/
 void rallyx_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
 {
@@ -110,6 +113,49 @@ void rallyx_vh_convert_color_prom(unsigned char *palette, unsigned short *colort
 		COLOR(2,i) = 16 + i;
 }
 
+void locomotn_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
+{
+	int i;
+	#define TOTAL_COLORS(gfxn) (Machine->gfx[gfxn]->total_colors * Machine->gfx[gfxn]->color_granularity)
+	#define COLOR(gfxn,offs) (colortable[Machine->drv->gfxdecodeinfo[gfxn].color_codes_start + offs])
+
+
+	for (i = 0;i < Machine->drv->total_colors;i++)
+	{
+		int bit0,bit1,bit2;
+
+
+		/* red component */
+		bit0 = (*color_prom >> 0) & 0x01;
+		bit1 = (*color_prom >> 1) & 0x01;
+		bit2 = (*color_prom >> 2) & 0x01;
+		*(palette++) = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+		/* green component */
+		bit0 = (*color_prom >> 3) & 0x01;
+		bit1 = (*color_prom >> 4) & 0x01;
+		bit2 = (*color_prom >> 5) & 0x01;
+		*(palette++) = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+		/* blue component */
+		bit0 = (*color_prom >> 6) & 0x01;
+		bit1 = (*color_prom >> 7) & 0x01;
+		*(palette++) = 0x50 * bit0 + 0xab * bit1;
+
+		color_prom++;
+	}
+
+	/* color_prom now points to the beginning of the lookup table */
+
+	/* character lookup table */
+	/* sprites use the same color lookup table as characters */
+	/* characters use colors 0-15 */
+	for (i = 0;i < TOTAL_COLORS(0);i++)
+		COLOR(0,i) = *(color_prom++) & 0x0f;
+
+	/* radar dots lookup table */
+	/* they use colors 16-19 */
+	for (i = 0;i < 4;i++)
+		COLOR(2,i) = 16 + i;
+}
 
 
 /***************************************************************************
@@ -597,7 +643,7 @@ if (flipscreen) sx += 32;
 
 		drawgfx(bitmap,Machine->gfx[1],
 				((spriteram[offs] & 0x7c) >> 2) + 0x20*(spriteram[offs] & 0x01) + ((spriteram[offs] & 0x80) >> 1),
-				spriteram_2[offs + 1],
+				spriteram_2[offs + 1] & 0x3f,
 				!flipscreen,!flipscreen,
 				sx,sy,
 				flipscreen ? &spritevisibleareaflip : &spritevisiblearea,TRANSPARENCY_COLOR,0);
@@ -750,7 +796,7 @@ if (flipscreen) sx += 32;
 		if (spriteram[offs] & 0x01)	/* ??? */
 			drawgfx(bitmap,Machine->gfx[1],
 					((spriteram[offs] & 0x7c) >> 2) + 0x20*(spriteram[offs] & 0x01) + ((spriteram[offs] & 0x80) >> 1),
-					spriteram_2[offs + 1],
+					spriteram_2[offs + 1] & 0x3f,
 					flipx,flipy,
 					sx,sy,
 					&Machine->drv->visible_area,TRANSPARENCY_COLOR,0);

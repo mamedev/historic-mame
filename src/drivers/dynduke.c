@@ -17,7 +17,7 @@
 	There is a country code byte in the program to select between
 	Seibu Kaihatsu/Fabtek/Taito licenses.
 
-	Emulation by Bryan McPhail, mish@tendril.force9.net
+	Emulation by Bryan McPhail, mish@tendril.co.uk
 
 ***************************************************************************/
 

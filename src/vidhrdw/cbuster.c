@@ -1,6 +1,6 @@
 /***************************************************************************
 
-   Crude Buster Video emulation - Bryan McPhail, mish@tendril.force9.net
+   Crude Buster Video emulation - Bryan McPhail, mish@tendril.co.uk
 
 ***************************************************************************/
 

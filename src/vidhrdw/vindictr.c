@@ -59,14 +59,17 @@
 #define YDIM (YCHARS*8)
 
 
-#define DEBUG_VIDEO 0
-
-
 /*************************************
  *
  *	Statics
  *
  *************************************/
+
+struct mo_data
+{
+	struct osd_bitmap *bitmap;
+	UINT8 color_xor;
+};
 
 static struct atarigen_pf_state pf_state;
 
@@ -85,10 +88,6 @@ static void pf_render_callback(const struct rectangle *clip, const struct rectan
 
 static void mo_color_callback(const UINT16 *data, const struct rectangle *clip, void *param);
 static void mo_render_callback(const UINT16 *data, const struct rectangle *clip, void *param);
-
-#if DEBUG_VIDEO
-static int debug(void);
-#endif
 
 
 
@@ -252,10 +251,6 @@ void vindictr_scanline_update(int scanline)
 
 void vindictr_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 {
-#if DEBUG_VIDEO
-	int xorval = debug();
-#endif
-
 	/* update the palette, and mark things dirty */
 	if (update_palette())
 		memset(atarigen_pf_dirty, 0xff, atarigen_playfieldram_size / 2);
@@ -452,7 +447,9 @@ static void pf_render_callback(const struct rectangle *clip, const struct rectan
 static void pf_overrender_callback(const struct rectangle *clip, const struct rectangle *tiles, const struct atarigen_pf_state *state, void *param)
 {
 	const struct GfxElement *gfx = Machine->gfx[0];
-	struct osd_bitmap *bitmap = param;
+	const struct mo_data *modata = param;
+	struct osd_bitmap *bitmap = modata->bitmap;
+	int color_xor = modata->color_xor;
 	int bank = state->param[0];
 	int x, y;
 
@@ -466,13 +463,13 @@ static void pf_overrender_callback(const struct rectangle *clip, const struct re
 		{
 			int offs = x * 64 + y;
 			int data = READ_WORD(&atarigen_playfieldram[offs * 2]);
-			int color = (16 + ((data >> 11) & 14)) ^ 1;
+			int color = 16 + ((data >> 11) & 14);
 			int code = bank * 0x1000 + (data & 0xfff);
 			int hflip = data & 0x8000;
 			int sx = (8 * x - state->hscroll) & 0x1ff;
 			if (sx >= XDIM) sx -= 0x200;
 
-			drawgfx(bitmap, gfx, code, color, hflip, 0, sx, sy, 0, TRANSPARENCY_THROUGH, palette_transparent_pen);
+			drawgfx(bitmap, gfx, code, color ^ color_xor, hflip, 0, sx, sy, 0, TRANSPARENCY_THROUGH, palette_transparent_pen);
 		}
 	}
 }
@@ -574,110 +571,10 @@ static void mo_render_callback(const UINT16 *data, const struct rectangle *clip,
 
 	/* overrender the playfield */
 	if (total_usage & 0x0002)
-		atarigen_pf_process(pf_overrender_callback, bitmap, &pf_clip);
-}
-
-
-
-/*************************************
- *
- *	Debugging
- *
- *************************************/
-
-#if DEBUG_VIDEO
-
-static void mo_print(const UINT16 *data, const struct rectangle *clip, void *param)
-{
-	int code = data[0] & 0x7fff;
-	int hsize = ((data[2] >> 3) & 7) + 1;
-	int vsize = (data[2] & 7) + 1;
-	int xpos = -pf_state.hscroll + (data[1] >> 7);
-	int ypos = -pf_state.vscroll - (data[2] >> 7) - vsize * 8;
-	int color = data[1] & 15;
-	int hflip = data[2] & 0x0040;
-
-	FILE *f = (FILE *)param;
-	fprintf(f, "P=%04X X=%03X Y=%03X SIZE=%Xx%X COL=%X FLIP=%X  -- DATA=%04X %04X %04X %04X\n",
-			code, xpos, ypos, hsize, vsize, color, hflip >> 6, data[0], data[1], data[2], data[3]);
-}
-
-static int debug(void)
-{
-	int hidebank = -1;
-
-	if (keyboard_pressed(KEYCODE_Q)) hidebank = 0;
-	if (keyboard_pressed(KEYCODE_W)) hidebank = 1;
-	if (keyboard_pressed(KEYCODE_E)) hidebank = 2;
-	if (keyboard_pressed(KEYCODE_R)) hidebank = 3;
-	if (keyboard_pressed(KEYCODE_T)) hidebank = 4;
-	if (keyboard_pressed(KEYCODE_Y)) hidebank = 5;
-	if (keyboard_pressed(KEYCODE_U)) hidebank = 6;
-	if (keyboard_pressed(KEYCODE_I)) hidebank = 7;
-
-	if (keyboard_pressed(KEYCODE_A)) hidebank = 8;
-	if (keyboard_pressed(KEYCODE_S)) hidebank = 9;
-	if (keyboard_pressed(KEYCODE_D)) hidebank = 10;
-	if (keyboard_pressed(KEYCODE_F)) hidebank = 11;
-	if (keyboard_pressed(KEYCODE_G)) hidebank = 12;
-	if (keyboard_pressed(KEYCODE_H)) hidebank = 13;
-	if (keyboard_pressed(KEYCODE_J)) hidebank = 14;
-	if (keyboard_pressed(KEYCODE_K)) hidebank = 15;
-
-	if (keyboard_pressed(KEYCODE_9))
 	{
-		static int count;
-		char name[50];
-		FILE *f;
-		int i;
-
-		while (keyboard_pressed(KEYCODE_9)) { }
-
-		sprintf(name, "Dump %d", ++count);
-		f = fopen(name, "wt");
-
-		fprintf(f, "\n\nPalette RAM:\n");
-
-		for (i = 0x000; i < 0x800; i++)
-		{
-			fprintf(f, "%04X ", READ_WORD(&paletteram[i*2]));
-			if ((i & 15) == 15) fprintf(f, "\n");
-			if ((i & 255) == 255) fprintf(f, "\n");
-		}
-
-		fprintf(f, "\n\nMotion Objects (drawn)\n");
-		atarigen_mo_process(mo_print, f);
-
-		fprintf(f, "\n\nMotion Objects\n");
-		for (i = 0; i < 0x400; i++)
-		{
-			fprintf(f, "   Object %02X:  P=%04X  Y=%04X  L=%04X  X=%04X\n",
-					i,
-					READ_WORD(&atarigen_spriteram[i*8+0]),
-					READ_WORD(&atarigen_spriteram[i*8+2]),
-					READ_WORD(&atarigen_spriteram[i*8+4]),
-					READ_WORD(&atarigen_spriteram[i*8+6])
-			);
-		}
-
-		fprintf(f, "\n\nPlayfield dump\n");
-		for (i = 0; i < atarigen_playfieldram_size / 2; i++)
-		{
-			fprintf(f, "%04X ", READ_WORD(&atarigen_playfieldram[i*2]));
-			if ((i & 63) == 63) fprintf(f, "\n");
-		}
-
-		fprintf(f, "\n\nAlpha dump\n");
-		for (i = 0; i < atarigen_alpharam_size / 2; i++)
-		{
-			fprintf(f, "%04X ", READ_WORD(&atarigen_alpharam[i*2]));
-			if ((i & 63) == 63) fprintf(f, "\n");
-		}
-
-		fclose(f);
+		struct mo_data modata;
+		modata.bitmap = bitmap;
+		modata.color_xor = (color == 0) ? 0 : 1;
+		atarigen_pf_process(pf_overrender_callback, &modata, &pf_clip);
 	}
-
-	return hidebank;
 }
-
-#endif

@@ -66,6 +66,9 @@ struct MachineSound
 #if (HAS_NAMCO)
 #include "sound/namco.h"
 #endif
+#if (HAS_TMS36XX)
+#include "sound/tms36xx.h"
+#endif
 #if (HAS_TMS5220)
 #include "sound/5220intf.h"
 #endif
@@ -190,6 +193,9 @@ enum
 #endif
 #if (HAS_NAMCO)
 	SOUND_NAMCO,
+#endif
+#if (HAS_TMS36XX)
+	SOUND_TMS36XX,		/* currently TMS3615 and TMS3617 */
 #endif
 #if (HAS_TMS5220)
 	SOUND_TMS5220,

@@ -3,6 +3,7 @@
 
 
 #define MAX_8910 5
+#define ALL_8910_CHANNELS -1
 
 struct AY8910interface
 {
@@ -19,6 +20,7 @@ struct AY8910interface
 void AY8910_reset(int chip);
 
 void AY8910_set_clock(int chip,int _clock);
+void AY8910_set_volume(int chip,int channel,int volume);
 
 
 void AY8910Write(int chip,int a,int data);

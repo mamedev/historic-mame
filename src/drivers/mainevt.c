@@ -3,7 +3,7 @@
   The Main Event, (c) 1988 Konami
   Devastators, (c) 1988 Konami
 
-Emulation by Bryan McPhail, mish@tendril.force9.net
+Emulation by Bryan McPhail, mish@tendril.co.uk
 
 Notes:
 * Schematics show a palette/work RAM bank selector, but this doesn't seem

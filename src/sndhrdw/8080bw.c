@@ -32,7 +32,9 @@
 #include "cpu/i8039/i8039.h"
 #include "machine/74123.h"
 
-void invaders_vh_flipscreen(int data);
+void invaders_flipscreen_w(int data);
+void invaders_screen_red_w(int data);
+
 
 /*
    Note: For invad2ct, the Player 1 sounds are the same as for the
@@ -52,9 +54,7 @@ void invad2ct_sh_port1_w(int offset, int data)
 		sample_stop (7);
 
 	if (data & 0x02 && ~Sound & 0x02)
-	{
 		sample_start (8, 11, 0);		/* Missle Sound - Player 2 */
-	}
 
 	if (data & 0x04 && ~Sound & 0x04)
 		sample_start (9, 12, 0);		/* Explosion - Player 2 */
@@ -73,105 +73,27 @@ void invaders_sh_port3_w(int offset, int data)
 	static unsigned char Sound = 0;
 
 	if (data & 0x01 && ~Sound & 0x01)
-		sample_start (0, 0, 1);			/* Saucer Sound */
+		sample_start (0, 0, 1);
 
 	if (~data & 0x01 && Sound & 0x01)
 		sample_stop (0);
 
 	if (data & 0x02 && ~Sound & 0x02)
-		sample_start (1, 1, 0);			/* Missle Sound */
+		sample_start (1, 1, 0);
 
 	if (data & 0x04 && ~Sound & 0x04)
-		sample_start (2, 2, 0);			/* Explosion */
+		sample_start (2, 2, 0);
+
+	if (~data & 0x04 && Sound & 0x04)
+		sample_stop (2);
 
 	if (data & 0x08 && ~Sound & 0x08)
-		sample_start (3, 3, 0);			/* Invader Hit */
+		sample_start (3, 3, 0);
 
 	if (data & 0x10 && ~Sound & 0x10)
-		sample_start (4, 9, 0);			/* Bonus Missle Base */
+		sample_start (4, 9, 0);
 
-	Sound = data;
-}
-
-/* LT 20-3-1998 */
-void invadpt2_sh_port3_w(int offset, int data)
-{
-	static unsigned char Sound = 0;
-
-	if (data & 0x01 && ~Sound & 0x01)
-		sample_start (0, 0, 1);
-
-	if (~data & 0x01 && Sound & 0x01)
-		sample_stop (0);
-
-	if (data & 0x02 && ~Sound & 0x02)
-		sample_start (1, 1, 0);
-
-	if (data & 0x04 && ~Sound & 0x04){
-            sample_start (2, 2, 0);
-    /* turn all colours red here */
-			palette_change_color(1,0xff,0x00,0x00);
-			palette_change_color(2,0xff,0x00,0x00);
-			palette_change_color(3,0xff,0x00,0x00);
-			palette_change_color(4,0xff,0x00,0x00);
-			palette_change_color(5,0xff,0x00,0x00);
-			palette_change_color(6,0xff,0x00,0x00);
-        }
-
-	if (~data & 0x04 && Sound & 0x04){
-            sample_stop (2);
-            palette_change_color(1,0xff,0x20,0x20);
-            palette_change_color(2,0x20,0xff,0x20);
-            palette_change_color(3,0xff,0xff,0x20);
-            palette_change_color(4,0xff,0xff,0xff);
-            palette_change_color(5,0x20,0xff,0xff);
-            palette_change_color(6,0xff,0x20,0xff);
-        }
-	if (data & 0x08 && ~Sound & 0x08)
-		sample_start (3, 3, 0);
-
-	Sound = data;
-}
-
-/* LT 20-3-1998 */
-void invaders_sh_port4_w(int offset, int data)
-{
-	static unsigned char Sound = 0;
-
-	if (data & 0x01 && ~Sound & 0x01)
-		sample_start (0, 0, 1);
-
-	if (~data & 0x01 && Sound & 0x01)
-		sample_stop (0);
-
-	if (data & 0x02 && ~Sound & 0x02)
-		sample_start (1, 1, 0);
-
-	if (data & 0x04 && ~Sound & 0x04){
-            sample_start (2, 2, 0);
-    /* turn all colours red here */
-            palette_change_color(1,0xff,0x00,0x00);
-            palette_change_color(2,0xff,0x00,0x00);
-            palette_change_color(3,0xff,0x00,0x00);
-            palette_change_color(4,0xff,0x00,0x00);
-            palette_change_color(5,0xff,0x00,0x00);
-            palette_change_color(6,0xff,0x00,0x00);
-            palette_change_color(7,0xff,0x00,0x00);
-        }
-
-	if (~data & 0x04 && Sound & 0x04){
-            sample_stop (2);
-    /* restore colours here */
-            palette_change_color(1,0x20,0x20,0xff);
-            palette_change_color(2,0x20,0xff,0x20);
-            palette_change_color(3,0x20,0xff,0xff);
-            palette_change_color(4,0xff,0x20,0x20);
-            palette_change_color(5,0xff,0x20,0xff);
-            palette_change_color(6,0xff,0xff,0x20);
-            palette_change_color(7,0xff,0xff,0xff);
-        }
-	if (data & 0x08 && ~Sound & 0x08)
-		sample_start (3, 3, 0);
+	invaders_screen_red_w(data & 0x04);
 
 	Sound = data;
 }
@@ -195,7 +117,7 @@ void invaders_sh_port5_w(int offset, int data)
 	if (data & 0x10 && ~Sound & 0x10)
 		sample_start (6, 8, 0);			/* Saucer Hit */
 
-	invaders_vh_flipscreen(data & 0x20);
+	invaders_flipscreen_w(data & 0x20);
 
 	Sound = data;
 }
@@ -219,7 +141,7 @@ void invad2ct_sh_port7_w(int offset, int data)
 	if (data & 0x10 && ~Sound & 0x10)
 		sample_start (12, 18, 0);		/* Saucer Hit - Player 2 */
 
-	invaders_vh_flipscreen(data & 0x20);
+	invaders_flipscreen_w(data & 0x20);
 
 	Sound = data;
 }
@@ -270,35 +192,7 @@ void boothill_sh_port5_w(int offset, int data)
 
 void ballbomb_sh_port3_w(int offset, int data)
 {
-	static unsigned char colorswap = 0;
-
-	if (data & 0x04 && ~colorswap & 0x04)
-	{
-	    /* turn all colours red here */
-
-        palette_change_color(1,0xff,0x00,0x00);
-        palette_change_color(2,0xff,0x00,0x00);
-        palette_change_color(3,0xff,0x00,0x00);
-        palette_change_color(4,0xff,0x00,0x00);
-        palette_change_color(5,0xff,0x00,0x00);
-        palette_change_color(6,0xff,0x00,0x00);
-        palette_change_color(7,0xff,0x00,0x00);
-    }
-
-	if (~data & 0x04 && colorswap & 0x04)
-	{
-    	/* restore colours here */
-
-        palette_change_color(1,0x20,0xff,0xff);
-        palette_change_color(2,0xff,0x20,0xff);
-        palette_change_color(3,0x20,0x20,0xff);
-        palette_change_color(4,0xff,0xff,0x20);
-        palette_change_color(5,0x20,0xff,0x20);
-        palette_change_color(6,0xff,0x20,0x20);
-        palette_change_color(7,0xff,0xff,0xff);
-    }
-
-	colorswap = data;
+	invaders_screen_red_w(data & 0x04);
 }
 
 

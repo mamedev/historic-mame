@@ -2349,7 +2349,7 @@ ROM_START( redufo )
 	ROM_LOAD( "ru5a",         0x2000, 0x0800, 0xcb648ff3 )
 	ROM_LOAD( "ru6a",         0x2800, 0x0800, 0xe1a9f58e )
 
-	ROM_REGION( 0x2000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x1000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "ruhja",        0x0000, 0x0800, 0x8a422b0d )
 	ROM_LOAD( "rukla",        0x0800, 0x0800, 0x1eb84cb1 )
 

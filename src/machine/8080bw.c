@@ -13,19 +13,10 @@
 static int shift_data1,shift_data2,shift_amount;
 
 
-int invaders_shift_data_r(int offset)
-{
-	return ((((shift_data1 << 8) | shift_data2) << shift_amount) >> 8) & 0xff;
-}
-
-
-
 void invaders_shift_amount_w(int offset,int data)
 {
 	shift_amount = data;
 }
-
-
 
 void invaders_shift_data_w(int offset,int data)
 {
@@ -34,47 +25,46 @@ void invaders_shift_data_w(int offset,int data)
 }
 
 
+#define SHIFT  (((((shift_data1 << 8) | shift_data2) << (shift_amount & 0x07)) >> 8) & 0xff)
+
+
+int invaders_shift_data_r(int offset)
+{
+	return SHIFT;
+}
+
+int invaders_shift_data_rev_r(int offset)
+{
+	int	ret = SHIFT;
+
+	ret = ((ret & 0x01) << 7)
+	    | ((ret & 0x02) << 5)
+	    | ((ret & 0x04) << 3)
+	    | ((ret & 0x08) << 1)
+	    | ((ret & 0x10) >> 1)
+	    | ((ret & 0x20) >> 3)
+	    | ((ret & 0x40) >> 5)
+	    | ((ret & 0x80) >> 7);
+
+	return ret;
+}
+
+int invaders_shift_data_comp_r(int offset)
+{
+	return SHIFT ^ 0xff;
+}
+
 
 int invaders_interrupt(void)
 {
 	static int count;
 
-
 	count++;
 
-        if (count & 1)
-                return 0x00cf;  /* RST 08h */
+	if (count & 1)
+		return 0x00cf;  /* RST 08h */
 	else
-                return 0x00d7;  /* RST 10h */
-}
-
-int seawolf_shift_data_r(int offset)
-{
-	int reverse_data;
-
-	reverse_data  = ((((shift_data1 << 8) | shift_data2) << shift_amount) >> 8) & 0xff;
-	reverse_data  = ((reverse_data & 0x01) << 7)
-	              | ((reverse_data & 0x02) << 5)
-	              | ((reverse_data & 0x04) << 3)
-	              | ((reverse_data & 0x08) << 1)
-	              | ((reverse_data & 0x10) >> 1)
-	              | ((reverse_data & 0x20) >> 3)
-	              | ((reverse_data & 0x40) >> 5)
-	              | ((reverse_data & 0x80) >> 7);
-	return reverse_data;
-}
-
-
-void zzzap_snd2_w(int offset, int data)
-{
-}
-
-void zzzap_snd5_w(int offset, int data)
-{
-}
-
-void zzzap_wdog(void)
-{
+		return 0x00d7;  /* RST 10h */
 }
 
 /****************************************************************************
@@ -86,31 +76,7 @@ int boothill_shift_data_r(int offset)
 	if (shift_amount < 0x10)
 		return invaders_shift_data_r(0);
     else
-    {
-    	int reverse_data1,reverse_data2;
-
-    	/* Reverse the bytes */
-
-        reverse_data1 = ((shift_data1 & 0x01) << 7)
-                      | ((shift_data1 & 0x02) << 5)
-                      | ((shift_data1 & 0x04) << 3)
-                      | ((shift_data1 & 0x08) << 1)
-                      | ((shift_data1 & 0x10) >> 1)
-                      | ((shift_data1 & 0x20) >> 3)
-                      | ((shift_data1 & 0x40) >> 5)
-                      | ((shift_data1 & 0x80) >> 7);
-
-        reverse_data2 = ((shift_data2 & 0x01) << 7)
-                      | ((shift_data2 & 0x02) << 5)
-                      | ((shift_data2 & 0x04) << 3)
-                      | ((shift_data2 & 0x08) << 1)
-                      | ((shift_data2 & 0x10) >> 1)
-                      | ((shift_data2 & 0x20) >> 3)
-                      | ((shift_data2 & 0x40) >> 5)
-                      | ((shift_data2 & 0x80) >> 7);
-
-		return ((((reverse_data2 << 8) | reverse_data1) << (0xff-shift_amount)) >> 8) & 0xff;
-    }
+    	return invaders_shift_data_rev_r(0);
 }
 
 /* Grays Binary again! */
@@ -149,15 +115,14 @@ static const int ControllerTable[64] = {
     36 , 37 , 39 , 38 , 34 , 35 , 33 , 32
 };
 
-/* TODO: I think the bits may need inverting for Sea Wolf and Space Encounters, a la Boot Hill */
 int gray6bit_controller0_r(int offset)
 {
-    return (input_port_0_r(0) & 0xc0) + ControllerTable[input_port_0_r(0) & 0x3f];
+    return (input_port_0_r(0) & 0xc0) + (ControllerTable[input_port_0_r(0) & 0x3f] ^ 0x3f);
 }
 
 int gray6bit_controller1_r(int offset)
 {
-    return (input_port_1_r(0) & 0xc0) + ControllerTable[input_port_1_r(0) & 0x3f];
+    return (input_port_1_r(0) & 0xc0) + (ControllerTable[input_port_1_r(0) & 0x3f] ^ 0x3f);
 }
 
 int seawolf_port_0_r (int offset)
@@ -166,48 +131,14 @@ int seawolf_port_0_r (int offset)
 }
 
 
-int midbowl_shift_data_r(int offset)
+static int desertgu_controller_select;
+
+int desertgu_port_1_r(int offset)
 {
-return ((~(((shift_data1 << 8) | shift_data2) << shift_amount) >> 8)) & 0xff;
+	return readinputport(desertgu_controller_select ? 1 : 2);
 }
 
-int midbowl_shift_data_rev_r(int offset)
+void desertgu_controller_select_w(int offset, int data)
 {
-int reverse_data, return_data;
-
-reverse_data  = ((~(((shift_data1 << 8) | shift_data2) << shift_amount) >> 8)) & 0xff;
-return_data  =  ((reverse_data & 0x01) << 7)
-              | ((reverse_data & 0x02) << 5)
-              | ((reverse_data & 0x04) << 3)
-              | ((reverse_data & 0x08) << 1)
-              | ((reverse_data & 0x10) >> 1)
-              | ((reverse_data & 0x20) >> 3)
-              | ((reverse_data & 0x40) >> 5)
-              | ((reverse_data & 0x80) >> 7);
-return return_data;
-}
-
-/*
- * note: shift_amount is always 0
- */
-
-int blueshrk_shift_data_r(int offset)
-{
-return (((((shift_data1 << 8) | shift_data2) << (0)) >> 8)) & 0xff;
-}
-
-int blueshrk_shift_data_rev_r(int offset)
-{
-int reverse_data, return_data;
-
-reverse_data  = (((((shift_data1 << 8) | shift_data2) << (0)) >> 8)) & 0xff;
-return_data  =  ((reverse_data & 0x01) << 7)
-              | ((reverse_data & 0x02) << 5)
-              | ((reverse_data & 0x04) << 3)
-              | ((reverse_data & 0x08) << 1)
-              | ((reverse_data & 0x10) >> 1)
-              | ((reverse_data & 0x20) >> 3)
-              | ((reverse_data & 0x40) >> 5)
-              | ((reverse_data & 0x80) >> 7);
-return return_data;
+	desertgu_controller_select = data & 0x08;
 }

@@ -599,6 +599,6 @@ static void init_jumping(void)
 
 
 
-GAME( 1987, rainbow,  0,       rainbow, rainbow, 0,       ROT0, "Taito Corporation", "Rainbow Islands" )
-GAMEX(1988, rainbowe, rainbow, rainbow, rainbow, 0,       ROT0, "Taito Corporation", "Rainbow Islands (Extra)", GAME_NOT_WORKING )
-GAMEX(1989, jumping,  rainbow, jumping, jumping, jumping, ROT0, "bootleg", "Jumping", GAME_NO_SOUND )
+GAMEX( 1987, rainbow,  0,       rainbow, rainbow, 0,       ROT0, "Taito Corporation", "Rainbow Islands", GAME_NO_COCKTAIL )
+GAMEX( 1988, rainbowe, rainbow, rainbow, rainbow, 0,       ROT0, "Taito Corporation", "Rainbow Islands (Extra)", GAME_NOT_WORKING | GAME_NO_COCKTAIL )
+GAMEX( 1989, jumping,  rainbow, jumping, jumping, jumping, ROT0, "bootleg", "Jumping", GAME_NO_SOUND | GAME_NO_COCKTAIL )

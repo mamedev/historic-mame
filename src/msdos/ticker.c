@@ -58,9 +58,6 @@ void init_ticker(void)
 		uclock_t a,b;
 		TICKER start,end;
 
-		printf("calculating CPU speed... ");
-		fflush(stdout);
-
 		use_rdtsc = 1;	/* must set this before calling ticker() */
 
 		a = uclock();
@@ -75,12 +72,12 @@ void init_ticker(void)
 		do
 		{
 			b = uclock();
-		} while (b-a < UCLOCKS_PER_SEC);
+		} while (b-a < UCLOCKS_PER_SEC/4);
 		end = ticker();
-		ticks_per_sec = end - start;
+		ticks_per_sec = (end - start)*4;
 
-		printf("%d.%06d MHz\n",(int)(ticks_per_sec/1000000),(int)(ticks_per_sec%1000000));
-if (errorlog) fprintf(errorlog,"using RDTSC for timing\n");
+if (errorlog) fprintf(errorlog,"using RDTSC for timing, CPU speed = %d.%06d MHz\n",
+		(int)(ticks_per_sec/1000000),(int)(ticks_per_sec%1000000));
 	}
 	else
 	{

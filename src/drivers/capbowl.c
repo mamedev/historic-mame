@@ -252,10 +252,10 @@ INPUT_PORTS_START( capbowl )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN1 )
 
 	PORT_START	/* FAKE */
-	PORT_ANALOG( 0xff, 0x00, IPT_TRACKBALL_Y | IPF_REVERSE, 20, 10, 0, 0 )
+	PORT_ANALOG( 0xff, 0x00, IPT_TRACKBALL_Y | IPF_REVERSE, 20, 40, 0, 0 )
 
 	PORT_START	/* FAKE */
-	PORT_ANALOG( 0xff, 0x00, IPT_TRACKBALL_X, 20, 10, 0, 0 )
+	PORT_ANALOG( 0xff, 0x00, IPT_TRACKBALL_X, 20, 40, 0, 0 )
 
 	PORT_START	/* FAKE */
 	/* This fake input port is used to get the status of the F2 key, */

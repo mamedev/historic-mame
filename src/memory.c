@@ -877,14 +877,19 @@ void memory_shutdown(void)
 #define CAN_BE_MISALIGNED			0		/* word/dwords can be read on non-16-bit boundaries */
 #define ALWAYS_ALIGNED				1		/* word/dwords are always read on 16-bit boundaries */
 
+/* stupid workarounds so that we can generate an address mask that works even for 32 bits */
+#define ADDRESS_TOPBIT(abits)		(1UL << (ABITS1_##abits + ABITS2_##abits + ABITS_MIN_##abits - 1))
+#define ADDRESS_MASK(abits)			(ADDRESS_TOPBIT(abits) | (ADDRESS_TOPBIT(abits) - 1))
+
+
 /* generic byte-sized read handler */
-#define READBYTE(name,type,abits2,abitsmin)												\
+#define READBYTE(name,type,abits)														\
 int name(int address)																	\
 {																						\
 	MHELE hw;																			\
 																						\
 	/* first-level lookup */															\
-	hw = cur_mrhard[(UINT32)address >> (abits2 + abitsmin)];							\
+	hw = cur_mrhard[(UINT32)address >> (ABITS2_##abits + ABITS_MIN_##abits)];			\
 																						\
 	/* for compatibility with setbankhandler, 8-bit systems must call handlers */		\
 	/* for banked memory reads/writes */												\
@@ -902,7 +907,7 @@ int name(int address)																	\
 	if (hw >= MH_HARDMAX)																\
 	{																					\
 		hw -= MH_HARDMAX;																\
-		hw = readhardware[(hw << MH_SBITS) + (((UINT32)address >> abitsmin) & MHMASK(abits2))];	\
+		hw = readhardware[(hw << MH_SBITS) + (((UINT32)address >> ABITS_MIN_##abits) & MHMASK(ABITS2_##abits))];	\
 																						\
 		/* for compatibility with setbankhandler, 8-bit systems must call handlers */	\
 		/* for banked memory reads/writes */											\
@@ -932,7 +937,7 @@ int name(int address)																	\
 }
 
 /* generic word-sized read handler (16-bit aligned only!) */
-#define READWORD(name,type,abits2,abitsmin,align)										\
+#define READWORD(name,type,abits,align)													\
 int name##_word(int address)															\
 {																						\
 	MHELE hw;																			\
@@ -945,7 +950,7 @@ int name##_word(int address)															\
 	if (align == ALWAYS_ALIGNED || !(address & 1))										\
 	{																					\
 		/* first-level lookup */														\
-		hw = cur_mrhard[(UINT32)address >> (abits2 + abitsmin)];						\
+		hw = cur_mrhard[(UINT32)address >> (ABITS2_##abits + ABITS_MIN_##abits)];		\
 		if (hw <= HT_BANKMAX)															\
 			return READ_WORD(&cpu_bankbase[hw][address - memoryreadoffset[hw]]);		\
 																						\
@@ -953,7 +958,7 @@ int name##_word(int address)															\
 		if (hw >= MH_HARDMAX)															\
 		{																				\
 			hw -= MH_HARDMAX;															\
-			hw = readhardware[(hw << MH_SBITS) + (((UINT32)address >> abitsmin) & MHMASK(abits2))];	\
+			hw = readhardware[(hw << MH_SBITS) + (((UINT32)address >> ABITS_MIN_##abits) & MHMASK(ABITS2_##abits))];	\
 			if (hw <= HT_BANKMAX)														\
 				return READ_WORD(&cpu_bankbase[hw][address - memoryreadoffset[hw]]);	\
 		}																				\
@@ -976,7 +981,7 @@ int name##_word(int address)															\
 }
 
 /* generic dword-sized read handler (16-bit aligned only!) */
-#define READLONG(name,type,abits2,abitsmin,align)										\
+#define READLONG(name,type,abits,align)													\
 int name##_dword(int address)															\
 {																						\
 	UINT16 word1, word2;																\
@@ -989,20 +994,22 @@ int name##_dword(int address)															\
 	/* handle aligned case first */														\
 	if (align == ALWAYS_ALIGNED || !(address & 1))										\
 	{																					\
+		int address2 = (address + 2) & ADDRESS_MASK(abits);								\
+																						\
 		/* first-level lookup */														\
-		hw1 = cur_mrhard[(UINT32)address >> (abits2 + abitsmin)];						\
-		hw2 = cur_mrhard[(UINT32)(address + 2) >> (abits2 + abitsmin)];					\
+		hw1 = cur_mrhard[(UINT32)address >> (ABITS2_##abits + ABITS_MIN_##abits)];		\
+		hw2 = cur_mrhard[(UINT32)address2 >> (ABITS2_##abits + ABITS_MIN_##abits)];		\
 																						\
 		/* second-level lookup */														\
 		if (hw1 >= MH_HARDMAX)															\
 		{																				\
 			hw1 -= MH_HARDMAX;															\
-			hw1 = readhardware[(hw1 << MH_SBITS) + (((UINT32)address >> abitsmin) & MHMASK(abits2))];	\
+			hw1 = readhardware[(hw1 << MH_SBITS) + (((UINT32)address >> ABITS_MIN_##abits) & MHMASK(ABITS2_##abits))];	\
 		}																				\
 		if (hw2 >= MH_HARDMAX)															\
 		{																				\
 			hw2 -= MH_HARDMAX;															\
-			hw2 = readhardware[(hw2 << MH_SBITS) + (((UINT32)(address + 2) >> abitsmin) & MHMASK(abits2))];	\
+			hw2 = readhardware[(hw2 << MH_SBITS) + (((UINT32)address2 >> ABITS_MIN_##abits) & MHMASK(ABITS2_##abits))];	\
 		}																				\
 																						\
 		/* process each word */															\
@@ -1011,9 +1018,9 @@ int name##_dword(int address)															\
 		else																			\
 			word1 = (*memoryreadhandler[hw1])(address - memoryreadoffset[hw1]);			\
 		if (hw2 <= HT_BANKMAX)															\
-			word2 = READ_WORD(&cpu_bankbase[hw2][address + 2 - memoryreadoffset[hw2]]);	\
+			word2 = READ_WORD(&cpu_bankbase[hw2][address2 - memoryreadoffset[hw2]]);	\
 		else																			\
-			word2 = (*memoryreadhandler[hw2])(address + 2 - memoryreadoffset[hw2]);		\
+			word2 = (*memoryreadhandler[hw2])(address2 - memoryreadoffset[hw2]);		\
 																						\
 		/* fall back to handler */														\
 		if (type == TYPE_16BIT_BE)														\
@@ -1039,27 +1046,27 @@ int name##_dword(int address)															\
 
 
 /* the handlers we need to generate */
-READBYTE(cpu_readmem16,    TYPE_8BIT,     ABITS2_16,    ABITS_MIN_16)
-READBYTE(cpu_readmem20,    TYPE_8BIT,     ABITS2_20,    ABITS_MIN_20)
-READBYTE(cpu_readmem21,    TYPE_8BIT,     ABITS2_21,    ABITS_MIN_21)
+READBYTE(cpu_readmem16,    TYPE_8BIT,     16)
+READBYTE(cpu_readmem20,    TYPE_8BIT,     20)
+READBYTE(cpu_readmem21,    TYPE_8BIT,     21)
 
-READBYTE(cpu_readmem16bew, TYPE_16BIT_BE, ABITS2_16BEW, ABITS_MIN_16BEW)
-READWORD(cpu_readmem16bew, TYPE_16BIT_BE, ABITS2_16BEW, ABITS_MIN_16BEW, ALWAYS_ALIGNED)
+READBYTE(cpu_readmem16bew, TYPE_16BIT_BE, 16BEW)
+READWORD(cpu_readmem16bew, TYPE_16BIT_BE, 16BEW, ALWAYS_ALIGNED)
 
-READBYTE(cpu_readmem16lew, TYPE_16BIT_LE, ABITS2_16LEW, ABITS_MIN_16LEW)
-READWORD(cpu_readmem16lew, TYPE_16BIT_LE, ABITS2_16LEW, ABITS_MIN_16LEW, ALWAYS_ALIGNED)
+READBYTE(cpu_readmem16lew, TYPE_16BIT_LE, 16LEW)
+READWORD(cpu_readmem16lew, TYPE_16BIT_LE, 16LEW, ALWAYS_ALIGNED)
 
-READBYTE(cpu_readmem24,    TYPE_16BIT_BE, ABITS2_24,    ABITS_MIN_24)
-READWORD(cpu_readmem24,    TYPE_16BIT_BE, ABITS2_24,    ABITS_MIN_24,    CAN_BE_MISALIGNED)
-READLONG(cpu_readmem24,    TYPE_16BIT_BE, ABITS2_24,    ABITS_MIN_24,    CAN_BE_MISALIGNED)
+READBYTE(cpu_readmem24,    TYPE_16BIT_BE, 24)
+READWORD(cpu_readmem24,    TYPE_16BIT_BE, 24,    CAN_BE_MISALIGNED)
+READLONG(cpu_readmem24,    TYPE_16BIT_BE, 24,    CAN_BE_MISALIGNED)
 
-READBYTE(cpu_readmem29,    TYPE_16BIT_LE, ABITS2_29,    ABITS_MIN_29)
-READWORD(cpu_readmem29,    TYPE_16BIT_LE, ABITS2_29,    ABITS_MIN_29,    CAN_BE_MISALIGNED)
-READLONG(cpu_readmem29,    TYPE_16BIT_LE, ABITS2_29,    ABITS_MIN_29,    CAN_BE_MISALIGNED)
+READBYTE(cpu_readmem29,    TYPE_16BIT_LE, 29)
+READWORD(cpu_readmem29,    TYPE_16BIT_LE, 29,    CAN_BE_MISALIGNED)
+READLONG(cpu_readmem29,    TYPE_16BIT_LE, 29,    CAN_BE_MISALIGNED)
 
-READBYTE(cpu_readmem32,    TYPE_16BIT_BE, ABITS2_32,    ABITS_MIN_32)
-READWORD(cpu_readmem32,    TYPE_16BIT_BE, ABITS2_32,    ABITS_MIN_32,    CAN_BE_MISALIGNED)
-READLONG(cpu_readmem32,    TYPE_16BIT_BE, ABITS2_32,    ABITS_MIN_32,    CAN_BE_MISALIGNED)
+READBYTE(cpu_readmem32,    TYPE_16BIT_BE, 32)
+READWORD(cpu_readmem32,    TYPE_16BIT_BE, 32,    CAN_BE_MISALIGNED)
+READLONG(cpu_readmem32,    TYPE_16BIT_BE, 32,    CAN_BE_MISALIGNED)
 
 
 /***************************************************************************
@@ -1069,13 +1076,13 @@ READLONG(cpu_readmem32,    TYPE_16BIT_BE, ABITS2_32,    ABITS_MIN_32,    CAN_BE_
 ***************************************************************************/
 
 /* generic byte-sized write handler */
-#define WRITEBYTE(name,type,abits2,abitsmin)											\
+#define WRITEBYTE(name,type,abits)														\
 void name(int address, int data)														\
 {																						\
 	MHELE hw;																			\
 																						\
 	/* first-level lookup */															\
-	hw = cur_mwhard[(UINT32)address >> (abits2 + abitsmin)];							\
+	hw = cur_mwhard[(UINT32)address >> (ABITS2_##abits + ABITS_MIN_##abits)];			\
 																						\
 	/* for compatibility with setbankhandler, 8-bit systems must call handlers */		\
 	/* for banked memory reads/writes */												\
@@ -1097,7 +1104,7 @@ void name(int address, int data)														\
 	if (hw >= MH_HARDMAX)																\
 	{																					\
 		hw -= MH_HARDMAX;																\
-		hw = writehardware[(hw << MH_SBITS) + (((UINT32)address >> abitsmin) & MHMASK(abits2))];	\
+		hw = writehardware[(hw << MH_SBITS) + (((UINT32)address >> ABITS_MIN_##abits) & MHMASK(ABITS2_##abits))];	\
 																						\
 		/* for compatibility with setbankhandler, 8-bit systems must call handlers */	\
 		/* for banked memory reads/writes */											\
@@ -1129,7 +1136,7 @@ void name(int address, int data)														\
 }
 
 /* generic word-sized write handler (16-bit aligned only!) */
-#define WRITEWORD(name,type,abits2,abitsmin,align)										\
+#define WRITEWORD(name,type,abits,align)												\
 void name##_word(int address, int data)													\
 {																						\
 	MHELE hw;																			\
@@ -1142,7 +1149,7 @@ void name##_word(int address, int data)													\
 	if (align == ALWAYS_ALIGNED || !(address & 1))										\
 	{																					\
 		/* first-level lookup */														\
-		hw = cur_mwhard[(UINT32)address >> (abits2 + abitsmin)];						\
+		hw = cur_mwhard[(UINT32)address >> (ABITS2_##abits + ABITS_MIN_##abits)];		\
 		if (hw <= HT_BANKMAX)															\
 		{																				\
 			WRITE_WORD(&cpu_bankbase[hw][address - memorywriteoffset[hw]], data);		\
@@ -1153,7 +1160,7 @@ void name##_word(int address, int data)													\
 		if (hw >= MH_HARDMAX)															\
 		{																				\
 			hw -= MH_HARDMAX;															\
-			hw = writehardware[(hw << MH_SBITS) + (((UINT32)address >> abitsmin) & MHMASK(abits2))];	\
+			hw = writehardware[(hw << MH_SBITS) + (((UINT32)address >> ABITS_MIN_##abits) & MHMASK(ABITS2_##abits))]; \
 			if (hw <= HT_BANKMAX)														\
 			{																			\
 				WRITE_WORD(&cpu_bankbase[hw][address - memorywriteoffset[hw]], data);	\
@@ -1179,7 +1186,7 @@ void name##_word(int address, int data)													\
 }
 
 /* generic dword-sized write handler (16-bit aligned only!) */
-#define WRITELONG(name,type,abits2,abitsmin,align)										\
+#define WRITELONG(name,type,abits,align)												\
 void name##_dword(int address, int data)												\
 {																						\
 	UINT16 word1, word2;																\
@@ -1192,20 +1199,22 @@ void name##_dword(int address, int data)												\
 	/* handle aligned case first */														\
 	if (align == ALWAYS_ALIGNED || !(address & 1))										\
 	{																					\
+		int address2 = (address + 2) & ADDRESS_MASK(abits);								\
+																						\
 		/* first-level lookup */														\
-		hw1 = cur_mwhard[(UINT32)address >> (abits2 + abitsmin)];						\
-		hw2 = cur_mwhard[(UINT32)(address + 2) >> (abits2 + abitsmin)];					\
+		hw1 = cur_mwhard[(UINT32)address >> (ABITS2_##abits + ABITS_MIN_##abits)];		\
+		hw2 = cur_mwhard[(UINT32)address2 >> (ABITS2_##abits + ABITS_MIN_##abits)];		\
 																						\
 		/* second-level lookup */														\
 		if (hw1 >= MH_HARDMAX)															\
 		{																				\
 			hw1 -= MH_HARDMAX;															\
-			hw1 = writehardware[(hw1 << MH_SBITS) + (((UINT32)address >> abitsmin) & MHMASK(abits2))];	\
+			hw1 = writehardware[(hw1 << MH_SBITS) + (((UINT32)address >> ABITS_MIN_##abits) & MHMASK(ABITS2_##abits))];	\
 		}																				\
 		if (hw2 >= MH_HARDMAX)															\
 		{																				\
 			hw2 -= MH_HARDMAX;															\
-			hw2 = writehardware[(hw2 << MH_SBITS) + (((UINT32)(address + 2) >> abitsmin) & MHMASK(abits2))];	\
+			hw2 = writehardware[(hw2 << MH_SBITS) + (((UINT32)address2 >> ABITS_MIN_##abits) & MHMASK(ABITS2_##abits))];	\
 		}																				\
 																						\
 		/* extract words */																\
@@ -1226,9 +1235,9 @@ void name##_dword(int address, int data)												\
 		else																			\
 			(*memorywritehandler[hw1])(address - memorywriteoffset[hw1], word1);		\
 		if (hw2 <= HT_BANKMAX)															\
-			WRITE_WORD(&cpu_bankbase[hw2][address + 2 - memorywriteoffset[hw2]], word2);\
+			WRITE_WORD(&cpu_bankbase[hw2][address2 - memorywriteoffset[hw2]], word2);	\
 		else																			\
-			(*memorywritehandler[hw2])(address + 2 - memorywriteoffset[hw2], word2);	\
+			(*memorywritehandler[hw2])(address2 - memorywriteoffset[hw2], word2);		\
 	}																					\
 																						\
 	/* unaligned case */																\
@@ -1248,27 +1257,27 @@ void name##_dword(int address, int data)												\
 
 
 /* the handlers we need to generate */
-WRITEBYTE(cpu_writemem16,    TYPE_8BIT,     ABITS2_16,    ABITS_MIN_16)
-WRITEBYTE(cpu_writemem20,    TYPE_8BIT,     ABITS2_20,    ABITS_MIN_20)
-WRITEBYTE(cpu_writemem21,    TYPE_8BIT,     ABITS2_21,    ABITS_MIN_21)
+WRITEBYTE(cpu_writemem16,    TYPE_8BIT,     16)
+WRITEBYTE(cpu_writemem20,    TYPE_8BIT,     20)
+WRITEBYTE(cpu_writemem21,    TYPE_8BIT,     21)
 
-WRITEBYTE(cpu_writemem16bew, TYPE_16BIT_BE, ABITS2_16BEW, ABITS_MIN_16BEW)
-WRITEWORD(cpu_writemem16bew, TYPE_16BIT_BE, ABITS2_16BEW, ABITS_MIN_16BEW, ALWAYS_ALIGNED)
+WRITEBYTE(cpu_writemem16bew, TYPE_16BIT_BE, 16BEW)
+WRITEWORD(cpu_writemem16bew, TYPE_16BIT_BE, 16BEW, ALWAYS_ALIGNED)
 
-WRITEBYTE(cpu_writemem16lew, TYPE_16BIT_LE, ABITS2_16LEW, ABITS_MIN_16LEW)
-WRITEWORD(cpu_writemem16lew, TYPE_16BIT_LE, ABITS2_16LEW, ABITS_MIN_16LEW, ALWAYS_ALIGNED)
+WRITEBYTE(cpu_writemem16lew, TYPE_16BIT_LE, 16LEW)
+WRITEWORD(cpu_writemem16lew, TYPE_16BIT_LE, 16LEW, ALWAYS_ALIGNED)
 
-WRITEBYTE(cpu_writemem24,    TYPE_16BIT_BE, ABITS2_24,    ABITS_MIN_24)
-WRITEWORD(cpu_writemem24,    TYPE_16BIT_BE, ABITS2_24,    ABITS_MIN_24,    CAN_BE_MISALIGNED)
-WRITELONG(cpu_writemem24,    TYPE_16BIT_BE, ABITS2_24,    ABITS_MIN_24,    CAN_BE_MISALIGNED)
+WRITEBYTE(cpu_writemem24,    TYPE_16BIT_BE, 24)
+WRITEWORD(cpu_writemem24,    TYPE_16BIT_BE, 24,    CAN_BE_MISALIGNED)
+WRITELONG(cpu_writemem24,    TYPE_16BIT_BE, 24,    CAN_BE_MISALIGNED)
 
-WRITEBYTE(cpu_writemem29,    TYPE_16BIT_LE, ABITS2_29,    ABITS_MIN_29)
-WRITEWORD(cpu_writemem29,    TYPE_16BIT_LE, ABITS2_29,    ABITS_MIN_29,    CAN_BE_MISALIGNED)
-WRITELONG(cpu_writemem29,    TYPE_16BIT_LE, ABITS2_29,    ABITS_MIN_29,    CAN_BE_MISALIGNED)
+WRITEBYTE(cpu_writemem29,    TYPE_16BIT_LE, 29)
+WRITEWORD(cpu_writemem29,    TYPE_16BIT_LE, 29,    CAN_BE_MISALIGNED)
+WRITELONG(cpu_writemem29,    TYPE_16BIT_LE, 29,    CAN_BE_MISALIGNED)
 
-WRITEBYTE(cpu_writemem32,    TYPE_16BIT_BE, ABITS2_32,    ABITS_MIN_32)
-WRITEWORD(cpu_writemem32,    TYPE_16BIT_BE, ABITS2_32,    ABITS_MIN_32,    CAN_BE_MISALIGNED)
-WRITELONG(cpu_writemem32,    TYPE_16BIT_BE, ABITS2_32,    ABITS_MIN_32,    CAN_BE_MISALIGNED)
+WRITEBYTE(cpu_writemem32,    TYPE_16BIT_BE, 32)
+WRITEWORD(cpu_writemem32,    TYPE_16BIT_BE, 32,    CAN_BE_MISALIGNED)
+WRITELONG(cpu_writemem32,    TYPE_16BIT_BE, 32,    CAN_BE_MISALIGNED)
 
 
 /***************************************************************************
@@ -1278,7 +1287,7 @@ WRITELONG(cpu_writemem32,    TYPE_16BIT_BE, ABITS2_32,    ABITS_MIN_32,    CAN_B
 ***************************************************************************/
 
 /* generic opcode base changer */
-#define SETOPBASE(name,abits2,abitsmin,shift)											\
+#define SETOPBASE(name,abits,shift)														\
 void name(int pc)																		\
 {																						\
 	MHELE hw;																			\
@@ -1294,11 +1303,11 @@ void name(int pc)																		\
 	}																					\
 																						\
 	/* perform the lookup */															\
-	hw = cur_mrhard[(UINT32)pc >> (abits2 + abitsmin)];									\
+	hw = cur_mrhard[(UINT32)pc >> (ABITS2_##abits + ABITS_MIN_##abits)];				\
 	if (hw >= MH_HARDMAX)																\
 	{																					\
 		hw -= MH_HARDMAX;																\
-		hw = readhardware[(hw << MH_SBITS) + (((UINT32)pc >> abitsmin) & MHMASK(abits2))];	\
+		hw = readhardware[(hw << MH_SBITS) + (((UINT32)pc >> ABITS_MIN_##abits) & MHMASK(ABITS2_##abits))];	\
 	}																					\
 	ophw = hw;																			\
 																						\
@@ -1317,14 +1326,14 @@ void name(int pc)																		\
 
 
 /* the handlers we need to generate */
-SETOPBASE(cpu_setOPbase16,    ABITS2_16,    ABITS_MIN_16,    0)
-SETOPBASE(cpu_setOPbase16bew, ABITS2_16BEW, ABITS_MIN_16BEW, 0)
-SETOPBASE(cpu_setOPbase16lew, ABITS2_16LEW, ABITS_MIN_16LEW, 0)
-SETOPBASE(cpu_setOPbase20,    ABITS2_20,    ABITS_MIN_20,    0)
-SETOPBASE(cpu_setOPbase21,    ABITS2_21,    ABITS_MIN_21,    0)
-SETOPBASE(cpu_setOPbase24,    ABITS2_24,    ABITS_MIN_24,    0)
-SETOPBASE(cpu_setOPbase29,    ABITS2_29,    ABITS_MIN_29,    3)
-SETOPBASE(cpu_setOPbase32,    ABITS2_32,    ABITS_MIN_32,    0)
+SETOPBASE(cpu_setOPbase16,    16,    0)
+SETOPBASE(cpu_setOPbase16bew, 16BEW, 0)
+SETOPBASE(cpu_setOPbase16lew, 16LEW, 0)
+SETOPBASE(cpu_setOPbase20,    20,    0)
+SETOPBASE(cpu_setOPbase21,    21,    0)
+SETOPBASE(cpu_setOPbase24,    24,    0)
+SETOPBASE(cpu_setOPbase29,    29,    3)
+SETOPBASE(cpu_setOPbase32,    32,    0)
 
 
 /***************************************************************************

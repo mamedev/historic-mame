@@ -1277,5 +1277,5 @@ GAME( 1985, sctionza, sectionz, lwings,   sectionz, 0, ROT0,   "Capcom", "Sectio
 GAME( 1986, trojan,   0,        trojan,   trojanls, 0, ROT0,   "Capcom", "Trojan (US)" )
 GAME( 1986, trojanr,  trojan,   trojan,   trojan,   0, ROT0,   "Capcom (Romstar license)", "Trojan (Romstar)" )
 GAME( 1986, trojanj,  trojan,   trojan,   trojan,   0, ROT0,   "Capcom", "Tatakai no Banka (Japan)" )
-GAMEX(1987, avengers, 0,        avengers, avengers, 0, ROT270, "Capcom", "Avengers (set 1)", GAME_NOT_WORKING )
-GAMEX(1987, avenger2, avengers, avengers, avengers, 0, ROT270, "Capcom", "Avengers (set 2)", GAME_NOT_WORKING )
+GAMEX(1987, avengers, 0,        avengers, avengers, 0, ROT270, "Capcom", "Avengers (set 1)", GAME_NOT_WORKING | GAME_WRONG_COLORS )
+GAMEX(1987, avenger2, avengers, avengers, avengers, 0, ROT270, "Capcom", "Avengers (set 2)", GAME_NOT_WORKING | GAME_WRONG_COLORS )

@@ -3,7 +3,7 @@
  *	 tbl6502.c
  *	 6502 opcode functions and function pointer table
  *
- *	 Copyright (c) 1998 Juergen Buchmueller, all rights reserved.
+ *	 Copyright (c) 1998,1999,2000 Juergen Buchmueller, all rights reserved.
  *
  *	 - This source code is released as freeware for non-commercial purposes.
  *	 - You are free to use and redistribute this code in modified or
@@ -14,8 +14,8 @@
  *	 - If you wish to use this for commercial purposes, please contact me at
  *	   pullmoll@t-online.de
  *	 - The author of this copywritten work reserves the right to change the
- *     terms of its usage and license at any time, including retroactively
- *   - This entire notice must remain in the source code.
+ *	   terms of its usage and license at any time, including retroactively
+ *	 - This entire notice must remain in the source code.
  *
  *****************************************************************************/
 
@@ -25,7 +25,7 @@
 /*****************************************************************************
  *****************************************************************************
  *
- *   plain vanilla 6502 opcodes
+ *	 plain vanilla 6502 opcodes
  *
  *****************************************************************************
  * op	 temp	  cycles			 rdmem	 opc  wrmem   ********************/
@@ -34,9 +34,7 @@ OP(00) {		  m6502_ICount -= 7;		 BRK;		  } /* 7 BRK */
 OP(20) {		  m6502_ICount -= 6;		 JSR;		  } /* 6 JSR */
 OP(40) {		  m6502_ICount -= 6;		 RTI;		  } /* 6 RTI */
 OP(60) {		  m6502_ICount -= 6;		 RTS;		  } /* 6 RTS */
-#ifndef CORE_M65CE02
 OP(80) {		  m6502_ICount -= 2;		 ILL;		  } /* 2 ILL */
-#endif
 OP(a0) { int tmp; m6502_ICount -= 2; RD_IMM; LDY;		  } /* 2 LDY IMM */
 OP(c0) { int tmp; m6502_ICount -= 2; RD_IMM; CPY;		  } /* 2 CPY IMM */
 OP(e0) { int tmp; m6502_ICount -= 2; RD_IMM; CPX;		  } /* 2 CPX IMM */
@@ -68,15 +66,12 @@ OP(b1) { int tmp; m6502_ICount -= 5; RD_IDY; LDA;		  } /* 5 LDA IDY */
 OP(d1) { int tmp; m6502_ICount -= 5; RD_IDY; CMP;		  } /* 5 CMP IDY */
 OP(f1) { int tmp; m6502_ICount -= 5; RD_IDY; SBC;		  } /* 5 SBC IDY */
 
-#ifndef CORE_M65CE02
 OP(02) {		  m6502_ICount -= 2;		 ILL;		  } /* 2 ILL */
 OP(22) {		  m6502_ICount -= 2;		 ILL;		  } /* 2 ILL */
 OP(42) {		  m6502_ICount -= 2;		 ILL;		  } /* 2 ILL */
 OP(62) {		  m6502_ICount -= 2;		 ILL;		  } /* 2 ILL */
 OP(82) {		  m6502_ICount -= 2;		 ILL;		  } /* 2 ILL */
-#endif
 OP(a2) { int tmp; m6502_ICount -= 2; RD_IMM; LDX;		  } /* 2 LDX IMM */
-#ifndef CORE_M65CE02
 OP(c2) {		  m6502_ICount -= 2;		 ILL;		  } /* 2 ILL */
 OP(e2) {		  m6502_ICount -= 2;		 ILL;		  } /* 2 ILL */
 
@@ -108,29 +103,22 @@ OP(d3) {		  m6502_ICount -= 2;		 ILL;		  } /* 2 ILL */
 OP(f3) {		  m6502_ICount -= 2;		 ILL;		  } /* 2 ILL */
 
 OP(04) {		  m6502_ICount -= 2;		 ILL;		  } /* 2 ILL */
-#endif
 OP(24) { int tmp; m6502_ICount -= 3; RD_ZPG; BIT;		  } /* 3 BIT ZPG */
-#ifndef CORE_M65CE02
 OP(44) {		  m6502_ICount -= 2;		 ILL;		  } /* 2 ILL */
 OP(64) {		  m6502_ICount -= 2;		 ILL;		  } /* 2 ILL */
-#endif
 OP(84) { int tmp; m6502_ICount -= 3;		 STY; WR_ZPG; } /* 3 STY ZPG */
 OP(a4) { int tmp; m6502_ICount -= 3; RD_ZPG; LDY;		  } /* 3 LDY ZPG */
 OP(c4) { int tmp; m6502_ICount -= 3; RD_ZPG; CPY;		  } /* 3 CPY ZPG */
 OP(e4) { int tmp; m6502_ICount -= 3; RD_ZPG; CPX;		  } /* 3 CPX ZPG */
 
-#ifndef CORE_M65CE02
 OP(14) {		  m6502_ICount -= 2;		 ILL;		  } /* 2 ILL */
 OP(34) {		  m6502_ICount -= 2;		 ILL;		  } /* 2 ILL */
 OP(54) {		  m6502_ICount -= 2;		 ILL;		  } /* 2 ILL */
 OP(74) {		  m6502_ICount -= 2;		 ILL;		  } /* 2 ILL */
-#endif
 OP(94) { int tmp; m6502_ICount -= 4;		 STY; WR_ZPX; } /* 4 STY ZPX */
 OP(b4) { int tmp; m6502_ICount -= 4; RD_ZPX; LDY;		  } /* 4 LDY ZPX */
-#ifndef CORE_M65CE02
 OP(d4) {		  m6502_ICount -= 2;		 ILL;		  } /* 2 ILL */
 OP(f4) {		  m6502_ICount -= 2;		 ILL;		  } /* 2 ILL */
-#endif
 
 OP(05) { int tmp; m6502_ICount -= 3; RD_ZPG; ORA;		  } /* 3 ORA ZPG */
 OP(25) { int tmp; m6502_ICount -= 3; RD_ZPG; AND;		  } /* 3 AND ZPG */
@@ -168,7 +156,6 @@ OP(b6) { int tmp; m6502_ICount -= 4; RD_ZPY; LDX;		  } /* 4 LDX ZPY */
 OP(d6) { int tmp; m6502_ICount -= 6; RD_ZPX; DEC; WB_EA;  } /* 6 DEC ZPX */
 OP(f6) { int tmp; m6502_ICount -= 6; RD_ZPX; INC; WB_EA;  } /* 6 INC ZPX */
 
-#ifndef CORE_M65CE02
 OP(07) {		  m6502_ICount -= 2;		 ILL;		  } /* 2 ILL */
 OP(27) {		  m6502_ICount -= 2;		 ILL;		  } /* 2 ILL */
 OP(47) {		  m6502_ICount -= 2;		 ILL;		  } /* 2 ILL */
@@ -186,7 +173,6 @@ OP(97) {		  m6502_ICount -= 2;		 ILL;		  } /* 2 ILL */
 OP(b7) {		  m6502_ICount -= 2;		 ILL;		  } /* 2 ILL */
 OP(d7) {		  m6502_ICount -= 2;		 ILL;		  } /* 2 ILL */
 OP(f7) {		  m6502_ICount -= 2;		 ILL;		  } /* 2 ILL */
-#endif
 
 OP(08) {		  m6502_ICount -= 2;		 PHP;		  } /* 2 PHP */
 OP(28) {		  m6502_ICount -= 2;		 PLP;		  } /* 2 PLP */
@@ -210,9 +196,7 @@ OP(09) { int tmp; m6502_ICount -= 2; RD_IMM; ORA;		  } /* 2 ORA IMM */
 OP(29) { int tmp; m6502_ICount -= 2; RD_IMM; AND;		  } /* 2 AND IMM */
 OP(49) { int tmp; m6502_ICount -= 2; RD_IMM; EOR;		  } /* 2 EOR IMM */
 OP(69) { int tmp; m6502_ICount -= 2; RD_IMM; ADC;		  } /* 2 ADC IMM */
-#ifndef CORE_M65CE02
 OP(89) {		  m6502_ICount -= 2;		 ILL;		  } /* 2 ILL */
-#endif
 OP(a9) { int tmp; m6502_ICount -= 2; RD_IMM; LDA;		  } /* 2 LDA IMM */
 OP(c9) { int tmp; m6502_ICount -= 2; RD_IMM; CMP;		  } /* 2 CMP IMM */
 OP(e9) { int tmp; m6502_ICount -= 2; RD_IMM; SBC;		  } /* 2 SBC IMM */
@@ -235,15 +219,12 @@ OP(aa) {		  m6502_ICount -= 2;		 TAX;		  } /* 2 TAX */
 OP(ca) {		  m6502_ICount -= 2;		 DEX;		  } /* 2 DEX */
 OP(ea) {		  m6502_ICount -= 2;		 NOP;		  } /* 2 NOP */
 
-#ifndef CORE_M65CE02
 OP(1a) {		  m6502_ICount -= 2;		 ILL;		  } /* 2 ILL */
 OP(3a) {		  m6502_ICount -= 2;		 ILL;		  } /* 2 ILL */
 OP(5a) {		  m6502_ICount -= 2;		 ILL;		  } /* 2 ILL */
 OP(7a) {		  m6502_ICount -= 2;		 ILL;		  } /* 2 ILL */
-#endif
 OP(9a) {		  m6502_ICount -= 2;		 TXS;		  } /* 2 TXS */
 OP(ba) {		  m6502_ICount -= 2;		 TSX;		  } /* 2 TSX */
-#ifndef CORE_M65CE02
 OP(da) {		  m6502_ICount -= 2;		 ILL;		  } /* 2 ILL */
 OP(fa) {		  m6502_ICount -= 2;		 ILL;		  } /* 2 ILL */
 
@@ -266,7 +247,6 @@ OP(db) {		  m6502_ICount -= 2;		 ILL;		  } /* 2 ILL */
 OP(fb) {		  m6502_ICount -= 2;		 ILL;		  } /* 2 ILL */
 
 OP(0c) {		  m6502_ICount -= 2;		 ILL;		  } /* 2 ILL */
-#endif
 OP(2c) { int tmp; m6502_ICount -= 4; RD_ABS; BIT;		  } /* 4 BIT ABS */
 OP(4c) {		  m6502_ICount -= 3; EA_ABS; JMP;		  } /* 3 JMP ABS */
 OP(6c) { int tmp; m6502_ICount -= 5; EA_IND; JMP;		  } /* 5 JMP IND */
@@ -275,18 +255,14 @@ OP(ac) { int tmp; m6502_ICount -= 4; RD_ABS; LDY;		  } /* 4 LDY ABS */
 OP(cc) { int tmp; m6502_ICount -= 4; RD_ABS; CPY;		  } /* 4 CPY ABS */
 OP(ec) { int tmp; m6502_ICount -= 4; RD_ABS; CPX;		  } /* 4 CPX ABS */
 
-#ifndef CORE_M65CE02
 OP(1c) {		  m6502_ICount -= 2;		 ILL;		  } /* 2 ILL */
 OP(3c) {		  m6502_ICount -= 2;		 ILL;		  } /* 2 ILL */
 OP(5c) {		  m6502_ICount -= 2;		 ILL;		  } /* 2 ILL */
 OP(7c) {		  m6502_ICount -= 2;		 ILL;		  } /* 2 ILL */
 OP(9c) {		  m6502_ICount -= 2;		 ILL;		  } /* 2 ILL */
-#endif
 OP(bc) { int tmp; m6502_ICount -= 4; RD_ABX; LDY;		  } /* 4 LDY ABX */
-#ifndef CORE_M65CE02
 OP(dc) {		  m6502_ICount -= 2;		 ILL;		  } /* 2 ILL */
 OP(fc) {		  m6502_ICount -= 2;		 ILL;		  } /* 2 ILL */
-#endif
 
 OP(0d) { int tmp; m6502_ICount -= 4; RD_ABS; ORA;		  } /* 4 ORA ABS */
 OP(2d) { int tmp; m6502_ICount -= 4; RD_ABS; AND;		  } /* 4 AND ABS */
@@ -319,14 +295,11 @@ OP(1e) { int tmp; m6502_ICount -= 7; RD_ABX; ASL; WB_EA;  } /* 7 ASL ABX */
 OP(3e) { int tmp; m6502_ICount -= 7; RD_ABX; ROL; WB_EA;  } /* 7 ROL ABX */
 OP(5e) { int tmp; m6502_ICount -= 7; RD_ABX; LSR; WB_EA;  } /* 7 LSR ABX */
 OP(7e) { int tmp; m6502_ICount -= 7; RD_ABX; ROR; WB_EA;  } /* 7 ROR ABX */
-#ifndef CORE_M65CE02
 OP(9e) {		  m6502_ICount -= 2;		 ILL;		  } /* 2 ILL */
-#endif
 OP(be) { int tmp; m6502_ICount -= 4; RD_ABY; LDX;		  } /* 4 LDX ABY */
 OP(de) { int tmp; m6502_ICount -= 7; RD_ABX; DEC; WB_EA;  } /* 7 DEC ABX */
 OP(fe) { int tmp; m6502_ICount -= 7; RD_ABX; INC; WB_EA;  } /* 7 INC ABX */
 
-#ifndef CORE_M65CE02
 OP(0f) {		  m6502_ICount -= 2;		 ILL;		  } /* 2 ILL */
 OP(2f) {		  m6502_ICount -= 2;		 ILL;		  } /* 2 ILL */
 OP(4f) {		  m6502_ICount -= 2;		 ILL;		  } /* 2 ILL */
@@ -344,9 +317,7 @@ OP(9f) {		  m6502_ICount -= 2;		 ILL;		  } /* 2 ILL */
 OP(bf) {		  m6502_ICount -= 2;		 ILL;		  } /* 2 ILL */
 OP(df) {		  m6502_ICount -= 2;		 ILL;		  } /* 2 ILL */
 OP(ff) {		  m6502_ICount -= 2;		 ILL;		  } /* 2 ILL */
-#endif
 
-#ifndef CORE_M65CE02
 /* and here's the array of function pointers */
 
 static void (*insn6502[0x100])(void) = {
@@ -383,5 +354,4 @@ static void (*insn6502[0x100])(void) = {
 	m6502_f0,m6502_f1,m6502_f2,m6502_f3,m6502_f4,m6502_f5,m6502_f6,m6502_f7,
 	m6502_f8,m6502_f9,m6502_fa,m6502_fb,m6502_fc,m6502_fd,m6502_fe,m6502_ff
 };
-#endif
 

@@ -226,7 +226,6 @@ INPUT_PORTS_START( ultraman )
 	PORT_DIPSETTING(    0x02, DEF_STR( 4C_1C ) )
 	PORT_DIPSETTING(    0x05, DEF_STR( 3C_1C ) )
 	PORT_DIPSETTING(    0x08, DEF_STR( 2C_1C ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( 5C_3C ) )
 	PORT_DIPSETTING(    0x04, DEF_STR( 3C_2C ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( 4C_3C ) )
 	PORT_DIPSETTING(    0x0f, DEF_STR( 1C_1C ) )
@@ -239,6 +238,7 @@ INPUT_PORTS_START( ultraman )
 	PORT_DIPSETTING(    0x0b, DEF_STR( 1C_5C ) )
 	PORT_DIPSETTING(    0x0a, DEF_STR( 1C_6C ) )
 	PORT_DIPSETTING(    0x09, DEF_STR( 1C_7C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Free_Play ) )
 
 	PORT_DIPNAME( 0xf0, 0xf0, DEF_STR( Coin_B ) )
 	PORT_DIPSETTING(    0x20, DEF_STR( 4C_1C ) )
@@ -271,18 +271,17 @@ INPUT_PORTS_START( ultraman )
 	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(	0x80, DEF_STR( Off ) )
 	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(	0x10, DEF_STR( Off ) )
-	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(	0x20, DEF_STR( Off ) )
-	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(	0x40, DEF_STR( Off ) )
-	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(	0x80, DEF_STR( Off ) )
-	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x30, 0x30, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(	0x10, "Easy" )
+	PORT_DIPSETTING(	0x30, "Normal" )
+	PORT_DIPSETTING(	0x20, "Difficult" )
+	PORT_DIPSETTING(	0x00, "Very Difficult" )
+	PORT_DIPNAME( 0x40, 0x40, "Upright Controls" )
+	PORT_DIPSETTING(	0x40, "Single" )
+	PORT_DIPSETTING(	0x00, "Dual" )
+	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( Upright ) )
+	PORT_DIPSETTING(	0x80, DEF_STR( Cocktail ) )
 INPUT_PORTS_END
 
 
@@ -290,8 +289,8 @@ INPUT_PORTS_END
 static struct YM2151interface ym2151_interface =
 {
 	1,
-	24000000/8,	/* 3 MHz? */
-	{ YM3012_VOL(50,MIXER_PAN_LEFT,50,MIXER_PAN_RIGHT) },
+	24000000/6,	/* 4 MHz (tempo verified against real board) */
+	{ YM3012_VOL(100,MIXER_PAN_LEFT,100,MIXER_PAN_RIGHT) },
 	{ 0 },
 };
 
@@ -317,7 +316,7 @@ static struct MachineDriver machine_driver_ultraman =
 		},
 		{
 			CPU_Z80,
-			24000000/8,		/* 3 MHz? */
+			24000000/6,		/* 4 MHz? */
 			ultraman_readmem_sound, ultraman_writemem_sound,0,ultraman_writeport_sound,
 			ignore_interrupt,1	/* NMI triggered by the m68000 */
 		}

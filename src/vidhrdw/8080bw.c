@@ -4,378 +4,364 @@
 
   Functions to emulate the video hardware of the machine.
 
-updated: 02-06-98 HJB moved Astro Invaders specific to z80bw.c
 ***************************************************************************/
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "artwork.h"
+
+static int use_tmpbitmap;
+static int flipscreen;
+static int screen_red;
+static int screen_red_enabled;		/* 1 for games that can turn the screen red */
+static int redraw_screen;
+static int color_map_select;
+
+static const struct artwork_element *init_overlay;
+static struct artwork *overlay;
+
+static void (*videoram_w_p)(int offset,int data);
+static void (*vh_screenrefresh_p)(struct osd_bitmap *bitmap,int full_refresh);
+static void (*plot_pixel_p)(int x, int y, int col);
+
+static void bw_videoram_w(int offset,int data);
+static void schaser_videoram_w(int offset,int data);
+static void rollingc_videoram_w(int offset,int data);
+static void invadpt2_videoram_w (int offset,int data);
+static void astinvad_videoram_w (int offset,int data);
+static void spaceint_videoram_w (int offset,int data);
+
+static void vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+static void seawolf_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+static void blueshrk_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+static void desertgu_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+
+static void plot_pixel_8080 (int x, int y, int col);
+static void plot_pixel_8080_tmpbitmap (int x, int y, int col);
+
+/* smoothed pure colors, overlays are not so contrasted */
+
+#define BLACK			0x00,0x00,0x00
+#define RED				0xff,0x20,0x20
+#define GREEN 			0x20,0xff,0x20
+#define YELLOW			0xff,0xff,0x20
+#define WHITE			0xff,0xff,0xff
+#define CYAN			0x20,0xff,0xff
+#define PURPLE			0xff,0x20,0xff
+
+#define ORANGE			0xff,0x90,0x20
+#define YELLOW_GREEN	0x90,0xff,0x20
+#define GREEN_CYAN		0x20,0xff,0x90
+
+#define	END  {{  -1,  -1,  -1,  -1}, 0,0,0,0}
 
 
-
-unsigned char *invaders_videoram;
-static int flipped = 0;
-
-/* palette colors (see drivers/8080bw.c) */
-enum { BLACK, RED, GREEN, YELLOW, WHITE, CYAN, PURPLE,
-	   ORANGE, YELLOW_GREEN, GREEN_CYAN };
-/* (3 extra colors for the invad2ct overlay transitions) */
-
-
-/***************************************************************************
-
-  Start the video hardware emulation.
-
-***************************************************************************/
-int invaders_vh_start (void)
+static const struct artwork_element invaders_overlay[]=
 {
-	if ((tmpbitmap = osd_create_bitmap(Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
+	{{	 0, 255,   0, 255}, WHITE,  0xff},
+	{{  16,  71,   0, 255}, GREEN,  0xff},
+	{{   0,  15,  16, 133}, GREEN,  0xff},
+	{{ 192, 223,   0, 255}, RED,    0xff},
+	END
+};
+
+static const struct artwork_element invdpt2m_overlay[]=
+{
+	{{	 0, 255,   0, 255}, WHITE,  0xff},
+	{{  16,  71,   0, 255}, GREEN,  0xff},
+	{{   0,  15,  16, 133}, GREEN,  0xff},
+	{{  72, 191,   0, 255}, YELLOW, 0xff},
+	{{ 192, 223,   0, 255}, RED,    0xff},
+	END
+};
+
+static const struct artwork_element invrvnge_overlay[]=
+{
+	{{	 0, 255,   0, 255}, WHITE,  0xff},
+	{{   0,  71,   0, 255}, GREEN,  0xff},
+	{{ 192, 223,   0, 255}, RED,    0xff},
+	END
+};
+
+static const struct artwork_element invad2ct_overlay[]=
+{
+	{{	 0,  24,   0, 255}, YELLOW,       0xff},
+	{{	25,  47,   0, 255}, YELLOW_GREEN, 0xff},
+	{{	48,  70,   0, 255}, GREEN_CYAN,   0xff},
+	{{	71, 116,   0, 255}, CYAN,         0xff},
+	{{ 117, 139,   0, 255}, GREEN_CYAN,   0xff},
+	{{ 140, 162,   0, 255}, GREEN,        0xff},
+	{{ 163, 185,   0, 255}, YELLOW_GREEN, 0xff},
+	{{ 186, 208,   0, 255}, YELLOW,       0xff},
+	{{ 209, 231,   0, 255}, ORANGE,       0xff},
+	{{ 232, 255,   0, 255}, RED,          0xff},
+	END
+};
+
+
+void init_8080bw(void)
+{
+	videoram_w_p = bw_videoram_w;
+	vh_screenrefresh_p = vh_screenrefresh;
+	use_tmpbitmap = 0;
+	screen_red_enabled = 0;
+	init_overlay = 0;
+	color_map_select = 0;
+	flipscreen = 0;
+}
+
+void init_invaders(void)
+{
+	init_8080bw();
+	init_overlay = invaders_overlay;
+}
+
+void init_invdpt2m(void)
+{
+	init_8080bw();
+	init_overlay = invdpt2m_overlay;
+}
+
+void init_invrvnge(void)
+{
+	init_8080bw();
+	init_overlay = invrvnge_overlay;
+}
+
+void init_invad2ct(void)
+{
+	init_8080bw();
+	init_overlay = invad2ct_overlay;
+}
+
+void init_schaser(void)
+{
+	init_8080bw();
+	videoram_w_p = schaser_videoram_w;
+}
+
+void init_rollingc(void)
+{
+	init_8080bw();
+	videoram_w_p = rollingc_videoram_w;
+}
+
+void init_invadpt2(void)
+{
+	init_8080bw();
+	videoram_w_p = invadpt2_videoram_w;
+	screen_red_enabled = 1;
+}
+
+void init_seawolf(void)
+{
+	init_8080bw();
+	vh_screenrefresh_p = seawolf_vh_screenrefresh;
+	use_tmpbitmap = 1;
+}
+
+void init_blueshrk(void)
+{
+	init_8080bw();
+	vh_screenrefresh_p = blueshrk_vh_screenrefresh;
+	use_tmpbitmap = 1;
+}
+
+void init_desertgu(void)
+{
+	init_8080bw();
+	vh_screenrefresh_p = desertgu_vh_screenrefresh;
+	use_tmpbitmap = 1;
+}
+
+void init_astinvad(void)
+{
+	init_8080bw();
+	videoram_w_p = astinvad_videoram_w;
+	screen_red_enabled = 1;
+}
+
+void init_spaceint(void)
+{
+	init_8080bw();
+	videoram_w_p = spaceint_videoram_w;
+}
+
+
+int invaders_vh_start(void)
+{
+	/* create overlay if one of was specified in init_X */
+	if (init_overlay)
+	{
+		if ((overlay = artwork_create(init_overlay, 2, Machine->drv->total_colors-2)) == 0)
+			return 1;
+
+		use_tmpbitmap = 1;
+	}
+
+	if (use_tmpbitmap && (generic_bitmapped_vh_start() != 0))
 		return 1;
+
+	plot_pixel_p = use_tmpbitmap ? plot_pixel_8080_tmpbitmap : plot_pixel_8080;
 
 	return 0;
 }
 
 
-/***************************************************************************
-
-  Stop the video hardware emulation.
-
-***************************************************************************/
-void invaders_vh_stop (void)
+void invaders_vh_stop(void)
 {
-	osd_free_bitmap (tmpbitmap);
+	if (overlay)
+	{
+		artwork_free(overlay);
+		overlay = 0;
+	}
+
+	if (use_tmpbitmap)  generic_bitmapped_vh_stop();
 }
 
-void invaders_vh_flipscreen(int data)
+
+void invaders_flipscreen_w(int data)
 {
+	if (data != color_map_select)
+	{
+		color_map_select = data;
+		redraw_screen = 1;
+	}
+
 	if (input_port_3_r(0) & 0x01)
 	{
-		if (data != flipped)
+		if (data != flipscreen)
 		{
-			int x,y;
-			int x_size = 256, y_size = 224;
-			int x_start = 0, y_start = 0;
-			int x_last, y_last;
-			if (Machine->orientation & ORIENTATION_SWAP_XY)
-			{
-				int tw = x_size;
-				x_size = y_size, y_size = tw;
-			}
-			if (Machine->orientation & ORIENTATION_FLIP_X)
-				x_start = 256-x_size;
-			if (Machine->orientation & ORIENTATION_FLIP_Y)
-				y_start = 256-y_size;
-			x_last = x_start+x_size-1;
-			y_last = y_start+y_size-1;
-			for (y = 0; y < y_size; y++)
-			{
-				for (x = 0; x < x_size/2; x++)
-				{
-					if (tmpbitmap->depth == 16)
-					{
-						int col = ((unsigned short *)tmpbitmap->line[y_last-y])[x_last-x];
-						((unsigned short *)Machine->scrbitmap->line[y_last-y])[x_last-x] =
-								((unsigned short *)tmpbitmap->line[y_last-y])[x_last-x] =
-								((unsigned short *)tmpbitmap->line[y_start+y])[x_start+x];
-						((unsigned short *)Machine->scrbitmap->line[y_start+y])[x_start+x] =
-								((unsigned short *)tmpbitmap->line[y_start+y])[x_start+x] = col;
-					}
-					else
-					{
-						int col = tmpbitmap->line[y_last-y][x_last-x];
-						Machine->scrbitmap->line[y_last-y][x_last-x] = tmpbitmap->line[y_last-y][x_last-x] = tmpbitmap->line[y_start+y][x_start+x];
-						Machine->scrbitmap->line[y_start+y][x_start+x] = tmpbitmap->line[y_start+y][x_start+x] = col;
-					}
-				}
-			}
-			osd_mark_dirty (x_start,y_start,x_last,y_last,0);
-			flipped = data;
+			flipscreen = data;
+			redraw_screen = 1;
 		}
 	}
 }
 
+
+void invaders_screen_red_w(int data)
+{
+	if (screen_red_enabled && (data != screen_red))
+	{
+		screen_red = data;
+		redraw_screen = 1;
+	}
+}
+
+
 static void plot_pixel_8080 (int x, int y, int col)
 {
-	if (flipped)
+	if (flipscreen)
 	{
 		x = 255-x;
 		y = 223-y;
 	}
 
-	plot_pixel2(Machine->scrbitmap,tmpbitmap,x,y,col);
+	plot_pixel(Machine->scrbitmap,x,y,Machine->pens[col]);
 }
+
+static void plot_pixel_8080_tmpbitmap (int x, int y, int col)
+{
+	if (flipscreen)
+	{
+		x = 255-x;
+		y = 223-y;
+	}
+
+	plot_pixel2(Machine->scrbitmap,tmpbitmap,x,y,Machine->pens[col]);
+}
+
 
 void invaders_videoram_w (int offset,int data)
 {
-	if (invaders_videoram[offset] != data)
-	{
-		int i,x,y;
-		int col;
-
-		invaders_videoram[offset] = data;
-
-		y = offset / 32;
-		x = 8 * (offset % 32);
-
-		/* Calculate overlay color for this byte */
-		col = Machine->pens[WHITE];
-		if (x >= 16 && x < 72) col = Machine->pens[GREEN];
-		if (x < 16 && y > 16 && y < 134) col = Machine->pens[GREEN];
-		if (x >= 192 && x < 224) col = Machine->pens[RED];
-
-		for (i = 0; i < 8; i++)
-		{
-			if (!(data & 0x01))
-				plot_pixel_8080 (x, y, Machine->pens[BLACK]);
-			else
-				plot_pixel_8080 (x, y, col);
-
-			x++;
-			data >>= 1;
-		}
-	}
+	videoram_w_p(offset, data);
 }
 
-void invdpt2m_videoram_w (int offset,int data)
+
+static void bw_videoram_w (int offset,int data)
 {
-	if (invaders_videoram[offset] != data)
+	int i,x,y;
+
+	videoram[offset] = data;
+
+	y = offset / 32;
+	x = 8 * (offset % 32);
+
+	for (i = 0; i < 8; i++)
 	{
-		int i,x,y;
-		int col;
+		plot_pixel_p (x, y, data & 0x01);
 
-		invaders_videoram[offset] = data;
-
-		y = offset / 32;
-		x = 8 * (offset % 32);
-
-		/* Calculate overlay color for this byte */
-		col = Machine->pens[WHITE];
-		if (x >= 16 && x < 72) col = Machine->pens[GREEN];
-		if (x < 16 && y > 16 && y < 134) col = Machine->pens[GREEN];
-                if (x >= 72 && x < 192) col = Machine->pens[YELLOW];
-		if (x >= 192 && x < 224) col = Machine->pens[RED];
-
-		for (i = 0; i < 8; i++)
-		{
-			if (!(data & 0x01))
-				plot_pixel_8080 (x, y, Machine->pens[BLACK]);
-			else
-				plot_pixel_8080 (x, y, col);
-
-			x ++;
-			data >>= 1;
-		}
+		x ++;
+		data >>= 1;
 	}
 }
 
-void invad2ct_videoram_w (int offset,int data)
+
+/* thr only difference between these is the background color */
+
+static void schaser_videoram_w (int offset,int data)
 {
-	if (invaders_videoram[offset] != data)
+	int i,x,y,fore_color,back_color;
+
+	videoram[offset] = data;
+
+	y = offset / 32;
+	x = 8 * (offset % 32);
+
+	back_color = 2;	/* blue */
+	fore_color = colorram[offset & 0x1f1f] & 0x07;
+
+	for (i = 0; i < 8; i++)
 	{
-		int i,x,y;
-		int col;
-		int band;
+		if (data & 0x01)
+			plot_pixel_p (x, y, fore_color);
+		else
+			plot_pixel_p (x, y, back_color);
 
-		invaders_videoram[offset] = data;
-
-		y = offset / 32;
-		x = 8 * (offset % 32);
-
-		for (i = 0; i < 8; i++)
-		{
-			if (!(data & 0x01))
-				plot_pixel_8080 (x, y, Machine->pens[BLACK]);
-			else
-			{
-				/* Calculate overlay color for this bit */
-
-				/* (This overlay is dithered to create color transitions,
-				   this is a close approximation) */
-
-				col = Machine->pens[WHITE];
-				band = (x - 2)/23;
-
-				if (band < 1)
-					col = Machine->pens[YELLOW];
-				else if (band < 2)
-					col = Machine->pens[YELLOW_GREEN];
-				else if (band < 3)
-					col = Machine->pens[GREEN_CYAN];
-				else if (band < 4)
-					col = Machine->pens[CYAN];
-				else if (band < 5)
-					col = Machine->pens[CYAN];
-				else if (band < 6)
-					col = Machine->pens[GREEN_CYAN];
-				else if (band < 7)
-					col = Machine->pens[GREEN];
-				else if (band < 8)
-					col = Machine->pens[YELLOW_GREEN];
-				else if (band < 9)
-					col = Machine->pens[YELLOW];
-				else if (band < 10)
-					col = Machine->pens[ORANGE];
-				else
-					col = Machine->pens[RED];
-
-				plot_pixel_8080 (x, y, col);
-			}
-			x++;
-			data >>= 1;
-		}
+		x ++;
+		data >>= 1;
 	}
 }
 
-void invrvnge_videoram_w (int offset,int data)
+static void rollingc_videoram_w (int offset,int data)
 {
-	if (invaders_videoram[offset] != data)
+	int i,x,y,fore_color,back_color;
+
+	videoram[offset] = data;
+
+	y = offset / 32;
+	x = 8 * (offset % 32);
+
+	back_color = 0;	/* black */
+	fore_color = colorram[offset & 0x1f1f] & 0x07;
+
+	for (i = 0; i < 8; i++)
 	{
-		int i,x,y;
-		int col;
+		if (data & 0x01)
+			plot_pixel_p (x, y, fore_color);
+		else
+			plot_pixel_p (x, y, back_color);
 
-		invaders_videoram[offset] = data;
-
-		y = offset / 32;
-		x = 8 * (offset % 32);
-
-		/* Calculate overlay color for this byte */
-		col = Machine->pens[WHITE];
-		if (x < 72) col = Machine->pens[GREEN];
-		if (x >= 192 && x < 224) col = Machine->pens[RED];
-
-		for (i = 0; i < 8; i++)
-		{
-			if (!(data & 0x01))
-				plot_pixel_8080 (x, y, Machine->pens[BLACK]);
-			else
-				plot_pixel_8080 (x, y, col);
-
-			x ++;
-			data >>= 1;
-		}
+		x ++;
+		data >>= 1;
 	}
 }
 
-
-void lrescue_videoram_w (int offset,int data)
+void schaser_colorram_w (int offset,int data)
 {
-	if (invaders_videoram[offset] != data)
+	int i;
+
+
+	offset &= 0x1f1f;
+
+	colorram[offset] = data;
+
+	/* redraw region with (possibly) changed color */
+	for (i = 0; i < 8; i++, offset += 0x20)
 	{
-		int i,x,y;
-		int col;
-
-		invaders_videoram[offset] = data;
-
-		y = offset / 32;
-		x = 8 * (offset % 32);
-
-		/* Calculate overlay color for this byte */
-		col = Machine->pens[WHITE];
-
-		if (x >= 240 && x < 248)
-		{
-			if (y < 72) col = Machine->pens[CYAN];
-			if (y >= 72 && y < 152) col = Machine->pens[RED];
-			if (y >= 152) col = Machine->pens[YELLOW];
-		}
-		if (x >= 232 && x < 240)
-		{
-			if (y < 72) col = Machine->pens[CYAN];
-			if (y >= 72 && y < 160) col = Machine->pens[GREEN];
-			if (y >= 160) col = Machine->pens[YELLOW];
-		}
-		if (x >= 224 && x < 232)
-		{
-			if (y >= 72 && y < 160) col = Machine->pens[GREEN];     /* or 152? */
-			if (y >= 160) col = Machine->pens[YELLOW];
-		}
-
-		if (x >= 216 && x < 224) col = Machine->pens[RED];
-		if (x >= 192 && x < 216) col = Machine->pens[PURPLE];
-		if (x >= 160 && x < 192) col = Machine->pens[GREEN];
-		if (x >= 128 && x < 160) col = Machine->pens[CYAN];
-		if (x >= 96 && x < 128) col = Machine->pens[PURPLE];
-		if (x >= 64 && x < 96) col = Machine->pens[YELLOW];
-		if (x >= 40 && x < 64) col = Machine->pens[RED];
-		if (x >= 24 && x < 40) col = Machine->pens[CYAN];
-		if (x >= 16 && x < 24) col = Machine->pens[RED];
-		if (x < 16)
-		{
-			if (y < 136) col = Machine->pens[CYAN];
-			if (y >= 136 && y < 192) col = Machine->pens[PURPLE];
-			if (y >= 192) col = Machine->pens[CYAN];
-		}
-		if (y == 223) col = Machine->pens[BLACK];
-
-		for (i = 0; i < 8; i++)
-		{
-			if (!(data & 0x01))
-				plot_pixel_8080 (x, y, Machine->pens[BLACK]);
-			else
-				plot_pixel_8080 (x, y, col);
-
-			x ++;
-			data >>= 1;
-		}
+		videoram_w_p(offset, videoram[offset]);
 	}
 }
-
-
-void rollingc_videoram_w (int offset,int data)
-{
-	/* TODO: get rid of this */
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	if (invaders_videoram[offset] != data)
-	{
-		int i,x,y;
-
-		invaders_videoram[offset] = data;
-
-		y = offset / 32;
-		x = 8 * (offset % 32);
-
-		for (i = 0; i < 8; i++)
-		{
-			if (!(data & 0x01))
-				plot_pixel_8080 (x, y, Machine->pens[16]);
-			else
-				plot_pixel_8080 (x, y, Machine->pens[RAM[0xa400 + offset] & 0x0f]);
-
-			x ++;
-			data >>= 1;
-		}
-	}
-}
-
-
-/* Bandido has an optional colour kit than can be added on  */  /* MJC */
-/* this includes a rom image that we do not yet have, so .. */
-
-void boothill_videoram_w (int offset,int data)
-{
-	if (invaders_videoram[offset] != data)
-	{
-		int i,x,y;
-
-		invaders_videoram[offset] = data;
-
-		y = offset / 32;
-		x = 8 * (offset % 32);
-
-		for (i = 0; i < 8; i++)
-		{
-			if (!(data & 0x01))
-				plot_pixel_8080 (x, y, Machine->pens[BLACK]);
-			else
-				plot_pixel_8080 (x, y, Machine->pens[WHITE]);
-
-			x ++;
-			data >>= 1;
-		}
-	}
-}
-
 
 
 /***************************************************************************
@@ -387,123 +373,192 @@ void boothill_videoram_w (int offset,int data)
 ***************************************************************************/
 void invaders_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
-	palette_recalc();
-
-	if (full_refresh)
-		/* copy the character mapped graphics */
-		copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+	vh_screenrefresh_p(bitmap, full_refresh);
 }
 
-void seawolf_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+
+static void vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
-	int x,y,centre,middle;
-
-	/* Update the Bitmap (and erase old cross) */
-
-	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
-
-    /* Draw the Sight */
-
-	centre = ((input_port_0_r(0) & 0x1f) * 8) + 4;
-    middle = 31;
-
-    if (centre<2)   centre=2;
-    if (centre>253) centre=253;
-
-	middle = 31;
-
-	for(y=middle-10;y<middle+11;y++)
-		plot_pixel(bitmap,centre,y,Machine->pens[GREEN]);
-
-	for(x=centre-20;x<centre+21;x++)
-		if((x>0) && (x<256))
-			plot_pixel(bitmap,x,middle,Machine->pens[GREEN]);
-}
-
-void blueshrk_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
-{
-	int x,y,centre,middle;
-
-	/* Update the Bitmap (and erase old cross) */
-
-	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
-
-    /* Draw the Sight */
-
-	centre = (((input_port_1_r(0)) & 0x7f) * 2) - 12;
-    middle = 31;
-
-    if (centre<2)   centre=2;
-    if (centre>253) centre=253;
-
-	middle = 31;
-
-	for(y=middle-10;y<middle+11;y++)
-		plot_pixel(bitmap,centre,y,Machine->pens[GREEN]);
-
-	for(x=centre-20;x<centre+21;x++)
-		if((x>0) && (x<256))
-			plot_pixel(bitmap,x,middle,Machine->pens[GREEN]);
-}
-
-/*******************************************************/
-/*                                                     */
-/* Taito "Balloon Bomber"                              */
-/*                                                     */
-/*******************************************************/
-
-static const unsigned char *colourrom;
-
-void ballbomb_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
-{
-	int i;
-	#define TOTAL_COLORS(gfxn) (Machine->gfx[gfxn]->total_colors * Machine->gfx[gfxn]->color_granularity)
-	#define COLOR(gfxn,offs) (colortable[Machine->drv->gfxdecodeinfo[gfxn].color_codes_start + offs])
-
-	colourrom = color_prom + 128;
-
-    *(palette++) = 0;
-    *(palette++) = 0;
-    *(palette++) = 0;
-
-	for (i = 1;i < Machine->drv->total_colors-1;i++)
+	if (palette_recalc() || redraw_screen || (full_refresh && !use_tmpbitmap))
 	{
-		*(palette++) = 0xdf * (((i >> 0) & 1) == 0) + 0x20;
-		*(palette++) = 0xdf * (((i >> 1) & 1) == 0) + 0x20;
-		*(palette++) = 0xdf * (((i >> 2) & 1) == 0) + 0x20;
+		int offs;
+
+		for (offs = 0;offs < videoram_size;offs++)
+			videoram_w_p(offs, videoram[offs]);
+
+		redraw_screen = 0;
+
+		if (overlay)
+			overlay_remap(overlay);
 	}
 
-    *(palette++) = 0xff;
-    *(palette++) = 0xff;
-    *(palette++) = 0xff;
+
+	if (full_refresh && use_tmpbitmap)
+		/* copy the character mapped graphics */
+		copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+
+	if (overlay)
+		overlay_draw(bitmap,overlay);
 }
 
-void ballbomb_videoram_w (int offset,int data)
+
+static void draw_sight(struct osd_bitmap *bitmap, int x_center, int y_center)
 {
-	if (invaders_videoram[offset] != data)
+	int x,y;
+
+
+    if (x_center<2)   x_center=2;
+    if (x_center>253) x_center=253;
+
+    if (y_center<2)   y_center=2;
+    if (y_center>253) y_center=253;
+
+	for(y = y_center-10; y < y_center+11; y++)
+		if((y >= 0) && (y < 256))
+			plot_pixel(bitmap,x_center,y,Machine->pens[1]);
+
+	for(x = x_center-20; x < x_center+21; x++)
+		if((x >= 0) && (x < 256))
+			plot_pixel(bitmap,x,y_center,Machine->pens[1]);
+}
+
+
+static void seawolf_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+{
+	/* update the bitmap (and erase old cross) */
+
+	vh_screenrefresh(bitmap, 1);
+
+    draw_sight(bitmap, ((input_port_0_r(0) & 0x1f) * 8) + 4, 31);
+}
+
+static void blueshrk_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+{
+	/* update the bitmap (and erase old cross) */
+
+	vh_screenrefresh(bitmap, 1);
+
+    draw_sight(bitmap, ((input_port_1_r(0) & 0x7f) * 2) - 12, 31);
+}
+
+static void desertgu_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+{
+	/* update the bitmap (and erase old cross) */
+
+	vh_screenrefresh(bitmap, 1);
+
+	draw_sight(bitmap,
+			   ((input_port_1_r(0) & 0x7f) * 2) - 30,
+			   ((input_port_2_r(0) & 0x7f) * 2) - 30);
+}
+
+
+void invadpt2_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
+{
+	int i;
+
+
+	for (i = 0;i < Machine->drv->total_colors;i++)
 	{
-		int i,x,y;
-		int col;
+		/* this bit arrangment is a little unusual but are confirmed by screen shots */
 
-		invaders_videoram[offset] = data;
+		*(palette++) = 0xff * ((i >> 0) & 1);
+		*(palette++) = 0xff * ((i >> 2) & 1);
+		*(palette++) = 0xff * ((i >> 1) & 1);
+	}
+}
 
-		y = offset / 32;
-		x = 8 * (offset % 32);
+static void invadpt2_videoram_w (int offset,int data)
+{
+	int i,x,y;
+	int col;
 
-        /* 32 x 32 colourmap */
+	videoram[offset] = data;
 
-        col = colourrom[((y / 8) * 32) + (x / 8)] & 7;
-        col = Machine->pens[col];
+	y = offset / 32;
+	x = 8 * (offset % 32);
 
-		for (i = 0; i < 8; i++)
+	/* 32 x 32 colormap */
+	if (!screen_red)
+		col = memory_region(REGION_PROMS)[(color_map_select ? 0x400 : 0 ) + (((y+32)/8)*32) + (x/8)] & 7;
+	else
+		col = 1;	/* red */
+
+	for (i = 0; i < 8; i++)
+	{
+		plot_pixel_p(x, y, (data & 0x01) ? col : 0);
+
+		x ++;
+		data >>= 1;
+	}
+}
+
+
+void astinvad_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
+{
+	int i;
+
+	for (i = 0;i < Machine->drv->total_colors;i++)
+	{
+		*(palette++) = 0xff * ((i >> 2) & 1);
+		*(palette++) = 0xff * ((i >> 1) & 1);
+		*(palette++) = 0xff * ((i >> 0) & 1);
+	}
+}
+
+
+static void astinvad_videoram_w (int offset,int data)
+{
+	int i,x,y;
+	int col;
+
+	videoram[offset] = data;
+
+	y = offset / 32;
+	x = 8 * (offset % 32);
+
+	if (!screen_red)
+	{
+		if (flipscreen)
+			col = memory_region(REGION_PROMS)[((y+32)/8)*32+(x/8)] >> 4;
+		else
+			col = memory_region(REGION_PROMS)[(31-y/8)*32+(31-x/8)] & 0x0f;
+	}
+	else
+		col = 4;	/* red */
+
+	for (i = 0; i < 8; i++)
+	{
+		plot_pixel_p(x, y, (data & 0x01) ? col : 0);
+
+		x++;
+		data >>= 1;
+	}
+}
+
+static void spaceint_videoram_w (int offset,int data)
+{
+	int i;
+	UINT8 x,y;
+
+	videoram[offset] = data;
+
+	y = 8 * (offset / 256);
+	x = offset % 256;
+
+	for (i = 0; i < 8; i++)
+	{
+		int col = 0;
+
+		if (data & 0x01)
 		{
-			if (!(data & 0x01))
-				plot_pixel_8080 (x, y, Machine->pens[BLACK]);
-			else
-				plot_pixel_8080 (x, y, col);
-
-			x ++;
-			data >>= 1;
+			/* this is wrong */
+			col = memory_region(REGION_PROMS)[(y/16)+16*((x+16)/32)];
 		}
+
+		plot_pixel_p(x, y, col);
+
+		y++;
+		data >>= 1;
 	}
 }

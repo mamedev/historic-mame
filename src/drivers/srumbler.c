@@ -6,41 +6,55 @@
 
   M6809 for game, Z80 and YM-2203 for sound.
 
-Notes:
-- Transparency is not really right.
-- There are three unknown PROMs. They might be related to transparency.
-
 ***************************************************************************/
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "cpu/m6809/m6809.h"
 
-extern unsigned char *srumbler_backgroundram;
-extern int srumbler_backgroundram_size;
-extern unsigned char *srumbler_scrollx;
-extern unsigned char *srumbler_scrolly;
+extern unsigned char *srumbler_backgroundram,*srumbler_foregroundram;
 
-void srumbler_bankswitch_w(int offset,int data);
 void srumbler_background_w(int offset,int data);
+void srumbler_foreground_w(int offset,int data);
+void srumbler_scroll_w(int offset,int data);
 void srumbler_4009_w(int offset,int data);
 
-int srumbler_interrupt(void);
-
 int  srumbler_vh_start(void);
-void srumbler_vh_stop(void);
 void srumbler_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 
 
-void srumbler_bankswitch_w(int offset,int data)
+static void srumbler_bankswitch_w(int offset,int data)
 {
-	unsigned char *RAM = memory_region(REGION_CPU1);
+	/*
+	  banking is controlled by two PROMs. 0000-4fff is mapped to the same
+	  address (RAM and I/O) for all banks, so we don't handle it here.
+	  e000-ffff is all mapped to the same ROMs, however we do handle it
+	  here anyway.
+	  Note that 5000-8fff can be either ROM or RAM, so we should handle
+	  that as well to be 100% accurate.
+	 */
+	int i;
+	unsigned char *ROM = memory_region(REGION_USER1);
+	unsigned char *prom1 = memory_region(REGION_PROMS) + (data & 0xf0);
+	unsigned char *prom2 = memory_region(REGION_PROMS) + 0x100 + ((data & 0x0f) << 4);
 
-	cpu_setbank (1, &RAM[0x10000+(data&0x0f)*0x9000]);
+	for (i = 0x05;i < 0x10;i++)
+	{
+		int bank = ((prom1[i] & 0x03) << 4) | (prom2[i] & 0x0f);
+		/* bit 2 of prom1 selects ROM or RAM - not supported */
+
+		cpu_setbank(i+1,&ROM[bank*0x1000]);
+	}
 }
 
-int srumbler_interrupt(void)
+static void srumbler_init_machine(void)
+{
+	/* initialize banked ROM pointers */
+	srumbler_bankswitch_w(0,0);
+}
+
+static int srumbler_interrupt(void)
 {
 	if (cpu_getiloops()==0)
 	{
@@ -62,8 +76,17 @@ static struct MemoryReadAddress readmem[] =
 	{ 0x400a, 0x400a, input_port_2_r },
 	{ 0x400b, 0x400b, input_port_3_r },
 	{ 0x400c, 0x400c, input_port_4_r },
-	{ 0x5000, 0xdfff, MRA_BANK1},  /* Banked ROM */
-	{ 0xe000, 0xffff, MRA_ROM },   /* ROM */
+	{ 0x5000, 0x5fff, MRA_BANK6 },	/* Banked ROM */
+	{ 0x6000, 0x6fff, MRA_BANK7 },	/* Banked ROM */
+	{ 0x7000, 0x7fff, MRA_BANK8 },	/* Banked ROM */
+	{ 0x8000, 0x8fff, MRA_BANK9 },	/* Banked ROM */
+	{ 0x9000, 0x9fff, MRA_BANK10 },	/* Banked ROM */
+	{ 0xa000, 0xafff, MRA_BANK11 },	/* Banked ROM */
+	{ 0xb000, 0xbfff, MRA_BANK12 },	/* Banked ROM */
+	{ 0xc000, 0xcfff, MRA_BANK13 },	/* Banked ROM */
+	{ 0xd000, 0xdfff, MRA_BANK14 },	/* Banked ROM */
+	{ 0xe000, 0xefff, MRA_BANK15 },	/* Banked ROM */
+	{ 0xf000, 0xffff, MRA_BANK16 },	/* Banked ROM */
 	{ -1 }  /* end of table */
 };
 
@@ -81,15 +104,14 @@ static struct MemoryWriteAddress writemem[] =
 {
 	{ 0x0000, 0x1dff, MWA_RAM },
 	{ 0x1e00, 0x1fff, MWA_RAM, &spriteram, &spriteram_size },
-	{ 0x2000, 0x3fff, srumbler_background_w, &srumbler_backgroundram, &srumbler_backgroundram_size },
-	{ 0x4008, 0x4008, srumbler_bankswitch_w},
-	{ 0x4009, 0x4009, srumbler_4009_w},
-	{ 0x400a, 0x400b, MWA_RAM, &srumbler_scrollx},
-	{ 0x400c, 0x400d, MWA_RAM, &srumbler_scrolly},
-	{ 0x400e, 0x400e, soundlatch_w},
-	{ 0x5000, 0x5fff, videoram_w, &videoram, &videoram_size },
+	{ 0x2000, 0x3fff, srumbler_background_w, &srumbler_backgroundram },
+	{ 0x4008, 0x4008, srumbler_bankswitch_w },
+	{ 0x4009, 0x4009, srumbler_4009_w },
+	{ 0x400a, 0x400d, srumbler_scroll_w },
+	{ 0x400e, 0x400e, soundlatch_w },
+	{ 0x5000, 0x5fff, srumbler_foreground_w, &srumbler_foregroundram },
 	{ 0x6000, 0x6fff, MWA_RAM }, /* Video RAM 2 ??? (not used) */
-	{ 0x7100, 0x73ff, paletteram_RRRRGGGGBBBBxxxx_swap_w, &paletteram },
+	{ 0x7000, 0x73ff, paletteram_RRRRGGGGBBBBxxxx_swap_w, &paletteram },
 	{ 0x7400, 0xffff, MWA_ROM },
 	{ -1 }  /* end of table */
 };
@@ -235,9 +257,9 @@ static struct GfxLayout spritelayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ REGION_GFX1, 0, &charlayout,   320, 16 }, /* colors 320 - 383 */
-	{ REGION_GFX2, 0, &tilelayout,     0,  8 }, /* colors   0 - 127 */
-	{ REGION_GFX3, 0, &spritelayout, 128,  8 }, /* colors 128 - 255 */
+	{ REGION_GFX1, 0, &charlayout,   448, 16 }, /* colors 448 - 511 */
+	{ REGION_GFX2, 0, &tilelayout,   128,  8 }, /* colors 128 - 255 */
+	{ REGION_GFX3, 0, &spritelayout, 256,  8 }, /* colors 256 - 383 */
 	{ -1 } /* end of array */
 };
 
@@ -246,7 +268,7 @@ static struct YM2203interface ym2203_interface =
 {
 	2,                      /* 2 chips */
 	4000000,        /* 4.0 MHz (? hand tuned to match the real board) */
-	{ YM2203_VOL(25,25), YM2203_VOL(25,25) },
+	{ YM2203_VOL(60,20), YM2203_VOL(60,20) },
 	{ 0 },
 	{ 0 },
 	{ 0 },
@@ -275,19 +297,19 @@ static struct MachineDriver machine_driver_srumbler =
 	60, 2500,       /* frames per second, vblank duration */
 				/* hand tuned to get rid of sprite lag */
 	1,      /* 1 CPU slice per frame - interleaving is forced when a sound command is written */
-	0,
+	srumbler_init_machine,
 
 	/* video hardware */
 	64*8, 32*8, { 10*8, (64-10)*8-1, 1*8, 31*8-1 },
 
 	gfxdecodeinfo,
-	384, 384,
+	512, 512,
 	0,
 
 	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_AFTER_VBLANK,
 	0,
 	srumbler_vh_start,
-	srumbler_vh_stop,
+	0,
 	srumbler_vh_screenrefresh,
 
 	/* sound hardware */
@@ -309,7 +331,7 @@ static struct MachineDriver machine_driver_srumbler =
 ***************************************************************************/
 
 ROM_START( srumbler )
-	ROM_REGION( 0x10000+0x9000*16, REGION_CPU1 )  /* 64k for code + banked ROM images */
+	ROM_REGION( 0x10000, REGION_CPU1 )  /* 64k for code */
 	/* empty, will be filled later */
 
 	ROM_REGION( 0x40000, REGION_USER1 ) /* Paged ROMs */
@@ -348,14 +370,14 @@ ROM_START( srumbler )
 	ROM_LOAD( "15j_sr26.bin", 0x30000, 0x8000, 0xd4f1732f )
 	ROM_LOAD( "14j_sr25.bin", 0x38000, 0x8000, 0xd2a4ea4f )
 
-	ROM_REGION( 0x0300, REGION_PROMS )	/* Proms (not used for now.. Transparency???) */
-	ROM_LOAD( "63s141.12a",   0x0000, 0x0100, 0x8421786f )
-	ROM_LOAD( "63s141.13a",   0x0100, 0x0100, 0x6048583f )
-	ROM_LOAD( "63s141.8j",    0x0200, 0x0100, 0x1a89a7ff )
+	ROM_REGION( 0x0300, REGION_PROMS )
+	ROM_LOAD( "63s141.12a",   0x0000, 0x0100, 0x8421786f )	/* ROM banking */
+	ROM_LOAD( "63s141.13a",   0x0100, 0x0100, 0x6048583f )	/* ROM banking */
+	ROM_LOAD( "63s141.8j",    0x0200, 0x0100, 0x1a89a7ff )	/* priority (not used) */
 ROM_END
 
 ROM_START( srumblr2 )
-	ROM_REGION( 0x10000+0x9000*16, REGION_CPU1 )  /* 64k for code + banked ROM images */
+	ROM_REGION( 0x10000, REGION_CPU1 )  /* 64k for code */
 	/* empty, will be filled later */
 
 	ROM_REGION( 0x40000, REGION_USER1 ) /* Paged ROMs */
@@ -394,14 +416,14 @@ ROM_START( srumblr2 )
 	ROM_LOAD( "15j_sr26.bin", 0x30000, 0x8000, 0xd4f1732f )
 	ROM_LOAD( "14j_sr25.bin", 0x38000, 0x8000, 0xd2a4ea4f )
 
-	ROM_REGION( 0x0300, REGION_PROMS )	/* Proms (not used for now.. Transparency???) */
-	ROM_LOAD( "63s141.12a",   0x0000, 0x0100, 0x8421786f )
-	ROM_LOAD( "63s141.13a",   0x0100, 0x0100, 0x6048583f )
-	ROM_LOAD( "63s141.8j",    0x0200, 0x0100, 0x1a89a7ff )
+	ROM_REGION( 0x0300, REGION_PROMS )
+	ROM_LOAD( "63s141.12a",   0x0000, 0x0100, 0x8421786f )	/* ROM banking */
+	ROM_LOAD( "63s141.13a",   0x0100, 0x0100, 0x6048583f )	/* ROM banking */
+	ROM_LOAD( "63s141.8j",    0x0200, 0x0100, 0x1a89a7ff )	/* priority (not used) */
 ROM_END
 
 ROM_START( rushcrsh )
-	ROM_REGION( 0x10000+0x9000*16, REGION_CPU1 )  /* 64k for code + banked ROM images */
+	ROM_REGION( 0x10000, REGION_CPU1 )  /* 64k for code */
 	/* empty, will be filled later */
 
 	ROM_REGION( 0x40000, REGION_USER1 ) /* Paged ROMs */
@@ -440,128 +462,14 @@ ROM_START( rushcrsh )
 	ROM_LOAD( "15j_sr26.bin", 0x30000, 0x8000, 0xd4f1732f )
 	ROM_LOAD( "14j_sr25.bin", 0x38000, 0x8000, 0xd2a4ea4f )
 
-	ROM_REGION( 0x0300, REGION_PROMS )	/* Proms (not used for now.. Transparency???) */
-	ROM_LOAD( "63s141.12a",   0x0000, 0x0100, 0x8421786f )
-	ROM_LOAD( "63s141.13a",   0x0100, 0x0100, 0x6048583f )
-	ROM_LOAD( "63s141.8j",    0x0200, 0x0100, 0x1a89a7ff )
+	ROM_REGION( 0x0300, REGION_PROMS )
+	ROM_LOAD( "63s141.12a",   0x0000, 0x0100, 0x8421786f )	/* ROM banking */
+	ROM_LOAD( "63s141.13a",   0x0100, 0x0100, 0x6048583f )	/* ROM banking */
+	ROM_LOAD( "63s141.8j",    0x0200, 0x0100, 0x1a89a7ff )	/* priority (not used) */
 ROM_END
 
 
 
-/*
-
-    SPEED-RUMBLER Paging system.
-    ===========================
-
-    This is quite complex.
-
-    The area from 0xe000-0xffff is resident all the time. The area from
-    0x5000-0xdfff is paged in and out.
-
-    The following map is derived from the ROM test routine. The routine
-    tests the ROM chips in the following order.
-
-    1=RC4
-    2=RC3
-    3=RC2
-    4=RC1
-    5=RC9
-    6=RC8
-    7=RC7
-    8=RC6
-
-    The numbers on the bars on the paging map refer to the ROM test
-    order. This is also the order that the ROM chips are loaded into MAME.
-
-    For example, page 0 consists of rom-test numbers 2 and 8.
-    This means it uses elements from RC3 and RC6.
-
-    All locations under the arrows correspond to the ROM test and should be
-    correct (since the ROMs pass their tests). It may be necessary to
-    swap two blocks of the same size and number.
-
-    Any locations not under the arrows are not covered by the ROM test. I
-    believe that these come from either page 0 or 5. Some of these, I know
-    are correct, some may not be.
-*/
-
-static int page_table[16][9]=
-{
-//  Arcade machine ROM location
-//  0x5000  0x6000  0x7000  0x8000  0x9000  0xa000  0xb000  0xc000  0xd000
-
-// <======= 2=====> <============ 8 ==============> <==2==> <=======2======>
-   {0x08000,0x09000,0x3c000,0x3d000,0x3e000,0x3f000,0x0b000,0x0e000,0x0f000}, // 00
-//                  <============ 7 ==============>
-   {0x08000,0x09000,0x30000,0x31000,0x32000,0x33000,0x0b000,0x0e000,0x0f000}, // 01
-//                  <============ 7 ==============>
-   {0x08000,0x09000,0x34000,0x35000,0x36000,0x37000,0x0b000,0x0e000,0x0f000}, // 02
-//                  <============ 8 ==============>
-   {0x08000,0x09000,0x38000,0x39000,0x3a000,0x3b000,0x0b000,0x0e000,0x0f000}, // 03
-//                                  <==2==> <==3==>
-   {0x08000,0x09000,0x3c000,0x3d000,0x0a000,0x16000,0x0b000,0x0e000,0x0f000}, // 04
-// <=============== 1 ============> <============ 1 ==============> <==3==>
-   {0x00000,0x01000,0x02000,0x03000,0x04000,0x05000,0x06000,0x07000,0x17000}, // 05
-//                                  <===== 3 =====>
-   {0x00000,0x01000,0x02000,0x03000,0x10000,0x11000,0x06000,0x07000,0x17000}, // 06
-//                                  <============== 3 ============>
-   {0x00000,0x01000,0x02000,0x03000,0x12000,0x13000,0x14000,0x15000,0x17000}, // 07
-//  <================================ 4 ==========================>
-   {0x18000,0x19000,0x1a000,0x1b000,0x1c000,0x1d000,0x1e000,0x1f000,0x17000}, // 08
-//                                  <============== 5 ============>
-   {0x00000,0x01000,0x02000,0x03000,0x20000,0x21000,0x22000,0x23000,0x17000}, // 09
-//                                  <============== 5 ============>
-   {0x00000,0x01000,0x02000,0x03000,0x24000,0x25000,0x26000,0x27000,0x17000}, // 0a
-//                                  <============== 6 ============>
-   {0x00000,0x01000,0x02000,0x03000,0x28000,0x29000,0x2a000,0x2b000,0x17000}, // 0b
-//                                  <============== 6 ============>
-   {0x00000,0x01000,0x02000,0x03000,0x2c000,0x2d000,0x2e000,0x2f000,0x17000}, // 0c
-
-   /* Empty pages, kept to simplify the paging formula in the machine driver */
-   {0xfffff,0xfffff,0xfffff,0xfffff,0xfffff, 0xfffff, 0xfffff, 0xfffff, 0xfffff}, // 0d
-   {0xfffff,0xfffff,0xfffff,0xfffff,0xfffff, 0xfffff, 0xfffff, 0xfffff, 0xfffff}, // 0e
-   {0xfffff,0xfffff,0xfffff,0xfffff,0xfffff, 0xfffff, 0xfffff, 0xfffff, 0xfffff}  // 0f
-};
-
-
-
-static void init_srumbler(void)
-{
-     /*
-     Use the paging map to copy the ROM blocks into a more usable format.
-     The machine driver uses blocks of 0x9000 bytes long.
-     */
-
-    int j, i;
-    unsigned char *RAM = memory_region(REGION_CPU1);
-    unsigned char *pROM = memory_region(REGION_USER1);
-
-    /* Resident ROM area e000-ffff */
-    memcpy(&RAM[0xe000], pROM+0x0c000, 0x2000);
-
-    /* Region 5000-dfff contains paged ROMS */
-    for (j=0; j<16; j++)        /* 16 Pages */
-    {
-		for (i=0; i<9; i++)     /* 9 * 0x1000 blocks */
-		{
-			int nADDR=page_table[j][i];
-			unsigned char *p=&RAM[0x10000+0x09000*j+i*0x1000];
-
-			if (nADDR == 0xfffff)
-			{
-				/* Fill unassigned regions with an illegal M6809 opcode (1) */
-				memset(p, 1, 0x1000);
-			}
-			else
-			{
-				memcpy(p, pROM+nADDR, 0x01000);
-			}
-		}
-    }
-}
-
-
-
-GAME( 1986, srumbler, 0,        srumbler, srumbler, srumbler, ROT270, "Capcom", "The Speed Rumbler (set 1)" )
-GAME( 1986, srumblr2, srumbler, srumbler, srumbler, srumbler, ROT270, "Capcom", "The Speed Rumbler (set 2)" )
-GAME( 1986, rushcrsh, srumbler, srumbler, srumbler, srumbler, ROT270, "Capcom", "Rush & Crash (Japan)" )
+GAME( 1986, srumbler, 0,        srumbler, srumbler, 0, ROT270, "Capcom", "The Speed Rumbler (set 1)" )
+GAME( 1986, srumblr2, srumbler, srumbler, srumbler, 0, ROT270, "Capcom", "The Speed Rumbler (set 2)" )
+GAME( 1986, rushcrsh, srumbler, srumbler, srumbler, 0, ROT270, "Capcom", "Rush & Crash (Japan)" )

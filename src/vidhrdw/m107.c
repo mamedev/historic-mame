@@ -1,6 +1,6 @@
 /****************************************************************************
 
-	Irem M107 video hardware, Bryan McPhail, mish@tendril.force9.net
+	Irem M107 video hardware, Bryan McPhail, mish@tendril.co.uk
 
 	Close to M92 hardware, but with 4 playfields, not 3.
 	Twice as many colours, twice as many sprites.

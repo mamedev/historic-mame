@@ -2,7 +2,7 @@
 
 	Prehistoric Isle video routines
 
-	Emulation by Bryan McPhail, mish@tendril.force9.net
+	Emulation by Bryan McPhail, mish@tendril.co.uk
 
 ***************************************************************************/
 

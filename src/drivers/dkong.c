@@ -1668,7 +1668,7 @@ static void init_radarscp(void)
 
 
 
-GAME( 1980, radarscp, 0,       radarscp, dkong,    radarscp, ROT90, "Nintendo", "Radar Scope" )
+GAMEX(1980, radarscp, 0,       radarscp, dkong,    radarscp, ROT90, "Nintendo", "Radar Scope", GAME_IMPERFECT_SOUND )
 GAME( 1981, dkong,    0,       dkong,    dkong,    0,        ROT90, "Nintendo of America", "Donkey Kong (US)" )
 GAME( 1981, dkongjp,  dkong,   dkong,    dkong,    0,        ROT90, "Nintendo", "Donkey Kong (Japan set 1)" )
 GAME( 1981, dkongjpo, dkong,   dkong,    dkong,    0,        ROT90, "Nintendo", "Donkey Kong (Japan set 2)" )

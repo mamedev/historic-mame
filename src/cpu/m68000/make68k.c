@@ -69,6 +69,8 @@
  *                  Now Win32 uses FASTCALL type call for interrupt callback
  * 09.02.00  MJC  - Check CPU type before allowing 68010/68020 instructions
  *                  remove routines for 5 non existant opcodes
+ * 05.03.00  MJC  - not command decrement A7 by 1 for bytes
+ * 10.03.00  MJC  - as did btst,cmpm and nbcd
  *---------------------------------------------------------------
  * Known Problems / Bugs
  *
@@ -2179,8 +2181,17 @@ void dump_bit_dynamic( int sreg, int type, int mode, int dreg )
     }
 
 	Opcode = 0x0100 | (sreg << 9) | (type<<6) | (mode<<3) | dreg ;
+
 	BaseCode = Opcode & 0x01f8 ;
 	if ( mode == 7 ) BaseCode |= dreg ;
+
+
+    // A7+, A7-
+
+	if ((dreg == 7) && (mode > 2) && (mode < 5))
+	{
+		BaseCode |= dreg;
+	}
 
     Dest = EAtoAMN(Opcode, FALSE);
 
@@ -3744,6 +3755,13 @@ void not(void)
 			BaseCode |= sreg ;
 		}
 
+        // A7+, A7-
+
+		if ( (leng == 0) && (sreg == 7) && (mode > 2) && (mode < 5) )
+		{
+			BaseCode |= sreg ;
+		}
+
         Dest = EAtoAMN(Opcode, FALSE);
 
 	    if ( allow[Dest&0x0f] != '-' )
@@ -4042,6 +4060,13 @@ void nbcd(void)
 
 		if ( mode == 7 )
 			BaseCode |= sreg ;
+
+    	// A7+, A7-
+
+		if ((sreg == 7) && (mode > 2) && (mode < 5))
+		{
+			BaseCode |= sreg;
+		}
 
 		Dest = EAtoAMN(BaseCode, FALSE);
 
@@ -5006,6 +5031,13 @@ void cmpm(void)
 	{
 		Opcode = 0xb108 | (regx<<9) | (leng<<6) | regy ;
 		BaseCode = Opcode & 0xb1c8 ;
+
+        if(leng==0)
+        {
+        	if(regx==7) BaseCode |= (regx<<9);
+        	if(regy==7) BaseCode |= regy;
+        }
+
       	switch (leng)
     	{
             case 0:
@@ -6523,7 +6555,7 @@ void CodeSegmentBegin(void)
 
 /* Messages */
 
-	fprintf(fp, "; Make68K - V%s - Copyright 1998, Mike Coates (mcoates@mame.freeserve.co.uk)\n", VERSION);
+	fprintf(fp, "; Make68K - V%s - Copyright 1998, Mike Coates (mame@btinternet.com)\n", VERSION);
     fprintf(fp, ";                               & Darren Olafson (deo@mail.island.net)\n\n");
 
 /* Needed code to make it work! */
@@ -7033,7 +7065,7 @@ int main(int argc, char **argv)
 {
 	int dwLoop;
 
-	printf("\nMake68K - V%s - Copyright 1998, Mike Coates (mcoates@mame.freeserve.co.uk)\n", VERSION);
+	printf("\nMake68K - V%s - Copyright 1998, Mike Coates (mame@btinternet.com)\n", VERSION);
     printf("                            1999, & Darren Olafson (deo@mail.island.net)\n");
     printf("                            2000\n\n");
 

@@ -1086,10 +1086,10 @@ void init_boblbobl(void)
 
 
 
-GAME( 1986, bublbobl, 0,        bublbobl, bublbobl, 0,        ROT0,  "Taito Corporation", "Bubble Bobble" )
-GAME( 1986, bublbobr, bublbobl, bublbobl, bublbobl, 0,        ROT0,  "Taito America Corporation (Romstar license)", "Bubble Bobble (US set 1)" )
-GAME( 1986, bubbobr1, bublbobl, bublbobl, bublbobl, 0,        ROT0,  "Taito America Corporation (Romstar license)", "Bubble Bobble (US set 2)" )
-GAME( 1986, boblbobl, bublbobl, boblbobl, boblbobl, boblbobl, ROT0,  "bootleg", "Bobble Bobble" )
-GAME( 1986, sboblbob, bublbobl, boblbobl, sboblbob, 0,        ROT0,  "bootleg", "Super Bobble Bobble" )
-GAMEX(1986, tokio,    0,        tokio,    tokio,    0,        ROT90, "Taito", "Tokio / Scramble Formation", GAME_NOT_WORKING )
-GAME( 1986, tokiob,   tokio,    tokio,    tokio,    0,        ROT90, "bootleg", "Tokio / Scramble Formation (bootleg)" )
+GAMEX( 1986, bublbobl, 0,        bublbobl, bublbobl, 0,        ROT0,  "Taito Corporation", "Bubble Bobble", GAME_NO_COCKTAIL )
+GAMEX( 1986, bublbobr, bublbobl, bublbobl, bublbobl, 0,        ROT0,  "Taito America Corporation (Romstar license)", "Bubble Bobble (US set 1)", GAME_NO_COCKTAIL )
+GAMEX( 1986, bubbobr1, bublbobl, bublbobl, bublbobl, 0,        ROT0,  "Taito America Corporation (Romstar license)", "Bubble Bobble (US set 2)", GAME_NO_COCKTAIL )
+GAMEX( 1986, boblbobl, bublbobl, boblbobl, boblbobl, boblbobl, ROT0,  "bootleg", "Bobble Bobble", GAME_NO_COCKTAIL )
+GAMEX( 1986, sboblbob, bublbobl, boblbobl, sboblbob, 0,        ROT0,  "bootleg", "Super Bobble Bobble", GAME_NO_COCKTAIL )
+GAMEX( 1986, tokio,    0,        tokio,    tokio,    0,        ROT90, "Taito", "Tokio / Scramble Formation", GAME_NOT_WORKING | GAME_NO_COCKTAIL )
+GAMEX( 1986, tokiob,   tokio,    tokio,    tokio,    0,        ROT90, "bootleg", "Tokio / Scramble Formation (bootleg)", GAME_NO_COCKTAIL )

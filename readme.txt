@@ -105,7 +105,7 @@ worked on. Also, a totally legal and free ROM set of Robby Roto is available
 on the same page.
 
 If you have bugs to report, check the MAME Testing Project at
-http://mameworld.retrogames.com/mametesters
+http://www.mameworld.net/mametesters
 
 Here are some of the people contributing to MAME. If you have comments,
 suggestions, or bug reports about an existing driver, check the driver's
@@ -135,8 +135,9 @@ your question, try checking the beginner's sections that many emulation pages
 have, or ask on the appropriate Usenet newsgroups (e.g. comp.emulators.misc) or
 on the official MAME message board at http://www.mame.net/msg/
 
-For help in compiling MAME, check this page:
-http://mameworld.retrogames.com
+For help in compiling MAME, check these pages:
+http://www.mame.net/compile.html
+http://www.mameworld.net
 
 Also, DO NOT SEND REQUESTS FOR NEW GAMES TO ADD, unless you have some original
 info on the game hardware or, even better, own the board and have the technical
@@ -190,6 +191,9 @@ SEAL Synthetic Audio Library API Interface Copyright (C) 1995, 1996
 Video modes created using Tweak 1.6b by Robert Schmidt, who also wrote
    TwkUser.c.
 "inflate" code for zip file support by Mark Adler.
+
+DOS executable compressed with UPX by Markus F.X.J. Oberhumer & Laszlo Molnar,
+    http://upx.tsx.org/
 
 Big thanks to Gary Walton (garyw@excels-w.demon.co.uk) for too many things
    to mention.
@@ -435,6 +439,9 @@ Options:
               connect PSX and N64 pads.
 
 -hotrod       Sets a default keyboard configuration suitable for the HotRod
+              joystick by HanaHo Games.
+
+-hotrodse     Sets a default keyboard configuration suitable for the HotRod SE
               joystick by HanaHo Games.
 
 -log          Creates a log of illegal memory accesses in ERROR.LOG

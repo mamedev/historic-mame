@@ -381,6 +381,6 @@ ROM_END
 /* The encryption is based on a custom ALU and seems to be dynamically evolving */
 /* (like Jr. PacMan). I think it decodes 16 bits at a time, bits 0-2 are (or can be) */
 /* an opcode for the ALU and the others contain the data. */
-GAMEX(1982?, popeye,   0,      popeyebl, popeye, 0, ROT0, "Nintendo", "Popeye (set 1)", GAME_NOT_WORKING )
-GAMEX(1982?, popeye2,  popeye, popeyebl, popeye, 0, ROT0, "Nintendo", "Popeye (set 2)", GAME_NOT_WORKING )
-GAME( 1982?, popeyebl, popeye, popeyebl, popeye, 0, ROT0, "bootleg", "Popeye (bootleg)" )
+GAMEX( 1982?, popeye,   0,      popeyebl, popeye, 0, ROT0, "Nintendo", "Popeye (set 1)", GAME_NOT_WORKING | GAME_NO_COCKTAIL )
+GAMEX( 1982?, popeye2,  popeye, popeyebl, popeye, 0, ROT0, "Nintendo", "Popeye (set 2)", GAME_NOT_WORKING | GAME_NO_COCKTAIL )
+GAMEX( 1982?, popeyebl, popeye, popeyebl, popeye, 0, ROT0, "bootleg", "Popeye (bootleg)", GAME_NO_COCKTAIL )

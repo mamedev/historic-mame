@@ -1320,12 +1320,12 @@ ROM_END
 
 
 
-GAME( 1991, pspikes,  0,       pspikes,  pspikes,  0, ROT0,   "Video System Co.", "Power Spikes (Korea)" )
-GAME( 1991, svolly91, pspikes, pspikes,  pspikes,  0, ROT0,   "Video System Co.", "Super Volley '91 (Japan)" )
-GAME( 1991, turbofrc, 0,       turbofrc, turbofrc, 0, ROT270, "Video System Co.", "Turbo Force" )
-GAME( 1992, aerofgt,  0,       aerofgt,  aerofgt,  0, ROT270, "Video System Co.", "Aero Fighters" )
-GAME( 1992, aerofgtb, aerofgt, aerofgtb, aerofgtb, 0, ROT270, "Video System Co.", "Aero Fighters (Turbo Force hardware set 1)" )
-GAME( 1992, aerofgtc, aerofgt, aerofgtb, aerofgtb, 0, ROT270, "Video System Co.", "Aero Fighters (Turbo Force hardware set 2)" )
+GAMEX( 1991, pspikes,  0,       pspikes,  pspikes,  0, ROT0,   "Video System Co.", "Power Spikes (Korea)", GAME_NO_COCKTAIL )
+GAMEX( 1991, svolly91, pspikes, pspikes,  pspikes,  0, ROT0,   "Video System Co.", "Super Volley '91 (Japan)", GAME_NO_COCKTAIL )
+GAMEX( 1991, turbofrc, 0,       turbofrc, turbofrc, 0, ROT270, "Video System Co.", "Turbo Force", GAME_NO_COCKTAIL )
+GAMEX( 1992, aerofgt,  0,       aerofgt,  aerofgt,  0, ROT270, "Video System Co.", "Aero Fighters", GAME_NO_COCKTAIL )
+GAMEX( 1992, aerofgtb, aerofgt, aerofgtb, aerofgtb, 0, ROT270, "Video System Co.", "Aero Fighters (Turbo Force hardware set 1)", GAME_NO_COCKTAIL )
+GAMEX( 1992, aerofgtc, aerofgt, aerofgtb, aerofgtb, 0, ROT270, "Video System Co.", "Aero Fighters (Turbo Force hardware set 2)", GAME_NO_COCKTAIL )
 
 /* note: this one has a 2608, not a 2610 */
-GAME( ????, unkvsys,  0,       unkvsys,  aerofgt,  0, ROT90,  "Video System Co.", "unknown" )
+GAMEX( ????, unkvsys,  0,       unkvsys,  aerofgt,  0, ROT90,  "Video System Co.", "unknown", GAME_NO_COCKTAIL )

@@ -278,5 +278,5 @@ ROM_END
 
 
 
-GAME( 1977, canyon,   0,      canyon, canyon, 0, ROT0, "Atari", "Canyon Bomber" )
-GAME( 1977, canbprot, canyon, canyon, canyon, 0, ROT0, "Atari", "Canyon Bomber (prototype)" )
+GAMEX( 1977, canyon,   0,      canyon, canyon, 0, ROT0, "Atari", "Canyon Bomber", GAME_NO_SOUND )
+GAMEX( 1977, canbprot, canyon, canyon, canyon, 0, ROT0, "Atari", "Canyon Bomber (prototype)", GAME_NO_SOUND )

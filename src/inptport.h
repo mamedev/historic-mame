@@ -98,6 +98,7 @@ enum { IPT_END=1,IPT_PORT,
 };
 
 #define IPT_UNUSED     IPF_UNUSED
+#define IPT_SPECIAL    IPT_UNUSED	/* special meaning handled by custom functions */
 
 #define IPF_MASK       0xffffff00
 #define IPF_UNUSED     0x80000000	/* The bit is not used by this game, but is used */

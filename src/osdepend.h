@@ -102,8 +102,13 @@ void osd_save_snapshot(void);
   osd_start_audio_stream() and osd_stop_audio_stream() must return the number of
   samples (or couples of samples, when using stereo) required for next frame.
   This will be around Machine->sample_rate / Machine->drv->frames_per_second,
-  the code may adjust it at will to keep timing accurate and to maintain audio
-  and video in sync when using vsync.
+  the code may adjust it by SMALL AMOUNTS to keep timing accurate and to maintain
+  audio and video in sync when using vsync. Note that sound generation,
+  especially when DACs are involved, greatly depends on the samples per frame to
+  be roughly constant, so the returned value must always stay close to the
+  reference value of Machine->sample_rate / Machine->drv->frames_per_second.
+  Of course that value is not necessarily an integer so at least a +/- 1
+  adjustment is necessary to avoid drifting over time.
  */
 int osd_start_audio_stream(int stereo);
 int osd_update_audio_stream(INT16 *buffer);

@@ -319,8 +319,8 @@ static void draw_sprites2(struct osd_bitmap *bitmap, int priority)
 		flash=x&0x800;
 		if (flash && (cpu_getcurrentframe() & 1)) continue;
 
-		if (priority==1 &&  (colour&8)) continue;
-		if (priority==2 && !(colour&8)) continue;
+		if (priority==1 &&  (colour&4)) continue;
+		if (priority==2 && !(colour&4)) continue;
 
 		fx = y & 0x2000;
 		fy = y & 0x4000;
@@ -500,16 +500,15 @@ void dec8_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 	scrollx=-((scroll1[0]<<8)+scroll1[1]);
 	copyscrollbitmap(bitmap,pf1_bitmap,1,&scrollx,1,&scrolly,0,TRANSPARENCY_NONE,0);
 
+	draw_sprites2(bitmap,1);
 
 	scrolly=-((scroll2[2]<<8)+scroll2[3]);
 	scrollx=-(((scroll2[0]&1)<<8)+scroll2[1]);
 	copyscrollbitmap(bitmap,pf2_bitmap,1,&scrollx,1,&scrolly,0,TRANSPARENCY_PEN,palette_transparent_pen);
 
-	/* Sprites */
-	draw_sprites2(bitmap,0);
+	draw_sprites2(bitmap,2);
 
-	/* Top layer */
-	draw_characters(bitmap,0x70,4);
+	draw_characters(bitmap,0xe0,5);
 }
 
 /******************************************************************************/
@@ -670,7 +669,6 @@ void gondo_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 
 	if (palette_recalc())
     	memset(pf_dirty,1,0x800);
-
 
 	/* Playfield 2 - Foreground */
 	mx=-1; my=0;

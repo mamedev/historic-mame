@@ -21,7 +21,8 @@
 	-  Teki Paki sprites seem to be three frames ahead of the tile layers.
 		Since this driver double buffers the sprites, Teki Paki is still
 		suffering sprite lag (Does it need an extra buffer - quite strange)
-
+	-  Batsugun, relationship between the two video controllers (priority
+		wise) is wrong and unknown.
 
  Video RAM address layout:
 
@@ -90,7 +91,7 @@ Scroll Registers (hex) :
 	06		Sprites    scroll X (X flip off) ???
 	07		Sprites    scroll Y (Y flip off) ???
 	0E		???? Initialise Video controller at startup ????
-	0F		Scroll update complete ??? using this to control sprite buffering
+	0F		Scroll update complete ??? (Not used in Ghox and V-Five)
 
 	80		Background scroll X (X flip on)
 	81		Background scroll Y (Y flip on)
@@ -105,15 +106,15 @@ Scroll Registers (hex) :
 
 Scroll Register 0E writes (Video controller inits ?) from different games:
 
-Teki-Paki		 | Ghox				| Knuckle Bash	   | Pipi & Bibis	  |
+Teki-Paki		 | Ghox				| Knuckle Bash	   | Tatsujin 2		  |
 0003, 0002, 4000 | ????, ????, ???? | 0202, 0203, 4200 | 0003, 0002, 4000 |
 
-Dogyuun			 |
-0202, 0203, 4200 |
-1202, 1203, 5200 | <--- Second video controller ???
+Dogyuun			 | Batsugun			|
+0202, 0203, 4200 | 0202, 0203, 4200 |
+1202, 1203, 5200 | 1202, 1203, 5200 | <--- Second video controller ???
 
-Fix Eight		 | Tatsujin 2		| Snow Bros. 2	   |
-0202, 0203, 4200 | 0003, 0002, 4000 | 0202, 0203, 4200 |
+Pipi & Bibis	 | Fix Eight		| V-Five		   | Snow Bros. 2	  |
+0003, 0002, 4000 | 0202, 0203, 4200 | 0202, 0203, 4200 | 0202, 0203, 4200 |
 
 ***************************************************************************/
 
@@ -131,51 +132,52 @@ Fix Eight		 | Tatsujin 2		| Snow Bros. 2	   |
 #define TOAPLAN2_SPRITE_FLIPX 0x1000	/* Sprite flip flags (for screen flip) */
 #define TOAPLAN2_SPRITE_FLIPY 0x2000
 
-static unsigned char *bgvideoram;
-static unsigned char *fgvideoram;
-static unsigned char *topvideoram;
-static unsigned char *spriteram_now;	/* Sprites to draw this frame */
-static unsigned char *spriteram_next;	/* Sprites to draw next frame */
-static unsigned char *spriteram_new;	/* Sprites to add to next frame */
-static int toaplan2_unk_vram;			/* Video RAM tested but not used (for Teki Paki)*/
+#define CPU_2_NONE		0x00
+#define CPU_2_Z80		0x5a
+#define CPU_2_HD647180	0xa5
+#define CPU_2_Zx80		0xff
 
-static int toaplan2_scroll_reg;
-static int toaplan2_voffs;
-static int bg_offs;
-static int fg_offs;
-static int top_offs;
-static int sprite_offs;
-static int bg_scrollx;
-static int bg_scrolly;
-static int fg_scrollx;
-static int fg_scrolly;
-static int top_scrollx;
-static int top_scrolly;
-static int sprite_scrollx;
-static int sprite_scrolly;
+
+static unsigned char *bgvideoram[2];
+static unsigned char *fgvideoram[2];
+static unsigned char *topvideoram[2];
+static unsigned char *spriteram_now[2];	 /* Sprites to draw this frame */
+static unsigned char *spriteram_next[2]; /* Sprites to draw next frame */
+static unsigned char *spriteram_new[2];	 /* Sprites to add to next frame */
+static int toaplan2_unk_vram;			 /* Video RAM tested but not used (for Teki Paki)*/
+
+static int toaplan2_scroll_reg[2];
+static int toaplan2_voffs[2];
+static int bg_offs[2];
+static int fg_offs[2];
+static int top_offs[2];
+static int sprite_offs[2];
+static int bg_scrollx[2];
+static int bg_scrolly[2];
+static int fg_scrollx[2];
+static int fg_scrolly[2];
+static int top_scrollx[2];
+static int top_scrolly[2];
+static int sprite_scrollx[2];
+static int sprite_scrolly[2];
 
 #if TOAPLAN2_DEBUG
-static int display_bg =1;
-static int display_fg =1;
-static int display_top=1;
-static int displog    =0;
+static int display_bg[2]  = { 1, 1 };
+static int display_fg[2]  = { 1, 1 };
+static int display_top[2] = { 1, 1 };
+static int displog = 0;
 #endif
-static int display_sp =1;
+static int display_sp[2] = { 1, 1 };
 
-static int sprite_priority[16];
-static int bg_flip = 0;
-static int fg_flip = 0;
-static int top_flip = 0;
-static int sprite_flip = 0;
+static int sprite_priority[2][16];
+static int bg_flip[2] = { 0, 0 };
+static int fg_flip[2] = { 0, 0 };
+static int top_flip[2] = { 0, 0 };
+static int sprite_flip[2] = { 0, 0 };
 
 extern int toaplan2_sub_cpu;
 
-#define CPU_2_NONE      0x00
-#define CPU_2_Z80		0x5a
-#define CPU_2_HD647180  0xa5
-#define CPU_2_UNKNOWN   0xff
-
-static struct tilemap *top_tilemap, *fg_tilemap, *bg_tilemap;
+static struct tilemap *top_tilemap[2], *fg_tilemap[2], *bg_tilemap[2];
 
 
 /***************************************************************************
@@ -184,10 +186,10 @@ static struct tilemap *top_tilemap, *fg_tilemap, *bg_tilemap;
 
 ***************************************************************************/
 
-static void get_top_tile_info( int col, int row )
+static void get_top0_tile_info( int col, int row )
 {
 	int color, tile_number, attrib, offset;
-	UINT16 *source = (UINT16 *)(topvideoram);
+	UINT16 *source = (UINT16 *)(topvideoram[0]);
 
 	offset = ((row*64) + (col*2)) & 0x7ff;
 
@@ -198,10 +200,10 @@ static void get_top_tile_info( int col, int row )
 	tile_info.priority = (attrib & 0x0f00) >> 8;
 }
 
-static void get_fg_tile_info( int col, int row )
+static void get_fg0_tile_info( int col, int row )
 {
 	int color, tile_number, attrib, offset;
-	UINT16 *source = (UINT16 *)(fgvideoram);
+	UINT16 *source = (UINT16 *)(fgvideoram[0]);
 
 	offset = ((row*64) + (col*2)) & 0x7ff;
 
@@ -212,10 +214,10 @@ static void get_fg_tile_info( int col, int row )
 	tile_info.priority = (attrib & 0x0f00) >> 8;
 }
 
-static void get_bg_tile_info( int col, int row )
+static void get_bg0_tile_info( int col, int row )
 {
 	int color, tile_number, attrib, offset;
-	UINT16 *source = (UINT16 *)(bgvideoram);
+	UINT16 *source = (UINT16 *)(bgvideoram[0]);
 
 	offset = ((row*64) + (col*2)) & 0x7ff;
 
@@ -225,6 +227,50 @@ static void get_bg_tile_info( int col, int row )
 	SET_TILE_INFO(0,tile_number,color)
 	tile_info.priority = (attrib & 0x0f00) >> 8;
 }
+
+
+static void get_top1_tile_info( int col, int row )
+{
+	int color, tile_number, attrib, offset;
+	UINT16 *source = (UINT16 *)(topvideoram[1]);
+
+	offset = ((row*64) + (col*2)) & 0x7ff;
+
+	attrib = source[offset];
+	tile_number = source[offset+1];
+	color = attrib & 0x7f;
+	SET_TILE_INFO(2,tile_number,color)
+	tile_info.priority = (attrib & 0x0f00) >> 8;
+}
+
+static void get_fg1_tile_info( int col, int row )
+{
+	int color, tile_number, attrib, offset;
+	UINT16 *source = (UINT16 *)(fgvideoram[1]);
+
+	offset = ((row*64) + (col*2)) & 0x7ff;
+
+	attrib = source[offset];
+	tile_number = source[offset+1];
+	color = attrib & 0x7f;
+	SET_TILE_INFO(2,tile_number,color)
+	tile_info.priority = (attrib & 0x0f00) >> 8;
+}
+
+static void get_bg1_tile_info( int col, int row )
+{
+	int color, tile_number, attrib, offset;
+	UINT16 *source = (UINT16 *)(bgvideoram[1]);
+
+	offset = ((row*64) + (col*2)) & 0x7ff;
+
+	attrib = source[offset];
+	tile_number = source[offset+1];
+	color = attrib & 0x7f;
+	SET_TILE_INFO(2,tile_number,color)
+	tile_info.priority = (attrib & 0x0f00) >> 8;
+}
+
 
 
 /***************************************************************************
@@ -232,99 +278,165 @@ static void get_bg_tile_info( int col, int row )
   Start the video hardware emulation.
 
 ***************************************************************************/
-void toaplan2_vh_stop(void) {
-	free(bgvideoram);
-	free(fgvideoram);
-	free(topvideoram);
-	free(spriteram_now);
-	free(spriteram_next);
-	free(spriteram_new);
+static void toaplan2_vh_stop(int controller)
+{
+	free(     bgvideoram[controller] );
+	free(     fgvideoram[controller] );
+	free(    topvideoram[controller] );
+	free(  spriteram_now[controller] );
+	free( spriteram_next[controller] );
+	free(  spriteram_new[controller] );
+}
+void toaplan2_0_vh_stop(void)
+{
+	toaplan2_vh_stop(0);
+}
+void toaplan2_1_vh_stop(void)
+{
+	toaplan2_vh_stop(1);
+	toaplan2_vh_stop(0);
 }
 
-int toaplan2_vh_start(void) {
-	if ((spriteram_new = malloc(TOAPLAN2_SPRITERAM_SIZE)) == 0)
-	{
-		return 1;
-	}
-	memset(spriteram_new,0,TOAPLAN2_SPRITERAM_SIZE);
 
-	if ((spriteram_next = malloc(TOAPLAN2_SPRITERAM_SIZE)) == 0)
-	{
-		free(spriteram_new);
-		return 1;
-	}
-	memset(spriteram_next,0,TOAPLAN2_SPRITERAM_SIZE);
-
-	if ((spriteram_now = malloc(TOAPLAN2_SPRITERAM_SIZE)) == 0)
-	{
-		free(spriteram_next);
-		free(spriteram_new);
-		return 1;
-	}
-	memset(spriteram_now,0,TOAPLAN2_SPRITERAM_SIZE);
-
-	if ((topvideoram = malloc(TOAPLAN2_TOP_VRAM_SIZE)) == 0)
-	{
-		free(spriteram_now);
-		free(spriteram_next);
-		free(spriteram_new);
-		return 1;
-	}
-	memset(topvideoram,0,TOAPLAN2_TOP_VRAM_SIZE);
-
-	if ((fgvideoram = malloc(TOAPLAN2_FG_VRAM_SIZE)) == 0)
-	{
-		free(topvideoram);
-		free(spriteram_now);
-		free(spriteram_next);
-		free(spriteram_new);
-		return 1;
-	}
-	memset(fgvideoram,0,TOAPLAN2_FG_VRAM_SIZE);
-
-	if ((bgvideoram = malloc(TOAPLAN2_BG_VRAM_SIZE)) == 0)
-	{
-		free(fgvideoram);
-		free(topvideoram);
-		free(spriteram_now);
-		free(spriteram_next);
-		free(spriteram_new);
-		return 1;
-	}
-	memset(bgvideoram,0,TOAPLAN2_BG_VRAM_SIZE);
-
-	top_tilemap = tilemap_create(
-		get_top_tile_info,
+static int create_tilemaps_0(void)
+{
+	top_tilemap[0] = tilemap_create(
+		get_top0_tile_info,
 		TILEMAP_TRANSPARENT,
 		16,16,
 		32,32
 	);
 
-	fg_tilemap = tilemap_create(
-		get_fg_tile_info,
+	fg_tilemap[0] = tilemap_create(
+		get_fg0_tile_info,
 		TILEMAP_TRANSPARENT,
 		16,16,
 		32,32
 	);
 
-	bg_tilemap = tilemap_create(
-		get_bg_tile_info,
+	bg_tilemap[0] = tilemap_create(
+		get_bg0_tile_info,
 		TILEMAP_TRANSPARENT,
 		16,16,
 		32,32
 	);
 
-
-	if (top_tilemap && fg_tilemap && bg_tilemap)
+	if (top_tilemap[0] && fg_tilemap[0] && bg_tilemap[0])
 	{
-		top_tilemap->transparent_pen = 0;
-		fg_tilemap->transparent_pen = 0;
-		bg_tilemap->transparent_pen = 0;
-
+		top_tilemap[0]->transparent_pen = 0;
+		fg_tilemap[0]->transparent_pen = 0;
+		bg_tilemap[0]->transparent_pen = 0;
 		return 0;
 	}
-
 	return 1;
+}
+static int create_tilemaps_1(void)
+{
+	top_tilemap[1] = tilemap_create(
+		get_top1_tile_info,
+		TILEMAP_TRANSPARENT,
+		16,16,
+		32,32
+	);
+
+	fg_tilemap[1] = tilemap_create(
+		get_fg1_tile_info,
+		TILEMAP_TRANSPARENT,
+		16,16,
+		32,32
+	);
+
+	bg_tilemap[1] = tilemap_create(
+		get_bg1_tile_info,
+		TILEMAP_TRANSPARENT,
+		16,16,
+		32,32
+	);
+
+	if (top_tilemap[1] && fg_tilemap[1] && bg_tilemap[1])
+	{
+		top_tilemap[1]->transparent_pen = 0;
+		fg_tilemap[1]->transparent_pen = 0;
+		bg_tilemap[1]->transparent_pen = 0;
+		return 0;
+	}
+	return 1;
+}
+
+static int toaplan2_vh_start(int controller)
+{
+	static int error_level = 0;
+	if ((spriteram_new[controller] = malloc(TOAPLAN2_SPRITERAM_SIZE)) == 0)
+	{
+		return 1;
+	}
+	memset(spriteram_new[controller],0,TOAPLAN2_SPRITERAM_SIZE);
+
+	if ((spriteram_next[controller] = malloc(TOAPLAN2_SPRITERAM_SIZE)) == 0)
+	{
+		free( spriteram_new[controller] );
+		return 1;
+	}
+	memset(spriteram_next[controller],0,TOAPLAN2_SPRITERAM_SIZE);
+
+	if ((spriteram_now[controller] = malloc(TOAPLAN2_SPRITERAM_SIZE)) == 0)
+	{
+		free( spriteram_next[controller] );
+		free(  spriteram_new[controller] );
+		return 1;
+	}
+	memset(spriteram_now[controller],0,TOAPLAN2_SPRITERAM_SIZE);
+
+	if ((topvideoram[controller] = malloc(TOAPLAN2_TOP_VRAM_SIZE)) == 0)
+	{
+		free(  spriteram_now[controller] );
+		free( spriteram_next[controller] );
+		free(  spriteram_new[controller] );
+		return 1;
+	}
+	memset(topvideoram[controller],0,TOAPLAN2_TOP_VRAM_SIZE);
+
+	if ((fgvideoram[controller] = malloc(TOAPLAN2_FG_VRAM_SIZE)) == 0)
+	{
+		free(    topvideoram[controller] );
+		free(  spriteram_now[controller] );
+		free( spriteram_next[controller] );
+		free(  spriteram_new[controller] );
+		return 1;
+	}
+	memset(fgvideoram[controller],0,TOAPLAN2_FG_VRAM_SIZE);
+
+	if ((bgvideoram[controller] = malloc(TOAPLAN2_BG_VRAM_SIZE)) == 0)
+	{
+		free(     fgvideoram[controller] );
+		free(    topvideoram[controller] );
+		free(  spriteram_now[controller] );
+		free( spriteram_next[controller] );
+		free(  spriteram_new[controller] );
+		return 1;
+	}
+	memset(bgvideoram[controller],0,TOAPLAN2_BG_VRAM_SIZE);
+
+	if (controller == 0)
+	{
+		error_level |= create_tilemaps_0();
+	}
+	if (controller == 1)
+	{
+		error_level |= create_tilemaps_1();
+	}
+	return error_level;
+}
+int toaplan2_0_vh_start(void)
+{
+	return toaplan2_vh_start(0);
+}
+int toaplan2_1_vh_start(void)
+{
+	int error_level = 0;
+	error_level |= toaplan2_vh_start(0);
+	error_level |= toaplan2_vh_start(1);
+	return error_level;
 }
 
 
@@ -335,272 +447,306 @@ int toaplan2_vh_start(void) {
 
 ***************************************************************************/
 
-
-int toaplan2_voffs_r(int offset)
+void toaplan2_voffs_w(int offset, int data, int controller)
 {
-	return toaplan2_voffs ;
-}
-
-void toaplan2_voffs_w(int offset, int data)
-{
-	toaplan2_voffs = data;
+	toaplan2_voffs[controller] = data;
 
 	/* Layers are seperated by ranges in the offset */
 	switch (data & 0xfc00)
 	{
 		case 0x0400:
-		case 0x0000:	bg_offs = (data & 0x7ff) * 2; break;
+		case 0x0000:	bg_offs[controller] = (data & 0x7ff) * 2; break;
 		case 0x0c00:
-		case 0x0800:	fg_offs = (data & 0x7ff) * 2; break;
+		case 0x0800:	fg_offs[controller] = (data & 0x7ff) * 2; break;
 		case 0x1400:
-		case 0x1000:	top_offs = (data & 0x7ff) * 2; break;
-		case 0x1800:	sprite_offs = (data & 0x3ff) * 2; break;
+		case 0x1000:	top_offs[controller] = (data & 0x7ff) * 2; break;
+		case 0x1800:	sprite_offs[controller] = (data & 0x3ff) * 2; break;
 		default:		if (errorlog)
-							fprintf(errorlog,"Hmmm, unknown video layer being selected (%08x)\n",data);
+							fprintf(errorlog,"Hmmm, unknown video controller %01x layer being selected (%08x)\n",controller,data);
+						data &= 0x1800;
+						if ((data & 0x1800) == 0x0000)
+							bg_offs[controller] = (data & 0x7ff) * 2;
+						if ((data & 0x1800) == 0x0800)
+							fg_offs[controller] = (data & 0x7ff) * 2;
+						if ((data & 0x1800) == 0x1000)
+							top_offs[controller] = (data & 0x7ff) * 2;
+						if ((data & 0x1800) == 0x1800)
+							sprite_offs[controller] = (data & 0x3ff) * 2;
 						break;
 	}
 }
+void toaplan2_0_voffs_w(int offset, int data)
+{
+	toaplan2_voffs_w(offset, data, 0);
+}
+void toaplan2_1_voffs_w(int offset, int data)
+{
+	toaplan2_voffs_w(offset, data, 1);
+}
 
-int toaplan2_videoram_r(int offset)
+int toaplan2_videoram_r(int offset, int controller)
 {
 	static int video_data = 0;
 	int videoram_offset;
 
-	switch (toaplan2_voffs & 0xfc00)
+	switch (toaplan2_voffs[controller] & 0xfc00)
 	{
 		case 0x0400:
 		case 0x0000:
-				videoram_offset = bg_offs & (TOAPLAN2_BG_VRAM_SIZE-1);
-				video_data = READ_WORD (&bgvideoram[videoram_offset]);
-				bg_offs+=2;
-				if (bg_offs > TOAPLAN2_BG_VRAM_SIZE)
+				videoram_offset = bg_offs[controller] & (TOAPLAN2_BG_VRAM_SIZE-1);
+				video_data = READ_WORD (&bgvideoram[controller][videoram_offset]);
+				bg_offs[controller] += 2;
+				if (bg_offs[controller] > TOAPLAN2_BG_VRAM_SIZE)
 				{
 					if (errorlog)
-						fprintf(errorlog,"Reading %04x from out of range BG Layer address (%08x) !!!\n",video_data,bg_offs);
+						fprintf(errorlog,"Reading %04x from out of range BG Layer address (%08x)  Video controller %01x  !!!\n",video_data,bg_offs[controller],controller);
 				}
 				break;
 		case 0x0c00:
 		case 0x0800:
-				videoram_offset = fg_offs & (TOAPLAN2_FG_VRAM_SIZE-1);
-				video_data = READ_WORD (&fgvideoram[videoram_offset]);
-				fg_offs+=2;
-				if (fg_offs > TOAPLAN2_FG_VRAM_SIZE)
+				videoram_offset = fg_offs[controller] & (TOAPLAN2_FG_VRAM_SIZE-1);
+				video_data = READ_WORD (&fgvideoram[controller][videoram_offset]);
+				fg_offs[controller] += 2;
+				if (fg_offs[controller] > TOAPLAN2_FG_VRAM_SIZE)
 				{
 					if (errorlog)
-						fprintf(errorlog,"Reading %04x from out of range FG Layer address (%08x) !!!\n",video_data,fg_offs);
+						fprintf(errorlog,"Reading %04x from out of range FG Layer address (%08x)  Video controller %01x  !!!\n",video_data,fg_offs[controller],controller);
 				}
 				break;
 		case 0x1400:
 		case 0x1000:
-				videoram_offset = top_offs & (TOAPLAN2_TOP_VRAM_SIZE-1);
-				video_data = READ_WORD (&topvideoram[videoram_offset]);
-				top_offs+=2;
-				if (top_offs > TOAPLAN2_TOP_VRAM_SIZE)
+				videoram_offset = top_offs[controller] & (TOAPLAN2_TOP_VRAM_SIZE-1);
+				video_data = READ_WORD (&topvideoram[controller][videoram_offset]);
+				top_offs[controller] += 2;
+				if (top_offs[controller] > TOAPLAN2_TOP_VRAM_SIZE)
 				{
 					if (errorlog)
-						fprintf(errorlog,"Reading %04x from out of range TOP Layer address (%08x) !!!\n",video_data,top_offs);
+						fprintf(errorlog,"Reading %04x from out of range TOP Layer address (%08x)  Video controller %01x  !!!\n",video_data,top_offs[controller],controller);
 				}
 				break;
 		case 0x1800:
-				videoram_offset = sprite_offs & (TOAPLAN2_SPRITERAM_SIZE-1);
-				video_data = READ_WORD (&spriteram_new[videoram_offset]);
-				sprite_offs+=2;
-				if (sprite_offs > TOAPLAN2_SPRITERAM_SIZE)
+				videoram_offset = sprite_offs[controller] & (TOAPLAN2_SPRITERAM_SIZE-1);
+				video_data = READ_WORD (&spriteram_new[controller][videoram_offset]);
+				sprite_offs[controller] += 2;
+				if (sprite_offs[controller] > TOAPLAN2_SPRITERAM_SIZE)
 				{
 					if (errorlog)
-						fprintf(errorlog,"Reading %04x from out of range Sprite address (%08x) !!!\n",video_data,sprite_offs);
+						fprintf(errorlog,"Reading %04x from out of range Sprite address (%08x)  Video controller %01x  !!!\n",video_data,sprite_offs[controller],controller);
 				}
 				break;
 		default:
 				video_data = toaplan2_unk_vram;
 				if (errorlog)
-					fprintf(errorlog,"Hmmm, reading %04x from unknown video layer (%08x)\n",video_data,toaplan2_voffs);
+					fprintf(errorlog,"Hmmm, reading %04x from unknown video layer (%08x)  Video controller %01x  !!!\n",video_data,toaplan2_voffs[controller],controller);
 				break;
 	}
 	return video_data;
 }
+int toaplan2_0_videoram_r(int offset)
+{
+	return toaplan2_videoram_r(offset, 0);
+}
+int toaplan2_1_videoram_r(int offset)
+{
+	return toaplan2_videoram_r(offset, 1);
+}
 
-void toaplan2_videoram_w(int offset, int data)
+void toaplan2_videoram_w(int offset, int data, int controller)
 {
 	int oldword = 0;
 	int videoram_offset;
 	int dirty_cell;
 
-	switch (toaplan2_voffs & 0xfc00)
+	switch (toaplan2_voffs[controller] & 0xfc00)
 	{
 		case 0x0400:
 		case 0x0000:
-				videoram_offset = bg_offs & (TOAPLAN2_BG_VRAM_SIZE-1);
-				oldword = READ_WORD (&bgvideoram[videoram_offset]);
+				videoram_offset = bg_offs[controller] & (TOAPLAN2_BG_VRAM_SIZE-1);
+				oldword = READ_WORD (&bgvideoram[controller][videoram_offset]);
 				if (data != oldword)
 				{
-					WRITE_WORD (&bgvideoram[videoram_offset],data);
-					dirty_cell = (bg_offs & (TOAPLAN2_BG_VRAM_SIZE-3))/2;
-					tilemap_mark_tile_dirty(bg_tilemap, (dirty_cell%64)/2, dirty_cell/64);
+					WRITE_WORD (&bgvideoram[controller][videoram_offset],data);
+					dirty_cell = (bg_offs[controller] & (TOAPLAN2_BG_VRAM_SIZE-3))/2;
+					tilemap_mark_tile_dirty(bg_tilemap[controller], (dirty_cell%64)/2, dirty_cell/64);
 				}
-				bg_offs+=2;
-				if (bg_offs > TOAPLAN2_BG_VRAM_SIZE)
+				bg_offs[controller] += 2;
+				if (bg_offs[controller] > TOAPLAN2_BG_VRAM_SIZE)
 				{
 					if (errorlog)
-						fprintf(errorlog,"Writing %04x to out of range BG Layer address (%08x) !!!\n",data,bg_offs);
+						fprintf(errorlog,"Writing %04x to out of range BG Layer address (%08x)  Video controller %01x  !!!\n",data,bg_offs[controller],controller);
 				}
 				break;
 		case 0x0c00:
 		case 0x0800:
-				videoram_offset = fg_offs & (TOAPLAN2_FG_VRAM_SIZE-1);
-				oldword = READ_WORD (&fgvideoram[videoram_offset]);
+				videoram_offset = fg_offs[controller] & (TOAPLAN2_FG_VRAM_SIZE-1);
+				oldword = READ_WORD (&fgvideoram[controller][videoram_offset]);
 				if (data != oldword)
 				{
-					WRITE_WORD (&fgvideoram[videoram_offset],data);
-					dirty_cell = (fg_offs & (TOAPLAN2_FG_VRAM_SIZE-3))/2;
-					tilemap_mark_tile_dirty(fg_tilemap, (dirty_cell%64)/2, dirty_cell/64);
+					WRITE_WORD (&fgvideoram[controller][videoram_offset],data);
+					dirty_cell = (fg_offs[controller] & (TOAPLAN2_FG_VRAM_SIZE-3))/2;
+					tilemap_mark_tile_dirty(fg_tilemap[controller], (dirty_cell%64)/2, dirty_cell/64);
 				}
-				fg_offs+=2;
-				if (fg_offs > TOAPLAN2_FG_VRAM_SIZE)
+				fg_offs[controller] += 2;
+				if (fg_offs[controller] > TOAPLAN2_FG_VRAM_SIZE)
 				{
 					if (errorlog)
-						fprintf(errorlog,"Writing %04x to out of range FG Layer address (%08x) !!!\n",data,fg_offs);
+						fprintf(errorlog,"Writing %04x to out of range FG Layer address (%08x)  Video controller %01x  !!!\n",data,fg_offs[controller],controller);
 				}
 				break;
 		case 0x1400:
 		case 0x1000:
-				videoram_offset = top_offs & (TOAPLAN2_TOP_VRAM_SIZE-1);
-				oldword = READ_WORD (&topvideoram[videoram_offset]);
+				videoram_offset = top_offs[controller] & (TOAPLAN2_TOP_VRAM_SIZE-1);
+				oldword = READ_WORD (&topvideoram[controller][videoram_offset]);
 				if (data != oldword)
 				{
-					WRITE_WORD (&topvideoram[videoram_offset],data);
-					dirty_cell = (top_offs & (TOAPLAN2_TOP_VRAM_SIZE-3))/2;
-					tilemap_mark_tile_dirty(top_tilemap, (dirty_cell%64)/2, dirty_cell/64);
+					WRITE_WORD (&topvideoram[controller][videoram_offset],data);
+					dirty_cell = (top_offs[controller] & (TOAPLAN2_TOP_VRAM_SIZE-3))/2;
+					tilemap_mark_tile_dirty(top_tilemap[controller], (dirty_cell%64)/2, dirty_cell/64);
 				}
-				top_offs+=2;
-				if (top_offs > TOAPLAN2_TOP_VRAM_SIZE)
+				top_offs[controller] += 2;
+				if (top_offs[controller] > TOAPLAN2_TOP_VRAM_SIZE)
 				{
 					if (errorlog)
-						fprintf(errorlog,"Writing %04x to out of range TOP Layer address (%08x) !!!\n",data,top_offs);
+						fprintf(errorlog,"Writing %04x to out of range TOP Layer address (%08x)  Video controller %01x  !!!\n",data,top_offs[controller],controller);
 				}
 				break;
 		case 0x1800:
-				videoram_offset = sprite_offs & (TOAPLAN2_SPRITERAM_SIZE-1);
-				WRITE_WORD (&spriteram_new[videoram_offset],data);
-				sprite_offs+=2;
-				if (sprite_offs > TOAPLAN2_SPRITERAM_SIZE)
+				videoram_offset = sprite_offs[controller] & (TOAPLAN2_SPRITERAM_SIZE-1);
+				WRITE_WORD (&spriteram_new[controller][videoram_offset],data);
+				sprite_offs[controller] += 2;
+				if (sprite_offs[controller] > TOAPLAN2_SPRITERAM_SIZE)
 				{
 					if (errorlog)
-						fprintf(errorlog,"Writing %04x to out of range Sprite address (%08x) !!!\n",data,sprite_offs);
+						fprintf(errorlog,"Writing %04x to out of range Sprite address (%08x)  Video controller %01x  !!!\n",data,sprite_offs[controller],controller);
 				}
 				break;
 		default:
 				toaplan2_unk_vram = data;
 				if (errorlog)
-					fprintf(errorlog,"Hmmm, writing %04x to unknown video layer (%08x)\n",toaplan2_unk_vram,toaplan2_voffs);
+					fprintf(errorlog,"Hmmm, writing %04x to unknown video layer (%08x)  Video controller %01x  \n",toaplan2_unk_vram,toaplan2_voffs[controller],controller);
 				break;
 	}
 }
-
-
-
-void toaplan2_scroll_reg_select_w(int offset, int data)
+void toaplan2_0_videoram_w(int offset, int data)
 {
-	toaplan2_scroll_reg = data;
-	if (toaplan2_scroll_reg & 0xffffff70)
-	{
-		if (errorlog) fprintf(errorlog,"Hmmm, unknown video control register selected (%08x)\n",toaplan2_scroll_reg);
-	}
+	toaplan2_videoram_w(offset, data, 0);
+}
+void toaplan2_1_videoram_w(int offset, int data)
+{
+	toaplan2_videoram_w(offset, data, 1);
 }
 
-void toaplan2_scroll_reg_data_w(int offset, int data)
+
+void toaplan2_scroll_reg_select_w(int offset, int data, int controller)
+{
+	toaplan2_scroll_reg[controller] = data;
+	if (toaplan2_scroll_reg[controller] & 0xffffff70)
+	{
+		if (errorlog) fprintf(errorlog,"Hmmm, unknown video control register selected (%08x)  Video controller %01x  \n",toaplan2_scroll_reg[controller],controller);
+	}
+}
+void toaplan2_0_scroll_reg_select_w(int offset, int data)
+{
+	toaplan2_scroll_reg_select_w(offset, data, 0);
+}
+void toaplan2_1_scroll_reg_select_w(int offset, int data)
+{
+	toaplan2_scroll_reg_select_w(offset, data, 1);
+}
+
+
+void toaplan2_scroll_reg_data_w(int offset, int data, int controller)
 {
 	/************************************************************************/
 	/***** X and Y layer flips can be set independantly, so emulate it ******/
 	/************************************************************************/
 
-	switch(toaplan2_scroll_reg)
-	{
-		case 0x00:	bg_scrollx = data - 0x1d6;			/* 1D6h */
-					bg_flip &= (~TILEMAP_FLIPX);
-					tilemap_set_flip(bg_tilemap,bg_flip);
-					tilemap_set_scrollx(bg_tilemap,0,bg_scrollx);
-					break;
-		case 0x01:	bg_scrolly = data - 0x1ef;			/* 1EFh */
-					bg_flip &= (~TILEMAP_FLIPY);
-					tilemap_set_flip(bg_tilemap,bg_flip);
-					tilemap_set_scrolly(bg_tilemap,0,bg_scrolly);
-					break;
-		case 0x02:	fg_scrollx = data - 0x1d8;			/* 1D0h */
-					fg_flip &= (~TILEMAP_FLIPX);
-					tilemap_set_flip(fg_tilemap,fg_flip);
-					tilemap_set_scrollx(fg_tilemap,0,fg_scrollx);
-					break;
-		case 0x03:  fg_scrolly = data - 0x1ef;			/* 1EFh */
-					fg_flip &= (~TILEMAP_FLIPY);
-					tilemap_set_flip(fg_tilemap,fg_flip);
-					tilemap_set_scrolly(fg_tilemap,0,fg_scrolly);
-					break;
-		case 0x04:	top_scrollx = data - 0x1da;			/* 1DAh */
-					top_flip &= (~TILEMAP_FLIPX);
-					tilemap_set_flip(top_tilemap,top_flip);
-					tilemap_set_scrollx(top_tilemap,0,top_scrollx);
-					break;
-		case 0x05:	top_scrolly = data - 0x1ef;			/* 1EFh */
-					top_flip &= (~TILEMAP_FLIPY);
-					tilemap_set_flip(top_tilemap,top_flip);
-					tilemap_set_scrolly(top_tilemap,0,top_scrolly);
-					break;
-		case 0x06:	sprite_scrollx = data - 0x1cc;		/* 1D4h */
-					if (sprite_scrollx & 0x80000000) sprite_scrollx |= 0xfffffe00;
-					else sprite_scrollx &= 0x1ff;
-					sprite_flip &= (~TOAPLAN2_SPRITE_FLIPX);
-					break;
-		case 0x07:	sprite_scrolly = data - 0x1ef;		/* 1F7h */
-					if (sprite_scrolly & 0x80000000) sprite_scrolly |= 0xfffffe00;
-					else sprite_scrolly &= 0x1ff;
-					sprite_flip &= (~TOAPLAN2_SPRITE_FLIPY);
-					break;
-		case 0x80:  bg_scrollx = data - 0x229;			/* 169h */
-					bg_flip |= TILEMAP_FLIPX;
-					tilemap_set_flip(bg_tilemap,bg_flip);
-					tilemap_set_scrollx(bg_tilemap,0,bg_scrollx);
-					break;
-		case 0x81:	bg_scrolly = data - 0x210;			/* 100h */
-					bg_flip |= TILEMAP_FLIPY;
-					tilemap_set_flip(bg_tilemap,bg_flip);
-					tilemap_set_scrolly(bg_tilemap,0,bg_scrolly);
-					break;
-		case 0x82:	fg_scrollx = data - 0x227;			/* 15Fh */
-					fg_flip |= TILEMAP_FLIPX;
-					tilemap_set_flip(fg_tilemap,fg_flip);
-					tilemap_set_scrollx(fg_tilemap,0,fg_scrollx);
-					break;
-		case 0x83:	fg_scrolly = data - 0x210;			/* 100h */
-					fg_flip |= TILEMAP_FLIPY;
-					tilemap_set_flip(fg_tilemap,fg_flip);
-					tilemap_set_scrolly(fg_tilemap,0,fg_scrolly);
-					break;
-		case 0x84:	top_scrollx = data - 0x225;			/* 165h */
-					top_flip |= TILEMAP_FLIPX;
-					tilemap_set_flip(top_tilemap,top_flip);
-					tilemap_set_scrollx(top_tilemap,0,top_scrollx);
-					break;
-		case 0x85:	top_scrolly = data - 0x210;			/* 100h */
-					top_flip |= TILEMAP_FLIPY;
-					tilemap_set_flip(top_tilemap,top_flip);
-					tilemap_set_scrolly(top_tilemap,0,top_scrolly);
-					break;
-		case 0x86:	sprite_scrollx = data - 0x17b;		/* 17Bh */
-					if (sprite_scrollx & 0x80000000) sprite_scrollx |= 0xfffffe00;
-					else sprite_scrollx &= 0x1ff;
-					sprite_flip |= TOAPLAN2_SPRITE_FLIPX;
-					break;
-		case 0x87:	sprite_scrolly = data - 0x108;		/* 108h */
-					if (sprite_scrolly & 0x80000000) sprite_scrolly |= 0xfffffe00;
-					else sprite_scrolly &= 0x1ff;
-					sprite_flip |= TOAPLAN2_SPRITE_FLIPY;
-					break;
+//	int vid_controllers = 1;
 
-		case 0x0f:	/* shift sprite buffers */
-		case 0x8f:	memcpy(spriteram_now,spriteram_next,TOAPLAN2_SPRITERAM_SIZE);
-					memcpy(spriteram_next,spriteram_new,TOAPLAN2_SPRITERAM_SIZE);
+	switch(toaplan2_scroll_reg[controller])
+	{
+		case 0x00:	bg_scrollx[controller] = data - 0x1d6;			/* 1D6h */
+					bg_flip[controller] &= (~TILEMAP_FLIPX);
+					tilemap_set_flip(bg_tilemap[controller],bg_flip[controller]);
+					tilemap_set_scrollx(bg_tilemap[controller],0,bg_scrollx[controller]);
 					break;
+		case 0x01:	bg_scrolly[controller] = data - 0x1ef;			/* 1EFh */
+					bg_flip[controller] &= (~TILEMAP_FLIPY);
+					tilemap_set_flip(bg_tilemap[controller],bg_flip[controller]);
+					tilemap_set_scrolly(bg_tilemap[controller],0,bg_scrolly[controller]);
+					break;
+		case 0x02:	fg_scrollx[controller] = data - 0x1d8;			/* 1D0h */
+					fg_flip[controller] &= (~TILEMAP_FLIPX);
+					tilemap_set_flip(fg_tilemap[controller],fg_flip[controller]);
+					tilemap_set_scrollx(fg_tilemap[controller],0,fg_scrollx[controller]);
+					break;
+		case 0x03:  fg_scrolly[controller] = data - 0x1ef;			/* 1EFh */
+					fg_flip[controller] &= (~TILEMAP_FLIPY);
+					tilemap_set_flip(fg_tilemap[controller],fg_flip[controller]);
+					tilemap_set_scrolly(fg_tilemap[controller],0,fg_scrolly[controller]);
+					break;
+		case 0x04:	top_scrollx[controller] = data - 0x1da;			/* 1DAh */
+					top_flip[controller] &= (~TILEMAP_FLIPX);
+					tilemap_set_flip(top_tilemap[controller],top_flip[controller]);
+					tilemap_set_scrollx(top_tilemap[controller],0,top_scrollx[controller]);
+					break;
+		case 0x05:	top_scrolly[controller] = data - 0x1ef;			/* 1EFh */
+					top_flip[controller] &= (~TILEMAP_FLIPY);
+					tilemap_set_flip(top_tilemap[controller],top_flip[controller]);
+					tilemap_set_scrolly(top_tilemap[controller],0,top_scrolly[controller]);
+					break;
+		case 0x06:	sprite_scrollx[controller] = data - 0x1cc;		/* 1D4h */
+					if (sprite_scrollx[controller] & 0x80000000) sprite_scrollx[controller] |= 0xfffffe00;
+					else sprite_scrollx[controller] &= 0x1ff;
+					sprite_flip[controller] &= (~TOAPLAN2_SPRITE_FLIPX);
+					break;
+		case 0x07:	sprite_scrolly[controller] = data - 0x1ef;		/* 1F7h */
+					if (sprite_scrolly[controller] & 0x80000000) sprite_scrolly[controller] |= 0xfffffe00;
+					else sprite_scrolly[controller] &= 0x1ff;
+					sprite_flip[controller] &= (~TOAPLAN2_SPRITE_FLIPY);
+					break;
+		case 0x0f:	break;
+		case 0x80:  bg_scrollx[controller] = data - 0x229;			/* 169h */
+					bg_flip[controller] |= TILEMAP_FLIPX;
+					tilemap_set_flip(bg_tilemap[controller],bg_flip[controller]);
+					tilemap_set_scrollx(bg_tilemap[controller],0,bg_scrollx[controller]);
+					break;
+		case 0x81:	bg_scrolly[controller] = data - 0x210;			/* 100h */
+					bg_flip[controller] |= TILEMAP_FLIPY;
+					tilemap_set_flip(bg_tilemap[controller],bg_flip[controller]);
+					tilemap_set_scrolly(bg_tilemap[controller],0,bg_scrolly[controller]);
+					break;
+		case 0x82:	fg_scrollx[controller] = data - 0x227;			/* 15Fh */
+					fg_flip[controller] |= TILEMAP_FLIPX;
+					tilemap_set_flip(fg_tilemap[controller],fg_flip[controller]);
+					tilemap_set_scrollx(fg_tilemap[controller],0,fg_scrollx[controller]);
+					break;
+		case 0x83:	fg_scrolly[controller] = data - 0x210;			/* 100h */
+					fg_flip[controller] |= TILEMAP_FLIPY;
+					tilemap_set_flip(fg_tilemap[controller],fg_flip[controller]);
+					tilemap_set_scrolly(fg_tilemap[controller],0,fg_scrolly[controller]);
+					break;
+		case 0x84:	top_scrollx[controller] = data - 0x225;			/* 165h */
+					top_flip[controller] |= TILEMAP_FLIPX;
+					tilemap_set_flip(top_tilemap[controller],top_flip[controller]);
+					tilemap_set_scrollx(top_tilemap[controller],0,top_scrollx[controller]);
+					break;
+		case 0x85:	top_scrolly[controller] = data - 0x210;			/* 100h */
+					top_flip[controller] |= TILEMAP_FLIPY;
+					tilemap_set_flip(top_tilemap[controller],top_flip[controller]);
+					tilemap_set_scrolly(top_tilemap[controller],0,top_scrolly[controller]);
+					break;
+		case 0x86:	sprite_scrollx[controller] = data - 0x17b;		/* 17Bh */
+					if (sprite_scrollx[controller] & 0x80000000) sprite_scrollx[controller] |= 0xfffffe00;
+					else sprite_scrollx[controller] &= 0x1ff;
+					sprite_flip[controller] |= TOAPLAN2_SPRITE_FLIPX;
+					break;
+		case 0x87:	sprite_scrolly[controller] = data - 0x108;		/* 108h */
+					if (sprite_scrolly[controller] & 0x80000000) sprite_scrolly[controller] |= 0xfffffe00;
+					else sprite_scrolly[controller] &= 0x1ff;
+					sprite_flip[controller] |= TOAPLAN2_SPRITE_FLIPY;
+					break;
+		case 0x8f:	break;
 
 		case 0x0e:	/******* Initialise video controller register ? *******/
 					if ((toaplan2_sub_cpu == CPU_2_Z80) && (data == 3))
@@ -610,113 +756,239 @@ void toaplan2_scroll_reg_data_w(int offset, int data)
 						YM3812_sh_reset();
 					}
 		default:	if (errorlog)
-						fprintf(errorlog,"Hmmm, writing %08x to unknown video control register (%08x)\n",data ,toaplan2_scroll_reg);
+						fprintf(errorlog,"Hmmm, writing %08x to unknown video control register (%08x)  Video controller %01x  !!!\n",data ,toaplan2_scroll_reg[controller],controller);
 					break;
 	}
 
 #if TOAPLAN2_DEBUG
+
+	if (spriteram_now[1] && spriteram_next[1] && spriteram_new[1]
+		&& top_tilemap[1] && fg_tilemap[1] && bg_tilemap[1])
+	{
+		vid_controllers = 2;
+	}
+
 	if ( keyboard_pressed(KEYCODE_L) )
 	{
 		while (keyboard_pressed(KEYCODE_L)) ;
-		display_sp += 1;
-		display_sp &= 1;
+		display_sp[0] += 1;
+		display_sp[0] &= 1;
 	}
 	if ( keyboard_pressed(KEYCODE_K) )
 	{
 		while (keyboard_pressed(KEYCODE_K)) ;
-		display_top += 1;
-		display_top &= 1;
-		tilemap_set_enable(top_tilemap, display_top);
+		display_top[0] += 1;
+		display_top[0] &= 1;
+		tilemap_set_enable(top_tilemap[0], display_top[0]);
 	}
 	if ( keyboard_pressed(KEYCODE_J) )
 	{
 		while (keyboard_pressed(KEYCODE_J)) ;
-		display_fg += 1;
-		display_fg &= 1;
-		tilemap_set_enable(fg_tilemap, display_fg);
+		display_fg[0] += 1;
+		display_fg[0] &= 1;
+		tilemap_set_enable(fg_tilemap[0], display_fg[0]);
 	}
 	if ( keyboard_pressed(KEYCODE_H) )
 	{
 		while (keyboard_pressed(KEYCODE_H)) ;
-		display_bg += 1;
-		display_bg &= 1;
-		tilemap_set_enable(bg_tilemap, display_bg);
+		display_bg[0] += 1;
+		display_bg[0] &= 1;
+		tilemap_set_enable(bg_tilemap[0], display_bg[0]);
+	}
+	if (vid_controllers == 2)
+	{
+		if ( keyboard_pressed(KEYCODE_O) )
+		{
+			while (keyboard_pressed(KEYCODE_O)) ;
+			display_sp[1] += 1;
+			display_sp[1] &= 1;
+		}
+		if ( keyboard_pressed(KEYCODE_I) )
+		{
+			while (keyboard_pressed(KEYCODE_I)) ;
+			display_top[1] += 1;
+			display_top[1] &= 1;
+			tilemap_set_enable(top_tilemap[1], display_top[1]);
+		}
+		if ( keyboard_pressed(KEYCODE_U) )
+		{
+			while (keyboard_pressed(KEYCODE_U)) ;
+			display_fg[1] += 1;
+			display_fg[1] &= 1;
+			tilemap_set_enable(fg_tilemap[1], display_fg[1]);
+		}
+		if ( keyboard_pressed(KEYCODE_Y) )
+		{
+			while (keyboard_pressed(KEYCODE_Y)) ;
+			display_bg[1] += 1;
+			display_bg[1] &= 1;
+			tilemap_set_enable(bg_tilemap[1], display_bg[1]);
+		}
 	}
 #endif
+}
+void toaplan2_0_scroll_reg_data_w(int offset, int data)
+{
+	toaplan2_scroll_reg_data_w(offset, data, 0);
+}
+void toaplan2_1_scroll_reg_data_w(int offset, int data)
+{
+	toaplan2_scroll_reg_data_w(offset, data, 1);
 }
 
 
 #if TOAPLAN2_DEBUG
 void toaplan2_log_vram(void)
 {
-	int sprite_voffs, tile_voffs;
+	int sprite_voffs, tile_voffs, vid_controllers = 1;
+
+	if (spriteram_now[1] && spriteram_next[1] && spriteram_new[1]
+		&& top_tilemap[1] && fg_tilemap[1] && bg_tilemap[1])
+	{
+		vid_controllers = 2;
+	}
 
 	if ( keyboard_pressed(KEYCODE_M) )
 	{
-		UINT16 *source = (UINT16 *)(spriteram_now);
-		UINT16 *source1 = (UINT16 *)(spriteram_next);
-		UINT16 *source2 = (UINT16 *)(spriteram_new);
+		UINT16 *source_now0  = (UINT16 *)(spriteram_now[0]);
+		UINT16 *source_next0 = (UINT16 *)(spriteram_next[0]);
+		UINT16 *source_new0  = (UINT16 *)(spriteram_new[0]);
+		UINT16 *source_now1;
+		UINT16 *source_next1;
+		UINT16 *source_new1;
+
+		int schar[3],sattr[3],sxpos[3],sypos[3];
+
+		if (vid_controllers == 2)
+		{
+			source_now1  = (UINT16 *)(spriteram_now[1]);
+			source_next1 = (UINT16 *)(spriteram_next[1]);
+			source_new1  = (UINT16 *)(spriteram_new[1]);
+		}
 
 		while (keyboard_pressed(KEYCODE_M)) ;
 		if (errorlog) fprintf (errorlog, "Scrolls   BG-X  BG-Y   FG-X  FG-Y   TOP-X  TOP-Y   Sprite-X  Sprite-Y\n");
-		if (errorlog) fprintf (errorlog, "------>   %04x  %04x   %04x  %04x    %04x  %04x       %04x    %04x\n", bg_scrollx,bg_scrolly,fg_scrollx,fg_scrolly,top_scrollx,top_scrolly,sprite_scrollx, sprite_scrolly);
+		if (errorlog) fprintf (errorlog, "---0-->   %04x  %04x   %04x  %04x    %04x  %04x       %04x    %04x\n", bg_scrollx[0],bg_scrolly[0],fg_scrollx[0],fg_scrolly[0],top_scrollx[0],top_scrolly[0],sprite_scrollx[0], sprite_scrolly[0]);
+		if (vid_controllers == 2)
+		{
+			if (errorlog) fprintf (errorlog, "---1-->   %04x  %04x   %04x  %04x    %04x  %04x       %04x    %04x\n", bg_scrollx[1],bg_scrolly[1],fg_scrollx[1],fg_scrolly[1],top_scrollx[1],top_scrolly[1],sprite_scrollx[1], sprite_scrolly[1]);
+		}
 		for ( sprite_voffs = 0; sprite_voffs < (TOAPLAN2_SPRITERAM_SIZE/2); sprite_voffs+=4 )
 		{
-			int tchar,tattr,txpos,typos;
-			tattr = source[sprite_voffs];
-			tchar = source[sprite_voffs + 1];
-			txpos = source[sprite_voffs + 2];
-			typos = source[sprite_voffs + 3];
-			if (errorlog) fprintf (errorlog, "Current SPoffs:%04x Attr=%04x Sprite=%04x Xpos=%04x Ypos=%04x\n", sprite_voffs, tattr, tchar, txpos, typos);
-			tattr = source1[sprite_voffs];
-			tchar = source1[sprite_voffs + 1];
-			txpos = source1[sprite_voffs + 2];
-			typos = source1[sprite_voffs + 3];
-			if (errorlog) fprintf (errorlog, "Next    SPoffs:%04x Attr=%04x Sprite=%04x Xpos=%04x Ypos=%04x\n", sprite_voffs, tattr, tchar, txpos, typos);
-			tattr = source2[sprite_voffs];
-			tchar = source2[sprite_voffs + 1];
-			txpos = source2[sprite_voffs + 2];
-			typos = source2[sprite_voffs + 3];
-			if (errorlog) fprintf (errorlog, "New     SPoffs:%04x Attr=%04x Sprite=%04x Xpos=%04x Ypos=%04x\n", sprite_voffs, tattr, tchar, txpos, typos);
+			sattr[0] = source_now0[sprite_voffs];
+			schar[0] = source_now0[sprite_voffs + 1];
+			sxpos[0] = source_now0[sprite_voffs + 2];
+			sypos[0] = source_now0[sprite_voffs + 3];
+			sattr[1] = source_next0[sprite_voffs];
+			schar[1] = source_next0[sprite_voffs + 1];
+			sxpos[1] = source_next0[sprite_voffs + 2];
+			sypos[1] = source_next0[sprite_voffs + 3];
+			sattr[2] = source_new0[sprite_voffs];
+			schar[2] = source_new0[sprite_voffs + 1];
+			sxpos[2] = source_new0[sprite_voffs + 2];
+			sypos[2] = source_new0[sprite_voffs + 3];
+			if (errorlog) fprintf (errorlog, "SPoffs     Sprt Attr Xpos Ypos     Sprt Attr Xpos Ypos     Sprt Attr Xpos Ypos\n");
+			if (errorlog) fprintf (errorlog, "0:%03x now:%04x %04x %04x %04x nxt:%04x %04x %04x %04x new:%04x %04x %04x %04x\n",sprite_voffs,
+						 						schar[0], sattr[0],sxpos[0], sypos[0],
+						 						schar[1], sattr[1],sxpos[1], sypos[1],
+						 						schar[2], sattr[2],sxpos[2], sypos[2]);
+			if (vid_controllers == 2)
+			{
+				sattr[0] = source_now1[sprite_voffs];
+				schar[0] = source_now1[sprite_voffs + 1];
+				sxpos[0] = source_now1[sprite_voffs + 2];
+				sypos[0] = source_now1[sprite_voffs + 3];
+				sattr[1] = source_next1[sprite_voffs];
+				schar[1] = source_next1[sprite_voffs + 1];
+				sxpos[1] = source_next1[sprite_voffs + 2];
+				sypos[1] = source_next1[sprite_voffs + 3];
+				sattr[2] = source_new1[sprite_voffs];
+				schar[2] = source_new1[sprite_voffs + 1];
+				sxpos[2] = source_new1[sprite_voffs + 2];
+				sypos[2] = source_new1[sprite_voffs + 3];
+				if (errorlog) fprintf (errorlog, "1:%03x now:%04x %04x %04x %04x nxt:%04x %04x %04x %04x new:%04x %04x %04x %04x\n",sprite_voffs,
+							 					schar[0], sattr[0],sxpos[0], sypos[0],
+							 					schar[1], sattr[1],sxpos[1], sypos[1],
+							 					schar[2], sattr[2],sxpos[2], sypos[2]);
+			}
 		}
 	}
 	if ( keyboard_pressed(KEYCODE_N) )
 	{
+		int tchar[2], tattr[2];
 		while (keyboard_pressed(KEYCODE_N)) ;
 		if (errorlog) fprintf (errorlog, "Scrolls   BG-X  BG-Y   FG-X  FG-Y   TOP-X  TOP-Y   Sprite-X  Sprite-Y\n");
-		if (errorlog) fprintf (errorlog, "------>   %04x  %04x   %04x  %04x    %04x  %04x       %04x    %04x\n", bg_scrollx,bg_scrolly,fg_scrollx,fg_scrolly,top_scrollx,top_scrolly,sprite_scrollx, sprite_scrolly);
+		if (errorlog) fprintf (errorlog, "---0-->   %04x  %04x   %04x  %04x    %04x  %04x       %04x    %04x\n", bg_scrollx[0],bg_scrolly[0],fg_scrollx[0],fg_scrolly[0],top_scrollx[0],top_scrolly[0],sprite_scrollx[0], sprite_scrolly[0]);
+		if (vid_controllers == 2)
+		{
+			if (errorlog) fprintf (errorlog, "---1-->   %04x  %04x   %04x  %04x    %04x  %04x       %04x    %04x\n", bg_scrollx[1],bg_scrolly[1],fg_scrollx[1],fg_scrolly[1],top_scrollx[1],top_scrolly[1],sprite_scrollx[1], sprite_scrolly[1]);
+		}
 		for ( tile_voffs = 0; tile_voffs < TOAPLAN2_TOP_VRAM_SIZE; tile_voffs+=4 )
 		{
-			int tattr,tchar;
-			tchar = READ_WORD (&topvideoram[tile_voffs + 2]);
-			tattr = READ_WORD (&topvideoram[tile_voffs]);
-			if (errorlog) fprintf (errorlog, "TXoffs:%08x Tile:%04x Attr:%04x\n", tile_voffs/2, tchar, tattr);
+			tchar[0] = READ_WORD (&topvideoram[0][tile_voffs + 2]);
+			tattr[0] = READ_WORD (&topvideoram[0][tile_voffs]);
+			if (vid_controllers == 2)
+			{
+				tchar[1] = READ_WORD (&topvideoram[1][tile_voffs + 2]);
+				tattr[1] = READ_WORD (&topvideoram[1][tile_voffs]);
+				if (errorlog) fprintf (errorlog, "TXoffs:%04x   Tile0:%04x  Attr0:%04x    Tile1:%04x  Attr1:%04x\n", tile_voffs/2, tchar[0], tattr[0], tchar[1], tattr[1]);
+			}
+			else
+			{
+				if (errorlog) fprintf (errorlog, "TXoffs:%04x   Tile0:%04x  Attr0:%04x\n", tile_voffs/2, tchar[0], tattr[0]);
+			}
 		}
 	}
 	if ( keyboard_pressed(KEYCODE_B) )
 	{
+		int tchar[2], tattr[2];
 		while (keyboard_pressed(KEYCODE_B)) ;
 		if (errorlog) fprintf (errorlog, "Scrolls   BG-X  BG-Y   FG-X  FG-Y   TOP-X  TOP-Y   Sprite-X  Sprite-Y\n");
-		if (errorlog) fprintf (errorlog, "------>   %04x  %04x   %04x  %04x    %04x  %04x       %04x    %04x\n", bg_scrollx,bg_scrolly,fg_scrollx,fg_scrolly,top_scrollx,top_scrolly,sprite_scrollx, sprite_scrolly);
+		if (errorlog) fprintf (errorlog, "---0-->   %04x  %04x   %04x  %04x    %04x  %04x       %04x    %04x\n", bg_scrollx[0],bg_scrolly[0],fg_scrollx[0],fg_scrolly[0],top_scrollx[0],top_scrolly[0],sprite_scrollx[0], sprite_scrolly[0]);
+		if (vid_controllers == 2)
+		{
+			if (errorlog) fprintf (errorlog, "---1-->   %04x  %04x   %04x  %04x    %04x  %04x       %04x    %04x\n", bg_scrollx[1],bg_scrolly[1],fg_scrollx[1],fg_scrolly[1],top_scrollx[1],top_scrolly[1],sprite_scrollx[1], sprite_scrolly[1]);
+		}
 		for ( tile_voffs = 0; tile_voffs < TOAPLAN2_FG_VRAM_SIZE; tile_voffs+=4 )
 		{
-			int tattr,tchar;
-			tchar = READ_WORD (&fgvideoram[tile_voffs + 2]);
-			tattr = READ_WORD (&fgvideoram[tile_voffs]);
-			if (errorlog) fprintf (errorlog, "FGoffs:%08x tile:%04x Attr:%04x\n", tile_voffs/2, tchar, tattr);
+			tchar[0] = READ_WORD (&fgvideoram[0][tile_voffs + 2]);
+			tattr[0] = READ_WORD (&fgvideoram[0][tile_voffs]);
+		if (vid_controllers == 2)
+			{
+				tchar[1] = READ_WORD (&fgvideoram[1][tile_voffs + 2]);
+				tattr[1] = READ_WORD (&fgvideoram[1][tile_voffs]);
+				if (errorlog) fprintf (errorlog, "FGoffs:%04x   Tile0:%04x  Attr0:%04x    Tile1:%04x  Attr1:%04x\n", tile_voffs/2, tchar[0], tattr[0], tchar[1], tattr[1]);
+			}
+			else
+			{
+				if (errorlog) fprintf (errorlog, "FGoffs:%04x   Tile0:%04x  Attr0:%04x\n", tile_voffs/2, tchar[0], tattr[0]);
+			}
 		}
 	}
 	if ( keyboard_pressed(KEYCODE_V) )
 	{
+		int tchar[2], tattr[2];
 		while (keyboard_pressed(KEYCODE_V)) ;
 		if (errorlog) fprintf (errorlog, "Scrolls   BG-X  BG-Y   FG-X  FG-Y   TOP-X  TOP-Y   Sprite-X  Sprite-Y\n");
-		if (errorlog) fprintf (errorlog, "------>   %04x  %04x   %04x  %04x    %04x  %04x       %04x    %04x\n", bg_scrollx,bg_scrolly,fg_scrollx,fg_scrolly,top_scrollx,top_scrolly,sprite_scrollx, sprite_scrolly);
+		if (errorlog) fprintf (errorlog, "---0-->   %04x  %04x   %04x  %04x    %04x  %04x       %04x    %04x\n", bg_scrollx[0],bg_scrolly[0],fg_scrollx[0],fg_scrolly[0],top_scrollx[0],top_scrolly[0],sprite_scrollx[0], sprite_scrolly[0]);
+		if (vid_controllers == 2)
+		{
+			if (errorlog) fprintf (errorlog, "---1-->   %04x  %04x   %04x  %04x    %04x  %04x       %04x    %04x\n", bg_scrollx[1],bg_scrolly[1],fg_scrollx[1],fg_scrolly[1],top_scrollx[1],top_scrolly[1],sprite_scrollx[1], sprite_scrolly[1]);
+		}
 		for ( tile_voffs = 0; tile_voffs < TOAPLAN2_BG_VRAM_SIZE; tile_voffs+=4 )
 		{
-			int tattr,tchar;
-			tchar = READ_WORD (&bgvideoram[tile_voffs + 2]);
-			tattr = READ_WORD (&bgvideoram[tile_voffs]);
-			if (errorlog) fprintf (errorlog, "BGoffs:%08x Tile:%04x Attr:%04x\n", tile_voffs/2, tchar, tattr);
+			tchar[0] = READ_WORD (&bgvideoram[0][tile_voffs + 2]);
+			tattr[0] = READ_WORD (&bgvideoram[0][tile_voffs]);
+			if (vid_controllers == 2)
+			{
+				tchar[1] = READ_WORD (&bgvideoram[1][tile_voffs + 2]);
+				tattr[1] = READ_WORD (&bgvideoram[1][tile_voffs]);
+				if (errorlog) fprintf (errorlog, "BGoffs:%04x   Tile0:%04x  Attr0:%04x    Tile1:%04x  Attr1:%04x\n", tile_voffs/2, tchar[0], tattr[0], tchar[1], tattr[1]);
+			}
+			else
+			{
+				if (errorlog) fprintf (errorlog, "BGoffs:%04x   Tile0:%04x  Attr0:%04x\n", tile_voffs/2, tchar[0], tattr[0]);
+			}
 		}
 	}
 
@@ -734,7 +1006,11 @@ void toaplan2_log_vram(void)
 	if (displog)
 	{
 		if (errorlog) fprintf (errorlog, "Scrolls   BG-X  BG-Y   FG-X  FG-Y   TOP-X  TOP-Y   Sprite-X  Sprite-Y\n");
-		if (errorlog) fprintf (errorlog, "------>   %04x  %04x   %04x  %04x    %04x  %04x       %04x    %04x\n", bg_scrollx,bg_scrolly,fg_scrollx,fg_scrolly,top_scrollx,top_scrolly,sprite_scrollx, sprite_scrolly);
+		if (errorlog) fprintf (errorlog, "---0-->   %04x  %04x   %04x  %04x    %04x  %04x       %04x    %04x\n", bg_scrollx[0],bg_scrolly[0],fg_scrollx[0],fg_scrolly[0],top_scrollx[0],top_scrolly[0],sprite_scrollx[0], sprite_scrolly[0]);
+		if (vid_controllers == 2)
+		{
+			if (errorlog) fprintf (errorlog, "---1-->   %04x  %04x   %04x  %04x    %04x  %04x       %04x    %04x\n", bg_scrollx[1],bg_scrolly[1],fg_scrollx[1],fg_scrolly[1],top_scrollx[1],top_scrolly[1],sprite_scrollx[1], sprite_scrolly[1]);
+		}
 	}
 }
 #endif
@@ -743,15 +1019,15 @@ void toaplan2_log_vram(void)
 	Sprite Handlers
 ***************************************************************************/
 
-static void mark_sprite_colors(void)
+static void mark_sprite_colors(int controller)
 {
 	int offs, attrib, sprite, color, i, pal_base;
 	int sprite_sizex, sprite_sizey, temp_x, temp_y;
 	int colmask[64];
 
-	UINT16 *source = (UINT16 *)(spriteram_now);
+	UINT16 *source = (UINT16 *)(spriteram_now[controller]);
 
-	pal_base = Machine->drv->gfxdecodeinfo[1].color_codes_start;
+	pal_base = Machine->drv->gfxdecodeinfo[ ((controller*2)+1) ].color_codes_start;
 
 	for(i=0; i < 64; i++) colmask[i] = 0;
 
@@ -759,10 +1035,11 @@ static void mark_sprite_colors(void)
 	{
 		attrib = source[offs];
 		sprite = source[offs + 1] | ((attrib & 3) << 16);
+		sprite %= Machine->gfx[ ((controller*2)+1) ]->total_elements;
 		if (attrib & 0x8000)
 		{
 			/* While we're here, mark all priorities used */
-			sprite_priority[((attrib & 0x0f00) >> 8)] = display_sp;
+			sprite_priority[controller][((attrib & 0x0f00) >> 8)] = display_sp[controller];
 
 			color = (attrib >> 2) & 0x3f;
 			sprite_sizex = (source[offs + 2] & 0x0f) + 1;
@@ -772,7 +1049,7 @@ static void mark_sprite_colors(void)
 			{
 				for (temp_x = 0; temp_x < sprite_sizex; temp_x++)
 				{
-					colmask[color] |= Machine->gfx[1]->pen_usage[sprite];
+					colmask[color] |= Machine->gfx[ ((controller*2)+1) ]->pen_usage[sprite];
 					sprite++ ;
 				}
 			}
@@ -793,12 +1070,12 @@ static void mark_sprite_colors(void)
 
 
 
-static void draw_sprites( struct osd_bitmap *bitmap, int priority_to_display )
+static void draw_sprites( struct osd_bitmap *bitmap, int controller, int priority_to_display )
 {
-	const struct GfxElement *gfx = Machine->gfx[1];
+	const struct GfxElement *gfx = Machine->gfx[ ((controller*2)+1) ];
 	const struct rectangle *clip = &Machine->drv->visible_area;
 
-	UINT16 *source = (UINT16 *)(spriteram_now);
+	UINT16 *source = (UINT16 *)(spriteram_now[controller]);
 
 	int offs;
 	for (offs = 0; offs < (TOAPLAN2_SPRITERAM_SIZE/2); offs += 4)
@@ -819,8 +1096,8 @@ static void draw_sprites( struct osd_bitmap *bitmap, int priority_to_display )
 			sprite_sizey = ((source[offs + 3] & 0x0f) + 1) * 8;
 
 			/****** find position to display sprite ******/
-			sx_base = (source[offs + 2] >> 7) - sprite_scrollx;
-			sy_base = (source[offs + 3] >> 7) - sprite_scrolly;
+			sx_base = (source[offs + 2] >> 7) - sprite_scrollx[controller];
+			sy_base = (source[offs + 3] >> 7) - sprite_scrolly[controller];
 
 			flipx = attrib & TOAPLAN2_SPRITE_FLIPX;
 			flipy = attrib & TOAPLAN2_SPRITE_FLIPY;
@@ -847,17 +1124,17 @@ static void draw_sprites( struct osd_bitmap *bitmap, int priority_to_display )
 			}
 
 			/****** flip the sprite layer in any active X or Y flip ******/
-			if (sprite_flip)
+			if (sprite_flip[controller])
 			{
-				if (sprite_flip & TOAPLAN2_SPRITE_FLIPX)
+				if (sprite_flip[controller] & TOAPLAN2_SPRITE_FLIPX)
 					sx_base = 320 - sx_base;
-				if (sprite_flip & TOAPLAN2_SPRITE_FLIPY)
+				if (sprite_flip[controller] & TOAPLAN2_SPRITE_FLIPY)
 					sy_base = 240 - sy_base;
 			}
 
 			/****** cancel flip, if it and sprite layer flip are active ******/
-			flipx = (flipx ^ (sprite_flip & TOAPLAN2_SPRITE_FLIPX));
-			flipy = (flipy ^ (sprite_flip & TOAPLAN2_SPRITE_FLIPY));
+			flipx = (flipx ^ (sprite_flip[controller] & TOAPLAN2_SPRITE_FLIPX));
+			flipy = (flipy ^ (sprite_flip[controller] & TOAPLAN2_SPRITE_FLIPY));
 
 			for (temp_y = 0; temp_y < sprite_sizey; temp_y += 8)
 			{
@@ -884,18 +1161,15 @@ static void draw_sprites( struct osd_bitmap *bitmap, int priority_to_display )
 /***************************************************************************
 
   Draw the game screen in the given osd_bitmap.
-  Do NOT call osd_update_display() from this function, it will be called by
-  the main emulation engine.
 
 ***************************************************************************/
 
-
-void toaplan2_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void toaplan2_0_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	int priority;
 
 	for (priority = 0; priority < 16; priority++)
-		sprite_priority[priority] = 0;		/* Clear priorities used list */
+		sprite_priority[0][priority] = 0;		/* Clear priorities used list */
 
 #if TOAPLAN2_DEBUG
 	if (errorlog) toaplan2_log_vram();
@@ -904,7 +1178,7 @@ void toaplan2_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	tilemap_update(ALL_TILEMAPS);
 
 	palette_init_used_colors();
-	mark_sprite_colors();	/* Also mark priorities used */
+	mark_sprite_colors(0);	/* Also mark priorities used */
 
 	if (palette_recalc()) tilemap_mark_all_pixels_dirty(ALL_TILEMAPS);
 
@@ -914,11 +1188,113 @@ void toaplan2_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 	for (priority = 0; priority < 16; priority++)
 	{
-		tilemap_draw(bitmap,bg_tilemap,priority);
-		tilemap_draw(bitmap,fg_tilemap,priority);
-		tilemap_draw(bitmap,top_tilemap,priority);
-		if (sprite_priority[priority])
-			draw_sprites(bitmap,priority);
+		tilemap_draw(bitmap,bg_tilemap[0],priority);
+		tilemap_draw(bitmap,fg_tilemap[0],priority);
+		tilemap_draw(bitmap,top_tilemap[0],priority);
+		if (sprite_priority[0][priority])
+			draw_sprites(bitmap,0,priority);
 	}
+}
+void toaplan2_1_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+{
+	int priority;
+
+	for (priority = 0; priority < 16; priority++)
+	{
+		sprite_priority[0][priority] = 0;		/* Clear priorities used list */
+		sprite_priority[1][priority] = 0;		/* Clear priorities used list */
+	}
+
+#if TOAPLAN2_DEBUG
+	if (errorlog) toaplan2_log_vram();
+#endif
+
+	tilemap_update(ALL_TILEMAPS);
+
+	palette_init_used_colors();
+	mark_sprite_colors(0);	/* Also mark priorities used */
+	mark_sprite_colors(1);	/* Also mark priorities used */
+
+	if (palette_recalc()) tilemap_mark_all_pixels_dirty(ALL_TILEMAPS);
+
+	tilemap_render(ALL_TILEMAPS);
+
+	fillbitmap(bitmap,palette_transparent_pen,&Machine->drv->visible_area);
+
+	for (priority = 0; priority < 16; priority++)
+	{
+		tilemap_draw(bitmap,bg_tilemap[1],priority);
+		tilemap_draw(bitmap,fg_tilemap[1],priority);
+		tilemap_draw(bitmap,top_tilemap[1],priority);
+		if (sprite_priority[1][priority])
+			draw_sprites(bitmap,1,priority);
+	}
+	for (priority = 0; priority < 16; priority++)
+	{
+		tilemap_draw(bitmap,bg_tilemap[0],priority);
+		tilemap_draw(bitmap,fg_tilemap[0],priority);
+		tilemap_draw(bitmap,top_tilemap[0],priority);
+		if (sprite_priority[0][priority])
+			draw_sprites(bitmap,0,priority);
+	}
+}
+void batsugun_1_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+{
+	int priority;
+
+	for (priority = 0; priority < 16; priority++)
+	{
+		sprite_priority[0][priority] = 0;		/* Clear priorities used list */
+		sprite_priority[1][priority] = 0;		/* Clear priorities used list */
+	}
+
+#if TOAPLAN2_DEBUG
+	if (errorlog) toaplan2_log_vram();
+#endif
+
+	tilemap_update(ALL_TILEMAPS);
+
+	palette_init_used_colors();
+	mark_sprite_colors(0);	/* Also mark priorities used */
+	mark_sprite_colors(1);	/* Also mark priorities used */
+
+	if (palette_recalc()) tilemap_mark_all_pixels_dirty(ALL_TILEMAPS);
+
+	tilemap_render(ALL_TILEMAPS);
+
+	fillbitmap(bitmap,palette_transparent_pen,&Machine->drv->visible_area);
+
+	for (priority = 0; priority < 16; priority++)
+	{
+		tilemap_draw(bitmap,bg_tilemap[1],priority);
+		tilemap_draw(bitmap,bg_tilemap[0],priority);
+		tilemap_draw(bitmap,fg_tilemap[1],priority);
+		tilemap_draw(bitmap,top_tilemap[1],priority);
+		if (sprite_priority[1][priority])
+			draw_sprites(bitmap,1,priority);
+	}
+	for (priority = 0; priority < 16; priority++)
+	{
+		tilemap_draw(bitmap,fg_tilemap[0],priority);
+		tilemap_draw(bitmap,top_tilemap[0],priority);
+		if (sprite_priority[0][priority])
+			draw_sprites(bitmap,0,priority);
+	}
+}
+
+
+void toaplan2_0_eof_callback(void)
+{
+	/** Shift sprite RAM buffers  ***  Used to fix sprite lag **/
+	memcpy(spriteram_now[0],spriteram_next[0],TOAPLAN2_SPRITERAM_SIZE);
+	memcpy(spriteram_next[0],spriteram_new[0],TOAPLAN2_SPRITERAM_SIZE);
+}
+void toaplan2_1_eof_callback(void)
+{
+	/** Shift sprite RAM buffers  ***  Used to fix sprite lag **/
+	memcpy(spriteram_now[0],spriteram_next[0],TOAPLAN2_SPRITERAM_SIZE);
+	memcpy(spriteram_next[0],spriteram_new[0],TOAPLAN2_SPRITERAM_SIZE);
+	memcpy(spriteram_now[1],spriteram_next[1],TOAPLAN2_SPRITERAM_SIZE);
+	memcpy(spriteram_next[1],spriteram_new[1],TOAPLAN2_SPRITERAM_SIZE);
 }
 

@@ -3,7 +3,7 @@
  *	 tbl6510.c
  *	 6510 opcode functions and function pointer table
  *
- *	 Copyright (c) 1998 Juergen Buchmueller, all rights reserved.
+ *	 Copyright (c) 1998,1999,2000 Juergen Buchmueller, all rights reserved.
  *
  *	 - This source code is released as freeware for non-commercial purposes.
  *	 - You are free to use and redistribute this code in modified or
@@ -29,10 +29,10 @@
 /*****************************************************************************
  *****************************************************************************
  *
- *   overrides for 6510 opcodes
+ *	 overrides for 6510 opcodes
  *
  *****************************************************************************
- ********** insn   temp     cycles             rdmem   opc  wrmem   **********/
+ ********** insn   temp 	cycles			   rdmem   opc	wrmem	**********/
 #define m6510_00 m6502_00									/* 7 BRK */
 #define m6510_20 m6502_20									/* 6 JSR */
 #define m6510_40 m6502_40									/* 6 RTI */

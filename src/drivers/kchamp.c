@@ -795,7 +795,7 @@ static void init_kchampvs( void )
 
 
 
-GAME( 1984, kchamp,   0,      kchamp, kchamp,     0,        ROT90, "Data East USA", "Karate Champ (US)" )
-GAME( 1984, karatedo, kchamp, kchamp, kchamp,     0,        ROT90, "Data East Corporation", "Karate Dou (Japan)" )
-GAME( 1984, kchampvs, kchamp, kchampvs, kchampvs, kchampvs, ROT90, "Data East USA", "Karate Champ (US VS version)" )
-GAME( 1984, karatevs, kchamp, kchampvs, kchampvs, kchampvs, ROT90, "Data East Corporation", "Taisen Karate Dou (Japan VS version)" )
+GAMEX( 1984, kchamp,   0,      kchamp, kchamp,     0,        ROT90, "Data East USA", "Karate Champ (US)", GAME_NO_COCKTAIL )
+GAMEX( 1984, karatedo, kchamp, kchamp, kchamp,     0,        ROT90, "Data East Corporation", "Karate Dou (Japan)", GAME_NO_COCKTAIL )
+GAMEX( 1984, kchampvs, kchamp, kchampvs, kchampvs, kchampvs, ROT90, "Data East USA", "Karate Champ (US VS version)", GAME_NO_COCKTAIL )
+GAMEX( 1984, karatevs, kchamp, kchampvs, kchampvs, kchampvs, ROT90, "Data East Corporation", "Taisen Karate Dou (Japan VS version)", GAME_NO_COCKTAIL )

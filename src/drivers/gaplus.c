@@ -821,7 +821,7 @@ ROM_END
 
 
 
-GAME( 1984, gaplus,   0,      gaplus,  gaplus,   0, ROT90, "Namco", "Gaplus (set 1)" )
-GAME( 1984, gaplusa,  gaplus, gaplusa, gaplus,   0, ROT90, "Namco", "Gaplus (set 2)" )
-GAME( 1984, galaga3,  gaplus, galaga3, galaga3,  0, ROT90, "Namco", "Galaga 3 (set 1)" )
-GAME( 1984, galaga3a, gaplus, galaga3, galaga3a, 0, ROT90, "Namco", "Galaga 3 (set 2)" )
+GAMEX( 1984, gaplus,   0,      gaplus,  gaplus,   0, ROT90, "Namco", "Gaplus (set 1)", GAME_NO_COCKTAIL )
+GAMEX( 1984, gaplusa,  gaplus, gaplusa, gaplus,   0, ROT90, "Namco", "Gaplus (set 2)", GAME_NO_COCKTAIL )
+GAMEX( 1984, galaga3,  gaplus, galaga3, galaga3,  0, ROT90, "Namco", "Galaga 3 (set 1)", GAME_NO_COCKTAIL )
+GAMEX( 1984, galaga3a, gaplus, galaga3, galaga3a, 0, ROT90, "Namco", "Galaga 3 (set 2)", GAME_NO_COCKTAIL )

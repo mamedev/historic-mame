@@ -1,12 +1,20 @@
 /***************************************************************************
 
 TODO:
-- wrong sprite/char priority (see cpu head at beginning of arm wrestling,
-  and heads in intermission after firing range III)
-- wrong chars in original versions
-- hook up sound in bootleg (the current sound is a hack, making use of the Konami ROMset)
-- use the real PROOMs in the bootleg version
-
+- in combasc (and more generally the 007121) the number of sprites can be
+  increased from 0x40 to 0x80. There is a hack in konamiic.c to handle that,
+  but it is wrong. If you don't pass the Iron Man stage, a few sprites are
+  left dangling on the screen.
+- priority orthogonality problems in the last level of combasc - see the
+  comments in vidhrdw.
+- it seems that to get correct target colors in firing range III we have to
+  use the WRONG lookup table (the one for tiles instead of the one for
+  sprites).
+- in combascb, wrong sprite/char priority (see cpu head at beginning of arm
+  wrestling, and heads in intermission after firing range III)
+- hook up sound in bootleg (the current sound is a hack, making use of the
+  Konami ROMset)
+- understand how the trackball really works
 
 "Combat School" (also known as "Boot Camp") - (Konami GX611)
 
@@ -97,30 +105,31 @@ e000-e001	YM2203
 
 extern unsigned char* banked_area;
 
-/* from machine/combatsc.c */
+/* from vidhrdw/combasc.c */
+void combasc_convert_color_prom( unsigned char *palette, unsigned short *colortable, const unsigned char *color_prom );
+void combascb_convert_color_prom( unsigned char *palette, unsigned short *colortable, const unsigned char *color_prom );
+int combasc_video_r( int offset );
+void combasc_video_w( int offset, int data );
+int combasc_vh_start( void );
+int combascb_vh_start( void );
+void combasc_vh_stop( void );
+
 void combascb_bankselect_w( int offset, int data );
-void combatsc_bankselect_w( int offset, int data );
-void combatsc_init_machine( void );
-void combatsc_pf_control_w( int offset, int data );
-int combatsc_scrollram_r( int offset );
-void combatsc_scrollram_w( int offset, int data );
+void combasc_bankselect_w( int offset, int data );
+void combasc_init_machine( void );
+void combasc_pf_control_w( int offset, int data );
+int combasc_scrollram_r( int offset );
+void combasc_scrollram_w( int offset, int data );
 
-/* from vidhrdw/combatsc.c */
-void combatsc_convert_color_prom( unsigned char *palette, unsigned short *colortable, const unsigned char *color_prom );
-int combatsc_video_r( int offset );
-void combatsc_video_w( int offset, int data );
-int combatsc_vh_start( void );
-void combatsc_vh_stop( void );
-void cmbatscb_vh_screenrefresh( struct osd_bitmap *bitmap, int fullrefresh );
-void combatsc_vh_screenrefresh( struct osd_bitmap *bitmap, int fullrefresh );
-void combatsc_io_w( int offset, int data );
-void combatsc_vreg_w(int offset, int data);
-void combatsc_sh_irqtrigger_w(int offset, int data);
+void combascb_vh_screenrefresh( struct osd_bitmap *bitmap, int fullrefresh );
+void combasc_vh_screenrefresh( struct osd_bitmap *bitmap, int fullrefresh );
+void combasc_io_w( int offset, int data );
+void combasc_vreg_w(int offset, int data);
 
 
 
 
-static void combatsc_coin_counter_w(int offset,int data)
+static void combasc_coin_counter_w(int offset,int data)
 {
 	/* b7-b3: unused? */
 	/* b1: coin counter 2 */
@@ -130,64 +139,117 @@ static void combatsc_coin_counter_w(int offset,int data)
 	coin_counter_w(1,data & 0x02);
 }
 
+static int trackball_r(int offset)
+{
+	static UINT8 pos[4],sign[4];
+
+	if (offset == 0)
+	{
+		int i,dir[4];
+
+		for (i = 0;i < 4;i++)
+		{
+			UINT8 curr;
+
+			curr = readinputport(4 + i);
+
+			dir[i] = curr - pos[i];
+			sign[i] = dir[i] & 0x80;
+			pos[i] = curr;
+		}
+
+		/* fix sign for orthogonal movements */
+		if (dir[0] || dir[1])
+		{
+			if (!dir[0]) sign[0] = sign[1] ^ 0x80;
+			if (!dir[1]) sign[1] = sign[0];
+		}
+		if (dir[2] || dir[3])
+		{
+			if (!dir[2]) sign[2] = sign[3] ^ 0x80;
+			if (!dir[3]) sign[3] = sign[2];
+		}
+	}
+
+	return sign[offset] | (pos[offset] & 0x7f);
+}
+
+
+/* the protection is a simple multiply */
+static int prot[2];
+
+static void protection_w(int offset,int data)
+{
+	prot[offset] = data;
+}
+static int protection_r(int offset)
+{
+	return ((prot[0] * prot[1]) >> (offset * 8)) & 0xff;
+}
+static void protection_clock(int offset,int data)
+{
+	/* 0x3f is written here every time before accessing the other registers */
+}
+
+
 /****************************************************************************/
 
-void combatsc_play_w(int offset,int data)
+static void combasc_sh_irqtrigger_w(int offset,int data)
+{
+	cpu_cause_interrupt(1,0xff);
+}
+
+static void combasc_play_w(int offset,int data)
 {
 	if (data & 0x02)
         UPD7759_start_w(0, 0);
 }
 
-void combatsc_voice_reset_w(int offset,int data)
+static void combasc_voice_reset_w(int offset,int data)
 {
     UPD7759_reset_w(0,data & 1);
 }
 
-void combatsc_portA_w(int offset,int data)
+static void combasc_portA_w(int offset,int data)
 {
 	/* unknown. always write 0 */
 }
 
 /****************************************************************************/
 
-static struct MemoryReadAddress combatsc_readmem[] =
+static struct MemoryReadAddress combasc_readmem[] =
 {
-	{ 0x0020, 0x003f, combatsc_scrollram_r },
-	{ 0x0040, 0x005f, MRA_RAM },					/* ??? */
-	{ 0x0200, 0x0201, MRA_RAM },					/* ??? */
+	{ 0x0020, 0x005f, combasc_scrollram_r },
+	{ 0x0200, 0x0201, protection_r },
 	{ 0x0400, 0x0400, input_port_0_r },
 	{ 0x0401, 0x0401, input_port_1_r },			/* DSW #3 */
 	{ 0x0402, 0x0402, input_port_2_r },			/* DSW #1 */
 	{ 0x0403, 0x0403, input_port_3_r },			/* DSW #2 */
-	{ 0x0404, 0x0404, input_port_4_r },			/* 1P & 2P controls / 1P trackball V */
-	{ 0x0405, 0x0405, input_port_5_r },			/* 1P trackball H */
-	{ 0x0406, 0x0406, input_port_6_r },			/* 2P trackball V */
-	{ 0x0407, 0x0407, input_port_7_r },			/* 2P trackball H */
+	{ 0x0404, 0x0407, trackball_r },			/* 1P & 2P controls / trackball */
 	{ 0x0600, 0x06ff, MRA_RAM },				/* palette */
 	{ 0x0800, 0x1fff, MRA_RAM },
-	{ 0x2000, 0x3fff, combatsc_video_r },
+	{ 0x2000, 0x3fff, combasc_video_r },
 	{ 0x4000, 0x7fff, MRA_BANK1 },				/* banked ROM area */
 	{ 0x8000, 0xffff, MRA_ROM },				/* ROM */
 	{ -1 }
 };
 
-static struct MemoryWriteAddress combatsc_writemem[] =
+static struct MemoryWriteAddress combasc_writemem[] =
 {
-	{ 0x0000, 0x0007, combatsc_pf_control_w },
-	{ 0x0020, 0x003f, combatsc_scrollram_w },
-	{ 0x0040, 0x005f, MWA_RAM },					/* ??? */
+	{ 0x0000, 0x0007, combasc_pf_control_w },
+	{ 0x0020, 0x005f, combasc_scrollram_w },
 //	{ 0x0060, 0x00ff, MWA_RAM },					/* RAM */
-	{ 0x0200, 0x0201, MWA_RAM },					/* ??? */
-	{ 0x0206, 0x0206, MWA_RAM },					/* ??? */
-	{ 0x0408, 0x0408, combatsc_coin_counter_w },	/* coin counters */
-	{ 0x040c, 0x040c, combatsc_vreg_w },
-	{ 0x0410, 0x0410, combatsc_bankselect_w },
-	{ 0x0414, 0x0414, combatsc_sh_irqtrigger_w },
-	{ 0x0418, 0x0418, MWA_NOP },					/* ??? */
+	{ 0x0200, 0x0201, protection_w },
+	{ 0x0206, 0x0206, protection_clock },
+	{ 0x0408, 0x0408, combasc_coin_counter_w },	/* coin counters */
+	{ 0x040c, 0x040c, combasc_vreg_w },
+	{ 0x0410, 0x0410, combasc_bankselect_w },
+	{ 0x0414, 0x0414, soundlatch_w },
+	{ 0x0418, 0x0418, combasc_sh_irqtrigger_w },
 	{ 0x041c, 0x041c, watchdog_reset_w },			/* watchdog reset? */
 	{ 0x0600, 0x06ff, paletteram_xBBBBBGGGGGRRRRR_w, &paletteram },
 	{ 0x0800, 0x1fff, MWA_RAM },					/* RAM */
-	{ 0x2000, 0x3fff, combatsc_video_w },
+	{ 0x2000, 0x3fff, combasc_video_w },
 	{ 0x4000, 0x7fff, MWA_ROM },					/* banked ROM area */
 	{ 0x8000, 0xffff, MWA_ROM },					/* ROM */
 	{ -1 }
@@ -198,7 +260,7 @@ static struct MemoryReadAddress combascb_readmem[] =
 	{ 0x0000, 0x04ff, MRA_RAM },
 	{ 0x0600, 0x06ff, MRA_RAM },	/* palette */
 	{ 0x0800, 0x1fff, MRA_RAM },
-	{ 0x2000, 0x3fff, combatsc_video_r },
+	{ 0x2000, 0x3fff, combasc_video_r },
 	{ 0x4000, 0x7fff, MRA_BANK1 },				/* banked ROM/RAM area */
 	{ 0x8000, 0xffff, MRA_ROM },				/* ROM */
 	{ -1 }
@@ -210,7 +272,7 @@ static struct MemoryWriteAddress combascb_writemem[] =
 	{ 0x0500, 0x0500, combascb_bankselect_w },
 	{ 0x0600, 0x06ff, paletteram_xBBBBBGGGGGRRRRR_w, &paletteram },
 	{ 0x0800, 0x1fff, MWA_RAM },
-	{ 0x2000, 0x3fff, combatsc_video_w },
+	{ 0x2000, 0x3fff, combasc_video_w },
 	{ 0x4000, 0x7fff, MWA_BANK1, &banked_area },/* banked ROM/RAM area */
 	{ 0x8000, 0xffff, MWA_ROM },				/* ROM */
 	{ -1 }
@@ -237,15 +299,15 @@ static struct MemoryWriteAddress writemem_sound[] =
 	{ 0x87f0, 0x87ff, MWA_RAM },				/* ??? */
  	{ 0x9000, 0x9000, YM2203_control_port_0_w },/* YM 2203 */
 	{ 0x9001, 0x9001, YM2203_write_port_0_w },	/* YM 2203 */
-	//{ 0x9800, 0x9800, combatsc_unknown_w_1 },	/* OKIM5205? */
-	//{ 0xa800, 0xa800, combatsc_unknown_w_2 },	/* OKIM5205? */
+	//{ 0x9800, 0x9800, combasc_unknown_w_1 },	/* OKIM5205? */
+	//{ 0xa800, 0xa800, combasc_unknown_w_2 },	/* OKIM5205? */
 	{ 0x8800, 0xfffb, MWA_ROM },				/* ROM */
 	{ 0xfffc, 0xffff, MWA_RAM },				/* ??? */
 	{ -1 }
 };
 #endif
 
-static struct MemoryReadAddress combatsc_readmem_sound[] =
+static struct MemoryReadAddress combasc_readmem_sound[] =
 {
 	{ 0x0000, 0x7fff, MRA_ROM },					/* ROM */
 	{ 0x8000, 0x87ff, MRA_RAM },					/* RAM */
@@ -255,20 +317,20 @@ static struct MemoryReadAddress combatsc_readmem_sound[] =
 	{ -1 }
 };
 
-static struct MemoryWriteAddress combatsc_writemem_sound[] =
+static struct MemoryWriteAddress combasc_writemem_sound[] =
 {
 	{ 0x0000, 0x7fff, MWA_ROM },				/* ROM */
 	{ 0x8000, 0x87ff, MWA_RAM },				/* RAM */
-	{ 0x9000, 0x9000, combatsc_play_w },		/* uPD7759 play voice */
+	{ 0x9000, 0x9000, combasc_play_w },		/* uPD7759 play voice */
 	{ 0xa000, 0xa000, UPD7759_message_w },		/* uPD7759 voice select */
-	{ 0xc000, 0xc000, combatsc_voice_reset_w },	/* uPD7759 reset? */
+	{ 0xc000, 0xc000, combasc_voice_reset_w },	/* uPD7759 reset? */
  	{ 0xe000, 0xe000, YM2203_control_port_0_w },/* YM 2203 */
 	{ 0xe001, 0xe001, YM2203_write_port_0_w },	/* YM 2203 */
 	{ -1 }
 };
 
 
-#define COMBATSC_COINAGE \
+#define COINAGE \
 	PORT_DIPNAME( 0x0f, 0x0f, DEF_STR( Coin_A ) ) \
 	PORT_DIPSETTING(    0x02, DEF_STR( 4C_1C ) ) \
 	PORT_DIPSETTING(    0x05, DEF_STR( 3C_1C ) ) \
@@ -304,10 +366,10 @@ static struct MemoryWriteAddress combatsc_writemem_sound[] =
 	PORT_DIPSETTING(    0x90, DEF_STR( 1C_7C ) ) \
 	PORT_DIPSETTING(    0x00, "coin 2 invalidity" )
 
-INPUT_PORTS_START( combatsc )
+INPUT_PORTS_START( combasc )
 	PORT_START
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 )
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER1 )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_COIN2 )
@@ -319,7 +381,7 @@ INPUT_PORTS_START( combatsc )
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_START2 )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Flip_Screen ) )
 	PORT_DIPSETTING(	0x10, DEF_STR( Off ) )
 	PORT_DIPSETTING(	0x00, DEF_STR( On )  )
@@ -332,13 +394,13 @@ INPUT_PORTS_START( combatsc )
 	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
 
 	PORT_START	/* DSW # 1 */
-	COMBATSC_COINAGE
+	COINAGE
 
 	PORT_START	/* DSW #2 */
-	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown) )
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(	0x01, DEF_STR( Off ) )
 	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown) )
+	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(	0x02, DEF_STR( Off ) )
 	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x04, 0x00, DEF_STR( Cabinet ) )
@@ -364,10 +426,10 @@ INPUT_PORTS_START( combatsc )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_PLAYER2 | IPF_8WAY )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_PLAYER2 | IPF_8WAY )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_PLAYER2 | IPF_8WAY )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_PLAYER1 | IPF_8WAY )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_PLAYER1 | IPF_8WAY )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_PLAYER1 | IPF_8WAY )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_PLAYER1 | IPF_8WAY )
 
 	PORT_START	/* only used in trackball version */
 	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
@@ -379,10 +441,10 @@ INPUT_PORTS_START( combatsc )
 	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( combatsct )
+INPUT_PORTS_START( combasct )
 	PORT_START
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 )
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER1 )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_COIN2 )
@@ -394,6 +456,7 @@ INPUT_PORTS_START( combatsct )
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Flip_Screen ) )
 	PORT_DIPSETTING(	0x10, DEF_STR( Off ) )
 	PORT_DIPSETTING(	0x00, DEF_STR( On )  )
@@ -406,13 +469,13 @@ INPUT_PORTS_START( combatsct )
 	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
 
 	PORT_START	/* DSW # 1 */
-	COMBATSC_COINAGE
+	COINAGE
 
 	PORT_START	/* DSW #2 */
-	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown) )
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(	0x01, DEF_STR( Off ) )
 	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown) )
+	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(	0x02, DEF_STR( Off ) )
 	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x04, 0x00, DEF_STR( Cabinet ) )
@@ -435,23 +498,23 @@ INPUT_PORTS_START( combatsct )
 
 	/* trackball 1P */
 	PORT_START
-	PORT_ANALOG( 0xff, 0x7f, IPT_TRACKBALL_Y | IPF_CENTER, 25, 10, 0, 0 )
+	PORT_ANALOG( 0xff, 0x00, IPT_TRACKBALL_Y | IPF_PLAYER1 | IPF_REVERSE, 10, 10, 0, 0 )
 
 	PORT_START
-	PORT_ANALOG( 0xff, 0x7f, IPT_TRACKBALL_X | IPF_CENTER | IPF_REVERSE, 25, 10, 0, 0 )
+	PORT_ANALOG( 0xff, 0x00, IPT_TRACKBALL_X | IPF_PLAYER1, 10, 10, 0, 0 )
 
 	/* trackball 2P (not implemented yet) */
 	PORT_START
-	PORT_ANALOG( 0xff, 0x7f, IPT_TRACKBALL_Y | IPF_CENTER | IPF_PLAYER2, 25, 10, 0, 0 )
+	PORT_ANALOG( 0xff, 0x00, IPT_TRACKBALL_Y | IPF_PLAYER2 | IPF_REVERSE, 10, 10, 0, 0 )
 
 	PORT_START
-	PORT_ANALOG( 0xff, 0x7f, IPT_TRACKBALL_X | IPF_CENTER | IPF_REVERSE | IPF_PLAYER2, 25, 10, 0, 0 )
+	PORT_ANALOG( 0xff, 0x00, IPT_TRACKBALL_X | IPF_PLAYER2, 10, 10, 0, 0 )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( cmbatscb )
+INPUT_PORTS_START( combascb )
 	PORT_START
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 )
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER1 )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_COIN2 )
@@ -464,13 +527,13 @@ INPUT_PORTS_START( cmbatscb )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_PLAYER2 | IPF_8WAY )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_PLAYER2 | IPF_8WAY )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_PLAYER2 | IPF_8WAY )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_PLAYER1 | IPF_8WAY )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_PLAYER1 | IPF_8WAY )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_PLAYER1 | IPF_8WAY )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_PLAYER1 | IPF_8WAY )
 
 	PORT_START
-	COMBATSC_COINAGE
+	COINAGE
 
 	PORT_START
 	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Unknown ) )
@@ -540,7 +603,7 @@ static struct GfxLayout sprite_layout =
 	8*8*4
 };
 
-static struct GfxDecodeInfo combatsc_gfxdecodeinfo[] =
+static struct GfxDecodeInfo combasc_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0x00000, &gfx_layout, 0, 8*16 },
 	{ REGION_GFX2, 0x00000, &gfx_layout, 0, 8*16 },
@@ -563,7 +626,7 @@ static struct YM2203interface ym2203_interface =
 	{ YM2203_VOL(20,20) },
 	{ 0 },
 	{ 0 },
-	{ combatsc_portA_w },
+	{ combasc_portA_w },
 	{ 0 }
 };
 
@@ -580,35 +643,36 @@ static struct UPD7759_interface upd7759_interface =
 
 
 /* combat school (original) */
-static struct MachineDriver machine_driver_combatsc =
+static struct MachineDriver machine_driver_combasc =
 {
 	{
 		{
 			CPU_HD6309,
 			5000000,	/* 5 MHz? */
-			combatsc_readmem,combatsc_writemem,0,0,
+			combasc_readmem,combasc_writemem,0,0,
 			interrupt,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			1500000,	/* 1.5 MHz? */
-			combatsc_readmem_sound,combatsc_writemem_sound,0,0,
+			combasc_readmem_sound,combasc_writemem_sound,0,0,
 			ignore_interrupt,1 	/* IRQs are caused by the main CPU */
 		}
 	},
 	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
 	10, /* CPU slices */
-	combatsc_init_machine,
+	combasc_init_machine,
 
 	/* video hardware */
 	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
-	combatsc_gfxdecodeinfo,
-	128,128*16,combatsc_convert_color_prom,
+	combasc_gfxdecodeinfo,
+	128,8*16*16,
+	combasc_convert_color_prom,
 	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
 	0,
-	combatsc_vh_start,
-	combatsc_vh_stop,
-	combatsc_vh_screenrefresh,
+	combasc_vh_start,
+	combasc_vh_stop,
+	combasc_vh_screenrefresh,
 
 	/* sound hardware */
 	0,0,0,0,
@@ -625,7 +689,7 @@ static struct MachineDriver machine_driver_combatsc =
 };
 
 /* combat school (bootleg on different hardware) */
-static struct MachineDriver machine_driver_cmbatscb =
+static struct MachineDriver machine_driver_combascb =
 {
 	{
 		{
@@ -637,23 +701,24 @@ static struct MachineDriver machine_driver_cmbatscb =
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			1500000,
-			combatsc_readmem_sound,combatsc_writemem_sound,0,0, /* FAKE */
+			combasc_readmem_sound,combasc_writemem_sound,0,0, /* FAKE */
 			ignore_interrupt,0 	/* IRQs are caused by the main CPU */
 		},
 	},
 	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
 	10, /* CPU slices */
-	combatsc_init_machine,
+	combasc_init_machine,
 
 	/* video hardware */
 	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
 	combascb_gfxdecodeinfo,
-	128,128*16,combatsc_convert_color_prom,
+	128,8*16*16,
+	combascb_convert_color_prom,
 	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
 	0,
-	combatsc_vh_start,
-	combatsc_vh_stop,
-	cmbatscb_vh_screenrefresh,
+	combascb_vh_start,
+	combasc_vh_stop,
+	combascb_vh_screenrefresh,
 
 	/* We are using the original sound subsystem */
 	0,0,0,0,
@@ -815,11 +880,9 @@ ROM_START( combascb )
 	ROM_LOAD( "combat.018",  0x60000, 0x10000, 0x575db729 )
 	ROM_LOAD( "combat.020",  0x70000, 0x10000, 0x8d748a1a )
 
-	ROM_REGION( 0x0400, REGION_PROMS )	/* TODO: WRONG, the bootleg uses different PROMs */
-	ROM_LOAD( "611g06.h14",  0x0000, 0x0100, 0xf916129a ) /* sprites lookup table */
-	ROM_LOAD( "611g05.h15",  0x0100, 0x0100, 0x207a7b07 ) /* chars lookup table */
-	ROM_LOAD( "611g10.h6",   0x0200, 0x0100, 0xf916129a ) /* sprites lookup table */
-	ROM_LOAD( "611g09.h7",   0x0300, 0x0100, 0x207a7b07 ) /* chars lookup table */
+	ROM_REGION( 0x0200, REGION_PROMS )
+	ROM_LOAD( "prom.d10",    0x0000, 0x0100, 0x265f4c97 ) /* sprites lookup table */
+	ROM_LOAD( "prom.c11",    0x0100, 0x0100, 0xa7a5c0b4 ) /* priority? */
 
 	ROM_REGION( 0x20000, REGION_SOUND1 )	/* uPD7759 data */
 	ROM_LOAD( "611g04.rom",  0x00000, 0x20000, 0x2987e158 )	/* FAKE - from Konami set! */
@@ -827,18 +890,30 @@ ROM_END
 
 
 
+static void init_combasc( void )
+{
+	/* joystick instead of trackball */
+	install_mem_read_handler(0,0x0404,0x0404,input_port_4_r);
+}
+
 static void init_combascb( void )
 {
-	unsigned char *gfx = memory_region(REGION_GFX1);
+	unsigned char *gfx;
 	int i;
+
+	gfx = memory_region(REGION_GFX1);
 	for (i = 0;i < memory_region_length(REGION_GFX1);i++)
+		gfx[i] = ~gfx[i];
+
+	gfx = memory_region(REGION_GFX2);
+	for (i = 0;i < memory_region_length(REGION_GFX2);i++)
 		gfx[i] = ~gfx[i];
 }
 
 
 
-GAMEX(1988, combasc,  0,       combatsc, combatsc,  0,        ROT0, "Konami", "Combat School (joystick)", GAME_NOT_WORKING )
-GAMEX(1987, combasct, combasc, combatsc, combatsct, 0,        ROT0, "Konami", "Combat School (trackball)", GAME_NOT_WORKING )
-GAMEX(1987, combascj, combasc, combatsc, combatsct, 0,        ROT0, "Konami", "Combat School (Japan trackball)", GAME_NOT_WORKING )
-GAMEX(1987, bootcamp, combasc, combatsc, combatsct, 0,        ROT0, "Konami", "Boot Camp", GAME_NOT_WORKING )
-GAME( 1988, combascb, combasc, cmbatscb, cmbatscb,  combascb, ROT0, "bootleg", "Combat School (bootleg)" )
+GAME( 1988, combasc,  0,       combasc,  combasc,  combasc,  ROT0, "Konami", "Combat School (joystick)" )
+GAME( 1987, combasct, combasc, combasc,  combasct, 0,        ROT0, "Konami", "Combat School (trackball)" )
+GAME( 1987, combascj, combasc, combasc,  combasct, 0,        ROT0, "Konami", "Combat School (Japan trackball)" )
+GAME( 1987, bootcamp, combasc, combasc,  combasct, 0,        ROT0, "Konami", "Boot Camp" )
+GAMEX(1988, combascb, combasc, combascb, combascb, combascb, ROT0, "bootleg", "Combat School (bootleg)", GAME_IMPERFECT_COLORS )

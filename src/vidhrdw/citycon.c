@@ -89,7 +89,7 @@ void citycon_background_w(int offset,int data)
 	}
 
 	/* bit 0 flips screen */
-	/* maybe it is also used to multiplex player 1 and player 2 controls */
+	/* it is also used to multiplex player 1 and player 2 controls */
 	if (flipscreen != (data & 1))
 	{
 		flipscreen = data & 1;
@@ -101,6 +101,10 @@ void citycon_background_w(int offset,int data)
 if (errorlog && (data & 0x0e) != 0) fprintf(errorlog,"background register = %02x\n",data);
 }
 
+int citycon_in_r(int offset)
+{
+	return readinputport(flipscreen);
+}
 
 
 /***************************************************************************

@@ -9,7 +9,7 @@
   both boards have 'export' stickers which usually indicates a World version.
   Maybe one is a UK or European version.
 
-  Emulation by Bryan McPhail, mish@tendril.force9.net
+  Emulation by Bryan McPhail, mish@tendril.co.uk
 
 ***************************************************************************/
 
@@ -412,7 +412,7 @@ static struct MachineDriver machine_driver_twocrude =
 			ignore_interrupt,0
 		}
 	},
-	58, DEFAULT_REAL_60HZ_VBLANK_DURATION, /* frames per second, vblank duration */
+	58, 529, /* frames per second, vblank duration */
 	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
 	0,
 

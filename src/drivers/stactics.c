@@ -291,10 +291,7 @@ static struct MachineDriver machine_driver_stactics =
     stactics_vh_screenrefresh,
 
 	/* sound hardware */
-    0,
-    0,  /* Start audio  */
-    0,  /* Stop audio   */
-    0   /* Update audio */
+    0,0,0,0
 };
 
 
@@ -327,5 +324,5 @@ ROM_END
 
 
 
-GAME( 1981, stactics, 0, stactics, stactics, 0, ROT0, "Sega", "Space Tactics" )
+GAMEX( 1981, stactics, 0, stactics, stactics, 0, ROT0, "Sega", "Space Tactics", GAME_NO_SOUND )
 

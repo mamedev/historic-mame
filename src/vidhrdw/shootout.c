@@ -82,6 +82,43 @@ static void get_sprite_info( void ){
 	}
 }
 
+static void get_sprite_info2( void ){
+	const struct GfxElement *gfx = Machine->gfx[1];
+	const UINT8 *source = spriteram;
+	struct sprite *sprite = sprite_list->sprite;
+	int count = NUM_SPRITES;
+
+	int attributes, flags, number;
+
+	while( count-- ){
+		flags = 0;
+		attributes = source[1];
+		if ( attributes & 0x01 ){ /* enabled */
+			flags |= SPRITE_VISIBLE;
+			sprite->priority = (attributes&0x08)?1:0;
+			sprite->x = (240 - source[2])&0xff;
+			sprite->y = (240 - source[0])&0xff;
+
+			number = source[3] + ((attributes&0xc0)<<2);
+			if( attributes & 0x04 ) flags |= SPRITE_FLIPX;
+			if( attributes & 0x02 ) flags |= SPRITE_FLICKER; /* ? */
+
+			if( attributes & 0x10 ){ /* double height */
+				number = number&(~1);
+				sprite->y -= 16;
+				sprite->total_height = 32;
+			}
+			else {
+				sprite->total_height = 16;
+			}
+			sprite->pen_data = gfx->gfxdata + number * gfx->char_modulo;
+		}
+		sprite->flags = flags;
+		sprite++;
+		source += 4;
+	}
+}
+
 static void draw_background( struct osd_bitmap *bitmap ){
 	const struct rectangle *clip = &Machine->drv->visible_area;
 	int offs;
@@ -130,6 +167,15 @@ static void draw_foreground( struct osd_bitmap *bitmap ){
 
 void shootout_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh){
 	get_sprite_info();
+	sprite_update();
+	draw_background( bitmap );
+	sprite_draw( sprite_list, 1);
+	draw_foreground( bitmap );
+	sprite_draw( sprite_list, 0);
+}
+
+void shootouj_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh){
+	get_sprite_info2();
 	sprite_update();
 	draw_background( bitmap );
 	sprite_draw( sprite_list, 1);

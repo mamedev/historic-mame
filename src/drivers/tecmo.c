@@ -1031,9 +1031,9 @@ ROM_END
 
 
 
-GAME( 1986, rygar,    0,        rygar,    rygar,    0, ROT0,  "Tecmo", "Rygar (US set 1)" )
-GAME( 1986, rygar2,   rygar,    rygar,    rygar,    0, ROT0,  "Tecmo", "Rygar (US set 2)" )
-GAME( 1986, rygarj,   rygar,    rygar,    rygar,    0, ROT0,  "Tecmo", "Argus no Senshi (Japan)" )
-GAME( 1987, gemini,   0,        gemini,   gemini,   0, ROT90, "Tecmo", "Gemini Wing" )
-GAME( 1988, silkworm, 0,        silkworm, silkworm, 0, ROT0,  "Tecmo", "Silkworm (set 1)" )
-GAME( 1988, silkwrm2, silkworm, silkworm, silkworm, 0, ROT0,  "Tecmo", "Silkworm (set 2)" )
+GAMEX( 1986, rygar,    0,        rygar,    rygar,    0, ROT0,  "Tecmo", "Rygar (US set 1)", GAME_NO_COCKTAIL )
+GAMEX( 1986, rygar2,   rygar,    rygar,    rygar,    0, ROT0,  "Tecmo", "Rygar (US set 2)", GAME_NO_COCKTAIL )
+GAMEX( 1986, rygarj,   rygar,    rygar,    rygar,    0, ROT0,  "Tecmo", "Argus no Senshi (Japan)", GAME_NO_COCKTAIL )
+GAMEX( 1987, gemini,   0,        gemini,   gemini,   0, ROT90, "Tecmo", "Gemini Wing", GAME_NO_COCKTAIL )
+GAMEX( 1988, silkworm, 0,        silkworm, silkworm, 0, ROT0,  "Tecmo", "Silkworm (set 1)", GAME_NO_COCKTAIL )
+GAMEX( 1988, silkwrm2, silkworm, silkworm, silkworm, 0, ROT0,  "Tecmo", "Silkworm (set 2)", GAME_NO_COCKTAIL )

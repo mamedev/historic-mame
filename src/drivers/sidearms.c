@@ -5,6 +5,7 @@
 
   Driver provided by Paul Leaman
 
+TODO:
   There is an additional ROM which seems to contain code for a third Z80,
   however the board only has two. The ROM is related to the missing star
   background. At one point, the code jumps to A000, outside of the ROM
@@ -804,8 +805,8 @@ ROM_END
 
 
 
-GAME( 1986, sidearms, 0,        sidearms, sidearms, 0, ROT0,   "Capcom", "Side Arms - Hyper Dyne (World)" )
-GAME( 1988, sidearmr, sidearms, sidearms, sidearms, 0, ROT0,   "Capcom (Romstar license)", "Side Arms - Hyper Dyne (US)" )
-GAME( 1986, sidearjp, sidearms, sidearms, sidearms, 0, ROT0,   "Capcom", "Side Arms - Hyper Dyne (Japan)" )
-GAME( 1988, turtship, 0,        turtship, turtship, 0, ROT0,   "Philko", "Turtle Ship" )
-GAME( 1989, dyger,    0,        turtship, dyger,    0, ROT270, "Philko", "Dyger" )
+GAMEX( 1986, sidearms, 0,        sidearms, sidearms, 0, ROT0,   "Capcom", "Side Arms - Hyper Dyne (World)", GAME_NO_COCKTAIL )
+GAMEX( 1988, sidearmr, sidearms, sidearms, sidearms, 0, ROT0,   "Capcom (Romstar license)", "Side Arms - Hyper Dyne (US)", GAME_NO_COCKTAIL )
+GAMEX( 1986, sidearjp, sidearms, sidearms, sidearms, 0, ROT0,   "Capcom", "Side Arms - Hyper Dyne (Japan)", GAME_NO_COCKTAIL )
+GAMEX( 1988, turtship, 0,        turtship, turtship, 0, ROT0,   "Philko", "Turtle Ship", GAME_NO_COCKTAIL )
+GAMEX( 1989, dyger,    0,        turtship, dyger,    0, ROT270, "Philko", "Dyger", GAME_NO_COCKTAIL )

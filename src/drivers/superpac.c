@@ -562,7 +562,7 @@ ROM_END
 
 
 
-GAME( 1982, superpac, 0,        superpac, superpac, 0, ROT90, "Namco", "Super Pac-Man" )
-GAME( 1982, superpcm, superpac, superpac, superpac, 0, ROT90, "[Namco] (Bally Midway license)", "Super Pac-Man (Midway)" )
-GAME( 1983, pacnpal,  0,        pacnpal,  pacnpal,  0, ROT90, "Namco", "Pac & Pal" )
-GAME( 1983, pacnchmp, pacnpal,  pacnpal,  pacnpal,  0, ROT90, "Namco", "Pac-Man & Chomp Chomp" )
+GAMEX( 1982, superpac, 0,        superpac, superpac, 0, ROT90, "Namco", "Super Pac-Man", GAME_NO_COCKTAIL )
+GAMEX( 1982, superpcm, superpac, superpac, superpac, 0, ROT90, "[Namco] (Bally Midway license)", "Super Pac-Man (Midway)", GAME_NO_COCKTAIL )
+GAMEX( 1983, pacnpal,  0,        pacnpal,  pacnpal,  0, ROT90, "Namco", "Pac & Pal", GAME_NO_COCKTAIL )
+GAMEX( 1983, pacnchmp, pacnpal,  pacnpal,  pacnpal,  0, ROT90, "Namco", "Pac-Man & Chomp Chomp", GAME_NO_COCKTAIL )

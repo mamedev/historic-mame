@@ -1,6 +1,6 @@
 /*******************************************************************************
 
-Data East machine functions - Bryan McPhail, mish@tendril.force9.net
+Data East machine functions - Bryan McPhail, mish@tendril.co.uk
 
 * Control reads, protection chip emulations & cycle skipping patches
 
@@ -27,9 +27,6 @@ void dec0_pf3_control_1_w(int offset,int data);
 void dec0_pf3_control_0_w(int offset,int data);
 void dec0_pf3_data_w(int offset,int data);
 
-//dont need this??
-void dec0_priority_w(int offset,int data);
-
 /******************************************************************************/
 
 int dec0_controls_read(int offset)
@@ -46,10 +43,7 @@ int dec0_controls_read(int offset)
 			return (readinputport(3) + (readinputport(4) << 8));
 
 		case 8: /* Intel 8751 mc, Bad Dudes & Heavy Barrel only */
-
-	if (errorlog) fprintf(errorlog,"CPU #0 PC %06x: warning - read unmapped memory address %06x\n",cpu_get_pc(),0x30c000+offset);
-
-
+			//if (errorlog) fprintf(errorlog,"CPU #0 PC %06x: warning - read unmapped memory address %06x\n",cpu_get_pc(),0x30c000+offset);
 			return i8751_return;
 	}
 
@@ -301,7 +295,7 @@ void hippodrm_shared_w(int offset,int data)
 
 static int hippodrm_68000_share_r(int offset)
 {
-	if (offset==0) cpu_spin(); /* A wee helper */
+	if (offset==0) cpu_yield(); /* A wee helper */
 	return share[offset/2];
 }
 

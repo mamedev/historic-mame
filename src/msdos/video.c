@@ -1766,7 +1766,7 @@ int osd_allocate_colors(unsigned int totalcolors,const unsigned char *palette,un
 
 	dirtycolor = malloc(screen_colors * sizeof(int));
 	current_palette = malloc(3 * screen_colors * sizeof(unsigned char));
-	palette_16bit_lookup = malloc(screen_colors * sizeof(UINT32));
+	palette_16bit_lookup = malloc(screen_colors * sizeof(palette_16bit_lookup[0]));
 	if (dirtycolor == 0 || current_palette == 0 || palette_16bit_lookup == 0)
 		return 1;
 
@@ -2280,6 +2280,8 @@ void osd_update_video_and_audio(void)
 			}
 			if (dirtypalette)
 			{
+				if (use_dirty) init_dirty(1);	/* have to redraw the whole screen */
+
 				dirtypalette = 0;
 				for (i = 0;i < screen_colors;i++)
 				{

@@ -1,6 +1,6 @@
 /***************************************************************************
 
-   Funky Jet Video emulation - Bryan McPhail, mish@tendril.force9.net
+   Funky Jet Video emulation - Bryan McPhail, mish@tendril.co.uk
 
    Cut & paste from Super Burgertime for now! :)
 

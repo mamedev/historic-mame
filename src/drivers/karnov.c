@@ -7,7 +7,7 @@
   Chelnov (Japanese version)             (c) 1987 Data East Corporation
 
 
-  Emulation by Bryan McPhail, mish@tendril.force9.net
+  Emulation by Bryan McPhail, mish@tendril.co.uk
 
 
 NOTE!  Karnov USA & Karnov Japan sets have different gameplay!
@@ -942,8 +942,8 @@ static void init_chelnovj(void)
 
 /******************************************************************************/
 
-GAME( 1987, karnov,   0,       karnov,   karnov,  karnov,   ROT0,   "Data East USA", "Karnov (US)" )
-GAME( 1987, karnovj,  karnov,  karnov,   karnov,  karnov,   ROT0,   "Data East Corporation", "Karnov (Japan)" )
-GAMEX(1987, wndrplnt, 0,       wndrplnt, karnov,  wndrplnt, ROT270, "Data East Corporation", "Wonder Planet (Japan)", GAME_NOT_WORKING )
-GAME( 1988, chelnov,  0,       karnov,   chelnov, chelnov,  ROT0,   "Data East USA", "Chelnov - Atomic Runner (US)" )
-GAME( 1988, chelnovj, chelnov, karnov,   chelnov, chelnovj, ROT0,   "Data East Corporation", "Chelnov - Atomic Runner (Japan)" )
+GAMEX( 1987, karnov,   0,       karnov,   karnov,  karnov,   ROT0,   "Data East USA", "Karnov (US)", GAME_NO_COCKTAIL )
+GAMEX( 1987, karnovj,  karnov,  karnov,   karnov,  karnov,   ROT0,   "Data East Corporation", "Karnov (Japan)", GAME_NO_COCKTAIL )
+GAMEX( 1987, wndrplnt, 0,       wndrplnt, karnov,  wndrplnt, ROT270, "Data East Corporation", "Wonder Planet (Japan)", GAME_NOT_WORKING | GAME_NO_COCKTAIL )
+GAMEX( 1988, chelnov,  0,       karnov,   chelnov, chelnov,  ROT0,   "Data East USA", "Chelnov - Atomic Runner (US)", GAME_NO_COCKTAIL )
+GAMEX( 1988, chelnovj, chelnov, karnov,   chelnov, chelnovj, ROT0,   "Data East Corporation", "Chelnov - Atomic Runner (Japan)", GAME_NO_COCKTAIL )

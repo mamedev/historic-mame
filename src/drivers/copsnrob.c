@@ -281,4 +281,4 @@ ROM_START( copsnrob )
 ROM_END
 
 
-GAME( 1976, copsnrob, 0, copsnrob, copsnrob, 0, ROT0, "Atari", "Cops'n Robbers" )
+GAMEX( 1976, copsnrob, 0, copsnrob, copsnrob, 0, ROT0, "Atari", "Cops'n Robbers", GAME_NO_SOUND )

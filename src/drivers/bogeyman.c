@@ -4,9 +4,9 @@
 
 	This game runs on Data East designed hardware.
 
-	Todo:  Colour, input ports, cocktail mode
+	Todo:  Cocktail mode
 
-	Emulation by Bryan McPhail, mish@tendril.force9.net
+	Emulation by Bryan McPhail, mish@tendril.co.uk and T.Nogi
 
 ***************************************************************************/
 
@@ -166,7 +166,7 @@ static struct GfxLayout charlayout1 =
 	8,8,	/* 8*8 chars */
 	512,
 	3,
-	{ 0x8000*8+4, 0, 4 },				// Modified by T.Nogi 1999/11/07
+	{ 0x8000*8+4, 0, 4 },
 	{ 0x2000*8+3, 0x2000*8+2, 0x2000*8+1, 0x2000*8+0, 3, 2, 1, 0, },
 	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
 	8*8	/* every char takes 16 consecutive bytes */
@@ -177,7 +177,7 @@ static struct GfxLayout charlayout2 =
 	8,8,	/* 8*8 chars */
 	512,
 	3,
-	{ 0x8000*8, 0+0x1000*8, 4+0x1000*8, 0 },	// Modified by T.Nogi 1999/11/07
+	{ 0x8000*8, 0+0x1000*8, 4+0x1000*8, 0 },
 	{ 0x2000*8+3, 0x2000*8+2, 0x2000*8+1, 0x2000*8+0, 3, 2, 1, 0, },
 	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
 	8*8	/* every char takes 16 consecutive bytes */
@@ -201,7 +201,7 @@ static struct GfxLayout tiles1b =
 	16,16,
 	0x80,
 	3,
-	{ 0x8000*8+0, 0+0x1000*8+0, 4+0x1000*8 },	// Modified by T.Nogi 1999/11/07
+	{ 0x8000*8+0, 0+0x1000*8+0, 4+0x1000*8 },
 	{ 1024*8*8+3, 1024*8*8+2, 1024*8*8+1, 1024*8*8+0, 3,2,1,0,
 		1024*8*8+3+64, 1024*8*8+2+64, 1024*8*8+1+64, 1024*8*8+0+64, 3+64,2+64,1+64,0+64 },
 	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8,
@@ -320,4 +320,4 @@ ROM_END
 
 /******************************************************************************/
 
-GAMEX( 1985?, bogeyman, 0, bogeyman, bogeyman, 0, ROT0, "Technos Japan", "Bogey Manor", GAME_IMPERFECT_COLORS )
+GAMEX( 1985?, bogeyman, 0, bogeyman, bogeyman, 0, ROT0, "Technos Japan", "Bogey Manor", GAME_IMPERFECT_COLORS | GAME_NO_COCKTAIL )

@@ -1079,8 +1079,8 @@ ROM_START( fantasyj )
 	ROM_LOAD( "fs11ic51.bin",    0x1000, 0x1000, 0x9dfff71c )
 
 	ROM_REGION( 0x0040, REGION_PROMS )
-	ROM_LOAD( "fantasy.ic7",     0x0000, 0x0020, 0x361a5e99 ) /* foreground colors */
-	ROM_LOAD( "fantasy.ic6",     0x0020, 0x0020, 0x33d974f7 ) /* background colors */
+	ROM_LOAD( "prom-8.bpr",      0x0000, 0x0020, 0x1aa9285a ) /* foreground colors */
+	ROM_LOAD( "prom-7.bpr",      0x0020, 0x0020, 0x7a6f7dc3 ) /* background colors */
 
 	ROM_REGION( 0x1800, REGION_SOUND1 )	/* sound ROMs */
 	ROM_LOAD( "fs_b_51.bin",     0x0000, 0x0800, 0x48094ec5 )

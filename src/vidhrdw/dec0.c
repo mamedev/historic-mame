@@ -1,6 +1,6 @@
 /***************************************************************************
 
-  Dec0 Video emulation - Bryan McPhail, mish@tendril.force9.net
+  Dec0 Video emulation - Bryan McPhail, mish@tendril.co.uk
 
 *********************************************************************
 

@@ -504,7 +504,7 @@ ROM_END
 
 
 
-GAME( 1984, pacland,  0,       pacland, pacland, 0, ROT0, "Namco", "Pac-Land (set 1)" )
-GAME( 1984, pacland2, pacland, pacland, pacland, 0, ROT0, "Namco", "Pac-Land (set 2)" )
-GAME( 1984, pacland3, pacland, pacland, pacland, 0, ROT0, "Namco", "Pac-Land (set 3)" )
-GAME( 1984, paclandm, pacland, pacland, pacland, 0, ROT0, "[Namco] (Bally Midway license)", "Pac-Land (Midway)" )
+GAMEX( 1984, pacland,  0,       pacland, pacland, 0, ROT0, "Namco", "Pac-Land (set 1)", GAME_NO_COCKTAIL )
+GAMEX( 1984, pacland2, pacland, pacland, pacland, 0, ROT0, "Namco", "Pac-Land (set 2)", GAME_NO_COCKTAIL )
+GAMEX( 1984, pacland3, pacland, pacland, pacland, 0, ROT0, "Namco", "Pac-Land (set 3)", GAME_NO_COCKTAIL )
+GAMEX( 1984, paclandm, pacland, pacland, pacland, 0, ROT0, "[Namco] (Bally Midway license)", "Pac-Land (Midway)", GAME_NO_COCKTAIL )

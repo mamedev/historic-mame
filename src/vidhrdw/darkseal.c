@@ -1,6 +1,6 @@
 /***************************************************************************
 
-   Dark Seal Video emulation - Bryan McPhail, mish@tendril.force9.net
+   Dark Seal Video emulation - Bryan McPhail, mish@tendril.co.uk
 
 ****************************************************************************
 

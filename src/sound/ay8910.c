@@ -580,6 +580,16 @@ void AY8910_set_clock(int chip,int clock)
 }
 
 
+void AY8910_set_volume(int chip,int channel,int volume)
+{
+	struct AY8910 *PSG = &AYPSG[chip];
+	int ch;
+
+	for (ch = 0; ch < 3; ch++)
+		if (channel == ch || channel == ALL_8910_CHANNELS)
+			mixer_set_volume(PSG->Channel + ch, volume);
+}
+
 
 static void build_mixer_table(int chip)
 {

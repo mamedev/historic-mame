@@ -706,6 +706,6 @@ static void init_decode_turbo(void)
  * Game drivers
  *********************************************************************/
 
-GAME( 1981, turbo,  0,     turbo, turbo, turbo,        ROT270, "Sega", "Turbo" )
-GAME( 1981, turboa, turbo, turbo, turbo, decode_turbo, ROT270, "Sega", "Turbo (encrypted set 1)" )
-GAME( 1981, turbob, turbo, turbo, turbo, decode_turbo, ROT270, "Sega", "Turbo (encrypted set 2)" )
+GAMEX( 1981, turbo,  0,     turbo, turbo, turbo,        ROT270, "Sega", "Turbo", GAME_NO_COCKTAIL )
+GAMEX( 1981, turboa, turbo, turbo, turbo, decode_turbo, ROT270, "Sega", "Turbo (encrypted set 1)", GAME_NO_COCKTAIL )
+GAMEX( 1981, turbob, turbo, turbo, turbo, decode_turbo, ROT270, "Sega", "Turbo (encrypted set 2)", GAME_NO_COCKTAIL )

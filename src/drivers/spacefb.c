@@ -526,8 +526,8 @@ ROM_START( spacedem )
 ROM_END
 
 
-GAMEX( 1980, spacefb,  0,       spacefb, spacefb,  0, ROT90, "Nintendo", "Space Firebird (Nintendo)", GAME_IMPERFECT_COLORS )
-GAMEX( 1980, spacefbg, spacefb, spacefb, spacefb,  0, ROT90, "Gremlin", "Space Firebird (Gremlin)", GAME_IMPERFECT_COLORS )
-GAMEX( 1980, spacebrd, spacefb, spacefb, spacefb,  0, ROT90, "bootleg", "Space Bird (bootleg)", GAME_IMPERFECT_COLORS )
-GAMEX( 1980, spacefbb, spacefb, spacefb, spacefb,  0, ROT90, "bootleg", "Space Firebird (bootleg)", GAME_IMPERFECT_COLORS )
-GAMEX( 1980, spacedem, spacefb, spacefb, spacedem, 0, ROT90, "Nintendo / Fortrek", "Space Demon", GAME_IMPERFECT_COLORS )
+GAMEX( 1980, spacefb,  0,       spacefb, spacefb,  0, ROT90, "Nintendo", "Space Firebird (Nintendo)", GAME_IMPERFECT_COLORS | GAME_IMPERFECT_SOUND )
+GAMEX( 1980, spacefbg, spacefb, spacefb, spacefb,  0, ROT90, "Gremlin", "Space Firebird (Gremlin)", GAME_IMPERFECT_COLORS | GAME_IMPERFECT_SOUND )
+GAMEX( 1980, spacebrd, spacefb, spacefb, spacefb,  0, ROT90, "bootleg", "Space Bird (bootleg)", GAME_IMPERFECT_COLORS | GAME_IMPERFECT_SOUND )
+GAMEX( 1980, spacefbb, spacefb, spacefb, spacefb,  0, ROT90, "bootleg", "Space Firebird (bootleg)", GAME_IMPERFECT_COLORS | GAME_IMPERFECT_SOUND )
+GAMEX( 1980, spacedem, spacefb, spacefb, spacedem, 0, ROT90, "Nintendo / Fortrek", "Space Demon", GAME_IMPERFECT_COLORS | GAME_IMPERFECT_SOUND )

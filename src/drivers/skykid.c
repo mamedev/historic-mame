@@ -606,5 +606,5 @@ ROM_END
 
 
 
-GAME( 1985, skykid,   0, skykid,   skykid,   0, ROT0, "Namco", "Sky Kid" )
-GAME( 1984, drgnbstr, 0, drgnbstr, drgnbstr, 0, ROT0, "Namco", "Dragon Buster" )
+GAMEX( 1985, skykid,   0, skykid,   skykid,   0, ROT0, "Namco", "Sky Kid", GAME_NO_COCKTAIL )
+GAMEX( 1984, drgnbstr, 0, drgnbstr, drgnbstr, 0, ROT0, "Namco", "Dragon Buster", GAME_NO_COCKTAIL )

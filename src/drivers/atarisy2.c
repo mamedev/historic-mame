@@ -2003,5 +2003,5 @@ GAME( 1986, 720,      0,   a720,     720,      a720,     ROT0,   "Atari Games", 
 GAME( 1986, 720b,     720, a720,     720,      a720,     ROT0,   "Atari Games", "720 Degrees (set 2)" )
 GAME( 1986, ssprint,  0,   sprint,   ssprint,  ssprint,  ROT0,   "Atari Games", "Super Sprint" )
 GAME( 1986, csprint,  0,   sprint,   csprint,  csprint,  ROT0,   "Atari Games", "Championship Sprint" )
-GAME( 1987, apb,      0,   paperboy, apb,      apb,      ROT270, "Atari Games", "APB (set 1)" )
-GAME( 1987, apb2,     apb, paperboy, apb,      apb,      ROT270, "Atari Games", "APB (set 2)" )
+GAME( 1987, apb,      0,   paperboy, apb,      apb,      ROT270, "Atari Games", "APB - All Points Bulletin (set 1)" )
+GAME( 1987, apb2,     apb, paperboy, apb,      apb,      ROT270, "Atari Games", "APB - All Points Bulletin (set 2)" )

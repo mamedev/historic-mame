@@ -1418,6 +1418,30 @@ ROM_START( cosmica )
 	ROM_LOAD( "ca.sub",       0x0000, 0x0400, 0xacbd4e98 )
 ROM_END
 
+ROM_START( cosmica2 )
+	ROM_REGION( 0x10000, REGION_CPU1 )	/* 64k for code */
+	ROM_LOAD( "ca.e3",        0x0000, 0x0800, 0x535ee0c5 )
+	ROM_LOAD( "c3.bin",       0x0800, 0x0400, 0x699c849e )
+	ROM_LOAD( "d4.bin",       0x0c00, 0x0400, 0x168e38da )
+	ROM_LOAD( "ca.e5",        0x1000, 0x0800, 0x6a111e5e )
+	ROM_LOAD( "ca.e6",        0x1800, 0x0800, 0xc9b5ca2a )
+	ROM_LOAD( "i9.bin",       0x2000, 0x0400, 0x3bb57720 )
+	ROM_LOAD( "j0.bin",       0x2400, 0x0400, 0x4ff70f45 )
+
+	ROM_REGION( 0x1000, REGION_GFX1 | REGIONFLAG_DISPOSE )	/* sprites */
+	ROM_LOAD( "ca.n1",        0x0000, 0x0800, 0x431e866c )
+	ROM_LOAD( "ca.n2",        0x0800, 0x0800, 0xaa6c6079 )
+
+	ROM_REGION( 0x0020, REGION_PROMS )
+	ROM_LOAD( "ca.d9",        0x0000, 0x0020, 0xdfb60f19 )
+
+	ROM_REGION( 0x0400, REGION_USER1 ) /* color map */
+	ROM_LOAD( "ca.e2",        0x0000, 0x0400, 0xea4ee931 )
+
+	ROM_REGION( 0x0400, REGION_USER2 ) /* starfield generator */
+	ROM_LOAD( "ca.sub",       0x0000, 0x0400, 0xacbd4e98 )
+ROM_END
+
 ROM_START( cosmicg )
 	ROM_REGION( 0x10000, REGION_CPU1 )  /* 8k for code */
 	COSMICG_ROM_LOAD( "cosmicg1.bin",  0x0000, 0x0400, 0xe1b9f894 )
@@ -1524,11 +1548,12 @@ ROM_END
 
 
 GAME( 1979, cosmicg,  0,       cosmicg,  cosmicg,  cosmicg, ROT270, "Universal", "Cosmic Guerilla" )
-GAME( 1980, cosmica,  0,       cosmica,  cosmica,  0,       ROT270, "Universal", "Cosmic Alien" )
+GAMEX(1979, cosmica,  0,       cosmica,  cosmica,  0,       ROT270, "Universal", "Cosmic Alien", GAME_NO_SOUND )
+GAMEX(1979, cosmica2, cosmica, cosmica,  cosmica,  0,       ROT270, "Universal", "Cosmic Alien (older)", GAME_NO_SOUND )
 GAME( 1980, panic,    0,       panic,    panic,    0,       ROT270, "Universal", "Space Panic (set 1)" )
 GAME( 1980, panica,   panic,   panic,    panic,    0,       ROT270, "Universal", "Space Panic (set 2)" )
 GAME( 1980, panicger, panic,   panic,    panic,    0,       ROT270, "Universal (ADP Automaten license)", "Space Panic (German)" )
-GAME( 1980, magspot2, 0,       magspot2, magspot2, 0,       ROT270, "Universal", "Magical Spot II" )
-GAME( 1980, devzone,  0,       magspot2, devzone,  0,       ROT270, "Universal", "Devil Zone" )
-GAMEX(1980?,nomnlnd,  0,       nomnlnd,  nomnlnd,  0,       ROT270, "Universal", "No Man's Land", GAME_WRONG_COLORS )
-GAMEX(1980?,nomnlndg, nomnlnd, nomnlnd,  nomnlnd,  0,       ROT270, "Universal (Gottlieb license)", "No Man's Land (Gottlieb)", GAME_WRONG_COLORS )
+GAMEX(1980, magspot2, 0,       magspot2, magspot2, 0,       ROT270, "Universal", "Magical Spot II", GAME_IMPERFECT_SOUND )
+GAMEX(1980, devzone,  0,       magspot2, devzone,  0,       ROT270, "Universal", "Devil Zone", GAME_IMPERFECT_SOUND )
+GAMEX(1980?,nomnlnd,  0,       nomnlnd,  nomnlnd,  0,       ROT270, "Universal", "No Man's Land", GAME_WRONG_COLORS | GAME_IMPERFECT_SOUND )
+GAMEX(1980?,nomnlndg, nomnlnd, nomnlnd,  nomnlnd,  0,       ROT270, "Universal (Gottlieb license)", "No Man's Land (Gottlieb)", GAME_WRONG_COLORS | GAME_IMPERFECT_SOUND )

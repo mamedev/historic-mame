@@ -496,5 +496,5 @@ ROM_END
 
 
 
-GAME( 1984, tp84,  0,    tp84, tp84, 0, ROT90, "Konami", "Time Pilot '84 (set 1)" )
-GAME( 1984, tp84a, tp84, tp84, tp84, 0, ROT90, "Konami", "Time Pilot '84 (set 2)" )
+GAMEX( 1984, tp84,  0,    tp84, tp84, 0, ROT90, "Konami", "Time Pilot '84 (set 1)", GAME_NO_COCKTAIL )
+GAMEX( 1984, tp84a, tp84, tp84, tp84, 0, ROT90, "Konami", "Time Pilot '84 (set 2)", GAME_NO_COCKTAIL )

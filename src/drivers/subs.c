@@ -242,4 +242,4 @@ static void init_subs(void)
 }
 
 
-GAME( 1977, subs, 0, subs, subs, subs, ROT0, "Atari", "Subs" )
+GAMEX( 1977, subs, 0, subs, subs, subs, ROT0, "Atari", "Subs", GAME_NO_SOUND )

@@ -3,22 +3,23 @@
   Capcom System ZN1/ZN2
   =====================
 
-    Playstation Hardware with Q sound.
+  Playstation Hardware with Q sound.
 
-    Driver by smf. Currently only qsound is emulated, based on the cps1/cps2 driver.
+  Driver by smf. Currently only qsound is emulated.
 
 Notes:
 
-   This works differently to the cps1/cps2 qsound. Instead of shared memory it uses an i/o
-   port. To tell the z80 to read from this port you need to trigger an nmi. It seems you have
-   to trigger two nmi's for the music to start playing. Although there are two reads to the i/o
-   port it doesn't seem to make a difference what you pass as the second value ( at the
-   moment both reads will return the same value ). The i/o port used for zn1 is always
-   0xf100 and everything seems to work fine. On zn2 it changes bits 8-12 of the i/o port
-   every time you stop triggering nmi's long enough for it to start playing. If you trigger more
-   or less nmi's it starts reading & writing to memory addresses that aren't currently
-   mapped. These are probably symptoms of it not working properly as tgmj only ever
-   plays one sample and sfex2/sfex2p seems to have music missing.
+  This driver is based on information from the cps1/cps2 qsound driver,
+  Miguel Angel Horna & Amuse. It works differently to the cps1/cps2 qsound,
+  instead of shared memory two bytes are transferred using an i/o port.
+  The 1/240th of a second timer either creates an nmi to tell the z80 there
+  is data waiting or otherwise an irq.
+
+  The I/O port used on zn1 always appears to be 0xf100. The zn2 games always
+  set the bottom eight bits to zero, but the top eight bits are cycled
+  0x00 - 0x1f for each access. This is probably to help synchronise the
+  command queue. This is not currently emulated as it only uses 8 bit i/o port
+  addressing.
 
 ***************************************************************************/
 
@@ -28,25 +29,18 @@ Notes:
 
 static int qcode;
 static int qcode_last;
+static int queue_data;
+static int queue_len;
 
-static void zn_qsound_w( int offset, int data )
+void qsound_queue_w( int offset, int data )
 {
-    soundlatch_w( offset, data & 0xff );
-    cpu_cause_interrupt( 1, Z80_NMI_INT );
-    cpu_cause_interrupt( 1, Z80_NMI_INT );
-}
-
-static void zn_init_machine( void )
-{
-    /* stop CPU1 as it's not really a z80. */
-    timer_suspendcpu( 0, 1, SUSPEND_REASON_DISABLE );
-    qcode = 0;
-    qcode_last = -1;
+    queue_data = data;
+    queue_len = 2;
 }
 
 static int zn_vh_start( void )
 {
-     return 0;
+    return 0;
 }
 
 static void zn_vh_stop( void )
@@ -57,31 +51,38 @@ static void zn_vh_screenrefresh( struct osd_bitmap *bitmap, int full_refresh )
 {
     int refresh = full_refresh;
 
-    if( keyboard_pressed_memory( KEYCODE_UP ) )
+    if( queue_len == 0 )
     {
-        qcode++;
-    }
-
-    if( keyboard_pressed_memory( KEYCODE_DOWN ) )
-    {
-        qcode--;
-    }
-
-    qcode &= 0xff;
-    if( qcode != qcode_last )
-    {
-        zn_qsound_w( 0, qcode );
-
-        qcode_last = qcode;
-        refresh = 1;
+        if( keyboard_pressed_memory( KEYCODE_UP ) )
+        {
+            qcode=( qcode & 0xff00 ) | ( ( qcode + 0x0001 ) & 0xff );
+        }
+        if( keyboard_pressed_memory( KEYCODE_DOWN ) )
+        {
+            qcode=( qcode & 0xff00 ) | ( ( qcode - 0x0001 ) & 0xff );
+        }
+        if( keyboard_pressed_memory( KEYCODE_RIGHT ) )
+        {
+            qcode=( ( qcode + 0x0100 ) & 0xff00 ) | ( qcode & 0xff );
+        }
+        if( keyboard_pressed_memory( KEYCODE_LEFT ) )
+        {
+            qcode=( ( qcode - 0x0100 ) & 0xff00 ) | ( qcode & 0xff );
+        }
+        if( qcode != qcode_last )
+        {
+            qsound_queue_w( 0, qcode );
+            qcode_last = qcode;
+            refresh = 1;
+        }
     }
 
     if( refresh )
     {
         struct DisplayText dt[ 3 ];
-        char *instructions = "UP/DN=QCODE";
+        char *instructions = "SELECT WITH RIGHT&LEFT/UP&DN";
         char text1[ 256 ];
-        sprintf( text1, "QSOUND CODE=%02x",  qcode );
+        sprintf( text1, "QSOUND CODE=%02x/%02x", qcode >> 8, qcode & 0xff );
         dt[ 0 ].text = text1;
         dt[ 0 ].color = DT_COLOR_RED;
         dt[ 0 ].x = ( Machine->uiwidth - Machine->uifontwidth * strlen( text1 ) ) / 2;
@@ -105,22 +106,8 @@ static struct QSound_interface qsound_interface =
 
 static void qsound_banksw_w( int offset, int data )
 {
-    /*
-    Z80 bank register for music note data. It's odd that it isn't encrypted
-    though.
-    */
     unsigned char *RAM = memory_region( REGION_CPU2 );
-    int bankaddress = 0x10000 + ( ( data & 0x0f ) * 0x4000 );
-    if( bankaddress + 0x4000 > memory_region_length( REGION_CPU2 ) )
-    {
-        /* how would this really wrap ? */
-        if( errorlog )
-        {
-                fprintf( errorlog, "WARNING: Q sound bank overflow (%02x)\n", data );
-        }
-        bankaddress = 0x10000;
-    }
-    cpu_setbank( 1, &RAM[ bankaddress ] );
+    cpu_setbank( 1, &RAM[ 0x10000 + ( ( data & 0x0f ) * 0x4000 ) ] );
 }
 
 static struct MemoryReadAddress qsound_readmem[] =
@@ -165,6 +152,34 @@ static struct MemoryWriteAddress zn_writemem[] =
     { -1 }  /* end of table */
 };
 
+int zn_interrupt( void )
+{
+    if( queue_len == 2 )
+    {
+        soundlatch_w( 0, queue_data >> 8 );
+        queue_len--;
+        return nmi_interrupt();
+    }
+    else if( queue_len == 1 )
+    {
+        soundlatch_w( 0, queue_data & 0xff );
+        queue_len--;
+        return nmi_interrupt();
+    }
+    return interrupt();
+}
+
+static void zn_init_machine( void )
+{
+    /* stop CPU1 as it's not really a z80. */
+    timer_suspendcpu( 0, 1, SUSPEND_REASON_DISABLE );
+
+    qcode = 0x0400;
+    qcode_last = -1;
+    queue_len = 0;
+    qsound_banksw_w( 0, 0 );
+}
+
 static struct MachineDriver machine_driver_zn =
 {
     /* basic machine hardware */
@@ -179,7 +194,7 @@ static struct MachineDriver machine_driver_zn =
             CPU_Z80 | CPU_AUDIO_CPU,
             8000000,  /* 8mhz ?? */
             qsound_readmem, qsound_writemem, qsound_readport, 0,
-            interrupt, 4 /* 4 interrupts per frame ?? */
+            zn_interrupt, 4 /* 4 interrupts per frame ?? */
         }
     },
     60, 0,
@@ -252,7 +267,6 @@ INPUT_PORTS_START( zn )
 INPUT_PORTS_END
 
 #define CODE_SIZE ( 0x3080000 )
-#define QSOUND_SIZE ( 0x50000 )
 
 ROM_START( rvschool )
     ROM_REGION( CODE_SIZE, REGION_CPU1 )      /* MIPS R3000 */
@@ -267,7 +281,7 @@ ROM_START( rvschool )
     ROM_LOAD( "jst-12m", 0x1c80000, 0x400000, 0x43bd2ddd )
     ROM_LOAD( "jst-13m", 0x2080000, 0x400000, 0x6b443235 )
 
-    ROM_REGION( 0x48000, REGION_CPU2 ) /* 64k for the audio CPU (+banks) */
+    ROM_REGION( 0x50000, REGION_CPU2 ) /* 64k for the audio CPU (+banks) */
     ROM_LOAD( "jst-02",  0x00000, 0x08000, 0x7809e2c3 )
     ROM_CONTINUE(        0x10000, 0x18000 )
     ROM_LOAD( "jst-03",  0x28000, 0x20000, 0x860ff24d )
@@ -289,7 +303,7 @@ ROM_START( jgakuen )
     ROM_LOAD( "jst-12m", 0x1c80000, 0x400000, 0x43bd2ddd )
     ROM_LOAD( "jst-13m", 0x2080000, 0x400000, 0x6b443235 )
 
-    ROM_REGION( 0x48000, REGION_CPU2 ) /* 64k for the audio CPU (+banks) */
+    ROM_REGION( 0x50000, REGION_CPU2 ) /* 64k for the audio CPU (+banks) */
     ROM_LOAD( "jst-02",  0x00000, 0x08000, 0x7809e2c3 )
     ROM_CONTINUE(        0x10000, 0x18000 )
     ROM_LOAD( "jst-03",  0x28000, 0x20000, 0x860ff24d )
@@ -308,7 +322,7 @@ ROM_START( sfex )
     ROM_LOAD( "sfe-09m", 0x1080000, 0x400000, 0x62c424cc )
     ROM_LOAD( "sfe-10m", 0x1480000, 0x400000, 0x83791a8b )
 
-    ROM_REGION( 0x48000, REGION_CPU2 ) /* 64k for the audio CPU (+banks) */
+    ROM_REGION( 0x50000, REGION_CPU2 ) /* 64k for the audio CPU (+banks) */
     ROM_LOAD( "sfe-02",  0x00000, 0x08000, 0x1908475c )
     ROM_CONTINUE(        0x10000, 0x18000 )
     ROM_LOAD( "sfe-03",  0x28000, 0x20000, 0x95c1e2e0 )
@@ -327,7 +341,7 @@ ROM_START( sfexj )
     ROM_LOAD( "sfe-09m", 0x1080000, 0x400000, 0x62c424cc )
     ROM_LOAD( "sfe-10m", 0x1480000, 0x400000, 0x83791a8b )
 
-    ROM_REGION( 0x48000, REGION_CPU2 ) /* 64k for the audio CPU (+banks) */
+    ROM_REGION( 0x50000, REGION_CPU2 ) /* 64k for the audio CPU (+banks) */
     ROM_LOAD( "sfe-02",  0x00000, 0x08000, 0x1908475c )
     ROM_CONTINUE(        0x10000, 0x18000 )
     ROM_LOAD( "sfe-03",  0x28000, 0x20000, 0x95c1e2e0 )
@@ -346,7 +360,7 @@ ROM_START( sfexp )
     ROM_LOAD( "sfp-09",  0x1080000, 0x400000, 0x15f8b71e )
     ROM_LOAD( "sfp-10",  0x1480000, 0x400000, 0xc1ecf652 )
 
-    ROM_REGION( 0x48000, REGION_CPU2 ) /* 64k for the audio CPU (+banks) */
+    ROM_REGION( 0x50000, REGION_CPU2 ) /* 64k for the audio CPU (+banks) */
     ROM_LOAD( "sfe-02",  0x00000, 0x08000, 0x1908475c )
     ROM_CONTINUE(        0x10000, 0x18000 )
     ROM_LOAD( "sfe-03",  0x28000, 0x20000, 0x95c1e2e0 )
@@ -365,7 +379,7 @@ ROM_START( sfexpj )
     ROM_LOAD( "sfp-09",  0x1080000, 0x400000, 0x15f8b71e )
     ROM_LOAD( "sfp-10",  0x1480000, 0x400000, 0xc1ecf652 )
 
-    ROM_REGION( 0x48000, REGION_CPU2 ) /* 64k for the audio CPU (+banks) */
+    ROM_REGION( 0x50000, REGION_CPU2 ) /* 64k for the audio CPU (+banks) */
     ROM_LOAD( "sfe-02",  0x00000, 0x08000, 0x1908475c )
     ROM_CONTINUE(        0x10000, 0x18000 )
     ROM_LOAD( "sfe-03",  0x28000, 0x20000, 0x95c1e2e0 )
@@ -383,7 +397,7 @@ ROM_START( sfex2 )
     ROM_LOAD( "ex2-08m", 0x1880000, 0x800000, 0x3194132e )
     ROM_LOAD( "ex2-09m", 0x2080000, 0x400000, 0x075ae585 )
 
-    ROM_REGION( 0x28000, REGION_CPU2 ) /* 64k for the audio CPU (+banks) */
+    ROM_REGION( 0x50000, REGION_CPU2 ) /* 64k for the audio CPU (+banks) */
     ROM_LOAD( "ex2-02",  0x00000, 0x08000, 0x9489875e )
     ROM_CONTINUE(        0x10000, 0x18000 )
 
@@ -401,7 +415,7 @@ ROM_START( sfex2p )
     ROM_LOAD( "sf2p-09", 0x2080000, 0x800000, 0x344aa227 )
     ROM_LOAD( "sf2p-10", 0x2880000, 0x800000, 0x2eef5931 )
 
-    ROM_REGION( 0x48000, REGION_CPU2 ) /* 64k for the audio CPU (+banks) */
+    ROM_REGION( 0x50000, REGION_CPU2 ) /* 64k for the audio CPU (+banks) */
     ROM_LOAD( "sf2p-02", 0x00000, 0x08000, 0x3705de5e )
     ROM_CONTINUE(        0x10000, 0x18000 )
     ROM_LOAD( "sf2p-03", 0x28000, 0x20000, 0x6ae828f6 )
@@ -416,7 +430,7 @@ ROM_START( tgmj )
     ROM_LOAD( "ate-05",  0x0080000, 0x400000, 0x50977f5a )
     ROM_LOAD( "ate-06",  0x0480000, 0x400000, 0x05973f16 )
 
-    ROM_REGION( 0x28000, REGION_CPU2 ) /* 64k for the audio CPU (+banks) */
+    ROM_REGION( 0x50000, REGION_CPU2 ) /* 64k for the audio CPU (+banks) */
     ROM_LOAD( "ate-02",  0x00000, 0x08000, 0xf4f6e82f )
     ROM_CONTINUE(        0x10000, 0x18000 )
 
@@ -432,14 +446,13 @@ ROM_START( ts2j )
     ROM_LOAD( "ts2-08m", 0x0880000, 0x400000, 0xb1f7f115 )
     ROM_LOAD( "ts2-10",  0x0C80000, 0x200000, 0xad90679a )
 
-    ROM_REGION( 0x28000, REGION_CPU2 ) /* 64k for the audio CPU (+banks) */
+    ROM_REGION( 0x50000, REGION_CPU2 ) /* 64k for the audio CPU (+banks) */
     ROM_LOAD( "ts2-02",  0x00000, 0x08000, 0x2f45c461 )
     ROM_CONTINUE(        0x10000, 0x18000 )
 
     ROM_REGION( 0x400000, REGION_SOUND1 ) /* Q Sound Samples */
     ROM_LOAD( "ts2-01",  0x0000000, 0x400000, 0xd7a505e0 )
 ROM_END
-
 
 
 GAME( 1995, ts2j,     0,        zn, zn, 0, ROT0, "Capcom/Takara", "Battle Arena Toshinden 2 (JAPAN 951124)" )
@@ -450,5 +463,5 @@ GAME( 1997, sfexpj,   sfexp,    zn, zn, 0, ROT0, "Capcom/Arika", "Street Fighter
 GAME( 1997, rvschool, 0,        zn, zn, 0, ROT0, "Capcom", "Rival Schools (ASIA 971117)" )
 GAME( 1997, jgakuen,  rvschool, zn, zn, 0, ROT0, "Capcom", "Justice Gakuen (JAPAN 971117)" )
 GAME( 1998, sfex2,    0,        zn, zn, 0, ROT0, "Capcom/Arika", "Street Fighter EX 2 (JAPAN 980312)" )
-GAME( 1999, sfex2p,   sfex2,    zn, zn, 0, ROT0, "Capcom/Arika", "Street Fighter EX 2 Plus (JAPAN 990611)" )
 GAME( 1998, tgmj,     0,        zn, zn, 0, ROT0, "Capcom/Akira", "Tetris The Grand Master (JAPAN 980710)" )
+GAME( 1999, sfex2p,   sfex2,    zn, zn, 0, ROT0, "Capcom/Arika", "Street Fighter EX 2 Plus (JAPAN 990611)" )

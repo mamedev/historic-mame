@@ -123,7 +123,7 @@ void naughtyb_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 void pleiads_sound_control_a_w(int offset, int data);
 void pleiads_sound_control_b_w(int offset, int data);
 int pleiads_sh_start(const struct MachineSound *msound);
-
+void pleiads_sh_stop(void);
 void pleiads_sh_update(void);
 
 static struct MemoryReadAddress readmem[] =
@@ -248,8 +248,18 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 static struct CustomSound_interface custom_interface =
 {
 	pleiads_sh_start,
-	0,
+	pleiads_sh_stop,
 	pleiads_sh_update
+};
+
+static struct TMS36XXinterface tms3617_interface =
+{
+	2,
+	{ 50,		50		},	/* mixing levels */
+	{ TMS3617,	TMS3617 },	/* TMS36xx subtypes */	/* WRONG it's a single 3615 */
+	{ 247,		247 	},	/* base clocks (one octave below A) */
+	/* and decay times of the six harmonic voices */
+	{ {0.5,0.5,0.5,0.5,0.5,0.5 }, {0.5,0.5,0.5,0.5,0.5,0.5} }
 };
 
 
@@ -288,8 +298,12 @@ static struct MachineDriver machine_driver_naughtyb =
 		{
 			SOUND_CUSTOM,
 			&custom_interface
-		}
-	}
+		},
+		{
+			SOUND_TMS36XX,
+			&tms3617_interface
+        }
+    }
 };
 
 /* Exactly the same but for the writemem handler */
@@ -327,6 +341,10 @@ static struct MachineDriver machine_driver_popflame =
 		{
 			SOUND_CUSTOM,
 			&custom_interface
+		},
+		{
+			SOUND_TMS36XX,
+			&tms3617_interface
 		}
 	}
 };
@@ -465,8 +483,8 @@ ROM_END
 
 
 
-GAME( 1982, naughtyb, 0,        naughtyb, naughtyb, 0, ROT90, "Jaleco", "Naughty Boy" )
-GAME( 1982, naughtya, naughtyb, naughtyb, naughtyb, 0, ROT90, "bootleg", "Naughty Boy (bootleg)" )
-GAME( 1982, naughtyc, naughtyb, naughtyb, naughtyb, 0, ROT90, "Jaleco (Cinematronics license)", "Naughty Boy (Cinematronics)" )
-GAME( 1982, popflame, 0,        popflame, naughtyb, 0, ROT90, "Jaleco", "Pop Flamer (set 1)" )
-GAME( 1982, popflama, popflame, popflame, naughtyb, 0, ROT90, "Jaleco", "Pop Flamer (set 2)" )
+GAMEX( 1982, naughtyb, 0,        naughtyb, naughtyb, 0, ROT90, "Jaleco", "Naughty Boy", GAME_NO_COCKTAIL )
+GAMEX( 1982, naughtya, naughtyb, naughtyb, naughtyb, 0, ROT90, "bootleg", "Naughty Boy (bootleg)", GAME_NO_COCKTAIL )
+GAMEX( 1982, naughtyc, naughtyb, naughtyb, naughtyb, 0, ROT90, "Jaleco (Cinematronics license)", "Naughty Boy (Cinematronics)", GAME_NO_COCKTAIL )
+GAMEX( 1982, popflame, 0,        popflame, naughtyb, 0, ROT90, "Jaleco", "Pop Flamer (set 1)", GAME_NO_COCKTAIL )
+GAMEX( 1982, popflama, popflame, popflame, naughtyb, 0, ROT90, "Jaleco", "Pop Flamer (set 2)", GAME_NO_COCKTAIL )

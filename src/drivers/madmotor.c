@@ -8,7 +8,7 @@
   "This game is developed by Mitchell, but they entrusted PCB design and some
   routines to Data East."
 
-  Emulation by Bryan McPhail, mish@tendril.force9.net
+  Emulation by Bryan McPhail, mish@tendril.co.uk
 
 ***************************************************************************/
 

@@ -108,14 +108,14 @@ static struct MemoryWriteAddress sound_writemem[] =
 
 static struct IOWritePort sound_writeport[] =
 {
-    { 0x82, 0x82, AY8910_write_port_0_w },
-    { 0x83, 0x83, AY8910_control_port_0_w },
-    { 0x86, 0x86, AY8910_write_port_1_w },
-    { 0x87, 0x87, AY8910_control_port_1_w },
-    { 0x8a, 0x8a, AY8910_write_port_2_w },
-    { 0x8b, 0x8b, AY8910_control_port_2_w },
-    { 0x8e, 0x8e, AY8910_write_port_3_w },
-    { 0x8f, 0x8f, AY8910_control_port_3_w },
+	{ 0x82, 0x82, AY8910_write_port_0_w },
+	{ 0x83, 0x83, AY8910_control_port_0_w },
+	{ 0x86, 0x86, AY8910_write_port_1_w },
+	{ 0x87, 0x87, AY8910_control_port_1_w },
+	{ 0x8a, 0x8a, AY8910_write_port_2_w },
+	{ 0x8b, 0x8b, AY8910_control_port_2_w },
+	{ 0x8e, 0x8e, AY8910_write_port_3_w },
+	{ 0x8f, 0x8f, AY8910_control_port_3_w },
 	{ -1 }	/* end of table */
 };
 
@@ -209,17 +209,11 @@ INPUT_PORTS_START( exctsccr )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START      /* DSW0 */
-	/* The next two overlap */
-	PORT_DIPNAME( 0x03, 0x03, "Coinage(Coin A)" )
+	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Coinage ) )
 	PORT_DIPSETTING(    0x02, DEF_STR( 2C_1C ) )
-	PORT_DIPSETTING(    0x03, DEF_STR( 1C_1C ) )
-	PORT_DIPSETTING(    0x01, DEF_STR( 1C_2C ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( 1C_3C ) )
-	PORT_DIPNAME( 0x03, 0x03, "Coinage(Coin B)" )
-	PORT_DIPSETTING(    0x03, DEF_STR( 3C_1C ) )
-	PORT_DIPSETTING(    0x02, DEF_STR( 2C_1C ) )
-	PORT_DIPSETTING(    0x01, DEF_STR( 1C_4C ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( 1C_6C ) )
+	PORT_DIPSETTING(    0x03, "A 1C/1C B 3C/1C" )
+	PORT_DIPSETTING(    0x01, "A 1C/2C B 1C/4C" )
+	PORT_DIPSETTING(    0x00, "A 1C/3C B 1C/6C" )
 	PORT_DIPNAME( 0x04, 0x00, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
@@ -577,7 +571,7 @@ ROM_END
 
 
 
-GAME( 1983, exctsccr, 0,        exctsccr, exctsccr, 0, ROT90, "Alpha Denshi Co", "Exciting Soccer" )
-GAME( 1983, exctscca, exctsccr, exctsccr, exctsccr, 0, ROT90, "Alpha Denshi Co", "Exciting Soccer (alternate music)" )
-GAME( 1984, exctsccb, exctsccr, exctsccb, exctsccr, 0, ROT90, "bootleg", "Exciting Soccer (bootleg)" )
-GAMEX(1983, exctscc2, exctsccr, exctsccr, exctsccr, 0, ROT90, "Alpha Denshi Co", "Exciting Soccer II", GAME_NOT_WORKING )
+GAMEX( 1983, exctsccr, 0,        exctsccr, exctsccr, 0, ROT90, "Alpha Denshi Co", "Exciting Soccer", GAME_NO_COCKTAIL )
+GAMEX( 1983, exctscca, exctsccr, exctsccr, exctsccr, 0, ROT90, "Alpha Denshi Co", "Exciting Soccer (alternate music)", GAME_NO_COCKTAIL )
+GAMEX( 1984, exctsccb, exctsccr, exctsccb, exctsccr, 0, ROT90, "bootleg", "Exciting Soccer (bootleg)", GAME_NO_COCKTAIL )
+GAMEX( 1983, exctscc2, exctsccr, exctsccr, exctsccr, 0, ROT90, "Alpha Denshi Co", "Exciting Soccer II", GAME_NOT_WORKING | GAME_NO_COCKTAIL )

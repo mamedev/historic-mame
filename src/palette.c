@@ -541,7 +541,9 @@ INLINE void palette_change_color_16_palettized(int color,unsigned char red,unsig
 			game_palette[3*color + 2] == blue)
 		return;
 
-	osd_modify_pen(Machine->pens[color],red,green,blue);
+	/* Machine->pens[color] might have been remapped to transparent_pen, so I */
+	/* use shrinked_pens[] directly */
+	osd_modify_pen(shrinked_pens[color + RESERVED_PENS],red,green,blue);
 	game_palette[3*color + 0] = red;
 	game_palette[3*color + 1] = green;
 	game_palette[3*color + 2] = blue;

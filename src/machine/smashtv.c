@@ -2456,7 +2456,7 @@ void narc_init_machine(void)
 	/* special input handler */
 	install_mem_read_handler(0, TOBYTE(0x01c00000), TOBYTE(0x01c0005f), narc_input_r );
 
-	install_mem_read_handler(0, TOBYTE(0x09afffd0), TOBYTE(0x09afffef), narc_unknown_r); /* bug? */
+	install_mem_read_handler(0, TOBYTE(0x09afffc0), TOBYTE(0x09afffff), narc_unknown_r); /* bug? */
 	install_mem_read_handler(0, TOBYTE(0x38383900), TOBYTE(0x383839ff), narc_unknown_r); /* bug? */
 }
 void smashtv_init_machine(void)

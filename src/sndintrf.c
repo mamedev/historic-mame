@@ -236,6 +236,9 @@ int YM3812_num(const struct MachineSound *msound) { return ((struct YM3812interf
 #if (HAS_VLM5030)
 int VLM5030_clock(const struct MachineSound *msound) { return ((struct VLM5030interface*)msound->sound_interface)->baseclock; }
 #endif
+#if (HAS_TMS36XX)
+int TMS36XX_num(const struct MachineSound *msound) { return ((struct TMS36XXinterface*)msound->sound_interface)->num; }
+#endif
 #if (HAS_TMS5220)
 int TMS5220_clock(const struct MachineSound *msound) { return ((struct TMS5220interface*)msound->sound_interface)->baseclock; }
 #endif
@@ -563,6 +566,18 @@ struct snd_interface sndintf[] =
 		namco_sh_start,
 		namco_sh_stop,
 		0,
+		0
+	},
+#endif
+#if (HAS_TMS36XX)
+    {
+		SOUND_TMS36XX,
+		"TMS36XX",
+		TMS36XX_num,
+        0,
+		tms36xx_sh_start,
+		tms36xx_sh_stop,
+		tms36xx_sh_update,
 		0
 	},
 #endif

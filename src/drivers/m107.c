@@ -10,7 +10,7 @@
 	unused roms next to the sprite roms.
 	Graphics glitches in both games too.
 
-	Emulation by Bryan McPhail, mish@tendril.force9.net
+	Emulation by Bryan McPhail, mish@tendril.co.uk
 
 *******************************************************************************/
 

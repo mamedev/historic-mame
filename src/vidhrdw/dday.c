@@ -17,8 +17,6 @@ static unsigned char *searchlight_image;
 static int searchlight_flipx;
 static int searchlight_enable = 0;
 
-void dday_sound_enable(int enabled);
-
 
 /* LBO */
 #ifdef LSB_FIRST
@@ -339,7 +337,13 @@ void dday_control_w(int offset, int data)
 	coin_counter_w(1, data & 0x02);
 
 	/* Bit 4 is sound enable */
-	dday_sound_enable(data & 0x10);
+	if (!(data & 0x10) && (control & 0x10))
+	{
+		AY8910_reset(0);
+		AY8910_reset(1);
+	}
+
+	mixer_sound_enable_global_w(data & 0x10);
 
 	/* Bit 6 is search light enable */
 	searchlight_enable = data & 0x40;

@@ -19,8 +19,6 @@ Thanks also go to Paul Tonizzo, Clay Cowgill, John Bowes, and Kevin Klopp
 for all the helpful information, samples, and schematics!
 
 TODO:
-- redo TMS3617 to use streams (and fix frequencies)
-- abstract TMS3617 into a true sound handler (not SOUND_CUSTOM)
 - locate Pig Newton cocktail mode?
 - verify Pig Newton and Sindbad Mystery DIPs
 - attempt Pig Newton, 005 sound
@@ -62,12 +60,6 @@ extern const char *astrob_sample_names[];
 extern const char *s005_sample_names[];
 extern const char *monsterb_sample_names[];
 extern const char *spaceod_sample_names[];
-
-/* sndhrdw/monsterb.c */
-int TMS3617_sh_start(const struct MachineSound *msound);
-void TMS3617_sh_stop(void);
-void TMS3617_sh_update(void);
-
 
 /* machine/segar.c */
 
@@ -1273,11 +1265,13 @@ static struct DACinterface monsterb_dac_interface =
 	{ 100 }
 };
 
-static struct CustomSound_interface monsterb_custom_interface =
+static struct TMS36XXinterface monsterb_tms3617_interface =
 {
-	TMS3617_sh_start,
-	TMS3617_sh_stop,
-	TMS3617_sh_update
+	1,
+    { 50 },         /* mixing levels */
+	{ TMS3617 },	/* TMS36xx subtype(s) */
+	{ 247 },		/* base clock (one octave below A) */
+	{ {0.75,0.75,0.75,0.75,0.75,0.75} }  /* decay times of voices */
 };
 
 static struct MachineDriver machine_driver_monsterb =
@@ -1317,8 +1311,8 @@ static struct MachineDriver machine_driver_monsterb =
 	0,0,0,0,
 	{
 		{
-			SOUND_CUSTOM,
-			&monsterb_custom_interface
+			SOUND_TMS36XX,
+			&monsterb_tms3617_interface
 		},
 		{
 			SOUND_SAMPLES,

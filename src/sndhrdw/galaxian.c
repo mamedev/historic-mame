@@ -514,13 +514,15 @@ void galaxian_sh_stop(void)
 		timer_remove(noisetimer);
 		noisetimer = 0;
 	}
-	free(noisewave);
-	noisewave = 0;
 	mixer_stop_sample(channelnoise);
 	mixer_stop_sample(channelshoot);
 	mixer_stop_sample(channellfo+0);
 	mixer_stop_sample(channellfo+1);
 	mixer_stop_sample(channellfo+2);
+	free(noisewave);
+	noisewave = 0;
+	free(shootwave);
+	shootwave = 0;
 }
 
 void galaxian_background_enable_w(int offset,int data)

@@ -261,32 +261,32 @@ INPUT_PORTS_START( tempest )
 
 	PORT_START	/* IN1/DSW0 */
 	/* This is the Tempest spinner input. It only uses 4 bits. */
-	PORT_ANALOG( 0x0f, 0x00, IPT_DIAL | IPF_REVERSE, 25, 20, 0, 0)
+	PORT_ANALOG( 0x0f, 0x00, IPT_DIAL, 25, 20, 0, 0)
 	/* The next one is reponsible for cocktail mode.
 	 * According to the documentation, this is not a switch, although
 	 * it may have been planned to put it on the Math Box PCB, D/E2 )
 	 */
-	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Cabinet ) )
-	PORT_DIPSETTING(    0x10, DEF_STR( Upright ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Cocktail ) )
-	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_DIPNAME( 0x10, 0x00, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( Cocktail ) )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START	/* IN2 */
-	PORT_DIPNAME(  0x03, 0x00, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(     0x01, "Easy" )
-	PORT_DIPSETTING(     0x00, "Medium1" )
-	PORT_DIPSETTING(     0x03, "Medium2" )
-	PORT_DIPSETTING(     0x02, "Hard" )
-	PORT_DIPNAME(  0x04, 0x00, "Rating" )
-	PORT_DIPSETTING(     0x00, "1, 3, 5, 7, 9" )
-	PORT_DIPSETTING(     0x04, "tied to high score" )
-	PORT_BIT(0x08, IP_ACTIVE_HIGH, IPT_BUTTON2 )
-	PORT_BIT(0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 )
-	PORT_BIT(0x20, IP_ACTIVE_HIGH, IPT_START1 )
-	PORT_BIT(0x40, IP_ACTIVE_HIGH, IPT_START2 )
-	PORT_BIT(0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_DIPNAME(  0x03, 0x03, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(     0x02, "Easy" )
+	PORT_DIPSETTING(     0x03, "Medium1" )
+	PORT_DIPSETTING(     0x00, "Medium2" )
+	PORT_DIPSETTING(     0x01, "Hard" )
+	PORT_DIPNAME(  0x04, 0x04, "Rating" )
+	PORT_DIPSETTING(     0x04, "1, 3, 5, 7, 9" )
+	PORT_DIPSETTING(     0x00, "tied to high score" )
+	PORT_BIT(0x08, IP_ACTIVE_LOW, IPT_BUTTON2 )
+	PORT_BIT(0x10, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT(0x20, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT(0x40, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT(0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START	/* DSW1 - (N13 on analog vector generator PCB */
 	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Coinage ) )
@@ -338,23 +338,25 @@ INPUT_PORTS_START( tempest )
 INPUT_PORTS_END
 
 
+int input_port_1_bit_r(int offs) { return (readinputport(1) & (1 << offs)) ? 0 : 228; }
+int input_port_2_bit_r(int offs) { return (readinputport(2) & (1 << offs)) ? 0 : 228; }
 
 static struct POKEYinterface pokey_interface =
 {
 	2,	/* 2 chips */
-	1500000,	/* 1.5 MHz??? */
+	12096000/8,	/* 1.512 MHz */
 	{ 50, 50 },
 	/* The 8 pot handlers */
-	{ 0, 0 },
-	{ 0, 0 },
-	{ 0, 0 },
-	{ 0, 0 },
-	{ 0, 0 },
-	{ 0, 0 },
-	{ 0, 0 },
-	{ 0, 0 },
+	{ input_port_1_bit_r, input_port_2_bit_r },
+	{ input_port_1_bit_r, input_port_2_bit_r },
+	{ input_port_1_bit_r, input_port_2_bit_r },
+	{ input_port_1_bit_r, input_port_2_bit_r },
+	{ input_port_1_bit_r, input_port_2_bit_r },
+	{ input_port_1_bit_r, input_port_2_bit_r },
+	{ input_port_1_bit_r, input_port_2_bit_r },
+	{ input_port_1_bit_r, input_port_2_bit_r },
 	/* The allpot handler */
-	{ input_port_1_r, input_port_2_r },
+	{ 0, 0 },
 };
 
 
@@ -365,7 +367,7 @@ static struct MachineDriver machine_driver_tempest =
 	{
 		{
 			CPU_M6502,
-			1500000,	/* 1.5 Mhz */
+			12096000/8,	/* 1.512 MHz */
 			readmem,writemem,0,0,
 			interrupt,4 /* 4.1ms */
 		}

@@ -233,7 +233,7 @@ INPUT_PORTS_START( bosco )
 	PORT_DIPSETTING(    0x20, "20K 70K 70K" )
 	PORT_DIPSETTING(    0x28, "30K 100K 100K" )
 	PORT_DIPSETTING(    0x00, "None" )
-	PORT_DIPNAME( 0xc0, 0x80, "Fighters" )
+	PORT_DIPNAME( 0xc0, 0x80, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x00, "1" )
 	PORT_DIPSETTING(    0x40, "2" )
 	PORT_DIPSETTING(    0x80, "3" )
@@ -316,7 +316,7 @@ INPUT_PORTS_START( boscomd )
 	PORT_DIPSETTING(    0x20, "20K 70K 70K" )
 	PORT_DIPSETTING(    0x28, "30K 100K 100K" )
 	PORT_DIPSETTING(    0x00, "None" )
-	PORT_DIPNAME( 0xc0, 0x80, "Fighters" )
+	PORT_DIPNAME( 0xc0, 0x80, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x00, "1" )
 	PORT_DIPSETTING(    0x40, "2" )
 	PORT_DIPSETTING(    0x80, "3" )
@@ -529,6 +529,46 @@ static struct MachineDriver machine_driver_bosco =
 
 ROM_START( bosco )
 	ROM_REGION( 0x10000, REGION_CPU1 )	/* 64k for code for the first CPU  */
+	ROM_LOAD( "bos3_1.bin",   0x0000, 0x1000, 0x96021267 )
+	ROM_LOAD( "bos1_2.bin",   0x1000, 0x1000, 0x2d8f3ebe )
+	ROM_LOAD( "bos1_3.bin",   0x2000, 0x1000, 0xc80ccfa5 )
+	ROM_LOAD( "bos1_4b.bin",  0x3000, 0x1000, 0xa3f7f4ab )
+
+	ROM_REGION( 0x10000, REGION_CPU2 )	/* 64k for the second CPU */
+	ROM_LOAD( "bos1_5c.bin",  0x0000, 0x1000, 0xa7c8e432 )
+	ROM_LOAD( "bos3_6.bin",   0x1000, 0x1000, 0x4543cf82 )
+
+	ROM_REGION( 0x10000, REGION_CPU3 )	/* 64k for the third CPU  */
+	ROM_LOAD( "2900.3e",      0x0000, 0x1000, 0xd45a4911 )
+
+	ROM_REGION( 0x1000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "5300.5d",      0x0000, 0x1000, 0xa956d3c5 )
+
+	ROM_REGION( 0x1000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "5200.5e",      0x0000, 0x1000, 0xe869219c )
+
+	ROM_REGION( 0x0100, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "prom.2d",      0x0000, 0x0100, 0x9b69b543 )	/* dots */
+
+	ROM_REGION( 0x0260, REGION_PROMS )
+	ROM_LOAD( "bosco.6b",     0x0000, 0x0020, 0xd2b96fb0 )	/* palette */
+	ROM_LOAD( "bosco.4m",     0x0020, 0x0100, 0x4e15d59c )	/* lookup table */
+	ROM_LOAD( "prom.1d",      0x0120, 0x0100, 0xde2316c6 )	/* ?? */
+	ROM_LOAD( "prom.2r",      0x0220, 0x0020, 0xb88d5ba9 )	/* ?? */
+	ROM_LOAD( "prom.7h",      0x0240, 0x0020, 0x87d61353 )	/* ?? */
+
+	ROM_REGION( 0x0200, REGION_SOUND1 )	/* sound prom */
+	ROM_LOAD( "bosco.spr",    0x0000, 0x0100, 0xee8ca3a8 )
+	ROM_LOAD( "prom.5c",      0x0100, 0x0100, 0x77245b66 )	/* timing - not used */
+
+	ROM_REGION( 0x3000, REGION_SOUND2 )	/* ROMs for digitised speech */
+	ROM_LOAD( "4900.5n",      0x0000, 0x1000, 0x09acc978 )
+	ROM_LOAD( "5000.5m",      0x1000, 0x1000, 0xe571e959 )
+	ROM_LOAD( "5100.5l",      0x2000, 0x1000, 0x17ac9511 )
+ROM_END
+
+ROM_START( boscoo )
+	ROM_REGION( 0x10000, REGION_CPU1 )	/* 64k for code for the first CPU  */
 	ROM_LOAD( "bos1_1.bin",   0x0000, 0x1000, 0x0d9920e7 )
 	ROM_LOAD( "bos1_2.bin",   0x1000, 0x1000, 0x2d8f3ebe )
 	ROM_LOAD( "bos1_3.bin",   0x2000, 0x1000, 0xc80ccfa5 )
@@ -536,119 +576,120 @@ ROM_START( bosco )
 
 	ROM_REGION( 0x10000, REGION_CPU2 )	/* 64k for the second CPU */
 	ROM_LOAD( "bos1_5c.bin",  0x0000, 0x1000, 0xa7c8e432 )
-	ROM_LOAD( "2800.3h",	  0x1000, 0x1000, 0x31b8c648 )
+	ROM_LOAD( "2800.3h",      0x1000, 0x1000, 0x31b8c648 )
 
 	ROM_REGION( 0x10000, REGION_CPU3 )	/* 64k for the third CPU  */
-	ROM_LOAD( "2900.3e",	  0x0000, 0x1000, 0xd45a4911 )
+	ROM_LOAD( "2900.3e",      0x0000, 0x1000, 0xd45a4911 )
 
 	ROM_REGION( 0x1000, REGION_GFX1 | REGIONFLAG_DISPOSE )
-	ROM_LOAD( "5300.5d",	  0x0000, 0x1000, 0xa956d3c5 )
+	ROM_LOAD( "5300.5d",      0x0000, 0x1000, 0xa956d3c5 )
 
 	ROM_REGION( 0x1000, REGION_GFX2 | REGIONFLAG_DISPOSE )
-	ROM_LOAD( "5200.5e",	  0x0000, 0x1000, 0xe869219c )
+	ROM_LOAD( "5200.5e",      0x0000, 0x1000, 0xe869219c )
 
 	ROM_REGION( 0x0100, REGION_GFX3 | REGIONFLAG_DISPOSE )
-	ROM_LOAD( "prom.2d",	  0x0000, 0x0100, 0x9b69b543 )	/* dots */
+	ROM_LOAD( "prom.2d",      0x0000, 0x0100, 0x9b69b543 )	/* dots */
 
 	ROM_REGION( 0x0260, REGION_PROMS )
-	ROM_LOAD( "bosco.6b",	  0x0000, 0x0020, 0xd2b96fb0 )	/* palette */
-	ROM_LOAD( "bosco.4m",	  0x0020, 0x0100, 0x4e15d59c )	/* lookup table */
-	ROM_LOAD( "prom.1d",	  0x0120, 0x0100, 0xde2316c6 )	/* ?? */
-	ROM_LOAD( "prom.2r",	  0x0220, 0x0020, 0xb88d5ba9 )	/* ?? */
-	ROM_LOAD( "prom.7h",	  0x0240, 0x0020, 0x87d61353 )	/* ?? */
+	ROM_LOAD( "bosco.6b",     0x0000, 0x0020, 0xd2b96fb0 )	/* palette */
+	ROM_LOAD( "bosco.4m",     0x0020, 0x0100, 0x4e15d59c )	/* lookup table */
+	ROM_LOAD( "prom.1d",      0x0120, 0x0100, 0xde2316c6 )	/* ?? */
+	ROM_LOAD( "prom.2r",      0x0220, 0x0020, 0xb88d5ba9 )	/* ?? */
+	ROM_LOAD( "prom.7h",      0x0240, 0x0020, 0x87d61353 )	/* ?? */
 
 	ROM_REGION( 0x0200, REGION_SOUND1 )	/* sound prom */
-	ROM_LOAD( "bosco.spr",	  0x0000, 0x0100, 0xee8ca3a8 )
-	ROM_LOAD( "prom.5c",	  0x0100, 0x0100, 0x77245b66 )	/* timing - not used */
+	ROM_LOAD( "bosco.spr",    0x0000, 0x0100, 0xee8ca3a8 )
+	ROM_LOAD( "prom.5c",      0x0100, 0x0100, 0x77245b66 )	/* timing - not used */
 
 	ROM_REGION( 0x3000, REGION_SOUND2 )	/* ROMs for digitised speech */
-	ROM_LOAD( "4900.5n",	  0x0000, 0x1000, 0x09acc978 )
-	ROM_LOAD( "5000.5m",	  0x1000, 0x1000, 0xe571e959 )
-	ROM_LOAD( "5100.5l",	  0x2000, 0x1000, 0x17ac9511 )
+	ROM_LOAD( "4900.5n",      0x0000, 0x1000, 0x09acc978 )
+	ROM_LOAD( "5000.5m",      0x1000, 0x1000, 0xe571e959 )
+	ROM_LOAD( "5100.5l",      0x2000, 0x1000, 0x17ac9511 )
 ROM_END
 
 ROM_START( boscomd )
 	ROM_REGION( 0x10000, REGION_CPU1 )	/* 64k for code for the first CPU  */
-	ROM_LOAD( "3n", 	  0x0000, 0x1000, 0x441b501a )
-	ROM_LOAD( "3m", 	  0x1000, 0x1000, 0xa3c5c7ef )
-	ROM_LOAD( "3l", 	  0x2000, 0x1000, 0x6ca9a0cf )
-	ROM_LOAD( "3k", 	  0x3000, 0x1000, 0xd83bacc5 )
+	ROM_LOAD( "3n",       0x0000, 0x1000, 0x441b501a )
+	ROM_LOAD( "3m",       0x1000, 0x1000, 0xa3c5c7ef )
+	ROM_LOAD( "3l",       0x2000, 0x1000, 0x6ca9a0cf )
+	ROM_LOAD( "3k",       0x3000, 0x1000, 0xd83bacc5 )
 
 	ROM_REGION( 0x10000, REGION_CPU2 )	/* 64k for the second CPU */
-	ROM_LOAD( "3j", 	  0x0000, 0x1000, 0x4374e39a )
-	ROM_LOAD( "3h", 	  0x1000, 0x1000, 0x04e9fcef )
+	ROM_LOAD( "3j",       0x0000, 0x1000, 0x4374e39a )
+	ROM_LOAD( "3h",       0x1000, 0x1000, 0x04e9fcef )
 
 	ROM_REGION( 0x10000, REGION_CPU3 )	/* 64k for the third CPU  */
-	ROM_LOAD( "2900.3e",	  0x0000, 0x1000, 0xd45a4911 )
+	ROM_LOAD( "2900.3e",      0x0000, 0x1000, 0xd45a4911 )
 
 	ROM_REGION( 0x1000, REGION_GFX1 | REGIONFLAG_DISPOSE )
-	ROM_LOAD( "5300.5d",	  0x0000, 0x1000, 0xa956d3c5 )
+	ROM_LOAD( "5300.5d",      0x0000, 0x1000, 0xa956d3c5 )
 
 	ROM_REGION( 0x1000, REGION_GFX2 | REGIONFLAG_DISPOSE )
-	ROM_LOAD( "5200.5e",	  0x0000, 0x1000, 0xe869219c )
+	ROM_LOAD( "5200.5e",      0x0000, 0x1000, 0xe869219c )
 
 	ROM_REGION( 0x0100, REGION_GFX3 | REGIONFLAG_DISPOSE )
-	ROM_LOAD( "prom.2d",	  0x0000, 0x0100, 0x9b69b543 )	/* dots */
+	ROM_LOAD( "prom.2d",      0x0000, 0x0100, 0x9b69b543 )	/* dots */
 
 	ROM_REGION( 0x0260, REGION_PROMS )
-	ROM_LOAD( "bosco.6b",	  0x0000, 0x0020, 0xd2b96fb0 )	/* palette */
-	ROM_LOAD( "bosco.4m",	  0x0020, 0x0100, 0x4e15d59c )	/* lookup table */
-	ROM_LOAD( "prom.1d",	  0x0120, 0x0100, 0xde2316c6 )	/* ?? */
-	ROM_LOAD( "prom.2r",	  0x0220, 0x0020, 0xb88d5ba9 )	/* ?? */
-	ROM_LOAD( "prom.7h",	  0x0240, 0x0020, 0x87d61353 )	/* ?? */
+	ROM_LOAD( "bosco.6b",     0x0000, 0x0020, 0xd2b96fb0 )	/* palette */
+	ROM_LOAD( "bosco.4m",     0x0020, 0x0100, 0x4e15d59c )	/* lookup table */
+	ROM_LOAD( "prom.1d",      0x0120, 0x0100, 0xde2316c6 )	/* ?? */
+	ROM_LOAD( "prom.2r",      0x0220, 0x0020, 0xb88d5ba9 )	/* ?? */
+	ROM_LOAD( "prom.7h",      0x0240, 0x0020, 0x87d61353 )	/* ?? */
 
 	ROM_REGION( 0x0200, REGION_SOUND1 )	/* sound prom */
-	ROM_LOAD( "bosco.spr",	  0x0000, 0x0100, 0xee8ca3a8 )
-	ROM_LOAD( "prom.5c",	  0x0100, 0x0100, 0x77245b66 )	/* timing - not used */
+	ROM_LOAD( "bosco.spr",    0x0000, 0x0100, 0xee8ca3a8 )
+	ROM_LOAD( "prom.5c",      0x0100, 0x0100, 0x77245b66 )	/* timing - not used */
 
 	ROM_REGION( 0x3000, REGION_SOUND2 )	/* ROMs for digitised speech */
-	ROM_LOAD( "4900.5n",	  0x0000, 0x1000, 0x09acc978 )
-	ROM_LOAD( "5000.5m",	  0x1000, 0x1000, 0xe571e959 )
-	ROM_LOAD( "5100.5l",	  0x2000, 0x1000, 0x17ac9511 )
+	ROM_LOAD( "4900.5n",      0x0000, 0x1000, 0x09acc978 )
+	ROM_LOAD( "5000.5m",      0x1000, 0x1000, 0xe571e959 )
+	ROM_LOAD( "5100.5l",      0x2000, 0x1000, 0x17ac9511 )
 ROM_END
 
 ROM_START( boscomdo )
 	ROM_REGION( 0x10000, REGION_CPU1 )	/* 64k for code for the first CPU  */
-	ROM_LOAD( "2300.3n",	  0x0000, 0x1000, 0xdb6128b0 )
-	ROM_LOAD( "2400.3m",	  0x1000, 0x1000, 0x86907614 )
-	ROM_LOAD( "2500.3l",	  0x2000, 0x1000, 0xa21fae11 )
-	ROM_LOAD( "2600.3k",	  0x3000, 0x1000, 0x11d6ae23 )
+	ROM_LOAD( "2300.3n",      0x0000, 0x1000, 0xdb6128b0 )
+	ROM_LOAD( "2400.3m",      0x1000, 0x1000, 0x86907614 )
+	ROM_LOAD( "2500.3l",      0x2000, 0x1000, 0xa21fae11 )
+	ROM_LOAD( "2600.3k",      0x3000, 0x1000, 0x11d6ae23 )
 
 	ROM_REGION( 0x10000, REGION_CPU2 )	/* 64k for the second CPU */
-	ROM_LOAD( "2700.3j",	  0x0000, 0x1000, 0x7254e65e )
-	ROM_LOAD( "2800.3h",	  0x1000, 0x1000, 0x31b8c648 )
+	ROM_LOAD( "2700.3j",      0x0000, 0x1000, 0x7254e65e )
+	ROM_LOAD( "2800.3h",      0x1000, 0x1000, 0x31b8c648 )
 
 	ROM_REGION( 0x10000, REGION_CPU3 )	/* 64k for the third CPU  */
-	ROM_LOAD( "2900.3e",	  0x0000, 0x1000, 0xd45a4911 )
+	ROM_LOAD( "2900.3e",      0x0000, 0x1000, 0xd45a4911 )
 
 	ROM_REGION( 0x1000, REGION_GFX1 | REGIONFLAG_DISPOSE )
-	ROM_LOAD( "5300.5d",	  0x0000, 0x1000, 0xa956d3c5 )
+	ROM_LOAD( "5300.5d",      0x0000, 0x1000, 0xa956d3c5 )
 
 	ROM_REGION( 0x1000, REGION_GFX2 | REGIONFLAG_DISPOSE )
-	ROM_LOAD( "5200.5e",	  0x0000, 0x1000, 0xe869219c )
+	ROM_LOAD( "5200.5e",      0x0000, 0x1000, 0xe869219c )
 
 	ROM_REGION( 0x0100, REGION_GFX3 | REGIONFLAG_DISPOSE )
-	ROM_LOAD( "prom.2d",	  0x0000, 0x0100, 0x9b69b543 )	/* dots */
+	ROM_LOAD( "prom.2d",      0x0000, 0x0100, 0x9b69b543 )	/* dots */
 
 	ROM_REGION( 0x0260, REGION_PROMS )
-	ROM_LOAD( "bosco.6b",	  0x0000, 0x0020, 0xd2b96fb0 )	/* palette */
-	ROM_LOAD( "bosco.4m",	  0x0020, 0x0100, 0x4e15d59c )	/* lookup table */
-	ROM_LOAD( "prom.1d",	  0x0120, 0x0100, 0xde2316c6 )	/* ?? */
-	ROM_LOAD( "prom.2r",	  0x0220, 0x0020, 0xb88d5ba9 )	/* ?? */
-	ROM_LOAD( "prom.7h",	  0x0240, 0x0020, 0x87d61353 )	/* ?? */
+	ROM_LOAD( "bosco.6b",     0x0000, 0x0020, 0xd2b96fb0 )	/* palette */
+	ROM_LOAD( "bosco.4m",     0x0020, 0x0100, 0x4e15d59c )	/* lookup table */
+	ROM_LOAD( "prom.1d",      0x0120, 0x0100, 0xde2316c6 )	/* ?? */
+	ROM_LOAD( "prom.2r",      0x0220, 0x0020, 0xb88d5ba9 )	/* ?? */
+	ROM_LOAD( "prom.7h",      0x0240, 0x0020, 0x87d61353 )	/* ?? */
 
 	ROM_REGION( 0x0200, REGION_SOUND1 )	/* sound prom */
-	ROM_LOAD( "bosco.spr",	  0x0000, 0x0100, 0xee8ca3a8 )
-	ROM_LOAD( "prom.5c",	  0x0100, 0x0100, 0x77245b66 )	/* timing - not used */
+	ROM_LOAD( "bosco.spr",    0x0000, 0x0100, 0xee8ca3a8 )
+	ROM_LOAD( "prom.5c",      0x0100, 0x0100, 0x77245b66 )	/* timing - not used */
 
 	ROM_REGION( 0x3000, REGION_SOUND2 )	/* ROMs for digitised speech */
-	ROM_LOAD( "4900.5n",	  0x0000, 0x1000, 0x09acc978 )
-	ROM_LOAD( "5000.5m",	  0x1000, 0x1000, 0xe571e959 )
-	ROM_LOAD( "5100.5l",	  0x2000, 0x1000, 0x17ac9511 )
+	ROM_LOAD( "4900.5n",      0x0000, 0x1000, 0x09acc978 )
+	ROM_LOAD( "5000.5m",      0x1000, 0x1000, 0xe571e959 )
+	ROM_LOAD( "5100.5l",      0x2000, 0x1000, 0x17ac9511 )
 ROM_END
 
 
 
-GAME( 1981, bosco,    0,     bosco, bosco,   0, ROT0, "Namco", "Bosconian" )
+GAME( 1981, bosco,    0,     bosco, bosco,   0, ROT0, "Namco", "Bosconian (new version)" )
+GAME( 1981, boscoo,   bosco, bosco, bosco,   0, ROT0, "Namco", "Bosconian (old version)" )
 GAME( 1981, boscomd,  bosco, bosco, boscomd, 0, ROT0, "[Namco] (Midway license)", "Bosconian (Midway, new version)" )
 GAME( 1981, boscomdo, bosco, bosco, boscomd, 0, ROT0, "[Namco] (Midway license)", "Bosconian (Midway, old version)" )

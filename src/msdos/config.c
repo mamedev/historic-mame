@@ -350,6 +350,9 @@ void parse_cmdline (int argc, char **argv, int game_index)
 	game = game_index;
 
 
+	/* force third mouse button emulation to "no" otherwise Allegro will default to "yes" */
+	set_config_string(0,"emulate_three","no");
+
 	/* read graphic configuration */
 	scanlines   = get_bool   ("config", "scanlines",    NULL,  1);
 	stretch     = get_bool   ("config", "stretch",		NULL,  1);
@@ -415,7 +418,9 @@ void parse_cmdline (int argc, char **argv, int game_index)
 	/* read input configuration */
 	use_mouse = get_bool   ("config", "mouse",   NULL,  1);
 	joyname   = get_string ("config", "joystick", "joy", "none");
-	use_hotrod = get_bool  ("config", "hotrod",   NULL,  0);
+	use_hotrod = 0;
+	if (get_bool  ("config", "hotrod",   NULL,  0)) use_hotrod = 1;
+	if (get_bool  ("config", "hotrodse",   NULL,  0)) use_hotrod = 2;
 
 	/* misc configuration */
 	options.cheat      = get_bool ("config", "cheat", NULL, 0);

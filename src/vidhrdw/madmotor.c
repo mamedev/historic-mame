@@ -1,6 +1,6 @@
 /***************************************************************************
 
-  Mad Motor video emulation - Bryan McPhail, mish@tendril.force9.net
+  Mad Motor video emulation - Bryan McPhail, mish@tendril.co.uk
 
   Notes:  Playfield 3 can change size between 512x1024 and 2048x256
 

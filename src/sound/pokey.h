@@ -1,6 +1,6 @@
 /*****************************************************************************
  *
- *	POKEY chip emulator 4.2
+ *	POKEY chip emulator 4.3
  *	Copyright (c) 2000 by The MAME Team
  *
  *	Based on original info found in Ron Fries' Pokey emulator,

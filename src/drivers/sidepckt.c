@@ -342,7 +342,7 @@ static struct MachineDriver machine_driver_sidepckt =
 	256, 256,
 	sidepckt_vh_convert_color_prom,
 
-	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY,
+	VIDEO_TYPE_RASTER,// | VIDEO_SUPPORTS_DIRTY, tilemaps don't support dirty
 	0,
 	sidepckt_vh_start,
 	generic_vh_stop,
@@ -390,7 +390,7 @@ static struct MachineDriver machine_driver_sidepctj =
 	256, 256,
 	sidepckt_vh_convert_color_prom,
 
-	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY,
+	VIDEO_TYPE_RASTER,// | VIDEO_SUPPORTS_DIRTY, tilemaps don't support dirty
 	0,
 	sidepckt_vh_start,
 	generic_vh_stop,

@@ -373,5 +373,4 @@ ROM_END
 
 
 
-GAME( 1988, superman, 0, superman, superman, 0, ROT0, "Taito Corporation", "Superman" )
-
+GAMEX( 1988, superman, 0, superman, superman, 0, ROT0, "Taito Corporation", "Superman", GAME_NO_COCKTAIL )

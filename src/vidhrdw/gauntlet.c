@@ -76,9 +76,15 @@ int vindctr2_screen_refresh;
  *
  *************************************/
 
+struct mo_data
+{
+	struct osd_bitmap *bitmap;
+	UINT8 color_xor;
+};
+
 static struct atarigen_pf_state pf_state;
 
-static int playfield_color_base;
+static UINT8 playfield_color_base;
 
 
 
@@ -363,7 +369,6 @@ static void pf_color_callback(const struct rectangle *clip, const struct rectang
 {
 	const unsigned int *usage = &Machine->gfx[0]->pen_usage[state->param[0] * 0x1000];
 	UINT16 *colormap = (UINT16 *)param;
-	int bank = state->param[0];
 	int x, y;
 
 	for (y = tiles->min_y; y != tiles->max_y; y = (y + 1) & 63)
@@ -371,7 +376,7 @@ static void pf_color_callback(const struct rectangle *clip, const struct rectang
 		{
 			int offs = x * 64 + y;
 			int data = READ_WORD(&atarigen_playfieldram[offs * 2]);
-			int code = bank * 0x1000 + ((data & 0xfff) ^ 0x800);
+			int code = (data & 0xfff) ^ 0x800;
 			int color = playfield_color_base + ((data >> 12) & 7);
 			colormap[color] |= usage[code];
 			colormap[color ^ 8] |= usage[code];
@@ -434,7 +439,9 @@ static void pf_render_callback(const struct rectangle *clip, const struct rectan
 static void pf_overrender_callback(const struct rectangle *clip, const struct rectangle *tiles, const struct atarigen_pf_state *state, void *param)
 {
 	const struct GfxElement *gfx = Machine->gfx[0];
-	struct osd_bitmap *bitmap = param;
+	const struct mo_data *modata = param;
+	struct osd_bitmap *bitmap = modata->bitmap;
+	int color_xor = modata->color_xor;
 	int bank = state->param[0];
 	int x, y;
 
@@ -454,7 +461,7 @@ static void pf_overrender_callback(const struct rectangle *clip, const struct re
 			int sx = (8 * x - state->hscroll) & 0x1ff;
 			if (sx >= XDIM) sx -= 0x200;
 
-			drawgfx(bitmap, gfx, code, color ^ 8, hflip, 0, sx, sy, 0, TRANSPARENCY_THROUGH, palette_transparent_pen);
+			drawgfx(bitmap, gfx, code, color ^ color_xor, hflip, 0, sx, sy, 0, TRANSPARENCY_THROUGH, palette_transparent_pen);
 		}
 	}
 }
@@ -556,5 +563,10 @@ static void mo_render_callback(const UINT16 *data, const struct rectangle *clip,
 
 	/* overrender the playfield */
 	if (total_usage & 0x0002)
-		atarigen_pf_process(pf_overrender_callback, bitmap, &pf_clip);
+	{
+		struct mo_data modata;
+		modata.bitmap = bitmap;
+		modata.color_xor = (color == 0 && vindctr2_screen_refresh) ? 0 : 8;
+		atarigen_pf_process(pf_overrender_callback, &modata, &pf_clip);
+	}
 }

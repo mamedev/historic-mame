@@ -7,260 +7,255 @@
 
 #include "driver.h"
 
-#define SAFREQ  1400
-#define SBFREQ  1400
-#define MAXFREQ_A 40000
+#define VMIN	0
+#define VMAX	32767
 
-#define VOLUME_A 20
-#define VOLUME_B 80
-#define SAMPLE_VOLUME 25
+static int channel;
 
-/* for voice A effects */
-#define SW_INTERVAL 4
-#define MOD_RATE 0.14
-#define MOD_DEPTH 0.1
+static int sound_latch_a;
+static int sound_latch_b;
 
-/* for voice B effect */
-#define SWEEP_RATE 0.14
-#define SWEEP_DEPTH 0.24
+static int tone_level;
 
-static int noise_vol;
-static int noise_freq;
+static UINT32 *poly18 = NULL;
 
-static int noisemulate;
-
-static int channel0,channel1,channel2,channel3,channel23;
-
-/* coin-up */
-static void *timer_a;
-static void *timer_b;
-void timer_a_callback(int param);
-void timer_b_callback(int param);
-
-
-/* waveforms for the audio hardware */
-static signed char waveform0[2] =
+INLINE int tone(int samplerate)
 {
-	/* flip-flop */
-	-128, 127
-};
-static unsigned char waveform1[32] =
+	static int counter, divisor, output;
+	int frequency = 11075;
+
+	if( (sound_latch_a & 15) != 15 )
+	{
+		counter -= frequency;
+		while( counter <= 0 )
+		{
+			counter += samplerate;
+			if( ++divisor == 16 )
+			{
+				divisor = sound_latch_a & 15;
+				output ^= 1;
+			}
+		}
+	}
+	return output ? tone_level / 2 : -tone_level / 2;
+}
+
+INLINE int update_c24(int samplerate)
 {
-	/* sine-wave */
-	0x0F, 0x0F, 0x0F, 0x06, 0x06, 0x09, 0x09, 0x06, 0x06, 0x09, 0x06, 0x0D, 0x0F, 0x0F, 0x0D, 0x00,
-	0xE6, 0xDE, 0xE1, 0xE6, 0xEC, 0xE6, 0xE7, 0xE7, 0xE7, 0xEC, 0xEC, 0xEC, 0xE7, 0xE1, 0xE1, 0xE7,
-};
-static unsigned char waveform2[] =
+	static int counter, level;
+	/*
+	 * Noise frequency control (Port B):
+	 * Bit 6 lo charges C24 (6.8u) via R51 (330) and when
+	 * bit 6 is hi, C24 is discharged through R52 (20k)
+	 * in approx. 20000 * 6.8e-6 = 0.136 seconds
+	 */
+	#define C24 6.8e-6
+	#define R49 1000
+    #define R51 330
+	#define R52 20000
+	if( sound_latch_a & 0x40 )
+	{
+		counter -= (int)((VMAX - level) / ((R51+R49) * C24));
+		if( counter <= 0 )
+        {
+            int n = -counter / samplerate + 1;
+            counter += n * samplerate;
+			if( (level += n) > VMAX)
+				level = VMAX;
+        }
+    }
+	else
+	{
+		counter -= (int)(level / (R52 * C24));
+		if( counter <= 0 )
+        {
+            int n = -counter / samplerate + 1;
+            counter += n * samplerate;
+			if( (level -= n) < VMIN)
+				level = VMIN;
+        }
+    }
+	return VMAX - level;
+}
+
+INLINE int update_c25(int samplerate)
 {
-	/* white-noise ? */
-	0x79, 0x75, 0x71, 0x72, 0x72, 0x6F, 0x70, 0x71, 0x71, 0x73, 0x75, 0x76, 0x74, 0x74, 0x78, 0x7A,
-	0x79, 0x7A, 0x7B, 0x7C, 0x7C, 0x7C, 0x7C, 0x7C, 0x7C, 0x7C, 0x7D, 0x80, 0x85, 0x88, 0x88, 0x87,
-	0x8B, 0x8B, 0x8A, 0x8A, 0x89, 0x87, 0x85, 0x87, 0x89, 0x86, 0x83, 0x84, 0x84, 0x85, 0x84, 0x84,
-	0x85, 0x86, 0x87, 0x87, 0x88, 0x88, 0x86, 0x81, 0x7E, 0x7D, 0x7F, 0x7D, 0x7C, 0x7D, 0x7D, 0x7C,
-	0x7E, 0x81, 0x7F, 0x7C, 0x7E, 0x82, 0x82, 0x82, 0x82, 0x83, 0x83, 0x84, 0x83, 0x82, 0x82, 0x83,
-	0x82, 0x84, 0x88, 0x8C, 0x8E, 0x8B, 0x8B, 0x8C, 0x8A, 0x8A, 0x8A, 0x89, 0x85, 0x86, 0x89, 0x89,
-	0x86, 0x85, 0x85, 0x85, 0x84, 0x83, 0x82, 0x83, 0x83, 0x83, 0x82, 0x83, 0x83
-};
+	static int counter, level;
+	/*
+	 * Bit 7 hi charges C25 (6.8u) over a R53 (330) and when
+	 * bit 7 is lo, C25 is discharged through R54 (47k)
+	 * in about 47000 * 6.8e-6 = 0.3196 seconds
+	 */
+	#define C25 6.8e-6
+	#define R50 1000
+    #define R53 330
+	#define R54 47000
+
+	if( sound_latch_a & 0x80 )
+	{
+		counter -= (int)((VMAX - level) / ((R50+R53) * C25));
+		if( counter <= 0 )
+		{
+			int n = -counter / samplerate + 1;
+			counter += n * samplerate;
+			if( (level += n) > VMAX )
+				level = VMAX;
+		}
+	}
+	else
+	{
+        counter -= (int)(level / (R54 * C25));
+		if( counter <= 0 )
+		{
+			int n = -counter / samplerate + 1;
+			counter += n * samplerate;
+			if( (level -= n) < VMIN )
+				level = VMIN;
+		}
+	}
+	return level;
+}
 
 
+INLINE int noise(int samplerate)
+{
+	static int counter, polyoffs, polybit, lowpass_counter, lowpass_polybit;
+	int vc24 = update_c24(samplerate);
+	int vc25 = update_c25(samplerate);
+	int sum = 0, level, frequency;
+
+	/*
+	 * The voltage levels are added and control I(CE) of transistor TR1
+	 * (NPN) which then controls the noise clock frequency (linearily?).
+	 * level = voltage at the output of the op-amp controlling the noise rate.
+	 */
+	if( vc24 < vc25 )
+		level = vc24 + (vc25 - vc24);
+	else
+		level = vc25 + (vc24 - vc25);
+
+	frequency = 6325 - (6325-588) * level / 32768;
+
+    /*
+	 * NE555: Ra=47k, Rb=1k, C=0.05uF
+	 * minfreq = 1.44 / ((47000+2*1000) * 0.05e-6) = approx. 588 Hz
+	 * R71 (2700 Ohms) parallel to R73 (47k Ohms) = approx. 2553 Ohms
+	 * maxfreq = 1.44 / ((2553+2*1000) * 0.05e-6) = approx. 6325 Hz
+	 */
+	counter -= frequency;
+	if( counter <= 0 )
+	{
+		int n = (-counter / samplerate) + 1;
+		counter += n * samplerate;
+		polyoffs = (polyoffs + n) & 0x3ffff;
+		polybit = (poly18[polyoffs>>5] >> (polyoffs & 31)) & 1;
+	}
+	if (!polybit)
+		sum += VMAX - vc24;
+
+	/* 400Hz crude low pass filter: only a guess */
+	lowpass_counter -= 400;
+	if( lowpass_counter <= 0 )
+	{
+		lowpass_counter += samplerate;
+		lowpass_polybit = polybit;
+	}
+	if (!lowpass_polybit)
+		sum += vc25;
+
+	return sum;
+}
+
+static void pleiads_sound_update(int param, INT16 *buffer, int length)
+{
+	int samplerate = Machine->sample_rate;
+
+	while( length-- > 0 )
+	{
+		int sum = tone(samplerate) + noise(samplerate);
+		sum /= 2;
+		*buffer++ = sum < 32768 ? sum > -32768 ? sum : -32768 : 32767;
+	}
+}
 
 void pleiads_sound_control_a_w (int offset,int data)
 {
-	static int lastnoise;
+    /* (data & 0x10), (data & 0x20), other analog stuff which I don't understand */
 
-	/* voice a */
-	int freq = data & 0x0f;
+	stream_update(channel,0);
+	sound_latch_a = data;
+
 	/* (data & 0x10), (data & 0x20), other analog stuff which I don't understand */
 
-	/* noise */
-	int noise = (data & 0xc0) >> 6;
-
-	if (freq != 0x0f)
-	{
-		mixer_set_sample_frequency(channel0,MAXFREQ_A/2/(16-freq));
-		mixer_set_volume(channel0,VOLUME_A);
-	}
-	else
-	{
-		mixer_set_volume(channel0,0);
-	}
-
-	if (noisemulate)
-	{
-		if (noise_freq != 1750*(4-noise))
-		{
-			noise_freq = 1750*(4-noise);
-			noise_vol = 85*noise;
-		}
-
-		if (noise)
-		{
-			mixer_set_sample_frequency(channel1,noise_freq);
-			mixer_set_volume(channel1,noise_vol*100/255);
-		}
-		else
-		{
-			mixer_set_volume(channel1,0);
-			noise_vol = 0;
-		}
-	}
-	else
-	{
-		switch (noise)
-		{
-			case 1 :
-				if (lastnoise != noise)
-					mixer_play_sample(channel1,Machine->samples->sample[0]->data,
-						Machine->samples->sample[0]->length,
-						Machine->samples->sample[0]->smpfreq,
-						0);
-				break;
-			case 2 :
-		 		if (lastnoise != noise)
-					mixer_play_sample(channel1,Machine->samples->sample[1]->data,
-						Machine->samples->sample[1]->length,
-						Machine->samples->sample[1]->smpfreq,
-						0);
-				break;
-		}
-		lastnoise = noise;
-	}
-/*	if (errorlog) fprintf(errorlog,"A:%X \n",data);*/
+    /* maybe bits 4 + 5 are volume control? */
+	tone_level = VMAX / 2 + VMAX / 2 * ((data >> 4) & 3) / 4;
 }
-
-
-
-#define BASE_FREQ       246.9416506
-#define PITCH_1         BASE_FREQ * 1.0			/* B  */
-#define PITCH_2         BASE_FREQ * 1.059463094		/* C  */
-#define PITCH_3         BASE_FREQ * 1.122462048		/* C# */
-#define PITCH_4         BASE_FREQ * 1.189207115		/* D  */
-#define PITCH_5         BASE_FREQ * 1.259921050		/* D# */
-#define PITCH_6         BASE_FREQ * 1.334839854		/* E  */
-#define PITCH_7         BASE_FREQ * 1.414213562		/* F  */
-#define PITCH_8         BASE_FREQ * 1.498307077		/* F# */
-#define PITCH_9         BASE_FREQ * 1.587401052		/* G  */
-#define PITCH_10        BASE_FREQ * 1.681792830		/* G# */
-#define PITCH_11        BASE_FREQ * 1.781797436		/* A = 440 */
-#define PITCH_12        BASE_FREQ * 1.887748625		/* A# */
-#define PITCH_13        BASE_FREQ * 2.0			/* B  */
-
-#define SHIFT_1 8*1.0
-
-static int TMS3615_freq[] =
-{
-	PITCH_1*SHIFT_1, PITCH_2*SHIFT_1, PITCH_3*SHIFT_1, PITCH_4*SHIFT_1,
-	PITCH_5*SHIFT_1, PITCH_6*SHIFT_1, PITCH_7*SHIFT_1, PITCH_8*SHIFT_1,
-	PITCH_9*SHIFT_1, PITCH_10*SHIFT_1, PITCH_11*SHIFT_1, PITCH_12*SHIFT_1,
-	PITCH_13*SHIFT_1, 0, 0, 0
-};
-
 
 void pleiads_sound_control_b_w (int offset,int data)
 {
-	static int portBstatus;
-	/* voice b1 & b2 */
-	int freq = data & 0x0f;
-	int pitch = (data & 0xc0) >> 6;
-	/* pitch selects one of 4 possible clock inputs (actually 3, because */
-	/* IC2 and IC3 are tied together) */
-	if (pitch == 3) pitch = 2;
+	static int tms3617_chip;
 
-	/* (data & 0x30) goes to a 556 */
+	/*
+     * pitch selects one of 4 possible clock inputs
+     * (actually 3, because IC2 and IC3 are tied together)
+     * write note value to TMS3615; voice b1 & b2
+     */
+	tms3617_note_w(tms3617_chip, (data >> 6) & 3, data & 15);
 
-	/* freq == 0x0d and 0x0e do nothing, 0x0f does something different (SAST BIAS?) */
-	if (freq <= 0x0c)
-	{
-		mixer_set_sample_frequency(channel23+portBstatus, (1<<pitch) * TMS3615_freq[freq]);
-		mixer_set_volume(channel23+portBstatus,VOLUME_B);
-	}
-	else
-	{
-		mixer_set_volume(channel23+portBstatus,0);
-	}
-	portBstatus ^= 0x01;
-	if (errorlog) fprintf(errorlog,"B:%X freq: %02x vol: %02x\n",data, data & 0x0f, (data & 0x30) >> 4);
+    /* next time next chip (I guess there's a flip-flop?) */
+	tms3617_chip ^= 1;
+
+    if (data == sound_latch_b)
+		return;
+
+    /* (data & 0x30) goes to a 556 */
+
+    stream_update(channel,0);
+    sound_latch_b = data;
 }
-
-
-static const char *phoenix_sample_names[] =
-{
-	"*phoenix",
-	"shot8.wav",
-	"death8.wav",
-	"phoenix1.wav",
-	"phoenix2.wav",
-	0	/* end of array */
-};
 
 int pleiads_sh_start(const struct MachineSound *msound)
 {
-	int vol[2];
+	int i, j;
+	UINT32 shiftreg;
 
-	Machine->samples = readsamples(phoenix_sample_names,Machine->gamedrv->name);
+	poly18 = (UINT32 *)malloc((1ul << (18-5)) * sizeof(UINT32));
 
-	channel0 = mixer_allocate_channel(VOLUME_A);
-	channel1 = mixer_allocate_channel(SAMPLE_VOLUME);
-	channel2 = mixer_allocate_channel(5);
-	channel3 = mixer_allocate_channel(5);
-	vol[0]=vol[1]=VOLUME_B;
-	channel23 = mixer_allocate_channels(2,vol);
+	if( !poly18 )
+		return 1;
 
-	if (Machine->samples != 0 && Machine->samples->sample[0] != 0)
-		noisemulate = 0;
-	else
+    shiftreg = 0;
+	for( i = 0; i < (1ul << (18-5)); i++ )
 	{
-		noisemulate = 1;
-		mixer_set_volume(channel1,0);
-		mixer_play_sample(channel1,(signed char *)waveform2,128,1000,1);
-	}
-
-	/* Clear all the variables */
-	{
-		noise_vol = 0;
-		noise_freq = 1000;
-	}
-
-	mixer_set_volume(channel0,0);
-        mixer_play_sample(channel0,waveform0,2,1000,1);
-	mixer_set_volume(channel23+0,0);
-        mixer_play_sample(channel23+0,(signed char *)waveform1,32,1000,1);
-	mixer_set_volume(channel23+1,0);
-	mixer_play_sample(channel23+1,(signed char *)waveform1,32,1000,1);
-
-	return 0;
-}
-
-
-
-void pleiads_sh_update (void)
-{
-	if ((noise_vol) && (noisemulate))
-	{
-		mixer_set_volume(channel1,noise_vol*100/255);
-		noise_vol-=3;
-	}
-        if (readinputport(2) & 1)
+		UINT32 bits = 0;
+		for( j = 0; j < 32; j++ )
 		{
-                mixer_set_volume(channel2,100);
-                mixer_play_sample(channel2,waveform0,2,1000,1);
-                mixer_set_volume(channel2+1,100);
-                mixer_play_sample(channel2+1,waveform0,2,2000,1);
+			bits = (bits >> 1) | (shiftreg << 31);
+			if( ((shiftreg >> 16) & 1) == ((shiftreg >> 17) & 1) )
+				shiftreg = (shiftreg << 1) | 1;
+			else
+				shiftreg <<= 1;
+		}
+		poly18[i] = bits;
+	}
 
-                timer_a = timer_set(TIME_IN_SEC(.2),0, timer_a_callback);
-                }
+	channel = stream_init("Custom", 50, Machine->sample_rate, 0, pleiads_sound_update);
+	if( channel == -1 )
+		return 1;
+
+    return 0;
 }
 
-void timer_a_callback (int param)
+void pleiads_sh_stop(void)
 {
-        mixer_set_volume(channel2,0);
-        mixer_set_volume(channel3,100);
-        mixer_play_sample(channel3,waveform0,2,4000,1);
-
-        timer_b = timer_set(TIME_IN_SEC(.08),0, timer_b_callback);
+	if( poly18 )
+		free(poly18);
+	poly18 = NULL;
 }
 
-void timer_b_callback (int param)
+void pleiads_sh_update(void)
 {
-        mixer_set_volume(channel3,0);
+	stream_update(channel, 0);
 }
+
+

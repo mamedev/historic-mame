@@ -490,7 +490,7 @@ ROM_END
   different: the levels are in a different order, and the "Demonstration" dip
   switch has no effect.
  */
-GAME( 1985, gunsmoke, 0,        gunsmoke, gunsmoke, 0, ROT270, "Capcom", "Gun.Smoke (World)" )
-GAME( 1985, gunsmrom, gunsmoke, gunsmoke, gunsmoke, 0, ROT270, "Capcom (Romstar license)", "Gun.Smoke (US set 1)" )
-GAME( 1986, gunsmoka, gunsmoke, gunsmoke, gunsmoke, 0, ROT270, "Capcom", "Gun.Smoke (US set 2)" )
-GAME( 1985, gunsmokj, gunsmoke, gunsmoke, gunsmoke, 0, ROT270, "Capcom", "Gun.Smoke (Japan)" )
+GAMEX( 1985, gunsmoke, 0,        gunsmoke, gunsmoke, 0, ROT270, "Capcom", "Gun.Smoke (World)", GAME_NO_COCKTAIL )
+GAMEX( 1985, gunsmrom, gunsmoke, gunsmoke, gunsmoke, 0, ROT270, "Capcom (Romstar license)", "Gun.Smoke (US set 1)", GAME_NO_COCKTAIL )
+GAMEX( 1986, gunsmoka, gunsmoke, gunsmoke, gunsmoke, 0, ROT270, "Capcom", "Gun.Smoke (US set 2)", GAME_NO_COCKTAIL )
+GAMEX( 1985, gunsmokj, gunsmoke, gunsmoke, gunsmoke, 0, ROT270, "Capcom", "Gun.Smoke (Japan)", GAME_NO_COCKTAIL )

@@ -1,7 +1,29 @@
+/*****************************************************************************
+ *
+ * A (partially wrong) try to emulate Asteroid's analog sound
+ * It's getting better but is still imperfect :/
+ * If you have ideas, corrections, suggestions contact Juergen
+ * Buchmueller <pullmoll@t-online.de>
+ *
+ * Known issues (TODO):
+ * - find out if/why the samples are 'damped', I don't see no
+ *	 low pass filter in the sound output, but the samples sound
+ *	 like there should be one. Maybe in the amplifier..
+ * - better (accurate) way to emulate the low pass on the thrust sound?
+ * - verify the thump_frequency calculation. It's only an approximation now
+ * - the nastiest piece of the circuit is the saucer sound IMO
+ *	 the circuits are almost equal, but there are some strange looking
+ *	 things like the direct coupled op-amps and transistors and I can't
+ *	 calculate the true resistance and thus voltage at the control
+ *	 input (5) of the NE555s.
+ * - saucer sound is not easy either and the calculations might be off, still.
+ *
+ *****************************************************************************/
+
 #include <math.h>
 #include "driver.h"
 
-#define VMAX	32767
+#define VMAX    32767
 #define VMIN	0
 
 #define SAUCEREN    0
@@ -16,342 +38,354 @@
 #define EXPAUDSHIFT 2
 #define EXPAUDMASK	(0x0f<<EXPAUDSHIFT)
 
+#define NE555_T1(Ra,Rb,C)	(VMAX*2/3/(0.639*((Ra)+(Rb))*(C)))
+#define NE555_T2(Ra,Rb,C)	(VMAX*2/3/(0.639*(Rb)*(C)))
+#define NE555_F(Ra,Rb,C)	(1.44/(((Ra)+2*(Rb))*(C)))
 static int channel;
 static int explosion_latch;
 static int thump_latch;
 static int sound_latch[8];
 
-static int poly_counter;
-static int poly_shifter;
-static int poly_sample_count;
-
-static int explosion_out;
-
-static int thump_counter;
+static int polynome;
 static int thump_frequency;
-static int thump_out;
-
-static int saucer_vco;
-static int saucer_vco_counter;
-static int saucer_vco_charge;
-static int saucer_counter;
-static int saucer_out;
-
-static int thrust_counter;
-static int thrust_amp;
-static int thrust_out;
-
-static int shipfire_amp;
-static int shipfire_amp_counter;
-static int shipfire_vco;
-static int shipfire_vco_counter;
-static int shipfire_counter;
-static int shipfire_out;
-
-static int saucerfire_amp;
-static int saucerfire_amp_counter;
-static int saucerfire_vco;
-static int saucerfire_vco_counter;
-static int saucerfire_counter;
-static int saucerfire_out;
-
-static int lifesound_counter;
-static int lifesound_out;
 
 static INT16 *discharge;
 static INT16 vol_explosion[16];
 #define EXP(charge,n) (charge ? 0x7fff - discharge[0x7fff-n] : discharge[n])
 
-static int astdelux_thrusten;
+INLINE int explosion(int samplerate)
+{
+	static int counter, sample_counter;
+	static int out;
+
+	counter -= 12000;
+	while( counter <= 0 )
+	{
+		counter += samplerate;
+		if( ((polynome & 0x4000) == 0) == ((polynome & 0x0040) == 0) )
+			polynome = (polynome << 1) | 1;
+		else
+			polynome <<= 1;
+		if( ++sample_counter == 16 )
+		{
+			sample_counter = 0;
+			if( explosion_latch & EXPITCH0 )
+				sample_counter |= 2 + 8;
+			else
+				sample_counter |= 4;
+			if( explosion_latch & EXPITCH1 )
+				sample_counter |= 1 + 8;
+		}
+		/* ripple count output is high? */
+		if( sample_counter == 15 )
+			out = polynome & 1;
+	}
+	if( out )
+		return vol_explosion[(explosion_latch & EXPAUDMASK) >> EXPAUDSHIFT];
+
+    return 0;
+}
+
+INLINE int thrust(int samplerate)
+{
+	static int counter, out, amp;
+
+    if( sound_latch[THRUSTEN] )
+	{
+		/* SHPSND filter */
+		counter -= 110;
+		while( counter <= 0 )
+		{
+			counter += samplerate;
+			out = polynome & 1;
+		}
+		if( out )
+		{
+			if( amp < VMAX )
+				amp += (VMAX - amp) * 32768 / 32 / samplerate + 1;
+		}
+		else
+		{
+			if( amp > VMIN )
+				amp -= amp * 32768 / 32 / samplerate + 1;
+		}
+		return amp;
+	}
+	return 0;
+}
+
+INLINE int thump(int samplerate)
+{
+	static int counter, out;
+
+    if( thump_latch & 0x10 )
+	{
+		counter -= thump_frequency;
+		while( counter <= 0 )
+		{
+			counter += samplerate;
+			out ^= 1;
+		}
+		if( out )
+			return VMAX;
+	}
+	return 0;
+}
+
+
+INLINE int saucer(int samplerate)
+{
+	static int vco, vco_charge, vco_counter;
+    static int out, counter;
+	double v5;
+
+    /* saucer sound enabled ? */
+	if( sound_latch[SAUCEREN] )
+	{
+		/* NE555 setup as astable multivibrator:
+		 * C = 10u, Ra = 5.6k, Rb = 10k
+		 * or, with /SAUCERSEL being low:
+		 * C = 10u, Ra = 5.6k, Rb = 6k (10k parallel with 15k)
+		 */
+		if( vco_charge )
+		{
+			if( sound_latch[SAUCERSEL] )
+				vco_counter -= NE555_T1(5600,10000,10e-6);
+			else
+				vco_counter -= NE555_T1(5600,6000,10e-6);
+			if( vco_counter <= 0 )
+			{
+				int steps = (-vco_counter / samplerate) + 1;
+				vco_counter += steps * samplerate;
+				if( (vco += steps) >= VMAX*2/3 )
+				{
+					vco = VMAX*2/3;
+					vco_charge = 0;
+				}
+			}
+		}
+		else
+		{
+			if( sound_latch[SAUCERSEL] )
+				vco_counter -= NE555_T2(5600,10000,10e-6);
+			else
+				vco_counter -= NE555_T2(5600,6000,10e-6);
+			if( vco_counter <= 0 )
+			{
+				int steps = (-vco_counter / samplerate) + 1;
+				vco_counter += steps * samplerate;
+				if( (vco -= steps) <= VMAX*1/3 )
+				{
+					vco = VMIN*1/3;
+					vco_charge = 1;
+				}
+			}
+		}
+		/*
+		 * NE566 voltage controlled oscillator
+		 * Co = 0.047u, Ro = 10k
+		 * to = 2.4 * (Vcc - V5) / (Ro * Co * Vcc)
+		 */
+		if( sound_latch[SAUCERSEL] )
+			v5 = 12.0 - 1.66 - 5.0 * EXP(vco_charge,vco) / 32768;
+		else
+			v5 = 11.3 - 1.66 - 5.0 * EXP(vco_charge,vco) / 32768;
+		counter -= floor(2.4 * (12.0 - v5) / (10000 * 0.047e-6 * 12.0));
+		while( counter <= 0 )
+		{
+			counter += samplerate;
+			out ^= 1;
+		}
+		if( out )
+			return VMAX;
+	}
+	return 0;
+}
+
+INLINE int saucerfire(int samplerate)
+{
+	static int vco, vco_counter;
+	static int amp, amp_counter;
+	static int out, counter;
+
+    if( sound_latch[SAUCRFIREEN] )
+	{
+		if( vco < VMAX*12/5 )
+		{
+			/* charge C38 (10u) through R54 (10K) from 5V to 12V */
+			#define C38_CHARGE_TIME (VMAX)
+			vco_counter -= C38_CHARGE_TIME;
+			while( vco_counter <= 0 )
+			{
+				vco_counter += samplerate;
+				if( ++vco == VMAX*12/5 )
+					break;
+			}
+		}
+		if( amp > VMIN )
+		{
+			/* discharge C39 (10u) through R58 (10K) and diode CR6,
+			 * but only during the time the output of the NE555 is low.
+			 */
+			if( out )
+			{
+				#define C39_DISCHARGE_TIME (int)(VMAX)
+				amp_counter -= C39_DISCHARGE_TIME;
+				while( amp_counter <= 0 )
+				{
+					amp_counter += samplerate;
+					if( --amp == VMIN )
+						break;
+				}
+			}
+		}
+		if( out )
+		{
+			/* C35 = 1u, Ra = 3.3k, Rb = 680
+			 * discharge = 0.693 * 680 * 1e-6 = 4.7124e-4 -> 2122 Hz
+			 */
+			counter -= 2122;
+			if( counter <= 0 )
+			{
+				int n = -counter / samplerate + 1;
+				counter += n * samplerate;
+				out = 0;
+			}
+		}
+		else
+		{
+			/* C35 = 1u, Ra = 3.3k, Rb = 680
+			 * charge 0.693 * (3300+680) * 1e-6 = 2.75814e-3 -> 363Hz
+			 */
+			counter -= 363 * 2 * (VMAX*12/5-vco) / 32768;
+			if( counter <= 0 )
+			{
+				int n = -counter / samplerate + 1;
+				counter += n * samplerate;
+				out = 1;
+			}
+		}
+        if( out )
+			return amp;
+	}
+	else
+	{
+		/* charge C38 and C39 */
+		amp = VMAX;
+		vco = VMAX;
+	}
+	return 0;
+}
+
+INLINE int shipfire(int samplerate)
+{
+	static int vco, vco_counter;
+	static int amp, amp_counter;
+    static int out, counter;
+
+    if( sound_latch[SHIPFIREEN] )
+	{
+		if( vco < VMAX*12/5 )
+		{
+			/* charge C47 (1u) through R52 (33K) and Q3 from 5V to 12V */
+			#define C47_CHARGE_TIME (VMAX * 3)
+			vco_counter -= C47_CHARGE_TIME;
+			while( vco_counter <= 0 )
+			{
+				vco_counter += samplerate;
+				if( ++vco == VMAX*12/5 )
+					break;
+			}
+        }
+		if( amp > VMIN )
+		{
+			/* discharge C48 (10u) through R66 (2.7K) and CR8,
+			 * but only while the output of theNE555 is low.
+			 */
+			if( out )
+			{
+				#define C48_DISCHARGE_TIME (VMAX * 3)
+				amp_counter -= C48_DISCHARGE_TIME;
+				while( amp_counter <= 0 )
+				{
+					amp_counter += samplerate;
+					if( --amp == VMIN )
+						break;
+				}
+			}
+		}
+
+		if( out )
+		{
+			/* C50 = 1u, Ra = 3.3k, Rb = 680
+			 * discharge = 0.693 * 680 * 1e-6 = 4.7124e-4 -> 2122 Hz
+			 */
+			counter -= 2122;
+			if( counter <= 0 )
+			{
+				int n = -counter / samplerate + 1;
+				counter += n * samplerate;
+				out = 0;
+			}
+		}
+		else
+		{
+			/* C50 = 1u, Ra = R65 (3.3k), Rb = R61 (680)
+			 * charge = 0.693 * (3300+680) * 1e-6) = 2.75814e-3 -> 363Hz
+			 */
+			counter -= 363 * 2 * (VMAX*12/5-vco) / 32768;
+			if( counter <= 0 )
+			{
+				int n = -counter / samplerate + 1;
+				counter += n * samplerate;
+				out = 1;
+			}
+		}
+		if( out )
+			return amp;
+	}
+	else
+	{
+		/* charge C47 and C48 */
+		amp = VMAX;
+		vco = VMAX;
+	}
+	return 0;
+}
+
+INLINE int life(int samplerate)
+{
+	static int counter, out;
+    if( sound_latch[LIFEEN] )
+	{
+		counter -= 3000;
+		while( counter <= 0 )
+		{
+			counter += samplerate;
+			out ^= 1;
+		}
+		if( out )
+			return VMAX;
+	}
+	return 0;
+}
+
 
 static void asteroid_sound_update(int param, INT16 *buffer, int length)
 {
 	int samplerate = Machine->sample_rate;
 
-	while( length-- > 0 )
+    while( length-- > 0 )
 	{
 		int sum = 0;
 
-		poly_counter -= 12000;
-		while( poly_counter <= 0 )
-		{
-			poly_counter += samplerate;
-			if( ((poly_shifter & 0x4000) == 0) == ((poly_shifter & 0x0040) == 0) )
-				poly_shifter = (poly_shifter << 1) | 1;
-			else
-				poly_shifter <<= 1;
-			if( ++poly_sample_count == 16 )
-			{
-				poly_sample_count = 0;
-				if( explosion_latch & EXPITCH0 )
-					poly_sample_count |= 2 + 8;
-                else
-					poly_sample_count |= 4;
-				if( explosion_latch & EXPITCH1 )
-					poly_sample_count |= 1 + 8;
-			}
-			/* ripple count output goes high? */
-			if( poly_sample_count == 15 )
-				explosion_out = poly_shifter & 1;
-        }
-		/* mixer 4.7K */
-		if( explosion_out )
-			sum += vol_explosion[(explosion_latch & EXPAUDMASK) >> EXPAUDSHIFT] / 7;
-
-		if( sound_latch[THRUSTEN] )
-		{
-			/* SHPSND filter
-			 * rumbling low noise... well, the filter parameters
-			 * are beyond me. I implement a 110Hz digital filter
-			 * on the poly noise and sweep the amplitude of the
-			 * signal to the new level.
-			 */
-			thrust_counter -= 110;
-			while( thrust_counter <= 0 )
-			{
-				thrust_counter += samplerate;
-				thrust_out = poly_shifter & 1;
-			}
-			if( thrust_out )
-			{
-				if( thrust_amp < VMAX )
-				{
-					thrust_amp += (VMAX - thrust_amp) * samplerate / 32768 / 32;
-					if( thrust_amp > VMAX )
-						thrust_amp = VMAX;
-				}
-			}
-			else
-			{
-				if( thrust_amp > VMIN )
-				{
-					thrust_amp -= thrust_amp * samplerate / 32768 / 32;
-					if( thrust_amp < VMIN)
-						thrust_amp = VMIN;
-                }
-            }
-			sum += thrust_amp / 7;
-        }
-
-        if( thump_latch & 0x10 )
-		{
-			thump_counter -= thump_frequency;
-			while( thump_counter <= 0 )
-			{
-				thump_counter += samplerate;
-				thump_out ^= 1;
-			}
-			if( thump_out )
-				sum += VMAX / 7;
-		}
-
-        /* saucer sound enabled ? */
-		if( sound_latch[SAUCEREN] )
-		{
-			/* NE555 setup as astable multivibrator
-			 * C = 10u, Ra = 5.6k, Rb = 10k
-             * charge time = 0.693 * (5.6k + 10k) * 10u = 0.108108s
-			 * discharge time = 0.693 * 10k * 10u = 0.0693s
-			 * ---------
-			 * C = 10u, Ra = 5.6k, Rb = 6k [1 / (1/10k + 1/15k)]
-			 * charge time = 0.693 * (5.6k + 6k) * 10u = 0.0.080388s
-			 * discharge time = 0.693 * 6k * 10u = 0.04158s
-             */
-			if( saucer_vco_charge )
-			{
-				if( sound_latch[SAUCERSEL] )
-					saucer_vco_counter -= (int)(VMAX / 0.108108);
-				else
-					saucer_vco_counter -= (int)(VMAX / 0.080388);
-				if( saucer_vco_counter < 0 )
-				{
-					int n = (-saucer_vco_counter / samplerate) + 1;
-					saucer_vco_counter += n * samplerate;
-					if( (saucer_vco += n) >= VMAX*2/3 )
-					{
-						saucer_vco = VMAX*2/3;
-                        saucer_vco_charge = 0;
-						break;
-					}
-				}
-			}
-			else
-			{
-				if( sound_latch[SAUCERSEL] )
-					saucer_vco_counter -= (int)(VMAX / 0.0693);
-				else
-					saucer_vco_counter -= (int)(VMAX / 0.04158);
-				if( saucer_vco_counter < 0 )
-				{
-					int n = (-saucer_vco_counter / samplerate) + 1;
-					saucer_vco_counter += n * samplerate;
-					if( (saucer_vco -= n) <= VMAX*1/3 )
-					{
-						saucer_vco = VMIN*1/3;
-                        saucer_vco_charge = 1;
-						break;
-					}
-                }
-            }
-			/*
-			 * NE566 setup as voltage controlled astable multivibrator
-			 * C = 0.001u, Ra = 5.6k, Rb = 3.9k
-			 * frequency = 1.44 / ((5600 + 2*3900) * 0.047e-6) = 2286Hz
-             */
-			if( sound_latch[SAUCERSEL] )
-				saucer_counter -= 2286*1/3 + (2286 * EXP(saucer_vco_charge,saucer_vco) / 32768);
-			else
-				saucer_counter -= 2286*1/3 + 800 /*???*/ + ((2286*1/3 + 800) * EXP(saucer_vco_charge,saucer_vco) / 32768);
-			while( saucer_counter <= 0 )
-			{
-				saucer_counter += samplerate;
-				saucer_out ^= 1;
-			}
-			if( saucer_out )
-				sum += VMAX / 7;
-        }
-
-		if( sound_latch[SAUCRFIREEN] )
-		{
-			if( saucerfire_vco > VMIN )
-			{
-				/* charge C38 (10u) through R54 (10K) */
-				#define C38_CHARGE_TIME (int)(VMAX / 6.93);
-				saucerfire_vco_counter -= C38_CHARGE_TIME;
-				while( saucerfire_vco_counter <= 0 )
-				{
-					saucerfire_vco_counter += samplerate;
-					if( --saucerfire_vco == VMIN )
-						break;
-				}
-			}
-			if( saucerfire_amp > VMIN )
-			{
-				/* discharge C39 (10u) through R58 (10K) and CR6 */
-				#define C39_DISCHARGE_TIME (int)(VMAX / 6.93);
-				saucerfire_amp_counter -= C39_DISCHARGE_TIME;
-				while( saucerfire_amp_counter <= 0 )
-				{
-					saucerfire_amp_counter += samplerate;
-					if( --saucerfire_amp == VMIN )
-						saucerfire_amp = VMIN;
-						break;
-                }
-			}
-			if( saucerfire_out )
-			{
-				/* C35 = 1u, Rb = 680 -> f = 8571Hz */
-				saucerfire_counter -= 8571;
-				while( saucerfire_counter <= 0 )
-				{
-					saucerfire_counter += samplerate;
-					saucerfire_out = 0;
-				}
-			}
-			else
-			{
-				if( saucerfire_vco > VMAX*1/3 )
-				{
-					/* C35 = 1u, Ra = 3.3k, Rb = 680 -> f = 522Hz */
-					saucerfire_counter -= 522*1/3 + (522 * EXP(0,saucerfire_vco) / 32768);
-					while( saucerfire_counter <= 0 )
-					{
-						saucerfire_counter += samplerate;
-						saucerfire_out = 1;
-					}
-				}
-			}
-            if( saucerfire_out )
-				sum += saucerfire_amp / 7;
-		}
-		else
-		{
-			/* charge C38 and C39 */
-			saucerfire_amp = VMAX;
-			saucerfire_vco = VMAX;
-		}
-
-		if( sound_latch[SHIPFIREEN] )
-		{
-			if( shipfire_vco > VMIN )
-			{
-#if 0	/* A typo in the schematics? 1u is too low */
-               /* charge C47 (1u) through R52 (33K) */
-				#define C47_CHARGE_TIME (int)(VMAX / 0.033);
-#else
-			   /* charge C47 (10u) through R52 (33K) */
-				#define C47_CHARGE_TIME (int)(VMAX / 0.33);
-#endif
-                shipfire_vco_counter -= C47_CHARGE_TIME;
-				while( shipfire_vco_counter <= 0 )
-				{
-					shipfire_vco_counter += samplerate;
-					if( --shipfire_vco == VMIN )
-						break;
-				}
-			}
-			if( shipfire_amp > VMIN )
-			{
-#if 0
-				/* A typo in the schematics? 1u is too low */
-                /* discharge C48 (10u) through R66 (2.7K) and CR8 */
-				#define C48_DISCHARGE_TIME (int)(VMAX / 0.027);
-#else
-				/* discharge C48 (10u) through R66 (2.7K) and CR8 */
-				#define C48_DISCHARGE_TIME (int)(VMAX / 0.27);
-#endif
-                shipfire_amp_counter -= C48_DISCHARGE_TIME;
-				while( shipfire_amp_counter <= 0 )
-				{
-					shipfire_amp_counter += samplerate;
-					if( --shipfire_amp == VMIN )
-						break;
-                }
-			}
-			if( shipfire_out )
-			{
-				/* C50 = 1u, Rb = 680 -> f = 8571Hz */
-				shipfire_counter -= 8571;
-				while( shipfire_counter <= 0 )
-				{
-					shipfire_counter += samplerate;
-					shipfire_out = 0;
-				}
-			}
-			else
-			{
-				/* C50 = 1u, Ra = 3.3k, Rb = 680 -> f = 522Hz */
-				if( shipfire_vco > VMAX*1/3 )
-				{
-					shipfire_counter -= 522*1/3 + (522 * EXP(0,shipfire_vco) / 32768);
-					while( shipfire_counter <= 0 )
-					{
-						shipfire_counter += samplerate;
-						shipfire_out = 1;
-					}
-				}
-			}
-			if( shipfire_out )
-				sum += shipfire_amp / 7;
-		}
-		else
-		{
-			/* charge C47 and C48 */
-			shipfire_amp = VMAX;
-			shipfire_vco = VMAX;
-		}
-
-		if( sound_latch[LIFEEN] )
-		{
-			lifesound_counter -= 3000;
-			while( lifesound_counter <= 0 )
-			{
-				lifesound_counter += samplerate;
-				lifesound_out ^= 1;
-			}
-			if( lifesound_out )
-				sum += VMAX / 7;
-		}
+		sum += explosion(samplerate) / 7;
+		sum += thrust(samplerate) / 7;
+		sum += thump(samplerate) / 7;
+		sum += saucer(samplerate) / 7;
+		sum += saucerfire(samplerate) / 7;
+		sum += shipfire(samplerate) / 7;
+		sum += life(samplerate) / 7;
 
         *buffer++ = sum;
 	}
@@ -493,67 +527,9 @@ static void astdelux_sound_update(int param, INT16 *buffer, int length)
 	{
 		int sum = 0;
 
-        poly_counter -= 12000;
-		while( poly_counter <= 0 )
-		{
-			poly_counter += samplerate;
-			if( ((poly_shifter & 0x4000) == 0) == ((poly_shifter & 0x0040) == 0) )
-				poly_shifter = (poly_shifter << 1) | 1;
-			else
-				poly_shifter <<= 1;
-			if( ++poly_sample_count == 16 )
-			{
-				poly_sample_count = 0;
-				if( explosion_latch & EXPITCH0 )
-					poly_sample_count |= 2 + 8;
-				else
-					poly_sample_count |= 4;
-				if( explosion_latch & EXPITCH1 )
-					poly_sample_count |= 1 + 8;
-			}
-			/* ripple count output goes high? */
-			if( poly_sample_count == 15 )
-				explosion_out = poly_shifter & 1;
-        }
-		/* mixer 4.7K */
-		if( explosion_out )
-			sum += vol_explosion[(explosion_latch & EXPAUDMASK) >> EXPAUDSHIFT] / 2;
+		sum += explosion(samplerate) / 2;
+		sum += thrust(samplerate) / 2;
 
-
-        if( astdelux_thrusten )
-        {
-            /* SHPSND filter
-             * rumbling low noise... well, the filter parameters
-			 * are beyond me. I implement a 110Hz digital filter
-             * on the poly noise and sweep the amplitude of the
-			 * signal to the new level.
-             */
-			thrust_counter -= 110;
-            while( thrust_counter < 0 )
-            {
-                thrust_counter += samplerate;
-                thrust_out = poly_shifter & 1;
-            }
-			if( thrust_out )
-			{
-				if( thrust_amp < VMAX )
-				{
-					thrust_amp += (VMAX - thrust_amp) * samplerate / 32768 / 32;
-					if( thrust_amp > VMAX )
-						thrust_amp = VMAX;
-				}
-			}
-			else
-			{
-				if( thrust_amp > VMIN )
-				{
-					thrust_amp -= thrust_amp * samplerate / 32768 / 32;
-					if( thrust_amp < VMIN )
-						thrust_amp = VMIN;
-                }
-            }
-			sum += thrust_amp / 2;
-        }
 		*buffer++ = sum;
 	}
 }
@@ -563,7 +539,7 @@ int astdelux_sh_start(const struct MachineSound *msound)
 	/* initialize explosion volume lookup table */
 	explosion_init();
 
-    channel = stream_init("Custom", 50, Machine->sample_rate, 0, astdelux_sound_update);
+	channel = stream_init("Custom", 50, Machine->sample_rate, 0, astdelux_sound_update);
     if( channel == -1 )
         return 1;
 
@@ -582,11 +558,11 @@ void astdelux_sh_update(void)
 
 void astdelux_sounds_w (int offset,int data)
 {
-	data = (data & 0x80) ^ 0x80;
-	if( data == astdelux_thrusten )
+	data = ~data & 0x80;
+	if( data == sound_latch[THRUSTEN] )
 		return;
     stream_update(channel, 0);
-	astdelux_thrusten = data;
+	sound_latch[THRUSTEN] = data;
 }
 
 

@@ -230,7 +230,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 static struct YM2203interface ym2203_interface =
 {
 	2,			/* 2 chips */
-	1500000,	/* 24MHz/16?? */
+	3000000,	/* 24MHz/8? */
 	{ YM2203_VOL(80,40), YM2203_VOL(80,40) },
 	{ input_port_0_r },
 	{ input_port_1_r, input_port_2_r },

@@ -300,12 +300,14 @@ void romident(const char* name,int enter_dirs) {
 
 #ifndef MESS
 enum { LIST_LIST = 1, LIST_LISTINFO, LIST_LISTFULL, LIST_LISTSAMDIR, LIST_LISTROMS, LIST_LISTSAMPLES,
-		LIST_LMR, LIST_LISTDETAILS, LIST_LISTGAMES, LIST_LISTCLONES,
+		LIST_LMR, LIST_LISTDETAILS, LIST_GAMELISTHEADER, LIST_GAMELISTFOOTER, LIST_GAMELIST,
+		LIST_LISTGAMES, LIST_LISTCLONES,
 		LIST_WRONGORIENTATION, LIST_WRONGFPS, LIST_LISTCRC, LIST_LISTDUPCRC, LIST_WRONGMERGE,
 		LIST_LISTROMSIZE, LIST_LISTCPU, LIST_SOURCEFILE };
 #else
 enum { LIST_LIST = 1, LIST_LISTINFO, LIST_LISTFULL, LIST_LISTSAMDIR, LIST_LISTROMS, LIST_LISTSAMPLES,
-		LIST_LMR, LIST_LISTDETAILS, LIST_LISTGAMES, LIST_LISTCLONES,
+		LIST_LMR, LIST_LISTDETAILS, LIST_GAMELISTHEADER, LIST_GAMELISTFOOTER, LIST_GAMELIST,
+		LIST_LISTGAMES, LIST_LISTCLONES,
 		LIST_WRONGORIENTATION, LIST_WRONGFPS, LIST_LISTCRC, LIST_LISTDUPCRC, LIST_WRONGMERGE,
 		LIST_LISTROMSIZE, LIST_LISTCPU, LIST_SOURCEFILE, LIST_MESSINFO };
 #endif
@@ -360,6 +362,9 @@ int frontend_help (int argc, char **argv)
  		if (!stricmp(argv[i],"-listinfo")) list = LIST_LISTINFO;
 		if (!stricmp(argv[i],"-listfull")) list = LIST_LISTFULL;
         if (!stricmp(argv[i],"-listdetails")) list = LIST_LISTDETAILS; /* A detailed MAMELIST.TXT type roms lister */
+        if (!stricmp(argv[i],"-gamelistheader")) list = LIST_GAMELISTHEADER; /* GAMELIST.TXT */
+        if (!stricmp(argv[i],"-gamelistfooter")) list = LIST_GAMELISTFOOTER; /* GAMELIST.TXT */
+        if (!stricmp(argv[i],"-gamelist")) list = LIST_GAMELIST; /* GAMELIST.TXT */
 		if (!stricmp(argv[i],"-listgames")) list = LIST_LISTGAMES;
 		if (!stricmp(argv[i],"-listclones")) list = LIST_LISTCLONES;
 		if (!stricmp(argv[i],"-listsamdir")) list = LIST_LISTSAMDIR;
@@ -612,9 +617,9 @@ int frontend_help (int argc, char **argv)
 			return 0;
 			break;
 
-        case LIST_LISTDETAILS: /* A detailed MAMELIST.TXT type roms lister */
+		case LIST_LISTDETAILS: /* A detailed MAMELIST.TXT type roms lister */
 
-            /* First, we shall print the header */
+			/* First, we shall print the header */
 
 			printf(" romname driver     ");
 			for(j=0;j<MAX_CPU;j++) printf("cpu %d    ",j+1);
@@ -625,11 +630,11 @@ int frontend_help (int argc, char **argv)
 			for(j=0;j<MAX_SOUND;j++) printf("----------- ");
 			printf("--------------------------\n");
 
-            /* Let's cycle through the drivers */
+			/* Let's cycle through the drivers */
 
-            i = 0;
+			i = 0;
 
-            while (drivers[i])
+			while (drivers[i])
 			{
 				if ((listclones || drivers[i]->clone_of == 0
 						|| (drivers[i]->clone_of->flags & NOT_A_DRIVER)
@@ -647,13 +652,13 @@ int frontend_help (int argc, char **argv)
 
 					#ifndef MESS
 					/* source file (skip the leading "src/drivers/" */
-                    printf("%-10s ",&drivers[i]->source_file[12]);
-                    #else
+					printf("%-10s ",&drivers[i]->source_file[12]);
+					#else
 					/* source file (skip the leading "src/mess/systems/" */
 					printf("%-10s ",&drivers[i]->source_file[17]);
 					#endif
 
-                    /* Then, cpus */
+					/* Then, cpus */
 
 					for(j=0;j<MAX_CPU;j++)
 					{
@@ -680,10 +685,170 @@ int frontend_help (int argc, char **argv)
 
 					printf("%s\n",drivers[i]->description);
 				}
-                i++;
-            }
-	    return 0;
-            break;
+				i++;
+			}
+			return 0;
+			break;
+
+		case LIST_GAMELISTHEADER: /* GAMELIST.TXT */
+			printf("This is the complete list of games supported by MAME %s\n",build_version);
+			if (!listclones)
+				printf("Variants of the same game are not included, you can use the -listclones command\n"
+					"to get a list of the alternate versions of a given game.\n");
+			printf("\n"
+				"The list is generated automatically and is not 100%% accurate, particularly in\n"
+				"the \"Screen Flip\" column. Please let us know of any errors you find so we can\n"
+				"correct them.\n"
+				"\n"
+				"The meanings of the columns are as follows:\n"
+				"Working - \"No\" means that the emulation has shortcomings that cause the game\n"
+				"  not to work correctly. This can be anywhere from just showing a black screen\n"
+				"  to to being playable with major problems.\n"
+				"Correct Colors - \"Yes\" means that colors should be identical to the original,\n"
+				"  \"Close\" that they are very similar but wrong in places, \"No\" that they are\n"
+				"  completely wrong. In some cases, we were not able to find the color PROMs of\n"
+				"  the game. Those PROMs will be reported as \"NO GOOD DUMP KNOWN\" on startup,\n"
+				"  and the game will have wrong colors. The game is still reported as \"Yes\" in\n"
+				"  this column, because the code to handle the color PROMs is in the driver and\n"
+				"  if you provide them colors will be correct.\n"
+				"Sound - \"Partial\" means that sound support is either incomplete or not entirely\n"
+				"  accurate. Note that, due to analog circuitry which is difficult to emulate,\n"
+				"  sound may be significantly different from the real board. A common case is\n"
+				"  the presence of low pass filters that make the real board sound less harsh\n"
+				"  than the emulation.\n"
+				"Screen Flip - A large number of games have a dip switch setting for \"Cocktail\"\n"
+				"  cabinet, meaning that the players sit in front of each other, and the screen\n"
+				"  is flipped when player 2 is playing. Some games also ahve a \"Flip Screen\" dip\n"
+				"  switch. Those need special support in the driver, whcih is missing in many\n"
+				"  cases.\n"
+				"Internal Name - This is the unique name that should be specified on the command\n"
+				"  line to run the game. ROMs must be placed in the ROM path, either in a .zip\n"
+				"  file or in a subdirectory of the same name. The former is suggested, because\n"
+				"  the files will be identified by their CRC instead of requiring specific\n"
+				"  names.\n\n");
+			printf("+----------------------------------+-------+-------+-------+-------+----------+\n");
+			printf("|                                  |       |Correct|       |Screen | Internal |\n");
+			printf("| Game Name                        |Working|Colors | Sound | Flip  |   Name   |\n");
+			printf("+----------------------------------+-------+-------+-------+-------+----------+\n");
+			return 0;
+			break;
+
+		case LIST_GAMELISTFOOTER: /* GAMELIST.TXT */
+			printf("+----------------------------------+-------+-------+-------+-------+----------+\n\n");
+			printf("(1) There are variants of the game (usually bootlegs) that work correctly\n");
+			printf("(2) Needs samples provided separately\n");
+			return 0;
+			break;
+
+		case LIST_GAMELIST: /* GAMELIST.TXT */
+			i = 0;
+
+			while (drivers[i])
+			{
+				if ((listclones || drivers[i]->clone_of == 0
+						|| (drivers[i]->clone_of->flags & NOT_A_DRIVER)
+						) && !strwildcmp(gamename, drivers[i]->name))
+				{
+					char name[200],name_ref[200];
+
+					strcpy(name,drivers[i]->description);
+
+					/* Move leading "The" to the end */
+					if (strstr(name," (")) *strstr(name," (") = 0;
+					if (strncmp(name,"The ",4) == 0)
+					{
+						sprintf(name_ref,"%s, The ",name+4);
+					}
+					else
+						sprintf(name_ref,"%s ",name);
+
+					/* print the additional description only if we are listing clones */
+					if (listclones)
+					{
+						if (strchr(drivers[i]->description,'('))
+							strcat(name_ref,strchr(drivers[i]->description,'('));
+					}
+
+					printf("| %-33.33s",name_ref);
+
+					if (drivers[i]->flags & GAME_NOT_WORKING)
+					{
+						const struct GameDriver *maindrv;
+						int foundworking;
+
+						if (drivers[i]->clone_of && !(drivers[i]->clone_of->flags & NOT_A_DRIVER))
+							maindrv = drivers[i]->clone_of;
+						else maindrv = drivers[i];
+
+						foundworking = 0;
+						j = 0;
+						while (drivers[j])
+						{
+							if (drivers[j] == maindrv || drivers[j]->clone_of == maindrv)
+							{
+								if ((drivers[j]->flags & GAME_NOT_WORKING) == 0)
+								{
+									foundworking = 1;
+									break;
+								}
+							}
+							j++;
+						}
+
+						if (foundworking)
+							printf("| No(1) ");
+						else
+							printf("|   No  ");
+					}
+					else
+						printf("|  Yes  ");
+
+					if (drivers[i]->flags & GAME_WRONG_COLORS)
+						printf("|   No  ");
+					else if (drivers[i]->flags & GAME_IMPERFECT_COLORS)
+						printf("| Close ");
+					else
+						printf("|  Yes  ");
+
+					{
+						const char **samplenames = 0;
+						for (j = 0;drivers[i]->drv->sound[j].sound_type && j < MAX_SOUND; j++)
+						{
+							if (drivers[i]->drv->sound[j].sound_type == SOUND_SAMPLES)
+							{
+								samplenames = ((struct Samplesinterface *)drivers[i]->drv->sound[j].sound_interface)->samplenames;
+								break;
+							}
+						}
+						if (drivers[i]->flags & GAME_NO_SOUND)
+							printf("|   No  ");
+						else if (drivers[i]->flags & GAME_IMPERFECT_SOUND)
+						{
+							if (samplenames)
+								printf("|Part(2)");
+							else
+								printf("|Partial");
+						}
+						else
+						{
+							if (samplenames)
+								printf("| Yes(2)");
+							else
+								printf("|  Yes  ");
+						}
+					}
+
+					if (drivers[i]->flags & GAME_NO_COCKTAIL)
+						printf("|   No  ");
+					else
+						printf("|  Yes  ");
+
+					printf("| %-8s |\n",drivers[i]->name);
+				}
+				i++;
+			}
+			return 0;
+			break;
 
 		case LIST_LISTGAMES: /* list games, production year, manufacturer */
 			i = 0;
@@ -1023,7 +1188,8 @@ int frontend_help (int argc, char **argv)
 
 							if (atoi(drivers[i]->year) == year)
 							{
-								for (j = 0;j < MAX_CPU;j++)
+//								for (j = 0;j < MAX_CPU;j++)
+j = 0;	// count only the main cpu
 									count[x_cpu[j].cpu_type & ~CPU_FLAGS_MASK]++;
 							}
 						}

@@ -590,6 +590,6 @@ ROM_END
 
 
 
-GAMEX(1988, cabal,   0,     cabal,   cabal, 0, ROT0, "Tad (Fabtek license)", "Cabal (US set 1)", GAME_NOT_WORKING )
-GAMEX(1988, cabal2,  cabal, cabal,   cabal, 0, ROT0, "Tad (Fabtek license)", "Cabal (US set 2)", GAME_NOT_WORKING )
-GAME( 1988, cabalbl, cabal, cabalbl, cabal, 0, ROT0, "bootleg", "Cabal (bootleg)" )
+GAMEX( 1988, cabal,   0,     cabal,   cabal, 0, ROT0, "Tad (Fabtek license)", "Cabal (US set 1)", GAME_NOT_WORKING | GAME_IMPERFECT_SOUND | GAME_NO_COCKTAIL )
+GAMEX( 1988, cabal2,  cabal, cabal,   cabal, 0, ROT0, "Tad (Fabtek license)", "Cabal (US set 2)", GAME_NOT_WORKING | GAME_IMPERFECT_SOUND | GAME_NO_COCKTAIL )
+GAMEX( 1988, cabalbl, cabal, cabalbl, cabal, 0, ROT0, "bootleg", "Cabal (bootleg)", GAME_IMPERFECT_SOUND | GAME_NO_COCKTAIL )

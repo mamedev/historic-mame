@@ -11,7 +11,7 @@
 		* Tri-Sports
 		* Pigskin 621AD
 
-	Emulation by Bryan McPhail, mish@tendril.force9.net and
+	Emulation by Bryan McPhail, mish@tendril.co.uk and
 	Aaron Giles agiles@pobox.com
 
 ****************************************************************************

@@ -27,7 +27,7 @@ Galactic Warriors   GX578*1985   68000           GX400
 Salamander          GX587*1986   68000           GX400
 WEC Le Mans 24      GX602*1986 2x68000
 BAW                 GX604 1987
-Combat School       GX611*1987    6309           007121(x2)
+Combat School       GX611*1987    6309           007121(x2)               007327 (palette)
 Rock 'n Rage /      GX620*1986    6309 007342        007420               007327 (palette)
   Koi no Hotrock
 Mr Kabuki/Mr Goemon GX621*1986     Z80           005849
@@ -37,7 +37,7 @@ Flak Attack         GX669*1987    6309           007121                   007327
 Devil World / Dark  GX687*1987 2x68000           TWIN16
   Adventure / Majuu no Oukoku
 Double Dribble      GX690*1986  3x6809           005885(x2)               007327 (palette) 007452
-Kitten Kaboodle     GX712 1988
+Kitten Kaboodle     GX712+1988                   GX400                    007593 (palette) 051550
 Chequered Flag      GX717+1988  052001               051960 051937(x2)    051316(x2) (zoom/rotation) 051733 (protection)
 Fast Lane           GX752*1987    6309           007121                   051733 (protection) 007801
 Hot Chase           GX763*1988 2x68000                                    051316(x3) (zoom/rotation) 007634 007635 007558 007557
@@ -51,7 +51,7 @@ Super Contra        GX775*1988  052001 052109 051962 051960 051937  PROM  007327
 Battlantis          GX777*1987    6309 007342        007420               007327 (palette) 007324
 Vulcan Venture /    GX785*1988 2x68000           TWIN16
   Gradius 2
-City Bomber         GX787+1987   68000
+City Bomber         GX787+1987   68000           GX400                    007593 (palette) 051550
 Over Drive          GX789 1990
 Hyper Crash         GX790 1987
 Blades of Steel     GX797*1987    6309 007342        007420               007327 (palette) 051733 (protection)
@@ -154,14 +154,49 @@ THE FOLLOWING INFORMATION IS PRELIMINARY AND INACCURATE. DON'T RELY ON IT.
 
 007121
 ------
+This is an interesting beast. Many games use two of these in pair.
+It manages sprites and two 32x32 tilemaps. The tilemaps can be joined to form
+a single 64x32 one, or one of them can be moved to the side of screen, giving
+a high score display suitable for vertical games.
+The chip also generates clock and interrupt signals suitable for a 6809.
+It uses 0x2000 bytes of RAM for the tilemaps and sprites, and an additional
+0x100 bytes, maybe for scroll RAM and line buffers. The maximum addressable
+ROM is 0x80000 bytes (addressed 16 bits at a time).
+Two 256x4 lookup PROMs are also used to increase the color combinations.
+All tilemap / sprite priority handling is done internally and the chip exports
+7 bits of color code, composed of 2 bits of palette bank, 1 bit indicating tile
+or sprite, and 4 bits of ROM data remapped through the PROM.
+
+inputs:
+- address lines (A0-A13)
+- data lines (DB0-DB7)
+- misc interface stuff
+- data from the gfx ROMs (RDL0-RDL7, RDU0-RDU7)
+- data from the tile lookup PROMs (VCD0-VCD3)
+- data from the sprite lookup PROMs (OCD0-OCD3)
+
+outputs:
+- address lines for tilemap RAM (AX0-AX12)
+- data lines for tilemap RAM (VO0-VO7)
+- address lines for the small RAM (FA0-FA7)
+- data lines for the small RAM (FD0-FD7)
+- address lines for the gfx ROMs (R0-R17)
+- address lines for the tile lookup PROMs (VCF0-VCF3, VCB0-VCB3)
+- address lines for the sprite lookup PROMs (OCB0-OCB3, OCF0-OCF3)
+- NNMI, NIRQ, NFIR, NE, NQ for the main CPU
+- misc interface stuff
+- color code to be output on screen (COA0-COA6)
+
+
 control registers
-000: scroll x (low 8 bits)
+000:          scroll x (low 8 bits)
 001: -------x scroll x (high bit)
+     ------x- enable rowscroll? (combasc)
      ----x--- this probably selects an alternate screen layout used in combat
               school where tilemap #2 is overlayed on front and doesn't scroll.
-              In the normal layout (used only by hcastle) the two tilemaps are
-              joined to form a single 64x32 scrolling tilemap.
-002: scroll y
+              The 32 lines of the front layer can be individually turned on or
+              off using the second 32 bytes of scroll RAM.
+002:          scroll y
 003: -------x bit 13 of the tile code
      ------x- unknown (contra)
      -----x-- might be sprite / tilemap priority (0 = sprites have priority)
@@ -179,12 +214,17 @@ control registers
               gameplay and resetting it on the title screen and crosshatch.
      --x----- might be sprite / tilemap priority (0 = sprites have priority)
               (combat school, contra, haunted castle(0/1), labyrunr)
-     -x------ enables an extra bank of 0x40 sprites (combasc, labyrunr)
+     -x------ Chops away the leftmost and rightmost columns, switching the
+              visible area from 256 to 240 pixels. This is used by combasc on
+              the scrolling stages, and by labyrunr on the title screen.
+              At first I thought that this enabled an extra bank of 0x40
+              sprites, needed by combasc, but labyrunr proves that this is not
+              the case
      x------- unknown (contra)
-004: ----xx-- in flak attack, bits 11-12 of the tile code for the background layer
-              fast lane uses only bit 3
-     -x------ unknown (combat school, flak attack)
-     x------- unknown (combat school, fast lane, labyrunr, flak attack)
+004: ----xxxx bits 9-12 of the tile code. Only the bits enabled by the following
+              mask are actually used, and replace the ones selected by register
+			  005.
+     xxxx---- mask enabling the above bits
 005: selects where in the attribute byte to pick bits 9-12 of the tile code,
      output to pins R12-R15. The bit of the attribute byte to use is the
      specified bit (0-3) + 3, that is one of bits 3-6. Bit 7 is hardcoded as
@@ -196,11 +236,21 @@ control registers
      ----xx-- attribute bit to use for tile code bit 10
      --xx---- attribute bit to use for tile code bit 11
      xx------ attribute bit to use for tile code bit 12
-006: -------x unknown (combat school, fast lane, flak attack)
-     -----x-- This is set only in Flak Attack, so it seems to be the one that
-              selects a different layout for the sprite RAM. It might be a
-              "compatibility mode" with an older custom IC.
-     ----x--- unknown (combat school, haunted castle(0/1), labyrunr)
+006: ----xxxx select additional effect for bits 3-6 of the tile attribute (the
+              same ones indexed by register 005). Note that an attribute bit
+              can therefore be used at the same time to be BOTH a tile code bit
+              and an additional effect.
+     -------x bit 3 of attribute is bit 3 of color (combasc, fastlane, flkatck)
+	 ------x- bit 4 of attribute is tile flip X (assumption - no game uses this)
+     -----x-- bit 5 of attribute is tile flip Y (flkatck)
+     ----x--- bit 6 of attribute is tile priority over sprites (combasc, hcastle,
+              labyrunr)
+              Note that hcastle sets this bit for layer 0, and bit 6 of the
+              attribute is also used as bit 12 of the tile code, however that
+              bit is ALWAYS set thoughout the game.
+              combasc uses the bit inthe "graduation" scene during attract mode,
+              to place soldiers behind the stand.
+              Use in labyrunr has not been investigated yet.
      --xx---- palette bank (both tiles and sprites, see contra)
 007: -------x nmi enable
      ------x- irq enable
@@ -225,6 +275,7 @@ control registers
      ------x- MSB of x scroll 2
      ---xxx-- layer 1 row/column scroll control
               000 = disabled
+			  010 = unknown (bladestl shootout between periods)
               011 = 32 columns (Blades of Steel)
               101 = 256 rows (Battlantis, Rock 'n Rage)
      x------- enable sprite wraparound from bottom to top (see Blades of Steel
@@ -338,7 +389,7 @@ address lines), and then reading it from the 051962.
          :         051962 and it is not hardwired to a specific tile attribute.
          :         Note that xmen, punkshot and thndrx2 set the bit but the current
          :         drivers don't use flip X and seem to work fine.
-         : bit 2 = enables tile Y flip when bit 1 of the tile attribute is set
+         : bit 2 = enables tile flip Y when bit 1 of the tile attribute is set
 1f00     : ROM bank selector bits 0-3 = bank 2 bits 4-7 = bank 3
 2000-27ff: layer FIX tilemap (code)
 2800-2fff: layer A tilemap (code)
@@ -786,7 +837,8 @@ void K007121_ctrl_1_w(int offset,int data)
  *
  * Flack Attack uses a different, "wider" layout with 32 bytes per sprites,
  * mapped as follows, and the priority order is reversed. Maybe it is a
- * compatibility mode with an older custom IC.
+ * compatibility mode with an older custom IC. It is not known how this
+ * alternate layout is selected.
  *
  * 0 -> e
  * 1 -> f
@@ -802,6 +854,7 @@ void K007121_sprites_draw(int chip,struct osd_bitmap *bitmap,
 	const struct GfxElement *gfx = Machine->gfx[chip];
 	int flip_screen = K007121_flipscreen[chip];
 	int i,num,inc,offs[5],trans;
+	int is_flakatck = K007121_ctrlram[chip][0x06] & 0x04;	/* WRONG!!!! */
 
 #if 0
 usrintf_showmessage("%02x-%02x-%02x-%02x-%02x-%02x-%02x-%02x  %02x-%02x-%02x-%02x-%02x-%02x-%02x-%02x",
@@ -822,7 +875,7 @@ if (keyboard_pressed(KEYCODE_D))
 }
 #endif
 
-	if (K007121_ctrlram[chip][0x06] & 0x04)	/* Flak Attack */
+	if (is_flakatck)
 	{
 		num = 0x40;
 		inc = -0x20;
@@ -838,7 +891,7 @@ if (keyboard_pressed(KEYCODE_D))
 	}
 	else	/* all others */
 	{
-		num = (K007121_ctrlram[chip][0x03] & 0x40) ? 0x80 : 0x40;
+		num = (K007121_ctrlram[chip][0x03] & 0x40) ? 0x80 : 0x40;	/* WRONG!!! (needed by combasc)  */
 		inc = 5;
 		offs[0] = 0x00;
 		offs[1] = 0x01;
@@ -870,7 +923,7 @@ if (keyboard_pressed(KEYCODE_D))
 		number = number << 2;
 		number += (sprite_bank >> 2) & 3;
 
-		if (number || !(K007121_ctrlram[chip][0x06] & 0x04))	/* Flak Attack needs this */
+		if (!is_flakatck || source[0x00])	/* Flak Attack needs this */
 		{
 			number += bank_base;
 
@@ -919,10 +972,11 @@ void K007121_mark_sprites_colors(int chip,
 		const unsigned char *source,int base_color,int bank_base)
 {
 	int i,num,inc,offs[5];
+	int is_flakatck = K007121_ctrlram[chip][0x06] & 0x04;	/* WRONG!!!! */
 
 	unsigned short palette_map[512];
 
-	if (K007121_ctrlram[chip][0x06] & 0x04)	/* Flak Attack */
+	if (is_flakatck)
 	{
 		num = 0x40;
 		inc = -0x20;
@@ -1163,6 +1217,7 @@ void K007342_tilemap_update(void)
 	switch (K007342_regs[2] & 0x1c)
 	{
 		case 0x00:
+		case 0x08:	/* unknown, blades of steel shootout between periods */
 			tilemap_set_scroll_rows(K007342_tilemap[0],1);
 			tilemap_set_scroll_cols(K007342_tilemap[0],1);
 			tilemap_set_scrollx(K007342_tilemap[0],0,K007342_scrollx[0]);
@@ -3164,12 +3219,18 @@ switch (K053247_spriteoffsY)
 	case 0x0071:	/* simpsons flip */
 		offsetkludge = 0x017;
 		break;
+	case 0x02f7:	/* vendetta (level 4 boss) */
+	case 0x02f8:	/* vendetta (level 4 boss) */
+	case 0x02f9:	/* vendetta (level 4 boss) */
 	case 0x02fa:	/* vendetta */
 	case 0x02fb:	/* vendetta (fat guy jumping) */
 	case 0x02fc:	/* vendetta (fat guy jumping) */
 	case 0x02fd:	/* vendetta (fat guy jumping) */
 	case 0x02fe:	/* vendetta (fat guy jumping) */
 	case 0x02ff:	/* vendetta (fat guy jumping) */
+	case 0x03f7:	/* vendetta flip (level 4 boss) */
+	case 0x03f8:	/* vendetta flip (level 4 boss) */
+	case 0x03f9:	/* vendetta flip (level 4 boss) */
 	case 0x03fa:	/* vendetta flip */
 	case 0x03fb:	/* vendetta flip (fat guy jumping) */
 	case 0x03fc:	/* vendetta flip (fat guy jumping) */

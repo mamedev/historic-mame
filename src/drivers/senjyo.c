@@ -4,6 +4,10 @@ Senjyo / Star Force / Baluba-louk
 
 driver by Mirko Buffoni
 
+TODO:
+- wrong background colors in baluba, intermissions after round 13
+
+
 This board was obviously born to run Senjyo. Four scrolling layers, gradient
 background, sprite/background priorities, and even a small bitmap for the
 radar. Star Force uses only a small subset of the features.
@@ -368,7 +372,7 @@ INPUT_PORTS_START( starforc )
 	PORT_DIPSETTING(    0x05, "100000" )
 	PORT_DIPSETTING(    0x06, "200000" )
 	PORT_DIPSETTING(    0x07, "None" )
-	PORT_DIPNAME( 0x38, 0x10, DEF_STR( Difficulty ) )
+	PORT_DIPNAME( 0x38, 0x00, DEF_STR( Difficulty ) )
 	PORT_DIPSETTING(    0x00, "Easiest" )
 	PORT_DIPSETTING(    0x08, "Easy" )
 	PORT_DIPSETTING(    0x10, "Normal" )
@@ -821,4 +825,4 @@ GAME( 1983, senjyo,   0,        senjyo, senjyo,   senjyo,   ROT90, "Tehkan", "Se
 GAME( 1984, starforc, 0,        senjyo, starforc, starforc, ROT90, "Tehkan", "Star Force" )
 GAME( 1984, starfore, starforc, senjyo, starforc, starfore, ROT90, "Tehkan", "Star Force (encrypted)" )
 GAME( 1985, megaforc, starforc, senjyo, starforc, starforc, ROT90, "Tehkan (Video Ware license)", "Mega Force" )
-GAME( 1986, baluba,   0,        senjyo, baluba,   starforc, ROT90, "Able Corp, Ltd.", "Baluba-louk no Densetsu" )
+GAMEX(1986, baluba,   0,        senjyo, baluba,   starforc, ROT90, "Able Corp, Ltd.", "Baluba-louk no Densetsu", GAME_IMPERFECT_COLORS )

@@ -12,7 +12,7 @@ down hardware (it doesn't write any good sound data btw, mostly zeros).
 
   Same hardware as Tumblepop, the two drivers can be joined at a later date.
 
-  Emulation by Bryan McPhail, mish@tendril.force9.net
+  Emulation by Bryan McPhail, mish@tendril.co.uk
 
 ***************************************************************************/
 
@@ -309,7 +309,7 @@ static struct MachineDriver machine_driver_supbtime =
 			ignore_interrupt,0
 		}
 	},
-	58, DEFAULT_REAL_60HZ_VBLANK_DURATION,
+	58, 529,
 	1,
 	0,
 
@@ -377,4 +377,4 @@ static void init_supbtime(void)
 
 /******************************************************************************/
 
-GAME( 1990, supbtime, 0, supbtime, supbtime, supbtime, ROT0, "Data East Corporation", "Super Burger Time (Japan)" )
+GAMEX( 1990, supbtime, 0, supbtime, supbtime, supbtime, ROT0, "Data East Corporation", "Super Burger Time (Japan)", GAME_NO_COCKTAIL )

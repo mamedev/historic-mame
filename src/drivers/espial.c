@@ -348,5 +348,5 @@ ROM_END
 
 
 
-GAME( 1983, espial,  0,      espial, espial, 0, ROT0, "[Orca] Thunderbolt", "Espial (US?)" )
-GAME( 1983, espiale, espial, espial, espial, 0, ROT0, "[Orca] Thunderbolt", "Espial (Europe)" )
+GAMEX( 1983, espial,  0,      espial, espial, 0, ROT0, "[Orca] Thunderbolt", "Espial (US?)", GAME_NO_COCKTAIL )
+GAMEX( 1983, espiale, espial, espial, espial, 0, ROT0, "[Orca] Thunderbolt", "Espial (Europe)", GAME_NO_COCKTAIL )

@@ -14,29 +14,45 @@ static struct tilemap *layer0, *layer1;
 static void get_tile_info0(int col,int row)
 {
 	int tile_index = 32*row+col;
-	int color = fastlane_videoram1[tile_index];
-	int gfxbank = ((color & 0x80) >> 7) | ((color & 0x70) >> 3)
-					| ((K007121_ctrlram[0][0x04] & 0x08) << 1)
-					| ((K007121_ctrlram[0][0x03] & 0x01) << 5);
+	int attr = fastlane_videoram1[tile_index];
 	int code = fastlane_videoram1[tile_index + 0x400];
+	int bit0 = (K007121_ctrlram[0][0x05] >> 0) & 0x03;
+	int bit1 = (K007121_ctrlram[0][0x05] >> 2) & 0x03;
+	int bit2 = (K007121_ctrlram[0][0x05] >> 4) & 0x03;
+	int bit3 = (K007121_ctrlram[0][0x05] >> 6) & 0x03;
+	int bank = ((attr & 0x80) >> 7) |
+			((attr >> (bit0+2)) & 0x02) |
+			((attr >> (bit1+1)) & 0x04) |
+			((attr >> (bit2  )) & 0x08) |
+			((attr >> (bit3-1)) & 0x10) |
+			((K007121_ctrlram[0][0x03] & 0x01) << 5);
+	int mask = (K007121_ctrlram[0][0x04] & 0xf0) >> 4;
 
-	code += 256*gfxbank;
+	bank = (bank & ~(mask << 1)) | ((K007121_ctrlram[0][0x04] & mask) << 1);
 
-	SET_TILE_INFO(0,code,1);
+	SET_TILE_INFO(0,code+bank*256,1);
 }
 
 static void get_tile_info1(int col,int row)
 {
 	int tile_index = 32*row+col;
-	int color = fastlane_videoram2[tile_index];
-	int gfxbank = ((color & 0x80) >> 7) | ((color & 0x70) >> 3)
-					| ((K007121_ctrlram[0][0x04] & 0x08) << 1)
-					| ((K007121_ctrlram[0][0x03] & 0x01) << 5);
+	int attr = fastlane_videoram2[tile_index];
 	int code = fastlane_videoram2[tile_index + 0x400];
+	int bit0 = (K007121_ctrlram[0][0x05] >> 0) & 0x03;
+	int bit1 = (K007121_ctrlram[0][0x05] >> 2) & 0x03;
+	int bit2 = (K007121_ctrlram[0][0x05] >> 4) & 0x03;
+	int bit3 = (K007121_ctrlram[0][0x05] >> 6) & 0x03;
+	int bank = ((attr & 0x80) >> 7) |
+			((attr >> (bit0+2)) & 0x02) |
+			((attr >> (bit1+1)) & 0x04) |
+			((attr >> (bit2  )) & 0x08) |
+			((attr >> (bit3-1)) & 0x10) |
+			((K007121_ctrlram[0][0x03] & 0x01) << 5);
+	int mask = (K007121_ctrlram[0][0x04] & 0xf0) >> 4;
 
-	code += 256*gfxbank;
+	bank = (bank & ~(mask << 1)) | ((K007121_ctrlram[0][0x04] & mask) << 1);
 
-	SET_TILE_INFO(0,code,0);
+	SET_TILE_INFO(0,code+bank*256,0);
 }
 
 /***************************************************************************
@@ -48,7 +64,7 @@ static void get_tile_info1(int col,int row)
 int fastlane_vh_start(void)
 {
 	layer0 = tilemap_create(get_tile_info0, TILEMAP_OPAQUE, 8, 8, 32, 32);
-	layer1 = tilemap_create(get_tile_info1, TILEMAP_OPAQUE, 8, 8,  5, 32);
+	layer1 = tilemap_create(get_tile_info1, TILEMAP_OPAQUE, 8, 8, 32, 32);
 
 	tilemap_set_scroll_rows( layer0, 32 );
 
@@ -58,7 +74,7 @@ int fastlane_vh_start(void)
 		clip.min_x += 40;
 		tilemap_set_clip(layer0,&clip);
 
-		clip.max_x = 40;
+		clip.max_x = 39;
 		clip.min_x = 0;
 		tilemap_set_clip(layer1,&clip);
 
@@ -86,9 +102,7 @@ void fastlane_vram2_w(int offset,int data)
 {
 	if (fastlane_videoram2[offset] != data)
 	{
-		int col = offset%32;
-		if (col < 5)
-			tilemap_mark_tile_dirty(layer1, col, (offset&0x3ff)/32);
+		tilemap_mark_tile_dirty(layer1, offset%32, (offset&0x3ff)/32);
 		fastlane_videoram2[offset] = data;
 	}
 }

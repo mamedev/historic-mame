@@ -1,9 +1,10 @@
 /*****************************************************************************
  *
  *	 m6502.c
- *	 Portable 6502/65c02/6510 emulator V1.1
+ *	 Portable 6502/65c02/65sc02/6510/n2a03 emulator V1.2
  *
- *	 Copyright (c) 1998 Juergen Buchmueller, all rights reserved.
+ *	 Copyright (c) 1998,1999,2000 Juergen Buchmueller, all rights reserved.
+ *	 65sc02 core Copyright (c) 2000 Peter Trauner.
  *
  *	 - This source code is released as freeware for non-commercial purposes.
  *	 - You are free to use and redistribute this code in modified or
@@ -14,11 +15,12 @@
  *	 - If you wish to use this for commercial purposes, please contact me at
  *	   pullmoll@t-online.de
  *	 - The author of this copywritten work reserves the right to change the
- *     terms of its usage and license at any time, including retroactively
- *   - This entire notice must remain in the source code.
+ *	   terms of its usage and license at any time, including retroactively
+ *	 - This entire notice must remain in the source code.
  *
  *****************************************************************************/
 /* 2.February 2000 PeT added 65sc02 subtype */
+/* 10.March   2000 PeT added 6502 set overflow input line */
 
 #include <stdio.h>
 #include "driver.h"
@@ -40,7 +42,7 @@ extern FILE * errorlog;
 /* Layout of the registers in the debugger */
 static UINT8 m6502_reg_layout[] = {
 	M6502_PC, M6502_S, M6502_P, M6502_A, M6502_X, M6502_Y, -1,
-	M6502_EA, M6502_ZP, M6502_NMI_STATE, M6502_IRQ_STATE, 0
+	M6502_EA, M6502_ZP, M6502_NMI_STATE, M6502_IRQ_STATE, M6502_SO_STATE, 0
 };
 
 /* Layout of the debugger windows x,y,w,h */
@@ -58,22 +60,23 @@ static UINT8 m6502_win_layout[] = {
 typedef struct
 {
 	UINT8	subtype;		/* currently selected cpu sub type */
-    void    (**insn)(void); /* pointer to the function pointer table */
+	void	(**insn)(void); /* pointer to the function pointer table */
 	PAIR	ppc;			/* previous program counter */
-    PAIR    pc;             /* program counter */
-    PAIR    sp;             /* stack pointer (always 100 - 1FF) */
-    PAIR    zp;             /* zero page address */
-    PAIR    ea;             /* effective address */
-    UINT8   a;              /* Accumulator */
-    UINT8   x;              /* X index register */
-    UINT8   y;              /* Y index register */
-    UINT8   p;              /* Processor status */
+	PAIR	pc; 			/* program counter */
+	PAIR	sp; 			/* stack pointer (always 100 - 1FF) */
+	PAIR	zp; 			/* zero page address */
+	PAIR	ea; 			/* effective address */
+	UINT8	a;				/* Accumulator */
+	UINT8	x;				/* X index register */
+	UINT8	y;				/* Y index register */
+	UINT8	p;				/* Processor status */
 	UINT8	pending_irq;	/* nonzero if an IRQ is pending */
-    UINT8   after_cli;      /* pending IRQ and last insn cleared I */
+	UINT8	after_cli;		/* pending IRQ and last insn cleared I */
 	UINT8	nmi_state;
 	UINT8	irq_state;
-    int     (*irq_callback)(int irqline);   /* IRQ callback */
-}   m6502_Regs;
+	UINT8   so_state;
+	int 	(*irq_callback)(int irqline);	/* IRQ callback */
+}	m6502_Regs;
 
 int m6502_ICount = 0;
 
@@ -109,12 +112,12 @@ static m6502_Regs m6502;
 void m6502_reset(void *param)
 {
 	m6502.subtype = SUBTYPE_6502;
-    m6502.insn = insn6502;
+	m6502.insn = insn6502;
 
 	/* wipe out the rest of the m6502 structure */
 	/* read the reset vector into PC */
-    PCL = RDMEM(M6502_RST_VEC);
-    PCH = RDMEM(M6502_RST_VEC+1);
+	PCL = RDMEM(M6502_RST_VEC);
+	PCH = RDMEM(M6502_RST_VEC+1);
 
 	m6502.sp.d = 0x01ff;	/* stack pointer starts at page 1 offset FF */
 	m6502.p = F_T|F_I|F_Z;	/* set T, I and Z flags */
@@ -181,6 +184,7 @@ unsigned m6502_get_reg (int regnum)
 		case M6502_ZP: return m6502.zp.w.l;
 		case M6502_NMI_STATE: return m6502.nmi_state;
 		case M6502_IRQ_STATE: return m6502.irq_state;
+		case M6502_SO_STATE: return m6502.so_state;
 		case M6502_SUBTYPE: return m6502.subtype;
 		case REG_PREVIOUSPC: return m6502.ppc.w.l;
 		default:
@@ -208,6 +212,7 @@ void m6502_set_reg (int regnum, unsigned val)
 		case M6502_ZP: m6502.zp.w.l = val; break;
 		case M6502_NMI_STATE: m6502_set_nmi_line( val ); break;
 		case M6502_IRQ_STATE: m6502_set_irq_line( 0, val ); break;
+		case M6502_SO_STATE: m6502_set_irq_line( M6502_SET_OVERFLOW, val ); break;
 		default:
 			if( regnum <= REG_SP_CONTENTS )
 			{
@@ -218,7 +223,7 @@ void m6502_set_reg (int regnum, unsigned val)
 					WRMEM( offset + 1, (val >> 8) & 0xff );
 				}
 			}
-    }
+	}
 }
 
 INLINE void take_irq(void)
@@ -236,7 +241,7 @@ INLINE void take_irq(void)
 		LOG((errorlog,"M6502#%d takes IRQ ($%04x)\n", cpu_getactivecpu(), PCD));
 		/* call back the cpuintrf to let it clear the line */
 		if (m6502.irq_callback) (*m6502.irq_callback)(0);
-	    change_pc16(PCD);
+		change_pc16(PCD);
 	}
 	m6502.pending_irq = 0;
 }
@@ -250,37 +255,37 @@ int m6502_execute(int cycles)
 	do
 	{
 		UINT8 op;
-        PPC = PCD;
+		PPC = PCD;
 
-        CALL_MAME_DEBUG;
+		CALL_MAME_DEBUG;
 
 		op = RDOP();
-        /* if an irq is pending, take it now */
+		/* if an irq is pending, take it now */
 		if( m6502.pending_irq && op == 0x78 )
-            take_irq();
+			take_irq();
 
 		(*m6502.insn[op])();
 
 		/* check if the I flag was just reset (interrupts enabled) */
-        if( m6502.after_cli )
-        {
-            LOG((errorlog,"M6502#%d after_cli was >0", cpu_getactivecpu()));
-            m6502.after_cli = 0;
-            if (m6502.irq_state != CLEAR_LINE)
-            {
-                LOG((errorlog,": irq line is asserted: set pending IRQ\n"));
-                m6502.pending_irq = 1;
-            }
-            else
-            {
-                LOG((errorlog,": irq line is clear\n"));
-            }
-        }
+		if( m6502.after_cli )
+		{
+			LOG((errorlog,"M6502#%d after_cli was >0", cpu_getactivecpu()));
+			m6502.after_cli = 0;
+			if (m6502.irq_state != CLEAR_LINE)
+			{
+				LOG((errorlog,": irq line is asserted: set pending IRQ\n"));
+				m6502.pending_irq = 1;
+			}
+			else
+			{
+				LOG((errorlog,": irq line is clear\n"));
+			}
+		}
 		else
 		if( m6502.pending_irq )
-            take_irq();
+			take_irq();
 
-    } while (m6502_ICount > 0);
+	} while (m6502_ICount > 0);
 
 	return cycles - m6502_ICount;
 }
@@ -302,11 +307,21 @@ void m6502_set_nmi_line(int state)
 		PCH = RDMEM(EAD+1);
 		LOG((errorlog,"M6502#%d takes NMI ($%04x)\n", cpu_getactivecpu(), PCD));
 		change_pc16(PCD);
-    }
+	}
 }
 
 void m6502_set_irq_line(int irqline, int state)
 {
+	if( irqline == M6502_SET_OVERFLOW )
+	{
+		if( m6502.so_state && !state )
+		{
+			LOG((errorlog, "M6502#%d set overflow\n", cpu_getactivecpu()));
+			P|=F_V;
+		}
+		m6502.so_state=state;
+		return;
+	}
 	m6502.irq_state = state;
 	if( state != CLEAR_LINE )
 	{
@@ -335,13 +350,14 @@ void m6502_state_save(void *file)
 	state_save_UINT8(file,"m6502",cpu,"AFTER_CLI",&m6502.after_cli,1);
 	state_save_UINT8(file,"m6502",cpu,"NMI_STATE",&m6502.nmi_state,1);
 	state_save_UINT8(file,"m6502",cpu,"IRQ_STATE",&m6502.irq_state,1);
+	state_save_UINT8(file,"m6502",cpu,"SO_STATE",&m6502.so_state,1);
 }
 
 void m6502_state_load(void *file)
 {
 	int cpu = cpu_getactivecpu();
 	state_load_UINT8(file,"m6502",cpu,"TYPE",&m6502.subtype,1);
-    /* insn is set at restore since it's a pointer */
+	/* insn is set at restore since it's a pointer */
 	switch (m6502.subtype)
 	{
 #if HAS_M65C02
@@ -373,6 +389,7 @@ void m6502_state_load(void *file)
 	state_load_UINT8(file,"m6502",cpu,"AFTER_CLI",&m6502.after_cli,1);
 	state_load_UINT8(file,"m6502",cpu,"NMI_STATE",&m6502.nmi_state,1);
 	state_load_UINT8(file,"m6502",cpu,"IRQ_STATE",&m6502.irq_state,1);
+	state_load_UINT8(file,"m6502",cpu,"SO_STATE",&m6502.so_state,1);
 }
 
 /****************************************************************************
@@ -389,7 +406,7 @@ const char *m6502_info(void *context, int regnum)
 	if( !context )
 		r = &m6502;
 
-    switch( regnum )
+	switch( regnum )
 	{
 		case CPU_INFO_REG+M6502_PC: sprintf(buffer[which], "PC:%04X", r->pc.w.l); break;
 		case CPU_INFO_REG+M6502_S: sprintf(buffer[which], "S:%02X", r->sp.b.l); break;
@@ -401,7 +418,8 @@ const char *m6502_info(void *context, int regnum)
 		case CPU_INFO_REG+M6502_ZP: sprintf(buffer[which], "ZP:%03X", r->zp.w.l); break;
 		case CPU_INFO_REG+M6502_NMI_STATE: sprintf(buffer[which], "NMI:%X", r->nmi_state); break;
 		case CPU_INFO_REG+M6502_IRQ_STATE: sprintf(buffer[which], "IRQ:%X", r->irq_state); break;
-        case CPU_INFO_FLAGS:
+		case CPU_INFO_REG+M6502_SO_STATE: sprintf(buffer[which], "SO:%X", r->so_state); break;
+		case CPU_INFO_FLAGS:
 			sprintf(buffer[which], "%c%c%c%c%c%c%c%c",
 				r->p & 0x80 ? 'N':'.',
 				r->p & 0x40 ? 'V':'.',
@@ -414,7 +432,7 @@ const char *m6502_info(void *context, int regnum)
 			break;
 		case CPU_INFO_NAME: return "M6502";
 		case CPU_INFO_FAMILY: return "Motorola 6502";
-		case CPU_INFO_VERSION: return "1.1";
+		case CPU_INFO_VERSION: return "1.2";
 		case CPU_INFO_FILE: return __FILE__;
 		case CPU_INFO_CREDITS: return "Copyright (c) 1998 Juergen Buchmueller, all rights reserved.";
 		case CPU_INFO_REG_LAYOUT: return (const char*)m6502_reg_layout;
@@ -426,7 +444,7 @@ const char *m6502_info(void *context, int regnum)
 unsigned m6502_dasm(char *buffer, unsigned pc)
 {
 #ifdef MAME_DEBUG
-    return Dasm6502( buffer, pc );
+	return Dasm6502( buffer, pc );
 #else
 	sprintf( buffer, "$%02X", cpu_readop(pc) );
 	return 1;
@@ -446,8 +464,8 @@ static UINT8 m65c02_reg_layout[] = {
 /* Layout of the debugger windows x,y,w,h */
 static UINT8 m65c02_win_layout[] = {
 	25, 0,55, 2,	/* register window (top, right rows) */
-     0, 0,24,22,    /* disassembler window (left colums) */
-    25, 3,55, 9,    /* memory #1 window (right, upper middle) */
+	 0, 0,24,22,	/* disassembler window (left colums) */
+	25, 3,55, 9,	/* memory #1 window (right, upper middle) */
 	25,13,55, 9,	/* memory #2 window (right, lower middle) */
 	 0,23,80, 1,	/* command line window (bottom rows) */
 };
@@ -477,18 +495,18 @@ void m65c02_state_load(void *file) { m6502_state_load(file); }
 const char *m65c02_info(void *context, int regnum)
 {
 	switch( regnum )
-    {
+	{
 		case CPU_INFO_NAME: return "M65C02";
-		case CPU_INFO_VERSION: return "1.1";
+		case CPU_INFO_VERSION: return "1.2";
 		case CPU_INFO_REG_LAYOUT: return (const char*)m65c02_reg_layout;
 		case CPU_INFO_WIN_LAYOUT: return (const char*)m65c02_win_layout;
-    }
+	}
 	return m6502_info(context,regnum);
 }
 unsigned m65c02_dasm(char *buffer, unsigned pc)
 {
 #ifdef MAME_DEBUG
-    return Dasm6502( buffer, pc );
+	return Dasm6502( buffer, pc );
 #else
 	sprintf( buffer, "$%02X", cpu_readop(pc) );
 	return 1;
@@ -510,8 +528,8 @@ static UINT8 m65sc02_reg_layout[] = {
 /* Layout of the debugger windows x,y,w,h */
 static UINT8 m65sc02_win_layout[] = {
 	25, 0,55, 2,	/* register window (top, right rows) */
-     0, 0,24,22,    /* disassembler window (left colums) */
-    25, 3,55, 9,    /* memory #1 window (right, upper middle) */
+	 0, 0,24,22,	/* disassembler window (left colums) */
+	25, 3,55, 9,	/* memory #1 window (right, upper middle) */
 	25,13,55, 9,	/* memory #2 window (right, lower middle) */
 	 0,23,80, 1,	/* command line window (bottom rows) */
 };
@@ -541,23 +559,23 @@ void m65sc02_state_load(void *file) { m6502_state_load(file); }
 const char *m65sc02_info(void *context, int regnum)
 {
 	switch( regnum )
-    {
+	{
 		case CPU_INFO_NAME: return "M65SC02";
 		case CPU_INFO_FAMILY: return "Metal Oxid Semiconductor MOS 6502";
 		case CPU_INFO_VERSION: return "1.0beta";
-		case CPU_INFO_CREDITS: 
+		case CPU_INFO_CREDITS:
 			return "Copyright (c) 1998 Juergen Buchmueller\n"
 				"Copyright (c) 2000 Peter Trauner\n"
 				"all rights reserved.";
 		case CPU_INFO_REG_LAYOUT: return (const char*)m65sc02_reg_layout;
 		case CPU_INFO_WIN_LAYOUT: return (const char*)m65sc02_win_layout;
-    }
+	}
 	return m6502_info(context,regnum);
 }
 unsigned m65sc02_dasm(char *buffer, unsigned pc)
 {
 #ifdef MAME_DEBUG
-    return Dasm6502( buffer, pc );
+	return Dasm6502( buffer, pc );
 #else
 	sprintf( buffer, "$%02X", cpu_readop(pc) );
 	return 1;
@@ -579,8 +597,8 @@ static UINT8 m6510_reg_layout[] = {
 /* Layout of the debugger windows x,y,w,h */
 static UINT8 m6510_win_layout[] = {
 	25, 0,55, 2,	/* register window (top, right rows) */
-     0, 0,24,22,    /* disassembler window (left colums) */
-    25, 3,55, 9,    /* memory #1 window (right, upper middle) */
+	 0, 0,24,22,	/* disassembler window (left colums) */
+	25, 3,55, 9,	/* memory #1 window (right, upper middle) */
 	25,13,55, 9,	/* memory #2 window (right, lower middle) */
 	 0,23,80, 1,	/* command line window (bottom rows) */
 };
@@ -609,19 +627,19 @@ void m6510_state_load(void *file) { m6502_state_load(file); }
 const char *m6510_info(void *context, int regnum)
 {
 	switch( regnum )
-    {
+	{
 		case CPU_INFO_NAME: return "M6510";
-		case CPU_INFO_VERSION: return "1.1";
+		case CPU_INFO_VERSION: return "1.2";
 		case CPU_INFO_REG_LAYOUT: return (const char*)m6510_reg_layout;
 		case CPU_INFO_WIN_LAYOUT: return (const char*)m6510_win_layout;
-    }
+	}
 	return m6502_info(context,regnum);
 }
 
 unsigned m6510_dasm(char *buffer, unsigned pc)
 {
 #ifdef MAME_DEBUG
-    return Dasm6502( buffer, pc );
+	return Dasm6502( buffer, pc );
 #else
 	sprintf( buffer, "$%02X", cpu_readop(pc) );
 	return 1;
@@ -642,8 +660,8 @@ static UINT8 n2a03_reg_layout[] = {
 /* Layout of the debugger windows x,y,w,h */
 static UINT8 n2a03_win_layout[] = {
 	25, 0,55, 2,	/* register window (top, right rows) */
-     0, 0,24,22,    /* disassembler window (left colums) */
-    25, 3,55, 9,    /* memory #1 window (right, upper middle) */
+	 0, 0,24,22,	/* disassembler window (left colums) */
+	25, 3,55, 9,	/* memory #1 window (right, upper middle) */
 	25,13,55, 9,	/* memory #2 window (right, lower middle) */
 	 0,23,80, 1,	/* command line window (bottom rows) */
 };
@@ -672,12 +690,12 @@ void n2a03_state_load(void *file) { m6502_state_load(file); }
 const char *n2a03_info(void *context, int regnum)
 {
 	switch( regnum )
-    {
+	{
 		case CPU_INFO_NAME: return "N2A03";
 		case CPU_INFO_VERSION: return "1.0";
 		case CPU_INFO_REG_LAYOUT: return (const char*)n2a03_reg_layout;
 		case CPU_INFO_WIN_LAYOUT: return (const char*)n2a03_win_layout;
-    }
+	}
 	return m6502_info(context,regnum);
 }
 
@@ -693,10 +711,11 @@ void n2a03_irq(void)
 unsigned n2a03_dasm(char *buffer, unsigned pc)
 {
 #ifdef MAME_DEBUG
-    return Dasm6502( buffer, pc );
+	return Dasm6502( buffer, pc );
 #else
 	sprintf( buffer, "$%02X", cpu_readop(pc) );
 	return 1;
 #endif
 }
 #endif
+

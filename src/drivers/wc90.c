@@ -451,4 +451,4 @@ ROM_START( wc90 )
 ROM_END
 
 
-GAMEX( 1989, wc90, 0, wc90, wc90, 0, ROT0, "Tecmo", "World Cup 90", GAME_IMPERFECT_SOUND )
+GAMEX( 1989, wc90, 0, wc90, wc90, 0, ROT0, "Tecmo", "World Cup 90", GAME_IMPERFECT_SOUND | GAME_NO_COCKTAIL )

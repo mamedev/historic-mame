@@ -424,5 +424,5 @@ ROM_END
 
 
 /* this is a newer version with just one bug fix */
-GAMEX( 1981, spiders,  0,       spiders, spiders, 0, ROT270, "Sigma Ent. Inc.", "Spiders (set 1)", GAME_NO_SOUND )
-GAMEX( 1981, spiders2, spiders, spiders, spiders, 0, ROT270, "Sigma Ent. Inc.", "Spiders (set 2)", GAME_NO_SOUND )
+GAMEX( 1981, spiders,  0,       spiders, spiders, 0, ROT270, "Sigma Ent. Inc.", "Spiders (set 1)", GAME_NO_SOUND | GAME_NO_COCKTAIL )
+GAMEX( 1981, spiders2, spiders, spiders, spiders, 0, ROT270, "Sigma Ent. Inc.", "Spiders (set 2)", GAME_NO_SOUND | GAME_NO_COCKTAIL )

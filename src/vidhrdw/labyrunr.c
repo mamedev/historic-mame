@@ -39,6 +39,7 @@ static void get_tile_info0(int col,int row)
 {
 	int tile_index = 32*row+col;
 	int attr = labyrunr_videoram1[tile_index];
+	int code = labyrunr_videoram1[tile_index + 0x400];
 	int bit0 = (K007121_ctrlram[0][0x05] >> 0) & 0x03;
 	int bit1 = (K007121_ctrlram[0][0x05] >> 2) & 0x03;
 	int bit2 = (K007121_ctrlram[0][0x05] >> 4) & 0x03;
@@ -47,8 +48,11 @@ static void get_tile_info0(int col,int row)
 			((attr >> (bit0+2)) & 0x02) |
 			((attr >> (bit1+1)) & 0x04) |
 			((attr >> (bit2  )) & 0x08) |
-			((attr >> (bit3-1)) & 0x10);
-	int code = labyrunr_videoram1[tile_index + 0x400];
+			((attr >> (bit3-1)) & 0x10) |
+			((K007121_ctrlram[0][0x03] & 0x01) << 5);
+	int mask = (K007121_ctrlram[0][0x04] & 0xf0) >> 4;
+
+	bank = (bank & ~(mask << 1)) | ((K007121_ctrlram[0][0x04] & mask) << 1);
 
 	SET_TILE_INFO(0,code+bank*256,((K007121_ctrlram[0][6]&0x30)*2+16)+(attr&7))
 }
@@ -57,6 +61,7 @@ static void get_tile_info1(int col,int row)
 {
 	int tile_index = 32*row+col;
 	int attr = labyrunr_videoram2[tile_index];
+	int code = labyrunr_videoram2[tile_index + 0x400];
 	int bit0 = (K007121_ctrlram[0][0x05] >> 0) & 0x03;
 	int bit1 = (K007121_ctrlram[0][0x05] >> 2) & 0x03;
 	int bit2 = (K007121_ctrlram[0][0x05] >> 4) & 0x03;
@@ -65,8 +70,11 @@ static void get_tile_info1(int col,int row)
 			((attr >> (bit0+2)) & 0x02) |
 			((attr >> (bit1+1)) & 0x04) |
 			((attr >> (bit2  )) & 0x08) |
-			((attr >> (bit3-1)) & 0x10);
-	int code = labyrunr_videoram2[tile_index + 0x400];
+			((attr >> (bit3-1)) & 0x10) |
+			((K007121_ctrlram[0][0x03] & 0x01) << 5);
+	int mask = (K007121_ctrlram[0][0x04] & 0xf0) >> 4;
+
+	bank = (bank & ~(mask << 1)) | ((K007121_ctrlram[0][0x04] & mask) << 1);
 
 	SET_TILE_INFO(0,code+bank*256,((K007121_ctrlram[0][6]&0x30)*2+16)+(attr&7))
 }
@@ -89,7 +97,7 @@ int labyrunr_vh_start(void)
 		clip.min_x += 40;
 		tilemap_set_clip(layer0,&clip);
 
-		clip.max_x = 40;
+		clip.max_x = 39;
 		clip.min_x = 0;
 		tilemap_set_clip(layer1,&clip);
 

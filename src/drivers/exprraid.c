@@ -551,6 +551,6 @@ static void init_wexpresb(void)
 }
 
 
-GAME( 1986, exprraid, 0,        exprraid, exprraid, exprraid, ROT0, "Data East USA", "Express Raider (US)" )
-GAME( 1986, wexpress, exprraid, exprraid, exprraid, wexpress, ROT0, "Data East Corporation", "Western Express (World?)" )
-GAME( 1986, wexpresb, exprraid, exprraid, exprraid, wexpresb, ROT0, "bootleg", "Western Express (bootleg)" )
+GAMEX( 1986, exprraid, 0,        exprraid, exprraid, exprraid, ROT0, "Data East USA", "Express Raider (US)", GAME_NO_COCKTAIL )
+GAMEX( 1986, wexpress, exprraid, exprraid, exprraid, wexpress, ROT0, "Data East Corporation", "Western Express (World?)", GAME_NO_COCKTAIL )
+GAMEX( 1986, wexpresb, exprraid, exprraid, exprraid, wexpresb, ROT0, "bootleg", "Western Express (bootleg)", GAME_NO_COCKTAIL )

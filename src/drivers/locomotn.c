@@ -4,6 +4,12 @@ Loco-Motion memory map (preliminary)
 
 driver by Nicola Salmoria
 
+TODO:
+- PROM 7a controls the video shape. This is used to show the top 4 lines in
+  Jungler but not in Locomotion and Commando. The visible area for the latter
+  two should be adjusted, handling flip screen accordingly.
+
+
 CPU #1
 0000-4fff ROM (empty space at 5000-5fff for diagnostic ROM)
 8040-83ff video RAM (top 8 rows of screen)
@@ -54,7 +60,7 @@ extern unsigned char *rallyx_scrollx,*rallyx_scrolly;
 void rallyx_videoram2_w(int offset,int data);
 void rallyx_colorram2_w(int offset,int data);
 void rallyx_flipscreen_w(int offset,int data);
-void rallyx_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
+void locomotn_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 int rallyx_vh_start(void);
 void rallyx_vh_stop(void);
 void locomotn_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
@@ -68,9 +74,20 @@ extern struct AY8910interface timeplt_ay8910_interface;
 void timeplt_sh_irqtrigger_w(int offset,int data);
 
 
+static void coin_1_w(int offset,int data)
+{
+	coin_counter_w(0,data & 1);
+}
+static void coin_2_w(int offset,int data)
+{
+	coin_counter_w(1,data & 1);
+}
+
+
+
 static struct MemoryReadAddress readmem[] =
 {
-	{ 0x0000, 0x5fff, MRA_ROM },
+	{ 0x0000, 0x7fff, MRA_ROM },
 	{ 0x8000, 0x8fff, MRA_RAM },
 	{ 0x9800, 0x9fff, MRA_RAM },
 	{ 0xa000, 0xa000, input_port_0_r },	/* IN0 */
@@ -82,7 +99,7 @@ static struct MemoryReadAddress readmem[] =
 
 static struct MemoryWriteAddress jungler_writemem[] =
 {
-	{ 0x0000, 0x5fff, MWA_ROM },
+	{ 0x0000, 0x7fff, MWA_ROM },
 	{ 0x8000, 0x83ff, videoram_w, &videoram, &videoram_size },
 	{ 0x8400, 0x87ff, rallyx_videoram2_w, &rallyx_videoram2 },
 	{ 0x8800, 0x8bff, colorram_w, &colorram },
@@ -96,9 +113,11 @@ static struct MemoryWriteAddress jungler_writemem[] =
 	{ 0xa170, 0xa170, MWA_NOP },	/* ????? */
 	{ 0xa180, 0xa180, timeplt_sh_irqtrigger_w },
 	{ 0xa181, 0xa181, interrupt_enable_w },
+//	{ 0xa182, 0xa182, MWA_NOP },	sound mute
 	{ 0xa183, 0xa183, rallyx_flipscreen_w },
-	{ 0xa184, 0xa185, osd_led_w },
-	{ 0xa186, 0xa186, MWA_NOP },
+	{ 0xa184, 0xa184, coin_1_w },
+	{ 0xa186, 0xa186, coin_2_w },
+//	{ 0xa187, 0xa187, MWA_NOP },	stars enable
 	{ 0x8014, 0x801f, MWA_RAM, &spriteram, &spriteram_size },	/* these are here just to initialize */
 	{ 0x8814, 0x881f, MWA_RAM, &spriteram_2 },	/* the pointers. */
 	{ 0x8034, 0x803f, MWA_RAM, &rallyx_radarx, &rallyx_radarram_size },	/* ditto */
@@ -108,7 +127,7 @@ static struct MemoryWriteAddress jungler_writemem[] =
 
 static struct MemoryWriteAddress writemem[] =
 {
-	{ 0x0000, 0x5fff, MWA_ROM },
+	{ 0x0000, 0x7fff, MWA_ROM },
 	{ 0x8000, 0x83ff, videoram_w, &videoram, &videoram_size },
 	{ 0x8400, 0x87ff, rallyx_videoram2_w, &rallyx_videoram2 },
 	{ 0x8800, 0x8bff, colorram_w, &colorram },
@@ -122,9 +141,11 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0xa170, 0xa170, MWA_NOP },	/* ????? */
 	{ 0xa180, 0xa180, timeplt_sh_irqtrigger_w },
 	{ 0xa181, 0xa181, interrupt_enable_w },
+//	{ 0xa182, 0xa182, MWA_NOP },	sound mute
 	{ 0xa183, 0xa183, rallyx_flipscreen_w },
-	{ 0xa184, 0xa185, osd_led_w },
-	{ 0xa186, 0xa186, MWA_NOP },
+	{ 0xa184, 0xa184, coin_1_w },
+	{ 0xa186, 0xa186, coin_2_w },
+//	{ 0xa187, 0xa187, MWA_NOP },	stars enable
 	{ 0x8000, 0x801f, MWA_RAM, &spriteram, &spriteram_size },	/* these are here just to initialize */
 	{ 0x8800, 0x881f, MWA_RAM, &spriteram_2 },	/* the pointers. */
 	{ 0x8020, 0x803f, MWA_RAM, &rallyx_radarx, &rallyx_radarram_size },	/* ditto */
@@ -393,7 +414,7 @@ static struct MachineDriver machine_driver_##GAMENAME =             \
 	{                                                               \
 		{                                                           \
 			CPU_Z80,                                                \
-			3072000,	/* 3.072 Mhz ? */                           \
+			18432000/6,	/* 3.072 MHz */                             \
 			readmem,GAMENAME##_writemem,0,0,                        \
 			nmi_interrupt,1                                         \
 		},                                                          \
@@ -412,7 +433,7 @@ static struct MachineDriver machine_driver_##GAMENAME =             \
 	36*8, 28*8, { 0*8, 36*8-1, 0*8, 28*8-1 },                       \
 	gfxdecodeinfo,                                                  \
 	32,64*4+4,                                                      \
-	rallyx_vh_convert_color_prom,                                   \
+	locomotn_vh_convert_color_prom,                                 \
                                                                     \
 	VIDEO_TYPE_RASTER,                                              \
 	0,                                                              \
@@ -464,8 +485,8 @@ ROM_START( locomotn )
 	ROM_REGION( 0x0160, REGION_PROMS )
 	ROM_LOAD( "8b.bpr",       0x0000, 0x0020, 0x75b05da0 ) /* palette */
 	ROM_LOAD( "9d.bpr",       0x0020, 0x0100, 0xaa6cf063 ) /* loookup table */
-	ROM_LOAD( "7a.bpr",       0x0120, 0x0020, 0x48c8f094 ) /* ?? */
-	ROM_LOAD( "10a.bpr",      0x0140, 0x0020, 0xb8861096 ) /* ?? */
+	ROM_LOAD( "7a.bpr",       0x0120, 0x0020, 0x48c8f094 ) /* video layout (not used) */
+	ROM_LOAD( "10a.bpr",      0x0140, 0x0020, 0xb8861096 ) /* video timing (not used) */
 ROM_END
 
 ROM_START( gutangtn )
@@ -489,8 +510,8 @@ ROM_START( gutangtn )
 	ROM_REGION( 0x0160, REGION_PROMS )
 	ROM_LOAD( "8b.bpr",       0x0000, 0x0020, 0x75b05da0 ) /* palette */
 	ROM_LOAD( "9d.bpr",       0x0020, 0x0100, 0xaa6cf063 ) /* loookup table */
-	ROM_LOAD( "7a.bpr",       0x0120, 0x0020, 0x48c8f094 ) /* ?? */
-	ROM_LOAD( "10a.bpr",      0x0140, 0x0020, 0xb8861096 ) /* ?? */
+	ROM_LOAD( "7a.bpr",       0x0120, 0x0020, 0x48c8f094 ) /* video layout (not used) */
+	ROM_LOAD( "10a.bpr",      0x0140, 0x0020, 0xb8861096 ) /* video timing (not used) */
 ROM_END
 
 ROM_START( cottong )
@@ -514,8 +535,8 @@ ROM_START( cottong )
 	ROM_REGION( 0x0160, REGION_PROMS )
 	ROM_LOAD( "2.bpr",        0x0000, 0x0020, 0x26f42e6f ) /* palette */
 	ROM_LOAD( "3.bpr",        0x0020, 0x0100, 0x4aecc0c8 ) /* loookup table */
-	ROM_LOAD( "7a.bpr",       0x0120, 0x0020, 0x48c8f094 ) /* ?? */
-	ROM_LOAD( "10a.bpr",      0x0140, 0x0020, 0xb8861096 ) /* ?? */
+	ROM_LOAD( "7a.bpr",       0x0120, 0x0020, 0x48c8f094 ) /* video layout (not used) */
+	ROM_LOAD( "10a.bpr",      0x0140, 0x0020, 0xb8861096 ) /* video timing (not used) */
 ROM_END
 
 ROM_START( jungler )
@@ -539,8 +560,8 @@ ROM_START( jungler )
 	ROM_REGION( 0x0160, REGION_PROMS )
 	ROM_LOAD( "18s030.8b",    0x0000, 0x0020, 0x55a7e6d1 ) /* palette */
 	ROM_LOAD( "tbp24s10.9d",  0x0020, 0x0100, 0xd223f7b8 ) /* loookup table */
-	ROM_LOAD( "18s030.7a",    0x0120, 0x0020, 0x8f574815 ) /* ?? */
-	ROM_LOAD( "6331-1.10a",   0x0140, 0x0020, 0xb8861096 ) /* ?? */
+	ROM_LOAD( "18s030.7a",    0x0120, 0x0020, 0x8f574815 ) /* video layout (not used) */
+	ROM_LOAD( "6331-1.10a",   0x0140, 0x0020, 0xb8861096 ) /* video timing (not used) */
 ROM_END
 
 ROM_START( junglers )
@@ -564,8 +585,8 @@ ROM_START( junglers )
 	ROM_REGION( 0x0160, REGION_PROMS )
 	ROM_LOAD( "18s030.8b",    0x0000, 0x0020, 0x55a7e6d1 ) /* palette */
 	ROM_LOAD( "tbp24s10.9d",  0x0020, 0x0100, 0xd223f7b8 ) /* loookup table */
-	ROM_LOAD( "18s030.7a",    0x0120, 0x0020, 0x8f574815 ) /* ?? */
-	ROM_LOAD( "6331-1.10a",   0x0140, 0x0020, 0xb8861096 ) /* ?? */
+	ROM_LOAD( "18s030.7a",    0x0120, 0x0020, 0x8f574815 ) /* video layout (not used) */
+	ROM_LOAD( "6331-1.10a",   0x0140, 0x0020, 0xb8861096 ) /* video timing (not used) */
 ROM_END
 
 ROM_START( commsega )
@@ -589,8 +610,8 @@ ROM_START( commsega )
 	ROM_REGION( 0x0160, REGION_PROMS )
 	ROM_LOAD( "gg1.bpr",      0x0000, 0x0020, 0xf69e585a ) /* palette */
 	ROM_LOAD( "gg2.bpr",      0x0020, 0x0100, 0x0b756e30 ) /* loookup table */
-	ROM_LOAD( "gg0.bpr",      0x0120, 0x0020, 0x48c8f094 ) /* ?? */
-	ROM_LOAD( "tt3.bpr",      0x0140, 0x0020, 0xb8861096 ) /* ?? */
+	ROM_LOAD( "gg0.bpr",      0x0120, 0x0020, 0x48c8f094 ) /* video layout (not used) */
+	ROM_LOAD( "tt3.bpr",      0x0140, 0x0020, 0xb8861096 ) /* video timing (not used) */
 ROM_END
 
 

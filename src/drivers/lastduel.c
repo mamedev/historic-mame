@@ -9,7 +9,7 @@
   Mad Gear (Japan set) has rom code MDJ and is not dumped yet, presumably
   other versions of Last Duel exist too.
 
-  Emulation by Bryan McPhail, mish@tendril.force9.net
+  Emulation by Bryan McPhail, mish@tendril.co.uk
 
   Trivia ;)  The Mad Gear pcb has an unused pad on the board for an i8751
 microcontroller.

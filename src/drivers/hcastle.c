@@ -1,9 +1,8 @@
 /***************************************************************************
 
-Haunted Castle
+	Haunted Castle
 
-
-Emulation by Bryan McPhail, mish@tendril.force9.net
+	Emulation by Bryan McPhail, mish@tendril.co.uk
 
 ***************************************************************************/
 
@@ -99,9 +98,9 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x0600, 0x06ff, paletteram_xBBBBBGGGGGRRRRR_swap_w, &paletteram },
 	{ 0x0700, 0x1fff, MWA_RAM },
 	{ 0x2000, 0x2fff, hcastle_pf1_video_w, &hcastle_pf1_videoram },
-	{ 0x3000, 0x3fff, MWA_RAM, &spriteram },
+	{ 0x3000, 0x3fff, MWA_RAM, &spriteram, &spriteram_size },
 	{ 0x4000, 0x4fff, hcastle_pf2_video_w, &hcastle_pf2_videoram },
-	{ 0x5000, 0x5fff, MWA_RAM, &spriteram_2 },
+	{ 0x5000, 0x5fff, MWA_RAM, &spriteram_2, &spriteram_2_size },
  	{ 0x6000, 0xffff, MWA_ROM },
 	{ -1 }	/* end of table */
 };
@@ -333,7 +332,7 @@ static struct MachineDriver machine_driver_hcastle =
 	256, 2*8*16*16,	/* use PALETTE_COLOR_TRANSPARENT from the dynamic palette. */
 	hcastle_vh_convert_color_prom,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_BUFFERS_SPRITERAM,
 	0,
 	hcastle_vh_start,
 	hcastle_vh_stop,
@@ -442,6 +441,6 @@ ROM_END
 
 
 
-GAME( 1988, hcastle,  0,       hcastle, hcastle, 0, ROT0, "Konami", "Haunted Castle (set 1)" )
-GAME( 1988, hcastlea, hcastle, hcastle, hcastle, 0, ROT0, "Konami", "Haunted Castle (set 2)" )
-GAME( 1988, hcastlej, hcastle, hcastle, hcastle, 0, ROT0, "Konami", "Akuma-Jou Dracula (Japan)" )
+GAMEX( 1988, hcastle,  0,       hcastle, hcastle, 0, ROT0, "Konami", "Haunted Castle (set 1)", GAME_NO_COCKTAIL )
+GAMEX( 1988, hcastlea, hcastle, hcastle, hcastle, 0, ROT0, "Konami", "Haunted Castle (set 2)", GAME_NO_COCKTAIL )
+GAMEX( 1988, hcastlej, hcastle, hcastle, hcastle, 0, ROT0, "Konami", "Akuma-Jou Dracula (Japan)", GAME_NO_COCKTAIL )

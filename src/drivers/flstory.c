@@ -398,6 +398,33 @@ ROM_START( flstory )
     ROM_LOAD( "vid-a45.09", 0x0c000, 0x4000, 0x8336be58 )
 ROM_END
 
+ROM_START( flstoryj )
+    ROM_REGION( 0x10000, REGION_CPU1 )	/* 64k for the first CPU */
+    ROM_LOAD( "cpu-a45.15", 0x00000, 0x4000, 0xf03fc969 )
+    ROM_LOAD( "cpu-a45.16", 0x04000, 0x4000, 0x311aa82e )
+    ROM_LOAD( "cpu-a45.17", 0x08000, 0x4000, 0xa2b5d17d )
+
+    ROM_REGION( 0x10000, REGION_CPU2 )	/* 64k for the second CPU */
+    ROM_LOAD( "a45_12.8",    0x0000, 0x2000, 0xd6f593fb )
+    ROM_LOAD( "a45_13.9",    0x2000, 0x2000, 0x451f92f9 )
+
+	ROM_REGION( 0x0800, REGION_CPU3 )	/* 2k for the microcontroller */
+	ROM_LOAD( "p5sa54-.09", 0x0000, 0x0800, 0x0e8b8846 )	/* from the english version - might be wrong */
+
+    ROM_REGION( 0x10000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+    ROM_LOAD( "vid-a45.06", 0x00000, 0x4000, 0xdc856a75 )
+    ROM_LOAD( "vid-a45.20", 0x04000, 0x4000, 0x1b0edf34 )
+    ROM_LOAD( "vid-a45.07", 0x08000, 0x4000, 0xaa4b0762 )
+    ROM_LOAD( "vid-a45.21", 0x0c000, 0x4000, 0xfc382bd1 )
+
+    ROM_REGION( 0x10000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+    ROM_LOAD( "vid-a45.18", 0x00000, 0x4000, 0x6f08f69e )
+    ROM_LOAD( "vid-a45.08", 0x04000, 0x4000, 0xd0b028ca )
+    ROM_LOAD( "vid-a45.19", 0x08000, 0x4000, 0x2b572dc9 )
+    ROM_LOAD( "vid-a45.09", 0x0c000, 0x4000, 0x8336be58 )
+ROM_END
+
+
 
 static void init_flstory(void)
 {
@@ -409,4 +436,5 @@ static void init_flstory(void)
 
 
 
-GAMEX( 1985, flstory, 0, flstory, flstory, flstory, ROT0, "Taito", "The FairyLand Story", GAME_NOT_WORKING )
+GAMEX( 1985, flstory,  0,       flstory, flstory, flstory, ROT0, "Taito", "The FairyLand Story", GAME_NOT_WORKING )
+GAMEX( 1985, flstoryj, flstory, flstory, flstory, flstory, ROT0, "Taito", "The FairyLand Story (Japan)", GAME_NOT_WORKING )

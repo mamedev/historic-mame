@@ -209,13 +209,13 @@ INPUT_PORTS_START( dogfight )
 	PORT_BITX(    0x10, 0x00, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Invulnerability", IP_KEY_NONE, IP_JOY_NONE )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x10, DEF_STR( On ) )
-	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Unknown ) )  /* bonus */
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x20, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Bonus_Life ) )
+	PORT_DIPSETTING(    0x00, "20k, 50k, then every 50k" )
+	PORT_DIPSETTING(    0x20, "40k, 70k, then every 70k" )
 	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Cabinet ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( Upright ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Cocktail ) )
-	PORT_DIPNAME( 0x80, 0x00, "Freeze Screen" )
+	PORT_DIPNAME( 0x80, 0x00, "Freeze" )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
 
@@ -565,5 +565,5 @@ ROM_END
 
 GAMEX(1983, zodiack,  0, zodiack, zodiac,   0, ROT270, "Orca (Esco Trading Co, Inc)", "Zodiack", GAME_IMPERFECT_COLORS )	/* bullet color needs to be verified */
 GAMEX(1983, dogfight, 0, zodiack, dogfight, 0, ROT270, "[Orca] Thunderbolt", "Dog Fight", GAME_IMPERFECT_COLORS )	/* bullet color needs to be verified */
-GAME( 1982, moguchan, 0, zodiack, moguchan, 0, ROT270, "Orca (Eastern Commerce Inc. license) (bootleg?)",  /* this is in the ROM at $0b5c */ "Moguchan" )
+GAMEX(1982, moguchan, 0, zodiack, moguchan, 0, ROT270, "Orca (Eastern Commerce Inc. license) (bootleg?)",  /* this is in the ROM at $0b5c */ "Moguchan", GAME_WRONG_COLORS )
 GAME( 1981, percuss,  0, percuss, percuss,  0, ROT270, "Orca", "The Percussor" )
