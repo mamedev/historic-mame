@@ -105,6 +105,7 @@ extern void mrdo_vh_screenrefresh(struct osd_bitmap *bitmap);
 extern void ladybug_sound1_w(int offset,int data);
 extern void ladybug_sound2_w(int offset,int data);
 extern int ladybug_sh_start(void);
+extern void ladybug_sh_stop(void);
 extern void ladybug_sh_update(void);
 
 
@@ -231,15 +232,6 @@ static unsigned char color_prom[] =
 
 
 
-/* waveforms for the audio hardware */
-static unsigned char samples[32] =	/* a simple sine (sort of) wave */
-{
-	0x00,0x00,0x00,0x00,0x22,0x22,0x22,0x22,0x44,0x44,0x44,0x44,0x22,0x22,0x22,0x22,
-	0x00,0x00,0x00,0x00,0xdd,0xdd,0xdd,0xdd,0xbb,0xbb,0xbb,0xbb,0xdd,0xdd,0xdd,0xdd
-};
-
-
-
 static struct MachineDriver machine_driver =
 {
 	/* basic machine hardware */
@@ -267,10 +259,10 @@ static struct MachineDriver machine_driver =
 	mrdo_vh_screenrefresh,
 
 	/* sound hardware */
-	samples,
+	0,
 	0,
 	ladybug_sh_start,
-	0,
+	ladybug_sh_stop,
 	ladybug_sh_update
 };
 
@@ -283,6 +275,22 @@ static struct MachineDriver machine_driver =
 ***************************************************************************/
 
 ROM_START( mrdo_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "a4-01.bin", 0x0000, 0x2000 )
+	ROM_LOAD( "c4-02.bin", 0x2000, 0x2000 )
+	ROM_LOAD( "e4-03.bin", 0x4000, 0x2000 )
+	ROM_LOAD( "f4-04.bin", 0x6000, 0x2000 )
+
+	ROM_REGION(0x6000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "s8-09.bin", 0x0000, 0x1000 )
+	ROM_LOAD( "u8-10.bin", 0x1000, 0x1000 )
+	ROM_LOAD( "r8-08.bin", 0x2000, 0x1000 )
+	ROM_LOAD( "n8-07.bin", 0x3000, 0x1000 )
+	ROM_LOAD( "h5-05.bin", 0x4000, 0x1000 )
+	ROM_LOAD( "k5-06.bin", 0x5000, 0x1000 )
+ROM_END
+
+ROM_START( mrdot_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "D1",  0x0000, 0x2000 )
 	ROM_LOAD( "D2",  0x2000, 0x2000 )
@@ -359,6 +367,28 @@ struct GameDriver mrdo_driver =
 
 	mrdo_rom,
 	0, 0,
+	0,
+
+	input_ports, dsw,
+
+	color_prom, 0, 0,
+	{ 0x00,0x01,0x02,0x03,0x04,0x05,0x06,0x07,0x08,0x09,	/* numbers */
+		0x0a,0x0b,0x0c,0x0d,0x0e,0x0f,0x10,0x11,0x12,0x13,0x14,0x15,0x16,	/* letters */
+		0x17,0x18,0x19,0x1a,0x1b,0x1c,0x1d,0x1e,0x1f,0x20,0x21,0x22,0x23 },
+	0x09, 0x3e,
+	8*17, 8*29, 0x2c,
+
+	hiload, hisave
+};
+
+struct GameDriver mrdot_driver =
+{
+	"mrdot",
+	&machine_driver,
+
+	mrdot_rom,
+	0, 0,
+	0,
 
 	input_ports, dsw,
 
@@ -379,6 +409,7 @@ struct GameDriver mrlo_driver =
 
 	mrlo_rom,
 	0, 0,
+	0,
 
 	input_ports, dsw,
 

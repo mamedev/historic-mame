@@ -83,7 +83,7 @@ extern int bagman_rand_r(int offset);
 extern unsigned char *bagman_video_enable;
 extern void bagman_vh_screenrefresh(struct osd_bitmap *bitmap);
 
-extern int cclimber_sh_start(void);
+extern int bagman_sh_start(void);
 
 
 
@@ -306,7 +306,7 @@ static struct MachineDriver machine_driver =
 	/* sound hardware */
 	0,
 	0,
-	cclimber_sh_start,
+	bagman_sh_start,
 	AY8910_sh_stop,
 	AY8910_sh_update
 };
@@ -348,6 +348,7 @@ struct GameDriver bagman_driver =
 
 	bagman_rom,
 	0, 0,
+	0,
 
 	input_ports, dsw,
 

@@ -42,7 +42,9 @@ extern int moonqsr_vh_start(void);
 extern void moonqsr_vh_screenrefresh(struct osd_bitmap *bitmap);
 
 extern void mooncrst_sound_freq_w(int offset,int data);
+extern void mooncrst_noise_w(int offset,int data);
 extern int mooncrst_sh_start(void);
+extern void mooncrst_sh_stop(void);
 extern void mooncrst_sh_update(void);
 
 
@@ -68,6 +70,7 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x9860, 0x9880, MWA_RAM, &moonqsr_bulletsram },
 	{ 0xb000, 0xb000, interrupt_enable_w },
 	{ 0xb800, 0xb800, mooncrst_sound_freq_w },
+	{ 0xa803, 0xa803, mooncrst_noise_w },
 	{ 0xb004, 0xb004, moonqsr_stars_w },
 	{ 0x0000, 0x3fff, MWA_ROM },
 	{ -1 }	/* end of table */
@@ -163,15 +166,6 @@ static unsigned char color_prom[] =
 
 
 
-/* waveforms for the audio hardware */
-static unsigned char samples[32] =	/* a simple sine (sort of) wave */
-{
-	0x00,0x00,0x00,0x00,0x22,0x22,0x22,0x22,0x44,0x44,0x44,0x44,0x22,0x22,0x22,0x22,
-	0x00,0x00,0x00,0x00,0xdd,0xdd,0xdd,0xdd,0xbb,0xbb,0xbb,0xbb,0xdd,0xdd,0xdd,0xdd
-};
-
-
-
 static struct MachineDriver machine_driver =
 {
 	/* basic machine hardware */
@@ -199,10 +193,10 @@ static struct MachineDriver machine_driver =
 	moonqsr_vh_screenrefresh,
 
 	/* sound hardware */
-	samples,
+	0,
 	0,
 	mooncrst_sh_start,
-	0,
+	mooncrst_sh_stop,
 	mooncrst_sh_update
 };
 
@@ -325,6 +319,7 @@ struct GameDriver moonqsr_driver =
 
 	moonqsr_rom,
 	0, moonqsr_decode,
+	0,
 
 	input_ports, dsw,
 

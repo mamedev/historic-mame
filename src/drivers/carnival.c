@@ -263,6 +263,7 @@ struct GameDriver carnival_driver =
 
 	carnival_rom,
 	0, 0,
+	0,
 
 	input_ports, dsw,
 

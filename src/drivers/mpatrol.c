@@ -363,6 +363,7 @@ struct GameDriver mpatrol_driver =
 
 	mpatrol_rom,
 	0, 0,
+	0,
 
 	input_ports, dsw,
 
@@ -383,6 +384,7 @@ struct GameDriver mranger_driver =
 
 	mranger_rom,
 	0, 0,
+	0,
 
 	input_ports, dsw,
 

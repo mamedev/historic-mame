@@ -269,6 +269,7 @@ struct GameDriver docastle_driver =
 
 	docastle_rom,
 	0, 0,
+	0,
 
 	input_ports, dsw,
 

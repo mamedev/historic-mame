@@ -246,7 +246,7 @@ static struct MachineDriver machine_driver =
 		},
 		{
 			CPU_Z80,
-			2000000,	/* 2 Mhz ????? */
+			3072000,	/* 3.072 Mhz ? */
 			2,	/* memory region #2 */
 			sound_readmem,sound_writemem,0,0,
 			pooyan_sh_interrupt,1
@@ -353,6 +353,7 @@ struct GameDriver timeplt_driver =
 
 	timeplt_rom,
 	0, 0,
+	0,
 
 	input_ports, dsw,
 
@@ -374,6 +375,7 @@ struct GameDriver spaceplt_driver =
 
 	timeplt_rom,
 	0, 0,
+	0,
 
 	input_ports, dsw,
 

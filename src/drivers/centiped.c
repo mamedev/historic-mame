@@ -397,6 +397,7 @@ struct GameDriver centiped_driver =
 
 	centiped_rom,
 	0, 0,
+	0,
 
 	input_ports, dsw,
 

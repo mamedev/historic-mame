@@ -11,17 +11,23 @@
 #include "Z80.h"
 
 
+
+unsigned char *gberet_interrupt_enable;
+
+
+
 int gberet_interrupt(void)
 {
 	static int nmi;
 
 
-	nmi = (nmi + 1) % 10;
+	nmi = (nmi + 1) % 32;
 
 	if (nmi == 0) return 0xff;
-	else
+	else if (nmi % 2)
 	{
-		if (RAM[0xe044] & 1) return Z80_NMI_INT;
-		else return Z80_IGNORE_INT;
+		if (*gberet_interrupt_enable & 1) return Z80_NMI_INT;
 	}
+
+	return Z80_IGNORE_INT;
 }

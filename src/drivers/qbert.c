@@ -67,7 +67,6 @@ to 22kHz)
 
 extern void qbert_vh_init_color_palette(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
 extern void qbert_sh_w(int offset, int data);
-extern int qbert_sh_init(const char *gamename);
 extern void qbert_sh_update(void);
 extern void qbert_output(int offset, int data);
 extern unsigned char *qbert_videoram;
@@ -118,7 +117,7 @@ static struct InputPort input_ports[] =
 	{       /* buttons */
 		0x40,   /* test mode off */
 		{ OSD_KEY_1, OSD_KEY_2, OSD_KEY_3, OSD_KEY_4,
-				0,0,0, OSD_KEY_ALT },
+				0, 0, 0, OSD_KEY_ALT },
 		{ 0, 0, 0, 0, 0, 0, 0, 0 }
 	},
 	{       /* trackball: not used */
@@ -133,10 +132,10 @@ static struct InputPort input_ports[] =
 	},
 	{       /* 2 joysticks (cocktail mode) mapped to one */
 		0x00,
-		{ OSD_KEY_DOWN, OSD_KEY_UP, OSD_KEY_RIGHT, OSD_KEY_LEFT,
-		 OSD_KEY_DOWN, OSD_KEY_UP, OSD_KEY_RIGHT, OSD_KEY_LEFT },
-		{ OSD_JOY_DOWN, OSD_JOY_UP, OSD_JOY_RIGHT, OSD_JOY_LEFT,
-		 OSD_JOY_DOWN, OSD_JOY_UP, OSD_JOY_RIGHT, OSD_JOY_LEFT }
+		{ OSD_KEY_RIGHT, OSD_KEY_LEFT, OSD_KEY_UP, OSD_KEY_DOWN,
+			OSD_KEY_RIGHT, OSD_KEY_LEFT, OSD_KEY_UP, OSD_KEY_DOWN },
+		{ OSD_JOY_RIGHT, OSD_JOY_LEFT, OSD_JOY_UP, OSD_JOY_DOWN,
+			OSD_JOY_RIGHT, OSD_JOY_LEFT, OSD_JOY_UP, OSD_JOY_DOWN },
 	},
 	{ -1 }  /* end of table */
 };
@@ -226,7 +225,7 @@ static const struct MachineDriver machine_driver =
 
 	/* sound hardware */
 	0,      /* samples */
-	qbert_sh_init,
+	0,
 	0,
 	0,
 	qbert_sh_update
@@ -246,6 +245,56 @@ ROM_START( qbert_rom )
 	ROM_LOAD( "qb-fg1.bin",  0x6000, 0x2000 )       /* sprites */
 	ROM_LOAD( "qb-fg0.bin",  0x8000, 0x2000 )       /* sprites */
 ROM_END
+
+
+
+static const char *sample_names[] =
+{
+	"FX_00",
+	"FX_01",
+	"FX_02",
+	"FX_03",
+	"FX_04",
+	"FX_05",
+	"FX_06",
+	"FX_07",
+	"FX_08",
+	"FX_09",
+	"FX_10",
+	"FX_11",
+	"FX_12",
+	"FX_13",
+	"FX_14",
+	"FX_15",
+	"FX_16",
+	"FX_17",
+	"FX_18",
+	"FX_19",
+	"FX_20",
+	"FX_21",
+	"FX_22",
+	"FX_23",
+	"FX_24",
+	"FX_25",
+	"FX_26",
+	"FX_27",
+	"FX_28",
+	"FX_29",
+	"FX_30",
+	"FX_31",
+	"FX_32",
+	"FX_33",
+	"FX_34",
+	"FX_35",
+	"FX_36",
+	"FX_37",
+	"FX_38",
+	"FX_39",
+	"FX_40",
+	"FX_41",
+	0	/* end of array */
+};
+
 
 
 /* here is a table of colors used by Q*bert. The table might not be
@@ -290,6 +339,7 @@ struct GameDriver qbert_driver =
 
 	qbert_rom,
 	0, 0,   /* rom decode and opcode decode functions */
+	sample_names,
 
 	input_ports, dsw,
 
@@ -312,6 +362,7 @@ struct GameDriver qbertjp_driver =
 
 	qbert_rom,
 	0, 0,   /* rom decode and opcode decode functions */
+	sample_names,
 
 	input_ports, dsw,
 

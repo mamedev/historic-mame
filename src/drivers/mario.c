@@ -384,6 +384,7 @@ struct GameDriver mario_driver =
 
 	mario_rom,
 	0, 0,
+	0,
 
 	input_ports, dsw,
 

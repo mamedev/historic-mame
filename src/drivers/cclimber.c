@@ -511,6 +511,7 @@ struct GameDriver cclimber_driver =
 
 	cclimber_rom,
 	0, cclimber_decode,
+	0,
 
 	input_ports, dsw,
 
@@ -531,6 +532,7 @@ struct GameDriver ccjap_driver =
 
 	ccjap_rom,
 	0, ccjap_decode,
+	0,
 
 	input_ports, dsw,
 
@@ -551,6 +553,7 @@ struct GameDriver ccboot_driver =
 
 	ccboot_rom,
 	0, ccjap_decode,
+	0,
 
 	input_ports, dsw,
 

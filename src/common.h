@@ -33,6 +33,21 @@ struct RomModule
 #define ROM_END { 0, 0, 0 }	}; /* end of table */
 
 
+
+struct GameSample
+{
+	int length;
+	char data[1];	/* extendable */
+};
+
+struct GameSamples
+{
+	int total;	/* total number of samples */
+	struct GameSample *sample[1];	/* extendable */
+};
+
+
+
 struct GfxLayout
 {
 	int width,height;	/* width and height of chars/sprites */
@@ -83,6 +98,8 @@ struct DisplayText
 #define TRANSPARENCY_COLOR 2
 
 int readroms(const struct RomModule *romp,const char *basename);
+struct GameSamples *readsamples(const char **samplenames,const char *basename);
+void freesamples(struct GameSamples *samples);
 void decodechar(struct GfxElement *gfx,int num,const unsigned char *src,const struct GfxLayout *gl);
 struct GfxElement *decodegfx(const unsigned char *src,const struct GfxLayout *gl);
 void freegfx(struct GfxElement *gfx);

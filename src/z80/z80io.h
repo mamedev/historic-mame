@@ -10,28 +10,30 @@
 /***     Please, notify me, if you make any changes to this file          ***/
 /****************************************************************************/
 
+#include "cpuintrf.h"
+
 /****************************************************************************/
 /* Input a byte from given I/O port                                         */
 /****************************************************************************/
-byte Z80_In (byte Port);
+/*byte Z80_In (byte Port);*/
+#define Z80_In(Port) ((byte)cpu_readport(Port))
 
 /****************************************************************************/
 /* Output a byte to given I/O port                                          */
 /****************************************************************************/
-void Z80_Out (byte Port,byte Value);
+/*void Z80_Out (byte Port,byte Value);*/
+#define Z80_Out(Port,Value) (cpu_writeport(Port,Value))
 
 /****************************************************************************/
 /* Read a byte from given memory location                                   */
 /****************************************************************************/
 /*unsigned Z80_RDMEM(dword A);*/
-extern int cpu_readmem(register int A);
 #define Z80_RDMEM(A) ((unsigned)cpu_readmem(A))
 
 /****************************************************************************/
 /* Write a byte to given memory location                                    */
 /****************************************************************************/
 /*void Z80_WRMEM(dword A,byte V);*/
-extern void cpu_writemem(register int A,register unsigned char V);
 #define Z80_WRMEM(A,V) (cpu_writemem(A,V))
 
 /****************************************************************************/

@@ -14,12 +14,15 @@ extern struct GameDriver pengo_driver;
 extern struct GameDriver penta_driver;
 extern struct GameDriver ladybug_driver;
 extern struct GameDriver mrdo_driver;
+extern struct GameDriver mrdot_driver;
 extern struct GameDriver mrlo_driver;
 extern struct GameDriver docastle_driver;
 extern struct GameDriver cclimber_driver;
 extern struct GameDriver ccjap_driver;
 extern struct GameDriver ccboot_driver;
+extern struct GameDriver seicross_driver;
 extern struct GameDriver ckong_driver;
+extern struct GameDriver ckongs_driver;
 extern struct GameDriver dkong_driver;
 extern struct GameDriver dkongjr_driver;
 extern struct GameDriver dkong3_driver;
@@ -88,9 +91,15 @@ extern struct GameDriver vanguard_driver;
 extern struct GameDriver gberet_driver;
 extern struct GameDriver rushatck_driver;
 extern struct GameDriver venture_driver;
+extern struct GameDriver mtrap_driver;
+extern struct GameDriver pepper2_driver;
 extern struct GameDriver qbert_driver;
 extern struct GameDriver qbertjp_driver;
 extern struct GameDriver mplanets_driver;
+extern struct GameDriver junglek_driver;
+extern struct GameDriver jungleh_driver;
+extern struct GameDriver elevator_driver;
+extern struct GameDriver panic_driver;
 
 
 
@@ -108,12 +117,15 @@ const struct GameDriver *drivers[] =
 	&penta_driver,
 	&ladybug_driver,
 	&mrdo_driver,
+	&mrdot_driver,
 	&mrlo_driver,
 	&docastle_driver,
 	&cclimber_driver,
 	&ccjap_driver,
 	&ccboot_driver,
+	&seicross_driver,
 	&ckong_driver,
+	&ckongs_driver,
 	&dkong_driver,
 	&dkongjr_driver,
 	&dkong3_driver,
@@ -182,8 +194,14 @@ const struct GameDriver *drivers[] =
 	&gberet_driver,
 	&rushatck_driver,
 	&venture_driver,
+	&mtrap_driver,
+	&pepper2_driver,
 	&qbert_driver,
 	&qbertjp_driver,
 	&mplanets_driver,
+	&junglek_driver,
+	&jungleh_driver,
+	&elevator_driver,
+	&panic_driver,
 	0	/* end of array */
 };

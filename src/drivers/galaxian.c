@@ -83,7 +83,9 @@ extern int mooncrst_vh_start(void);
 extern void mooncrst_vh_screenrefresh(struct osd_bitmap *bitmap);
 
 extern void mooncrst_sound_freq_w(int offset,int data);
+extern void mooncrst_noise_w(int offset,int data);
 extern int mooncrst_sh_start(void);
+extern void mooncrst_sh_stop(void);
 extern void mooncrst_sh_update(void);
 
 
@@ -107,6 +109,7 @@ static struct MemoryWriteAddress galaxian_writemem[] =
 	{ 0x5860, 0x5880, MWA_RAM, &mooncrst_bulletsram },
 	{ 0x7001, 0x7001, interrupt_enable_w },
 	{ 0x7800, 0x7800, mooncrst_sound_freq_w },
+	{ 0x6803, 0x6803, mooncrst_noise_w },
 	{ 0x7004, 0x7004, mooncrst_stars_w },
 	{ 0x0000, 0x27ff, MWA_ROM },
 	{ -1 }	/* end of table */
@@ -119,6 +122,7 @@ static struct MemoryWriteAddress pisces_writemem[] =
 	{ 0x5860, 0x5880, MWA_RAM, &mooncrst_bulletsram },
 	{ 0x7001, 0x7001, interrupt_enable_w },
 	{ 0x7800, 0x7800, mooncrst_sound_freq_w },
+	{ 0x6803, 0x6803, mooncrst_noise_w },
 	{ 0x6002, 0x6002, pisces_gfxbank_w },
 	{ 0x7004, 0x7004, mooncrst_stars_w },
 	{ 0x0000, 0x3fff, MWA_ROM },	/* not all games use all the space */
@@ -328,29 +332,6 @@ static unsigned char uniwars_color_prom[] =
 
 
 
-/* waveforms for the audio hardware */
-static unsigned char samples[32] =	/* a simple sine (sort of) wave */
-{
-	0x00,0x00,0x00,0x00,0x22,0x22,0x22,0x22,0x44,0x44,0x44,0x44,0x22,0x22,0x22,0x22,
-	0x00,0x00,0x00,0x00,0xdd,0xdd,0xdd,0xdd,0xbb,0xbb,0xbb,0xbb,0xdd,0xdd,0xdd,0xdd
-#if 0
-	/* VOL1 = 0  VOL2 = 0 */
-	0x00,0x00,0x10,0x10,0x00,0x00,0x10,0x10,0x18,0x18,0x28,0x28,0x18,0x18,0x28,0x28,
-	0x00,0x00,0x10,0x10,0x00,0x00,0x10,0x10,0x18,0x18,0x28,0x28,0x18,0x18,0x28,0x28,
-	/* VOL1 = 1  VOL2 = 0 */
-	0x00,0x00,0x10,0x10,0x00,0x00,0x10,0x10,0x4c,0x4c,0x5c,0x5c,0x4c,0x4c,0x5c,0x5c,
-	0x00,0x00,0x10,0x10,0x00,0x00,0x10,0x10,0x4c,0x4c,0x5c,0x5c,0x4c,0x4c,0x5c,0x5c,
-	/* VOL1 = 0  VOL2 = 1 */
-	0x00,0x00,0x10,0x10,0x00,0x00,0x10,0x10,0x18,0x18,0x28,0x28,0x18,0x18,0x28,0x28,
-	0x23,0x23,0x33,0x33,0x23,0x23,0x33,0x33,0x3b,0x3b,0x4b,0x4b,0x3b,0x3b,0x4b,0x4b,
-	/* VOL1 = 1  VOL2 = 1 */
-	0x00,0x00,0x10,0x10,0x00,0x00,0x10,0x10,0x4c,0x4c,0x5c,0x5c,0x4c,0x4c,0x5c,0x5c,
-	0x23,0x23,0x33,0x33,0x23,0x23,0x33,0x33,0x6f,0x6f,0x7f,0x7f,0x6f,0x6f,0x7f,0x7f,
-#endif
-};
-
-
-
 static struct MachineDriver galaxian_machine_driver =
 {
 	/* basic machine hardware */
@@ -378,10 +359,10 @@ static struct MachineDriver galaxian_machine_driver =
 	mooncrst_vh_screenrefresh,
 
 	/* sound hardware */
-	samples,
+	0,
 	0,
 	mooncrst_sh_start,
-	0,
+	mooncrst_sh_stop,
 	mooncrst_sh_update
 };
 
@@ -414,10 +395,10 @@ static struct MachineDriver pisces_machine_driver =
 	mooncrst_vh_screenrefresh,
 
 	/* sound hardware */
-	samples,
+	0,
 	0,
 	mooncrst_sh_start,
-	0,
+	mooncrst_sh_stop,
 	mooncrst_sh_update
 };
 
@@ -604,6 +585,7 @@ struct GameDriver galaxian_driver =
 
 	galaxian_rom,
 	0, 0,
+	0,
 
 	galaxian_input_ports, galaxian_dsw,
 
@@ -624,6 +606,7 @@ struct GameDriver galmidw_driver =
 
 	galmidw_rom,
 	0, 0,
+	0,
 
 	galaxian_input_ports, galaxian_dsw,
 
@@ -644,6 +627,7 @@ struct GameDriver galnamco_driver =
 
 	galnamco_rom,
 	0, 0,
+	0,
 
 	galaxian_input_ports, galboot_dsw,
 
@@ -664,6 +648,7 @@ struct GameDriver superg_driver =
 
 	galnamco_rom,
 	0, 0,
+	0,
 
 	galaxian_input_ports, galboot_dsw,
 
@@ -684,6 +669,7 @@ struct GameDriver galapx_driver =
 
 	galapx_rom,
 	0, 0,
+	0,
 
 	galaxian_input_ports, galboot_dsw,
 
@@ -704,6 +690,7 @@ struct GameDriver galap1_driver =
 
 	galap1_rom,
 	0, 0,
+	0,
 
 	galaxian_input_ports, galboot_dsw,
 
@@ -724,6 +711,7 @@ struct GameDriver galap4_driver =
 
 	galap4_rom,
 	0, 0,
+	0,
 
 	galaxian_input_ports, galboot_dsw,
 
@@ -744,6 +732,7 @@ struct GameDriver galturbo_driver =
 
 	galnamco_rom,
 	0, 0,
+	0,
 
 	galaxian_input_ports, galboot_dsw,
 
@@ -764,6 +753,7 @@ struct GameDriver pisces_driver =
 
 	pisces_rom,
 	0, 0,
+	0,
 
 	galaxian_input_ports, pisces_dsw,
 
@@ -784,6 +774,7 @@ struct GameDriver japirem_driver =
 
 	japirem_rom,
 	0, 0,
+	0,
 
 	galaxian_input_ports, japirem_dsw,
 
@@ -804,6 +795,7 @@ struct GameDriver uniwars_driver =
 
 	uniwars_rom,
 	0, 0,
+	0,
 
 	galaxian_input_ports, japirem_dsw,
 
@@ -824,6 +816,7 @@ struct GameDriver warofbug_driver =
 
 	warofbug_rom,
 	0, 0,
+	0,
 
 	warofbug_input_ports, warofbug_dsw,
 

@@ -427,6 +427,45 @@ ROM_END
 
 
 
+static int hiload(const char *name)
+{
+	/* check if the hi score table has already been initialized */
+	if (memcmp(&RAM[0x8030],"\x00\x89\x00",3) == 0 &&
+			memcmp(&RAM[0x8099],"\x00\x37\x00",3) == 0)
+	{
+		FILE *f;
+
+
+		if ((f = fopen(name,"rb")) != 0)
+		{
+			fread(&RAM[0x8020],1,21*6,f);
+			RAM[0x80bd] = RAM[0x8030];
+			RAM[0x80be] = RAM[0x8031];
+			RAM[0x80bf] = RAM[0x8032];
+			fclose(f);
+		}
+
+		return 1;
+	}
+	else return 0;	/* we can't load the hi scores yet */
+}
+
+
+
+static void hisave(const char *name)
+{
+	FILE *f;
+
+
+	if ((f = fopen(name,"wb")) != 0)
+	{
+		fwrite(&RAM[0x8020],1,21*6,f);
+		fclose(f);
+	}
+}
+
+
+
 struct GameDriver congo_driver =
 {
 	"congo",
@@ -434,6 +473,7 @@ struct GameDriver congo_driver =
 
 	congo_rom,
 	0, 0,
+	0,
 
 	input_ports, dsw,
 
@@ -444,5 +484,5 @@ struct GameDriver congo_driver =
 	0x00, 0x01,
 	8*13, 8*16, 0x05,
 
-	0, 0
+	hiload, hisave
 };

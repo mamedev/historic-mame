@@ -59,7 +59,6 @@ Sound processor (6502) memory map:
 
 extern void mplanets_vh_init_color_palette(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
 extern void qbert_sh_w(int offset, int data);
-extern int qbert_sh_init(const char *gamename);
 extern void qbert_sh_update(void);
 extern void qbert_output(int offset, int data);
 extern unsigned char *qbert_videoram;
@@ -243,7 +242,7 @@ static const struct MachineDriver machine_driver =
 
 	/* sound hardware */
 	0,      /* samples */
-	qbert_sh_init,
+	0,
 	0,
 	0,
 	qbert_sh_update
@@ -307,6 +306,7 @@ struct GameDriver mplanets_driver =
 
 	mplanets_rom,
 	0, 0,   /* rom decode and opcode decode functions */
+	0,
 
 	input_ports, dsw,
 

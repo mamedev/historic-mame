@@ -25,7 +25,7 @@ void qbert_vh_init_color_palette(unsigned char *palette, unsigned char *colortab
 	int i;
 	unsigned short *colors=(unsigned short *)color_prom;
 
-	for (i = 0;i<256 ;i++)
+	for (i = 0;i<213 ;i++)
 	{
 		unsigned int red,green,blue;
 		red=(colors[i]>>8) & 0x0F;
@@ -69,7 +69,7 @@ void mplanets_vh_init_color_palette(unsigned char *palette, unsigned char *color
 		colortable[256+32+i]=0x3F; /* yellow */
 	}
 }
-   
+
 
 void qbert_videoram_w(int offset,int data)
 {
@@ -91,10 +91,10 @@ void qbert_paletteram_w(int offset,int data)
 {
 	int offs;
 	if (qbert_paletteram[offset]!=data) {
-		qbert_paletteram[offset] = data;        
+		qbert_paletteram[offset] = data;
 		if (offset%2)
 			for (offs = 0;offs < VIDEO_RAM_SIZE;offs++)
-				dirtybuffer[offs] = 1;   
+				dirtybuffer[offs] = 1;
 	}
 /*
 if (offset%2) printf("%x%02x\n",qbert_paletteram[offset],qbert_paletteram[offset-1]);
@@ -119,7 +119,7 @@ void qbert_vh_screenrefresh(struct osd_bitmap *bitmap)
 		col = qbert_paletteram[2*i] + ((qbert_paletteram[2*i+1]&0x0F) << 8);
 		Machine->gfx[0]->colortable[i] =
 			Machine->gfx[1]->colortable[i] =
-				Machine->gfx[2]->colortable[color_to_lookup[col]];         
+				Machine->gfx[2]->colortable[color_to_lookup[col]];
 
 	}
 
@@ -156,7 +156,7 @@ void qbert_vh_screenrefresh(struct osd_bitmap *bitmap)
 	else
 	/* or clear it if sprites are to be drawn first */
 		clearbitmap(bitmap);
-		
+
 	/* Draw the sprites. Note that it is important to draw them exactly in this */
 	/* order, to have the correct priorities. */
 	for (offs = 0;offs<64*4 ;offs += 4)
@@ -192,7 +192,7 @@ void mplanets_vh_screenrefresh(struct osd_bitmap *bitmap)
 		Machine->gfx[0]->colortable[i] =
 			Machine->gfx[1]->colortable[i] =
                 		Machine->gfx[2]->colortable[col];
-        }    
+        }
 
         /* for every character in the Video RAM, check if it has been modified */
         /* since last time and update it accordingly. */
@@ -209,7 +209,7 @@ void mplanets_vh_screenrefresh(struct osd_bitmap *bitmap)
                         sy = 8 * (offs % 32);
 
                         drawgfx(tmpbitmap,Machine->gfx[0],
-                                qbert_videoram[offs],  /* code */     
+                                qbert_videoram[offs],  /* code */
                                 0, /* color */
                                 0,      /* don't flip X */
                                 0,      /* don't flip Y */
@@ -232,7 +232,7 @@ void mplanets_vh_screenrefresh(struct osd_bitmap *bitmap)
         /* order, to have the correct priorities. */
         for (offs = 0;offs<64*4 ;offs += 4)
         {
-            if (qbert_spriteram[offs]||qbert_spriteram[offs+1])     
+            if (qbert_spriteram[offs]||qbert_spriteram[offs+1])
                 drawgfx(bitmap,Machine->gfx[1],
                                 255-qbert_spriteram[offs+2], /* object # */
                                 0, /* color */
@@ -246,4 +246,4 @@ void mplanets_vh_screenrefresh(struct osd_bitmap *bitmap)
         }
         if (qbert_fb_priority)
                 copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
-}      
+}

@@ -327,6 +327,7 @@ struct GameDriver phoenix_driver =
 
 	phoenix_rom,
 	0, 0,
+	0,
 
 	input_ports, dsw,
 
@@ -347,6 +348,7 @@ struct GameDriver pleiads_driver =
 
 	pleiads_rom,
 	0, 0,
+	0,
 
 	input_ports, dsw,
 

@@ -60,6 +60,7 @@ Notable differences are: (thanks to Ville Laitinen)
 
 extern unsigned char *ckong_bsvideoram;
 extern unsigned char *ckong_bigspriteram;
+extern unsigned char *ckong_row_scroll;
 extern void ckong_colorram_w(int offset,int data);
 extern void ckong_bigsprite_videoram_w(int offset,int data);
 extern void cclimber_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
@@ -98,6 +99,7 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x9c00, 0x9fff, ckong_colorram_w, &colorram },
 	{ 0x8800, 0x88ff, ckong_bigsprite_videoram_w, &ckong_bsvideoram },
 	{ 0x98dc, 0x98df, MWA_RAM, &ckong_bigspriteram },
+	{ 0x9800, 0x981f, MWA_RAM, &ckong_row_scroll },
 	{ 0xa004, 0xa004, cclimber_sample_trigger_w },
 	{ 0xb000, 0xb000, cclimber_sample_volume_w },
 	{ 0xa800, 0xa800, cclimber_sample_rate_w },
@@ -334,6 +336,7 @@ struct GameDriver ckong_driver =
 
 	ckong_rom,
 	0, 0,
+	0,
 
 	input_ports, dsw,
 

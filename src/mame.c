@@ -39,6 +39,12 @@ static unsigned char remappedtable[MAX_COLOR_TUPLE*MAX_COLOR_CODES];
 FILE *errorlog;
 
 
+int init_machine(const char *gamename,int argc,char **argv);
+void shutdown_machine(void);
+int run_machine(const char *gamename);
+
+
+
 int main(int argc,char **argv)
 {
 	int i,log,success;
@@ -67,12 +73,7 @@ int main(int argc,char **argv)
 		}
 		else printf("Unable to initialize system\n");
 
-		/* free the memory allocated for ROM and RAM */
-		for (i = 0;i < MAX_MEMORY_REGIONS;i++)
-		{
-			free(Machine->memory_region[i]);
-			Machine->memory_region[i] = 0;
-		}
+		shutdown_machine();
 	}
 	else printf("Unable to initialize machine emulation\n");
 
@@ -173,6 +174,11 @@ int init_machine(const char *gamename,int argc,char **argv)
 		mwa++;
 	}
 
+
+	/* read audio samples if available */
+	Machine->samples = readsamples(gamedrv->samplenames,gamename);
+
+
 	if (*drv->init_machine && (*drv->init_machine)(gamename) != 0)
 		return 1;
 
@@ -183,6 +189,24 @@ int init_machine(const char *gamename,int argc,char **argv)
 		return 1;
 
 	return 0;
+}
+
+
+
+void shutdown_machine(void)
+{
+	int i;
+
+
+	/* free audio samples */
+	freesamples(Machine->samples);
+
+	/* free the memory allocated for ROM and RAM */
+	for (i = 0;i < MAX_MEMORY_REGIONS;i++)
+	{
+		free(Machine->memory_region[i]);
+		Machine->memory_region[i] = 0;
+	}
 }
 
 

@@ -28,10 +28,12 @@ static unsigned char porthandler(int num,AY8910 *chip, int port, int iswrite, un
 		if (port == 0x0e)
 		{
 			if (intf->portAwrite[num]) (*intf->portAwrite[num])(0,val);
+else if (errorlog) fprintf(errorlog,"PC %04x: warning - write %02x to 8910 #%d Port A\n",cpu_getpc(),val,num);
 		}
 		else
 		{
 			if (intf->portBwrite[num]) (*intf->portBwrite[num])(1,val);
+else if (errorlog) fprintf(errorlog,"PC %04x: warning - write %02x to 8910 #%d Port B\n",cpu_getpc(),val,num);
 		}
 	}
 	else
@@ -41,10 +43,12 @@ static unsigned char porthandler(int num,AY8910 *chip, int port, int iswrite, un
 		if (port == 0x0e)
 		{
 			if (intf->portAread[num]) chip->Regs[port] = (*intf->portAread[num])(0);
+else if (errorlog) fprintf(errorlog,"PC %04x: warning - read 8910 #%d Port A\n",cpu_getpc(),num);
 		}
 		else
 		{
 			if (intf->portBread[num]) chip->Regs[port] = (*intf->portBread[num])(1);
+else if (errorlog) fprintf(errorlog,"PC %04x: warning - read 8910 #%d Port B\n",cpu_getpc(),num);
 		}
 	}
 

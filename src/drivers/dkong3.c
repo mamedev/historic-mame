@@ -510,6 +510,7 @@ struct GameDriver dkong3_driver =
 
 	dkong3_rom,
 	0, 0,
+	0,
 
 	input_ports, dsw,
 

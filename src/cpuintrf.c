@@ -13,7 +13,7 @@
 #include "M6502.h"
 
 extern void I86_Execute();
-extern void I86_Reset(int cycles);
+extern void I86_Reset(unsigned char *mem,int cycles);
 
 
 static int activecpu;
@@ -85,7 +85,8 @@ reset:
 				}
 				break;
 			case CPU_I86:
-				I86_Reset(cycles);
+				RAM = Machine->memory_region[Machine->drv->cpu[activecpu].memory_region];
+				I86_Reset(RAM,cycles);
 				break;
 		}
 	}
@@ -443,7 +444,12 @@ void cpu_writemem(register int A,register unsigned char V)
 
 
 
-byte Z80_In(byte Port)
+/***************************************************************************
+
+  Perform an I/O port read. This function is called by the CPU emulation.
+
+***************************************************************************/
+int cpu_readport(int Port)
 {
 	const struct IOReadPort *iorp;
 
@@ -472,7 +478,12 @@ byte Z80_In(byte Port)
 
 
 
-void Z80_Out(byte Port,byte Value)
+/***************************************************************************
+
+  Perform an I/O port write. This function is called by the CPU emulation.
+
+***************************************************************************/
+void cpu_writeport(int Port,int Value)
 {
 	const struct IOWritePort *iowp;
 

@@ -29,102 +29,83 @@
 #include "driver.h"
 
 #define emulation_rate 11025
-#define buffer_len 30000
 
-/* if no files found sound will be zero */
-char samp_buf[9][buffer_len];
-int buf_size[9];
-
-int invaders_sh_init(const char *gamename)
-{
-   FILE *infile;
-   int x;
-   char buf[32];
-   static char *names[] =
-   {
-      "0.raw",     "1.raw",     "2.raw",     "3.raw",
-      "4.raw",     "5.raw",    "6.raw",      "7.raw",
-      "8.raw"
-   };
-
-   for (x = 0; x < 9; x++)
-   {
-      buf_size[x] = 0;
-      if (names[x][0] != 0)
-      {
-         sprintf(buf, "%s/%s", gamename, names[x]);
-         infile = fopen(buf, "rb");
-
-         if (infile)
-         {
-            buf_size[x] = fread(samp_buf[x], 1, buffer_len, infile);
-            fclose(infile);
-         }
-      }
-   }
-
-   return 0;
-}
 
 
 void invaders_sh_port3_w(int offset, int data)
 {
-   static unsigned char Sound = 0;
+	static unsigned char Sound = 0;
 
-   if (data & 0x01 && ~Sound & 0x01)
-      osd_play_sample(0, samp_buf[0], buf_size[0], emulation_rate, 255, 1);
 
-   if (~data & 0x01 && Sound & 0x01)
-      osd_stop_sample(0);
+	if (Machine->samples == 0) return;
 
-   if (data & 0x02 && ~Sound & 0x02)
-      osd_play_sample(1, samp_buf[1], buf_size[1], emulation_rate, 255, 0);
+	if (data & 0x01 && ~Sound & 0x01 && Machine->samples->sample[0])
+		osd_play_sample(0,Machine->samples->sample[0]->data,
+				Machine->samples->sample[0]->length,emulation_rate,128,1);
 
-   if (~data & 0x02 && Sound & 0x02)
-      osd_stop_sample(1);
+	if (~data & 0x01 && Sound & 0x01)
+		osd_stop_sample(0);
 
-   if (data & 0x04 && ~Sound & 0x04)
-      osd_play_sample(2, samp_buf[2], buf_size[2], emulation_rate, 255, 0);
+	if (data & 0x02 && ~Sound & 0x02 && Machine->samples->sample[1])
+		osd_play_sample(1,Machine->samples->sample[1]->data,
+				Machine->samples->sample[1]->length,emulation_rate,100,0);
 
-   if (~data & 0x04 && Sound & 0x04)
-      osd_stop_sample(2);
+	if (~data & 0x02 && Sound & 0x02)
+		osd_stop_sample(1);
 
-   if (data & 0x08 && ~Sound & 0x08)
-      osd_play_sample(3, samp_buf[3], buf_size[3], emulation_rate, 255, 0);
+	if (data & 0x04 && ~Sound & 0x04 && Machine->samples->sample[2])
+		osd_play_sample(2,Machine->samples->sample[2]->data,
+				Machine->samples->sample[2]->length,emulation_rate,128,0);
 
-   if (~data & 0x08 && Sound & 0x08)
-      osd_stop_sample(3);
+	if (~data & 0x04 && Sound & 0x04)
+		osd_stop_sample(2);
 
-   Sound = data;
+	if (data & 0x08 && ~Sound & 0x08 && Machine->samples->sample[3])
+		osd_play_sample(3,Machine->samples->sample[3]->data,
+				Machine->samples->sample[3]->length,emulation_rate,100,0);
+
+	if (~data & 0x08 && Sound & 0x08)
+		osd_stop_sample(3);
+
+	Sound = data;
 }
 
 
 void invaders_sh_port5_w(int offset, int data)
 {
-   static unsigned char Sound = 0;
+	static unsigned char Sound = 0;
 
-   if (data & 0x01 && ~Sound & 0x01)
-      osd_play_sample(4, samp_buf[4], buf_size[4], emulation_rate, 255, 0);
 
-   if (data & 0x02 && ~Sound & 0x02)
-      osd_play_sample(4, samp_buf[5], buf_size[5], emulation_rate, 255, 0);
+	if (Machine->samples == 0) return;
 
-   if (data & 0x04 && ~Sound & 0x04)
-      osd_play_sample(4, samp_buf[6], buf_size[6], emulation_rate, 255, 0);
+	if (data & 0x01 && ~Sound & 0x01 && Machine->samples->sample[4])
+		osd_play_sample(4,Machine->samples->sample[4]->data,
+				Machine->samples->sample[4]->length,emulation_rate,255,0);
 
-   if (data & 0x08 && ~Sound & 0x08)
-      osd_play_sample(4, samp_buf[7], buf_size[7], emulation_rate, 255, 0);
+	if (data & 0x02 && ~Sound & 0x02 && Machine->samples->sample[5])
+		osd_play_sample(4,Machine->samples->sample[5]->data,
+				Machine->samples->sample[5]->length,emulation_rate,255,0);
 
-   if (data & 0x10 && ~Sound & 0x10)
-      osd_play_sample(5, samp_buf[8], buf_size[8], emulation_rate, 255, 0);
+	if (data & 0x04 && ~Sound & 0x04 && Machine->samples->sample[6])
+		osd_play_sample(4,Machine->samples->sample[6]->data,
+				Machine->samples->sample[6]->length,emulation_rate,255,0);
 
-   if (~data & 0x10 && Sound & 0x10)
-      osd_stop_sample(5);
+	if (data & 0x08 && ~Sound & 0x08 && Machine->samples->sample[7])
+		osd_play_sample(4,Machine->samples->sample[7]->data,
+				Machine->samples->sample[7]->length,emulation_rate,255,0);
 
-   Sound = data;
+	if (data & 0x10 && ~Sound & 0x10 && Machine->samples->sample[8])
+		osd_play_sample(5,Machine->samples->sample[8]->data,
+				Machine->samples->sample[8]->length,emulation_rate,128,0);
+
+	if (~data & 0x10 && Sound & 0x10)
+		osd_stop_sample(5);
+
+	Sound = data;
 }
+
+
 
 void invaders_sh_update(void)
 {
 }
-

@@ -1,6 +1,6 @@
 /***************************************************************************
 
-Green Berete memory map (preliminary)
+Green Beret memory map (preliminary)
 
 0000-bfff ROM
 c000-c7ff Color RAM
@@ -28,11 +28,15 @@ f603      IN2
           bit 0-1-2 coin  bit 3 1 player  start  bit 4 2 players start
 
 write:
-e043      bit 3 = sprite bank select; other bits = ?
+e040      ?
+e041      ?
+e042      ?
+e043      bit 3 = sprite RAM bank select; other bits = ?
 e044      bit 0 = nmi enable, other bits = ?
-f200      sound (?)
-f400      sound (?)
-f600      watchdog reset
+f000      ?
+f200      sound
+f400      sound (always used together with f200)
+f600      watchdog reset (?)
 
 interrupts:
 The game uses both IRQ (mode 1) and NMI.
@@ -44,29 +48,30 @@ The game uses both IRQ (mode 1) and NMI.
 
 
 
+extern unsigned char *gberet_interrupt_enable;
 extern int gberet_interrupt(void);
 
 extern unsigned char *gberet_scroll;
+extern unsigned char *gberet_spritebank;
 extern void gberet_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
 extern int gberet_vh_start(void);
 extern void gberet_vh_stop(void);
 extern void gberet_vh_screenrefresh(struct osd_bitmap *bitmap);
 
-extern void ladybug_sound1_w(int offset,int data);
-extern void ladybug_sound2_w(int offset,int data);
-extern int ladybug_sh_start(void);
-extern void ladybug_sh_update(void);
+extern void gberet_sound1_w(int offset,int data);
+extern int gberet_sh_start(void);
+extern void gberet_sh_stop(void);
+extern void gberet_sh_update(void);
 
 
 
 static struct MemoryReadAddress readmem[] =
 {
+	{ 0xc000, 0xe03f, MRA_RAM },
 	{ 0x0000, 0xbfff, MRA_ROM },
-	{ 0xc000, 0xdfff, MRA_RAM },
-	{ 0xe000, 0xe03f, MRA_RAM },
+	{ 0xf603, 0xf603, input_port_2_r },	/* IN2 */
 	{ 0xf602, 0xf602, input_port_0_r },	/* IN0 */
 	{ 0xf601, 0xf601, input_port_1_r },	/* IN1 */
-	{ 0xf603, 0xf603, input_port_2_r },	/* IN2 */
 	{ 0xf600, 0xf600, input_port_3_r },	/* DSW1 */
 	{ 0xf200, 0xf200, input_port_4_r },	/* DSW2 */
 	{ 0xf400, 0xf400, input_port_5_r },	/* DSW3 */
@@ -75,16 +80,17 @@ static struct MemoryReadAddress readmem[] =
 
 static struct MemoryWriteAddress writemem[] =
 {
+	{ 0xd000, 0xd1ff, MWA_RAM, &spriteram },
 	{ 0xd200, 0xdfff, MWA_RAM },
 	{ 0xc000, 0xc7ff, colorram_w, &colorram },
 	{ 0xc800, 0xcfff, videoram_w, &videoram },
-	{ 0xd000, 0xd1ff, MWA_RAM, &spriteram },
 	{ 0xe000, 0xe03f, MWA_RAM, &gberet_scroll },
+	{ 0xe043, 0xe043, MWA_RAM, &gberet_spritebank },
+	{ 0xe044, 0xe044, MWA_RAM, &gberet_interrupt_enable },
+	{ 0xf200, 0xf200, gberet_sound1_w },
+	{ 0xf400, 0xf400, MWA_NOP },
+	{ 0xf000, 0xf000, MWA_NOP },
 	{ 0xf600, 0xf600, MWA_NOP },
-{ 0xe043, 0xe043, MWA_RAM },
-{ 0xe044, 0xe044, MWA_RAM },
-	{ 0xf200, 0xf200, ladybug_sound1_w },
-	{ 0xf400, 0xf400, ladybug_sound2_w },
 	{ 0x0000, 0xbfff, MWA_ROM },
 	{ -1 }	/* end of table */
 };
@@ -220,15 +226,6 @@ static unsigned char color_prom[] =
 
 
 
-/* waveforms for the audio hardware */
-static unsigned char samples[32] =	/* a simple sine (sort of) wave */
-{
-	0x00,0x00,0x00,0x00,0x22,0x22,0x22,0x22,0x44,0x44,0x44,0x44,0x22,0x22,0x22,0x22,
-	0x00,0x00,0x00,0x00,0xdd,0xdd,0xdd,0xdd,0xbb,0xbb,0xbb,0xbb,0xdd,0xdd,0xdd,0xdd
-};
-
-
-
 static struct MachineDriver machine_driver =
 {
 	/* basic machine hardware */
@@ -238,14 +235,14 @@ static struct MachineDriver machine_driver =
 			3072000,	/* 3.072 Mhz?? */
 			0,
 			readmem,writemem,0,0,
-			gberet_interrupt,8
+			gberet_interrupt,16
 		}
 	},
 	60,
 	0,
 
 	/* video hardware */
-	32*8, 32*8, { 1*8, 31*8-1, 2*8, 32*8-1 },
+	32*8, 32*8, { 1*8, 31*8-1, 1*8, 31*8-1 },
 	gfxdecodeinfo,
 	32,2*16*16,
 	gberet_vh_convert_color_prom,
@@ -256,11 +253,11 @@ static struct MachineDriver machine_driver =
 	gberet_vh_screenrefresh,
 
 	/* sound hardware */
-	samples,
 	0,
-	ladybug_sh_start,
 	0,
-	ladybug_sh_update
+	gberet_sh_start,
+	gberet_sh_stop,
+	gberet_sh_update
 };
 
 
@@ -301,6 +298,45 @@ ROM_END
 
 
 
+static int hiload(const char *name)
+{
+	/* check if the hi score table has already been initialized */
+	if (memcmp(&RAM[0xd900],"\x03\x30\x00",3) == 0 &&
+			memcmp(&RAM[0xd91b],"\x01\x00\x00",3) == 0)
+	{
+		FILE *f;
+
+
+		if ((f = fopen(name,"rb")) != 0)
+		{
+			fread(&RAM[0xd900],1,6*10,f);
+			RAM[0xdb06] = RAM[0xd900];
+			RAM[0xdb07] = RAM[0xd901];
+			RAM[0xdb08] = RAM[0xd902];
+			fclose(f);
+		}
+
+		return 1;
+	}
+	else return 0;	/* we can't load the hi scores yet */
+}
+
+
+
+static void hisave(const char *name)
+{
+	FILE *f;
+
+
+	if ((f = fopen(name,"wb")) != 0)
+	{
+		fwrite(&RAM[0xd900],1,6*10,f);
+		fclose(f);
+	}
+}
+
+
+
 struct GameDriver gberet_driver =
 {
 	"gberet",
@@ -308,6 +344,7 @@ struct GameDriver gberet_driver =
 
 	gberet_rom,
 	0, 0,
+	0,
 
 	input_ports, dsw,
 
@@ -316,9 +353,9 @@ struct GameDriver gberet_driver =
 		0x11,0x12,0x13,0x14,0x15,0x16,0x17,0x18,0x19,0x1a,0x1b,0x1c,0x1d,	/* letters */
 		0x1e,0x1f,0x20,0x21,0x22,0x23,0x24,0x25,0x26,0x27,0x28,0x29,0x2a },
 	0x0b, 0x0e,
-	8*13, 8*16, 0x05,
+	8*13, 8*16, 0x0f,
 
-	0, 0
+	hiload, hisave
 };
 
 struct GameDriver rushatck_driver =
@@ -328,6 +365,7 @@ struct GameDriver rushatck_driver =
 
 	rushatck_rom,
 	0, 0,
+	0,
 
 	input_ports, dsw,
 
@@ -336,7 +374,7 @@ struct GameDriver rushatck_driver =
 		0x11,0x12,0x13,0x14,0x15,0x16,0x17,0x18,0x19,0x1a,0x1b,0x1c,0x1d,	/* letters */
 		0x1e,0x1f,0x20,0x21,0x22,0x23,0x24,0x25,0x26,0x27,0x28,0x29,0x2a },
 	0x0b, 0x0e,
-	8*13, 8*16, 0x05,
+	8*13, 8*16, 0x0f,
 
-	0, 0
+	hiload, hisave
 };

@@ -319,6 +319,7 @@ struct GameDriver rallyx_driver =
 
 	rallyx_rom,
 	0, 0,
+	0,
 
 	input_ports, dsw,
 

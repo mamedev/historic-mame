@@ -256,6 +256,7 @@ struct GameDriver vanguard_driver =
 
 	vanguard_rom,
 	0, 0,
+	0,
 
 	input_ports, dsw,
 

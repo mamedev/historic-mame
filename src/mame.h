@@ -22,6 +22,7 @@ struct RunningMachine
 	int background_pen;	/* pen to use to clear the bitmap (DON'T use 0) */
 	const struct GameDriver *gamedrv;	/* contains the definition of the game machine */
 	const struct MachineDriver *drv;	/* same as gamedrv->drv */
+	struct GameSamples *samples;	/* samples loaded from disk */
 };
 
 
@@ -29,8 +30,6 @@ extern struct RunningMachine *Machine;
 extern unsigned char *RAM;	/* pointer to the memory region of the active CPU */
 
 
-int init_machine(const char *gamename,int argc,char **argv);
-int run_machine(const char *gamename);
 int updatescreen(void);
 
 #endif

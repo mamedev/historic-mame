@@ -39,7 +39,7 @@ int sound_command_r(int offset)
 	}
 	else
 	{
-		if (errorlog) fprintf(errorlog,"warning: read command, but queue empty\n");
+		if (errorlog) fprintf(errorlog,"warning: read sound command, but queue empty\n");
 		res = 0;
 	}
 

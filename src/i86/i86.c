@@ -1,8 +1,9 @@
 /****************************************************************************
 *                          8088/8086 emulator :                             *
 	this is Fabrice Frances' version of David Hedley emulator (pcemu),
-	heavily modified in order to allow memory-mapped I/O
-	and interfaced to MAME.
+	- heavily modified in order to allow memory-mapped I/O
+	- interfaced to MAME.
+	- now faster too
 ****************************************************************************/
 
 /****************************************************************************
@@ -19,11 +20,11 @@
 *                                                                           *
 ****************************************************************************/
 
+#include "mytypes.h"
 #include "global.h"
 
 #include <stdio.h>
 
-#include "mytypes.h"
 #include "I86.h"
 #include "instr.h"
 
@@ -40,9 +41,13 @@ extern void cpu_writemem(register int A,register unsigned char V);
 extern BYTE I86_In(WORD port);
 extern void I86_Out(WORD port, BYTE val);
 
-static WORD wregs[8];	     /* Always little-endian */
-static BYTE *bregs[16];     /* Points to bytes within wregs[] */
+static union {
+	WORD w[9];	/* native machine word order ! 8 general registers + a NONE reg*/
+	BYTE b[16];
+} regs;
+
 static unsigned sregs[4];   /* Always native machine word order */
+static unsigned base[4]; /* 'Shadows' of the segment registers multiplied by 16 */
 
 static unsigned ip;	     /* Always native machine word order */
 
@@ -57,108 +62,105 @@ static unsigned AF, OF, SF;
 
 
 static UINT8 parity_table[256];
-static BYTE *ModRMRegB[256];
-static WORD *ModRMRegW[256];
+static BREGS ModRMRegB[256];
+static WREGS ModRMRegW[256];
 
-    /* 'Shadows' of the segment registers multiplied by 16 */
-static unsigned c_cs,c_ds,c_es,c_ss,c_stack;
 
 static volatile int int_pending;   /* Interrupt pending */
 static volatile int int_blocked;   /* Blocked pending */
+static int init=0;		/* has the cpu started ? */
+static unsigned char *Memory;	/* MAME kindly gives us the Memory address 8-) */
 
 static struct
 {
-    unsigned *segment;
-    WORD *reg1;
-    WORD *reg2;
-    int offset;
-    int offset16;
-    int pad[3];	/* Make structure power of 2 bytes wide for speed */
+    SREGS segment;
+    WREGS reg1;
+    WREGS reg2;
+    BOOLEAN offset;
+    BOOLEAN offset16;
 } ModRMRM[256];
 
-static WORD zero_word = 0;
-
-static WORD *ModRMRMWRegs[256];
-static BYTE *ModRMRMBRegs[256];
+static WREGS ModRMRMWRegs[256];
+static BREGS ModRMRMBRegs[256];
 
 static void trap(void);
 
 #define PushSeg(Seg) \
 { \
-      register unsigned tmp = (WORD)(ReadWord(&wregs[SP])-2); \
-      WriteWord(&wregs[SP],tmp); \
-      PutMemW(c_stack,tmp,sregs[Seg]); \
+      register unsigned tmp = (WORD)(regs.w[SP]-2); \
+      regs.w[SP]=tmp; \
+      PutMemW(base[SS],tmp,sregs[Seg]); \
 }
 
 
 #define PopSeg(seg, Seg) \
 { \
-      register unsigned tmp = ReadWord(&wregs[SP]); \
-      sregs[Seg] = GetMemW(c_stack,tmp); \
+      register unsigned tmp = regs.w[SP]; \
+      sregs[Seg] = GetMemW(base[SS],tmp); \
       seg = SegToMemPtr(Seg); \
       tmp += 2; \
-      WriteWord(&wregs[SP],tmp); \
+      regs.w[SP]=tmp; \
 }
 
 
 #define PushWordReg(Reg) \
 { \
-      register unsigned tmp1 = (WORD)(ReadWord(&wregs[SP])-2); \
+      register unsigned tmp1 = (WORD)(regs.w[SP]-2); \
       WORD tmp2; \
-      WriteWord(&wregs[SP],tmp1); \
-      tmp2 = ReadWord(&wregs[Reg]); \
-      PutMemW(c_stack,tmp1,tmp2); \
+      regs.w[SP]=tmp1; \
+      tmp2 = regs.w[Reg]; \
+      PutMemW(base[SS],tmp1,tmp2); \
 }
 
 
 #define PopWordReg(Reg) \
 { \
-      register unsigned tmp = ReadWord(&wregs[SP]); \
-      WORD tmp2 = GetMemW(c_stack,tmp); \
+      register unsigned tmp = regs.w[SP]; \
+      WORD tmp2 = GetMemW(base[SS],tmp); \
       tmp += 2; \
-      WriteWord(&wregs[SP],tmp); \
-      WriteWord(&wregs[Reg],tmp2); \
+      regs.w[SP]=tmp; \
+      regs.w[Reg]=tmp2; \
 }
 
 
 #define XchgAXReg(Reg) \
 { \
       register unsigned tmp; \
-      tmp = wregs[Reg]; \
-      wregs[Reg] = wregs[AX]; \
-      wregs[AX] = tmp; \
+      tmp = regs.w[Reg]; \
+      regs.w[Reg] = regs.w[AX]; \
+      regs.w[AX] = tmp; \
 }
 
 
 #define IncWordReg(Reg) \
 { \
-      register unsigned tmp = (unsigned)ReadWord(&wregs[Reg]); \
+      register unsigned tmp = (unsigned)regs.w[Reg]; \
       register unsigned tmp1 = tmp+1; \
       SetOFW_Add(tmp1,tmp,1); \
       SetAF(tmp1,tmp,1); \
       SetZFW(tmp1); \
       SetSFW(tmp1); \
       SetPF(tmp1); \
-      WriteWord(&wregs[Reg],tmp1); \
+      regs.w[Reg]=tmp1; \
 }
 
 
 #define DecWordReg(Reg) \
 { \
-      register unsigned tmp = (unsigned)ReadWord(&wregs[Reg]); \
+      register unsigned tmp = (unsigned)regs.w[Reg]; \
       register unsigned tmp1 = tmp-1; \
       SetOFW_Sub(tmp1,1,tmp); \
       SetAF(tmp1,tmp,1); \
       SetZFW(tmp1); \
       SetSFW(tmp1); \
       SetPF(tmp1); \
-      WriteWord(&wregs[Reg],tmp1); \
+      regs.w[Reg]=tmp1; \
 }
 
 
 #define Logical_br8(op) \
 { \
-      unsigned ModRM = (unsigned)GetMemInc(c_cs,ip); \
+      unsigned ModRM = (unsigned)GetMemInc(base[CS],ip); \
       register unsigned src = (unsigned)GetModRMRegB(ModRM); \
       register unsigned tmp = (unsigned)GetModRMRMB(ModRM); \
       tmp op ## = src; \
@@ -172,7 +174,7 @@ static void trap(void);
 
 #define Logical_r8b(op) \
 { \
-      unsigned ModRM = (unsigned)GetMemInc(c_cs,ip); \
+      unsigned ModRM = (unsigned)GetMemInc(base[CS],ip); \
       register unsigned tmp = (unsigned)GetModRMRegB(ModRM); \
       register unsigned src = (unsigned)GetModRMRMB(ModRM); \
       tmp op ## = src; \
@@ -186,7 +188,7 @@ static void trap(void);
 
 #define Logical_wr16(op) \
 { \
-      unsigned ModRM = GetMemInc(c_cs,ip); \
+      unsigned ModRM = GetMemInc(base[CS],ip); \
       register unsigned tmp1 = (unsigned)GetModRMRegW(ModRM); \
       register unsigned tmp2 = (unsigned)GetModRMRMW(ModRM); \
       register unsigned tmp3 = tmp1 op tmp2; \
@@ -200,7 +202,7 @@ static void trap(void);
 
 #define Logical_r16w(op) \
 { \
-      unsigned ModRM = GetMemInc(c_cs,ip); \
+      unsigned ModRM = GetMemInc(base[CS],ip); \
       register unsigned tmp2 = (unsigned)GetModRMRegW(ModRM); \
       register unsigned tmp1 = (unsigned)GetModRMRMW(ModRM); \
       register unsigned tmp3 = tmp1 op tmp2; \
@@ -214,28 +216,28 @@ static void trap(void);
 
 #define Logical_ald8(op) \
 { \
-      register unsigned tmp = *bregs[AL]; \
-      tmp op ## = (unsigned)GetMemInc(c_cs,ip); \
+      register unsigned tmp = regs.b[AL]; \
+      tmp op ## = (unsigned)GetMemInc(base[CS],ip); \
       CF = OF = AF = 0; \
       SetZFB(tmp); \
       SetSFB(tmp); \
       SetPF(tmp); \
-      *bregs[AL] = (BYTE)tmp; \
+      regs.b[AL] = (BYTE)tmp; \
 }
 
 
 #define Logical_axd16(op) \
 { \
       register unsigned src; \
-      register unsigned tmp = ReadWord(&wregs[AX]); \
-      src = GetMemInc(c_cs,ip); \
-      src += GetMemInc(c_cs,ip) << 8; \
+      register unsigned tmp = regs.w[AX]; \
+      src = GetMemInc(base[CS],ip); \
+      src += GetMemInc(base[CS],ip) << 8; \
       tmp op ## = src; \
       CF = OF = AF = 0; \
       SetZFW(tmp); \
       SetSFW(tmp); \
       SetPF(tmp); \
-      WriteWord(&wregs[AX],tmp); \
+      regs.w[AX]=tmp; \
 }
 
 
@@ -257,22 +259,26 @@ static INLINE2 void i_ ## name ## _axd16(void) \
 #define JumpCond(name, cond) \
 static INLINE2 void i_j ## name ## (void) \
 { \
-      register int tmp = (int)((INT8)GetMemInc(c_cs,ip)); \
+      register int tmp = (int)((INT8)GetMemInc(base[CS],ip)); \
       if (cond) ip = (WORD)(ip+tmp); \
 }
 
 
-void I86_Reset(void)
+void I86_Reset(unsigned char *mem,int cycles)
 {
     unsigned int i,j,c;
+    BREGS reg_name[8]={ AL, CL, DL, BL, AH, CH, DH, BH };
     
     for (i = 0; i < 4; i++)
         sregs[i] = 0;
     for (i=0; i < 8; i++)
-        wregs[i] = 0;
+        regs.w[i] = 0;
     
     sregs[CS]=0xFFFF;
     ip = 0;
+    init = 0;
+
+    Memory=mem;
     
     for (i = 0;i < 256; i++)
     {
@@ -284,28 +290,10 @@ void I86_Reset(void)
     
     CF = PF = AF = ZF = SF = TF = IF = DF = OF = 0;
     
-    bregs[AL] = (BYTE *)&wregs[AX];
-    bregs[AH] = (BYTE *)&wregs[AX]+1;
-    bregs[CL] = (BYTE *)&wregs[CX];
-    bregs[CH] = (BYTE *)&wregs[CX]+1;
-    bregs[DL] = (BYTE *)&wregs[DX];
-    bregs[DH] = (BYTE *)&wregs[DX]+1;
-    bregs[BL] = (BYTE *)&wregs[BX];
-    bregs[BH] = (BYTE *)&wregs[BX]+1;
-    
-    bregs[SPL] = (BYTE *)&wregs[SP];
-    bregs[SPH] = (BYTE *)&wregs[SP]+1;
-    bregs[BPL] = (BYTE *)&wregs[BP];
-    bregs[BPH] = (BYTE *)&wregs[BP]+1;
-    bregs[SIL] = (BYTE *)&wregs[SI];
-    bregs[SIH] = (BYTE *)&wregs[SI]+1;
-    bregs[DIL] = (BYTE *)&wregs[DI];
-    bregs[DIH] = (BYTE *)&wregs[DI]+1;
-    
     for (i = 0; i < 256; i++)
     {
-        ModRMRegB[i] = bregs[(i & 0x38) >> 3];
-        ModRMRegW[i] = &wregs[(i & 0x38) >> 3];
+        ModRMRegB[i] = reg_name[(i & 0x38) >> 3];
+        ModRMRegW[i] = (i & 0x38) >> 3;
     }
     
     for (i = 0; i < 0x40; i++)
@@ -313,53 +301,53 @@ void I86_Reset(void)
         switch (i & 7)
         {
         case 0:
-            ModRMRM[i].segment = &c_ds;
-            ModRMRM[i].reg1 = &wregs[BX];
-            ModRMRM[i].reg2 = &wregs[SI];
-            ModRMRM[i].offset = ModRMRM[i].offset16 = 0;
+            ModRMRM[i].segment = DS;
+            ModRMRM[i].reg1 = BX;
+            ModRMRM[i].reg2 = SI;
+            ModRMRM[i].offset = ModRMRM[i].offset16 = FALSE;
             break;
         case 1:
-            ModRMRM[i].segment = &c_ds;
-            ModRMRM[i].reg1 = &wregs[BX];
-            ModRMRM[i].reg2 = &wregs[DI];
-            ModRMRM[i].offset = ModRMRM[i].offset16 = 0;
+            ModRMRM[i].segment = DS;
+            ModRMRM[i].reg1 = BX;
+            ModRMRM[i].reg2 = DI;
+            ModRMRM[i].offset = ModRMRM[i].offset16 = FALSE;
             break;
         case 2:
-            ModRMRM[i].segment = &c_ss;
-            ModRMRM[i].reg1 = &wregs[BP];
-            ModRMRM[i].reg2 = &wregs[SI];
-            ModRMRM[i].offset = ModRMRM[i].offset16 = 0;
+            ModRMRM[i].segment = SS;
+            ModRMRM[i].reg1 = BP;
+            ModRMRM[i].reg2 = SI;
+            ModRMRM[i].offset = ModRMRM[i].offset16 = FALSE;
             break;
         case 3:
-            ModRMRM[i].segment = &c_ss;
-            ModRMRM[i].reg1 = &wregs[BP];
-            ModRMRM[i].reg2 = &wregs[DI];
-            ModRMRM[i].offset = ModRMRM[i].offset16 = 0;
+            ModRMRM[i].segment = DS;
+            ModRMRM[i].reg1 = BP;
+            ModRMRM[i].reg2 = DI;
+            ModRMRM[i].offset = ModRMRM[i].offset16 = FALSE;
             break;
         case 4:
-            ModRMRM[i].segment = &c_ds;
-            ModRMRM[i].reg1 = &zero_word;
-            ModRMRM[i].reg2 = &wregs[SI];
-            ModRMRM[i].offset = ModRMRM[i].offset16 = 0;
+            ModRMRM[i].segment = DS;
+            ModRMRM[i].reg1 = NONE;
+            ModRMRM[i].reg2 = SI;
+            ModRMRM[i].offset = ModRMRM[i].offset16 = FALSE;
             break;
         case 5:
-            ModRMRM[i].segment = &c_ds;
-            ModRMRM[i].reg1 = &zero_word;
-            ModRMRM[i].reg2 = &wregs[DI];
-            ModRMRM[i].offset = ModRMRM[i].offset16 = 0;
+            ModRMRM[i].segment = DS;
+            ModRMRM[i].reg1 = NONE;
+            ModRMRM[i].reg2 = DI;
+            ModRMRM[i].offset = ModRMRM[i].offset16 = FALSE;
             break;
         case 6:
-            ModRMRM[i].segment = &c_ds;
-            ModRMRM[i].reg1 = &zero_word;
-            ModRMRM[i].reg2 = &zero_word;
-            ModRMRM[i].offset = 1;
-            ModRMRM[i].offset16 = 1;
+            ModRMRM[i].segment = DS;
+            ModRMRM[i].reg1 = NONE;
+            ModRMRM[i].reg2 = NONE;
+            ModRMRM[i].offset = TRUE;
+            ModRMRM[i].offset16 = TRUE;
             break;
         default:
-            ModRMRM[i].segment = &c_ds;
-            ModRMRM[i].reg1 = &wregs[BX];
-            ModRMRM[i].reg2 = &zero_word;
-            ModRMRM[i].offset = ModRMRM[i].offset16 = 0;
+            ModRMRM[i].segment = DS;
+            ModRMRM[i].reg1 = BX;
+            ModRMRM[i].reg2 = NONE;
+            ModRMRM[i].offset = ModRMRM[i].offset16 = FALSE;
             break;
         }
     }
@@ -369,60 +357,60 @@ void I86_Reset(void)
         switch (i & 7)
         {
         case 0:
-            ModRMRM[i].segment = &c_ds;
-            ModRMRM[i].reg1 = &wregs[BX];
-            ModRMRM[i].reg2 = &wregs[SI];
-            ModRMRM[i].offset = 1;
-            ModRMRM[i].offset16 = 0;
+            ModRMRM[i].segment = DS;
+            ModRMRM[i].reg1 = BX;
+            ModRMRM[i].reg2 = SI;
+            ModRMRM[i].offset = TRUE;
+            ModRMRM[i].offset16 = FALSE;
             break;
         case 1:
-            ModRMRM[i].segment = &c_ds;
-            ModRMRM[i].reg1 = &wregs[BX];
-            ModRMRM[i].reg2 = &wregs[DI];
-            ModRMRM[i].offset = 1;
-            ModRMRM[i].offset16 = 0;
+            ModRMRM[i].segment = DS;
+            ModRMRM[i].reg1 = BX;
+            ModRMRM[i].reg2 = DI;
+            ModRMRM[i].offset = TRUE;
+            ModRMRM[i].offset16 = FALSE;
             break;
         case 2:
-            ModRMRM[i].segment = &c_ss;
-            ModRMRM[i].reg1 = &wregs[BP];
-            ModRMRM[i].reg2 = &wregs[SI];
-            ModRMRM[i].offset = 1;
-            ModRMRM[i].offset16 = 0;
+            ModRMRM[i].segment = SS;
+            ModRMRM[i].reg1 = BP;
+            ModRMRM[i].reg2 = SI;
+            ModRMRM[i].offset = TRUE;
+            ModRMRM[i].offset16 = FALSE;
             break;
         case 3:
-            ModRMRM[i].segment = &c_ss;
-            ModRMRM[i].reg1 = &wregs[BP];
-            ModRMRM[i].reg2 = &wregs[DI];
-            ModRMRM[i].offset = 1;
-            ModRMRM[i].offset16 = 0;
+            ModRMRM[i].segment = SS;
+            ModRMRM[i].reg1 = BP;
+            ModRMRM[i].reg2 = DI;
+            ModRMRM[i].offset = TRUE;
+            ModRMRM[i].offset16 = FALSE;
             break;
         case 4:
-            ModRMRM[i].segment = &c_ds;
-            ModRMRM[i].reg1 = &zero_word;
-            ModRMRM[i].reg2 = &wregs[SI];
-            ModRMRM[i].offset = 1;
-            ModRMRM[i].offset16 = 0;
+            ModRMRM[i].segment = DS;
+            ModRMRM[i].reg1 = NONE;
+            ModRMRM[i].reg2 = SI;
+            ModRMRM[i].offset = TRUE;
+            ModRMRM[i].offset16 = FALSE;
             break;
         case 5:
-            ModRMRM[i].segment = &c_ds;
-            ModRMRM[i].reg1 = &zero_word;
-            ModRMRM[i].reg2 = &wregs[DI];
-            ModRMRM[i].offset = 1;
-            ModRMRM[i].offset16 = 0;
+            ModRMRM[i].segment = DS;
+            ModRMRM[i].reg1 = NONE;
+            ModRMRM[i].reg2 = DI;
+            ModRMRM[i].offset = TRUE;
+            ModRMRM[i].offset16 = FALSE;
             break;
         case 6:
-            ModRMRM[i].segment = &c_ss;
-            ModRMRM[i].reg1 = &wregs[BP];
-            ModRMRM[i].reg2 = &zero_word;
-            ModRMRM[i].offset = 1;
-            ModRMRM[i].offset16 = 0;
+            ModRMRM[i].segment = SS;
+            ModRMRM[i].reg1 = BP;
+            ModRMRM[i].reg2 = NONE;
+            ModRMRM[i].offset = TRUE;
+            ModRMRM[i].offset16 = FALSE;
             break;
         default:
-            ModRMRM[i].segment = &c_ds;
-            ModRMRM[i].reg1 = &wregs[BX];
-            ModRMRM[i].reg2 = &zero_word;
-            ModRMRM[i].offset = 1;
-            ModRMRM[i].offset16 = 0;
+            ModRMRM[i].segment = DS;
+            ModRMRM[i].reg1 = BX;
+            ModRMRM[i].reg2 = NONE;
+            ModRMRM[i].offset = TRUE;
+            ModRMRM[i].offset16 = FALSE;
             break;
         }
     }
@@ -432,68 +420,68 @@ void I86_Reset(void)
         switch (i & 7)
         {
         case 0:
-            ModRMRM[i].segment = &c_ds;
-            ModRMRM[i].reg1 = &wregs[BX];
-            ModRMRM[i].reg2 = &wregs[SI];
-            ModRMRM[i].offset = 1;
-            ModRMRM[i].offset16 = 1;
+            ModRMRM[i].segment = DS;
+            ModRMRM[i].reg1 = BX;
+            ModRMRM[i].reg2 = SI;
+            ModRMRM[i].offset = TRUE;
+            ModRMRM[i].offset16 = TRUE;
             break;
         case 1:
-            ModRMRM[i].segment = &c_ds;
-            ModRMRM[i].reg1 = &wregs[BX];
-            ModRMRM[i].reg2 = &wregs[DI];
-            ModRMRM[i].offset = 1;
-            ModRMRM[i].offset16 = 1;
+            ModRMRM[i].segment = DS;
+            ModRMRM[i].reg1 = BX;
+            ModRMRM[i].reg2 = DI;
+            ModRMRM[i].offset = TRUE;
+            ModRMRM[i].offset16 = TRUE;
             break;
         case 2:
-            ModRMRM[i].segment = &c_ss;
-            ModRMRM[i].reg1 = &wregs[BP];
-            ModRMRM[i].reg2 = &wregs[SI];
-            ModRMRM[i].offset = 1;
-            ModRMRM[i].offset16 = 1;
+            ModRMRM[i].segment = DS;
+            ModRMRM[i].reg1 = BP;
+            ModRMRM[i].reg2 = SI;
+            ModRMRM[i].offset = TRUE;
+            ModRMRM[i].offset16 = TRUE;
             break;
         case 3:
-            ModRMRM[i].segment = &c_ss;
-            ModRMRM[i].reg1 = &wregs[BP];
-            ModRMRM[i].reg2 = &wregs[DI];
-            ModRMRM[i].offset = 1;
-            ModRMRM[i].offset16 = 1;
+            ModRMRM[i].segment = SS;
+            ModRMRM[i].reg1 = BP;
+            ModRMRM[i].reg2 = DI;
+            ModRMRM[i].offset = TRUE;
+            ModRMRM[i].offset16 = TRUE;
             break;
         case 4:
-            ModRMRM[i].segment = &c_ds;
-            ModRMRM[i].reg1 = &zero_word;
-            ModRMRM[i].reg2 = &wregs[SI];
-            ModRMRM[i].offset = 1;
-            ModRMRM[i].offset16 = 1;
+            ModRMRM[i].segment = DS;
+            ModRMRM[i].reg1 = NONE;
+            ModRMRM[i].reg2 = SI;
+            ModRMRM[i].offset = TRUE;
+            ModRMRM[i].offset16 = TRUE;
             break;
         case 5:
-            ModRMRM[i].segment = &c_ds;
-            ModRMRM[i].reg1 = &zero_word;
-            ModRMRM[i].reg2 = &wregs[DI];
-            ModRMRM[i].offset = 1;
-            ModRMRM[i].offset16 = 1;
+            ModRMRM[i].segment = DS;
+            ModRMRM[i].reg1 = NONE;
+            ModRMRM[i].reg2 = DI;
+            ModRMRM[i].offset = TRUE;
+            ModRMRM[i].offset16 = TRUE;
             break;
         case 6:
-            ModRMRM[i].segment = &c_ss;
-            ModRMRM[i].reg1 = &wregs[BP];
-            ModRMRM[i].reg2 = &zero_word;
-            ModRMRM[i].offset = 1;
-            ModRMRM[i].offset16 = 1;
+            ModRMRM[i].segment = SS;
+            ModRMRM[i].reg1 = BP;
+            ModRMRM[i].reg2 = NONE;
+            ModRMRM[i].offset = TRUE;
+            ModRMRM[i].offset16 = TRUE;
             break;
         default:
-            ModRMRM[i].segment = &c_ds;
-            ModRMRM[i].reg1 = &wregs[BX];
-            ModRMRM[i].reg2 = &zero_word;
-            ModRMRM[i].offset = 1;
-            ModRMRM[i].offset16 = 1;
+            ModRMRM[i].segment = DS;
+            ModRMRM[i].reg1 = BX;
+            ModRMRM[i].reg2 = NONE;
+            ModRMRM[i].offset = TRUE;
+            ModRMRM[i].offset16 = TRUE;
             break;
         }
     }
     
     for (i = 0xc0; i < 0x100; i++)
     {
-        ModRMRMWRegs[i] = &wregs[i & 7];
-        ModRMRMBRegs[i] = bregs[i & 7];
+        ModRMRMWRegs[i] = i & 7;
+        ModRMRMBRegs[i] = reg_name[i & 7];
     }
 }
 
@@ -513,16 +501,16 @@ static void interrupt(unsigned int_num)
     dest_off = GetMemW(0,int_num*4);
     dest_seg = GetMemW(0,int_num*4+2);
 
-    tmp1 = (WORD)(ReadWord(&wregs[SP])-2);
+    tmp1 = (WORD)(regs.w[SP]-2);
 
-    PutMemW(c_stack,tmp1,sregs[CS]);
+    PutMemW(base[SS],tmp1,sregs[CS]);
     tmp1 = (WORD)(tmp1-2);
-    PutMemW(c_stack,tmp1,ip);
-    WriteWord(&wregs[SP],tmp1);
+    PutMemW(base[SS],tmp1,ip);
+    regs.w[SP]=tmp1;
 
     ip = (WORD)dest_off;
     sregs[CS] = (WORD)dest_seg;
-    c_cs = SegToMemPtr(CS);
+    base[CS] = SegToMemPtr(CS);
 
     TF = IF = 0;    /* Turn of trap and interrupts... */
 
@@ -548,37 +536,37 @@ static void external_int(void)
 }
 
 
-#define GetModRMRegW(ModRM) (*ModRMRegW[ModRM])
-#define GetModRMRegB(ModRM) (*ModRMRegB[ModRM])
-#define PutModRMRegW(ModRM,val) *ModRMRegW[ModRM]=(val)
-#define PutModRMRegB(ModRM,val) *ModRMRegB[ModRM]=(val)
+#define GetModRMRegW(ModRM) regs.w[ModRMRegW[ModRM]]
+#define GetModRMRegB(ModRM) regs.b[ModRMRegB[ModRM]]
+#define PutModRMRegW(ModRM,val) regs.w[ModRMRegW[ModRM]]=(val)
+#define PutModRMRegB(ModRM,val) regs.b[ModRMRegB[ModRM]]=(val)
 
 static unsigned disp; 
 
 static INLINE WORD GetModRMRMW(unsigned ModRM)
 {
     if (ModRM >= 0xc0)
-        return ReadWord(ModRMRMWRegs[ModRM]);
+        return regs.w[ModRMRMWRegs[ModRM]];
 
     disp = 0;
 
     if (ModRMRM[ModRM].offset)
     {
-        disp = (WORD)((INT16)((INT8)GetMemInc(c_cs,ip)));
+        disp = (WORD)((INT16)((INT8)GetMemInc(base[CS],ip)));
         if (ModRMRM[ModRM].offset16)
-            disp = (GetMemInc(c_cs,ip) << 8) + (BYTE)disp;
+            disp = (GetMemInc(base[CS],ip) << 8) + (BYTE)disp;
     }
     
-    return GetMemW(*ModRMRM[ModRM].segment,
-                  (WORD)(ReadWord(ModRMRM[ModRM].reg1) +
-                   ReadWord(ModRMRM[ModRM].reg2) + disp));
+    return GetMemW(base[ModRMRM[ModRM].segment],
+                  (WORD)(regs.w[ModRMRM[ModRM].reg1] +
+                   regs.w[ModRMRM[ModRM].reg2] + disp));
 }
 
 
 static INLINE void PutModRMRMW(unsigned ModRM, WORD val)
 {
     if (ModRM >= 0xc0) {
-        WriteWord(ModRMRMWRegs[ModRM],val);
+        regs.w[ModRMRMWRegs[ModRM]]=val;
         return;
     }
 
@@ -586,14 +574,14 @@ static INLINE void PutModRMRMW(unsigned ModRM, WORD val)
 
     if (ModRMRM[ModRM].offset)
     {
-        disp = (WORD)((INT16)((INT8)GetMemInc(c_cs,ip)));
+        disp = (WORD)((INT16)((INT8)GetMemInc(base[CS],ip)));
         if (ModRMRM[ModRM].offset16)
-            disp = (GetMemInc(c_cs,ip) << 8) + (BYTE)disp;
+            disp = (GetMemInc(base[CS],ip) << 8) + (BYTE)disp;
     }
     
-    PutMemW(*ModRMRM[ModRM].segment,
-            (WORD)(ReadWord(ModRMRM[ModRM].reg1) +
-                   ReadWord(ModRMRM[ModRM].reg2) + disp),
+    PutMemW(base[ModRMRM[ModRM].segment],
+            (WORD)(regs.w[ModRMRM[ModRM].reg1] +
+                   regs.w[ModRMRM[ModRM].reg2] + disp),
             val);
 }
 
@@ -602,9 +590,9 @@ static INLINE void PutImmModRMRMW(unsigned ModRM)
     WORD val;
 
     if (ModRM >= 0xc0) {
-        val = (WORD)((INT16)((INT8)GetMemInc(c_cs,ip)));
-        val = (GetMemInc(c_cs,ip) << 8) + (BYTE)val;
-        WriteWord(ModRMRMWRegs[ModRM],val);
+        val = (WORD)((INT16)((INT8)GetMemInc(base[CS],ip)));
+        val = (GetMemInc(base[CS],ip) << 8) + (BYTE)val;
+        regs.w[ModRMRMWRegs[ModRM]]=val;
         return;
     }
 
@@ -612,36 +600,36 @@ static INLINE void PutImmModRMRMW(unsigned ModRM)
 
     if (ModRMRM[ModRM].offset)
     {
-        disp = (WORD)((INT16)((INT8)GetMemInc(c_cs,ip)));
+        disp = (WORD)((INT16)((INT8)GetMemInc(base[CS],ip)));
         if (ModRMRM[ModRM].offset16)
-            disp = (GetMemInc(c_cs,ip) << 8) + (BYTE)disp;
+            disp = (GetMemInc(base[CS],ip) << 8) + (BYTE)disp;
     }
     
-    val = (WORD)((INT16)((INT8)GetMemInc(c_cs,ip)));
-    val = (GetMemInc(c_cs,ip) << 8) + (BYTE)val;
+    val = (WORD)((INT16)((INT8)GetMemInc(base[CS],ip)));
+    val = (GetMemInc(base[CS],ip) << 8) + (BYTE)val;
 
-    PutMemW(*ModRMRM[ModRM].segment,
-            (WORD)(ReadWord(ModRMRM[ModRM].reg1) +
-                   ReadWord(ModRMRM[ModRM].reg2) + disp),
+    PutMemW(base[ModRMRM[ModRM].segment],
+            (WORD)(regs.w[ModRMRM[ModRM].reg1] +
+                   regs.w[ModRMRM[ModRM].reg2] + disp),
             val);
 }
 
 
 static INLINE WORD GetnextModRMRMW(unsigned ModRM)
 {
-    return GetMemW(*ModRMRM[ModRM].segment,
-                  (WORD)(ReadWord(ModRMRM[ModRM].reg1) +
-                   ReadWord(ModRMRM[ModRM].reg2) + disp + 2));
+    return GetMemW(base[ModRMRM[ModRM].segment],
+                  (WORD)(regs.w[ModRMRM[ModRM].reg1] +
+                   regs.w[ModRMRM[ModRM].reg2] + disp + 2));
 }
 
 static INLINE void PutbackModRMRMW(unsigned ModRM, WORD val)
 {
     if (ModRM >= 0xc0)
-        WriteWord(ModRMRMWRegs[ModRM],val);
+        regs.w[ModRMRMWRegs[ModRM]]=val;
     else
-	PutMemW(*ModRMRM[ModRM].segment,
-            (WORD)(ReadWord(ModRMRM[ModRM].reg1) +
-                   ReadWord(ModRMRM[ModRM].reg2) + disp),
+	PutMemW(base[ModRMRM[ModRM].segment],
+            (WORD)(regs.w[ModRMRM[ModRM].reg1] +
+                   regs.w[ModRMRM[ModRM].reg2] + disp),
             val);
 }
 
@@ -649,27 +637,27 @@ static INLINE void PutbackModRMRMW(unsigned ModRM, WORD val)
 static INLINE BYTE GetModRMRMB(unsigned ModRM)
 {
     if (ModRM >= 0xc0)
-        return *ModRMRMBRegs[ModRM];
+        return regs.b[ModRMRMBRegs[ModRM]];
 
     disp = 0;
 
     if (ModRMRM[ModRM].offset)
     {
-        disp = (WORD)((INT16)((INT8)GetMemInc(c_cs,ip)));
+        disp = (WORD)((INT16)((INT8)GetMemInc(base[CS],ip)));
         if (ModRMRM[ModRM].offset16)
-            disp = (GetMemInc(c_cs,ip) << 8) + (BYTE)disp;
+            disp = (GetMemInc(base[CS],ip) << 8) + (BYTE)disp;
     }
     
-    return GetMemB(*ModRMRM[ModRM].segment,
-                  (WORD)(ReadWord(ModRMRM[ModRM].reg1) +
-                         ReadWord(ModRMRM[ModRM].reg2) + disp));
+    return GetMemB(base[ModRMRM[ModRM].segment],
+                  (WORD)(regs.w[ModRMRM[ModRM].reg1] +
+                         regs.w[ModRMRM[ModRM].reg2] + disp));
 }
 
 
 static INLINE void PutModRMRMB(unsigned ModRM, BYTE val)
 {
     if (ModRM >= 0xc0) {
-        *ModRMRMBRegs[ModRM]=val;
+        regs.b[ModRMRMBRegs[ModRM]]=val;
 	return;
     }
 
@@ -677,14 +665,14 @@ static INLINE void PutModRMRMB(unsigned ModRM, BYTE val)
 
     if (ModRMRM[ModRM].offset)
     {
-        disp = (WORD)((INT16)((INT8)GetMemInc(c_cs,ip)));
+        disp = (WORD)((INT16)((INT8)GetMemInc(base[CS],ip)));
         if (ModRMRM[ModRM].offset16)
-            disp = (GetMemInc(c_cs,ip) << 8) + (BYTE)disp;
+            disp = (GetMemInc(base[CS],ip) << 8) + (BYTE)disp;
     }
     
-    PutMemB(*ModRMRM[ModRM].segment,
-            (WORD)(ReadWord(ModRMRM[ModRM].reg1) +
-                   ReadWord(ModRMRM[ModRM].reg2) + disp),
+    PutMemB(base[ModRMRM[ModRM].segment],
+            (WORD)(regs.w[ModRMRM[ModRM].reg1] +
+                   regs.w[ModRMRM[ModRM].reg2] + disp),
             val);
 }
 
@@ -692,7 +680,7 @@ static INLINE void PutModRMRMB(unsigned ModRM, BYTE val)
 static INLINE void PutImmModRMRMB(unsigned ModRM)
 {
     if (ModRM >= 0xc0) {
-        *ModRMRMBRegs[ModRM]=GetMemInc(c_cs,ip);
+        regs.b[ModRMRMBRegs[ModRM]]=GetMemInc(base[CS],ip);
 	return;
     }
 
@@ -700,26 +688,26 @@ static INLINE void PutImmModRMRMB(unsigned ModRM)
 
     if (ModRMRM[ModRM].offset)
     {
-        disp = (WORD)((INT16)((INT8)GetMemInc(c_cs,ip)));
+        disp = (WORD)((INT16)((INT8)GetMemInc(base[CS],ip)));
         if (ModRMRM[ModRM].offset16)
-            disp = (GetMemInc(c_cs,ip) << 8) + (BYTE)disp;
+            disp = (GetMemInc(base[CS],ip) << 8) + (BYTE)disp;
     }
     
-    PutMemB(*ModRMRM[ModRM].segment,
-            (WORD)(ReadWord(ModRMRM[ModRM].reg1) +
-                   ReadWord(ModRMRM[ModRM].reg2) + disp),
-            GetMemInc(c_cs,ip));
+    PutMemB(base[ModRMRM[ModRM].segment],
+            (WORD)(regs.w[ModRMRM[ModRM].reg1] +
+                   regs.w[ModRMRM[ModRM].reg2] + disp),
+            GetMemInc(base[CS],ip));
 }
 
 
 static INLINE void PutbackModRMRMB(unsigned ModRM, BYTE val)
 {
     if (ModRM >= 0xc0)
-        *ModRMRMBRegs[ModRM]=val;
+        regs.b[ModRMRMBRegs[ModRM]]=val;
     else
-	PutMemB(*ModRMRM[ModRM].segment,
-            (WORD)(ReadWord(ModRMRM[ModRM].reg1) +
-                   ReadWord(ModRMRM[ModRM].reg2) + disp),
+	PutMemB(base[ModRMRM[ModRM].segment],
+            (WORD)(regs.w[ModRMRM[ModRM].reg1] +
+                   regs.w[ModRMRM[ModRM].reg2] + disp),
             val);
 }
 
@@ -728,7 +716,7 @@ static INLINE2 void i_add_br8(void)
 {
     /* Opcode 0x00 */
 
-    unsigned ModRM = (unsigned)GetMemInc(c_cs,ip);
+    unsigned ModRM = (unsigned)GetMemInc(base[CS],ip);
     register unsigned src = (unsigned)GetModRMRegB(ModRM);
     register unsigned tmp = (unsigned)GetModRMRMB(ModRM);
     register unsigned tmp2 = tmp;
@@ -750,7 +738,7 @@ static INLINE2 void i_add_wr16(void)
 {
     /* Opcode 0x01 */
 
-    unsigned ModRM = GetMemInc(c_cs,ip);
+    unsigned ModRM = GetMemInc(base[CS],ip);
     register unsigned tmp2 = (unsigned)GetModRMRegW(ModRM);
     register unsigned tmp1 = (unsigned)GetModRMRMW(ModRM);
     register unsigned tmp3;
@@ -772,7 +760,7 @@ static INLINE2 void i_add_r8b(void)
 {
     /* Opcode 0x02 */
 
-    unsigned ModRM = (unsigned)GetMemInc(c_cs,ip);
+    unsigned ModRM = (unsigned)GetMemInc(base[CS],ip);
     register unsigned tmp = (unsigned)GetModRMRegB(ModRM);
     register unsigned src = (unsigned)GetModRMRMB(ModRM);
     register unsigned tmp2 = tmp;
@@ -795,7 +783,7 @@ static INLINE2 void i_add_r16w(void)
 {
     /* Opcode 0x03 */
 
-    unsigned ModRM = GetMemInc(c_cs,ip);
+    unsigned ModRM = GetMemInc(base[CS],ip);
     register unsigned tmp1 = (unsigned)GetModRMRegW(ModRM);
     register unsigned tmp2 = (unsigned)GetModRMRMW(ModRM);
     register unsigned tmp3;
@@ -817,8 +805,8 @@ static INLINE2 void i_add_ald8(void)
 {
     /* Opcode 0x04 */
 
-    register unsigned src = (unsigned)GetMemInc(c_cs,ip);
-    register unsigned tmp = (unsigned)*bregs[AL];
+    register unsigned src = (unsigned)GetMemInc(base[CS],ip);
+    register unsigned tmp = (unsigned)regs.b[AL];
     register unsigned tmp2 = tmp;
 
     tmp2 += src;
@@ -830,7 +818,7 @@ static INLINE2 void i_add_ald8(void)
     SetSFB(tmp2);
     SetPF(tmp2);
 
-    *bregs[AL] = (BYTE)tmp2;
+    regs.b[AL] = (BYTE)tmp2;
 }
 
 
@@ -839,11 +827,11 @@ static INLINE2 void i_add_axd16(void)
     /* Opcode 0x05 */
 
     register unsigned src;
-    register unsigned tmp = ReadWord(&wregs[AX]);
+    register unsigned tmp = regs.w[AX];
     register unsigned tmp2 = tmp;
 
-    src = GetMemInc(c_cs,ip);
-    src += GetMemInc(c_cs,ip) << 8;
+    src = GetMemInc(base[CS],ip);
+    src += GetMemInc(base[CS],ip) << 8;
 
     tmp2 += src;
 
@@ -854,7 +842,7 @@ static INLINE2 void i_add_axd16(void)
     SetSFW(tmp2);
     SetPF(tmp2);
 
-    WriteWord(&wregs[AX],tmp2);
+    regs.w[AX]=tmp2;
 }
 
 
@@ -869,7 +857,7 @@ static INLINE2 void i_push_es(void)
 static INLINE2 void i_pop_es(void)
 {
     /* Opcode 0x07 */
-    PopSeg(c_es,ES);
+    PopSeg(base[ES],ES);
 }
 
     /* most OR instructions go here... */
@@ -889,7 +877,7 @@ static INLINE2 void i_adc_br8(void)
 {
     /* Opcode 0x10 */
 
-    unsigned ModRM = (unsigned)GetMemInc(c_cs,ip);
+    unsigned ModRM = (unsigned)GetMemInc(base[CS],ip);
     register unsigned src = (unsigned)GetModRMRegB(ModRM)+CF;
     register unsigned tmp = (unsigned)GetModRMRMB(ModRM);
     register unsigned tmp2 = tmp;
@@ -913,7 +901,7 @@ static INLINE2 void i_adc_wr16(void)
 {
     /* Opcode 0x11 */
 
-    unsigned ModRM = GetMemInc(c_cs,ip);
+    unsigned ModRM = GetMemInc(base[CS],ip);
     register unsigned tmp2 = (unsigned)GetModRMRegW(ModRM)+CF;
     register unsigned tmp1 = (unsigned)GetModRMRMW(ModRM);
     register unsigned tmp3;
@@ -937,7 +925,7 @@ static INLINE2 void i_adc_r8b(void)
 {
     /* Opcode 0x12 */
 
-    unsigned ModRM = (unsigned)GetMemInc(c_cs,ip);
+    unsigned ModRM = (unsigned)GetMemInc(base[CS],ip);
     register unsigned tmp = (unsigned)GetModRMRegB(ModRM);
     register unsigned src = (unsigned)GetModRMRMB(ModRM)+CF;
     register unsigned tmp2 = tmp;
@@ -961,7 +949,7 @@ static INLINE2 void i_adc_r16w(void)
 {
     /* Opcode 0x13 */
 
-    unsigned ModRM = GetMemInc(c_cs,ip);
+    unsigned ModRM = GetMemInc(base[CS],ip);
     register unsigned tmp1 = (unsigned)GetModRMRegW(ModRM);
     register unsigned tmp2 = (unsigned)GetModRMRMW(ModRM)+CF;
     register unsigned tmp3;
@@ -986,8 +974,8 @@ static INLINE2 void i_adc_ald8(void)
 {
     /* Opcode 0x14 */
 
-    register unsigned src = (unsigned)GetMemInc(c_cs,ip)+CF;
-    register unsigned tmp = (unsigned)*bregs[AL];
+    register unsigned src = (unsigned)GetMemInc(base[CS],ip)+CF;
+    register unsigned tmp = (unsigned)regs.b[AL];
     register unsigned tmp2 = tmp;
 
     tmp2 += src;
@@ -1001,7 +989,7 @@ static INLINE2 void i_adc_ald8(void)
     SetSFB(tmp2);
     SetPF(tmp2);
 
-    *bregs[AL] = (BYTE)tmp2;
+    regs.b[AL] = (BYTE)tmp2;
 }
 
 
@@ -1010,11 +998,11 @@ static INLINE2 void i_adc_axd16(void)
     /* Opcode 0x15 */
 
     register unsigned src;
-    register unsigned tmp = ReadWord(&wregs[AX]);
+    register unsigned tmp = regs.w[AX];
     register unsigned tmp2 = tmp;
 
-    src = GetMemInc(c_cs,ip);
-    src += (GetMemInc(c_cs,ip) << 8)+CF;
+    src = GetMemInc(base[CS],ip);
+    src += (GetMemInc(base[CS],ip) << 8)+CF;
 
     tmp2 += src;
 
@@ -1027,7 +1015,7 @@ static INLINE2 void i_adc_axd16(void)
     SetSFW(tmp2);
     SetPF(tmp2);
 
-    WriteWord(&wregs[AX],tmp2);
+    regs.w[AX]=tmp2;
 }
 
 
@@ -1045,8 +1033,7 @@ static INLINE2 void i_pop_ss(void)
 
     static int multiple = 0;
 
-    PopSeg(c_ss,SS);
-    c_stack = c_ss;
+    PopSeg(base[SS],SS);
     
     if (multiple == 0)	/* prevent unlimited recursion */
     {
@@ -1056,7 +1043,7 @@ static INLINE2 void i_pop_ss(void)
         call_debugger(D_TRACE);
 #endif
 */
-        instruction[GetMemInc(c_cs,ip)]();
+        instruction[GetMemInc(base[CS],ip)]();
         multiple = 0;
     }
 }
@@ -1066,7 +1053,7 @@ static INLINE2 void i_sbb_br8(void)
 {
     /* Opcode 0x18 */
 
-    unsigned ModRM = (unsigned)GetMemInc(c_cs,ip);
+    unsigned ModRM = (unsigned)GetMemInc(base[CS],ip);
     register unsigned src = (unsigned)GetModRMRegB(ModRM)+CF;
     register unsigned tmp = (unsigned)GetModRMRMB(ModRM);
     register unsigned tmp2 = tmp;
@@ -1090,7 +1077,7 @@ static INLINE2 void i_sbb_wr16(void)
 {
     /* Opcode 0x19 */
 
-    unsigned ModRM = GetMemInc(c_cs,ip);
+    unsigned ModRM = GetMemInc(base[CS],ip);
     register unsigned tmp2 = GetModRMRegW(ModRM)+CF;
     register unsigned tmp1 = GetModRMRMW(ModRM);
     register unsigned tmp3;
@@ -1114,7 +1101,7 @@ static INLINE2 void i_sbb_r8b(void)
 {
     /* Opcode 0x1a */
 
-    unsigned ModRM = (unsigned)GetMemInc(c_cs,ip);
+    unsigned ModRM = (unsigned)GetMemInc(base[CS],ip);
     register unsigned tmp = (unsigned)GetModRMRegB(ModRM);
     register unsigned src = (unsigned)GetModRMRMB(ModRM)+CF;
     register unsigned tmp2 = tmp;
@@ -1139,7 +1126,7 @@ static INLINE2 void i_sbb_r16w(void)
 {
     /* Opcode 0x1b */
 
-    unsigned ModRM = GetMemInc(c_cs,ip);
+    unsigned ModRM = GetMemInc(base[CS],ip);
     register unsigned tmp1 = GetModRMRegW(ModRM);
     register unsigned tmp2 = GetModRMRMW(ModRM)+CF;
     register unsigned tmp3;
@@ -1163,8 +1150,8 @@ static INLINE2 void i_sbb_ald8(void)
 {
     /* Opcode 0x1c */
 
-    register unsigned src = GetMemInc(c_cs,ip)+CF;
-    register unsigned tmp = *bregs[AL];
+    register unsigned src = GetMemInc(base[CS],ip)+CF;
+    register unsigned tmp = regs.b[AL];
     register unsigned tmp1 = tmp;
 
     tmp1 -= src;
@@ -1178,7 +1165,7 @@ static INLINE2 void i_sbb_ald8(void)
     SetSFB(tmp1);
     SetPF(tmp1);
 
-    *bregs[AL] = (BYTE)tmp1;
+    regs.b[AL] = (BYTE)tmp1;
 }
 
 
@@ -1187,11 +1174,11 @@ static INLINE2 void i_sbb_axd16(void)
     /* Opcode 0x1d */
 
     register unsigned src;
-    register unsigned tmp = ReadWord(&wregs[AX]);
+    register unsigned tmp = regs.w[AX];
     register unsigned tmp2 = tmp;
 
-    src = GetMemInc(c_cs,ip);
-    src += (GetMemInc(c_cs,ip) << 8)+CF;
+    src = GetMemInc(base[CS],ip);
+    src += (GetMemInc(base[CS],ip) << 8)+CF;
 
     tmp2 -= src;
 
@@ -1204,7 +1191,7 @@ static INLINE2 void i_sbb_axd16(void)
     SetSFW(tmp2);
     SetPF(tmp2);
 
-    WriteWord(&wregs[AX],tmp2);
+    regs.w[AX]=tmp2;
 }
 
 
@@ -1219,7 +1206,7 @@ static INLINE2 void i_push_ds(void)
 static INLINE2 void i_pop_ds(void)
 {
     /* Opcode 0x1f */
-    PopSeg(c_ds,DS);
+    PopSeg(base[DS],DS);
 }
 
     /* most AND instructions go here... */
@@ -1231,42 +1218,42 @@ static INLINE2 void i_es(void)
 {
     /* Opcode 0x26 */
 
-    c_ds = c_ss = c_es;
+    base[DS] = base[SS] = base[ES];
 
-    instruction[GetMemInc(c_cs,ip)]();
+    instruction[GetMemInc(base[CS],ip)]();
 
-    c_ds = SegToMemPtr(DS);
-    c_ss = SegToMemPtr(SS);
+    base[DS] = SegToMemPtr(DS);
+    base[SS] = SegToMemPtr(SS);
 }
 
 static INLINE2 void i_daa(void)
 {
-    if (AF || ((*bregs[AL] & 0xf) > 9))
+    if (AF || ((regs.b[AL] & 0xf) > 9))
     {
-        *bregs[AL] += 6;
+        regs.b[AL] += 6;
         AF = 1;
     }
     else
         AF = 0;
 
-    if (CF || (*bregs[AL] > 0x9f))
+    if (CF || (regs.b[AL] > 0x9f))
     {
-        *bregs[AL] += 0x60;
+        regs.b[AL] += 0x60;
         CF = 1;
     }
     else
         CF = 0;
 
-    SetPF(*bregs[AL]);
-    SetSFB(*bregs[AL]);
-    SetZFB(*bregs[AL]);
+    SetPF(regs.b[AL]);
+    SetSFB(regs.b[AL]);
+    SetZFB(regs.b[AL]);
 }
 
 static INLINE2 void i_sub_br8(void)
 {
     /* Opcode 0x28 */
 
-    unsigned ModRM = (unsigned)GetMemInc(c_cs,ip);
+    unsigned ModRM = (unsigned)GetMemInc(base[CS],ip);
     register unsigned src = (unsigned)GetModRMRegB(ModRM);
     register unsigned tmp = (unsigned)GetModRMRMB(ModRM);
     register unsigned tmp2 = tmp;
@@ -1289,7 +1276,7 @@ static INLINE2 void i_sub_wr16(void)
 {
     /* Opcode 0x29 */
 
-    unsigned ModRM = GetMemInc(c_cs,ip);
+    unsigned ModRM = GetMemInc(base[CS],ip);
     register unsigned tmp2 = GetModRMRegW(ModRM);
     register unsigned tmp1 = GetModRMRMW(ModRM);
     register unsigned tmp3;
@@ -1311,7 +1298,7 @@ static INLINE2 void i_sub_r8b(void)
 {
     /* Opcode 0x2a */
 
-    unsigned ModRM = (unsigned)GetMemInc(c_cs,ip);
+    unsigned ModRM = (unsigned)GetMemInc(base[CS],ip);
     register unsigned tmp = GetModRMRegB(ModRM);
     register unsigned src = GetModRMRMB(ModRM);
     register unsigned tmp2 = tmp;
@@ -1333,7 +1320,7 @@ static INLINE2 void i_sub_r16w(void)
 {
     /* Opcode 0x2b */
 
-    unsigned ModRM = GetMemInc(c_cs,ip);
+    unsigned ModRM = GetMemInc(base[CS],ip);
     register unsigned tmp1 = GetModRMRegW(ModRM);
     register unsigned tmp2 = GetModRMRMW(ModRM);
     register unsigned tmp3;
@@ -1355,8 +1342,8 @@ static INLINE2 void i_sub_ald8(void)
 {
     /* Opcode 0x2c */
 
-    register unsigned src = GetMemInc(c_cs,ip);
-    register unsigned tmp = *bregs[AL];
+    register unsigned src = GetMemInc(base[CS],ip);
+    register unsigned tmp = regs.b[AL];
     register unsigned tmp1 = tmp;
 
     tmp1 -= src;
@@ -1368,7 +1355,7 @@ static INLINE2 void i_sub_ald8(void)
     SetSFB(tmp1);
     SetPF(tmp1);
 
-    *bregs[AL] = (unsigned) tmp1;
+    regs.b[AL] = (unsigned) tmp1;
 }
 
 
@@ -1377,11 +1364,11 @@ static INLINE2 void i_sub_axd16(void)
     /* Opcode 0x2d */
 
     register unsigned src;
-    register unsigned tmp = ReadWord(&wregs[AX]);
+    register unsigned tmp = regs.w[AX];
     register unsigned tmp2 = tmp;
 
-    src = GetMemInc(c_cs,ip);
-    src += (GetMemInc(c_cs,ip) << 8);
+    src = GetMemInc(base[CS],ip);
+    src += (GetMemInc(base[CS],ip) << 8);
 
     tmp2 -= src;
 
@@ -1392,7 +1379,7 @@ static INLINE2 void i_sub_axd16(void)
     SetSFW(tmp2);
     SetPF(tmp2);
 
-    WriteWord(&wregs[AX],tmp2);
+    regs.w[AX]=tmp2;
 }
 
 
@@ -1400,35 +1387,35 @@ static INLINE2 void i_cs(void)
 {
     /* Opcode 0x2e */
 
-    c_ds = c_ss = c_cs;
+    base[DS] = base[SS] = base[CS];
 
-    instruction[GetMemInc(c_cs,ip)]();
+    instruction[GetMemInc(base[CS],ip)]();
 
-    c_ds = SegToMemPtr(DS);
-    c_ss = SegToMemPtr(SS);
+    base[DS] = SegToMemPtr(DS);
+    base[SS] = SegToMemPtr(SS);
 }
 
 static INLINE2 void i_das(void)
 {
-    if (AF || ((*bregs[AL] & 0xf) > 9))
+    if (AF || ((regs.b[AL] & 0xf) > 9))
     {
-        *bregs[AL] -= 6;
+        regs.b[AL] -= 6;
         AF = 1;
     }
     else
         AF = 0;
 
-    if (CF || (*bregs[AL] > 0x9f))
+    if (CF || (regs.b[AL] > 0x9f))
     {
-        *bregs[AL] -= 0x60;
+        regs.b[AL] -= 0x60;
         CF = 1;
     }
     else
         CF = 0;
 
-    SetPF(*bregs[AL]);
-    SetSFB(*bregs[AL]);
-    SetZFB(*bregs[AL]);
+    SetPF(regs.b[AL]);
+    SetSFB(regs.b[AL]);
+    SetZFB(regs.b[AL]);
 }
 
 
@@ -1441,20 +1428,20 @@ static INLINE2 void i_ss(void)
 {
     /* Opcode 0x36 */
 
-    c_ds = c_ss;
+    base[DS] = base[SS];
 
-    instruction[GetMemInc(c_cs,ip)]();
+    instruction[GetMemInc(base[CS],ip)]();
 
-    c_ds = SegToMemPtr(DS);
+    base[DS] = SegToMemPtr(DS);
 }
 
 static INLINE2 void i_aaa(void)
 {
     /* Opcode 0x37 */
-    if (AF || ((*bregs[AL] & 0xf) > 9))
+    if (AF || ((regs.b[AL] & 0xf) > 9))
     {
-        *bregs[AL] += 6;
-        *bregs[AH] += 1;
+        regs.b[AL] += 6;
+        regs.b[AH] += 1;
         AF = 1;
         CF = 1;
     }
@@ -1462,7 +1449,7 @@ static INLINE2 void i_aaa(void)
         AF = 0;
         CF = 0;
     }
-    *bregs[AL] &= 0x0F;
+    regs.b[AL] &= 0x0F;
 }
 
 
@@ -1470,7 +1457,7 @@ static INLINE2 void i_cmp_br8(void)
 {
     /* Opcode 0x38 */
 
-    unsigned ModRM = (unsigned)GetMemInc(c_cs,ip);
+    unsigned ModRM = (unsigned)GetMemInc(base[CS],ip);
     register unsigned src = (unsigned)GetModRMRegB(ModRM);
     register unsigned tmp = GetModRMRMB(ModRM);
     register unsigned tmp2 = tmp;
@@ -1490,7 +1477,7 @@ static INLINE2 void i_cmp_wr16(void)
 {
     /* Opcode 0x39 */
 
-    unsigned ModRM = GetMemInc(c_cs,ip);
+    unsigned ModRM = GetMemInc(base[CS],ip);
     register unsigned tmp2 = GetModRMRegW(ModRM);
     register unsigned tmp1 = GetModRMRMW(ModRM);
     register unsigned tmp3;
@@ -1510,7 +1497,7 @@ static INLINE2 void i_cmp_r8b(void)
 {
     /* Opcode 0x3a */
 
-    unsigned ModRM = (unsigned)GetMemInc(c_cs,ip);
+    unsigned ModRM = (unsigned)GetMemInc(base[CS],ip);
     register unsigned tmp = (unsigned)GetModRMRegB(ModRM);
     register unsigned src = GetModRMRMB(ModRM);
     register unsigned tmp2 = tmp;
@@ -1529,7 +1516,7 @@ static INLINE2 void i_cmp_r16w(void)
 {
     /* Opcode 0x3b */
 
-    unsigned ModRM = GetMemInc(c_cs,ip);
+    unsigned ModRM = GetMemInc(base[CS],ip);
     register unsigned tmp1 = GetModRMRegW(ModRM);
     register unsigned tmp2 = GetModRMRMW(ModRM);
     register unsigned tmp3;
@@ -1549,8 +1536,8 @@ static INLINE2 void i_cmp_ald8(void)
 {
     /* Opcode 0x3c */
 
-    register unsigned src = GetMemInc(c_cs,ip);
-    register unsigned tmp = *bregs[AL];
+    register unsigned src = GetMemInc(base[CS],ip);
+    register unsigned tmp = regs.b[AL];
     register unsigned tmp1 = tmp;
 
     tmp1 -= src;
@@ -1569,11 +1556,11 @@ static INLINE2 void i_cmp_axd16(void)
     /* Opcode 0x3d */
 
     register unsigned src;
-    register unsigned tmp = ReadWord(&wregs[AX]);
+    register unsigned tmp = regs.w[AX];
     register unsigned tmp2 = tmp;
 
-    src = GetMemInc(c_cs,ip);
-    src += (GetMemInc(c_cs,ip) << 8);
+    src = GetMemInc(base[CS],ip);
+    src += (GetMemInc(base[CS],ip) << 8);
 
     tmp2 -= src;
 
@@ -1590,20 +1577,20 @@ static INLINE2 void i_ds(void)
 {
     /* Opcode 0x3e */
 
-    c_ss = c_ds;
+    base[SS] = base[DS];
 
-    instruction[GetMemInc(c_cs,ip)]();
+    instruction[GetMemInc(base[CS],ip)]();
 
-    c_ss = SegToMemPtr(SS);
+    base[SS] = SegToMemPtr(SS);
 }
 
 static INLINE2 void i_aas(void)
 {
     /* Opcode 0x3f */
-    if (AF || ((*bregs[AL] & 0xf) > 9))
+    if (AF || ((regs.b[AL] & 0xf) > 9))
     {
-        *bregs[AL] -= 6;
-        *bregs[AH] -= 1;
+        regs.b[AL] -= 6;
+        regs.b[AH] -= 1;
         AF = 1;
         CF = 1;
     }
@@ -1611,7 +1598,7 @@ static INLINE2 void i_aas(void)
         AF = 0;
         CF = 0;
     }
-    *bregs[AL] &= 0x0F;
+    regs.b[AL] &= 0x0F;
 }
 
 static INLINE2 void i_inc_ax(void)
@@ -1861,9 +1848,9 @@ JumpCond(nle,(!(!SF)==!(!OF))&&!ZF)  /* 0x7f = Jump if not less than or equal*/
 static INLINE2 void i_80pre(void)
 {
     /* Opcode 0x80 */
-    unsigned ModRM = GetMemInc(c_cs,ip);
+    unsigned ModRM = GetMemInc(base[CS],ip);
     register unsigned tmp = GetModRMRMB(ModRM);
-    register unsigned src = GetMemInc(c_cs,ip);
+    register unsigned src = GetMemInc(base[CS],ip);
     register unsigned tmp2;
     
     
@@ -1977,12 +1964,12 @@ static INLINE2 void i_81pre(void)
 {
     /* Opcode 0x81 */
 
-    unsigned ModRM = GetMemInc(c_cs,ip);
+    unsigned ModRM = GetMemInc(base[CS],ip);
     register unsigned tmp = GetModRMRMW(ModRM);
-    register unsigned src = GetMemInc(c_cs,ip);
+    register unsigned src = GetMemInc(base[CS],ip);
     register unsigned tmp2;
 
-    src += GetMemInc(c_cs,ip) << 8;
+    src += GetMemInc(base[CS],ip) << 8;
 
     switch (ModRM & 0x38)
     {
@@ -2094,9 +2081,9 @@ static INLINE2 void i_83pre(void)
 {
     /* Opcode 0x83 */
 
-    unsigned ModRM = GetMemInc(c_cs,ip);
+    unsigned ModRM = GetMemInc(base[CS],ip);
     register unsigned tmp = GetModRMRMW(ModRM);
-    register unsigned src = (WORD)((INT16)((INT8)GetMemInc(c_cs,ip)));
+    register unsigned src = (WORD)((INT16)((INT8)GetMemInc(base[CS],ip)));
     register unsigned tmp2;
     
     switch (ModRM & 0x38)
@@ -2211,7 +2198,7 @@ static INLINE2 void i_test_br8(void)
 {
     /* Opcode 0x84 */
 
-    unsigned ModRM = (unsigned)GetMemInc(c_cs,ip);
+    unsigned ModRM = (unsigned)GetMemInc(base[CS],ip);
     register unsigned src = (unsigned)GetModRMRegB(ModRM);
     register unsigned tmp = (unsigned)GetModRMRMB(ModRM);
     tmp &= src;
@@ -2226,7 +2213,7 @@ static INLINE2 void i_test_wr16(void)
 {
     /* Opcode 0x85 */
 
-    unsigned ModRM = GetMemInc(c_cs,ip);
+    unsigned ModRM = GetMemInc(base[CS],ip);
     register unsigned tmp1 = (unsigned)GetModRMRegW(ModRM);
     register unsigned tmp2 = (unsigned)GetModRMRMW(ModRM);
     register unsigned tmp3 = tmp1 & tmp2;
@@ -2241,7 +2228,7 @@ static INLINE2 void i_xchg_br8(void)
 {
     /* Opcode 0x86 */
 
-    unsigned ModRM = (unsigned)GetMemInc(c_cs,ip);
+    unsigned ModRM = (unsigned)GetMemInc(base[CS],ip);
     register BYTE src = GetModRMRegB(ModRM);
     register BYTE tmp = GetModRMRMB(ModRM);
     PutModRMRegB(ModRM,tmp);
@@ -2253,7 +2240,7 @@ static INLINE2 void i_xchg_wr16(void)
 {
     /* Opcode 0x87 */
 
-    unsigned ModRM = GetMemInc(c_cs,ip);
+    unsigned ModRM = GetMemInc(base[CS],ip);
     register WORD src = GetModRMRegW(ModRM);
     register WORD dest = GetModRMRMW(ModRM);
     PutModRMRegW(ModRM,dest);
@@ -2265,7 +2252,7 @@ static INLINE2 void i_mov_br8(void)
 {
     /* Opcode 0x88 */
 
-    register unsigned ModRM = GetMemInc(c_cs,ip);
+    register unsigned ModRM = GetMemInc(base[CS],ip);
     register BYTE src = GetModRMRegB(ModRM);
     PutModRMRMB(ModRM,src);
 }
@@ -2275,7 +2262,7 @@ static INLINE2 void i_mov_wr16(void)
 {
     /* Opcode 0x89 */
 
-    register unsigned ModRM = GetMemInc(c_cs,ip);
+    register unsigned ModRM = GetMemInc(base[CS],ip);
     register WORD src = GetModRMRegW(ModRM);
     PutModRMRMW(ModRM,src);
 }
@@ -2285,7 +2272,7 @@ static INLINE2 void i_mov_r8b(void)
 {
     /* Opcode 0x8a */
 
-    register unsigned ModRM = GetMemInc(c_cs,ip);
+    register unsigned ModRM = GetMemInc(base[CS],ip);
     register BYTE src = GetModRMRMB(ModRM);
     PutModRMRegB(ModRM,src);
 }
@@ -2295,7 +2282,7 @@ static INLINE2 void i_mov_r16w(void)
 {
     /* Opcode 0x8b */
 
-    register unsigned ModRM = GetMemInc(c_cs,ip);
+    register unsigned ModRM = GetMemInc(base[CS],ip);
     register WORD src = GetModRMRMW(ModRM);
     PutModRMRegW(ModRM,src);
 }
@@ -2305,7 +2292,7 @@ static INLINE2 void i_mov_wsreg(void)
 {
     /* Opcode 0x8c */
 
-    register unsigned ModRM = GetMemInc(c_cs,ip);
+    register unsigned ModRM = GetMemInc(base[CS],ip);
     PutModRMRMW(ModRM,sregs[(ModRM & 0x38) >> 3]);
 }
 
@@ -2314,17 +2301,17 @@ static INLINE2 void i_lea(void)
 {
     /* Opcode 0x8d */
 
-    register unsigned ModRM = GetMemInc(c_cs,ip);
+    register unsigned ModRM = GetMemInc(base[CS],ip);
     register unsigned src = 0;
 
     if (ModRMRM[ModRM].offset)
     {
-        src = (WORD)((INT16)((INT8)GetMemInc(c_cs,ip)));
+        src = (WORD)((INT16)((INT8)GetMemInc(base[CS],ip)));
         if (ModRMRM[ModRM].offset16)
-            src = (GetMemInc(c_cs,ip) << 8) + (BYTE)(src);
+            src = (GetMemInc(base[CS],ip) << 8) + (BYTE)(src);
     }
 
-    src += ReadWord(ModRMRM[ModRM].reg1)+ReadWord(ModRMRM[ModRM].reg2);        
+    src += regs.w[ModRMRM[ModRM].reg1]+regs.w[ModRMRM[ModRM].reg2];        
     PutModRMRegW(ModRM,src);
 }
 
@@ -2334,22 +2321,22 @@ static INLINE2 void i_mov_sregw(void)
     /* Opcode 0x8e */
     
     static int multiple = 0;
-    register unsigned ModRM = GetMemInc(c_cs,ip);
+    register unsigned ModRM = GetMemInc(base[CS],ip);
     register WORD src = GetModRMRMW(ModRM);
     
     switch (ModRM & 0x38)
     {
     case 0x00:	/* mov es,... */
         sregs[ES] = src;
-        c_es = SegToMemPtr(ES);
+        base[ES] = SegToMemPtr(ES);
         break;
     case 0x18:	/* mov ds,... */
         sregs[DS] = src;
-        c_ds = SegToMemPtr(DS);
+        base[DS] = SegToMemPtr(DS);
         break;
     case 0x10:	/* mov ss,... */
         sregs[SS] = src;
-        c_stack = c_ss = SegToMemPtr(SS);
+        base[SS] = SegToMemPtr(SS);
         
         if (multiple == 0) /* Prevent unlimited recursion.. */
         {
@@ -2359,7 +2346,7 @@ static INLINE2 void i_mov_sregw(void)
             call_debugger(D_TRACE);
 #endif
 */
-            instruction[GetMemInc(c_cs,ip)]();
+            instruction[GetMemInc(base[CS],ip)]();
             multiple = 0;
         }
         
@@ -2375,11 +2362,11 @@ static INLINE2 void i_popw(void)
 {
     /* Opcode 0x8f */
     
-    unsigned ModRM = GetMemInc(c_cs,ip);
-    register unsigned tmp = ReadWord(&wregs[SP]);
-    WORD tmp2 = GetMemW(c_stack,tmp);
+    unsigned ModRM = GetMemInc(base[CS],ip);
+    register unsigned tmp = regs.w[SP];
+    WORD tmp2 = GetMemW(base[SS],tmp);
     tmp += 2;
-    WriteWord(&wregs[SP],tmp);
+    regs.w[SP]=tmp;
     PutModRMRMW(ModRM,tmp2);
 }
 
@@ -2442,14 +2429,14 @@ static INLINE2 void i_cbw(void)
 {
     /* Opcode 0x98 */
 
-    *bregs[AH] = (*bregs[AL] & 0x80) ? 0xff : 0;
+    regs.b[AH] = (regs.b[AL] & 0x80) ? 0xff : 0;
 }
         
 static INLINE2 void i_cwd(void)
 {
     /* Opcode 0x99 */
 
-    wregs[DX] = (*bregs[AH] & 0x80) ? ChangeE(0xffff) : ChangeE(0);
+    regs.w[DX] = (regs.b[AH] & 0x80) ? ChangeE(0xffff) : ChangeE(0);
 }
 
 
@@ -2457,23 +2444,23 @@ static INLINE2 void i_call_far(void)
 {
     register unsigned tmp, tmp1, tmp2;
 
-    tmp = GetMemInc(c_cs,ip);
-    tmp += GetMemInc(c_cs,ip) << 8;
+    tmp = GetMemInc(base[CS],ip);
+    tmp += GetMemInc(base[CS],ip) << 8;
 
-    tmp2 = GetMemInc(c_cs,ip);
-    tmp2 += GetMemInc(c_cs,ip) << 8;
+    tmp2 = GetMemInc(base[CS],ip);
+    tmp2 += GetMemInc(base[CS],ip) << 8;
 
-    tmp1 = (WORD)(ReadWord(&wregs[SP])-2);
+    tmp1 = (WORD)(regs.w[SP]-2);
 
-    PutMemW(c_stack,tmp1,sregs[CS]);
+    PutMemW(base[SS],tmp1,sregs[CS]);
     tmp1 = (WORD)(tmp1-2);
-    PutMemW(c_stack,tmp1,ip);
+    PutMemW(base[SS],tmp1,ip);
 
-    WriteWord(&wregs[SP],tmp1);
+    regs.w[SP]=tmp1;
 
     ip = (WORD)tmp;
     sregs[CS] = (WORD)tmp2;
-    c_cs = SegToMemPtr(CS);
+    base[CS] = SegToMemPtr(CS);
 }
 
 
@@ -2489,11 +2476,11 @@ static INLINE2 void i_pushf(void)
 {
     /* Opcode 0x9c */
 
-    register unsigned tmp1 = (ReadWord(&wregs[SP])-2);
+    register unsigned tmp1 = (regs.w[SP]-2);
     WORD tmp2 = CompressFlags() | 0xf000;
 
-    PutMemW(c_stack,tmp1,tmp2);
-    WriteWord(&wregs[SP],tmp1);
+    PutMemW(base[SS],tmp1,tmp2);
+    regs.w[SP]=tmp1;
 }
 
 
@@ -2501,12 +2488,12 @@ static INLINE2 void i_popf(void)
 {
     /* Opcode 0x9d */
 
-    register unsigned tmp = ReadWord(&wregs[SP]);
-    unsigned tmp2 = (unsigned)GetMemW(c_stack,tmp);
+    register unsigned tmp = regs.w[SP];
+    unsigned tmp2 = (unsigned)GetMemW(base[SS],tmp);
 
     ExpandFlags(tmp2);
     tmp += 2;
-    WriteWord(&wregs[SP],tmp);
+    regs.w[SP]=tmp;
     
     if (IF && int_blocked)
     {
@@ -2522,7 +2509,7 @@ static INLINE2 void i_sahf(void)
 {
     /* Opcode 0x9e */
 
-    unsigned tmp = (CompressFlags() & 0xff00) | (*bregs[AH] & 0xd5);
+    unsigned tmp = (CompressFlags() & 0xff00) | (regs.b[AH] & 0xd5);
 
     ExpandFlags(tmp);
 }
@@ -2532,7 +2519,7 @@ static INLINE2 void i_lahf(void)
 {
     /* Opcode 0x9f */
 
-    *bregs[AH] = CompressFlags() & 0xff;
+    regs.b[AH] = CompressFlags() & 0xff;
 }
 
 static INLINE2 void i_mov_aldisp(void)
@@ -2541,10 +2528,10 @@ static INLINE2 void i_mov_aldisp(void)
 
     register unsigned addr;
 
-    addr = GetMemInc(c_cs,ip);
-    addr += GetMemInc(c_cs, ip) << 8;
+    addr = GetMemInc(base[CS],ip);
+    addr += GetMemInc(base[CS], ip) << 8;
 
-    *bregs[AL] = GetMemB(c_ds, addr);
+    regs.b[AL] = GetMemB(base[DS], addr);
 }
 
 
@@ -2554,11 +2541,11 @@ static INLINE2 void i_mov_axdisp(void)
 
     register unsigned addr;
 
-    addr = GetMemInc(c_cs, ip);
-    addr += GetMemInc(c_cs, ip) << 8;
+    addr = GetMemInc(base[CS], ip);
+    addr += GetMemInc(base[CS], ip) << 8;
 
-    *bregs[AL] = GetMemB(c_ds, addr);
-    *bregs[AH] = GetMemB(c_ds, addr+1);
+    regs.b[AL] = GetMemB(base[DS], addr);
+    regs.b[AH] = GetMemB(base[DS], addr+1);
 }
 
 
@@ -2568,10 +2555,10 @@ static INLINE2 void i_mov_dispal(void)
 
     register unsigned addr;
 
-    addr = GetMemInc(c_cs,ip);
-    addr += GetMemInc(c_cs, ip) << 8;
+    addr = GetMemInc(base[CS],ip);
+    addr += GetMemInc(base[CS], ip) << 8;
 
-    PutMemB(c_ds, addr, *bregs[AL]);
+    PutMemB(base[DS], addr, regs.b[AL]);
 }
 
 
@@ -2581,11 +2568,11 @@ static INLINE2 void i_mov_dispax(void)
 
     register unsigned addr;
 
-    addr = GetMemInc(c_cs, ip);
-    addr += GetMemInc(c_cs, ip) << 8;
+    addr = GetMemInc(base[CS], ip);
+    addr += GetMemInc(base[CS], ip) << 8;
 
-    PutMemB(c_ds, addr, *bregs[AL]);
-    PutMemB(c_ds, addr+1, *bregs[AH]);
+    PutMemB(base[DS], addr, regs.b[AL]);
+    PutMemB(base[DS], addr+1, regs.b[AH]);
 }
 
 
@@ -2593,18 +2580,18 @@ static INLINE2 void i_movsb(void)
 {
     /* Opcode 0xa4 */
 
-    register unsigned di = ReadWord(&wregs[DI]);
-    register unsigned si = ReadWord(&wregs[SI]);
+    register unsigned di = regs.w[DI];
+    register unsigned si = regs.w[SI];
 
-    BYTE tmp = GetMemB(c_ds,si);
+    BYTE tmp = GetMemB(base[DS],si);
 
-    PutMemB(c_es,di, tmp);
+    PutMemB(base[ES],di, tmp);
 
     di += -2*DF +1;
     si += -2*DF +1;
 
-    WriteWord(&wregs[DI],di);
-    WriteWord(&wregs[SI],si);
+    regs.w[DI]=di;
+    regs.w[SI]=si;
 }
 
 
@@ -2612,18 +2599,18 @@ static INLINE2 void i_movsw(void)
 {
     /* Opcode 0xa5 */
 
-    register unsigned di = ReadWord(&wregs[DI]);
-    register unsigned si = ReadWord(&wregs[SI]);
+    register unsigned di = regs.w[DI];
+    register unsigned si = regs.w[SI];
     
-    WORD tmp = GetMemW(c_ds,si);
+    WORD tmp = GetMemW(base[DS],si);
 
-    PutMemW(c_es,di, tmp);
+    PutMemW(base[ES],di, tmp);
 
     di += -4*DF +2;
     si += -4*DF +2;
 
-    WriteWord(&wregs[DI],di);
-    WriteWord(&wregs[SI],si);
+    regs.w[DI]=di;
+    regs.w[SI]=si;
 }
 
 
@@ -2631,10 +2618,10 @@ static INLINE2 void i_cmpsb(void)
 {
     /* Opcode 0xa6 */
 
-    unsigned di = ReadWord(&wregs[DI]);
-    unsigned si = ReadWord(&wregs[SI]);
-    unsigned src = GetMemB(c_es, di);
-    unsigned tmp = GetMemB(c_ds, si);
+    unsigned di = regs.w[DI];
+    unsigned si = regs.w[SI];
+    unsigned src = GetMemB(base[ES], di);
+    unsigned tmp = GetMemB(base[DS], si);
     unsigned tmp2 = tmp;
     
     tmp -= src;
@@ -2649,8 +2636,8 @@ static INLINE2 void i_cmpsb(void)
     di += -2*DF +1;
     si += -2*DF +1;
 
-    WriteWord(&wregs[DI],di);
-    WriteWord(&wregs[SI],si);
+    regs.w[DI]=di;
+    regs.w[SI]=si;
 }
 
 
@@ -2658,10 +2645,10 @@ static INLINE2 void i_cmpsw(void)
 {
     /* Opcode 0xa7 */
 
-    unsigned di = ReadWord(&wregs[DI]);
-    unsigned si = ReadWord(&wregs[SI]);
-    unsigned src = GetMemW(c_es, di);
-    unsigned tmp = GetMemW(c_ds, si);
+    unsigned di = regs.w[DI];
+    unsigned si = regs.w[SI];
+    unsigned src = GetMemW(base[ES], di);
+    unsigned tmp = GetMemW(base[DS], si);
     unsigned tmp2 = tmp;
     
     tmp -= src;
@@ -2676,8 +2663,8 @@ static INLINE2 void i_cmpsw(void)
     di += -4*DF +2;
     si += -4*DF +2;
 
-    WriteWord(&wregs[DI],di);
-    WriteWord(&wregs[SI],si);
+    regs.w[DI]=di;
+    regs.w[SI]=si;
 }
 
 
@@ -2685,8 +2672,8 @@ static INLINE2 void i_test_ald8(void)
 {
     /* Opcode 0xa8 */
 
-    register unsigned tmp1 = (unsigned)*bregs[AL];
-    register unsigned tmp2 = (unsigned) GetMemInc(c_cs,ip);
+    register unsigned tmp1 = (unsigned)regs.b[AL];
+    register unsigned tmp2 = (unsigned) GetMemInc(base[CS],ip);
 
     tmp1 &= tmp2;
     CF = OF = AF = 0;
@@ -2700,11 +2687,11 @@ static INLINE2 void i_test_axd16(void)
 {
     /* Opcode 0xa9 */
 
-    register unsigned tmp1 = (unsigned)ReadWord(&wregs[AX]);
+    register unsigned tmp1 = (unsigned)regs.w[AX];
     register unsigned tmp2;
     
-    tmp2 = (unsigned) GetMemInc(c_cs,ip);
-    tmp2 += GetMemInc(c_cs,ip) << 8;
+    tmp2 = (unsigned) GetMemInc(base[CS],ip);
+    tmp2 += GetMemInc(base[CS],ip) << 8;
 
     tmp1 &= tmp2;
     CF = OF = AF = 0;
@@ -2717,55 +2704,55 @@ static INLINE2 void i_stosb(void)
 {
     /* Opcode 0xaa */
 
-    register unsigned di = ReadWord(&wregs[DI]);
+    register unsigned di = regs.w[DI];
 
-    PutMemB(c_es,di,*bregs[AL]);
+    PutMemB(base[ES],di,regs.b[AL]);
     di += -2*DF +1;
-    WriteWord(&wregs[DI],di);
+    regs.w[DI]=di;
 }
 
 static INLINE2 void i_stosw(void)
 {
     /* Opcode 0xab */
 
-    register unsigned di = ReadWord(&wregs[DI]);
+    register unsigned di = regs.w[DI];
 
-    PutMemB(c_es,di,*bregs[AL]);
-    PutMemB(c_es,di+1,*bregs[AH]);
+    PutMemB(base[ES],di,regs.b[AL]);
+    PutMemB(base[ES],di+1,regs.b[AH]);
     di += -4*DF +2;;
-    WriteWord(&wregs[DI],di);
+    regs.w[DI]=di;
 }
 
 static INLINE2 void i_lodsb(void)
 {
     /* Opcode 0xac */
 
-    register unsigned si = ReadWord(&wregs[SI]);
+    register unsigned si = regs.w[SI];
 
-    *bregs[AL] = GetMemB(c_ds,si);
+    regs.b[AL] = GetMemB(base[DS],si);
     si += -2*DF +1;
-    WriteWord(&wregs[SI],si);
+    regs.w[SI]=si;
 }
 
 static INLINE2 void i_lodsw(void)
 {
     /* Opcode 0xad */
 
-    register unsigned si = ReadWord(&wregs[SI]);
-    register unsigned tmp = GetMemW(c_ds,si);
+    register unsigned si = regs.w[SI];
+    register unsigned tmp = GetMemW(base[DS],si);
 
     si +=  -4*DF+2;
-    WriteWord(&wregs[SI],si);
-    WriteWord(&wregs[AX],tmp);
+    regs.w[SI]=si;
+    regs.w[AX]=tmp;
 }
     
 static INLINE2 void i_scasb(void)
 {
     /* Opcode 0xae */
 
-    unsigned di = ReadWord(&wregs[DI]);
-    unsigned src = GetMemB(c_es, di);
-    unsigned tmp = *bregs[AL];
+    unsigned di = regs.w[DI];
+    unsigned src = GetMemB(base[ES], di);
+    unsigned tmp = regs.b[AL];
     unsigned tmp2 = tmp;
     
     tmp -= src;
@@ -2779,7 +2766,7 @@ static INLINE2 void i_scasb(void)
 
     di += -2*DF +1;
 
-    WriteWord(&wregs[DI],di);
+    regs.w[DI]=di;
 }
 
 
@@ -2787,9 +2774,9 @@ static INLINE2 void i_scasw(void)
 {
     /* Opcode 0xaf */
 
-    unsigned di = ReadWord(&wregs[DI]);
-    unsigned src = GetMemW(c_es, di);
-    unsigned tmp = ReadWord(&wregs[AX]);
+    unsigned di = regs.w[DI];
+    unsigned src = GetMemW(base[ES], di);
+    unsigned tmp = regs.w[AX];
     unsigned tmp2 = tmp;
     
     tmp -= src;
@@ -2803,14 +2790,14 @@ static INLINE2 void i_scasw(void)
 
     di += -4*DF +2;
 
-    WriteWord(&wregs[DI],di);
+    regs.w[DI]=di;
 }
 
 static INLINE2 void i_mov_ald8(void)
 {
     /* Opcode 0xb0 */
 
-    *bregs[AL] = GetMemInc(c_cs,ip);
+    regs.b[AL] = GetMemInc(base[CS],ip);
 }
 
 
@@ -2818,7 +2805,7 @@ static INLINE2 void i_mov_cld8(void)
 {
     /* Opcode 0xb1 */
 
-    *bregs[CL] = GetMemInc(c_cs,ip);
+    regs.b[CL] = GetMemInc(base[CS],ip);
 }
 
 
@@ -2826,7 +2813,7 @@ static INLINE2 void i_mov_dld8(void)
 {
     /* Opcode 0xb2 */
 
-    *bregs[DL] = GetMemInc(c_cs,ip);
+    regs.b[DL] = GetMemInc(base[CS],ip);
 }
 
 
@@ -2834,7 +2821,7 @@ static INLINE2 void i_mov_bld8(void)
 {
     /* Opcode 0xb3 */
 
-    *bregs[BL] = GetMemInc(c_cs,ip);
+    regs.b[BL] = GetMemInc(base[CS],ip);
 }
 
 
@@ -2842,7 +2829,7 @@ static INLINE2 void i_mov_ahd8(void)
 {
     /* Opcode 0xb4 */
 
-    *bregs[AH] = GetMemInc(c_cs,ip);
+    regs.b[AH] = GetMemInc(base[CS],ip);
 }
 
 
@@ -2850,7 +2837,7 @@ static INLINE2 void i_mov_chd8(void)
 {
     /* Opcode 0xb5 */
 
-    *bregs[CH] = GetMemInc(c_cs,ip);
+    regs.b[CH] = GetMemInc(base[CS],ip);
 }
 
 
@@ -2858,7 +2845,7 @@ static INLINE2 void i_mov_dhd8(void)
 {
     /* Opcode 0xb6 */
 
-    *bregs[DH] = GetMemInc(c_cs,ip);
+    regs.b[DH] = GetMemInc(base[CS],ip);
 }
 
 
@@ -2866,7 +2853,7 @@ static INLINE2 void i_mov_bhd8(void)
 {
     /* Opcode 0xb7 */
 
-    *bregs[BH] = GetMemInc(c_cs,ip);
+    regs.b[BH] = GetMemInc(base[CS],ip);
 }
 
 
@@ -2874,8 +2861,8 @@ static INLINE2 void i_mov_axd16(void)
 {
     /* Opcode 0xb8 */
 
-    *bregs[AL] = GetMemInc(c_cs,ip);
-    *bregs[AH] = GetMemInc(c_cs,ip);
+    regs.b[AL] = GetMemInc(base[CS],ip);
+    regs.b[AH] = GetMemInc(base[CS],ip);
 }
 
 
@@ -2883,8 +2870,8 @@ static INLINE2 void i_mov_cxd16(void)
 {
     /* Opcode 0xb9 */
 
-    *bregs[CL] = GetMemInc(c_cs,ip);
-    *bregs[CH] = GetMemInc(c_cs,ip);
+    regs.b[CL] = GetMemInc(base[CS],ip);
+    regs.b[CH] = GetMemInc(base[CS],ip);
 }
 
 
@@ -2892,8 +2879,8 @@ static INLINE2 void i_mov_dxd16(void)
 {
     /* Opcode 0xba */
 
-    *bregs[DL] = GetMemInc(c_cs,ip);
-    *bregs[DH] = GetMemInc(c_cs,ip);
+    regs.b[DL] = GetMemInc(base[CS],ip);
+    regs.b[DH] = GetMemInc(base[CS],ip);
 }
 
 
@@ -2901,8 +2888,8 @@ static INLINE2 void i_mov_bxd16(void)
 {
     /* Opcode 0xbb */
 
-    *bregs[BL] = GetMemInc(c_cs,ip);
-    *bregs[BH] = GetMemInc(c_cs,ip);
+    regs.b[BL] = GetMemInc(base[CS],ip);
+    regs.b[BH] = GetMemInc(base[CS],ip);
 }
 
 
@@ -2910,8 +2897,8 @@ static INLINE2 void i_mov_spd16(void)
 {
     /* Opcode 0xbc */
 
-    *bregs[SPL] = GetMemInc(c_cs,ip);
-    *bregs[SPH] = GetMemInc(c_cs,ip);
+    regs.b[SPL] = GetMemInc(base[CS],ip);
+    regs.b[SPH] = GetMemInc(base[CS],ip);
 }
 
 
@@ -2919,8 +2906,8 @@ static INLINE2 void i_mov_bpd16(void)
 {
     /* Opcode 0xbd */
 
-    *bregs[BPL] = GetMemInc(c_cs,ip);
-    *bregs[BPH] = GetMemInc(c_cs,ip);
+    regs.b[BPL] = GetMemInc(base[CS],ip);
+    regs.b[BPH] = GetMemInc(base[CS],ip);
 }
 
 
@@ -2928,8 +2915,8 @@ static INLINE2 void i_mov_sid16(void)
 {
     /* Opcode 0xbe */
 
-    *bregs[SIL] = GetMemInc(c_cs,ip);
-    *bregs[SIH] = GetMemInc(c_cs,ip);
+    regs.b[SIL] = GetMemInc(base[CS],ip);
+    regs.b[SIH] = GetMemInc(base[CS],ip);
 }
 
 
@@ -2937,8 +2924,8 @@ static INLINE2 void i_mov_did16(void)
 {
     /* Opcode 0xbf */
 
-    *bregs[DIL] = GetMemInc(c_cs,ip);
-    *bregs[DIH] = GetMemInc(c_cs,ip);
+    regs.b[DIL] = GetMemInc(base[CS],ip);
+    regs.b[DIH] = GetMemInc(base[CS],ip);
 }
 
 
@@ -2946,15 +2933,15 @@ static INLINE2 void i_ret_d16(void)
 {
     /* Opcode 0xc2 */
 
-    register unsigned tmp = ReadWord(&wregs[SP]);
+    register unsigned tmp = regs.w[SP];
     register unsigned count;
 
-    count = GetMemInc(c_cs,ip);
-    count += GetMemInc(c_cs,ip) << 8;
+    count = GetMemInc(base[CS],ip);
+    count += GetMemInc(base[CS],ip) << 8;
 
-    ip = GetMemW(c_stack,tmp);
+    ip = GetMemW(base[SS],tmp);
     tmp += count+2;
-    WriteWord(&wregs[SP],tmp);
+    regs.w[SP]=tmp;
 }
 
 
@@ -2962,10 +2949,10 @@ static INLINE2 void i_ret(void)
 {
     /* Opcode 0xc3 */
 
-    register unsigned tmp = ReadWord(&wregs[SP]);
-    ip = GetMemW(c_stack,tmp);
+    register unsigned tmp = regs.w[SP];
+    ip = GetMemW(base[SS],tmp);
     tmp += 2;
-    WriteWord(&wregs[SP],tmp);
+    regs.w[SP]=tmp;
 }
 
 
@@ -2973,12 +2960,12 @@ static INLINE2 void i_les_dw(void)
 {
     /* Opcode 0xc4 */
 
-    unsigned ModRM = GetMemInc(c_cs,ip);
+    unsigned ModRM = GetMemInc(base[CS],ip);
     WORD tmp = GetModRMRMW(ModRM);
 
     PutModRMRegW(ModRM, tmp);
     sregs[ES] = GetnextModRMRMW(ModRM);
-    c_es = SegToMemPtr(ES);
+    base[ES] = SegToMemPtr(ES);
 }
 
 
@@ -2986,19 +2973,19 @@ static INLINE2 void i_lds_dw(void)
 {
     /* Opcode 0xc5 */
 
-    unsigned ModRM = GetMemInc(c_cs,ip);
+    unsigned ModRM = GetMemInc(base[CS],ip);
     WORD tmp = GetModRMRMW(ModRM);
 
     PutModRMRegW(ModRM,tmp);
     sregs[DS] = GetnextModRMRMW(ModRM);
-    c_ds = SegToMemPtr(DS);
+    base[DS] = SegToMemPtr(DS);
 }
 
 static INLINE2 void i_mov_bd8(void)
 {
     /* Opcode 0xc6 */
 
-    unsigned ModRM = GetMemInc(c_cs,ip);
+    unsigned ModRM = GetMemInc(base[CS],ip);
     PutImmModRMRMB(ModRM);
 }
 
@@ -3007,7 +2994,7 @@ static INLINE2 void i_mov_wd16(void)
 {
     /* Opcode 0xc7 */
 
-    unsigned ModRM = GetMemInc(c_cs,ip);
+    unsigned ModRM = GetMemInc(base[CS],ip);
     PutImmModRMRMW(ModRM);
 }
 
@@ -3016,18 +3003,18 @@ static INLINE2 void i_retf_d16(void)
 {
     /* Opcode 0xca */
 
-    register unsigned tmp = ReadWord(&wregs[SP]);
+    register unsigned tmp = regs.w[SP];
     register unsigned count;
 
-    count = GetMemInc(c_cs,ip);
-    count += GetMemInc(c_cs,ip) << 8;
+    count = GetMemInc(base[CS],ip);
+    count += GetMemInc(base[CS],ip) << 8;
 
-    ip = GetMemW(c_stack,tmp);
+    ip = GetMemW(base[SS],tmp);
     tmp = (WORD)(tmp+2);
-    sregs[CS] = GetMemW(c_stack,tmp);
-    c_cs = SegToMemPtr(CS);
+    sregs[CS] = GetMemW(base[SS],tmp);
+    base[CS] = SegToMemPtr(CS);
     tmp += count+2;
-    WriteWord(&wregs[SP],tmp);
+    regs.w[SP]=tmp;
 }
 
 
@@ -3035,13 +3022,13 @@ static INLINE2 void i_retf(void)
 {
     /* Opcode 0xcb */
 
-    register unsigned tmp = ReadWord(&wregs[SP]);
-    ip = GetMemW(c_stack,tmp);
+    register unsigned tmp = regs.w[SP];
+    ip = GetMemW(base[SS],tmp);
     tmp = (WORD)(tmp+2);
-    sregs[CS] = GetMemW(c_stack,tmp);
-    c_cs = SegToMemPtr(CS);
+    sregs[CS] = GetMemW(base[SS],tmp);
+    base[CS] = SegToMemPtr(CS);
     tmp += 2;
-    WriteWord(&wregs[SP],tmp);
+    regs.w[SP]=tmp;
 }
 
 
@@ -3057,7 +3044,7 @@ static INLINE2 void i_int(void)
 {
     /* Opcode 0xcd */
 
-    unsigned int_num = GetMemInc(c_cs,ip);
+    unsigned int_num = GetMemInc(base[CS],ip);
 
     interrupt(int_num);
 }
@@ -3076,13 +3063,13 @@ static INLINE2 void i_iret(void)
 {
     /* Opcode 0xcf */
 
-    register unsigned tmp = ReadWord(&wregs[SP]);
-    ip = GetMemW(c_stack,tmp);
+    register unsigned tmp = regs.w[SP];
+    ip = GetMemW(base[SS],tmp);
     tmp = (WORD)(tmp+2);
-    sregs[CS] = GetMemW(c_stack,tmp);
-    c_cs = SegToMemPtr(CS);
+    sregs[CS] = GetMemW(base[SS],tmp);
+    base[CS] = SegToMemPtr(CS);
     tmp += 2;
-    WriteWord(&wregs[SP],tmp);
+    regs.w[SP]=tmp;
 
     i_popf();
 #ifdef DEBUGGER
@@ -3095,7 +3082,7 @@ static INLINE2 void i_d0pre(void)
 {
     /* Opcode 0xd0 */
 
-    unsigned ModRM = GetMemInc(c_cs,ip);
+    unsigned ModRM = GetMemInc(base[CS],ip);
     register unsigned tmp = GetModRMRMB(ModRM);
     register unsigned tmp2 = tmp;
 
@@ -3166,7 +3153,7 @@ static INLINE2 void i_d1pre(void)
 {
     /* Opcode 0xd1 */
 
-    unsigned ModRM = GetMemInc(c_cs,ip);
+    unsigned ModRM = GetMemInc(base[CS],ip);
     register unsigned tmp = GetModRMRMW(ModRM);
     register unsigned tmp2 = tmp;
 
@@ -3246,16 +3233,16 @@ static INLINE2 void i_d2pre(void)
     register unsigned tmp2;
     unsigned count;
 
-    if (*bregs[CL] == 1)
+    if (regs.b[CL] == 1)
     {
         i_d0pre();
         D(printf("Skipping CL processing\n"););
         return;
     }
 
-    ModRM = GetMemInc(c_cs,ip);
+    ModRM = GetMemInc(base[CS],ip);
     tmp = (unsigned)GetModRMRMB(ModRM);
-    count = (unsigned)*bregs[CL];
+    count = (unsigned)regs.b[CL];
 
     switch (ModRM & 0x38)
     {
@@ -3356,15 +3343,15 @@ static INLINE2 void i_d3pre(void)
     register unsigned tmp2;
     unsigned count;
 
-    if (*bregs[CL] == 1)
+    if (regs.b[CL] == 1)
     {
         i_d1pre();
         return;
     }
 
-    ModRM = GetMemInc(c_cs,ip);
+    ModRM = GetMemInc(base[CS],ip);
     tmp = GetModRMRMW(ModRM);
-    count = (unsigned)*bregs[CL];
+    count = (unsigned)regs.b[CL];
 
     switch (ModRM & 0x38)
     {
@@ -3458,18 +3445,18 @@ static INLINE2 void i_d3pre(void)
 static INLINE2 void i_aam(void)
 {
     /* Opcode 0xd4 */
-    unsigned mult = GetMemInc(c_cs,ip);
+    unsigned mult = GetMemInc(base[CS],ip);
 
 	if (mult == 0)
         interrupt(0);
     else
     {
-        *bregs[AH] = *bregs[AL] / mult;
-        *bregs[AL] %= mult;
+        regs.b[AH] = regs.b[AL] / mult;
+        regs.b[AL] %= mult;
 
-        SetPF(*bregs[AL]);
-        SetZFW(wregs[AX]);
-        SetSFB(*bregs[AH]);
+        SetPF(regs.b[AL]);
+        SetZFW(regs.w[AX]);
+        SetSFB(regs.b[AH]);
     }
 }
 
@@ -3477,13 +3464,13 @@ static INLINE2 void i_aam(void)
 static INLINE2 void i_aad(void)
 {
     /* Opcode 0xd5 */
-    unsigned mult = GetMemInc(c_cs,ip);
+    unsigned mult = GetMemInc(base[CS],ip);
 
-    *bregs[AL] = *bregs[AH] * mult + *bregs[AL];
-    *bregs[AH] = 0;
+    regs.b[AL] = regs.b[AH] * mult + regs.b[AL];
+    regs.b[AH] = 0;
 
-    SetPF(*bregs[AL]);
-    SetZFB(*bregs[AL]);
+    SetPF(regs.b[AL]);
+    SetZFB(regs.b[AL]);
     SF = 0;
 }
 
@@ -3491,16 +3478,16 @@ static INLINE2 void i_xlat(void)
 {
     /* Opcode 0xd7 */
 
-    unsigned dest = ReadWord(&wregs[BX])+*bregs[AL];
+    unsigned dest = regs.w[BX]+regs.b[AL];
     
-    *bregs[AL] = GetMemB(c_ds, dest);
+    regs.b[AL] = GetMemB(base[DS], dest);
 }
 
 static INLINE2 void i_escape(void)
 {
     /* Opcodes 0xd8, 0xd9, 0xda, 0xdb, 0xdc, 0xdd, 0xde and 0xdf */
 
-    unsigned ModRM = GetMemInc(c_cs,ip);
+    unsigned ModRM = GetMemInc(base[CS],ip);
     GetModRMRMB(ModRM);
 }
 
@@ -3508,10 +3495,10 @@ static INLINE2 void i_loopne(void)
 {
     /* Opcode 0xe0 */
 
-    register int disp = (int)((INT8)GetMemInc(c_cs,ip));
-    register unsigned tmp = ReadWord(&wregs[CX])-1;
+    register int disp = (int)((INT8)GetMemInc(base[CS],ip));
+    register unsigned tmp = regs.w[CX]-1;
 
-    WriteWord(&wregs[CX],tmp);
+    regs.w[CX]=tmp;
 
     if (!ZF && tmp) ip = (WORD)(ip+disp);
 }
@@ -3520,10 +3507,10 @@ static INLINE2 void i_loope(void)
 {
     /* Opcode 0xe1 */
 
-    register int disp = (int)((INT8)GetMemInc(c_cs,ip));
-    register unsigned tmp = ReadWord(&wregs[CX])-1;
+    register int disp = (int)((INT8)GetMemInc(base[CS],ip));
+    register unsigned tmp = regs.w[CX]-1;
 
-    WriteWord(&wregs[CX],tmp);
+    regs.w[CX]=tmp;
 
     if (ZF && tmp) ip = (WORD)(ip+disp);
 }
@@ -3532,10 +3519,10 @@ static INLINE2 void i_loop(void)
 {
     /* Opcode 0xe2 */
 
-    register int disp = (int)((INT8)GetMemInc(c_cs,ip));
-    register unsigned tmp = ReadWord(&wregs[CX])-1;
+    register int disp = (int)((INT8)GetMemInc(base[CS],ip));
+    register unsigned tmp = regs.w[CX]-1;
 
-    WriteWord(&wregs[CX],tmp);
+    regs.w[CX]=tmp;
 
     if (tmp) ip = (WORD)(ip+disp);
 }
@@ -3544,9 +3531,9 @@ static INLINE2 void i_jcxz(void)
 {
     /* Opcode 0xe3 */
 
-    register int disp = (int)((INT8)GetMemInc(c_cs,ip));
+    register int disp = (int)((INT8)GetMemInc(base[CS],ip));
     
-    if (wregs[CX] == 0)
+    if (regs.w[CX] == 0)
         ip = (WORD)(ip+disp);
 }
 
@@ -3554,38 +3541,38 @@ static INLINE2 void i_inal(void)
 {
     /* Opcode 0xe4 */
 
-    unsigned port = GetMemInc(c_cs,ip);
+    unsigned port = GetMemInc(base[CS],ip);
 
-    *bregs[AL] = read_port(port);
+    regs.b[AL] = read_port(port);
 }
 
 static INLINE2 void i_inax(void)
 {
     /* Opcode 0xe5 */
 
-    unsigned port = GetMemInc(c_cs,ip);
+    unsigned port = GetMemInc(base[CS],ip);
 
-    *bregs[AL] = read_port(port);
-    *bregs[AH] = read_port(port+1);
+    regs.b[AL] = read_port(port);
+    regs.b[AH] = read_port(port+1);
 }
     
 static INLINE2 void i_outal(void)
 {
     /* Opcode 0xe6 */
 
-    unsigned port = GetMemInc(c_cs,ip);
+    unsigned port = GetMemInc(base[CS],ip);
 
-    write_port(port, *bregs[AL]);
+    write_port(port, regs.b[AL]);
 }
 
 static INLINE2 void i_outax(void)
 {
     /* Opcode 0xe7 */
 
-    unsigned port = GetMemInc(c_cs,ip);
+    unsigned port = GetMemInc(base[CS],ip);
 
-    write_port(port, *bregs[AL]);
-    write_port(port+1, *bregs[AH]);
+    write_port(port, regs.b[AL]);
+    write_port(port+1, regs.b[AH]);
 }
 
 static INLINE2 void i_call_d16(void)
@@ -3593,13 +3580,13 @@ static INLINE2 void i_call_d16(void)
     /* Opcode 0xe8 */
 
     register unsigned tmp;
-    register unsigned tmp1 = (WORD)(ReadWord(&wregs[SP])-2);
+    register unsigned tmp1 = (WORD)(regs.w[SP]-2);
 
-    tmp = GetMemInc(c_cs,ip);
-    tmp += GetMemInc(c_cs,ip) << 8;
+    tmp = GetMemInc(base[CS],ip);
+    tmp += GetMemInc(base[CS],ip) << 8;
 
-    PutMemW(c_stack,tmp1,ip);
-    WriteWord(&wregs[SP],tmp1);
+    PutMemW(base[SS],tmp1,ip);
+    regs.w[SP]=tmp1;
 
     ip = (WORD)(ip+(INT16)tmp);
 }
@@ -3609,8 +3596,8 @@ static INLINE2 void i_jmp_d16(void)
 {
     /* Opcode 0xe9 */
 
-    register int tmp = GetMemInc(c_cs,ip);
-    tmp += GetMemInc(c_cs,ip) << 8;
+    register int tmp = GetMemInc(base[CS],ip);
+    tmp += GetMemInc(base[CS],ip) << 8;
 
     ip = (WORD)(ip+(INT16)tmp);
 }
@@ -3622,14 +3609,14 @@ static INLINE2 void i_jmp_far(void)
 
     register unsigned tmp,tmp1;
 
-    tmp = GetMemInc(c_cs,ip);
-    tmp += GetMemInc(c_cs,ip) << 8;
+    tmp = GetMemInc(base[CS],ip);
+    tmp += GetMemInc(base[CS],ip) << 8;
 
-    tmp1 = GetMemInc(c_cs,ip);
-    tmp1 += GetMemInc(c_cs,ip) << 8;
+    tmp1 = GetMemInc(base[CS],ip);
+    tmp1 += GetMemInc(base[CS],ip) << 8;
 
     sregs[CS] = (WORD)tmp1;
-    c_cs = SegToMemPtr(CS);
+    base[CS] = SegToMemPtr(CS);
     ip = (WORD)tmp;
 }
 
@@ -3637,7 +3624,7 @@ static INLINE2 void i_jmp_far(void)
 static INLINE2 void i_jmp_d8(void)
 {
     /* Opcode 0xeb */
-    register int tmp = (int)((INT8)GetMemInc(c_cs,ip));
+    register int tmp = (int)((INT8)GetMemInc(base[CS],ip));
     ip = (WORD)(ip+tmp);
 }
 
@@ -3646,33 +3633,33 @@ static INLINE2 void i_inaldx(void)
 {
     /* Opcode 0xec */
 
-    *bregs[AL] = read_port(ReadWord(&wregs[DX]));
+    regs.b[AL] = read_port(regs.w[DX]);
 }
 
 static INLINE2 void i_inaxdx(void)
 {
     /* Opcode 0xed */
 
-    unsigned port = ReadWord(&wregs[DX]);
+    unsigned port = regs.w[DX];
 
-    *bregs[AL] = read_port(port);
-    *bregs[AH] = read_port(port+1);
+    regs.b[AL] = read_port(port);
+    regs.b[AH] = read_port(port+1);
 }
 
 static INLINE2 void i_outdxal(void)
 {
     /* Opcode 0xee */
 
-    write_port(ReadWord(&wregs[DX]), *bregs[AL]);
+    write_port(regs.w[DX], regs.b[AL]);
 }
 
 static INLINE2 void i_outdxax(void)
 {
     /* Opcode 0xef */
-    unsigned port = ReadWord(&wregs[DX]);
+    unsigned port = regs.w[DX];
 
-    write_port(port, *bregs[AL]);
-    write_port(port+1, *bregs[AH]);
+    write_port(port, regs.b[AL]);
+    write_port(port+1, regs.b[AH]);
 }
 
 static INLINE2 void i_lock(void)
@@ -3687,13 +3674,13 @@ static INLINE2 void i_gobios(void)
     void (*routine)(void);
     unsigned dest;
     
-    if (GetMemInc(c_cs,ip) != 0xf1)
+    if (GetMemInc(base[CS],ip) != 0xf1)
         i_notdone();
 
-    dest = GetMemInc(c_cs,ip);	/* Must be re-coded sometime.... */
-    dest += (GetMemInc(c_cs,ip) << 8);
-    dest += (GetMemInc(c_cs,ip) << 16);
-    dest += (GetMemInc(c_cs,ip) << 24);
+    dest = GetMemInc(base[CS],ip);	/* Must be re-coded sometime.... */
+    dest += (GetMemInc(base[CS],ip) << 8);
+    dest += (GetMemInc(base[CS],ip) << 16);
+    dest += (GetMemInc(base[CS],ip) << 24);
 
     routine = (void (*)(void))dest;
 
@@ -3706,82 +3693,82 @@ static void rep(int flagval)
     /* Handles rep- and repnz- prefixes. flagval is the value of ZF for the
        loop  to continue for CMPS and SCAS instructions. */
 
-    unsigned next = GetMemInc(c_cs,ip);
-    unsigned count = ReadWord(&wregs[CX]);
+    unsigned next = GetMemInc(base[CS],ip);
+    unsigned count = regs.w[CX];
 
     switch(next)
     {
     case 0x26:  /* ES: */
-        c_ss = c_ds = c_es;
+        base[SS] = base[DS] = base[ES];
         rep(flagval);
-        c_ds = SegToMemPtr(DS);
-        c_ss = SegToMemPtr(SS);
+        base[DS] = SegToMemPtr(DS);
+        base[SS] = SegToMemPtr(SS);
         break;
     case 0x2e:  /* CS: */
-        c_ss = c_ds = c_cs;
+        base[SS] = base[DS] = base[CS];
         rep(flagval);
-        c_ds = SegToMemPtr(DS);
-        c_ss = SegToMemPtr(SS);
+        base[DS] = SegToMemPtr(DS);
+        base[SS] = SegToMemPtr(SS);
         break;
     case 0x36:  /* SS: */
-        c_ds = c_ss;
+        base[DS] = base[SS];
         rep(flagval);
-        c_ds = SegToMemPtr(DS);
+        base[DS] = SegToMemPtr(DS);
         break;
     case 0x3e:  /* DS: */
-        c_ss = c_ds;
+        base[SS] = base[DS];
         rep(flagval);
-        c_ss = SegToMemPtr(SS);
+        base[SS] = SegToMemPtr(SS);
         break;
     case 0xa4:  /* REP MOVSB */
         for (; count > 0; count--)
             i_movsb();
-        WriteWord(&wregs[CX],count);
+        regs.w[CX]=count;
         break;
     case 0xa5:  /* REP MOVSW */
         for (; count > 0; count--)
             i_movsw();
-        WriteWord(&wregs[CX],count);
+        regs.w[CX]=count;
         break;
     case 0xa6:  /* REP(N)E CMPSB */
         for (ZF = flagval; (ZF == flagval) && (count > 0); count--)
             i_cmpsb();
-        WriteWord(&wregs[CX],count);
+        regs.w[CX]=count;
         break;
     case 0xa7:  /* REP(N)E CMPSW */
         for (ZF = flagval; (ZF == flagval) && (count > 0); count--)
             i_cmpsw();
-        WriteWord(&wregs[CX],count);
+        regs.w[CX]=count;
         break;
     case 0xaa:  /* REP STOSB */
         for (; count > 0; count--)
             i_stosb();
-        WriteWord(&wregs[CX],count);
+        regs.w[CX]=count;
         break;
     case 0xab:  /* REP LODSW */
         for (; count > 0; count--)
             i_stosw();
-        WriteWord(&wregs[CX],count);
+        regs.w[CX]=count;
         break;
     case 0xac:  /* REP LODSB */
         for (; count > 0; count--)
             i_lodsb();
-        WriteWord(&wregs[CX],count);
+        regs.w[CX]=count;
         break;
     case 0xad:  /* REP LODSW */
         for (; count > 0; count--)
             i_lodsw();
-        WriteWord(&wregs[CX],count);
+        regs.w[CX]=count;
         break;
     case 0xae:  /* REP(N)E SCASB */
         for (ZF = flagval; (ZF == flagval) && (count > 0); count--)
             i_scasb();
-        WriteWord(&wregs[CX],count);
+        regs.w[CX]=count;
         break;
     case 0xaf:  /* REP(N)E SCASW */
         for (ZF = flagval; (ZF == flagval) && (count > 0); count--)
             i_scasw();
-        WriteWord(&wregs[CX],count);
+        regs.w[CX]=count;
         break;
     default:
         instruction[next]();
@@ -3816,7 +3803,7 @@ static INLINE2 void i_cmc(void)
 static INLINE2 void i_f6pre(void)
 {
 	/* Opcode 0xf6 */
-    unsigned ModRM = GetMemInc(c_cs,ip);
+    unsigned ModRM = GetMemInc(base[CS],ip);
     register unsigned tmp = (unsigned)GetModRMRMB(ModRM);
     register unsigned tmp2;
     
@@ -3825,7 +3812,7 @@ static INLINE2 void i_f6pre(void)
     {
     case 0x00:	/* TEST Eb, data8 */
     case 0x08:  /* ??? */
-        tmp &= GetMemInc(c_cs,ip);
+        tmp &= GetMemInc(base[CS],ip);
         
         CF = OF = AF = 0;
         SetZFB(tmp);
@@ -3853,31 +3840,31 @@ static INLINE2 void i_f6pre(void)
     case 0x20:	/* MUL AL, Eb */
 	{
 	    UINT16 result;
-	    tmp2 = *bregs[AL];
+	    tmp2 = regs.b[AL];
         
 	    SetSFB(tmp2);
 	    SetPF(tmp2);
         
 	    result = (UINT16)tmp2*tmp;
-	    WriteWord(&wregs[AX],(WORD)result);
+	    regs.w[AX]=(WORD)result;
 
-	    SetZFW(wregs[AX]);
-	    CF = OF = (*bregs[AH] != 0);
+	    SetZFW(regs.w[AX]);
+	    CF = OF = (regs.b[AH] != 0);
 	}
         break;
     case 0x28:	/* IMUL AL, Eb */
 	{
 	    INT16 result;
         
-	    tmp2 = (unsigned)*bregs[AL];
+	    tmp2 = (unsigned)regs.b[AL];
         
 	    SetSFB(tmp2);
 	    SetPF(tmp2);
         
 	    result = (INT16)((INT8)tmp2)*(INT16)((INT8)tmp);
-	    WriteWord(&wregs[AX],(WORD)result);
+	    regs.w[AX]=(WORD)result;
         
-	    SetZFW(wregs[AX]);
+	    SetZFW(regs.w[AX]);
         
 	    OF = (result >> 7 != 0) && (result >> 7 != -1);
 	    CF = !(!OF);
@@ -3887,7 +3874,7 @@ static INLINE2 void i_f6pre(void)
 	{
 	    UINT16 result;
         
-	    result = ReadWord(&wregs[AX]);
+	    result = regs.w[AX];
         
 	    if (tmp)
 	    {
@@ -3898,8 +3885,8 @@ static INLINE2 void i_f6pre(void)
             }
             else
             {
-                *bregs[AH] = result % tmp;
-                *bregs[AL] = result / tmp;
+                regs.b[AH] = result % tmp;
+                regs.b[AL] = result / tmp;
             }
             
 	    }
@@ -3914,7 +3901,7 @@ static INLINE2 void i_f6pre(void)
 	{
 	    INT16 result;
         
-	    result = ReadWord(&wregs[AX]);
+	    result = regs.w[AX];
         
 	    if (tmp)
 	    {
@@ -3927,8 +3914,8 @@ static INLINE2 void i_f6pre(void)
             }
             else
             {
-                *bregs[AL] = result;
-                *bregs[AH] = tmp2;
+                regs.b[AL] = result;
+                regs.b[AH] = tmp2;
             }
 	    }
 	    else
@@ -3945,7 +3932,7 @@ static INLINE2 void i_f6pre(void)
 static INLINE2 void i_f7pre(void)
 {
 	/* Opcode 0xf7 */
-    unsigned ModRM = GetMemInc(c_cs,ip);
+    unsigned ModRM = GetMemInc(base[CS],ip);
     register unsigned tmp = GetModRMRMW(ModRM);
     register unsigned tmp2;
     
@@ -3954,8 +3941,8 @@ static INLINE2 void i_f7pre(void)
     {
     case 0x00:	/* TEST Ew, data16 */
     case 0x08:  /* ??? */
-        tmp2 = GetMemInc(c_cs,ip);
-        tmp2 += GetMemInc(c_cs,ip) << 8;
+        tmp2 = GetMemInc(base[CS],ip);
+        tmp2 += GetMemInc(base[CS],ip) << 8;
         
         tmp &= tmp2;
         
@@ -3986,18 +3973,18 @@ static INLINE2 void i_f7pre(void)
     case 0x20:	/* MUL AX, Ew */
 	{
 	    UINT32 result;
-	    tmp2 = ReadWord(&wregs[AX]);
+	    tmp2 = regs.w[AX];
         
 	    SetSFW(tmp2);
 	    SetPF(tmp2);
 
 	    result = (UINT32)tmp2*tmp;
-	    WriteWord(&wregs[AX],(WORD)result);
+	    regs.w[AX]=(WORD)result;
         result >>= 16;
-	    WriteWord(&wregs[DX],result);
+	    regs.w[DX]=result;
 
-	    SetZFW(wregs[AX] | wregs[DX]);
-	    CF = OF = (wregs[DX] != ChangeE(0));
+	    SetZFW(regs.w[AX] | regs.w[DX]);
+	    CF = OF = (regs.w[DX] != ChangeE(0));
 	}
         break;
         
@@ -4005,7 +3992,7 @@ static INLINE2 void i_f7pre(void)
 	{
 	    INT32 result;
         
-	    tmp2 = ReadWord(&wregs[AX]);
+	    tmp2 = regs.w[AX];
         
 	    SetSFW(tmp2);
 	    SetPF(tmp2);
@@ -4013,11 +4000,11 @@ static INLINE2 void i_f7pre(void)
 	    result = (INT32)((INT16)tmp2)*(INT32)((INT16)tmp);
         OF = (result >> 15 != 0) && (result >> 15 != -1);
 
-	    WriteWord(&wregs[AX],(WORD)result);
+	    regs.w[AX]=(WORD)result;
         result = (WORD)(result >> 16);
-	    WriteWord(&wregs[DX],result);
+	    regs.w[DX]=result;
 
-	    SetZFW(wregs[AX] | wregs[DX]);
+	    SetZFW(regs.w[AX] | regs.w[DX]);
         
         CF = !(!OF);
 	}
@@ -4026,7 +4013,7 @@ static INLINE2 void i_f7pre(void)
 	{
 	    UINT32 result;
         
-	    result = (ReadWord(&wregs[DX]) << 16) + ReadWord(&wregs[AX]);
+	    result = (regs.w[DX] << 16) + regs.w[AX];
         
 	    if (tmp)
 	    {
@@ -4038,9 +4025,9 @@ static INLINE2 void i_f7pre(void)
             }
             else
             {
-                WriteWord(&wregs[DX],tmp2);
+                regs.w[DX]=tmp2;
                 result /= tmp;
-                WriteWord(&wregs[AX],result);
+                regs.w[AX]=result;
             }
 	    }
 	    else
@@ -4054,7 +4041,7 @@ static INLINE2 void i_f7pre(void)
 	{
 	    INT32 result;
         
-	    result = (ReadWord(&wregs[DX]) << 16) + ReadWord(&wregs[AX]);
+	    result = (regs.w[DX] << 16) + regs.w[AX];
         
 	    if (tmp)
 	    {
@@ -4067,8 +4054,8 @@ static INLINE2 void i_f7pre(void)
             }
             else
             {
-                WriteWord(&wregs[AX],result);
-                WriteWord(&wregs[DX],tmp2);
+                regs.w[AX]=result;
+                regs.w[DX]=tmp2;
             }
 	    }
 	    else
@@ -4141,7 +4128,7 @@ static INLINE2 void i_fepre(void)
 {
     /* Opcode 0xfe */
 
-    unsigned ModRM = GetMemInc(c_cs,ip);
+    unsigned ModRM = GetMemInc(base[CS],ip);
     register unsigned tmp = GetModRMRMB(ModRM);
     register unsigned tmp1;
     
@@ -4169,7 +4156,7 @@ static INLINE2 void i_ffpre(void)
 {
     /* Opcode 0xff */
 
-    unsigned ModRM = GetMemInc(c_cs,ip);
+    unsigned ModRM = GetMemInc(base[CS],ip);
     register unsigned tmp;
     register unsigned tmp1;
 
@@ -4203,25 +4190,25 @@ static INLINE2 void i_ffpre(void)
         
     case 0x10:  /* CALL ew */
         tmp = GetModRMRMW(ModRM);
-        tmp1 = (WORD)(ReadWord(&wregs[SP])-2);
+        tmp1 = (WORD)(regs.w[SP]-2);
         
-        PutMemW(c_stack,tmp1,ip);
-        WriteWord(&wregs[SP],tmp1);
+        PutMemW(base[SS],tmp1,ip);
+        regs.w[SP]=tmp1;
         
         ip = (WORD)tmp;
         break;
         
     case 0x18:  /* CALL FAR ea */
-        tmp1 = (WORD)(ReadWord(&wregs[SP])-2);
+        tmp1 = (WORD)(regs.w[SP]-2);
         
-        PutMemW(c_stack,tmp1,sregs[CS]);
+        PutMemW(base[SS],tmp1,sregs[CS]);
         tmp1 = (WORD)(tmp1-2);
-        PutMemW(c_stack,tmp1,ip);
-        WriteWord(&wregs[SP],tmp1);
+        PutMemW(base[SS],tmp1,ip);
+        regs.w[SP]=tmp1;
         
         ip = GetModRMRMW(ModRM);
         sregs[CS] = GetnextModRMRMW(ModRM);
-        c_cs = SegToMemPtr(CS);
+        base[CS] = SegToMemPtr(CS);
         break;
         
     case 0x20:  /* JMP ea */
@@ -4231,15 +4218,15 @@ static INLINE2 void i_ffpre(void)
     case 0x28:  /* JMP FAR ea */
         ip = GetModRMRMW(ModRM);
         sregs[CS] = GetnextModRMRMW(ModRM);
-        c_cs = SegToMemPtr(CS);
+        base[CS] = SegToMemPtr(CS);
         break;
         
     case 0x30:  /* PUSH ea */
-        tmp1 = (WORD)(ReadWord(&wregs[SP])-2);
+        tmp1 = (WORD)(regs.w[SP]-2);
         tmp = GetModRMRMW(ModRM);
         
-        PutMemW(c_stack,tmp1,tmp);
-        WriteWord(&wregs[SP],tmp1);
+        PutMemW(base[SS],tmp1,tmp);
+        regs.w[SP]=tmp1;
         break;
     }
 }
@@ -4255,7 +4242,7 @@ static INLINE2 void i_notdone(void)
 
 void trap(void)
 {
-    instruction[GetMemInc(c_cs,ip)]();
+    instruction[GetMemInc(base[CS],ip)]();
     interrupt(1);
 }
 
@@ -4263,12 +4250,11 @@ void trap(void)
 void I86_Execute(void)
 {
     int instr_count=5000;	/* I will soon change this and count cycles instead */
-    static int init=0;
 
-    c_cs = SegToMemPtr(CS);
-    c_ds = SegToMemPtr(DS);
-    c_es = SegToMemPtr(ES);
-    c_stack = c_ss = SegToMemPtr(SS);
+    base[CS] = SegToMemPtr(CS);
+    base[DS] = SegToMemPtr(DS);
+    base[ES] = SegToMemPtr(ES);
+    base[SS] = SegToMemPtr(SS);
     
     if (init) interrupt(2); /* NMI interrupt, but let the cpu start first */
     else init=1; 
@@ -4282,12 +4268,12 @@ void I86_Execute(void)
         call_debugger(D_TRACE);
 #endif
 /*
-printf("%04x\n",ip);
+printf("[%04x]=%02x\tAX=%04x\tBX=%04x\tCX=%04x\tDX=%04x\n",ip,GetMemB(base[CS],ip),regs.w[AX],regs.w[BX],regs.w[CX],regs.w[DX]);
 */
 
 #if defined(BIGCASE) && !defined(RS6000)
   /* Some compilers cannot handle large case statements */
-        switch(GetMemInc(c_cs,ip))
+        switch(GetMemInc(base[CS],ip))
         {
         case 0x00:    i_add_br8(); break;
         case 0x01:    i_add_wr16(); break;
@@ -4547,7 +4533,7 @@ printf("%04x\n",ip);
         case 0xff:    i_ffpre(); break;
         };
 #else
-        instruction[GetMemInc(c_cs,ip)]();
+        instruction[GetMemInc(base[CS],ip)]();
 #endif
     }
 }

@@ -1,58 +1,16 @@
-/****************************************************************************
-*                                                                           *
-*                            Third Year Project                             *
-*                                                                           *
-*                            An IBM PC Emulator                             *
-*                          For Unix and X Windows                           *
-*                                                                           *
-*                             By David Hedley                               *
-*                                                                           *
-*                                                                           *
-* This program is Copyrighted.  Consult the file COPYRIGHT for more details *
-*                                                                           *
-****************************************************************************/
-
-/* This is CPU.H  it contains definitions for cpu.c */
-
-
 #ifndef CPU_H
 #define CPU_H
 
 #include "mytypes.h"
 
-#define AX 0
-#define CX 1
-#define DX 2
-#define BX 3
-#define SP 4
-#define BP 5
-#define SI 6
-#define DI 7
+typedef enum { ES, CS, SS, DS } SREGS;
+typedef enum { AX, CX, DX, BX, SP, BP, SI, DI, NONE } WREGS;
 
-#define AL 0
-#define CL 1
-#define DL 2
-#define BL 3
-#define AH 4
-#define CH 5
-#define DH 6
-#define BH 7
-
-#define SPL 8
-#define SPH 9
-#define BPL 10
-#define BPH 11
-#define SIL 12
-#define SIH 13
-#define DIL 14
-#define DIH 15
-
-
-#define ES 0
-#define CS 1
-#define SS 2
-#define DS 3
-
+#ifdef LSB_FIRST
+typedef enum { AL,AH,CL,CH,DL,DH,BL,BH,SPL,SPH,BPL,BPH,SIL,SIH,DIL,DIH } BREGS;
+#else
+typedef enum { AH,AL,CH,CL,DH,DL,BH,BL,SPH,SPL,BPH,BPL,SIH,SIL,DIH,DIL } BREGS;
+#endif
 
 /* parameter x = result, y = source 1, z = source 2 */
 
@@ -93,12 +51,13 @@
 
 #define PutMemB(Seg,Off,x) (cpu_writemem((Seg)+(Off),(x)))
 #define GetMemB(Seg,Off) ((BYTE)cpu_readmem((Seg)+(Off)))
-#define GetMemInc(Seg,Off) ((BYTE)cpu_readmem((Seg)+(Off)++))
 #define GetMemW(Seg,Off) ((WORD)GetMemB(Seg,Off)+(WORD)(GetMemB(Seg,(Off)+1)<<8))
 #define PutMemW(Seg,Off,x) (PutMemB(Seg,Off,(BYTE)(x)),PutMemB(Seg,(Off)+1,(BYTE)((x)>>8)))
 
-#define read_port(port) Z80_In(port)
-#define write_port(port,val) Z80_Out(port,val)
+#define read_port(port) cpu_readport(port)
+#define write_port(port,val) cpu_writeport(port,val)
+/* no need to go through cpu_readmem for this one... used by fetching */
+#define GetMemInc(Seg,Off) ((BYTE)Memory[(Seg)+(Off)++])
 /************************************************************************/
 
 #if defined(LITTLE_ENDIAN) && !defined(ALIGNED_ACCESS)

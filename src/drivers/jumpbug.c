@@ -69,7 +69,7 @@ write:
 
 
 
-extern int cclimber_sh_start(void);
+extern int jumpbug_sh_start(void);
 
 
 
@@ -101,6 +101,7 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x4800, 0x4bff, videoram_w, &videoram },
 	{ 0x5000, 0x503f, scramble_attributes_w, &scramble_attributesram },
 	{ 0x5040, 0x505f, MWA_RAM, &spriteram },
+	{ 0x5060, 0x507f, MWA_RAM, &scramble_bulletsram },	/* not used by Jump Bug, but the driver needs it */
 	{ 0x7001, 0x7001, interrupt_enable_w },
 	{ 0x7004, 0x7004, scramble_stars_w },
 	{ 0x5900, 0x5900, AY8910_control_port_0_w },
@@ -230,7 +231,7 @@ static struct MachineDriver machine_driver =
 	/* sound hardware */
 	0,
 	0,
-	cclimber_sh_start,
+	jumpbug_sh_start,
 	AY8910_sh_stop,
 	AY8910_sh_update
 };
@@ -280,6 +281,7 @@ struct GameDriver jumpbug_driver =
 
 	jumpbug_rom,
 	0, 0,
+	0,
 
 	input_ports, dsw,
 
@@ -300,6 +302,7 @@ struct GameDriver jbugsega_driver =
 
 	jbugsega_rom,
 	0, 0,
+	0,
 
 	input_ports, dsw,
 

@@ -1,106 +1,95 @@
 #include "driver.h"
+#include "sn76496.h"
+#include <math.h>
 
 
-#define SND_CLOCK 4000000	/* 4 Mhz */
+#define SND_CLOCK 4000000	/* 3.072 Mhz */
+#define CHIPS 2
 
 
-static int sound_changed;
-static int freqlo[6],freqhi[6],vol[6];
+#define TONE_LENGTH 2000
+#define TONE_PERIOD 4
+#define NOISE_LENGTH 10000
+#define WAVE_AMPLITUDE 70
 
 
+static char *tone;
+static char *noise;
 
-static void sound_w(int voice,int data)
-{
-	static int lasttone[2];
-
-
-	sound_changed = 1;
-
-	if (data & 0x80)
-	{
-		switch ((data >> 4)& 0x07)
-		{
-			case 0x0:
-				freqlo[3*voice+0] = data & 0x0f;
-				lasttone[voice] = 0;
-				break;
-			case 0x1:
-				vol[3*voice+0] = 0x0f - (data & 0x0f);
-				break;
-			case 0x2:
-				freqlo[3*voice+1] = data & 0x0f;
-				lasttone[voice] = 1;
-				break;
-			case 0x3:
-				vol[3*voice+1] = 0x0f - (data & 0x0f);
-				break;
-			case 0x4:
-				freqlo[3*voice+2] = data & 0x0f;
-				lasttone[voice] = 2;
-				break;
-			case 0x5:
-				vol[3*voice+2] = 0x0f - (data & 0x0f);
-				break;
-			case 0x6:
-				break;
-			case 0x7:
-				break;
-		}
-	}
-	else freqhi[3*voice+lasttone[voice]] = data & 0x3f;
-}
+static struct SN76496 sn[CHIPS];
 
 
 
 void ladybug_sound1_w(int offset,int data)
 {
-	sound_w(0,data);
+	SN76496Write(&sn[0],data);
 }
 
 
 
 void ladybug_sound2_w(int offset,int data)
 {
-	sound_w(1,data);
+	SN76496Write(&sn[1],data);
 }
 
 
 
 int ladybug_sh_start(void)
 {
-	int i;
+	int i,j;
 
 
-	for (i = 0;i < 6;i++)
-		osd_play_sample(i,Machine->drv->samples,32,1000,0,1);
+	if ((tone = malloc(TONE_LENGTH)) == 0)
+		return 1;
+	if ((noise = malloc(NOISE_LENGTH)) == 0)
+	{
+		free(tone);
+		return 1;
+	}
+
+	for (i = 0;i < TONE_LENGTH;i++)
+		tone[i] = WAVE_AMPLITUDE * sin(2*PI*i/TONE_PERIOD);
+	for (i = 0;i < NOISE_LENGTH;i++)
+		noise[i] = (rand() % (2*WAVE_AMPLITUDE)) - WAVE_AMPLITUDE;
+
+	for (j = 0;j < CHIPS;j++)
+	{
+		sn[j].Clock = SND_CLOCK;
+		SN76496Reset(&sn[j]);
+
+		for (i = 0;i < 3;i++)
+			osd_play_sample(4*j+i,tone,TONE_LENGTH,TONE_PERIOD * sn[j].Frequency[i],sn[j].Volume[i],1);
+
+		osd_play_sample(4*j+3,noise,NOISE_LENGTH,sn[j].NoiseShiftRate,sn[j].Volume[3],1);
+	}
+
 	return 0;
+}
+
+
+
+void ladybug_sh_stop(void)
+{
+	free(noise);
+	free(tone);
 }
 
 
 
 void ladybug_sh_update(void)
 {
+	int i,j;
+
+
 	if (play_sound == 0) return;
 
-	if (sound_changed)
+	for (j = 0;j < CHIPS;j++)
 	{
-		int voice;
+		SN76496Update(&sn[j]);
 
+		for (i = 0;i < 3;i++)
+			osd_adjust_sample(4*j+i,TONE_PERIOD * sn[j].Frequency[i],sn[j].Volume[i]);
 
-		sound_changed = 0;
-
-		for (voice = 0;voice < 6;voice++)
-		{
-			int freq,volume;
-
-
-			freq = freqlo[voice] | (freqhi[voice] << 4);
-			if (freq) freq = SND_CLOCK / freq;
-
-			volume = vol[voice];
-			volume = (volume << 4) | volume;
-
-			osd_adjust_sample(voice,freq,volume);
-		}
+		osd_adjust_sample(4*j+3,sn[j].NoiseShiftRate,sn[j].Volume[3]);
 	}
 }

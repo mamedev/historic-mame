@@ -171,6 +171,8 @@ struct GameDriver
 	const struct RomModule *rom;
 	unsigned (*rom_decode)(int A);	/* used to decrypt the ROMs after loading them */
 	unsigned (*opcode_decode)(int A);	/* used to decrypt the ROMs when the CPU fetches an opcode */
+	const char **samplenames;	/* optional array of names of samples to load. */
+							/* drivers can retrieve them in Machine->samples */
 
 	struct InputPort *input_ports;
 	const struct DSW *dswsettings;

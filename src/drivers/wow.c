@@ -323,6 +323,7 @@ struct GameDriver wow_driver =
 
 	wow_rom,
 	0, 0,
+	0,
 
 	input_ports, dsw,
 
@@ -343,6 +344,7 @@ struct GameDriver robby_driver =
 
 	robby_rom,
 	0, 0,
+	0,
 
 	input_ports, dsw,
 
@@ -363,6 +365,7 @@ struct GameDriver gorf_driver =
 
 	gorf_rom,
 	0, 0,
+	0,
 
 	input_ports, dsw,
 

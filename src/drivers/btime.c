@@ -1289,6 +1289,7 @@ struct GameDriver btime_driver =
 
 	btime_rom,
 	0, btime_decode,
+	0,
 
 	input_ports, dsw,
 
@@ -1309,6 +1310,7 @@ struct GameDriver btimea_driver =
 
 	btimea_rom,
 	0, btimea_decode,
+	0,
 
 	input_ports, dsw,
 

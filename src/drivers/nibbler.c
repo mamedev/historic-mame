@@ -363,6 +363,7 @@ struct GameDriver nibbler_driver =
 
 	nibbler_rom,
 	0, 0,
+	0,
 
 	input_ports, dsw,
 
@@ -383,6 +384,7 @@ struct GameDriver fantasy_driver =
 
 	fantasy_rom,
 	0, 0,
+	0,
 
 	input_ports, dsw,
 

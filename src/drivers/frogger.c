@@ -337,6 +337,7 @@ struct GameDriver frogger_driver =
 
 	frogger_rom,
 	0, 0,
+	0,
 
 	input_ports, dsw,
 
@@ -359,6 +360,7 @@ struct GameDriver frogsega_driver =
 
 	frogsega_rom,
 	0, 0,
+	0,
 
 	input_ports, dsw,
 

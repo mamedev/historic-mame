@@ -72,6 +72,7 @@ extern void bombjack_background_w(int offset,int data);
 extern void bombjack_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
 extern void bombjack_vh_screenrefresh(struct osd_bitmap *bitmap);
 
+extern int bombjack_sh_intflag_r(int offset);
 extern int bombjack_sh_start(void);
 
 
@@ -107,8 +108,9 @@ static struct MemoryWriteAddress writemem[] =
 
 static struct MemoryReadAddress bombjack_sound_readmem[] =
 {
-	{ 0x0000, 0x1fff, MRA_ROM },
+	{ 0x4390, 0x4390, bombjack_sh_intflag_r },	/* kludge to speed up the emulation */
 	{ 0x2000, 0x5fff, MRA_RAM },
+	{ 0x0000, 0x1fff, MRA_ROM },
 	{ 0x6000, 0x6000, sound_command_r },
 	{ -1 }  /* end of table */
 };
@@ -275,7 +277,7 @@ static struct MachineDriver machine_driver =
 		},
 		{
 			CPU_Z80,
-			3000000,	/* 3 Mhz????? */
+			3072000,	/* 3.072 Mhz????? */
 			3,	/* memory region #3 */
 			bombjack_sound_readmem,bombjack_sound_writemem,0,bombjack_sound_writeport,
 			nmi_interrupt,1
@@ -417,6 +419,7 @@ struct GameDriver bombjack_driver =
 
 	bombjack_rom,
 	0, 0,
+	0,
 
 	input_ports, dsw,
 

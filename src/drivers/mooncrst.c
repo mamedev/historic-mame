@@ -18,7 +18,9 @@ extern int mooncrst_vh_start(void);
 extern void mooncrst_vh_screenrefresh(struct osd_bitmap *bitmap);
 
 extern void mooncrst_sound_freq_w(int offset,int data);
+extern void mooncrst_noise_w(int offset,int data);
 extern int mooncrst_sh_start(void);
+extern void mooncrst_sh_stop(void);
 extern void mooncrst_sh_update(void);
 
 
@@ -44,6 +46,7 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x9860, 0x9880, MWA_RAM, &mooncrst_bulletsram },
 	{ 0xb000, 0xb000, interrupt_enable_w },
 	{ 0xb800, 0xb800, mooncrst_sound_freq_w },
+	{ 0xa803, 0xa803, mooncrst_noise_w },
 	{ 0xa000, 0xa002, mooncrst_gfxextend_w },
 	{ 0xb004, 0xb004, mooncrst_stars_w },
 	{ 0x0000, 0x3fff, MWA_ROM },
@@ -148,15 +151,6 @@ static unsigned char fantazia_color_prom[] =
 
 
 
-/* waveforms for the audio hardware */
-static unsigned char samples[32] =	/* a simple sine (sort of) wave */
-{
-	0x00,0x00,0x00,0x00,0x22,0x22,0x22,0x22,0x44,0x44,0x44,0x44,0x22,0x22,0x22,0x22,
-	0x00,0x00,0x00,0x00,0xdd,0xdd,0xdd,0xdd,0xbb,0xbb,0xbb,0xbb,0xdd,0xdd,0xdd,0xdd
-};
-
-
-
 static struct MachineDriver machine_driver =
 {
 	/* basic machine hardware */
@@ -184,10 +178,10 @@ static struct MachineDriver machine_driver =
 	mooncrst_vh_screenrefresh,
 
 	/* sound hardware */
-	samples,
+	0,
 	0,
 	mooncrst_sh_start,
-	0,
+	mooncrst_sh_stop,
 	mooncrst_sh_update
 };
 
@@ -346,6 +340,7 @@ struct GameDriver mooncrst_driver =
 
 	mooncrst_rom,
 	moonqsr_decode, 0,
+	0,
 
 	input_ports, dsw,
 
@@ -366,6 +361,7 @@ struct GameDriver mooncrsb_driver =
 
 	mooncrsb_rom,
 	0, 0,
+	0,
 
 	input_ports, dsw,
 
@@ -386,6 +382,7 @@ struct GameDriver fantazia_driver =
 
 	fantazia_rom,
 	0, 0,
+	0,
 
 	input_ports, dsw,
 

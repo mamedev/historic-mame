@@ -43,7 +43,7 @@ int vs_lastline;
 
 
 /* audio related stuff */
-#define NUMVOICES 6
+#define NUMVOICES 8
 #define SAMPLE_RATE 44100
 #define SAMPLE_BUFFER_LENGTH 50000
 HAC hVoice[NUMVOICES];

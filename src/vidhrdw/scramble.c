@@ -272,7 +272,8 @@ void scramble_vh_screenrefresh(struct osd_bitmap *bitmap)
 		if (spriteram[offs + 3] > 8)	/* ???? */
 		{
 			drawgfx(bitmap,Machine->gfx[1],
-					spriteram[offs + 1] & 0x3f,
+							/* bit 4 of [offs+2] is used only by Crazy Kong */
+					(spriteram[offs + 1] & 0x3f) + 4*(spriteram[offs + 2] & 0x10),
 					spriteram[offs + 2],
 					spriteram[offs + 1] & 0x80,spriteram[offs + 1] & 0x40,
 					spriteram[offs],spriteram[offs + 3],

@@ -377,6 +377,7 @@ struct GameDriver scobra_driver =
 
 	scobra_rom,
 	0, 0,
+	0,
 
 	input_ports, dsw,
 
@@ -397,6 +398,7 @@ struct GameDriver scobrak_driver =
 
 	scobrak_rom,
 	0, 0,
+	0,
 
 	input_ports, dsw,
 
@@ -417,6 +419,7 @@ struct GameDriver scobrab_driver =
 
 	scobrab_rom,
 	0, 0,
+	0,
 
 	input_ports, dsw,
 
@@ -437,6 +440,7 @@ struct GameDriver losttomb_driver =
 
 	losttomb_rom,
 	0, 0,
+	0,
 
 	input_ports, dsw,
 

@@ -38,7 +38,6 @@ extern void invaders_videoram_w(int offset,int data);
 extern void invaders_vh_screenrefresh(struct osd_bitmap *bitmap);
 extern void invaders_sh_port3_w(int offset,int data);
 extern void invaders_sh_port5_w(int offset,int data);
-extern int invaders_sh_init(const char *gamename);
 extern void invaders_sh_update(void);
 
 
@@ -182,7 +181,7 @@ static struct MachineDriver machine_driver =
 
 	/* sound hardware */
 	0,
-	invaders_sh_init,
+	0,
 	0,
 	0,
 	invaders_sh_update
@@ -254,6 +253,57 @@ ROM_END
 
 
 
+static const char *invaders_sample_names[] =
+{
+	"0.raw",
+	"1.raw",
+	"2.raw",
+	"3.raw",
+	"4.raw",
+	"5.raw",
+	"6.raw",
+	"7.raw",
+	"8.raw",
+	0	/* end of array */
+};
+
+
+
+static int invaders_hiload(const char *name)
+{
+	/* check if the hi score table has already been initialized */
+	if (memcmp(&RAM[0x20f4],"\x00\x00",2) == 0)
+	{
+		FILE *f;
+
+
+		if ((f = fopen(name,"rb")) != 0)
+		{
+			fread(&RAM[0x20f4],1,2,f);
+			fclose(f);
+		}
+
+		return 1;
+	}
+	else return 0;	/* we can't load the hi scores yet */
+}
+
+
+
+static void invaders_hisave(const char *name)
+{
+	FILE *f;
+
+
+	if ((f = fopen(name,"wb")) != 0)
+	{
+		fwrite(&RAM[0x20f4],1,2,f);
+		fclose(f);
+	}
+}
+
+
+
 struct GameDriver invaders_driver =
 {
 	"invaders",
@@ -261,6 +311,7 @@ struct GameDriver invaders_driver =
 
 	invaders_rom,
 	0, 0,
+	invaders_sample_names,
 
 	input_ports, dsw,
 
@@ -271,7 +322,7 @@ struct GameDriver invaders_driver =
 	0, 3,
 	8*13, 8*16, 2,
 
-	0, 0
+	invaders_hiload, invaders_hisave
 };
 
 struct GameDriver earthinv_driver =
@@ -281,6 +332,7 @@ struct GameDriver earthinv_driver =
 
 	invaders_rom,
 	0, 0,
+	invaders_sample_names,
 
 	input_ports, dsw,
 
@@ -301,6 +353,7 @@ struct GameDriver spaceatt_driver =
 
 	spaceatt_rom,
 	0, 0,
+	invaders_sample_names,
 
 	input_ports, dsw,
 
@@ -321,6 +374,7 @@ struct GameDriver invdelux_driver =
 
 	invdelux_rom,
 	0, 0,
+	invaders_sample_names,
 
 	input_ports, dsw,
 
@@ -341,6 +395,7 @@ struct GameDriver galxwars_driver =
 
 	galxwars_rom,
 	0, 0,
+	invaders_sample_names,
 
 	input_ports, dsw,
 
@@ -361,6 +416,7 @@ struct GameDriver lrescue_driver =
 
 	lrescue_rom,
 	0, 0,
+	invaders_sample_names,
 
 	input_ports, dsw,
 
@@ -381,6 +437,7 @@ struct GameDriver desterth_driver =
 
 	desterth_rom,
 	0, 0,
+	invaders_sample_names,
 
 	input_ports, dsw,
 

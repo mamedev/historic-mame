@@ -15,6 +15,9 @@
 unsigned char *venture_characterram;
 static unsigned char dirtycharacter[256];
 
+unsigned char *venture_sprite_no;
+unsigned char *venture_sprite_enable;
+
 
 
 void venture_characterram_w(int offset,int data)
@@ -26,7 +29,6 @@ void venture_characterram_w(int offset,int data)
 		venture_characterram[offset] = data;
 	}
 }
-
 
 
 /***************************************************************************
@@ -79,7 +81,7 @@ void venture_vh_screenrefresh(struct osd_bitmap *bitmap)
 			sy = 8 * (offs / 32);
 
 			drawgfx(tmpbitmap,Machine->gfx[1],
-					charcode,0,
+					charcode,(charcode>>6)+1,         //0,
 					0,0,sx,sy,
 					&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
 		}
@@ -101,22 +103,25 @@ void venture_vh_screenrefresh(struct osd_bitmap *bitmap)
 			int sx,sy;
 
 
-			sx = 236-RAM[0x5000];
-			sy = 244-RAM[0x5040];
+			sx = 236-RAM[0x5000]-4;
+			sy = 244-RAM[0x5040]-4;
 
-			drawgfx(bitmap,Machine->gfx[0],
-					0,1,
+			drawgfx(bitmap,Machine->gfx[2],
+					(*venture_sprite_no & 0x0F)+(((*venture_sprite_enable>>7)&1)*16),0,
 					0,0,
 					sx,sy,
 					&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
 
-			sx = 236-RAM[0x5080];
-			sy = 244-RAM[0x50c0];
 
-			drawgfx(bitmap,Machine->gfx[0],
-					1,2,
+			sx = 236-RAM[0x5080]-4;
+			sy = 244-RAM[0x50c0]-4;
+
+			drawgfx(bitmap,Machine->gfx[2],
+					((*venture_sprite_no>>4) & 0x0F)+(((*venture_sprite_enable>>6)&1)*16)+32,1,
 					0,0,
 					sx,sy,
 					&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
 	}
+
+
 }

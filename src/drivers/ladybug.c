@@ -99,6 +99,7 @@ extern void ladybug_vh_screenrefresh(struct osd_bitmap *bitmap);
 extern void ladybug_sound1_w(int offset,int data);
 extern void ladybug_sound2_w(int offset,int data);
 extern int ladybug_sh_start(void);
+extern void ladybug_sh_stop(void);
 extern void ladybug_sh_update(void);
 
 
@@ -216,15 +217,6 @@ static unsigned char color_prom[] =
 
 
 
-/* waveforms for the audio hardware */
-static unsigned char samples[32] =	/* a simple sine (sort of) wave */
-{
-	0x00,0x00,0x00,0x00,0x22,0x22,0x22,0x22,0x44,0x44,0x44,0x44,0x22,0x22,0x22,0x22,
-	0x00,0x00,0x00,0x00,0xdd,0xdd,0xdd,0xdd,0xbb,0xbb,0xbb,0xbb,0xdd,0xdd,0xdd,0xdd
-};
-
-
-
 static struct MachineDriver machine_driver =
 {
 	/* basic machine hardware */
@@ -252,10 +244,10 @@ static struct MachineDriver machine_driver =
 	ladybug_vh_screenrefresh,
 
 	/* sound hardware */
-	samples,
+	0,
 	0,
 	ladybug_sh_start,
-	0,
+	ladybug_sh_stop,
 	ladybug_sh_update
 };
 
@@ -330,6 +322,7 @@ struct GameDriver ladybug_driver =
 
 	ladybug_rom,
 	0, 0,
+	0,
 
 	input_ports, dsw,
 

@@ -163,6 +163,84 @@ getout:
 
 /***************************************************************************
 
+  Read samples into memory.
+  This function is different from readroms() because it doesn't fail if
+  it doesn't find a file: it will load as many samples as it can find.
+
+***************************************************************************/
+struct GameSamples *readsamples(const char **samplenames,const char *basename)
+{
+	int i;
+	struct GameSamples *samples;
+
+
+	if (samplenames == 0 || samplenames[0] == 0) return 0;
+
+	i = 0;
+	while (samplenames[i] != 0) i++;
+
+	if ((samples = malloc(sizeof(struct GameSamples) + (i-1)*sizeof(struct GameSample))) == 0)
+		return 0;
+
+	samples->total = i;
+	for (i = 0;i < samples->total;i++)
+		samples->sample[i] = 0;
+
+	for (i = 0;i < samples->total;i++)
+	{
+		FILE *f;
+		char buf[100];
+		char name[100];
+
+
+		if (samplenames[i][0])
+		{
+			sprintf(buf,samplenames[i],basename);
+			sprintf(name,"%s/%s",basename,buf);
+
+			if ((f = fopen(name,"rb")) != 0)
+			{
+				if (fseek(f,0,SEEK_END) == 0)
+				{
+					int len;
+
+
+					len = ftell(f);
+					if (len != -1 && (samples->sample[i] = malloc(sizeof(struct GameSample) + (len-1)*sizeof(char))) != 0)
+					{
+						samples->sample[i]->length = len;
+						fseek(f,0,SEEK_SET);
+						fread(samples->sample[i]->data,1,len,f);
+					}
+				}
+
+				fclose(f);
+			}
+		}
+	}
+
+	return samples;
+}
+
+
+
+void freesamples(struct GameSamples *samples)
+{
+	int i;
+
+
+	if (samples == 0) return;
+
+	for (i = 0;i < samples->total;i++)
+		free(samples->sample[i]);
+
+	free(samples);
+}
+
+
+
+/***************************************************************************
+
   Function to convert the information stored in the graphic roms into a
   more usable format.
 
@@ -390,12 +468,32 @@ void drawgfx(struct osd_bitmap *dest,const struct GfxElement *gfx,
 					}
 					else		/* normal */
 					{
-						for (y = sy;y <= ey;y++)
+						/* unrolled loop for the most common case */
+						if (ex-sx+1 == 8)
 						{
-							bm = dest->line[y] + sx;
-							sd = gfx->gfxdata->line[start + (y-oy)] + (sx-ox);
-							for (x = sx;x <= ex;x++)
+							for (y = sy;y <= ey;y++)
+							{
+								bm = dest->line[y] + sx;
+								sd = gfx->gfxdata->line[start + (y-oy)] + (sx-ox);
 								*(bm++) = paldata[*(sd++)];
+								*(bm++) = paldata[*(sd++)];
+								*(bm++) = paldata[*(sd++)];
+								*(bm++) = paldata[*(sd++)];
+								*(bm++) = paldata[*(sd++)];
+								*(bm++) = paldata[*(sd++)];
+								*(bm++) = paldata[*(sd++)];
+								*bm = paldata[*sd];
+							}
+						}
+						else
+						{
+							for (y = sy;y <= ey;y++)
+							{
+								bm = dest->line[y] + sx;
+								sd = gfx->gfxdata->line[start + (y-oy)] + (sx-ox);
+								for (x = sx;x <= ex;x++)
+									*(bm++) = paldata[*(sd++)];
+							}
 						}
 					}
 				}

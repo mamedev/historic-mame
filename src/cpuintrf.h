@@ -8,8 +8,11 @@ int cpu_getpc(void);
 int cpu_geticount(void);
 void cpu_seticount(int cycles);
 
-void cpu_writemem(register int A,register unsigned char V);
 int cpu_readmem(register int A);
+void cpu_writemem(register int A,register unsigned char V);
+
+int cpu_readport(int Port);
+void cpu_writeport(int Port,int Value);
 
 /* some useful general purpose functions for the memory map */
 int readinputport(int port);

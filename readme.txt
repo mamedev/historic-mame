@@ -4,8 +4,12 @@
                     Multiple Arcade Machine Emulator
 
                   by Nicola Salmoria (MC6489@mclink.it)
+Please don't send contributions to the above address. The current maintainer
+of the project is Mirko Buffoni (mix@lim.dsi.unimi.it). Contact him if you
+have material to submit for inclusion into MAME.
 
-please note that many people helped with this project, either directly or
+
+Please note that many people helped with this project, either directly or
 by making source code available which I examined to write the drivers. I am
 not trying to appropriate merit which isn't mine. See the acknowledgemnts
 section for a list of contributors.
@@ -22,10 +26,11 @@ Pac Man                        Yes         Yes        Yes       Yes
 Ms Pac Man (bootleg)           Yes         Yes        Yes       Yes
 Crush Roller                   Yes         Yes        Yes       Yes
 Pengo                          Yes         Yes        Yes       Yes
-Lady Bug                       Yes         Yes      No noise    Yes
+Lady Bug                       Yes         Yes        Yes       Yes
 Mr. Do!                        Yes         Yes        Yes       Yes
 Mr. Do's Castle                 No          No         No       n/a
 Crazy Climber                  Yes         Yes        Yes       Yes
+Seicross                        No          No        Yes       n/a
 Crazy Kong                     Yes         Yes        Yes       Yes
 Donkey Kong                    Yes          No      Yes (1)     Yes
 Donkey Kong Jr.                Yes          No         No       Yes
@@ -52,7 +57,7 @@ Time Pilot                     Yes          No        Yes       Yes
 Pooyan                         Yes          No        Yes       Yes
 Phoenix                        Yes        Close     Limited      No
 Pleiads                        Yes          No      Limited      No
-Space Invaders                 Yes         Yes      Yes (1)      No
+Space Invaders                 Yes         Yes      Yes (1)     Yes
 Carnival                       Yes        Maybe        No        No
 Zaxxon                         Yes          No         No       Yes
 Congo Bongo                    Yes          No         No       Yes
@@ -66,12 +71,18 @@ Moon Patrol                    Yes          No         No        No
 Burger Time                    Yes         Yes        Yes       Yes
 Lost Tomb                       No          No        Yes       n/a
 Jump Bug                       Yes          No        Yes        No
-Green Beret                    Yes         Yes     Music only    No
+Green Beret                    Yes         Yes        Yes       Yes
 Venture                     Partially       No         No        No
+Mouse Trap                  Partially       No         No        No
+Pepper II                   Partially       No         No        No
 Q*Bert                         Yes         Yes?    Partial (1)   No
 Mad Planets                    Yes         Yes?        No        No
+Jungle King                    Yes          No         No        No
+Elevator Action                 No          No         No       n/a
+Space Panic                    Yes          No         No        No
 
 (1) Needs samples, provided in a separate archive
+
 
 
 Acknowledgements
@@ -119,8 +130,10 @@ Vanguard driver by Brad Oliver and Mirko Buffoni, based on code by Brian
 Carnival driver completed by Mike Coates and Richard Davies.
 Jump Bug driver by Richard Davies (R.Davies@dcs.hull.ac.uk) and Brad Oliver
    (bradman@primenet.com).
-Venture driver by Marc Lafontaine (marclaf@sympatico.ca).
+Venture, Mouse Trap and Pepper II drivers by Marc Lafontaine
+   (marclaf@sympatico.ca).
 Q*Bert and Mad Planets drivers by Fabrice Frances (frances@ensica.fr)
+Space Panic driver by Mike Coates (mike@dissfulfils.co.uk)
 
 
 Very special thanks to Sergio Munoz for the precious information about the
@@ -262,16 +275,6 @@ Clones supported:
   Puck Man ("puckman")
   Piranha ("piranha")
 
-Known issues:
-- Blinky and Pinky seem to be shifted one pixel to the right. This is really
-  annoying, but I can't seem to be able to understand why. Maybe there is an
-  additional "sprite offset" register somewhere? Or did the original just
-  behave this way?
-  Note that we can't fix it by just moving sprites 0 and 1 one pixel to the
-  left, because when Pac Man eats a power pill the sprites order is changed
-  so that Pac Man is drawn over the ghosts. It becomes sprite 0, and Blinky
-  becomes sprite 4.
-
 
 
 Ms Pac Man ("mspacman")
@@ -281,16 +284,6 @@ Arrows  Move around
 F1      Skip level
 F2      Test mode
 CTRL    Speed up cheat
-
-Known issues:
-- Blinky and Pinky seem to be shifted one pixel to the right. This is really
-  annoying, but I can't seem to be able to understand why. Maybe there is an
-  additional "sprite offset" register somewhere? Or did the original just
-  behave this way?
-  Note that we can't fix it by just moving sprites 0 and 1 one pixel to the
-  left, because when Pac Man eats a power pill the sprites order is changed
-  so that Pac Man is drawn over the ghosts. It becomes sprite 0, and Blinky
-  becomes sprite 4.
 
 
 
@@ -302,10 +295,6 @@ Pac Man board.
 
 Arrows  Move around
 F1      Skip level
-
-Known issues:
-- There's the same problem with sprites as in Pac Man, but here it could be
-  fixed without apparent side effects.
 
 
 
@@ -328,9 +317,6 @@ Lady Bug ("ladybug")
 Arrows  Move around
 F1      Skip level
 
-Known issues:
-- The noise generator is not emulated yet.
-
 
 
 Mr. Do! ("mrdo")
@@ -342,11 +328,8 @@ F1      Skip level
 CTRL+F3 Test mode
 
 Clones supported:
+  Version with additional Taito copyright ("mrdot")
   Mr. Lo! ("mrlo")
-
-Known issues:
-- The noise generator is not emulated yet, but I think Mr. Do! doesn't
-  use it anyway.
 
 
 
@@ -370,6 +353,15 @@ Clones supported:
 
 
 
+Seicross ("seicross")
+---------------------
+
+Runs on almost the same hardware as Crazy Climber, but not exactly the same.
+
+Not playable.
+
+
+
 Crazy Kong ("ckong")
 --------------------
 
@@ -379,6 +371,9 @@ notable differencies being a larger character set and the display rotated
 
 Arrows  Move around
 CTRL    Jump
+
+Clones supported:
+  version running on Scramble hardware ("ckongs")
 
 Known issues:
 - Some problems with sound
@@ -943,7 +938,8 @@ Clones supported:
   US version, called Rush'n Attack ("rushatck")
 
 Known issues:
-- Is the speed right?
+- The music starts with what seems a correct pitch, but changes after you die
+  for the first time or finishe the first level. Weird.
 
 
 
@@ -952,10 +948,42 @@ Venture ("venture")
 
 Arrows  Move around
 CTRL    Fire
+3+F3    Test mode
 On startup, keep 1 or 2 pressed to proceed
 
 Known issues:
-- Sprites are not drawn correctly.
+- Collision detection doesn't work - use 7 and 8 to simulate it.
+
+
+
+Mouse Trap ("mtrap")
+--------------------
+
+Runs on the same hardware as Venture.
+
+Arrows  Move around
+CTRL    Fire
+3+F3    Test mode
+
+Known issues:
+- Collision detection doesn't work.
+
+
+
+Pepper II ("pepper2")
+---------------------
+
+Runs on hardware similar to Venture.
+
+Arrows  Move around
+CTRL    Dog button
+Z       Yellow button
+X       Red button
+C       Blue button
+3+F3    Test mode
+
+Known issues:
+- Collision detection doesn't work - use 7 and 8 to simulate it.
 
 
 
@@ -963,6 +991,7 @@ Q*Bert ("qbert")
 ----------------
 
 Arrows  Move around
+To enter your name in the high score list, use 1 or 2.
 
 Clones supported:
   Japanese version ("qbertjp")
@@ -976,3 +1005,36 @@ Runs on the same hardware as Q*Bert
 
 Arrows  Move around
 CTRL    Fire
+
+Known issues:
+- The dialer (used to rotate the ship) is not supported.
+
+
+
+Jungle King ("junglek")
+-----------------------
+
+Arrows  Move around
+CTRL    Jump
+
+Known issues:
+- I haven't the gfx bank selector switch, therefore the background graphics
+  are not selected appropriately. Use C and V to change the gfx set.
+
+
+
+Elevator Action ("elevator")
+----------------------------
+
+Should run on hardware similar to Jungle King.
+
+Doesn't work.
+
+
+
+Space Panic ("panic")
+---------------------
+
+Arrows  Move around
+CTRL    Fire1
+ALT     Fire2

@@ -385,6 +385,7 @@ struct GameDriver pengo_driver =
 
 	pengo_rom,
 	0, 0,
+	0,
 
 	input_ports, dsw,
 
@@ -405,6 +406,7 @@ struct GameDriver penta_driver =
 
 	penta_rom,
 	0, 0,
+	0,
 
 	input_ports, dsw,
 

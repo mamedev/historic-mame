@@ -14,7 +14,6 @@ static int porta;
 
 static void cclimber_portA_w(int offset,int data)
 {
-	/* Crazy Climber and Crazy Kong */
 	porta = data;
 }
 
@@ -25,8 +24,8 @@ static struct AY8910interface interface =
 	1,	/* 1 chip */
 	1536000000,	/* 1.536000000 MHZ */
 	{ 255 },
-	{ input_port_0_r },	/* Bagman only */
-	{ input_port_1_r },	/* Bagman only */
+	{ },
+	{ },
 	{ cclimber_portA_w },
 	{ }
 };

@@ -313,6 +313,7 @@ struct GameDriver milliped_driver =
 
 	milliped_rom,
 	0, 0,
+	0,
 
 	input_ports, dsw,
 

@@ -134,11 +134,10 @@ Crush Roller:
 extern int pacman_init_machine(const char *gamename);
 extern int pacman_interrupt(void);
 
-extern unsigned char *pengo_soundregs;
 extern void pacman_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
-extern int pengo_vh_start(void);
-extern void pengo_vh_screenrefresh(struct osd_bitmap *bitmap);
+extern void pacman_vh_screenrefresh(struct osd_bitmap *bitmap);
 
+extern unsigned char *pengo_soundregs;
 extern void pengo_sound_enable_w(int offset,int data);
 extern void pengo_sound_w(int offset,int data);
 extern void pengo_sh_update(void);
@@ -377,9 +376,9 @@ static struct MachineDriver machine_driver =
 	pacman_vh_convert_color_prom,
 
 	0,
-	pengo_vh_start,
+	generic_vh_start,
 	generic_vh_stop,
-	pengo_vh_screenrefresh,
+	pacman_vh_screenrefresh,
 
 	/* sound hardware */
 	samples,
@@ -608,6 +607,7 @@ struct GameDriver pacman_driver =
 
 	pacman_rom,
 	0, 0,
+	0,
 
 	pacman_input_ports, pacman_dsw,
 
@@ -628,6 +628,7 @@ struct GameDriver pacmod_driver =
 
 	pacmod_rom,
 	0, 0,
+	0,
 
 	pacman_input_ports, pacman_dsw,
 
@@ -648,6 +649,7 @@ struct GameDriver namcopac_driver =
 
 	pacman_rom,
 	0, 0,
+	0,
 
 	pacman_input_ports, pacman_dsw,
 
@@ -668,6 +670,7 @@ struct GameDriver hangly_driver =
 
 	pacman_rom,
 	0, 0,
+	0,
 
 	pacman_input_ports, pacman_dsw,
 
@@ -688,6 +691,7 @@ struct GameDriver puckman_driver =
 
 	pacman_rom,
 	0, 0,
+	0,
 
 	pacman_input_ports, pacman_dsw,
 
@@ -708,6 +712,7 @@ struct GameDriver piranha_driver =
 
 	piranha_rom,
 	0, 0,
+	0,
 
 	pacman_input_ports, pacman_dsw,
 
@@ -728,6 +733,7 @@ struct GameDriver mspacman_driver =
 
 	mspacman_rom,
 	0, 0,
+	0,
 
 	pacman_input_ports, mspacman_dsw,
 
@@ -748,6 +754,7 @@ struct GameDriver crush_driver =
 
 	crush_rom,
 	0, 0,
+	0,
 
 	crush_input_ports, crush_dsw,
 

@@ -459,6 +459,7 @@ struct GameDriver scramble_driver =
 
 	scramble_rom,
 	0, 0,
+	0,
 
 	input_ports, scramble_dsw,
 
@@ -479,6 +480,7 @@ struct GameDriver atlantis_driver =
 
 	atlantis_rom,
 	0, 0,
+	0,
 
 	input_ports, atlantis_dsw,
 
@@ -499,6 +501,7 @@ struct GameDriver theend_driver =
 
 	theend_rom,
 	0, 0,
+	0,
 
 	input_ports, theend_dsw,
 
@@ -519,6 +522,7 @@ struct GameDriver froggers_driver =
 
 	froggers_rom,
 	0, 0,
+	0,
 
 	input_ports, scramble_dsw,
 

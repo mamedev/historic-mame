@@ -113,7 +113,6 @@ extern void dkong_vh_screenrefresh(struct osd_bitmap *bitmap);
 extern void dkong_sh1_w(int offset,int data);
 extern void dkong_sh2_w(int offset,int data);
 extern void dkong_sh3_w(int offset,int data);
-extern int dkong_sh_init(const char *gamename);
 extern void dkong_sh_update(void);
 
 
@@ -563,7 +562,7 @@ static struct MachineDriver dkong_machine_driver =
 
 	/* sound hardware */
 	0,
-	dkong_sh_init,
+	0,
 	0,
 	0,
 	dkong_sh_update
@@ -660,6 +659,38 @@ ROM_END
 
 
 
+static const char *sample_names[] =
+{
+	"walk.sam",
+	"jump.sam",
+	"boom.sam",
+	"coin.sam",
+	"drop.sam",
+	"prize.sam",
+	"",
+	"",
+	"",
+	"intro.sam",
+	"howhigh.sam",
+	"time.sam",
+	"hammer.sam",
+	"rivet2a.sam",
+	"hamhit.sam",
+	"lvl1end.sam",
+	"back1.sam",
+	"",
+	"back3.sam",
+	"back2.sam",
+	"rivet1a.sam",
+	"",
+	"rivet1.sam",
+	"gorilla.sam",
+	"death.sam",
+	0	/* end of array */
+};
+
+
+
 static int hiload(const char *name)
 {
 	/* check if the hi score table has already been initialized */
@@ -713,6 +744,7 @@ struct GameDriver dkong_driver =
 
 	dkong_rom,
 	0, 0,
+	sample_names,
 
 	input_ports, dsw,
 
@@ -733,6 +765,7 @@ struct GameDriver dkongjr_driver =
 
 	dkongjr_rom,
 	0, 0,
+	0,
 
 	input_ports, dsw,
 

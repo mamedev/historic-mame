@@ -247,7 +247,7 @@ static void _AYUpdateChip(int num)
     PSG->Incr2 = x ? AYClockFreq / AYSoundRate * 4 / x : 0;
 
     x = PSG->Regs[AY_NOISEPER]&0x1F;
-    PSG->Incrnoise = AYClockFreq / AYSoundRate * 4 / ( x ? x : 1 );
+    PSG->Incrnoise = x ? AYClockFreq / AYSoundRate * 4 / x : 0;
 
     x = (PSG->Regs[AY_EFINE]+((unsigned)PSG->Regs[AY_ECOARSE]<<8));
     PSG->Increnv = x ? AYClockFreq / AYSoundRate * 4 / x * AYBufSize : 0;
@@ -280,6 +280,12 @@ static void _AYUpdateChip(int num)
     PSG->Vol0 = ( PSG->Regs[AY_ENABLE] & 001 ) ? 0 : PSG->Vol0;
     PSG->Vol1 = ( PSG->Regs[AY_ENABLE] & 002 ) ? 0 : PSG->Vol1;
     PSG->Vol2 = ( PSG->Regs[AY_ENABLE] & 004 ) ? 0 : PSG->Vol2;
+
+	/* if the frequency is 0, shut down the voice */
+    if (PSG->Incr0 == 0) PSG->Vol0 = 0;
+    if (PSG->Incr1 == 0) PSG->Vol1 = 0;
+    if (PSG->Incr2 == 0) PSG->Vol2 = 0;
+    if (PSG->Incrnoise == 0) PSG->Volnoise = 0;
 
     for( i=0; i<AYBufSize; ++i ) {
 

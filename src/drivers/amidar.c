@@ -301,7 +301,7 @@ static struct MachineDriver machine_driver =
 		},
 		{
 			CPU_Z80,
-			1789750,	/* 1.78975 Mhz?????? */
+			2000000,	/* 2 Mhz?????? */
 			2,	/* memory region #2 */
 			sound_readmem,sound_writemem,sound_readport,sound_writeport,
 			amidar_sh_interrupt,1
@@ -396,6 +396,7 @@ struct GameDriver amidar_driver =
 
 	amidar_rom,
 	0, 0,
+	0,
 
 	input_ports, amidar_dsw,
 
@@ -416,6 +417,7 @@ struct GameDriver amidarjp_driver =
 
 	amidarjp_rom,
 	0, 0,
+	0,
 
 	input_ports, amidar_dsw,
 
@@ -436,6 +438,7 @@ struct GameDriver turtles_driver =
 
 	turtles_rom,
 	0, 0,
+	0,
 
 	input_ports, turtles_dsw,
 
