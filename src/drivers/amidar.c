@@ -57,7 +57,7 @@ interrupt mode 1 triggered by the main CPU
 void amidar_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 void amidar_updatehook00(int offset);
 void amidar_updatehook01(int offset);
-void amidar_vh_screenrefresh(struct osd_bitmap *bitmap);
+void amidar_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 int scramble_portB_r(int offset);
 void scramble_sh_irqtrigger_w(int offset,int data);
@@ -456,7 +456,7 @@ static struct AY8910interface ay8910_interface =
 {
 	2,	/* 2 chips */
 	14318000/8,	/* 1.78975 Mhz */
-	{ 0x60ff, 0x60ff },
+	{ 0x30ff, 0x30ff },
 	{ soundlatch_r },
 	{ scramble_portB_r },
 	{ 0 },
@@ -586,19 +586,19 @@ ROM_END
 
 ROM_START( turpin_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "M1", 0x0000, 0x1000, 0x805f1577 )
-	ROM_LOAD( "M2", 0x1000, 0x1000, 0x694f9789 )
-	ROM_LOAD( "M3", 0x2000, 0x1000, 0x1b08134e )
-	ROM_LOAD( "M4", 0x3000, 0x1000, 0xb71c1118 )
-	ROM_LOAD( "M5", 0x4000, 0x1000, 0x112be471 )
+	ROM_LOAD( "M1",          0x0000, 0x1000, 0x805f1577 )
+	ROM_LOAD( "M2",          0x1000, 0x1000, 0x694f9789 )
+	ROM_LOAD( "M3",          0x2000, 0x1000, 0x1b08134e )
+	ROM_LOAD( "turt_vid.2h", 0x3000, 0x1000, 0xb71c1118 )
+	ROM_LOAD( "M5",          0x4000, 0x1000, 0x112be471 )
 
 	ROM_REGION(0x1000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "C1", 0x0000, 0x0800, 0x077a3a46 )
-	ROM_LOAD( "C2", 0x0800, 0x0800, 0xd1107d84 )
+	ROM_LOAD( "turt_vid.5h", 0x0000, 0x0800, 0x077a3a46 )
+	ROM_LOAD( "turt_vid.5f", 0x0800, 0x0800, 0xd1107d84 )
 
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
-	ROM_LOAD( "D1", 0x0000, 0x1000, 0x90ecc748 )
-	ROM_LOAD( "D2", 0x1000, 0x1000, 0xad8bffad )
+	ROM_LOAD( "turt_snd.5c", 0x0000, 0x1000, 0x90ecc748 )
+	ROM_LOAD( "turt_snd.5d", 0x1000, 0x1000, 0xad8bffad )
 ROM_END
 
 
@@ -718,9 +718,9 @@ struct GameDriver amidar_driver =
 	__FILE__,
 	0,
 	"amidar",
-	"Amidar (US version)",
-	"????",
-	"?????",
+	"Amidar (US)",
+	"1982",
+	"Konami (Stern license)",
 	"Robert Anschuetz (Arcade emulator)\nNicola Salmoria (MAME driver)\nAlan J. McCormick (color info)",
 	0,
 	&machine_driver,
@@ -741,11 +741,11 @@ struct GameDriver amidar_driver =
 struct GameDriver amidarjp_driver =
 {
 	__FILE__,
-	0,
+	&amidar_driver,
 	"amidarjp",
-	"Amidar (Japanese version)",
-	"????",
-	"?????",
+	"Amidar (Japan)",
+	"1981",
+	"Konami",
 	"Robert Anschuetz (Arcade emulator)\nNicola Salmoria (MAME driver)\nAlan J. McCormick (color info)",
 	0,
 	&machine_driver,
@@ -766,11 +766,11 @@ struct GameDriver amidarjp_driver =
 struct GameDriver amigo_driver =
 {
 	__FILE__,
-	0,
+	&amidar_driver,
 	"amigo",
-	"Amigo (Amidar US bootleg)",
-	"????",
-	"?????",
+	"Amigo",
+	"1982",
+	"bootleg",
 	"Robert Anschuetz (Arcade emulator)\nNicola Salmoria (MAME driver)\nAlan J. McCormick (color info)\nDavid Winter (game driver)",
 	0,
 	&machine_driver,
@@ -794,8 +794,8 @@ struct GameDriver turtles_driver =
 	0,
 	"turtles",
 	"Turtles",
-	"????",
-	"?????",
+	"1981",
+	"Stern",
 	"Robert Anschuetz (Arcade emulator)\nNicola Salmoria (MAME driver)\nAlan J. McCormick (color info)\nValerio Verrando (high score save)",
 	0,
 	&machine_driver,
@@ -816,11 +816,11 @@ struct GameDriver turtles_driver =
 struct GameDriver turpin_driver =
 {
 	__FILE__,
-	0,
+	&turtles_driver,
 	"turpin",
 	"Turpin",
-	"????",
-	"?????",
+	"1981",
+	"Sega",
 	"Robert Anschuetz (Arcade emulator)\nNicola Salmoria (MAME driver)\nAlan J. McCormick (color info)\nValerio Verrando (high score save)",
 	0,
 	&machine_driver,

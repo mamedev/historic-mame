@@ -21,9 +21,10 @@
   the main emulation engine.
 
 ***************************************************************************/
-void avalnche_vh_screenrefresh(struct osd_bitmap *bitmap)
+
+void avalnche_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
-	int offs,i;
+	int offs;
 
 	/* for every character in the Video RAM, check if it has been modified */
 	/* since last time and update it accordingly. */
@@ -49,11 +50,16 @@ void avalnche_vh_screenrefresh(struct osd_bitmap *bitmap)
 					0,0,sx,sy,
 					&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
 
+			if (!full_refresh)
+				drawgfx(bitmap,Machine->gfx[0],
+					offs,color,
+					0,0,sx,sy,
+					&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
 		}
 	}
 
-	/* copy the character mapped graphics */
-	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
-
+	if (full_refresh)
+		/* copy the character mapped graphics */
+		copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
 }
 

@@ -129,7 +129,7 @@ void redalert_characterram_w(int offset,int data)
   the main emulation engine.
 
 ***************************************************************************/
-void redalert_vh_screenrefresh(struct osd_bitmap *bitmap)
+void redalert_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	int offs,i;
 

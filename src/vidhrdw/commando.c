@@ -174,7 +174,7 @@ void commando_c804_w(int offset,int data)
   the main emulation engine.
 
 ***************************************************************************/
-void commando_vh_screenrefresh(struct osd_bitmap *bitmap)
+void commando_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	int offs;
 

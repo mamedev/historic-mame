@@ -9,14 +9,9 @@
 
 static unsigned char *ram;
 
-extern unsigned char *snowbros_paletteram;
 extern unsigned char *snowbros_spriteram;
 
-void snowbros_vh_screenrefresh(struct osd_bitmap *bitmap);
-
-void snowbros_paletteram_w(int offset,int data);
-int  snowbros_paletteram_r(int offset);
-
+void snowbros_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 void snowbros_spriteram_w(int offset,int data);
 int  snowbros_spriteram_r(int offset);
 
@@ -72,8 +67,8 @@ static struct MemoryReadAddress readmem[] =
 	{ 0x100000, 0x103fff, MRA_BANK1, &ram },
 	{ 0x300000, 0x300001, snowbros_68000_sound_r },
 	{ 0x500000, 0x500005, snowbros_input_r },
-	{ 0x600000, 0x6001ff, snowbros_paletteram_r, &snowbros_paletteram },
-	{ 0x700000, 0x701dff, snowbros_spriteram_r, &snowbros_spriteram, &videoram_size },
+	{ 0x600000, 0x6001ff, paletteram_word_r },
+	{ 0x700000, 0x701dff, snowbros_spriteram_r },
 	{ -1 }  /* end of table */
 };
 
@@ -84,8 +79,8 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x200000, 0x200001, watchdog_reset_w },
 	{ 0x300000, 0x300001, snowbros_68000_sound_w },
 //	{ 0x400000, 0x400001, snowbros_interrupt_enable_w },
-	{ 0x600000, 0x6001ff, snowbros_paletteram_w },
-	{ 0x700000, 0x701dff, snowbros_spriteram_w },
+	{ 0x600000, 0x6001ff, paletteram_xBBBBBGGGGGRRRRR_word_w, &paletteram },
+	{ 0x700000, 0x701dff, snowbros_spriteram_w, &snowbros_spriteram, &videoram_size },
 	{ 0x800000, 0x800001, MWA_NOP },	/* IRQ 4 acknowledge? */
 	{ 0x900000, 0x900001, MWA_NOP },	/* IRQ 3 acknowledge? */
 	{ 0xA00000, 0xA00001, MWA_NOP },	/* IRQ 2 acknowledge? */
@@ -230,11 +225,18 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 
 
+/* handler called by the 3812 emulator when the internal timers cause an IRQ */
+static void irqhandler(void)
+{
+	cpu_cause_interrupt(1,0xff);
+}
+
 static struct YM3812interface ym3812_interface =
 {
 	1,			/* 1 chip (no more supported) */
-	3000000,	/* 3 MHz ? (not supported) */
-	{ 255 }		/* (not supported) */
+	3600000,	/* 3.600000 MHz ? (partially supported) */
+	{ 255 },		/* (not supported) */
+	irqhandler,
 };
 
 
@@ -245,7 +247,7 @@ static struct MachineDriver machine_driver =
 	{
 		{
 			CPU_M68000,
-			12000000,	/* ? Mhz (slower than this gives some wrong effects */
+			8000000,	/* 8 Mhz ????? */
 			0,
 			readmem,writemem,0,0,
 			snowbros_interrupt,3
@@ -255,7 +257,7 @@ static struct MachineDriver machine_driver =
 			4000000,	/* 4 Mhz ??? */
 			2,
 			sound_readmem,sound_writemem,sound_readport,sound_writeport,
-			interrupt,2	/* ? just a guess */
+			ignore_interrupt,0	/* IRQs are caused by the YM3812 */
 		}
 	},
 	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */

@@ -49,7 +49,6 @@ void atarigen_render_display_list (struct osd_bitmap *bitmap, atarigen_morender 
 extern int atarigen_cpu_to_sound, atarigen_cpu_to_sound_ready;
 extern int atarigen_sound_to_cpu, atarigen_sound_to_cpu_ready;
 
-extern unsigned char *atarigen_paletteram;
 extern unsigned char *atarigen_playfieldram;
 extern unsigned char *atarigen_spriteram;
 extern unsigned char *atarigen_alpharam;
@@ -61,5 +60,4 @@ extern unsigned char *atarigen_slapstic;
 extern int atarigen_playfieldram_size;
 extern int atarigen_spriteram_size;
 extern int atarigen_alpharam_size;
-extern int atarigen_paletteram_size;
 extern int atarigen_eeprom_size;

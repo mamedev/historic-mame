@@ -49,7 +49,7 @@ void commando_c804_w(int offset,int data);
 int commando_vh_start(void);
 void commando_vh_stop(void);
 void commando_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-void commando_vh_screenrefresh(struct osd_bitmap *bitmap);
+void commando_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 
 
@@ -244,7 +244,7 @@ static struct YM2203interface ym2203_interface =
 {
 	2,			/* 2 chips */
 	1500000,	/* 1.5 MHz */
-	{ YM2203_VOL(100,0x20ff), YM2203_VOL(100,0x20ff) },
+	{ YM2203_VOL(128,255), YM2203_VOL(128,255) },
 	{ 0 },
 	{ 0 },
 	{ 0 },

@@ -358,7 +358,7 @@ void c1942_vh_convert_color_prom(unsigned char *palette, unsigned short *colorta
 void c1942_flipscreen_w(int offset,int data);
 void c1942_updatehook0(int offset);
 void c1942_updatehook1(int offset);
-void c1942_vh_screenrefresh(struct osd_bitmap *bitmap);
+void c1942_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 
 
@@ -628,7 +628,7 @@ static struct AY8910interface ay8910_interface =
 {
 	2,	/* 2 chips */
 	1500000,	/* 1.5 MHz ? */
-	{ 0x20ff, 0x20ff },
+	{ 255, 255 },
 	{ 0 },
 	{ 0 },
 	{ 0 },
@@ -825,7 +825,7 @@ struct GameDriver c1942_driver =
 	__FILE__,
 	0,
 	"1942",
-	"1942",
+	"1942 (set 1)",
 	"1984",
 	"Capcom",
 	"Paul Leaman (hardware info)\nNicola Salmoria (MAME driver)",
@@ -849,8 +849,8 @@ struct GameDriver c1942a_driver =
 {
 	__FILE__,
 	&c1942_driver,
-	"1942",
-	"1942 (alternate)",
+	"1942a",
+	"1942 (set 2)",
 	"1984",
 	"Capcom",
 	"Paul Leaman (hardware info)\nNicola Salmoria (MAME driver)",

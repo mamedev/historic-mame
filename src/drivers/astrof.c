@@ -24,7 +24,7 @@ extern unsigned char *astrof_color;
 
 int  astrof_vh_start(void);
 void astrof_vh_stop(void);
-void astrof_vh_screenrefresh(struct osd_bitmap *bitmap);
+void astrof_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 void astrof_videoram_w(int offset,int data);
 
 
@@ -244,9 +244,9 @@ struct GameDriver astrof_driver =
 	__FILE__,
 	0,
 	"astrof",
-	"Astro Fighter",
-	"????",
-	"?????",
+	"Astro Fighter (set 1)",
+	"1980",
+	"Data East",
 	"Lee Taylor\nLucy Anne Taylor(Who`s birth 27/11/1997 made this driver possible)\nSanteri Saarimaa (high score save)",
 	0,
 	&machine_driver,
@@ -267,11 +267,11 @@ struct GameDriver astrof_driver =
 struct GameDriver astrof2_driver =
 {
 	__FILE__,
-	0,
+	&astrof_driver,
 	"astrof2",
-	"Astro Fighter (alternate)",
-	"????",
-	"?????",
+	"Astro Fighter (set 2)",
+	"1980",
+	"Data East",
 	"Lee Taylor\nLucy Anne Taylor(Who`s birth 27/11/1997 made this driver possible)\nSanteri Saarimaa (high score save)",
 	0,
 	&machine_driver,

@@ -54,7 +54,7 @@ extern unsigned char *congo_background_enable;
 void zaxxon_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 int  congo_vh_start(void);
 void congo_vh_stop(void);
-void congo_vh_screenrefresh(struct osd_bitmap *bitmap);
+void congo_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 void congo_daio(int offset, int data);
 
@@ -415,25 +415,25 @@ ROM_START( tiptop_rom )
 	ROM_LOAD( "tiptop4.bin",  0x6000, 0x2000, 0x58baf652 )
 
 	ROM_REGION(0x13800)      /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "tiptop5.bin",  0x00000, 0x1000, 0x863539ed )	/* characters */
+	ROM_LOAD( "congo5.bin",  0x00000, 0x1000, 0x863539ed )	/* characters */
 	/* 1000-1800 empty space to convert the characters as 3bpp instead of 2 */
-	ROM_LOAD( "tiptop8.bin",  0x01800, 0x2000, 0xb060d10e )	/* background tiles */
-	ROM_LOAD( "tiptop9.bin",  0x03800, 0x2000, 0xf10944e7 )
-	ROM_LOAD( "tiptop10.bin", 0x05800, 0x2000, 0xccf64f98 )
-	ROM_LOAD( "tiptop12.bin", 0x07800, 0x2000, 0x96781f3e )	/* sprites */
-	ROM_LOAD( "tiptop13.bin", 0x09800, 0x2000, 0x5e0d138d )
-	ROM_LOAD( "tiptop11.bin", 0x0b800, 0x2000, 0x4a0cef9a )
-	ROM_LOAD( "tiptop14.bin", 0x0d800, 0x2000, 0x33c05a1e )
-	ROM_LOAD( "tiptop16.bin", 0x0f800, 0x2000, 0xdd85484b )
-	ROM_LOAD( "tiptop15.bin", 0x11800, 0x2000, 0xb3f44d2e )
+	ROM_LOAD( "congo8.bin",  0x01800, 0x2000, 0xb060d10e )	/* background tiles */
+	ROM_LOAD( "congo9.bin",  0x03800, 0x2000, 0xf10944e7 )
+	ROM_LOAD( "congo10.bin", 0x05800, 0x2000, 0xccf64f98 )
+	ROM_LOAD( "congo12.bin", 0x07800, 0x2000, 0x96781f3e )	/* sprites */
+	ROM_LOAD( "congo13.bin", 0x09800, 0x2000, 0x5e0d138d )
+	ROM_LOAD( "congo11.bin", 0x0b800, 0x2000, 0x4a0cef9a )
+	ROM_LOAD( "congo14.bin", 0x0d800, 0x2000, 0x33c05a1e )
+	ROM_LOAD( "congo16.bin", 0x0f800, 0x2000, 0xdd85484b )
+	ROM_LOAD( "congo15.bin", 0x11800, 0x2000, 0xb3f44d2e )
 	ROM_REGION(0x8000)      /* background data */
-	ROM_LOAD( "tiptop6.bin", 0x0000, 0x2000, 0x785c8c22 )
+	ROM_LOAD( "congo6.bin", 0x0000, 0x2000, 0x785c8c22 )
 	/* 2000-3fff empty space to match Zaxxon */
-	ROM_LOAD( "tiptop7.bin", 0x4000, 0x2000, 0x87817173 )
+	ROM_LOAD( "congo7.bin", 0x4000, 0x2000, 0x87817173 )
 	/* 6000-7fff empty space to match Zaxxon */
 
 	ROM_REGION(0x10000) /*64K for the sound cpu*/
-	ROM_LOAD( "tiptop17.bin", 0x0000, 0x2000 ,0xe4e0223c)
+	ROM_LOAD( "congo17.bin", 0x0000, 0x2000 ,0xe4e0223c)
 ROM_END
 
 
@@ -507,8 +507,8 @@ struct GameDriver congo_driver =
 	0,
 	"congo",
 	"Congo Bongo",
-	"????",
-	"?????",
+	"1983",
+	"Sega",
 	"Ville Laitinen (MAME driver)\nNicola Salmoria (Zaxxon driver)\nTim Lindquist (color & sound info)",
 	0,
 	&machine_driver,
@@ -529,11 +529,11 @@ struct GameDriver congo_driver =
 struct GameDriver tiptop_driver =
 {
 	__FILE__,
-	0,
+	&congo_driver,
 	"tiptop",
 	"Tip Top",
-	"????",
-	"?????",
+	"1983",
+	"Sega",
 	"Ville Laitinen (MAME driver)\nNicola Salmoria (Zaxxon driver)\nTim Lindquist (color & sound info)",
 	0,
 	&machine_driver,

@@ -47,7 +47,7 @@ extern unsigned char *copsnrob_cary;
 extern unsigned char *copsnrob_trucky;
 
 extern int  copsnrob_gun_position_r(int offset);
-extern void copsnrob_vh_screenrefresh(struct osd_bitmap *bitmap);
+extern void copsnrob_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 static struct MemoryReadAddress readmem[] =
 {
@@ -249,23 +249,23 @@ struct MachineDriver machine_driver =
 ***************************************************************************/
 
 ROM_START( copsnrob_rom )
-        ROM_REGION(0x10000)     /* 64k for code */
-        ROM_LOAD( "5777.l7", 0x1200, 0x0200, 0x70ed0b77 )
-        ROM_LOAD( "5776.k7", 0x1400, 0x0200, 0xe23d6097 )
-        ROM_LOAD( "5775.j7", 0x1600, 0x0200, 0x6862fb70 )
-        ROM_LOAD( "5774.h7", 0x1800, 0x0200, 0xceee84fa )
-        ROM_LOAD( "5773.e7", 0x1a00, 0x0200, 0xe786eb50 )
-        ROM_LOAD( "5772.d7", 0x1c00, 0x0200, 0xdac265e4 )
-        ROM_LOAD( "5771.b7", 0x1e00, 0x0200, 0xab54ea82 )
-        ROM_RELOAD(          0xfe00, 0x0200 ) // For 6502 vectors
+	ROM_REGION(0x10000)     /* 64k for code */
+	ROM_LOAD( "5777.l7", 0x1200, 0x0200, 0x70ed0b77 )
+	ROM_LOAD( "5776.k7", 0x1400, 0x0200, 0xe23d6097 )
+	ROM_LOAD( "5775.j7", 0x1600, 0x0200, 0x6862fb70 )
+	ROM_LOAD( "5774.h7", 0x1800, 0x0200, 0xceee84fa )
+	ROM_LOAD( "5773.e7", 0x1a00, 0x0200, 0xe786eb50 )
+	ROM_LOAD( "5772.d7", 0x1c00, 0x0200, 0xdac265e4 )
+	ROM_LOAD( "5771.b7", 0x1e00, 0x0200, 0xab54ea82 )
+	ROM_RELOAD(          0xfe00, 0x0200 ) // For 6502 vectors
 
-        ROM_REGION(0x0b00)     /* 2.75k for graphics */
-        ROM_LOAD( "5782.m3", 0x0000, 0x0200, 0xb072021e )
-        ROM_LOAD( "5778.p1", 0x0200, 0x0200, 0x4efd0003 )
-        ROM_LOAD( "5779.m1", 0x0400, 0x0200, 0x431e0122 )
-        ROM_LOAD( "5780.l1", 0x0600, 0x0200, 0x613d4043 )
-        ROM_LOAD( "5781.j1", 0x0800, 0x0200, 0x99937341 )
-        ROM_LOAD( "5770.m2", 0x0a00, 0x0100, 0x06fd0901 )
+	ROM_REGION(0x0b00)     /* 2.75k for graphics */
+	ROM_LOAD( "5782.m3", 0x0000, 0x0200, 0xb072021e )
+	ROM_LOAD( "5778.p1", 0x0200, 0x0200, 0x4efd0003 )
+	ROM_LOAD( "5779.m1", 0x0400, 0x0200, 0x431e0122 )
+	ROM_LOAD( "5780.l1", 0x0600, 0x0200, 0x613d4043 )
+	ROM_LOAD( "5781.j1", 0x0800, 0x0200, 0x99937341 )
+	ROM_LOAD( "5770.m2", 0x0a00, 0x0100, 0x06fd0901 )
 ROM_END
 
 
@@ -273,24 +273,24 @@ struct GameDriver copsnrob_driver =
 {
 	__FILE__,
 	0,
-        "copsnrob",
-        "Cops'n Robbers",
-	"????",
-	"?????",
-        "Zsolt Vasvari",
+	"copsnrob",
+	"Cops'n Robbers",
+	"1976",
+	"Atari",
+	"Zsolt Vasvari",
 	0,
-        &machine_driver,
+	&machine_driver,
 
-        copsnrob_rom,
-        0, 0,
-        0,
-        0,      /* sound_prom */
+	copsnrob_rom,
+	0, 0,
+	0,
+	0,      /* sound_prom */
 
-        copsnrob_input_ports,
+	copsnrob_input_ports,
 
-        0, palette, colortable,
-        ORIENTATION_DEFAULT,
+	0, palette, colortable,
+	ORIENTATION_DEFAULT,
 
-        // This game doesn't keep track of high scores
-        0, 0
+	// This game doesn't keep track of high scores
+	0, 0
 };

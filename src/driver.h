@@ -235,8 +235,9 @@ struct MachineSound
 #define SOUND_TMS5220  13
 #define SOUND_VLM5030  14
 #define SOUND_ADPCM    15
-#define SOUND_OKIM6295 16  /* ROM-based ADPCM system */
-#define SOUND_MSM5205  17  /* CPU-based ADPCM system */
+#define SOUND_OKIM6295 16	/* ROM-based ADPCM system */
+#define SOUND_MSM5205  17	/* CPU-based ADPCM system */
+#define	SOUND_HC55516  18	/* Harris family of CVSD CODECs */
 
 #define MAX_SOUND 4	/* MAX_SOUND is the maximum number of sound subsystems */
 					/* which can run at the same time. Currently, 4 is enough. */
@@ -271,7 +272,7 @@ struct MachineDriver
 								/* order is front to back: layer[0] is the frontmost layer, */
 	int (*vh_start)(void);
 	void (*vh_stop)(void);
-	void (*vh_update)(struct osd_bitmap *bitmap);
+	void (*vh_update)(struct osd_bitmap *bitmap,int full_refresh);
 
 	/* sound hardware */
 	int (*sh_init)(const char *gamename);
@@ -338,7 +339,7 @@ struct GameDriver
 	const char *year;
 	const char *manufacturer;
 	const char *credits;
-	int flags;
+	int flags;	/* see defines below */
 	const struct MachineDriver *drv;
 
 	const struct RomModule *rom;
@@ -366,6 +367,10 @@ struct GameDriver
 	void (*hiscore_save)(void);	/* will not be called if hiscore_load() hasn't yet */
 						/* returned nonzero, to avoid saving an invalid table */
 };
+
+
+/* values for the flags field */
+#define GAME_NOT_WORKING	0x0001
 
 
 #define PROM_MEMORY_REGION(region) ((const unsigned char *)-region-1)

@@ -1,12 +1,14 @@
-/********************************************************************
-	meadows.c
+/***************************************************************************
+    meadows.c
 	Video handler
 	Dead Eye, Gypsy Juggler
 
 	J. Buchmueller, June '98
-*********************************************************************/
+****************************************************************************/
 
 #include "vidhrdw/generic.h"
+
+#define USE_OVERLAY
 
 /* some constants to make life easier */
 #define SCR_HORZ        32
@@ -91,7 +93,7 @@ int     i;
 /*************************************************************/
 /* deadeye screen refresh                                    */
 /*************************************************************/
-void    deadeye_vh_screenrefresh(struct osd_bitmap * bitmap)
+void deadeye_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 int     i;
 
@@ -111,7 +113,7 @@ static  int deadeye_color_overlay[30][32] =
 	{B,B,B,B,B,B,B,B,B,B,B,B,B,B,B,B,B,B,B,B,B,B,B,B,B,B,B,B,B,B,B,B},
 	{Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y},
 	{Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y},
-	{Y,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,Y},
+	{Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y},
 	{Y,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,Y},
 	{Y,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,Y},
 	{Y,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,Y},
@@ -133,7 +135,8 @@ static  int deadeye_color_overlay[30][32] =
 	{B,B,B,B,B,B,B,B,B,B,B,B,B,B,B,B,B,B,B,B,B,B,B,B,B,B,B,B,B,B,B,B},
 };
 
-        /* the first two rows are invisible */
+
+    /* the first two rows are invisible */
 	for (i = 0; i < SCR_VERT * SCR_HORZ; i++)
 	{
 		if (dirtybuffer[i])
@@ -142,14 +145,18 @@ static  int deadeye_color_overlay[30][32] =
 			x = (i % SCR_HORZ);
 			y = (i / SCR_HORZ);
 			dirtybuffer[i] = 0;
+#ifdef USE_OVERLAY
 			color = deadeye_color_overlay[y][x];
+#else
+			color = W;
+#endif
 
 			x *= CHR_HORZ;
 			y *= CHR_VERT;
 
 			drawgfx(tmpbitmap,
 				Machine->gfx[0],
-				videoram[i],
+				videoram[i] & 0x7f,
 				color,
 				0,0,
 				x,y,
@@ -165,7 +172,7 @@ static  int deadeye_color_overlay[30][32] =
 		   &Machine->drv->visible_area,TRANSPARENCY_NONE,0);
 }
 
-void    gypsyjug_vh_screenrefresh(struct osd_bitmap * bitmap)
+void gypsyjug_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 int     i;
 
@@ -208,7 +215,7 @@ static  int gypsyjug_color_overlay[SCR_VERT][SCR_HORZ] =
 	{Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y},
 };
 
-	/* the first two are invisible */
+    /* the first two are invisible */
 	for (i = 0; i < SCR_VERT * SCR_HORZ; i++)
 	{
 		if (dirtybuffer[i])
@@ -217,14 +224,18 @@ static  int gypsyjug_color_overlay[SCR_VERT][SCR_HORZ] =
 			x = (i % SCR_HORZ);
 			y = (i / SCR_HORZ);
 			dirtybuffer[i] = 0;
+#ifdef USE_OVERLAY
 			color = gypsyjug_color_overlay[y][x];
+#else
+			color = W;
+#endif
 
 			x *= CHR_HORZ;
 			y *= CHR_VERT;
 
 			drawgfx(tmpbitmap,
 				Machine->gfx[0],
-				videoram[i],
+				videoram[i] & 0x7f,
 				color, 0, 0, x, y,
 				&Machine->drv->visible_area,
 				TRANSPARENCY_NONE,0);
@@ -264,9 +275,13 @@ int     x, y;
 
 	sprite_dirty[n] = 1;
 
-	for (y = sprite_vert[n] / CHR_VERT; y < sprite_vert[n] / CHR_VERT + 2 + 1; y++)
+	for (y = sprite_vert[n] / CHR_VERT;
+		 y < (sprite_vert[n] + CHR_VERT - 1) / CHR_VERT + SPR_VERT / CHR_VERT ;
+		 y++)
 	{
-		for (x = sprite_horz[n] / CHR_HORZ; x < sprite_horz[n] / CHR_HORZ + 2 + 1; x++)
+		for (x = sprite_horz[n] / CHR_HORZ;
+			 x < (sprite_horz[n] + CHR_HORZ - 1) / CHR_HORZ + SPR_HORZ / CHR_HORZ;
+			 x++)
 		{
 			if (y >= 0 && y < SCR_VERT && x >= 0 && x < SCR_HORZ)
 				dirtybuffer[y * SCR_HORZ + x] = 1;

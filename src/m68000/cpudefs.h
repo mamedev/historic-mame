@@ -66,9 +66,10 @@ typedef union
 #endif
 } pair68000;
 
+
 extern void Exception(int nr, CPTR oldpc);
 
-typedef void cpuop_func(ULONG);
+typedef void cpuop_func(void);
 extern cpuop_func *cpufunctbl[65536];
 
 
@@ -104,10 +105,10 @@ WORD wat_readmemw(void *a);
 
 union flagu {
     struct {
-        char v;
         char c;
-        char n;
+        char v;
         char z;
+        char n;
     } flags;
     struct {
         unsigned short vc;
@@ -117,7 +118,18 @@ union flagu {
 };
 
 #define CLEARVC regflags.quickclear.vc=0;
+#define CLEARFLGS regflags.longflags=0;
 
+// to be used at a later time
+// set each to the appropriate bit in the SR
+// should speed up MakeSR() and MakeFromSR()
+// cctrue() switch would also have to be done
+
+#define CTRUE 0x01
+#define VTRUE 0x01
+#define ZTRUE 0x01
+#define NTRUE 0x01
+#define XTRUE 0x01
 
 extern int areg_byteinc[];
 extern int movem_index1[256];
@@ -126,10 +138,13 @@ extern int movem_next[256];
 extern int imm8_table[];
 extern UBYTE *actadr;
 
+extern int MC68000_ICount ;
+
 typedef struct
 {
-	    pair68000  d[8];
+		pair68000  d[8];
             CPTR  a[8],usp,isp,msp;
+            ULONG pc;
             UWORD sr;
             flagtype t1;
             flagtype t0;
@@ -138,8 +153,6 @@ typedef struct
             flagtype x;
             flagtype stopped;
             int intmask;
-            ULONG pc;
-
             ULONG vbr,sfc,dfc;
             double fp[8];
             ULONG fpcr,fpsr,fpiar;
@@ -175,16 +188,14 @@ INLINE UWORD nextiword_opcode(void)
 
 INLINE UWORD nextiword(void)
 {
-    unsigned int i=regs.pc&0xffffff;
     regs.pc+=2;
-    return (cpu_readop16(i));
+    return (cpu_readop16(regs.pc-2));
 }
 
 INLINE ULONG nextilong(void)
 {
-    unsigned int i=regs.pc&0xffffff;
     regs.pc+=4;
-    return ((cpu_readop16(i)<<16) | cpu_readop16(i+2));
+    return ((cpu_readop16(regs.pc-4)<<16) | cpu_readop16(regs.pc-2));
 }
 
 INLINE void m68k_setpc(CPTR newpc)
@@ -234,17 +245,69 @@ INLINE int cctrue(const int cc)
 
 INLINE void MakeSR(void)
 {
-    regs.sr = ((regs.t1 << 15) | (regs.t0 << 14)
+
+	int sr ;
+
+	sr = regs.t1 ;
+	sr <<= 1 ;
+	sr |= regs.t0 ;
+	sr <<= 1 ;
+	sr |= regs.s ;
+	sr <<= 1 ;
+	sr |= regs.m ;
+	sr <<= 4 ;
+	sr |= regs.intmask ;
+	sr <<= 4 ;
+	sr |= regs.x ;
+	sr <<= 1 ;
+	sr |= NFLG ;
+	sr <<= 1 ;
+	sr |= ZFLG ;
+	sr <<= 1 ;
+	sr |= VFLG ;
+	sr <<= 1 ;
+	sr |= CFLG ;
+
+	regs.sr = sr ;
+
+
+/*
+     regs.sr = ((regs.t1 << 15) | (regs.t0 << 14)
       | (regs.s << 13) | (regs.m << 12) | (regs.intmask << 8)
       | (regs.x << 4) | (NFLG << 3) | (ZFLG << 2) | (VFLG << 1)
       |  CFLG);
+*/
 }
 
 INLINE void MakeFromSR(void)
 {
   /*  int oldm = regs.m; */
-    int olds = regs.s;
+	int olds = regs.s;
 
+
+	int sr = regs.sr ;
+
+	CFLG = sr & 1 ;
+	sr >>= 1 ;
+	VFLG = sr & 1 ;
+	sr >>= 1 ;
+	ZFLG = sr & 1 ;
+	sr >>= 1 ;
+	NFLG = sr & 1 ;
+	sr >>= 1 ;
+	regs.x = sr & 1 ;
+	sr >>= 4 ;
+	regs.intmask = sr & 7 ;
+	sr >>= 4 ;
+	regs.m = sr & 1 ;
+	sr >>= 1 ;
+	regs.s = sr & 1 ;
+	sr >>= 1 ;
+	regs.t0 = sr & 1 ;
+	sr >>= 1 ;
+	regs.t1 = sr & 1 ;
+
+/*
     regs.t1 = (regs.sr >> 15) & 1;
     regs.t0 = (regs.sr >> 14) & 1;
     regs.s = (regs.sr >> 13) & 1;
@@ -255,6 +318,7 @@ INLINE void MakeFromSR(void)
     ZFLG = (regs.sr >> 2) & 1;
     VFLG = (regs.sr >> 1) & 1;
     CFLG = regs.sr & 1;
+*/
 
     if (olds != regs.s) {
        if (olds) {
@@ -268,5 +332,6 @@ INLINE void MakeFromSR(void)
 
 }
 
+extern int opcode ;
 
 #endif

@@ -11,76 +11,6 @@
 
 
 
-unsigned char *bombjack_paletteram;
-
-
-
-/***************************************************************************
-
-  Bomb Jack doesn't have a color PROM. It uses 256 bytes of RAM to
-  dynamically create the palette. Each couple of bytes defines one
-  color (4 bits per pixel; the high 4 bits of the second byte are unused).
-  Since the graphics use 3 bitplanes, hence 8 colors, this makes for 16
-  different color codes.
-
-  I don't know the exact values of the resistors between the RAM and the
-  RGB output. I assumed these values (the same as Commando)
-  bit 7 -- 220 ohm resistor  -- GREEN
-        -- 470 ohm resistor  -- GREEN
-        -- 1  kohm resistor  -- GREEN
-        -- 2.2kohm resistor  -- GREEN
-        -- 220 ohm resistor  -- RED
-        -- 470 ohm resistor  -- RED
-        -- 1  kohm resistor  -- RED
-  bit 0 -- 2.2kohm resistor  -- RED
-
-  bit 7 -- unused
-        -- unused
-        -- unused
-        -- unused
-        -- 220 ohm resistor  -- BLUE
-        -- 470 ohm resistor  -- BLUE
-        -- 1  kohm resistor  -- BLUE
-  bit 0 -- 2.2kohm resistor  -- BLUE
-
-***************************************************************************/
-void bombjack_paletteram_w(int offset,int data)
-{
-	int bit0,bit1,bit2,bit3;
-	int r,g,b,val;
-
-
-	bombjack_paletteram[offset] = data;
-
-	/* red component */
-	val = bombjack_paletteram[offset & ~1];
-	bit0 = (val >> 0) & 0x01;
-	bit1 = (val >> 1) & 0x01;
-	bit2 = (val >> 2) & 0x01;
-	bit3 = (val >> 3) & 0x01;
-	r = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
-
-	/* green component */
-	val = bombjack_paletteram[offset & ~1];
-	bit0 = (val >> 4) & 0x01;
-	bit1 = (val >> 5) & 0x01;
-	bit2 = (val >> 6) & 0x01;
-	bit3 = (val >> 7) & 0x01;
-	g = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
-
-	/* blue component */
-	val = bombjack_paletteram[offset | 1];
-	bit0 = (val >> 0) & 0x01;
-	bit1 = (val >> 1) & 0x01;
-	bit2 = (val >> 2) & 0x01;
-	bit3 = (val >> 3) & 0x01;
-	b = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
-
-	palette_change_color(offset / 2,r,g,b);
-}
-
-
-
 void bombjack_background_w(int offset,int data)
 {
 	int base,offs,code,attr;
@@ -131,7 +61,7 @@ void bombjack_updatehook0(int offset)
   the main emulation engine.
 
 ***************************************************************************/
-void bombjack_vh_screenrefresh(struct osd_bitmap *bitmap)
+void bombjack_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	int offs;
 

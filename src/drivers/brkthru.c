@@ -57,7 +57,7 @@ void brkthru_1800_w(int offset,int data);
 int brkthru_vh_start(void);
 void brkthru_vh_stop(void);
 void brkthru_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-void brkthru_vh_screenrefresh(struct osd_bitmap *bitmap);
+void brkthru_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 
 static int nmi_enable;
@@ -425,7 +425,7 @@ static struct YM2203interface ym2203_interface =
 {
 	1,
 	1500000,	/* Unknown */
-	{ YM2203_VOL(100,0x20ff) },
+	{ YM2203_VOL(100,255) },
 	{ 0 },
 	{ 0 },
 	{ 0 },
@@ -435,7 +435,7 @@ static struct YM2203interface ym2203_interface =
 static struct YM3526interface ym3526_interface =
 {
 	1,			/* 1 chip (no more supported) */
-	3000000,	/* 3 MHz ? (not supported) */
+	3600000,	/* 3.600000 MHz ? (partially supported) */
 	{ 255 }		/* (not supported) */
 };
 
@@ -701,8 +701,8 @@ struct GameDriver brkthru_driver =
 	0,
 	"brkthru",
 	"Break Thru",
-	"????",
-	"?????",
+	"1986",
+	"Data East USA",
 	"Phil Stroffolino (MAME driver)\nCarlos Lozano (hardware info)\nNicola Salmoria (MAME driver)\nTim Lindquist (color info)\nMarco Cassili\nGerrit Van Goethem (high score save)\nBryan McPhail (sound)",
 	0,
 	&brkthru_machine_driver,
@@ -724,9 +724,9 @@ struct GameDriver darwin_driver =
 	__FILE__,
 	0,
 	"darwin",
-	"Darwin 4078",
-	"????",
-	"?????",
+	"Darwin 4078 (Japan)",
+	"1986",
+	"Data East Corporation",
 	"Phil Stroffolino (MAME driver)\nCarlos Lozano (Breakthru hardware info)\nNicola Salmoria (MAME driver)\nTim Lindquist (color info)\nMarco Cassili\nBryan McPhail (sound)\nVille Laitinen (MAME driver)",
 	0,
 	&darwin_machine_driver,

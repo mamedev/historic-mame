@@ -81,7 +81,7 @@ void crbaloon_flipscreen_w(int offset,int data)
 
  ***************************************************************************/
 
-void crbaloon_vh_screenrefresh(struct osd_bitmap *bitmap)
+void crbaloon_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	int offs,i,j;
 

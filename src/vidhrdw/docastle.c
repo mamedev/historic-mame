@@ -41,7 +41,7 @@ static void convert_color_prom(unsigned char *palette, unsigned short *colortabl
 	#define COLOR(gfxn,offs) (colortable[Machine->drv->gfxdecodeinfo[gfxn].color_codes_start + offs])
 
 
-	for (i = 0;i < Machine->drv->total_colors;i++)
+	for (i = 0;i < 256;i++)
 	{
 		int bit0,bit1,bit2;
 
@@ -64,6 +64,16 @@ static void convert_color_prom(unsigned char *palette, unsigned short *colortabl
 
 		color_prom++;
 	}
+
+	/* reserve one color for the transparent pen (none of the game colors can have */
+	/* these RGB components) */
+	*(palette++) = 1;
+	*(palette++) = 1;
+	*(palette++) = 1;
+	/* and the last color for the sprite covering pen */
+	*(palette++) = 2;
+	*(palette++) = 2;
+	*(palette++) = 2;
 
 
 	/* characters */
@@ -88,13 +98,13 @@ static void convert_color_prom(unsigned char *palette, unsigned short *colortabl
 		{
 			if (priority == 0)	/* Do's Castle */
 			{
-				colortable[32*16+16*i+j] = 0;	/* high bit clear means less priority than sprites */
+				colortable[32*16+16*i+j] = 256;	/* high bit clear means less priority than sprites */
 				colortable[32*16+16*i+j+8] = 8*i+j;
 			}
 			else	/* Do Wild Ride, Do Run Run, Kick Rider */
 			{
 				colortable[32*16+16*i+j] = 8*i+j;
-				colortable[32*16+16*i+j+8] = 0;	/* high bit set means less priority than sprites */
+				colortable[32*16+16*i+j+8] = 256;	/* high bit set means less priority than sprites */
 			}
 		}
 	}
@@ -106,15 +116,13 @@ static void convert_color_prom(unsigned char *palette, unsigned short *colortabl
 	{
 		for (j = 0;j < 8;j++)
 		{
-			colortable[64*16+16*i+j] = 0;	/* high bit clear means transparent */
-			colortable[64*16+16*i+j+8] = 8*i+j;
+			colortable[64*16+16*i+j] = 256;	/* high bit clear means transparent */
+			if (j != 7)
+				colortable[64*16+16*i+j+8] = 8*i+j;
+			else
+				colortable[64*16+16*i+j+8] = 257;	/* sprite covering color */
 		}
 	}
-
-	/* find a non trasparent black */
-	i = 1;
-	while (color_prom[i] != 0) i++;
-	colortable[64*16+8] = i;	/* replace pen 0 with a non trasparent black */
 
 
    /* now check our sprites and mark which ones have color 15 ('draw under') */
@@ -197,7 +205,7 @@ void docastle_vh_stop(void)
   the main emulation engine.
 
 ***************************************************************************/
-void docastle_vh_screenrefresh(struct osd_bitmap *bitmap)
+void docastle_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	int offs;
 
@@ -256,7 +264,7 @@ void docastle_vh_screenrefresh(struct osd_bitmap *bitmap)
 			color,
 			spriteram[offs + 2] & 0x40,spriteram[offs + 2] & 0x80,
 			sx,sy,
-			&Machine->drv->visible_area,TRANSPARENCY_COLOR,0);
+			&Machine->drv->visible_area,TRANSPARENCY_COLOR,256);
 
 		/* sprites use color 0 for background pen and 8 for the 'under tile' pen.
 		   The color 7 is used to cover over other sprites.
@@ -271,11 +279,11 @@ void docastle_vh_screenrefresh(struct osd_bitmap *bitmap)
 			clip.min_y = sy;
 			clip.max_y = sy+31;
 
-			copybitmap(bitmap,tmpbitmap,0,0,0,0,&clip,TRANSPARENCY_THROUGH,Machine->pens[7+(color*8)]);
+			copybitmap(bitmap,tmpbitmap,0,0,0,0,&clip,TRANSPARENCY_THROUGH,Machine->pens[257]);
 		}
 	}
 
 
 	/* now redraw the portions of the background which have priority over sprites */
-	copybitmap(bitmap,tmpbitmap1,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_COLOR,0);
+	copybitmap(bitmap,tmpbitmap1,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_COLOR,256);
 }

@@ -14,6 +14,7 @@
 unsigned char mappy_scroll;
 
 static unsigned char *transparency;
+static int motos_special_display;
 
 
 /***************************************************************************
@@ -100,7 +101,7 @@ void mappy_vh_convert_color_prom(unsigned char *palette, unsigned short *colorta
 }
 
 
-int mappy_vh_start(void)
+static int common_vh_start(void)
 {
 	if ((dirtybuffer = malloc(videoram_size)) == 0)
 		return 1;
@@ -113,6 +114,18 @@ int mappy_vh_start(void)
 	}
 
 	return 0;
+}
+
+int mappy_vh_start(void)
+{
+	motos_special_display = 0;
+	return common_vh_start();
+}
+
+int motos_vh_start(void)
+{
+	motos_special_display = 1;
+	return common_vh_start();
 }
 
 
@@ -161,6 +174,8 @@ void mappy_scroll_w(int offset,int data)
 void mappy_draw_sprite(struct osd_bitmap *dest,unsigned int code,unsigned int color,
 	int flipx,int flipy,int sx,int sy)
 {
+	if (motos_special_display) sx--;
+
 	drawgfx(dest,Machine->gfx[1],code,color,flipx,flipy,sx,sy,&Machine->drv->visible_area,
 		TRANSPARENCY_COLOR,16);
 }
@@ -173,7 +188,7 @@ void mappy_draw_sprite(struct osd_bitmap *dest,unsigned int code,unsigned int co
   the main emulation engine.
 
 ***************************************************************************/
-void mappy_vh_screenrefresh(struct osd_bitmap *bitmap)
+void mappy_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	static unsigned short overoffset[2048];
 	unsigned short *save = overoffset;
@@ -200,9 +215,21 @@ void mappy_vh_screenrefresh(struct osd_bitmap *bitmap)
 
 			if (offs >= videoram_size - 64)
 			{
+				int off;
+
+
+				off = offs;
+				if (motos_special_display)
+				{
+					if (off == 0x07d1 || off == 0x07d0 || off == 0x07f1 || off == 0x07f0)
+						off -= 0x10;
+					if (off == 0x07c1 || off == 0x07c0 || off == 0x07e1 || off == 0x07e0)
+						off += 0x10;
+				}
+
 				/* Draw the top 2 lines. */
-				mx = offs % 32;
-				my = (offs - (videoram_size - 64)) / 32;
+				mx = off % 32;
+				my = (off - (videoram_size - 64)) / 32;
 
 				sx = 29 - mx;
 				sy = my;

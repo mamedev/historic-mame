@@ -43,7 +43,7 @@ int ladybug_interrupt(void);
 
 void ladybug_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 void ladybug_flipscreen_w(int offset,int data);
-void ladybug_vh_screenrefresh(struct osd_bitmap *bitmap);
+void ladybug_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 
 
@@ -681,8 +681,8 @@ struct GameDriver ladybug_driver =
 	0,
 	"ladybug",
 	"Lady Bug",
-	"????",
-	"?????",
+	"1981",
+	"Universal",
 	"Nicola Salmoria",
 	0,
 	&machine_driver,
@@ -706,8 +706,8 @@ struct GameDriver snapjack_driver =
 	0,
 	"snapjack",
 	"Snap Jack",
-	"????",
-	"?????",
+	"1981?",
+	"Universal",
 	"Nicola Salmoria (MAME driver)\nMike Balfour (high score save)",
 	0,
 	&machine_driver,
@@ -731,8 +731,8 @@ struct GameDriver cavenger_driver =
 	0,
 	"cavenger",
 	"Cosmic Avenger",
-	"????",
-	"?????",
+	"1981",
+	"Universal",
 	"Nicola Salmoria (MAME driver)\nMike Balfour (high score save)",
 	0,
 	&machine_driver,

@@ -89,7 +89,7 @@ void exerion_vh_stop (void)
   the main emulation engine.
 
 ***************************************************************************/
-void exerion_vh_screenrefresh (struct osd_bitmap *bitmap)
+void exerion_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
    int sx,sy,offs,i;
 

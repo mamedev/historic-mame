@@ -88,7 +88,7 @@ void karnov_vh_convert_color_prom(unsigned char *palette, unsigned short *colort
 
 /******************************************************************************/
 
-void karnov_vh_screenrefresh(struct osd_bitmap *bitmap)
+void karnov_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	int my,mx,offs,color,tile;
   int scrollx=READ_WORD (&karnov_scroll[0]);

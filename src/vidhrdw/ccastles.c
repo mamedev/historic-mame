@@ -281,7 +281,7 @@ void ccastles_flipscreen_w(int offset,int data)
   the main emulation engine.
 
 ***************************************************************************/
-void ccastles_vh_screenrefresh(struct osd_bitmap *bitmap)
+void ccastles_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	int offs;
 	int i,j;

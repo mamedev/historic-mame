@@ -30,7 +30,6 @@ fc00      interrupt vector? (not needed by Bobble Bobble)
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-#include "Z80/Z80.h"
 
 
 
@@ -48,14 +47,13 @@ void bublbobl_bankswitch_w(int offset, int data);
 
 /* prototypes for functions in ../vidhrdw/bublbobl.c */
 extern unsigned char *bublbobl_objectram;
-extern unsigned char *bublbobl_paletteram;
 extern int bublbobl_objectram_size;
 void bublbobl_videoram_w(int offset,int data);
 void bublbobl_objectram_w(int offset,int data);
-void bublbobl_paletteram_w(int offset,int data);
+void bublbobl_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 int bublbobl_vh_start(void);
 void bublbobl_vh_stop(void);
-void bublbobl_vh_screenrefresh(struct osd_bitmap *bitmap);
+void bublbobl_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 
 
@@ -85,7 +83,7 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x0000, 0xbfff, MWA_ROM },
 	{ 0xc000, 0xdcff, bublbobl_videoram_w, &videoram, &videoram_size },
 	{ 0xdd00, 0xdfff, bublbobl_objectram_w, &bublbobl_objectram, &bublbobl_objectram_size },	/* handled by bublbobl_sharedram_w() */
-	{ 0xf800, 0xf9ff, bublbobl_paletteram_w, &bublbobl_paletteram },
+	{ 0xf800, 0xf9ff, paletteram_RRRRGGGGBBBBxxxx_swap_w, &paletteram },
 	{ 0xc000, 0xf9ff, bublbobl_sharedram1_w, &bublbobl_sharedram1 },
 	{ 0xfa00, 0xfa00, bublbobl_sound_command_w },
 	{ 0xfa80, 0xfa80, MWA_NOP },
@@ -353,7 +351,7 @@ static struct GfxLayout charlayout =
 						* 6 ROM pairs */
 	4,	/* 4 bits per pixel */
 	{ 0, 4, 6*0x8000*8, 6*0x8000*8+4 },
-	{ 3, 2, 1, 0, 11, 10, 9, 8 },
+	{ 3, 2, 1, 0, 8+3, 8+2, 8+1, 8+0 },
 	{ 0*16, 1*16, 2*16, 3*16, 4*16, 5*16, 6*16, 7*16 },
 	16*8	/* every char takes 16 bytes in two ROMs */
 };
@@ -388,7 +386,7 @@ static struct YM2203interface ym2203_interface =
 static struct YM3526interface ym3526_interface =
 {
 	1,			/* 1 chip (no more supported) */
-	3000000,	/* 3 MHz ? (not supported) */
+	3600000,	/* 3.600000 MHz ? (partially supported) */
 	{ 255 }		/* (not supported) */
 };
 
@@ -396,8 +394,8 @@ static struct YM3526interface ym3526_interface =
 
 static struct MachineDriver bublbobl_machine_driver =
 {
-    /* basic machine hardware */
-    {				/* MachineCPU */
+	/* basic machine hardware */
+	{				/* MachineCPU */
 		{
 			CPU_Z80,
 			6000000,		/* 6 Mhz??? */
@@ -420,21 +418,21 @@ static struct MachineDriver bublbobl_machine_driver =
 			ignore_interrupt,0	/* NMIs are triggered by the main CPU */
 								/* IRQs are triggered by the YM2203 */
 		}
-    },
+	},
 	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
 	100,	/* 100 CPU slices per frame - an high value to ensure proper */
 			/* synchronization of the CPUs */
-    0,		/* init_machine() */
+	0,		/* init_machine() */
 
-    /* video hardware */
-    32*8, 32*8,			/* screen_width, height */
-    { 0, 32*8-1, 2*8, 30*8-1 }, /* visible_area */
-    gfxdecodeinfo,
-    256, 256,
-    0,
+	/* video hardware */
+	32*8, 32*8,			/* screen_width, height */
+	{ 0, 32*8-1, 2*8, 30*8-1 }, /* visible_area */
+	gfxdecodeinfo,
+	256, 256,
+	bublbobl_vh_convert_color_prom,
 
 	VIDEO_TYPE_RASTER|VIDEO_MODIFIES_PALETTE,
-    0,
+	0,
 	bublbobl_vh_start,
 	bublbobl_vh_stop,
 	bublbobl_vh_screenrefresh,
@@ -455,8 +453,8 @@ static struct MachineDriver bublbobl_machine_driver =
 
 static struct MachineDriver boblbobl_machine_driver =
 {
-    /* basic machine hardware */
-    {				/* MachineCPU */
+	/* basic machine hardware */
+	{				/* MachineCPU */
 		{
 			CPU_Z80,
 			6000000,		/* 6 Mhz??? */
@@ -479,21 +477,21 @@ static struct MachineDriver boblbobl_machine_driver =
 			ignore_interrupt,0	/* NMIs are triggered by the main CPU */
 								/* IRQs are triggered by the YM2203 */
 		}
-    },
+	},
 	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
 	100,	/* 100 CPU slices per frame - an high value to ensure proper */
 			/* synchronization of the CPUs */
-    0,		/* init_machine() */
+	0,		/* init_machine() */
 
-    /* video hardware */
-    32*8, 32*8,			/* screen_width, height */
-    { 0, 32*8-1, 2*8, 30*8-1 }, /* visible_area */
-    gfxdecodeinfo,
+	/* video hardware */
+	32*8, 32*8,			/* screen_width, height */
+	{ 0, 32*8-1, 2*8, 30*8-1 }, /* visible_area */
+	gfxdecodeinfo,
 	256, 256,
-	0,
+	bublbobl_vh_convert_color_prom,
 
 	VIDEO_TYPE_RASTER|VIDEO_MODIFIES_PALETTE,
-    0,
+	0,
 	bublbobl_vh_start,
 	bublbobl_vh_stop,
 	bublbobl_vh_screenrefresh,
@@ -556,24 +554,24 @@ ROM_START( boblbobl_rom )
     ROM_LOAD( "bb4", 0x14000, 0x8000, 0xc6fc6192 )	/* banked at 8000-bfff */
 
     ROM_REGION(0x60000)	/* temporary space for graphics (disposed after conversion) */
-    ROM_LOAD( "bb6",  0x00000, 0x8000, 0x4c2d6dc7 )
-    ROM_LOAD( "bb7",  0x08000, 0x8000, 0x58e234c8 )
-    ROM_LOAD( "bb8",  0x10000, 0x8000, 0x12787a3c )
-    ROM_LOAD( "bb9",  0x18000, 0x8000, 0xcb0e4600 )
-    ROM_LOAD( "bb10", 0x20000, 0x8000, 0x08e59a77 )
-    ROM_LOAD( "bb11", 0x28000, 0x8000, 0xda100c26 )
-    ROM_LOAD( "bb12", 0x30000, 0x8000, 0xe24b0f79 )
-    ROM_LOAD( "bb13", 0x38000, 0x8000, 0x82f9f47b )
-    ROM_LOAD( "bb14", 0x40000, 0x8000, 0x02935fdb )
-    ROM_LOAD( "bb15", 0x48000, 0x8000, 0x41e639be )
-    ROM_LOAD( "bb16", 0x50000, 0x8000, 0xd7b322af )
-    ROM_LOAD( "bb17", 0x58000, 0x8000, 0xd2704b1e )
+    ROM_LOAD( "a78_09.bin", 0x00000, 0x8000, 0x4c2d6dc7 )
+    ROM_LOAD( "a78_10.bin", 0x08000, 0x8000, 0x58e234c8 )
+    ROM_LOAD( "a78_11.bin", 0x10000, 0x8000, 0x12787a3c )
+    ROM_LOAD( "a78_12.bin", 0x18000, 0x8000, 0xcb0e4600 )
+    ROM_LOAD( "a78_13.bin", 0x20000, 0x8000, 0x08e59a77 )
+    ROM_LOAD( "a78_14.bin", 0x28000, 0x8000, 0xda100c26 )
+    ROM_LOAD( "a78_15.bin", 0x30000, 0x8000, 0xe24b0f79 )
+    ROM_LOAD( "a78_16.bin", 0x38000, 0x8000, 0x82f9f47b )
+    ROM_LOAD( "a78_17.bin", 0x40000, 0x8000, 0x02935fdb )
+    ROM_LOAD( "a78_18.bin", 0x48000, 0x8000, 0x41e639be )
+    ROM_LOAD( "a78_19.bin", 0x50000, 0x8000, 0xd7b322af )
+    ROM_LOAD( "a78_20.bin", 0x58000, 0x8000, 0xd2704b1e )
 
     ROM_REGION(0x10000)	/* 64k for the second CPU */
-    ROM_LOAD( "bb1", 0x0000, 0x08000, 0xa11cdcf4 )
+    ROM_LOAD( "a78_08.bin", 0x0000, 0x08000, 0xa11cdcf4 )
 
     ROM_REGION(0x10000)	/* 64k for the third CPU */
-    ROM_LOAD( "bb2", 0x0000, 0x08000, 0x3eaa10b8 )
+    ROM_LOAD( "a78_07.bin", 0x0000, 0x08000, 0x3eaa10b8 )
 ROM_END
 
 ROM_START( sboblbob_rom )
@@ -585,24 +583,24 @@ ROM_START( sboblbob_rom )
     ROM_LOAD( "bbb-4.rom", 0x14000, 0x8000, 0x8e95270d )	/* banked at 8000-bfff */
 
     ROM_REGION(0x60000)	/* temporary space for graphics (disposed after conversion) */
-    ROM_LOAD( "bbb-11.rom", 0x00000, 0x8000, 0x4c2d6dc7 )
-    ROM_LOAD( "bbb-10.rom", 0x08000, 0x8000, 0x58e234c8 )
-    ROM_LOAD( "bbb-9.rom",  0x10000, 0x8000, 0x12787a3c )
-    ROM_LOAD( "bbb-8.rom",  0x18000, 0x8000, 0xcb0e4600 )
-    ROM_LOAD( "bbb-7.rom",  0x20000, 0x8000, 0x08e59a77 )
-    ROM_LOAD( "bbb-6.rom",  0x28000, 0x8000, 0xda100c26 )
-    ROM_LOAD( "bbb-17.rom", 0x30000, 0x8000, 0xe24b0f79 )
-    ROM_LOAD( "bbb-16.rom", 0x38000, 0x8000, 0x82f9f47b )
-    ROM_LOAD( "bbb-15.rom", 0x40000, 0x8000, 0x02935fdb )
-    ROM_LOAD( "bbb-14.rom", 0x48000, 0x8000, 0x41e639be )
-    ROM_LOAD( "bbb-13.rom", 0x50000, 0x8000, 0xd7b322af )
-    ROM_LOAD( "bbb-12.rom", 0x58000, 0x8000, 0xd2704b1e )
+    ROM_LOAD( "a78_09.bin", 0x00000, 0x8000, 0x4c2d6dc7 )
+    ROM_LOAD( "a78_10.bin", 0x08000, 0x8000, 0x58e234c8 )
+    ROM_LOAD( "a78_11.bin", 0x10000, 0x8000, 0x12787a3c )
+    ROM_LOAD( "a78_12.bin", 0x18000, 0x8000, 0xcb0e4600 )
+    ROM_LOAD( "a78_13.bin", 0x20000, 0x8000, 0x08e59a77 )
+    ROM_LOAD( "a78_14.bin", 0x28000, 0x8000, 0xda100c26 )
+    ROM_LOAD( "a78_15.bin", 0x30000, 0x8000, 0xe24b0f79 )
+    ROM_LOAD( "a78_16.bin", 0x38000, 0x8000, 0x82f9f47b )
+    ROM_LOAD( "a78_17.bin", 0x40000, 0x8000, 0x02935fdb )
+    ROM_LOAD( "a78_18.bin", 0x48000, 0x8000, 0x41e639be )
+    ROM_LOAD( "a78_19.bin", 0x50000, 0x8000, 0xd7b322af )
+    ROM_LOAD( "a78_20.bin", 0x58000, 0x8000, 0xd2704b1e )
 
     ROM_REGION(0x10000)	/* 64k for the second CPU */
-    ROM_LOAD( "bbb-1.rom", 0x0000, 0x08000, 0xa11cdcf4 )
+    ROM_LOAD( "a78_08.bin", 0x0000, 0x08000, 0xa11cdcf4 )
 
     ROM_REGION(0x10000)	/* 64k for the third CPU */
-    ROM_LOAD( "bbb-2.rom", 0x0000, 0x08000, 0x3eaa10b8 )
+    ROM_LOAD( "a78_07.bin", 0x0000, 0x08000, 0x3eaa10b8 )
 ROM_END
 
 
@@ -680,10 +678,10 @@ struct GameDriver bublbobl_driver =
 	0,
 	"bublbobl",
 	"Bubble Bobble",
-	"????",
-	"?????",
+	"1986",
+	"Taito",
 	"Chris Moore\nOliver White\nNicola Salmoria\nMarco Cassili",
-	0,
+	GAME_NOT_WORKING,
 	&bublbobl_machine_driver,
 
 	bublbobl_rom,
@@ -702,11 +700,11 @@ struct GameDriver bublbobl_driver =
 struct GameDriver boblbobl_driver =
 {
 	__FILE__,
-	0,
+	&bublbobl_driver,
 	"boblbobl",
 	"Bobble Bobble",
-	"????",
-	"?????",
+	"1986",
+	"bootleg",
 	"Chris Moore\nOliver White\nNicola Salmoria\nMarco Cassili",
 	0,
 	&boblbobl_machine_driver,
@@ -727,11 +725,11 @@ struct GameDriver boblbobl_driver =
 struct GameDriver sboblbob_driver =
 {
 	__FILE__,
-	0,
+	&bublbobl_driver,
 	"sboblbob",
 	"Super Bobble Bobble",
-	"????",
-	"?????",
+	"1986",
+	"bootleg",
 	"Chris Moore\nOliver White\nNicola Salmoria\nMarco Cassili",
 	0,
 	&boblbobl_machine_driver,

@@ -54,6 +54,39 @@ write
 
 Interrupts: VBlank causes an IRQ. Coin insertion causes a NMI.
 
+Pioneer Balloon memory map (preliminary)
+
+0000-03ff RAM		   IC13 cpu
+0400-07ff Video RAM 1  IC67 video
+0800-0bff Video RAM 2  ???? video
+0c00-0fff Color RAM    IC68 (3 bits for VRAM 1 and 3 bits for VRAM 2)
+1000-1fff RAM		   ???? Character generator
+3000-3fff ROM 4/5	   IC12
+4000-4fff ROM 1 	   IC07
+5000-5fff ROM 2 	   IC08
+6000-6fff ROM 3 	   IC09
+7000-7fff ROM 4 	   IC10
+8000-8fff ROM 5 	   IC14
+9000-9fff ROM 6 	   IC15
+read:
+b104	  IN0
+b105	  IN1
+b106	  DSW
+b107	  IN2
+
+write
+b000	  Sound Port 0
+b001	  Sound Port 1
+b100	  ????
+b103	  bit 7 = flip screen
+          bit 4-6 = coin counter?
+		  bit 3 = char bank selector
+b106	  ????
+b200	  y scroll register
+b300	  x scroll register
+
+Interrupts: VBlank causes an IRQ. Coin insertion causes a NMI.
+
 ***************************************************************************/
 
 #include "driver.h"
@@ -67,13 +100,13 @@ extern unsigned char *rockola_scrollx,*rockola_scrolly;
 void satansat_b002_w(int offset,int data);
 void satansat_backcolor_w(int offset, int data);
 void satansat_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-void satansat_vh_screenrefresh(struct osd_bitmap *bitmap);
+void satansat_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 void satansat_characterram_w(int offset,int data);
 
 void rockola_characterram_w(int offset,int data);
 void rockola_flipscreen_w(int offset,int data);
 void rockola_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-void rockola_vh_screenrefresh(struct osd_bitmap *bitmap);
+void rockola_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 void rockola_sound0_w(int offset,int data);
 void rockola_sound1_w(int offset,int data);
@@ -165,6 +198,33 @@ static struct MemoryWriteAddress fantasy_writemem[] =
 	{ -1 }	/* end of table */
 };
 
+static struct MemoryReadAddress pballoon_readmem[] =
+{
+	{ 0x0000, 0x1fff, MRA_RAM },
+	{ 0x3000, 0x9fff, MRA_ROM },
+	{ 0xb104, 0xb104, input_port_0_r },	/* IN0 */
+	{ 0xb105, 0xb105, input_port_1_r },	/* IN1 */
+	{ 0xb106, 0xb106, input_port_2_r },	/* DSW */
+	{ 0xb107, 0xb107, input_port_3_r },	/* IN2 */
+	{ 0xfffa, 0xffff, MRA_ROM },
+	{ -1 }	/* end of table */
+};
+
+static struct MemoryWriteAddress pballoon_writemem[] =
+{
+	{ 0x0000, 0x03ff, MWA_RAM },
+	{ 0x0400, 0x07ff, MWA_RAM, &rockola_videoram2 },
+	{ 0x0800, 0x0bff, videoram_w, &videoram, &videoram_size },
+	{ 0x0c00, 0x0fff, colorram_w, &colorram },
+	{ 0x1000, 0x1fff, rockola_characterram_w, &rockola_characterram },
+	{ 0x3000, 0x9fff, MWA_ROM },
+	{ 0xb100, 0xb100, rockola_sound0_w },
+	{ 0xb101, 0xb101, rockola_sound1_w },
+	{ 0xb103, 0xb103, rockola_flipscreen_w },
+	{ 0xb200, 0xb200, MWA_RAM, &rockola_scrolly },
+	{ 0xb300, 0xb300, MWA_RAM, &rockola_scrollx },
+	{ -1 }	/* end of table */
+};
 
 
 
@@ -316,20 +376,20 @@ INPUT_PORTS_END
 
 INPUT_PORTS_START( fantasy_input_ports )
 	PORT_START	/* IN0 */
-	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_BUTTON3 )
-	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_BUTTON4 )
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_BUTTON2 )
-	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_BUTTON1 )
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_8WAY)
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_8WAY)
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_8WAY )
 
 	PORT_START	/* IN1 */
-	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_BUTTON3 | IPF_COCKTAIL )
-	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_BUTTON4 | IPF_COCKTAIL )
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_BUTTON2 | IPF_COCKTAIL )
-	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_COCKTAIL )
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_8WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL )
@@ -366,6 +426,78 @@ INPUT_PORTS_START( fantasy_input_ports )
 	PORT_DIPNAME( 0x80, 0x00, "Allow Continue", IP_KEY_NONE )
 	PORT_DIPSETTING(    0x80, "No" )
 	PORT_DIPSETTING(    0x00, "Yes" )
+
+	PORT_START	/* IN2 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_START2 )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_START1 )
+
+	PORT_START	/* FAKE */
+	/* The coin slots are not memory mapped. Coin insertion causes a NMI. */
+	/* This fake input port is used by the interrupt */
+	/* handler to be notified of coin insertions. We use IPF_IMPULSE to */
+	/* trigger exactly one interrupt, without having to check when the */
+	/* user releases the key. */
+	PORT_BITX(0x01, IP_ACTIVE_HIGH, IPT_COIN1 | IPF_IMPULSE, "Coin", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 1 )
+INPUT_PORTS_END
+
+INPUT_PORTS_START( pballoon_input_ports )
+	PORT_START	/* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_BUTTON1 )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_8WAY)
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_8WAY)
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_8WAY )
+
+	PORT_START	/* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_BUTTON1 )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_COCKTAIL )
+
+	PORT_START	/* DSW0 */
+	PORT_DIPNAME( 0x01, 0x01, "Cabinet", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x01, "Upright" )
+	PORT_DIPSETTING(    0x00, "Cocktail" )
+	PORT_DIPNAME( 0x4e, 0x02, "Coinage", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x42, "2 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x02, "1 Coin/1 Credit + Bonus" )
+	PORT_DIPSETTING(    0x00, "1 Coin/2 Credits" )
+	PORT_DIPSETTING(    0x48, "1 Coin/2 Credits + Bonus" )
+	PORT_DIPSETTING(    0x08, "1 Coin/3 Credits" )
+	PORT_DIPSETTING(    0x44, "1 Coin/3 Credits + Bonus" )
+	PORT_DIPSETTING(    0x04, "1 Coin/4 Credits" )
+	PORT_DIPSETTING(    0x4c, "1 Coin/6 Credits + Bonus" )
+	PORT_DIPSETTING(    0x0c, "1 Coin/7 Credits" )
+/*
+	PORT_DIPSETTING(    0x06, "1 Coin/2 Credits" )
+	PORT_DIPSETTING(    0x0a, "1 Coin/2 Credits" )
+	PORT_DIPSETTING(    0x0e, "1 Coin/2 Credits" )
+	PORT_DIPSETTING(    0x40, "1 Coin/1 Credit + Bonus" )
+	PORT_DIPSETTING(    0x46, "1 Coin/1 Credit + Bonus" )
+	PORT_DIPSETTING(    0x4a, "1 Coin/1 Credit + Bonus" )
+	PORT_DIPSETTING(    0x4e, "1 Coin/1 Credit + Bonus" )
+*/
+	PORT_DIPNAME( 0x30, 0x00, "Lives", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "3" )
+	PORT_DIPSETTING(    0x10, "4" )
+	PORT_DIPSETTING(    0x20, "5" )
+/*	PORT_DIPSETTING(    0x30, "3" ) */
+	PORT_DIPNAME( 0x80, 0x00, "Unknown", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x80, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
 
 	PORT_START	/* IN2 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_UNKNOWN )
@@ -525,6 +657,16 @@ static unsigned char fantasy_color_prom[] =
 	0x00,0x07,0x38,0x2F,0x00,0xF8,0xFF,0xC5,0x00,0xC0,0x38,0xF4,0x00,0x27,0xFF,0x2F
 };
 
+static unsigned char pballoon_color_prom[] =
+{
+	/* sk8_ic7.bin - foreground colors */
+	0x00,0x07,0x38,0xF8,0x00,0x2F,0x38,0x05,0x00,0xC0,0x2F,0xF8,0x00,0xF8,0x07,0xFF,
+	0x00,0x07,0xF4,0xC0,0x00,0x38,0xC5,0x07,0x00,0xFF,0x2F,0x3F,0x00,0xF8,0xAD,0x07,
+	/* sk8_ic6.bin - background colors */
+	0x00,0x07,0xC5,0x2F,0xFF,0x2F,0x38,0x05,0x7E,0x38,0x05,0x28,0xA5,0x07,0xFF,0xF4,
+	0xFF,0x07,0x38,0x2F,0xFE,0xF8,0xFF,0xC5,0xA5,0xC0,0x38,0xF4,0xFF,0x25,0x37,0x2F,
+};
+
 static unsigned char nibbler_color_prom[] =
 {
 	/* IC7 - foreground palette */
@@ -639,6 +781,42 @@ static struct MachineDriver fantasy_machine_driver =
 	rockola_sh_update
 };
 
+/* note that in this driver the visible area is different!!! */
+static struct MachineDriver pballoon_machine_driver =
+{
+	/* basic machine hardware */
+	{
+		{
+			CPU_M6502,
+			1000000,    /* 1 MHz??? */
+			0,
+			pballoon_readmem,pballoon_writemem,0,0,
+			rockola_interrupt,2
+		}
+	},
+	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
+	1,	/* single CPU, no need for interleaving */
+	0,
+
+	/* video hardware */
+	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },	/* different from the others! */
+	fantasy_gfxdecodeinfo,
+	64,16*4,
+	rockola_vh_convert_color_prom,
+
+	VIDEO_TYPE_RASTER,
+	0,
+	generic_vh_start,
+	generic_vh_stop,
+	rockola_vh_screenrefresh,
+
+	/* sound hardware */
+	0,
+	rockola_sh_start,
+	0,
+	rockola_sh_update
+};
+
 
 
 /***************************************************************************
@@ -646,30 +824,6 @@ static struct MachineDriver fantasy_machine_driver =
   Game driver(s)
 
 ***************************************************************************/
-
-ROM_START( zarzon_rom )
-	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "ZARZ122.07", 0x4000, 0x0800, 0xa260b9f8 )
-	ROM_LOAD( "ZARZ123.08", 0x4800, 0x0800, 0xf2b8072c )
-	ROM_LOAD( "ZARZ124.09", 0x5000, 0x0800, 0xdea47b9a )
-	ROM_LOAD( "ZARZ125.10", 0x5800, 0x0800, 0xa30532d5 )
-	ROM_LOAD( "ZARZ126.13", 0x6000, 0x0800, 0x043c84ba )
-	ROM_LOAD( "ZARZ127.14", 0x6800, 0x0800, 0xa3f1286b )
-	ROM_LOAD( "ZARZ128.15", 0x7000, 0x0800, 0xfbc89252 )
-	ROM_LOAD( "ZARZ129.16", 0x7800, 0x0800, 0xc7440c84 )
-	ROM_RELOAD(             0xf800, 0x0800 ) /* for the reset/interrupt vectors */
-	ROM_LOAD( "ZARZ130.22", 0x8000, 0x0800, 0x78362c82 )
-	ROM_LOAD( "ZARZ131.23", 0x8800, 0x0800, 0x566914b5 )
-	ROM_LOAD( "ZARZ132.24", 0x9000, 0x0800, 0x7c4f3143 )
-
-	ROM_REGION(0x1000)  /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "ZARZ135.73", 0x0000, 0x0800, 0xbc67fa61 )
-	ROM_LOAD( "ZARZ136.75", 0x0800, 0x0800, 0x2364fe46 )
-
-    ROM_REGION(0x1000)  /* sound data for Vanguard-style audio section */
-	ROM_LOAD( "ZARZ133.53", 0x0000, 0x0800, 0x4b404b14 )
-	ROM_LOAD( "ZARZ134.54", 0x0800, 0x0800, 0x01380400 )
-ROM_END
 
 ROM_START( satansat_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
@@ -693,6 +847,30 @@ ROM_START( satansat_rom )
     ROM_REGION(0x1000)  /* sound data for Vanguard-style audio section */
 	ROM_LOAD( "SS12", 0x0000, 0x0800, 0xc7de2350 )
 	ROM_LOAD( "SS13", 0x0800, 0x0800, 0x01380400 )
+ROM_END
+
+ROM_START( zarzon_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "ZARZ122.07", 0x4000, 0x0800, 0xa260b9f8 )
+	ROM_LOAD( "ZARZ123.08", 0x4800, 0x0800, 0xf2b8072c )
+	ROM_LOAD( "ZARZ124.09", 0x5000, 0x0800, 0xdea47b9a )
+	ROM_LOAD( "ZARZ125.10", 0x5800, 0x0800, 0xa30532d5 )
+	ROM_LOAD( "ZARZ126.13", 0x6000, 0x0800, 0x043c84ba )
+	ROM_LOAD( "ZARZ127.14", 0x6800, 0x0800, 0xa3f1286b )
+	ROM_LOAD( "ZARZ128.15", 0x7000, 0x0800, 0xfbc89252 )
+	ROM_LOAD( "ZARZ129.16", 0x7800, 0x0800, 0xc7440c84 )
+	ROM_RELOAD(             0xf800, 0x0800 ) /* for the reset/interrupt vectors */
+	ROM_LOAD( "ZARZ130.22", 0x8000, 0x0800, 0x78362c82 )
+	ROM_LOAD( "ZARZ131.23", 0x8800, 0x0800, 0x566914b5 )
+	ROM_LOAD( "ZARZ132.24", 0x9000, 0x0800, 0x7c4f3143 )
+
+	ROM_REGION(0x1000)  /* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "ZARZ135.73", 0x0000, 0x0800, 0xbc67fa61 )
+	ROM_LOAD( "ZARZ136.75", 0x0800, 0x0800, 0x2364fe46 )
+
+    ROM_REGION(0x1000)  /* sound data for Vanguard-style audio section */
+	ROM_LOAD( "ZARZ133.53", 0x0000, 0x0800, 0x4b404b14 )
+	ROM_LOAD( "ZARZ134.54", 0x0800, 0x0800, 0x01380400 )
 ROM_END
 
 ROM_START( vanguard_rom )
@@ -749,6 +927,27 @@ ROM_START( fantasy_rom )
 /*	ROM_LOAD( "ic11.dau", 0x????, 0x0800 ) ?? */
 ROM_END
 
+ROM_START( pballoon_rom )
+	ROM_REGION(0x10000) /* 64k for code */
+	ROM_LOAD( "sk7_ic12.bin", 0x3000, 0x1000, 0x9fef177d )
+	ROM_LOAD( "sk7_ic07.bin", 0x4000, 0x1000, 0x04216b23 )
+	ROM_LOAD( "sk7_ic08.bin", 0x5000, 0x1000, 0xc186fcb8 )
+	ROM_LOAD( "sk7_ic09.bin", 0x6000, 0x1000, 0x45265972 )
+	ROM_LOAD( "sk7_ic10.bin", 0x7000, 0x1000, 0xf7c9c595 )
+	ROM_LOAD( "sk7_ic14.bin", 0x8000, 0x1000, 0x1862375a )
+	ROM_RELOAD(               0xf000, 0x1000 )  /* for the reset and interrupt vectors */
+	ROM_LOAD( "sk7_ic15.bin", 0x9000, 0x1000, 0x7ed30423 )
+
+	ROM_REGION(0x2000)  /* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "sk8_ic50.bin", 0x0000, 0x1000, 0xda255685 )
+	ROM_LOAD( "sk8_ic51.bin", 0x1000, 0x1000, 0xd40a2fd2 )
+
+	ROM_REGION(0x1800)  /* space for the sound ROMs */
+	ROM_LOAD( "sk7_ic51.bin", 0x0000, 0x0800, 0xecf5012f )  /* sound ROM 1 */
+	ROM_LOAD( "sk7_ic52.bin", 0x0800, 0x0800, 0xfe490c2f )  /* sound ROM 2 */
+	ROM_LOAD( "sk7_ic53.bin", 0x1000, 0x0800, 0x1dee0008 )  /* sound ROM 3 */
+ROM_END
+
 ROM_START( nibbler_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "IC12", 0x3000, 0x1000, 0x63b52ccf )
@@ -789,7 +988,6 @@ ROM_START( nibblera_rom )
 	ROM_LOAD( "G960-58.51", 0x1000, 0x1000, 0xab79f1ad )
 
 	ROM_REGION(0x1000)	/* space for the sound ROMs */
-	/* IC53 seems way off - load IC52 twice */
 	ROM_LOAD( "G960-45.53", 0x0000, 0x0800, 0xaafe2944 )
 	ROM_LOAD( "G960-44.52", 0x0800, 0x0800, 0x9ad646f8 )
 ROM_END
@@ -915,8 +1113,8 @@ struct GameDriver satansat_driver =
 	0,
     "satansat",
     "Satan of Saturn",
-	"????",
-	"?????",
+	"1981",
+	"SNK",
     "Dan Boris\nTheo Philips",
 	0,
 	&satansat_machine_driver,
@@ -937,11 +1135,11 @@ struct GameDriver satansat_driver =
 struct GameDriver zarzon_driver =
 {
 	__FILE__,
-	0,
+	&satansat_driver,
     "zarzon",
     "Zarzon",
-	"????",
-	"?????",
+	"1981",
+	"[SNK] (Taito America license)",
     "Dan Boris\nTheo Philips",
 	0,
 	&satansat_machine_driver,
@@ -965,8 +1163,8 @@ struct GameDriver vanguard_driver =
 	0,
 	"vanguard",
 	"Vanguard",
-	"????",
-	"?????",
+	"1981",
+	"SNK",
 	"Brian Levine (Vanguard emulator)\nBrad Oliver (MAME driver)\nMirko Buffoni (MAME driver)\nAndrew Scott\nValerio Verrando (high score save)",
 	0,
 	&vanguard_machine_driver,
@@ -990,8 +1188,8 @@ struct GameDriver fantasy_driver =
 	0,
 	"fantasy",
 	"Fantasy",
-	"????",
-	"?????",
+	"1981",
+	"Rock-ola",
 	"Nicola Salmoria\nBrian Levine\nMirko Buffoni\nDani Portillo (high score save)",
 	0,
 	&fantasy_machine_driver,
@@ -1009,14 +1207,39 @@ struct GameDriver fantasy_driver =
 	fantasy_hiload, fantasy_hisave
 };
 
+struct GameDriver pballoon_driver =
+{
+	__FILE__,
+	0,
+	"pballoon",
+	"Pioner Balloon",
+	"1982",
+	"SNK",
+	"Nicola Salmoria\nBrian Levine\nMirko Buffoni",
+	0,
+	&pballoon_machine_driver,
+
+	pballoon_rom,
+	0, 0,
+	0,
+	0,	/* sound_prom */
+
+	pballoon_input_ports,
+
+	pballoon_color_prom, 0, 0,
+	ORIENTATION_ROTATE_90,
+
+	0, 0
+};
+
 struct GameDriver nibbler_driver =
 {
 	__FILE__,
 	0,
 	"nibbler",
-	"Nibbler",
-	"????",
-	"?????",
+	"Nibbler (set 1)",
+	"1982",
+	"Rock-ola",
 	"Nicola Salmoria\nBrian Levine\nMirko Buffoni\nMarco Cassili",
 	0,
 	&fantasy_machine_driver,
@@ -1037,11 +1260,11 @@ struct GameDriver nibbler_driver =
 struct GameDriver nibblera_driver =
 {
 	__FILE__,
-	0,
+	&nibbler_driver,
 	"nibblera",
-	"Nibbler (alternate)",
-	"????",
-	"?????",
+	"Nibbler (set 2)",
+	"1982",
+	"Rock-ola",
 	"Nicola Salmoria\nBrian Levine\nMirko Buffoni\nMarco Cassili",
 	0,
 	&fantasy_machine_driver,

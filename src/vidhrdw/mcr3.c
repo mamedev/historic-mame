@@ -9,7 +9,6 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-unsigned char *mcr3_paletteram;
 
 static char sprite_transparency[512]; /* no mcr3 game has more than this many sprites */
 
@@ -26,21 +25,6 @@ static int draw_lamps;
 void mcr3_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
 {
 	int i;
-	#define TOTAL_COLORS(gfxn) (Machine->gfx[gfxn]->total_colors * Machine->gfx[gfxn]->color_granularity)
-	#define COLOR(gfxn,offs) (colortable[Machine->drv->gfxdecodeinfo[gfxn].color_codes_start + offs])
-
-	/* the palette will be initialized by the game. We just set it to some */
-	/* pre-cooked values so the startup copyright notice can be displayed. */
-	for (i = 0;i < Machine->drv->total_colors;i++)
-	{
-		*(palette++) = ((i & 1) >> 0) * 0xff;
-		*(palette++) = ((i & 2) >> 1) * 0xff;
-		*(palette++) = ((i & 4) >> 2) * 0xff;
-	}
-
-	/* characters and sprites use the same palette */
-	for (i = 0;i < TOTAL_COLORS(0);i++)
-		COLOR(0,i) = i;
 
    /* now check our sprites and mark which ones have color 8 ('draw under') */
    {
@@ -69,13 +53,12 @@ void mcr3_vh_convert_color_prom(unsigned char *palette, unsigned short *colortab
 }
 
 
-void mcr3_palette_w(int offset,int data)
+void mcr3_paletteram_w(int offset,int data)
 {
-	int r;
-	int g;
-	int b;
+	int r,g,b;
 
-	mcr3_paletteram[offset] = data;
+
+	paletteram[offset] = data;
 	offset &= 0x7f;
 
 	r = ((offset & 1) << 2) + (data >> 6);
@@ -101,7 +84,7 @@ void mcr3_videoram_w(int offset,int data)
 }
 
 
-void mcr3_vh_screenrefresh(struct osd_bitmap *bitmap)
+void mcr3_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
    int offs;
    int mx,my;
@@ -176,22 +159,7 @@ void mcr3_vh_screenrefresh(struct osd_bitmap *bitmap)
 
 ***************************************************************************/
 
-void rampage_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
-{
-	struct osd_bitmap *bitmap = Machine->gfx[0]->gfxdata;
-	int y, x;
-
-	/* standard init */
-	mcr3_vh_convert_color_prom (palette, colortable, color_prom);
-
-	/* the tile graphics for Rampage are reverse colors; we preswap them here */
-	for (y = bitmap->height - 1; y >= 0; y--)
-		for (x = bitmap->width - 1; x >= 0; x--)
-			bitmap->line[y][x] ^= 15;
-}
-
-
-void rampage_vh_screenrefresh(struct osd_bitmap *bitmap)
+void rampage_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
    int offs;
    int mx,my;
@@ -341,7 +309,7 @@ void spyhunt_vh_stop(void)
 }
 
 
-void spyhunt_vh_screenrefresh(struct osd_bitmap *bitmap)
+void spyhunt_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	static struct rectangle clip = { 0, 30*16-1, 0, 30*16-1 };
    int offs;
@@ -364,12 +332,12 @@ void spyhunt_vh_screenrefresh(struct osd_bitmap *bitmap)
 
 			drawgfx(backbitmap,Machine->gfx[0],
 				(code & 0x3f) | ((code & 0x80) >> 1),
-				1,0,(code & 0x40),64*mx,32*my,
+				0,0,(code & 0x40),64*mx,32*my,
 				NULL,TRANSPARENCY_NONE,0);
 
 			drawgfx(backbitmap,Machine->gfx[1],
 				(code & 0x3f) | ((code & 0x80) >> 1),
-				1,0,(code & 0x40),64*mx + 32,32*my,
+				0,0,(code & 0x40),64*mx + 32,32*my,
 				NULL,TRANSPARENCY_NONE,0);
 		}
    }

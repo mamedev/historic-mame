@@ -132,7 +132,7 @@ void hyperspt_flipscreen_w(int offset,int data)
   the main emulation engine.
 
 ***************************************************************************/
-void hyperspt_vh_screenrefresh(struct osd_bitmap *bitmap)
+void hyperspt_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	int offs;
 
@@ -232,7 +232,7 @@ void hyperspt_vh_screenrefresh(struct osd_bitmap *bitmap)
 
 /* Only difference with Hyper Sports is the way tiles are selected (1536 tiles */
 /* instad of 1024). Plus, it has 256 sprites instead of 512. */
-void roadf_vh_screenrefresh(struct osd_bitmap *bitmap)
+void roadf_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	int offs;
 

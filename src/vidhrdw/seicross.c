@@ -62,11 +62,6 @@ void seicross_vh_convert_color_prom(unsigned char *palette, unsigned short *colo
 
 		color_prom++;
 	}
-
-
-	/* character and sprite lookup table */
-	for (i = 0;i < TOTAL_COLORS(0);i++)
-		COLOR(0,i) = i;
 }
 
 
@@ -98,7 +93,7 @@ void seicross_colorram_w(int offset,int data)
   the main emulation engine.
 
 ***************************************************************************/
-void seicross_vh_screenrefresh(struct osd_bitmap *bitmap)
+void seicross_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	int offs;
 
@@ -117,8 +112,8 @@ void seicross_vh_screenrefresh(struct osd_bitmap *bitmap)
 			sx = offs % 32;
 			sy = offs / 32;
 
-			drawgfx(tmpbitmap,Machine->gfx[(colorram[offs] & 0x10) ? 1 : 0],
-					videoram[offs] + 8 * (colorram[offs] & 0x20),
+			drawgfx(tmpbitmap,Machine->gfx[0],
+					videoram[offs] + ((colorram[offs] & 0x10) << 4),
 					colorram[offs] & 0x0f,
 					colorram[offs] & 0x40,colorram[offs] & 0x80,
 					8*sx,8*sy,
@@ -141,8 +136,8 @@ void seicross_vh_screenrefresh(struct osd_bitmap *bitmap)
 	/* draw sprites */
 	for (offs = spriteram_size - 4;offs >= 0;offs -= 4)
 	{
-		drawgfx(bitmap,Machine->gfx[spriteram[offs + 1] & 0x10 ? 3 : 2],
-				(spriteram[offs] & 0x3f),
+		drawgfx(bitmap,Machine->gfx[1],
+				(spriteram[offs] & 0x3f) + ((spriteram[offs + 1] & 0x10) << 2),
 				spriteram[offs + 1] & 0x0f,
 				spriteram[offs] & 0x40,spriteram[offs] & 0x80,
 				spriteram[offs + 3],240-spriteram[offs + 2],

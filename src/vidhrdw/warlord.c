@@ -9,7 +9,6 @@ Warlords Driver by Lee Taylor and John Clegg
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-unsigned char *warlord_paletteram;
 
 
 /***************************************************************************
@@ -19,7 +18,7 @@ unsigned char *warlord_paletteram;
   the main emulation engine.
 
 ***************************************************************************/
-void warlord_vh_screenrefresh(struct osd_bitmap *bitmap)
+void warlord_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	int offs;
 

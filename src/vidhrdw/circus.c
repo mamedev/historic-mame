@@ -181,7 +181,7 @@ void RobotBox(int top, int left)
 }
 
 
-void circus_vh_screenrefresh(struct osd_bitmap *bitmap)
+void circus_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
         int offs, x, y, col;
 
@@ -299,7 +299,7 @@ void circus_vh_screenrefresh(struct osd_bitmap *bitmap)
 }
 
 
-void robotbowl_vh_screenrefresh(struct osd_bitmap *bitmap)
+void robotbowl_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
         int offs;
 
@@ -371,7 +371,7 @@ void robotbowl_vh_screenrefresh(struct osd_bitmap *bitmap)
                         &Machine->drv->visible_area,TRANSPARENCY_PEN,0);
 }
 
-void crash_vh_screenrefresh(struct osd_bitmap *bitmap)
+void crash_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	int offs;
 

@@ -140,5 +140,8 @@ void     I8039_Clear_Pending_Interrupts(void);	/* NS 970904 */
  */
 #define I8039_RDOP_ARG(A) ((unsigned)cpu_readop_arg(A))
 
+#ifdef  MAME_DEBUG
+int     Dasm8039(char * dst, unsigned char* addr);
+#endif
 
 #endif  /* _I8039_H */

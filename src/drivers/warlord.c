@@ -95,20 +95,9 @@ Off On  On                          For every 5 coins, add 1 coin
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
+void warlord_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
-int warlord_pot1_r (int offset);
-int warlord_pot2_r (int offset);
-int warlord_pot3_r (int offset);
-int warlord_pot4_r (int offset);
-int warlord_trakball_r (int offset);
-
-void warlord_vh_screenrefresh(struct osd_bitmap *bitmap);
-void warlord_paletteram_w (int offset, int data);
-
-extern unsigned char *warlord_paletteram;
-
-
-void warlord_led_w(int offset,int data)
+static void warlord_led_w(int offset,int data)
 {
 	osd_led_w(offset,~data >> 7);
 }
@@ -156,10 +145,10 @@ INPUT_PORTS_START( input_ports )
 	PORT_DIPSETTING (   0x80, "Cocktail" )
 
 	PORT_START	/* IN1 */
-	PORT_BITX( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1, "1p Button/Start", OSD_KEY_LCONTROL, OSD_JOY_FIRE1, 0 )
-	PORT_BITX( 0x02, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2, "2p Button/Start", OSD_KEY_ALT, IP_JOY_NONE, 0 )
-	PORT_BITX( 0x04, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER3, "3p Button/Start", OSD_KEY_SPACE, IP_JOY_NONE, 0 )
-	PORT_BITX( 0x08, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER4, "4p Button/Start", OSD_KEY_L, IP_JOY_NONE, 0 )
+	PORT_BIT ( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1 )
+	PORT_BIT ( 0x02, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
+	PORT_BIT ( 0x04, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER3 )
+	PORT_BIT ( 0x08, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER4 )
 	PORT_BIT ( 0x10, IP_ACTIVE_LOW, IPT_TILT )
 	PORT_BIT ( 0x20, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT ( 0x40, IP_ACTIVE_LOW, IPT_COIN2 )
@@ -201,16 +190,18 @@ INPUT_PORTS_START( input_ports )
 	PORT_DIPSETTING (   0x60, "6 credits/4 coins" )
 	PORT_DIPSETTING (   0x80, "6 credits/5 coins" )
 
-	PORT_START	/* IN4 - fake to control player 1 paddle */
-	PORT_ANALOG ( 0xff, 0x80, IPT_PADDLE, 50, 32, 0x1d, 0xcb )
+    /* IN4-7 fake to control player paddles */
+	PORT_START
+	PORT_ANALOG ( 0xff, 0x80, IPT_PADDLE | IPF_PLAYER1, 50, 32, 0x1d, 0xcb )
 
-	PORT_START	/* IN5 - fake to control players 2-4 with keyboard */
-	PORT_BITX( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_2WAY | IPF_PLAYER2, "2p Right", OSD_KEY_A, IP_JOY_NONE, 0 )
-	PORT_BITX( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_2WAY | IPF_PLAYER2, "2p Right", OSD_KEY_S, IP_JOY_NONE, 0 )
-	PORT_BITX( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_2WAY | IPF_PLAYER3, "3p Right", OSD_KEY_V, IP_JOY_NONE, 0 )
-	PORT_BITX( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_2WAY | IPF_PLAYER3, "3p Right", OSD_KEY_B, IP_JOY_NONE, 0 )
-	PORT_BITX( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_2WAY | IPF_PLAYER4, "4p Right", OSD_KEY_O, IP_JOY_NONE, 0 )
-	PORT_BITX( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_2WAY | IPF_PLAYER4, "4p Right", OSD_KEY_P, IP_JOY_NONE, 0 )
+	PORT_START
+	PORT_ANALOG ( 0xff, 0x80, IPT_PADDLE | IPF_PLAYER2, 50, 32, 0x1d, 0xcb )
+
+	PORT_START
+	PORT_ANALOG ( 0xff, 0x80, IPT_PADDLE | IPF_PLAYER3, 50, 32, 0x1d, 0xcb )
+
+	PORT_START
+	PORT_ANALOG ( 0xff, 0x80, IPT_PADDLE | IPF_PLAYER4, 50, 32, 0x1d, 0xcb )
 INPUT_PORTS_END
 
 
@@ -245,9 +236,9 @@ static struct POKEYinterface pokey_interface =
 	NO_CLIP,
 	/* The 8 pot handlers */
 	{ input_port_4_r },
-	{ warlord_pot2_r },
-	{ warlord_pot3_r },
-	{ warlord_pot4_r },
+	{ input_port_5_r },
+	{ input_port_6_r },
+	{ input_port_7_r },
 	{ 0 },
 	{ 0 },
 	{ 0 },
@@ -326,8 +317,8 @@ struct GameDriver warlord_driver =
 	0,
 	"warlord",
 	"Warlords",
-	"????",
-	"?????",
+	"1980",
+	"Atari",
 	"Lee Taylor\nJohn Clegg\nBrad Oliver (additional code)",
 	0,
 	&machine_driver,

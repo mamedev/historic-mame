@@ -177,7 +177,7 @@ void astinvad_videoram_w (int offset,int data)
   the main emulation engine.
 
 ***************************************************************************/
-void astinvad_vh_screenrefresh(struct osd_bitmap *bitmap)
+void astinvad_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	/* copy the character mapped graphics */
 	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);

@@ -49,6 +49,8 @@ static int total_stars;
 void galaga_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
 {
 	int i;
+	#define TOTAL_COLORS(gfxn) (Machine->gfx[gfxn]->total_colors * Machine->gfx[gfxn]->color_granularity)
+	#define COLOR(gfxn,offs) (colortable[Machine->drv->gfxdecodeinfo[gfxn].color_codes_start + offs])
 
 
 	for (i = 0;i < 32;i++)
@@ -70,15 +72,25 @@ void galaga_vh_convert_color_prom(unsigned char *palette, unsigned short *colort
 		palette[3*i + 2] = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
 	}
 
+	color_prom += 32;
+
 	/* characters */
-	for (i = 0;i < 32*4;i++)
-		colortable[i] = 15 - (color_prom[i + 32] & 0x0f);
+	for (i = 0;i < TOTAL_COLORS(0);i++)
+		COLOR(0,i) = 15 - (*(color_prom++) & 0x0f);
+
+	color_prom += 128;
+
 	/* sprites */
-	for (i = 32*4;i < 64*4;i++)
+	for (i = 0;i < TOTAL_COLORS(1);i++)
 	{
-		if (i % 4 == 0) colortable[i] = 0;	/* preserve transparency */
-		else colortable[i] = (15 - (color_prom[i + 32] & 0x0f)) + 0x10;
+		if (i % 4 == 0) COLOR(1,i) = 0;	/* preserve transparency */
+		else COLOR(1,i) = 15 - ((*color_prom & 0x0f)) + 0x10;
+
+		color_prom++;
 	}
+
+	color_prom += 128;
+
 
 	/* now the stars */
 	for (i = 32;i < 32 + 64;i++)
@@ -177,7 +189,7 @@ void galaga_flipscreen_w(int offset,int data)
   the main emulation engine.
 
 ***************************************************************************/
-void galaga_vh_screenrefresh(struct osd_bitmap *bitmap)
+void galaga_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	int offs;
 

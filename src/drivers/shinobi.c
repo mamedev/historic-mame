@@ -34,7 +34,7 @@ WRITE:
 #include "machine/system16.h"
 #include "sndhrdw/2151intf.h"
 
-void system16_vh_screenrefresh(struct osd_bitmap *bitmap);
+void system16_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 void system16_soundcommand_w(int offset, int data);
 void system16_soundcommand_w(int offset, int data){
@@ -47,10 +47,10 @@ void system16_soundcommand_w(int offset, int data){
 
 static struct MemoryReadAddress shinobi_readmem[] =
 {
-	{ 0x410000, 0x410fff, system16_videoram_r, &system16_videoram, &s16_videoram_size },
-	{ 0x400000, 0x40ffff, system16_backgroundram_r, &system16_backgroundram, &s16_backgroundram_size },
-	{ 0x440000, 0x440fff, system16_spriteram_r, &system16_spriteram, &s16_spriteram_size },
-	{ 0x840000, 0x840fff, system16_paletteram_r, &system16_paletteram, &s16_paletteram_size },
+	{ 0x410000, 0x410fff, system16_videoram_r },
+	{ 0x400000, 0x40ffff, system16_backgroundram_r },
+	{ 0x440000, 0x440fff, system16_spriteram_r },
+	{ 0x840000, 0x840fff, paletteram_word_r },
 	{ 0xc41000, 0xc41007, shinobi_control_r },
 	{ 0xc42000, 0xc42007, shinobi_dsw_r },
 	{ 0xff0000, 0xffffff, MRA_BANK1 },
@@ -62,12 +62,12 @@ static struct MemoryWriteAddress shinobi_writemem[] =
 {
 	{ 0x410e90, 0x410e9f, shinobi_scroll_w },
 	{ 0x410e80, 0x410e83, shinobi_pagesel_w },
-	{ 0x410000, 0x410fff, system16_videoram_w },
+	{ 0x410000, 0x410fff, system16_videoram_w, &system16_videoram, &s16_videoram_size },
 	{ 0x418028, 0x41802b, tetris_bgpagesel_w },
 	{ 0x418038, 0x41803b, tetris_fgpagesel_w },
-	{ 0x400000, 0x40ffff, system16_backgroundram_w },
-	{ 0x440000, 0x440fff, system16_spriteram_w },
-	{ 0x840000, 0x840fff, system16_paletteram_w },
+	{ 0x400000, 0x40ffff, system16_backgroundram_w, &system16_backgroundram, &s16_backgroundram_size },
+	{ 0x440000, 0x440fff, system16_spriteram_w, &system16_spriteram, &s16_spriteram_size },
+	{ 0x840000, 0x840fff, system16_paletteram_w, &paletteram },
 	{ 0xc40000, 0xc40003, goldnaxe_refreshenable_w, &system16_refreshregister }, /* this is valid only for aliensyndrome, but other games should not use it */
 	{ 0xc40004, 0xc4000f, MWA_NOP },                 /* IO Ctrl:  Unknown */
 	{ 0xc43000, 0xc4300f, MWA_NOP },                 /* IO Ctrl:  Unknown */
@@ -80,10 +80,10 @@ static struct MemoryWriteAddress shinobi_writemem[] =
 
 static struct MemoryReadAddress passshot_readmem[] =
 {
-	{ 0x410000, 0x410fff, system16_videoram_r, &system16_videoram, &s16_videoram_size },
-	{ 0x400000, 0x40ffff, system16_backgroundram_r, &system16_backgroundram, &s16_backgroundram_size },
-	{ 0x440000, 0x440fff, system16_spriteram_r, &system16_spriteram, &s16_spriteram_size },
-	{ 0x840000, 0x840fff, system16_paletteram_r, &system16_paletteram, &s16_paletteram_size },
+	{ 0x410000, 0x410fff, system16_videoram_r },
+	{ 0x400000, 0x40ffff, system16_backgroundram_r },
+	{ 0x440000, 0x440fff, system16_spriteram_r },
+	{ 0x840000, 0x840fff, paletteram_word_r },
 	{ 0xc41000, 0xc41007, passshot_control_r },
 	{ 0xc42000, 0xc42007, shinobi_dsw_r },
 	{ 0xff0000, 0xffffff, MRA_BANK1 },
@@ -94,10 +94,10 @@ static struct MemoryReadAddress passshot_readmem[] =
 static struct MemoryWriteAddress passshot_writemem[] =
 {
 	{ 0x410ff4, 0x410ff7, passshot_pagesel_w, &system16_pagesram },
-	{ 0x410000, 0x410fff, system16_videoram_w },
-	{ 0x400000, 0x40ffff, system16_backgroundram_w },
-	{ 0x440000, 0x440fff, passshot_spriteram_w },
-	{ 0x840000, 0x840fff, system16_paletteram_w },
+	{ 0x410000, 0x410fff, system16_videoram_w, &system16_videoram, &s16_videoram_size },
+	{ 0x400000, 0x40ffff, system16_backgroundram_w, &system16_backgroundram, &s16_backgroundram_size },
+	{ 0x440000, 0x440fff, passshot_spriteram_w, &system16_spriteram, &s16_spriteram_size },
+	{ 0x840000, 0x840fff, system16_paletteram_w, &paletteram },
 	{ 0xc40000, 0xc40003, goldnaxe_refreshenable_w, &system16_refreshregister }, /* this is valid only for aliensyndrome, but other games should not use it */
 	{ 0xc40004, 0xc4000f, MWA_NOP },                 /* IO Ctrl:  Unknown */
 	{ 0xc43000, 0xc4300f, MWA_NOP },                 /* IO Ctrl:  Unknown */
@@ -579,10 +579,10 @@ static struct MachineDriver machine_driver =
 	/* video hardware */
 	40*8, 28*8, { 0*8, 40*8-1, 0*8, 28*8-1 },
 	gfxdecodeinfo,
-	256,2048,
+	2048,2048,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_16BIT,
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
 	0,
 	system16_vh_start,
 	system16_vh_stop,
@@ -625,10 +625,10 @@ static struct MachineDriver tetris_machine_driver =
 	/* video hardware */
 	40*8, 28*8, { 0*8, 40*8-1, 0*8, 28*8-1 },
 	gfxdecodeinfo,
-	256,2048,
+	2048,2048,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_16BIT,
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
 	0,
 	system16_vh_start,
 	system16_vh_stop,
@@ -671,10 +671,10 @@ static struct MachineDriver passshot_machine_driver =
 	/* video hardware */
 	40*8, 28*8, { 0*8, 40*8-1, 0*8, 28*8-1 },
 	gfxdecodeinfo,
-	256,2048,
+	2048,2048,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_16BIT,
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
 	0,
 	system16_vh_start,
 	system16_vh_stop,
@@ -842,8 +842,8 @@ struct GameDriver shinobi_driver =
 	0,
 	"shinobi",
 	"Shinobi",
-	"????",
-	"?????",
+	"1987",
+	"Sega",
 	"Mirko Buffoni         (Mame Driver)\nThierry Lescot & Nao  (Hardware Info)",
 	0,
 	&machine_driver,
@@ -867,8 +867,8 @@ struct GameDriver aliensyn_driver =
 	0,
 	"aliensyn",
 	"Alien Syndrome",
-	"????",
-	"?????",
+	"1987",
+	"Sega",
 	"Mirko Buffoni         (Mame Driver)\nThierry Lescot & Nao  (Hardware Info)",
 	0,
 	&machine_driver,
@@ -891,8 +891,8 @@ struct GameDriver tetrisbl_driver =
 	0,
 	"tetrisbl",
 	"Tetris (Sega, bootleg)",
-	"????",
-	"?????",
+	"1988",
+	"Sega",
 	"Mirko Buffoni         (Mame Driver)\nThierry Lescot & Nao  (Hardware Info)",
 	0,
 	&tetris_machine_driver,
@@ -917,7 +917,7 @@ struct GameDriver passshtb_driver =
 	"passshtb",
 	"Passing Shot (bootleg)",
 	"????",
-	"?????",
+	"bootleg",
 	"Mirko Buffoni         (Mame Driver)\nThierry Lescot & Nao  (Hardware Info)",
 	0,
 	&passshot_machine_driver,

@@ -329,6 +329,6 @@ void SN76496_sh_update(void)
 	}
 
 	for (i = 0;i < intf->num;i++)
-		if( sample_16bit ) osd_play_streamed_sample_16(channel+i,output_buffer[i],buffer_len,emulation_rate,volume[i]);
+		if( sample_16bit ) osd_play_streamed_sample_16(channel+i,output_buffer[i],2*buffer_len,emulation_rate,volume[i]);
 		else               osd_play_streamed_sample(channel+i,output_buffer[i],buffer_len,emulation_rate,volume[i]);
 }

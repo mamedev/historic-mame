@@ -61,7 +61,7 @@ int pacnpal_interrupt_2(void);
 void pacnpal_interrupt_enable_2_w(int offset,int data);
 
 int superpac_vh_start(void);
-void superpac_vh_screenrefresh(struct osd_bitmap *bitmap);
+void superpac_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 void superpac_init_machine(void);
 void superpac_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 
@@ -626,11 +626,11 @@ ROM_START( superpcn_rom )
 	ROM_LOAD( "SP1.1", 0xe000, 0x2000, 0x181e2450 )
 
 	ROM_REGION(0x3000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "SP1.6", 0x0000, 0x1000, 0xcb510929 )
-	ROM_LOAD( "SP1.5", 0x1000, 0x2000, 0x19a3fd43 )
+	ROM_LOAD( "SP1.6",    0x0000, 0x1000, 0xcb510929 )
+	ROM_LOAD( "SPV-2.3F", 0x1000, 0x2000, 0x19a3fd43 )
 
 	ROM_REGION(0x10000)	/* 64k for the second CPU */
-	ROM_LOAD( "SP1.4", 0xf000, 0x1000, 0x6d32e9fa )
+	ROM_LOAD( "SPC-3.1K", 0xf000, 0x1000, 0x6d32e9fa )
 ROM_END
 
 ROM_START( pacnpal_rom )
@@ -774,8 +774,8 @@ struct GameDriver superpac_driver =
 	0,
 	"superpac",
 	"Super Pac-Man (Midway)",
-	"????",
-	"?????",
+	"1982",
+	"[Namco] (Bally Midway license)",
 	"Aaron Giles (MAME driver)\nKevin Brisley (hardware info)\nLawnmower Man (hardware info)",
 	0,
 	&superpac_machine_driver, /* MachineDriver * */
@@ -798,11 +798,11 @@ struct GameDriver superpac_driver =
 struct GameDriver superpcn_driver =
 {
 	__FILE__,
-	0,
+	&superpac_driver,
 	"superpcn",
 	"Super Pac-Man (Namco)",
-	"????",
-	"?????",
+	"1982",
+	"Namco",
 	"Aaron Giles (MAME driver)\nKevin Brisley (Replay emulator)\nLawnmower Man (hardware info)",
 	0,
 	&superpac_machine_driver, /* MachineDriver * */
@@ -828,8 +828,8 @@ struct GameDriver pacnpal_driver =
 	0,
 	"pacnpal",
 	"Pac & Pal",
-	"????",
-	"?????",
+	"1983",
+	"Namco",
 	"Aaron Giles\nKevin Brisley\nLawnmower Man",
 	0,
 	&pacnpal_machine_driver,  /* MachineDriver * */

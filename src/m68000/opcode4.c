@@ -2,377 +2,353 @@
 #include "M68000.h"
 extern int pending_interrupts;
 
-void op_4000(ULONG opcode) /* NEGX */
+void op_4000(void) /* NEGX */
 {
         ULONG srcreg = (opcode & 7);
 {{      BYTE src = regs.d[srcreg].B.l;
 {       ULONG newv = 0 - src - (regs.x ? 1 : 0);
+        regs.d[srcreg].B.l = newv;
 {       int flgs = ((BYTE)(src)) < 0;
-        int flgo = ((BYTE)(0)) < 0;
         int flgn = ((BYTE)(newv)) < 0;
-        VFLG = (!flgs && flgo && !flgn) || (flgs && !flgo && flgn);
-        regs.x = CFLG = (flgs && !flgo) || (flgn && (!flgo || flgs));
+        VFLG = (flgs && flgn);
+        regs.x = CFLG = (flgs || flgn);
         if (((BYTE)(newv)) != 0) ZFLG = 0;
         NFLG = ((BYTE)(newv)) < 0;
-        regs.d[srcreg].B.l = newv;
 }}}}}
-void op_4010(ULONG opcode) /* NEGX */
+void op_4010(void) /* NEGX */
 {
         ULONG srcreg = (opcode & 7);
 {{      CPTR srca = regs.a[srcreg];
         BYTE src = get_byte(srca);
 {       ULONG newv = 0 - src - (regs.x ? 1 : 0);
+        put_byte(srca,newv);
 {       int flgs = ((BYTE)(src)) < 0;
-        int flgo = ((BYTE)(0)) < 0;
         int flgn = ((BYTE)(newv)) < 0;
-        VFLG = (!flgs && flgo && !flgn) || (flgs && !flgo && flgn);
-        regs.x = CFLG = (flgs && !flgo) || (flgn && (!flgo || flgs));
+        VFLG = (flgs && flgn);
+        regs.x = CFLG = (flgs || flgn);
         if (((BYTE)(newv)) != 0) ZFLG = 0;
         NFLG = ((BYTE)(newv)) < 0;
-        put_byte(srca,newv);
 }}}}}
-void op_4018(ULONG opcode) /* NEGX */
+void op_4018(void) /* NEGX */
 {
         ULONG srcreg = (opcode & 7);
 {{      CPTR srca = regs.a[srcreg];
         BYTE src = get_byte(srca);
 {       regs.a[srcreg] += areg_byteinc[srcreg];
 {       ULONG newv = 0 - src - (regs.x ? 1 : 0);
+        put_byte(srca,newv);
 {       int flgs = ((BYTE)(src)) < 0;
-        int flgo = ((BYTE)(0)) < 0;
         int flgn = ((BYTE)(newv)) < 0;
-        VFLG = (!flgs && flgo && !flgn) || (flgs && !flgo && flgn);
-        regs.x = CFLG = (flgs && !flgo) || (flgn && (!flgo || flgs));
+        VFLG = (flgs && flgn);
+        regs.x = CFLG = (flgs || flgn);
         if (((BYTE)(newv)) != 0) ZFLG = 0;
         NFLG = ((BYTE)(newv)) < 0;
-        put_byte(srca,newv);
 }}}}}}
-void op_4020(ULONG opcode) /* NEGX */
+void op_4020(void) /* NEGX */
 {
         ULONG srcreg = (opcode & 7);
 {{      regs.a[srcreg] -= areg_byteinc[srcreg];
 {       CPTR srca = regs.a[srcreg];
         BYTE src = get_byte(srca);
 {       ULONG newv = 0 - src - (regs.x ? 1 : 0);
+        put_byte(srca,newv);
 {       int flgs = ((BYTE)(src)) < 0;
-        int flgo = ((BYTE)(0)) < 0;
         int flgn = ((BYTE)(newv)) < 0;
-        VFLG = (!flgs && flgo && !flgn) || (flgs && !flgo && flgn);
-        regs.x = CFLG = (flgs && !flgo) || (flgn && (!flgo || flgs));
+        VFLG = (flgs && flgn);
+        regs.x = CFLG = (flgs || flgn);
         if (((BYTE)(newv)) != 0) ZFLG = 0;
         NFLG = ((BYTE)(newv)) < 0;
-        put_byte(srca,newv);
 }}}}}}
-void op_4028(ULONG opcode) /* NEGX */
+void op_4028(void) /* NEGX */
 {
         ULONG srcreg = (opcode & 7);
 {{      CPTR srca = regs.a[srcreg] + (LONG)(WORD)nextiword();
         BYTE src = get_byte(srca);
 {       ULONG newv = 0 - src - (regs.x ? 1 : 0);
+        put_byte(srca,newv);
 {       int flgs = ((BYTE)(src)) < 0;
-        int flgo = ((BYTE)(0)) < 0;
         int flgn = ((BYTE)(newv)) < 0;
-        VFLG = (!flgs && flgo && !flgn) || (flgs && !flgo && flgn);
-        regs.x = CFLG = (flgs && !flgo) || (flgn && (!flgo || flgs));
+        VFLG = (flgs && flgn);
+        regs.x = CFLG = (flgs || flgn);
         if (((BYTE)(newv)) != 0) ZFLG = 0;
         NFLG = ((BYTE)(newv)) < 0;
-        put_byte(srca,newv);
 }}}}}
-void op_4030(ULONG opcode) /* NEGX */
+void op_4030(void) /* NEGX */
 {
         ULONG srcreg = (opcode & 7);
 {{      CPTR srca = get_disp_ea(regs.a[srcreg]);
 {       BYTE src = get_byte(srca);
 {       ULONG newv = 0 - src - (regs.x ? 1 : 0);
+        put_byte(srca,newv);
 {       int flgs = ((BYTE)(src)) < 0;
-        int flgo = ((BYTE)(0)) < 0;
         int flgn = ((BYTE)(newv)) < 0;
-        VFLG = (!flgs && flgo && !flgn) || (flgs && !flgo && flgn);
-        regs.x = CFLG = (flgs && !flgo) || (flgn && (!flgo || flgs));
+        VFLG = (flgs && flgn);
+        regs.x = CFLG = (flgs || flgn);
         if (((BYTE)(newv)) != 0) ZFLG = 0;
         NFLG = ((BYTE)(newv)) < 0;
-        put_byte(srca,newv);
 }}}}}}
-void op_4038(ULONG opcode) /* NEGX */
+void op_4038(void) /* NEGX */
 {
 {{      CPTR srca = (LONG)(WORD)nextiword();
         BYTE src = get_byte(srca);
 {       ULONG newv = 0 - src - (regs.x ? 1 : 0);
+        put_byte(srca,newv);
 {       int flgs = ((BYTE)(src)) < 0;
-        int flgo = ((BYTE)(0)) < 0;
         int flgn = ((BYTE)(newv)) < 0;
-        VFLG = (!flgs && flgo && !flgn) || (flgs && !flgo && flgn);
-        regs.x = CFLG = (flgs && !flgo) || (flgn && (!flgo || flgs));
+        VFLG = (flgs && flgn);
+        regs.x = CFLG = (flgs || flgn);
         if (((BYTE)(newv)) != 0) ZFLG = 0;
         NFLG = ((BYTE)(newv)) < 0;
-        put_byte(srca,newv);
 }}}}}
-void op_4039(ULONG opcode) /* NEGX */
+void op_4039(void) /* NEGX */
 {
 {{      CPTR srca = nextilong();
         BYTE src = get_byte(srca);
 {       ULONG newv = 0 - src - (regs.x ? 1 : 0);
+        put_byte(srca,newv);
 {       int flgs = ((BYTE)(src)) < 0;
-        int flgo = ((BYTE)(0)) < 0;
         int flgn = ((BYTE)(newv)) < 0;
-        VFLG = (!flgs && flgo && !flgn) || (flgs && !flgo && flgn);
-        regs.x = CFLG = (flgs && !flgo) || (flgn && (!flgo || flgs));
+        VFLG = (flgs && flgn);
+        regs.x = CFLG = (flgs || flgn);
         if (((BYTE)(newv)) != 0) ZFLG = 0;
         NFLG = ((BYTE)(newv)) < 0;
-        put_byte(srca,newv);
 }}}}}
-void op_4040(ULONG opcode) /* NEGX */
+void op_4040(void) /* NEGX */
 {
         ULONG srcreg = (opcode & 7);
 {{      WORD src = regs.d[srcreg].W.l;
 {       ULONG newv = 0 - src - (regs.x ? 1 : 0);
+        regs.d[srcreg].W.l = newv;
 {       int flgs = ((WORD)(src)) < 0;
-        int flgo = ((WORD)(0)) < 0;
         int flgn = ((WORD)(newv)) < 0;
-        VFLG = (!flgs && flgo && !flgn) || (flgs && !flgo && flgn);
-        regs.x = CFLG = (flgs && !flgo) || (flgn && (!flgo || flgs));
+        VFLG = (flgs && flgn);
+        regs.x = CFLG = (flgs || flgn);
         if (((WORD)(newv)) != 0) ZFLG = 0;
         NFLG = ((WORD)(newv)) < 0;
-        regs.d[srcreg].W.l = newv;
 }}}}}
-void op_4050(ULONG opcode) /* NEGX */
+void op_4050(void) /* NEGX */
 {
         ULONG srcreg = (opcode & 7);
 {{      CPTR srca = regs.a[srcreg];
         WORD src = get_word(srca);
 {       ULONG newv = 0 - src - (regs.x ? 1 : 0);
+        put_word(srca,newv);
 {       int flgs = ((WORD)(src)) < 0;
-        int flgo = ((WORD)(0)) < 0;
         int flgn = ((WORD)(newv)) < 0;
-        VFLG = (!flgs && flgo && !flgn) || (flgs && !flgo && flgn);
-        regs.x = CFLG = (flgs && !flgo) || (flgn && (!flgo || flgs));
+        VFLG = (flgs && flgn);
+        regs.x = CFLG = (flgs || flgn);
         if (((WORD)(newv)) != 0) ZFLG = 0;
         NFLG = ((WORD)(newv)) < 0;
-        put_word(srca,newv);
 }}}}}
-void op_4058(ULONG opcode) /* NEGX */
+void op_4058(void) /* NEGX */
 {
         ULONG srcreg = (opcode & 7);
 {{      CPTR srca = regs.a[srcreg];
         WORD src = get_word(srca);
 {       regs.a[srcreg] += 2;
 {       ULONG newv = 0 - src - (regs.x ? 1 : 0);
+        put_word(srca,newv);
 {       int flgs = ((WORD)(src)) < 0;
-        int flgo = ((WORD)(0)) < 0;
         int flgn = ((WORD)(newv)) < 0;
-        VFLG = (!flgs && flgo && !flgn) || (flgs && !flgo && flgn);
-        regs.x = CFLG = (flgs && !flgo) || (flgn && (!flgo || flgs));
+        VFLG = (flgs && flgn);
+        regs.x = CFLG = (flgs || flgn);
         if (((WORD)(newv)) != 0) ZFLG = 0;
         NFLG = ((WORD)(newv)) < 0;
-        put_word(srca,newv);
 }}}}}}
-void op_4060(ULONG opcode) /* NEGX */
+void op_4060(void) /* NEGX */
 {
         ULONG srcreg = (opcode & 7);
 {{      regs.a[srcreg] -= 2;
 {       CPTR srca = regs.a[srcreg];
         WORD src = get_word(srca);
 {       ULONG newv = 0 - src - (regs.x ? 1 : 0);
+        put_word(srca,newv);
 {       int flgs = ((WORD)(src)) < 0;
-        int flgo = ((WORD)(0)) < 0;
         int flgn = ((WORD)(newv)) < 0;
-        VFLG = (!flgs && flgo && !flgn) || (flgs && !flgo && flgn);
-        regs.x = CFLG = (flgs && !flgo) || (flgn && (!flgo || flgs));
+        VFLG = (flgs && flgn);
+        regs.x = CFLG = (flgs || flgn);
         if (((WORD)(newv)) != 0) ZFLG = 0;
         NFLG = ((WORD)(newv)) < 0;
-        put_word(srca,newv);
 }}}}}}
-void op_4068(ULONG opcode) /* NEGX */
+void op_4068(void) /* NEGX */
 {
         ULONG srcreg = (opcode & 7);
 {{      CPTR srca = regs.a[srcreg] + (LONG)(WORD)nextiword();
         WORD src = get_word(srca);
 {       ULONG newv = 0 - src - (regs.x ? 1 : 0);
+        put_word(srca,newv);
 {       int flgs = ((WORD)(src)) < 0;
-        int flgo = ((WORD)(0)) < 0;
         int flgn = ((WORD)(newv)) < 0;
-        VFLG = (!flgs && flgo && !flgn) || (flgs && !flgo && flgn);
-        regs.x = CFLG = (flgs && !flgo) || (flgn && (!flgo || flgs));
+        VFLG = (flgs && flgn);
+        regs.x = CFLG = (flgs || flgn);
         if (((WORD)(newv)) != 0) ZFLG = 0;
         NFLG = ((WORD)(newv)) < 0;
-        put_word(srca,newv);
 }}}}}
-void op_4070(ULONG opcode) /* NEGX */
+void op_4070(void) /* NEGX */
 {
         ULONG srcreg = (opcode & 7);
 {{      CPTR srca = get_disp_ea(regs.a[srcreg]);
 {       WORD src = get_word(srca);
 {       ULONG newv = 0 - src - (regs.x ? 1 : 0);
+        put_word(srca,newv);
 {       int flgs = ((WORD)(src)) < 0;
-        int flgo = ((WORD)(0)) < 0;
         int flgn = ((WORD)(newv)) < 0;
-        VFLG = (!flgs && flgo && !flgn) || (flgs && !flgo && flgn);
-        regs.x = CFLG = (flgs && !flgo) || (flgn && (!flgo || flgs));
+        VFLG = (flgs && flgn);
+        regs.x = CFLG = (flgs || flgn);
         if (((WORD)(newv)) != 0) ZFLG = 0;
         NFLG = ((WORD)(newv)) < 0;
-        put_word(srca,newv);
 }}}}}}
-void op_4078(ULONG opcode) /* NEGX */
+void op_4078(void) /* NEGX */
 {
 {{      CPTR srca = (LONG)(WORD)nextiword();
         WORD src = get_word(srca);
 {       ULONG newv = 0 - src - (regs.x ? 1 : 0);
+        put_word(srca,newv);
 {       int flgs = ((WORD)(src)) < 0;
-        int flgo = ((WORD)(0)) < 0;
         int flgn = ((WORD)(newv)) < 0;
-        VFLG = (!flgs && flgo && !flgn) || (flgs && !flgo && flgn);
-        regs.x = CFLG = (flgs && !flgo) || (flgn && (!flgo || flgs));
+        VFLG = (flgs && flgn);
+        regs.x = CFLG = (flgs || flgn);
         if (((WORD)(newv)) != 0) ZFLG = 0;
         NFLG = ((WORD)(newv)) < 0;
-        put_word(srca,newv);
 }}}}}
-void op_4079(ULONG opcode) /* NEGX */
+void op_4079(void) /* NEGX */
 {
 {{      CPTR srca = nextilong();
         WORD src = get_word(srca);
 {       ULONG newv = 0 - src - (regs.x ? 1 : 0);
+        put_word(srca,newv);
 {       int flgs = ((WORD)(src)) < 0;
-        int flgo = ((WORD)(0)) < 0;
         int flgn = ((WORD)(newv)) < 0;
-        VFLG = (!flgs && flgo && !flgn) || (flgs && !flgo && flgn);
-        regs.x = CFLG = (flgs && !flgo) || (flgn && (!flgo || flgs));
+        VFLG = (flgs && flgn);
+        regs.x = CFLG = (flgs || flgn);
         if (((WORD)(newv)) != 0) ZFLG = 0;
         NFLG = ((WORD)(newv)) < 0;
-        put_word(srca,newv);
 }}}}}
-void op_4080(ULONG opcode) /* NEGX */
+void op_4080(void) /* NEGX */
 {
         ULONG srcreg = (opcode & 7);
 {{      LONG src = regs.d[srcreg].D;
 {       ULONG newv = 0 - src - (regs.x ? 1 : 0);
+        regs.d[srcreg].D = (newv);
 {       int flgs = ((LONG)(src)) < 0;
-        int flgo = ((LONG)(0)) < 0;
         int flgn = ((LONG)(newv)) < 0;
-        VFLG = (!flgs && flgo && !flgn) || (flgs && !flgo && flgn);
-        regs.x = CFLG = (flgs && !flgo) || (flgn && (!flgo || flgs));
+        VFLG = (flgs && flgn);
+        regs.x = CFLG = (flgs || flgn);
         if (((LONG)(newv)) != 0) ZFLG = 0;
         NFLG = ((LONG)(newv)) < 0;
-        regs.d[srcreg].D = (newv);
 }}}}}
-void op_4090(ULONG opcode) /* NEGX */
+void op_4090(void) /* NEGX */
 {
         ULONG srcreg = (opcode & 7);
 {{      CPTR srca = regs.a[srcreg];
         LONG src = get_long(srca);
 {       ULONG newv = 0 - src - (regs.x ? 1 : 0);
+        put_long(srca,newv);
 {       int flgs = ((LONG)(src)) < 0;
-        int flgo = ((LONG)(0)) < 0;
         int flgn = ((LONG)(newv)) < 0;
-        VFLG = (!flgs && flgo && !flgn) || (flgs && !flgo && flgn);
-        regs.x = CFLG = (flgs && !flgo) || (flgn && (!flgo || flgs));
+        VFLG = (flgs && flgn);
+        regs.x = CFLG = (flgs || flgn);
         if (((LONG)(newv)) != 0) ZFLG = 0;
         NFLG = ((LONG)(newv)) < 0;
-        put_long(srca,newv);
 }}}}}
-void op_4098(ULONG opcode) /* NEGX */
+void op_4098(void) /* NEGX */
 {
         ULONG srcreg = (opcode & 7);
 {{      CPTR srca = regs.a[srcreg];
         LONG src = get_long(srca);
 {       regs.a[srcreg] += 4;
 {       ULONG newv = 0 - src - (regs.x ? 1 : 0);
+        put_long(srca,newv);
 {       int flgs = ((LONG)(src)) < 0;
-        int flgo = ((LONG)(0)) < 0;
         int flgn = ((LONG)(newv)) < 0;
-        VFLG = (!flgs && flgo && !flgn) || (flgs && !flgo && flgn);
-        regs.x = CFLG = (flgs && !flgo) || (flgn && (!flgo || flgs));
+        VFLG = (flgs && flgn);
+        regs.x = CFLG = (flgs || flgn);
         if (((LONG)(newv)) != 0) ZFLG = 0;
         NFLG = ((LONG)(newv)) < 0;
-        put_long(srca,newv);
 }}}}}}
-void op_40a0(ULONG opcode) /* NEGX */
+void op_40a0(void) /* NEGX */
 {
         ULONG srcreg = (opcode & 7);
 {{      regs.a[srcreg] -= 4;
 {       CPTR srca = regs.a[srcreg];
         LONG src = get_long(srca);
 {       ULONG newv = 0 - src - (regs.x ? 1 : 0);
+        put_long(srca,newv);
 {       int flgs = ((LONG)(src)) < 0;
-        int flgo = ((LONG)(0)) < 0;
         int flgn = ((LONG)(newv)) < 0;
-        VFLG = (!flgs && flgo && !flgn) || (flgs && !flgo && flgn);
-        regs.x = CFLG = (flgs && !flgo) || (flgn && (!flgo || flgs));
+        VFLG = (flgs && flgn);
+        regs.x = CFLG = (flgs || flgn);
         if (((LONG)(newv)) != 0) ZFLG = 0;
         NFLG = ((LONG)(newv)) < 0;
-        put_long(srca,newv);
 }}}}}}
-void op_40a8(ULONG opcode) /* NEGX */
+void op_40a8(void) /* NEGX */
 {
         ULONG srcreg = (opcode & 7);
 {{      CPTR srca = regs.a[srcreg] + (LONG)(WORD)nextiword();
         LONG src = get_long(srca);
 {       ULONG newv = 0 - src - (regs.x ? 1 : 0);
+        put_long(srca,newv);
 {       int flgs = ((LONG)(src)) < 0;
-        int flgo = ((LONG)(0)) < 0;
         int flgn = ((LONG)(newv)) < 0;
-        VFLG = (!flgs && flgo && !flgn) || (flgs && !flgo && flgn);
-        regs.x = CFLG = (flgs && !flgo) || (flgn && (!flgo || flgs));
+        VFLG = (flgs && flgn);
+        regs.x = CFLG = (flgs || flgn);
         if (((LONG)(newv)) != 0) ZFLG = 0;
         NFLG = ((LONG)(newv)) < 0;
-        put_long(srca,newv);
 }}}}}
-void op_40b0(ULONG opcode) /* NEGX */
+void op_40b0(void) /* NEGX */
 {
         ULONG srcreg = (opcode & 7);
 {{      CPTR srca = get_disp_ea(regs.a[srcreg]);
 {       LONG src = get_long(srca);
 {       ULONG newv = 0 - src - (regs.x ? 1 : 0);
+        put_long(srca,newv);
 {       int flgs = ((LONG)(src)) < 0;
-        int flgo = ((LONG)(0)) < 0;
         int flgn = ((LONG)(newv)) < 0;
-        VFLG = (!flgs && flgo && !flgn) || (flgs && !flgo && flgn);
-        regs.x = CFLG = (flgs && !flgo) || (flgn && (!flgo || flgs));
+        VFLG = (flgs && flgn);
+        regs.x = CFLG = (flgs || flgn);
         if (((LONG)(newv)) != 0) ZFLG = 0;
         NFLG = ((LONG)(newv)) < 0;
-        put_long(srca,newv);
 }}}}}}
-void op_40b8(ULONG opcode) /* NEGX */
+void op_40b8(void) /* NEGX */
 {
 {{      CPTR srca = (LONG)(WORD)nextiword();
         LONG src = get_long(srca);
 {       ULONG newv = 0 - src - (regs.x ? 1 : 0);
+        put_long(srca,newv);
 {       int flgs = ((LONG)(src)) < 0;
-        int flgo = ((LONG)(0)) < 0;
         int flgn = ((LONG)(newv)) < 0;
-        VFLG = (!flgs && flgo && !flgn) || (flgs && !flgo && flgn);
-        regs.x = CFLG = (flgs && !flgo) || (flgn && (!flgo || flgs));
+        VFLG = (flgs && flgn);
+        regs.x = CFLG = (flgs || flgn);
         if (((LONG)(newv)) != 0) ZFLG = 0;
         NFLG = ((LONG)(newv)) < 0;
-        put_long(srca,newv);
 }}}}}
-void op_40b9(ULONG opcode) /* NEGX */
+void op_40b9(void) /* NEGX */
 {
 {{      CPTR srca = nextilong();
         LONG src = get_long(srca);
 {       ULONG newv = 0 - src - (regs.x ? 1 : 0);
+        put_long(srca,newv);
 {       int flgs = ((LONG)(src)) < 0;
-        int flgo = ((LONG)(0)) < 0;
         int flgn = ((LONG)(newv)) < 0;
-        VFLG = (!flgs && flgo && !flgn) || (flgs && !flgo && flgn);
-        regs.x = CFLG = (flgs && !flgo) || (flgn && (!flgo || flgs));
+        VFLG = (flgs && flgn);
+        regs.x = CFLG = (flgs || flgn);
         if (((LONG)(newv)) != 0) ZFLG = 0;
         NFLG = ((LONG)(newv)) < 0;
-        put_long(srca,newv);
 }}}}}
-void op_40c0(ULONG opcode) /* MVSR2 */
+void op_40c0(void) /* MVSR2 */
 {
         ULONG srcreg = (opcode & 7);
 {{      MakeSR();
         regs.d[srcreg].W.l = regs.sr;
 }}}
-void op_40d0(ULONG opcode) /* MVSR2 */
+void op_40d0(void) /* MVSR2 */
 {
         ULONG srcreg = (opcode & 7);
 {{      CPTR srca = regs.a[srcreg];
         MakeSR();
         put_word(srca,regs.sr);
 }}}
-void op_40d8(ULONG opcode) /* MVSR2 */
+void op_40d8(void) /* MVSR2 */
 {
         ULONG srcreg = (opcode & 7);
 {{      CPTR srca = regs.a[srcreg];
@@ -380,7 +356,7 @@ void op_40d8(ULONG opcode) /* MVSR2 */
         MakeSR();
         put_word(srca,regs.sr);
 }}}}
-void op_40e0(ULONG opcode) /* MVSR2 */
+void op_40e0(void) /* MVSR2 */
 {
         ULONG srcreg = (opcode & 7);
 {{      regs.a[srcreg] -= 2;
@@ -388,33 +364,33 @@ void op_40e0(ULONG opcode) /* MVSR2 */
         MakeSR();
         put_word(srca,regs.sr);
 }}}}
-void op_40e8(ULONG opcode) /* MVSR2 */
+void op_40e8(void) /* MVSR2 */
 {
         ULONG srcreg = (opcode & 7);
 {{      CPTR srca = regs.a[srcreg] + (LONG)(WORD)nextiword();
         MakeSR();
         put_word(srca,regs.sr);
 }}}
-void op_40f0(ULONG opcode) /* MVSR2 */
+void op_40f0(void) /* MVSR2 */
 {
         ULONG srcreg = (opcode & 7);
 {{      CPTR srca = get_disp_ea(regs.a[srcreg]);
         MakeSR();
         put_word(srca,regs.sr);
 }}}
-void op_40f8(ULONG opcode) /* MVSR2 */
+void op_40f8(void) /* MVSR2 */
 {
 {{      CPTR srca = (LONG)(WORD)nextiword();
         MakeSR();
         put_word(srca,regs.sr);
 }}}
-void op_40f9(ULONG opcode) /* MVSR2 */
+void op_40f9(void) /* MVSR2 */
 {
 {{      CPTR srca = nextilong();
         MakeSR();
         put_word(srca,regs.sr);
 }}}
-void op_4100(ULONG opcode) /* CHK */
+void op_4100(void) /* CHK */
 {
         ULONG srcreg = (opcode & 7);
         ULONG dstreg = (opcode >> 9) & 7;
@@ -424,7 +400,7 @@ void op_4100(ULONG opcode) /* CHK */
         if ((LONG)dst < 0) { NFLG=1; Exception(6,oldpc-2); }
         else if (dst > src) { NFLG=0; Exception(6,oldpc-2); }
 }}}}
-void op_4110(ULONG opcode) /* CHK */
+void op_4110(void) /* CHK */
 {
         ULONG srcreg = (opcode & 7);
         ULONG dstreg = (opcode >> 9) & 7;
@@ -435,7 +411,7 @@ void op_4110(ULONG opcode) /* CHK */
         if ((LONG)dst < 0) { NFLG=1; Exception(6,oldpc-2); }
         else if (dst > src) { NFLG=0; Exception(6,oldpc-2); }
 }}}}
-void op_4118(ULONG opcode) /* CHK */
+void op_4118(void) /* CHK */
 {
         ULONG srcreg = (opcode & 7);
         ULONG dstreg = (opcode >> 9) & 7;
@@ -447,7 +423,7 @@ void op_4118(ULONG opcode) /* CHK */
         if ((LONG)dst < 0) { NFLG=1; Exception(6,oldpc-2); }
         else if (dst > src) { NFLG=0; Exception(6,oldpc-2); }
 }}}}}
-void op_4120(ULONG opcode) /* CHK */
+void op_4120(void) /* CHK */
 {
         ULONG srcreg = (opcode & 7);
         ULONG dstreg = (opcode >> 9) & 7;
@@ -459,7 +435,7 @@ void op_4120(ULONG opcode) /* CHK */
         if ((LONG)dst < 0) { NFLG=1; Exception(6,oldpc-2); }
         else if (dst > src) { NFLG=0; Exception(6,oldpc-2); }
 }}}}}
-void op_4128(ULONG opcode) /* CHK */
+void op_4128(void) /* CHK */
 {
         ULONG srcreg = (opcode & 7);
         ULONG dstreg = (opcode >> 9) & 7;
@@ -470,7 +446,7 @@ void op_4128(ULONG opcode) /* CHK */
         if ((LONG)dst < 0) { NFLG=1; Exception(6,oldpc-2); }
         else if (dst > src) { NFLG=0; Exception(6,oldpc-2); }
 }}}}
-void op_4130(ULONG opcode) /* CHK */
+void op_4130(void) /* CHK */
 {
         ULONG srcreg = (opcode & 7);
         ULONG dstreg = (opcode >> 9) & 7;
@@ -481,7 +457,7 @@ void op_4130(ULONG opcode) /* CHK */
         if ((LONG)dst < 0) { NFLG=1; Exception(6,oldpc-2); }
         else if (dst > src) { NFLG=0; Exception(6,oldpc-2); }
 }}}}}
-void op_4138(ULONG opcode) /* CHK */
+void op_4138(void) /* CHK */
 {
         ULONG dstreg = (opcode >> 9) & 7;
 {       CPTR oldpc = m68k_getpc();
@@ -491,7 +467,7 @@ void op_4138(ULONG opcode) /* CHK */
         if ((LONG)dst < 0) { NFLG=1; Exception(6,oldpc-2); }
         else if (dst > src) { NFLG=0; Exception(6,oldpc-2); }
 }}}}
-void op_4139(ULONG opcode) /* CHK */
+void op_4139(void) /* CHK */
 {
         ULONG dstreg = (opcode >> 9) & 7;
 {       CPTR oldpc = m68k_getpc();
@@ -501,7 +477,7 @@ void op_4139(ULONG opcode) /* CHK */
         if ((LONG)dst < 0) { NFLG=1; Exception(6,oldpc-2); }
         else if (dst > src) { NFLG=0; Exception(6,oldpc-2); }
 }}}}
-void op_413a(ULONG opcode) /* CHK */
+void op_413a(void) /* CHK */
 {
         ULONG dstreg = (opcode >> 9) & 7;
 {       CPTR oldpc = m68k_getpc();
@@ -512,7 +488,7 @@ void op_413a(ULONG opcode) /* CHK */
         if ((LONG)dst < 0) { NFLG=1; Exception(6,oldpc-2); }
         else if (dst > src) { NFLG=0; Exception(6,oldpc-2); }
 }}}}}
-void op_413b(ULONG opcode) /* CHK */
+void op_413b(void) /* CHK */
 {
         ULONG dstreg = (opcode >> 9) & 7;
 {       CPTR oldpc = m68k_getpc();
@@ -522,7 +498,7 @@ void op_413b(ULONG opcode) /* CHK */
         if ((LONG)dst < 0) { NFLG=1; Exception(6,oldpc-2); }
         else if (dst > src) { NFLG=0; Exception(6,oldpc-2); }
 }}}}}
-void op_413c(ULONG opcode) /* CHK */
+void op_413c(void) /* CHK */
 {
         ULONG dstreg = (opcode >> 9) & 7;
 {       CPTR oldpc = m68k_getpc();
@@ -531,7 +507,7 @@ void op_413c(ULONG opcode) /* CHK */
         if ((LONG)dst < 0) { NFLG=1; Exception(6,oldpc-2); }
         else if (dst > src) { NFLG=0; Exception(6,oldpc-2); }
 }}}}
-void op_4180(ULONG opcode) /* CHK */
+void op_4180(void) /* CHK */
 {
         ULONG srcreg = (opcode & 7);
         ULONG dstreg = (opcode >> 9) & 7;
@@ -541,7 +517,7 @@ void op_4180(ULONG opcode) /* CHK */
         if ((LONG)dst < 0) { NFLG=1; Exception(6,oldpc-2); }
         else if (dst > src) { NFLG=0; Exception(6,oldpc-2); }
 }}}}
-void op_4190(ULONG opcode) /* CHK */
+void op_4190(void) /* CHK */
 {
         ULONG srcreg = (opcode & 7);
         ULONG dstreg = (opcode >> 9) & 7;
@@ -552,7 +528,7 @@ void op_4190(ULONG opcode) /* CHK */
         if ((LONG)dst < 0) { NFLG=1; Exception(6,oldpc-2); }
         else if (dst > src) { NFLG=0; Exception(6,oldpc-2); }
 }}}}
-void op_4198(ULONG opcode) /* CHK */
+void op_4198(void) /* CHK */
 {
         ULONG srcreg = (opcode & 7);
         ULONG dstreg = (opcode >> 9) & 7;
@@ -564,7 +540,7 @@ void op_4198(ULONG opcode) /* CHK */
         if ((LONG)dst < 0) { NFLG=1; Exception(6,oldpc-2); }
         else if (dst > src) { NFLG=0; Exception(6,oldpc-2); }
 }}}}}
-void op_41a0(ULONG opcode) /* CHK */
+void op_41a0(void) /* CHK */
 {
         ULONG srcreg = (opcode & 7);
         ULONG dstreg = (opcode >> 9) & 7;
@@ -576,7 +552,7 @@ void op_41a0(ULONG opcode) /* CHK */
         if ((LONG)dst < 0) { NFLG=1; Exception(6,oldpc-2); }
         else if (dst > src) { NFLG=0; Exception(6,oldpc-2); }
 }}}}}
-void op_41a8(ULONG opcode) /* CHK */
+void op_41a8(void) /* CHK */
 {
         ULONG srcreg = (opcode & 7);
         ULONG dstreg = (opcode >> 9) & 7;
@@ -587,7 +563,7 @@ void op_41a8(ULONG opcode) /* CHK */
         if ((LONG)dst < 0) { NFLG=1; Exception(6,oldpc-2); }
         else if (dst > src) { NFLG=0; Exception(6,oldpc-2); }
 }}}}
-void op_41b0(ULONG opcode) /* CHK */
+void op_41b0(void) /* CHK */
 {
         ULONG srcreg = (opcode & 7);
         ULONG dstreg = (opcode >> 9) & 7;
@@ -598,7 +574,7 @@ void op_41b0(ULONG opcode) /* CHK */
         if ((LONG)dst < 0) { NFLG=1; Exception(6,oldpc-2); }
         else if (dst > src) { NFLG=0; Exception(6,oldpc-2); }
 }}}}}
-void op_41b8(ULONG opcode) /* CHK */
+void op_41b8(void) /* CHK */
 {
         ULONG dstreg = (opcode >> 9) & 7;
 {       CPTR oldpc = m68k_getpc();
@@ -608,7 +584,7 @@ void op_41b8(ULONG opcode) /* CHK */
         if ((LONG)dst < 0) { NFLG=1; Exception(6,oldpc-2); }
         else if (dst > src) { NFLG=0; Exception(6,oldpc-2); }
 }}}}
-void op_41b9(ULONG opcode) /* CHK */
+void op_41b9(void) /* CHK */
 {
         ULONG dstreg = (opcode >> 9) & 7;
 {       CPTR oldpc = m68k_getpc();
@@ -618,7 +594,7 @@ void op_41b9(ULONG opcode) /* CHK */
         if ((LONG)dst < 0) { NFLG=1; Exception(6,oldpc-2); }
         else if (dst > src) { NFLG=0; Exception(6,oldpc-2); }
 }}}}
-void op_41ba(ULONG opcode) /* CHK */
+void op_41ba(void) /* CHK */
 {
         ULONG dstreg = (opcode >> 9) & 7;
 {       CPTR oldpc = m68k_getpc();
@@ -629,7 +605,7 @@ void op_41ba(ULONG opcode) /* CHK */
         if ((LONG)dst < 0) { NFLG=1; Exception(6,oldpc-2); }
         else if (dst > src) { NFLG=0; Exception(6,oldpc-2); }
 }}}}}
-void op_41bb(ULONG opcode) /* CHK */
+void op_41bb(void) /* CHK */
 {
         ULONG dstreg = (opcode >> 9) & 7;
 {       CPTR oldpc = m68k_getpc();
@@ -639,7 +615,7 @@ void op_41bb(ULONG opcode) /* CHK */
         if ((LONG)dst < 0) { NFLG=1; Exception(6,oldpc-2); }
         else if (dst > src) { NFLG=0; Exception(6,oldpc-2); }
 }}}}}
-void op_41bc(ULONG opcode) /* CHK */
+void op_41bc(void) /* CHK */
 {
         ULONG dstreg = (opcode >> 9) & 7;
 {       CPTR oldpc = m68k_getpc();
@@ -648,623 +624,575 @@ void op_41bc(ULONG opcode) /* CHK */
         if ((LONG)dst < 0) { NFLG=1; Exception(6,oldpc-2); }
         else if (dst > src) { NFLG=0; Exception(6,oldpc-2); }
 }}}}
-void op_41d0(ULONG opcode) /* LEA */
+void op_41d0(void) /* LEA */
 {
         ULONG srcreg = (opcode & 7);
         ULONG dstreg = (opcode >> 9) & 7;
 {{      CPTR srca = regs.a[srcreg];
 {       regs.a[dstreg] = (srca);
 }}}}
-void op_41e8(ULONG opcode) /* LEA */
+void op_41e8(void) /* LEA */
 {
         ULONG srcreg = (opcode & 7);
         ULONG dstreg = (opcode >> 9) & 7;
 {{      CPTR srca = regs.a[srcreg] + (LONG)(WORD)nextiword();
 {       regs.a[dstreg] = (srca);
 }}}}
-void op_41f0(ULONG opcode) /* LEA */
+void op_41f0(void) /* LEA */
 {
         ULONG srcreg = (opcode & 7);
         ULONG dstreg = (opcode >> 9) & 7;
 {{      CPTR srca = get_disp_ea(regs.a[srcreg]);
 {       regs.a[dstreg] = (srca);
 }}}}
-void op_41f8(ULONG opcode) /* LEA */
+void op_41f8(void) /* LEA */
 {
         ULONG dstreg = (opcode >> 9) & 7;
 {{      CPTR srca = (LONG)(WORD)nextiword();
 {       regs.a[dstreg] = (srca);
 }}}}
-void op_41f9(ULONG opcode) /* LEA */
+void op_41f9(void) /* LEA */
 {
         ULONG dstreg = (opcode >> 9) & 7;
 {{      CPTR srca = nextilong();
 {       regs.a[dstreg] = (srca);
 }}}}
-void op_41fa(ULONG opcode) /* LEA */
+void op_41fa(void) /* LEA */
 {
         ULONG dstreg = (opcode >> 9) & 7;
 {{      CPTR srca = m68k_getpc();
         srca += (LONG)(WORD)nextiword();
 {       regs.a[dstreg] = (srca);
 }}}}
-void op_41fb(ULONG opcode) /* LEA */
+void op_41fb(void) /* LEA */
 {
         ULONG dstreg = (opcode >> 9) & 7;
 {{      CPTR srca = get_disp_ea(m68k_getpc());
 {       regs.a[dstreg] = (srca);
 }}}}
-void op_4200(ULONG opcode) /* CLR */
+void op_4200(void) /* CLR */
 {
         ULONG srcreg = (opcode & 7);
-{{      CLEARVC;
-        ZFLG = ((BYTE)(0)) == 0;
-        NFLG = ((BYTE)(0)) < 0;
         regs.d[srcreg].B.l = 0;
+{{      CLEARFLGS;
+        ZFLG = ZTRUE ;
 }}}
-void op_4210(ULONG opcode) /* CLR */
+void op_4210(void) /* CLR */
 {
         ULONG srcreg = (opcode & 7);
 {{      CPTR srca = regs.a[srcreg];
-        CLEARVC;
-        ZFLG = ((BYTE)(0)) == 0;
-        NFLG = ((BYTE)(0)) < 0;
         put_byte(srca,0);
+        CLEARFLGS;
+        ZFLG = ZTRUE ;
 }}}
-void op_4218(ULONG opcode) /* CLR */
+void op_4218(void) /* CLR */
 {
         ULONG srcreg = (opcode & 7);
 {{      CPTR srca = regs.a[srcreg];
 {       regs.a[srcreg] += areg_byteinc[srcreg];
-        CLEARVC;
-        ZFLG = ((BYTE)(0)) == 0;
-        NFLG = ((BYTE)(0)) < 0;
         put_byte(srca,0);
+        CLEARFLGS;
+        ZFLG = ZTRUE ;
 }}}}
-void op_4220(ULONG opcode) /* CLR */
+void op_4220(void) /* CLR */
 {
         ULONG srcreg = (opcode & 7);
 {{      regs.a[srcreg] -= areg_byteinc[srcreg];
 {       CPTR srca = regs.a[srcreg];
-        CLEARVC;
-        ZFLG = ((BYTE)(0)) == 0;
-        NFLG = ((BYTE)(0)) < 0;
         put_byte(srca,0);
+        CLEARFLGS;
+        ZFLG = ZTRUE ;
 }}}}
-void op_4228(ULONG opcode) /* CLR */
+void op_4228(void) /* CLR */
 {
         ULONG srcreg = (opcode & 7);
 {{      CPTR srca = regs.a[srcreg] + (LONG)(WORD)nextiword();
-        CLEARVC;
-        ZFLG = ((BYTE)(0)) == 0;
-        NFLG = ((BYTE)(0)) < 0;
         put_byte(srca,0);
+        CLEARFLGS;
+        ZFLG = ZTRUE ;
 }}}
-void op_4230(ULONG opcode) /* CLR */
+void op_4230(void) /* CLR */
 {
         ULONG srcreg = (opcode & 7);
 {{      CPTR srca = get_disp_ea(regs.a[srcreg]);
-        CLEARVC;
-        ZFLG = ((BYTE)(0)) == 0;
-        NFLG = ((BYTE)(0)) < 0;
         put_byte(srca,0);
+        CLEARFLGS;
+        ZFLG = ZTRUE ;
 }}}
-void op_4238(ULONG opcode) /* CLR */
+void op_4238(void) /* CLR */
 {
 {{      CPTR srca = (LONG)(WORD)nextiword();
-        CLEARVC;
-        ZFLG = ((BYTE)(0)) == 0;
-        NFLG = ((BYTE)(0)) < 0;
         put_byte(srca,0);
+        CLEARFLGS;
+        ZFLG = ZTRUE ;
 }}}
-void op_4239(ULONG opcode) /* CLR */
+void op_4239(void) /* CLR */
 {
 {{      CPTR srca = nextilong();
-        CLEARVC;
-        ZFLG = ((BYTE)(0)) == 0;
-        NFLG = ((BYTE)(0)) < 0;
         put_byte(srca,0);
+        CLEARFLGS;
+        ZFLG = ZTRUE ;
 }}}
-void op_4240(ULONG opcode) /* CLR */
+void op_4240(void) /* CLR */
 {
         ULONG srcreg = (opcode & 7);
-{{      CLEARVC;
-        ZFLG = ((WORD)(0)) == 0;
-        NFLG = ((WORD)(0)) < 0;
         regs.d[srcreg].W.l = 0;
+{{      CLEARFLGS;
+        ZFLG = ZTRUE ;
 }}}
-void op_4250(ULONG opcode) /* CLR */
+void op_4250(void) /* CLR */
 {
         ULONG srcreg = (opcode & 7);
 {{      CPTR srca = regs.a[srcreg];
-        CLEARVC;
-        ZFLG = ((WORD)(0)) == 0;
-        NFLG = ((WORD)(0)) < 0;
         put_word(srca,0);
+        CLEARFLGS;
+        ZFLG = ZTRUE ;
 }}}
-void op_4258(ULONG opcode) /* CLR */
+void op_4258(void) /* CLR */
 {
         ULONG srcreg = (opcode & 7);
 {{      CPTR srca = regs.a[srcreg];
 {       regs.a[srcreg] += 2;
-        CLEARVC;
-        ZFLG = ((WORD)(0)) == 0;
-        NFLG = ((WORD)(0)) < 0;
         put_word(srca,0);
+        CLEARFLGS;
+        ZFLG = ZTRUE ;
 }}}}
-void op_4260(ULONG opcode) /* CLR */
+void op_4260(void) /* CLR */
 {
         ULONG srcreg = (opcode & 7);
 {{      regs.a[srcreg] -= 2;
 {       CPTR srca = regs.a[srcreg];
-        CLEARVC;
-        ZFLG = ((WORD)(0)) == 0;
-        NFLG = ((WORD)(0)) < 0;
         put_word(srca,0);
+        CLEARFLGS;
+        ZFLG = ZTRUE ;
 }}}}
-void op_4268(ULONG opcode) /* CLR */
+void op_4268(void) /* CLR */
 {
         ULONG srcreg = (opcode & 7);
 {{      CPTR srca = regs.a[srcreg] + (LONG)(WORD)nextiword();
-        CLEARVC;
-        ZFLG = ((WORD)(0)) == 0;
-        NFLG = ((WORD)(0)) < 0;
         put_word(srca,0);
+        CLEARFLGS;
+        ZFLG = ZTRUE ;
 }}}
-void op_4270(ULONG opcode) /* CLR */
+void op_4270(void) /* CLR */
 {
         ULONG srcreg = (opcode & 7);
 {{      CPTR srca = get_disp_ea(regs.a[srcreg]);
-        CLEARVC;
-        ZFLG = ((WORD)(0)) == 0;
-        NFLG = ((WORD)(0)) < 0;
         put_word(srca,0);
+        CLEARFLGS;
+        ZFLG = ZTRUE ;
 }}}
-void op_4278(ULONG opcode) /* CLR */
+void op_4278(void) /* CLR */
 {
 {{      CPTR srca = (LONG)(WORD)nextiword();
-        CLEARVC;
-        ZFLG = ((WORD)(0)) == 0;
-        NFLG = ((WORD)(0)) < 0;
         put_word(srca,0);
+        CLEARFLGS;
+        ZFLG = ZTRUE ;
 }}}
-void op_4279(ULONG opcode) /* CLR */
+void op_4279(void) /* CLR */
 {
 {{      CPTR srca = nextilong();
-        CLEARVC;
-        ZFLG = ((WORD)(0)) == 0;
-        NFLG = ((WORD)(0)) < 0;
         put_word(srca,0);
+        CLEARFLGS;
+        ZFLG = ZTRUE ;
 }}}
-void op_4280(ULONG opcode) /* CLR */
+void op_4280(void) /* CLR */
 {
         ULONG srcreg = (opcode & 7);
-{{      CLEARVC;
-        ZFLG = ((LONG)(0)) == 0;
-        NFLG = ((LONG)(0)) < 0;
         regs.d[srcreg].D = (0);
+{{      CLEARFLGS;
+        ZFLG = ZTRUE ;
 }}}
-void op_4290(ULONG opcode) /* CLR */
+void op_4290(void) /* CLR */
 {
         ULONG srcreg = (opcode & 7);
 {{      CPTR srca = regs.a[srcreg];
-        CLEARVC;
-        ZFLG = ((LONG)(0)) == 0;
-        NFLG = ((LONG)(0)) < 0;
         put_long(srca,0);
+        CLEARFLGS;
+        ZFLG = ZTRUE ;
 }}}
-void op_4298(ULONG opcode) /* CLR */
+void op_4298(void) /* CLR */
 {
         ULONG srcreg = (opcode & 7);
 {{      CPTR srca = regs.a[srcreg];
 {       regs.a[srcreg] += 4;
-        CLEARVC;
-        ZFLG = ((LONG)(0)) == 0;
-        NFLG = ((LONG)(0)) < 0;
         put_long(srca,0);
+        CLEARFLGS;
+        ZFLG = ZTRUE ;
 }}}}
-void op_42a0(ULONG opcode) /* CLR */
+void op_42a0(void) /* CLR */
 {
         ULONG srcreg = (opcode & 7);
 {{      regs.a[srcreg] -= 4;
 {       CPTR srca = regs.a[srcreg];
-        CLEARVC;
-        ZFLG = ((LONG)(0)) == 0;
-        NFLG = ((LONG)(0)) < 0;
         put_long(srca,0);
+        CLEARFLGS;
+        ZFLG = ZTRUE ;
 }}}}
-void op_42a8(ULONG opcode) /* CLR */
+void op_42a8(void) /* CLR */
 {
         ULONG srcreg = (opcode & 7);
 {{      CPTR srca = regs.a[srcreg] + (LONG)(WORD)nextiword();
-        CLEARVC;
-        ZFLG = ((LONG)(0)) == 0;
-        NFLG = ((LONG)(0)) < 0;
         put_long(srca,0);
+        CLEARFLGS;
+        ZFLG = ZTRUE ;
 }}}
-void op_42b0(ULONG opcode) /* CLR */
+void op_42b0(void) /* CLR */
 {
         ULONG srcreg = (opcode & 7);
 {{      CPTR srca = get_disp_ea(regs.a[srcreg]);
-        CLEARVC;
-        ZFLG = ((LONG)(0)) == 0;
-        NFLG = ((LONG)(0)) < 0;
         put_long(srca,0);
+        CLEARFLGS;
+        ZFLG = ZTRUE ;
 }}}
-void op_42b8(ULONG opcode) /* CLR */
+void op_42b8(void) /* CLR */
 {
 {{      CPTR srca = (LONG)(WORD)nextiword();
-        CLEARVC;
-        ZFLG = ((LONG)(0)) == 0;
-        NFLG = ((LONG)(0)) < 0;
         put_long(srca,0);
+        CLEARFLGS;
+        ZFLG = ZTRUE ;
 }}}
-void op_42b9(ULONG opcode) /* CLR */
+void op_42b9(void) /* CLR */
 {
 {{      CPTR srca = nextilong();
-        CLEARVC;
-        ZFLG = ((LONG)(0)) == 0;
-        NFLG = ((LONG)(0)) < 0;
         put_long(srca,0);
+        CLEARFLGS;
+        ZFLG = ZTRUE ;
 }}}
-void op_4400(ULONG opcode) /* NEG */
+void op_4400(void) /* NEG */
 {
         ULONG srcreg = (opcode & 7);
 {{      BYTE src = regs.d[srcreg].B.l;
 {{ULONG dst = ((BYTE)(0)) - ((BYTE)(src));
-{       int flgs = ((BYTE)(src)) < 0;
-        int flgo = ((BYTE)(0)) < 0;
-        int flgn = ((BYTE)(dst)) < 0;
+        regs.d[srcreg].B.l = dst;
         ZFLG = ((BYTE)(dst)) == 0;
-        VFLG = (flgs != flgo) && (flgn != flgo);
+{       int flgs = ((BYTE)(src)) < 0;
+        int flgn = ((BYTE)(dst)) < 0;
+        VFLG = (flgs && flgn);
         CFLG = regs.x = ((UBYTE)(src)) > ((UBYTE)(0));
         NFLG = flgn != 0;
-        regs.d[srcreg].B.l = dst;
 }}}}}}
-void op_4410(ULONG opcode) /* NEG */
+void op_4410(void) /* NEG */
 {
         ULONG srcreg = (opcode & 7);
 {{      CPTR srca = regs.a[srcreg];
         BYTE src = get_byte(srca);
 {{ULONG dst = ((BYTE)(0)) - ((BYTE)(src));
-{       int flgs = ((BYTE)(src)) < 0;
-        int flgo = ((BYTE)(0)) < 0;
-        int flgn = ((BYTE)(dst)) < 0;
+        put_byte(srca,dst);
         ZFLG = ((BYTE)(dst)) == 0;
-        VFLG = (flgs != flgo) && (flgn != flgo);
+{       int flgs = ((BYTE)(src)) < 0;
+        int flgn = ((BYTE)(dst)) < 0;
+        VFLG = (flgs && flgn);
         CFLG = regs.x = ((UBYTE)(src)) > ((UBYTE)(0));
         NFLG = flgn != 0;
-        put_byte(srca,dst);
 }}}}}}
-void op_4418(ULONG opcode) /* NEG */
+void op_4418(void) /* NEG */
 {
         ULONG srcreg = (opcode & 7);
 {{      CPTR srca = regs.a[srcreg];
         BYTE src = get_byte(srca);
 {       regs.a[srcreg] += areg_byteinc[srcreg];
 {{ULONG dst = ((BYTE)(0)) - ((BYTE)(src));
-{       int flgs = ((BYTE)(src)) < 0;
-        int flgo = ((BYTE)(0)) < 0;
-        int flgn = ((BYTE)(dst)) < 0;
+        put_byte(srca,dst);
         ZFLG = ((BYTE)(dst)) == 0;
-        VFLG = (flgs != flgo) && (flgn != flgo);
+{       int flgs = ((BYTE)(src)) < 0;
+        int flgn = ((BYTE)(dst)) < 0;
+        VFLG = (flgs && flgn);
         CFLG = regs.x = ((UBYTE)(src)) > ((UBYTE)(0));
         NFLG = flgn != 0;
-        put_byte(srca,dst);
 }}}}}}}
-void op_4420(ULONG opcode) /* NEG */
+void op_4420(void) /* NEG */
 {
         ULONG srcreg = (opcode & 7);
 {{      regs.a[srcreg] -= areg_byteinc[srcreg];
 {       CPTR srca = regs.a[srcreg];
         BYTE src = get_byte(srca);
 {{ULONG dst = ((BYTE)(0)) - ((BYTE)(src));
-{       int flgs = ((BYTE)(src)) < 0;
-        int flgo = ((BYTE)(0)) < 0;
-        int flgn = ((BYTE)(dst)) < 0;
+        put_byte(srca,dst);
         ZFLG = ((BYTE)(dst)) == 0;
-        VFLG = (flgs != flgo) && (flgn != flgo);
+{       int flgs = ((BYTE)(src)) < 0;
+        int flgn = ((BYTE)(dst)) < 0;
+        VFLG = (flgs && flgn);
         CFLG = regs.x = ((UBYTE)(src)) > ((UBYTE)(0));
         NFLG = flgn != 0;
-        put_byte(srca,dst);
 }}}}}}}
-void op_4428(ULONG opcode) /* NEG */
+void op_4428(void) /* NEG */
 {
         ULONG srcreg = (opcode & 7);
 {{      CPTR srca = regs.a[srcreg] + (LONG)(WORD)nextiword();
         BYTE src = get_byte(srca);
 {{ULONG dst = ((BYTE)(0)) - ((BYTE)(src));
-{       int flgs = ((BYTE)(src)) < 0;
-        int flgo = ((BYTE)(0)) < 0;
-        int flgn = ((BYTE)(dst)) < 0;
+        put_byte(srca,dst);
         ZFLG = ((BYTE)(dst)) == 0;
-        VFLG = (flgs != flgo) && (flgn != flgo);
+{       int flgs = ((BYTE)(src)) < 0;
+        int flgn = ((BYTE)(dst)) < 0;
+        VFLG = (flgs && flgn);
         CFLG = regs.x = ((UBYTE)(src)) > ((UBYTE)(0));
         NFLG = flgn != 0;
-        put_byte(srca,dst);
 }}}}}}
-void op_4430(ULONG opcode) /* NEG */
+void op_4430(void) /* NEG */
 {
         ULONG srcreg = (opcode & 7);
 {{      CPTR srca = get_disp_ea(regs.a[srcreg]);
 {       BYTE src = get_byte(srca);
 {{ULONG dst = ((BYTE)(0)) - ((BYTE)(src));
-{       int flgs = ((BYTE)(src)) < 0;
-        int flgo = ((BYTE)(0)) < 0;
-        int flgn = ((BYTE)(dst)) < 0;
+        put_byte(srca,dst);
         ZFLG = ((BYTE)(dst)) == 0;
-        VFLG = (flgs != flgo) && (flgn != flgo);
+{       int flgs = ((BYTE)(src)) < 0;
+        int flgn = ((BYTE)(dst)) < 0;
+        VFLG = (flgs && flgn);
         CFLG = regs.x = ((UBYTE)(src)) > ((UBYTE)(0));
         NFLG = flgn != 0;
-        put_byte(srca,dst);
 }}}}}}}
-void op_4438(ULONG opcode) /* NEG */
+void op_4438(void) /* NEG */
 {
 {{      CPTR srca = (LONG)(WORD)nextiword();
         BYTE src = get_byte(srca);
 {{ULONG dst = ((BYTE)(0)) - ((BYTE)(src));
-{       int flgs = ((BYTE)(src)) < 0;
-        int flgo = ((BYTE)(0)) < 0;
-        int flgn = ((BYTE)(dst)) < 0;
+        put_byte(srca,dst);
         ZFLG = ((BYTE)(dst)) == 0;
-        VFLG = (flgs != flgo) && (flgn != flgo);
+{       int flgs = ((BYTE)(src)) < 0;
+        int flgn = ((BYTE)(dst)) < 0;
+        VFLG = (flgs && flgn);
         CFLG = regs.x = ((UBYTE)(src)) > ((UBYTE)(0));
         NFLG = flgn != 0;
-        put_byte(srca,dst);
 }}}}}}
-void op_4439(ULONG opcode) /* NEG */
+void op_4439(void) /* NEG */
 {
 {{      CPTR srca = nextilong();
         BYTE src = get_byte(srca);
 {{ULONG dst = ((BYTE)(0)) - ((BYTE)(src));
-{       int flgs = ((BYTE)(src)) < 0;
-        int flgo = ((BYTE)(0)) < 0;
-        int flgn = ((BYTE)(dst)) < 0;
+        put_byte(srca,dst);
         ZFLG = ((BYTE)(dst)) == 0;
-        VFLG = (flgs != flgo) && (flgn != flgo);
+{       int flgs = ((BYTE)(src)) < 0;
+        int flgn = ((BYTE)(dst)) < 0;
+        VFLG = (flgs && flgn);
         CFLG = regs.x = ((UBYTE)(src)) > ((UBYTE)(0));
         NFLG = flgn != 0;
-        put_byte(srca,dst);
 }}}}}}
-void op_4440(ULONG opcode) /* NEG */
+void op_4440(void) /* NEG */
 {
         ULONG srcreg = (opcode & 7);
 {{      WORD src = regs.d[srcreg].W.l;
 {{ULONG dst = ((WORD)(0)) - ((WORD)(src));
-{       int flgs = ((WORD)(src)) < 0;
-        int flgo = ((WORD)(0)) < 0;
-        int flgn = ((WORD)(dst)) < 0;
+        regs.d[srcreg].W.l = dst;
         ZFLG = ((WORD)(dst)) == 0;
-        VFLG = (flgs != flgo) && (flgn != flgo);
+{       int flgs = ((WORD)(src)) < 0;
+        int flgn = ((WORD)(dst)) < 0;
+        VFLG = (flgs && flgn);
         CFLG = regs.x = ((UWORD)(src)) > ((UWORD)(0));
         NFLG = flgn != 0;
-        regs.d[srcreg].W.l = dst;
 }}}}}}
-void op_4450(ULONG opcode) /* NEG */
+void op_4450(void) /* NEG */
 {
         ULONG srcreg = (opcode & 7);
 {{      CPTR srca = regs.a[srcreg];
         WORD src = get_word(srca);
 {{ULONG dst = ((WORD)(0)) - ((WORD)(src));
-{       int flgs = ((WORD)(src)) < 0;
-        int flgo = ((WORD)(0)) < 0;
-        int flgn = ((WORD)(dst)) < 0;
+        put_word(srca,dst);
         ZFLG = ((WORD)(dst)) == 0;
-        VFLG = (flgs != flgo) && (flgn != flgo);
+{       int flgs = ((WORD)(src)) < 0;
+        int flgn = ((WORD)(dst)) < 0;
+        VFLG = (flgs && flgn);
         CFLG = regs.x = ((UWORD)(src)) > ((UWORD)(0));
         NFLG = flgn != 0;
-        put_word(srca,dst);
 }}}}}}
-void op_4458(ULONG opcode) /* NEG */
+void op_4458(void) /* NEG */
 {
         ULONG srcreg = (opcode & 7);
 {{      CPTR srca = regs.a[srcreg];
         WORD src = get_word(srca);
 {       regs.a[srcreg] += 2;
 {{ULONG dst = ((WORD)(0)) - ((WORD)(src));
-{       int flgs = ((WORD)(src)) < 0;
-        int flgo = ((WORD)(0)) < 0;
-        int flgn = ((WORD)(dst)) < 0;
+        put_word(srca,dst);
         ZFLG = ((WORD)(dst)) == 0;
-        VFLG = (flgs != flgo) && (flgn != flgo);
+{       int flgs = ((WORD)(src)) < 0;
+        int flgn = ((WORD)(dst)) < 0;
+        VFLG = (flgs && flgn);
         CFLG = regs.x = ((UWORD)(src)) > ((UWORD)(0));
         NFLG = flgn != 0;
-        put_word(srca,dst);
 }}}}}}}
-void op_4460(ULONG opcode) /* NEG */
+void op_4460(void) /* NEG */
 {
         ULONG srcreg = (opcode & 7);
 {{      regs.a[srcreg] -= 2;
 {       CPTR srca = regs.a[srcreg];
         WORD src = get_word(srca);
 {{ULONG dst = ((WORD)(0)) - ((WORD)(src));
-{       int flgs = ((WORD)(src)) < 0;
-        int flgo = ((WORD)(0)) < 0;
-        int flgn = ((WORD)(dst)) < 0;
+        put_word(srca,dst);
         ZFLG = ((WORD)(dst)) == 0;
-        VFLG = (flgs != flgo) && (flgn != flgo);
+{       int flgs = ((WORD)(src)) < 0;
+        int flgn = ((WORD)(dst)) < 0;
+        VFLG = (flgs && flgn);
         CFLG = regs.x = ((UWORD)(src)) > ((UWORD)(0));
         NFLG = flgn != 0;
-        put_word(srca,dst);
 }}}}}}}
-void op_4468(ULONG opcode) /* NEG */
+void op_4468(void) /* NEG */
 {
         ULONG srcreg = (opcode & 7);
 {{      CPTR srca = regs.a[srcreg] + (LONG)(WORD)nextiword();
         WORD src = get_word(srca);
 {{ULONG dst = ((WORD)(0)) - ((WORD)(src));
-{       int flgs = ((WORD)(src)) < 0;
-        int flgo = ((WORD)(0)) < 0;
-        int flgn = ((WORD)(dst)) < 0;
+        put_word(srca,dst);
         ZFLG = ((WORD)(dst)) == 0;
-        VFLG = (flgs != flgo) && (flgn != flgo);
+{       int flgs = ((WORD)(src)) < 0;
+        int flgn = ((WORD)(dst)) < 0;
+        VFLG = (flgs && flgn);
         CFLG = regs.x = ((UWORD)(src)) > ((UWORD)(0));
         NFLG = flgn != 0;
-        put_word(srca,dst);
 }}}}}}
-void op_4470(ULONG opcode) /* NEG */
+void op_4470(void) /* NEG */
 {
         ULONG srcreg = (opcode & 7);
 {{      CPTR srca = get_disp_ea(regs.a[srcreg]);
 {       WORD src = get_word(srca);
 {{ULONG dst = ((WORD)(0)) - ((WORD)(src));
-{       int flgs = ((WORD)(src)) < 0;
-        int flgo = ((WORD)(0)) < 0;
-        int flgn = ((WORD)(dst)) < 0;
+        put_word(srca,dst);
         ZFLG = ((WORD)(dst)) == 0;
-        VFLG = (flgs != flgo) && (flgn != flgo);
+{       int flgs = ((WORD)(src)) < 0;
+        int flgn = ((WORD)(dst)) < 0;
+        VFLG = (flgs && flgn);
         CFLG = regs.x = ((UWORD)(src)) > ((UWORD)(0));
         NFLG = flgn != 0;
-        put_word(srca,dst);
 }}}}}}}
-void op_4478(ULONG opcode) /* NEG */
+void op_4478(void) /* NEG */
 {
 {{      CPTR srca = (LONG)(WORD)nextiword();
         WORD src = get_word(srca);
 {{ULONG dst = ((WORD)(0)) - ((WORD)(src));
-{       int flgs = ((WORD)(src)) < 0;
-        int flgo = ((WORD)(0)) < 0;
-        int flgn = ((WORD)(dst)) < 0;
+        put_word(srca,dst);
         ZFLG = ((WORD)(dst)) == 0;
-        VFLG = (flgs != flgo) && (flgn != flgo);
+{       int flgs = ((WORD)(src)) < 0;
+        int flgn = ((WORD)(dst)) < 0;
+        VFLG = (flgs && flgn);
         CFLG = regs.x = ((UWORD)(src)) > ((UWORD)(0));
         NFLG = flgn != 0;
-        put_word(srca,dst);
 }}}}}}
-void op_4479(ULONG opcode) /* NEG */
+void op_4479(void) /* NEG */
 {
 {{      CPTR srca = nextilong();
         WORD src = get_word(srca);
 {{ULONG dst = ((WORD)(0)) - ((WORD)(src));
-{       int flgs = ((WORD)(src)) < 0;
-        int flgo = ((WORD)(0)) < 0;
-        int flgn = ((WORD)(dst)) < 0;
+        put_word(srca,dst);
         ZFLG = ((WORD)(dst)) == 0;
-        VFLG = (flgs != flgo) && (flgn != flgo);
+{       int flgs = ((WORD)(src)) < 0;
+        int flgn = ((WORD)(dst)) < 0;
+        VFLG = (flgs && flgn);
         CFLG = regs.x = ((UWORD)(src)) > ((UWORD)(0));
         NFLG = flgn != 0;
-        put_word(srca,dst);
 }}}}}}
-void op_4480(ULONG opcode) /* NEG */
+void op_4480(void) /* NEG */
 {
         ULONG srcreg = (opcode & 7);
 {{      LONG src = regs.d[srcreg].D;
 {{ULONG dst = ((LONG)(0)) - ((LONG)(src));
-{       int flgs = ((LONG)(src)) < 0;
-        int flgo = ((LONG)(0)) < 0;
-        int flgn = ((LONG)(dst)) < 0;
+        regs.d[srcreg].D = (dst);
         ZFLG = ((LONG)(dst)) == 0;
-        VFLG = (flgs != flgo) && (flgn != flgo);
+{       int flgs = ((LONG)(src)) < 0;
+        int flgn = ((LONG)(dst)) < 0;
+        VFLG = (flgs && flgn);
         CFLG = regs.x = ((ULONG)(src)) > ((ULONG)(0));
         NFLG = flgn != 0;
-        regs.d[srcreg].D = (dst);
 }}}}}}
-void op_4490(ULONG opcode) /* NEG */
+void op_4490(void) /* NEG */
 {
         ULONG srcreg = (opcode & 7);
 {{      CPTR srca = regs.a[srcreg];
         LONG src = get_long(srca);
 {{ULONG dst = ((LONG)(0)) - ((LONG)(src));
-{       int flgs = ((LONG)(src)) < 0;
-        int flgo = ((LONG)(0)) < 0;
-        int flgn = ((LONG)(dst)) < 0;
+        put_long(srca,dst);
         ZFLG = ((LONG)(dst)) == 0;
-        VFLG = (flgs != flgo) && (flgn != flgo);
+{       int flgs = ((LONG)(src)) < 0;
+        int flgn = ((LONG)(dst)) < 0;
+        VFLG = (flgs && flgn);
         CFLG = regs.x = ((ULONG)(src)) > ((ULONG)(0));
         NFLG = flgn != 0;
-        put_long(srca,dst);
 }}}}}}
-void op_4498(ULONG opcode) /* NEG */
+void op_4498(void) /* NEG */
 {
         ULONG srcreg = (opcode & 7);
 {{      CPTR srca = regs.a[srcreg];
         LONG src = get_long(srca);
 {       regs.a[srcreg] += 4;
 {{ULONG dst = ((LONG)(0)) - ((LONG)(src));
-{       int flgs = ((LONG)(src)) < 0;
-        int flgo = ((LONG)(0)) < 0;
-        int flgn = ((LONG)(dst)) < 0;
+        put_long(srca,dst);
         ZFLG = ((LONG)(dst)) == 0;
-        VFLG = (flgs != flgo) && (flgn != flgo);
+{       int flgs = ((LONG)(src)) < 0;
+        int flgn = ((LONG)(dst)) < 0;
+        VFLG = (flgs && flgn);
         CFLG = regs.x = ((ULONG)(src)) > ((ULONG)(0));
         NFLG = flgn != 0;
-        put_long(srca,dst);
 }}}}}}}
-void op_44a0(ULONG opcode) /* NEG */
+void op_44a0(void) /* NEG */
 {
         ULONG srcreg = (opcode & 7);
 {{      regs.a[srcreg] -= 4;
 {       CPTR srca = regs.a[srcreg];
         LONG src = get_long(srca);
 {{ULONG dst = ((LONG)(0)) - ((LONG)(src));
-{       int flgs = ((LONG)(src)) < 0;
-        int flgo = ((LONG)(0)) < 0;
-        int flgn = ((LONG)(dst)) < 0;
+        put_long(srca,dst);
         ZFLG = ((LONG)(dst)) == 0;
-        VFLG = (flgs != flgo) && (flgn != flgo);
+{       int flgs = ((LONG)(src)) < 0;
+        int flgn = ((LONG)(dst)) < 0;
+        VFLG = (flgs && flgn);
         CFLG = regs.x = ((ULONG)(src)) > ((ULONG)(0));
         NFLG = flgn != 0;
-        put_long(srca,dst);
 }}}}}}}
-void op_44a8(ULONG opcode) /* NEG */
+void op_44a8(void) /* NEG */
 {
         ULONG srcreg = (opcode & 7);
 {{      CPTR srca = regs.a[srcreg] + (LONG)(WORD)nextiword();
         LONG src = get_long(srca);
 {{ULONG dst = ((LONG)(0)) - ((LONG)(src));
-{       int flgs = ((LONG)(src)) < 0;
-        int flgo = ((LONG)(0)) < 0;
-        int flgn = ((LONG)(dst)) < 0;
+        put_long(srca,dst);
         ZFLG = ((LONG)(dst)) == 0;
-        VFLG = (flgs != flgo) && (flgn != flgo);
+{       int flgs = ((LONG)(src)) < 0;
+        int flgn = ((LONG)(dst)) < 0;
+        VFLG = (flgs && flgn);
         CFLG = regs.x = ((ULONG)(src)) > ((ULONG)(0));
         NFLG = flgn != 0;
-        put_long(srca,dst);
 }}}}}}
-void op_44b0(ULONG opcode) /* NEG */
+void op_44b0(void) /* NEG */
 {
         ULONG srcreg = (opcode & 7);
 {{      CPTR srca = get_disp_ea(regs.a[srcreg]);
 {       LONG src = get_long(srca);
 {{ULONG dst = ((LONG)(0)) - ((LONG)(src));
-{       int flgs = ((LONG)(src)) < 0;
-        int flgo = ((LONG)(0)) < 0;
-        int flgn = ((LONG)(dst)) < 0;
+        put_long(srca,dst);
         ZFLG = ((LONG)(dst)) == 0;
-        VFLG = (flgs != flgo) && (flgn != flgo);
+{       int flgs = ((LONG)(src)) < 0;
+        int flgn = ((LONG)(dst)) < 0;
+        VFLG = (flgs && flgn);
         CFLG = regs.x = ((ULONG)(src)) > ((ULONG)(0));
         NFLG = flgn != 0;
-        put_long(srca,dst);
 }}}}}}}
-void op_44b8(ULONG opcode) /* NEG */
+void op_44b8(void) /* NEG */
 {
 {{      CPTR srca = (LONG)(WORD)nextiword();
         LONG src = get_long(srca);
 {{ULONG dst = ((LONG)(0)) - ((LONG)(src));
-{       int flgs = ((LONG)(src)) < 0;
-        int flgo = ((LONG)(0)) < 0;
-        int flgn = ((LONG)(dst)) < 0;
+        put_long(srca,dst);
         ZFLG = ((LONG)(dst)) == 0;
-        VFLG = (flgs != flgo) && (flgn != flgo);
+{       int flgs = ((LONG)(src)) < 0;
+        int flgn = ((LONG)(dst)) < 0;
+        VFLG = (flgs && flgn);
         CFLG = regs.x = ((ULONG)(src)) > ((ULONG)(0));
         NFLG = flgn != 0;
-        put_long(srca,dst);
 }}}}}}
-void op_44b9(ULONG opcode) /* NEG */
+void op_44b9(void) /* NEG */
 {
 {{      CPTR srca = nextilong();
         LONG src = get_long(srca);
 {{ULONG dst = ((LONG)(0)) - ((LONG)(src));
-{       int flgs = ((LONG)(src)) < 0;
-        int flgo = ((LONG)(0)) < 0;
-        int flgn = ((LONG)(dst)) < 0;
+        put_long(srca,dst);
         ZFLG = ((LONG)(dst)) == 0;
-        VFLG = (flgs != flgo) && (flgn != flgo);
+{       int flgs = ((LONG)(src)) < 0;
+        int flgn = ((LONG)(dst)) < 0;
+        VFLG = (flgs && flgn);
         CFLG = regs.x = ((ULONG)(src)) > ((ULONG)(0));
         NFLG = flgn != 0;
-        put_long(srca,dst);
 }}}}}}
-void op_44c0(ULONG opcode) /* MV2SR */
+void op_44c0(void) /* MV2SR */
 {
         ULONG srcreg = (opcode & 7);
 {{      WORD src = regs.d[srcreg].W.l;
@@ -1273,7 +1201,7 @@ void op_44c0(ULONG opcode) /* MV2SR */
         regs.sr |= src & 0xFF;
         MakeFromSR();
 }}}
-void op_44d0(ULONG opcode) /* MV2SR */
+void op_44d0(void) /* MV2SR */
 {
         ULONG srcreg = (opcode & 7);
 {{      CPTR srca = regs.a[srcreg];
@@ -1283,7 +1211,7 @@ void op_44d0(ULONG opcode) /* MV2SR */
         regs.sr |= src & 0xFF;
         MakeFromSR();
 }}}
-void op_44d8(ULONG opcode) /* MV2SR */
+void op_44d8(void) /* MV2SR */
 {
         ULONG srcreg = (opcode & 7);
 {{      CPTR srca = regs.a[srcreg];
@@ -1294,7 +1222,7 @@ void op_44d8(ULONG opcode) /* MV2SR */
         regs.sr |= src & 0xFF;
         MakeFromSR();
 }}}}
-void op_44e0(ULONG opcode) /* MV2SR */
+void op_44e0(void) /* MV2SR */
 {
         ULONG srcreg = (opcode & 7);
 {{      regs.a[srcreg] -= 2;
@@ -1305,7 +1233,7 @@ void op_44e0(ULONG opcode) /* MV2SR */
         regs.sr |= src & 0xFF;
         MakeFromSR();
 }}}}
-void op_44e8(ULONG opcode) /* MV2SR */
+void op_44e8(void) /* MV2SR */
 {
         ULONG srcreg = (opcode & 7);
 {{      CPTR srca = regs.a[srcreg] + (LONG)(WORD)nextiword();
@@ -1315,7 +1243,7 @@ void op_44e8(ULONG opcode) /* MV2SR */
         regs.sr |= src & 0xFF;
         MakeFromSR();
 }}}
-void op_44f0(ULONG opcode) /* MV2SR */
+void op_44f0(void) /* MV2SR */
 {
         ULONG srcreg = (opcode & 7);
 {{      CPTR srca = get_disp_ea(regs.a[srcreg]);
@@ -1325,7 +1253,7 @@ void op_44f0(ULONG opcode) /* MV2SR */
         regs.sr |= src & 0xFF;
         MakeFromSR();
 }}}}
-void op_44f8(ULONG opcode) /* MV2SR */
+void op_44f8(void) /* MV2SR */
 {
 {{      CPTR srca = (LONG)(WORD)nextiword();
         WORD src = get_word(srca);
@@ -1334,7 +1262,7 @@ void op_44f8(ULONG opcode) /* MV2SR */
         regs.sr |= src & 0xFF;
         MakeFromSR();
 }}}
-void op_44f9(ULONG opcode) /* MV2SR */
+void op_44f9(void) /* MV2SR */
 {
 {{      CPTR srca = nextilong();
         WORD src = get_word(srca);
@@ -1343,7 +1271,7 @@ void op_44f9(ULONG opcode) /* MV2SR */
         regs.sr |= src & 0xFF;
         MakeFromSR();
 }}}
-void op_44fa(ULONG opcode) /* MV2SR */
+void op_44fa(void) /* MV2SR */
 {
 {{      CPTR srca = m68k_getpc();
         srca += (LONG)(WORD)nextiword();
@@ -1353,7 +1281,7 @@ void op_44fa(ULONG opcode) /* MV2SR */
         regs.sr |= src & 0xFF;
         MakeFromSR();
 }}}}
-void op_44fb(ULONG opcode) /* MV2SR */
+void op_44fb(void) /* MV2SR */
 {
 {{      CPTR srca = get_disp_ea(m68k_getpc());
 {       WORD src = get_word(srca);
@@ -1362,7 +1290,7 @@ void op_44fb(ULONG opcode) /* MV2SR */
         regs.sr |= src & 0xFF;
         MakeFromSR();
 }}}}
-void op_44fc(ULONG opcode) /* MV2SR */
+void op_44fc(void) /* MV2SR */
 {
 {{      WORD src = nextiword();
         MakeSR();
@@ -1370,268 +1298,383 @@ void op_44fc(ULONG opcode) /* MV2SR */
         regs.sr |= src & 0xFF;
         MakeFromSR();
 }}}
-void op_4600(ULONG opcode) /* NOT */
+void op_4600(void) /* NOT */
 {
         ULONG srcreg = (opcode & 7);
 {{      BYTE src = regs.d[srcreg].B.l;
 {       ULONG dst = ~src;
-        CLEARVC;
+        regs.d[srcreg].B.l = dst;
+        CLEARFLGS;
         ZFLG = ((BYTE)(dst)) == 0;
         NFLG = ((BYTE)(dst)) < 0;
-        regs.d[srcreg].B.l = dst;
 }}}}
-void op_4610(ULONG opcode) /* NOT */
+void op_4610(void) /* NOT */
 {
         ULONG srcreg = (opcode & 7);
 {{      CPTR srca = regs.a[srcreg];
         BYTE src = get_byte(srca);
 {       ULONG dst = ~src;
-        CLEARVC;
-        ZFLG = ((BYTE)(dst)) == 0;
-        NFLG = ((BYTE)(dst)) < 0;
         put_byte(srca,dst);
+        CLEARFLGS;
+	if ( dst <= 0 )
+		{
+		if ( dst == 0 )
+			ZFLG = ZTRUE ;
+		else
+			NFLG = NTRUE ;
+		}
 }}}}
-void op_4618(ULONG opcode) /* NOT */
+void op_4618(void) /* NOT */
 {
         ULONG srcreg = (opcode & 7);
 {{      CPTR srca = regs.a[srcreg];
         BYTE src = get_byte(srca);
 {       regs.a[srcreg] += areg_byteinc[srcreg];
 {       ULONG dst = ~src;
-        CLEARVC;
-        ZFLG = ((BYTE)(dst)) == 0;
-        NFLG = ((BYTE)(dst)) < 0;
         put_byte(srca,dst);
+        CLEARFLGS;
+	if ( dst <= 0 )
+		{
+		if ( dst == 0 )
+			ZFLG = ZTRUE ;
+		else
+			NFLG = NTRUE ;
+		}
 }}}}}
-void op_4620(ULONG opcode) /* NOT */
+void op_4620(void) /* NOT */
 {
         ULONG srcreg = (opcode & 7);
 {{      regs.a[srcreg] -= areg_byteinc[srcreg];
 {       CPTR srca = regs.a[srcreg];
         BYTE src = get_byte(srca);
 {       ULONG dst = ~src;
-        CLEARVC;
-        ZFLG = ((BYTE)(dst)) == 0;
-        NFLG = ((BYTE)(dst)) < 0;
         put_byte(srca,dst);
+        CLEARFLGS;
+	if ( dst <= 0 )
+		{
+		if ( dst == 0 )
+			ZFLG = ZTRUE ;
+		else
+			NFLG = NTRUE ;
+		}
 }}}}}
-void op_4628(ULONG opcode) /* NOT */
+void op_4628(void) /* NOT */
 {
         ULONG srcreg = (opcode & 7);
 {{      CPTR srca = regs.a[srcreg] + (LONG)(WORD)nextiword();
         BYTE src = get_byte(srca);
 {       ULONG dst = ~src;
-        CLEARVC;
-        ZFLG = ((BYTE)(dst)) == 0;
-        NFLG = ((BYTE)(dst)) < 0;
         put_byte(srca,dst);
+        CLEARFLGS;
+	if ( dst <= 0 )
+		{
+		if ( dst == 0 )
+			ZFLG = ZTRUE ;
+		else
+			NFLG = NTRUE ;
+		}
 }}}}
-void op_4630(ULONG opcode) /* NOT */
+void op_4630(void) /* NOT */
 {
         ULONG srcreg = (opcode & 7);
 {{      CPTR srca = get_disp_ea(regs.a[srcreg]);
 {       BYTE src = get_byte(srca);
 {       ULONG dst = ~src;
-        CLEARVC;
-        ZFLG = ((BYTE)(dst)) == 0;
-        NFLG = ((BYTE)(dst)) < 0;
         put_byte(srca,dst);
+        CLEARFLGS;
+	if ( dst <= 0 )
+		{
+		if ( dst == 0 )
+			ZFLG = ZTRUE ;
+		else
+			NFLG = NTRUE ;
+		}
 }}}}}
-void op_4638(ULONG opcode) /* NOT */
+void op_4638(void) /* NOT */
 {
 {{      CPTR srca = (LONG)(WORD)nextiword();
         BYTE src = get_byte(srca);
 {       ULONG dst = ~src;
-        CLEARVC;
-        ZFLG = ((BYTE)(dst)) == 0;
-        NFLG = ((BYTE)(dst)) < 0;
         put_byte(srca,dst);
+        CLEARFLGS;
+	if ( dst <= 0 )
+		{
+		if ( dst == 0 )
+			ZFLG = ZTRUE ;
+		else
+			NFLG = NTRUE ;
+		}
 }}}}
-void op_4639(ULONG opcode) /* NOT */
+void op_4639(void) /* NOT */
 {
 {{      CPTR srca = nextilong();
         BYTE src = get_byte(srca);
 {       ULONG dst = ~src;
-        CLEARVC;
-        ZFLG = ((BYTE)(dst)) == 0;
-        NFLG = ((BYTE)(dst)) < 0;
         put_byte(srca,dst);
+        CLEARFLGS;
+	if ( dst <= 0 )
+		{
+		if ( dst == 0 )
+			ZFLG = ZTRUE ;
+		else
+			NFLG = NTRUE ;
+		}
 }}}}
-void op_4640(ULONG opcode) /* NOT */
+void op_4640(void) /* NOT */
 {
         ULONG srcreg = (opcode & 7);
 {{      WORD src = regs.d[srcreg].W.l;
 {       ULONG dst = ~src;
-        CLEARVC;
-        ZFLG = ((WORD)(dst)) == 0;
-        NFLG = ((WORD)(dst)) < 0;
         regs.d[srcreg].W.l = dst;
+        CLEARFLGS;
+	if ( dst <= 0 )
+		{
+		if ( dst == 0 )
+			ZFLG = ZTRUE ;
+		else
+			NFLG = NTRUE ;
+		}
 }}}}
-void op_4650(ULONG opcode) /* NOT */
+void op_4650(void) /* NOT */
 {
         ULONG srcreg = (opcode & 7);
 {{      CPTR srca = regs.a[srcreg];
         WORD src = get_word(srca);
 {       ULONG dst = ~src;
-        CLEARVC;
-        ZFLG = ((WORD)(dst)) == 0;
-        NFLG = ((WORD)(dst)) < 0;
         put_word(srca,dst);
+        CLEARFLGS;
+	if ( dst <= 0 )
+		{
+		if ( dst == 0 )
+			ZFLG = ZTRUE ;
+		else
+			NFLG = NTRUE ;
+		}
 }}}}
-void op_4658(ULONG opcode) /* NOT */
+void op_4658(void) /* NOT */
 {
         ULONG srcreg = (opcode & 7);
 {{      CPTR srca = regs.a[srcreg];
         WORD src = get_word(srca);
 {       regs.a[srcreg] += 2;
 {       ULONG dst = ~src;
-        CLEARVC;
-        ZFLG = ((WORD)(dst)) == 0;
-        NFLG = ((WORD)(dst)) < 0;
         put_word(srca,dst);
+        CLEARFLGS;
+	if ( dst <= 0 )
+		{
+		if ( dst == 0 )
+			ZFLG = ZTRUE ;
+		else
+			NFLG = NTRUE ;
+		}
 }}}}}
-void op_4660(ULONG opcode) /* NOT */
+void op_4660(void) /* NOT */
 {
         ULONG srcreg = (opcode & 7);
 {{      regs.a[srcreg] -= 2;
 {       CPTR srca = regs.a[srcreg];
         WORD src = get_word(srca);
 {       ULONG dst = ~src;
-        CLEARVC;
-        ZFLG = ((WORD)(dst)) == 0;
-        NFLG = ((WORD)(dst)) < 0;
         put_word(srca,dst);
+        CLEARFLGS;
+	if ( dst <= 0 )
+		{
+		if ( dst == 0 )
+			ZFLG = ZTRUE ;
+		else
+			NFLG = NTRUE ;
+		}
 }}}}}
-void op_4668(ULONG opcode) /* NOT */
+void op_4668(void) /* NOT */
 {
         ULONG srcreg = (opcode & 7);
 {{      CPTR srca = regs.a[srcreg] + (LONG)(WORD)nextiword();
         WORD src = get_word(srca);
 {       ULONG dst = ~src;
-        CLEARVC;
-        ZFLG = ((WORD)(dst)) == 0;
-        NFLG = ((WORD)(dst)) < 0;
         put_word(srca,dst);
+        CLEARFLGS;
+	if ( dst <= 0 )
+		{
+		if ( dst == 0 )
+			ZFLG = ZTRUE ;
+		else
+			NFLG = NTRUE ;
+		}
 }}}}
-void op_4670(ULONG opcode) /* NOT */
+void op_4670(void) /* NOT */
 {
         ULONG srcreg = (opcode & 7);
 {{      CPTR srca = get_disp_ea(regs.a[srcreg]);
 {       WORD src = get_word(srca);
 {       ULONG dst = ~src;
-        CLEARVC;
-        ZFLG = ((WORD)(dst)) == 0;
-        NFLG = ((WORD)(dst)) < 0;
         put_word(srca,dst);
+        CLEARFLGS;
+	if ( dst <= 0 )
+		{
+		if ( dst == 0 )
+			ZFLG = ZTRUE ;
+		else
+			NFLG = NTRUE ;
+		}
 }}}}}
-void op_4678(ULONG opcode) /* NOT */
+void op_4678(void) /* NOT */
 {
 {{      CPTR srca = (LONG)(WORD)nextiword();
         WORD src = get_word(srca);
 {       ULONG dst = ~src;
-        CLEARVC;
-        ZFLG = ((WORD)(dst)) == 0;
-        NFLG = ((WORD)(dst)) < 0;
         put_word(srca,dst);
+        CLEARFLGS;
+	if ( dst <= 0 )
+		{
+		if ( dst == 0 )
+			ZFLG = ZTRUE ;
+		else
+			NFLG = NTRUE ;
+		}
 }}}}
-void op_4679(ULONG opcode) /* NOT */
+void op_4679(void) /* NOT */
 {
 {{      CPTR srca = nextilong();
         WORD src = get_word(srca);
 {       ULONG dst = ~src;
-        CLEARVC;
-        ZFLG = ((WORD)(dst)) == 0;
-        NFLG = ((WORD)(dst)) < 0;
         put_word(srca,dst);
+        CLEARFLGS;
+	if ( dst <= 0 )
+		{
+		if ( dst == 0 )
+			ZFLG = ZTRUE ;
+		else
+			NFLG = NTRUE ;
+		}
 }}}}
-void op_4680(ULONG opcode) /* NOT */
+void op_4680(void) /* NOT */
 {
         ULONG srcreg = (opcode & 7);
 {{      LONG src = regs.d[srcreg].D;
 {       ULONG dst = ~src;
-        CLEARVC;
-        ZFLG = ((LONG)(dst)) == 0;
-        NFLG = ((LONG)(dst)) < 0;
         regs.d[srcreg].D = (dst);
+        CLEARFLGS;
+	if ( dst <= 0 )
+		{
+		if ( dst == 0 )
+			ZFLG = ZTRUE ;
+		else
+			NFLG = NTRUE ;
+		}
 }}}}
-void op_4690(ULONG opcode) /* NOT */
+void op_4690(void) /* NOT */
 {
         ULONG srcreg = (opcode & 7);
 {{      CPTR srca = regs.a[srcreg];
         LONG src = get_long(srca);
 {       ULONG dst = ~src;
-        CLEARVC;
-        ZFLG = ((LONG)(dst)) == 0;
-        NFLG = ((LONG)(dst)) < 0;
         put_long(srca,dst);
+        CLEARFLGS;
+	if ( dst <= 0 )
+		{
+		if ( dst == 0 )
+			ZFLG = ZTRUE ;
+		else
+			NFLG = NTRUE ;
+		}
 }}}}
-void op_4698(ULONG opcode) /* NOT */
+void op_4698(void) /* NOT */
 {
         ULONG srcreg = (opcode & 7);
 {{      CPTR srca = regs.a[srcreg];
         LONG src = get_long(srca);
 {       regs.a[srcreg] += 4;
 {       ULONG dst = ~src;
-        CLEARVC;
-        ZFLG = ((LONG)(dst)) == 0;
-        NFLG = ((LONG)(dst)) < 0;
         put_long(srca,dst);
+        CLEARFLGS;
+	if ( dst <= 0 )
+		{
+		if ( dst == 0 )
+			ZFLG = ZTRUE ;
+		else
+			NFLG = NTRUE ;
+		}
 }}}}}
-void op_46a0(ULONG opcode) /* NOT */
+void op_46a0(void) /* NOT */
 {
         ULONG srcreg = (opcode & 7);
 {{      regs.a[srcreg] -= 4;
 {       CPTR srca = regs.a[srcreg];
         LONG src = get_long(srca);
 {       ULONG dst = ~src;
-        CLEARVC;
-        ZFLG = ((LONG)(dst)) == 0;
-        NFLG = ((LONG)(dst)) < 0;
         put_long(srca,dst);
+        CLEARFLGS;
+	if ( dst <= 0 )
+		{
+		if ( dst == 0 )
+			ZFLG = ZTRUE ;
+		else
+			NFLG = NTRUE ;
+		}
 }}}}}
-void op_46a8(ULONG opcode) /* NOT */
+void op_46a8(void) /* NOT */
 {
         ULONG srcreg = (opcode & 7);
 {{      CPTR srca = regs.a[srcreg] + (LONG)(WORD)nextiword();
         LONG src = get_long(srca);
 {       ULONG dst = ~src;
-        CLEARVC;
-        ZFLG = ((LONG)(dst)) == 0;
-        NFLG = ((LONG)(dst)) < 0;
         put_long(srca,dst);
+        CLEARFLGS;
+	if ( dst <= 0 )
+		{
+		if ( dst == 0 )
+			ZFLG = ZTRUE ;
+		else
+			NFLG = NTRUE ;
+		}
 }}}}
-void op_46b0(ULONG opcode) /* NOT */
+void op_46b0(void) /* NOT */
 {
         ULONG srcreg = (opcode & 7);
 {{      CPTR srca = get_disp_ea(regs.a[srcreg]);
 {       LONG src = get_long(srca);
 {       ULONG dst = ~src;
-        CLEARVC;
-        ZFLG = ((LONG)(dst)) == 0;
-        NFLG = ((LONG)(dst)) < 0;
         put_long(srca,dst);
+        CLEARFLGS;
+	if ( dst <= 0 )
+		{
+		if ( dst == 0 )
+			ZFLG = ZTRUE ;
+		else
+			NFLG = NTRUE ;
+		}
 }}}}}
-void op_46b8(ULONG opcode) /* NOT */
+void op_46b8(void) /* NOT */
 {
 {{      CPTR srca = (LONG)(WORD)nextiword();
         LONG src = get_long(srca);
 {       ULONG dst = ~src;
-        CLEARVC;
-        ZFLG = ((LONG)(dst)) == 0;
-        NFLG = ((LONG)(dst)) < 0;
         put_long(srca,dst);
+        CLEARFLGS;
+	if ( dst <= 0 )
+		{
+		if ( dst == 0 )
+			ZFLG = ZTRUE ;
+		else
+			NFLG = NTRUE ;
+		}
 }}}}
-void op_46b9(ULONG opcode) /* NOT */
+void op_46b9(void) /* NOT */
 {
 {{      CPTR srca = nextilong();
         LONG src = get_long(srca);
 {       ULONG dst = ~src;
-        CLEARVC;
-        ZFLG = ((LONG)(dst)) == 0;
-        NFLG = ((LONG)(dst)) < 0;
         put_long(srca,dst);
+        CLEARFLGS;
+	if ( dst <= 0 )
+		{
+		if ( dst == 0 )
+			ZFLG = ZTRUE ;
+		else
+			NFLG = NTRUE ;
+		}
 }}}}
-void op_46c0(ULONG opcode) /* MV2SR */
+void op_46c0(void) /* MV2SR */
 {
         ULONG srcreg = (opcode & 7);
 {if (!regs.s) { regs.pc -= 2; Exception(8,0); } else
@@ -1639,7 +1682,7 @@ void op_46c0(ULONG opcode) /* MV2SR */
         regs.sr = src;
         MakeFromSR();
 }}}}
-void op_46d0(ULONG opcode) /* MV2SR */
+void op_46d0(void) /* MV2SR */
 {
         ULONG srcreg = (opcode & 7);
 {if (!regs.s) { regs.pc -= 2; Exception(8,0); } else
@@ -1648,7 +1691,7 @@ void op_46d0(ULONG opcode) /* MV2SR */
         regs.sr = src;
         MakeFromSR();
 }}}}
-void op_46d8(ULONG opcode) /* MV2SR */
+void op_46d8(void) /* MV2SR */
 {
         ULONG srcreg = (opcode & 7);
 {if (!regs.s) { regs.pc -= 2; Exception(8,0); } else
@@ -1658,7 +1701,7 @@ void op_46d8(ULONG opcode) /* MV2SR */
         regs.sr = src;
         MakeFromSR();
 }}}}}
-void op_46e0(ULONG opcode) /* MV2SR */
+void op_46e0(void) /* MV2SR */
 {
         ULONG srcreg = (opcode & 7);
 {if (!regs.s) { regs.pc -= 2; Exception(8,0); } else
@@ -1668,7 +1711,7 @@ void op_46e0(ULONG opcode) /* MV2SR */
         regs.sr = src;
         MakeFromSR();
 }}}}}
-void op_46e8(ULONG opcode) /* MV2SR */
+void op_46e8(void) /* MV2SR */
 {
         ULONG srcreg = (opcode & 7);
 {if (!regs.s) { regs.pc -= 2; Exception(8,0); } else
@@ -1677,7 +1720,7 @@ void op_46e8(ULONG opcode) /* MV2SR */
         regs.sr = src;
         MakeFromSR();
 }}}}
-void op_46f0(ULONG opcode) /* MV2SR */
+void op_46f0(void) /* MV2SR */
 {
         ULONG srcreg = (opcode & 7);
 {if (!regs.s) { regs.pc -= 2; Exception(8,0); } else
@@ -1686,7 +1729,7 @@ void op_46f0(ULONG opcode) /* MV2SR */
         regs.sr = src;
         MakeFromSR();
 }}}}}
-void op_46f8(ULONG opcode) /* MV2SR */
+void op_46f8(void) /* MV2SR */
 {
 {if (!regs.s) { regs.pc -= 2; Exception(8,0); } else
 {{      CPTR srca = (LONG)(WORD)nextiword();
@@ -1694,7 +1737,7 @@ void op_46f8(ULONG opcode) /* MV2SR */
         regs.sr = src;
         MakeFromSR();
 }}}}
-void op_46f9(ULONG opcode) /* MV2SR */
+void op_46f9(void) /* MV2SR */
 {
 {if (!regs.s) { regs.pc -= 2; Exception(8,0); } else
 {{      CPTR srca = nextilong();
@@ -1702,7 +1745,7 @@ void op_46f9(ULONG opcode) /* MV2SR */
         regs.sr = src;
         MakeFromSR();
 }}}}
-void op_46fa(ULONG opcode) /* MV2SR */
+void op_46fa(void) /* MV2SR */
 {
 {if (!regs.s) { regs.pc -= 2; Exception(8,0); } else
 {{      CPTR srca = m68k_getpc();
@@ -1711,7 +1754,7 @@ void op_46fa(ULONG opcode) /* MV2SR */
         regs.sr = src;
         MakeFromSR();
 }}}}}
-void op_46fb(ULONG opcode) /* MV2SR */
+void op_46fb(void) /* MV2SR */
 {
 {if (!regs.s) { regs.pc -= 2; Exception(8,0); } else
 {{      CPTR srca = get_disp_ea(m68k_getpc());
@@ -1719,14 +1762,14 @@ void op_46fb(ULONG opcode) /* MV2SR */
         regs.sr = src;
         MakeFromSR();
 }}}}}
-void op_46fc(ULONG opcode) /* MV2SR */
+void op_46fc(void) /* MV2SR */
 {
 {if (!regs.s) { regs.pc -= 2; Exception(8,0); } else
 {{      WORD src = nextiword();
         regs.sr = src;
         MakeFromSR();
 }}}}
-void op_4800(ULONG opcode) /* NBCD */
+void op_4800(void) /* NBCD */
 {
         ULONG srcreg = (opcode & 7);
 {{      BYTE src = regs.d[srcreg].B.l;
@@ -1740,7 +1783,7 @@ void op_4800(ULONG opcode) /* NBCD */
         NFLG = ((BYTE)(newv)) < 0;
         regs.d[srcreg].B.l = newv;
 }}}}
-void op_4810(ULONG opcode) /* NBCD */
+void op_4810(void) /* NBCD */
 {
         ULONG srcreg = (opcode & 7);
 {{      CPTR srca = regs.a[srcreg];
@@ -1755,7 +1798,7 @@ void op_4810(ULONG opcode) /* NBCD */
         NFLG = ((BYTE)(newv)) < 0;
         put_byte(srca,newv);
 }}}}
-void op_4818(ULONG opcode) /* NBCD */
+void op_4818(void) /* NBCD */
 {
         ULONG srcreg = (opcode & 7);
 {{      CPTR srca = regs.a[srcreg];
@@ -1771,7 +1814,7 @@ void op_4818(ULONG opcode) /* NBCD */
         NFLG = ((BYTE)(newv)) < 0;
         put_byte(srca,newv);
 }}}}}
-void op_4820(ULONG opcode) /* NBCD */
+void op_4820(void) /* NBCD */
 {
         ULONG srcreg = (opcode & 7);
 {{      regs.a[srcreg] -= areg_byteinc[srcreg];
@@ -1787,7 +1830,7 @@ void op_4820(ULONG opcode) /* NBCD */
         NFLG = ((BYTE)(newv)) < 0;
         put_byte(srca,newv);
 }}}}}
-void op_4828(ULONG opcode) /* NBCD */
+void op_4828(void) /* NBCD */
 {
         ULONG srcreg = (opcode & 7);
 {{      CPTR srca = regs.a[srcreg] + (LONG)(WORD)nextiword();
@@ -1802,7 +1845,7 @@ void op_4828(ULONG opcode) /* NBCD */
         NFLG = ((BYTE)(newv)) < 0;
         put_byte(srca,newv);
 }}}}
-void op_4830(ULONG opcode) /* NBCD */
+void op_4830(void) /* NBCD */
 {
         ULONG srcreg = (opcode & 7);
 {{      CPTR srca = get_disp_ea(regs.a[srcreg]);
@@ -1817,7 +1860,7 @@ void op_4830(ULONG opcode) /* NBCD */
         NFLG = ((BYTE)(newv)) < 0;
         put_byte(srca,newv);
 }}}}}
-void op_4838(ULONG opcode) /* NBCD */
+void op_4838(void) /* NBCD */
 {
 {{      CPTR srca = (LONG)(WORD)nextiword();
         BYTE src = get_byte(srca);
@@ -1831,7 +1874,7 @@ void op_4838(ULONG opcode) /* NBCD */
         NFLG = ((BYTE)(newv)) < 0;
         put_byte(srca,newv);
 }}}}
-void op_4839(ULONG opcode) /* NBCD */
+void op_4839(void) /* NBCD */
 {
 {{      CPTR srca = nextilong();
         BYTE src = get_byte(srca);
@@ -1845,17 +1888,17 @@ void op_4839(ULONG opcode) /* NBCD */
         NFLG = ((BYTE)(newv)) < 0;
         put_byte(srca,newv);
 }}}}
-void op_4840(ULONG opcode) /* SWAP */
+void op_4840(void) /* SWAP */
 {
         ULONG srcreg = (opcode & 7);
 {{      LONG src = regs.d[srcreg].D;
 {       ULONG dst = ((src >> 16)&0xFFFF) | ((src&0xFFFF)<<16);
-        CLEARVC;
+        CLEARFLGS;
         ZFLG = ((LONG)(dst)) == 0;
         NFLG = ((LONG)(dst)) < 0;
         regs.d[srcreg].D = (dst);
 }}}}
-void op_4850(ULONG opcode) /* PEA */
+void op_4850(void) /* PEA */
 {
         ULONG srcreg = (opcode & 7);
 {{      CPTR srca = regs.a[srcreg];
@@ -1863,7 +1906,7 @@ void op_4850(ULONG opcode) /* PEA */
 {       CPTR dsta = regs.a[7];
         put_long(dsta,srca);
 }}}}}
-void op_4868(ULONG opcode) /* PEA */
+void op_4868(void) /* PEA */
 {
         ULONG srcreg = (opcode & 7);
 {{      CPTR srca = regs.a[srcreg] + (LONG)(WORD)nextiword();
@@ -1871,7 +1914,7 @@ void op_4868(ULONG opcode) /* PEA */
 {       CPTR dsta = regs.a[7];
         put_long(dsta,srca);
 }}}}}
-void op_4870(ULONG opcode) /* PEA */
+void op_4870(void) /* PEA */
 {
         ULONG srcreg = (opcode & 7);
 {{      CPTR srca = get_disp_ea(regs.a[srcreg]);
@@ -1879,21 +1922,21 @@ void op_4870(ULONG opcode) /* PEA */
 {       CPTR dsta = regs.a[7];
         put_long(dsta,srca);
 }}}}}
-void op_4878(ULONG opcode) /* PEA */
+void op_4878(void) /* PEA */
 {
 {{      CPTR srca = (LONG)(WORD)nextiword();
 {       regs.a[7] -= 4;
 {       CPTR dsta = regs.a[7];
         put_long(dsta,srca);
 }}}}}
-void op_4879(ULONG opcode) /* PEA */
+void op_4879(void) /* PEA */
 {
 {{      CPTR srca = nextilong();
 {       regs.a[7] -= 4;
 {       CPTR dsta = regs.a[7];
         put_long(dsta,srca);
 }}}}}
-void op_487a(ULONG opcode) /* PEA */
+void op_487a(void) /* PEA */
 {
 {{      CPTR srca = m68k_getpc();
         srca += (LONG)(WORD)nextiword();
@@ -1901,676 +1944,888 @@ void op_487a(ULONG opcode) /* PEA */
 {       CPTR dsta = regs.a[7];
         put_long(dsta,srca);
 }}}}}
-void op_487b(ULONG opcode) /* PEA */
+void op_487b(void) /* PEA */
 {
 {{      CPTR srca = get_disp_ea(m68k_getpc());
 {       regs.a[7] -= 4;
 {       CPTR dsta = regs.a[7];
         put_long(dsta,srca);
 }}}}}
-void op_4880(ULONG opcode) /* EXT */
+void op_4880(void) /* EXT */
 {
         ULONG srcreg = (opcode & 7);
 {{      LONG src = regs.d[srcreg].D;
 {       UWORD dst = (WORD)(BYTE)src;
-        CLEARVC;
+        CLEARFLGS;
         ZFLG = ((WORD)(dst)) == 0;
         NFLG = ((WORD)(dst)) < 0;
         regs.d[srcreg].W.l = dst;
 }}}}
-void op_4890(ULONG opcode) /* MVMLE */
+void op_4890(void) /* MVMLE */
 {
         ULONG dstreg = opcode & 7;
 {       UWORD mask = nextiword();
 {       CPTR srca = regs.a[dstreg];
 {       UWORD dmask = mask & 0xff, amask = (mask >> 8) & 0xff;
-	while (dmask) { put_word(srca, regs.d[movem_index1[dmask]].D); srca += 2; dmask = movem_next[dmask]; }
-        while (amask) { put_word(srca, regs.a[movem_index1[amask]]); srca += 2; amask = movem_next[amask]; }
+	while (dmask) { put_word(srca, regs.d[movem_index1[dmask]].D); srca += 2; dmask = movem_next[dmask]; MC68000_ICount -= 4; }
+        while (amask) { put_word(srca, regs.a[movem_index1[amask]]); srca += 2; amask = movem_next[amask]; MC68000_ICount -= 4; }
 }}}}
-void op_48a0(ULONG opcode) /* MVMLE */
+void op_48a0(void) /* MVMLE */
 {
         ULONG dstreg = opcode & 7;
 {       UWORD mask = nextiword();
 {{      CPTR srca = regs.a[dstreg];
 {       UWORD amask = mask & 0xff, dmask = (mask >> 8) & 0xff;
-        while (amask) { srca -= 2; put_word(srca, regs.a[movem_index2[amask]]); amask = movem_next[amask]; }
-	while (dmask) { srca -= 2; put_word(srca, regs.d[movem_index2[dmask]].D); dmask = movem_next[dmask]; }
+        while (amask) { srca -= 2; put_word(srca, regs.a[movem_index2[amask]]); amask = movem_next[amask]; MC68000_ICount -= 4; }
+	while (dmask) { srca -= 2; put_word(srca, regs.d[movem_index2[dmask]].D); dmask = movem_next[dmask]; MC68000_ICount -= 4; }
         regs.a[dstreg] = srca;
 }}}}}
-void op_48a8(ULONG opcode) /* MVMLE */
+void op_48a8(void) /* MVMLE */
 {
         ULONG dstreg = opcode & 7;
 {       UWORD mask = nextiword();
 {       CPTR srca = regs.a[dstreg] + (LONG)(WORD)nextiword();
 {       UWORD dmask = mask & 0xff, amask = (mask >> 8) & 0xff;
-	while (dmask) { put_word(srca, regs.d[movem_index1[dmask]].D); srca += 2; dmask = movem_next[dmask]; }
-        while (amask) { put_word(srca, regs.a[movem_index1[amask]]); srca += 2; amask = movem_next[amask]; }
+	while (dmask) { put_word(srca, regs.d[movem_index1[dmask]].D); srca += 2; dmask = movem_next[dmask]; MC68000_ICount -= 4; }
+        while (amask) { put_word(srca, regs.a[movem_index1[amask]]); srca += 2; amask = movem_next[amask]; MC68000_ICount -= 4; }
 }}}}
-void op_48b0(ULONG opcode) /* MVMLE */
+void op_48b0(void) /* MVMLE */
 {
         ULONG dstreg = opcode & 7;
 {       UWORD mask = nextiword();
 {       CPTR srca = get_disp_ea(regs.a[dstreg]);
 {       UWORD dmask = mask & 0xff, amask = (mask >> 8) & 0xff;
-	while (dmask) { put_word(srca, regs.d[movem_index1[dmask]].D); srca += 2; dmask = movem_next[dmask]; }
-        while (amask) { put_word(srca, regs.a[movem_index1[amask]]); srca += 2; amask = movem_next[amask]; }
+	while (dmask) { put_word(srca, regs.d[movem_index1[dmask]].D); srca += 2; dmask = movem_next[dmask]; MC68000_ICount -= 4; }
+        while (amask) { put_word(srca, regs.a[movem_index1[amask]]); srca += 2; amask = movem_next[amask]; MC68000_ICount -= 4; }
 }}}}
-void op_48b8(ULONG opcode) /* MVMLE */
+void op_48b8(void) /* MVMLE */
 {
 {       UWORD mask = nextiword();
 {       CPTR srca = (LONG)(WORD)nextiword();
 {       UWORD dmask = mask & 0xff, amask = (mask >> 8) & 0xff;
-	while (dmask) { put_word(srca, regs.d[movem_index1[dmask]].D); srca += 2; dmask = movem_next[dmask]; }
-        while (amask) { put_word(srca, regs.a[movem_index1[amask]]); srca += 2; amask = movem_next[amask]; }
+	while (dmask) { put_word(srca, regs.d[movem_index1[dmask]].D); srca += 2; dmask = movem_next[dmask]; MC68000_ICount -= 4; }
+        while (amask) { put_word(srca, regs.a[movem_index1[amask]]); srca += 2; amask = movem_next[amask]; MC68000_ICount -= 4; }
 }}}}
-void op_48b9(ULONG opcode) /* MVMLE */
+void op_48b9(void) /* MVMLE */
 {
 {       UWORD mask = nextiword();
 {       CPTR srca = nextilong();
 {       UWORD dmask = mask & 0xff, amask = (mask >> 8) & 0xff;
-	while (dmask) { put_word(srca, regs.d[movem_index1[dmask]].D); srca += 2; dmask = movem_next[dmask]; }
-        while (amask) { put_word(srca, regs.a[movem_index1[amask]]); srca += 2; amask = movem_next[amask]; }
+	while (dmask) { put_word(srca, regs.d[movem_index1[dmask]].D); srca += 2; dmask = movem_next[dmask]; MC68000_ICount -= 4; }
+        while (amask) { put_word(srca, regs.a[movem_index1[amask]]); srca += 2; amask = movem_next[amask]; MC68000_ICount -= 4; }
 }}}}
-void op_48c0(ULONG opcode) /* EXT */
+void op_48c0(void) /* EXT */
 {
         ULONG srcreg = (opcode & 7);
 {{      LONG src = regs.d[srcreg].D;
 {       ULONG dst = (LONG)(WORD)src;
-        CLEARVC;
+        CLEARFLGS;
         ZFLG = ((LONG)(dst)) == 0;
         NFLG = ((LONG)(dst)) < 0;
         regs.d[srcreg].D = (dst);
 }}}}
-void op_48d0(ULONG opcode) /* MVMLE */
+void op_48d0(void) /* MVMLE */
 {
         ULONG dstreg = opcode & 7;
 {       UWORD mask = nextiword();
 {       CPTR srca = regs.a[dstreg];
 {       UWORD dmask = mask & 0xff, amask = (mask >> 8) & 0xff;
-	while (dmask) { put_long(srca, regs.d[movem_index1[dmask]].D); srca += 4; dmask = movem_next[dmask]; }
-        while (amask) { put_long(srca, regs.a[movem_index1[amask]]); srca += 4; amask = movem_next[amask]; }
+	while (dmask) { put_long(srca, regs.d[movem_index1[dmask]].D); srca += 4; dmask = movem_next[dmask]; MC68000_ICount -= 8; }
+        while (amask) { put_long(srca, regs.a[movem_index1[amask]]); srca += 4; amask = movem_next[amask]; MC68000_ICount -= 8; }
 }}}}
-void op_48e0(ULONG opcode) /* MVMLE */
+void op_48e0(void) /* MVMLE */
 {
         ULONG dstreg = opcode & 7;
 {       UWORD mask = nextiword();
 {{      CPTR srca = regs.a[dstreg];
 {       UWORD amask = mask & 0xff, dmask = (mask >> 8) & 0xff;
-        while (amask) { srca -= 4; put_long(srca, regs.a[movem_index2[amask]]); amask = movem_next[amask]; }
-	while (dmask) { srca -= 4; put_long(srca, regs.d[movem_index2[dmask]].D); dmask = movem_next[dmask]; }
+        while (amask) { srca -= 4; put_long(srca, regs.a[movem_index2[amask]]); amask = movem_next[amask]; MC68000_ICount -= 8; }
+	while (dmask) { srca -= 4; put_long(srca, regs.d[movem_index2[dmask]].D); dmask = movem_next[dmask]; MC68000_ICount -= 8; }
         regs.a[dstreg] = srca;
 }}}}}
-void op_48e8(ULONG opcode) /* MVMLE */
+void op_48e8(void) /* MVMLE */
 {
         ULONG dstreg = opcode & 7;
 {       UWORD mask = nextiword();
 {       CPTR srca = regs.a[dstreg] + (LONG)(WORD)nextiword();
 {       UWORD dmask = mask & 0xff, amask = (mask >> 8) & 0xff;
-	while (dmask) { put_long(srca, regs.d[movem_index1[dmask]].D); srca += 4; dmask = movem_next[dmask]; }
-        while (amask) { put_long(srca, regs.a[movem_index1[amask]]); srca += 4; amask = movem_next[amask]; }
+	while (dmask) { put_long(srca, regs.d[movem_index1[dmask]].D); srca += 4; dmask = movem_next[dmask]; MC68000_ICount -= 8; }
+        while (amask) { put_long(srca, regs.a[movem_index1[amask]]); srca += 4; amask = movem_next[amask]; MC68000_ICount -= 8; }
 }}}}
-void op_48f0(ULONG opcode) /* MVMLE */
+void op_48f0(void) /* MVMLE */
 {
         ULONG dstreg = opcode & 7;
 {       UWORD mask = nextiword();
 {       CPTR srca = get_disp_ea(regs.a[dstreg]);
 {       UWORD dmask = mask & 0xff, amask = (mask >> 8) & 0xff;
-	while (dmask) { put_long(srca, regs.d[movem_index1[dmask]].D); srca += 4; dmask = movem_next[dmask]; }
-        while (amask) { put_long(srca, regs.a[movem_index1[amask]]); srca += 4; amask = movem_next[amask]; }
+	while (dmask) { put_long(srca, regs.d[movem_index1[dmask]].D); srca += 4; dmask = movem_next[dmask]; MC68000_ICount -= 8; }
+        while (amask) { put_long(srca, regs.a[movem_index1[amask]]); srca += 4; amask = movem_next[amask]; MC68000_ICount -= 8; }
 }}}}
-void op_48f8(ULONG opcode) /* MVMLE */
+void op_48f8(void) /* MVMLE */
 {
 {       UWORD mask = nextiword();
 {       CPTR srca = (LONG)(WORD)nextiword();
 {       UWORD dmask = mask & 0xff, amask = (mask >> 8) & 0xff;
-	while (dmask) { put_long(srca, regs.d[movem_index1[dmask]].D); srca += 4; dmask = movem_next[dmask]; }
-        while (amask) { put_long(srca, regs.a[movem_index1[amask]]); srca += 4; amask = movem_next[amask]; }
+	while (dmask) { put_long(srca, regs.d[movem_index1[dmask]].D); srca += 4; dmask = movem_next[dmask]; MC68000_ICount -= 8; }
+        while (amask) { put_long(srca, regs.a[movem_index1[amask]]); srca += 4; amask = movem_next[amask]; MC68000_ICount -= 8; }
 }}}}
-void op_48f9(ULONG opcode) /* MVMLE */
+void op_48f9(void) /* MVMLE */
 {
 {       UWORD mask = nextiword();
 {       CPTR srca = nextilong();
 {       UWORD dmask = mask & 0xff, amask = (mask >> 8) & 0xff;
-	while (dmask) { put_long(srca, regs.d[movem_index1[dmask]].D); srca += 4; dmask = movem_next[dmask]; }
-        while (amask) { put_long(srca, regs.a[movem_index1[amask]]); srca += 4; amask = movem_next[amask]; }
+	while (dmask) { put_long(srca, regs.d[movem_index1[dmask]].D); srca += 4; dmask = movem_next[dmask]; MC68000_ICount -= 8; }
+        while (amask) { put_long(srca, regs.a[movem_index1[amask]]); srca += 4; amask = movem_next[amask]; MC68000_ICount -= 8; }
 }}}}
-void op_49c0(ULONG opcode) /* EXT */
+void op_49c0(void) /* EXT */
 {
         ULONG srcreg = (opcode & 7);
 {{      LONG src = regs.d[srcreg].D;
 {       ULONG dst = (LONG)(BYTE)src;
-        CLEARVC;
-        ZFLG = ((LONG)(dst)) == 0;
-        NFLG = ((LONG)(dst)) < 0;
         regs.d[srcreg].D = (dst);
+        CLEARFLGS;
+	if ( dst <= 0 )
+		{
+		if ( dst == 0 )
+			ZFLG = ZTRUE ;
+		else
+			NFLG = NTRUE ;
+		}
 }}}}
-void op_4a00(ULONG opcode) /* TST */
+void op_4a00(void) /* TST */
 {
         ULONG srcreg = (opcode & 7);
 {{      BYTE src = regs.d[srcreg].B.l;
-        CLEARVC;
-        ZFLG = ((BYTE)(src)) == 0;
-        NFLG = ((BYTE)(src)) < 0;
+        CLEARFLGS;
+	if ( src <= 0 )
+		{
+		if ( src == 0 )
+			ZFLG = ZTRUE ;
+		else
+			NFLG = NTRUE ;
+		}
 }}}
-void op_4a10(ULONG opcode) /* TST */
+void op_4a10(void) /* TST */
 {
         ULONG srcreg = (opcode & 7);
 {{      CPTR srca = regs.a[srcreg];
         BYTE src = get_byte(srca);
-        CLEARVC;
-        ZFLG = ((BYTE)(src)) == 0;
-        NFLG = ((BYTE)(src)) < 0;
+        CLEARFLGS;
+	if ( src <= 0 )
+		{
+		if ( src == 0 )
+			ZFLG = ZTRUE ;
+		else
+			NFLG = NTRUE ;
+		}
 }}}
-void op_4a18(ULONG opcode) /* TST */
+void op_4a18(void) /* TST */
 {
         ULONG srcreg = (opcode & 7);
 {{      CPTR srca = regs.a[srcreg];
         BYTE src = get_byte(srca);
 {       regs.a[srcreg] += areg_byteinc[srcreg];
-        CLEARVC;
-        ZFLG = ((BYTE)(src)) == 0;
-        NFLG = ((BYTE)(src)) < 0;
+        CLEARFLGS;
+	if ( src <= 0 )
+		{
+		if ( src == 0 )
+			ZFLG = ZTRUE ;
+		else
+			NFLG = NTRUE ;
+		}
 }}}}
-void op_4a20(ULONG opcode) /* TST */
+void op_4a20(void) /* TST */
 {
         ULONG srcreg = (opcode & 7);
 {{      regs.a[srcreg] -= areg_byteinc[srcreg];
 {       CPTR srca = regs.a[srcreg];
         BYTE src = get_byte(srca);
-        CLEARVC;
-        ZFLG = ((BYTE)(src)) == 0;
-        NFLG = ((BYTE)(src)) < 0;
+        CLEARFLGS;
+	if ( src <= 0 )
+		{
+		if ( src == 0 )
+			ZFLG = ZTRUE ;
+		else
+			NFLG = NTRUE ;
+		}
 }}}}
-void op_4a28(ULONG opcode) /* TST */
+void op_4a28(void) /* TST */
 {
         ULONG srcreg = (opcode & 7);
 {{      CPTR srca = regs.a[srcreg] + (LONG)(WORD)nextiword();
         BYTE src = get_byte(srca);
-        CLEARVC;
-        ZFLG = ((BYTE)(src)) == 0;
-        NFLG = ((BYTE)(src)) < 0;
+        CLEARFLGS;
+	if ( src <= 0 )
+		{
+		if ( src == 0 )
+			ZFLG = ZTRUE ;
+		else
+			NFLG = NTRUE ;
+		}
 }}}
-void op_4a30(ULONG opcode) /* TST */
+void op_4a30(void) /* TST */
 {
         ULONG srcreg = (opcode & 7);
 {{      CPTR srca = get_disp_ea(regs.a[srcreg]);
 {       BYTE src = get_byte(srca);
-        CLEARVC;
-        ZFLG = ((BYTE)(src)) == 0;
-        NFLG = ((BYTE)(src)) < 0;
+        CLEARFLGS;
+	if ( src <= 0 )
+		{
+		if ( src == 0 )
+			ZFLG = ZTRUE ;
+		else
+			NFLG = NTRUE ;
+		}
 }}}}
-void op_4a38(ULONG opcode) /* TST */
+void op_4a38(void) /* TST */
 {
 {{      CPTR srca = (LONG)(WORD)nextiword();
         BYTE src = get_byte(srca);
-        CLEARVC;
-        ZFLG = ((BYTE)(src)) == 0;
-        NFLG = ((BYTE)(src)) < 0;
+        CLEARFLGS;
+	if ( src <= 0 )
+		{
+		if ( src == 0 )
+			ZFLG = ZTRUE ;
+		else
+			NFLG = NTRUE ;
+		}
 }}}
-void op_4a39(ULONG opcode) /* TST */
+void op_4a39(void) /* TST */
 {
 {{      CPTR srca = nextilong();
         BYTE src = get_byte(srca);
-        CLEARVC;
-        ZFLG = ((BYTE)(src)) == 0;
-        NFLG = ((BYTE)(src)) < 0;
+        CLEARFLGS;
+	if ( src <= 0 )
+		{
+		if ( src == 0 )
+			ZFLG = ZTRUE ;
+		else
+			NFLG = NTRUE ;
+		}
 }}}
-void op_4a3a(ULONG opcode) /* TST */
+void op_4a3a(void) /* TST */
 {
 {{      CPTR srca = m68k_getpc();
         srca += (LONG)(WORD)nextiword();
 {       BYTE src = get_byte(srca);
-        CLEARVC;
-        ZFLG = ((BYTE)(src)) == 0;
-        NFLG = ((BYTE)(src)) < 0;
+        CLEARFLGS;
+	if ( src <= 0 )
+		{
+		if ( src == 0 )
+			ZFLG = ZTRUE ;
+		else
+			NFLG = NTRUE ;
+		}
 }}}}
-void op_4a3b(ULONG opcode) /* TST */
+void op_4a3b(void) /* TST */
 {
 {{      CPTR srca = get_disp_ea(m68k_getpc());
 {       BYTE src = get_byte(srca);
-        CLEARVC;
-        ZFLG = ((BYTE)(src)) == 0;
-        NFLG = ((BYTE)(src)) < 0;
+        CLEARFLGS;
+	if ( src <= 0 )
+		{
+		if ( src == 0 )
+			ZFLG = ZTRUE ;
+		else
+			NFLG = NTRUE ;
+		}
 }}}}
-void op_4a3c(ULONG opcode) /* TST */
+void op_4a3c(void) /* TST */
 {
 {{      BYTE src = nextiword();
-        CLEARVC;
-        ZFLG = ((BYTE)(src)) == 0;
-        NFLG = ((BYTE)(src)) < 0;
+        CLEARFLGS;
+	if ( src <= 0 )
+		{
+		if ( src == 0 )
+			ZFLG = ZTRUE ;
+		else
+			NFLG = NTRUE ;
+		}
 }}}
-void op_4a40(ULONG opcode) /* TST */
+void op_4a40(void) /* TST */
 {
         ULONG srcreg = (opcode & 7);
 {{      WORD src = regs.d[srcreg].W.l;
-        CLEARVC;
-        ZFLG = ((WORD)(src)) == 0;
-        NFLG = ((WORD)(src)) < 0;
+        CLEARFLGS;
+	if ( src <= 0 )
+		{
+		if ( src == 0 )
+			ZFLG = ZTRUE ;
+		else
+			NFLG = NTRUE ;
+		}
 }}}
-void op_4a48(ULONG opcode) /* TST */
+void op_4a48(void) /* TST */
 {
         ULONG srcreg = (opcode & 7);
 {{      WORD src = regs.a[srcreg];
-        CLEARVC;
-        ZFLG = ((WORD)(src)) == 0;
-        NFLG = ((WORD)(src)) < 0;
+        CLEARFLGS;
+	if ( src <= 0 )
+		{
+		if ( src == 0 )
+			ZFLG = ZTRUE ;
+		else
+			NFLG = NTRUE ;
+		}
 }}}
-void op_4a50(ULONG opcode) /* TST */
+void op_4a50(void) /* TST */
 {
         ULONG srcreg = (opcode & 7);
 {{      CPTR srca = regs.a[srcreg];
         WORD src = get_word(srca);
-        CLEARVC;
-        ZFLG = ((WORD)(src)) == 0;
-        NFLG = ((WORD)(src)) < 0;
+        CLEARFLGS;
+	if ( src <= 0 )
+		{
+		if ( src == 0 )
+			ZFLG = ZTRUE ;
+		else
+			NFLG = NTRUE ;
+		}
 }}}
-void op_4a58(ULONG opcode) /* TST */
+void op_4a58(void) /* TST */
 {
         ULONG srcreg = (opcode & 7);
 {{      CPTR srca = regs.a[srcreg];
         WORD src = get_word(srca);
 {       regs.a[srcreg] += 2;
-        CLEARVC;
-        ZFLG = ((WORD)(src)) == 0;
-        NFLG = ((WORD)(src)) < 0;
+        CLEARFLGS;
+	if ( src <= 0 )
+		{
+		if ( src == 0 )
+			ZFLG = ZTRUE ;
+		else
+			NFLG = NTRUE ;
+		}
 }}}}
-void op_4a60(ULONG opcode) /* TST */
+void op_4a60(void) /* TST */
 {
         ULONG srcreg = (opcode & 7);
 {{      regs.a[srcreg] -= 2;
 {       CPTR srca = regs.a[srcreg];
         WORD src = get_word(srca);
-        CLEARVC;
-        ZFLG = ((WORD)(src)) == 0;
-        NFLG = ((WORD)(src)) < 0;
+        CLEARFLGS;
+	if ( src <= 0 )
+		{
+		if ( src == 0 )
+			ZFLG = ZTRUE ;
+		else
+			NFLG = NTRUE ;
+		}
 }}}}
-void op_4a68(ULONG opcode) /* TST */
+void op_4a68(void) /* TST */
 {
         ULONG srcreg = (opcode & 7);
 {{      CPTR srca = regs.a[srcreg] + (LONG)(WORD)nextiword();
         WORD src = get_word(srca);
-        CLEARVC;
-        ZFLG = ((WORD)(src)) == 0;
-        NFLG = ((WORD)(src)) < 0;
+        CLEARFLGS;
+	if ( src <= 0 )
+		{
+		if ( src == 0 )
+			ZFLG = ZTRUE ;
+		else
+			NFLG = NTRUE ;
+		}
 }}}
-void op_4a70(ULONG opcode) /* TST */
+void op_4a70(void) /* TST */
 {
         ULONG srcreg = (opcode & 7);
 {{      CPTR srca = get_disp_ea(regs.a[srcreg]);
 {       WORD src = get_word(srca);
-        CLEARVC;
-        ZFLG = ((WORD)(src)) == 0;
-        NFLG = ((WORD)(src)) < 0;
+        CLEARFLGS;
+	if ( src <= 0 )
+		{
+		if ( src == 0 )
+			ZFLG = ZTRUE ;
+		else
+			NFLG = NTRUE ;
+		}
 }}}}
-void op_4a78(ULONG opcode) /* TST */
+void op_4a78(void) /* TST */
 {
 {{      CPTR srca = (LONG)(WORD)nextiword();
         WORD src = get_word(srca);
-        CLEARVC;
-        ZFLG = ((WORD)(src)) == 0;
-        NFLG = ((WORD)(src)) < 0;
+        CLEARFLGS;
+	if ( src <= 0 )
+		{
+		if ( src == 0 )
+			ZFLG = ZTRUE ;
+		else
+			NFLG = NTRUE ;
+		}
 }}}
-void op_4a79(ULONG opcode) /* TST */
+void op_4a79(void) /* TST */
 {
 {{      CPTR srca = nextilong();
         WORD src = get_word(srca);
-        CLEARVC;
-        ZFLG = ((WORD)(src)) == 0;
-        NFLG = ((WORD)(src)) < 0;
+        CLEARFLGS;
+	if ( src <= 0 )
+		{
+		if ( src == 0 )
+			ZFLG = ZTRUE ;
+		else
+			NFLG = NTRUE ;
+		}
 }}}
-void op_4a7a(ULONG opcode) /* TST */
+void op_4a7a(void) /* TST */
 {
 {{      CPTR srca = m68k_getpc();
         srca += (LONG)(WORD)nextiword();
 {       WORD src = get_word(srca);
-        CLEARVC;
-        ZFLG = ((WORD)(src)) == 0;
-        NFLG = ((WORD)(src)) < 0;
+        CLEARFLGS;
+	if ( src <= 0 )
+		{
+		if ( src == 0 )
+			ZFLG = ZTRUE ;
+		else
+			NFLG = NTRUE ;
+		}
 }}}}
-void op_4a7b(ULONG opcode) /* TST */
+void op_4a7b(void) /* TST */
 {
 {{      CPTR srca = get_disp_ea(m68k_getpc());
 {       WORD src = get_word(srca);
-        CLEARVC;
-        ZFLG = ((WORD)(src)) == 0;
-        NFLG = ((WORD)(src)) < 0;
+        CLEARFLGS;
+	if ( src <= 0 )
+		{
+		if ( src == 0 )
+			ZFLG = ZTRUE ;
+		else
+			NFLG = NTRUE ;
+		}
 }}}}
-void op_4a7c(ULONG opcode) /* TST */
+void op_4a7c(void) /* TST */
 {
 {{      WORD src = nextiword();
-        CLEARVC;
-        ZFLG = ((WORD)(src)) == 0;
-        NFLG = ((WORD)(src)) < 0;
+        CLEARFLGS;
+	if ( src <= 0 )
+		{
+		if ( src == 0 )
+			ZFLG = ZTRUE ;
+		else
+			NFLG = NTRUE ;
+		}
 }}}
-void op_4a80(ULONG opcode) /* TST */
+void op_4a80(void) /* TST */
 {
         ULONG srcreg = (opcode & 7);
 {{      LONG src = regs.d[srcreg].D;
-        CLEARVC;
-        ZFLG = ((LONG)(src)) == 0;
-        NFLG = ((LONG)(src)) < 0;
+        CLEARFLGS;
+	if ( src <= 0 )
+		{
+		if ( src == 0 )
+			ZFLG = ZTRUE ;
+		else
+			NFLG = NTRUE ;
+		}
 }}}
-void op_4a88(ULONG opcode) /* TST */
+void op_4a88(void) /* TST */
 {
         ULONG srcreg = (opcode & 7);
 {{      LONG src = regs.a[srcreg];
-        CLEARVC;
-        ZFLG = ((LONG)(src)) == 0;
-        NFLG = ((LONG)(src)) < 0;
+        CLEARFLGS;
+	if ( src <= 0 )
+		{
+		if ( src == 0 )
+			ZFLG = ZTRUE ;
+		else
+			NFLG = NTRUE ;
+		}
 }}}
-void op_4a90(ULONG opcode) /* TST */
+void op_4a90(void) /* TST */
 {
         ULONG srcreg = (opcode & 7);
 {{      CPTR srca = regs.a[srcreg];
         LONG src = get_long(srca);
-        CLEARVC;
-        ZFLG = ((LONG)(src)) == 0;
-        NFLG = ((LONG)(src)) < 0;
+        CLEARFLGS;
+	if ( src <= 0 )
+		{
+		if ( src == 0 )
+			ZFLG = ZTRUE ;
+		else
+			NFLG = NTRUE ;
+		}
 }}}
-void op_4a98(ULONG opcode) /* TST */
+void op_4a98(void) /* TST */
 {
         ULONG srcreg = (opcode & 7);
 {{      CPTR srca = regs.a[srcreg];
         LONG src = get_long(srca);
 {       regs.a[srcreg] += 4;
-        CLEARVC;
-        ZFLG = ((LONG)(src)) == 0;
-        NFLG = ((LONG)(src)) < 0;
+        CLEARFLGS;
+	if ( src <= 0 )
+		{
+		if ( src == 0 )
+			ZFLG = ZTRUE ;
+		else
+			NFLG = NTRUE ;
+		}
 }}}}
-void op_4aa0(ULONG opcode) /* TST */
+void op_4aa0(void) /* TST */
 {
         ULONG srcreg = (opcode & 7);
 {{      regs.a[srcreg] -= 4;
 {       CPTR srca = regs.a[srcreg];
         LONG src = get_long(srca);
-        CLEARVC;
-        ZFLG = ((LONG)(src)) == 0;
-        NFLG = ((LONG)(src)) < 0;
+        CLEARFLGS;
+	if ( src <= 0 )
+		{
+		if ( src == 0 )
+			ZFLG = ZTRUE ;
+		else
+			NFLG = NTRUE ;
+		}
 }}}}
-void op_4aa8(ULONG opcode) /* TST */
+void op_4aa8(void) /* TST */
 {
         ULONG srcreg = (opcode & 7);
 {{      CPTR srca = regs.a[srcreg] + (LONG)(WORD)nextiword();
         LONG src = get_long(srca);
-        CLEARVC;
-        ZFLG = ((LONG)(src)) == 0;
-        NFLG = ((LONG)(src)) < 0;
+        CLEARFLGS;
+	if ( src <= 0 )
+		{
+		if ( src == 0 )
+			ZFLG = ZTRUE ;
+		else
+			NFLG = NTRUE ;
+		}
 }}}
-void op_4ab0(ULONG opcode) /* TST */
+void op_4ab0(void) /* TST */
 {
         ULONG srcreg = (opcode & 7);
 {{      CPTR srca = get_disp_ea(regs.a[srcreg]);
 {       LONG src = get_long(srca);
-        CLEARVC;
-        ZFLG = ((LONG)(src)) == 0;
-        NFLG = ((LONG)(src)) < 0;
+        CLEARFLGS;
+	if ( src <= 0 )
+		{
+		if ( src == 0 )
+			ZFLG = ZTRUE ;
+		else
+			NFLG = NTRUE ;
+		}
 }}}}
-void op_4ab8(ULONG opcode) /* TST */
+void op_4ab8(void) /* TST */
 {
 {{      CPTR srca = (LONG)(WORD)nextiword();
         LONG src = get_long(srca);
-        CLEARVC;
-        ZFLG = ((LONG)(src)) == 0;
-        NFLG = ((LONG)(src)) < 0;
+        CLEARFLGS;
+	if ( src <= 0 )
+		{
+		if ( src == 0 )
+			ZFLG = ZTRUE ;
+		else
+			NFLG = NTRUE ;
+		}
 }}}
-void op_4ab9(ULONG opcode) /* TST */
+void op_4ab9(void) /* TST */
 {
 {{      CPTR srca = nextilong();
         LONG src = get_long(srca);
-        CLEARVC;
-        ZFLG = ((LONG)(src)) == 0;
-        NFLG = ((LONG)(src)) < 0;
+        CLEARFLGS;
+	if ( src <= 0 )
+		{
+		if ( src == 0 )
+			ZFLG = ZTRUE ;
+		else
+			NFLG = NTRUE ;
+		}
 }}}
-void op_4aba(ULONG opcode) /* TST */
+void op_4aba(void) /* TST */
 {
 {{      CPTR srca = m68k_getpc();
         srca += (LONG)(WORD)nextiword();
 {       LONG src = get_long(srca);
-        CLEARVC;
-        ZFLG = ((LONG)(src)) == 0;
-        NFLG = ((LONG)(src)) < 0;
+        CLEARFLGS;
+	if ( src <= 0 )
+		{
+		if ( src == 0 )
+			ZFLG = ZTRUE ;
+		else
+			NFLG = NTRUE ;
+		}
 }}}}
-void op_4abb(ULONG opcode) /* TST */
+void op_4abb(void) /* TST */
 {
 {{      CPTR srca = get_disp_ea(m68k_getpc());
 {       LONG src = get_long(srca);
-        CLEARVC;
-        ZFLG = ((LONG)(src)) == 0;
-        NFLG = ((LONG)(src)) < 0;
+        CLEARFLGS;
+	if ( src <= 0 )
+		{
+		if ( src == 0 )
+			ZFLG = ZTRUE ;
+		else
+			NFLG = NTRUE ;
+		}
 }}}}
-void op_4abc(ULONG opcode) /* TST */
+void op_4abc(void) /* TST */
 {
 {{      LONG src = nextilong();
-        CLEARVC;
-        ZFLG = ((LONG)(src)) == 0;
-        NFLG = ((LONG)(src)) < 0;
+        CLEARFLGS;
+	if ( src <= 0 )
+		{
+		if ( src == 0 )
+			ZFLG = ZTRUE ;
+		else
+			NFLG = NTRUE ;
+		}
 }}}
-void op_4ac0(ULONG opcode) /* TAS */
+void op_4ac0(void) /* TAS */
 {
         ULONG srcreg = (opcode & 7);
 {{      BYTE src = regs.d[srcreg].B.l;
-        CLEARVC;
-        ZFLG = ((BYTE)(src)) == 0;
-        NFLG = ((BYTE)(src)) < 0;
-        src |= 0x80;
-        regs.d[srcreg].B.l = src;
+        regs.d[srcreg].B.l = src | 0x80;
+        CLEARFLGS;
+	if ( src <= 0 )
+		{
+		if ( src == 0 )
+			ZFLG = ZTRUE ;
+		else
+			NFLG = NTRUE ;
+		}
 }}}
-void op_4ad0(ULONG opcode) /* TAS */
+void op_4ad0(void) /* TAS */
 {
         ULONG srcreg = (opcode & 7);
 {{      CPTR srca = regs.a[srcreg];
         BYTE src = get_byte(srca);
-        CLEARVC;
-        ZFLG = ((BYTE)(src)) == 0;
-        NFLG = ((BYTE)(src)) < 0;
-        src |= 0x80;
-        put_byte(srca,src);
+        put_byte(srca,src | 0x80 );
+        CLEARFLGS;
+	if ( src <= 0 )
+		{
+		if ( src == 0 )
+			ZFLG = ZTRUE ;
+		else
+			NFLG = NTRUE ;
+		}
 }}}
-void op_4ad8(ULONG opcode) /* TAS */
+void op_4ad8(void) /* TAS */
 {
         ULONG srcreg = (opcode & 7);
 {{      CPTR srca = regs.a[srcreg];
         BYTE src = get_byte(srca);
 {       regs.a[srcreg] += areg_byteinc[srcreg];
-        CLEARVC;
-        ZFLG = ((BYTE)(src)) == 0;
-        NFLG = ((BYTE)(src)) < 0;
-        src |= 0x80;
-        put_byte(srca,src);
+        put_byte(srca,src | 0x80 );
+        CLEARFLGS;
+	if ( src <= 0 )
+		{
+		if ( src == 0 )
+			ZFLG = ZTRUE ;
+		else
+			NFLG = NTRUE ;
+		}
 }}}}
-void op_4ae0(ULONG opcode) /* TAS */
+void op_4ae0(void) /* TAS */
 {
         ULONG srcreg = (opcode & 7);
 {{      regs.a[srcreg] -= areg_byteinc[srcreg];
 {       CPTR srca = regs.a[srcreg];
         BYTE src = get_byte(srca);
-        CLEARVC;
-        ZFLG = ((BYTE)(src)) == 0;
-        NFLG = ((BYTE)(src)) < 0;
-        src |= 0x80;
-        put_byte(srca,src);
+        put_byte(srca,src | 0x80 );
+        CLEARFLGS;
+	if ( src <= 0 )
+		{
+		if ( src == 0 )
+			ZFLG = ZTRUE ;
+		else
+			NFLG = NTRUE ;
+		}
 }}}}
-void op_4ae8(ULONG opcode) /* TAS */
+void op_4ae8(void) /* TAS */
 {
         ULONG srcreg = (opcode & 7);
 {{      CPTR srca = regs.a[srcreg] + (LONG)(WORD)nextiword();
         BYTE src = get_byte(srca);
-        CLEARVC;
-        ZFLG = ((BYTE)(src)) == 0;
-        NFLG = ((BYTE)(src)) < 0;
-        src |= 0x80;
-        put_byte(srca,src);
+        put_byte(srca,src | 0x80);
+        CLEARFLGS;
+	if ( src <= 0 )
+		{
+		if ( src == 0 )
+			ZFLG = ZTRUE ;
+		else
+			NFLG = NTRUE ;
+		}
 }}}
-void op_4af0(ULONG opcode) /* TAS */
+void op_4af0(void) /* TAS */
 {
         ULONG srcreg = (opcode & 7);
 {{      CPTR srca = get_disp_ea(regs.a[srcreg]);
 {       BYTE src = get_byte(srca);
-        CLEARVC;
-        ZFLG = ((BYTE)(src)) == 0;
-        NFLG = ((BYTE)(src)) < 0;
-        src |= 0x80;
-        put_byte(srca,src);
+        put_byte(srca,src | 0x80);
+        CLEARFLGS;
+	if ( src <= 0 )
+		{
+		if ( src == 0 )
+			ZFLG = ZTRUE ;
+		else
+			NFLG = NTRUE ;
+		}
 }}}}
-void op_4af8(ULONG opcode) /* TAS */
+void op_4af8(void) /* TAS */
 {
 {{      CPTR srca = (LONG)(WORD)nextiword();
         BYTE src = get_byte(srca);
-        CLEARVC;
-        ZFLG = ((BYTE)(src)) == 0;
-        NFLG = ((BYTE)(src)) < 0;
-        src |= 0x80;
-        put_byte(srca,src);
+        put_byte(srca,src | 0x80);
+        CLEARFLGS;
+	if ( src <= 0 )
+		{
+		if ( src == 0 )
+			ZFLG = ZTRUE ;
+		else
+			NFLG = NTRUE ;
+		}
 }}}
-void op_4af9(ULONG opcode) /* TAS */
+void op_4af9(void) /* TAS */
 {
 {{      CPTR srca = nextilong();
         BYTE src = get_byte(srca);
-        CLEARVC;
-        ZFLG = ((BYTE)(src)) == 0;
-        NFLG = ((BYTE)(src)) < 0;
-        src |= 0x80;
-        put_byte(srca,src);
+        put_byte(srca,src | 0x80);
+        CLEARFLGS;
+	if ( src <= 0 )
+		{
+		if ( src == 0 )
+			ZFLG = ZTRUE ;
+		else
+			NFLG = NTRUE ;
+		}
 }}}
-void op_4c90(ULONG opcode) /* MVMEL */
+void op_4c90(void) /* MVMEL */
 {
         ULONG dstreg = opcode & 7;
 {       UWORD mask = nextiword(), dmask = mask & 0xff, amask = (mask >> 8) & 0xff;
 {       CPTR srca = regs.a[dstreg];
-{	while (dmask) { regs.d[movem_index1[dmask]].D = (LONG)(WORD)get_word(srca); srca += 2; dmask = movem_next[dmask]; }
-        while (amask) { regs.a[movem_index1[amask]] = (LONG)(WORD)get_word(srca); srca += 2; amask = movem_next[amask]; }
+{	while (dmask) { regs.d[movem_index1[dmask]].D = (LONG)(WORD)get_word(srca); srca += 2; dmask = movem_next[dmask]; MC68000_ICount -= 4; }
+        while (amask) { regs.a[movem_index1[amask]] = (LONG)(WORD)get_word(srca); srca += 2; amask = movem_next[amask]; MC68000_ICount -= 4; }
 }}}}
-void op_4c98(ULONG opcode) /* MVMEL */
+void op_4c98(void) /* MVMEL */
 {
         ULONG dstreg = opcode & 7;
 {       UWORD mask = nextiword(), dmask = mask & 0xff, amask = (mask >> 8) & 0xff;
 {       CPTR srca = regs.a[dstreg];
-{	while (dmask) { regs.d[movem_index1[dmask]].D = (LONG)(WORD)get_word(srca); srca += 2; dmask = movem_next[dmask]; }
-        while (amask) { regs.a[movem_index1[amask]] = (LONG)(WORD)get_word(srca); srca += 2; amask = movem_next[amask]; }
+{	while (dmask) { regs.d[movem_index1[dmask]].D = (LONG)(WORD)get_word(srca); srca += 2; dmask = movem_next[dmask]; MC68000_ICount -= 4; }
+        while (amask) { regs.a[movem_index1[amask]] = (LONG)(WORD)get_word(srca); srca += 2; amask = movem_next[amask]; MC68000_ICount -= 4; }
         regs.a[dstreg] = srca;
 }}}}
-void op_4ca8(ULONG opcode) /* MVMEL */
+void op_4ca8(void) /* MVMEL */
 {
         ULONG dstreg = opcode & 7;
 {       UWORD mask = nextiword(), dmask = mask & 0xff, amask = (mask >> 8) & 0xff;
 {       CPTR srca = regs.a[dstreg] + (LONG)(WORD)nextiword();
-{	while (dmask) { regs.d[movem_index1[dmask]].D = (LONG)(WORD)get_word(srca); srca += 2; dmask = movem_next[dmask]; }
-        while (amask) { regs.a[movem_index1[amask]] = (LONG)(WORD)get_word(srca); srca += 2; amask = movem_next[amask]; }
+{	while (dmask) { regs.d[movem_index1[dmask]].D = (LONG)(WORD)get_word(srca); srca += 2; dmask = movem_next[dmask]; MC68000_ICount -= 4; }
+        while (amask) { regs.a[movem_index1[amask]] = (LONG)(WORD)get_word(srca); srca += 2; amask = movem_next[amask]; MC68000_ICount -= 4; }
 }}}}
-void op_4cb0(ULONG opcode) /* MVMEL */
+void op_4cb0(void) /* MVMEL */
 {
         ULONG dstreg = opcode & 7;
 {       UWORD mask = nextiword(), dmask = mask & 0xff, amask = (mask >> 8) & 0xff;
 {       CPTR srca = get_disp_ea(regs.a[dstreg]);
-{	while (dmask) { regs.d[movem_index1[dmask]].D = (LONG)(WORD)get_word(srca); srca += 2; dmask = movem_next[dmask]; }
-        while (amask) { regs.a[movem_index1[amask]] = (LONG)(WORD)get_word(srca); srca += 2; amask = movem_next[amask]; }
+{	while (dmask) { regs.d[movem_index1[dmask]].D = (LONG)(WORD)get_word(srca); srca += 2; dmask = movem_next[dmask]; MC68000_ICount -= 4; }
+        while (amask) { regs.a[movem_index1[amask]] = (LONG)(WORD)get_word(srca); srca += 2; amask = movem_next[amask]; MC68000_ICount -= 4; }
 }}}}
-void op_4cb8(ULONG opcode) /* MVMEL */
+void op_4cb8(void) /* MVMEL */
 {
 {       UWORD mask = nextiword(), dmask = mask & 0xff, amask = (mask >> 8) & 0xff;
 {       CPTR srca = (LONG)(WORD)nextiword();
-{	while (dmask) { regs.d[movem_index1[dmask]].D = (LONG)(WORD)get_word(srca); srca += 2; dmask = movem_next[dmask]; }
-        while (amask) { regs.a[movem_index1[amask]] = (LONG)(WORD)get_word(srca); srca += 2; amask = movem_next[amask]; }
+{	while (dmask) { regs.d[movem_index1[dmask]].D = (LONG)(WORD)get_word(srca); srca += 2; dmask = movem_next[dmask]; MC68000_ICount -= 4; }
+        while (amask) { regs.a[movem_index1[amask]] = (LONG)(WORD)get_word(srca); srca += 2; amask = movem_next[amask]; MC68000_ICount -= 4; }
 }}}}
-void op_4cb9(ULONG opcode) /* MVMEL */
+void op_4cb9(void) /* MVMEL */
 {
 {       UWORD mask = nextiword(), dmask = mask & 0xff, amask = (mask >> 8) & 0xff;
 {       CPTR srca = nextilong();
-{	while (dmask) { regs.d[movem_index1[dmask]].D = (LONG)(WORD)get_word(srca); srca += 2; dmask = movem_next[dmask]; }
-        while (amask) { regs.a[movem_index1[amask]] = (LONG)(WORD)get_word(srca); srca += 2; amask = movem_next[amask]; }
+{	while (dmask) { regs.d[movem_index1[dmask]].D = (LONG)(WORD)get_word(srca); srca += 2; dmask = movem_next[dmask]; MC68000_ICount -= 4; }
+        while (amask) { regs.a[movem_index1[amask]] = (LONG)(WORD)get_word(srca); srca += 2; amask = movem_next[amask]; MC68000_ICount -= 4; }
 }}}}
-void op_4cba(ULONG opcode) /* MVMEL */
+void op_4cba(void) /* MVMEL */
 {
 				ULONG dstreg;
 				dstreg = 2;
 {       UWORD mask = nextiword(), dmask = mask & 0xff, amask = (mask >> 8) & 0xff;
 {       CPTR srca = m68k_getpc();
 				srca += (LONG)(WORD)nextiword();
-{	while (dmask) { regs.d[movem_index1[dmask]].D = (LONG)(WORD)get_word(srca); srca += 2; dmask = movem_next[dmask]; }
-				while (amask) { regs.a[movem_index1[amask]] = (LONG)(WORD)get_word(srca); srca += 2; amask = movem_next[amask]; }
+{	while (dmask) { regs.d[movem_index1[dmask]].D = (LONG)(WORD)get_word(srca); srca += 2; dmask = movem_next[dmask]; MC68000_ICount -= 4; }
+				while (amask) { regs.a[movem_index1[amask]] = (LONG)(WORD)get_word(srca); srca += 2; amask = movem_next[amask]; MC68000_ICount -= 4; }
 }}}}
-void op_4cbb(ULONG opcode) /* MVMEL */
+void op_4cbb(void) /* MVMEL */
 {
 				ULONG dstreg;
 				dstreg = 3;
 {       UWORD mask = nextiword(), dmask = mask & 0xff, amask = (mask >> 8) & 0xff;
 {       CPTR srca = get_disp_ea(m68k_getpc());
-{	while (dmask) { regs.d[movem_index1[dmask]].D = (LONG)(WORD)get_word(srca); srca += 2; dmask = movem_next[dmask]; }
-	while (amask) { regs.a[movem_index1[amask]] = (LONG)(WORD)get_word(srca); srca += 2; amask = movem_next[amask]; }
+{	while (dmask) { regs.d[movem_index1[dmask]].D = (LONG)(WORD)get_word(srca); srca += 2; dmask = movem_next[dmask]; MC68000_ICount -= 4; }
+	while (amask) { regs.a[movem_index1[amask]] = (LONG)(WORD)get_word(srca); srca += 2; amask = movem_next[amask]; MC68000_ICount -= 4; }
 }}}}
-void op_4cd0(ULONG opcode) /* MVMEL */
+void op_4cd0(void) /* MVMEL */
 {
 				ULONG dstreg = opcode & 7;
 {       UWORD mask = nextiword(), dmask = mask & 0xff, amask = (mask >> 8) & 0xff;
 {       CPTR srca = regs.a[dstreg];
-{	while (dmask) { regs.d[movem_index1[dmask]].D = get_long(srca); srca += 4; dmask = movem_next[dmask]; }
-	while (amask) { regs.a[movem_index1[amask]] = get_long(srca); srca += 4; amask = movem_next[amask]; }
+{	while (dmask) { regs.d[movem_index1[dmask]].D = get_long(srca); srca += 4; dmask = movem_next[dmask]; MC68000_ICount -= 8; }
+	while (amask) { regs.a[movem_index1[amask]] = get_long(srca); srca += 4; amask = movem_next[amask]; MC68000_ICount -= 8; }
 }}}}
-void op_4cd8(ULONG opcode) /* MVMEL */
+void op_4cd8(void) /* MVMEL */
 {
 				ULONG dstreg = opcode & 7;
 {       UWORD mask = nextiword(), dmask = mask & 0xff, amask = (mask >> 8) & 0xff;
 {       CPTR srca = regs.a[dstreg];
-{	while (dmask) { regs.d[movem_index1[dmask]].D = get_long(srca); srca += 4; dmask = movem_next[dmask]; }
-	while (amask) { regs.a[movem_index1[amask]] = get_long(srca); srca += 4; amask = movem_next[amask]; }
+{	while (dmask) { regs.d[movem_index1[dmask]].D = get_long(srca); srca += 4; dmask = movem_next[dmask]; MC68000_ICount -= 8; }
+	while (amask) { regs.a[movem_index1[amask]] = get_long(srca); srca += 4; amask = movem_next[amask]; MC68000_ICount -= 8; }
 	regs.a[dstreg] = srca;
 }}}}
-void op_4ce8(ULONG opcode) /* MVMEL */
+void op_4ce8(void) /* MVMEL */
 {
 				ULONG dstreg = opcode & 7;
 {       UWORD mask = nextiword(), dmask = mask & 0xff, amask = (mask >> 8) & 0xff;
 {       CPTR srca = regs.a[dstreg] + (LONG)(WORD)nextiword();
-{	while (dmask) { regs.d[movem_index1[dmask]].D = get_long(srca); srca += 4; dmask = movem_next[dmask]; }
-	while (amask) { regs.a[movem_index1[amask]] = get_long(srca); srca += 4; amask = movem_next[amask]; }
+{	while (dmask) { regs.d[movem_index1[dmask]].D = get_long(srca); srca += 4; dmask = movem_next[dmask]; MC68000_ICount -= 8; }
+	while (amask) { regs.a[movem_index1[amask]] = get_long(srca); srca += 4; amask = movem_next[amask]; MC68000_ICount -= 8; }
 }}}}
-void op_4cf0(ULONG opcode) /* MVMEL */
+void op_4cf0(void) /* MVMEL */
 {
 				ULONG dstreg = opcode & 7;
 {       UWORD mask = nextiword(), dmask = mask & 0xff, amask = (mask >> 8) & 0xff;
 {       CPTR srca = get_disp_ea(regs.a[dstreg]);
-{	while (dmask) { regs.d[movem_index1[dmask]].D = get_long(srca); srca += 4; dmask = movem_next[dmask]; }
-	while (amask) { regs.a[movem_index1[amask]] = get_long(srca); srca += 4; amask = movem_next[amask]; }
+{	while (dmask) { regs.d[movem_index1[dmask]].D = get_long(srca); srca += 4; dmask = movem_next[dmask]; MC68000_ICount -= 8; }
+	while (amask) { regs.a[movem_index1[amask]] = get_long(srca); srca += 4; amask = movem_next[amask]; MC68000_ICount -= 8; }
 }}}}
-void op_4cf8(ULONG opcode) /* MVMEL */
+void op_4cf8(void) /* MVMEL */
 {
 {       UWORD mask = nextiword(), dmask = mask & 0xff, amask = (mask >> 8) & 0xff;
 {       CPTR srca = (LONG)(WORD)nextiword();
-{	while (dmask) { regs.d[movem_index1[dmask]].D = get_long(srca); srca += 4; dmask = movem_next[dmask]; }
-	while (amask) { regs.a[movem_index1[amask]] = get_long(srca); srca += 4; amask = movem_next[amask]; }
+{	while (dmask) { regs.d[movem_index1[dmask]].D = get_long(srca); srca += 4; dmask = movem_next[dmask]; MC68000_ICount -= 8; }
+	while (amask) { regs.a[movem_index1[amask]] = get_long(srca); srca += 4; amask = movem_next[amask]; MC68000_ICount -= 8; }
 }}}}
-void op_4cf9(ULONG opcode) /* MVMEL */
+void op_4cf9(void) /* MVMEL */
 {
 {       UWORD mask = nextiword(), dmask = mask & 0xff, amask = (mask >> 8) & 0xff;
 {       CPTR srca = nextilong();
-{	while (dmask) { regs.d[movem_index1[dmask]].D = get_long(srca); srca += 4; dmask = movem_next[dmask]; }
-	while (amask) { regs.a[movem_index1[amask]] = get_long(srca); srca += 4; amask = movem_next[amask]; }
+{	while (dmask) { regs.d[movem_index1[dmask]].D = get_long(srca); srca += 4; dmask = movem_next[dmask]; MC68000_ICount -= 8; }
+	while (amask) { regs.a[movem_index1[amask]] = get_long(srca); srca += 4; amask = movem_next[amask]; MC68000_ICount -= 8; }
 }}}}
-void op_4cfa(ULONG opcode) /* MVMEL */
+void op_4cfa(void) /* MVMEL */
 {
 				ULONG dstreg;
 				dstreg = 2;
 {       UWORD mask = nextiword(), dmask = mask & 0xff, amask = (mask >> 8) & 0xff;
 {       CPTR srca = m68k_getpc();
 				srca += (LONG)(WORD)nextiword();
-{	while (dmask) { regs.d[movem_index1[dmask]].D = get_long(srca); srca += 4; dmask = movem_next[dmask]; }
-	while (amask) { regs.a[movem_index1[amask]] = get_long(srca); srca += 4; amask = movem_next[amask]; }
+{	while (dmask) { regs.d[movem_index1[dmask]].D = get_long(srca); srca += 4; dmask = movem_next[dmask]; MC68000_ICount -= 8; }
+	while (amask) { regs.a[movem_index1[amask]] = get_long(srca); srca += 4; amask = movem_next[amask]; MC68000_ICount -= 8; }
 }}}}
-void op_4cfb(ULONG opcode) /* MVMEL */
+void op_4cfb(void) /* MVMEL */
 {
 				ULONG dstreg;
 				dstreg = 3;
 {       UWORD mask = nextiword(), dmask = mask & 0xff, amask = (mask >> 8) & 0xff;
 {       CPTR srca = get_disp_ea(m68k_getpc());
-{	while (dmask) { regs.d[movem_index1[dmask]].D = get_long(srca); srca += 4; dmask = movem_next[dmask]; }
-	while (amask) { regs.a[movem_index1[amask]] = get_long(srca); srca += 4; amask = movem_next[amask]; }
+{	while (dmask) { regs.d[movem_index1[dmask]].D = get_long(srca); srca += 4; dmask = movem_next[dmask]; MC68000_ICount -= 8; }
+	while (amask) { regs.a[movem_index1[amask]] = get_long(srca); srca += 4; amask = movem_next[amask]; MC68000_ICount -= 8; }
 }}}}
-void op_4e40(ULONG opcode) /* TRAP */
+void op_4e40(void) /* TRAP */
 {
 				ULONG srcreg = (opcode & 15);
 {{      ULONG src = srcreg;
 				Exception(src+32,0);
 }}}
-void op_4e50(ULONG opcode) /* LINK */
+void op_4e50(void) /* LINK */
 {
 				ULONG srcreg = (opcode & 7);
 {{      regs.a[7] -= 4;
@@ -2581,7 +2836,7 @@ void op_4e50(ULONG opcode) /* LINK */
 {       WORD offs = nextiword();
         regs.a[7] += offs;
 }}}}}}
-void op_4e58(ULONG opcode) /* UNLK */
+void op_4e58(void) /* UNLK */
 {
         ULONG srcreg = (opcode & 7);
 {{      LONG src = regs.a[srcreg];
@@ -2591,28 +2846,28 @@ void op_4e58(ULONG opcode) /* UNLK */
 {       regs.a[7] += 4;
         regs.a[srcreg] = (old);
 }}}}}
-void op_4e60(ULONG opcode) /* MVR2USP */
+void op_4e60(void) /* MVR2USP */
 {
         ULONG srcreg = (opcode & 7);
 {if (!regs.s) { regs.pc -= 2; Exception(8,0); } else
 {{      LONG src = regs.a[srcreg];
         regs.usp = src;
 }}}}
-void op_4e68(ULONG opcode) /* MVUSP2R */
+void op_4e68(void) /* MVUSP2R */
 {
         ULONG srcreg = (opcode & 7);
 {if (!regs.s) { regs.pc -= 2; Exception(8,0); } else
 {{      regs.a[srcreg] = (regs.usp);
 }}}}
-void op_4e70(ULONG opcode) /* RESET */
+void op_4e70(void) /* RESET */
 {
 {if (!regs.s) { regs.pc -= 2; Exception(8,0); } else
 {
 }}}
-void op_4e71(ULONG opcode) /* NOP */
+void op_4e71(void) /* NOP */
 {
 {}}
-void op_4e72(ULONG opcode) /* STOP */
+void op_4e72(void) /* STOP */
 {
 {if (!regs.s) { regs.pc -= 2; Exception(8,0); } else
 {{      WORD src = nextiword();
@@ -2621,7 +2876,7 @@ void op_4e72(ULONG opcode) /* STOP */
         pending_interrupts |= MC68000_STOP;
         MC68000_ICount = 0;
 }}}}
-void op_4e73(ULONG opcode) /* RTE */
+void op_4e73(void) /* RTE */
 {
 {if (!regs.s) { regs.pc -= 2; Exception(8,0); } else
 {{      CPTR sra = regs.a[7];
@@ -2633,7 +2888,7 @@ void op_4e73(ULONG opcode) /* RTE */
         regs.sr = sr; m68k_setpc(pc);
         MakeFromSR();
 }}}}}}}
-void op_4e74(ULONG opcode) /* RTD */
+void op_4e74(void) /* RTD */
 {
 {{      CPTR pca = regs.a[7];
         LONG pc = get_long(pca);
@@ -2642,18 +2897,18 @@ void op_4e74(ULONG opcode) /* RTD */
         regs.a[7] += offs;
         m68k_setpc(pc);
 }}}}}
-void op_4e75(ULONG opcode) /* RTS */
+void op_4e75(void) /* RTS */
 {
 {{      CPTR pca = regs.a[7];
         LONG pc = get_long(pca);
 {       regs.a[7] += 4;
         m68k_setpc(pc);
 }}}}
-void op_4e76(ULONG opcode) /* TRAPV */
+void op_4e76(void) /* TRAPV */
 {
 {       if(VFLG) Exception(7,m68k_getpc()-2);
 }}
-void op_4e77(ULONG opcode) /* RTR */
+void op_4e77(void) /* RTR */
 {
 {       MakeSR();
 {       CPTR sra = regs.a[7];
@@ -2666,7 +2921,7 @@ void op_4e77(ULONG opcode) /* RTR */
         regs.sr |= sr; m68k_setpc(pc);
         MakeFromSR();
 }}}}}}
-void op_4e90(ULONG opcode) /* JSR */
+void op_4e90(void) /* JSR */
 {
         ULONG srcreg = (opcode & 7);
 {{      CPTR srca = regs.a[srcreg];
@@ -2675,7 +2930,7 @@ void op_4e90(ULONG opcode) /* JSR */
         put_long(spa,m68k_getpc());
         m68k_setpc(srca);
 }}}}}
-void op_4ea8(ULONG opcode) /* JSR */
+void op_4ea8(void) /* JSR */
 {
         ULONG srcreg = (opcode & 7);
 {{      CPTR srca = regs.a[srcreg] + (LONG)(WORD)nextiword();
@@ -2684,7 +2939,7 @@ void op_4ea8(ULONG opcode) /* JSR */
         put_long(spa,m68k_getpc());
         m68k_setpc(srca);
 }}}}}
-void op_4eb0(ULONG opcode) /* JSR */
+void op_4eb0(void) /* JSR */
 {
         ULONG srcreg = (opcode & 7);
 {{      CPTR srca = get_disp_ea(regs.a[srcreg]);
@@ -2693,7 +2948,7 @@ void op_4eb0(ULONG opcode) /* JSR */
         put_long(spa,m68k_getpc());
         m68k_setpc(srca);
 }}}}}
-void op_4eb8(ULONG opcode) /* JSR */
+void op_4eb8(void) /* JSR */
 {
 {{      CPTR srca = (LONG)(WORD)nextiword();
 {       regs.a[7] -= 4;
@@ -2701,7 +2956,7 @@ void op_4eb8(ULONG opcode) /* JSR */
         put_long(spa,m68k_getpc());
         m68k_setpc(srca);
 }}}}}
-void op_4eb9(ULONG opcode) /* JSR */
+void op_4eb9(void) /* JSR */
 {
 {{      CPTR srca = nextilong();
 {       regs.a[7] -= 4;
@@ -2709,7 +2964,7 @@ void op_4eb9(ULONG opcode) /* JSR */
         put_long(spa,m68k_getpc());
         m68k_setpc(srca);
 }}}}}
-void op_4eba(ULONG opcode) /* JSR */
+void op_4eba(void) /* JSR */
 {
 {{      CPTR srca = m68k_getpc();
         srca += (LONG)(WORD)nextiword();
@@ -2718,7 +2973,7 @@ void op_4eba(ULONG opcode) /* JSR */
         put_long(spa,m68k_getpc());
         m68k_setpc(srca);
 }}}}}
-void op_4ebb(ULONG opcode) /* JSR */
+void op_4ebb(void) /* JSR */
 {
 {{      CPTR srca = get_disp_ea(m68k_getpc());
 {       regs.a[7] -= 4;
@@ -2726,41 +2981,41 @@ void op_4ebb(ULONG opcode) /* JSR */
         put_long(spa,m68k_getpc());
         m68k_setpc(srca);
 }}}}}
-void op_4ed0(ULONG opcode) /* JMP */
+void op_4ed0(void) /* JMP */
 {
         ULONG srcreg = (opcode & 7);
 {{      CPTR srca = regs.a[srcreg];
         m68k_setpc(srca);
 }}}
-void op_4ee8(ULONG opcode) /* JMP */
+void op_4ee8(void) /* JMP */
 {
         ULONG srcreg = (opcode & 7);
 {{      CPTR srca = regs.a[srcreg] + (LONG)(WORD)nextiword();
         m68k_setpc(srca);
 }}}
-void op_4ef0(ULONG opcode) /* JMP */
+void op_4ef0(void) /* JMP */
 {
         ULONG srcreg = (opcode & 7);
 {{      CPTR srca = get_disp_ea(regs.a[srcreg]);
         m68k_setpc(srca);
 }}}
-void op_4ef8(ULONG opcode) /* JMP */
+void op_4ef8(void) /* JMP */
 {
 {{      CPTR srca = (LONG)(WORD)nextiword();
         m68k_setpc(srca);
 }}}
-void op_4ef9(ULONG opcode) /* JMP */
+void op_4ef9(void) /* JMP */
 {
 {{      CPTR srca = nextilong();
         m68k_setpc(srca);
 }}}
-void op_4efa(ULONG opcode) /* JMP */
+void op_4efa(void) /* JMP */
 {
 {{      CPTR srca = m68k_getpc();
         srca += (LONG)(WORD)nextiword();
         m68k_setpc(srca);
 }}}
-void op_4efb(ULONG opcode) /* JMP */
+void op_4efb(void) /* JMP */
 {
 {{      CPTR srca = get_disp_ea(m68k_getpc());
         m68k_setpc(srca);

@@ -110,14 +110,12 @@ Program ROM (48K bytes)                   4000-FFFF   R    D0-D7
 int blstroid_io_r (int offset);
 int blstroid_6502_switch_r (int offset);
 int blstroid_playfieldram_r (int offset);
-int blstroid_paletteram_r (int offset);
 
 void blstroid_tms5220_w (int offset, int data);
 void blstroid_6502_ctl_w (int offset, int data);
 void blstroid_sound_reset_w (int offset, int data);
 void blstroid_priorityram_w (int offset, int data);
 void blstroid_playfieldram_w (int offset, int data);
-void blstroid_paletteram_w (int offset, int data);
 
 int blstroid_interrupt (void);
 int blstroid_sound_interrupt (void);
@@ -127,7 +125,7 @@ void blstroid_init_machine (void);
 int blstroid_vh_start (void);
 void blstroid_vh_stop (void);
 
-void blstroid_vh_screenrefresh (struct osd_bitmap *bitmap);
+void blstroid_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 
 /*************************************
@@ -143,10 +141,10 @@ static struct MemoryReadAddress blstroid_readmem[] =
 	{ 0xff9800, 0xff9803, input_port_0_r },
 	{ 0xff9804, 0xff9807, input_port_1_r },
 	{ 0xff9c00, 0xff9c03, blstroid_io_r },
-	{ 0xffa000, 0xffa3ff, blstroid_paletteram_r, &atarigen_paletteram, &atarigen_paletteram_size },
-	{ 0xffb000, 0xffb3ff, atarigen_eeprom_r, &atarigen_eeprom, &atarigen_eeprom_size },
-	{ 0xffc000, 0xffcfff, blstroid_playfieldram_r, &atarigen_playfieldram, &atarigen_playfieldram_size },
-	{ 0xffd000, 0xffdfff, MRA_BANK3, &atarigen_spriteram, &atarigen_spriteram_size },
+	{ 0xffa000, 0xffa3ff, paletteram_word_r },
+	{ 0xffb000, 0xffb3ff, atarigen_eeprom_r },
+	{ 0xffc000, 0xffcfff, blstroid_playfieldram_r },
+	{ 0xffd000, 0xffdfff, MRA_BANK3 },
 	{ 0xffe000, 0xffffff, MRA_BANK2 },
 	{ -1 }  /* end of table */
 };
@@ -163,10 +161,10 @@ static struct MemoryWriteAddress blstroid_writemem[] =
 	{ 0xff8a00, 0xff8a03, atarigen_sound_w },
 	{ 0xff8c00, 0xff8c03, blstroid_sound_reset_w },
 	{ 0xff8e00, 0xff8e03, MWA_NOP },		/* halt until HBLANK */
-	{ 0xffa000, 0xffa3ff, blstroid_paletteram_w },
-	{ 0xffb000, 0xffb3ff, atarigen_eeprom_w },
-	{ 0xffc000, 0xffcfff, blstroid_playfieldram_w },
-	{ 0xffd000, 0xffdfff, MWA_BANK3 },
+	{ 0xffa000, 0xffa3ff, paletteram_xRRRRRGGGGGBBBBB_word_w, &paletteram },
+	{ 0xffb000, 0xffb3ff, atarigen_eeprom_w, &atarigen_eeprom, &atarigen_eeprom_size },
+	{ 0xffc000, 0xffcfff, blstroid_playfieldram_w, &atarigen_playfieldram, &atarigen_playfieldram_size },
+	{ 0xffd000, 0xffdfff, MWA_BANK3, &atarigen_spriteram, &atarigen_spriteram_size },
 	{ 0xffe000, 0xffffff, MWA_BANK2 },
 	{ -1 }  /* end of table */
 };
@@ -361,7 +359,7 @@ static struct MachineDriver blstroid_machine_driver =
 	0,0,0,0,
 	{
 		{
-			SOUND_YM2151_ALT,
+			SOUND_YM2151,
 			&ym2151_interface
 		},
 		{
@@ -427,8 +425,8 @@ struct GameDriver blstroid_driver =
 	0,
 	"blstroid",
 	"Blasteroids",
-	"????",
-	"?????",
+	"1987",
+	"Atari Games",
 	"Aaron Giles (MAME driver)\nNeil Bradley (Hardware Info)",
 	0,
 	&blstroid_machine_driver,

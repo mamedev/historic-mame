@@ -59,7 +59,7 @@ static int sbrkout_overlay_color(int sx, int sy)
   the main emulation engine.
 
 ***************************************************************************/
-void sbrkout_vh_screenrefresh(struct osd_bitmap *bitmap)
+void sbrkout_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
         int offs;
         int ball;

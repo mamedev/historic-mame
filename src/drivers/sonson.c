@@ -50,7 +50,7 @@ write:
 extern unsigned char *sonson_scrollx;
 
 void sonson_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-void sonson_vh_screenrefresh(struct osd_bitmap *bitmap);
+void sonson_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 
 
@@ -249,7 +249,7 @@ static struct AY8910interface ay8910_interface =
 {
 	2,	/* 2 chips */
 	1500000,	/* 1.5 MHz ? */
-	{ 0x40ff, 0x20ff },
+	{ 0x10ff, 255 },
 	{ 0 },
 	{ 0 },
 	{ 0 },
@@ -391,7 +391,7 @@ struct GameDriver sonson_driver =
 	"Son Son",
 	"1984",
 	"Capcom",
-	"MIRKO BUFFONI\nNICOLA SALMORIA\nGARY WALTON\nSIMON WALLS",
+	"Mirko Buffoni (MAME driver)\nNicola Salmoria (MAME driver)\nGary Walton (color info)\nSimon Walls (color info=",
 	0,
 	&machine_driver,
 

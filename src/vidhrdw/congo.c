@@ -119,7 +119,7 @@ void congo_vh_stop(void)
   the main emulation engine.
 
 ***************************************************************************/
-void congo_vh_screenrefresh(struct osd_bitmap *bitmap)
+void congo_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
         int offs, i;
         static unsigned int sprpri[0x100]; /* this really should not be more

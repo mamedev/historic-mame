@@ -73,7 +73,7 @@ void spacefb_vh_convert_color_prom(unsigned char *palette, unsigned short *color
 
 ***************************************************************************/
 
-void spacefb_vh_screenrefresh(struct osd_bitmap *bitmap)
+void spacefb_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	int offs;
 	int spriteno;

@@ -5,7 +5,6 @@
 
 unsigned char *blockout_videoram;
 unsigned char *blockout_frontvideoram;
-unsigned char *blockout_paletteram;
 
 
 
@@ -41,28 +40,18 @@ static void setcolor(int color,int rgb)
 
 void blockout_paletteram_w(int offset, int data)
 {
-	int oldword = READ_WORD(&blockout_paletteram[offset]);
+	int oldword = READ_WORD(&paletteram[offset]);
 	int newword = COMBINE_WORD(oldword,data);
 
 
-	WRITE_WORD(&blockout_paletteram[offset],newword);
+	WRITE_WORD(&paletteram[offset],newword);
 
 	setcolor(offset / 2,newword);
 }
 
-int blockout_paletteram_r(int offset)
-{
-   return READ_WORD(&blockout_paletteram[offset]);
-}
-
 void blockout_frontcolor_w(int offset, int data)
 {
-	if (offset == 2)
-	{
-		/* we use color 0, which is the transparent color for the middle bitmap, */
-		/* to store the color of the front bitmap */
-		setcolor(0,data);
-	}
+	setcolor(512,data);
 }
 
 
@@ -152,7 +141,7 @@ int blockout_frontvideoram_r(int offset)
 
 
 
-void blockout_vh_screenrefresh(struct osd_bitmap *bitmap)
+void blockout_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	if (palette_recalc())
 	{
@@ -175,7 +164,7 @@ void blockout_vh_screenrefresh(struct osd_bitmap *bitmap)
 		int x,y,color;
 
 
-		color = Machine->pens[0];
+		color = Machine->pens[512];
 
 		for (y = 0;y < 256;y++)
 		{

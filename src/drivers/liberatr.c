@@ -138,7 +138,7 @@ int  liberator_interrupt(void) ;
 
 /* from vidhrdw */
 int  liberator_vh_start(void);
-void liberator_vh_update(struct osd_bitmap *bitmap);
+void liberator_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 void liberator_vh_stop(void);
 void liberator_startlg_w(int offset,int data) ;
 void liberator_basram_w(int address, int data) ;
@@ -314,7 +314,7 @@ static struct MachineDriver machine_driver =
 	0,						/* vh_init()	*/
 	liberator_vh_start,		/* vh_start()	*/
 	liberator_vh_stop,		/* vh_stop()	*/
-	liberator_vh_update,	/* vh_update()	*/
+	liberator_vh_screenrefresh,	/* vh_update()	*/
 
 	/* sound hardware */
 	0,0,0,0,
@@ -361,8 +361,8 @@ struct GameDriver liberatr_driver =
 	0,
 	"liberatr",			/* name					*/
 	"Liberator",		/* description			*/
-	"????",
-	"?????",
+	"1982",
+	"Atari",
 	"Paul Winkler",		/* credits				*/
 	0,
 	&machine_driver,	/* MachineDriver		*/

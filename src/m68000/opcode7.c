@@ -1,5 +1,5 @@
 #include "cpudefs.h"
-void op_7000(ULONG opcode) /* MOVE */
+void op_7000(void) /* MOVE */
 {
 	ULONG srcreg = (LONG)(BYTE)(opcode & 255);
 	ULONG dstreg = (opcode >> 9) & 7;

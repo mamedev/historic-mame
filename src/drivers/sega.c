@@ -152,7 +152,7 @@ void startrek_sh_w (int offset, int data);
 void sega_init_colors (unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 int sega_vh_start (void);
 void sega_vh_stop (void);
-void sega_vh_screenrefresh(struct osd_bitmap *bitmap);
+void sega_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 static struct MemoryReadAddress readmem[] =
 {
@@ -805,21 +805,7 @@ void tacscan_decode(void)
 
 ***************************************************************************/
 
-ROM_START( spacfury_rom )
-	ROM_REGION(0x10000)	/* 64k for code */
-        ROM_LOAD( "969A.U25", 0x0000, 0x0800, 0xcc7c8410 )
-        ROM_LOAD( "960A.U1", 0x0800, 0x0800, 0x8a0f3d2f )
-        ROM_LOAD( "961A.U2", 0x1000, 0x0800, 0x87019ccb )
-        ROM_LOAD( "962A.U3", 0x1800, 0x0800, 0x6e505c6a )
-        ROM_LOAD( "963A.U4", 0x2000, 0x0800, 0x23de181e )
-        ROM_LOAD( "964A.U5", 0x2800, 0x0800, 0x059d031f )
-        ROM_LOAD( "965A.U6", 0x3000, 0x0800, 0xf5ff830d )
-        ROM_LOAD( "966A.U7", 0x3800, 0x0800, 0x0f83c95f )
-        ROM_LOAD( "967A.U8", 0x4000, 0x0800, 0xb48ed0b6 )
-        ROM_LOAD( "968A.U9", 0x4800, 0x0800, 0xd8987bc8 )
-ROM_END
-
-ROM_START( spacfurc_rom )
+ROM_START( spacfury_rom ) /* Revision C */
 	ROM_REGION(0x10000)	/* 64k for code */
         ROM_LOAD( "969C.U25", 0x0000, 0x0800, 0x63ef8173 )
         ROM_LOAD( "960C.U1", 0x0800, 0x0800, 0x5f84cd72 )
@@ -831,6 +817,20 @@ ROM_START( spacfurc_rom )
         ROM_LOAD( "966C.U7", 0x3800, 0x0800, 0x3feb6bf5 )
         ROM_LOAD( "967C.U8", 0x4000, 0x0800, 0x46ac086a )
         ROM_LOAD( "968C.U9", 0x4800, 0x0800, 0x413125b3 )
+ROM_END
+
+ROM_START( spacfura_rom ) /* Revision A */
+	ROM_REGION(0x10000)	/* 64k for code */
+        ROM_LOAD( "969A.U25", 0x0000, 0x0800, 0xcc7c8410 )
+        ROM_LOAD( "960A.U1", 0x0800, 0x0800, 0x8a0f3d2f )
+        ROM_LOAD( "961A.U2", 0x1000, 0x0800, 0x87019ccb )
+        ROM_LOAD( "962A.U3", 0x1800, 0x0800, 0x6e505c6a )
+        ROM_LOAD( "963A.U4", 0x2000, 0x0800, 0x23de181e )
+        ROM_LOAD( "964A.U5", 0x2800, 0x0800, 0x059d031f )
+        ROM_LOAD( "965A.U6", 0x3000, 0x0800, 0xf5ff830d )
+        ROM_LOAD( "966A.U7", 0x3800, 0x0800, 0x0f83c95f )
+        ROM_LOAD( "967A.U8", 0x4000, 0x0800, 0xb48ed0b6 )
+        ROM_LOAD( "968A.U9", 0x4800, 0x0800, 0xd8987bc8 )
 ROM_END
 
 ROM_START( zektor_rom )
@@ -1292,9 +1292,9 @@ struct GameDriver spacfury_driver =
 	__FILE__,
 	0,
 	"spacfury",
-	"Space Fury (revision A)",
-	"????",
-	"?????",
+	"Space Fury (revision C)",
+	"1981",
+	"Sega",
 	"Al Kossow (G80 Emu)\nBrad Oliver (MAME driver)\nMike Balfour (high score saving)\n"VECTOR_TEAM,
 	0,
 	&spacfury_machine_driver,
@@ -1312,19 +1312,19 @@ struct GameDriver spacfury_driver =
     spacfury_hiload, spacfury_hisave
 };
 
-struct GameDriver spacfurc_driver =
+struct GameDriver spacfura_driver =
 {
 	__FILE__,
-	0,
-	"spacfurc",
-	"Space Fury (revision C)",
-	"????",
-	"?????",
+	&spacfury_driver,
+	"spacfura",
+	"Space Fury (revision A)",
+	"1981",
+	"Sega",
 	"Al Kossow (G80 Emu)\nBrad Oliver (MAME driver)\nMike Balfour (high score saving)\n"VECTOR_TEAM,
 	0,
 	&spacfury_machine_driver,
 
-	spacfurc_rom,
+	spacfura_rom,
 	spacfury_decode, 0,
 	spacfury_sample_names,
 	0,
@@ -1424,8 +1424,8 @@ struct GameDriver zektor_driver =
 	0,
 	"zektor",
 	"Zektor",
-	"????",
-	"?????",
+	"1982",
+	"Sega",
 	"Al Kossow (G80 Emu)\nBrad Oliver (MAME driver)\nMike Balfour (high score saving)\n"VECTOR_TEAM,
 	0,
 	&zektor_machine_driver,
@@ -1522,8 +1522,8 @@ struct GameDriver tacscan_driver =
 	0,
 	"tacscan",
 	"Tac-Scan",
-	"????",
-	"?????",
+	"1982",
+	"Sega",
 	"Al Kossow (G80 Emu)\nBrad Oliver (MAME driver)\nValerio Verrando (high score saving)\n"VECTOR_TEAM,
 	0,
 	&tacscan_machine_driver,
@@ -1619,9 +1619,9 @@ struct GameDriver elim2_driver =
 	__FILE__,
 	0,
 	"elim2",
-	"Eliminator (2 Player)",
-	"????",
-	"?????",
+	"Eliminator (2 Players)",
+	"1981",
+	"Gremlin",
 	"Al Kossow (G80 Emu)\nBrad Oliver (MAME driver)\nMike Balfour (high score saving)\n"VECTOR_TEAM,
 	0,
 	&elim2_machine_driver,
@@ -1685,11 +1685,11 @@ static struct MachineDriver elim4_machine_driver =
 struct GameDriver elim4_driver =
 {
 	__FILE__,
-	0,
+	&elim2_driver,
 	"elim4",
-	"Eliminator (4 Player)",
-	"????",
-	"?????",
+	"Eliminator (4 Players)",
+	"1981",
+	"Gremlin",
 	"Al Kossow (G80 Emu)\nBrad Oliver (MAME driver)\nMike Balfour (high score saving)\n"VECTOR_TEAM,
 	0,
 	&elim4_machine_driver,
@@ -1826,8 +1826,8 @@ struct GameDriver startrek_driver =
 	0,
 	"startrek",
 	"Star Trek",
-	"????",
-	"?????",
+	"1982",
+	"Sega",
 	"Al Kossow (G80 Emu)\nBrad Oliver (MAME driver)\nValerio Verrando (high score saving)\n"VECTOR_TEAM,
 	0,
 	&startrek_machine_driver,
@@ -1844,6 +1844,3 @@ struct GameDriver startrek_driver =
 
 	startrek_hiload, startrek_hisave
 };
-
-
-

@@ -90,12 +90,10 @@ Priority:
 #define TEXTRAM_SIZE	0x2000	/* Size of text layer */
 #define TILERAM_SIZE	0x800	/* Size of background and foreground */
 
-/* Palette stuff */
-static unsigned char *palette_ram_rg,*palette_ram_b;
 
 /* Video */
 unsigned char *dec0_sprite,*dec0_mem;
-static unsigned char *dec0_pf1_data,*dec0_pf2_data,*dec0_pf3_data;
+unsigned char *dec0_pf1_data,*dec0_pf2_data,*dec0_pf3_data;
 static unsigned char *dec0_pf1_dirty,*dec0_pf3_dirty,*dec0_pf2_dirty;
 static struct osd_bitmap *dec0_pf1_bitmap;
 static int dec0_pf1_current_shape;
@@ -197,37 +195,23 @@ static void update_24bitcol(int offset)
 	int r,g,b;
 
 
-	r = (READ_WORD(&palette_ram_rg[offset]) >> 0) & 0xff;
-	g = (READ_WORD(&palette_ram_rg[offset]) >> 8) & 0xff;
-	b = (READ_WORD(&palette_ram_b[offset]) >> 0) & 0xff;
+	r = (READ_WORD(&paletteram[offset]) >> 0) & 0xff;
+	g = (READ_WORD(&paletteram[offset]) >> 8) & 0xff;
+	b = (READ_WORD(&paletteram_2[offset]) >> 0) & 0xff;
 
 	palette_change_color(offset / 2,r,g,b);
 }
 
-void dec0_palette_24bit_rg(int offset,int data)
+void dec0_paletteram_w_rg(int offset,int data)
 {
-	COMBINE_WORD_MEM(&palette_ram_rg[offset],data);
+	COMBINE_WORD_MEM(&paletteram[offset],data);
 	update_24bitcol(offset);
 }
 
-void dec0_palette_24bit_b(int offset,int data)
+void dec0_paletteram_w_b(int offset,int data)
 {
-	COMBINE_WORD_MEM(&palette_ram_b[offset],data);
+	COMBINE_WORD_MEM(&paletteram_2[offset],data);
 	update_24bitcol(offset);
-}
-
-void dec0_palette_12bit_w(int offset,int data)
-{
-	int r,g,b;
-
-
-	COMBINE_WORD_MEM(&palette_ram_rg[offset],data);
-
-	r = 0x11 * ((READ_WORD(&palette_ram_rg[offset]) >> 0) & 0x0f);
-	g = 0x11 * ((READ_WORD(&palette_ram_rg[offset]) >> 4) & 0x0f);
-	b = 0x11 * ((READ_WORD(&palette_ram_rg[offset]) >> 8) & 0x0f);
-
-	palette_change_color(offset / 2,r,g,b);
 }
 
 
@@ -781,7 +765,7 @@ void dec0_pf1_draw(struct osd_bitmap *bitmap)
 
 /******************************************************************************/
 
-void dec0_vh_screenrefresh(struct osd_bitmap *bitmap)
+void dec0_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	int offs,xscroll_f,yscroll_f,xscroll_b,yscroll_b;
 
@@ -879,7 +863,7 @@ else
 
 /******************************************************************************/
 
-void robocop_vh_screenrefresh(struct osd_bitmap *bitmap)
+void robocop_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	int xscroll_f,yscroll_f,xscroll_b,yscroll_b;
 	int scrollx,scrolly;
@@ -974,7 +958,7 @@ else
 
 /******************************************************************************/
 
-void heavyb_vh_screenrefresh(struct osd_bitmap *bitmap)
+void hbarrel_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	int xscroll_f,yscroll_f,xscroll_b,yscroll_b;
 	int scrollx,scrolly;
@@ -1040,7 +1024,7 @@ void heavyb_vh_screenrefresh(struct osd_bitmap *bitmap)
   #endif
 }
 
-void hippodrm_vh_screenrefresh(struct osd_bitmap *bitmap)
+void hippodrm_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	int xscroll_f,yscroll_f,xscroll_b,yscroll_b;
 
@@ -1076,7 +1060,7 @@ void hippodrm_vh_screenrefresh(struct osd_bitmap *bitmap)
 
 /******************************************************************************/
 
-void midres_vh_screenrefresh(struct osd_bitmap *bitmap)
+void midres_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
   int xscroll_f,yscroll_f,xscroll_b,yscroll_b;
 
@@ -1168,7 +1152,7 @@ else
 
 /******************************************************************************/
 
-void slyspy_vh_screenrefresh(struct osd_bitmap *bitmap)
+void slyspy_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	int offs,xscroll_f,yscroll_f,xscroll_b,yscroll_b;
 
@@ -1379,18 +1363,9 @@ int dec0_vh_start (void)
 	}
 	dec0_pf3_current_shape = 1;
 
-	dec0_pf1_data = malloc(TEXTRAM_SIZE);
 	dec0_pf1_dirty = malloc(TEXTRAM_SIZE);
-	dec0_pf3_data = malloc(TILERAM_SIZE);
 	dec0_pf3_dirty = malloc(TILERAM_SIZE);
-	dec0_pf2_data = malloc(TILERAM_SIZE);
 	dec0_pf2_dirty = malloc(TILERAM_SIZE);
-
-	palette_ram_rg=malloc(0x800);
-	palette_ram_b=malloc(0x800);
-
-	memset(palette_ram_rg,0,0x800);
-	memset(palette_ram_b,0,0x800);
 
 	memset(dec0_pf1_dirty,1,TEXTRAM_SIZE);
 	memset(dec0_pf2_dirty,1,TILERAM_SIZE);
@@ -1424,11 +1399,11 @@ void dec0_vh_stop (void)
   fclose(fp);
 
   fp=fopen("pal_rg.ram","wb");
-  fwrite(palette_ram_rg,1,0x800,fp);
+  fwrite(paletteram,1,0x800,fp);
   fclose(fp);
 
   fp=fopen("pal_b.ram","wb");
-  fwrite(palette_ram_b,1,0x800,fp);
+  fwrite(paletteram2,1,0x800,fp);
   fclose(fp);
 
   fp=fopen("system.rom","wb");
@@ -1448,11 +1423,6 @@ void dec0_vh_stop (void)
 	osd_free_bitmap(dec0_pf2_bitmap);
 	osd_free_bitmap(dec0_pf3_bitmap);
 	osd_free_bitmap(dec0_pf1_bitmap);
-	free(dec0_pf3_data);
-	free(dec0_pf2_data);
-	free(dec0_pf1_data);
-	free(palette_ram_rg);
-	free(palette_ram_b);
 	free(dec0_pf3_dirty);
 	free(dec0_pf2_dirty);
 	free(dec0_pf1_dirty);

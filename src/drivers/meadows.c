@@ -108,18 +108,18 @@
 /* Externals                                                 */
 /*                                                           */
 /*************************************************************/
-extern  int     meadows_vh_start(void);
-extern  void    meadows_vh_stop(void);
-extern  void    deadeye_vh_screenrefresh(struct osd_bitmap * bitmap);
-extern  void    gypsyjug_vh_screenrefresh(struct osd_bitmap * bitmap);
-extern  void    meadows_videoram_w(int offset, int data);
-extern  void    meadows_sprite_w(int offset, int data);
+int     meadows_vh_start(void);
+void    meadows_vh_stop(void);
+void    deadeye_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void    gypsyjug_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void    meadows_videoram_w(int offset, int data);
+void    meadows_sprite_w(int offset, int data);
 
-extern	int 	meadows_sh_init(const char * gamename);
-extern  int     meadows_sh_start(void);
-extern  void    meadows_sh_stop(void);
-extern	void	meadows_sh_dac_w(int data);
-extern  void    meadows_sh_update(void);
+int 	meadows_sh_init(const char * gamename);
+int     meadows_sh_start(void);
+void    meadows_sh_stop(void);
+void	meadows_sh_dac_w(int data);
+void    meadows_sh_update(void);
 extern	byte	meadows_0c00;
 extern	byte	meadows_0c01;
 extern	byte	meadows_0c02;
@@ -148,6 +148,7 @@ static  byte flip_bits[0x100] = {
 	0x07,0x87,0x47,0xc7,0x27,0xa7,0x67,0xe7,0x17,0x97,0x57,0xd7,0x37,0xb7,0x77,0xf7,
 	0x0f,0x8f,0x4f,0xcf,0x2f,0xaf,0x6f,0xef,0x1f,0x9f,0x5f,0xdf,0x3f,0xbf,0x7f,0xff,
 };
+static	int cycles_at_vsync = 0;
 
 /*************************************************************/
 /*                                                           */
@@ -156,7 +157,6 @@ static  byte flip_bits[0x100] = {
 /*************************************************************/
 int 	meadows_hardware_r(int offset)
 {
-
     switch (offset)
     {
         case 0: /* buttons */
@@ -164,7 +164,7 @@ int 	meadows_hardware_r(int offset)
         case 1: /* AD stick */
             return input_port_1_r(0);
         case 2: /* horizontal sync divider chain */
-            return flip_bits[cycles_currently_ran() & 0xff];
+			return flip_bits[(cycles_currently_ran() - cycles_at_vsync) & 0xff];
         case 3: /* dip switches */
             return input_port_2_r(0);
     }
@@ -176,6 +176,8 @@ void    meadows_hardware_w(int offset, int data)
     switch (offset)
 	{
 		case 0:
+			if (meadows_0c00 == data)
+				break;
 			if (errorlog) fprintf(errorlog, "meadows_hardware_w %d $%02x\n", offset, data);
 			meadows_0c00 = data;
             break;
@@ -200,6 +202,8 @@ int     meadows_interrupt(void)
 {
 static  int sense_state = 0;
 static	int coin1_state = 0;
+	/* preserve the actual cycle count */
+    cycles_at_vsync = cycles_currently_ran();
     /* fake something toggling the sense input line of the S2650 */
 	sense_state ^= 1;
 	S2650_set_sense(sense_state);
@@ -225,26 +229,29 @@ void    meadows_sound_hardware_w(int offset, int data)
     switch (offset & 3)
 	{
 		case 0: /* DAC */
-			meadows_sh_dac_w(data);
+			meadows_sh_dac_w(data ^ 0xff);
             break;
 		case 1: /* counter clk 5 MHz / 256 */
 			if (data == meadows_0c01)
 				break;
-			if (errorlog) fprintf(errorlog, "meadows sound ctr1 preset $%x amp %d\n", data & 15, data >> 4);
+			if (errorlog) fprintf(errorlog, "meadows_sound_w ctr1 preset $%x amp %d\n", data & 15, data >> 4);
 			meadows_0c01 = data;
+			meadows_sh_update();
 			break;
 		case 2: /* counter clk 5 MHz / 32 (/ 2 or / 4) */
 			if (data == meadows_0c02)
                 break;
-            if (errorlog) fprintf(errorlog, "meadows sound ctr2 preset $%02x\n", data);
+			if (errorlog) fprintf(errorlog, "meadows_sound_w ctr2 preset $%02x\n", data);
 			meadows_0c02 = data;
-			break;
+			meadows_sh_update();
+            break;
 		case 3: /* sound enable */
 			if (data == meadows_0c03)
                 break;
-            if (errorlog) fprintf(errorlog, "meadows sound enable ctr2/2:%d ctr2:%d dac:%d ctr1:%d\n", data&1, (data>>1)&1, (data>>2)&1, (data>>3)&1);
+			if (errorlog) fprintf(errorlog, "meadows_sound_w enable ctr2/2:%d ctr2:%d dac:%d ctr1:%d\n", data&1, (data>>1)&1, (data>>2)&1, (data>>3)&1);
 			meadows_0c03 = data;
-			break;
+			meadows_sh_update();
+            break;
 	}
 }
 
@@ -260,7 +267,7 @@ static int last_data = 0;
 			if (data != last_data)
 			{
 				last_data = data;
-				if (errorlog) fprintf(errorlog, "meadows sound read %d $%02x\n", offset, data);
+				if (errorlog) fprintf(errorlog, "meadows_sound_r %d $%02x\n", offset, data);
 			}
 }
             break;
@@ -281,7 +288,11 @@ static int last_data = 0;
 /*************************************************************/
 int     meadows_sound_interrupt(void)
 {
-	return S2650_INT_NONE;
+static	int sense_state = 0;
+    /* fake something toggling the sense input line of the S2650 */
+	sense_state ^= 1;
+    S2650_set_sense(sense_state);
+    return S2650_INT_NONE;
 }
 
 /*************************************************************/
@@ -339,7 +350,7 @@ INPUT_PORTS_START( meadows_input_ports )
 	PORT_START		/* IN1 control 1 */
 	PORT_ANALOG( 0xff, 0x80, IPT_AD_STICK_X, 100, 0, 0x10, 0xf0 )
 	PORT_START		/* IN2 dip switch */
-	PORT_BITX( 0x07, 0x00, IPT_DIPSWITCH_NAME, "Coins", IP_KEY_NONE, IP_JOY_NONE, 0)
+	PORT_BITX( 0x07, 0x00, IPT_DIPSWITCH_NAME, "Misses", IP_KEY_NONE, IP_JOY_NONE, 0)
 	PORT_DIPSETTING( 0x00, "2")
 	PORT_DIPSETTING( 0x01, "3")
 	PORT_DIPSETTING( 0x02, "4")
@@ -348,7 +359,7 @@ INPUT_PORTS_START( meadows_input_ports )
 	PORT_DIPSETTING( 0x05, "7")
 	PORT_DIPSETTING( 0x06, "8")
 	PORT_DIPSETTING( 0x07, "9")
-	PORT_BITX( 0x18, 0x18, IPT_DIPSWITCH_NAME, "Coins / play", IP_KEY_NONE, IP_JOY_NONE, 0)
+	PORT_BITX( 0x18, 0x00, IPT_DIPSWITCH_NAME, "Coins / play", IP_KEY_NONE, IP_JOY_NONE, 0)
 	PORT_DIPSETTING( 0x00, "1c / 1p")
 	PORT_DIPSETTING( 0x08, "2c / 1p")
 	PORT_DIPSETTING( 0x10, "1c / 2p")
@@ -356,14 +367,14 @@ INPUT_PORTS_START( meadows_input_ports )
 	PORT_BITX( 0x20, 0x20, IPT_DIPSWITCH_NAME, "Attract music", IP_KEY_NONE, IP_JOY_NONE, 0)
 	PORT_DIPSETTING( 0x00, "Off")
 	PORT_DIPSETTING( 0x20, "On")
-	PORT_BITX( 0xc0, 0x80, IPT_DIPSWITCH_NAME, "Extended play", IP_KEY_NONE, IP_JOY_NONE, 0)
+	PORT_BITX( 0xc0, 0x40, IPT_DIPSWITCH_NAME, "Extended play", IP_KEY_NONE, IP_JOY_NONE, 0)
 	PORT_DIPSETTING( 0x00, "none")
 	PORT_DIPSETTING( 0x40, "5000 pts")
 	PORT_DIPSETTING( 0x80, "15000 pts")
 	PORT_DIPSETTING( 0xc0, "35000 pts")
-	PORT_START		/* IN3 coinage */
+	PORT_START		/* FAKE coinage */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 )
-	PORT_BIT( 0xfe, IP_ACTIVE_LOW,	IPT_UNUSED )
+	PORT_BIT( 0x8e, IP_ACTIVE_LOW,	IPT_UNUSED )
 INPUT_PORTS_END
 
 static struct GfxLayout charlayout =
@@ -439,23 +450,24 @@ static struct MachineDriver deadeye_machine_driver =
 	{
 		{
 			CPU_S2650,
-			625000, 	/* 625 kHz */
+			625000, 	/* 5MHz / 8 = 625 kHz */
 			0,
 			meadows_readmem,meadows_writemem,
 			0,0,
-			meadows_interrupt,1 	/* 1 interrupt per frame!? */
+			meadows_interrupt,1 	/* one interrupt per frame!? */
 		},
 		{
-			CPU_S2650,
-			625000, 	/* 625 kHz */
+			CPU_S2650 | CPU_AUDIO_CPU,
+			625000, 	/* 5MHz / 8 = 625 kHz */
 			2,
 			meadows_sound_readmem,meadows_sound_writemem,
 			0,0,
-			meadows_sound_interrupt,1	 /* one interrupt per frame */
-		}
-	},
+			0,0,
+			meadows_sound_interrupt,38	/* 5000000/131072 interrupts per frame */
+        }
+    },
 	60, DEFAULT_60HZ_VBLANK_DURATION,		/* frames per second, vblank duration */
-	2,										/* dual CPU; interleave them a bit */
+	240,									/* dual CPU; interleave them */
 	0,
 
 	/* video hardware */
@@ -471,10 +483,10 @@ static struct MachineDriver deadeye_machine_driver =
 	deadeye_vh_screenrefresh,
 
 	/* sound hardware */
-    &meadows_sh_init,
+	0,
     &meadows_sh_start,
 	&meadows_sh_stop,
-	&meadows_sh_update,
+	0,
 	{
 		{
 			SOUND_DAC,
@@ -489,23 +501,24 @@ static struct MachineDriver gypsyjug_machine_driver =
 	{
 		{
 			CPU_S2650,
-			625000, 	  /* 625 kHz */
+			625000, 	/* 5MHz / 8 = 625 kHz */
 			0,
 			meadows_readmem,meadows_writemem,
 			0,0,
 			meadows_interrupt,1 	/* one interrupt per frame!? */
 		},
 		{
-			CPU_S2650,
-			625000, 	   /* 625 kHz */
+			CPU_S2650 | CPU_AUDIO_CPU,
+			625000, 	/* 5MHz / 8 = 625 kHz */
 			2,
 			meadows_sound_readmem,meadows_sound_writemem,
 			0,0,
-			meadows_sound_interrupt,1	 /* one interrupt per frame */
+			0,0,
+			meadows_sound_interrupt,38	/* 5000000/131072 interrupts per frame */
 		}
 	},
 	60, DEFAULT_60HZ_VBLANK_DURATION,		/* frames per second, vblank duration */
-	2,										/* dual CPU; interleave them a bit */
+	240,									/* dual CPU; interleave them */
 	0,
 
 	/* video hardware */
@@ -521,10 +534,10 @@ static struct MachineDriver gypsyjug_machine_driver =
 	gypsyjug_vh_screenrefresh,
 
 	/* sound hardware */
-    &meadows_sh_init,
+	0,
 	&meadows_sh_start,
 	&meadows_sh_stop,
-    &meadows_sh_update,
+	0,
 	{
 		{
 			SOUND_DAC,
@@ -547,10 +560,12 @@ ROM_START( deadeye_rom )
 	ROM_LOAD( "de4.11h",     0x1000, 0x0400, 0x6270031e )
 	ROM_LOAD( "de5.12h",     0x1400, 0x0400, 0xc38ac92e )
 	ROM_LOAD( "de6.13h",     0x1800, 0x0400, 0xc6546fce )
-	ROM_REGION_DISPOSE(0x1400)
+
+	ROM_REGION_DISPOSE(0x1400)	/* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "de_char.15e", 0x0000, 0x0400, 0xda8e0f10 )
 	ROM_LOAD( "de_mov1.5a",  0x0400, 0x0400, 0xacbe0c08 )
 	ROM_LOAD( "de_mov2.13a", 0x0800, 0x0400, 0xe3925bbe )
+
 	ROM_REGION(0x08000) 	/* 32K for code for the sound cpu */
 	ROM_LOAD( "de_snd",      0x0000, 0x0400, 0xf8d44164 )
 ROM_END
@@ -562,16 +577,31 @@ ROM_START( gypsyjug_rom )
 	ROM_LOAD( "GJ.3B",  0x0800, 0x0400, 0x0f1e56691 )
 	ROM_LOAD( "GJ.4B",  0x1000, 0x0400, 0x8879a2a7 )
 	ROM_LOAD( "GJ.5B",  0x1400, 0x0400, 0x3b862d96 )
-	ROM_REGION_DISPOSE(0x1400)
+
+	ROM_REGION_DISPOSE(0x1400)	/* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "GJ.E15", 0x0000, 0x0400, 0x7947c4b9 )
 	ROM_LOAD( "GJ.A",   0x0400, 0x0400, 0x25898ed5 )
 	ROM_LOAD( "GJ.A",   0x0800, 0x0400, 0x25898ed5 )
+
 	ROM_REGION(0x08000) 	/* 32K for code for the sound cpu */
 	ROM_LOAD( "GJ.A4S", 0x0000, 0x0400, 0xa61fe099 )
 	ROM_LOAD( "GJ.A5S", 0x0400, 0x0400, 0x2673523f )
 	ROM_LOAD( "GJ.A6S", 0x0800, 0x0400, 0xf0a6b806 )
 ROM_END
 
+/* A fake for the missing ball sprites #3 and #4 */
+static void gypsyjug_rom_decode(void)
+{
+int i;
+static byte ball[16*2] = {
+	0x00,0x00, 0x00,0x00, 0x00,0x00, 0x00,0x00,
+	0x00,0x00, 0x00,0x00, 0x00,0x00, 0x00,0x00,
+	0x00,0x00, 0x00,0x00, 0x00,0x00, 0x00,0x00,
+	0x01,0x80, 0x03,0xc0, 0x03,0xc0, 0x01,0x80};
+
+	for (i = 0; i < 0x800; i += 16*2)
+		memcpy(&Machine->memory_region[1][0x0c00+i], ball, sizeof(ball));
+}
 
 struct GameDriver deadeye_driver =
 {
@@ -579,8 +609,8 @@ struct GameDriver deadeye_driver =
 	0,
 	"deadeye",
 	"Dead Eye",
-	"????",
-	"?????",
+	"1978",
+	"Meadows",
 	"Juergen Buchmueller\n",
 	0,
 	&deadeye_machine_driver,
@@ -607,14 +637,14 @@ struct GameDriver gypsyjug_driver =
 	0,
 	"gypsyjug",
 	"Gypsy Juggler",
-	"????",
-	"?????",
+	"1978",
+	"Meadows",
 	"Juergen Buchmueller\n",
 	0,
 	&gypsyjug_machine_driver,
 
 	gypsyjug_rom,
-	0,
+	gypsyjug_rom_decode,
 	0,
 	0,
 	0,		/* sound_prom */
@@ -628,4 +658,3 @@ struct GameDriver gypsyjug_driver =
 
     0,0
 };
-

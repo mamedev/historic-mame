@@ -42,7 +42,7 @@ void bankp_scroll_w(int offset,int data);
 void bankp_out_w(int offset,int data);
 int bankp_vh_start(void);
 void bankp_vh_stop(void);
-void bankp_vh_screenrefresh(struct osd_bitmap *bitmap);
+void bankp_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 
 
@@ -349,8 +349,8 @@ struct GameDriver bankp_driver =
 	0,
 	"bankp",
 	"Bank Panic",
-	"????",
-	"?????",
+	"1984",
+	"Sega",
 	"Nicola Salmoria (MAME driver)\nAlan J. McCormick (color info)",
 	0,
 	&machine_driver,

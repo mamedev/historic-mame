@@ -20,14 +20,12 @@
 
 extern unsigned char *sidearms_bg_scrollx,*sidearms_bg_scrolly;
 extern unsigned char *sidearms_bg2_scrollx,*sidearms_bg2_scrolly;
-extern unsigned char *sidearms_paletteram;
 
-void sidearms_paletteram_w(int offset, int data);
 void sidearms_c804_w(int offset, int data);
 int  sidearms_vh_start(void);
 void sidearms_vh_stop(void);
 void sidearms_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-void sidearms_vh_screenrefresh(struct osd_bitmap *bitmap);
+void sidearms_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 
 
@@ -60,7 +58,8 @@ static struct MemoryReadAddress readmem[] =
 static struct MemoryWriteAddress writemem[] =
 {
 	{ 0x0000, 0xbfff, MWA_ROM },
-	{ 0xc000, 0xc7ff, sidearms_paletteram_w, &sidearms_paletteram },
+	{ 0xc000, 0xc3ff, paletteram_xxxxBBBBRRRRGGGG_split1_w, &paletteram },
+	{ 0xc400, 0xc7ff, paletteram_xxxxBBBBRRRRGGGG_split2_w, &paletteram_2 },
 	{ 0xc800, 0xc800, soundlatch_w },
 	{ 0xc801, 0xc801, sidearms_bankswitch_w },
 	{ 0xc802, 0xc802, MWA_NOP },	/* watchdog reset? */
@@ -288,7 +287,7 @@ static struct YM2203interface ym2203_interface =
 {
 	2,			/* 2 chips */
 	3500000,	/* 3.5 MHz ? (hand tuned) */
-	{ YM2203_VOL(100,0x20ff), YM2203_VOL(100,0x20ff) },
+	{ YM2203_VOL(100,255), YM2203_VOL(100,255) },
 	{ 0 },
 	{ 0 },
 	{ 0 },
@@ -476,7 +475,7 @@ struct GameDriver sidearms_driver =
 	__FILE__,
 	0,
 	"sidearms",
-	"Sidearms",
+	"Sidearms (US)",
 	"1986",
 	"Capcom",
 	"Paul Leaman (MAME driver)\nNicola Salmoria (additional code)\nGerrit Van Goethem (high score save)",

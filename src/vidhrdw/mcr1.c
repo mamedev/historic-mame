@@ -19,32 +19,7 @@ unsigned char *mcr1_paletteram_bg,*mcr1_paletteram_r;
 
 ***************************************************************************/
 
-static void update_color(int offset)
-{
-	int r,g,b;
-
-	b = 0x11 * (mcr1_paletteram_bg[offset] >> 4);
-	g = 0x11 * (mcr1_paletteram_bg[offset] & 0x0f);
-	r = 0x11 * (mcr1_paletteram_r[offset] & 0x0f);
-
-	palette_change_color(offset,r,g,b);
-}
-
-void mcr1_palette_bg_w(int offset,int data)
-{
-	mcr1_paletteram_bg[offset] = data;
-	update_color(offset);
-}
-
-void mcr1_palette_r_w(int offset,int data)
-{
-	mcr1_paletteram_r[offset] = data;
-	update_color(offset);
-}
-
-
-
-void mcr1_vh_screenrefresh(struct osd_bitmap *bitmap)
+void mcr1_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
    int offs;
    int mx,my;

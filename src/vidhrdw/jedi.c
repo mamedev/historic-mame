@@ -13,7 +13,6 @@
 
 unsigned char *jedi_backgroundram;
 int jedi_backgroundram_size;
-unsigned char *jedi_paletteram;
 unsigned char *jedi_PIXIRAM;
 static unsigned int jedi_vscroll;
 static unsigned int jedi_hscroll;
@@ -63,8 +62,8 @@ void jedi_paletteram_w(int offset,int data)
     unsigned int color;
 
 
-	jedi_paletteram[offset] = data;
-	color = jedi_paletteram[offset & 0x3FF] | (jedi_paletteram[offset | 0x400] << 8);
+	paletteram[offset] = data;
+	color = paletteram[offset & 0x3FF] | (paletteram[offset | 0x400] << 8);
 	intensity = (color >> 9) & 0x07;
 	bits = (color >> 6) & 0x07;
 	r = 5 * bits * intensity;
@@ -145,7 +144,7 @@ void jedi_backgroundram_w(int offset,int data)
   the main emulation engine.
 
 ***************************************************************************/
-void jedi_vh_screenrefresh(struct osd_bitmap *bitmap)
+void jedi_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	int offs;
 

@@ -22,6 +22,9 @@ int videoram_r(int offset);
 int colorram_r(int offset);
 void videoram_w(int offset,int data);
 void colorram_w(int offset,int data);
+int spriteram_r(int offset);
+void spriteram_w(int offset,int data);
+
 
 extern unsigned char *videoram00,*videoram01,*videoram02,*videoram03;
 extern unsigned char *videoram10,*videoram11,*videoram12,*videoram13;

@@ -437,6 +437,53 @@ INPUT_PORTS_START ( llander_input_ports )
 	PORT_ANALOGX( 0xff, 0x00, IPT_PADDLE|IPF_REVERSE, 100, 0, 0, 255, OSD_KEY_UP, OSD_KEY_DOWN, OSD_JOY_UP, OSD_JOY_DOWN, 1)
 INPUT_PORTS_END
 
+INPUT_PORTS_START ( llander1_input_ports )
+	PORT_START /* IN0 */
+	/* Bit 0 is VG_HALT, handled in the machine dependant part */
+	PORT_BIT ( 0x01, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BITX ( 0x02, 0x02, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE, 0 )
+	PORT_DIPSETTING ( 0x02, "Off" )
+	PORT_DIPSETTING ( 0x00, "On" )
+	PORT_BIT ( 0x04, IP_ACTIVE_LOW, IPT_TILT )
+	/* Of the rest, Bit 6 is the 3KHz source. 3,4 and 5 are unknown */
+	PORT_BIT ( 0x78, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BITX (0x80, IP_ACTIVE_LOW, IPT_SERVICE, "Diagnostic Step", OSD_KEY_F1, IP_JOY_NONE, 0 )
+
+	PORT_START /* IN1 */
+	PORT_BIT ( 0x01, IP_ACTIVE_HIGH, IPT_START1 )
+	PORT_BIT ( 0x02, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT ( 0x04, IP_ACTIVE_HIGH, IPT_COIN2 )
+	PORT_BIT ( 0x08, IP_ACTIVE_LOW, IPT_COIN3 )
+	PORT_BITX( 0x10, IP_ACTIVE_HIGH, IPT_START2, "Select Game", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0 )
+	PORT_BITX( 0x20, IP_ACTIVE_HIGH, IPT_BUTTON1, "Abort", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0 )
+	PORT_BIT ( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_2WAY )
+	PORT_BIT ( 0x80, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_2WAY )
+
+	PORT_START /* DSW1 */
+	PORT_DIPNAME ( 0x03, 0x01, "Right Coin", IP_KEY_NONE )
+	PORT_DIPSETTING (    0x00, "*1" )
+	PORT_DIPSETTING (    0x01, "*4" )
+	PORT_DIPSETTING (    0x02, "*5" )
+	PORT_DIPSETTING (    0x03, "*6" )
+	PORT_DIPNAME ( 0x0c, 0x00, "Language", IP_KEY_NONE )
+	PORT_DIPSETTING (    0x00, "English" )
+	PORT_DIPSETTING (    0x04, "French" )
+	PORT_DIPSETTING (    0x08, "Spanish" )
+	PORT_DIPSETTING (    0x0c, "German" )
+	PORT_DIPNAME ( 0x10, 0x00, "Coinage", IP_KEY_NONE )
+	PORT_DIPSETTING (    0x00, "Normal" )
+	PORT_DIPSETTING (    0x10, "Free Play" )
+	PORT_DIPNAME ( 0xc0, 0x80, "Fuel units", IP_KEY_NONE )
+	PORT_DIPSETTING (    0x00, "450" )
+	PORT_DIPSETTING (    0x40, "600" )
+	PORT_DIPSETTING (    0x80, "750" )
+	PORT_DIPSETTING (    0xc0, "900" )
+
+	/* The next one is a potentiometer */
+	PORT_START /* IN3 */
+	PORT_ANALOGX( 0xff, 0x00, IPT_PADDLE|IPF_REVERSE, 100, 0, 0, 255, OSD_KEY_UP, OSD_KEY_DOWN, OSD_JOY_UP, OSD_JOY_DOWN, 1)
+INPUT_PORTS_END
+
 static struct GfxLayout fakelayout =
 {
 	1,1,
@@ -485,7 +532,7 @@ static int asteroid1_hiload(void)
 	else return 0;	/* we can't load the hi scores yet */
 }
 
-static int asteroid2_hiload(void)
+static int asteroid_hiload(void)
 {
 	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
@@ -524,7 +571,7 @@ static void asteroid1_hisave(void)
 	}
 }
 
-static void asteroid2_hisave(void)
+static void asteroid_hisave(void)
 {
 	void *f;
 	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
@@ -727,17 +774,17 @@ static const char *asteroid_sample_names[] =
     0	/* end of array */
 };
 
-ROM_START( asteroid_rom )
+ROM_START( asteroi1_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "035145.02", 0x6800, 0x0800, 0xd84a7878 )
-	ROM_LOAD( "035144.02", 0x7000, 0x0800, 0x15f39999 )
-	ROM_LOAD( "035143.02", 0x7800, 0x0800, 0x93d25050 )
+	ROM_LOAD( "035145.01", 0x6800, 0x0800, 0xd84a7878 )
+	ROM_LOAD( "035144.01", 0x7000, 0x0800, 0x15f39999 )
+	ROM_LOAD( "035143.01", 0x7800, 0x0800, 0x93d25050 )
 	ROM_RELOAD(            0xf800, 0x0800 )	/* for reset/interrupt vectors */
 	/* Vector ROM */
-	ROM_LOAD( "035127.02", 0x5000, 0x0800, 0xa144e0e0 )
+	ROM_LOAD( "035127.01", 0x5000, 0x0800, 0xa144e0e0 )
 ROM_END
 
-ROM_START( asteroi2_rom )
+ROM_START( asteroid_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "035145.02", 0x6800, 0x0800, 0x8de50d0d )
 	ROM_LOAD( "035144.02", 0x7000, 0x0800, 0xa0dbd7d7 )
@@ -754,9 +801,9 @@ struct GameDriver asteroid_driver =
 	__FILE__,
 	0,
 	"asteroid",
-	"Asteroids (rev 1)",
-	"????",
-	"?????",
+	"Asteroids (rev 2)",
+	"1979",
+	"Atari",
 	"Brad Oliver (Mame Driver)\n"VECTOR_TEAM,
 	0,
 	&asteroid_machine_driver,
@@ -771,22 +818,22 @@ struct GameDriver asteroid_driver =
 	asteroid_color_prom, 0, 0,
 	ORIENTATION_DEFAULT,
 
-	asteroid1_hiload, asteroid1_hisave
+	asteroid_hiload, asteroid_hisave
 };
 
-struct GameDriver asteroi2_driver =
+struct GameDriver asteroi1_driver =
 {
 	__FILE__,
-	0,
-	"asteroi2",
-	"Asteroids (rev 2)",
-	"????",
-	"?????",
+	&asteroid_driver,
+	"asteroi1",
+	"Asteroids (rev 1)",
+	"1979",
+	"Atari",
 	"Brad Oliver (Mame Driver)\n"VECTOR_TEAM,
 	0,
 	&asteroid_machine_driver,
 
-	asteroi2_rom,
+	asteroi1_rom,
 	0, 0,
 	asteroid_sample_names,
 	0,	/* sound_prom */
@@ -796,7 +843,7 @@ struct GameDriver asteroi2_driver =
 	asteroid_color_prom, 0, 0,
 	ORIENTATION_DEFAULT,
 
-	asteroid2_hiload, asteroid2_hisave
+	asteroid1_hiload, asteroid1_hisave
 };
 
 ROM_START( astdelux_rom )
@@ -811,7 +858,8 @@ ROM_START( astdelux_rom )
 	ROM_LOAD( "036799.01", 0x5000, 0x0800, 0x5bcf256d )
 ROM_END
 
-#if 0 /* anyone have a correct romset? */
+/* 036433.02 with the checksum below is _broken_! */
+/* Anyone have a correct romset? */
 ROM_START( astdelu1_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "036430.01", 0x6000, 0x0800, 0x4bca4e5e )
@@ -823,7 +871,6 @@ ROM_START( astdelu1_rom )
 	ROM_LOAD( "036800.01", 0x4800, 0x0800, 0xc05aa9d8 )
 	ROM_LOAD( "036799.01", 0x5000, 0x0800, 0x5bcf256d )
 ROM_END
-#endif
 
 
 
@@ -841,9 +888,9 @@ struct GameDriver astdelux_driver =
 	__FILE__,
 	0,
 	"astdelux",
-	"Asteroids Deluxe",
-	"????",
-	"?????",
+	"Asteroids Deluxe (rev 2)",
+	"1980",
+	"Atari",
 	"Brad Oliver (Mame Driver)\n"VECTOR_TEAM,
 	0,
 	&astdelux_machine_driver,
@@ -861,15 +908,15 @@ struct GameDriver astdelux_driver =
 	atari_vg_earom_load, atari_vg_earom_save
 };
 
-#if 0 /* the romset floating around is probably broken */
+/* the REV 1 romset floating around is broken */
 struct GameDriver astdelu1_driver =
 {
 	__FILE__,
-	0,
+	&astdelux_driver,
 	"astdelu1",
-	"Asteroids Deluxe (alternate version)",
-	"????",
-	"?????",
+	"Asteroids Deluxe (rev 1)",
+	"1980",
+	"Atari",
 	"Brad Oliver (Mame Driver)\n"VECTOR_TEAM,
 	0,
 	&astdelux_machine_driver,
@@ -886,7 +933,6 @@ struct GameDriver astdelu1_driver =
 
 	atari_vg_earom_load, atari_vg_earom_save
 };
-#endif
 
 ROM_START( llander_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
@@ -898,6 +944,25 @@ ROM_START( llander_rom )
 	/* Vector ROM */
 	ROM_LOAD( "034599.01", 0x4800, 0x0800, 0x9e7084de )
 	ROM_LOAD( "034598.01", 0x5000, 0x0800, 0xd006607c )
+	/* This _should_ be the rom for international versions. */
+	/* Unfortunately, is it not currently available. We use */
+	/* a fake one. */
+	ROM_LOAD( "034597.01", 0x5800, 0x0800, 0xfc000000 )
+ROM_END
+
+ROM_START( llander1_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "034572.01", 0x6000, 0x0800, 0x7b348ab6 )
+	ROM_LOAD( "034571.01", 0x6800, 0x0800, 0xc0ffbbb7 )
+	ROM_LOAD( "034570.01", 0x7000, 0x0800, 0xfe8b233f )
+	ROM_LOAD( "034569.01", 0x7800, 0x0800, 0xac0dcbc7 )
+	ROM_RELOAD(            0xf800, 0x0800 )	/* for reset/interrupt vectors */
+	/* Vector ROM */
+	ROM_LOAD( "034599.01", 0x4800, 0x0800, 0x9e7084de )
+	ROM_LOAD( "034598.01", 0x5000, 0x0800, 0xd006607c )
+	/* This _should_ be the rom for international versions. */
+	/* Unfortunately, is it not currently available. We use */
+	/* a fake one. */
 	ROM_LOAD( "034597.01", 0x5800, 0x0800, 0xfc000000 )
 ROM_END
 
@@ -906,9 +971,9 @@ struct GameDriver llander_driver =
 	__FILE__,
 	0,
 	"llander",
-	"Lunar Lander",
-	"????",
-	"?????",
+	"Lunar Lander (rev 2)",
+	"1979",
+	"Atari",
 	"Brad Oliver (Mame Driver)\nKeith Wilkins (Sound)\n"VECTOR_TEAM,
 	0,
 	&llander_machine_driver,
@@ -919,6 +984,31 @@ struct GameDriver llander_driver =
 	0,	/* sound_prom */
 
 	llander_input_ports,
+
+	asteroid_color_prom, 0, 0,
+	ORIENTATION_DEFAULT,
+
+	0, 0
+};
+
+struct GameDriver llander1_driver =
+{
+	__FILE__,
+	&llander_driver,
+	"llander1",
+	"Lunar Lander (rev 1)",
+	"1979",
+	"Atari",
+	"Brad Oliver (Mame Driver)\nKeith Wilkins (Sound)\n"VECTOR_TEAM,
+	0,
+	&llander_machine_driver,
+
+	llander1_rom,
+	0, 0,
+	0,
+	0,	/* sound_prom */
+
+	llander1_input_ports,
 
 	asteroid_color_prom, 0, 0,
 	ORIENTATION_DEFAULT,

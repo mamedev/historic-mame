@@ -231,12 +231,12 @@ INLINE void plotpixel(int col,int row,int pen)
 		row = tmpbitmap->height - row - 1;
 
 	if (tmpbitmap->depth == 16)
-		((unsigned short *)tmpbitmap->line[row])[col] = pen;
+		((unsigned short *)Machine->scrbitmap->line[row])[col] = ((unsigned short *)tmpbitmap->line[row])[col] = pen;
 	else
-		tmpbitmap->line[row][col] = pen;
+		Machine->scrbitmap->line[row][col] = tmpbitmap->line[row][col] = pen;
 }
 
-void capbowl_vh_screenrefresh(struct osd_bitmap *bitmap)
+void capbowl_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	int col, row;
 	const unsigned char *remapped;
@@ -289,5 +289,6 @@ void capbowl_vh_screenrefresh(struct osd_bitmap *bitmap)
 		}
 	}
 
-	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+	if (full_refresh)
+		copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
 }

@@ -19,7 +19,6 @@ extern unsigned char *banked_ram_0, *banked_ram_1;
 
 
 unsigned char *tnzs_objectram;
-unsigned char *tnzs_paletteram;
 unsigned char *tnzs_workram;
 int tnzs_objectram_size;
 static struct osd_bitmap *tnzs_column[16];
@@ -35,22 +34,6 @@ static int tnzs_screenflip, tnzs_insertcoin;
   different color codes.
 
 ***************************************************************************/
-void tnzs_paletteram_w(int offset,int data)
-{
-	int r,g,b,val;
-
-	tnzs_paletteram[offset] = data;
-
-    val = READ_WORD (&tnzs_paletteram[offset & ~1]);
-    r = (val >> 10) & 31;
-    g = (val >> 5) & 31;
-    b = val & 31;
-
-    r = (r << 3) + (r >> 2);
-    g = (g << 3) + (g >> 2);
-    b = (b << 3) + (b >> 2);
-    palette_change_color(offset / 2, r,g,b);
-}
 
 
 
@@ -262,7 +245,7 @@ void tnzs_vh_draw_foreground(struct osd_bitmap *bitmap,
 
 ***************************************************************************/
 extern int number_of_credits;
-void tnzs_vh_screenrefresh(struct osd_bitmap *bitmap)
+void tnzs_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
     int color,code,i,offs,x,y, t;
     int colmask[32];

@@ -37,7 +37,7 @@ static unsigned char *ironhors_interrupt_enable;
 void ironhors_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 void ironhors_palettebank_w(int offset,int data);
 void ironhors_charbank_w(int offset,int data);
-void ironhors_vh_screenrefresh(struct osd_bitmap *bitmap);
+void ironhors_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 
 
@@ -341,7 +341,7 @@ static struct GfxDecodeInfo farwest_gfxdecodeinfo[] =
 };
 
 
-/* we are missing the lookup table PROMs. We have only the palette. */
+
 static unsigned char ironhors_color_prom[] =
 {
 	/* 03F_H08.BIN - palette red component */
@@ -526,7 +526,7 @@ static struct YM2203interface ym2203_interface =
 {
 	1,			/* 1 chip */
 	1500000,	/* 1.5 MHz ? */
-	{ YM2203_VOL(128,255) },
+	{ YM2203_VOL(255,255) },
 	{ 0 },
 	{ 0 },
 	{ 0 },
@@ -674,8 +674,8 @@ struct GameDriver ironhors_driver =
 	0,
 	"ironhors",
 	"Iron Horse",
-	"????",
-	"?????",
+	"1986",
+	"Konami",
 	"Mirko Buffoni (MAME driver)\nPaul Swan (color info)",
 	0,
 	&ironhors_machine_driver,
@@ -696,13 +696,13 @@ struct GameDriver ironhors_driver =
 struct GameDriver farwest_driver =
 {
 	__FILE__,
-	0,
+	&ironhors_driver,
 	"farwest",
 	"Far West",
-	"????",
-	"?????",
+	"1986",
+	"bootleg?",
 	"Mirko Buffoni (MAME driver)\nGerald Vanderick (color info)",
-	0,
+	GAME_NOT_WORKING,
 	&farwest_machine_driver,
 
 	farwest_rom,

@@ -21,7 +21,7 @@ extern unsigned char *yard_sprite_priority; /* JB 970912 */
 void yard_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 int yard_vh_start(void);
 void yard_vh_stop(void);
-void yard_vh_screenrefresh(struct osd_bitmap *bitmap);
+void yard_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 void mpatrol_io_w(int offset, int value);
 int mpatrol_io_r(int offset);
@@ -285,11 +285,13 @@ static struct GfxLayout charlayout =
 static struct GfxLayout spritelayout =
 {
 	16,16,	/* 16*16 sprites */
-	256,	/* 256 sprites */
+	512,	/* 256 sprites */
 	3,	/* 3 bits per pixel */
 	{ 2*0x4000*8, 0x4000*8, 0 },
-	{ 0, 1, 2, 3, 4, 5, 6, 7, 16*8+0, 16*8+1, 16*8+2, 16*8+3, 16*8+4, 16*8+5, 16*8+6, 16*8+7},
-	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8, 8*8, 9*8, 10*8, 11*8, 12*8, 13*8, 14*8, 15*8 },
+	{ 0, 1, 2, 3, 4, 5, 6, 7,
+			16*8+0, 16*8+1, 16*8+2, 16*8+3, 16*8+4, 16*8+5, 16*8+6, 16*8+7},
+	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8,
+			8*8, 9*8, 10*8, 11*8, 12*8, 13*8, 14*8, 15*8 },
 	32*8	/* every sprite takes 32 consecutive bytes */
 };
 
@@ -311,7 +313,6 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
 	{ 1, 0x00000, &charlayout,           0, 32 },
 	{ 1, 0x06000, &spritelayout,      32*8, 32 },
-	{ 1, 0x08000, &spritelayout,      32*8, 32 },
 	{ 0, 0,       &fakelayout,   32*8+32*8, 64 },
 	{ -1 } /* end of array */
 };
@@ -460,7 +461,7 @@ static struct MachineDriver machine_driver =
 	/* video hardware */
 	32*8, 32*8, { 0*8, 32*8-1, 1*8, 31*8-1 },
 	gfxdecodeinfo,
-	256, 32*8+32*8+64*4,
+	256+16+256, 32*8+32*8+64*4,
 	yard_vh_convert_color_prom,
 
 	VIDEO_TYPE_RASTER,
@@ -506,36 +507,31 @@ ROM_START( yard_rom )
 	ROM_LOAD( "yf-b-5j", 0x0e000, 0x2000, 0x687142a1 )
 	ROM_LOAD( "yf-b-5k", 0x10000, 0x2000, 0x0143b99b )
 
-	/* JB 971012 */
 	ROM_REGION(0x10000)	/* 64k for sound cpu */
-	/* should the samples be loaded here ??? */
 	ROM_LOAD( "yf-s-3b", 0x8000, 0x2000, 0xbbb87550 )		/* samples (ADPCM 4-bit) */
 	ROM_LOAD( "yf-s-1b", 0xa000, 0x2000, 0xec2129c1 )		/* samples (ADPCM 4-bit) */
 	ROM_LOAD( "yf-s-3a", 0xc000, 0x2000, 0xf4962ed6 )		/* samples (ADPCM 4-bit) */
 	ROM_LOAD( "yf-s-1a", 0xe000, 0x2000, 0xb2b58731 )
 ROM_END
-
 
 ROM_START( vsyard_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "yf-a-3n", 0x0000, 0x2000, 0x62af9fe3 )
-	ROM_LOAD( "yf-a-3m", 0x2000, 0x2000, 0x05825f66 )
-	ROM_LOAD( "yf-a-3k", 0x4000, 0x2000, 0xc22e2aca )
+	ROM_LOAD( "vyf-a-3n", 0x0000, 0x2000, 0x62af9fe3 )
+	ROM_LOAD( "vyf-a-3m", 0x2000, 0x2000, 0x05825f66 )
+	ROM_LOAD( "vyf-a-3k", 0x4000, 0x2000, 0xc22e2aca )
 
 	ROM_REGION(0x12000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "yf-a-3a", 0x00000, 0x2000, 0x1be716f5 )	/* chars */
-	ROM_LOAD( "yf-a-3c", 0x02000, 0x2000, 0x83060c38 )
-	ROM_LOAD( "yf-a-3d", 0x04000, 0x2000, 0xdd373627 )
-	ROM_LOAD( "yf-b-5c", 0x06000, 0x2000, 0x5331aec5 )	/* sprites */
-	ROM_LOAD( "yf-b-5a", 0x08000, 0x2000, 0xc052c88c )
-	ROM_LOAD( "yf-b-5e", 0x0a000, 0x2000, 0x7fdade5c )
-	ROM_LOAD( "yf-b-5d", 0x0c000, 0x2000, 0x8ed559bd )
-	ROM_LOAD( "yf-b-5j", 0x0e000, 0x2000, 0x687142a1 )
-	ROM_LOAD( "yf-b-5h", 0x10000, 0x2000, 0x0143b99b )
+	ROM_LOAD( "vyf-a-3a", 0x00000, 0x2000, 0x1be716f5 )	/* chars */
+	ROM_LOAD( "vyf-a-3c", 0x02000, 0x2000, 0x83060c38 )
+	ROM_LOAD( "vyf-a-3d", 0x04000, 0x2000, 0xdd373627 )
+	ROM_LOAD( "yf-b-5b",  0x06000, 0x2000, 0x5331aec5 )	/* sprites */
+	ROM_LOAD( "yf-b-5c",  0x08000, 0x2000, 0xc052c88c )
+	ROM_LOAD( "yf-b-5f",  0x0a000, 0x2000, 0x7fdade5c )
+	ROM_LOAD( "yf-b-5e",  0x0c000, 0x2000, 0x8ed559bd )
+	ROM_LOAD( "yf-b-5j",  0x0e000, 0x2000, 0x687142a1 )
+	ROM_LOAD( "yf-b-5k",  0x10000, 0x2000, 0x0143b99b )
 
-	/* JB 971012 */
 	ROM_REGION(0x10000)	/* 64k for sound cpu */
-	/* should the samples be loaded here ??? */
 	ROM_LOAD( "yf-s-3b", 0x8000, 0x2000, 0xbbb87550 )		/* samples (ADPCM 4-bit) */
 	ROM_LOAD( "yf-s-1b", 0xa000, 0x2000, 0xec2129c1 )		/* samples (ADPCM 4-bit) */
 	ROM_LOAD( "yf-s-3a", 0xc000, 0x2000, 0xf4962ed6 )		/* samples (ADPCM 4-bit) */
@@ -543,7 +539,7 @@ ROM_START( vsyard_rom )
 ROM_END
 
 
-/* JB 971009 */
+
 static int hiload(void)
 {
 	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
@@ -587,14 +583,15 @@ static void hisave(void)
 }
 
 
+
 struct GameDriver yard_driver =
 {
 	__FILE__,
 	0,
 	"yard",
 	"10 Yard Fight",
-	"????",
-	"?????",
+	"1983",
+	"Irem",
 	"Lee Taylor\nJohn Clegg\nMirko Buffoni\nNicola Salmoria\nIshmair\nTim Lindquist (color info)\nAaron Giles (sound)\nKevin Brisley (hiscores)",
 	0,
 	&machine_driver,
@@ -609,18 +606,17 @@ struct GameDriver yard_driver =
 	color_prom, 0, 0,
 	ORIENTATION_DEFAULT,
 
-	hiload, hisave /* JB 971009 */
+	hiload, hisave
 };
-
 
 struct GameDriver vsyard_driver =
 {
 	__FILE__,
-	0,
+	&yard_driver,
 	"vsyard",
 	"10 Yard Fight (Vs. version)",
-	"????",
-	"?????",
+	"1984",
+	"Irem",
 	"Lee Taylor\nJohn Clegg\nMirko Buffoni\nNicola Salmoria\nIshmair\nTim Lindquist (color info)\nAaron Giles (sound)\nKevin Brisley (hiscores)",
 	0,
 	&machine_driver,
@@ -635,5 +631,5 @@ struct GameDriver vsyard_driver =
 	color_prom, 0, 0,
 	ORIENTATION_DEFAULT,
 
-	hiload, hisave /* JB 971009 */
+	hiload, hisave
 };

@@ -301,7 +301,7 @@ void panic_videoram_w(int offset,int data)
 
 ***************************************************************************/
 
-void panic_vh_screenrefresh(struct osd_bitmap *bitmap)
+void panic_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	int offs, Sprite, Bank, Rotate;
 

@@ -30,11 +30,11 @@ Write
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-extern unsigned char *atetris_paletteram;
 
-void atetris_vh_screenrefresh(struct osd_bitmap *bitmap);
+void atetris_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 int  atetris_slapstic_r(int offset);
-void atetris_palette_w(int offset, int data);
+
+
 
 static struct MemoryReadAddress readmem[] =
 {
@@ -50,7 +50,7 @@ static struct MemoryWriteAddress writemem[] =
 {
         { 0x0000, 0x0fff, MWA_RAM },
         { 0x1000, 0x1fff, videoram_w, &videoram, &videoram_size },
-        { 0x2000, 0x20ff, atetris_palette_w, &atetris_paletteram },
+        { 0x2000, 0x20ff, paletteram_RRRGGGBB_w, &paletteram },
         { 0x2400, 0x25ff, MWA_RAM },
         { 0x2800, 0x280f, pokey1_w },
         { 0x2810, 0x281f, pokey2_w },
@@ -204,38 +204,38 @@ static struct MachineDriver machine_driver =
 
 ***************************************************************************/
 ROM_START( atetris_rom )
-        ROM_REGION(0x14000)     /* 80k for code */
-        ROM_LOAD( "1100.45f", 0x0000, 0x10000, 0xaf18a152 )
+	ROM_REGION(0x14000)     /* 80k for code */
+	ROM_LOAD( "1100.45f", 0x0000, 0x10000, 0xaf18a152 )
 
-        ROM_REGION(0x10000)     /* temporary space for graphics (disposed after conversion) */
-        ROM_LOAD( "1101.35a", 0x0000, 0x10000, 0x4bdf7ba5 )
+	ROM_REGION(0x10000)     /* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "1101.35a", 0x0000, 0x10000, 0x4bdf7ba5 )
 ROM_END
 
 ROM_START( atetrisa_rom )
-        ROM_REGION(0x14000)     /* 80k for code */
-        ROM_LOAD( "d1", 0x0000, 0x10000, 0x4112e26c )
+	ROM_REGION(0x14000)     /* 80k for code */
+	ROM_LOAD( "d1", 0x0000, 0x10000, 0x4112e26c )
 
-        ROM_REGION(0x10000)     /* temporary space for graphics (disposed after conversion) */
-        ROM_LOAD( "d2", 0x0000, 0x10000, 0x4bdf7ba5 )
+	ROM_REGION(0x10000)     /* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "1101.35a", 0x0000, 0x10000, 0x4bdf7ba5 )
 ROM_END
 
 ROM_START( atetrisb_rom )
-        ROM_REGION(0x14000)     /* 80k for code */
-        ROM_LOAD( "tetris.01", 0x0000, 0x10000, 0x813ea036 )
+	ROM_REGION(0x14000)     /* 80k for code */
+	ROM_LOAD( "tetris.01", 0x0000, 0x10000, 0x813ea036 )
 
-        ROM_REGION(0x10000)     /* temporary space for graphics (disposed after conversion) */
-        ROM_LOAD( "tetris.02", 0x0000, 0x10000, 0x366e8d7a )
+	ROM_REGION(0x10000)     /* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "tetris.02", 0x0000, 0x10000, 0x366e8d7a )
 
-        /* there's an extra EEPROM, maybe used for protection crack, which */
-        /* however doesn't seem to be required to run the game in this driver. */
+	/* there's an extra EEPROM, maybe used for protection crack, which */
+	/* however doesn't seem to be required to run the game in this driver. */
 ROM_END
 
 ROM_START( atetcktl_rom )
-        ROM_REGION(0x14000)     /* 80k for code */
-        ROM_LOAD( "1102.45f",  0x0000, 0x10000, 0xcb2f88b3 )
+	ROM_REGION(0x14000)     /* 80k for code */
+	ROM_LOAD( "1102.45f", 0x0000, 0x10000, 0xcb2f88b3 )
 
-        ROM_REGION(0x10000)     /* temporary space for graphics (disposed after conversion) */
-        ROM_LOAD( "1103.35a",  0x0000, 0x10000, 0x010956c1 )
+	ROM_REGION(0x10000)     /* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "1103.35a", 0x0000, 0x10000, 0x010956c1 )
 ROM_END
 
 
@@ -293,98 +293,98 @@ struct GameDriver atetris_driver =
 {
 	__FILE__,
 	0,
-        "atetris",
-        "Tetris (Atari)",
-	"????",
-	"?????",
-        "Zsolt Vasvari",
+	"atetris",
+	"Tetris (set 1)",
+	"1988",
+	"Atari Games",
+	"Zsolt Vasvari",
 	0,
-        &machine_driver,
+	&machine_driver,
 
-        atetris_rom,
-        atetris_rom_move,
-        0,
-        0,
-        0,      /* sound_prom */
+	atetris_rom,
+	atetris_rom_move,
+	0,
+	0,
+	0,      /* sound_prom */
 
-        ports,
+	ports,
 
-        0, 0, 0,   /* colors, palette, colortable */
-        ORIENTATION_DEFAULT,
-        hiload, hisave
+	0, 0, 0,   /* colors, palette, colortable */
+	ORIENTATION_DEFAULT,
+	hiload, hisave
 };
 
 struct GameDriver atetrisa_driver =
 {
 	__FILE__,
+	&atetris_driver,
+	"atetrisa",
+	"Tetris (set 2)",
+	"1988",
+	"Atari Games",
+	"Zsolt Vasvari",
 	0,
-        "atetrisa",
-        "Tetris (Atari) (alternate)",
-	"????",
-	"?????",
-        "Zsolt Vasvari",
+	&machine_driver,
+
+	atetrisa_rom,
+	atetris_rom_move,
 	0,
-        &machine_driver,
+	0,
+	0,      /* sound_prom */
 
-        atetrisa_rom,
-        atetris_rom_move,
-        0,
-        0,
-        0,      /* sound_prom */
+	ports,
 
-        ports,
-
-        0, 0, 0,   /* colors, palette, colortable */
-        ORIENTATION_DEFAULT,
-        hiload, hisave
+	0, 0, 0,   /* colors, palette, colortable */
+	ORIENTATION_DEFAULT,
+	hiload, hisave
 };
 
 struct GameDriver atetrisb_driver =
 {
 	__FILE__,
+	&atetris_driver,
+	"atetrisb",
+	"Tetris (bootleg)",
+	"1988",
+	"bootleg",
+	"Zsolt Vasvari",
 	0,
-        "atetrisb",
-        "Tetris (Atari) (bootleg)",
-	"????",
-	"?????",
-        "Zsolt Vasvari",
+	&machine_driver,
+
+	atetrisb_rom,
+	atetris_rom_move,
 	0,
-        &machine_driver,
+	0,
+	0,      /* sound_prom */
 
-        atetrisb_rom,
-        atetris_rom_move,
-        0,
-        0,
-        0,      /* sound_prom */
+	ports,
 
-        ports,
-
-        0, 0, 0,   /* colors, palette, colortable */
-        ORIENTATION_DEFAULT,
-        hiload, hisave
+	0, 0, 0,   /* colors, palette, colortable */
+	ORIENTATION_DEFAULT,
+	hiload, hisave
 };
 
 struct GameDriver atetcktl_driver =
 {
 	__FILE__,
+	&atetris_driver,
+	"atetcktl",
+	"Tetris (Cocktail version)",
+	"1989",
+	"Atari Games",
+	"Zsolt Vasvari",
 	0,
-        "atetcktl",
-        "Tetris (Atari) (Cocktail version)",
-	"????",
-	"?????",
-        "Zsolt Vasvari",
+	&machine_driver,
+
+	atetcktl_rom,
+	atetris_rom_move,
 	0,
-        &machine_driver,
+	0,
+	0,      /* sound_prom */
 
-        atetcktl_rom,
-        atetris_rom_move,
-        0,
-        0,
-        0,      /* sound_prom */
+	atetcktl_ports,
 
-        atetcktl_ports,
-
-        0, 0, 0,   /* colors, palette, colortable */
-        ORIENTATION_ROTATE_270,
-        hiload, hisave
+	0, 0, 0,   /* colors, palette, colortable */
+	ORIENTATION_ROTATE_270,
+	hiload, hisave
 };

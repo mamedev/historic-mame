@@ -147,7 +147,7 @@ void digdug_draw_sprite(struct osd_bitmap *dest,unsigned int code,unsigned int c
   the main emulation engine.
 
 ***************************************************************************/
-void digdug_vh_screenrefresh(struct osd_bitmap *bitmap)
+void digdug_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	int offs,pfindex,pfcolor;
 	unsigned char *pf;

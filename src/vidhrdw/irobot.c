@@ -443,7 +443,7 @@ void run_video(void) {
   the main emulation engine.
 
 ***************************************************************************/
-void irobot_vh_screenrefresh(struct osd_bitmap *bitmap)
+void irobot_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
         int offs;
         int c,cl;

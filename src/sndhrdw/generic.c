@@ -12,6 +12,8 @@
 
 ***************************************************************************/
 
+static int cleared_value = 0x00;
+
 static int latch,read_debug;
 
 
@@ -33,6 +35,11 @@ int soundlatch_r(int offset)
 {
 	read_debug = 1;
 	return latch;
+}
+
+void soundlatch_clear_w(int offset, int data)
+{
+	latch = cleared_value;
 }
 
 
@@ -58,6 +65,11 @@ int soundlatch2_r(int offset)
 	return latch2;
 }
 
+void soundlatch2_clear_w(int offset, int data)
+{
+	latch2 = cleared_value;
+}
+
 
 static int latch3,read_debug3;
 
@@ -79,6 +91,11 @@ int soundlatch3_r(int offset)
 {
 	read_debug3 = 1;
 	return latch3;
+}
+
+void soundlatch3_clear_w(int offset, int data)
+{
+	latch3 = cleared_value;
 }
 
 
@@ -104,7 +121,16 @@ int soundlatch4_r(int offset)
 	return latch4;
 }
 
+void soundlatch4_clear_w(int offset, int data)
+{
+	latch4 = cleared_value;
+}
 
+
+void soundlatch_setclearedvalue(int value)
+{
+	cleared_value = value;
+}
 
 /***************************************************************************
 

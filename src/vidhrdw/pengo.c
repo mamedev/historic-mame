@@ -181,7 +181,7 @@ void pengo_gfxbank_w(int offset,int data)
   the main emulation engine.
 
 ***************************************************************************/
-void pengo_vh_screenrefresh(struct osd_bitmap *bitmap)
+void pengo_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	int offs;
 

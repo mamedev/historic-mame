@@ -9,6 +9,9 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
+extern unsigned char *galaxian_attributesram;
+
+static int sound_enabled = 0;
 
 static struct rectangle spritevisiblearea =
 {
@@ -25,7 +28,17 @@ static struct rectangle spritevisibleareaflipx =
 
 /***************************************************************************
 
-  I'm assuming Frogger resistor values
+  Convert the color PROMs into a more useable format.
+
+  bit 7 -- 220 ohm resistor  -- BLUE
+        -- 470 ohm resistor  -- BLUE
+        -- 220 ohm resistor  -- GREEN
+        -- 470 ohm resistor  -- GREEN
+        -- 1  kohm resistor  -- GREEN
+        -- 220 ohm resistor  -- RED
+        -- 470 ohm resistor  -- RED
+  bit 0 -- 1  kohm resistor  -- RED
+
 
 ***************************************************************************/
 void thepit_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
@@ -78,6 +91,46 @@ void thepit_flipy_w(int offset,int data)
 }
 
 
+int thepit_input_port_0_r(int offset)
+{
+	/* Read either the real or the fake input ports depending on the
+	   horizontal flip switch. (This is how the real PCB does it) */
+	if (*flip_screen_x)
+	{
+		return input_port_3_r(offset);
+	}
+	else
+	{
+		return input_port_0_r(offset);
+	}
+}
+
+
+void thepit_sound_enable_w(int offset, int data)
+{
+	if (sound_enabled && !data)
+	{
+		AYResetChip(0);
+		AY8910_sh_update();
+	}
+
+	sound_enabled = data;
+}
+
+void thepit_AY8910_0_w(int offset, int data)
+{
+	/* Get out if sound is off */
+	if (!sound_enabled) return;
+
+	if (offset & 1)
+	{
+		AY8910_write_port_0_w(0, data);
+	}
+	else
+	{
+		AY8910_control_port_0_w(0, data);
+	}
+}
 
 /***************************************************************************
 
@@ -86,7 +139,7 @@ void thepit_flipy_w(int offset,int data)
   the main emulation engine.
 
 ***************************************************************************/
-void thepit_vh_screenrefresh(struct osd_bitmap *bitmap)
+void thepit_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	int offs;
 
@@ -109,7 +162,7 @@ void thepit_vh_screenrefresh(struct osd_bitmap *bitmap)
 
 			drawgfx(tmpbitmap,Machine->gfx[0],
 					videoram[offs],
-					colorram[offs] & 0x0f,
+					colorram[offs] & 0x07,
 					*flip_screen_x,*flip_screen_y,
 					8*sx,8*sy,
 					0,TRANSPARENCY_NONE,0);
@@ -118,7 +171,30 @@ void thepit_vh_screenrefresh(struct osd_bitmap *bitmap)
 
 
 	/* copy the temporary bitmap to the screen */
-	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+	{
+			int i, scroll[32];
+
+
+			if (*flip_screen_x)
+			{
+					for (i = 0;i < 32;i++)
+					{
+							scroll[31-i] = -galaxian_attributesram[2 * i];
+							if (*flip_screen_y) scroll[31-i] = -scroll[31-i];
+					}
+			}
+			else
+			{
+					for (i = 0;i < 32;i++)
+					{
+							scroll[i] = -galaxian_attributesram[2 * i];
+							if (*flip_screen_y) scroll[i] = -scroll[i];
+					}
+			}
+
+			copyscrollbitmap(bitmap,tmpbitmap,0,0,32,scroll,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+	}
+
 
 	/* draw the sprites */
 	for (offs = spriteram_size - 4;offs >= 0;offs -= 4)

@@ -24,7 +24,7 @@ extern void bsktball_led2_w(int offset, int data);
 
 /* vidhrdw/bsktball.c */
 extern unsigned char *bsktball_motion;
-extern void bsktball_vh_screenrefresh(struct osd_bitmap *bitmap);
+extern void bsktball_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 
 /* sound hardware - temporary */
@@ -421,8 +421,8 @@ struct GameDriver bsktball_driver =
 	0,
 	"bsktball",
 	"Basketball",
-	"????",
-	"?????",
+	"1979",
+	"Atari",
 	"Mike Balfour",
 	0,
 	&machine_driver,

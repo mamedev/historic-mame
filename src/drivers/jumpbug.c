@@ -46,7 +46,7 @@ void jumpbug_attributes_w(int offset,int data);
 void jumpbug_gfxbank_w(int offset,int data);
 void jumpbug_stars_w(int offset,int data);
 int jumpbug_vh_start(void);
-void jumpbug_vh_screenrefresh(struct osd_bitmap *bitmap);
+void jumpbug_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 
 
@@ -263,7 +263,12 @@ ROM_START( jbugsega_rom )
 	ROM_LOAD( "jb2.prg", 0x8000, 0x2800, 0x14302ed6 )
 
 	ROM_REGION(0x3000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "jb3.gfx", 0x0000, 0x3000, 0xa798658a )
+	ROM_LOAD( "jbi", 0x0000, 0x0800, 0x5857c05d )
+	ROM_LOAD( "jbj", 0x0800, 0x0800, 0xdd2b5d5b )
+	ROM_LOAD( "jbk", 0x1000, 0x0800, 0x53ddcbb5 )
+	ROM_LOAD( "jbl", 0x1800, 0x0800, 0x66b19093 )
+	ROM_LOAD( "jbm", 0x2000, 0x0800, 0x7bac88f8 )
+	ROM_LOAD( "jbn", 0x2800, 0x0800, 0x3bdc2b52 )
 ROM_END
 
 
@@ -332,8 +337,8 @@ struct GameDriver jumpbug_driver =
 	0,
 	"jumpbug",
 	"Jump Bug",
-	"????",
-	"?????",
+	"1981",
+	"Rock-ola",
 	"Richard Davies\nBrad Oliver\nNicola Salmoria\nJuan Carlos Lorente\nMarco Cassili",
 	0,
 	&machine_driver,
@@ -354,11 +359,11 @@ struct GameDriver jumpbug_driver =
 struct GameDriver jbugsega_driver =
 {
 	__FILE__,
-	0,
+	&jumpbug_driver,
 	"jbugsega",
 	"Jump Bug (bootleg)",
-	"????",
-	"?????",
+	"1981",
+	"bootleg",
 	"Richard Davies\nBrad Oliver\nNicola Salmoria\nJuan Carlos Lorente\nMarco Cassili",
 	0,
 	&machine_driver,

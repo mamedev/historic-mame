@@ -181,13 +181,11 @@ Sound board: uses the same board as Pooyan.
 
 
 
-extern unsigned char *tutankhm_paletteram;
 extern unsigned char *tutankhm_scrollx;
 
 void tutankhm_videoram_w( int offset, int data );
-void tutankhm_palette_w( int offset, int data );
 void tutankhm_flipscreen_w( int offset, int data );
-void tutankhm_vh_screenrefresh( struct osd_bitmap *bitmap );
+void tutankhm_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 
 
@@ -281,8 +279,8 @@ static struct MemoryReadAddress readmem[] =
 static struct MemoryWriteAddress writemem[] =
 {
 	{ 0x0000, 0x7fff, tutankhm_videoram_w, &videoram, &videoram_size },
-	{ 0x8000, 0x800f, tutankhm_palette_w, &tutankhm_paletteram },	/* Palette RAM */
-	{ 0x8100, 0x8100, MWA_RAM, &tutankhm_scrollx },              /* video x pan hardware reg */
+	{ 0x8000, 0x800f, paletteram_BBGGGRRR_w, &paletteram },
+	{ 0x8100, 0x8100, MWA_RAM, &tutankhm_scrollx },
 	{ 0x8200, 0x8200, interrupt_enable_w },
 	{ 0x8202, 0x8203, MWA_RAM },	/* coin counters */
 	{ 0x8205, 0x8205, MWA_NOP },	/* ??? */
@@ -416,7 +414,7 @@ static struct AY8910interface ay8910_interface =
 {
 	2,	/* 2 chips */
 	1789750,	/* 1.78975 MHz ? (same as other Konami games) */
-	{ 0x40ff, 0x40ff },
+	{ 0x20ff, 0x20ff },
 	{ soundlatch_r },
 	{ tutankhm_portB_r },
 	{ 0 },
@@ -502,21 +500,21 @@ ROM_END
 
 ROM_START( tutankst_rom )
 	ROM_REGION( 0x20000 )      /* 64k for M6809 CPU code + 64k for ROM banks */
-	ROM_LOAD( "ra1_1h.cpu", 0x0a000, 0x1000, 0xc0622dc2 ) /* program ROMs */
-	ROM_LOAD( "ra1_2h.cpu", 0x0b000, 0x1000, 0x4cff2ad5 )
+	ROM_LOAD( "h1.bin",     0x0a000, 0x1000, 0xc0622dc2 ) /* program ROMs */
+	ROM_LOAD( "h2.bin",     0x0b000, 0x1000, 0x4cff2ad5 )
 	ROM_LOAD( "ra1_3h.cpu", 0x0c000, 0x1000, 0xb3914153 )
-	ROM_LOAD( "ra1_4h.cpu", 0x0d000, 0x1000, 0x0c36af12 )
-	ROM_LOAD( "ra1_5h.cpu", 0x0e000, 0x1000, 0xf6bc4352 )
+	ROM_LOAD( "h4.bin",     0x0d000, 0x1000, 0x0c36af12 )
+	ROM_LOAD( "h5.bin",     0x0e000, 0x1000, 0xf6bc4352 )
 	ROM_LOAD( "ra1_6h.cpu", 0x0f000, 0x1000, 0x7397e4d1 )
-	ROM_LOAD( "ra1_1i.cpu", 0x10000, 0x1000, 0x076360bf ) /* graphic ROMs (banked) -- only 9 of 12 are filled */
-	ROM_LOAD( "ra1_2i.cpu", 0x11000, 0x1000, 0x7c5691fa )
-	ROM_LOAD( "ra1_3i.cpu", 0x12000, 0x1000, 0xda9a4984 )
-	ROM_LOAD( "ra1_4i.cpu", 0x13000, 0x1000, 0x8938bdc0 )
-	ROM_LOAD( "ra1_5i.cpu", 0x14000, 0x1000, 0x6643cec3 )
-	ROM_LOAD( "ra1_6i.cpu", 0x15000, 0x1000, 0x2721bb0b )
-	ROM_LOAD( "ra1_7i.cpu", 0x16000, 0x1000, 0xe48c0550 )
-	ROM_LOAD( "ra1_8i.cpu", 0x17000, 0x1000, 0x7a2c6b34 )
-	ROM_LOAD( "ra1_9i.cpu", 0x18000, 0x1000, 0x8e1e46ce )
+	ROM_LOAD( "j1.bin",     0x10000, 0x1000, 0x076360bf ) /* graphic ROMs (banked) -- only 9 of 12 are filled */
+	ROM_LOAD( "j2.bin",     0x11000, 0x1000, 0x7c5691fa )
+	ROM_LOAD( "j3.bin",     0x12000, 0x1000, 0xda9a4984 )
+	ROM_LOAD( "j4.bin",     0x13000, 0x1000, 0x8938bdc0 )
+	ROM_LOAD( "j5.bin",     0x14000, 0x1000, 0x6643cec3 )
+	ROM_LOAD( "j6.bin",     0x15000, 0x1000, 0x2721bb0b )
+	ROM_LOAD( "j7.bin",     0x16000, 0x1000, 0xe48c0550 )
+	ROM_LOAD( "j8.bin",     0x17000, 0x1000, 0x7a2c6b34 )
+	ROM_LOAD( "j9.bin",     0x18000, 0x1000, 0x8e1e46ce )
 	/* the other banks (1900-1fff) are empty */
 
 	ROM_REGION( 0x1000 ) /* ROM Region 1 -- discarded */
@@ -524,8 +522,8 @@ ROM_START( tutankst_rom )
 	/* core currently always frees region #1 after initialization. */
 
 	ROM_REGION( 0x10000 ) /* 64k for Z80 sound CPU code */
-	ROM_LOAD( "ra1_7a.snd", 0x0000, 0x1000, 0x00122ac0 )
-	ROM_LOAD( "ra1_8a.snd", 0x1000, 0x1000, 0xc5102f10 )
+	ROM_LOAD( "11-7a.bin", 0x0000, 0x1000, 0x00122ac0 )
+	ROM_LOAD( "10-8a.bin", 0x1000, 0x1000, 0xc5102f10 )
 ROM_END
 
 
@@ -574,8 +572,8 @@ struct GameDriver tutankhm_driver =
 	0,
 	"tutankhm",
 	"Tutankham (Konami)",
-	"????",
-	"?????",
+	"1982",
+	"Konami",
 	"Mirko Buffoni (MAME driver)\nDavid Dahl (hardware info)\nAaron Giles\nMarco Cassili",
 	0,
 	&machine_driver,
@@ -596,16 +594,16 @@ struct GameDriver tutankhm_driver =
 struct GameDriver tutankst_driver =
 {
 	__FILE__,
-	0,
+	&tutankhm_driver,
 	"tutankst",
 	"Tutankham (Stern)",
-	"????",
-	"?????",
+	"1982",
+	"Stern",
 	"Mirko Buffoni (MAME driver)\nDavid Dahl (hardware info)\nAaron Giles\nMarco Cassili",
 	0,
 	&machine_driver,
 
-        tutankst_rom,
+	tutankst_rom,
 	0, 0,   /* ROM decode and opcode decode functions */
 	0,      /* Sample names */
 	0,	/* sound_prom */
@@ -617,4 +615,3 @@ struct GameDriver tutankst_driver =
 
 	hiload, hisave		        /* High score load and save */
 };
-

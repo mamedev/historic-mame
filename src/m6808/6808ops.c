@@ -15,7 +15,7 @@ HNZVC
 
 static void illegal( void )
 {
-	if(errorlog)fprintf(errorlog, "M6808: illegal opcode\n");
+	if(errorlog)fprintf(errorlog, "M6808: illegal opcode: address %04X, op %02X\n",pcreg,(int) M_RDOP_ARG(pcreg)&0xFF);
 }
 
 #if macintosh
@@ -24,7 +24,10 @@ static void illegal( void )
 
 /* $00 ILLEGAL */
 
-/* $01 ILLEGAL */
+/* $01 NOP */
+INLINE void nop( void )
+{
+}
 
 /* $02 ILLEGAL */
 
@@ -386,11 +389,9 @@ INLINE void mul( void )
 	SETDREG(t);
 }
 
-/* $3e WAI inherent ----1 */
+/* $3e WAI inherent ----- */
 INLINE void wai( void )
 {
-	byte t;
-	IMMBYTE(t); cc&=t;
 	/* WAI should stack the entire machine state on the hardware stack,
 		then wait for an interrupt. We just wait for an IRQ. */
 	m6808_ICount = 0;

@@ -27,8 +27,9 @@ extern int slapfight_scroll_char_y;
 
   Convert the color PROMs into a more useable format.
 
-  1942 has three 256x4 palette PROMs (one per gun) and three 256x4 lookup
-  table PROMs (one for characters, one for sprites, one for background tiles).
+  Slapfight has three 256x4 palette PROMs (one per gun) all colours for all
+  outputs are mapped to the palette directly.
+
   The palette PROMs are connected to the RGB output this way:
 
   bit 3 -- 220 ohm resistor  -- RED/GREEN/BLUE
@@ -39,32 +40,31 @@ extern int slapfight_scroll_char_y;
 ***************************************************************************/
 void slapfight_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
 {
-	int i,used;
+	int i;
 
-	memset(palette,0,3 * Machine->drv->total_colors);
 
-	used = 0;
-        for (i = 0;i < 256;i++)
+	for (i = 0;i < Machine->drv->total_colors;i++)
 	{
-                int bit0,bit1,bit2,bit3;
+		int bit0,bit1,bit2,bit3;
 
-                bit0 = (color_prom[i] >> 0) & 0x01;
-                bit1 = (color_prom[i] >> 1) & 0x01;
-                bit2 = (color_prom[i] >> 2) & 0x01;
-                bit3 = (color_prom[i] >> 3) & 0x01;
-                palette[3*i] = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
-                bit0 = (color_prom[i+512] >> 0) & 0x01;
-                bit1 = (color_prom[i+512] >> 1) & 0x01;
-                bit2 = (color_prom[i+512] >> 2) & 0x01;
-                bit3 = (color_prom[i+512] >> 3) & 0x01;
-                palette[3*i + 1] = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
-                bit0 = (color_prom[i+512*2] >> 0) & 0x01;
-                bit1 = (color_prom[i+512*2] >> 1) & 0x01;
-                bit2 = (color_prom[i+512*2] >> 2) & 0x01;
-                bit3 = (color_prom[i+512*2] >> 3) & 0x01;
-                palette[3*i + 2] = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
 
-                colortable[i] = i;
+		bit0 = (color_prom[0] >> 0) & 0x01;
+		bit1 = (color_prom[0] >> 1) & 0x01;
+		bit2 = (color_prom[0] >> 2) & 0x01;
+		bit3 = (color_prom[0] >> 3) & 0x01;
+		*(palette++) = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
+		bit0 = (color_prom[Machine->drv->total_colors] >> 0) & 0x01;
+		bit1 = (color_prom[Machine->drv->total_colors] >> 1) & 0x01;
+		bit2 = (color_prom[Machine->drv->total_colors] >> 2) & 0x01;
+		bit3 = (color_prom[Machine->drv->total_colors] >> 3) & 0x01;
+		*(palette++) = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
+		bit0 = (color_prom[2*Machine->drv->total_colors] >> 0) & 0x01;
+		bit1 = (color_prom[2*Machine->drv->total_colors] >> 1) & 0x01;
+		bit2 = (color_prom[2*Machine->drv->total_colors] >> 2) & 0x01;
+		bit3 = (color_prom[2*Machine->drv->total_colors] >> 3) & 0x01;
+		*(palette++) = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
+
+		color_prom++;
 	}
 }
 
@@ -76,10 +76,7 @@ void slapfight_vh_convert_color_prom(unsigned char *palette, unsigned short *col
 ***************************************************************************/
 int slapfight_vh_start(void)
 {
-  if (generic_vh_start() != 0)
-    return 1;
-
-  return 0;
+	if (generic_vh_start() != 0) return 1; else return 0;
 }
 
 
@@ -90,7 +87,7 @@ int slapfight_vh_start(void)
 ***************************************************************************/
 void slapfight_vh_stop(void)
 {
-  generic_vh_stop();
+	generic_vh_stop();
 }
 
 
@@ -100,94 +97,98 @@ void slapfight_vh_stop(void)
   Do NOT call osd_update_display() from this function, it will be called by
   the main emulation engine.
 
+  BG Scroll area byte decode
+  --------------------------
+  Tile Word  BG_RAM1 Tile7  Tile6  Tile5  Tile4  Tile3  Tile2  Tile1  Tile0
+             BG_RAM2 Colr7  Colr6  Colr5  Colr4  Tile11 Tile10 Tile9  Tile8
+
+             Lower 4 colour bits are taken from the tile pixel
+
+
+  Sprite ram byte decode
+  ----------------------
+  Byte 0 : NNNN NNNN   Number of tile
+  Byte 1 : XXXX XXXX   X
+  Byte 2 : NNCC CC?O   Hi-Number + Upper 4 colour bits + Sprite On/Off
+  Byte 3 : YYYY YYYY   Y
+
 ***************************************************************************/
-void slapfight_vh_update(struct osd_bitmap *bitmap)
+void slapfight_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
+	int offs;
+	int addr,scrx,scry,scrollx;
 
-  int offs,offs_scroll;
+	/* Draw the background layer */
 
-  /* Draw the background layer */
+	for (scry = 2 ; scry < 32 ; scry++)
+	{
+		for (scrx = 0 ; scrx < 0x37 ; scrx++)
+		{
+			scrollx=(scrx+27+slapfight_scroll_char_x)%64;
+//			scrollx=scrx;
+			if(flipscreen) addr =((31-(scry-2))*64)+(63-scrollx) ; else addr = ((scry-2)*64)+scrollx;
 
+			drawgfx(bitmap,Machine->gfx[1],
+				slapfight_bg_ram1[addr]+((slapfight_bg_ram2[addr]&0x0f)<<8) ,
+				(slapfight_bg_ram2[addr]>>4)&0x0f,
+				flipscreen,flipscreen,
+				(8*scrx)-slapfight_scroll_pixel_x,8*scry,
+//				8*scrx,8*scry,
+				&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+		}
+	}
 
-  for (offs = slapfight_bg_ram_size - 1;offs >= 0;offs--)
-  {
-      int sx,sy;
+	/* Draw the sprite layer */
 
-      sx = (offs % 64);
-      sy = (offs / 64);
+	for (offs = 0 ; offs<spriteram_size ;  offs+=4)
+	{
+		if (!(spriteram[offs+2]&1)) /* Not sure about it */
+		{
+			drawgfx(bitmap,Machine->gfx[2],
+				spriteram[offs] + ((spriteram[offs+2]&0xC0)<<2),
+				(spriteram[offs+2]>>1)&0x0f,
+				flipscreen,flipscreen,  /* flip not found*/
+				spriteram[offs+1]-12,spriteram[offs+3],		/* Mysterious fudge factor sprite offset */
+				&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+		}
+	}
 
-      if (flipscreen)
-      {
-        sx = 63 - sx;
-        sy = 31 - sy;
-      }
+	/* draw the frontmost playfield. They are characters, but draw them as sprites */
 
-/* BG Ram decode bytes
+	for (scry = 2 ; scry < 0x20 ; scry++)
+	{
+		for (scrx = 0 ; scrx < 0x25 ; scrx++)
+		{
+			if(flipscreen) addr =((31-scry)*64)+(63-scrx) ; else addr = (scry*64)+scrx;
 
-   Tile Word  BG_RAM1 Tile7  Tile6  Tile5  Tile4  Tile3  Tile2  Tile1  Tile0
-              BG_RAM2 ?????  ?????  ?????  ?????  Tile11 Tile10 Tile9  Tile8
+			drawgfx(bitmap,Machine->gfx[0],
+				videoram[addr] + ((colorram[addr]&0x03)<<8) ,
+				(colorram[addr]&0x7e)>>2,	// Was 0x7f
+				flipscreen,flipscreen,
+				8*scrx,8*scry,
+				&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+		}
+	}
 
-*/
-	  /* We on only draw the X axis from 0x00-0x24 the rest is wasted or so it seems */
+// Debug output for scrolling
 
-//          if(sx < 0x25)
-	  {
-              offs_scroll=offs+slapfight_scroll_char_x;
+#if 0
+	{
+		char debugstr[256];
+		int x,i;
+		sprintf(debugstr,"Char=%02d Pixel=%02d",slapfight_scroll_char_x,slapfight_scroll_pixel_x);
 
-              drawgfx(bitmap,Machine->gfx[1],
-                      slapfight_bg_ram1[offs_scroll]+((slapfight_bg_ram2[offs_scroll]&0x0f)<<8) ,
-                      0,
-                      flipscreen,flipscreen,
-                      (8*sx)-slapfight_scroll_pixel_x,8*sy,
-                      &Machine->drv->visible_area,TRANSPARENCY_NONE,0);
-	  }
-  }
+		x = (Machine->uiwidth - 16*Machine->uifont->width)/2;
 
-  /* Draw the sprite layer */
-
-  /* Byte 0 : NNNN NNNN   Number of tile
-     Byte 1 : XXXX XXXX   X
-     Byte 2 : NN?? ???O   Hi-Number + Sprite On/Off
-     Byte 3 : YYYY YYYY   Y */
-
-  for (offs = 0 ; offs<spriteram_size ;  offs+=4)
-  {
-     if (!(spriteram[offs+2]&1)) /* Not sure about it */
-     {
-        drawgfx(bitmap,Machine->gfx[2],
-          spriteram[offs] + ((spriteram[offs+2]&0xC0)<<2),
-          0,    /* color not found*/
-          0,0,  /* flip not found*/
-          spriteram[offs+1],spriteram[offs+3],
-          &Machine->drv->visible_area,TRANSPARENCY_PEN,0);
-     }
-  }
-
-  /* draw the frontmost playfield. They are characters, but draw them as sprites */
-
-  for (offs = videoram_size - 1;offs >= 0;offs--)
-  {
-      int sx,sy;
-
-      sx = offs % 64;
-      sy = offs / 64;
-
-      if (flipscreen)
-      {
-        sx = 63 - sx;
-        sy = 31 - sy;
-      }
-
-      /* We on only draw the X axis from 0x00-0x24 the rest is wasted or so it seems */
-
-      if(sx < 0x25)
-      {
-         drawgfx(bitmap,Machine->gfx[0],
-           videoram[offs] + ((colorram[offs]&0x01)?0x100:0) ,
-           colorram[offs] & 0x7f,
-           flipscreen,flipscreen,
-           8*sx,8*sy,
-           &Machine->drv->visible_area,TRANSPARENCY_PEN,0);
-      }
-   }
+		for (i = 0;i < 16;i++)
+		{
+			drawgfx(bitmap,Machine->uifont,
+				(unsigned int)debugstr[i],
+				DT_COLOR_WHITE,
+				0,0,
+				64,64+(i*8),
+				&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+		}
+	}
+#endif
 }

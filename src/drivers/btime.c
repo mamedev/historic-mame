@@ -57,11 +57,11 @@ int  bnj_vh_start (void);
 
 void bnj_vh_stop (void);
 
-void btime_vh_screenrefresh(struct osd_bitmap *bitmap);
-void bnj_vh_screenrefresh  (struct osd_bitmap *bitmap);
-void lnc_vh_screenrefresh  (struct osd_bitmap *bitmap);
-void eggs_vh_screenrefresh (struct osd_bitmap *bitmap);
-void zoar_vh_screenrefresh (struct osd_bitmap *bitmap);
+void btime_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void bnj_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void lnc_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void eggs_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void zoar_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 void btime_paletteram_w(int offset,int data);
 void btime_background_w(int offset,int data);
@@ -74,6 +74,7 @@ void btime_mirrorcolorram_w(int offset,int data);
 void lnc_videoram_w(int offset,int data);
 void lnc_mirrorvideoram_w(int offset,int data);
 void zoar_video_control_w(int offset,int data);
+void btime_video_control_w(int offset,int data);
 
 static void sound_command_w(int offset,int data);
 
@@ -123,6 +124,8 @@ static void btime_ram_w(int offset,int data)
 		btime_mirrorvideoram_w(offset - 0x1800,data);
 	else if (offset >= 0x1c00 && offset <= 0x1fff)
 		btime_mirrorcolorram_w(offset - 0x1c00,data);
+	else if (offset == 0x4002)
+		btime_video_control_w(0,data);
 	else if (offset == 0x4003)
 		sound_command_w(0,data);
 	else if (offset == 0x4004)
@@ -193,6 +196,7 @@ static struct MemoryWriteAddress btime_writemem[] =
 	{ 0x1800, 0x1bff, btime_mirrorvideoram_w },
 	{ 0x1c00, 0x1fff, btime_mirrorcolorram_w },
 	{ 0x4000, 0x4000, MWA_NOP },
+	{ 0x4002, 0x4002, btime_video_control_w },
 	{ 0x4003, 0x4003, sound_command_w },
 	{ 0x4004, 0x4004, btime_background_w },
 	{ -1 }  /* end of table */
@@ -252,6 +256,7 @@ static struct MemoryWriteAddress eggs_writemem[] =
 	{ 0x1400, 0x17ff, colorram_w, &colorram },
 	{ 0x1800, 0x1bff, btime_mirrorvideoram_w },
 	{ 0x1c00, 0x1fff, btime_mirrorcolorram_w },
+	{ 0x2000, 0x2000, btime_video_control_w },
 	{ 0x2001, 0x2001, MWA_NOP },
 	{ 0x2004, 0x2004, AY8910_control_port_0_w },
 	{ 0x2005, 0x2005, AY8910_write_port_0_w },
@@ -308,6 +313,7 @@ static struct MemoryReadAddress bnj_readmem[] =
 static struct MemoryWriteAddress bnj_writemem[] =
 {
 	{ 0x0000, 0x07ff, MWA_RAM },
+	{ 0x1001, 0x1001, btime_video_control_w },
 	{ 0x1002, 0x1002, sound_command_w },
 	{ 0x4000, 0x43ff, videoram_w, &videoram, &videoram_size },
 	{ 0x4400, 0x47ff, colorram_w, &colorram },
@@ -910,7 +916,7 @@ static struct AY8910interface ay8910_interface =
 {
 	2,      /* 2 chips */
 	1500000,        /* 1.5 MHz ? (hand tuned) */
-	{ 0x20ff, 0x20ff },
+	{ 255, 255 },
 	{ 0 },
 	{ 0 },
 	{ 0 },
@@ -991,9 +997,50 @@ static struct MachineDriver GAMENAME##_machine_driver =             \
 	}                                                           	\
 }
 
+#define EGGS_MACHINE_DRIVER(GAMENAME, CLOCK, MAIN_IRQ, SOUND_IRQ, GFX, COLOR)   \
+																	\
+static struct MachineDriver GAMENAME##_machine_driver =             \
+{                                                                   \
+	/* basic machine hardware */                                	\
+	{		                                                        \
+		{	  	                                                    \
+			CPU_M6502,                                  			\
+			CLOCK,													\
+			0,                                          			\
+			GAMENAME##_readmem,GAMENAME##_writemem,0,0, 			\
+			MAIN_IRQ,1                                  			\
+		}                                                   		\
+	},                                                          	\
+	57, 3072,        /* frames per second, vblank duration */   	\
+	1,      /* 1 CPU slice per frame - interleaving is forced when a sound command is written */ \
+	GAMENAME##_init_machine,                                    	\
+																	\
+	/* video hardware */                                        	\
+	32*8, 32*8, { 1*8, 31*8-1, 0*8, 32*8-1 },                   	\
+	GFX,                                                        	\
+	COLOR,COLOR,                                                	\
+	GAMENAME##_vh_convert_color_prom,                           	\
+																	\
+	VIDEO_TYPE_RASTER|VIDEO_MODIFIES_PALETTE,                   	\
+	0,                                                          	\
+	GAMENAME##_vh_start,                                        	\
+	GAMENAME##_vh_stop,                                         	\
+	GAMENAME##_vh_screenrefresh,                                   	\
+																	\
+	/* sound hardware */                                        	\
+	0,0,0,0,                                                    	\
+	{                                                           	\
+		{                                                   		\
+			SOUND_AY8910,                               			\
+			&ay8910_interface                           			\
+		}                                                   		\
+	}                                                           	\
+}
+
+
 MACHINE_DRIVER(btime, 1500000, btime_irq_interrupt, nmi_interrupt, btime_gfxdecodeinfo, 16);
 
-MACHINE_DRIVER(eggs, 1500000, interrupt, nmi_interrupt, lnc_gfxdecodeinfo, 8);
+EGGS_MACHINE_DRIVER(eggs, 1500000, interrupt, nmi_interrupt, lnc_gfxdecodeinfo, 8);
 
 MACHINE_DRIVER(lnc, 1500000, btime_nmi_interrupt, lnc_sound_interrupt, lnc_gfxdecodeinfo, 8);
 
@@ -1042,21 +1089,20 @@ ROM_START( btimea_rom )
 
 	ROM_REGION(0x7800)      /* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "aa8.13k",    0x0000, 0x1000, 0xf994fcc4 )    /* charset #1 */
-	ROM_LOAD( "aa9.15k",    0x1000, 0x1000, 0xfcee0000 )
-	ROM_LOAD( "aa10.10k",   0x2000, 0x1000, 0x9f7eaf02 )
-	ROM_LOAD( "aa11.12k",   0x3000, 0x1000, 0xf491ffff )
+	ROM_LOAD( "ab9.15k",    0x1000, 0x1000, 0xfcee0000 )
+	ROM_LOAD( "ab10.10k",   0x2000, 0x1000, 0x9f7eaf02 )
+	ROM_LOAD( "ab11.12k",   0x3000, 0x1000, 0xf491ffff )
 	ROM_LOAD( "aa12.7k",    0x4000, 0x1000, 0x7f8438a2 )
-	ROM_LOAD( "aa13.9k" ,   0x5000, 0x1000, 0xf5faff00 )
-	ROM_LOAD( "aa02.4b",    0x6000, 0x0800, 0x644f1331 )    /* charset #2 */
-	ROM_LOAD( "aa01.3b",    0x6800, 0x0800, 0x18000000 )
-	ROM_LOAD( "aa00.1b",    0x7000, 0x0800, 0xea53eb39 )
+	ROM_LOAD( "ab13.9k" ,   0x5000, 0x1000, 0xf5faff00 )
+	ROM_LOAD( "ab02.4b",    0x6000, 0x0800, 0x644f1331 )    /* charset #2 */
+	ROM_LOAD( "ab01.3b",    0x6800, 0x0800, 0x18000000 )
+	ROM_LOAD( "ab00.1b",    0x7000, 0x0800, 0xea53eb39 )
 
 	ROM_REGION(0x10000)     /* 64k for the audio CPU */
-	ROM_LOAD( "aa14.12h",   0xf000, 0x1000, 0x06b5888d )
-	ROM_LOAD( "aa00.1b",    0x7000, 0x0800, 0xea53eb39 )
+	ROM_LOAD( "ab14.12h",   0xf000, 0x1000, 0x06b5888d )
 
 	ROM_REGION(0x0800)      /* background graphics */
-	ROM_LOAD( "aa03.6b",    0x0000, 0x0800, 0x8d200806 )
+	ROM_LOAD( "ab03.6b",    0x0000, 0x0800, 0x8d200806 )
 ROM_END
 
 ROM_START( hamburge_rom )
@@ -1100,8 +1146,6 @@ ROM_START( eggs_rom )
 	ROM_LOAD( "h10.bin",  0x3000, 0x1000, 0x77b53ac7 )
 	ROM_LOAD( "j12.bin",  0x4000, 0x1000, 0x27ab70f5 )
 	ROM_LOAD( "j10.bin",  0x5000, 0x1000, 0x8786e8c4 )
-
-	ROM_REGION(0x10000)     /* Dummy region for nonexistent audio CPU */
 ROM_END
 
 ROM_START( scregg_rom )
@@ -1120,9 +1164,6 @@ ROM_START( scregg_rom )
 	ROM_LOAD( "scregg.h10",  0x3000, 0x1000, 0x007800b8 )
 	ROM_LOAD( "scregg.j12",  0x4000, 0x1000, 0xe5077119 )
 	ROM_LOAD( "scregg.j10",  0x5000, 0x1000, 0xc41a7b5e )
-
-	ROM_REGION(0x10000)     /* Dummy region for audio CPU. Only defined so we
-							   can use a common machine driver definition */
 ROM_END
 
 ROM_START( lnc_rom )
@@ -1168,31 +1209,31 @@ ROM_START( brubber_rom )
 	ROM_LOAD( "brubber.12d", 0xe000, 0x2000, 0x1d905348 )
 
 	ROM_REGION(0x8000)      /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "brubber.4h",  0x0000, 0x2000, 0xc141332f )
-	ROM_LOAD( "brubber.4f",  0x2000, 0x2000, 0x5035d3c9 )
-	ROM_LOAD( "brubber.4e",  0x4000, 0x2000, 0x97b719fb )
-	ROM_LOAD( "brubber.10e", 0x6000, 0x1000, 0x43556767 )
-	ROM_LOAD( "brubber.10f", 0x7000, 0x1000, 0xc1bfbfbf )
+	ROM_LOAD( "bnj4h.bin",  0x0000, 0x2000, 0xc141332f )
+	ROM_LOAD( "bnj4f.bin",  0x2000, 0x2000, 0x5035d3c9 )
+	ROM_LOAD( "bnj4e.bin",  0x4000, 0x2000, 0x97b719fb )
+	ROM_LOAD( "bnj10e.bin", 0x6000, 0x1000, 0x43556767 )
+	ROM_LOAD( "bnj10f.bin", 0x7000, 0x1000, 0xc1bfbfbf )
 
 	ROM_REGION(0x10000)     /* 64k for the audio CPU */
-	ROM_LOAD( "brubber.6c",  0xf000, 0x1000, 0x80f9e12b )
+	ROM_LOAD( "bnj6c.bin",  0xf000, 0x1000, 0x80f9e12b )
 ROM_END
 
 ROM_START( caractn_rom )
 	ROM_REGION(0x10000)     /* 64k for code */
 	/* a000-bfff space for the service ROM */
-	ROM_LOAD( "caractn.a7", 0xc000, 0x2000, 0x2e85db11 )
-	ROM_LOAD( "caractn.a6", 0xe000, 0x2000, 0x105bf9d5 )
+	ROM_LOAD( "brubber.12c", 0xc000, 0x2000, 0x2e85db11 )
+	ROM_LOAD( "caractn.a6",  0xe000, 0x2000, 0x105bf9d5 )
 
 	ROM_REGION(0x8000)      /* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "caractn.a2", 0x0000, 0x2000, 0xa72dd54b )
 	ROM_LOAD( "caractn.a1", 0x2000, 0x2000, 0x3582b118 )
 	ROM_LOAD( "caractn.a0", 0x4000, 0x2000, 0x6da52fab )
-	ROM_LOAD( "caractn.a3", 0x6000, 0x1000, 0x43556767 )
-	ROM_LOAD( "caractn.a4", 0x7000, 0x1000, 0xc1bfbfbf )
+	ROM_LOAD( "bnj10e.bin", 0x6000, 0x1000, 0x43556767 )
+	ROM_LOAD( "bnj10f.bin", 0x7000, 0x1000, 0xc1bfbfbf )
 
 	ROM_REGION(0x10000)     /* 64k for the audio CPU */
-	ROM_LOAD( "caractn.a5", 0xf000, 0x1000, 0x80f9e12b )
+	ROM_LOAD( "bnj6c.bin",  0xf000, 0x1000, 0x80f9e12b )
 ROM_END
 
 ROM_START( zoar_rom )
@@ -1507,59 +1548,254 @@ static void zoar_hisave(void)
 }
 
 
-#define GAMEDRIVER(GAMENAME, BASENAME, DECODE, PROM, DESC, CREDITS) \
-struct GameDriver GAMENAME##_driver =          \
-{                                              \
-	__FILE__,                                  \
-	0,                                         \
-	#GAMENAME,                             	   \
-	DESC,	                                   \
-	"????",                                    \
-	"?????",                                   \
-	CREDITS,                               	   \
-	0,                                         \
-	&BASENAME##_machine_driver,            	   \
-											   \
-	GAMENAME##_rom,                        	   \
-	0, DECODE,                          	   \
-	0,                                     	   \
-	0,      /* sound_prom */             	   \
-											   \
-	BASENAME##_input_ports,                	   \
-											   \
-	PROM, 0, 0,                         	   \
-	ORIENTATION_DEFAULT,                   	   \
-											   \
-	BASENAME##_hiload, BASENAME##_hisave   	   \
-}
 
-GAMEDRIVER(btime, btime, btime_decode, 0, "Burger Time (Midway)",
-		   "Kevin Brisley (Replay emulator)\nMirko Buffoni (MAME driver)\nNicola Salmoria (MAME driver)\nZsolt Vasvari (ROM decryption)");
+struct GameDriver btime_driver =
+{
+	__FILE__,
+	0,
+	"btime",
+	"Burger Time (Midway)",
+	"1982",
+	"Data East (Bally Midway license)",
+	"Kevin Brisley (Replay emulator)\nMirko Buffoni (MAME driver)\nNicola Salmoria (MAME driver)\nZsolt Vasvari (ROM decryption)",
+	0,
+	&btime_machine_driver,
 
-GAMEDRIVER(btimea, btime, btime_decode, 0, "Burger Time (Data East)",
-		   "Kevin Brisley (Replay emulator)\nMirko Buffoni (MAME driver)\nNicola Salmoria (MAME driver)\nZsolt Vasvari (ROM decryption)");
+	btime_rom,
+	0, btime_decode,
+	0,
+	0,	/* sound_prom */
 
-GAMEDRIVER(hamburge, btime, 0, hamburge_color_prom, "Hamburger",
-		   "Kevin Brisley (Replay emulator)\nMirko Buffoni (MAME driver)\nNicola Salmoria (MAME driver)");
+	btime_input_ports,
 
-GAMEDRIVER(eggs, eggs, 0, eggs_color_prom, "Eggs",
-		   "Nicola Salmoria (MAME driver)\nMike Balfour (high score save)");
+	0, 0, 0,
+	ORIENTATION_DEFAULT,
 
-GAMEDRIVER(scregg, eggs, 0, eggs_color_prom, "Scrambled Egg",
-		   "Nicola Salmoria (MAME driver)\nMike Balfour (high score save)");
+	btime_hiload, btime_hisave
+};
 
-GAMEDRIVER(lnc, lnc, lnc_decode, lnc_color_prom, "Lock'n'Chase",
-		   "Zsolt Vasvari\nKevin Brisley (Bunp 'n' Jump driver)\nMirko Buffoni (Audio/Add. code)");
+struct GameDriver btimea_driver =
+{
+	__FILE__,
+	&btime_driver,
+	"btimea",
+	"Burger Time (Data East)",
+	"1982",
+	"Data East Corporation",
+	"Kevin Brisley (Replay emulator)\nMirko Buffoni (MAME driver)\nNicola Salmoria (MAME driver)\nZsolt Vasvari (ROM decryption)",
+	0,
+	&btime_machine_driver,
 
-GAMEDRIVER(bnj, bnj, lnc_decode, 0, "Bump 'n' Jump",
-		   "Kevin Brisley (MAME driver)\nMirko Buffoni (Audio/Add. code)");
+	btimea_rom,
+	0, btime_decode,
+	0,
+	0,	/* sound_prom */
 
-GAMEDRIVER(brubber, bnj, lnc_decode, 0, "Burnin' Rubber",
-		   "Kevin Brisley (MAME driver)\nMirko Buffoni (Audio/Add. code)");
+	btime_input_ports,
 
-GAMEDRIVER(caractn, bnj, lnc_decode, 0, "Car Action",
-		   "Ivan Mackintosh\nKevin Brisley (Bump 'n' Jump driver)\nMirko Buffoni (Audio/Add. code)");
+	0, 0, 0,
+	ORIENTATION_DEFAULT,
 
-GAMEDRIVER(zoar, zoar, zoar_decode, zoar_color_prom, "Zoar",
-		   "Zsolt Vasvari\nKevin Brisley (Bunp 'n' Jump driver)");
+	btime_hiload, btime_hisave
+};
+
+struct GameDriver hamburge_driver =
+{
+	__FILE__,
+	&btime_driver,
+	"hamburge",
+	"Hamburger",
+	"1982",
+	"bootleg",
+	"Kevin Brisley (Replay emulator)\nMirko Buffoni (MAME driver)\nNicola Salmoria (MAME driver)",
+	GAME_NOT_WORKING,
+	&btime_machine_driver,
+
+	hamburge_rom,
+	0, 0,
+	0,
+	0,	/* sound_prom */
+
+	btime_input_ports,
+
+	hamburge_color_prom, 0, 0,
+	ORIENTATION_DEFAULT,
+
+	btime_hiload, btime_hisave
+};
+
+struct GameDriver eggs_driver =
+{
+	__FILE__,
+	0,
+	"eggs",
+	"Eggs",
+	"1983",
+	"Universal USA",
+	"Nicola Salmoria (MAME driver)\nMike Balfour (high score save)",
+	0,
+	&eggs_machine_driver,
+
+	eggs_rom,
+	0, 0,
+	0,
+	0,	/* sound_prom */
+
+	eggs_input_ports,
+
+	eggs_color_prom, 0, 0,
+	ORIENTATION_DEFAULT,
+
+	eggs_hiload, eggs_hisave
+};
+
+struct GameDriver scregg_driver =
+{
+	__FILE__,
+	&eggs_driver,
+	"scregg",
+	"Scrambled Egg",
+	"1983",
+	"Technos",
+	"Nicola Salmoria (MAME driver)\nMike Balfour (high score save)",
+	0,
+	&eggs_machine_driver,
+
+	scregg_rom,
+	0, 0,
+	0,
+	0,	/* sound_prom */
+
+	eggs_input_ports,
+
+	eggs_color_prom, 0, 0,
+	ORIENTATION_DEFAULT,
+
+	eggs_hiload, eggs_hisave
+};
+
+struct GameDriver lnc_driver =
+{
+	__FILE__,
+	0,
+	"lnc",
+	"Lock'n'Chase",
+	"1981",
+	"Data East Corporation",
+	"Zsolt Vasvari\nKevin Brisley (Bunp 'n' Jump driver)\nMirko Buffoni (Audio/Add. code)",
+	0,
+	&lnc_machine_driver,
+
+	lnc_rom,
+	0, lnc_decode,
+	0,
+	0,	/* sound_prom */
+
+	lnc_input_ports,
+
+	lnc_color_prom, 0, 0,
+	ORIENTATION_DEFAULT,
+
+	lnc_hiload, lnc_hisave
+};
+
+struct GameDriver bnj_driver =
+{
+	__FILE__,
+	0,
+	"bnj",
+	"Bump 'n' Jump",
+	"1982",
+	"Data East USA (Bally Midway license)",
+	"Kevin Brisley (MAME driver)\nMirko Buffoni (Audio/Add. code)",
+	0,
+	&bnj_machine_driver,
+
+	bnj_rom,
+	0, lnc_decode,
+	0,
+	0,	/* sound_prom */
+
+	bnj_input_ports,
+
+	0, 0, 0,
+	ORIENTATION_DEFAULT,
+
+	bnj_hiload, bnj_hisave
+};
+
+struct GameDriver brubber_driver =
+{
+	__FILE__,
+	&bnj_driver,
+	"brubber",
+	"Burnin' Rubber",
+	"1982",
+	"Data East",
+	"Kevin Brisley (MAME driver)\nMirko Buffoni (Audio/Add. code)",
+	0,
+	&bnj_machine_driver,
+
+	brubber_rom,
+	0, lnc_decode,
+	0,
+	0,	/* sound_prom */
+
+	bnj_input_ports,
+
+	0, 0, 0,
+	ORIENTATION_DEFAULT,
+
+	bnj_hiload, bnj_hisave
+};
+
+struct GameDriver caractn_driver =
+{
+	__FILE__,
+	&bnj_driver,
+	"caractn",
+	"Car Action",
+	"1983",
+	"bootleg",
+	"Ivan Mackintosh\nKevin Brisley (Bump 'n' Jump driver)\nMirko Buffoni (Audio/Add. code)",
+	0,
+	&bnj_machine_driver,
+
+	caractn_rom,
+	0, lnc_decode,
+	0,
+	0,	/* sound_prom */
+
+	bnj_input_ports,
+
+	0, 0, 0,
+	ORIENTATION_DEFAULT,
+
+	bnj_hiload, bnj_hisave
+};
+
+struct GameDriver zoar_driver =
+{
+	__FILE__,
+	0,
+	"zoar",
+	"Zoar",
+	"1982",
+	"Data East USA",
+	"Zsolt Vasvari\nKevin Brisley (Bunp 'n' Jump driver)",
+	0,
+	&zoar_machine_driver,
+
+	zoar_rom,
+	0, zoar_decode,
+	0,
+	0,	/* sound_prom */
+
+	zoar_input_ports,
+
+	zoar_color_prom, 0, 0,
+	ORIENTATION_DEFAULT,
+
+	zoar_hiload, zoar_hisave
+};
 

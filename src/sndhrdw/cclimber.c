@@ -87,5 +87,5 @@ void cclimber_sample_trigger_w(int offset,int data)
 	while (end < 0x4000 && (samples[end] != AUDIO_CONV(0x77) || samples[end+1] != AUDIO_CONV(0x00)))
 		end += 2;
 
-	osd_play_sample(channel,samples + start,end - start,sample_freq,sample_volume*4,0);
+	osd_play_sample(channel,samples + start,end - start,sample_freq,sample_volume*8,0);
 }

@@ -21,7 +21,7 @@ static int background_image = 0;
 static int flipscreen = 0;
 static int zoar_palette = 0;
 static unsigned char bnj_scroll1 = 0;
-static unsigned char *dirtybuffer2;
+static unsigned char *dirtybuffer2 = NULL;
 static struct osd_bitmap *background_bitmap;
 
 /***************************************************************************
@@ -160,27 +160,8 @@ void bnj_vh_stop (void)
 
 void btime_paletteram_w(int offset,int data)
 {
-	int r,g,b;
-	int bit0,bit1,bit2;
-
-	r = (~data & 0x07);
-	g = (~data & 0x38) >> 3;
-	b = (~data & 0xC0) >> 6;
-
-	bit0 = (r >> 0) & 0x01;
-	bit1 = (r >> 1) & 0x01;
-	bit2 = (r >> 2) & 0x01;
-	r = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
-	bit0 = (g >> 0) & 0x01;
-	bit1 = (g >> 1) & 0x01;
-	bit2 = (g >> 2) & 0x01;
-	g = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
-	bit0 = 0;
-	bit1 = (b >> 0) & 0x01;
-	bit2 = (b >> 1) & 0x01;
-	b = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
-
-	palette_change_color(offset,r,g,b);
+	/* RGB output is inverted */
+	paletteram_BBGGGRRR_w(offset,~data);
 }
 
 void lnc_videoram_w(int offset, int data)
@@ -261,20 +242,23 @@ void btime_background_w(int offset,int data)
 		int offs, base;
 
 		/* kludge to get the correct background */
-		static int mapconvert[8] = { 1,2,3,0,5,6,7,4 };
+		static int mapconvert[2][8] = {
+			{ 1,2,3,0,5,6,7,4 },
+			{ 0,1,2,3,4,5,6,7 }
+		};
 
 		memset(dirtybuffer,1,videoram_size);
 
 		background_image = data;
 
 		// Create background image
-		base = 0x100 * mapconvert[(background_image & 0x07)];
+		base = 0x100 * mapconvert[flipscreen][(background_image & 0x07)];
 
 		for (offs = 0; offs < 0x100; offs++)
 		{
 			int bx,by;
 
-			bx = 16 * (offs % 16);
+			bx = 16 * (offs % 16) - 2 * flipscreen;
 			by = 16 * (offs / 16);
 
 			drawgfx(tmpbitmap,Machine->gfx[2],
@@ -326,6 +310,26 @@ void zoar_video_control_w(int offset,int data)
 
 		flipscreen   =  zoar_video_control & 0x80;
 		zoar_palette = (zoar_video_control & 0x30) >> 3;
+	}
+}
+
+void btime_video_control_w(int offset,int data)
+{
+	// Btime video control
+	//
+	// Bit 0   = Flip screen
+	// Bit 1-7 = Unknown
+
+	static int btime_video_control = -1;
+
+	if (btime_video_control != data)
+	{
+		memset(dirtybuffer,1,videoram_size);
+		if (dirtybuffer2 != NULL)
+			memset(dirtybuffer2,1,bnj_backgroundram_size);
+
+		btime_video_control = data;
+		flipscreen = btime_video_control & 0x01;
 	}
 }
 
@@ -421,7 +425,7 @@ static void drawsprites(struct osd_bitmap *bitmap, int color,
 }
 
 
-void btime_vh_screenrefresh(struct osd_bitmap *bitmap)
+void btime_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	if (background_image & 0x10)
 	{
@@ -442,7 +446,7 @@ void btime_vh_screenrefresh(struct osd_bitmap *bitmap)
 }
 
 
-void eggs_vh_screenrefresh(struct osd_bitmap *bitmap)
+void eggs_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	drawchars(bitmap, 0, 0);
 
@@ -453,7 +457,7 @@ void eggs_vh_screenrefresh(struct osd_bitmap *bitmap)
 }
 
 
-void lnc_vh_screenrefresh(struct osd_bitmap *bitmap)
+void lnc_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	drawchars(bitmap, 0, 0);
 
@@ -464,7 +468,7 @@ void lnc_vh_screenrefresh(struct osd_bitmap *bitmap)
 }
 
 
-void zoar_vh_screenrefresh(struct osd_bitmap *bitmap)
+void zoar_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	int scroll = -(*bnj_scroll2 | ((bnj_scroll1 & 0x03) << 8));
 
@@ -519,7 +523,7 @@ void zoar_vh_screenrefresh(struct osd_bitmap *bitmap)
 }
 
 
-void bnj_vh_screenrefresh(struct osd_bitmap *bitmap)
+void bnj_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	/*
 	 *  For each character in the background RAM, check if it has been
@@ -543,7 +547,7 @@ void bnj_vh_screenrefresh(struct osd_bitmap *bitmap)
 			if (flipscreen)
 			{
 				sx = 240 - sx;
-				sy = 240 - sy;
+				sy = 496 - sy;
 			}
 
 			drawgfx(background_bitmap, Machine->gfx[2],
@@ -556,6 +560,8 @@ void bnj_vh_screenrefresh(struct osd_bitmap *bitmap)
 
 		/* copy the background bitmap to the screen */
 		scroll = (bnj_scroll1 & 0x02) * 128 + 511 - *bnj_scroll2;
+		if (flipscreen)
+			scroll = 767-scroll;
 		copyscrollbitmap (bitmap, background_bitmap, 0, 0, 1, &scroll, &Machine->drv->visible_area,TRANSPARENCY_NONE, 0);
 
 		// The sprites appear below the foremost layer
@@ -573,4 +579,3 @@ void bnj_vh_screenrefresh(struct osd_bitmap *bitmap)
 		drawsprites(bitmap, 0, 0, 0);
 	}
 }
-

@@ -43,7 +43,7 @@ void nova2001_vh_convert_color_prom(unsigned char *palette, unsigned short *colo
 void nova2001_scroll_x_w(int offset,int data);
 void nova2001_scroll_y_w(int offset,int data);
 void nova2001_flipscreen_w(int offset,int data);
-void nova2001_vh_screenrefresh(struct osd_bitmap *bitmap);
+void nova2001_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 
 
@@ -199,19 +199,11 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 
 
-static const unsigned char color_prom[] =
-{
-	0x00,0x00,0x0F,0x3F,0xC3,0x82,0x53,0xB0,0x18,0xDB,0x6F,0x5F,0x56,0xA8,0xFC,0xFF,
-	0x00,0x00,0xE5,0xD7,0xC4,0xA7,0xA4,0x53,0x87,0x84,0x43,0x3C,0x2C,0x1C,0xC3,0xFD,
-};
-
-
-
 static struct AY8910interface ay8910_interface =
 {
 	2,                /* 2 chips */
 	1500000,          /* ?? */
-	{ 0x30ff, 0x30ff }, /* 8910 gains & volumes */
+	{ 255, 255 },
 	{ 0, input_port_3_r },
 	{ 0, input_port_4_r },
 	{ nova2001_scroll_x_w }, /* writes are connected to pf scroll */
@@ -268,6 +260,9 @@ ROM_START( nova2001_rom )
 	ROM_LOAD( "nova2001.6", 0x2000, 0x2000, 0x81dc834e )
 	ROM_LOAD( "nova2001.7", 0x4000, 0x2000, 0xeb669c62 )
 	ROM_LOAD( "nova2001.8", 0x6000, 0x2000, 0xe3583068 )
+
+	ROM_REGION(0x0020)	/* color PROMs */
+	ROM_LOAD( "nova2001.clr", 0x0000, 0x0020, 0x0bfceca4 )
 ROM_END
 
 
@@ -317,8 +312,8 @@ struct GameDriver nova2001_driver =
 	0,
 	"nova2001",
 	"Nova 2001",
-	"????",
-	"?????",
+	"1984?",
+	"UPL (Universal license)",
 	"Howie Cohen\nFrank Palazzolo\nAlex Pasadyn",
 	0,
 	&machine_driver,
@@ -330,7 +325,7 @@ struct GameDriver nova2001_driver =
 
 	input_ports,
 
-	color_prom, 0, 0,
+	PROM_MEMORY_REGION(2), 0, 0,
 	ORIENTATION_DEFAULT,
 
 	hiload,hisave

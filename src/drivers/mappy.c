@@ -75,8 +75,9 @@ int todruaga_customio_r_2(int offset);
 
 /* video driver data & functions */
 int mappy_vh_start(void);
+int motos_vh_start(void);
 void mappy_vh_stop(void);
-void mappy_vh_screenrefresh(struct osd_bitmap *bitmap);
+void mappy_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 void mappy_videoram_w(int offset,int data);
 void mappy_colorram_w(int offset,int data);
 void mappy_scroll_w(int offset,int data);
@@ -983,7 +984,7 @@ static struct MachineDriver motos_machine_driver =
 
 	VIDEO_TYPE_RASTER,
 	0,
-	mappy_vh_start,
+	motos_vh_start,
 	mappy_vh_stop,
 	mappy_vh_screenrefresh,
 
@@ -1064,16 +1065,16 @@ ROM_END
 ROM_START( mappyjp_rom )
 	ROM_REGION(0x10000)     /* 64k for code for the first CPU  */
 	ROM_LOAD( "mappy3.bin", 0xa000, 0x2000, 0x6e7011fc )
-	ROM_LOAD( "mappy2.bin", 0xc000, 0x2000, 0x860ad848 )
+	ROM_LOAD( "mappy1c.64", 0xc000, 0x2000, 0x860ad848 )
 	ROM_LOAD( "mappy1.bin", 0xe000, 0x2000, 0xeaa05b74 )
 
 	ROM_REGION(0x5000)      /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "mappy5.bin", 0x0000, 0x1000, 0x28f0a190 )
-	ROM_LOAD( "mappy6.bin", 0x1000, 0x2000, 0xd22dfbf1 )
-	ROM_LOAD( "mappy7.bin", 0x3000, 0x2000, 0x7289055d )
+	ROM_LOAD( "mappy3b.32", 0x0000, 0x1000, 0x28f0a190 )
+	ROM_LOAD( "mappy3m.64", 0x1000, 0x2000, 0xd22dfbf1 )
+	ROM_LOAD( "mappy3n.64", 0x3000, 0x2000, 0x7289055d )
 
 	ROM_REGION(0x10000)     /* 64k for the second CPU */
-	ROM_LOAD( "mappy4.bin", 0xe000, 0x2000, 0x8ad60a6c )
+	ROM_LOAD( "mappy1k.64", 0xe000, 0x2000, 0x8ad60a6c )
 ROM_END
 
 ROM_START( digdug2_rom )
@@ -1322,9 +1323,9 @@ struct GameDriver mappy_driver =
 	__FILE__,
 	0,
 	"mappy",
-	"Mappy (US version)",
-	"????",
-	"?????",
+	"Mappy (US)",
+	"1983",
+	"Namco",
 	"Aaron Giles\nMirko Buffoni\nJROK",
 	0,
 	&mappy_machine_driver,
@@ -1345,11 +1346,11 @@ struct GameDriver mappy_driver =
 struct GameDriver mappyjp_driver =
 {
 	__FILE__,
-	0,
+	&mappy_driver,
 	"mappyjp",
-	"Mappy (Japanese version)",
-	"????",
-	"?????",
+	"Mappy (Japan)",
+	"1983",
+	"Namco",
 	"Aaron Giles\nMirko Buffoni\nJROK",
 	0,
 	&mappy_machine_driver,
@@ -1373,8 +1374,8 @@ struct GameDriver digdug2_driver =
 	0,
 	"digdug2",
 	"Dig Dug 2",
-	"????",
-	"?????",
+	"1985",
+	"Namco",
 	"Aaron Giles\nMirko Buffoni\nJROK",
 	0,
 	&digdug2_machine_driver,
@@ -1398,8 +1399,8 @@ struct GameDriver motos_driver =
 	0,
 	"motos",
 	"Motos",
-	"????",
-	"?????",
+	"1985",
+	"Namco",
 	"Aaron Giles\nMirko Buffoni\nJROK\nValerio Verrando",
 	0,
 	&motos_machine_driver,
@@ -1423,8 +1424,8 @@ struct GameDriver todruaga_driver =
 	0,
 	"todruaga",
 	"Tower of Druaga",
-	"????",
-	"?????",
+	"1984",
+	"Namco",
 	"Aaron Giles\nMirko Buffoni\nJROK\nValerio Verrando",
 	0,
 	&todruaga_machine_driver,

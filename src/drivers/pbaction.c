@@ -28,15 +28,20 @@ e600      interrupt enable
 
 
 extern unsigned char *pbaction_videoram2,*pbaction_colorram2;
-extern unsigned char *pbaction_paletteram;
-void pbaction_paletteram_w(int offset,int data);
 void pbaction_videoram2_w(int offset,int data);
 void pbaction_colorram2_w(int offset,int data);
+void pbaction_flipscreen_w(int offset,int data);
 int pbaction_vh_start(void);
 void pbaction_vh_stop(void);
 
-void pbaction_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-void pbaction_vh_screenrefresh(struct osd_bitmap *bitmap);
+void pbaction_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+
+
+static void pbaction_sh_command_w(int offset,int data)
+{
+	soundlatch_w(offset,data);
+	cpu_cause_interrupt(1,0x00);
+}
 
 
 
@@ -64,12 +69,40 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0xd800, 0xdbff, pbaction_videoram2_w, &pbaction_videoram2 },
 	{ 0xdc00, 0xdfff, pbaction_colorram2_w, &pbaction_colorram2 },
 	{ 0xe000, 0xe07f, MWA_RAM, &spriteram, &spriteram_size },
-	{ 0xe400, 0xe5ff, pbaction_paletteram_w, &pbaction_paletteram },
+	{ 0xe400, 0xe5ff, paletteram_xxxxBBBBGGGGRRRR_w, &paletteram },
 	{ 0xe600, 0xe600, interrupt_enable_w },
-	{ 0xe800, 0xe800, soundlatch_w },	/* ??? */
+	{ 0xe604, 0xe604, pbaction_flipscreen_w },
+	{ 0xe800, 0xe800, pbaction_sh_command_w },
 	{ -1 }  /* end of table */
 };
 
+static struct MemoryReadAddress sound_readmem[] =
+{
+	{ 0x0000, 0x1fff, MRA_ROM },
+	{ 0x4000, 0x47ff, MRA_RAM },
+	{ 0x8000, 0x8000, soundlatch_r },
+	{ -1 }	/* end of table */
+};
+
+static struct MemoryWriteAddress sound_writemem[] =
+{
+	{ 0x0000, 0x1fff, MWA_ROM },
+	{ 0x4000, 0x47ff, MWA_RAM },
+	{ 0xffff, 0xffff, MWA_NOP },	/* watchdog? */
+	{ -1 }	/* end of table */
+};
+
+
+static struct IOWritePort sound_writeport[] =
+{
+	{ 0x10, 0x10, AY8910_control_port_0_w },
+	{ 0x11, 0x11, AY8910_write_port_0_w },
+	{ 0x20, 0x20, AY8910_control_port_1_w },
+	{ 0x21, 0x21, AY8910_write_port_1_w },
+	{ 0x30, 0x30, AY8910_control_port_2_w },
+	{ 0x31, 0x31, AY8910_write_port_2_w },
+	{ -1 }	/* end of table */
+};
 
 
 INPUT_PORTS_START( input_ports )
@@ -122,9 +155,9 @@ INPUT_PORTS_START( input_ports )
 	PORT_DIPNAME( 0x40, 0x40, "Cabinet", IP_KEY_NONE )
 	PORT_DIPSETTING(    0x40, "Upright" )
 	PORT_DIPSETTING(    0x00, "Cocktail" )
-	PORT_DIPNAME( 0x80, 0x80, "Demo Sounds?", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "Off" )
-	PORT_DIPSETTING(    0x80, "On" )
+	PORT_DIPNAME( 0x80, 0x00, "Demo Sounds", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x80, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
 
 	PORT_START	/* DSW1 */
 	PORT_DIPNAME( 0x07, 0x00, "Bonus Life", IP_KEY_NONE )
@@ -161,8 +194,8 @@ static struct GfxLayout charlayout1 =
 	1024,	/* 1024 characters */
 	3,	/* 3 bits per pixel */
 	{ 0, 1024*8*8, 2*1024*8*8 },	/* the bitplanes are separated */
-	{ 7*8, 6*8, 5*8, 4*8, 3*8, 2*8, 1*8, 0*8 },
 	{ 0, 1, 2, 3, 4, 5, 6, 7 },	/* pretty straightforward layout */
+	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
 	8*8	/* every char takes 8 consecutive bytes */
 };
 static struct GfxLayout charlayout2 =
@@ -171,8 +204,8 @@ static struct GfxLayout charlayout2 =
 	2048,	/* 2048 characters */
 	4,	/* 4 bits per pixel */
 	{ 0, 2048*8*8, 2*2048*8*8, 3*2048*8*8 },	/* the bitplanes are separated */
-	{ 7*8, 6*8, 5*8, 4*8, 3*8, 2*8, 1*8, 0*8 },
 	{ 0, 1, 2, 3, 4, 5, 6, 7 },	/* pretty straightforward layout */
+	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
 	8*8	/* every char takes 8 consecutive bytes */
 };
 static struct GfxLayout spritelayout1 =
@@ -181,10 +214,10 @@ static struct GfxLayout spritelayout1 =
 	128,	/* 128 sprites */
 	3,	/* 3 bits per pixel */
 	{ 0, 256*16*16, 2*256*16*16 },	/* the bitplanes are separated */
-	{ 23*8, 22*8, 21*8, 20*8, 19*8, 18*8, 17*8, 16*8,
-			7*8, 6*8, 5*8, 4*8, 3*8, 2*8, 1*8, 0*8 },
 	{ 0, 1, 2, 3, 4, 5, 6, 7,	/* pretty straightforward layout */
 			8*8+0, 8*8+1, 8*8+2, 8*8+3, 8*8+4, 8*8+5, 8*8+6, 8*8+7 },
+	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8,
+			16*8, 17*8, 18*8, 19*8, 20*8, 21*8, 22*8, 23*8 },
 	32*8	/* every sprite takes 32 consecutive bytes */
 };
 static struct GfxLayout spritelayout2 =
@@ -193,14 +226,14 @@ static struct GfxLayout spritelayout2 =
 	32,	/* 32 sprites */
 	3,	/* 3 bits per pixel */
 	{ 2*64*32*32, 64*32*32, 0 },	/* the bitplanes are separated */
-	{ 87*8, 86*8, 85*8, 84*8, 83*8, 82*8, 81*8, 80*8,
-			71*8, 70*8, 69*8, 68*8, 67*8, 66*8, 65*8, 64*8,
-			23*8, 22*8, 21*8, 20*8, 19*8, 18*8, 17*8, 16*8,
-			7*8, 6*8, 5*8, 4*8, 3*8, 2*8, 1*8, 0*8 },
 	{ 0, 1, 2, 3, 4, 5, 6, 7,	/* pretty straightforward layout */
 			8*8+0, 8*8+1, 8*8+2, 8*8+3, 8*8+4, 8*8+5, 8*8+6, 8*8+7,
 			32*8+0, 32*8+1, 32*8+2, 32*8+3, 32*8+4, 32*8+5, 32*8+6, 32*8+7,
 			40*8+0, 40*8+1, 40*8+2, 40*8+3, 40*8+4, 40*8+5, 40*8+6, 40*8+7 },
+	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8,
+			16*8, 17*8, 18*8, 19*8, 20*8, 21*8, 22*8, 23*8,
+			64*8, 65*8, 66*8, 67*8, 68*8, 69*8, 70*8, 71*8,
+			80*8, 81*8, 82*8, 83*8, 84*8, 85*8, 86*8, 87*8 },
 	128*8	/* every sprite takes 128 consecutive bytes */
 };
 
@@ -208,13 +241,30 @@ static struct GfxLayout spritelayout2 =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x00000, &charlayout1,      0, 16 },	/* characters */
-	{ 1, 0x06000, &charlayout2,   16*8, 8 },	/* background */
-	{ 1, 0x16000, &spritelayout1,    0, 16 },	/* normal sprites */
-	{ 1, 0x17000, &spritelayout2,    0, 16 },	/* large sprites */
+	{ 1, 0x00000, &charlayout1,    0, 16 },	/*   0-127 characters */
+	{ 1, 0x06000, &charlayout2,  128,  8 },	/* 128-255 background */
+	{ 1, 0x16000, &spritelayout1,  0, 16 },	/*   0-127 normal sprites */
+	{ 1, 0x17000, &spritelayout2,  0, 16 },	/*   0-127 large sprites */
 	{ -1 } /* end of array */
 };
 
+
+static struct AY8910interface ay8910_interface =
+{
+	3,	/* 3 chips */
+	1500000,	/* 1.5 MHz?????? */
+	{ 255, 255, 255 },
+	{ 0 },
+	{ 0 },
+	{ 0 },
+	{ 0 }
+};
+
+
+int pbaction_interrupt(void)
+{
+	return  0x02;	/* the CPU is in Interrupt Mode 2 */
+}
 
 
 static struct MachineDriver machine_driver =
@@ -227,26 +277,40 @@ static struct MachineDriver machine_driver =
 			0,
 			readmem,writemem,0,0,
 			nmi_interrupt,1
-		}
+		},
+		{
+			CPU_Z80 | CPU_AUDIO_CPU,
+			3072000,	/* 3.072 Mhz (?????) */
+			2,
+			sound_readmem,sound_writemem,0,sound_writeport,
+			pbaction_interrupt,2	/* ??? */
+									/* IRQs are caused by the main CPU */
+		},
 	},
 	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
 	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
 	0,
 
 	/* video hardware */
-	32*8, 32*8, { 2*8, 30*8-1, 0, 32*8-1 },
+	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
 	gfxdecodeinfo,
-	256,16*8+8*16,
-	pbaction_vh_convert_color_prom,
+	256, 256,
+	0,
 
-	VIDEO_TYPE_RASTER|VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_SUPPORTS_DIRTY,
 	0,
 	pbaction_vh_start,
 	pbaction_vh_stop,
 	pbaction_vh_screenrefresh,
 
 	/* sound hardware */
-	0,0,0,0
+	0,0,0,0,
+	{
+		{
+			SOUND_AY8910,
+			&ay8910_interface
+		}
+	}
 };
 
 
@@ -289,9 +353,9 @@ struct GameDriver pbaction_driver =
 	0,
 	"pbaction",
 	"Pinball Action",
-	"????",
-	"?????",
-	"Nicola Salmoria",
+	"1985",
+	"Tehkan",
+	"Nicola Salmoria (MAME driver)\nMirko Buffoni (sound)",
 	0,
 	&machine_driver,
 
@@ -303,7 +367,7 @@ struct GameDriver pbaction_driver =
 	input_ports,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
+	ORIENTATION_ROTATE_90,
 
 	0, 0
 };

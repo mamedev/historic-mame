@@ -14,7 +14,6 @@ unsigned char *lastduel_scroll1;
 unsigned char *lastduel_scroll2;
 unsigned char *lastduel_vram;
 unsigned char *lastduel_ram;
-unsigned char *lastduel_paletteram;
 
 static struct osd_bitmap *scroll1_bitmap;
 static struct osd_bitmap *scroll2_bitmap;
@@ -81,31 +80,6 @@ void lastduel_vram_w(int offset,int value)
   COMBINE_WORD_MEM(&lastduel_vram[offset],value);
 }
 
-int lastduel_palette_r( int offset)
-{
-  return READ_WORD(&lastduel_paletteram[offset]);
-}
-
-void lastduel_palette_w( int offset, int data )
-{
-	int oldword = READ_WORD(&lastduel_paletteram[offset]);
-	int newword = COMBINE_WORD(oldword,data);
-	int r,g,b,bright;
-
-
-  	WRITE_WORD(&lastduel_paletteram[offset],newword);
-
-	r = (newword >> 12) & 0x0f;
-	g = (newword >> 8) & 0x0f;
-	b = (newword >> 4) & 0x0f;
-	bright = (newword >> 0) & 0x0f;
-
-	r = (r * bright) * 17 / 15;
-	g = (g * bright) * 17 / 15;
-	b = (b * bright) * 17 / 15;
-
-  	palette_change_color(offset / 2,r,g,b);
-}
 
 /***************************************************************************
 
@@ -139,7 +113,7 @@ void lastduel_vh_stop(void)
 
 /***************************************************************************/
 
-void lastduel_vh_screenrefresh(struct osd_bitmap *bitmap)
+void lastduel_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
   int i,offs,color,code,tile;
   int mx,my;

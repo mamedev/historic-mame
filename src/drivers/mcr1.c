@@ -45,10 +45,7 @@ DSW1
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-void mcr1_vh_screenrefresh(struct osd_bitmap *bitmap);
-void mcr1_palette_bg_w(int offset,int data);
-void mcr1_palette_r_w(int offset,int data);
-extern unsigned char *mcr1_paletteram_bg,*mcr1_paletteram_r;
+void mcr1_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 void mcr_init_machine(void);
 int mcr_interrupt(void);
@@ -74,8 +71,8 @@ static struct MemoryWriteAddress mcr1_writemem[] =
 	{ 0x0000, 0x6fff, MWA_ROM },
 	{ 0x7000, 0x77ff, MWA_RAM },
 	{ 0xf000, 0xf1ff, MWA_RAM, &spriteram, &spriteram_size },
-	{ 0xf400, 0xf41f, mcr1_palette_bg_w, &mcr1_paletteram_bg },
-	{ 0xf800, 0xf81f, mcr1_palette_r_w, &mcr1_paletteram_r },
+	{ 0xf400, 0xf41f, paletteram_xxxxRRRRBBBBGGGG_split1_w, &paletteram },
+	{ 0xf800, 0xf81f, paletteram_xxxxRRRRBBBBGGGG_split2_w, &paletteram_2 },
 	{ 0xfc00, 0xffff, videoram_w, &videoram, &videoram_size },
 	{ -1 }  /* end of table */
 };
@@ -238,8 +235,8 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 static struct AY8910interface ay8910_interface =
 {
 	2,	/* 2 chips */
-	2000000,	/* 2 MHZ ?? */
-	{ 0x20ff, 0x20ff },
+	2000000,	/* 2 MHz ?? */
+	{ 255, 255 },
 	{ 0 },
 	{ 0 },
 	{ 0 },
@@ -428,8 +425,8 @@ struct GameDriver solarfox_driver =
 	0,
 	"solarfox",
 	"Solar Fox",
-	"????",
-	"?????",
+	"1981",
+	"Bally Midway",
 	"Christopher Kirmse\nAaron Giles\nNicola Salmoria\nBrad Oliver",
 	0,
 	&machine_driver,
@@ -453,8 +450,8 @@ struct GameDriver kick_driver =
 	0,
 	"kick",
 	"Kick",
-	"????",
-	"?????",
+	"1981",
+	"Midway",
 	"Christopher Kirmse\nAaron Giles\nNicola Salmoria\nBrad Oliver\nJohn Butler",
 	0,
 	&machine_driver,

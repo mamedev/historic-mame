@@ -65,7 +65,7 @@ void galaxian_flipy_w(int offset,int data);
 void galaxian_attributes_w(int offset,int data);
 void galaxian_stars_w(int offset,int data);
 int ckongs_vh_start(void);
-void galaxian_vh_screenrefresh(struct osd_bitmap *bitmap);
+void galaxian_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 int scramble_vh_interrupt(void);
 
 int scramble_portB_r(int offset);
@@ -258,7 +258,7 @@ static struct AY8910interface ay8910_interface =
 {
 	2,	/* 2 chips */
 	1789750,	/* 1.78975 MHz */
-	{ 0x60ff, 0x60ff },
+	{ 0x30ff, 0x30ff },
 	{ soundlatch_r },
 	{ scramble_portB_r },
 	{ 0 },
@@ -340,14 +340,15 @@ ROM_END
 
 
 
+extern struct GameDriver ckong_driver;
 struct GameDriver ckongs_driver =
 {
 	__FILE__,
-	0,
+	&ckong_driver,
 	"ckongs",
 	"Crazy Kong (Scramble Hardware)",
-	"????",
-	"?????",
+	"1981",
+	"bootleg",
 	"Nicola Salmoria (MAME driver)",
 	0,
 	&machine_driver,

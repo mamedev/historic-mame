@@ -61,7 +61,7 @@ void popeye_videoram_w(int offset,int data);
 void popeye_colorram_w(int offset,int data);
 void popeye_palettebank_w(int offset,int data);
 void popeye_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-void popeye_vh_screenrefresh(struct osd_bitmap *bitmap);
+void popeye_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 int  popeye_vh_start(void);
 void popeye_vh_stop(void);
 
@@ -383,11 +383,11 @@ ROM_START( popeyebl_rom )
 	ROM_LOAD( "po_d1-e1.bin", 0xe000, 0x0020, 0x64007604 )	/* protection PROM */
 
 	ROM_REGION(0x9000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "po5", 0x0000, 0x1000, 0x4e800000 )
-	ROM_LOAD( "po6", 0x1000, 0x2000, 0x034f71a7 )
-	ROM_LOAD( "po7", 0x3000, 0x2000, 0x0d9053e2 )
-	ROM_LOAD( "po8", 0x5000, 0x2000, 0x8568d90c )
-	ROM_LOAD( "po9", 0x7000, 0x2000, 0xe2b9685f )
+	ROM_LOAD( "v-5n", 0x0000, 0x1000, 0x27406a96 )
+	ROM_LOAD( "v-1e", 0x1000, 0x2000, 0x034f71a7 )
+	ROM_LOAD( "v-1f", 0x3000, 0x2000, 0x0d9053e2 )
+	ROM_LOAD( "v-1j", 0x5000, 0x2000, 0x8568d90c )
+	ROM_LOAD( "v-1k", 0x7000, 0x2000, 0xe2b9685f )
 ROM_END
 
 
@@ -463,10 +463,10 @@ struct GameDriver popeye_driver =
 	0,
 	"popeye",
 	"Popeye",
-	"????",
-	"?????",
+	"1982?",
+	"Nintendo",
 	"Marc Lafontaine\nNicola Salmoria\nMarco Cassili",
-	0,
+	GAME_NOT_WORKING,
 	&machine_driver,
 
 	popeye_rom,
@@ -485,11 +485,11 @@ struct GameDriver popeye_driver =
 struct GameDriver popeyebl_driver =
 {
 	__FILE__,
-	0,
+	&popeye_driver,
 	"popeyebl",
 	"Popeye (bootleg)",
-	"????",
-	"?????",
+	"1982?",
+	"bootleg",
 	"Marc Lafontaine\nNicola Salmoria\nMarco Cassili",
 	0,
 	&machine_driver,

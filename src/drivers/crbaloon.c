@@ -57,7 +57,7 @@ write:
 void crbaloon_spritectrl_w(int offset,int data);
 void crbaloon_flipscreen_w(int offset,int data);
 void crbaloon_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-void crbaloon_vh_screenrefresh(struct osd_bitmap *bitmap);
+void crbaloon_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 
 int val06,val08,val0a;
@@ -340,16 +340,16 @@ ROM_END
 
 ROM_START( crbalon2_rom )
 	ROM_REGION(0x10000)     /* 64k for code */
-	ROM_LOAD( "crazybal.ep1", 0x0000, 0x0800, 0xd1e59681 )
+	ROM_LOAD( "cl01.bin",     0x0000, 0x0800, 0xd1e59681 )
 	ROM_LOAD( "crazybal.ep2", 0x0800, 0x0800, 0xf2fd16c1 )
 	ROM_LOAD( "crazybal.ep3", 0x1000, 0x0800, 0x3923209f )
-	ROM_LOAD( "crazybal.ep4", 0x1800, 0x0800, 0x7b9df1b9 )
-	ROM_LOAD( "crazybal.ep5", 0x2000, 0x0800, 0x96326cee )
+	ROM_LOAD( "cl04.bin",     0x1800, 0x0800, 0x7b9df1b9 )
+	ROM_LOAD( "cl05.bin",     0x2000, 0x0800, 0x96326cee )
 	ROM_LOAD( "crazybal.ep6", 0x2800, 0x0800, 0xb44b4fa7 )
 
 	ROM_REGION(0x1000)      /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "crazybal.ep7", 0x0000, 0x0800, 0x0e8a7a70 )
-	ROM_LOAD( "crazybal.ep8", 0x0800, 0x0800, 0x02aa0810 )
+	ROM_LOAD( "cl07.bin", 0x0000, 0x0800, 0x0e8a7a70 )
+	ROM_LOAD( "cl08.bin", 0x0800, 0x0800, 0x02aa0810 )
 ROM_END
 
 
@@ -358,9 +358,9 @@ struct GameDriver crbaloon_driver =
 	__FILE__,
 	0,
 	"crbaloon",
-	"Crazy Balloon",
-	"????",
-	"?????",
+	"Crazy Balloon (set 1)",
+	"1980",
+	"Taito",
 	"Nicola Salmoria",
 	0,
 	&machine_driver,
@@ -381,11 +381,11 @@ struct GameDriver crbaloon_driver =
 struct GameDriver crbalon2_driver =
 {
 	__FILE__,
-	0,
+	&crbaloon_driver,
 	"crbalon2",
-	"Crazy Balloon (alternate)",
-	"????",
-	"?????",
+	"Crazy Balloon (set 2)",
+	"1980",
+	"Taito",
 	"Nicola Salmoria",
 	0,
 	&machine_driver,

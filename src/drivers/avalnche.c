@@ -26,7 +26,7 @@ extern void avalnche_noise_amplitude_w(int offset, int data);
 extern int avalnche_interrupt(void);
 
 /* vidhrdw/avalnche.c */
-extern void avalnche_vh_screenrefresh(struct osd_bitmap *bitmap);
+extern void avalnche_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 static struct MemoryReadAddress readmem[] =
 {
@@ -255,8 +255,8 @@ struct GameDriver avalnche_driver =
 	0,
 	"avalnche",
 	"Avalanche",
-	"????",
-	"?????",
+	"1978",
+	"Atari",
 	"Mike Balfour",
 	0,
 	&machine_driver,

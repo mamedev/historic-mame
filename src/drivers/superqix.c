@@ -15,14 +15,14 @@ CPU:
 
 int superqix_vh_start(void);
 void superqix_vh_stop(void);
-int superqix_palette_r(int offset);
-void superqix_palette_w(int offset,int data);
+int superqix_paletteram_r(int offset);
+void superqix_paletteram_w(int offset,int data);
 int superqix_bitmapram_r(int offset);
 void superqix_bitmapram_w(int offset,int data);
 int superqix_bitmapram2_r(int offset);
 void superqix_bitmapram2_w(int offset,int data);
 void superqix_0410_w(int offset,int data);
-void superqix_vh_screenrefresh(struct osd_bitmap *bitmap);
+void superqix_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 
 
@@ -47,7 +47,7 @@ static struct MemoryWriteAddress writemem[] =
 
 static struct IOReadPort readport[] =
 {
-	{ 0x0000, 0x00ff, superqix_palette_r },
+	{ 0x0000, 0x00ff, superqix_paletteram_r },
 	{ 0x0401, 0x0401, AY8910_read_port_0_r },
 	{ 0x0405, 0x0405, AY8910_read_port_1_r },
 	{ 0x0418, 0x0418, input_port_4_r },
@@ -58,7 +58,7 @@ static struct IOReadPort readport[] =
 
 static struct IOWritePort writeport[] =
 {
-	{ 0x0000, 0x00ff, superqix_palette_w },
+	{ 0x0000, 0x00ff, superqix_paletteram_w },
 	{ 0x0402, 0x0402, AY8910_write_port_0_w },
 	{ 0x0403, 0x0403, AY8910_control_port_0_w },
 	{ 0x0406, 0x0406, AY8910_write_port_1_w },
@@ -211,10 +211,10 @@ static struct MachineDriver machine_driver =
 	{
 		{
 			CPU_Z80 | CPU_16BIT_PORT,
-			6000000,	/* 6 Mhz ? */
+			8000000,	/* 8 Mhz ? */
 			0,
 			readmem,writemem,readport,writeport,
-			nmi_interrupt,2	/* ??? */
+			nmi_interrupt,3	/* ??? */
 		}
 	},
 	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
@@ -269,13 +269,13 @@ ROM_END
 ROM_START( sqixbl_rom )
 	ROM_REGION(0x20000)	/* 64k for code */
 	ROM_LOAD( "CPU.2",  0x00000, 0x08000, 0x8cf43590 )
-	ROM_LOAD( "CPU.1",  0x10000, 0x10000, 0x25dd66f5 )
+	ROM_LOAD( "sq02.96",  0x10000, 0x10000, 0x25dd66f5 )
 
 	ROM_REGION(0x38000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "4",  0x00000, 0x08000, 0x165430fc )
-	ROM_LOAD( "5",  0x08000, 0x10000, 0xfa8039c6 )
-	ROM_LOAD( "6",  0x18000, 0x10000, 0xfbb4714c )
-	ROM_LOAD( "3",  0x28000, 0x10000, 0x03c81564 )
+	ROM_LOAD( "sq04.2",  0x00000, 0x08000, 0x165430fc )
+	ROM_LOAD( "sq03.3",  0x08000, 0x10000, 0xfa8039c6 )
+	ROM_LOAD( "sq06.14", 0x18000, 0x10000, 0xfbb4714c )
+	ROM_LOAD( "sq05.1",  0x28000, 0x10000, 0x03c81564 )
 ROM_END
 
 
@@ -286,10 +286,10 @@ struct GameDriver superqix_driver =
 	0,
 	"superqix",
 	"Super Qix",
-	"????",
-	"?????",
+	"1987",
+	"Taito",
 	"Mirko Buffoni\nNicola Salmoria",
-	0,
+	GAME_NOT_WORKING,
 	&machine_driver,
 
 	superqix_rom,
@@ -308,11 +308,11 @@ struct GameDriver superqix_driver =
 struct GameDriver sqixbl_driver =
 {
 	__FILE__,
-	0,
+	&superqix_driver,
 	"sqixbl",
 	"Super Qix (bootleg)",
-	"????",
-	"?????",
+	"1987",
+	"bootleg",
 	"Mirko Buffoni\nNicola Salmoria",
 	0,
 	&machine_driver,

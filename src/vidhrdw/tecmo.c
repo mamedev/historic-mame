@@ -10,7 +10,6 @@
 unsigned char *tecmo_videoram,*tecmo_colorram;
 unsigned char *tecmo_videoram2,*tecmo_colorram2;
 unsigned char *tecmo_scroll;
-unsigned char *tecmo_paletteram;
 int tecmo_videoram2_size;
 
 static unsigned char *dirtybuffer2;
@@ -24,24 +23,6 @@ static int video_type = 0;
 
 
 
-void tecmo_paletteram_w(int offset,int data)
-{
-	int r,g,b;
-
-
-	tecmo_paletteram[offset] = data;
-
-	r = 0x11 * ((tecmo_paletteram[offset | 1] >> 4) & 0x0f);
-	g = 0x11 * ((tecmo_paletteram[offset | 1] >> 0) & 0x0f);
-	b = 0x11 * ((tecmo_paletteram[offset & ~1] >> 0) & 0x0f);
-
-	palette_change_color(offset / 2,r,g,b);
-	if (offset / 2 == 0x0100)	/* background color */
-		palette_change_transparent_color(r,g,b);
-}
-
-
-
 /***************************************************************************
 
   Start the video hardware emulation.
@@ -50,28 +31,34 @@ void tecmo_paletteram_w(int offset,int data)
 
 int tecmo_vh_start(void)
 {
-  if (generic_vh_start() ) return 1;
+	if (generic_vh_start()) return 1;
 
-  if ((dirtybuffer2 = malloc(videoram_size)) == 0){
-    generic_vh_stop();
-    return 1;
-  }
-  memset(dirtybuffer2,1,videoram_size);
+	if ((dirtybuffer2 = malloc(videoram_size)) == 0)
+	{
+		generic_vh_stop();
+		return 1;
+	}
+	memset(dirtybuffer2,1,videoram_size);
 
-  /* the background area is twice as wide as the screen */
-  if ((tmpbitmap2 = osd_new_bitmap(2*Machine->drv->screen_width,Machine->drv->screen_height,Machine->scrbitmap->depth)) == 0){
-    free(dirtybuffer2);
-    generic_vh_stop();
-    return 1;
-  }
-  if ((tmpbitmap3 = osd_new_bitmap(2*Machine->drv->screen_width,Machine->drv->screen_height,Machine->scrbitmap->depth)) == 0){
-    osd_free_bitmap(tmpbitmap2);
-    free(dirtybuffer2);
-    generic_vh_stop();
-    return 1;
-  }
+	/* the background area is twice as wide as the screen */
+	if ((tmpbitmap2 = osd_new_bitmap(2*Machine->drv->screen_width,Machine->drv->screen_height,Machine->scrbitmap->depth)) == 0)
+	{
+		free(dirtybuffer2);
+		generic_vh_stop();
+		return 1;
+	}
+	if ((tmpbitmap3 = osd_new_bitmap(2*Machine->drv->screen_width,Machine->drv->screen_height,Machine->scrbitmap->depth)) == 0)
+	{
+		osd_free_bitmap(tmpbitmap2);
+		free(dirtybuffer2);
+		generic_vh_stop();
+		return 1;
+	}
 
-  return 0;
+	/* 0x100 is the background color */
+	palette_transparent_color = 0x100;
+
+	return 0;
 }
 
 int rygar_vh_start(void)
@@ -106,20 +93,22 @@ void tecmo_vh_stop(void){
   generic_vh_stop();
 }
 
-void tecmo_videoram_w(int offset,int data){
-  if (tecmo_videoram[offset] != data){
-    dirtybuffer2[offset] = 1;
-
-    tecmo_videoram[offset] = data;
-  }
+void tecmo_videoram_w(int offset,int data)
+{
+	if (tecmo_videoram[offset] != data)
+	{
+		dirtybuffer2[offset] = 1;
+		tecmo_videoram[offset] = data;
+	}
 }
 
-void tecmo_colorram_w(int offset,int data){
-  if (tecmo_colorram[offset] != data){
-    dirtybuffer2[offset] = 1;
-
-    tecmo_colorram[offset] = data;
-  }
+void tecmo_colorram_w(int offset,int data)
+{
+	if (tecmo_colorram[offset] != data)
+	{
+		dirtybuffer2[offset] = 1;
+		tecmo_colorram[offset] = data;
+	}
 }
 
 
@@ -173,7 +162,7 @@ void tecmo_draw_sprites( struct osd_bitmap *bitmap, int priority ){
   }
 }
 
-void tecmo_vh_screenrefresh(struct osd_bitmap *bitmap)
+void tecmo_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	int offs;
 

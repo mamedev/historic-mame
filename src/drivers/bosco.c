@@ -91,7 +91,7 @@ void bosco_init_machine(void);
 
 void bosco_cpu_reset_w(int offset, int data);
 int  bosco_vh_start(void);
-void bosco_vh_screenrefresh(struct osd_bitmap *bitmap);
+void bosco_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 void bosco_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 
 extern unsigned char *bosco_videoram2,*bosco_colorram2;
@@ -104,7 +104,7 @@ void bosco_videoram2_w(int offset,int data);
 void bosco_colorram2_w(int offset,int data);
 int  bosco_vh_start(void);
 void bosco_vh_stop(void);
-void bosco_vh_screenrefresh(struct osd_bitmap *bitmap);
+void bosco_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 void pengo_sound_w(int offset,int data);
 int  bosco_sh_start(void);
@@ -615,20 +615,20 @@ ROM_START( bosconm_rom )
 	ROM_LOAD( "bos1_4b.bin", 0x3000, 0x1000, 0x5cf9f585 )
 
 	ROM_REGION(0x2000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "bos1_14.bin", 0x0000, 0x1000, 0x1610cd08 )
-	ROM_LOAD( "bos1_13.bin", 0x1000, 0x1000, 0xb04edf54 )
+	ROM_LOAD( "5300.5d", 0x0000, 0x1000, 0x1610cd08 )
+	ROM_LOAD( "5200.5e", 0x1000, 0x1000, 0xb04edf54 )
 
 	ROM_REGION(0x10000)	/* 64k for the second CPU */
 	ROM_LOAD( "bos1_5c.bin", 0x0000, 0x1000, 0x36dceeb2 )
-	ROM_LOAD( "bos1_6.bin",  0x1000, 0x1000, 0xf773c773 )
+	ROM_LOAD( "2800.3h",     0x1000, 0x1000, 0xf773c773 )
 
 	ROM_REGION(0x10000)	/* 64k for the third CPU  */
-	ROM_LOAD( "bos1_7.bin", 0x0000, 0x1000, 0x6b74d2ca )
+	ROM_LOAD( "2900.3e", 0x0000, 0x1000, 0x6b74d2ca )
 
 	ROM_REGION(0x3000)	/* ROMs for digitised speech */
-	ROM_LOAD( "bos1_9.bin",  0x0000, 0x1000, 0x409e4312 )
-	ROM_LOAD( "bos1_10.bin", 0x1000, 0x1000, 0x01fce73c )
-	ROM_LOAD( "bos1_11.bin", 0x2000, 0x1000, 0x0c0be19b )
+	ROM_LOAD( "4900.5n", 0x0000, 0x1000, 0x409e4312 )
+	ROM_LOAD( "5000.5m", 0x1000, 0x1000, 0x01fce73c )
+	ROM_LOAD( "5100.5l", 0x2000, 0x1000, 0x0c0be19b )
 ROM_END
 
 static const char *bosco_sample_names[] =
@@ -703,8 +703,8 @@ struct GameDriver bosco_driver =
 	0,
 	"bosco",
 	"Bosconian (Midway)",
-	"????",
-	"?????",
+	"1981",
+	"[Namco] (Midway license)",
 	"Martin Scragg\nAaron Giles\nPete Grounds\nSidney Brown\nKurt Mahan (color info)\nNicola Salmoria\nMirko Buffoni",
 	0,
 	&machine_driver,
@@ -725,11 +725,11 @@ struct GameDriver bosco_driver =
 struct GameDriver bosconm_driver =
 {
 	__FILE__,
-	0,
+	&bosco_driver,
 	"bosconm",
 	"Bosconian (Namco)",
-	"????",
-	"?????",
+	"1981",
+	"Namco",
 	"Martin Scragg\nAaron Giles\nPete Grounds\nSidney Brown\nKurt Mahan (color info)\nNicola Salmoria\nMirko Buffoni",
 	0,
 	&machine_driver,

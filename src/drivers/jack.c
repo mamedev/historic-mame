@@ -37,10 +37,9 @@ Known problems:
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-unsigned char *jack_paletteram;
 
 void jack_paletteram_w(int offset,int data);
-void jack_vh_screenrefresh(struct osd_bitmap *bitmap);
+void jack_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 void jack_sh_command_w(int offset,int data)
 {
@@ -93,7 +92,7 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x4000, 0x62ff, MWA_RAM },
 	{ 0xb000, 0xb07f, MWA_RAM, &spriteram, &spriteram_size },
 	{ 0xb400, 0xb400, jack_sh_command_w },
-	{ 0xb600, 0xb61f, jack_paletteram_w, &jack_paletteram },
+	{ 0xb600, 0xb61f, jack_paletteram_w, &paletteram },
 	{ 0xb800, 0xbbff, videoram_w, &videoram, &videoram_size },
 	{ 0xbc00, 0xbfff, colorram_w, &colorram },
 	{ 0xc000, 0xffff, MWA_ROM },
@@ -316,7 +315,7 @@ static struct AY8910interface ay8910_interface =
 {
 	1,	/* 1 chip */
 	1789750,	/* 1.78975 MHz?????? */
-	{ 0x20ff },
+	{ 0x10ff },
 	{ soundlatch_r },
 	{ jack_portB_r },
 	{ 0 },
@@ -327,7 +326,7 @@ static struct AY8910interface zzyzzyxx_ay8910_interface =
 {
 	1,	/* 1 chip */
 	1789750,	/* 1.78975 MHz?????? */
-	{ 0x20ff },
+	{ 255 },
 	{ soundlatch_r },
 	{ zzyzzyxx_portB_r },
 	{ 0 },
@@ -561,8 +560,8 @@ struct GameDriver jack_driver =
 	0,
 	"jack",
 	"Jack the Giant Killer",
-	"????",
-	"?????",
+	"1982",
+	"Cinematronics",
 	"Brad Oliver",
 	0,
 	&machine_driver,
@@ -586,8 +585,8 @@ struct GameDriver zzyzzyxx_driver =
 	0,
 	"zzyzzyxx",
 	"Zzyzzyxx",
-	"????",
-	"?????",
+	"1982",
+	"Cinematronics",
 	"Brad Oliver",
 	0,
 	&zzyzzyxx_machine_driver,

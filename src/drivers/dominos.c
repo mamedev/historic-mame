@@ -31,7 +31,7 @@ extern void dominos_lamp2_w(int offset, int data);
 extern void dominos_lamp1_w(int offset, int data);
 
 /* vidhrdw/dominos.c */
-extern void dominos_vh_screenrefresh(struct osd_bitmap *bitmap);
+extern void dominos_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 static struct MemoryReadAddress readmem[] =
 {
@@ -212,8 +212,8 @@ struct GameDriver dominos_driver =
 	0,
 	"dominos",
 	"Dominos",
-	"????",
-	"?????",
+	"1977",
+	"Atari",
 	"Mike Balfour",
 	0,
 	&machine_driver,

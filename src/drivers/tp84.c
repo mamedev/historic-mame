@@ -106,7 +106,7 @@ void tp84_col0_w(int offset,int data);
 void tp84_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 int tp84_vh_start(void);
 void tp84_vh_stop(void);
-void tp84_vh_screenrefresh(struct osd_bitmap *bitmap);
+void tp84_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 
 
@@ -565,8 +565,8 @@ struct GameDriver tp84_driver =
 	0,
 	"tp84",
 	"Time Pilot 84",
-	"????",
-	"?????",
+	"1984",
+	"Konami",
 	"Marc Lafontaine (MAME driver)\nJuan Carlos Lorente (high score)\nMarco Cassili",
 	0,
 	&machine_driver,		/* MachineDriver * */

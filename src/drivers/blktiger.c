@@ -18,14 +18,12 @@
 
 
 
-extern unsigned char *blktiger_paletteram;
 extern unsigned char *blktiger_backgroundram;
 extern unsigned char *blktiger_backgroundattribram;
 extern int blktiger_backgroundram_size;
 extern unsigned char *blktiger_palette_bank;
 extern unsigned char *blktiger_screen_layout;
 
-void blktiger_paletteram_w(int offset,int data);
 void blktiger_palette_bank_w(int offset,int data);
 void blktiger_screen_layout_w(int offset,int data);
 
@@ -41,7 +39,7 @@ int blktiger_interrupt(void);
 
 int blktiger_vh_start(void);
 void blktiger_vh_stop(void);
-void blktiger_vh_screenrefresh(struct osd_bitmap *bitmap);
+void blktiger_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 
 
@@ -63,7 +61,7 @@ static void blktiger_bankswitch_w(int offset,int data)
 	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
 
-	bankaddress = 0x10000 + (data & 0x0f) * 0x4000 ;
+	bankaddress = 0x10000 + (data & 0x0f) * 0x4000;
 	cpu_setbank(1,&RAM[bankaddress]);
 }
 
@@ -84,7 +82,8 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0xc000, 0xcfff, blktiger_background_w, &blktiger_backgroundram, &blktiger_backgroundram_size },
 	{ 0xd000, 0xd3ff, videoram_w, &videoram, &videoram_size },
 	{ 0xd400, 0xd7ff, colorram_w, &colorram },
-	{ 0xd800, 0xdfff, blktiger_paletteram_w, &blktiger_paletteram },
+	{ 0xd800, 0xdbff, paletteram_xxxxBBBBRRRRGGGG_split1_w, &paletteram },
+	{ 0xdc00, 0xdfff, paletteram_xxxxBBBBRRRRGGGG_split2_w, &paletteram_2 },
 	{ 0xe000, 0xfdff, MWA_RAM },
 	{ 0xfe00, 0xffff, MWA_RAM, &spriteram, &spriteram_size },
 	{ -1 }	/* end of table */
@@ -280,7 +279,7 @@ static struct YM2203interface ym2203_interface =
 {
 	2,			/* 2 chips */
 	3500000,	/* 3.5 MHz ? (hand tuned) */
-	{ YM2203_VOL(100,0x20ff), YM2203_VOL(100,0x20ff) },
+	{ YM2203_VOL(255,255), YM2203_VOL(255,255) },
 	{ 0 },
 	{ 0 },
 	{ 0 },

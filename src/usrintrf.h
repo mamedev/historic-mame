@@ -25,6 +25,7 @@ struct DisplayText
 struct GfxElement *builduifont(void);
 void displaytext(const struct DisplayText *dt,int erase);
 int showcharset(void);
+int showcopyright(void);
 int showcredits(void);
 int showgameinfo(void);
 int setup_menu(void);

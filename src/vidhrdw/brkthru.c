@@ -167,7 +167,7 @@ void brkthru_1800_w(int offset,int data)
   the main emulation engine.
 
 ***************************************************************************/
-void brkthru_vh_screenrefresh(struct osd_bitmap *bitmap)
+void brkthru_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	int offs;
 

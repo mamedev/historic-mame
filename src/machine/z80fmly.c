@@ -138,7 +138,9 @@ static void z80ctc_interrupt_check( z80ctc *ctc )
 	for( ch = 3 ; ch >= 0 ; ch-- )
 	{
 		/* if IEO disable , same and lower IRQ is masking */
-		if( ctc->int_state[ch] & Z80_INT_IEO ) state  = Z80_INT_IEO;
+/* ASG: changed this line because this state could have an interrupt pending as well! */
+/*		if( ctc->int_state[ch] & Z80_INT_IEO ) state  = Z80_INT_IEO;*/
+		if( ctc->int_state[ch] & Z80_INT_IEO ) state  = ctc->int_state[ch];
 		else                                   state |= ctc->int_state[ch];
 	}
 	/* change interrupt status */

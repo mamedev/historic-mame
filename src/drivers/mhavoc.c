@@ -273,7 +273,7 @@ INPUT_PORTS_START( input_ports )
 	PORT_BIT ( 0x0f, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START	/* IN2 - gamma */
-	PORT_ANALOG ( 0xff, 0x00, IPT_DIAL | IPF_REVERSE, 100, 0, 0, 0 )
+	PORT_ANALOGX ( 0xff, 0x00, IPT_DIAL | IPF_REVERSE, 100, 0, 0, 0, OSD_KEY_LEFT, OSD_KEY_RIGHT, OSD_JOY_LEFT, OSD_JOY_RIGHT, 8 )
 
 	PORT_START /* DIP Switch at position 13/14S */
 	PORT_DIPNAME( 0xc0, 0x00, "Lives", IP_KEY_NONE )
@@ -549,9 +549,9 @@ struct GameDriver mhavoc_driver =
 	__FILE__,
 	0,
 	"mhavoc",
-	"Major Havoc",
-	"????",
-	"?????",
+	"Major Havoc (rev 3)",
+	"1983",
+	"Atari",
 	CREDITS,
 	0,
 	&machine_driver,
@@ -572,11 +572,11 @@ struct GameDriver mhavoc_driver =
 struct GameDriver mhavoc2_driver =
 {
 	__FILE__,
-	0,
+	&mhavoc_driver,
 	"mhavoc2",
-	"Major Havoc (alternate version)",
-	"????",
-	"?????",
+	"Major Havoc (rev 2)",
+	"1983",
+	"Atari",
 	CREDITS,
 	0,
 	&machine_driver,
@@ -597,11 +597,11 @@ struct GameDriver mhavoc2_driver =
 struct GameDriver mhavocrv_driver =
 {
 	__FILE__,
-	0,
+	&mhavoc_driver,
 	"mhavocrv",
 	"Major Havoc (Return to Vax)",
-	"????",
-	"?????",
+	"1983",
+	"hack",
 	CREDITS,
 	0,
 	&machine_driver,

@@ -82,7 +82,7 @@ void champbas_vh_convert_color_prom(unsigned char *palette, unsigned short *colo
   the main emulation engine.
 
 ***************************************************************************/
-void champbas_vh_screenrefresh(struct osd_bitmap *bitmap)
+void champbas_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	int offs;
 

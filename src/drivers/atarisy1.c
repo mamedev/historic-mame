@@ -119,7 +119,6 @@ int atarisys1_6522_r (int offset);
 int atarisys1_int3state_r (int offset);
 int atarisys1_trakball_r (int offset);
 int atarisys1_joystick_r (int offset);
-int atarisys1_paletteram_r (int offset);
 int atarisys1_playfieldram_r (int offset);
 int atarisys1_spriteram_r (int offset);
 
@@ -128,7 +127,6 @@ int marble_speedcheck_r (int offset);
 void atarisys1_led_w (int offset, int data);
 void atarisys1_6522_w (int offset, int data);
 void atarisys1_joystick_w (int offset, int data);
-void atarisys1_paletteram_w (int offset, int data);
 void atarisys1_playfieldram_w (int offset, int data);
 void atarisys1_spriteram_w (int offset, int data);
 void atarisys1_bankselect_w (int offset, int data);
@@ -153,8 +151,8 @@ int roadrunn_vh_start (void);
 int roadblst_vh_start (void);
 void atarisys1_vh_stop (void);
 
-void atarisys1_vh_screenrefresh (struct osd_bitmap *bitmap);
-void roadblst_vh_screenrefresh (struct osd_bitmap *bitmap);
+void atarisys1_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void roadblst_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 
 /*************************************
@@ -166,16 +164,16 @@ void roadblst_vh_screenrefresh (struct osd_bitmap *bitmap);
 static struct MemoryReadAddress atarisys1_readmem[] =
 {
 	{ 0x000000, 0x07ffff, MRA_ROM },
-	{ 0x080000, 0x087fff, atarigen_slapstic_r, &atarigen_slapstic },
+	{ 0x080000, 0x087fff, atarigen_slapstic_r },
 	{ 0x2e0000, 0x2e0003, atarisys1_int3state_r },
 	{ 0x400000, 0x401fff, MRA_BANK1 },
 	{ 0x840000, 0x840003, MRA_BANK4, &atarisys1_prioritycolor },
 	{ 0x900000, 0x9fffff, MRA_BANK2 },
-	{ 0xa00000, 0xa01fff, atarisys1_playfieldram_r, &atarigen_playfieldram, &atarigen_playfieldram_size },
-	{ 0xa02000, 0xa02fff, atarisys1_spriteram_r, &atarigen_spriteram, &atarigen_spriteram_size },
-	{ 0xa03000, 0xa03fff, MRA_BANK6, &atarigen_alpharam, &atarigen_alpharam_size },
-	{ 0xb00000, 0xb007ff, atarisys1_paletteram_r, &atarigen_paletteram, &atarigen_paletteram_size },
-	{ 0xf00000, 0xf00fff, atarigen_eeprom_r, &atarigen_eeprom, &atarigen_eeprom_size },
+	{ 0xa00000, 0xa01fff, atarisys1_playfieldram_r },
+	{ 0xa02000, 0xa02fff, atarisys1_spriteram_r },
+	{ 0xa03000, 0xa03fff, MRA_BANK6 },
+	{ 0xb00000, 0xb007ff, paletteram_word_r },
+	{ 0xf00000, 0xf00fff, atarigen_eeprom_r },
 	{ 0xf20000, 0xf20007, atarisys1_trakball_r },
 	{ 0xf40000, 0xf40013, atarisys1_joystick_r },
 	{ 0xf60000, 0xf60003, atarisys1_io_r },
@@ -187,7 +185,7 @@ static struct MemoryReadAddress atarisys1_readmem[] =
 static struct MemoryWriteAddress atarisys1_writemem[] =
 {
 	{ 0x000000, 0x07ffff, MWA_ROM },
-	{ 0x080000, 0x087fff, atarigen_slapstic_w },
+	{ 0x080000, 0x087fff, atarigen_slapstic_w, &atarigen_slapstic },
 	{ 0x400000, 0x401fff, MWA_BANK1 },
 	{ 0x800000, 0x800003, atarisys1_hscroll_w, &atarigen_hscroll },
 	{ 0x820000, 0x820003, atarisys1_vscroll_w, &atarigen_vscroll },
@@ -197,11 +195,11 @@ static struct MemoryWriteAddress atarisys1_writemem[] =
 	{ 0x8a0000, 0x8a0003, MWA_NOP },		/* VBLANK ack */
 	{ 0x8c0000, 0x8c0003, atarigen_eeprom_enable_w },
 	{ 0x900000, 0x9fffff, MWA_BANK2 },
-	{ 0xa00000, 0xa01fff, atarisys1_playfieldram_w },
-	{ 0xa02000, 0xa02fff, atarisys1_spriteram_w },
-	{ 0xa03000, 0xa03fff, MWA_BANK6 },
-	{ 0xb00000, 0xb007ff, atarisys1_paletteram_w },
-	{ 0xf00000, 0xf00fff, atarigen_eeprom_w },
+	{ 0xa00000, 0xa01fff, atarisys1_playfieldram_w, &atarigen_playfieldram, &atarigen_playfieldram_size },
+	{ 0xa02000, 0xa02fff, atarisys1_spriteram_w, &atarigen_spriteram, &atarigen_spriteram_size },
+	{ 0xa03000, 0xa03fff, MWA_BANK6, &atarigen_alpharam, &atarigen_alpharam_size },
+	{ 0xb00000, 0xb007ff, paletteram_IIIIRRRRGGGGBBBB_word_w, &paletteram },
+	{ 0xf00000, 0xf00fff, atarigen_eeprom_w, &atarigen_eeprom, &atarigen_eeprom_size },
 	{ 0xf40010, 0xf40013, atarisys1_joystick_w },
 	{ 0xfe0000, 0xfe0003, atarigen_sound_w },
 	{ -1 }  /* end of table */
@@ -211,17 +209,17 @@ static struct MemoryWriteAddress atarisys1_writemem[] =
 static struct MemoryReadAddress marble_readmem[] =
 {
 	{ 0x000000, 0x07ffff, MRA_ROM },
-	{ 0x080000, 0x087fff, atarigen_slapstic_r, &atarigen_slapstic },
+	{ 0x080000, 0x087fff, atarigen_slapstic_r },
 	{ 0x2e0000, 0x2e0003, atarisys1_int3state_r },
-	{ 0x400014, 0x400017, marble_speedcheck_r, &marble_speedcheck },
+	{ 0x400014, 0x400017, marble_speedcheck_r },
 	{ 0x400000, 0x401fff, MRA_BANK1 },
 	{ 0x840000, 0x840003, MRA_BANK4, &atarisys1_prioritycolor },
 	{ 0x900000, 0x9fffff, MRA_BANK2 },
-	{ 0xa00000, 0xa01fff, atarisys1_playfieldram_r, &atarigen_playfieldram, &atarigen_playfieldram_size },
-	{ 0xa02000, 0xa02fff, MRA_BANK3, &atarigen_spriteram, &atarigen_spriteram_size },
-	{ 0xa03000, 0xa03fff, MRA_BANK6, &atarigen_alpharam, &atarigen_alpharam_size },
-	{ 0xb00000, 0xb007ff, atarisys1_paletteram_r, &atarigen_paletteram, &atarigen_paletteram_size },
-	{ 0xf00000, 0xf00fff, atarigen_eeprom_r, &atarigen_eeprom, &atarigen_eeprom_size },
+	{ 0xa00000, 0xa01fff, atarisys1_playfieldram_r },
+	{ 0xa02000, 0xa02fff, MRA_BANK3 },
+	{ 0xa03000, 0xa03fff, MRA_BANK6 },
+	{ 0xb00000, 0xb007ff, paletteram_word_r },
+	{ 0xf00000, 0xf00fff, atarigen_eeprom_r },
 	{ 0xf20000, 0xf20007, atarisys1_trakball_r },
 	{ 0xf40000, 0xf40013, atarisys1_joystick_r },
 	{ 0xf60000, 0xf60003, atarisys1_io_r },
@@ -233,8 +231,8 @@ static struct MemoryReadAddress marble_readmem[] =
 static struct MemoryWriteAddress marble_writemem[] =
 {
 	{ 0x000000, 0x07ffff, MWA_ROM },
-	{ 0x080000, 0x087fff, atarigen_slapstic_w },
-	{ 0x400014, 0x400017, marble_speedcheck_w },
+	{ 0x080000, 0x087fff, atarigen_slapstic_w, &atarigen_slapstic },
+	{ 0x400014, 0x400017, marble_speedcheck_w, &marble_speedcheck },
 	{ 0x400000, 0x401fff, MWA_BANK1 },
 	{ 0x800000, 0x800003, atarisys1_hscroll_w, &atarigen_hscroll },
 	{ 0x820000, 0x820003, atarisys1_vscroll_w, &atarigen_vscroll },
@@ -244,11 +242,11 @@ static struct MemoryWriteAddress marble_writemem[] =
 	{ 0x8a0000, 0x8a0003, MWA_NOP },		/* VBLANK ack */
 	{ 0x8c0000, 0x8c0003, atarigen_eeprom_enable_w },
 	{ 0x900000, 0x9fffff, MWA_BANK2 },
-	{ 0xa00000, 0xa01fff, atarisys1_playfieldram_w },
-	{ 0xa02000, 0xa02fff, MWA_BANK3 },
-	{ 0xa03000, 0xa03fff, MWA_BANK6 },
-	{ 0xb00000, 0xb007ff, atarisys1_paletteram_w },
-	{ 0xf00000, 0xf00fff, atarigen_eeprom_w },
+	{ 0xa00000, 0xa01fff, atarisys1_playfieldram_w, &atarigen_playfieldram, &atarigen_playfieldram_size },
+	{ 0xa02000, 0xa02fff, MWA_BANK3, &atarigen_spriteram, &atarigen_spriteram_size },
+	{ 0xa03000, 0xa03fff, MWA_BANK6, &atarigen_alpharam, &atarigen_alpharam_size },
+	{ 0xb00000, 0xb007ff, paletteram_IIIIRRRRGGGGBBBB_word_w, &paletteram },
+	{ 0xf00000, 0xf00fff, atarigen_eeprom_w, &atarigen_eeprom, &atarigen_eeprom_size },
 	{ 0xf40010, 0xf40013, atarisys1_joystick_w },
 	{ 0xfe0000, 0xfe0003, atarigen_sound_w },
 	{ -1 }  /* end of table */
@@ -695,7 +693,7 @@ static struct MachineDriver marble_machine_driver =
 	0,0,0,0,
 	{
 		{
-			SOUND_YM2151_ALT,
+			SOUND_YM2151,
 			&ym2151_interface
 		},
 		{
@@ -745,7 +743,7 @@ static struct MachineDriver peterpak_machine_driver =
 	0,0,0,0,
 	{
 		{
-			SOUND_YM2151_ALT,
+			SOUND_YM2151,
 			&ym2151_interface
 		},
 		{
@@ -795,7 +793,7 @@ static struct MachineDriver indytemp_machine_driver =
 	0,0,0,0,
 	{
 		{
-			SOUND_YM2151_ALT,
+			SOUND_YM2151,
 			&ym2151_interface
 		},
 		{
@@ -849,7 +847,7 @@ static struct MachineDriver roadrunn_machine_driver =
 	0,0,0,0,
 	{
 		{
-			SOUND_YM2151_ALT,
+			SOUND_YM2151,
 			&ym2151_interface
 		},
 		{
@@ -903,7 +901,7 @@ static struct MachineDriver roadblst_machine_driver =
 	0,0,0,0,
 	{
 		{
-			SOUND_YM2151_ALT,
+			SOUND_YM2151,
 			&ym2151_interface
 		},
 		{
@@ -1027,14 +1025,19 @@ ROM_START( marble2_rom )
 	ROM_LOAD_ODD ( "136033.108", 0x80000, 0x04000, 0x4d90714a )
 
 	ROM_REGION(0x42000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "136033.109", 0x00000, 0x08000, 0xe1af1577 )  /* bank 0 (5 bpp)*/
-	ROM_LOAD( "136033.110", 0x08000, 0x08000, 0x6bcc192c )
-	ROM_LOAD( "136033.111", 0x10000, 0x08000, 0x04bd3231 )
-	ROM_LOAD( "136033.112", 0x18000, 0x08000, 0x25a73c35 )
-	ROM_LOAD( "136033.113", 0x20000, 0x08000, 0xb8965958 )
-	ROM_LOAD( "136033.115", 0x2c000, 0x04000, 0x57f77323 )  /* bank 1 (3 bpp) */
-	ROM_LOAD( "136033.116", 0x34000, 0x04000, 0x85b4d29e )
-	ROM_LOAD( "136033.117", 0x3c000, 0x04000, 0x35547ca8 )
+	ROM_LOAD( "136033.137", 0x00000, 0x04000, 0xa8cd8791 )  /* bank 0 (5 bpp)*/
+	ROM_LOAD( "136033.138", 0x04000, 0x04000, 0x38e292e6 )
+	ROM_LOAD( "136033.139", 0x08000, 0x04000, 0x6eb184fb )
+	ROM_LOAD( "136033.140", 0x0c000, 0x04000, 0xfd1b9dd7 )
+	ROM_LOAD( "136033.141", 0x10000, 0x04000, 0xd6e7eaff )
+	ROM_LOAD( "136033.142", 0x14000, 0x04000, 0x2dd6d8ce )
+	ROM_LOAD( "136033.143", 0x18000, 0x04000, 0xea9fb0b9 )
+	ROM_LOAD( "136033.144", 0x1c000, 0x04000, 0x3b088c8c )
+	ROM_LOAD( "136033.145", 0x20000, 0x04000, 0x3062bb18 )
+	ROM_LOAD( "136033.146", 0x24000, 0x04000, 0x8834e240 )
+	ROM_LOAD( "136033.149", 0x2c000, 0x04000, 0x57f77323 )  /* bank 1 (3 bpp) */
+	ROM_LOAD( "136033.151", 0x34000, 0x04000, 0x85b4d29e )
+	ROM_LOAD( "136033.153", 0x3c000, 0x04000, 0x35547ca8 )
 	ROM_LOAD( "136032.107", 0x40000, 0x02000, 0xad209966 )  /* alpha font */
 
 	ROM_REGION(0x10000)	/* 64k for 6502 code */
@@ -1055,8 +1058,8 @@ ROM_START( marblea_rom )
 	ROM_LOAD_ODD ( "136033.228", 0x20000, 0x04000, 0x1b735fe7 )
 	ROM_LOAD_EVEN( "136033.229", 0x28000, 0x04000, 0x6611c209 )
 	ROM_LOAD_ODD ( "136033.230", 0x28000, 0x04000, 0xea7fd571 )
-	ROM_LOAD_EVEN( "136033.135", 0x80000, 0x04000, 0xa38dc551 )
-	ROM_LOAD_ODD ( "136033.136", 0x80000, 0x04000, 0x4d90714a )
+	ROM_LOAD_EVEN( "136033.107", 0x80000, 0x04000, 0xa38dc551 )
+	ROM_LOAD_ODD ( "136033.108", 0x80000, 0x04000, 0x4d90714a )
 
 	ROM_REGION(0x42000)	/* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "136033.137", 0x00000, 0x04000, 0xa8cd8791 )  /* bank 0 (5 bpp)*/
@@ -1274,9 +1277,9 @@ struct GameDriver marble_driver =
 	__FILE__,
 	0,
 	"marble",
-	"Marble Madness",
-	"????",
-	"?????",
+	"Marble Madness (set 1)",
+	"1984",
+	"Atari Games",
 	"Aaron Giles (MAME driver)\nFrank Palazzolo (Slapstic decoding)\nTim Lindquist (Hardware Info)",
 	0,
 	&marble_machine_driver,
@@ -1298,11 +1301,11 @@ struct GameDriver marble_driver =
 struct GameDriver marble2_driver =
 {
 	__FILE__,
-	0,
+	&marble_driver,
 	"marble2",
-	"Marble Madness (version 2)",
-	"????",
-	"?????",
+	"Marble Madness (set 2)",
+	"1984",
+	"Atari Games",
 	"Aaron Giles (MAME driver)\nFrank Palazzolo (Slapstic decoding)\nTim Lindquist (Hardware Info)",
 	0,
 	&marble_machine_driver,
@@ -1324,11 +1327,11 @@ struct GameDriver marble2_driver =
 struct GameDriver marblea_driver =
 {
 	__FILE__,
-	0,
+	&marble_driver,
 	"marblea",
-	"Marble Madness (alternate version)",
-	"????",
-	"?????",
+	"Marble Madness (set 3)",
+	"1984",
+	"Atari Games",
 	"Aaron Giles (MAME driver)\nFrank Palazzolo (Slapstic decoding)\nTim Lindquist (Hardware Info)",
 	0,
 	&marble_machine_driver,
@@ -1353,8 +1356,8 @@ struct GameDriver peterpak_driver =
 	0,
 	"peterpak",
 	"Peter Pack-Rat",
-	"????",
-	"?????",
+	"1984",
+	"Atari Games",
 	"Aaron Giles (MAME driver)\nFrank Palazzolo (Slapstic decoding)\nTim Lindquist (Hardware Info)",
 	0,
 	&peterpak_machine_driver,
@@ -1379,8 +1382,8 @@ struct GameDriver indytemp_driver =
 	0,
 	"indytemp",
 	"Indiana Jones and the Temple of Doom",
-	"????",
-	"?????",
+	"1985",
+	"Atari Games",
 	"Aaron Giles (MAME driver)\nFrank Palazzolo (Slapstic decoding)\nTim Lindquist (Hardware Info)",
 	0,
 	&indytemp_machine_driver,
@@ -1405,8 +1408,8 @@ struct GameDriver roadrunn_driver =
 	0,
 	"roadrunn",
 	"Road Runner",
-	"????",
-	"?????",
+	"1985",
+	"Atari Games",
 	"Aaron Giles (MAME driver)\nFrank Palazzolo (Slapstic decoding)\nTim Lindquist (Hardware Info)",
 	0,
 	&roadrunn_machine_driver,
@@ -1431,8 +1434,8 @@ struct GameDriver roadblst_driver =
 	0,
 	"roadblst",
 	"Road Blasters",
-	"????",
-	"?????",
+	"1987",
+	"Atari Games",
 	"Aaron Giles (MAME driver)\nFrank Palazzolo (Slapstic decoding)\nTim Lindquist (Hardware Info)",
 	0,
 	&roadblst_machine_driver,

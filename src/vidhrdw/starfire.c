@@ -179,7 +179,7 @@ void starfire_vh_convert_color_prom(unsigned char *palette, unsigned short *colo
   the main emulation engine.
 
 ***************************************************************************/
-void starfire_vh_screenrefresh(struct osd_bitmap *bitmap)
+void starfire_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
         int x,y,xx;
         int j,col;

@@ -41,8 +41,8 @@ Possible Frame Types are as follows:
 
 Silent    0000
 Stop      1111
-Repeat    XXXX   1  XXXXXX  
-Unvoiced  XXXX   0  000000 XXXXX XXXXX XXXX XXXX  
+Repeat    XXXX   1  XXXXXX
+Unvoiced  XXXX   0  000000 XXXXX XXXXX XXXX XXXX
 Voiced    XXXX   0  XXXXXX XXXXX XXXXX XXXX XXXX XXXX XXXX XXXX XXX XXX XXX
 
 Stop Frame:     Stops the current speech
@@ -78,7 +78,7 @@ I'll point you towards it.  Feel free to contact me if you have a question.
 
 Frank Palazzolo
 
-palazzol@tir.com
+palazzol@home.com
 
 
 

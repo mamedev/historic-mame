@@ -138,14 +138,12 @@ void tnzs_bankswitch_w(int offset, int data);
 
 /* prototypes for functions in ../vidhrdw/tnzs.c */
 unsigned char *tnzs_objectram;
-extern unsigned char *tnzs_paletteram;
 int tnzs_objectram_size;
 void tnzs_videoram_w(int offset,int data);
 void tnzs_objectram_w(int offset,int data);
-void tnzs_paletteram_w(int offset,int data);
 int tnzs_vh_start(void);
 void tnzs_vh_stop(void);
-void tnzs_vh_screenrefresh(struct osd_bitmap *bitmap);
+void tnzs_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 
 static struct MemoryReadAddress readmem[] =
@@ -173,7 +171,7 @@ static struct MemoryWriteAddress writemem[] =
     { 0xf000, 0xf1ff, tnzs_vdcram_w, &tnzs_vdcram },
     { 0xf200, 0xf3ff, tnzs_scrollram_w, &tnzs_scrollram }, /* scrolling info */
 	{ 0xf600, 0xf600, tnzs_bankswitch_w },
-    { 0xf800, 0xfbff, tnzs_paletteram_w, &tnzs_paletteram },
+    { 0xf800, 0xfbff, paletteram_xRRRRRGGGGGBBBBB_w, &paletteram },
 	{ -1 }  /* end of table */
 };
 
@@ -532,8 +530,8 @@ struct GameDriver tnzs_driver =
 	0,
 	"tnzs",
 	"The New Zealand Story",
-	"????",
-	"?????",
+	"1988",
+	"Taito",
     "Chris Moore\nMartin Scragg\nRichard Mitton\nSanteri Saarimaa (hi-scores)",
 	0,
 	&tnzs_machine_driver,
@@ -557,8 +555,8 @@ struct GameDriver tnzs2_driver =
 	0,
 	"tnzs2",
 	"The New Zealand Story 2",
-	"????",
-	"?????",
+	"1988",
+	"Taito",
     "Chris Moore\nMartin Scragg\nRichard Mitton\nSanteri Saarimaa (hi-scores)",
 	0,
 	&tnzs_machine_driver,

@@ -17,7 +17,7 @@ NOTE:  ROM DM03 is missing from all known ROM sets.  This is a color palette.
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-extern void bking2_vh_screenrefresh(struct osd_bitmap *bitmap);
+extern void bking2_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 extern void bking2_xld1_w(int offset, int data);
 extern void bking2_yld1_w(int offset, int data);
 extern void bking2_xld2_w(int offset, int data);
@@ -331,10 +331,10 @@ struct GameDriver bking2_driver =
 	0,
 	"bking2",
 	"Birdie King 2",
-	"????",
-	"?????",
+	"1983",
+	"Taito",
 	"Ed. Mueller\nMike Balfour",
-	0,
+	GAME_NOT_WORKING,
 	&machine_driver,
 
 	bking2_rom,

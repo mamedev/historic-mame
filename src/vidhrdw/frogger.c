@@ -107,7 +107,7 @@ void frogger_attributes_w(int offset,int data)
   the main emulation engine.
 
 ***************************************************************************/
-void frogger_vh_screenrefresh(struct osd_bitmap *bitmap)
+void frogger_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	int i,offs;
 
@@ -179,7 +179,7 @@ void frogger_vh_screenrefresh(struct osd_bitmap *bitmap)
 
 /* the alternate version doesn't have the sprite & scroll registers mangling, */
 /* but it still has the color code mangling. */
-void frogger2_vh_screenrefresh(struct osd_bitmap *bitmap)
+void frogger2_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	int i,offs;
 

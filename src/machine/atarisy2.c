@@ -121,13 +121,19 @@ void atarisys2_32v_interrupt (int param)
 		irq_hold2 = 1;
 	}
 
-	/* update the display list for the current scanline */
-	timer_set (cpu_getscanlineperiod (), param, atarisys2_update_display_list);
-
 	/* set the timer for the next one */
 	param += 64;
-	if (param <= 384)
+	if (param < 384)
 		timer_set (64.0 * cpu_getscanlineperiod (), param, atarisys2_32v_interrupt);
+}
+
+
+void atarisys2_video_update (int param)
+{
+	atarisys2_update_display_list (param);
+	param += 8;
+	if (param < 384)
+		timer_set (8.0 * cpu_getscanlineperiod (), param, atarisys2_video_update);
 }
 
 
@@ -137,9 +143,7 @@ int atarisys2_interrupt (void)
 
 	/* set the 32V timer */
 	timer_set (TIME_IN_USEC (Machine->drv->vblank_duration), 0, atarisys2_32v_interrupt);
-
-	/* set a timer to reset the video parameters just before the end of VBLANK */
-	timer_set (TIME_IN_USEC (Machine->drv->vblank_duration - 10), 0, atarisys2_update_display_list);
+	timer_set (TIME_IN_USEC (Machine->drv->vblank_duration), 0, atarisys2_video_update);
 
 	/* update the pedals once per frame */
     for (i = 0; i < pedal_count; i++)

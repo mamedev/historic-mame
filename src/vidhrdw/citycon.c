@@ -11,7 +11,7 @@
 
 
 
-unsigned char *citycon_paletteram,*citycon_charlookup;
+unsigned char *citycon_charlookup;
 unsigned char *citycon_scroll;
 static struct osd_bitmap *tmpbitmap2;
 static int bg_image,dirty_background;
@@ -67,43 +67,6 @@ void citycon_vh_stop(void)
 
 
 
-void citycon_paletteram_w(int offset,int data)
-{
-	int bit0,bit1,bit2,bit3;
-	int r,g,b,val;
-
-
-	citycon_paletteram[offset] = data;
-
-	/* red component */
-	val = citycon_paletteram[offset & ~1];
-	bit0 = (val >> 4) & 0x01;
-	bit1 = (val >> 5) & 0x01;
-	bit2 = (val >> 6) & 0x01;
-	bit3 = (val >> 7) & 0x01;
-	r = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
-
-	/* green component */
-	val = citycon_paletteram[offset & ~1];
-	bit0 = (val >> 0) & 0x01;
-	bit1 = (val >> 1) & 0x01;
-	bit2 = (val >> 2) & 0x01;
-	bit3 = (val >> 3) & 0x01;
-	g = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
-
-	/* blue component */
-	val = citycon_paletteram[offset | 1];
-	bit0 = (val >> 4) & 0x01;
-	bit1 = (val >> 5) & 0x01;
-	bit2 = (val >> 6) & 0x01;
-	bit3 = (val >> 7) & 0x01;
-	b = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
-
-	palette_change_color(offset / 2,r,g,b);
-}
-
-
-
 void citycon_charlookup_w(int offset,int data)
 {
 	if (citycon_charlookup[offset] != data)
@@ -147,7 +110,7 @@ if (errorlog && (data & 0x0e) != 0) fprintf(errorlog,"background register = %02x
   the main emulation engine.
 
 ***************************************************************************/
-void citycon_vh_screenrefresh(struct osd_bitmap *bitmap)
+void citycon_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	int offs;
 

@@ -8,12 +8,11 @@
 
 
 extern unsigned char *citycon_scroll;
-extern unsigned char *citycon_paletteram,*citycon_charlookup;
-void citycon_paletteram_w(int offset,int data);
+extern unsigned char *citycon_charlookup;
 void citycon_charlookup_w(int offset,int data);
 void citycon_background_w(int offset,int data);
 
-void citycon_vh_screenrefresh(struct osd_bitmap *bitmap);
+void citycon_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 int  citycon_vh_start(void);
 void citycon_vh_stop(void);
 
@@ -40,7 +39,7 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x3001, 0x3001, soundlatch_w },
 	{ 0x3002, 0x3002, soundlatch2_w },
 	{ 0x3004, 0x3005, MWA_RAM, &citycon_scroll },
-	{ 0x3800, 0x3cff, citycon_paletteram_w, &citycon_paletteram },
+	{ 0x3800, 0x3cff, paletteram_RRRRGGGGBBBBxxxx_swap_w, &paletteram },
 	{ 0x4000, 0xffff, MWA_ROM },
 	{ -1 }  /* end of table */
 };
@@ -326,8 +325,8 @@ struct GameDriver citycon_driver =
 	0,
 	"citycon",
 	"City Connection",
-	"????",
-	"?????",
+	"1985",
+	"Jaleco",
 	"Mirko Buffoni (MAME driver)\nNicola Salmoria (MAME driver)",
 	0,
 	&machine_driver,

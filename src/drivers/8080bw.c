@@ -161,7 +161,7 @@ void boothill_videoram_w(int offset,int data);   /* MAB */
 
 int  invaders_vh_start(void);
 void invaders_vh_stop(void);
-void invaders_vh_screenrefresh(struct osd_bitmap *bitmap);
+void invaders_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 void invaders_sh_port3_w(int offset,int data);
 void invaders_sh_port4_w(int offset,int data);
 void invadpt2_sh_port3_w(int offset,int data);
@@ -173,8 +173,8 @@ void invaders_sh_update(void);
 /* desterth, cosmicmo, spaceph */
 static struct MemoryReadAddress readmem[] =
 {
-	{ 0x2000, 0x3fff, MRA_RAM },
 	{ 0x0000, 0x1fff, MRA_ROM },
+	{ 0x2000, 0x3fff, MRA_RAM },
 	{ 0x4000, 0x57ff, MRA_ROM },
 	{ -1 }  /* end of table */
 };
@@ -182,9 +182,9 @@ static struct MemoryReadAddress readmem[] =
 /* invaders, earthinv, spaceatt, invdelux, galxwars, desterth, cosmicmo */
 static struct MemoryWriteAddress writemem[] =
 {
+	{ 0x0000, 0x1fff, MWA_ROM },
 	{ 0x2000, 0x23ff, MWA_RAM },
 	{ 0x2400, 0x3fff, invaders_videoram_w, &invaders_videoram },
-	{ 0x0000, 0x1fff, MWA_ROM },
 	{ 0x4000, 0x57ff, MWA_ROM },
 	{ -1 }  /* end of table */
 };
@@ -192,9 +192,9 @@ static struct MemoryWriteAddress writemem[] =
 /* invrvnge */
 static struct MemoryWriteAddress invrvnge_writemem[] =
 {
+	{ 0x0000, 0x1fff, MWA_ROM },
 	{ 0x2000, 0x23ff, MWA_RAM },
 	{ 0x2400, 0x3fff, invrvnge_videoram_w, &invaders_videoram },
-	{ 0x0000, 0x1fff, MWA_ROM },
 	{ 0x4000, 0x57ff, MWA_ROM },
 	{ -1 }  /* end of table */
 };
@@ -256,6 +256,22 @@ static struct MemoryWriteAddress boothill_writemem[] =
 	{ -1 }  /* end of table */
 };
 
+static struct MemoryReadAddress polaris_readmem[] =
+{
+	{ 0x0000, 0x1fff, MRA_ROM },
+	{ 0x2000, 0x3fff, MRA_RAM },
+	{ 0x4000, 0x4fff, MRA_ROM },
+	{ -1 }  /* end of table */
+};
+
+static struct MemoryWriteAddress polaris_writemem[] =
+{
+	{ 0x0000, 0x1fff, MWA_ROM },
+	{ 0x2000, 0x23ff, MWA_RAM },
+	{ 0x2400, 0x3fff, boothill_videoram_w, &invaders_videoram },
+	{ 0x4000, 0x4fff, MWA_ROM },
+	{ -1 }  /* end of table */
+};
 
 
 static struct IOReadPort readport[] =
@@ -389,6 +405,22 @@ static struct IOWritePort gunfight_writeport[] =
 	{ -1 }  /* end of table */
 };
 
+static struct IOReadPort polaris_readport[] =
+{
+	{ 0x00, 0x00, input_port_0_r },
+	{ 0x01, 0x01, input_port_1_r },
+	{ 0x02, 0x02, input_port_2_r },
+	{ 0x03, 0x03, invaders_shift_data_r },
+	{ -1 }  /* end of table */
+};
+
+static struct IOWritePort polaris_writeport[] =
+{
+	{ 0x01, 0x01, invaders_shift_amount_w },
+	{ 0x03, 0x03, invaders_shift_data_w },
+	{ -1 }  /* end of table */
+};
+
 
 INPUT_PORTS_START( invaders_input_ports )
 	PORT_START      /* IN0 */
@@ -410,12 +442,25 @@ INPUT_PORTS_START( invaders_input_ports )
 	PORT_DIPNAME( 0x08, 0x00, "Bonus", IP_KEY_NONE )
 	PORT_DIPSETTING(    0x00, "1500" )
 	PORT_DIPSETTING(    0x08, "1000" )
-	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 )
-	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT )
-	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_COCKTAIL )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_2WAY | IPF_COCKTAIL)
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_2WAY | IPF_COCKTAIL )
 	PORT_DIPNAME( 0x80, 0x00, "Coin Info", IP_KEY_NONE )
 	PORT_DIPSETTING(    0x00, "On" )
 	PORT_DIPSETTING(    0x80, "Off" )
+	PORT_START		/* BSR */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_START		/* Dummy port for cocktail mode */
+	PORT_DIPNAME( 0x01, 0x00, "Cabinet", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "Upright" )
+	PORT_DIPSETTING(	0x01, "Cocktail" )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( earthinv_input_ports )
@@ -561,12 +606,16 @@ INPUT_PORTS_START( invdelux_input_ports )
 	PORT_DIPNAME( 0x08, 0x00, "Preset Mode", IP_KEY_NONE )
 	PORT_DIPSETTING(    0x00, "Off" )
 	PORT_DIPSETTING(    0x08, "On" )
-	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 )
-	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT )
-	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_COCKTAIL )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_2WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_2WAY | IPF_COCKTAIL )
 	PORT_DIPNAME( 0x80, 0x00, "Coin Info", IP_KEY_NONE )
 	PORT_DIPSETTING(    0x00, "On" )
 	PORT_DIPSETTING(    0x80, "Off" )
+	PORT_START		/* Dummy port for cocktail mode */
+	PORT_DIPNAME( 0x01, 0x00, "Cabinet", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "Upright" )
+	PORT_DIPSETTING(	0x01, "Cocktail" )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( invadpt2_input_ports )
@@ -590,12 +639,25 @@ INPUT_PORTS_START( invadpt2_input_ports )
 	PORT_DIPNAME( 0x08, 0x00, "Preset Mode", IP_KEY_NONE )
 	PORT_DIPSETTING(    0x00, "Off" )
 	PORT_DIPSETTING(    0x08, "On" )
-	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 )
-	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT )
-	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_COCKTAIL )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_2WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_2WAY | IPF_COCKTAIL )
 	PORT_DIPNAME( 0x80, 0x00, "Coin Info", IP_KEY_NONE )
 	PORT_DIPSETTING(    0x00, "On" )
 	PORT_DIPSETTING(    0x80, "Off" )
+	PORT_START		/* BSR */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_START		/* Dummy port for cocktail mode */
+	PORT_DIPNAME( 0x01, 0x00, "Cabinet", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "Upright" )
+	PORT_DIPSETTING(	0x01, "Cocktail" )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( desterth_input_ports )
@@ -1290,6 +1352,46 @@ INPUT_PORTS_START( spacefev_input_ports )
 //	PORT_DIPSETTING(    0xfc, "Off" )
 INPUT_PORTS_END
 
+INPUT_PORTS_START( polaris_input_ports )
+	PORT_START      /* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_UNKNOWN )   // Tilt
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN)
+
+	PORT_START      /* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_START2 )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_START1 )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_BUTTON1 )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_8WAY )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_8WAY )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_8WAY )
+
+
+	PORT_START      /* DSW0 */
+	PORT_DIPNAME( 0x03, 0x00, "Lives", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "3" )
+	PORT_DIPSETTING(    0x01, "4" )
+	PORT_DIPSETTING(    0x02, "5" )
+	PORT_DIPSETTING(    0x03, "6" )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_DIPNAME( 0x08, 0x00, "Bonus", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "1500" )
+	PORT_DIPSETTING(    0x08, "1000" )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT )
+	PORT_DIPNAME( 0x80, 0x00, "Preset Mode", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "Off" )
+	PORT_DIPSETTING(    0x80, "On" )
+INPUT_PORTS_END
+
 
 
 static unsigned char palette[] = /* V.V */ /* Smoothed pure colors, overlays are not so contrasted */
@@ -1938,6 +2040,39 @@ static struct MachineDriver m4_machine_driver =
 };
 #endif
 
+static struct MachineDriver polaris_machine_driver =
+{
+	/* basic machine hardware */
+	{
+		{
+			CPU_8080,
+			2000000,        /* 2 Mhz? */
+			0,
+			polaris_readmem,polaris_writemem,polaris_readport,polaris_writeport,
+			invaders_interrupt,2    /* two interrupts per frame */
+		}
+	},
+	60, DEFAULT_60HZ_VBLANK_DURATION,       /* frames per second, vblank duration */
+	1,      /* single CPU, no need for interleaving */
+	0,
+
+	/* video hardware */
+	32*8, 32*8, { 0*8, 32*8-1, 0*8, 28*8-1 },
+	0,      /* no gfxdecodeinfo - bitmapped display */
+	sizeof(palette)/3, 0,
+	0,
+
+	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY,
+	0,
+	invaders_vh_start,
+	invaders_vh_stop,
+	invaders_vh_screenrefresh,
+
+	/* sound hardware */
+	0,0,0,0
+};
+
+
 
 /***************************************************************************
 
@@ -1955,10 +2090,10 @@ ROM_END
 
 ROM_START( earthinv_rom )
 	ROM_REGION(0x10000)             /* 64k for code */
-	ROM_LOAD( "invaders.h", 0x0000, 0x0800, 0xec409c20 )
-	ROM_LOAD( "invaders.g", 0x0800, 0x0800, 0x46a1b083 )
-	ROM_LOAD( "invaders.f", 0x1000, 0x0800, 0xfcb8d54c )
-	ROM_LOAD( "invaders.e", 0x1800, 0x0800, 0x38dff747 )
+	ROM_LOAD( "earthinv.h", 0x0000, 0x0800, 0xec409c20 )
+	ROM_LOAD( "earthinv.g", 0x0800, 0x0800, 0x46a1b083 )
+	ROM_LOAD( "earthinv.f", 0x1000, 0x0800, 0xfcb8d54c )
+	ROM_LOAD( "earthinv.e", 0x1800, 0x0800, 0x38dff747 )
 ROM_END
 
 ROM_START( spaceatt_rom )
@@ -2272,6 +2407,16 @@ ROM_START( dogpatch_rom )
 ROM_END
 #endif
 
+ROM_START( polaris_rom )
+	ROM_REGION(0x10000)     /* 64k for code */
+	ROM_LOAD( "ps-01", 0x0000, 0x0800, 0x5aa7c985 )
+	ROM_LOAD( "ps-09", 0x0800, 0x0800, 0x77363310 )
+	ROM_LOAD( "ps-08", 0x1000, 0x0800, 0x00769af6 )
+	ROM_LOAD( "ps-04", 0x1800, 0x0800, 0x00a0c624 )
+	ROM_LOAD( "ps-05", 0x4000, 0x0800, 0x3602c8f6 )
+	ROM_LOAD( "ps-10", 0x4800, 0x0800, 0x7eebdc49 )
+ROM_END
+
 
 static const char *invaders_sample_names[] =
 {
@@ -2526,8 +2671,8 @@ struct GameDriver invaders_driver =
 	0,
 	"invaders",
 	"Space Invaders",
-	"????",
-	"?????",
+	"1978",
+	"Midway",
 	"Michael Strutts (Space Invaders emulator)\nNicola Salmoria\nTormod Tjaberg (sound)\nMirko Buffoni\nValerio Verrando\nMarco Cassili",
 	0,
 	&machine_driver,
@@ -2548,11 +2693,11 @@ struct GameDriver invaders_driver =
 struct GameDriver earthinv_driver =
 {
 	__FILE__,
-	0,
+	&invaders_driver,
 	"earthinv",
 	"Super Earth Invasion",
-	"????",
-	"?????",
+	"1980",
+	"bootleg",
 	"Michael Strutts (Space Invaders emulator)\nNicola Salmoria\nTormod Tjaberg (sound)\nMirko Buffoni\nMarco Cassili",
 	0,
 	&machine_driver,
@@ -2573,11 +2718,11 @@ struct GameDriver earthinv_driver =
 struct GameDriver spaceatt_driver =
 {
 	__FILE__,
-	0,
+	&invaders_driver,
 	"spaceatt",
 	"Space Attack II",
-	"????",
-	"?????",
+	"1980",
+	"bootleg",
 	"Michael Strutts (Space Invaders emulator)\nNicola Salmoria\nTormod Tjaberg (sound)\nMirko Buffoni\nValerio Verrando\nMarco Cassili",
 	0,
 	&machine_driver,
@@ -2600,9 +2745,9 @@ struct GameDriver invrvnge_driver =
 	__FILE__,
 	0,
 	"invrvnge",
-	"Invaders Revenge",
+	"Invader's Revenge",
 	"????",
-	"?????",
+	"Zenitone Microsec",
 	"Michael Strutts (Space Invaders emulator)\nNicola Salmoria\nTormod Tjaberg (sound)\nMirko Buffoni\nMarco Cassili (high score save)",
 	0,
 	&invrvnge_machine_driver,
@@ -2620,31 +2765,6 @@ struct GameDriver invrvnge_driver =
 	invrvnge_hiload, invrvnge_hisave
 };
 
-struct GameDriver invdelux_driver =
-{
-	__FILE__,
-	0,
-	"invdelux",
-	"Space Invaders Part II (Midway)",
-	"????",
-	"?????",
-	"Michael Strutts (Space Invaders emulator)\nNicola Salmoria\nTormod Tjaberg (sound)\nMirko Buffoni\nValerio Verrando\nMarco Cassili",
-	0,
-	&invdelux_machine_driver,
-
-	invdelux_rom,
-	0, 0,
-	invaders_sample_names,
-	0,      /* sound_prom */
-
-	invdelux_input_ports,
-
-	0, palette, 0,
-	ORIENTATION_ROTATE_270,
-
-	invdelux_hiload, invdelux_hisave
-};
-
 /* LT 24-11-1997 */
 /* LT 20-3-1998 UPDATED */
 struct GameDriver invadpt2_driver =
@@ -2653,8 +2773,8 @@ struct GameDriver invadpt2_driver =
 	0,
 	"invadpt2",
 	"Space Invaders Part II (Taito)",
-	"????",
-	"?????",
+	"1980",
+	"Taito",
 	"Michael Strutts (Space Invaders emulator)\nNicola Salmoria\nTormod Tjaberg (sound)\nMirko Buffoni\nValerio Verrando\nLee Taylor\nMarco Cassili",
 	0,
 	&invadpt2_machine_driver,
@@ -2672,6 +2792,31 @@ struct GameDriver invadpt2_driver =
 	invdelux_hiload, invdelux_hisave
 };
 
+struct GameDriver invdelux_driver =
+{
+	__FILE__,
+	&invadpt2_driver,
+	"invdelux",
+	"Space Invaders Part II (Midway)",
+	"1980",
+	"Midway",
+	"Michael Strutts (Space Invaders emulator)\nNicola Salmoria\nTormod Tjaberg (sound)\nMirko Buffoni\nValerio Verrando\nMarco Cassili",
+	0,
+	&invdelux_machine_driver,
+
+	invdelux_rom,
+	0, 0,
+	invaders_sample_names,
+	0,      /* sound_prom */
+
+	invdelux_input_ports,
+
+	0, palette, 0,
+	ORIENTATION_ROTATE_270,
+
+	invdelux_hiload, invdelux_hisave
+};
+
 
 struct GameDriver galxwars_driver =
 {
@@ -2679,8 +2824,8 @@ struct GameDriver galxwars_driver =
 	0,
 	"galxwars",
 	"Galaxy Wars",
-	"????",
-	"?????",
+	"1979",
+	"Taito",
 	"Michael Strutts (Space Invaders emulator)\nNicola Salmoria\nTormod Tjaberg (sound)\nMirko Buffoni\nValerio Verrando\nMarco Cassili",
 	0,
 	&machine_driver,
@@ -2704,8 +2849,8 @@ struct GameDriver lrescue_driver =
 	0,
 	"lrescue",
 	"Lunar Rescue",
-	"????",
-	"?????",
+	"1979",
+	"Taito",
 	"Michael Strutts (Space Invaders emulator)\nNicola Salmoria\nTormod Tjaberg (sound)\nMirko Buffoni\nValerio Verrando\nMarco Cassili",
 	0,
 	&lrescue_machine_driver,
@@ -2727,11 +2872,11 @@ struct GameDriver lrescue_driver =
 struct GameDriver desterth_driver =
 {
 	__FILE__,
-	0,
+	&lrescue_driver,
 	"desterth",
 	"Destination Earth",
-	"????",
-	"?????",
+	"1979",
+	"bootleg",
 	"Michael Strutts (Space Invaders emulator)\nNicola Salmoria\nTormod Tjaberg (sound)\nMirko Buffoni\nValerio Verrando\nMarco Cassili",
 	0,
 	&machine_driver,
@@ -2753,11 +2898,11 @@ struct GameDriver desterth_driver =
 struct GameDriver cosmicmo_driver =
 {
 	__FILE__,
-	0,
+	&invaders_driver,
 	"cosmicmo",
 	"Cosmic Monsters",
-	"????",
-	"?????",
+	"1979",
+	"Universal",
 	"Michael Strutts (Space Invaders emulator)\nNicola Salmoria\nTormod Tjaberg (sound)\nMirko Buffoni\nValerio Verrando\nLee Taylor\nMarco Cassili",
 	0,
 	&machine_driver,
@@ -2785,7 +2930,7 @@ struct GameDriver spaceph_driver =
 	"spaceph",
 	"Space Phantoms",
 	"????",
-	"?????",
+	"Zilec Games",
 	"Michael Strutts (Space Invaders emulator)\nNicola Salmoria\nTormod Tjaberg (sound)\nMirko Buffoni\nValerio Verrando\nLee Taylor\nPaul Swan\nMarco Cassili",
 	0,
 	&lrescue_machine_driver,
@@ -2809,9 +2954,9 @@ struct GameDriver rollingc_driver =
 	__FILE__,
 	0,
 	"rollingc",
-	"Rolling Crash - Moon Base",
-	"????",
-	"?????",
+	"Rolling Crash / Moon Base",
+	"1979",
+	"Nichibutsu",
 	"Michael Strutts (Space Invaders emulator)\nNicola Salmoria\nTormod Tjaberg (sound)\nMirko Buffoni\nValerio Verrando\nLee Taylor\nPaul Swan",    /*L.T */
 	0,
 	&rollingc_machine_driver,
@@ -2836,8 +2981,8 @@ struct GameDriver bandido_driver =                                              
 	0,
 	"bandido",
 	"Bandido",
-	"????",
-	"?????",
+	"1980",
+	"Exidy",
 	"Michael Strutts (Space Invaders emulator)\nNicola Salmoria\nMirko Buffoni\nValerio Verrando\nMike Coates\n",
 	0,
 	&bandido_machine_driver,
@@ -2861,8 +3006,8 @@ struct GameDriver boothill_driver =                                             
 	0,
 	"boothill",
 	"Boot Hill",
-	"????",
-	"?????",
+	"1977",
+	"Midway",
 	"Michael Strutts (Space Invaders emulator)\nNicola Salmoria\nTormod Tjaberg (sound)\nMirko Buffoni\nValerio Verrando\nMarco Cassili\nMike Balfour\nMike Coates\n\n(added samples)\n Howie Cohen \n Douglas Silfen \n Eric Lundquist",
 	0,
 	&boothill_machine_driver,
@@ -2888,8 +3033,8 @@ struct GameDriver schaser_driver =
 	0,
 	"schaser",
 	"Space Chaser",
-	"????",
-	"?????",
+	"1980",
+	"Taito",
 	"Lee Taylor\n",
 	0,
 	&lrescue_machine_driver,
@@ -2913,8 +3058,8 @@ struct GameDriver spcenctr_driver =
 	0,
 	"spcenctr",
 	"Space Encounters",
-	"????",
-	"?????",
+	"1980",
+	"Midway",
 	"Space Invaders Team\nLee Taylor\n",
 	0,
 	&spcenctr_machine_driver,
@@ -2938,8 +3083,8 @@ struct GameDriver clowns_driver =
 	0,
 	"clowns",
 	"Clowns",
-	"????",
-	"?????",
+	"1978",
+	"Midway",
 	"Space Invaders Team\nLee Taylor\n",
 	0,
 	&clowns_machine_driver,
@@ -2963,8 +3108,8 @@ struct GameDriver gmissile_driver =
 	0,
 	"gmissile",
 	"Guided Missile",
-	"????",
-	"?????",
+	"1977",
+	"Midway",
 	"Lee Taylor\n",
 	0,
 	&boothill_machine_driver,
@@ -2988,8 +3133,8 @@ struct GameDriver seawolf_driver =
 	0,
 	"seawolf",
 	"Sea Wolf",
-	"????",
-	"?????",
+	"1976",
+	"Midway",
 	"Lee Taylor\n",
 	0,
 	&seawolf_machine_driver,
@@ -3013,8 +3158,8 @@ struct GameDriver gunfight_driver =
 	0,
 	"gunfight",
 	"Gunfight",
-	"????",
-	"?????",
+	"1975",
+	"Midway",
 	"Lee Taylor\n",
 	0,
 	&gunfight_machine_driver,
@@ -3038,8 +3183,8 @@ struct GameDriver zzzap_driver =
 	0,
 	"280zzzap",
 	"280-ZZZAP",
-	"????",
-	"?????",
+	"1976",
+	"Midway",
 	"Space Invaders Team\nLee Taylor\n",
 	0,
 	&zzzap_machine_driver,
@@ -3065,8 +3210,8 @@ struct GameDriver tornbase_driver =
 	0,
 	"tornbase",
 	"Tornado Baseball",
-	"????",
-	"?????",
+	"1976",
+	"Midway",
 	"Lee Taylor\n",
 	0,
 	&tornbase_machine_driver,
@@ -3091,8 +3236,8 @@ struct GameDriver maze_driver =
 	0,
 	"maze",
 	"The Amazing Maze Game",
-	"????",
-	"?????",
+	"1976",
+	"Midway",
 	"Space Invaders Team\nLee Taylor\n",
 	0,
 	&tornbase_machine_driver,
@@ -3116,8 +3261,8 @@ struct GameDriver lupin3_driver =
 	0,
 	"lupin3",
 	"Lupin III",
-	"????",
-	"?????",
+	"1980",
+	"Taito",
 	"Space Invaders Team\nLee Taylor\n",
 	0,
 	&lupin3_machine_driver,
@@ -3141,8 +3286,8 @@ struct GameDriver helifire_driver =                                             
 	0,
 	"helifire",
 	"Heli Fire",
-	"????",
-	"?????",
+	"1980",
+	"Nintendo",
 	"Michael Strutts (Space Invaders emulator)\nNicola Salmoria\nMirko Buffoni\nValerio Verrando\nMike Coates\nMarco Cassili",
 	0,
 	&bandido_machine_driver,
@@ -3166,8 +3311,8 @@ struct GameDriver spacefev_driver =                                             
 	0,
 	"spacefev",
 	"Space Fever",
-	"????",
-	"?????",
+	"1980",
+	"Nintendo",
 	"Michael Strutts (Space Invaders emulator)\nNicola Salmoria\nMirko Buffoni\nValerio Verrando\nMike Coates\nMarco Cassili",
 	0,
 	&bandido_machine_driver,
@@ -3267,3 +3412,27 @@ struct GameDriver m4_driver =
 };
 #endif
 
+struct GameDriver polaris_driver =
+{
+	__FILE__,
+	0,
+	"polaris",
+	"Polaris",
+	"1980",
+	"Taito",
+	"Space Invaders Team",
+	0,
+	&polaris_machine_driver,
+
+	polaris_rom,
+	0, 0,
+	0,
+	0,      /* sound_prom */
+
+	polaris_input_ports,
+
+	0, palette, 0,
+	ORIENTATION_ROTATE_270,
+
+	0, 0
+};

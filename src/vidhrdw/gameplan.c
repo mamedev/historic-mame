@@ -447,7 +447,7 @@ void gameplan_video_w(int offset,int data)
 ***************************************************************************/
 
 
-void gameplan_vh_screenrefresh(struct osd_bitmap *bitmap)
+void gameplan_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	/* copy the character mapped graphics */
 	copybitmap(bitmap, tmpbitmap, 0, 0, 0, 0,

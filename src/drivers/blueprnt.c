@@ -73,7 +73,7 @@ write:
 
 
 void blueprnt_flipscreen_w(int offset,int data);
-void blueprnt_vh_screenrefresh(struct osd_bitmap *bitmap);
+void blueprnt_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 
 
@@ -314,7 +314,7 @@ static struct AY8910interface ay8910_interface =
 {
 	2,	/* 2 chips */
 	1250000,	/* 1.25 MHz? (hand tuned) */
-	{ 0x20ff, 0x20ff },
+	{ 255, 255 },
 	{            0, input_port_2_r },
 	{ soundlatch_r, input_port_3_r },
 	{ dipsw_w },
@@ -445,8 +445,8 @@ struct GameDriver blueprnt_driver =
 	0,
 	"blueprnt",
 	"Blue Print",
-	"????",
-	"?????",
+	"1982",
+	"Bally Midway",
 	"Nicola Salmoria (MAME driver)\nMike Balfour (high score save)",
 	0,
 	&machine_driver,

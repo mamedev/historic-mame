@@ -150,11 +150,9 @@ Known issues:
 int centiped_IN0_r(int offset);
 int centiped_IN2_r(int offset);	/* JB 971220 */
 
-extern unsigned char *centiped_paletteram;
-
 void centiped_paletteram_w (int offset, int data);
 void centiped_vh_flipscreen_w (int offset,int data);
-void centiped_vh_screenrefresh (struct osd_bitmap *bitmap);
+void centiped_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 int centiped_interrupt(void);	/* in vidhrdw */
 
@@ -190,7 +188,7 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x0400, 0x07bf, videoram_w, &videoram, &videoram_size },
 	{ 0x07c0, 0x07ff, MWA_RAM, &spriteram },
 	{ 0x1000, 0x100f, pokey1_w },
-	{ 0x1400, 0x140f, centiped_paletteram_w, &centiped_paletteram },
+	{ 0x1400, 0x140f, centiped_paletteram_w, &paletteram },
 	{ 0x1600, 0x163f, atari_vg_earom_w },
 	{ 0x1680, 0x1680, atari_vg_earom_ctrl },
 	{ 0x1800, 0x1800, MWA_NOP },	/* IRQ acknowldege */
@@ -406,7 +404,7 @@ ROM_START( centiped_rom )
 	ROM_LOAD( "centiped.212", 0x0800, 0x0800, 0xc9016e3f )
 ROM_END
 
-ROM_START( centipd1_rom )
+ROM_START( centipd2_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "centiped.207", 0x2000, 0x0800, 0x45b4d32c )
 	ROM_LOAD( "centiped.208", 0x2800, 0x0800, 0xb7c2dd22 )
@@ -425,9 +423,9 @@ struct GameDriver centiped_driver =
 	__FILE__,
 	0,
 	"centiped",
-	"Centipede",
-	"????",
-	"?????",
+	"Centipede (revision 3)",
+	"1980",
+	"Atari",
 	"Ivan Mackintosh (hardware info)\nEdward Massey (MageX emulator)\nPete Rittwage (hardware info)\nNicola Salmoria (MAME driver)\nMirko Buffoni (MAME driver)\nBrad Oliver (additional code)",
 	0,
 	&machine_driver,
@@ -445,19 +443,19 @@ struct GameDriver centiped_driver =
 	atari_vg_earom_load, atari_vg_earom_save
 };
 
-struct GameDriver centipd1_driver =
+struct GameDriver centipd2_driver =
 {
 	__FILE__,
-	0,
-	"centipd1",
-	"Centipede (rev 1)",
-	"????",
-	"?????",
+	&centiped_driver,
+	"centipd2",
+	"Centipede (revision 2)",
+	"1980",
+	"Atari",
 	"Ivan Mackintosh (hardware info)\nEdward Massey (MageX emulator)\nPete Rittwage (hardware info)\nNicola Salmoria (MAME driver)\nMirko Buffoni (MAME driver)\nBrad Oliver (additional code)",
 	0,
 	&machine_driver,
 
-	centipd1_rom,
+	centipd2_rom,
 	0, 0,
 	0,
 	0,	/* sound_prom */

@@ -378,12 +378,6 @@ void atarisys2_hscroll_w (int offset, int data)
  *
  *************************************/
 
-int atarisys2_paletteram_r (int offset)
-{
-	return READ_WORD (&atarigen_paletteram[offset]);
-}
-
-
 void atarisys2_paletteram_w (int offset, int data)
 {
 	static const int intensity_table[16] =
@@ -401,11 +395,11 @@ void atarisys2_paletteram_w (int offset, int data)
 
 	int inten, red, green, blue;
 
-	int oldword = READ_WORD (&atarigen_paletteram[offset]);
+	int oldword = READ_WORD (&paletteram[offset]);
 	int newword = COMBINE_WORD (oldword, data);
 	int indx = offset / 2;
 
-	WRITE_WORD (&atarigen_paletteram[offset], newword);
+	WRITE_WORD (&paletteram[offset], newword);
 
 	inten = intensity_table[newword & 15];
 	red = (color_table[(newword >> 12) & 15] * inten) >> 4;
@@ -600,7 +594,7 @@ void atarisys2_render_mo (struct osd_bitmap *bitmap, struct rectangle *clip, uns
 
 ***************************************************************************/
 
-void atarisys2_vh_screenrefresh(struct osd_bitmap *bitmap)
+void atarisys2_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	int x, y, sx, sy, xoffs, yoffs, xscroll, yscroll, offs;
 	struct atarisys2_mo_data modata;
@@ -805,21 +799,21 @@ static void atarisys2_dump_video_ram (void)
 	fprintf (f, "MO Palette\n");
 	for (i = 0x00; i < 0x40; i++)
 	{
-		fprintf (f, "%04X ", READ_WORD (&atarigen_paletteram[i*2]));
+		fprintf (f, "%04X ", READ_WORD (&paletteram[i*2]));
 		if ((i & 15) == 15) fprintf (f, "\n");
 	}
 
 	fprintf (f, "\n\nAlpha Palette\n");
 	for (i = 0x40; i < 0x80; i++)
 	{
-		fprintf (f, "%04X ", READ_WORD (&atarigen_paletteram[i*2]));
+		fprintf (f, "%04X ", READ_WORD (&paletteram[i*2]));
 		if ((i & 15) == 15) fprintf (f, "\n");
 	}
 
 	fprintf (f, "\n\nPlayfield Palette\n");
 	for (i = 0x80; i < 0x100; i++)
 	{
-		fprintf (f, "%04X ", READ_WORD (&atarigen_paletteram[i*2]));
+		fprintf (f, "%04X ", READ_WORD (&paletteram[i*2]));
 		if ((i & 15) == 15) fprintf (f, "\n");
 	}
 

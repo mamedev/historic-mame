@@ -4,6 +4,8 @@
 #include "readcpu.h"
 #include "osd_dbg.h"
 #include <stdio.h>
+/* BFV 061298 - added include for instruction timing table */
+#include "cycletbl.h"
 
 /* LBO 090597 - added these lines and made them extern in cpudefs.h */
 int movem_index1[256];
@@ -28,6 +30,8 @@ int MC68000_ICount;
 int pending_interrupts;
 
 static int InitStatus=0;
+
+int opcode ;
 
 extern FILE * errorlog;
 
@@ -94,6 +98,8 @@ static void initCPU(void)
 
 void Exception(int nr, CPTR oldpc)
 {
+	MC68000_ICount -= exception_cycles[nr];
+
    MakeSR();
 
    if(!regs.s) {
@@ -156,18 +162,21 @@ if (!InitStatus)
 
 void MC68000_SetRegs(MC68000_Regs *src)
 {
-	regs = src->regs;
-	NFLG = (regs.sr >> 3) & 1;
-	ZFLG = (regs.sr >> 2) & 1;
-	VFLG = (regs.sr >> 1) & 1;
-	CFLG = regs.sr & 1;
+
+	regs = src->regs ;
+
+{	int sr = regs.sr ;
+
+	NFLG = (sr >> 3) & 1;
+	ZFLG = (sr >> 2) & 1;
+	VFLG = (sr >> 1) & 1;
+	CFLG = sr & 1;
 	pending_interrupts = src->pending_interrupts;
-}
+}}
 
 void MC68000_GetRegs(MC68000_Regs *dst)
 {
-	regs.sr = (regs.sr & 0xfff0) | (NFLG << 3) | (ZFLG << 2) | (VFLG << 1) |
-	CFLG;
+	regs.sr = (regs.sr & 0xfff0) | (NFLG << 3) | (ZFLG << 2) | (VFLG << 1) | CFLG;
 	dst->regs = regs;
 	dst->pending_interrupts = pending_interrupts;
 }
@@ -197,8 +206,6 @@ int  MC68000_GetPC(void)
 
 int MC68000_Execute(int cycles)
 {
-	UWORD opcode;
-
 	if ((pending_interrupts & MC68000_STOP) && !(pending_interrupts & 0xff000000))
 		return cycles;
 
@@ -240,8 +247,9 @@ int MC68000_Execute(int cycles)
 			opcode=nextiword();
 		#endif
 
-		MC68000_ICount -= 12;
-		cpufunctbl[opcode](opcode);
+/* BFV 061298 - removed "MC68000_ICount -= 12;" added index lookup for timing table */
+		MC68000_ICount -= cycletbl[opcode];
+		cpufunctbl[opcode]();
 
 	}
 	while (MC68000_ICount > 0);
@@ -264,4 +272,5 @@ UBYTE *allocmem(long size, UBYTE init_value) {
    }
    return(p);
 }
+
 

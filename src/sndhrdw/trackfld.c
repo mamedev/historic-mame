@@ -12,7 +12,7 @@ struct SN76496interface konami_sn76496_interface =
 {
 	1,	/* 1 chip */
 	14318180/8,	/*  1.7897725 Mhz */
-	{ 255*2, 255*2 }
+	{ 255 }
 };
 
 struct DACinterface konami_dac_interface =

@@ -192,7 +192,7 @@ void bankp_out_w(int offset,int data)
   the main emulation engine.
 
 ***************************************************************************/
-void bankp_vh_screenrefresh(struct osd_bitmap *bitmap)
+void bankp_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	int offs;
 

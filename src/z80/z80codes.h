@@ -14,8 +14,8 @@
         R.SP.W.l+=2
 #define M_PUSH(Rg)          \
         R.SP.W.l-=2;        \
-        M_WRSTACK(R.SP.D,R.Rg.D); \
-	M_WRSTACK((word)(R.SP.D+1),R.Rg.D>>8)
+        M_WRSTACK(R.SP.D,R.Rg.B.l);	/* NS 980720 */ \
+	M_WRSTACK((word)(R.SP.D+1),R.Rg.B.h)	/* NS 980720 */
 #define M_CALL              \
 {                           \
  int q;                     \

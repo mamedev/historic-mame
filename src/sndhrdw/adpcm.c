@@ -330,7 +330,7 @@ void ADPCM_sh_update (void)
 
 		/* play the result */
 		if (Machine->sample_bits == 16)
-			osd_play_streamed_sample_16 (voice->channel, voice->buffer, buffer_len, emulation_rate, voice->volume);
+			osd_play_streamed_sample_16 (voice->channel, voice->buffer, 2*buffer_len, emulation_rate, voice->volume);
 		else
 			osd_play_streamed_sample (voice->channel, voice->buffer, buffer_len, emulation_rate, voice->volume);
 
@@ -388,6 +388,39 @@ if (errorlog) fprintf(errorlog,"warning: ADPCM_trigger() called with unknown tri
 
 
 
+void ADPCM_play (int num, int offset, int length)
+{
+	struct ADPCMVoice *voice = adpcm + num;
+
+
+	/* bail if we're not playing anything */
+	if (Machine->sample_rate == 0)
+		return;
+
+	/* range check the numbers */
+	if (num >= adpcm_intf->num)
+	{
+		if (errorlog) fprintf(errorlog,"error: ADPCM_trigger() called with channel = %d, but only %d channels allocated\n", num, adpcm_intf->num);
+		return;
+	}
+
+	/* update the ADPCM voice */
+	ADPCM_update (voice, cpu_scalebyfcount (buffer_len));
+
+fprintf(errorlog,"play num %d offset %05x length %04x\n",num,offset,length);
+	/* set up the voice to play this sample */
+	voice->playing = 1;
+	voice->base = &Machine->memory_region[adpcm_intf->region][offset];
+	voice->sample = 0;
+	voice->count = length;
+
+	/* also reset the ADPCM parameters */
+	voice->signal = -2;
+	voice->step = 0;
+}
+
+
+
 /*
  *   Stop playback on an ADPCM data channel
  */
@@ -414,6 +447,30 @@ void ADPCM_stop (int num)
 	voice->playing = 0;
 }
 
+/*
+ *   Change volume on an ADPCM data channel
+ */
+
+void ADPCM_setvol (int num, int vol)
+{
+	struct ADPCMVoice *voice = adpcm + num;
+
+	/* bail if we're not playing anything */
+	if (Machine->sample_rate == 0)
+		return;
+
+	/* range check the numbers */
+	if (num >= adpcm_intf->num)
+	{
+		if (errorlog) fprintf(errorlog,"error: ADPCM_setvol() called with channel = %d, but only %d channels allocated\n", num, adpcm_intf->num);
+		return;
+	}
+
+	voice->volume = vol;
+
+	/* update the ADPCM voice */
+	ADPCM_update(voice, cpu_scalebyfcount (buffer_len));
+}
 
 
 /*

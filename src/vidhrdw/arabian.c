@@ -382,7 +382,7 @@ void arabian_videoramw(int offset, int val)
 }
 
 
-void arabian_vh_screenrefresh(struct osd_bitmap *bitmap)
+void arabian_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	/* copy the character mapped graphics */
 	copybitmap(bitmap,tmpbitmap2,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);

@@ -22,54 +22,8 @@ int mystston_videoram2_size;
 unsigned char *mystston_videoram3,*mystston_colorram3;
 int mystston_videoram3_size;
 unsigned char *mystston_scroll;
-unsigned char *mystston_paletteram;
 static struct osd_bitmap *tmpbitmap2;
 static unsigned char *dirtybuffer2;
-
-
-/***************************************************************************
-
-  Convert the color PROMs into a more useable format.
-
-  Actually Mysterious Stones uses RAM, not PROMs to store the palette.
-  I don't know for sure how the palette RAM is connected to the RGB output,
-  but it's probably the usual:
-
-  bit 7 -- 220 ohm resistor  -- BLUE
-        -- 470 ohm resistor  -- BLUE
-        -- 220 ohm resistor  -- GREEN
-        -- 470 ohm resistor  -- GREEN
-        -- 1  kohm resistor  -- GREEN
-        -- 220 ohm resistor  -- RED
-        -- 470 ohm resistor  -- RED
-  bit 0 -- 1  kohm resistor  -- RED
-
-***************************************************************************/
-void mystston_paletteram_w(int offset,int data)
-{
-	int bit0,bit1,bit2;
-	int r,g,b;
-
-	mystston_paletteram[offset] = data;
-
-	bit0 = (data >> 0) & 0x01;
-	bit1 = (data >> 1) & 0x01;
-	bit2 = (data >> 2) & 0x01;
-	r = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
-
-	bit0 = (data >> 3) & 0x01;
-	bit1 = (data >> 4) & 0x01;
-	bit2 = (data >> 5) & 0x01;
-	g = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
-
-	bit0 = 0;
-	bit1 = (data >> 6) & 0x01;
-	bit2 = (data >> 7) & 0x01;
-	b = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
-
-	palette_change_color(offset,r,g,b);
-}
-
 
 
 /***************************************************************************
@@ -156,7 +110,7 @@ void mystston_colorram3_w(int offset,int data)
   the main emulation engine.
 
 ***************************************************************************/
-void mystston_vh_screenrefresh(struct osd_bitmap *bitmap)
+void mystston_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	int offs;
 

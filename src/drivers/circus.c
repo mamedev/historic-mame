@@ -26,9 +26,9 @@ void circus_clown_y_w(int offset, int data);
 void circus_clown_z_w(int offset, int data);
 
 
-void crash_vh_screenrefresh(struct osd_bitmap *bitmap);
-void circus_vh_screenrefresh(struct osd_bitmap *bitmap);
-void robotbowl_vh_screenrefresh(struct osd_bitmap *bitmap);
+void crash_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void circus_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void robotbowl_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 int crash_interrupt(void);
 
@@ -257,8 +257,8 @@ struct GameDriver circus_driver =
 	0,
 	"circus",
 	"Circus",
-	"????",
-	"?????",
+	"1977",
+	"Exidy",
 	"Mike Coates (MAME driver)\nValerio Verrando (high score save)",
 	0,
 	&machine_driver,
@@ -402,8 +402,8 @@ struct GameDriver robotbwl_driver =
 	0,
 	"robotbwl",
 	"Robot Bowl",
-	"????",
-	"?????",
+	"1977",
+	"Exidy",
 	"Mike Coates",
 	0,
 	&robotbowl_machine_driver,
@@ -555,8 +555,8 @@ struct GameDriver crash_driver =
 	0,
 	"crash",
 	"Crash",
-	"????",
-	"?????",
+	"1979",
+	"Exidy",
 	"Mike Coates",
 	0,
 	&crash_machine_driver,

@@ -2,7 +2,7 @@
 #include "vidhrdw/generic.h"
 
 
-void pingpong_vh_screenrefresh(struct osd_bitmap *bitmap);
+void pingpong_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 void pingpong_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 
 static unsigned char *intenable;
@@ -344,8 +344,8 @@ struct GameDriver pingpong_driver =
 	0,
 	"pingpong",
 	"Ping Pong",
-	"????",
-	"?????",
+	"1985",
+	"Konami",
 	"Jarek Parchanski (MAME driver)\nMartin Binder (color info)",
 	0,
 	&machine_driver,

@@ -9,7 +9,7 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-unsigned char *mcr68_paletteram,*mcr68_spriteram;
+unsigned char *mcr68_spriteram;
 
 static char sprite_transparency[512]; /* no mcr3 game has more than this many sprites */
 
@@ -67,20 +67,18 @@ void mcr68_vh_convert_color_prom(unsigned char *palette, unsigned short *colorta
 
 /******************************************************************************/
 
-int mcr68_palette_r(int offset)
-{
-	return READ_WORD(&mcr68_paletteram[offset]);
-}
-
-void mcr68_palette_w(int offset,int data)
+void mcr68_paletteram_w(int offset,int data)
 {
 	int r,g,b;
+	int oldword = READ_WORD(&paletteram[offset]);
+	int newword = COMBINE_WORD(oldword,data);
 
-	WRITE_WORD(&mcr68_paletteram[offset],data);
 
-	r = ((offset & 1) << 2) + (data >> 6);
-	g = (data >> 0) & 7;
-	b = (data >> 3) & 7;
+	WRITE_WORD(&paletteram[offset],newword);
+
+	r = ((offset & 1) << 2) + (newword >> 6);
+	g = (newword >> 0) & 7;
+	b = (newword >> 3) & 7;
 
 	/* up to 8 bits */
 	r = (r << 5) | (r << 2) | (r >> 1);
@@ -103,7 +101,7 @@ int mcr68_videoram_r(int offset)
 
 /******************************************************************************/
 
-void xenophobe_vh_screenrefresh(struct osd_bitmap *bitmap)
+void xenophobe_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
    int offs;
    int mx,my;

@@ -114,7 +114,7 @@ void shaolins_palettebank_w(int offset,int data)
   the main emulation engine.
 
 ***************************************************************************/
-void shaolins_vh_screenrefresh(struct osd_bitmap *bitmap)
+void shaolins_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	int offs;
 	int sx,sy;

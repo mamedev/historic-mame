@@ -13,6 +13,7 @@ updated: 02-06-98 HJB moved Astro Invaders specific to z80bw.c
 
 
 unsigned char *invaders_videoram;
+static int flipped = 0;
 
 /* palette colors (see drivers/8080bw.c) */
 enum { BLACK, RED, GREEN, YELLOW, WHITE, CYAN, PURPLE };
@@ -42,8 +43,50 @@ void invaders_vh_stop (void)
 	osd_free_bitmap (tmpbitmap);
 }
 
+void invaders_vh_flipscreen(int data)
+{
+	if (input_port_3_r(0) & 0x01)
+	{
+		if (data != flipped)
+		{
+			int x,y;
+			int x_size = 256, y_size = 224;
+			int x_start = 0, y_start = 0;
+			int x_last, y_last;
+			if (Machine->orientation & ORIENTATION_SWAP_XY)
+			{
+				int tw = x_size;
+				x_size = y_size, y_size = tw;
+			}
+			if (Machine->orientation & ORIENTATION_FLIP_X)
+				x_start = 256-x_size;
+			if (Machine->orientation & ORIENTATION_FLIP_Y)
+				y_start = 256-y_size;
+			x_last = x_start+x_size-1;
+			y_last = y_start+y_size-1;
+			for (y = 0; y < y_size; y++)
+			{
+				for (x = 0; x < x_size/2; x++)
+				{
+					int col = tmpbitmap->line[y_last-y][x_last-x];
+					Machine->scrbitmap->line[y_last-y][x_last-x] = tmpbitmap->line[y_last-y][x_last-x] = tmpbitmap->line[y_start+y][x_start+x];
+					Machine->scrbitmap->line[y_start+y][x_start+x] = tmpbitmap->line[y_start+y][x_start+x] = col;
+				}
+			}
+			osd_mark_dirty (x_start,y_start,x_last,y_last,0);
+			flipped = data;
+		}
+	}
+}
+
 static void plot_pixel_8080 (int x, int y, int col)
 {
+	if (flipped)
+	{
+		x = 255-x;
+		y = 223-y;
+	}
+
 	if (Machine->orientation & ORIENTATION_SWAP_XY)
 	{
 		int temp;
@@ -58,6 +101,7 @@ static void plot_pixel_8080 (int x, int y, int col)
 		y = 255 - y;
 
 	tmpbitmap->line[y][x] = col;
+	Machine->scrbitmap->line[y][x] = col;
 	/* TODO: we should mark 8 bits dirty at a time */
 	osd_mark_dirty (x,y,x,y,0);
 }
@@ -245,6 +289,7 @@ void boothill_videoram_w (int offset,int data)
 }
 
 
+
 /***************************************************************************
 
   Draw the game screen in the given osd_bitmap.
@@ -252,8 +297,9 @@ void boothill_videoram_w (int offset,int data)
   the main emulation engine.
 
 ***************************************************************************/
-void invaders_vh_screenrefresh(struct osd_bitmap *bitmap)
+void invaders_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
-	/* copy the character mapped graphics */
-	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+	if (full_refresh)
+		/* copy the character mapped graphics */
+		copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
 }

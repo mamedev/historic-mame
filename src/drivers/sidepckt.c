@@ -38,7 +38,7 @@ TODO:
 #include "M6502/M6502.h"
 
 /* from vidhrdw */
-extern void sidepocket_vh_screenrefresh(struct osd_bitmap *bitmap);
+extern void sidepocket_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 /* stub for reading input ports as active low (makes building ports much easier) */
 static int low_input_r( int offset ) {
@@ -231,7 +231,7 @@ static struct YM2203interface ym2203_interface =
 static struct YM3526interface ym3526_interface =
 {
     1,                      /* 1 chip (no more supported) */
-    3000000,        /* 3 MHz ? (not supported) */
+	3600000,	/* 3.600000 MHz ? (partially supported) */
     { 255 }         /* (not supported) */
 };
 
@@ -262,7 +262,7 @@ static struct MachineDriver machine_driver =
 	/* video hardware */
 	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
 	gfxdecodeinfo,
-	sizeof( palette ) / 3,sizeof( colortable ),
+	sizeof(palette)/3,sizeof(colortable)/sizeof(unsigned short),
 	0,
 
 	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY,
@@ -314,8 +314,8 @@ struct GameDriver sidepckt_driver =
 	0,
     "sidepckt",
     "Side Pocket",
-	"????",
-	"?????",
+	"1986",
+	"Data East Corporation",
     "Ernesto Corvi\nMarc Vergoossen (hardware info)",
 	0,
     &machine_driver,

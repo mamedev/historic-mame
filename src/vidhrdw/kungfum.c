@@ -14,6 +14,7 @@
 unsigned char *kungfum_scroll_low;
 unsigned char *kungfum_scroll_high;
 static int flipscreen;
+static const unsigned char *sprite_height_prom;
 
 
 
@@ -75,6 +76,11 @@ void kungfum_vh_convert_color_prom(unsigned char *palette, unsigned short *color
 
 		color_prom++;
 	}
+
+	color_prom += 2*Machine->drv->total_colors;
+	/* color_prom now points to the beginning of the sprite height table */
+
+	sprite_height_prom = color_prom;	/* we'll need this at run time */
 }
 
 
@@ -136,7 +142,7 @@ void kungfum_flipscreen_w(int offset,int data)
   the main emulation engine.
 
 ***************************************************************************/
-void kungfum_vh_screenrefresh(struct osd_bitmap *bitmap)
+void kungfum_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	int offs,i;
 
@@ -202,12 +208,6 @@ void kungfum_vh_screenrefresh(struct osd_bitmap *bitmap)
 	for (offs = 0;offs < spriteram_size;offs += 8)
 	{
 		int bank,incr,code,col,flipx,flipy,sx,sy;
-		static unsigned char sprite_height_prom[] =
-		{
-			/* B-5F - sprite height, one entry per 32 sprites */
-			0x00,0x00,0x01,0x01,0x01,0x01,0x01,0x01,0x00,0x00,0x01,0x01,0x02,0x02,0x02,0x02,
-			0x00,0x01,0x01,0x01,0x01,0x01,0x01,0x00,0x00,0x01,0x01,0x00,0x01,0x01,0x01,0x01,
-		};
 
 
 		bank = spriteram[offs+5] & 0x03;

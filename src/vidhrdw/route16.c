@@ -277,7 +277,7 @@ static void common_videoram_w(int offset,int data,
   the main emulation engine.
 
 ***************************************************************************/
-void route16_vh_screenrefresh(struct osd_bitmap *bitmap)
+void route16_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
         if (video_remap_1)
         {

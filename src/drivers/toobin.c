@@ -98,7 +98,6 @@ extern unsigned char *toobin_moslip;
 
 int toobin_io_r (int offset);
 int toobin_6502_switch_r (int offset);
-int toobin_paletteram_r (int offset);
 int toobin_playfieldram_r (int offset);
 int toobin_sound_r (int offset);
 int toobin_controls_r (int offset);
@@ -118,7 +117,7 @@ void toobin_init_machine (void);
 
 int toobin_vh_start (void);
 void toobin_vh_stop (void);
-void toobin_vh_screenrefresh (struct osd_bitmap *bitmap);
+void toobin_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 
 /*************************************
@@ -130,15 +129,15 @@ void toobin_vh_screenrefresh (struct osd_bitmap *bitmap);
 static struct MemoryReadAddress toobin_readmem[] =
 {
 	{ 0x000000, 0x07ffff, MRA_ROM },
-	{ 0xc00000, 0xc07fff, toobin_playfieldram_r, &atarigen_playfieldram, &atarigen_playfieldram_size },
-	{ 0xc08000, 0xc097ff, MRA_BANK2, &atarigen_alpharam, &atarigen_alpharam_size },
-	{ 0xc09800, 0xc09fff, MRA_BANK3, &atarigen_spriteram, &atarigen_spriteram_size },
-	{ 0xc10000, 0xc107ff, toobin_paletteram_r, &atarigen_paletteram, &atarigen_paletteram_size },
+	{ 0xc00000, 0xc07fff, toobin_playfieldram_r },
+	{ 0xc08000, 0xc097ff, MRA_BANK2 },
+	{ 0xc09800, 0xc09fff, MRA_BANK3 },
+	{ 0xc10000, 0xc107ff, paletteram_word_r },
 	{ 0xff6000, 0xff6003, MRA_NOP },		/* who knows? read at controls time */
 	{ 0xff8800, 0xff8803, toobin_controls_r },
 	{ 0xff9000, 0xff9003, toobin_io_r },
 	{ 0xff9800, 0xff9803, atarigen_sound_r },
-	{ 0xffa000, 0xffafff, atarigen_eeprom_r, &atarigen_eeprom, &atarigen_eeprom_size },
+	{ 0xffa000, 0xffafff, atarigen_eeprom_r },
 	{ 0xffc000, 0xffffff, MRA_BANK1 },
 	{ -1 }  /* end of table */
 };
@@ -147,10 +146,10 @@ static struct MemoryReadAddress toobin_readmem[] =
 static struct MemoryWriteAddress toobin_writemem[] =
 {
 	{ 0x000000, 0x07ffff, MWA_ROM },
-	{ 0xc00000, 0xc07fff, toobin_playfieldram_w },
-	{ 0xc08000, 0xc097ff, MWA_BANK2 },
-	{ 0xc09800, 0xc09fff, MWA_BANK3 },
-	{ 0xc10000, 0xc107ff, toobin_paletteram_w },
+	{ 0xc00000, 0xc07fff, toobin_playfieldram_w, &atarigen_playfieldram, &atarigen_playfieldram_size },
+	{ 0xc08000, 0xc097ff, MWA_BANK2, &atarigen_alpharam, &atarigen_alpharam_size },
+	{ 0xc09800, 0xc09fff, MWA_BANK3, &atarigen_spriteram, &atarigen_spriteram_size },
+	{ 0xc10000, 0xc107ff, toobin_paletteram_w, &paletteram },
 	{ 0xff8000, 0xff8003, watchdog_reset_w },
 	{ 0xff8100, 0xff8103, atarigen_sound_w },
 	{ 0xff8300, 0xff8303, MWA_BANK7, &toobin_intensity },
@@ -161,7 +160,7 @@ static struct MemoryWriteAddress toobin_writemem[] =
 	{ 0xff8500, 0xff8503, atarigen_eeprom_enable_w },
 	{ 0xff8600, 0xff8603, MWA_BANK4, &atarigen_hscroll },
 	{ 0xff8700, 0xff8703, MWA_BANK5, &atarigen_vscroll },
-	{ 0xffa000, 0xffafff, atarigen_eeprom_w },
+	{ 0xffa000, 0xffafff, atarigen_eeprom_w, &atarigen_eeprom, &atarigen_eeprom_size },
 	{ 0xffc000, 0xffffff, MWA_BANK1 },
 	{ -1 }  /* end of table */
 };
@@ -387,7 +386,7 @@ static struct MachineDriver toobin_machine_driver =
 	0,0,0,0,
 	{
 		{
-			SOUND_YM2151_ALT,
+			SOUND_YM2151,
 			&ym2151_interface
 		},
 		{
@@ -470,8 +469,8 @@ struct GameDriver toobin_driver =
 	0,
 	"toobin",
 	"Toobin'",
-	"????",
-	"?????",
+	"1988",
+	"Atari Games",
 	"Aaron Giles (MAME driver)\nTim Lindquist (hardware info)",
 	0,
 	&toobin_machine_driver,

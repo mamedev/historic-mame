@@ -55,8 +55,8 @@ void rallyx_flipscreen_w(int offset,int data);
 void rallyx_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 int rallyx_vh_start(void);
 void rallyx_vh_stop(void);
-void locomotn_vh_screenrefresh(struct osd_bitmap *bitmap);
-void jungler_vh_screenrefresh(struct osd_bitmap *bitmap);
+void locomotn_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void jungler_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 
 
@@ -460,7 +460,7 @@ static struct AY8910interface ay8910_interface =
 {
 	2,	/* 2 chips */
 	1789750,	/* 1.78975 MHz ? (same as other Konami games) */
-	{ 0x38ff, 0x38ff },
+	{ 0x20ff, 0x20ff },
 	{ soundlatch_r },
 	{ locomotn_portB_r },
 	{ 0 },
@@ -740,8 +740,8 @@ struct GameDriver locomotn_driver =
 	0,
 	"locomotn",
 	"Loco-Motion",
-	"????",
-	"?????",
+	"1982",
+	"Konami (Centuri license)",
 	"Nicola Salmoria\nMike Balfour (high score save)\nKevin Klopp (color info)",
 	0,
 	&machine_driver,
@@ -765,8 +765,8 @@ struct GameDriver jungler_driver =
 	0,
 	"jungler",
 	"Jungler",
-	"????",
-	"?????",
+	"1981",
+	"Konami",
 	"Nicola Salmoria",
 	0,
 	&jungler_machine_driver,
@@ -790,10 +790,10 @@ struct GameDriver commsega_driver =
 	0,
 	"commsega",
 	"Commando (Sega)",
-	"????",
-	"?????",
+	"1983",
+	"Sega",
 	"Nicola Salmoria\nBrad Oliver",
-	0,
+	GAME_NOT_WORKING,
 	&machine_driver,
 
 	commsega_rom,

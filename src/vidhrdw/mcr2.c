@@ -12,7 +12,6 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-unsigned char *mcr2_paletteram;
 
 static int sprite_transparency[128]; /* no mcr2 game has more than this many sprites */
 
@@ -23,12 +22,12 @@ static int sprite_transparency[128]; /* no mcr2 game has more than this many spr
 
 ***************************************************************************/
 
-void mcr2_palette_w(int offset,int data)
+void mcr2_paletteram_w(int offset,int data)
 {
 	int r,g,b;
 
 
-	mcr2_paletteram[offset] = data;
+	paletteram[offset] = data;
 
 	/* bit 2 of the red component is taken from bit 0 of the address */
 	r = ((offset & 1) << 2) + (data >> 6);
@@ -54,7 +53,7 @@ void mcr2_videoram_w(int offset,int data)
 }
 
 
-void mcr2_vh_screenrefresh(struct osd_bitmap *bitmap)
+void mcr2_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
    int offs;
    int mx,my;
@@ -154,7 +153,7 @@ int journey_vh_start(void)
 }
 
 
-void journey_vh_screenrefresh(struct osd_bitmap *bitmap)
+void journey_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
    int offs;
    int mx,my;

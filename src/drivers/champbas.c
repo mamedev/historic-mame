@@ -36,7 +36,7 @@ The second CPU plays speech
 
 
 void champbas_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-void champbas_vh_screenrefresh(struct osd_bitmap *bitmap);
+void champbas_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 
 
@@ -244,7 +244,7 @@ static struct AY8910interface ay8910_interface =
 {
 	1,	/* 1 chip */
 	1500000,	/* 1.5 MHz ? */
-	{ 0x30ff },
+	{ 255 },
 	{ input_port_0_r },
 	{ input_port_1_r },
 	{ 0 },
@@ -359,8 +359,8 @@ struct GameDriver champbas_driver =
 	0,
 	"champbas",
 	"Champion Baseball",
-	"????",
-	"?????",
+	"1983",
+	"Sega",
 	"Nicola Salmoria",
 	0,
 	&machine_driver,

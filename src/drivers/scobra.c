@@ -77,7 +77,7 @@ void galaxian_flipy_w(int offset,int data);
 void galaxian_attributes_w(int offset,int data);
 void galaxian_stars_w(int offset,int data);
 int scramble_vh_start(void);
-void galaxian_vh_screenrefresh(struct osd_bitmap *bitmap);
+void galaxian_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 int scramble_vh_interrupt(void);
 void scramble_background_w(int offset, int data);	/* MJC 051297 */
 
@@ -961,7 +961,7 @@ static struct AY8910interface ay8910_interface =
 {
 	2,	/* 2 chips */
 	14318000/8,	/* 1.78975 Mhz */
-	{ 0x60ff, 0x60ff },
+	{ 0x30ff, 0x30ff },
 	{ soundlatch_r },
 	{ scramble_portB_r },
 	{ 0 },
@@ -972,7 +972,7 @@ static struct AY8910interface hustler_ay8910_interface =
 {
 	1,	/* 1 chip */
 	14318000/8,	/* 1.78975 Mhz */
-	{ 0x60ff, 0x60ff },
+	{ 0x30ff },
 	{ soundlatch_r },
 	{ frogger_portB_r },
 	{ 0 },
@@ -1279,6 +1279,7 @@ ROM_START( scobra_rom )
 	ROM_LOAD( "scobra5h.bin", 0x0800, 0x0800, 0xaa5bbcd1 )
 
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	/* the ROMs were bad - I took the ones from the Konami version */
 	ROM_LOAD( "scobra5c.bin", 0x0000, 0x0800, 0x5b7ffd15 )
 	ROM_LOAD( "scobra5d.bin", 0x0800, 0x0800, 0xc1522792 )
 	ROM_LOAD( "scobra5e.bin", 0x1000, 0x0800, 0xc4b1e3e7 )
@@ -1483,8 +1484,8 @@ ROM_START( stratgyb_rom )
 	ROM_LOAD( "st10", 0x0800, 0x0800, 0xc939da93 )
 
 	ROM_REGION(0x10000)	/* 64k for sound code */
-	ROM_LOAD( "st1", 0x0000, 0x1000, 0xac5c8db8 )
-	ROM_LOAD( "st2", 0x1000, 0x1000, 0x03f78e87 )
+	ROM_LOAD( "5c.snd", 0x0000, 0x1000, 0xac5c8db8 )
+	ROM_LOAD( "5d.snd", 0x1000, 0x1000, 0x03f78e87 )
 ROM_END
 
 ROM_START( darkplnt_rom )
@@ -1841,8 +1842,8 @@ struct GameDriver scobra_driver =
 	0,
 	"scobra",
 	"Super Cobra (Stern)",
-	"????",
-	"?????",
+	"1981",
+	"Stern",
 	"Nicola Salmoria (MAME driver)\nValerio Verrando (high score)\nTim Lindquist (color info)\nMarco Cassili",
 	0,
 	&machine_driver,
@@ -1863,11 +1864,11 @@ struct GameDriver scobra_driver =
 struct GameDriver scobrak_driver =
 {
 	__FILE__,
-	0,
+	&scobra_driver,
 	"scobrak",
 	"Super Cobra (Konami)",
-	"????",
-	"?????",
+	"1981",
+	"Konami",
 	"Nicola Salmoria (MAME driver)\nValerio Verrando (high score)\nTim Lindquist (color info)\nMarco Cassili",
 	0,
 	&machine_driver,
@@ -1888,11 +1889,11 @@ struct GameDriver scobrak_driver =
 struct GameDriver scobrab_driver =
 {
 	__FILE__,
-	0,
+	&scobra_driver,
 	"scobrab",
 	"Super Cobra (bootleg)",
-	"????",
-	"?????",
+	"1981",
+	"bootleg",
 	"Nicola Salmoria (MAME driver)\nValerio Verrando (high score)\nTim Lindquist (color info)\nMarco Cassili",
 	0,
 	&machine_driver,
@@ -1916,8 +1917,8 @@ struct GameDriver losttomb_driver =
 	0,
 	"losttomb",
 	"Lost Tomb",
-	"????",
-	"?????",
+	"1982",
+	"Stern",
 	"Nicola Salmoria\nJamer R. Twine\nMirko Buffoni\nFabio Buffoni",
 	0,
 	&machine_driver,
@@ -1941,8 +1942,8 @@ struct GameDriver superbon_driver =
 	0,
 	"superbon",
 	"Super Bond",
-	"????",
-	"?????",
+	"1982?",
+	"Alpha?",
 	"Chris Hardy",
 	0,
 	&machine_driver,
@@ -1966,8 +1967,8 @@ struct GameDriver rescue_driver =
 	0,
 	"rescue",
 	"Rescue",
-	"????",
-	"?????",
+	"1982",
+	"Stern",
 	"James R. Twine\nChris Hardy\nMirko Buffoni\nFabio Buffoni\nAlan J. McCormick\nMike Coates (Background)",
 	0,
 	&rescue_machine_driver,
@@ -1991,8 +1992,8 @@ struct GameDriver minefld_driver =
 	0,
 	"minefld",
 	"Minefield",
-	"????",
-	"?????",
+	"1983",
+	"Stern",
 	"Nicola Salmoria (MAME driver)\nAl Kossow (color info)\nMike Coates (Background)",
 	0,
 	&minefield_machine_driver,
@@ -2016,8 +2017,8 @@ struct GameDriver anteater_driver =
 	0,
 	"anteater",
 	"Ant Eater",
-	"????",
-	"?????",
+	"1982",
+	"Tago",
 	"James R. Twine\nChris Hardy\nMirko Buffoni\nFabio Buffoni",
 	0,
 	&machine_driver,
@@ -2041,8 +2042,8 @@ struct GameDriver armorcar_driver =
 	0,
 	"armorcar",
 	"Armored Car",
-	"????",
-	"?????",
+	"1981",
+	"Stern",
 	"Nicola Salmoria (MAME driver)\nMike Balfour (high score save)",
 	0,
 	&armorcar_machine_driver,
@@ -2066,8 +2067,8 @@ struct GameDriver tazmania_driver =
 	0,
 	"tazmania",
 	"Tazz-Mania",
-	"????",
-	"?????",
+	"1982",
+	"Stern",
 	"Chris Hardy\nChris Moore (high score save)",
 	0,
 	&machine_driver,
@@ -2090,9 +2091,9 @@ struct GameDriver stratgyx_driver =
 	__FILE__,
 	0,
 	"stratgyx",
-	"Strategy X (Stern)",
-	"????",
-	"?????",
+	"Strategy X",
+	"1981",
+	"Stern",
 	"Lee Taylor",
 	0,
 	&stratgyx_machine_driver,
@@ -2104,7 +2105,7 @@ struct GameDriver stratgyx_driver =
 
 	stratgyx_input_ports,
 
-	scobra_color_prom, 0, 0,	/* wrong */
+	wrong_color_prom, 0, 0,
 	ORIENTATION_DEFAULT,
 	0,0
 };
@@ -2112,11 +2113,11 @@ struct GameDriver stratgyx_driver =
 struct GameDriver stratgyb_driver =
 {
 	__FILE__,
-	0,
+	&stratgyx_driver,
 	"stratgyb",
-	"Strategy X (bootleg)",
-	"????",
-	"?????",
+	"Strong X",
+	"1982",
+	"bootleg",
 	"Lee Taylor",
 	0,
 	&stratgyx_machine_driver,
@@ -2128,7 +2129,7 @@ struct GameDriver stratgyb_driver =
 
 	stratgyx_input_ports,
 
-	scobra_color_prom, 0, 0,	/* wrong */
+	wrong_color_prom, 0, 0,
 	ORIENTATION_DEFAULT,
 	0,0
 };
@@ -2139,10 +2140,10 @@ struct GameDriver darkplnt_driver =
 	0,
 	"darkplnt",
 	"Dark Planet",
-	"????",
-	"?????",
+	"1982",
+	"Stern",
 	"Mike Balfour",
-	0,
+	GAME_NOT_WORKING,
 	&stratgyx_machine_driver,
 
 	darkplnt_rom,
@@ -2164,8 +2165,8 @@ struct GameDriver hustler_driver =
 	0,
 	"hustler",
 	"Video Hustler",
-	"????",
-	"?????",
+	"1981",
+	"Konami",
 	"Nicola Salmoria",
 	0,
 	&hustler_machine_driver,
@@ -2193,7 +2194,7 @@ struct GameDriver pool_driver =
 	"????",
 	"?????",
 	"Nicola Salmoria",
-	0,
+	GAME_NOT_WORKING,
 	&hustler_machine_driver,
 
 	pool_rom,

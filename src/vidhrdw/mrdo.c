@@ -64,29 +64,35 @@ void mrdo_vh_convert_color_prom(unsigned char *palette, unsigned short *colortab
 			bit1 = (color_prom[4 * (i / 8) + j + 32] >> 0) & 0x01;
 			bit2 = (color_prom[4 * (i % 8) + j] >> 1) & 0x01;
 			bit3 = (color_prom[4 * (i % 8) + j] >> 0) & 0x01;
-			palette[3*(4*i + j)] = 0x2c * bit0 + 0x37 * bit1 + 0x43 * bit2 + 0x59 * bit3;
+			*(palette++) = 0x2c * bit0 + 0x37 * bit1 + 0x43 * bit2 + 0x59 * bit3;
 			bit0 = (color_prom[4 * (i / 8) + j + 32] >> 3) & 0x01;
 			bit1 = (color_prom[4 * (i / 8) + j + 32] >> 2) & 0x01;
 			bit2 = (color_prom[4 * (i % 8) + j] >> 3) & 0x01;
 			bit3 = (color_prom[4 * (i % 8) + j] >> 2) & 0x01;
-			palette[3*(4*i + j) + 1] = 0x2c * bit0 + 0x37 * bit1 + 0x43 * bit2 + 0x59 * bit3;
+			*(palette++) = 0x2c * bit0 + 0x37 * bit1 + 0x43 * bit2 + 0x59 * bit3;
 			bit0 = (color_prom[4 * (i / 8) + j + 32] >> 5) & 0x01;
 			bit1 = (color_prom[4 * (i / 8) + j + 32] >> 4) & 0x01;
 			bit2 = (color_prom[4 * (i % 8) + j] >> 5) & 0x01;
 			bit3 = (color_prom[4 * (i % 8) + j] >> 4) & 0x01;
-			palette[3*(4*i + j) + 2] = 0x2c * bit0 + 0x37 * bit1 + 0x43 * bit2 + 0x59 * bit3;
+			*(palette++) = 0x2c * bit0 + 0x37 * bit1 + 0x43 * bit2 + 0x59 * bit3;
 		}
 	}
+
+	/* reserve the last color for the transparent pen (none of the game colors can have */
+	/* these RGB components) */
+	*(palette++) = 1;
+	*(palette++) = 1;
+	*(palette++) = 1;
+
 
 	/* characters with pen 0 = black */
 	for (i = 0;i < 4 * 64;i++)
 	{
-		if (i % 4 == 0) colortable[i] = 0;
+		if (i % 4 == 0) colortable[i] = 256;	/* transparent */
 		else colortable[i] = i;
 	}
 	/* characters with colored pen 0 */
-	colortable[0 + 4 * 64] = 3;	/* black, but avoid transparency */
-	for (i = 1;i < 4 * 64;i++)
+	for (i = 0;i < 4 * 64;i++)
 		colortable[i + 4 * 64] = i;
 
 	/* sprites */
@@ -196,7 +202,7 @@ void mrdo_flipscreen_w(int offset,int data)
   the main emulation engine.
 
 ***************************************************************************/
-void mrdo_vh_screenrefresh(struct osd_bitmap *bitmap)
+void mrdo_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	int offs;
 
@@ -263,7 +269,7 @@ void mrdo_vh_screenrefresh(struct osd_bitmap *bitmap)
 
 		copyscrollbitmap(bitmap,tmpbitmap1,0,0,1,&scroll,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
 
-		copybitmap(bitmap,tmpbitmap2,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_COLOR,0);
+		copybitmap(bitmap,tmpbitmap2,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_COLOR,256);
 	}
 	else
 		copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);

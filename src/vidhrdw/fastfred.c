@@ -168,7 +168,7 @@ void fastfred_flipy_w(int offset,int data)
   the main emulation engine.
 
 ***************************************************************************/
-void fastfred_vh_screenrefresh(struct osd_bitmap *bitmap)
+void fastfred_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
         int offs, charbank, colorbank;
 

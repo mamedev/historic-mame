@@ -152,6 +152,7 @@ QIX NONVOLATILE CMOS MEMORY MAP (CPU #2 -- Video) $8400-$87ff
 ***************************************************************************/
 
 #include "driver.h"
+#include "vidhrdw/generic.h"
 #include "machine/6821pia.h"
 
 /*#define TRYGAMEPIA 1*/
@@ -162,7 +163,7 @@ void qix_data_firq_w(int offset, int data);
 void qix_video_firq_w(int offset, int data);
 
 
-extern unsigned char *qix_paletteram,*qix_palettebank;
+extern unsigned char *qix_palettebank;
 extern unsigned char *qix_videoaddress;
 
 int qix_videoram_r(int offset);
@@ -175,7 +176,7 @@ void qix_palettebank_w(int offset,int data);
 int qix_sharedram_r(int offset);
 void qix_sharedram_w(int offset, int data);
 int qix_interrupt_video(void);
-void qix_vh_screenrefresh(struct osd_bitmap *bitmap);
+void qix_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 int qix_vh_start(void);
 void qix_vh_stop(void);
 void qix_init_machine(void);
@@ -297,7 +298,7 @@ static struct MemoryWriteAddress writemem_video[] =
 	{ 0x8400, 0x87ff, MWA_RAM },
 	{ 0x8800, 0x8800, qix_palettebank_w, &qix_palettebank },
 	{ 0x8c00, 0x8c00, qix_data_firq_w },
-	{ 0x9000, 0x93ff, qix_paletteram_w, &qix_paletteram },
+	{ 0x9000, 0x93ff, qix_paletteram_w, &paletteram },
 	{ 0x9400, 0x9400, qix_addresslatch_w },
 	{ 0x9402, 0x9403, MWA_RAM, &qix_videoaddress },
 	{ 0xc000, 0xffff, MWA_ROM },
@@ -315,7 +316,7 @@ static struct MemoryWriteAddress zoo_writemem_video[] =
 	{ 0x8801, 0x8801, zoo_bankswitch_w },
 	{ 0x8c00, 0x8c00, qix_data_firq_w },
 	{ 0x8c01, 0x8c01, MWA_NOP },	/* interrupt acknowledge */
-	{ 0x9000, 0x93ff, qix_paletteram_w, &qix_paletteram },
+	{ 0x9000, 0x93ff, qix_paletteram_w, &paletteram },
 	{ 0x9400, 0x9400, qix_addresslatch_w },
 	{ 0x9402, 0x9403, MWA_RAM, &qix_videoaddress },
 	{ 0xa000, 0xffff, MWA_ROM },
@@ -571,33 +572,6 @@ static struct MachineDriver zoo_machine_driver =
 
 ***************************************************************************/
 
-ROM_START( sdungeon_rom )
-	ROM_REGION(0x10000)	/* 64k for code for the first CPU (Data) */
-    ROM_LOAD( "sd14.u14", 0xA000, 0x1000, 0xf9c6981e )
-    ROM_LOAD( "sd15.u15", 0xB000, 0x1000, 0x9f512c93 )
-    ROM_LOAD( "sd16.u16", 0xC000, 0x1000, 0x3f462084 )
-    ROM_LOAD( "sd17.u17", 0xD000, 0x1000, 0xedd308f5 )
-    ROM_LOAD( "sd18.u18", 0xE000, 0x1000, 0xc50e5838 )
-    ROM_LOAD( "sd19.u19", 0xF000, 0x1000, 0xb0c02320 )
-
-	ROM_REGION(0x1000)
-	/* empty memory region - not used by the game, but needed bacause the main */
-	/* core currently always frees region #1 after initialization. */
-
-	ROM_REGION(0x12000)     /* 64k for code + 2 ROM banks for the second CPU (Video) */
-    ROM_LOAD(  "sd05.u5", 0x0A000, 0x1000, 0xfdceac26 )
-    ROM_LOAD(  "sd06.u6", 0x0B000, 0x1000, 0x02049b9a )
-
-    ROM_LOAD(  "sd07.u7", 0x0C000, 0x1000, 0x0690b3fa )
-    ROM_LOAD(  "sd08.u8", 0x0D000, 0x1000, 0x5cf68752 )
-    ROM_LOAD(  "sd09.u9", 0x0E000, 0x1000, 0x606dd945 )
-    ROM_LOAD( "sd10.u10", 0x0F000, 0x1000, 0x85f6cf42 )
-
-	ROM_REGION(0x10000) 	/* 64k for code for the third CPU (sound) */
-    ROM_LOAD( "SD26.U26", 0xF000, 0x0800, 0xa078ff04)
-    ROM_LOAD( "SD27.U27", 0xF800, 0x0800, 0x51c8f2e2 )
-ROM_END
-
 ROM_START( qix_rom )
 	ROM_REGION(0x10000)	/* 64k for code for the first CPU (Data) */
 	ROM_LOAD( "u12", 0xC000, 0x800, 0x87bd3a11 )
@@ -655,7 +629,34 @@ ROM_START( qix2_rom )
 	ROM_LOAD( "u27.rmb", 0xF800, 0x800, 0xdc9c8536 )
 ROM_END
 
-ROM_START( zookeeper_rom )
+ROM_START( sdungeon_rom )
+	ROM_REGION(0x10000)	/* 64k for code for the first CPU (Data) */
+    ROM_LOAD( "sd14.u14", 0xA000, 0x1000, 0xf9c6981e )
+    ROM_LOAD( "sd15.u15", 0xB000, 0x1000, 0x9f512c93 )
+    ROM_LOAD( "sd16.u16", 0xC000, 0x1000, 0x3f462084 )
+    ROM_LOAD( "sd17.u17", 0xD000, 0x1000, 0xedd308f5 )
+    ROM_LOAD( "sd18.u18", 0xE000, 0x1000, 0xc50e5838 )
+    ROM_LOAD( "sd19.u19", 0xF000, 0x1000, 0xb0c02320 )
+
+	ROM_REGION(0x1000)
+	/* empty memory region - not used by the game, but needed bacause the main */
+	/* core currently always frees region #1 after initialization. */
+
+	ROM_REGION(0x12000)     /* 64k for code + 2 ROM banks for the second CPU (Video) */
+    ROM_LOAD(  "sd05.u5", 0x0A000, 0x1000, 0xfdceac26 )
+    ROM_LOAD(  "sd06.u6", 0x0B000, 0x1000, 0x02049b9a )
+
+    ROM_LOAD(  "sd07.u7", 0x0C000, 0x1000, 0x0690b3fa )
+    ROM_LOAD(  "sd08.u8", 0x0D000, 0x1000, 0x5cf68752 )
+    ROM_LOAD(  "sd09.u9", 0x0E000, 0x1000, 0x606dd945 )
+    ROM_LOAD( "sd10.u10", 0x0F000, 0x1000, 0x85f6cf42 )
+
+	ROM_REGION(0x10000) 	/* 64k for code for the third CPU (sound) */
+    ROM_LOAD( "SD26.U26", 0xF000, 0x0800, 0xa078ff04)
+    ROM_LOAD( "SD27.U27", 0xF800, 0x0800, 0x51c8f2e2 )
+ROM_END
+
+ROM_START( zookeep_rom )
 	ROM_REGION(0x10000)	/* 64k for code for the first CPU (Data) */
 	ROM_LOAD( "ZB12", 0x8000, 0x1000, 0x04506034 )
 	ROM_LOAD( "ZA13", 0x9000, 0x1000, 0x91f9297d )
@@ -687,6 +688,37 @@ ROM_START( zookeeper_rom )
 	ROM_LOAD( "ZA27", 0xF000, 0x1000, 0xd583f705 )
 ROM_END
 
+ROM_START( zookeepa_rom )
+	ROM_REGION(0x10000)	/* 64k for code for the first CPU (Data) */
+	ROM_LOAD( "ZB12", 0x8000, 0x1000, 0x04506034 )
+	ROM_LOAD( "ZA13", 0x9000, 0x1000, 0x91f9297d )
+	ROM_LOAD( "ZA14", 0xA000, 0x1000, 0xa9a036e4 )
+	ROM_LOAD( "ZA15", 0xB000, 0x1000, 0x56a14af7 )
+	ROM_LOAD( "ZA16", 0xC000, 0x1000, 0x01f7597d )
+	ROM_LOAD( "ZA17", 0xD000, 0x1000, 0x3dd0c4e0 )
+	ROM_LOAD( "ZA18", 0xE000, 0x1000, 0xdc96af3a )
+	ROM_LOAD( "ZA19", 0xF000, 0x1000, 0xfd5cd200 )
+
+	ROM_REGION(0x1000)
+	/* empty memory region - not used by the game, but needed because the main */
+	/* core currently always frees region #1 after initialization. */
+
+	ROM_REGION(0x12000)     /* 64k for code + 2 ROM banks for the second CPU (Video) */
+	ROM_LOAD( "ZA5",     0x0A000, 0x1000, 0x05e61772 )
+	ROM_LOAD( "ZA3",     0x10000, 0x1000, 0x8f54bbe8 )
+	ROM_LOAD( "ZA6",     0x0B000, 0x1000, 0x3b0092ac )
+	ROM_LOAD( "ZA4",     0x11000, 0x1000, 0x8979a0b3 )
+
+	ROM_LOAD( "ZA7",     0x0C000, 0x1000, 0xe01d57bd )
+	ROM_LOAD( "ZA8",     0x0D000, 0x1000, 0x62a73b67 )
+	ROM_LOAD( "ZV35.9",  0x0E000, 0x1000, 0xb3b4499a )
+	ROM_LOAD( "ZV36.10", 0x0F000, 0x1000, 0x46f9a17d )
+
+	ROM_REGION(0x10000) 	/* 64k for code for the third CPU (sound) */
+	ROM_LOAD( "ZA25", 0xD000, 0x1000, 0x6b0469ba )
+	ROM_LOAD( "ZA26", 0xE000, 0x1000, 0x1b46045a )
+	ROM_LOAD( "ZA27", 0xF000, 0x1000, 0xd583f705 )
+ROM_END
 
 
 
@@ -731,8 +763,8 @@ struct GameDriver qix_driver =
 	0,
 	"qix",
 	"Qix",
-	"????",
-	"?????",
+	"1981",
+	"Taito America",
 	"John Butler\nEd Mueller\nAaron Giles\nMarco Cassili",
 	0,
 	&machine_driver,
@@ -753,11 +785,11 @@ struct GameDriver qix_driver =
 struct GameDriver qix2_driver =
 {
 	__FILE__,
-	0,
+	&qix_driver,
 	"qix2",
 	"Qix II (Tournament)",
-	"????",
-	"?????",
+	"1981",
+	"Taito America",
 	"John Butler\nEd Mueller\nAaron Giles\nMarco Cassili",
 	0,
 	&machine_driver,
@@ -775,19 +807,44 @@ struct GameDriver qix2_driver =
 	hiload, hisave	       /* High score load and save */
 };
 
+struct GameDriver sdungeon_driver =
+{
+	__FILE__,
+	0,
+	"sdungeon",
+	"Space Dungeon",
+	"1981",
+	"Taito America",
+	"John Butler\nEd Mueller\nAaron Giles\nMarco Cassili\nDan Boris",
+	0,
+	&machine_driver,
+
+	sdungeon_rom,
+	0, 0,   /* ROM decode and opcode decode functions */
+	0,      /* Sample names */
+	0,		/* sound_prom */
+
+	sdungeon_input_ports,
+
+	0, 0, 0,   /* colors, palette, colortable */
+	ORIENTATION_ROTATE_270,
+
+	hiload, hisave	       /* High score load and save */
+};
+
 struct GameDriver zookeep_driver =
 {
 	__FILE__,
 	0,
 	"zookeep",
-	"Zoo Keeper",
-	"????",
-	"?????",
+	"Zoo Keeper (set 1)",
+	"1982",
+	"Taito America",
 	"John Butler\nEd. Mueller\nAaron Giles",
 	0,
 	&zoo_machine_driver,
 
-    zookeeper_rom,
+    zookeep_rom,
 	0, 0,   /* ROM decode and opcode decode functions */
 	0,      /* Sample names */
 	0,		/* sound_prom */
@@ -800,27 +857,27 @@ struct GameDriver zookeep_driver =
 	hiload,hisave		/* High score load and save */
 };
 
-struct GameDriver sdungeon_driver =
+struct GameDriver zookeepa_driver =
 {
 	__FILE__,
+	&zookeep_driver,
+	"zookeepa",
+	"Zoo Keeper (set 2)",
+	"1982",
+	"Taito America",
+	"John Butler\nEd. Mueller\nAaron Giles",
 	0,
-    "sdungeon",
-    "Space Dungeon",
-	"????",
-	"?????",
-    "John Butler\nEd Mueller\nAaron Giles\nMarco Cassili\nDan Boris",
-	0,
-	&machine_driver,
+	&zoo_machine_driver,
 
-    sdungeon_rom,
+    zookeepa_rom,
 	0, 0,   /* ROM decode and opcode decode functions */
 	0,      /* Sample names */
 	0,		/* sound_prom */
 
-    sdungeon_input_ports,
+    zoo_input_ports,
 
-	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_ROTATE_270,
+    0, 0, 0,   			/* colors, palette, colortable */
+	ORIENTATION_DEFAULT,
 
-	hiload, hisave	       /* High score load and save */
+	hiload,hisave		/* High score load and save */
 };

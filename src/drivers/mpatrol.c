@@ -53,7 +53,7 @@ void mpatrol_bgcontrol_w(int offset,int data);
 int mpatrol_vh_start(void);
 void mpatrol_vh_stop(void);
 void mpatrol_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-void mpatrol_vh_screenrefresh(struct osd_bitmap *bitmap);
+void mpatrol_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 void mpatrol_io_w(int offset, int value);
 int mpatrol_io_r(int offset);
@@ -539,14 +539,34 @@ ROM_END
 
 ROM_START( mpatrolw_rom )
 	ROM_REGION(0x10000)     /* 64k for code */
-	ROM_LOAD( "mp-a.3m", 0x0000, 0x1000, 0x138439c6 )
-	ROM_LOAD( "mp-a.3l", 0x1000, 0x1000, 0x0c1bc43b )
-	ROM_LOAD( "mp-a.3k", 0x2000, 0x1000, 0x56b4c738 )
-	ROM_LOAD( "mp-a.3j", 0x3000, 0x1000, 0x9e598a75 )
+	ROM_LOAD( "mpw-a.3m", 0x0000, 0x1000, 0x138439c6 )
+	ROM_LOAD( "mpw-a.3l", 0x1000, 0x1000, 0x0c1bc43b )
+	ROM_LOAD( "mpw-a.3k", 0x2000, 0x1000, 0x56b4c738 )
+	ROM_LOAD( "mpw-a.3j", 0x3000, 0x1000, 0x9e598a75 )
 
 	ROM_REGION(0x7000)      /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "mp-e.3e", 0x0000, 0x1000, 0xc8e818a2 )       /* chars */
-	ROM_LOAD( "mp-e.3f", 0x1000, 0x1000, 0x080d9163 )
+	ROM_LOAD( "mpw-e.3e", 0x0000, 0x1000, 0xc8e818a2 )       /* chars */
+	ROM_LOAD( "mpw-e.3f", 0x1000, 0x1000, 0x080d9163 )
+	ROM_LOAD( "mp-b.3m",  0x2000, 0x1000, 0xfe518a23 )       /* sprites */
+	ROM_LOAD( "mp-b.3n",  0x3000, 0x1000, 0x974b35c3 )
+	ROM_LOAD( "mp-e.3l",  0x4000, 0x1000, 0x48b86bb0 )       /* background graphics */
+	ROM_LOAD( "mp-e.3k",  0x5000, 0x1000, 0x48d8cace )
+	ROM_LOAD( "mp-e.3h",  0x6000, 0x1000, 0x89ce19a8 )
+
+	ROM_REGION(0x10000)     /* 64k for code */
+	ROM_LOAD( "mp-snd.1a", 0xf000, 0x1000, 0x506d76fb )
+ROM_END
+
+ROM_START( mranger_rom )
+	ROM_REGION(0x10000)     /* 64k for code */
+	ROM_LOAD( "mp-a.3m", 0x0000, 0x1000, 0x0440639c )
+	ROM_LOAD( "mr-a.3l", 0x1000, 0x1000, 0xf25e07f8 )
+	ROM_LOAD( "mr-a.3k", 0x2000, 0x1000, 0x6e686d92 )
+	ROM_LOAD( "mr-a.3j", 0x3000, 0x1000, 0x39412cd3 )
+
+	ROM_REGION(0x7000)      /* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "mp-e.3e", 0x0000, 0x1000, 0xefe9bb1d )       /* chars */
+	ROM_LOAD( "mp-e.3f", 0x1000, 0x1000, 0x796d8525 )
 	ROM_LOAD( "mp-b.3m", 0x2000, 0x1000, 0xfe518a23 )       /* sprites */
 	ROM_LOAD( "mp-b.3n", 0x3000, 0x1000, 0x974b35c3 )
 	ROM_LOAD( "mp-e.3l", 0x4000, 0x1000, 0x48b86bb0 )       /* background graphics */
@@ -555,26 +575,6 @@ ROM_START( mpatrolw_rom )
 
 	ROM_REGION(0x10000)     /* 64k for code */
 	ROM_LOAD( "mp-snd.1a", 0xf000, 0x1000, 0x506d76fb )
-ROM_END
-
-ROM_START( mranger_rom )
-	ROM_REGION(0x10000)     /* 64k for code */
-	ROM_LOAD( "mr-a.3m", 0x0000, 0x1000, 0x0440639c )
-	ROM_LOAD( "mr-a.3l", 0x1000, 0x1000, 0xf25e07f8 )
-	ROM_LOAD( "mr-a.3k", 0x2000, 0x1000, 0x6e686d92 )
-	ROM_LOAD( "mr-a.3j", 0x3000, 0x1000, 0x39412cd3 )
-
-	ROM_REGION(0x7000)      /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "mr-e.3e", 0x0000, 0x1000, 0xefe9bb1d )       /* chars */
-	ROM_LOAD( "mr-e.3f", 0x1000, 0x1000, 0x796d8525 )
-	ROM_LOAD( "mr-b.3m", 0x2000, 0x1000, 0xfe518a23 )       /* sprites */
-	ROM_LOAD( "mr-b.3n", 0x3000, 0x1000, 0x974b35c3 )
-	ROM_LOAD( "mr-e.3l", 0x4000, 0x1000, 0x48b86bb0 )       /* background graphics */
-	ROM_LOAD( "mr-e.3k", 0x5000, 0x1000, 0x48d8cace )
-	ROM_LOAD( "mr-e.3h", 0x6000, 0x1000, 0x89ce19a8 )
-
-	ROM_REGION(0x10000)     /* 64k for code */
-	ROM_LOAD( "mr-snd.1a", 0xf000, 0x1000, 0x506d76fb )
 ROM_END
 
 
@@ -633,8 +633,8 @@ struct GameDriver mpatrol_driver =
 	0,
 	"mpatrol",
 	"Moon Patrol",
-	"????",
-	"?????",
+	"1982",
+	"Irem",
 	"Nicola Salmoria\nChris Hardy\nValerio Verrando\nTim Lindquist (color info)\nAaron Giles (sound)\nMarco Cassili",
 	0,
 	&machine_driver,
@@ -655,11 +655,11 @@ struct GameDriver mpatrol_driver =
 struct GameDriver mpatrolw_driver =
 {
 	__FILE__,
-	0,
+	&mpatrol_driver,
 	"mpatrolw",
 	"Moon Patrol (Williams)",
-	"????",
-	"?????",
+	"1982",
+	"Irem (Williams license)",
 	"Nicola Salmoria\nChris Hardy\nValerio Verrando\nTim Lindquist (color info)\nAaron Giles (sound)\nMarco Cassili",
 	0,
 	&machine_driver,
@@ -680,11 +680,11 @@ struct GameDriver mpatrolw_driver =
 struct GameDriver mranger_driver =
 {
 	__FILE__,
-	0,
+	&mpatrol_driver,
 	"mranger",
-	"Moon Ranger (bootleg Moon Patrol)",
-	"????",
-	"?????",
+	"Moon Ranger",
+	"1982",
+	"bootleg",
 	"Nicola Salmoria (MAME driver)\nChris Hardy (hardware info)\nTim Lindquist (color info)\nAaron Giles (sound)\nValerio Verrando (high score save)\nMarco Cassili",
 	0,
 	&machine_driver,

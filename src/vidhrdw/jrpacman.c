@@ -84,7 +84,7 @@ int jrpacman_vh_start(void)
 	memset(dirtybuffer,1,videoram_size);
 
 	/* Jr. Pac Man has a virtual screen twice as large as the visible screen */
-	if ((tmpbitmap = osd_create_bitmap(2 * Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
+	if ((tmpbitmap = osd_create_bitmap(Machine->drv->screen_width,2*Machine->drv->screen_height)) == 0)
 	{
 		free(dirtybuffer);
 		return 1;
@@ -123,6 +123,10 @@ void jrpacman_videoram_w(int offset,int data)
 
 			for (i = 2*32;i < 56*32;i += 32)
 				dirtybuffer[i + offset] = 1;
+		}
+		else if (offset > 1792)	/* colors for top and bottom two rows */
+		{
+			dirtybuffer[offset & ~0x80] = 1;
 		}
 	}
 }
@@ -169,7 +173,7 @@ void jrpacman_charbank_w(int offset,int data)
   the main emulation engine.
 
 ***************************************************************************/
-void jrpacman_vh_screenrefresh(struct osd_bitmap *bitmap)
+void jrpacman_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	int i,offs;
 
@@ -180,48 +184,52 @@ void jrpacman_vh_screenrefresh(struct osd_bitmap *bitmap)
 	{
 		if (dirtybuffer[offs])
 		{
-			int sx,sy,mx,my;
+			int mx,my;
 
 
 			dirtybuffer[offs] = 0;
 
 			/* Jr. Pac Man's screen layout is quite awkward */
-			mx = offs / 32;
-			my = offs % 32;
+			mx = offs % 32;
+			my = offs / 32;
 
-			if (mx >= 2 && mx < 60)
+			if (my >= 2 && my < 60)
 			{
-				if (mx < 56)
+				int sx, sy;
+
+				if (my < 56)
 				{
-					sx = 57 - mx;
-					sy = my + 2;
+					sy = my;
+					sx = mx+2;
 
 					drawgfx(tmpbitmap,Machine->gfx[0],
 							videoram[offs] + 256 * *jrpacman_charbank,
 						/* color is set line by line */
-							(videoram[my] & 0x1f) + 0x20 * (*jrpacman_colortablebank & 1)
+							(videoram[mx] & 0x1f) + 0x20 * (*jrpacman_colortablebank & 1)
 									+ 0x40 * (*jrpacman_palettebank & 1),
-							0,0,8*sx,8*sy,
+							0,0,
+							8*sx,8*sy,
 							0,TRANSPARENCY_NONE,0);
 				}
 				else
 				{
-					if (mx >= 58)
+					if (my >= 58)
 					{
-						sx = 29 - my;
-						sy = mx - 58;
+						sy = mx - 2;
+						sx = my - 58;
 
 						drawgfx(tmpbitmap,Machine->gfx[0],
 								videoram[offs],
 								(videoram[offs + 4*32] & 0x1f) + 0x20 * (*jrpacman_colortablebank & 1)
 										+ 0x40 * (*jrpacman_palettebank & 1),
-								0,0,8*sx,8*sy,
+								0,0,
+								8*sx,8*sy,
 								0,TRANSPARENCY_NONE,0);
 					}
 					else
 					{
-						sx = 29 - my;
-						sy = mx - 22;
+						sy = mx - 2;
+						sx = my - 22;
 
 						drawgfx(tmpbitmap,Machine->gfx[0],
 								videoram[offs] + 0x100 * (*jrpacman_charbank & 1),
@@ -244,11 +252,11 @@ void jrpacman_vh_screenrefresh(struct osd_bitmap *bitmap)
 		for (i = 0;i < 2;i++)
 			scroll[i] = 0;
 		for (i = 2;i < 34;i++)
-			scroll[i] = *jrpacman_scroll - 224;
+			scroll[i] = -*jrpacman_scroll - 16;
 		for (i = 34;i < 36;i++)
 			scroll[i] = 0;
 
-		copyscrollbitmap(bitmap,tmpbitmap,36,scroll,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+		copyscrollbitmap(bitmap,tmpbitmap,0,0,36,scroll,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
 	}
 
 
@@ -260,8 +268,8 @@ void jrpacman_vh_screenrefresh(struct osd_bitmap *bitmap)
 				(spriteram[offs] >> 2) + 0x40 * (*jrpacman_spritebank & 1),
 				(spriteram[offs + 1] & 0x1f) + 0x20 * (*jrpacman_colortablebank & 1)
 						+ 0x40 * (*jrpacman_palettebank & 1),
-				spriteram[offs] & 2,spriteram[offs] & 1,
-				239 - spriteram_2[offs],272 - spriteram_2[offs + 1],
+				spriteram[offs] & 1,spriteram[offs] & 2,
+				272 - spriteram_2[offs + 1],spriteram_2[offs]-31,
 				&Machine->drv->visible_area,
 				(*jrpacman_bgpriority & 1) ? TRANSPARENCY_THROUGH : TRANSPARENCY_COLOR,
 				(*jrpacman_bgpriority & 1) ? Machine->pens[0]     : 0);
@@ -273,8 +281,8 @@ void jrpacman_vh_screenrefresh(struct osd_bitmap *bitmap)
 				(spriteram[offs] >> 2) + 0x40 * (*jrpacman_spritebank & 1),
 				(spriteram[offs + 1] & 0x1f) + 0x20 * (*jrpacman_colortablebank & 1)
 						+ 0x40 * (*jrpacman_palettebank & 1),
-				spriteram[offs] & 2,spriteram[offs] & 1,
-				238 - spriteram_2[offs],272 - spriteram_2[offs + 1],
+				spriteram[offs] & 1,spriteram[offs] & 2,
+				272 - spriteram_2[offs + 1],spriteram_2[offs]-30,
 				&Machine->drv->visible_area,
 				(*jrpacman_bgpriority & 1) ? TRANSPARENCY_THROUGH : TRANSPARENCY_COLOR,
 				(*jrpacman_bgpriority & 1) ? Machine->pens[0]     : 0);

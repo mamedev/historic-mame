@@ -13,7 +13,6 @@ unsigned char *xain_videoram;
 unsigned char *xain_videoram2;
 int xain_videoram_size;
 int xain_videoram2_size;
-unsigned char *xain_paletteram;
 
 static struct osd_bitmap *tmpbitmap2;
 static struct osd_bitmap *tmpbitmap3;
@@ -25,22 +24,6 @@ static unsigned char xain_scrollxP3[2];
 static unsigned char xain_scrollyP3[2];
 
 void xain_vh_stop(void);
-
-
-
-void xain_paletteram_w(int offset,int data)
-{
-	int r,g,b;
-
-
-	xain_paletteram[offset] = data;
-
-	r = 0x11 * ((xain_paletteram[offset & ~0x200] >> 0) & 0x0f);
-	g = 0x11 * ((xain_paletteram[offset & ~0x200] >> 4) & 0x0f);
-	b = 0x11 * ((xain_paletteram[offset | 0x200] >> 0) & 0x0f);
-
-	palette_change_color(offset & ~0x200,r,g,b);
-}
 
 
 
@@ -132,7 +115,7 @@ void xain_vh_stop(void)
 
 ***************************************************************************/
 
-void xain_vh_screenrefresh(struct osd_bitmap *bitmap)
+void xain_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	int offs;
         struct rectangle *r = malloc(sizeof(int)*4);

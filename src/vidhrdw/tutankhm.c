@@ -13,43 +13,9 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-unsigned char tutankhm_paletteram[16];
+
 unsigned char *tutankhm_scrollx;
 static int flipscreen[2];
-
-
-
-/***************************************************************************
-
-  Tutankhm doesn't have a color PROM, it uses RAM palette registers.
-
-***************************************************************************/
-void tutankhm_palette_w(int offset,int data)
-{
-	int r, g, b;
-	int bit0,bit1,bit2;
-
-
-	tutankhm_paletteram[offset] = data;
-
-	/* red component */
-	bit0 = (data >> 0) & 0x01;
-	bit1 = (data >> 1) & 0x01;
-	bit2 = (data >> 2) & 0x01;
-	r = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
-	/* green component */
-	bit0 = (data >> 3) & 0x01;
-	bit1 = (data >> 4) & 0x01;
-	bit2 = (data >> 5) & 0x01;
-	g = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
-	/* blue component */
-	bit0 = 0;
-	bit1 = (data >> 6) & 0x01;
-	bit2 = (data >> 7) & 0x01;
-	b = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
-
-	palette_change_color(offset,r,g,b);
-}
 
 
 
@@ -137,7 +103,7 @@ void tutankhm_flipscreen_w(int offset,int data)
   the main emulation engine.
 
 ***************************************************************************/
-void tutankhm_vh_screenrefresh(struct osd_bitmap *bitmap)
+void tutankhm_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	/* copy the temporary bitmap to the screen */
 	{

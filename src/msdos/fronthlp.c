@@ -93,9 +93,10 @@ int frontend_help (int argc, char **argv)
 		/* check for front-end utilities */
 		if (!stricmp(argv[i],"-list")) list = 1;
 		if (!stricmp(argv[i],"-listfull")) list = 2;
-		if (!stricmp(argv[i],"-listgames")) list = 8;
-		if (!stricmp(argv[i],"-listsamdir")) list = 3;
         if (!stricmp(argv[i],"-listdetails")) list = 7; /* A detailed MAMELIST.TXT type roms lister */
+		if (!stricmp(argv[i],"-listgames")) list = 8;
+		if (!stricmp(argv[i],"-listclones")) list = 9;
+		if (!stricmp(argv[i],"-listsamdir")) list = 3;
 
 #ifdef MAME_DEBUG /* do not put this into a public release! */
 		if (!stricmp(argv[i],"-lmr")) list = 6;
@@ -223,7 +224,12 @@ int frontend_help (int argc, char **argv)
 			{
 				get_rom_sample_path (argc, argv, i);
 				if (!osd_faccess (drivers[i]->name, OSD_FILETYPE_ROM))
+				{
+					/* if the game is a clone, try loading the ROM from the main version */
+					if (drivers[i]->clone_of == 0 ||
+							!osd_faccess(drivers[i]->clone_of->name,OSD_FILETYPE_ROM))
 						printf ("%s\n", drivers[i]->name);
+				}
 			}
 			return 0;
 			break;
@@ -347,11 +353,25 @@ int frontend_help (int argc, char **argv)
 			{
 				if ((listclones || drivers[i]->clone_of == 0) &&
 						!strwildcmp(gamename, drivers[i]->description))
-					printf("%-5s %-28s %s\n",drivers[i]->year,drivers[i]->manufacturer,drivers[i]->description);
+					printf("%-5s%-32s %s\n",drivers[i]->year,drivers[i]->manufacturer,drivers[i]->description);
 				i++;
 			}
 			return 0;
 			break;
+
+		case 9: /* list clones */
+			printf("Name:    Clone of:\n");
+			i = 0;
+			while (drivers[i])
+			{
+				if (drivers[i]->clone_of &&
+						(!strwildcmp(gamename,drivers[i]->name) || !strwildcmp(gamename,drivers[i]->clone_of->name)))
+					printf("%-8s %-8s\n",drivers[i]->name,drivers[i]->clone_of->name);
+				i++;
+			}
+			return 0;
+			break;
+
 	}
 
 	if (verify)  /* "verify" utilities */
@@ -371,7 +391,12 @@ int frontend_help (int argc, char **argv)
 			/* if using wildcards, ignore games we don't have romsets for. */
 			if (!osd_faccess (drivers[i]->name, OSD_FILETYPE_ROM))
 			{
-				if (stricmp(gamename, drivers[i]->name) != 0) continue;
+				{
+					/* if the game is a clone, try loading the ROM from the main version */
+					if (drivers[i]->clone_of == 0 ||
+							!osd_faccess(drivers[i]->clone_of->name,OSD_FILETYPE_ROM))
+						if (stricmp(gamename, drivers[i]->name) != 0) continue;
+				}
 			}
 
 			if (verify == 1)

@@ -15,7 +15,6 @@
 #include "vidhrdw/generic.h"
 
 
-unsigned char *srumbler_paletteram;
 unsigned char *srumbler_backgroundram;
 unsigned char *srumbler_scrolly;
 unsigned char *srumbler_scrollx;
@@ -35,43 +34,6 @@ Currently not used. The end of level score-board should either be
 transparent or the scroll tiles need to be turned off.
 */
 static int chon=1,objon=1,scrollon=1;
-
-
-
-void srumbler_paletteram_w(int offset,int data)
-{
-	int bit0,bit1,bit2,bit3;
-	int r,g,b,val;
-
-
-	srumbler_paletteram[offset] = data;
-
-	/* red component */
-	val = srumbler_paletteram[offset & ~1];
-	bit0 = (val >> 4) & 0x01;
-	bit1 = (val >> 5) & 0x01;
-	bit2 = (val >> 6) & 0x01;
-	bit3 = (val >> 7) & 0x01;
-	r = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
-
-	/* green component */
-	val = srumbler_paletteram[offset & ~1];
-	bit0 = (val >> 0) & 0x01;
-	bit1 = (val >> 1) & 0x01;
-	bit2 = (val >> 2) & 0x01;
-	bit3 = (val >> 3) & 0x01;
-	g = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
-
-	/* blue component */
-	val = srumbler_paletteram[offset | 1];
-	bit0 = (val >> 4) & 0x01;
-	bit1 = (val >> 5) & 0x01;
-	bit2 = (val >> 6) & 0x01;
-	bit3 = (val >> 7) & 0x01;
-	b = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
-
-	palette_change_color(offset / 2,r,g,b);
-}
 
 
 
@@ -173,7 +135,7 @@ void srumbler_background_w(int offset,int data)
 
 ***************************************************************************/
 
-void srumbler_vh_screenrefresh(struct osd_bitmap *bitmap)
+void srumbler_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	int scrollx, scrolly;
 	int offs;

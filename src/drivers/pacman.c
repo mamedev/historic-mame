@@ -61,13 +61,15 @@ int pacman_interrupt(void);
 int pacman_vh_start(void);
 void pengo_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 void pengo_updatehook0(int offset);
-void pengo_vh_screenrefresh(struct osd_bitmap *bitmap);
+void pengo_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 extern unsigned char *pengo_soundregs;
 void pengo_sound_enable_w(int offset,int data);
 void pengo_sound_w(int offset,int data);
 
-
+void theglob_init_machine(void);
+int theglob_decrypt_rom(int offset);
+extern unsigned char *theglob_mem_rom;
 
 static struct MemoryReadAddress readmem[] =
 {
@@ -114,6 +116,24 @@ static struct IOWritePort writeport[] =
 	{ -1 }	/* end of table */
 };
 
+
+static struct MemoryReadAddress theglob_readmem[] =
+{
+	{ 0x0000, 0x3fff, MRA_BANK1, &theglob_mem_rom },
+	{ 0x4000, 0x47ff, MRA_RAM },	/* video and color RAM */
+	{ 0x4c00, 0x4fff, MRA_RAM },	/* including sprite codes at 4ff0-4fff */
+	{ 0x5000, 0x503f, input_port_0_r },	/* IN0 */
+	{ 0x5040, 0x507f, input_port_1_r },	/* IN1 */
+	{ 0x5080, 0x50bf, input_port_2_r },	/* DSW1 */
+	{ 0x50c0, 0x50ff, input_port_3_r },	/* DSW2 */
+	{ -1 }	/* end of table */
+};
+
+static struct IOReadPort theglob_readport[] =
+{
+	{ 0x00, 0xff, theglob_decrypt_rom },	/* Switch protection logic */
+	{ -1 }	/* end of table */
+};
 
 
 INPUT_PORTS_START( pacman_input_ports )
@@ -420,7 +440,6 @@ INPUT_PORTS_START( eyes_input_ports )
  	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
 INPUT_PORTS_END
 
-
 INPUT_PORTS_START( lizwiz_input_ports )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY )
@@ -471,6 +490,54 @@ INPUT_PORTS_START( lizwiz_input_ports )
  	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
 INPUT_PORTS_END
 
+INPUT_PORTS_START( theglob_input_ports )
+	PORT_START	/* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_4WAY )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_4WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_4WAY )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_COCKTAIL )
+
+	PORT_START	/* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON2 )
+	PORT_DIPNAME( 0x80, 0x80, "Cabinet", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x80, "Upright" )
+	PORT_DIPSETTING(    0x00, "Cocktail" )
+
+	PORT_START	/* DSW 1 */
+ 	PORT_DIPNAME( 0x03, 0x03, "Lives", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x03, "3" )
+	PORT_DIPSETTING(    0x02, "4" )
+	PORT_DIPSETTING(    0x01, "5" )
+	PORT_DIPSETTING(    0x00, "6" )
+	PORT_DIPNAME( 0x1c, 0x1c, "Difficulty", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x1c, "1 (Easiest)" )
+	PORT_DIPSETTING(    0x18, "2" )
+	PORT_DIPSETTING(    0x14, "3" )
+	PORT_DIPSETTING(    0x10, "4" )
+	PORT_DIPSETTING(    0x0c, "5" )
+	PORT_DIPSETTING(    0x08, "6" )
+	PORT_DIPSETTING(    0x04, "7" )
+	PORT_DIPSETTING(    0x00, "8 (Hardest)" )
+	PORT_DIPNAME( 0x20, 0x00, "Demo Sounds", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x20, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+ 	PORT_BIT( 0xc0, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START	/* DSW 2 */
+ 	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
+INPUT_PORTS_END
 
 
 static struct GfxLayout spritelayout =
@@ -575,6 +642,45 @@ static struct MachineDriver machine_driver =
 };
 
 
+static struct MachineDriver theglob_machine_driver =
+{
+	/* basic machine hardware */
+	{
+		{
+			CPU_Z80,
+			18432000/6,	/* 3.072 Mhz */
+			0,
+			theglob_readmem,writemem,theglob_readport,writeport,
+			pacman_interrupt,1
+		}
+	},
+	60, 2500,	/* frames per second, vblank duration */
+	1,	/* single CPU, no need for interleaving */
+	theglob_init_machine,
+
+	/* video hardware */
+	36*8, 28*8, { 0*8, 36*8-1, 0*8, 28*8-1 },
+	gfxdecodeinfo,
+	16, 4*32,
+	pengo_vh_convert_color_prom,
+
+	VIDEO_TYPE_RASTER,
+	machine_layers,
+	pacman_vh_start,
+	generic_vh_stop,
+	pengo_vh_screenrefresh,
+
+	/* sound hardware */
+	0,0,0,0,
+	{
+		{
+			SOUND_NAMCO,
+			&namco_interface
+		}
+	}
+};
+
+
 
 /***************************************************************************
 
@@ -636,18 +742,6 @@ ROM_START( pacmod_rom )
 	ROM_LOAD( "pacmanh.5f", 0x1000, 0x1000, 0x0f80461c )
 ROM_END
 
-ROM_START( pacplus_rom )
-	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "pacplus.6e", 0x0000, 0x1000, 0x8200be38 )
-	ROM_LOAD( "pacplus.6f", 0x1000, 0x1000, 0xd800bc8a )
-	ROM_LOAD( "pacplus.6h", 0x2000, 0x1000, 0xd800986c )
-	ROM_LOAD( "pacplus.6j", 0x3000, 0x1000, 0xbca63c60 )
-
-	ROM_REGION(0x2000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "pacplus.5e", 0x0000, 0x1000, 0xd635f515 )
-	ROM_LOAD( "pacplus.5f", 0x1000, 0x1000, 0x58751f9d )
-ROM_END
-
 ROM_START( hangly_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "hangly.6e", 0x0000, 0x1000, 0x1b05a9d7 )
@@ -686,6 +780,18 @@ ROM_START( piranha_rom )
 	ROM_LOAD( "pr8.cpu", 0x1800, 0x0800, 0xb44bf835 )
 ROM_END
 
+ROM_START( pacplus_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "pacplus.6e", 0x0000, 0x1000, 0x8200be38 )
+	ROM_LOAD( "pacplus.6f", 0x1000, 0x1000, 0xd800bc8a )
+	ROM_LOAD( "pacplus.6h", 0x2000, 0x1000, 0xd800986c )
+	ROM_LOAD( "pacplus.6j", 0x3000, 0x1000, 0xbca63c60 )
+
+	ROM_REGION(0x2000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "pacplus.5e", 0x0000, 0x1000, 0xd635f515 )
+	ROM_LOAD( "pacplus.5f", 0x1000, 0x1000, 0x58751f9d )
+ROM_END
+
 ROM_START( mspacman_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "boot1", 0x0000, 0x1000, 0xbefc1968 )
@@ -696,22 +802,22 @@ ROM_START( mspacman_rom )
 	ROM_LOAD( "boot6", 0x9000, 0x1000, 0xefd154c7 )
 
 	ROM_REGION(0x2000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "5e",    0x0000, 0x1000, 0x02d51d73 )
-	ROM_LOAD( "5f",    0x1000, 0x1000, 0x26da1654 )
+	ROM_LOAD( "5e", 0x0000, 0x1000, 0x02d51d73 )
+	ROM_LOAD( "5f", 0x1000, 0x1000, 0x26da1654 )
 ROM_END
 
 ROM_START( mspacatk_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "mspacatk.1", 0x0000, 0x1000, 0xbefc1968 )
+	ROM_LOAD( "boot1",      0x0000, 0x1000, 0xbefc1968 )
 	ROM_LOAD( "mspacatk.2", 0x1000, 0x1000, 0xe800e6f4 )
-	ROM_LOAD( "mspacatk.3", 0x2000, 0x1000, 0xd16668e8 )
-	ROM_LOAD( "mspacatk.4", 0x3000, 0x1000, 0x0652d280 )
+	ROM_LOAD( "boot3",      0x2000, 0x1000, 0xd16668e8 )
+	ROM_LOAD( "boot4",      0x3000, 0x1000, 0x0652d280 )
 	ROM_LOAD( "mspacatk.5", 0x8000, 0x1000, 0xf98d457b )
 	ROM_LOAD( "mspacatk.6", 0x9000, 0x1000, 0x33f15633 )
 
 	ROM_REGION(0x2000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "5e",    0x0000, 0x1000, 0x02d51d73 )
-	ROM_LOAD( "5f",    0x1000, 0x1000, 0x26da1654 )
+	ROM_LOAD( "5e", 0x0000, 0x1000, 0x02d51d73 )
+	ROM_LOAD( "5f", 0x1000, 0x1000, 0x26da1654 )
 ROM_END
 
 ROM_START( crush_rom )
@@ -772,6 +878,24 @@ ROM_START( lizwiz_rom )
 	ROM_REGION(0x2000)	/* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "5e.cpu", 0x0000, 0x1000, 0xa0d0ddaa )
 	ROM_LOAD( "5f.cpu", 0x1000, 0x1000, 0x61defb68 )
+
+	ROM_REGION(0x0110)	/* color PROMs */
+	ROM_LOAD( "7f.cpu", 0x0000, 0x0010, 0x5a5001c4 )
+	ROM_LOAD( "4a.cpu", 0x0010, 0x0100, 0xd1bf0203 )
+ROM_END
+
+ROM_START( theglob_rom )
+	ROM_REGION(0x20000)	/* 64k for code */
+	ROM_LOAD( "glob.u2", 0x0000, 0x2000, 0x1d8944bf )
+	ROM_LOAD( "glob.u3", 0x2000, 0x2000, 0x9b0ef710 )
+
+	ROM_REGION(0x2000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "glob.5e", 0x0000, 0x1000, 0x4e3f2f45 )
+	ROM_LOAD( "glob.5f", 0x1000, 0x1000, 0x5cdd1d37 )
+
+	ROM_REGION(0x0110)	/* color PROMs */
+	ROM_LOAD( "glob.7f", 0x0000, 0x0010, 0x13e9f753 )
+	ROM_LOAD( "glob.4a", 0x0010, 0x0100, 0xcd4e000a )
 ROM_END
 
 
@@ -919,21 +1043,6 @@ static unsigned char crush_color_prom[] =
 	0x00,0x01,0x09,0x0f,0x00,0x09,0x0c,0x09,0x00,0x09,0x05,0x0f,0x00,0x05,0x0c,0x0f,
 	0x00,0x01,0x07,0x0b,0x00,0x0f,0x0b,0x00,0x00,0x0f,0x00,0x0b,0x00,0x0b,0x05,0x09,
 	0x00,0x0b,0x0c,0x0f,0x00,0x0b,0x07,0x09,0x00,0x02,0x0b,0x00,0x00,0x02,0x0b,0x07
-};
-
-static unsigned char lizwiz_color_prom[] =
-{
-	/* palette */
-	0x00,0x62,0x85,0x2F,0x07,0x1D,0x28,0x8C,0xC7,0x3F,0xF8,0xC9,0xAC,0x18,0x38,0xF6,
-	/* color lookup table */
-	0x00,0x00,0x00,0x00,0x00,0x01,0x0c,0x0f,0x00,0x05,0x03,0x09,0x00,0x07,0x02,0x08,
-	0x00,0x0d,0x06,0x0e,0x00,0x0b,0x01,0x0a,0x00,0x04,0x03,0x09,0x00,0x06,0x04,0x09,
-	0x00,0x0b,0x09,0x04,0x00,0x0a,0x04,0x09,0x00,0x0d,0x01,0x06,0x00,0x05,0x03,0x00,
-	0x00,0x05,0x01,0x02,0x00,0x05,0x07,0x02,0x00,0x05,0x03,0x0d,0x00,0x03,0x05,0x01,
-	0x00,0x05,0x07,0x01,0x00,0x00,0x04,0x09,0x00,0x05,0x04,0x09,0x01,0x05,0x04,0x09,
-	0x00,0x01,0x04,0x09,0x0d,0x0d,0x04,0x09,0x02,0x02,0x04,0x09,0x01,0x0a,0x04,0x09,
-	0x00,0x02,0x08,0x0f,0x00,0x0b,0x0a,0x0f,0x00,0x05,0x04,0x03,0x00,0x0a,0x0a,0x0a,
-	0x0f,0x0f,0x0f,0x0f,0x0f,0x0f,0x0f,0x0f,0x0f,0x0f,0x0f,0x0f,0x0f,0x0f,0x0f,0x0f
 };
 
 
@@ -1136,7 +1245,6 @@ static int ponpoko_hiload(void)
 	else return 0;	/* we can't load the hi scores yet */
 }
 
-
 static void ponpoko_hisave(void)
 {
 	void *f;
@@ -1151,75 +1259,416 @@ static void ponpoko_hisave(void)
 }
 
 
-#define GAMEDRIVER(NAME, BASENAME, ORIENT, DECODE, DESC, CREDITS)        \
-																		 \
-struct GameDriver NAME##_driver =										 \
-{																		 \
-	__FILE__,                                                            \
-	0,                                                                   \
-	#NAME,																 \
-	DESC,																 \
-	"????",                                                              \
-	"?????",                                                             \
-	CREDITS,															 \
-	0,                                                                   \
-	&machine_driver,													 \
-																		 \
-	NAME##_rom,															 \
-	DECODE, 0,														     \
-	0,																	 \
-	sound_prom,	/* sound_prom */										 \
-																		 \
-	BASENAME##_input_ports,												 \
-																		 \
-	BASENAME##_color_prom, 0, 0,										 \
-	ORIENT,																 \
-																		 \
-	BASENAME##_hiload, BASENAME##_hisave								 \
-};
+static int theglob_hiload(void)
+{
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
 
-#define mspacman_hiload      pacman_hiload
-#define pacplus_hiload       pacman_hiload
-#define lizwiz_hiload        pacman_hiload
-#define mspacman_hisave      pacman_hisave
-#define pacplus_hisave       pacman_hisave
-#define lizwiz_hisave        pacman_hisave
+	if (memcmp(&RAM[0x4c48],"MOB",3) == 0)
+	{
+		void *f;
 
-#define pacplus_input_ports  pacman_input_ports
+		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
+		{
+			osd_fread(f,&RAM[0x4c48],0x50);
 
-#define mspacman_color_prom  pacman_color_prom
-#define ponpoko_color_prom   pacman_color_prom  /* Probably Correct */
-#define eyes_color_prom      pacman_color_prom  /* Wrong !!! */
+			osd_fclose(f);
+		}
+
+		return 1;
+	}
+	else return 0;	/* we can't load the hi scores yet */
+}
+
+static void theglob_hisave(void)
+{
+	void *f;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+
+	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
+	{
+		osd_fwrite(f,&RAM[0x4c48],0x50);
+		osd_fclose(f);
+	}
+}
 
 
 #define BASE_CREDITS "Allard van der Bas (original code)\nNicola Salmoria (MAME driver)"
 
 
-GAMEDRIVER(pacman,   pacman,   ORIENTATION_ROTATE_90, 0, "Pac Man (Midway)", BASE_CREDITS)
+struct GameDriver pacman_driver =
+{
+	__FILE__,
+	0,
+	"pacman",
+	"Pac Man (Midway)",
+	"1980",
+	"[Namco] (Midway license)",
+	BASE_CREDITS,
+	0,
+	&machine_driver,
 
-GAMEDRIVER(namcopac, pacman,   ORIENTATION_ROTATE_90, 0, "Pac Man (Namco)", BASE_CREDITS)
+	pacman_rom,
+	0, 0,
+	0,
+	sound_prom,	/* sound_prom */
 
-GAMEDRIVER(pacmanjp, pacman,   ORIENTATION_ROTATE_90, 0, "Pac Man (Namco, alternate)", BASE_CREDITS)
+	pacman_input_ports,
 
-GAMEDRIVER(pacmod,   pacman,   ORIENTATION_ROTATE_90, 0, "Pac Man (modified)", BASE_CREDITS)
+	pacman_color_prom, 0, 0,
+	ORIENTATION_ROTATE_90,
 
-GAMEDRIVER(pacplus,  pacplus,  ORIENTATION_ROTATE_90, 0, "Pac Man with Pac Man Plus graphics", BASE_CREDITS)
+	pacman_hiload, pacman_hisave
+};
 
-GAMEDRIVER(hangly,   pacman,   ORIENTATION_ROTATE_90, 0, "Hangly Man", BASE_CREDITS)
+struct GameDriver namcopac_driver =
+{
+	__FILE__,
+	&pacman_driver,
+	"namcopac",
+	"Pac Man (Namco)",
+	"1980",
+	"Namco",
+	BASE_CREDITS,
+	0,
+	&machine_driver,
 
-GAMEDRIVER(puckman,  pacman,   ORIENTATION_ROTATE_90, 0, "Puck Man", BASE_CREDITS)
+	namcopac_rom,
+	0, 0,
+	0,
+	sound_prom,	/* sound_prom */
 
-GAMEDRIVER(piranha,  mspacman, ORIENTATION_ROTATE_90, 0, "Piranha", BASE_CREDITS)
+	pacman_input_ports,
 
-GAMEDRIVER(mspacman, mspacman, ORIENTATION_ROTATE_90, 0, "Ms. Pac Man", BASE_CREDITS)
+	pacman_color_prom, 0, 0,
+	ORIENTATION_ROTATE_90,
 
-GAMEDRIVER(mspacatk, mspacman, ORIENTATION_ROTATE_90, 0, "Miss Pac Plus", BASE_CREDITS)
+	pacman_hiload, pacman_hisave
+};
 
-GAMEDRIVER(crush,    crush,    ORIENTATION_ROTATE_90, 0, "Crush Roller", BASE_CREDITS"\nGary Walton (color info)\nSimon Walls (color info)")
+struct GameDriver pacmanjp_driver =
+{
+	__FILE__,
+	&pacman_driver,
+	"pacmanjp",
+	"Pac Man (Namco, alternate)",
+	"1980",
+	"Namco",
+	BASE_CREDITS,
+	0,
+	&machine_driver,
 
-GAMEDRIVER(ponpoko,  ponpoko,  ORIENTATION_DEFAULT,   ponpoko_decode, "Ponpoko", BASE_CREDITS)
+	pacmanjp_rom,
+	0, 0,
+	0,
+	sound_prom,	/* sound_prom */
 
-GAMEDRIVER(eyes,     eyes,     ORIENTATION_ROTATE_90, eyes_decode, "Eyes", "Zsolt Vasvari\n"BASE_CREDITS)
+	pacman_input_ports,
 
-GAMEDRIVER(lizwiz,   lizwiz,   ORIENTATION_ROTATE_90, 0, "Lizard Wizard", BASE_CREDITS)
+	pacman_color_prom, 0, 0,
+	ORIENTATION_ROTATE_90,
+
+	pacman_hiload, pacman_hisave
+};
+
+struct GameDriver pacmod_driver =
+{
+	__FILE__,
+	&pacman_driver,
+	"pacmod",
+	"Pac Man (harder)",
+	"1981",
+	"[Namco] (Midway license)",
+	BASE_CREDITS,
+	0,
+	&machine_driver,
+
+	pacmod_rom,
+	0, 0,
+	0,
+	sound_prom,	/* sound_prom */
+
+	pacman_input_ports,
+
+	pacman_color_prom, 0, 0,
+	ORIENTATION_ROTATE_90,
+
+	pacman_hiload, pacman_hisave
+};
+
+struct GameDriver hangly_driver =
+{
+	__FILE__,
+	&pacman_driver,
+	"hangly",
+	"Hangly Man",
+	"1981",
+	"hack",
+	BASE_CREDITS,
+	0,
+	&machine_driver,
+
+	hangly_rom,
+	0, 0,
+	0,
+	sound_prom,	/* sound_prom */
+
+	pacman_input_ports,
+
+	pacman_color_prom, 0, 0,
+	ORIENTATION_ROTATE_90,
+
+	pacman_hiload, pacman_hisave
+};
+
+struct GameDriver puckman_driver =
+{
+	__FILE__,
+	&pacman_driver,
+	"puckman",
+	"Puck Man",
+	"1980",
+	"hack",
+	BASE_CREDITS,
+	0,
+	&machine_driver,
+
+	puckman_rom,
+	0, 0,
+	0,
+	sound_prom,	/* sound_prom */
+
+	pacman_input_ports,
+
+	pacman_color_prom, 0, 0,
+	ORIENTATION_ROTATE_90,
+
+	pacman_hiload, pacman_hisave
+};
+
+struct GameDriver piranha_driver =
+{
+	__FILE__,
+	&pacman_driver,
+	"piranha",
+	"Piranha",
+	"1981",
+	"hack",
+	BASE_CREDITS,
+	0,
+	&machine_driver,
+
+	piranha_rom,
+	0, 0,
+	0,
+	sound_prom,	/* sound_prom */
+
+	mspacman_input_ports,
+
+	pacman_color_prom, 0, 0,
+	ORIENTATION_ROTATE_90,
+
+	pacman_hiload, pacman_hisave
+};
+
+struct GameDriver pacplus_driver =
+{
+	__FILE__,
+	0,
+	"pacplus",
+	"Pac Man with Pac Man Plus graphics",
+	"????",
+	"hack",
+	BASE_CREDITS,
+	0,
+	&machine_driver,
+
+	pacplus_rom,
+	0, 0,
+	0,
+	sound_prom,	/* sound_prom */
+
+	pacman_input_ports,
+
+	pacplus_color_prom, 0, 0,
+	ORIENTATION_ROTATE_90,
+
+	pacman_hiload, pacman_hisave
+};
+
+struct GameDriver mspacman_driver =
+{
+	__FILE__,
+	0,
+	"mspacman",
+	"Ms. Pac Man",
+	"1981",
+	"bootleg",
+	BASE_CREDITS,
+	0,
+	&machine_driver,
+
+	mspacman_rom,
+	0, 0,
+	0,
+	sound_prom,	/* sound_prom */
+
+	mspacman_input_ports,
+
+	pacman_color_prom, 0, 0,
+	ORIENTATION_ROTATE_90,
+
+	pacman_hiload, pacman_hisave
+};
+
+struct GameDriver mspacatk_driver =
+{
+	__FILE__,
+	&mspacman_driver,
+	"mspacatk",
+	"Miss Pac Plus",
+	"1981",
+	"hack",
+	BASE_CREDITS,
+	0,
+	&machine_driver,
+
+	mspacatk_rom,
+	0, 0,
+	0,
+	sound_prom,	/* sound_prom */
+
+	mspacman_input_ports,
+
+	pacman_color_prom, 0, 0,
+	ORIENTATION_ROTATE_90,
+
+	pacman_hiload, pacman_hisave
+};
+
+extern struct GameDriver maketrax_driver;
+struct GameDriver crush_driver =
+{
+	__FILE__,
+	&maketrax_driver,
+	"crush",
+	"Crush Roller",
+	"1981",
+	"bootleg",
+	BASE_CREDITS"\nGary Walton (color info)\nSimon Walls (color info)",
+	0,
+	&machine_driver,
+
+	crush_rom,
+	0, 0,
+	0,
+	sound_prom,	/* sound_prom */
+
+	crush_input_ports,
+
+	crush_color_prom, 0, 0,
+	ORIENTATION_ROTATE_90,
+
+	crush_hiload, crush_hisave
+};
+
+struct GameDriver ponpoko_driver =
+{
+	__FILE__,
+	0,
+	"ponpoko",
+	"Ponpoko",
+	"1982",
+	"Sigma Ent. Inc.",
+	BASE_CREDITS,
+	0,
+	&machine_driver,
+
+	ponpoko_rom,
+	ponpoko_decode, 0,
+	0,
+	sound_prom,	/* sound_prom */
+
+	ponpoko_input_ports,
+
+	pacman_color_prom, 0, 0,	/* probably correct */
+	ORIENTATION_DEFAULT,
+
+	ponpoko_hiload, ponpoko_hisave
+};
+
+struct GameDriver eyes_driver =
+{
+	__FILE__,
+	0,
+	"eyes",
+	"Eyes",
+	"1982",
+	"Digitrex Techstar (Rock-ola license)",
+	"Zsolt Vasvari\n"BASE_CREDITS,
+	0,
+	&machine_driver,
+
+	eyes_rom,
+	eyes_decode, 0,
+	0,
+	sound_prom,	/* sound_prom */
+
+	eyes_input_ports,
+
+	pacman_color_prom, 0, 0,	/* wrong!! */
+	ORIENTATION_ROTATE_90,
+
+	eyes_hiload, eyes_hisave
+};
+
+struct GameDriver lizwiz_driver =
+{
+	__FILE__,
+	0,
+	"lizwiz",
+	"Lizard Wizard",
+	"1985",
+	"Techstar (Sunn license)",
+	BASE_CREDITS,
+	0,
+	&machine_driver,
+
+	lizwiz_rom,
+	0, 0,
+	0,
+	sound_prom,	/* sound_prom */
+
+	lizwiz_input_ports,
+
+	PROM_MEMORY_REGION(2), 0, 0,
+	ORIENTATION_ROTATE_90,
+
+	0, 0
+};
+
+struct GameDriver theglob_driver =
+{
+	__FILE__,
+	0,
+	"theglob",
+	"The Glob (Pac Man hardware)",
+	"1983",
+	"Epos Corporation",
+	BASE_CREDITS"\nClay Cowgill(Information)\nMike Balfour(Information)",
+	0,
+	&theglob_machine_driver,
+
+	theglob_rom,
+	0, 0,
+	0,
+	sound_prom,	/* sound_prom */
+
+	theglob_input_ports,
+
+	PROM_MEMORY_REGION(2), 0, 0,
+	ORIENTATION_ROTATE_90,
+
+	theglob_hiload,theglob_hisave
+};

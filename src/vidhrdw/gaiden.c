@@ -12,7 +12,6 @@
 
 unsigned char *gaiden_videoram;
 unsigned char *gaiden_spriteram;
-unsigned char *gaiden_paletteram;
 unsigned char *gaiden_videoram2;
 unsigned char *gaiden_videoram3;
 
@@ -33,34 +32,6 @@ unsigned char *gaiden_txscrollx,*gaiden_txscrolly;
 unsigned char *gaiden_fgscrollx,*gaiden_fgscrolly;
 unsigned char *gaiden_bgscrollx,*gaiden_bgscrolly;
 
-
-
-
-/*
- *   palette RAM read/write handlers
- */
-void gaiden_paletteram_w(int offset,int data)
-{
-	int oldword = READ_WORD(&gaiden_paletteram[offset]);
-	int newword = COMBINE_WORD(oldword,data);
-	int r,g,b;
-
-
-	WRITE_WORD(&gaiden_paletteram[offset],newword);
-
-	r = 0x11 * ((newword >> 0) & 0x0f);
-	g = 0x11 * ((newword >> 4) & 0x0f);
-	b = 0x11 * ((newword >> 8) & 0x0f);
-
-	palette_change_color(offset / 2,r,g,b);
-	if (offset / 2 == 0x0200)	/* background color */
-		palette_change_transparent_color(r,g,b);
-}
-
-int gaiden_paletteram_r(int offset)
-{
-	return READ_WORD (&gaiden_paletteram[offset]);
-}
 
 
 
@@ -96,6 +67,10 @@ int gaiden_vh_start (void)
 		gaiden_vh_stop ();
 		return 1;
 	}
+
+	/* 0x200 is the background color */
+	palette_transparent_color = 0x200;
+
 	return 0;
 }
 
@@ -281,7 +256,7 @@ void gaiden_drawsprites(struct osd_bitmap *bitmap, int priority)
 	}
 }
 
-void gaiden_vh_screenrefresh(struct osd_bitmap *bitmap)
+void gaiden_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	int offs;
 	int scrollx,scrolly;

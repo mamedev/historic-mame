@@ -113,7 +113,7 @@ void naughtyb_videoreg_w (int offset,int data);
 int naughtyb_vh_start(void);
 void naughtyb_vh_stop(void);
 void naughtyb_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-void naughtyb_vh_screenrefresh(struct osd_bitmap *bitmap);
+void naughtyb_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 // Let's skip the sound for now.. ;)
 // void naughtyb_sound_control_a_w(int offset, int data);
@@ -555,8 +555,8 @@ struct GameDriver naughtyb_driver =
 	0,
 	"naughtyb",
 	"Naughty Boy",
-	"????",
-	"?????",
+	"1982",
+	"Jaleco (Cinematronics license)",
 	"Sal and John Bugliarisi (MAME driver)\nMirko Buffoni (additional code)\nNicola Salmoria (additional code)\nAlan J. McCormick (color info)",
 	0,
 	&machine_driver,
@@ -580,8 +580,8 @@ struct GameDriver popflame_driver =
 	0,
 	"popflame",
 	"Pop Flamer",
-	"????",
-	"?????",
+	"1982",
+	"Jaleco",
 	"Brad Oliver (MAME driver)\nSal and John Bugliarisi (Naughty Boy driver)\nMirko Buffoni (additional code)\nNicola Salmoria (additional code)\nTim Lindquist (color info)",
 	0,
 	&machine_driver,

@@ -32,7 +32,7 @@ static void sidepocket_drawsprites( struct osd_bitmap *bitmap ) {
 	}
 }
 
-void sidepocket_vh_screenrefresh(struct osd_bitmap *bitmap)
+void sidepocket_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	int offs;
 

@@ -18,7 +18,7 @@ out of Bizarro World. I submit for your approval:
 void exerion_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 int exerion_vh_start (void);
 void exerion_vh_stop (void);
-void exerion_vh_screenrefresh (struct osd_bitmap *bitmap);
+void exerion_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 extern void exerion_videoreg_w (int offset,int data);
 
@@ -405,16 +405,17 @@ ROM_START( exerionb_rom )
 
 	ROM_REGION(0x1c000)     /* temporary space for graphics (disposed after conversion) */
 	/* Set aside 0xe000 for the unscrambled graphics */
-	ROM_LOAD( "eb8.bin", 0x0e000, 0x2000, 0xcd93f589 )
-	ROM_LOAD( "eb3.bin", 0x10000, 0x2000, 0x47c3cac1 )
-	ROM_LOAD( "eb4.bin", 0x12000, 0x2000, 0xc4fe0d02 )
-	ROM_LOAD( "eb1.bin", 0x14000, 0x2000, 0xa32c1e5a )
-	ROM_LOAD( "eb2.bin", 0x16000, 0x2000, 0xf7c668aa )
+	ROM_LOAD( "exerion.06", 0x0e000, 0x2000, 0xcd93f589 )
+	ROM_LOAD( "exerion.01", 0x10000, 0x2000, 0x47c3cac1 )
+	ROM_LOAD( "exerion.02", 0x12000, 0x2000, 0xc4fe0d02 )
+	ROM_LOAD( "exerion.03", 0x14000, 0x2000, 0xa32c1e5a )
+	ROM_LOAD( "exerion.04", 0x16000, 0x2000, 0xf7c668aa )
 	/* sprites */
-	ROM_LOAD( "eb9.bin", 0x18000, 0x4000, 0xec63a1eb )
+	ROM_LOAD( "exerion.11", 0x18000, 0x2000, 0xece32a3b )
+	ROM_LOAD( "exerion.10", 0x1a000, 0x2000, 0xff808bd0 )
 
 	ROM_REGION(0x10000)     /* 64k for the audio CPU */
-	ROM_LOAD( "eb7.bin", 0x0000, 0x2000, 0x16090891 )
+	ROM_LOAD( "exerion.05", 0x0000, 0x2000, 0x16090891 )
 ROM_END
 
 
@@ -549,8 +550,8 @@ struct GameDriver exerion_driver =
 	0,
 	"exerion",
 	"Exerion",
-	"????",
-	"?????",
+	"1983",
+	"Jaleco",
 	"Brad Oliver\nJohn Butler\nValerio Verrando (high score save)\nGerald Vanderick (color info)",
 	0,
 	&machine_driver,
@@ -571,11 +572,11 @@ struct GameDriver exerion_driver =
 struct GameDriver exerionb_driver =
 {
 	__FILE__,
-	0,
+	&exerion_driver,
 	"exerionb",
 	"Exerion (bootleg)",
-	"????",
-	"?????",
+	"1983",
+	"Jaleco",
 	"Brad Oliver\nJohn Butler\nValerio Verrando (high score save)\nGerald Vanderick (color info)",
 	0,
 	&machine_driver,

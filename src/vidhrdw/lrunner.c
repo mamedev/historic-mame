@@ -115,7 +115,7 @@ void lrunner_vh_stop(void)
   the main emulation engine.
 
 ***************************************************************************/
-void lrunner_vh_screenrefresh(struct osd_bitmap *bitmap)
+void lrunner_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	int offs;
 

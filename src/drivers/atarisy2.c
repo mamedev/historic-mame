@@ -133,7 +133,6 @@ int atarisys2_slapstic_r (int offset);
 int atarisys2_adc_r (int offset);
 int atarisys2_switch_r (int offset);
 int atarisys2_videoram_r (int offset);
-int atarisys2_paletteram_r (int offset);
 int atarisys2_leta_r (int offset);
 int atarisys2_6502_switch_r (int offset);
 
@@ -169,7 +168,7 @@ int ssprint_vh_start (void);
 int csprint_vh_start (void);
 
 void atarisys2_vh_stop (void);
-void atarisys2_vh_screenrefresh (struct osd_bitmap *bitmap);
+void atarisys2_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 
 /*************************************
@@ -181,14 +180,14 @@ void atarisys2_vh_screenrefresh (struct osd_bitmap *bitmap);
 static struct MemoryReadAddress atarisys2_readmem[] =
 {
 	{ 0x0000, 0x0fff, MRA_RAM },
-	{ 0x1000, 0x11ff, atarisys2_paletteram_r, &atarigen_paletteram, &atarigen_paletteram_size },
+	{ 0x1000, 0x11ff, paletteram_word_r },
 	{ 0x1400, 0x1403, atarisys2_adc_r },
 	{ 0x1800, 0x1801, atarisys2_switch_r },
 	{ 0x1c00, 0x1c01, atarigen_sound_r },
 	{ 0x2000, 0x3fff, atarisys2_videoram_r },
 	{ 0x4000, 0x5fff, MRA_BANK1 },
 	{ 0x6000, 0x7fff, MRA_BANK2 },
-	{ 0x8000, 0x81ff, atarisys2_slapstic_r, &atarisys2_slapstic_base },
+	{ 0x8000, 0x81ff, atarisys2_slapstic_r },
 	{ 0x8200, 0xffff, MRA_ROM },
 	{ -1 }  /* end of table */
 };
@@ -197,7 +196,7 @@ static struct MemoryReadAddress atarisys2_readmem[] =
 static struct MemoryWriteAddress atarisys2_writemem[] =
 {
 	{ 0x0000, 0x0fff, MWA_RAM },
-	{ 0x1000, 0x11ff, atarisys2_paletteram_w },
+	{ 0x1000, 0x11ff, atarisys2_paletteram_w, &paletteram },
 	{ 0x1400, 0x1403, atarisys2_bankselect_w, &atarisys2_bankselect },
 	{ 0x1480, 0x148f, atarisys2_adc_strobe_w },
 	{ 0x1500, 0x1501, atarisys2_vmmu_w },
@@ -209,7 +208,7 @@ static struct MemoryWriteAddress atarisys2_writemem[] =
 	{ 0x1800, 0x1801, atarisys2_watchdog_w },
 	{ 0x2000, 0x3fff, atarisys2_videoram_w },
 	{ 0x4000, 0x7fff, MWA_ROM },
-	{ 0x8000, 0x81ff, atarisys2_slapstic_w },
+	{ 0x8000, 0x81ff, atarisys2_slapstic_w, &atarisys2_slapstic_base },
 	{ 0x8200, 0xffff, MWA_ROM },
 	{ -1 }  /* end of table */
 };
@@ -221,6 +220,16 @@ static struct MemoryWriteAddress atarisys2_writemem[] =
  *		Sound CPU memory handlers
  *
  *************************************/
+
+static void sound_eeprom_w (int offset, int data)
+{
+	Machine->memory_region[2][offset + 0x1000] = data;
+/*	{
+	static FILE *f;
+	if (!f) f = fopen ("eeprom.log", "w");
+	fprintf (f, "Write %02X @ %04X (PC = %04X)\n", data, offset + 0x1000, cpu_getpc ());
+	}*/
+}
 
 static struct MemoryReadAddress atarisys2_sound_readmem[] =
 {
@@ -240,7 +249,7 @@ static struct MemoryReadAddress atarisys2_sound_readmem[] =
 static struct MemoryWriteAddress atarisys2_sound_writemem[] =
 {
 	{ 0x0000, 0x0fff, MWA_RAM },
-	{ 0x1000, 0x17ff, MWA_RAM },	/* EEPROM */
+	{ 0x1000, 0x17ff, sound_eeprom_w },	/* EEPROM */
 	{ 0x1800, 0x180f, pokey1_w },
 	{ 0x1830, 0x183f, pokey2_w },
 	{ 0x1850, 0x1850, YM2151_register_port_0_w },
@@ -741,7 +750,7 @@ static struct MachineDriver paperboy_machine_driver =
 			2,
 			atarisys2_sound_readmem,atarisys2_sound_writemem,0,0,
 			0,0,
-			atarisys2_sound_interrupt,300
+			atarisys2_sound_interrupt,250
 		},
 	},
 	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
@@ -764,7 +773,7 @@ static struct MachineDriver paperboy_machine_driver =
 	0,0,0,0,
 	{
 		{
-			SOUND_YM2151_ALT,
+			SOUND_YM2151,
 			&ym2151_interface
 		},
 		{
@@ -796,7 +805,7 @@ static struct MachineDriver apb_machine_driver =
 			2,
 			atarisys2_sound_readmem,atarisys2_sound_writemem,0,0,
 			0,0,
-			atarisys2_sound_interrupt,300
+			atarisys2_sound_interrupt,250
 		},
 	},
 	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
@@ -819,7 +828,7 @@ static struct MachineDriver apb_machine_driver =
 	0,0,0,0,
 	{
 		{
-			SOUND_YM2151_ALT,
+			SOUND_YM2151,
 			&ym2151_interface
 		},
 		{
@@ -851,7 +860,7 @@ static struct MachineDriver a720_machine_driver =
 			2,
 			atarisys2_sound_readmem,atarisys2_sound_writemem,0,0,
 			0,0,
-			atarisys2_sound_interrupt,300
+			atarisys2_sound_interrupt,250
 		},
 	},
 	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
@@ -874,7 +883,7 @@ static struct MachineDriver a720_machine_driver =
 	0,0,0,0,
 	{
 		{
-			SOUND_YM2151_ALT,
+			SOUND_YM2151,
 			&ym2151_interface
 		},
 		{
@@ -906,7 +915,7 @@ static struct MachineDriver ssprint_machine_driver =
 			2,
 			atarisys2_sound_readmem,atarisys2_sound_writemem,0,0,
 			0,0,
-			atarisys2_sound_interrupt,300
+			atarisys2_sound_interrupt,250
 		},
 	},
 	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
@@ -919,7 +928,7 @@ static struct MachineDriver ssprint_machine_driver =
 	256,256,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_BEFORE_VBLANK,
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_BEFORE_VBLANK | VIDEO_SUPPORTS_DIRTY,
 	0,
 	ssprint_vh_start,
 	atarisys2_vh_stop,
@@ -929,7 +938,7 @@ static struct MachineDriver ssprint_machine_driver =
 	0,0,0,0,
 	{
 		{
-			SOUND_YM2151_ALT,
+			SOUND_YM2151,
 			&ym2151_interface
 		},
 		{
@@ -957,7 +966,7 @@ static struct MachineDriver csprint_machine_driver =
 			2,
 			atarisys2_sound_readmem,atarisys2_sound_writemem,0,0,
 			0,0,
-			atarisys2_sound_interrupt,300
+			atarisys2_sound_interrupt,250
 		},
 	},
 	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
@@ -970,7 +979,7 @@ static struct MachineDriver csprint_machine_driver =
 	256,256,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_BEFORE_VBLANK,
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_BEFORE_VBLANK | VIDEO_SUPPORTS_DIRTY,
 	0,
 	csprint_vh_start,
 	atarisys2_vh_stop,
@@ -980,7 +989,7 @@ static struct MachineDriver csprint_machine_driver =
 	0,0,0,0,
 	{
 		{
-			SOUND_YM2151_ALT,
+			SOUND_YM2151,
 			&ym2151_interface
 		},
 		{
@@ -1289,6 +1298,109 @@ void csprint_rom_decode (void)
 
 /*************************************
  *
+ *		High score save/load
+ *
+ *************************************/
+
+int paperboy_hiload (void)
+{
+	void *f;
+
+	f = osd_fopen (Machine->gamedrv->name, 0, OSD_FILETYPE_HIGHSCORE, 0);
+	if (f)
+	{
+		osd_fread (f, atarigen_eeprom, atarigen_eeprom_size);
+		osd_fclose (f);
+	}
+	else
+	{
+		static const unsigned char data0042[] =
+		{
+			0x00,0x13,0x24,0x50,0x53,0x54,0x00,0x12,0xc0,0x55,0x43,0x48,0x00,0x12,0x5c,0x54,
+			0x4f,0x49,0x00,0x11,0xf8,0x20,0x52,0x53,0x00,0x11,0x49,0x59,0x45,0x20,0x00,0x11,
+			0x30,0x4f,0x20,0x54,0x00,0x10,0xcc,0x55,0x4f,0x41,0x00,0x10,0x68,0x52,0x4e,0x42,
+			0x00,0x10,0x04,0x20,0x54,0x4c,0x00,0x0f,0xa0,0x20,0x4f,0x45,0x00,0x26,0xac,0x50,
+			0x49,0x47,0x00,0x26,0x48,0x41,0x53,0x52,0x00,0x25,0xe4,0x50,0x20,0x45,0x00,0x25,
+			0x80,0x45,0x54,0x41,0x00,0x25,0x1c,0x52,0x48,0x54,0x00,0x24,0xb8,0x20,0x45,0x45,
+			0x00,0x24,0x54,0x42,0x20,0x53,0x00,0x23,0xf0,0x4f,0x20,0x54,0x00,0x23,0x8c,0x59,
+			0x20,0x20,0x00,0x23,0x28,0x20,0x20,0x20,0x00,0x3a,0x34,0x44,0x41,0x54,0x00,0x39,
+			0xd0,0x54,0x48,0x45,0x00,0x39,0x6c,0x42,0x4f,0x59,0x00,0x39,0x08,0x42,0x46,0x20,
+			0x00,0x38,0xa4,0x4d,0x45,0x43,0x00,0x38,0x40,0x43,0x4a,0x20,0x00,0x37,0xdc,0x4a,
+			0x45,0x53,0x00,0x37,0x78,0x50,0x43,0x54,0x00,0x37,0x14,0x4d,0x41,0x41,0x00,0x36,
+			0xb0,0x42,0x41,0x46,0x01
+		};
+		static const unsigned char data00fb[] =
+		{
+			0x41,0x7f,0x41,0x7f,0x86,0x41,0x7f,0x41,0x7f,0x85,0x41,0x7f,0x41,0x7f,0x84
+		};
+		int i;
+
+		for (i = 0x0000; i < 0x0042; i++)
+			atarigen_eeprom[i + 0x0000] = 0x00;
+
+		for (i = 0; i < sizeof (data0042); i++)
+			atarigen_eeprom[i + 0x0042] = data0042[i];
+
+		for (i = 0; i < sizeof (data00fb); i++)
+			atarigen_eeprom[i + 0x00fb] = data00fb[i];
+	}
+
+	return 1;
+}
+
+
+int ssprint_hiload (void)
+{
+	void *f;
+
+	f = osd_fopen (Machine->gamedrv->name, 0, OSD_FILETYPE_HIGHSCORE, 0);
+	if (f)
+	{
+		osd_fread (f, atarigen_eeprom, atarigen_eeprom_size);
+		osd_fclose (f);
+	}
+	else
+	{
+		static const unsigned char data0000[] =
+		{
+			0xff,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0xff,
+			0x00,0x20,0x00,0x20,0x00,0x00,0x00,0x20,0x00,0x00,0x00,0x00,0x00,0x20,0xff,0x00,
+			0x40,0x00,0x40,0x10,0x00,0x10,0x50,0x00,0x10,0x00,0x00,0x00,0x40,0xff,0x00,0x60,
+			0x00,0x60,0x00,0x00,0x00,0x60,0x00,0x00,0x00,0x00,0x00,0x60,0xff,0x00,0x80,0x00,
+			0x80,0x00,0x00,0x00,0x80,0x00,0x00,0x00,0x00,0x00,0x80,0xff,0x00,0xa0,0x00,0xa0,
+			0x00,0x00,0x00,0xa0,0x00,0x00,0x00,0x00,0x00,0xa0,0xff,0x00,0xc0,0x00,0xc0,0x00,
+			0x00,0x00,0xc0,0x00,0x00,0x00,0x00,0x00,0xc0
+		};
+		static const unsigned char data0186[] =
+		{
+			0x03,0xe8,0x46,0xd6,0x03,0xde,0x28,0xb3,0x03,0xd4,0x44,0x23,0x03,0xca,0x1c,0x0b,
+			0x03,0xc0,0x59,0xbf,0x03,0xb6,0x29,0x9f,0x03,0xac,0x4a,0xc2,0x03,0xa2,0x0e,0xdf,
+			0x03,0x98,0x31,0xbf,0x03,0x8e,0x0d,0x06,0x03,0x84,0x0e,0x86,0x03,0x7a,0x24,0x0c,
+			0x03,0x70,0x4a,0x48,0x03,0x66,0x51,0xf2,0x03,0x5c,0x3e,0x3f,0x03,0x52,0x11,0x06,
+			0x03,0x48,0x45,0xb1,0x03,0x3e,0x7e,0x64,0x03,0x34,0x7f,0xe0,0x03,0x2a,0x7f,0xf3,
+			0x03,0x20,0x7f,0xff,0x03,0x16,0x2a,0xd6,0x03,0x0c,0x25,0x76,0x03,0x02,0x4c,0x61,
+			0x02,0xf8,0x28,0x01,0x02,0xee,0x01,0x53,0x02,0xe4,0x09,0x32,0x02,0xda,0x2c,0x32,
+			0x02,0xd0,0x25,0x86,0x02,0xc6,0x1d,0x1f
+		};
+		int i;
+
+		for (i = 0; i < sizeof (data0000); i++)
+			atarigen_eeprom[i + 0x0000] = data0000[i];
+
+		for (i = 0x0069; i < 0x0186; i++)
+			atarigen_eeprom[i] = 0xff;
+
+		for (i = 0; i < sizeof (data0186); i++)
+			atarigen_eeprom[i + 0x0186] = data0186[i];
+	}
+
+	return 1;
+}
+
+
+
+/*************************************
+ *
  *		Game driver(s)
  *
  *************************************/
@@ -1299,8 +1411,8 @@ struct GameDriver paperboy_driver =
 	0,
 	"paperboy",
 	"Paperboy",
-	"????",
-	"?????",
+	"1984",
+	"Atari Games",
 	"Aaron Giles (MAME driver)\nJuergen Buchmueller (MAME driver)\nMike Balfour (hardware info)",
 	0,
 	&paperboy_machine_driver,
@@ -1315,7 +1427,7 @@ struct GameDriver paperboy_driver =
 
 	0, 0, 0,   /* colors, palette, colortable */
 	ORIENTATION_DEFAULT,
-	atarigen_hiload, atarigen_hisave
+	paperboy_hiload, atarigen_hisave
 };
 
 
@@ -1325,10 +1437,10 @@ struct GameDriver apb_driver =
 	0,
 	"apb",
 	"APB",
-	"????",
-	"?????",
+	"1987",
+	"Atari Games",
 	"Juergen Buchmueller (MAME driver)\nAaron Giles (MAME driver)\nMike Balfour (hardware info)",
-	0,
+	GAME_NOT_WORKING,
 	&apb_machine_driver,
 
 	apb_rom,
@@ -1351,10 +1463,10 @@ struct GameDriver a720_driver =
 	0,
 	"720",
 	"720 Degrees",
-	"????",
-	"?????",
+	"1986",
+	"Atari Games",
 	"Aaron Giles (MAME driver)\nJuergen Buchmueller (MAME driver)\nMike Balfour (hardware info)",
-	0,
+	GAME_NOT_WORKING,
 	&a720_machine_driver,
 
 	a720_rom,
@@ -1377,8 +1489,8 @@ struct GameDriver ssprint_driver =
 	0,
 	"ssprint",
 	"Super Sprint",
-	"????",
-	"?????",
+	"1986",
+	"Atari Games",
 	"Aaron Giles (MAME driver)\nJuergen Buchmueller (MAME driver)\nMike Balfour (hardware info)",
 	0,
 	&ssprint_machine_driver,
@@ -1393,7 +1505,7 @@ struct GameDriver ssprint_driver =
 
 	0, 0, 0,   /* colors, palette, colortable */
 	ORIENTATION_DEFAULT,
-	atarigen_hiload, atarigen_hisave
+	ssprint_hiload, atarigen_hisave
 };
 
 
@@ -1403,8 +1515,8 @@ struct GameDriver csprint_driver =
 	0,
 	"csprint",
 	"Championship Sprint",
-	"????",
-	"?????",
+	"1986",
+	"Atari Games",
 	"Aaron Giles (MAME driver)\nJuergen Buchmueller (MAME driver)\nMike Balfour (hardware info)",
 	0,
 	&csprint_machine_driver,

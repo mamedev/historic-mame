@@ -149,7 +149,7 @@ int missile_trakball_r(int data);
 
 int  missile_vh_start(void);
 void missile_vh_stop(void);
-void missile_vh_update(struct osd_bitmap *bitmap);
+void missile_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 
 
@@ -383,7 +383,7 @@ static struct MachineDriver machine_driver =
 	0,
 	missile_vh_start,
 	missile_vh_stop,
-	missile_vh_update,
+	missile_vh_screenrefresh,
 
 	/* sound hardware */
 	0,0,0,0,
@@ -469,8 +469,8 @@ struct GameDriver missile_driver =
 	0,
 	"missile",
 	"Missile Command",
-	"????",
-	"?????",
+	"1980",
+	"Atari",
 	"Ray Giarratana\nMarco Cassili\nEric Anschuetz",  /* EEA */
 	0,
 	&machine_driver,
@@ -491,11 +491,11 @@ struct GameDriver missile_driver =
 struct GameDriver suprmatk_driver =
 {
 	__FILE__,
-	0,
+	&missile_driver,
 	"suprmatk",
 	"Super Missile Attack",
-	"????",
-	"?????",
+	"1981",
+	"Atari + Gencomp",
 	"Ray Giarratana\nMarco Cassili\nEric Anschuetz",  /* EEA */
 	0,
 	&machine_driver,

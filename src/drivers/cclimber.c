@@ -140,7 +140,7 @@ void cclimber_bigsprite_videoram_w(int offset,int data);
 void cclimber_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 int cclimber_vh_start(void);
 void cclimber_vh_stop(void);
-void cclimber_vh_screenrefresh(struct osd_bitmap *bitmap);
+void cclimber_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 void cclimber_portA_w(int offset,int data);
 void cclimber_sample_trigger_w(int offset,int data);
@@ -401,7 +401,7 @@ static struct AY8910interface ay8910_interface =
 {
 	1,      /* 1 chip */
 	1536000,	/* 1.536 MHz */
-	{ 0x20ff },
+	{ 255 },
 	{ 0 },
 	{ 0 },
 	{ cclimber_portA_w },
@@ -575,16 +575,16 @@ ROM_START( ccjap_rom )
 	ROM_LOAD( "cc07j.bin", 0x4000, 0x1000, 0xbe3cc484 )
 
 	ROM_REGION(0x5000)      /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "cc06j.bin", 0x0000, 0x0800, 0x8ceda6c7 )
+	ROM_LOAD( "cc06", 0x0000, 0x0800, 0x8ceda6c7 )
 	/* empty hole - Crazy Kong has an additional ROM here */
-	ROM_LOAD( "cc04j.bin", 0x1000, 0x0800, 0xda323f5a )
+	ROM_LOAD( "cc04", 0x1000, 0x0800, 0xda323f5a )
 	/* empty hole - Crazy Kong has an additional ROM here */
-	ROM_LOAD( "cc05j.bin", 0x2000, 0x0800, 0xa26db1cf )
+	ROM_LOAD( "cc05", 0x2000, 0x0800, 0xa26db1cf )
 	/* empty hole - Crazy Kong has an additional ROM here */
-	ROM_LOAD( "cc03j.bin", 0x3000, 0x0800, 0x8eb7e34d )
+	ROM_LOAD( "cc03", 0x3000, 0x0800, 0x8eb7e34d )
 	/* empty hole - Crazy Kong has an additional ROM here */
-	ROM_LOAD( "cc02j.bin", 0x4000, 0x0800, 0x25f097b6 )
-	ROM_LOAD( "cc01j.bin", 0x4800, 0x0800, 0xb90b75dd )
+	ROM_LOAD( "cc02", 0x4000, 0x0800, 0x25f097b6 )
+	ROM_LOAD( "cc01", 0x4800, 0x0800, 0xb90b75dd )
 
 	ROM_REGION(0x2000)      /* samples */
 	ROM_LOAD( "cc13j.bin", 0x0000, 0x1000, 0x9f4339e5 )
@@ -691,28 +691,6 @@ static void ccjap_decode(void)
 
 ROM_START( ckong_rom )
 	ROM_REGION(0x10000)     /* 64k for code */
-	ROM_LOAD( "7.dat",  0x0000, 0x1000, 0xc6efa047 )
-	ROM_LOAD( "8.dat",  0x1000, 0x1000, 0xb6c21834 )
-	ROM_LOAD( "9.dat",  0x2000, 0x1000, 0xa71d0d79 )
-	ROM_LOAD( "10.dat", 0x3000, 0x1000, 0x68fee770 )
-	ROM_LOAD( "11.dat", 0x4000, 0x1000, 0x18a93c23 )
-	ROM_LOAD( "12.dat", 0x5000, 0x1000, 0xe72c50f6 )
-
-	ROM_REGION(0x5000)      /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "6.dat",  0x0000, 0x1000, 0x29097247 )
-	ROM_LOAD( "4.dat",  0x1000, 0x1000, 0xd8e27c6e )
-	ROM_LOAD( "5.dat",  0x2000, 0x1000, 0xbb5521c9 )
-	ROM_LOAD( "3.dat",  0x3000, 0x1000, 0x8aef534f )
-	ROM_LOAD( "2.dat",  0x4000, 0x0800, 0x9c1f9d15 )
-	ROM_LOAD( "1.dat",  0x4800, 0x0800, 0x9cbf41cb )
-
-	ROM_REGION(0x2000)      /* samples */
-	ROM_LOAD( "14.dat", 0x0000, 0x1000, 0x9f4339e5 )
-	ROM_LOAD( "13.dat", 0x1000, 0x1000, 0xe921f6f5 )
-ROM_END
-
-ROM_START( ckonga_rom )
-	ROM_REGION(0x10000)     /* 64k for code */
 	ROM_LOAD( "D05-07.bin", 0x0000, 0x1000, 0xc6efa047 )
 	ROM_LOAD( "F05-08.bin", 0x1000, 0x1000, 0xb6c21834 )
 	ROM_LOAD( "H05-09.bin", 0x2000, 0x1000, 0xa71d0d79 )
@@ -733,26 +711,48 @@ ROM_START( ckonga_rom )
 	ROM_LOAD( "R05-13.bin", 0x1000, 0x1000, 0xe921f6f5 )
 ROM_END
 
-ROM_START( ckongjeu_rom )
+ROM_START( ckonga_rom )
 	ROM_REGION(0x10000)     /* 64k for code */
-	ROM_LOAD( "7.dat",  0x0000, 0x1000, 0xc6efa047 )
-	ROM_LOAD( "8.dat",  0x1000, 0x1000, 0xb6c21834 )
-	ROM_LOAD( "9.dat",  0x2000, 0x1000, 0xa71d0d79 )
-	ROM_LOAD( "10.dat", 0x3000, 0x1000, 0x5beeee78 )
-	ROM_LOAD( "11.dat", 0x4000, 0x1000, 0x18a93c23 )
-	ROM_LOAD( "12.dat", 0x5000, 0x1000, 0x10bfbb61 )
+	ROM_LOAD( "D05-07.bin", 0x0000, 0x1000, 0xc6efa047 )
+	ROM_LOAD( "F05-08.bin", 0x1000, 0x1000, 0xb6c21834 )
+	ROM_LOAD( "H05-09.bin", 0x2000, 0x1000, 0xa71d0d79 )
+	ROM_LOAD( "10.dat",     0x3000, 0x1000, 0x68fee770 )
+	ROM_LOAD( "L05-11.bin", 0x4000, 0x1000, 0x18a93c23 )
+	ROM_LOAD( "N05-12.bin", 0x5000, 0x1000, 0xe72c50f6 )
 
 	ROM_REGION(0x5000)      /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "6.dat",  0x0000, 0x1000, 0x29097247 )
-	ROM_LOAD( "4.dat",  0x1000, 0x1000, 0xd8e27c6e )
-	ROM_LOAD( "5.dat",  0x2000, 0x1000, 0xbb5521c9 )
-	ROM_LOAD( "3.dat",  0x3000, 0x1000, 0x8aef534f )
-	ROM_LOAD( "2.dat",  0x4000, 0x0800, 0x9c1f9d15 )
-	ROM_LOAD( "1.dat",  0x4800, 0x0800, 0x9cbf41cb )
+	ROM_LOAD( "N11-06.bin", 0x0000, 0x1000, 0x29097247 )
+	ROM_LOAD( "K11-04.bin", 0x1000, 0x1000, 0xd8e27c6e )
+	ROM_LOAD( "L11-05.bin", 0x2000, 0x1000, 0xbb5521c9 )
+	ROM_LOAD( "H11-03.bin", 0x3000, 0x1000, 0x8aef534f )
+	ROM_LOAD( "C11-02.bin", 0x4000, 0x0800, 0x9c1f9d15 )
+	ROM_LOAD( "A11-01.bin", 0x4800, 0x0800, 0x9cbf41cb )
 
 	ROM_REGION(0x2000)      /* samples */
-	ROM_LOAD( "14.dat", 0x0000, 0x1000, 0x9f4339e5 )
-	ROM_LOAD( "13.dat", 0x1000, 0x1000, 0xe921f6f5 )
+	ROM_LOAD( "S05-14.bin", 0x0000, 0x1000, 0x9f4339e5 )
+	ROM_LOAD( "R05-13.bin", 0x1000, 0x1000, 0xe921f6f5 )
+ROM_END
+
+ROM_START( ckongjeu_rom )
+	ROM_REGION(0x10000)     /* 64k for code */
+	ROM_LOAD( "D05-07.bin",  0x0000, 0x1000, 0xc6efa047 )
+	ROM_LOAD( "F05-08.bin",  0x1000, 0x1000, 0xb6c21834 )
+	ROM_LOAD( "H05-09.bin",  0x2000, 0x1000, 0xa71d0d79 )
+	ROM_LOAD( "ckjeu10.dat", 0x3000, 0x1000, 0x5beeee78 )
+	ROM_LOAD( "L05-11.bin",  0x4000, 0x1000, 0x18a93c23 )
+	ROM_LOAD( "ckjeu12.dat", 0x5000, 0x1000, 0x10bfbb61 )
+
+	ROM_REGION(0x5000)      /* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "N11-06.bin", 0x0000, 0x1000, 0x29097247 )
+	ROM_LOAD( "K11-04.bin", 0x1000, 0x1000, 0xd8e27c6e )
+	ROM_LOAD( "L11-05.bin", 0x2000, 0x1000, 0xbb5521c9 )
+	ROM_LOAD( "H11-03.bin", 0x3000, 0x1000, 0x8aef534f )
+	ROM_LOAD( "C11-02.bin", 0x4000, 0x0800, 0x9c1f9d15 )
+	ROM_LOAD( "A11-01.bin", 0x4800, 0x0800, 0x9cbf41cb )
+
+	ROM_REGION(0x2000)      /* samples */
+	ROM_LOAD( "S05-14.bin", 0x0000, 0x1000, 0x9f4339e5 )
+	ROM_LOAD( "R05-13.bin", 0x1000, 0x1000, 0xe921f6f5 )
 ROM_END
 
 ROM_START( ckongalc_rom )
@@ -885,9 +885,9 @@ struct GameDriver cclimber_driver =
 	__FILE__,
 	0,
 	"cclimber",
-	"Crazy Climber (US version)",
-	"????",
-	"?????",
+	"Crazy Climber (US)",
+	"1980",
+	"Nihon Bussan",
 	"Lionel Theunissen (hardware info and ROM decryption)\nNicola Salmoria (MAME driver)",
 	0,
 	&machine_driver,
@@ -908,11 +908,11 @@ struct GameDriver cclimber_driver =
 struct GameDriver ccjap_driver =
 {
 	__FILE__,
-	0,
+	&cclimber_driver,
 	"ccjap",
-	"Crazy Climber (Japanese version)",
-	"????",
-	"?????",
+	"Crazy Climber (Japan)",
+	"1980",
+	"Nihon Bussan",
 	"Lionel Theunissen (hardware info and ROM decryption)\nNicola Salmoria (MAME driver)",
 	0,
 	&machine_driver,
@@ -933,11 +933,11 @@ struct GameDriver ccjap_driver =
 struct GameDriver ccboot_driver =
 {
 	__FILE__,
-	0,
+	&cclimber_driver,
 	"ccboot",
 	"Crazy Climber (bootleg)",
-	"????",
-	"?????",
+	"1980",
+	"bootleg",
 	"Lionel Theunissen (hardware info and ROM decryption)\nNicola Salmoria (MAME driver)",
 	0,
 	&machine_driver,
@@ -962,9 +962,9 @@ struct GameDriver ckong_driver =
 	__FILE__,
 	0,
 	"ckong",
-	"Crazy Kong (Crazy Climber hardware)",
-	"????",
-	"?????",
+	"Crazy Kong (set 1)",
+	"1981",
+	"Falcon",
 	"Nicola Salmoria (MAME driver)\nVille Laitinen (adaptation from Crazy Climber)\nDoug Jefferys (color info)\nTim Lindquist (color info)",
 	0,
 	&machine_driver,
@@ -985,11 +985,11 @@ struct GameDriver ckong_driver =
 struct GameDriver ckonga_driver =
 {
 	__FILE__,
-	0,
+	&ckong_driver,
 	"ckonga",
-	"Crazy Kong (alternate version)",
-	"????",
-	"?????",
+	"Crazy Kong (set 2)",
+	"1981",
+	"Falcon",
 	"Nicola Salmoria (MAME driver)\nVille Laitinen (adaptation from Crazy Climber)\nDoug Jefferys (color info)\nTim Lindquist (color info)",
 	0,
 	&machine_driver,
@@ -1010,11 +1010,11 @@ struct GameDriver ckonga_driver =
 struct GameDriver ckongjeu_driver =
 {
 	__FILE__,
-	0,
+	&ckong_driver,
 	"ckongjeu",
 	"Crazy Kong (Jeutel bootleg)",
-	"????",
-	"?????",
+	"1981",
+	"bootleg",
 	"Nicola Salmoria (MAME driver)\nVille Laitinen (adaptation from Crazy Climber)\nDoug Jefferys (color info)\nTim Lindquist (color info)",
 	0,
 	&machine_driver,
@@ -1035,11 +1035,11 @@ struct GameDriver ckongjeu_driver =
 struct GameDriver ckongalc_driver =
 {
 	__FILE__,
-	0,
+	&ckong_driver,
 	"ckongalc",
 	"Crazy Kong (Alca bootleg)",
-	"????",
-	"?????",
+	"1981",
+	"bootleg",
 	"Nicola Salmoria (MAME driver)\nVille Laitinen (adaptation from Crazy Climber)\nDoug Jefferys (color info)\nTim Lindquist (color info)\nLee Taylor",
 	0,
 	&machine_driver,
@@ -1060,11 +1060,11 @@ struct GameDriver ckongalc_driver =
 struct GameDriver monkeyd_driver =
 {
 	__FILE__,
-	0,
+	&ckong_driver,
 	"monkeyd",
 	"Monkey Donkey",
-	"????",
-	"?????",
+	"1981",
+	"bootleg",
 	"Nicola Salmoria (MAME driver)\nVille Laitinen (adaptation from Crazy Climber)\nDoug Jefferys (color info)\nTim Lindquist (color info)\nLee Taylor",
 	0,
 	&machine_driver,
@@ -1093,7 +1093,7 @@ struct GameDriver monkeyd_driver =
 void swimmer_bgcolor_w(int offset,int data);
 void swimmer_palettebank_w(int offset,int data);
 void swimmer_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-void swimmer_vh_screenrefresh(struct osd_bitmap *bitmap);
+void swimmer_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 void swimmer_sidepanel_enable_w(int offset,int data);
 
 
@@ -1442,7 +1442,7 @@ static struct AY8910interface swimmer_ay8910_interface =
 {
 	2,      /* 2 chips */
 	2000000,	/* 2 MHz? (hand tuned for Guzzler) */
-	{ 0x20ff, 0x20ff },
+	{ 255, 255 },
 	{ 0 },
 	{ 0 },
 	{ 0 },
@@ -1500,19 +1500,19 @@ static struct MachineDriver swimmer_machine_driver =
 
 ROM_START( swimmer_rom )
 	ROM_REGION(0x10000)     /* 64k for code */
-	ROM_LOAD( "sw1",  0x0000, 0x1000, 0x0f1a49b8 )
-	ROM_LOAD( "sw2",  0x1000, 0x1000, 0x50d86262 )
-	ROM_LOAD( "sw3",  0x2000, 0x1000, 0x4c967b46 )
-	ROM_LOAD( "sw4",  0x3000, 0x1000, 0xd7538bf1 )
-	ROM_LOAD( "sw5",  0x4000, 0x1000, 0x8dfa0b0e )
-	ROM_LOAD( "sw6",  0x5000, 0x1000, 0x2241dc33 )
-	ROM_LOAD( "sw7",  0x6000, 0x1000, 0x2520c322 )
-	ROM_LOAD( "sw8",  0x7000, 0x1000, 0x7d18b25a )
+	ROM_LOAD( "sw1", 0x0000, 0x1000, 0x0f1a49b8 )
+	ROM_LOAD( "sw2", 0x1000, 0x1000, 0x50d86262 )
+	ROM_LOAD( "sw3", 0x2000, 0x1000, 0x4c967b46 )
+	ROM_LOAD( "sw4", 0x3000, 0x1000, 0xd7538bf1 )
+	ROM_LOAD( "sw5", 0x4000, 0x1000, 0x8dfa0b0e )
+	ROM_LOAD( "sw6", 0x5000, 0x1000, 0x2241dc33 )
+	ROM_LOAD( "sw7", 0x6000, 0x1000, 0x2520c322 )
+	ROM_LOAD( "sw8", 0x7000, 0x1000, 0x7d18b25a )
 
 	ROM_REGION(0x6000)      /* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "sw15", 0x0000, 0x1000, 0x96e9a871 )  /* chars */
-	ROM_LOAD( "sw14", 0x1000, 0x1000, 0x0ba99bbf )
-	ROM_LOAD( "sw13", 0x2000, 0x1000, 0xf3431acf )
+	ROM_LOAD( "sw14", 0x1000, 0x1000, 0x0ba59bbb )
+	ROM_LOAD( "sw13", 0x2000, 0x1000, 0xd3433acf )
 	ROM_LOAD( "sw23", 0x3000, 0x0800, 0xd495316f )  /* bigsprite data */
 	/* 3800-3fff empty (Guzzler has larger ROMs) */
 	ROM_LOAD( "sw22", 0x4000, 0x0800, 0xe8c2f776 )
@@ -1526,14 +1526,14 @@ ROM_END
 
 ROM_START( swimmera_rom )
 	ROM_REGION(0x10000)     /* 64k for code */
-	ROM_LOAD( "sw1",  0x0000, 0x1000, 0x78d5f53b )
-	ROM_LOAD( "sw2",  0x1000, 0x1000, 0x92357e0f )
-	ROM_LOAD( "sw3",  0x2000, 0x1000, 0x520b9fc7 )
-	ROM_LOAD( "sw4",  0x3000, 0x1000, 0x8db0d8e0 )
-	ROM_LOAD( "sw5",  0x4000, 0x1000, 0x5f79bd21 )
-	ROM_LOAD( "sw6",  0x5000, 0x1000, 0xa24dda45 )
-	ROM_LOAD( "sw7",  0x6000, 0x1000, 0x4e697751 )
-	ROM_LOAD( "sw8",  0x7000, 0x1000, 0x084ac8a0 )
+	ROM_LOAD( "swa1", 0x0000, 0x1000, 0x78d5f53b )
+	ROM_LOAD( "swa2", 0x1000, 0x1000, 0x92357e0f )
+	ROM_LOAD( "swa3", 0x2000, 0x1000, 0x520b9fc7 )
+	ROM_LOAD( "swa4", 0x3000, 0x1000, 0x8db0d8e0 )
+	ROM_LOAD( "swa5", 0x4000, 0x1000, 0x5f79bd21 )
+	ROM_LOAD( "swa6", 0x5000, 0x1000, 0xa24dda45 )
+	ROM_LOAD( "swa7", 0x6000, 0x1000, 0x4e697751 )
+	ROM_LOAD( "swa8", 0x7000, 0x1000, 0x084ac8a0 )
 
 	ROM_REGION(0x6000)      /* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "sw15", 0x0000, 0x1000, 0x96e9a871 )  /* chars */
@@ -1668,9 +1668,9 @@ struct GameDriver swimmer_driver =
 	__FILE__,
 	0,
 	"swimmer",
-	"Swimmer",
-	"????",
-	"?????",
+	"Swimmer (set 1)",
+	"1982",
+	"Tehkan",
 	"Brad Oliver",
 	0,
 	&swimmer_machine_driver,
@@ -1691,11 +1691,11 @@ struct GameDriver swimmer_driver =
 struct GameDriver swimmera_driver =
 {
 	__FILE__,
-	0,
+	&swimmer_driver,
 	"swimmera",
-	"Swimmer (alternate)",
-	"????",
-	"?????",
+	"Swimmer (set 2)",
+	"1982",
+	"Tehkan",
 	"Brad Oliver",
 	0,
 	&swimmer_machine_driver,
@@ -1719,8 +1719,8 @@ struct GameDriver guzzler_driver =
 	0,
 	"guzzler",
 	"Guzzler",
-	"????",
-	"?????",
+	"1983",
+	"Tehkan",
 	"Mirko Buffoni (MAME driver)\nGerald Vanderick (color info)\nAUC-L (SM) Valerio Verrando\n(high score save)",
 	0,
 	&swimmer_machine_driver,

@@ -153,7 +153,7 @@ void vastar_bg2colorram2_w(int offset,int data)
   the main emulation engine.
 
 ***************************************************************************/
-void vastar_vh_screenrefresh(struct osd_bitmap *bitmap)
+void vastar_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	int offs;
 

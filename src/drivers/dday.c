@@ -53,7 +53,7 @@ extern unsigned char *dday_videoram2;
 extern unsigned char *dday_videoram3;
 
 void dday_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-void dday_vh_screenrefresh(struct osd_bitmap *bitmap);
+void dday_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 void dday_colorram_w(int offset, int data);
 int  dday_colorram_r(int offset);
 void dday_control_w (int offset, int data);
@@ -308,7 +308,7 @@ static struct AY8910interface ay8910_interface =
 {
 	2,      /* 2 chips */
 	1000000,	/* 1.0 MHz ? */
-	{ 0x20ff , 0x20ff }, /* ??? */
+	{ 255, 255 },
 	{ 0 },
 	{ 0 },
 	{ 0 },
@@ -431,8 +431,8 @@ struct GameDriver dday_driver =
 	0,
 	"dday",
 	"D-Day",
-	"????",
-	"?????",
+	"1982",
+	"Centuri",
 	"Zsolt Vasvari\nHowie Cohen\nChris Moore\nBrad Oliver",
 	0,
 	&machine_driver,

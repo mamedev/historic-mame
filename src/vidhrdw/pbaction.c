@@ -11,91 +11,11 @@
 
 
 unsigned char *pbaction_videoram2,*pbaction_colorram2;
-unsigned char *pbaction_paletteram;
 void pbaction_videoram2_w(int offset,int data);
 void pbaction_colorram2_w(int offset,int data);
 static unsigned char *dirtybuffer2;
 static struct osd_bitmap *tmpbitmap2;
-
-
-
-
-/***************************************************************************
-
-  Pinball Action doesn't have a color PROM. It uses 512 bytes of RAM to
-  dynamically create the palette. Each couple of bytes defines one
-  color (4 bits per pixel; the high 4 bits of the second byte are unused).
-
-  I don't know the exact values of the resistors between the RAM and the
-  RGB output. I assumed these values (the same as Commando)
-  bit 7 -- 220 ohm resistor  -- GREEN
-        -- 470 ohm resistor  -- GREEN
-        -- 1  kohm resistor  -- GREEN
-        -- 2.2kohm resistor  -- GREEN
-        -- 220 ohm resistor  -- RED
-        -- 470 ohm resistor  -- RED
-        -- 1  kohm resistor  -- RED
-  bit 0 -- 2.2kohm resistor  -- RED
-
-  bit 7 -- unused
-        -- unused
-        -- unused
-        -- unused
-        -- 220 ohm resistor  -- BLUE
-        -- 470 ohm resistor  -- BLUE
-        -- 1  kohm resistor  -- BLUE
-  bit 0 -- 2.2kohm resistor  -- BLUE
-
-***************************************************************************/
-void pbaction_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
-{
-	int i;
-
-
-	/* initialize the color table */
-	for (i = 0;i < Machine->drv->total_colors;i++)
-	{
-		if (i < 128 && i % 8 == 0) colortable[i] = 0;
-		else colortable[i] = i;
-	}
-}
-
-
-
-void pbaction_paletteram_w(int offset,int data)
-{
-	int bit0,bit1,bit2,bit3;
-	int r,g,b,val;
-
-
-	pbaction_paletteram[offset] = data;
-
-	/* red component */
-	val = pbaction_paletteram[offset & ~1];
-	bit0 = (val >> 0) & 0x01;
-	bit1 = (val >> 1) & 0x01;
-	bit2 = (val >> 2) & 0x01;
-	bit3 = (val >> 3) & 0x01;
-	r = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
-
-	/* green component */
-	val = pbaction_paletteram[offset & ~1];
-	bit0 = (val >> 4) & 0x01;
-	bit1 = (val >> 5) & 0x01;
-	bit2 = (val >> 6) & 0x01;
-	bit3 = (val >> 7) & 0x01;
-	g = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
-
-	/* blue component */
-	val = pbaction_paletteram[offset | 1];
-	bit0 = (val >> 0) & 0x01;
-	bit1 = (val >> 1) & 0x01;
-	bit2 = (val >> 2) & 0x01;
-	bit3 = (val >> 3) & 0x01;
-	b = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
-
-	palette_change_color(offset / 2,r,g,b);
-}
+static int flipscreen;
 
 
 
@@ -106,6 +26,9 @@ void pbaction_paletteram_w(int offset,int data)
 ***************************************************************************/
 int pbaction_vh_start(void)
 {
+	int i;
+
+
 	if (generic_vh_start() != 0)
 		return 1;
 
@@ -122,6 +45,9 @@ int pbaction_vh_start(void)
 		generic_vh_stop();
 		return 1;
 	}
+
+	/* leave everything at the default, but map all foreground 0 pens as transparent */
+	for (i = 0;i < 16;i++) palette_used_colors[8 * i] = PALETTE_COLOR_TRANSPARENT;
 
 	return 0;
 }
@@ -165,6 +91,18 @@ void pbaction_colorram2_w(int offset,int data)
 
 
 
+void pbaction_flipscreen_w(int offset,int data)
+{
+	if (flipscreen != (data & 1))
+	{
+		flipscreen = data & 1;
+		memset(dirtybuffer,1,videoram_size);
+		memset(dirtybuffer2,1,videoram_size);
+	}
+}
+
+
+
 /***************************************************************************
 
   Draw the game screen in the given osd_bitmap.
@@ -172,16 +110,16 @@ void pbaction_colorram2_w(int offset,int data)
   the main emulation engine.
 
 ***************************************************************************/
-void pbaction_vh_screenrefresh(struct osd_bitmap *bitmap)
+void pbaction_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	int offs;
 
 
 	/* recalc the palette if necessary */
-	if (palette_recalc ())
+	if (palette_recalc())
 	{
-		memset (dirtybuffer,1,videoram_size);
-		memset (dirtybuffer2,1,videoram_size);
+		memset(dirtybuffer,1,videoram_size);
+		memset(dirtybuffer2,1,videoram_size);
 	}
 
 
@@ -191,36 +129,52 @@ void pbaction_vh_screenrefresh(struct osd_bitmap *bitmap)
 	{
 		if (dirtybuffer[offs])
 		{
-			int sx,sy;
+			int sx,sy,flipx,flipy;
 
 
 			dirtybuffer[offs] = 0;
 
-			sx = 31 - offs / 32;
-			sy = offs % 32;
+			sx = offs % 32;
+			sy = offs / 32;
+			flipx = colorram[offs] & 0x40;
+			flipy = colorram[offs] & 0x80;
+			if (flipscreen)
+			{
+				sx = 31 - sx;
+				sy = 31 - sy;
+				flipx = !flipx;
+				flipy = !flipy;
+			}
 
 			drawgfx(tmpbitmap,Machine->gfx[0],
 					videoram[offs] + 0x10 * (colorram[offs] & 0x30),
 					colorram[offs] & 0x0f,
-					0,0,
+					flipx,flipy,
 					8*sx,8*sy,
 					&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
 		}
 
 		if (dirtybuffer2[offs])
 		{
-			int sx,sy;
+			int sx,sy,flipy;
 
 
 			dirtybuffer2[offs] = 0;
 
-			sx = 31 - offs / 32;
-			sy = offs % 32;
+			sx = offs % 32;
+			sy = offs / 32;
+			flipy = pbaction_colorram2[offs] & 0x80;
+			if (flipscreen)
+			{
+				sx = 31 - sx;
+				sy = 31 - sy;
+				flipy = !flipy;
+			}
 
 			drawgfx(tmpbitmap2,Machine->gfx[1],
 					pbaction_videoram2[offs] + 0x10 * (pbaction_colorram2[offs] & 0x70),
 					pbaction_colorram2[offs] & 0x0f,
-					0,0,
+					flipscreen,flipy,
 					8*sx,8*sy,
 					&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
 		}
@@ -232,20 +186,46 @@ void pbaction_vh_screenrefresh(struct osd_bitmap *bitmap)
 
 
 	/* Draw the sprites. */
-	for (offs = 0;offs < spriteram_size;offs += 4)
+	for (offs = spriteram_size - 4;offs >= 0;offs -= 4)
 	{
+		int sx,sy,flipx,flipy;
+
+
+		/* if next sprite is double size, skip this one */
+		if (offs > 0 && spriteram[offs - 4] & 0x80) continue;
+
+		sx = spriteram[offs+3];
+		if (spriteram[offs] & 0x80)
+			sy = 225-spriteram[offs+2];
+		else
+			sy = 241-spriteram[offs+2];
+		flipx = spriteram[offs+1] & 0x40;
+		flipy =	spriteram[offs+1] & 0x80;
+		if (flipscreen)
+		{
+			if (spriteram[offs] & 0x80)
+			{
+				sx = 224 - sx;
+				sy = 225 - sy;
+			}
+			else
+			{
+				sx = 240 - sx;
+				sy = 241 - sy;
+			}
+			flipx = !flipx;
+			flipy = !flipy;
+		}
+
 		drawgfx(bitmap,Machine->gfx[(spriteram[offs] & 0x80) ? 3 : 2],	/* normal or double size */
 				spriteram[offs],
 				spriteram[offs + 1] & 0x0f,
-				spriteram[offs + 1] & 0x80,spriteram[offs + 1] & 0x40,
-				spriteram[offs + 2],spriteram[offs + 3],
+				flipx,flipy,
+				sx,sy,
 				&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
-
-		/* if double size, skip next sprite */
-		if (spriteram[offs] & 0x80) offs += 4;
 	}
 
 
 	/* copy the foreground */
-	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_COLOR,0);
+	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_PEN,palette_transparent_pen);
 }

@@ -58,9 +58,9 @@ void blstroid_vh_stop (void);
 void blstroid_sound_reset (void);
 void blstroid_update_display_list (int scanline);
 
-//#if 0
+#if 0
 static int blstroid_debug (void);
-//#endif
+#endif
 
 
 /*************************************
@@ -190,39 +190,6 @@ void blstroid_playfieldram_w (int offset, int data)
 				int1_timer[row] = 0;
 			}
 		}
-	}
-}
-
-
-
-/*************************************
- *
- *		Palette RAM read/write handlers
- *
- *************************************/
-
-int blstroid_paletteram_r (int offset)
-{
-	return READ_WORD (&atarigen_paletteram[offset]);
-}
-
-
-void blstroid_paletteram_w (int offset, int data)
-{
-	int oldword = READ_WORD (&atarigen_paletteram[offset]);
-	int newword = COMBINE_WORD (oldword, data);
-	WRITE_WORD (&atarigen_paletteram[offset], newword);
-
-	{
-		int red =   (((newword >> 10) & 31) * 224) >> 5;
-		int green = (((newword >>  5) & 31) * 224) >> 5;
-		int blue =  (((newword      ) & 31) * 224) >> 5;
-
-		if (red) red += 38;
-		if (green) green += 38;
-		if (blue) blue += 38;
-
-		palette_change_color ((offset / 2) & 0x1ff, red, green, blue);
 	}
 }
 
@@ -370,15 +337,12 @@ void blstroid_render_mo (struct osd_bitmap *bitmap, struct rectangle *clip, unsi
 
 ***************************************************************************/
 
-void blstroid_vh_screenrefresh (struct osd_bitmap *bitmap)
+void blstroid_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	unsigned char mo_map[16], pf_map[16];
 	struct blstroid_mo_data modata;
 	int redraw_list[1024], *r;
 	int x, y, offs, i;
-
-
-	int hidebank = blstroid_debug ();
 
 
 	/* reset color tracking */
@@ -524,7 +488,7 @@ void blstroid_vh_screenrefresh (struct osd_bitmap *bitmap)
  *
  *************************************/
 
-//#if 0
+#if 0
 static int blstroid_debug (void)
 {
 	static unsigned long oldpri[8];
@@ -574,14 +538,14 @@ static int blstroid_debug (void)
 		fprintf (f, "\n\nMotion Object Palette:\n");
 		for (i = 0x000; i < 0x100; i++)
 		{
-			fprintf (f, "%04X ", READ_WORD (&atarigen_paletteram[i*2]));
+			fprintf (f, "%04X ", READ_WORD (&paletteram[i*2]));
 			if ((i & 15) == 15) fprintf (f, "\n");
 		}
 
 		fprintf (f, "\n\nPlayfield Palette:\n");
 		for (i = 0x100; i < 0x200; i++)
 		{
-			fprintf (f, "%04X ", READ_WORD (&atarigen_paletteram[i*2]));
+			fprintf (f, "%04X ", READ_WORD (&paletteram[i*2]));
 			if ((i & 15) == 15) fprintf (f, "\n");
 		}
 
@@ -609,4 +573,4 @@ static int blstroid_debug (void)
 
 	return hidebank;
 }
-//#endif
+#endif

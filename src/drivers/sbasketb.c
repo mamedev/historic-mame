@@ -21,7 +21,7 @@ MAIN BOARD:
 extern unsigned char *sbasketb_scroll;
 extern unsigned char *sbasketb_palettebank;
 void sbasketb_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-void sbasketb_vh_screenrefresh(struct osd_bitmap *bitmap);
+void sbasketb_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 extern unsigned char *konami_dac;
 
@@ -483,8 +483,8 @@ struct GameDriver sbasketb_driver =
 	0,
 	"sbasketb",
 	"Super Basketball",
-	"????",
-	"?????",
+	"1984",
+	"Konami",
 	"Zsolt Vasvari\nTim Linquist (color info)\nMarco Cassili\nTatsuyuki Satoh(speech sound)",
 	0,
 	&machine_driver,

@@ -73,7 +73,7 @@ extern unsigned char *wiz_sprite_bank;
 
 void wiz_background_bank_select_w (int offset, int data);
 void wiz_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-void wiz_vh_screenrefresh(struct osd_bitmap *bitmap);
+void wiz_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 void wiz_flipx_w(int offset,int data);
 void wiz_flipy_w(int offset,int data);
 
@@ -345,7 +345,7 @@ static struct AY8910interface ay8910_interface =
 {
 	3,      /* 3 chips */
 	14318000/8,	/* ? */
-	{ 0x60ff, 0x60ff, 0x60ff }, /* ? */
+	{ 100, 100, 100 },	/* with 255 the SEAL audio library distorts */
 	{ 0 },
 	{ 0 },
 	{ 0 },
@@ -472,8 +472,8 @@ struct GameDriver wiz_driver =
 	0,
 	"wiz",
 	"Wiz",
-	"????",
-	"?????",
+	"1985",
+	"Seibu Kaihatsu",
 	"Zsolt Vasvari",
 	0,
 	&machine_driver,

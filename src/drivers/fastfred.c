@@ -63,7 +63,7 @@ extern unsigned char *galaxian_attributesram;
 void galaxian_attributes_w(int offset,int data);
 
 void fastfred_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-void fastfred_vh_screenrefresh(struct osd_bitmap *bitmap);
+void fastfred_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 void fastfred_character_bank_select_w (int offset, int data);
 void fastfred_color_bank_select_w (int offset, int data);
 void fastfred_background_color_w (int offset, int data);
@@ -595,7 +595,7 @@ static struct AY8910interface fastfred_ay8910_interface =
 {
 	2,             /* 2 chips */
 	CLOCK/6,       /* 3.072 Mhz */
-	{ 0x60ff, 0x60ff }, /* ? */
+	{ 255, 255 },
 	{ 0 },
 	{ 0 },
 	{ 0 },
@@ -606,7 +606,7 @@ static struct AY8910interface jumpcoas_ay8910_interface =
 {
 	1,             /* 1 chip */
 	CLOCK/6,       /* 3.072 Mhz */
-	{ 0x60ff },    /* ? */
+	{ 255 },
 	{ 0 },
 	{ 0 },
 	{ 0 },
@@ -885,39 +885,14 @@ static void jumpcoas_hisave(void)
 }
 
 
-struct GameDriver fastfred_driver =
-{
-	__FILE__,
-	0,
-	"fastfred",
-	"Fast Freddie",
-	"????",
-	"?????",
-	"Zsolt Vasvari",
-	0,
-	&fastfred_machine_driver,
-
-	fastfred_rom,
-	0, 0,
-	0,
-	0,      /* sound_prom */
-
-	fastfred_input_ports,
-
-	flyboy_color_prom, 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	fastfred_hiload, fastfred_hisave
-};
-
 struct GameDriver flyboy_driver =
 {
 	__FILE__,
 	0,
 	"flyboy",
 	"Fly-Boy (bootleg?)",
-	"????",
-	"?????",
+	"1982",
+	"Kaneko",
 	"Zsolt Vasvari\nBrad Oliver (additional code)\nMarco Cassili (additional code)",
 	0,
 	&fastfred_machine_driver,
@@ -935,14 +910,39 @@ struct GameDriver flyboy_driver =
 	flyboy_hiload, flyboy_hisave
 };
 
+struct GameDriver fastfred_driver =
+{
+	__FILE__,
+	&flyboy_driver,
+	"fastfred",
+	"Fast Freddie",
+	"1982",
+	"Atari",
+	"Zsolt Vasvari",
+	0,
+	&fastfred_machine_driver,
+
+	fastfred_rom,
+	0, 0,
+	0,
+	0,      /* sound_prom */
+
+	fastfred_input_ports,
+
+	flyboy_color_prom, 0, 0,
+	ORIENTATION_ROTATE_90,
+
+	fastfred_hiload, fastfred_hisave
+};
+
 struct GameDriver jumpcoas_driver =
 {
 	__FILE__,
 	0,
 	"jumpcoas",
 	"Jump Coaster",
-	"????",
-	"?????",
+	"1983",
+	"Kaneko",
 	"Zsolt Vasvari",
 	0,
 	&jumpcoas_machine_driver,

@@ -66,7 +66,7 @@ I-Robot Memory Map
 extern int  irobot_vh_start(void);
 extern void irobot_vh_stop(void);
 extern void irobot_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-extern void irobot_vh_screenrefresh(struct osd_bitmap *bitmap);
+extern void irobot_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 extern void irobot_paletteram_w(int offset,int data);
 
 extern void irobot_nvram_w(int offset,int data);
@@ -372,10 +372,10 @@ struct GameDriver irobot_driver =
 	0,
     "irobot",
     "I, Robot",
-	"????",
-	"?????",
+	"1984?",
+	"Atari",
     "Dan Boris\nMike Balfour\nFrank Palazzolo\nBryan Smith (Tech info)",
-	0,
+	GAME_NOT_WORKING,
 	&machine_driver,
 
     irobot_rom,

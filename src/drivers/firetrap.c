@@ -76,7 +76,7 @@ void firetrap_flipscreen_w(int offset,int data);
 int firetrap_vh_start(void);
 void firetrap_vh_stop(void);
 void firetrap_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-void firetrap_vh_screenrefresh(struct osd_bitmap *bitmap);
+void firetrap_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 
 static int firetrap_irq_enable = 0;
@@ -388,7 +388,7 @@ static unsigned char color_prom[] =
 static struct YM3526interface ym3526_interface =
 {
 	1,			/* 1 chip (no more supported) */
-	3000000,	/* 3 MHz ? (not supported) */
+	3600000,	/* 3.600000 MHz ? (partially supported) */
 	{ 255 }		/* (not supported) */
 };
 
@@ -498,22 +498,22 @@ ROM_START( firetpbl_rom )
 
 	ROM_REGION(0x62000)	/* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "ft0e.bin",  0x00000, 0x2000, 0x66f41692 )	/* characters */
-	ROM_LOAD( "ft02.bin",  0x02000, 0x8000, 0x259f1eab )	/* tiles */
-	ROM_LOAD( "ft04.bin",  0x0a000, 0x8000, 0xa819796d )
-	ROM_LOAD( "ft01.bin",  0x12000, 0x8000, 0x09fb07c9 )
-	ROM_LOAD( "ft03.bin",  0x1a000, 0x8000, 0x85236d25 )
-	ROM_LOAD( "ft06.bin",  0x22000, 0x8000, 0x50d837aa )
-	ROM_LOAD( "ft08.bin",  0x2a000, 0x8000, 0xdc2fce6f )
-	ROM_LOAD( "ft05.bin",  0x32000, 0x8000, 0x1bae1e98 )
-	ROM_LOAD( "ft07.bin",  0x3a000, 0x8000, 0xb9904b02 )
-	ROM_LOAD( "ft12.bin",  0x42000, 0x8000, 0xc5032565 )	/* sprites */
-	ROM_LOAD( "ft09.bin",  0x4a000, 0x8000, 0x28c90385 )
-	ROM_LOAD( "ft10.bin",  0x52000, 0x8000, 0xb5249f96 )
-	ROM_LOAD( "ft11.bin",  0x5a000, 0x8000, 0x8d67bbe1 )
+	ROM_LOAD( "di06.bin",  0x02000, 0x8000, 0x259f1eab )	/* tiles */
+	ROM_LOAD( "di07.bin",  0x0a000, 0x8000, 0xa819796d )
+	ROM_LOAD( "di04.bin",  0x12000, 0x8000, 0x09fb07c9 )
+	ROM_LOAD( "di05.bin",  0x1a000, 0x8000, 0x85236d25 )
+	ROM_LOAD( "di09.bin",  0x22000, 0x8000, 0x50d837aa )
+	ROM_LOAD( "di11.bin",  0x2a000, 0x8000, 0xdc2fce6f )
+	ROM_LOAD( "di08.bin",  0x32000, 0x8000, 0x1bae1e98 )
+	ROM_LOAD( "di10.bin",  0x3a000, 0x8000, 0xb9904b02 )
+	ROM_LOAD( "di16.bin",  0x42000, 0x8000, 0xc5032565 )	/* sprites */
+	ROM_LOAD( "di13.bin",  0x4a000, 0x8000, 0x08c92385 )
+	ROM_LOAD( "di14.bin",  0x52000, 0x8000, 0xebfc9f9e )
+	ROM_LOAD( "di15.bin",  0x5a000, 0x8000, 0x8d67bbe1 )
 
 	ROM_REGION(0x18000)	/* 64k for the sound CPU + 32k for banked ROMs */
-	ROM_LOAD( "ft13.bin",  0x08000, 0x8000, 0x5f3832e8 )
-	ROM_LOAD( "ft14.bin",  0x10000, 0x8000, 0x0bd60332 )
+	ROM_LOAD( "di17.bin",  0x08000, 0x8000, 0x5f3832e8 )
+	ROM_LOAD( "di18.bin",  0x10000, 0x8000, 0x0bd60332 )
 ROM_END
 
 
@@ -559,10 +559,10 @@ struct GameDriver firetrap_driver =
 	0,
 	"firetrap",
 	"Fire Trap",
-	"????",
-	"?????",
+	"1986",
+	"Data East USA",
 	"Nicola Salmoria (MAME driver)\nTim Lindquist (color and hardware info)\nDani Portillo (high score save)",
-	0,
+	GAME_NOT_WORKING,
 	&machine_driver,
 
 	firetrap_rom,
@@ -581,11 +581,11 @@ struct GameDriver firetrap_driver =
 struct GameDriver firetpbl_driver =
 {
 	__FILE__,
-	0,
+	&firetrap_driver,
 	"firetpbl",
-	"Fire Trap (Japanese bootleg)",
-	"????",
-	"?????",
+	"Fire Trap (Japan bootleg)",
+	"1986",
+	"bootleg",
 	"Nicola Salmoria (MAME driver)\nTim Lindquist (color and hardware info)\nDani Portillo (high score save)",
 	0,
 	&machine_driver,

@@ -3,7 +3,7 @@ sndhrdw\starwars.c
 
 STARWARS MACHINE FILE
 
-This file created by Frank Palazzolo. (palazzol@tir.com)
+This file created by Frank Palazzolo. (palazzol@home.com)
 
 Release 2.0 (6 August 1997)
 

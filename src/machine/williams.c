@@ -8,6 +8,7 @@
 ***************************************************************************/
 
 #include "driver.h"
+#include "vidhrdw/generic.h"
 #include "M6808/M6808.h"
 #include "M6809/M6809.h"
 #include "6821pia.h"
@@ -65,9 +66,6 @@ static void williams_snd_irq (void);
 static void williams_snd_cmd_w (int offset, int cmd);
 static void williams_port_select_w (int offset, int data);
 static void sinistar_snd_cmd_w (int offset, int cmd);
-
-/* external code to modify the palette */
-void williams_palette_w (int offset, int data);
 
 /* external code to update part of the screen */
 void williams_vh_update (int counter);
@@ -617,7 +615,7 @@ void defender_io_w (int offset,int data)
 
 	/* Palette */
 	else if (offset < 0x10)
-		williams_palette_w (offset, data);
+		paletteram_BBGGGRRR_w(offset,data);
 
 	/* PIAs */
 	else if (offset >= 0x0c00 && offset < 0x0c04)

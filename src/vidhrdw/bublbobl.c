@@ -12,73 +12,19 @@
 
 
 unsigned char *bublbobl_objectram;
-unsigned char *bublbobl_paletteram;
 int bublbobl_objectram_size;
 
 
 
-/***************************************************************************
-
-  Bubble Bobble doesn't have a color PROM. It uses 512 bytes of RAM to
-  dynamically create the palette. Each couple of bytes defines one
-  color (4 bits per pixel; the low 4 bits of the second byte are unused).
-  Since the graphics use 4 bitplanes, hence 16 colors, this makes for 16
-  different color codes.
-
-  I don't know the exact values of the resistors between the RAM and the
-  RGB output. I assumed these values (the same as Commando)
-  bit 7 -- 220 ohm resistor  -- RED
-        -- 470 ohm resistor  -- RED
-        -- 1  kohm resistor  -- RED
-        -- 2.2kohm resistor  -- RED
-        -- 220 ohm resistor  -- GREEN
-        -- 470 ohm resistor  -- GREEN
-        -- 1  kohm resistor  -- GREEN
-  bit 0 -- 2.2kohm resistor  -- GREEN
-
-  bit 7 -- 220 ohm resistor  -- BLUE
-        -- 470 ohm resistor  -- BLUE
-        -- 1  kohm resistor  -- BLUE
-        -- 2.2kohm resistor  -- BLUE
-         -- unused
-        -- unused
-        -- unused
-  bit 0 -- unused
-
-***************************************************************************/
-void bublbobl_paletteram_w(int offset,int data)
+void bublbobl_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
 {
-	int bit0,bit1,bit2,bit3;
-	int r,g,b,val;
+	int i;
 
 
-	bublbobl_paletteram[offset] = data;
-
-	/* red component */
-	val = bublbobl_paletteram[offset & ~1];
-	bit0 = (val >> 4) & 0x01;
-	bit1 = (val >> 5) & 0x01;
-	bit2 = (val >> 6) & 0x01;
-	bit3 = (val >> 7) & 0x01;
-	r = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
-
-	/* green component */
-	val = bublbobl_paletteram[offset & ~1];
-	bit0 = (val >> 0) & 0x01;
-	bit1 = (val >> 1) & 0x01;
-	bit2 = (val >> 2) & 0x01;
-	bit3 = (val >> 3) & 0x01;
-	g = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
-
-	/* blue component */
-	val = bublbobl_paletteram[offset | 1];
-	bit0 = (val >> 4) & 0x01;
-	bit1 = (val >> 5) & 0x01;
-	bit2 = (val >> 6) & 0x01;
-	bit3 = (val >> 7) & 0x01;
-	b = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
-
-	palette_change_color((offset / 2) ^ 0x0f,r,g,b);
+	/* no color PROMs here, only RAM, but the gfx data is inverted so we */
+	/* cannot use the default lookup table */
+	for (i = 0;i < Machine->drv->color_table_len;i++)
+		colortable[i] = i ^ 0x0f;
 }
 
 
@@ -151,7 +97,7 @@ void bublbobl_objectram_w(int offset,int data)
   the main emulation engine.
 
 ***************************************************************************/
-void bublbobl_vh_screenrefresh(struct osd_bitmap *bitmap)
+void bublbobl_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	int offs;
 	int sx,sy,xc,yc;

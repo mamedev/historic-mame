@@ -17,24 +17,24 @@ byte meadows_dac  = 0;
 
 #define BASE_CLOCK		5000000
 #define BASE_CTR1       (BASE_CLOCK / 256)
-#define BASE_CTR2		(BASE_CLOCK / 32 / 2)
+#define BASE_CTR2		(BASE_CLOCK / 32)
 
-#define DIVIDE_CTR2     0x01
+#define DIV2OR4_CTR2	0x01
 #define ENABLE_CTR2     0x02
 #define ENABLE_DAC      0x04
 #define ENABLE_CTR1     0x08
 
-static	int wavelen;
-static	int channel[2];
-static	signed char * waveform[2];
+static	int channel;
+static	int freq1 = 1000;
+static	int freq2 = 1000;
+static	signed char waveform[2] = { -120, 120 };
 
 /************************************/
 /* Sound handler init				*/
 /************************************/
 int meadows_sh_init(const char *gamename)
 {
-	channel[0] = get_play_channels(1);
-	channel[1] = get_play_channels(1);
+	if (errorlog) fprintf(errorlog, "meadows sh_init\n");
     return 0;
 }
 
@@ -43,21 +43,9 @@ int meadows_sh_init(const char *gamename)
 /************************************/
 int meadows_sh_start(void)
 {
-int max_length;
-
-    /* build the wave form length based on the sample rate */
-	wavelen = Machine->sample_rate / Machine->drv->frames_per_second;
-    if (errorlog) fprintf(errorlog, "meadows wavelen %d\n", wavelen);
-
-	waveform[0] = malloc(wavelen);
-	if (!waveform[0])
-		return 1;
-
-	waveform[1] = malloc(wavelen);
-	if (!waveform[1])
-        return 1;
-	if (errorlog) fprintf(errorlog, "meadows wavelen %d\n", wavelen);
-
+	channel = get_play_channels(2);
+	osd_play_sample(channel, waveform, sizeof(waveform), freq1, 0, 1);
+	osd_play_sample(channel+1, waveform, sizeof(waveform), freq2, 0, 1);
     return 0;
 }
 
@@ -66,10 +54,8 @@ int max_length;
 /************************************/
 void meadows_sh_stop(void)
 {
-	free(waveform[1]);
-	free(waveform[0]);
-    osd_stop_sample(channel[1]);
-	osd_stop_sample(channel[0]);
+	osd_stop_sample(channel);
+    osd_stop_sample(channel+1);
 }
 
 /************************************/
@@ -77,75 +63,53 @@ void meadows_sh_stop(void)
 /************************************/
 void meadows_sh_update(void)
 {
-static	byte latched_dac  = 0;
 static  byte latched_0c01 = 0;
 static	byte latched_0c02 = 0;
 static	byte latched_0c03 = 0;
-int freq, amp;
+int preset, amp;
 
     if (latched_0c01 != meadows_0c01 || latched_0c03 != meadows_0c03)
 	{
-		if ((meadows_0c03 & ENABLE_CTR1) != 0)
-		{
-		int i, n, data, preset;
-			/* amplitude is a combination of the upper 4 bits of 0c01 */
-			/* and bit 4 merged from S2650's flag output */
-			amp = (meadows_0c01 & 0xf0) >> 1;
-			if (S2650_get_flag())
-				amp += 128;
-            /* calculate frequency for counter #1 */
-			/* bit 0..3 of 0c01 are ctr preset */
-			preset = (meadows_0c01 & 0x0f) + 1;
-			/* build the waveform based on sample rate */
-			for (i = 0, n = BASE_CTR1 / preset; i < wavelen; i++)
-			{
-				waveform[0][i] = i;
-				if ((n -= Machine->sample_rate) < 0)
-				{
-					n += BASE_CTR1 / preset;
-					data = -data;
-				}
-			}
-			osd_stop_sample(channel[0]);
-            osd_play_sample(channel[0], waveform[0], wavelen, Machine->sample_rate, amp, 0);
-		}
+		/* amplitude is a combination of the upper 4 bits of 0c01 */
+		/* and bit 4 merged from S2650's flag output */
+		amp = ((meadows_0c03 & ENABLE_CTR1) == 0) ? 0 : (meadows_0c01 & 0xf0) >> 1;
+		if (S2650_get_flag())
+			amp += 0x80;
+		/* calculate frequency for counter #1 */
+		/* bit 0..3 of 0c01 are ctr preset */
+		preset = (meadows_0c01 & 15) ^ 15;
+		if (preset)
+			freq1 = BASE_CTR1 / (preset + 1);
+		else amp = 0;
+		if (errorlog) fprintf(errorlog, "meadows ctr1 channel #%d preset:%3d freq:%5d amp:%d\n", channel, preset, freq1, amp);
+		osd_adjust_sample(channel, freq1 * sizeof(waveform), amp);
     }
 
 	if (latched_0c02 != meadows_0c02 || latched_0c03 != meadows_0c03)
 	{
-		if ((meadows_0c03 & ENABLE_CTR2) == 0)
+		/* calculate frequency for counter #2 */
+		/* 0c02 is ctr preset, 0c03 bit 0 enables division by 2 */
+		amp = ((meadows_0c03 & ENABLE_CTR2) != 0) ? 0xa0 : 0;
+		preset = meadows_0c02 ^ 0xff;
+		if (preset)
 		{
-		int i, n, data, preset;
-            /* calculate frequency for counter #2 */
-			/* 0c02 is ctr preset, 0c03 bit 0 enables division by 2 */
-			preset = meadows_0c02 + 1;
-            amp = 255;
-			if (meadows_0c03 & DIVIDE_CTR2)
-				preset *= 2;
-			/* build the waveform based on sample rate */
-			for (i = 0, n = BASE_CTR2 / preset; i < wavelen; i++)
-			{
-				waveform[1][i] = i;
-				if ((n -= Machine->sample_rate) < 0)
-				{
-					n += BASE_CTR2 / preset;
-					data = -data;
-				}
-			}
-			osd_stop_sample(channel[1]);
-			osd_play_sample(channel[1], waveform[1], wavelen, Machine->sample_rate, amp, 0);
-        }
+			freq2 = BASE_CTR2 / (preset + 1) / 2;
+			if ((meadows_0c03 & DIV2OR4_CTR2) == 0)
+				freq2 >>= 1;
+		}
+		else amp = 0;
+		if (errorlog) fprintf(errorlog, "meadows ctr2 channel #%d preset:%3d freq:%5d amp:%d\n", channel+1, preset, freq2, amp);
+		osd_adjust_sample(channel+1, freq2 * sizeof(waveform), amp);
     }
 
-	if (latched_dac != meadows_dac || latched_0c03 != meadows_0c03)
-    {
-		amp = meadows_dac;
+	if (latched_0c03 != meadows_0c03)
+	{
 		if ((meadows_0c03 & ENABLE_DAC) == 0)
-			amp = 0;
-        DAC_data_w(0, amp);
+			DAC_volume(0,0);
+		else
+			DAC_volume(0,255);
     }
 
-	latched_dac  = meadows_dac;
     latched_0c01 = meadows_0c01;
 	latched_0c02 = meadows_0c02;
 	latched_0c03 = meadows_0c03;
@@ -156,8 +120,8 @@ int freq, amp;
 /************************************/
 void meadows_sh_dac_w(int data)
 {
-	meadows_dac = data + 0x80;
-    meadows_sh_update();
+	meadows_dac = data;
+	DAC_data_w(0, meadows_dac);
 }
 
 

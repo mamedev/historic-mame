@@ -2,30 +2,6 @@
 
 int tigeroad_base_bank;
 unsigned char *tigeroad_scrollram;
-unsigned char *tigeroad_paletteram;
-
-
-
-void tigeroad_paletteram_w(int offset,int data)
-{
-	int oldword = READ_WORD(&tigeroad_paletteram[offset]);
-	int newword = COMBINE_WORD(oldword,data);
-	int r,g,b;
-
-
-	WRITE_WORD(&tigeroad_paletteram[offset],newword);
-
-	r = 0x11 * ((newword >> 8) & 0x0f);
-	g = 0x11 * ((newword >> 4) & 0x0f);
-	b = 0x11 * ((newword >> 0) & 0x0f);
-
-	palette_change_color(offset / 2,r,g,b);
-}
-
-int tigeroad_paletteram_r(int offset)
-{
-	return READ_WORD(&tigeroad_paletteram[offset]);
-}
 
 
 
@@ -147,7 +123,7 @@ static void render_text( struct osd_bitmap *bitmap )
 
 
 
-void tigeroad_vh_screenrefresh(struct osd_bitmap *bitmap)
+void tigeroad_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	palette_recalc();
 

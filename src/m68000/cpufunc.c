@@ -1878,7 +1878,7 @@ struct mnemolookup lookuptab[] = {
 
 struct instr *table68k;
 
-__inline__ amodes mode_from_str(const char *str)
+INLINE amodes mode_from_str(const char *str)
 {
     if (strncmp(str,"Dreg",4) == 0) return Dreg;
     if (strncmp(str,"Areg",4) == 0) return Areg;
@@ -1896,7 +1896,7 @@ __inline__ amodes mode_from_str(const char *str)
     return(Dreg);
 }
 
-__inline__ amodes mode_from_mr(int mode, int reg)
+INLINE amodes mode_from_mr(int mode, int reg)
 {
     switch(mode) {
      case 0: return Dreg;
@@ -2415,18 +2415,18 @@ void read_table68k ()
 
 static int mismatch;
 
-static void handle_merges(long int opcode)
+static void handle_merges(long int opcde)
 {
     UWORD smsk;
     UWORD dmsk;
     int sbitdst, dstend;
     int srcreg, dstreg;
 
-    if (table68k[opcode].spos == -1) {
+    if (table68k[opcde].spos == -1) {
         sbitdst = 1; smsk = 0;
     }
     else {
-        switch (table68k[opcode].stype) {
+        switch (table68k[opcde].stype) {
          case 0:
             smsk = 7; sbitdst = 8; break;
          case 1:
@@ -2444,61 +2444,61 @@ static void handle_merges(long int opcode)
             abort();
             break;
         }
-        smsk <<= table68k[opcode].spos;
+        smsk <<= table68k[opcde].spos;
     }
-    if (table68k[opcode].dpos == -1) {
+    if (table68k[opcde].dpos == -1) {
         dstend = 1; dmsk = 0;
     }
     else {
-        dmsk = 7 << table68k[opcode].dpos;
+        dmsk = 7 << table68k[opcde].dpos;
         dstend = 8;
     }
     for (srcreg=0; srcreg < sbitdst; srcreg++) {
         for (dstreg=0; dstreg < dstend; dstreg++) {
-            UWORD code = opcode;
+            UWORD code = opcde;
 
-            code = (code & ~smsk) | (srcreg << table68k[opcode].spos);
-            code = (code & ~dmsk) | (dstreg << table68k[opcode].dpos);
+            code = (code & ~smsk) | (srcreg << table68k[opcde].spos);
+            code = (code & ~dmsk) | (dstreg << table68k[opcde].dpos);
 
             /* Check whether this is in fact the same instruction.
              * The instructions should never differ, except for the
              * Bcc.(BW) case. */
-            if (table68k[code].mnemo != table68k[opcode].mnemo
-                || table68k[code].size != table68k[opcode].size
-                || table68k[code].suse != table68k[opcode].suse
-                || table68k[code].duse != table68k[opcode].duse)
+            if (table68k[code].mnemo != table68k[opcde].mnemo
+                || table68k[code].size != table68k[opcde].size
+                || table68k[code].suse != table68k[opcde].suse
+                || table68k[code].duse != table68k[opcde].duse)
             {
                 mismatch++; continue;
             }
-            if (table68k[opcode].suse
-                && (table68k[opcode].spos != table68k[code].spos
-                    || table68k[opcode].smode != table68k[code].smode
-                    || table68k[opcode].stype != table68k[code].stype))
+            if (table68k[opcde].suse
+                && (table68k[opcde].spos != table68k[code].spos
+                    || table68k[opcde].smode != table68k[code].smode
+                    || table68k[opcde].stype != table68k[code].stype))
             {
                 mismatch++; continue;
             }
-            if (table68k[opcode].duse
-                && (table68k[opcode].dpos != table68k[code].dpos
-                    || table68k[opcode].dmode != table68k[code].dmode))
+            if (table68k[opcde].duse
+                && (table68k[opcde].dpos != table68k[code].dpos
+                    || table68k[opcde].dmode != table68k[code].dmode))
             {
                 mismatch++; continue;
             }
 
-            if (code != opcode)
-                table68k[code].handler = opcode;
+            if (code != opcde)
+                table68k[code].handler = opcde;
         }
     }
 }
 
 void do_merges ()
 {
-    long int opcode;
+    long int opcde;
     mismatch = 0;
 
-    for (opcode = 0; opcode < 65536; opcode++) {
-        if (table68k[opcode].handler != -1 || table68k[opcode].mnemo == i_ILLG)
+    for (opcde = 0; opcde < 65536; opcde++) {
+        if (table68k[opcde].handler != -1 || table68k[opcde].mnemo == i_ILLG)
             continue;
-        handle_merges (opcode);
+        handle_merges (opcde);
     }
 
 }
@@ -2508,46 +2508,45 @@ int get_no_mismatches ()
     return mismatch;
 }
 
-void op_illg(ULONG opcode)
+void op_illg(ULONG opcde)
 {
- /*   printf("illegal opcode:%lx at %x\n",opcode,regs.pc); */
+ /*   printf("illegal opcde:%lx at %x\n",opcde,regs.pc); */
     regs.pc-=2;
-    if((opcode&0xf000)==0xf000) {
+    if((opcde&0xf000)==0xf000) {
         Exception(0xb,0);
         return;
     }
-    if((opcode&0xf000)==0xa000) {
+    if((opcde&0xf000)==0xa000) {
         Exception(0xa,0);
         return;
     }
-    /* Illegal opcode */
+    /* Illegal opcde */
     Exception(4,0);
 }
 
 void BuildCPU(void)
 {
-    int opcode,i;
+    int opcde,i;
 
     read_table68k();
     do_merges();
-    for(opcode=0;opcode<65536;opcode++) cpufunctbl[opcode]=(cpuop_func *)op_illg;
-    for (opcode = 0; opcode < 65536; opcode++)
-        cpufunctbl[opcode] =(cpuop_func *) op_illg;
+    for (opcde = 0; opcde < 65536; opcde++)
+        cpufunctbl[opcde] =(cpuop_func *) op_illg;
     for (i = 0; smallcputbl[i].handler != NULL; i++) {
         if (!smallcputbl[i].specific)
             cpufunctbl[smallcputbl[i].opcode] = smallcputbl[i].handler;
     }
-    for (opcode = 0; opcode < 65536; opcode++) {
+    for (opcde = 0; opcde < 65536; opcde++) {
         cpuop_func *f;
 
-        if (table68k[opcode].mnemo == i_ILLG)
+        if (table68k[opcde].mnemo == i_ILLG)
             continue;
 
-        if (table68k[opcode].handler != -1) {
-            f = cpufunctbl[table68k[opcode].handler];
+        if (table68k[opcde].handler != -1) {
+            f = cpufunctbl[table68k[opcde].handler];
             if (f == (cpuop_func *)op_illg)
                 abort();
-            cpufunctbl[opcode] = f;
+            cpufunctbl[opcde] = f;
         }
     }
     for (i = 0; smallcputbl[i].handler != NULL; i++) {
@@ -2727,16 +2726,16 @@ void MC68000_disasm(CPTR addr, CPTR *nextpc, int cnt)
 		m68k_setpc(addr);
 		for (;cnt--;){
 				char instrname[20],*ccpt;
-				ULONG opcode;
+				ULONG opcde;
 				struct mnemolookup *lookup;
 				struct instr *dp;
 				printf("%08lx: ", (long unsigned int)m68k_getpc());
 
-				opcode = nextiword();
-				if (cpufunctbl[opcode] == (cpuop_func *)op_illg) {
-						opcode = 0x4AFC;
+				opcde = nextiword();
+				if (cpufunctbl[opcde] == (cpuop_func *)op_illg) {
+						opcde = 0x4AFC;
 				}
-				dp = table68k + opcode;
+				dp = table68k + opcde;
 				for (lookup = lookuptab;lookup->mnemo != dp->mnemo; lookup++)
 						;
 
@@ -2770,7 +2769,7 @@ void MC68000_disasm(CPTR addr, CPTR *nextpc, int cnt)
 								printf(" == %08lx (TRUE)",(long unsigned int)newpc);
 						else
 								printf(" == %08lx (FALSE)",(long unsigned int)newpc);
-				} else if ((opcode & 0xff00) == 0x6100) /* BSR */
+				} else if ((opcde & 0xff00) == 0x6100) /* BSR */
 						printf(" == %08lx",(long unsigned int)newpc);
 
 

@@ -9,28 +9,11 @@
 #include <stdio.h>
 
 unsigned char *dd_videoram;
-unsigned char *dd_palette_ram;
 int dd_scrollx_hi, dd_scrolly_hi;
 unsigned char *dd_scrollx_lo;
 unsigned char *dd_scrolly_lo;
 unsigned char *dd_spriteram;
 int dd2_video;
-
-
-
-void dd_palette_w(int offset,int data)
-{
-	int r,g,b;
-
-
-	dd_palette_ram[offset] = data;
-
-	r = 0x11 * ((dd_palette_ram[offset & ~0x200] >> 0) & 0x0f);
-	g = 0x11 * ((dd_palette_ram[offset & ~0x200] >> 4) & 0x0f);
-	b = 0x11 * ((dd_palette_ram[offset | 0x200] >> 0) & 0x0f);
-
-	palette_change_color(offset & ~0x200,r,g,b);
-}
 
 
 
@@ -199,7 +182,7 @@ static void dd_draw_foreground( struct osd_bitmap *bitmap )
 
 
 
-void dd_vh_screenrefresh( struct osd_bitmap *bitmap )
+void dd_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	if (palette_recalc())
  		memset(dirtybuffer,1, 0x400);

@@ -382,7 +382,7 @@ void kangaroo_videoram_w(int offset,int data)
   the main emulation engine.
 
 ***************************************************************************/
-void kangaroo_vh_screenrefresh(struct osd_bitmap *bitmap)
+void kangaroo_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	/* Plane B is primary */
 	if (*kangaroo_bank_select & 0x01)

@@ -60,7 +60,7 @@ int twincobr_vh_start(void)
 void twincobr_vh_stop(void)
 {
 }
-void twincobr_vh_screenrefresh(struct osd_bitmap *bitmap)
+void twincobr_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	int offs;
 static int base = 0;
@@ -382,7 +382,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 static struct YM3812interface ym3812_interface =
 {
 	1,			/* 1 chip (no more supported) */
-	3000000,	/* 3 MHz ? (not supported) */
+	3600000,	/* 3.600000 MHz ? (partially supported) */
 	{ 255 }		/* (not supported) */
 };
 

@@ -18,7 +18,7 @@ unsigned char *bsktball_motion;
   the main emulation engine.
 
 ***************************************************************************/
-void bsktball_vh_screenrefresh(struct osd_bitmap *bitmap)
+void bsktball_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
     int offs,motion;
 

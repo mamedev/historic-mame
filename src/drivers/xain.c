@@ -36,10 +36,9 @@ unsigned char waitIRQA;
 unsigned char waitIRQB;
 unsigned char waitIRQsound;
 
-void xain_vh_screenrefresh(struct osd_bitmap *bitmap);
+void xain_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 int xain_vh_start(void);
 void xain_vh_stop(void);
-void xain_paletteram_w(int offset,int data);
 void xain_scrollxP2_w(int offset,int data);
 void xain_scrollyP2_w(int offset,int data);
 void xain_scrollxP3_w(int offset,int data);
@@ -50,7 +49,6 @@ extern unsigned char *xain_videoram;
 extern int xain_videoram_size;
 extern unsigned char *xain_videoram2;
 extern int xain_videoram2_size;
-extern unsigned char *xain_paletteram;
 
 
 void xain_init_machine(void)
@@ -149,7 +147,8 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x3a0d, 0x3a0e, MWA_RAM },
 	{ 0x3a0f, 0x3a0f, xainCPUA_bankswitch_w},
 	{ 0x3a10, 0x3bff, MWA_RAM },
-	{ 0x3c00, 0x3fff, xain_paletteram_w, &xain_paletteram },
+	{ 0x3c00, 0x3dff, paletteram_xxxxBBBBGGGGRRRR_split1_w, &paletteram },
+	{ 0x3e00, 0x3fff, paletteram_xxxxBBBBGGGGRRRR_split2_w, &paletteram_2 },
 	{ 0x4000, 0xffff, MWA_ROM },
 	{ -1 }	/* end of table */
 };
@@ -339,14 +338,14 @@ static struct YM2203interface ym2203_interface =
 {
 	2,			/* 2 chips */
 	1500000,	/* 1.5 MHz (?) */      /* Real unknown */
-	{ YM2203_VOL(100,0x20ff), YM2203_VOL(100,0x20ff) },
+	{ YM2203_VOL(100,255), YM2203_VOL(100,255) },
 	{ 0 },
 	{ 0 },
 	{ 0 },
 	{ 0 }
 };
 
-static struct MachineDriver xain_machine_driver =
+static struct MachineDriver machine_driver =
 {
 	/* basic machine hardware */
 	{
@@ -378,7 +377,7 @@ static struct MachineDriver xain_machine_driver =
 	xain_init_machine,
 
 	/* video hardware */
-	32*8, 32*8, { 0, 32*8, 8, 30*8 },
+	32*8, 32*8, { 0*8, 32*8-1, 1*8, 30*8-1 },
 	gfxdecodeinfo,
 	512, 512,
 	0,
@@ -408,20 +407,20 @@ static struct MachineDriver xain_machine_driver =
 ***************************************************************************/
 ROM_START( xain_rom )
 	ROM_REGION(0x14000)	/* 64k for code */
-	ROM_LOAD( "1.ROM", 0x8000, 0x8000, 0x3ec33443 )
-	ROM_LOAD( "2.ROM", 0x4000, 0x4000, 0xdb85edf1 )
-	ROM_CONTINUE(           0x10000, 0x4000 )
+	ROM_LOAD( "1.ROM", 0x08000, 0x8000, 0x3ec33443 )
+	ROM_LOAD( "2.ROM", 0x04000, 0x4000, 0xdb85edf1 )
+	ROM_CONTINUE(      0x10000, 0x4000 )
 
 	ROM_REGION(0xc8000)     /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "12.ROM",  0x00000, 0x8000, 0x332dd307 ) /* Characters */
-	ROM_LOAD( "21.ROM",  0x08000, 0x8000, 0xc5ffe72d ) /* Characters */
-	ROM_LOAD( "13.ROM",  0x10000, 0x8000, 0x8149446f ) /* Characters */
-	ROM_LOAD( "22.ROM",  0x18000, 0x8000, 0xd98cbc6e ) /* Characters */
-	ROM_LOAD( "14.ROM",  0x20000, 0x8000, 0x9541a9e5 ) /* Characters */
-	ROM_LOAD( "23.ROM",  0x28000, 0x8000, 0x8de2d670 ) /* Characters */
-	ROM_LOAD( "15.ROM",  0x30000, 0x8000, 0x982dcaa3 ) /* Characters */
-	ROM_LOAD( "24.ROM",  0x38000, 0x8000, 0xa6e371a3 ) /* Characters */
-	ROM_LOAD( "16.ROM",  0x40000, 0x8000, 0xfc3769e7 ) /* Characters */
+	ROM_LOAD( "12.ROM", 0x00000, 0x8000, 0x332dd307 ) /* Characters */
+	ROM_LOAD( "21.ROM", 0x08000, 0x8000, 0xc5ffe72d ) /* Characters */
+	ROM_LOAD( "13.ROM", 0x10000, 0x8000, 0x8149446f ) /* Characters */
+	ROM_LOAD( "22.ROM", 0x18000, 0x8000, 0xd98cbc6e ) /* Characters */
+	ROM_LOAD( "14.ROM", 0x20000, 0x8000, 0x9541a9e5 ) /* Characters */
+	ROM_LOAD( "23.ROM", 0x28000, 0x8000, 0x8de2d670 ) /* Characters */
+	ROM_LOAD( "15.ROM", 0x30000, 0x8000, 0x982dcaa3 ) /* Characters */
+	ROM_LOAD( "24.ROM", 0x38000, 0x8000, 0xa7e87156 ) /* Characters */
+	ROM_LOAD( "16.ROM", 0x40000, 0x8000, 0xfc3769e7 ) /* Characters */
 
 	ROM_LOAD( "6.ROM",  0x48000, 0x8000, 0xe557058d ) /* Characters */
 	ROM_LOAD( "7.ROM",  0x50000, 0x8000, 0x89af64ff ) /* Characters */
@@ -430,19 +429,19 @@ ROM_START( xain_rom )
 	ROM_LOAD( "4.ROM",  0x68000, 0x8000, 0x6ce496ca ) /* Characters */
 	ROM_LOAD( "9.ROM",  0x70000, 0x8000, 0xfdac576e ) /* Characters */
 
-	ROM_LOAD( "25.ROM",  0x88000, 0x8000, 0x5d057a13 ) /* Sprites */
-	ROM_LOAD( "17.ROM",  0x90000, 0x8000, 0xceb1ebc9 ) /* Sprites */
-	ROM_LOAD( "26.ROM",  0x98000, 0x8000, 0x08031ddd ) /* Sprites */
-	ROM_LOAD( "18.ROM",  0xa0000, 0x8000, 0x778ecaa8 ) /* Sprites */
-	ROM_LOAD( "27.ROM",  0xa8000, 0x8000, 0xd65c0e86 ) /* Sprites */
-	ROM_LOAD( "19.ROM",  0xb0000, 0x8000, 0xb92747b1 ) /* Sprites */
-	ROM_LOAD( "28.ROM",  0xb8000, 0x8000, 0xbc3c6520 ) /* Sprites */
-	ROM_LOAD( "20.ROM",  0xc0000, 0x8000, 0x12ec4e96 ) /* Sprites */
+	ROM_LOAD( "25.ROM", 0x88000, 0x8000, 0x5d057a13 ) /* Sprites */
+	ROM_LOAD( "17.ROM", 0x90000, 0x8000, 0xcdb1eac9 ) /* Sprites */
+	ROM_LOAD( "26.ROM", 0x98000, 0x8000, 0x08031ddd ) /* Sprites */
+	ROM_LOAD( "18.ROM", 0xa0000, 0x8000, 0x778ecaa8 ) /* Sprites */
+	ROM_LOAD( "27.ROM", 0xa8000, 0x8000, 0xd65c0e86 ) /* Sprites */
+	ROM_LOAD( "19.ROM", 0xb0000, 0x8000, 0xb92747b1 ) /* Sprites */
+	ROM_LOAD( "28.ROM", 0xb8000, 0x8000, 0xbc3c6520 ) /* Sprites */
+	ROM_LOAD( "20.ROM", 0xc0000, 0x8000, 0x12ec4e96 ) /* Sprites */
 
 	ROM_REGION(0x14000)	/* 64k for code */
-	ROM_LOAD( "10.ROM", 0x8000, 0x8000, 0x27cac38c )
-	ROM_LOAD( "11.ROM", 0x4000, 0x4000, 0x153a4f82 )
-	ROM_CONTINUE(           0x10000, 0x4000 )
+	ROM_LOAD( "10.ROM", 0x08000, 0x8000, 0x27cac38c )
+	ROM_LOAD( "11.ROM", 0x04000, 0x4000, 0x153a4f82 )
+	ROM_CONTINUE(       0x10000, 0x4000 )
 
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "3.ROM", 0x8000, 0x8000, 0x1e173e1f )
@@ -450,44 +449,44 @@ ROM_END
 
 ROM_START( solarwar_rom )
 	ROM_REGION(0x14000)	/* 64k for code */
-	ROM_LOAD( "P9-0.BIN", 0x8000, 0x8000, 0xc3e68da0 )
-	ROM_LOAD( "PA-0.BIN", 0x4000, 0x4000, 0x748e938e )
-	ROM_CONTINUE(           0x10000, 0x4000 )
+	ROM_LOAD( "P9-0.BIN", 0x08000, 0x8000, 0xb3e69da0 )
+	ROM_LOAD( "PA-0.BIN", 0x04000, 0x4000, 0x778e908e )
+	ROM_CONTINUE(         0x10000, 0x4000 )
 
 	ROM_REGION(0xc8000)     /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "PB-01.BIN", 0x00000, 0x8000, 0x332dd307 ) /* Characters */
-	ROM_LOAD( "PK-0.BIN",  0x08000, 0x8000, 0x7cff502d ) /* Characters */
-	ROM_LOAD( "PC-0.BIN",  0x10000, 0x8000, 0x8149446f ) /* Characters */
-	ROM_LOAD( "PL-0.BIN",  0x18000, 0x8000, 0xe88cb36e ) /* Characters */
-	ROM_LOAD( "PD-0.BIN",  0x20000, 0x8000, 0x9541a9e5 ) /* Characters */
-	ROM_LOAD( "PM-0.BIN",  0x28000, 0x8000, 0x81e22270 ) /* Characters */
-	ROM_LOAD( "PE-0.BIN",  0x30000, 0x8000, 0x982dcaa3 ) /* Characters */
-	ROM_LOAD( "PN-0.BIN",  0x38000, 0x8000, 0x624d8eeb ) /* Characters */
-	ROM_LOAD( "PF-0.BIN",  0x40000, 0x8000, 0xa4919a67 ) /* Characters */
+	ROM_LOAD( "12.ROM",   0x00000, 0x8000, 0x332dd307 ) /* Characters */
+	ROM_LOAD( "21.ROM",   0x08000, 0x8000, 0xc5ffe72d ) /* Characters */
+	ROM_LOAD( "13.ROM",   0x10000, 0x8000, 0x8149446f ) /* Characters */
+	ROM_LOAD( "22.ROM",   0x18000, 0x8000, 0xd98cbc6e ) /* Characters */
+	ROM_LOAD( "14.ROM",   0x20000, 0x8000, 0x9541a9e5 ) /* Characters */
+	ROM_LOAD( "23.ROM",   0x28000, 0x8000, 0x8de2d670 ) /* Characters */
+	ROM_LOAD( "15.ROM",   0x30000, 0x8000, 0x982dcaa3 ) /* Characters */
+	ROM_LOAD( "PN-0.BIN", 0x38000, 0x8000, 0x624d8eeb ) /* Characters */
+	ROM_LOAD( "PF-0.BIN", 0x40000, 0x8000, 0xa4919a67 ) /* Characters */
 
-	ROM_LOAD( "P5-0.BIN",  0x48000, 0x8000, 0x24573a8d ) /* Characters */
-	ROM_LOAD( "P6-0.BIN",  0x50000, 0x8000, 0xb9af54ff ) /* Characters */
-	ROM_LOAD( "P4-0.BIN",  0x58000, 0x8000, 0xbd784de6 ) /* Characters */
-	ROM_LOAD( "P7-0.BIN",  0x60000, 0x8000, 0x16f96c2d ) /* Characters */
-	ROM_LOAD( "P3-0.BIN",  0x68000, 0x8000, 0x6be469ca ) /* Characters */
-	ROM_LOAD( "P8-0.BIN",  0x70000, 0x8000, 0xfcaca86e ) /* Characters */
+	ROM_LOAD( "6.ROM",    0x48000, 0x8000, 0xe557058d ) /* Characters */
+	ROM_LOAD( "7.ROM",    0x50000, 0x8000, 0x89af64ff ) /* Characters */
+	ROM_LOAD( "5.ROM",    0x58000, 0x8000, 0x547824e6 ) /* Characters */
+	ROM_LOAD( "8.ROM",    0x60000, 0x8000, 0x16f96c2d ) /* Characters */
+	ROM_LOAD( "4.ROM",    0x68000, 0x8000, 0x6ce496ca ) /* Characters */
+	ROM_LOAD( "9.ROM",    0x70000, 0x8000, 0xfdac576e ) /* Characters */
 
-	ROM_LOAD( "PO-0.BIN",  0x88000, 0x8000, 0x5d057a13 ) /* Sprites */
-	ROM_LOAD( "PG-0.BIN",  0x90000, 0x8000, 0xcdb1eac9 ) /* Sprites */
-	ROM_LOAD( "PP-0.BIN",  0x98000, 0x8000, 0x08031ddd ) /* Sprites */
-	ROM_LOAD( "PH-0.BIN",  0xa0000, 0x8000, 0x778ecaa8 ) /* Sprites */
-	ROM_LOAD( "PQ-0.BIN",  0xa8000, 0x8000, 0xd65c0e86 ) /* Sprites */
-	ROM_LOAD( "PI-0.BIN",  0xb0000, 0x8000, 0xb92747b1 ) /* Sprites */
-	ROM_LOAD( "PR-0.BIN",  0xb8000, 0x8000, 0xbc3c6520 ) /* Sprites */
-	ROM_LOAD( "PJ-0.BIN",  0xc0000, 0x8000, 0x12ec4e96 ) /* Sprites */
+	ROM_LOAD( "25.ROM",   0x88000, 0x8000, 0x5d057a13 ) /* Sprites */
+	ROM_LOAD( "17.ROM",   0x90000, 0x8000, 0xcdb1eac9 ) /* Sprites */
+	ROM_LOAD( "26.ROM",   0x98000, 0x8000, 0x08031ddd ) /* Sprites */
+	ROM_LOAD( "18.ROM",   0xa0000, 0x8000, 0x778ecaa8 ) /* Sprites */
+	ROM_LOAD( "27.ROM",   0xa8000, 0x8000, 0xd65c0e86 ) /* Sprites */
+	ROM_LOAD( "19.ROM",   0xb0000, 0x8000, 0xb92747b1 ) /* Sprites */
+	ROM_LOAD( "28.ROM",   0xb8000, 0x8000, 0xbc3c6520 ) /* Sprites */
+	ROM_LOAD( "20.ROM",   0xc0000, 0x8000, 0x12ec4e96 ) /* Sprites */
 
 	ROM_REGION(0x14000)	/* 64k for code */
-	ROM_LOAD( "P1-0.BIN", 0x8000, 0x8000, 0xddf55cd3 )
-	ROM_LOAD( "P0-0.BIN", 0x4000, 0x4000, 0x7bc8ebda )
-	ROM_CONTINUE(           0x10000, 0x4000 )
+	ROM_LOAD( "P1-0.BIN", 0x08000, 0x8000, 0x87f5f6d3 )
+	ROM_LOAD( "P0-0.BIN", 0x04000, 0x4000, 0xbcc8a8da )
+	ROM_CONTINUE(         0x10000, 0x4000 )
 
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "P2-0.BIN", 0x8000, 0x8000, 0x2817281f )
+	ROM_LOAD( "3.ROM", 0x8000, 0x8000, 0x1e173e1f )
 ROM_END
 
 
@@ -498,11 +497,11 @@ struct GameDriver xsleena_driver =
 	0,
 	"xsleena",
 	"Xain'd Sleena",
-	"????",
-	"?????",
+	"1986",
+	"Technos",
 	"Carlos A. Lozano\nRob Rosenbrock\nPhil Stroffolino\n",
 	0,
-	&xain_machine_driver,
+	&machine_driver,
 
 	xain_rom,
 	0, 0,
@@ -520,14 +519,14 @@ struct GameDriver xsleena_driver =
 struct GameDriver solarwar_driver =
 {
 	__FILE__,
-	0,
+	&xsleena_driver,
 	"solarwar",
 	"Solar Warrior",
-	"????",
-	"?????",
+	"1986",
+	"Technos (Memetron license)",
 	"Carlos A. Lozano\nRob Rosenbrock\nPhil Stroffolino\n",
 	0,
-	&xain_machine_driver,
+	&machine_driver,
 
 	solarwar_rom,
 	0, 0,
@@ -541,4 +540,3 @@ struct GameDriver solarwar_driver =
 
 	0, 0
 };
-

@@ -5,7 +5,7 @@
 /* input ports handling */
 #define MAX_INPUT_PORTS 16
 
-void load_input_port_settings(void);
+int load_input_port_settings(void);
 void save_input_port_settings(void);
 
 void update_analog_port(int port);

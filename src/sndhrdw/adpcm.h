@@ -34,6 +34,8 @@ void ADPCM_sh_stop (void);
 void ADPCM_sh_update (void);
 
 void ADPCM_trigger (int num, int which);
+void ADPCM_play (int num, int offset, int length);
+void ADPCM_setvol (int num, int vol);
 void ADPCM_stop (int num);
 int ADPCM_playing (int num);
 

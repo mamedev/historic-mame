@@ -118,7 +118,7 @@ void mario_palettebank_w(int offset,int data)
   the main emulation engine.
 
 ***************************************************************************/
-void mario_vh_screenrefresh(struct osd_bitmap *bitmap)
+void mario_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	int offs;
 

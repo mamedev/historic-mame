@@ -10,6 +10,8 @@
 
 #include "driver.h"
 #include <allegro.h>
+#include <dos.h>
+#include <time.h>
 
 
 int  msdos_init_seal (void);
@@ -50,6 +52,27 @@ void osd_exit(void)
 	remove_keyboard();
 }
 
+/* fuzzy string compare, compare short string against long string */
+/* e.g. astdel == "Asteroids Deluxe"            return 0 on match */
+int fuzzycmp (const char *s, const char *l)
+{
+	for (; *s && *l; l++)
+	{
+		if (*s == *l)
+			s++;
+		else if (*s >= 'a' && *s <= 'z' && (*s - 'a') == (*l - 'A'))
+			s++;
+		else if (*s >= 'A' && *s <= 'Z' && (*s - 'A') == (*l - 'a'))
+			s++;
+	}
+
+	if (*s)
+		return 1;
+	else
+		return 0;
+}
+
+
 
 int main (int argc, char **argv)
 {
@@ -88,17 +111,56 @@ int main (int argc, char **argv)
 	for (j = 1; j < argc; j++)
 		if (argv[j][0] != '-') break;
 
-	/* do we have a drivers for this? */
-	for (i = 0; drivers[i]; i++)
-		if (stricmp(argv[j],drivers[i]->name) == 0) break;
+	game_index = -1;
 
-	if (drivers[i] == 0)
+	/* do we have a driver for this? */
+#ifdef MAME_DEBUG
+	/* pick a random game */
+	if (stricmp(argv[j],"random") == 0)
+	{
+		struct timeval t;
+
+		i = 0;
+		while (drivers[i]) i++;	/* count available drivers */
+
+		gettimeofday(&t,0);
+		srand(t.tv_sec);
+		game_index = rand() % i;
+
+		printf("Running %s (%s) [press return]\n",drivers[game_index]->name,drivers[game_index]->description);
+		getchar();
+	}
+	else
+#endif
+	{
+		for (i = 0; drivers[i] && (game_index == -1); i++)
+		{
+			if (stricmp(argv[j],drivers[i]->name) == 0)
+			{
+				game_index = i;
+				break;
+			}
+		}
+
+		if (game_index == -1)
+		{
+			/* educated guess on what the user wants to play */
+			for (i = 0; drivers[i] && (game_index == -1); i++)
+			{
+				if (fuzzycmp(argv[j], drivers[i]->description) == 0)
+				{
+					game_index = i;
+					break;
+				}
+			}
+		}
+	}
+
+	if (game_index == -1)
 	{
 		printf("Game \"%s\" not supported\n", argv[j]);
 		return 1;
 	}
-	else
-		game_index = i;
 
 	/* parse generic (os-independent) options */
 	parse_cmdline (argc, argv, &options, game_index);

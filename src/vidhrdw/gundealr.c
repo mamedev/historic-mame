@@ -11,7 +11,6 @@
 
 
 
-unsigned char *gundealr_paletteram;
 unsigned char *gundealr_bsvideoram;
 unsigned char *gundealr_bigspriteram;
 
@@ -22,22 +21,19 @@ void gundealr_paletteram_w(int offset,int data)
 	int r,g,b,val;
 
 
-	gundealr_paletteram[offset] = data;
+	paletteram[offset] = data;
 
-	val = gundealr_paletteram[offset & ~1];
+	val = paletteram[offset & ~1];
 	r = (val >> 4) & 0x0f;
 	g = (val >> 0) & 0x0f;
 
-	val = gundealr_paletteram[offset | 1];
+	val = paletteram[offset | 1];
 	b = (val >> 4) & 0x0f;
-	/* I'm not sure about the following bits */
-	r = (r << 1) | ((val >> 3) & 1);
-	g = (g << 1) | ((val >> 2) & 1);
-	b = (b << 1) | ((val >> 1) & 1);
+	/* TODO: the bottom 4 bits are used as well, but I'm not sure about the meaning */
 
-	r = (r << 3) | (r >> 2);
-	g = (g << 3) | (g >> 2);
-	b = (b << 3) | (b >> 2);
+	r = 0x11 * r;
+	g = 0x11 * g;
+	b = 0x11 * b;
 
 	palette_change_color(offset / 2,r,g,b);
 }
@@ -51,7 +47,7 @@ void gundealr_paletteram_w(int offset,int data)
   the main emulation engine.
 
 ***************************************************************************/
-void gundealr_vh_screenrefresh(struct osd_bitmap *bitmap)
+void gundealr_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	int offs;
 

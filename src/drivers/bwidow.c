@@ -648,10 +648,10 @@ static struct MachineDriver bwidow_machine_driver =
 			1500000,	/* 1.5 Mhz */
 			0,
 			bwidow_readmem,bwidow_writemem,0,0,
-			interrupt,4	/* 5.4ms */
+			interrupt,4	/* 4.1ms */
 		}
 	},
-	45, 0,	/* frames per second, vblank duration (vector game, so no vblank) */
+	60, 0,	/* frames per second, vblank duration (vector game, so no vblank) */
 	1,
 	0,
 
@@ -686,7 +686,7 @@ static struct MachineDriver gravitar_machine_driver =
 			1500000,	/* 1.5 Mhz */
 			0,
 			bwidow_readmem,bwidow_writemem,0,0,
-			interrupt,3 /* 5.4ms */
+			interrupt,4 /* 4.1ms */
 		}
 	},
 	60, 0,	/* frames per second, vblank duration (vector game, so no vblank) */
@@ -828,8 +828,8 @@ struct GameDriver bwidow_driver =
 	0,
 	"bwidow",
 	"Black Widow",
-	"????",
-	"?????",
+	"1982",
+	"Atari",
 	"Brad Oliver (MAME driver)\n"VECTOR_TEAM,
 	0,
 	&bwidow_machine_driver,
@@ -884,8 +884,8 @@ struct GameDriver gravitar_driver =
 	0,
 	"gravitar",
 	"Gravitar",
-	"????",
-	"?????",
+	"1982",
+	"Atari",
 	"Brad Oliver (MAME driver)\n"VECTOR_TEAM,
 	0,
 	&gravitar_machine_driver,
@@ -940,8 +940,8 @@ struct GameDriver spacduel_driver =
 	0,
 	"spacduel",
 	"Space Duel",
-	"????",
-	"?????",
+	"1980",
+	"Atari",
 	"Brad Oliver (MAME driver)\n"VECTOR_TEAM,
 	0,
 	&spacduel_machine_driver,

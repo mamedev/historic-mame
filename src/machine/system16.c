@@ -17,7 +17,6 @@
 int s16_videoram_size;
 int s16_soundram_size;
 int s16_spriteram_size;
-int s16_paletteram_size;
 int s16_backgroundram_size;
 int system16_sprxoffset;
 unsigned char *system16_videoram;
@@ -25,8 +24,6 @@ unsigned char *system16_soundram;
 unsigned char *system16_spriteram;
 unsigned char *system16_scrollram;
 unsigned char *system16_pagesram;
-unsigned char *system16_paletteram;
-unsigned char *system16_colordirty;
 unsigned char *system16_refreshregister;
 unsigned char *system16_backgroundram;
 unsigned char system16_background_bank;
@@ -44,32 +41,25 @@ int *s16_obj_bank = NULL;
 #define LoggaW(s,o,d) if (errorlog) fprintf(errorlog, "%s_W:  %08xh = %02xh\n", s, o, d);
 
 int  system16_init_machine(void){
-	system16_colordirty = calloc (s16_paletteram_size / 2, 1);
-	if( system16_colordirty ){
-		int size = sizeof(struct sys16_sprite_info)*256;
-		sys16_sprite = (struct sys16_sprite_info *)malloc(size);
-		if( sys16_sprite ){
-			memset((char *)sys16_sprite,0,size);
+	int size = sizeof(struct sys16_sprite_info)*256;
+	sys16_sprite = (struct sys16_sprite_info *)malloc(size);
+	if( sys16_sprite ){
+		memset((char *)sys16_sprite,0,size);
 
-			memset(system16_colordirty,1,s16_paletteram_size/2);
+		scrollX[0] = scrollX[1] = scrollY[0] = scrollY[1] = 0;
 
-			scrollX[0] = scrollX[1] = scrollY[0] = scrollY[1] = 0;
+		fg_pages[0] = fg_pages[1] = fg_pages[2] = fg_pages[3] = 16;
+		bg_pages[0] = bg_pages[1] = bg_pages[2] = bg_pages[3] = 16;
 
-			fg_pages[0] = fg_pages[1] = fg_pages[2] = fg_pages[3] = 16;
-			bg_pages[0] = bg_pages[1] = bg_pages[2] = bg_pages[3] = 16;
+		system16_sprxoffset = 0xb8;
+		system16_refreshenable = 1;
 
-			system16_sprxoffset = 0xb8;
-			system16_refreshenable = 1;
-
-			return 0;
-		}
-		free( system16_colordirty );
+		return 0;
 	}
 	return 1;
 }
 
 void system16_done(void){
-	free(system16_colordirty);
 	free( (char *)sys16_sprite );
 }
 
@@ -140,17 +130,27 @@ void system16_spriteram_w( int offset, int data ){
 }
 
 
-int  system16_paletteram_r(int offset){ return READ_WORD (&system16_paletteram[offset]); }
 void system16_paletteram_w(int offset, int data)
 {
-	int oldword = READ_WORD (&system16_paletteram[offset]);
+	int r,g,b;
+	int oldword = READ_WORD (&paletteram[offset]);
 	int newword = COMBINE_WORD (oldword, data);
+	WRITE_WORD (&paletteram[offset], newword);
 
-	if (oldword != newword)
-	{
-		WRITE_WORD (&system16_paletteram[offset], newword);
-		system16_colordirty[offset / 2] = 1;
-	}
+	r = (newword >> 0) & 0x0f;
+	g = (newword >> 4) & 0x0f;
+	b = (newword >> 8) & 0x0f;
+
+	/* I'm not sure about the following bits */
+	r = (r << 1) | ((newword >> 12) & 1);
+	g = (g << 1) | ((newword >> 13) & 1);
+	b = (b << 1) | ((newword >> 14) & 1);
+
+	r = (r << 3) | (r >> 2);
+	g = (g << 3) | (g >> 2);
+	b = (b << 3) | (b >> 2);
+
+	palette_change_color(offset / 2,r,g,b);
 }
 
 int  system16_backgroundram_r(int offset){ return READ_WORD (&system16_backgroundram[offset]); }

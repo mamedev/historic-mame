@@ -12,17 +12,8 @@
 
 
 unsigned char *phoenix_videoram2;
-unsigned char *phoenix_scroll;
-
+static unsigned char bg_scroll;
 static int palette_bank;
-
-
-
-static struct rectangle backtmparea =
-{
-	6*8, 32*8-1,
-	0*8, 32*8-1
-};
 
 
 
@@ -115,6 +106,11 @@ void phoenix_videoreg_w (int offset,int data)
 	}
 }
 
+void phoenix_scroll_w (int offset,int data)
+{
+	bg_scroll = data;
+}
+
 
 
 /***************************************************************************
@@ -124,7 +120,7 @@ void phoenix_videoreg_w (int offset,int data)
   the main emulation engine.
 
 ***************************************************************************/
-void phoenix_vh_screenrefresh(struct osd_bitmap *bitmap)
+void phoenix_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	int offs;
 
@@ -140,15 +136,15 @@ void phoenix_vh_screenrefresh(struct osd_bitmap *bitmap)
 
 			dirtybuffer[offs] = 0;
 
-			sx = 31 - offs / 32;
-			sy = offs % 32;
+			sx = offs % 32;
+			sy = offs / 32;
 
 			drawgfx(tmpbitmap,Machine->gfx[0],
 					videoram[offs],
 					(videoram[offs] >> 5) + 8 * palette_bank,
 					0,0,
 					8*sx,8*sy,
-					&backtmparea,TRANSPARENCY_NONE,0);
+					0,TRANSPARENCY_NONE,0);
 		}
 	}
 
@@ -158,9 +154,9 @@ void phoenix_vh_screenrefresh(struct osd_bitmap *bitmap)
 		int scroll;
 
 
-		scroll = -*phoenix_scroll;
+		scroll = -bg_scroll;
 
-		copyscrollbitmap(bitmap,tmpbitmap,0,0,1,&scroll,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+		copyscrollbitmap(bitmap,tmpbitmap,1,&scroll,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
 	}
 
 
@@ -170,10 +166,10 @@ void phoenix_vh_screenrefresh(struct osd_bitmap *bitmap)
 		int sx,sy;
 
 
-		sx = 31 - offs / 32;
-		sy = offs % 32;
+		sx = offs % 32;
+		sy = offs / 32;
 
-		if (sy >= 1)
+		if (sx >= 1)
 		{
 			drawgfx(bitmap,Machine->gfx[1],
 					phoenix_videoram2[offs],

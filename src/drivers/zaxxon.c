@@ -67,7 +67,7 @@ extern unsigned char *zaxxon_background_enable;
 void zaxxon_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 int  zaxxon_vh_start(void);
 void zaxxon_vh_stop(void);
-void zaxxon_vh_screenrefresh(struct osd_bitmap *bitmap);
+void zaxxon_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 void zaxxon_sound_w(int offset, int data);
 
@@ -649,8 +649,8 @@ struct GameDriver zaxxon_driver =
 	0,
 	"zaxxon",
 	"Zaxxon",
-	"????",
-	"?????",
+	"1982",
+	"Sega",
 	"Mirko Buffoni (MAME driver)\nNicola Salmoria (MAME driver)\nAlex Judd (sound)\nGerald Vanderick (color info)\nFrank Palazzolo (sound info)\nRiek Gladys (sound info)",
 	0,
 	&machine_driver,
@@ -674,8 +674,8 @@ struct GameDriver szaxxon_driver =
 	0,
 	"szaxxon",
 	"Super Zaxxon",
-	"????",
-	"?????",
+	"1982",
+	"Sega",
 	"Mirko Buffoni (MAME driver)\nNicola Salmoria (MAME driver)\nAlex Judd (sound)\nTim Lindquist (encryption and color info)\nFrank Palazzolo (sound info)\nRiek Gladys (sound info)",
 	0,
 	&machine_driver,

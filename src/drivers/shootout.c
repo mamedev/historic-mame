@@ -21,7 +21,7 @@ static int encrypttable[] = { 0x00, 0x10, 0x40, 0x50, 0x20, 0x30, 0x60, 0x70,
 #include "M6502/M6502.h"
 
 /* externals: from vidhrdw */
-extern void shootout_vh_screenrefresh(struct osd_bitmap *bitmap);
+extern void shootout_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 unsigned char *shootout_textram;
 
 static void shootout_decode_bank (void) {
@@ -382,8 +382,8 @@ struct GameDriver shootout_driver =
 	0,
 	"shootout",
 	"Shoot Out",
-	"????",
-	"?????",
+	"1985",
+	"Data East USA",
 	"Ernesto Corvi\nPhil Stroffolino\nZsolt Vasvari\nKevin Brisley\n",
 	0,
 	&machine_driver,

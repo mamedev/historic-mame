@@ -57,18 +57,16 @@ Known issues:
 #include "machine/6821pia.h"
 
 void mcr3_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-void mcr3_vh_screenrefresh(struct osd_bitmap *bitmap);
+void mcr3_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 void mcr3_videoram_w(int offset,int data);
-void mcr3_palette_w(int offset,int data);
-extern unsigned char *mcr3_paletteram;
+void mcr3_paletteram_w(int offset,int data);
 
-void rampage_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-void rampage_vh_screenrefresh(struct osd_bitmap *bitmap);
+void rampage_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 void spyhunt_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 int spyhunt_vh_start(void);
 void spyhunt_vh_stop(void);
-void spyhunt_vh_screenrefresh(struct osd_bitmap *bitmap);
+void spyhunt_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 extern unsigned char *spyhunt_alpharam;
 extern int spyhunt_alpharam_size;
 
@@ -126,7 +124,7 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x0000, 0xdfff, MWA_ROM },
 	{ 0xe800, 0xe9ff, MWA_RAM, &spriteram, &spriteram_size },
 	{ 0xf000, 0xf7ff, mcr3_videoram_w, &videoram, &videoram_size },
-	{ 0xf800, 0xf8ff, mcr3_palette_w, &mcr3_paletteram },
+	{ 0xf800, 0xf8ff, mcr3_paletteram_w, &paletteram },
 	{ -1 }  /* end of table */
 };
 
@@ -144,7 +142,7 @@ static struct MemoryWriteAddress rampage_writemem[] =
 	{ 0x0000, 0xdfff, MWA_ROM },
 	{ 0xe800, 0xebff, MWA_RAM, &spriteram, &spriteram_size },
 	{ 0xf000, 0xf7ff, mcr3_videoram_w, &videoram, &videoram_size },
-	{ 0xec00, 0xecff, mcr3_palette_w, &mcr3_paletteram },
+	{ 0xec00, 0xecff, mcr3_paletteram_w, &paletteram },
 	{ -1 }  /* end of table */
 };
 
@@ -162,7 +160,7 @@ static struct MemoryWriteAddress spyhunt_writemem[] =
 	{ 0xe800, 0xebff, MWA_RAM, &spyhunt_alpharam, &spyhunt_alpharam_size },
 	{ 0xe000, 0xe7ff, videoram_w, &videoram, &videoram_size },
 	{ 0xf800, 0xf9ff, MWA_RAM, &spriteram, &spriteram_size },
-	{ 0xfa00, 0xfaff, mcr3_palette_w, &mcr3_paletteram },
+	{ 0xfa00, 0xfaff, mcr3_paletteram_w, &paletteram },
 	{ 0x0000, 0xdfff, MWA_ROM },
 	{ -1 }  /* end of table */
 };
@@ -953,10 +951,19 @@ static struct GfxDecodeInfo sarge_gfxdecodeinfo[] =
 
 static struct GfxDecodeInfo spyhunt_gfxdecodeinfo[] =
 {
-	{ 1, 0x0000, &spyhunt_charlayout_128,    0, 4 },	/* top half */
-	{ 1, 0x0004, &spyhunt_charlayout_128,    0, 4 },	/* bottom half */
-	{ 1, 0x8000, &mcr3_spritelayout_256,     0, 4 },
-	{ 1, 0x28000, &spyhunt_alphalayout,   8*16, 4 },
+	{ 1, 0x0000, &spyhunt_charlayout_128, 1*16, 1 },	/* top half */
+	{ 1, 0x0004, &spyhunt_charlayout_128, 1*16, 1 },	/* bottom half */
+	{ 1, 0x8000, &mcr3_spritelayout_256,  0*16, 1 },
+	{ 1, 0x28000, &spyhunt_alphalayout,   8*16, 1 },
+	{ -1 } /* end of array */
+};
+
+static struct GfxDecodeInfo crater_gfxdecodeinfo[] =
+{
+	{ 1, 0x0000, &spyhunt_charlayout_128, 3*16, 1 },	/* top half */
+	{ 1, 0x0004, &spyhunt_charlayout_128, 3*16, 1 },	/* bottom half */
+	{ 1, 0x8000, &mcr3_spritelayout_256,  0*16, 1 },
+	{ 1, 0x28000, &spyhunt_alphalayout,   8*16, 1 },
 	{ -1 } /* end of array */
 };
 
@@ -971,8 +978,8 @@ static struct GfxDecodeInfo spyhunt_gfxdecodeinfo[] =
 static struct AY8910interface ay8910_interface =
 {
 	2,	/* 2 chips */
-	2000000,	/* 2 MHZ ?? */
-	{ 0x20ff, 0x20ff },
+	2000000,	/* 2 MHz ?? */
+	{ 255, 255 },
 	{ 0 },
 	{ 0 },
 	{ 0 },
@@ -1220,7 +1227,7 @@ static struct MachineDriver rampage_machine_driver =
 	32*16, 30*16, { 0, 32*16-1, 0, 30*16-1 },
 	rampage_gfxdecodeinfo,
 	8*16, 8*16,
-	rampage_vh_convert_color_prom,
+	mcr3_vh_convert_color_prom,
 
 	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY|VIDEO_MODIFIES_PALETTE,
 	0,
@@ -1265,7 +1272,7 @@ static struct MachineDriver sarge_machine_driver =
 	32*16, 30*16, { 0, 32*16-1, 0, 30*16-1 },
 	sarge_gfxdecodeinfo,
 	8*16, 8*16,
-	rampage_vh_convert_color_prom,
+	mcr3_vh_convert_color_prom,
 
 	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY|VIDEO_MODIFIES_PALETTE,
 	0,
@@ -1303,7 +1310,7 @@ static struct MachineDriver spyhunt_machine_driver =
 		},
 		{
 			CPU_M68000 | CPU_AUDIO_CPU,
-		8500000,	/* Actually 7.5 Mhz, but the 68000 emulator isn't accurate */
+			7500000,	/* Actually 7.5 Mhz, but the 68000 emulator isn't accurate */
 			3,
 			csd_readmem,csd_writemem,0,0,
 			ignore_interrupt,1
@@ -1365,7 +1372,7 @@ static struct MachineDriver crater_machine_driver =
 
 	/* video hardware */
 	30*16, 30*16, { 0, 30*16-1, 0, 30*16-1 },
-	spyhunt_gfxdecodeinfo,
+	crater_gfxdecodeinfo,
 	8*16+4, 8*16+4,
 	spyhunt_vh_convert_color_prom,
 
@@ -1508,83 +1515,31 @@ ROM_START( tapper_rom )
 	ROM_LOAD( "tapsda10.bin", 0x3000, 0x1000, 0x5700e3bc )
 ROM_END
 
-struct GameDriver tapper_driver =
-{
-	__FILE__,
-	0,
-	"tapper",
-	"Tapper (Budweiser)",
-	"????",
-	"?????",
-	"Christopher Kirmse\nAaron Giles\nNicola Salmoria",
-	0,
-	&tapper_machine_driver,
-
-	tapper_rom,
-	0, 0,
-	0,
-	0,	/* sound_prom */
-
-	tapper_input_ports,
-
-	0, 0,0,
-	ORIENTATION_DEFAULT,
-
-	tapper_hiload, tapper_hisave
-};
-
-
 ROM_START( sutapper_rom )
-ROM_REGION(0x10000)	/* 64k for code */
-ROM_LOAD( "5791", 0x0000, 0x4000, 0xa2e24a48 )
-ROM_LOAD( "5792", 0x4000, 0x4000, 0x6747c235 )
-ROM_LOAD( "5793", 0x8000, 0x4000, 0x2d32407c )
-ROM_LOAD( "5794", 0xc000, 0x2000, 0x97ac03a4 )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "5791", 0x0000, 0x4000, 0xa2e24a48 )
+	ROM_LOAD( "5792", 0x4000, 0x4000, 0x6747c235 )
+	ROM_LOAD( "5793", 0x8000, 0x4000, 0x2d32407c )
+	ROM_LOAD( "5794", 0xc000, 0x2000, 0x97ac03a4 )
 
-ROM_REGION(0x28000)	/* temporary space for graphics (disposed after conversion) */
-ROM_LOAD( "5790", 0x00000, 0x4000, 0x45206b3a )
-ROM_LOAD( "5789", 0x04000, 0x4000, 0xb4f2f8a6 )
-ROM_LOAD( "5801", 0x08000, 0x4000, 0x05652719 )
-ROM_LOAD( "5802", 0x0c000, 0x4000, 0x4d701a98 )
-ROM_LOAD( "5799", 0x10000, 0x4000, 0x4f493201 )
-ROM_LOAD( "5800", 0x14000, 0x4000, 0x76a9f89b )
-ROM_LOAD( "5797", 0x18000, 0x4000, 0xae2a03c0 )
-ROM_LOAD( "5798", 0x1c000, 0x4000, 0x0ca30a7b )
-ROM_LOAD( "5795", 0x20000, 0x4000, 0x436ecbb8 )
-ROM_LOAD( "5796", 0x24000, 0x4000, 0x1b70e618 )
+	ROM_REGION(0x28000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "5790", 0x00000, 0x4000, 0x45206b3a )
+	ROM_LOAD( "5789", 0x04000, 0x4000, 0xb4f2f8a6 )
+	ROM_LOAD( "5801", 0x08000, 0x4000, 0x05652719 )
+	ROM_LOAD( "5802", 0x0c000, 0x4000, 0x4d701a98 )
+	ROM_LOAD( "5799", 0x10000, 0x4000, 0x4f493201 )
+	ROM_LOAD( "5800", 0x14000, 0x4000, 0x76a9f89b )
+	ROM_LOAD( "5797", 0x18000, 0x4000, 0xae2a03c0 )
+	ROM_LOAD( "5798", 0x1c000, 0x4000, 0x0ca30a7b )
+	ROM_LOAD( "5795", 0x20000, 0x4000, 0x436ecbb8 )
+	ROM_LOAD( "5796", 0x24000, 0x4000, 0x1b70e618 )
 
-ROM_REGION(0x10000)	/* 64k for the audio CPU */
-ROM_LOAD( "5788", 0x0000, 0x1000, 0x7deadcee )
-ROM_LOAD( "5787", 0x1000, 0x1000, 0x3fd4b634 )
-ROM_LOAD( "5786", 0x2000, 0x1000, 0xd39ced7e )
-ROM_LOAD( "5785", 0x3000, 0x1000, 0xff9f449d )
+	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_LOAD( "5788", 0x0000, 0x1000, 0x7deadcee )
+	ROM_LOAD( "5787", 0x1000, 0x1000, 0x3fd4b634 )
+	ROM_LOAD( "5786", 0x2000, 0x1000, 0xd39ced7e )
+	ROM_LOAD( "5785", 0x3000, 0x1000, 0xff9f449d )
 ROM_END
-
-struct GameDriver sutapper_driver =
-{
-	__FILE__,
-	0,
-	"sutapper",
-	"Tapper (Suntory)",
-	"????",
-	"?????",
-	"Christopher Kirmse\nAaron Giles\nNicola Salmoria",
-	0,
-	&tapper_machine_driver,
-
-	sutapper_rom,
-	0, 0,
-	0,
-	0,	/* sound_prom */
-
-	tapper_input_ports,
-
-	0, 0,0,
-	ORIENTATION_DEFAULT,
-
-	tapper_hiload, tapper_hisave
-};
-
 
 ROM_START( rbtapper_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
@@ -1612,14 +1567,64 @@ ROM_START( rbtapper_rom )
 	ROM_LOAD( "rbtsda10.bin", 0x3000, 0x1000, 0xff9f449d )
 ROM_END
 
-struct GameDriver rbtapper_driver =
+struct GameDriver tapper_driver =
 {
 	__FILE__,
 	0,
+	"tapper",
+	"Tapper (Budweiser)",
+	"1983",
+	"Bally Midway",
+	"Christopher Kirmse\nAaron Giles\nNicola Salmoria",
+	0,
+	&tapper_machine_driver,
+
+	tapper_rom,
+	0, 0,
+	0,
+	0,	/* sound_prom */
+
+	tapper_input_ports,
+
+	0, 0,0,
+	ORIENTATION_DEFAULT,
+
+	tapper_hiload, tapper_hisave
+};
+
+struct GameDriver sutapper_driver =
+{
+	__FILE__,
+	&tapper_driver,
+	"sutapper",
+	"Tapper (Suntory)",
+	"1983",
+	"Bally Midway",
+	"Christopher Kirmse\nAaron Giles\nNicola Salmoria",
+	0,
+	&tapper_machine_driver,
+
+	sutapper_rom,
+	0, 0,
+	0,
+	0,	/* sound_prom */
+
+	tapper_input_ports,
+
+	0, 0,0,
+	ORIENTATION_DEFAULT,
+
+	tapper_hiload, tapper_hisave
+};
+
+struct GameDriver rbtapper_driver =
+{
+	__FILE__,
+	&tapper_driver,
 	"rbtapper",
 	"Tapper (Root Beer)",
-	"????",
-	"?????",
+	"1984",
+	"Bally Midway",
 	"Christopher Kirmse\nAaron Giles\nNicola Salmoria",
 	0,
 	&tapper_machine_driver,
@@ -1675,8 +1680,8 @@ struct GameDriver dotron_driver =
 	0,
 	"dotron",
 	"Discs of Tron",
-	"????",
-	"?????",
+	"1983",
+	"Bally Midway",
 	"Christopher Kirmse\nAaron Giles\nNicola Salmoria\nAlan J. McCormick (speech info)",
 	0,
 	&dotron_machine_driver,
@@ -1724,8 +1729,8 @@ struct GameDriver destderb_driver =
 	0,
 	"destderb",
 	"Demolition Derby",
-	"????",
-	"?????",
+	"1984",
+	"Bally Midway",
 	"Christopher Kirmse\nAaron Giles\nNicola Salmoria\nBrad Oliver",
 	0,
 	&destderb_machine_driver,
@@ -1775,8 +1780,8 @@ struct GameDriver timber_driver =
 	0,
 	"timber",
 	"Timber",
-	"????",
-	"?????",
+	"1984",
+	"Bally Midway",
 	"Christopher Kirmse\nAaron Giles\nNicola Salmoria\nBrad Oliver",
 	0,
 	&timber_machine_driver,
@@ -1815,20 +1820,29 @@ ROM_START( rampage_rom )
 	ROM_LOAD_ODD ( "ramp_u18.snd", 0x10000, 0x8000, 0xbc884046 )
 ROM_END
 
+void rampage_rom_decode (void)
+{
+	int i;
+
+	/* Rampage tile graphics are inverted */
+	for (i = 0; i < 0x8000; i++)
+		Machine->memory_region[1][i] ^= 0xff;
+}
+
 struct GameDriver rampage_driver =
 {
 	__FILE__,
 	0,
 	"rampage",
 	"Rampage",
-	"????",
-	"?????",
+	"1986",
+	"Bally Midway",
 	"Aaron Giles\nChristopher Kirmse\nNicola Salmoria\nBrad Oliver",
 	0,
 	&rampage_machine_driver,
 
 	rampage_rom,
-	0, 0,
+	rampage_rom_decode, 0,
 	0,
 	0,	/* sound_prom */
 
@@ -1865,14 +1879,14 @@ struct GameDriver sarge_driver =
 	0,
 	"sarge",
 	"Sarge",
-	"????",
-	"?????",
+	"1985",
+	"Bally Midway",
 	"Aaron Giles\nChristopher Kirmse\nNicola Salmoria\nBrad Oliver",
 	0,
 	&sarge_machine_driver,
 
 	sarge_rom,
-	0, 0,
+	rampage_rom_decode, 0,
 	0,
 	0,	/* sound_prom */
 
@@ -1927,8 +1941,8 @@ struct GameDriver spyhunt_driver =
 	0,
 	"spyhunt",
 	"Spy Hunter",
-	"????",
-	"?????",
+	"1983",
+	"Bally Midway",
 	"Aaron Giles\nChristopher Kirmse\nNicola Salmoria\nBrad Oliver\nLawnmower Man",
 	0,
 	&spyhunt_machine_driver,
@@ -1984,8 +1998,8 @@ struct GameDriver crater_driver =
 	0,
 	"crater",
 	"Crater Raider",
-	"????",
-	"?????",
+	"1984",
+	"Bally Midway",
 	"Aaron Giles\nChristopher Kirmse\nNicola Salmoria\nBrad Oliver\nLawnmower Man",
 	0,
 	&crater_machine_driver,

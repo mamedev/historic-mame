@@ -186,7 +186,7 @@ void satansat_backcolor_w(int offset, int data)
   the main emulation engine.
 
 ***************************************************************************/
-void rockola_vh_screenrefresh(struct osd_bitmap *bitmap)
+void rockola_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	int offs;
 
@@ -207,7 +207,11 @@ void rockola_vh_screenrefresh(struct osd_bitmap *bitmap)
 			if (flipscreen)
 			{
 				sx = 31 - sx;
-				sy = 27 - sy;
+				/* Pioner Balloon has a visible area different from all the others */
+				if (Machine->drv->visible_area.max_y == 28*8-1)
+					sy = 27 - sy;
+				else
+					sy = 31 - sy;
 			}
 
 			drawgfx(tmpbitmap,Machine->gfx[1],
@@ -230,7 +234,11 @@ void rockola_vh_screenrefresh(struct osd_bitmap *bitmap)
 		if (flipscreen)
 		{
 			scrollx = -scrollx;
-			scrolly = -scrolly - 32;
+			/* Pioner Balloon has a visible area different from all the others */
+			if (Machine->drv->visible_area.max_y == 28*8-1)
+				scrolly = -scrolly - 32;
+			else
+				scrolly = -scrolly;
 		}
 		copyscrollbitmap(bitmap,tmpbitmap,1,&scrollx,1,&scrolly,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
 	}
@@ -258,7 +266,11 @@ void rockola_vh_screenrefresh(struct osd_bitmap *bitmap)
 		if (flipscreen)
 		{
 			sx = 31 - sx;
-			sy = 27 - sy;
+			/* Pioner Balloon has a visible area different from all the others */
+			if (Machine->drv->visible_area.max_y == 28*8-1)
+				sy = 27 - sy;
+			else
+				sy = 31 - sy;
 		}
 
 		drawgfx(bitmap,Machine->gfx[0],
@@ -272,7 +284,7 @@ void rockola_vh_screenrefresh(struct osd_bitmap *bitmap)
 
 
 /* Zarzon's background doesn't scroll, and the color code selection is different. */
-void satansat_vh_screenrefresh(struct osd_bitmap *bitmap)
+void satansat_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	int offs;
 

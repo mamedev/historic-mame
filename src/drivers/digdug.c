@@ -132,7 +132,7 @@ void digdug_cpu_reset_w(int offset, int data);
 void digdug_vh_latch_w(int offset, int data);
 int digdug_vh_start(void);
 void digdug_vh_stop(void);
-void digdug_vh_screenrefresh(struct osd_bitmap *bitmap);
+void digdug_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 void digdug_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 
 void pengo_sound_w(int offset,int data);
@@ -469,34 +469,7 @@ static struct MachineDriver machine_driver =
 
 ***************************************************************************/
 
-ROM_START( digdugnm_rom )
-	ROM_REGION(0x10000)	/* 64k for code for the first CPU  */
-	ROM_LOAD( "dd1.1b", 0x0000, 0x1000, 0x530a8d1c )
-	ROM_LOAD( "dd1.2",  0x1000, 0x1000, 0x3e4a1cb6 )
-	ROM_LOAD( "dd1.3",  0x2000, 0x1000, 0x2a1e5ce2 )
-	ROM_LOAD( "dd1.4b", 0x3000, 0x1000, 0xaaddfff7 )
-
-	ROM_REGION(0x8000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "dd1.9",  0x0000, 0x0800, 0x81dba5a5 )
-	ROM_LOAD( "dd1.11", 0x1000, 0x1000, 0xd6a41d2e )
-	ROM_LOAD( "dd1.15", 0x2000, 0x1000, 0xff914d75 )
-	ROM_LOAD( "dd1.14", 0x3000, 0x1000, 0xa3d074d0 )
-	ROM_LOAD( "dd1.13", 0x4000, 0x1000, 0x494d7f6d )
-	ROM_LOAD( "dd1.12", 0x5000, 0x1000, 0xfd468dcc )
-
-	ROM_REGION(0x10000)	/* 64k for the second CPU */
-	ROM_LOAD( "dd1.5b", 0x0000, 0x1000, 0xe09b56bb )
-	ROM_LOAD( "dd1.6b", 0x1000, 0x1000, 0xee615c91 )
-
-	ROM_REGION(0x10000)	/* 64k for the third CPU  */
-	ROM_LOAD( "dd1.7", 0x0000, 0x1000, 0xc7bdef23 )
-
-	ROM_REGION(0x01000)	/* 4k for the playfield graphics */
-	ROM_LOAD( "dd1.10b", 0x0000, 0x1000, 0x581d2bb7 )
-ROM_END
-
-
-ROM_START( digdugat_rom )
+ROM_START( digdug_rom )
 	ROM_REGION(0x10000)	/* 64k for code for the first CPU  */
 	ROM_LOAD( "136007.101", 0x0000, 0x1000, 0x530a8d1c )
 	ROM_LOAD( "136007.102", 0x1000, 0x1000, 0x3e4a1cb6 )
@@ -521,6 +494,33 @@ ROM_START( digdugat_rom )
 	ROM_REGION(0x01000)	/* 4k for the playfield graphics */
 	ROM_LOAD( "136007.114", 0x0000, 0x1000, 0xcce929b7 )
 ROM_END
+
+ROM_START( digdugnm_rom )
+	ROM_REGION(0x10000)	/* 64k for code for the first CPU  */
+	ROM_LOAD( "136007.101", 0x0000, 0x1000, 0x530a8d1c )
+	ROM_LOAD( "136007.102", 0x1000, 0x1000, 0x3e4a1cb6 )
+	ROM_LOAD( "136007.103", 0x2000, 0x1000, 0x2a1e5ce2 )
+	ROM_LOAD( "dd1.4b",     0x3000, 0x1000, 0xaaddfff7 )
+
+	ROM_REGION(0x8000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "dd1.9",      0x0000, 0x0800, 0x81dba5a5 )
+	ROM_LOAD( "dd1.11",     0x1000, 0x1000, 0xd6a41d2e )
+	ROM_LOAD( "136007.116", 0x2000, 0x1000, 0xff914d75 )
+	ROM_LOAD( "dd1.14",     0x3000, 0x1000, 0xa3d074d0 )
+	ROM_LOAD( "136007.118", 0x4000, 0x1000, 0x494d7f6d )
+	ROM_LOAD( "136007.119", 0x5000, 0x1000, 0xfd468dcc )
+
+	ROM_REGION(0x10000)	/* 64k for the second CPU */
+	ROM_LOAD( "dd1.5b", 0x0000, 0x1000, 0xe09b56bb )
+	ROM_LOAD( "dd1.6b", 0x1000, 0x1000, 0xee615c91 )
+
+	ROM_REGION(0x10000)	/* 64k for the third CPU  */
+	ROM_LOAD( "136007.107", 0x0000, 0x1000, 0xc7bdef23 )
+
+	ROM_REGION(0x01000)	/* 4k for the playfield graphics */
+	ROM_LOAD( "dd1.10b", 0x0000, 0x1000, 0x581d2bb7 )
+ROM_END
+
 
 
 static int hiload(void)
@@ -560,14 +560,39 @@ static void hisave(void)
 }
 
 
-struct GameDriver digdugnm_driver =
+struct GameDriver digdug_driver =
 {
 	__FILE__,
 	0,
+	"digdug",
+	"Dig Dug (Atari)",
+	"1982",
+	"[Namco] (Atari license)",
+	"Aaron Giles\nMartin Scragg\nNicola Salmoria\nMirko Buffoni\nAlan J McCormick",
+	0,
+	&machine_driver,
+
+	digdug_rom,
+	0, 0,
+	0,
+	sound_prom,	/* sound_prom */
+
+	digdug_input_ports,
+
+	color_prom, 0, 0,
+	ORIENTATION_DEFAULT,
+
+	hiload, hisave
+};
+
+struct GameDriver digdugnm_driver =
+{
+	__FILE__,
+	&digdug_driver,
 	"digdugnm",
 	"Dig Dug (Namco)",
-	"????",
-	"?????",
+	"1982",
+	"Namco",
 	"Aaron Giles\nMartin Scragg\nNicola Salmoria\nMirko Buffoni\nAlan J McCormick",
 	0,
 	&machine_driver,
@@ -584,30 +609,3 @@ struct GameDriver digdugnm_driver =
 
 	hiload, hisave
 };
-
-
-struct GameDriver digdugat_driver =
-{
-	__FILE__,
-	0,
-	"digdugat",
-	"Dig Dug (Atari)",
-	"????",
-	"?????",
-	"Aaron Giles\nMartin Scragg\nNicola Salmoria\nMirko Buffoni\nAlan J McCormick",
-	0,
-	&machine_driver,
-
-	digdugat_rom,
-	0, 0,
-	0,
-	sound_prom,	/* sound_prom */
-
-	digdug_input_ports,
-
-	color_prom, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	hiload, hisave
-};
-

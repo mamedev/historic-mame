@@ -86,14 +86,13 @@ void jedi_paletteram_w(int offset,int data);
 void jedi_backgroundram_w(int offset,int data);
 int  jedi_vh_start(void);
 void jedi_vh_stop(void);
-void jedi_vh_screenrefresh(struct osd_bitmap *bitmap);
+void jedi_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 void jedi_vscroll_w(int offset,int data);
 void jedi_hscroll_w(int offset,int data);
 
 extern unsigned char *jedi_PIXIRAM;
 extern unsigned char *jedi_backgroundram;
 extern int jedi_backgroundram_size;
-extern unsigned char *jedi_paletteram;
 unsigned char *jedi_nvRAM;
 
 void jedi_soundlatch_w(int offset,int data);
@@ -138,7 +137,7 @@ static struct MemoryWriteAddress writemem[] =
     { 0x1F00, 0x1F00, jedi_soundlatch_w },
     { 0x1F80, 0x1F80, jedi_rom_banksel },
     { 0x2000, 0x27FF, jedi_backgroundram_w, &jedi_backgroundram, &jedi_backgroundram_size },
-    { 0x2800, 0x2FFF, jedi_paletteram_w, &jedi_paletteram },
+    { 0x2800, 0x2FFF, jedi_paletteram_w, &paletteram },
     { 0x3000, 0x37BF, videoram_w, &videoram, &videoram_size },
     { 0x37C0, 0x3Bff, MWA_RAM, &spriteram, &spriteram_size },
     { 0x3C00, 0x3C01, jedi_vscroll_w },
@@ -394,8 +393,8 @@ struct GameDriver jedi_driver =
 	0,
 	"jedi",
 	"Return of the Jedi",
-	"????",
-	"?????",
+	"1984",
+	"Atari",
 	"Dan Boris",
 	0,
 	&machine_driver,

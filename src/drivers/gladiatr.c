@@ -90,16 +90,15 @@ E0     - Comunication port to 6809
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-extern unsigned char *gladiatr_palette_rg,*gladiatr_palette_b;
 extern unsigned char *gladiator_text;
 extern void gladiatr_spritebank_w( int offset, int data );
 extern void gladiatr_video_registers_w( int offset, int data );
 extern int gladiatr_video_registers_r( int offset );
-extern void gladiatr_palette_rg_w( int offset, int data );
-extern void gladiatr_palette_b_w( int offset, int data );
+extern void gladiatr_paletteram_rg_w( int offset, int data );
+extern void gladiatr_paletteram_b_w( int offset, int data );
 extern int gladiatr_vh_start(void);
 extern void gladiatr_vh_stop(void);
-extern void gladiatr_vh_screenrefresh(struct osd_bitmap *bitmap);
+extern void gladiatr_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 extern void gladiatr_bankswitch_w(int offset,int data);
 extern int gladiatr_bankswitch_r(int offset);
@@ -168,8 +167,8 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x0000, 0xbfff, MWA_ROM },
 	{ 0xc000, 0xcbff, MWA_RAM, &spriteram },
 	{ 0xcc00, 0xcfff, gladiatr_video_registers_w },
-	{ 0xd000, 0xd1ff, gladiatr_palette_rg_w, &gladiatr_palette_rg },
-	{ 0xd400, 0xd5ff, gladiatr_palette_b_w, &gladiatr_palette_b },
+	{ 0xd000, 0xd1ff, gladiatr_paletteram_rg_w, &paletteram },
+	{ 0xd400, 0xd5ff, gladiatr_paletteram_b_w, &paletteram_2 },
 	{ 0xd800, 0xdfff, videoram_w, &videoram },
 	{ 0xe000, 0xe7ff, colorram_w, &colorram },
 	{ 0xe800, 0xefff, MWA_RAM, &gladiator_text },
@@ -425,7 +424,7 @@ static struct AY8910interface ym2203_interface =
 {
 	1,	/* 1 chip */
 	3000000,	/* 3 MHz? */
-	{ YM2203_VOL(255,0xff) },
+	{ YM2203_VOL(255,255) },
 	{ 0 },
  	{ 0 },
 	{ 0 },
@@ -526,6 +525,39 @@ ROM_START( gladiatr_rom )
 	ROM_LOAD( "QB0-20", 0x18000, 0x8000, 0x8af2da92 )
 ROM_END
 
+ROM_START( ogonsiro_rom )
+	ROM_REGION(0x1c000)
+	ROM_LOAD( "QB0-5", 0x00000,	0x4000, 0x4f9d05a1 )
+	ROM_LOAD( "QB0-4", 0x04000,	0x2000, 0x4bc45fda )
+	ROM_LOAD( "QB0-1", 0x10000,	0x4000, 0x11836769 )
+	ROM_LOAD( "QB0_3", 0x14000,	0x8000, 0xacd3f737 )
+
+	ROM_REGION(0x44000)	/* temporary space for graphics (disposed after conversion) */
+	/* sprites */
+	ROM_LOAD( "QB0_7",	0x00000, 0x8000, 0xa86b93a9 ) /* plane 3 */
+	ROM_LOAD( "QB0_10",	0x08000, 0x8000, 0x7c6f2813 ) /* planes 1,2 */
+	ROM_LOAD( "QB0_11",	0x10000, 0x8000, 0x8a96c5ec ) /* planes 1,2 */
+
+	ROM_LOAD( "QB0_6",	0x30000, 0x4000, 0xeaa88da2 ) /* plane 3 */
+	ROM_LOAD( "QC0-8",	0x38000, 0x4000, 0x70b2dc78 ) /* planes 1,2 */
+	ROM_LOAD( "QB0_9",	0x40000, 0x4000, 0x17ce0786 ) /* planes 1,2 */
+
+	/* tiles */
+	ROM_LOAD( "QB0-12",	0x18000, 0x8000, 0x021c6258 ) /* plane 3 */
+	ROM_LOAD( "QB0-13",	0x20000, 0x8000, 0x796ff62b ) /* planes 1,2 */
+	ROM_LOAD( "QB0-14",	0x28000, 0x8000, 0x2f23bdff ) /* planes 1,2 */
+
+	ROM_LOAD( "QB0_15",	0x34000, 0x2000, 0x598891f2 ) /* (monochrome) */
+
+	ROM_REGION( 0x10000 ) /* Code for de 2nd. CPU */
+	ROM_LOAD( "QB0-17",	0x0000, 0x4000, 0xf68e3364 )
+
+	ROM_REGION( 0x20000 )  /* QB0-18, QB0-19, QB0-20 contain 4-bit adpcm sounds */
+	ROM_LOAD( "QB0-18", 0x08000, 0x8000, 0x9437974d )
+	ROM_LOAD( "QB0-19", 0x10000, 0x8000, 0xa31d0a5f )
+	ROM_LOAD( "QB0-20", 0x18000, 0x8000, 0x8af2da92 )
+ROM_END
+
 
 
 static int gladiatr_nvram_load(void)
@@ -563,13 +595,38 @@ struct GameDriver gladiatr_driver =
 	0,
 	"gladiatr",
 	"Gladiator",
-	"????",
-	"?????",
+	"1986",
+	"Taito America",
 	"Victor Trucco\nSteve Ellenoff\nPhil Stroffolino",
 	0,
 	&machine_driver,
 
 	gladiatr_rom,
+	0, 0,
+	0,
+	0,
+
+	input_ports,
+
+	0, 0, 0,
+	ORIENTATION_DEFAULT,
+
+	gladiatr_nvram_load, gladiatr_nvram_save
+};
+
+struct GameDriver ogonsiro_driver =
+{
+	__FILE__,
+	&gladiatr_driver,
+	"ogonsiro",
+	"Ohgon no Siro",
+	"1986",
+	"Taito",
+	"Victor Trucco\nSteve Ellenoff\nPhil Stroffolino",
+	0,
+	&machine_driver,
+
+	ogonsiro_rom,
 	0, 0,
 	0,
 	0,

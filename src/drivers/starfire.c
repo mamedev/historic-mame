@@ -62,7 +62,7 @@ C000 - DFFF: Video RAM
 #include "vidhrdw/generic.h"
 
 void starfire_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-void starfire_vh_screenrefresh(struct osd_bitmap *bitmap);
+void starfire_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 extern void starfire_soundctrl_w(int offset, int data);
 extern int starfire_io1_r(int offset);
@@ -227,9 +227,9 @@ struct GameDriver starfire_driver =
 	__FILE__,
 	0,
 	"starfire",
-	"Starfire (Exidy)",
-	"????",
-	"?????",
+	"Starfire",
+	"1978",
+	"Exidy",
 	"Daniel Boris\n",
 	0,
 	&machine_driver,

@@ -174,10 +174,16 @@ int mappy_customio_r_1(int offset)
 
 				/* bit 0 is a trigger for the 1 player start */
 				if ((val & 1) && ((val ^ lastval) & 1))
+				{
 					if (credits >= credden[temp]) credits -= credden[temp];
+					else val &= ~1;	/* otherwise you can start with no credits! */
+				}
 				/* bit 1 is a trigger for the 2 player start */
 				if ((val & 2) && ((val ^ lastval) & 2))
+				{
 					if (credits >= 2 * credden[temp]) credits -= 2 * credden[temp];
+					else val &= ~2;	/* otherwise you can start with no credits! */
+				}
 
 				return lastval = val;
 			}

@@ -82,14 +82,12 @@ Blitter source graphics
 #include "M6809/m6809.h"
 
 
-extern unsigned char *tutankhm_paletteram;
 extern unsigned char *tutankhm_scrollx;
 
 void tutankhm_videoram_w( int offset, int data );
-void tutankhm_palette_w( int offset, int data );
 void tutankhm_flipscreen_w( int offset, int data );
 
-void tutankhm_vh_screenrefresh( struct osd_bitmap *bitmap );
+void tutankhm_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 
 void tutankhm_init_machine(void);
@@ -175,8 +173,7 @@ static struct MemoryReadAddress readmem[] =
 static struct MemoryWriteAddress writemem[] =
 {
 	{ 0x0000, 0x7fff, tutankhm_videoram_w, &videoram, &videoram_size },
-	{ 0x8000, 0x800f, tutankhm_palette_w, &tutankhm_paletteram },	/* Palette RAM */
-
+	{ 0x8000, 0x800f, paletteram_BBGGGRRR_w, &paletteram },
 	{ 0x8030, 0x8030, interrupt_enable_w },
 	{ 0x8031, 0x8031, MWA_RAM },	/* ??? */
 	{ 0x8032, 0x8032, MWA_RAM },	/* coin counters */
@@ -314,7 +311,7 @@ static struct AY8910interface ay8910_interface =
 {
 	1,	/* 1 chip */
 	1789750,	/* 1.78975 MHz ? (same as other Konami games) */
-	{ 0x40ff },
+	{ 255 },
 	{ junofrst_portA_r },
 	{ 0 },
 	{ 0 },
@@ -561,8 +558,8 @@ struct GameDriver junofrst_driver =
 	0,
 	"junofrst",
 	"Juno First",
-	"????",
-	"?????",
+	"1983",
+	"Konami",
 	"Chris Hardy (MAME driver) Mirko Buffoni (Tutankham driver)\nDavid Dahl (hardware info)\nAaron Giles\nMarco Cassili",
 	0,
 	&machine_driver,

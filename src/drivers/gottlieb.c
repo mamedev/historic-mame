@@ -1,6 +1,6 @@
 /***************************************************************************
 
-Q*bert's driver : dedicated to Warren Davis, Jeff Lee & David Thiel
+Gottlieb driver : dedicated to Warren Davis, Jeff Lee & David Thiel
 
 ****************************************************************************
 
@@ -8,14 +8,12 @@ Reactor: earlier version of the board, with a different memory map
 
 Main processor (8088 minimum mode)
 0000-1fff RAM (NOT battery backed unlike all the others)
-2000-2fff sprite programmation. The manual says there are 63 sprites (NOT 64),
-          but the Q*Bert object priority test leaves sprite #63 dangling, so
-		  they are probably only 62.
-3000-37ff background ram (32x30 chars)
-4000-4fff background object ram
+2000-2fff sprites
+3000-37ff video ram
+4000-4fff char generator ram
 6000-67ff palette ram (palette of 16 colors)
-7000-77ff i/o ports (see below)
-8000-ffff ROM (reactor's prog)
+7000-77ff i/o ports
+8000-ffff ROM
 
 memory mapped ports:
 
@@ -53,14 +51,16 @@ Main processor (8088 minimum mode)
 0000-0fff RAM (battery backed)
 1000-1fff RAM or ROM (selected with jumpers on the board)
 2000-2fff RAM or ROM (selected with jumpers on the board)
-3000-37ff sprite programmation (64 sprites)
-3800-3fff background RAM (32x30 chars)
-4000-4fff background object RAM (can be replaced by a ROM twice as large,
+3000-37ff sprites. The manual says there are 63 sprites (NOT 64),
+          but the Q*Bert object priority test leaves sprite #63 dangling, so
+		  they are probably only 62.
+3800-3fff video RAM
+4000-4fff char generator RAM (can be replaced by a ROM twice as large,
           selection made with jumpers on the board. If it's ROM, the CPU
 		  cannot fully access it, I think it could read half the data if it
 		  wanted to but none of the games do that)
 5000-57ff palette ram (palette of 16 colors)
-5800-5fff i/o ports (see below)
+5800-5fff i/o ports
 6000-ffff ROM (not necessarily fully populated)
 
 memory mapped ports:
@@ -141,10 +141,9 @@ void gottlieb_vh_stop(void);
 void gottlieb_characterram_w(int offset, int data);
 void gottlieb_video_outputs(int offset,int data);
 void usvsthem_video_outputs(int offset,int data);
-extern unsigned char *gottlieb_paletteram;
 extern unsigned char *gottlieb_characterram;
 void gottlieb_paletteram_w(int offset,int data);
-void gottlieb_vh_screenrefresh(struct osd_bitmap *bitmap);
+void gottlieb_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 void gottlieb_sh_w(int offset, int data);
 
@@ -332,7 +331,7 @@ static struct MemoryWriteAddress reactor_writemem[] =
 	{ 0x3000, 0x33ff, videoram_w, &videoram, &videoram_size },
 	{ 0x3400, 0x37ff, videoram_w },	/* mirror address, some games write to it */
 	{ 0x4000, 0x4fff, gottlieb_characterram_w, &gottlieb_characterram },
-	{ 0x6000, 0x601f, gottlieb_paletteram_w, &gottlieb_paletteram },
+	{ 0x6000, 0x601f, gottlieb_paletteram_w, &paletteram },
 	{ 0x7000, 0x7000, watchdog_reset_w },
 	{ 0x7001, 0x7001, gottlieb_track_reset_w },
 	{ 0x7002, 0x7002, gottlieb_sh_w }, /* sound/speech command */
@@ -367,7 +366,7 @@ static struct MemoryWriteAddress gottlieb_writemem[] =
 	{ 0x3800, 0x3bff, videoram_w, &videoram, &videoram_size },
 	{ 0x3c00, 0x3fff, videoram_w },	/* mirror address, some games write to it */
 	{ 0x4000, 0x4fff, gottlieb_characterram_w, &gottlieb_characterram },
-	{ 0x5000, 0x501f, gottlieb_paletteram_w, &gottlieb_paletteram },
+	{ 0x5000, 0x501f, gottlieb_paletteram_w, &paletteram },
 	{ 0x5800, 0x5800, watchdog_reset_w },
 	{ 0x5801, 0x5801, gottlieb_track_reset_w },
 	{ 0x5802, 0x5802, gottlieb_sh_w }, /* sound/speech command */
@@ -387,7 +386,7 @@ static struct MemoryWriteAddress usvsthem_writemem[] =
 	{ 0x3800, 0x3bff, videoram_w, &videoram, &videoram_size },
 	{ 0x3c00, 0x3fff, videoram_w },	/* mirror address, some games write to it */
 	{ 0x4000, 0x4fff, gottlieb_characterram_w, &gottlieb_characterram },
-	{ 0x5000, 0x501f, gottlieb_paletteram_w, &gottlieb_paletteram },
+	{ 0x5000, 0x501f, gottlieb_paletteram_w, &paletteram },
 	{ 0x5800, 0x5800, watchdog_reset_w },
 	{ 0x5801, 0x5801, gottlieb_track_reset_w },
 	{ 0x5802, 0x5802, gottlieb_sh_w }, /* sound/speech command */
@@ -425,7 +424,7 @@ static struct MemoryWriteAddress stooges_writemem[] =
 	{ 0x3800, 0x3bff, videoram_w, &videoram, &videoram_size },
 	{ 0x3c00, 0x3fff, videoram_w },	/* mirror address, some games write to it */
 	{ 0x4000, 0x4fff, gottlieb_characterram_w, &gottlieb_characterram },
-	{ 0x5000, 0x501f, gottlieb_paletteram_w, &gottlieb_paletteram },
+	{ 0x5000, 0x501f, gottlieb_paletteram_w, &paletteram },
 	{ 0x5800, 0x5800, watchdog_reset_w },
 	{ 0x5801, 0x5801, gottlieb_track_reset_w },
 	{ 0x5802, 0x5802, gottlieb_sh_w }, /* sound/speech command */
@@ -1338,9 +1337,9 @@ ROM_END
 
 ROM_START( qbertjp_rom )
 	ROM_REGION(0x10000)     /* 64k for code */
-	ROM_LOAD( "qb-rom2.bin", 0xa000, 0x2000, 0x22b59259 )
-	ROM_LOAD( "qb-rom1.bin", 0xc000, 0x2000, 0xa9ffed43 )
-	ROM_LOAD( "qb-rom0.bin", 0xe000, 0x2000, 0xf20e301e )
+	ROM_LOAD( "qbj-rom2.bin", 0xa000, 0x2000, 0x22b59259 )
+	ROM_LOAD( "qbj-rom1.bin", 0xc000, 0x2000, 0xa9ffed43 )
+	ROM_LOAD( "qbj-rom0.bin", 0xe000, 0x2000, 0xf20e301e )
 
 	ROM_REGION(0xa000)	/* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "qb-bg0.bin", 0x0000, 0x1000, 0x035735a1 )	/* chars */
@@ -1351,8 +1350,10 @@ ROM_START( qbertjp_rom )
 	ROM_LOAD( "qb-fg0.bin", 0x8000, 0x2000, 0x0ca72f4f )
 
 	ROM_REGION(0x10000)	/* 64k for sound cpu */
-	ROM_LOAD( "qb-sq1.bin", 0xf000, 0x1000, 0x66a74fc9 )
-	ROM_RELOAD(             0x7000, 0x1000) /* A15 is not decoded */
+	ROM_LOAD( "qb-snd1.bin", 0xf000, 0x800, 0x469952eb )
+	ROM_RELOAD(              0x7000, 0x800) /* A15 is not decoded */
+	ROM_LOAD( "qb-snd2.bin", 0xf800, 0x800, 0x200e1d22 )
+	ROM_RELOAD(              0x7800, 0x800) /* A15 is not decoded */
 ROM_END
 
 ROM_START( sqbert_rom )
@@ -1606,14 +1607,14 @@ struct GameDriver reactor_driver =
 	0,
 	"reactor",
 	"Reactor",
-	"????",
-	"?????",
+	"1982",
+	"Gottlieb",
 	"Fabrice Frances",
 	0,
 	&reactor_machine_driver,
 
 	reactor_rom,
-	0, 0,   /* rom decode and opcode decode functions */
+	0, 0,
 	0,
 	0,	/* sound_prom */
 
@@ -1631,14 +1632,14 @@ struct GameDriver mplanets_driver =
 	0,
 	"mplanets",
 	"Mad Planets",
-	"????",
-	"?????",
+	"1983",
+	"Gottlieb",
 	"Fabrice Frances",
 	0,
 	&gottlieb_machine_driver,
 
 	mplanets_rom,
-	0, 0,   /* rom decode and opcode decode functions */
+	0, 0,
 	0,
 	0,	/* sound_prom */
 
@@ -1655,15 +1656,15 @@ struct GameDriver qbert_driver =
 	__FILE__,
 	0,
 	"qbert",
-	"Q*Bert (US version)",
-	"????",
-	"?????",
+	"Q*Bert (US)",
+	"1982",
+	"Gottlieb",
 	"Fabrice Frances (MAME driver)\nMarco Cassili\nJohn Butler     (speech\nHowie Cohen     samples)\n\nDedicated to:\nWarren Davis\nJeff Lee\nDavid Thiel",
 	0,
 	&gottlieb_machine_driver,
 
 	qbert_rom,
-	0, 0,   /* rom decode and opcode decode functions */
+	0, 0,
 	qbert_sample_names,
 	0,	/* sound_prom */
 
@@ -1678,17 +1679,17 @@ struct GameDriver qbert_driver =
 struct GameDriver qbertjp_driver =
 {
 	__FILE__,
-	0,
+	&qbert_driver,
 	"qbertjp",
-	"Q*Bert (Japanese version)",
-	"????",
-	"?????",
+	"Q*Bert (Japan)",
+	"1982",
+	"Gottlieb (Konami license)",
 	"Fabrice Frances (MAME driver)\nMarco Cassili\nJohn Butler     (speech\nHowie Cohen     samples)\n\nDedicated to:\nWarren Davis\nJeff Lee\nDavid Thiel",
 	0,
 	&gottlieb_machine_driver,
 
 	qbertjp_rom,
-	0, 0,   /* rom decode and opcode decode functions */
+	0, 0,
 	qbert_sample_names,
 	0,	/* sound_prom */
 
@@ -1706,14 +1707,14 @@ struct GameDriver sqbert_driver =
 	0,
 	"sqbert",
 	"FHMC Q*Bert",
-	"????",
-	"?????",
+	"1983",
+	"Mylstar",
 	"Fabrice Frances (MAME driver)\nMarco Cassili\nJohn Butler     (speech\nHowie Cohen     samples)\n\n Special thanks to:\nFred Sookiasian\n\nDedicated to:\nWarren Davis\nJeff Lee\nDavid Thiel",
 	0,
 	&gottlieb_machine_driver,
 
 	sqbert_rom,
-	0, 0,   /* rom decode and opcode decode functions */
+	0, 0,
 	qbert_sample_names,
 	0,	/* sound_prom */
 
@@ -1731,14 +1732,14 @@ struct GameDriver qbertqub_driver =
 	0,
 	"qbertqub",
 	"Q*Bert Qubes",
-	"????",
-	"?????",
+	"1983",
+	"Mylstar",
 	"Fabrice Frances & Rodimus Prime (MAME driver)\nMarco Cassili",
 	0,
 	&qbertqub_machine_driver,
 
 	qbertqub_rom,
-	0, 0,   /* rom decode and opcode decode functions */
+	0, 0,
 	qbert_sample_names,
 	0,	/* sound_prom */
 
@@ -1756,14 +1757,14 @@ struct GameDriver krull_driver =
 	0,
 	"krull",
 	"Krull",
-	"????",
-	"?????",
+	"1983",
+	"Gottlieb",
 	"Fabrice Frances (MAME driver)\nMarco Cassili",
 	0,
 	&krull_machine_driver,
 
 	krull_rom,
-	0, 0,   /* rom decode and opcode decode functions */
+	0, 0,
 	0,
 	0,	/* sound_prom */
 
@@ -1781,15 +1782,15 @@ struct GameDriver mach3_driver =
 	0,
 	"mach3",
 	"M.A.C.H. 3",
-	"????",
-	"?????",
+	"1983",
+	"Mylstar",
 	"Fabrice Frances (MAME driver)\n\n"
 	"This is a LASER DISC game, so it doesn't work.",
-	0,
+	GAME_NOT_WORKING,
 	&mach3_machine_driver,
 
 	mach3_rom,
-	0, 0,   /* rom decode and opcode decode functions */
+	0, 0,
 	0,
 	0,	/* sound_prom */
 
@@ -1808,14 +1809,14 @@ struct GameDriver usvsthem_driver =
 	"usvsthem",
 	"Us vs. Them",
 	"????",
-	"?????",
+	"Mylstar",
 	"Fabrice Frances (MAME driver)\n\n"
 	"This is a LASER DISC game, so it doesn't work.",
-	0,
+	GAME_NOT_WORKING,
 	&usvsthem_machine_driver,
 
 	usvsthem_rom,
-	0, 0,   /* rom decode and opcode decode functions */
+	0, 0,
 	0,
 	0,	/* sound_prom */
 
@@ -1833,14 +1834,14 @@ struct GameDriver stooges_driver =
 	0,
 	"3stooges",
 	"Three Stooges",
-	"????",
-	"?????",
+	"1984",
+	"Mylstar",
 	"Fabrice Frances (MAME driver)\nJohn Butler\nMarco Cassili",
 	0,
 	&stooges_machine_driver,
 
 	stooges_rom,
-	0, 0,   /* rom decode and opcode decode functions */
+	0, 0,
 	0,
 	0,	/* sound_prom */
 
@@ -1858,14 +1859,14 @@ struct GameDriver curvebal_driver =
 	0,
 	"curvebal",
 	"Curve Ball",
-	"????",
-	"?????",
+	"1984",
+	"Mylstar",
 	"Fabrice Frances (MAME driver)",
 	0,
 	&gottlieb_machine_driver,
 
 	curvebal_rom,
-	0, 0,   /* rom decode and opcode decode functions */
+	0, 0,
 	0,
 	0,	/* sound_prom */
 

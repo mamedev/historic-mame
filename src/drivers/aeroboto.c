@@ -2,6 +2,8 @@
 
 Aeroboto (Preliminary)
 
+This is the Williams license of Jaleco's Formation-Z.
+
 ****************************************************************************/
 
 #include "driver.h"
@@ -13,7 +15,7 @@ extern unsigned char *aeroboto_fgscroll,*aeroboto_bgscroll;
 extern unsigned char *aeroboto_charlookup;
 
 void aeroboto_gfxctrl_w(int ofset,int data);
-void aeroboto_vh_screenrefresh(struct osd_bitmap *bitmap);
+void aeroboto_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 
 static int pip(int offset)
@@ -172,7 +174,7 @@ static struct AY8910interface ay8910_interface =
 {
 	2,      /* 2 chips */
 	1500000,        /* 1.5 MHz ? (hand tuned) */
-	{ 0x20ff, 0x20ff },
+	{ 255, 255 },
 	{ soundlatch_r, 0 },	/* ? */
 	{ soundlatch2_r, 0 },	/* ? */
 	{ 0, 0 },
@@ -255,10 +257,10 @@ struct GameDriver aeroboto_driver =
 	0,
 	"aeroboto",
 	"Aeroboto",
-	"????",
-	"?????",
+	"1984",
+	"[Jaleco] (Williams license)",
 	"Carlos A. Lozano",
-	0,
+	GAME_NOT_WORKING,
 	&machine_driver,
 
 	aeroboto_rom,

@@ -171,7 +171,7 @@ $F987 - Addresses table at $f98d containing four structs:
 
 int  spiders_vh_start(void);
 void spiders_vh_stop(void);
-void spiders_vh_update(struct osd_bitmap *bitmap);
+void spiders_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 void spiders_pia_2_w(int address, int data);
 int spiders_pia_2_r(int address);
@@ -369,11 +369,11 @@ static struct MachineDriver machine_driver =
     0,                                  /* Colour table length  */
     0,                                  /* Convert colour prom  */
 
-    VIDEO_TYPE_RASTER,                  /* Video attributes     */
+    VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY,                  /* Video attributes     */
     0,                                  /* Video initialisation */
     spiders_vh_start,                    /* Video start          */
     spiders_vh_stop,                     /* Video stop           */
-    spiders_vh_update,                   /* Video update         */
+    spiders_vh_screenrefresh,                   /* Video update         */
 
     /* sound hardware */
     0,0,0,0
@@ -413,8 +413,8 @@ struct GameDriver spiders_driver =
 	0,
 	"spiders",
 	"Spiders",
-	"????",
-	"?????",
+	"1981",
+	"Sigma",
 	"Keith Wilkins",
 	0,
 	&machine_driver,

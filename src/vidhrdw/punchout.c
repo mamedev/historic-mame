@@ -65,99 +65,62 @@ static struct rectangle backgroundvisiblearea =
 ***************************************************************************/
 void punchout_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
 {
-	int i,j,used;
-	unsigned char allocated[3*256];
+	int i;
 	#define TOTAL_COLORS(gfxn) (Machine->gfx[gfxn]->total_colors * Machine->gfx[gfxn]->color_granularity)
 	#define COLOR(gfxn,offs) (colortable[Machine->drv->gfxdecodeinfo[gfxn].color_codes_start + (offs)])
 
 
-	/* The game has 1024 colors, but we are limited to a maximum of 256. */
-	/* Luckily, many of the colors are duplicated, so the total number of */
-	/* different colors is less than 256. We select the unique colors and */
-	/* put them in our palette. */
-
-	memset(palette,0,3 * Machine->drv->total_colors);
-
-	/* transparent black */
-	allocated[0] = 0xff;
-	allocated[1] = 0xff;
-	allocated[2] = 0xff;
-	palette[0] = 0;
-	palette[1] = 0;
-	palette[2] = 0;
-	/* non transparent black */
-	allocated[3] = 0xff;
-	allocated[4] = 0xff;
-	allocated[5] = 0xff;
-	palette[3] = 0;
-	palette[4] = 0;
-	palette[5] = 0;
-	used = 2;
-
 	for (i = 0;i < 1024;i++)
 	{
-		for (j = 0;j < used;j++)
-		{
-			if (allocated[j] == color_prom[i] &&
-					allocated[j+256] == color_prom[i+1024] &&
-					allocated[j+2*256] == color_prom[i+2*1024])
-				break;
-		}
-		if (j == used)
-		{
-			int bit0,bit1,bit2,bit3;
+		int bit0,bit1,bit2,bit3;
 
 
-			used++;
+		bit0 = (color_prom[0] >> 0) & 0x01;
+		bit1 = (color_prom[0] >> 1) & 0x01;
+		bit2 = (color_prom[0] >> 2) & 0x01;
+		bit3 = (color_prom[0] >> 3) & 0x01;
+		*(palette++) = 255 - (0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3);
+		bit0 = (color_prom[1024] >> 0) & 0x01;
+		bit1 = (color_prom[1024] >> 1) & 0x01;
+		bit2 = (color_prom[1024] >> 2) & 0x01;
+		bit3 = (color_prom[1024] >> 3) & 0x01;
+		*(palette++) = 255 - (0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3);
+		bit0 = (color_prom[2*1024] >> 0) & 0x01;
+		bit1 = (color_prom[2*1024] >> 1) & 0x01;
+		bit2 = (color_prom[2*1024] >> 2) & 0x01;
+		bit3 = (color_prom[2*1024] >> 3) & 0x01;
+		*(palette++) = 255 - (0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3);
 
-			allocated[j] = color_prom[i];
-			allocated[j+256] = color_prom[i+1024];
-			allocated[j+2*256] = color_prom[i+2*1024];
+		color_prom++;
+	}
 
-			bit0 = (color_prom[i] >> 0) & 0x01;
-			bit1 = (color_prom[i] >> 1) & 0x01;
-			bit2 = (color_prom[i] >> 2) & 0x01;
-			bit3 = (color_prom[i] >> 3) & 0x01;
-			palette[3*j] = 255 - (0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3);
-			bit0 = (color_prom[i+1024] >> 0) & 0x01;
-			bit1 = (color_prom[i+1024] >> 1) & 0x01;
-			bit2 = (color_prom[i+1024] >> 2) & 0x01;
-			bit3 = (color_prom[i+1024] >> 3) & 0x01;
-			palette[3*j + 1] = 255 - (0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3);
-			bit0 = (color_prom[i+2*1024] >> 0) & 0x01;
-			bit1 = (color_prom[i+2*1024] >> 1) & 0x01;
-			bit2 = (color_prom[i+2*1024] >> 2) & 0x01;
-			bit3 = (color_prom[i+2*1024] >> 3) & 0x01;
-			palette[3*j + 2] = 255 - (0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3);
-		}
-
-		if (i < 512)
-		{
-			/* top monitor chars - palette order is inverted */
-			COLOR(0,i ^ 0x03) = j;
-		}
-		else
-		{
-			int ii,jj;
+	/* reserve the last color for the transparent pen (none of the game colors can have */
+	/* these RGB components) */
+	*(palette++) = 1;
+	*(palette++) = 1;
+	*(palette++) = 1;
 
 
-			ii = i - 512;
+	/* top monitor chars - palette order is inverted */
+	for (i = 0;i < TOTAL_COLORS(0);i++)
+		COLOR(0,i ^ 3) = i;
 
-			/* bottom monitor chars */
-			COLOR(1,ii) = j;
+	/* bottom monitor chars */
+	for (i = 0;i < TOTAL_COLORS(1);i++)
+		COLOR(1,i) = i + 512;
 
-			/* big sprite #1 - palette order is inverted */
-			jj = j;
-			if (ii % 8 == 0) jj = 0;	/* preserve transparency */
-			else if (jj == 0) jj = 1;	/* avoid undesired transparency */
-			COLOR(2,ii ^ 0x07) = jj;
+	/* big sprite #1 - palette order is inverted */
+	for (i = 0;i < TOTAL_COLORS(2);i++)
+	{
+		if (i % 8 == 0) COLOR(2,i ^ 7) = 1024;	/* transparent */
+		else COLOR(2,i ^ 7) = i + 512;
+	}
 
-			/* big sprite #2 */
-			jj = j;
-			if (ii % 4 == 0) jj = 0;	/* preserve transparency */
-			else if (jj == 0) jj = 1;	/* avoid undesired transparency */
-			COLOR(3,ii) = jj;
-		}
+	/* big sprite #2 */
+	for (i = 0;i < TOTAL_COLORS(3);i++)
+	{
+		if (i % 4 == 0) COLOR(3,i) = 1024;	/* transparent */
+		else COLOR(3,i) = i + 512;
 	}
 }
 
@@ -308,7 +271,7 @@ void punchout_palettebank_w(int offset,int data)
   the main emulation engine.
 
 ***************************************************************************/
-void punchout_vh_screenrefresh(struct osd_bitmap *bitmap)
+void punchout_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	int offs;
 
@@ -451,7 +414,7 @@ void punchout_vh_screenrefresh(struct osd_bitmap *bitmap)
 				copybitmapzoom(bitmap,bs1tmpbitmap,
 						punchout_bigsprite1[6] & 1,0,
 						sx,sy - 8*(32-TOP_MONITOR_ROWS),
-						&topvisiblearea,TRANSPARENCY_COLOR,0,
+						&topvisiblearea,TRANSPARENCY_COLOR,1024,
 						0x10000 * 0x1000 / zoom / 4,0x10000 * 0x1000 / zoom / 4);
 			}
 			if (punchout_bigsprite1[7] & 2)	/* display in bottom monitor */
@@ -459,7 +422,7 @@ void punchout_vh_screenrefresh(struct osd_bitmap *bitmap)
 				copybitmapzoom(bitmap,bs1tmpbitmap,
 						punchout_bigsprite1[6] & 1,0,
 						sx,sy + 8*TOP_MONITOR_ROWS,
-						&bottomvisiblearea,TRANSPARENCY_COLOR,0,
+						&bottomvisiblearea,TRANSPARENCY_COLOR,1024,
 						0x10000 * 0x1000 / zoom / 4,0x10000 * 0x1000 / zoom / 4);
 			}
 		}
@@ -478,6 +441,6 @@ void punchout_vh_screenrefresh(struct osd_bitmap *bitmap)
 		copybitmap(bitmap,bs2tmpbitmap,
 				punchout_bigsprite2[4] & 1,0,
 				sx,sy + 8*TOP_MONITOR_ROWS,
-				&bottomvisiblearea,TRANSPARENCY_COLOR,0);
+				&bottomvisiblearea,TRANSPARENCY_COLOR,1024);
 	}
 }

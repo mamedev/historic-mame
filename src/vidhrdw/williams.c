@@ -20,10 +20,8 @@ extern void williams_vram_select_w (int offset, int data);
 
 
 unsigned char *williams_blitterram;
-unsigned char *williams_paletteram;
 unsigned char *williams_videoram;
 unsigned char *williams_remap_select;
-int williams_paletteram_size;
 
 unsigned char *blaster_video_bits;
 unsigned char *blaster_color_zero_table;
@@ -252,7 +250,7 @@ void williams_vh_update (int counter)
  *  Video update - not needed, the video is updated in chunks
  */
 
-void williams_vh_screenrefresh (struct osd_bitmap *bitmap)
+void williams_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 }
 
@@ -270,36 +268,6 @@ void williams_videoram_w (int offset, int data)
 	(*put_pix) (offset, data);
 }
 
-
-/*
- *  Generic palette write function; works for every game
- */
-
-void williams_palette_w (int offset, int data)
-{
-	int r, g, b;
-	int bit0,bit1,bit2;
-
-	williams_paletteram[offset] = data;
-
-	/* red component */
-	bit0 = (data >> 0) & 0x01;
-	bit1 = (data >> 1) & 0x01;
-	bit2 = (data >> 2) & 0x01;
-	r = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
-	/* green component */
-	bit0 = (data >> 3) & 0x01;
-	bit1 = (data >> 4) & 0x01;
-	bit2 = (data >> 5) & 0x01;
-	g = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
-	/* blue component */
-	bit0 = 0;
-	bit1 = (data >> 6) & 0x01;
-	bit2 = (data >> 7) & 0x01;
-	b = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
-
-	palette_change_color(offset,r,g,b);
-}
 
 
 /*
@@ -845,7 +813,7 @@ void blaster_vh_convert_color_prom (unsigned char *palette, unsigned short *colo
  *  Blaster-specific screen refresh; handles the zero color palette change
  */
 
-void blaster_vh_screenrefresh (struct osd_bitmap *bitmap)
+void blaster_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	int i, j;
 	int back_color;
@@ -853,8 +821,15 @@ void blaster_vh_screenrefresh (struct osd_bitmap *bitmap)
 	int back_pen;
 	int first = -1;
 
+	/* Recalculate palette */
+	if (palette_recalc ())
+	{
+		for (i = 0; i < 0x9800; i++)
+			williams_videoram_w (i, williams_videoram[i]);
+	}
+
 	/* Copy williams_bitmap in bitmap */
-	williams_vh_screenrefresh (bitmap);
+	williams_vh_screenrefresh(bitmap,full_refresh);
 
 	/* The color 0 of the palette can change at each video line */
 	/* Since we cannot do that on a PC, we do that in a copy of the bitmap */

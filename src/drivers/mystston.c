@@ -64,14 +64,12 @@ extern int mystston_videoram2_size;
 extern unsigned char *mystston_videoram3,*mystston_colorram3;
 extern int mystston_videoram3_size;
 extern unsigned char *mystston_scroll;
-extern unsigned char *mystston_paletteram;
 
-void mystston_paletteram_w(int offset,int data);
 void mystston_videoram3_w(int offset,int data);
 void mystston_colorram3_w(int offset,int data);
 int mystston_vh_start(void);
 void mystston_vh_stop(void);
-void mystston_vh_screenrefresh(struct osd_bitmap *bitmap);
+void mystston_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 /* extern unsigned char *mystston_pageselect; */
 
@@ -101,7 +99,7 @@ static struct MemoryWriteAddress writemem[] =
 /*	{ 0x2000, 0x2000, MWA_RAM, &mystston_pageselect }, */
 /*	{ 0x2010, 0x2010, soundlatch_w }, */
 	{ 0x2020, 0x2020, MWA_RAM, &mystston_scroll },
-	{ 0x2060, 0x2077, mystston_paletteram_w, &mystston_paletteram },
+	{ 0x2060, 0x2077, paletteram_BBGGGRRR_w, &paletteram },
 	{ 0x4000, 0xffff, MWA_ROM },
 	{ -1 }	/* end of table */
 };
@@ -326,8 +324,8 @@ struct GameDriver mystston_driver =
 	0,
 	"mystston",
 	"Mysterious Stones",
-	"????",
-	"?????",
+	"1984",
+	"Technos",
 	"Nicola Salmoria\nMike Balfour\nBrad Oliver",
 	0,
 	&machine_driver,

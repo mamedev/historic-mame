@@ -149,9 +149,6 @@ void tnzs_bankswitch_w(int offset, int data)
 
 void tnzs_bankswitch1_w(int offset,int data)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[1].memory_region];
-
-
 #ifdef MALLOC_CPU1_ROM_AREAS
 	switch (data & 3)
 	{
@@ -169,6 +166,9 @@ void tnzs_bankswitch1_w(int offset,int data)
 			break;
 	}
 #else
-	cpu_setbank(2,&RAM[0x8000 + 0x2000 * (data & 3)]);
+	{
+		unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[1].memory_region];
+		cpu_setbank(2,&RAM[0x8000 + 0x2000 * (data & 3)]);
+	}
 #endif
 }

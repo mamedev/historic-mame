@@ -4,12 +4,12 @@
 ***************************************************************************/
 
 #include "driver.h"
+#include "vidhrdw/generic.h"
 
 
 
 extern unsigned char *blockout_videoram;
 extern unsigned char *blockout_frontvideoram;
-extern unsigned char *blockout_paletteram;
 extern unsigned char *blockout_frontcolor;
 
 void blockout_videoram_w(int offset, int data);
@@ -17,11 +17,10 @@ int blockout_videoram_r(int offset);
 void blockout_frontvideoram_w(int offset, int data);
 int blockout_frontvideoram_r(int offset);
 void blockout_paletteram_w(int offset, int data);
-int blockout_paletteram_r(int offset);
 void blockout_frontcolor_w(int offset, int data);
 int blockout_vh_start(void);
 void blockout_vh_stop(void);
-void blockout_vh_screenrefresh(struct osd_bitmap *bitmap);
+void blockout_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 
 int blockout_interrupt(void)
@@ -76,7 +75,7 @@ static struct MemoryReadAddress readmem[] =
 	{ 0x1f4000, 0x1fffff, MRA_BANK2 },	/* work RAM */
 	{ 0x200000, 0x207fff, blockout_frontvideoram_r },
 	{ 0x208000, 0x21ffff, MRA_BANK3 },	/* ??? */
-	{ 0x280200, 0x2805ff, blockout_paletteram_r },
+	{ 0x280200, 0x2805ff, paletteram_word_r },
 	{ -1 }  /* end of table */
 };
 
@@ -89,8 +88,8 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x1f4000, 0x1fffff, MWA_BANK2 },	/* work RAM */
 	{ 0x200000, 0x207fff, blockout_frontvideoram_w, &blockout_frontvideoram },
 	{ 0x208000, 0x21ffff, MWA_BANK3 },	/* ??? */
-	{ 0x280000, 0x280003, blockout_frontcolor_w },
-	{ 0x280200, 0x2805ff, blockout_paletteram_w, &blockout_paletteram },
+	{ 0x280002, 0x280003, blockout_frontcolor_w },
+	{ 0x280200, 0x2805ff, blockout_paletteram_w, &paletteram },
 	{ -1 }  /* end of table */
 };
 
@@ -241,7 +240,7 @@ static struct MachineDriver machine_driver =
 	/* video hardware */
 	320, 256, { 0, 319, 8, 247 },
 	0,
-	512, 0,
+	513, 0,
 	0,
 
 	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
@@ -254,7 +253,7 @@ static struct MachineDriver machine_driver =
 	0,0,0,0,
 	{
 		{
-			SOUND_YM2151,
+			SOUND_YM2151_ALT,
 			&ym2151_interface
 		},
 		{
@@ -295,8 +294,8 @@ struct GameDriver blockout_driver =
 	0,
 	"blockout",
 	"Block Out",
-	"????",
-	"?????",
+	"1989",
+	"Technos + California Dreams",
 	"Nicola Salmoria\nAaron Giles (ADPCM sound)",
 	0,
 	&machine_driver,

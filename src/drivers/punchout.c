@@ -106,7 +106,7 @@ void punchout_palettebank_w(int offset,int data);
 int punchout_vh_start(void);
 void punchout_vh_stop(void);
 void punchout_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-void punchout_vh_screenrefresh(struct osd_bitmap *bitmap);
+void punchout_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 int punchout_input_3_r(int offset);
 void punchout_speech_reset(int offset,int data);
@@ -877,7 +877,7 @@ static struct MachineDriver machine_driver =
 	/* video hardware */
 	32*8, 60*8, { 0*8, 32*8-1, 0*8, 60*8-1 },
 	gfxdecodeinfo,
-	256,128*4+128*4+64*8+128*4,
+	1024+1, 128*4+128*4+64*8+128*4,
 	punchout_vh_convert_color_prom,
 
 	VIDEO_TYPE_RASTER,
@@ -965,8 +965,9 @@ ROM_START( spnchout_rom )
 	ROM_LOAD( "chs1-v.8f",  0x8000, 0x4000, 0x440a5850 )
 
 	ROM_REGION(0x48000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "chs1-b.4c",  0x00000, 0x2000, 0x00000000 )	/* chars #1 */
-	ROM_LOAD( "chs1-b.4d",  0x02000, 0x2000, 0x00000000 )
+	/* the following two ROMs are BAD! */
+	ROM_LOAD( "chs1-b.4c",  0x00000, 0x2000, 0xf0000000 )	/* chars #1 */
+	ROM_LOAD( "chs1-b.4d",  0x02000, 0x2000, 0x6a808080 )
 	ROM_LOAD( "chs1-b.4a",  0x04000, 0x2000, 0xe4db3e1f )	/* chars #2 */
 	ROM_LOAD( "chs1-b.4b",  0x06000, 0x2000, 0x7d8ace36 )
 	ROM_LOAD( "chs1-v.2r",  0x08000, 0x4000, 0x24fa739e )	/* chars #3 */
@@ -1047,8 +1048,8 @@ struct GameDriver punchout_driver =
 	0,
 	"punchout",
 	"Punch Out",
-	"????",
-	"?????",
+	"1984",
+	"Nintendo",
 	"Nicola Salmoria (MAME driver)\nTim Lindquist (color info)\nBryan Smith (hardware info)\nTatsuyuki Satoh(speech sound)",
 	0,
 	&machine_driver,
@@ -1072,10 +1073,10 @@ struct GameDriver spnchout_driver =
 	0,
 	"spnchout",
 	"Super Punch Out",
-	"????",
-	"?????",
+	"1984",
+	"Nintendo",
 	"Nicola Salmoria (MAME driver)\nTim Lindquist (color info)\nBryan Smith (hardware info)",
-	0,
+	GAME_NOT_WORKING,
 	&machine_driver,
 
 	spnchout_rom,

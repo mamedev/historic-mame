@@ -450,6 +450,45 @@ static struct MachineDriver machine_driver =
 };
 
 
+/* Tempest Tube uses a slightly different visual area */
+static struct MachineDriver tempest_tube_machine_driver =
+{
+	/* basic machine hardware */
+	{
+		{
+			CPU_M6502,
+			1500000,	/* 1.5 Mhz */
+			0,
+			readmem,writemem,0,0,
+			interrupt,4 /* 4.1ms */
+		}
+	},
+	60, 0,	/* frames per second, vblank duration (vector game, so no vblank) */
+	1,
+	0,
+
+	/* video hardware */
+	350, 400, { 0, 600, 0, 580 },
+	gfxdecodeinfo,
+	256,256,
+	avg_init_colors,
+
+	VIDEO_TYPE_VECTOR,
+	0,
+	avg_start_tempest,
+	avg_stop,
+	avg_screenrefresh,
+
+	/* sound hardware */
+	0,0,0,0,
+	{
+		{
+			SOUND_POKEY,
+			&pokey_interface
+		}
+	}
+};
+
 
 /***************************************************************************
 
@@ -465,7 +504,25 @@ static struct MachineDriver machine_driver =
  */
 
 
-ROM_START( tempest_rom )
+ROM_START( tempest_rom ) /* rev 3 */
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "136002.113", 0x9000, 0x0800, 0xc4180c0e )
+	ROM_LOAD( "136002.114", 0x9800, 0x0800, 0x3bf4999a )
+	ROM_LOAD( "136002.115", 0xa000, 0x0800, 0x22bb1713 )
+	ROM_LOAD( "136002.316", 0xa800, 0x0800, 0xee8c0306 )
+	ROM_LOAD( "136002.217", 0xb000, 0x0800, 0x85768680 )
+	ROM_LOAD( "136002.118", 0xb800, 0x0800, 0x461ca3a4 )
+	ROM_LOAD( "136002.119", 0xc000, 0x0800, 0x02e4a6ae )
+	ROM_LOAD( "136002.120", 0xc800, 0x0800, 0x82d1e4ed )
+	ROM_LOAD( "136002.121", 0xd000, 0x0800, 0xe663151f )
+	ROM_LOAD( "136002.222", 0xd800, 0x0800, 0xb5c39e95 )
+	ROM_RELOAD(             0xf800, 0x0800 ) /* for reset/interrupt vectors */
+	/* Mathbox ROMs */
+	ROM_LOAD( "136002.123", 0x3000, 0x0800, 0xca906060 )
+	ROM_LOAD( "136002.124", 0x3800, 0x0800, 0xb6c4f9f8 )
+ROM_END
+
+ROM_START( tempest1_rom ) /* rev 1 */
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "136002.113", 0x9000, 0x0800, 0xc4180c0e )
 	ROM_LOAD( "136002.114", 0x9800, 0x0800, 0x3bf4999a )
@@ -483,25 +540,43 @@ ROM_START( tempest_rom )
 	ROM_LOAD( "136002.124", 0x3800, 0x0800, 0xb6c4f9f8 )
 ROM_END
 
-ROM_START( temptube_rom )
+ROM_START( tempest2_rom ) /* rev 2 */
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "136002.113", 0x9000, 0x0800, 0xc4180c0e )
 	ROM_LOAD( "136002.114", 0x9800, 0x0800, 0x3bf4999a )
 	ROM_LOAD( "136002.115", 0xa000, 0x0800, 0x22bb1713 )
 	ROM_LOAD( "136002.116", 0xa800, 0x0800, 0xee2a0306 )
-	ROM_LOAD( "136002.117", 0xb000, 0x0800, 0x85788680 )
-	ROM_LOAD( "tube.118",   0xb800, 0x0800, 0xf4ecc108 )
+	ROM_LOAD( "136002.217", 0xb000, 0x0800, 0x85768680 )
+	ROM_LOAD( "136002.118", 0xb800, 0x0800, 0x461ca3a4 )
 	ROM_LOAD( "136002.119", 0xc000, 0x0800, 0x02e4a6ae )
 	ROM_LOAD( "136002.120", 0xc800, 0x0800, 0x82d1e4ed )
 	ROM_LOAD( "136002.121", 0xd000, 0x0800, 0xe663151f )
-	ROM_LOAD( "136002.122", 0xd800, 0x0800, 0x292ebfb4 )
+	ROM_LOAD( "136002.222", 0xd800, 0x0800, 0xb5c39e95 )
 	ROM_RELOAD(             0xf800, 0x0800 ) /* for reset/interrupt vectors */
 	/* Mathbox ROMs */
 	ROM_LOAD( "136002.123", 0x3000, 0x0800, 0xca906060 )
 	ROM_LOAD( "136002.124", 0x3800, 0x0800, 0xb6c4f9f8 )
 ROM_END
 
-#if 0
+ROM_START( temptube_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "136002.113", 0x9000, 0x0800, 0xc4180c0e )
+	ROM_LOAD( "136002.114", 0x9800, 0x0800, 0x3bf4999a )
+	ROM_LOAD( "136002.115", 0xa000, 0x0800, 0x22bb1713 )
+	ROM_LOAD( "136002.316", 0xa800, 0x0800, 0xee8c0306 )
+	ROM_LOAD( "136002.217", 0xb000, 0x0800, 0x85768680 )
+	ROM_LOAD( "tube.118",   0xb800, 0x0800, 0xf4ecc108 )
+	ROM_LOAD( "136002.119", 0xc000, 0x0800, 0x02e4a6ae )
+	ROM_LOAD( "136002.120", 0xc800, 0x0800, 0x82d1e4ed )
+	ROM_LOAD( "136002.121", 0xd000, 0x0800, 0xe663151f )
+	ROM_LOAD( "136002.222", 0xd800, 0x0800, 0xb5c39e95 )
+	ROM_RELOAD(             0xf800, 0x0800 ) /* for reset/interrupt vectors */
+	/* Mathbox ROMs */
+	ROM_LOAD( "136002.123", 0x3000, 0x0800, 0xca906060 )
+	ROM_LOAD( "136002.124", 0x3800, 0x0800, 0xb6c4f9f8 )
+ROM_END
+
+#if 0 /* identical to tempest_rom, only different rom sizes */
 ROM_START( tempest3_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "tempest.x", 0x9000, 0x1000, -1 )
@@ -520,10 +595,10 @@ struct GameDriver tempest_driver =
 	__FILE__,
 	0,
 	"tempest",
-	"Tempest",
-	"????",
-	"?????",
-	"Brad Oliver (MAME driver)\nVECTOR_TEAMKeith Gerdes (Pokey protection)",
+	"Tempest (rev 3)",
+	"1980",
+	"Atari",
+	"Brad Oliver (MAME driver)\n"VECTOR_TEAM"Keith Gerdes (Pokey protection)",
 	0,
 	&machine_driver,
 
@@ -540,17 +615,67 @@ struct GameDriver tempest_driver =
 	atari_vg_earom_load, atari_vg_earom_save
 };
 
+struct GameDriver tempest1_driver =
+{
+	__FILE__,
+	&tempest_driver,
+	"tempest1",
+	"Tempest (rev 1)",
+	"1980",
+	"Atari",
+	"Brad Oliver (MAME driver)\n"VECTOR_TEAM"Keith Gerdes (Pokey protection)",
+	0,
+	&machine_driver,
+
+	tempest1_rom,
+	0, 0,
+	0,
+	0,	/* sound_prom */
+
+	input_ports,
+
+	color_prom, 0, 0,
+	ORIENTATION_DEFAULT,
+
+	atari_vg_earom_load, atari_vg_earom_save
+};
+
+struct GameDriver tempest2_driver =
+{
+	__FILE__,
+	&tempest_driver,
+	"tempest2",
+	"Tempest (rev 2)",
+	"1980",
+	"Atari",
+	"Brad Oliver (MAME driver)\n"VECTOR_TEAM"Keith Gerdes (Pokey protection)",
+	0,
+	&machine_driver,
+
+	tempest2_rom,
+	0, 0,
+	0,
+	0,	/* sound_prom */
+
+	input_ports,
+
+	color_prom, 0, 0,
+	ORIENTATION_DEFAULT,
+
+	atari_vg_earom_load, atari_vg_earom_save
+};
+
 struct GameDriver temptube_driver =
 {
 	__FILE__,
-	0,
+	&tempest_driver,
 	"temptube",
 	"Tempest Tubes",
-	"????",
-	"?????",
-	"Brad Oliver (MAME driver)\nVECTOR_TEAMKeith Gerdes (Pokey protection)",
+	"1980",
+	"hack",
+	"Brad Oliver (MAME driver)\n"VECTOR_TEAM"Keith Gerdes (Pokey protection)",
 	0,
-	&machine_driver,
+	&tempest_tube_machine_driver,
 
 	temptube_rom,
 	0, 0,

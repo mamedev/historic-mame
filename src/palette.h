@@ -15,9 +15,9 @@
   colors, the term "palette" refers to the colors available at any given time,
   not to the whole range of colors which can be produced by the hardware. The
   latter is referred to as "color space".
-  The term "pen" refers to one of the maximum of 256 colors can use to
-  generate the display. PC users might want to think of them as the colors
-  available in VGA, but be warned: the mapping of MAME pens to the VGA
+  The term "pen" refers to one of the maximum of MAX_PENS colors that can be
+  used to generate the display. PC users might want to think of them as the
+  colors available in VGA, but be warned: the mapping of MAME pens to the VGA
   registers is not 1:1, so MAME's pen 10 will not necessarily be mapped to
   VGA's color #10 (actually this is never the case). This is done to ensure
   portability, since on some systems it is not possible to do a 1:1 mapping.
@@ -25,7 +25,7 @@
   So, to summarize, the three layers of palette abstraction are:
 
   P1) The game virtual palette (the "colors")
-  P2) MAME's 256 colors palette (the "pens")
+  P2) MAME's MAX_PENS colors palette (the "pens")
   P3) The OS specific hardware color registers (the "OS specific pens")
 
   The array Machine->pens is a lookup table which maps game colors to OS
@@ -58,18 +58,18 @@
 
   Display modes
   -------------
-  The avaialble display modes can be summarized in four categories:
+  The available display modes can be summarized in four categories:
   1) Static palette. Use this for games which use PROMs for color generation.
      The palette is initialized by vh_convert_color_prom(), and never changed
      again.
   2) Dynamic palette. Use this for games which use RAM for color generation and
-     have no more than 256 colors in the palette. The palette can be
+     have no more than MAX_PENS colors in the palette. The palette can be
      dynamically modified by the driver using the function
      palette_change_color(). MachineDriver->video_attributes must contain the
      flag VIDEO_MODIFIES_PALETTE.
   3) Dynamic shrinked palette. Use this for games which use RAM for color
-     generation and have more than 256 colors in the palette. The palette can
-     be dynamically modified by the driver using the function
+     generation and have more than MAX_PENS colors in the palette. The palette
+	 can be dynamically modified by the driver using the function
      palette_change_color(). MachineDriver->video_attributes must contain the
      flag VIDEO_MODIFIES_PALETTE.
      The difference with case 2) above is that the driver must do some
@@ -77,25 +77,19 @@
      The function palette_recalc() must be called every frame before doing any
      rendering. The palette_used_colors array can be changed to precisely
      indicate to the function which of the game colors are used, so it can pick
-     only the needed colors, and make the palette fit into 256 colors. Colors
-     can also be marked as "transparent".
+     only the needed colors, and make the palette fit into MAX_PENS colors.
+	 Colors can also be marked as "transparent".
      The return code of palette_recalc() tells the driver whether the lookup
      table has changed, and therefore whether a screen refresh is needed. Note
      that his only applies to colors which were used in the previous frame:
      that's why palette_recalc() must be called before ANY rendering takes
      place.
-  4) 16-bit color. This should only be used for games which use more than 256
-     colors at a time. It is slower and more awkward to use than the other
-     modes, so it should be avoided whenever possible.
-     When this mode is used, the driver must manually modify the lookup table
-     to match changes in the palette. But video can be downgraded to 8-bit, but
-     with a noticeable decrease in quality.
-     MachineDriver->video_attributes must contain the flag
-     VIDEO_SUPPPORTS_16BIT.
+  4) 16-bit color. This should only be used for games which use more than
+     MAX_PENS colors at a time. It is slower than the other modes, so it should
+	 be avoided whenever possible. Transparency support is limited.
+     MachineDriver->video_attributes must contain both VIDEO_MODIFIES_PALETTE
+	 and VIDEO_SUPPPORTS_16BIT.
 
-  The important difference between cases 3) and 4) is that in 3), color cycling
-  (which many games use) is essentially free, while in 4) every palette change
-  requires a screen refresh. The color quality in 3) is also better than in 4).
   The dynamic shrinking of the palette works this way: as colors are requested,
   they are associated to a pen. When a color is no longer needed, the pen is
   freed and can be used for another color. When the code runs out of free pens,
@@ -105,18 +99,21 @@
   game needs, and colors which change often will be assigned an exclusive pen,
   which can be modified using the video cards hardware registers without need
   for a screen refresh.
+  The important difference between cases 3) and 4) is that in 3), color cycling
+  (which many games use) is essentially free, while in 4) every palette change
+  requires a screen refresh. The color quality in 3) is also better than in 4)
+  if the game uses more than 5 bits per color component. For testing purposes,
+  you can switch between the two modes by just adding/removing the
+  VIDEO_SUPPPORTS_16BIT flag (but be warned about the limited transparency
+  support in 16-bit mode).
 
 ******************************************************************************/
 
 #ifndef PALETTE_H
 #define PALETTE_H
 
-#ifndef macintosh
-#define MAX_PENS 256	/* unless 16-bit mode is used, can't handle more */
-						/* than 256 colors on screen */
-#else
-#define MAX_PENS 254
-#endif
+#define DYNAMIC_MAX_PENS 254	/* the Mac cannot handle more than 254 dynamic pens */
+#define STATIC_MAX_PENS 254	/* but theoretically static pens could be increased to 256 */
 
 int palette_start(void);
 void palette_stop(void);
@@ -147,16 +144,56 @@ const unsigned char *palette_recalc(void);
 extern unsigned short palette_transparent_pen;
 
 /* The transparent color can also be used as a background color, to avoid doing */
-/* a fillbitmap() + copybitmap() when there is nothing between the background and */
-/* the transparent layer. By default, the background color is black; use this */
-/* function to change it. */
-void palette_change_transparent_color(unsigned char red,unsigned char green,unsigned char blue);
+/* a fillbitmap() + copybitmap() when there is nothing between the background */
+/* and the transparent layer. By default, the background color is black; you */
+/* can change it by doing: */
+/* palette_change_color(palette_transparent_color,R,G,B); */
+/* by default, palette_transparent_color is -1; you are allowed to change it */
+/* to make it point to a color in the game's palette, so the background color */
+/* can automatically handled by your paletteram_w() function. The Tecmo games */
+/* do this. */
+extern int palette_transparent_color;
 
 
-/* helper macros for 16-bit support: */
-extern unsigned short *shrinked_pens;
-#define rgbpenindex(r,g,b) ((Machine->scrbitmap->depth==16) ? ((((r)>>3)<<10)+(((g)>>3)<<5)+((b)>>3)) : ((((r)>>5)<<5)+(((g)>>5)<<2)+((b)>>6)))
-#define rgbpen(r,g,b) (shrinked_pens[rgbpenindex(r,g,b)])
-#define setgfxcolorentry(gfx,i,r,g,b) ((gfx)->colortable[i] = rgbpen(r,g,b))
+
+/* here some functions to handle commonly used palette layouts, so you don't have */
+/* to write your own paletteram_w() function. */
+
+extern unsigned char *paletteram;
+extern unsigned char *paletteram_2;	/* use when palette RAM is split in two parts */
+
+int paletteram_r(int offset);
+int paletteram_word_r(int offset);	/* for 16 bit CPU */
+
+void paletteram_BBGGGRRR_w(int offset,int data);
+void paletteram_RRRGGGBB_w(int offset,int data);
+
+/* _w       least significant byte first */
+/* _swap_w  most significant byte first */
+/* _split_w least and most significant bytes are not consecutive */
+/* _word_w  use with 16 bit CPU */
+/*              MSB          LSB */
+void paletteram_xxxxBBBBGGGGRRRR_w(int offset,int data);
+void paletteram_xxxxBBBBGGGGRRRR_swap_w(int offset,int data);
+void paletteram_xxxxBBBBGGGGRRRR_split1_w(int offset,int data);	/* uses paletteram[] */
+void paletteram_xxxxBBBBGGGGRRRR_split2_w(int offset,int data);	/* uses paletteram_2[] */
+void paletteram_xxxxBBBBGGGGRRRR_word_w(int offset,int data);
+void paletteram_xxxxBBBBRRRRGGGG_swap_w(int offset,int data);
+void paletteram_xxxxBBBBRRRRGGGG_split1_w(int offset,int data);	/* uses paletteram[] */
+void paletteram_xxxxBBBBRRRRGGGG_split2_w(int offset,int data);	/* uses paletteram_2[] */
+void paletteram_xxxxRRRRBBBBGGGG_split1_w(int offset,int data);	/* uses paletteram[] */
+void paletteram_xxxxRRRRBBBBGGGG_split2_w(int offset,int data);	/* uses paletteram_2[] */
+void paletteram_xxxxRRRRGGGGBBBB_word_w(int offset,int data);
+void paletteram_RRRRGGGGBBBBxxxx_swap_w(int offset,int data);
+void paletteram_RRRRGGGGBBBBxxxx_split1_w(int offset,int data);	/* uses paletteram[] */
+void paletteram_RRRRGGGGBBBBxxxx_split2_w(int offset,int data);	/* uses paletteram_2[] */
+void paletteram_RRRRGGGGBBBBxxxx_word_w(int offset,int data);
+void paletteram_xBBBBBGGGGGRRRRR_w(int offset,int data);
+void paletteram_xBBBBBGGGGGRRRRR_swap_w(int offset,int data);
+void paletteram_xBBBBBGGGGGRRRRR_word_w(int offset,int data);
+void paletteram_xRRRRRGGGGGBBBBB_w(int offset,int data);
+void paletteram_xRRRRRGGGGGBBBBB_word_w(int offset,int data);
+void paletteram_IIIIRRRRGGGGBBBB_word_w(int offset,int data);
+void paletteram_RRRRGGGGBBBBIIII_word_w(int offset,int data);
 
 #endif

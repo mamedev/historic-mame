@@ -16,7 +16,7 @@ extern unsigned char *c1943_bgscrolly;
 void c1943_c804_w(int offset,int data);	/* in vidhrdw/c1943.c */
 void c1943_d806_w(int offset,int data);	/* in vidhrdw/c1943.c */
 void c1943_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-void c1943_vh_screenrefresh(struct osd_bitmap *bitmap);
+void c1943_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 int c1943_vh_start(void);
 void c1943_vh_stop(void);
 
@@ -254,7 +254,7 @@ static struct YM2203interface ym2203_interface =
 {
 	2,			/* 2 chips */
 	1500000,	/* 1.5 MHz */
-	{ YM2203_VOL(100,0x20ff), YM2203_VOL(100,0x20ff) },
+	{ YM2203_VOL(100,255), YM2203_VOL(100,255) },
 	{ 0 },
 	{ 0 },
 	{ 0 },

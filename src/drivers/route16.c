@@ -63,7 +63,7 @@ int  route16_videoram1_r(int offset);
 int  route16_videoram2_r(int offset);
 void route16_sharedram_w(int offset,int data);
 int  route16_sharedram_r(int offset);
-void route16_vh_screenrefresh(struct osd_bitmap *bitmap);
+void route16_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 void stratvox_samples_w(int offset,int data);
 
 static struct MemoryReadAddress cpu1_readmem[] =
@@ -258,7 +258,7 @@ static struct AY8910interface ay8910_interface =
 {
 	1,	/* 1 chip */
 	10000000/8,     /* 10Mhz / 8 = 1.25Mhz */
-	{ 0x60ff },
+	{ 255 },
 	{ 0 },
 	{ 0 },
 	{ stratvox_samples_w },  /* SN76477 commands (not used in Route 16?) */
@@ -473,33 +473,52 @@ static void stratvox_hisave(void)
 }
 
 
-#define GAMEDRIVER(GAMENAME, SAMPLES, DESC, CREDITS) \
-											\
-struct GameDriver GAMENAME##_driver =		\
-{											\
-	__FILE__,                               \
-	0,                                      \
-	#GAMENAME,								\
-	DESC,									\
-	"????",                                 \
-	"?????",                                \
-	CREDITS,								\
-	0,                                      \
-	&GAMENAME##_machine_driver,				\
-											\
-	GAMENAME##_rom,							\
-	GAMENAME##_set_machine_type, 0,			\
-	SAMPLES,								\
-	0,	/* sound_prom */					\
-											\
-	GAMENAME##_input_ports,					\
-											\
-	color_prom, 0, 0,						\
-											\
-	ORIENTATION_ROTATE_90,					\
-											\
-	GAMENAME##_hiload, GAMENAME##_hisave	\
+struct GameDriver route16_driver =
+{
+	__FILE__,
+	0,
+	"route16",
+	"Route 16",
+	"1981",
+	"bootleg",
+	"Zsolt Vasvari\nMike Balfour",
+	0,
+	&route16_machine_driver,
+
+	route16_rom,
+	route16_set_machine_type, 0,
+	0,
+	0,	/* sound_prom */
+
+	route16_input_ports,
+
+	color_prom, 0, 0,
+	ORIENTATION_ROTATE_90,
+
+	route16_hiload, route16_hisave
 };
 
-GAMEDRIVER(route16, 0, "Route 16", "Zsolt Vasvari\nMike Balfour")
-GAMEDRIVER(stratvox, stratvox_sample_names, "Stratovox", "Darren Olafson\nZsolt Vasvari\nMike Balfour")
+struct GameDriver stratvox_driver =
+{
+	__FILE__,
+	0,
+	"stratvox",
+	"Stratovox",
+	"1980",
+	"Taito",
+	"Darren Olafson\nZsolt Vasvari\nMike Balfour",
+	0,
+	&stratvox_machine_driver,
+
+	stratvox_rom,
+	stratvox_set_machine_type, 0,
+	stratvox_sample_names,
+	0,	/* sound_prom */
+
+	stratvox_input_ports,
+
+	color_prom, 0, 0,
+	ORIENTATION_ROTATE_90,
+
+	stratvox_hiload, stratvox_hisave
+};

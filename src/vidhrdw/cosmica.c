@@ -122,7 +122,7 @@ void cosmicalien_videoram_w(int offset,int data)
   the main emulation engine.
 
 ***************************************************************************/
-void cosmicalien_vh_screenrefresh(struct osd_bitmap *bitmap)
+void cosmicalien_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	int offs;
 	/* copy the bitmaped mapped graphics */

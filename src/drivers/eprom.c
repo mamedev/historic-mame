@@ -112,12 +112,10 @@ extern unsigned char *eprom_playfieldpalram;
 extern int eprom_playfieldpalram_size;
 
 
-int eprom_paletteram_r (int offset);
 int eprom_playfieldram_r (int offset);
 int eprom_playfieldpalram_r (int offset);
 
 void eprom_latch_w (int offset, int data);
-void eprom_paletteram_w (int offset, int data);
 void eprom_playfieldram_w (int offset, int data);
 void eprom_playfieldpalram_w (int offset, int data);
 
@@ -128,7 +126,7 @@ void eprom_init_machine (void);
 int eprom_vh_start (void);
 void eprom_vh_stop (void);
 
-void eprom_vh_screenrefresh (struct osd_bitmap *bitmap);
+void eprom_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 int eprom_update_display_list (int scanline);
 
@@ -289,18 +287,18 @@ void eprom_vblank_ack_w (int offset, int data)
 static struct MemoryReadAddress eprom_readmem[] =
 {
 	{ 0x000000, 0x09ffff, MRA_ROM },
-	{ 0x0e0000, 0x0e0fff, atarigen_eeprom_r, &atarigen_eeprom, &atarigen_eeprom_size },
-	{ 0x16cc00, 0x16cc01, eprom_sync_r, &eprom_sync },
+	{ 0x0e0000, 0x0e0fff, atarigen_eeprom_r },
+	{ 0x16cc00, 0x16cc01, eprom_sync_r },
 	{ 0x160000, 0x16ffff, MRA_BANK1 },
 	{ 0x260000, 0x26001f, eprom_input_r },
 	{ 0x260020, 0x26002f, eprom_adc_r },
 	{ 0x260030, 0x260033, atarigen_sound_r },
-	{ 0x3e0000, 0x3e0fff, eprom_paletteram_r, &atarigen_paletteram, &atarigen_paletteram_size },
-	{ 0x3f0000, 0x3f1fff, eprom_playfieldram_r, &atarigen_playfieldram, &atarigen_playfieldram_size },
-	{ 0x3f2000, 0x3f3fff, MRA_BANK3, &atarigen_spriteram, &atarigen_spriteram_size },
-	{ 0x3f4000, 0x3f4fff, MRA_BANK4, &atarigen_alpharam, &atarigen_alpharam_size },
+	{ 0x3e0000, 0x3e0fff, paletteram_word_r },
+	{ 0x3f0000, 0x3f1fff, eprom_playfieldram_r },
+	{ 0x3f2000, 0x3f3fff, MRA_BANK3 },
+	{ 0x3f4000, 0x3f4fff, MRA_BANK4 },
 	{ 0x3f5000, 0x3f7fff, MRA_BANK5 },
-	{ 0x3f8000, 0x3f9fff, eprom_playfieldpalram_r, &eprom_playfieldpalram, &eprom_playfieldpalram_size },
+	{ 0x3f8000, 0x3f9fff, eprom_playfieldpalram_r },
 	{ -1 }  /* end of table */
 };
 
@@ -308,8 +306,8 @@ static struct MemoryReadAddress eprom_readmem[] =
 static struct MemoryWriteAddress eprom_writemem[] =
 {
 	{ 0x000000, 0x09ffff, MWA_ROM },
-	{ 0x0e0000, 0x0e0fff, atarigen_eeprom_w },
-	{ 0x16cc00, 0x16cc01, eprom_sync_w },
+	{ 0x0e0000, 0x0e0fff, atarigen_eeprom_w, &atarigen_eeprom, &atarigen_eeprom_size },
+	{ 0x16cc00, 0x16cc01, eprom_sync_w, &eprom_sync },
 	{ 0x160000, 0x16ffff, MWA_BANK1 },
 	{ 0x1f0000, 0x1fffff, atarigen_eeprom_enable_w },
 /*	{ 0x2e0000, 0x2e0003, watchdog_reset_w },*/
@@ -318,12 +316,12 @@ static struct MemoryWriteAddress eprom_writemem[] =
 	{ 0x360010, 0x360013, eprom_latch_w },
 	{ 0x360020, 0x360023, eprom_sound_reset_w },
 	{ 0x360030, 0x360033, atarigen_sound_w },
-	{ 0x3e0000, 0x3e0fff, eprom_paletteram_w },
-	{ 0x3f0000, 0x3f1fff, eprom_playfieldram_w },
-	{ 0x3f2000, 0x3f3fff, MWA_BANK3 },
-	{ 0x3f4000, 0x3f4fff, MWA_BANK4 },
+	{ 0x3e0000, 0x3e0fff, paletteram_IIIIRRRRGGGGBBBB_word_w, &paletteram },
+	{ 0x3f0000, 0x3f1fff, eprom_playfieldram_w, &atarigen_playfieldram, &atarigen_playfieldram_size },
+	{ 0x3f2000, 0x3f3fff, MWA_BANK3, &atarigen_spriteram, &atarigen_spriteram_size },
+	{ 0x3f4000, 0x3f4fff, MWA_BANK4, &atarigen_alpharam, &atarigen_alpharam_size },
 	{ 0x3f5000, 0x3f7fff, MWA_BANK5 },
-	{ 0x3f8000, 0x3f9fff, eprom_playfieldpalram_w },
+	{ 0x3f8000, 0x3f9fff, eprom_playfieldpalram_w, &eprom_playfieldpalram, &eprom_playfieldpalram_size },
 	{ -1 }  /* end of table */
 };
 
@@ -570,7 +568,7 @@ static struct MachineDriver eprom_machine_driver =
 	0,0,0,0,
 	{
 		{
-			SOUND_YM2151_ALT,
+			SOUND_YM2151,
 			&ym2151_interface
 		},
 		{
@@ -660,8 +658,8 @@ struct GameDriver eprom_driver =
 	0,
 	"eprom",
 	"Escape from the Planet of the Robot Monsters",
-	"????",
-	"?????",
+	"1989",
+	"Atari Games",
 	"Aaron Giles (MAME driver)\nTim Lindquist (hardware information)",
 	0,
 	&eprom_machine_driver,

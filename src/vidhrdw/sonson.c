@@ -98,7 +98,7 @@ void sonson_vh_convert_color_prom(unsigned char *palette, unsigned short *colort
   the main emulation engine.
 
 ***************************************************************************/
-void sonson_vh_screenrefresh(struct osd_bitmap *bitmap)
+void sonson_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	int offs;
 

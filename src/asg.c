@@ -343,4 +343,33 @@ extern int Dasm2650 (char *buffer, int pc);
 		}
 	}
 }
+
+void asg_8039Trace(unsigned char *RAM, int PC)
+{
+        extern int Dasm8039 (char *buffer, unsigned char* addr);
+
+	if (traceon && traceFile[current])
+	{
+		char temp[80];
+		int count, i;
+
+		// check for loops
+		for (i=count=0;i<LOOP_CHECK;i++)
+			if (lastPC[current][i]==PC)
+				count++;
+		if (count>1)
+			loops[current]++;
+		else
+		{
+			if (loops[current])
+                                fprintf(traceFile[current],"\n   (loops for %d instructions)\n\n",loops[current]);
+			loops[current]=0;
+			Dasm8039(temp,RAM+PC);
+			fprintf(traceFile[current],"%04X: %s\n",PC,temp);
+			memmove(&lastPC[current][0],&lastPC[current][1],(LOOP_CHECK-1)*sizeof(int));
+			lastPC[current][LOOP_CHECK-1]=PC;
+		}
+	}
+}
+
 #endif

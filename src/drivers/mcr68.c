@@ -18,18 +18,17 @@
 #include "machine/6821pia.h"
 
 void mcr3_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
-void mcr3_vh_screenrefresh(struct osd_bitmap *bitmap);
+void mcr3_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 void mcr68_videoram_w(int offset,int data);
-void mcr68_palette_w(int offset,int data);
+void mcr68_paletteram_w(int offset,int data);
 
-extern unsigned char *mcr68_paletteram,*mcr68_spriteram;
+extern unsigned char *mcr68_spriteram;
 int mcr68_videoram_r(int offset);
-int mcr68_palette_r(int offset);
 
 
 void mcr68_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-void xenophobe_vh_screenrefresh(struct osd_bitmap *bitmap);
+void xenophobe_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 void mcr68_init_machine(void);
 int mcr68_interrupt(void);
@@ -62,7 +61,7 @@ static struct MemoryReadAddress mcr68_readmem[] =
 	{ 0x70000, 0x70fff, mcr68_videoram_r },
 	{ 0x71000, 0x71fff, MRA_BANK2 },
 	{ 0x80000, 0x80fff, MRA_BANK3 },
-	{ 0x90000, 0x900ff, mcr68_palette_r },
+	{ 0x90000, 0x900ff, paletteram_word_r },
 	{ 0xa0000, 0xa000f, mcr68_6840_r },
 	{ 0xd0000, 0xd0003, mcr68_control_0 },
 	{ 0xe0000, 0xe0003, mcr68_control_1 },
@@ -77,7 +76,7 @@ static struct MemoryWriteAddress mcr68_writemem[] =
 	{ 0x70000, 0x70fff, mcr68_videoram_w, &videoram, &videoram_size },
 	{ 0x71000, 0x71fff, MWA_BANK2 },
 	{ 0x80000, 0x80fff, MWA_BANK3, &mcr68_spriteram },
-	{ 0x90000, 0x900ff, mcr68_palette_w, &mcr68_paletteram },
+	{ 0x90000, 0x900ff, mcr68_paletteram_w, &paletteram },
 	{ 0xa0000, 0xa000f, mcr68_6840_w },
 	{ 0xb0000, 0xb0003, MWA_NOP }, /* Watchdog is 0xb0000 */
 	{ 0xc0000, 0xc0003, mcr68_sg_w }, /* sound cpu */
@@ -95,7 +94,7 @@ static struct MemoryReadAddress zwackery_readmem[] =
 	{ 0x70000, 0x70fff, mcr68_videoram_r },
 	{ 0x71000, 0x71fff, MRA_BANK2 },
 //	{ 0x80000, 0x80fff, MRA_BANK3 },
-	{ 0x90000, 0x900ff, mcr68_palette_r },
+	{ 0x90000, 0x900ff, paletteram_word_r },
 	{ 0xa0000, 0xa000f, mcr68_6840_r },
 	{ 0xd0000, 0xd0003, mcr68_control_0 },
 	{ 0xe0000, 0xe0003, mcr68_control_1 },
@@ -117,7 +116,7 @@ static struct MemoryWriteAddress zwackery_writemem[] =
 	{ 0x71000, 0x71fff, MWA_BANK2 },
 //	{ 0x80000, 0x80fff, MWA_BANK3, &mcr68_spriteram },
 
-	{ 0x90000, 0x900ff, mcr68_palette_w, &mcr68_paletteram },
+	{ 0x90000, 0x900ff, mcr68_paletteram_w, &paletteram },
 	{ 0xa0000, 0xa000f, mcr68_6840_w },
 	{ 0xb0000, 0xb0003, MWA_NOP }, /* Watchdog is 0xb0000 */
 	{ 0xc0000, 0xc0003, mcr68_sg_w }, /* sound cpu */
@@ -642,8 +641,8 @@ struct GameDriver xenophob_driver =
 	0,
 	"xenophob",
 	"Xenophobe",
-	"????",
-	"?????",
+	"1987",
+	"Bally Midway",
 	"Bryan McPhail\n",
 	0,
 	&mcr68_machine_driver,

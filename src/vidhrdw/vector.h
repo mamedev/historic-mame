@@ -18,12 +18,14 @@
 
 #define MAX_PIXELS 200000  /* Maximum of pixels we can remember */
 
+#define TRANSLUCENCY 1	/* translucent vectors  */
+
 extern unsigned char *vectorram;
 extern int vectorram_size;
 
 int  vector_vh_start (void);
 void vector_vh_stop (void);
-void vector_vh_update (struct osd_bitmap *bitmap);
+void vector_vh_update(struct osd_bitmap *bitmap,int full_refresh);
 void vector_clear_list (void);
 void vector_draw_to (int x2, int y2, int col, int intensity, int dirty);
 void vector_add_point (int x, int y, int color, int intensity);

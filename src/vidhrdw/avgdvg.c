@@ -27,7 +27,7 @@
  *
  * Games with self adjusting framerate
  *
- * 5.4ms: Black Widow, Gravitar
+ * 4.1ms: Black Widow, Gravitar
  * 4.1ms: Tempest
  * Major Havoc
  * Quantum
@@ -40,6 +40,8 @@
 #include "vector.h"
 
 #define VEC_SHIFT 16	/* fixed for the moment */
+#define BRIGHTNESS 12   /* for maximum brightness, use 16! */
+
 
 /* the screen is red above this Y coordinate */
 #define BZONE_TOP 0x0050
@@ -236,8 +238,12 @@ static void dvg_generate_vector_list(void)
 				dvg_vector_timer(temp);
 
 				/* ASG 080497, .ac JAN2498 */
+#if TRANSLUCENCY
+				z = z * BRIGHTNESS;
+#else
 				if (z)
 					z = (z << 4) | 0x0f;
+#endif
 				vector_add_point (currentx, currenty, colorram[1], z);
 
 				break;
@@ -325,8 +331,12 @@ static void dvg_generate_vector_list(void)
 				dvg_vector_timer(temp);
 
 				/* ASG 080497, .ac JAN2498 */
+#if TRANSLUCENCY
+				z = z * BRIGHTNESS;
+#else
 				if (z)
 					z = (z << 4) | 0x0f;
+#endif
 				vector_add_point (currentx, currenty, colorram[1], z);
 				break;
 
@@ -514,7 +524,11 @@ static void avg_generate_vector_list (void)
 				/* highest intensity. */
 				if (vectorEngine == USE_AVG_SWARS)
 				{
+#if TRANSLUCENCY
+					z = (statz * z) / 12;
+#else
 					z = (statz * z) >> 3;
+#endif
 					if (z > 0xff)
 						z = 0xff;
 				}
@@ -522,8 +536,12 @@ static void avg_generate_vector_list (void)
 				{
 					if (z == 2)
 						z = statz;
+#if TRANSLUCENCY
+					z = z * BRIGHTNESS;
+#else
 					if (z)
 						z = (z << 4) | 0x1f;
+#endif
 				}
 
 				deltax = x * scale;
@@ -560,15 +578,23 @@ static void avg_generate_vector_list (void)
 
 				if (vectorEngine == USE_AVG_SWARS)
 				{
+#if TRANSLUCENCY
+					z = (statz * z) / 12;
+#else
 					z = (statz * z) >> 3;
+#endif
 					if (z > 0xff) z = 0xff;
 				}
 				else
 				{
 					if (z == 2)
 						z = statz;
+#if TRANSLUCENCY
+					z = z * BRIGHTNESS;
+#else
 					if (z)
 						z = (z << 4) | 0x1f;
+#endif
 				}
 
 				deltax = x * scale;
@@ -1041,14 +1067,14 @@ level # - green
 
 ***************************************************************************/
 
-void avg_screenrefresh (struct osd_bitmap *bitmap)
+void avg_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
-	vector_vh_update (bitmap);
+	vector_vh_update(bitmap,full_refresh);
 }
 
-void dvg_screenrefresh (struct osd_bitmap *bitmap)
+void dvg_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
-	vector_vh_update (bitmap);
+	vector_vh_update(bitmap,full_refresh);
 }
 
 int dvg_start(void)

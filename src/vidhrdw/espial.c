@@ -92,7 +92,7 @@ void espial_attributeram_w(int offset,int data)
   the main emulation engine.
 
 ***************************************************************************/
-void espial_vh_screenrefresh(struct osd_bitmap *bitmap)
+void espial_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	int offs;
 

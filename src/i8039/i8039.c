@@ -529,7 +529,8 @@ void I8039_Reset (void)
 	R.A11ff   = R.A11     = 0;
 	R.timerON = R.countON = 0;
 	R.tirq_en = R.xirq_en = 0;
-    R.xirq_en=1;
+	R.xirq_en=1;
+	R.timerON = 1;	/* Mario Bros. doesn't work without this */
 	R.masterClock = 0;
 }
 
@@ -605,14 +606,12 @@ int I8039_Execute(int cycles)
 	}
         R.pending_irq = I8039_IGNORE_INT;
 
-/*
 	#ifdef MAME_DEBUG
 	{
 	  extern int mame_debug;
 	  if (mame_debug) MAME_Debug();
 	}
 	#endif
-*/
 
 	opcode=M_RDOP(R.PC.W);
 

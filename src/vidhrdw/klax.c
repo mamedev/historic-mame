@@ -166,7 +166,7 @@ void klax_playfieldram_w (int offset, int data)
 
 int klax_paletteram_r (int offset)
 {
-	return (atarigen_paletteram[(offset / 2) ^ BYTE_XOR] << 8) | 0xff;
+	return (paletteram[(offset / 2) ^ BYTE_XOR] << 8) | 0xff;
 }
 
 
@@ -174,10 +174,10 @@ void klax_paletteram_w (int offset, int data)
 {
 	if (!(data & 0xff000000))
 	{
-		atarigen_paletteram[(offset / 2) ^ BYTE_XOR] = data >> 8;
+		paletteram[(offset / 2) ^ BYTE_XOR] = data >> 8;
 
 		{
-			int newword = READ_WORD (&atarigen_paletteram[(offset / 4) * 2]);
+			int newword = READ_WORD (&paletteram[(offset / 4) * 2]);
 			int red =   (((newword >> 10) & 31) * 224) >> 5;
 			int green = (((newword >>  5) & 31) * 224) >> 5;
 			int blue =  (((newword      ) & 31) * 224) >> 5;
@@ -304,7 +304,7 @@ void klax_render_mo (struct osd_bitmap *bitmap, struct rectangle *clip, unsigned
 
 ***************************************************************************/
 
-void klax_vh_screenrefresh (struct osd_bitmap *bitmap)
+void klax_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	unsigned char mo_map[16], pf_map[16];
 	int x, y, offs, i;
@@ -418,14 +418,14 @@ static void klax_debug (void)
 		fprintf (f, "\n\nMotion Object Palette:\n");
 		for (i = 0x000; i < 0x100; i++)
 		{
-			fprintf (f, "%04X ", READ_WORD (&atarigen_paletteram[i*2]));
+			fprintf (f, "%04X ", READ_WORD (&paletteram[i*2]));
 			if ((i & 15) == 15) fprintf (f, "\n");
 		}
 
 		fprintf (f, "\n\nPlayfield Palette:\n");
 		for (i = 0x100; i < 0x200; i++)
 		{
-			fprintf (f, "%04X ", READ_WORD (&atarigen_paletteram[i*2]));
+			fprintf (f, "%04X ", READ_WORD (&paletteram[i*2]));
 			if ((i & 15) == 15) fprintf (f, "\n");
 		}
 

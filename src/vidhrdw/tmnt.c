@@ -12,20 +12,17 @@
 
 
 
-unsigned char *punkshot_paletteram,*punkshot_vidram,*punkshot_scrollram;
-int punkshot_paletteram_size,punkshot_vidram_size;
+unsigned char *punkshot_vidram,*punkshot_scrollram;
+int punkshot_vidram_size;
 
 static struct osd_bitmap *tmpbitmap1;
-static unsigned char *dirtypal;
 static unsigned char punkshot_yscroll[2];
 static unsigned char romsubbank[2];
 static unsigned char charrombank[4];
 static int read_char_rom;
 static int irq_enable;
-static int pal_div;
 static int text_colorbase,fg_colorbase,bg_colorbase,sprite_colorbase;
 static int priority;
-static unsigned int col_test;
 
 
 
@@ -76,17 +73,6 @@ static int common_vh_start (void)
 	}
 	memset(dirtybuffer,1,punkshot_vidram_size / 2);
 
-	if ((dirtypal = malloc(punkshot_paletteram_size / pal_div)) == 0)
-	{
-		free(dirtybuffer);
-		osd_free_bitmap(tmpbitmap1);
-		osd_free_bitmap(tmpbitmap);
-		return 1;
-	}
-	memset(dirtypal,1,punkshot_paletteram_size / pal_div);
-
-	if (Machine->scrbitmap->depth == 8) col_test = 32; else col_test = 8;
-
 	return 0;
 }
 
@@ -94,7 +80,6 @@ static int common_vh_start (void)
 
 static void common_vh_stop (void)
 {
-	free(dirtypal);
 	free(dirtybuffer);
 	osd_free_bitmap(tmpbitmap1);
 	osd_free_bitmap(tmpbitmap);
@@ -103,7 +88,6 @@ static void common_vh_stop (void)
 
 int tmnt_vh_start (void)
 {
-	pal_div = 64;
 	text_colorbase = 0;
 	sprite_colorbase = 16;
 	fg_colorbase = 32;
@@ -118,7 +102,6 @@ void tmnt_vh_stop (void)
 
 int punkshot_vh_start (void)
 {
-	pal_div = 32;
 	text_colorbase = 0;
 	sprite_colorbase = 32;
 	fg_colorbase = 64;
@@ -133,23 +116,29 @@ void punkshot_vh_stop (void)
 
 
 
-void punkshot_paletteram_w(int offset,int data)
+void tmnt_paletteram_w(int offset,int data)
 {
-	int oldword = READ_WORD(&punkshot_paletteram[offset]);
+	int oldword = READ_WORD(&paletteram[offset]);
 	int newword = COMBINE_WORD(oldword,data);
+	WRITE_WORD(&paletteram[offset],newword);
 
-
-	if (oldword != newword)
+	offset /= 4;
 	{
-		WRITE_WORD(&punkshot_paletteram[offset],newword);
-		dirtypal[offset / pal_div] = 1;
+		int palette = ((READ_WORD(&paletteram[offset * 4]) & 0x00ff) << 8)
+				+ (READ_WORD(&paletteram[offset * 4 + 2]) & 0x00ff);
+		int r = palette & 31;
+		int g = (palette >> 5) & 31;
+		int b = (palette >> 10) & 31;
+
+		r = (r << 3) + (r >> 2);
+		g = (g << 3) + (g >> 2);
+		b = (b << 3) + (b >> 2);
+
+		palette_change_color (offset,r,g,b);
 	}
 }
 
-int punkshot_paletteram_r(int offset)
-{
-	return READ_WORD(&punkshot_paletteram[offset]);
-}
+
 
 void punkshot_spriteram_w(int offset,int data)
 {
@@ -614,36 +603,75 @@ static void punkshot_drawsprites(struct osd_bitmap *bitmap,int pri)
 }
 
 
-void tmnt_vh_screenrefresh(struct osd_bitmap *bitmap)
+void tmnt_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	int offs,i;
 
 
-	for (offs = 0; offs < punkshot_paletteram_size / pal_div; offs++)
+	/* palette remapping first */
 	{
-		if (dirtypal[offs])
+		unsigned short palette_map[64];
+		int tile,code,color;
+
+		memset (palette_map, 0, sizeof (palette_map));
+
+		/* foreground */
+		for (offs = 0x3000 - 2;offs >= 0x2000;offs -= 2)
 		{
-			for (i = 0;i < 16;i++)
-			{
-				int palette = ((READ_WORD(&punkshot_paletteram[pal_div * offs + 4 * i]) & 0x00ff) << 8)
-						+ (READ_WORD(&punkshot_paletteram[pal_div * offs + 4 * i + 2]) & 0x00ff);
-				int r = palette & 31;
-				int g = (palette >> 5) & 31;
-				int b = (palette >> 10) & 31;
-
-				r = (r << 3) + (r >> 2);
-				g = (g << 3) + (g >> 2);
-				b = (b << 3) + (b >> 2);
-
-				/* avoid undesired transparency */
-				if (i % 16 != 0 && r <= col_test && g <= col_test && b <= (col_test<<1))
-					r = col_test;
-
-				setgfxcolorentry(Machine->gfx[0],16 * offs + i,r,g,b);
-			}
-
-			setgfxcolorentry(Machine->gfx[0],16 * offs,0,0,0);
+			tile = READ_WORD(&punkshot_vidram[offs]);
+			color = fg_colorbase + ((tile & 0xe000) >> 13);
+			code = (tile & 0x03ff) + ((tile & 0x1000) >> 2) +
+					0x800 * charrombank[(tile & 0x0c00) >> 10];
+			palette_map[color] |= Machine->gfx[0]->pen_usage[code];
 		}
+
+		/* background */
+		for (offs = 0x5000 - 2;offs >= 0x4000;offs -= 2)
+		{
+			tile = READ_WORD(&punkshot_vidram[offs]);
+			color = bg_colorbase + ((tile & 0xe000) >> 13);
+			code = (tile & 0x03ff) + ((tile & 0x1000) >> 2) +
+					0x800 * charrombank[(tile & 0x0c00) >> 10];
+			palette_map[color] |= Machine->gfx[0]->pen_usage[code];
+		}
+
+		/* characters */
+		for (offs = 0x1000 - 2;offs >= 0;offs -= 2)
+		{
+			tile = READ_WORD(&punkshot_vidram[offs]);
+			color = text_colorbase + ((tile & 0xe000) >> 13);
+			code = (tile & 0x03ff) + ((tile & 0x1000) >> 2) +
+					0x800 * charrombank[(tile & 0x0c00) >> 10];
+			palette_map[color] |= Machine->gfx[0]->pen_usage[code];
+		}
+
+		/* sprites */
+		for (offs = spriteram_size - 8;offs >= 0;offs -= 8)
+		{
+			color = sprite_colorbase + (READ_WORD(&spriteram[offs+2]) & 0x0f);
+			palette_map[color] |= 0xffff;
+		}
+
+		/* now build the final table */
+		for (i = 0; i < 64; i++)
+		{
+			int usage = palette_map[i], j;
+			if (usage)
+			{
+				palette_used_colors[i * 16 + 0] = PALETTE_COLOR_TRANSPARENT;
+				for (j = 1; j < 16; j++)
+					if (usage & (1 << j))
+						palette_used_colors[i * 16 + j] = PALETTE_COLOR_USED;
+					else
+						palette_used_colors[i * 16 + j] = PALETTE_COLOR_UNUSED;
+			}
+			else
+				memset (&palette_used_colors[i * 16 + 0], PALETTE_COLOR_UNUSED, 16);
+		}
+
+		/* recalc */
+		if (palette_recalc ())
+			memset(dirtybuffer,1,punkshot_vidram_size / 2);
 	}
 
 
@@ -653,12 +681,11 @@ void tmnt_vh_screenrefresh(struct osd_bitmap *bitmap)
 	{
 		int sx,sy,tile,code,color;
 
-
-		tile = READ_WORD(&punkshot_vidram[offs]);
-		color = fg_colorbase + ((tile & 0xe000) >> 13);
-
-		if (dirtybuffer[offs / 2] || dirtypal[color])
+		if (dirtybuffer[offs / 2])
 		{
+			tile = READ_WORD(&punkshot_vidram[offs]);
+			color = fg_colorbase + ((tile & 0xe000) >> 13);
+
 			dirtybuffer[offs / 2] = 0;
 
 			sx = (offs/2) % 64;
@@ -680,12 +707,11 @@ void tmnt_vh_screenrefresh(struct osd_bitmap *bitmap)
 	{
 		int sx,sy,tile,code,color;
 
-
-		tile = READ_WORD(&punkshot_vidram[offs]);
-		color = bg_colorbase + ((tile & 0xe000) >> 13);
-
-		if (dirtybuffer[offs / 2] || dirtypal[color])
+		if (dirtybuffer[offs / 2])
 		{
+			tile = READ_WORD(&punkshot_vidram[offs]);
+			color = bg_colorbase + ((tile & 0xe000) >> 13);
+
 			dirtybuffer[offs / 2] = 0;
 
 			sx = (offs/2) % 64;
@@ -728,7 +754,7 @@ void tmnt_vh_screenrefresh(struct osd_bitmap *bitmap)
 		xscroll = -((READ_WORD(&punkshot_scrollram[0]) >> 8) + 256 * (READ_WORD(&punkshot_scrollram[2]) >> 8));
 		xscroll += 6;
 		yscroll = -(READ_WORD(punkshot_yscroll) >> 8);
-		copyscrollbitmap(bitmap,tmpbitmap,1,&xscroll,1,&yscroll,&Machine->drv->visible_area,TRANSPARENCY_COLOR,0);
+		copyscrollbitmap(bitmap,tmpbitmap,1,&xscroll,1,&yscroll,&Machine->drv->visible_area,TRANSPARENCY_PEN,palette_transparent_pen);
 	}
 
 
@@ -757,37 +783,79 @@ void tmnt_vh_screenrefresh(struct osd_bitmap *bitmap)
 				8*sx,8*sy,
 				&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
 	}
-
-
-	memset(dirtypal,0,punkshot_paletteram_size / pal_div);
 }
 
-void punkshot_vh_screenrefresh(struct osd_bitmap *bitmap)
+void punkshot_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	int offs,i;
 
 
-	/* palette layout is different from TMNT */
-	for (offs = 0; offs < punkshot_paletteram_size / pal_div; offs++)
+	/* palette remapping first */
 	{
-		if (dirtypal[offs])
+		unsigned short palette_map[128];
+		int tile,code,color;
+
+		memset (palette_map, 0, sizeof (palette_map));
+
+		/* foreground */
+		for (offs = 0x3000 - 2;offs >= 0x2000;offs -= 2)
 		{
-			for (i = 0;i < 16;i++)
-			{
-				int palette = READ_WORD(&punkshot_paletteram[pal_div * offs + 2 * i]);
-				int r = palette & 31;
-				int g = (palette >> 5) & 31;
-				int b = (palette >> 10) & 31;
-
-				r = (r << 3) + (r >> 2);
-				g = (g << 3) + (g >> 2);
-				b = (b << 3) + (b >> 2);
-				setgfxcolorentry(Machine->gfx[0],16 * offs + i,r,g,b);
-			}
-
-			setgfxcolorentry(Machine->gfx[0],16 * offs,0,0,0);
+			tile = READ_WORD(&punkshot_vidram[offs]);
+			color = fg_colorbase + ((tile & 0xe000) >> 13);
+			code = (tile & 0x03ff) + ((tile & 0x1000) >> 2) +
+					0x800 * charrombank[(tile & 0x0c00) >> 10];
+			palette_map[color] |= Machine->gfx[0]->pen_usage[code];
 		}
+
+		/* background */
+		for (offs = 0x5000 - 2;offs >= 0x4000;offs -= 2)
+		{
+			tile = READ_WORD(&punkshot_vidram[offs]);
+			color = bg_colorbase + ((tile & 0xe000) >> 13);
+			code = (tile & 0x03ff) + ((tile & 0x1000) >> 2) +
+					0x800 * charrombank[(tile & 0x0c00) >> 10];
+			palette_map[color] |= Machine->gfx[0]->pen_usage[code];
+		}
+
+		/* characters */
+		for (offs = 0x1000 - 2;offs >= 0;offs -= 2)
+		{
+			tile = READ_WORD(&punkshot_vidram[offs]);
+			color = text_colorbase + ((tile & 0xe000) >> 13);
+			code = (tile & 0x03ff) + ((tile & 0x1000) >> 2) +
+					0x800 * charrombank[(tile & 0x0c00) >> 10];
+			palette_map[color] |= Machine->gfx[0]->pen_usage[code];
+		}
+
+		/* sprites */
+		for (offs = spriteram_size - 8;offs >= 0;offs -= 8)
+		{
+			color = sprite_colorbase + (READ_WORD(&spriteram[offs+2]) & 0x0f);
+			palette_map[color] |= 0xffff;
+		}
+
+		/* now build the final table */
+		for (i = 0; i < 128; i++)
+		{
+			int usage = palette_map[i], j;
+			if (usage)
+			{
+				palette_used_colors[i * 16 + 0] = PALETTE_COLOR_TRANSPARENT;
+				for (j = 1; j < 16; j++)
+					if (usage & (1 << j))
+						palette_used_colors[i * 16 + j] = PALETTE_COLOR_USED;
+					else
+						palette_used_colors[i * 16 + j] = PALETTE_COLOR_UNUSED;
+			}
+			else
+				memset (&palette_used_colors[i * 16 + 0], PALETTE_COLOR_UNUSED, 16);
+		}
+
+		/* recalc */
+		if (palette_recalc ())
+			memset(dirtybuffer,1,punkshot_vidram_size / 2);
 	}
+
 
 	/* for every character in the Video RAM, check if it has been modified */
 	/* since last time and update it accordingly. */
@@ -799,7 +867,7 @@ void punkshot_vh_screenrefresh(struct osd_bitmap *bitmap)
 		tile = READ_WORD(&punkshot_vidram[offs]);
 		color = fg_colorbase + ((tile & 0xe000) >> 13);
 
-		if (dirtybuffer[offs / 2] || dirtypal[color])
+		if (dirtybuffer[offs / 2])
 		{
 			dirtybuffer[offs / 2] = 0;
 
@@ -826,7 +894,7 @@ void punkshot_vh_screenrefresh(struct osd_bitmap *bitmap)
 		tile = READ_WORD(&punkshot_vidram[offs]);
 		color = bg_colorbase + ((tile & 0xe000) >> 13);
 
-		if (dirtybuffer[offs / 2] || dirtypal[color])
+		if (dirtybuffer[offs / 2])
 		{
 			dirtybuffer[offs / 2] = 0;
 
@@ -871,7 +939,7 @@ void punkshot_vh_screenrefresh(struct osd_bitmap *bitmap)
 			xscroll[(offs - yscroll) & 0xff] += 6;
 		}
 		if (priority == 0x3c)
-			copyscrollbitmap(bitmap,tmpbitmap1,256,xscroll,1,&yscroll,&Machine->drv->visible_area,TRANSPARENCY_COLOR,0);
+			copyscrollbitmap(bitmap,tmpbitmap1,256,xscroll,1,&yscroll,&Machine->drv->visible_area,TRANSPARENCY_PEN,palette_transparent_pen);
 		else
 			copyscrollbitmap(bitmap,tmpbitmap1,256,xscroll,1,&yscroll,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
 	}
@@ -886,7 +954,7 @@ void punkshot_vh_screenrefresh(struct osd_bitmap *bitmap)
 		xscroll = -((READ_WORD(&punkshot_scrollram[0]) >> 8) + 256 * (READ_WORD(&punkshot_scrollram[2]) >> 8));
 		xscroll += 6;
 		yscroll = -(READ_WORD(punkshot_yscroll) >> 8);
-		copyscrollbitmap(bitmap,tmpbitmap,1,&xscroll,1,&yscroll,&Machine->drv->visible_area,TRANSPARENCY_COLOR,0);
+		copyscrollbitmap(bitmap,tmpbitmap,1,&xscroll,1,&yscroll,&Machine->drv->visible_area,TRANSPARENCY_PEN,palette_transparent_pen);
 	}
 
 
@@ -916,7 +984,4 @@ void punkshot_vh_screenrefresh(struct osd_bitmap *bitmap)
 	}
 
 	punkshot_drawsprites(bitmap,1);
-
-
-	memset(dirtypal,0,punkshot_paletteram_size / pal_div);
 }

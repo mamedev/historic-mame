@@ -7,7 +7,7 @@
 ***************************************************************************/
 
 #include "driver.h"
-#include "generic.h"
+#include "vidhrdw/generic.h"
 
 
 unsigned char *videoram00,*videoram01,*videoram02,*videoram03;
@@ -116,14 +116,10 @@ int videoram_r(int offset)
 	return videoram[offset];
 }
 
-
-
 int colorram_r(int offset)
 {
 	return colorram[offset];
 }
-
-
 
 void videoram_w(int offset,int data)
 {
@@ -134,8 +130,6 @@ void videoram_w(int offset,int data)
 		videoram[offset] = data;
 	}
 }
-
-
 
 void colorram_w(int offset,int data)
 {
@@ -148,6 +142,16 @@ void colorram_w(int offset,int data)
 }
 
 
+
+int spriteram_r(int offset)
+{
+	return spriteram[offset];
+}
+
+void spriteram_w(int offset,int data)
+{
+	spriteram[offset] = data;
+}
 
 
 

@@ -97,11 +97,11 @@ static int SprTrans(Sprites *u)
 	unsigned char *table;
 
 
-	ro = Machine->memory_region[3][YTABLE_START + u->y];
+	ro = Machine->memory_region[4][YTABLE_START + u->y];
 	theta2 = 2 * u->x;
 
 	/* cosine table */
-	table = &Machine->memory_region[3][COSTABLE_START];
+	table = &Machine->memory_region[4][COSTABLE_START];
 
 	u->y = (table[theta2+1] * ro) >> 8;
 	if (u->y >= 0x80)
@@ -120,7 +120,7 @@ static int SprTrans(Sprites *u)
 	}
 
 	/* sine table */
-	table = &Machine->memory_region[3][SINTABLE_START];
+	table = &Machine->memory_region[4][SINTABLE_START];
 
 	u->x = (table[theta2+1] * ro) >> 8;
 	if (u->x >= 0x80)
@@ -253,7 +253,7 @@ void gyruss_flipscreen_w(int offset,int data)
   the main emulation engine.
 
 ***************************************************************************/
-void gyruss_vh_screenrefresh(struct osd_bitmap *bitmap)
+void gyruss_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	int offs;
 

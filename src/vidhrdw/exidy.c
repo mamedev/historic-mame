@@ -209,7 +209,7 @@ void exidy_check_collision(struct osd_bitmap *bitmap)
   the main emulation engine.
 
 ***************************************************************************/
-void exidy_vh_screenrefresh(struct osd_bitmap *bitmap)
+void exidy_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	int offs,i;
 

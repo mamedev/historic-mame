@@ -42,22 +42,19 @@
 extern unsigned char *nemesis_videoram1;
 extern unsigned char *nemesis_videoram2;
 extern unsigned char *nemesis_characterram;
-extern unsigned char *nemesis_paletteram;
 extern unsigned char *nemesis_xscroll1,*nemesis_xscroll2, *nemesis_yscroll;
 
 int  nemesis_videoram1_r(int offset);
 void nemesis_videoram1_w(int offset,int data);
 int  nemesis_videoram2_r(int offset);
 void nemesis_videoram2_w(int offset,int data);
-int  nemesis_paletteram_r(int offset);
-void nemesis_paletteram_w(int offset,int data);
 int  nemesis_characterram_r(int offset);
 void nemesis_characterram_w(int offset,int data);
-void nemesis_vh_screenrefresh(struct osd_bitmap *bitmap);
+void nemesis_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 int  nemesis_vh_start(void);
 void nemesis_vh_stop(void);
 
-void salamand_vh_screenrefresh(struct osd_bitmap *bitmap);
+void salamand_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 
 
@@ -112,7 +109,7 @@ static struct MemoryReadAddress readmem[] =
 	{ 0x052000, 0x053fff, nemesis_videoram1_r },
 	{ 0x054000, 0x055fff, nemesis_videoram2_r },
 	{ 0x056000, 0x056fff, MRA_BANK5 },
-	{ 0x05a000, 0x05afff, nemesis_paletteram_r },
+	{ 0x05a000, 0x05afff, paletteram_word_r },
 
 	{ 0x05c400, 0x05c401, input_port_4_r },	/* DSW0 */
 	{ 0x05c402, 0x05c403, input_port_5_r },	/* DSW1 */
@@ -140,7 +137,7 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x052000, 0x053fff, nemesis_videoram1_w, &nemesis_videoram1 },	/* VRAM 1 */
 	{ 0x054000, 0x055fff, nemesis_videoram2_w, &nemesis_videoram2 },	/* VRAM 2 */
 	{ 0x056000, 0x056fff, MWA_BANK5, &spriteram, &spriteram_size },
-	{ 0x05a000, 0x05afff, nemesis_paletteram_w, &nemesis_paletteram },
+	{ 0x05a000, 0x05afff, paletteram_xBBBBBGGGGGRRRRR_word_w, &paletteram },
 
 	{ 0x05c000, 0x05c001, nemesis_soundlatch_w },
 	{ 0x05c800, 0x05c801, watchdog_reset_w },	/* probably */
@@ -460,7 +457,7 @@ static struct AY8910interface ay8910_interface =
 {
 	2,	/* 2 chip */
 	14318000/8,	/* 1.78975 Mhz?? */
-	{ 0x20ff, 0x20ff },
+	{ 255, 255 },
 	{ nemesis_portA_r, 0 },
 	{ 0, 0 },
 	{ 0, 0 },
@@ -581,21 +578,21 @@ ROM_END
 
 ROM_START( nemesuk_rom )
 	ROM_REGION(0x40000)    /* 4 * 64k for code and rom */
-	ROM_LOAD_EVEN ( "12a_01.bin", 0x00000, 0x008000, 0x1c18a42a )
-	ROM_LOAD_ODD  ( "12c_05.bin", 0x00000, 0x008000, 0x3feaa154 )
-	ROM_LOAD_EVEN ( "13a_02.bin", 0x10000, 0x008000, 0x7ba92b17 )
-	ROM_LOAD_ODD  ( "13c_06.bin", 0x10000, 0x008000, 0xc07eb1d0 )
+	ROM_LOAD_EVEN ( "12a_01.uk",  0x00000, 0x008000, 0x1c18a42a )
+	ROM_LOAD_ODD  ( "12c_05.uk",  0x00000, 0x008000, 0x3feaa154 )
+	ROM_LOAD_EVEN ( "13a_02.uk",  0x10000, 0x008000, 0x7ba92b17 )
+	ROM_LOAD_ODD  ( "13c_06.uk",  0x10000, 0x008000, 0xc07eb1d0 )
 	ROM_LOAD_EVEN ( "14a_03.bin", 0x20000, 0x008000, 0x8e3e63cc )
 	ROM_LOAD_ODD  ( "14c_07.bin", 0x20000, 0x008000, 0xb73cbe76 )
-	ROM_LOAD_EVEN ( "15a_04.bin", 0x30000, 0x008000, 0xc724f74e )
-	ROM_LOAD_ODD  ( "15c_08.bin", 0x30000, 0x008000, 0xc4a7a4d9 )
+	ROM_LOAD_EVEN ( "15a_04.uk",  0x30000, 0x008000, 0xc724f74e )
+	ROM_LOAD_ODD  ( "15c_08.uk",  0x30000, 0x008000, 0xc4a7a4d9 )
 
 	ROM_REGION(0x1000)      /* temporary space for graphics (disposed after conversion) */
 	/* empty memory region - not used by the game, but needed because the main */
 	/* core currently always frees region #1 after initialization. */
 
 	ROM_REGION(0x10000)    /* 64k for sound */
-	ROM_LOAD  ( "09c_snd.bin", 0x00000, 0x4000, 0xc3ea5a3a )
+	ROM_LOAD  ( "09c_snd.bin", 0x0000, 0x4000, 0xc3ea5a3a )
 ROM_END
 
 ROM_START( konamigt_rom )
@@ -636,9 +633,9 @@ struct GameDriver nemesis_driver =
 	__FILE__,
 	0,
 	"nemesis",
-	"Nemesis",
-	"????",
-	"?????",
+	"Nemesis (hacked?)",
+	"1985",
+	"Konami",
 	"Allard van der Bas (MAME driver)",
 	0,
 	&nemesis_machine_driver,
@@ -659,11 +656,11 @@ struct GameDriver nemesis_driver =
 struct GameDriver nemesuk_driver =
 {
 	__FILE__,
-	0,
+	&nemesis_driver,
 	"nemesuk",
-	"Nemesis (UK version)",
-	"????",
-	"?????",
+	"Nemesis (UK)",
+	"1985",
+	"Konami",
 	"Allard van der Bas (MAME driver)",
 	0,
 	&nemesis_machine_driver,
@@ -687,10 +684,10 @@ struct GameDriver konamigt_driver =
 	0,
 	"konamigt",
 	"Konami GT",
-	"????",
-	"?????",
-	"68K test",
-	0,
+	"1985",
+	"Konami",
+	"Allard van der Bas (MAME driver)",
+	GAME_NOT_WORKING,
 	&nemesis_machine_driver,
 
 	konamigt_rom,
@@ -715,7 +712,7 @@ struct GameDriver salamand_driver =
 	"????",
 	"?????",
 	"68K test",
-	0,
+	GAME_NOT_WORKING,
 	&salamand_machine_driver,
 
 	salamand_rom,

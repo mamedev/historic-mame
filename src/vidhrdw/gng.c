@@ -11,74 +11,12 @@
 
 
 
-unsigned char *gng_paletteram;
-
 unsigned char *gng_bgvideoram,*gng_bgcolorram;
 int gng_bgvideoram_size;
 unsigned char *gng_scrollx, *gng_scrolly;
 static unsigned char *dirtybuffer2;
 static struct osd_bitmap *tmpbitmap2;
 static int flipscreen;
-
-
-
-/***************************************************************************
-
-  Ghosts 'n Goblins doesn't have color PROMs, it uses RAM instead.
-
-  I don't know the exact values of the resistors between the RAM and the
-  RGB output. I assumed these values (the same as Commando)
-  bit 7 -- 220 ohm resistor  -- RED
-        -- 470 ohm resistor  -- RED
-        -- 1  kohm resistor  -- RED
-        -- 2.2kohm resistor  -- RED
-        -- 220 ohm resistor  -- GREEN
-        -- 470 ohm resistor  -- GREEN
-        -- 1  kohm resistor  -- GREEN
-  bit 0 -- 2.2kohm resistor  -- GREEN
-
-  bit 7 -- 220 ohm resistor  -- BLUE
-        -- 470 ohm resistor  -- BLUE
-        -- 1  kohm resistor  -- BLUE
-        -- 2.2kohm resistor  -- BLUE
-        -- unused
-        -- unused
-        -- unused
-  bit 0 -- unused
-
-***************************************************************************/
-void gng_paletteram_w(int offset,int data)
-{
-	int bit0,bit1,bit2,bit3;
-	int r,g,b,val;
-
-	gng_paletteram[offset] = data;
-
-	if ((offset & ~0x100) < 192)	/* only 192 colors actually used */
-	{
-		val = gng_paletteram[offset & ~0x100];
-		bit0 = (val >> 4) & 0x01;
-		bit1 = (val >> 5) & 0x01;
-		bit2 = (val >> 6) & 0x01;
-		bit3 = (val >> 7) & 0x01;
-		r = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
-
-		bit0 = (val >> 0) & 0x01;
-		bit1 = (val >> 1) & 0x01;
-		bit2 = (val >> 2) & 0x01;
-		bit3 = (val >> 3) & 0x01;
-		g = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
-
-		val = gng_paletteram[offset | 0x100];
-		bit0 = (val >> 4) & 0x01;
-		bit1 = (val >> 5) & 0x01;
-		bit2 = (val >> 6) & 0x01;
-		bit3 = (val >> 7) & 0x01;
-		b = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
-
-		palette_change_color(offset & ~0x100,r,g,b);
-	}
-}
 
 
 
@@ -168,7 +106,7 @@ void gng_flipscreen_w(int offset,int data)
   the main emulation engine.
 
 ***************************************************************************/
-void gng_vh_screenrefresh(struct osd_bitmap *bitmap)
+void gng_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	int offs;
 

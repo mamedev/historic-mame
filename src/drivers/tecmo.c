@@ -108,19 +108,17 @@ static void tecmo_adpcm_trigger_w(int offset,int data)
 extern unsigned char *tecmo_videoram,*tecmo_colorram;
 extern unsigned char *tecmo_videoram2,*tecmo_colorram2;
 extern unsigned char *tecmo_scroll;
-extern unsigned char *tecmo_paletteram;
 extern int tecmo_videoram2_size;
 
 void tecmo_videoram_w(int offset,int data);
 void tecmo_colorram_w(int offset,int data);
-void tecmo_paletteram_w(int offset,int data);
 
 int rygar_vh_start(void);
 int silkworm_vh_start(void);
 int gemini_vh_start(void);
 
 void tecmo_vh_stop(void);
-void tecmo_vh_screenrefresh(struct osd_bitmap *bitmap);
+void tecmo_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 
 
@@ -154,7 +152,7 @@ static struct MemoryWriteAddress silkworm_writemem[] =
 	{ 0xcc00, 0xcfff, MWA_RAM, &tecmo_colorram2 },
 	{ 0xd000, 0xdfff, MWA_RAM },
 	{ 0xe000, 0xe7ff, MWA_RAM, &spriteram, &spriteram_size },
-	{ 0xe800, 0xefff, tecmo_paletteram_w, &tecmo_paletteram },
+	{ 0xe800, 0xefff, paletteram_xxxxBBBBRRRRGGGG_swap_w, &paletteram },
 	{ 0xf000, 0xf7ff, MWA_ROM },
 	{ 0xf800, 0xf805, MWA_RAM, &tecmo_scroll },
 	{ 0xf806, 0xf806, tecmo_sound_command_w },
@@ -176,7 +174,7 @@ static struct MemoryWriteAddress rygar_writemem[] =
 	{ 0xdc00, 0xddff, videoram_w, &videoram, &videoram_size },
 	{ 0xde00, 0xdfff, colorram_w, &colorram },
 	{ 0xe000, 0xe7ff, MWA_RAM, &spriteram, &spriteram_size },
-	{ 0xe800, 0xefff, tecmo_paletteram_w, &tecmo_paletteram },
+	{ 0xe800, 0xefff, paletteram_xxxxBBBBRRRRGGGG_swap_w, &paletteram },
 	{ 0xf000, 0xf7ff, MWA_ROM },
 	{ 0xf800, 0xf805, MWA_RAM, &tecmo_scroll },
 	{ 0xf806, 0xf806, tecmo_sound_command_w },
@@ -197,7 +195,7 @@ static struct MemoryWriteAddress gemini_writemem[] =
 	{ 0xda00, 0xdbff, tecmo_colorram_w, &tecmo_colorram },
 	{ 0xdc00, 0xddff, videoram_w, &videoram, &videoram_size },
 	{ 0xde00, 0xdfff, colorram_w, &colorram },
-	{ 0xe000, 0xe7ff, tecmo_paletteram_w, &tecmo_paletteram },
+	{ 0xe000, 0xe7ff, paletteram_xxxxBBBBRRRRGGGG_swap_w, &paletteram },
 	{ 0xe800, 0xefff, MWA_RAM, &spriteram, &spriteram_size },
 	{ 0xf000, 0xf7ff, MWA_ROM },
 	{ 0xf800, 0xf805, MWA_RAM, &tecmo_scroll },
@@ -648,7 +646,7 @@ static struct GfxDecodeInfo rygar_gfxdecodeinfo[] =
 static struct YM3526interface ym3812_interface =
 {
 	1,			/* 1 chip (no more supported) */
-	3000000,	/* 3 MHz ? (not supported) */
+	3600000,	/* 3.600000 MHz ? (partially supported) */
 	{ 255 }		/* (not supported) */
 };
 
@@ -819,33 +817,6 @@ static struct MachineDriver gemini_machine_driver =
 
 ***************************************************************************/
 
-ROM_START( silkworm_rom )
-	ROM_REGION(0x20000)	/* 64k for code */
-	ROM_LOAD( "silkworm.4",  0x00000, 0x10000, 0x8242f71e )	/* c000-ffff is not used */
-	ROM_LOAD( "silkworm.5",  0x10000, 0x10000, 0xdc2e3a8c )	/* banked at f000-f7ff */
-
-	ROM_REGION(0xc8000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "silkworm.2",  0x00000, 0x08000, 0xcc03f6a3 )	/* characters */
-	ROM_LOAD( "silkworm.6",  0x08000, 0x10000, 0x9fa0b862 )	/* sprites */
-	ROM_LOAD( "silkworm.7",  0x18000, 0x10000, 0x61dfce63 )	/* sprites */
-	ROM_LOAD( "silkworm.8",  0x28000, 0x10000, 0xc7a80a5c )	/* sprites */
-	ROM_LOAD( "silkworm.9",  0x38000, 0x10000, 0x4b6e4340 )	/* sprites */
-	ROM_LOAD( "silkworm.10", 0x48000, 0x10000, 0xfad1bcad )	/* tiles #1 */
-	ROM_LOAD( "silkworm.11", 0x58000, 0x10000, 0x35f18a5b )	/* tiles #1 */
-	ROM_LOAD( "silkworm.12", 0x68000, 0x10000, 0xc4faff70 )	/* tiles #1 */
-	ROM_LOAD( "silkworm.13", 0x78000, 0x10000, 0x98692fdd )	/* tiles #1 */
-	ROM_LOAD( "silkworm.14", 0x88000, 0x10000, 0x23e5846f )	/* tiles #2 */
-	ROM_LOAD( "silkworm.15", 0x98000, 0x10000, 0xb389f5f5 )	/* tiles #2 */
-	ROM_LOAD( "silkworm.16", 0xa8000, 0x10000, 0x783c76d8 )	/* tiles #2 */
-	ROM_LOAD( "silkworm.17", 0xb8000, 0x10000, 0xf292cf5e )	/* tiles #2 */
-
-	ROM_REGION(0x20000)	/* 64k for the audio CPU */
-	ROM_LOAD( "silkworm.3",  0x0000, 0x8000, 0x0867f097 )
-
-	ROM_REGION(0x8000)	/* ADPCM samples */
-	ROM_LOAD( "silkworm.1",  0x0000, 0x8000, 0x83601ea4 )
-ROM_END
-
 ROM_START( rygar_rom )
 	ROM_REGION(0x18000)	/* 64k for code */
 	ROM_LOAD( "CPU_5P.BIN", 0x00000, 0x08000, 0xff6100e3 ) /* code */
@@ -880,12 +851,12 @@ ROM_END
 ROM_START( rygarj_rom )
 	ROM_REGION(0x18000)	/* 64k for code */
 
-	ROM_LOAD( "CPU_5P.BIN", 0x00000, 0x08000, 0x4ff67dda ) /* code */
-	ROM_LOAD( "CPU_5M.BIN", 0x08000, 0x04000, 0x55f3a025 ) /* code */
-	ROM_LOAD( "CPU_5J.BIN", 0x10000, 0x08000, 0x777a78aa ) /* banked at f000-f7ff */
+	ROM_LOAD( "CPUJ_5P.BIN", 0x00000, 0x08000, 0x4ff67dda ) /* code */
+	ROM_LOAD( "CPUJ_5M.BIN", 0x08000, 0x04000, 0x55f3a025 ) /* code */
+	ROM_LOAD( "CPUJ_5J.BIN", 0x10000, 0x08000, 0x777a78aa ) /* banked at f000-f7ff */
 
 	ROM_REGION(0x68000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "CPU_8K.BIN",  0x00000, 0x08000, 0xb94a3248 )	/* characters */
+	ROM_LOAD( "CPUJ_8K.BIN", 0x00000, 0x08000, 0xb94a3248 )	/* characters */
 
 	ROM_LOAD( "VID_6K.BIN",  0x08000, 0x08000, 0x97c92065 )	/* sprites */
 	ROM_LOAD( "VID_6J.BIN",  0x10000, 0x08000, 0x7f08b292 )	/* sprites */
@@ -907,6 +878,33 @@ ROM_START( rygarj_rom )
 
 	ROM_REGION(0x4000)	/* ADPCM samples */
 	ROM_LOAD( "CPU_1F.BIN",  0x0000, 0x4000, 0xf592c358 )
+ROM_END
+
+ROM_START( silkworm_rom )
+	ROM_REGION(0x20000)	/* 64k for code */
+	ROM_LOAD( "silkworm.4",  0x00000, 0x10000, 0x8242f71e )	/* c000-ffff is not used */
+	ROM_LOAD( "silkworm.5",  0x10000, 0x10000, 0xdc2e3a8c )	/* banked at f000-f7ff */
+
+	ROM_REGION(0xc8000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "silkworm.2",  0x00000, 0x08000, 0xcc03f6a3 )	/* characters */
+	ROM_LOAD( "silkworm.6",  0x08000, 0x10000, 0x9fa0b862 )	/* sprites */
+	ROM_LOAD( "silkworm.7",  0x18000, 0x10000, 0x61dfce63 )	/* sprites */
+	ROM_LOAD( "silkworm.8",  0x28000, 0x10000, 0xc7a80a5c )	/* sprites */
+	ROM_LOAD( "silkworm.9",  0x38000, 0x10000, 0x4b6e4340 )	/* sprites */
+	ROM_LOAD( "silkworm.10", 0x48000, 0x10000, 0xfad1bcad )	/* tiles #1 */
+	ROM_LOAD( "silkworm.11", 0x58000, 0x10000, 0x35f18a5b )	/* tiles #1 */
+	ROM_LOAD( "silkworm.12", 0x68000, 0x10000, 0xc4faff70 )	/* tiles #1 */
+	ROM_LOAD( "silkworm.13", 0x78000, 0x10000, 0x98692fdd )	/* tiles #1 */
+	ROM_LOAD( "silkworm.14", 0x88000, 0x10000, 0x23e5846f )	/* tiles #2 */
+	ROM_LOAD( "silkworm.15", 0x98000, 0x10000, 0xb389f5f5 )	/* tiles #2 */
+	ROM_LOAD( "silkworm.16", 0xa8000, 0x10000, 0x783c76d8 )	/* tiles #2 */
+	ROM_LOAD( "silkworm.17", 0xb8000, 0x10000, 0xf292cf5e )	/* tiles #2 */
+
+	ROM_REGION(0x20000)	/* 64k for the audio CPU */
+	ROM_LOAD( "silkworm.3",  0x0000, 0x8000, 0x0867f097 )
+
+	ROM_REGION(0x8000)	/* ADPCM samples */
+	ROM_LOAD( "silkworm.1",  0x0000, 0x8000, 0x83601ea4 )
 ROM_END
 
 ROM_START( gemini_rom )
@@ -937,6 +935,13 @@ ROM_START( gemini_rom )
 ROM_END
 
 
+
+ADPCM_SAMPLES_START(rygar_samples)
+	ADPCM_SAMPLE(0x0005, 0x0005, (0x060b-0x0005)*2)
+	ADPCM_SAMPLE(0x060b, 0x060b, (0x0c1a-0x060b)*2)
+	ADPCM_SAMPLE(0x0c1a, 0x0c1a, (0x1a3f-0x0c1a)*2)
+	ADPCM_SAMPLE(0x1a3f, 0x1a3f, (0x4000-0x1a3f)*2)
+ADPCM_SAMPLES_END
 
 /* We are probably missing some samples here. The first half of the ADPCM ROMs */
 /* of Silkworm and Gemini Wing is identical, and it is the only part used here. */
@@ -991,13 +996,6 @@ ADPCM_SAMPLES_START(silkworm_samples)
 	ADPCM_SAMPLE(0x3f3c, 0x3f3c, 0x0100*2)
 ADPCM_SAMPLES_END
 
-ADPCM_SAMPLES_START(rygar_samples)
-	ADPCM_SAMPLE(0x0005, 0x0005, (0x060b-0x0005)*2)
-	ADPCM_SAMPLE(0x060b, 0x060b, (0x0c1a-0x060b)*2)
-	ADPCM_SAMPLE(0x0c1a, 0x0c1a, (0x1a3f-0x0c1a)*2)
-	ADPCM_SAMPLE(0x1a3f, 0x1a3f, (0x4000-0x1a3f)*2)
-ADPCM_SAMPLES_END
-
 
 
 static int rygar_hiload(void)
@@ -1006,7 +1004,9 @@ static int rygar_hiload(void)
 
 
 	/* check if the hi score table has already been initialized */
-	if (memcmp(&RAM[0xc023],"\x00\x00\x03",3) == 0)
+	if (memcmp(&RAM[0xc984],"\x00\x03\x00\x00",4) == 0 &&
+			memcmp(&RAM[0xcb46],"\x00\x03\x00\x00",4) == 0 &&
+			memcmp(&RAM[0xc023],"\x00\x00\x03\x00",4) == 0)	/* high score */
 	{
 		void *f;
 		int p;
@@ -1014,8 +1014,11 @@ static int rygar_hiload(void)
 
 		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
 		{
-			osd_fread(f,&RAM[0xc023],4);
-			osd_fread(f,&RAM[0xc984],8*50);
+			osd_fread(f,&RAM[0xc983],9*50);
+			RAM[0xc023]=RAM[0xc987];
+			RAM[0xc024]=RAM[0xc986];
+			RAM[0xc025]=RAM[0xc985];
+			RAM[0xc026]=RAM[0xc984];
 			osd_fclose(f);
 
 			/* update the screen hi score (now or never) */
@@ -1028,7 +1031,7 @@ static int rygar_hiload(void)
 			for (p=0;p<6;p++ )
 			{
 				if (RAM[0xd06c+p]==0x60)
-					RAM[0xd06c+p]=0x01;
+						RAM[0xd06c+p]=0x01;
 				else break;
 			}
 		}
@@ -1046,8 +1049,7 @@ static void rygar_hisave(void)
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{
-		osd_fwrite(f,&RAM[0xc023],4);
-		osd_fwrite(f,&RAM[0xc984],8*50);
+		osd_fwrite(f,&RAM[0xc983],9*50);
 		osd_fclose(f);
 	}
 }
@@ -1138,9 +1140,9 @@ struct GameDriver rygar_driver =
 	__FILE__,
 	0,
 	"rygar",
-	"Rygar",
-	"????",
-	"?????",
+	"Rygar (US)",
+	"1986",
+	"Tecmo",
 	"Nicola Salmoria\nErnesto Corvi (ADPCM sound)",
 	0,
 	&rygar_machine_driver,
@@ -1161,11 +1163,11 @@ struct GameDriver rygar_driver =
 struct GameDriver rygarj_driver =
 {
 	__FILE__,
-	0,
+	&rygar_driver,
 	"rygarj",
 	"Rygar (Japan)",
-	"????",
-	"?????",
+	"1986",
+	"Tecmo",
 	"Nicola Salmoria\nErnesto Corvi (ADPCM sound)",
 	0,
 	&rygar_machine_driver,
@@ -1183,39 +1185,14 @@ struct GameDriver rygarj_driver =
 	rygar_hiload, rygar_hisave
 };
 
-struct GameDriver silkworm_driver =
-{
-	__FILE__,
-	0,
-	"silkworm",
-	"Silkworm",
-	"????",
-	"?????",
-	"Nicola Salmoria",
-	0,
-	&silkworm_machine_driver,
-
-	silkworm_rom,
-	0, 0,
-	0,
-	(void *)silkworm_samples,	/* sound_prom */
-
-	silkworm_input_ports,
-
-	0, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	silkworm_hiload, silkworm_hisave
-};
-
 struct GameDriver gemini_driver =
 {
 	__FILE__,
 	0,
 	"gemini",
 	"Gemini Wing",
-	"????",
-	"?????",
+	"1987",
+	"Tecmo",
     "Nicola Salmoria (MAME driver)\nMirko Buffoni (additional code)\nMartin Binder (dip switches)",
 	0,
 	&gemini_machine_driver,
@@ -1231,4 +1208,29 @@ struct GameDriver gemini_driver =
 	ORIENTATION_ROTATE_90,
 
 	gemini_hiload, gemini_hisave
+};
+
+struct GameDriver silkworm_driver =
+{
+	__FILE__,
+	0,
+	"silkworm",
+	"Silkworm",
+	"1988",
+	"Tecmo",
+	"Nicola Salmoria",
+	0,
+	&silkworm_machine_driver,
+
+	silkworm_rom,
+	0, 0,
+	0,
+	(void *)silkworm_samples,	/* sound_prom */
+
+	silkworm_input_ports,
+
+	0, 0, 0,
+	ORIENTATION_DEFAULT,
+
+	silkworm_hiload, silkworm_hisave
 };

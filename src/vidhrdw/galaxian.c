@@ -429,7 +429,7 @@ void mooncrst_gfxextend_w(int offset,int data)
   the main emulation engine.
 
 ***************************************************************************/
-void galaxian_vh_screenrefresh(struct osd_bitmap *bitmap)
+void galaxian_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	int i,offs;
 

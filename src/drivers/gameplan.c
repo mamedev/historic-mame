@@ -30,7 +30,7 @@ int gameplan_sound_r(int offset);
 void gameplan_sound_w(int offset, int data);
 int gameplan_via5_r(int offset);
 void gameplan_via5_w(int offset, int data);
-void gameplan_vh_screenrefresh(struct osd_bitmap *bitmap);
+void gameplan_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 void gameplan_select_port(int offset, int data);
 int gameplan_read_port(int offset);
 
@@ -608,7 +608,7 @@ static struct AY8910interface ay8910_interface =
 {
 	1,	/* 1 chips */
 	1500000,	/* 1.5 MHz ? */
-    { 0xff },
+    { 255 },
 	{ 0 },
 	{ 0 },
 	{ 0 },
@@ -896,8 +896,8 @@ struct GameDriver kaos_driver =
 	0,
 	"kaos",
 	"Kaos",
-	"????",
-	"?????",
+	"1981",
+	"Gameplan",
     "Chris Moore      (MAME driver)\nSanteri Saarimaa (not a sausage)",
 	0,
 	&machine_driver,
@@ -920,8 +920,8 @@ struct GameDriver killcom_driver =
 	0,
 	"killcom",
 	"Killer Comet",
-	"????",
-	"?????",
+	"1980",
+	"Gameplan (Centuri license)",
     "Chris Moore      (MAME driver)\nSanteri Saarimaa (cleaning up, hi-scores)",
 	0,
     &machine_driver,
@@ -944,8 +944,8 @@ struct GameDriver megatack_driver =
 	0,
 	"megatack",
 	"MegaTack",
-	"????",
-	"?????",
+	"1980",
+	"Gameplan (Centuri license)",
     "Chris Moore      (MAME driver)\nSanteri Saarimaa (cleaning up, hi-scores)",
 	0,
 	&machine_driver,
@@ -967,8 +967,8 @@ struct GameDriver challeng_driver =
 	0,
     "challeng",
     "Challenger",
-	"????",
-	"?????",
+	"1980",
+	"Gameplan (Centuri license)",
     "Chris Moore      (MAME driver)\nSanteri Saarimaa (cleaning up, hi-scores)",
 	0,
     &machine_driver,

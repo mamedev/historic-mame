@@ -431,7 +431,7 @@ void llander_sh_update(void)
 
 	if( Machine->sample_bits == 16 )
 	{
-	        osd_play_streamed_sample_16(channel,sample_buffer,buffer_len,emulation_rate,0xff);
+	        osd_play_streamed_sample_16(channel,sample_buffer,2*buffer_len,emulation_rate,0xff);
 	}
 	else
 	{

@@ -63,7 +63,6 @@ I/O read/write
 
 extern unsigned char *starforc_scrollx2,*starforc_scrolly2;
 extern unsigned char *starforc_scrollx3,*starforc_scrolly3;
-extern unsigned char *starforc_paletteram;
 extern unsigned char *starforc_tilebackground2;
 extern unsigned char *starforc_tilebackground3;
 extern unsigned char *starforc_tilebackground4;
@@ -76,7 +75,7 @@ void starforc_paletteram_w(int offset,int data);
 int starforc_vh_start(void);
 void starforc_vh_stop(void);
 
-void starforc_vh_screenrefresh(struct osd_bitmap *bitmap);
+void starforc_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 int starforc_sh_start(void);
 void starforc_sh_stop(void);
@@ -115,7 +114,7 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x9000, 0x93ff, videoram_w, &videoram, &videoram_size },
 	{ 0x9400, 0x97ff, colorram_w, &colorram },
 	{ 0x9800, 0x987f, MWA_RAM, &spriteram, &spriteram_size },
-	{ 0x9c00, 0x9d7f, starforc_paletteram_w, &starforc_paletteram },
+	{ 0x9c00, 0x9d7f, starforc_paletteram_w, &paletteram },
 	{ 0x9e20, 0x9e21, MWA_RAM, &starforc_scrollx2 },
 	{ 0x9e25, 0x9e25, MWA_RAM, &starforc_scrolly2 },
 //	{ 0x9e28, 0x9e29, MWA_RAM, &starforc_scrollx? },
@@ -411,24 +410,24 @@ ROM_START( megaforc_rom )
 	ROM_LOAD( "mf2.bin", 0x4000, 0x4000, 0xf112ba16 )
 
 	ROM_REGION(0x1e000)     /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "mf7.bin",  0x00000, 0x1000, 0xebe46dfc )
-	ROM_LOAD( "mf8.bin",  0x01000, 0x1000, 0xc23d186b )
-	ROM_LOAD( "mf9.bin",  0x02000, 0x1000, 0x77586a06 )
-	ROM_LOAD( "mf10.bin", 0x03000, 0x2000, 0x8ff8c55c )
-	ROM_LOAD( "mf11.bin", 0x05000, 0x2000, 0x647d74eb )
-	ROM_LOAD( "mf12.bin", 0x07000, 0x2000, 0x451c5ffc )
-	ROM_LOAD( "mf13.bin", 0x09000, 0x2000, 0x0be64664 )
-	ROM_LOAD( "mf14.bin", 0x0b000, 0x2000, 0xff8c2118 )
-	ROM_LOAD( "mf15.bin", 0x0d000, 0x2000, 0x44f6e3f8 )
-	ROM_LOAD( "mf16.bin", 0x0f000, 0x1000, 0x111fb9ed )
-	ROM_LOAD( "mf17.bin", 0x10000, 0x1000, 0xb62c8e7a )
-	ROM_LOAD( "mf18.bin", 0x11000, 0x1000, 0x4185c335 )
-	ROM_LOAD( "mf4.bin",  0x12000, 0x4000, 0xbe304630 )
-	ROM_LOAD( "mf5.bin",  0x16000, 0x4000, 0x178f15e9 )
-	ROM_LOAD( "mf6.bin",  0x1a000, 0x4000, 0x1cd03e28 )
+	ROM_LOAD( "mf7.bin",     0x00000, 0x1000, 0xebe46dfc )
+	ROM_LOAD( "mf8.bin",     0x01000, 0x1000, 0xc23d186b )
+	ROM_LOAD( "mf9.bin",     0x02000, 0x1000, 0x77586a06 )
+	ROM_LOAD( "starforc.10", 0x03000, 0x2000, 0x8ff8c55c )
+	ROM_LOAD( "starforc.11", 0x05000, 0x2000, 0x647d74eb )
+	ROM_LOAD( "starforc.12", 0x07000, 0x2000, 0x451c5ffc )
+	ROM_LOAD( "starforc.13", 0x09000, 0x2000, 0x0be64664 )
+	ROM_LOAD( "starforc.14", 0x0b000, 0x2000, 0xff8c2118 )
+	ROM_LOAD( "starforc.15", 0x0d000, 0x2000, 0x44f6e3f8 )
+	ROM_LOAD( "starforc.16", 0x0f000, 0x1000, 0x111fb9ed )
+	ROM_LOAD( "starforc.17", 0x10000, 0x1000, 0xb62c8e7a )
+	ROM_LOAD( "starforc.18", 0x11000, 0x1000, 0x4185c335 )
+	ROM_LOAD( "starforc.4",  0x12000, 0x4000, 0xbe304630 )
+	ROM_LOAD( "starforc.5",  0x16000, 0x4000, 0x178f15e9 )
+	ROM_LOAD( "starforc.6",  0x1a000, 0x4000, 0x1cd03e28 )
 
 	ROM_REGION(0x10000)     /* 64k for sound board */
-	ROM_LOAD( "mf1.bin", 0x0000, 0x2000, 0xfb4a6b5a )
+	ROM_LOAD( "starforc.1", 0x0000, 0x2000, 0xfb4a6b5a )
 ROM_END
 
 
@@ -543,8 +542,8 @@ struct GameDriver starforc_driver =
 	0,
 	"starforc",
 	"Star Force",
-	"????",
-	"?????",
+	"1984",
+	"Tehkan",
 	"Mirko Buffoni\nNicola Salmoria\nTatsuyuki Satoh\nJuan Carlos Lorente\nMarco Cassili",
 	0,
 	&machine_driver,
@@ -565,11 +564,11 @@ struct GameDriver starforc_driver =
 struct GameDriver megaforc_driver =
 {
 	__FILE__,
-	0,
+	&starforc_driver,
 	"megaforc",
 	"Mega Force",
-	"????",
-	"?????",
+	"1985",
+	"Tehkan (Video Ware license)",
 	"Mirko Buffoni\nNicola Salmoria\nTatsuyuki Satoh\nJuan Carlos Lorente\nMarco Cassili",
 	0,
 	&machine_driver,

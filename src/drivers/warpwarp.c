@@ -51,7 +51,7 @@ C037      flip screen (currently ignored)
 
 extern unsigned char *warpwarp_bulletsram;
 void warpwarp_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-void warpwarp_vh_screenrefresh(struct osd_bitmap *bitmap);
+void warpwarp_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 int warpwarp_input_c000_7_r(int offset);
 int warpwarp_input_c020_27_r(int offset);
@@ -288,8 +288,8 @@ struct GameDriver warpwarp_driver =
 	0,
 	"warpwarp",
 	"Warp Warp",
-	"????",
-	"?????",
+	"1981",
+	"[Namco] (Rock-ola license)",
 	"Chris Hardy (MAME driver)\nJuan Carlos Lorente (high score)\nMarco Cassili",
 	0,
 	&machine_driver,

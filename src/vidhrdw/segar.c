@@ -397,7 +397,7 @@ void segar_bcolortable_w(int offset,int data)
   the main emulation engine.
 
 ***************************************************************************/
-void segar_vh_screenrefresh(struct osd_bitmap *bitmap)
+void segar_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	int offs;
         int charcode;
@@ -478,7 +478,7 @@ void segar_vh_screenrefresh(struct osd_bitmap *bitmap)
   the main emulation engine.
 
 ***************************************************************************/
-void spaceod_vh_screenrefresh(struct osd_bitmap *bitmap)
+void spaceod_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	int offs;
     int charcode;

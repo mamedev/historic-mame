@@ -131,7 +131,7 @@ int  spacefb_sh_gett0(int offset);
 int  spacefb_sh_gett1(int offset);
 int  spacefb_sh_getp2(int offset);
 
-void spacefb_vh_screenrefresh(struct osd_bitmap *bitmap);
+void spacefb_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 void spacefb_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 
 void spacefb_port_0_w(int offset,int data);
@@ -463,9 +463,9 @@ struct GameDriver spacefb_driver =
 	0,
 	"spacefb",
 	"Space Firebird",
-	"????",
-	"?????",
-    "Chris Hardy\nAndy Clark\nPaul Johnson\nChris Moore (high score save)\nMarco Cassili\nDan Boris (sound)",
+	"1980",
+	"Nintendo",
+	"Chris Hardy\nAndy Clark\nPaul Johnson\nChris Moore (high score save)\nMarco Cassili\nDan Boris (sound)",
 	0,
 	&machine_driver,
 

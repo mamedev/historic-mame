@@ -5,10 +5,9 @@ YIE AR KUNG-FU hardware description
 enrique.sanchez@cs.us.es
 
 Main CPU:    Motorola 6809
-Sound chip:  ???
 
 Normal 6809 IRQs must be generated each video frame (60 fps).
-The 6809 NMI vector is present, though I don't know what's its use.
+The 6809 NMI is used for sound timing.
 
 ROM files
 
@@ -27,7 +26,6 @@ A12_9.BIN (8K)   -- Sound related??
 
 Memory map
 
-0000 - 3FFF   = RAM
 4000&4f00     various, not clear which of the two locations does what
               but it seems 4000 is used for interrupt enable, and
 			  4f00 for everything else.
@@ -36,8 +34,8 @@ Memory map
               bit 2 interrupt enable/acknowledge
               bit 3 coin cointer 1
               bit 4 coin cointer 1
-4800          = ?
-4900          = ?
+4800          = SN76496 latch
+4900          = SN76496 trigger read
 4A00          = ?
 4B00          = ?
 4C00          = DIP SWITCH 1
@@ -59,15 +57,9 @@ Memory map
 #include "M6809/M6809.h"
 
 void yiear_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-void yiear_vh_screenrefresh(struct osd_bitmap *bitmap);
+void yiear_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 void yiear_videoram_w(int offset,int data);
 void yiear_4f00_w(int offset,int data);
-
-extern unsigned char *yiear_soundport;
-extern const char *yiear_sample_names[];
-void yiear_audio_out_w( int offset, int val );
-int yiear_sh_start( void );
-void yiear_sh_update(void);
 
 
 
@@ -77,16 +69,49 @@ void yiear_init_machine(void)
 	m6809_Flags = M6809_FAST_S;
 }
 
+static int irq_enable,nmi_enable;
+
 static void yiear_interrupt_enable_w(int offset,int data)
 {
-	/* bit 2 is interrupt enable */
-	interrupt_enable_w(offset,data & 0x04);
+	/* bit 1 is NMI enable */
+	nmi_enable = data & 0x02;
+
+	/* bit 2 is IRQ enable */
+	irq_enable = data & 0x04;
+}
+
+static int yiear_interrupt(void)
+{
+	if (irq_enable) return interrupt();
+	else return ignore_interrupt();
+}
+
+static int yiear_nmi_interrupt(void)
+{
+	if (nmi_enable) return nmi_interrupt();
+	else return ignore_interrupt();
+}
+
+static int yiear_speech_r(int offset)
+{
+	return rand();
+	/* maybe bit 0 is VLM5030 busy pin??? */
+	if (VLM5030_BSY()) return 1;
+	else return 0;
+}
+
+void yiear_speech_st(int offset,int data)
+{
+	/* no idea if this is correct... */
+	VLM5030_ST( 1 );
+	VLM5030_ST( 0 );
 }
 
 
 
 static struct MemoryReadAddress readmem[] =
 {
+	{ 0x0000, 0x0000, yiear_speech_r },
 	{ 0x4E00, 0x4E00, input_port_0_r },	/* coin,start */
 	{ 0x4E01, 0x4E01, input_port_1_r },	/* joy1 */
 	{ 0x4E02, 0x4E02, input_port_2_r },	/* joy2 */
@@ -101,10 +126,13 @@ static struct MemoryReadAddress readmem[] =
 static struct MemoryWriteAddress writemem[] =
 {
 	{ 0x4000, 0x4000, yiear_interrupt_enable_w },
+	{ 0x4800, 0x4800, SN76496_0_w },	/* Loads the snd command into the snd latch */
+	{ 0x4900, 0x4900, MWA_NOP },	/* This address triggers the SN chip to read the data port. */
+	{ 0x4a00, 0x4a00, VLM5030_data_w },	/* VLM5030 */
+	{ 0x4b00, 0x4b00, yiear_speech_st },
 	{ 0x4f00, 0x4f00, yiear_4f00_w },
 	{ 0x5030, 0x51AF, MWA_RAM, &spriteram, &spriteram_size },
-	{ 0x5607, 0x5607, yiear_audio_out_w, &yiear_soundport },
-	{ 0x5000, 0x57FF, MWA_RAM },	/* sprites and audio are in this area */
+	{ 0x5000, 0x57FF, MWA_RAM },	/* sprites are in this area */
 	{ 0x5800, 0x5FFF, videoram_w, &videoram, &videoram_size },
 	{ 0x8000, 0xFFFF, MWA_ROM },
 	{ -1 } /* end of table */
@@ -274,6 +302,23 @@ static unsigned char color_prom[] =
 
 
 
+struct SN76496interface sn76496_interface =
+{
+	1,	/* 1 chip */
+	1500000,	/*  1.5 MHz ? (hand tuned) */
+	{ 255 }
+};
+
+struct VLM5030interface vlm5030_interface =
+{
+	3580000,    /* master clock  */
+	255,        /* volume        */
+	2,         /* memory region  */
+	0,         /* VCU            */
+};
+
+
+
 static struct MachineDriver machine_driver =
 {
 	/* basic machine hardware */
@@ -286,8 +331,8 @@ static struct MachineDriver machine_driver =
 			writemem,	/* MemoryWriteAddress */
 			0,			/* IOReadPort */
 			0,			/* IOWritePort */
-			interrupt,	/* interrupt routine */
-			1			/* interrupts per frame */
+			yiear_interrupt,1,	/* vblank */
+			yiear_nmi_interrupt,500	/* music tempo (correct frequency unknown) */
 		}
 	},
 	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
@@ -309,10 +354,17 @@ static struct MachineDriver machine_driver =
 	yiear_vh_screenrefresh,	/* vh_update routine */
 
 	/* sound hardware */
-	0,					/* sh_init routine */
-	yiear_sh_start,		/* sh_start routine */
-	0,					/* sh_stop routine */
-	yiear_sh_update		/* sh_update routine */
+	0,0,0,0,
+	{
+		{
+			SOUND_SN76496,
+			&sn76496_interface
+		},
+		{
+			SOUND_VLM5030,
+			&vlm5030_interface
+		}
+	}
 };
 
 
@@ -334,6 +386,9 @@ ROM_START( yiear_rom )
 	ROM_LOAD( "G05_4.BIN", 0x08000, 0x4000, 0xe9a3d4d9 )
 	ROM_LOAD( "G04_5.BIN", 0x0c000, 0x4000, 0x35ca933a )
 	ROM_LOAD( "G03_6.BIN", 0x10000, 0x4000, 0x9e25b6cb )
+
+	ROM_REGION(0x2000)	/* 8k for the VLM5030 data */
+	ROM_LOAD( "A12_9.BIN", 0x0000, 0x2000, 0x1e331185 )
 ROM_END
 
 
@@ -364,8 +419,6 @@ static int hiload(void)
 	else return 0;	/* we can't load the hi scores yet */
 }
 
-
-
 static void hisave(void)
 {
 	void *f;
@@ -378,7 +431,6 @@ static void hisave(void)
                 osd_fwrite(f,&RAM[0x5520],14*10);
 		osd_fclose(f);
 	}
-
 }
 
 
@@ -388,16 +440,16 @@ struct GameDriver yiear_driver =
 	__FILE__,
 	0,
 	"yiear",
-	"Yie Ar Kung Fu (Konami)",
-	"????",
-	"?????",
+	"Yie Ar Kung Fu",
+	"1985",
+	"Konami",
 	"Enrique Sanchez\nPhilip Stroffolino\nMike Balfour (high score)\nTim Lindquist (color info)\nKevin Estep (sound info)\nMarco Cassili",
 	0,
 	&machine_driver,
 
 	yiear_rom,
 	0, 0,   /* ROM decode and opcode decode functions */
-	yiear_sample_names,	/* Sample names */
+	0,
 	0,	/* sound_prom */
 
 	input_ports,

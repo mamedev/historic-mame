@@ -109,7 +109,7 @@ void arkanoid_d008_w(int offset,int data)
   the main emulation engine.
 
 ***************************************************************************/
-void arkanoid_vh_screenrefresh(struct osd_bitmap *bitmap)
+void arkanoid_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	int offs;
 

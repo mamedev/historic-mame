@@ -67,7 +67,7 @@ void spiders_vh_stop(void)
   the main emulation engine.
 
 ***************************************************************************/
-void spiders_vh_update(struct osd_bitmap *bitmap)
+void spiders_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	int loop,data0,data1,data2,col;
 
@@ -77,7 +77,7 @@ void spiders_vh_update(struct osd_bitmap *bitmap)
 	unsigned char *RAM = Machine->memory_region[0];
 
 
-        crtc6845_mem_size=crtc6845_horiz_disp*crtc6845_vert_disp*8;
+	crtc6845_mem_size=crtc6845_horiz_disp*crtc6845_vert_disp*8;
 
 	if(spiders_video_flip)
 	{
@@ -123,19 +123,26 @@ void spiders_vh_update(struct osd_bitmap *bitmap)
 
 			for(i=0;i<8;i++)
 			{
+				int x2, y2;
+
 				x=((loop%0x20)<<3)+i;
 				col=((data2&0x01)<<2)+((data1&0x01)<<1)+(data0&0x01);
 
 				/* Do x/y swap, let bitmap copy to the flips */
 
-				if(Machine->orientation&ORIENTATION_SWAP_XY)
+				x2 = x; y2 = y;
+				if (Machine->orientation & ORIENTATION_SWAP_XY)
 				{
-					tmpbitmap->line[x][y] = Machine->pens[col];
+					x2 = y;
+					y2 = x;
 				}
-				else
-				{
-					tmpbitmap->line[y][x] = Machine->pens[col];
-				}
+				if (Machine->orientation & ORIENTATION_FLIP_X)
+					x2 = 255 - x2;
+				if (Machine->orientation & ORIENTATION_FLIP_Y)
+					y2 = 255 - y2;
+
+				bitmap->line[y2][x2] = tmpbitmap->line[y2][x2] = Machine->pens[col];
+				osd_mark_dirty (x2, y2, x2, y2, 0);
 
 				data0 >>= 1;
 				data1 >>= 1;
@@ -147,8 +154,9 @@ void spiders_vh_update(struct osd_bitmap *bitmap)
 		video_addr&=0x3fff;
 	}
 
-	/* Now copy the temp bitmap to the screen */
-	copybitmap(bitmap,tmpbitmap,Machine->orientation&ORIENTATION_FLIP_Y,Machine->orientation&ORIENTATION_FLIP_X,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
-
+	if (full_refresh)
+	{
+		/* Now copy the temp bitmap to the screen */
+		copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+	}
 }
-

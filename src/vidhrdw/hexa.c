@@ -21,11 +21,24 @@ void hexa_vh_convert_color_prom(unsigned char *palette, unsigned short *colortab
 
 	for (i = 0;i < Machine->drv->total_colors;i++)
 	{
+		int bit0,bit1,bit2,bit3;
 
 
-		*(palette++) = 0x11 * (color_prom[0] & 0x0f);
-		*(palette++) = 0x11 * (color_prom[Machine->drv->total_colors] & 0x0f);
-		*(palette++) = 0x11 * (color_prom[2*Machine->drv->total_colors] & 0x0f);
+		bit0 = (color_prom[0] >> 0) & 0x01;
+		bit1 = (color_prom[0] >> 1) & 0x01;
+		bit2 = (color_prom[0] >> 2) & 0x01;
+		bit3 = (color_prom[0] >> 3) & 0x01;
+		*(palette++) = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
+		bit0 = (color_prom[Machine->drv->total_colors] >> 0) & 0x01;
+		bit1 = (color_prom[Machine->drv->total_colors] >> 1) & 0x01;
+		bit2 = (color_prom[Machine->drv->total_colors] >> 2) & 0x01;
+		bit3 = (color_prom[Machine->drv->total_colors] >> 3) & 0x01;
+		*(palette++) = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
+		bit0 = (color_prom[2*Machine->drv->total_colors] >> 0) & 0x01;
+		bit1 = (color_prom[2*Machine->drv->total_colors] >> 1) & 0x01;
+		bit2 = (color_prom[2*Machine->drv->total_colors] >> 2) & 0x01;
+		bit3 = (color_prom[2*Machine->drv->total_colors] >> 3) & 0x01;
+		*(palette++) = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
 
 		color_prom++;
 	}
@@ -78,7 +91,7 @@ void hexa_d008_w(int offset,int data)
   the main emulation engine.
 
 ***************************************************************************/
-void hexa_vh_screenrefresh(struct osd_bitmap *bitmap)
+void hexa_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	int offs;
 

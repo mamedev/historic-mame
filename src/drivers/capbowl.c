@@ -84,7 +84,7 @@
 
 void capbowl_init_machine(void);
 
-void capbowl_vh_screenrefresh(struct osd_bitmap *bitmap);
+void capbowl_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 int  capbowl_vh_start(void);
 void capbowl_vh_stop(void);
@@ -298,7 +298,7 @@ MACHINEDRIVER(bowlrama, 239)
 
 ROM_START( capbowl_rom )
 	ROM_REGION(0x28000)   /* 160k for code and graphics */
-	ROM_LOAD( "u6",  0x8000 , 0x8000, 0xb70297ae )
+	ROM_LOAD( "u6",  0x08000, 0x8000, 0xb70297ae )
 	ROM_LOAD( "gr0", 0x10000, 0x8000, 0xfb7d35bd )
 	ROM_LOAD( "gr1", 0x18000, 0x8000, 0xe28dc4ef )
 	ROM_LOAD( "gr2", 0x20000, 0x8000, 0x325fce25 )
@@ -313,17 +313,17 @@ ROM_END
 
 ROM_START( clbowl_rom )
 	ROM_REGION(0x28000)   /* 160k for code and graphics */
-	ROM_LOAD( "u6",  0x8000 , 0x8000, 0x99fede6e )
-	ROM_LOAD( "gr0", 0x10000, 0x8000, 0x64039867 )
-	ROM_LOAD( "gr1", 0x18000, 0x8000, 0x3a758375 )
-	ROM_LOAD( "gr2", 0x20000, 0x8000, 0xb63eb4f2 )
+	ROM_LOAD( "u6.cl",  0x08000, 0x8000, 0x99fede6e )
+	ROM_LOAD( "gr0.cl", 0x10000, 0x8000, 0x64039867 )
+	ROM_LOAD( "gr1.cl", 0x18000, 0x8000, 0x3a758375 )
+	ROM_LOAD( "gr2.cl", 0x20000, 0x8000, 0xb63eb4f2 )
 
 	ROM_REGION(0x1000)      /* temporary space for graphics (disposed after conversion) */
 	/* empty memory region - not used by the game, but needed because the main */
 	/* core currently always frees region #1 after initialization. */
 
 	ROM_REGION(0x10000)   /* 64k for sound */
-	ROM_LOAD( "sound", 0x8000, 0x8000, 0xe27c494a )
+	ROM_LOAD( "sound.cl", 0x8000, 0x8000, 0xe27c494a )
 ROM_END
 
 ROM_START( bowlrama_rom )
@@ -380,39 +380,78 @@ static void hisave(void)
 }
 
 
-#define GAMEDRIVER(NAME, BASE, DESC, CREDITS)	\
-												\
-struct GameDriver NAME##_driver =				\
-{												\
-	__FILE__,                                   \
-	0,                                          \
-	#NAME,										\
-	DESC,  										\
-	"????",                                     \
-	"?????",                                    \
-	CREDITS,									\
-	0,                                          \
-	&BASE##_machine_driver,						\
-												\
-	NAME##_rom,									\
-	0, 0,										\
-	0,											\
-	0,											\
-												\
-	input_ports,								\
-												\
-	0, 0, 0,									\
-												\
-	ORIENTATION_ROTATE_270,						\
-												\
-	hiload, hisave								\
+
+struct GameDriver capbowl_driver =
+{
+	__FILE__,
+	0,
+	"capbowl",
+	"Capcom Bowling",
+	"1988",
+	"Incredible Technologies",
+	"Zsolt Vasvari\nMirko Buffoni\nNicola Salmoria\nMichael Appolo",
+	0,
+	&capbowl_machine_driver,
+
+	capbowl_rom,
+	0, 0,
+	0,
+	0,	/* sound_prom */
+
+	input_ports,
+
+	0, 0, 0,
+	ORIENTATION_ROTATE_270,
+
+	hiload, hisave
 };
 
+struct GameDriver clbowl_driver =
+{
+	__FILE__,
+	&capbowl_driver,
+	"clbowl",
+	"Coors Light Bowling",
+	"1989",
+	"Incredible Technologies",
+	"Zsolt Vasvari\nMirko Buffoni\nNicola Salmoria\nMichael Appolo",
+	0,
+	&capbowl_machine_driver,
 
+	clbowl_rom,
+	0, 0,
+	0,
+	0,	/* sound_prom */
 
-GAMEDRIVER(capbowl,  capbowl,  "Capcom Bowling",      "Zsolt Vasvari\nMirko Buffoni\nNicola Salmoria\nMichael Appolo")
+	input_ports,
 
-GAMEDRIVER(clbowl,   capbowl,  "Coors Light Bowling", "Zsolt Vasvari\nMirko Buffoni\nNicola Salmoria\nMichael Appolo")
+	0, 0, 0,
+	ORIENTATION_ROTATE_270,
 
-GAMEDRIVER(bowlrama, bowlrama, "Bowl-O-Rama",         "Michael Appolo\nZsolt Vasvari\nMirko Buffoni\nNicola Salmoria")
+	hiload, hisave
+};
 
+struct GameDriver bowlrama_driver =
+{
+	__FILE__,
+	0,
+	"bowlrama",
+	"Bowl-O-Rama",
+	"1991",
+	"P & P Marketing",
+	"Michael Appolo\nZsolt Vasvari\nMirko Buffoni\nNicola Salmoria",
+	0,
+	&bowlrama_machine_driver,
+
+	bowlrama_rom,
+	0, 0,
+	0,
+	0,	/* sound_prom */
+
+	input_ports,
+
+	0, 0, 0,
+	ORIENTATION_ROTATE_270,
+
+	hiload, hisave
+};

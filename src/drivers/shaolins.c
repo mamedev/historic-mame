@@ -16,7 +16,7 @@ extern unsigned char *shaolins_scroll;
 
 void shaolins_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 void shaolins_palettebank_w(int offset,int data);
-void shaolins_vh_screenrefresh(struct osd_bitmap *bitmap);
+void shaolins_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 
 int shaolins_interrupt(void)
@@ -368,17 +368,30 @@ static struct MachineDriver shaolins_machine_driver =
 
 ***************************************************************************/
 
-ROM_START( shaolins_rom )
+ROM_START( kicker_rom )
 	ROM_REGION(0x10000)     /* 64k for code */
-	ROM_LOAD( "shaolins.3", 0x6000, 0x2000, 0xb6c97203 )
-	ROM_LOAD( "shaolins.4", 0x8000, 0x4000, 0x3665bf81 )
-	ROM_LOAD( "shaolins.5", 0xC000, 0x4000, 0xc369280b )
+	ROM_LOAD( "kikrd8.bin",  0x6000, 0x2000, 0xb6c97203 )
+	ROM_LOAD( "kikrd9.bin",  0x8000, 0x4000, 0x3665bf81 )
+	ROM_LOAD( "kikrd11.bin", 0xC000, 0x4000, 0xc369280b )
 
 	ROM_REGION(0xC000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "shaolins.6", 0x0000, 0x2000, 0x4d23d183 )
-	ROM_LOAD( "shaolins.7", 0x2000, 0x2000, 0xa97b56ed )
-	ROM_LOAD( "shaolins.2", 0x4000, 0x4000, 0xa1824a7a )
-	ROM_LOAD( "shaolins.1", 0x8000, 0x4000, 0xe96c2e94 )
+	ROM_LOAD( "kikra10.bin", 0x0000, 0x2000, 0x841f8f71 )
+	ROM_LOAD( "kikra11.bin", 0x2000, 0x2000, 0x244bd67d )
+	ROM_LOAD( "kikrh14.bin", 0x4000, 0x4000, 0xbbb429b6 )
+	ROM_LOAD( "kikrh13.bin", 0x8000, 0x4000, 0xee8e4448 )
+ROM_END
+
+ROM_START( shaolins_rom )
+	ROM_REGION(0x10000)     /* 64k for code */
+	ROM_LOAD( "kikrd8.bin",  0x6000, 0x2000, 0xb6c97203 )
+	ROM_LOAD( "kikrd9.bin",  0x8000, 0x4000, 0x3665bf81 )
+	ROM_LOAD( "kikrd11.bin", 0xC000, 0x4000, 0xc369280b )
+
+	ROM_REGION(0xC000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "shaolins.6",  0x0000, 0x2000, 0x4d23d183 )
+	ROM_LOAD( "shaolins.7",  0x2000, 0x2000, 0xa97b56ed )
+	ROM_LOAD( "kikrh14.bin", 0x4000, 0x4000, 0xbbb429b6 )
+	ROM_LOAD( "kikrh13.bin", 0x8000, 0x4000, 0xee8e4448 )
 ROM_END
 
 
@@ -427,14 +440,39 @@ static void hisave(void)
 
 
 
-struct GameDriver shaolins_driver =
+struct GameDriver kicker_driver =
 {
 	__FILE__,
 	0,
+	"kicker",
+	"Kicker",
+	"1985",
+	"Konami",
+	"Allard Van Der Bas (MAME driver)\nMirko Buffoni (additional code)\nPhil Stroffolino (additional code)\nGerrit Van Goethem (high score save)\nGerald Vanderick (color info)",
+	0,
+	&shaolins_machine_driver,
+
+	kicker_rom,
+	0, 0,
+	0,
+	0,
+
+	shaolins_input_ports,
+
+	color_prom, 0, 0,
+	ORIENTATION_DEFAULT,
+
+	hiload, hisave
+};
+
+struct GameDriver shaolins_driver =
+{
+	__FILE__,
+	&kicker_driver,
 	"shaolins",
 	"Shao-Lin's Road",
-	"????",
-	"?????",
+	"1985",
+	"Konami",
 	"Allard Van Der Bas (MAME driver)\nMirko Buffoni (additional code)\nPhil Stroffolino (additional code)\nGerrit Van Goethem (high score save)\nGerald Vanderick (color info)",
 	0,
 	&shaolins_machine_driver,

@@ -193,7 +193,7 @@ void c1943_d806_w(int offset,int data)
   the main emulation engine.
 
 ***************************************************************************/
-void c1943_vh_screenrefresh(struct osd_bitmap *bitmap)
+void c1943_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	int offs,sx,sy;
 	int bg_scrolly, bg_scrollx;

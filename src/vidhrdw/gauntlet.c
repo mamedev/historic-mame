@@ -204,38 +204,6 @@ void gauntlet_alpharam_w (int offset, int data)
 
 /*************************************
  *
- *		Palette RAM read/write handlers
- *
- *************************************/
-
-int gauntlet_paletteram_r (int offset)
-{
-	return READ_WORD (&atarigen_paletteram[offset]);
-}
-
-
-void gauntlet_paletteram_w (int offset, int data)
-{
-	int oldword = READ_WORD (&atarigen_paletteram[offset]);
-	int newword = COMBINE_WORD (oldword, data);
-	WRITE_WORD (&atarigen_paletteram[offset], newword);
-
-	{
-		static const int ztable[16] =
-			{ 0x0, 0x3, 0x4, 0x5, 0x6, 0x7, 0x8, 0x9, 0xa, 0xb, 0xc, 0xd, 0xe, 0xf, 0x10, 0x11 };
-		int inten = ztable[(newword >> 12) & 15];
-		int red =   ((newword >> 8) & 15) * inten;
-		int green = ((newword >> 4) & 15) * inten;
-		int blue =  ((newword     ) & 15) * inten;
-
-		palette_change_color ((offset / 2) & 0x3ff, red, green, blue);
-	}
-}
-
-
-
-/*************************************
- *
  *		Motion object list handlers
  *
  *************************************/
@@ -350,7 +318,7 @@ void gauntlet_render_mo (struct osd_bitmap *bitmap, struct rectangle *clip, unsi
 
 ***************************************************************************/
 
-void gauntlet_vh_screenrefresh(struct osd_bitmap *bitmap)
+void gauntlet_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	unsigned char mo_map[16], al_map[32], pf_map[16];
 	int x, y, sx, sy, xoffs, yoffs, i, offs, bank;

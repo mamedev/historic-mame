@@ -42,9 +42,6 @@ static int findbestcolor(unsigned char r,unsigned char g,unsigned char b)
 	mindist = 200000;
 	best = 0;
 
-	if (Machine->drv->video_attributes & VIDEO_SUPPORTS_16BIT)
-		return rgbpen (r, g, b);
-
 	for (i = 0;i < Machine->drv->total_colors;i++)
 	{
 		unsigned char r1,g1,b1;
@@ -252,7 +249,7 @@ void displaytext(const struct DisplayText *dt,int erase)
 	int i,j,trueorientation;
 
 	/*             blac blue whit    blac red  yelw    blac blac red  */
-	int dt_r[] = { 0x00,0x00,0xff,-1,0x00,0xff,0xff,-1,0x00,0x00,0xff };
+	int dt_r[] = { 0x00,0x00,0xff,-1,0x00,0xff,0x7f,-1,0x00,0x00,0xff };
 	int dt_g[] = { 0x00,0x00,0xff,-1,0x00,0x00,0xff,-1,0x00,0x00,0x00 };
 	int dt_b[] = { 0x00,0xff,0xff,-1,0x00,0x00,0x00,-1,0x00,0x00,0x00 };
 
@@ -264,9 +261,10 @@ void displaytext(const struct DisplayText *dt,int erase)
 	/* look for appropriate colors and update the colortable. This is necessary */
 	/* for dynamic palette games */
 
-	/* modified to get better results with limited palettes .ac JAN2498 */
-	for( i=0; i<=10; i++ ) {
-		if( dt_r[i] >= 0 ) {
+	for( i=0; i<=10; i++ )
+	{
+		if( dt_r[i] >= 0 )
+		{
 			j = findbestcolor(dt_r[i],dt_g[i],dt_b[i]);
 			Machine->uifont->colortable[i] = j;
 		}
@@ -415,7 +413,7 @@ int showcharset(void)
 				0,TRANSPARENCY_NONE,0);
 		}
 
-		sprintf(buf,"GFXSET %d  COLOR %d  LINE %d ",bank,color,line);
+		sprintf(buf,"GFXSET %d COLOR %d LINE %d ",bank,color,line);
 		dt[0].text = buf;
 		dt[0].color = DT_COLOR_RED;
 		dt[0].x = 0;
@@ -538,7 +536,7 @@ static int setdipswitches(void)
 			}
 		}
 
-		displaytext(dt,1);
+		displayset(dt,total,s);
 
 		key = osd_read_keyrepeat();
 
@@ -1267,6 +1265,36 @@ void mame_stats (void)
 	while (osd_key_pressed(key)) ;	/* wait for key release */
 }
 
+int showcopyright(void)
+{
+#ifndef macintosh /* LBO - This text is displayed in a dialog box. */
+	int key;
+	struct DisplayText dt[2];
+
+
+	dt[0].text = "PLEASE DO NOT DISTRIBUTE THE SOURCE CODE AND/OR THE EXECUTABLE "
+			"APPLICATION WITH ANY ROM IMAGES.\n"
+			"DOING AS SUCH WILL HARM ANY FURTHER DEVELOPMENT OF MAME AND COULD "
+			"RESULT IN LEGAL ACTION BEING TAKEN BY THE LAWFUL COPYRIGHT HOLDERS "
+			"OF ANY ROM IMAGES.";
+
+	dt[0].color = DT_COLOR_RED;
+	dt[0].x = 0;
+	dt[0].y = 0;
+	dt[1].text = 0;
+	displaytext(dt,1);
+
+	key = osd_read_key();
+	while (osd_key_pressed(key)) ;	/* wait for key release */
+	if (key == OSD_KEY_ESC) return 1;
+#endif
+
+	osd_clearbitmap(Machine->scrbitmap);
+	osd_update_display();
+
+	return 0;
+}
+
 int showcredits(void)
 {
 	int key;
@@ -1285,6 +1313,9 @@ int showcredits(void)
 
 	key = osd_read_key();
 	while (osd_key_pressed(key)) ;	/* wait for key release */
+
+	osd_clearbitmap(Machine->scrbitmap);
+	osd_update_display();
 
 	return 0;
 }
@@ -1329,8 +1360,52 @@ int showgameinfo(void)
 		"VLM5030",
 		"ADPCM samples",
 		"OKIM6295 ADPCM",
-		"MSM5205 ADPCM"
+		"MSM5205 ADPCM",
+		"HC-55516 CVSD"
 	};
+
+
+	if (Machine->gamedrv->flags & GAME_NOT_WORKING)
+	{
+		const struct GameDriver *main;
+		int foundworking;
+
+
+		strcpy(buf,"THIS GAME DOESN'T WORK PROPERLY");
+		if (Machine->gamedrv->clone_of) main = Machine->gamedrv->clone_of;
+		else main = Machine->gamedrv;
+
+		foundworking = 0;
+		i = 0;
+		while (drivers[i])
+		{
+			if (drivers[i] == main || drivers[i]->clone_of == main)
+			{
+				if ((drivers[i]->flags & GAME_NOT_WORKING) == 0)
+				{
+					if (foundworking == 0)
+						strcat(buf,"\n\n\nThere are clones of this game which work. They are:\n\n");
+					foundworking = 1;
+
+					sprintf(&buf[strlen(buf)],"%s\n",drivers[i]->name);
+				}
+			}
+			i++;
+		}
+
+		strcat(buf,"\n\n\nType OK to continue");
+
+		dt[0].text = buf;
+		dt[0].color = DT_COLOR_RED;
+		dt[0].x = 0;
+		dt[0].y = 0;
+		dt[1].text = 0;
+		displaytext(dt,1);
+
+		while (!osd_key_pressed(OSD_KEY_O)) ;
+		while (!osd_key_pressed(OSD_KEY_K)) ;
+		while (osd_key_pressed(OSD_KEY_K)) ;
+	}
 
 
 	sprintf(buf,"%s\n%s %s\n\nCPU:\n",Machine->gamedrv->description,Machine->gamedrv->year,Machine->gamedrv->manufacturer);
@@ -1404,6 +1479,9 @@ int showgameinfo(void)
 
 	key = osd_read_key();
 	while (osd_key_pressed(key)) ;	/* wait for key release */
+
+	osd_clearbitmap(Machine->scrbitmap);
+	osd_update_display();
 
 	return 0;
 }

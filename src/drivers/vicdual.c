@@ -56,21 +56,7 @@ read:
           bit 7 = seems unused
 
 write:
-01        sound. For Carnival:
-          bit 0 = fire gun
-          bit 1 = hit object            * See Port 2
-          bit 2 = duck 1
-          bit 3 = duck 2
-          bit 4 = duck 3
-          bit 5 = hit pipe
-          bit 6 = bonus
-          bit 7 = hit background
-
-02        sound. For Carnival:
-          bit 2 = Switch effect for hit object - Bear
-          bit 3 = Music On/Off
-          bit 4 = ? (may be used as signal to sound processor)
-          bit 5 = Ranking (not implemented)
+	(ports 1 and 2: see definitions in sound driver)
 
 08        ?
 
@@ -80,16 +66,27 @@ write:
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "I8039/I8039.h"
+
+
+
+#define	PSG_CLOCK_CARNIVAL	( 3579545 / 3 )	/* Hz */
+
 
 
 extern unsigned char *vicdual_characterram;
 void vicdual_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 void vicdual_characterram_w(int offset,int data);
 void vicdual_palette_bank_w(int offset, int data);
-void vicdual_vh_screenrefresh(struct osd_bitmap *bitmap);
+void vicdual_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 void carnival_sh_port1_w(int offset, int data);
 void carnival_sh_port2_w(int offset, int data);
+
+int carnival_music_port_t1_r( int offset );
+
+void carnival_music_port_1_w( int offset, int data );
+void carnival_music_port_2_w( int offset, int data );
 
 
 
@@ -147,6 +144,32 @@ static struct IOWritePort writeport[] =
 	{ 0x02, 0x02, carnival_sh_port2_w },
 	{ 0x40, 0x40, vicdual_palette_bank_w },
 	{ -1 }  /* end of table */
+};
+
+
+static struct MemoryReadAddress i8039_readmem[] =
+{
+	{ 0x0000, 0x07ff, MRA_ROM },
+	{ -1 }	/* end of table */
+};
+
+static struct MemoryWriteAddress i8039_writemem[] =
+{
+	{ 0x0000, 0x07ff, MWA_ROM },
+	{ -1 }	/* end of table */
+};
+
+static struct IOReadPort i8039_readport[] =
+{
+	{ I8039_t1, I8039_t1, carnival_music_port_t1_r },
+	{ -1 }
+};
+
+static struct IOWritePort i8039_writeport[] =
+{
+	{ I8039_p1, I8039_p1, carnival_music_port_1_w },
+	{ I8039_p2, I8039_p2, carnival_music_port_2_w },
+	{ -1 }	/* end of table */
 };
 
 
@@ -602,7 +625,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 static struct Samplesinterface samples_interface =
 {
-	8	/* 8 channels */
+	10	/* 10 channels */
 };
 
 
@@ -617,7 +640,7 @@ static struct MachineDriver NAME =					\
 	{												\
 		{											\
 			CPU_Z80,								\
-			1933560,	/* 1.93356 Mhz ???? */		\
+			3867120/2,								\
 			0,										\
 			readmem,writemem,readport_##PORT,writeport,	\
 			ignore_interrupt,1						\
@@ -653,6 +676,70 @@ MACHINEDRIVER( vicdual_2Aports_machine_driver, 2Aports )
 MACHINEDRIVER( vicdual_2Bports_machine_driver, 2Bports )
 MACHINEDRIVER( vicdual_3ports_machine_driver, 3ports )
 MACHINEDRIVER( vicdual_4ports_machine_driver, 4ports )
+
+
+static struct AY8910interface ay8910_interface =
+{
+	1,	/* 1 chips */
+	PSG_CLOCK_CARNIVAL,
+	{ 255 },
+	{ 0 },
+	{ 0 },
+	{ 0 },
+	{ 0 },
+	{ 0 }
+};
+
+/* don't know if any of the other games use the 8048 music board */
+/* so, we won't burden those drivers with the extra music handling */
+static struct MachineDriver carnival_machine_driver =
+{
+	/* basic machine hardware */
+	{
+		{
+			CPU_Z80,
+			3867120/2,
+			0,
+			readmem,writemem,readport_4ports,writeport,
+			ignore_interrupt,1
+		},
+		{
+			CPU_I8039 | CPU_AUDIO_CPU,
+			( ( 3579545 / 5 ) / 3 ),
+			2,
+			i8039_readmem,i8039_writemem,i8039_readport,i8039_writeport,
+			ignore_interrupt,1
+		}
+	},
+	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
+	10,
+	0,
+
+	/* video hardware */
+	32*8, 32*8, { 0*8, 32*8-1, 0*8, 28*8-1 },
+	gfxdecodeinfo,
+	64, 64,
+	vicdual_vh_convert_color_prom,
+
+	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY,
+	0,
+	generic_vh_start,
+	generic_vh_stop,
+	vicdual_vh_screenrefresh,
+
+	/* sound hardware */
+	0,0,0,0,
+	{
+		{
+			SOUND_AY8910,
+			&ay8910_interface
+		},
+		{
+			SOUND_SAMPLES,
+			&samples_interface
+		}
+	}
+};
 
 
 
@@ -827,6 +914,13 @@ ROM_START( carnival_rom )
 	ROM_LOAD( "664u3.cpu",  0x7400, 0x0400, 0x75f1b261 )
 	ROM_LOAD( "665u2.cpu",  0x7800, 0x0400, 0xecdd5165 )
 	ROM_LOAD( "666u1.cpu",  0x7c00, 0x0400, 0x24809182 )
+
+	ROM_REGION(0x2000)	/* temporary space for graphics (disposed after conversion) */
+	/* empty memory region - not used by the game, but needed because the main */
+	/* core currently always frees region #1 after initialization. */
+
+	ROM_REGION(0x0800)
+	ROM_LOAD( "crvl.snd",  0x0000, 0x0800, 0xd8240000 )
 ROM_END
 
 ROM_START( pulsar_rom )
@@ -879,12 +973,15 @@ static unsigned char headon_color_prom[] =
 	0xE1,0xE1,0xE1,0xE1,0xE1,0xE1,0xE1,0xE1,0xE1,0xE1,0xE1,0xE1,0xE1,0xE1,0xE1,0xE1,
 };
 
+#if 0
+/* ROMs for this game are not available yet */
 static unsigned char ho2ds_color_prom[] =
 {
 	/* 306-283: palette */
 	0x31,0xB1,0x71,0x31,0x31,0x31,0x31,0x31,0x91,0xF1,0x31,0xF1,0x51,0xB1,0x91,0xB1,
 	0xF5,0x79,0x31,0xB9,0xF5,0xF5,0xB5,0x95,0x31,0x31,0x31,0x31,0x31,0x31,0x31,0x31
 };
+#endif
 
 static unsigned char invho2_color_prom[] =
 {
@@ -942,17 +1039,17 @@ static unsigned char pulsar_color_prom[] =
 
 static const char *carnival_sample_names[] =
 {
-	"C1.SAM",       /* Fire Gun 1 */
-	"C2.SAM",       /* Hit Target */
-	"C3.SAM",       /* Duck 1 */
-	"C4.SAM",       /* Duck 2 */
-	"C5.SAM",       /* Duck 3 */
-	"C6.SAM",       /* Hit Pipe */
-	"C7.SAM",       /* BONUS */
-	"C8.SAM",       /* Hit bonus box */
-	"C9.SAM",       /* Fire Gun 2 */
-	"C10.SAM",      /* Hit Bear */
-	0               /* end of array */
+	"bear.sam",
+	"bonus1.sam",
+	"bonus2.sam",
+	"clang.sam",
+	"duck1.sam",
+	"duck2.sam",
+	"duck3.sam",
+	"pipehit.sam",
+	"ranking.sam",
+	"rifle.sam",
+	NULL
 };
 
 
@@ -1002,43 +1099,291 @@ static void carnival_hisave(void)
 
 
 
-#define GAMEDRIVER(GAMENAME,DESC,MACHINEDRIVER,SAMPLES,ORIENTATION,HILOAD,HISAVE) \
-struct GameDriver GAMENAME##_driver =				\
-{													\
-	__FILE__,                                       \
-	0,                                              \
-	#GAMENAME,										\
-	DESC,											\
-	"????",                                         \
-	"?????",                                        \
-	"Mike Coates\nRichard Davies\nNicola Salmoria\nZsolt Vasvari",	\
-	0,                                              \
-	&MACHINEDRIVER,									\
-													\
-	GAMENAME##_rom,									\
-	0, 0,											\
-	SAMPLES,										\
-	0,	/* sound_prom */							\
-													\
-	GAMENAME##_input_ports,							\
-													\
-	GAMENAME##_color_prom, 0, 0,					\
-													\
-	ORIENTATION,									\
-													\
-	HILOAD,HISAVE									\
+struct GameDriver depthch_driver =
+{
+	__FILE__,
+	0,
+	"depthch",
+	"Depth Charge",
+	"1977",
+	"Gremlin",
+	"Mike Coates\nRichard Davies\nNicola Salmoria\nZsolt Vasvari",
+	0,
+	&vicdual_2Aports_machine_driver,
+
+	depthch_rom,
+	0, 0,
+	0,
+	0,	/* sound_prom */
+
+	depthch_input_ports,
+
+	depthch_color_prom, 0, 0,
+
+	ORIENTATION_DEFAULT,
+
+	0, 0
 };
 
-GAMEDRIVER( depthch,  "Depth Charge",          vicdual_2Aports_machine_driver, 0, ORIENTATION_DEFAULT,    0, 0 )
-GAMEDRIVER( safari,   "Safari",                vicdual_2Bports_machine_driver, 0, ORIENTATION_DEFAULT,    0, 0 )
-GAMEDRIVER( sspaceat, "Sega Space Attack",     vicdual_3ports_machine_driver,  0, ORIENTATION_ROTATE_270, 0, 0 )
-GAMEDRIVER( headon,   "Head On",               vicdual_2Aports_machine_driver, 0, ORIENTATION_DEFAULT,    0, 0 )
+struct GameDriver safari_driver =
+{
+	__FILE__,
+	0,
+	"safari",
+	"Safari",
+	"1977",
+	"Gremlin",
+	"Mike Coates\nRichard Davies\nNicola Salmoria\nZsolt Vasvari",
+	0,
+	&vicdual_2Bports_machine_driver,
+
+	safari_rom,
+	0, 0,
+	0,
+	0,	/* sound_prom */
+
+	safari_input_ports,
+
+	safari_color_prom, 0, 0,
+
+	ORIENTATION_DEFAULT,
+
+	0, 0
+};
+
+struct GameDriver sspaceat_driver =
+{
+	__FILE__,
+	0,
+	"sspaceat",
+	"Sega Space Attack",
+	"1979",
+	"Sega",
+	"Mike Coates\nRichard Davies\nNicola Salmoria\nZsolt Vasvari",
+	0,
+	&vicdual_3ports_machine_driver,
+
+	sspaceat_rom,
+	0, 0,
+	0,
+	0,	/* sound_prom */
+
+	sspaceat_input_ports,
+
+	sspaceat_color_prom, 0, 0,
+
+	ORIENTATION_ROTATE_270,
+
+	0, 0
+};
+
+struct GameDriver headon_driver =
+{
+	__FILE__,
+	0,
+	"headon",
+	"Head On",
+	"1979",
+	"Gremlin",
+	"Mike Coates\nRichard Davies\nNicola Salmoria\nZsolt Vasvari",
+	0,
+	&vicdual_2Aports_machine_driver,
+
+	headon_rom,
+	0, 0,
+	0,
+	0,	/* sound_prom */
+
+	headon_input_ports,
+
+	headon_color_prom, 0, 0,
+
+	ORIENTATION_DEFAULT,
+
+	0, 0
+};
+
 /* No ROMs yet for the following one, but we have the color PROM. */
 //GAMEDRIVER( ho2ds,    "Head On 2 / Deep Scan", vicdual_4ports_machine_driver,  0, ORIENTATION_ROTATE_270, 0, 0 )
-GAMEDRIVER( invho2,   "Invinco / Head On 2",   vicdual_4ports_machine_driver,  0, ORIENTATION_ROTATE_270, 0, 0 )
-GAMEDRIVER( invinco,  "Invinco",               vicdual_3ports_machine_driver,  0, ORIENTATION_ROTATE_270, 0, 0 )
-GAMEDRIVER( invds,    "Invinco / Deep Scan",   vicdual_4ports_machine_driver,  0, ORIENTATION_ROTATE_270, 0, 0 )
-GAMEDRIVER( tranqgun, "Tranquilizer Gun",      vicdual_4ports_machine_driver,  0, ORIENTATION_ROTATE_270, 0, 0 )
-GAMEDRIVER( spacetrk, "Space Trek",            vicdual_4ports_machine_driver,  0, ORIENTATION_ROTATE_270, 0, 0 )
-GAMEDRIVER( carnival, "Carnival",              vicdual_4ports_machine_driver, carnival_sample_names, ORIENTATION_ROTATE_270, carnival_hiload, carnival_hisave )
-GAMEDRIVER( pulsar,   "Pulsar",                vicdual_4ports_machine_driver,  0, ORIENTATION_ROTATE_270, 0, 0 )
+
+struct GameDriver invho2_driver =
+{
+	__FILE__,
+	0,
+	"invho2",
+	"Invinco / Head On 2",
+	"1979",
+	"Sega",
+	"Mike Coates\nRichard Davies\nNicola Salmoria\nZsolt Vasvari",
+	0,
+	&vicdual_4ports_machine_driver,
+
+	invho2_rom,
+	0, 0,
+	0,
+	0,	/* sound_prom */
+
+	invho2_input_ports,
+
+	invho2_color_prom, 0, 0,
+
+	ORIENTATION_ROTATE_270,
+
+	0, 0
+};
+
+struct GameDriver invinco_driver =
+{
+	__FILE__,
+	0,
+	"invinco",
+	"Invinco",
+	"1979",
+	"Sega",
+	"Mike Coates\nRichard Davies\nNicola Salmoria\nZsolt Vasvari",
+	0,
+	&vicdual_3ports_machine_driver,
+
+	invinco_rom,
+	0, 0,
+	0,
+	0,	/* sound_prom */
+
+	invinco_input_ports,
+
+	invinco_color_prom, 0, 0,
+
+	ORIENTATION_ROTATE_270,
+
+	0, 0
+};
+
+struct GameDriver invds_driver =
+{
+	__FILE__,
+	0,
+	"invds",
+	"Invinco / Deep Scan",
+	"1979",
+	"Sega",
+	"Mike Coates\nRichard Davies\nNicola Salmoria\nZsolt Vasvari",
+	0,
+	&vicdual_4ports_machine_driver,
+
+	invds_rom,
+	0, 0,
+	0,
+	0,	/* sound_prom */
+
+	invds_input_ports,
+
+	invds_color_prom, 0, 0,
+
+	ORIENTATION_ROTATE_270,
+
+	0, 0
+};
+
+struct GameDriver tranqgun_driver =
+{
+	__FILE__,
+	0,
+	"tranqgun",
+	"Tranquilizer Gun",
+	"1980",
+	"Sega",
+	"Mike Coates\nRichard Davies\nNicola Salmoria\nZsolt Vasvari",
+	0,
+	&vicdual_4ports_machine_driver,
+
+	tranqgun_rom,
+	0, 0,
+	0,
+	0,	/* sound_prom */
+
+	tranqgun_input_ports,
+
+	tranqgun_color_prom, 0, 0,
+
+	ORIENTATION_ROTATE_270,
+
+	0, 0
+};
+
+struct GameDriver spacetrk_driver =
+{
+	__FILE__,
+	0,
+	"spacetrk",
+	"Space Trek",
+	"1980",
+	"Sega",
+	"Mike Coates\nRichard Davies\nNicola Salmoria\nZsolt Vasvari",
+	0,
+	&vicdual_4ports_machine_driver,
+
+	spacetrk_rom,
+	0, 0,
+	0,
+	0,	/* sound_prom */
+
+	spacetrk_input_ports,
+
+	spacetrk_color_prom, 0, 0,
+
+	ORIENTATION_ROTATE_270,
+
+	0, 0
+};
+
+struct GameDriver carnival_driver =
+{
+	__FILE__,
+	0,
+	"carnival",
+	"Carnival",
+	"1980",
+	"Sega",
+	"Mike Coates\nRichard Davies\nNicola Salmoria\nZsolt Vasvari\nPeter Clare (sound)",
+	0,
+	&carnival_machine_driver,
+
+	carnival_rom,
+	0, 0,
+	carnival_sample_names,
+	0,	/* sound_prom */
+
+	carnival_input_ports,
+
+	carnival_color_prom, 0, 0,
+
+	ORIENTATION_ROTATE_270,
+
+	carnival_hiload, carnival_hisave
+};
+
+struct GameDriver pulsar_driver =
+{
+	__FILE__,
+	0,
+	"pulsar",
+	"Pulsar",
+	"1981",
+	"Sega",
+	"Mike Coates\nRichard Davies\nNicola Salmoria\nZsolt Vasvari",
+	0,
+	&vicdual_4ports_machine_driver,
+
+	pulsar_rom,
+	0, 0,
+	0,
+	0,	/* sound_prom */
+
+	pulsar_input_ports,
+
+	pulsar_color_prom, 0, 0,
+
+	ORIENTATION_ROTATE_270,
+
+	0, 0
+};

@@ -75,7 +75,7 @@ void superpac_draw_sprite(struct osd_bitmap *dest,unsigned int code,unsigned int
   the main emulation engine.
 
 ***************************************************************************/
-void superpac_vh_screenrefresh(struct osd_bitmap *bitmap)
+void superpac_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	int offs;
 

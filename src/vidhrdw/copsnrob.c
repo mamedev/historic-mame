@@ -41,7 +41,7 @@ unsigned char *copsnrob_trucky;
   the main emulation engine.
 
 ***************************************************************************/
-void copsnrob_vh_screenrefresh(struct osd_bitmap *bitmap)
+void copsnrob_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
     int offs, x, y, bullet, mask1, mask2;
 

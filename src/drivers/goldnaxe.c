@@ -39,19 +39,19 @@ WRITE:
 #include "machine/system16.h"
 
 void system16_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
-void system16_vh_screenrefresh(struct osd_bitmap *bitmap);
+void system16_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 
 static struct MemoryReadAddress goldnaxe_readmem[] =
 {
 	{ 0x000000, 0x0bffff, MRA_ROM },
-	{ 0x200000, 0x200fff, system16_spriteram_r, &system16_spriteram, &s16_spriteram_size },
-	{ 0x140000, 0x140fff, system16_paletteram_r, &system16_paletteram, &s16_paletteram_size },
-	{ 0x110000, 0x110fff, system16_videoram_r, &system16_videoram, &s16_videoram_size },
-	{ 0x100000, 0x10ffff, system16_backgroundram_r, &system16_backgroundram, &s16_backgroundram_size },
+	{ 0x100000, 0x10ffff, system16_backgroundram_r },
+	{ 0x110000, 0x110fff, system16_videoram_r },
+	{ 0x140000, 0x140fff, paletteram_word_r },
+	{ 0x200000, 0x200fff, system16_spriteram_r },
 	{ 0xc41000, 0xc41007, shinobi_control_r },
 	{ 0xc42000, 0xc42007, shinobi_dsw_r },
-	{ 0xfe0000, 0xfeffff, system16_soundram_r, &system16_soundram, &s16_soundram_size },
+	{ 0xfe0000, 0xfeffff, system16_soundram_r },
 	{ 0xffecd0, 0xffecd3, goldnaxe_mirror1_r, &goldnaxe_mirror1 },
 	{ 0xffec94, 0xffec97, goldnaxe_mirror2_r, &goldnaxe_mirror2 },
 	{ 0xff0000, 0xffffff, MRA_BANK1 },
@@ -61,17 +61,17 @@ static struct MemoryReadAddress goldnaxe_readmem[] =
 static struct MemoryWriteAddress goldnaxe_writemem[] =
 {
 	{ 0x000000, 0x0bffff, MWA_ROM },
+	{ 0x100000, 0x10ffff, system16_backgroundram_w, &system16_backgroundram, &s16_backgroundram_size },
 	{ 0x110e90, 0x110e9f, system16_scroll_w, &system16_scrollram },
 	{ 0x110e80, 0x110e87, system16_pagesel_w, &system16_pagesram },
-	{ 0x110000, 0x110fff, system16_videoram_w },
-	{ 0x100000, 0x10ffff, system16_backgroundram_w },
+	{ 0x110000, 0x110fff, system16_videoram_w, &system16_videoram, &s16_videoram_size },
+	{ 0x140000, 0x140fff, system16_paletteram_w, &paletteram },
 	{ 0x1f0000, 0x1f0003, MWA_NOP },				/* IO Ctrl: Unknown */
-	{ 0x200000, 0x200fff, system16_spriteram_w },
-	{ 0x140000, 0x140fff, system16_paletteram_w },
+	{ 0x200000, 0x200fff, system16_spriteram_w, &system16_spriteram, &s16_spriteram_size },
 	{ 0xc40000, 0xc40003, goldnaxe_refreshenable_w, &system16_refreshregister },
 	{ 0xc40008, 0xc4000f, MWA_NOP },				/* IO Ctrl:  Unknown */
 	{ 0xc43000, 0xc4300f, MWA_NOP },				/* IO Ctrl:  Unknown */
-	{ 0xfe0000, 0xfeffff, system16_soundram_w },
+	{ 0xfe0000, 0xfeffff, system16_soundram_w, &system16_soundram, &s16_soundram_size },
 	{ 0xff0000, 0xffffff, MWA_BANK1 },
 	{ -1 }  /* end of table */
 };
@@ -229,10 +229,10 @@ static struct MachineDriver machine_driver =
 	/* video hardware */
 	40*8, 28*8, { 0*8, 40*8-1, 0*8, 28*8-1 },
 	gfxdecodeinfo,
-	256,2048,
+	2048,2048,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_16BIT,
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
 	0,
 	system16_vh_start,
 	system16_vh_stop,
@@ -290,8 +290,8 @@ struct GameDriver goldnaxe_driver =
 	0,
 	"goldnaxe",
 	"Golden Axe",
-	"????",
-	"?????",
+	"1989",
+	"Sega",
 	"Mirko Buffoni         (Mame Driver)\nThierry Lescot & Nao  (Hardware Info)",
 	0,
 	&machine_driver,

@@ -65,7 +65,7 @@ static int tankbatt_nmi_enable; /* No need to init this - the game will set it o
 static int tankbatt_sound_enable;
 
 void tankbatt_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-void tankbatt_vh_screenrefresh(struct osd_bitmap *bitmap);
+void tankbatt_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 void tankbatt_led_w(int offset,int data)
 {
@@ -404,8 +404,8 @@ struct GameDriver tankbatt_driver =
 	0,
 	"tankbatt",
 	"Tank Battalion",
-	"????",
-	"?????",
+	"1980",
+	"Namco",
 	"Brad Oliver",
 	0,
 	&machine_driver,

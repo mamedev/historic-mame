@@ -16,7 +16,7 @@ extern int cps1_interrupt2(void);      /* Everything else */
 
 extern int  cps1_vh_start(void);
 extern void cps1_vh_stop(void);
-extern void cps1_vh_screenrefresh(struct osd_bitmap *bitmap);
+extern void cps1_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 /* Game specific data */
 struct CPS1config

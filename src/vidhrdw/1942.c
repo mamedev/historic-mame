@@ -117,7 +117,7 @@ void c1942_updatehook1(int offset)
   the main emulation engine.
 
 ***************************************************************************/
-void c1942_vh_screenrefresh(struct osd_bitmap *bitmap)
+void c1942_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	int offs;
 

@@ -76,7 +76,7 @@ void vastar_bg2colorram2_w(int offset,int data);
 void vastar_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 int vastar_vh_start(void);
 void vastar_vh_stop(void);
-void vastar_vh_screenrefresh(struct osd_bitmap *bitmap);
+void vastar_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 extern unsigned char *vastar_sharedram;
 void vastar_init_machine(void);
@@ -414,15 +414,58 @@ ROM_END
 
 
 
+static int hiload(void)
+{
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+
+	/* check if the hi score table has already been initialized */
+	if (memcmp(&RAM[0xf128],"\x00\x20",2) == 0)
+	{
+		void *f;
+
+
+		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
+		{
+			osd_fread(f,&RAM[0xf128],133);
+			osd_fclose(f);
+
+			/* let's show them on the screen!! */
+			RAM[0xce21]=(RAM[0xf129]/16);
+			RAM[0xce01]=(RAM[0xf129]%16);
+			RAM[0xcde1]=(RAM[0xf128]/16);
+			RAM[0xcdc1]=(RAM[0xf128]%16);
+		}
+
+		return 1;
+	}
+	else return 0;  /* we can't load the hi scores yet */
+}
+
+static void hisave(void)
+{
+	void *f;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+
+	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
+	{
+		osd_fwrite(f,&RAM[0xf128],133);
+		osd_fclose(f);
+	}
+}
+
+
+
 struct GameDriver vastar_driver =
 {
 	__FILE__,
 	0,
 	"vastar",
 	"Vastar",
-	"????",
-	"?????",
-	"Allard van der Bas\nNicola Salmoria",
+	"1983",
+	"Sesame Japan",
+	"Allard van der Bas\nNicola Salmoria\nDani Portillo (hi score)",
 	0,
 	&machine_driver,
 
@@ -436,5 +479,5 @@ struct GameDriver vastar_driver =
 	color_prom, 0, 0,
 	ORIENTATION_ROTATE_90,
 
-	0, 0
+	hiload, hisave
 };

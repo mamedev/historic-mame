@@ -11,7 +11,6 @@
 
 
 
-unsigned char *centiped_paletteram;
 static int flipscreen;
 
 static struct rectangle spritevisiblearea =
@@ -59,7 +58,7 @@ static void setcolor(int pen,int data)
 
 void centiped_paletteram_w(int offset,int data)
 {
-	centiped_paletteram[offset] = data;
+	paletteram[offset] = data;
 
 	/* the char palette will be effectively updated by the next interrupt handler */
 
@@ -81,7 +80,7 @@ int centiped_interrupt(void)
 	/* set the palette for the previous screen slice to properly support */
 	/* midframe palette changes in test mode */
 	for (offset = 4;offset < 8;offset++)
-		setcolor(4 * slice + start + (offset - 4),centiped_paletteram[offset]);
+		setcolor(4 * slice + start + (offset - 4),paletteram[offset]);
 
 	return interrupt();
 }
@@ -106,7 +105,7 @@ void centiped_vh_flipscreen_w (int offset,int data)
   the main emulation engine.
 
 ***************************************************************************/
-void centiped_vh_screenrefresh(struct osd_bitmap *bitmap)
+void centiped_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	int offs;
 

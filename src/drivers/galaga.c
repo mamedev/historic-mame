@@ -92,7 +92,7 @@ void galaga_init_machine(void);
 extern unsigned char *galaga_starcontrol;
 void galaga_flipscreen_w(int offset,int data);
 int galaga_vh_start(void);
-void galaga_vh_screenrefresh(struct osd_bitmap *bitmap);
+void galaga_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 void galaga_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 
 void pengo_sound_w(int offset,int data);
@@ -388,37 +388,10 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 
 
-static unsigned char color_prom[] =
-{
-	/* 5N - palette */
-	0xF6,0x07,0x3F,0x27,0x2F,0xC7,0xF8,0xED,0x16,0x38,0x21,0xD8,0xC4,0xC0,0xA0,0x00,
-	0xF6,0x07,0x3F,0x27,0x00,0xC7,0xF8,0xE8,0x00,0x38,0x00,0xD8,0xC5,0xC0,0x00,0x00,
-	/* 2N - chars */
-	0x0F,0x00,0x00,0x06,0x0F,0x0D,0x01,0x00,0x0F,0x02,0x0C,0x0D,0x0F,0x0B,0x01,0x00,
-	0x0F,0x01,0x00,0x01,0x0F,0x00,0x00,0x02,0x0F,0x00,0x00,0x03,0x0F,0x00,0x00,0x05,
-	0x0F,0x00,0x00,0x09,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
-	0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x0F,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
-	0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
-	0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
-	0x0F,0x0B,0x07,0x06,0x0F,0x06,0x0B,0x07,0x0F,0x07,0x06,0x0B,0x0F,0x0F,0x0F,0x01,
-	0x0F,0x0F,0x0B,0x0F,0x0F,0x02,0x0F,0x0F,0x0F,0x06,0x06,0x0B,0x0F,0x06,0x0B,0x0B,
-	/* 1C - sprites */
-	0x0F,0x08,0x0E,0x02,0x0F,0x05,0x0B,0x0C,0x0F,0x00,0x0B,0x01,0x0F,0x01,0x0B,0x02,
-	0x0F,0x08,0x0D,0x02,0x0F,0x06,0x01,0x04,0x0F,0x09,0x01,0x05,0x0F,0x07,0x0B,0x01,
-	0x0F,0x01,0x06,0x0B,0x0F,0x01,0x0B,0x00,0x0F,0x01,0x02,0x00,0x0F,0x00,0x01,0x06,
-	0x0F,0x00,0x00,0x06,0x0F,0x03,0x0B,0x09,0x0F,0x06,0x02,0x00,0x00,0x00,0x00,0x00,
-	0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
-	0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
-	0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
-	0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00
-};
-
-
-
-
 /* waveforms for the audio hardware */
 static unsigned char sound_prom[] =
 {
+	/* 1D.BIN */
 	0x77,0x99,0xAA,0xBB,0xCC,0xDD,0xDD,0xEE,0xEE,0xEE,0xDD,0xDD,0xCC,0xBB,0xAA,0x99,
 	0x77,0x55,0x44,0x33,0x22,0x11,0x11,0x00,0x00,0x00,0x11,0x11,0x22,0x33,0x44,0x55,
 	0x77,0x99,0xAA,0xBB,0x77,0xDD,0xDD,0x77,0xEE,0x77,0xDD,0xDD,0x77,0xBB,0xAA,0x99,
@@ -467,14 +440,14 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_Z80,
 			3125000,        /* 3.125 Mhz */
-			2,      /* memory region #2 */
+			3,      /* memory region #3 */
 			readmem_cpu2,writemem_cpu2,0,0,
 			galaga_interrupt_2,1
 		},
 		{
 			CPU_Z80,
 			3125000,        /* 3.125 Mhz */
-			3,      /* memory region #3 */
+			4,      /* memory region #4 */
 			readmem_cpu3,writemem_cpu3,0,0,
 			galaga_interrupt_3,2
 		}
@@ -520,25 +493,6 @@ static struct MachineDriver machine_driver =
 
 ROM_START( galaga_rom )
 	ROM_REGION(0x10000)     /* 64k for code for the first CPU  */
-	ROM_LOAD( "3200a.bin", 0x0000, 0x1000, 0xa0c3e1bf )
-	ROM_LOAD( "3300b.bin", 0x1000, 0x1000, 0x1819bf3b )
-	ROM_LOAD( "3400c.bin", 0x2000, 0x1000, 0x1060ec44 )
-	ROM_LOAD( "3500d.bin", 0x3000, 0x1000, 0xf02d0b8b )
-
-	ROM_REGION(0x3000)      /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "2600j_4l.bin", 0x0000, 0x1000, 0x730600f0 )
-	ROM_LOAD( "2800l_4d.bin", 0x1000, 0x1000, 0xffdf703b )
-	ROM_LOAD( "2700k.bin",    0x2000, 0x1000, 0xa83e9cae )
-
-	ROM_REGION(0x10000)     /* 64k for the second CPU */
-	ROM_LOAD( "3600e.bin", 0x0000, 0x1000, 0xe70740a3 )
-
-	ROM_REGION(0x10000)     /* 64k for the third CPU  */
-	ROM_LOAD( "3700g.bin", 0x0000, 0x1000, 0x20c4710c )
-ROM_END
-
-ROM_START( galaganm_rom )
-	ROM_REGION(0x10000)     /* 64k for code for the first CPU  */
 	ROM_LOAD( "04m_g01.bin", 0x0000, 0x1000, 0xdf86b6ec )
 	ROM_LOAD( "04k_g02.bin", 0x1000, 0x1000, 0x938e00f8 )
 	ROM_LOAD( "04j_g03.bin", 0x2000, 0x1000, 0x8fe52561 )
@@ -549,6 +503,11 @@ ROM_START( galaganm_rom )
 	ROM_LOAD( "07e_g10.bin", 0x1000, 0x1000, 0xffdf703b )
 	ROM_LOAD( "07h_g09.bin", 0x2000, 0x1000, 0xa83e9cae )
 
+	ROM_REGION(0x0220)	/* color PROMs */
+	ROM_LOAD( "5n.bin", 0x0000, 0x0020, 0xf05fb905 )	/* palette */
+	ROM_LOAD( "2n.bin", 0x0020, 0x0100, 0xe6d30001 )	/* char lookup table */
+	ROM_LOAD( "1c.bin", 0x0120, 0x0100, 0xc3750b05 )	/* sprite lookup table */
+
 	ROM_REGION(0x10000)     /* 64k for the second CPU */
 	ROM_LOAD( "04e_g05.bin", 0x0000, 0x1000, 0x6079fa7d )
 
@@ -556,61 +515,100 @@ ROM_START( galaganm_rom )
 	ROM_LOAD( "04d_g06.bin", 0x0000, 0x1000, 0x9dd8ebd8 )
 ROM_END
 
-ROM_START( galagabl_rom )
+ROM_START( galagamw_rom )
 	ROM_REGION(0x10000)     /* 64k for code for the first CPU  */
-	ROM_LOAD( "galagabl.1_1", 0x0000, 0x1000, 0xdf86b6ec )
-	ROM_LOAD( "galagabl.1_2", 0x1000, 0x1000, 0x6bb57bbf )
-	ROM_LOAD( "galagabl.1_3", 0x2000, 0x1000, 0x8fe52561 )
-	ROM_LOAD( "galagabl.1_4", 0x3000, 0x1000, 0xca530147 )
+	ROM_LOAD( "3200a.bin", 0x0000, 0x1000, 0xa0c3e1bf )
+	ROM_LOAD( "3300b.bin", 0x1000, 0x1000, 0x1819bf3b )
+	ROM_LOAD( "3400c.bin", 0x2000, 0x1000, 0x1060ec44 )
+	ROM_LOAD( "3500d.bin", 0x3000, 0x1000, 0xf02d0b8b )
 
 	ROM_REGION(0x3000)      /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "galagabl.1_8", 0x0000, 0x1000, 0x730600f0 )
-	ROM_LOAD( "galagabl.1_a", 0x1000, 0x1000, 0xffdf703b )
-	ROM_LOAD( "galagabl.1_9", 0x2000, 0x1000, 0xa83e9cae )
+	ROM_LOAD( "07m_g08.bin", 0x0000, 0x1000, 0x730600f0 )
+	ROM_LOAD( "07e_g10.bin", 0x1000, 0x1000, 0xffdf703b )
+	ROM_LOAD( "07h_g09.bin", 0x2000, 0x1000, 0xa83e9cae )
+
+	ROM_REGION(0x0220)	/* color PROMs */
+	ROM_LOAD( "5n.bin", 0x0000, 0x0020, 0xf05fb905 )	/* palette */
+	ROM_LOAD( "2n.bin", 0x0020, 0x0100, 0xe6d30001 )	/* char lookup table */
+	ROM_LOAD( "1c.bin", 0x0120, 0x0100, 0xc3750b05 )	/* sprite lookup table */
 
 	ROM_REGION(0x10000)     /* 64k for the second CPU */
-	ROM_LOAD( "galagabl.1_5", 0x0000, 0x1000, 0x6079fa7d )
+	ROM_LOAD( "3600e.bin", 0x0000, 0x1000, 0xe70740a3 )
 
 	ROM_REGION(0x10000)     /* 64k for the third CPU  */
-	ROM_LOAD( "galagabl.1_7", 0x0000, 0x1000, 0x9dd8ebd8 )
+	ROM_LOAD( "3700g.bin", 0x0000, 0x1000, 0x20c4710c )
+ROM_END
+
+ROM_START( galagads_rom )
+	ROM_REGION(0x10000)     /* 64k for code for the first CPU  */
+	ROM_LOAD( "3200a.bin", 0x0000, 0x1000, 0xa0c3e1bf )
+	ROM_LOAD( "3300b.bin", 0x1000, 0x1000, 0x1819bf3b )
+	ROM_LOAD( "3400c.bin", 0x2000, 0x1000, 0x1060ec44 )
+	ROM_LOAD( "3500d.bin", 0x3000, 0x1000, 0xf02d0b8b )
+
+	ROM_REGION(0x3000)      /* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "07m_g08.bin", 0x0000, 0x1000, 0x730600f0 )
+	ROM_LOAD( "07e_g10.bin", 0x1000, 0x1000, 0xffdf703b )
+	ROM_LOAD( "07h_g09.bin", 0x2000, 0x1000, 0xa83e9cae )
+
+	ROM_REGION(0x0220)	/* color PROMs */
+	ROM_LOAD( "5n.bin", 0x0000, 0x0020, 0xf05fb905 )	/* palette */
+	ROM_LOAD( "2n.bin", 0x0020, 0x0100, 0xe6d30001 )	/* char lookup table */
+	ROM_LOAD( "1c.bin", 0x0120, 0x0100, 0xc3750b05 )	/* sprite lookup table */
+
+	ROM_REGION(0x10000)     /* 64k for the second CPU */
+	ROM_LOAD( "3600fast.bin", 0x0000, 0x1000, 0xe8074051 )
+
+	ROM_REGION(0x10000)     /* 64k for the third CPU  */
+	ROM_LOAD( "3700g.bin", 0x0000, 0x1000, 0x20c4710c )
 ROM_END
 
 ROM_START( gallag_rom )
 	ROM_REGION(0x10000)     /* 64k for code for the first CPU  */
-	ROM_LOAD( "gallag.1", 0x0000, 0x1000, 0xdf86b6ec )
-	ROM_LOAD( "gallag.2", 0x1000, 0x1000, 0x7ca470a4 )
-	ROM_LOAD( "gallag.3", 0x2000, 0x1000, 0x8fe52561 )
-	ROM_LOAD( "gallag.4", 0x3000, 0x1000, 0xca530147 )
+	ROM_LOAD( "04m_g01.bin", 0x0000, 0x1000, 0xdf86b6ec )
+	ROM_LOAD( "gallag.2",    0x1000, 0x1000, 0x7ca470a4 )
+	ROM_LOAD( "04j_g03.bin", 0x2000, 0x1000, 0x8fe52561 )
+	ROM_LOAD( "04h_g04.bin", 0x3000, 0x1000, 0xca530147 )
 
 	ROM_REGION(0x3000)      /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "gallag.8", 0x0000, 0x1000, 0x0c670ff9 )
-	ROM_LOAD( "gallag.a", 0x1000, 0x1000, 0xffdf703b )
-	ROM_LOAD( "gallag.9", 0x2000, 0x1000, 0xa83e9cae )
+	ROM_LOAD( "gallag.8",    0x0000, 0x1000, 0x0c670ff9 )
+	ROM_LOAD( "07e_g10.bin", 0x1000, 0x1000, 0xffdf703b )
+	ROM_LOAD( "07h_g09.bin", 0x2000, 0x1000, 0xa83e9cae )
+
+	ROM_REGION(0x0220)	/* color PROMs */
+	ROM_LOAD( "5n.bin", 0x0000, 0x0020, 0xf05fb905 )	/* palette */
+	ROM_LOAD( "2n.bin", 0x0020, 0x0100, 0xe6d30001 )	/* char lookup table */
+	ROM_LOAD( "1c.bin", 0x0120, 0x0100, 0xc3750b05 )	/* sprite lookup table */
 
 	ROM_REGION(0x10000)     /* 64k for the second CPU */
-	ROM_LOAD( "gallag.5", 0x0000, 0x1000, 0x6079fa7d )
+	ROM_LOAD( "04e_g05.bin", 0x0000, 0x1000, 0x6079fa7d )
 
 	ROM_REGION(0x10000)     /* 64k for the third CPU  */
-	ROM_LOAD( "gallag.7", 0x0000, 0x1000, 0x9dd8ebd8 )
+	ROM_LOAD( "04d_g06.bin", 0x0000, 0x1000, 0x9dd8ebd8 )
 ROM_END
 
 ROM_START( galagab2_rom )
 	ROM_REGION(0x10000)     /* 64k for code for the first CPU  */
-	ROM_LOAD( "g1", 0x0000, 0x1000, 0x7aecbece )
-	ROM_LOAD( "g2", 0x1000, 0x1000, 0xb778a4da )
-	ROM_LOAD( "g3", 0x2000, 0x1000, 0x8fe52561 )
-	ROM_LOAD( "g4", 0x3000, 0x1000, 0x21f8c6ba )
+	ROM_LOAD( "g1",          0x0000, 0x1000, 0x7aecbece )
+	ROM_LOAD( "g2",          0x1000, 0x1000, 0xb778a4da )
+	ROM_LOAD( "04j_g03.bin", 0x2000, 0x1000, 0x8fe52561 )
+	ROM_LOAD( "g4",          0x3000, 0x1000, 0x21f8c6ba )
 
 	ROM_REGION(0x3000)      /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "g9",  0x0000, 0x1000, 0x0c670ff9 )
-	ROM_LOAD( "g11", 0x1000, 0x1000, 0xffdf703b )
-	ROM_LOAD( "g10", 0x2000, 0x1000, 0xa83e9cae )
+	ROM_LOAD( "gallag.8",    0x0000, 0x1000, 0x0c670ff9 )
+	ROM_LOAD( "07e_g10.bin", 0x1000, 0x1000, 0xffdf703b )
+	ROM_LOAD( "07h_g09.bin", 0x2000, 0x1000, 0xa83e9cae )
+
+	ROM_REGION(0x0220)	/* color PROMs */
+	ROM_LOAD( "5n.bin", 0x0000, 0x0020, 0xf05fb905 )	/* palette */
+	ROM_LOAD( "2n.bin", 0x0020, 0x0100, 0xe6d30001 )	/* char lookup table */
+	ROM_LOAD( "1c.bin", 0x0120, 0x0100, 0xc3750b05 )	/* sprite lookup table */
 
 	ROM_REGION(0x10000)     /* 64k for the second CPU */
-	ROM_LOAD( "g5", 0x0000, 0x1000, 0x6079fa7d )
+	ROM_LOAD( "04e_g05.bin", 0x0000, 0x1000, 0x6079fa7d )
 
 	ROM_REGION(0x10000)     /* 64k for the third CPU  */
-	ROM_LOAD( "g7", 0x0000, 0x1000, 0x9dd8ebd8 )
+	ROM_LOAD( "04d_g06.bin", 0x0000, 0x1000, 0x9dd8ebd8 )
 ROM_END
 
 
@@ -672,9 +670,9 @@ struct GameDriver galaga_driver =
 	__FILE__,
 	0,
 	"galaga",
-	"Galaga (Midway)",
-	"????",
-	"?????",
+	"Galaga (Namco)",
+	"1981",
+	"Namco",
 	"Martin Scragg (hardware info)\nNicola Salmoria (MAME driver)\nMirko Buffoni (additional code)\nValerio Verrando (high score fix)",
 	0,
 	&machine_driver,
@@ -684,59 +682,59 @@ struct GameDriver galaga_driver =
 	galaga_sample_names,
 	sound_prom,	/* sound_prom */
 
+	galaganm_input_ports,
+
+	PROM_MEMORY_REGION(2), 0, 0,
+	ORIENTATION_DEFAULT,
+
+	hiload, hisave
+};
+
+struct GameDriver galagamw_driver =
+{
+	__FILE__,
+	&galaga_driver,
+	"galagamw",
+	"Galaga (Midway)",
+	"1981",
+	"[Namco] (Midway license)",
+	"Martin Scragg (hardware info)\nNicola Salmoria (MAME driver)\nMirko Buffoni (additional code)\nValerio Verrando (high score fix)",
+	0,
+	&machine_driver,
+
+	galagamw_rom,
+	0, 0,
+	galaga_sample_names,
+	sound_prom,	/* sound_prom */
+
 	galaga_input_ports,
 
-	color_prom, 0, 0,
+	PROM_MEMORY_REGION(2), 0, 0,
 	ORIENTATION_DEFAULT,
 
 	hiload, hisave
 };
 
-struct GameDriver galaganm_driver =
+struct GameDriver galagads_driver =
 {
 	__FILE__,
-	0,
-	"galaganm",
-	"Galaga (Namco)",
-	"????",
-	"?????",
+	&galaga_driver,
+	"galagads",
+	"Galaga (fast shoot)",
+	"1981",
+	"hack",
 	"Martin Scragg (hardware info)\nNicola Salmoria (MAME driver)\nMirko Buffoni (additional code)\nValerio Verrando (high score fix)",
 	0,
 	&machine_driver,
 
-	galaganm_rom,
+	galagads_rom,
 	0, 0,
 	galaga_sample_names,
 	sound_prom,	/* sound_prom */
 
-	galaganm_input_ports,
+	galaga_input_ports,
 
-	color_prom, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	hiload, hisave
-};
-
-struct GameDriver galagabl_driver =
-{
-	__FILE__,
-	0,
-	"galagabl",
-	"Galaga (bootleg)",
-	"????",
-	"?????",
-	"Martin Scragg (hardware info)\nNicola Salmoria (MAME driver)\nMirko Buffoni (additional code)\nValerio Verrando (high score fix)",
-	0,
-	&machine_driver,
-
-	galagabl_rom,
-	0, 0,
-	galaga_sample_names,
-	sound_prom,	/* sound_prom */
-
-	galaganm_input_ports,
-
-	color_prom, 0, 0,
+	PROM_MEMORY_REGION(2), 0, 0,
 	ORIENTATION_DEFAULT,
 
 	hiload, hisave
@@ -745,11 +743,11 @@ struct GameDriver galagabl_driver =
 struct GameDriver gallag_driver =
 {
 	__FILE__,
-	0,
+	&galaga_driver,
 	"gallag",
-	"Gallag (bootleg Galaga)",
-	"????",
-	"?????",
+	"Gallag",
+	"1982",
+	"bootleg",
 	"Martin Scragg (hardware info)\nNicola Salmoria (MAME driver)\nMirko Buffoni (additional code)\nValerio Verrando (high score fix)",
 	0,
 	&machine_driver,
@@ -761,7 +759,7 @@ struct GameDriver gallag_driver =
 
 	galaganm_input_ports,
 
-	color_prom, 0, 0,
+	PROM_MEMORY_REGION(2), 0, 0,
 	ORIENTATION_DEFAULT,
 
 	hiload, hisave
@@ -770,11 +768,11 @@ struct GameDriver gallag_driver =
 struct GameDriver galagab2_driver =
 {
 	__FILE__,
-	0,
+	&galaga_driver,
 	"galagab2",
-	"Galaga (NAMCO alternate)",
-	"????",
-	"?????",
+	"Galaga (bootleg)",
+	"1981",
+	"bootleg",
 	"Martin Scragg (hardware info)\nNicola Salmoria (MAME driver)\nMirko Buffoni (additional code)\nValerio Verrando (high score fix)",
 	0,
 	&machine_driver,
@@ -786,7 +784,7 @@ struct GameDriver galagab2_driver =
 
 	galaganm_input_ports,
 
-	color_prom, 0, 0,
+	PROM_MEMORY_REGION(2), 0, 0,
 	ORIENTATION_DEFAULT,
 
 	hiload, hisave

@@ -31,7 +31,7 @@ void galaxian_stars_w(int offset,int data);
 void mooncrst_gfxextend_w(int offset,int data);
 int galaxian_vh_start(void);
 int moonqsr_vh_start(void);
-void galaxian_vh_screenrefresh(struct osd_bitmap *bitmap);
+void galaxian_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 int galaxian_vh_interrupt(void);
 
 void mooncrst_pitch_w(int offset,int data);
@@ -176,9 +176,9 @@ INPUT_PORTS_START( mooncrst_input_ports )
 	PORT_DIPNAME( 0x40, 0x00, "Bonus Life", IP_KEY_NONE )
 	PORT_DIPSETTING(    0x00, "30000" )
 	PORT_DIPSETTING(    0x40, "50000" )
-	PORT_DIPNAME( 0x80, 0x00, "Language", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "Japanese" )
+	PORT_DIPNAME( 0x80, 0x80, "Language", IP_KEY_NONE )
 	PORT_DIPSETTING(    0x80, "English" )
+	PORT_DIPSETTING(    0x00, "Japanese" )
 
 	PORT_START	/* DSW */
  	PORT_DIPNAME( 0x03, 0x00, "Coin A", IP_KEY_NONE )
@@ -533,7 +533,7 @@ static struct AY8910interface ay8910_interface =
 {
 	1,	/* 1 chip */
 	1620000,	/* 1.62 MHz */
-	{ 0x60ff },
+	{ 255 },
 	{ 0 },
 	{ 0 },
 	{ 0 },
@@ -609,16 +609,10 @@ ROM_START( mooncrst_rom )
 	ROM_LOAD( "mc8", 0x3800, 0x0800, 0xc2ca7a86 )
 
 	ROM_REGION(0x2000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "mcb", 0x0000, 0x0800, 0x22bd9067 )
-	ROM_LOAD( "mcd", 0x0800, 0x0200, 0xdfbc68ba )
-	ROM_CONTINUE(    0x0c00, 0x0200 )	/* this version of the gfx ROMs has two */
-	ROM_CONTINUE(    0x0a00, 0x0200 )	/* groups of 16 sprites swapped */
-	ROM_CONTINUE(    0x0e00, 0x0200 )
-	ROM_LOAD( "mca", 0x1000, 0x0800, 0xf93f9153 )
-	ROM_LOAD( "mcc", 0x1800, 0x0200, 0xc1dc1cde )
-	ROM_CONTINUE(    0x1c00, 0x0200 )
-	ROM_CONTINUE(    0x1a00, 0x0200 )
-	ROM_CONTINUE(    0x1e00, 0x0200 )
+	ROM_LOAD( "mcs_b", 0x0000, 0x0800, 0xec117295 )
+	ROM_LOAD( "mcs_d", 0x0800, 0x0800, 0xdfbc68ba )
+	ROM_LOAD( "mcs_a", 0x1000, 0x0800, 0xc5975785 )
+	ROM_LOAD( "mcs_c", 0x1800, 0x0800, 0xc1dc1cde )
 ROM_END
 
 ROM_START( mooncrsg_rom )
@@ -641,20 +635,20 @@ ROM_END
 
 ROM_START( mooncrsb_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "EPR194", 0x0000, 0x0800, 0x1c6e3b4a )
-	ROM_LOAD( "EPR195", 0x0800, 0x0800, 0xa8901964 )
-	ROM_LOAD( "EPR196", 0x1000, 0x0800, 0x3247a543 )
-	ROM_LOAD( "EPR197", 0x1800, 0x0800, 0x8e22a4b2 )
-	ROM_LOAD( "EPR198", 0x2000, 0x0800, 0x981d7a7f )
-	ROM_LOAD( "EPR199", 0x2800, 0x0800, 0x3def1bab )
-	ROM_LOAD( "EPR200", 0x3000, 0x0800, 0xb31bfacf )
-	ROM_LOAD( "EPR201", 0x3800, 0x0800, 0xe0a15117 )
+	ROM_LOAD( "BEPR194", 0x0000, 0x0800, 0x1c6e3b4a )
+	ROM_LOAD( "BEPR195", 0x0800, 0x0800, 0xa8901964 )
+	ROM_LOAD( "BEPR196", 0x1000, 0x0800, 0x3247a543 )
+	ROM_LOAD( "BEPR197", 0x1800, 0x0800, 0x8e22a4b2 )
+	ROM_LOAD( "BEPR198", 0x2000, 0x0800, 0x981d7a7f )
+	ROM_LOAD( "BEPR199", 0x2800, 0x0800, 0x3def1bab )
+	ROM_LOAD( "BEPR200", 0x3000, 0x0800, 0xb31bfacf )
+	ROM_LOAD( "BEPR201", 0x3800, 0x0800, 0xe0a15117 )
 
 	ROM_REGION(0x2000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "EPR203", 0x0000, 0x0800, 0xa27f5447 )
-	ROM_LOAD( "EPR172", 0x0800, 0x0800, 0xdfbc68ba )
-	ROM_LOAD( "EPR202", 0x1000, 0x0800, 0xec79cbdb )
-	ROM_LOAD( "EPR171", 0x1800, 0x0800, 0xc1dc1cde )
+	ROM_LOAD( "BEPR203", 0x0000, 0x0800, 0xa27f5447 )
+	ROM_LOAD( "BEPR172", 0x0800, 0x0800, 0xdfbc68ba )
+	ROM_LOAD( "BEPR202", 0x1000, 0x0800, 0xec79cbdb )
+	ROM_LOAD( "BEPR171", 0x1800, 0x0800, 0xc1dc1cde )
 ROM_END
 
 ROM_START( fantazia_rom )
@@ -759,17 +753,21 @@ ROM_END
 
 ROM_START( moonal2b_rom )
 	ROM_REGION(0x10000) /* 64k for code */
-	ROM_LOAD( "MD-1", 0x0000, 0x0800, 0xb749237b )
-	ROM_LOAD( "MD-2", 0x0800, 0x0800, 0xd643a5a7 )
-	ROM_LOAD( "MD-3", 0x1000, 0x0800, 0x0cc146eb )
-	ROM_LOAD( "MD-4", 0x1800, 0x0800, 0x91138f41 )
-	ROM_LOAD( "MD-5", 0x2000, 0x0800, 0xf43a1306 )
-	ROM_LOAD( "MD-6", 0x2800, 0x0800, 0x225ff205 )
+	ROM_LOAD( "ali1",  0x0000, 0x0400, 0x1a3f23c1 )
+	ROM_LOAD( "ali2",  0x0400, 0x0400, 0x9d0a00ba )
+	ROM_LOAD( "MD-2",  0x0800, 0x0800, 0xd643a5a7 )
+	ROM_LOAD( "ali5",  0x1000, 0x0400, 0xe14af8fe )
+	ROM_LOAD( "ali6",  0x1400, 0x0400, 0x2b77be15 )
+	ROM_LOAD( "ali7",  0x1800, 0x0400, 0x9bb5fe05 )
+	ROM_LOAD( "ali8",  0x1c00, 0x0400, 0xf55e7144 )
+	ROM_LOAD( "ali9",  0x2000, 0x0400, 0xe7545590 )
+	ROM_LOAD( "ali10", 0x2400, 0x0400, 0x0ce64696 )
+	ROM_LOAD( "MD-6",  0x2800, 0x0800, 0x225ff205 )
 
 	ROM_REGION(0x2000) /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "MD-13", 0x0000, 0x0800, 0x879421ae )
+	ROM_LOAD( "ali13.1h", 0x0000, 0x0800, 0x879421ae )
 	/* 0800-0fff empty */
-	ROM_LOAD( "MD-12", 0x1000, 0x0800, 0xcfb52239 )
+	ROM_LOAD( "ali12.1k", 0x1000, 0x0800, 0xcfb52239 )
 	/* 1800-1fff empty */
 ROM_END
 
@@ -1063,9 +1061,9 @@ struct GameDriver mooncrst_driver =
 	0,
 	"mooncrst",
 	"Moon Cresta (Nichibutsu)",
-	"????",
-	"?????",
-	"ROBERT ANSCHUETZ\nNICOLA SALMORIA\nGARY WALTON\nSIMON WALLS\nANDREW SCOTT",
+	"1980",
+	"Nihon Bussan",
+	"Robert Anschuetz (Arcade emulator)\nNicola Salmoria (MAME driver)\nGary Walton (color info)\nSimon Walls (color info)\nAndrew Scott",
 	0,
 	&mooncrst_machine_driver,
 
@@ -1085,12 +1083,12 @@ struct GameDriver mooncrst_driver =
 struct GameDriver mooncrsg_driver =
 {
 	__FILE__,
-	0,
+	&mooncrst_driver,
 	"mooncrsg",
 	"Moon Cresta (Gremlin)",
-	"????",
-	"?????",
-	"ROBERT ANSCHUETZ\nNICOLA SALMORIA\nGARY WALTON\nSIMON WALLS\nANDREW SCOTT",
+	"1980",
+	"Gremlin",
+	"Robert Anschuetz (Arcade emulator)\nNicola Salmoria (MAME driver)\nGary Walton (color info)\nSimon Walls (color info)\nAndrew Scott",
 	0,
 	&mooncrst_machine_driver,
 
@@ -1110,12 +1108,12 @@ struct GameDriver mooncrsg_driver =
 struct GameDriver mooncrsb_driver =
 {
 	__FILE__,
-	0,
+	&mooncrst_driver,
 	"mooncrsb",
 	"Moon Cresta (bootleg)",
-	"????",
-	"?????",
-	"ROBERT ANSCHUETZ\nNICOLA SALMORIA\nGARY WALTON\nSIMON WALLS\nANDREW SCOTT",
+	"1980",
+	"bootleg",
+	"Robert Anschuetz (Arcade emulator)\nNicola Salmoria (MAME driver)\nGary Walton (color info)\nSimon Walls (color info)\nAndrew Scott",
 	0,
 	&mooncrst_machine_driver,
 
@@ -1135,12 +1133,12 @@ struct GameDriver mooncrsb_driver =
 struct GameDriver fantazia_driver =
 {
 	__FILE__,
-	0,
+	&mooncrst_driver,
 	"fantazia",
 	"Fantazia",
-	"????",
-	"?????",
-	"ROBERT ANSCHUETZ\nNICOLA SALMORIA\nGARY WALTON\nSIMON WALLS\nANDREW SCOTT",
+	"1980",
+	"bootleg",
+	"Robert Anschuetz (Arcade emulator)\nNicola Salmoria (MAME driver)\nGary Walton (color info)\nSimon Walls (color info)\nAndrew Scott",
 	0,
 	&mooncrst_machine_driver,
 
@@ -1160,12 +1158,12 @@ struct GameDriver fantazia_driver =
 struct GameDriver eagle_driver =
 {
 	__FILE__,
-	0,
+	&mooncrst_driver,
 	"eagle",
 	"Eagle",
-	"????",
-	"?????",
-	"ROBERT ANSCHUETZ\nNICOLA SALMORIA\nGARY WALTON\nSIMON WALLS\nANDREW SCOTT",
+	"1980",
+	"Centuri",
+	"Robert Anschuetz (Arcade emulator)\nNicola Salmoria (MAME driver)\nGary Walton (color info)\nSimon Walls (color info)\nAndrew Scott",
 	0,
 	&mooncrst_machine_driver,
 
@@ -1188,8 +1186,8 @@ struct GameDriver moonqsr_driver =
 	0,
 	"moonqsr",
 	"Moon Quasar",
-	"????",
-	"?????",
+	"1980",
+	"Nichibutsu",
 	"Robert Anschuetz (Arcade emulator)\nMike Coates (decryption info)\nNicola Salmoria (MAME driver)\nGary Walton (color info)\nSimon Walls (color info)\nAndrew Scott\nMarco Cassili",
 	0,
 	&moonqsr_machine_driver,
@@ -1213,8 +1211,8 @@ struct GameDriver checkman_driver =
 	0,
 	"checkman",
 	"Checkman",
-	"????",
-	"?????",
+	"1982",
+	"Zilec-Zenitone",
 	"Brad Oliver (MAME driver)\nMalcolm Lear (hardware & encryption info)",
 	0,
 	&checkman_machine_driver,
@@ -1238,9 +1236,9 @@ struct GameDriver moonal2_driver =
 	0,
 	"moonal2",
 	"Moon Alien Part 2",
-	"????",
-	"?????",
-	"ROBERT ANSCHUETZ\nNICOLA SALMORIA\nGARY WALTON\nSIMON WALLS\nANDREW SCOTT",
+	"1980",
+	"Nichibutsu",
+	"Robert Anschuetz (Arcade emulator)\nNicola Salmoria (MAME driver)\nAndrew Scott",
 	0,
 	&moonal2_machine_driver,
 
@@ -1260,12 +1258,12 @@ struct GameDriver moonal2_driver =
 struct GameDriver moonal2b_driver =
 {
 	__FILE__,
-	0,
+	&moonal2_driver,
 	"moonal2b",
-	"Moon Alien Part 2 (alternate)",
-	"????",
-	"?????",
-	"ROBERT ANSCHUETZ\nNICOLA SALMORIA\nGARY WALTON\nSIMON WALLS\nANDREW SCOTT",
+	"Moon Alien Part 2 (older version)",
+	"1980",
+	"Nichibutsu",
+	"Robert Anschuetz (Arcade emulator)\nNicola Salmoria (MAME driver)\nAndrew Scott",
 	0,
 	&moonal2_machine_driver,
 

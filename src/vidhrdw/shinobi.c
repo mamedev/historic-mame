@@ -22,48 +22,8 @@ extern void drawgfxpicture(
 	const struct rectangle *clip
 );
 
-/***************************************************************************
-
-  system16 games don't have a color PROM
-  Instead, 4096 bytes of RAM are mapped to specify colors.
-  2 bytes are used for each color, yielding 2048 color entries.
-  1024 of these are used for sprites, and 1024 are used for the backgrounds.
-
-  Graphics use 4 bitplanes.
-
-***************************************************************************/
-
-static void refresh_palette(void);
-static void refresh_palette(void)
-{
-	unsigned char *dirty = system16_colordirty;
-	int indx;
-
-	for( indx=0; indx<s16_paletteram_size/2; indx++ ){
-		if( dirty[indx] ){
-			int offset = indx*2;
-			int palette = READ_WORD (&system16_paletteram[offset]);
-
-			/*
-				byte0		byte1
-				GBGR BBBB	GGGG RRRR
-				5444 3210	3210 3210
-			*/
-			int red		= ( palette & 0xf );
-			int green	= ( palette >> 4 ) & 0x0f;
-			int blue	= ( palette >> 8 ) & 0x0f;
-
-			red = (red << 4) + red;
-			green = (green << 4) + green;
-			blue = (blue << 4) + blue;
-
-			setgfxcolorentry (Machine->gfx[0], indx, red, green, blue);
-			dirty[indx] = 0;
-		}
-	}
-}
-
 static void draw_background(struct osd_bitmap *bitmap);
+static void palette_background(unsigned char *base);
 static void draw_background(struct osd_bitmap *bitmap)
 {
 	const struct rectangle *clip = &Machine->drv->visible_area;
@@ -107,8 +67,48 @@ static void draw_background(struct osd_bitmap *bitmap)
 		}
 	} /* next page */
 }
+static void palette_background(unsigned char *base)
+{
+	const struct GfxElement *gfx = Machine->gfx[0];
+	const int mask = Machine->gfx[0]->total_elements - 1;
+
+	int page;
+
+	int scrollx = 320+scrollX[BG_OFFS];
+	int scrolly = 256-scrollY[BG_OFFS];
+
+	if (scrollx < 0) scrollx = 1024 - (-scrollx) % 1024;
+	else scrollx = scrollx % 1024;
+
+	if (scrolly < 0) scrolly = 512 - (-scrolly) % 512;
+	else scrolly = scrolly % 512;
+
+	for (page=0; page < 4; page++){
+		unsigned char *source = system16_backgroundram + bg_pages[page]*0x1000;
+
+		int startx = (page&1)*512+scrollx;
+		int starty = (page>>1)*256+scrolly;
+
+		int row,col;
+
+		for( row=0; row<32*8; row+=8 ){
+			for( col=0; col<64*8; col+=8 ){
+				int x = startx+col;
+				int y = starty+row;
+				if( x>320 ) x-=1024;
+				if( y>224 ) y-=512;
+				if( x>-8 && x<320 && y>-8 && y<224 ){
+					int tile = READ_WORD( &source[0] );
+					base[(tile >> 6)%128] |= gfx->pen_usage[(tile + system16_background_bank*0x1000) & mask];
+				}
+				source+=2;
+			}
+		}
+	} /* next page */
+}
 
 static void draw_foreground(struct osd_bitmap *bitmap, int priority );
+static void palette_foreground(unsigned char *base);
 static void draw_foreground(struct osd_bitmap *bitmap, int priority )
 {
 	const struct rectangle *clip = &Machine->drv->visible_area;
@@ -154,8 +154,51 @@ static void draw_foreground(struct osd_bitmap *bitmap, int priority )
 		}
 	} /* next page */
 }
+static void palette_foreground(unsigned char *base)
+{
+	const struct GfxElement *gfx = Machine->gfx[0];
+	const int mask = Machine->gfx[0]->total_elements - 1;
+
+	int page;
+	int scrollx = 320+scrollX[FG_OFFS];
+	int scrolly = 256-scrollY[FG_OFFS];
+
+	if (scrollx < 0) scrollx = 1024 - (-scrollx) % 1024;
+	else scrollx = scrollx % 1024;
+
+	if (scrolly < 0) scrolly = 512 - (-scrolly) % 512;
+	else scrolly = scrolly % 512;
+
+	for (page=0; page < 4; page++){
+		unsigned char *source = system16_backgroundram + fg_pages[page]*0x1000;
+
+		int startx = (page&1)*512+scrollx;
+		int starty = (page>>1)*256+scrolly;
+
+		int row,col;
+
+		for( row=0; row<32*8; row+=8 ){
+			for( col=0; col<64*8; col+=8 ){
+				int tile = READ_WORD ( &source[0] );
+				tile = (tile & 0x1fff) + ((tile >> 2) & 0x2000);
+				{
+					int x = startx+col;
+					int y = starty+row;
+					if( x>320 ) x-=1024;
+					if( y>224 ) y-=512;
+					if( x>-8 && x<320 && y>-8 && y<224 ){
+						if( tile )
+							base[(tile >> 6)%128] |= gfx->pen_usage[tile & mask];
+					}
+				}
+				source+=2;
+			}
+		}
+	} /* next page */
+}
 
 static void draw_text(struct osd_bitmap *bitmap);
+static void palette_text(unsigned char *base);
 static void draw_text(struct osd_bitmap *bitmap)
 {
 	const struct rectangle *clip = &Machine->drv->visible_area;
@@ -176,8 +219,22 @@ static void draw_text(struct osd_bitmap *bitmap)
 			}
 	}
 }
+static void palette_text(unsigned char *base)
+{
+	const int mask = Machine->gfx[0]->total_elements - 1;
+	int sx,sy;
+	for (sx = 0; sx < 40; sx++) for (sy = 0; sy < 28; sy++){
+			int offs = (sy * 64 + sx + (64-40)) << 1;
+			int data = READ_WORD(&system16_videoram[offs]);
+			int tile_number = data&0x1ff;
+			if( tile_number ){ /* skip spaces */
+				base[(data >> 9)%8] |= Machine->gfx[0]->pen_usage[tile_number & mask] & 0xfe;
+			}
+	}
+}
 
 static void draw_sprites(struct osd_bitmap *bitmap, int priority);
+static void palette_sprites(unsigned short *base);
 static void draw_sprites(struct osd_bitmap *bitmap, int priority)
 {
 	struct sys16_sprite_info *sprite = sys16_sprite;
@@ -223,10 +280,87 @@ static void draw_sprites(struct osd_bitmap *bitmap, int priority)
 		sprite++;
 	}while( sprite<finish );
 }
+static void palette_sprites(unsigned short *base)
+{
+	struct sys16_sprite_info *sprite = sys16_sprite;
+	struct sys16_sprite_info *finish = sprite+64;
+
+	do{
+		if( sprite->end_line == 0xff ) break;
+
+		{
+			const unsigned short pal = sprite->color / 16;
+
+			base[pal] |= 0xfffe;
+		}
+		sprite++;
+	}while( sprite<finish );
+}
 
 
-void system16_vh_screenrefresh(struct osd_bitmap *bitmap);
-void system16_vh_screenrefresh(struct osd_bitmap *bitmap)
+/***************************************************************************
+
+  system16 games don't have a color PROM
+  Instead, 4096 bytes of RAM are mapped to specify colors.
+  2 bytes are used for each color, yielding 2048 color entries.
+  1024 of these are used for sprites, and 1024 are used for the backgrounds.
+
+  Graphics use 4 bitplanes.
+
+***************************************************************************/
+
+static void refresh_palette(void);
+static void refresh_palette(void)
+{
+	/* compute palette usage */
+	unsigned char palette_map[128];
+	unsigned short sprite_map[64];
+	int i;
+
+	memset (palette_map, 0, sizeof (palette_map));
+	memset (sprite_map, 0, sizeof (sprite_map));
+
+	palette_background(palette_map);
+	palette_foreground(palette_map);
+	palette_text(palette_map);
+	palette_sprites(sprite_map);
+
+	/* expand the results */
+	for (i = 0; i < 128; i++)
+	{
+		int usage = palette_map[i], j;
+		if (usage)
+		{
+			for (j = 0; j < 8; j++)
+				if (usage & (1 << j))
+					palette_used_colors[i * 8 + j] = PALETTE_COLOR_USED;
+				else
+					palette_used_colors[i * 8 + j] = PALETTE_COLOR_UNUSED;
+		}
+		else
+			memset (&palette_used_colors[i * 8 + 0], PALETTE_COLOR_UNUSED, 8);
+	}
+	for (i = 0; i < 64; i++)
+	{
+		int usage = sprite_map[i], j;
+		if (usage)
+		{
+			palette_used_colors[1024 + i * 16 + 0] = PALETTE_COLOR_TRANSPARENT;
+			for (j = 1; j < 16; j++)
+				if (usage & (1 << j))
+					palette_used_colors[1024 + i * 16 + j] = PALETTE_COLOR_USED;
+				else
+					palette_used_colors[1024 + i * 16 + j] = PALETTE_COLOR_UNUSED;
+		}
+		else
+			memset (&palette_used_colors[1024 + i * 16 + 0], PALETTE_COLOR_UNUSED, 16);
+	}
+
+	palette_recalc ();
+}
+
+void system16_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void system16_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	refresh_palette();
 

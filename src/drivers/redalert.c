@@ -21,7 +21,7 @@ extern void redalert_backram_w(int offset, int data);
 extern void redalert_spriteram1_w(int offset, int data);
 extern void redalert_spriteram2_w(int offset, int data);
 extern void redalert_characterram_w(int offset, int data);
-extern void redalert_vh_screenrefresh(struct osd_bitmap *bitmap);
+extern void redalert_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 extern void redalert_c040_w(int offset, int data);
 extern void redalert_backcolor_w(int offset, int data);
 
@@ -264,11 +264,11 @@ static int redalert_interrupt(void)
 	return interrupt();
 }
 
-static struct AY8910interface redalert_ay8910_interface =
+static struct AY8910interface ay8910_interface =
 {
 	1,			/* 1 chip */
 	2000000,	/* 2 MHz */
-	{ 0x20ff },	/* Volume */
+	{ 255 },	/* Volume */
 	{ redalert_AY8910_A_r },		/* Port A Read */
 	{ 0 },		/* Port B Read */
 	{ 0 },		/* Port A Write */
@@ -298,7 +298,7 @@ static struct MachineDriver machine_driver =
 			interrupt,1150
 		},
 		{
-			CPU_8085A | CPU_AUDIO_CPU,	/* Actually an 8085A */
+			CPU_8085A | CPU_AUDIO_CPU,
 			1000000,	   /* 1 MHz? */
 			3,
 			voice_readmem,voice_writemem,0,0,
@@ -326,7 +326,7 @@ static struct MachineDriver machine_driver =
 	{
 		{
 			SOUND_AY8910,
-			&redalert_ay8910_interface
+			&ay8910_interface
 		}
 	}
 
@@ -380,8 +380,8 @@ struct GameDriver redalert_driver =
 	0,
 	"redalert",
 	"Red Alert",
-	"????",
-	"?????",
+	"1981",
+	"GDI + Irem",
 	"Mike Balfour\nDick Milliken (Information)",
 	0,
 	&machine_driver,

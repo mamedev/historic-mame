@@ -238,6 +238,7 @@ void parse_cmdline (int argc, char **argv, struct GameOptions *options, int game
 	static float f_beam, f_flicker;
 	static int _vesa;
 	static char *resolution;
+	static char *vesamode;
 	char tmpres[10];
 	int i;
 
@@ -252,6 +253,7 @@ void parse_cmdline (int argc, char **argv, struct GameOptions *options, int game
 	antialias   = get_bool   ("config", "antialias",    NULL,  1);
 	use_synced  = get_bool   ("config", "syncedtweak",  NULL,  1);
 	_vesa       = get_bool   ("config", "vesa",         NULL,  0);
+	vesamode	= get_string ("config", "vesamode",		NULL,  "vesa2l");
 	ntsc        = get_bool   ("config", "ntsc",         NULL,  0);
 	vgafreq     = get_int    ("config", "vgafreq",      NULL,  -1);
 	color_depth = get_int    ("config", "depth",        NULL, 16);
@@ -308,7 +310,14 @@ void parse_cmdline (int argc, char **argv, struct GameOptions *options, int game
 		flicker = 255;
 
 	if (_vesa == 1)
-		gfx_mode = GFX_VESA2L;
+	{
+		if (stricmp (vesamode, "vesa1") == 0)
+			gfx_mode = GFX_VESA1;
+		else if (stricmp (vesamode, "vesa2b") == 0)
+			gfx_mode = GFX_VESA2B;
+		else
+			gfx_mode = GFX_VESA2L;
+	}
 //	else
 //		gfx_mode = GFX_VGA;
 

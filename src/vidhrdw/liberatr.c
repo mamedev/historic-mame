@@ -29,7 +29,7 @@
 
 ***************************************************************************/
 #include "driver.h"
-#include "generic.h"
+#include "vidhrdw/generic.h"
 
 #define LIB_VIDEORAM_SIZE	(0x100*0x100)
 
@@ -249,7 +249,7 @@ void liberator_colorram_w(int offset,int data)
 
 
 /********************************************************************************************/
-void liberator_vh_update(struct osd_bitmap *bitmap)
+void liberator_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	/* put the planet into tmpbitmap */
 	lib_drawplanet( lib_startlg ) ;

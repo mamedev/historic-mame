@@ -172,8 +172,6 @@ void gng_bankswitch_w(int offset,int data);
 int gng_bankedrom_r(int offset);
 void gng_init_machine(void);
 
-extern unsigned char *gng_paletteram;
-void gng_paletteram_w(int offset,int data);
 extern unsigned char *gng_bgvideoram,*gng_bgcolorram;
 extern int gng_bgvideoram_size;
 extern unsigned char *gng_scrollx,*gng_scrolly;
@@ -182,14 +180,12 @@ void gng_bgcolorram_w(int offset,int data);
 void gng_flipscreen_w(int offset,int data);
 int gng_vh_start(void);
 void gng_vh_stop(void);
-void gng_vh_screenrefresh(struct osd_bitmap *bitmap);
+void gng_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 
 
 void gng_bankswitch_w(int offset,int data)
 {
-/* ASG 091197 -- old code looked like this:
-	bankaddress = 0x10000 + data * 0x2000;*/
 	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
 
@@ -229,7 +225,8 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x2400, 0x27ff, colorram_w, &colorram },
 	{ 0x2800, 0x2bff, gng_bgvideoram_w, &gng_bgvideoram, &gng_bgvideoram_size },
 	{ 0x2c00, 0x2fff, gng_bgcolorram_w, &gng_bgcolorram },
-	{ 0x3800, 0x39ff, gng_paletteram_w, &gng_paletteram },
+	{ 0x3800, 0x38ff, paletteram_RRRRGGGGBBBBxxxx_split2_w, &paletteram_2 },
+	{ 0x3900, 0x39ff, paletteram_RRRRGGGGBBBBxxxx_split1_w, &paletteram },
 	{ 0x3a00, 0x3a00, soundlatch_w },
 	{ 0x3b08, 0x3b09, MWA_RAM, &gng_scrollx },
 	{ 0x3b0a, 0x3b0b, MWA_RAM, &gng_scrolly },
@@ -568,7 +565,7 @@ static struct YM2203interface ym2203_interface =
 {
 	2,			/* 2 chips */
 	1500000,	/* 1.5 MHz (?) */
-	{ YM2203_VOL(100,0x20ff), YM2203_VOL(100,0x20ff) },
+	{ YM2203_VOL(100,255), YM2203_VOL(100,255) },
 	{ 0 },
 	{ 0 },
 	{ 0 },
@@ -596,8 +593,8 @@ static struct MachineDriver machine_driver =
 			interrupt,4
 		}
 	},
-	60, 500,	/* frames per second, vblank duration */
-				/* vblank duration is crucial to get proper sprite/background alignment */
+	60, 2500,	/* frames per second, vblank duration */
+				/* hand tuned to get rid of sprite lag */
 	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
 	gng_init_machine,
 
@@ -635,7 +632,7 @@ ROM_START( gng_rom )
 	ROM_REGION(0x18000)	/* 64k for code * 5 pages */
 	ROM_LOAD( "gg3.bin",  0x8000, 0x8000, 0x019eaa7c )
 	ROM_LOAD( "gg4.bin",  0x4000, 0x4000, 0xf74cb35c )	/* 4000-5fff is page 0 */
-	ROM_LOAD( "gg5.bin", 0x10000, 0x8000, 0xd39c9516 )	/* page 1, 2, 3 e 4 */
+	ROM_LOAD( "gg5.bin", 0x10000, 0x8000, 0xd39c9516 )	/* page 1, 2, 3 and 4 */
 
 	ROM_REGION(0x34000)	/* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "gg1.bin",  0x00000, 0x4000, 0x0d95960b )	/* characters */
@@ -660,7 +657,7 @@ ROM_START( gngcross_rom )
 	ROM_REGION(0x18000)	/* 64k for code * 5 pages */
 	ROM_LOAD( "gg3.bin",  0x8000, 0x8000, 0x019eaa7c )
 	ROM_LOAD( "gg4.bin",  0x4000, 0x4000, 0xf74cb35c )	/* 4000-5fff is page 0 */
-	ROM_LOAD( "gg5.bin", 0x10000, 0x8000, 0xd39c9516 )	/* page 1, 2, 3 e 4 */
+	ROM_LOAD( "gg5.bin", 0x10000, 0x8000, 0xd39c9516 )	/* page 1, 2, 3 and 4 */
 
 	ROM_REGION(0x34000)	/* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "gg1.bin",     0x00000, 0x4000, 0x0d95960b )	/* characters */
@@ -685,7 +682,7 @@ ROM_START( gngjap_rom )
 	ROM_REGION(0x18000)	/* 64k for code * 5 pages */
 	ROM_LOAD( "8n.rom",   0x8000, 0x8000, 0xe787d6cf )
 	ROM_LOAD( "10n.rom",  0x4000, 0x4000, 0x6ae8f4b8 )	/* 4000-5fff is page 0 */
-	ROM_LOAD( "12n.rom", 0x10000, 0x8000, 0x0d9a17cc )	/* page 1, 2, 3 e 4 */
+	ROM_LOAD( "12n.rom", 0x10000, 0x8000, 0x0d9a17cc )	/* page 1, 2, 3 and 4 */
 
 	ROM_REGION(0x34000)	/* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "gg1.bin",  0x00000, 0x4000, 0x0d95960b )	/* characters */
@@ -712,7 +709,7 @@ ROM_START( diamond_rom )
 	ROM_LOAD( "d3",       0x8000, 0x8000, 0x38d5bcc9 )
 	ROM_LOAD( "d3o",      0x4000, 0x2000, 0x76c09ea4 )	/* 4000-5fff is page 0 */
 	ROM_CONTINUE(        0x18000, 0x2000 )
-	ROM_LOAD( "d5o",     0x10000, 0x8000, 0x06f68aa8 )	/* page 1, 2, 3 e 4 */
+	ROM_LOAD( "d5o",     0x10000, 0x8000, 0x06f68aa8 )	/* page 1, 2, 3 and 4 */
 
 	ROM_REGION(0x34000)	/* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "d1",  0x00000, 0x4000, 0x7da60000 )	/* characters */
@@ -879,7 +876,7 @@ struct GameDriver gngjap_driver =
 	__FILE__,
 	&gng_driver,
 	"gngjap",
-	"Ghosts'n Goblins (Japan)",
+	"Makai-mura (Japan)",
 	"1985",
 	"Capcom",
 	"Roberto Ventura\nMirko Buffoni\nNicola Salmoria\nGabrio Secco\nMarco Cassili",

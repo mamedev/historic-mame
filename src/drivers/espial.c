@@ -71,7 +71,7 @@ extern unsigned char *espial_attributeram;
 extern unsigned char *espial_column_scroll;
 void espial_attributeram_w(int offset,int data);
 void espial_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-void espial_vh_screenrefresh(struct osd_bitmap *bitmap);
+void espial_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 int espial_sh_interrupt(void);
 
@@ -358,10 +358,10 @@ ROM_START( espiale_rom )
 	ROM_LOAD( "2732.5", 0xc000, 0x1000, 0x25bff16d )
 
 	ROM_REGION(0x5000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "2764.8",  0x0000, 0x2000, 0xc2dfd8e7 )
-	ROM_LOAD( "2732.7",  0x2000, 0x1000, 0x868c222c )
-	ROM_LOAD( "2732.10", 0x3000, 0x1000, 0x43808b36 )
-	ROM_LOAD( "2732.9",  0x4000, 0x1000, 0x04efcefb )
+	ROM_LOAD( "espial.8",  0x0000, 0x2000, 0xc2dfd8e7 )
+	ROM_LOAD( "espial.7",  0x2000, 0x1000, 0x868c222c )
+	ROM_LOAD( "espial.10", 0x3000, 0x1000, 0x43808b36 )
+	ROM_LOAD( "espial.9",  0x4000, 0x1000, 0x04efcefb )
 
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
 	ROM_LOAD( "2732.1", 0x0000, 0x1000, 0x13b5696d )
@@ -415,9 +415,9 @@ struct GameDriver espial_driver =
 	__FILE__,
 	0,
 	"espial",
-	"Espial",
-	"????",
-	"?????",
+	"Espial (US?)",
+	"1983",
+	"Tunderbolt",
 	"Brad Oliver\nNicola Salmoria\nTim Lindquist (color info)\nJuan Carlos Lorente (high score save)",
 	0,
 	&machine_driver,
@@ -438,11 +438,11 @@ struct GameDriver espial_driver =
 struct GameDriver espiale_driver =
 {
 	__FILE__,
-	0,
+	&espial_driver,
 	"espiale",
-	"Espial (European version)",
-	"????",
-	"?????",
+	"Espial (Europe)",
+	"1983",
+	"Tunderbolt",
 	"Brad Oliver\nNicola Salmoria\nTim Lindquist (color info)\nJuan Carlos Lorente (high score save)",
 	0,
 	&machine_driver,

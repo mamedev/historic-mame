@@ -34,7 +34,6 @@ extern struct sys16_sprite_info *sys16_sprite;
 extern int s16_videoram_size;
 extern int s16_soundram_size;
 extern int s16_spriteram_size;
-extern int s16_paletteram_size;
 extern int s16_backgroundram_size;
 extern int system16_sprxoffset;
 extern unsigned char *system16_videoram;
@@ -42,7 +41,6 @@ extern unsigned char *system16_soundram;
 extern unsigned char *system16_spriteram;
 extern unsigned char *system16_scrollram;
 extern unsigned char *system16_pagesram;
-extern unsigned char *system16_paletteram;
 extern unsigned char *system16_colordirty;
 extern unsigned char *system16_refreshregister;
 extern unsigned char *system16_backgroundram;
@@ -83,7 +81,6 @@ void system16_soundram_w(int offset, int data);
 int  system16_spriteram_r(int offset);
 void system16_spriteram_w(int offset, int data);
 
-int  system16_paletteram_r(int offset);
 void system16_paletteram_w(int offset, int data);
 
 int  system16_backgroundram_r(int offset);

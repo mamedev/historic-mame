@@ -43,7 +43,7 @@ void mrdo_flipscreen_w(int offset,int data);
 void mrdo_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 int mrdo_vh_start(void);
 void mrdo_vh_stop(void);
-void mrdo_vh_screenrefresh(struct osd_bitmap *bitmap);
+void mrdo_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 
 
@@ -203,21 +203,6 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 
 
-static unsigned char color_prom[] =
-{
-	/* palette (high bits) */
-	0x00,0x0C,0x03,0x00,0x0F,0x0B,0x0C,0x3F,0x0D,0x0F,0x0F,0x0C,0x0C,0x3C,0x0C,0x30,
-	0x0C,0x03,0x30,0x03,0x0C,0x0F,0x00,0x3F,0x03,0x1E,0x00,0x0F,0x37,0x36,0x0D,0x33,
-	/* palette (low bits) */
-	0x00,0x0C,0x03,0x00,0x0C,0x03,0x00,0x3F,0x0F,0x03,0x0F,0x3F,0x0C,0x0F,0x0F,0x3A,
-	0x03,0x0F,0x00,0x0C,0x00,0x0F,0x3F,0x03,0x2A,0x0C,0x00,0x0A,0x0C,0x0E,0x3F,0x0F,
-	/* sprite color lookup table */
-	0x00,0x97,0x71,0xF9,0x00,0x27,0xA5,0x13,0x00,0x32,0x77,0x3F,0x00,0xA7,0x72,0xF9,
-	0x00,0x1F,0x9A,0x77,0x00,0x15,0x27,0x38,0x00,0xC2,0x55,0x69,0x00,0x7F,0x76,0x7A
-};
-
-
-
 static struct SN76496interface sn76496_interface =
 {
 	2,	/* 2 chips */
@@ -246,7 +231,7 @@ static struct MachineDriver machine_driver =
 	/* video hardware */
 	32*8, 32*8, { 1*8, 31*8-1, 4*8, 28*8-1 },
 	gfxdecodeinfo,
-	256,4*144,
+	257,4*144,
 	mrdo_vh_convert_color_prom,
 
 	VIDEO_TYPE_RASTER,
@@ -287,55 +272,76 @@ ROM_START( mrdo_rom )
 	ROM_LOAD( "n8-07.bin", 0x3000, 0x1000, 0x5d25fe31 )
 	ROM_LOAD( "h5-05.bin", 0x4000, 0x1000, 0x7f8e8642 )
 	ROM_LOAD( "k5-06.bin", 0x5000, 0x1000, 0xb456cce4 )
+
+	ROM_REGION(0x0060)	/* color PROMs */
+	ROM_LOAD( "u02--2.bin", 0x0000, 0x0020, 0xe2c70b13 )	/* palette (high bits) */
+	ROM_LOAD( "t02--3.bin", 0x0020, 0x0020, 0x00392931 )	/* palette (low bits) */
+	ROM_LOAD( "f10--1.bin", 0x0040, 0x0020, 0x91e24fe2 )	/* sprite color lookup table */
 ROM_END
 
 ROM_START( mrdot_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "D1",  0x0000, 0x2000, 0xb738fe88 )
-	ROM_LOAD( "D2",  0x2000, 0x2000, 0xa21679bc )
-	ROM_LOAD( "D3",  0x4000, 0x2000, 0xa36ea250 )
-	ROM_LOAD( "D4",  0x6000, 0x2000, 0xe25d6e3d )
+	ROM_LOAD( "D1", 0x0000, 0x2000, 0xb738fe88 )
+	ROM_LOAD( "D2", 0x2000, 0x2000, 0xa21679bc )
+	ROM_LOAD( "D3", 0x4000, 0x2000, 0xa36ea250 )
+	ROM_LOAD( "D4", 0x6000, 0x2000, 0xe25d6e3d )
 
 	ROM_REGION(0x6000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "D9",  0x0000, 0x1000, 0x0360f41e )
-	ROM_LOAD( "D10", 0x1000, 0x1000, 0x9c9a9882 )
-	ROM_LOAD( "D8",  0x2000, 0x1000, 0x005b757b )
-	ROM_LOAD( "D7",  0x3000, 0x1000, 0x5d25fe31 )
-	ROM_LOAD( "D5",  0x4000, 0x1000, 0x7f8e8642 )
-	ROM_LOAD( "D6",  0x5000, 0x1000, 0xb456cce4 )
-ROM_END
-
-ROM_START( mrlo_rom )
-	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "a4-01.bin", 0x0000, 0x2000, 0xaca06df6 )
-	ROM_LOAD( "c4-02.bin", 0x2000, 0x2000, 0xa21679bc )
-	ROM_LOAD( "e4-03.bin", 0x4000, 0x2000, 0xf21e4688 )
-	ROM_LOAD( "g4-04.bin", 0x6000, 0x2000, 0xc031b3e9 )
-
-	ROM_REGION(0x6000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "s8-09.bin", 0x0000, 0x1000, 0xe96e0ef6 )
-	ROM_LOAD( "u8-10.bin", 0x1000, 0x1000, 0xaa29cb17 )
+	ROM_LOAD( "D9",        0x0000, 0x1000, 0x0360f41e )
+	ROM_LOAD( "D10",       0x1000, 0x1000, 0x9c9a9882 )
 	ROM_LOAD( "r8-08.bin", 0x2000, 0x1000, 0x005b757b )
 	ROM_LOAD( "n8-07.bin", 0x3000, 0x1000, 0x5d25fe31 )
 	ROM_LOAD( "h5-05.bin", 0x4000, 0x1000, 0x7f8e8642 )
 	ROM_LOAD( "k5-06.bin", 0x5000, 0x1000, 0xb456cce4 )
+
+	ROM_REGION(0x0060)	/* color PROMs */
+	ROM_LOAD( "u02--2.bin", 0x0000, 0x0020, 0xe2c70b13 )	/* palette (high bits) */
+	ROM_LOAD( "t02--3.bin", 0x0020, 0x0020, 0x00392931 )	/* palette (low bits) */
+	ROM_LOAD( "f10--1.bin", 0x0040, 0x0020, 0x91e24fe2 )	/* sprite color lookup table */
+ROM_END
+
+ROM_START( mrlo_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "MRLO01.bin", 0x0000, 0x2000, 0xaca06df6 )
+	ROM_LOAD( "D2",         0x2000, 0x2000, 0xa21679bc )
+	ROM_LOAD( "MRLO03.bin", 0x4000, 0x2000, 0xf21e4688 )
+	ROM_LOAD( "MRLO04.bin", 0x6000, 0x2000, 0xc031b3e9 )
+
+	ROM_REGION(0x6000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "MRLO09.bin", 0x0000, 0x1000, 0xe96e0ef6 )
+	ROM_LOAD( "MRLO10.bin", 0x1000, 0x1000, 0xaa29cb17 )
+	ROM_LOAD( "r8-08.bin",  0x2000, 0x1000, 0x005b757b )
+	ROM_LOAD( "n8-07.bin",  0x3000, 0x1000, 0x5d25fe31 )
+	ROM_LOAD( "h5-05.bin",  0x4000, 0x1000, 0x7f8e8642 )
+	ROM_LOAD( "k5-06.bin",  0x5000, 0x1000, 0xb456cce4 )
+
+	ROM_REGION(0x0060)	/* color PROMs */
+	ROM_LOAD( "u02--2.bin", 0x0000, 0x0020, 0xe2c70b13 )	/* palette (high bits) */
+	ROM_LOAD( "t02--3.bin", 0x0020, 0x0020, 0x00392931 )	/* palette (low bits) */
+	ROM_LOAD( "f10--1.bin", 0x0040, 0x0020, 0x91e24fe2 )	/* sprite color lookup table */
 ROM_END
 
 ROM_START( mrdu_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "DU1.BIN",  0x0000, 0x2000, 0xb738fe88 )
-	ROM_LOAD( "DU2.BIN",  0x2000, 0x2000, 0xa21679bc )
-	ROM_LOAD( "DU3.BIN",  0x4000, 0x2000, 0xa36ea250 )
+	ROM_LOAD( "D1",       0x0000, 0x2000, 0xb738fe88 )
+	ROM_LOAD( "D2",       0x2000, 0x2000, 0xa21679bc )
+	ROM_LOAD( "D3",       0x4000, 0x2000, 0xa36ea250 )
 	ROM_LOAD( "DU4.BIN",  0x6000, 0x2000, 0xdf60933e)
 
 	ROM_REGION(0x6000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "DU9.BIN",  0x0000, 0x1000, 0xe717f699 )
-	ROM_LOAD( "DU10.BIN", 0x1000, 0x1000, 0xd0b2db78 )
-	ROM_LOAD( "DU8.BIN",  0x2000, 0x1000, 0x005b757b )
-	ROM_LOAD( "DU7.BIN",  0x3000, 0x1000, 0x5d25fe31 )
-	ROM_LOAD( "DU5.BIN",  0x4000, 0x1000, 0x7f8e8642 )
-	ROM_LOAD( "DU6.BIN",  0x5000, 0x1000, 0xb456cce4 )
+	ROM_LOAD( "DU9.BIN",   0x0000, 0x1000, 0xe717f699 )
+	ROM_LOAD( "DU10.BIN",  0x1000, 0x1000, 0xd0b2db78 )
+	ROM_LOAD( "r8-08.bin", 0x2000, 0x1000, 0x005b757b )
+	ROM_LOAD( "n8-07.bin", 0x3000, 0x1000, 0x5d25fe31 )
+	ROM_LOAD( "h5-05.bin", 0x4000, 0x1000, 0x7f8e8642 )
+	ROM_LOAD( "k5-06.bin", 0x5000, 0x1000, 0xb456cce4 )
+
+	ROM_REGION(0x0060)	/* color PROMs */
+	ROM_LOAD( "u02--2.bin", 0x0000, 0x0020, 0xe2c70b13 )	/* palette (high bits) */
+	ROM_LOAD( "t02--3.bin", 0x0020, 0x0020, 0x00392931 )	/* palette (low bits) */
+	ROM_LOAD( "f10--1.bin", 0x0040, 0x0020, 0x91e24fe2 )	/* sprite color lookup table */
 ROM_END
+
 
 
 static int hiload(void)
@@ -379,11 +385,11 @@ static void hisave(void)
 struct GameDriver mrdo_driver =
 {
 	__FILE__,
-	0,
+	&mrdo_driver,
 	"mrdo",
 	"Mr. Do! (Universal)",
-	"????",
-	"?????",
+	"1982",
+	"Universal",
 	"Nicola Salmoria (MAME driver)\nPaul Swan (color info)\nMarco Cassili",
 	0,
 	&machine_driver,
@@ -395,7 +401,7 @@ struct GameDriver mrdo_driver =
 
 	input_ports,
 
-	color_prom, 0, 0,
+	PROM_MEMORY_REGION(2), 0, 0,
 	ORIENTATION_ROTATE_270,
 
 	hiload, hisave
@@ -404,11 +410,11 @@ struct GameDriver mrdo_driver =
 struct GameDriver mrdot_driver =
 {
 	__FILE__,
-	0,
+	&mrdo_driver,
 	"mrdot",
 	"Mr. Do! (Taito)",
-	"????",
-	"?????",
+	"1982",
+	"Universal (Taito license)",
 	"Nicola Salmoria (MAME driver)\nPaul Swan (color info)\nMarco Cassili",
 	0,
 	&machine_driver,
@@ -420,7 +426,7 @@ struct GameDriver mrdot_driver =
 
 	input_ports,
 
-	color_prom, 0, 0,
+	PROM_MEMORY_REGION(2), 0, 0,
 	ORIENTATION_ROTATE_270,
 
 	hiload, hisave
@@ -429,11 +435,11 @@ struct GameDriver mrdot_driver =
 struct GameDriver mrlo_driver =
 {
 	__FILE__,
-	0,
+	&mrdo_driver,
 	"mrlo",
 	"Mr. Lo!",
-	"????",
-	"?????",
+	"1982",
+	"bootleg",
 	"Nicola Salmoria (MAME driver)\nPaul Swan (color info)\nMarco Cassili",
 	0,
 	&machine_driver,
@@ -445,7 +451,7 @@ struct GameDriver mrlo_driver =
 
 	input_ports,
 
-	color_prom, 0, 0,
+	PROM_MEMORY_REGION(2), 0, 0,
 	ORIENTATION_ROTATE_270,
 
 	hiload, hisave
@@ -454,11 +460,11 @@ struct GameDriver mrlo_driver =
 struct GameDriver mrdu_driver =
 {
 	__FILE__,
-	0,
+	&mrdo_driver,
 	"mrdu",
 	"Mr. Du!",
-	"????",
-	"?????",
+	"1982",
+	"bootleg",
 	"Nicola Salmoria (MAME driver)\nPaul Swan (color info)\nMarco Cassili\nLee Taylor",
 	0,
 	&machine_driver,
@@ -470,7 +476,7 @@ struct GameDriver mrdu_driver =
 
 	input_ports,
 
-	color_prom, 0, 0,
+	PROM_MEMORY_REGION(2), 0, 0,
 	ORIENTATION_ROTATE_270,
 
 	hiload, hisave

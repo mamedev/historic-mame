@@ -61,7 +61,7 @@ standard NMI at 0x66
 
 void pooyan_flipscreen_w(int offset,int data);
 void pooyan_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-void pooyan_vh_screenrefresh(struct osd_bitmap *bitmap);
+void pooyan_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 
 /* I am not 100% sure that this timer is correct, but */
@@ -346,7 +346,7 @@ static struct AY8910interface ay8910_interface =
 {
 	2,	/* 2 chips */
 	1789750,	/* 1.78975 MHz ? (same as other Konami games) */
-	{ 0x50ff, 0x50ff },
+	{ 0x30ff, 0x30ff },
 	{ soundlatch_r },
 	{ pooyan_portB_r },
 	{ 0 },
@@ -410,10 +410,10 @@ static struct MachineDriver machine_driver =
 
 ROM_START( pooyan_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "ic22_a4.cpu",  0x0000, 0x2000, 0x8906608a )
-	ROM_LOAD( "ic23_a5.cpu",  0x2000, 0x2000, 0x26eff7e3 )
-	ROM_LOAD( "ic24_a6.cpu",  0x4000, 0x2000, 0x4d5af9a8 )
-	ROM_LOAD( "ic25_a7.cpu",  0x6000, 0x2000, 0xe8a37e2f )
+	ROM_LOAD( "ic22_a4.cpu", 0x0000, 0x2000, 0x8906608a )
+	ROM_LOAD( "ic23_a5.cpu", 0x2000, 0x2000, 0x26eff7e3 )
+	ROM_LOAD( "ic24_a6.cpu", 0x4000, 0x2000, 0x4d5af9a8 )
+	ROM_LOAD( "ic25_a7.cpu", 0x6000, 0x2000, 0xe8a37e2f )
 
 	ROM_REGION(0x4000)	/* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "ic13_g10.cpu", 0x0000, 0x1000, 0x70837e21 )
@@ -422,26 +422,26 @@ ROM_START( pooyan_rom )
 	ROM_LOAD( "ic16_a8.cpu",  0x3000, 0x1000, 0x18d9a3fb )
 
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
-	ROM_LOAD( "sd01_a7.snd",  0x0000, 0x1000, 0x41dc452c )
-	ROM_LOAD( "sd02_a8.snd",  0x1000, 0x1000, 0xe108928c )
+	ROM_LOAD( "sd01_a7.snd", 0x0000, 0x1000, 0x41dc452c )
+	ROM_LOAD( "sd02_a8.snd", 0x1000, 0x1000, 0xe108928c )
 ROM_END
 
 ROM_START( pootan_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "poo_ic22.bin",  0x0000, 0x2000, 0x1fc0a5aa )
-	ROM_LOAD( "poo_ic23.bin",  0x2000, 0x2000, 0x39faab9a )
-	ROM_LOAD( "poo_ic24.bin",  0x4000, 0x2000, 0xd72a8cea )
-	ROM_LOAD( "poo_ic25.bin",  0x6000, 0x2000, 0xb83a5d06 )
+	ROM_LOAD( "poo_ic22.bin", 0x0000, 0x2000, 0x1fc0a5aa )
+	ROM_LOAD( "poo_ic23.bin", 0x2000, 0x2000, 0x39faab9a )
+	ROM_LOAD( "poo_ic24.bin", 0x4000, 0x2000, 0xd72a8cea )
+	ROM_LOAD( "poo_ic25.bin", 0x6000, 0x2000, 0xb83a5d06 )
 
 	ROM_REGION(0x4000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "poo_ic13.bin",  0x0000, 0x1000, 0x1e020240 )
-	ROM_LOAD( "poo_ic14.bin",  0x1000, 0x1000, 0x7c58b368 )
-	ROM_LOAD( "poo_ic15.bin",  0x2000, 0x1000, 0xf00ec45a )
-	ROM_LOAD( "poo_ic16.bin",  0x3000, 0x1000, 0x18d9a3fb )
+	ROM_LOAD( "poo_ic13.bin", 0x0000, 0x1000, 0x1e020240 )
+	ROM_LOAD( "poo_ic14.bin", 0x1000, 0x1000, 0x7c58b368 )
+	ROM_LOAD( "ic15_a9.cpu",  0x2000, 0x1000, 0xf00ec45a )
+	ROM_LOAD( "ic16_a8.cpu",  0x3000, 0x1000, 0x18d9a3fb )
 
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
-	ROM_LOAD( "poo_a1.bin",   0x0000, 0x1000, 0x41dc452c )
-	ROM_LOAD( "poo_a2.bin",   0x1000, 0x1000, 0xe108928c )
+	ROM_LOAD( "sd01_a7.snd", 0x0000, 0x1000, 0x41dc452c )
+	ROM_LOAD( "sd02_a8.snd", 0x1000, 0x1000, 0xe108928c )
 ROM_END
 
 
@@ -504,8 +504,8 @@ struct GameDriver pooyan_driver =
 	0,
 	"pooyan",
 	"Pooyan",
-	"????",
-	"?????",
+	"1982",
+	"Stern",
 	"Mike Cuddy (hardware info)\nAllard Van Der Bas (Pooyan emulator)\nNicola Salmoria (MAME driver)\nMartin Binder (color info)\nMarco Cassili",
 	0,
 	&machine_driver,
@@ -526,11 +526,11 @@ struct GameDriver pooyan_driver =
 struct GameDriver pootan_driver =
 {
 	__FILE__,
-	0,
+	&pooyan_driver,
 	"pootan",
 	"Pootan",
-	"????",
-	"?????",
+	"1982",
+	"bootleg",
 	"Mike Cuddy (hardware info)\nAllard Van Der Bas (Pooyan emulator)\nNicola Salmoria (MAME driver)\nMartin Binder (color info)\nMarco Cassili",
 	0,
 	&machine_driver,

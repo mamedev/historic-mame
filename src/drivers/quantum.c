@@ -113,32 +113,32 @@ INPUT_PORTS_START( quantum_input_ports )
 
 /* first POKEY is SW2, second is SW1 -- more confusion! */
 	PORT_START /* DSW0 */
-	PORT_DIPNAME(   0xc0, 0xc0, "Coinage",             IP_KEY_NONE )
-	PORT_DIPSETTING(      0x80, "Free Play"            )
-	PORT_DIPSETTING(      0x00, "1 Coin/2 Credit"      )
-	PORT_DIPSETTING(      0xc0, "1 Coin/1 Credit"      )
-	PORT_DIPSETTING(      0x40, "2 Coin/1 Credit"      )
+	PORT_DIPNAME(   0xc0, 0x00, "Coinage",             IP_KEY_NONE )
+	PORT_DIPSETTING(      0x40, "Free Play"            )
+	PORT_DIPSETTING(      0xc0, "1 Coin/2 Credit"      )
+	PORT_DIPSETTING(      0x00, "1 Coin/1 Credit"      )
+	PORT_DIPSETTING(      0x80, "2 Coin/1 Credit"      )
 
-	PORT_DIPNAME(   0x30, 0x30, "Right Coin mech",     IP_KEY_NONE)
-	PORT_DIPSETTING(      0x30, "Right coin mech x1"   )
-	PORT_DIPSETTING(      0x10, "Right coin mech x4"   )
-	PORT_DIPSETTING(      0x20, "Right coin mech x5"   )
-	PORT_DIPSETTING(      0x00, "Right coin mech x6"   )
+	PORT_DIPNAME(   0x30, 0x00, "Right Coin mech",     IP_KEY_NONE)
+	PORT_DIPSETTING(      0x00, "Right coin mech x1"   )
+	PORT_DIPSETTING(      0x20, "Right coin mech x4"   )
+	PORT_DIPSETTING(      0x10, "Right coin mech x5"   )
+	PORT_DIPSETTING(      0x30, "Right coin mech x6"   )
 
-	PORT_DIPNAME(   0x08, 0x08, "Left Coin mech",      IP_KEY_NONE)
-	PORT_DIPSETTING(      0x08, "Left coin mech x1"    )
-	PORT_DIPSETTING(      0x00, "Left coin mech x2"    )
+	PORT_DIPNAME(   0x08, 0x00, "Left Coin mech",      IP_KEY_NONE)
+	PORT_DIPSETTING(      0x00, "Left coin mech x1"    )
+	PORT_DIPSETTING(      0x08, "Left coin mech x2"    )
 
-	PORT_DIPNAME(   0x07, 0x03, "Bonus Coins",         IP_KEY_NONE)
-	PORT_DIPSETTING(      0x03, "No bonus coins"       )
-	PORT_DIPSETTING(      0x05, "1 bonus coin for 4"   )
-	PORT_DIPSETTING(      0x01, "2 bonus coin for 4"   )
-	PORT_DIPSETTING(      0x06, "1 bonus coin for 5"   )
-	PORT_DIPSETTING(      0x02, "1 bonus coin for 3"   )
+	PORT_DIPNAME(   0x07, 0x00, "Bonus Coins",         IP_KEY_NONE)
+	PORT_DIPSETTING(      0x00, "No bonus coins"       )
+	PORT_DIPSETTING(      0x02, "1 bonus coin for 4"   )
+	PORT_DIPSETTING(      0x06, "2 bonus coin for 4"   )
+	PORT_DIPSETTING(      0x01, "1 bonus coin for 5"   )
+	PORT_DIPSETTING(      0x05, "1 bonus coin for 3"   )
 
 	PORT_START /* DSW1 */
-	PORT_DIPNAME(   0xff, 0xff, "Unknown",             IP_KEY_NONE )
-	PORT_DIPSETTING(      0xff, "Factory Settings"     )
+	PORT_DIPNAME(   0xff, 0x00, "Unknown",             IP_KEY_NONE )
+	PORT_DIPSETTING(      0x00, "Factory Settings"     )
 
 	PORT_START      /* IN2 */
 	PORT_ANALOG ( 0x0f, 0, IPT_TRACKBALL_Y | IPF_REVERSE, 20, 7, 0,0)
@@ -174,7 +174,7 @@ static unsigned char color_prom[] = { VEC_PAL_COLOR };
 static struct POKEYinterface pokey_interface =
 {
 	2,	/* 2 chips */
-	600000,	/* 0.6 MHz??? */
+	1500000,	/* 1.5 MHz? */
 	255,
 	POKEY_DEFAULT_GAIN/2,
 	NO_CLIP,
@@ -210,7 +210,7 @@ static struct MachineDriver machine_driver =
 	0,
 
 	/* video hardware */
-	224, 288, { 0, 600, 0, 900 },
+	350, 400, { 0, 600, 0, 900 },
 	gfxdecodeinfo,
 	256, 256,
 	avg_init_colors,
@@ -233,7 +233,7 @@ static struct MachineDriver machine_driver =
 
 
 
-ROM_START( quantum_rom )
+ROM_START( quantum1_rom )
 	ROM_REGION(0x014000)
     ROM_LOAD_EVEN( "136016.101", 0x000000, 0x002000, 0x6d6c10aa )
     ROM_LOAD_ODD ( "136016.106", 0x000000, 0x002000, 0xf8098bbd )
@@ -247,7 +247,7 @@ ROM_START( quantum_rom )
     ROM_LOAD_ODD ( "136016.110", 0x010000, 0x002000, 0x943b9d71 )
 ROM_END
 
-ROM_START( quantum2_rom )
+ROM_START( quantum_rom )
 	ROM_REGION(0x014000)
     ROM_LOAD_EVEN( "136016.201", 0x000000, 0x002000, 0x8cfa0e3a )
     ROM_LOAD_ODD ( "136016.206", 0x000000, 0x002000, 0x75bd063d )
@@ -267,9 +267,9 @@ struct GameDriver quantum_driver =
 	__FILE__,
 	0,
 	"quantum",
-	"Quantum",
-	"????",
-	"?????",
+	"Quantum (rev 2)",
+	"1982",
+	"Atari",
 	"Paul Forgey (MAME driver)\nAaron Giles (MAME driver)\n"VECTOR_TEAM,
 	0,
 	&machine_driver,
@@ -288,19 +288,19 @@ struct GameDriver quantum_driver =
 	quantum_nvram_load, quantum_nvram_save
 };
 
-struct GameDriver quantum2_driver =
+struct GameDriver quantum1_driver =
 {
 	__FILE__,
-	0,
-	"quantum2",
-	"Quantum (version 2)",
-	"????",
-	"?????",
+	&quantum_driver,
+	"quantum1",
+	"Quantum (rev 1)",
+	"1982",
+	"Atari",
 	"Paul Forgey (MAME driver)\nAaron Giles (MAME driver)\n"VECTOR_TEAM,
 	0,
 	&machine_driver,
 
-	quantum2_rom,
+	quantum1_rom,
 	NULL, NULL,
 
 	NULL,

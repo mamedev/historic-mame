@@ -231,7 +231,7 @@ void cloak_vh_stop(void)
   the main emulation engine.
 
 ***************************************************************************/
-void cloak_vh_screenrefresh(struct osd_bitmap *bitmap)
+void cloak_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
         int offs;
 

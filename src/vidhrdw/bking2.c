@@ -120,7 +120,7 @@ void bking2_hitclr_w(int offset, int data)
   the main emulation engine.
 
 ***************************************************************************/
-void bking2_vh_screenrefresh(struct osd_bitmap *bitmap)
+void bking2_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
     int offs;
 

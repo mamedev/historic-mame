@@ -88,15 +88,14 @@ interrupts: IRQ level 4.
 
 
 
-extern unsigned char *punkshot_paletteram,*punkshot_vidram,*punkshot_scrollram;
-extern int punkshot_paletteram_size,punkshot_vidram_size;
+extern unsigned char *punkshot_vidram,*punkshot_scrollram;
+extern int punkshot_vidram_size;
 
 int tmnt_interrupt(void);
 int punkshot_interrupt(void);
 void punkshot_irqenable_w(int offset,int data);
 
-int punkshot_paletteram_r(int offset);
-void punkshot_paletteram_w(int offset,int data);
+void tmnt_paletteram_w(int offset,int data);
 int punkshot_vidram_r(int offset);
 void punkshot_vidram_w(int offset,int data);
 int punkshot_spriteram_r(int offset);
@@ -115,8 +114,8 @@ int punkshot_vh_start (void);
 void punkshot_vh_stop (void);
 int tmnt_vh_start (void);
 void tmnt_vh_stop (void);
-void tmnt_vh_screenrefresh(struct osd_bitmap *bitmap);
-void punkshot_vh_screenrefresh(struct osd_bitmap *bitmap);
+void tmnt_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void punkshot_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 
 
@@ -125,6 +124,65 @@ void tmnt_sound_command_w(int offset,int data)
 	if (offset == 0)
 		soundlatch_w(0,data & 0xff);
 }
+
+void tmnt_s_9000_w(int offset,int data)
+{
+	/* bit 1 resets the UPD7795C sound chip */
+
+	/* bit 2 plays the title music */
+	if (data & 4) sample_start(0,0,0);
+}
+
+int tmnt_decode_sample(const char *gamename)
+{
+	int i;
+	signed short *dest;
+	unsigned char *source = Machine->memory_region[4];
+	struct GameSamples *samples;
+
+
+	if ((Machine->samples = malloc(sizeof(struct GameSamples))) == NULL)
+		return 1;
+
+	samples = Machine->samples;
+
+	if ((samples->sample[0] = malloc(sizeof(struct GameSample) + (0x40000)*sizeof(short))) == NULL)
+		return 1;
+
+	samples->sample[0]->length = 0x40000*2;
+	samples->sample[0]->volume = 0xff;
+	samples->sample[0]->smpfreq = 22050;
+	samples->sample[0]->resolution = 16;
+	dest = (signed short *)samples->sample[0]->data;
+	samples->total = 1;
+
+	/*	Sound sample for TMNT.D05 is stored in the following mode:
+	 *
+	 *	Bit 15-13:	Exponent (2 ^ x)
+	 *	Bit 12-4 :	Sound data (9 bit)
+	 *
+	 *	(Sound info courtesy of Dave <dayvee@rocketmail.com>)
+	 */
+
+	for (i = 0;i < 0x40000;i++)
+	{
+		int val = source[2*i] + source[2*i+1] * 256;
+		int exp = val >> 13;
+
+	  	val = (val >> 4) & (0x1ff);	/* 9 bit, Max Amplitude 0x200 */
+		val -= 0x100;					/* Centralize value	*/
+
+		val <<= exp;
+
+		dest[i] = val;
+	}
+
+	/*	The sample is now ready to be used.  It's a 16 bit, 22khz sample.
+	 */
+
+	return 0;
+}
+
 
 
 int tmnt_input_r (int offset)
@@ -197,7 +255,7 @@ static struct MemoryReadAddress tmnt_readmem[] =
 {
 	{ 0x000000, 0x05ffff, MRA_ROM },
 	{ 0x060000, 0x063fff, MRA_BANK1 },	/* main RAM */
-	{ 0x080000, 0x080fff, punkshot_paletteram_r },
+	{ 0x080000, 0x080fff, paletteram_word_r },
 	{ 0x0a0000, 0x0a001b, tmnt_input_r },
 	{ 0x100000, 0x106fff, punkshot_100000_r },	/* either video RAMs or character ROMs, */
 												/* depending on bit 3 of a0021. */
@@ -211,7 +269,7 @@ static struct MemoryWriteAddress tmnt_writemem[] =
 {
 	{ 0x000000, 0x05ffff, MWA_ROM },
 	{ 0x060000, 0x063fff, MWA_BANK1 },	/* main RAM */
-	{ 0x080000, 0x080fff, punkshot_paletteram_w, &punkshot_paletteram, &punkshot_paletteram_size },
+	{ 0x080000, 0x080fff, tmnt_paletteram_w, &paletteram },
 	{ 0x0a0000, 0x0a0003, tmnt_0a0000_w },
 	{ 0x0a0008, 0x0a000b, tmnt_sound_command_w },
 	{ 0x0a0010, 0x0a0013, watchdog_reset_w },
@@ -230,7 +288,7 @@ static struct MemoryReadAddress punkshot_readmem[] =
 {
 	{ 0x000000, 0x03ffff, MRA_ROM },
 	{ 0x080000, 0x083fff, MRA_BANK1 },	/* main RAM */
-	{ 0x090000, 0x090fff, punkshot_paletteram_r },
+	{ 0x090000, 0x090fff, paletteram_word_r },
 	{ 0x0a0000, 0x0a0007, punkshot_input_r },
 	{ 0x100000, 0x106fff, punkshot_100000_r },	/* either video RAMs or character ROMs, */
 												/* depending on bit 3 of a0021. */
@@ -245,7 +303,7 @@ static struct MemoryWriteAddress punkshot_writemem[] =
 {
 	{ 0x000000, 0x03ffff, MWA_ROM },
 	{ 0x080000, 0x083fff, MWA_BANK1 },	/* main RAM */
-	{ 0x090000, 0x090fff, punkshot_paletteram_w, &punkshot_paletteram, &punkshot_paletteram_size },
+	{ 0x090000, 0x090fff, paletteram_xBBBBBGGGGGRRRRR_word_w, &paletteram },
 	{ 0x0a0020, 0x0a0023, punkshot_0a0020_w },
 	{ 0x0a0040, 0x0a0043, tmnt_sound_command_w },
 	{ 0x0a0068, 0x0a006b, punkshot_priority_w },
@@ -274,6 +332,7 @@ static struct MemoryWriteAddress tmnt_s_writemem[] =
 {
 	{ 0x0000, 0x7fff, MWA_ROM },
 	{ 0x8000, 0x87ff, MWA_RAM },
+	{ 0x9000, 0x9000, tmnt_s_9000_w },	/* title music & UPD7759C reset */
 	{ 0xc000, 0xc000, YM2151_register_port_0_w },
 	{ 0xc001, 0xc001, YM2151_data_port_0_w },
 	{ -1 }	/* end of table */
@@ -702,6 +761,10 @@ static struct YM2151interface ym2151_interface =
 	{ 0 }
 };
 
+static struct Samplesinterface samples_interface =
+{
+	1	/* 1 channel for the title music */
+};
 
 
 
@@ -711,8 +774,7 @@ static struct MachineDriver tmnt_machine_driver =
 	{
 		{
 			CPU_M68000,
-			12000000,	/* CPU is 68000/12, but this doesn't necessarily mean it's */
-						/* running at 12MHz. TMNT uses 8MHz */
+			8000000,	/* 8 MHz */
 			0,
 			tmnt_readmem,tmnt_writemem,0,0,
 			tmnt_interrupt,1
@@ -732,21 +794,28 @@ static struct MachineDriver tmnt_machine_driver =
 	/* video hardware */
 	64*8, 32*8, { 13*8, (64-13)*8-1, 2*8, 30*8-1 },	/* not sure about the horizontal visible area */
 	tmnt_gfxdecodeinfo,
-	256,64*16,
+	64*16,64*16,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_16BIT,
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
 	0,
 	tmnt_vh_start,
 	tmnt_vh_stop,
 	tmnt_vh_screenrefresh,
 
 	/* sound hardware */
-	0,0,0,0,
+	tmnt_decode_sample,
+	0,
+	0,
+	0,
 	{
 		{
 			SOUND_YM2151_ALT,
 			&ym2151_interface
+		},
+		{
+			SOUND_SAMPLES,
+			&samples_interface
 		}
 	}
 };
@@ -757,7 +826,8 @@ static struct MachineDriver punkshot_machine_driver =
 	{
 		{
 			CPU_M68000,
-			12000000,	/* 12 MHz */
+			12000000,	/* CPU is 68000/12, but this doesn't necessarily mean it's */
+						/* running at 12MHz. TMNT uses 8MHz */
 			0,
 			punkshot_readmem,punkshot_writemem,0,0,
 			punkshot_interrupt,1
@@ -777,10 +847,10 @@ static struct MachineDriver punkshot_machine_driver =
 	/* video hardware */
 	64*8, 32*8, { 13*8, (64-13)*8-1, 2*8, 30*8-1 },	/* not sure about the horizontal visible area */
 	punkshot_gfxdecodeinfo,
-	256,128*16,
+	128*16,128*16,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_16BIT,
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
 	0,
 	punkshot_vh_start,
 	punkshot_vh_stop,
@@ -806,30 +876,32 @@ static struct MachineDriver punkshot_machine_driver =
 
 ROM_START( tmnt_rom )
 	ROM_REGION(0x60000)	/* 2*128k and 2*64k for 68000 code */
-	ROM_LOAD_EVEN( "tmnt.j17", 0x00000, 0x20000, 0xdef10569 )
-	ROM_LOAD_ODD ( "tmnt.k17", 0x00000, 0x20000, 0x2329a9ad )
-	ROM_LOAD_EVEN( "tmnt.j15", 0x40000, 0x10000, 0xe8e08288 )
-	ROM_LOAD_ODD ( "tmnt.k15", 0x40000, 0x10000, 0x63225ce0 )
+	ROM_LOAD_EVEN( "963-r23", 0x00000, 0x20000, 0xdef10569 )
+	ROM_LOAD_ODD ( "963-r24", 0x00000, 0x20000, 0x2329a9ad )
+	ROM_LOAD_EVEN( "963-r21", 0x40000, 0x10000, 0xe8e08288 )
+	ROM_LOAD_ODD ( "963-r22", 0x40000, 0x10000, 0x63225ce0 )
 
 	ROM_REGION(0x1000)
 	/* empty memory region - not used by the game, but needed because the main */
 	/* core currently always frees region #1 after initialization. */
 
 	ROM_REGION(0x300000)	/* graphics (addressable by the main CPU) */
-	ROM_LOAD( "tmnt.h27", 0x000000, 0x80000, 0xc4e80fc8 )        /* 8x8 tiles */
-	ROM_LOAD( "tmnt.k27", 0x080000, 0x80000, 0x3e996127 )        /* 8x8 tiles */
-	ROM_LOAD( "tmnt.h04", 0x100000, 0x80000, 0x87547ae2 )        /* sprites */
-	ROM_LOAD( "tmnt.h06", 0x180000, 0x80000, 0x8216ed80 )        /* sprites */
-	ROM_LOAD( "tmnt.k04", 0x200000, 0x80000, 0x54034e53 )        /* sprites */
-	ROM_LOAD( "tmnt.k06", 0x280000, 0x80000, 0x89662258 )        /* sprites */
+	ROM_LOAD( "963-a28", 0x000000, 0x80000, 0xc4e80fc8 )        /* 8x8 tiles */
+	ROM_LOAD( "963-a29", 0x080000, 0x80000, 0x3e996127 )        /* 8x8 tiles */
+	ROM_LOAD( "963-a17", 0x100000, 0x80000, 0x87547ae2 )        /* sprites */
+	ROM_LOAD( "963-a18", 0x180000, 0x80000, 0x8216ed80 )        /* sprites */
+	ROM_LOAD( "963-a15", 0x200000, 0x80000, 0x54034e53 )        /* sprites */
+	ROM_LOAD( "963-a16", 0x280000, 0x80000, 0x89662258 )        /* sprites */
 
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
-	ROM_LOAD( "tmnt.g13", 0x00000, 0x08000, 0x9120fcdc )
+	ROM_LOAD( "963-e20", 0x00000, 0x08000, 0x9120fcdc )
 
-	ROM_REGION(0x0a0000)	/* 64k+64k+512k for the samples */
-	ROM_LOAD( "tmnt.c13", 0x00000, 0x10000, 0x40ec95d4 ) /* samples */
-	ROM_LOAD( "tmnt.d18", 0x10000, 0x10000, 0xc01b3f71 ) /* samples */
-	ROM_LOAD( "tmnt.d05", 0x20000, 0x80000, 0x5d8ee020 ) /* samples */
+	ROM_REGION(0x80000)	/* 512k for the title music sample */
+	ROM_LOAD( "963-a25", 0x00000, 0x80000, 0x5d8ee020 )
+
+	ROM_REGION(0x20000)	/* 64k+64k+512k for the samples */
+	ROM_LOAD( "963-a26", 0x00000, 0x10000, 0x40ec95d4 ) /* samples for 007232 */
+	ROM_LOAD( "963-a27", 0x10000, 0x10000, 0xc01b3f71 ) /* samples for UPD7759C */
 ROM_END
 
 ROM_START( tmntj_rom )
@@ -854,13 +926,15 @@ ROM_START( tmntj_rom )
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
 	ROM_LOAD( "963-e20", 0x00000, 0x08000, 0x9120fcdc )
 
-	ROM_REGION(0x0a0000)	/* 64k+64k+512k for the samples */
-	ROM_LOAD( "963-a26", 0x00000, 0x10000, 0x40ec95d4 ) /* samples */
-	ROM_LOAD( "963-a27", 0x10000, 0x10000, 0xc01b3f71 ) /* samples */
-	ROM_LOAD( "963-a25", 0x20000, 0x80000, 0x5d8ee020 ) /* samples */
+	ROM_REGION(0x80000)	/* 512k for the title music sample */
+	ROM_LOAD( "963-a25", 0x00000, 0x80000, 0x5d8ee020 )
+
+	ROM_REGION(0x20000)	/* 64k+64k+512k for the samples */
+	ROM_LOAD( "963-a26", 0x00000, 0x10000, 0x40ec95d4 ) /* samples for 007232 */
+	ROM_LOAD( "963-a27", 0x10000, 0x10000, 0xc01b3f71 ) /* samples for UPD7759C */
 ROM_END
 
-ROM_START( tmnt2p_rom )
+ROM_START( tmht2p_rom )
 	ROM_REGION(0x60000)	/* 2*128k and 2*64k for 68000 code */
 	ROM_LOAD_EVEN( "963-u23", 0x00000, 0x20000, 0x2f4f59a1 )
 	ROM_LOAD_ODD ( "963-u24", 0x00000, 0x20000, 0x337f4fc1 )
@@ -882,10 +956,12 @@ ROM_START( tmnt2p_rom )
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
 	ROM_LOAD( "963-e20", 0x00000, 0x08000, 0x9120fcdc )
 
-	ROM_REGION(0x0a0000)	/* 64k+64k+512k for the samples */
-	ROM_LOAD( "963-a26", 0x00000, 0x10000, 0x40ec95d4 ) /* samples */
-	ROM_LOAD( "963-a27", 0x10000, 0x10000, 0xc01b3f71 ) /* samples */
-	ROM_LOAD( "963-a25", 0x20000, 0x80000, 0x5d8ee020 ) /* samples */
+	ROM_REGION(0x80000)	/* 512k for the title music sample */
+	ROM_LOAD( "963-a25", 0x00000, 0x80000, 0x5d8ee020 )
+
+	ROM_REGION(0x20000)	/* 64k+64k+512k for the samples */
+	ROM_LOAD( "963-a26", 0x00000, 0x10000, 0x40ec95d4 ) /* samples for 007232 */
+	ROM_LOAD( "963-a27", 0x10000, 0x10000, 0xc01b3f71 ) /* samples for UPD7759C */
 ROM_END
 
 ROM_START( tmnt2pj_rom )
@@ -910,10 +986,12 @@ ROM_START( tmnt2pj_rom )
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
 	ROM_LOAD( "963-e20", 0x00000, 0x08000, 0x9120fcdc )
 
-	ROM_REGION(0x0a0000)	/* 64k+64k+512k for the samples */
-	ROM_LOAD( "963-a26", 0x00000, 0x10000, 0x40ec95d4 ) /* samples */
-	ROM_LOAD( "963-a27", 0x10000, 0x10000, 0xc01b3f71 ) /* samples */
-	ROM_LOAD( "963-a25", 0x20000, 0x80000, 0x5d8ee020 ) /* samples */
+	ROM_REGION(0x80000)	/* 512k for the title music sample */
+	ROM_LOAD( "963-a25", 0x00000, 0x80000, 0x5d8ee020 )
+
+	ROM_REGION(0x20000)	/* 64k+64k+512k for the samples */
+	ROM_LOAD( "963-a26", 0x00000, 0x10000, 0x40ec95d4 ) /* samples for 007232 */
+	ROM_LOAD( "963-a27", 0x10000, 0x10000, 0xc01b3f71 ) /* samples for UPD7759C */
 ROM_END
 
 ROM_START( punkshot_rom )
@@ -947,9 +1025,9 @@ struct GameDriver tmnt_driver =
 	__FILE__,
 	0,
 	"tmnt",
-	"TMNT (4 Player USA)",
-	"????",
-	"?????",
+	"TMNT (4 Players USA)",
+	"1989",
+	"Konami",
 	"Nicola Salmoria (MAME driver)\nAlex Pasadyn (MAME driver)\nJeff Slutter (hardware info)\nHowie Cohen (hardware info)\nDan Boris (hardware info)",
 	0,
 	&tmnt_machine_driver,
@@ -970,11 +1048,11 @@ struct GameDriver tmnt_driver =
 struct GameDriver tmntj_driver =
 {
 	__FILE__,
-	0,
+	&tmnt_driver,
 	"tmntj",
-	"TMNT (4 Player Japanese)",
-	"????",
-	"?????",
+	"TMNT (4 Players Japanese)",
+	"1989",
+	"Konami",
 	"Nicola Salmoria (MAME driver)\nAlex Pasadyn (MAME driver)\nJeff Slutter (hardware info)\nHowie Cohen (hardware info)\nDan Boris (hardware info)",
 	0,
 	&tmnt_machine_driver,
@@ -992,19 +1070,19 @@ struct GameDriver tmntj_driver =
 	0, 0
 };
 
-struct GameDriver tmnt2p_driver =
+struct GameDriver tmht2p_driver =
 {
 	__FILE__,
-	0,
-	"tmnt2p",
-	"TMNT (2 Player USA)",
-	"????",
-	"?????",
+	&tmnt_driver,
+	"tmht2p",
+	"TMHT (2 Players UK)",
+	"1989",
+	"Konami",
 	"Nicola Salmoria (MAME driver)\nAlex Pasadyn (MAME driver)\nJeff Slutter (hardware info)\nHowie Cohen (hardware info)\nDan Boris (hardware info)\nAlex Simmons (2 player version)",
 	0,
 	&tmnt_machine_driver,
 
-	tmnt2p_rom,
+	tmht2p_rom,
 	0, 0,
 	0,
 	0,	/* sound_prom */
@@ -1020,11 +1098,11 @@ struct GameDriver tmnt2p_driver =
 struct GameDriver tmnt2pj_driver =
 {
 	__FILE__,
-	0,
+	&tmnt_driver,
 	"tmnt2pj",
-	"TMNT (2 Player Japanese)",
-	"????",
-	"?????",
+	"TMNT (2 Players Japanese)",
+	"1990",
+	"Konami",
 	"Nicola Salmoria (MAME driver)\nAlex Pasadyn (MAME driver)\nJeff Slutter (hardware info)\nHowie Cohen (hardware info)\nDan Boris (hardware info)\nAlex Simmons (2 player version)",
 	0,
 	&tmnt_machine_driver,
@@ -1048,8 +1126,8 @@ struct GameDriver punkshot_driver =
 	0,
 	"punkshot",
 	"Punk Shot",
-	"????",
-	"?????",
+	"1990",
+	"Konami",
 	"Nicola Salmoria (MAME driver)\nAlex Pasadyn (MAME driver)\nJeff Slutter (hardware info)\nHowie Cohen (hardware info)\nDan Boris (hardware info)",
 	0,
 	&punkshot_machine_driver,

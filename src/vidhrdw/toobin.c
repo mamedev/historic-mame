@@ -162,17 +162,11 @@ void toobin_playfieldram_w (int offset, int data)
  *
  *************************************/
 
-int toobin_paletteram_r (int offset)
-{
-	return READ_WORD (&atarigen_paletteram[offset]);
-}
-
-
 void toobin_paletteram_w (int offset, int data)
 {
-	int oldword = READ_WORD (&atarigen_paletteram[offset]);
+	int oldword = READ_WORD (&paletteram[offset]);
 	int newword = COMBINE_WORD (oldword, data);
-	WRITE_WORD (&atarigen_paletteram[offset], newword);
+	WRITE_WORD (&paletteram[offset], newword);
 
 	{
 		int red =   (((newword >> 10) & 31) * 224) >> 5;
@@ -360,14 +354,13 @@ void toobin_render_mo (struct osd_bitmap *bitmap, struct rectangle *clip, unsign
  *		the real deal
  */
 
-void toobin_vh_screenrefresh (struct osd_bitmap *bitmap)
+void toobin_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	unsigned char al_map[16], pf_map[16];
 	unsigned short mo_map[16];
 	int x, y, sx, sy, xoffs, yoffs, offs, i, intensity;
 	struct toobin_mo_data modata;
 	int redraw_list[1024], *r;
-	int saved = 0;
 
 
 	/* compute the intensity and modify the palette if it's different */
@@ -377,7 +370,7 @@ void toobin_vh_screenrefresh (struct osd_bitmap *bitmap)
 		last_intensity = intensity;
 		for (i = 0; i < 256+256+64; i++)
 		{
-			int newword = READ_WORD (&atarigen_paletteram[i*2]);
+			int newword = READ_WORD (&paletteram[i*2]);
 			int red =   (((newword >> 10) & 31) * 224) >> 5;
 			int green = (((newword >>  5) & 31) * 224) >> 5;
 			int blue =  (((newword      ) & 31) * 224) >> 5;
@@ -645,21 +638,21 @@ static void toobin_dump_video_ram (void)
 	fprintf (f, "\n\nPlayfield Palette:\n");
 	for (i = 0x000; i < 0x100; i++)
 	{
-		fprintf (f, "%04X ", READ_WORD (&atarigen_paletteram[i*2]));
+		fprintf (f, "%04X ", READ_WORD (&paletteram[i*2]));
 		if ((i & 15) == 15) fprintf (f, "\n");
 	}
 
 	fprintf (f, "\n\nMotion Object Palette:\n");
 	for (i = 0x100; i < 0x200; i++)
 	{
-		fprintf (f, "%04X ", READ_WORD (&atarigen_paletteram[i*2]));
+		fprintf (f, "%04X ", READ_WORD (&paletteram[i*2]));
 		if ((i & 15) == 15) fprintf (f, "\n");
 	}
 
 	fprintf (f, "\n\nAlpha Palette\n");
 	for (i = 0x200; i < 0x300; i++)
 	{
-		fprintf (f, "%04X ", READ_WORD (&atarigen_paletteram[i*2]));
+		fprintf (f, "%04X ", READ_WORD (&paletteram[i*2]));
 		if ((i & 15) == 15) fprintf (f, "\n");
 	}
 

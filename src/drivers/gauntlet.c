@@ -129,7 +129,6 @@ int gauntlet_68010_speedup_r (int offset);
 int gauntlet_6502_speedup_r (int offset);
 int gauntlet_6502_switch_r (int offset);
 int gauntlet_playfieldram_r (int offset);
-int gauntlet_paletteram_r (int offset);
 int gauntlet_alpharam_r (int offset);
 int gauntlet_vscroll_r (int offset);
 
@@ -139,7 +138,6 @@ void gauntlet_6502_mix_w (int offset, int data);
 void gauntlet_sound_ctl_w (int offset, int data);
 void gauntlet_tms_w (int offset, int data);
 void gauntlet_playfieldram_w (int offset, int data);
-void gauntlet_paletteram_w (int offset, int data);
 void gauntlet_alpharam_w (int offset, int data);
 void gauntlet_vscroll_w (int offset, int data);
 
@@ -153,7 +151,7 @@ void gauntlet2_init_machine (void);
 int gauntlet_vh_start (void);
 void gauntlet_vh_stop (void);
 
-void gauntlet_vh_screenrefresh (struct osd_bitmap *bitmap);
+void gauntlet_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 
 /*************************************
@@ -165,21 +163,21 @@ void gauntlet_vh_screenrefresh (struct osd_bitmap *bitmap);
 static struct MemoryReadAddress gauntlet_readmem[] =
 {
 	{ 0x000000, 0x037fff, MRA_ROM },
-	{ 0x038000, 0x03ffff, atarigen_slapstic_r, &atarigen_slapstic },
+	{ 0x038000, 0x03ffff, atarigen_slapstic_r },
 	{ 0x040000, 0x07ffff, MRA_ROM },
 	{ 0x800000, 0x801fff, MRA_BANK1 },
-	{ 0x802000, 0x802fff, atarigen_eeprom_r, &atarigen_eeprom, &atarigen_eeprom_size },
+	{ 0x802000, 0x802fff, atarigen_eeprom_r },
 	{ 0x803000, 0x803007, gauntlet_control_r },
 	{ 0x803008, 0x80300f, gauntlet_io_r },
-	{ 0x900000, 0x901fff, gauntlet_playfieldram_r, &atarigen_playfieldram, &atarigen_playfieldram_size },
-	{ 0x902000, 0x903fff, MRA_BANK4, &atarigen_spriteram, &atarigen_spriteram_size },
-	{ 0x904000, 0x904003, gauntlet_68010_speedup_r, &gauntlet_speed_check },
+	{ 0x900000, 0x901fff, gauntlet_playfieldram_r },
+	{ 0x902000, 0x903fff, MRA_BANK4 },
+	{ 0x904000, 0x904003, gauntlet_68010_speedup_r },
 	{ 0x904004, 0x904fff, MRA_BANK2 },
-	{ 0x905f6c, 0x905f6f, gauntlet_vscroll_r, &atarigen_vscroll },
-	{ 0x905000, 0x905eff, gauntlet_alpharam_r, &atarigen_alpharam, &atarigen_alpharam_size },
+	{ 0x905f6c, 0x905f6f, gauntlet_vscroll_r },
+	{ 0x905000, 0x905eff, gauntlet_alpharam_r },
 	{ 0x905f00, 0x905fff, MRA_BANK3 },
-	{ 0x910000, 0x9107ff, gauntlet_paletteram_r, &atarigen_paletteram, &atarigen_paletteram_size },
-	{ 0x930000, 0x930003, MRA_BANK5, &atarigen_hscroll },
+	{ 0x910000, 0x9107ff, paletteram_word_r },
+	{ 0x930000, 0x930003, MRA_BANK5 },
 	{ -1 }  /* end of table */
 };
 
@@ -187,24 +185,24 @@ static struct MemoryReadAddress gauntlet_readmem[] =
 static struct MemoryWriteAddress gauntlet_writemem[] =
 {
 	{ 0x000000, 0x037fff, MWA_ROM },
-	{ 0x038000, 0x03ffff, atarigen_slapstic_w },
+	{ 0x038000, 0x03ffff, atarigen_slapstic_w, &atarigen_slapstic },
 	{ 0x040000, 0x07ffff, MWA_ROM },
 	{ 0x800000, 0x801fff, MWA_BANK1 },
-	{ 0x802000, 0x802fff, atarigen_eeprom_w },
+	{ 0x802000, 0x802fff, atarigen_eeprom_w, &atarigen_eeprom, &atarigen_eeprom_size },
 	{ 0x803100, 0x803103, MWA_NOP },
 	{ 0x803120, 0x80312f, gauntlet_io_w },
 	{ 0x803140, 0x803143, MWA_NOP },
 	{ 0x803150, 0x803153, atarigen_eeprom_enable_w },
 	{ 0x803170, 0x803173, atarigen_sound_w },
-	{ 0x900000, 0x901fff, gauntlet_playfieldram_w },
-	{ 0x902000, 0x903fff, MWA_BANK4 },
-	{ 0x904000, 0x904003, gauntlet_68010_speedup_w },
+	{ 0x900000, 0x901fff, gauntlet_playfieldram_w, &atarigen_playfieldram, &atarigen_playfieldram_size },
+	{ 0x902000, 0x903fff, MWA_BANK4, &atarigen_spriteram, &atarigen_spriteram_size },
+	{ 0x904000, 0x904003, gauntlet_68010_speedup_w, &gauntlet_speed_check },
 	{ 0x904004, 0x904fff, MWA_BANK2 },
-	{ 0x905f6c, 0x905f6f, gauntlet_vscroll_w },
-	{ 0x905000, 0x905eff, gauntlet_alpharam_w },
+	{ 0x905f6c, 0x905f6f, gauntlet_vscroll_w, &atarigen_vscroll },
+	{ 0x905000, 0x905eff, gauntlet_alpharam_w, &atarigen_alpharam, &atarigen_alpharam_size },
 	{ 0x905f00, 0x905fff, MWA_BANK3 },
-	{ 0x910000, 0x9107ff, gauntlet_paletteram_w },
-	{ 0x930000, 0x930003, MWA_BANK5 },
+	{ 0x910000, 0x9107ff, paletteram_IIIIRRRRGGGGBBBB_word_w, &paletteram },
+	{ 0x930000, 0x930003, MWA_BANK5, &atarigen_hscroll },
 	{ -1 }  /* end of table */
 };
 
@@ -777,8 +775,8 @@ struct GameDriver gauntlet_driver =
 	0,
 	"gauntlet",
 	"Gauntlet",
-	"????",
-	"?????",
+	"1985",
+	"Atari Games",
 	"Aaron Giles (MAME driver)\nMike Balfour (graphics info)\nFrank Palazzolo (Slapstic decoding)",
 	0,
 	&gauntlet_machine_driver,
@@ -800,11 +798,11 @@ struct GameDriver gauntlet_driver =
 struct GameDriver gauntir1_driver =
 {
 	__FILE__,
-	0,
+	&gauntlet_driver,
 	"gauntir1",
 	"Gauntlet (Intermediate Release 1)",
-	"????",
-	"?????",
+	"1985",
+	"Atari Games",
 	"Aaron Giles (MAME driver)\nMike Balfour (graphics info)\nFrank Palazzolo (Slapstic decoding)",
 	0,
 	&gauntlet_machine_driver,
@@ -826,11 +824,11 @@ struct GameDriver gauntir1_driver =
 struct GameDriver gauntir2_driver =
 {
 	__FILE__,
-	0,
+	&gauntlet_driver,
 	"gauntir2",
 	"Gauntlet (Intermediate Release 2)",
-	"????",
-	"?????",
+	"1985",
+	"Atari Games",
 	"Aaron Giles (MAME driver)\nMike Balfour (graphics info)\nFrank Palazzolo (Slapstic decoding)",
 	0,
 	&gauntlet_machine_driver,
@@ -852,11 +850,11 @@ struct GameDriver gauntir2_driver =
 struct GameDriver gaunt2p_driver =
 {
 	__FILE__,
-	0,
+	&gauntlet_driver,
 	"gaunt2p",
-	"Gauntlet (2 Player)",
-	"????",
-	"?????",
+	"Gauntlet (2 Players)",
+	"1985",
+	"Atari Games",
 	"Aaron Giles (MAME driver)\nMike Balfour (graphics info)\nFrank Palazzolo (Slapstic decoding)",
 	0,
 	&gaunt2p_machine_driver,
@@ -881,8 +879,8 @@ struct GameDriver gaunt2_driver =
 	0,
 	"gaunt2",
 	"Gauntlet 2",
-	"????",
-	"?????",
+	"1986",
+	"Atari Games",
 	"Aaron Giles (MAME driver)\nMike Balfour (graphics info)\nFrank Palazzolo (Slapstic decoding)",
 	0,
 	&gauntlet2_machine_driver,

@@ -105,7 +105,7 @@ void ladybug_flipscreen_w(int offset,int data)
   the main emulation engine.
 
 ***************************************************************************/
-void ladybug_vh_screenrefresh(struct osd_bitmap *bitmap)
+void ladybug_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	int i,offs;
 

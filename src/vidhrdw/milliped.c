@@ -11,8 +11,6 @@
 
 
 
-unsigned char *milliped_paletteram;
-
 static struct rectangle spritevisiblearea =
 {
 	1*8, 31*8-1,
@@ -42,7 +40,7 @@ void milliped_paletteram_w(int offset,int data)
 	int r,g,b;
 
 
-	milliped_paletteram[offset] = data;
+	paletteram[offset] = data;
 
 	/* red component */
 	bit0 = (~data >> 5) & 0x01;
@@ -74,7 +72,7 @@ void milliped_paletteram_w(int offset,int data)
   the main emulation engine.
 
 ***************************************************************************/
-void milliped_vh_screenrefresh(struct osd_bitmap *bitmap)
+void milliped_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	int offs;
 

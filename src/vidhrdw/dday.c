@@ -68,7 +68,7 @@ void dday_control_w(int offset, int data)
   the main emulation engine.
 
 ***************************************************************************/
-void dday_vh_screenrefresh(struct osd_bitmap *bitmap)
+void dday_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	int offs;
 

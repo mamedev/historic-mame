@@ -19,7 +19,7 @@ Cobra Command:
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-static unsigned char *palette_ram,*pf_video,*pf_dirty,*oscar_shared_mem;
+static unsigned char *pf_video,*pf_dirty,*oscar_shared_mem;
 static int scroll1[4],scroll2[4],pf1_attr[8],pf2_attr[8];
 static struct osd_bitmap *pf1_bitmap,*pf2_bitmap;
 
@@ -61,13 +61,18 @@ void dec8_scroll2_w(int offset, int data)
 
 
 
-void dec8_vh_screenrefresh(struct osd_bitmap *bitmap)
+void dec8_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 
 	int my,mx,offs,color,tile;
 
 	int scrollx,scrolly;
 
+
+	if (palette_recalc())
+	{
+		memset(pf_dirty,1,0x800);
+	}
 
 
   /* Playfield 2 - Foreground */
@@ -373,40 +378,6 @@ void dec8_vh_screenrefresh(struct osd_bitmap *bitmap)
 
 }
 
-int dec8_palette_r(int offset)
-{
-	return palette_ram[offset];
-}
-
-void dec8_palette_w(int offset, int data)
-{
-	int r,g,b;
- 	palette_ram[offset]=data;
-
-
-  if (offset%2) {
-
-		r = 0x11 * ((palette_ram[offset] >> 0) & 0x0f);
-
-		g = 0x11 * ((palette_ram[offset] >> 4) & 0x0f);
-
-		b = 0x11 * ((palette_ram[offset-1] >> 0) & 0x0f);
-
-
- 		osd_modify_pen(Machine->pens[offset/2],r,g,b);
-  }
- 	else {
-   	r = 0x11 * ((palette_ram[offset+1] >> 0) & 0x0f);
-		g = 0x11 * ((palette_ram[offset+1] >> 4) & 0x0f);
-
-		b = 0x11 * ((palette_ram[offset] >> 0) & 0x0f);
-
-
- 		osd_modify_pen(Machine->pens[offset/2],r,g,b);
- 	}
-}
-
-
 int dec8_video_r(int offset)
 {
 	return pf_video[offset];
@@ -440,7 +411,6 @@ int dec8_vh_start (void)
 
 
 
-  palette_ram=malloc(0x800);
   pf_video=malloc(0x1000);
   pf_dirty=malloc(0x800);
   oscar_shared_mem=malloc(0x1000);
@@ -458,11 +428,10 @@ int dec8_vh_start (void)
 
 void dec8_vh_stop (void)
 {
-  osd_free_bitmap(pf1_bitmap);
-  osd_free_bitmap(pf2_bitmap);
-	free(palette_ram);
-  free(pf_video);
-  free(pf_dirty);
-  free(oscar_shared_mem);
+	osd_free_bitmap(pf1_bitmap);
+	osd_free_bitmap(pf2_bitmap);
+	free(pf_video);
+	free(pf_dirty);
+	free(oscar_shared_mem);
 	generic_vh_stop();
 }

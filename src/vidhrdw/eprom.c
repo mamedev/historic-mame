@@ -190,38 +190,6 @@ void eprom_playfieldpalram_w (int offset, int data)
 
 /*************************************
  *
- *		Palette RAM read/write handlers
- *
- *************************************/
-
-int eprom_paletteram_r (int offset)
-{
-	return READ_WORD (&atarigen_paletteram[offset]);
-}
-
-
-void eprom_paletteram_w (int offset, int data)
-{
-	int oldword = READ_WORD (&atarigen_paletteram[offset]);
-	int newword = COMBINE_WORD (oldword, data);
-	WRITE_WORD (&atarigen_paletteram[offset], newword);
-
-	{
-		static const int ztable[16] =
-			{ 0x0, 0x3, 0x4, 0x5, 0x6, 0x7, 0x8, 0x9, 0xa, 0xb, 0xc, 0xd, 0xe, 0xf, 0x10, 0x11 };
-		int inten = ztable[(newword >> 12) & 15];
-		int red =   ((newword >> 8) & 15) * inten;
-		int green = ((newword >> 4) & 15) * inten;
-		int blue =  ((newword     ) & 15) * inten;
-
-		palette_change_color ((offset / 2) & 0x7ff, red, green, blue);
-	}
-}
-
-
-
-/*************************************
- *
  *		Motion object list handlers
  *
  *************************************/
@@ -398,7 +366,7 @@ static void redraw_playfield_chunk (struct osd_bitmap *bitmap, int xpos, int ypo
 
 ***************************************************************************/
 
-void eprom_vh_screenrefresh (struct osd_bitmap *bitmap)
+void eprom_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	unsigned char mo_map[16], al_map[32], pf_map[16];
 	int x, y, sx, sy, offs, xoffs, yoffs, i;
@@ -574,21 +542,21 @@ static void eprom_debug (void)
 		fprintf (f, "\n\nAlpha Palette:\n");
 		for (i = 0x000; i < 0x100; i++)
 		{
-			fprintf (f, "%04X ", READ_WORD (&atarigen_paletteram[i*2]));
+			fprintf (f, "%04X ", READ_WORD (&paletteram[i*2]));
 			if ((i & 15) == 15) fprintf (f, "\n");
 		}
 
 		fprintf (f, "\n\nMotion Object Palette:\n");
 		for (i = 0x100; i < 0x200; i++)
 		{
-			fprintf (f, "%04X ", READ_WORD (&atarigen_paletteram[i*2]));
+			fprintf (f, "%04X ", READ_WORD (&paletteram[i*2]));
 			if ((i & 15) == 15) fprintf (f, "\n");
 		}
 
 		fprintf (f, "\n\nPlayfield Palette:\n");
 		for (i = 0x200; i < 0x400; i++)
 		{
-			fprintf (f, "%04X ", READ_WORD (&atarigen_paletteram[i*2]));
+			fprintf (f, "%04X ", READ_WORD (&paletteram[i*2]));
 			if ((i & 15) == 15) fprintf (f, "\n");
 		}
 

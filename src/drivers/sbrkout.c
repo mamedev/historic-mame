@@ -17,7 +17,7 @@ ask.  - Mike Balfour (mab22@po.cwru.edu)
 #include "vidhrdw/generic.h"
 
 /* vidhrdw/sbrkout.c */
-extern void sbrkout_vh_screenrefresh(struct osd_bitmap *bitmap);
+extern void sbrkout_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 extern int sbrkout_vh_start(void);
 extern void sbrkout_vh_stop(void);
 extern unsigned char *sbrkout_horiz_ram;
@@ -340,8 +340,8 @@ struct GameDriver sbrkout_driver =
 	0,
 	"sbrkout",
 	"Super Breakout",
-	"????",
-	"?????",
+	"1978",
+	"Atari",
 	"Mike Balfour",
 	0,
 	&machine_driver,

@@ -4,9 +4,6 @@
 
 
 
-extern unsigned char *paletteram;
-extern int paletteram_size;
-
 int ssi_input_r (int offset)
 {
 	switch (offset)
@@ -33,10 +30,6 @@ if (errorlog) fprintf(errorlog,"CPU #0 PC %06x: warning - read unmapped memory a
 }
 
 
-void ssi_paletteram_w(int offset, int data);
-
-int ssi_paletteram_r(int offset);
-
 int ssi_videoram_r(int offset);
 
 void ssi_videoram_w(int offset,int data);
@@ -46,13 +39,13 @@ void ssi_vh_stop (void);
 int  ssi_interrupt(void) ;
 
 
-void ssi_vh_screenrefresh(struct osd_bitmap *bitmap);
+void ssi_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 static struct MemoryReadAddress ssi_readmem[] =
 {
 	{ 0x000000, 0x07ffff, MRA_ROM },
         { 0x100000, 0x10000f, ssi_input_r },
         { 0x200000, 0x20ffff, MRA_BANK1 },
-        { 0x300000, 0x301fff, ssi_paletteram_r },
+        { 0x300000, 0x301fff, paletteram_word_r },
         { 0x400002, 0x400003, MRA_NOP },
         { 0x800000, 0x80ffff, ssi_videoram_r}, //MRA_BANK3 },
 
@@ -64,7 +57,7 @@ static struct MemoryWriteAddress ssi_writemem[] =
 	{ 0x000000, 0x07ffff, MWA_ROM },
         { 0x100000, 0x10000f, MWA_NOP },  /* input and dsw */
         { 0x200000, 0x20ffff, MWA_BANK1 }, /* 68000 ram */
-        { 0x300000, 0x301fff, ssi_paletteram_w, &paletteram, &paletteram_size},
+        { 0x300000, 0x301fff, paletteram_RRRRGGGGBBBBxxxx_word_w, &paletteram },
         { 0x400000, 0x4000ff, MWA_NOP }, /* ??  */
         { 0x500000, 0x500001, MWA_NOP },
         { 0x800000, 0x80ffff, ssi_videoram_w, &videoram, &videoram_size }, /* sprite ram */
@@ -192,10 +185,10 @@ static struct MachineDriver machine_driver =
 	/* video hardware */
 	30*8, 40*8, { 2*8, 30*8-1, 2*8, 40*8-1 },
 	ssi_gfxdecodeinfo,
-	256,256*16,
+	256*16,256*16,
         0,
 
-        VIDEO_TYPE_RASTER| VIDEO_SUPPORTS_16BIT,
+        VIDEO_TYPE_RASTER| VIDEO_MODIFIES_PALETTE,
 	0,
 	ssi_vh_start,
 	ssi_vh_stop,
@@ -241,8 +234,8 @@ struct GameDriver ssi_driver =
 	0,
 	"ssi",
 	"Super Space Invaders '91",
-	"????",
-	"?????",
+	"1990",
+	"Taito",
 	"Howie Cohen \nAlex Pasadyn \nBill Boyle (graphics info) \nRichard Bush (technical information)",
 	0,
 	&machine_driver,

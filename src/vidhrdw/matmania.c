@@ -22,7 +22,6 @@ int matmania_videoram2_size;
 unsigned char *matmania_videoram3,*matmania_colorram3;
 int matmania_videoram3_size;
 unsigned char *matmania_scroll;
-unsigned char *matmania_paletteram;
 static struct osd_bitmap *tmpbitmap2;
 static unsigned char *dirtybuffer2;
 
@@ -94,24 +93,24 @@ void matmania_paletteram_w(int offset,int data)
 	int offs2;
 
 
-	matmania_paletteram[offset] = data;
+	paletteram[offset] = data;
 	offs2 = offset & 0x0f;
 
-	val = matmania_paletteram[offs2];
+	val = paletteram[offs2];
 	bit0 = (val >> 0) & 0x01;
 	bit1 = (val >> 1) & 0x01;
 	bit2 = (val >> 2) & 0x01;
 	bit3 = (val >> 3) & 0x01;
 	r = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
 
-	val = matmania_paletteram[offs2 | 0x10];
+	val = paletteram[offs2 | 0x10];
 	bit0 = (val >> 0) & 0x01;
 	bit1 = (val >> 1) & 0x01;
 	bit2 = (val >> 2) & 0x01;
 	bit3 = (val >> 3) & 0x01;
 	g = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
 
-	val = matmania_paletteram[offs2 | 0x20];
+	val = paletteram[offs2 | 0x20];
 	bit0 = (val >> 0) & 0x01;
 	bit1 = (val >> 1) & 0x01;
 	bit2 = (val >> 2) & 0x01;
@@ -199,7 +198,7 @@ void matmania_colorram3_w(int offset,int data)
 }
 
 
-void matmania_vh_screenrefresh(struct osd_bitmap *bitmap)
+void matmania_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	int offs;
 
@@ -295,7 +294,7 @@ void matmania_vh_screenrefresh(struct osd_bitmap *bitmap)
 	}
 }
 
-void maniach_vh_screenrefresh(struct osd_bitmap *bitmap)
+void maniach_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	int offs;
 

@@ -48,7 +48,7 @@ extern unsigned char *panic_videoram;
 
 int panic_vh_start(void);
 void panic_vh_stop(void);
-void panic_vh_screenrefresh(struct osd_bitmap *bitmap);
+void panic_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 static struct MemoryReadAddress readmem[] =
 {
@@ -301,13 +301,13 @@ ROM_END
 
 ROM_START( panica_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "spcpanic.1", 0x0000, 0x0800, 0x49cd1801 )         /* Code */
+	ROM_LOAD( "panica.1",   0x0000, 0x0800, 0x49cd1801 )         /* Code */
 	ROM_LOAD( "spcpanic.2", 0x0800, 0x0800, 0x0ed18545 )
 	ROM_LOAD( "spcpanic.3", 0x1000, 0x0800, 0x44a22274 )
 	ROM_LOAD( "spcpanic.4", 0x1800, 0x0800, 0x633ea97e )
 	ROM_LOAD( "spcpanic.5", 0x2000, 0x0800, 0xf16ac644 )
 	ROM_LOAD( "spcpanic.6", 0x2800, 0x0800, 0xd0aaa828 )
-	ROM_LOAD( "spcpanic.7", 0x3000, 0x0800, 0x04fe6428 )
+	ROM_LOAD( "panica.7",   0x3000, 0x0800, 0x04fe6428 )
 	ROM_LOAD( "spcpanic.8", 0x3800, 0x0800, 0xc6f90207 )         /* Colour Table */
 
 	ROM_REGION(0x2000)	/* temporary space for graphics (disposed after conversion) */
@@ -324,9 +324,9 @@ struct GameDriver panic_driver =
 	__FILE__,
 	0,
 	"panic",
-	"Space Panic",
-	"????",
-	"?????",
+	"Space Panic (set 1)",
+	"1980",
+	"Universal",
 	"Mike Coates (MAME driver)\nMarco Cassili",
 	0,
 	&machine_driver,
@@ -347,11 +347,11 @@ struct GameDriver panic_driver =
 struct GameDriver panica_driver =
 {
 	__FILE__,
-	0,
+	&panic_driver,
 	"panica",
-	"Space Panic (alternate version)",
-	"????",
-	"?????",
+	"Space Panic (set 2)",
+	"1980",
+	"Universal",
 	"Mike Coates (MAME driver)\nMarco Cassili",
 	0,
 	&machine_driver,

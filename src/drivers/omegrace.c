@@ -451,7 +451,7 @@ static struct AY8910interface ay8910_interface =
 {
 	2,	/* 2 chips */
 	1500000,	/* 1.5 MHz */
-	{ 0x20ff, 0x20ff },
+	{ 255, 255 },
 	{ 0 },
 	{ 0 },
 	{ 0 },
@@ -564,8 +564,8 @@ struct GameDriver omegrace_driver =
 	0,
 	"omegrace",
 	"Omega Race",
-	"????",
-	"?????",
+	"1981",
+	"Midway",
 	"Al Kossow (original code)\nBernd Wiebelt (MAME driver)\ndedicated to Natalia & Lara\n"VECTOR_TEAM,
 	0,
 	&machine_driver,

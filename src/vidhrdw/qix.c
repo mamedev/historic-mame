@@ -11,7 +11,7 @@
 
 
 
-unsigned char *qix_paletteram, *qix_palettebank;
+unsigned char *qix_palettebank;
 unsigned char *qix_videoaddress;
 static unsigned char *screen;
 
@@ -156,7 +156,7 @@ void qix_videoram_w(int offset,int data)
 		y = ~y & 0xff;
 
 
-	tmpbitmap->line[y][x] = Machine->pens[data];
+	Machine->scrbitmap->line[y][x] = tmpbitmap->line[y][x] = Machine->pens[data];
 
 	osd_mark_dirty(x,y,x,y,0);
 
@@ -193,7 +193,7 @@ void qix_addresslatch_w(int offset,int data)
 		y = ~y & 0xff;
 
 
-	tmpbitmap->line[y][x] = Machine->pens[data];
+	Machine->scrbitmap->line[y][x] = tmpbitmap->line[y][x] = Machine->pens[data];
 
 	osd_mark_dirty(x,y,x,y,0);
 
@@ -213,7 +213,7 @@ Qix uses a palette of 64 colors (2 each RGB) and four intensities (RRGGBBII).
 */
 void qix_paletteram_w(int offset,int data)
 {
-	qix_paletteram[offset] = data;
+	paletteram[offset] = data;
 
 	if ((*qix_palettebank & 0x03) == (offset / 256))
 		update_pen (offset % 256, data);
@@ -225,7 +225,7 @@ void qix_palettebank_w(int offset,int data)
 {
 	if ((*qix_palettebank & 0x03) != (data & 0x03))
 	{
-		unsigned char *pram = &qix_paletteram[256 * (data & 0x03)];
+		unsigned char *pram = &paletteram[256 * (data & 0x03)];
 		int i;
 
 		for (i = 0;i < 256;i++)
@@ -252,7 +252,7 @@ void qix_palettebank_w(int offset,int data)
 }
 
 
-void qix_vh_screenrefresh(struct osd_bitmap *bitmap)
+void qix_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	/* recalc the palette if necessary */
 	if (palette_recalc ())
@@ -276,13 +276,13 @@ void qix_vh_screenrefresh(struct osd_bitmap *bitmap)
 				y = ~y & 0xff;
 
 
-			tmpbitmap->line[y][x] = Machine->pens[screen[offs]];
+			Machine->scrbitmap->line[y][x] = tmpbitmap->line[y][x] = Machine->pens[screen[offs]];
 		}
 
 		osd_mark_dirty (0,0,255,255,0);
 	}
 
-
-	/* copy the screen */
-	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+	if (full_refresh)
+		/* copy the screen */
+		copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
 }

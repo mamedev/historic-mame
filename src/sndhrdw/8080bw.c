@@ -30,6 +30,8 @@
 
 #include "driver.h"
 
+void invaders_vh_flipscreen(int data);
+
 void invaders_sh_port3_w(int offset, int data)
 {
 	static unsigned char Sound = 0;
@@ -179,6 +181,8 @@ void invaders_sh_port5_w(int offset, int data)
 
 	if (~data & 0x10 && Sound & 0x10)
 		sample_stop (5);
+
+	invaders_vh_flipscreen(data & 0x20);
 
 	Sound = data;
 }

@@ -20,8 +20,7 @@
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-#include "sndhrdw/2151intf.h"
-#include "sndhrdw/adpcm.h"
+
 
 #include "cps1.h"       /* External CPS1 defintions */
 
@@ -41,20 +40,20 @@
 *
 *********************************************************************/
 static void cps1_irq_handler_mus (void) {  cpu_cause_interrupt (1, 0xff ); }
-static struct YM2151interface interface_mus =
+static struct YM2151interface ym2151_interface =
 {
-        1,                      /* 1 chip */
-        4000000,                /* 4 MHZ TODO: find out the real frq */
-        { 170 },                /* 170 somethings */
-        { cps1_irq_handler_mus }
+	1,                      /* 1 chip */
+	3579580,                /* 3.579580 MHz ? */
+	{ 255 },
+	{ cps1_irq_handler_mus }
 };
 
-static struct OKIM6295interface interface_okim6295 =
+static struct OKIM6295interface okim6295_interface =
 {
-        1,              /* 1 chip */
-        8000,           /* 8000Hz ??? TODO: find out the real frequency */
-        3,              /* memory region 3 */
-        { 255 }
+	1,              /* 1 chip */
+	8000,           /* 8000Hz ??? TODO: find out the real frequency */
+	3,              /* memory region 3 */
+	{ 255 }
 };
 
 void cps1_snd_bankswitch_w(int offset,int data)
@@ -166,11 +165,11 @@ static struct MachineDriver CPS1_DRVNAME =                             \
         0x30*8, 0x1e*8, { 0*8, 0x30*8-1, 2*8, 0x1e*8-1 },                    \
                                                                          \
         CPS1_GFX,                                                  \
-        256,                       /* 256 colours */                     \
+        32*16+32*16+32*16+32*16,   /* lotsa colours */                   \
         32*16+32*16+32*16+32*16,   /* Colour table length */             \
         0,                                                               \
                                                                          \
-        VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_16BIT,                        \
+        VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,                      \
         0,                                                               \
         cps1_vh_start,                                                   \
         cps1_vh_stop,                                                    \
@@ -178,8 +177,8 @@ static struct MachineDriver CPS1_DRVNAME =                             \
                                                                          \
         /* sound hardware */                                             \
         cps1_sh_init,0,0,0,                                              \
-        { { SOUND_YM2151,  &interface_mus },                            \
-          { SOUND_OKIM6295,  &interface_okim6295 }                    \
+        { { SOUND_YM2151,  &ym2151_interface },                            \
+          { SOUND_OKIM6295,  &okim6295_interface }                    \
         }                            \
 };
 
@@ -359,7 +358,7 @@ static int cps1_sh_init(const char *gamename)
         struct CPS1config *pCFG=&cps1_config_table[0];
         while(pCFG->name)
         {
-                if (stricmp(pCFG->name, gamename) == 0)
+                if (strcmp(pCFG->name, gamename) == 0)
                 {
                         break;
                 }
@@ -372,7 +371,7 @@ static int cps1_sh_init(const char *gamename)
                 pCFG->space_scroll1 &= 0xfff;
         }
 
-        if (stricmp(gamename, "cawingj")==0)
+        if (strcmp(gamename, "cawingj")==0)
         {
                 /* Quick hack (NOP out CPSB test) */
                 if (errorlog)
@@ -382,7 +381,7 @@ static int cps1_sh_init(const char *gamename)
                 WRITE_WORD(&RAM[0x04ca], 0x4e71);
                 WRITE_WORD(&RAM[0x04cc], 0x4e71);
         }
-        else if (stricmp(gamename, "ghouls")==0)
+        else if (strcmp(gamename, "ghouls")==0)
         {
                 /* Patch out self-test... it takes forever */
                 WRITE_WORD(&RAM[0x61964+0], 0x4ef9);
@@ -551,8 +550,8 @@ TILE32_LAYOUT(tilelayout32_strider, 4096-512,  0x080000*8, 0x100000*8)
 static struct GfxDecodeInfo gfxdecodeinfo_strider[] =
 {
         /*   start    pointer          colour start   number of colours */
-        { 1, 0x2f0000, &charlayout_strider,    0,                      32 },
-        { 1, 0x004000, &spritelayout_strider,  32*16,                  32 },
+        { 1, 0x2f0000, &charlayout_strider,    32*16,                  32 },
+        { 1, 0x004000, &spritelayout_strider,  0,                      32 },
         { 1, 0x050000, &tilelayout_strider,    32*16+32*16,            32 },
         { 1, 0x200000, &tilelayout32_strider,  32*16+32*16+32*16,      32 },
         { -1 } /* end of array */
@@ -789,8 +788,8 @@ TILE_LAYOUT2(tilelayout_willow, 2*4096,     0x080000*8, 0x020000 )
 static struct GfxDecodeInfo gfxdecodeinfo_willow[] =
 {
         /*   start    pointer                 start   number of colours */
-        { 1, 0x0f0000, &charlayout_willow,    0,                      32 },
-        { 1, 0x000000, &spritelayout_strider, 32*16,                  32 },
+        { 1, 0x0f0000, &charlayout_willow,    32*16,                  32 },
+        { 1, 0x000000, &spritelayout_strider, 0,                      32 },
         { 1, 0x200000, &tilelayout_willow,    32*16+32*16,            32 },
         { 1, 0x050000, &tile32layout_willow,  32*16+32*16+32*16,      32 },
         { -1 } /* end of array */
@@ -1035,8 +1034,8 @@ TILE32_LAYOUT(tile32layout_ffight, 512+128,     0x080000*8, 0x100000*8)
 static struct GfxDecodeInfo gfxdecodeinfo_ffight[] =
 {
         /*   start    pointer                 start   number of colours */
-        { 1, 0x044000, &charlayout_ffight,    0,                      32 },
-        { 1, 0x000000, &spritelayout_ffight,  32*16,                  32 },
+        { 1, 0x044000, &charlayout_ffight,    32*16,                  32 },
+        { 1, 0x000000, &spritelayout_ffight,  0,                      32 },
         { 1, 0x060000, &tilelayout_ffight,    32*16+32*16,            32 },
         { 1, 0x04c000, &tile32layout_ffight,  32*16+32*16+32*16,      32 },
         { -1 } /* end of array */
@@ -1264,8 +1263,8 @@ TILE32_LAYOUT(tilelayout32_unsquad, 1024,  0x080000*8, 0x100000*8)
 static struct GfxDecodeInfo gfxdecodeinfo_unsquad[] =
 {
         /*   start    pointer          colour start   number of colours */
-        { 1, 0x030000, &charlayout_unsquad,    0,                      32 },
-        { 1, 0x000000, &spritelayout_unsquad,  32*16,                  32 },
+        { 1, 0x030000, &charlayout_unsquad,    32*16,                  32 },
+        { 1, 0x000000, &spritelayout_unsquad,  0,                      32 },
         { 1, 0x040000, &tilelayout_unsquad,    32*16+32*16,            32 },
         { 1, 0x060000, &tilelayout32_unsquad,  32*16+32*16+32*16,      32 },
         { -1 } /* end of array */
@@ -1448,8 +1447,8 @@ TILE32_LAYOUT(tilelayout32_mtwins, 512,  0x080000*8, 0x100000*8)
 static struct GfxDecodeInfo gfxdecodeinfo_mtwins[] =
 {
         /*   start    pointer          colour start   number of colours */
-        { 1, 0x030000, &charlayout_mtwins,    0,                      32 },
-        { 1, 0x000000, &spritelayout_mtwins,  32*16,                  32 },
+        { 1, 0x030000, &charlayout_mtwins,    32*16,                  32 },
+        { 1, 0x000000, &spritelayout_mtwins,  0,                      32 },
         { 1, 0x040000, &tilelayout_mtwins,    32*16+32*16,            32 },
         { 1, 0x070000, &tilelayout32_mtwins,  32*16+32*16+32*16,      32 },
         { -1 } /* end of array */
@@ -1678,8 +1677,8 @@ TILE32_LAYOUT(tilelayout32_nemo, 1024-256,  0x080000*8, 0x100000*8)
 static struct GfxDecodeInfo gfxdecodeinfo_nemo[] =
 {
         /*   start    pointer          colour start   number of colours */
-        { 1, 0x040000, &charlayout_nemo,    0,                      32 },
-        { 1, 0x000000, &spritelayout_nemo,  32*16,                  32 },
+        { 1, 0x040000, &charlayout_nemo,    32*16,                  32 },
+        { 1, 0x000000, &spritelayout_nemo,  0,                      32 },
         { 1, 0x048000, &tilelayout_nemo,    32*16+32*16,            32 },
         { 1, 0x068000, &tilelayout32_nemo,  32*16+32*16+32*16,      32 },
         { -1 } /* end of array */
@@ -1910,8 +1909,8 @@ TILE32_LAYOUT(tilelayout32_1941, 1024,  0x080000*8, 0x100000*8)
 static struct GfxDecodeInfo gfxdecodeinfo_1941[] =
 {
         /*   start    pointer               colour start   number of colours */
-        { 1, 0x040000, &charlayout_1941,    0,                      32 },
-        { 1, 0x000000, &spritelayout_1941,  32*16,                  32 },
+        { 1, 0x040000, &charlayout_1941,    32*16,                  32 },
+        { 1, 0x000000, &spritelayout_1941,  0    ,                  32 },
         { 1, 0x048000, &tilelayout_1941,    32*16+32*16,            32 },
         { 1, 0x020000, &tilelayout32_1941,  32*16+32*16+32*16,      32 },
         { -1 } /* end of array */
@@ -2141,8 +2140,8 @@ TILE32_LAYOUT(tilelayout32_msword, 512,  0x080000*8, 0x100000*8)
 static struct GfxDecodeInfo gfxdecodeinfo_msword[] =
 {
         /*   start    pointer          colour start   number of colours */
-        { 1, 0x040000, &charlayout_msword,    0,                      32 },
-        { 1, 0x000000, &spritelayout_msword,  32*16,                  32 },
+        { 1, 0x040000, &charlayout_msword,    32*16,                  32 },
+        { 1, 0x000000, &spritelayout_msword,  0,                      32 },
         { 1, 0x050000, &tilelayout_msword,    32*16+32*16,            32 },
         { 1, 0x070000, &tilelayout32_msword,  32*16+32*16+32*16,      32 },
         { -1 } /* end of array */
@@ -2379,8 +2378,8 @@ TILE32_LAYOUT2(tilelayout32_pnickj, 512,  0x40000*8, 0x80000*8 )
 static struct GfxDecodeInfo gfxdecodeinfo_pnickj[] =
 {
         /*   start    pointer          colour start   number of colours */
-        { 1, 0x000000, &charlayout_pnickj,    0,                      32 },
-        { 1, 0x008000, &spritelayout_pnickj,  32*16,                  32 },
+        { 1, 0x000000, &charlayout_pnickj,    32*16,                  32 },
+        { 1, 0x008000, &spritelayout_pnickj,  0,                      32 },
         { 1, 0x008000, &tilelayout_pnickj,    32*16+32*16,            32 },
         { 1, 0x030000, &tilelayout32_pnickj,  32*16+32*16+32*16,      32 },
         { -1 } /* end of array */
@@ -2583,8 +2582,8 @@ TILE32_LAYOUT(tilelayout32_knights, 2048-512,  0x100000*8, 0x200000*8)
 static struct GfxDecodeInfo gfxdecodeinfo_knights[] =
 {
         /*   start    pointer          colour start   number of colours */
-        { 1, 0x088000, &charlayout_knights,    0,                      32 },
-        { 1, 0x000000, &spritelayout_knights,  32*16,                  32 },
+        { 1, 0x088000, &charlayout_knights,    32*16,                  32 },
+        { 1, 0x000000, &spritelayout_knights,  0,                      32 },
         { 1, 0x098000, &tilelayout_knights,    32*16+32*16,            32 },
         { 1, 0x0d0000, &tilelayout32_knights,  32*16+32*16+32*16,      32 },
         { -1 } /* end of array */
@@ -2629,7 +2628,7 @@ struct GameDriver knights_driver =
 	"1991",
 	"Capcom",
 	CPS1_CREDITS("Paul Leaman (Game Driver)\nMarco Cassili (dip switches)"),
-	0,
+	GAME_NOT_WORKING,
 	&knights_machine_driver,
 
 	knights_rom,
@@ -2787,11 +2786,11 @@ TILE32_LAYOUT2(tilelayout32_ghouls, 1024,    0x040000*8, 0x10000*8 )
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
         /*   start    pointer          colour start   number of colours */
-        { 1, 0x030000, &charlayout_ghouls,      0,                       32 },
-        { 1, 0x000000, &spritelayout_ghouls,    32*16,                   32 },
+        { 1, 0x030000, &charlayout_ghouls,      32*16,                   32 },
+        { 1, 0x000000, &spritelayout_ghouls,    0,                       32 },
         { 1, 0x040000, &tilelayout_ghouls,      32*16+32*16,             32 },
         { 1, 0x280000, &tilelayout32_ghouls,    32*16+32*16+32*16,       32 },
-        { 1, 0x200000, &spritelayout2_ghouls,   32*16,                   32 },
+        { 1, 0x200000, &spritelayout2_ghouls,   0,                       32 },
         { -1 } /* end of array */
 };
 
@@ -3049,8 +3048,8 @@ TILE32_LAYOUT2(tilelayout32_cawingj, 0x400,  0x40000*8, 0x80000*8)
 static struct GfxDecodeInfo gfxdecodeinfo_cawingj[] =
 {
         /*   start    pointer          colour start   number of colours */
-        { 1, 0x028000, &charlayout_cawingj,    0,                      32 },
-        { 1, 0x000000, &spritelayout_cawingj,  32*16,                  32 },
+        { 1, 0x028000, &charlayout_cawingj,    32*16,                  32 },
+        { 1, 0x000000, &spritelayout_cawingj,  0,                      32 },
         { 1, 0x02c000, &tilelayout_cawingj,    32*16+32*16,            32 },
         { 1, 0x018000, &tilelayout32_cawingj,  32*16+32*16+32*16,      32 },
         { -1 } /* end of array */
@@ -3117,7 +3116,7 @@ struct GameDriver cawingj_driver =
 	"1990",
 	"Capcom",
 	CPS1_CREDITS("Paul Leaman (Game Driver)\nMarco Cassili (dip switches)"),
-	0,
+	GAME_NOT_WORKING,
 	&cawingj_machine_driver,
 
 	cawingj_rom,
@@ -3149,8 +3148,8 @@ TILE_LAYOUT2(tilelayout_sf2, 1,     0x080000*8, 0x020000*8 )
 static struct GfxDecodeInfo gfxdecodeinfo_sf2[] =
 {
         /*   start    pointer                 start   number of colours */
-        { 1, 0x400000, &charlayout_sf2,       0,                      32 },
-        { 1, 0x000000, &spritelayout_sf2,     32*16,                  32 },
+        { 1, 0x400000, &charlayout_sf2,       32*16,                  32 },
+        { 1, 0x000000, &spritelayout_sf2,     0,                      32 },
         { 1, 0x200000, &tilelayout_sf2,       32*16+32*16,            32 },
         { 1, 0x050000, &tile32layout_sf2,     32*16+32*16+32*16,      32 },
         { -1 } /* end of array */

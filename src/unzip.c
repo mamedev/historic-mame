@@ -15,7 +15,7 @@
 #include "types.h"
 #include "osdepend.h"
 
-#define BUFSIZE	0x1000
+#define BUFSIZE	0x2000
 
 typedef struct
 {
@@ -186,14 +186,14 @@ static char * get_zipfile_basename (const char *zipfile)
 }
 
 /* JB 980519 */
-static void errormsg (va_list arg_list, ...)
+static void errormsg (char *fmt, ...)
 {
 	va_list	arg_ptr;
 	char	*format;
 	char	s[256];
 
-	va_start (arg_ptr, arg_list);
-	format = arg_list;
+	va_start (arg_ptr, fmt);
+	format = fmt;
 	(void) vsprintf (s, format, arg_ptr);
 
 	if (gUnzipQuiet)
@@ -220,6 +220,7 @@ int /* error */ load_zipped_file (const char *zipfile, const char *filename,
 	t_central_dir_ent	cd;
 	t_local_file_hdr	lfh;
 	unsigned char		*inbuf = 0, *outbuf = 0;
+
 	char				filenameUpper[32], *p;
 	int 				err;
 
@@ -739,7 +740,7 @@ static int get_file_length (FILE *fp, long *length)
 static word read_word (char *buf)
 {
    unsigned char *ubuf = (unsigned char *) buf;
- 
+
    return (ubuf[1] << 8) | ubuf[0];
 }
 
@@ -747,6 +748,6 @@ static word read_word (char *buf)
 static dword read_dword (char *buf)
 {
    unsigned char *ubuf = (unsigned char *) buf;
- 
+
    return (ubuf[3] << 24) | (ubuf[2] << 16) | (ubuf[1] << 8) | ubuf[0];
 }

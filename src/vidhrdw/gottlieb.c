@@ -12,7 +12,6 @@
 
 
 
-unsigned char *gottlieb_paletteram;
 unsigned char *gottlieb_characterram;
 #define MAX_CHARS 256
 static unsigned char *dirtycharacter;
@@ -56,10 +55,10 @@ void gottlieb_paletteram_w(int offset,int data)
 	int r,g,b,val;
 
 
-	gottlieb_paletteram[offset] = data;
+	paletteram[offset] = data;
 
 	/* red component */
-	val = gottlieb_paletteram[offset | 1];
+	val = paletteram[offset | 1];
 	bit0 = (val >> 0) & 0x01;
 	bit1 = (val >> 1) & 0x01;
 	bit2 = (val >> 2) & 0x01;
@@ -67,7 +66,7 @@ void gottlieb_paletteram_w(int offset,int data)
 	r = 0x10 * bit0 + 0x21 * bit1 + 0x46 * bit2 + 0x88 * bit3;
 
 	/* green component */
-	val = gottlieb_paletteram[offset & ~1];
+	val = paletteram[offset & ~1];
 	bit0 = (val >> 4) & 0x01;
 	bit1 = (val >> 5) & 0x01;
 	bit2 = (val >> 6) & 0x01;
@@ -75,7 +74,7 @@ void gottlieb_paletteram_w(int offset,int data)
 	g = 0x10 * bit0 + 0x21 * bit1 + 0x46 * bit2 + 0x88 * bit3;
 
 	/* blue component */
-	val = gottlieb_paletteram[offset & ~1];
+	val = paletteram[offset & ~1];
 	bit0 = (val >> 0) & 0x01;
 	bit1 = (val >> 1) & 0x01;
 	bit2 = (val >> 2) & 0x01;
@@ -177,7 +176,7 @@ void gottlieb_characterram_w(int offset,int data)
   the main emulation engine.
 
 ***************************************************************************/
-void gottlieb_vh_screenrefresh(struct osd_bitmap *bitmap)
+void gottlieb_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
     int offs;
 

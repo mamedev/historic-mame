@@ -76,7 +76,7 @@ standart IM 1 interrupt mode (rst #38 every vblank)
 
 int arabian_vh_start(void);
 void arabian_vh_stop(void);
-void arabian_vh_screenrefresh(struct osd_bitmap *bitmap);
+void arabian_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 void arabian_spriteramw(int offset, int val);
 void arabian_videoramw(int offset, int val);
 
@@ -403,8 +403,8 @@ struct GameDriver arabian_driver =
 	0,
 	"arabian",
 	"Arabian",
-	"????",
-	"?????",
+	"1983",
+	"Atari",
 	"Jarek Burczynski (MAME driver)\nMarco Cassili",
 	0,
 	&machine_driver,

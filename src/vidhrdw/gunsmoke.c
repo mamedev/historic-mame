@@ -165,7 +165,7 @@ void gunsmoke_d806_w(int offset,int data)
   the main emulation engine.
 
 ***************************************************************************/
-void gunsmoke_vh_screenrefresh(struct osd_bitmap *bitmap)
+void gunsmoke_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	int offs,sx,sy;
 	int bg_scrolly, bg_scrollx;

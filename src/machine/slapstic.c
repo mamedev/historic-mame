@@ -9,7 +9,7 @@ Frank Palazzolo
 03/13/98
 
 (Please send comments or corrections
- to me at palazzol@tir.com)
+ to me at palazzol@home.com)
 ----------------------------------
 
 0) Credits:

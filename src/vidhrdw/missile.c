@@ -7,7 +7,7 @@
 ***************************************************************************/
 
 #include "driver.h"
-#include "generic.h"
+#include "vidhrdw/generic.h"
 
 unsigned char *missile_videoram;
 
@@ -117,7 +117,7 @@ missile_video_3rd_bit_w(int address, int data)
 
 
 /********************************************************************************************/
-void missile_vh_update(struct osd_bitmap *bitmap)
+void missile_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	int x, y, tmp;
 	int address;

@@ -58,12 +58,11 @@ static struct rectangle spritevisiblearea2 =
 void yard_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
 {
 	int i;
-	const unsigned char *spritepalette;
 	#define TOTAL_COLORS(gfxn) (Machine->gfx[gfxn]->total_colors * Machine->gfx[gfxn]->color_granularity)
 	#define COLOR(gfxn,offs) (colortable[Machine->drv->gfxdecodeinfo[gfxn].color_codes_start + offs])
 
 
-	/* build a palette with all possible colors */
+	/* character palette and lookup table */
 	for (i = 0;i < 256;i++)
 	{
 		int bit0,bit1,bit2;
@@ -71,52 +70,97 @@ void yard_vh_convert_color_prom(unsigned char *palette, unsigned short *colortab
 
 		/* red component */
 		bit0 = 0;
-		bit1 = (i >> 6) & 0x01;
-		bit2 = (i >> 7) & 0x01;
+		bit1 = (color_prom[256] >> 2) & 0x01;
+		bit2 = (color_prom[256] >> 3) & 0x01;
 		*(palette++) = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
 		/* green component */
-		bit0 = (i >> 3) & 0x01;
-		bit1 = (i >> 4) & 0x01;
-		bit2 = (i >> 5) & 0x01;
+		bit0 = (color_prom[0] >> 3) & 0x01;
+		bit1 = (color_prom[256] >> 0) & 0x01;
+		bit2 = (color_prom[256] >> 1) & 0x01;
 		*(palette++) = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
 		/* blue component */
-		bit0 = (i >> 0) & 0x01;
-		bit1 = (i >> 1) & 0x01;
-		bit2 = (i >> 2) & 0x01;
+		bit0 = (color_prom[0] >> 0) & 0x01;
+		bit1 = (color_prom[0] >> 1) & 0x01;
+		bit2 = (color_prom[0] >> 2) & 0x01;
 		*(palette++) = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
-	}
 
-
-	/* character lookup table */
-	for (i = 0;i < TOTAL_COLORS(0);i++)
-	{
-		COLOR(0,i) = (color_prom[0] & 0x0f) | (color_prom[Machine->drv->total_colors] << 4);
+		COLOR(0,i) = i;
 		color_prom++;
 	}
 
 	color_prom += TOTAL_COLORS(0);
 	/* color_prom now points to the beginning of the sprite palette */
 
-	spritepalette = color_prom;
 
-	color_prom += 32;
+	/* make the transparent pen unique (none of the game colors can have */
+	/* these RGB components) */
+	*(palette++) = 1;
+	*(palette++) = 1;
+	*(palette++) = 1;
+	color_prom++;
+
+	/* sprite palette */
+	for (i = 1;i < 16;i++)
+	{
+		int bit0,bit1,bit2;
+
+
+		/* red component */
+		bit0 = 0;
+		bit1 = (*color_prom >> 6) & 0x01;
+		bit2 = (*color_prom >> 7) & 0x01;
+		*(palette++) = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+		/* green component */
+		bit0 = (*color_prom >> 3) & 0x01;
+		bit1 = (*color_prom >> 4) & 0x01;
+		bit2 = (*color_prom >> 5) & 0x01;
+		*(palette++) = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+		/* blue component */
+		bit0 = (*color_prom >> 0) & 0x01;
+		bit1 = (*color_prom >> 1) & 0x01;
+		bit2 = (*color_prom >> 2) & 0x01;
+		*(palette++) = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+
+		color_prom++;
+	}
+
+	color_prom += 16;
 	/* color_prom now points to the beginning of the sprite lookup table */
+
 
 	/* sprite lookup table */
 	for (i = 0;i < TOTAL_COLORS(1);i++)
 	{
-		COLOR(1,i) = spritepalette[(*color_prom & 0x0f)];
-		/* replace black with dark blue to preserve transparency */
-		if (COLOR(1,i) == 0 && (*color_prom & 0x0f) != 0) COLOR(1,i) = 1;
+		COLOR(1,i) = 256 + (*color_prom & 0x0f);
 		color_prom++;
 	}
 
 	/* color_prom now points to the beginning of the radar palette */
 
-	/* radar lookup table */
-	for (i = 0;i < TOTAL_COLORS(3);i++)
+
+	/* radar palette and lookup table */
+	for (i = 0;i < 256;i++)
 	{
-		COLOR(3,i) = (color_prom[0] & 0x0f) | (color_prom[Machine->drv->total_colors] << 4);
+		int bit0,bit1,bit2;
+
+
+		/* red component */
+		bit0 = 0;
+		bit1 = (color_prom[256] >> 2) & 0x01;
+		bit2 = (color_prom[256] >> 3) & 0x01;
+		*(palette++) = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+		/* green component */
+		bit0 = (color_prom[0] >> 3) & 0x01;
+		bit1 = (color_prom[256] >> 0) & 0x01;
+		bit2 = (color_prom[256] >> 1) & 0x01;
+		*(palette++) = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+		/* blue component */
+		bit0 = (color_prom[0] >> 0) & 0x01;
+		bit1 = (color_prom[0] >> 1) & 0x01;
+		bit2 = (color_prom[0] >> 2) & 0x01;
+		*(palette++) = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+
+		COLOR(2,i) = 256 + 16 + i;
 		color_prom++;
 	}
 }
@@ -164,7 +208,7 @@ void yard_vh_stop(void)
   the main emulation engine.
 
 ***************************************************************************/
-void yard_vh_screenrefresh(struct osd_bitmap *bitmap)
+void yard_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	int offs;
 	struct rectangle *visible_rect;/* JB 970912 */
@@ -230,7 +274,7 @@ void yard_vh_screenrefresh(struct osd_bitmap *bitmap)
 					col = ((col >> 3) | col) & 3;
 					if (sx+i >= Machine->drv->visible_area.max_x-(6*8-1) &&
 							sx+i <= Machine->drv->visible_area.max_x)
-						bitmap->line[sy][sx + i] = Machine->gfx[3]->colortable[(sy & 0xfc) + col];
+						bitmap->line[sy][sx + i] = Machine->gfx[2]->colortable[(sy & 0xfc) + col];
 				}
 			}
 		}
@@ -240,26 +284,26 @@ void yard_vh_screenrefresh(struct osd_bitmap *bitmap)
 	for (offs = spriteram_size - 4;offs >= 0;offs -= 4)
 	{
 		int sprt,bank,flipx,flipy;
-		bank = ((spriteram[offs + 1] & 0x020) >> 5) + 1;
+		bank = (spriteram[offs + 1] & 0x020) >> 5;
 		sprt = spriteram[offs + 2];
 		sprt &= 0xbf;
 		flipx = spriteram[offs + 1] & 0x40;
 		flipy = spriteram[offs + 1] & 0x80;
 
 		if (flipy) sprt = sprt + 0x40;
-		drawgfx(bitmap,Machine->gfx[bank],
-				sprt,
+		drawgfx(bitmap,Machine->gfx[1],
+				sprt + 256 * bank,
 				spriteram[offs + 1] & 0x1f,
 				flipx,flipy,
 				spriteram[offs + 3],241 - spriteram[offs],
-				visible_rect,TRANSPARENCY_COLOR,0);
+				visible_rect,TRANSPARENCY_COLOR,256);
 		if (flipy) sprt = sprt - 0x40;
 		else sprt = sprt + 0x40;
-		drawgfx(bitmap,Machine->gfx[bank],
-				sprt,
+		drawgfx(bitmap,Machine->gfx[1],
+				sprt + 256 * bank,
 				spriteram[offs + 1] & 0x1f,
 				flipx,flipy,
 				spriteram[offs + 3],241 - spriteram[offs] + 16,
-				visible_rect,TRANSPARENCY_COLOR,0);
+				visible_rect,TRANSPARENCY_COLOR,256);
 	}
 }

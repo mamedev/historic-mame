@@ -34,7 +34,7 @@ NOTES:
 
 
 void hexa_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-void hexa_vh_screenrefresh(struct osd_bitmap *bitmap);
+void hexa_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 void hexa_d008_w(int offset,int data);
 
 
@@ -259,7 +259,7 @@ struct GameDriver hexa_driver =
 	"hexa",
 	"Hexa",
 	"????",
-	"?????",
+	"D. R. Korea",
 	"Howie Cohen (driver)\nThierry Lescot (Technical Info) ",
 	0,
 	&machine_driver,

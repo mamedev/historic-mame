@@ -12,48 +12,11 @@
 
 void rastan_vh_stop (void);
 
-unsigned char *rastan_paletteram;
 unsigned char *rastan_spriteram;
 unsigned char *rastan_scrollx;
 unsigned char *rastan_scrolly;
 
-static unsigned char *pal_dirty;
 static unsigned char spritepalettebank;
-
-
-/*
- *   video system start; we also initialize the system memory as well here
- */
-
-int rastan_vh_start (void)
-{
-	if (generic_vh_start() != 0)
-		return 1;
-
-	/* Allocate dirty buffers */
-	pal_dirty = malloc (0x80);
-	if (!pal_dirty)
-	{
-		rastan_vh_stop ();
-		return 1;
-	}
-
-	return 0;
-}
-
-
-/*
- *   video system shutdown; we also bring down the system memory as well here
- */
-
-void rastan_vh_stop (void)
-{
-	/* Free dirty buffers */
-	free (pal_dirty);
-	pal_dirty = 0;
-
-	generic_vh_stop();
-}
 
 
 
@@ -69,24 +32,6 @@ void rastan_scrollY_w (int offset, int data)
 void rastan_scrollX_w (int offset, int data)
 {
 	COMBINE_WORD_MEM (&rastan_scrollx[offset], data);
-}
-
-
-/*
- *   palette RAM read/write handlers
- */
-
-void rastan_paletteram_w (int offset, int data)
-{
-	COMBINE_WORD_MEM (&rastan_paletteram[offset], data);
-	offset /= 32;
-	if (offset < 0x80)
-		pal_dirty[offset] = 1;
-}
-
-int rastan_paletteram_r (int offset)
-{
-	return READ_WORD (&rastan_paletteram[offset]);
 }
 
 
@@ -147,46 +92,74 @@ void rastan_videocontrol_w (int offset, int data)
   the main emulation engine.
 
 ***************************************************************************/
-void rastan_vh_screenrefresh(struct osd_bitmap *bitmap)
+void rastan_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
-	int offs,pom;
-	int i;
+	int offs;
+
+
+memset(palette_used_colors,PALETTE_COLOR_UNUSED,Machine->drv->total_colors * sizeof(unsigned char));
+
+{
+	int color,code,i;
+	int colmask[128];
+	int pal_base;
 	struct GfxLayer *layer;
 
 
-	for (pom = 0; pom < 0x80; pom++)
-	{
-		if (pal_dirty[pom])
-		{
-			for (i = 0; i < 16; i++)
-			{
-				int palette = READ_WORD (&rastan_paletteram[pom*32+i*2]);
-				int red = palette & 31;
-				int green = (palette >> 5) & 31;
-				int blue = (palette >> 10) & 31;
+	pal_base = 0;
 
-				red = (red << 3) + (red >> 2);
-				green = (green << 3) + (green >> 2);
-				blue = (blue << 3) + (blue >> 2);
-				setgfxcolorentry (Machine->gfx[0], pom*16+i, red, green, blue);
-			}
-		}
-	}
+	for (color = 0;color < 128;color++) colmask[color] = 0;
 
 	layer = Machine->layer[0];
 	for (i = layer->tilemap.virtualwidth * layer->tilemap.virtualheight - 1;i >= 0;i--)
 	{
-		if (pal_dirty[TILE_COLOR(layer->tilemap.virtualtiles[i])])
-			layer->tilemap.virtualdirty[i] = 1;
+		int tile;
+
+		tile = layer->tilemap.virtualtiles[i];
+		code = TILE_CODE(tile);
+		color = TILE_COLOR(tile);
+		colmask[color] |= layer->tilemap.gfxtilebank[TILE_BANK(tile)]->tiles[code].pens_used;
 	}
+
 	layer = Machine->layer[1];
 	for (i = layer->tilemap.virtualwidth * layer->tilemap.virtualheight - 1;i >= 0;i--)
 	{
-		if (pal_dirty[TILE_COLOR(layer->tilemap.virtualtiles[i])])
-			layer->tilemap.virtualdirty[i] = 1;
+		int tile;
+
+		tile = layer->tilemap.virtualtiles[i];
+		code = TILE_CODE(tile);
+		color = TILE_COLOR(tile);
+		colmask[color] |= layer->tilemap.gfxtilebank[TILE_BANK(tile)]->tiles[code].pens_used;
 	}
 
-	memset (pal_dirty, 0, 0x80);
+	for (offs = 0x800-8; offs >= 0; offs -= 8)
+	{
+		code = READ_WORD (&rastan_spriteram[offs+4]);
+
+		if (code)
+		{
+			int data1;
+
+			data1 = READ_WORD (&rastan_spriteram[offs]);
+
+			color = (data1 & 0x0f) + 0x10 * spritepalettebank;
+			colmask[color] |= Machine->gfx[0]->pen_usage[code];
+		}
+	}
+
+	for (color = 0;color < 128;color++)
+	{
+		for (i = 0;i < 16;i++)
+		{
+			if (colmask[color] & (1 << i))
+				palette_used_colors[pal_base + 16 * color + i] = PALETTE_COLOR_USED;
+		}
+	}
+
+
+	if (palette_recalc())
+		layer_mark_full_screen_dirty();
+}
 
 
 	set_tile_layer_attributes(1,bitmap,					/* layer number, bitmap */
@@ -233,46 +206,13 @@ layer_mark_rectangle_dirty(Machine->layer[1],sx,sx+15,sy,sy+15);
 	}
 }
 
-void rainbow_vh_screenrefresh(struct osd_bitmap *bitmap)
+void rainbow_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
-	int offs,pom;
-	int i;
-	struct GfxLayer *layer;
+	int offs;
 
 
-	for (pom = 0; pom < 0x80; pom++)
-	{
-		if (pal_dirty[pom])
-		{
-			for (i = 0; i < 16; i++)
-			{
-				int palette = READ_WORD (&rastan_paletteram[pom*32+i*2]);
-				int red = palette & 31;
-				int green = (palette >> 5) & 31;
-				int blue = (palette >> 10) & 31;
-
-				red = (red << 3) + (red >> 2);
-				green = (green << 3) + (green >> 2);
-				blue = (blue << 3) + (blue >> 2);
-				setgfxcolorentry (Machine->gfx[0], pom*16+i, red, green, blue);
-			}
-		}
-	}
-
-	layer = Machine->layer[0];
-	for (i = layer->tilemap.virtualwidth * layer->tilemap.virtualheight - 1;i >= 0;i--)
-	{
-		if (pal_dirty[TILE_COLOR(layer->tilemap.virtualtiles[i])])
-			layer->tilemap.virtualdirty[i] = 1;
-	}
-	layer = Machine->layer[1];
-	for (i = layer->tilemap.virtualwidth * layer->tilemap.virtualheight - 1;i >= 0;i--)
-	{
-		if (pal_dirty[TILE_COLOR(layer->tilemap.virtualtiles[i])])
-			layer->tilemap.virtualdirty[i] = 1;
-	}
-
-	memset (pal_dirty, 0, 0x80);
+	if (palette_recalc())
+		layer_mark_full_screen_dirty();
 
 
 	set_tile_layer_attributes(1,bitmap,					/* layer number, bitmap */

@@ -79,7 +79,7 @@ void mario_gfxbank_w(int offset,int data);
 void mario_palettebank_w(int offset,int data);
 int  mario_vh_start(void);
 void mario_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-void mario_vh_screenrefresh(struct osd_bitmap *bitmap);
+void mario_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 /*
  *  from sndhrdw/mario.c
@@ -358,8 +358,8 @@ static struct Samplesinterface samples_interface =
 static struct AY8910interface ay8910_interface =
 {
 	1,      /* 1 chip */
-	14318000/8,	/* ? */
-	{ 0x20ff },
+	14318000/6,	/* ? */
+	{ 255 },
 	{ soundlatch_r },
 	{ 0 },
 	{ 0 },
@@ -599,8 +599,8 @@ struct GameDriver mario_driver =
 	0,
 	"mario",
 	"Mario Bros.",
-	"????",
-	"?????",
+	"1983",
+	"Nintendo of America",
 	"Mirko Buffoni (MAME driver)\nNicola Salmoria (MAME driver)\nTim Lindquist (color info)\nDan Boris (8039 info)\nRon Fries (Audio Info)\nMarco Cassili",
 	0,
 	&machine_driver,
@@ -621,11 +621,11 @@ struct GameDriver mario_driver =
 struct GameDriver masao_driver =
 {
 	__FILE__,
-	0,
+	&mario_driver,
 	"masao",
 	"Masao",
-	"????",
-	"?????",
+	"1983",
+	"bootleg",
 	"Hugh McLenaghan (MAME driver)\nMirko Buffoni (sound info)",
 	0,
 	&masao_machine_driver,

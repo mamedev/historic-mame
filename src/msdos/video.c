@@ -53,6 +53,7 @@ int gfx_mode;
 int gfx_width;
 int gfx_height;
 
+static int auto_resolution;
 static int viswidth;
 static int visheight;
 static int skiplinesmax;
@@ -260,6 +261,8 @@ static void select_display_mode(void)
 	int width,height;
 
 
+	auto_resolution = 0;
+
 	if (vector_game)
 	{
 		width = Machine->drv->screen_width;
@@ -294,7 +297,7 @@ static void select_display_mode(void)
 	/* tweaked VGA modes */
 	if (gfx_width && gfx_height)
 	{
-		if (gfx_width >=320 && gfx_height >=240)
+		if (gfx_width >= 320 && gfx_height >= 240)
 			gfx_mode = GFX_VESA2L;
 		else
 			gfx_mode = GFX_VGA;
@@ -302,7 +305,7 @@ static void select_display_mode(void)
 	/* if no gfx mode specified, choose the best one */
 	else if (!gfx_mode)
 	{
-		if (width >=320 && height >=240)
+		if (width >= 320 && height >= 240)
 			gfx_mode = GFX_VESA2L;
 		else
 			gfx_mode = GFX_VGA;
@@ -341,6 +344,8 @@ static void select_display_mode(void)
 
 	if ((gfx_mode!=GFX_VGA) && !gfx_width && !gfx_height)
 	{
+		auto_resolution = 1;
+
 		/* vector games use 640x480 as default */
 		if (vector_game)
 		{
@@ -349,10 +354,15 @@ static void select_display_mode(void)
 		}
 		else
 		{
-			if (use_double != 0)
+			doubling = use_double;
+
+			/* turn off pixel doubling if we don't want scanlines */
+			if (scanlines == 0) doubling = 0;
+
+			if (doubling != 0)
 			{
 				/* see if pixel doubling can be applied at 640x480 */
-				if (height <=240 && width <= 320)
+				if (height <= 240 && width <= 320)
 				{
 					gfx_width = 640;
 					gfx_height = 480;
@@ -360,19 +370,29 @@ static void select_display_mode(void)
 				/* see if pixel doubling can be applied at 800x600 */
 				else if (height <= 300 && width <= 400)
 				{
-					gfx_width=800;
-					gfx_height=600;
+					gfx_width = 800;
+					gfx_height = 600;
 				}
 				/* we don't want to use pixel doubling at 1024x768 */
 
 				/* no pixel doubled modes fit, revert to not doubled */
 				else
-					use_double = 0;
+					doubling = 0;
 			}
 
-			if (use_double == 0)
+			if (doubling == 0)
 			{
-				if (height <= 384 && width <= 512)
+				if (height <= 240 && width <= 320)
+				{
+					gfx_width = 320;
+					gfx_height = 240;
+				}
+				else if (height <= 300 && width <= 400)
+				{
+					gfx_width = 400;
+					gfx_height = 300;
+				}
+				else if (height <= 384 && width <= 512)
 				{
 					gfx_width = 512;
 					gfx_height = 384;
@@ -438,11 +458,8 @@ static void adjust_display (int xmin, int ymin, int xmax, int ymax)
 	viswidth  = xmax - xmin + 1;
 	visheight = ymax - ymin + 1;
 
-	if (gfx_mode == GFX_VGA || use_double == 0)
-		doubling = 0;
-	else if (use_double == 1)
-		doubling = 1;
-	else if (viswidth > gfx_width/2 || visheight > gfx_height/2)
+	if (doubling == 0 || gfx_mode == GFX_VGA ||
+			viswidth > gfx_width/2 || visheight > gfx_height/2)
 		doubling = 0;
 	else
 		doubling = 1;
@@ -557,15 +574,6 @@ struct osd_bitmap *osd_create_display(int width,int height,int attributes)
 			scale_vectorgames(gfx_width/2,gfx_height/2,&width, &height);
 		else
 			scale_vectorgames(gfx_width,gfx_height,&width, &height);
-		/* vector games are always non-doubling */
-		use_double = 0;
-		/* center display */
-		adjust_display(0, 0, width-1, height-1);
-	}
-	else /* center display based on visible area */
-	{
-		struct rectangle vis = Machine->drv->visible_area;
-		adjust_display (vis.min_x, vis.min_y, vis.max_x, vis.max_y);
 	}
 
 	game_width = width;
@@ -581,6 +589,19 @@ struct osd_bitmap *osd_create_display(int width,int height,int attributes)
 
 	if (!osd_set_display(width, height, attributes))
 		return 0;
+
+	if (vector_game)
+	{
+		/* vector games are always non-doubling */
+		doubling = 0;
+		/* center display */
+		adjust_display(0, 0, width-1, height-1);
+	}
+	else /* center display based on visible area */
+	{
+		struct rectangle vis = Machine->drv->visible_area;
+		adjust_display (vis.min_x, vis.min_y, vis.max_x, vis.max_y);
+	}
 
 	return scrbitmap;
 }
@@ -609,7 +630,11 @@ int osd_set_display(int width,int height, int attributes)
 
 	if (use_dirty)
 	{
-		init_dirty(1);
+		if (vector_game)
+			/* vector games only use one dirty buffer */
+			init_dirty (0);
+		else
+			init_dirty(1);
 		swap_dirty();
 		init_dirty(1);
 	}
@@ -635,6 +660,16 @@ int osd_set_display(int width,int height, int attributes)
 			found = 1;
 		}
 
+		/* handle special noscanlines 256x256 57Hz tweaked mode */
+		if (gfx_width == 256 && gfx_height == 256 && scanlines == 0 &&
+				video_sync && Machine->drv->frames_per_second == 57)
+		{
+			reg = scr256x256_57;
+			reglen = sizeof(scr256x256_57)/sizeof(Register);
+			videofreq = 0;
+			found = 1;
+		}
+
 		/* find the matching tweaked mode */
 		/* use noscanline modes if scanline modes not possible */
 		for (i=0; ((vga_tweaked[i].x != 0) && !found); i++)
@@ -654,6 +689,10 @@ int osd_set_display(int width,int height, int attributes)
 			}
 		}
 
+/* TODO: this is a temporary hack */
+if (reg == scr256x256scanlines && use_synced == 0)
+	reg = orig_scr256x256scanlines;
+
 		/* can't find a VGA mode, use VESA */
 		if (found == 0)
 		{
@@ -671,6 +710,7 @@ int osd_set_display(int width,int height, int attributes)
 		int mode, bits;
 
 
+retry:
 		/* Try the specified vesamode and all lower ones BW 131097 */
 		for (mode=gfx_mode; mode>=GFX_VESA1; mode--)
 		{
@@ -701,6 +741,26 @@ int osd_set_display(int width,int height, int attributes)
 
 		if (mode < GFX_VESA1)
 		{
+			if (auto_resolution && gfx_width <= 512)
+			{
+				/* low res VESA mode not available, try an high res one */
+				if (use_double == 0)
+				{
+					/* if pixel doubling disabledm use 640x480 */
+					gfx_width = 640;
+					gfx_height = 480;
+					goto retry;
+				}
+				else
+				{
+					/* if pixel doubling enabled, turn it one and use the double resolution */
+					doubling = 1;
+					gfx_width *= 2;
+					gfx_height *= 2;
+					goto retry;
+				}
+			}
+
 			printf ("\nNo %d-bit %dx%d VESA mode available.\n",
 					scrbitmap->depth,gfx_width,gfx_height);
 			printf ("\nPossible causes:\n"
@@ -1295,12 +1355,6 @@ void osd_update_display(void)
 	int need_to_clear_bitmap = 0;
 
 
-	/* for the FPS average calculation */
-	if (++frames_displayed == FRAMES_TO_SKIP)
-		start_time = uclock();
-	else
-		end_time = uclock();
-
 
 	/* Check for PGUP, PGDN and pan screen */
 	if (osd_key_pressed(OSD_KEY_PGDN) || osd_key_pressed(OSD_KEY_PGUP))
@@ -1313,6 +1367,10 @@ void osd_update_display(void)
 		{
 			frameskip = (frameskip + 1) % 4;
 			showfpstemp = 50;
+
+			/* reset the frame counter every time the frameskip key is pressed, so */
+			/* we'll measure the average FPS on a consistent status. */
+			frames_displayed = 0;
 		}
 		f8pressed = 1;
 	}
@@ -1380,6 +1438,14 @@ void osd_update_display(void)
 		}
 	}
 	else curr = uclock();
+
+
+	/* for the FPS average calculation */
+	if (++frames_displayed == FRAMES_TO_SKIP)
+		start_time = curr;
+	else
+		end_time = curr;
+
 
 	memory = (memory+1) % MEMORY;
 
@@ -1545,9 +1611,13 @@ void osd_update_display(void)
 
 	if (use_dirty)
 	{
-		swap_dirty();
+		if (!vector_game)
+			swap_dirty();
 		init_dirty(0);
 	}
+
+	if (need_to_clear_bitmap)
+		osd_clearbitmap(scrbitmap);
 
 	/* if the user pressed F12, save a snapshot of the screen. */
 	if (osd_key_pressed(OSD_KEY_F12))

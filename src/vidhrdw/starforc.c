@@ -13,7 +13,6 @@
 
 unsigned char *starforc_scrollx2,*starforc_scrolly2;
 unsigned char *starforc_scrollx3,*starforc_scrolly3;
-unsigned char *starforc_paletteram;
 unsigned char *starforc_tilebackground2;
 unsigned char *starforc_tilebackground3;
 unsigned char *starforc_tilebackground4;
@@ -39,20 +38,21 @@ static struct osd_bitmap *tmpbitmap2,*tmpbitmap3;
 ***************************************************************************/
 void starforc_paletteram_w(int offset,int data)
 {
-	starforc_paletteram[offset] = data;
-	{
-		int bits,intensity;
-		int r, g, b;
+	int bits,intensity;
+	int r,g,b;
 
-		intensity = (data >> 6) & 0x03;
-		bits = (data >> 0) & 0x03;
-		r = 0x44 * bits + 0x11 * intensity;
-		bits = (data >> 2) & 0x03;
-		g = 0x44 * bits + 0x11 * intensity;
-		bits = (data >> 4) & 0x03;
-		b = 0x44 * bits + 0x11 * intensity;
-		palette_change_color (offset, r, g, b);
-	}
+
+	paletteram[offset] = data;
+
+	intensity = (data >> 6) & 0x03;
+	bits = (data >> 0) & 0x03;
+	r = 0x44 * bits + 0x11 * intensity;
+	bits = (data >> 2) & 0x03;
+	g = 0x44 * bits + 0x11 * intensity;
+	bits = (data >> 4) & 0x03;
+	b = 0x44 * bits + 0x11 * intensity;
+
+	palette_change_color(offset,r,g,b);
 }
 
 
@@ -181,7 +181,7 @@ void starforc_tiles4_w(int offset,int data)
   the main emulation engine.
 
 ***************************************************************************/
-void starforc_vh_screenrefresh(struct osd_bitmap *bitmap)
+void starforc_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	int offs;
 
@@ -237,21 +237,6 @@ void starforc_vh_screenrefresh(struct osd_bitmap *bitmap)
 					0,0,
 					sx,sy,
 					0,TRANSPARENCY_NONE,0);
-
-			drawgfx(tmpbitmap3,Machine->gfx[2],
-					code,
-					col,
-					0,0,
-					sx,sy,
-					0,TRANSPARENCY_PEN,0);
-		}
-		else if (code)
-		{
-			int sx,sy;
-
-
-			sx = 16 * (31 - offs / 16);
-			sy = 16 * (offs % 16);
 
 			drawgfx(tmpbitmap3,Machine->gfx[2],
 					code,

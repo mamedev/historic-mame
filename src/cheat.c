@@ -825,7 +825,7 @@ void DoCheat(int CurrentVolume)
 
 /* JRT3 10-23-97 BEGIN */
     osd_clearbitmap( Machine -> scrbitmap );        /* Clear Screen */
-    (Machine -> drv -> vh_update)( Machine -> scrbitmap );  /* Make Game Redraw Screen */
+    (Machine->drv->vh_update)(Machine->scrbitmap,1);  /* Make Game Redraw Screen */
 /* JRT3 10-23-97 END */
   }
 

@@ -15,15 +15,12 @@
 #include "vidhrdw/generic.h"
 #include "M6809/m6809.h"
 
-extern unsigned char *srumbler_paletteram;
-extern int srumbler_paletteram_size;
 extern unsigned char *srumbler_backgroundram;
 extern int srumbler_backgroundram_size;
 extern unsigned char *srumbler_scrollx;
 extern unsigned char *srumbler_scrolly;
 
 void srumbler_bankswitch_w(int offset,int data);
-void srumbler_paletteram_w(int offset,int data);
 void srumbler_background_w(int offset,int data);
 void srumbler_4009_w(int offset,int data);
 
@@ -31,7 +28,7 @@ int srumbler_interrupt(void);
 
 int  srumbler_vh_start(void);
 void srumbler_vh_stop(void);
-void srumbler_vh_screenrefresh(struct osd_bitmap *bitmap);
+void srumbler_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 
 
@@ -90,7 +87,7 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x400e, 0x400e, soundlatch_w},
 	{ 0x5000, 0x5fff, videoram_w, &videoram, &videoram_size },
 	{ 0x6000, 0x6fff, MWA_RAM }, /* Video RAM 2 ??? (not used) */
-	{ 0x7100, 0x73ff, srumbler_paletteram_w, &srumbler_paletteram },
+	{ 0x7100, 0x73ff, paletteram_RRRRGGGGBBBBxxxx_swap_w, &paletteram },
 	{ 0x7400, 0xffff, MWA_ROM },
 	{ -1 }	/* end of table */
 };
@@ -371,7 +368,7 @@ static struct YM2203interface ym2203_interface =
 {
 	2,			/* 2 chips */
 	2000000,        /* 2.0 MHz (? hand tuned to match the real board) */
-	{ YM2203_VOL(100,0x20ff), YM2203_VOL(100,0x20ff) },
+	{ YM2203_VOL(255,255), YM2203_VOL(255,255) },
 	{ 0 },
 	{ 0 },
 	{ 0 },
@@ -521,7 +518,7 @@ struct GameDriver srumbler_driver =
 	__FILE__,
 	0,
 	"srumbler",
-	"Speed Rumbler",
+	"Speed Rumbler (set 1)",
 	"1986",
 	"Capcom",
 	"Paul Leaman",
@@ -546,11 +543,11 @@ struct GameDriver srumblr2_driver =
 	__FILE__,
 	&srumbler_driver,
 	"srumblr2",
-	"Speed Rumbler (alternate)",
+	"Speed Rumbler (set 2)",
 	"1986",
 	"Capcom",
 	"Paul Leaman",
-	0,
+	GAME_NOT_WORKING,
 	&machine_driver,
 
 	srumblr2_rom,

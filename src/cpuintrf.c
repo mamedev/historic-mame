@@ -64,7 +64,7 @@ static int interrupt_enable[MAX_CPU];
 static int interrupt_vector[MAX_CPU];
 
 
-static void *watchdog_timer;
+static int watchdog_counter;
 
 static void *vblank_timer;
 static int vblank_countdown;
@@ -380,7 +380,7 @@ void cpu_init(void)
 
 	/* reset the timer system */
 	timer_init ();
-	timeslice_timer = refresh_timer = watchdog_timer = vblank_timer = NULL;
+	timeslice_timer = refresh_timer = vblank_timer = NULL;
 }
 
 
@@ -414,6 +414,7 @@ void cpu_run(void)
 reset:
 	/* initialize the various timers (suspends all CPUs at startup) */
 	cpu_inittimers ();
+	watchdog_counter = -1;
 
 	/* enable all CPUs (except for audio CPUs if the sound is off) */
 	for (i = 0; i < totalcpu; i++)
@@ -513,22 +514,14 @@ if (errorlog) fprintf(errorlog,"Machine reset\n");
   machine will be reset.
 
 ***************************************************************************/
-static void watchdog_callback (int param)
-{
-	watchdog_timer = 0;
-
-	if (errorlog) fprintf(errorlog,"warning: reset caused by the watchdog\n");
-	machine_reset ();
-}
-
 void watchdog_reset_w(int offset,int data)
 {
-	timer_reset (watchdog_timer, TIME_IN_SEC (1));
+	watchdog_counter = Machine->drv->frames_per_second;
 }
 
 int watchdog_reset_r(int offset)
 {
-	timer_reset (watchdog_timer, TIME_IN_SEC (1));
+	watchdog_counter = Machine->drv->frames_per_second;
 	return 0;
 }
 
@@ -1219,6 +1212,11 @@ static void cpu_updatecallback (int param)
 	/* update IPT_VBLANK input ports */
 	inputport_vblank_end();
 
+	/* check the watchdog */
+	if (watchdog_counter > 0)
+		if (--watchdog_counter == 0)
+			machine_reset ();
+
 	/* reset the refresh timer */
 	timer_reset (refresh_timer, TIME_NEVER);
 }
@@ -1271,8 +1269,6 @@ static void cpu_inittimers (void)
 		timer_remove (timeslice_timer);
 	if (refresh_timer)
 		timer_remove (refresh_timer);
-	if (watchdog_timer)
-		timer_remove (watchdog_timer);
 	if (vblank_timer)
 		timer_remove (vblank_timer);
 
@@ -1295,9 +1291,6 @@ static void cpu_inittimers (void)
 	else
 		scanline_period = refresh_period / (double)Machine->drv->screen_height;
 	scanline_period_inv = 1.0 / scanline_period;
-
-	/* allocate an infinite watchdog timer; it will be set to a sane value on a read/write */
-	watchdog_timer = timer_set (TIME_NEVER, 0, watchdog_callback);
 
 	/*
 	 *		The following code finds all the CPUs that are interrupting in sync with the VBLANK

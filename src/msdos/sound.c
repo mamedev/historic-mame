@@ -142,9 +142,10 @@ int msdos_init_sound(void)
 		memset(lpWave[0]->lpData,0,3*Machine->sample_rate);
 		/* upload the data to the audio DRAM local memory */
 		AWriteAudioData(lpWave[0],0,3*Machine->sample_rate);
-		APlayVoice(hVoice[0],lpWave[0]);
+		APrimeVoice(hVoice[0],lpWave[0]);
 		ASetVoiceFrequency(hVoice[0],Machine->sample_rate);
 		ASetVoiceVolume(hVoice[0],0);
+		AStartVoice(hVoice[0]);
 
 		a = uclock();
 		/* wait some time to let everything stabilize */
@@ -295,17 +296,20 @@ static void playsample(int channel,signed char *data,int len,int freq,int volume
 	}
 	else
 	{
-		if (loop) lpWave[channel]->wFormat = AUDIO_FORMAT_8BITS | AUDIO_FORMAT_MONO | AUDIO_FORMAT_LOOP;
-		else lpWave[channel]->wFormat = AUDIO_FORMAT_8BITS | AUDIO_FORMAT_MONO;
+		if (loop) lpWave[channel]->wFormat = (bits == 8 ? AUDIO_FORMAT_8BITS : AUDIO_FORMAT_16BITS)
+				| AUDIO_FORMAT_MONO | AUDIO_FORMAT_LOOP;
+		else lpWave[channel]->wFormat = (bits == 8 ? AUDIO_FORMAT_8BITS : AUDIO_FORMAT_16BITS)
+				| AUDIO_FORMAT_MONO;
 	}
 
 	memcpy(lpWave[channel]->lpData,data,len);
 	/* upload the data to the audio DRAM local memory */
 	AWriteAudioData(lpWave[channel],0,len);
-	APlayVoice(hVoice[channel],lpWave[channel]);
+	APrimeVoice(hVoice[channel],lpWave[channel]);
 	/* need to cast to double because freq*nominal_sample_rate can exceed the size of an int */
 	ASetVoiceFrequency(hVoice[channel],(double)freq*nominal_sample_rate/Machine->sample_rate);
 	ASetVoiceVolume(hVoice[channel],MasterVolume*volume/400);
+	AStartVoice(hVoice[channel]);
 
 	Volumi[channel] = volume/4;
 }
@@ -317,7 +321,7 @@ void osd_play_sample(int channel,signed char *data,int len,int freq,int volume,i
 
 void osd_play_sample_16(int channel,signed short *data,int len,int freq,int volume,int loop)
 {
-	playsample(channel,(signed char *)data,2*len,freq,volume,loop,16);
+	playsample(channel,(signed char *)data,len,freq,volume,loop,16);
 }
 
 
@@ -361,10 +365,11 @@ static void playstreamedsample(int channel,signed char *data,int len,int freq,in
 		memcpy(lpWave[channel]->lpData,data,len);
 		/* upload the data to the audio DRAM local memory */
 		AWriteAudioData(lpWave[channel],0,3*len);
-		APlayVoice(hVoice[channel],lpWave[channel]);
+		APrimeVoice(hVoice[channel],lpWave[channel]);
 	/* need to cast to double because freq*nominal_sample_rate can exceed the size of an int */
 		ASetVoiceFrequency(hVoice[channel],(double)freq*nominal_sample_rate/Machine->sample_rate);
 		ASetVoiceVolume(hVoice[channel],MasterVolume*volume/400);
+		AStartVoice(hVoice[channel]);
 		playing[channel] = 1;
 		c[channel] = 1;
 	}
@@ -402,7 +407,7 @@ void osd_play_streamed_sample(int channel,signed char *data,int len,int freq,int
 
 void osd_play_streamed_sample_16(int channel,signed short *data,int len,int freq,int volume)
 {
-	playstreamedsample(channel,(signed char *)data,2*len,freq,volume,16);
+	playstreamedsample(channel,(signed char *)data,len,freq,volume,16);
 }
 
 
@@ -477,16 +482,6 @@ void osd_set_mastervolume(int volume)
 }
 
 
-
-int osd_ym3812_status(void)
-{
-	return inportb(0x388);
-}
-
-int osd_ym3812_read(void)
-{
-	return inportb(0x389);
-}
 
 void osd_ym3812_control(int reg)
 {

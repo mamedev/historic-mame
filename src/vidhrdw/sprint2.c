@@ -16,7 +16,7 @@ extern int sprint2_gear1;
 extern int sprint2_gear2;
 
 /* local */
-void sprint_vh_screenrefresh(struct osd_bitmap *bitmap);
+void sprint_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 unsigned char *sprint2_horiz_ram;
 unsigned char *sprint2_vert_car_ram;
@@ -389,12 +389,12 @@ void sprint2_check_collision2(struct osd_bitmap *bitmap)
 /***************************************************************************
 ***************************************************************************/
 
-void sprint2_vh_screenrefresh(struct osd_bitmap *bitmap)
+void sprint2_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
         char gear_buf[6] = {0x07,0x05,0x01,0x12,0x00,0x00}; /* "GEAR  " */
         int offs;
 
-        sprint_vh_screenrefresh(bitmap);
+        sprint_vh_screenrefresh(bitmap,full_refresh);
 
         /* gear shift indicators - not a part of the original game!!! */
         gear_buf[5]=0x30 + sprint2_gear1;
@@ -413,12 +413,12 @@ void sprint2_vh_screenrefresh(struct osd_bitmap *bitmap)
 
 }
 
-void sprint1_vh_screenrefresh(struct osd_bitmap *bitmap)
+void sprint1_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
         char gear_buf[6] = {0x07,0x05,0x01,0x12,0x00,0x00}; /* "GEAR  " */
         int offs;
 
-        sprint_vh_screenrefresh(bitmap);
+        sprint_vh_screenrefresh(bitmap,full_refresh);
 
         /* gear shift indicators - not a part of the original game!!! */
         gear_buf[5]=0x30 + sprint2_gear1;
@@ -436,7 +436,7 @@ void sprint1_vh_screenrefresh(struct osd_bitmap *bitmap)
   the main emulation engine.
 
 ***************************************************************************/
-void sprint_vh_screenrefresh(struct osd_bitmap *bitmap)
+void sprint_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
         int offs,car;
 

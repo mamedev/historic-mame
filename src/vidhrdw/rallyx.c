@@ -198,7 +198,7 @@ void rallyx_flipscreen_w(int offset,int data)
   the main emulation engine.
 
 ***************************************************************************/
-void rallyx_vh_screenrefresh(struct osd_bitmap *bitmap)
+void rallyx_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	int offs,sx,sy;
 
@@ -330,7 +330,7 @@ void rallyx_vh_screenrefresh(struct osd_bitmap *bitmap)
 
 
 
-void locomotn_vh_screenrefresh(struct osd_bitmap *bitmap)
+void locomotn_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	int offs,sx,sy;
 
@@ -479,7 +479,7 @@ if (flipscreen) x += 32;
 
 
 
-void jungler_vh_screenrefresh(struct osd_bitmap *bitmap)
+void jungler_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	int offs,sx,sy;
 

@@ -41,7 +41,7 @@ void berzerk_sound_control_b_w(int offset, int data);
 int berzerk_sh_start(void);
 void berzerk_sh_update(void);
 
-void berzerk_vh_screenrefresh(struct osd_bitmap *bitmap);
+void berzerk_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 static struct MemoryReadAddress readmem[] =
 {
@@ -521,8 +521,8 @@ struct GameDriver berzerk_driver =
 	0,
 	"berzerk",
 	"Berzerk",
-	"????",
-	"?????",
+	"1980",
+	"Stern",
 	"Zsolt Vasvari\nChristopher Kirmse\nMirko Buffoni\nValerio Verrando\nDouglas Silfen\nAlex Judd (Sound Programming)",
 	0,
 	&berzerk_machine_driver,
@@ -545,11 +545,11 @@ struct GameDriver berzerk_driver =
 struct GameDriver berzerk1_driver =
 {
 	__FILE__,
-	0,
+	&berzerk_driver,
 	"berzerk1",
 	"Berzerk (version 1)",
-	"????",
-	"?????",
+	"1980",
+	"Stern",
 	"Zsolt Vasvari\nChristopher Kirmse\nMirko Buffoni\nValerio Verrando\nDouglas Silfen\nAlex Judd (Sound Programming)",
 	0,
 	&berzerk_machine_driver,
@@ -575,8 +575,8 @@ struct GameDriver frenzy_driver =
 	0,
 	"frenzy",
 	"Frenzy",
-	"????",
-	"?????",
+	"1982",
+	"Stern",
 	"Keith Gerdes\nMirko Buffoni\nMike Cuddy\nBrad Oliver\nZsolt Vasvari\nChristopher Kirmse",
 	0,
 	&frenzy_machine_driver,
@@ -598,11 +598,11 @@ struct GameDriver frenzy_driver =
 struct GameDriver frenzy1_driver =
 {
 	__FILE__,
-	0,
+	&frenzy_driver,
 	"frenzy1",
 	"Frenzy (version 1)",
-	"????",
-	"?????",
+	"1982",
+	"Stern",
 	"Keith Gerdes\nMirko Buffoni\nMike Cuddy\nBrad Oliver\nZsolt Vasvari\nChristopher Kirmse",
 	0,
 	&frenzy_machine_driver,

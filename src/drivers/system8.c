@@ -1,5 +1,27 @@
 #include "driver.h"
-#include "machine/system8.h"
+#include "vidhrdw/system8.h"
+
+
+int  system8_bank = 0x0f;
+
+
+void system8_bankswitch_w(int offset,int data)
+{
+	int bankaddress;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+
+	bankaddress = 0x10000 + (((data & 0x0c)>>2) * 0x4000);
+	cpu_setbank(1,&RAM[bankaddress]);
+
+	system8_bank=data;
+}
+
+int system8_bankswitch_r(int offset)
+{
+	return(system8_bank);
+}
+
 
 
 static struct MemoryReadAddress readmem[] =
@@ -13,9 +35,7 @@ static struct MemoryWriteAddress writemem[] =
 {
 	{ 0x0000, 0xBFFF, MWA_ROM },
 	{ 0xD000, 0xD1FF, MWA_RAM, &system8_spriteram },
-	{ 0xD800, 0xD9FF, MWA_RAM, &system8_spritepaletteram, &system8_spritepaletteram_size },
-	{ 0xDA00, 0xDBFF, system8_paletteram_w, &system8_paletteram, &system8_paletteram_size },
-	{ 0xDC00, 0xDDFF, system8_backgroundpaletteram_w, &system8_backgroundpaletteram, &system8_backgroundpaletteram_size },
+	{ 0xD800, 0xDFFF, system8_paletteram_w, &paletteram },
 	{ 0xE000, 0xE7FF, system8_backgroundram_w, &system8_backgroundram, &system8_backgroundram_size },
 	{ 0xE800, 0xEEFF, MWA_RAM, &system8_videoram, &system8_videoram_size },
 	{ 0xEFBD, 0xEFBD, MWA_RAM, &system8_scroll_y },
@@ -38,9 +58,7 @@ static struct MemoryWriteAddress wbml_writemem[] =
 {
 	{ 0x0000, 0xbfff, MWA_ROM },
 	{ 0xD000, 0xD1FF, MWA_RAM, &system8_spriteram },
-	{ 0xD800, 0xD9FF, MWA_RAM, &system8_spritepaletteram, &system8_spritepaletteram_size },
-	{ 0xDC00, 0xDDFF, system8_backgroundpaletteram_w, &system8_backgroundpaletteram, &system8_backgroundpaletteram_size },
-	{ 0xDA00, 0xDBFF, system8_paletteram_w, &system8_paletteram, &system8_paletteram_size },
+	{ 0xD800, 0xDFFF, system8_paletteram_w, &paletteram },
 	{ 0xE740, 0xE747, MWA_RAM, &system8_bg_pagesel },
 	{ 0xE7BC, 0xE7FB, choplifter_scroll_x_w, &system8_scrollx_ram },
 	{ 0xE000, 0xE7FF, system8_videoram_w, &system8_videoram, &system8_videoram_size },
@@ -58,6 +76,7 @@ static struct IOReadPort readport[] =
 	{ 0x0004, 0x0004, input_port_1_r },	/* joy2 */
 	{ 0x0008, 0x0008, input_port_2_r },	/* coin,start */
 	{ 0x000C, 0x000C, input_port_3_r },	/* DIP2 */
+	{ 0x000D, 0x000D, input_port_4_r },	/* DIP1 (Up'n Down only) */
 	{ 0x0010, 0x0010, input_port_4_r },	/* DIP1 */
 	{ -1 }	/* end of table */
 };
@@ -317,6 +336,98 @@ INPUT_PORTS_START( wbml_input_ports )
 /*	PORT_DIPSETTING(    0x00, "1/1" ) */
 INPUT_PORTS_END
 
+INPUT_PORTS_START( upndown_input_ports )
+	PORT_START	/* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY )
+
+	PORT_START	/* IN2 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_COCKTAIL )
+
+	PORT_START	/* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BITX(0x04, IP_ACTIVE_LOW, IPT_SERVICE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE, 0 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_COIN3 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START      /* DSW1 */
+	PORT_DIPNAME( 0x0f, 0x0f, "A Coin/Cred", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x07, "4/1" )
+	PORT_DIPSETTING(    0x08, "3/1" )
+	PORT_DIPSETTING(    0x09, "2/1" )
+	PORT_DIPSETTING(    0x05, "2/1 + Bonus each 5" )
+	PORT_DIPSETTING(    0x04, "2/1 + Bonus each 4" )
+	PORT_DIPSETTING(    0x0f, "1/1" )
+	PORT_DIPSETTING(    0x03, "1/1 + Bonus each 5" )
+	PORT_DIPSETTING(    0x02, "1/1 + Bonus each 4" )
+	PORT_DIPSETTING(    0x01, "1/1 + Bonus each 2" )
+	PORT_DIPSETTING(    0x06, "2/3" )
+	PORT_DIPSETTING(    0x0e, "1/2" )
+	PORT_DIPSETTING(    0x0d, "1/3" )
+	PORT_DIPSETTING(    0x0c, "1/4" )
+	PORT_DIPSETTING(    0x0b, "1/5" )
+	PORT_DIPSETTING(    0x0a, "1/6" )
+/*	PORT_DIPSETTING(    0x00, "1/1" ) */
+	PORT_DIPNAME( 0xf0, 0xf0, "B Coin/Cred", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x70, "4/1" )
+	PORT_DIPSETTING(    0x80, "3/1" )
+	PORT_DIPSETTING(    0x90, "2/1" )
+	PORT_DIPSETTING(    0x50, "2/1 + Bonus each 5" )
+	PORT_DIPSETTING(    0x40, "2/1 + Bonus each 4" )
+	PORT_DIPSETTING(    0xf0, "1/1" )
+	PORT_DIPSETTING(    0x30, "1/1 + Bonus each 5" )
+	PORT_DIPSETTING(    0x20, "1/1 + Bonus each 4" )
+	PORT_DIPSETTING(    0x10, "1/1 + Bonus each 2" )
+	PORT_DIPSETTING(    0x60, "2/3" )
+	PORT_DIPSETTING(    0xe0, "1/2" )
+	PORT_DIPSETTING(    0xd0, "1/3" )
+	PORT_DIPSETTING(    0xc0, "1/4" )
+	PORT_DIPSETTING(    0xb0, "1/5" )
+	PORT_DIPSETTING(    0xa0, "1/6" )
+/*	PORT_DIPSETTING(    0x00, "1/1" ) */
+
+	PORT_START	/* DSW0 */
+	PORT_DIPNAME( 0x01, 0x00, "Cabinet", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "Upright" )
+	PORT_DIPSETTING(    0x01, "Cocktail" )
+	PORT_DIPNAME( 0x06, 0x06, "Lives", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x06, "3" )
+	PORT_DIPSETTING(    0x04, "4" )
+	PORT_DIPSETTING(    0x02, "5" )
+	PORT_BITX( 0,       0x00, IPT_DIPSWITCH_SETTING | IPF_CHEAT, "Infinite", IP_KEY_NONE, IP_JOY_NONE, 0 )
+	PORT_DIPNAME( 0x38, 0x38, "Bonus Life", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x38, "10000" )
+	PORT_DIPSETTING(    0x30, "20000" )
+	PORT_DIPSETTING(    0x28, "30000" )
+	PORT_DIPSETTING(    0x20, "40000" )
+	PORT_DIPSETTING(    0x18, "50000" )
+	PORT_DIPSETTING(    0x10, "60000" )
+	PORT_DIPSETTING(    0x08, "70000" )
+	PORT_DIPSETTING(    0x00, "None" )
+	PORT_DIPNAME( 0xc0, 0xc0, "Difficulty", IP_KEY_NONE )
+	PORT_DIPSETTING(    0xc0, "Easy" )
+	PORT_DIPSETTING(    0x80, "Medium" )
+	PORT_DIPSETTING(    0x40, "Hard" )
+	PORT_DIPSETTING(    0x00, "Hardest" )
+INPUT_PORTS_END
+
 INPUT_PORTS_START( pitfall2_input_ports )
 	PORT_START	/* IN1 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )
@@ -530,15 +641,13 @@ static struct GfxLayout choplift_charlayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x0000, &charlayout,    0 , 64},
-	{ 1, 0x0000, &charlayout, 64*8 , 64},
+	{ 1, 0x0000, &charlayout,  512, 128},
 	{ -1 } /* end of array */
 };
 
 static struct GfxDecodeInfo choplift_gfxdecodeinfo[] =
 {
-	{ 1, 0x0000, &choplift_charlayout,    0, 64},
-	{ 1, 0x0000, &choplift_charlayout, 64*8, 64},
+	{ 1, 0x0000, &choplift_charlayout, 512, 128},
 	{ -1 } /* end of array */
 };
 
@@ -551,6 +660,7 @@ static void wbdeluxe_init_machine(void)
 	system8_define_cliparea(16,239,0,223);
 	system8_define_spritememsize(2, 0x10000);
 	system8_define_sprite_offset_y(16);
+	system8_define_sprite_pixelmode(SYSTEM8_SPRITE_PIXEL_MODE1);
 }
 
 static void wbml_init_machine(void)
@@ -560,6 +670,7 @@ static void wbml_init_machine(void)
 	system8_define_cliparea(0,255,0,224);
 	system8_define_spritememsize(2, 0x20000);
 	system8_define_sprite_offset_y(0);
+	system8_define_sprite_pixelmode(SYSTEM8_SPRITE_PIXEL_MODE2);
 }
 
 static void pitfall2_init_machine(void)
@@ -569,6 +680,7 @@ static void pitfall2_init_machine(void)
 	system8_define_cliparea(6,249,0,223);
 	system8_define_spritememsize(2, 0x8000);
 	system8_define_sprite_offset_y(16);
+	system8_define_sprite_pixelmode(SYSTEM8_SPRITE_PIXEL_MODE1);
 }
 
 static void choplift_init_machine(void)
@@ -579,8 +691,8 @@ static void choplift_init_machine(void)
 	system8_define_cliparea(8,247,16,239);
 	system8_define_spritememsize(2, 0x20000);
 	system8_define_sprite_offset_y(16);
+	system8_define_sprite_pixelmode(SYSTEM8_SPRITE_PIXEL_MODE2);
 }
-
 
 
 static unsigned char wbml_color_prom[] =
@@ -704,7 +816,6 @@ static struct SN76496interface sn76496_interface =
 };
 
 
-
 static struct MachineDriver wbdeluxe_machine_driver =
 {
 	/* basic machine hardware */
@@ -735,11 +846,11 @@ static struct MachineDriver wbdeluxe_machine_driver =
 	256, 256,				/* screen_width, screen_height */
 	{ 16, 239, 16, 239 },			/* struct rectangle visible_area */
 	gfxdecodeinfo,				/* GfxDecodeInfo */
-	256,					/* total colors */
-	64*8+64*8,				/* color table length */
-	system8_vh_init_palette,	/* convert color prom routine */
+	2048,						/* total colors */
+	2048,						/* color table length */
+	system8_vh_convert_color_prom,	/* convert color prom routine */
 
-	VIDEO_TYPE_RASTER,
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
 	0,					/* vh_init routine */
 	system8_vh_start,			/* vh_start routine */
 	system8_vh_stop,			/* vh_stop routine */
@@ -785,11 +896,11 @@ static struct MachineDriver pitfall2_machine_driver =
 	256, 256,				/* screen_width, screen_height */
 	{ 6, 249, 16, 239 },			/* struct rectangle visible_area */
 	gfxdecodeinfo,				/* GfxDecodeInfo */
-	256,					/* total colors */
-	64*8+64*8,				/* color table length */
-	system8_vh_init_palette,	/* convert color prom routine */
+	2048,						/* total colors */
+	2048,						/* color table length */
+	system8_vh_convert_color_prom,	/* convert color prom routine */
 
-	VIDEO_TYPE_RASTER,
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
 	0,					/* vh_init routine */
 	system8_vh_start,			/* vh_start routine */
 	system8_vh_stop,			/* vh_stop routine */
@@ -834,11 +945,11 @@ static struct MachineDriver choplift_machine_driver =
 	256, 256,						/* screen_width, screen_height */
 	{ 6, 249, 16, 239 },			/* struct rectangle visible_area */
 	choplift_gfxdecodeinfo,			/* GfxDecodeInfo */
-	256,							/* total colors */
-	64*8+64*8,						/* color table length */
+	2048,						/* total colors */
+	2048,						/* color table length */
 	system8_vh_convert_color_prom,	/* convert color prom routine */
 
-	VIDEO_TYPE_RASTER,
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
 	0,								/* vh_init routine */
 	system8_vh_start,				/* vh_start routine */
 	system8_vh_stop,				/* vh_stop routine */
@@ -883,11 +994,11 @@ static struct MachineDriver wbml_machine_driver =
 	256, 256,				/* screen_width, screen_height */
 	{ 0, 255, 0, 239 },			/* struct rectangle visible_area */
 	choplift_gfxdecodeinfo,				/* GfxDecodeInfo */
-	256,					/* total colors */
-	64*8+64*8,				/* color table length */
+	2048,						/* total colors */
+	2048,						/* color table length */
 	system8_vh_convert_color_prom,	/* convert color prom routine */
 
-	VIDEO_TYPE_RASTER,
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
 	0,					/* vh_init routine */
 	system8_vh_start,			/* vh_start routine */
 	system8_vh_stop,			/* vh_stop routine */
@@ -1051,9 +1162,9 @@ ROM_END
 
 ROM_START( chplftbl_rom )
 	ROM_REGION(0x20000)	/* 128k for code */
-	ROM_LOAD( "7124.90", 0x00000, 0x8000, 0xaa09ffb1 )
-	ROM_LOAD( "7125.91", 0x10000, 0x8000, 0x56d3a903 )
-	ROM_LOAD( "7126.92", 0x18000, 0x8000, 0x2f4c41fa )
+	ROM_LOAD( "7124bl.90", 0x00000, 0x8000, 0xaa09ffb1 )
+	ROM_LOAD( "7125.91",   0x10000, 0x8000, 0x56d3a903 )
+	ROM_LOAD( "7126.92",   0x18000, 0x8000, 0x2f4c41fa )
 
 	ROM_REGION(0x18000) 	/* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "7127.4", 0x00000, 0x8000, 0x684454da )
@@ -1264,8 +1375,8 @@ struct GameDriver wbdeluxe_driver =
 	0,
 	"wbdeluxe",
 	"Wonder Boy Deluxe",
-	"????",
-	"?????",
+	"1986",
+	"Sega (Escape license)",
 	"Jarek Parchanski (MAME driver)\nRoberto Ventura  (hardware info)\nJarek Burczynski (sound)\nMirko Buffoni (additional code)",
 	0,
 	&wbdeluxe_machine_driver,
@@ -1288,8 +1399,8 @@ struct GameDriver upndown_driver =
 	0,
 	"upndown",
 	"Up'n Down",
-	"????",
-	"?????",
+	"1984?",
+	"bootleg?",
 	"Jarek Parchanski (MAME driver)\nRoberto Ventura  (hardware info)\nJarek Burczynski (sound)\nMirko Buffoni (additional code)",
 	0,
 	&wbdeluxe_machine_driver,
@@ -1299,10 +1410,10 @@ struct GameDriver upndown_driver =
 	0,      				/* Sample names */
 	0,
 
-	wbdeluxe_input_ports,
+	upndown_input_ports,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
+	ORIENTATION_ROTATE_270,
 	upndown_hiload, upndown_hisave
 };
 
@@ -1312,10 +1423,10 @@ struct GameDriver wbml_driver =
 	0,
 	"wbml",
 	"Wonder Boy in Monster Land",
-	"????",
-	"?????",
+	"1987",
+	"Sega",
 	"Mirko Buffoni",
-	0,
+	GAME_NOT_WORKING,
 	&wbml_machine_driver,
 
 	wbml_rom,
@@ -1337,8 +1448,8 @@ struct GameDriver pitfall2_driver =
 	0,
 	"pitfall2",
 	"Pitfall II",
-	"????",
-	"?????",
+	"1984?",
+	"Sega",
 	"Jarek Parchanski (MAME driver)\nRoberto Ventura  (hardware info)\nJarek Burczynski (sound)\nMirko Buffoni (additional code)",
 	0,
 	&pitfall2_machine_driver,
@@ -1361,10 +1472,10 @@ struct GameDriver chplft_driver =
 	0,
 	"chplft",
 	"Choplifter",
-	"????",
-	"?????",
+	"1985",
+	"Sega",
 	"Jarek Parchanski (MAME driver)\nRoberto Ventura  (hardware info)",
-	0,
+	GAME_NOT_WORKING,
 	&choplift_machine_driver,
 
 	chplft_rom,
@@ -1382,11 +1493,11 @@ struct GameDriver chplft_driver =
 struct GameDriver chplftb_driver =
 {
 	__FILE__,
-	0,
+	&chplft_driver,
 	"chplftb",
 	"Choplifter (alternate)",
-	"????",
-	"?????",
+	"1985",
+	"Sega",
 	"Jarek Parchanski (MAME driver)\nRoberto Ventura  (hardware info)",
 	0,
 	&choplift_machine_driver,
@@ -1406,11 +1517,11 @@ struct GameDriver chplftb_driver =
 struct GameDriver chplftbl_driver =
 {
 	__FILE__,
-	0,
+	&chplft_driver,
 	"chplftbl",
 	"Choplifter (bootleg)",
-	"????",
-	"?????",
+	"1985",
+	"bootleg",
 	"Jarek Parchanski (MAME driver)\nRoberto Ventura  (hardware info)",
 	0,
 	&choplift_machine_driver,

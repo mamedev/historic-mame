@@ -26,12 +26,9 @@ Memory Overview:
 
 extern int tigeroad_base_bank;
 extern unsigned char *tigeroad_scrollram;
-extern unsigned char *tigeroad_paletteram;
 
-void tigeroad_paletteram_w(int offset,int data);
-int tigeroad_paletteram_r(int offset);
 void tigeroad_scrollram_w(int offset,int data);
-void tigeroad_vh_screenrefresh(struct osd_bitmap *bitmap);
+void tigeroad_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 
 static void tigeroad_control_w( int offset, int data )
@@ -76,7 +73,7 @@ static struct MemoryReadAddress readmem[] =
 	{ 0xfe0d00, 0xfe1807, MRA_BANK2 },
 	{ 0xfe4000, 0xfe4007, tigeroad_input_r },
 	{ 0xfec000, 0xfec7ff, MRA_BANK3 },
-	{ 0xff8200, 0xff867f, tigeroad_paletteram_r },
+	{ 0xff8200, 0xff867f, paletteram_word_r },
 	{ 0xffc000, 0xffffff, MRA_BANK5 },
 	{ -1 }  /* end of table */
 };
@@ -90,7 +87,7 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0xfec000, 0xfec7ff, MWA_BANK3, &videoram, &videoram_size },
 	{ 0xfe8000, 0xfe8003, MWA_BANK4, &tigeroad_scrollram },
 	{ 0xfe800c, 0xfe800f, MWA_NOP },	/* fe800e = watchdog or IRQ acknowledge */
-	{ 0xff8200, 0xff867f, tigeroad_paletteram_w, &tigeroad_paletteram },
+	{ 0xff8200, 0xff867f, paletteram_xxxxRRRRGGGGBBBB_word_w, &paletteram },
 	{ 0xffc000, 0xffffff, MWA_BANK5 },
 	{ -1 }  /* end of table */
 };
@@ -368,7 +365,7 @@ static struct YM2203interface ym2203_interface =
 {
 	2,			/* 2 chips */
 	3500000,	/* 3.5 MHz ? */
-	{ YM2203_VOL(100,255), YM2203_VOL(100,255) },
+	{ YM2203_VOL(255,255), YM2203_VOL(255,255) },
 	{ 0 },
 	{ 0 },
 	{ 0 },
@@ -524,7 +521,7 @@ struct GameDriver f1dream_driver =
 	"1988",
 	"Capcom (Romstar license)",
 	"Paul Leaman\nPhil Stroffolino (MAME driver)\nTim Lindquist",
-	0,
+	GAME_NOT_WORKING,
 	&machine_driver,
 
 	f1dream_rom,

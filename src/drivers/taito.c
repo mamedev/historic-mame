@@ -155,7 +155,7 @@ extern unsigned char *taito_characterram;
 extern unsigned char *taito_scrollx1,*taito_scrollx2,*taito_scrollx3;
 extern unsigned char *taito_scrolly1,*taito_scrolly2,*taito_scrolly3;
 extern unsigned char *taito_colscrolly1,*taito_colscrolly2,*taito_colscrolly3;
-extern unsigned char *taito_gfxpointer,*taito_paletteram;
+extern unsigned char *taito_gfxpointer;
 extern unsigned char *taito_colorbank,*taito_video_priority,*taito_video_enable;
 void taito_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 int taito_gfxrom_r(int offset);
@@ -167,7 +167,7 @@ void taito_videoenable_w(int offset,int data);
 void taito_characterram_w(int offset,int data);
 int taito_vh_start(void);
 void taito_vh_stop(void);
-void taito_vh_screenrefresh(struct osd_bitmap *bitmap);
+void taito_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 
 
@@ -218,7 +218,7 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0xd020, 0xd03f, MWA_RAM, &taito_colscrolly2 },
 	{ 0xd040, 0xd05f, MWA_RAM, &taito_colscrolly3 },
 	{ 0xd100, 0xd17f, MWA_RAM, &spriteram, &spriteram_size },
-	{ 0xd200, 0xd27f, taito_paletteram_w, &taito_paletteram },
+	{ 0xd200, 0xd27f, taito_paletteram_w, &paletteram },
 	{ 0xd300, 0xd300, MWA_RAM, &taito_video_priority },
 	{ 0xd40e, 0xd40e, AY8910_control_port_0_w },
 	{ 0xd40f, 0xd40f, AY8910_write_port_0_w },
@@ -822,7 +822,7 @@ static struct AY8910interface ay8910_interface =
 {
 	4,	/* 4 chips */
 	6000000/4,	/* 1.5 MHz */
-	{ 255, 255, 255, 0x40ff },
+	{ 255, 255, 255, 0x20ff },
 	{ input_port_5_r, 0, 0, 0 },		/* port Aread */
 	{ input_port_6_r, 0, 0, 0 },		/* port Bread */
 	{ 0, taito_digital_out, 0, 0 },		/* port Awrite */
@@ -833,7 +833,7 @@ static struct DACinterface dac_interface =
 {
 	1,
 	441000,
-	{ 128, 128 },
+	{ 255, 255 },
 	{  1,  1 }
 };
 
@@ -919,65 +919,64 @@ ROM_START( elevator_rom )
 	/* core currently always frees region #1 after initialization. */
 
 	ROM_REGION(0x8000)	/* graphic ROMs */
-	ROM_LOAD( "ea-ic1.bin",  0x0000, 0x1000, 0xec7c455a )
-	ROM_LOAD( "ea-ic2.bin",  0x1000, 0x1000, 0x19bc841c )
-	ROM_LOAD( "ea-ic3.bin",  0x2000, 0x1000, 0x06828c76 )
-	ROM_LOAD( "ea-ic4.bin",  0x3000, 0x1000, 0x39ef916b )
-	ROM_LOAD( "ea-ic5.bin",  0x4000, 0x1000, 0x9aed5295 )
-	ROM_LOAD( "ea-ic6.bin",  0x5000, 0x1000, 0x19108d2c )
-	ROM_LOAD( "ea-ic7.bin",  0x6000, 0x1000, 0x61d8fe9a )
-	ROM_LOAD( "ea-ic8.bin",  0x7000, 0x1000, 0x5d924ce0 )
+	ROM_LOAD( "ea-ic1.bin", 0x0000, 0x1000, 0xec7c455a )
+	ROM_LOAD( "ea-ic2.bin", 0x1000, 0x1000, 0x19bc841c )
+	ROM_LOAD( "ea-ic3.bin", 0x2000, 0x1000, 0x06828c76 )
+	ROM_LOAD( "ea-ic4.bin", 0x3000, 0x1000, 0x39ef916b )
+	ROM_LOAD( "ea-ic5.bin", 0x4000, 0x1000, 0x9aed5295 )
+	ROM_LOAD( "ea-ic6.bin", 0x5000, 0x1000, 0x19108d2c )
+	ROM_LOAD( "ea-ic7.bin", 0x6000, 0x1000, 0x61d8fe9a )
+	ROM_LOAD( "ea-ic8.bin", 0x7000, 0x1000, 0x5d924ce0 )
 
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
 	ROM_LOAD( "ea-ic70.bin", 0x0000, 0x1000, 0x30ddb2e3 )
 	ROM_LOAD( "ea-ic71.bin", 0x1000, 0x1000, 0x34e16eb3 )
-/*	ROM_LOAD( "ee_ea10.bin", , 0x1000 ) ??? */
 ROM_END
 
 ROM_START( elevatob_rom )
 	ROM_REGION(0x12000)	/* 64k for code */
-	ROM_LOAD( "ea69.bin", 0x0000, 0x1000, 0x9575392d )
-	ROM_LOAD( "ea68.bin", 0x1000, 0x1000, 0x885e9cac )
-	ROM_LOAD( "ea67.bin", 0x2000, 0x1000, 0x0f3f24e5 )
-	ROM_LOAD( "ea66.bin", 0x3000, 0x1000, 0x2ac3f1f9 )
-	ROM_LOAD( "ea65.bin", 0x4000, 0x1000, 0xe15c6fcc )
-	ROM_LOAD( "ea64.bin", 0x5000, 0x1000, 0x23ed29b1 )
-	ROM_LOAD( "ea55.bin", 0x6000, 0x1000, 0x04dbd855 )
-	ROM_LOAD( "ea54.bin", 0x7000, 0x1000, 0x4d791e41 )
+	ROM_LOAD( "ea69.bin",    0x0000, 0x1000, 0x9575392d )
+	ROM_LOAD( "ea-ic68.bin", 0x1000, 0x1000, 0x885e9cac )
+	ROM_LOAD( "ea-ic67.bin", 0x2000, 0x1000, 0x0f3f24e5 )
+	ROM_LOAD( "ea66.bin",    0x3000, 0x1000, 0x2ac3f1f9 )
+	ROM_LOAD( "ea-ic65.bin", 0x4000, 0x1000, 0xe15c6fcc )
+	ROM_LOAD( "ea-ic64.bin", 0x5000, 0x1000, 0x23ed29b1 )
+	ROM_LOAD( "ea55.bin",    0x6000, 0x1000, 0x04dbd855 )
+	ROM_LOAD( "ea54.bin",    0x7000, 0x1000, 0x4d791e41 )
 	/* 10000-10fff space for another banked ROM (not used) */
-	ROM_LOAD( "ea52.bin", 0x11000, 0x1000, 0xde40e7e6 )	/* protection crack, bank switched at 7000 */
+	ROM_LOAD( "ea52.bin",    0x11000, 0x1000, 0xde40e7e6 )	/* protection crack, bank switched at 7000 */
 
 	ROM_REGION(0x1000)	/* temporary space for graphics (disposed after conversion) */
 	/* empty memory region - not used by the game, but needed because the main */
 	/* core currently always frees region #1 after initialization. */
 
 	ROM_REGION(0x8000)	/* graphic ROMs */
-	ROM_LOAD( "ea01.bin", 0x0000, 0x1000, 0xe97f45a5 )
-	ROM_LOAD( "ea02.bin", 0x1000, 0x1000, 0x19bc841c )
-	ROM_LOAD( "ea03.bin", 0x2000, 0x1000, 0x06828c76 )
-	ROM_LOAD( "ea04.bin", 0x3000, 0x1000, 0x39ef916b )
-	ROM_LOAD( "ea05.bin", 0x4000, 0x1000, 0x9aed5295 )
-	ROM_LOAD( "ea06.bin", 0x5000, 0x1000, 0x30ddb2e3 )
-	ROM_LOAD( "ea07.bin", 0x6000, 0x1000, 0x61d8fe9a )
-	ROM_LOAD( "ea08.bin", 0x7000, 0x1000, 0xd6d24ce0 )
+	ROM_LOAD( "ea-ic1.bin", 0x0000, 0x1000, 0xec7c455a )
+	ROM_LOAD( "ea-ic2.bin", 0x1000, 0x1000, 0x19bc841c )
+	ROM_LOAD( "ea-ic3.bin", 0x2000, 0x1000, 0x06828c76 )
+	ROM_LOAD( "ea-ic4.bin", 0x3000, 0x1000, 0x39ef916b )
+	ROM_LOAD( "ea-ic5.bin", 0x4000, 0x1000, 0x9aed5295 )
+	ROM_LOAD( "ea-ic6.bin", 0x5000, 0x1000, 0x19108d2c )
+	ROM_LOAD( "ea-ic7.bin", 0x6000, 0x1000, 0x61d8fe9a )
+	ROM_LOAD( "ea08.bin",   0x7000, 0x1000, 0xd6d24ce0 )
 
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
-	ROM_LOAD( "ea70.bin", 0x0000, 0x1000, 0x30ddb2e3 )
-	ROM_LOAD( "ea71.bin", 0x1000, 0x1000, 0x34e16eb3 )
+	ROM_LOAD( "ea-ic70.bin", 0x0000, 0x1000, 0x30ddb2e3 )
+	ROM_LOAD( "ea-ic71.bin", 0x1000, 0x1000, 0x34e16eb3 )
 ROM_END
 
 ROM_START( junglek_rom )
 	ROM_REGION(0x12000)	/* 64k for code */
-	ROM_LOAD( "kn41.bin",   0x00000, 0x1000, 0xac5442b8 )
-	ROM_LOAD( "kn42.bin",   0x01000, 0x1000, 0xa3a182b5 )
-	ROM_LOAD( "kn43.bin",   0x02000, 0x1000, 0xcbb13a65 )
-	ROM_LOAD( "kn44.bin",   0x03000, 0x1000, 0x883222ca )
-	ROM_LOAD( "kn45.bin",   0x04000, 0x1000, 0x9911012d )
-	ROM_LOAD( "kn46.bin",   0x05000, 0x1000, 0xc040e8ac )
-	ROM_LOAD( "kn47.bin",   0x06000, 0x1000, 0xf361abd9 )
-	ROM_LOAD( "kn48.bin",   0x07000, 0x1000, 0x45072f4d )
+	ROM_LOAD( "kn41.bin", 0x00000, 0x1000, 0xac5442b8 )
+	ROM_LOAD( "kn42.bin", 0x01000, 0x1000, 0xa3a182b5 )
+	ROM_LOAD( "kn43.bin", 0x02000, 0x1000, 0xcbb13a65 )
+	ROM_LOAD( "kn44.bin", 0x03000, 0x1000, 0x883222ca )
+	ROM_LOAD( "kn45.bin", 0x04000, 0x1000, 0x9911012d )
+	ROM_LOAD( "kn46.bin", 0x05000, 0x1000, 0xc040e8ac )
+	ROM_LOAD( "kn47.bin", 0x06000, 0x1000, 0xf361abd9 )
+	ROM_LOAD( "kn48.bin", 0x07000, 0x1000, 0x45072f4d )
 	/* 10000-10fff space for another banked ROM (not used) */
-	ROM_LOAD( "kn60.bin",   0x11000, 0x1000, 0xc751bc93 )	/* banked at 7000 */
+	ROM_LOAD( "kn60.bin", 0x11000, 0x1000, 0xc751bc93 )	/* banked at 7000 */
 
 	ROM_REGION(0x1000)	/* temporary space for graphics (disposed after conversion) */
 	/* empty memory region - not used by the game, but needed because the main */
@@ -1001,35 +1000,35 @@ ROM_END
 
 ROM_START( jhunt_rom )
 	ROM_REGION(0x12000)	/* 64k for code */
-	ROM_LOAD( "kn41a",  0x00000, 0x1000, 0x9174a276 )
-	ROM_LOAD( "kn42",   0x01000, 0x1000, 0xa3a182b5 )
-	ROM_LOAD( "kn43",   0x02000, 0x1000, 0xcbb13a65 )
-	ROM_LOAD( "kn44",   0x03000, 0x1000, 0x883222ca )
-	ROM_LOAD( "kn45",   0x04000, 0x1000, 0x9911012d )
-	ROM_LOAD( "kn46a",  0x05000, 0x1000, 0xe4bcd3ec )
-	ROM_LOAD( "kn47",   0x06000, 0x1000, 0xf361abd9 )
-	ROM_LOAD( "kn48a",  0x07000, 0x1000, 0xed94461e )
+	ROM_LOAD( "kn41a",    0x00000, 0x1000, 0x9174a276 )
+	ROM_LOAD( "kn42.bin", 0x01000, 0x1000, 0xa3a182b5 )
+	ROM_LOAD( "kn43.bin", 0x02000, 0x1000, 0xcbb13a65 )
+	ROM_LOAD( "kn44.bin", 0x03000, 0x1000, 0x883222ca )
+	ROM_LOAD( "kn45.bin", 0x04000, 0x1000, 0x9911012d )
+	ROM_LOAD( "kn46a",    0x05000, 0x1000, 0xe4bcd3ec )
+	ROM_LOAD( "kn47.bin", 0x06000, 0x1000, 0xf361abd9 )
+	ROM_LOAD( "kn48a",    0x07000, 0x1000, 0xed94461e )
 	/* 10000-10fff space for another banked ROM (not used) */
-	ROM_LOAD( "kn60",   0x11000, 0x1000, 0xc751bc93 )	/* banked at 7000 */
+	ROM_LOAD( "kn60.bin", 0x11000, 0x1000, 0xc751bc93 )	/* banked at 7000 */
 
 	ROM_REGION(0x1000)	/* temporary space for graphics (disposed after conversion) */
 	/* empty memory region - not used by the game, but needed because the main */
 	/* core currently always frees region #1 after initialization. */
 
 	ROM_REGION(0x8000)	/* graphic ROMs */
-	ROM_LOAD( "kn49a", 0x0000, 0x1000, 0x1bf1ccb5 )
-	ROM_LOAD( "kn50a", 0x1000, 0x1000, 0xa02514d7 )
-	ROM_LOAD( "kn51a", 0x2000, 0x1000, 0xdfdc6430 )
-	ROM_LOAD( "kn52a", 0x3000, 0x1000, 0x07daf09a )
-	ROM_LOAD( "kn53a", 0x4000, 0x1000, 0xb8e50809 )
-	ROM_LOAD( "kn54a", 0x5000, 0x1000, 0x32dab8ac )
-	ROM_LOAD( "kn55",  0x6000, 0x1000, 0x9ddcccc6 )
-	ROM_LOAD( "kn56a", 0x7000, 0x1000, 0x5e1a9162 )
+	ROM_LOAD( "kn49a",    0x0000, 0x1000, 0x1bf1ccb5 )
+	ROM_LOAD( "kn50a",    0x1000, 0x1000, 0xa02514d7 )
+	ROM_LOAD( "kn51a",    0x2000, 0x1000, 0xdfdc6430 )
+	ROM_LOAD( "kn52a",    0x3000, 0x1000, 0x07daf09a )
+	ROM_LOAD( "kn53a",    0x4000, 0x1000, 0xb8e50809 )
+	ROM_LOAD( "kn54a",    0x5000, 0x1000, 0x32dab8ac )
+	ROM_LOAD( "kn55.bin", 0x6000, 0x1000, 0x9ddcccc6 )
+	ROM_LOAD( "kn56a",    0x7000, 0x1000, 0x5e1a9162 )
 
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
-	ROM_LOAD( "kn57-1", 0x0000, 0x1000, 0x66c38ff9 )
-	ROM_LOAD( "kn58-1", 0x1000, 0x1000, 0xea9154bd )
-	ROM_LOAD( "kn59-1", 0x2000, 0x1000, 0xd3d4d7fe )
+	ROM_LOAD( "kn57-1.bin", 0x0000, 0x1000, 0x66c38ff9 )
+	ROM_LOAD( "kn58-1.bin", 0x1000, 0x1000, 0xea9154bd )
+	ROM_LOAD( "kn59-1.bin", 0x2000, 0x1000, 0xd3d4d7fe )
 ROM_END
 
 ROM_START( wwestern_rom )
@@ -1261,10 +1260,10 @@ struct GameDriver elevator_driver =
 	0,
 	"elevator",
 	"Elevator Action",
-	"????",
-	"?????",
+	"1983",
+	"Taito",
 	"Nicola Salmoria (MAME driver)\nTatsuyuki Satoh (additional code)\nMike Balfour (high score save)\nMarco Cassili",
-	0,
+	GAME_NOT_WORKING,
 	&machine_driver,
 
 	elevator_rom,
@@ -1283,11 +1282,11 @@ struct GameDriver elevator_driver =
 struct GameDriver elevatob_driver =
 {
 	__FILE__,
-	0,
+	&elevator_driver,
 	"elevatob",
 	"Elevator Action (bootleg)",
-	"????",
-	"?????",
+	"1983",
+	"bootleg",
 	"Nicola Salmoria (MAME driver)\nTatsuyuki Satoh (additional code)\nMike Balfour (high score save)\nMarco Cassili",
 	0,
 	&machine_driver,
@@ -1311,8 +1310,8 @@ struct GameDriver junglek_driver =
 	0,
 	"junglek",
 	"Jungle King",
-	"????",
-	"?????",
+	"1982",
+	"Taito",
 	"Nicola Salmoria (MAME driver)\nTatsuyuki Satoh (additional code)\nMike Balfour (high score save)\nMarco Cassili",
 	0,
 	&machine_driver,
@@ -1333,11 +1332,11 @@ struct GameDriver junglek_driver =
 struct GameDriver jhunt_driver =
 {
 	__FILE__,
-	0,
+	&junglek_driver,
 	"jhunt",
 	"Jungle Hunt",
-	"????",
-	"?????",
+	"1982",
+	"Taito of America",
 	"Nicola Salmoria (MAME driver)\nTatsuyuki Satoh (additional code)\nMike Balfour (high score save)\nMarco Cassili",
 	0,
 	&machine_driver,
@@ -1361,10 +1360,10 @@ struct GameDriver frontlin_driver =
 	0,
 	"frontlin",
 	"Front Line",
-	"????",
-	"?????",
+	"1982",
+	"Taito",
 	"Nicola Salmoria (MAME driver)\nTatsuyuki Satoh (additional code)\nMarco Cassili",
-	0,
+	GAME_NOT_WORKING,
 	&machine_driver,
 
 	frontlin_rom,
@@ -1387,10 +1386,10 @@ struct GameDriver wwestern_driver =
 	0,
 	"wwestern",
 	"Wild Western",
-	"????",
-	"?????",
+	"1982",
+	"Taito",
 	"Nicola Salmoria (MAME driver)\nTatsuyuki Satoh (additional code)",
-	0,
+	GAME_NOT_WORKING,
 	&machine_driver,
 
 	wwestern_rom,
@@ -1415,7 +1414,7 @@ struct GameDriver alpine_driver =
 	"????",
 	"?????",
 	"Nicola Salmoria (MAME driver)\nTatsuyuki Satoh (additional code)",
-	0,
+	GAME_NOT_WORKING,
 	&machine_driver,
 
 	alpine_rom,
@@ -1437,8 +1436,8 @@ struct GameDriver spaceskr_driver =
 	0,
 	"spaceskr",
 	"Space Seeker",
-	"????",
-	"?????",
+	"1981",
+	"Taito",
 	"Nicola Salmoria (MAME driver)\nTatsuyuki Satoh (additional code)",
 	0,
 	&machine_driver,

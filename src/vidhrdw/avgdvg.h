@@ -32,8 +32,8 @@ void tempest_colorram_w (int offset, int data);
 void mhavoc_colorram_w (int offset, int data);
 void quantum_colorram_w (int offset, int data);
 
-void dvg_screenrefresh (struct osd_bitmap *bitmap);
-void avg_screenrefresh (struct osd_bitmap *bitmap);
+void dvg_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void avg_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 int dvg_start(void);
 int avg_start(void);
 int avg_start_tempest(void);

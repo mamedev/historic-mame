@@ -24,12 +24,26 @@ void sample_start(int channel,int samplenum,int loop)
 		return;
 	}
 
-	osd_play_sample(channel + firstchannel,
-			Machine->samples->sample[samplenum]->data,
-			Machine->samples->sample[samplenum]->length,
-			Machine->samples->sample[samplenum]->smpfreq,
-			Machine->samples->sample[samplenum]->volume,
-			loop);
+	if ( Machine->samples->sample[samplenum]->resolution == 8 )
+	{
+		if (errorlog) fprintf(errorlog,"play 8 bit sample %d, channel %d\n",samplenum,channel);
+		osd_play_sample(channel + firstchannel,
+				Machine->samples->sample[samplenum]->data,
+				Machine->samples->sample[samplenum]->length,
+				Machine->samples->sample[samplenum]->smpfreq,
+				Machine->samples->sample[samplenum]->volume,
+				loop);
+	}
+	else
+	{
+		if (errorlog) fprintf(errorlog,"play 16 bit sample %d, channel %d\n",samplenum,channel);
+		osd_play_sample_16(channel + firstchannel,
+				(short *) Machine->samples->sample[samplenum]->data,
+				Machine->samples->sample[samplenum]->length,
+				Machine->samples->sample[samplenum]->smpfreq,
+				Machine->samples->sample[samplenum]->volume,
+				loop);
+	}
 }
 
 void sample_adjust(int channel,int freq,int volume)

@@ -428,7 +428,7 @@ int m6808_execute(int cycles)
 		switch( ireg )
 		{
 			case 0x00: illegal(); break;
-			case 0x01: illegal(); break;
+			case 0x01: nop(); break;
 			case 0x02: illegal(); break;
 			case 0x03: illegal(); break;
 			case 0x04: lsrd(); /* 6803 only */; break;

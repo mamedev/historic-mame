@@ -70,7 +70,7 @@ void galaxian_attributes_w(int offset,int data);
 void galaxian_stars_w(int offset,int data);
 void scramble_background_w(int offset, int data);	/* MJC 051297 */
 int scramble_vh_start(void);
-void galaxian_vh_screenrefresh(struct osd_bitmap *bitmap);
+void galaxian_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 int scramble_vh_interrupt(void);
 void scramble_background_w(int offset, int data);	/* MJC 051297 */
 
@@ -474,15 +474,6 @@ static unsigned char scramble_color_prom[] =
 	0x00,0xC7,0x31,0x17,0x00,0x31,0xC7,0x3F,0x00,0xF6,0x07,0xF0,0x00,0x3F,0x07,0xC4
 };
 
-/* these colors are nowhere near the real Frogger, but they match the actual ones */
-/* of the bootleg the ROMs come from. */
-static unsigned char froggers_color_prom[] =
-{
-	/* palette */
-	0x00,0xF6,0x79,0x4F,0x00,0xC0,0x3F,0x17,0x00,0x87,0xF8,0x7F,0x00,0xC1,0x7F,0x38,
-	0x00,0x7F,0xCF,0xF9,0x00,0x57,0xB7,0xC3,0x00,0xFF,0x7F,0x87,0x00,0x79,0x4F,0xFF
-};
-
 static unsigned char amidars_color_prom[] =
 {
 	0x00,0x07,0xC0,0xB6,0x00,0x38,0xC5,0x67,0x00,0x30,0x07,0x3F,0x00,0x07,0x30,0x3F,
@@ -495,7 +486,7 @@ static struct AY8910interface scramble_ay8910_interface =
 {
 	2,	/* 2 chips */
 	14318000/8,	/* 1.78975 MHz */
-	{ 0x60ff, 0x60ff },
+	{ 0x30ff, 0x30ff },
 	{ soundlatch_r },
 	{ scramble_portB_r },
 	{ 0 },
@@ -506,7 +497,7 @@ static struct AY8910interface frogger_ay8910_interface =
 {
 	1,	/* 1 chip */
 	14318000/8,	/* 1.78975 MHz */
-	{ 0x60ff },
+	{ 0x30ff },
 	{ soundlatch_r },
 	{ frogger_portB_r },
 	{ 0 },
@@ -620,7 +611,7 @@ static struct MachineDriver froggers_machine_driver =
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			14318000/8,	/* 1.78975 MHz */
-			2,	/* memory region #2 */
+			3,	/* memory region #3 */
 			froggers_sound_readmem,froggers_sound_writemem,froggers_sound_readport,froggers_sound_writeport,
 			ignore_interrupt,1	/* interrupts are triggered by the main CPU */
 		}
@@ -731,6 +722,9 @@ ROM_START( froggers_rom )
 	ROM_REGION(0x1000)	/* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "vid_f5.bin", 0x0000, 0x0800, 0x38a71739 )
 	ROM_LOAD( "vid_h5.bin", 0x0800, 0x0800, 0xb474d87c )
+
+	ROM_REGION(0x0020)	/* color PROMs */
+	ROM_LOAD( "vid_e6.bin", 0x0000, 0x0020, 0x8cab8983 )
 
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
 	ROM_LOAD( "snd_c5.bin", 0x0000, 0x0800, 0x57851ff5 )
@@ -961,8 +955,8 @@ struct GameDriver scramble_driver =
 	0,
 	"scramble",
 	"Scramble",
-	"????",
-	"?????",
+	"1981",
+	"Stern",
 	"Nicola Salmoria (MAME driver)\nMike Balfour (high score save)",
 	0,
 	&scramble_machine_driver,
@@ -986,9 +980,9 @@ struct GameDriver atlantis_driver =
 	0,
 	"atlantis",
 	"Battle of Atlantis",
-	"????",
-	"?????",
-	"NICOLA SALMORIA\nMIKE BALFOUR",
+	"1981",
+	"Comsoft",
+	"Nicola Salmoria\nMike Balfour",
 	0,
 	&scramble_machine_driver,
 
@@ -1011,9 +1005,9 @@ struct GameDriver theend_driver =
 	0,
 	"theend",
 	"The End",
-	"????",
-	"?????",
-	"NICOLA SALMORIA\nVILLE LAITINEN\nMIKE BALFOUR",
+	"1980",
+	"Stern",
+	"Nicola Salmoria\nVille Laitinen\nMike Balfour",
 	0,
 	&theend_machine_driver,
 
@@ -1030,15 +1024,16 @@ struct GameDriver theend_driver =
 	theend_hiload, theend_hisave
 };
 
+extern struct GameDriver frogger_driver;
 struct GameDriver froggers_driver =
 {
 	__FILE__,
-	0,
+	&frogger_driver,
 	"froggers",
 	"Frog",
-	"????",
-	"?????",
-	"NICOLA SALMORIA",
+	"1981",
+	"bootleg",
+	"Nicola Salmoria",
 	0,
 	&froggers_machine_driver,
 
@@ -1049,20 +1044,21 @@ struct GameDriver froggers_driver =
 
 	froggers_input_ports,
 
-	froggers_color_prom, 0, 0,
+	PROM_MEMORY_REGION(2), 0, 0,
 	ORIENTATION_ROTATE_90,
 
 	froggers_hiload, froggers_hisave
 };
 
+extern struct GameDriver amidar_driver;
 struct GameDriver amidars_driver =
 {
 	__FILE__,
-	0,
+	&amidar_driver,
 	"amidars",
-	"Amidars",
-	"????",
-	"?????",
+	"Amidar (Scramble hardware)",
+	"1982",
+	"Konami",
 	"Nicola Salmoria\nMike Coates",
 	0,
 	&scramble_machine_driver,
@@ -1207,7 +1203,7 @@ static struct AY8910interface triplep_ay8910_interface =
 {
 	1,	/* 1 chip */
 	1789750,	/* 1.78975 MHz? */
-	{ 0x30ff },
+	{ 255 },
 	{ 0 },
 	{ 0 },
 	{ 0 },
@@ -1273,9 +1269,9 @@ struct GameDriver triplep_driver =
 	0,
 	"triplep",
 	"Triple Punch",
-	"????",
-	"?????",
-	"NICOLA SALMORIA",
+	"1982",
+	"KKI",
+	"Nicola Salmoria",
 	0,
 	&triplep_machine_driver,
 

@@ -89,7 +89,7 @@ Targ:
 int exidy_vh_start(void);
 void exidy_vh_stop(void);
 void exidy_characterram_w(int offset,int data);
-void exidy_vh_screenrefresh(struct osd_bitmap *bitmap);
+void exidy_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 void exidy_color_w(int offset,int data);
 
 extern unsigned char *exidy_characterram;
@@ -786,7 +786,7 @@ ROM_START( venture_rom )
 	ROM_LOAD( "6A-CPU",  0xF000, 0x1000, 0x1714e61c )
 
 	ROM_REGION(0x0800)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "11D-CPU", 0x0000, 0x0800, 0xceb42d02 )
+	ROM_LOAD( "11d-cpu", 0x0000, 0x0800, 0xceb42d02 )
 
 	ROM_REGION(0x10000) /* 64k for audio */
 	ROM_LOAD( "3a-ac", 0x5800, 0x0800, 0x6098790a )
@@ -809,14 +809,14 @@ ROM_START( venture2_rom )
 	ROM_LOAD( "vent_a6.cpu",  0xF000, 0x1000, 0xdb8a7148 )
 
 	ROM_REGION(0x0800)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "vent_d11.cpu", 0x0000, 0x0800, 0xceb42d02 )
+	ROM_LOAD( "11d-cpu", 0x0000, 0x0800, 0xceb42d02 )
 
 	ROM_REGION(0x10000) /* 64k for audio */
-	ROM_LOAD( "vent_3a.vid", 0x5800, 0x0800, 0x6098790a )
-	ROM_LOAD( "vent_4a.vid", 0x6000, 0x0800, 0x9bd6ad80 )
-	ROM_LOAD( "vent_5a.vid", 0x6800, 0x0800, 0xee5c9752 )
-	ROM_LOAD( "vent_6a.vid", 0x7000, 0x0800, 0x9559adbb )
-	ROM_LOAD( "vent_7a.vid", 0x7800, 0x0800, 0xdc5641b0 )
+	ROM_LOAD( "3a-ac", 0x5800, 0x0800, 0x6098790a )
+	ROM_LOAD( "4a-ac", 0x6000, 0x0800, 0x9bd6ad80 )
+	ROM_LOAD( "5a-ac", 0x6800, 0x0800, 0xee5c9752 )
+	ROM_LOAD( "6a-ac", 0x7000, 0x0800, 0x9559adbb )
+	ROM_LOAD( "7a-ac", 0x7800, 0x0800, 0x9c5601b0 )
 	ROM_RELOAD( 	  0xF800, 0x0800 )
 ROM_END
 
@@ -1348,8 +1348,8 @@ struct GameDriver mtrap_driver =
 	0,
 	"mtrap",
 	"Mouse Trap",
-	"????",
-	"?????",
+	"1981",
+	"Exidy",
 	"Marc LaFontaine\nBrian Levine\nMike Balfour\nMarco Cassili",
 	0,
 	&machine_driver,
@@ -1373,9 +1373,9 @@ struct GameDriver venture_driver =
 	__FILE__,
 	0,
 	"venture",
-	"Venture",
-	"????",
-	"?????",
+	"Venture (set 1)",
+	"1981",
+	"Exidy",
 	"Marc LaFontaine\nNicola Salmoria\nBrian Levine\nMike Balfour\nBryan Smith (hardware info)",
 	0,
 	&venture_machine_driver,
@@ -1396,11 +1396,11 @@ struct GameDriver venture_driver =
 struct GameDriver venture2_driver =
 {
 	__FILE__,
-	0,
+	&venture_driver,
 	"venture2",
-	"Venture (alternate version)",
-	"????",
-	"?????",
+	"Venture (set 2)",
+	"1981",
+	"Exidy",
 	"Marc LaFontaine\nNicola Salmoria\nBrian Levine\nMike Balfour\nBryan Smith (hardware info)",
 	0,
 	&venture_machine_driver,
@@ -1426,8 +1426,8 @@ struct GameDriver pepper2_driver =
 	0,
 	"pepper2",
 	"Pepper II",
-	"????",
-	"?????",
+	"1982",
+	"Exidy",
 	"Marc LaFontaine\nBrian Levine\nMike Balfour",
 	0,
 	&pepper2_machine_driver,
@@ -1451,8 +1451,8 @@ struct GameDriver targ_driver =
 	0,
 	"targ",
 	"Targ",
-	"????",
-	"?????",
+	"1980",
+	"Exidy",
 	"Neil Bradley (hardware info)\nDan Boris (adaptation of Venture driver)",
 	0,
 	&targ_machine_driver,
@@ -1477,8 +1477,8 @@ struct GameDriver spectar_driver =
 	0,
 	"spectar",
 	"Spectar",
-	"????",
-	"?????",
+	"1980",
+	"Exidy",
 	"Neil Bradley (hardware info)\nDan Boris (adaptation of Venture driver)",
 	0,
 	&targ_machine_driver,
@@ -1503,8 +1503,8 @@ struct GameDriver fax_driver =
 	0,
 	"fax",
 	"Fax",
-	"????",
-	"?????",
+	"1983",
+	"Exidy",
 	"Marc LaFontaine\nBrian Levine\nMike Balfour",
 	0,
 	&fax_machine_driver,

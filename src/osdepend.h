@@ -236,8 +236,6 @@ void osd_restart_sample(int channel);
 int osd_get_sample_status(int channel);
 void osd_ym2203_write(int n, int r, int v);
 void osd_ym2203_update(void);
-int osd_ym3812_status(void);
-int osd_ym3812_read(void);
 void osd_ym3812_control(int reg);
 void osd_ym3812_write(int data);
 void osd_set_mastervolume(int volume);

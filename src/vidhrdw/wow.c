@@ -561,7 +561,7 @@ void Gorf_CopyLine(int Line)
 	}
 }
 
-void gorf_vh_screenrefresh(struct osd_bitmap *bitmap)
+void gorf_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
     static int Speed=0;
 	int offs;
@@ -642,7 +642,7 @@ void gorf_vh_screenrefresh(struct osd_bitmap *bitmap)
  * Seawolf specific routines
  ****************************************************************************/
 
-void seawolf2_vh_screenrefresh(struct osd_bitmap *bitmap)
+void seawolf2_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	extern int Controller1;
 	extern int Controller2;
@@ -815,7 +815,7 @@ int wow_vh_start(void)
 }
 
 
-void wow_vh_screenrefresh_stars(struct osd_bitmap *bitmap)
+void wow_vh_screenrefresh_stars(struct osd_bitmap *bitmap,int full_refresh)
 {
     static int Speed=0;
 	int offs;
@@ -925,7 +925,7 @@ void CopyLine(int Line)
     }
 }
 
-void wow_vh_screenrefresh(struct osd_bitmap *bitmap)
+void wow_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	/* copy the character mapped graphics */
 

@@ -33,7 +33,7 @@ WRITE:
 #include "vidhrdw/generic.h"
 #include "machine/system16.h"
 
-void system16_vh_screenrefresh(struct osd_bitmap *bitmap);
+void system16_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 unsigned char *altbeast_backgroundbank;
 
@@ -47,13 +47,13 @@ int altbeast_backbank_r(int offset)
 
 static struct MemoryReadAddress altbeast_readmem[] =
 {
-	{ 0x410000, 0x410fff, system16_videoram_r, &system16_videoram, &s16_videoram_size },
-	{ 0x400000, 0x40ffff, system16_backgroundram_r, &system16_backgroundram, &s16_backgroundram_size },
-	{ 0x440000, 0x440fff, system16_spriteram_r, &system16_spriteram, &s16_spriteram_size },
-	{ 0x840000, 0x840fff, system16_paletteram_r, &system16_paletteram, &s16_paletteram_size },
+	{ 0x410000, 0x410fff, system16_videoram_r },
+	{ 0x400000, 0x40ffff, system16_backgroundram_r },
+	{ 0x440000, 0x440fff, system16_spriteram_r },
+	{ 0x840000, 0x840fff, paletteram_word_r },
 	{ 0xc41000, 0xc41007, shinobi_control_r },
 	{ 0xc42000, 0xc42007, shinobi_dsw_r },
-	{ 0xfe0000, 0xfeffff, system16_soundram_r, &system16_soundram, &s16_soundram_size },
+	{ 0xfe0000, 0xfeffff, system16_soundram_r },
 	{ 0xfff094, 0xfff097, altbeast_backbank_r, &altbeast_backgroundbank },
 	{ 0xff0000, 0xffffff, MRA_BANK1 },
 	{ 0x000000, 0x03ffff, MRA_ROM },
@@ -64,14 +64,14 @@ static struct MemoryWriteAddress altbeast_writemem[] =
 {
 	{ 0x410e90, 0x410e9f, system16_scroll_w, &system16_scrollram },
 	{ 0x410e80, 0x410e87, system16_pagesel_w, &system16_pagesram },
-	{ 0x410000, 0x410fff, system16_videoram_w },
-	{ 0x400000, 0x40ffff, system16_backgroundram_w },
-	{ 0x440000, 0x440fff, system16_spriteram_w },
+	{ 0x410000, 0x410fff, system16_videoram_w, &system16_videoram, &s16_videoram_size },
+	{ 0x400000, 0x40ffff, system16_backgroundram_w, &system16_backgroundram, &s16_backgroundram_size },
+	{ 0x440000, 0x440fff, system16_spriteram_w, &system16_spriteram, &s16_spriteram_size },
 	{ 0x840000, 0x840fff, system16_paletteram_w },
 	{ 0xc40000, 0xc40003, goldnaxe_refreshenable_w, &system16_refreshregister },
 	{ 0xc40004, 0xc4000f, MWA_NOP },                 /* IO Ctrl:  Unknown */
 	{ 0xc43000, 0xc4300f, MWA_NOP },                 /* IO Ctrl:  Unknown */
-	{ 0xfe0000, 0xfeffff, system16_soundram_w },
+	{ 0xfe0000, 0xfeffff, system16_soundram_w, &system16_soundram, &s16_soundram_size },
 	{ 0xff0000, 0xffffff, MWA_BANK1 },
 	{ 0x000000, 0x03ffff, MWA_ROM },
 	{ -1 }  /* end of table */
@@ -224,10 +224,10 @@ static struct MachineDriver machine_driver =
 	/* video hardware */
 	40*8, 28*8, { 0*8, 40*8-1, 0*8, 28*8-1 },
 	gfxdecodeinfo,
-	256,2048,
+	2048,2048,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_16BIT,
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
 	0,
 	system16_vh_start,
 	system16_vh_stop,
@@ -288,8 +288,8 @@ struct GameDriver altbeast_driver =
 	0,
 	"altbeast",
 	"Altered Beast",
-	"????",
-	"?????",
+	"1988",
+	"Sega",
 	"Mirko Buffoni         (Mame Driver)\nThierry Lescot & Nao  (Hardware Info)",
 	0,
 	&machine_driver,

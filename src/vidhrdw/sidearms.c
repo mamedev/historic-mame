@@ -13,46 +13,8 @@
 
 unsigned char *sidearms_bg_scrollx,*sidearms_bg_scrolly;
 unsigned char *sidearms_bg2_scrollx,*sidearms_bg2_scrolly;
-unsigned char *sidearms_paletteram;
 static struct osd_bitmap *tmpbitmap2;
 static int flipscreen;
-
-
-
-void sidearms_paletteram_w(int offset,int data)
-{
-	int bit0,bit1,bit2,bit3;
-	int r,g,b,val;
-
-
-	sidearms_paletteram[offset] = data;
-
-	/* red component */
-	val = sidearms_paletteram[offset & ~0x400];
-	bit0 = (val >> 4) & 0x01;
-	bit1 = (val >> 5) & 0x01;
-	bit2 = (val >> 6) & 0x01;
-	bit3 = (val >> 7) & 0x01;
-	r = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
-
-	/* green component */
-	val = sidearms_paletteram[offset & ~0x400];
-	bit0 = (val >> 0) & 0x01;
-	bit1 = (val >> 1) & 0x01;
-	bit2 = (val >> 2) & 0x01;
-	bit3 = (val >> 3) & 0x01;
-	g = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
-
-	/* blue component */
-	val = sidearms_paletteram[offset | 0x400];
-	bit0 = (val >> 0) & 0x01;
-	bit1 = (val >> 1) & 0x01;
-	bit2 = (val >> 2) & 0x01;
-	bit3 = (val >> 3) & 0x01;
-	b = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
-
-	palette_change_color(offset & ~0x400,r,g,b);
-}
 
 
 
@@ -117,7 +79,7 @@ void sidearms_c804_w(int offset,int data)
   the main emulation engine.
 
 ***************************************************************************/
-void sidearms_vh_screenrefresh(struct osd_bitmap *bitmap)
+void sidearms_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	int offs, sx, sy;
 	int scrollx,scrolly;

@@ -642,16 +642,16 @@ ROM_END
 
 ROM_START( bzone2_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "036414.01", 0x5000, 0x0800, 0x1fe91ce3 )
-	ROM_LOAD( "036413.01", 0x5800, 0x0800, 0x9f3aa956 )
-	ROM_LOAD( "036412.01", 0x6000, 0x0800, 0x5c3bda25 )
-	ROM_LOAD( "036411.01", 0x6800, 0x0800, 0xa40bfa05 )
-	ROM_LOAD( "036410.01", 0x7000, 0x0800, 0x364b14eb )
-	ROM_LOAD( "036409.01", 0x7800, 0x0800, 0x7a21b649 )
-	ROM_RELOAD(            0xf800, 0x0800 )	/* for reset/interrupt vectors */
+	ROM_LOAD( "036414a.01", 0x5000, 0x0800, 0x1fe91ce3 )
+	ROM_LOAD( "036413.01",  0x5800, 0x0800, 0x9f3aa956 )
+	ROM_LOAD( "036412.01",  0x6000, 0x0800, 0x5c3bda25 )
+	ROM_LOAD( "036411.01",  0x6800, 0x0800, 0xa40bfa05 )
+	ROM_LOAD( "036410.01",  0x7000, 0x0800, 0x364b14eb )
+	ROM_LOAD( "036409.01",  0x7800, 0x0800, 0x7a21b649 )
+	ROM_RELOAD(             0xf800, 0x0800 )	/* for reset/interrupt vectors */
 	/* Mathbox ROMs */
-	ROM_LOAD( "036422.01", 0x3000, 0x0800, 0x5c8342bd )
-	ROM_LOAD( "036421.01", 0x3800, 0x0800, 0x16a742bd )
+	ROM_LOAD( "036422.01",  0x3000, 0x0800, 0x5c8342bd )
+	ROM_LOAD( "036421.01",  0x3800, 0x0800, 0x16a742bd )
 ROM_END
 
 
@@ -662,8 +662,8 @@ struct GameDriver bzone_driver =
 	0,
 	"bzone",
 	"Battle Zone",
-	"????",
-	"?????",
+	"1980",
+	"Atari",
 	"Brad Oliver (MAME driver)\n"VECTOR_TEAM"Mauro Minenna (one-stick mode)",
 	0,
 	&bzone_machine_driver,
@@ -684,11 +684,11 @@ struct GameDriver bzone_driver =
 struct GameDriver bzone2_driver =
 {
 	__FILE__,
-	0,
+	&bzone_driver,
 	"bzone2",
 	"Battle Zone (alternate version)",
-	"????",
-	"?????",
+	"1980",
+	"Atari",
 	"Brad Oliver (MAME driver)\n"VECTOR_TEAM"Mauro Minenna (one-stick mode)",
 	0,
 	&bzone_machine_driver,
@@ -812,8 +812,8 @@ struct GameDriver redbaron_driver =
 	0,
 	"redbaron",
 	"Red Baron",
-	"????",
-	"?????",
+	"1980",
+	"Atari",
 	"Brad Oliver (MAME driver)\n"VECTOR_TEAM"Baloo (stick support)",
 	0,
 	&redbaron_machine_driver,

@@ -20,7 +20,6 @@ short layer_dirty_maxx,layer_dirty_maxy;
 				/* coordinates of the top-left corner of the bottom-right block */
 
 
-
 static int readbit(const unsigned char *src,int bitnum)
 {
 	return (src[bitnum / 8] >> (7 - bitnum % 8)) & 1;
@@ -1918,7 +1917,10 @@ void layer_mark_rectangle_dirty_norotate(struct GfxLayer *layer,int minx,int max
 void layer_mark_full_screen_dirty(void)
 {
 	int i;
+	extern int bitmap_dirty;	/* in mame.c */
 
+	/* mame.c passes this to the drivers (*vh_update)() */
+	bitmap_dirty = 1;
 
 	i = MAX_LAYERS - 1;
 	while (i >= 0 && Machine->layer[i] == 0) i--;	/* find the bottom layer */

@@ -173,7 +173,7 @@ void leprechn_vh_stop(void)
   the main emulation engine.
 
 ***************************************************************************/
-void leprechn_vh_screenrefresh(struct osd_bitmap *bitmap)
+void leprechn_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
     copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
 }

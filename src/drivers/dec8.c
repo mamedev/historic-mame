@@ -38,9 +38,7 @@ void dec8_pf1_w(int offset, int data);
 void dec8_pf2_w(int offset, int data);
 void dec8_scroll1_w(int offset, int data);
 void dec8_scroll2_w(int offset, int data);
-int dec8_palette_r(int offset);
-void dec8_palette_w(int offset, int data);
-void dec8_vh_screenrefresh(struct osd_bitmap *bitmap);
+void dec8_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 int dec8_vh_start(void);
 void dec8_vh_stop(void);
 
@@ -140,17 +138,17 @@ void cobra_sound_w(int offset, int data)
 
 static struct MemoryReadAddress cobra_readmem[] =
 {
-  { 0x0000, 0x0fff, MRA_RAM },
-  { 0x1000, 0x1fff, dec8_video_r },
-  { 0x2000, 0x27ff, MRA_RAM },
-  { 0x2800, 0x2fff, MRA_RAM },
-  { 0x3000, 0x31ff, dec8_palette_r },
-  { 0x3200, 0x37ff, MRA_RAM }, /* Unknown, probably unused in this game */
+	{ 0x0000, 0x0fff, MRA_RAM },
+	{ 0x1000, 0x1fff, dec8_video_r },
+	{ 0x2000, 0x27ff, MRA_RAM },
+	{ 0x2800, 0x2fff, MRA_RAM },
+	{ 0x3000, 0x31ff, MRA_RAM },
+	{ 0x3200, 0x37ff, MRA_RAM }, /* Unknown, probably unused in this game */
 	{ 0x3800, 0x3800, input_port_0_r }, /* Player 1 */
 	{ 0x3801, 0x3801, input_port_1_r }, /* Player 2 */
-  { 0x3802, 0x3802, input_port_3_r }, /* Dip 1 */
-  { 0x3803, 0x3803, input_port_4_r }, /* Dip 2 */
-  { 0x3a00, 0x3a00, input_port_2_r }, /* VBL & coins */
+	{ 0x3802, 0x3802, input_port_3_r }, /* Dip 1 */
+	{ 0x3803, 0x3803, input_port_4_r }, /* Dip 2 */
+	{ 0x3a00, 0x3a00, input_port_2_r }, /* VBL & coins */
 	{ 0x4000, 0x7fff, MRA_BANK1 },
 	{ 0x8000, 0xffff, MRA_ROM },
 	{ -1 }  /* end of table */
@@ -158,19 +156,19 @@ static struct MemoryReadAddress cobra_readmem[] =
 
 static struct MemoryWriteAddress cobra_writemem[] =
 {
- 	{ 0x0000, 0x0fff, MWA_RAM },
- 	{ 0x1000, 0x1fff, dec8_video_w },
-  { 0x2000, 0x27ff, MWA_RAM, &videoram, &videoram_size },
-  { 0x2800, 0x2fff, MWA_RAM, &spriteram },
-  { 0x3000, 0x31ff, dec8_palette_w },
-  { 0x3200, 0x37ff, MWA_RAM }, /* Unknown, probably unused in this game */
- 	{ 0x3800, 0x3806, dec8_pf1_w },
-  { 0x3810, 0x3813, dec8_scroll1_w },
-  { 0x3a00, 0x3a06, dec8_pf2_w },
-  { 0x3a10, 0x3a13, dec8_scroll2_w },
-  { 0x3c00, 0x3c00, dec8_bank_w },
-  { 0x3c02, 0x3c02, MWA_NOP }, /* Lots of 1s written here, don't think it's a watchdog */
- 	{ 0x3e00, 0x3e00, cobra_sound_w },
+	{ 0x0000, 0x0fff, MWA_RAM },
+	{ 0x1000, 0x1fff, dec8_video_w },
+	{ 0x2000, 0x27ff, MWA_RAM, &videoram, &videoram_size },
+	{ 0x2800, 0x2fff, MWA_RAM, &spriteram },
+	{ 0x3000, 0x31ff, paletteram_xxxxBBBBGGGGRRRR_swap_w, &paletteram },
+	{ 0x3200, 0x37ff, MWA_RAM }, /* Unknown, probably unused in this game */
+	{ 0x3800, 0x3806, dec8_pf1_w },
+	{ 0x3810, 0x3813, dec8_scroll1_w },
+	{ 0x3a00, 0x3a06, dec8_pf2_w },
+	{ 0x3a10, 0x3a13, dec8_scroll2_w },
+	{ 0x3c00, 0x3c00, dec8_bank_w },
+	{ 0x3c02, 0x3c02, MWA_NOP }, /* Lots of 1s written here, don't think it's a watchdog */
+	{ 0x3e00, 0x3e00, cobra_sound_w },
 	{ 0x4000, 0xffff, MWA_ROM },
 	{ -1 }  /* end of table */
 };
@@ -186,7 +184,7 @@ static struct MemoryReadAddress readmem[] =
   //  { 0x1000, 0x1fff, dec8_video_r },
 //  { 0x2000, 0x27ff, MRA_RAM },
 //  { 0x2800, 0x2fff, MRA_RAM },
-//  { 0x3000, 0x31ff, dec8_palette_r },
+//  { 0x3000, 0x31ff, MRA_RAM },
 //  { 0x3200, 0x37ff, MRA_RAM }, /* Unknown */
 
   { 0x2000, 0x2000, prot1_r }, // gb
@@ -225,7 +223,7 @@ static struct MemoryWriteAddress writemem[] =
 // 	{ 0x1000, 0x1fff, dec8_video_w },
 //  { 0x2000, 0x27ff, MWA_RAM, &videoram, &videoram_size },
 //  { 0x2800, 0x2fff, MWA_RAM, &spriteram },
-//  { 0x3000, 0x31ff, dec8_palette_w },
+//	{ 0x3000, 0x31ff, paletteram_xxxxBBBBGGGGRRRR_swap_w, &paletteram },
 //  { 0x3200, 0x37ff, MWA_RAM }, /* Unknown */
 
 	{ 0x2840, 0x288f, MWA_RAM },       /* g b */
@@ -301,7 +299,7 @@ static struct MemoryReadAddress gondo_readmem[] =
   //  { 0x1000, 0x1fff, dec8_video_r },
   { 0x2000, 0x27ff, MRA_RAM },
   { 0x2800, 0x2fff, MRA_RAM },
-//  { 0x3000, 0x31ff, dec8_palette_r },
+//  { 0x3000, 0x31ff, MRA_RAM },
   { 0x3000, 0x37ff, MRA_RAM }, /* Unknown */
 
   { 0x3838, 0x3838, gondo_prot2_r },
@@ -346,7 +344,7 @@ static struct MemoryWriteAddress gondo_writemem[] =
 // 	{ 0x1000, 0x1fff, dec8_video_w },
   { 0x2000, 0x27ff, MWA_RAM, &videoram, &videoram_size },
   { 0x2800, 0x2fff, MWA_RAM, &spriteram },  /* palette */
-//  { 0x3000, 0x31ff, dec8_palette_w },
+//	{ 0x3000, 0x31ff, paletteram_xxxxBBBBGGGGRRRR_swap_w, &paletteram },
   { 0x3000, 0x37ff, MWA_RAM }, /* Unknown */
 
 //	{ 0x2840, 0x288f, MWA_RAM },       /* g b */
@@ -370,7 +368,7 @@ static struct MemoryReadAddress oscar_readmem[] =
   { 0x2000, 0x27ff, MRA_RAM },
   { 0x2800, 0x2fff, MRA_RAM },
   { 0x3000, 0x39ff, MRA_RAM }, /* Unknown */
-  { 0x3a00, 0x3bff, dec8_palette_r },
+  { 0x3a00, 0x3bff, MRA_RAM },
 
 //  { 0x3c00, 0x3c00, input_port_0_r },
 //  { 0x3c01, 0x3c01, input_port_1_r },
@@ -396,13 +394,13 @@ void oscar_sub_int(int offset, int data)
 
 static struct MemoryWriteAddress oscar_writemem[] =
 {
-  { 0x0000, 0x07ff, oscar_share_w },
-  { 0x0800, 0x0fff, MWA_RAM },
- 	{ 0x1000, 0x1fff, dec8_video_w },
-  { 0x2000, 0x27ff, MWA_RAM, &videoram, &videoram_size },
-  { 0x2800, 0x2fff, MWA_RAM, &spriteram },  /* palette */
-  { 0x3000, 0x39ff, MWA_RAM }, /* Unknown */
-  { 0x3a00, 0x3bff, dec8_palette_w },
+	{ 0x0000, 0x07ff, oscar_share_w },
+	{ 0x0800, 0x0fff, MWA_RAM },
+	{ 0x1000, 0x1fff, dec8_video_w },
+	{ 0x2000, 0x27ff, MWA_RAM, &videoram, &videoram_size },
+	{ 0x2800, 0x2fff, MWA_RAM, &spriteram },  /* palette */
+	{ 0x3000, 0x39ff, MWA_RAM }, /* Unknown */
+	{ 0x3a00, 0x3bff, paletteram_xxxxBBBBGGGGRRRR_swap_w, &paletteram },
 
  //	{ 0x3800, 0x3806, dec8_pf1_w }, /* pf1 control?  MSB of 3800 is reverse screen */
  // { 0x3810, 0x3813, dec8_scroll1_w },
@@ -466,7 +464,7 @@ static struct MemoryReadAddress lastmiss_readmem[] =
   { 0x2000, 0x27ff, MRA_RAM },
   { 0x2800, 0x2fff, MRA_RAM },
   { 0x3000, 0x3fff, dec8_video_r },
-//  { 0x3a00, 0x3bff, dec8_palette_r },
+//  { 0x3a00, 0x3bff, MRA_RAM },
 
 //  { 0x3c00, 0x3c00, input_port_0_r },
 //  { 0x3c01, 0x3c01, input_port_1_r },
@@ -491,7 +489,7 @@ static struct MemoryWriteAddress lastmiss_writemem[] =
   { 0x2800, 0x2fff, MWA_RAM, &spriteram },  /* palette */
   { 0x3000, 0x3fff, dec8_video_w },
 
-//  { 0x3a00, 0x3bff, dec8_palette_w },
+//	{ 0x3a00, 0x3bff, paletteram_xxxxBBBBGGGGRRRR_swap_w, &paletteram },
  //	{ 0x3800, 0x3806, dec8_pf1_w }, /* pf1 control?  MSB of 3800 is reverse screen */
  // { 0x3810, 0x3813, dec8_scroll1_w },
  // { 0x3a00, 0x3a06, dec8_pf2_w }, /* pf2 control? */
@@ -1049,7 +1047,7 @@ static struct YM2203interface ym2203_interface =
 {
 	1,
 	1500000,	/* Unknown */
-	{ YM2203_VOL(140,0x20ff) },
+	{ YM2203_VOL(140,255) },
 	{ 0 },
 	{ 0 },
 	{ 0 },
@@ -1059,14 +1057,14 @@ static struct YM2203interface ym2203_interface =
 static struct YM3526interface ym3526_interface =
 {
 	1,			/* 1 chip (no more supported) */
-	3000000,	/* 3 MHz ? (not supported) */
+	3600000,	/* 3.600000 MHz ? (partially supported) */
 	{ 255 }		/* (not supported) */
 };
 
 static struct YM3812interface ym3812_interface =
 {
 	1,			/* 1 chip (no more supported) */
-	3000000,	/* 3 MHz ? (not supported) */
+	3600000,	/* 3.600000 MHz ? (partially supported) */
 	{ 255 }		/* (not supported) */
 };
 
@@ -1783,8 +1781,8 @@ struct GameDriver cobracom_driver =
 	0,
 	"cobracom",
 	"Cobra Command",
-	"????",
-	"?????",
+	"1988",
+	"Data East Corporation",
 	"Bryan McPhail",
 	0,
 	&cobra_machine_driver,

@@ -16,7 +16,7 @@ unsigned char *taito_characterram;
 unsigned char *taito_scrollx1,*taito_scrollx2,*taito_scrollx3;
 unsigned char *taito_scrolly1,*taito_scrolly2,*taito_scrolly3;
 unsigned char *taito_colscrolly1,*taito_colscrolly2,*taito_colscrolly3;
-unsigned char *taito_gfxpointer,*taito_paletteram;
+unsigned char *taito_gfxpointer;
 unsigned char *taito_colorbank,*taito_video_priority,*taito_video_enable;
 static unsigned char *dirtybuffer2,*dirtybuffer3;
 static struct osd_bitmap *tmpbitmap2,*tmpbitmap3;
@@ -72,25 +72,25 @@ void taito_paletteram_w(int offset,int data)
 	int r,g,b,val;
 
 
-	taito_paletteram[offset] = data;
+	paletteram[offset] = data;
 
 	/* red component */
-	val = taito_paletteram[offset | 1];
+	val = paletteram[offset | 1];
 	bit0 = (~val >> 6) & 0x01;
 	bit1 = (~val >> 7) & 0x01;
-	val = taito_paletteram[offset & ~1];
+	val = paletteram[offset & ~1];
 	bit2 = (~val >> 0) & 0x01;
 	r = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
 
 	/* green component */
-	val = taito_paletteram[offset | 1];
+	val = paletteram[offset | 1];
 	bit0 = (~val >> 3) & 0x01;
 	bit1 = (~val >> 4) & 0x01;
 	bit2 = (~val >> 5) & 0x01;
 	g = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
 
 	/* blue component */
-	val = taito_paletteram[offset | 1];
+	val = paletteram[offset | 1];
 	bit0 = (~val >> 0) & 0x01;
 	bit1 = (~val >> 1) & 0x01;
 	bit2 = (~val >> 2) & 0x01;
@@ -465,7 +465,7 @@ static void drawplane(int n,struct osd_bitmap *bitmap)
 
 
 
-void taito_vh_screenrefresh(struct osd_bitmap *bitmap)
+void taito_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	int offs,i;
 

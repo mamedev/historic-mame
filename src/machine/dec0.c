@@ -110,7 +110,7 @@ int slyspy_controls_read(int offset)
 		case 2: /* Player 1 & Player 2 joysticks & fire buttons */
 			return (readinputport(0) + (readinputport(1) << 8));
 
-		case 4: /* Credits, ??? in msb */
+		case 4: /* Credits */
 			return readinputport(2);
 	}
 
@@ -166,7 +166,7 @@ void hb_8751_write(int data)
                 };
 
   /* Code 0x9000 is unknown but we can use it to initialise the variables */
-	if (data==0x9000 || data==0xb3b) hb_prot=level=0;
+	if (data==0x9000 || data==0xb3b || data==0x500) hb_prot=level=0;
 
   /* Command 0x301 is written at end of each level */
   if (data==0x301) {level++;hb_prot=level;}

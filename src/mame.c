@@ -15,7 +15,9 @@ int mame_debug; /* !0 when -debug option is specified */
 int frameskip;
 int VolumePTR = 0;
 int CurrentVolume = 100;
+static int settingsloaded;
 
+int bitmap_dirty;	/* set by layer_mark_full_screen_dirty() */
 
 unsigned char *ROM;
 
@@ -184,6 +186,9 @@ int init_machine(void)
 	/* other initialization routines */
 	cpu_init();
 
+	/* load input ports settings (keys, dip switches, and so on) */
+	settingsloaded = load_input_port_settings();
+
 	/* ASG 971007 move from mame.c */
 	if( !initmemoryhandlers() )
 	{
@@ -335,6 +340,7 @@ static int vh_open(void)
 int updatescreen(void)
 {
 	static int framecount = 0, showvoltemp = 0; /* M.Z.: new options */
+	static int need_to_clear_bitmap;
 #ifdef BETA_VERSION
 	static int beta_count;
 #endif
@@ -403,7 +409,7 @@ int updatescreen(void)
 			if (osd_key_pressed(OSD_KEY_TAB)) setup_menu(); /* call the configuration menu */
 
 			osd_clearbitmap(Machine->scrbitmap);
-			(*drv->vh_update)(Machine->scrbitmap);  /* redraw screen */
+			(*drv->vh_update)(Machine->scrbitmap,1);  /* redraw screen */
 
 			if (count < Machine->drv->frames_per_second / 2)
 				displaytext(dt,0);      /* make PAUSED blink */
@@ -452,42 +458,48 @@ int updatescreen(void)
 	{
 		framecount = 0;
 
-		if (showvoltemp)
+		if (need_to_clear_bitmap)
 		{
-			showvoltemp--;
-			if (!showvoltemp)
-			{
-				osd_clearbitmap(Machine->scrbitmap);
-			}
-		}                        /* MAURY_END: nuove opzioni */
+			osd_clearbitmap(Machine->scrbitmap);
+			need_to_clear_bitmap = 0;
+		}
 
-		(*drv->vh_update)(Machine->scrbitmap);  /* update screen */
+
+		(*drv->vh_update)(Machine->scrbitmap,bitmap_dirty);  /* update screen */
+		bitmap_dirty = 0;
 
 		/* This call is for the cheat, it must be called at least each frames */
 		if (nocheat == 0) DoCheat(CurrentVolume);
 
-		if (showvoltemp)      /* MAURY_BEGIN: nuove opzioni */
+		if (showvoltemp)
 		{                     /* volume-meter */
 			int trueorientation;
 			int i,x;
 			char volstr[25];
 
 
-			trueorientation = Machine->orientation;
-			Machine->orientation = ORIENTATION_DEFAULT;
+			showvoltemp--;
 
-			x = (Machine->uiwidth - 24*Machine->uifont->width)/2;
-			strcpy(volstr,"                      ");
-			for (i = 0;i < (CurrentVolume/5);i++) volstr[i+1] = '\x15';
+			if (showvoltemp)
+			{
+				trueorientation = Machine->orientation;
+				Machine->orientation = ORIENTATION_DEFAULT;
 
-			drawgfx(Machine->scrbitmap,Machine->uifont,16,DT_COLOR_RED,0,0,x,drv->screen_height/2,0,TRANSPARENCY_NONE,0);
-			drawgfx(Machine->scrbitmap,Machine->uifont,17,DT_COLOR_RED,0,0,x+23*Machine->uifont->width,drv->screen_height/2,0,TRANSPARENCY_NONE,0);
-			for (i = 0;i < 22;i++)
-			    drawgfx(Machine->scrbitmap,Machine->uifont,(unsigned int)volstr[i],DT_COLOR_WHITE,
-					0,0,x+(i+1)*Machine->uifont->width+Machine->uixmin,Machine->uiheight/2+Machine->uiymin,0,TRANSPARENCY_NONE,0);
+				x = (Machine->uiwidth - 24*Machine->uifont->width)/2;
+				strcpy(volstr,"                      ");
+				for (i = 0;i < (CurrentVolume/5);i++) volstr[i+1] = '\x15';
 
-			Machine->orientation = trueorientation;
-		}                     /* MAURY_END: nuove opzioni */
+				drawgfx(Machine->scrbitmap,Machine->uifont,16,DT_COLOR_RED,0,0,x,Machine->uiheight/2+Machine->uiymin,0,TRANSPARENCY_NONE,0);
+				drawgfx(Machine->scrbitmap,Machine->uifont,17,DT_COLOR_RED,0,0,x+23*Machine->uifont->width,Machine->uiheight/2+Machine->uiymin,0,TRANSPARENCY_NONE,0);
+				for (i = 0;i < 22;i++)
+					drawgfx(Machine->scrbitmap,Machine->uifont,(unsigned int)volstr[i],DT_COLOR_WHITE,
+						0,0,x+(i+1)*Machine->uifont->width+Machine->uixmin,Machine->uiheight/2+Machine->uiymin,0,TRANSPARENCY_NONE,0);
+
+				Machine->orientation = trueorientation;
+			}
+			else
+				need_to_clear_bitmap = 1;
+		}
 
 #ifdef BETA_VERSION
 		if (beta_count < 5 * Machine->drv->frames_per_second)
@@ -514,7 +526,7 @@ int updatescreen(void)
 				Machine->orientation = trueorientation;
 			}
 			else
-				osd_clearbitmap(Machine->scrbitmap);
+				need_to_clear_bitmap = 1;
 		}
 #endif
 
@@ -547,60 +559,35 @@ int run_machine(void)
 		{
 			if (sound_start() == 0) /* start the audio hardware */
 			{
-#ifndef macintosh /* LBO - This text is displayed in a dialog box. */
-				int i;
-				struct DisplayText dt[2];
+				/* free the graphics ROMs, they are no longer needed */
+				/* TODO: instead of hardcoding region 1, use a flag to mark regions */
+				/*       which can be freed after initialization. */
+				free(Machine->memory_region[1]);
+				Machine->memory_region[1] = 0;
 
-
-				dt[0].text = "PLEASE DO NOT DISTRIBUTE THE SOURCE CODE AND/OR THE EXECUTABLE "
-						"APPLICATION WITH ANY ROM IMAGES.\n"
-						"DOING AS SUCH WILL HARM ANY FURTHER DEVELOPMENT OF MAME AND COULD "
-						"RESULT IN LEGAL ACTION BEING TAKEN BY THE LAWFUL COPYRIGHT HOLDERS "
-						"OF ANY ROM IMAGES.\n\n"
-						"IF YOU DO NOT AGREE WITH THESE CONDITIONS THEN PLEASE PRESS ESC NOW.";
-
-				dt[0].color = DT_COLOR_RED;
-				dt[0].x = 0;
-				dt[0].y = 0;
-				dt[1].text = 0;
-				displaytext(dt,1);
-
-				i = osd_read_key();
-				while (osd_key_pressed(i));             /* wait for key release */
-				if (i != OSD_KEY_ESC)
-#endif
+				if (settingsloaded == 0)
 				{
-					showcredits();  /* show the driver credits */
-
-					showgameinfo();  /* show info about the game */
-
-					osd_clearbitmap(Machine->scrbitmap);
-					osd_update_display();
-
-
-					/* free the graphics ROMs, they are no longer needed */
-					/* TODO: instead of hardcoding region 1, use a flag to mark regions */
-					/*       which can be freed after initialization. */
-					free(Machine->memory_region[1]);
-					Machine->memory_region[1] = 0;
-
-					/* load input ports settings (keys, dip switches, and so on) */
-					load_input_port_settings();
-
-					if (nocheat == 0) InitCheat();
-
-					cpu_run();      /* run the emulation! */
-
-					if (nocheat == 0) StopCheat();
-
-					/* save input ports settings */
-					save_input_port_settings();
-
-					/* the following MUST be done after hiscore_save() otherwise */
-					/* some 68000 games will not work */
-					sound_stop();
-					if (drv->vh_stop) (*drv->vh_stop)();
+					/* if there is no saved config, it must be first time we run this game, */
+					/* so show the disclaimer and driver credits. */
+					showcopyright();
+					showcredits();
 				}
+
+				showgameinfo();  /* show info about the game */
+
+				if (nocheat == 0) InitCheat();
+
+				cpu_run();      /* run the emulation! */
+
+				if (nocheat == 0) StopCheat();
+
+				/* save input ports settings */
+				save_input_port_settings();
+
+				/* the following MUST be done after hiscore_save() otherwise */
+				/* some 68000 games will not work */
+				sound_stop();
+				if (drv->vh_stop) (*drv->vh_stop)();
 
 				res = 0;
 			}

@@ -45,12 +45,11 @@ Known issues:
 #include "vidhrdw/generic.h"
 
 int journey_vh_start(void);
-void journey_vh_screenrefresh(struct osd_bitmap *bitmap);
+void journey_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
-void mcr2_vh_screenrefresh(struct osd_bitmap *bitmap);
+void mcr2_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 void mcr2_videoram_w(int offset,int data);
-void mcr2_palette_w(int offset,int data);
-extern unsigned char *mcr2_paletteram;
+void mcr2_paletteram_w(int offset,int data);
 
 void mcr_init_machine(void);
 int mcr_interrupt(void);
@@ -86,7 +85,7 @@ static struct MemoryWriteAddress mcr2_writemem[] =
 	{ 0xc000, 0xc7ff, MWA_RAM },
 	{ 0xf000, 0xf7ff, MWA_RAM, &spriteram, &spriteram_size },
 	{ 0xf800, 0xff7f, mcr2_videoram_w, &videoram, &videoram_size },
-	{ 0xff80, 0xffff, mcr2_palette_w, &mcr2_paletteram },
+	{ 0xff80, 0xffff, mcr2_paletteram_w, &paletteram },
 	{ -1 }  /* end of table */
 };
 
@@ -106,7 +105,7 @@ static struct MemoryWriteAddress journey_writemem[] =
 	{ 0xc000, 0xc7ff, MWA_RAM },
 	{ 0xf000, 0xf1ff, MWA_RAM, &spriteram, &spriteram_size },
 	{ 0xf800, 0xff7f, mcr2_videoram_w, &videoram, &videoram_size },
-	{ 0xff80, 0xffff, mcr2_palette_w, &mcr2_paletteram },
+	{ 0xff80, 0xffff, mcr2_paletteram_w, &paletteram },
 	{ -1 }  /* end of table */
 };
 
@@ -372,7 +371,7 @@ INPUT_PORTS_START( twotiger_input_ports )
 	PORT_DIPSETTING(    0x00, "On" )
 
 	PORT_START	/* IN1 -- player 1 spinner */
-	PORT_ANALOG( 0xff, 0x00, IPT_DIAL | IPF_REVERSE, 50, 0, 0, 0 )
+	PORT_ANALOG( 0xff, 0x00, IPT_DIAL | IPF_REVERSE, 10, 0, 0, 0 )
 
 	PORT_START	/* IN2 -- buttons for player 1 & player 2 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 )
@@ -385,7 +384,7 @@ INPUT_PORTS_START( twotiger_input_ports )
 	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START	/* IN4 -- player 2 spinner */
-	PORT_ANALOG( 0xff, 0x00, IPT_DIAL | IPF_REVERSE | IPF_PLAYER2, 50, 0, 0, 0 )
+	PORT_ANALOG( 0xff, 0x00, IPT_DIAL | IPF_REVERSE | IPF_PLAYER2, 10, 0, 0, 0 )
 
 	PORT_START	/* AIN0 */
 	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNKNOWN )
@@ -489,8 +488,8 @@ static struct GfxDecodeInfo journey_gfxdecodeinfo[] =
 static struct AY8910interface ay8910_interface =
 {
 	2,	/* 2 chips */
-	2000000,	/* 2 MHZ ?? */
-	{ 0x20ff, 0x20ff },
+	2000000,	/* 2 MHz ?? */
+	{ 255, 255 },
 	{ 0 },
 	{ 0 },
 	{ 0 },
@@ -892,8 +891,8 @@ struct GameDriver shollow_driver =
 	0,
 	"shollow",
 	"Satan's Hollow",
-	"????",
-	"?????",
+	"1981",
+	"Bally Midway",
 	"Christopher Kirmse\nAaron Giles\nNicola Salmoria\nBrad Oliver",
 	0,
 	&mcr2_machine_driver,
@@ -917,8 +916,8 @@ struct GameDriver tron_driver =
 	0,
 	"tron",
 	"Tron",
-	"????",
-	"?????",
+	"1982",
+	"Bally Midway",
 	"Christopher Kirmse\nAaron Giles\nNicola Salmoria\nBrad Oliver",
 	0,
 	&mcr2_machine_driver,
@@ -942,8 +941,8 @@ struct GameDriver kroozr_driver =
 	0,
 	"kroozr",
 	"Kozmik Kroozr",
-	"????",
-	"?????",
+	"1982",
+	"Bally Midway",
 	"Christopher Kirmse\nAaron Giles\nNicola Salmoria\nBrad Oliver",
 	0,
 	&kroozr_machine_driver,
@@ -967,8 +966,8 @@ struct GameDriver domino_driver =
 	0,
 	"domino",
 	"Domino Man",
-	"????",
-	"?????",
+	"1982",
+	"Bally Midway",
 	"Christopher Kirmse\nAaron Giles\nNicola Salmoria\nBrad Oliver",
 	0,
 	&mcr2_machine_driver,
@@ -992,8 +991,8 @@ struct GameDriver wacko_driver =
 	0,
 	"wacko",
 	"Wacko",
-	"????",
-	"?????",
+	"1982",
+	"Bally Midway",
 	"Christopher Kirmse\nAaron Giles\nNicola Salmoria\nBrad Oliver\nJohn Butler",
 	0,
 	&wacko_machine_driver,
@@ -1017,8 +1016,8 @@ struct GameDriver twotiger_driver =
 	0,
 	"twotiger",
 	"Two Tigers",
-	"????",
-	"?????",
+	"1984",
+	"Bally Midway",
 	"Christopher Kirmse\nAaron Giles\nNicola Salmoria\nBrad Oliver",
 	0,
 	&mcr2_machine_driver,
@@ -1071,8 +1070,8 @@ struct GameDriver journey_driver =
 	0,
 	"journey",
 	"Journey",
-	"????",
-	"?????",
+	"1983",
+	"Bally Midway",
 	"Christopher Kirmse\nAaron Giles\nNicola Salmoria\nBrad Oliver",
 	0,
 	&journey_machine_driver,

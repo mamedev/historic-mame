@@ -145,7 +145,7 @@ int gberet_interrupt(void)
   the main emulation engine.
 
 ***************************************************************************/
-void gberet_vh_screenrefresh(struct osd_bitmap *bitmap)
+void gberet_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	int offs;
 
@@ -174,7 +174,7 @@ void gberet_vh_screenrefresh(struct osd_bitmap *bitmap)
 			}
 
 			drawgfx(tmpbitmap,Machine->gfx[0],
-					videoram[offs] + 4 * (colorram[offs] & 0x40),
+					videoram[offs] + ((colorram[offs] & 0x40) << 2),
 					colorram[offs] & 0x0f,
 					flipx,flipy,
 					8*sx,8*sy,
@@ -232,8 +232,9 @@ void gberet_vh_screenrefresh(struct osd_bitmap *bitmap)
 					flipy = !flipy;
 				}
 
-				drawgfx(bitmap,Machine->gfx[(sr[offs+1] & 0x40) ? 2 : 1],
-						sr[offs],sr[offs+1] & 0x0f,
+				drawgfx(bitmap,Machine->gfx[1],
+						sr[offs] + ((sr[offs+1] & 0x40) << 2),
+						sr[offs+1] & 0x0f,
 						flipx,flipy,
 						sx,sy,
 						&Machine->drv->visible_area,TRANSPARENCY_COLOR,0);

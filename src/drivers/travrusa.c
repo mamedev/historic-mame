@@ -19,7 +19,7 @@ extern unsigned char *trace_scroll_x_high;
 void trace_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 int trace_vh_start(void);
 void trace_vh_stop(void);
-void trace_vh_screenrefresh(struct osd_bitmap *bitmap);
+void trace_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 void mpatrol_io_w(int offset, int value);
 int mpatrol_io_r(int offset);
@@ -326,14 +326,14 @@ ROM_START( travrusa_rom )
 
 	ROM_REGION(0x12000)	/* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "ZIPPYRAC.001", 0x00000, 0x2000, 0x080c2eea )
-	ROM_LOAD( "ZIPPYRAC.002", 0x02000, 0x2000, 0x822f3c4d )
-	ROM_LOAD( "ZIPPYRAC.003", 0x04000, 0x2000, 0x4dff1a15 )
+	ROM_LOAD( "mr8.3c",       0x02000, 0x2000, 0x822f3c4d )
+	ROM_LOAD( "mr9.3a",       0x04000, 0x2000, 0x4dff1a15 )
 	ROM_LOAD( "ZIPPYRAC.008", 0x06000, 0x2000, 0xd6c5bd0d )
 	ROM_LOAD( "ZIPPYRAC.009", 0x08000, 0x2000, 0x6372812a )
 	ROM_LOAD( "ZIPPYRAC.010", 0x0a000, 0x2000, 0x76e982c9 )
 
 	ROM_REGION(0x10000)	/* 64k for sound cpu */
-	ROM_LOAD( "ZIPPYRAC.004", 0xf000, 0x1000, 0x91c75683 )
+	ROM_LOAD( "mr10.1a", 0xf000, 0x1000, 0x91c75683 )
 ROM_END
 
 ROM_START( motorace_rom )
@@ -448,8 +448,8 @@ struct GameDriver travrusa_driver =
 	0,
 	"travrusa",
 	"Traverse USA",
-	"????",
-	"?????",
+	"1983",
+	"Irem",
 	"Lee Taylor (Driver Code)\nJohn Clegg (Graphics Code)\nAaron Giles (sound)\nThierry Lescot (color info)",
 	0,
 	&machine_driver,
@@ -470,11 +470,11 @@ struct GameDriver travrusa_driver =
 struct GameDriver motorace_driver =
 {
 	__FILE__,
-	0,
+	&travrusa_driver,
 	"motorace",
 	"MotoRace USA",
-	"????",
-	"?????",
+	"1983",
+	"Irem (Williams license)",
 	"Lee Taylor (Driver Code)\nJohn Clegg (Graphics Code)\nAaron Giles (sound)\nThierry Lescot (color info)\nGerald Vanderick (color info)",
 	0,
 	&machine_driver,

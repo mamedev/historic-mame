@@ -14,7 +14,7 @@ extern unsigned char *lrunner_scroll_high;
 void lrunner_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 int lrunner_vh_start(void);
 void lrunner_vh_stop(void);
-void lrunner_vh_screenrefresh(struct osd_bitmap *bitmap);
+void lrunner_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 void mpatrol_io_w(int offset, int value);
 int mpatrol_io_r(int offset);
@@ -319,7 +319,7 @@ static struct AY8910interface ay8910_interface =
 {
 	2,	/* 2 chips */
 	910000,	/* .91 MHZ ?? */
-	{ 0x20ff, 0x20ff },
+	{ 255, 255 },
 	{ 0 },
 	{ 0 },
 	{ 0 },
@@ -420,8 +420,8 @@ struct GameDriver lrunner_driver =
 	0,
 	"lrunner",
 	"Lode Runner",
-	"????",
-	"?????",
+	"1984",
+	"Irem (Broderbund license)",
 	"Lee Taylor\nJohn Clegg\nAaron Giles (sound)",
 	0,
 	&machine_driver,

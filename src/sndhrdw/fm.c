@@ -1,10 +1,12 @@
+#define NICK_BUBLBOBL_CHANGE
+
 /*
 **
 ** File: fm.c -- software implementation of FM sound generator
 **
 ** Copyright (C) 1998 Tatsuyuki Satoh , MultiArcadeMachineEmurator development
 **
-** Version 0.33c
+** Version 0.33d
 **
 */
 
@@ -754,7 +756,13 @@ static void timer_callback_A_OPN(int param)
 	/* set status flag */
 	OPN->ST.status |= 0x01;
 	/* update the counter */
+#ifdef NICK_BUBLBOBL_CHANGE
+	OPN->ST.TAC = (1024-OPN->ST.TA)<<12;
+	/*if (OPN->ST.handler)*/
+		OPN->ST.timer_a_timer = timer_set ((double)OPN->ST.TAC / ((double)OPN->ST.freqbase * (double)OPN->ST.rate), param, timer_callback_A_OPN);
+#else
 	OPN->ST.TAC = 0;
+#endif
 
 #ifdef CSM_SUPPORT
 	if( OPN->ST.mode & 0x80 )
@@ -788,7 +796,13 @@ static void timer_callback_B_OPN(int param)
 	/* set status flag */
 	OPN->ST.status |= 0x02;
 	/* update the counter */
+#ifdef NICK_BUBLBOBL_CHANGE
+	OPN->ST.TBC = ( 256-OPN->ST.TB)<<(4+12);
+	/*if (OPN->ST.handler)*/
+		OPN->ST.timer_b_timer = timer_set ((double)OPN->ST.TBC / ((double)OPN->ST.freqbase * (double)OPN->ST.rate), param, timer_callback_B_OPN);
+#else
 	OPN->ST.TBC = 0;
+#endif
 }
 #else /* MAME_TIMER */
 
@@ -1117,20 +1131,24 @@ void OPNWriteReg(int n, int r, int v)
 			if( v & 0x20 )
 			{
 				OPN->ST.status &=0xfd; /* reset TIMER B */
+#ifndef NICK_BUBLBOBL_CHANGE
 				if (OPN->ST.timer_b_timer)
 				{
 					timer_remove (OPN->ST.timer_b_timer);
 					OPN->ST.timer_b_timer = 0;
 				}
+#endif
 			}
 			if( v & 0x10 )
 			{
 				OPN->ST.status &=0xfe; /* reset TIMER A */
+#ifndef NICK_BUBLBOBL_CHANGE
 				if (OPN->ST.timer_a_timer)
 				{
 					timer_remove (OPN->ST.timer_a_timer);
 					OPN->ST.timer_a_timer = 0;
 				}
+#endif
 			}
 			if( v & 0x02 )
 			{
@@ -1141,6 +1159,16 @@ void OPNWriteReg(int n, int r, int v)
 						OPN->ST.timer_b_timer = timer_set ((double)OPN->ST.TBC / ((double)OPN->ST.freqbase * (double)OPN->ST.rate), n, timer_callback_B_OPN);
 				}
 			}
+#ifndef NICK_BUBLBOBL_CHANGE
+			else
+			{
+				if (OPN->ST.timer_b_timer)
+				{
+					timer_remove (OPN->ST.timer_b_timer);
+					OPN->ST.timer_b_timer = 0;
+				}
+			}
+#endif
 			if( v & 0x01 )
 			{
 				if (OPN->ST.timer_a_timer == 0)
@@ -1150,6 +1178,16 @@ void OPNWriteReg(int n, int r, int v)
 						OPN->ST.timer_a_timer = timer_set ((double)OPN->ST.TAC / ((double)OPN->ST.freqbase * (double)OPN->ST.rate), n, timer_callback_A_OPN);
 				}
 			}
+#ifdef NICK_BUBLBOBL_CHANGE
+			else
+			{
+				if (OPN->ST.timer_a_timer)
+				{
+					timer_remove (OPN->ST.timer_a_timer);
+					OPN->ST.timer_a_timer = 0;
+				}
+			}
+#endif
 #else /* MAME_TIMER */
 			if( v & 0x20 )
 			{
@@ -1270,12 +1308,12 @@ void OPNWriteReg(int n, int r, int v)
 			break;
 		case 2:		/* 0xa8-0xaa : 3CH FNUM1 */
 			{
-				unsigned int fn  = (((unsigned int)(OPN->fn3_h[s]&7))<<8) + v;
-				unsigned char blk = OPN->fn3_h[s]>>3;
+				unsigned int fn  = (((unsigned int)(OPN->fn3_h[c]&7))<<8) + v;
+				unsigned char blk = OPN->fn3_h[c]>>3;
 				/* make keyscale code */
-				OPN->kcode3[s]= (blk<<2)|OPN_FKTABLE[(fn>>7)];
+				OPN->kcode3[c]= (blk<<2)|OPN_FKTABLE[(fn>>7)];
 				/* make basic increment counter 32bit = 1 cycle */
-				OPN->fc3[s] = OPN->FN_TABLE[fn]>>(7-blk);
+				OPN->fc3[c] = OPN->FN_TABLE[fn]>>(7-blk);
 				OPN->CH[2].Incr[SLOT1]=-1;
 			}
 			break;

@@ -235,7 +235,7 @@ void xevious_colorram2_w(int offset,int data);
 int  xevious_vh_start( void );
 void xevious_vh_stop( void );
 void xevious_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-void xevious_vh_screenrefresh(struct osd_bitmap *bitmap);
+void xevious_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 void pengo_sound_w(int offset,int data);
 extern unsigned char *pengo_soundregs;
@@ -337,6 +337,94 @@ INPUT_PORTS_START( xevious_input_ports )
 	PORT_DIPSETTING(    0x60, "Normal" )
 	PORT_DIPSETTING(    0x20, "Hard" )
 	PORT_DIPSETTING(    0x00, "Hardest" )
+	PORT_DIPNAME( 0x80, 0x80, "Freeze?", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x80, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+
+	PORT_START	/* DSW1 */
+	PORT_DIPNAME( 0x03, 0x03, "Left Coin", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x01, "2 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x03, "1 Coin/1 Credit" )
+	PORT_DIPSETTING(    0x00, "2 Coins/3 Credits" )
+	PORT_DIPSETTING(    0x02, "1 Coin/2 Credits" )
+	/* TODO: bonus scores are different for 5 lives */
+	PORT_DIPNAME( 0x1c, 0x1c, "Bonus Life", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x18, "10000 40000" )
+	PORT_DIPSETTING(    0x14, "10000 50000" )
+	PORT_DIPSETTING(    0x10, "20000 50000" )
+	PORT_DIPSETTING(    0x0c, "20000 70000" )
+	PORT_DIPSETTING(    0x08, "20000 80000" )
+	PORT_DIPSETTING(    0x1c, "20000 60000" )
+	PORT_DIPSETTING(    0x04, "20000 and 60000" )
+	PORT_DIPSETTING(    0x00, "None" )
+	PORT_DIPNAME( 0x60, 0x60, "Lives", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x40, "1" )
+	PORT_DIPSETTING(    0x20, "2" )
+	PORT_DIPSETTING(    0x60, "3" )
+	PORT_DIPSETTING(    0x00, "5" )
+	PORT_DIPNAME( 0x80, 0x80, "Cabinet", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x80, "Upright" )
+	PORT_DIPSETTING(    0x00, "Cocktail" )
+
+	PORT_START	/* FAKE */
+	/* The player inputs are not memory mapped, they are handled by an I/O chip. */
+	/* These fake input ports are read by galaga_customio_data_r() */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY )
+	PORT_BITX(0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_IMPULSE,
+			IP_NAME_DEFAULT, IP_KEY_DEFAULT, IP_JOY_DEFAULT, 1 )
+	PORT_BITX(0x20, IP_ACTIVE_LOW, IPT_BUTTON1, 0, IP_KEY_PREVIOUS, IP_JOY_PREVIOUS, 0 )
+	PORT_BIT( 0xc0, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START	/* FAKE */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY | IPF_COCKTAIL)
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL)
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_COCKTAIL)
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_COCKTAIL)
+	PORT_BITX(0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_IMPULSE | IPF_COCKTAIL,
+			IP_NAME_DEFAULT, IP_KEY_DEFAULT, IP_JOY_DEFAULT, 1 )
+	PORT_BITX(0x20, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL, 0, IP_KEY_PREVIOUS, IP_JOY_PREVIOUS, 0 )
+	PORT_BIT( 0xc0, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START	/* FAKE */
+	PORT_BIT( 0x03, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BITX(0x04, IP_ACTIVE_LOW, IPT_START1 | IPF_IMPULSE,
+			IP_NAME_DEFAULT, IP_KEY_DEFAULT, IP_JOY_DEFAULT, 1 )
+	PORT_BITX(0x08, IP_ACTIVE_LOW, IPT_START2 | IPF_IMPULSE,
+			IP_NAME_DEFAULT, IP_KEY_DEFAULT, IP_JOY_DEFAULT, 1 )
+	PORT_BITX(0x10, IP_ACTIVE_LOW, IPT_COIN1 | IPF_IMPULSE,
+			IP_NAME_DEFAULT, IP_KEY_DEFAULT, IP_JOY_DEFAULT, 1 )
+	PORT_BITX(0x20, IP_ACTIVE_LOW, IPT_COIN2 | IPF_IMPULSE,
+			IP_NAME_DEFAULT, IP_KEY_DEFAULT, IP_JOY_DEFAULT, 1 )
+	PORT_BITX(0x40, IP_ACTIVE_LOW, IPT_COIN3 | IPF_IMPULSE,
+			IP_NAME_DEFAULT, IP_KEY_DEFAULT, IP_JOY_DEFAULT, 1 )
+	PORT_BITX(    0x80, 0x80, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE, 0 )
+	PORT_DIPSETTING(    0x80, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+INPUT_PORTS_END
+
+/* same as xevious, the only difference is DSW0 bit 7 */
+INPUT_PORTS_START( xeviousa_input_ports )
+	PORT_START	/* DSW0 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON2 )
+	PORT_DIPNAME( 0x02, 0x02, "Flags Award Bonus Life", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "No" )
+	PORT_DIPSETTING(    0x02, "Yes" )
+	PORT_DIPNAME( 0x0c, 0x0c, "Right Coin", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x0c, "1 Coin/1 Credit" )
+	PORT_DIPSETTING(    0x08, "1 Coin/2 Credit" )
+	PORT_DIPSETTING(    0x04, "1 Coin/3 Credits" )
+	PORT_DIPSETTING(    0x00, "1 Coin/6 Credits" )
+	PORT_DIPNAME( 0x10, 0x10, "Unknown", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x10, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x60, 0x60, "Difficulty", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x40, "Easy" )
+	PORT_DIPSETTING(    0x60, "Normal" )
+	PORT_DIPSETTING(    0x20, "Hard" )
+	PORT_DIPSETTING(    0x00, "Hardest" )
 	/* when switch is on Namco, high score names are 10 letters long */
 	PORT_DIPNAME( 0x80, 0x80, "Copyright", IP_KEY_NONE )
 	PORT_DIPSETTING(    0x00, "Namco" )
@@ -406,96 +494,8 @@ INPUT_PORTS_START( xevious_input_ports )
 	PORT_DIPSETTING(    0x00, "On" )
 INPUT_PORTS_END
 
-/* same as xevious, the only difference is DSW0 bit 7 */
-INPUT_PORTS_START( xeviousn_input_ports )
-	PORT_START	/* DSW0 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON2 )
-	PORT_DIPNAME( 0x02, 0x02, "Flags Award Bonus Life", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "No" )
-	PORT_DIPSETTING(    0x02, "Yes" )
-	PORT_DIPNAME( 0x0c, 0x0c, "Right Coin", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x0c, "1 Coin/1 Credit" )
-	PORT_DIPSETTING(    0x08, "1 Coin/2 Credit" )
-	PORT_DIPSETTING(    0x04, "1 Coin/3 Credits" )
-	PORT_DIPSETTING(    0x00, "1 Coin/6 Credits" )
-	PORT_DIPNAME( 0x10, 0x10, "Unknown", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x10, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
-	PORT_DIPNAME( 0x60, 0x60, "Difficulty", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x40, "Easy" )
-	PORT_DIPSETTING(    0x60, "Normal" )
-	PORT_DIPSETTING(    0x20, "Hard" )
-	PORT_DIPSETTING(    0x00, "Hardest" )
-	PORT_DIPNAME( 0x80, 0x80, "Freeze?", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x80, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
-
-	PORT_START	/* DSW1 */
-	PORT_DIPNAME( 0x03, 0x03, "Left Coin", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x01, "2 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x03, "1 Coin/1 Credit" )
-	PORT_DIPSETTING(    0x00, "2 Coins/3 Credits" )
-	PORT_DIPSETTING(    0x02, "1 Coin/2 Credits" )
-	/* TODO: bonus scores are different for 5 lives */
-	PORT_DIPNAME( 0x1c, 0x1c, "Bonus Life", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x18, "10000 40000" )
-	PORT_DIPSETTING(    0x14, "10000 50000" )
-	PORT_DIPSETTING(    0x10, "20000 50000" )
-	PORT_DIPSETTING(    0x0c, "20000 70000" )
-	PORT_DIPSETTING(    0x08, "20000 80000" )
-	PORT_DIPSETTING(    0x1c, "20000 60000" )
-	PORT_DIPSETTING(    0x04, "20000 and 60000" )
-	PORT_DIPSETTING(    0x00, "None" )
-	PORT_DIPNAME( 0x60, 0x60, "Lives", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x40, "1" )
-	PORT_DIPSETTING(    0x20, "2" )
-	PORT_DIPSETTING(    0x60, "3" )
-	PORT_DIPSETTING(    0x00, "5" )
-	PORT_DIPNAME( 0x80, 0x80, "Cabinet", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x80, "Upright" )
-	PORT_DIPSETTING(    0x00, "Cocktail" )
-
-	PORT_START	/* FAKE */
-	/* The player inputs are not memory mapped, they are handled by an I/O chip. */
-	/* These fake input ports are read by galaga_customio_data_r() */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY )
-	PORT_BITX(0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_IMPULSE,
-			IP_NAME_DEFAULT, IP_KEY_DEFAULT, IP_JOY_DEFAULT, 1 )
-	PORT_BITX(0x20, IP_ACTIVE_LOW, IPT_BUTTON1, 0, IP_KEY_PREVIOUS, IP_JOY_PREVIOUS, 0 )
-	PORT_BIT( 0xc0, IP_ACTIVE_LOW, IPT_UNUSED )
-
-	PORT_START	/* FAKE */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY | IPF_COCKTAIL)
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL)
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_COCKTAIL)
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_COCKTAIL)
-	PORT_BITX(0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_IMPULSE | IPF_COCKTAIL,
-			IP_NAME_DEFAULT, IP_KEY_DEFAULT, IP_JOY_DEFAULT, 1 )
-	PORT_BITX(0x20, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL, 0, IP_KEY_PREVIOUS, IP_JOY_PREVIOUS, 0 )
-	PORT_BIT( 0xc0, IP_ACTIVE_LOW, IPT_UNUSED )
-
-	PORT_START	/* FAKE */
-	PORT_BIT( 0x03, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BITX(0x04, IP_ACTIVE_LOW, IPT_START1 | IPF_IMPULSE,
-			IP_NAME_DEFAULT, IP_KEY_DEFAULT, IP_JOY_DEFAULT, 1 )
-	PORT_BITX(0x08, IP_ACTIVE_LOW, IPT_START2 | IPF_IMPULSE,
-			IP_NAME_DEFAULT, IP_KEY_DEFAULT, IP_JOY_DEFAULT, 1 )
-	PORT_BITX(0x10, IP_ACTIVE_LOW, IPT_COIN1 | IPF_IMPULSE,
-			IP_NAME_DEFAULT, IP_KEY_DEFAULT, IP_JOY_DEFAULT, 1 )
-	PORT_BITX(0x20, IP_ACTIVE_LOW, IPT_COIN2 | IPF_IMPULSE,
-			IP_NAME_DEFAULT, IP_KEY_DEFAULT, IP_JOY_DEFAULT, 1 )
-	PORT_BITX(0x40, IP_ACTIVE_LOW, IPT_COIN3 | IPF_IMPULSE,
-			IP_NAME_DEFAULT, IP_KEY_DEFAULT, IP_JOY_DEFAULT, 1 )
-	PORT_BITX(    0x80, 0x80, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE, 0 )
-	PORT_DIPSETTING(    0x80, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
-INPUT_PORTS_END
-
 /* same as xevious, the only difference is DSW0 bit 7. Note that the bit is */
-/* inverted wrt xeviousn. */
+/* inverted wrt xevious. */
 INPUT_PORTS_START( sxevious_input_ports )
 	PORT_START	/* DSW0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON2 )
@@ -891,44 +891,17 @@ static struct MachineDriver machine_driver =
 
 ROM_START( xevious_rom )
 	ROM_REGION(0x10000)	/* 64k for the first CPU */
-	ROM_LOAD( "xe-1m-a.bin", 0x0000, 0x2000, 0x4a8335a7 )
-	ROM_LOAD( "xe-1l-a.bin", 0x2000, 0x2000, 0xa35c0044 )
-
-	ROM_REGION(0xb000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "xe-3b.bin",   0x0000, 0x1000, 0x7da40000 )	/* foreground characters */
-	ROM_LOAD( "xe-3c.bin",   0x1000, 0x1000, 0x86acf050 )	/* bg pattern B0 */
-	ROM_LOAD( "xe-3d.bin",   0x2000, 0x1000, 0xcae06a98 )	/* bg pattern B1 */
-	ROM_LOAD( "xe-4m.bin",   0x3000, 0x2000, 0xf4396729 )	/* sprite set #1, planes 0/1 */
-	ROM_LOAD( "xe-4r.bin",   0x5000, 0x2000, 0x4dc1265d )	/* sprite set #1, plane 2, set #2, plane 0 */
-	ROM_LOAD( "xe-4p.bin",   0x7000, 0x2000, 0xb178ce72 )	/* sprite set #2, planes 1/2 */
-	ROM_LOAD( "xe-4n.bin",   0x9000, 0x1000, 0x4b853bdf )	/* sprite set #3, planes 0/1 */
-	/* 0xa000-0xafff empty space to decode sprite set #3 as 3 bits per pixel */
-
-	ROM_REGION(0x10000)	/* 64k for the second CPU */
-	ROM_LOAD( "xe-4c-a.bin", 0x0000, 0x2000, 0x37f5afeb )
-
-	ROM_REGION(0x10000)	/* 64k for the audio CPU */
-	ROM_LOAD( "xe-2c-a.bin", 0x0000, 0x1000, 0x66a1cf07 )
-
-	ROM_REGION(0x4000)	/* gfx map */
-	ROM_LOAD( "xe-2a.bin",   0x0000, 0x1000, 0xcbed7745 )
-	ROM_LOAD( "xe-2b.bin",   0x1000, 0x2000, 0xbf84e836 )
-	ROM_LOAD( "xe-2c.bin",   0x3000, 0x1000, 0x4e606118 )
-ROM_END
-
-ROM_START( xeviousn_rom )
-	ROM_REGION(0x10000)	/* 64k for the first CPU */
 	ROM_LOAD( "xe-1m-a.bin", 0x0000, 0x2000, 0x07dd0575 )
 	ROM_LOAD( "xe-1l-a.bin", 0x2000, 0x2000, 0xff5e0eea )
 
 	ROM_REGION(0xb000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "xe-3b.bin",   0x0000, 0x1000, 0x7da40000 )	/* foreground characters */
-	ROM_LOAD( "xe-3c.bin",   0x1000, 0x1000, 0x86acf050 )	/* bg pattern B0 */
-	ROM_LOAD( "xe-3d.bin",   0x2000, 0x1000, 0xcae06a98 )	/* bg pattern B1 */
-	ROM_LOAD( "xe-4m.bin",   0x3000, 0x2000, 0xf4396729 )	/* sprite set #1, planes 0/1 */
-	ROM_LOAD( "xe-4r.bin",   0x5000, 0x2000, 0x4dc1265d )	/* sprite set #1, plane 2, set #2, plane 0 */
-	ROM_LOAD( "xe-4p.bin",   0x7000, 0x2000, 0xb178ce72 )	/* sprite set #2, planes 1/2 */
-	ROM_LOAD( "xe-4n.bin",   0x9000, 0x1000, 0x4b853bdf )	/* sprite set #3, planes 0/1 */
+	ROM_LOAD( "xe-3b.bin", 0x0000, 0x1000, 0x7da40000 )	/* foreground characters */
+	ROM_LOAD( "xe-3c.bin", 0x1000, 0x1000, 0x86acf050 )	/* bg pattern B0 */
+	ROM_LOAD( "xe-3d.bin", 0x2000, 0x1000, 0xcae06a98 )	/* bg pattern B1 */
+	ROM_LOAD( "xe-4m.bin", 0x3000, 0x2000, 0xf4396729 )	/* sprite set #1, planes 0/1 */
+	ROM_LOAD( "xe-4r.bin", 0x5000, 0x2000, 0x4dc1265d )	/* sprite set #1, plane 2, set #2, plane 0 */
+	ROM_LOAD( "xe-4p.bin", 0x7000, 0x2000, 0xb178ce72 )	/* sprite set #2, planes 1/2 */
+	ROM_LOAD( "xe-4n.bin", 0x9000, 0x1000, 0x4b853bdf )	/* sprite set #3, planes 0/1 */
 	/* 0xa000-0xafff empty space to decode sprite set #3 as 3 bits per pixel */
 
 	ROM_REGION(0x10000)	/* 64k for the second CPU */
@@ -938,9 +911,36 @@ ROM_START( xeviousn_rom )
 	ROM_LOAD( "xe-2c-a.bin", 0x0000, 0x1000, 0x66a1cf07 )
 
 	ROM_REGION(0x4000)	/* gfx map */
-	ROM_LOAD( "xe-2a.bin",   0x0000, 0x1000, 0xcbed7745 )
-	ROM_LOAD( "xe-2b.bin",   0x1000, 0x2000, 0xbf84e836 )
-	ROM_LOAD( "xe-2c.bin",   0x3000, 0x1000, 0x4e606118 )
+	ROM_LOAD( "xe-2a.bin", 0x0000, 0x1000, 0xcbed7745 )
+	ROM_LOAD( "xe-2b.bin", 0x1000, 0x2000, 0xbf84e836 )
+	ROM_LOAD( "xe-2c.bin", 0x3000, 0x1000, 0x4e606118 )
+ROM_END
+
+ROM_START( xeviousa_rom )
+	ROM_REGION(0x10000)	/* 64k for the first CPU */
+	ROM_LOAD( "xea-1m-a.bin", 0x0000, 0x2000, 0x4a8335a7 )
+	ROM_LOAD( "xea-1l-a.bin", 0x2000, 0x2000, 0xa35c0044 )
+
+	ROM_REGION(0xb000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "xe-3b.bin", 0x0000, 0x1000, 0x7da40000 )	/* foreground characters */
+	ROM_LOAD( "xe-3c.bin", 0x1000, 0x1000, 0x86acf050 )	/* bg pattern B0 */
+	ROM_LOAD( "xe-3d.bin", 0x2000, 0x1000, 0xcae06a98 )	/* bg pattern B1 */
+	ROM_LOAD( "xe-4m.bin", 0x3000, 0x2000, 0xf4396729 )	/* sprite set #1, planes 0/1 */
+	ROM_LOAD( "xe-4r.bin", 0x5000, 0x2000, 0x4dc1265d )	/* sprite set #1, plane 2, set #2, plane 0 */
+	ROM_LOAD( "xe-4p.bin", 0x7000, 0x2000, 0xb178ce72 )	/* sprite set #2, planes 1/2 */
+	ROM_LOAD( "xe-4n.bin", 0x9000, 0x1000, 0x4b853bdf )	/* sprite set #3, planes 0/1 */
+	/* 0xa000-0xafff empty space to decode sprite set #3 as 3 bits per pixel */
+
+	ROM_REGION(0x10000)	/* 64k for the second CPU */
+	ROM_LOAD( "xea-4c-a.bin", 0x0000, 0x2000, 0x37f5afeb )
+
+	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_LOAD( "xe-2c-a.bin", 0x0000, 0x1000, 0x66a1cf07 )
+
+	ROM_REGION(0x4000)	/* gfx map */
+	ROM_LOAD( "xe-2a.bin", 0x0000, 0x1000, 0xcbed7745 )
+	ROM_LOAD( "xe-2b.bin", 0x1000, 0x2000, 0xbf84e836 )
+	ROM_LOAD( "xe-2c.bin", 0x3000, 0x1000, 0x4e606118 )
 ROM_END
 
 ROM_START( sxevious_rom )
@@ -951,13 +951,13 @@ ROM_START( sxevious_rom )
 	ROM_LOAD( "cpu_2l.rom", 0x3000, 0x1000, 0xfce2e698 )
 
 	ROM_REGION(0xb000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "vid_3b.rom", 0x0000, 0x1000, 0x7da40000 )	/* foreground characters */
-	ROM_LOAD( "vid_3c.rom", 0x1000, 0x1000, 0x86acf050 )	/* bg pattern B0 */
-	ROM_LOAD( "vid_3d.rom", 0x2000, 0x1000, 0xcae06a98 )	/* bg pattern B1 */
-	ROM_LOAD( "vid_4m.rom", 0x3000, 0x2000, 0xf4396729 )	/* sprite set #1, planes 0/1 */
-	ROM_LOAD( "vid_4r.rom", 0x5000, 0x2000, 0x4dc1265d )	/* sprite set #1, plane 2, set #2, plane 0 */
-	ROM_LOAD( "vid_4p.rom", 0x7000, 0x2000, 0xb178ce72 )	/* sprite set #2, planes 1/2 */
-	ROM_LOAD( "vid_4n.rom", 0x9000, 0x1000, 0x4b853bdf )	/* sprite set #3, planes 0/1 */
+	ROM_LOAD( "xe-3b.bin", 0x0000, 0x1000, 0x7da40000 )	/* foreground characters */
+	ROM_LOAD( "xe-3c.bin", 0x1000, 0x1000, 0x86acf050 )	/* bg pattern B0 */
+	ROM_LOAD( "xe-3d.bin", 0x2000, 0x1000, 0xcae06a98 )	/* bg pattern B1 */
+	ROM_LOAD( "xe-4m.bin", 0x3000, 0x2000, 0xf4396729 )	/* sprite set #1, planes 0/1 */
+	ROM_LOAD( "xe-4r.bin", 0x5000, 0x2000, 0x4dc1265d )	/* sprite set #1, plane 2, set #2, plane 0 */
+	ROM_LOAD( "xe-4p.bin", 0x7000, 0x2000, 0xb178ce72 )	/* sprite set #2, planes 1/2 */
+	ROM_LOAD( "xe-4n.bin", 0x9000, 0x1000, 0x4b853bdf )	/* sprite set #3, planes 0/1 */
 	/* 0xa000-0xafff empty space to decode sprite set #3 as 3 bits per pixel */
 
 	ROM_REGION(0x10000)	/* 64k for the second CPU */
@@ -965,12 +965,12 @@ ROM_START( sxevious_rom )
 	ROM_LOAD( "cpu_3j.rom", 0x1000, 0x1000, 0xcca50ae5 )
 
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
-	ROM_LOAD( "cpu_2c.rom", 0x0000, 0x1000, 0x66a1cf07 )
+	ROM_LOAD( "xe-2c-a.bin", 0x0000, 0x1000, 0x66a1cf07 )
 
 	ROM_REGION(0x4000)	/* gfx map */
-	ROM_LOAD( "vid_2a.rom", 0x0000, 0x1000, 0xcbed7745 )
-	ROM_LOAD( "vid_2b.rom", 0x1000, 0x2000, 0xbf84e836 )
-	ROM_LOAD( "vid_2c.rom", 0x3000, 0x1000, 0x4e606118 )
+	ROM_LOAD( "xe-2a.bin", 0x0000, 0x1000, 0xcbed7745 )
+	ROM_LOAD( "xe-2b.bin", 0x1000, 0x2000, 0xbf84e836 )
+	ROM_LOAD( "xe-2c.bin", 0x3000, 0x1000, 0x4e606118 )
 ROM_END
 
 
@@ -1032,9 +1032,9 @@ struct GameDriver xevious_driver =
 	__FILE__,
 	0,
 	"xevious",
-	"Xevious (Atari/Namco copyright)",
-	"????",
-	"?????",
+	"Xevious (Namco)",
+	"1982",
+	"Namco",
 	"Mirko Buffoni\nTatsuyuki Satoh\nNicola Salmoria\nValerio Verrando (high score save)",
 	0,
 	&machine_driver,
@@ -1052,24 +1052,24 @@ struct GameDriver xevious_driver =
 	hiload, hisave
 };
 
-struct GameDriver xeviousn_driver =
+struct GameDriver xeviousa_driver =
 {
 	__FILE__,
-	0,
-	"xeviousn",
-	"Xevious (Namco copyright)",
-	"????",
-	"?????",
+	&xevious_driver,
+	"xeviousa",
+	"Xevious (Atari)",
+	"1982",
+	"Namco (Atari license)",
 	"Mirko Buffoni\nTatsuyuki Satoh\nNicola Salmoria\nValerio Verrando (high score save)",
 	0,
 	&machine_driver,
 
-	xeviousn_rom,
+	xeviousa_rom,
 	0, 0,
 	xevious_sample_names,
 	sound_prom,	/* sound_prom */
 
-	xeviousn_input_ports,
+	xeviousa_input_ports,
 
 	color_prom, 0, 0,
 	ORIENTATION_DEFAULT,
@@ -1080,11 +1080,11 @@ struct GameDriver xeviousn_driver =
 struct GameDriver sxevious_driver =
 {
 	__FILE__,
-	0,
+	&xevious_driver,
 	"sxevious",
 	"Super Xevious",
-	"????",
-	"?????",
+	"1984",
+	"Namco",
 	"Mirko Buffoni\nTatsuyuki Satoh\nNicola Salmoria\nValerio Verrando (high score save)",
 	0,
 	&machine_driver,

@@ -90,7 +90,7 @@ void sega_generate_vector_list (void)
 
 				color = attrib & 0x7e;
 				if ((attrib & 1) && color)
-					intensity = 0xff;
+					intensity = 0xa0; /* leave room for translucency */
 				else
 					intensity = 0;
 				vector_add_point ( currentX, currentY, color, intensity );
@@ -243,12 +243,8 @@ void sega_vh_stop (void)
   the main emulation engine.
 
 ***************************************************************************/
-void sega_vh_screenrefresh (struct osd_bitmap *bitmap)
+void sega_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	sega_generate_vector_list();
-	vector_vh_update (bitmap);
+	vector_vh_update(bitmap,full_refresh);
 }
-
-
-
-

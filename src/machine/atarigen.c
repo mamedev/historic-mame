@@ -21,7 +21,6 @@ int slapstic_tweak (int offset);
 int atarigen_cpu_to_sound, atarigen_cpu_to_sound_ready;
 int atarigen_sound_to_cpu, atarigen_sound_to_cpu_ready;
 
-unsigned char *atarigen_paletteram;
 unsigned char *atarigen_playfieldram;
 unsigned char *atarigen_spriteram;
 unsigned char *atarigen_alpharam;
@@ -33,7 +32,6 @@ unsigned char *atarigen_slapstic;
 int atarigen_playfieldram_size;
 int atarigen_spriteram_size;
 int atarigen_alpharam_size;
-int atarigen_paletteram_size;
 int atarigen_eeprom_size;
 
 static int unlocked;

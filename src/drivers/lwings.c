@@ -21,11 +21,9 @@
 #include "vidhrdw/generic.h"
 
 void lwings_bankswitch_w(int offset,int data);
-void lwings_paletteram_w(int offset,int data);
 int lwings_bankedrom_r(int offset);
 int lwings_interrupt(void);
 
-extern unsigned char *lwings_paletteram;
 extern unsigned char *lwings_backgroundram;
 extern unsigned char *lwings_backgroundattribram;
 extern int lwings_backgroundram_size;
@@ -37,7 +35,7 @@ void lwings_backgroundattrib_w(int offset,int data);
 void lwings_palette_bank_w(int offset,int data);
 int  lwings_vh_start(void);
 void lwings_vh_stop(void);
-void lwings_vh_screenrefresh(struct osd_bitmap *bitmap);
+void lwings_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 extern unsigned char *trojan_scrolly;
 extern unsigned char *trojan_scrollx;
@@ -45,7 +43,7 @@ extern unsigned char *trojan_bk_scrolly;
 extern unsigned char *trojan_bk_scrollx;
 int  trojan_vh_start(void);
 void trojan_vh_stop(void);
-void trojan_vh_screenrefresh(struct osd_bitmap *bitmap);
+void trojan_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 void trojan_sound_cmd_w(int offset, int data)
 {
@@ -91,7 +89,8 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0xe400, 0xe7ff, colorram_w, &colorram },
 	{ 0xe800, 0xebff, lwings_background_w, &lwings_backgroundram, &lwings_backgroundram_size },
 	{ 0xec00, 0xefff, lwings_backgroundattrib_w, &lwings_backgroundattribram },
-	{ 0xf000, 0xf7ff, lwings_paletteram_w, &lwings_paletteram },
+	{ 0xf000, 0xf3ff, paletteram_RRRRGGGGBBBBxxxx_split2_w, &paletteram_2 },
+	{ 0xf400, 0xf7ff, paletteram_RRRRGGGGBBBBxxxx_split1_w, &paletteram },
 	{ 0xf800, 0xf801, MWA_RAM, &trojan_scrollx },
 	{ 0xf802, 0xf803, MWA_RAM, &trojan_scrolly },
 	{ 0xf804, 0xf804, MWA_RAM, &trojan_bk_scrollx },
@@ -115,7 +114,8 @@ static struct MemoryWriteAddress trojan_writemem[] =
 	{ 0xe400, 0xe7ff, colorram_w, &colorram },
 	{ 0xe800, 0xebff, lwings_background_w, &lwings_backgroundram, &lwings_backgroundram_size },
 	{ 0xec00, 0xefff, lwings_backgroundattrib_w, &lwings_backgroundattribram },
-	{ 0xf000, 0xf7ff, lwings_paletteram_w, &lwings_paletteram },
+	{ 0xf000, 0xf3ff, paletteram_RRRRGGGGBBBBxxxx_split2_w, &paletteram_2 },
+	{ 0xf400, 0xf7ff, paletteram_RRRRGGGGBBBBxxxx_split1_w, &paletteram },
 	{ 0xf800, 0xf801, MWA_RAM, &trojan_scrollx },
 	{ 0xf802, 0xf803, MWA_RAM, &trojan_scrolly },
 	{ 0xf804, 0xf804, MWA_RAM, &trojan_bk_scrollx },
@@ -440,10 +440,10 @@ static struct YM2203interface ym2203_interface =
 {
 	2,			/* 2 chips */
 	1500000,	/* 1.5 MHz (?) */
-        { YM2203_VOL(50,0x10ff), YM2203_VOL(50,0x10ff) },
+	{ YM2203_VOL(100,255), YM2203_VOL(100,255) },
 	{ 0 },
 	{ 0 },
-        { 0 },
+	{ 0 },
 	{ 0 }
 };
 
@@ -503,11 +503,11 @@ static struct MachineDriver machine_driver =
 
 ROM_START( lwings_rom )
 	ROM_REGION(0x20000)     /* 64k for code + 3*16k for the banked ROMs images */
-	ROM_LOAD( "6c_lw01.bin",  0x00000, 0x8000, 0x664f6939 )
-	ROM_LOAD( "7c_lw02.bin",  0x10000, 0x8000, 0x5506f9b8 )
-	ROM_LOAD( "9c_lw03.bin",  0x18000, 0x8000, 0x45a255a0 )
+	ROM_LOAD( "6c_lw01.bin", 0x00000, 0x8000, 0x664f6939 )
+	ROM_LOAD( "7c_lw02.bin", 0x10000, 0x8000, 0x5506f9b8 )
+	ROM_LOAD( "9c_lw03.bin", 0x18000, 0x8000, 0x45a255a0 )
 
-        ROM_REGION(0x70000)     /* temporary space for graphics (disposed after conversion) */
+	ROM_REGION(0x70000)     /* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "9h_lw05.bin", 0x00000, 0x4000, 0x0bf1930f )	/* characters */
 	ROM_LOAD( "3e_lw14.bin", 0x10000, 0x8000, 0xf796da02 )	/* tiles */
 	ROM_LOAD( "1e_lw08.bin", 0x18000, 0x8000, 0xcc211065 )
@@ -528,27 +528,27 @@ ROM_END
 
 ROM_START( lwingsjp_rom )
 	ROM_REGION(0x20000)     /* 64k for code + 3*16k for the banked ROMs images */
-	ROM_LOAD( "a_06c.rom",  0x00000, 0x8000, 0x32da996c )
-	ROM_LOAD( "a_07c.rom",  0x10000, 0x8000, 0x5717e44b )
-	ROM_LOAD( "a_09c.rom",  0x18000, 0x8000, 0x45a255a0 )
+	ROM_LOAD( "a_06c.rom",   0x00000, 0x8000, 0x32da996c )
+	ROM_LOAD( "a_07c.rom",   0x10000, 0x8000, 0x5717e44b )
+	ROM_LOAD( "9c_lw03.bin", 0x18000, 0x8000, 0x45a255a0 )
 
 	ROM_REGION(0x70000)     /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "a_09h.rom", 0x00000, 0x4000, 0x0bf1930f )	/* characters */
-	ROM_LOAD( "b_03b.rom", 0x30000, 0x8000, 0x97c116c3 )	/* tiles */
-	ROM_LOAD( "b_01b.rom", 0x38000, 0x8000, 0x31c18a63 )
-	ROM_LOAD( "b_03d.rom", 0x20000, 0x8000, 0x346ad050 )
-	ROM_LOAD( "b_01d.rom", 0x28000, 0x8000, 0xadc849d6 )
-	ROM_LOAD( "b_03e.rom", 0x10000, 0x8000, 0x017ac406 )
-	ROM_LOAD( "b_01e.rom", 0x18000, 0x8000, 0xc34943cf )
-	ROM_LOAD( "b_03f.rom", 0x40000, 0x8000, 0xb2962e04 )
-	ROM_LOAD( "b_01f.rom", 0x48000, 0x8000, 0x871dc5eb )
-	ROM_LOAD( "b_03j.rom", 0x50000, 0x8000, 0x6c24efb0 )	/* sprites */
-	ROM_LOAD( "b_01j.rom", 0x58000, 0x8000, 0xf3715fe3 )
-	ROM_LOAD( "b_03h.rom", 0x60000, 0x8000, 0x17d60134 )
-	ROM_LOAD( "b_01h.rom", 0x68000, 0x8000, 0xd92720a7 )
+	ROM_LOAD( "9h_lw05.bin", 0x00000, 0x4000, 0x0bf1930f )	/* characters */
+	ROM_LOAD( "b_03e.rom",   0x10000, 0x8000, 0x017ac406 )	/* tiles */
+	ROM_LOAD( "b_01e.rom",   0x18000, 0x8000, 0xc34943cf )
+	ROM_LOAD( "b_03d.rom",   0x20000, 0x8000, 0x346ad050 )
+	ROM_LOAD( "b_01d.rom",   0x28000, 0x8000, 0xadc849d6 )
+	ROM_LOAD( "b_03b.rom",   0x30000, 0x8000, 0x97c116c3 )
+	ROM_LOAD( "b_01b.rom",   0x38000, 0x8000, 0x31c18a63 )
+	ROM_LOAD( "b_03f.rom",   0x40000, 0x8000, 0xb2962e04 )
+	ROM_LOAD( "b_01f.rom",   0x48000, 0x8000, 0x871dc5eb )
+	ROM_LOAD( "b_03j.rom",   0x50000, 0x8000, 0x6c24efb0 )	/* sprites */
+	ROM_LOAD( "b_01j.rom",   0x58000, 0x8000, 0xf3715fe3 )
+	ROM_LOAD( "b_03h.rom",   0x60000, 0x8000, 0x17d60134 )
+	ROM_LOAD( "b_01h.rom",   0x68000, 0x8000, 0xd92720a7 )
 
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
-	ROM_LOAD( "a_11e.rom", 0x0000, 0x8000, 0x314df447 )
+	ROM_LOAD( "11e_lw04.bin", 0x0000, 0x8000, 0x314df447 )
 ROM_END
 
 

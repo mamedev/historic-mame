@@ -111,7 +111,7 @@ extern unsigned char *kangaroo_blitter;
 void kangaroo_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 int  kangaroo_vh_start(void);
 void kangaroo_vh_stop(void);
-void kangaroo_vh_screenrefresh(struct osd_bitmap *bitmap);
+void kangaroo_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 void kangaroo_blitter_w(int offset, int val);
 void kangaroo_videoram_w(int offset, int val);
 void kangaroo_color_mask_w(int offset,int data);
@@ -433,8 +433,8 @@ struct GameDriver kangaroo_driver =
 	0,
 	"kangaroo",
 	"Kangaroo",
-	"????",
-	"?????",
+	"1982",
+	"Atari",
 	"Ville Laitinen (MAME driver)\nMarco Cassili",
 	0,
 	&machine_driver,

@@ -31,7 +31,8 @@ void wow_magic_expand_color_w(int offset,int data);
 void wow_magic_control_w(int offset,int data);
 void wow_magicram_w(int offset,int data);
 void wow_pattern_board_w(int offset,int data);
-void wow_vh_screenrefresh(struct osd_bitmap *bitmap);
+void wow_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void wow_vh_screenrefresh_stars(struct osd_bitmap *bitmap,int full_refresh);
 int  wow_video_retrace_r(int offset);
 
 void wow_interrupt_enable_w(int offset, int data);
@@ -40,16 +41,15 @@ int  wow_interrupt(void);
 
 int  seawolf2_controller1_r(int offset);
 int  seawolf2_controller2_r(int offset);
-void seawolf2_vh_screenrefresh(struct osd_bitmap *bitmap);
+void seawolf2_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
-void gorf_vh_screenrefresh(struct osd_bitmap *bitmap);
+void gorf_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 int  gorf_vh_start(void);
 int  gorf_interrupt(void);
 int  gorf_timer_r(int offset);
 int  Gorf_IO_r(int offset);
 
 int  wow_vh_start(void);
-void wow_vh_screenrefresh_stars(struct osd_bitmap *bitmap);
 
 int  wow_sh_start(void);
 void wow_sh_stop(void);
@@ -586,8 +586,8 @@ struct GameDriver wow_driver =
 	0,
 	"wow",
 	"Wizard of Wor",
-	"????",
-	"?????",
+	"1980",
+	"Midway",
 	"Nicola Salmoria (MAME driver)\nSteve Scavone (info and code)\nJim Hernandez (hardware info)\nMike Coates (additional code)\nMike Balfour (high score save)\nKevin Estep (samples)\nAlex Judd (sound programming)",
 	0,
 	&wow_machine_driver,
@@ -783,8 +783,8 @@ struct GameDriver robby_driver =
 	0,
 	"robby",
 	"Robby Roto",
-	"????",
-	"?????",
+	"1981",
+	"Bally Midway",
 	"Nicola Salmoria (MAME driver)\nSteve Scavone (info and code)\nMike Coates (additional code)\nMike Balfour (high score save)",
 	0,
 	&robby_machine_driver,
@@ -1028,19 +1028,19 @@ static void gorf_hisave(void)
 
 }
 
-struct GameDriver gorfpgm1_driver =
+struct GameDriver gorf_driver =
 {
 	__FILE__,
 	0,
-	"gorfpgm1",
-    "Gorf (Program 1)",
-	"????",
-	"?????",
+	"gorf",
+    "Gorf",
+	"1981",
+	"Midway",
     "Nicola Salmoria (MAME driver)\nSteve Scavone (info and code)\nMike Coates (game support)\nMike Balfour (high score save)\nKevin Estep (samples)\nAlex Judd (word sound driver)\n",
 	0,
 	&gorf_machine_driver,
 
-	gorfpgm1_rom,
+	gorf_rom,
 	0, 0,
 	gorf_sample_names,
 	0,	/* sound_prom */
@@ -1053,19 +1053,19 @@ struct GameDriver gorfpgm1_driver =
 	gorf_hiload, gorf_hisave
 };
 
-struct GameDriver gorf_driver =
+struct GameDriver gorfpgm1_driver =
 {
 	__FILE__,
-	0,
-	"gorf",
-    "Gorf",
-	"????",
-	"?????",
+	&gorf_driver,
+	"gorfpgm1",
+    "Gorf (Program 1)",
+	"1981",
+	"Midway",
     "Nicola Salmoria (MAME driver)\nSteve Scavone (info and code)\nMike Coates (game support)\nMike Balfour (high score save)\nKevin Estep (samples)\nAlex Judd (word sound driver)\n",
 	0,
 	&gorf_machine_driver,
 
-	gorf_rom,
+	gorfpgm1_rom,
 	0, 0,
 	gorf_sample_names,
 	0,	/* sound_prom */
@@ -1224,8 +1224,8 @@ struct GameDriver spacezap_driver =
 	0,
 	"spacezap",
 	"Space Zap",
-	"????",
-	"?????",
+	"1980",
+	"Midway",
 	"Nicola Salmoria (MAME driver)\nSteve Scavone (info and code)\nMike Coates (game support)\nMike Balfour (high score save)",
 	0,
 	&spacezap_machine_driver,
@@ -1418,8 +1418,8 @@ struct GameDriver seawolf2_driver =
 	0,
 	"seawolf2",
 	"Sea Wolf II",
-	"????",
-	"?????",
+	"1978",
+	"Midway",
 	"Nicola Salmoria (MAME driver)\nSteve Scavone (info and code)\nMike Coates (game support)\nMike Balfour (high score support)",
 	0,
 	&seawolf_machine_driver,
@@ -1583,10 +1583,10 @@ struct GameDriver ebases_driver =
 	0,
 	"ebases",
 	"Extra Bases",
-	"????",
-	"?????",
+	"1980",
+	"Midway",
 	"Alex Judd (MAME driver)\nSteve Scavone (info and code)\nMike Coates (game support)\nMike Balfour (high score support)",
-	0,
+	GAME_NOT_WORKING,
 	&ebases_machine_driver,
 
 	ebases_rom,

@@ -422,7 +422,7 @@ static void drawbigsprite(struct osd_bitmap *bitmap)
 }
 
 
-void cclimber_vh_screenrefresh(struct osd_bitmap *bitmap)
+void cclimber_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	int offs;
 
@@ -562,7 +562,7 @@ void cclimber_vh_screenrefresh(struct osd_bitmap *bitmap)
 
 
 
-void swimmer_vh_screenrefresh(struct osd_bitmap *bitmap)
+void swimmer_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	int offs;
 

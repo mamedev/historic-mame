@@ -6,7 +6,6 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-extern unsigned char *rastan_paletteram;
 extern unsigned char *rastan_spriteram;
 extern unsigned char *rastan_scrollx;
 extern unsigned char *rastan_scrolly;
@@ -14,8 +13,6 @@ extern unsigned char *rastan_scrolly;
 void rastan_updatehook0(int offset);
 void rastan_updatehook1(int offset);
 
-void rastan_paletteram_w(int offset,int data);
-int rastan_paletteram_r(int offset);
 void rastan_spriteram_w(int offset,int data);
 int rastan_spriteram_r(int offset);
 
@@ -28,10 +25,7 @@ int rastan_interrupt(void);
 int rastan_s_interrupt(void);
 
 void rastan_background_w(int offset,int data);
-void rastan_vh_screenrefresh(struct osd_bitmap *bitmap);
-
-int  rastan_vh_start(void);
-void rastan_vh_stop(void);
+void rastan_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 int rastan_input_r (int offset);
 
@@ -58,7 +52,7 @@ static struct MemoryReadAddress rastan_readmem[] =
 	{ 0x000000, 0x05ffff, MRA_ROM },
 //	{ 0x10dc10, 0x10dc13, rastan_speedup_r },
 	{ 0x10c000, 0x10ffff, MRA_BANK1 },	/* RAM */
-	{ 0x200000, 0x20ffff, rastan_paletteram_r, &rastan_paletteram },
+	{ 0x200000, 0x20ffff, paletteram_word_r },
 	{ 0x3e0000, 0x3e0003, rastan_sound_r },
 	{ 0x390000, 0x39000f, rastan_input_r },
 	{ 0xc00000, 0xc03fff, videoram10_word_r },
@@ -74,7 +68,7 @@ static struct MemoryWriteAddress rastan_writemem[] =
 	{ 0x000000, 0x05ffff, MWA_ROM },
 //	{ 0x10dc10, 0x10dc13, rastan_speedup_w },
 	{ 0x10c000, 0x10ffff, MWA_BANK1 },
-	{ 0x200000, 0x20ffff, rastan_paletteram_w },
+	{ 0x200000, 0x20ffff, paletteram_xBBBBBGGGGGRRRRR_word_w, &paletteram },
 	{ 0x350008, 0x35000b, MWA_NOP },     /* 0 only (often) ? */
 	{ 0x380000, 0x380003, rastan_videocontrol_w },	/* sprite palette bank, coin counters, other unknowns */
 	{ 0x3c0000, 0x3c0003, MWA_NOP },     /*0000,0020,0063,0992,1753 (very often) watchdog? */
@@ -111,7 +105,6 @@ static struct MemoryWriteAddress rastan_s_writemem[] =
 	{ 0xa000, 0xa000, r_wr_a000 },
 	{ 0xa001, 0xa001, r_wr_a001 },
 	{ 0xb000, 0xb000, ADPCM_trigger },
-/*	{ 0xb000, 0xb000, r_wr_b000 },*/
 	{ 0xc000, 0xc000, r_wr_c000 },
 	{ 0xd000, 0xd000, r_wr_d000 },
 	{ -1 }  /* end of table */
@@ -398,13 +391,13 @@ static struct MachineDriver machine_driver =
 	/* video hardware */
 	40*8, 32*8, { 0*8, 40*8-1, 1*8, 31*8-1 },
 	gfxdecodeinfo,
-	256,0x80*16, /* looking on palette it seems that RASTAN uses 0x0-0x4f color schemes 16 colors each*/
+	2048, 2048,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_16BIT,
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
 	machine_layers,
-	rastan_vh_start,
-	rastan_vh_stop,
+	generic_vh_start,
+	generic_vh_stop,
 	rastan_vh_screenrefresh,
 
 	/* sound hardware */
@@ -467,12 +460,12 @@ ROM_END
 
 ROM_START( rastsaga_rom )
 	ROM_REGION(0x60000)	/* 6*64k for 68000 code */
-	ROM_LOAD_EVEN( "IC19_38.bin", 0x00000, 0x10000, 0x7428495a )
-	ROM_LOAD_ODD ( "IC07_37.bin", 0x00000, 0x10000, 0x7632da3c )
-	ROM_LOAD_EVEN( "IC20_40.bin", 0x20000, 0x10000, 0x092456b0 )
-	ROM_LOAD_ODD ( "IC08_39.bin", 0x20000, 0x10000, 0x5c4a02b4 )
-	ROM_LOAD_EVEN( "IC21_42.bin", 0x40000, 0x10000, 0x1193f1a5 )
-	ROM_LOAD_ODD ( "IC09_43.bin", 0x40000, 0x10000, 0x149b90fd )
+	ROM_LOAD_EVEN( "RS19_38.bin", 0x00000, 0x10000, 0x7428495a )
+	ROM_LOAD_ODD ( "RS07_37.bin", 0x00000, 0x10000, 0x7632da3c )
+	ROM_LOAD_EVEN( "RS20_40.bin", 0x20000, 0x10000, 0x092456b0 )
+	ROM_LOAD_ODD ( "RS08_39.bin", 0x20000, 0x10000, 0x5c4a02b4 )
+	ROM_LOAD_EVEN( "RS21_42.bin", 0x40000, 0x10000, 0x1193f1a5 )
+	ROM_LOAD_ODD ( "RS09_43.bin", 0x40000, 0x10000, 0x149b90fd )
 
 	ROM_REGION(0x100000)	/* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "IC40_01.bin",   0x00000, 0x10000, 0x67dad0cc )        /* 8x8 0 */
@@ -517,8 +510,8 @@ struct GameDriver rastan_driver =
 	0,
 	"rastan",
 	"Rastan",
-	"????",
-	"?????",
+	"1987",
+	"Taito Japan",
 	"Jarek Burczynski\nMarco Cassili",
 	0,
 	&machine_driver,
@@ -538,11 +531,11 @@ struct GameDriver rastan_driver =
 struct GameDriver rastsaga_driver =
 {
 	__FILE__,
-	0,
+	&rastan_driver,
 	"rastsaga",
 	"Rastan Saga",
-	"????",
-	"?????",
+	"1987",
+	"Taito",
 	"Jarek Burczynski\nMarco Cassili",
 	0,
 	&machine_driver,
@@ -607,13 +600,13 @@ static struct MachineDriver rastmu_driver =
 	/* video hardware */
 	32*8, 32*8, { 0*8, 32*8-1, 0*8, 32*8-1 },
 	gfxdecodeinfo,
-	256,0x50*16+256, /* looking on palette it seems that RASTAN uses 0x0-0x4f color schemes 16 colors each*/
+	2048, 2048,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_16BIT,
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
 	0,
-	rastan_vh_start,
-	rastan_vh_stop,
+	generic_vh_start,
+	generic_vh_stop,
 	rastan_vhmus_screenrefresh,
 
 	/* sound hardware */

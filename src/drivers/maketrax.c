@@ -79,7 +79,7 @@ int pacman_interrupt(void);
 void pengo_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 void pengo_updatehook0(int offset);
 int pacman_vh_start(void);
-void pengo_vh_screenrefresh(struct osd_bitmap *bitmap);
+void pengo_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 extern unsigned char *pengo_soundregs;
 void pengo_sound_enable_w(int offset,int data);
@@ -466,8 +466,8 @@ struct GameDriver maketrax_driver =
 	0,
 	"maketrax",
 	"Make Trax",
-	"????",
-	"?????",
+	"1981",
+	"Williams",
 	"Allard van der Bas (original code)\nNicola Salmoria (MAME driver)\nGary Walton (color info)\nSimon Walls (color info)\nJohn Bowes(info)\nMike Balfour\nValerio Verrando (high score saving)",
 	0,
 	&maketrax_machine_driver,

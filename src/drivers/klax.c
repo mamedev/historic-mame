@@ -73,7 +73,7 @@ void klax_init_machine (void);
 int klax_vh_start (void);
 void klax_vh_stop (void);
 
-void klax_vh_screenrefresh (struct osd_bitmap *bitmap);
+void klax_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 void klax_update_display_list (int scanline);
 
@@ -142,7 +142,7 @@ static struct MemoryReadAddress klax_readmem[] =
 	{ 0x0e0000, 0x0e0fff, atarigen_eeprom_r, &atarigen_eeprom, &atarigen_eeprom_size },
 	{ 0x260000, 0x260003, klax_input_r },
 	{ 0x270000, 0x270003, klax_adpcm_r },
-	{ 0x3e0000, 0x3e07ff, klax_paletteram_r, &atarigen_paletteram, &atarigen_paletteram_size },
+	{ 0x3e0000, 0x3e07ff, klax_paletteram_r, &paletteram },
 	{ 0x3f0000, 0x3f1fff, klax_playfieldram_r, &atarigen_playfieldram, &atarigen_playfieldram_size },
 	{ 0x3f2000, 0x3f27ff, MRA_BANK3, &atarigen_spriteram, &atarigen_spriteram_size },
 	{ 0x3f2800, 0x3f3fff, MRA_BANK2 },
@@ -341,16 +341,16 @@ ROM_START( klaxalt_rom )
 	ROM_LOAD_ODD ( "136075.007", 0x20000, 0x10000, 0xd2b58d41 )
 
 	ROM_REGION(0x60000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "136075.010", 0x00000, 0x10000, 0x4d657d89 )
-	ROM_LOAD( "136075.012", 0x10000, 0x10000, 0x649734d3 )
-	ROM_LOAD( "136075.014", 0x20000, 0x10000, 0x11012575 )
-	ROM_LOAD( "136075.009", 0x30000, 0x10000, 0xa0254981 )
-	ROM_LOAD( "136075.011", 0x40000, 0x10000, 0x3def5741 )
-	ROM_LOAD( "136075.013", 0x50000, 0x10000, 0x09c2a410 )
+	ROM_LOAD( "136075-2.010", 0x00000, 0x10000, 0x4d657d89 )
+	ROM_LOAD( "136075-2.012", 0x10000, 0x10000, 0x649734d3 )
+	ROM_LOAD( "136075-2.014", 0x20000, 0x10000, 0x11012575 )
+	ROM_LOAD( "136075-2.009", 0x30000, 0x10000, 0xa0254981 )
+	ROM_LOAD( "136075-2.011", 0x40000, 0x10000, 0x3def5741 )
+	ROM_LOAD( "136075-2.013", 0x50000, 0x10000, 0x09c2a410 )
 
 	ROM_REGION(0x20000)	/* ADPCM data */
-	ROM_LOAD( "136075.015", 0x00000, 0x10000, 0x98e01950 )
-	ROM_LOAD( "136075.016", 0x10000, 0x10000, 0x857903b5 )
+	ROM_LOAD( "136075-1.015", 0x00000, 0x10000, 0x98e01950 )
+	ROM_LOAD( "136075-1.016", 0x10000, 0x10000, 0x857903b5 )
 ROM_END
 
 
@@ -366,9 +366,9 @@ struct GameDriver klax_driver =
 	__FILE__,
 	0,
 	"klax",
-	"Klax",
-	"????",
-	"?????",
+	"Klax (set 1)",
+	"1989",
+	"Atari Games",
 	"Aaron Giles (MAME driver)\nMike Cuddy (additional information)",
 	0,
 	&klax_machine_driver,
@@ -390,11 +390,11 @@ struct GameDriver klax_driver =
 struct GameDriver klaxalt_driver =
 {
 	__FILE__,
-	0,
+	&klax_driver,
 	"klaxalt",
-	"Klax (Alternate)",
-	"????",
-	"?????",
+	"Klax (set 2)",
+	"1989",
+	"Atari Games",
 	"Aaron Giles (MAME driver)\nMike Cuddy (additional information)",
 	0,
 	&klax_machine_driver,

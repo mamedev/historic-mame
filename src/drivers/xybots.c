@@ -29,17 +29,15 @@ XYBOTS 6502 MEMORY MAP
 #include "sndhrdw/2151intf.h"
 
 
-int xybots_paletteram_r (int offset);
 int xybots_playfieldram_r (int offset);
 
-void xybots_paletteram_w (int offset, int data);
 void xybots_playfieldram_w (int offset, int data);
 void xybots_update_display_list (int scanline);
 
 int xybots_vh_start (void);
 void xybots_vh_stop (void);
 
-void xybots_vh_screenrefresh (struct osd_bitmap *bitmap);
+void xybots_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 
 static int speech_val;
@@ -146,14 +144,14 @@ void xybots_6502_ctl_w (int offset, int data)
 
 static struct MemoryReadAddress xybots_readmem[] =
 {
-	{ 0x008000, 0x00ffff, atarigen_slapstic_r, &atarigen_slapstic },
+	{ 0x008000, 0x00ffff, atarigen_slapstic_r },
 	{ 0x000000, 0x03ffff, MRA_ROM },
-	{ 0xff8000, 0xff8fff, MRA_BANK3, &atarigen_alpharam, &atarigen_alpharam_size },
+	{ 0xff8000, 0xff8fff, MRA_BANK3 },
 	{ 0xff9000, 0xffadff, MRA_BANK2 },
-	{ 0xffae00, 0xffafff, MRA_BANK4, &atarigen_spriteram, &atarigen_spriteram_size },
-	{ 0xffb000, 0xffbfff, xybots_playfieldram_r, &atarigen_playfieldram, &atarigen_playfieldram_size },
-	{ 0xffc000, 0xffc7ff, xybots_paletteram_r, &atarigen_paletteram, &atarigen_paletteram_size },
-	{ 0xffd000, 0xffdfff, atarigen_eeprom_r, &atarigen_eeprom, &atarigen_eeprom_size },
+	{ 0xffae00, 0xffafff, MRA_BANK4 },
+	{ 0xffb000, 0xffbfff, xybots_playfieldram_r },
+	{ 0xffc000, 0xffc7ff, paletteram_word_r },
+	{ 0xffd000, 0xffdfff, atarigen_eeprom_r },
 	{ 0xffe000, 0xffe0ff, atarigen_sound_r },
 	{ 0xffe100, 0xffe1ff, xybots_sw_r },
 	{ 0xffe200, 0xffe2ff, xybots_sysin_r },
@@ -163,14 +161,14 @@ static struct MemoryReadAddress xybots_readmem[] =
 
 static struct MemoryWriteAddress xybots_writemem[] =
 {
-	{ 0x008000, 0x00ffff, atarigen_slapstic_w },
+	{ 0x008000, 0x00ffff, atarigen_slapstic_w, &atarigen_slapstic },
 	{ 0x000000, 0x03ffff, MWA_ROM },
-	{ 0xff8000, 0xff8fff, MWA_BANK3 },
+	{ 0xff8000, 0xff8fff, MWA_BANK3, &atarigen_alpharam, &atarigen_alpharam_size },
 	{ 0xff9000, 0xffadff, MWA_BANK2 },
-	{ 0xffae00, 0xffafff, MWA_BANK4 },
-	{ 0xffb000, 0xffbfff, xybots_playfieldram_w },
-	{ 0xffc000, 0xffc7ff, xybots_paletteram_w },
-	{ 0xffd000, 0xffdfff, atarigen_eeprom_w },
+	{ 0xffae00, 0xffafff, MWA_BANK4, &atarigen_spriteram, &atarigen_spriteram_size },
+	{ 0xffb000, 0xffbfff, xybots_playfieldram_w, &atarigen_playfieldram, &atarigen_playfieldram_size },
+	{ 0xffc000, 0xffc7ff, paletteram_IIIIRRRRGGGGBBBB_word_w, &paletteram },
+	{ 0xffd000, 0xffdfff, atarigen_eeprom_w, &atarigen_eeprom, &atarigen_eeprom_size },
 	{ 0xffe800, 0xffe8ff, atarigen_eeprom_enable_w },
 	{ 0xffe900, 0xffe9ff, atarigen_sound_w },
 	{ 0xffea00, 0xffeaff, MWA_NOP },	/* watchdog */
@@ -472,8 +470,8 @@ struct GameDriver xybots_driver =
 	0,
 	"xybots",
 	"Xybots",
-	"????",
-	"?????",
+	"1987",
+	"Atari Games",
 	"Aaron Giles (MAME driver)\nAlan J. McCormick (hardware info)\nFrank Palazzolo (Slapstic decoding)",
 	0,
 	&xybots_machine_driver,

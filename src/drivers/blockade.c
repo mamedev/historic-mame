@@ -1,7 +1,7 @@
 /****************************************************************************
 
 Blockade/Comotion/Blasto Memory MAP
-Frank Palazzolo (palazzol@tir.com)
+Frank Palazzolo (palazzol@home.com)
 
 CPU - Intel 8080A
 
@@ -42,9 +42,9 @@ Notes:  Blockade/Comotion support is complete with the exception of
 /* #define BLOCKADE_LOG 1 */
 
 /* in vidhrdw */
-void blockade_vh_screenrefresh(struct osd_bitmap *bitmap);
-void comotion_vh_screenrefresh(struct osd_bitmap *bitmap);
-void blasto_vh_screenrefresh(struct osd_bitmap *bitmap);
+void blockade_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void comotion_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void blasto_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 void blockade_coin_latch_w(int offset, int data);
 void blockade_sound_freq_w(int offset, int data);
@@ -583,8 +583,8 @@ struct GameDriver blockade_driver =
 	0,
     "blockade",
     "Blockade",
-	"????",
-	"?????",
+	"1976",
+	"Gremlin",
     "Frank Palazzolo",
 	0,
     &blockade_machine_driver,
@@ -609,8 +609,8 @@ struct GameDriver comotion_driver =
 	0,
     "comotion",
     "Comotion",
-	"????",
-	"?????",
+	"1976",
+	"Gremlin",
     "Frank Palazzolo",
 	0,
     &comotion_machine_driver,
@@ -635,10 +635,10 @@ struct GameDriver blasto_driver =
 	0,
     "blasto",
     "Blasto",
-	"????",
-	"?????",
-    "Frank Palazzolo\n\nNote: This driver is preliminary",
-	0,
+	"1978",
+	"Gremlin",
+    "Frank Palazzolo",
+	GAME_NOT_WORKING,
     &blasto_machine_driver,
 
     blasto_rom,

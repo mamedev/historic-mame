@@ -130,7 +130,7 @@ int timeplt_scanline_r(int offset)
   the main emulation engine.
 
 ***************************************************************************/
-void timeplt_vh_screenrefresh(struct osd_bitmap *bitmap)
+void timeplt_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	int offs;
 

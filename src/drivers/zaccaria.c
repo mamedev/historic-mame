@@ -36,7 +36,7 @@ extern unsigned char *zaccaria_attributesram;
 
 void zaccaria_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 void zaccaria_attributes_w(int offset,int data);
-void zaccaria_vh_screenrefresh(struct osd_bitmap *bitmap);
+void zaccaria_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 struct GameDriver monymony_driver;
 
@@ -532,8 +532,8 @@ struct GameDriver monymony_driver =
 	0,
 	"monymony",
 	"Money Money",
-	"????",
-	"?????",
+	"1983",
+	"Zaccaria",
 	"Nicola Salmoria",
 	0,
 	&machine_driver,
@@ -557,8 +557,8 @@ struct GameDriver jackrabt_driver =
 	0,
 	"jackrabt",
 	"Jack Rabbit",
-	"????",
-	"?????",
+	"1984",
+	"Zaccaria",
 	"Nicola Salmoria",
 	0,
 	&machine_driver,

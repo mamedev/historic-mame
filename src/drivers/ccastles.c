@@ -89,7 +89,7 @@ extern unsigned char *ccastles_mobram2;
 void ccastles_paletteram_w(int offset,int data);
 int ccastles_vh_start(void);
 void ccastles_vh_stop(void);
-void ccastles_vh_screenrefresh(struct osd_bitmap *bitmap);
+void ccastles_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 int ccastles_trakball_x(int data);
 int ccastles_trakball_y(int data);
@@ -348,8 +348,8 @@ struct GameDriver ccastles_driver =
 	0,
 	"ccastles",
 	"Crystal Castles",
-	"????",
-	"?????",
+	"1983",
+	"Atari",
 	"Pat Lawrence\nChris Hardy\nSteve Clynes\nNicola Salmoria\nBrad Oliver",
 	0,
 	&ccastles_machine,

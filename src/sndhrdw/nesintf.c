@@ -129,7 +129,7 @@ void NESPSG_sh_update(void)
 	{
 		sample_pos[i] = 0;
 		if( sample_bits == 16 )
-			osd_play_streamed_sample_16(channel+i,buffer[i],buffer_len,emulation_rate,volume[i]);
+			osd_play_streamed_sample_16(channel+i,buffer[i],2*buffer_len,emulation_rate,volume[i]);
 		else
 			osd_play_streamed_sample(channel+i,buffer[i],buffer_len,emulation_rate,volume[i]);
 	}

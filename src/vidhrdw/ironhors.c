@@ -126,7 +126,7 @@ void ironhors_palettebank_w(int offset,int data)
   the main emulation engine.
 
 ***************************************************************************/
-void ironhors_vh_screenrefresh(struct osd_bitmap *bitmap)
+void ironhors_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	int offs,i;
 

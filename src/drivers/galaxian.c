@@ -83,7 +83,7 @@ void galaxian_attributes_w(int offset,int data);
 void galaxian_stars_w(int offset,int data);
 void pisces_gfxbank_w(int offset,int data);
 int galaxian_vh_start(void);
-void galaxian_vh_screenrefresh(struct osd_bitmap *bitmap);
+void galaxian_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 int galaxian_vh_interrupt(void);
 
 void mooncrst_pitch_w(int offset,int data);
@@ -422,6 +422,47 @@ INPUT_PORTS_START( pacmanbl_input_ports )
 	PORT_BIT( 0xf0, IP_ACTIVE_HIGH, IPT_UNUSED )
 INPUT_PORTS_END
 
+INPUT_PORTS_START( mooncrgx_input_ports )
+	PORT_START	/* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_COIN2 )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_2WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_2WAY )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 )
+	PORT_DIPNAME( 0x20, 0x00, "Cabinet", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "Upright" )
+	PORT_DIPSETTING(    0x20, "Cocktail" )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )	/* "reset" on schematics */
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_COIN3 )	/* works only in the Gremlin version */
+
+	PORT_START	/* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_START1 )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_START2 )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_2WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_2WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_COCKTAIL )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN )	/* probably unused */
+	PORT_DIPNAME( 0x40, 0x00, "Bonus Life", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "30000" )
+	PORT_DIPSETTING(    0x40, "50000" )
+	PORT_DIPNAME( 0x80, 0x00, "Language", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "Japanese" )
+	PORT_DIPSETTING(    0x80, "English" )
+
+	PORT_START	/* DSW */
+ 	PORT_DIPNAME( 0x03, 0x00, "Coin A", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x03, "4 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x02, "3 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x01, "2 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x00, "1 Coin/1 Credit" )
+ 	PORT_DIPNAME( 0x0c, 0x00, "Coin B", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "1 Coin/1 Credit" )
+	PORT_DIPSETTING(    0x04, "1 Coin/2 Credits" )
+	PORT_DIPSETTING(    0x08, "1 Coin/3 Credits" )
+	PORT_DIPSETTING(    0x0c, "Free Play" )
+	PORT_BIT( 0xf0, IP_ACTIVE_HIGH, IPT_UNUSED )
+INPUT_PORTS_END
+
 
 
 static struct GfxLayout galaxian_charlayout =
@@ -545,6 +586,13 @@ static unsigned char digger_color_prom[] =
 {
 	0x00,0xC7,0xF0,0x3F,0x00,0xDB,0xC6,0x38,0x00,0xF0,0x15,0x1F,0x00,0xF6,0x06,0x07,
 	0x00,0x91,0x07,0xF6,0x00,0xF0,0xFE,0x07,0x00,0x38,0x07,0xFE,0x00,0x07,0x3F,0xFE,
+};
+
+static unsigned char mooncrgx_color_prom[] =
+{
+	/* palette */
+	0x00,0x7a,0x36,0x07,0x00,0xf0,0x38,0x1f,0x00,0xc7,0xf0,0x3f,0x00,0xdb,0xc6,0x38,
+	0x00,0x36,0x07,0xf0,0x00,0x33,0x3f,0xdb,0x00,0x3f,0x57,0xc6,0x00,0xc6,0x3f,0xff
 };
 
 
@@ -699,41 +747,41 @@ ROM_END
 
 ROM_START( galmidw_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "galaxian.u",  0x0000, 0x0800, 0x168a654c )
-	ROM_LOAD( "galaxian.v",  0x0800, 0x0800, 0x934ef280 )
-	ROM_LOAD( "galaxian.w",  0x1000, 0x0800, 0x587af4d8 )
-	ROM_LOAD( "galaxian.y",  0x1800, 0x0800, 0xc2f89d12 )
-	ROM_LOAD( "galaxian.z",  0x2000, 0x0800, 0x9471bfe9 )
+	ROM_LOAD( "galmidw.u",  0x0000, 0x0800, 0x168a654c )
+	ROM_LOAD( "galmidw.v",  0x0800, 0x0800, 0x934ef280 )
+	ROM_LOAD( "galmidw.w",  0x1000, 0x0800, 0x587af4d8 )
+	ROM_LOAD( "galmidw.y",  0x1800, 0x0800, 0xc2f89d12 )
+	ROM_LOAD( "galmidw.z",  0x2000, 0x0800, 0x9471bfe9 )
 
 	ROM_REGION(0x1000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "galaxian.1j", 0x0000, 0x0800, 0xc05187c1 )
-	ROM_LOAD( "galaxian.1k", 0x0800, 0x0800, 0x8f8f0ecd )
+	ROM_LOAD( "galmidw.1j", 0x0000, 0x0800, 0xc05187c1 )
+	ROM_LOAD( "galmidw.1k", 0x0800, 0x0800, 0x8f8f0ecd )
 ROM_END
 
 ROM_START( galnamco_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "galaxian.u",  0x0000, 0x0800, 0xa9f9434b )
-	ROM_LOAD( "galaxian.v",  0x0800, 0x0800, 0x1fd66534 )
-	ROM_LOAD( "galaxian.w",  0x1000, 0x0800, 0xde73ca2f )
-	ROM_LOAD( "galaxian.y",  0x1800, 0x0800, 0x3bddfc4b )
-	ROM_LOAD( "galaxian.z",  0x2000, 0x0800, 0x98f4d194 )
+	ROM_LOAD( "galnamco.u",  0x0000, 0x0800, 0xa9f9434b )
+	ROM_LOAD( "galnamco.v",  0x0800, 0x0800, 0x1fd66534 )
+	ROM_LOAD( "galnamco.w",  0x1000, 0x0800, 0xde73ca2f )
+	ROM_LOAD( "galnamco.y",  0x1800, 0x0800, 0x3bddfc4b )
+	ROM_LOAD( "galnamco.z",  0x2000, 0x0800, 0x98f4d194 )
 
 	ROM_REGION(0x1000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "galaxian.1h", 0x0000, 0x0800, 0x4852a7c2 )
-	ROM_LOAD( "galaxian.1k", 0x0800, 0x0800, 0x17902ece )
+	ROM_LOAD( "galnamco.1h", 0x0000, 0x0800, 0x4852a7c2 )
+	ROM_LOAD( "galnamco.1k", 0x0800, 0x0800, 0x17902ece )
 ROM_END
 
 ROM_START( superg_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "galaxian.u",  0x0000, 0x0800, 0xaa7b3253 )
-	ROM_LOAD( "galaxian.v",  0x0800, 0x0800, 0xb2c47640 )
-	ROM_LOAD( "galaxian.w",  0x1000, 0x0800, 0x2afb5745 )
-	ROM_LOAD( "galaxian.y",  0x1800, 0x0800, 0xb6749510 )
-	ROM_LOAD( "galaxian.z",  0x2000, 0x0800, 0xd16558c9 )
+	ROM_LOAD( "superg.u",  0x0000, 0x0800, 0xaa7b3253 )
+	ROM_LOAD( "superg.v",  0x0800, 0x0800, 0xb2c47640 )
+	ROM_LOAD( "superg.w",  0x1000, 0x0800, 0x2afb5745 )
+	ROM_LOAD( "superg.y",  0x1800, 0x0800, 0xb6749510 )
+	ROM_LOAD( "superg.z",  0x2000, 0x0800, 0xd16558c9 )
 
 	ROM_REGION(0x1000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "galaxian.1h", 0x0000, 0x0800, 0xc05187c1 )
-	ROM_LOAD( "galaxian.1k", 0x0800, 0x0800, 0x8f8f0ecd )
+	ROM_LOAD( "superg.1h", 0x0000, 0x0800, 0xc05187c1 )
+	ROM_LOAD( "superg.1k", 0x0800, 0x0800, 0x8f8f0ecd )
 ROM_END
 
 ROM_START( galapx_rom )
@@ -769,15 +817,15 @@ ROM_END
 
 ROM_START( galturbo_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "galaxian.u",  0x0000, 0x0800, 0xaa7b3253 )
-	ROM_LOAD( "galaxian.v",  0x0800, 0x0800, 0xa08d337b )
-	ROM_LOAD( "galaxian.w",  0x1000, 0x0800, 0x2afb5745 )
-	ROM_LOAD( "galaxian.y",  0x1800, 0x0800, 0x9574b410 )
-	ROM_LOAD( "galaxian.z",  0x2000, 0x0800, 0xd525c4cb )
+	ROM_LOAD( "galturbo.u",  0x0000, 0x0800, 0xaa7b3253 )
+	ROM_LOAD( "galturbo.v",  0x0800, 0x0800, 0xa08d337b )
+	ROM_LOAD( "galturbo.w",  0x1000, 0x0800, 0x2afb5745 )
+	ROM_LOAD( "galturbo.y",  0x1800, 0x0800, 0x9574b410 )
+	ROM_LOAD( "galturbo.z",  0x2000, 0x0800, 0xd525c4cb )
 
 	ROM_REGION(0x1000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "galaxian.1h", 0x0000, 0x0800, 0xb545ede3 )
-	ROM_LOAD( "galaxian.1k", 0x0800, 0x0800, 0xcfbf64ef )
+	ROM_LOAD( "galturbo.1h", 0x0000, 0x0800, 0xb545ede3 )
+	ROM_LOAD( "galturbo.1k", 0x0800, 0x0800, 0xcfbf64ef )
 ROM_END
 
 ROM_START( pisces_rom )
@@ -814,20 +862,20 @@ ROM_END
 
 ROM_START( uniwars_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "u1",  0x0000, 0x0800, 0x9cc3c45f )
-	ROM_LOAD( "u2",  0x0800, 0x0800, 0x76d8a0c6 )
-	ROM_LOAD( "u3",  0x1000, 0x0800, 0x6511100f )
-	ROM_LOAD( "u4",  0x1800, 0x0800, 0x0ac76feb )
-	ROM_LOAD( "u5",  0x2000, 0x0800, 0x37e1e91b )
-	ROM_LOAD( "u6",  0x2800, 0x0800, 0x528d7839 )
-	ROM_LOAD( "u7",  0x3000, 0x0800, 0x7f2cc704 )
-	ROM_LOAD( "u8",  0x3800, 0x0800, 0xe370a4d6 )
+	ROM_LOAD( "f07_1a.bin",  0x0000, 0x0800, 0x9cc3c45f )
+	ROM_LOAD( "h07_2a.bin",  0x0800, 0x0800, 0x76d8a0c6 )
+	ROM_LOAD( "k07_3a.bin",  0x1000, 0x0800, 0x6511100f )
+	ROM_LOAD( "m07_4a.bin",  0x1800, 0x0800, 0x0ac76feb )
+	ROM_LOAD( "u5",          0x2000, 0x0800, 0x37e1e91b )
+	ROM_LOAD( "u6",          0x2800, 0x0800, 0x528d7839 )
+	ROM_LOAD( "m08p_7a.bin", 0x3000, 0x0800, 0x7f2cc704 )
+	ROM_LOAD( "u8",          0x3800, 0x0800, 0xe370a4d6 )
 
 	ROM_REGION(0x2000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "u10", 0x0000, 0x0800, 0x8b6d9ed9 )
-	ROM_LOAD( "u12", 0x0800, 0x0800, 0xc2870825 )
-	ROM_LOAD( "u9",  0x1000, 0x0800, 0x2acb176d )
-	ROM_LOAD( "u11", 0x1800, 0x0800, 0xa42e795c )
+	ROM_LOAD( "u10",         0x0000, 0x0800, 0x8b6d9ed9 )
+	ROM_LOAD( "h01_2.bin",   0x0800, 0x0800, 0xc2870825 )
+	ROM_LOAD( "u9",          0x1000, 0x0800, 0x2acb176d )
+	ROM_LOAD( "k01_2.bin",   0x1800, 0x0800, 0xa42e795c )
 ROM_END
 
 ROM_START( warofbug_rom )
@@ -896,6 +944,24 @@ ROM_START( zigzag_rom )
 	ROM_REGION(0x2000)	/* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "zz5", 0x0000, 0x1000, 0xb9732537 )
 	ROM_LOAD( "zz6", 0x1000, 0x1000, 0x24b20f8e )
+ROM_END
+
+ROM_START( mooncrgx_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "1", 0x0000, 0x0800, 0xbd53f38d )
+	ROM_LOAD( "2", 0x0800, 0x0800, 0x5907a613 )
+	ROM_LOAD( "3", 0x1000, 0x0800, 0x1d78f6cc )
+	ROM_LOAD( "4", 0x1800, 0x0800, 0x0be2a472 )
+	ROM_LOAD( "5", 0x2000, 0x0800, 0xef14f1f4 )
+	ROM_LOAD( "6", 0x2800, 0x0800, 0xdc48b506 )
+	ROM_LOAD( "7", 0x3000, 0x0800, 0x90ca9316 )
+	ROM_LOAD( "8", 0x3800, 0x0800, 0xd29f6aa7 )
+
+	ROM_REGION(0x2000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "10.chr", 0x0000, 0x0800, 0x22bd9067 )
+	ROM_LOAD( "12.chr", 0x0800, 0x0800, 0xdfbc68ba )
+	ROM_LOAD( "9.chr",  0x1000, 0x0800, 0x377a137c )
+	ROM_LOAD( "11.chr", 0x1800, 0x0800, 0xc1dc1cde )
 ROM_END
 
 
@@ -1076,8 +1142,8 @@ struct GameDriver galaxian_driver =
 	0,
 	"galaxian",
 	"Galaxian (Namco)",
-	"????",
-	"?????",
+	"1979",
+	"Namco",
 	"Robert Anschuetz\nNicola Salmoria\nAndrew Scott\nMarco Cassili",
 	0,
 	&galaxian_machine_driver,
@@ -1098,11 +1164,11 @@ struct GameDriver galaxian_driver =
 struct GameDriver galmidw_driver =
 {
 	__FILE__,
-	0,
+	&galaxian_driver,
 	"galmidw",
 	"Galaxian (Midway)",
-	"????",
-	"?????",
+	"1979",
+	"[Namco] (Midway license)",
 	"Robert Anschuetz\nNicola Salmoria\nAndrew Scott\nMarco Cassili",
 	0,
 	&galaxian_machine_driver,
@@ -1123,11 +1189,11 @@ struct GameDriver galmidw_driver =
 struct GameDriver galnamco_driver =
 {
 	__FILE__,
-	0,
+	&galaxian_driver,
 	"galnamco",
 	"Galaxian (Namco, modified)",
-	"????",
-	"?????",
+	"1979",
+	"hack",
 	"Robert Anschuetz\nNicola Salmoria\nAndrew Scott\nMarco Cassili",
 	0,
 	&galaxian_machine_driver,
@@ -1148,11 +1214,11 @@ struct GameDriver galnamco_driver =
 struct GameDriver superg_driver =
 {
 	__FILE__,
-	0,
+	&galaxian_driver,
 	"superg",
 	"Super Galaxians",
-	"????",
-	"?????",
+	"1979",
+	"hack",
 	"Robert Anschuetz\nNicola Salmoria\nAndrew Scott\nMarco Cassili",
 	0,
 	&galaxian_machine_driver,
@@ -1173,11 +1239,11 @@ struct GameDriver superg_driver =
 struct GameDriver galapx_driver =
 {
 	__FILE__,
-	0,
+	&galaxian_driver,
 	"galapx",
 	"Galaxian Part X",
-	"????",
-	"?????",
+	"1979",
+	"hack",
 	"Robert Anschuetz\nNicola Salmoria\nAndrew Scott\nMarco Cassili",
 	0,
 	&galaxian_machine_driver,
@@ -1198,11 +1264,11 @@ struct GameDriver galapx_driver =
 struct GameDriver galap1_driver =
 {
 	__FILE__,
-	0,
+	&galaxian_driver,
 	"galap1",
 	"Space Invaders Galactica",
-	"????",
-	"?????",
+	"1979",
+	"hack",
 	"Robert Anschuetz\nNicola Salmoria\nAndrew Scott\nMarco Cassili",
 	0,
 	&galaxian_machine_driver,
@@ -1223,11 +1289,11 @@ struct GameDriver galap1_driver =
 struct GameDriver galap4_driver =
 {
 	__FILE__,
-	0,
+	&galaxian_driver,
 	"galap4",
 	"Galaxian Part 4",
-	"????",
-	"?????",
+	"1979",
+	"hack",
 	"Robert Anschuetz\nNicola Salmoria\nAndrew Scott\nMarco Cassili",
 	0,
 	&galaxian_machine_driver,
@@ -1248,11 +1314,11 @@ struct GameDriver galap4_driver =
 struct GameDriver galturbo_driver =
 {
 	__FILE__,
-	0,
+	&galaxian_driver,
 	"galturbo",
 	"Galaxian Turbo",
-	"????",
-	"?????",
+	"1979",
+	"hack",
 	"Robert Anschuetz\nNicola Salmoria\nAndrew Scott\nMarco Cassili",
 	0,
 	&galaxian_machine_driver,
@@ -1277,7 +1343,7 @@ struct GameDriver pisces_driver =
 	"pisces",
 	"Pisces",
 	"????",
-	"?????",
+	"<unknown>",
 	"Robert Anschuetz\nNicola Salmoria\nAndrew Scott\nMike Balfour\nMarco Cassili",
 	0,
 	&pisces_machine_driver,
@@ -1301,8 +1367,8 @@ struct GameDriver japirem_driver =
 	0,
 	"japirem",
 	"Gingateikoku No Gyakushu",
-	"????",
-	"?????",
+	"1980",
+	"Irem",
 	"Nicola Salmoria\nLionel Theunissen\nRobert Anschuetz\nAndrew Scott\nMarco Cassili",
 	0,
 	&pisces_machine_driver,
@@ -1323,11 +1389,11 @@ struct GameDriver japirem_driver =
 struct GameDriver uniwars_driver =
 {
 	__FILE__,
-	0,
+	&japirem_driver,
 	"uniwars",
 	"Uniwars",
-	"????",
-	"?????",
+	"1980",
+	"Karateco",
 	"Nicola Salmoria\nGary Walton\nRobert Anschuetz\nAndrew Scott\nMarco Cassili",
 	0,
 	&pisces_machine_driver,
@@ -1351,8 +1417,8 @@ struct GameDriver warofbug_driver =
 	0,
 	"warofbug",
 	"War of the Bugs",
-	"????",
-	"?????",
+	"1981",
+	"Armenia",
 	"Robert Aanchuetz\nNicola Salmoria\nAndrew Scott\nMike Balfour\nTim Lindquist (color info)\nMarco Cassili",
 	0,
 	&galaxian_machine_driver,
@@ -1377,7 +1443,7 @@ struct GameDriver redufo_driver =
 	"redufo",
 	"Defend the Terra Attack on the Red UFO",
 	"????",
-	"?????",
+	"hack",
 	"Robert Aanchuetz\nNicola Salmoria\nAndrew Scott\nValerio Verrando (high score save)\nMarco Cassili",
 	0,
 	&galaxian_machine_driver,
@@ -1395,14 +1461,15 @@ struct GameDriver redufo_driver =
 	galaxian_hiload, galaxian_hisave
 };
 
+extern struct GameDriver pacman_driver;
 struct GameDriver pacmanbl_driver =
 {
 	__FILE__,
-	0,
+	&pacman_driver,
 	"pacmanbl",
 	"Pac Man (bootleg on Galaxian hardware)",
-	"????",
-	"?????",
+	"1981",
+	"bootleg",
 	"Robert Aanchuetz\nNicola Salmoria\nAndrew Scott\nValerio Verrando (high score save)\nMarco Cassili",
 	0,
 	&pacmanbl_machine_driver,
@@ -1466,6 +1533,32 @@ struct GameDriver zigzag_driver =
 
 	digger_color_prom, 0, 0,
 	ORIENTATION_ROTATE_90,
+
+	0, 0
+};
+
+extern struct GameDriver mooncrst_driver;
+struct GameDriver mooncrgx_driver =
+{
+	__FILE__,
+	&mooncrst_driver,
+	"mooncrgx",
+	"Moon Cresta (bootleg on Galaxian hardware)",
+	"1980",
+	"bootleg",
+	"Robert Anschuetz (Arcade emulator)\nNicola Salmoria (MAME driver)\nGary Walton (color info)\nSimon Walls (color info)\nAndrew Scott",
+	0,
+	&pisces_machine_driver,
+
+	mooncrgx_rom,
+	0, 0,
+	mooncrst_sample_names,
+	0,	/* sound_prom */
+
+	mooncrgx_input_ports,
+
+	mooncrgx_color_prom, 0, 0,
+	ORIENTATION_ROTATE_270,
 
 	0, 0
 };

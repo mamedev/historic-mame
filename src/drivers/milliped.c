@@ -50,10 +50,8 @@ trick to reading them properly.
 #include "machine/atari_vg.h"
 
 
-extern unsigned char *milliped_paletteram;
-
 void milliped_paletteram_w(int offset,int data);
-void milliped_vh_screenrefresh(struct osd_bitmap *bitmap);
+void milliped_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 int milliped_IN0_r(int offset);	/* JB 971220 */
 int milliped_IN1_r(int offset);	/* JB 971220 */
@@ -88,7 +86,7 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x0800, 0x080f, pokey2_w },
 	{ 0x1000, 0x13ff, videoram_w, &videoram, &videoram_size },
 	{ 0x13c0, 0x13ff, MWA_RAM, &spriteram },
-	{ 0x2480, 0x249f, milliped_paletteram_w, &milliped_paletteram },
+	{ 0x2480, 0x249f, milliped_paletteram_w, &paletteram },
 	{ 0x2680, 0x2680, watchdog_reset_w },
 	{ 0x2600, 0x2600, MWA_NOP }, /* IRQ ack */
 	{ 0x2500, 0x2502, coin_counter_w },
@@ -331,8 +329,8 @@ struct GameDriver milliped_driver =
 	0,
 	"milliped",
 	"Millipede",
-	"????",
-	"?????",
+	"1982",
+	"Atari",
 	"Ivan Mackintosh\nNicola Salmoria\nJohn Butler\nAaron Giles\nBernd Wiebelt\nBrad Oliver",
 	0,
 	&machine_driver,

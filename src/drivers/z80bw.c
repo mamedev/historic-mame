@@ -38,7 +38,7 @@ void astinvad_videoram_w(int offset,int data);   /* L.T */
 
 int  astinvad_vh_start(void);
 void astinvad_vh_stop(void);
-void astinvad_vh_screenrefresh(struct osd_bitmap *bitmap);
+void astinvad_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 void astinvad_sh_port4_w(int offset,int data);
 void astinvad_sh_port5_w(int offset,int data);
 void astinvad_sh_update(void);
@@ -210,21 +210,21 @@ struct GameDriver astinvad_driver =
 	0,
 	"astinvad",
 	"Astro Invader",
-	"????",
-	"?????",
+	"1980",
+	"Stern",
 	"Lee Taylor\n",
 	0,
 	&astinvad_machine_driver,
 
 	astinvad_rom,
 	0, 0,
-        astinvad_sample_names,
+	astinvad_sample_names,
 	0,      /* sound_prom */
 
 	astinvad_input_ports,
 
 	0, astinvad_palette, 0,
-        ORIENTATION_ROTATE_270,
+	ORIENTATION_ROTATE_270,
 
 	0,0
 };
@@ -236,21 +236,21 @@ struct GameDriver kamikaze_driver =
 	0,
 	"kamikaze",
 	"Kamikaze",
-	"????",
-	"?????",
+	"1979",
+	"Leijac Corporation",
 	"Lee Taylor\n",
 	0,
 	&astinvad_machine_driver,
 
 	kamikaze_rom,
 	0, 0,
-        astinvad_sample_names,
+	astinvad_sample_names,
 	0,      /* sound_prom */
 
 	astinvad_input_ports,
 
 	0, astinvad_palette, 0,
-        ORIENTATION_ROTATE_270,
+	ORIENTATION_ROTATE_270,
 
 	0,0
 };

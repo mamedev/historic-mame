@@ -123,7 +123,7 @@ void nova2001_flipscreen_w(int offset,int data)
   the main emulation engine.
 
 ***************************************************************************/
-void nova2001_vh_screenrefresh(struct osd_bitmap *bitmap)
+void nova2001_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	int offs;
 

@@ -1,100 +1,180 @@
 #include "cpudefs.h"
-void op_0(ULONG opcode) /* OR */
+void op_0(void) /* OR */
 {
 	ULONG dstreg = opcode & 7;
-{{	BYTE src = nextiword();
-{	BYTE dst = regs.d[dstreg].B.l;
+	BYTE src = nextiword();
+	BYTE dst = regs.d[dstreg].B.l;
 	src |= dst;
-	CLEARVC;
-	ZFLG = ((BYTE)(src)) == 0;
-	NFLG = ((BYTE)(src)) < 0;
 	regs.d[dstreg].B.l = src;
-}}}}
-void op_10(ULONG opcode) /* OR */
+	CLEARFLGS;
+	if ( src <= 0 )
+		{
+		if ( src ==  0 )
+			{
+			ZFLG = ZTRUE;
+			}
+		else
+			{
+			NFLG = NTRUE;
+			}
+		}
+}
+
+void op_10(void) /* OR */
 {
 	ULONG dstreg = opcode & 7;
-{{	BYTE src = nextiword();
+	BYTE src = nextiword();
+	CPTR dsta = regs.a[dstreg];
+	BYTE dst = get_byte(dsta);
+	src |= dst;
+	put_byte(dsta,src);
+	CLEARFLGS;
+	if ( src <= 0 )
+		{
+		if ( src ==  0 )
+			{
+			ZFLG = ZTRUE;
+			}
+		else
+			{
+			NFLG = NTRUE;
+			}
+		}
+}
+
+void op_18(void) /* OR */
+{
+	ULONG dstreg = opcode & 7;
+	BYTE src = nextiword();
+	CPTR dsta = regs.a[dstreg];
+	BYTE dst = get_byte(dsta);
+	regs.a[dstreg] += areg_byteinc[dstreg];
+	src |= dst;
+	put_byte(dsta,src);
+	CLEARFLGS;
+	if ( src <= 0 )
+		{
+		if ( src ==  0 )
+			{
+			ZFLG = ZTRUE;
+			}
+		else
+			{
+			NFLG = NTRUE;
+			}
+		}
+}
+
+void op_20(void) /* OR */
+{
+	ULONG dstreg = opcode & 7;
+	BYTE src = nextiword();
+	regs.a[dstreg] -= areg_byteinc[dstreg];
 {	CPTR dsta = regs.a[dstreg];
 	BYTE dst = get_byte(dsta);
 	src |= dst;
-	CLEARVC;
-	ZFLG = ((BYTE)(src)) == 0;
-	NFLG = ((BYTE)(src)) < 0;
 	put_byte(dsta,src);
-}}}}
-void op_18(ULONG opcode) /* OR */
+	CLEARFLGS;
+	if ( src <= 0 )
+		{
+		if ( src ==  0 )
+			{
+			ZFLG = ZTRUE;
+			}
+		else
+			{
+			NFLG = NTRUE;
+			}
+		}
+}}
+
+void op_28(void) /* OR */
 {
 	ULONG dstreg = opcode & 7;
-{{	BYTE src = nextiword();
-{	CPTR dsta = regs.a[dstreg];
+	BYTE src = nextiword();
+	CPTR dsta = regs.a[dstreg] + (LONG)(WORD)nextiword();
 	BYTE dst = get_byte(dsta);
-{	regs.a[dstreg] += areg_byteinc[dstreg];
 	src |= dst;
-	CLEARVC;
-	ZFLG = ((BYTE)(src)) == 0;
-	NFLG = ((BYTE)(src)) < 0;
 	put_byte(dsta,src);
-}}}}}
-void op_20(ULONG opcode) /* OR */
+	CLEARFLGS;
+	if ( src <= 0 )
+		{
+		if ( src ==  0 )
+			{
+			ZFLG = ZTRUE;
+			}
+		else
+			{
+			NFLG = NTRUE;
+			}
+		}
+}
+
+void op_30(void) /* OR */
 {
 	ULONG dstreg = opcode & 7;
-{{	BYTE src = nextiword();
-{	regs.a[dstreg] -= areg_byteinc[dstreg];
-{	CPTR dsta = regs.a[dstreg];
+	BYTE src = nextiword();
+	CPTR dsta = get_disp_ea(regs.a[dstreg]);
 	BYTE dst = get_byte(dsta);
 	src |= dst;
-	CLEARVC;
-	ZFLG = ((BYTE)(src)) == 0;
-	NFLG = ((BYTE)(src)) < 0;
 	put_byte(dsta,src);
-}}}}}
-void op_28(ULONG opcode) /* OR */
+	CLEARFLGS;
+	if ( src <= 0 )
+		{
+		if ( src ==  0 )
+			{
+			ZFLG = ZTRUE;
+			}
+		else
+			{
+			NFLG = NTRUE;
+			}
+		}
+}
+
+void op_38(void) /* OR */
 {
-	ULONG dstreg = opcode & 7;
-{{	BYTE src = nextiword();
-{	CPTR dsta = regs.a[dstreg] + (LONG)(WORD)nextiword();
+	BYTE src = nextiword();
+	CPTR dsta = (LONG)(WORD)nextiword();
 	BYTE dst = get_byte(dsta);
 	src |= dst;
-	CLEARVC;
-	ZFLG = ((BYTE)(src)) == 0;
-	NFLG = ((BYTE)(src)) < 0;
 	put_byte(dsta,src);
-}}}}
-void op_30(ULONG opcode) /* OR */
+	CLEARFLGS;
+	if ( src <= 0 )
+		{
+		if ( src ==  0 )
+			{
+			ZFLG = ZTRUE;
+			}
+		else
+			{
+			NFLG = NTRUE;
+			}
+		}
+}
+
+void op_39(void) /* OR */
 {
-	ULONG dstreg = opcode & 7;
-{{	BYTE src = nextiword();
-{	CPTR dsta = get_disp_ea(regs.a[dstreg]);
-{	BYTE dst = get_byte(dsta);
-	src |= dst;
-	CLEARVC;
-	ZFLG = ((BYTE)(src)) == 0;
-	NFLG = ((BYTE)(src)) < 0;
-	put_byte(dsta,src);
-}}}}}
-void op_38(ULONG opcode) /* OR */
-{
-{{	BYTE src = nextiword();
-{	CPTR dsta = (LONG)(WORD)nextiword();
+	BYTE src = nextiword();
+	CPTR dsta = nextilong();
 	BYTE dst = get_byte(dsta);
 	src |= dst;
-	CLEARVC;
-	ZFLG = ((BYTE)(src)) == 0;
-	NFLG = ((BYTE)(src)) < 0;
 	put_byte(dsta,src);
-}}}}
-void op_39(ULONG opcode) /* OR */
-{
-{{	BYTE src = nextiword();
-{	CPTR dsta = nextilong();
-	BYTE dst = get_byte(dsta);
-	src |= dst;
-	CLEARVC;
-	ZFLG = ((BYTE)(src)) == 0;
-	NFLG = ((BYTE)(src)) < 0;
-	put_byte(dsta,src);
-}}}}
-void op_3c(ULONG opcode) /* ORSR */
+	CLEARFLGS;
+	if ( src <= 0 )
+		{
+		if ( src ==  0 )
+			{
+			ZFLG = ZTRUE;
+			}
+		else
+			{
+			NFLG = NTRUE;
+			}
+		}
+}
+
+void op_3c(void) /* ORSR */
 {
 {	MakeSR();
 {	WORD src = nextiword();
@@ -102,146 +182,266 @@ void op_3c(ULONG opcode) /* ORSR */
 	regs.sr |= src;
 	MakeFromSR();
 }}}
-void op_40(ULONG opcode) /* OR */
+
+void op_40(void) /* OR */
 {
 	ULONG dstreg = opcode & 7;
-{{	WORD src = nextiword();
-{	WORD dst = regs.d[dstreg].W.l;
+	WORD src = nextiword();
+	WORD dst = regs.d[dstreg].W.l;
 	src |= dst;
-	CLEARVC;
-	ZFLG = ((WORD)(src)) == 0;
-	NFLG = ((WORD)(src)) < 0;
 	regs.d[dstreg].W.l = src;
-}}}}
-void op_50(ULONG opcode) /* OR */
+	CLEARFLGS;
+	if ( src <= 0 )
+		{
+		if ( src ==  0 )
+			{
+			ZFLG = ZTRUE;
+			}
+		else
+			{
+			NFLG = NTRUE;
+			}
+		}
+}
+
+void op_50(void) /* OR */
 {
 	ULONG dstreg = opcode & 7;
-{{	WORD src = nextiword();
+	WORD src = nextiword();
+	CPTR dsta = regs.a[dstreg];
+	WORD dst = get_word(dsta);
+	src |= dst;
+	put_word(dsta,src);
+	CLEARFLGS;
+	if ( src <= 0 )
+		{
+		if ( src ==  0 )
+			{
+			ZFLG = ZTRUE;
+			}
+		else
+			{
+			NFLG = NTRUE;
+			}
+		}
+}
+
+void op_58(void) /* OR */
+{
+	ULONG dstreg = opcode & 7;
+	WORD src = nextiword();
+	CPTR dsta = regs.a[dstreg];
+	WORD dst = get_word(dsta);
+	src |= dst;
+	put_word(dsta,src);
+	regs.a[dstreg] += 2;
+	CLEARFLGS;
+	if ( src <= 0 )
+		{
+		if ( src ==  0 )
+			{
+			ZFLG = ZTRUE;
+			}
+		else
+			{
+			NFLG = NTRUE;
+			}
+		}
+}
+
+void op_60(void) /* OR */
+{
+	ULONG dstreg = opcode & 7;
+	WORD src = nextiword();
+	regs.a[dstreg] -= 2;
 {	CPTR dsta = regs.a[dstreg];
 	WORD dst = get_word(dsta);
 	src |= dst;
-	CLEARVC;
-	ZFLG = ((WORD)(src)) == 0;
-	NFLG = ((WORD)(src)) < 0;
 	put_word(dsta,src);
-}}}}
-void op_58(ULONG opcode) /* OR */
+	CLEARFLGS;
+	if ( src <= 0 )
+		{
+		if ( src ==  0 )
+			{
+			ZFLG = ZTRUE;
+			}
+		else
+			{
+			NFLG = NTRUE;
+			}
+		}
+}}
+
+void op_68(void) /* OR */
 {
 	ULONG dstreg = opcode & 7;
-{{	WORD src = nextiword();
-{	CPTR dsta = regs.a[dstreg];
+	WORD src = nextiword();
+	CPTR dsta = regs.a[dstreg] + (LONG)(WORD)nextiword();
 	WORD dst = get_word(dsta);
-{	regs.a[dstreg] += 2;
 	src |= dst;
-	CLEARVC;
-	ZFLG = ((WORD)(src)) == 0;
-	NFLG = ((WORD)(src)) < 0;
 	put_word(dsta,src);
-}}}}}
-void op_60(ULONG opcode) /* OR */
+	CLEARFLGS;
+	if ( src <= 0 )
+		{
+		if ( src ==  0 )
+			{
+			ZFLG = ZTRUE;
+			}
+		else
+			{
+			NFLG = NTRUE;
+			}
+		}
+}
+
+void op_70(void) /* OR */
 {
 	ULONG dstreg = opcode & 7;
-{{	WORD src = nextiword();
-{	regs.a[dstreg] -= 2;
-{	CPTR dsta = regs.a[dstreg];
+	WORD src = nextiword();
+	CPTR dsta = get_disp_ea(regs.a[dstreg]);
 	WORD dst = get_word(dsta);
 	src |= dst;
-	CLEARVC;
-	ZFLG = ((WORD)(src)) == 0;
-	NFLG = ((WORD)(src)) < 0;
 	put_word(dsta,src);
-}}}}}
-void op_68(ULONG opcode) /* OR */
+	CLEARFLGS;
+	if ( src <= 0 )
+		{
+		if ( src ==  0 )
+			{
+			ZFLG = ZTRUE;
+			}
+		else
+			{
+			NFLG = NTRUE;
+			}
+		}
+}
+
+void op_78(void) /* OR */
+{
+	WORD src = nextiword();
+	CPTR dsta = (LONG)(WORD)nextiword();
+	WORD dst = get_word(dsta);
+	src |= dst;
+	put_word(dsta,src);
+	CLEARFLGS;
+	if ( src <= 0 )
+		{
+		if ( src ==  0 )
+			{
+			ZFLG = ZTRUE;
+			}
+		else
+			{
+			NFLG = NTRUE;
+			}
+		}
+}
+
+void op_79(void) /* OR */
+{
+	WORD src = nextiword();
+	CPTR dsta = nextilong();
+	WORD dst = get_word(dsta);
+	src |= dst;
+	put_word(dsta,src);
+	CLEARFLGS;
+	if ( src <= 0 )
+		{
+		if ( src ==  0 )
+			{
+			ZFLG = ZTRUE;
+			}
+		else
+			{
+			NFLG = NTRUE;
+			}
+		}
+}
+
+void op_7c(void) /* ORSR */
+{
+	if (!regs.s)
+		{
+		regs.pc -= 2;
+		Exception(8,0);
+		}
+	else
+		{
+		MakeSR();
+			{	WORD src = nextiword();
+		regs.sr |= src;
+		MakeFromSR();
+			}
+		}
+}
+
+void op_80(void) /* OR */
 {
 	ULONG dstreg = opcode & 7;
-{{	WORD src = nextiword();
-{	CPTR dsta = regs.a[dstreg] + (LONG)(WORD)nextiword();
-	WORD dst = get_word(dsta);
+	LONG src = nextilong();
+	LONG dst = regs.d[dstreg].D;
 	src |= dst;
-	CLEARVC;
-	ZFLG = ((WORD)(src)) == 0;
-	NFLG = ((WORD)(src)) < 0;
-	put_word(dsta,src);
-}}}}
-void op_70(ULONG opcode) /* OR */
-{
-	ULONG dstreg = opcode & 7;
-{{	WORD src = nextiword();
-{	CPTR dsta = get_disp_ea(regs.a[dstreg]);
-{	WORD dst = get_word(dsta);
-	src |= dst;
-	CLEARVC;
-	ZFLG = ((WORD)(src)) == 0;
-	NFLG = ((WORD)(src)) < 0;
-	put_word(dsta,src);
-}}}}}
-void op_78(ULONG opcode) /* OR */
-{
-{{	WORD src = nextiword();
-{	CPTR dsta = (LONG)(WORD)nextiword();
-	WORD dst = get_word(dsta);
-	src |= dst;
-	CLEARVC;
-	ZFLG = ((WORD)(src)) == 0;
-	NFLG = ((WORD)(src)) < 0;
-	put_word(dsta,src);
-}}}}
-void op_79(ULONG opcode) /* OR */
-{
-{{	WORD src = nextiword();
-{	CPTR dsta = nextilong();
-	WORD dst = get_word(dsta);
-	src |= dst;
-	CLEARVC;
-	ZFLG = ((WORD)(src)) == 0;
-	NFLG = ((WORD)(src)) < 0;
-	put_word(dsta,src);
-}}}}
-void op_7c(ULONG opcode) /* ORSR */
-{
-{if (!regs.s) { regs.pc -= 2; Exception(8,0); } else
-{	MakeSR();
-{	WORD src = nextiword();
-	regs.sr |= src;
-	MakeFromSR();
-}}}}
-void op_80(ULONG opcode) /* OR */
-{
-	ULONG dstreg = opcode & 7;
-{{	LONG src = nextilong();
-{	LONG dst = regs.d[dstreg].D;
-	src |= dst;
-	CLEARVC;
-	ZFLG = ((LONG)(src)) == 0;
-	NFLG = ((LONG)(src)) < 0;
 	regs.d[dstreg].D = (src);
-}}}}
-void op_90(ULONG opcode) /* OR */
+	CLEARFLGS;
+	if ( src <= 0 )
+		{
+		if ( src ==  0 )
+			{
+			ZFLG = ZTRUE;
+			}
+		else
+			{
+			NFLG = NTRUE;
+			}
+		}
+}
+
+void op_90(void) /* OR */
 {
 	ULONG dstreg = opcode & 7;
-{{	LONG src = nextilong();
-{	CPTR dsta = regs.a[dstreg];
+	LONG src = nextilong();
+	CPTR dsta = regs.a[dstreg];
 	LONG dst = get_long(dsta);
 	src |= dst;
-	CLEARVC;
-	ZFLG = ((LONG)(src)) == 0;
-	NFLG = ((LONG)(src)) < 0;
 	put_long(dsta,src);
-}}}}
-void op_98(ULONG opcode) /* OR */
+	CLEARFLGS;
+	if ( src <= 0 )
+		{
+		if ( src ==  0 )
+			{
+			ZFLG = ZTRUE;
+			}
+		else
+			{
+			NFLG = NTRUE;
+			}
+		}
+}
+
+void op_98(void) /* OR */
 {
 	ULONG dstreg = opcode & 7;
-{{	LONG src = nextilong();
-{	CPTR dsta = regs.a[dstreg];
+	LONG src = nextilong();
+	CPTR dsta = regs.a[dstreg];
 	LONG dst = get_long(dsta);
-{	regs.a[dstreg] += 4;
+	regs.a[dstreg] += 4;
 	src |= dst;
-	CLEARVC;
-	ZFLG = ((LONG)(src)) == 0;
-	NFLG = ((LONG)(src)) < 0;
 	put_long(dsta,src);
-}}}}}
-void op_a0(ULONG opcode) /* OR */
+	CLEARFLGS;
+	if ( src <= 0 )
+		{
+		if ( src ==  0 )
+			{
+			ZFLG = ZTRUE;
+			}
+		else
+			{
+			NFLG = NTRUE;
+			}
+		}
+}
+
+void op_a0(void) /* OR */
 {
 	ULONG dstreg = opcode & 7;
 {{	LONG src = nextilong();
@@ -249,85 +449,135 @@ void op_a0(ULONG opcode) /* OR */
 {	CPTR dsta = regs.a[dstreg];
 	LONG dst = get_long(dsta);
 	src |= dst;
-	CLEARVC;
-	ZFLG = ((LONG)(src)) == 0;
-	NFLG = ((LONG)(src)) < 0;
 	put_long(dsta,src);
+	CLEARFLGS;
+	if ( src <= 0 )
+		{
+		if ( src ==  0 )
+			{
+			ZFLG = ZTRUE;
+			}
+		else
+			{
+			NFLG = NTRUE;
+			}
+		}
 }}}}}
-void op_a8(ULONG opcode) /* OR */
+
+void op_a8(void) /* OR */
 {
 	ULONG dstreg = opcode & 7;
 {{	LONG src = nextilong();
 {	CPTR dsta = regs.a[dstreg] + (LONG)(WORD)nextiword();
 	LONG dst = get_long(dsta);
 	src |= dst;
-	CLEARVC;
-	ZFLG = ((LONG)(src)) == 0;
-	NFLG = ((LONG)(src)) < 0;
 	put_long(dsta,src);
+	CLEARFLGS;
+	if ( src <= 0 )
+		{
+		if ( src ==  0 )
+			{
+			ZFLG = ZTRUE;
+			}
+		else
+			{
+			NFLG = NTRUE;
+			}
+		}
 }}}}
-void op_b0(ULONG opcode) /* OR */
+void op_b0(void) /* OR */
 {
 	ULONG dstreg = opcode & 7;
 {{	LONG src = nextilong();
 {	CPTR dsta = get_disp_ea(regs.a[dstreg]);
 {	LONG dst = get_long(dsta);
 	src |= dst;
-	CLEARVC;
-	ZFLG = ((LONG)(src)) == 0;
-	NFLG = ((LONG)(src)) < 0;
 	put_long(dsta,src);
+	CLEARFLGS;
+	if ( src <= 0 )
+		{
+		if ( src ==  0 )
+			{
+			ZFLG = ZTRUE;
+			}
+		else
+			{
+			NFLG = NTRUE;
+			}
+		}
 }}}}}
-void op_b8(ULONG opcode) /* OR */
+void op_b8(void) /* OR */
 {
 {{	LONG src = nextilong();
 {	CPTR dsta = (LONG)(WORD)nextiword();
 	LONG dst = get_long(dsta);
 	src |= dst;
-	CLEARVC;
-	ZFLG = ((LONG)(src)) == 0;
-	NFLG = ((LONG)(src)) < 0;
 	put_long(dsta,src);
+	CLEARFLGS;
+	if ( src <= 0 )
+		{
+		if ( src ==  0 )
+			{
+			ZFLG = ZTRUE;
+			}
+		else
+			{
+			NFLG = NTRUE;
+			}
+		}
 }}}}
-void op_b9(ULONG opcode) /* OR */
+void op_b9(void) /* OR */
 {
 {{	LONG src = nextilong();
 {	CPTR dsta = nextilong();
 	LONG dst = get_long(dsta);
 	src |= dst;
-	CLEARVC;
-	ZFLG = ((LONG)(src)) == 0;
-	NFLG = ((LONG)(src)) < 0;
 	put_long(dsta,src);
+	CLEARFLGS;
+	if ( src <= 0 )
+		{
+		if ( src ==  0 )
+			{
+			ZFLG = ZTRUE;
+			}
+		else
+			{
+			NFLG = NTRUE;
+			}
+		}
 }}}}
-void op_100(ULONG opcode) /* BTST */
+
+void op_100(void) /* BTST */
 {
 	ULONG srcreg = ((opcode >> 9) & 7);
 	ULONG dstreg = opcode & 7;
-{{	LONG src = regs.d[srcreg].D;
-{	LONG dst = regs.d[dstreg].D;
+	LONG src = regs.d[srcreg].D;
+	LONG dst = regs.d[dstreg].D;
 	src &= 31;
 	ZFLG = !(dst & (1 << src));
-}}}}
-void op_108(ULONG opcode) /* MVPMR */
+}
+
+void op_108(void) /* MVPMR */
 {
 	ULONG srcreg = (opcode & 7);
 	ULONG dstreg = (opcode >> 9) & 7;
-{	CPTR memp = regs.a[srcreg] + nextiword();
-{	UWORD val = (get_byte(memp) << 8) + get_byte(memp + 2);
+	CPTR memp = regs.a[srcreg] + nextiword();
+	UWORD val = (get_byte(memp) << 8) + get_byte(memp + 2);
 	regs.d[dstreg].W.l = val;
-}}}
-void op_110(ULONG opcode) /* BTST */
+}
+
+void op_110(void) /* BTST */
 {
 	ULONG srcreg = ((opcode >> 9) & 7);
 	ULONG dstreg = opcode & 7;
-{{	BYTE src = regs.d[srcreg].B.l;
-{	CPTR dsta = regs.a[dstreg];
+	BYTE src = regs.d[srcreg].B.l;
+	CPTR dsta = regs.a[dstreg];
 	BYTE dst = get_byte(dsta);
 	src &= 7;
 	ZFLG = !(dst & (1 << src));
-}}}}
-void op_118(ULONG opcode) /* BTST */
+}
+
+void op_118(void) /* BTST */
 {
 	ULONG srcreg = ((opcode >> 9) & 7);
 	ULONG dstreg = opcode & 7;
@@ -338,7 +588,7 @@ void op_118(ULONG opcode) /* BTST */
 	src &= 7;
 	ZFLG = !(dst & (1 << src));
 }}}}}
-void op_120(ULONG opcode) /* BTST */
+void op_120(void) /* BTST */
 {
 	ULONG srcreg = ((opcode >> 9) & 7);
 	ULONG dstreg = opcode & 7;
@@ -349,7 +599,7 @@ void op_120(ULONG opcode) /* BTST */
 	src &= 7;
 	ZFLG = !(dst & (1 << src));
 }}}}}
-void op_128(ULONG opcode) /* BTST */
+void op_128(void) /* BTST */
 {
 	ULONG srcreg = ((opcode >> 9) & 7);
 	ULONG dstreg = opcode & 7;
@@ -359,7 +609,7 @@ void op_128(ULONG opcode) /* BTST */
 	src &= 7;
 	ZFLG = !(dst & (1 << src));
 }}}}
-void op_130(ULONG opcode) /* BTST */
+void op_130(void) /* BTST */
 {
 	ULONG srcreg = ((opcode >> 9) & 7);
 	ULONG dstreg = opcode & 7;
@@ -369,7 +619,7 @@ void op_130(ULONG opcode) /* BTST */
 	src &= 7;
 	ZFLG = !(dst & (1 << src));
 }}}}}
-void op_138(ULONG opcode) /* BTST */
+void op_138(void) /* BTST */
 {
 	ULONG srcreg = ((opcode >> 9) & 7);
 {{	BYTE src = regs.d[srcreg].B.l;
@@ -378,7 +628,7 @@ void op_138(ULONG opcode) /* BTST */
 	src &= 7;
 	ZFLG = !(dst & (1 << src));
 }}}}
-void op_139(ULONG opcode) /* BTST */
+void op_139(void) /* BTST */
 {
 	ULONG srcreg = ((opcode >> 9) & 7);
 {{	BYTE src = regs.d[srcreg].B.l;
@@ -387,7 +637,7 @@ void op_139(ULONG opcode) /* BTST */
 	src &= 7;
 	ZFLG = !(dst & (1 << src));
 }}}}
-void op_13a(ULONG opcode) /* BTST */
+void op_13a(void) /* BTST */
 {
 	ULONG srcreg = ((opcode >> 9) & 7);
 	ULONG dstreg;
@@ -399,7 +649,7 @@ void op_13a(ULONG opcode) /* BTST */
 	src &= 7;
 	ZFLG = !(dst & (1 << src));
 }}}}}
-void op_13b(ULONG opcode) /* BTST */
+void op_13b(void) /* BTST */
 {
 	ULONG srcreg = ((opcode >> 9) & 7);
 	ULONG dstreg;
@@ -410,7 +660,7 @@ void op_13b(ULONG opcode) /* BTST */
 	src &= 7;
 	ZFLG = !(dst & (1 << src));
 }}}}}
-void op_13c(ULONG opcode) /* BTST */
+void op_13c(void) /* BTST */
 {
 	ULONG srcreg = ((opcode >> 9) & 7);
 {{	BYTE src = regs.d[srcreg].B.l;
@@ -418,7 +668,7 @@ void op_13c(ULONG opcode) /* BTST */
 	src &= 7;
 	ZFLG = !(dst & (1 << src));
 }}}}
-void op_140(ULONG opcode) /* BCHG */
+void op_140(void) /* BCHG */
 {
 	ULONG srcreg = ((opcode >> 9) & 7);
 	ULONG dstreg = opcode & 7;
@@ -429,7 +679,7 @@ void op_140(ULONG opcode) /* BCHG */
 	dst ^= (1 << src);
 	regs.d[dstreg].D = (dst);
 }}}}
-void op_148(ULONG opcode) /* MVPMR */
+void op_148(void) /* MVPMR */
 {
 	ULONG srcreg = (opcode & 7);
 	ULONG dstreg = (opcode >> 9) & 7;
@@ -438,7 +688,7 @@ void op_148(ULONG opcode) /* MVPMR */
 							+ (get_byte(memp + 4) << 8) + get_byte(memp + 6);
 	regs.d[dstreg].D = (val);
 }}}
-void op_150(ULONG opcode) /* BCHG */
+void op_150(void) /* BCHG */
 {
 	ULONG srcreg = ((opcode >> 9) & 7);
 	ULONG dstreg = opcode & 7;
@@ -450,7 +700,7 @@ void op_150(ULONG opcode) /* BCHG */
 	dst ^= (1 << src);
 	put_byte(dsta,dst);
 }}}}
-void op_158(ULONG opcode) /* BCHG */
+void op_158(void) /* BCHG */
 {
 	ULONG srcreg = ((opcode >> 9) & 7);
 	ULONG dstreg = opcode & 7;
@@ -463,7 +713,7 @@ void op_158(ULONG opcode) /* BCHG */
 	dst ^= (1 << src);
 	put_byte(dsta,dst);
 }}}}}
-void op_160(ULONG opcode) /* BCHG */
+void op_160(void) /* BCHG */
 {
 	ULONG srcreg = ((opcode >> 9) & 7);
 	ULONG dstreg = opcode & 7;
@@ -476,7 +726,7 @@ void op_160(ULONG opcode) /* BCHG */
 	dst ^= (1 << src);
 	put_byte(dsta,dst);
 }}}}}
-void op_168(ULONG opcode) /* BCHG */
+void op_168(void) /* BCHG */
 {
 	ULONG srcreg = ((opcode >> 9) & 7);
 	ULONG dstreg = opcode & 7;
@@ -488,7 +738,7 @@ void op_168(ULONG opcode) /* BCHG */
 	dst ^= (1 << src);
 	put_byte(dsta,dst);
 }}}}
-void op_170(ULONG opcode) /* BCHG */
+void op_170(void) /* BCHG */
 {
 	ULONG srcreg = ((opcode >> 9) & 7);
 	ULONG dstreg = opcode & 7;
@@ -500,7 +750,7 @@ void op_170(ULONG opcode) /* BCHG */
 	dst ^= (1 << src);
 	put_byte(dsta,dst);
 }}}}}
-void op_178(ULONG opcode) /* BCHG */
+void op_178(void) /* BCHG */
 {
 	ULONG srcreg = ((opcode >> 9) & 7);
 {{	BYTE src = regs.d[srcreg].B.l;
@@ -511,7 +761,7 @@ void op_178(ULONG opcode) /* BCHG */
 	dst ^= (1 << src);
 	put_byte(dsta,dst);
 }}}}
-void op_179(ULONG opcode) /* BCHG */
+void op_179(void) /* BCHG */
 {
 	ULONG srcreg = ((opcode >> 9) & 7);
 {{	BYTE src = regs.d[srcreg].B.l;
@@ -522,7 +772,7 @@ void op_179(ULONG opcode) /* BCHG */
 	dst ^= (1 << src);
 	put_byte(dsta,dst);
 }}}}
-void op_17a(ULONG opcode) /* BCHG */
+void op_17a(void) /* BCHG */
 {
 	ULONG srcreg = ((opcode >> 9) & 7);
 	ULONG dstreg;
@@ -536,7 +786,7 @@ void op_17a(ULONG opcode) /* BCHG */
 	dst ^= (1 << src);
 	put_byte(dsta,dst);
 }}}}}
-void op_17b(ULONG opcode) /* BCHG */
+void op_17b(void) /* BCHG */
 {
 	ULONG srcreg = ((opcode >> 9) & 7);
 	ULONG dstreg;
@@ -549,7 +799,7 @@ void op_17b(ULONG opcode) /* BCHG */
 	dst ^= (1 << src);
 	put_byte(dsta,dst);
 }}}}}
-void op_180(ULONG opcode) /* BCLR */
+void op_180(void) /* BCLR */
 {
 	ULONG srcreg = ((opcode >> 9) & 7);
 	ULONG dstreg = opcode & 7;
@@ -560,7 +810,7 @@ void op_180(ULONG opcode) /* BCLR */
 	dst &= ~(1 << src);
 	regs.d[dstreg].D = (dst);
 }}}}
-void op_188(ULONG opcode) /* MVPRM */
+void op_188(void) /* MVPRM */
 {
 	ULONG srcreg = ((opcode >> 9) & 7);
 	ULONG dstreg = opcode & 7;
@@ -568,7 +818,7 @@ void op_188(ULONG opcode) /* MVPRM */
 	CPTR memp = regs.a[dstreg] + nextiword();
 	put_byte(memp, src >> 8); put_byte(memp + 2, src);
 }}}
-void op_190(ULONG opcode) /* BCLR */
+void op_190(void) /* BCLR */
 {
 	ULONG srcreg = ((opcode >> 9) & 7);
 	ULONG dstreg = opcode & 7;
@@ -580,7 +830,7 @@ void op_190(ULONG opcode) /* BCLR */
 	dst &= ~(1 << src);
 	put_byte(dsta,dst);
 }}}}
-void op_198(ULONG opcode) /* BCLR */
+void op_198(void) /* BCLR */
 {
 	ULONG srcreg = ((opcode >> 9) & 7);
 	ULONG dstreg = opcode & 7;
@@ -593,7 +843,7 @@ void op_198(ULONG opcode) /* BCLR */
 	dst &= ~(1 << src);
 	put_byte(dsta,dst);
 }}}}}
-void op_1a0(ULONG opcode) /* BCLR */
+void op_1a0(void) /* BCLR */
 {
 	ULONG srcreg = ((opcode >> 9) & 7);
 	ULONG dstreg = opcode & 7;
@@ -606,7 +856,7 @@ void op_1a0(ULONG opcode) /* BCLR */
 	dst &= ~(1 << src);
 	put_byte(dsta,dst);
 }}}}}
-void op_1a8(ULONG opcode) /* BCLR */
+void op_1a8(void) /* BCLR */
 {
 	ULONG srcreg = ((opcode >> 9) & 7);
 	ULONG dstreg = opcode & 7;
@@ -618,7 +868,7 @@ void op_1a8(ULONG opcode) /* BCLR */
 	dst &= ~(1 << src);
 	put_byte(dsta,dst);
 }}}}
-void op_1b0(ULONG opcode) /* BCLR */
+void op_1b0(void) /* BCLR */
 {
 	ULONG srcreg = ((opcode >> 9) & 7);
 	ULONG dstreg = opcode & 7;
@@ -630,7 +880,7 @@ void op_1b0(ULONG opcode) /* BCLR */
 	dst &= ~(1 << src);
 	put_byte(dsta,dst);
 }}}}}
-void op_1b8(ULONG opcode) /* BCLR */
+void op_1b8(void) /* BCLR */
 {
 	ULONG srcreg = ((opcode >> 9) & 7);
 {{	BYTE src = regs.d[srcreg].B.l;
@@ -641,7 +891,7 @@ void op_1b8(ULONG opcode) /* BCLR */
 	dst &= ~(1 << src);
 	put_byte(dsta,dst);
 }}}}
-void op_1b9(ULONG opcode) /* BCLR */
+void op_1b9(void) /* BCLR */
 {
 	ULONG srcreg = ((opcode >> 9) & 7);
 {{	BYTE src = regs.d[srcreg].B.l;
@@ -652,7 +902,7 @@ void op_1b9(ULONG opcode) /* BCLR */
 	dst &= ~(1 << src);
 	put_byte(dsta,dst);
 }}}}
-void op_1ba(ULONG opcode) /* BCLR */
+void op_1ba(void) /* BCLR */
 {
 	ULONG srcreg = ((opcode >> 9) & 7);
 	ULONG dstreg;
@@ -666,7 +916,7 @@ void op_1ba(ULONG opcode) /* BCLR */
 	dst &= ~(1 << src);
 	put_byte(dsta,dst);
 }}}}}
-void op_1bb(ULONG opcode) /* BCLR */
+void op_1bb(void) /* BCLR */
 {
 	ULONG srcreg = ((opcode >> 9) & 7);
 	ULONG dstreg;
@@ -679,7 +929,7 @@ void op_1bb(ULONG opcode) /* BCLR */
 	dst &= ~(1 << src);
 	put_byte(dsta,dst);
 }}}}}
-void op_1c0(ULONG opcode) /* BSET */
+void op_1c0(void) /* BSET */
 {
 	ULONG srcreg = ((opcode >> 9) & 7);
 	ULONG dstreg = opcode & 7;
@@ -690,7 +940,7 @@ void op_1c0(ULONG opcode) /* BSET */
 	dst |= (1 << src);
 	regs.d[dstreg].D = (dst);
 }}}}
-void op_1c8(ULONG opcode) /* MVPRM */
+void op_1c8(void) /* MVPRM */
 {
 	ULONG srcreg = ((opcode >> 9) & 7);
 	ULONG dstreg = opcode & 7;
@@ -699,7 +949,7 @@ void op_1c8(ULONG opcode) /* MVPRM */
 	put_byte(memp, src >> 24); put_byte(memp + 2, src >> 16);
 	put_byte(memp + 4, src >> 8); put_byte(memp + 6, src);
 }}}
-void op_1d0(ULONG opcode) /* BSET */
+void op_1d0(void) /* BSET */
 {
 	ULONG srcreg = ((opcode >> 9) & 7);
 	ULONG dstreg = opcode & 7;
@@ -711,7 +961,7 @@ void op_1d0(ULONG opcode) /* BSET */
 	dst |= (1 << src);
 	put_byte(dsta,dst);
 }}}}
-void op_1d8(ULONG opcode) /* BSET */
+void op_1d8(void) /* BSET */
 {
 	ULONG srcreg = ((opcode >> 9) & 7);
 	ULONG dstreg = opcode & 7;
@@ -724,7 +974,7 @@ void op_1d8(ULONG opcode) /* BSET */
 	dst |= (1 << src);
 	put_byte(dsta,dst);
 }}}}}
-void op_1e0(ULONG opcode) /* BSET */
+void op_1e0(void) /* BSET */
 {
 	ULONG srcreg = ((opcode >> 9) & 7);
 	ULONG dstreg = opcode & 7;
@@ -737,7 +987,7 @@ void op_1e0(ULONG opcode) /* BSET */
 	dst |= (1 << src);
 	put_byte(dsta,dst);
 }}}}}
-void op_1e8(ULONG opcode) /* BSET */
+void op_1e8(void) /* BSET */
 {
 	ULONG srcreg = ((opcode >> 9) & 7);
 	ULONG dstreg = opcode & 7;
@@ -749,7 +999,7 @@ void op_1e8(ULONG opcode) /* BSET */
 	dst |= (1 << src);
 	put_byte(dsta,dst);
 }}}}
-void op_1f0(ULONG opcode) /* BSET */
+void op_1f0(void) /* BSET */
 {
 	ULONG srcreg = ((opcode >> 9) & 7);
 	ULONG dstreg = opcode & 7;
@@ -761,7 +1011,7 @@ void op_1f0(ULONG opcode) /* BSET */
 	dst |= (1 << src);
 	put_byte(dsta,dst);
 }}}}}
-void op_1f8(ULONG opcode) /* BSET */
+void op_1f8(void) /* BSET */
 {
 	ULONG srcreg = ((opcode >> 9) & 7);
 {{	BYTE src = regs.d[srcreg].B.l;
@@ -772,7 +1022,7 @@ void op_1f8(ULONG opcode) /* BSET */
 	dst |= (1 << src);
 	put_byte(dsta,dst);
 }}}}
-void op_1f9(ULONG opcode) /* BSET */
+void op_1f9(void) /* BSET */
 {
 	ULONG srcreg = ((opcode >> 9) & 7);
 {{	BYTE src = regs.d[srcreg].B.l;
@@ -783,7 +1033,7 @@ void op_1f9(ULONG opcode) /* BSET */
 	dst |= (1 << src);
 	put_byte(dsta,dst);
 }}}}
-void op_1fa(ULONG opcode) /* BSET */
+void op_1fa(void) /* BSET */
 {
 	ULONG srcreg = ((opcode >> 9) & 7);
 	ULONG dstreg;
@@ -797,7 +1047,7 @@ void op_1fa(ULONG opcode) /* BSET */
 	dst |= (1 << src);
 	put_byte(dsta,dst);
 }}}}}
-void op_1fb(ULONG opcode) /* BSET */
+void op_1fb(void) /* BSET */
 {
 	ULONG srcreg = ((opcode >> 9) & 7);
 	ULONG dstreg;
@@ -810,102 +1060,178 @@ void op_1fb(ULONG opcode) /* BSET */
 	dst |= (1 << src);
 	put_byte(dsta,dst);
 }}}}}
-void op_200(ULONG opcode) /* AND */
+void op_200(void) /* AND */
 {
 	ULONG dstreg = opcode & 7;
-{{	BYTE src = nextiword();
-{	BYTE dst = regs.d[dstreg].B.l;
+	BYTE src = nextiword();
+	BYTE dst = regs.d[dstreg].B.l;
 	src &= dst;
-	CLEARVC;
-	ZFLG = ((BYTE)(src)) == 0;
-	NFLG = ((BYTE)(src)) < 0;
 	regs.d[dstreg].B.l = src;
-}}}}
-void op_210(ULONG opcode) /* AND */
+	CLEARFLGS;
+	if ( src <= 0 )
+		{
+		if ( src ==  0 )
+			{
+			ZFLG = ZTRUE;
+			}
+		else
+			{
+			NFLG = NTRUE;
+			}
+		}
+}
+
+void op_210(void) /* AND */
 {
 	ULONG dstreg = opcode & 7;
-{{	BYTE src = nextiword();
+	BYTE src = nextiword();
+	CPTR dsta = regs.a[dstreg];
+	BYTE dst = get_byte(dsta);
+	src &= dst;
+	put_byte(dsta,src);
+	CLEARFLGS;
+	if ( src <= 0 )
+		{
+		if ( src ==  0 )
+			{
+			ZFLG = ZTRUE;
+			}
+		else
+			{
+			NFLG = NTRUE;
+			}
+		}
+}
+
+void op_218(void) /* AND */
+{
+	ULONG dstreg = opcode & 7;
+	BYTE src = nextiword();
+	CPTR dsta = regs.a[dstreg];
+	BYTE dst = get_byte(dsta);
+	regs.a[dstreg] += areg_byteinc[dstreg];
+	src &= dst;
+	put_byte(dsta,src);
+	CLEARFLGS;
+	if ( src <= 0 )
+		{
+		if ( src ==  0 )
+			{
+			ZFLG = ZTRUE;
+			}
+		else
+			{
+			NFLG = NTRUE;
+			}
+		}
+}
+
+void op_220(void) /* AND */
+{
+	ULONG dstreg = opcode & 7;
+	BYTE src = nextiword();
+	regs.a[dstreg] -= areg_byteinc[dstreg];
 {	CPTR dsta = regs.a[dstreg];
 	BYTE dst = get_byte(dsta);
 	src &= dst;
-	CLEARVC;
-	ZFLG = ((BYTE)(src)) == 0;
-	NFLG = ((BYTE)(src)) < 0;
 	put_byte(dsta,src);
-}}}}
-void op_218(ULONG opcode) /* AND */
-{
-	ULONG dstreg = opcode & 7;
-{{	BYTE src = nextiword();
-{	CPTR dsta = regs.a[dstreg];
-	BYTE dst = get_byte(dsta);
-{	regs.a[dstreg] += areg_byteinc[dstreg];
-	src &= dst;
-	CLEARVC;
-	ZFLG = ((BYTE)(src)) == 0;
-	NFLG = ((BYTE)(src)) < 0;
-	put_byte(dsta,src);
-}}}}}
-void op_220(ULONG opcode) /* AND */
-{
-	ULONG dstreg = opcode & 7;
-{{	BYTE src = nextiword();
-{	regs.a[dstreg] -= areg_byteinc[dstreg];
-{	CPTR dsta = regs.a[dstreg];
-	BYTE dst = get_byte(dsta);
-	src &= dst;
-	CLEARVC;
-	ZFLG = ((BYTE)(src)) == 0;
-	NFLG = ((BYTE)(src)) < 0;
-	put_byte(dsta,src);
-}}}}}
-void op_228(ULONG opcode) /* AND */
+	CLEARFLGS;
+	if ( src <= 0 )
+		{
+		if ( src ==  0 )
+			{
+			ZFLG = ZTRUE;
+			}
+		else
+			{
+			NFLG = NTRUE;
+			}
+		}
+}}
+
+void op_228(void) /* AND */
 {
 	ULONG dstreg = opcode & 7;
 {{	BYTE src = nextiword();
 {	CPTR dsta = regs.a[dstreg] + (LONG)(WORD)nextiword();
 	BYTE dst = get_byte(dsta);
 	src &= dst;
-	CLEARVC;
-	ZFLG = ((BYTE)(src)) == 0;
-	NFLG = ((BYTE)(src)) < 0;
 	put_byte(dsta,src);
+	CLEARFLGS;
+	if ( src <= 0 )
+		{
+		if ( src ==  0 )
+			{
+			ZFLG = ZTRUE;
+			}
+		else
+			{
+			NFLG = NTRUE;
+			}
+		}
 }}}}
-void op_230(ULONG opcode) /* AND */
+void op_230(void) /* AND */
 {
 	ULONG dstreg = opcode & 7;
 {{	BYTE src = nextiword();
 {	CPTR dsta = get_disp_ea(regs.a[dstreg]);
 {	BYTE dst = get_byte(dsta);
 	src &= dst;
-	CLEARVC;
-	ZFLG = ((BYTE)(src)) == 0;
-	NFLG = ((BYTE)(src)) < 0;
 	put_byte(dsta,src);
+	CLEARFLGS;
+	if ( src <= 0 )
+		{
+		if ( src ==  0 )
+			{
+			ZFLG = ZTRUE;
+			}
+		else
+			{
+			NFLG = NTRUE;
+			}
+		}
 }}}}}
-void op_238(ULONG opcode) /* AND */
+void op_238(void) /* AND */
 {
 {{	BYTE src = nextiword();
 {	CPTR dsta = (LONG)(WORD)nextiword();
 	BYTE dst = get_byte(dsta);
 	src &= dst;
-	CLEARVC;
-	ZFLG = ((BYTE)(src)) == 0;
-	NFLG = ((BYTE)(src)) < 0;
 	put_byte(dsta,src);
+	CLEARFLGS;
+	if ( src <= 0 )
+		{
+		if ( src ==  0 )
+			{
+			ZFLG = ZTRUE;
+			}
+		else
+			{
+			NFLG = NTRUE;
+			}
+		}
 }}}}
-void op_239(ULONG opcode) /* AND */
+void op_239(void) /* AND */
 {
 {{	BYTE src = nextiword();
 {	CPTR dsta = nextilong();
 	BYTE dst = get_byte(dsta);
 	src &= dst;
-	CLEARVC;
-	ZFLG = ((BYTE)(src)) == 0;
-	NFLG = ((BYTE)(src)) < 0;
 	put_byte(dsta,src);
+	CLEARFLGS;
+	if ( src <= 0 )
+		{
+		if ( src ==  0 )
+			{
+			ZFLG = ZTRUE;
+			}
+		else
+			{
+			NFLG = NTRUE;
+			}
+		}
 }}}}
-void op_23c(ULONG opcode) /* ANDSR */
+void op_23c(void) /* ANDSR */
 {
 {	MakeSR();
 {	WORD src = nextiword();
@@ -913,43 +1239,71 @@ void op_23c(ULONG opcode) /* ANDSR */
 	regs.sr &= src;
 	MakeFromSR();
 }}}
-void op_240(ULONG opcode) /* AND */
+void op_240(void) /* AND */
 {
 	ULONG dstreg = opcode & 7;
 {{	WORD src = nextiword();
 {	WORD dst = regs.d[dstreg].W.l;
 	src &= dst;
-	CLEARVC;
-	ZFLG = ((WORD)(src)) == 0;
-	NFLG = ((WORD)(src)) < 0;
 	regs.d[dstreg].W.l = src;
+	CLEARFLGS;
+	if ( src <= 0 )
+		{
+		if ( src ==  0 )
+			{
+			ZFLG = ZTRUE;
+			}
+		else
+			{
+			NFLG = NTRUE;
+			}
+		}
 }}}}
-void op_250(ULONG opcode) /* AND */
+void op_250(void) /* AND */
 {
 	ULONG dstreg = opcode & 7;
 {{	WORD src = nextiword();
 {	CPTR dsta = regs.a[dstreg];
 	WORD dst = get_word(dsta);
 	src &= dst;
-	CLEARVC;
-	ZFLG = ((WORD)(src)) == 0;
-	NFLG = ((WORD)(src)) < 0;
 	put_word(dsta,src);
+	CLEARFLGS;
+	if ( src <= 0 )
+		{
+		if ( src ==  0 )
+			{
+			ZFLG = ZTRUE;
+			}
+		else
+			{
+			NFLG = NTRUE;
+			}
+		}
 }}}}
-void op_258(ULONG opcode) /* AND */
+void op_258(void) /* AND */
 {
 	ULONG dstreg = opcode & 7;
-{{	WORD src = nextiword();
-{	CPTR dsta = regs.a[dstreg];
+	WORD src = nextiword();
+	CPTR dsta = regs.a[dstreg];
 	WORD dst = get_word(dsta);
-{	regs.a[dstreg] += 2;
 	src &= dst;
-	CLEARVC;
-	ZFLG = ((WORD)(src)) == 0;
-	NFLG = ((WORD)(src)) < 0;
 	put_word(dsta,src);
-}}}}}
-void op_260(ULONG opcode) /* AND */
+	regs.a[dstreg] += 2;
+	CLEARFLGS;
+	if ( src <= 0 )
+		{
+		if ( src ==  0 )
+			{
+			ZFLG = ZTRUE;
+			}
+		else
+			{
+			NFLG = NTRUE;
+			}
+		}
+}
+
+void op_260(void) /* AND */
 {
 	ULONG dstreg = opcode & 7;
 {{	WORD src = nextiword();
@@ -957,58 +1311,103 @@ void op_260(ULONG opcode) /* AND */
 {	CPTR dsta = regs.a[dstreg];
 	WORD dst = get_word(dsta);
 	src &= dst;
-	CLEARVC;
-	ZFLG = ((WORD)(src)) == 0;
-	NFLG = ((WORD)(src)) < 0;
 	put_word(dsta,src);
+	CLEARFLGS;
+	if ( src <= 0 )
+		{
+		if ( src ==  0 )
+			{
+			ZFLG = ZTRUE;
+			}
+		else
+			{
+			NFLG = NTRUE;
+			}
+		}
 }}}}}
-void op_268(ULONG opcode) /* AND */
+void op_268(void) /* AND */
 {
 	ULONG dstreg = opcode & 7;
 {{	WORD src = nextiword();
 {	CPTR dsta = regs.a[dstreg] + (LONG)(WORD)nextiword();
 	WORD dst = get_word(dsta);
 	src &= dst;
-	CLEARVC;
-	ZFLG = ((WORD)(src)) == 0;
-	NFLG = ((WORD)(src)) < 0;
 	put_word(dsta,src);
+	CLEARFLGS;
+	if ( src <= 0 )
+		{
+		if ( src ==  0 )
+			{
+			ZFLG = ZTRUE;
+			}
+		else
+			{
+			NFLG = NTRUE;
+			}
+		}
 }}}}
-void op_270(ULONG opcode) /* AND */
+void op_270(void) /* AND */
 {
 	ULONG dstreg = opcode & 7;
 {{	WORD src = nextiword();
 {	CPTR dsta = get_disp_ea(regs.a[dstreg]);
 {	WORD dst = get_word(dsta);
 	src &= dst;
-	CLEARVC;
-	ZFLG = ((WORD)(src)) == 0;
-	NFLG = ((WORD)(src)) < 0;
 	put_word(dsta,src);
+	CLEARFLGS;
+	if ( src <= 0 )
+		{
+		if ( src ==  0 )
+			{
+			ZFLG = ZTRUE;
+			}
+		else
+			{
+			NFLG = NTRUE;
+			}
+		}
 }}}}}
-void op_278(ULONG opcode) /* AND */
+void op_278(void) /* AND */
 {
 {{	WORD src = nextiword();
 {	CPTR dsta = (LONG)(WORD)nextiword();
 	WORD dst = get_word(dsta);
 	src &= dst;
-	CLEARVC;
-	ZFLG = ((WORD)(src)) == 0;
-	NFLG = ((WORD)(src)) < 0;
 	put_word(dsta,src);
+	CLEARFLGS;
+	if ( src <= 0 )
+		{
+		if ( src ==  0 )
+			{
+			ZFLG = ZTRUE;
+			}
+		else
+			{
+			NFLG = NTRUE;
+			}
+		}
 }}}}
-void op_279(ULONG opcode) /* AND */
+void op_279(void) /* AND */
 {
 {{	WORD src = nextiword();
 {	CPTR dsta = nextilong();
 	WORD dst = get_word(dsta);
 	src &= dst;
-	CLEARVC;
-	ZFLG = ((WORD)(src)) == 0;
-	NFLG = ((WORD)(src)) < 0;
 	put_word(dsta,src);
+	CLEARFLGS;
+	if ( src <= 0 )
+		{
+		if ( src ==  0 )
+			{
+			ZFLG = ZTRUE;
+			}
+		else
+			{
+			NFLG = NTRUE;
+			}
+		}
 }}}}
-void op_27c(ULONG opcode) /* ANDSR */
+void op_27c(void) /* ANDSR */
 {
 {if (!regs.s) { regs.pc -= 2; Exception(8,0); } else
 {	MakeSR();
@@ -1016,30 +1415,48 @@ void op_27c(ULONG opcode) /* ANDSR */
 	regs.sr &= src;
 	MakeFromSR();
 }}}}
-void op_280(ULONG opcode) /* AND */
+void op_280(void) /* AND */
 {
 	ULONG dstreg = opcode & 7;
 {{	LONG src = nextilong();
 {	LONG dst = regs.d[dstreg].D;
 	src &= dst;
-	CLEARVC;
-	ZFLG = ((LONG)(src)) == 0;
-	NFLG = ((LONG)(src)) < 0;
 	regs.d[dstreg].D = (src);
+	CLEARFLGS;
+	if ( src <= 0 )
+		{
+		if ( src ==  0 )
+			{
+			ZFLG = ZTRUE;
+			}
+		else
+			{
+			NFLG = NTRUE;
+			}
+		}
 }}}}
-void op_290(ULONG opcode) /* AND */
+void op_290(void) /* AND */
 {
 	ULONG dstreg = opcode & 7;
 {{	LONG src = nextilong();
 {	CPTR dsta = regs.a[dstreg];
 	LONG dst = get_long(dsta);
 	src &= dst;
-	CLEARVC;
-	ZFLG = ((LONG)(src)) == 0;
-	NFLG = ((LONG)(src)) < 0;
 	put_long(dsta,src);
+	CLEARFLGS;
+	if ( src <= 0 )
+		{
+		if ( src ==  0 )
+			{
+			ZFLG = ZTRUE;
+			}
+		else
+			{
+			NFLG = NTRUE;
+			}
+		}
 }}}}
-void op_298(ULONG opcode) /* AND */
+void op_298(void) /* AND */
 {
 	ULONG dstreg = opcode & 7;
 {{	LONG src = nextilong();
@@ -1047,12 +1464,21 @@ void op_298(ULONG opcode) /* AND */
 	LONG dst = get_long(dsta);
 {	regs.a[dstreg] += 4;
 	src &= dst;
-	CLEARVC;
-	ZFLG = ((LONG)(src)) == 0;
-	NFLG = ((LONG)(src)) < 0;
 	put_long(dsta,src);
+	CLEARFLGS;
+	if ( src <= 0 )
+		{
+		if ( src ==  0 )
+			{
+			ZFLG = ZTRUE;
+			}
+		else
+			{
+			NFLG = NTRUE;
+			}
+		}
 }}}}}
-void op_2a0(ULONG opcode) /* AND */
+void op_2a0(void) /* AND */
 {
 	ULONG dstreg = opcode & 7;
 {{	LONG src = nextilong();
@@ -1060,857 +1486,954 @@ void op_2a0(ULONG opcode) /* AND */
 {	CPTR dsta = regs.a[dstreg];
 	LONG dst = get_long(dsta);
 	src &= dst;
-	CLEARVC;
-	ZFLG = ((LONG)(src)) == 0;
-	NFLG = ((LONG)(src)) < 0;
 	put_long(dsta,src);
+	CLEARFLGS;
+	if ( src <= 0 )
+		{
+		if ( src ==  0 )
+			{
+			ZFLG = ZTRUE;
+			}
+		else
+			{
+			NFLG = NTRUE;
+			}
+		}
 }}}}}
-void op_2a8(ULONG opcode) /* AND */
+void op_2a8(void) /* AND */
 {
 	ULONG dstreg = opcode & 7;
 {{	LONG src = nextilong();
 {	CPTR dsta = regs.a[dstreg] + (LONG)(WORD)nextiword();
 	LONG dst = get_long(dsta);
 	src &= dst;
-	CLEARVC;
-	ZFLG = ((LONG)(src)) == 0;
-	NFLG = ((LONG)(src)) < 0;
 	put_long(dsta,src);
+	CLEARFLGS;
+	if ( src <= 0 )
+		{
+		if ( src ==  0 )
+			{
+			ZFLG = ZTRUE;
+			}
+		else
+			{
+			NFLG = NTRUE;
+			}
+		}
 }}}}
-void op_2b0(ULONG opcode) /* AND */
+void op_2b0(void) /* AND */
 {
 	ULONG dstreg = opcode & 7;
 {{	LONG src = nextilong();
 {	CPTR dsta = get_disp_ea(regs.a[dstreg]);
 {	LONG dst = get_long(dsta);
 	src &= dst;
-	CLEARVC;
-	ZFLG = ((LONG)(src)) == 0;
-	NFLG = ((LONG)(src)) < 0;
 	put_long(dsta,src);
+	CLEARFLGS;
+	if ( src <= 0 )
+		{
+		if ( src ==  0 )
+			{
+			ZFLG = ZTRUE;
+			}
+		else
+			{
+			NFLG = NTRUE;
+			}
+		}
 }}}}}
-void op_2b8(ULONG opcode) /* AND */
+void op_2b8(void) /* AND */
 {
 {{	LONG src = nextilong();
 {	CPTR dsta = (LONG)(WORD)nextiword();
 	LONG dst = get_long(dsta);
 	src &= dst;
-	CLEARVC;
-	ZFLG = ((LONG)(src)) == 0;
-	NFLG = ((LONG)(src)) < 0;
 	put_long(dsta,src);
+	CLEARFLGS;
+	if ( src <= 0 )
+		{
+		if ( src ==  0 )
+			{
+			ZFLG = ZTRUE;
+			}
+		else
+			{
+			NFLG = NTRUE;
+			}
+		}
 }}}}
-void op_2b9(ULONG opcode) /* AND */
+void op_2b9(void) /* AND */
 {
 {{	LONG src = nextilong();
 {	CPTR dsta = nextilong();
 	LONG dst = get_long(dsta);
 	src &= dst;
-	CLEARVC;
-	ZFLG = ((LONG)(src)) == 0;
-	NFLG = ((LONG)(src)) < 0;
 	put_long(dsta,src);
+	CLEARFLGS;
+	if ( src <= 0 )
+		{
+		if ( src ==  0 )
+			{
+			ZFLG = ZTRUE;
+			}
+		else
+			{
+			NFLG = NTRUE;
+			}
+		}
 }}}}
-void op_400(ULONG opcode) /* SUB */
+void op_400(void) /* SUB */
 {
 	ULONG dstreg = opcode & 7;
-{{	BYTE src = nextiword();
-{	BYTE dst = regs.d[dstreg].B.l;
-{{ULONG newv = ((BYTE)(dst)) - ((BYTE)(src));
-{	int flgs = ((BYTE)(src)) < 0;
-	int flgo = ((BYTE)(dst)) < 0;
-	int flgn = ((BYTE)(newv)) < 0;
-	ZFLG = ((BYTE)(newv)) == 0;
-	VFLG = (flgs != flgo) && (flgn != flgo);
-	CFLG = regs.x = ((UBYTE)(src)) > ((UBYTE)(dst));
-	NFLG = flgn != 0;
+	BYTE src = nextiword();
+	BYTE dst = regs.d[dstreg].B.l;
+	ULONG newv = ((BYTE)(dst)) - ((BYTE)(src));
 	regs.d[dstreg].B.l = newv;
-}}}}}}}
-void op_410(ULONG opcode) /* SUB */
+{	int flgs = ((BYTE)(src)) < 0;
+	int flgo = ((BYTE)(dst)) < 0;
+	int flgn = ((BYTE)(newv)) < 0;
+	NFLG = flgn != 0;
+	ZFLG = ((BYTE)(newv)) == 0;
+	VFLG = (flgs != flgo) && (flgn != flgo);
+	CFLG = regs.x = ((UBYTE)(src)) > ((UBYTE)(dst));
+}}
+
+void op_410(void) /* SUB */
 {
 	ULONG dstreg = opcode & 7;
-{{	BYTE src = nextiword();
+	BYTE src = nextiword();
+	CPTR dsta = regs.a[dstreg];
+	BYTE dst = get_byte(dsta);
+	ULONG newv = ((BYTE)(dst)) - ((BYTE)(src));
+	put_byte(dsta,newv);
+	ZFLG = ((BYTE)(newv)) == 0;
+{	int flgs = ((BYTE)(src)) < 0;
+	int flgo = ((BYTE)(dst)) < 0;
+	int flgn = ((BYTE)(newv)) < 0;
+	NFLG = flgn != 0;
+	VFLG = (flgs != flgo) && (flgn != flgo);
+	CFLG = regs.x = ((UBYTE)(src)) > ((UBYTE)(dst));
+}}
+
+void op_418(void) /* SUB */
+{
+	ULONG dstreg = opcode & 7;
+	BYTE src = nextiword();
+	CPTR dsta = regs.a[dstreg];
+	BYTE dst = get_byte(dsta);
+	regs.a[dstreg] += areg_byteinc[dstreg];
+{	ULONG newv = ((BYTE)(dst)) - ((BYTE)(src));
+	put_byte(dsta,newv);
+	ZFLG = ((BYTE)(newv)) == 0;
+{	int flgs = ((BYTE)(src)) < 0;
+	int flgo = ((BYTE)(dst)) < 0;
+	int flgn = ((BYTE)(newv)) < 0;
+	NFLG = flgn != 0;
+	VFLG = (flgs != flgo) && (flgn != flgo);
+	CFLG = regs.x = ((UBYTE)(src)) > ((UBYTE)(dst));
+}}}
+
+void op_420(void) /* SUB */
+{
+	ULONG dstreg = opcode & 7;
+	BYTE src = nextiword();
+	regs.a[dstreg] -= areg_byteinc[dstreg];
 {	CPTR dsta = regs.a[dstreg];
 	BYTE dst = get_byte(dsta);
-{{ULONG newv = ((BYTE)(dst)) - ((BYTE)(src));
+	ULONG newv = ((BYTE)(dst)) - ((BYTE)(src));
+	put_byte(dsta,newv);
+	ZFLG = ((BYTE)(newv)) == 0;
 {	int flgs = ((BYTE)(src)) < 0;
 	int flgo = ((BYTE)(dst)) < 0;
 	int flgn = ((BYTE)(newv)) < 0;
-	ZFLG = ((BYTE)(newv)) == 0;
+	NFLG = flgn != 0;
 	VFLG = (flgs != flgo) && (flgn != flgo);
 	CFLG = regs.x = ((UBYTE)(src)) > ((UBYTE)(dst));
-	NFLG = flgn != 0;
-	put_byte(dsta,newv);
-}}}}}}}
-void op_418(ULONG opcode) /* SUB */
+}}}
+
+void op_428(void) /* SUB */
 {
 	ULONG dstreg = opcode & 7;
-{{	BYTE src = nextiword();
-{	CPTR dsta = regs.a[dstreg];
+	BYTE src = nextiword();
+	CPTR dsta = regs.a[dstreg] + (LONG)(WORD)nextiword();
 	BYTE dst = get_byte(dsta);
-{	regs.a[dstreg] += areg_byteinc[dstreg];
-{{ULONG newv = ((BYTE)(dst)) - ((BYTE)(src));
+	ULONG newv = ((BYTE)(dst)) - ((BYTE)(src));
+	put_byte(dsta,newv);
+	ZFLG = ((BYTE)(newv)) == 0;
 {	int flgs = ((BYTE)(src)) < 0;
 	int flgo = ((BYTE)(dst)) < 0;
 	int flgn = ((BYTE)(newv)) < 0;
-	ZFLG = ((BYTE)(newv)) == 0;
+	NFLG = flgn != 0;
 	VFLG = (flgs != flgo) && (flgn != flgo);
 	CFLG = regs.x = ((UBYTE)(src)) > ((UBYTE)(dst));
-	NFLG = flgn != 0;
-	put_byte(dsta,newv);
-}}}}}}}}
-void op_420(ULONG opcode) /* SUB */
+}}
+
+void op_430(void) /* SUB */
 {
 	ULONG dstreg = opcode & 7;
-{{	BYTE src = nextiword();
-{	regs.a[dstreg] -= areg_byteinc[dstreg];
-{	CPTR dsta = regs.a[dstreg];
+	BYTE src = nextiword();
+	CPTR dsta = get_disp_ea(regs.a[dstreg]);
 	BYTE dst = get_byte(dsta);
-{{ULONG newv = ((BYTE)(dst)) - ((BYTE)(src));
+	ULONG newv = ((BYTE)(dst)) - ((BYTE)(src));
+	put_byte(dsta,newv);
+	ZFLG = ((BYTE)(newv)) == 0;
 {	int flgs = ((BYTE)(src)) < 0;
 	int flgo = ((BYTE)(dst)) < 0;
 	int flgn = ((BYTE)(newv)) < 0;
-	ZFLG = ((BYTE)(newv)) == 0;
+	NFLG = flgn != 0;
 	VFLG = (flgs != flgo) && (flgn != flgo);
 	CFLG = regs.x = ((UBYTE)(src)) > ((UBYTE)(dst));
-	NFLG = flgn != 0;
+}}
+
+void op_438(void) /* SUB */
+{
+	BYTE src = nextiword();
+	CPTR dsta = (LONG)(WORD)nextiword();
+	BYTE dst = get_byte(dsta);
+	ULONG newv = ((BYTE)(dst)) - ((BYTE)(src));
 	put_byte(dsta,newv);
-}}}}}}}}
-void op_428(ULONG opcode) /* SUB */
+	ZFLG = ((BYTE)(newv)) == 0;
+{	int flgs = ((BYTE)(src)) < 0;
+	int flgo = ((BYTE)(dst)) < 0;
+	int flgn = ((BYTE)(newv)) < 0;
+	NFLG = flgn != 0;
+	VFLG = (flgs != flgo) && (flgn != flgo);
+	CFLG = regs.x = ((UBYTE)(src)) > ((UBYTE)(dst));
+}}
+
+void op_439(void) /* SUB */
+{
+	BYTE src = nextiword();
+	CPTR dsta = nextilong();
+	BYTE dst = get_byte(dsta);
+	ULONG newv = ((BYTE)(dst)) - ((BYTE)(src));
+	put_byte(dsta,newv);
+	ZFLG = ((BYTE)(newv)) == 0;
+{	int flgs = ((BYTE)(src)) < 0;
+	int flgo = ((BYTE)(dst)) < 0;
+	int flgn = ((BYTE)(newv)) < 0;
+	NFLG = flgn != 0;
+	VFLG = (flgs != flgo) && (flgn != flgo);
+	CFLG = regs.x = ((UBYTE)(src)) > ((UBYTE)(dst));
+}}
+
+void op_440(void) /* SUB */
 {
 	ULONG dstreg = opcode & 7;
-{{	BYTE src = nextiword();
-{	CPTR dsta = regs.a[dstreg] + (LONG)(WORD)nextiword();
-	BYTE dst = get_byte(dsta);
-{{ULONG newv = ((BYTE)(dst)) - ((BYTE)(src));
-{	int flgs = ((BYTE)(src)) < 0;
-	int flgo = ((BYTE)(dst)) < 0;
-	int flgn = ((BYTE)(newv)) < 0;
-	ZFLG = ((BYTE)(newv)) == 0;
-	VFLG = (flgs != flgo) && (flgn != flgo);
-	CFLG = regs.x = ((UBYTE)(src)) > ((UBYTE)(dst));
-	NFLG = flgn != 0;
-	put_byte(dsta,newv);
-}}}}}}}
-void op_430(ULONG opcode) /* SUB */
-{
-	ULONG dstreg = opcode & 7;
-{{	BYTE src = nextiword();
-{	CPTR dsta = get_disp_ea(regs.a[dstreg]);
-{	BYTE dst = get_byte(dsta);
-{{ULONG newv = ((BYTE)(dst)) - ((BYTE)(src));
-{	int flgs = ((BYTE)(src)) < 0;
-	int flgo = ((BYTE)(dst)) < 0;
-	int flgn = ((BYTE)(newv)) < 0;
-	ZFLG = ((BYTE)(newv)) == 0;
-	VFLG = (flgs != flgo) && (flgn != flgo);
-	CFLG = regs.x = ((UBYTE)(src)) > ((UBYTE)(dst));
-	NFLG = flgn != 0;
-	put_byte(dsta,newv);
-}}}}}}}}
-void op_438(ULONG opcode) /* SUB */
-{
-{{	BYTE src = nextiword();
-{	CPTR dsta = (LONG)(WORD)nextiword();
-	BYTE dst = get_byte(dsta);
-{{ULONG newv = ((BYTE)(dst)) - ((BYTE)(src));
-{	int flgs = ((BYTE)(src)) < 0;
-	int flgo = ((BYTE)(dst)) < 0;
-	int flgn = ((BYTE)(newv)) < 0;
-	ZFLG = ((BYTE)(newv)) == 0;
-	VFLG = (flgs != flgo) && (flgn != flgo);
-	CFLG = regs.x = ((UBYTE)(src)) > ((UBYTE)(dst));
-	NFLG = flgn != 0;
-	put_byte(dsta,newv);
-}}}}}}}
-void op_439(ULONG opcode) /* SUB */
-{
-{{	BYTE src = nextiword();
-{	CPTR dsta = nextilong();
-	BYTE dst = get_byte(dsta);
-{{ULONG newv = ((BYTE)(dst)) - ((BYTE)(src));
-{	int flgs = ((BYTE)(src)) < 0;
-	int flgo = ((BYTE)(dst)) < 0;
-	int flgn = ((BYTE)(newv)) < 0;
-	ZFLG = ((BYTE)(newv)) == 0;
-	VFLG = (flgs != flgo) && (flgn != flgo);
-	CFLG = regs.x = ((UBYTE)(src)) > ((UBYTE)(dst));
-	NFLG = flgn != 0;
-	put_byte(dsta,newv);
-}}}}}}}
-void op_440(ULONG opcode) /* SUB */
-{
-	ULONG dstreg = opcode & 7;
-{{	WORD src = nextiword();
-{	WORD dst = regs.d[dstreg].W.l;
-{{ULONG newv = ((WORD)(dst)) - ((WORD)(src));
-{	int flgs = ((WORD)(src)) < 0;
-	int flgo = ((WORD)(dst)) < 0;
-	int flgn = ((WORD)(newv)) < 0;
-	ZFLG = ((WORD)(newv)) == 0;
-	VFLG = (flgs != flgo) && (flgn != flgo);
-	CFLG = regs.x = ((UWORD)(src)) > ((UWORD)(dst));
-	NFLG = flgn != 0;
+	WORD src = nextiword();
+	WORD dst = regs.d[dstreg].W.l;
+	ULONG newv = ((WORD)(dst)) - ((WORD)(src));
 	regs.d[dstreg].W.l = newv;
-}}}}}}}
-void op_450(ULONG opcode) /* SUB */
+	ZFLG = ((WORD)(newv)) == 0;
+{	int flgs = ((WORD)(src)) < 0;
+	int flgo = ((WORD)(dst)) < 0;
+	int flgn = ((WORD)(newv)) < 0;
+	NFLG = flgn != 0;
+	VFLG = (flgs != flgo) && (flgn != flgo);
+	CFLG = regs.x = ((UWORD)(src)) > ((UWORD)(dst));
+}}
+
+void op_450(void) /* SUB */
 {
 	ULONG dstreg = opcode & 7;
-{{	WORD src = nextiword();
+	WORD src = nextiword();
+	CPTR dsta = regs.a[dstreg];
+	WORD dst = get_word(dsta);
+	ULONG newv = ((WORD)(dst)) - ((WORD)(src));
+	put_word(dsta,newv);
+	ZFLG = ((WORD)(newv)) == 0;
+{	int flgs = ((WORD)(src)) < 0;
+	int flgo = ((WORD)(dst)) < 0;
+	int flgn = ((WORD)(newv)) < 0;
+	NFLG = flgn != 0;
+	VFLG = (flgs != flgo) && (flgn != flgo);
+	CFLG = regs.x = ((UWORD)(src)) > ((UWORD)(dst));
+}}
+
+void op_458(void) /* SUB */
+{
+	ULONG dstreg = opcode & 7;
+	WORD src = nextiword();
+	CPTR dsta = regs.a[dstreg];
+	WORD dst = get_word(dsta);
+	ULONG newv = ((WORD)(dst)) - ((WORD)(src));
+	put_word(dsta,newv);
+	regs.a[dstreg] += 2;
+	ZFLG = ((WORD)(newv)) == 0;
+{	int flgs = ((WORD)(src)) < 0;
+	int flgo = ((WORD)(dst)) < 0;
+	int flgn = ((WORD)(newv)) < 0;
+	VFLG = (flgs != flgo) && (flgn != flgo);
+	CFLG = regs.x = ((UWORD)(src)) > ((UWORD)(dst));
+	NFLG = flgn != 0;
+}}
+
+void op_460(void) /* SUB */
+{
+	ULONG dstreg = opcode & 7;
+	WORD src = nextiword();
+	regs.a[dstreg] -= 2;
 {	CPTR dsta = regs.a[dstreg];
 	WORD dst = get_word(dsta);
-{{ULONG newv = ((WORD)(dst)) - ((WORD)(src));
+	ULONG newv = ((WORD)(dst)) - ((WORD)(src));
+	put_word(dsta,newv);
+	ZFLG = ((WORD)(newv)) == 0;
 {	int flgs = ((WORD)(src)) < 0;
 	int flgo = ((WORD)(dst)) < 0;
 	int flgn = ((WORD)(newv)) < 0;
-	ZFLG = ((WORD)(newv)) == 0;
+	NFLG = flgn != 0;
 	VFLG = (flgs != flgo) && (flgn != flgo);
 	CFLG = regs.x = ((UWORD)(src)) > ((UWORD)(dst));
-	NFLG = flgn != 0;
-	put_word(dsta,newv);
-}}}}}}}
-void op_458(ULONG opcode) /* SUB */
+}}}
+
+void op_468(void) /* SUB */
 {
 	ULONG dstreg = opcode & 7;
-{{	WORD src = nextiword();
-{	CPTR dsta = regs.a[dstreg];
+	WORD src = nextiword();
+	CPTR dsta = regs.a[dstreg] + (LONG)(WORD)nextiword();
 	WORD dst = get_word(dsta);
-{	regs.a[dstreg] += 2;
-{{ULONG newv = ((WORD)(dst)) - ((WORD)(src));
+	ULONG newv = ((WORD)(dst)) - ((WORD)(src));
+	put_word(dsta,newv);
+	ZFLG = ((WORD)(newv)) == 0;
 {	int flgs = ((WORD)(src)) < 0;
 	int flgo = ((WORD)(dst)) < 0;
 	int flgn = ((WORD)(newv)) < 0;
-	ZFLG = ((WORD)(newv)) == 0;
+	NFLG = flgn != 0;
 	VFLG = (flgs != flgo) && (flgn != flgo);
 	CFLG = regs.x = ((UWORD)(src)) > ((UWORD)(dst));
-	NFLG = flgn != 0;
-	put_word(dsta,newv);
-}}}}}}}}
-void op_460(ULONG opcode) /* SUB */
+}}
+
+void op_470(void) /* SUB */
 {
 	ULONG dstreg = opcode & 7;
-{{	WORD src = nextiword();
-{	regs.a[dstreg] -= 2;
-{	CPTR dsta = regs.a[dstreg];
+	WORD src = nextiword();
+	CPTR dsta = get_disp_ea(regs.a[dstreg]);
 	WORD dst = get_word(dsta);
-{{ULONG newv = ((WORD)(dst)) - ((WORD)(src));
+	ULONG newv = ((WORD)(dst)) - ((WORD)(src));
+	put_word(dsta,newv);
+	ZFLG = ((WORD)(newv)) == 0;
 {	int flgs = ((WORD)(src)) < 0;
 	int flgo = ((WORD)(dst)) < 0;
 	int flgn = ((WORD)(newv)) < 0;
-	ZFLG = ((WORD)(newv)) == 0;
+	NFLG = flgn != 0;
 	VFLG = (flgs != flgo) && (flgn != flgo);
 	CFLG = regs.x = ((UWORD)(src)) > ((UWORD)(dst));
-	NFLG = flgn != 0;
+}}
+
+void op_478(void) /* SUB */
+{
+	WORD src = nextiword();
+	CPTR dsta = (LONG)(WORD)nextiword();
+	WORD dst = get_word(dsta);
+	ULONG newv = ((WORD)(dst)) - ((WORD)(src));
 	put_word(dsta,newv);
-}}}}}}}}
-void op_468(ULONG opcode) /* SUB */
+	ZFLG = ((WORD)(newv)) == 0;
+{	int flgs = ((WORD)(src)) < 0;
+	int flgo = ((WORD)(dst)) < 0;
+	int flgn = ((WORD)(newv)) < 0;
+	NFLG = flgn != 0;
+	VFLG = (flgs != flgo) && (flgn != flgo);
+	CFLG = regs.x = ((UWORD)(src)) > ((UWORD)(dst));
+}}
+
+void op_479(void) /* SUB */
+{
+	WORD src = nextiword();
+	CPTR dsta = nextilong();
+	WORD dst = get_word(dsta);
+	ULONG newv = ((WORD)(dst)) - ((WORD)(src));
+	put_word(dsta,newv);
+	ZFLG = ((WORD)(newv)) == 0;
+{	int flgs = ((WORD)(src)) < 0;
+	int flgo = ((WORD)(dst)) < 0;
+	int flgn = ((WORD)(newv)) < 0;
+	NFLG = flgn != 0;
+	VFLG = (flgs != flgo) && (flgn != flgo);
+	CFLG = regs.x = ((UWORD)(src)) > ((UWORD)(dst));
+}}
+
+void op_480(void) /* SUB */
 {
 	ULONG dstreg = opcode & 7;
-{{	WORD src = nextiword();
-{	CPTR dsta = regs.a[dstreg] + (LONG)(WORD)nextiword();
-	WORD dst = get_word(dsta);
-{{ULONG newv = ((WORD)(dst)) - ((WORD)(src));
-{	int flgs = ((WORD)(src)) < 0;
-	int flgo = ((WORD)(dst)) < 0;
-	int flgn = ((WORD)(newv)) < 0;
-	ZFLG = ((WORD)(newv)) == 0;
-	VFLG = (flgs != flgo) && (flgn != flgo);
-	CFLG = regs.x = ((UWORD)(src)) > ((UWORD)(dst));
-	NFLG = flgn != 0;
-	put_word(dsta,newv);
-}}}}}}}
-void op_470(ULONG opcode) /* SUB */
-{
-	ULONG dstreg = opcode & 7;
-{{	WORD src = nextiword();
-{	CPTR dsta = get_disp_ea(regs.a[dstreg]);
-{	WORD dst = get_word(dsta);
-{{ULONG newv = ((WORD)(dst)) - ((WORD)(src));
-{	int flgs = ((WORD)(src)) < 0;
-	int flgo = ((WORD)(dst)) < 0;
-	int flgn = ((WORD)(newv)) < 0;
-	ZFLG = ((WORD)(newv)) == 0;
-	VFLG = (flgs != flgo) && (flgn != flgo);
-	CFLG = regs.x = ((UWORD)(src)) > ((UWORD)(dst));
-	NFLG = flgn != 0;
-	put_word(dsta,newv);
-}}}}}}}}
-void op_478(ULONG opcode) /* SUB */
-{
-{{	WORD src = nextiword();
-{	CPTR dsta = (LONG)(WORD)nextiword();
-	WORD dst = get_word(dsta);
-{{ULONG newv = ((WORD)(dst)) - ((WORD)(src));
-{	int flgs = ((WORD)(src)) < 0;
-	int flgo = ((WORD)(dst)) < 0;
-	int flgn = ((WORD)(newv)) < 0;
-	ZFLG = ((WORD)(newv)) == 0;
-	VFLG = (flgs != flgo) && (flgn != flgo);
-	CFLG = regs.x = ((UWORD)(src)) > ((UWORD)(dst));
-	NFLG = flgn != 0;
-	put_word(dsta,newv);
-}}}}}}}
-void op_479(ULONG opcode) /* SUB */
-{
-{{	WORD src = nextiword();
-{	CPTR dsta = nextilong();
-	WORD dst = get_word(dsta);
-{{ULONG newv = ((WORD)(dst)) - ((WORD)(src));
-{	int flgs = ((WORD)(src)) < 0;
-	int flgo = ((WORD)(dst)) < 0;
-	int flgn = ((WORD)(newv)) < 0;
-	ZFLG = ((WORD)(newv)) == 0;
-	VFLG = (flgs != flgo) && (flgn != flgo);
-	CFLG = regs.x = ((UWORD)(src)) > ((UWORD)(dst));
-	NFLG = flgn != 0;
-	put_word(dsta,newv);
-}}}}}}}
-void op_480(ULONG opcode) /* SUB */
-{
-	ULONG dstreg = opcode & 7;
-{{	LONG src = nextilong();
-{	LONG dst = regs.d[dstreg].D;
-{{ULONG newv = ((LONG)(dst)) - ((LONG)(src));
-{	int flgs = ((LONG)(src)) < 0;
-	int flgo = ((LONG)(dst)) < 0;
-	int flgn = ((LONG)(newv)) < 0;
-	ZFLG = ((LONG)(newv)) == 0;
-	VFLG = (flgs != flgo) && (flgn != flgo);
-	CFLG = regs.x = ((ULONG)(src)) > ((ULONG)(dst));
-	NFLG = flgn != 0;
+	LONG src = nextilong();
+	LONG dst = regs.d[dstreg].D;
+	ULONG newv = ((LONG)(dst)) - ((LONG)(src));
 	regs.d[dstreg].D = (newv);
-}}}}}}}
-void op_490(ULONG opcode) /* SUB */
+	ZFLG = ((LONG)(newv)) == 0;
+{	int flgs = ((LONG)(src)) < 0;
+	int flgo = ((LONG)(dst)) < 0;
+	int flgn = ((LONG)(newv)) < 0;
+	NFLG = flgn != 0;
+	VFLG = (flgs != flgo) && (flgn != flgo);
+	CFLG = regs.x = ((ULONG)(src)) > ((ULONG)(dst));
+}}
+
+void op_490(void) /* SUB */
 {
 	ULONG dstreg = opcode & 7;
-{{	LONG src = nextilong();
+	LONG src = nextilong();
+	CPTR dsta = regs.a[dstreg];
+	LONG dst = get_long(dsta);
+	ULONG newv = ((LONG)(dst)) - ((LONG)(src));
+	put_long(dsta,newv);
+	ZFLG = ((LONG)(newv)) == 0;
+{	int flgs = ((LONG)(src)) < 0;
+	int flgo = ((LONG)(dst)) < 0;
+	int flgn = ((LONG)(newv)) < 0;
+	NFLG = flgn != 0;
+	VFLG = (flgs != flgo) && (flgn != flgo);
+	CFLG = regs.x = ((ULONG)(src)) > ((ULONG)(dst));
+}}
+
+void op_498(void) /* SUB */
+{
+	ULONG dstreg = opcode & 7;
+	LONG src = nextilong();
+	CPTR dsta = regs.a[dstreg];
+	LONG dst = get_long(dsta);
+	ULONG newv = ((LONG)(dst)) - ((LONG)(src));
+	put_long(dsta,newv);
+	ZFLG = ((LONG)(newv)) == 0;
+	regs.a[dstreg] += 4;
+{	int flgs = ((LONG)(src)) < 0;
+	int flgo = ((LONG)(dst)) < 0;
+	int flgn = ((LONG)(newv)) < 0;
+	NFLG = flgn != 0;
+	VFLG = (flgs != flgo) && (flgn != flgo);
+	CFLG = regs.x = ((ULONG)(src)) > ((ULONG)(dst));
+}}
+
+void op_4a0(void) /* SUB */
+{
+	ULONG dstreg = opcode & 7;
+	LONG src = nextilong();
+	regs.a[dstreg] -= 4;
 {	CPTR dsta = regs.a[dstreg];
 	LONG dst = get_long(dsta);
-{{ULONG newv = ((LONG)(dst)) - ((LONG)(src));
+	ULONG newv = ((LONG)(dst)) - ((LONG)(src));
+	put_long(dsta,newv);
+	ZFLG = ((LONG)(newv)) == 0;
 {	int flgs = ((LONG)(src)) < 0;
 	int flgo = ((LONG)(dst)) < 0;
 	int flgn = ((LONG)(newv)) < 0;
-	ZFLG = ((LONG)(newv)) == 0;
+	NFLG = flgn != 0;
 	VFLG = (flgs != flgo) && (flgn != flgo);
 	CFLG = regs.x = ((ULONG)(src)) > ((ULONG)(dst));
-	NFLG = flgn != 0;
-	put_long(dsta,newv);
-}}}}}}}
-void op_498(ULONG opcode) /* SUB */
+}}}
+
+void op_4a8(void) /* SUB */
 {
 	ULONG dstreg = opcode & 7;
-{{	LONG src = nextilong();
-{	CPTR dsta = regs.a[dstreg];
+	LONG src = nextilong();
+	CPTR dsta = regs.a[dstreg] + (LONG)(WORD)nextiword();
 	LONG dst = get_long(dsta);
-{	regs.a[dstreg] += 4;
-{{ULONG newv = ((LONG)(dst)) - ((LONG)(src));
+	ULONG newv = ((LONG)(dst)) - ((LONG)(src));
+	put_long(dsta,newv);
+	ZFLG = ((LONG)(newv)) == 0;
 {	int flgs = ((LONG)(src)) < 0;
 	int flgo = ((LONG)(dst)) < 0;
 	int flgn = ((LONG)(newv)) < 0;
-	ZFLG = ((LONG)(newv)) == 0;
+	NFLG = flgn != 0;
 	VFLG = (flgs != flgo) && (flgn != flgo);
 	CFLG = regs.x = ((ULONG)(src)) > ((ULONG)(dst));
-	NFLG = flgn != 0;
-	put_long(dsta,newv);
-}}}}}}}}
-void op_4a0(ULONG opcode) /* SUB */
+}}
+
+void op_4b0(void) /* SUB */
 {
 	ULONG dstreg = opcode & 7;
-{{	LONG src = nextilong();
-{	regs.a[dstreg] -= 4;
-{	CPTR dsta = regs.a[dstreg];
+	LONG src = nextilong();
+	CPTR dsta = get_disp_ea(regs.a[dstreg]);
 	LONG dst = get_long(dsta);
-{{ULONG newv = ((LONG)(dst)) - ((LONG)(src));
+	ULONG newv = ((LONG)(dst)) - ((LONG)(src));
+	put_long(dsta,newv);
+	ZFLG = ((LONG)(newv)) == 0;
 {	int flgs = ((LONG)(src)) < 0;
 	int flgo = ((LONG)(dst)) < 0;
 	int flgn = ((LONG)(newv)) < 0;
+	NFLG = flgn != 0;
+	VFLG = (flgs != flgo) && (flgn != flgo);
+	CFLG = regs.x = ((ULONG)(src)) > ((ULONG)(dst));
+}}
+
+void op_4b8(void) /* SUB */
+{
+	LONG src = nextilong();
+	CPTR dsta = (LONG)(WORD)nextiword();
+	LONG dst = get_long(dsta);
+	ULONG newv = ((LONG)(dst)) - ((LONG)(src));
+	put_long(dsta,newv);
+	ZFLG = ((LONG)(newv)) == 0;
+{	int flgs = ((LONG)(src)) < 0;
+	int flgo = ((LONG)(dst)) < 0;
+	int flgn = ((LONG)(newv)) < 0;
+	NFLG = flgn != 0;
+	VFLG = (flgs != flgo) && (flgn != flgo);
+	CFLG = regs.x = ((ULONG)(src)) > ((ULONG)(dst));
+}}
+
+void op_4b9(void) /* SUB */
+{
+	LONG src = nextilong();
+	CPTR dsta = nextilong();
+	LONG dst = get_long(dsta);
+	ULONG newv = ((LONG)(dst)) - ((LONG)(src));
+	put_long(dsta,newv);
+{	int flgs = ((LONG)(src)) < 0;
+	int flgo = ((LONG)(dst)) < 0;
+	int flgn = ((LONG)(newv)) < 0;
+	NFLG = flgn != 0;
 	ZFLG = ((LONG)(newv)) == 0;
 	VFLG = (flgs != flgo) && (flgn != flgo);
 	CFLG = regs.x = ((ULONG)(src)) > ((ULONG)(dst));
-	NFLG = flgn != 0;
-	put_long(dsta,newv);
-}}}}}}}}
-void op_4a8(ULONG opcode) /* SUB */
+}}
+
+void op_600(void) /* ADD */
 {
 	ULONG dstreg = opcode & 7;
-{{	LONG src = nextilong();
-{	CPTR dsta = regs.a[dstreg] + (LONG)(WORD)nextiword();
-	LONG dst = get_long(dsta);
-{{ULONG newv = ((LONG)(dst)) - ((LONG)(src));
-{	int flgs = ((LONG)(src)) < 0;
-	int flgo = ((LONG)(dst)) < 0;
-	int flgn = ((LONG)(newv)) < 0;
-	ZFLG = ((LONG)(newv)) == 0;
-	VFLG = (flgs != flgo) && (flgn != flgo);
-	CFLG = regs.x = ((ULONG)(src)) > ((ULONG)(dst));
-	NFLG = flgn != 0;
-	put_long(dsta,newv);
-}}}}}}}
-void op_4b0(ULONG opcode) /* SUB */
-{
-	ULONG dstreg = opcode & 7;
-{{	LONG src = nextilong();
-{	CPTR dsta = get_disp_ea(regs.a[dstreg]);
-{	LONG dst = get_long(dsta);
-{{ULONG newv = ((LONG)(dst)) - ((LONG)(src));
-{	int flgs = ((LONG)(src)) < 0;
-	int flgo = ((LONG)(dst)) < 0;
-	int flgn = ((LONG)(newv)) < 0;
-	ZFLG = ((LONG)(newv)) == 0;
-	VFLG = (flgs != flgo) && (flgn != flgo);
-	CFLG = regs.x = ((ULONG)(src)) > ((ULONG)(dst));
-	NFLG = flgn != 0;
-	put_long(dsta,newv);
-}}}}}}}}
-void op_4b8(ULONG opcode) /* SUB */
-{
-{{	LONG src = nextilong();
-{	CPTR dsta = (LONG)(WORD)nextiword();
-	LONG dst = get_long(dsta);
-{{ULONG newv = ((LONG)(dst)) - ((LONG)(src));
-{	int flgs = ((LONG)(src)) < 0;
-	int flgo = ((LONG)(dst)) < 0;
-	int flgn = ((LONG)(newv)) < 0;
-	ZFLG = ((LONG)(newv)) == 0;
-	VFLG = (flgs != flgo) && (flgn != flgo);
-	CFLG = regs.x = ((ULONG)(src)) > ((ULONG)(dst));
-	NFLG = flgn != 0;
-	put_long(dsta,newv);
-}}}}}}}
-void op_4b9(ULONG opcode) /* SUB */
-{
-{{	LONG src = nextilong();
-{	CPTR dsta = nextilong();
-	LONG dst = get_long(dsta);
-{{ULONG newv = ((LONG)(dst)) - ((LONG)(src));
-{	int flgs = ((LONG)(src)) < 0;
-	int flgo = ((LONG)(dst)) < 0;
-	int flgn = ((LONG)(newv)) < 0;
-	ZFLG = ((LONG)(newv)) == 0;
-	VFLG = (flgs != flgo) && (flgn != flgo);
-	CFLG = regs.x = ((ULONG)(src)) > ((ULONG)(dst));
-	NFLG = flgn != 0;
-	put_long(dsta,newv);
-}}}}}}}
-void op_600(ULONG opcode) /* ADD */
-{
-	ULONG dstreg = opcode & 7;
-{{	BYTE src = nextiword();
-{	BYTE dst = regs.d[dstreg].B.l;
-{{ULONG newv = ((BYTE)(dst)) + ((BYTE)(src));
-{	int flgs = ((BYTE)(src)) < 0;
-	int flgo = ((BYTE)(dst)) < 0;
-	int flgn = ((BYTE)(newv)) < 0;
-	ZFLG = ((BYTE)(newv)) == 0;
-	VFLG = (flgs == flgo) && (flgn != flgo);
-	CFLG = regs.x = ((UBYTE)(~dst)) < ((UBYTE)(src));
-	NFLG = flgn != 0;
+	BYTE src = nextiword();
+	BYTE dst = regs.d[dstreg].B.l;
+	ULONG newv = ((BYTE)(dst)) + ((BYTE)(src));
 	regs.d[dstreg].B.l = newv;
-}}}}}}}
-void op_610(ULONG opcode) /* ADD */
+{	int flgs = ((BYTE)(src)) < 0;
+	int flgo = ((BYTE)(dst)) < 0;
+	int flgn = ((BYTE)(newv)) < 0;
+	NFLG = flgn != 0;
+	ZFLG = ((BYTE)(newv)) == 0;
+	VFLG = (flgs == flgo) && (flgn != flgo);
+	CFLG = regs.x = ((UBYTE)(~dst)) < ((UBYTE)(src));
+}}
+
+void op_610(void) /* ADD */
 {
 	ULONG dstreg = opcode & 7;
-{{	BYTE src = nextiword();
+	BYTE src = nextiword();
+	CPTR dsta = regs.a[dstreg];
+	BYTE dst = get_byte(dsta);
+	ULONG newv = ((BYTE)(dst)) + ((BYTE)(src));
+	put_byte(dsta,newv);
+{	int flgs = ((BYTE)(src)) < 0;
+	int flgo = ((BYTE)(dst)) < 0;
+	int flgn = ((BYTE)(newv)) < 0;
+	NFLG = flgn != 0;
+	ZFLG = ((BYTE)(newv)) == 0;
+	VFLG = (flgs == flgo) && (flgn != flgo);
+	CFLG = regs.x = ((UBYTE)(~dst)) < ((UBYTE)(src));
+}}
+
+void op_618(void) /* ADD */
+{
+	ULONG dstreg = opcode & 7;
+	BYTE src = nextiword();
+	CPTR dsta = regs.a[dstreg];
+	BYTE dst = get_byte(dsta);
+	regs.a[dstreg] += areg_byteinc[dstreg];
+{	ULONG newv = ((BYTE)(dst)) + ((BYTE)(src));
+	put_byte(dsta,newv);
+{	int flgs = ((BYTE)(src)) < 0;
+	int flgo = ((BYTE)(dst)) < 0;
+	int flgn = ((BYTE)(newv)) < 0;
+	NFLG = flgn != 0;
+	ZFLG = ((BYTE)(newv)) == 0;
+	VFLG = (flgs == flgo) && (flgn != flgo);
+	CFLG = regs.x = ((UBYTE)(~dst)) < ((UBYTE)(src));
+}}}
+
+void op_620(void) /* ADD */
+{
+	ULONG dstreg = opcode & 7;
+	BYTE src = nextiword();
+	regs.a[dstreg] -= areg_byteinc[dstreg];
 {	CPTR dsta = regs.a[dstreg];
 	BYTE dst = get_byte(dsta);
-{{ULONG newv = ((BYTE)(dst)) + ((BYTE)(src));
+	ULONG newv = ((BYTE)(dst)) + ((BYTE)(src));
+	put_byte(dsta,newv);
 {	int flgs = ((BYTE)(src)) < 0;
 	int flgo = ((BYTE)(dst)) < 0;
 	int flgn = ((BYTE)(newv)) < 0;
+	NFLG = flgn != 0;
 	ZFLG = ((BYTE)(newv)) == 0;
 	VFLG = (flgs == flgo) && (flgn != flgo);
 	CFLG = regs.x = ((UBYTE)(~dst)) < ((UBYTE)(src));
-	NFLG = flgn != 0;
-	put_byte(dsta,newv);
-}}}}}}}
-void op_618(ULONG opcode) /* ADD */
+}}}
+
+void op_628(void) /* ADD */
 {
 	ULONG dstreg = opcode & 7;
-{{	BYTE src = nextiword();
-{	CPTR dsta = regs.a[dstreg];
+	BYTE src = nextiword();
+	CPTR dsta = regs.a[dstreg] + (LONG)(WORD)nextiword();
 	BYTE dst = get_byte(dsta);
-{	regs.a[dstreg] += areg_byteinc[dstreg];
-{{ULONG newv = ((BYTE)(dst)) + ((BYTE)(src));
+	ULONG newv = ((BYTE)(dst)) + ((BYTE)(src));
+	put_byte(dsta,newv);
 {	int flgs = ((BYTE)(src)) < 0;
 	int flgo = ((BYTE)(dst)) < 0;
 	int flgn = ((BYTE)(newv)) < 0;
+	NFLG = flgn != 0;
 	ZFLG = ((BYTE)(newv)) == 0;
 	VFLG = (flgs == flgo) && (flgn != flgo);
 	CFLG = regs.x = ((UBYTE)(~dst)) < ((UBYTE)(src));
-	NFLG = flgn != 0;
-	put_byte(dsta,newv);
-}}}}}}}}
-void op_620(ULONG opcode) /* ADD */
+}}
+
+void op_630(void) /* ADD */
 {
 	ULONG dstreg = opcode & 7;
-{{	BYTE src = nextiword();
-{	regs.a[dstreg] -= areg_byteinc[dstreg];
-{	CPTR dsta = regs.a[dstreg];
+	BYTE src = nextiword();
+	CPTR dsta = get_disp_ea(regs.a[dstreg]);
 	BYTE dst = get_byte(dsta);
-{{ULONG newv = ((BYTE)(dst)) + ((BYTE)(src));
+	ULONG newv = ((BYTE)(dst)) + ((BYTE)(src));
+	put_byte(dsta,newv);
 {	int flgs = ((BYTE)(src)) < 0;
 	int flgo = ((BYTE)(dst)) < 0;
 	int flgn = ((BYTE)(newv)) < 0;
+	NFLG = flgn != 0;
 	ZFLG = ((BYTE)(newv)) == 0;
 	VFLG = (flgs == flgo) && (flgn != flgo);
 	CFLG = regs.x = ((UBYTE)(~dst)) < ((UBYTE)(src));
-	NFLG = flgn != 0;
+}}
+
+void op_638(void) /* ADD */
+{
+	BYTE src = nextiword();
+	CPTR dsta = (LONG)(WORD)nextiword();
+	BYTE dst = get_byte(dsta);
+	ULONG newv = ((BYTE)(dst)) + ((BYTE)(src));
 	put_byte(dsta,newv);
-}}}}}}}}
-void op_628(ULONG opcode) /* ADD */
+{	int flgs = ((BYTE)(src)) < 0;
+	int flgo = ((BYTE)(dst)) < 0;
+	int flgn = ((BYTE)(newv)) < 0;
+	NFLG = flgn != 0;
+	ZFLG = ((BYTE)(newv)) == 0;
+	VFLG = (flgs == flgo) && (flgn != flgo);
+	CFLG = regs.x = ((UBYTE)(~dst)) < ((UBYTE)(src));
+}}
+
+void op_639(void) /* ADD */
+{
+	BYTE src = nextiword();
+	CPTR dsta = nextilong();
+	BYTE dst = get_byte(dsta);
+	ULONG newv = ((BYTE)(dst)) + ((BYTE)(src));
+	put_byte(dsta,newv);
+{	int flgs = ((BYTE)(src)) < 0;
+	int flgo = ((BYTE)(dst)) < 0;
+	int flgn = ((BYTE)(newv)) < 0;
+	NFLG = flgn != 0;
+	ZFLG = ((BYTE)(newv)) == 0;
+	VFLG = (flgs == flgo) && (flgn != flgo);
+	CFLG = regs.x = ((UBYTE)(~dst)) < ((UBYTE)(src));
+}}
+
+void op_640(void) /* ADD */
 {
 	ULONG dstreg = opcode & 7;
-{{	BYTE src = nextiword();
-{	CPTR dsta = regs.a[dstreg] + (LONG)(WORD)nextiword();
-	BYTE dst = get_byte(dsta);
-{{ULONG newv = ((BYTE)(dst)) + ((BYTE)(src));
-{	int flgs = ((BYTE)(src)) < 0;
-	int flgo = ((BYTE)(dst)) < 0;
-	int flgn = ((BYTE)(newv)) < 0;
-	ZFLG = ((BYTE)(newv)) == 0;
-	VFLG = (flgs == flgo) && (flgn != flgo);
-	CFLG = regs.x = ((UBYTE)(~dst)) < ((UBYTE)(src));
-	NFLG = flgn != 0;
-	put_byte(dsta,newv);
-}}}}}}}
-void op_630(ULONG opcode) /* ADD */
-{
-	ULONG dstreg = opcode & 7;
-{{	BYTE src = nextiword();
-{	CPTR dsta = get_disp_ea(regs.a[dstreg]);
-{	BYTE dst = get_byte(dsta);
-{{ULONG newv = ((BYTE)(dst)) + ((BYTE)(src));
-{	int flgs = ((BYTE)(src)) < 0;
-	int flgo = ((BYTE)(dst)) < 0;
-	int flgn = ((BYTE)(newv)) < 0;
-	ZFLG = ((BYTE)(newv)) == 0;
-	VFLG = (flgs == flgo) && (flgn != flgo);
-	CFLG = regs.x = ((UBYTE)(~dst)) < ((UBYTE)(src));
-	NFLG = flgn != 0;
-	put_byte(dsta,newv);
-}}}}}}}}
-void op_638(ULONG opcode) /* ADD */
-{
-{{	BYTE src = nextiword();
-{	CPTR dsta = (LONG)(WORD)nextiword();
-	BYTE dst = get_byte(dsta);
-{{ULONG newv = ((BYTE)(dst)) + ((BYTE)(src));
-{	int flgs = ((BYTE)(src)) < 0;
-	int flgo = ((BYTE)(dst)) < 0;
-	int flgn = ((BYTE)(newv)) < 0;
-	ZFLG = ((BYTE)(newv)) == 0;
-	VFLG = (flgs == flgo) && (flgn != flgo);
-	CFLG = regs.x = ((UBYTE)(~dst)) < ((UBYTE)(src));
-	NFLG = flgn != 0;
-	put_byte(dsta,newv);
-}}}}}}}
-void op_639(ULONG opcode) /* ADD */
-{
-{{	BYTE src = nextiword();
-{	CPTR dsta = nextilong();
-	BYTE dst = get_byte(dsta);
-{{ULONG newv = ((BYTE)(dst)) + ((BYTE)(src));
-{	int flgs = ((BYTE)(src)) < 0;
-	int flgo = ((BYTE)(dst)) < 0;
-	int flgn = ((BYTE)(newv)) < 0;
-	ZFLG = ((BYTE)(newv)) == 0;
-	VFLG = (flgs == flgo) && (flgn != flgo);
-	CFLG = regs.x = ((UBYTE)(~dst)) < ((UBYTE)(src));
-	NFLG = flgn != 0;
-	put_byte(dsta,newv);
-}}}}}}}
-void op_640(ULONG opcode) /* ADD */
-{
-	ULONG dstreg = opcode & 7;
-{{	WORD src = nextiword();
-{	WORD dst = regs.d[dstreg].W.l;
-{{ULONG newv = ((WORD)(dst)) + ((WORD)(src));
-{	int flgs = ((WORD)(src)) < 0;
-	int flgo = ((WORD)(dst)) < 0;
-	int flgn = ((WORD)(newv)) < 0;
-	ZFLG = ((WORD)(newv)) == 0;
-	VFLG = (flgs == flgo) && (flgn != flgo);
-	CFLG = regs.x = ((UWORD)(~dst)) < ((UWORD)(src));
-	NFLG = flgn != 0;
+	WORD src = nextiword();
+	WORD dst = regs.d[dstreg].W.l;
+	ULONG newv = ((WORD)(dst)) + ((WORD)(src));
 	regs.d[dstreg].W.l = newv;
-}}}}}}}
-void op_650(ULONG opcode) /* ADD */
+{	int flgs = ((WORD)(src)) < 0;
+	int flgo = ((WORD)(dst)) < 0;
+	int flgn = ((WORD)(newv)) < 0;
+	NFLG = flgn != 0;
+	ZFLG = ((WORD)(newv)) == 0;
+	VFLG = (flgs == flgo) && (flgn != flgo);
+	CFLG = regs.x = ((UWORD)(~dst)) < ((UWORD)(src));
+}}
+
+void op_650(void) /* ADD */
 {
 	ULONG dstreg = opcode & 7;
-{{	WORD src = nextiword();
+	WORD src = nextiword();
+	CPTR dsta = regs.a[dstreg];
+	WORD dst = get_word(dsta);
+	ULONG newv = ((WORD)(dst)) + ((WORD)(src));
+	put_word(dsta,newv);
+{	int flgs = ((WORD)(src)) < 0;
+	int flgo = ((WORD)(dst)) < 0;
+	int flgn = ((WORD)(newv)) < 0;
+	NFLG = flgn != 0;
+	ZFLG = ((WORD)(newv)) == 0;
+	VFLG = (flgs == flgo) && (flgn != flgo);
+	CFLG = regs.x = ((UWORD)(~dst)) < ((UWORD)(src));
+}}
+
+void op_658(void) /* ADD */
+{
+	ULONG dstreg = opcode & 7;
+	WORD src = nextiword();
+	CPTR dsta = regs.a[dstreg];
+	WORD dst = get_word(dsta);
+	ULONG newv = ((WORD)(dst)) + ((WORD)(src));
+	put_word(dsta,newv);
+	regs.a[dstreg] += 2;
+{	int flgs = ((WORD)(src)) < 0;
+	int flgo = ((WORD)(dst)) < 0;
+	int flgn = ((WORD)(newv)) < 0;
+	NFLG = flgn != 0;
+	ZFLG = ((WORD)(newv)) == 0;
+	VFLG = (flgs == flgo) && (flgn != flgo);
+	CFLG = regs.x = ((UWORD)(~dst)) < ((UWORD)(src));
+}}
+
+void op_660(void) /* ADD */
+{
+	ULONG dstreg = opcode & 7;
+	WORD src = nextiword();
+	regs.a[dstreg] -= 2;
 {	CPTR dsta = regs.a[dstreg];
 	WORD dst = get_word(dsta);
-{{ULONG newv = ((WORD)(dst)) + ((WORD)(src));
+	ULONG newv = ((WORD)(dst)) + ((WORD)(src));
+	put_word(dsta,newv);
 {	int flgs = ((WORD)(src)) < 0;
 	int flgo = ((WORD)(dst)) < 0;
 	int flgn = ((WORD)(newv)) < 0;
+	NFLG = flgn != 0;
 	ZFLG = ((WORD)(newv)) == 0;
 	VFLG = (flgs == flgo) && (flgn != flgo);
 	CFLG = regs.x = ((UWORD)(~dst)) < ((UWORD)(src));
-	NFLG = flgn != 0;
-	put_word(dsta,newv);
-}}}}}}}
-void op_658(ULONG opcode) /* ADD */
+}}}
+
+void op_668(void) /* ADD */
 {
 	ULONG dstreg = opcode & 7;
-{{	WORD src = nextiword();
-{	CPTR dsta = regs.a[dstreg];
+	WORD src = nextiword();
+	CPTR dsta = regs.a[dstreg] + (LONG)(WORD)nextiword();
 	WORD dst = get_word(dsta);
-{	regs.a[dstreg] += 2;
-{{ULONG newv = ((WORD)(dst)) + ((WORD)(src));
+	ULONG newv = ((WORD)(dst)) + ((WORD)(src));
+	put_word(dsta,newv);
 {	int flgs = ((WORD)(src)) < 0;
 	int flgo = ((WORD)(dst)) < 0;
 	int flgn = ((WORD)(newv)) < 0;
+	NFLG = flgn != 0;
 	ZFLG = ((WORD)(newv)) == 0;
 	VFLG = (flgs == flgo) && (flgn != flgo);
 	CFLG = regs.x = ((UWORD)(~dst)) < ((UWORD)(src));
-	NFLG = flgn != 0;
-	put_word(dsta,newv);
-}}}}}}}}
-void op_660(ULONG opcode) /* ADD */
+}}
+
+void op_670(void) /* ADD */
 {
 	ULONG dstreg = opcode & 7;
-{{	WORD src = nextiword();
-{	regs.a[dstreg] -= 2;
-{	CPTR dsta = regs.a[dstreg];
+	WORD src = nextiword();
+	CPTR dsta = get_disp_ea(regs.a[dstreg]);
 	WORD dst = get_word(dsta);
-{{ULONG newv = ((WORD)(dst)) + ((WORD)(src));
+	ULONG newv = ((WORD)(dst)) + ((WORD)(src));
+	put_word(dsta,newv);
 {	int flgs = ((WORD)(src)) < 0;
 	int flgo = ((WORD)(dst)) < 0;
 	int flgn = ((WORD)(newv)) < 0;
+	NFLG = flgn != 0;
 	ZFLG = ((WORD)(newv)) == 0;
 	VFLG = (flgs == flgo) && (flgn != flgo);
 	CFLG = regs.x = ((UWORD)(~dst)) < ((UWORD)(src));
-	NFLG = flgn != 0;
+}}
+
+void op_678(void) /* ADD */
+{
+	WORD src = nextiword();
+	CPTR dsta = (LONG)(WORD)nextiword();
+	WORD dst = get_word(dsta);
+	ULONG newv = ((WORD)(dst)) + ((WORD)(src));
 	put_word(dsta,newv);
-}}}}}}}}
-void op_668(ULONG opcode) /* ADD */
+{	int flgs = ((WORD)(src)) < 0;
+	int flgo = ((WORD)(dst)) < 0;
+	int flgn = ((WORD)(newv)) < 0;
+	NFLG = flgn != 0;
+	ZFLG = ((WORD)(newv)) == 0;
+	VFLG = (flgs == flgo) && (flgn != flgo);
+	CFLG = regs.x = ((UWORD)(~dst)) < ((UWORD)(src));
+}}
+
+void op_679(void) /* ADD */
+{
+	WORD src = nextiword();
+	CPTR dsta = nextilong();
+	WORD dst = get_word(dsta);
+	ULONG newv = ((WORD)(dst)) + ((WORD)(src));
+	put_word(dsta,newv);
+{	int flgs = ((WORD)(src)) < 0;
+	int flgo = ((WORD)(dst)) < 0;
+	int flgn = ((WORD)(newv)) < 0;
+	NFLG = flgn != 0;
+	ZFLG = ((WORD)(newv)) == 0;
+	VFLG = (flgs == flgo) && (flgn != flgo);
+	CFLG = regs.x = ((UWORD)(~dst)) < ((UWORD)(src));
+}}
+
+void op_680(void) /* ADD */
 {
 	ULONG dstreg = opcode & 7;
-{{	WORD src = nextiword();
-{	CPTR dsta = regs.a[dstreg] + (LONG)(WORD)nextiword();
-	WORD dst = get_word(dsta);
-{{ULONG newv = ((WORD)(dst)) + ((WORD)(src));
-{	int flgs = ((WORD)(src)) < 0;
-	int flgo = ((WORD)(dst)) < 0;
-	int flgn = ((WORD)(newv)) < 0;
-	ZFLG = ((WORD)(newv)) == 0;
-	VFLG = (flgs == flgo) && (flgn != flgo);
-	CFLG = regs.x = ((UWORD)(~dst)) < ((UWORD)(src));
-	NFLG = flgn != 0;
-	put_word(dsta,newv);
-}}}}}}}
-void op_670(ULONG opcode) /* ADD */
-{
-	ULONG dstreg = opcode & 7;
-{{	WORD src = nextiword();
-{	CPTR dsta = get_disp_ea(regs.a[dstreg]);
-{	WORD dst = get_word(dsta);
-{{ULONG newv = ((WORD)(dst)) + ((WORD)(src));
-{	int flgs = ((WORD)(src)) < 0;
-	int flgo = ((WORD)(dst)) < 0;
-	int flgn = ((WORD)(newv)) < 0;
-	ZFLG = ((WORD)(newv)) == 0;
-	VFLG = (flgs == flgo) && (flgn != flgo);
-	CFLG = regs.x = ((UWORD)(~dst)) < ((UWORD)(src));
-	NFLG = flgn != 0;
-	put_word(dsta,newv);
-}}}}}}}}
-void op_678(ULONG opcode) /* ADD */
-{
-{{	WORD src = nextiword();
-{	CPTR dsta = (LONG)(WORD)nextiword();
-	WORD dst = get_word(dsta);
-{{ULONG newv = ((WORD)(dst)) + ((WORD)(src));
-{	int flgs = ((WORD)(src)) < 0;
-	int flgo = ((WORD)(dst)) < 0;
-	int flgn = ((WORD)(newv)) < 0;
-	ZFLG = ((WORD)(newv)) == 0;
-	VFLG = (flgs == flgo) && (flgn != flgo);
-	CFLG = regs.x = ((UWORD)(~dst)) < ((UWORD)(src));
-	NFLG = flgn != 0;
-	put_word(dsta,newv);
-}}}}}}}
-void op_679(ULONG opcode) /* ADD */
-{
-{{	WORD src = nextiword();
-{	CPTR dsta = nextilong();
-	WORD dst = get_word(dsta);
-{{ULONG newv = ((WORD)(dst)) + ((WORD)(src));
-{	int flgs = ((WORD)(src)) < 0;
-	int flgo = ((WORD)(dst)) < 0;
-	int flgn = ((WORD)(newv)) < 0;
-	ZFLG = ((WORD)(newv)) == 0;
-	VFLG = (flgs == flgo) && (flgn != flgo);
-	CFLG = regs.x = ((UWORD)(~dst)) < ((UWORD)(src));
-	NFLG = flgn != 0;
-	put_word(dsta,newv);
-}}}}}}}
-void op_680(ULONG opcode) /* ADD */
-{
-	ULONG dstreg = opcode & 7;
-{{	LONG src = nextilong();
-{	LONG dst = regs.d[dstreg].D;
-{{ULONG newv = ((LONG)(dst)) + ((LONG)(src));
-{	int flgs = ((LONG)(src)) < 0;
-	int flgo = ((LONG)(dst)) < 0;
-	int flgn = ((LONG)(newv)) < 0;
-	ZFLG = ((LONG)(newv)) == 0;
-	VFLG = (flgs == flgo) && (flgn != flgo);
-	CFLG = regs.x = ((ULONG)(~dst)) < ((ULONG)(src));
-	NFLG = flgn != 0;
+	LONG src = nextilong();
+	LONG dst = regs.d[dstreg].D;
+	ULONG newv = ((LONG)(dst)) + ((LONG)(src));
 	regs.d[dstreg].D = (newv);
-}}}}}}}
-void op_690(ULONG opcode) /* ADD */
+{	int flgs = ((LONG)(src)) < 0;
+	int flgo = ((LONG)(dst)) < 0;
+	int flgn = ((LONG)(newv)) < 0;
+	NFLG = flgn != 0;
+	ZFLG = ((LONG)(newv)) == 0;
+	VFLG = (flgs == flgo) && (flgn != flgo);
+	CFLG = regs.x = ((ULONG)(~dst)) < ((ULONG)(src));
+}}
+
+void op_690(void) /* ADD */
 {
 	ULONG dstreg = opcode & 7;
-{{	LONG src = nextilong();
+	LONG src = nextilong();
+	CPTR dsta = regs.a[dstreg];
+	LONG dst = get_long(dsta);
+	ULONG newv = ((LONG)(dst)) + ((LONG)(src));
+	put_long(dsta,newv);
+{	int flgs = ((LONG)(src)) < 0;
+	int flgo = ((LONG)(dst)) < 0;
+	int flgn = ((LONG)(newv)) < 0;
+	NFLG = flgn != 0;
+	ZFLG = ((LONG)(newv)) == 0;
+	VFLG = (flgs == flgo) && (flgn != flgo);
+	CFLG = regs.x = ((ULONG)(~dst)) < ((ULONG)(src));
+}}
+
+void op_698(void) /* ADD */
+{
+	ULONG dstreg = opcode & 7;
+	LONG src = nextilong();
+	CPTR dsta = regs.a[dstreg];
+	LONG dst = get_long(dsta);
+	ULONG newv = ((LONG)(dst)) + ((LONG)(src));
+	put_long(dsta,newv);
+	regs.a[dstreg] += 4;
+{	int flgs = ((LONG)(src)) < 0;
+	int flgo = ((LONG)(dst)) < 0;
+	int flgn = ((LONG)(newv)) < 0;
+	NFLG = flgn != 0;
+	ZFLG = ((LONG)(newv)) == 0;
+	VFLG = (flgs == flgo) && (flgn != flgo);
+	CFLG = regs.x = ((ULONG)(~dst)) < ((ULONG)(src));
+}}
+
+void op_6a0(void) /* ADD */
+{
+	ULONG dstreg = opcode & 7;
+	LONG src = nextilong();
+	regs.a[dstreg] -= 4;
 {	CPTR dsta = regs.a[dstreg];
 	LONG dst = get_long(dsta);
-{{ULONG newv = ((LONG)(dst)) + ((LONG)(src));
+	ULONG newv = ((LONG)(dst)) + ((LONG)(src));
+	put_long(dsta,newv);
 {	int flgs = ((LONG)(src)) < 0;
 	int flgo = ((LONG)(dst)) < 0;
 	int flgn = ((LONG)(newv)) < 0;
+	NFLG = flgn != 0;
 	ZFLG = ((LONG)(newv)) == 0;
 	VFLG = (flgs == flgo) && (flgn != flgo);
 	CFLG = regs.x = ((ULONG)(~dst)) < ((ULONG)(src));
-	NFLG = flgn != 0;
-	put_long(dsta,newv);
-}}}}}}}
-void op_698(ULONG opcode) /* ADD */
+}}}
+
+void op_6a8(void) /* ADD */
 {
 	ULONG dstreg = opcode & 7;
-{{	LONG src = nextilong();
-{	CPTR dsta = regs.a[dstreg];
+	LONG src = nextilong();
+	CPTR dsta = regs.a[dstreg] + (LONG)(WORD)nextiword();
 	LONG dst = get_long(dsta);
-{	regs.a[dstreg] += 4;
-{{ULONG newv = ((LONG)(dst)) + ((LONG)(src));
+	ULONG newv = ((LONG)(dst)) + ((LONG)(src));
+	put_long(dsta,newv);
 {	int flgs = ((LONG)(src)) < 0;
 	int flgo = ((LONG)(dst)) < 0;
 	int flgn = ((LONG)(newv)) < 0;
+	NFLG = flgn != 0;
 	ZFLG = ((LONG)(newv)) == 0;
 	VFLG = (flgs == flgo) && (flgn != flgo);
 	CFLG = regs.x = ((ULONG)(~dst)) < ((ULONG)(src));
-	NFLG = flgn != 0;
-	put_long(dsta,newv);
-}}}}}}}}
-void op_6a0(ULONG opcode) /* ADD */
+}}
+
+void op_6b0(void) /* ADD */
 {
 	ULONG dstreg = opcode & 7;
-{{	LONG src = nextilong();
-{	regs.a[dstreg] -= 4;
-{	CPTR dsta = regs.a[dstreg];
+	LONG src = nextilong();
+	CPTR dsta = get_disp_ea(regs.a[dstreg]);
 	LONG dst = get_long(dsta);
-{{ULONG newv = ((LONG)(dst)) + ((LONG)(src));
+	ULONG newv = ((LONG)(dst)) + ((LONG)(src));
+	put_long(dsta,newv);
 {	int flgs = ((LONG)(src)) < 0;
 	int flgo = ((LONG)(dst)) < 0;
 	int flgn = ((LONG)(newv)) < 0;
+	NFLG = flgn != 0;
 	ZFLG = ((LONG)(newv)) == 0;
 	VFLG = (flgs == flgo) && (flgn != flgo);
 	CFLG = regs.x = ((ULONG)(~dst)) < ((ULONG)(src));
-	NFLG = flgn != 0;
+}}
+
+void op_6b8(void) /* ADD */
+{
+	LONG src = nextilong();
+	CPTR dsta = (LONG)(WORD)nextiword();
+	LONG dst = get_long(dsta);
+	ULONG newv = ((LONG)(dst)) + ((LONG)(src));
 	put_long(dsta,newv);
-}}}}}}}}
-void op_6a8(ULONG opcode) /* ADD */
+{	int flgs = ((LONG)(src)) < 0;
+	int flgo = ((LONG)(dst)) < 0;
+	int flgn = ((LONG)(newv)) < 0;
+	NFLG = flgn != 0;
+	ZFLG = ((LONG)(newv)) == 0;
+	VFLG = (flgs == flgo) && (flgn != flgo);
+	CFLG = regs.x = ((ULONG)(~dst)) < ((ULONG)(src));
+}}
+
+void op_6b9(void) /* ADD */
+{
+	LONG src = nextilong();
+	CPTR dsta = nextilong();
+	LONG dst = get_long(dsta);
+	ULONG newv = ((LONG)(dst)) + ((LONG)(src));
+	put_long(dsta,newv);
+{	int flgs = ((LONG)(src)) < 0;
+	int flgo = ((LONG)(dst)) < 0;
+	int flgn = ((LONG)(newv)) < 0;
+	NFLG = flgn != 0;
+	ZFLG = ((LONG)(newv)) == 0;
+	VFLG = (flgs == flgo) && (flgn != flgo);
+	CFLG = regs.x = ((ULONG)(~dst)) < ((ULONG)(src));
+}}
+
+void op_800(void) /* BTST */
 {
 	ULONG dstreg = opcode & 7;
-{{	LONG src = nextilong();
-{	CPTR dsta = regs.a[dstreg] + (LONG)(WORD)nextiword();
-	LONG dst = get_long(dsta);
-{{ULONG newv = ((LONG)(dst)) + ((LONG)(src));
-{	int flgs = ((LONG)(src)) < 0;
-	int flgo = ((LONG)(dst)) < 0;
-	int flgn = ((LONG)(newv)) < 0;
-	ZFLG = ((LONG)(newv)) == 0;
-	VFLG = (flgs == flgo) && (flgn != flgo);
-	CFLG = regs.x = ((ULONG)(~dst)) < ((ULONG)(src));
-	NFLG = flgn != 0;
-	put_long(dsta,newv);
-}}}}}}}
-void op_6b0(ULONG opcode) /* ADD */
-{
-	ULONG dstreg = opcode & 7;
-{{	LONG src = nextilong();
-{	CPTR dsta = get_disp_ea(regs.a[dstreg]);
-{	LONG dst = get_long(dsta);
-{{ULONG newv = ((LONG)(dst)) + ((LONG)(src));
-{	int flgs = ((LONG)(src)) < 0;
-	int flgo = ((LONG)(dst)) < 0;
-	int flgn = ((LONG)(newv)) < 0;
-	ZFLG = ((LONG)(newv)) == 0;
-	VFLG = (flgs == flgo) && (flgn != flgo);
-	CFLG = regs.x = ((ULONG)(~dst)) < ((ULONG)(src));
-	NFLG = flgn != 0;
-	put_long(dsta,newv);
-}}}}}}}}
-void op_6b8(ULONG opcode) /* ADD */
-{
-{{	LONG src = nextilong();
-{	CPTR dsta = (LONG)(WORD)nextiword();
-	LONG dst = get_long(dsta);
-{{ULONG newv = ((LONG)(dst)) + ((LONG)(src));
-{	int flgs = ((LONG)(src)) < 0;
-	int flgo = ((LONG)(dst)) < 0;
-	int flgn = ((LONG)(newv)) < 0;
-	ZFLG = ((LONG)(newv)) == 0;
-	VFLG = (flgs == flgo) && (flgn != flgo);
-	CFLG = regs.x = ((ULONG)(~dst)) < ((ULONG)(src));
-	NFLG = flgn != 0;
-	put_long(dsta,newv);
-}}}}}}}
-void op_6b9(ULONG opcode) /* ADD */
-{
-{{	LONG src = nextilong();
-{	CPTR dsta = nextilong();
-	LONG dst = get_long(dsta);
-{{ULONG newv = ((LONG)(dst)) + ((LONG)(src));
-{	int flgs = ((LONG)(src)) < 0;
-	int flgo = ((LONG)(dst)) < 0;
-	int flgn = ((LONG)(newv)) < 0;
-	ZFLG = ((LONG)(newv)) == 0;
-	VFLG = (flgs == flgo) && (flgn != flgo);
-	CFLG = regs.x = ((ULONG)(~dst)) < ((ULONG)(src));
-	NFLG = flgn != 0;
-	put_long(dsta,newv);
-}}}}}}}
-void op_800(ULONG opcode) /* BTST */
-{
-	ULONG dstreg = opcode & 7;
-{{	WORD src = nextiword();
-{	LONG dst = regs.d[dstreg].D;
+	WORD src = nextiword();
+	LONG dst = regs.d[dstreg].D;
 	src &= 31;
 	ZFLG = !(dst & (1 << src));
-}}}}
-void op_810(ULONG opcode) /* BTST */
+}
+
+void op_810(void) /* BTST */
 {
 	ULONG dstreg = opcode & 7;
-{{	WORD src = nextiword();
+	WORD src = nextiword();
+	CPTR dsta = regs.a[dstreg];
+	BYTE dst = get_byte(dsta);
+	src &= 7;
+	ZFLG = !(dst & (1 << src));
+}
+
+void op_818(void) /* BTST */
+{
+	ULONG dstreg = opcode & 7;
+	WORD src = nextiword();
+	CPTR dsta = regs.a[dstreg];
+	BYTE dst = get_byte(dsta);
+	regs.a[dstreg] += areg_byteinc[dstreg];
+	src &= 7;
+	ZFLG = !(dst & (1 << src));
+}
+
+void op_820(void) /* BTST */
+{
+	ULONG dstreg = opcode & 7;
+	WORD src = nextiword();
+	regs.a[dstreg] -= areg_byteinc[dstreg];
 {	CPTR dsta = regs.a[dstreg];
 	BYTE dst = get_byte(dsta);
 	src &= 7;
 	ZFLG = !(dst & (1 << src));
-}}}}
-void op_818(ULONG opcode) /* BTST */
-{
-	ULONG dstreg = opcode & 7;
-{{	WORD src = nextiword();
-{	CPTR dsta = regs.a[dstreg];
-	BYTE dst = get_byte(dsta);
-{	regs.a[dstreg] += areg_byteinc[dstreg];
-	src &= 7;
-	ZFLG = !(dst & (1 << src));
-}}}}}
-void op_820(ULONG opcode) /* BTST */
-{
-	ULONG dstreg = opcode & 7;
-{{	WORD src = nextiword();
-{	regs.a[dstreg] -= areg_byteinc[dstreg];
-{	CPTR dsta = regs.a[dstreg];
-	BYTE dst = get_byte(dsta);
-	src &= 7;
-	ZFLG = !(dst & (1 << src));
-}}}}}
-void op_828(ULONG opcode) /* BTST */
+}}
+
+void op_828(void) /* BTST */
 {
 	ULONG dstreg = opcode & 7;
 {{	WORD src = nextiword();
@@ -1919,7 +2442,7 @@ void op_828(ULONG opcode) /* BTST */
 	src &= 7;
 	ZFLG = !(dst & (1 << src));
 }}}}
-void op_830(ULONG opcode) /* BTST */
+void op_830(void) /* BTST */
 {
 	ULONG dstreg = opcode & 7;
 {{	WORD src = nextiword();
@@ -1928,7 +2451,7 @@ void op_830(ULONG opcode) /* BTST */
 	src &= 7;
 	ZFLG = !(dst & (1 << src));
 }}}}}
-void op_838(ULONG opcode) /* BTST */
+void op_838(void) /* BTST */
 {
 {{	WORD src = nextiword();
 {	CPTR dsta = (LONG)(WORD)nextiword();
@@ -1936,7 +2459,7 @@ void op_838(ULONG opcode) /* BTST */
 	src &= 7;
 	ZFLG = !(dst & (1 << src));
 }}}}
-void op_839(ULONG opcode) /* BTST */
+void op_839(void) /* BTST */
 {
 {{	WORD src = nextiword();
 {	CPTR dsta = nextilong();
@@ -1944,7 +2467,7 @@ void op_839(ULONG opcode) /* BTST */
 	src &= 7;
 	ZFLG = !(dst & (1 << src));
 }}}}
-void op_83a(ULONG opcode) /* BTST */
+void op_83a(void) /* BTST */
 {
 	ULONG dstreg;
 	dstreg = 2;
@@ -1955,7 +2478,7 @@ void op_83a(ULONG opcode) /* BTST */
 	src &= 7;
 	ZFLG = !(dst & (1 << src));
 }}}}}
-void op_83b(ULONG opcode) /* BTST */
+void op_83b(void) /* BTST */
 {
 	ULONG dstreg;
 	dstreg = 3;
@@ -1965,14 +2488,14 @@ void op_83b(ULONG opcode) /* BTST */
 	src &= 7;
 	ZFLG = !(dst & (1 << src));
 }}}}}
-void op_83c(ULONG opcode) /* BTST */
+void op_83c(void) /* BTST */
 {
 {{	WORD src = nextiword();
 {	BYTE dst = nextiword();
 	src &= 7;
 	ZFLG = !(dst & (1 << src));
 }}}}
-void op_840(ULONG opcode) /* BCHG */
+void op_840(void) /* BCHG */
 {
 	ULONG dstreg = opcode & 7;
 {{	WORD src = nextiword();
@@ -1982,7 +2505,7 @@ void op_840(ULONG opcode) /* BCHG */
 	dst ^= (1 << src);
 	regs.d[dstreg].D = (dst);
 }}}}
-void op_850(ULONG opcode) /* BCHG */
+void op_850(void) /* BCHG */
 {
 	ULONG dstreg = opcode & 7;
 {{	WORD src = nextiword();
@@ -1993,7 +2516,7 @@ void op_850(ULONG opcode) /* BCHG */
 	dst ^= (1 << src);
 	put_byte(dsta,dst);
 }}}}
-void op_858(ULONG opcode) /* BCHG */
+void op_858(void) /* BCHG */
 {
 	ULONG dstreg = opcode & 7;
 {{	WORD src = nextiword();
@@ -2005,7 +2528,7 @@ void op_858(ULONG opcode) /* BCHG */
 	dst ^= (1 << src);
 	put_byte(dsta,dst);
 }}}}}
-void op_860(ULONG opcode) /* BCHG */
+void op_860(void) /* BCHG */
 {
 	ULONG dstreg = opcode & 7;
 {{	WORD src = nextiword();
@@ -2017,7 +2540,7 @@ void op_860(ULONG opcode) /* BCHG */
 	dst ^= (1 << src);
 	put_byte(dsta,dst);
 }}}}}
-void op_868(ULONG opcode) /* BCHG */
+void op_868(void) /* BCHG */
 {
 	ULONG dstreg = opcode & 7;
 {{	WORD src = nextiword();
@@ -2028,7 +2551,7 @@ void op_868(ULONG opcode) /* BCHG */
 	dst ^= (1 << src);
 	put_byte(dsta,dst);
 }}}}
-void op_870(ULONG opcode) /* BCHG */
+void op_870(void) /* BCHG */
 {
 	ULONG dstreg = opcode & 7;
 {{	WORD src = nextiword();
@@ -2039,7 +2562,7 @@ void op_870(ULONG opcode) /* BCHG */
 	dst ^= (1 << src);
 	put_byte(dsta,dst);
 }}}}}
-void op_878(ULONG opcode) /* BCHG */
+void op_878(void) /* BCHG */
 {
 {{	WORD src = nextiword();
 {	CPTR dsta = (LONG)(WORD)nextiword();
@@ -2049,7 +2572,7 @@ void op_878(ULONG opcode) /* BCHG */
 	dst ^= (1 << src);
 	put_byte(dsta,dst);
 }}}}
-void op_879(ULONG opcode) /* BCHG */
+void op_879(void) /* BCHG */
 {
 {{	WORD src = nextiword();
 {	CPTR dsta = nextilong();
@@ -2059,7 +2582,7 @@ void op_879(ULONG opcode) /* BCHG */
 	dst ^= (1 << src);
 	put_byte(dsta,dst);
 }}}}
-void op_87a(ULONG opcode) /* BCHG */
+void op_87a(void) /* BCHG */
 {
 	ULONG dstreg;
 	dstreg = 2;
@@ -2072,7 +2595,7 @@ void op_87a(ULONG opcode) /* BCHG */
 	dst ^= (1 << src);
 	put_byte(dsta,dst);
 }}}}}
-void op_87b(ULONG opcode) /* BCHG */
+void op_87b(void) /* BCHG */
 {
 	ULONG dstreg;
 	dstreg = 3;
@@ -2084,7 +2607,7 @@ void op_87b(ULONG opcode) /* BCHG */
 	dst ^= (1 << src);
 	put_byte(dsta,dst);
 }}}}}
-void op_880(ULONG opcode) /* BCLR */
+void op_880(void) /* BCLR */
 {
 	ULONG dstreg = opcode & 7;
 {{	WORD src = nextiword();
@@ -2094,7 +2617,7 @@ void op_880(ULONG opcode) /* BCLR */
 	dst &= ~(1 << src);
 	regs.d[dstreg].D = (dst);
 }}}}
-void op_890(ULONG opcode) /* BCLR */
+void op_890(void) /* BCLR */
 {
 	ULONG dstreg = opcode & 7;
 {{	WORD src = nextiword();
@@ -2105,7 +2628,7 @@ void op_890(ULONG opcode) /* BCLR */
 	dst &= ~(1 << src);
 	put_byte(dsta,dst);
 }}}}
-void op_898(ULONG opcode) /* BCLR */
+void op_898(void) /* BCLR */
 {
 	ULONG dstreg = opcode & 7;
 {{	WORD src = nextiword();
@@ -2117,7 +2640,7 @@ void op_898(ULONG opcode) /* BCLR */
 	dst &= ~(1 << src);
 	put_byte(dsta,dst);
 }}}}}
-void op_8a0(ULONG opcode) /* BCLR */
+void op_8a0(void) /* BCLR */
 {
 	ULONG dstreg = opcode & 7;
 {{	WORD src = nextiword();
@@ -2129,7 +2652,7 @@ void op_8a0(ULONG opcode) /* BCLR */
 	dst &= ~(1 << src);
 	put_byte(dsta,dst);
 }}}}}
-void op_8a8(ULONG opcode) /* BCLR */
+void op_8a8(void) /* BCLR */
 {
 	ULONG dstreg = opcode & 7;
 {{	WORD src = nextiword();
@@ -2140,7 +2663,7 @@ void op_8a8(ULONG opcode) /* BCLR */
 	dst &= ~(1 << src);
 	put_byte(dsta,dst);
 }}}}
-void op_8b0(ULONG opcode) /* BCLR */
+void op_8b0(void) /* BCLR */
 {
 	ULONG dstreg = opcode & 7;
 {{	WORD src = nextiword();
@@ -2151,7 +2674,7 @@ void op_8b0(ULONG opcode) /* BCLR */
 	dst &= ~(1 << src);
 	put_byte(dsta,dst);
 }}}}}
-void op_8b8(ULONG opcode) /* BCLR */
+void op_8b8(void) /* BCLR */
 {
 {{	WORD src = nextiword();
 {	CPTR dsta = (LONG)(WORD)nextiword();
@@ -2161,7 +2684,7 @@ void op_8b8(ULONG opcode) /* BCLR */
 	dst &= ~(1 << src);
 	put_byte(dsta,dst);
 }}}}
-void op_8b9(ULONG opcode) /* BCLR */
+void op_8b9(void) /* BCLR */
 {
 {{	WORD src = nextiword();
 {	CPTR dsta = nextilong();
@@ -2171,7 +2694,7 @@ void op_8b9(ULONG opcode) /* BCLR */
 	dst &= ~(1 << src);
 	put_byte(dsta,dst);
 }}}}
-void op_8ba(ULONG opcode) /* BCLR */
+void op_8ba(void) /* BCLR */
 {
 	ULONG dstreg;
 	dstreg = 2;
@@ -2184,7 +2707,7 @@ void op_8ba(ULONG opcode) /* BCLR */
 	dst &= ~(1 << src);
 	put_byte(dsta,dst);
 }}}}}
-void op_8bb(ULONG opcode) /* BCLR */
+void op_8bb(void) /* BCLR */
 {
 	ULONG dstreg;
 	dstreg = 3;
@@ -2196,7 +2719,7 @@ void op_8bb(ULONG opcode) /* BCLR */
 	dst &= ~(1 << src);
 	put_byte(dsta,dst);
 }}}}}
-void op_8c0(ULONG opcode) /* BSET */
+void op_8c0(void) /* BSET */
 {
 	ULONG dstreg = opcode & 7;
 {{	WORD src = nextiword();
@@ -2206,7 +2729,7 @@ void op_8c0(ULONG opcode) /* BSET */
 	dst |= (1 << src);
 	regs.d[dstreg].D = (dst);
 }}}}
-void op_8d0(ULONG opcode) /* BSET */
+void op_8d0(void) /* BSET */
 {
 	ULONG dstreg = opcode & 7;
 {{	WORD src = nextiword();
@@ -2217,7 +2740,7 @@ void op_8d0(ULONG opcode) /* BSET */
 	dst |= (1 << src);
 	put_byte(dsta,dst);
 }}}}
-void op_8d8(ULONG opcode) /* BSET */
+void op_8d8(void) /* BSET */
 {
 	ULONG dstreg = opcode & 7;
 {{	WORD src = nextiword();
@@ -2229,7 +2752,7 @@ void op_8d8(ULONG opcode) /* BSET */
 	dst |= (1 << src);
 	put_byte(dsta,dst);
 }}}}}
-void op_8e0(ULONG opcode) /* BSET */
+void op_8e0(void) /* BSET */
 {
 	ULONG dstreg = opcode & 7;
 {{	WORD src = nextiword();
@@ -2241,7 +2764,7 @@ void op_8e0(ULONG opcode) /* BSET */
 	dst |= (1 << src);
 	put_byte(dsta,dst);
 }}}}}
-void op_8e8(ULONG opcode) /* BSET */
+void op_8e8(void) /* BSET */
 {
 	ULONG dstreg = opcode & 7;
 {{	WORD src = nextiword();
@@ -2252,7 +2775,7 @@ void op_8e8(ULONG opcode) /* BSET */
 	dst |= (1 << src);
 	put_byte(dsta,dst);
 }}}}
-void op_8f0(ULONG opcode) /* BSET */
+void op_8f0(void) /* BSET */
 {
 	ULONG dstreg = opcode & 7;
 {{	WORD src = nextiword();
@@ -2263,7 +2786,7 @@ void op_8f0(ULONG opcode) /* BSET */
 	dst |= (1 << src);
 	put_byte(dsta,dst);
 }}}}}
-void op_8f8(ULONG opcode) /* BSET */
+void op_8f8(void) /* BSET */
 {
 {{	WORD src = nextiword();
 {	CPTR dsta = (LONG)(WORD)nextiword();
@@ -2273,7 +2796,7 @@ void op_8f8(ULONG opcode) /* BSET */
 	dst |= (1 << src);
 	put_byte(dsta,dst);
 }}}}
-void op_8f9(ULONG opcode) /* BSET */
+void op_8f9(void) /* BSET */
 {
 {{	WORD src = nextiword();
 {	CPTR dsta = nextilong();
@@ -2283,7 +2806,7 @@ void op_8f9(ULONG opcode) /* BSET */
 	dst |= (1 << src);
 	put_byte(dsta,dst);
 }}}}
-void op_8fa(ULONG opcode) /* BSET */
+void op_8fa(void) /* BSET */
 {
 	ULONG dstreg;
 	dstreg = 2;
@@ -2296,7 +2819,7 @@ void op_8fa(ULONG opcode) /* BSET */
 	dst |= (1 << src);
 	put_byte(dsta,dst);
 }}}}}
-void op_8fb(ULONG opcode) /* BSET */
+void op_8fb(void) /* BSET */
 {
 	ULONG dstreg;
 	dstreg = 3;
@@ -2308,30 +2831,48 @@ void op_8fb(ULONG opcode) /* BSET */
 	dst |= (1 << src);
 	put_byte(dsta,dst);
 }}}}}
-void op_a00(ULONG opcode) /* EOR */
+void op_a00(void) /* EOR */
 {
 	ULONG dstreg = opcode & 7;
 {{	BYTE src = nextiword();
 {	BYTE dst = regs.d[dstreg].B.l;
 	src ^= dst;
-	CLEARVC;
-	ZFLG = ((BYTE)(src)) == 0;
-	NFLG = ((BYTE)(src)) < 0;
 	regs.d[dstreg].B.l = src;
+	CLEARFLGS;
+	if ( src <= 0 )
+		{
+		if ( src ==  0 )
+			{
+			ZFLG = ZTRUE;
+			}
+		else
+			{
+			NFLG = NTRUE;
+			}
+		}
 }}}}
-void op_a10(ULONG opcode) /* EOR */
+void op_a10(void) /* EOR */
 {
 	ULONG dstreg = opcode & 7;
 {{	BYTE src = nextiword();
 {	CPTR dsta = regs.a[dstreg];
 	BYTE dst = get_byte(dsta);
 	src ^= dst;
-	CLEARVC;
-	ZFLG = ((BYTE)(src)) == 0;
-	NFLG = ((BYTE)(src)) < 0;
 	put_byte(dsta,src);
+	CLEARFLGS;
+	if ( src <= 0 )
+		{
+		if ( src ==  0 )
+			{
+			ZFLG = ZTRUE;
+			}
+		else
+			{
+			NFLG = NTRUE;
+			}
+		}
 }}}}
-void op_a18(ULONG opcode) /* EOR */
+void op_a18(void) /* EOR */
 {
 	ULONG dstreg = opcode & 7;
 {{	BYTE src = nextiword();
@@ -2339,12 +2880,21 @@ void op_a18(ULONG opcode) /* EOR */
 	BYTE dst = get_byte(dsta);
 {	regs.a[dstreg] += areg_byteinc[dstreg];
 	src ^= dst;
-	CLEARVC;
-	ZFLG = ((BYTE)(src)) == 0;
-	NFLG = ((BYTE)(src)) < 0;
 	put_byte(dsta,src);
+	CLEARFLGS;
+	if ( src <= 0 )
+		{
+		if ( src ==  0 )
+			{
+			ZFLG = ZTRUE;
+			}
+		else
+			{
+			NFLG = NTRUE;
+			}
+		}
 }}}}}
-void op_a20(ULONG opcode) /* EOR */
+void op_a20(void) /* EOR */
 {
 	ULONG dstreg = opcode & 7;
 {{	BYTE src = nextiword();
@@ -2352,58 +2902,103 @@ void op_a20(ULONG opcode) /* EOR */
 {	CPTR dsta = regs.a[dstreg];
 	BYTE dst = get_byte(dsta);
 	src ^= dst;
-	CLEARVC;
-	ZFLG = ((BYTE)(src)) == 0;
-	NFLG = ((BYTE)(src)) < 0;
 	put_byte(dsta,src);
+	CLEARFLGS;
+	if ( src <= 0 )
+		{
+		if ( src ==  0 )
+			{
+			ZFLG = ZTRUE;
+			}
+		else
+			{
+			NFLG = NTRUE;
+			}
+		}
 }}}}}
-void op_a28(ULONG opcode) /* EOR */
+void op_a28(void) /* EOR */
 {
 	ULONG dstreg = opcode & 7;
 {{	BYTE src = nextiword();
 {	CPTR dsta = regs.a[dstreg] + (LONG)(WORD)nextiword();
 	BYTE dst = get_byte(dsta);
 	src ^= dst;
-	CLEARVC;
-	ZFLG = ((BYTE)(src)) == 0;
-	NFLG = ((BYTE)(src)) < 0;
 	put_byte(dsta,src);
+	CLEARFLGS;
+	if ( src <= 0 )
+		{
+		if ( src ==  0 )
+			{
+			ZFLG = ZTRUE;
+			}
+		else
+			{
+			NFLG = NTRUE;
+			}
+		}
 }}}}
-void op_a30(ULONG opcode) /* EOR */
+void op_a30(void) /* EOR */
 {
 	ULONG dstreg = opcode & 7;
 {{	BYTE src = nextiword();
 {	CPTR dsta = get_disp_ea(regs.a[dstreg]);
 {	BYTE dst = get_byte(dsta);
 	src ^= dst;
-	CLEARVC;
-	ZFLG = ((BYTE)(src)) == 0;
-	NFLG = ((BYTE)(src)) < 0;
 	put_byte(dsta,src);
+	CLEARFLGS;
+	if ( src <= 0 )
+		{
+		if ( src ==  0 )
+			{
+			ZFLG = ZTRUE;
+			}
+		else
+			{
+			NFLG = NTRUE;
+			}
+		}
 }}}}}
-void op_a38(ULONG opcode) /* EOR */
+void op_a38(void) /* EOR */
 {
 {{	BYTE src = nextiword();
 {	CPTR dsta = (LONG)(WORD)nextiword();
 	BYTE dst = get_byte(dsta);
 	src ^= dst;
-	CLEARVC;
-	ZFLG = ((BYTE)(src)) == 0;
-	NFLG = ((BYTE)(src)) < 0;
 	put_byte(dsta,src);
+	CLEARFLGS;
+	if ( src <= 0 )
+		{
+		if ( src ==  0 )
+			{
+			ZFLG = ZTRUE;
+			}
+		else
+			{
+			NFLG = NTRUE;
+			}
+		}
 }}}}
-void op_a39(ULONG opcode) /* EOR */
+void op_a39(void) /* EOR */
 {
 {{	BYTE src = nextiword();
 {	CPTR dsta = nextilong();
 	BYTE dst = get_byte(dsta);
 	src ^= dst;
-	CLEARVC;
-	ZFLG = ((BYTE)(src)) == 0;
-	NFLG = ((BYTE)(src)) < 0;
 	put_byte(dsta,src);
+	CLEARFLGS;
+	if ( src <= 0 )
+		{
+		if ( src ==  0 )
+			{
+			ZFLG = ZTRUE;
+			}
+		else
+			{
+			NFLG = NTRUE;
+			}
+		}
 }}}}
-void op_a3c(ULONG opcode) /* EORSR */
+void op_a3c(void) /* EORSR */
 {
 {	MakeSR();
 {	WORD src = nextiword();
@@ -2411,43 +3006,72 @@ void op_a3c(ULONG opcode) /* EORSR */
 	regs.sr ^= src;
 	MakeFromSR();
 }}}
-void op_a40(ULONG opcode) /* EOR */
+void op_a40(void) /* EOR */
 {
 	ULONG dstreg = opcode & 7;
 {{	WORD src = nextiword();
 {	WORD dst = regs.d[dstreg].W.l;
 	src ^= dst;
-	CLEARVC;
-	ZFLG = ((WORD)(src)) == 0;
-	NFLG = ((WORD)(src)) < 0;
 	regs.d[dstreg].W.l = src;
+	CLEARFLGS;
+	if ( src <= 0 )
+		{
+		if ( src ==  0 )
+			{
+			ZFLG = ZTRUE;
+			}
+		else
+			{
+			NFLG = NTRUE;
+			}
+		}
 }}}}
-void op_a50(ULONG opcode) /* EOR */
+void op_a50(void) /* EOR */
 {
 	ULONG dstreg = opcode & 7;
-{{	WORD src = nextiword();
-{	CPTR dsta = regs.a[dstreg];
+	WORD src = nextiword();
+	CPTR dsta = regs.a[dstreg];
 	WORD dst = get_word(dsta);
 	src ^= dst;
-	CLEARVC;
-	ZFLG = ((WORD)(src)) == 0;
-	NFLG = ((WORD)(src)) < 0;
 	put_word(dsta,src);
-}}}}
-void op_a58(ULONG opcode) /* EOR */
+	CLEARFLGS;
+	if ( src <= 0 )
+		{
+		if ( src ==  0 )
+			{
+			ZFLG = ZTRUE;
+			}
+		else
+			{
+			NFLG = NTRUE;
+			}
+		}
+}
+
+void op_a58(void) /* EOR */
 {
 	ULONG dstreg = opcode & 7;
-{{	WORD src = nextiword();
-{	CPTR dsta = regs.a[dstreg];
+	WORD src = nextiword();
+	CPTR dsta = regs.a[dstreg];
 	WORD dst = get_word(dsta);
-{	regs.a[dstreg] += 2;
 	src ^= dst;
-	CLEARVC;
-	ZFLG = ((WORD)(src)) == 0;
-	NFLG = ((WORD)(src)) < 0;
 	put_word(dsta,src);
-}}}}}
-void op_a60(ULONG opcode) /* EOR */
+	regs.a[dstreg] += 2;
+	CLEARFLGS;
+	if ( src <= 0 )
+		{
+		if ( src ==  0 )
+			{
+			ZFLG = ZTRUE;
+			}
+		else
+			{
+			NFLG = NTRUE;
+			}
+		}
+}
+
+void op_a60(void) /* EOR */
 {
 	ULONG dstreg = opcode & 7;
 {{	WORD src = nextiword();
@@ -2455,58 +3079,103 @@ void op_a60(ULONG opcode) /* EOR */
 {	CPTR dsta = regs.a[dstreg];
 	WORD dst = get_word(dsta);
 	src ^= dst;
-	CLEARVC;
-	ZFLG = ((WORD)(src)) == 0;
-	NFLG = ((WORD)(src)) < 0;
 	put_word(dsta,src);
+	CLEARFLGS;
+	if ( src <= 0 )
+		{
+		if ( src ==  0 )
+			{
+			ZFLG = ZTRUE;
+			}
+		else
+			{
+			NFLG = NTRUE;
+			}
+		}
 }}}}}
-void op_a68(ULONG opcode) /* EOR */
+void op_a68(void) /* EOR */
 {
 	ULONG dstreg = opcode & 7;
 {{	WORD src = nextiword();
 {	CPTR dsta = regs.a[dstreg] + (LONG)(WORD)nextiword();
 	WORD dst = get_word(dsta);
 	src ^= dst;
-	CLEARVC;
-	ZFLG = ((WORD)(src)) == 0;
-	NFLG = ((WORD)(src)) < 0;
 	put_word(dsta,src);
+	CLEARFLGS;
+	if ( src <= 0 )
+		{
+		if ( src ==  0 )
+			{
+			ZFLG = ZTRUE;
+			}
+		else
+			{
+			NFLG = NTRUE;
+			}
+		}
 }}}}
-void op_a70(ULONG opcode) /* EOR */
+void op_a70(void) /* EOR */
 {
 	ULONG dstreg = opcode & 7;
 {{	WORD src = nextiword();
 {	CPTR dsta = get_disp_ea(regs.a[dstreg]);
 {	WORD dst = get_word(dsta);
 	src ^= dst;
-	CLEARVC;
-	ZFLG = ((WORD)(src)) == 0;
-	NFLG = ((WORD)(src)) < 0;
 	put_word(dsta,src);
+	CLEARFLGS;
+	if ( src <= 0 )
+		{
+		if ( src ==  0 )
+			{
+			ZFLG = ZTRUE;
+			}
+		else
+			{
+			NFLG = NTRUE;
+			}
+		}
 }}}}}
-void op_a78(ULONG opcode) /* EOR */
+void op_a78(void) /* EOR */
 {
 {{	WORD src = nextiword();
 {	CPTR dsta = (LONG)(WORD)nextiword();
 	WORD dst = get_word(dsta);
 	src ^= dst;
-	CLEARVC;
-	ZFLG = ((WORD)(src)) == 0;
-	NFLG = ((WORD)(src)) < 0;
 	put_word(dsta,src);
+	CLEARFLGS;
+	if ( src <= 0 )
+		{
+		if ( src ==  0 )
+			{
+			ZFLG = ZTRUE;
+			}
+		else
+			{
+			NFLG = NTRUE;
+			}
+		}
 }}}}
-void op_a79(ULONG opcode) /* EOR */
+void op_a79(void) /* EOR */
 {
 {{	WORD src = nextiword();
 {	CPTR dsta = nextilong();
 	WORD dst = get_word(dsta);
 	src ^= dst;
-	CLEARVC;
-	ZFLG = ((WORD)(src)) == 0;
-	NFLG = ((WORD)(src)) < 0;
 	put_word(dsta,src);
+	CLEARFLGS;
+	if ( src <= 0 )
+		{
+		if ( src ==  0 )
+			{
+			ZFLG = ZTRUE;
+			}
+		else
+			{
+			NFLG = NTRUE;
+			}
+		}
 }}}}
-void op_a7c(ULONG opcode) /* EORSR */
+void op_a7c(void) /* EORSR */
 {
 {if (!regs.s) { regs.pc -= 2; Exception(8,0); } else
 {	MakeSR();
@@ -2514,30 +3183,48 @@ void op_a7c(ULONG opcode) /* EORSR */
 	regs.sr ^= src;
 	MakeFromSR();
 }}}}
-void op_a80(ULONG opcode) /* EOR */
+void op_a80(void) /* EOR */
 {
 	ULONG dstreg = opcode & 7;
 {{	LONG src = nextilong();
 {	LONG dst = regs.d[dstreg].D;
 	src ^= dst;
-	CLEARVC;
-	ZFLG = ((LONG)(src)) == 0;
-	NFLG = ((LONG)(src)) < 0;
 	regs.d[dstreg].D = (src);
+	CLEARFLGS;
+	if ( src <= 0 )
+		{
+		if ( src ==  0 )
+			{
+			ZFLG = ZTRUE;
+			}
+		else
+			{
+			NFLG = NTRUE;
+			}
+		}
 }}}}
-void op_a90(ULONG opcode) /* EOR */
+void op_a90(void) /* EOR */
 {
 	ULONG dstreg = opcode & 7;
 {{	LONG src = nextilong();
 {	CPTR dsta = regs.a[dstreg];
 	LONG dst = get_long(dsta);
 	src ^= dst;
-	CLEARVC;
-	ZFLG = ((LONG)(src)) == 0;
-	NFLG = ((LONG)(src)) < 0;
 	put_long(dsta,src);
+	CLEARFLGS;
+	if ( src <= 0 )
+		{
+		if ( src ==  0 )
+			{
+			ZFLG = ZTRUE;
+			}
+		else
+			{
+			NFLG = NTRUE;
+			}
+		}
 }}}}
-void op_a98(ULONG opcode) /* EOR */
+void op_a98(void) /* EOR */
 {
 	ULONG dstreg = opcode & 7;
 {{	LONG src = nextilong();
@@ -2545,12 +3232,21 @@ void op_a98(ULONG opcode) /* EOR */
 	LONG dst = get_long(dsta);
 {	regs.a[dstreg] += 4;
 	src ^= dst;
-	CLEARVC;
-	ZFLG = ((LONG)(src)) == 0;
-	NFLG = ((LONG)(src)) < 0;
 	put_long(dsta,src);
+	CLEARFLGS;
+	if ( src <= 0 )
+		{
+		if ( src ==  0 )
+			{
+			ZFLG = ZTRUE;
+			}
+		else
+			{
+			NFLG = NTRUE;
+			}
+		}
 }}}}}
-void op_aa0(ULONG opcode) /* EOR */
+void op_aa0(void) /* EOR */
 {
 	ULONG dstreg = opcode & 7;
 {{	LONG src = nextilong();
@@ -2558,510 +3254,573 @@ void op_aa0(ULONG opcode) /* EOR */
 {	CPTR dsta = regs.a[dstreg];
 	LONG dst = get_long(dsta);
 	src ^= dst;
-	CLEARVC;
-	ZFLG = ((LONG)(src)) == 0;
-	NFLG = ((LONG)(src)) < 0;
 	put_long(dsta,src);
+	CLEARFLGS;
+	if ( src <= 0 )
+		{
+		if ( src ==  0 )
+			{
+			ZFLG = ZTRUE;
+			}
+		else
+			{
+			NFLG = NTRUE;
+			}
+		}
 }}}}}
-void op_aa8(ULONG opcode) /* EOR */
+void op_aa8(void) /* EOR */
 {
 	ULONG dstreg = opcode & 7;
 {{	LONG src = nextilong();
 {	CPTR dsta = regs.a[dstreg] + (LONG)(WORD)nextiword();
 	LONG dst = get_long(dsta);
 	src ^= dst;
-	CLEARVC;
-	ZFLG = ((LONG)(src)) == 0;
-	NFLG = ((LONG)(src)) < 0;
 	put_long(dsta,src);
+	CLEARFLGS;
+	if ( src <= 0 )
+		{
+		if ( src ==  0 )
+			{
+			ZFLG = ZTRUE;
+			}
+		else
+			{
+			NFLG = NTRUE;
+			}
+		}
 }}}}
-void op_ab0(ULONG opcode) /* EOR */
+void op_ab0(void) /* EOR */
 {
 	ULONG dstreg = opcode & 7;
 {{	LONG src = nextilong();
 {	CPTR dsta = get_disp_ea(regs.a[dstreg]);
 {	LONG dst = get_long(dsta);
 	src ^= dst;
-	CLEARVC;
-	ZFLG = ((LONG)(src)) == 0;
-	NFLG = ((LONG)(src)) < 0;
 	put_long(dsta,src);
+	CLEARFLGS;
+	if ( src <= 0 )
+		{
+		if ( src ==  0 )
+			{
+			ZFLG = ZTRUE;
+			}
+		else
+			{
+			NFLG = NTRUE;
+			}
+		}
 }}}}}
-void op_ab8(ULONG opcode) /* EOR */
+void op_ab8(void) /* EOR */
 {
 {{	LONG src = nextilong();
 {	CPTR dsta = (LONG)(WORD)nextiword();
 	LONG dst = get_long(dsta);
 	src ^= dst;
-	CLEARVC;
-	ZFLG = ((LONG)(src)) == 0;
-	NFLG = ((LONG)(src)) < 0;
 	put_long(dsta,src);
+	CLEARFLGS;
+	if ( src <= 0 )
+		{
+		if ( src ==  0 )
+			{
+			ZFLG = ZTRUE;
+			}
+		else
+			{
+			NFLG = NTRUE;
+			}
+		}
 }}}}
-void op_ab9(ULONG opcode) /* EOR */
+void op_ab9(void) /* EOR */
 {
-{{	LONG src = nextilong();
-{	CPTR dsta = nextilong();
+	LONG src = nextilong();
+	CPTR dsta = nextilong();
 	LONG dst = get_long(dsta);
 	src ^= dst;
-	CLEARVC;
-	ZFLG = ((LONG)(src)) == 0;
-	NFLG = ((LONG)(src)) < 0;
 	put_long(dsta,src);
-}}}}
-void op_c00(ULONG opcode) /* CMP */
+	CLEARFLGS;
+	if ( src <= 0 )
+		{
+		if ( src ==  0 )
+			{
+			ZFLG = ZTRUE;
+			}
+		else
+			{
+			NFLG = NTRUE;
+			}
+		}
+}
+
+void op_c00(void) /* CMP */
 {
 	ULONG dstreg = opcode & 7;
-{{	BYTE src = nextiword();
-{	BYTE dst = regs.d[dstreg].B.l;
-{{ULONG newv = ((BYTE)(dst)) - ((BYTE)(src));
+	BYTE src = nextiword();
+	BYTE dst = regs.d[dstreg].B.l;
+	ULONG newv = ((BYTE)(dst)) - ((BYTE)(src));
+	ZFLG = ((BYTE)(newv)) == 0;
 {	int flgs = ((BYTE)(src)) < 0;
 	int flgo = ((BYTE)(dst)) < 0;
 	int flgn = ((BYTE)(newv)) < 0;
-	ZFLG = ((BYTE)(newv)) == 0;
+	NFLG = flgn != 0;
 	VFLG = (flgs != flgo) && (flgn != flgo);
 	CFLG = ((UBYTE)(src)) > ((UBYTE)(dst));
-	NFLG = flgn != 0;
-}}}}}}}
-void op_c10(ULONG opcode) /* CMP */
+}}
+
+void op_c10(void) /* CMP */
 {
 	ULONG dstreg = opcode & 7;
-{{	BYTE src = nextiword();
+	BYTE src = nextiword();
+	CPTR dsta = regs.a[dstreg];
+	BYTE dst = get_byte(dsta);
+	ULONG newv = ((BYTE)(dst)) - ((BYTE)(src));
+	ZFLG = ((BYTE)(newv)) == 0;
+{	int flgs = ((BYTE)(src)) < 0;
+	int flgo = ((BYTE)(dst)) < 0;
+	int flgn = ((BYTE)(newv)) < 0;
+	NFLG = flgn != 0;
+	VFLG = (flgs != flgo) && (flgn != flgo);
+	CFLG = ((UBYTE)(src)) > ((UBYTE)(dst));
+}}
+
+void op_c18(void) /* CMP */
+{
+	ULONG dstreg = opcode & 7;
+	BYTE src = nextiword();
+	CPTR dsta = regs.a[dstreg];
+	BYTE dst = get_byte(dsta);
+	regs.a[dstreg] += areg_byteinc[dstreg];
+{	ULONG newv = ((BYTE)(dst)) - ((BYTE)(src));
+	ZFLG = ((BYTE)(newv)) == 0;
+{	int flgs = ((BYTE)(src)) < 0;
+	int flgo = ((BYTE)(dst)) < 0;
+	int flgn = ((BYTE)(newv)) < 0;
+	NFLG = flgn != 0;
+	VFLG = (flgs != flgo) && (flgn != flgo);
+	CFLG = ((UBYTE)(src)) > ((UBYTE)(dst));
+}}}
+
+void op_c20(void) /* CMP */
+{
+	ULONG dstreg = opcode & 7;
+	BYTE src = nextiword();
+	regs.a[dstreg] -= areg_byteinc[dstreg];
 {	CPTR dsta = regs.a[dstreg];
 	BYTE dst = get_byte(dsta);
-{{ULONG newv = ((BYTE)(dst)) - ((BYTE)(src));
+	ULONG newv = ((BYTE)(dst)) - ((BYTE)(src));
+	ZFLG = ((BYTE)(newv)) == 0;
 {	int flgs = ((BYTE)(src)) < 0;
 	int flgo = ((BYTE)(dst)) < 0;
 	int flgn = ((BYTE)(newv)) < 0;
-	ZFLG = ((BYTE)(newv)) == 0;
+	NFLG = flgn != 0;
 	VFLG = (flgs != flgo) && (flgn != flgo);
 	CFLG = ((UBYTE)(src)) > ((UBYTE)(dst));
-	NFLG = flgn != 0;
-}}}}}}}
-void op_c18(ULONG opcode) /* CMP */
+}}}
+
+void op_c28(void) /* CMP */
 {
 	ULONG dstreg = opcode & 7;
-{{	BYTE src = nextiword();
-{	CPTR dsta = regs.a[dstreg];
+	BYTE src = nextiword();
+	CPTR dsta = regs.a[dstreg] + (LONG)(WORD)nextiword();
 	BYTE dst = get_byte(dsta);
-{	regs.a[dstreg] += areg_byteinc[dstreg];
-{{ULONG newv = ((BYTE)(dst)) - ((BYTE)(src));
+	ULONG newv = ((BYTE)(dst)) - ((BYTE)(src));
+	ZFLG = ((BYTE)(newv)) == 0;
 {	int flgs = ((BYTE)(src)) < 0;
 	int flgo = ((BYTE)(dst)) < 0;
 	int flgn = ((BYTE)(newv)) < 0;
-	ZFLG = ((BYTE)(newv)) == 0;
+	NFLG = flgn != 0;
 	VFLG = (flgs != flgo) && (flgn != flgo);
 	CFLG = ((UBYTE)(src)) > ((UBYTE)(dst));
-	NFLG = flgn != 0;
-}}}}}}}}
-void op_c20(ULONG opcode) /* CMP */
+}}
+
+void op_c30(void) /* CMP */
 {
 	ULONG dstreg = opcode & 7;
-{{	BYTE src = nextiword();
-{	regs.a[dstreg] -= areg_byteinc[dstreg];
-{	CPTR dsta = regs.a[dstreg];
+	BYTE src = nextiword();
+	CPTR dsta = get_disp_ea(regs.a[dstreg]);
 	BYTE dst = get_byte(dsta);
-{{ULONG newv = ((BYTE)(dst)) - ((BYTE)(src));
+	ULONG newv = ((BYTE)(dst)) - ((BYTE)(src));
+	ZFLG = ((BYTE)(newv)) == 0;
 {	int flgs = ((BYTE)(src)) < 0;
 	int flgo = ((BYTE)(dst)) < 0;
 	int flgn = ((BYTE)(newv)) < 0;
-	ZFLG = ((BYTE)(newv)) == 0;
+	NFLG = flgn != 0;
 	VFLG = (flgs != flgo) && (flgn != flgo);
 	CFLG = ((UBYTE)(src)) > ((UBYTE)(dst));
-	NFLG = flgn != 0;
-}}}}}}}}
-void op_c28(ULONG opcode) /* CMP */
+}}
+
+void op_c38(void) /* CMP */
 {
-	ULONG dstreg = opcode & 7;
-{{	BYTE src = nextiword();
-{	CPTR dsta = regs.a[dstreg] + (LONG)(WORD)nextiword();
+	BYTE src = nextiword();
+	CPTR dsta = (LONG)(WORD)nextiword();
 	BYTE dst = get_byte(dsta);
-{{ULONG newv = ((BYTE)(dst)) - ((BYTE)(src));
+	ULONG newv = ((BYTE)(dst)) - ((BYTE)(src));
+	ZFLG = ((BYTE)(newv)) == 0;
 {	int flgs = ((BYTE)(src)) < 0;
 	int flgo = ((BYTE)(dst)) < 0;
 	int flgn = ((BYTE)(newv)) < 0;
-	ZFLG = ((BYTE)(newv)) == 0;
+	NFLG = flgn != 0;
 	VFLG = (flgs != flgo) && (flgn != flgo);
 	CFLG = ((UBYTE)(src)) > ((UBYTE)(dst));
-	NFLG = flgn != 0;
-}}}}}}}
-void op_c30(ULONG opcode) /* CMP */
+}}
+
+void op_c39(void) /* CMP */
 {
-	ULONG dstreg = opcode & 7;
-{{	BYTE src = nextiword();
-{	CPTR dsta = get_disp_ea(regs.a[dstreg]);
-{	BYTE dst = get_byte(dsta);
-{{ULONG newv = ((BYTE)(dst)) - ((BYTE)(src));
-{	int flgs = ((BYTE)(src)) < 0;
-	int flgo = ((BYTE)(dst)) < 0;
-	int flgn = ((BYTE)(newv)) < 0;
-	ZFLG = ((BYTE)(newv)) == 0;
-	VFLG = (flgs != flgo) && (flgn != flgo);
-	CFLG = ((UBYTE)(src)) > ((UBYTE)(dst));
-	NFLG = flgn != 0;
-}}}}}}}}
-void op_c38(ULONG opcode) /* CMP */
-{
-{{	BYTE src = nextiword();
-{	CPTR dsta = (LONG)(WORD)nextiword();
+	BYTE src = nextiword();
+	CPTR dsta = nextilong();
 	BYTE dst = get_byte(dsta);
-{{ULONG newv = ((BYTE)(dst)) - ((BYTE)(src));
+	ULONG newv = ((BYTE)(dst)) - ((BYTE)(src));
+	ZFLG = ((BYTE)(newv)) == 0;
 {	int flgs = ((BYTE)(src)) < 0;
 	int flgo = ((BYTE)(dst)) < 0;
 	int flgn = ((BYTE)(newv)) < 0;
-	ZFLG = ((BYTE)(newv)) == 0;
+	NFLG = flgn != 0;
 	VFLG = (flgs != flgo) && (flgn != flgo);
 	CFLG = ((UBYTE)(src)) > ((UBYTE)(dst));
-	NFLG = flgn != 0;
-}}}}}}}
-void op_c39(ULONG opcode) /* CMP */
+}}
+
+void op_c3a(void) /* CMP */
 {
-{{	BYTE src = nextiword();
-{	CPTR dsta = nextilong();
-	BYTE dst = get_byte(dsta);
-{{ULONG newv = ((BYTE)(dst)) - ((BYTE)(src));
-{	int flgs = ((BYTE)(src)) < 0;
-	int flgo = ((BYTE)(dst)) < 0;
-	int flgn = ((BYTE)(newv)) < 0;
-	ZFLG = ((BYTE)(newv)) == 0;
-	VFLG = (flgs != flgo) && (flgn != flgo);
-	CFLG = ((UBYTE)(src)) > ((UBYTE)(dst));
-	NFLG = flgn != 0;
-}}}}}}}
-void op_c3a(ULONG opcode) /* CMP */
-{
-	ULONG dstreg;
-	dstreg = 2;
-{{	BYTE src = nextiword();
-{	CPTR dsta = m68k_getpc();
+	BYTE src = nextiword();
+	CPTR dsta = m68k_getpc();
 	dsta += (LONG)(WORD)nextiword();
 {	BYTE dst = get_byte(dsta);
-{{ULONG newv = ((BYTE)(dst)) - ((BYTE)(src));
+	ULONG newv = ((BYTE)(dst)) - ((BYTE)(src));
+	ZFLG = ((BYTE)(newv)) == 0;
 {	int flgs = ((BYTE)(src)) < 0;
 	int flgo = ((BYTE)(dst)) < 0;
 	int flgn = ((BYTE)(newv)) < 0;
-	ZFLG = ((BYTE)(newv)) == 0;
+	NFLG = flgn != 0;
 	VFLG = (flgs != flgo) && (flgn != flgo);
 	CFLG = ((UBYTE)(src)) > ((UBYTE)(dst));
-	NFLG = flgn != 0;
-}}}}}}}}
-void op_c3b(ULONG opcode) /* CMP */
+}}}
+
+void op_c3b(void) /* CMP */
 {
-	ULONG dstreg;
-	dstreg = 3;
-{{	BYTE src = nextiword();
-{	CPTR dsta = get_disp_ea(m68k_getpc());
-{	BYTE dst = get_byte(dsta);
-{{ULONG newv = ((BYTE)(dst)) - ((BYTE)(src));
+	BYTE src = nextiword();
+	CPTR dsta = get_disp_ea(m68k_getpc());
+	BYTE dst = get_byte(dsta);
+	ULONG newv = ((BYTE)(dst)) - ((BYTE)(src));
+	ZFLG = ((BYTE)(newv)) == 0;
 {	int flgs = ((BYTE)(src)) < 0;
 	int flgo = ((BYTE)(dst)) < 0;
 	int flgn = ((BYTE)(newv)) < 0;
-	ZFLG = ((BYTE)(newv)) == 0;
+	NFLG = flgn != 0;
 	VFLG = (flgs != flgo) && (flgn != flgo);
 	CFLG = ((UBYTE)(src)) > ((UBYTE)(dst));
-	NFLG = flgn != 0;
-}}}}}}}}
-void op_c40(ULONG opcode) /* CMP */
+}}
+
+void op_c40(void) /* CMP */
 {
 	ULONG dstreg = opcode & 7;
-{{	WORD src = nextiword();
-{	WORD dst = regs.d[dstreg].W.l;
-{{ULONG newv = ((WORD)(dst)) - ((WORD)(src));
+	WORD src = nextiword();
+	WORD dst = regs.d[dstreg].W.l;
+	ULONG newv = ((WORD)(dst)) - ((WORD)(src));
+	ZFLG = ((WORD)(newv)) == 0;
 {	int flgs = ((WORD)(src)) < 0;
 	int flgo = ((WORD)(dst)) < 0;
 	int flgn = ((WORD)(newv)) < 0;
-	ZFLG = ((WORD)(newv)) == 0;
+	NFLG = flgn != 0;
 	VFLG = (flgs != flgo) && (flgn != flgo);
 	CFLG = ((UWORD)(src)) > ((UWORD)(dst));
-	NFLG = flgn != 0;
-}}}}}}}
-void op_c50(ULONG opcode) /* CMP */
+}}
+
+void op_c50(void) /* CMP */
 {
 	ULONG dstreg = opcode & 7;
-{{	WORD src = nextiword();
+	WORD src = nextiword();
+	CPTR dsta = regs.a[dstreg];
+	WORD dst = get_word(dsta);
+	ULONG newv = ((WORD)(dst)) - ((WORD)(src));
+	ZFLG = ((WORD)(newv)) == 0;
+{	int flgs = ((WORD)(src)) < 0;
+	int flgo = ((WORD)(dst)) < 0;
+	int flgn = ((WORD)(newv)) < 0;
+	NFLG = flgn != 0;
+	VFLG = (flgs != flgo) && (flgn != flgo);
+	CFLG = ((UWORD)(src)) > ((UWORD)(dst));
+}}
+
+void op_c58(void) /* CMP */
+{
+	ULONG dstreg = opcode & 7;
+	WORD src = nextiword();
+	CPTR dsta = regs.a[dstreg];
+	WORD dst = get_word(dsta);
+	regs.a[dstreg] += 2;
+{	ULONG newv = ((WORD)(dst)) - ((WORD)(src));
+	ZFLG = ((WORD)(newv)) == 0;
+{	int flgs = ((WORD)(src)) < 0;
+	int flgo = ((WORD)(dst)) < 0;
+	int flgn = ((WORD)(newv)) < 0;
+	NFLG = flgn != 0;
+	VFLG = (flgs != flgo) && (flgn != flgo);
+	CFLG = ((UWORD)(src)) > ((UWORD)(dst));
+}}}
+
+void op_c60(void) /* CMP */
+{
+	ULONG dstreg = opcode & 7;
+	WORD src = nextiword();
+	regs.a[dstreg] -= 2;
 {	CPTR dsta = regs.a[dstreg];
 	WORD dst = get_word(dsta);
-{{ULONG newv = ((WORD)(dst)) - ((WORD)(src));
+	ULONG newv = ((WORD)(dst)) - ((WORD)(src));
+	ZFLG = ((WORD)(newv)) == 0;
 {	int flgs = ((WORD)(src)) < 0;
 	int flgo = ((WORD)(dst)) < 0;
 	int flgn = ((WORD)(newv)) < 0;
-	ZFLG = ((WORD)(newv)) == 0;
+	NFLG = flgn != 0;
 	VFLG = (flgs != flgo) && (flgn != flgo);
 	CFLG = ((UWORD)(src)) > ((UWORD)(dst));
-	NFLG = flgn != 0;
-}}}}}}}
-void op_c58(ULONG opcode) /* CMP */
+}}}
+
+void op_c68(void) /* CMP */
 {
 	ULONG dstreg = opcode & 7;
-{{	WORD src = nextiword();
-{	CPTR dsta = regs.a[dstreg];
+	WORD src = nextiword();
+	CPTR dsta = regs.a[dstreg] + (LONG)(WORD)nextiword();
 	WORD dst = get_word(dsta);
-{	regs.a[dstreg] += 2;
-{{ULONG newv = ((WORD)(dst)) - ((WORD)(src));
+	ULONG newv = ((WORD)(dst)) - ((WORD)(src));
+	ZFLG = ((WORD)(newv)) == 0;
 {	int flgs = ((WORD)(src)) < 0;
 	int flgo = ((WORD)(dst)) < 0;
 	int flgn = ((WORD)(newv)) < 0;
-	ZFLG = ((WORD)(newv)) == 0;
+	NFLG = flgn != 0;
 	VFLG = (flgs != flgo) && (flgn != flgo);
 	CFLG = ((UWORD)(src)) > ((UWORD)(dst));
-	NFLG = flgn != 0;
-}}}}}}}}
-void op_c60(ULONG opcode) /* CMP */
+}}
+
+void op_c70(void) /* CMP */
 {
 	ULONG dstreg = opcode & 7;
-{{	WORD src = nextiword();
-{	regs.a[dstreg] -= 2;
-{	CPTR dsta = regs.a[dstreg];
+	WORD src = nextiword();
+	CPTR dsta = get_disp_ea(regs.a[dstreg]);
 	WORD dst = get_word(dsta);
-{{ULONG newv = ((WORD)(dst)) - ((WORD)(src));
+	ULONG newv = ((WORD)(dst)) - ((WORD)(src));
+	ZFLG = ((WORD)(newv)) == 0;
 {	int flgs = ((WORD)(src)) < 0;
 	int flgo = ((WORD)(dst)) < 0;
 	int flgn = ((WORD)(newv)) < 0;
-	ZFLG = ((WORD)(newv)) == 0;
+	NFLG = flgn != 0;
 	VFLG = (flgs != flgo) && (flgn != flgo);
 	CFLG = ((UWORD)(src)) > ((UWORD)(dst));
-	NFLG = flgn != 0;
-}}}}}}}}
-void op_c68(ULONG opcode) /* CMP */
+}}
+
+void op_c78(void) /* CMP */
 {
-	ULONG dstreg = opcode & 7;
-{{	WORD src = nextiword();
-{	CPTR dsta = regs.a[dstreg] + (LONG)(WORD)nextiword();
+	WORD src = nextiword();
+	CPTR dsta = (LONG)(WORD)nextiword();
 	WORD dst = get_word(dsta);
-{{ULONG newv = ((WORD)(dst)) - ((WORD)(src));
+	ULONG newv = ((WORD)(dst)) - ((WORD)(src));
+	ZFLG = ((WORD)(newv)) == 0;
 {	int flgs = ((WORD)(src)) < 0;
 	int flgo = ((WORD)(dst)) < 0;
 	int flgn = ((WORD)(newv)) < 0;
-	ZFLG = ((WORD)(newv)) == 0;
+	NFLG = flgn != 0;
 	VFLG = (flgs != flgo) && (flgn != flgo);
 	CFLG = ((UWORD)(src)) > ((UWORD)(dst));
-	NFLG = flgn != 0;
-}}}}}}}
-void op_c70(ULONG opcode) /* CMP */
+}}
+
+void op_c79(void) /* CMP */
 {
-	ULONG dstreg = opcode & 7;
-{{	WORD src = nextiword();
-{	CPTR dsta = get_disp_ea(regs.a[dstreg]);
-{	WORD dst = get_word(dsta);
-{{ULONG newv = ((WORD)(dst)) - ((WORD)(src));
-{	int flgs = ((WORD)(src)) < 0;
-	int flgo = ((WORD)(dst)) < 0;
-	int flgn = ((WORD)(newv)) < 0;
-	ZFLG = ((WORD)(newv)) == 0;
-	VFLG = (flgs != flgo) && (flgn != flgo);
-	CFLG = ((UWORD)(src)) > ((UWORD)(dst));
-	NFLG = flgn != 0;
-}}}}}}}}
-void op_c78(ULONG opcode) /* CMP */
-{
-{{	WORD src = nextiword();
-{	CPTR dsta = (LONG)(WORD)nextiword();
+	WORD src = nextiword();
+	CPTR dsta = nextilong();
 	WORD dst = get_word(dsta);
-{{ULONG newv = ((WORD)(dst)) - ((WORD)(src));
+	ULONG newv = ((WORD)(dst)) - ((WORD)(src));
+	ZFLG = ((WORD)(newv)) == 0;
 {	int flgs = ((WORD)(src)) < 0;
 	int flgo = ((WORD)(dst)) < 0;
 	int flgn = ((WORD)(newv)) < 0;
-	ZFLG = ((WORD)(newv)) == 0;
+	NFLG = flgn != 0;
 	VFLG = (flgs != flgo) && (flgn != flgo);
 	CFLG = ((UWORD)(src)) > ((UWORD)(dst));
-	NFLG = flgn != 0;
-}}}}}}}
-void op_c79(ULONG opcode) /* CMP */
+}}
+
+void op_c7a(void) /* CMP */
 {
-{{	WORD src = nextiword();
-{	CPTR dsta = nextilong();
-	WORD dst = get_word(dsta);
-{{ULONG newv = ((WORD)(dst)) - ((WORD)(src));
-{	int flgs = ((WORD)(src)) < 0;
-	int flgo = ((WORD)(dst)) < 0;
-	int flgn = ((WORD)(newv)) < 0;
-	ZFLG = ((WORD)(newv)) == 0;
-	VFLG = (flgs != flgo) && (flgn != flgo);
-	CFLG = ((UWORD)(src)) > ((UWORD)(dst));
-	NFLG = flgn != 0;
-}}}}}}}
-void op_c7a(ULONG opcode) /* CMP */
-{
-	ULONG dstreg;
-	dstreg = 2;
-{{	WORD src = nextiword();
-{	CPTR dsta = m68k_getpc();
+	WORD src = nextiword();
+	CPTR dsta = m68k_getpc();
 	dsta += (LONG)(WORD)nextiword();
 {	WORD dst = get_word(dsta);
-{{ULONG newv = ((WORD)(dst)) - ((WORD)(src));
+	ULONG newv = ((WORD)(dst)) - ((WORD)(src));
+	ZFLG = ((WORD)(newv)) == 0;
 {	int flgs = ((WORD)(src)) < 0;
 	int flgo = ((WORD)(dst)) < 0;
 	int flgn = ((WORD)(newv)) < 0;
-	ZFLG = ((WORD)(newv)) == 0;
+	NFLG = flgn != 0;
 	VFLG = (flgs != flgo) && (flgn != flgo);
 	CFLG = ((UWORD)(src)) > ((UWORD)(dst));
-	NFLG = flgn != 0;
-}}}}}}}}
-void op_c7b(ULONG opcode) /* CMP */
+}}}
+
+void op_c7b(void) /* CMP */
 {
-	ULONG dstreg;
-	dstreg = 3;
-{{	WORD src = nextiword();
-{	CPTR dsta = get_disp_ea(m68k_getpc());
-{	WORD dst = get_word(dsta);
-{{ULONG newv = ((WORD)(dst)) - ((WORD)(src));
+	WORD src = nextiword();
+	CPTR dsta = get_disp_ea(m68k_getpc());
+	WORD dst = get_word(dsta);
+	ULONG newv = ((WORD)(dst)) - ((WORD)(src));
+	ZFLG = ((WORD)(newv)) == 0;
 {	int flgs = ((WORD)(src)) < 0;
 	int flgo = ((WORD)(dst)) < 0;
 	int flgn = ((WORD)(newv)) < 0;
-	ZFLG = ((WORD)(newv)) == 0;
+	NFLG = flgn != 0;
 	VFLG = (flgs != flgo) && (flgn != flgo);
 	CFLG = ((UWORD)(src)) > ((UWORD)(dst));
-	NFLG = flgn != 0;
-}}}}}}}}
-void op_c80(ULONG opcode) /* CMP */
+}}
+
+void op_c80(void) /* CMP */
 {
 	ULONG dstreg = opcode & 7;
-{{	LONG src = nextilong();
-{	LONG dst = regs.d[dstreg].D;
-{{ULONG newv = ((LONG)(dst)) - ((LONG)(src));
+	LONG src = nextilong();
+	LONG dst = regs.d[dstreg].D;
+	ULONG newv = ((LONG)(dst)) - ((LONG)(src));
+	ZFLG = ((LONG)(newv)) == 0;
 {	int flgs = ((LONG)(src)) < 0;
 	int flgo = ((LONG)(dst)) < 0;
 	int flgn = ((LONG)(newv)) < 0;
-	ZFLG = ((LONG)(newv)) == 0;
+	NFLG = flgn != 0;
 	VFLG = (flgs != flgo) && (flgn != flgo);
 	CFLG = ((ULONG)(src)) > ((ULONG)(dst));
-	NFLG = flgn != 0;
-}}}}}}}
-void op_c90(ULONG opcode) /* CMP */
+}}
+
+void op_c90(void) /* CMP */
 {
 	ULONG dstreg = opcode & 7;
-{{	LONG src = nextilong();
+	LONG src = nextilong();
+	CPTR dsta = regs.a[dstreg];
+	LONG dst = get_long(dsta);
+	ULONG newv = ((LONG)(dst)) - ((LONG)(src));
+	ZFLG = ((LONG)(newv)) == 0;
+{	int flgs = ((LONG)(src)) < 0;
+	int flgo = ((LONG)(dst)) < 0;
+	int flgn = ((LONG)(newv)) < 0;
+	NFLG = flgn != 0;
+	VFLG = (flgs != flgo) && (flgn != flgo);
+	CFLG = ((ULONG)(src)) > ((ULONG)(dst));
+}}
+
+void op_c98(void) /* CMP */
+{
+	ULONG dstreg = opcode & 7;
+	LONG src = nextilong();
+	CPTR dsta = regs.a[dstreg];
+	LONG dst = get_long(dsta);
+	regs.a[dstreg] += 4;
+{	ULONG newv = ((LONG)(dst)) - ((LONG)(src));
+	ZFLG = ((LONG)(newv)) == 0;
+{	int flgs = ((LONG)(src)) < 0;
+	int flgo = ((LONG)(dst)) < 0;
+	int flgn = ((LONG)(newv)) < 0;
+	NFLG = flgn != 0;
+	VFLG = (flgs != flgo) && (flgn != flgo);
+	CFLG = ((ULONG)(src)) > ((ULONG)(dst));
+}}}
+
+void op_ca0(void) /* CMP */
+{
+	ULONG dstreg = opcode & 7;
+	LONG src = nextilong();
+	regs.a[dstreg] -= 4;
 {	CPTR dsta = regs.a[dstreg];
 	LONG dst = get_long(dsta);
-{{ULONG newv = ((LONG)(dst)) - ((LONG)(src));
+	ULONG newv = ((LONG)(dst)) - ((LONG)(src));
+	ZFLG = ((LONG)(newv)) == 0;
 {	int flgs = ((LONG)(src)) < 0;
 	int flgo = ((LONG)(dst)) < 0;
 	int flgn = ((LONG)(newv)) < 0;
-	ZFLG = ((LONG)(newv)) == 0;
+	NFLG = flgn != 0;
 	VFLG = (flgs != flgo) && (flgn != flgo);
 	CFLG = ((ULONG)(src)) > ((ULONG)(dst));
-	NFLG = flgn != 0;
-}}}}}}}
-void op_c98(ULONG opcode) /* CMP */
+}}}
+
+void op_ca8(void) /* CMP */
 {
 	ULONG dstreg = opcode & 7;
-{{	LONG src = nextilong();
-{	CPTR dsta = regs.a[dstreg];
+	LONG src = nextilong();
+	CPTR dsta = regs.a[dstreg] + (LONG)(WORD)nextiword();
 	LONG dst = get_long(dsta);
-{	regs.a[dstreg] += 4;
-{{ULONG newv = ((LONG)(dst)) - ((LONG)(src));
+	ULONG newv = ((LONG)(dst)) - ((LONG)(src));
+	ZFLG = ((LONG)(newv)) == 0;
 {	int flgs = ((LONG)(src)) < 0;
 	int flgo = ((LONG)(dst)) < 0;
 	int flgn = ((LONG)(newv)) < 0;
-	ZFLG = ((LONG)(newv)) == 0;
+	NFLG = flgn != 0;
 	VFLG = (flgs != flgo) && (flgn != flgo);
 	CFLG = ((ULONG)(src)) > ((ULONG)(dst));
-	NFLG = flgn != 0;
-}}}}}}}}
-void op_ca0(ULONG opcode) /* CMP */
+}}
+
+void op_cb0(void) /* CMP */
 {
 	ULONG dstreg = opcode & 7;
-{{	LONG src = nextilong();
-{	regs.a[dstreg] -= 4;
-{	CPTR dsta = regs.a[dstreg];
+	LONG src = nextilong();
+	CPTR dsta = get_disp_ea(regs.a[dstreg]);
 	LONG dst = get_long(dsta);
-{{ULONG newv = ((LONG)(dst)) - ((LONG)(src));
+	ULONG newv = ((LONG)(dst)) - ((LONG)(src));
+	ZFLG = ((LONG)(newv)) == 0;
 {	int flgs = ((LONG)(src)) < 0;
 	int flgo = ((LONG)(dst)) < 0;
 	int flgn = ((LONG)(newv)) < 0;
-	ZFLG = ((LONG)(newv)) == 0;
+	NFLG = flgn != 0;
 	VFLG = (flgs != flgo) && (flgn != flgo);
 	CFLG = ((ULONG)(src)) > ((ULONG)(dst));
-	NFLG = flgn != 0;
-}}}}}}}}
-void op_ca8(ULONG opcode) /* CMP */
+}}
+
+void op_cb8(void) /* CMP */
 {
-	ULONG dstreg = opcode & 7;
-{{	LONG src = nextilong();
-{	CPTR dsta = regs.a[dstreg] + (LONG)(WORD)nextiword();
+	LONG src = nextilong();
+	CPTR dsta = (LONG)(WORD)nextiword();
 	LONG dst = get_long(dsta);
-{{ULONG newv = ((LONG)(dst)) - ((LONG)(src));
+	ULONG newv = ((LONG)(dst)) - ((LONG)(src));
+	ZFLG = ((LONG)(newv)) == 0;
 {	int flgs = ((LONG)(src)) < 0;
 	int flgo = ((LONG)(dst)) < 0;
 	int flgn = ((LONG)(newv)) < 0;
-	ZFLG = ((LONG)(newv)) == 0;
+	NFLG = flgn != 0;
 	VFLG = (flgs != flgo) && (flgn != flgo);
 	CFLG = ((ULONG)(src)) > ((ULONG)(dst));
-	NFLG = flgn != 0;
-}}}}}}}
-void op_cb0(ULONG opcode) /* CMP */
+}}
+
+void op_cb9(void) /* CMP */
 {
-	ULONG dstreg = opcode & 7;
-{{	LONG src = nextilong();
-{	CPTR dsta = get_disp_ea(regs.a[dstreg]);
-{	LONG dst = get_long(dsta);
-{{ULONG newv = ((LONG)(dst)) - ((LONG)(src));
-{	int flgs = ((LONG)(src)) < 0;
-	int flgo = ((LONG)(dst)) < 0;
-	int flgn = ((LONG)(newv)) < 0;
-	ZFLG = ((LONG)(newv)) == 0;
-	VFLG = (flgs != flgo) && (flgn != flgo);
-	CFLG = ((ULONG)(src)) > ((ULONG)(dst));
-	NFLG = flgn != 0;
-}}}}}}}}
-void op_cb8(ULONG opcode) /* CMP */
-{
-{{	LONG src = nextilong();
-{	CPTR dsta = (LONG)(WORD)nextiword();
+	LONG src = nextilong();
+	CPTR dsta = nextilong();
 	LONG dst = get_long(dsta);
-{{ULONG newv = ((LONG)(dst)) - ((LONG)(src));
+	ULONG newv = ((LONG)(dst)) - ((LONG)(src));
+	ZFLG = ((LONG)(newv)) == 0;
 {	int flgs = ((LONG)(src)) < 0;
 	int flgo = ((LONG)(dst)) < 0;
 	int flgn = ((LONG)(newv)) < 0;
-	ZFLG = ((LONG)(newv)) == 0;
+	NFLG = flgn != 0;
 	VFLG = (flgs != flgo) && (flgn != flgo);
 	CFLG = ((ULONG)(src)) > ((ULONG)(dst));
-	NFLG = flgn != 0;
-}}}}}}}
-void op_cb9(ULONG opcode) /* CMP */
+}}
+
+void op_cba(void) /* CMP */
 {
-{{	LONG src = nextilong();
-{	CPTR dsta = nextilong();
-	LONG dst = get_long(dsta);
-{{ULONG newv = ((LONG)(dst)) - ((LONG)(src));
-{	int flgs = ((LONG)(src)) < 0;
-	int flgo = ((LONG)(dst)) < 0;
-	int flgn = ((LONG)(newv)) < 0;
-	ZFLG = ((LONG)(newv)) == 0;
-	VFLG = (flgs != flgo) && (flgn != flgo);
-	CFLG = ((ULONG)(src)) > ((ULONG)(dst));
-	NFLG = flgn != 0;
-}}}}}}}
-void op_cba(ULONG opcode) /* CMP */
-{
-	ULONG dstreg;
-	dstreg = 2;
-{{	LONG src = nextilong();
-{	CPTR dsta = m68k_getpc();
+	LONG src = nextilong();
+	CPTR dsta = m68k_getpc();
 	dsta += (LONG)(WORD)nextiword();
 {	LONG dst = get_long(dsta);
-{{ULONG newv = ((LONG)(dst)) - ((LONG)(src));
+	ULONG newv = ((LONG)(dst)) - ((LONG)(src));
+	ZFLG = ((LONG)(newv)) == 0;
 {	int flgs = ((LONG)(src)) < 0;
 	int flgo = ((LONG)(dst)) < 0;
 	int flgn = ((LONG)(newv)) < 0;
-	ZFLG = ((LONG)(newv)) == 0;
+	NFLG = flgn != 0;
 	VFLG = (flgs != flgo) && (flgn != flgo);
 	CFLG = ((ULONG)(src)) > ((ULONG)(dst));
-	NFLG = flgn != 0;
-}}}}}}}}
-void op_cbb(ULONG opcode) /* CMP */
+}}}
+
+void op_cbb(void) /* CMP */
 {
-	ULONG dstreg;
-	dstreg = 3;
-{{	LONG src = nextilong();
-{	CPTR dsta = get_disp_ea(m68k_getpc());
-{	LONG dst = get_long(dsta);
-{{ULONG newv = ((LONG)(dst)) - ((LONG)(src));
+	LONG src = nextilong();
+	CPTR dsta = get_disp_ea(m68k_getpc());
+	LONG dst = get_long(dsta);
+	ULONG newv = ((LONG)(dst)) - ((LONG)(src));
+	ZFLG = ((LONG)(newv)) == 0;
 {	int flgs = ((LONG)(src)) < 0;
 	int flgo = ((LONG)(dst)) < 0;
 	int flgn = ((LONG)(newv)) < 0;
-	ZFLG = ((LONG)(newv)) == 0;
+	NFLG = flgn != 0;
 	VFLG = (flgs != flgo) && (flgn != flgo);
 	CFLG = ((ULONG)(src)) > ((ULONG)(dst));
-	NFLG = flgn != 0;
-}}}}}}}}
+}}

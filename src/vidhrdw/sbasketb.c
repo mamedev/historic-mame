@@ -93,7 +93,7 @@ void sbasketb_vh_convert_color_prom(unsigned char *palette, unsigned short *colo
   the main emulation engine.
 
 ***************************************************************************/
-void sbasketb_vh_screenrefresh(struct osd_bitmap *bitmap)
+void sbasketb_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	int offs;
 	int sx,sy;

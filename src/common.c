@@ -1904,7 +1904,7 @@ int i;
 	mygfx.gfxdata = src;
 mygfx.colortable = hacktable;
 for (i = 0;i < 256;i++) hacktable[i] = i;
-	drawgfxzoom(dest,&mygfx,0,0,flipx,flipy,sx,sy,clip,/*transparency,transparent_color,*/scalex,scaley);	/* ASG 971011 */
+	drawgfxzoom(dest,&mygfx,0,0,flipx,flipy,sx,sy,clip,transparency,transparent_color,scalex,scaley);	/* ASG 971011 */
 }
 
 
@@ -2231,9 +2231,18 @@ void fillbitmap(struct osd_bitmap *dest,int pen,const struct rectangle *clip)
 
 void drawgfxzoom( struct osd_bitmap *dest_bmp,const struct GfxElement *gfx,
 		unsigned int code,unsigned int color,int flipx,int flipy,int sx,int sy,
-		const struct rectangle *clip,int scalex, int scaley )
+		const struct rectangle *clip,int transparency,int transparent_color,int scalex, int scaley)
 {
 	struct rectangle myclip;
+
+
+	/* only support TRANSPARENCY_PEN and TRANSPARENCY_COLOR */
+	if (transparency != TRANSPARENCY_PEN && transparency != TRANSPARENCY_COLOR)
+		return;
+
+	if (transparency == TRANSPARENCY_COLOR)
+		transparent_color = Machine->pens[transparent_color];
+
 
 	/*
 	scalex and scaley are 16.16 fixed point numbers
@@ -2379,21 +2388,45 @@ void drawgfxzoom( struct osd_bitmap *dest_bmp,const struct GfxElement *gfx,
 			if( ex>sx )
 			{ /* skip if inner loop doesn't draw anything */
 				int y;
-				int col = Machine->pens[0];
-				for( y=sy; y<ey; y++ )
+
+				/* case 1: TRANSPARENCY_PEN */
+				if (transparency == TRANSPARENCY_PEN)
 				{
-					unsigned char *source = source_bmp->line[source_base+(y_index>>16)];
-					unsigned char *dest = dest_bmp->line[y];
-
-					int x, x_index = x_index_base;
-					for( x=sx; x<ex; x++ )
+					for( y=sy; y<ey; y++ )
 					{
-						int c = source[x_index>>16];
-						if( c != col ) dest[x] = pal[c];
-						x_index += dx;
-					}
+						unsigned char *source = source_bmp->line[source_base+(y_index>>16)];
+						unsigned char *dest = dest_bmp->line[y];
 
-					y_index += dy;
+						int x, x_index = x_index_base;
+						for( x=sx; x<ex; x++ )
+						{
+							int c = source[x_index>>16];
+							if( c != transparent_color ) dest[x] = pal[c];
+							x_index += dx;
+						}
+
+						y_index += dy;
+					}
+				}
+
+				/* case 2: TRANSPARENCY_COLOR */
+				else if (transparency == TRANSPARENCY_COLOR)
+				{
+					for( y=sy; y<ey; y++ )
+					{
+						unsigned char *source = source_bmp->line[source_base+(y_index>>16)];
+						unsigned char *dest = dest_bmp->line[y];
+
+						int x, x_index = x_index_base;
+						for( x=sx; x<ex; x++ )
+						{
+							int c = pal[source[x_index>>16]];
+							if( c != transparent_color ) dest[x] = c;
+							x_index += dx;
+						}
+
+						y_index += dy;
+					}
 				}
 			}
 
@@ -2472,20 +2505,45 @@ void drawgfxzoom( struct osd_bitmap *dest_bmp,const struct GfxElement *gfx,
 			if( ex>sx )
 			{ /* skip if inner loop doesn't draw anything */
 				int y;
-				for( y=sy; y<ey; y++ )
+
+				/* case 1: TRANSPARENCY_PEN */
+				if (transparency == TRANSPARENCY_PEN)
 				{
-					unsigned char *source = source_bmp->line[source_base+(y_index>>16)];
-					unsigned short *dest = (unsigned short *)dest_bmp->line[y];
-
-					int x, x_index = x_index_base;
-					for( x=sx; x<ex; x++ )
+					for( y=sy; y<ey; y++ )
 					{
-						int c = source[x_index>>16];
-						if( c ) dest[x] = pal[c];
-						x_index += dx;
-					}
+						unsigned char *source = source_bmp->line[source_base+(y_index>>16)];
+						unsigned short *dest = (unsigned short *)dest_bmp->line[y];
 
-					y_index += dy;
+						int x, x_index = x_index_base;
+						for( x=sx; x<ex; x++ )
+						{
+							int c = source[x_index>>16];
+							if( c != transparent_color ) dest[x] = pal[c];
+							x_index += dx;
+						}
+
+						y_index += dy;
+					}
+				}
+
+				/* case 2: TRANSPARENCY_COLOR */
+				else if (transparency == TRANSPARENCY_COLOR)
+				{
+					for( y=sy; y<ey; y++ )
+					{
+						unsigned char *source = source_bmp->line[source_base+(y_index>>16)];
+						unsigned short *dest = (unsigned short *)dest_bmp->line[y];
+
+						int x, x_index = x_index_base;
+						for( x=sx; x<ex; x++ )
+						{
+							int c = pal[source[x_index>>16]];
+							if( c != transparent_color ) dest[x] = c;
+							x_index += dx;
+						}
+
+						y_index += dy;
+					}
 				}
 			}
 		}

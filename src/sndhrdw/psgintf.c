@@ -107,7 +107,7 @@ int PSG_sh_start(struct PSGinterface *interface , int type , int rate)
 	/* SSG initialize */
 	for (i = 0;i < intf->num;i++)
 	{
-		if ((bufferAY[i] = malloc((sample_bits/8)*buffer_lenAY)) == 0)
+		if ((bufferAY[i] = malloc(3*(sample_bits/8)*buffer_lenAY)) == 0)
 		{
 			while (--i >= 0) free(bufferAY[i]);
 			return 1;
@@ -116,7 +116,7 @@ int PSG_sh_start(struct PSGinterface *interface , int type , int rate)
 	}
 	if (AYInit(intf->num,intf->clock,emulation_rateAY,sample_bits,buffer_lenAY,bufferAY) == 0)
 	{
-		channelAY = get_play_channels( intf->num );
+		channelAY = get_play_channels( 3*intf->num );
 
 		/* volume setup (do not support YM2203) */
 		for (i = 0;i < intf->num;i++)
@@ -445,12 +445,16 @@ void PSG_sh_update(void)
 			sample_posAY[i] = sample_posFM[i] = 0;
 			if( sample_bits == 16 )
 			{
-				osd_play_streamed_sample_16(channelAY+i,bufferAY[i],buffer_lenFM,emulation_rateFM,volumeAY[i]);
-				osd_play_streamed_sample_16(channelFM+i,bufferFM[i],buffer_lenFM,emulation_rateFM,volumeFM[i]);
+				osd_play_streamed_sample_16(channelAY+3*i,bufferAY[i],2*buffer_lenAY,emulation_rateAY,volumeAY[i]);
+				osd_play_streamed_sample_16(channelAY+3*i+1,(signed short *)bufferAY[i]+buffer_lenAY,2*buffer_lenAY,emulation_rateAY,volumeAY[i]);
+				osd_play_streamed_sample_16(channelAY+3*i+2,(signed short *)bufferAY[i]+2*buffer_lenAY,2*buffer_lenAY,emulation_rateAY,volumeAY[i]);
+				osd_play_streamed_sample_16(channelFM+i,bufferFM[i],2*buffer_lenFM,emulation_rateFM,volumeFM[i]);
 			}
 			else
 			{
-				osd_play_streamed_sample(channelAY+i,bufferAY[i],buffer_lenFM,emulation_rateFM,volumeAY[i]);
+				osd_play_streamed_sample(channelAY+3*i,bufferAY[i],buffer_lenAY,emulation_rateAY,volumeAY[i]);
+				osd_play_streamed_sample(channelAY+3*i+1,(signed char *)bufferAY[i]+buffer_lenAY,buffer_lenAY,emulation_rateAY,volumeAY[i]);
+				osd_play_streamed_sample(channelAY+3*i+2,(signed char *)bufferAY[i]+2*buffer_lenAY,buffer_lenAY,emulation_rateAY,volumeAY[i]);
 				osd_play_streamed_sample(channelFM+i,bufferFM[i],buffer_lenFM,emulation_rateFM,volumeFM[i]);
 			}
 		}
@@ -463,9 +467,17 @@ void PSG_sh_update(void)
 		{
 			sample_posAY[i] = 0;
 			if( sample_bits == 16 )
-				osd_play_streamed_sample_16(channelAY+i,bufferAY[i],buffer_lenAY,emulation_rateAY,volumeAY[i]);
+			{
+				osd_play_streamed_sample_16(channelAY+3*i,bufferAY[i],2*buffer_lenAY,emulation_rateAY,volumeAY[i]);
+				osd_play_streamed_sample_16(channelAY+3*i+1,(signed short *)bufferAY[i]+buffer_lenAY,2*buffer_lenAY,emulation_rateAY,volumeAY[i]);
+				osd_play_streamed_sample_16(channelAY+3*i+2,(signed short *)bufferAY[i]+2*buffer_lenAY,2*buffer_lenAY,emulation_rateAY,volumeAY[i]);
+			}
 			else
-				osd_play_streamed_sample(channelAY+i,bufferAY[i],buffer_lenAY,emulation_rateAY,volumeAY[i]);
+			{
+				osd_play_streamed_sample(channelAY+3*i,bufferAY[i],buffer_lenAY,emulation_rateAY,volumeAY[i]);
+				osd_play_streamed_sample(channelAY+3*i+1,(signed char *)bufferAY[i]+buffer_lenAY,buffer_lenAY,emulation_rateAY,volumeAY[i]);
+				osd_play_streamed_sample(channelAY+3*i+2,(signed char *)bufferAY[i]+2*buffer_lenAY,buffer_lenAY,emulation_rateAY,volumeAY[i]);
+			}
 		}
 	}
 

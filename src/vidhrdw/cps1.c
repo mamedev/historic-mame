@@ -94,76 +94,76 @@ struct CPS1config *cps1_game_config;
 
 INLINE int cps1_port(int offset)
 {
-        return READ_WORD(&cps1_output[offset]);
+	return READ_WORD(&cps1_output[offset]);
 }
 
 INLINE unsigned char * cps1_base(int offset)
 {
-        int base=cps1_port(offset)*256;
-        return &cps1_gfxram[base&0x3ffff];
+	int base=cps1_port(offset)*256;
+	return &cps1_gfxram[base&0x3ffff];
 }
 
 #ifdef MAME_DEBUG
 void cps1_dump_video(void)
 {
-        FILE *fp;
-        fp=fopen("SCROLL1.DMP", "w+b");
-        if (fp)
-        {
-                fwrite(cps1_scroll1, cps1_scroll1_size, 1, fp);
-                fclose(fp);
-        }
-        fp=fopen("SCROLL2.DMP", "w+b");
-        if (fp)
-        {
-                fwrite(cps1_scroll2, cps1_scroll2_size, 1, fp);
-                fclose(fp);
-        }
-        fp=fopen("SCROLL3.DMP", "w+b");
-        if (fp)
-        {
-                fwrite(cps1_scroll3, cps1_scroll3_size, 1, fp);
-                fclose(fp);
-        }
-        fp=fopen("OBJ.DMP", "w+b");
-        if (fp)
-        {
-                fwrite(cps1_obj, cps1_obj_size, 1, fp);
-                fclose(fp);
-        }
+	FILE *fp;
+	fp=fopen("SCROLL1.DMP", "w+b");
+	if (fp)
+	{
+		fwrite(cps1_scroll1, cps1_scroll1_size, 1, fp);
+		fclose(fp);
+	}
+	fp=fopen("SCROLL2.DMP", "w+b");
+	if (fp)
+	{
+		fwrite(cps1_scroll2, cps1_scroll2_size, 1, fp);
+		fclose(fp);
+	}
+	fp=fopen("SCROLL3.DMP", "w+b");
+	if (fp)
+	{
+		fwrite(cps1_scroll3, cps1_scroll3_size, 1, fp);
+		fclose(fp);
+	}
+	fp=fopen("OBJ.DMP", "w+b");
+	if (fp)
+	{
+		fwrite(cps1_obj, cps1_obj_size, 1, fp);
+		fclose(fp);
+	}
 
-        fp=fopen("UNKNOWN.DMP", "w+b");
-        if (fp)
-        {
-                fwrite(cps1_unknown, cps1_unknown_size, 1, fp);
-                fclose(fp);
-        }
+	fp=fopen("UNKNOWN.DMP", "w+b");
+	if (fp)
+	{
+		fwrite(cps1_unknown, cps1_unknown_size, 1, fp);
+		fclose(fp);
+	}
 
-        fp=fopen("PALETTE.DMP", "w+b");
-        if (fp)
-        {
-                fwrite(cps1_palette, cps1_palette_size, 1, fp);
-                fclose(fp);
-        }
-        fp=fopen("OUTPUT.DMP", "w+b");
-        if (fp)
-        {
-                fwrite(cps1_output, cps1_output_size, 1, fp);
-                fclose(fp);
-        }
+	fp=fopen("PALETTE.DMP", "w+b");
+	if (fp)
+	{
+		fwrite(cps1_palette, cps1_palette_size, 1, fp);
+		fclose(fp);
+	}
+	fp=fopen("OUTPUT.DMP", "w+b");
+	if (fp)
+	{
+		fwrite(cps1_output, cps1_output_size, 1, fp);
+		fclose(fp);
+	}
 }
 #endif
 
 
 INLINE void cps1_get_video_base(void)
 {
-        /* Re-calculate the VIDEO RAM base */
-        cps1_scroll1=cps1_base(CPS1_SCROLL1_BASE);
-        cps1_scroll2=cps1_base(CPS1_SCROLL2_BASE);
-        cps1_scroll3=cps1_base(CPS1_SCROLL3_BASE);
-        cps1_obj    =cps1_base(CPS1_OBJ_BASE);
-        cps1_palette=cps1_base(CPS1_PALETTE_BASE);
-        cps1_unknown=cps1_base(CPS1_UNKNOWN_BASE);
+	/* Re-calculate the VIDEO RAM base */
+	cps1_scroll1=cps1_base(CPS1_SCROLL1_BASE);
+	cps1_scroll2=cps1_base(CPS1_SCROLL2_BASE);
+	cps1_scroll3=cps1_base(CPS1_SCROLL3_BASE);
+	cps1_obj    =cps1_base(CPS1_OBJ_BASE);
+	cps1_palette=cps1_base(CPS1_PALETTE_BASE);
+	cps1_unknown=cps1_base(CPS1_UNKNOWN_BASE);
 }
 
 /***************************************************************************
@@ -174,43 +174,43 @@ INLINE void cps1_get_video_base(void)
 
 int cps1_vh_start(void)
 {
-        cps1_old_palette=(unsigned char *)malloc(cps1_palette_size);
-        if (!cps1_old_palette)
-        {
-                return -1;
-        }
-        memset(cps1_old_palette, 0xff, cps1_palette_size);
+	cps1_old_palette=(unsigned char *)malloc(cps1_palette_size);
+	if (!cps1_old_palette)
+	{
+		return -1;
+	}
+	memset(cps1_old_palette, 0xff, cps1_palette_size);
 
-        memset(cps1_gfxram, 0, cps1_gfxram_size);   /* Clear GFX RAM */
-        memset(cps1_output, 0, cps1_output_size);   /* Clear output ports */
+	memset(cps1_gfxram, 0, cps1_gfxram_size);   /* Clear GFX RAM */
+	memset(cps1_output, 0, cps1_output_size);   /* Clear output ports */
 
-        cps1_get_video_base();   /* Calculate base pointers */
+	cps1_get_video_base();   /* Calculate base pointers */
 
-        if (!cps1_game_config)
-        {
-           if (errorlog)
-           {
-                fprintf(errorlog, "cps1_game_config hasn't been set up yet");
-           }
-           return -1;
-        }
+	if (!cps1_game_config)
+	{
+		if (errorlog)
+		{
+			fprintf(errorlog, "cps1_game_config hasn't been set up yet");
+		}
+		return -1;
+	}
 
-        /*
-           Some games interrogate a couple of registers on bootup.
-           These are CPS1 board B self test checks. They wander from game to
-           game.
-        */
-        if (cps1_game_config->cpsb_addr)
-        {
-                if (errorlog)
-                {
-                    fprintf(errorlog, "CPSB port %02x=%04x\n",
-                                cps1_game_config->cpsb_addr,
-                                cps1_game_config->cpsb_value);
-                }
-                WRITE_WORD(&cps1_output[cps1_game_config->cpsb_addr],
-                        cps1_game_config->cpsb_value);
-        }
+	/*
+		Some games interrogate a couple of registers on bootup.
+		These are CPS1 board B self test checks. They wander from game to
+		game.
+	*/
+	if (cps1_game_config->cpsb_addr)
+	{
+		if (errorlog)
+		{
+			fprintf(errorlog, "CPSB port %02x=%04x\n",
+			cps1_game_config->cpsb_addr,
+			cps1_game_config->cpsb_value);
+		}
+		WRITE_WORD(&cps1_output[cps1_game_config->cpsb_addr],
+		           cps1_game_config->cpsb_value);
+	}
 
 	return 0;
 }
@@ -222,8 +222,8 @@ int cps1_vh_start(void)
 ***************************************************************************/
 void cps1_vh_stop(void)
 {
-        if (cps1_old_palette)
-                free(cps1_old_palette);
+	if (cps1_old_palette)
+		free(cps1_old_palette);
 }
 
 /***************************************************************************
@@ -236,37 +236,27 @@ void cps1_vh_stop(void)
 
 INLINE void cps1_build_palette(void)
 {
-                          /* Chars  Sprites   16*16   32*32 */
-        static int start[4]={0x0400, 0x0000,  0x0800, 0x0c00};
-        static int count[4]={0x0200, 0x0200,  0x0200, 0x0200};
+	int offset;
 
-        int j, i;
-        /* rebuild the colour lookup tabl from RAM palette */
-        for (j=0; j<4; j++)
+	for (offset = 0; offset < 32*16*4; offset++)
 	{
-              int max=count[j];
-              int offset=start[j];
+		int palette = READ_WORD (&cps1_palette[offset * 2]);
 
-              for (i=0; i<max; i++)
-              {
-                    int palette=READ_WORD(&cps1_palette[offset]);
-                    if (palette != READ_WORD(&cps1_old_palette[offset]) )
-                    {
-                        int red, green, blue, bright;
-                        bright= (palette>>12);
-                        red   = ((palette>>8)&0x0f);
-                        green = ((palette>>4)&0x0f);
-                        blue  = (palette&0x0f);
-                        red   = (red * bright ) * 17 / 15;
-                        green = (green * bright) * 17 / 15;
-                        blue  = (blue * bright) * 17 / 15;
+		if (palette != READ_WORD (&cps1_old_palette[offset * 2]) )
+		{
+			int red, green, blue, bright;
 
-                        setgfxcolorentry (Machine->gfx[j], i, red, green, blue);
-                        WRITE_WORD(&cps1_old_palette[offset], palette);
-                    }
-                    offset+=2;
-              }
-        }
+			bright= (palette>>12);
+			if (bright) bright += 2;
+
+			red   = ((palette>>8)&0x0f) * bright;
+			green = ((palette>>4)&0x0f) * bright;
+			blue  = (palette&0x0f) * bright;
+
+			palette_change_color (offset, red, green, blue);
+			WRITE_WORD(&cps1_old_palette[offset * 2], palette);
+		}
+	}
 }
 
 /***************************************************************************
@@ -294,49 +284,86 @@ INLINE void cps1_build_palette(void)
 
 ***************************************************************************/
 
+INLINE void cps1_palette_scroll1(unsigned short *base)
+{
+	int x,y, offs, offsx;
+	int base_scroll1=cps1_game_config->base_scroll1;
+	int space_char=cps1_game_config->space_scroll1;
+
+	int scrlxrough=(scroll1x>>3)+8;
+	int scrlyrough=(scroll1y>>3);
+
+	int elements = Machine->gfx[0]->total_elements;
+
+	for (x=0; x<0x34; x++)
+	{
+		 offsx=(scrlxrough+x)*0x80;
+		 offsx&=0x1fff;
+
+		 for (y=0; y<0x20; y++)
+		 {
+			int code, offsy;
+			int n=scrlyrough+y;
+			offsy=( (n&0x1f)*4 | ((n&0x20)*0x100)) & 0x3fff;
+			offs=offsy+offsx;
+			offs &= 0x3fff;
+
+			code=READ_WORD(&cps1_scroll1[offs])&0x0fff;
+
+			if (code >= base_scroll1 && code != space_char)
+			{
+				/* Optimization: only draw non-spaces */
+				int colour=READ_WORD(&cps1_scroll1[offs+2]);
+				code -= base_scroll1;
+				base[colour&0x1f] |= Machine->gfx[0]->pen_usage[code % elements] & 0x7fff;
+			}
+		}
+	}
+}
+
 INLINE void cps1_render_scroll1(struct osd_bitmap *bitmap)
 {
-        int x,y, offs, offsx, sx, sy;
-        int base_scroll1=cps1_game_config->base_scroll1;
-        int space_char=cps1_game_config->space_scroll1;
+	int x,y, offs, offsx, sx, sy;
+	int base_scroll1=cps1_game_config->base_scroll1;
+	int space_char=cps1_game_config->space_scroll1;
 
-        int scrlxrough=(scroll1x>>3)+8;
-        int scrlyrough=(scroll1y>>3);
+	int scrlxrough=(scroll1x>>3)+8;
+	int scrlyrough=(scroll1y>>3);
 
-        sx=-(scroll1x&0x07);
+	sx=-(scroll1x&0x07);
 
-        for (x=0; x<0x34; x++)
-        {
-             sy=-(scroll1y&0x07);
-             offsx=(scrlxrough+x)*0x80;
-             offsx&=0x1fff;
+	for (x=0; x<0x34; x++)
+	{
+		 sy=-(scroll1y&0x07);
+		 offsx=(scrlxrough+x)*0x80;
+		 offsx&=0x1fff;
 
-             for (y=0; y<0x20; y++)
-             {
-                 int code, offsy;
-                 int n=scrlyrough+y;
-                 offsy=( (n&0x1f)*4 | ((n&0x20)*0x100)) & 0x3fff;
-                 offs=offsy+offsx;
-                 offs &= 0x3fff;
+		 for (y=0; y<0x20; y++)
+		 {
+			int code, offsy;
+			int n=scrlyrough+y;
+			offsy=( (n&0x1f)*4 | ((n&0x20)*0x100)) & 0x3fff;
+			offs=offsy+offsx;
+			offs &= 0x3fff;
 
-                 code=READ_WORD(&cps1_scroll1[offs])&0x0fff;
+			code=READ_WORD(&cps1_scroll1[offs])&0x0fff;
 
-                 if (code >= base_scroll1 && code != space_char)
-                 {
-                       /* Optimization: only draw non-spaces */
-                       int colour=READ_WORD(&cps1_scroll1[offs+2]);
-                       code -= base_scroll1;
-                       drawgfx(bitmap,Machine->gfx[0],
-                                     code,
-                                     colour&0x1f,
-                                     colour&0x20,colour&0x40,sx,sy,
-                                     &Machine->drv->visible_area,
-                                     TRANSPARENCY_PEN,15);
-                 }
-                 sy+=8;
-             }
-             sx+=8;
-      }
+			if (code >= base_scroll1 && code != space_char)
+			{
+				/* Optimization: only draw non-spaces */
+				int colour=READ_WORD(&cps1_scroll1[offs+2]);
+				code -= base_scroll1;
+				drawgfx(bitmap,Machine->gfx[0],
+						code,
+						colour&0x1f,
+						colour&0x20,colour&0x40,sx,sy,
+						&Machine->drv->visible_area,
+						TRANSPARENCY_PEN,15);
+			 }
+			 sy+=8;
+		 }
+		 sx+=8;
+	}
 }
 
 /***************************************************************************
@@ -364,181 +391,218 @@ INLINE void cps1_render_scroll1(struct osd_bitmap *bitmap)
 
 ***************************************************************************/
 
-INLINE void cps1_render_sprites(struct osd_bitmap *bitmap)
+INLINE void cps1_palette_sprites(unsigned short *base)
 {
-        int i;
-        int base_obj=cps1_game_config->base_obj;
-        int obj_size=cps1_obj_size;
+	int i;
+	int base_obj=cps1_game_config->base_obj;
+	int obj_size=cps1_obj_size;
 
-        int gng_obj_kludge=cps1_game_config->gng_sprite_kludge;
-        int bank;
-        if (cps1_game_config->size_obj)
-        {
-                obj_size=cps1_game_config->size_obj;
-        }
+	int gng_obj_kludge=cps1_game_config->gng_sprite_kludge;
+	int bank;
+	if (cps1_game_config->size_obj)
+	{
+		obj_size=cps1_game_config->size_obj;
+	}
 
-        if (gng_obj_kludge)
-        {
-                /*
-                Ghouls and Ghosts splits the sprites over two separate
-                graphics layouts */
-                bank=4;
-        }
+	if (gng_obj_kludge)
+	{
+		/*
+		Ghouls and Ghosts splits the sprites over two separate
+		graphics layouts */
+		bank=4;
+	}
 
-        /* Draw the sprites */
-        for (i=obj_size-8; i>=0; i-=8)
-        {
-                int x=READ_WORD(&cps1_obj[i]);
-                int y=READ_WORD(&cps1_obj[i+2]);
-                if (x && y)
-                {
-                   int code=READ_WORD(&cps1_obj[i+4]);
-                   int colour=READ_WORD(&cps1_obj[i+6]);
-                   int col=colour&0x1f;
-                   x-=0x40;
-                   code &= 0x3fff;
-                   if (code >= base_obj)
-                   {
-                     code -= base_obj;
-                     bank=1;
-                     if (gng_obj_kludge && code >= 0x01000)
-                     {
-                         code &= 0xfff;
-                         bank=4;
-                     }
-
-                     if (colour & 0xff00)
-                     {
-                           /* handle blocked sprites */
-                           int nx=(colour & 0x0f00) >> 8;
-                           int ny=(colour & 0xf000) >> 12;
-                           int nxs, nys;
-                           nx++;
-                           ny++;
-
-                           if (colour & 0x40)
-                           {
-                             /* Y flip */
-                             if (colour &0x20)
-                             {
-                               for (nys=0; nys<ny; nys++)
-                               {
-                                    for (nxs=0; nxs<nx; nxs++)
-                                    {
-                                         drawgfx(bitmap,Machine->gfx[bank],
-                                                code+(nx-1)-nxs+0x10*(ny-1-nys),
-                                                col&0x1f,
-                                                1,1,
-                                                x+nxs*16,y+nys*16,
-                                                &Machine->drv->visible_area,TRANSPARENCY_PEN,15);
-                                    }
-                               }
-                             }
-                             else
-                             {
-                               for (nys=0; nys<ny; nys++)
-                               {
-                                    for (nxs=0; nxs<nx; nxs++)
-                                    {
-                                         drawgfx(bitmap,Machine->gfx[bank],
-                                                code+nxs+0x10*(ny-1-nys),
-                                                col&0x1f,
-                                                0,1,
-                                                x+nxs*16,y+nys*16,
-                                                &Machine->drv->visible_area,TRANSPARENCY_PEN,15);
-                                    }
-                               }
-                            }
-
-                           }
-                           else
-                           {
-                             if (colour &0x20)
-                             {
-                               for (nys=0; nys<ny; nys++)
-                               {
-                                    for (nxs=0; nxs<nx; nxs++)
-                                    {
-                                         drawgfx(bitmap,Machine->gfx[bank],
-                                                code+(nx-1)-nxs+0x10*nys,
-                                                col&0x1f,
-                                                1,0,
-                                                x+nxs*16,y+nys*16,
-                                                &Machine->drv->visible_area,TRANSPARENCY_PEN,15);
-                                    }
-                               }
-                             }
-                             else
-                             {
-                               for (nys=0; nys<ny; nys++)
-                               {
-                                    for (nxs=0; nxs<nx; nxs++)
-                                    {
-                                         drawgfx(bitmap,Machine->gfx[bank],
-                                                code+nxs+0x10*nys,
-                                                col&0x1f,
-                                                0,0,
-                                                x+nxs*16,y+nys*16,
-                                                &Machine->drv->visible_area,TRANSPARENCY_PEN,15);
-                                    }
-                               }
-                            }
-                         }
-                    }
-                    else
-                    {
-                        /* Simple case... 1 sprite */
-                           drawgfx(bitmap,Machine->gfx[bank],
-                                       code,
-                                       col&0x1f,
-                                       colour&0x20,colour&0x40,
-                                       x,y,
-                                       &Machine->drv->visible_area,
-                                       TRANSPARENCY_PEN,15);
-                    }
-                  }
-             }
-        }
+	/* Draw the sprites */
+	for (i=obj_size-8; i>=0; i-=8)
+	{
+		int x=READ_WORD(&cps1_obj[i]);
+		int y=READ_WORD(&cps1_obj[i+2]);
+		if (x && y)
+		{
+			int code=READ_WORD(&cps1_obj[i+4]);
+			int colour=READ_WORD(&cps1_obj[i+6]);
+			int col=colour&0x1f;
+			x-=0x40;
+			code &= 0x3fff;
+			if (code >= base_obj)
+			{
+				base[col] |= 0x7fff;
+			}
+		}
+	}
 }
 
-#ifdef MAME_DEBUG
+INLINE void cps1_render_sprites(struct osd_bitmap *bitmap)
+{
+	int i;
+	int base_obj=cps1_game_config->base_obj;
+	int obj_size=cps1_obj_size;
+
+	int gng_obj_kludge=cps1_game_config->gng_sprite_kludge;
+	int bank;
+	if (cps1_game_config->size_obj)
+	{
+		obj_size=cps1_game_config->size_obj;
+	}
+
+	if (gng_obj_kludge)
+	{
+		/*
+		Ghouls and Ghosts splits the sprites over two separate
+		graphics layouts */
+		bank=4;
+	}
+
+	/* Draw the sprites */
+	for (i=obj_size-8; i>=0; i-=8)
+	{
+		int x=READ_WORD(&cps1_obj[i]);
+		int y=READ_WORD(&cps1_obj[i+2]);
+		if (x && y)
+		{
+			int code=READ_WORD(&cps1_obj[i+4]);
+			int colour=READ_WORD(&cps1_obj[i+6]);
+			int col=colour&0x1f;
+			x-=0x40;
+			code &= 0x3fff;
+			if (code >= base_obj)
+			{
+				code -= base_obj;
+				bank=1;
+				if (gng_obj_kludge && code >= 0x01000)
+				{
+					code &= 0xfff;
+					bank=4;
+				}
+
+				if (colour & 0xff00)
+				{
+					/* handle blocked sprites */
+					int nx=(colour & 0x0f00) >> 8;
+					int ny=(colour & 0xf000) >> 12;
+					int nxs, nys;
+					nx++;
+					ny++;
+
+					if (colour & 0x40)
+					{
+						/* Y flip */
+						if (colour &0x20)
+						{
+							for (nys=0; nys<ny; nys++)
+							{
+								for (nxs=0; nxs<nx; nxs++)
+								{
+									drawgfx(bitmap,Machine->gfx[bank],
+									    code+(nx-1)-nxs+0x10*(ny-1-nys),
+									    col&0x1f,
+									    1,1,
+									    x+nxs*16,y+nys*16,
+									    &Machine->drv->visible_area,TRANSPARENCY_PEN,15);
+								}
+							}
+						}
+						else
+						{
+							for (nys=0; nys<ny; nys++)
+							{
+								for (nxs=0; nxs<nx; nxs++)
+								{
+									drawgfx(bitmap,Machine->gfx[bank],
+									    code+nxs+0x10*(ny-1-nys),
+									    col&0x1f,
+									    0,1,
+									    x+nxs*16,y+nys*16,
+									    &Machine->drv->visible_area,TRANSPARENCY_PEN,15);
+								}
+							}
+						}
+					}
+					else
+					{
+						if (colour &0x20)
+						{
+							for (nys=0; nys<ny; nys++)
+							{
+								for (nxs=0; nxs<nx; nxs++)
+								{
+									drawgfx(bitmap,Machine->gfx[bank],
+									    code+(nx-1)-nxs+0x10*nys,
+									    col&0x1f,
+									    1,0,
+									    x+nxs*16,y+nys*16,
+									    &Machine->drv->visible_area,TRANSPARENCY_PEN,15);
+								}
+							}
+						}
+						else
+						{
+							for (nys=0; nys<ny; nys++)
+							{
+								for (nxs=0; nxs<nx; nxs++)
+								{
+									drawgfx(bitmap,Machine->gfx[bank],
+									    code+nxs+0x10*nys,
+									    col&0x1f,
+									    0,0,
+									    x+nxs*16,y+nys*16,
+									    &Machine->drv->visible_area,TRANSPARENCY_PEN,15);
+								}
+							}
+						}
+					}
+				}
+				else
+				{
+					/* Simple case... 1 sprite */
+					drawgfx(bitmap,Machine->gfx[bank],
+					       code,
+					       col&0x1f,
+					       colour&0x20,colour&0x40,
+					       x,y,
+					       &Machine->drv->visible_area,
+					       TRANSPARENCY_PEN,15);
+				}
+			}
+		}
+	}
+}
+
+#if 0
 void cps1_debug(int colour)
 {
-        static int s;
-        static int reset;
-        int pressed=0;
-        int n=0;
-        int i;
-        int keys[]={OSD_KEY_1, OSD_KEY_2, OSD_KEY_3, OSD_KEY_4,
-                    OSD_KEY_5, OSD_KEY_6, OSD_KEY_7, OSD_KEY_8};
+	static int s;
+	static int reset;
+	int pressed=0;
+	int n=0;
+	int i;
+	int keys[]={OSD_KEY_1, OSD_KEY_2, OSD_KEY_3, OSD_KEY_4,
+	            OSD_KEY_5, OSD_KEY_6, OSD_KEY_7, OSD_KEY_8};
 
-        for (i=0; i<8; i++)
-        {
-             if (osd_key_pressed(i))
-             {
-                        int no=0;
-                        if (osd_key_pressed(OSD_KEY_LSHIFT))
-                        {
-                                no+=8;
-                        }
-                     s++;
-                     setgfxcolorentry (Machine->gfx[2], colour*16+i-1+no, s,s,s);
-                     reset=1;
-                     pressed=1;
-             }
-        }
-        if (!pressed)
-        {
-             if (reset)
-             {
-                reset=0;
-                memset(cps1_old_palette, 0xff, cps1_palette_size);
-                cps1_build_palette();
-             }
-        }
-
-
-
+	for (i=0; i<8; i++)
+	{
+		if (osd_key_pressed(i))
+		{
+			int no=0;
+			if (osd_key_pressed(OSD_KEY_LSHIFT))
+			{
+				no+=8;
+			}
+			s++;
+//			setgfxcolorentry (Machine->gfx[2], colour*16+i-1+no, s,s,s);
+			reset=1;
+			pressed=1;
+		}
+	}
+	if (!pressed)
+	{
+		if (reset)
+		{
+			reset=0;
+			memset(cps1_old_palette, 0xff, cps1_palette_size);
+			cps1_build_palette();
+		}
+	}
 }
 #endif
 
@@ -1091,76 +1155,108 @@ int cps1_transparency_table[512]=
 ***************************************************************************/
 
 
+INLINE void cps1_palette_scroll2(unsigned short *base)
+{
+	int base_scroll2=cps1_game_config->base_scroll2;
+	int space_char=cps1_game_config->space_scroll2;
+	int sx, sy;
+	int nx=(scroll2x>>4)+4;        /* Rough X */
+	int ny=(scroll2y>>4);          /* Rough Y */
+
+	int elements = Machine->gfx[2]->total_elements;
+
+	for (sx=0; sx<0x32/2+1; sx++)
+	{
+		for (sy=0; sy<0x09*2; sy++)
+		{
+			int offsy, offsx, offs, colour, code;
+			int n;
+			n=ny+sy;
+			offsy  = ((n&0x0f)*4 | ((n&0x30)*0x100))&0x3fff;
+			offsx=((nx+sx)*0x040)&0xfff;
+			offs=offsy+offsx;
+			offs &= 0x3fff;
+
+			code=READ_WORD(&cps1_scroll2[offs]);
+			if (code >= base_scroll2 && code != space_char )
+			{
+				code -= base_scroll2;
+				colour=READ_WORD(&cps1_scroll2[offs+2]);
+
+				base[colour&0x1f] |= Machine->gfx[2]->pen_usage[code % elements];
+			}
+		}
+	}
+}
+
+
 INLINE void cps1_render_scroll2(struct osd_bitmap *bitmap, int priority)
 {
-         int base_scroll2=cps1_game_config->base_scroll2;
-         int space_char=cps1_game_config->space_scroll2;
-         int sx, sy;
-         int nxoffset=scroll2x&0x0f;    /* Smooth X */
-         int nyoffset=scroll2y&0x0f;    /* Smooth Y */
-         int nx=(scroll2x>>4)+4;        /* Rough X */
-         int ny=(scroll2y>>4);          /* Rough Y */
+	int base_scroll2=cps1_game_config->base_scroll2;
+	int space_char=cps1_game_config->space_scroll2;
+	int sx, sy;
+	int nxoffset=scroll2x&0x0f;    /* Smooth X */
+	int nyoffset=scroll2y&0x0f;    /* Smooth Y */
+	int nx=(scroll2x>>4)+4;        /* Rough X */
+	int ny=(scroll2y>>4);          /* Rough Y */
 
-         for (sx=0; sx<0x32/2+1; sx++)
-         {
-                for (sy=0; sy<0x09*2; sy++)
-                {
-                        int offsy, offsx, offs, colour, code;
-                        int n;
-                        n=ny+sy;
-                        offsy  = ((n&0x0f)*4 | ((n&0x30)*0x100))&0x3fff;
-                        offsx=((nx+sx)*0x040)&0xfff;
-                        offs=offsy+offsx;
-                        offs &= 0x3fff;
+	for (sx=0; sx<0x32/2+1; sx++)
+	{
+		for (sy=0; sy<0x09*2; sy++)
+		{
+			int offsy, offsx, offs, colour, code;
+			int n;
+			n=ny+sy;
+			offsy  = ((n&0x0f)*4 | ((n&0x30)*0x100))&0x3fff;
+			offsx=((nx+sx)*0x040)&0xfff;
+			offs=offsy+offsx;
+			offs &= 0x3fff;
 
-                        code=READ_WORD(&cps1_scroll2[offs]);
-                        if (code >= base_scroll2 && code != space_char )
-                        {
-                                code -= base_scroll2;
-                                colour=READ_WORD(&cps1_scroll2[offs+2]);
-                                if (priority)
-                                {
-                                        int mask=colour & 0x0180;
+			code=READ_WORD(&cps1_scroll2[offs]);
+			if (code >= base_scroll2 && code != space_char )
+			{
+				code -= base_scroll2;
+				colour=READ_WORD(&cps1_scroll2[offs+2]);
+				if (priority)
+				{
+					int mask=colour & 0x0180;
 
-                                        if (mask)
-                                        {
+					if (mask)
+					{
 
-                                             int transp=0;
-#ifdef MAME_DEBUG
-                                             cps1_debug(colour & 0x1f);
-                                             if (errorlog &&
-                                                osd_key_pressed(OSD_KEY_L))
-                                             {
-                                                 fprintf(errorlog,
-                                                        "%04x\n", colour);
-                                             }
+						int transp=0;
+#if 0
+						cps1_debug(colour & 0x1f);
+						if (errorlog && osd_key_pressed(OSD_KEY_L))
+						{
+							fprintf(errorlog, "%04x\n", colour);
+						}
 #endif
-                                             transp=cps1_transparency_table[colour>>7];
+						transp=cps1_transparency_table[colour>>7];
 
-                                             drawgfx(bitmap,Machine->gfx[2],
-                                                code,
-                                                colour&0x1f,
-                                                colour&0x20,colour&0x40,
-                                                16*sx-nxoffset,16*sy-nyoffset,
-                                                &Machine->drv->visible_area,
-                                                TRANSPARENCY_PENS,transp);
-                                        }
-                                }
-                                else
-                                {
-                                       /* Draw entire tile */
-                                       drawgfx(bitmap,Machine->gfx[2],
-                                                code,
-                                                colour&0x1f,
-                                                colour&0x20,colour&0x40,
-                                                16*sx-nxoffset,16*sy-nyoffset,
-                                                &Machine->drv->visible_area,
-                                                TRANSPARENCY_PEN,15);
-                                }
-
-                        }
-              }
-       }
+						drawgfx(bitmap,Machine->gfx[2],
+								code,
+								colour&0x1f,
+								colour&0x20,colour&0x40,
+								16*sx-nxoffset,16*sy-nyoffset,
+								&Machine->drv->visible_area,
+								TRANSPARENCY_PENS,transp);
+					}
+				}
+				else
+				{
+					/* Draw entire tile */
+					drawgfx(bitmap,Machine->gfx[2],
+					        code,
+					        colour&0x1f,
+					        colour&0x20,colour&0x40,
+					        16*sx-nxoffset,16*sy-nyoffset,
+					        &Machine->drv->visible_area,
+					        TRANSPARENCY_PEN,15);
+				}
+			}
+		}
+	}
 }
 
 
@@ -1188,80 +1284,113 @@ INLINE void cps1_render_scroll2(struct osd_bitmap *bitmap, int priority)
 
 ***************************************************************************/
 
+INLINE void cps1_palette_scroll3(unsigned short *base)
+{
+	int base_scroll3=cps1_game_config->base_scroll3;
+	int space_char=cps1_game_config->space_scroll3;
+	int sx,sy;
+	int nx=(scroll3x>>5)+2;
+	int ny=(scroll3y>>5);
+
+	int elements = Machine->gfx[3]->total_elements;
+
+	for (sx=0; sx<0x32/4+1; sx++)
+	{
+		for (sy=0; sy<0x20/4+1; sy++)
+		{
+			int offsy, offsx, offs, colour, code;
+			int n;
+			n=ny+sy;
+			offsy  = ((n&0x07)*4 | ((n&0xf8)*0x0100))&0x3fff;
+			offsx=((nx+sx)*0x020)&0x7ff;
+			offs=offsy+offsx;
+			offs &= 0x3fff;
+			code=READ_WORD(&cps1_scroll3[offs]);
+			if (code>=base_scroll3 && code != space_char)
+			{
+				code -= base_scroll3;
+				colour=READ_WORD(&cps1_scroll3[offs+2]);
+				base[colour&0x1f] |= Machine->gfx[3]->pen_usage[code % elements] & 0x7fff;
+			}
+		}
+	}
+}
+
+
 INLINE void cps1_render_scroll3(struct osd_bitmap *bitmap, int priority)
 {
-        int base_scroll3=cps1_game_config->base_scroll3;
-        int space_char=cps1_game_config->space_scroll3;
-        int sx,sy;
-         /* CPS1_SCROLL 3 */
-        int nxoffset=scroll3x&0x1f;
-        int nyoffset=scroll3y&0x1f;
-        int nx=(scroll3x>>5)+2;
-        int ny=(scroll3y>>5);
+	int base_scroll3=cps1_game_config->base_scroll3;
+	int space_char=cps1_game_config->space_scroll3;
+	int sx,sy;
+	/* CPS1_SCROLL 3 */
+	int nxoffset=scroll3x&0x1f;
+	int nyoffset=scroll3y&0x1f;
+	int nx=(scroll3x>>5)+2;
+	int ny=(scroll3y>>5);
 
-        for (sx=0; sx<0x32/4+1; sx++)
-        {
-                for (sy=0; sy<0x20/4+1; sy++)
-                {
-                        int offsy, offsx, offs, colour, code;
-                        int n;
-                        n=ny+sy;
-                        offsy  = ((n&0x07)*4 | ((n&0xf8)*0x0100))&0x3fff;
-                        offsx=((nx+sx)*0x020)&0x7ff;
-                        offs=offsy+offsx;
-                        offs &= 0x3fff;
-                        code=READ_WORD(&cps1_scroll3[offs]);
-                        if (code>=base_scroll3 && code != space_char)
-                        {
-                            code -= base_scroll3;
-                            colour=READ_WORD(&cps1_scroll3[offs+2]);
-                            if (priority)
-                            {
-                                int mask=colour & 0x0180;
-                                if (mask)
-                                {
-                                       int transp=0;
-                                       switch (mask)
-                                       {
-                                                case 0x080:
-                                                       transp=0xf001;
-                                                       break;
-                                                case 0x0100:
-                                                       transp=0x8000;
-                                                       break;
-                                                case 0x0180:
-                                                       transp=0x8000;
-                                                       break;
-                                                case 0x0200:
-                                                       transp=0x8000;
-                                                       break;
-                                        }
+	for (sx=0; sx<0x32/4+1; sx++)
+	{
+		for (sy=0; sy<0x20/4+1; sy++)
+		{
+			int offsy, offsx, offs, colour, code;
+			int n;
+			n=ny+sy;
+			offsy  = ((n&0x07)*4 | ((n&0xf8)*0x0100))&0x3fff;
+			offsx=((nx+sx)*0x020)&0x7ff;
+			offs=offsy+offsx;
+			offs &= 0x3fff;
+			code=READ_WORD(&cps1_scroll3[offs]);
+			if (code>=base_scroll3 && code != space_char)
+			{
+				code -= base_scroll3;
+				colour=READ_WORD(&cps1_scroll3[offs+2]);
+				if (priority)
+				{
+					int mask=colour & 0x0180;
+					if (mask)
+					{
+						int transp=0;
+						switch (mask)
+						{
+							case 0x080:
+								transp=0xf001;
+								break;
+							case 0x0100:
+								transp=0x8000;
+								break;
+							case 0x0180:
+								transp=0x8000;
+								break;
+							case 0x0200:
+								transp=0x8000;
+								break;
+						}
 
-                                        if (transp)
-                                        {
-                                            drawgfx(bitmap,Machine->gfx[3],
-                                                 code,
-                                                colour&0x1f,
-                                                colour&0x20,colour&0x40,
-                                                32*sx-nxoffset,32*sy-nyoffset,
-                                                &Machine->drv->visible_area,
-                                                TRANSPARENCY_PENS,transp);
-                                        }
-                               }
-                           }
-                           else
-                           {
-                              drawgfx(bitmap,Machine->gfx[3],
-                                        code,
-                                        colour&0x1f,
-                                        colour&0x20,colour&0x40,
-                                        32*sx-nxoffset,32*sy-nyoffset,
-                                        &Machine->drv->visible_area,
-                                        TRANSPARENCY_PEN,15);
-                           }
-                        }
-                }
-         }
+						if (transp)
+						{
+							drawgfx(bitmap,Machine->gfx[3],
+							     code,
+							    colour&0x1f,
+							    colour&0x20,colour&0x40,
+							    32*sx-nxoffset,32*sy-nyoffset,
+							    &Machine->drv->visible_area,
+							    TRANSPARENCY_PENS,transp);
+						}
+					}
+				}
+				else
+				{
+					drawgfx(bitmap,Machine->gfx[3],
+					    code,
+					    colour&0x1f,
+					    colour&0x20,colour&0x40,
+					    32*sx-nxoffset,32*sy-nyoffset,
+					    &Machine->drv->visible_area,
+					    TRANSPARENCY_PEN,15);
+				}
+			}
+		}
+	}
 }
 
 
@@ -1271,237 +1400,269 @@ INLINE void cps1_render_scroll3(struct osd_bitmap *bitmap, int priority)
 
 ***************************************************************************/
 
-void cps1_vh_screenrefresh(struct osd_bitmap *bitmap)
+void cps1_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
-        int layercontrolport;
-        int layercontrol;
-        int scrl1on, scrl2on, scrl3on;
-        int scroll1priority;
-        int scroll2priority;
+	unsigned short palette_usage[32*4];
+	int layercontrolport;
+	int layercontrol;
+	int scrl1on, scrl2on, scrl3on;
+	int scroll1priority;
+	int scroll2priority;
+	int i,offset;
 
-        /* Get video memory base registers */
-        cps1_get_video_base();
+	/* Get video memory base registers */
+	cps1_get_video_base();
 
-        /* Get scroll values */
-        scroll1x=cps1_port(CPS1_SCROLL1_SCROLLX);
-        scroll1y=cps1_port(CPS1_SCROLL1_SCROLLY);
-        scroll2x=cps1_port(CPS1_SCROLL2_SCROLLX);
-        scroll2y=cps1_port(CPS1_SCROLL2_SCROLLY);
-        scroll3x=cps1_port(CPS1_SCROLL3_SCROLLX);
-        scroll3y=cps1_port(CPS1_SCROLL3_SCROLLY);
+	/* Get scroll values */
+	scroll1x=cps1_port(CPS1_SCROLL1_SCROLLX);
+	scroll1y=cps1_port(CPS1_SCROLL1_SCROLLY);
+	scroll2x=cps1_port(CPS1_SCROLL2_SCROLLX);
+	scroll2y=cps1_port(CPS1_SCROLL2_SCROLLY);
+	scroll3x=cps1_port(CPS1_SCROLL3_SCROLLX);
+	scroll3y=cps1_port(CPS1_SCROLL3_SCROLLY);
 
-        /*
-         Welcome to kludgesville... I have no idea how this is supposed
-         to work. The layer priority register is different from machine
-         to machine.
-        */
-        switch (cps1_game_config->alternative)
-        {
-                /* Wandering video control ports */
-                case 0:
-                        /* default */
-                        layercontrolport=0x66;
-                        layercontrol=READ_WORD(&cps1_output[layercontrolport]);
-                        /* Layers on / off */
-                        scrl1on=1;
-                        scrl2on=layercontrol&0x08;      /* Not quite should probably */
-                        scrl3on=layercontrol&0x08;      /* be individually turn-offable  */
+	/*
+	 Welcome to kludgesville... I have no idea how this is supposed
+	 to work. The layer priority register is different from machine
+	 to machine.
+	*/
+	switch (cps1_game_config->alternative)
+	{
+		/* Wandering video control ports */
+		case 0:
+			/* default */
+			layercontrolport=0x66;
+			layercontrol=READ_WORD(&cps1_output[layercontrolport]);
+			/* Layers on / off */
+			scrl1on=1;
+			scrl2on=layercontrol&0x08;      /* Not quite should probably */
+			scrl3on=layercontrol&0x08;      /* be individually turn-offable  */
 
-                        scroll2priority=(layercontrol&0x040);
-                        break;
-                case 1:
-                        /* Willow */
-                        layercontrolport=0x70;
-                        layercontrol=READ_WORD(&cps1_output[layercontrolport]);
-                        /* Layers on / off */
-                        scrl1on=1;
-                        scrl2on=layercontrol&0x08;      /* Not quite should probably */
-                        scrl3on=layercontrol&0x08;      /* be individually turn-offable  */
+			scroll2priority=(layercontrol&0x040);
+			break;
+		case 1:
+			/* Willow */
+			layercontrolport=0x70;
+			layercontrol=READ_WORD(&cps1_output[layercontrolport]);
+			/* Layers on / off */
+			scrl1on=1;
+			scrl2on=layercontrol&0x08;      /* Not quite should probably */
+			scrl3on=layercontrol&0x08;      /* be individually turn-offable  */
 
-                        /* Scroll 2 / 3 priority */
-                        scroll2priority=(layercontrol&0x040);
-                        break;
-                case 2:
-                        layercontrolport=0x6e;
-                        layercontrol=READ_WORD(&cps1_output[layercontrolport]);
-                        /* Layers on / off */
-                        scrl1on=1;
-                        scrl2on=layercontrol&0x08;      /* Not quite should probably */
-                        scrl3on=layercontrol&0x08;      /* be individually turn-offable  */
+			/* Scroll 2 / 3 priority */
+			scroll2priority=(layercontrol&0x040);
+			break;
+		case 2:
+			layercontrolport=0x6e;
+			layercontrol=READ_WORD(&cps1_output[layercontrolport]);
+			/* Layers on / off */
+			scrl1on=1;
+			scrl2on=layercontrol&0x08;      /* Not quite should probably */
+			scrl3on=layercontrol&0x08;      /* be individually turn-offable  */
 
-                        /* Scroll 2 / 3 priority */
-                        scroll2priority=(layercontrol&0x040);
-                        break;
+			/* Scroll 2 / 3 priority */
+			scroll2priority=(layercontrol&0x040);
+			break;
 
-                case 4:
-                        /* Strider (completely kludged) */
-                        layercontrolport=0x66;
-                        layercontrol=READ_WORD(&cps1_output[layercontrolport]);
-                        /* Layers on / off */
-                        scrl1on=1;
-                        scrl2on=layercontrol&0x08;      /* Not quite should probably */
-                        scrl3on=layercontrol&0x08;      /* be individually turn-offable  */
+		case 4:
+			/* Strider (completely kludged) */
+			layercontrolport=0x66;
+			layercontrol=READ_WORD(&cps1_output[layercontrolport]);
+			/* Layers on / off */
+			scrl1on=1;
+			scrl2on=layercontrol&0x08;      /* Not quite should probably */
+			scrl3on=layercontrol&0x08;      /* be individually turn-offable  */
 
-                        /* Priority */
-                        scroll2priority=(layercontrol&0x060)==0x40;
-                        if (layercontrol == 0x0e4e )
-                        {
-                            scroll2priority=0;
-                        }
+			/* Priority */
+			scroll2priority=(layercontrol&0x060)==0x40;
+			if (layercontrol == 0x0e4e )
+			{
+			    scroll2priority=0;
+			}
 
-                        break;
+			break;
 
-                case 5: /* Ghouls and Ghosts */
-                        layercontrolport=0x66;
-                        layercontrol=READ_WORD(&cps1_output[layercontrolport]);
+		case 5: /* Ghouls and Ghosts */
+			layercontrolport=0x66;
+			layercontrol=READ_WORD(&cps1_output[layercontrolport]);
 
-                        /* Layers on / off */
-                        scrl1on=layercontrol&0x02;
-                        scrl2on=layercontrol&0x04;
-                        scrl3on=layercontrol&0x08;
-                        scroll2priority=(layercontrol&0x060)==0x40;
-                        if (layercontrol == 0x12ca ||
-                                layercontrol == 0x3948)
-                        {
-                                scroll2priority=0;
-                        }
-                        break;
-                case 6: /* 1941 */
-                        layercontrolport=0x68;
-                        layercontrol=READ_WORD(&cps1_output[layercontrolport]);
-                        /* Layers on / off */
-                        scrl1on=1;
-                        scrl2on=1;
-                        scrl3on=layercontrol&0x20;
-                        scroll2priority=(layercontrol&0x040);
-                        break;
+			/* Layers on / off */
+			scrl1on=layercontrol&0x02;
+			scrl2on=layercontrol&0x04;
+			scrl3on=layercontrol&0x08;
+			scroll2priority=(layercontrol&0x060)==0x40;
+			if (layercontrol == 0x12ca ||
+			        layercontrol == 0x3948)
+			{
+			        scroll2priority=0;
+			}
+			break;
+		case 6: /* 1941 */
+			layercontrolport=0x68;
+			layercontrol=READ_WORD(&cps1_output[layercontrolport]);
+			/* Layers on / off */
+			scrl1on=1;
+			scrl2on=1;
+			scrl3on=layercontrol&0x20;
+			scroll2priority=(layercontrol&0x040);
+			break;
 
-                case 7: /* Magic sword */
-                        layercontrolport=0x62;
-                        layercontrol=READ_WORD(&cps1_output[layercontrolport]);
-                        /* Layers on / off */
-                        scrl1on=1;
-                        scrl2on=layercontrol&0x04;
-                        scrl3on=layercontrol&0x06;
-                        /* Priority */
-                        scroll2priority=(layercontrol&0x040);
-                        break;
+		case 7: /* Magic sword */
+			layercontrolport=0x62;
+			layercontrol=READ_WORD(&cps1_output[layercontrolport]);
+			/* Layers on / off */
+			scrl1on=1;
+			scrl2on=layercontrol&0x04;
+			scrl3on=layercontrol&0x06;
+			/* Priority */
+			scroll2priority=(layercontrol&0x040);
+			break;
 
-                case 8: /* Nemo */
-                        layercontrolport=0x42;
-                        layercontrol=READ_WORD(&cps1_output[layercontrolport]);
-                        /* Layers on / off */
-                        scrl1on=1;
-                        scrl2on=1; //layercontrol&0x04;
-                        scrl3on=1; //layercontrol&0x06;
-                        /* Priority */
-                        scroll2priority=(layercontrol&0x040);
-                        break;
+		case 8: /* Nemo */
+			layercontrolport=0x42;
+			layercontrol=READ_WORD(&cps1_output[layercontrolport]);
+			/* Layers on / off */
+			scrl1on=1;
+			scrl2on=1; //layercontrol&0x04;
+			scrl3on=1; //layercontrol&0x06;
+			/* Priority */
+			scroll2priority=(layercontrol&0x040);
+			break;
 
-                default:
-                        layercontrolport=0;
-                        layercontrol=0xffff;
-                        scrl1on=1;
-                        scrl2on=layercontrol&0x08;      /* Not quite should probably */
-                        scrl3on=layercontrol&0x08;      /* be individually turn-offable  */
+		default:
+			layercontrolport=0;
+			layercontrol=0xffff;
+			scrl1on=1;
+			scrl2on=layercontrol&0x08;      /* Not quite should probably */
+			scrl3on=layercontrol&0x08;      /* be individually turn-offable  */
 
-                        layercontrol|=0x0080;           /* Force scroll1 priority */
+			layercontrol|=0x0080;           /* Force scroll1 priority */
 
-                        /* Scroll 2 / 3 priority */
-                        scroll2priority=1;
-                        break;
-        }
+			/* Scroll 2 / 3 priority */
+			scroll2priority=1;
+			break;
+	}
 
-        /* Build palette */
-        cps1_build_palette();
+	/* Build palette */
+	cps1_build_palette();
 
-        /* Blank screen */
-        fillbitmap(bitmap,Machine->pens[0],&Machine->drv->visible_area);
+	/* Compute the used portion */
+	memset (palette_usage, 0, sizeof (palette_usage));
+	cps1_palette_sprites (&palette_usage[0]);
+	if (scrl1on)
+		cps1_palette_scroll1 (&palette_usage[32]);
+	if (scrl2on)
+		cps1_palette_scroll2 (&palette_usage[32+32]);
+	if (scrl3on)
+		cps1_palette_scroll3 (&palette_usage[32+32+32]);
+	for (i = offset = 0; i < 32*4; i++)
+	{
+		int usage = palette_usage[i];
+		if (usage)
+		{
+			int j;
+			for (j = 0; j < 16; j++)
+				if (usage & (1 << j))
+					palette_used_colors[offset++] = PALETTE_COLOR_USED;
+				else
+					palette_used_colors[offset++] = PALETTE_COLOR_UNUSED;
+		}
+		else
+		{
+			memset (&palette_used_colors[offset], PALETTE_COLOR_UNUSED, 16);
+			offset += 16;
+		}
+	}
+	palette_recalc ();
+
+	/* Blank screen */
+	fillbitmap(bitmap,palette_transparent_pen,&Machine->drv->visible_area);
 
 
-        /* Scroll 1 priority */
-        scroll1priority=(layercontrol&0x0080);
+	/* Scroll 1 priority */
+	scroll1priority=(layercontrol&0x0080);
 
-        /* Scroll 1 priority */
-        if (!scroll1priority && scrl1on)
-        {
-              cps1_render_scroll1(bitmap);
-        }
+	/* Scroll 1 priority */
+	if (!scroll1priority && scrl1on)
+	{
+		cps1_render_scroll1(bitmap);
+	}
 
-        if (scroll2priority)
-        {
-                if (scrl3on)
-                {
-                        cps1_render_scroll3(bitmap, 0);
-                }
-                if (scrl2on)
-                {
-                        cps1_render_scroll2(bitmap, 0);
-                }
-        }
-        else
-        {
-                if (scrl2on)
-                {
-                        cps1_render_scroll2(bitmap, 0);
-                }
-                if (scrl3on)
-                {
-                        cps1_render_scroll3(bitmap, 0);
-                }
-        }
+	if (scroll2priority)
+	{
+		if (scrl3on)
+		{
+			cps1_render_scroll3(bitmap, 0);
+		}
+		if (scrl2on)
+		{
+			cps1_render_scroll2(bitmap, 0);
+		}
+	}
+	else
+	{
+		if (scrl2on)
+		{
+			cps1_render_scroll2(bitmap, 0);
+		}
+		if (scrl3on)
+		{
+			cps1_render_scroll3(bitmap, 0);
+		}
+	}
 
-        cps1_render_sprites(bitmap);
+	cps1_render_sprites(bitmap);
 
-        if (scroll2priority)
-        {
-                if (scrl3on)
-                {
-                        cps1_render_scroll3(bitmap, 0x0100);
-                }
-                if (scrl2on)
-                {
-                        cps1_render_scroll2(bitmap, 0x0100);
-                }
-        }
-        else
-        {
-                if (scrl2on)
-                {
-                        cps1_render_scroll2(bitmap, 0x0100);
-                }
-                if (scrl3on)
-                {
-                        cps1_render_scroll3(bitmap, 0x0100);
-                }
-        }
+	if (scroll2priority)
+	{
+		if (scrl3on)
+		{
+			cps1_render_scroll3(bitmap, 0x0100);
+		}
+		if (scrl2on)
+		{
+			cps1_render_scroll2(bitmap, 0x0100);
+		}
+	}
+	else
+	{
+		if (scrl2on)
+		{
+			cps1_render_scroll2(bitmap, 0x0100);
+		}
+		if (scrl3on)
+		{
+			cps1_render_scroll3(bitmap, 0x0100);
+		}
+	}
 
-        if (scroll1priority && scrl1on)
-        {
-                cps1_render_scroll1(bitmap);
-        }
+	if (scroll1priority && scrl1on)
+	{
+		cps1_render_scroll1(bitmap);
+	}
+
 #if 0
-        {
-                int i;
-                int nReg=layercontrolport;
-                int nVal=cps1_port(nReg);
+	{
+		int i;
+		int nReg=layercontrolport;
+		int nVal=cps1_port(nReg);
 		struct DisplayText dt[2];
-                char szBuffer[40];
+		char szBuffer[40];
 		int count = 0;
 
-                char *pszPriority="SCROLL 2";
-                if (!scroll2priority)
-                {
-                        pszPriority="SCROLL 3";
-                }
-                sprintf(szBuffer, "%04x=%04x %s", nReg, nVal, pszPriority);
-                dt[0].text = szBuffer;
+		char *pszPriority="SCROLL 2";
+		if (!scroll2priority)
+		{
+			pszPriority="SCROLL 3";
+		}
+		sprintf(szBuffer, "%04x=%04x %s", nReg, nVal, pszPriority);
+		dt[0].text = szBuffer;
 		dt[0].color = DT_COLOR_RED;
 		dt[0].x = (Machine->uiwidth - Machine->uifont->width * strlen(dt[0].text)) / 2;
-                dt[0].y = (Machine->uiheight - Machine->uifont->height) / 2 + 2;
+		dt[0].y = (Machine->uiheight - Machine->uifont->height) / 2 + 2;
 		dt[1].text = 0;
-                displaytext(dt,0);
-         }
+		displaytext(dt,0);
+	}
 #endif
 }
 

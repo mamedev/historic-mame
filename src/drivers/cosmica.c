@@ -19,7 +19,7 @@ void cosmicalien_flipy_w(int offset,int data);
 void cosmicalien_attributes_w(int offset,int data);
 void cosmicalien_stars_w(int offset,int data);
 int  cosmicalien_vh_start(void);
-void cosmicalien_vh_screenrefresh(struct osd_bitmap *bitmap);
+void cosmicalien_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 void cosmicalien_vh_stop(void);
 
 
@@ -233,15 +233,15 @@ struct GameDriver cosmica_driver =
 	0,
 	"cosmica",
 	"Cosmic Alien",
-	"????",
-	"?????",
-	"Lee Taylor\n",
+	"1980",
+	"Universal",
+	"Lee Taylor",
 	0,
-        &cosmicalien_machine_driver,
+	&cosmicalien_machine_driver,
 
 	cosmicalien_rom,
 	0, 0,
-        0,
+	0,
 	0,      /* sound_prom */
 
 	cosmicalien_input_ports,
@@ -249,6 +249,6 @@ struct GameDriver cosmica_driver =
 	0, palette, spritelookup_prom,
 	ORIENTATION_DEFAULT,
 
-        0,0
+	0, 0
 };
 

@@ -81,9 +81,9 @@ static char *MakeEA (int lo, unsigned char *pBase, int size, int *count)
 					PARAM_WORD (pm);
 					temp = pm & 0xff;
 					if (temp & 0x80)
-						sprintf (buf, "(-$%X,PC,D%ld.%c)", -(signed char)temp & 0xff, (pm >> 12) & 7, (pm & 800) ? 'L' : 'W');
+						sprintf (buf, "(-$%X,PC,%c%ld.%c)", -(signed char)temp & 0xff, (pm & 0x8000) ? 'A' : 'D',(pm >> 12) & 7, (pm & 0x800) ? 'L' : 'W');
 					else
-						sprintf (buf, "($%X,PC,D%ld.%c)", temp, (pm >> 12) & 7, (pm & 800) ? 'L' : 'W');
+						sprintf (buf, "($%X,PC,%c%ld.%c)", temp, (pm & 0x8000) ? 'A' : 'D',(pm >> 12) & 7, (pm & 0x800) ? 'L' : 'W');
 					break;
 				case 4:
 					if (size == 1)

@@ -7,7 +7,7 @@
 ***************************************************************************/
 
 #include "driver.h"
-#include "generic.h"
+#include "vidhrdw/generic.h"
 
 
 
@@ -100,7 +100,7 @@ void pingpong_vh_convert_color_prom(unsigned char *palette, unsigned short *colo
   Draw the game screen in the given osd_bitmap.
 
 ***************************************************************************/
-void pingpong_vh_screenrefresh(struct osd_bitmap *bitmap)
+void pingpong_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	int offs;
 

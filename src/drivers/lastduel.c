@@ -37,9 +37,7 @@ extern int lastduel_sprites_r(int offset);
 extern void lastduel_sprites_w(int offset,int value);
 extern int lastduel_vh_start(void);
 extern void lastduel_vh_stop(void);
-extern void lastduel_vh_screenrefresh(struct osd_bitmap *bitmap);
-extern int lastduel_palette_r( int offset );
-extern void lastduel_palette_w( int offset, int data );
+extern void lastduel_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 extern void lastduel_scroll_w( int offset, int data );
 
 extern unsigned char *lastduel_ram;
@@ -47,7 +45,6 @@ extern unsigned char *lastduel_vram;
 extern unsigned char *lastduel_scroll2;
 extern unsigned char *lastduel_scroll1;
 extern unsigned char *lastduel_sprites;
-extern unsigned char *lastduel_paletteram;
 
 /******************************************************************************/
 
@@ -119,7 +116,7 @@ static struct MemoryReadAddress lastduel_readmem[] =
   { 0xfcc000, 0xfcdfff, lastduel_vram_r },
   { 0xfd0000, 0xfd3fff, lastduel_scroll1_r },
   { 0xfd4000, 0xfd7fff, lastduel_scroll2_r },
-  { 0xfd8000, 0xfd87ff, lastduel_palette_r },
+  { 0xfd8000, 0xfd87ff, paletteram_word_r },
   { 0xfe0000, 0xffffff, MRA_BANK1 },
 	{ -1 }	/* end of table */
 };
@@ -134,7 +131,7 @@ static struct MemoryWriteAddress lastduel_writemem[] =
   { 0xfcc000, 0xfcdfff, lastduel_vram_w,    &lastduel_vram },
   { 0xfd0000, 0xfd3fff, lastduel_scroll1_w, &lastduel_scroll1 },
   { 0xfd4000, 0xfd7fff, lastduel_scroll2_w, &lastduel_scroll2 },
-  { 0xfd8000, 0xfd87ff, lastduel_palette_w, &lastduel_paletteram },
+  { 0xfd8000, 0xfd87ff, paletteram_RRRRGGGGBBBBIIII_word_w, &paletteram },
   { 0xfe0000, 0xffffff, MWA_BANK1 },
 	{ -1 }	/* end of table */
 };
@@ -145,7 +142,7 @@ static struct MemoryReadAddress madgear_readmem[] =
   { 0xfc4000, 0xfc4007, madgear_inputs_r },
   { 0xfc1800, 0xfc1fff, lastduel_sprites_r },
   { 0xfc8000, 0xfc9fff, lastduel_vram_r },
-  { 0xfcc000, 0xfcc7ff, lastduel_palette_r },
+  { 0xfcc000, 0xfcc7ff, paletteram_word_r },
   { 0xfd4000, 0xfd7fff, lastduel_scroll1_r },
   { 0xfd8000, 0xfdffff, lastduel_scroll2_r },
   { 0xff0000, 0xffffff, MRA_BANK1 },
@@ -159,7 +156,7 @@ static struct MemoryWriteAddress madgear_writemem[] =
   { 0xfd0000, 0xfd000f, lastduel_scroll_w },
   { 0xfc1800, 0xfc1fff, lastduel_sprites_w, &lastduel_sprites },
   { 0xfc8000, 0xfc9fff, lastduel_vram_w,    &lastduel_vram },
-  { 0xfcc000, 0xfcc7ff, lastduel_palette_w, &lastduel_paletteram },
+  { 0xfcc000, 0xfcc7ff, paletteram_RRRRGGGGBBBBIIII_word_w, &paletteram },
   { 0xfd4000, 0xfd7fff, lastduel_scroll1_w, &lastduel_scroll1 },
   { 0xfd8000, 0xfdffff, lastduel_scroll2_w, &lastduel_scroll2 },
   { 0xff0000, 0xffffff, MWA_BANK1 },
@@ -334,7 +331,7 @@ static struct YM2203interface ym2203_interface =
 {
 	2,			/* 2 chips */
 	3500000,	/* 3.5 MHz ? */
-	{ YM2203_VOL(100,255), YM2203_VOL(100,255) },
+	{ YM2203_VOL(140,255), YM2203_VOL(140,255) },
 	{ 0 },
 	{ 0 },
 	{ 0 },
@@ -664,7 +661,7 @@ struct GameDriver lastduel_driver =
 	"1988",
 	"Capcom",
 	"Bryan McPhail\n\nDriver Notes: \n  One set of tile roms missing!\n",
-	0,
+	GAME_NOT_WORKING,
 	&lastduel_machine_driver,
 
 	lastduel_rom,
@@ -687,7 +684,7 @@ struct GameDriver madgear_driver =
 	"1989",
 	"Capcom",
 	"Bryan McPhail\n\nDriver Notes: \n  Tile roms missing!\n",
-	0,
+	GAME_NOT_WORKING,
 	&madgear_machine_driver,
 
 	madgear_rom,

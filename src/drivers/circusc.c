@@ -16,7 +16,7 @@ extern unsigned char *circusc_scroll;
 void circusc_flipscreen_w(int offset,int data);
 void circusc_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 void circusc_sprite_bank_select_w(int offset, int data);
-void circusc_vh_screenrefresh(struct osd_bitmap *bitmap);
+void circusc_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 unsigned char KonamiDecode( unsigned char opcode, unsigned short address );
 
@@ -385,18 +385,18 @@ ROM_START( circusc2_rom )
 	ROM_LOAD( "q01", 0xE000, 0x2000, 0x331c99ea )
 
 	ROM_REGION(0x10000)    /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "j12", 0x0000, 0x2000, 0xb87e4276 )
-	ROM_LOAD( "k13", 0x2000, 0x2000, 0x91e42b1a )
-	ROM_LOAD( "j06", 0x4000, 0x2000, 0xf8dad4f2 )
-	ROM_LOAD( "j07", 0x6000, 0x2000, 0x4a3b8c93 )
-	ROM_LOAD( "j08", 0x8000, 0x2000, 0xeebecdd0 )
-	ROM_LOAD( "j09", 0xa000, 0x2000, 0xb0fe94f2 )
-	ROM_LOAD( "j10", 0xc000, 0x2000, 0xef7e6bc0 )
-	ROM_LOAD( "j11", 0xe000, 0x2000, 0xc68c2584 )
+	ROM_LOAD( "a04_j12.bin", 0x0000, 0x2000, 0xb87e4276 )
+	ROM_LOAD( "a05_k13.bin", 0x2000, 0x2000, 0x91e42b1a )
+	ROM_LOAD( "e11_j06.bin", 0x4000, 0x2000, 0xf8dad4f2 )
+	ROM_LOAD( "e12_j07.bin", 0x6000, 0x2000, 0x4a3b8c93 )
+	ROM_LOAD( "e13_j08.bin", 0x8000, 0x2000, 0xeebecdd0 )
+	ROM_LOAD( "e14_j09.bin", 0xa000, 0x2000, 0xb0fe94f2 )
+	ROM_LOAD( "e15_j10.bin", 0xc000, 0x2000, 0xef7e6bc0 )
+	ROM_LOAD( "e16_j11.bin", 0xe000, 0x2000, 0xc68c2584 )
 
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
-	ROM_LOAD( "l14", 0x0000, 0x2000, 0x7d613615 )
-	ROM_LOAD( "l15", 0x2000, 0x2000, 0x12edc96d )
+	ROM_LOAD( "cd05_l14.bin", 0x0000, 0x2000, 0x7d613615 )
+	ROM_LOAD( "cd07_l15.bin", 0x2000, 0x2000, 0x12edc96d )
 ROM_END
 
 static void circusc_decode(void)
@@ -469,8 +469,8 @@ struct GameDriver circusc_driver =
 	0,
 	"circusc",
 	"Circus Charlie",
-	"????",
-	"?????",
+	"1984",
+	"Konami",
 	"Chris Hardy (MAME driver)\nValerio Verrando (high score save)\nPaul Swan (color info)",
 	0,
 	&machine_driver,
@@ -491,11 +491,11 @@ struct GameDriver circusc_driver =
 struct GameDriver circusc2_driver =
 {
 	__FILE__,
-	0,
+	&circusc_driver,
 	"circusc2",
 	"Circus Charlie (level select)",
-	"????",
-	"?????",
+	"1984",
+	"Konami",
 	"Chris Hardy (MAME driver)\nValerio Verrando (high score save)\nPaul Swan (color info)",
 	0,
 	&machine_driver,

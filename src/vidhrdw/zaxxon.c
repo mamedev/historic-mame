@@ -83,21 +83,10 @@ void zaxxon_vh_convert_color_prom(unsigned char *palette, unsigned short *colort
 		COLOR(0,i) = i;
 }
 
-/* handle rotation of the background bitmaps */
+/* handle flips of the background bitmaps */
 static void copy_rotated_pixel (struct osd_bitmap *dst_bm, int dy, int dx,
 	struct osd_bitmap *src_bm, int sy, int sx)
 {
-	if (Machine->orientation & ORIENTATION_SWAP_XY)
-	{
-		int temp;
-
-		temp = dx;
-		dx = dy;
-		dy = temp;
-		temp = sx;
-		sx = sy;
-		sy = temp;
-	}
 	if (Machine->orientation & ORIENTATION_FLIP_X)
 	{
 		dx = dst_bm->width - 1 - dx;
@@ -123,32 +112,45 @@ int zaxxon_vh_start(void)
 	int offs;
 	int sx,sy;
 	struct osd_bitmap *prebitmap;
+	int width, height;
 
 
 	if (generic_vh_start() != 0)
 		return 1;
 
+	/* for speed, backgrounds are arranged differently if axis is swapped */
+	if (Machine->orientation & ORIENTATION_SWAP_XY)
+		/* leave a screenful of black pixels at each end */
+		width = 256+4096+256, height = 256;
+	else
+		width = 512, height = 2303+32;
+
 	/* large bitmap for the precalculated background */
-	if ((backgroundbitmap1 = osd_create_bitmap(512,2303+32)) == 0)
+	if ((backgroundbitmap1 = osd_create_bitmap(width,height)) == 0)
 	{
 		generic_vh_stop();
 		return 1;
 	}
 
-	if ((backgroundbitmap2 = osd_create_bitmap(512,2303+32)) == 0)
+	if ((backgroundbitmap2 = osd_create_bitmap(width,height)) == 0)
 	{
 		osd_free_bitmap(backgroundbitmap1);
 		generic_vh_stop();
 		return 1;
 	}
 
-	/* create a temporary bitmap to prepare the background before converting it */
-	if ((prebitmap = osd_create_bitmap(4096,256)) == 0)
+	if (Machine->orientation & ORIENTATION_SWAP_XY)
+		prebitmap = backgroundbitmap1;
+	else
 	{
-		osd_free_bitmap(backgroundbitmap2);
-		osd_free_bitmap(backgroundbitmap1);
-		generic_vh_stop();
-		return 1;
+		/* create a temporary bitmap to prepare the background before converting it */
+		if ((prebitmap = osd_create_bitmap(4096,256)) == 0)
+		{
+			osd_free_bitmap(backgroundbitmap2);
+			osd_free_bitmap(backgroundbitmap1);
+			generic_vh_stop();
+			return 1;
+		}
 	}
 
 	/* prepare the background */
@@ -156,6 +158,9 @@ int zaxxon_vh_start(void)
 	{
 		sx = 8 * (511 - offs / 32);
 		sy = 8 * (offs % 32);
+
+		if (Machine->orientation & ORIENTATION_SWAP_XY)
+			sx += 256;
 
 		drawgfx(prebitmap,Machine->gfx[1],
 				Machine->memory_region[2][offs] + 256 * (Machine->memory_region[2][0x4000 + offs] & 3),
@@ -165,31 +170,39 @@ int zaxxon_vh_start(void)
 				0,TRANSPARENCY_NONE,0);
 	}
 
-	/* the background is stored as a rectangle, but is drawn by the hardware skewed: */
-	/* go right two pixels, then up one pixel. Doing the conversion at run time would */
-	/* be extremely expensive, so we do it now. To save memory, we squash the image */
-	/* horizontally (doing line shifts at run time is much less expensive than doing */
-	/* column shifts) */
-	for (offs = -510;offs < 4096;offs += 2)
+	if (!(Machine->orientation & ORIENTATION_SWAP_XY))
 	{
-		sy = (2302-510/2) - offs/2;
-
-		for (sx = 0;sx < 512;sx += 2)
+		/* the background is stored as a rectangle, but is drawn by the hardware skewed: */
+		/* go right two pixels, then up one pixel. Doing the conversion at run time would */
+		/* be extremely expensive, so we do it now. To save memory, we squash the image */
+		/* horizontally (doing line shifts at run time is much less expensive than doing */
+		/* column shifts) */
+		for (offs = -510;offs < 4096;offs += 2)
 		{
-			if (offs + sx >= 0 && offs + sx < 4096)
+			sy = (2302-510/2) - offs/2;
+
+			for (sx = 0;sx < 512;sx += 2)
 			{
-				copy_rotated_pixel (backgroundbitmap1, sy, sx, prebitmap, sx/2, offs+sx);
-				copy_rotated_pixel (backgroundbitmap1, sy, sx+1, prebitmap, sx/2, offs+sx+1);
+				if (offs + sx >= 0 && offs + sx < 4096)
+				{
+					copy_rotated_pixel (backgroundbitmap1, sy, sx, prebitmap, sx/2, offs+sx);
+					copy_rotated_pixel (backgroundbitmap1, sy, sx+1, prebitmap, sx/2, offs+sx+1);
+				}
 			}
 		}
 	}
 
+	if (Machine->orientation & ORIENTATION_SWAP_XY)
+		prebitmap = backgroundbitmap2;
 
 	/* prepare a second background with different colors, used in the death sequence */
 	for (offs = 0;offs < 0x4000;offs++)
 	{
 		sx = 8 * (511 - offs / 32);
 		sy = 8 * (offs % 32);
+
+		if (Machine->orientation & ORIENTATION_SWAP_XY)
+			sx += 256;
 
 		drawgfx(prebitmap,Machine->gfx[1],
 				Machine->memory_region[2][offs] + 256 * (Machine->memory_region[2][0x4000 + offs] & 3),
@@ -199,26 +212,29 @@ int zaxxon_vh_start(void)
 				0,TRANSPARENCY_NONE,0);
 	}
 
-	/* the background is stored as a rectangle, but is drawn by the hardware skewed: */
-	/* go right two pixels, then up one pixel. Doing the conversion at run time would */
-	/* be extremely expensive, so we do it now. To save memory, we squash the image */
-	/* horizontally (doing line shifts at run time is much less expensive than doing */
-	/* column shifts) */
-	for (offs = -510;offs < 4096;offs += 2)
+	if (!(Machine->orientation & ORIENTATION_SWAP_XY))
 	{
-		sy = (2302-510/2) - offs/2;
-
-		for (sx = 0;sx < 512;sx += 2)
+		/* the background is stored as a rectangle, but is drawn by the hardware skewed: */
+		/* go right two pixels, then up one pixel. Doing the conversion at run time would */
+		/* be extremely expensive, so we do it now. To save memory, we squash the image */
+		/* horizontally (doing line shifts at run time is much less expensive than doing */
+		/* column shifts) */
+		for (offs = -510;offs < 4096;offs += 2)
 		{
-			if (offs + sx >= 0 && offs + sx < 4096)
+			sy = (2302-510/2) - offs/2;
+
+			for (sx = 0;sx < 512;sx += 2)
 			{
-				copy_rotated_pixel (backgroundbitmap2, sy, sx, prebitmap, sx/2, offs+sx);
-				copy_rotated_pixel (backgroundbitmap2, sy, sx+1, prebitmap, sx/2, offs+sx+1);
+				if (offs + sx >= 0 && offs + sx < 4096)
+				{
+					copy_rotated_pixel (backgroundbitmap2, sy, sx, prebitmap, sx/2, offs+sx);
+					copy_rotated_pixel (backgroundbitmap2, sy, sx+1, prebitmap, sx/2, offs+sx+1);
+				}
 			}
 		}
-	}
 
-	osd_free_bitmap(prebitmap);
+		osd_free_bitmap(prebitmap);
+	}
 
 
 	/* free the graphics ROMs, they are no longer needed */
@@ -272,20 +288,47 @@ void zaxxon_vh_screenrefresh(struct osd_bitmap *bitmap)
 		clip.min_x = Machine->drv->visible_area.min_x;
 		clip.max_x = Machine->drv->visible_area.max_x;
 
-		scroll = 2048+63 - (zaxxon_background_position[0] + 256*(zaxxon_background_position[1]&7));
-
-		skew = 128;
-
-		for (i = 0;i < 256-4*8;i++)
+		if (Machine->orientation & ORIENTATION_SWAP_XY)
 		{
-			clip.min_y = i;
-			clip.max_y = i;
+			/* for rotated case, skew up one pixel every 2 horizontal pixels */
+			scroll = 2*(zaxxon_background_position[0] + 256*(zaxxon_background_position[1]&7));
 
-			if (*zaxxon_background_color_bank & 1)
-				copybitmap(bitmap,backgroundbitmap2,0,0,skew,-scroll,&clip,TRANSPARENCY_NONE,0);
-			else copybitmap(bitmap,backgroundbitmap1,0,0,skew,-scroll,&clip,TRANSPARENCY_NONE,0);
+			skew = 64;
 
-			skew -= 2;
+			clip.min_y = 0;
+			clip.max_y = 256-4*8-1;
+
+			for (i = 0;i < Machine->drv->visible_area.max_x;i+=2)
+			{
+				clip.min_x = i;
+				clip.max_x = i+1;
+
+				if (*zaxxon_background_color_bank & 1)
+					copybitmap(bitmap,backgroundbitmap2,0,0,-scroll,skew,&clip,TRANSPARENCY_NONE,0);
+				else
+					copybitmap(bitmap,backgroundbitmap1,0,0,-scroll,skew,&clip,TRANSPARENCY_NONE,0);
+
+				skew--;
+			}
+		}
+		else
+		{
+			/* standard rotation - skew horizontally only */
+			scroll = 2048+63 - (zaxxon_background_position[0] + 256*(zaxxon_background_position[1]&7));
+
+			skew = 128;
+
+			for (i = 0;i < 256-4*8;i++)
+			{
+				clip.min_y = i;
+				clip.max_y = i;
+
+				if (*zaxxon_background_color_bank & 1)
+					copybitmap(bitmap,backgroundbitmap2,0,0,skew,-scroll,&clip,TRANSPARENCY_NONE,0);
+				else copybitmap(bitmap,backgroundbitmap1,0,0,skew,-scroll,&clip,TRANSPARENCY_NONE,0);
+
+				skew -= 2;
+			}
 		}
 	}
 	else fillbitmap(bitmap,Machine->pens[0],&Machine->drv->visible_area);

@@ -52,6 +52,15 @@ static unsigned char *ramptr[MAX_CPU], *romptr[MAX_CPU];
 /* element shift bits, mask bits */
 int mhshift[MAX_CPU][3], mhmask[MAX_CPU][3];
 
+/* pointers to port structs */
+/* ASG: port speedup */
+static const struct IOReadPort *readport[MAX_CPU];
+static const struct IOWritePort *writeport[MAX_CPU];
+static int portmask[MAX_CPU];
+static const struct IOReadPort *cur_readport;
+static const struct IOWritePort *cur_writeport;
+static int cur_portmask;
+
 /* current hardware element map */
 static MHELE *cur_mr_element[MAX_CPU];
 static MHELE *cur_mw_element[MAX_CPU];
@@ -456,6 +465,15 @@ int initmemoryhandlers(void)
 			if (_mwa->size) *_mwa->size = _mwa->end - _mwa->start + 1;
 			_mwa++;
 		}
+
+		/* initialize port structures */
+		readport[cpu] = Machine->drv->cpu[cpu].port_read;
+		writeport[cpu] = Machine->drv->cpu[cpu].port_write;
+		if ((Machine->drv->cpu[cpu].cpu_type & ~CPU_FLAGS_MASK) == CPU_Z80 &&
+				(Machine->drv->cpu[cpu].cpu_type & CPU_16BIT_PORT) == 0)
+			portmask[cpu] = 0xff;
+		else
+			portmask[cpu] = 0xffff;
 	}
 
 	/* initialize grobal handler */
@@ -727,6 +745,11 @@ void memorycontextswap(int activecpu)
 
 	cur_mrhard = cur_mr_element[activecpu];
 	cur_mwhard = cur_mw_element[activecpu];
+
+	/* ASG: port speedup */
+	cur_readport = readport[activecpu];
+	cur_writeport = writeport[activecpu];
+	cur_portmask = portmask[activecpu];
 
 	/* op code memory pointer */
 	ophw = HT_RAM;
@@ -1221,14 +1244,14 @@ void cpu_writemem24_dword (int address, int data)
   Perform an I/O port read. This function is called by the CPU emulation.
 
 ***************************************************************************/
-int cpu_readport16(int Port)
+int cpu_readport(int Port)
 {
-	const struct IOReadPort *iorp;
+	const struct IOReadPort *iorp = cur_readport;
 
 
-	iorp = Machine->drv->cpu[cpu_getactivecpu()].port_read;
 	if (iorp)
 	{
+		Port &= cur_portmask;
 		while (iorp->start != -1)
 		{
 			if (Port >= iorp->start && Port <= iorp->end)
@@ -1244,17 +1267,8 @@ int cpu_readport16(int Port)
 		}
 	}
 
-	if (errorlog) fprintf(errorlog,"CPU #%d PC %04x: warning - read unmapped I/O port %02x\n",cpu_getactivecpu(),cpu_getpc(),Port);
+	if (errorlog) fprintf(errorlog,"CPU #%d PC %04x: warning - read unmapped I/O port %02x\n",cpu_getactivecpu(),cpu_getpc(),Port & cur_portmask);
 	return 0;
-}
-
-int cpu_readport(int Port)
-{
-	/* if Z80 and it doesn't support 16-bit addressing, clip to the low 8 bits */
-	if ((Machine->drv->cpu[cpu_getactivecpu()].cpu_type & ~CPU_FLAGS_MASK) == CPU_Z80 &&
-			(Machine->drv->cpu[cpu_getactivecpu()].cpu_type & CPU_16BIT_PORT) == 0)
-		return cpu_readport16(Port & 0xff);
-	else return cpu_readport16(Port);
 }
 
 
@@ -1263,14 +1277,14 @@ int cpu_readport(int Port)
   Perform an I/O port write. This function is called by the CPU emulation.
 
 ***************************************************************************/
-void cpu_writeport16(int Port,int Value)
+void cpu_writeport(int Port,int Value)
 {
-	const struct IOWritePort *iowp;
+	const struct IOWritePort *iowp = cur_writeport;
 
 
-	iowp = Machine->drv->cpu[cpu_getactivecpu()].port_write;
 	if (iowp)
 	{
+		Port &= cur_portmask;
 		while (iowp->start != -1)
 		{
 			if (Port >= iowp->start && Port <= iowp->end)
@@ -1288,18 +1302,8 @@ void cpu_writeport16(int Port,int Value)
 		}
 	}
 
-	if (errorlog) fprintf(errorlog,"CPU #%d PC %04x: warning - write %02x to unmapped I/O port %02x\n",cpu_getactivecpu(),cpu_getpc(),Value,Port);
+	if (errorlog) fprintf(errorlog,"CPU #%d PC %04x: warning - write %02x to unmapped I/O port %02x\n",cpu_getactivecpu(),cpu_getpc(),Value,Port & cur_portmask);
 }
-
-void cpu_writeport(int Port,int Value)
-{
-	/* if Z80 and it doesn't support 16-bit addressing, clip to the low 8 bits */
-	if ((Machine->drv->cpu[cpu_getactivecpu()].cpu_type & ~CPU_FLAGS_MASK) == CPU_Z80 &&
-			(Machine->drv->cpu[cpu_getactivecpu()].cpu_type & CPU_16BIT_PORT) == 0)
-		cpu_writeport16(Port & 0xff,Value);
-	else cpu_writeport16(Port,Value);
-}
-
 
 
 /* set readmemory handler for bank memory  */

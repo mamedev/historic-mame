@@ -8,6 +8,8 @@
  *        anti-alias code by Andrew Caldwell
  *        (still more to add)
  *
+ * 980611 use translucent vectors. Thanks to Peter Hirschberg
+ *        and Neil Bradley for the inspiration. BW
  * 980307 added cleverer dirty handling. BW, ASG
  *        fixed antialias table .ac
  * 980221 rewrote anti-alias line draw routine
@@ -231,15 +233,26 @@ int vector_vh_start (void)
 			unsigned char rgb1[3],rgb2[3];
 			osd_get_pen(i,&rgb1[0],&rgb1[1],&rgb1[2]);
 			osd_get_pen(j,&rgb2[0],&rgb2[1],&rgb2[2]);
-			for( k=0; k<3 ;k++ )
+
+			for (k=0; k<3; k++)
+
+#if TRANSLUCENCY /* add gun values */
 			{
-				if( rgb1[k] > rgb2[k] )         /* choose highest gun value */
-				{
-					c[k] = rgb1[k];
-				} else {
-					c[k] = rgb2[k];
-				}
+				int tmp;
+				tmp = rgb1[k] + rgb2[k];
+				if (tmp > 255)
+					c[k] = 255;
+				else
+					c[k] = tmp;
 			}
+#else /* choose highest gun value */
+			{
+				if (rgb1[k] > rgb2[k])
+					c[k] = rgb1[k];
+				else
+					c[k] = rgb2[k];
+			}
+#endif
 			Tmerge(i,j) = Tmerge(j,i) = find_color(c[0],c[1],c[2]);
 		}
 	}
@@ -745,7 +758,7 @@ static void clever_mark_dirty (void)
 }
 
 
-void vector_vh_update (struct osd_bitmap *bitmap)
+void vector_vh_update(struct osd_bitmap *bitmap,int full_refresh)
 {
 	int i;
 	int temp_x, temp_y;

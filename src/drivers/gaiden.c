@@ -38,7 +38,6 @@ write:
 
 extern unsigned char *gaiden_videoram;
 extern unsigned char *gaiden_spriteram;
-extern unsigned char *gaiden_paletteram;
 extern unsigned char *gaiden_videoram2;
 extern unsigned char *gaiden_videoram3;
 extern unsigned char *gaiden_txscrollx,*gaiden_txscrolly;
@@ -50,14 +49,12 @@ extern int gaiden_videoram2_size;
 extern int gaiden_videoram3_size;
 extern int gaiden_spriteram_size;
 
-void gaiden_vh_screenrefresh(struct osd_bitmap *bitmap);
+void gaiden_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 void gaiden_unknownram_w(int offset,int data);
 int gaiden_unknownram_r(int offset);
 void gaiden_videoram_w(int offset,int data);
 int gaiden_videoram_r(int offset);
-void gaiden_paletteram_w(int offset,int data);
-int gaiden_paletteram_r(int offset);
 void gaiden_videoram2_w(int offset,int data);
 int gaiden_videoram2_r(int offset);
 void gaiden_videoram3_w(int offset,int data);
@@ -74,7 +71,7 @@ void gaiden_bgscrolly_w(int offset,int data);
 
 
 void gaiden_background_w(int offset,int data);
-void gaiden_vh_screenrefresh(struct osd_bitmap *bitmap);
+void gaiden_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 int  gaiden_vh_start(void);
 void gaiden_vh_stop(void);
@@ -124,7 +121,7 @@ static struct MemoryReadAddress readmem[] =
 	{ 0x072000, 0x073fff, gaiden_videoram2_r },
 	{ 0x074000, 0x075fff, gaiden_videoram3_r },
 	{ 0x076000, 0x077fff, gaiden_spriteram_r },
-	{ 0x078000, 0x0787ff, gaiden_paletteram_r },
+	{ 0x078000, 0x0787ff, paletteram_word_r },
 	{ 0x078800, 0x079fff, MRA_NOP },   /* extra portion of palette RAM, not really used */
 	{ 0x07a000, 0x07a007, gaiden_input_r },
 	{ 0x07a100, 0x07a1ff, MRA_BANK2 },
@@ -140,7 +137,7 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x072000, 0x073fff, gaiden_videoram2_w,  &gaiden_videoram2, &gaiden_videoram2_size },
 	{ 0x074000, 0x075fff, gaiden_videoram3_w,  &gaiden_videoram3, &gaiden_videoram3_size },
 	{ 0x076000, 0x077fff, gaiden_spriteram_w, &gaiden_spriteram, &gaiden_spriteram_size },
-	{ 0x078000, 0x0787ff, gaiden_paletteram_w, &gaiden_paletteram },
+	{ 0x078000, 0x0787ff, paletteram_xxxxBBBBGGGGRRRR_word_w, &paletteram },
 	{ 0x078800, 0x079fff, MWA_NOP },   /* extra portion of palette RAM, not really used */
 //	{ 0x07a000, 0x07a00f, MWA_NOP },   /* I'm not sure */
 //	{ 0x07a100, 0x07a111, MWA_BANK2 },  /* video? */
@@ -351,7 +348,7 @@ static struct YM2203interface ym2203_interface =
 {
 	2,			/* 2 chips */
 	2000000,	/* 2 MHz ? (hand tuned) */
-	{ YM2203_VOL(255,0x20ff), YM2203_VOL(255,0x20ff) },
+	{ YM2203_VOL(255,255), YM2203_VOL(255,255) },
 	{ 0 },
 	{ 0 },
 	{ 0 },
@@ -432,15 +429,15 @@ ROM_START( gaiden_rom )
 	ROM_LOAD_ODD ( "gaiden.2", 0x00000, 0x20000, 0xb0a2e242 )
 
 	ROM_REGION(0x210000)     /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "gaiden.5",  0x000000, 0x10000, 0xf3653a0f )        /* 8x8 tiles */
-	ROM_LOAD( "gaiden.6",  0x010000, 0x20000, 0xde50047a )        /* sprites A1 */
-	ROM_LOAD( "gaiden.7",  0x030000, 0x20000, 0x9f40c78e )        /* sprites A2 */
-	ROM_LOAD( "gaiden.8",  0x050000, 0x20000, 0xc0d813a6 )        /* sprites B1 */
-	ROM_LOAD( "gaiden.9",  0x070000, 0x20000, 0xdeea0a22 )        /* sprites B2 */
-	ROM_LOAD( "gaiden.10", 0x090000, 0x20000, 0xfc2e2818 )        /* sprites C1 */
-	ROM_LOAD( "gaiden.11", 0x0b0000, 0x20000, 0xfb2d2641 )        /* sprites C2 */
-	ROM_LOAD( "gaiden.12", 0x0D0000, 0x20000, 0xe7739fed )        /* sprites D1 */
-	ROM_LOAD( "gaiden.13", 0x0f0000, 0x20000, 0xbd928520 )        /* sprites D2 */
+	ROM_LOAD( "gaiden.5",  0x000000, 0x10000, 0xf3653a0f )	/* 8x8 tiles */
+	ROM_LOAD( "gaiden.6",  0x010000, 0x20000, 0xde50047a )	/* sprites A1 */
+	ROM_LOAD( "gaiden.7",  0x030000, 0x20000, 0x9f40c78e )	/* sprites A2 */
+	ROM_LOAD( "gaiden.8",  0x050000, 0x20000, 0xc0d813a6 )	/* sprites B1 */
+	ROM_LOAD( "gaiden.9",  0x070000, 0x20000, 0xdeea0a22 )	/* sprites B2 */
+	ROM_LOAD( "gaiden.10", 0x090000, 0x20000, 0xfc2e2818 )	/* sprites C1 */
+	ROM_LOAD( "gaiden.11", 0x0b0000, 0x20000, 0xfb2d2641 )	/* sprites C2 */
+	ROM_LOAD( "gaiden.12", 0x0D0000, 0x20000, 0xe7739fed )	/* sprites D1 */
+	ROM_LOAD( "gaiden.13", 0x0f0000, 0x20000, 0xbd928520 )	/* sprites D2 */
 	ROM_LOAD( "14.bin",    0x110000, 0x20000, 0x00d6531c )
 	ROM_LOAD( "15.bin",    0x130000, 0x20000, 0xae21271b )
 	ROM_LOAD( "16.bin",    0x150000, 0x20000, 0x4dee5eec )
@@ -459,35 +456,35 @@ ROM_END
 
 ROM_START( shadoww_rom )
 	ROM_REGION(0x40000)	/* 2*128k for 68000 code */
-   ROM_LOAD_EVEN( "shadoww.1", 0x00000, 0x20000, 0x5e4e90c2 )
-   ROM_LOAD_ODD ( "shadoww.2", 0x00000, 0x20000, 0x33f84e7e )
+	ROM_LOAD_EVEN( "shadoww.1", 0x00000, 0x20000, 0x5e4e90c2 )
+	ROM_LOAD_ODD ( "shadoww.2", 0x00000, 0x20000, 0x33f84e7e )
 
 	ROM_REGION(0x210000)     /* temporary space for graphics (disposed after conversion) */
-   ROM_LOAD( "shadoww.5",  0x000000, 0x10000, 0xf3653a0f )        /* 8x8 tiles */
-   ROM_LOAD( "shadoww.6",  0x010000, 0x20000, 0xde50047a )        /* sprites A1 */
-   ROM_LOAD( "shadoww.7",  0x030000, 0x20000, 0x9f40c78e )        /* sprites A2 */
-   ROM_LOAD( "shadoww.8",  0x050000, 0x20000, 0xc0d813a6 )        /* sprites B1 */
-   ROM_LOAD( "shadoww.9",  0x070000, 0x20000, 0xdeea0a22 )        /* sprites B2 */
-   ROM_LOAD( "shadoww.10", 0x090000, 0x20000, 0xfc2e2818 )        /* sprites C1 */
-   ROM_LOAD( "shadoww.11", 0x0b0000, 0x20000, 0xfb2d2641 )        /* sprites C2 */
-   ROM_LOAD( "shadoww.12a", 0x0D0000, 0x10000, 0xb9da7f3c )       /* sprites D1 */
-   ROM_LOAD( "shadoww.12b", 0x0E0000, 0x10000, 0xe2915fb7 )       /* sprites D1 */
-   ROM_LOAD( "shadoww.13a", 0x0f0000, 0x10000, 0x5e66bed4 )        /* sprites D2 */
-   ROM_LOAD( "shadoww.13b", 0x100000, 0x10000, 0x8a0508d7 )        /* sprites D2 */
-   ROM_LOAD( "shadoww.14",    0x110000, 0x20000, 0x00d6531c )
-   ROM_LOAD( "shadoww.15",    0x130000, 0x20000, 0xae21271b )
-   ROM_LOAD( "shadoww.16",    0x150000, 0x20000, 0x4dee5eec )
-   ROM_LOAD( "shadoww.17",    0x170000, 0x20000, 0x9e0c7684 )
-   ROM_LOAD( "shadoww.18",    0x190000, 0x20000, 0xc76c8d20 )
-   ROM_LOAD( "shadoww.19",    0x1b0000, 0x20000, 0xc3845b96 )
-   ROM_LOAD( "shadoww.20",    0x1d0000, 0x20000, 0x40e78ca5 )
-   ROM_LOAD( "shadoww.21",    0x1f0000, 0x20000, 0xccdcbd02 )
+	ROM_LOAD( "gaiden.5",    0x000000, 0x10000, 0xf3653a0f )	/* 8x8 tiles */
+	ROM_LOAD( "gaiden.6",    0x010000, 0x20000, 0xde50047a )	/* sprites A1 */
+	ROM_LOAD( "gaiden.7",    0x030000, 0x20000, 0x9f40c78e )	/* sprites A2 */
+	ROM_LOAD( "gaiden.8",    0x050000, 0x20000, 0xc0d813a6 )	/* sprites B1 */
+	ROM_LOAD( "gaiden.9",    0x070000, 0x20000, 0xdeea0a22 )	/* sprites B2 */
+	ROM_LOAD( "gaiden.10",   0x090000, 0x20000, 0xfc2e2818 )	/* sprites C1 */
+	ROM_LOAD( "gaiden.11",   0x0b0000, 0x20000, 0xfb2d2641 )	/* sprites C2 */
+	ROM_LOAD( "shadoww.12a", 0x0D0000, 0x10000, 0xb9da7f3c )	/* sprites D1 */
+	ROM_LOAD( "shadoww.12b", 0x0E0000, 0x10000, 0xe2915fb7 )	/* sprites D1 */
+	ROM_LOAD( "shadoww.13a", 0x0f0000, 0x10000, 0x5e66bed4 )	/* sprites D2 */
+	ROM_LOAD( "shadoww.13b", 0x100000, 0x10000, 0x8a0508d7 )	/* sprites D2 */
+	ROM_LOAD( "14.bin",      0x110000, 0x20000, 0x00d6531c )
+	ROM_LOAD( "15.bin",      0x130000, 0x20000, 0xae21271b )
+	ROM_LOAD( "16.bin",      0x150000, 0x20000, 0x4dee5eec )
+	ROM_LOAD( "17.bin",      0x170000, 0x20000, 0x9e0c7684 )
+	ROM_LOAD( "18.bin",      0x190000, 0x20000, 0xc76c8d20 )
+	ROM_LOAD( "19.bin",      0x1b0000, 0x20000, 0xc3845b96 )
+	ROM_LOAD( "20.bin",      0x1d0000, 0x20000, 0x40e78ca5 )
+	ROM_LOAD( "21.bin",      0x1f0000, 0x20000, 0xccdcbd02 )
 
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
-   ROM_LOAD( "shadoww.3", 0x0000, 0x10000, 0x1db13fc3 )   /* Audio CPU is a Z80  */
+	ROM_LOAD( "gaiden.3", 0x0000, 0x10000, 0x1db13fc3 )   /* Audio CPU is a Z80  */
 
 	ROM_REGION(0x20000)	/* 128k for ADPCM samples - sound chip is OKIM6295 */
-   ROM_LOAD( "shadoww.4", 0x0000, 0x20000, 0xb8e72ccf ) /* samples */
+	ROM_LOAD( "gaiden.4", 0x0000, 0x20000, 0xb8e72ccf ) /* samples */
 ROM_END
 
 
@@ -497,8 +494,8 @@ struct GameDriver gaiden_driver =
 	0,
 	"gaiden",
 	"Ninja Gaiden",
-	"????",
-	"?????",
+	"1988",
+	"Tecmo",
 	"Alex Pasadyn",
 	0,
 	&machine_driver,
@@ -518,11 +515,11 @@ struct GameDriver gaiden_driver =
 struct GameDriver shadoww_driver =
 {
 	__FILE__,
-	0,
+	&gaiden_driver,
 	"shadoww",
 	"Shadow Warriors",
-	"????",
-	"?????",
+	"1988",
+	"Tecmo",
 	"Alex Pasadyn",
 	0,
 	&machine_driver,

@@ -11,7 +11,6 @@ unsigned char *nemesis_videoram1;
 unsigned char *nemesis_videoram2;
 
 unsigned char *nemesis_characterram;
-unsigned char *nemesis_paletteram;			/* 0x80*16*2 = 0x1000 bytes    */
 unsigned char *nemesis_xscroll1,*nemesis_xscroll2,*nemesis_yscroll;
 
 struct osd_bitmap *tmpbitmap2;
@@ -22,29 +21,6 @@ static unsigned char *char_dirty;	/* 2048 chars */
 static unsigned char *sprite_dirty;	/* 512 sprites */
 
 
-
-int nemesis_paletteram_r(int offset)
-{
-	return READ_WORD(&nemesis_paletteram[offset]);
-}
-
-void nemesis_paletteram_w(int offset,int data)
-{
-	int oldword = READ_WORD (&nemesis_paletteram[offset]);
-	int newword = COMBINE_WORD (oldword, data);
-	int r,g,b;
-
-
-	WRITE_WORD(&nemesis_paletteram[offset], newword);
-	r = newword & 31;
-	g = (newword >> 5) & 31;
-	b = (newword >> 10) & 31;
-
-	r = (r << 3) + (r >> 2);
-	g = (g << 3) + (g >> 2);
-	b = (b << 3) + (b >> 2);
-	palette_change_color(offset / 2,r,g,b);
-}
 
 int nemesis_videoram1_r(int offset)
 {
@@ -268,7 +244,7 @@ void draw_sprites(struct osd_bitmap *bitmap)
 
 
 
-void nemesis_vh_screenrefresh(struct osd_bitmap *bitmap)
+void nemesis_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	int offs;
 
@@ -480,6 +456,6 @@ memset(palette_used_colors,PALETTE_COLOR_UNUSED,Machine->drv->total_colors * siz
 }
 
 
-void salamand_vh_screenrefresh(struct osd_bitmap *bitmap)
+void salamand_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 }

@@ -12,7 +12,7 @@
 #include "driver.h"
 
 static int banka;
-static int port9f;
+//static int port9f;
 static unsigned char port9e_c1;
 static unsigned char port9f_c1;
 static unsigned char port20_c2;

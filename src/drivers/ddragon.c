@@ -24,15 +24,13 @@ multiple sampling rates, all samples currently play at 8khz.
 
 /* from vidhrdw */
 extern unsigned char *dd_videoram;
-extern unsigned char *dd_palette_ram;
 extern int dd_scrollx_hi, dd_scrolly_hi;
 extern unsigned char *dd_scrollx_lo;
 extern unsigned char *dd_scrolly_lo;
-extern int dd_vh_start(void);
-extern void dd_vh_stop(void);
-extern void dd_vh_screenrefresh(struct osd_bitmap *bitmap);
-extern void dd_background_w( int offset, int val );
-extern void dd_palette_w( int offset, int val );
+int dd_vh_start(void);
+void dd_vh_stop(void);
+void dd_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void dd_background_w( int offset, int val );
 extern unsigned char *dd_spriteram;
 extern int dd2_video;
 /* end of extern code & data */
@@ -100,22 +98,40 @@ static void cpu_sound_command_w( int offset, int data ) {
 	cpu_cause_interrupt( 2, sound_irq );
 }
 
-static void dd_adpcm_w( int offset, int data ) {
-	static int cur_sample[2];
+static void dd_adpcm_w(int offset,int data)
+{
+	static int start[2],end[2];
 	int chip = offset & 1;
+
 
 	offset >>= 1;
 
-	if ( offset == 1 )
-		cur_sample[chip] = data;
+fprintf(errorlog,"chip %d offset %d data %02x\n",chip,offset,data);
+	switch (offset)
+	{
+		case 3:
+			break;
 
-	if ( offset == 0 )
-		ADPCM_trigger( chip, ( cur_sample[chip] ) + ( chip << 8 ) );
+		case 2:
+			start[chip] = data;
+			break;
+
+		case 1:
+			end[chip] = data;
+			break;
+
+		case 0:
+			ADPCM_play( chip, 0x10000*chip + start[chip]*0x200, (end[chip]-start[chip])*0x400);
+			break;
+	}
 }
 
-static int dd_adpcm_status_r( int offset ) {
+static int dd_adpcm_status_r( int offset )
+{
 	return ( ADPCM_playing( 0 ) + ( ADPCM_playing( 1 ) << 1 ) );
 }
+
+
 
 static struct MemoryReadAddress readmem[] =
 {
@@ -136,7 +152,8 @@ static struct MemoryReadAddress readmem[] =
 static struct MemoryWriteAddress writemem[] =
 {
 	{ 0x0000, 0x0fff, MWA_RAM },
-	{ 0x1000, 0x13ff, dd_palette_w, &dd_palette_ram },
+	{ 0x1000, 0x11ff, paletteram_xxxxBBBBGGGGRRRR_split1_w, &paletteram },
+	{ 0x1200, 0x13ff, paletteram_xxxxBBBBGGGGRRRR_split2_w, &paletteram_2 },
 	{ 0x1400, 0x17ff, MWA_RAM },
 	{ 0x1800, 0x1fff, MWA_RAM, &videoram },
 	{ 0x2000, 0x2fff, dd_spriteram_w },
@@ -169,7 +186,8 @@ static struct MemoryWriteAddress dd2_writemem[] =
 	{ 0x380e, 0x380e, cpu_sound_command_w },
 	{ 0x380f, 0x380f, dd_forcedIRQ_w },
 	{ 0x3810, 0x3bff, MWA_RAM },
-	{ 0x3c00, 0x3fff, dd_palette_w, &dd_palette_ram },
+	{ 0x3c00, 0x3dff, paletteram_xxxxBBBBGGGGRRRR_split1_w, &paletteram },
+	{ 0x3e00, 0x3fff, paletteram_xxxxBBBBGGGGRRRR_split2_w, &paletteram_2 },
 	{ 0x4000, 0xffff, MWA_ROM },
 	{ -1 }	/* end of table */
 };
@@ -445,7 +463,9 @@ static int dd_interrupt(void)
 	return ( M6809_INT_FIRQ | M6809_INT_NMI );
 }
 
-static struct MachineDriver ddragonb_machine_driver =
+
+
+static struct MachineDriver ddragon_machine_driver =
 {
 	/* basic machine hardware */
 	{
@@ -457,7 +477,7 @@ static struct MachineDriver ddragonb_machine_driver =
 			dd_interrupt,1
 		},
 		{
- 			CPU_M6809,
+ 			CPU_HD63701, /* we're missing the code for this one */
 			12000000 / 3, /* 4 Mhz */
 			2,
 			sub_readmem,sub_writemem,0,0,
@@ -500,7 +520,7 @@ static struct MachineDriver ddragonb_machine_driver =
 	}
 };
 
-static struct MachineDriver ddragon_machine_driver =
+static struct MachineDriver ddragonb_machine_driver =
 {
 	/* basic machine hardware */
 	{
@@ -512,7 +532,7 @@ static struct MachineDriver ddragon_machine_driver =
 			dd_interrupt,1
 		},
 		{
- 			CPU_HD63701, /* we're missing the code for this one */
+ 			CPU_M6809,
 			12000000 / 3, /* 4 Mhz */
 			2,
 			sub_readmem,sub_writemem,0,0,
@@ -618,48 +638,15 @@ static struct MachineDriver ddragon2_machine_driver =
 ***************************************************************************/
 
 
-ROM_START( dd_rom )
-	ROM_REGION(0x28000)	/* 64k for code + bankswitched memory */
-	ROM_LOAD( "IC26",  0x08000, 0x08000, 0x113d6391 )
-	ROM_LOAD( "IC25",  0x10000, 0x08000, 0xd40db89b ) /* banked at 0x4000-0x8000 */
-	ROM_LOAD( "IC24",  0x18000, 0x08000, 0x1a208c10 ) /* banked at 0x4000-0x8000 */
-	ROM_LOAD( "IC23",  0x20000, 0x08000, 0xe9e164b9 ) /* banked at 0x4000-0x8000 */
-
-	ROM_REGION(0xc8000) /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "IC20",  0xc0000, 0x08000, 0x7146494c ) /* 0,1,2,3 */ /* text */
-	ROM_LOAD( "IC80",  0x00000, 0x10000, 0x10c0e6d0 ) /* 0,1 */ /* tiles */
-	ROM_LOAD( "IC79",  0x10000, 0x10000, 0x9a4cc484 ) /* 0,1 */ /* tiles */
-	ROM_LOAD( "IC115", 0x20000, 0x10000, 0x51b52415 ) /* 2,3 */ /* tiles */
-	ROM_LOAD( "IC114", 0x30000, 0x10000, 0xf1e7d881 ) /* 2,3 */ /* tiles */
-	ROM_LOAD( "IC123", 0x40000, 0x10000, 0x172eb21c ) /* 0,1 */ /* sprites */
-	ROM_LOAD( "IC122", 0x50000, 0x10000, 0xee6eb2d6 ) /* 0,1 */ /* sprites */
-	ROM_LOAD( "IC121", 0x60000, 0x10000, 0xe98e2e82 ) /* 0,1 */ /* sprites */
-	ROM_LOAD( "IC120", 0x70000, 0x10000, 0x526d686d ) /* 0,1 */ /* sprites */
-	ROM_LOAD( "IC119", 0x80000, 0x10000, 0x9ae98b73 ) /* 2,3 */ /* sprites */
-	ROM_LOAD( "IC118", 0x90000, 0x10000, 0x7a6c1946 ) /* 2,3 */ /* sprites */
-	ROM_LOAD( "IC117", 0xa0000, 0x10000, 0xfd29a219 ) /* 2,3 */ /* sprites */
-	ROM_LOAD( "IC116", 0xb0000, 0x10000, 0xc5d467e4 ) /* 2,3 */ /* sprites */
-
-	ROM_REGION(0x10000) /* sprite cpu */
-	ROM_LOAD( "IC38",  0x0c000, 0x04000, 0x7f95ec95 )
-
-	ROM_REGION(0x10000) /* audio cpu */
-	ROM_LOAD( "IC30",  0x08000, 0x08000, 0xad00a730 )
-
-	ROM_REGION(0x20000) /* adpcm samples */
-	ROM_LOAD( "IC99",  0x00000, 0x10000, 0x27a46af4 )
-	ROM_LOAD( "IC98",  0x10000, 0x10000, 0x105e0bba )
-ROM_END
-
 ROM_START( ddragon_rom )
 	ROM_REGION(0x28000)	/* 64k for code + bankswitched memory */
 	ROM_LOAD( "A_M2_D02.BIN", 0x08000, 0x08000, 0x62e30fe9 )
-	ROM_LOAD( "A_K2_D03.BIN", 0x10000, 0x08000, 0xd40db89b )
-	ROM_LOAD( "A_H2_D04.BIN", 0x18000, 0x08000, 0x8aa2463c )
-	ROM_LOAD( "A_G2_D05.BIN", 0x20000, 0x08000, 0x20935a8d )
+	ROM_LOAD( "A_K2_D03.BIN", 0x10000, 0x08000, 0xd40db89b ) /* banked at 0x4000-0x8000 */
+	ROM_LOAD( "A_H2_D04.BIN", 0x18000, 0x08000, 0x8aa2463c ) /* banked at 0x4000-0x8000 */
+	ROM_LOAD( "A_G2_D05.BIN", 0x20000, 0x08000, 0x20935a8d ) /* banked at 0x4000-0x8000 */
 
 	ROM_REGION(0xC8000) /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "A_A2_D06.BIN", 0xC0000, 0x08000 , 0x7146494c ) /* 0,1,2,3 */ /* text */
+	ROM_LOAD( "A_A2_D06.BIN", 0xC0000, 0x08000, 0x7146494c ) /* 0,1,2,3 */ /* text */
 	ROM_LOAD( "B_C5_D09.BIN", 0x00000, 0x10000, 0x10c0e6d0 ) /* 0,1 */ /* tiles */
 	ROM_LOAD( "B_A5_D10.BIN", 0x10000, 0x10000, 0x9a4cc484 ) /* 0,1 */ /* tiles */
 	ROM_LOAD( "B_C7_D19.BIN", 0x20000, 0x10000, 0x51b52415 ) /* 2,3 */ /* tiles */
@@ -687,11 +674,44 @@ ROM_START( ddragon_rom )
 	ROM_LOAD( "A_R6_D08.BIN",  0x10000, 0x10000, 0x105e0bba )
 ROM_END
 
+ROM_START( ddragonb_rom )
+	ROM_REGION(0x28000)	/* 64k for code + bankswitched memory */
+	ROM_LOAD( "IC26",         0x08000, 0x08000, 0x113d6391 )
+	ROM_LOAD( "A_K2_D03.BIN", 0x10000, 0x08000, 0xd40db89b ) /* banked at 0x4000-0x8000 */
+	ROM_LOAD( "IC24",         0x18000, 0x08000, 0x1a208c10 ) /* banked at 0x4000-0x8000 */
+	ROM_LOAD( "IC23",         0x20000, 0x08000, 0xe9e164b9 ) /* banked at 0x4000-0x8000 */
+
+	ROM_REGION(0xc8000) /* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "A_A2_D06.BIN", 0xC0000, 0x08000, 0x7146494c ) /* 0,1,2,3 */ /* text */
+	ROM_LOAD( "B_C5_D09.BIN", 0x00000, 0x10000, 0x10c0e6d0 ) /* 0,1 */ /* tiles */
+	ROM_LOAD( "B_A5_D10.BIN", 0x10000, 0x10000, 0x9a4cc484 ) /* 0,1 */ /* tiles */
+	ROM_LOAD( "B_C7_D19.BIN", 0x20000, 0x10000, 0x51b52415 ) /* 2,3 */ /* tiles */
+	ROM_LOAD( "B_A7_D20.BIN", 0x30000, 0x10000, 0xf1e7d881 ) /* 2,3 */ /* tiles */
+	ROM_LOAD( "B_R7_D11.BIN", 0x40000, 0x10000, 0x172eb21c ) /* 0,1 */ /* sprites */
+	ROM_LOAD( "B_P7_D12.BIN", 0x50000, 0x10000, 0xee6eb2d6 ) /* 0,1 */ /* sprites */
+	ROM_LOAD( "B_M7_D13.BIN", 0x60000, 0x10000, 0xe98e2e82 ) /* 0,1 */ /* sprites */
+	ROM_LOAD( "B_L7_D14.BIN", 0x70000, 0x10000, 0x526d686d ) /* 0,1 */ /* sprites */
+	ROM_LOAD( "B_J7_D15.BIN", 0x80000, 0x10000, 0x9ae98b73 ) /* 2,3 */ /* sprites */
+	ROM_LOAD( "B_H7_D16.BIN", 0x90000, 0x10000, 0x7a6c1946 ) /* 2,3 */ /* sprites */
+	ROM_LOAD( "B_F7_D17.BIN", 0xA0000, 0x10000, 0xfd29a219 ) /* 2,3 */ /* sprites */
+	ROM_LOAD( "B_D7_D18.BIN", 0xB0000, 0x10000, 0xc5d467e4 ) /* 2,3 */ /* sprites */
+
+	ROM_REGION(0x10000) /* sprite cpu */
+	ROM_LOAD( "IC38",  0x0c000, 0x04000, 0x7f95ec95 )
+
+	ROM_REGION(0x10000) /* audio cpu */
+	ROM_LOAD( "A_S2_D01.BIN",  0x08000, 0x08000, 0xad00a730 )
+
+	ROM_REGION(0x20000) /* adpcm samples */
+	ROM_LOAD( "A_S6_D07.BIN",  0x00000, 0x10000, 0x27a46af4 )
+	ROM_LOAD( "A_R6_D08.BIN",  0x10000, 0x10000, 0x105e0bba )
+ROM_END
+
 ROM_START( ddragon2_rom )
 	ROM_REGION(0x28000)	/* region#0: 64k for code */
 	ROM_LOAD( "26A9-04.BIN", 0x08000, 0x8000, 0x718a0bcc )
 	ROM_LOAD( "26AA-03.BIN", 0x10000, 0x8000, 0x87c72a6f )
-	ROM_LOAD(  "26AB-0.BIN", 0x18000, 0x8000, 0x40acba00 )
+	ROM_LOAD( "26AB-0.BIN",  0x18000, 0x8000, 0x40acba00 )
 	ROM_LOAD( "26AC-02.BIN", 0x20000, 0x8000, 0xf4dc516e )
 
 	ROM_REGION(0x110000) /* region#1: graphics (disposed after conversion) */
@@ -716,40 +736,7 @@ ROM_START( ddragon2_rom )
     ROM_LOAD("26J7-0.BIN", 0x20000, 0x20000, 0x2e49c0f9 )
 ROM_END
 
-/*************************/
-/* Double Dragon Samples */
-/*************************/
-ADPCM_SAMPLES_START( dd_samples )
-	/* samples on ROM 1 */
-	ADPCM_SAMPLE( 0x000, 0x0000, (0x0800-0x0000)*2 )
-	ADPCM_SAMPLE( 0x004, 0x0800, (0x1300-0x0800)*2 )
-	ADPCM_SAMPLE( 0x009, 0x1300, (0x1f00-0x1300)*2 )
-	ADPCM_SAMPLE( 0x00f, 0x1f00, (0x3300-0x1f00)*2 )
-	ADPCM_SAMPLE( 0x019, 0x3300, (0x4d00-0x3300)*2 )
-	ADPCM_SAMPLE( 0x026, 0x4d00, (0x6900-0x4d00)*2 )
-	ADPCM_SAMPLE( 0x034, 0x6900, (0x7500-0x6900)*2 )
-	ADPCM_SAMPLE( 0x03a, 0x7500, (0x8600-0x7500)*2 )
-	ADPCM_SAMPLE( 0x043, 0x8600, (0x9300-0x8600)*2 )
-	ADPCM_SAMPLE( 0x049, 0x9300, (0x9d00-0x9300)*2 )
-	ADPCM_SAMPLE( 0x04e, 0x9d00, (0xa700-0x9d00)*2 )
-	ADPCM_SAMPLE( 0x053, 0xa700, (0xb200-0xa700)*2 )
-	ADPCM_SAMPLE( 0x059, 0xb200, (0xe700-0xb200)*2 )
-	/* samples on ROM 2 */
-	ADPCM_SAMPLE( 0x100, 0x10000+0x0000, (0x1600-0x0000)*2 )
-	ADPCM_SAMPLE( 0x10b, 0x10000+0x1600, (0x2500-0x1600)*2 )
-	ADPCM_SAMPLE( 0x112, 0x10000+0x2500, (0x3500-0x2500)*2 )
-	ADPCM_SAMPLE( 0x11a, 0x10000+0x3500, (0x4d00-0x3500)*2 )
-	ADPCM_SAMPLE( 0x126, 0x10000+0x4d00, (0x7900-0x4d00)*2 )
-	ADPCM_SAMPLE( 0x13c, 0x10000+0x7900, (0x8f00-0x7900)*2 )
-	ADPCM_SAMPLE( 0x148, 0x10000+0x9000, (0x9900-0x9000)*2 )
-	ADPCM_SAMPLE( 0x14c, 0x10000+0x9900, (0xa400-0x9900)*2 )
-	ADPCM_SAMPLE( 0x152, 0x10000+0xa400, (0xaf00-0xa400)*2 )
-	ADPCM_SAMPLE( 0x157, 0x10000+0xaf00, (0xb700-0xaf00)*2 )
-	ADPCM_SAMPLE( 0x15a, 0x10000+0xb400, (0xce00-0xb400)*2 )
-	ADPCM_SAMPLE( 0x168, 0x10000+0xd100, (0xe500-0xd100)*2 )
-	ADPCM_SAMPLE( 0x172, 0x10000+0xe500, (0xf400-0xe500)*2 )
-	ADPCM_SAMPLE( 0x1f4, 0x10000+0xf400, (0xfd00-0xf400)*2 )
-ADPCM_SAMPLES_END
+
 
 struct GameDriver ddragon_driver =
 {
@@ -757,17 +744,16 @@ struct GameDriver ddragon_driver =
 	0,
 	"ddragon",
 	"Double Dragon",
-	"????",
-	"?????",
-	"Carlos A. Lozano\nRob Rosenbrock\nChris Moore\nPhil Stroffolino\nErnesto Corvi\n\n\n"
-	"This driver does not work and we are aware of it.\nPlay with the bootleg version in the meantime.\n",
-	0,
+	"1987",
+	"bootleg?",
+	"Carlos A. Lozano\nRob Rosenbrock\nChris Moore\nPhil Stroffolino\nErnesto Corvi",
+	GAME_NOT_WORKING,
 	&ddragon_machine_driver,
 
 	ddragon_rom,
 	0, 0,
 	0,
-	(void *)dd_samples,
+	0,
 
 	dd1_input_ports,
 
@@ -780,19 +766,19 @@ struct GameDriver ddragon_driver =
 struct GameDriver ddragonb_driver =
 {
 	__FILE__,
-	0,
+	&ddragon_driver,
 	"ddragonb",
 	"Double Dragon (bootleg)",
-	"????",
-	"?????",
+	"1987",
+	"bootleg",
 	"Carlos A. Lozano\nRob Rosenbrock\nChris Moore\nPhil Stroffolino\nErnesto Corvi\n",
 	0,
 	&ddragonb_machine_driver,
 
-	dd_rom,
+	ddragonb_rom,
 	0, 0,
 	0,
-	(void *)dd_samples,
+	0,
 
 	dd1_input_ports,
 
@@ -808,8 +794,8 @@ struct GameDriver ddragon2_driver =
 	0,
 	"ddragon2",
 	"Double Dragon 2",
-	"????",
-	"?????",
+	"1988",
+	"Technos",
 	"Carlos A. Lozano\nRob Rosenbrock\nPhil Stroffolino\nErnesto Corvi\n",
 	0,
 	&ddragon2_machine_driver,

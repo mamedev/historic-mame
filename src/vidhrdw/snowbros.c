@@ -9,36 +9,10 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-unsigned char *snowbros_paletteram;
+
 unsigned char *snowbros_spriteram;
 
 int snowbros_spriteram_size;
-
-
-void snowbros_paletteram_w (int offset, int data)
-{
-	int oldword = READ_WORD(&snowbros_paletteram[offset]);
-	int newword = COMBINE_WORD(oldword,data);
-	int r,g,b;
-
-
-	WRITE_WORD(&snowbros_paletteram[offset],newword);
-
-	r = newword & 31;
-	g = (newword >> 5) & 31;
-	b = (newword >> 10) & 31;
-
-	r = (r << 3) | (r >> 2);
-	g = (g << 3) | (g >> 2);
-	b = (b << 3) | (b >> 2);
-
-	palette_change_color(offset / 2,r,g,b);
-}
-
-int  snowbros_paletteram_r (int offset)
-{
-	return READ_WORD(&snowbros_paletteram[offset]);
-}
 
 
 /* Put in case screen can be optimised later */
@@ -53,7 +27,7 @@ int  snowbros_spriteram_r (int offset)
 	return READ_WORD(&snowbros_spriteram[offset]);
 }
 
-void snowbros_vh_screenrefresh(struct osd_bitmap *bitmap)
+void snowbros_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
     int x=0,y=0,offs;
 

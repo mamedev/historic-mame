@@ -12,7 +12,6 @@ static int base_scroll;
 static int background_scroll;
 static int sprite_bank;
 
-unsigned char *gladiatr_palette_rg,*gladiatr_palette_b;
 unsigned char *gladiatr_scroll;
 unsigned char *gladiator_text;
 
@@ -22,13 +21,13 @@ static void update_color(int offset)
 	int r,g,b;
 
 
-	r = (gladiatr_palette_rg[offset] >> 0) & 0x0f;
-	g = (gladiatr_palette_rg[offset] >> 4) & 0x0f;
-	b = (gladiatr_palette_b[offset] >> 0) & 0x0f;
+	r = (paletteram[offset] >> 0) & 0x0f;
+	g = (paletteram[offset] >> 4) & 0x0f;
+	b = (paletteram_2[offset] >> 0) & 0x0f;
 
-	r = (r << 1) + ((gladiatr_palette_b[offset] >> 4) & 0x01);
-	g = (g << 1) + ((gladiatr_palette_b[offset] >> 5) & 0x01);
-	b = (b << 1) + ((gladiatr_palette_b[offset] >> 6) & 0x01);
+	r = (r << 1) + ((paletteram_2[offset] >> 4) & 0x01);
+	g = (g << 1) + ((paletteram_2[offset] >> 5) & 0x01);
+	b = (b << 1) + ((paletteram_2[offset] >> 6) & 0x01);
 
 	r = (r << 3) | (r >> 2);
 	g = (g << 3) | (g >> 2);
@@ -36,22 +35,22 @@ static void update_color(int offset)
 
 	palette_change_color(offset,r,g,b);
 
-	/* the text layer might use the other 512 entries in the plaette RAM */
+	/* the text layer might use the other 512 entries in the palette RAM */
 	/* (which are all set to 0x07ff = white). I don't know, so I just set */
 	/* it to white. */
 	palette_change_color(512,0x00,0x00,0x00);
 	palette_change_color(513,0xff,0xff,0xff);
 }
 
-void gladiatr_palette_rg_w(int offset,int data)
+void gladiatr_paletteram_rg_w(int offset,int data)
 {
-	gladiatr_palette_rg[offset] = data;
+	paletteram[offset] = data;
 	update_color(offset);
 }
 
-void gladiatr_palette_b_w(int offset,int data)
+void gladiatr_paletteram_b_w(int offset,int data)
 {
-	gladiatr_palette_b[offset] = data;
+	paletteram_2[offset] = data;
 	update_color(offset);
 }
 
@@ -265,7 +264,7 @@ static void render_sprites(struct osd_bitmap *bitmap){
 
 
 
-void gladiatr_vh_screenrefresh(struct osd_bitmap *bitmap)
+void gladiatr_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	if (video_attributes & 0x20)	/* screen refresh enable? */
 	{

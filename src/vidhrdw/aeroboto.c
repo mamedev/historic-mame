@@ -37,7 +37,7 @@ void aeroboto_gfxctrl_w(int ofset,int data)
   the main emulation engine.
 
 ***************************************************************************/
-void aeroboto_vh_screenrefresh(struct osd_bitmap *bitmap)
+void aeroboto_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	int offs;
 

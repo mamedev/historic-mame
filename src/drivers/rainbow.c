@@ -9,7 +9,6 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-extern unsigned char *rastan_paletteram;
 extern unsigned char *rastan_spriteram;
 extern unsigned char *rastan_scrollx;
 extern unsigned char *rastan_scrolly;
@@ -17,8 +16,6 @@ extern unsigned char *rastan_scrolly;
 void rastan_updatehook0(int offset);
 void rastan_updatehook1(int offset);
 
-void rastan_paletteram_w(int offset,int data);
-int  rastan_paletteram_r(int offset);
 void rastan_spriteram_w(int offset,int data);
 int  rastan_spriteram_r(int offset);
 
@@ -29,9 +26,6 @@ void rastan_videocontrol_w(int offset,int data);
 
 int rastan_interrupt(void);
 int rastan_s_interrupt(void);
-
-int  rastan_vh_start(void);
-void rastan_vh_stop(void);
 
 int rastan_input_r (int offset);
 
@@ -57,14 +51,14 @@ void r_wr_d000(int offset,int data);
 int  rainbow_interrupt(void);
 void rainbow_c_chip_w(int offset, int data);
 int  rainbow_c_chip_r(int offset);
-void rainbow_vh_screenrefresh(struct osd_bitmap *bitmap);
+void rainbow_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 
 static struct MemoryReadAddress rainbow_readmem[] =
 {
 	{ 0x000000, 0x07ffff, MRA_ROM },
 	{ 0x10c000, 0x10ffff, MRA_BANK1 },	/* RAM */
-	{ 0x200000, 0x20ffff, rastan_paletteram_r, &rastan_paletteram },
+	{ 0x200000, 0x20ffff, paletteram_word_r },
     { 0x390000, 0x390003, input_port_0_r },
     { 0x3B0000, 0x3B0003, input_port_1_r },
 	{ 0x3e0000, 0x3e0003, rastan_sound_r },
@@ -81,7 +75,7 @@ static struct MemoryWriteAddress rainbow_writemem[] =
 {
 	{ 0x000000, 0x07ffff, MWA_ROM },
 	{ 0x10c000, 0x10ffff, MWA_BANK1 },
-	{ 0x200000, 0x20ffff, rastan_paletteram_w },
+	{ 0x200000, 0x20ffff, paletteram_xBBBBBGGGGGRRRRR_word_w, &paletteram },
     { 0x800000, 0x80ffff, rainbow_c_chip_w },
 	{ 0xc00000, 0xc03fff, videoram10_word_w, &videoram10 },
 	{ 0xc04000, 0xc07fff, MWA_BANK2 },
@@ -308,13 +302,13 @@ static struct MachineDriver machine_driver =
 	/* video hardware */
 	40*8, 32*8, { 0*8, 40*8-1, 1*8, 31*8-1 },
 	rainbowe_gfxdecodeinfo,
-	256,0x80*16+256, /* looking on palette it seems that RASTAN uses 0x0-0x4f color schemes 16 colors each*/
+	2048, 2048,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_16BIT,
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
 	machine_layers,
-	rastan_vh_start,
-	rastan_vh_stop,
+	generic_vh_start,
+	generic_vh_stop,
 	rainbow_vh_screenrefresh,
 
 	/* sound hardware */
@@ -328,41 +322,43 @@ static struct MachineDriver machine_driver =
 
 ROM_START( rainbow_rom )
 	ROM_REGION(0x80000)		/* 8*64k for 68000 code */
-	ROM_LOAD_EVEN( "b22-10", 0x00000, 0x10000, 0x4dbf4585 )
-	ROM_LOAD_ODD ( "b22-11", 0x00000, 0x10000, 0xcd9b9d19 )
-	ROM_LOAD_EVEN( "b22-08", 0x20000, 0x10000, 0x9969d64d )
-	ROM_LOAD_ODD ( "b22-09", 0x20000, 0x10000, 0xe7687f18 )
-
+	ROM_LOAD_EVEN( "b22-10",     0x00000, 0x10000, 0x4dbf4585 )
+	ROM_LOAD_ODD ( "b22-11",     0x00000, 0x10000, 0xcd9b9d19 )
+	ROM_LOAD_EVEN( "b22-08",     0x20000, 0x10000, 0x9969d64d )
+	ROM_LOAD_ODD ( "b22-09",     0x20000, 0x10000, 0xe7687f18 )
 	ROM_LOAD_EVEN( "ri_m03.rom", 0x40000, 0x20000, 0x5c4aded4 )
 	ROM_LOAD_ODD ( "ri_m04.rom", 0x40000, 0x20000, 0x8b4e3d12 )
 
 	ROM_REGION(0x120000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "ri_m01.rom", 0x00000, 0x80000, 0x1f58a3d8 )        /* 8x8 gfx */
-  	ROM_LOAD( "ri_m02.rom", 0x80000, 0x80000, 0x38c9c265 )        /* sprites */
+	ROM_LOAD( "ri_m01.rom", 0x000000, 0x80000, 0x1f58a3d8 )        /* 8x8 gfx */
+  	ROM_LOAD( "ri_m02.rom", 0x080000, 0x80000, 0x38c9c265 )        /* sprites */
+	ROM_LOAD( "b22-13",     0x100000, 0x10000, 0x852d58a3 )
+	ROM_LOAD( "b22-12",     0x110000, 0x10000, 0x086dcc57 )
 
-	ROM_LOAD( "b22-13", 0x100000, 0x10000, 0x852d58a3 )
-	ROM_LOAD( "b22-12", 0x110000, 0x10000, 0x086dcc57 )
+#if 0
+	ROM_REGION(0x10000)		/* 64k for the audio CPU */
+	ROM_LOAD( "b22-14", 0x0000, 0x10000, 0x0 )
+#endif
 ROM_END
 
 ROM_START( rainbowe_rom )
 	ROM_REGION(0x80000)		/* 8*64k for 68000 code */
-	ROM_LOAD_EVEN( "ri_01.rom", 0x00000, 0x10000, 0xbd67d825 )
-	ROM_LOAD_ODD ( "ri_02.rom", 0x00000, 0x10000, 0xbe32da3e )
-	ROM_LOAD_EVEN( "ri_03.rom", 0x20000, 0x10000, 0x724f374b )
-	ROM_LOAD_ODD ( "ri_04.rom", 0x20000, 0x10000, 0x33f3af7b )
+	ROM_LOAD_EVEN( "ri_01.rom",  0x00000, 0x10000, 0xbd67d825 )
+	ROM_LOAD_ODD ( "ri_02.rom",  0x00000, 0x10000, 0xbe32da3e )
+	ROM_LOAD_EVEN( "ri_03.rom",  0x20000, 0x10000, 0x724f374b )
+	ROM_LOAD_ODD ( "ri_04.rom",  0x20000, 0x10000, 0x33f3af7b )
 	ROM_LOAD_EVEN( "ri_m03.rom", 0x40000, 0x20000, 0x5c4aded4 )
 	ROM_LOAD_ODD ( "ri_m04.rom", 0x40000, 0x20000, 0x8b4e3d12 )
 
 	ROM_REGION(0x120000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "ri_m01.rom", 0x00000, 0x80000, 0x1f58a3d8 )        /* 8x8 gfx */
-  	ROM_LOAD( "ri_m02.rom", 0x80000, 0x80000, 0x38c9c265 )        /* sprites */
-
-	ROM_LOAD( "ri_13.rom",  0x100000, 0x10000, 0x852d58a3 )		  /* Spares? */
-	ROM_LOAD( "ri_12.rom",  0x110000, 0x10000, 0x086dcc57 )
+	ROM_LOAD( "ri_m01.rom", 0x000000, 0x80000, 0x1f58a3d8 )        /* 8x8 gfx */
+  	ROM_LOAD( "ri_m02.rom", 0x080000, 0x80000, 0x38c9c265 )        /* sprites */
+	ROM_LOAD( "b22-13",     0x100000, 0x10000, 0x852d58a3 )
+	ROM_LOAD( "b22-12",     0x110000, 0x10000, 0x086dcc57 )
 
 #if 0
 	ROM_REGION(0x10000)		/* 64k for the audio CPU */
-	ROM_LOAD( "ri_14.rom", 0x0000, 0x10000, 0x0 )
+	ROM_LOAD( "b22-14", 0x0000, 0x10000, 0x0 )
 #endif
 ROM_END
 
@@ -374,10 +370,10 @@ struct GameDriver rainbow_driver =
 	0,
 	"rainbow",
 	"Rainbow Islands",
-	"????",
-	"?????",
+	"1987",
+	"Taito",
 	"Richard Bush (Raine & Info)\nMike Coates (MAME driver)",
-	0,
+	GAME_NOT_WORKING,
 	&machine_driver,
 
 	rainbow_rom,
@@ -395,13 +391,13 @@ struct GameDriver rainbow_driver =
 struct GameDriver rainbowe_driver =
 {
 	__FILE__,
-	0,
+	&rainbow_driver,
 	"rainbowe",
 	"Rainbow Islands (Extra)",
-	"????",
-	"?????",
+	"1988",
+	"Taito",
 	"Richard Bush (Raine & Info)\nMike Coates (MAME driver)",
-	0,
+	GAME_NOT_WORKING,
 	&machine_driver,
 
 	rainbowe_rom,

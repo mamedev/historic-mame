@@ -21,7 +21,7 @@
 	#define MAX_OUTPUT 0xffff
 #endif
 
-#define STEP 0x10000
+#define STEP 0x8000
 
 struct AY8910
 {
@@ -380,7 +380,6 @@ void AYUpdateOne(int chip,int endp)
 	while (length)
 	{
 		int vola,volb,volc;
-		int output;
 		int left;
 
 
@@ -572,9 +571,20 @@ void AYUpdateOne(int chip,int endp)
 			}
 		}
 
-		output = vola*PSG->VolA + volb*PSG->VolB + volc*PSG->VolC;
-		if( sample_16bit ) *buffer_16++ = output / STEP;
-		else               *buffer_8++  = output / (STEP*256);
+		if (sample_16bit)
+		{
+			buffer_16[0]           = vola*PSG->VolA / STEP;
+			buffer_16[AYBufSize]   = volb*PSG->VolB / STEP;
+			buffer_16[2*AYBufSize] = volc*PSG->VolC / STEP;
+			buffer_16++;
+		}
+		else
+		{
+			buffer_8[0]           = vola*PSG->VolA / (STEP*256);
+			buffer_8[AYBufSize]   = volb*PSG->VolB / (STEP*256);
+			buffer_8[2*AYBufSize] = volc*PSG->VolC / (STEP*256);
+			buffer_8++;
+		}
 
 		length--;
 	}
@@ -636,7 +646,7 @@ void AYSetGain(int n,int gain)
 	gain &= 0xff;
 
 	/* increase max output basing on gain (0.2 dB per step) */
-	out = MAX_OUTPUT/3;
+	out = MAX_OUTPUT;
 	while (gain-- > 0)
 		out *= 1.023292992;	/* = (10 ^ (0.2/20)) */
 
@@ -647,7 +657,7 @@ void AYSetGain(int n,int gain)
 	for (i = 31;i > 0;i--)
 	{
 		/* limit volume to avoid clipping */
-		if (out > MAX_OUTPUT/3) PSG->VolTable[i] = MAX_OUTPUT/3;
+		if (out > MAX_OUTPUT) PSG->VolTable[i] = MAX_OUTPUT;
 		else PSG->VolTable[i] = out;
 
 		out /= 1.188502227;	/* = 10 ^ (1.5/20) */

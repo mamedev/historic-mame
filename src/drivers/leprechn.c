@@ -70,7 +70,7 @@ void leprechn_graphics_command_w(int offset,int data);
 int  leprechn_graphics_data_r(int offset);
 void leprechn_graphics_data_w(int offset,int data);
 
-void leprechn_vh_screenrefresh(struct osd_bitmap *bitmap);
+void leprechn_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 void leprechn_input_port_select_w(int offset,int data);
 int  leprechn_input_port_r(int offset);
@@ -236,7 +236,7 @@ static struct AY8910interface ay8910_interface =
 {
 	1,      /* 1 chip */
 	14318000/8,     /* ? */
-	{ 0x60ff }, /* ? */
+	{ 255 },
 	{ 0 },
 	{ 0 },
 	{ 0 },
@@ -365,8 +365,8 @@ struct GameDriver leprechn_driver =
 	0,
 	"leprechn",
 	"Leprechaun",
-	"????",
-	"?????",
+	"1982",
+	"Tong Electronic",
 	"Zsolt Vasvari",
 	0,
 	&leprechn_machine_driver,

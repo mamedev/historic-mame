@@ -14,6 +14,9 @@ TODO:	remove the 1 analog device per port limitation
 #include "driver.h"
 #include <math.h>
 
+/* Use the MRU code for 4way joysticks */
+#define MRU_JOYSTICK
+
 /* header identifying the version of the game.cfg file */
 #define MAMECFGSTRING "MAMECFG\2"
 
@@ -116,7 +119,7 @@ static void writeip(void *f,struct InputPort *in)
 
 
 
-void load_input_port_settings(void)
+int load_input_port_settings(void)
 {
 	void *f;
 
@@ -127,6 +130,7 @@ void load_input_port_settings(void)
 		int total,savedtotal;
 		char buf[8];
 		int i;
+
 
 		in = Machine->gamedrv->new_input_ports;
 
@@ -204,6 +208,13 @@ getout:
 		for (i = 0; i < MAX_INPUT_PORTS; i++)
 			input_analog_init[i] = 1;
 	}
+
+	update_input_ports();
+
+	/* if we didn't find a saved config, return 0 so the main core knows that it */
+	/* is the first time the game is run and it should diplay the disclaimer. */
+	if (f) return 1;
+	else return 0;
 }
 
 
@@ -595,14 +606,19 @@ void update_analog_port(int port)
 
 void update_input_ports(void)
 {
-	int i,port,ib;
+	int port,ib;
 	struct InputPort *in;
 #define MAX_INPUT_BITS 1024
 static int impulsecount[MAX_INPUT_BITS];
 static int waspressed[MAX_INPUT_BITS];
 #define MAX_JOYSTICKS 3
 #define MAX_PLAYERS 4
+#ifdef MRU_JOYSTICK
+static int update_serial_number = 1;
+static int joyserial[MAX_JOYSTICKS*MAX_PLAYERS][4];
+#else
 int joystick[MAX_JOYSTICKS*MAX_PLAYERS][4];
+#endif
 
 
 	/* clear all the values before proceeding */
@@ -613,8 +629,10 @@ int joystick[MAX_JOYSTICKS*MAX_PLAYERS][4];
 		input_analog[port] = 0;
 	}
 
+#ifndef MRU_JOYSTICK
 	for (i = 0;i < 4*MAX_JOYSTICKS*MAX_PLAYERS;i++)
 		joystick[i/4][i%4] = 0;
+#endif
 
 	in = Machine->input_ports;
 
@@ -627,6 +645,63 @@ int joystick[MAX_JOYSTICKS*MAX_PLAYERS][4];
 		return;
 	}
 	else in++;
+
+#ifdef MRU_JOYSTICK
+	/* scan all the joystick ports */
+	port = 0;
+	while (in->type != IPT_END && port < MAX_INPUT_PORTS)
+	{
+		while (in->type != IPT_END && in->type != IPT_PORT)
+		{
+			if ((in->type & ~IPF_MASK) >= IPT_JOYSTICK_UP &&
+				(in->type & ~IPF_MASK) <= IPT_JOYSTICKLEFT_RIGHT)
+			{
+				int key,joy;
+
+				key = default_key(in);
+				joy = default_joy(in);
+
+				if ((key != 0 && key != IP_KEY_NONE) ||
+					(joy != 0 && joy != IP_JOY_NONE))
+				{
+					int joynum,joydir,player;
+
+					player = 0;
+					if ((in->type & IPF_PLAYERMASK) == IPF_PLAYER2)
+						player = 1;
+					else if ((in->type & IPF_PLAYERMASK) == IPF_PLAYER3)
+						player = 2;
+					else if ((in->type & IPF_PLAYERMASK) == IPF_PLAYER4)
+						player = 3;
+
+					joynum = player * MAX_JOYSTICKS +
+							 ((in->type & ~IPF_MASK) - IPT_JOYSTICK_UP) / 4;
+					joydir = ((in->type & ~IPF_MASK) - IPT_JOYSTICK_UP) % 4;
+
+					if ((key != 0 && key != IP_KEY_NONE && osd_key_pressed(key)) ||
+						(joy != 0 && joy != IP_JOY_NONE && osd_joy_pressed(joy)))
+					{
+						if (joyserial[joynum][joydir] == 0)
+							joyserial[joynum][joydir] = update_serial_number;
+					}
+					else
+						joyserial[joynum][joydir] = 0;
+				}
+			}
+			in++;
+		}
+
+		port++;
+		if (in->type == IPT_PORT) in++;
+	}
+	update_serial_number += 1;
+
+	in = Machine->input_ports;
+
+	/* already made sure the InputPort definition is correct */
+	in++;
+#endif
+
 
 	/* scan all the input ports */
 	port = 0;
@@ -728,11 +803,11 @@ if (errorlog && in->arg == 0)
 
 							mask = in->mask;
 
+#ifndef MRU_JOYSTICK
 							/* avoid movement in two opposite directions */
 							if (joystick[joynum][joydir ^ 1] != 0)
 								mask = 0;
-
-							if (in->type & IPF_4WAY)
+							else if (in->type & IPF_4WAY)
 							{
 								int dir;
 
@@ -746,6 +821,31 @@ if (errorlog && in->arg == 0)
 							}
 
 							joystick[joynum][joydir] = 1;
+#else
+							/* avoid movement in two opposite directions */
+							if (joyserial[joynum][joydir ^ 1] != 0)
+								mask = 0;
+							else if (in->type & IPF_4WAY)
+							{
+								int mru_dir = joydir;
+								int mru_serial = 0;
+								int dir;
+
+
+								/* avoid diagonal movements, use mru button */
+								for (dir = 0;dir < 4;dir++)
+								{
+									if (joyserial[joynum][dir] > mru_serial)
+									{
+										mru_serial = joyserial[joynum][dir];
+										mru_dir = dir;
+									}
+								}
+
+								if (mru_dir != joydir)
+									mask = 0;
+							}
+#endif
 
 							input_port_value[port] ^= mask;
 						}
