@@ -871,6 +871,8 @@ void osd_set_visible_area(int min_x,int max_x,int min_y,int max_y)
 {
 	int act_width;
 
+logerror("set visible area %d-%d %d-%d\n",min_x,max_x,min_y,max_y);
+
 /* if it's a SVGA arcade monitor mode, get the memory width of the mode */
 /* this could be double the width of the actual mode set */
 	if (scanrate15KHz && SVGA15KHzdriver && use_vesa == 1)

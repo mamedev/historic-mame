@@ -280,7 +280,7 @@ static struct rectangle foregroundvisiblearea =
 
 void exterm_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
-	if (TMS34010_io_display_blanked(0))
+	if (tms34010_io_display_blanked(0))
 	{
 		fillbitmap(bitmap,palette_transparent_pen,&Machine->visible_area);
 		return;
@@ -308,7 +308,7 @@ void exterm_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		copybitmap(bitmap,tmpbitmap, 0,0,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
 	}
 
-    if (TMS34010_get_DPYSTRT(1) & 0x800)
+    if (tms34010_get_DPYSTRT(1) & 0x800)
 	{
 		copybitmap(bitmap,tmpbitmap2,0,0,0,0,&foregroundvisiblearea,TRANSPARENCY_PEN, palette_transparent_pen);
 	}

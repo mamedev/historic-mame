@@ -47,7 +47,7 @@ static void dv_tile_callback(int layer,int bank,int *code,int *color)
 
 ***************************************************************************/
 
-static void mainevt_sprite_callback(int *code,int *color,int *priority_mask)
+static void mainevt_sprite_callback(int *code,int *color,int *priority_mask,int *shadow)
 {
 	/* bit 5 = priority over layer B (has precedence) */
 	/* bit 6 = HALF priority over layer B (used for crowd when you get out of the ring) */
@@ -59,7 +59,7 @@ static void mainevt_sprite_callback(int *code,int *color,int *priority_mask)
 	*color = sprite_colorbase + (*color & 0x03);
 }
 
-static void dv_sprite_callback(int *code,int *color,int *priority)
+static void dv_sprite_callback(int *code,int *color,int *priority,int *shadow)
 {
 	/* TODO: the priority/shadow handling (bits 5-7) seems to be quite complex (see PROM) */
 	*color = sprite_colorbase + (*color & 0x07);

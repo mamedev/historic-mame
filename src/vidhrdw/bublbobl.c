@@ -50,7 +50,7 @@ void bublbobl_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 	/* Bubble Bobble doesn't have a real video RAM. All graphics (characters */
 	/* and sprites) are stored in the same memory region, and information on */
-	/* the background character columns is stored inthe area dd00-dd3f */
+	/* the background character columns is stored in the area dd00-dd3f */
 
 	/* This clears & redraws the entire screen each pass */
 	fillbitmap(bitmap,Machine->pens[255],&Machine->visible_area);

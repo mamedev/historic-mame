@@ -8,9 +8,13 @@
 #	include "mac_dos.h"
 #	include "stat.h"
 #else
-#include <dirent.h>
+#ifndef WIN32
+#   include <dirent.h>
+#   include <sys/errno.h>
+#else
+#    include "dirent.h"
+#endif
 #include <sys/stat.h>
-#include <sys/errno.h>
 #endif
 
 
@@ -96,10 +100,7 @@ static void checkintegrity(const struct fileinfo *file,int side)
 	int mask0,mask1;
 	int addrbit;
 
-
 	if (file->buf == 0) return;
-
-
 
 	/* check for bad data lines */
 	mask0 = 0x0000;
@@ -522,7 +523,7 @@ static int load_files(int i, int *found, const char *path)
 }
 
 
-int main(int argc,char **argv)
+int CLIB_DECL main(int argc,char **argv)
 {
 	int	err;
 
@@ -690,3 +691,4 @@ int main(int argc,char **argv)
 
 	return 0;
 }
+

@@ -219,26 +219,26 @@ INPUT_PORTS_END
 
 static struct GfxLayout pflayout =
 {
-	16,8,	/* 16*8 chars (doubled horizontally) */
-	8192,	/* 8192 chars */
-	4,		/* 4 bits per pixel */
+	16,8,
+	RGN_FRAC(1,1),
+	4,
 	{ 0, 1, 2, 3 },
 	{ 0,0, 4,4, 8,8, 12,12, 16,16, 20,20, 24,24, 28,28 },
 	{ 0*8, 4*8, 8*8, 12*8, 16*8, 20*8, 24*8, 28*8 },
-	32*8	/* every char takes 32 consecutive bytes */
+	32*8
 };
 
 
 static struct GfxLayout molayout =
 {
-	16,8,	/* 16*8 chars */
-	16384,	/* 16384 chars */
-	4,		/* 4 bits per pixel */
+	16,8,
+	RGN_FRAC(1,2),
+	4,
 	{ 0, 1, 2, 3 },
-	{ 0x80000*8+0, 0x80000*8+4, 0, 4, 0x80000*8+8, 0x80000*8+12, 8, 12,
-			0x80000*8+16, 0x80000*8+20, 16, 20, 0x80000*8+24, 0x80000*8+28, 24, 28 },
+	{ RGN_FRAC(1,2)+0, RGN_FRAC(1,2)+4, 0, 4, RGN_FRAC(1,2)+8, RGN_FRAC(1,2)+12, 8, 12,
+			RGN_FRAC(1,2)+16, RGN_FRAC(1,2)+20, 16, 20, RGN_FRAC(1,2)+24, RGN_FRAC(1,2)+28, 24, 28 },
 	{ 0*8, 4*8, 8*8, 12*8, 16*8, 20*8, 24*8, 28*8 },
-	32*8	/* every char takes 32 consecutive bytes */
+	32*8
 };
 
 
@@ -374,6 +374,43 @@ ROM_START( blstroi2 )
 ROM_END
 
 
+ROM_START( blsthead )
+	ROM_REGION( 0x40000, REGION_CPU1 )	/* 4*64k for 68000 code */
+	ROM_LOAD_EVEN( "eheadh0.c6",  0x00000, 0x10000, 0x061f0898 )
+	ROM_LOAD_ODD ( "eheadl0.b6",  0x00000, 0x10000, 0xae8df7cb )
+	ROM_LOAD_EVEN( "eheadh1.c5",  0x20000, 0x10000, 0x0b7a3cb6 )
+	ROM_LOAD_ODD ( "eheadl1.b5",  0x20000, 0x10000, 0x43971694 )
+
+	ROM_REGION( 0x14000, REGION_CPU2 )	/* 64k for 6502 code */
+	ROM_LOAD( "blstroid.snd", 0x10000, 0x4000, 0xbaa8b5fe )
+	ROM_CONTINUE(             0x04000, 0xc000 )
+
+	ROM_REGION( 0x040000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "blstroid.1l",  0x000000, 0x10000, 0x3c2daa5b ) /* playfield */
+	ROM_LOAD( "blstroid.1m",  0x010000, 0x10000, 0xf84f0b97 ) /* playfield */
+	ROM_LOAD( "blstroid.3l",  0x020000, 0x10000, 0xae5274f0 ) /* playfield */
+	ROM_LOAD( "blstroid.3m",  0x030000, 0x10000, 0x4bb72060 ) /* playfield */
+
+	ROM_REGION( 0x100000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "blstroid.5m",  0x000000, 0x10000, 0x50e0823f ) /* mo */
+	ROM_LOAD( "blstroid.6m",  0x010000, 0x10000, 0x729de7a9 ) /* mo */
+	ROM_LOAD( "blstroid.8m",  0x020000, 0x10000, 0x090e42ab ) /* mo */
+	ROM_LOAD( "blstroid.10m", 0x030000, 0x10000, 0x1ff79e67 ) /* mo */
+	ROM_LOAD( "mol4.m12",     0x040000, 0x10000, 0x571139ea ) /* mo */
+	ROM_LOAD( "blstroid.13m", 0x050000, 0x10000, 0xe4409310 ) /* mo */
+	ROM_LOAD( "blstroid.14m", 0x060000, 0x10000, 0x7aaca15e ) /* mo */
+	ROM_LOAD( "mol7.m16",     0x070000, 0x10000, 0xd27b2d91 ) /* mo */
+	ROM_LOAD( "blstroid.5n",  0x080000, 0x10000, 0x2720ee71 ) /* mo */
+	ROM_LOAD( "blstroid.6n",  0x090000, 0x10000, 0x2faecd15 ) /* mo */
+	ROM_LOAD( "moh2.n8",      0x0a0000, 0x10000, 0xa15e79e1 ) /* mo */
+	ROM_LOAD( "blstroid.10n", 0x0b0000, 0x10000, 0x4d5fc284 ) /* mo */
+	ROM_LOAD( "moh4.n12",     0x0c0000, 0x10000, 0x1a74e960 ) /* mo */
+	ROM_LOAD( "blstroid.13n", 0x0d0000, 0x10000, 0xf423b4f8 ) /* mo */
+	ROM_LOAD( "blstroid.14n", 0x0e0000, 0x10000, 0x56fa3d16 ) /* mo */
+	ROM_LOAD( "moh7.n16",     0x0f0000, 0x10000, 0xa93cbbe7 ) /* mo */
+ROM_END
+
+
 
 /*************************************
  *
@@ -403,3 +440,4 @@ static void init_blstroid(void)
 
 GAME( 1987, blstroid, 0,        blstroid, blstroid, blstroid, ROT0, "Atari Games", "Blasteroids (version 4)" )
 GAME( 1987, blstroi2, blstroid, blstroid, blstroid, blstroid, ROT0, "Atari Games", "Blasteroids (version 2)" )
+GAME( 1987, blsthead, blstroid, blstroid, blstroid, blstroid, ROT0, "Atari Games", "Blasteroids (with heads)" )

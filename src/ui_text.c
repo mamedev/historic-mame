@@ -167,6 +167,19 @@ const char * default_text[] =
 	"Y position",
 	"Watch",
 
+	/* searching */
+	"Lives (or some other value)",
+	"Timers (+/- some value)",
+	"Energy (greater or less)",
+	"Status (bits or flags)",
+	"Slow but sure (changed or not)",
+	"Change Search Speed",
+	"Matches found",
+	"Search not initialized",
+	"No previous values saved",
+	"Previous values already restored",
+	"Restoration successful",
+
 	NULL
 };
 
@@ -244,7 +257,7 @@ int uistring_init (void *langfile)
 			ptr = strtok (curline, "\n");
 
 			/* Find a matching default string */
-			for (i = 0; i <= UI_last_entry; i ++)
+			for (i = 0; i < UI_last_entry; i ++)
 			{
 				if (strcmp (curline, default_text[i]) == 0)
 				{
@@ -257,7 +270,7 @@ int uistring_init (void *langfile)
 					ptr = strtok (transline, "\n");
 
 					/* Allocate storage and copy the string */
-					trans_text[i] = malloc (strlen(transline));
+					trans_text[i] = malloc (strlen(transline)+1);
 					strcpy (trans_text[i], transline);
 
 					/* Done searching */

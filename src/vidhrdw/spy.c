@@ -26,7 +26,7 @@ static void tile_callback(int layer,int bank,int *code,int *color)
 
 ***************************************************************************/
 
-static void sprite_callback(int *code,int *color,int *priority)
+static void sprite_callback(int *code,int *color,int *priority,int *shadow)
 {
 	/* bit 4 = priority over layer A (0 = have priority) */
 	/* bit 5 = priority over layer B (1 = have priority) */

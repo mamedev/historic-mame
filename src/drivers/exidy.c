@@ -111,100 +111,116 @@ IO:
 #include "vidhrdw/generic.h"
 #include "machine/6821pia.h"
 
-/* also in machine/exidy.c */
-#define PALETTE_LEN 8
-#define COLORTABLE_LEN 20
 
 /* These are defined in sndhrdw/exidy.c */
+int exidy_sh_start(const struct MachineSound *msound);
+
+WRITE_HANDLER( exidy_shriot_w );
+WRITE_HANDLER( exidy_sfxctrl_w );
+WRITE_HANDLER( exidy_sh8253_w );
+WRITE_HANDLER( exidy_sh6840_w );
+READ_HANDLER( exidy_shriot_r );
+READ_HANDLER( exidy_sh8253_r );
+READ_HANDLER( exidy_sh6840_r );
+
 WRITE_HANDLER( mtrap_voiceio_w );
 READ_HANDLER( mtrap_voiceio_r );
 
-/* These are defined in sndhrdw/exidy.c */
-WRITE_HANDLER( exidy_shriot_w );
-READ_HANDLER( exidy_shriot_r );
-
-WRITE_HANDLER( exidy_sfxctrl_w );
-
-WRITE_HANDLER( exidy_sh8253_w );
-READ_HANDLER( exidy_sh8253_r );
-
-READ_HANDLER( exidy_sh6840_r );
-WRITE_HANDLER( exidy_sh6840_w );
-
-int exidy_sh_start(const struct MachineSound *msound);
-void exidy_sh_stop(void);
-
-/* These are defined in vidhrdw/exidy.c */
-
-int exidy_vh_start(void);
-void exidy_vh_stop(void);
-WRITE_HANDLER( exidy_characterram_w );
-void exidy_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
-WRITE_HANDLER( exidy_color_w );
-
-extern unsigned char *exidy_characterram;
-extern unsigned char *exidy_sprite_no;
-extern unsigned char *exidy_sprite_enable;
-extern unsigned char *exidy_sprite1_xpos;
-extern unsigned char *exidy_sprite1_ypos;
-extern unsigned char *exidy_sprite2_xpos;
-extern unsigned char *exidy_sprite2_ypos;
-extern unsigned char *exidy_color_latch;
-
-extern int exidy_collision_counter;
-
-/* These are defined in machine/exidy.c */
-
-WRITE_HANDLER( fax_bank_select_w );
-READ_HANDLER( exidy_input_port_2_r );
-void exidy_init_machine(void);
-int venture_interrupt(void);
-int venture_shinterrupt(void);
-
-void init_sidetrac(void);
-void init_targ(void);
-void init_spectar(void);
-void init_venture(void);
-void init_mtrap(void);
-void init_pepper2(void);
-void init_fax(void);
-void exidy_vh_init_palette(unsigned char *game_palette, unsigned short *game_colortable,const unsigned char *color_prom);
-
-int exidy_interrupt(void);
-
-extern unsigned char exidy_collision_mask;
 
 /* These are defined in sndhrdw/targ.c */
-extern unsigned char targ_spec_flag;
-WRITE_HANDLER( targ_sh_w );
+extern UINT8 targ_spec_flag;
+
 int targ_sh_start(const struct MachineSound *msound);
 void targ_sh_stop(void);
 
+WRITE_HANDLER( targ_sh_w );
 
 
-static struct MemoryReadAddress readmem[] =
+/* These are defined in vidhrdw/targ.c */
+#define PALETTE_LEN 8
+#define COLORTABLE_LEN 20
+
+extern UINT8 *exidy_characterram;
+extern UINT8 *exidy_sprite_no;
+extern UINT8 *exidy_sprite_enable;
+extern UINT8 *exidy_sprite1_xpos;
+extern UINT8 *exidy_sprite1_ypos;
+extern UINT8 *exidy_sprite2_xpos;
+extern UINT8 *exidy_sprite2_ypos;
+extern UINT8 *exidy_color_latch;
+extern UINT8 *exidy_palette;
+extern UINT16 *exidy_colortable;
+
+extern UINT8 sidetrac_palette[];
+extern UINT8 targ_palette[];
+extern UINT8 spectar_palette[];
+extern UINT16 exidy_1bpp_colortable[];
+extern UINT16 exidy_2bpp_colortable[];
+
+extern UINT8 exidy_collision_mask;
+extern UINT8 exidy_collision_invert;
+
+int exidy_vh_start(void);
+void exidy_vh_stop(void);
+void exidy_vh_eof(void);
+void exidy_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void exidy_vh_init_palette(UINT8 *game_palette, UINT16 *game_colortable,const UINT8 *color_prom);
+int exidy_vblank_interrupt(void);
+
+WRITE_HANDLER( exidy_characterram_w );
+WRITE_HANDLER( exidy_color_w );
+
+READ_HANDLER( exidy_interrupt_r );
+
+
+
+/*************************************
+ *
+ *	Bankswitcher
+ *
+ *************************************/
+
+static WRITE_HANDLER( fax_bank_select_w )
+{
+	UINT8 *RAM = memory_region(REGION_CPU1);
+
+	cpu_setbank(1, &RAM[0x10000 + (0x2000 * (data & 0x1F))]);
+	if ((data & 0x1F) > 0x17)
+		logerror("Banking to unpopulated ROM bank %02X!\n",data & 0x1F);
+}
+
+
+
+/*************************************
+ *
+ *	Main CPU memory handlers
+ *
+ *************************************/
+
+static struct MemoryReadAddress main_readmem[] =
 {
 	{ 0x0000, 0x03ff, MRA_RAM },
-	{ 0x0800, 0x3fff, MRA_ROM }, /* Targ, Spectar only */
+	{ 0x0800, 0x3fff, MRA_ROM },			/* Targ, Spectar only */
 	{ 0x4000, 0x43ff, videoram_r },
-	{ 0x4400, 0x47ff, videoram_r },	/* mirror (sidetrac requires this) */
+	{ 0x4400, 0x47ff, videoram_r },			/* mirror (sidetrac requires this) */
 	{ 0x4800, 0x4fff, MRA_RAM },
-	{ 0x5100, 0x5100, input_port_0_r }, /* DSW */
-	{ 0x5101, 0x5101, input_port_1_r }, /* IN0 */
-	{ 0x5103, 0x5103, exidy_input_port_2_r }, /* IN1 */
-	{ 0x5105, 0x5105, input_port_4_r }, /* IN3 - Targ, Spectar only */
+	{ 0x5100, 0x5100, input_port_0_r },		/* DSW */
+	{ 0x5101, 0x5101, input_port_1_r },		/* IN0 */
+	{ 0x5103, 0x5103, exidy_interrupt_r },	/* IN1 */
+	{ 0x5105, 0x5105, input_port_4_r },		/* IN3 - Targ, Spectar only */
 	{ 0x5200, 0x520F, pia_0_r },
-	{ 0x5213, 0x5213, input_port_3_r },     /* IN2 */
-	{ 0x6000, 0x6fff, MRA_RAM }, /* Pepper II only */
+	{ 0x5213, 0x5213, input_port_3_r },		/* IN2 */
+	{ 0x6000, 0x6fff, MRA_RAM },			/* Pepper II only */
 	{ 0x8000, 0xffff, MRA_ROM },
-	{ -1 }  /* end of table */
+	{ -1 }
 };
 
-static struct MemoryWriteAddress writemem[] =
+static struct MemoryWriteAddress main_writemem[] =
 {
 	{ 0x0000, 0x03ff, MWA_RAM },
 	{ 0x0800, 0x3fff, MWA_ROM },
 	{ 0x4000, 0x43ff, videoram_w, &videoram, &videoram_size },
+	{ 0x4400, 0x47ff, videoram_w },
 	{ 0x4800, 0x4fff, exidy_characterram_w, &exidy_characterram },
 	{ 0x5000, 0x5000, MWA_RAM, &exidy_sprite1_xpos },
 	{ 0x5040, 0x5040, MWA_RAM, &exidy_sprite1_ypos },
@@ -215,67 +231,32 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x5200, 0x520F, pia_0_w },
 	{ 0x5210, 0x5212, exidy_color_w, &exidy_color_latch },
 	{ 0x8000, 0xffff, MWA_ROM },
-	{ -1 }  /* end of table */
-};
-
-static struct MemoryWriteAddress targ_writemem[] =
-{
-	{ 0x0000, 0x03ff, MWA_RAM },
-	{ 0x0800, 0x3fff, MWA_ROM },
-	{ 0x4000, 0x43ff, videoram_w, &videoram, &videoram_size },
-	{ 0x4800, 0x4fff, exidy_characterram_w, &exidy_characterram },
-	{ 0x5000, 0x5000, MWA_RAM, &exidy_sprite1_xpos },
-	{ 0x5040, 0x5040, MWA_RAM, &exidy_sprite1_ypos },
-	{ 0x5080, 0x5080, MWA_RAM, &exidy_sprite2_xpos },
-	{ 0x50C0, 0x50C0, MWA_RAM, &exidy_sprite2_ypos },
-	{ 0x5100, 0x5100, MWA_RAM, &exidy_sprite_no },
-	{ 0x5101, 0x5101, MWA_RAM, &exidy_sprite_enable },
-	{ 0x5200, 0x5201, targ_sh_w },
-	{ 0x8000, 0xffff, MWA_ROM },
-	{ -1 }  /* end of table */
-};
-
-static struct MemoryWriteAddress pepper2_writemem[] =
-{
-	{ 0x0000, 0x03ff, MWA_RAM },
-	{ 0x4000, 0x43ff, videoram_w, &videoram, &videoram_size },
-	{ 0x5000, 0x5000, MWA_RAM, &exidy_sprite1_xpos },
-	{ 0x5040, 0x5040, MWA_RAM, &exidy_sprite1_ypos },
-	{ 0x5080, 0x5080, MWA_RAM, &exidy_sprite2_xpos },
-	{ 0x50C0, 0x50C0, MWA_RAM, &exidy_sprite2_ypos },
-	{ 0x5100, 0x5100, MWA_RAM, &exidy_sprite_no },
-	{ 0x5101, 0x5101, MWA_RAM, &exidy_sprite_enable },
-	{ 0x5200, 0x520F, pia_0_w },
-	{ 0x5210, 0x5212, exidy_color_w, &exidy_color_latch },
-	{ 0x5213, 0x5217, MWA_NOP }, /* empty control lines on color/sound board */
-	{ 0x6000, 0x6fff, exidy_characterram_w, &exidy_characterram }, /* two 6116 character RAMs */
-	{ 0x8000, 0xffff, MWA_ROM },
-	{ -1 }  /* end of table */
+	{ -1 }
 };
 
 static struct MemoryReadAddress fax_readmem[] =
 {
 	{ 0x0000, 0x03ff, MRA_RAM },
-	{ 0x0400, 0x07ff, MRA_RAM }, /* Fax only */
-	{ 0x1a00, 0x1a00, input_port_4_r }, /* IN3 - Fax only */
-	{ 0x1c00, 0x1c00, input_port_3_r }, /* IN2 - Fax only */
-	{ 0x2000, 0x3fff, MRA_BANK1 }, /* Fax only */
+	{ 0x0400, 0x07ff, MRA_RAM },			/* Fax only */
+	{ 0x1a00, 0x1a00, input_port_4_r },		/* IN3 - Fax only */
+	{ 0x1c00, 0x1c00, input_port_3_r },		/* IN2 - Fax only */
+	{ 0x2000, 0x3fff, MRA_BANK1 },			/* Fax only */
 	{ 0x4000, 0x43ff, MRA_RAM },
-	{ 0x5100, 0x5100, input_port_0_r }, /* DSW */
-	{ 0x5101, 0x5101, input_port_1_r }, /* IN0 */
-	{ 0x5103, 0x5103, exidy_input_port_2_r }, /* IN1 */
+	{ 0x5100, 0x5100, input_port_0_r },		/* DSW */
+	{ 0x5101, 0x5101, input_port_1_r },		/* IN0 */
+	{ 0x5103, 0x5103, exidy_interrupt_r },	/* IN1 */
 	{ 0x5200, 0x520F, pia_0_r },
-	{ 0x5213, 0x5213, input_port_3_r },     /* IN2 */
-	{ 0x6000, 0x6fff, MRA_RAM }, /* Fax, Pepper II only */
+	{ 0x5213, 0x5213, input_port_3_r },		/* IN2 */
+	{ 0x6000, 0x6fff, MRA_RAM },			/* Fax, Pepper II only */
 	{ 0x8000, 0xffff, MRA_ROM },
-	{ -1 }  /* end of table */
+	{ -1 }
 };
 
 static struct MemoryWriteAddress fax_writemem[] =
 {
 	{ 0x0000, 0x03ff, MWA_RAM },
-	{ 0x0400, 0x07ff, MWA_RAM }, /* Fax only */
-	{ 0x2000, 0x2000, fax_bank_select_w }, /* Fax only */
+	{ 0x0400, 0x07ff, MWA_RAM },			/* Fax only */
+	{ 0x2000, 0x2000, fax_bank_select_w },	/* Fax only */
 	{ 0x4000, 0x43ff, videoram_w, &videoram, &videoram_size },
 	{ 0x5000, 0x5000, MWA_RAM, &exidy_sprite1_xpos },
 	{ 0x5040, 0x5040, MWA_RAM, &exidy_sprite1_ypos },
@@ -285,69 +266,81 @@ static struct MemoryWriteAddress fax_writemem[] =
 	{ 0x5101, 0x5101, MWA_RAM, &exidy_sprite_enable },
 	{ 0x5200, 0x520F, pia_0_w },
 	{ 0x5210, 0x5212, exidy_color_w, &exidy_color_latch },
-	{ 0x5213, 0x5217, MWA_NOP }, /* empty control lines on color/sound board */
+	{ 0x5213, 0x5217, MWA_NOP },			/* empty control lines on color/sound board */
 	{ 0x6000, 0x6fff, exidy_characterram_w, &exidy_characterram }, /* two 6116 character RAMs */
 	{ 0x8000, 0xffff, MWA_ROM },
-	{ -1 }  /* end of table */
+	{ -1 }
 };
+
+
+
+/*************************************
+ *
+ *	Sound CPU memory handlers
+ *
+ *************************************/
 
 static struct MemoryReadAddress sound_readmem[] =
 {
 	{ 0x0000, 0x07ff, MRA_RAM },
-	{ 0x0800, 0x0FFF, exidy_shriot_r },
-	{ 0x1000, 0x100F, pia_1_r },
-	{ 0x1800, 0x1FFF, exidy_sh8253_r },
-	{ 0x2000, 0x27FF, MRA_RAM },
-	{ 0x2800, 0x2FFF, exidy_sh6840_r },
+	{ 0x0800, 0x0fff, exidy_shriot_r },
+	{ 0x1000, 0x100f, pia_1_r },
+	{ 0x1800, 0x1fff, exidy_sh8253_r },
+	{ 0x2000, 0x27ff, MRA_RAM },
+	{ 0x2800, 0x2fff, exidy_sh6840_r },
 	{ 0x5800, 0x7fff, MRA_ROM },
 	{ 0x8000, 0xf7ff, MRA_RAM },
 	{ 0xf800, 0xffff, MRA_ROM },
-	{ -1 }  /* end of table */
+	{ -1 }
 };
 
 static struct MemoryWriteAddress sound_writemem[] =
 {
-	{ 0x0000, 0x07FF, MWA_RAM },
-	{ 0x0800, 0x0FFF, exidy_shriot_w },
-	{ 0x1000, 0x100F, pia_1_w },
-	{ 0x1800, 0x1FFF, exidy_sh8253_w },
-	{ 0x2000, 0x27FF, MWA_RAM },
-	{ 0x2800, 0x2FFF, exidy_sh6840_w },
+	{ 0x0000, 0x07ff, MWA_RAM },
+	{ 0x0800, 0x0fff, exidy_shriot_w },
+	{ 0x1000, 0x100f, pia_1_w },
+	{ 0x1800, 0x1fff, exidy_sh8253_w },
+	{ 0x2000, 0x27ff, MWA_RAM },
+	{ 0x2800, 0x2fff, exidy_sh6840_w },
 	{ 0x3000, 0x3700, exidy_sfxctrl_w },
 	{ 0x5800, 0x7fff, MWA_ROM },
 	{ 0x8000, 0xf7ff, MWA_RAM },
 	{ 0xf800, 0xffff, MWA_ROM },
-	{ -1 }  /* end of table */
-};
-
-static struct MemoryWriteAddress dac_writemem[] =
-{
-        {0x0000,0x3fff, MWA_ROM },
-	{ -1 } /* end of table */
-};
-
-static struct MemoryReadAddress dac_readmem[] =
-{
-        {0x0000,0x3fff, MRA_ROM },
-        {0x4000,0xffff, MRA_ROM },
-	{ -1 } /* end of table */
-};
-
-static struct IOWritePort dac_iowrite[] =
-{
-        { 0x00, 0xFF, mtrap_voiceio_w },
-	{ -1 }	/* end of table */
-};
-
-static struct IOReadPort dac_ioread[] =
-{
-	{ 0x00, 0xFF, mtrap_voiceio_r },
 	{ -1 }
 };
 
-/***************************************************************************
-Input Ports
-***************************************************************************/
+static struct MemoryWriteAddress cvsd_writemem[] =
+{
+	{ 0x0000, 0x3fff, MWA_ROM },
+	{ -1 }
+};
+
+static struct MemoryReadAddress cvsd_readmem[] =
+{
+	{ 0x0000, 0x3fff, MRA_ROM },
+	{ 0x4000, 0xffff, MRA_ROM },
+	{ -1 }
+};
+
+static struct IOWritePort cvsd_iowrite[] =
+{
+	{ 0x00, 0xff, mtrap_voiceio_w },
+	{ -1 }
+};
+
+static struct IOReadPort cvsd_ioread[] =
+{
+	{ 0x00, 0xff, mtrap_voiceio_r },
+	{ -1 }
+};
+
+
+
+/*************************************
+ *
+ *	Port definitions
+ *
+ *************************************/
 
 INPUT_PORTS_START( sidetrac )
 	PORT_START              /* DSW0 */
@@ -402,6 +395,7 @@ INPUT_PORTS_START( sidetrac )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 INPUT_PORTS_END
 
+
 INPUT_PORTS_START( targ )
 	PORT_START              /* DSW0 */
 	PORT_BIT ( 0x01, IP_ACTIVE_LOW, IPT_COIN2 ) /* upright/cocktail switch? */
@@ -433,7 +427,7 @@ INPUT_PORTS_START( targ )
 	PORT_BIT( 0x1f, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_COIN2 )
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_COIN1 )
-	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START      /* IN2 */
 	PORT_BIT( 0xFF, IP_ACTIVE_LOW, IPT_UNKNOWN )
@@ -448,6 +442,7 @@ INPUT_PORTS_START( targ )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_4WAY )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 INPUT_PORTS_END
+
 
 /* identical to Targ, the only difference is the additional Language dip switch */
 INPUT_PORTS_START( spectar )
@@ -486,7 +481,7 @@ INPUT_PORTS_START( spectar )
 	PORT_BIT( 0x1c, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_COIN2 )
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_COIN1 )
-	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START      /* IN2 */
 	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNKNOWN )
@@ -501,6 +496,7 @@ INPUT_PORTS_START( spectar )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_4WAY )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 INPUT_PORTS_END
+
 
 INPUT_PORTS_START( mtrap )
 	PORT_START      /* DSW0 */
@@ -553,7 +549,7 @@ INPUT_PORTS_START( mtrap )
 	PORT_BIT( 0x1f, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_COIN2 )
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_COIN1 )
-	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_VBLANK )
 
 	PORT_START              /* IN2 */
 	PORT_BITX(0x01, IP_ACTIVE_LOW, IPT_BUTTON2, "Yellow Button", IP_KEY_DEFAULT, IP_JOY_DEFAULT )
@@ -567,6 +563,7 @@ INPUT_PORTS_START( mtrap )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 INPUT_PORTS_END
+
 
 INPUT_PORTS_START( venture )
 	PORT_START      /* DSW0 */
@@ -618,8 +615,9 @@ INPUT_PORTS_START( venture )
 	PORT_BIT( 0x1f, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_COIN2 )
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_COIN1 )
-	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_VBLANK )
 INPUT_PORTS_END
+
 
 INPUT_PORTS_START( pepper2 )
 	PORT_START              /* DSW */
@@ -672,8 +670,9 @@ INPUT_PORTS_START( pepper2 )
 	PORT_BIT( 0x1F, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_COIN2 )
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_COIN1 )
-	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_VBLANK )
 INPUT_PORTS_END
+
 
 INPUT_PORTS_START( fax )
 	PORT_START              /* DSW */
@@ -721,7 +720,7 @@ INPUT_PORTS_START( fax )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )    /* Set when motion object 1 is drawn? */
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_COIN2 )
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_COIN1 )
-	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )   /* VBlank */
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_VBLANK )   /* VBlank */
 
 	PORT_START /* IN2 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START2 )
@@ -739,88 +738,72 @@ INPUT_PORTS_START( fax )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER2 )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
-
 INPUT_PORTS_END
 
 
-/***************************************************************************
-Graphics Layout
-***************************************************************************/
 
-static struct GfxLayout charlayout =
+/*************************************
+ *
+ *	Graphics definitions
+ *
+ *************************************/
+
+static struct GfxLayout charlayout_1bpp =
 {
-	8,8,    /* 8*8 characters */
-	256,    /* 256 characters */
-	1,      /* 1 bits per pixel */
-	{ 0 }, /* No info needed for bit offsets */
+	8,8,
+	256,
+	1,
+	{ 0 },
 	{ 0, 1, 2, 3, 4, 5, 6, 7 },
 	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
-	8*8 /* every char takes 8 consecutive bytes */
+	8*8
 };
 
-/* Pepper II and Fax used a special Plane Generation Board for 2-bit graphics */
-
-static struct GfxLayout pepper2_charlayout =
+static struct GfxLayout charlayout_2bpp =
 {
-	8,8,    /* 8*8 characters */
-	256,    /* 256 characters */
-	2,      /* 2 bits per pixel */
-	{ 0, 256*8*8 }, /* 2 bits separated by 0x0800 bytes */
+	8,8,
+	256,
+	2,
+	{ 0, 256*8*8 },
 	{ 0, 1, 2, 3, 4, 5, 6, 7 },
 	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
-	8*8 /* every char takes 8 consecutive bytes */
+	8*8
 };
-
 
 static struct GfxLayout spritelayout =
 {
-	16,16,  /* 16*16 sprites */
-	16*4,   /* 64 characters */
-	1,      /* 1 bit per pixel */
+	16,16,
+	RGN_FRAC(1,1),
+	1,
 	{ 0 },
 	{ 0, 1, 2, 3, 4, 5, 6, 7, 16*8+0, 16*8+1, 16*8+2, 16*8+3, 16*8+4, 16*8+5, 16*8+6, 16*8+7},
 	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8, 8*8, 9*8, 10*8, 11*8, 12*8, 13*8, 14*8, 15*8},
-	8*32    /* every char takes 32 consecutive bytes */
+	8*32
 };
 
-static struct GfxLayout targ_spritelayout =
+
+static struct GfxDecodeInfo gfxdecodeinfo_1bpp[] =
 {
-	16,16,  /* 16*16 sprites */
-	16*2,   /* 32 characters for Targ/Spectar */
-	1,      /* 1 bit per pixel */
-	{ 0 },
-	{ 0, 1, 2, 3, 4, 5, 6, 7, 16*8+0, 16*8+1, 16*8+2, 16*8+3, 16*8+4, 16*8+5, 16*8+6, 16*8+7},
-	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8, 8*8, 9*8, 10*8, 11*8, 12*8, 13*8, 14*8, 15*8},
-	8*32    /* every char takes 32 consecutive bytes */
+	{ REGION_CPU1, 0x4800, &charlayout_1bpp, 0, 4 },	/* the game dynamically modifies this */
+	{ REGION_GFX1, 0x0000, &spritelayout,    8, 2 },
+	{ -1 }
 };
 
 
-static struct GfxDecodeInfo gfxdecodeinfo[] =
+static struct GfxDecodeInfo gfxdecodeinfo_2bpp[] =
 {
-	{ 0,           0x4800, &charlayout,       0, 4 },         /* the game dynamically modifies this */
-	{ REGION_GFX1, 0x0000, &spritelayout, 8, 2 },  /* Sprites */
-	{ -1 } /* end of array */
-};
-
-static struct GfxDecodeInfo pepper2_gfxdecodeinfo[] =
-{
-	{ 0,           0x6000, &pepper2_charlayout,       0, 4 },    /* the game dynamically modifies this */
-	{ REGION_GFX1, 0x0000, &spritelayout, 16, 2 },  /* Angel/Devil/Zipper Ripper */
-	{ -1 } /* end of array */
-};
-
-static struct GfxDecodeInfo targ_gfxdecodeinfo[] =
-{
-	{ 0,           0x4800, &charlayout,       0, 4 },         /* the game dynamically modifies this */
-	{ REGION_GFX1, 0x0000, &targ_spritelayout, 8, 2 },  /* Sprites */
-	{ -1 } /* end of array */
+	{ REGION_CPU1, 0x6000, &charlayout_2bpp, 0, 4 },	/* the game dynamically modifies this */
+	{ REGION_GFX1, 0x0000, &spritelayout,   16, 2 },
+	{ -1 }
 };
 
 
 
-/***************************************************************************
-  Game drivers
-***************************************************************************/
+/*************************************
+ *
+ *	Sound  definitions
+ *
+ *************************************/
 
 static const char *targ_sample_names[] =
 {
@@ -843,17 +826,33 @@ static struct Samplesinterface targ_samples_interface =
 static struct CustomSound_interface targ_custom_interface =
 {
 	targ_sh_start,
-	targ_sh_stop,
-	0
+	targ_sh_stop
 };
 
 static struct DACinterface targ_DAC_interface =
 {
 	1,
-    { 100 }
+	{ 100 }
+};
+
+static struct hc55516_interface cvsd_interface =
+{
+	1,          /* 1 chip */
+	{ 80 }
+};
+
+static struct CustomSound_interface exidy_custom_interface =
+{
+	exidy_sh_start
 };
 
 
+
+/*************************************
+ *
+ *	Machine drivers
+ *
+ *************************************/
 
 static struct MachineDriver machine_driver_targ =
 {
@@ -861,23 +860,23 @@ static struct MachineDriver machine_driver_targ =
 	{
 		{
 			CPU_M6502,
-			11289000/16,    /* .705562 MHz */
-			readmem,targ_writemem,0,0,
-			exidy_interrupt,1
+			11289000/16,
+			main_readmem,main_writemem,0,0,
+			exidy_vblank_interrupt,1
 		},
 	},
-	57, DEFAULT_60HZ_VBLANK_DURATION,       /* frames per second, vblank duration */
+	57, DEFAULT_REAL_60HZ_VBLANK_DURATION,
 	1,
-	exidy_init_machine,
+	0,
 
 	/* video hardware */
 	32*8, 32*8, { 0*8, 31*8-1, 0*8, 32*8-1 },
-	targ_gfxdecodeinfo,
+	gfxdecodeinfo_1bpp,
 	PALETTE_LEN, COLORTABLE_LEN,
 	exidy_vh_init_palette,
 
-	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY,
-	0,
+	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY,
+	exidy_vh_eof,
 	exidy_vh_start,
 	exidy_vh_stop,
 	exidy_vh_screenrefresh,
@@ -885,39 +884,12 @@ static struct MachineDriver machine_driver_targ =
 	/* sound hardware */
 	0,0,0,0,
 	{
-		{
-			SOUND_CUSTOM,
-			&targ_custom_interface
-		},
-		{
-			SOUND_SAMPLES,
-			&targ_samples_interface
-		},
-		{
-			SOUND_DAC,
-			&targ_DAC_interface
-		}
+		{ SOUND_CUSTOM,  &targ_custom_interface },
+		{ SOUND_SAMPLES, &targ_samples_interface },
+		{ SOUND_DAC,     &targ_DAC_interface }
 	}
 };
 
-static struct hc55516_interface cvsd_interface =
-{
-	1,          /* 1 chip */
-        { 80 }
-};
-
-static struct Samplesinterface venture_samples_interface=
-{
-    6,       /* 6 Channels */
-    20  /* volume */
-};
-
-static struct CustomSound_interface exidy_custom_interface =
-{
-    exidy_sh_start,
-    exidy_sh_stop,
-	0
-};
 
 static struct MachineDriver machine_driver_mtrap =
 {
@@ -926,8 +898,8 @@ static struct MachineDriver machine_driver_mtrap =
 		{
 			CPU_M6502,
 			11289000/16,
-			readmem,writemem,0,0,
-			exidy_interrupt,1
+			main_readmem,main_writemem,0,0,
+			exidy_vblank_interrupt,1
 		},
 		{
 			CPU_M6502 | CPU_AUDIO_CPU,
@@ -938,22 +910,22 @@ static struct MachineDriver machine_driver_mtrap =
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			3579545/2,
-			dac_readmem,dac_writemem,dac_ioread,dac_iowrite,
+			cvsd_readmem,cvsd_writemem,cvsd_ioread,cvsd_iowrite,
 			ignore_interrupt,0
 		}
 	},
-	57, DEFAULT_60HZ_VBLANK_DURATION,       /* frames per second, vblank duration */
-    32, /* 10 CPU slices per frame - enough for the sound CPU to read all commands */
-	exidy_init_machine,
+	57, DEFAULT_REAL_60HZ_VBLANK_DURATION,
+    32,
+	0,
 
 	/* video hardware */
 	32*8, 32*8, { 0*8, 31*8-1, 0*8, 32*8-1 },
-	gfxdecodeinfo,
+	gfxdecodeinfo_1bpp,
 	PALETTE_LEN, COLORTABLE_LEN,
 	exidy_vh_init_palette,
 
-	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY|VIDEO_MODIFIES_PALETTE,
-	0,
+	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY | VIDEO_MODIFIES_PALETTE,
+	exidy_vh_eof,
 	exidy_vh_start,
 	exidy_vh_stop,
 	exidy_vh_screenrefresh,
@@ -961,21 +933,9 @@ static struct MachineDriver machine_driver_mtrap =
 	/* sound hardware */
 	0,0,0,0,
 	{
-		{
-			SOUND_HC55516,
-			&cvsd_interface
-        },
-		{
-			SOUND_SAMPLES,
-			&venture_samples_interface
-		},
-		{
-			SOUND_CUSTOM,
-			&exidy_custom_interface
-        }
+		{ SOUND_HC55516, &cvsd_interface },
+		{ SOUND_CUSTOM,  &exidy_custom_interface }
 	}
-
-
 };
 
 
@@ -986,8 +946,8 @@ static struct MachineDriver machine_driver_venture =
 		{
 			CPU_M6502,
 			11289000/16,
-			readmem,writemem,0,0,
-			venture_interrupt,32 /* Need to have multiple IRQs per frame if there's a collision */
+			main_readmem,main_writemem,0,0,
+			exidy_vblank_interrupt,1
 		},
 		{
 			CPU_M6502 | CPU_AUDIO_CPU,
@@ -996,18 +956,18 @@ static struct MachineDriver machine_driver_venture =
 			ignore_interrupt,0
 		}
 	},
-	57, DEFAULT_60HZ_VBLANK_DURATION,       /* frames per second, vblank duration */
-	10, /* 10 CPU slices per frame - enough for the sound CPU to read all commands */
-	exidy_init_machine,
+	57, DEFAULT_REAL_60HZ_VBLANK_DURATION,
+	10,
+	0,
 
 	/* video hardware */
 	32*8, 32*8, { 0*8, 31*8-1, 0*8, 32*8-1 },
-	gfxdecodeinfo,
+	gfxdecodeinfo_1bpp,
 	PALETTE_LEN, COLORTABLE_LEN,
 	exidy_vh_init_palette,
 
-	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY|VIDEO_MODIFIES_PALETTE,
-	0,
+	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY | VIDEO_MODIFIES_PALETTE,
+	exidy_vh_eof,
 	exidy_vh_start,
 	exidy_vh_stop,
 	exidy_vh_screenrefresh,
@@ -1015,14 +975,7 @@ static struct MachineDriver machine_driver_venture =
 	/* sound hardware */
 	0,0,0,0,
 	{
-		{
-			SOUND_SAMPLES,
-			&venture_samples_interface
-		},
-		{
-			SOUND_CUSTOM,
-			&exidy_custom_interface
-		}
+		{ SOUND_CUSTOM,  &exidy_custom_interface }
 	}
 };
 
@@ -1034,8 +987,8 @@ static struct MachineDriver machine_driver_pepper2 =
 		{
 			CPU_M6502,
 			11289000/16,
-			readmem,pepper2_writemem,0,0,
-			exidy_interrupt,1
+			main_readmem,main_writemem,0,0,
+			exidy_vblank_interrupt,1
 		},
 		{
 			CPU_M6502 | CPU_AUDIO_CPU,
@@ -1044,18 +997,18 @@ static struct MachineDriver machine_driver_pepper2 =
 			ignore_interrupt,0
 		}
 	},
-	57, DEFAULT_60HZ_VBLANK_DURATION,       /* frames per second, vblank duration */
-	10, /* 10 CPU slices per frame - enough for the sound CPU to read all commands */
-	exidy_init_machine,
+	57, DEFAULT_REAL_60HZ_VBLANK_DURATION,
+	10,
+	0,
 
 	/* video hardware */
 	32*8, 32*8, { 0*8, 31*8-1, 0*8, 32*8-1 },
-	pepper2_gfxdecodeinfo,
+	gfxdecodeinfo_2bpp,
 	PALETTE_LEN, COLORTABLE_LEN,
 	exidy_vh_init_palette,
 
-	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY|VIDEO_MODIFIES_PALETTE,
-	0,
+	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY | VIDEO_MODIFIES_PALETTE,
+	exidy_vh_eof,
 	exidy_vh_start,
 	exidy_vh_stop,
 	exidy_vh_screenrefresh,
@@ -1063,14 +1016,7 @@ static struct MachineDriver machine_driver_pepper2 =
 	/* sound hardware */
 	0,0,0,0,
 	{
-		{
-			SOUND_SAMPLES,
-			&venture_samples_interface
-		},
-		{
-			SOUND_CUSTOM,
-			&exidy_custom_interface
-		}
+		{ SOUND_CUSTOM, &exidy_custom_interface }
 	}
 
 };
@@ -1084,7 +1030,7 @@ static struct MachineDriver machine_driver_fax =
 			CPU_M6502,
 			11289000/16,
 			fax_readmem,fax_writemem,0,0,
-			exidy_interrupt,1
+			exidy_vblank_interrupt,1
 		},
 		{
 			CPU_M6502 | CPU_AUDIO_CPU,
@@ -1093,18 +1039,18 @@ static struct MachineDriver machine_driver_fax =
 			ignore_interrupt,0
 		}
 	},
-	57, DEFAULT_60HZ_VBLANK_DURATION,       /* frames per second, vblank duration */
-	10, /* 10 CPU slices per frame - enough for the sound CPU to read all commands */
-	exidy_init_machine,
+	57, DEFAULT_REAL_60HZ_VBLANK_DURATION,
+	10,
+	0,
 
 	/* video hardware */
 	32*8, 32*8, { 0*8, 31*8-1, 0*8, 32*8-1 },
-	pepper2_gfxdecodeinfo,
+	gfxdecodeinfo_2bpp,
 	PALETTE_LEN, COLORTABLE_LEN,
 	exidy_vh_init_palette,
 
-	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY|VIDEO_MODIFIES_PALETTE,
-	0,
+	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY | VIDEO_MODIFIES_PALETTE,
+	exidy_vh_eof,
 	exidy_vh_start,
 	exidy_vh_stop,
 	exidy_vh_screenrefresh,
@@ -1112,21 +1058,17 @@ static struct MachineDriver machine_driver_fax =
 	/* sound hardware */
 	0,0,0,0,
 	{
-		{
-			SOUND_SAMPLES,
-			&venture_samples_interface
-		},
-		{
-			SOUND_CUSTOM,
-			&exidy_custom_interface
-		}
+		{ SOUND_CUSTOM, &exidy_custom_interface }
 	}
 };
 
 
-/***************************************************************************
-  Game ROMs
-***************************************************************************/
+
+/*************************************
+ *
+ *	ROM definitions
+ *
+ *************************************/
 
 ROM_START( sidetrac )
 	ROM_REGION( 0x10000, REGION_CPU1 ) /* 64k for code */
@@ -1136,9 +1078,10 @@ ROM_START( sidetrac )
 	ROM_RELOAD(              0xf800, 0x0800 ) /* for the reset/interrupt vectors */
 	ROM_LOAD( "stl9c-1",     0x4800, 0x0400, 0x08710a84 ) /* prom instead of ram chr gen*/
 
-	ROM_REGION( 0x0800, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x0200, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "stl11d",      0x0000, 0x0200, 0x3bd1acc1 )
 ROM_END
+
 
 ROM_START( targ )
 	ROM_REGION( 0x10000, REGION_CPU1 ) /* 64k for code */
@@ -1149,9 +1092,10 @@ ROM_START( targ )
 	ROM_LOAD( "targ06a3",    0x3800, 0x0800, 0xa60a1bfc )
 	ROM_RELOAD(              0xf800, 0x0800 ) /* for the reset/interrupt vectors */
 
-	ROM_REGION( 0x0800, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x0400, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "targ11d1",    0x0000, 0x0400, 0x9f03513e )
 ROM_END
+
 
 ROM_START( spectar )
 	ROM_REGION( 0x10000, REGION_CPU1 ) /* 64k for code */
@@ -1163,7 +1107,7 @@ ROM_START( spectar )
 	ROM_LOAD( "spl6a-2",     0x3800, 0x0800, 0x0cb46b25 )
 	ROM_RELOAD(              0xf800, 0x0800 )  /* for the reset/interrupt vectors */
 
-	ROM_REGION( 0x0800, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x0400, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "hrl11d-2",    0x0000, 0x0400, 0xc55b645d )  /* this is actually not used (all FF) */
 	ROM_CONTINUE(            0x0000, 0x0400 )  /* overwrite with the real one */
 ROM_END
@@ -1179,10 +1123,11 @@ ROM_START( spectar1 )
 	ROM_LOAD( "spl6a1",      0x3800, 0x0800, 0xf0e4e71a )
 	ROM_RELOAD(              0xf800, 0x0800 )   /* for the reset/interrupt vectors */
 
-	ROM_REGION( 0x0800, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x0400, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "hrl11d-2",    0x0000, 0x0400, 0xc55b645d )  /* this is actually not used (all FF) */
 	ROM_CONTINUE(            0x0000, 0x0400 )  /* overwrite with the real one */
 ROM_END
+
 
 ROM_START( mtrap )
 	ROM_REGION( 0x10000, REGION_CPU1 ) /* 64k for code */
@@ -1200,10 +1145,10 @@ ROM_START( mtrap )
 	ROM_RELOAD(              0xf800, 0x0800 )
 
 	ROM_REGION( 0x10000, REGION_CPU3 ) /* 64k for digital sound processor */
-	ROM_LOAD( "mta2a.bin", 0x0000,0x1000,0x13db8ed3 )
-	ROM_LOAD( "mta3a.bin", 0x1000,0x1000,0x31bdfe5c )
-	ROM_LOAD( "mta4a.bin", 0x2000,0x1000,0x1502d0e8 )
-	ROM_LOAD( "mta1a.bin", 0x3000,0x1000,0x658482a6 )
+	ROM_LOAD( "mta2a.bin", 0x0000, 0x1000, 0x13db8ed3 )
+	ROM_LOAD( "mta3a.bin", 0x1000, 0x1000, 0x31bdfe5c )
+	ROM_LOAD( "mta4a.bin", 0x2000, 0x1000, 0x1502d0e8 )
+	ROM_LOAD( "mta1a.bin", 0x3000, 0x1000, 0x658482a6 )
 
 	ROM_REGION( 0x0800, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "mtl11d.bin",  0x0000, 0x0800, 0xc6e4d339 )
@@ -1225,10 +1170,10 @@ ROM_START( mtrap3 )
 	ROM_RELOAD(              0xf800, 0x0800 )
 
 	ROM_REGION( 0x10000, REGION_CPU3 ) /* 64k for digital sound processor */
-	ROM_LOAD( "mta2a.bin", 0x0000,0x1000,0x13db8ed3 )
-	ROM_LOAD( "mta3a.bin", 0x1000,0x1000,0x31bdfe5c )
-	ROM_LOAD( "mta4a.bin", 0x2000,0x1000,0x1502d0e8 )
-	ROM_LOAD( "mta1a.bin", 0x3000,0x1000,0x658482a6 )
+	ROM_LOAD( "mta2a.bin", 0x0000, 0x1000, 0x13db8ed3 )
+	ROM_LOAD( "mta3a.bin", 0x1000, 0x1000, 0x31bdfe5c )
+	ROM_LOAD( "mta4a.bin", 0x2000, 0x1000, 0x1502d0e8 )
+	ROM_LOAD( "mta1a.bin", 0x3000, 0x1000, 0x658482a6 )
 
 	ROM_REGION( 0x0800, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "mtl11d.bin",  0x0000, 0x0800, 0xc6e4d339 )
@@ -1258,6 +1203,7 @@ ROM_START( mtrap4 )
 	ROM_REGION( 0x0800, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "mtl11d.bin",   0x0000, 0x0800, 0xc6e4d339 )
 ROM_END
+
 
 ROM_START( venture )
 	ROM_REGION( 0x10000, REGION_CPU1 ) /* 64k for code */
@@ -1328,6 +1274,7 @@ ROM_START( venture4 )
 	ROM_LOAD( "vel11d-2",     0x0000, 0x0800, 0xea6fd981 )
 ROM_END
 
+
 ROM_START( pepper2 )
 	ROM_REGION( 0x10000, REGION_CPU1 ) /* 64k for code */
 	ROM_LOAD( "main_12a",     0x9000, 0x1000, 0x33db4737 )
@@ -1348,6 +1295,7 @@ ROM_START( pepper2 )
 	ROM_LOAD( "main_11d",     0x0000, 0x0800, 0xb25160cd )
 ROM_END
 
+
 ROM_START( hardhat )
 	ROM_REGION( 0x10000, REGION_CPU1 ) /* 64k for code */
 	ROM_LOAD( "hhl-2.11a",    0xa000, 0x1000, 0x7623deea )
@@ -1367,6 +1315,7 @@ ROM_START( hardhat )
 	ROM_LOAD( "hhl-1.11d",    0x0000, 0x0800, 0xdbcdf353 )
 ROM_END
 
+
 ROM_START( fax )
 	ROM_REGION( 0x40000, REGION_CPU1 ) /* 64k for code + 192k for extra memory */
 	ROM_LOAD( "fxl8-13a.32",  0x8000, 0x1000, 0x8e30bf6b )
@@ -1378,31 +1327,31 @@ ROM_START( fax )
 	ROM_LOAD( "fxl8-7a.32",   0xE000, 0x1000, 0x1471fef5 )
 	ROM_LOAD( "fxl8-6a.32",   0xF000, 0x1000, 0x812e39f3 )
 	/* Banks of question ROMs */
-	ROM_LOAD( "fxd-1c.64",          0x10000, 0x2000, 0xfd7e3137 )
-	ROM_LOAD( "fxd-2c.64",          0x12000, 0x2000, 0xe78cb16f )
-	ROM_LOAD( "fxd-3c.64",          0x14000, 0x2000, 0x57a94c6f )
-	ROM_LOAD( "fxd-4c.64",          0x16000, 0x2000, 0x9036c5a2 )
-	ROM_LOAD( "fxd-5c.64",          0x18000, 0x2000, 0x38c03405 )
-	ROM_LOAD( "fxd-6c.64",          0x1A000, 0x2000, 0xf48fc308 )
-	ROM_LOAD( "fxd-7c.64",          0x1C000, 0x2000, 0xcf93b924 )
-	ROM_LOAD( "fxd-8c.64",          0x1E000, 0x2000, 0x607b48da )
-	ROM_LOAD( "fxd-1b.64",          0x20000, 0x2000, 0x62872d4f )
-	ROM_LOAD( "fxd-2b.64",          0x22000, 0x2000, 0x625778d0 )
-	ROM_LOAD( "fxd-3b.64",          0x24000, 0x2000, 0xc3473dee )
-	ROM_LOAD( "fxd-4b.64",          0x26000, 0x2000, 0xe39a15f5 )
-	ROM_LOAD( "fxd-5b.64",          0x28000, 0x2000, 0x101a9d70 )
-	ROM_LOAD( "fxd-6b.64",          0x2A000, 0x2000, 0x374a8f05 )
-	ROM_LOAD( "fxd-7b.64",          0x2C000, 0x2000, 0xf7e7f824 )
-	ROM_LOAD( "fxd-8b.64",          0x2E000, 0x2000, 0x8f1a5287 )
-	ROM_LOAD( "fxd-1a.64",          0x30000, 0x2000, 0xfc5e6344 )
-	ROM_LOAD( "fxd-2a.64",          0x32000, 0x2000, 0x43cf60b3 )
-	ROM_LOAD( "fxd-3a.64",          0x34000, 0x2000, 0x6b7d29cb )
-	ROM_LOAD( "fxd-4a.64",          0x36000, 0x2000, 0xb9de3c2d )
-	ROM_LOAD( "fxd-5a.64",          0x38000, 0x2000, 0x67285bc6 )
-	ROM_LOAD( "fxd-6a.64",          0x3A000, 0x2000, 0xba67b7b2 )
+	ROM_LOAD( "fxd-1c.64",  0x10000, 0x2000, 0xfd7e3137 )
+	ROM_LOAD( "fxd-2c.64",  0x12000, 0x2000, 0xe78cb16f )
+	ROM_LOAD( "fxd-3c.64",  0x14000, 0x2000, 0x57a94c6f )
+	ROM_LOAD( "fxd-4c.64",  0x16000, 0x2000, 0x9036c5a2 )
+	ROM_LOAD( "fxd-5c.64",  0x18000, 0x2000, 0x38c03405 )
+	ROM_LOAD( "fxd-6c.64",  0x1A000, 0x2000, 0xf48fc308 )
+	ROM_LOAD( "fxd-7c.64",  0x1C000, 0x2000, 0xcf93b924 )
+	ROM_LOAD( "fxd-8c.64",  0x1E000, 0x2000, 0x607b48da )
+	ROM_LOAD( "fxd-1b.64",  0x20000, 0x2000, 0x62872d4f )
+	ROM_LOAD( "fxd-2b.64",  0x22000, 0x2000, 0x625778d0 )
+	ROM_LOAD( "fxd-3b.64",  0x24000, 0x2000, 0xc3473dee )
+	ROM_LOAD( "fxd-4b.64",  0x26000, 0x2000, 0xe39a15f5 )
+	ROM_LOAD( "fxd-5b.64",  0x28000, 0x2000, 0x101a9d70 )
+	ROM_LOAD( "fxd-6b.64",  0x2A000, 0x2000, 0x374a8f05 )
+	ROM_LOAD( "fxd-7b.64",  0x2C000, 0x2000, 0xf7e7f824 )
+	ROM_LOAD( "fxd-8b.64",  0x2E000, 0x2000, 0x8f1a5287 )
+	ROM_LOAD( "fxd-1a.64",  0x30000, 0x2000, 0xfc5e6344 )
+	ROM_LOAD( "fxd-2a.64",  0x32000, 0x2000, 0x43cf60b3 )
+	ROM_LOAD( "fxd-3a.64",  0x34000, 0x2000, 0x6b7d29cb )
+	ROM_LOAD( "fxd-4a.64",  0x36000, 0x2000, 0xb9de3c2d )
+	ROM_LOAD( "fxd-5a.64",  0x38000, 0x2000, 0x67285bc6 )
+	ROM_LOAD( "fxd-6a.64",  0x3A000, 0x2000, 0xba67b7b2 )
 	/* The last two ROM sockets were apparently never populated */
-//	ROM_LOAD( "fxd-7a.64",          0x3C000, 0x2000, 0x00000000 )
-//	ROM_LOAD( "fxd-8a.64",          0x3E000, 0x2000, 0x00000000 )
+//	ROM_LOAD( "fxd-7a.64",  0x3C000, 0x2000, 0x00000000 )
+//	ROM_LOAD( "fxd-8a.64",  0x3E000, 0x2000, 0x00000000 )
 
 	ROM_REGION( 0x10000, REGION_CPU2 ) /* 64k for audio */
 	ROM_LOAD( "fxa2-5a.16",   0x6800, 0x0800, 0x7c525aec )
@@ -1417,16 +1366,110 @@ ROM_END
 
 
 
+/*************************************
+ *
+ *	Driver init
+ *
+ *************************************/
+
+void init_sidetrac(void)
+{
+	exidy_palette 			= sidetrac_palette;
+	exidy_colortable 		= exidy_1bpp_colortable;
+	exidy_collision_mask 	= 0x00;
+	exidy_collision_invert	= 0x00;
+
+	/* there is no sprite enable register so we have to fake it out */
+	*exidy_sprite_enable 	= 0x10;
+	targ_spec_flag 			= 0;
+
+	/* sound is handled directly instead of via a PIA */
+	install_mem_write_handler(0, 0x5200, 0x5201, targ_sh_w);
+}
+
+void init_targ(void)
+{
+	exidy_palette 			= targ_palette;
+	exidy_colortable 		= exidy_1bpp_colortable;
+	exidy_collision_mask 	= 0x00;
+	exidy_collision_invert	= 0x00;
+
+	/* there is no sprite enable register so we have to fake it out */
+	*exidy_sprite_enable 	= 0x10;
+	targ_spec_flag 			= 1;
+
+	/* sound is handled directly instead of via a PIA */
+	install_mem_write_handler(0, 0x5200, 0x5201, targ_sh_w);
+}
+
+void init_spectar(void)
+{
+	exidy_palette 			= spectar_palette;
+	exidy_colortable 		= exidy_1bpp_colortable;
+	exidy_collision_mask 	= 0x00;
+	exidy_collision_invert	= 0x00;
+
+	/* there is no sprite enable register so we have to fake it out */
+	*exidy_sprite_enable 	= 0x10;
+	targ_spec_flag 			= 0;
+
+	/* sound is handled directly instead of via a PIA */
+	install_mem_write_handler(0, 0x5200, 0x5201, targ_sh_w);
+}
+
+void init_mtrap(void)
+{
+	exidy_colortable 		= exidy_1bpp_colortable;
+	exidy_collision_mask 	= 0x14;
+	exidy_collision_invert	= 0x00;
+}
+
+void init_venture(void)
+{
+	exidy_colortable 		= exidy_1bpp_colortable;
+	exidy_collision_mask 	= 0x04;
+	exidy_collision_invert	= 0x04;
+}
+
+void init_pepper2(void)
+{
+	exidy_colortable 		= exidy_2bpp_colortable;
+	exidy_collision_mask 	= 0x14;
+	exidy_collision_invert	= 0x04;
+
+	/* two 6116 character RAMs */
+	install_mem_write_handler(0, 0x4800, 0x4fff, MWA_NOP);
+	exidy_characterram = install_mem_write_handler(0, 0x6000, 0x6fff, exidy_characterram_w);
+}
+
+void init_fax(void)
+{
+	exidy_colortable 		= exidy_2bpp_colortable;
+	exidy_collision_mask 	= 0x04;
+	exidy_collision_invert	= 0x04;
+
+	/* Initialize our ROM question bank */
+	fax_bank_select_w(0,0);
+}
+
+
+
+/*************************************
+ *
+ *	Game drivers
+ *
+ *************************************/
+
 GAME( 1979, sidetrac, 0,       targ,    sidetrac, sidetrac, ROT0, "Exidy", "Side Track" )
 GAME( 1980, targ,     0,       targ,    targ,     targ,     ROT0, "Exidy", "Targ" )
 GAME( 1980, spectar,  0,       targ,    spectar,  spectar,  ROT0, "Exidy", "Spectar (revision 3)" )
 GAME( 1980, spectar1, spectar, targ,    spectar,  spectar,  ROT0, "Exidy", "Spectar (revision 1?)" )
-GAMEX(1981, mtrap,    0,       mtrap,   mtrap,    mtrap,    ROT0, "Exidy", "Mouse Trap (version 5)", GAME_IMPERFECT_SOUND )
-GAMEX(1981, mtrap3,   mtrap,   mtrap,   mtrap,    mtrap,    ROT0, "Exidy", "Mouse Trap (version 3)", GAME_IMPERFECT_SOUND )
-GAMEX(1981, mtrap4,   mtrap,   mtrap,   mtrap,    mtrap,    ROT0, "Exidy", "Mouse Trap (version 4)", GAME_IMPERFECT_SOUND )
-GAMEX(1981, venture,  0,       venture, venture,  venture,  ROT0, "Exidy", "Venture (version 5 set 1)", GAME_IMPERFECT_SOUND )
-GAMEX(1981, venture2, venture, venture, venture,  venture,  ROT0, "Exidy", "Venture (version 5 set 2)", GAME_IMPERFECT_SOUND )
-GAMEX(1981, venture4, venture, venture, venture,  venture,  ROT0, "Exidy", "Venture (version 4)", GAME_IMPERFECT_SOUND )
-GAMEX(1982, pepper2,  0,       pepper2, pepper2,  pepper2,  ROT0, "Exidy", "Pepper II", GAME_IMPERFECT_SOUND )
-GAMEX(1982, hardhat,  0,       pepper2, pepper2,  pepper2,  ROT0, "Exidy", "Hard Hat", GAME_IMPERFECT_SOUND )
-GAMEX(1983, fax,      0,       fax,     fax,      fax,      ROT0, "Exidy", "Fax", GAME_IMPERFECT_SOUND )
+GAME( 1981, mtrap,    0,       mtrap,   mtrap,    mtrap,    ROT0, "Exidy", "Mouse Trap (version 5)" )
+GAME( 1981, mtrap3,   mtrap,   mtrap,   mtrap,    mtrap,    ROT0, "Exidy", "Mouse Trap (version 3)" )
+GAME( 1981, mtrap4,   mtrap,   mtrap,   mtrap,    mtrap,    ROT0, "Exidy", "Mouse Trap (version 4)" )
+GAME( 1981, venture,  0,       venture, venture,  venture,  ROT0, "Exidy", "Venture (version 5 set 1)" )
+GAME( 1981, venture2, venture, venture, venture,  venture,  ROT0, "Exidy", "Venture (version 5 set 2)" )
+GAME( 1981, venture4, venture, venture, venture,  venture,  ROT0, "Exidy", "Venture (version 4)" )
+GAME( 1982, pepper2,  0,       pepper2, pepper2,  pepper2,  ROT0, "Exidy", "Pepper II" )
+GAME( 1982, hardhat,  0,       pepper2, pepper2,  pepper2,  ROT0, "Exidy", "Hard Hat" )
+GAME( 1983, fax,      0,       fax,     fax,      fax,      ROT0, "Exidy", "Fax" )

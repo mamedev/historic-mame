@@ -27,7 +27,7 @@
   0x1e-0x1f     Related to Y pos (xored with 0x100 when screen flip on)
   0x20-0x21     start offset for the rowscroll matrix
   0x22-0x23     unknown but widely used - usually 0x0e. bit 0 enables rowscroll
-                on layer 2. bit 15 is flip screen.
+				on layer 2. bit 15 is flip screen.
 
 
   Registers move from game to game.. following example strider
@@ -46,44 +46,43 @@
   ==============
   All games
   * Large sprites don't exit smoothly on the left side of the screen (e.g. Car
-    in Mega Man attract mode, cadillac in Cadillacs and Dinosaurs)
+	in Mega Man attract mode, cadillac in Cadillacs and Dinosaurs)
+  * There might be problems if high priority tiles (over sprites) and rowscroll
+    are used at the same time, because the priority buffer is not rowscrolled.
+    The only place I know were this might cause problems is the cave in mtwins,
+    which waves to simulate heat. I haven't noticed anything wrong, though.
 
   Magic Sword.
   * during attract mode, characters are shown with a black background. There is
-    a background, but the layers are disabled. I think this IS the correct
+	a background, but the layers are disabled. I think this IS the correct
 	behaviour.
 
-  King of Dragons.
+  King of Dragons (World).
   * Distortion effect missing on character description screen during attract
-    mode. The game rapidly toggles on and off the layer enable bit.
-
-  mtwins
-  * in the cave, some parts of the background don't wave. That's because
-    rowscroll is not supported for high priority tiles.
-
-  cawing
-  * at end of level 2, a big black box covers the large plane. This seems to
-    be supposed to be a *mask* to hide the fuel pipes. The pipes are sprites,
-	the large plane is scroll2. Therefore, the mask should block sprites but
-	not tiles from the other planes.
+	mode. The game rapidly toggles on and off the layer enable bit. Again, I
+	think this IS the correct behaviour. The Japanese version does the
+	distortion as expected.
 
   qad
   * layer enable mask incomplete
 
    dino
   * in level 6, the legs of the big dino which stomps you are almost entirely
-    missing.
+	missing.
   * in level 6, palette changes due to lightnings cause a lot of tiling effects
-    on scroll2.
+	on scroll2.
 
   Unknown issues
   ==============
 
   There are often some redundant high bits in the scroll layer's attributes.
-  I think that these are spare bits that the game uses for control.
+  I think that these are spare bits that the game uses for to store additional
+  information, not used by the hardware.
   The games seem to use them to mark platforms, kill zones and no-go areas.
 
 ***************************************************************************/
+
+#ifndef SELF_INCLUDE
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
@@ -214,17 +213,17 @@ static struct CPS1config cps1_config_table[]=
 	{"varthj",  0x00,0x0000, 0x4e,0x4c,0x4a,0x48, 0x60,0x6e,0x6c,0x6a,0x68,0x70, 0x20,0x06,0x06, 0,0,0,     -1,0x0000,0xffff,0x0000,0xffff },	/* CPSB test has been patched out (72=0001) */
 	{"cworld2j",0x00,0x0000, 0x00,0x00,0x00,0x00, 0x60,0x6e,0x6c,0x6a,0x68,0x70, 0x20,0x14,0x14, 0,0,0,     -1,0x0000,0xffff,0x0000,0xffff },  /* The 0x76 priority values are incorrect values */
 	{"wof",     0x00,0x0000, 0x00,0x00,0x00,0x00, 0x66,0x68,0x6a,0x6c,0x6e,0x70, 0x02,0x04,0x08, 0,0,0,     -1,0x0000,0xffff,0x0000,0xffff },
-    {"wofa",    0x00,0x0000, 0x00,0x00,0x00,0x00, 0x66,0x68,0x6a,0x6c,0x6e,0x70, 0x02,0x04,0x08, 0,0,0,     -1,0x0000,0xffff,0x0000,0xffff },
+	{"wofa",    0x00,0x0000, 0x00,0x00,0x00,0x00, 0x66,0x68,0x6a,0x6c,0x6e,0x70, 0x02,0x04,0x08, 0,0,0,     -1,0x0000,0xffff,0x0000,0xffff },
 	{"wofj",    0x00,0x0000, 0x00,0x00,0x00,0x00, 0x62,0x64,0x66,0x68,0x6a,0x6c, 0x10,0x08,0x04, 0,0,0,     -1,0x0000,0xffff,0x0000,0xffff },
 	{"dino",    0x00,0x0000, 0x00,0x00,0x00,0x00, 0x4a,0x4c,0x4e,0x40,0x42,0x44, 0x16,0x16,0x16, 0,0,0,     -1,0x0000,0xffff,0x0000,0xffff },	/* layer enable never used */
 	{"dinoj",   0x00,0x0000, 0x00,0x00,0x00,0x00, 0x4a,0x4c,0x4e,0x40,0x42,0x44, 0x16,0x16,0x16, 0,0,0,     -1,0x0000,0xffff,0x0000,0xffff },	/* layer enable never used */
 	{"punisher",0x4e,0x0c00, 0x00,0x00,0x00,0x00, 0x52,0x54,0x56,0x48,0x4a,0x4c, 0x04,0x02,0x20, 0,0,0,     -1,0x0000,0xffff,0x0000,0xffff },
 	{"punishru",0x4e,0x0c00, 0x00,0x00,0x00,0x00, 0x52,0x54,0x56,0x48,0x4a,0x4c, 0x04,0x02,0x20, 0,0,0,     -1,0x0000,0xffff,0x0000,0xffff },
 	{"punishrj",0x4e,0x0c00, 0x00,0x00,0x00,0x00, 0x52,0x54,0x56,0x48,0x4a,0x4c, 0x04,0x02,0x20, 0,0,0,     -1,0x0000,0xffff,0x0000,0xffff },
-	{"slammast",0x6e,0x0c01, 0x00,0x00,0x00,0x00, 0x56,0x40,0x42,0x68,0x6a,0x6c, 0x10,0x0c,0x0c, 0,0,0,     -1,0x0000,0xffff,0x0000,0xffff },
-	{"mbomberj",0x6e,0x0c01, 0x00,0x00,0x00,0x00, 0x56,0x40,0x42,0x68,0x6a,0x6c, 0x10,0x0c,0x0c, 0,0,0,     -1,0x0000,0xffff,0x0000,0xffff },
-	{"mbombrd", 0x5e,0x0c02, 0x00,0x00,0x00,0x00, 0x6a,0x6c,0x6e,0x70,0x72,0x5c, 0x10,0x0c,0x0c, 0,0,0,     -1,0x0000,0xffff,0x0000,0xffff },
-	{"mbombrdj",0x5e,0x0c02, 0x00,0x00,0x00,0x00, 0x6a,0x6c,0x6e,0x70,0x72,0x5c, 0x10,0x0c,0x0c, 0,0,0,     -1,0x0000,0xffff,0x0000,0xffff },
+	{"slammast",0x6e,0x0c01, 0x00,0x00,0x00,0x00, 0x56,0x40,0x42,0x68,0x6a,0x6c, 0x0c,0x0c,0x10, 0,0,0,     -1,0x0000,0xffff,0x0000,0xffff },
+	{"mbomberj",0x6e,0x0c01, 0x00,0x00,0x00,0x00, 0x56,0x40,0x42,0x68,0x6a,0x6c, 0x0c,0x0c,0x10, 0,0,0,     -1,0x0000,0xffff,0x0000,0xffff },
+	{"mbombrd", 0x5e,0x0c02, 0x00,0x00,0x00,0x00, 0x6a,0x6c,0x6e,0x70,0x72,0x5c, 0x0c,0x0c,0x10, 0,0,0,     -1,0x0000,0xffff,0x0000,0xffff },
+	{"mbombrdj",0x5e,0x0c02, 0x00,0x00,0x00,0x00, 0x6a,0x6c,0x6e,0x70,0x72,0x5c, 0x0c,0x0c,0x10, 0,0,0,     -1,0x0000,0xffff,0x0000,0xffff },
 	{"sf2t",    0x00,0x0000, 0x40,0x42,0x44,0x46, 0x66,0x68,0x6a,0x6c,0x6e,0x70, 0x02,0x0c,0x0c, 2,2,2,     -1,0x0000,0xffff,0x0000,0xffff },
 	{"sf2tj",   0x00,0x0000, 0x40,0x42,0x44,0x46, 0x66,0x68,0x6a,0x6c,0x6e,0x70, 0x02,0x0c,0x0c, 2,2,2,     -1,0x0000,0xffff,0x0000,0xffff },
 	{"pnickj",  0x00,0x0000, 0x00,0x00,0x00,0x00, 0x66,0x00,0x00,0x00,0x00,0x70, 0x0e,0x0e,0x0e, 0,0,0,     -1,0x0000,0xffff,0x0000,0xffff },
@@ -232,7 +231,7 @@ static struct CPS1config cps1_config_table[]=
 	{"qadj",    0x00,0x0000, 0x40,0x42,0x44,0x46, 0x66,0x68,0x6a,0x6c,0x6e,0x70, 0x0e,0x0e,0x0e, 0,0,0,     -1,0x0000,0xffff,0x0000,0xffff },
 	{"qtono2",  0x00,0x0000, 0x40,0x42,0x44,0x46, 0x66,0x68,0x6a,0x6c,0x6e,0x70, 0x06,0x06,0x08, 0,0,0,     -1,0x0000,0xffff,0x0000,0xffff },
 	{"pang3",   0x00,0x0000, 0x00,0x00,0x00,0x00, 0x66,0x68,0x6a,0x6c,0x6e,0x70, 0x02,0x0c,0x0c, 0,0,0,     -1,0x0000,0xffff,0x0000,0xffff, 5},	/* EEPROM port is among the CPS registers */
-    {"pang3j",  0x00,0x0000, 0x00,0x00,0x00,0x00, 0x66,0x68,0x6a,0x6c,0x6e,0x70, 0x02,0x0c,0x0c, 0,0,0,     -1,0x0000,0xffff,0x0000,0xffff, 5}, /* EEPROM port is among the CPS registers */
+	{"pang3j",  0x00,0x0000, 0x00,0x00,0x00,0x00, 0x66,0x68,0x6a,0x6c,0x6e,0x70, 0x02,0x0c,0x0c, 0,0,0,     -1,0x0000,0xffff,0x0000,0xffff, 5}, /* EEPROM port is among the CPS registers */
 	{"megaman", 0x00,0x0000, 0x00,0x00,0x00,0x00, 0x66,0x68,0x6a,0x6c,0x6e,0x70, 0x02,0x04,0x08, 0,0,0,     -1,0x0000,0xffff,0x0000,0xffff },
 	{"rockmanj",0x00,0x0000, 0x00,0x00,0x00,0x00, 0x66,0x68,0x6a,0x6c,0x6e,0x70, 0x02,0x04,0x08, 0,0,0,     -1,0x0000,0xffff,0x0000,0xffff },
 	{"sfzch",   0x00,0x0000, 0x00,0x00,0x00,0x00, 0x66,0x68,0x6a,0x6c,0x6e,0x70, 0x02,0x04,0x08, 0,0,0,     -1,0x0000,0xffff,0x0000,0xffff },
@@ -270,36 +269,26 @@ static void cps1_init_machine(void)
 		WRITE_WORD(&RAM[0x61964+4], 0x0400);
 	}
 #endif
-  /*
-	else if (strcmp(gamename, "slammast" )==0 || strcmp(gamename, "mbomberj" )==0)
-	{
-		WRITE_WORD(&RAM[0x0fbe], 0x4e75);
-	}
-	else if (strcmp(gamename, "mbombrd" )==0 || strcmp(gamename, "mbombrdj" )==0)
-	{
-		WRITE_WORD(&RAM[0x0f1a], 0x4e75);
-	}
-    */
 }
 
 
 
 INLINE int cps1_port(int offset)
 {
-    return READ_WORD(&cps1_output[offset]);
+	return READ_WORD(&cps1_output[offset]);
 }
 
-INLINE unsigned char * cps1_base(int offset,int boundary)
+INLINE unsigned char *cps1_base(int offset,int boundary)
 {
-    int base=cps1_port(offset)*256;
-    /*
-    The scroll RAM must start on a 0x4000 boundary.
-    Some games do not do this.
-    For example:
-       Captain commando     - continue screen will not display
-       Muscle bomber games  - will animate garbage during gameplay
-    Mask out the irrelevant bits.
-    */
+	int base=cps1_port(offset)*256;
+	/*
+	The scroll RAM must start on a 0x4000 boundary.
+	Some games do not do this.
+	For example:
+	   Captain commando     - continue screen will not display
+	   Muscle bomber games  - will animate garbage during gameplay
+	Mask out the irrelevant bits.
+	*/
 	base &= ~(boundary-1);
  	return &cps1_gfxram[base&0x3ffff];
 }
@@ -322,7 +311,7 @@ if (offset >= 0x18) logerror("PC %06x: read output port %02x\n",cpu_get_pc(),off
 	/* with a 32-bit result, by writing the factors to two ports and reading the */
 	/* result from two other ports. */
 	if (offset && offset == cps1_game_config->mult_result_lo)
-        return (READ_WORD(&cps1_output[cps1_game_config->mult_factor1]) *
+		return (READ_WORD(&cps1_output[cps1_game_config->mult_factor1]) *
 				READ_WORD(&cps1_output[cps1_game_config->mult_factor2])) & 0xffff;
 	if (offset && offset == cps1_game_config->mult_result_hi)
 		return (READ_WORD(&cps1_output[cps1_game_config->mult_factor1]) *
@@ -574,8 +563,10 @@ void cps1_draw_gfx(
 	const int srcdelta)
 {
 	#define DATATYPE unsigned char
-	#define IF_NOT_TRANSPARENT(n) if (tpens & (0x01 << n))
-	#include "cps1draw.c"
+	#define IF_NOT_TRANSPARENT(n,x,y) if (tpens & (0x01 << n))
+	#define SELF_INCLUDE
+	#include "cps1.c"
+	#undef SELF_INCLUDE
 	#undef DATATYPE
 	#undef IF_NOT_TRANSPARENT
 }
@@ -594,8 +585,56 @@ void cps1_draw_gfx16(
 	const int srcdelta)
 {
 	#define DATATYPE unsigned short
-	#define IF_NOT_TRANSPARENT(n) if (tpens & (0x01 << n))
-	#include "cps1draw.c"
+	#define IF_NOT_TRANSPARENT(n,x,y) if (tpens & (0x01 << n))
+	#define SELF_INCLUDE
+	#include "cps1.c"
+	#undef SELF_INCLUDE
+	#undef DATATYPE
+	#undef IF_NOT_TRANSPARENT
+}
+
+void cps1_draw_gfx_pri(
+	struct osd_bitmap *dest,const struct GfxElement *gfx,
+	unsigned int code,
+	int color,
+	int flipx,int flipy,
+	int sx,int sy,
+	int tpens,
+	int *pusage,
+	const int size,
+	const int max,
+	const int delta,
+	const int srcdelta,
+	struct osd_bitmap *pribm)
+{
+	#define DATATYPE unsigned char
+	#define IF_NOT_TRANSPARENT(n,x,y) if ((tpens & (0x01 << n)) && pribm->line[y][x] == 0)
+	#define SELF_INCLUDE
+	#include "cps1.c"
+	#undef SELF_INCLUDE
+	#undef DATATYPE
+	#undef IF_NOT_TRANSPARENT
+}
+
+void cps1_draw_gfx16_pri(
+	struct osd_bitmap *dest,const struct GfxElement *gfx,
+	unsigned int code,
+	int color,
+	int flipx,int flipy,
+	int sx,int sy,
+	int tpens,
+	int *pusage,
+	const int size,
+	const int max,
+	const int delta,
+	const int srcdelta,
+	struct osd_bitmap *pribm)
+{
+	#define DATATYPE unsigned short
+	#define IF_NOT_TRANSPARENT(n,x,y) if ((tpens & (0x01 << n)) && pribm->line[y][x] == 0)
+	#define SELF_INCLUDE
+	#include "cps1.c"
+	#undef SELF_INCLUDE
 	#undef DATATYPE
 	#undef IF_NOT_TRANSPARENT
 }
@@ -622,8 +661,10 @@ void cps1_draw_gfx_opaque(
 	const int srcdelta)
 {
 	#define DATATYPE unsigned char
-	#define IF_NOT_TRANSPARENT(n)
-	#include "cps1draw.c"
+	#define IF_NOT_TRANSPARENT(n,x,y)
+	#define SELF_INCLUDE
+	#include "cps1.c"
+	#undef SELF_INCLUDE
 	#undef DATATYPE
 	#undef IF_NOT_TRANSPARENT
 }
@@ -642,8 +683,10 @@ void cps1_draw_gfx_opaque16(
 	const int srcdelta)
 {
 	#define DATATYPE unsigned short
-	#define IF_NOT_TRANSPARENT(n)
-	#include "cps1draw.c"
+	#define IF_NOT_TRANSPARENT(n,x,y)
+	#define SELF_INCLUDE
+	#include "cps1.c"
+	#undef SELF_INCLUDE
 	#undef DATATYPE
 	#undef IF_NOT_TRANSPARENT
 }
@@ -655,20 +698,20 @@ INLINE void cps1_draw_scroll1(
 	unsigned int code, int color,
 	int flipx, int flipy,int sx, int sy, int tpens)
 {
-    if (Machine->scrbitmap->depth==16)
-    {
-        cps1_draw_gfx16(dest,
-            Machine->gfx[0],
-            code,color,flipx,flipy,sx,sy,
-            tpens,cps1_char_pen_usage,8, cps1_max_char, 16, 1);
-    }
-    else
-    {
-        cps1_draw_gfx(dest,
-            Machine->gfx[0],
-            code,color,flipx,flipy,sx,sy,
-            tpens,cps1_char_pen_usage,8, cps1_max_char, 16, 1);
-    }
+	if (dest->depth==16)
+	{
+		cps1_draw_gfx16(dest,
+			Machine->gfx[0],
+			code,color,flipx,flipy,sx,sy,
+			tpens,cps1_char_pen_usage,8, cps1_max_char, 16, 1);
+	}
+	else
+	{
+		cps1_draw_gfx(dest,
+			Machine->gfx[0],
+			code,color,flipx,flipy,sx,sy,
+			tpens,cps1_char_pen_usage,8, cps1_max_char, 16, 1);
+	}
 }
 
 
@@ -677,20 +720,41 @@ INLINE void cps1_draw_tile16(struct osd_bitmap *dest,
 	unsigned int code, int color,
 	int flipx, int flipy,int sx, int sy, int tpens)
 {
-    if (Machine->scrbitmap->depth==16)
-    {
-        cps1_draw_gfx16(dest,
-            gfx,
-            code,color,flipx,flipy,sx,sy,
-            tpens,cps1_tile16_pen_usage,16, cps1_max_tile16, 16*2,0);
-    }
-    else
-    {
-        cps1_draw_gfx(dest,
-            gfx,
-            code,color,flipx,flipy,sx,sy,
-            tpens,cps1_tile16_pen_usage,16, cps1_max_tile16, 16*2,0);
-    }
+	if (dest->depth==16)
+	{
+		cps1_draw_gfx16(dest,
+			gfx,
+			code,color,flipx,flipy,sx,sy,
+			tpens,cps1_tile16_pen_usage,16, cps1_max_tile16, 16*2,0);
+	}
+	else
+	{
+		cps1_draw_gfx(dest,
+			gfx,
+			code,color,flipx,flipy,sx,sy,
+			tpens,cps1_tile16_pen_usage,16, cps1_max_tile16, 16*2,0);
+	}
+}
+
+INLINE void cps1_draw_tile16_pri(struct osd_bitmap *dest,
+	const struct GfxElement *gfx,
+	unsigned int code, int color,
+	int flipx, int flipy,int sx, int sy, int tpens)
+{
+	if (dest->depth==16)
+	{
+		cps1_draw_gfx16_pri(dest,
+			gfx,
+			code,color,flipx,flipy,sx,sy,
+			tpens,cps1_tile16_pen_usage,16, cps1_max_tile16, 16*2,0, priority_bitmap);
+	}
+	else
+	{
+		cps1_draw_gfx_pri(dest,
+			gfx,
+			code,color,flipx,flipy,sx,sy,
+			tpens,cps1_tile16_pen_usage,16, cps1_max_tile16, 16*2,0, priority_bitmap);
+	}
 }
 
 INLINE void cps1_draw_tile32(struct osd_bitmap *dest,
@@ -698,33 +762,33 @@ INLINE void cps1_draw_tile32(struct osd_bitmap *dest,
 	unsigned int code, int color,
 	int flipx, int flipy,int sx, int sy, int tpens)
 {
-    if (Machine->scrbitmap->depth==16)
-    {
-        cps1_draw_gfx16(dest,
-            gfx,
-            code,color,flipx,flipy,sx,sy,
-            tpens,cps1_tile32_pen_usage,32, cps1_max_tile32, 16*2*4,0);
-    }
-    else
-    {
-        cps1_draw_gfx(dest,
-            gfx,
-            code,color,flipx,flipy,sx,sy,
-            tpens,cps1_tile32_pen_usage,32, cps1_max_tile32, 16*2*4,0);
-    }
+	if (dest->depth==16)
+	{
+		cps1_draw_gfx16(dest,
+			gfx,
+			code,color,flipx,flipy,sx,sy,
+			tpens,cps1_tile32_pen_usage,32, cps1_max_tile32, 16*2*4,0);
+	}
+	else
+	{
+		cps1_draw_gfx(dest,
+			gfx,
+			code,color,flipx,flipy,sx,sy,
+			tpens,cps1_tile32_pen_usage,32, cps1_max_tile32, 16*2*4,0);
+	}
 }
 
 
 INLINE void cps1_draw_blank16(struct osd_bitmap *dest, int sx, int sy )
 {
-    int i,j;
+	int i,j;
 
 	if (Machine->orientation & ORIENTATION_SWAP_XY)
 	{
 		int temp;
 		temp=sx;
 		sx=sy;
-        sy=dest->height-temp-16;
+		sy=dest->height-temp-16;
 	}
 
 	if (cps1_flip_screen)
@@ -734,9 +798,9 @@ INLINE void cps1_draw_blank16(struct osd_bitmap *dest, int sx, int sy )
 		sy=dest->height-sy-16;
 	}
 
-	if (Machine->scrbitmap->depth==16)
-    {
-        for (i=15; i>=0; i--)
+	if (dest->depth==16)
+	{
+		for (i=15; i>=0; i--)
 		{
 			register unsigned short *bm=(unsigned short *)dest->line[sy+i]+sx;
 			for (j=15; j>=0; j--)
@@ -745,10 +809,10 @@ INLINE void cps1_draw_blank16(struct osd_bitmap *dest, int sx, int sy )
 				bm++;
 			}
 		}
-    }
-    else
-    {
-        for (i=15; i>=0; i--)
+	}
+	else
+	{
+		for (i=15; i>=0; i--)
 		{
 			register unsigned char *bm=dest->line[sy+i]+sx;
 			for (j=15; j>=0; j--)
@@ -757,7 +821,7 @@ INLINE void cps1_draw_blank16(struct osd_bitmap *dest, int sx, int sy )
 				bm++;
 			}
 		}
-    }
+	}
 }
 
 
@@ -765,22 +829,22 @@ INLINE void cps1_draw_blank16(struct osd_bitmap *dest, int sx, int sy )
 INLINE void cps1_draw_tile16_bmp(struct osd_bitmap *dest,
 	const struct GfxElement *gfx,
 	unsigned int code, int color,
-    int flipx, int flipy,int sx, int sy)
+	int flipx, int flipy,int sx, int sy)
 {
-    if (Machine->scrbitmap->depth==16)
-    {
-        cps1_draw_gfx_opaque16(dest,
-            gfx,
-            code,color,flipx,flipy,sx,sy,
-            -1,cps1_tile16_pen_usage,16, cps1_max_tile16, 16*2,0);
-    }
-    else
-    {
-        cps1_draw_gfx_opaque(dest,
-            gfx,
-            code,color,flipx,flipy,sx,sy,
-            -1,cps1_tile16_pen_usage,16, cps1_max_tile16, 16*2,0);
-    }
+	if (dest->depth==16)
+	{
+		cps1_draw_gfx_opaque16(dest,
+			gfx,
+			code,color,flipx,flipy,sx,sy,
+			-1,cps1_tile16_pen_usage,16, cps1_max_tile16, 16*2,0);
+	}
+	else
+	{
+		cps1_draw_gfx_opaque(dest,
+			gfx,
+			code,color,flipx,flipy,sx,sy,
+			-1,cps1_tile16_pen_usage,16, cps1_max_tile16, 16*2,0);
+	}
 }
 
 
@@ -855,32 +919,32 @@ INLINE void cps1_get_video_base(void )
 	int layercontrol;
 
 	/* Re-calculate the VIDEO RAM base */
-    cps1_scroll1=cps1_base(CPS1_SCROLL1_BASE,cps1_scroll1_size);
-    cps1_scroll2=cps1_base(CPS1_SCROLL2_BASE,cps1_scroll2_size);
-    cps1_scroll3=cps1_base(CPS1_SCROLL3_BASE,cps1_scroll3_size);
-    cps1_obj=cps1_base(CPS1_OBJ_BASE,cps1_obj_size);
-    cps1_palette=cps1_base(CPS1_PALETTE_BASE,cps1_palette_size);
-    cps1_other=cps1_base(CPS1_OTHER_BASE,cps1_other_size);
+	cps1_scroll1=cps1_base(CPS1_SCROLL1_BASE,cps1_scroll1_size);
+	cps1_scroll2=cps1_base(CPS1_SCROLL2_BASE,cps1_scroll2_size);
+	cps1_scroll3=cps1_base(CPS1_SCROLL3_BASE,cps1_scroll3_size);
+	cps1_obj=cps1_base(CPS1_OBJ_BASE,cps1_obj_size);
+	cps1_palette=cps1_base(CPS1_PALETTE_BASE,cps1_palette_size);
+	cps1_other=cps1_base(CPS1_OTHER_BASE,cps1_other_size);
 
-    /* Get scroll values */
-    scroll1x=cps1_port(CPS1_SCROLL1_SCROLLX);
-    scroll1y=cps1_port(CPS1_SCROLL1_SCROLLY);
-    scroll2x=cps1_port(CPS1_SCROLL2_SCROLLX);
-    scroll2y=cps1_port(CPS1_SCROLL2_SCROLLY);
-    scroll3x=cps1_port(CPS1_SCROLL3_SCROLLX);
-    scroll3y=cps1_port(CPS1_SCROLL3_SCROLLY);
+	/* Get scroll values */
+	scroll1x=cps1_port(CPS1_SCROLL1_SCROLLX);
+	scroll1y=cps1_port(CPS1_SCROLL1_SCROLLY);
+	scroll2x=cps1_port(CPS1_SCROLL2_SCROLLX);
+	scroll2y=cps1_port(CPS1_SCROLL2_SCROLLY);
+	scroll3x=cps1_port(CPS1_SCROLL3_SCROLLX);
+	scroll3y=cps1_port(CPS1_SCROLL3_SCROLLY);
 
 	/* Get transparency registers */
 	if (cps1_game_config->priority1)
 	{
-        cps1_transparency_scroll[0]=cps1_port(cps1_game_config->priority0);
-        cps1_transparency_scroll[1]=cps1_port(cps1_game_config->priority1);
-        cps1_transparency_scroll[2]=cps1_port(cps1_game_config->priority2);
-        cps1_transparency_scroll[3]=cps1_port(cps1_game_config->priority3);
-    }
+		cps1_transparency_scroll[0]=cps1_port(cps1_game_config->priority0);
+		cps1_transparency_scroll[1]=cps1_port(cps1_game_config->priority1);
+		cps1_transparency_scroll[2]=cps1_port(cps1_game_config->priority2);
+		cps1_transparency_scroll[3]=cps1_port(cps1_game_config->priority3);
+	}
 
 	/* Get layer enable bits */
-    layercontrol=cps1_port(cps1_game_config->layer_control);
+	layercontrol=cps1_port(cps1_game_config->layer_control);
 	cps1_layer_enabled[0]=1;
 	cps1_layer_enabled[1]=layercontrol & cps1_game_config->scrl1_enable_mask;
 	cps1_layer_enabled[2]=layercontrol & cps1_game_config->scrl2_enable_mask;
@@ -1162,15 +1226,25 @@ void cps1_render_scroll1(struct osd_bitmap *bitmap,int priority)
 
 				/* 0x0020 appears to never be drawn */
 				if (priority)
+				{
 					transp=cps1_transparency_scroll[(colour & 0x0180)>>7];
-				else transp = 0x7fff;
-
-				cps1_draw_scroll1(bitmap,
-						 code+base,
-						 colour&0x1f,
-						 colour&0x20,
-						 colour&0x40,
-						 sx,sy,transp);
+					cps1_draw_scroll1(priority_bitmap,
+							code+base,
+							colour&0x1f,
+							colour&0x20,
+							colour&0x40,
+							sx,sy,transp);
+				}
+				else
+				{
+					transp = 0x7fff;
+					cps1_draw_scroll1(bitmap,
+							code+base,
+							colour&0x1f,
+							colour&0x20,
+							colour&0x40,
+							sx,sy,transp);
+				}
 			 }
 			 sy+=8;
 		 }
@@ -1249,15 +1323,15 @@ void cps1_palette_sprites(unsigned short *base)
 			unsigned int code=READ_WORD(&cps1_buffered_obj[i+4]);
 			if (cps1_game_config->kludge == 7)
 			{
-			       code += 0x4000;
+				code += 0x4000;
 			}
 			if (cps1_game_config->kludge == 1 && code >= 0x01000)
 			{
-			       code += 0x4000;
+				code += 0x4000;
 			}
 			if (cps1_game_config->kludge == 2 && code >= 0x02a00)
 			{
-			       code += 0x4000;
+				code += 0x4000;
 			}
 
 			if ( colour & 0xff00 )
@@ -1337,7 +1411,7 @@ void cps1_palette_sprites(unsigned short *base)
 
 void cps1_render_sprites(struct osd_bitmap *bitmap)
 {
-    const int mask=0x7fff;
+	const int mask=0x7fff;
 	int i;
 //mish
 	/* Draw the sprites */
@@ -1364,120 +1438,120 @@ void cps1_render_sprites(struct osd_bitmap *bitmap)
 
 			if (cps1_game_config->kludge == 7)
 			{
-			       code += 0x4000;
+				code += 0x4000;
 			}
 			if (cps1_game_config->kludge == 1 && code >= 0x01000)
 			{
-			       code += 0x4000;
+				code += 0x4000;
 			}
 			if (cps1_game_config->kludge == 2 && code >= 0x02a00)
 			{
-			       code += 0x4000;
+				code += 0x4000;
 			}
 
 			if (colour & 0xff00 )
 			{
-					/* handle blocked sprites */
-					int nx=(colour & 0x0f00) >> 8;
-					int ny=(colour & 0xf000) >> 12;
-					int nxs,nys,sx,sy;
-					nx++;
-					ny++;
+				/* handle blocked sprites */
+				int nx=(colour & 0x0f00) >> 8;
+				int ny=(colour & 0xf000) >> 12;
+				int nxs,nys,sx,sy;
+				nx++;
+				ny++;
 
-					if (colour & 0x40)
+				if (colour & 0x40)
+				{
+					/* Y flip */
+					if (colour &0x20)
 					{
-						/* Y flip */
-						if (colour &0x20)
+						for (nys=0; nys<ny; nys++)
 						{
-							for (nys=0; nys<ny; nys++)
+							for (nxs=0; nxs<nx; nxs++)
 							{
-								for (nxs=0; nxs<nx; nxs++)
-								{
-									sx = x+nxs*16;
-									sy = y+nys*16;
-									if (sx > 450) sx -= 0x200;
-									if (sy > 450) sy -= 0x200;
+								sx = x+nxs*16;
+								sy = y+nys*16;
+								if (sx > 450) sx -= 0x200;
+								if (sy > 450) sy -= 0x200;
 
-									cps1_draw_tile16(bitmap,Machine->gfx[1],
-										code+(nx-1)-nxs+0x10*(ny-1-nys),
-										col&0x1f,
-										1,1,
-                                        sx,sy,mask);
-								}
-							}
-						}
-						else
-						{
-							for (nys=0; nys<ny; nys++)
-							{
-								for (nxs=0; nxs<nx; nxs++)
-								{
-									sx = x+nxs*16;
-									sy = y+nys*16;
-									if (sx > 450) sx -= 0x200;
-									if (sy > 450) sy -= 0x200;
-
-									cps1_draw_tile16(bitmap,Machine->gfx[1],
-										code+nxs+0x10*(ny-1-nys),
-										col&0x1f,
-										0,1,
-                                        sx,sy,mask );
-								}
+								cps1_draw_tile16_pri(bitmap,Machine->gfx[1],
+									code+(nx-1)-nxs+0x10*(ny-1-nys),
+									col&0x1f,
+									1,1,
+									sx,sy,mask);
 							}
 						}
 					}
 					else
 					{
-						if (colour &0x20)
+						for (nys=0; nys<ny; nys++)
 						{
-							for (nys=0; nys<ny; nys++)
+							for (nxs=0; nxs<nx; nxs++)
 							{
-								for (nxs=0; nxs<nx; nxs++)
-								{
-									sx = x+nxs*16;
-									sy = y+nys*16;
-									if (sx > 450) sx -= 0x200;
-									if (sy > 450) sy -= 0x200;
+								sx = x+nxs*16;
+								sy = y+nys*16;
+								if (sx > 450) sx -= 0x200;
+								if (sy > 450) sy -= 0x200;
 
-									cps1_draw_tile16(bitmap,Machine->gfx[1],
-										code+(nx-1)-nxs+0x10*nys,
-										col&0x1f,
-										1,0,
-                                        sx,sy,mask
-										);
-								}
-							}
-						}
-						else
-						{
-							for (nys=0; nys<ny; nys++)
-							{
-								for (nxs=0; nxs<nx; nxs++)
-								{
-									sx = x+nxs*16;
-									sy = y+nys*16;
-									if (sx > 450) sx -= 0x200;
-									if (sy > 450) sy -= 0x200;
-
-									cps1_draw_tile16(bitmap,Machine->gfx[1],
-										code+nxs+0x10*nys,
-										col&0x1f,
-										0,0,
-                                        sx,sy, mask);
-								}
+								cps1_draw_tile16_pri(bitmap,Machine->gfx[1],
+									code+nxs+0x10*(ny-1-nys),
+									col&0x1f,
+									0,1,
+									sx,sy,mask );
 							}
 						}
 					}
 				}
 				else
 				{
-					/* Simple case... 1 sprite */
-					cps1_draw_tile16(bitmap,Machine->gfx[1],
-						   code,
-						   col&0x1f,
-						   colour&0x20,colour&0x40,
-                           x,y,mask);
+					if (colour &0x20)
+					{
+						for (nys=0; nys<ny; nys++)
+						{
+							for (nxs=0; nxs<nx; nxs++)
+							{
+								sx = x+nxs*16;
+								sy = y+nys*16;
+								if (sx > 450) sx -= 0x200;
+								if (sy > 450) sy -= 0x200;
+
+								cps1_draw_tile16_pri(bitmap,Machine->gfx[1],
+									code+(nx-1)-nxs+0x10*nys,
+									col&0x1f,
+									1,0,
+									sx,sy,mask
+									);
+							}
+						}
+					}
+					else
+					{
+						for (nys=0; nys<ny; nys++)
+						{
+							for (nxs=0; nxs<nx; nxs++)
+							{
+								sx = x+nxs*16;
+								sy = y+nys*16;
+								if (sx > 450) sx -= 0x200;
+								if (sy > 450) sy -= 0x200;
+
+								cps1_draw_tile16_pri(bitmap,Machine->gfx[1],
+									code+nxs+0x10*nys,
+									col&0x1f,
+									0,0,
+									sx,sy, mask);
+							}
+						}
+					}
 				}
+			}
+			else
+			{
+				/* Simple case... 1 sprite */
+				cps1_draw_tile16_pri(bitmap,Machine->gfx[1],
+					   code,
+					   col&0x1f,
+					   colour&0x20,colour&0x40,
+					   x,y,mask);
+			}
 		}
 	}
 }
@@ -1512,7 +1586,7 @@ void cps1_render_sprites(struct osd_bitmap *bitmap)
 INLINE void cps1_palette_scroll2(unsigned short *base)
 {
 	int offs, code, colour;
-    int basecode=cps1_game_config->bank_scroll2*0x04000;
+	int basecode=cps1_game_config->bank_scroll2*0x04000;
 
 	for (offs=cps1_scroll2_size-4; offs>=0; offs-=4)
 	{
@@ -1529,15 +1603,15 @@ void cps1_render_scroll2_bitmap(struct osd_bitmap *bitmap)
 {
 	int sx, sy;
 	int ny=(scroll2y>>4);	  /* Rough Y */
-    int base=cps1_game_config->bank_scroll2*0x04000;
+	int base=cps1_game_config->bank_scroll2*0x04000;
 	const int startcode=cps1_game_config->start_scroll2;
 	const int endcode=cps1_game_config->end_scroll2;
 	const int kludge=cps1_game_config->kludge;
 
-    for (sx=CPS1_SCROLL2_WIDTH-1; sx>=0; sx--)
+	for (sx=CPS1_SCROLL2_WIDTH-1; sx>=0; sx--)
 	{
 		int n=ny;
-        for (sy=0x09*2-1; sy>=0; sy--)
+		for (sy=0x09*2-1; sy>=0; sy--)
 		{
 			long newvalue;
 			int offsy, offsx, offs, colour, code;
@@ -1553,7 +1627,7 @@ void cps1_render_scroll2_bitmap(struct osd_bitmap *bitmap)
 			if ( newvalue != *(long*)(&cps1_scroll2_old[offs]) )
 			{
 				*(long*)(&cps1_scroll2_old[offs])=newvalue;
-                code=READ_WORD(&cps1_scroll2[offs]);
+				code=READ_WORD(&cps1_scroll2[offs]);
 				if ( code >= startcode && code <= endcode
 					/*
 					MERCS has an gap in the scroll 2 layout
@@ -1567,7 +1641,7 @@ void cps1_render_scroll2_bitmap(struct osd_bitmap *bitmap)
 						code,
 						colour&0x1f,
 						colour&0x20,colour&0x40,
-                        16*sx, 16*n);
+						16*sx, 16*n);
 				}
 				else
 				{
@@ -1591,7 +1665,7 @@ void cps1_render_scroll2_high(struct osd_bitmap *bitmap)
 	int nyoffset=(scroll2y&0x0f);    /* Smooth Y */
 	int nx=(scroll2x>>4);	  /* Rough X */
 	int ny=(scroll2y>>4)-4;	/* Rough Y */
-    int base=cps1_game_config->bank_scroll2*0x04000;
+	int base=cps1_game_config->bank_scroll2*0x04000;
 
 	for (sx=0; sx<0x32/2+4; sx++)
 	{
@@ -1610,7 +1684,7 @@ void cps1_render_scroll2_high(struct osd_bitmap *bitmap)
 
 			transp=cps1_transparency_scroll[(colour & 0x0180)>>7];
 
-			cps1_draw_tile16(bitmap,
+			cps1_draw_tile16(priority_bitmap,
 						Machine->gfx[2],
 						code+base,
 						colour&0x1f,
@@ -1624,17 +1698,17 @@ void cps1_render_scroll2_high(struct osd_bitmap *bitmap)
 
 void cps1_render_scroll2_low(struct osd_bitmap *bitmap)
 {
-      int scrly=-(scroll2y-0x20);
-      int scrlx=-(scroll2x+0x40-0x20);
+	  int scrly=-(scroll2y-0x20);
+	  int scrlx=-(scroll2x+0x40-0x20);
 
-      if (cps1_flip_screen)
-      {
-            scrly=(CPS1_SCROLL2_HEIGHT*16)-scrly;
-      }
+	  if (cps1_flip_screen)
+	  {
+			scrly=(CPS1_SCROLL2_HEIGHT*16)-scrly;
+	  }
 
-      cps1_render_scroll2_bitmap(cps1_scroll2_bitmap);
+	  cps1_render_scroll2_bitmap(cps1_scroll2_bitmap);
 
-      copyscrollbitmap(bitmap,cps1_scroll2_bitmap,1,&scrlx,1,&scrly,&Machine->visible_area,TRANSPARENCY_PEN,palette_transparent_pen);
+	  copyscrollbitmap(bitmap,cps1_scroll2_bitmap,1,&scrlx,1,&scrly,&Machine->visible_area,TRANSPARENCY_PEN,palette_transparent_pen);
 }
 
 
@@ -1699,7 +1773,7 @@ void cps1_palette_scroll3(unsigned short *base)
 	int sx,sy;
 	int nx=(scroll3x>>5)+1;
 	int ny=(scroll3y>>5)-1;
-    int basecode=cps1_game_config->bank_scroll3*0x01000;
+	int basecode=cps1_game_config->bank_scroll3*0x01000;
 
 	for (sx=0; sx<0x32/4+2; sx++)
 	{
@@ -1712,10 +1786,10 @@ void cps1_palette_scroll3(unsigned short *base)
 			offsx=((nx+sx)*0x020)&0x7ff;
 			offs=offsy+offsx;
 			offs &= 0x3fff;
-            code=basecode+READ_WORD(&cps1_scroll3[offs]);
+			code=basecode+READ_WORD(&cps1_scroll3[offs]);
 			if (cps1_game_config->kludge == 2 && code >= 0x01500)
 			{
-			       code -= 0x1000;
+				code -= 0x1000;
 			}
 			colour=READ_WORD(&cps1_scroll3[offs+2]);
 			if (code < cps1_max_tile32)
@@ -1734,7 +1808,7 @@ void cps1_render_scroll3(struct osd_bitmap *bitmap, int priority)
 	int nyoffset=scroll3y&0x1f;
 	int nx=(scroll3x>>5)+1;
 	int ny=(scroll3y>>5)-1;
-    int basecode=cps1_game_config->bank_scroll3*0x01000;
+	int basecode=cps1_game_config->bank_scroll3*0x01000;
 	const int startcode=cps1_game_config->start_scroll3;
 	const int endcode=cps1_game_config->end_scroll3;
 
@@ -1749,7 +1823,7 @@ void cps1_render_scroll3(struct osd_bitmap *bitmap, int priority)
 			offsx=((nx+sx)*0x020)&0x7ff;
 			offs=offsy+offsx;
 			offs &= 0x3fff;
-            code=READ_WORD(&cps1_scroll3[offs]);
+			code=READ_WORD(&cps1_scroll3[offs]);
 			if (code >= startcode && code <= endcode)
 			{
 				int transp;
@@ -1761,15 +1835,25 @@ void cps1_render_scroll3(struct osd_bitmap *bitmap, int priority)
 				}
 				colour=READ_WORD(&cps1_scroll3[offs+2]);
 				if (priority)
+				{
 					transp=cps1_transparency_scroll[(colour & 0x0180)>>7];
-				else transp = 0x7fff;
-
-				cps1_draw_tile32(bitmap,Machine->gfx[3],
-						code,
-						colour&0x1f,
-						colour&0x20,colour&0x40,
-						32*sx-nxoffset,32*sy-nyoffset,
-						transp);
+					cps1_draw_tile32(priority_bitmap,Machine->gfx[3],
+							code,
+							colour&0x1f,
+							colour&0x20,colour&0x40,
+							32*sx-nxoffset,32*sy-nyoffset,
+							transp);
+				}
+				else
+				{
+					transp = 0x7fff;
+					cps1_draw_tile32(bitmap,Machine->gfx[3],
+							code,
+							colour&0x1f,
+							colour&0x20,colour&0x40,
+							32*sx-nxoffset,32*sy-nyoffset,
+							transp);
+				}
 			}
 		}
 	}
@@ -1787,13 +1871,13 @@ void cps1_render_layer(struct osd_bitmap *bitmap, int layer, int distort)
 				cps1_render_sprites(bitmap);
 				break;
 			case 1:
-                cps1_render_scroll1(bitmap, 0);
+				cps1_render_scroll1(bitmap, 0);
 				break;
 			case 2:
 				if (distort)
-                    cps1_render_scroll2_distort(bitmap);
+					cps1_render_scroll2_distort(bitmap);
 				else
-                    cps1_render_scroll2_low(bitmap);
+					cps1_render_scroll2_low(bitmap);
 				break;
 			case 3:
 				cps1_render_scroll3(bitmap, 0);
@@ -1812,10 +1896,10 @@ void cps1_render_high_layer(struct osd_bitmap *bitmap, int layer)
 				/* there are no high priority sprites */
 				break;
 			case 1:
-                cps1_render_scroll1(bitmap, 1);
+				cps1_render_scroll1(bitmap, 1);
 				break;
 			case 2:
-                cps1_render_scroll2_high(bitmap);
+				cps1_render_scroll2_high(bitmap);
 				break;
 			case 3:
 				cps1_render_scroll3(bitmap, 1);
@@ -1909,25 +1993,27 @@ void cps1_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	fillbitmap(bitmap,palette_transparent_pen,0);
 
 
-	/* Draw layers */
+	/* Draw layers (0 = sprites, 1-3 = tilemaps) */
 	l0 = (layercontrol >> 0x06) & 03;
 	l1 = (layercontrol >> 0x08) & 03;
 	l2 = (layercontrol >> 0x0a) & 03;
 	l3 = (layercontrol >> 0x0c) & 03;
 
+	fillbitmap(priority_bitmap,0,NULL);
+
 	cps1_render_layer(bitmap,l0,distort_scroll2);
+	if (l1 == 0) cps1_render_high_layer(bitmap,l0);	/* prepare mask for sprites */
 	cps1_render_layer(bitmap,l1,distort_scroll2);
-	if (l1 == 0) cps1_render_high_layer(bitmap,l0);	/* overlay sprites */
+	if (l2 == 0) cps1_render_high_layer(bitmap,l1);	/* prepare mask for sprites */
 	cps1_render_layer(bitmap,l2,distort_scroll2);
-	if (l2 == 0) cps1_render_high_layer(bitmap,l1);	/* overlay sprites */
+	if (l3 == 0) cps1_render_high_layer(bitmap,l2);	/* prepare mask for sprites */
 	cps1_render_layer(bitmap,l3,distort_scroll2);
-	if (l3 == 0) cps1_render_high_layer(bitmap,l2);	/* overlay sprites */
 
 #if CPS1_DUMP_VIDEO
-    if (keyboard_pressed(KEYCODE_F))
-    {
-        cps1_dump_video();
-    }
+	if (keyboard_pressed(KEYCODE_F))
+	{
+		cps1_dump_video();
+	}
 #endif
 }
 
@@ -1943,3 +2029,182 @@ void cps1_eof_callback(void)
 
 
 #include "cps2.c"
+
+
+
+#else	/* SELF_INCLUDE */
+/* don't put this file in the makefile, it is #included by cps1.c to */
+/* generate 8-bit and 16-bit versions                                */
+
+{
+	int i, j;
+	UINT32 dwval;
+	UINT32 *src;
+	const unsigned short *paldata;
+	UINT32 n;
+	DATATYPE *bm;
+
+	if ( code > max || (tpens & pusage[code])==0)
+	{
+		/* Do not draw blank object */
+		return;
+	}
+
+	if (Machine->orientation & ORIENTATION_SWAP_XY)
+	{
+		int temp;
+		temp=sx;
+		sx=sy;
+		sy=dest->height-temp-size;
+		temp=flipx;
+		flipx=flipy;
+		flipy=!temp;
+	}
+
+	if (cps1_flip_screen)
+	{
+		/* Handle flipped screen */
+		flipx=!flipx;
+		flipy=!flipy;
+		sx=dest->width-sx-size;
+		sy=dest->height-sy-size;
+	}
+
+	if (sx<0 || sx > dest->width-size || sy<0 || sy>dest->height-size )
+	{
+		/* Don't draw clipped tiles (for sprites) */
+		return;
+	}
+
+	paldata=&gfx->colortable[gfx->color_granularity * color];
+	src = cps1_gfx+code*delta;
+
+	if (Machine->orientation & ORIENTATION_SWAP_XY)
+	{
+		int bmdelta,dir;
+
+		bmdelta = (dest->line[1] - dest->line[0]);
+		dir = 1;
+		if (flipy)
+		{
+			bmdelta = -bmdelta;
+			dir = -1;
+			sy += size-1;
+		}
+		if (flipx) sx+=size-1;
+		for (i=0; i<size; i++)
+		{
+			int ny=sy;
+			for (j=0; j<size/8; j++)
+			{
+				dwval=*src;
+				n=(dwval>>28)&0x0f;
+				bm = (DATATYPE *)dest->line[ny]+sx;
+				IF_NOT_TRANSPARENT(n,sx,ny) bm[0]=paldata[n];
+				n=(dwval>>24)&0x0f;
+				bm = (DATATYPE *)(((unsigned char *)bm) + bmdelta);
+				IF_NOT_TRANSPARENT(n,sx,ny+dir) bm[0]=paldata[n];
+				n=(dwval>>20)&0x0f;
+				bm = (DATATYPE *)(((unsigned char *)bm) + bmdelta);
+				IF_NOT_TRANSPARENT(n,sx,ny+2*dir) bm[0]=paldata[n];
+				n=(dwval>>16)&0x0f;
+				bm = (DATATYPE *)(((unsigned char *)bm) + bmdelta);
+				IF_NOT_TRANSPARENT(n,sx,ny+3*dir) bm[0]=paldata[n];
+				n=(dwval>>12)&0x0f;
+				bm = (DATATYPE *)(((unsigned char *)bm) + bmdelta);
+				IF_NOT_TRANSPARENT(n,sx,ny+4*dir) bm[0]=paldata[n];
+				n=(dwval>>8)&0x0f;
+				bm = (DATATYPE *)(((unsigned char *)bm) + bmdelta);
+				IF_NOT_TRANSPARENT(n,sx,ny+5*dir) bm[0]=paldata[n];
+				n=(dwval>>4)&0x0f;
+				bm = (DATATYPE *)(((unsigned char *)bm) + bmdelta);
+				IF_NOT_TRANSPARENT(n,sx,ny+6*dir) bm[0]=paldata[n];
+				n=dwval&0x0f;
+				bm = (DATATYPE *)(((unsigned char *)bm) + bmdelta);
+				IF_NOT_TRANSPARENT(n,sx,ny+7*dir) bm[0]=paldata[n];
+				if (flipy) ny-=8;
+				else ny+=8;
+				src++;
+			}
+			if (flipx) sx--;
+			else sx++;
+			src+=srcdelta;
+		}
+	}
+	else
+	{
+		if (flipy) sy+=size-1;
+		if (flipx)
+		{
+			sx+=size;
+			for (i=0; i<size; i++)
+			{
+				int x,y;
+				x=sx;
+				if (flipy) y=sy-i;
+				else y=sy+i;
+				bm=(DATATYPE *)dest->line[y]+sx;
+				for (j=0; j<size/8; j++)
+				{
+					dwval=*src;
+					n=(dwval>>28)&0x0f;
+					IF_NOT_TRANSPARENT(n,x-1,y) bm[-1]=paldata[n];
+					n=(dwval>>24)&0x0f;
+					IF_NOT_TRANSPARENT(n,x-2,y) bm[-2]=paldata[n];
+					n=(dwval>>20)&0x0f;
+					IF_NOT_TRANSPARENT(n,x-3,y) bm[-3]=paldata[n];
+					n=(dwval>>16)&0x0f;
+					IF_NOT_TRANSPARENT(n,x-4,y) bm[-4]=paldata[n];
+					n=(dwval>>12)&0x0f;
+					IF_NOT_TRANSPARENT(n,x-5,y) bm[-5]=paldata[n];
+					n=(dwval>>8)&0x0f;
+					IF_NOT_TRANSPARENT(n,x-6,y) bm[-6]=paldata[n];
+					n=(dwval>>4)&0x0f;
+					IF_NOT_TRANSPARENT(n,x-7,y) bm[-7]=paldata[n];
+					n=dwval&0x0f;
+					IF_NOT_TRANSPARENT(n,x-8,y) bm[-8]=paldata[n];
+					bm-=8;
+					x-=8;
+					src++;
+				}
+				src+=srcdelta;
+			}
+		}
+		else
+		{
+			for (i=0; i<size; i++)
+			{
+				int x,y;
+				x=sx;
+				if (flipy) y=sy-i;
+				else y=sy+i;
+				bm=(DATATYPE *)dest->line[y]+sx;
+				for (j=0; j<size/8; j++)
+				{
+					dwval=*src;
+					n=(dwval>>28)&0x0f;
+					IF_NOT_TRANSPARENT(n,x+0,y) bm[0]=paldata[n];
+					n=(dwval>>24)&0x0f;
+					IF_NOT_TRANSPARENT(n,x+1,y) bm[1]=paldata[n];
+					n=(dwval>>20)&0x0f;
+					IF_NOT_TRANSPARENT(n,x+2,y) bm[2]=paldata[n];
+					n=(dwval>>16)&0x0f;
+					IF_NOT_TRANSPARENT(n,x+3,y) bm[3]=paldata[n];
+					n=(dwval>>12)&0x0f;
+					IF_NOT_TRANSPARENT(n,x+4,y) bm[4]=paldata[n];
+					n=(dwval>>8)&0x0f;
+					IF_NOT_TRANSPARENT(n,x+5,y) bm[5]=paldata[n];
+					n=(dwval>>4)&0x0f;
+					IF_NOT_TRANSPARENT(n,x+6,y) bm[6]=paldata[n];
+					n=dwval&0x0f;
+					IF_NOT_TRANSPARENT(n,x+7,y) bm[7]=paldata[n];
+					bm+=8;
+					x+=8;
+					src++;
+				}
+				src+=srcdelta;
+			}
+		}
+	}
+}
+#endif	/* SELF_INCLUDE */

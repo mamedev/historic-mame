@@ -2,8 +2,6 @@
 
 tecmo.c
 
-M68000 based Tecmo games (Final Starforce) may fit in here as well
-
 driver by Nicola Salmoria
 
 
@@ -46,30 +44,26 @@ f808      ROM bank selector
 f809      ????
 f80b      ????
 
-***************************************************************************
-
-Rygar memory map (preliminary)
-
-read:
-f800	player #1 joystick
-f801	player #1 buttons; service
-f802	player #2 joystick (mirror player#1 - since players take turns)
-f803	player #2 buttons (cocktail mode reads these)
-f804	start, coins
-f806	DSWA
-f807	DSWA cocktail
-f808	DSWB
-f809	DSWB
-
 ***************************************************************************/
 #include "driver.h"
-#include "vidhrdw/generic.h"
 #include "cpu/z80/z80.h"
 
 
 
-WRITE_HANDLER( tecmo_bankswitch_w );
-READ_HANDLER( tecmo_bankedrom_r );
+extern int tecmo_video_type;
+extern unsigned char *tecmo_txvideoram,*tecmo_fgvideoram,*tecmo_bgvideoram;
+extern unsigned char *spriteram;
+extern size_t spriteram_size;
+
+WRITE_HANDLER( tecmo_txvideoram_w );
+WRITE_HANDLER( tecmo_fgvideoram_w );
+WRITE_HANDLER( tecmo_bgvideoram_w );
+WRITE_HANDLER( tecmo_fgscroll_w );
+WRITE_HANDLER( tecmo_bgscroll_w );
+WRITE_HANDLER( tecmo_flipscreen_w );
+
+int tecmo_vh_start(void);
+void tecmo_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 
 
@@ -89,40 +83,41 @@ static WRITE_HANDLER( tecmo_sound_command_w )
 	cpu_cause_interrupt(1,Z80_NMI_INT);
 }
 
-static int adpcm_start,adpcm_end;
+static int adpcm_pos,adpcm_end;
 
 static WRITE_HANDLER( tecmo_adpcm_start_w )
 {
-	adpcm_start = data << 8;
+	adpcm_pos = data << 8;
+	MSM5205_reset_w(0,0);
 }
 static WRITE_HANDLER( tecmo_adpcm_end_w )
 {
 	adpcm_end = (data + 1) << 8;
 }
-static WRITE_HANDLER( tecmo_adpcm_trigger_w )
+static WRITE_HANDLER( tecmo_adpcm_vol_w )
 {
-	ADPCM_setvol(0,(data & 0x0f) * 0x11);
-	if (data & 0x0f)	/* maybe this selects the volume? */
-		if (adpcm_start < 0x8000)
-			ADPCM_play(0,adpcm_start,(adpcm_end - adpcm_start)*2);
+	MSM5205_set_volume(0,(data & 0x0f) * 100 / 15);
 }
+static void tecmo_adpcm_int(int num)
+{
+	static int adpcm_data = -1;
 
+	if (adpcm_pos >= adpcm_end ||
+				adpcm_pos >= memory_region_length(REGION_SOUND1))
+		MSM5205_reset_w(0,1);
+	else if (adpcm_data != -1)
+	{
+		MSM5205_data_w(0,adpcm_data & 0x0f);
+		adpcm_data = -1;
+	}
+	else
+	{
+		unsigned char *ROM = memory_region(REGION_SOUND1);
 
-
-extern unsigned char *tecmo_videoram,*tecmo_colorram;
-extern unsigned char *tecmo_videoram2,*tecmo_colorram2;
-extern unsigned char *tecmo_scroll;
-extern size_t tecmo_videoram2_size;
-
-WRITE_HANDLER( tecmo_videoram_w );
-WRITE_HANDLER( tecmo_colorram_w );
-
-int rygar_vh_start(void);
-int silkworm_vh_start(void);
-int gemini_vh_start(void);
-
-void tecmo_vh_stop(void);
-void tecmo_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+		adpcm_data = ROM[adpcm_pos++];
+		MSM5205_data_w(0,adpcm_data >> 4);
+	}
+}
 
 
 
@@ -145,47 +140,22 @@ static struct MemoryReadAddress readmem[] =
 	{ -1 }	/* end of table */
 };
 
-static struct MemoryWriteAddress silkworm_writemem[] =
-{
-	{ 0x0000, 0xbfff, MWA_ROM },
-	{ 0xc000, 0xc1ff, videoram_w, &videoram, &videoram_size },
-	{ 0xc200, 0xc3ff, colorram_w, &colorram },
-	{ 0xc400, 0xc5ff, tecmo_videoram_w, &tecmo_videoram },
-	{ 0xc600, 0xc7ff, tecmo_colorram_w, &tecmo_colorram },
-	{ 0xc800, 0xcbff, MWA_RAM, &tecmo_videoram2, &tecmo_videoram2_size },
-	{ 0xcc00, 0xcfff, MWA_RAM, &tecmo_colorram2 },
-	{ 0xd000, 0xdfff, MWA_RAM },
-	{ 0xe000, 0xe7ff, MWA_RAM, &spriteram, &spriteram_size },
-	{ 0xe800, 0xefff, paletteram_xxxxBBBBRRRRGGGG_swap_w, &paletteram },
-	{ 0xf000, 0xf7ff, MWA_ROM },
-	{ 0xf800, 0xf805, MWA_RAM, &tecmo_scroll },
-	{ 0xf806, 0xf806, tecmo_sound_command_w },
-	{ 0xf807, 0xf807, MWA_NOP },	/* ???? */
-	{ 0xf808, 0xf808, tecmo_bankswitch_w },
-	{ 0xf809, 0xf809, MWA_NOP },	/* ???? */
-	{ 0xf80b, 0xf80b, MWA_NOP },	/* ???? */
-	{ -1 }	/* end of table */
-};
-
 static struct MemoryWriteAddress rygar_writemem[] =
 {
 	{ 0x0000, 0xbfff, MWA_ROM },
 	{ 0xc000, 0xcfff, MWA_RAM },
-	{ 0xd000, 0xd3ff, MWA_RAM, &tecmo_videoram2, &tecmo_videoram2_size },
-	{ 0xd400, 0xd7ff, MWA_RAM, &tecmo_colorram2 },
-	{ 0xd800, 0xd9ff, tecmo_videoram_w, &tecmo_videoram },
-	{ 0xda00, 0xdbff, tecmo_colorram_w, &tecmo_colorram },
-	{ 0xdc00, 0xddff, videoram_w, &videoram, &videoram_size },
-	{ 0xde00, 0xdfff, colorram_w, &colorram },
+	{ 0xd000, 0xd7ff, tecmo_txvideoram_w, &tecmo_txvideoram },
+	{ 0xd800, 0xdbff, tecmo_fgvideoram_w, &tecmo_fgvideoram },
+	{ 0xdc00, 0xdfff, tecmo_bgvideoram_w, &tecmo_bgvideoram },
 	{ 0xe000, 0xe7ff, MWA_RAM, &spriteram, &spriteram_size },
 	{ 0xe800, 0xefff, paletteram_xxxxBBBBRRRRGGGG_swap_w, &paletteram },
 	{ 0xf000, 0xf7ff, MWA_ROM },
-	{ 0xf800, 0xf805, MWA_RAM, &tecmo_scroll },
+	{ 0xf800, 0xf802, tecmo_fgscroll_w },
+	{ 0xf803, 0xf805, tecmo_bgscroll_w },
 	{ 0xf806, 0xf806, tecmo_sound_command_w },
-	{ 0xf807, 0xf807, MWA_NOP },	/* ???? */
+	{ 0xf807, 0xf807, tecmo_flipscreen_w },
 	{ 0xf808, 0xf808, tecmo_bankswitch_w },
-	{ 0xf809, 0xf809, MWA_NOP },	/* ???? */
-	{ 0xf80b, 0xf80b, MWA_NOP },	/* ???? */
+	{ 0xf80b, 0xf80b, watchdog_reset_w },
 	{ -1 }	/* end of table */
 };
 
@@ -193,44 +163,38 @@ static struct MemoryWriteAddress gemini_writemem[] =
 {
 	{ 0x0000, 0xbfff, MWA_ROM },
 	{ 0xc000, 0xcfff, MWA_RAM },
-	{ 0xd000, 0xd3ff, MWA_RAM, &tecmo_videoram2, &tecmo_videoram2_size },
-	{ 0xd400, 0xd7ff, MWA_RAM, &tecmo_colorram2 },
-	{ 0xd800, 0xd9ff, tecmo_videoram_w, &tecmo_videoram },
-	{ 0xda00, 0xdbff, tecmo_colorram_w, &tecmo_colorram },
-	{ 0xdc00, 0xddff, videoram_w, &videoram, &videoram_size },
-	{ 0xde00, 0xdfff, colorram_w, &colorram },
+	{ 0xd000, 0xd7ff, tecmo_txvideoram_w, &tecmo_txvideoram },
+	{ 0xd800, 0xdbff, tecmo_fgvideoram_w, &tecmo_fgvideoram },
+	{ 0xdc00, 0xdfff, tecmo_bgvideoram_w, &tecmo_bgvideoram },
 	{ 0xe000, 0xe7ff, paletteram_xxxxBBBBRRRRGGGG_swap_w, &paletteram },
 	{ 0xe800, 0xefff, MWA_RAM, &spriteram, &spriteram_size },
 	{ 0xf000, 0xf7ff, MWA_ROM },
-	{ 0xf800, 0xf805, MWA_RAM, &tecmo_scroll },
+	{ 0xf800, 0xf802, tecmo_fgscroll_w },
+	{ 0xf803, 0xf805, tecmo_bgscroll_w },
 	{ 0xf806, 0xf806, tecmo_sound_command_w },
-	{ 0xf807, 0xf807, MWA_NOP },	/* ???? */
+	{ 0xf807, 0xf807, tecmo_flipscreen_w },
 	{ 0xf808, 0xf808, tecmo_bankswitch_w },
-	{ 0xf809, 0xf809, MWA_NOP },	/* ???? */
-	{ 0xf80b, 0xf80b, MWA_NOP },	/* ???? */
+	{ 0xf80b, 0xf80b, watchdog_reset_w },
 	{ -1 }	/* end of table */
 };
 
-static struct MemoryReadAddress sound_readmem[] =
+static struct MemoryWriteAddress silkworm_writemem[] =
 {
-	{ 0x0000, 0x7fff, MRA_ROM },
-	{ 0x8000, 0x87ff, MRA_RAM },
-	{ 0xc000, 0xc000, soundlatch_r },
-	{ -1 }	/* end of table */
-};
-
-static struct MemoryWriteAddress sound_writemem[] =
-{
-	{ 0x2000, 0x207f, MWA_RAM },	/* Silkworm set #2 has a custom CPU which */
-									/* writes code to this area */
-	{ 0x0000, 0x7fff, MWA_ROM },
-	{ 0x8000, 0x87ff, MWA_RAM },
-	{ 0xa000, 0xa000, YM3812_control_port_0_w },
-	{ 0xa001, 0xa001, YM3812_write_port_0_w },
-	{ 0xc000, 0xc000, tecmo_adpcm_start_w },
-	{ 0xc400, 0xc400, tecmo_adpcm_end_w },
-	{ 0xc800, 0xc800, tecmo_adpcm_trigger_w },
-	{ 0xcc00, 0xcc00, MWA_NOP },	/* NMI acknowledge? */
+	{ 0x0000, 0xbfff, MWA_ROM },
+	{ 0xc000, 0xc3ff, tecmo_bgvideoram_w, &tecmo_bgvideoram },
+	{ 0xc400, 0xc7ff, tecmo_fgvideoram_w, &tecmo_fgvideoram },
+	{ 0xc800, 0xcfff, tecmo_txvideoram_w, &tecmo_txvideoram },
+	{ 0xd000, 0xdfff, MWA_RAM },
+	{ 0xe000, 0xe7ff, MWA_RAM, &spriteram, &spriteram_size },
+	{ 0xe800, 0xefff, paletteram_xxxxBBBBRRRRGGGG_swap_w, &paletteram },
+	{ 0xf000, 0xf7ff, MWA_ROM },
+	{ 0xf800, 0xf802, tecmo_fgscroll_w },
+	{ 0xf803, 0xf805, tecmo_bgscroll_w },
+	{ 0xf806, 0xf806, tecmo_sound_command_w },
+	{ 0xf807, 0xf807, tecmo_flipscreen_w },
+	{ 0xf808, 0xf808, tecmo_bankswitch_w },
+	{ 0xf809, 0xf809, MWA_NOP },	/* ? */
+	{ 0xf80b, 0xf80b, MWA_NOP },	/* ? if mapped to watchdog like in the others, causes reset */
 	{ -1 }	/* end of table */
 };
 
@@ -250,8 +214,31 @@ static struct MemoryWriteAddress rygar_sound_writemem[] =
 	{ 0x8001, 0x8001, YM3812_write_port_0_w },
 	{ 0xc000, 0xc000, tecmo_adpcm_start_w },
 	{ 0xd000, 0xd000, tecmo_adpcm_end_w },
-	{ 0xe000, 0xe000, tecmo_adpcm_trigger_w },
-	{ 0xf000, 0xf000, MWA_NOP },	/* NMI acknowledge? */
+	{ 0xe000, 0xe000, tecmo_adpcm_vol_w },
+	{ 0xf000, 0xf000, MWA_NOP },	/* NMI acknowledge */
+	{ -1 }	/* end of table */
+};
+
+static struct MemoryReadAddress tecmo_sound_readmem[] =
+{
+	{ 0x0000, 0x7fff, MRA_ROM },
+	{ 0x8000, 0x87ff, MRA_RAM },
+	{ 0xc000, 0xc000, soundlatch_r },
+	{ -1 }	/* end of table */
+};
+
+static struct MemoryWriteAddress tecmo_sound_writemem[] =
+{
+	{ 0x2000, 0x207f, MWA_RAM },	/* Silkworm set #2 has a custom CPU which */
+									/* writes code to this area */
+	{ 0x0000, 0x7fff, MWA_ROM },
+	{ 0x8000, 0x87ff, MWA_RAM },
+	{ 0xa000, 0xa000, YM3812_control_port_0_w },
+	{ 0xa001, 0xa001, YM3812_write_port_0_w },
+	{ 0xc000, 0xc000, tecmo_adpcm_start_w },
+	{ 0xc400, 0xc400, tecmo_adpcm_end_w },
+	{ 0xc800, 0xc800, tecmo_adpcm_vol_w },
+	{ 0xcc00, 0xcc00, MWA_NOP },	/* NMI acknowledge */
 	{ -1 }	/* end of table */
 };
 
@@ -259,22 +246,22 @@ static struct MemoryWriteAddress rygar_sound_writemem[] =
 
 INPUT_PORTS_START( rygar )
 	PORT_START	/* IN0 bits 0-3 */
-	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_8WAY )
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_8WAY )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY )
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_8WAY )
-	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_8WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN  | IPF_8WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP    | IPF_8WAY )
 
 	PORT_START	/* IN1 bits 0-3 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_BUTTON1 )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_BUTTON2 )
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_COIN3 )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_SERVICE1 )
 	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 
 	PORT_START	/* IN2 bits 0-3 */
-	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_COCKTAIL )
 
 	PORT_START	/* IN3 bits 0-3 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_COCKTAIL )
@@ -348,10 +335,10 @@ INPUT_PORTS_END
 
 INPUT_PORTS_START( gemini )
 	PORT_START	/* IN0 bits 0-3 */
-	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_8WAY )
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_8WAY )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY )
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_8WAY )
-	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_8WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN  | IPF_8WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP    | IPF_8WAY )
 
 	PORT_START	/* IN1 bits 0-3 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_BUTTON2 )
@@ -360,10 +347,10 @@ INPUT_PORTS_START( gemini )
 	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 
 	PORT_START	/* IN2 bits 0-3 */
-	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_COCKTAIL )
 
 	PORT_START	/* IN3 bits 0-3 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_BUTTON2 | IPF_COCKTAIL )
@@ -440,10 +427,10 @@ INPUT_PORTS_END
 
 INPUT_PORTS_START( silkworm )
 	PORT_START	/* IN0 bit 0-3 */
-	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_8WAY )
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_8WAY )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY )
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_8WAY )
-	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_8WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN  | IPF_8WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP    | IPF_8WAY )
 
 	PORT_START	/* IN0 bit 4-7 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_BUTTON2 )
@@ -452,10 +439,10 @@ INPUT_PORTS_START( silkworm )
 	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_UNKNOWN )	/* unused? */
 
 	PORT_START	/* IN1 bit 0-3 */
-	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER2 )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER2 )
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_PLAYER2 )
-	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER2 )
 
 	PORT_START	/* IN1 bit 4-7 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_BUTTON2 | IPF_PLAYER2 )
@@ -487,7 +474,7 @@ INPUT_PORTS_START( silkworm )
 	PORT_DIPSETTING(    0x00, "3" )
 	PORT_DIPSETTING(    0x01, "4" )
 	PORT_DIPSETTING(    0x02, "5" )
-	PORT_DIPNAME( 0x04, 0x00, "A 7" )	/* unused? */
+	PORT_DIPNAME( 0x04, 0x00, DEF_STR( Unknown ) )	/* unused? */
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x04, DEF_STR( On ) )
 	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Demo_Sounds ) )
@@ -504,7 +491,7 @@ INPUT_PORTS_START( silkworm )
 	PORT_DIPSETTING(    0x05, "100000" )
 	PORT_DIPSETTING(    0x06, "200000" )
 	PORT_DIPSETTING(    0x07, "None" )
-	PORT_DIPNAME( 0x08, 0x00, "B 4" )	/* unused? */
+	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Unknown ) )	/* unused? */
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x08, DEF_STR( On ) )
 
@@ -530,294 +517,128 @@ INPUT_PORTS_END
 
 
 
-static struct GfxLayout tecmo_charlayout =
+static struct GfxLayout charlayout =
 {
-	8,8,	/* 8*8 characters */
-	1024,	/* 1024 characters */
-	4,	/* 4 bits per pixel */
-	{ 0, 1, 2, 3 },	/* the bitplanes are packed in one nibble */
+	8,8,
+	RGN_FRAC(1,1),
+	4,
+	{ 0, 1, 2, 3 },
 	{ 0*4, 1*4, 2*4, 3*4, 4*4, 5*4, 6*4, 7*4 },
 	{ 0*32, 1*32, 2*32, 3*32, 4*32, 5*32, 6*32, 7*32 },
-	32*8	/* every char takes 32 consecutive bytes */
+	32*8
 };
 
-static struct GfxLayout silkworm_spritelayout =
+static struct GfxLayout tilelayout =
 {
-	16,16,	/* 16*16 sprites */
-	2048,	/* 2048 sprites */
-	4,	/* 4 bits per pixel */
-	{ 0, 1, 2, 3 },	/* the bitplanes are packed in one nibble */
+	16,16,
+	RGN_FRAC(1,1),
+	4,
+	{ 0, 1, 2, 3 },
 	{ 0*4, 1*4, 2*4, 3*4, 4*4, 5*4, 6*4, 7*4,
 			32*8+0*4, 32*8+1*4, 32*8+2*4, 32*8+3*4, 32*8+4*4, 32*8+5*4, 32*8+6*4, 32*8+7*4 },
 	{ 0*32, 1*32, 2*32, 3*32, 4*32, 5*32, 6*32, 7*32,
 			16*32, 17*32, 18*32, 19*32, 20*32, 21*32, 22*32, 23*32 },
-	128*8	/* every sprite takes 128 consecutive bytes */
+	128*8
 };
 
-static struct GfxLayout silkworm_spritelayout2x =
+static struct GfxLayout spritelayout =
 {
-	32,32,	/* 32*32 sprites */
-	512,	/* 512 sprites */
-	4,	/* 4 bits per pixel */
-	{ 0, 1, 2, 3 },	/* the bitplanes are packed in one nibble */
-	{ 0*4, 1*4, 2*4, 3*4, 4*4, 5*4, 6*4, 7*4,
-			32*8+0*4, 32*8+1*4, 32*8+2*4, 32*8+3*4, 32*8+4*4, 32*8+5*4, 32*8+6*4, 32*8+7*4,
-			128*8+0*4, 128*8+1*4, 128*8+2*4, 128*8+3*4, 128*8+4*4, 128*8+5*4, 128*8+6*4, 128*8+7*4,
-			160*8+0*4, 160*8+1*4, 160*8+2*4, 160*8+3*4, 160*8+4*4, 160*8+5*4, 160*8+6*4, 160*8+7*4 },
-	{ 0*32, 1*32, 2*32, 3*32, 4*32, 5*32, 6*32, 7*32,
-			16*32, 17*32, 18*32, 19*32, 20*32, 21*32, 22*32, 23*32,
-			64*32, 65*32, 66*32, 67*32, 68*32, 69*32, 70*32, 71*32,
-			80*32, 81*32, 82*32, 83*32, 84*32, 85*32, 86*32, 87*32 },
-	512*8	/* every sprite takes 512 consecutive bytes */
-};
-
-static struct GfxLayout silkworm_spritelayout8x8 =
-{
-	8,8,	/* 8*8 xprites */
-	8192,	/* 8192 sprites */
-	4,		/* 4 bits per pixel */
-	{ 0, 1, 2, 3 },	/* the bitplanes are packed in one nibble */
+	8,8,
+	RGN_FRAC(1,1),
+	4,
+	{ 0, 1, 2, 3 },
 	{ 0*4, 1*4, 2*4, 3*4, 4*4, 5*4, 6*4, 7*4 },
 	{ 0*32, 1*32, 2*32, 3*32, 4*32, 5*32, 6*32, 7*32 },
-	32*8	/* every sprite takes 32 consecutive bytes */
-};
-
-/* the only difference in rygar_spritelayout is that half as many sprites are present */
-
-static struct GfxLayout rygar_spritelayout = /* only difference is half as many sprites as silkworm */
-{
-	16,16,	/* 16*16 sprites */
-	1024,	/* 1024 sprites */
-	4,	/* 4 bits per pixel */
-	{ 0, 1, 2, 3 },	/* the bitplanes are packed in one nibble */
-	{ 0*4, 1*4, 2*4, 3*4, 4*4, 5*4, 6*4, 7*4,
-			32*8+0*4, 32*8+1*4, 32*8+2*4, 32*8+3*4, 32*8+4*4, 32*8+5*4, 32*8+6*4, 32*8+7*4 },
-	{ 0*32, 1*32, 2*32, 3*32, 4*32, 5*32, 6*32, 7*32,
-			16*32, 17*32, 18*32, 19*32, 20*32, 21*32, 22*32, 23*32 },
-	128*8	/* every sprite takes 128 consecutive bytes */
-};
-
-static struct GfxLayout rygar_spritelayout2x =
-{
-	32,32,	/* 32*32 sprites */
-	256,	/* 512 sprites */
-	4,	/* 4 bits per pixel */
-	{ 0, 1, 2, 3 },	/* the bitplanes are packed in one nibble */
-	{ 0*4, 1*4, 2*4, 3*4, 4*4, 5*4, 6*4, 7*4,
-			32*8+0*4, 32*8+1*4, 32*8+2*4, 32*8+3*4, 32*8+4*4, 32*8+5*4, 32*8+6*4, 32*8+7*4,
-			128*8+0*4, 128*8+1*4, 128*8+2*4, 128*8+3*4, 128*8+4*4, 128*8+5*4, 128*8+6*4, 128*8+7*4,
-			160*8+0*4, 160*8+1*4, 160*8+2*4, 160*8+3*4, 160*8+4*4, 160*8+5*4, 160*8+6*4, 160*8+7*4 },
-	{ 0*32, 1*32, 2*32, 3*32, 4*32, 5*32, 6*32, 7*32,
-			16*32, 17*32, 18*32, 19*32, 20*32, 21*32, 22*32, 23*32,
-			64*32, 65*32, 66*32, 67*32, 68*32, 69*32, 70*32, 71*32,
-			80*32, 81*32, 82*32, 83*32, 84*32, 85*32, 86*32, 87*32 },
-	512*8	/* every sprite takes 512 consecutive bytes */
-};
-
-static struct GfxLayout rygar_spritelayout8x8 =
-{
-	8,8,	/* 8*8 xprites */
-	4096,	/* 8192 sprites */
-	4,		/* 4 bits per pixel */
-	{ 0, 1, 2, 3 },	/* the bitplanes are packed in one nibble */
-	{ 0*4, 1*4, 2*4, 3*4, 4*4, 5*4, 6*4, 7*4 },
-	{ 0*32, 1*32, 2*32, 3*32, 4*32, 5*32, 6*32, 7*32 },
-	32*8	/* every sprite takes 32 consecutive bytes */
+	32*8
 };
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ REGION_GFX1, 0, &tecmo_charlayout,        256, 16 },	/* colors 256 - 511 */
-	{ REGION_GFX2, 0, &silkworm_spritelayout8x8,  0, 16 },	/* colors   0 - 255 */
-	{ REGION_GFX2, 0, &silkworm_spritelayout,     0, 16 },	/* 16x16 sprites */
-	{ REGION_GFX2, 0, &silkworm_spritelayout2x,   0, 16 },	/* double size hack */
-	{ REGION_GFX3, 0, &silkworm_spritelayout,   512, 16 },	/* bg#1 colors 512 - 767 */
-	{ REGION_GFX4, 0, &silkworm_spritelayout,   768, 16 },	/* bg#2 colors 768 - 1023 */
-	{ -1 } /* end of array */
-};
-
-static struct GfxDecodeInfo rygar_gfxdecodeinfo[] =
-{
-	{ REGION_GFX1, 0, &tecmo_charlayout,     256, 16 },	/* colors 256 - 511 */
-	{ REGION_GFX2, 0, &rygar_spritelayout8x8,  0, 16 },	/* colors   0 - 255 */
-	{ REGION_GFX2, 0, &rygar_spritelayout,     0, 16 },	/* 16x16 sprites */
-	{ REGION_GFX2, 0, &rygar_spritelayout2x,   0, 16 },	/* double size hack */
-	{ REGION_GFX3, 0, &rygar_spritelayout,   512, 16 },	/* bg#1 colors 512 - 767 */
-	{ REGION_GFX4, 0, &rygar_spritelayout,   768, 16 },	/* bg#2 colors 768 - 1023 */
+	{ REGION_GFX1, 0, &charlayout, 256, 16 },	/* colors 256 - 511 */
+	{ REGION_GFX2, 0, &spritelayout, 0, 16 },	/* colors   0 - 255 */
+	{ REGION_GFX3, 0, &tilelayout, 512, 16 },	/* colors 512 - 767 */
+	{ REGION_GFX4, 0, &tilelayout, 768, 16 },	/* colors 768 - 1023 */
 	{ -1 } /* end of array */
 };
 
 
 
-static struct YM3526interface rygar_ym3812_interface =
+static void irqhandler(int linestate)
 {
-	1,			/* 1 chip (no more supported) */
-	4000000,	/* 4 MHz ? */
-	{ 255 }		/* (not supported) */
-};
+	cpu_set_irq_line(1,0,linestate);
+}
 
 static struct YM3526interface ym3812_interface =
 {
-	1,			/* 1 chip (no more supported) */
-	4000000,	/* 4 MHz ? */
-	{ 255 }		/* (not supported) */
+	1,			/* 1 chip */
+	4000000,	/* 4 MHz */
+	{ 80 },		/* volume */
+	{ irqhandler }
 };
 
-/* ADPCM chip is a MSM5205 @ 400kHz */
-static struct ADPCMinterface adpcm_interface =
+static struct MSM5205interface msm5205_interface =
 {
-	1,			/* 1 channel */
-	8333,       /* 8000Hz playback */
-	REGION_SOUND1,	/* memory region 3 */
-	0,			/* init function */
-	{ 255 }
+	1,					/* 1 chip             */
+	384000,				/* 384KHz             */
+	{ tecmo_adpcm_int },/* interrupt function */
+	{ MSM5205_S48_4B },	/* 8KHz               */
+	{ 80 }				/* volume */
 };
 
 
 
-static struct MachineDriver machine_driver_silkworm =
-{
-	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			7600000,	/* 7.6 Mhz (?????) */
-			readmem,silkworm_writemem,0,0,
-			interrupt,1
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			4000000,	/* 4 MHz ???? */
-			sound_readmem,sound_writemem,0,0,
-			interrupt,2	/* ?? */
-						/* NMIs are triggered by the main CPU */
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
-	0,
-
-	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
-	gfxdecodeinfo,
-	1024, 1024,
-	0,
-
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
-	0,
-	silkworm_vh_start,
-	tecmo_vh_stop,
-	tecmo_vh_screenrefresh,
-
-	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_YM3812,
-			&ym3812_interface
-		},
-		{
-			SOUND_ADPCM,
-			&adpcm_interface
-		}
-	}
+#define MACHINE_DRIVER(NAME,CPU1_CLOCK,SOUND)					\
+static struct MachineDriver machine_driver_##NAME =				\
+{																\
+	/* basic machine hardware */								\
+	{															\
+		{														\
+			CPU_Z80,											\
+			CPU1_CLOCK,											\
+			readmem,NAME##_writemem,0,0,						\
+			interrupt,1											\
+		},														\
+		{														\
+			CPU_Z80 | CPU_AUDIO_CPU,							\
+			4000000,	/* 4 MHz */								\
+			SOUND##_sound_readmem,SOUND##_sound_writemem,0,0,	\
+			ignore_interrupt,0	/* IRQs triggered by YM3526 */	\
+								/* NMIs triggered by main CPU */\
+		}														\
+	},															\
+	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */	\
+	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */	\
+	0,															\
+																\
+	/* video hardware */										\
+	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },					\
+	gfxdecodeinfo,												\
+	1024, 1024,													\
+	0,															\
+																\
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,					\
+	0,															\
+	tecmo_vh_start,												\
+	0,															\
+	tecmo_vh_screenrefresh,										\
+																\
+	/* sound hardware */										\
+	0,0,0,0,													\
+	{															\
+		{														\
+			SOUND_YM3812,										\
+			&ym3812_interface									\
+		},														\
+		{														\
+			SOUND_MSM5205,										\
+			&msm5205_interface									\
+		},														\
+	}															\
 };
 
-static struct MachineDriver machine_driver_rygar =
-{
-	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			7600000,
-			readmem,rygar_writemem,0,0,
-			interrupt,1
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			4000000,	/* 4 MHz ???? */
-			rygar_sound_readmem,rygar_sound_writemem,0,0,
-			interrupt,2	/* ?? */
-						/* NMIs are triggered by the main CPU */
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
-	0,
-
-	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
-	rygar_gfxdecodeinfo,
-	1024, 1024,
-	0,
-
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
-	0,
-	rygar_vh_start,
-	tecmo_vh_stop,
-	tecmo_vh_screenrefresh,
-
-	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_YM3812,
-			&rygar_ym3812_interface
-		},
-		{
-			SOUND_ADPCM,
-			&adpcm_interface
-		},
-	}
-};
-
-static struct MachineDriver machine_driver_gemini =
-{
-	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			7600000,	/* 7.6 Mhz (?????) */
-			readmem,gemini_writemem,0,0,
-			interrupt,1
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			4000000,	/* 4 MHz ???? */
-			sound_readmem,sound_writemem,0,0,
-			interrupt,2	/* ?? */
-						/* NMIs are triggered by the main CPU */
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
-	0,
-
-	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
-	gfxdecodeinfo,
-	1024, 1024,
-	0,
-
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
-	0,
-	gemini_vh_start,
-	tecmo_vh_stop,
-	tecmo_vh_screenrefresh,
-
-	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_YM3812,
-			&ym3812_interface
-		},
-		{
-			SOUND_ADPCM,
-			&adpcm_interface
-		}
-	}
-};
+MACHINE_DRIVER( rygar,    4000000,         rygar )
+MACHINE_DRIVER( gemini,   6000000 /* ? */, tecmo )
+MACHINE_DRIVER( silkworm, 6000000 /* ? */, tecmo )
 
 
 
@@ -1031,9 +852,19 @@ ROM_END
 
 
 
-GAMEX( 1986, rygar,    0,        rygar,    rygar,    0, ROT0,  "Tecmo", "Rygar (US set 1)", GAME_NO_COCKTAIL )
-GAMEX( 1986, rygar2,   rygar,    rygar,    rygar,    0, ROT0,  "Tecmo", "Rygar (US set 2)", GAME_NO_COCKTAIL )
-GAMEX( 1986, rygarj,   rygar,    rygar,    rygar,    0, ROT0,  "Tecmo", "Argus no Senshi (Japan)", GAME_NO_COCKTAIL )
-GAMEX( 1987, gemini,   0,        gemini,   gemini,   0, ROT90, "Tecmo", "Gemini Wing", GAME_NO_COCKTAIL )
-GAMEX( 1988, silkworm, 0,        silkworm, silkworm, 0, ROT0,  "Tecmo", "Silkworm (set 1)", GAME_NO_COCKTAIL )
-GAMEX( 1988, silkwrm2, silkworm, silkworm, silkworm, 0, ROT0,  "Tecmo", "Silkworm (set 2)", GAME_NO_COCKTAIL )
+/*
+   video_type is used to distinguish Rygar, Silkworm and Gemini Wing.
+   This is needed because there is a difference in the tile and sprite indexing.
+*/
+void init_rygar(void)    { tecmo_video_type = 0; }
+void init_silkworm(void) { tecmo_video_type = 1; }
+void init_gemini(void)   { tecmo_video_type = 2; }
+
+
+
+GAME( 1986, rygar,    0,        rygar,    rygar,    rygar,    ROT0,  "Tecmo", "Rygar (US set 1)" )
+GAME( 1986, rygar2,   rygar,    rygar,    rygar,    rygar,    ROT0,  "Tecmo", "Rygar (US set 2)" )
+GAME( 1986, rygarj,   rygar,    rygar,    rygar,    rygar,    ROT0,  "Tecmo", "Argus no Senshi (Japan)" )
+GAME( 1987, gemini,   0,        gemini,   gemini,   gemini,   ROT90, "Tecmo", "Gemini Wing" )
+GAME( 1988, silkworm, 0,        silkworm, silkworm, silkworm, ROT0,  "Tecmo", "Silkworm (set 1)" )
+GAME( 1988, silkwrm2, silkworm, silkworm, silkworm, silkworm, ROT0,  "Tecmo", "Silkworm (set 2)" )

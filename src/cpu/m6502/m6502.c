@@ -821,7 +821,7 @@ unsigned m6510_dasm(char *buffer, unsigned pc)
 }
 #endif
 
-#ifdef HAS_M6510T
+#if (HAS_M6510T)
 const char *m6510t_info(void *context, int regnum)
 {
 	switch( regnum )
@@ -832,7 +832,7 @@ const char *m6510t_info(void *context, int regnum)
 }
 #endif
 
-#ifdef HAS_M7501
+#if (HAS_M7501)
 const char *m7501_info(void *context, int regnum)
 {
 	switch( regnum )
@@ -843,7 +843,7 @@ const char *m7501_info(void *context, int regnum)
 }
 #endif
 
-#ifdef HAS_M8502
+#if (HAS_M8502)
 const char *m8502_info(void *context, int regnum)
 {
 	switch( regnum )

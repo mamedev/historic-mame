@@ -545,46 +545,50 @@ void punchout_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 	/* copy the two big sprites */
 	{
-		int sx,sy,zoom,height;
-
+		int zoom;
 
 		zoom = punchout_bigsprite1[0] + 256 * (punchout_bigsprite1[1] & 0x0f);
 		if (zoom)
 		{
-			sx = 1024 - (punchout_bigsprite1[2] + 256 * (punchout_bigsprite1[3] & 0x0f)) / 4;
-			if (sx > 1024-127) sx -= 1024;
-			sx = sx * (0x1000 / 4) / zoom;	/* adjust x position basing on zoom */
-			sx -= 57;	/* adjustment to match the screen shots */
+			int sx,sy;
+			UINT32 startx,starty;
+			int incxx,incyy;
 
-			sy = -punchout_bigsprite1[4] + 256 * (punchout_bigsprite1[5] & 1);
-			sy = sy * (0x1000 / 4) / zoom;	/* adjust y position basing on zoom */
+			sx = 4096 - (punchout_bigsprite1[2] + 256 * (punchout_bigsprite1[3] & 0x0f));
+			if (sx > 4096-4*127) sx -= 4096;
 
-			/* when the sprite is reduced, it fits more than */
-			/* once in the screen, so if the first draw is */
-			/* offscreen the second can be visible */
-			height = 256 * (0x1000 / 4) / zoom;	/* height of the zoomed sprite */
-			if (sy <= -height+16) sy += 2*height;	/* if offscreen, try moving it lower */
+			sy = -(punchout_bigsprite1[4] + 256 * (punchout_bigsprite1[5] & 1));
+			if (sy <= -256 + zoom/0x40) sy += 512;
 
-			sy += 3;	/* adjustment to match the screen shots */
-				/* have to be at least 3, using 2 creates a blank line at the bottom */
-				/* of the screen when you win the championship and jump around with */
-				/* the belt */
+			incxx = zoom << 6;
+			incyy = zoom << 6;
+
+			startx = -sx * 0x4000;
+			starty = -sy * 0x10000;
+			startx += 3740 * zoom;	/* adjustment to match the screen shots */
+			starty -= 178 * zoom;	/* and make the hall of fame picture nice */
+
+			if (punchout_bigsprite1[6] & 1)	/* flip x */
+			{
+				startx = (bs1tmpbitmap->width << 16) - startx - 1;
+				incxx = -incxx;
+			}
 
 			if (punchout_bigsprite1[7] & 1)	/* display in top monitor */
 			{
-				copybitmapzoom(bitmap,bs1tmpbitmap,
-						punchout_bigsprite1[6] & 1,0,
-						sx,sy - 8*(32-TOP_MONITOR_ROWS),
-						&topvisiblearea,TRANSPARENCY_COLOR,1024,
-						0x10000 * 0x1000 / 4 / zoom,0x10000 * 0x1000 / 4 / zoom);
+				copyrozbitmap(bitmap,bs1tmpbitmap,
+					startx,starty + 0x200*(32-TOP_MONITOR_ROWS) * zoom,
+					incxx,0,0,incyy,	/* zoom, no rotation */
+					0,	/* no wraparound */
+					&topvisiblearea,TRANSPARENCY_COLOR,1024,0);
 			}
 			if (punchout_bigsprite1[7] & 2)	/* display in bottom monitor */
 			{
-				copybitmapzoom(bitmap,bs1tmpbitmap,
-						punchout_bigsprite1[6] & 1,0,
-						sx,sy + 8*TOP_MONITOR_ROWS,
-						&bottomvisiblearea,TRANSPARENCY_COLOR,1024,
-						0x10000 * 0x1000 / 4 / zoom,0x10000 * 0x1000 / 4 / zoom);
+				copyrozbitmap(bitmap,bs1tmpbitmap,
+					startx,starty - 0x200*TOP_MONITOR_ROWS * zoom,
+					incxx,0,0,incyy,	/* zoom, no rotation */
+					0,	/* no wraparound */
+					&bottomvisiblearea,TRANSPARENCY_COLOR,1024,0);
 			}
 		}
 	}
@@ -708,46 +712,50 @@ void armwrest_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 	/* copy the two big sprites */
 	{
-		int sx,sy,zoom,height;
-
+		int zoom;
 
 		zoom = punchout_bigsprite1[0] + 256 * (punchout_bigsprite1[1] & 0x0f);
 		if (zoom)
 		{
-			sx = 1024 - (punchout_bigsprite1[2] + 256 * (punchout_bigsprite1[3] & 0x0f)) / 4;
-			if (sx > 1024-127) sx -= 1024;
-			sx = sx * (0x1000 / 4) / zoom;	/* adjust x position basing on zoom */
-			sx -= 57;	/* adjustment to match the screen shots */
+			int sx,sy;
+			UINT32 startx,starty;
+			int incxx,incyy;
 
-			sy = -punchout_bigsprite1[4] + 256 * (punchout_bigsprite1[5] & 1);
-			sy = sy * (0x1000 / 4) / zoom;	/* adjust y position basing on zoom */
+			sx = 4096 - (punchout_bigsprite1[2] + 256 * (punchout_bigsprite1[3] & 0x0f));
+			if (sx > 4096-4*127) sx -= 4096;
 
-			/* when the sprite is reduced, it fits more than */
-			/* once in the screen, so if the first draw is */
-			/* offscreen the second can be visible */
-			height = 256 * (0x1000 / 4) / zoom;	/* height of the zoomed sprite */
-			if (sy <= -height+16) sy += 2*height;	/* if offscreen, try moving it lower */
+			sy = -(punchout_bigsprite1[4] + 256 * (punchout_bigsprite1[5] & 1));
+			if (sy <= -256 + zoom/0x40) sy += 512;
 
-			sy += 3;	/* adjustment to match the screen shots */
-				/* have to be at least 3, using 2 creates a blank line at the bottom */
-				/* of the screen when you win the championship and jump around with */
-				/* the belt */
+			incxx = zoom << 6;
+			incyy = zoom << 6;
+
+			startx = -sx * 0x4000;
+			starty = -sy * 0x10000;
+			startx += 3740 * zoom;	/* adjustment to match the screen shots */
+			starty -= 178 * zoom;	/* and make the hall of fame picture nice */
+
+			if (punchout_bigsprite1[6] & 1)	/* flip x */
+			{
+				startx = (bs1tmpbitmap->width << 16) - startx - 1;
+				incxx = -incxx;
+			}
 
 			if (punchout_bigsprite1[7] & 1)	/* display in top monitor */
 			{
-				copybitmapzoom(bitmap,bs1tmpbitmap,
-						punchout_bigsprite1[6] & 1,0,
-						sx,sy - 8*(32-TOP_MONITOR_ROWS),
-						&topvisiblearea,TRANSPARENCY_COLOR,1024,
-						0x10000 * 0x1000 / 4 / zoom,0x10000 * 0x1000 / 4 / zoom);
+				copyrozbitmap(bitmap,bs1tmpbitmap,
+					startx,starty + 0x200*(32-TOP_MONITOR_ROWS) * zoom,
+					incxx,0,0,incyy,	/* zoom, no rotation */
+					0,	/* no wraparound */
+					&topvisiblearea,TRANSPARENCY_COLOR,1024,0);
 			}
 			if (punchout_bigsprite1[7] & 2)	/* display in bottom monitor */
 			{
-				copybitmapzoom(bitmap,bs1tmpbitmap,
-						punchout_bigsprite1[6] & 1,0,
-						sx,sy + 8*TOP_MONITOR_ROWS,
-						&bottomvisiblearea,TRANSPARENCY_COLOR,1024,
-						0x10000 * 0x1000 / 4 / zoom,0x10000 * 0x1000 / 4 / zoom);
+				copyrozbitmap(bitmap,bs1tmpbitmap,
+					startx,starty - 0x200*TOP_MONITOR_ROWS * zoom,
+					incxx,0,0,incyy,	/* zoom, no rotation */
+					0,	/* no wraparound */
+					&bottomvisiblearea,TRANSPARENCY_COLOR,1024,0);
 			}
 		}
 	}

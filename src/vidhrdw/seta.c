@@ -71,30 +71,37 @@ Note:	if MAME_DEBUG is defined, pressing Z with:
 							[ Floating Tilemap ]
 
 	There's a floating tilemap made of vertical colums composed of 2x16
-	"sprites". Each 32 consecutive "sprites" define a column. Each column
-	has a variable horizontal position and a vertical scrolling value
-	(see the Sprite Control Registers).
+	"sprites". Each 32 consecutive "sprites" define a column.
 
+	For column I:
 
-		Spriteram_2 + 0x800.w
+		Spriteram_2 + 0x800 + 0x40 * I:
 
 						f--- ---- ---- ----		Flip X
 						-e-- ---- ---- ----		Flip Y
 						--dc b--- ---- ----		-
 						---- --98 7654 3210		Code (Lower bits)
 
-		Spriteram_2 + 0xc00.w
+		Spriteram_2 + 0xc00 + 0x40 * I:
 
 						fedc b--- ---- ----		Color
-						---- -a-- ---- ----		?Code (Upper Bits)?
+						---- -a-- ---- ----		? Code (Upper Bits) ?
 						---- --9- ---- ----		Code (Upper Bits)
 						---- ---8 7654 3210		-
 
-		Spriteram   + 0x400.w
+	Each column	has a variable horizontal position and a vertical scrolling
+	value (see also the Sprite Control Registers). For column I:
+
+
+		Spriteram   + 0x400 + 0x20 * I:
 
 						fedc ba98 ---- ----		-
 						---- ---- 7654 3210		Y
 
+		Spriteram   + 0x408 + 0x20 * I:
+
+						fedc ba98 ---- ----		-
+						---- ---- 7654 3210		Low Bits Of X
 
 
 
@@ -143,6 +150,15 @@ unsigned char *seta_vregs;
 int seta_tiles_offset;	// tiles banking, can be 0 or $4000
 
 
+/* Variables defined in driver */
+
+extern int blandia_samples_bank;
+
+
+
+
+
+
 WRITE_HANDLER( seta_vregs_w )
 {
 	COMBINE_WORD_MEM(&seta_vregs[offset], data);
@@ -156,10 +172,40 @@ WRITE_HANDLER( seta_vregs_w )
 			}
 			break;
 
-		case 2:	// Handled in vh_screenrefresh:
-				// bit 0: swap layers order
-				// bit 1: ?
-			break;
+		case 2:
+		{
+			unsigned char *RAM = memory_region(REGION_SOUND1);
+			int new_bank;
+
+			// Handled in vh_screenrefresh:
+			// bit 0: swap layers order
+			// bit 1: ?
+			// bit 2: ?
+
+			// bit 3-5: samples bank (blandia)
+
+			new_bank = (data >> 3) & 0x7;
+
+			if (new_bank != blandia_samples_bank)
+			{
+				int samples_len, addr;
+
+				blandia_samples_bank = new_bank;
+
+				samples_len = memory_region_length(REGION_SOUND1);
+
+				addr = 0x40000 * new_bank;
+				if (new_bank >= 3)	addr += 0x40000;
+
+				if ( (samples_len > 0x100000) && ((addr+0x40000) <= samples_len) )
+					memcpy(&RAM[0xc0000],&RAM[addr],0x40000);
+				else
+					logerror("PC %06X - Invalid samples bank %02X !\n", cpu_get_pc(), new_bank);
+			}
+
+		}
+		break;
+
 
 		case 4:	// ?
 			break;
@@ -325,6 +371,49 @@ int seta_vh_start_1_layer(void)
 }
 
 
+int seta_vh_start_1_layer_offset_0x02(void)
+{
+	if (seta_vh_start_1_layer())	return 1;
+
+	tilemap_set_scrolldx(tilemap_0, -0x02, 0x00); // see calibr50's rescue
+	tilemap_set_scrolldx(tilemap_1, -0x02, 0x00);
+
+	tilemap_set_scrolldy(tilemap_0, 0x00, 0x00);
+	tilemap_set_scrolldy(tilemap_1, 0x00, 0x00);
+
+	return 0;
+}
+
+
+/***************************************************************************
+
+
+							Palette Init Functions
+
+
+***************************************************************************/
+
+
+/* 2 layers, 6 bit deep. The color codes have a 16 color granularity.
+
+   One layer only uses the first 16 colors of the palette (repeated
+   4 times to fill the 64 colors) and regardless of the color code!
+
+   The other uses the first 64 colors of the palette regardless of
+   the color code too!
+
+   I think that's because this game's a prototype..
+*/
+void blandia_vh_init_palette(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
+{
+	int color, pen;
+	for( color = 0; color < 32; color++ )
+		for( pen = 0; pen < 64; pen++ )
+		{
+			colortable[color * 64 + pen + 16*32]       = (pen%16) + 16*32*1;
+			colortable[color * 64 + pen + 16*32+64*32] = pen      + 16*32*2;
+		}
+}
 
 
 
@@ -336,6 +425,9 @@ void zingzip_vh_init_palette(unsigned char *palette, unsigned short *colortable,
 		for( pen = 0; pen < 64; pen++ )
 			colortable[color * 64 + pen + 32*16*2] = ((color * 16 + pen)%(32*16)) + 32*16*2;
 }
+
+
+
 
 /* 6 bit layer. The colors are still WRONG */
 void usclssic_vh_init_palette(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
@@ -450,6 +542,7 @@ static void seta_draw_sprites_map(struct osd_bitmap *bitmap)
 
 //	int max_x	=	Machine->drv->screen_width  - 16;
 //	int max_y	=	Machine->visible_area.max_y+1;	// see pic of metafox
+int max_y	=	240;
 
 	xoffs	=	flip ? 0x10 : 0x10;	// see wrofaero test mode: made of sprites map
 	yoffs	=	flip ? 0x09 : 0x07;
@@ -483,10 +576,9 @@ static void seta_draw_sprites_map(struct osd_bitmap *bitmap)
 
 			if (flip)
 			{
-//				x = 0x200 - y;
-//				y = 0x100 - y;
+				sy = max_y - 16 - sy - 0x100;
 				flipx = !flipx;
-//				flipy = !flipy;
+				flipy = !flipy;
 			}
 
 			color	=	( color >> (16-5) ) % total_color_codes;
@@ -528,11 +620,17 @@ static void seta_draw_sprites(struct osd_bitmap *bitmap)
 	unsigned char *spriteram1 = spriteram_2 + ((ctrl2 & 0x40) ? 0x2000 : 0);
 
 //	int max_x	=	Machine->drv->screen_width  - 16;
-	int max_y	=	Machine->visible_area.max_y+1;	// see pic of metafox
+//	int max_y	=	Machine->visible_area.max_y+1;	// see pic of metafox
+int max_y	=	240;
+
+
 
 	seta_draw_sprites_map(bitmap);
 
-	xoffs	=	flip ? 0x10 : 0x11;	// see downtown test mode: made of normal sprites
+
+
+//	xoffs	=	flip ? 0x10 : 0x11;	// see downtown test mode: made of normal sprites
+xoffs	=	flip ? 0x10 : 0x10;	// see blandia test mode: made of normal sprites
 	yoffs	=	flip ? 0x06 : 0x06;
 
 	for ( offs = 0x400-2 ; offs >= 0; offs -= 2 )
@@ -549,9 +647,9 @@ static void seta_draw_sprites(struct osd_bitmap *bitmap)
 
 		if (flip)
 		{
-//			x = max_x - x;
 			y = max_y - y;
-			flipx = !flipx;		flipy = !flipy;
+			flipx = !flipx;
+			flipy = !flipy;
 		}
 
 		code = (code & 0x3fff) + (bank ? 0x4000 : 0);

@@ -12,7 +12,8 @@ TARGET = mame
 # SYMBOLS = 1
 
 # uncomment next line to use Assembler 68k engine
-X86_ASM_68K = 1
+# currently the Psikyo games don't work with it
+# X86_ASM_68K = 1
 
 # set this the operating system you're building for
 # (actually you'll probably need your own main makefile anyways)
@@ -27,11 +28,14 @@ VPATH=src $(wildcard src/cpu/*)
 # compiler, linker and utilities
 AR = @ar
 CC = @gcc
-LD = gcc
+LD = @gcc
 #ASM = @nasm
 ASM = @nasmw
 ASMFLAGS = -f coff
 
+ifdef DEBUG
+NAME = $(TARGET)d
+else
 ifdef K6
 NAME = $(TARGET)k6
 ARCH = -march=k6
@@ -42,6 +46,7 @@ ARCH = -march=pentiumpro
 else
 NAME = $(TARGET)
 ARCH = -march=pentium
+endif
 endif
 endif
 

@@ -320,6 +320,11 @@ int readroms(void)
 
 				osd_fclose(f);
 			}
+			else if (romp->length & ROMFLAG_OPTIONAL)
+			{
+				sprintf (&buf[strlen(buf)], "OPTIONAL %-12s NOT FOUND\n",name);
+				romp ++;
+			}
 			else
 			{
 				/* allow for a NO GOOD DUMP KNOWN rom to be missing */
@@ -928,10 +933,12 @@ void save_screen_snapshot_as(void *fp,struct osd_bitmap *bitmap)
 
 		if (copy)
 		{
-			copybitmapzoom(copy,bitmap,0,0,
-					-scalex * Machine->visible_area.min_x,-scaley * Machine->visible_area.min_y,
-					0,TRANSPARENCY_NONE,0,
-					scalex * 0x10000,scaley * 0x10000);
+			copyrozbitmap(copy,bitmap,
+					Machine->visible_area.min_x << 16,Machine->visible_area.min_y << 16,
+					0x10000 / scalex,0,0,0x10000 / scaley,	/* zoom, no rotation */
+					0,	/* no wraparound */
+					0,TRANSPARENCY_NONE,0,0);
+
 			png_write_bitmap(fp,copy);
 			bitmap_free(copy);
 		}

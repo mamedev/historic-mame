@@ -78,6 +78,11 @@
  * 20.04.00  MJC  - TST.B Also missing A7 specific routine
  *                - Extra Define A7ROUTINE to switch between having seperate
  *                  routines for +-(A7) address modes.
+ * 24.06.00  MJC  - ADDX/SUBX +-(A7) routines added.
+ *                  TAS should not touch X flag
+ *                  LSL/LSR EA not clearing V flag
+ *                  CHK not all opcodes in jump table
+ *                  Add define to mask status register
  *---------------------------------------------------------------
  * Known Problems / Bugs
  *
@@ -116,6 +121,7 @@
 #define ASMBANK         /* Memory banking algorithm to use */
 #define A7ROUTINE       /* Define to use separate routines for -(a7)/(a7)+ */
 #define ALIGNMENT 4		/* Alignment to use for branches */
+#undef  MASKCCR         /* Mask the status register to filter out unused bits */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -790,7 +796,13 @@ void ReadCCR(char Size, int Wreg)
     fprintf(fp, "\t\t or    eax,%s\t\t\t\t; O\n\n",regnameslong[Wreg]);
 
     if (Size == 'W')
+    {
 	    fprintf(fp, "\t\t mov   ah,byte [%s] \t; T, S & I\n\n",REG_SRH);
+
+		#ifdef MASKCCR
+		    fprintf(fp, "\t\t and   ax,0A71Fh\t; Mask unused bits\n");
+        #endif
+	}
 }
 
 /*
@@ -3313,6 +3325,14 @@ void addx_subx(void)
 
 		BaseCode = Opcode & 0xd1c8 ;
 
+        #ifdef A7ROUTINE
+	    if ((rm == 1) && (leng == 0))
+		{
+         	if (regx == 7) BaseCode |= (regx << 9);
+			if (regy == 7) BaseCode |= regy;
+        }
+        #endif
+
 		if ( rm == 0 )
 			mode = 0 ;
 		else
@@ -3975,48 +3995,52 @@ void chk(void)
 
 		Dest = EAtoAMN(Opcode, FALSE);
 
-		if ( (OpcodeArray[BaseCode] == -2 ) && ( allow[Dest&0xf] != '-' ))
+		if (allow[Dest&0xf] != '-')
 		{
-			Align();
-			Label = GenerateLabel(BaseCode,0);
-			fprintf(fp, "%s:\n", Label );
-   			fprintf(fp, "\t\t add   esi,byte 2\n\n");
+        	if (OpcodeArray[BaseCode] == -2 )
+			{
+			    Align();
+			    Label = GenerateLabel(BaseCode,0);
+			    fprintf(fp, "%s:\n", Label );
+   			    fprintf(fp, "\t\t add   esi,byte 2\n\n");
 
-            TimingCycles += 10;
+                TimingCycles += 10;
 
-			fprintf(fp, "\t\t mov   ebx,ecx\n");
-			fprintf(fp, "\t\t shr   ebx,byte 9\n");
-			fprintf(fp, "\t\t and   ebx,byte 7\n");
+			    fprintf(fp, "\t\t mov   ebx,ecx\n");
+			    fprintf(fp, "\t\t shr   ebx,byte 9\n");
+			    fprintf(fp, "\t\t and   ebx,byte 7\n");
 
-			fprintf(fp, "\t\t mov   ebx,[%s+EBX*4]\n",REG_DAT);
-			fprintf(fp, "\t\t test  bh,80h\n"); /* is word bx < 0 */
-			fprintf(fp, "\t\t jnz   near OP_%4.4x_Trap_minus\n",BaseCode);
+			    fprintf(fp, "\t\t mov   ebx,[%s+EBX*4]\n",REG_DAT);
+			    fprintf(fp, "\t\t test  bh,80h\n"); /* is word bx < 0 */
+			    fprintf(fp, "\t\t jnz   near OP_%4.4x_Trap_minus\n",BaseCode);
 
-			if (Dest < 7)
- 				fprintf(fp, "\t\t and   ecx,byte 7\n");
+			    if (Dest < 7)
+ 				    fprintf(fp, "\t\t and   ecx,byte 7\n");
 
-			EffectiveAddressRead(Dest,'W',ECX,EAX,"----S-B",FALSE);
+			    EffectiveAddressRead(Dest,'W',ECX,EAX,"----S-B",FALSE);
 
-			fprintf(fp, "\t\t cmp   bx,ax\n");
-			fprintf(fp, "\t\t jg    near OP_%4.4x_Trap_over\n",BaseCode);
-			Completed();
+			    fprintf(fp, "\t\t cmp   bx,ax\n");
+			    fprintf(fp, "\t\t jg    near OP_%4.4x_Trap_over\n",BaseCode);
+			    Completed();
 
-            /* N is set if data less than zero */
+                /* N is set if data less than zero */
 
-			Align();
-			fprintf(fp, "OP_%4.4x_Trap_minus:\n",BaseCode);
-			fprintf(fp, "\t\t or    dl,80h\n"); 		/* N flag = 80H */
-			Exception(6,BaseCode);
+			    Align();
+			    fprintf(fp, "OP_%4.4x_Trap_minus:\n",BaseCode);
+			    fprintf(fp, "\t\t or    dl,80h\n"); 		/* N flag = 80H */
+			    Exception(6,BaseCode);
 
-            /* N is cleared if greated than compared number */
+                /* N is cleared if greated than compared number */
 
-            Align();
-			fprintf(fp, "OP_%4.4x_Trap_over:\n",BaseCode);
-			fprintf(fp, "\t\t and   dl,7Fh\n"); 		/* N flag = 80H */
-			Exception(6,0x10000+BaseCode);
+                Align();
+			    fprintf(fp, "OP_%4.4x_Trap_over:\n",BaseCode);
+			    fprintf(fp, "\t\t and   dl,7Fh\n"); 		/* N flag = 80H */
+			    Exception(6,0x10000+BaseCode);
 
-			OpcodeArray[Opcode] = BaseCode ;
-		}
+		    }
+
+		    OpcodeArray[Opcode] = BaseCode ;
+        }
 	}
 }
 
@@ -4194,7 +4218,7 @@ void tas(void)
 
   				EffectiveAddressRead(Dest,'B',ECX,EAX,"--C-SDB",FALSE);
 
-				SetFlags('B',EAX,TRUE,TRUE,TRUE);
+				SetFlags('B',EAX,TRUE,FALSE,TRUE);
 				fprintf(fp, "\t\t or    al,128\n");
 
 	  			EffectiveAddressWrite(Dest,'B',ECX,EAX,"----S-B",FALSE);
@@ -5827,9 +5851,13 @@ void lsl_lsr_ea(void)
 				else
 					fprintf(fp, "\t\t shl   ax,1\n");
 
-				SetFlags('W',EAX,FALSE,TRUE,TRUE);
+				SetFlags('W',EAX,FALSE,TRUE,FALSE);
 
-				EffectiveAddressWrite(Dest&0xf,'W',ECX,EAX,"----S-B",FALSE);
+	            /* Clear Overflow flag */
+
+    	        fprintf(fp, "\t\t xor   dh,dh\n");
+
+				EffectiveAddressWrite(Dest&0xf,'W',ECX,EAX,"---DS-B",TRUE);
 				Completed();
 			}
 

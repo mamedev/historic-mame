@@ -725,7 +725,7 @@ void ataxx_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			{
 				int xsum = xcoarse + x;
 				int offs = ((ysum & 0x40) << 9) + ((ysum & 0x3f) << 8) + (xsum & 0xff);
-				int code = ataxx_qram[offs] | ((ataxx_qram[offs + 0x4000] & 0x3f) << 8);
+				int code = ataxx_qram[offs] | ((ataxx_qram[offs + 0x4000] & 0x7f) << 8);
 
 				/* draw to the bitmap */
 				drawgfx(bitmap, gfx,

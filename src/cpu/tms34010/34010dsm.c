@@ -244,7 +244,7 @@ static void print_reg_list(UINT16 rev)
 }
 
 
-unsigned Dasm34010 (char *buff, UINT32 pc)
+unsigned Dasm340x0(char *buff, UINT32 pc, int is_34020)
 {
 	UINT8 bad = 0;
 	UINT16 subop;
@@ -268,7 +268,28 @@ unsigned Dasm34010 (char *buff, UINT32 pc)
 			sprintf (buffer, "REV    ");
 			print_des_reg();
 			break;
-
+			
+		case 0x0040:
+			if (is_34020)
+				sprintf (buffer, "IDLE   ");
+			else
+				bad = 1;
+			break;
+			
+		case 0x0080:
+			if (is_34020)
+				sprintf (buffer, "MWAIT  ");
+			else
+				bad = 1;
+			break;
+			
+		case 0x00e0:
+			if (is_34020)
+				sprintf (buffer, "BLMOVE %d,%d", (op >> 1) & 1, op & 1);
+			else
+				bad = 1;
+			break;
+			
 		case 0x0100:
 			sprintf (buffer, "EMU    ");
 			break;
@@ -315,6 +336,57 @@ unsigned Dasm34010 (char *buff, UINT32 pc)
 	case 0x0200:
 		switch (subop)
 		{
+		case 0x0040:
+			if (is_34020)
+				sprintf (buffer, "SETCSP ");
+			else
+				bad = 1;
+			break;
+
+		case 0x0060:
+			if (is_34020)
+				sprintf (buffer, "SETCDP ");
+			else
+				bad = 1;
+			break;
+
+		case 0x0080:
+			if (is_34020)
+			{
+				sprintf (buffer, "RPIX   ");
+				print_des_reg();
+			}
+			else
+				bad = 1;
+			break;
+
+		case 0x00a0:
+			if (is_34020)
+			{
+				sprintf (buffer, "EXGPS  ");
+				print_des_reg();
+			}
+			else
+				bad = 1;
+			break;
+
+		case 0x00c0:
+			if (is_34020)
+			{
+				sprintf (buffer, "GETPS  ");
+				print_des_reg();
+			}
+			else
+				bad = 1;
+			break;
+
+		case 0x00e0:
+			if (is_34020)
+				sprintf (buffer, "SETCMP ");
+			else
+				bad = 1;
+			break;
+
 		case 0x0100:
 			sprintf (buffer, "NOP    ");
 			break;
@@ -364,6 +436,136 @@ unsigned Dasm34010 (char *buff, UINT32 pc)
 	case 0x0600:
 		switch (subop)
 		{
+		case 0x0000:
+			if (is_34020 && (op & 0xfe00) == 0x0600)
+			{
+				UINT32 x;
+				PARAM_LONG(x);
+				sprintf(buffer, "CEXEC  %d,%06X,%d", (x >> 7) & 1, (x >> 8) & 0x1fffff, (x >> 29) & 7);
+			}
+			else
+				bad = 1;
+			break;
+		
+		case 0x0020:
+			if (is_34020 && (op & 0xfe00) == 0x0600)
+			{
+				UINT32 x;
+				PARAM_LONG(x);
+				sprintf(buffer, "CMOVGC ");
+				print_des_reg();
+				sprintf(temp, ",%06X,%d", (x >> 8) & 0x1fffff, (x >> 29) & 7);
+				strcat(buffer, temp);
+			}
+			else
+				bad = 1;
+			break;
+		
+		case 0x0040:
+			if (is_34020 && (op & 0xfe00) == 0x0600)
+			{
+				UINT32 x;
+				PARAM_LONG(x);
+				sprintf(buffer, "CMOVGC ");
+				print_des_reg();
+				strcat(buffer, ",");
+				rf = (x & 0x10) ? 'B' : 'A';
+				print_reg(x & 0x0f);
+				sprintf(temp, ",%d,%06X,%d", (x >> 7) & 1, (x >> 8) & 0x1fffff, (x >> 29) & 7);
+				strcat(buffer, temp);
+			}
+			else
+				bad = 1;
+			break;
+		
+		case 0x0060:
+			if (is_34020 && (op & 0xfe00) == 0x0600)
+			{
+				UINT32 x;
+				PARAM_LONG(x);
+				
+				if (op == 0x0660 && (x & 0xff) == 0x01)
+				{
+					sprintf(buffer, "CMOVCS ");
+					sprintf(temp, ",%06X,%d", (x >> 8) & 0x1fffff, (x >> 29) & 7);
+					strcat(buffer, temp);
+				}
+				else
+				{
+					sprintf(buffer, "CMOVCG ");
+					print_des_reg();
+					strcat(buffer, ",");
+					rf = (x & 0x10) ? 'B' : 'A';
+					print_reg(x & 0x0f);
+					sprintf(temp, ",%d,%06X,%d", (x >> 7) & 1, (x >> 8) & 0x1fffff, (x >> 29) & 7);
+					strcat(buffer, temp);
+				}
+			}
+			else
+				bad = 1;
+			break;
+		
+		case 0x0080:
+			if (is_34020 && (op & 0xfe00) == 0x0600)
+			{
+				UINT32 x;
+				PARAM_LONG(x);
+				sprintf(buffer, "CMOVMC *");
+				rf = (x & 0x10) ? 'B' : 'A';
+				print_reg(x & 0x0f);
+				sprintf(temp, "+,%d,%d,%06X,%d", op & 0x1f, (x >> 7) & 1, (x >> 8) & 0x1fffff, (x >> 29) & 7);
+				strcat(buffer, temp);
+			}
+			else
+				bad = 1;
+			break;
+		
+		case 0x00a0:
+			if (is_34020 && (op & 0xfe00) == 0x0600)
+			{
+				UINT32 x;
+				PARAM_LONG(x);
+				sprintf(buffer, "CMOVCM *");
+				print_des_reg();
+				sprintf(temp, "+,%d,%d,%06X,%d", x & 0x1f, (x >> 7) & 1, (x >> 8) & 0x1fffff, (x >> 29) & 7);
+				strcat(buffer, temp);
+			}
+			else
+				bad = 1;
+			break;
+		
+		case 0x00c0:
+			if (is_34020 && (op & 0xfe00) == 0x0600)
+			{
+				UINT32 x;
+				PARAM_LONG(x);
+				sprintf(buffer, "CMOVCM *-");
+				print_des_reg();
+				sprintf(temp, ",%d,%d,%06X,%d", x & 0x1f, (x >> 7) & 1, (x >> 8) & 0x1fffff, (x >> 29) & 7);
+				strcat(buffer, temp);
+			}
+			else
+				bad = 1;
+			break;
+		
+		case 0x00e0:
+			if (is_34020 && (op & 0xfe00) == 0x0600)
+			{
+				UINT32 x;
+				PARAM_LONG(x);
+				sprintf(buffer, "CMOVMC *");
+				rf = (x & 0x10) ? 'B' : 'A';
+				print_reg(x & 0x0f);
+				strcat(buffer, "+,");
+				rf = (op & 0x10) ? 'B' : 'A';
+				print_reg(op & 0x0f);
+				sprintf(temp, ",%d,%06X,%d", (x >> 7) & 1, (x >> 8) & 0x1fffff, (x >> 29) & 7);
+				strcat(buffer, temp);
+			}
+			else
+				bad = 1;
+			break;
+		
 		case 0x0100:
 			sprintf (buffer, "SEXT   ");
 			print_des_reg();
@@ -439,6 +641,49 @@ unsigned Dasm34010 (char *buff, UINT32 pc)
 	case 0x0800:
 		switch (subop)
 		{
+		case 0x0000:
+			if (is_34020)
+				sprintf (buffer, "TRAPL  ");
+			else
+				bad = 1;
+			break;
+			
+		case 0x0020:
+			if (is_34020)
+			{
+				UINT32 x;
+				PARAM_LONG(x);
+				sprintf(buffer, "CMOVMC *-");
+				rf = (x & 0x10) ? 'B' : 'A';
+				print_reg(x & 0x0f);
+				sprintf(temp, ",%d,%d,%06X,%d", op & 0x1f, (x >> 7) & 1, (x >> 8) & 0x1fffff, (x >> 29) & 7);
+				strcat(buffer, temp);
+			}
+			else
+				bad = 1;
+			break;
+		
+		case 0x0040:
+			if (is_34020)
+				sprintf (buffer, "VBLT   B,L");
+			else
+				bad = 1;
+			break;
+			
+		case 0x0060:
+			if (is_34020)
+				sprintf(buffer, "RETM   ");
+			else
+				bad = 1;
+			break;
+		
+		case 0x00e0:
+			if (is_34020)
+				sprintf (buffer, "CLIP   ");
+			else
+				bad = 1;
+			break;
+			
 		case 0x0100:
 			sprintf (buffer, "TRAP   %Xh", op & 0x1f);
 			break;
@@ -496,6 +741,61 @@ unsigned Dasm34010 (char *buff, UINT32 pc)
 	case 0x0a00:
 		switch (subop)
 		{
+		case 0x0000:
+			if (is_34020)
+				sprintf (buffer, "VLCOL  ");
+			else
+				bad = 1;
+			break;
+		
+		case 0x0020:
+			if (is_34020)
+				sprintf (buffer, "PFILL  XY");
+			else
+				bad = 1;
+			break;
+		
+		case 0x0040:
+			if (is_34020)
+				sprintf (buffer, "VFILL  L");
+			else
+				bad = 1;
+			break;
+		
+		case 0x0060:
+			if (is_34020)
+			{
+				sprintf (buffer, "CVMXYL ");
+				print_des_reg();
+			}
+			else
+				bad = 1;
+			break;
+		
+		case 0x0080:
+			if (is_34020)
+			{
+				sprintf (buffer, "CVDXYL ");
+				print_des_reg();
+			}
+			else
+				bad = 1;
+			break;
+		
+		case 0x00a0:
+			if (is_34020)
+				sprintf (buffer, "FPIXEQ ");
+			else
+				bad = 1;
+			break;
+		
+		case 0x00c0:
+			if (is_34020)
+				sprintf (buffer, "FPIXNE ");
+			else
+				bad = 1;
+			break;
+		
 		case 0x0100:
 			sprintf (buffer, "ADDI   ");
             print_word_parm();
@@ -561,6 +861,25 @@ unsigned Dasm34010 (char *buff, UINT32 pc)
 	case 0x0c00:
 		switch (subop)
 		{
+		case 0x0000:
+			if (is_34020)
+			{
+				sprintf (buffer, "ADDXYI ");
+	            print_long_parm();
+				strcat(buffer, ",");
+				print_des_reg();
+			}
+			else
+				bad = 1;
+			break;
+		
+		case 0x0040:
+			if (is_34020)
+				sprintf (buffer, "LINIT  ");
+			else
+				bad = 1;
+			break;
+		
 		case 0x0100:
 			sprintf (buffer, "SUBI   ");
             print_long_parm_1s_comp();
@@ -616,6 +935,20 @@ unsigned Dasm34010 (char *buff, UINT32 pc)
 	case 0x0e00:
 		switch (subop)
 		{
+		case 0x0000:
+			if (is_34020)
+				sprintf (buffer, "PIXBLT L,M,L");
+			else
+				bad = 1;
+			break;
+
+		case 0x00e0:
+			if (is_34020)
+				sprintf (buffer, "TFILL  XY");
+			else
+				bad = 1;
+			break;
+
 		case 0x0100:
 			sprintf (buffer, "PIXBLT L,L");
 			break;
@@ -750,6 +1083,18 @@ unsigned Dasm34010 (char *buff, UINT32 pc)
 		print_des_reg();
 		break;
 
+	case 0x3400:
+	case 0x3600:
+		if (is_34020)
+		{
+			sprintf (buffer, "CMPK   ");
+			print_constant_1_32();
+			strcat(buffer, ",");
+			print_des_reg();
+		}
+		else
+			bad = 1;
+		break;
 
 	case 0x3800:
 	case 0x3a00:
@@ -926,6 +1271,28 @@ unsigned Dasm34010 (char *buff, UINT32 pc)
 	case 0x6e00:
 		sprintf (buffer, "MODU   ");
 		print_src_des_reg();
+		break;
+
+
+	case 0x7a00:
+		if (is_34020)
+		{
+			sprintf (buffer, "RMO    ");
+			print_src_des_reg();
+		}
+		else
+			bad = 1;
+		break;
+
+	case 0x7e00:
+		if (is_34020)
+		{
+			sprintf (buffer, "SWAPF  *");
+			print_src_des_reg();
+			strcat(buffer, ",0");
+		}
+		else
+			bad = 1;
 		break;
 
 
@@ -1195,10 +1562,35 @@ unsigned Dasm34010 (char *buff, UINT32 pc)
 		}
 		break;
 
+	case 0xd800:
+		if (is_34020)
+		{
+			UINT32 x;
+			PARAM_WORD(x);
+			sprintf(buffer, "CEXEC  %d,%06X,%d", op & 1, ((x << 5) & 0x1fffe0) | ((op >> 1) & 0x1f), (x >> 13) & 7);
+		}
+		else
+			bad = 1;
+		break;
+	
 
 	case 0xde00:
 		switch (subop)
 		{
+		case 0x0000:
+			if (is_34020)
+				sprintf (buffer, "FLINE   0");
+			else
+				bad = 1;
+			break;
+
+		case 0x0080:
+			if (is_34020)
+				sprintf (buffer, "FLINE   1");
+			else
+				bad = 1;
+			break;
+
 		case 0x0100:
 			sprintf (buffer, "LINE   0");
 			break;
@@ -1239,6 +1631,17 @@ unsigned Dasm34010 (char *buff, UINT32 pc)
 	case 0xe800:
 		sprintf (buffer, "CVXYL  ");
 		print_src_des_reg();
+		break;
+
+
+	case 0xea00:
+		if (is_34020)
+		{
+			sprintf (buffer, "CVSXYL ");
+			print_src_des_reg();
+		}
+		else
+			bad = 1;
 		break;
 
 
@@ -1318,3 +1721,14 @@ unsigned Dasm34010 (char *buff, UINT32 pc)
 
 	return _pc - __pc;
 }
+
+unsigned Dasm34010(char *buff, UINT32 pc)
+{
+	return Dasm340x0(buff, pc, 0);
+}
+
+unsigned Dasm34020(char *buff, UINT32 pc)
+{
+	return Dasm340x0(buff, pc, 1);
+}
+

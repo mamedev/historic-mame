@@ -13,8 +13,6 @@ Notes:
 - Sound doesn't work in Spinal Breakers
 - Sprite zoom is probably not 100% accurate (check the table in vidhrdw).
   In pspikes, the zooming text during attract mode is horrible.
-- Aero Fighters has graphics for different tiles (Sonic Wings, The Final War)
-  but I haven't found a way to display them - different program, maybe.
 
 pspikes/turbofrc/aerofgtb write to two addresses which look like control
 registers for a video generator. Maybe they control the display size/position.
@@ -558,37 +556,39 @@ INPUT_PORTS_START( karatblz )
 	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_BUTTON4 | IPF_PLAYER4 )
 
 	PORT_START
-	PORT_DIPNAME( 0x0001, 0x0001, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x0001, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0002, 0x0002, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x0002, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0004, 0x0004, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x0004, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0008, 0x0008, DEF_STR( Unknown ) )
+	PORT_DIPNAME( 0x0007, 0x0007, DEF_STR( Coinage ) )
+	PORT_DIPSETTING(      0x0004, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(      0x0005, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(      0x0006, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(      0x0007, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(      0x0003, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(      0x0002, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(      0x0001, DEF_STR( 1C_5C ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( 1C_6C ) )
+	PORT_DIPNAME( 0x0008, 0x0008, "2 Coins to Start, 1 to Continue" )
 	PORT_DIPSETTING(      0x0008, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0010, 0x0010, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x0010, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0020, 0x0020, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x0020, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0040, 0x0000, "Max Players" )
-	PORT_DIPSETTING(      0x0040, "2" )
-	PORT_DIPSETTING(      0x0000, "4" )
+	PORT_DIPNAME( 0x0010, 0x0010, DEF_STR( Lives ) )
+	PORT_DIPSETTING(      0x0000, "1" )
+	PORT_DIPSETTING(      0x0010, "2" )
+	PORT_DIPNAME( 0x0060, 0x0060, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(      0x0060, "2 Players" )
+	PORT_DIPSETTING(      0x0040, "3 Players" )
+	PORT_DIPSETTING(      0x0020, "4 Players" )
+	PORT_DIPSETTING(      0x0000, "4 Players (Team)" )
+	/*  With 4 player (Team) selected and Same Coin Slot:
+		Coin A & B credit together for use by _only_ player 1 or player 2
+		Coin C & D credit together for use by _only_ player 3 or player 4
+		Otherwise with Individual selected, everyone is seperate  */
 	PORT_DIPNAME( 0x0080, 0x0080, "Coin Slot" )
 	PORT_DIPSETTING(      0x0080, "Same" )
 	PORT_DIPSETTING(      0x0000, "Individual" )
 	PORT_SERVICE( 0x0100, IP_ACTIVE_LOW )
-	PORT_DIPNAME( 0x0200, 0x0200, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x0200, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0400, 0x0400, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x0400, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0600, 0x0600, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(      0x0400, "Easy" )
+	PORT_DIPSETTING(      0x0600, "Normal" )
+	PORT_DIPSETTING(      0x0200, "Hard" )
+	PORT_DIPSETTING(      0x0000, "Hardest" )
 	PORT_DIPNAME( 0x0800, 0x0800, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(      0x0800, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
@@ -601,7 +601,7 @@ INPUT_PORTS_START( karatblz )
 	PORT_DIPNAME( 0x4000, 0x0000, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x4000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x8000, 0x8000, DEF_STR( Unknown ) )
+	PORT_DIPNAME( 0x8000, 0x8000, DEF_STR( Flip_Screen ) )
 	PORT_DIPSETTING(      0x8000, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
 INPUT_PORTS_END
@@ -636,52 +636,68 @@ INPUT_PORTS_START( spinlbrk )
 	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START
-	PORT_DIPNAME( 0x0001, 0x0001, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x0001, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0002, 0x0002, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x0002, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0004, 0x0004, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x0004, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0008, 0x0008, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x0008, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0010, 0x0010, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x0010, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0020, 0x0020, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x0020, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0040, 0x0040, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x0040, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0080, 0x0080, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x0080, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0100, 0x0100, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x0100, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0200, 0x0200, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x0200, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0400, 0x0400, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x0400, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0800, 0x0800, DEF_STR( Unknown ) )
+	PORT_DIPNAME( 0x000f, 0x000f, DEF_STR( Coin_A ) )
+	PORT_DIPSETTING(      0x000f, "1 Credit 1 Health Pack" )	/* I chose "Health Packs" as the actual value can change */
+	PORT_DIPSETTING(      0x000e, "1 Credit 2 Health Packs" )	/*  via dipswitch 2-7 (0x4000) see below */
+	PORT_DIPSETTING(      0x000d, "1 Credit 3 Health Packs" )
+	PORT_DIPSETTING(      0x000c, "1 Credit 4 Health Packs" )
+	PORT_DIPSETTING(      0x000b, "1 Credit 5 Health Packs" )
+	PORT_DIPSETTING(      0x000a, "1 Credit 6 Health Packs" )
+	PORT_DIPSETTING(      0x0009, "2 Credits 1 Health Pack" )
+	PORT_DIPSETTING(      0x0008, "3 Credits 1 Health Pack" )
+	PORT_DIPSETTING(      0x0007, "4 Credits 1 Health Pack" )
+	PORT_DIPSETTING(      0x0006, "5 Credits 1 Health Pack" )
+	PORT_DIPSETTING(      0x0005, "2 Credits 2 Health Packs" )
+	PORT_DIPSETTING(      0x0004, "2-1-1C  1-1-1 HPs" )
+	PORT_DIPSETTING(      0x0003, "2-2C 1-2 HPs" )
+	PORT_DIPSETTING(      0x0002, "1-1-1-1-1C 1-1-1-1-2 HPs" )
+	PORT_DIPSETTING(      0x0001, "1-1-1-1C 1-1-1-2 HPs" )
+	PORT_DIPSETTING(      0x0000, "1-1C 1-2 HPs" )
+/* The last 5 Coin/Credit selections are cycles:
+	Example: 0x0004 = 2-1-1C 1-1-1 HPs:
+	2 Credits for the 1st Health Pack, 1 Credit for the 2nd Health Pack, 1 Credit
+	for the 3rd Health Pack... Then back to 2 Credits agian for 1 HP, then 1 credit
+	and 1 credit.... on and on.  With all Coin/Credit dips set to on, it's 1 Health
+	Pack for odd credits, 2 Health Packs for even credits :p
+	*/
+	PORT_DIPNAME( 0x00f0, 0x00f0, DEF_STR( Coin_B ) )
+	PORT_DIPSETTING(      0x00f0, "1 Credit 1 Health Pack" )
+	PORT_DIPSETTING(      0x00e0, "1 Credit 2 Health Packs" )
+	PORT_DIPSETTING(      0x00d0, "1 Credit 3 Health Packs" )
+	PORT_DIPSETTING(      0x00c0, "1 Credit 4 Health Packs" )
+	PORT_DIPSETTING(      0x00b0, "1 Credit 5 Health Packs" )
+	PORT_DIPSETTING(      0x00a0, "1 Credit 6 Health Packs" )
+	PORT_DIPSETTING(      0x0090, "2 Credits 1 Health Pack" )
+	PORT_DIPSETTING(      0x0080, "3 Credits 1 Health Pack" )
+	PORT_DIPSETTING(      0x0070, "4 Credits 1 Health Pack" )
+	PORT_DIPSETTING(      0x0060, "5 Credits 1 Health Pack" )
+	PORT_DIPSETTING(      0x0050, "2 Credits 2 Health Packs" )
+	PORT_DIPSETTING(      0x0040, "2-1-1C  1-1-1 HPs" )
+	PORT_DIPSETTING(      0x0030, "2-2C 1-2 HPs" )
+	PORT_DIPSETTING(      0x0020, "1-1-1-1-1C 1-1-1-1-2 HPs" )
+	PORT_DIPSETTING(      0x0010, "1-1-1-1C 1-1-1-2 HPs" )
+	PORT_DIPSETTING(      0x0000, "1-1C 1-2 HPs" )
+	PORT_DIPNAME( 0x0300, 0x0300, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(      0x0300, "Normal" )
+	PORT_DIPSETTING(      0x0200, "Easy" )
+	PORT_DIPSETTING(      0x0100, "Hard" )
+	PORT_DIPSETTING(      0x0000, "Hardest" )
+	PORT_DIPNAME( 0x0400, 0x0400, "Coin Slot" )		/* Japan ver acts like "Same" is always selected */
+	PORT_DIPSETTING(      0x0000, "Same" )
+	PORT_DIPSETTING(      0x0400, "Individual" )
+	PORT_DIPNAME( 0x0800, 0x0800, DEF_STR( Flip_Screen ) )
 	PORT_DIPSETTING(      0x0800, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x1000, 0x1000, DEF_STR( Unknown ) )
+	PORT_DIPNAME( 0x1000, 0x1000, "Player Lever Check?" ) /* Possibly Demo Sound??? but causes lever error??? */
 	PORT_DIPSETTING(      0x1000, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
 	PORT_SERVICE( 0x2000, IP_ACTIVE_LOW )
-	PORT_DIPNAME( 0x4000, 0x4000, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x4000, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x4000, 0x4000, "Health Pack" )
+	PORT_DIPSETTING(      0x4000, "20 Hitpoints" )			/* World and Japan ver this value is 32 */
+	PORT_DIPSETTING(      0x0000, "32 Hitpoints" )			/* World and Japan ver this value is 40 */
 	PORT_DIPNAME( 0x8000, 0x8000, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x8000, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPSETTING(      0x8000, DEF_STR( Off ) )			/* This DIP has no effect that I can see */
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )			/*  most likely "Bonus Life" */
 INPUT_PORTS_END
 
 INPUT_PORTS_START( turbofrc )
@@ -1693,6 +1709,37 @@ ROM_START( aerofgtc )
 	ROM_LOAD( "it-19-06",     0x000000, 0x100000, 0xcdbbdb1d )
 ROM_END
 
+ROM_START( sonicwi )
+	ROM_REGION( 0x80000, REGION_CPU1 )	/* 68000 code */
+	ROM_LOAD_EVEN( "2.149",             0x00000, 0x40000, 0x3d1b96ba )
+	ROM_LOAD_ODD ( "1.111",             0x00000, 0x40000, 0xa3d09f94 )
+
+	ROM_REGION( 0x30000, REGION_CPU2 )	/* 64k for the audio CPU + banks */
+	ROM_LOAD( "2.153",        0x00000, 0x20000, 0xa1ef64ec )	// 3.156
+	ROM_RELOAD(               0x10000, 0x20000 )
+
+	/* gfx ROMs were missing in this set, I'm using the aerofgtb ones */
+	ROM_REGION( 0x080000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "it-19-03",     0x000000, 0x80000, 0x85eba1a4 )
+
+	ROM_REGION( 0x080000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "it-19-02",     0x000000, 0x80000, 0x4f57f8ba )
+
+	ROM_REGION( 0x100000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "it-19-04",     0x000000, 0x80000, 0x3b329c1f )
+	ROM_LOAD( "it-19-05",     0x080000, 0x80000, 0x02b525af )
+
+	ROM_REGION( 0x080000, REGION_GFX4 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "g27",          0x000000, 0x40000, 0x4d89cbc8 )
+	ROM_LOAD( "g26",          0x040000, 0x40000, 0x8072c1d2 )
+
+	ROM_REGION( 0x40000, REGION_SOUND1 ) /* sound samples */
+	ROM_LOAD( "it-19-01",     0x00000, 0x40000, 0x6d42723d )
+
+	ROM_REGION( 0x100000, REGION_SOUND2 ) /* sound samples */
+	ROM_LOAD( "it-19-06",     0x000000, 0x100000, 0xcdbbdb1d )
+ROM_END
+
 
 
 GAMEX( 1991, pspikes,  0,        pspikes,  pspikes,  0, ROT0,   "Video System Co.", "Power Spikes (Korea)", GAME_NO_COCKTAIL )
@@ -1706,3 +1753,4 @@ GAMEX( 1991, turbofrc, 0,        turbofrc, turbofrc, 0, ROT270, "Video System Co
 GAMEX( 1992, aerofgt,  0,        aerofgt,  aerofgt,  0, ROT270, "Video System Co.", "Aero Fighters", GAME_NO_COCKTAIL )
 GAMEX( 1992, aerofgtb, aerofgt,  aerofgtb, aerofgtb, 0, ROT270, "Video System Co.", "Aero Fighters (Turbo Force hardware set 1)", GAME_NO_COCKTAIL )
 GAMEX( 1992, aerofgtc, aerofgt,  aerofgtb, aerofgtb, 0, ROT270, "Video System Co.", "Aero Fighters (Turbo Force hardware set 2)", GAME_NO_COCKTAIL )
+GAMEX( 1992, sonicwi,  aerofgt,  aerofgtb, aerofgtb, 0, ROT270, "Video System Co.", "Sonic Wings (Japan)", GAME_NO_COCKTAIL )

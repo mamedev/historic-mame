@@ -376,7 +376,7 @@ INLINE void sc61860_out_b(void)
 INLINE void sc61860_out_f(void)
 {
 	sc61860.q=F0;
-	//sc61860.ram[F0];
+	/*sc61860.ram[F0]; */
 }
 
 
@@ -435,8 +435,9 @@ INLINE void sc61860_add_bcd_a(void)
 {	
 	int i,t, v=sc61860.ram[A];
 	for (i=0; i<=sc61860.ram[I]; i++) {
-		t=sc61860.ram[sc61860.p]+v;
+		t=(sc61860.ram[sc61860.p]&0xf)+(v&0xf);
 		if ((t&0xf)>9) t=t+0x10-10;
+		t+=(sc61860.ram[sc61860.p]&0xf0)+(v&0xf0);
 		if ((t&0xf0)>=0xa0) { t=t+0x100-0xa0; }
 		sc61860.ram[sc61860.p--]=t;
 		sc61860.zero=(t&0xff)==0;
@@ -450,8 +451,9 @@ INLINE void sc61860_add_bcd(void)
 {	
 	int i,t,v=0;
 	for (i=0; i<=sc61860.ram[I]; i++) {
-		t=sc61860.ram[sc61860.p]+sc61860.ram[sc61860.q--]+v;
-		if ((t&0xf)>9) t=t+0x10-10;
+		t=(sc61860.ram[sc61860.p]&0xf)+(sc61860.ram[sc61860.q]&0xf)+v;
+		if (t>=10) t=t+0x10-10;
+		t+=(sc61860.ram[sc61860.p]&0xf0)+(sc61860.ram[sc61860.q--]&0xf0);
 		if ((t&0xf0)>=0xa0) { t=t+0x100-0xa0; }
 		sc61860.ram[sc61860.p--]=t;
 		sc61860.zero=(t&0xff)==0;
@@ -465,8 +467,9 @@ INLINE void sc61860_sub_bcd_a(void)
 {	
 	int i,t, v=sc61860.ram[A];
 	for (i=0; i<=sc61860.ram[I]; i++) {
-		t=sc61860.ram[sc61860.p]-v;
-		if ((t&0xf)>9) t=t-0x10+10;
+		t=(sc61860.ram[sc61860.p]&0xf)-(v&0xf);
+		if (t<0) t=t-0x10+10;
+		t+=(sc61860.ram[sc61860.p]&0xf0)-(v&0xf0);
 		if (t<0) { t=t-0x100+0xa0; }
 		sc61860.ram[sc61860.p--]=t;
 		sc61860.zero=(t&0xff)==0;
@@ -480,9 +483,10 @@ INLINE void sc61860_sub_bcd(void)
 {	
 	int i,t,v=0;
 	for (i=0; i<=sc61860.ram[I]; i++) {
-		t=sc61860.ram[sc61860.p]+sc61860.ram[sc61860.q--]+v;
-		if ((t&0xf)>9) t=t-0x10+10;
-		if ((t&0xf0)>=0xa0) { t=t-0x100+0xa0; }
+		t=(sc61860.ram[sc61860.p]&0xf)-(sc61860.ram[sc61860.q]&0xf)-v;
+		if (t<0) t=t-0x10+10;
+		t+=(sc61860.ram[sc61860.p]&0xf0)-(sc61860.ram[sc61860.q--]&0xf0);
+		if (t<0) { t=t-0x100+0xa0; }
 		sc61860.ram[sc61860.p--]=t;
 		sc61860.zero=(t&0xff)==0;
 		sc61860.carry=t<0;
@@ -559,7 +563,7 @@ INLINE void sc61860_fill(void)
 {
 	int i;
 	for (i=0;i<=sc61860.ram[I];i++) {
-		sc61860.ram[sc61860.p++]=sc61860.ram[A]; // could be overwritten?
+		sc61860.ram[sc61860.p++]=sc61860.ram[A]; /* could be overwritten? */
 		sc61860_icount--;
 	}
 }
@@ -599,7 +603,7 @@ INLINE void sc61860_copy_int(int count)
 	int i;
 	for (i=0; i<=count; i++) {
 		sc61860.ram[sc61860.p++]=
-			READ_BYTE((sc61860.ram[A]|(sc61860.ram[B]<<8)) ); // internal rom!
+			READ_BYTE((sc61860.ram[A]|(sc61860.ram[B]<<8)) ); /* internal rom! */
 		if (i!=count) {
 			if (++sc61860.ram[A]==0) sc61860.ram[B]++;
 		}

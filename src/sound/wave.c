@@ -29,6 +29,7 @@ struct wave_file {
 	int samples;			/* number of samples (length * resolution / 8) */
 	int length; 			/* length in bytes */
 	void *data; 			/* sample data */
+	int mute;				/* mute if non-zero */
 };
 
 static struct Wave_interface *intf;
@@ -456,7 +457,7 @@ static void wave_sound_update(int id, INT16 *buffer, int length)
 					}
 					w->play_sample = w->record_sample;
 				}
-				*buffer++ = w->play_sample;
+				*buffer++ = w->mute ? 0 : w->play_sample;
 			}
 		}
 		else
@@ -482,7 +483,7 @@ static void wave_sound_update(int id, INT16 *buffer, int length)
 					}
 					w->play_sample = w->record_sample;
 				}
-				*buffer++ = w->play_sample;
+				*buffer++ = w->mute ? 0 : w->play_sample;
             }
         }
 	}
@@ -500,7 +501,7 @@ static void wave_sound_update(int id, INT16 *buffer, int length)
 						w->playpos = w->samples - 1;
 					w->play_sample = *((INT16 *)w->data + w->playpos);
 				}
-				*buffer++ = w->play_sample;
+				*buffer++ = w->mute ? 0 : w->play_sample;
             }
         }
 		else
@@ -515,7 +516,7 @@ static void wave_sound_update(int id, INT16 *buffer, int length)
 						w->playpos = w->samples - 1;
 					w->play_sample = 256 * *((INT8 *)w->data + w->playpos);
 				}
-				*buffer++ = w->play_sample;
+				*buffer++ = w->mute ? 0 : w->play_sample;
 			}
 		}
 	}
@@ -548,6 +549,7 @@ int wave_sh_start(const struct MachineSound *msound)
         if( w->channel == -1 )
 			return 1;
 	}
+
     return 0;
 }
 
@@ -562,6 +564,7 @@ void wave_sh_stop(void)
 void wave_sh_update(void)
 {
 	int i;
+
 	for( i = 0; i < intf->num; i++ )
 	{
 		if( wave[i].channel != -1 )
@@ -611,6 +614,13 @@ void wave_exit(int id)
 
 int wave_status(int id, int newstatus)
 {
+	/* wave status has the following bitfields:
+	 *
+	 *	Bit 1:	Mute (1=mute 0=nomute)
+	 *	Bit 0:	Motor (1=on 0=off)
+	 *
+	 *	Also, you can pass -1 to have it simply return the status
+	 */
 	struct wave_file *w = &wave[id];
 
 	if( !w->file )
@@ -618,6 +628,9 @@ int wave_status(int id, int newstatus)
 
     if( newstatus != -1 )
 	{
+		w->mute = newstatus & 2;
+		newstatus &= 1;
+
 		if( newstatus && !w->timer )
 		{
 			w->timer = timer_set(TIME_NEVER, 0, NULL);
@@ -632,7 +645,7 @@ int wave_status(int id, int newstatus)
 			bitmap_dirty = 1;
 		}
 	}
-	return w->timer ? 1 : 0;
+	return (w->timer ? 1 : 0) | (w->mute ? 2 : 0);
 }
 
 int wave_open(int id, int mode, void *args)

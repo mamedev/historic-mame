@@ -5,20 +5,26 @@ unsigned char *lkage_scroll, *lkage_vreg;
 static unsigned char bg_tile_bank, fg_tile_bank;
 
 /*
-	lkage_scroll[0x00]: unknown (always 0xf7)
-	lkage_scroll[0x01]: unknown (always 0x00)
+	lkage_scroll[0x00]: text layer horizontal scroll
+	lkage_scroll[0x01]: text layer vertical scroll
 	lkage_scroll[0x02]: foreground layer horizontal scroll
 	lkage_scroll[0x03]: foreground layer vertical scroll
 	lkage_scroll[0x04]: background layer horizontal scroll
 	lkage_scroll[0x05]: background layer vertical scroll
 
-	lkage_vreg[0x00]:
-		0x04: tile bank select
+	lkage_vreg[0]:
+		0x04: fg tile bank select
 
-	lkage_vreg[0x01]:
+	lkage_vreg[1]:
 		0xf0: background, foreground palette select
-		0x08: tile bank select
-		0x07: text layer palette select
+		0x08: bg tile bank select
+		0x07: text layer palette select (is it?)
+
+	lkage_vreg[2]:
+		0x03: flip screen x/y
+		0xf0: normally 1111, but 1001 and 0001 inbetween stages (while the
+		backgrounds are are being redrawn). These bits are probably used to enable
+		individual layers, but we have no way of knowing the mapping.
 */
 
 struct tilemap *bg_tilemap, *fg_tilemap, *tx_tilemap;
@@ -48,12 +54,12 @@ WRITE_HANDLER( lkage_videoram_w )
 
 static void get_bg_tile_info(int tile_index)
 {
-	SET_TILE_INFO(bg_tile_bank?2:1,videoram[tile_index + 0x800],0);
+	SET_TILE_INFO(0,videoram[tile_index + 0x800] + 256 * (bg_tile_bank?5:1),0);
 }
 
 static void get_fg_tile_info(int tile_index)
 {
-	SET_TILE_INFO(fg_tile_bank?1:0,videoram[tile_index + 0x400],1);
+	SET_TILE_INFO(0,videoram[tile_index + 0x400] + 256 * (fg_tile_bank?1:0),1);
 }
 
 static void get_tx_tile_info(int tile_index)
@@ -74,6 +80,11 @@ int lkage_vh_start(void)
 
 	fg_tilemap->transparent_pen = 0;
 	tx_tilemap->transparent_pen = 0;
+
+	tilemap_set_scrolldx(tx_tilemap,-9,15);
+	tilemap_set_scrolldx(fg_tilemap,-15,13);
+	tilemap_set_scrolldx(bg_tilemap,-13,19);
+
 	return 0;
 }
 
@@ -82,7 +93,7 @@ static void draw_sprites( struct osd_bitmap *bitmap, int priority )
 	const struct rectangle *clip = &Machine->visible_area;
 	const unsigned char *finish = spriteram;
 	const unsigned char *source = spriteram+0x60-4;
-	const struct GfxElement *gfx = Machine->gfx[3];
+	const struct GfxElement *gfx = Machine->gfx[1];
 
 	while( source>=finish )
 	{
@@ -98,59 +109,41 @@ static void draw_sprites( struct osd_bitmap *bitmap, int priority )
 
 		if( (attributes>>7) == priority )
 		{
-			int sy = 240-source[1];
-			int sx = source[0] - 16;
+			int y;
 			int color = (attributes>>4)&7;
+			int flipx = attributes&0x01;
+			int flipy = attributes&0x02;
+			int height = (attributes&0x08) ? 2 : 1;
+			int sx = source[0];
+			int sy = 256 -16*height -source[1];
+			int sprite_number = source[3] + ((attributes & 0x04) << 6);
 
-			int sprite_number = source[3];
-			if( attributes&0x04 )
-			    sprite_number += 128;
+			if (flip_screen_x)
+			{
+				sx = 240 - sx - 6;
+				flipx = !flipx;
+			}
 			else
-			    sprite_number += 256;
+				sx -= 23;
+			sx = ((sx + 8) & 0xff) - 8;
+			if (flip_screen_y)
+			{
+				sy = 256 - 16*height - sy;
+				flipy = !flipy;
+			}
+			sy -= 1;
 
-			if( sprite_number!=256 )
-			{ /* enable */
-			    if( attributes&0x02 )
-				{ /* vertical flip */
-			        if( attributes&0x08 )
-					{ /* tall sprite */
-			            sy -= 16;
-			            drawgfx( bitmap,gfx,
-			                sprite_number^1,
-			                color,
-			                attributes&1,1, /* flip */
-			                sx,sy+16,
-			                clip,
-			                TRANSPARENCY_PEN,0 );
-			        }
-			        drawgfx( bitmap,gfx,
-			            sprite_number,
-			            color,
-			            attributes&1,1, /* flip */
-			            sx,sy,
-			            clip,
-			            TRANSPARENCY_PEN,0 );
-			    }
-			    else
-				{
-			        if( attributes&0x08 )
-					{ /* tall sprite */
-			            drawgfx( bitmap,gfx,
-			                sprite_number^1,
-			                color,
-			                attributes&1,0, /* flip */
-			                sx,sy-16,
-			                clip,
-			                TRANSPARENCY_PEN,0 );
-			        }
-			        drawgfx( bitmap,gfx,
-			            sprite_number,
-			            color,
-			            attributes&1,0, /* flip */
-			            sx,sy,
-			            clip,
-			            TRANSPARENCY_PEN,0 );
-			    }
+			if (height == 2 && !flipy) sprite_number ^= 1;
+
+			for (y = 0;y < height;y++)
+			{
+				drawgfx( bitmap,gfx,
+						sprite_number ^ y,
+						color,
+						flipx,flipy,
+						sx,sy + 16*y,
+						clip,
+						TRANSPARENCY_PEN,0 );
 			}
 		}
 		source-=4;
@@ -175,15 +168,18 @@ void lkage_set_palette_row( int virtual_row, int logical_row, int len )
 
 void lkage_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
-	if( bg_tile_bank != (lkage_vreg[0x01]&0x08) )
+	flip_screen_x_w(0,~lkage_vreg[2] & 0x01);
+	flip_screen_y_w(0,~lkage_vreg[2] & 0x02);
+
+	if( bg_tile_bank != (lkage_vreg[1]&0x08) )
 	{
-		bg_tile_bank = lkage_vreg[0x01]&0x08;
+		bg_tile_bank = lkage_vreg[1]&0x08;
 		tilemap_mark_all_tiles_dirty( bg_tilemap );
 	}
 
-	if( fg_tile_bank != (lkage_vreg[0x00]&0x04) )
+	if( fg_tile_bank != (lkage_vreg[0]&0x04) )
 	{
-		fg_tile_bank = lkage_vreg[0x00]&0x04;
+		fg_tile_bank = lkage_vreg[0]&0x04;
 		tilemap_mark_all_tiles_dirty( fg_tilemap );
 	}
 
@@ -194,22 +190,18 @@ void lkage_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		lkage_set_palette_row( 0xa, 0x11, 16 ); /* text colors */
 	}
 
-	tilemap_set_scrollx( fg_tilemap,0, lkage_scroll[2]+8 );
-	tilemap_set_scrolly( fg_tilemap,0, lkage_scroll[3] );
-	tilemap_set_scrollx( bg_tilemap,0, lkage_scroll[4]+8 );
-	tilemap_set_scrolly( bg_tilemap,0, lkage_scroll[5] );
+	tilemap_set_scrollx(tx_tilemap,0,lkage_scroll[0]);
+	tilemap_set_scrolly(tx_tilemap,0,lkage_scroll[1]);
+	tilemap_set_scrollx(fg_tilemap,0,lkage_scroll[2]);
+	tilemap_set_scrolly(fg_tilemap,0,lkage_scroll[3]);
+	tilemap_set_scrollx(bg_tilemap,0,lkage_scroll[4]);
+	tilemap_set_scrolly(bg_tilemap,0,lkage_scroll[5]);
 
 	tilemap_update( ALL_TILEMAPS );
 	if (palette_recalc())  tilemap_mark_all_pixels_dirty(ALL_TILEMAPS);
 	tilemap_render( ALL_TILEMAPS );
 
-	/*
-		A register exists which is normally 0xf3,
-		but goes to 0x13 inbetween stages (while the backgrounds are
-		are being redrawn).  Its bits are probably used to enable
-		individual layers, but we have no way of knowing the mapping.
-	*/
-	if( lkage_vreg[2]==0xf3 )
+	if ((lkage_vreg[2] & 0xf0) == 0xf0)
 	{
 		tilemap_draw( bitmap,bg_tilemap,0 );
 		draw_sprites( bitmap, 1 );
@@ -221,20 +213,4 @@ void lkage_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	{
 		tilemap_draw( bitmap,tx_tilemap,TILEMAP_IGNORE_TRANSPARENCY );
 	}
-
-
-#if 0
-	drawgfx( bitmap,Machine->uifont,
-		"0123456789abcdef"[lkage_vreg[1]>>4],
-		0,0,0,
-		16,32,
-		0,
-		TRANSPARENCY_NONE,0 );
-	drawgfx( bitmap,Machine->uifont,
-		"0123456789abcdef"[lkage_vreg[1]&0xf],
-		0,0,0,
-		16+6,32,
-		0,
-		TRANSPARENCY_NONE,0 );
-#endif
 }

@@ -1,832 +1,530 @@
+/* ======================================================================== */
+/* ========================= LICENSING & COPYRIGHT ======================== */
+/* ======================================================================== */
+/*
+ *                                  MUSASHI
+ *                                Version 3.1
+ *
+ * A portable Motorola M680x0 processor emulation engine.
+ * Copyright 1999,2000 Karl Stenerud.  All rights reserved.
+ *
+ * This code may be freely used for non-commercial purposes as long as this
+ * copyright notice remains unaltered in the source code and any binary files
+ * containing this code in compiled form.
+ *
+ * Any commercial ventures wishing to use this code must contact the author
+ * (Karl Stenerud) for commercial licensing terms.
+ *
+ * The latest version of this code can be obtained at:
+ * http://members.xoom.com/kstenerud
+ */
+
+
+
+/* ======================================================================== */
+/* ============================ CODE GENERATOR ============================ */
+/* ======================================================================== */
+/*
+ * This is the code generator program which will generate the opcode table
+ * and the final opcode handlers.
+ *
+ * It requires an input file to function (default m68k_in.c), but you can
+ * specify your own like so:
+ *
+ * m68kmake <output path> <input file>
+ *
+ * where output path is the path where the output files should be placed, and
+ * input file is the file to use for input.
+ *
+ * If you modify the input file greatly from its released form, you may have
+ * to tweak the configuration section a bit since I'm using static allocation
+ * to keep things simple.
+ *
+ *
+ * TODO: - build a better code generator for the move instruction.
+ *       - Add callm and rtm instructions
+ *       - Fix RTE to handle other format words
+ *       - Add address error (and bus error?) handling
+ */
+
+
+char* g_version = "3.1";
+
+/* ======================================================================== */
+/* =============================== INCLUDES =============================== */
+/* ======================================================================== */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
+#include <stdarg.h>
+#include <dir.h>
 
 
-int atoh(char* buff);
-char* modify_ea_string(char* old_ea_string, char* insert_string);
-char* modify_imm_string(char* old_ea_string, char* insert_string);
-char* replace_clk_string(char* old_clk_string, char* replace_string, int add_value);
-int get_clk_add(int func_num, int ea_mode);
 
-void add_op_header(FILE* filep, char low, char high);
-void add_prototype_header(FILE* filep);
-void add_prototype_footer(FILE* filep);
-void add_table_header(FILE* filep);
-void add_table_footer(FILE* filep);
+/* ======================================================================== */
+/* ============================= CONFIGURATION ============================ */
+/* ======================================================================== */
 
-int generate_funcs(FILE* file_ac, FILE* file_dm, FILE* file_nz);
-int generate_table(FILE* table_file);
-int generate_prototypes(FILE* prototype_file);
+#define NUM_CPUS                          3	/* 000, 010, 020 */
+#define MAX_LINE_LENGTH                 200	/* length of 1 line */
+#define MAX_BODY_LENGTH                 300	/* Number of lines in 1 function */
+#define MAX_REPLACE_LENGTH               30	/* Max number of replace strings */
+#define MAX_INSERT_LENGTH              5000	/* Max size of insert piece */
+#define MAX_NAME_LENGTH                  30	/* Max length of ophandler name */
+#define MAX_MODE_LENGTH                   6	/* Max length of special mode str*/
+#define EA_ALLOWED_LENGTH                11	/* Max length of ea allowed str */
+#define MAX_OPCODE_INPUT_TABLE_LENGTH  1000	/* Max length of opcode handler tbl */
+#define MAX_OPCODE_OUTPUT_TABLE_LENGTH 3000	/* Max length of opcode handler tbl */
 
-#define PRINT_TABLE_ENTRY(file, name, mask, match, clks) \
-{ \
-    unsigned bits = mask; \
-    bits = ((bits & 0xaaaa) >> 1) + (bits & 0x5555); \
-    bits = ((bits & 0xcccc) >> 2) + (bits & 0x3333); \
-    bits = ((bits & 0xf0f0) >> 4) + (bits & 0x0f0f); \
-    bits = ((bits & 0xff00) >> 8) + (bits & 0x00ff); \
-    fprintf(file, "\t{%-24s, %2d, 0x%04x, 0x%04x},\n", name, bits, mask, match); \
-}
-
-#define PRINT_PROTOTYPE(file, name) fprintf(file, "void %s(void);\n", name)
+/* Default filenames */
+#define FILENAME_INPUT      "m68k_in.c"
+#define FILENAME_PROTOTYPE  "m68kops.h"
+#define FILENAME_TABLE      "m68kops.c"
+#define FILENAME_OPS_AC     "m68kopac.c"
+#define FILENAME_OPS_DM     "m68kopdm.c"
+#define FILENAME_OPS_NZ     "m68kopnz.c"
 
 
+/* Identifier sequences recognized by this program */
+
+#define ID_INPUT_SEPARATOR "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
+
+#define ID_BASE                 "M68KMAKE"
+#define ID_PROTOTYPE_HEADER     ID_BASE "_PROTOTYPE_HEADER"
+#define ID_PROTOTYPE_FOOTER     ID_BASE "_PROTOTYPE_FOOTER"
+#define ID_TABLE_HEADER         ID_BASE "_TABLE_HEADER"
+#define ID_TABLE_FOOTER         ID_BASE "_TABLE_FOOTER"
+#define ID_TABLE_BODY           ID_BASE "_TABLE_BODY"
+#define ID_TABLE_START          ID_BASE "_TABLE_START"
+#define ID_OPHANDLER_HEADER     ID_BASE "_OPCODE_HANDLER_HEADER"
+#define ID_OPHANDLER_FOOTER     ID_BASE "_OPCODE_HANDLER_FOOTER"
+#define ID_OPHANDLER_BODY       ID_BASE "_OPCODE_HANDLER_BODY"
+#define ID_END                  ID_BASE "_END"
+
+#define ID_OPHANDLER_NAME       ID_BASE "_OP"
+#define ID_OPHANDLER_EA_AY_8    ID_BASE "_GET_EA_AY_8"
+#define ID_OPHANDLER_EA_AY_16   ID_BASE "_GET_EA_AY_16"
+#define ID_OPHANDLER_EA_AY_32   ID_BASE "_GET_EA_AY_32"
+#define ID_OPHANDLER_OPER_AY_8  ID_BASE "_GET_OPER_AY_8"
+#define ID_OPHANDLER_OPER_AY_16 ID_BASE "_GET_OPER_AY_16"
+#define ID_OPHANDLER_OPER_AY_32 ID_BASE "_GET_OPER_AY_32"
+#define ID_OPHANDLER_CC         ID_BASE "_CC"
+#define ID_OPHANDLER_NOT_CC     ID_BASE "_NOT_CC"
+
+
+#ifndef DECL_SPEC
+#define DECL_SPEC
+#endif /* DECL_SPEC */
+
+
+
+/* ======================================================================== */
+/* ============================== PROTOTYPES ============================== */
+/* ======================================================================== */
+
+#define CPU_TYPE_000 0
+#define CPU_TYPE_010 1
+#define CPU_TYPE_020 2
+
+#define HAS_NO_EA_MODE(A) (strcmp(A, "..........") == 0)
+#define HAS_EA_AI(A)   ((A)[0] == 'A')
+#define HAS_EA_PI(A)   ((A)[1] == '+')
+#define HAS_EA_PD(A)   ((A)[2] == '-')
+#define HAS_EA_DI(A)   ((A)[3] == 'D')
+#define HAS_EA_IX(A)   ((A)[4] == 'X')
+#define HAS_EA_AW(A)   ((A)[5] == 'W')
+#define HAS_EA_AL(A)   ((A)[6] == 'L')
+#define HAS_EA_PCDI(A) ((A)[7] == 'd')
+#define HAS_EA_PCIX(A) ((A)[8] == 'x')
+#define HAS_EA_I(A)    ((A)[9] == 'I')
+
+enum
+{
+	EA_MODE_NONE,	/* No special addressing mode */
+	EA_MODE_AI,		/* Address register indirect */
+	EA_MODE_PI,		/* Address register indirect with postincrement */
+	EA_MODE_PI7,	/* Address register 7 indirect with postincrement */
+	EA_MODE_PD,		/* Address register indirect with predecrement */
+	EA_MODE_PD7,	/* Address register 7 indirect with predecrement */
+	EA_MODE_DI,		/* Address register indirect with displacement */
+	EA_MODE_IX,		/* Address register indirect with index */
+	EA_MODE_AW,		/* Absolute word */
+	EA_MODE_AL,		/* Absolute long */
+	EA_MODE_PCDI,	/* Program counter indirect with displacement */
+	EA_MODE_PCIX,	/* Program counter indirect with index */
+	EA_MODE_I		/* Immediate */
+};
+
+
+/* Everything we need to know about an opcode */
 typedef struct
 {
-	char* name; /* handler function */
-	int op_mask;	/* mask on opcode */
-	int op_match;	/* what to match after masking */
-	int ea_mask;	/* what ea modes are allowed */
-	int size;		/* operation size (0=8, 1=16, 2=32, 3=unsized) */
-	int base_cycles; /* base cycles used on real 68000 (-1 = special) */
-} opcode_handler_struct;
+	char name[MAX_NAME_LENGTH];
+	unsigned char size;
+	char mode[MAX_MODE_LENGTH];
+	unsigned char bits;
+	unsigned short op_mask;
+	unsigned short op_match;
+	char ea_allowed[EA_ALLOWED_LENGTH];
+	char cpus[NUM_CPUS+1];
+	unsigned char cycles[NUM_CPUS]; /* cycles for 000, 010, 020 */
+} opcode_struct;
 
 
-int g_errors = 0;
-char g_m68k_in_c[255+1] = "m68k_in.c";
-
-
-int g_ea_8_cycle_table[64]=
+/* All modifications necessary for a specific EA mode of an instruction */
+typedef struct
 {
-    0,  0,  0,  0,  0,  0,  0,  0, /* 000 xxx data register direct */
-    0,  0,  0,  0,  0,  0,  0,  0, /* 001 xxx address register direct */
-    4,  4,  4,  4,  4,  4,  4,  4, /* 010 xxx address register indirect */
-    4,  4,  4,  4,  4,  4,  4,  4, /* 011 xxx address register indirect with postincrement */
-    6,  6,  6,  6,  6,  6,  6,  6, /* 100 xxx address register indirect with predecrement */
-    8,  8,  8,  8,  8,  8,  8,  8, /* 101 xxx address register indirect with displacement */
-   10, 10, 10, 10, 10, 10, 10, 10, /* 110 xxx address register indirect with index */
-    8,                             /* 111 000 absolute short */
-   12,                             /* 111 001 absolute long */
-    8,                             /* 111 010 program counter with displacement */
-   10,                             /* 111 011 program counter with index */
-    4,                             /* 111 100 immediate */
-    0,                             /* 111 101 <invalid> */
-    0,                             /* 111 110 <invalid> */
-    0,                             /* 111 111 <invalid> */
+	char* fname_add;
+	char* ea_add;
+	unsigned int mask_add;
+	unsigned int match_add;
+} ea_info_struct;
+
+
+/* Holds the body of a function */
+typedef struct
+{
+	char body[MAX_BODY_LENGTH][MAX_LINE_LENGTH+1];
+	int length;
+} body_struct;
+
+
+/* Holds a sequence of search / replace strings */
+typedef struct
+{
+	char replace[MAX_REPLACE_LENGTH][2][MAX_LINE_LENGTH+1];
+	int length;
+} replace_struct;
+
+
+/* Function Prototypes */
+void error_exit(char* fmt, ...);
+void perror_exit(char* fmt, ...);
+int check_strsncpy(char* dst, char* src, int maxlength);
+int check_atoi(char* str, int *result);
+int skip_spaces(char* str);
+int num_bits(int value);
+int atoh(char* buff);
+int fgetline(char* buff, int nchars, FILE* file);
+int get_oper_cycles(opcode_struct* op, int ea_mode, int cpu_type);
+opcode_struct* find_opcode(char* name, int size, char* mode);
+opcode_struct* find_illegal_opcode(void);
+int extract_opcode_info(char* src, char* name, int* size, char* mode);
+void add_replace_string(replace_struct* replace, char* search_str, char* replace_str);
+void write_body(FILE* filep, body_struct* body, replace_struct* replace);
+void get_base_name(char* base_name, opcode_struct* op);
+void write_prototype(FILE* filep, char* base_name);
+void write_function_name(FILE* filep, char* base_name);
+void add_opcode_output_table_entry(opcode_struct* op, char* name);
+static int DECL_SPEC compare_nof_true_bits(const void* aptr, const void* bptr);
+void print_opcode_output_table(FILE* filep);
+void write_table_entry(FILE* filep, opcode_struct* op);
+void set_opcode_struct(opcode_struct* src, opcode_struct* dst, int ea_mode);
+void generate_opcode_handler(FILE* filep, body_struct* body, replace_struct* replace, opcode_struct* opinfo, int ea_mode);
+void generate_opcode_ea_variants(FILE* filep, body_struct* body, replace_struct* replace, opcode_struct* op);
+void generate_opcode_cc_variants(FILE* filep, body_struct* body, replace_struct* replace, opcode_struct* op_in, int offset);
+void process_opcode_handlers(void);
+void populate_table(void);
+void read_insert(char* insert);
+
+
+
+/* ======================================================================== */
+/* ================================= DATA ================================= */
+/* ======================================================================== */
+
+/* Name of the input file */
+char g_input_filename[MAXPATH] = FILENAME_INPUT;
+
+/* File handles */
+FILE* g_input_file = NULL;
+FILE* g_prototype_file = NULL;
+FILE* g_table_file = NULL;
+FILE* g_ops_ac_file = NULL;
+FILE* g_ops_dm_file = NULL;
+FILE* g_ops_nz_file = NULL;
+
+int g_num_functions = 0;  /* Number of functions processed */
+int g_num_primitives = 0; /* Number of function primitives read */
+int g_line_number = 1;    /* Current line number */
+
+/* Opcode handler table */
+opcode_struct g_opcode_input_table[MAX_OPCODE_INPUT_TABLE_LENGTH];
+
+opcode_struct g_opcode_output_table[MAX_OPCODE_OUTPUT_TABLE_LENGTH];
+int g_opcode_output_table_length = 0;
+
+ea_info_struct g_ea_info_table[13] =
+{/* fname    ea        mask  match */
+	{"",     "",       0x00, 0x00}, /* EA_MODE_NONE */
+	{"ai",   "AY_AI",  0x38, 0x10}, /* EA_MODE_AI   */
+	{"pi",   "AY_PI",  0x38, 0x18}, /* EA_MODE_PI   */
+	{"pi7",  "A7_PI",  0x3f, 0x1f}, /* EA_MODE_PI7  */
+	{"pd",   "AY_PD",  0x38, 0x20}, /* EA_MODE_PD   */
+	{"pd7",  "A7_PD",  0x3f, 0x27}, /* EA_MODE_PD7  */
+	{"di",   "AY_DI",  0x38, 0x28}, /* EA_MODE_DI   */
+	{"ix",   "AY_IX",  0x38, 0x30}, /* EA_MODE_IX   */
+	{"aw",   "AW",     0x3f, 0x38}, /* EA_MODE_AW   */
+	{"al",   "AL",     0x3f, 0x39}, /* EA_MODE_AL   */
+	{"pcdi", "PCDI",   0x3f, 0x3a}, /* EA_MODE_PCDI */
+	{"pcix", "PCIX",   0x3f, 0x3b}, /* EA_MODE_PCIX */
+	{"i",    "I",      0x3f, 0x3c}, /* EA_MODE_I    */
 };
 
-int g_ea_32_cycle_table[64]=
+
+char* g_cc_table[16][2] =
 {
-    0,  0,  0,  0,  0,  0,  0,  0, /* 000 xxx data register direct */
-    0,  0,  0,  0,  0,  0,  0,  0, /* 001 xxx address register direct */
-    8,  8,  8,  8,  8,  8,  8,  8, /* 010 xxx address register indirect */
-    8,  8,  8,  8,  8,  8,  8,  8, /* 011 xxx address register indirect with postincrement */
-   10, 10, 10, 10, 10, 10, 10, 10, /* 100 xxx address register indirect with predecrement */
-   12, 12, 12, 12, 12, 12, 12, 12, /* 101 xxx address register indirect with displacement */
-   14, 14, 14, 14, 14, 14, 14, 14, /* 110 xxx address register indirect with index */
-   12,                             /* 111 000 absolute short */
-   16,                             /* 111 001 absolute long */
-   12,                             /* 111 010 program counter with displacement */
-   14,                             /* 111 011 program counter with index */
-    8,                             /* 111 100 immediate */
-    0,                             /* 111 101 <invalid> */
-    0,                             /* 111 110 <invalid> */
-    0,                             /* 111 111 <invalid> */
+	{ "t",  "T"}, /* 0000 */
+	{ "f",  "F"}, /* 0001 */
+	{"hi", "HI"}, /* 0010 */
+	{"ls", "LS"}, /* 0011 */
+	{"cc", "CC"}, /* 0100 */
+	{"cs", "CS"}, /* 0101 */
+	{"ne", "NE"}, /* 0110 */
+	{"eq", "EQ"}, /* 0111 */
+	{"vc", "VC"}, /* 1000 */
+	{"vs", "VS"}, /* 1001 */
+	{"pl", "PL"}, /* 1010 */
+	{"mi", "MI"}, /* 1011 */
+	{"ge", "GE"}, /* 1100 */
+	{"lt", "LT"}, /* 1101 */
+	{"gt", "GT"}, /* 1110 */
+	{"le", "LE"}, /* 1111 */
 };
 
-int* g_ea_cycle_table[3] = {g_ea_8_cycle_table, g_ea_8_cycle_table, g_ea_32_cycle_table};
-
-int g_jmp_cycle_table[64]=
+/* size to index translator (0 -> 0, 8 and 16 -> 1, 32 -> 2) */
+int g_size_select_table[33] =
 {
-    0,  0,  0,  0,  0,  0,  0,  0, /* 000 xxx data register direct */
-    0,  0,  0,  0,  0,  0,  0,  0, /* 001 xxx address register direct */
-    8,  8,  8,  8,  8,  8,  8,  8, /* 010 xxx address register indirect */
-    0,  0,  0,  0,  0,  0,  0,  0, /* 011 xxx address register indirect with postincrement */
-    0,  0,  0,  0,  0,  0,  0,  0, /* 100 xxx address register indirect with predecrement */
-   10, 10, 10, 10, 10, 10, 10, 10, /* 101 xxx address register indirect with displacement */
-   14, 14, 14, 14, 14, 14, 14, 14, /* 110 xxx address register indirect with index */
-   10,                             /* 111 000 absolute short */
-   12,                             /* 111 001 absolute long */
-   10,                             /* 111 010 program counter with displacement */
-   14,                             /* 111 011 program counter with index */
-    0,                             /* 111 100 immediate */
-    0,                             /* 111 101 <invalid> */
-    0,                             /* 111 110 <invalid> */
-    0,                             /* 111 111 <invalid> */
+	0,												/* unsized */
+	0, 0, 0, 0, 0, 0, 0, 1,							/*    8    */
+	0, 0, 0, 0, 0, 0, 0, 1,							/*   16    */
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2	/*   32    */
 };
 
-int g_jsr_cycle_table[64]=
-{
-    0,  0,  0,  0,  0,  0,  0,  0, /* 000 xxx data register direct */
-    0,  0,  0,  0,  0,  0,  0,  0, /* 001 xxx address register direct */
-   16, 16, 16, 16, 16, 16, 16, 16, /* 010 xxx address register indirect */
-    0,  0,  0,  0,  0,  0,  0,  0, /* 011 xxx address register indirect with postincrement */
-    0,  0,  0,  0,  0,  0,  0,  0, /* 100 xxx address register indirect with predecrement */
-   18, 18, 18, 18, 18, 18, 18, 18, /* 101 xxx address register indirect with displacement */
-   22, 22, 22, 22, 22, 22, 22, 22, /* 110 xxx address register indirect with index */
-   18,                             /* 111 000 absolute short */
-   20,                             /* 111 001 absolute long */
-   18,                             /* 111 010 program counter with displacement */
-   22,                             /* 111 011 program counter with index */
-    0,                             /* 111 100 immediate */
-    0,                             /* 111 101 <invalid> */
-    0,                             /* 111 110 <invalid> */
-    0,                             /* 111 111 <invalid> */
+/* Extra cycles required for certain EA modes */
+int g_ea_cycle_table[13][NUM_CPUS][3] =
+{/*       000           010           020   */
+	{{ 0,  0,  0}, { 0,  0,  0}, { 0,  0,  0}}, /* EA_MODE_NONE */
+	{{ 0,  4,  8}, { 0,  4,  8}, { 0,  4,  4}}, /* EA_MODE_AI   */
+	{{ 0,  4,  8}, { 0,  4,  8}, { 0,  4,  4}}, /* EA_MODE_PI   */
+	{{ 0,  4,  8}, { 0,  4,  8}, { 0,  4,  4}}, /* EA_MODE_PI7  */
+	{{ 0,  6, 10}, { 0,  6, 10}, { 0,  5,  5}}, /* EA_MODE_PD   */
+	{{ 0,  6, 10}, { 0,  6, 10}, { 0,  5,  5}}, /* EA_MODE_PD7  */
+	{{ 0,  8, 12}, { 0,  8, 12}, { 0,  5,  5}}, /* EA_MODE_DI   */
+	{{ 0, 10, 14}, { 0, 10, 14}, { 0,  7,  7}}, /* EA_MODE_IX   */
+	{{ 0,  8, 12}, { 0,  8, 12}, { 0,  4,  4}}, /* EA_MODE_AW   */
+	{{ 0, 12, 16}, { 0, 12, 16}, { 0,  4,  4}}, /* EA_MODE_AL   */
+	{{ 0,  8, 12}, { 0,  8, 12}, { 0,  5,  5}}, /* EA_MODE_PCDI */
+	{{ 0, 10, 14}, { 0, 10, 14}, { 0,  7,  7}}, /* EA_MODE_PCIX */
+	{{ 0,  4,  8}, { 0,  4,  8}, { 0,  2,  4}}, /* EA_MODE_I    */
 };
 
-int g_lea_cycle_table[64]=
+/* Extra cycles for JMP instruction (000, 010) */
+int g_jmp_cycle_table[13] =
 {
-    0,  0,  0,  0,  0,  0,  0,  0, /* 000 xxx data register direct */
-    0,  0,  0,  0,  0,  0,  0,  0, /* 001 xxx address register direct */
-    4,  4,  4,  4,  4,  4,  4,  4, /* 010 xxx address register indirect */
-    0,  0,  0,  0,  0,  0,  0,  0, /* 011 xxx address register indirect with postincrement */
-    0,  0,  0,  0,  0,  0,  0,  0, /* 100 xxx address register indirect with predecrement */
-    8,  8,  8,  8,  8,  8,  8,  8, /* 101 xxx address register indirect with displacement */
-   12, 12, 12, 12, 12, 12, 12, 12, /* 110 xxx address register indirect with index */
-    8,                             /* 111 000 absolute short */
-   12,                             /* 111 001 absolute long */
-    8,                             /* 111 010 program counter with displacement */
-   12,                             /* 111 011 program counter with index */
-    0,                             /* 111 100 immediate */
-    0,                             /* 111 101 <invalid> */
-    0,                             /* 111 110 <invalid> */
-    0,                             /* 111 111 <invalid> */
+	 0, /* EA_MODE_NONE */
+	 4, /* EA_MODE_AI   */
+	 0, /* EA_MODE_PI   */
+	 0, /* EA_MODE_PI7  */
+	 0, /* EA_MODE_PD   */
+	 0, /* EA_MODE_PD7  */
+	 6, /* EA_MODE_DI   */
+	 8, /* EA_MODE_IX   */
+	 6, /* EA_MODE_AW   */
+	 8, /* EA_MODE_AL   */
+	 6, /* EA_MODE_PCDI */
+	10, /* EA_MODE_PCIX */
+	 0, /* EA_MODE_I    */
 };
 
-int g_pea_cycle_table[64]=
+/* Extra cycles for JSR instruction (000, 010) */
+int g_jsr_cycle_table[13] =
 {
-    0,  0,  0,  0,  0,  0,  0,  0, /* 000 xxx data register direct */
-    0,  0,  0,  0,  0,  0,  0,  0, /* 001 xxx address register direct */
-   12, 12, 12, 12, 12, 12, 12, 12, /* 010 xxx address register indirect */
-    0,  0,  0,  0,  0,  0,  0,  0, /* 011 xxx address register indirect with postincrement */
-    0,  0,  0,  0,  0,  0,  0,  0, /* 100 xxx address register indirect with predecrement */
-   16, 16, 16, 16, 16, 16, 16, 16, /* 101 xxx address register indirect with displacement */
-   20, 20, 20, 20, 20, 20, 20, 20, /* 110 xxx address register indirect with index */
-   16,                             /* 111 000 absolute short */
-   20,                             /* 111 001 absolute long */
-   16,                             /* 111 010 program counter with displacement */
-   20,                             /* 111 011 program counter with index */
-    0,                             /* 111 100 immediate */
-    0,                             /* 111 101 <invalid> */
-    0,                             /* 111 110 <invalid> */
-    0,                             /* 111 111 <invalid> */
+	 0, /* EA_MODE_NONE */
+	 4, /* EA_MODE_AI   */
+	 0, /* EA_MODE_PI   */
+	 0, /* EA_MODE_PI7  */
+	 0, /* EA_MODE_PD   */
+	 0, /* EA_MODE_PD7  */
+	 6, /* EA_MODE_DI   */
+	10, /* EA_MODE_IX   */
+	 6, /* EA_MODE_AW   */
+	 8, /* EA_MODE_AL   */
+	 6, /* EA_MODE_PCDI */
+	10, /* EA_MODE_PCIX */
+	 0, /* EA_MODE_I    */
 };
 
-int g_moves_bw_cycle_table[64]=
+/* Extra cycles for LEA instruction (000, 010) */
+int g_lea_cycle_table[13] =
 {
-    0,  0,  0,  0,  0,  0,  0,  0, /* 000 xxx data register direct */
-    0,  0,  0,  0,  0,  0,  0,  0, /* 001 xxx address register direct */
-   18, 18, 18, 18, 18, 18, 18, 18, /* 010 xxx address register indirect */
-   20, 20, 20, 20, 20, 20, 20, 20, /* 011 xxx address register indirect with postincrement */
-   20, 20, 20, 20, 20, 20, 20, 20, /* 100 xxx address register indirect with predecrement */
-   20, 20, 20, 20, 20, 20, 20, 20, /* 101 xxx address register indirect with displacement */
-   24, 24, 24, 24, 24, 24, 24, 24, /* 110 xxx address register indirect with index */
-   20,                             /* 111 000 absolute short */
-   24,                             /* 111 001 absolute long */
-    0,                             /* 111 010 program counter with displacement */
-    0,                             /* 111 011 program counter with index */
-    0,                             /* 111 100 immediate */
-    0,                             /* 111 101 <invalid> */
-    0,                             /* 111 110 <invalid> */
-    0,                             /* 111 111 <invalid> */
+	 0, /* EA_MODE_NONE */
+	 4, /* EA_MODE_AI   */
+	 0, /* EA_MODE_PI   */
+	 0, /* EA_MODE_PI7  */
+	 0, /* EA_MODE_PD   */
+	 0, /* EA_MODE_PD7  */
+	 8, /* EA_MODE_DI   */
+	12, /* EA_MODE_IX   */
+	 8, /* EA_MODE_AW   */
+	12, /* EA_MODE_AL   */
+	 8, /* EA_MODE_PCDI */
+	12, /* EA_MODE_PCIX */
+	 0, /* EA_MODE_I    */
 };
 
-int g_moves_l_cycle_table[64]=
+/* Extra cycles for PEA instruction (000, 010) */
+int g_pea_cycle_table[13] =
 {
-    0,  0,  0,  0,  0,  0,  0,  0, /* 000 xxx data register direct */
-    0,  0,  0,  0,  0,  0,  0,  0, /* 001 xxx address register direct */
-   22, 22, 22, 22, 22, 22, 22, 22, /* 010 xxx address register indirect */
-   24, 24, 24, 24, 24, 24, 24, 24, /* 011 xxx address register indirect with postincrement */
-   24, 24, 24, 24, 24, 24, 24, 24, /* 100 xxx address register indirect with predecrement */
-   24, 24, 24, 24, 24, 24, 24, 24, /* 101 xxx address register indirect with displacement */
-   28, 28, 28, 28, 28, 28, 28, 28, /* 110 xxx address register indirect with index */
-   24,                             /* 111 000 absolute short */
-   28,                             /* 111 001 absolute long */
-    0,                             /* 111 010 program counter with displacement */
-    0,                             /* 111 011 program counter with index */
-    0,                             /* 111 100 immediate */
-    0,                             /* 111 101 <invalid> */
-    0,                             /* 111 110 <invalid> */
-    0,                             /* 111 111 <invalid> */
+	 0, /* EA_MODE_NONE */
+	 4, /* EA_MODE_AI   */
+	 0, /* EA_MODE_PI   */
+	 0, /* EA_MODE_PI7  */
+	 0, /* EA_MODE_PD   */
+	 0, /* EA_MODE_PD7  */
+	10, /* EA_MODE_DI   */
+	14, /* EA_MODE_IX   */
+	10, /* EA_MODE_AW   */
+	14, /* EA_MODE_AL   */
+	10, /* EA_MODE_PCDI */
+	14, /* EA_MODE_PCIX */
+	 0, /* EA_MODE_I    */
 };
 
-static opcode_handler_struct g_func_table[] =
+/* Extra cycles for MOVES instruction (010) */
+int g_moves_cycle_table[13][3] =
 {
-/*  name                       mask   match    ea   size  base clks */
-	{"m68000_1010"           , 0xf000, 0xa000, 0x000, 1,   0},
-	{"m68000_1111"           , 0xf000, 0xf000, 0x000, 1,   0},
-	{"m68000_abcd_rr"        , 0xf1f8, 0xc100, 0x000, 0,   6},
-	{"m68000_abcd_mm_ax7"    , 0xfff8, 0xcf08, 0x000, 0,  18},
-	{"m68000_abcd_mm_ay7"    , 0xf1ff, 0xc10f, 0x000, 0,  18},
-	{"m68000_abcd_mm_axy7"   , 0xffff, 0xcf0f, 0x000, 0,  18},
-	{"m68000_abcd_mm"        , 0xf1f8, 0xc108, 0x000, 0,  18},
-	{"m68000_add_er_d_8"     , 0xf1f8, 0xd000, 0x000, 0,   4},
-	{"m68000_add_er_8"       , 0xf1c0, 0xd000, 0xbff, 0,   4},
-	{"m68000_add_er_d_16"    , 0xf1f8, 0xd040, 0x000, 1,   4},
-	{"m68000_add_er_a_16"    , 0xf1f8, 0xd048, 0x000, 1,   4},
-	{"m68000_add_er_16"      , 0xf1c0, 0xd040, 0xfff, 1,   4},
-	{"m68000_add_er_d_32"    , 0xf1f8, 0xd080, 0x000, 2,   8},
-	{"m68000_add_er_a_32"    , 0xf1f8, 0xd088, 0x000, 2,   8},
-	{"m68000_add_er_32"      , 0xf1c0, 0xd080, 0xfff, 2,   6}, /* 8 for imm */
-	{"m68000_add_re_8"       , 0xf1c0, 0xd100, 0x3f8, 0,   8},
-	{"m68000_add_re_16"      , 0xf1c0, 0xd140, 0x3f8, 1,   8},
-	{"m68000_add_re_32"      , 0xf1c0, 0xd180, 0x3f8, 2,  12},
-	{"m68000_adda_d_16"      , 0xf1f8, 0xd0c0, 0x000, 1,   8},
-	{"m68000_adda_a_16"      , 0xf1f8, 0xd0c8, 0x000, 1,   8},
-	{"m68000_adda_16"        , 0xf1c0, 0xd0c0, 0xfff, 1,   8},
-	{"m68000_adda_d_32"      , 0xf1f8, 0xd1c0, 0x000, 2,   8},
-	{"m68000_adda_a_32"      , 0xf1f8, 0xd1c8, 0x000, 2,   8},
-	{"m68000_adda_32"        , 0xf1c0, 0xd1c0, 0xfff, 2,   6}, /* 8 for imm */
-	{"m68000_addi_d_8"       , 0xfff8, 0x0600, 0x000, 0,   8},
-	{"m68000_addi_8"         , 0xffc0, 0x0600, 0xbf8, 0,  12},
-	{"m68000_addi_d_16"      , 0xfff8, 0x0640, 0x000, 1,   8},
-	{"m68000_addi_16"        , 0xffc0, 0x0640, 0xbf8, 1,  12},
-	{"m68000_addi_d_32"      , 0xfff8, 0x0680, 0x000, 2,  16},
-	{"m68000_addi_32"        , 0xffc0, 0x0680, 0xbf8, 2,  20},
-	{"m68000_addq_d_8"       , 0xf1f8, 0x5000, 0x000, 0,   4},
-	{"m68000_addq_8"         , 0xf1c0, 0x5000, 0xbf8, 0,   8},
-	{"m68000_addq_d_16"      , 0xf1f8, 0x5040, 0x000, 1,   4},
-	{"m68000_addq_a_16"      , 0xf1f8, 0x5048, 0x000, 1,   4},
-	{"m68000_addq_16"        , 0xf1c0, 0x5040, 0xff8, 1,   8},
-	{"m68000_addq_d_32"      , 0xf1f8, 0x5080, 0x000, 2,   8},
-	{"m68000_addq_a_32"      , 0xf1f8, 0x5088, 0x000, 2,   8},
-	{"m68000_addq_32"        , 0xf1c0, 0x5080, 0xff8, 2,  12},
-	{"m68000_addx_rr_8"      , 0xf1f8, 0xd100, 0x000, 0,   4},
-	{"m68000_addx_rr_16"     , 0xf1f8, 0xd140, 0x000, 1,   4},
-	{"m68000_addx_rr_32"     , 0xf1f8, 0xd180, 0x000, 2,   8},
-	{"m68000_addx_mm_8_ax7"  , 0xfff8, 0xdf08, 0x000, 0,  18},
-	{"m68000_addx_mm_8_ay7"  , 0xf1ff, 0xd10f, 0x000, 0,  18},
-	{"m68000_addx_mm_8_axy7" , 0xffff, 0xdf0f, 0x000, 0,  18},
-	{"m68000_addx_mm_8"      , 0xf1f8, 0xd108, 0x000, 0,  18},
-	{"m68000_addx_mm_16"     , 0xf1f8, 0xd148, 0x000, 1,  18},
-	{"m68000_addx_mm_32"     , 0xf1f8, 0xd188, 0x000, 2,  30},
-	{"m68000_and_er_d_8"     , 0xf1f8, 0xc000, 0x000, 0,   4},
-	{"m68000_and_er_8"       , 0xf1c0, 0xc000, 0xbff, 0,   4},
-	{"m68000_and_er_d_16"    , 0xf1f8, 0xc040, 0x000, 1,   4},
-	{"m68000_and_er_16"      , 0xf1c0, 0xc040, 0xbff, 1,   4},
-	{"m68000_and_er_d_32"    , 0xf1f8, 0xc080, 0x000, 2,   8},
-	{"m68000_and_er_32"      , 0xf1c0, 0xc080, 0xbff, 2,   6}, /* 8 for imm */
-	{"m68000_and_re_8"       , 0xf1c0, 0xc100, 0x3f8, 0,   8},
-	{"m68000_and_re_16"      , 0xf1c0, 0xc140, 0x3f8, 1,   8},
-	{"m68000_and_re_32"      , 0xf1c0, 0xc180, 0x3f8, 2,  12},
-	{"m68000_andi_to_ccr"    , 0xffff, 0x023c, 0x000, 0,  20},
-	{"m68000_andi_to_sr"     , 0xffff, 0x027c, 0x000, 1,  20},
-	{"m68000_andi_d_8"       , 0xfff8, 0x0200, 0x000, 0,   8},
-	{"m68000_andi_8"         , 0xffc0, 0x0200, 0xbf8, 0,  12},
-	{"m68000_andi_d_16"      , 0xfff8, 0x0240, 0x000, 1,   8},
-	{"m68000_andi_16"        , 0xffc0, 0x0240, 0xbf8, 1,  12},
-	{"m68000_andi_d_32"      , 0xfff8, 0x0280, 0x000, 2,  14},
-	{"m68000_andi_32"        , 0xffc0, 0x0280, 0xbf8, 2,  20},
-	{"m68000_asr_s_8"        , 0xf1f8, 0xe000, 0x000, 0,  14}, /* fix in code */
-	{"m68000_asr_s_16"       , 0xf1f8, 0xe040, 0x000, 1,  14},
-	{"m68000_asr_s_32"       , 0xf1f8, 0xe080, 0x000, 2,  16},
-	{"m68000_asr_r_8"        , 0xf1f8, 0xe020, 0x000, 0,  14},
-	{"m68000_asr_r_16"       , 0xf1f8, 0xe060, 0x000, 1,  22},
-	{"m68000_asr_r_32"       , 0xf1f8, 0xe0a0, 0x000, 2,  38},
-	{"m68000_asr_ea"         , 0xffc0, 0xe0c0, 0x3f8, 1,   8},
-	{"m68000_asl_s_8"        , 0xf1f8, 0xe100, 0x000, 0,  14},
-	{"m68000_asl_s_16"       , 0xf1f8, 0xe140, 0x000, 1,  14},
-	{"m68000_asl_s_32"       , 0xf1f8, 0xe180, 0x000, 2,  16},
-	{"m68000_asl_r_8"        , 0xf1f8, 0xe120, 0x000, 0,  14},
-	{"m68000_asl_r_16"       , 0xf1f8, 0xe160, 0x000, 1,  22},
-	{"m68000_asl_r_32"       , 0xf1f8, 0xe1a0, 0x000, 2,  38},
-	{"m68000_asl_ea"         , 0xffc0, 0xe1c0, 0x3f8, 1,   8},
-	{"m68000_bhi_16"         , 0xffff, 0x6200, 0x000, 1,  11}, /* fix in code */
-	{"m68020_bhi_32"         , 0xffff, 0x62ff, 0x000, 2,  11},
-	{"m68000_bhi_8"          , 0xff00, 0x6200, 0x000, 0,   9},
-	{"m68000_bls_16"         , 0xffff, 0x6300, 0x000, 1,  11},
-	{"m68020_bls_32"         , 0xffff, 0x63ff, 0x000, 2,  11},
-	{"m68000_bls_8"          , 0xff00, 0x6300, 0x000, 0,   9},
-	{"m68000_bcc_16"         , 0xffff, 0x6400, 0x000, 1,  11},
-	{"m68020_bcc_32"         , 0xffff, 0x64ff, 0x000, 2,  11},
-	{"m68000_bcc_8"          , 0xff00, 0x6400, 0x000, 0,   9},
-	{"m68000_bcs_16"         , 0xffff, 0x6500, 0x000, 1,  11},
-	{"m68020_bcs_32"         , 0xffff, 0x65ff, 0x000, 2,  11},
-	{"m68000_bcs_8"          , 0xff00, 0x6500, 0x000, 0,   9},
-	{"m68000_bne_16"         , 0xffff, 0x6600, 0x000, 1,  11},
-	{"m68020_bne_32"         , 0xffff, 0x66ff, 0x000, 2,  11},
-	{"m68000_bne_8"          , 0xff00, 0x6600, 0x000, 0,   9},
-	{"m68000_beq_16"         , 0xffff, 0x6700, 0x000, 1,  11},
-	{"m68020_beq_32"         , 0xffff, 0x67ff, 0x000, 2,  11},
-	{"m68000_beq_8"          , 0xff00, 0x6700, 0x000, 0,   9},
-	{"m68000_bvc_16"         , 0xffff, 0x6800, 0x000, 1,  11},
-	{"m68020_bvc_32"         , 0xffff, 0x68ff, 0x000, 2,  11},
-	{"m68000_bvc_8"          , 0xff00, 0x6800, 0x000, 0,   9},
-	{"m68000_bvs_16"         , 0xffff, 0x6900, 0x000, 1,  11},
-	{"m68020_bvs_32"         , 0xffff, 0x69ff, 0x000, 2,  11},
-	{"m68000_bvs_8"          , 0xff00, 0x6900, 0x000, 0,   9},
-	{"m68000_bpl_16"         , 0xffff, 0x6a00, 0x000, 1,  11},
-	{"m68020_bpl_32"         , 0xffff, 0x6aff, 0x000, 2,  11},
-	{"m68000_bpl_8"          , 0xff00, 0x6a00, 0x000, 0,   9},
-	{"m68000_bmi_16"         , 0xffff, 0x6b00, 0x000, 1,  11},
-	{"m68020_bmi_32"         , 0xffff, 0x6bff, 0x000, 2,  11},
-	{"m68000_bmi_8"          , 0xff00, 0x6b00, 0x000, 0,   9},
-	{"m68000_bge_16"         , 0xffff, 0x6c00, 0x000, 1,  11},
-	{"m68020_bge_32"         , 0xffff, 0x6cff, 0x000, 2,  11},
-	{"m68000_bge_8"          , 0xff00, 0x6c00, 0x000, 0,   9},
-	{"m68000_blt_16"         , 0xffff, 0x6d00, 0x000, 1,  11},
-	{"m68020_blt_32"         , 0xffff, 0x6dff, 0x000, 2,  11},
-	{"m68000_blt_8"          , 0xff00, 0x6d00, 0x000, 0,   9},
-	{"m68000_bgt_16"         , 0xffff, 0x6e00, 0x000, 1,  11},
-	{"m68020_bgt_32"         , 0xffff, 0x6eff, 0x000, 2,  11},
-	{"m68000_bgt_8"          , 0xff00, 0x6e00, 0x000, 0,   9},
-	{"m68000_ble_16"         , 0xffff, 0x6f00, 0x000, 1,  11},
-	{"m68020_ble_32"         , 0xffff, 0x6fff, 0x000, 2,  11},
-	{"m68000_ble_8"          , 0xff00, 0x6f00, 0x000, 0,   9},
-	{"m68000_bchg_r_d"       , 0xf1f8, 0x0140, 0x000, 2,   8},
-	{"m68000_bchg_r"         , 0xf1c0, 0x0140, 0xbf8, 0,   8},
-	{"m68000_bchg_s_d"       , 0xfff8, 0x0840, 0x000, 2,  12},
-	{"m68000_bchg_s"         , 0xffc0, 0x0840, 0xbf8, 0,  12},
-	{"m68000_bclr_r_d"       , 0xf1f8, 0x0180, 0x000, 2,  10},
-	{"m68000_bclr_r"         , 0xf1c0, 0x0180, 0xbf8, 0,   8},
-	{"m68000_bclr_s_d"       , 0xfff8, 0x0880, 0x000, 2,  14},
-	{"m68000_bclr_s"         , 0xffc0, 0x0880, 0xbf8, 0,  12},
-	{"m68020_bfchg_d"        , 0xfff8, 0xeac0, 0x000, 2,  12},
-	{"m68020_bfchg"          , 0xffc0, 0xeac0, 0xa78, 2,  12},
-	{"m68020_bfclr_d"        , 0xfff8, 0xecc0, 0x000, 2,  12},
-	{"m68020_bfclr"          , 0xffc0, 0xecc0, 0xa78, 2,  12},
-	{"m68020_bfexts_d"       , 0xfff8, 0xebc0, 0x000, 2,  12},
-	{"m68020_bfexts"         , 0xffc0, 0xebc0, 0xa7b, 2,  12},
-	{"m68020_bfextu_d"       , 0xfff8, 0xe9c0, 0x000, 2,  12},
-	{"m68020_bfextu"         , 0xffc0, 0xe9c0, 0xa7b, 2,  12},
-	{"m68020_bfffo_d"        , 0xfff8, 0xedc0, 0x000, 2,  12},
-	{"m68020_bfffo"          , 0xffc0, 0xedc0, 0xa7b, 2,  12},
-	{"m68020_bfins_d"        , 0xfff8, 0xefc0, 0x000, 2,  12},
-	{"m68020_bfins"          , 0xffc0, 0xefc0, 0xa78, 2,  12},
-	{"m68020_bfset_d"        , 0xfff8, 0xeec0, 0x000, 2,  12},
-	{"m68020_bfset"          , 0xffc0, 0xeec0, 0xa78, 2,  12},
-	{"m68020_bftst_d"        , 0xfff8, 0xe8c0, 0x000, 2,  12},
-	{"m68020_bftst"          , 0xffc0, 0xe8c0, 0xa7b, 2,  12},
-	{"m68010_bkpt"           , 0xfff8, 0x4848, 0x000, 0,  11},
-	{"m68000_bra_16"         , 0xffff, 0x6000, 0x000, 1,  10},
-	{"m68020_bra_32"         , 0xffff, 0x60ff, 0x000, 2,  10},
-	{"m68000_bra_8"          , 0xff00, 0x6000, 0x000, 0,  10},
-	{"m68000_bset_r_d"       , 0xf1f8, 0x01c0, 0x000, 2,   8},
-	{"m68000_bset_r"         , 0xf1c0, 0x01c0, 0xbf8, 0,   8},
-	{"m68000_bset_s_d"       , 0xfff8, 0x08c0, 0x000, 2,  12},
-	{"m68000_bset_s"         , 0xffc0, 0x08c0, 0xbf8, 0,  12},
-	{"m68000_bsr_16"         , 0xffff, 0x6100, 0x000, 1,  18},
-	{"m68020_bsr_32"         , 0xffff, 0x61ff, 0x000, 2,  18},
-	{"m68000_bsr_8"          , 0xff00, 0x6100, 0x000, 0,  18},
-	{"m68000_btst_r_d"       , 0xf1f8, 0x0100, 0x000, 2,   6},
-	{"m68000_btst_r"         , 0xf1c0, 0x0100, 0xbff, 0,   4},
-	{"m68000_btst_s_d"       , 0xfff8, 0x0800, 0x000, 2,  10},
-	{"m68000_btst_s"         , 0xffc0, 0x0800, 0xbfb, 0,   8},
-	{"m68020_callm"          , 0xffc0, 0x06c0, 0x27b, 2,   8},
-	{"m68020_cas_8"          , 0xffc0, 0x0ac0, 0x3f8, 0,  36},
-	{"m68020_cas_16"         , 0xffc0, 0x0cc0, 0x3f8, 1,  36},
-	{"m68020_cas_32"         , 0xffc0, 0x0ec0, 0x3f8, 2,  36},
-	{"m68020_cas2_16"        , 0xffff, 0x0cfc, 0x000, 1,  36},
-	{"m68020_cas2_32"        , 0xffff, 0x0efc, 0x000, 2,  36},
-	{"m68000_chk_d_16"       , 0xf1f8, 0x4180, 0x000, 1,  10},
-	{"m68000_chk_16"         , 0xf1c0, 0x4180, 0xbff, 1,  10},
-	{"m68020_chk_d_32"       , 0xf1f8, 0x4100, 0x000, 1,  10},
-	{"m68020_chk_32"         , 0xf1c0, 0x4100, 0xbff, 1,  10},
-	{"m68020_chk2_cmp2_8"    , 0xffc0, 0x00c0, 0x27b, 0,  12},
-	{"m68020_chk2_cmp2_16"   , 0xffc0, 0x02c0, 0x27b, 1,  12},
-	{"m68020_chk2_cmp2_32"   , 0xffc0, 0x04c0, 0x27b, 2,  12},
-	{"m68000_clr_d_8"        , 0xfff8, 0x4200, 0x000, 0,   4},
-	{"m68000_clr_8"          , 0xffc0, 0x4200, 0xbf8, 0,   8},
-	{"m68000_clr_d_16"       , 0xfff8, 0x4240, 0x000, 1,   4},
-	{"m68000_clr_16"         , 0xffc0, 0x4240, 0xbf8, 1,   8},
-	{"m68000_clr_d_32"       , 0xfff8, 0x4280, 0x000, 2,   6},
-	{"m68000_clr_32"         , 0xffc0, 0x4280, 0xbf8, 2,  12},
-	{"m68000_cmp_d_8"        , 0xf1f8, 0xb000, 0x000, 0,   4},
-	{"m68000_cmp_8"          , 0xf1c0, 0xb000, 0xbff, 0,   4},
-	{"m68000_cmp_d_16"       , 0xf1f8, 0xb040, 0x000, 1,   4},
-	{"m68000_cmp_a_16"       , 0xf1f8, 0xb048, 0x000, 1,   4},
-	{"m68000_cmp_16"         , 0xf1c0, 0xb040, 0xfff, 1,   4},
-	{"m68000_cmp_d_32"       , 0xf1f8, 0xb080, 0x000, 2,   6},
-	{"m68000_cmp_a_32"       , 0xf1f8, 0xb088, 0x000, 2,   6},
-	{"m68000_cmp_32"         , 0xf1c0, 0xb080, 0xfff, 2,   6},
-	{"m68000_cmpa_d_16"      , 0xf1f8, 0xb0c0, 0x000, 1,   6},
-	{"m68000_cmpa_a_16"      , 0xf1f8, 0xb0c8, 0x000, 1,   6},
-	{"m68000_cmpa_16"        , 0xf1c0, 0xb0c0, 0xfff, 1,   6},
-	{"m68000_cmpa_d_32"      , 0xf1f8, 0xb1c0, 0x000, 2,   6},
-	{"m68000_cmpa_a_32"      , 0xf1f8, 0xb1c8, 0x000, 2,   6},
-	{"m68000_cmpa_32"        , 0xf1c0, 0xb1c0, 0xfff, 2,   6},
-	{"m68000_cmpi_d_8"       , 0xfff8, 0x0c00, 0x000, 0,   8},
-	{"m68000_cmpi_8"         , 0xffc0, 0x0c00, 0xbf8, 0,   8},
-	{"m68020_cmpi_pcdi_8"    , 0xffff, 0x0c3a, 0x000, 0,   8},
-	{"m68020_cmpi_pcix_8"    , 0xffff, 0x0c3b, 0x000, 0,   8},
-	{"m68000_cmpi_d_16"      , 0xfff8, 0x0c40, 0x000, 1,   8},
-	{"m68000_cmpi_16"        , 0xffc0, 0x0c40, 0xbf8, 1,   8},
-	{"m68020_cmpi_pcdi_16"   , 0xffff, 0x0c7a, 0x000, 1,   8},
-	{"m68020_cmpi_pcix_16"   , 0xffff, 0x0c7b, 0x000, 1,   8},
-	{"m68000_cmpi_d_32"      , 0xfff8, 0x0c80, 0x000, 2,  14},
-	{"m68000_cmpi_32"        , 0xffc0, 0x0c80, 0xbf8, 2,  12},
-	{"m68020_cmpi_pcdi_32"   , 0xffff, 0x0cba, 0x000, 2,  12},
-	{"m68020_cmpi_pcix_32"   , 0xffff, 0x0cbb, 0x000, 2,  12},
-	{"m68000_cmpm_8_ax7"     , 0xfff8, 0xbf08, 0x000, 0,  12},
-	{"m68000_cmpm_8_ay7"     , 0xf1ff, 0xb10f, 0x000, 0,  12},
-	{"m68000_cmpm_8_axy7"    , 0xffff, 0xbf0f, 0x000, 0,  12},
-	{"m68000_cmpm_8"         , 0xf1f8, 0xb108, 0x000, 0,  12},
-	{"m68000_cmpm_16"        , 0xf1f8, 0xb148, 0x000, 1,  12},
-	{"m68000_cmpm_32"        , 0xf1f8, 0xb188, 0x000, 2,  20},
-	{"m68020_cpbcc"          , 0xf180, 0xf080, 0x000, 2,   0},
-	{"m68020_cpdbcc"         , 0xf1f8, 0xf048, 0x000, 2,   0},
-	{"m68020_cpgen"          , 0xf1c0, 0xf000, 0x000, 2,   0},
-	{"m68020_cpscc"          , 0xf1c0, 0xf040, 0x000, 2,   0},
-	{"m68020_cptrapcc"       , 0xf1f8, 0xf078, 0x000, 2,   0},
-	{"m68000_dbt"            , 0xfff8, 0x50c8, 0x000, 1,  12}, /* fix in code */
-	{"m68000_dbf"            , 0xfff8, 0x51c8, 0x000, 1,  10},
-	{"m68000_dbhi"           , 0xfff8, 0x52c8, 0x000, 1,  11},
-	{"m68000_dbls"           , 0xfff8, 0x53c8, 0x000, 1,  11},
-	{"m68000_dbcc"           , 0xfff8, 0x54c8, 0x000, 1,  11},
-	{"m68000_dbcs"           , 0xfff8, 0x55c8, 0x000, 1,  11},
-	{"m68000_dbne"           , 0xfff8, 0x56c8, 0x000, 1,  11},
-	{"m68000_dbeq"           , 0xfff8, 0x57c8, 0x000, 1,  11},
-	{"m68000_dbvc"           , 0xfff8, 0x58c8, 0x000, 1,  11},
-	{"m68000_dbvs"           , 0xfff8, 0x59c8, 0x000, 1,  11},
-	{"m68000_dbpl"           , 0xfff8, 0x5ac8, 0x000, 1,  11},
-	{"m68000_dbmi"           , 0xfff8, 0x5bc8, 0x000, 1,  11},
-	{"m68000_dbge"           , 0xfff8, 0x5cc8, 0x000, 1,  11},
-	{"m68000_dblt"           , 0xfff8, 0x5dc8, 0x000, 1,  11},
-	{"m68000_dbgt"           , 0xfff8, 0x5ec8, 0x000, 1,  11},
-	{"m68000_dble"           , 0xfff8, 0x5fc8, 0x000, 1,  11},
-	{"m68000_divs_d_16"      , 0xf1f8, 0x81c0, 0x000, 1, 158},
-	{"m68000_divs_16"        , 0xf1c0, 0x81c0, 0xbff, 1, 158},
-	{"m68000_divu_d_16"      , 0xf1f8, 0x80c0, 0x000, 1, 140},
-	{"m68000_divu_16"        , 0xf1c0, 0x80c0, 0xbff, 1, 140},
-	{"m68020_divl_d_32"      , 0xfff8, 0x4c40, 0x000, 2, 150},
-	{"m68020_divl_32"        , 0xffc0, 0x4c40, 0xbff, 2, 150},
-	{"m68000_eor_d_8"        , 0xf1f8, 0xb100, 0x000, 0,   4},
-	{"m68000_eor_8"          , 0xf1c0, 0xb100, 0xbf8, 0,   8},
-	{"m68000_eor_d_16"       , 0xf1f8, 0xb140, 0x000, 1,   4},
-	{"m68000_eor_16"         , 0xf1c0, 0xb140, 0xbf8, 1,   8},
-	{"m68000_eor_d_32"       , 0xf1f8, 0xb180, 0x000, 2,   8},
-	{"m68000_eor_32"         , 0xf1c0, 0xb180, 0xbf8, 2,  12},
-	{"m68000_eori_to_ccr"    , 0xffff, 0x0a3c, 0x000, 0,  20},
-	{"m68000_eori_to_sr"     , 0xffff, 0x0a7c, 0x000, 1,  20},
-	{"m68000_eori_d_8"       , 0xfff8, 0x0a00, 0x000, 0,   8},
-	{"m68000_eori_8"         , 0xffc0, 0x0a00, 0xbf8, 0,  12},
-	{"m68000_eori_d_16"      , 0xfff8, 0x0a40, 0x000, 1,   8},
-	{"m68000_eori_16"        , 0xffc0, 0x0a40, 0xbf8, 1,  12},
-	{"m68000_eori_d_32"      , 0xfff8, 0x0a80, 0x000, 2,  16},
-	{"m68000_eori_32"        , 0xffc0, 0x0a80, 0xbf8, 2,  20},
-	{"m68000_exg_dd"         , 0xf1f8, 0xc140, 0x000, 2,   6},
-	{"m68000_exg_aa"         , 0xf1f8, 0xc148, 0x000, 2,   6},
-	{"m68000_exg_da"         , 0xf1f8, 0xc188, 0x000, 2,   6},
-	{"m68000_ext_16"         , 0xfff8, 0x4880, 0x000, 1,   4},
-	{"m68000_ext_32"         , 0xfff8, 0x48c0, 0x000, 2,   4},
-	{"m68020_extb"           , 0xfff8, 0x49c0, 0x000, 2,   4},
-	{"m68000_illegal"        , 0xffff, 0x4afc, 0x000, 1,   0},
-	{"m68000_jmp"            , 0xffc0, 0x4ec0, 0x27b, 2,   0}, /* make table */
-	{"m68000_jsr"            , 0xffc0, 0x4e80, 0x27b, 2,   0}, /* make table */
-	{"m68000_lea"            , 0xf1c0, 0x41c0, 0x27b, 2,   0}, /* make table */
-	{"m68000_link_16_a7"     , 0xffff, 0x4e57, 0x000, 1,  16},
-	{"m68000_link_16"        , 0xfff8, 0x4e50, 0x000, 1,  16},
-	{"m68020_link_32_a7"     , 0xffff, 0x480f, 0x000, 1,  16},
-	{"m68020_link_32"        , 0xfff8, 0x4808, 0x000, 1,  16},
-	{"m68000_lsr_s_8"        , 0xf1f8, 0xe008, 0x000, 0,  14}, /* fix in code */
-	{"m68000_lsr_s_16"       , 0xf1f8, 0xe048, 0x000, 1,  14},
-	{"m68000_lsr_s_32"       , 0xf1f8, 0xe088, 0x000, 2,  16},
-	{"m68000_lsr_r_8"        , 0xf1f8, 0xe028, 0x000, 0,  14},
-	{"m68000_lsr_r_16"       , 0xf1f8, 0xe068, 0x000, 1,  22},
-	{"m68000_lsr_r_32"       , 0xf1f8, 0xe0a8, 0x000, 2,  38},
-	{"m68000_lsr_ea"         , 0xffc0, 0xe2c0, 0x3f8, 1,   8},
-	{"m68000_lsl_s_8"        , 0xf1f8, 0xe108, 0x000, 0,  14}, /* fix in code */
-	{"m68000_lsl_s_16"       , 0xf1f8, 0xe148, 0x000, 1,  14},
-	{"m68000_lsl_s_32"       , 0xf1f8, 0xe188, 0x000, 2,  16},
-	{"m68000_lsl_r_8"        , 0xf1f8, 0xe128, 0x000, 0,  14},
-	{"m68000_lsl_r_16"       , 0xf1f8, 0xe168, 0x000, 1,  22},
-	{"m68000_lsl_r_32"       , 0xf1f8, 0xe1a8, 0x000, 2,  38},
-	{"m68000_lsl_ea"         , 0xffc0, 0xe3c0, 0x3f8, 1,   8},
-	{"m68000_move_dd_d_8"    , 0xf1f8, 0x1000, 0x000, 0,   4},
-	{"m68000_move_dd_8"      , 0xf1c0, 0x1000, 0xbff, 0,   4},
-	{"m68000_move_ai_d_8"    , 0xf1f8, 0x1080, 0x000, 0,   8},
-	{"m68000_move_ai_8"      , 0xf1c0, 0x1080, 0xbff, 0,   8},
-	{"m68000_move_pi_d_8"    , 0xf1f8, 0x10c0, 0x000, 0,   8},
-	{"m68000_move_pi_8"      , 0xf1c0, 0x10c0, 0xbff, 0,   8},
-	{"m68000_move_pi7_d_8"   , 0xfff8, 0x1ec0, 0x000, 0,   8},
-	{"m68000_move_pi7_8"     , 0xffc0, 0x1ec0, 0xbff, 0,   8},
-	{"m68000_move_pd_d_8"    , 0xf1f8, 0x1100, 0x000, 0,   8},
-	{"m68000_move_pd_8"      , 0xf1c0, 0x1100, 0xbff, 0,   8},
-	{"m68000_move_pd7_d_8"   , 0xfff8, 0x1f00, 0x000, 0,   8},
-	{"m68000_move_pd7_8"     , 0xffc0, 0x1f00, 0xbff, 0,   8},
-	{"m68000_move_di_d_8"    , 0xf1f8, 0x1140, 0x000, 0,  12},
-	{"m68000_move_di_8"      , 0xf1c0, 0x1140, 0xbff, 0,  12},
-	{"m68000_move_ix_d_8"    , 0xf1f8, 0x1180, 0x000, 0,  14},
-	{"m68000_move_ix_8"      , 0xf1c0, 0x1180, 0xbff, 0,  14},
-	{"m68000_move_aw_d_8"    , 0xfff8, 0x11c0, 0x000, 0,  12},
-	{"m68000_move_aw_8"      , 0xffc0, 0x11c0, 0xbff, 0,  12},
-	{"m68000_move_al_d_8"    , 0xfff8, 0x13c0, 0x000, 0,  16},
-	{"m68000_move_al_8"      , 0xffc0, 0x13c0, 0xbff, 0,  16},
-	{"m68000_move_dd_d_16"   , 0xf1f8, 0x3000, 0x000, 1,   4},
-	{"m68000_move_dd_a_16"   , 0xf1f8, 0x3008, 0x000, 1,   4},
-	{"m68000_move_dd_16"     , 0xf1c0, 0x3000, 0xfff, 1,   4},
-	{"m68000_move_ai_d_16"   , 0xf1f8, 0x3080, 0x000, 1,   8},
-	{"m68000_move_ai_a_16"   , 0xf1f8, 0x3088, 0x000, 1,   8},
-	{"m68000_move_ai_16"     , 0xf1c0, 0x3080, 0xfff, 1,   8},
-	{"m68000_move_pi_d_16"   , 0xf1f8, 0x30c0, 0x000, 1,   8},
-	{"m68000_move_pi_a_16"   , 0xf1f8, 0x30c8, 0x000, 1,   8},
-	{"m68000_move_pi_16"     , 0xf1c0, 0x30c0, 0xfff, 1,   8},
-	{"m68000_move_pd_d_16"   , 0xf1f8, 0x3100, 0x000, 1,   8},
-	{"m68000_move_pd_a_16"   , 0xf1f8, 0x3108, 0x000, 1,   8},
-	{"m68000_move_pd_16"     , 0xf1c0, 0x3100, 0xfff, 1,   8},
-	{"m68000_move_di_d_16"   , 0xf1f8, 0x3140, 0x000, 1,  12},
-	{"m68000_move_di_a_16"   , 0xf1f8, 0x3148, 0x000, 1,  12},
-	{"m68000_move_di_16"     , 0xf1c0, 0x3140, 0xfff, 1,  12},
-	{"m68000_move_ix_d_16"   , 0xf1f8, 0x3180, 0x000, 1,  14},
-	{"m68000_move_ix_a_16"   , 0xf1f8, 0x3188, 0x000, 1,  14},
-	{"m68000_move_ix_16"     , 0xf1c0, 0x3180, 0xfff, 1,  14},
-	{"m68000_move_aw_d_16"   , 0xfff8, 0x31c0, 0x000, 1,  12},
-	{"m68000_move_aw_a_16"   , 0xfff8, 0x31c8, 0x000, 1,  12},
-	{"m68000_move_aw_16"     , 0xffc0, 0x31c0, 0xfff, 1,  12},
-	{"m68000_move_al_d_16"   , 0xfff8, 0x33c0, 0x000, 1,  16},
-	{"m68000_move_al_a_16"   , 0xfff8, 0x33c8, 0x000, 1,  16},
-	{"m68000_move_al_16"     , 0xffc0, 0x33c0, 0xfff, 1,  16},
-	{"m68000_move_dd_d_32"   , 0xf1f8, 0x2000, 0x000, 2,   4},
-	{"m68000_move_dd_a_32"   , 0xf1f8, 0x2008, 0x000, 2,   4},
-	{"m68000_move_dd_32"     , 0xf1c0, 0x2000, 0xfff, 2,   4},
-	{"m68000_move_ai_d_32"   , 0xf1f8, 0x2080, 0x000, 2,  12},
-	{"m68000_move_ai_a_32"   , 0xf1f8, 0x2088, 0x000, 2,  12},
-	{"m68000_move_ai_32"     , 0xf1c0, 0x2080, 0xfff, 2,  12},
-	{"m68000_move_pi_d_32"   , 0xf1f8, 0x20c0, 0x000, 2,  12},
-	{"m68000_move_pi_a_32"   , 0xf1f8, 0x20c8, 0x000, 2,  12},
-	{"m68000_move_pi_32"     , 0xf1c0, 0x20c0, 0xfff, 2,  12},
-	{"m68000_move_pd_d_32"   , 0xf1f8, 0x2100, 0x000, 2,  12},
-	{"m68000_move_pd_a_32"   , 0xf1f8, 0x2108, 0x000, 2,  12},
-	{"m68000_move_pd_32"     , 0xf1c0, 0x2100, 0xfff, 2,  12},
-	{"m68000_move_di_d_32"   , 0xf1f8, 0x2140, 0x000, 2,  16},
-	{"m68000_move_di_a_32"   , 0xf1f8, 0x2148, 0x000, 2,  16},
-	{"m68000_move_di_32"     , 0xf1c0, 0x2140, 0xfff, 2,  16},
-	{"m68000_move_ix_d_32"   , 0xf1f8, 0x2180, 0x000, 2,  18},
-	{"m68000_move_ix_a_32"   , 0xf1f8, 0x2188, 0x000, 2,  18},
-	{"m68000_move_ix_32"     , 0xf1c0, 0x2180, 0xfff, 2,  18},
-	{"m68000_move_aw_d_32"   , 0xfff8, 0x21c0, 0x000, 2,  16},
-	{"m68000_move_aw_a_32"   , 0xfff8, 0x21c8, 0x000, 2,  16},
-	{"m68000_move_aw_32"     , 0xffc0, 0x21c0, 0xfff, 2,  16},
-	{"m68000_move_al_d_32"   , 0xfff8, 0x23c0, 0x000, 2,  20},
-	{"m68000_move_al_a_32"   , 0xfff8, 0x23c8, 0x000, 2,  20},
-	{"m68000_move_al_32"     , 0xffc0, 0x23c0, 0xfff, 2,  20},
-	{"m68000_movea_d_16"     , 0xf1f8, 0x3040, 0x000, 1,   4},
-	{"m68000_movea_a_16"     , 0xf1f8, 0x3048, 0x000, 1,   4},
-	{"m68000_movea_16"       , 0xf1c0, 0x3040, 0xfff, 1,   4},
-	{"m68000_movea_d_32"     , 0xf1f8, 0x2040, 0x000, 2,   4},
-	{"m68000_movea_a_32"     , 0xf1f8, 0x2048, 0x000, 2,   4},
-	{"m68000_movea_32"       , 0xf1c0, 0x2040, 0xfff, 2,   4},
-	{"m68010_move_fr_ccr_d"  , 0xfff8, 0x42c0, 0x000, 1,   4},
-	{"m68010_move_fr_ccr"    , 0xffc0, 0x42c0, 0xbf8, 1,   8},
-	{"m68000_move_to_ccr_d"  , 0xfff8, 0x44c0, 0x000, 1,  12},
-	{"m68000_move_to_ccr"    , 0xffc0, 0x44c0, 0xbff, 1,  12},
-	{"m68000_move_fr_sr_d"   , 0xfff8, 0x40c0, 0x000, 1,   6},
-	{"m68000_move_fr_sr"     , 0xffc0, 0x40c0, 0xbf8, 1,   8},
-	{"m68000_move_to_sr_d"   , 0xfff8, 0x46c0, 0x000, 1,  12},
-	{"m68000_move_to_sr"     , 0xffc0, 0x46c0, 0xbff, 1,  12},
-	{"m68000_move_fr_usp"    , 0xfff8, 0x4e68, 0x000, 2,   4},
-	{"m68000_move_to_usp"    , 0xfff8, 0x4e60, 0x000, 2,   4},
-	{"m68010_movec_cr"       , 0xffff, 0x4e7a, 0x000, 0,  12},
-	{"m68010_movec_rc"       , 0xffff, 0x4e7b, 0x000, 0,  10},
-	{"m68000_movem_pd_16"    , 0xfff8, 0x48a0, 0x000, 1,  40}, /* fix in code */
-	{"m68000_movem_pd_32"    , 0xfff8, 0x48e0, 0x000, 1,  72},	/* ASG: size really 2, but cycles like 1 */
-	{"m68000_movem_pi_16"    , 0xfff8, 0x4c98, 0x000, 1,  44},
-	{"m68000_movem_pi_32"    , 0xfff8, 0x4cd8, 0x000, 1,  76},	/* ASG: size really 2, but cycles like 1 */
-	{"m68000_movem_re_16"    , 0xffc0, 0x4880, 0x278, 1,  36}, /* HJB was 0x2f8 */
-	{"m68000_movem_re_32"    , 0xffc0, 0x48c0, 0x278, 1,  68}, /* HJB was 0x2f8 */	/* ASG: size really 2, but cycles like 1 */
-	{"m68000_movem_er_16"    , 0xffc0, 0x4c80, 0x27b, 1,  40}, /* JCB was 0x37b */
-	{"m68000_movem_er_32"    , 0xffc0, 0x4cc0, 0x27b, 1,  72}, /* JCB was 0x37b */	/* ASG: size really 2, but cycles like 1 */
-	{"m68000_movep_er_16"    , 0xf1f8, 0x0108, 0x000, 1,  16},
-	{"m68000_movep_er_32"    , 0xf1f8, 0x0148, 0x000, 2,  24},
-	{"m68000_movep_re_16"    , 0xf1f8, 0x0188, 0x000, 1,  16},
-	{"m68000_movep_re_32"    , 0xf1f8, 0x01c8, 0x000, 2,  24},
-	{"m68010_moves_8"        , 0xffc0, 0x0e00, 0x3f8, 0,   0}, /* make table */
-	{"m68010_moves_16"       , 0xffc0, 0x0e40, 0x3f8, 1,   0}, /* make table */
-	{"m68010_moves_32"       , 0xffc0, 0x0e80, 0x3f8, 2,   0}, /* make table */
-	{"m68000_moveq"          , 0xf100, 0x7000, 0x000, 2,   4},
-	{"m68000_muls_d_16"      , 0xf1f8, 0xc1c0, 0x000, 1,  54},
-	{"m68000_muls_16"        , 0xf1c0, 0xc1c0, 0xbff, 1,  54},
-	{"m68000_mulu_d_16"      , 0xf1f8, 0xc0c0, 0x000, 1,  54},
-	{"m68000_mulu_16"        , 0xf1c0, 0xc0c0, 0xbff, 1,  54},
-	{"m68020_mull_d_32"      , 0xfff8, 0x4c00, 0x000, 2,  54},
-	{"m68020_mull_32"        , 0xffc0, 0x4c00, 0xbff, 2,  54},
-	{"m68000_nbcd_d"         , 0xfff8, 0x4800, 0x000, 0,   6},
-	{"m68000_nbcd"           , 0xffc0, 0x4800, 0xbf8, 0,   8},
-	{"m68000_neg_d_8"        , 0xfff8, 0x4400, 0x000, 0,   4},
-	{"m68000_neg_8"          , 0xffc0, 0x4400, 0xbf8, 0,   8},
-	{"m68000_neg_d_16"       , 0xfff8, 0x4440, 0x000, 1,   4},
-	{"m68000_neg_16"         , 0xffc0, 0x4440, 0xbf8, 1,   8},
-	{"m68000_neg_d_32"       , 0xfff8, 0x4480, 0x000, 2,   6},
-	{"m68000_neg_32"         , 0xffc0, 0x4480, 0xbf8, 2,  12},
-	{"m68000_negx_d_8"       , 0xfff8, 0x4000, 0x000, 0,   4},
-	{"m68000_negx_8"         , 0xffc0, 0x4000, 0xbf8, 0,   8},
-	{"m68000_negx_d_16"      , 0xfff8, 0x4040, 0x000, 1,   4},
-	{"m68000_negx_16"        , 0xffc0, 0x4040, 0xbf8, 1,   8},
-	{"m68000_negx_d_32"      , 0xfff8, 0x4080, 0x000, 2,   6},
-	{"m68000_negx_32"        , 0xffc0, 0x4080, 0xbf8, 2,  12},
-	{"m68000_nop"            , 0xffff, 0x4e71, 0x000, 1,   4},
-	{"m68000_not_d_8"        , 0xfff8, 0x4600, 0x000, 0,   4},
-	{"m68000_not_8"          , 0xffc0, 0x4600, 0xbf8, 0,   8},
-	{"m68000_not_d_16"       , 0xfff8, 0x4640, 0x000, 1,   4},
-	{"m68000_not_16"         , 0xffc0, 0x4640, 0xbf8, 1,   8},
-	{"m68000_not_d_32"       , 0xfff8, 0x4680, 0x000, 2,   6},
-	{"m68000_not_32"         , 0xffc0, 0x4680, 0xbf8, 2,  12},
-	{"m68000_or_er_d_8"      , 0xf1f8, 0x8000, 0x000, 0,   4},
-	{"m68000_or_er_8"        , 0xf1c0, 0x8000, 0xbff, 0,   4},
-	{"m68000_or_er_d_16"     , 0xf1f8, 0x8040, 0x000, 1,   4},
-	{"m68000_or_er_16"       , 0xf1c0, 0x8040, 0xbff, 1,   4},
-	{"m68000_or_er_d_32"     , 0xf1f8, 0x8080, 0x000, 2,   8},
-	{"m68000_or_er_32"       , 0xf1c0, 0x8080, 0xbff, 2,   6}, /* 8 for imm */
-	{"m68000_or_re_8"        , 0xf1c0, 0x8100, 0x3f8, 0,   8},
-	{"m68000_or_re_16"       , 0xf1c0, 0x8140, 0x3f8, 1,   8},
-	{"m68000_or_re_32"       , 0xf1c0, 0x8180, 0x3f8, 2,  12},
-	{"m68000_ori_to_ccr"     , 0xffff, 0x003c, 0x000, 0,  20},
-	{"m68000_ori_to_sr"      , 0xffff, 0x007c, 0x000, 1,  20},
-	{"m68000_ori_d_8"        , 0xfff8, 0x0000, 0x000, 0,   8},
-	{"m68000_ori_8"          , 0xffc0, 0x0000, 0xbf8, 0,  12},
-	{"m68000_ori_d_16"       , 0xfff8, 0x0040, 0x000, 1,   8},
-	{"m68000_ori_16"         , 0xffc0, 0x0040, 0xbf8, 1,  12},
-	{"m68000_ori_d_32"       , 0xfff8, 0x0080, 0x000, 2,  16},
-	{"m68000_ori_32"         , 0xffc0, 0x0080, 0xbf8, 2,  20},
-	{"m68020_pack_rr"        , 0xf1f8, 0x8140, 0x000, 0,   8},
-	{"m68020_pack_mm_ax7"    , 0xf1ff, 0x814f, 0x000, 0,   8},
-	{"m68020_pack_mm_ay7"    , 0xfff8, 0x8f48, 0x000, 0,   8},
-	{"m68020_pack_mm_axy7"   , 0xffff, 0x8f4f, 0x000, 0,   8},
-	{"m68020_pack_mm"        , 0xf1f8, 0x8148, 0x000, 0,   8},
-	{"m68000_pea"            , 0xffc0, 0x4840, 0x27b, 2,   0}, /* make table */
-	{"m68000_rst"            , 0xffff, 0x4e70, 0x000, 1, 132},
-	{"m68000_ror_s_8"        , 0xf1f8, 0xe018, 0x000, 0,  14}, /* fix in code */
-	{"m68000_ror_s_16"       , 0xf1f8, 0xe058, 0x000, 1,  14},
-	{"m68000_ror_s_32"       , 0xf1f8, 0xe098, 0x000, 2,  16},
-	{"m68000_ror_r_8"        , 0xf1f8, 0xe038, 0x000, 0,  14},
-	{"m68000_ror_r_16"       , 0xf1f8, 0xe078, 0x000, 1,  22},
-	{"m68000_ror_r_32"       , 0xf1f8, 0xe0b8, 0x000, 2,  38},
-	{"m68000_ror_ea"         , 0xffc0, 0xe6c0, 0x3f8, 1,   8},
-	{"m68000_rol_s_8"        , 0xf1f8, 0xe118, 0x000, 0,  14}, /* fix in code */
-	{"m68000_rol_s_16"       , 0xf1f8, 0xe158, 0x000, 1,  14},
-	{"m68000_rol_s_32"       , 0xf1f8, 0xe198, 0x000, 2,  16},
-	{"m68000_rol_r_8"        , 0xf1f8, 0xe138, 0x000, 0,  14},
-	{"m68000_rol_r_16"       , 0xf1f8, 0xe178, 0x000, 1,  22},
-	{"m68000_rol_r_32"       , 0xf1f8, 0xe1b8, 0x000, 2,  38},
-	{"m68000_rol_ea"         , 0xffc0, 0xe7c0, 0x3f8, 1,   8},
-	{"m68000_roxr_s_8"       , 0xf1f8, 0xe010, 0x000, 0,  14}, /* fix in code */
-	{"m68000_roxr_s_16"      , 0xf1f8, 0xe050, 0x000, 1,  14},
-	{"m68000_roxr_s_32"      , 0xf1f8, 0xe090, 0x000, 2,  16},
-	{"m68000_roxr_r_8"       , 0xf1f8, 0xe030, 0x000, 0,  14},
-	{"m68000_roxr_r_16"      , 0xf1f8, 0xe070, 0x000, 1,  22},
-	{"m68000_roxr_r_32"      , 0xf1f8, 0xe0b0, 0x000, 2,  38},
-	{"m68000_roxr_ea"        , 0xffc0, 0xe4c0, 0x3f8, 1,   8},
-	{"m68000_roxl_s_8"       , 0xf1f8, 0xe110, 0x000, 0,  14}, /* fix in code */
-	{"m68000_roxl_s_16"      , 0xf1f8, 0xe150, 0x000, 1,  14},
-	{"m68000_roxl_s_32"      , 0xf1f8, 0xe190, 0x000, 2,  16},
-	{"m68000_roxl_r_8"       , 0xf1f8, 0xe130, 0x000, 0,  14},
-	{"m68000_roxl_r_16"      , 0xf1f8, 0xe170, 0x000, 1,  22},
-	{"m68000_roxl_r_32"      , 0xf1f8, 0xe1b0, 0x000, 2,  38},
-	{"m68000_roxl_ea"        , 0xffc0, 0xe5c0, 0x3f8, 1,   8},
-	{"m68010_rtd"            , 0xffff, 0x4e74, 0x000, 2,  16},
-	{"m68000_rte"            , 0xffff, 0x4e73, 0x000, 2,  20},
-	{"m68020_rtm"            , 0xfff0, 0x06c0, 0x000, 2,  20},
-	{"m68000_rtr"            , 0xffff, 0x4e77, 0x000, 2,  20},
-	{"m68000_rts"            , 0xffff, 0x4e75, 0x000, 2,  16},
-	{"m68000_sbcd_rr"        , 0xf1f8, 0x8100, 0x000, 0,   6},
-	{"m68000_sbcd_mm_ax7"    , 0xfff8, 0x8f08, 0x000, 0,  18},
-	{"m68000_sbcd_mm_ay7"    , 0xf1ff, 0x810f, 0x000, 0,  18},
-	{"m68000_sbcd_mm_axy7"   , 0xffff, 0x8f0f, 0x000, 0,  18},
-	{"m68000_sbcd_mm"        , 0xf1f8, 0x8108, 0x000, 0,  18},
-	{"m68000_st_d"           , 0xfff8, 0x50c0, 0x000, 0,   6}, /* fix in code */
-	{"m68000_st"             , 0xffc0, 0x50c0, 0xbf8, 0,   8},
-	{"m68000_sf_d"           , 0xfff8, 0x51c0, 0x000, 0,   4},
-	{"m68000_sf"             , 0xffc0, 0x51c0, 0xbf8, 0,   8},
-	{"m68000_shi_d"          , 0xfff8, 0x52c0, 0x000, 0,   5},
-	{"m68000_shi"            , 0xffc0, 0x52c0, 0xbf8, 0,   8},
-	{"m68000_sls_d"          , 0xfff8, 0x53c0, 0x000, 0,   5},
-	{"m68000_sls"            , 0xffc0, 0x53c0, 0xbf8, 0,   8},
-	{"m68000_scc_d"          , 0xfff8, 0x54c0, 0x000, 0,   5},
-	{"m68000_scc"            , 0xffc0, 0x54c0, 0xbf8, 0,   8},
-	{"m68000_scs_d"          , 0xfff8, 0x55c0, 0x000, 0,   5},
-	{"m68000_scs"            , 0xffc0, 0x55c0, 0xbf8, 0,   8},
-	{"m68000_sne_d"          , 0xfff8, 0x56c0, 0x000, 0,   5},
-	{"m68000_sne"            , 0xffc0, 0x56c0, 0xbf8, 0,   8},
-	{"m68000_seq_d"          , 0xfff8, 0x57c0, 0x000, 0,   5},
-	{"m68000_seq"            , 0xffc0, 0x57c0, 0xbf8, 0,   8},
-	{"m68000_svc_d"          , 0xfff8, 0x58c0, 0x000, 0,   5},
-	{"m68000_svc"            , 0xffc0, 0x58c0, 0xbf8, 0,   8},
-	{"m68000_svs_d"          , 0xfff8, 0x59c0, 0x000, 0,   5},
-	{"m68000_svs"            , 0xffc0, 0x59c0, 0xbf8, 0,   8},
-	{"m68000_spl_d"          , 0xfff8, 0x5ac0, 0x000, 0,   5},
-	{"m68000_spl"            , 0xffc0, 0x5ac0, 0xbf8, 0,   8},
-	{"m68000_smi_d"          , 0xfff8, 0x5bc0, 0x000, 0,   5},
-	{"m68000_smi"            , 0xffc0, 0x5bc0, 0xbf8, 0,   8},
-	{"m68000_sge_d"          , 0xfff8, 0x5cc0, 0x000, 0,   5},
-	{"m68000_sge"            , 0xffc0, 0x5cc0, 0xbf8, 0,   8},
-	{"m68000_slt_d"          , 0xfff8, 0x5dc0, 0x000, 0,   5},
-	{"m68000_slt"            , 0xffc0, 0x5dc0, 0xbf8, 0,   8},
-	{"m68000_sgt_d"          , 0xfff8, 0x5ec0, 0x000, 0,   5},
-	{"m68000_sgt"            , 0xffc0, 0x5ec0, 0xbf8, 0,   8},
-	{"m68000_sle_d"          , 0xfff8, 0x5fc0, 0x000, 0,   5},
-	{"m68000_sle"            , 0xffc0, 0x5fc0, 0xbf8, 0,   8},
-	{"m68000_stop"           , 0xffff, 0x4e72, 0x000, 1,   4},
-	{"m68000_sub_er_d_8"     , 0xf1f8, 0x9000, 0x000, 0,   4},
-	{"m68000_sub_er_8"       , 0xf1c0, 0x9000, 0xbff, 0,   4},
-	{"m68000_sub_er_d_16"    , 0xf1f8, 0x9040, 0x000, 1,   4},
-	{"m68000_sub_er_a_16"    , 0xf1f8, 0x9048, 0x000, 1,   4},
-	{"m68000_sub_er_16"      , 0xf1c0, 0x9040, 0xfff, 1,   4},
-	{"m68000_sub_er_d_32"    , 0xf1f8, 0x9080, 0x000, 2,   8},
-	{"m68000_sub_er_a_32"    , 0xf1f8, 0x9088, 0x000, 2,   8},
-	{"m68000_sub_er_32"      , 0xf1c0, 0x9080, 0xfff, 2,   6}, /* 8 for imm */
-	{"m68000_sub_re_8"       , 0xf1c0, 0x9100, 0x3f8, 0,   8},
-	{"m68000_sub_re_16"      , 0xf1c0, 0x9140, 0x3f8, 1,   8},
-	{"m68000_sub_re_32"      , 0xf1c0, 0x9180, 0x3f8, 2,  12},
-	{"m68000_suba_d_16"      , 0xf1f8, 0x90c0, 0x000, 1,   8},
-	{"m68000_suba_a_16"      , 0xf1f8, 0x90c8, 0x000, 1,   8},
-	{"m68000_suba_16"        , 0xf1c0, 0x90c0, 0xfff, 1,   8},
-	{"m68000_suba_d_32"      , 0xf1f8, 0x91c0, 0x000, 2,   8},
-	{"m68000_suba_a_32"      , 0xf1f8, 0x91c8, 0x000, 2,   8},
-	{"m68000_suba_32"        , 0xf1c0, 0x91c0, 0xfff, 2,   6}, /* 8 for imm */
-	{"m68000_subi_d_8"       , 0xfff8, 0x0400, 0x000, 0,   8},
-	{"m68000_subi_8"         , 0xffc0, 0x0400, 0xbf8, 0,  12},
-	{"m68000_subi_d_16"      , 0xfff8, 0x0440, 0x000, 1,   8},
-	{"m68000_subi_16"        , 0xffc0, 0x0440, 0xbf8, 1,  12},
-	{"m68000_subi_d_32"      , 0xfff8, 0x0480, 0x000, 2,  16},
-	{"m68000_subi_32"        , 0xffc0, 0x0480, 0xbf8, 2,  20},
-	{"m68000_subq_d_8"       , 0xf1f8, 0x5100, 0x000, 0,   4},
-	{"m68000_subq_8"         , 0xf1c0, 0x5100, 0xbf8, 0,   8},
-	{"m68000_subq_d_16"      , 0xf1f8, 0x5140, 0x000, 1,   4},
-	{"m68000_subq_a_16"      , 0xf1f8, 0x5148, 0x000, 1,   8},
-	{"m68000_subq_16"        , 0xf1c0, 0x5140, 0xff8, 1,   8},
-	{"m68000_subq_d_32"      , 0xf1f8, 0x5180, 0x000, 2,   8},
-	{"m68000_subq_a_32"      , 0xf1f8, 0x5188, 0x000, 2,   8},
-	{"m68000_subq_32"        , 0xf1c0, 0x5180, 0xff8, 2,  12},
-	{"m68000_subx_rr_8"      , 0xf1f8, 0x9100, 0x000, 0,   4},
-	{"m68000_subx_rr_16"     , 0xf1f8, 0x9140, 0x000, 1,   4},
-	{"m68000_subx_rr_32"     , 0xf1f8, 0x9180, 0x000, 2,   8},
-	{"m68000_subx_mm_8_ax7"  , 0xfff8, 0x9f08, 0x000, 0,  18},
-	{"m68000_subx_mm_8_ay7"  , 0xf1ff, 0x910f, 0x000, 0,  18},
-	{"m68000_subx_mm_8_axy7" , 0xffff, 0x9f0f, 0x000, 0,  18},
-	{"m68000_subx_mm_8"      , 0xf1f8, 0x9108, 0x000, 0,  18},
-	{"m68000_subx_mm_16"     , 0xf1f8, 0x9148, 0x000, 1,  18},
-	{"m68000_subx_mm_32"     , 0xf1f8, 0x9188, 0x000, 2,  30},
-	{"m68000_swap"           , 0xfff8, 0x4840, 0x000, 1,   4},
-	{"m68000_tas_d"          , 0xfff8, 0x4ac0, 0x000, 0,   4},
-	{"m68000_tas"            , 0xffc0, 0x4ac0, 0xbf8, 0,  14},
-	{"m68000_trap"           , 0xfff0, 0x4e40, 0x000, 1,   4},
-	{"m68020_trapt_0"        , 0xffff, 0x50fc, 0x000, 0,   4},
-	{"m68020_trapt_16"       , 0xffff, 0x50fa, 0x000, 0,   4},
-	{"m68020_trapt_32"       , 0xffff, 0x50fb, 0x000, 0,   4},
-	{"m68020_trapf_0"        , 0xffff, 0x51fc, 0x000, 0,   4},
-	{"m68020_trapf_16"       , 0xffff, 0x51fa, 0x000, 0,   4},
-	{"m68020_trapf_32"       , 0xffff, 0x51fb, 0x000, 0,   4},
-	{"m68020_traphi_0"       , 0xffff, 0x52fc, 0x000, 0,   4},
-	{"m68020_traphi_16"      , 0xffff, 0x52fa, 0x000, 0,   4},
-	{"m68020_traphi_32"      , 0xffff, 0x52fb, 0x000, 0,   4},
-	{"m68020_trapls_0"       , 0xffff, 0x53fc, 0x000, 0,   4},
-	{"m68020_trapls_16"      , 0xffff, 0x53fa, 0x000, 0,   4},
-	{"m68020_trapls_32"      , 0xffff, 0x53fb, 0x000, 0,   4},
-	{"m68020_trapcc_0"       , 0xffff, 0x54fc, 0x000, 0,   4},
-	{"m68020_trapcc_16"      , 0xffff, 0x54fa, 0x000, 0,   4},
-	{"m68020_trapcc_32"      , 0xffff, 0x54fb, 0x000, 0,   4},
-	{"m68020_trapcs_0"       , 0xffff, 0x55fc, 0x000, 0,   4},
-	{"m68020_trapcs_16"      , 0xffff, 0x55fa, 0x000, 0,   4},
-	{"m68020_trapcs_32"      , 0xffff, 0x55fb, 0x000, 0,   4},
-	{"m68020_trapne_0"       , 0xffff, 0x56fc, 0x000, 0,   4},
-	{"m68020_trapne_16"      , 0xffff, 0x56fa, 0x000, 0,   4},
-	{"m68020_trapne_32"      , 0xffff, 0x56fb, 0x000, 0,   4},
-	{"m68020_trapeq_0"       , 0xffff, 0x57fc, 0x000, 0,   4},
-	{"m68020_trapeq_16"      , 0xffff, 0x57fa, 0x000, 0,   4},
-	{"m68020_trapeq_32"      , 0xffff, 0x57fb, 0x000, 0,   4},
-	{"m68020_trapvc_0"       , 0xffff, 0x58fc, 0x000, 0,   4},
-	{"m68020_trapvc_16"      , 0xffff, 0x58fa, 0x000, 0,   4},
-	{"m68020_trapvc_32"      , 0xffff, 0x58fb, 0x000, 0,   4},
-	{"m68020_trapvs_0"       , 0xffff, 0x59fc, 0x000, 0,   4},
-	{"m68020_trapvs_16"      , 0xffff, 0x59fa, 0x000, 0,   4},
-	{"m68020_trapvs_32"      , 0xffff, 0x59fb, 0x000, 0,   4},
-	{"m68020_trappl_0"       , 0xffff, 0x5afc, 0x000, 0,   4},
-	{"m68020_trappl_16"      , 0xffff, 0x5afa, 0x000, 0,   4},
-	{"m68020_trappl_32"      , 0xffff, 0x5afb, 0x000, 0,   4},
-	{"m68020_trapmi_0"       , 0xffff, 0x5bfc, 0x000, 0,   4},
-	{"m68020_trapmi_16"      , 0xffff, 0x5bfa, 0x000, 0,   4},
-	{"m68020_trapmi_32"      , 0xffff, 0x5bfb, 0x000, 0,   4},
-	{"m68020_trapge_0"       , 0xffff, 0x5cfc, 0x000, 0,   4},
-	{"m68020_trapge_16"      , 0xffff, 0x5cfa, 0x000, 0,   4},
-	{"m68020_trapge_32"      , 0xffff, 0x5cfb, 0x000, 0,   4},
-	{"m68020_traplt_0"       , 0xffff, 0x5dfc, 0x000, 0,   4},
-	{"m68020_traplt_16"      , 0xffff, 0x5dfa, 0x000, 0,   4},
-	{"m68020_traplt_32"      , 0xffff, 0x5dfb, 0x000, 0,   4},
-	{"m68020_trapgt_0"       , 0xffff, 0x5efc, 0x000, 0,   4},
-	{"m68020_trapgt_16"      , 0xffff, 0x5efa, 0x000, 0,   4},
-	{"m68020_trapgt_32"      , 0xffff, 0x5efb, 0x000, 0,   4},
-	{"m68020_traple_0"       , 0xffff, 0x5ffc, 0x000, 0,   4},
-	{"m68020_traple_16"      , 0xffff, 0x5ffa, 0x000, 0,   4},
-	{"m68020_traple_32"      , 0xffff, 0x5ffb, 0x000, 0,   4},
-	{"m68000_trapv"          , 0xffff, 0x4e76, 0x000, 1,   4},
-	{"m68000_tst_d_8"        , 0xfff8, 0x4a00, 0x000, 0,   4},
-	{"m68000_tst_8"          , 0xffc0, 0x4a00, 0xbf8, 0,   4},
-	{"m68020_tst_pcdi_8"     , 0xffff, 0x4a3a, 0x000, 0,   4},
-	{"m68020_tst_pcix_8"     , 0xffff, 0x4a3b, 0x000, 0,   4},
-	{"m68020_tst_imm_8"      , 0xffff, 0x4a3c, 0x000, 0,   4},
-	{"m68000_tst_d_16"       , 0xfff8, 0x4a40, 0x000, 1,   4},
-	{"m68020_tst_a_16"       , 0xfff8, 0x4a48, 0x000, 1,   4},
-	{"m68000_tst_16"         , 0xffc0, 0x4a40, 0xbf8, 1,   4},
-	{"m68020_tst_pcdi_16"    , 0xffff, 0x4a7a, 0x000, 1,   4},
-	{"m68020_tst_pcix_16"    , 0xffff, 0x4a7b, 0x000, 1,   4},
-	{"m68020_tst_imm_16"     , 0xffff, 0x4a7c, 0x000, 1,   4},
-	{"m68000_tst_d_32"       , 0xfff8, 0x4a80, 0x000, 2,   4},
-	{"m68020_tst_a_32"       , 0xfff8, 0x4a88, 0x000, 2,   4},
-	{"m68000_tst_32"         , 0xffc0, 0x4a80, 0xbf8, 2,   4},
-	{"m68020_tst_pcdi_32"    , 0xffff, 0x4aba, 0x000, 2,   4},
-	{"m68020_tst_pcix_32"    , 0xffff, 0x4abb, 0x000, 2,   4},
-	{"m68020_tst_imm_32"     , 0xffff, 0x4abc, 0x000, 2,   4},
-	{"m68000_unlk_a7"        , 0xffff, 0x4e5f, 0x000, 1,  12},
-	{"m68000_unlk"           , 0xfff8, 0x4e58, 0x000, 1,  12},
-	{"m68020_unpk_rr"        , 0xf1f8, 0x8180, 0x000, 0,   8},
-	{"m68020_unpk_mm_ax7"    , 0xf1ff, 0x818f, 0x000, 0,   8},
-	{"m68020_unpk_mm_ay7"    , 0xfff8, 0x8f88, 0x000, 0,   8},
-	{"m68020_unpk_mm_axy7"   , 0xffff, 0x8f8f, 0x000, 0,   8},
-	{"m68020_unpk_mm"        , 0xf1f8, 0x8188, 0x000, 0,   8},
-	{0, 0, 0, 0, 0}
+	{ 0,  0,  0}, /* EA_MODE_NONE */
+	{ 0,  4,  6}, /* EA_MODE_AI   */
+	{ 0,  4,  6}, /* EA_MODE_PI   */
+	{ 0,  4,  6}, /* EA_MODE_PI7  */
+	{ 0,  6, 12}, /* EA_MODE_PD   */
+	{ 0,  6, 12}, /* EA_MODE_PD7  */
+	{ 0, 12, 16}, /* EA_MODE_DI   */
+	{ 0, 16, 20}, /* EA_MODE_IX   */
+	{ 0, 12, 16}, /* EA_MODE_AW   */
+	{ 0, 16, 20}, /* EA_MODE_AL   */
+	{ 0,  0,  0}, /* EA_MODE_PCDI */
+	{ 0,  0,  0}, /* EA_MODE_PCIX */
+	{ 0,  0,  0}, /* EA_MODE_I    */
 };
+
+/* Extra cycles for CLR instruction (010) */
+int g_clr_cycle_table[13][3] =
+{
+	{ 0,  0,  0}, /* EA_MODE_NONE */
+	{ 0,  4,  6}, /* EA_MODE_AI   */
+	{ 0,  4,  6}, /* EA_MODE_PI   */
+	{ 0,  4,  6}, /* EA_MODE_PI7  */
+	{ 0,  6,  8}, /* EA_MODE_PD   */
+	{ 0,  6,  8}, /* EA_MODE_PD7  */
+	{ 0,  8, 10}, /* EA_MODE_DI   */
+	{ 0, 10, 14}, /* EA_MODE_IX   */
+	{ 0,  8, 10}, /* EA_MODE_AW   */
+	{ 0, 10, 14}, /* EA_MODE_AL   */
+	{ 0,  0,  0}, /* EA_MODE_PCDI */
+	{ 0,  0,  0}, /* EA_MODE_PCIX */
+	{ 0,  0,  0}, /* EA_MODE_I    */
+};
+
+
+
+/* ======================================================================== */
+/* =========================== UTILITY FUNCTIONS ========================== */
+/* ======================================================================== */
+
+/* Print an error message and exit with status error */
+void error_exit(char* fmt, ...)
+{
+	va_list args;
+	fprintf(stderr, "In %s, near or on line %d:\n\t", g_input_filename, g_line_number);
+	va_start(args, fmt);
+	vfprintf(stderr, fmt, args);
+	va_end(args);
+	fprintf(stderr, "\n");
+
+	if(g_prototype_file) fclose(g_prototype_file);
+	if(g_table_file) fclose(g_table_file);
+	if(g_ops_ac_file) fclose(g_ops_ac_file);
+	if(g_ops_dm_file) fclose(g_ops_dm_file);
+	if(g_ops_nz_file) fclose(g_ops_nz_file);
+	if(g_input_file) fclose(g_input_file);
+
+	exit(EXIT_FAILURE);
+}
+
+/* Print an error message, call perror(), and exit with status error */
+void perror_exit(char* fmt, ...)
+{
+	va_list args;
+	va_start(args, fmt);
+	vfprintf(stderr, fmt, args);
+	va_end(args);
+	perror("");
+
+	if(g_prototype_file) fclose(g_prototype_file);
+	if(g_table_file) fclose(g_table_file);
+	if(g_ops_ac_file) fclose(g_ops_ac_file);
+	if(g_ops_dm_file) fclose(g_ops_dm_file);
+	if(g_ops_nz_file) fclose(g_ops_nz_file);
+	if(g_input_file) fclose(g_input_file);
+
+	exit(EXIT_FAILURE);
+}
+
+
+/* copy until 0 or space and exit with error if we read too far */
+int check_strsncpy(char* dst, char* src, int maxlength)
+{
+	char* p = dst;
+	while(*src && *src != ' ')
+	{
+		*p++ = *src++;
+		if(p - dst > maxlength)
+			error_exit("Field too long");
+	}
+	*p = 0;
+	return p - dst;
+}
+
+/* convert ascii to integer and exit with error if we find invalid data */
+int check_atoi(char* str, int *result)
+{
+	int accum = 0;
+	char* p = str;
+	while(*p >= '0' && *p <= '9')
+	{
+		accum *= 10;
+		accum += *p++ - '0';
+	}
+	if(*p != ' ' && *p != 0)
+		error_exit("Malformed integer value");
+	*result = accum;
+	return p - str;
+}
+
+/* Skip past spaces in a string */
+int skip_spaces(char* str)
+{
+	char* p = str;
+
+	while(*p == ' ')
+		p++;
+
+	return p - str;
+}
+
+/* Count the number of set bits in a value */
+int num_bits(int value)
+{
+    value = ((value & 0xaaaa) >> 1) + (value & 0x5555);
+    value = ((value & 0xcccc) >> 2) + (value & 0x3333);
+    value = ((value & 0xf0f0) >> 4) + (value & 0x0f0f);
+    value = ((value & 0xff00) >> 8) + (value & 0x00ff);
+	return value;
+}
 
 /* Convert a hex value written in ASCII */
 int atoh(char* buff)
@@ -850,1097 +548,819 @@ int atoh(char* buff)
 	return accum;
 }
 
-
-/* Safe version of fgets that works on Macs and PCs */
-char *safe_fgets(char * s, int n, FILE * file)
+/* Get a line of text from a file, discarding any end-of-line characters */
+int fgetline(char* buff, int nchars, FILE* file)
 {
-	char *result = fgets(s, n, file);
-	if (s[0] == '\r')
-		memcpy(s, s + 1, n - 1);
-	return result;
+	int length;
+
+	if(fgets(buff, nchars, file) == NULL)
+		return -1;
+	if(buff[0] == '\r')
+		memcpy(buff, buff + 1, nchars - 1);
+
+	length = strlen(buff);
+	while(length && (buff[length-1] == '\r' || buff[length-1] == '\n'))
+		length--;
+	buff[length] = 0;
+	g_line_number++;
+
+	return length;
 }
 
 
-char* modify_ea_string(char* old_ea_string, char* insert_string)
+
+/* ======================================================================== */
+/* =========================== HELPER FUNCTIONS =========================== */
+/* ======================================================================== */
+
+/* Calculate the number of cycles an opcode requires */
+int get_oper_cycles(opcode_struct* op, int ea_mode, int cpu_type)
 {
-	static char buff[300];
-	static char* blank = "";
-	char end_bit[200];
-	char* ea_start;
-	char* ea_end;
+	int size = g_size_select_table[op->size];
 
-	if(strstr(old_ea_string, "uint ea") != NULL)
-		return blank;
-	strcpy(buff, old_ea_string);
-	ea_start = strstr(buff, "m68ki_get_ea_");
-	ea_end = *(ea_start+13) == '8' ? ea_start + 16 : ea_start + 17;
-	strcpy(end_bit, ea_end);
-	sprintf(ea_start, "%s%s", insert_string, end_bit);
+	if(op->cpus[cpu_type] == '.')
+		return 0;
 
-	return buff;
-}
-
-
-char* modify_imm_string(char* old_ea_string, char* insert_string)
-{
-	static char buff[300];
-	static char* blank = "";
-	char end_bit[200];
-	char* real_start;
-	char* ea_start;
-	char* ea_end;
-
-	if(strstr(old_ea_string, "uint ea") != NULL)
-		return blank;
-	strcpy(buff, old_ea_string);
-	real_start = strstr(buff, "m68ki_read_");
-	ea_start = strstr(buff, "m68ki_get_ea_");
-	ea_end = *(ea_start+13) == '8' ? ea_start + 17 : ea_start + 18;
-	strcpy(end_bit, ea_end);
-	sprintf(real_start, "%s%s", insert_string, end_bit);
-
-    return buff;
-}
-
-
-char* replace_clk_string(char* old_clk_string, char* replace_string, int add_value)
-{
-	static char buff[300];
-	char spaces[200];
-	char guts[30];
-	char* guts_start;
-	char* guts_end;
-	char* ptr;
-	int i;
-
-	strcpy(spaces, old_clk_string);
-	for( i = 0; i < 199; i++ )
-		if( !isspace(spaces[i]) )
-            break;
-	spaces[i] = 0;
-
-	guts_start = strstr(old_clk_string, "(") + 1;
-	strcpy(guts, guts_start);
-	guts_end = strstr(guts, ")");
-	while((ptr = strstr(guts_end+1, ")")) != NULL)
-		guts_end = ptr;
-	*guts_end = 0;
-	sprintf(buff, "%s%s(%s+%d);\n", spaces, replace_string, guts, add_value);
-	return buff;
-}
-
-
-int get_clk_add(int func_num, int ea_mode)
-{
-	if(strcmp(g_func_table[func_num].name, "m68000_jmp") == 0)
-		return g_jmp_cycle_table[ea_mode];
-	if(strcmp(g_func_table[func_num].name, "m68000_jsr") == 0)
-		return g_jsr_cycle_table[ea_mode];
-	if(strcmp(g_func_table[func_num].name, "m68000_lea") == 0)
-		return g_lea_cycle_table[ea_mode];
-	if(strcmp(g_func_table[func_num].name, "m68000_pea") == 0)
-		return g_pea_cycle_table[ea_mode];
-	if(strcmp(g_func_table[func_num].name, "m68010_moves_8") == 0 || strcmp(g_func_table[func_num].name, "m68010_moves_16") == 0)
-		return g_moves_bw_cycle_table[ea_mode];
-	if(strcmp(g_func_table[func_num].name, "m68000_moves_32") == 0)
-		return g_moves_l_cycle_table[ea_mode];
-
-	/* ASG: added these cases -- immediate modes take 2 extra cycles here */
-	if(ea_mode == 0x3c &&
-	   (strcmp(g_func_table[func_num].name, "m68000_add_er_32") == 0 ||
-		strcmp(g_func_table[func_num].name, "m68000_adda_32") == 0 ||
-		strcmp(g_func_table[func_num].name, "m68000_and_er_32") == 0 ||
-		strcmp(g_func_table[func_num].name, "m68000_or_er_32") == 0 ||
-		strcmp(g_func_table[func_num].name, "m68000_sub_er_32") == 0 ||
-		strcmp(g_func_table[func_num].name, "m68000_suba_32") == 0))
-		return g_ea_cycle_table[g_func_table[func_num].size][ea_mode] + 2;
-
-	return g_ea_cycle_table[g_func_table[func_num].size][ea_mode];
-}
-
-void add_op_header(FILE* filep, char low, char high)
-{
-	fprintf(filep, "#include \"m68kcpu.h\"\n\n");
-	fprintf(filep, "#include \"m68kops.h\"\n\n");
-	fprintf(filep, "/* ======================================================================== */\n");
-	fprintf(filep, "/* ======================= INSTRUCTION HANDLERS %c-%c ======================= */\n", low, high);
-	fprintf(filep, "/* ======================================================================== */\n");
-	fprintf(filep, "/* Instruction handler function names follow this convention:\n");
-	fprintf(filep, " *\n");
-	fprintf(filep, " * m68000_NAME_EXTENSIONS(void)\n");
-	fprintf(filep, " * where NAME is the name of the opcode it handles and EXTENSIONS are any\n");
-	fprintf(filep, " * extensions for special instances of that opcode.\n");
-	fprintf(filep, " *\n");
-	fprintf(filep, " * Examples:\n");
-	fprintf(filep, " *   m68000_add_er_ai_8(): add opcode, from effective address to register,\n");
-	fprintf(filep, " *                         using address register indirect, size = byte\n");
-	fprintf(filep, " *\n");
-	fprintf(filep, " *   m68000_asr_s_8(): arithmetic shift right, static count, size = byte\n");
-	fprintf(filep, " *\n");
-	fprintf(filep, " *\n");
-	fprintf(filep, " * Note: move uses the form m68000_move_DST_SRC_SIZE\n");
-	fprintf(filep, " *\n");
-	fprintf(filep, " * Common extensions:\n");
-	fprintf(filep, " * 8   : size = byte\n");
-	fprintf(filep, " * 16  : size = word\n");
-	fprintf(filep, " * 32  : size = long\n");
-	fprintf(filep, " * rr  : register to register\n");
-	fprintf(filep, " * mm  : memory to memory\n");
-	fprintf(filep, " * a7  : using a7 register\n");
-	fprintf(filep, " * ax7 : using a7 in X part of instruction (....XXX......YYY)\n");
-	fprintf(filep, " * ay7 : using a7 in Y part of instruction (....XXX......YYY)\n");
-	fprintf(filep, " * axy7: using a7 in both parts of instruction (....XXX......YYY)\n");
-	fprintf(filep, " * r   : register\n");
-	fprintf(filep, " * s   : static\n");
-	fprintf(filep, " * er  : effective address -> register\n");
-	fprintf(filep, " * re  : register -> effective address\n");
-	fprintf(filep, " * ea  : using effective address mode of operation\n");
-	fprintf(filep, " * d   : data register direct\n");
-	fprintf(filep, " * a   : address register direct\n");
-	fprintf(filep, " * ai  : address register indirect\n");
-	fprintf(filep, " * pi  : address register indirect with postincrement\n");
-	fprintf(filep, " * pi7 : address register 7 indirect with postincrement\n");
-	fprintf(filep, " * pd  : address register indirect with predecrement\n");
-	fprintf(filep, " * pd7 : address register 7 indirect with predecrement\n");
-	fprintf(filep, " * di  : address register indirect with displacement\n");
-	fprintf(filep, " * ix  : address register indirect with index\n");
-	fprintf(filep, " * aw  : absolute word\n");
-	fprintf(filep, " * al  : absolute long\n");
-	fprintf(filep, " * pcdi: program counter with displacement\n");
-	fprintf(filep, " * pcix: program counter with index\n");
-	fprintf(filep, " */\n\n\n");
-}
-
-void add_prototype_header(FILE* filep)
-{
-	fprintf(filep, "#ifndef M68KOPS__HEADER\n");
-	fprintf(filep, "#define M68KOPS__HEADER\n\n");
-}
-
-void add_prototype_footer(FILE* filep)
-{
-	fprintf(filep, "\n#endif /* M68KOPS__HEADER */\n");
-}
-
-
-void add_table_header(FILE* filep)
-{
-	fprintf(filep, "/* ======================================================================== */\n");
-	fprintf(filep, "/* ========================= OPCODE TABLE BUILDER ========================= */\n");
-	fprintf(filep, "/* ======================================================================== */\n\n");
-
-	fprintf(filep, "#include \"m68kops.h\"\n");
-	fprintf(filep, "#include \"m68kcpu.h\"\n");
-	fprintf(filep, "#include <stdlib.h>\n\n");
-	fprintf(filep, "#include <string.h>\n\n");
-
-	fprintf(filep, "extern void  (*m68k_instruction_jump_table[])(void); /* opcode handler jump table */\n\n");
-
-	fprintf(filep, "/* This is used to generate the opcode handler jump table */\n");
-	fprintf(filep, "typedef struct\n");
-	fprintf(filep, "{\n");
-	fprintf(filep, "\tvoid (*opcode_handler)(void); /* handler function */\n");
-	fprintf(filep, "\tuint bits;\t\t\t/* number of bits set in mask */\n");
-    fprintf(filep, "\tuint mask;\t\t\t/* mask on opcode */\n");
-	fprintf(filep, "\tuint match;\t\t\t/* what to match after masking */\n");
-	fprintf(filep, "} opcode_handler_struct;\n\n\n");
-
-	fprintf(filep, "/* Opcode handler table */\n");
-	fprintf(filep, "static opcode_handler_struct m68k_opcode_handler_table[] =\n");
-	fprintf(filep, "{\n");
-	fprintf(filep, "/*  opcode handler              mask   match */\n");
-}
-
-void add_table_footer(FILE* filep)
-{
-	fprintf(filep, "\t{0, 0, 0, 0}\n");
-	fprintf(filep, "};\n\n\n");
-
-	fprintf(filep, "/*\n");
-	fprintf(filep, " * Comparison function for qsort()\n");
-	fprintf(filep, " * For entries with an equal number of set bits in\n");
-	fprintf(filep, " * the mask compare the match values\n");
-	fprintf(filep, " */\n");
-	fprintf(filep, "static int DECL_SPEC compare_nof_true_bits(const void* aptr, const void* bptr)\n");
-	fprintf(filep, "{\n");
-	fprintf(filep, "\tconst opcode_handler_struct *a = aptr, *b = bptr;\n");
-	fprintf(filep, "\tif( a->bits != b->bits )\n");
-	fprintf(filep, "\t\treturn a->bits - b->bits;\n");
-	fprintf(filep, "\tif( a->mask != b->mask )\n");
-	fprintf(filep, "\t\treturn a->mask - b->mask;\n");
-	fprintf(filep, "\treturn a->match - b->match;\n");
-	fprintf(filep, "}\n\n");
-
-	fprintf(filep, "/* Build the opcode handler jump table */\n");
-	fprintf(filep, "void m68ki_build_opcode_table(void)\n");
-	fprintf(filep, "{\n");
-	fprintf(filep, "\topcode_handler_struct *ostruct;\n");
-	fprintf(filep, "\tuint table_length = 0;\n");
-	fprintf(filep, "\tint i,j;\n");
-	fprintf(filep, "\n");
-	fprintf(filep, "\tfor(ostruct = m68k_opcode_handler_table;ostruct->opcode_handler != 0;ostruct++)\n");
-	fprintf(filep, "\t\ttable_length++;\n");
-	fprintf(filep, "\n");
-	fprintf(filep, "\tqsort((void *)m68k_opcode_handler_table, table_length, sizeof(m68k_opcode_handler_table[0]), compare_nof_true_bits);\n");
-	fprintf(filep, "\n");
-	fprintf(filep, "\tfor( i = 0; i < 0x10000; i++ )\n");
-	fprintf(filep, "\t{\n");
-	fprintf(filep, "\t\t/* default to illegal */\n");
-	fprintf(filep, "\t\tm68k_instruction_jump_table[i] = m68000_illegal;\n");
-	fprintf(filep, "\t}\n");
-	fprintf(filep, "\n");
-	fprintf(filep, "\tostruct = m68k_opcode_handler_table;\n");
-	fprintf(filep, "\twhile (ostruct->mask != 0xff00)\n");
-	fprintf(filep, "\t{\n");
-	fprintf(filep, "\t\tfor (i = 0;i < 0x10000;i++)\n");
-	fprintf(filep, "\t\t{\n");
-	fprintf(filep, "\t\t\tif ((i & ostruct->mask) == ostruct->match)\n");
-	fprintf(filep, "\t\t\t{\n");
-	fprintf(filep, "\t\t\t\tm68k_instruction_jump_table[i] = ostruct->opcode_handler;\n");
-	fprintf(filep, "\t\t\t}\n");
-	fprintf(filep, "\t\t}\n");
-	fprintf(filep, "\t\tostruct++;\n");
-	fprintf(filep, "\t}\n");
-	fprintf(filep, "\twhile (ostruct->mask == 0xff00)\n");
-	fprintf(filep, "\t{\n");
-	fprintf(filep, "\t\tfor (i = 0;i <= 0xff;i++)\n");
-	fprintf(filep, "\t\t\tm68k_instruction_jump_table[ostruct->match | i] = ostruct->opcode_handler;\n");
-	fprintf(filep, "\t\tostruct++;\n");
-	fprintf(filep, "\t}\n");
-	fprintf(filep, "\twhile (ostruct->mask == 0xf1f8)\n");
-	fprintf(filep, "\t{\n");
-	fprintf(filep, "\t\tfor (i = 0;i < 8;i++)\n");
-	fprintf(filep, "\t\t{\n");
-	fprintf(filep, "\t\t\tfor (j = 0;j < 8;j++)\n");
-	fprintf(filep, "\t\t\t{\n");
-	fprintf(filep, "\t\t\t\tm68k_instruction_jump_table[ostruct->match | (i << 9) | j] = ostruct->opcode_handler;\n");
-	fprintf(filep, "\t\t\t}\n");
-	fprintf(filep, "\t\t}\n");
-	fprintf(filep, "\t\tostruct++;\n");
-	fprintf(filep, "\t}\n");
-	fprintf(filep, "\twhile (ostruct->mask == 0xfff0)\n");
-	fprintf(filep, "\t{\n");
-	fprintf(filep, "\t\tfor (i = 0;i <= 0x0f;i++)\n");
-	fprintf(filep, "\t\t\tm68k_instruction_jump_table[ostruct->match | i] = ostruct->opcode_handler;\n");
-	fprintf(filep, "\t\tostruct++;\n");
-	fprintf(filep, "\t}\n");
-	fprintf(filep, "\twhile (ostruct->mask == 0xf1ff)\n");
-	fprintf(filep, "\t{\n");
-	fprintf(filep, "\t\tfor (i = 0;i <= 0x07;i++)\n");
-	fprintf(filep, "\t\t\tm68k_instruction_jump_table[ostruct->match | (i << 9)] = ostruct->opcode_handler;\n");
-	fprintf(filep, "\t\tostruct++;\n");
-	fprintf(filep, "\t}\n");
-	fprintf(filep, "\twhile (ostruct->mask == 0xfff8)\n");
-	fprintf(filep, "\t{\n");
-	fprintf(filep, "\t\tfor (i = 0;i <= 0x07;i++)\n");
-	fprintf(filep, "\t\t\tm68k_instruction_jump_table[ostruct->match | i] = ostruct->opcode_handler;\n");
-	fprintf(filep, "\t\tostruct++;\n");
-	fprintf(filep, "\t}\n");
-	fprintf(filep, "\twhile (ostruct->mask == 0xffff)\n");
-	fprintf(filep, "\t{\n");
-	fprintf(filep, "\t\tm68k_instruction_jump_table[ostruct->match] = ostruct->opcode_handler;\n");
-	fprintf(filep, "\t\tostruct++;\n");
-	fprintf(filep, "\t}\n");
-	fprintf(filep, "}\n");
-}
-
-
-int generate_funcs(FILE* file_ac, FILE* file_dm, FILE* file_nz)
-{
-	FILE* input_file;
-	FILE* output_file;
-	static char func_lines[200][300];
-	char name[200];
-	char full_name[200];
-	char* name_start;
-	char* name_end;
-	char insert[30];
-	int insert_pt;
-	int num_lines = 0;
-	int ea_line = 0;
-	int i;
-	int func_num;
-	int ea;
-	int size;
-	char ea_spaces[200];
-
-	/* Our input file is m68k_in.c */
-	if((input_file=fopen(g_m68k_in_c, "rt")) == NULL)
+	if(cpu_type < CPU_TYPE_020)
 	{
-		sprintf(name, "can't open %s", g_m68k_in_c);
-		perror(name);
-		exit(-1);
+		if(cpu_type == CPU_TYPE_010)
+		{
+			if(strcmp(op->name, "moves") == 0)
+				return op->cycles[cpu_type] + g_moves_cycle_table[ea_mode][size];
+			if(strcmp(op->name, "clr") == 0)
+				return op->cycles[cpu_type] + g_clr_cycle_table[ea_mode][size];
+		}
+
+		/* ASG: added these cases -- immediate modes take 2 extra cycles here */
+		if(cpu_type == CPU_TYPE_000 && ea_mode == EA_MODE_I &&
+		   (strcmp(op->name, "add_er") == 0 ||
+			strcmp(op->name, "adda")   == 0 ||
+			strcmp(op->name, "and_er") == 0 ||
+			strcmp(op->name, "or_er")  == 0 ||
+			strcmp(op->name, "sub_er") == 0 ||
+			strcmp(op->name, "suba")   == 0))
+			return op->cycles[cpu_type] + g_ea_cycle_table[ea_mode][cpu_type][size] + 2;
+
+		if(strcmp(op->name, "jmp") == 0)
+			return op->cycles[cpu_type] + g_jmp_cycle_table[ea_mode];
+		if(strcmp(op->name, "jsr") == 0)
+			return op->cycles[cpu_type] + g_jsr_cycle_table[ea_mode];
+		if(strcmp(op->name, "lea") == 0)
+			return op->cycles[cpu_type] + g_lea_cycle_table[ea_mode];
+		if(strcmp(op->name, "pea") == 0)
+			return op->cycles[cpu_type] + g_pea_cycle_table[ea_mode];
+	}
+	return op->cycles[cpu_type] + g_ea_cycle_table[ea_mode][cpu_type][size];
+}
+
+/* Find an opcode in the opcode handler list */
+opcode_struct* find_opcode(char* name, int size, char* mode)
+{
+	opcode_struct* op;
+
+
+	for(op = g_opcode_input_table;op->name != NULL;op++)
+	{
+		if(	strcmp(name, op->name) == 0 &&
+			(size == op->size) &&
+			strcmp(mode, op->mode) == 0)
+				return op;
+	}
+	return NULL;
+}
+
+/* Specifically find the illegal opcode in the list */
+opcode_struct* find_illegal_opcode(void)
+{
+	opcode_struct* op;
+
+	for(op = g_opcode_input_table;op->name != NULL;op++)
+	{
+		if(strcmp(op->name, "illegal") == 0)
+			return op;
+	}
+	return NULL;
+}
+
+/* Parse an opcode handler name */
+int extract_opcode_info(char* src, char* name, int* size, char* mode)
+{
+	char* start = strstr(src, ID_OPHANDLER_NAME) + strlen(ID_OPHANDLER_NAME) + 1;
+	char* end;
+
+	if(start == NULL)
+		return 0;
+
+	if((end = strstr(start, ",")) == NULL)
+		return 0;
+	strncpy(name, start, end-start);
+	name[end-start] = 0;
+
+	for(start = end+1;*start == ' ';start++)
+		;
+	if((end = strstr(start, ",")) == NULL)
+		return 0;
+	*size = atoi(start);
+
+	for(start = end+1;*start == ' ';start++)
+		;
+	if((end = strstr(start, ")")) == NULL)
+		return 0;
+	strncpy(mode, start, end-start);
+	mode[end-start] = 0;
+
+	return 1;
+}
+
+
+/* Add a search/replace pair to a replace structure */
+void add_replace_string(replace_struct* replace, char* search_str, char* replace_str)
+{
+	if(replace->length >= MAX_REPLACE_LENGTH)
+		error_exit("overflow in replace structure");
+
+	strcpy(replace->replace[replace->length][0], search_str);
+	strcpy(replace->replace[replace->length++][1], replace_str);
+}
+
+/* Write a function body while replacing any selected strings */
+void write_body(FILE* filep, body_struct* body, replace_struct* replace)
+{
+	int i;
+	int j;
+	char* ptr;
+	char output[MAX_LINE_LENGTH+1];
+	char temp_buff[MAX_LINE_LENGTH+1];
+	int found;
+
+	for(i=0;i<body->length;i++)
+	{
+		strcpy(output, body->body[i]);
+		/* Check for the base directive header */
+		if(strstr(output, ID_BASE) != NULL)
+		{
+			/* Search for any text we need to replace */
+			found = 0;
+			for(j=0;j<replace->length;j++)
+			{
+				ptr = strstr(output, replace->replace[j][0]);
+				if(ptr)
+				{
+					/* We found something to replace */
+					found = 1;
+					strcpy(temp_buff, ptr+strlen(replace->replace[j][0]));
+					strcpy(ptr, replace->replace[j][1]);
+					strcat(ptr, temp_buff);
+				}
+			}
+			/* Found a directive with no matching replace string */
+			if(!found)
+				error_exit("Unknown " ID_BASE " directive");
+		}
+		fprintf(filep, "%s\n", output);
+	}
+	fprintf(filep, "\n\n");
+}
+
+/* Generate a base function name from an opcode struct */
+void get_base_name(char* base_name, opcode_struct* op)
+{
+	sprintf(base_name, "m68k_op_%s", op->name);
+	if(op->size > 0)
+		sprintf(base_name+strlen(base_name), "_%d", op->size);
+	if(strcmp(op->mode, "_") != 0)
+		sprintf(base_name+strlen(base_name), "_%s", op->mode);
+}
+
+/* Write the prototype of an opcode handler function */
+void write_prototype(FILE* filep, char* base_name)
+{
+	fprintf(filep, "void %s(void);\n", base_name);
+}
+
+/* Write the name of an opcode handler function */
+void write_function_name(FILE* filep, char* base_name)
+{
+	fprintf(filep, "void %s(void)\n", base_name);
+}
+
+void add_opcode_output_table_entry(opcode_struct* op, char* name)
+{
+	opcode_struct* ptr;
+	if(g_opcode_output_table_length > MAX_OPCODE_OUTPUT_TABLE_LENGTH)
+		error_exit("Opcode output table overflow");
+
+	ptr = g_opcode_output_table + g_opcode_output_table_length++;
+
+	*ptr = *op;
+	strcpy(ptr->name, name);
+	ptr->bits = num_bits(ptr->op_mask);
+}
+
+/*
+ * Comparison function for qsort()
+ * For entries with an equal number of set bits in
+ * the mask compare the match values
+ */
+static int DECL_SPEC compare_nof_true_bits(const void* aptr, const void* bptr)
+{
+	const opcode_struct *a = aptr, *b = bptr;
+	if(a->bits != b->bits)
+		return a->bits - b->bits;
+	if(a->op_mask != b->op_mask)
+		return a->op_mask - b->op_mask;
+	return a->op_match - b->op_match;
+}
+
+void print_opcode_output_table(FILE* filep)
+{
+	int i;
+	qsort((void *)g_opcode_output_table, g_opcode_output_table_length, sizeof(g_opcode_output_table[0]), compare_nof_true_bits);
+
+	for(i=0;i<g_opcode_output_table_length;i++)
+		write_table_entry(filep, g_opcode_output_table+i);
+}
+
+/* Write an entry in the opcode handler table */
+void write_table_entry(FILE* filep, opcode_struct* op)
+{
+	int i;
+
+	fprintf(filep, "\t{%-28s, 0x%04x, 0x%04x, {",
+		op->name, op->op_mask, op->op_match);
+
+	for(i=0;i<NUM_CPUS;i++)
+	{
+		fprintf(filep, "%3d", op->cycles[i]);
+		if(i < NUM_CPUS-1)
+			fprintf(filep, ", ");
 	}
 
-	/* Add the header to the first output file */
-	add_op_header(output_file = file_ac, 'A', 'C');
+	fprintf(filep, "}},\n");
+}
+
+/* Fill out an opcode struct with a specific addressing mode of the source opcode struct */
+void set_opcode_struct(opcode_struct* src, opcode_struct* dst, int ea_mode)
+{
+	int i;
+
+	*dst = *src;
+
+	for(i=0;i<NUM_CPUS;i++)
+		dst->cycles[i] = get_oper_cycles(dst, ea_mode, i);
+	if(strcmp(dst->mode, "_") == 0 && ea_mode != EA_MODE_NONE)
+		sprintf(dst->mode, "%s", g_ea_info_table[ea_mode].fname_add);
+	dst->op_mask |= g_ea_info_table[ea_mode].mask_add;
+	dst->op_match |= g_ea_info_table[ea_mode].match_add;
+}
+
+
+/* Generate a final opcode handler from the provided data */
+void generate_opcode_handler(FILE* filep, body_struct* body, replace_struct* replace, opcode_struct* opinfo, int ea_mode)
+{
+	char str[MAX_LINE_LENGTH+1];
+	opcode_struct op;
+
+	/* Set the opcode structure and write the tables, prototypes, etc */
+	set_opcode_struct(opinfo, &op, ea_mode);
+	get_base_name(str, &op);
+	write_prototype(g_prototype_file, str);
+	add_opcode_output_table_entry(&op, str);
+	write_function_name(filep, str);
+
+	/* Add any replace strings needed */
+	if(ea_mode != EA_MODE_NONE)
+	{
+		sprintf(str, "EA_%s_8()", g_ea_info_table[ea_mode].ea_add);
+		add_replace_string(replace, ID_OPHANDLER_EA_AY_8, str);
+		sprintf(str, "EA_%s_16()", g_ea_info_table[ea_mode].ea_add);
+		add_replace_string(replace, ID_OPHANDLER_EA_AY_16, str);
+		sprintf(str, "EA_%s_32()", g_ea_info_table[ea_mode].ea_add);
+		add_replace_string(replace, ID_OPHANDLER_EA_AY_32, str);
+		sprintf(str, "OPER_%s_8()", g_ea_info_table[ea_mode].ea_add);
+		add_replace_string(replace, ID_OPHANDLER_OPER_AY_8, str);
+		sprintf(str, "OPER_%s_16()", g_ea_info_table[ea_mode].ea_add);
+		add_replace_string(replace, ID_OPHANDLER_OPER_AY_16, str);
+		sprintf(str, "OPER_%s_32()", g_ea_info_table[ea_mode].ea_add);
+		add_replace_string(replace, ID_OPHANDLER_OPER_AY_32, str);
+	}
+
+	/* Now write the function body with the selected replace strings */
+	write_body(filep, body, replace);
+	g_num_functions++;
+}
+
+/* Generate opcode variants based on available addressing modes */
+void generate_opcode_ea_variants(FILE* filep, body_struct* body, replace_struct* replace, opcode_struct* op)
+{
+	int old_length = replace->length;
+
+	/* No ea modes available for this opcode */
+	if(HAS_NO_EA_MODE(op->ea_allowed))
+	{
+		generate_opcode_handler(filep, body, replace, op, EA_MODE_NONE);
+		return;
+	}
+
+	/* Check for and create specific opcodes for each available addressing mode */
+	if(HAS_EA_AI(op->ea_allowed))
+		generate_opcode_handler(filep, body, replace, op, EA_MODE_AI);
+	replace->length = old_length;
+	if(HAS_EA_PI(op->ea_allowed))
+	{
+		generate_opcode_handler(filep, body, replace, op, EA_MODE_PI);
+		replace->length = old_length;
+		if(op->size == 8)
+			generate_opcode_handler(filep, body, replace, op, EA_MODE_PI7);
+	}
+	replace->length = old_length;
+	if(HAS_EA_PD(op->ea_allowed))
+	{
+		generate_opcode_handler(filep, body, replace, op, EA_MODE_PD);
+		replace->length = old_length;
+		if(op->size == 8)
+			generate_opcode_handler(filep, body, replace, op, EA_MODE_PD7);
+	}
+	replace->length = old_length;
+	if(HAS_EA_DI(op->ea_allowed))
+		generate_opcode_handler(filep, body, replace, op, EA_MODE_DI);
+	replace->length = old_length;
+	if(HAS_EA_IX(op->ea_allowed))
+		generate_opcode_handler(filep, body, replace, op, EA_MODE_IX);
+	replace->length = old_length;
+	if(HAS_EA_AW(op->ea_allowed))
+		generate_opcode_handler(filep, body, replace, op, EA_MODE_AW);
+	replace->length = old_length;
+	if(HAS_EA_AL(op->ea_allowed))
+		generate_opcode_handler(filep, body, replace, op, EA_MODE_AL);
+	replace->length = old_length;
+	if(HAS_EA_PCDI(op->ea_allowed))
+		generate_opcode_handler(filep, body, replace, op, EA_MODE_PCDI);
+	replace->length = old_length;
+	if(HAS_EA_PCIX(op->ea_allowed))
+		generate_opcode_handler(filep, body, replace, op, EA_MODE_PCIX);
+	replace->length = old_length;
+	if(HAS_EA_I(op->ea_allowed))
+		generate_opcode_handler(filep, body, replace, op, EA_MODE_I);
+	replace->length = old_length;
+}
+
+/* Generate variants of condition code opcodes */
+void generate_opcode_cc_variants(FILE* filep, body_struct* body, replace_struct* replace, opcode_struct* op_in, int offset)
+{
+	char repl[20];
+	char replnot[20];
+	int i;
+	int old_length = replace->length;
+	opcode_struct op = *op_in;
+
+	op.op_mask |= 0x0f00;
+
+	/* Do all condition codes except t and f */
+	for(i=2;i<16;i++)
+	{
+		/* Add replace strings for this condition code */
+		sprintf(repl, "COND_%s()", g_cc_table[i][1]);
+		sprintf(replnot, "COND_NOT_%s()", g_cc_table[i][1]);
+
+		add_replace_string(replace, ID_OPHANDLER_CC, repl);
+		add_replace_string(replace, ID_OPHANDLER_NOT_CC, replnot);
+
+		/* Set the new opcode info */
+		strcpy(op.name+offset, g_cc_table[i][0]);
+
+		op.op_match = (op.op_match & 0xf0ff) | (i<<8);
+
+		/* Generate all opcode variants for this modified opcode */
+		generate_opcode_ea_variants(filep, body, replace, &op);
+		/* Remove the above replace strings */
+		replace->length = old_length;
+	}
+}
+
+/* Process the opcode handlers section of the input file */
+void process_opcode_handlers(void)
+{
+	FILE* input_file = g_input_file;
+	FILE* output_file;
+	char func_name[MAX_LINE_LENGTH+1];
+	char oper_name[MAX_LINE_LENGTH+1];
+	int  oper_size;
+	char oper_mode[MAX_LINE_LENGTH+1];
+	opcode_struct* opinfo;
+	replace_struct replace;
+	body_struct body;
+
+
+	output_file = g_ops_ac_file;
 
 	for(;;)
 	{
 		/* Find the first line of the function */
-		func_lines[0][0] = '\n';
-		while(func_lines[0][0] == '\n')
-			if(safe_fgets(func_lines[0], 200, input_file) == NULL)
-				exit(0);
-
-		/* Extract the name of the function */
-		name_start = strstr(func_lines[0], "m68");
-		strcpy(name, name_start);
-		name_end = strstr(name, "(");
-		*name_end = '\0';
-		while( name_end > name && name_end[-1] == ' ' )
-			*--name_end = '\0';
-		strcpy(full_name, name);
-
-        /* Change output files if we pass 'c' or 'n' */
-		if(output_file == file_ac && full_name[7] > 'c')
-			add_op_header(output_file = file_dm, 'D', 'M');
-		if(output_file == file_dm && full_name[7] > 'm')
-			add_op_header(output_file = file_nz, 'N', 'Z');
-
-		/* Find the point in the name to insert ea mode bits */
-		switch(*(name_end-1))
+		func_name[0] = 0;
+		while(strstr(func_name, ID_OPHANDLER_NAME) == NULL)
 		{
-		case '8':
-			insert_pt = - 2;
-			break;
-		case '2': case '6':
-			insert_pt = - 3;
-			break;
-		default:
-			insert_pt = 0;
+			if(strcmp(func_name, ID_INPUT_SEPARATOR) == 0)
+				return; /* all done */
+			if(fgetline(func_name, MAX_LINE_LENGTH, input_file) < 0)
+				error_exit("Premature end of file");
 		}
-
-		strcpy(insert, name_end+insert_pt);
-		*(name_end+insert_pt) = 0;
-
-		/* Get the rest of the function and find the "get_ea" bit */
-		num_lines = 0;
-		ea_line = 0;
-		for(i=1;i<200;i++)
+		/* Get the rest of the function */
+		for(body.length=0;;body.length++)
 		{
-			if(safe_fgets(func_lines[i], 200, input_file) == NULL)
-				exit(0);
-			if(func_lines[i][0] == '}')
+			if(body.length > MAX_BODY_LENGTH)
+				error_exit("Function too long");
+
+			if(fgetline(body.body[body.length], MAX_LINE_LENGTH, input_file) < 0)
+				error_exit("Premature end of file");
+
+			if(body.body[body.length][0] == '}')
 			{
-				num_lines = i+1; /* don't cut off the } */
+				body.length++;
 				break;
 			}
-			if(strstr(func_lines[i], "m68ki_get_ea_8") != NULL ||
-			   strstr(func_lines[i], "m68ki_get_ea_16") != NULL ||
-			   strstr(func_lines[i], "m68ki_get_ea_32") != NULL)
-				ea_line = i;
 		}
 
-		/* Look for the function in the function table */
-		func_num = -1;
-		/* find what function it is */
-		for(i=0;g_func_table[i].name != NULL;i++)
-			if(strcmp(full_name, g_func_table[i].name) == 0)
-				func_num = i;
+		g_num_primitives++;
 
-		if(func_num == -1)
-		{
-			printf("Unable to find function %s\n", full_name);
-			g_errors++;
-			continue;
-		}
+		/* Extract the function name information */
+		if(!extract_opcode_info(func_name, oper_name, &oper_size, oper_mode))
+			error_exit("Invalid " ID_OPHANDLER_NAME " format");
 
-		/* Get the ea mask and size of function */
-		ea = g_func_table[func_num].ea_mask;
-		size = g_func_table[func_num].size;
+		/* Find the corresponding table entry */
+		opinfo = find_opcode(oper_name, oper_size, oper_mode);
+		if(opinfo == NULL)
+			error_exit("Unable to find matching table entry for %s", func_name);
 
-		/* If there's no get_ea part to this function */
-		if(ea_line == 0)
-		{
-			/* Error: there's no get_ea, but the function table says ther should be) */
-			if(ea != 0)
-			{
-				printf("Can't find EA line for function %s\n", full_name);
-				g_errors++;
-				continue;
-			}
-			/* This function doesn't need any ea modes added */
-			/* print function as-is */
-			for(i=0;i<num_lines;i++)
-				fprintf(output_file, "%s", func_lines[i]);
-			/* print 2 newlines */
-			fprintf(output_file, "\n\n");
-			continue;
-		}
+        /* Change output files if we pass 'c' or 'n' */
+		if(output_file == g_ops_ac_file && oper_name[0] > 'c')
+			output_file = g_ops_dm_file;
+		else if(output_file == g_ops_dm_file && oper_name[0] > 'm')
+			output_file = g_ops_nz_file;
 
-		/* Preserve indentation */
-		for(i=0;func_lines[ea_line][i] == '\t' || func_lines[ea_line][i] == ' ';i++)
-			ea_spaces[i] = func_lines[ea_line][i];
-		ea_spaces[i] = 0;
+		replace.length = 0;
 
-		/* Sanity check */
-		if(ea == 0)
-		{
-			printf("ERROR!! %s should not have EA 0 at this point\n", func_lines[0]);
-			g_errors++;
-		}
-
-
-		/* Now we check the ea mode value to see what versions of this function we have to generate. */
-
-		if(ea & 0x200) /* AI */
-		{
-			/* print new function name */
-			fprintf(output_file, "void %s_ai%s(void)\n", name, insert);
-			/* print up to ea line */
-			for(i=1;i<ea_line;i++)
-				fprintf(output_file, "%s", strstr(func_lines[i], "USE_CLKS") == NULL ? func_lines[i] : replace_clk_string(func_lines[i], "USE_CLKS", get_clk_add(func_num, 0x10)));
-			/* print new ea mode */
-			if(strstr(func_lines[ea_line], "uint ea") != NULL)
-				fprintf(output_file, "%suint ea = EA_AI;\n", ea_spaces);
-			else
-				fprintf(output_file, "%s", modify_ea_string(func_lines[ea_line], "EA_AI"));
-
-			/* print rest of function */
-			for(i=ea_line+1;i<num_lines;i++)
-				fprintf(output_file, "%s", strstr(func_lines[i], "USE_CLKS") == NULL ? func_lines[i] : replace_clk_string(func_lines[i], "USE_CLKS", get_clk_add(func_num, 0x10)));
-			/* print 2 newlines */
-			fprintf(output_file, "\n\n");
-		}
-		if(ea & 0x100) /* PI */
-		{
-			if(size == 0)
-			{
-				/* print new function name */
-				fprintf(output_file, "void %s_pi%s(void)\n", name, insert);
-				/* print up to ea line */
-				for(i=1;i<ea_line;i++)
-					fprintf(output_file, "%s", strstr(func_lines[i], "USE_CLKS") == NULL ? func_lines[i] : replace_clk_string(func_lines[i], "USE_CLKS", get_clk_add(func_num, 0x18)));
-				/* print new ea mode */
-				if(strstr(func_lines[ea_line], "uint ea") != NULL)
-					fprintf(output_file, "%suint ea = EA_PI_8;\n", ea_spaces);
-				else
-					fprintf(output_file, "%s", modify_ea_string(func_lines[ea_line], "EA_PI_8"));
-
-				/* print rest of function */
-				for(i=ea_line+1;i<num_lines;i++)
-				fprintf(output_file, "%s", strstr(func_lines[i], "USE_CLKS") == NULL ? func_lines[i] : replace_clk_string(func_lines[i], "USE_CLKS", get_clk_add(func_num, 0x18)));
-				/* print 2 newlines */
-				fprintf(output_file, "\n\n");
-
-				/* print new function name */
-				fprintf(output_file, "void %s_pi7%s(void)\n", name, insert);
-				/* print up to ea line */
-				for(i=1;i<ea_line;i++)
-					fprintf(output_file, "%s", strstr(func_lines[i], "USE_CLKS") == NULL ? func_lines[i] : replace_clk_string(func_lines[i], "USE_CLKS", get_clk_add(func_num, 0x1f)));
-				/* print new ea mode */
-				if(strstr(func_lines[ea_line], "uint ea") != NULL)
-					fprintf(output_file, "%suint ea = EA_PI7_8;\n", ea_spaces);
-				else
-					fprintf(output_file, "%s", modify_ea_string(func_lines[ea_line], "EA_PI7_8"));
-
-				/* print rest of function */
-				for(i=ea_line+1;i<num_lines;i++)
-					fprintf(output_file, "%s", strstr(func_lines[i], "USE_CLKS") == NULL ? func_lines[i] : replace_clk_string(func_lines[i], "USE_CLKS", get_clk_add(func_num, 0x1f)));
-				/* print 2 newlines */
-				fprintf(output_file, "\n\n");
-			}
-			else if(size == 1)
-			{
-				/* print new function name */
-				fprintf(output_file, "void %s_pi%s(void)\n", name, insert);
-				/* print up to ea line */
-				for(i=1;i<ea_line;i++)
-					fprintf(output_file, "%s", strstr(func_lines[i], "USE_CLKS") == NULL ? func_lines[i] : replace_clk_string(func_lines[i], "USE_CLKS", get_clk_add(func_num, 0x18)));
-				/* print new ea mode */
-				if(strstr(func_lines[ea_line], "uint ea") != NULL)
-					fprintf(output_file, "%suint ea = EA_PI_16;\n", ea_spaces);
-				else
-					fprintf(output_file, "%s", modify_ea_string(func_lines[ea_line], "EA_PI_16"));
-
-				/* print rest of function */
-				for(i=ea_line+1;i<num_lines;i++)
-					fprintf(output_file, "%s", strstr(func_lines[i], "USE_CLKS") == NULL ? func_lines[i] : replace_clk_string(func_lines[i], "USE_CLKS", get_clk_add(func_num, 0x18)));
-				/* print 2 newlines */
-				fprintf(output_file, "\n\n");
-			}
-			else if(size == 2)
-			{
-				/* print new function name */
-				fprintf(output_file, "void %s_pi%s(void)\n", name, insert);
-				/* print up to ea line */
-				for(i=1;i<ea_line;i++)
-					fprintf(output_file, "%s", strstr(func_lines[i], "USE_CLKS") == NULL ? func_lines[i] : replace_clk_string(func_lines[i], "USE_CLKS", get_clk_add(func_num, 0x18)));
-				/* print new ea mode */
-				if(strstr(func_lines[ea_line], "uint ea") != NULL)
-					fprintf(output_file, "%suint ea = EA_PI_32;\n", ea_spaces);
-				else
-					fprintf(output_file, "%s", modify_ea_string(func_lines[ea_line], "EA_PI_32"));
-
-				/* print rest of function */
-				for(i=ea_line+1;i<num_lines;i++)
-					fprintf(output_file, "%s", strstr(func_lines[i], "USE_CLKS") == NULL ? func_lines[i] : replace_clk_string(func_lines[i], "USE_CLKS", get_clk_add(func_num, 0x18)));
-				/* print 2 newlines */
-				fprintf(output_file, "\n\n");
-			}
-		}
-		if(ea & 0x80) /* PD */
-		{
-		   if(size == 0)
-		   {
-			   /* print new function name */
-			   fprintf(output_file, "void %s_pd%s(void)\n", name, insert);
-			   /* print up to ea line */
-			   for(i=1;i<ea_line;i++)
-					fprintf(output_file, "%s", strstr(func_lines[i], "USE_CLKS") == NULL ? func_lines[i] : replace_clk_string(func_lines[i], "USE_CLKS", get_clk_add(func_num, 0x20)));
-			   /* print new ea mode */
-			   if(strstr(func_lines[ea_line], "uint ea") != NULL)
-					fprintf(output_file, "%suint ea = EA_PD_8;\n", ea_spaces);
-			   else
-					fprintf(output_file, "%s", modify_ea_string(func_lines[ea_line], "EA_PD_8"));
-
-			   /* print rest of function */
-			   for(i=ea_line+1;i<num_lines;i++)
-					fprintf(output_file, "%s", strstr(func_lines[i], "USE_CLKS") == NULL ? func_lines[i] : replace_clk_string(func_lines[i], "USE_CLKS", get_clk_add(func_num, 0x20)));
-			   /* print 2 newlines */
-			   fprintf(output_file, "\n\n");
-
-
-			   /* print new function name */
-			   fprintf(output_file, "void %s_pd7%s(void)\n", name, insert);
-			   /* print up to ea line */
-			   for(i=1;i<ea_line;i++)
-					fprintf(output_file, "%s", strstr(func_lines[i], "USE_CLKS") == NULL ? func_lines[i] : replace_clk_string(func_lines[i], "USE_CLKS", get_clk_add(func_num, 0x27)));
-			   /* print new ea mode */
-			   if(strstr(func_lines[ea_line], "uint ea") != NULL)
-					fprintf(output_file, "%suint ea = EA_PD7_8;\n", ea_spaces);
-			   else
-					fprintf(output_file, "%s", modify_ea_string(func_lines[ea_line], "EA_PD7_8"));
-
-			   /* print rest of function */
-			   for(i=ea_line+1;i<num_lines;i++)
-					fprintf(output_file, "%s", strstr(func_lines[i], "USE_CLKS") == NULL ? func_lines[i] : replace_clk_string(func_lines[i], "USE_CLKS", get_clk_add(func_num, 0x27)));
-			   /* print 2 newlines */
-			   fprintf(output_file, "\n\n");
-		   }
-		   else if(size == 1)
-		   {
-			   /* print new function name */
-			   fprintf(output_file, "void %s_pd%s(void)\n", name, insert);
-			   /* print up to ea line */
-			   for(i=1;i<ea_line;i++)
-					fprintf(output_file, "%s", strstr(func_lines[i], "USE_CLKS") == NULL ? func_lines[i] : replace_clk_string(func_lines[i], "USE_CLKS", get_clk_add(func_num, 0x20)));
-			   /* print new ea mode */
-			   if(strstr(func_lines[ea_line], "uint ea") != NULL)
-					fprintf(output_file, "%suint ea = EA_PD_16;\n", ea_spaces);
-			   else
-					fprintf(output_file, "%s", modify_ea_string(func_lines[ea_line], "EA_PD_16"));
-
-			   /* print rest of function */
-			   for(i=ea_line+1;i<num_lines;i++)
-					fprintf(output_file, "%s", strstr(func_lines[i], "USE_CLKS") == NULL ? func_lines[i] : replace_clk_string(func_lines[i], "USE_CLKS", get_clk_add(func_num, 0x20)));
-			   /* print 2 newlines */
-			   fprintf(output_file, "\n\n");
-		   }
-		   else if(size == 2)
-		   {
-			   /* print new function name */
-			   fprintf(output_file, "void %s_pd%s(void)\n", name, insert);
-			   /* print up to ea line */
-			   for(i=1;i<ea_line;i++)
-					fprintf(output_file, "%s", strstr(func_lines[i], "USE_CLKS") == NULL ? func_lines[i] : replace_clk_string(func_lines[i], "USE_CLKS", get_clk_add(func_num, 0x20)));
-			   /* print new ea mode */
-			   if(strstr(func_lines[ea_line], "uint ea") != NULL)
-					fprintf(output_file, "%suint ea = EA_PD_32;\n", ea_spaces);
-			   else
-					fprintf(output_file, "%s", modify_ea_string(func_lines[ea_line], "EA_PD_32"));
-
-			   /* print rest of function */
-			   for(i=ea_line+1;i<num_lines;i++)
-					fprintf(output_file, "%s", strstr(func_lines[i], "USE_CLKS") == NULL ? func_lines[i] : replace_clk_string(func_lines[i], "USE_CLKS", get_clk_add(func_num, 0x20)));
-			   /* print 2 newlines */
-			   fprintf(output_file, "\n\n");
-		   }
-		}
-		if(ea & 0x40) /* DI */
-		{
-			/* print new function name */
-			fprintf(output_file, "void %s_di%s(void)\n", name, insert);
-			/* print up to ea line */
-			for(i=1;i<ea_line;i++)
-				fprintf(output_file, "%s", strstr(func_lines[i], "USE_CLKS") == NULL ? func_lines[i] : replace_clk_string(func_lines[i], "USE_CLKS", get_clk_add(func_num, 0x28)));
-			/* print new ea mode */
-			if(strstr(func_lines[ea_line], "uint ea") != NULL)
-				fprintf(output_file, "%suint ea = EA_DI;\n", ea_spaces);
-			else
-				fprintf(output_file, "%s", modify_ea_string(func_lines[ea_line], "EA_DI"));
-
-			/* print rest of function */
-			for(i=ea_line+1;i<num_lines;i++)
-				fprintf(output_file, "%s", strstr(func_lines[i], "USE_CLKS") == NULL ? func_lines[i] : replace_clk_string(func_lines[i], "USE_CLKS", get_clk_add(func_num, 0x28)));
-			/* print 2 newlines */
-			fprintf(output_file, "\n\n");
-		}
-		if(ea & 0x20) /* IX */
-		{
-			/* print new function name */
-			fprintf(output_file, "void %s_ix%s(void)\n", name, insert);
-			/* print up to ea line */
-			for(i=1;i<ea_line;i++)
-				fprintf(output_file, "%s", strstr(func_lines[i], "USE_CLKS") == NULL ? func_lines[i] : replace_clk_string(func_lines[i], "USE_CLKS", get_clk_add(func_num, 0x30)));
-			/* print new ea mode */
-			if(strstr(func_lines[ea_line], "uint ea") != NULL)
-				fprintf(output_file, "%suint ea = EA_IX;\n", ea_spaces);
-			else
-				fprintf(output_file, "%s", modify_ea_string(func_lines[ea_line], "EA_IX"));
-
-			/* print rest of function */
-			for(i=ea_line+1;i<num_lines;i++)
-				fprintf(output_file, "%s", strstr(func_lines[i], "USE_CLKS") == NULL ? func_lines[i] : replace_clk_string(func_lines[i], "USE_CLKS", get_clk_add(func_num, 0x30)));
-			/* print 2 newlines */
-			fprintf(output_file, "\n\n");
-		}
-		if(ea & 0x10) /* AW */
-		{
-			/* print new function name */
-			fprintf(output_file, "void %s_aw%s(void)\n", name, insert);
-			/* print up to ea line */
-			for(i=1;i<ea_line;i++)
-				fprintf(output_file, "%s", strstr(func_lines[i], "USE_CLKS") == NULL ? func_lines[i] : replace_clk_string(func_lines[i], "USE_CLKS", get_clk_add(func_num, 0x38)));
-			/* print new ea mode */
-			if(strstr(func_lines[ea_line], "uint ea") != NULL)
-				fprintf(output_file, "%suint ea = EA_AW;\n", ea_spaces);
-			else
-				fprintf(output_file, "%s", modify_ea_string(func_lines[ea_line], "EA_AW"));
-
-			/* print rest of function */
-			for(i=ea_line+1;i<num_lines;i++)
-				fprintf(output_file, "%s", strstr(func_lines[i], "USE_CLKS") == NULL ? func_lines[i] : replace_clk_string(func_lines[i], "USE_CLKS", get_clk_add(func_num, 0x38)));
-			/* print 2 newlines */
-			fprintf(output_file, "\n\n");
-		}
-		if(ea & 0x8) /* AL */
-		{
-			/* print new function name */
-			fprintf(output_file, "void %s_al%s(void)\n", name, insert);
-			/* print up to ea line */
-			for(i=1;i<ea_line;i++)
-				fprintf(output_file, "%s", strstr(func_lines[i], "USE_CLKS") == NULL ? func_lines[i] : replace_clk_string(func_lines[i], "USE_CLKS", get_clk_add(func_num, 0x39)));
-			/* print new ea mode */
-			if(strstr(func_lines[ea_line], "uint ea") != NULL)
-				fprintf(output_file, "%suint ea = EA_AL;\n", ea_spaces);
-			else
-				fprintf(output_file, "%s", modify_ea_string(func_lines[ea_line], "EA_AL"));
-
-			/* print rest of function */
-			for(i=ea_line+1;i<num_lines;i++)
-				fprintf(output_file, "%s", strstr(func_lines[i], "USE_CLKS") == NULL ? func_lines[i] : replace_clk_string(func_lines[i], "USE_CLKS", get_clk_add(func_num, 0x39)));
-			/* print 2 newlines */
-			fprintf(output_file, "\n\n");
-		}
-		if(ea & 0x2) /* PCDI */
-		{
-			/* print new function name */
-			fprintf(output_file, "void %s_pcdi%s(void)\n", name, insert);
-			/* print up to ea line */
-			for(i=1;i<ea_line;i++)
-				fprintf(output_file, "%s", strstr(func_lines[i], "USE_CLKS") == NULL ? func_lines[i] : replace_clk_string(func_lines[i], "USE_CLKS", get_clk_add(func_num, 0x3a)));
-			/* print new ea mode */
-			fprintf(output_file, "%suint old_pc = (CPU_PC+=2) - 2;\n", ea_spaces);
-			fprintf(output_file, "%suint ea = old_pc + MAKE_INT_16(m68ki_read_16(old_pc));\n", ea_spaces);
-			fprintf(output_file, "%s", modify_ea_string(func_lines[ea_line], "ea"));
-
-			/* print rest of function */
-			for(i=ea_line+1;i<num_lines;i++)
-				fprintf(output_file, "%s", strstr(func_lines[i], "USE_CLKS") == NULL ? func_lines[i] : replace_clk_string(func_lines[i], "USE_CLKS", get_clk_add(func_num, 0x3a)));
-			/* print 2 newlines */
-			fprintf(output_file, "\n\n");
-		}
-		if(ea & 0x1) /* PCIX */
-		{
-			/* print new function name */
-			fprintf(output_file, "void %s_pcix%s(void)\n", name, insert);
-			/* print up to ea line */
-			for(i=1;i<ea_line;i++)
-				fprintf(output_file, "%s", strstr(func_lines[i], "USE_CLKS") == NULL ? func_lines[i] : replace_clk_string(func_lines[i], "USE_CLKS", get_clk_add(func_num, 0x3b)));
-			/* print new ea mode */
-			if(strstr(func_lines[ea_line], "uint ea") != NULL)
-				fprintf(output_file, "%suint ea = EA_PCIX;\n", ea_spaces);
-			else
-				fprintf(output_file, "%s", modify_ea_string(func_lines[ea_line], "EA_PCIX"));
-
-			/* print rest of function */
-			for(i=ea_line+1;i<num_lines;i++)
-				fprintf(output_file, "%s", strstr(func_lines[i], "USE_CLKS") == NULL ? func_lines[i] : replace_clk_string(func_lines[i], "USE_CLKS", get_clk_add(func_num, 0x3b)));
-			/* print 2 newlines */
-			fprintf(output_file, "\n\n");
-		}
-		if(ea & 0x4) /* IMM */
-		{
-			char* imm_ptr = "m68ki_read_imm_8()";
-			if(size == 1)
-				imm_ptr = "m68ki_read_imm_16()";
-			else if(size == 2)
-				imm_ptr = "m68ki_read_imm_32()";
-
-			/* print new function name */
-			fprintf(output_file, "void %s_i%s(void)\n", name, insert);
-			/* print up to ea line */
-			for(i=1;i<ea_line;i++)
-				fprintf(output_file, "%s", strstr(func_lines[i], "USE_CLKS") == NULL ? func_lines[i] : replace_clk_string(func_lines[i], "USE_CLKS", get_clk_add(func_num, 0x3c)));
-			/* print new ea mode */
-			if(strstr(func_lines[ea_line], "uint ea") != NULL)
-				fprintf(output_file, "%suint ea = %s;\n", imm_ptr, ea_spaces);
-			else
-				fprintf(output_file, "%s", modify_imm_string(func_lines[ea_line], imm_ptr));
-
-			/* print rest of function */
-			for(i=ea_line+1;i<num_lines;i++)
-				fprintf(output_file, "%s", strstr(func_lines[i], "USE_CLKS") == NULL ? func_lines[i] : replace_clk_string(func_lines[i], "USE_CLKS", get_clk_add(func_num, 0x3c)));
-			/* print 2 newlines */
-			fprintf(output_file, "\n\n");
-		 }
-	 }
-	 fclose(input_file);
-	 return 0;
+		/* Generate opcode variants */
+		if(strcmp(opinfo->name, "bcc") == 0 || strcmp(opinfo->name, "scc") == 0)
+			generate_opcode_cc_variants(output_file, &body, &replace, opinfo, 1);
+		else if(strcmp(opinfo->name, "dbcc") == 0)
+			generate_opcode_cc_variants(output_file, &body, &replace, opinfo, 2);
+		else if(strcmp(opinfo->name, "trapcc") == 0)
+			generate_opcode_cc_variants(output_file, &body, &replace, opinfo, 4);
+		else
+			generate_opcode_ea_variants(output_file, &body, &replace, opinfo);
+	}
 }
 
 
-/* Generate the opcode handler table */
-
-int generate_table(FILE* table_file)
+/* Populate the opcode handler table from the input file */
+void populate_table(void)
 {
-	char name[100];
-	char new_name[100];
-	char* name_start;
-	char* name_end;
-	char* insert;
-	int name_length;
-	int mask;
-	int match;
-	int ea;
-	int size;
-	int clks;
+	char* ptr;
+	char bitpattern[17];
+	opcode_struct* op;
+	char buff[MAX_LINE_LENGTH];
 	int i;
+	int temp;
 
+	buff[0] = 0;
 
-	/* Go through the entire function table */
-	for( i = 0; g_func_table[i].name; i++ )
+	/* Find the start of the table */
+	while(strcmp(buff, ID_TABLE_START) != 0)
+		if(fgetline(buff, MAX_LINE_LENGTH, g_input_file) < 0)
+			error_exit("Premature EOF while reading table");
+
+	/* Process the entire table */
+	for(op = g_opcode_input_table;;op++)
 	{
-		/* isolate the name parts */
-		name_start = g_func_table[i].name;
-		name_end = name_start + strlen(name_start);
-
-        /* Find the point to insert the ea bits */
-		switch(*(name_end-1))
-		{
-		case '8':
-			insert = name_end - 2;
+		if(fgetline(buff, MAX_LINE_LENGTH, g_input_file) < 0)
+			error_exit("Premature EOF while reading table");
+		/* We finish when we find an input separator */
+		if(strcmp(buff, ID_INPUT_SEPARATOR) == 0)
 			break;
-		case '2': case '6':
-			insert = name_end - 3;
-			break;
-		default:
-			insert = name_end;
-		}
 
-		name_length = insert - name_start;
+		/* Extract the info from the table */
+		ptr = buff;
 
-		strcpy(name, name_start);
-		mask = g_func_table[i].op_mask;
-		match = g_func_table[i].op_match;
-		ea = g_func_table[i].ea_mask;
-		size = g_func_table[i].size;
-		clks = g_func_table[i].base_cycles;
+		/* Name */
+		ptr += skip_spaces(ptr);
+		ptr += check_strsncpy(op->name, ptr, MAX_NAME_LENGTH);
 
-        /* This function has no ea modes, so just blast it through */
-		if(ea == 0)
+		/* Size */
+		ptr += skip_spaces(ptr);
+		ptr += check_atoi(ptr, &temp);
+		op->size = (unsigned char)temp;
+
+		/* EA Mode */
+		ptr += skip_spaces(ptr);
+		ptr += check_strsncpy(op->mode, ptr, MAX_MODE_LENGTH);
+
+		/* Bit Pattern (more processing later) */
+		ptr += skip_spaces(ptr);
+		ptr += check_strsncpy(bitpattern, ptr, 17);
+
+		/* Allowed Addressing Mode List */
+		ptr += skip_spaces(ptr);
+		ptr += check_strsncpy(op->ea_allowed, ptr, EA_ALLOWED_LENGTH);
+
+		/* Allowed CPUs for this instruction */
+		for(i=0;i<NUM_CPUS;i++)
 		{
-			PRINT_TABLE_ENTRY(table_file, name, mask, match, clks);
-			continue;
-		}
-
-		*(name+name_length) = 0;
-		mask |= 0x38;
-
-		/* Print out all the versions of this function that are necessary */
-		if(ea & 0x200) /* AI */
-		{
-			sprintf(new_name, "%s_ai%s", name, insert);
-			PRINT_TABLE_ENTRY(table_file, new_name, mask, match | 0x10, clks+g_ea_cycle_table[size][0x10]);
-		}
-		if(ea & 0x100) /* PI */
-		{
-			sprintf(new_name, "%s_pi%s", name, insert);
-			PRINT_TABLE_ENTRY(table_file, new_name, mask, match | 0x18, clks+g_ea_cycle_table[size][0x18]);
-			if(size == 0)
+			ptr += skip_spaces(ptr);
+			if(*ptr == '_')
 			{
-				sprintf(new_name, "%s_pi7%s", name, insert);
-				PRINT_TABLE_ENTRY(table_file, new_name, mask | 7, match | 0x1f, clks+g_ea_cycle_table[size][0x1f]);
+				op->cpus[i] = '.';
+				op->cycles[i] = 0;
+				ptr++;
+			}
+			else
+			{
+				op->cpus[i] = '0' + i;
+				ptr += check_atoi(ptr, &temp);
+				op->cycles[i] = (unsigned char)temp;
 			}
 		}
-		if(ea & 0x80) /* PD */
-		{
-			sprintf(new_name, "%s_pd%s", name, insert);
-			PRINT_TABLE_ENTRY(table_file, new_name, mask, match | 0x20, clks+g_ea_cycle_table[size][0x20]);
-			if(size == 0)
-			{
-				sprintf(new_name, "%s_pd7%s", name, insert);
-				PRINT_TABLE_ENTRY(table_file, new_name, mask | 7, match | 0x27, clks+g_ea_cycle_table[size][0x27]);
-			}
-		}
-		if(ea & 0x40) /* DI */
-		{
-			sprintf(new_name, "%s_di%s", name, insert);
-			PRINT_TABLE_ENTRY(table_file, new_name, mask, match | 0x28, clks+g_ea_cycle_table[size][0x28]);
-		}
-		if(ea & 0x20) /* IX */
-		{
-			sprintf(new_name, "%s_ix%s", name, insert);
-			PRINT_TABLE_ENTRY(table_file, new_name, mask, match | 0x30, clks+g_ea_cycle_table[size][0x30]);
-		}
 
-		mask |= 7;
-
-		if(ea & 0x10) /* AW */
+		/* generate mask and match from bitpattern */
+		op->op_mask = 0;
+		op->op_match = 0;
+		for(i=0;i<16;i++)
 		{
-			sprintf(new_name, "%s_aw%s", name, insert);
-			PRINT_TABLE_ENTRY(table_file, new_name, mask, match | 0x38, clks+g_ea_cycle_table[size][0x38]);
-		}
-		if(ea & 0x8) /* AL */
-		{
-			sprintf(new_name, "%s_al%s", name, insert);
-			PRINT_TABLE_ENTRY(table_file, new_name, mask, match | 0x39, clks+g_ea_cycle_table[size][0x39]);
-		}
-		if(ea & 0x2) /* PCDI */
-		{
-			sprintf(new_name, "%s_pcdi%s", name, insert);
-			PRINT_TABLE_ENTRY(table_file, new_name, mask, match | 0x3a, clks+g_ea_cycle_table[size][0x3a]);
-		}
-		if(ea & 0x1) /* PCIX */
-		{
-			sprintf(new_name, "%s_pcix%s", name, insert);
-			PRINT_TABLE_ENTRY(table_file, new_name, mask, match | 0x3b, clks+g_ea_cycle_table[size][0x3b]);
-		}
-		if(ea & 0x4) /* IMM */
-		{
-			sprintf(new_name, "%s_i%s", name, insert);
-			PRINT_TABLE_ENTRY(table_file, new_name, mask, match | 0x3c, clks+g_ea_cycle_table[size][0x3c]);
+			op->op_mask |= (bitpattern[i] != '.') << (15-i);
+			op->op_match |= (bitpattern[i] == '1') << (15-i);
 		}
 	}
+	/* Terminate the list */
+	op->name[0] = 0;
+}
+
+/* Read a header or footer insert from the input file */
+void read_insert(char* insert)
+{
+	char* ptr = insert;
+	char* overflow = insert + MAX_INSERT_LENGTH - MAX_LINE_LENGTH;
+	int length;
+	char* first_blank = NULL;
+
+	first_blank = NULL;
+
+	/* Skip any leading blank lines */
+	for(length = 0;length == 0;length = fgetline(ptr, MAX_LINE_LENGTH, g_input_file))
+		if(ptr >= overflow)
+			error_exit("Buffer overflow reading inserts");
+	if(length < 0)
+		error_exit("Premature EOF while reading inserts");
+
+	/* Advance and append newline */
+	ptr += length;
+	strcpy(ptr++, "\n");
+
+	/* Read until next separator */
+	for(;;)
+	{
+		/* Read a new line */
+		if(ptr >= overflow)
+			error_exit("Buffer overflow reading inserts");
+		if((length = fgetline(ptr, MAX_LINE_LENGTH, g_input_file)) < 0)
+			error_exit("Premature EOF while reading inserts");
+
+		/* Stop if we read a separator */
+		if(strcmp(ptr, ID_INPUT_SEPARATOR) == 0)
+			break;
+
+		/* keep track in case there are trailing blanks */
+		if(length == 0)
+		{
+			if(first_blank == NULL)
+				first_blank = ptr;
+		}
+		else
+			first_blank = NULL;
+
+		/* Advance and append newline */
+		ptr += length;
+		strcpy(ptr++, "\n");
+	}
+
+	/* kill any trailing blank lines */
+	if(first_blank)
+		ptr = first_blank;
+	*ptr++ = 0;
+}
+
+
+
+/* ======================================================================== */
+/* ============================= MAIN FUNCTION ============================ */
+/* ======================================================================== */
+
+int main(int argc, char **argv)
+{
+	/* File stuff */
+	char output_path[MAXDIR] = "";
+	char filename[MAXPATH];
+	/* Section identifier */
+	char section_id[MAX_LINE_LENGTH+1];
+	/* Inserts */
+	char temp_insert[MAX_INSERT_LENGTH+1];
+	char prototype_footer_insert[MAX_INSERT_LENGTH+1];
+	char table_footer_insert[MAX_INSERT_LENGTH+1];
+	char ophandler_footer_insert[MAX_INSERT_LENGTH+1];
+	/* Flags if we've processed certain parts already */
+	int prototype_header_read = 0;
+	int prototype_footer_read = 0;
+	int table_header_read = 0;
+	int table_footer_read = 0;
+	int ophandler_header_read = 0;
+	int ophandler_footer_read = 0;
+	int table_body_read = 0;
+	int ophandler_body_read = 0;
+
+	printf("\n\t\tMusashi v%s 68000, 68010, 68EC020, 68020 emulator\n", g_version);
+	printf("\t\tCopyright 1998-2000 Karl Stenerud (karl@mame.net)\n\n");
+
+	/* Check if output path and source for the input file are given */
+    if(argc > 1)
+	{
+		char *ptr;
+		strcpy(output_path, argv[1]);
+
+		for(ptr = strchr(output_path, '\\'); ptr; ptr = strchr(ptr, '\\'))
+			*ptr = '/';
+        if(output_path[strlen(output_path)-1] != '/')
+			strcat(output_path, "/");
+		if(argc > 2)
+			strcpy(g_input_filename, argv[2]);
+	}
+
+
+	/* Open the files we need */
+	sprintf(filename, "%s%s", output_path, FILENAME_PROTOTYPE);
+	if((g_prototype_file = fopen(filename, "wt")) == NULL)
+		perror_exit("Unable to create prototype file (%s)\n", filename);
+
+	sprintf(filename, "%s%s", output_path, FILENAME_TABLE);
+	if((g_table_file = fopen(filename, "wt")) == NULL)
+		perror_exit("Unable to create table file (%s)\n", filename);
+
+	sprintf(filename, "%s%s", output_path, FILENAME_OPS_AC);
+	if((g_ops_ac_file = fopen(filename, "wt")) == NULL)
+		perror_exit("Unable to create ops ac file (%s)\n", filename);
+
+	sprintf(filename, "%s%s", output_path, FILENAME_OPS_DM);
+	if((g_ops_dm_file = fopen(filename, "wt")) == NULL)
+		perror_exit("Unable to create ops dm file (%s)\n", filename);
+
+	sprintf(filename, "%s%s", output_path, FILENAME_OPS_NZ);
+	if((g_ops_nz_file = fopen(filename, "wt")) == NULL)
+		perror_exit("Unable to create ops nz file (%s)\n", filename);
+
+	if((g_input_file=fopen(g_input_filename, "rt")) == NULL)
+		perror_exit("can't open %s for input", g_input_filename);
+
+
+	/* Get to the first section of the input file */
+	section_id[0] = 0;
+	while(strcmp(section_id, ID_INPUT_SEPARATOR) != 0)
+		if(fgetline(section_id, MAX_LINE_LENGTH, g_input_file) < 0)
+			error_exit("Premature EOF while reading input file");
+
+	/* Now process all sections */
+	for(;;)
+	{
+		if(fgetline(section_id, MAX_LINE_LENGTH, g_input_file) < 0)
+			error_exit("Premature EOF while reading input file");
+		if(strcmp(section_id, ID_PROTOTYPE_HEADER) == 0)
+		{
+			if(prototype_header_read)
+				error_exit("Duplicate prototype header");
+			read_insert(temp_insert);
+			fprintf(g_prototype_file, "%s\n\n", temp_insert);
+			prototype_header_read = 1;
+		}
+		else if(strcmp(section_id, ID_TABLE_HEADER) == 0)
+		{
+			if(table_header_read)
+				error_exit("Duplicate table header");
+			read_insert(temp_insert);
+			fprintf(g_table_file, "%s", temp_insert);
+			table_header_read = 1;
+		}
+		else if(strcmp(section_id, ID_OPHANDLER_HEADER) == 0)
+		{
+			if(ophandler_header_read)
+				error_exit("Duplicate opcode handler header");
+			read_insert(temp_insert);
+			fprintf(g_ops_ac_file, "%s\n\n", temp_insert);
+			fprintf(g_ops_dm_file, "%s\n\n", temp_insert);
+			fprintf(g_ops_nz_file, "%s\n\n", temp_insert);
+			ophandler_header_read = 1;
+		}
+		else if(strcmp(section_id, ID_PROTOTYPE_FOOTER) == 0)
+		{
+			if(prototype_footer_read)
+				error_exit("Duplicate prototype footer");
+			read_insert(prototype_footer_insert);
+			prototype_footer_read = 1;
+		}
+		else if(strcmp(section_id, ID_TABLE_FOOTER) == 0)
+		{
+			if(table_footer_read)
+				error_exit("Duplicate table footer");
+			read_insert(table_footer_insert);
+			table_footer_read = 1;
+		}
+		else if(strcmp(section_id, ID_OPHANDLER_FOOTER) == 0)
+		{
+			if(ophandler_footer_read)
+				error_exit("Duplicate opcode handler footer");
+			read_insert(ophandler_footer_insert);
+			ophandler_footer_read = 1;
+		}
+		else if(strcmp(section_id, ID_TABLE_BODY) == 0)
+		{
+			if(!prototype_header_read)
+				error_exit("Table body encountered before prototype header");
+			if(!table_header_read)
+				error_exit("Table body encountered before table header");
+			if(!ophandler_header_read)
+				error_exit("Table body encountered before opcode handler header");
+
+			if(table_body_read)
+				error_exit("Duplicate table body");
+
+			populate_table();
+			table_body_read = 1;
+		}
+		else if(strcmp(section_id, ID_OPHANDLER_BODY) == 0)
+		{
+			if(!prototype_header_read)
+				error_exit("Opcode handlers encountered before prototype header");
+			if(!table_header_read)
+				error_exit("Opcode handlers encountered before table header");
+			if(!ophandler_header_read)
+				error_exit("Opcode handlers encountered before opcode handler header");
+			if(!table_body_read)
+				error_exit("Opcode handlers encountered before table body");
+
+			if(ophandler_body_read)
+				error_exit("Duplicate opcode handler section");
+
+			process_opcode_handlers();
+
+			ophandler_body_read = 1;
+		}
+		else if(strcmp(section_id, ID_END) == 0)
+		{
+			/* End of input file.  Do a sanity check and then write footers */
+			if(!prototype_header_read)
+				error_exit("Missing prototype header");
+			if(!prototype_footer_read)
+				error_exit("Missing prototype footer");
+			if(!table_header_read)
+				error_exit("Missing table header");
+			if(!table_footer_read)
+				error_exit("Missing table footer");
+			if(!table_body_read)
+				error_exit("Missing table body");
+			if(!ophandler_header_read)
+				error_exit("Missing opcode handler header");
+			if(!ophandler_footer_read)
+				error_exit("Missing opcode handler footer");
+			if(!ophandler_body_read)
+				error_exit("Missing opcode handler body");
+
+			print_opcode_output_table(g_table_file);
+
+			fprintf(g_prototype_file, "%s\n\n", prototype_footer_insert);
+			fprintf(g_table_file, "%s\n\n", table_footer_insert);
+			fprintf(g_ops_ac_file, "%s\n\n", ophandler_footer_insert);
+			fprintf(g_ops_dm_file, "%s\n\n", ophandler_footer_insert);
+			fprintf(g_ops_nz_file, "%s\n\n", ophandler_footer_insert);
+
+			break;
+		}
+		else
+		{
+			error_exit("Unknown section identifier: %s", section_id);
+		}
+	}
+
+	/* Close all files and exit */
+	fclose(g_prototype_file);
+	fclose(g_table_file);
+	fclose(g_ops_ac_file);
+	fclose(g_ops_dm_file);
+	fclose(g_ops_nz_file);
+	fclose(g_input_file);
+
+	printf("Generated %d opcode handlers from %d primitives\n", g_num_functions, g_num_primitives);
+
 	return 0;
 }
 
 
-/* Generate all the function prototypes */
 
-int generate_prototypes(FILE* prototype_file)
-{
-	char name[100];
-	char new_name[100];
-	char* name_start;
-	char* name_end;
-	char* insert;
-	int name_length;
-	int mask;
-	int match;
-	int ea;
-	int size;
-	int clks;
-	int i;
-
-	fprintf(prototype_file, "/* ======================================================================== */\n");
-	fprintf(prototype_file, "/* ============================ OPCODE HANDLERS =========================== */\n");
-	fprintf(prototype_file, "/* ======================================================================== */\n\n");
-
-    /* Go through the entire function table */
-	for(i=0;g_func_table[i].name != 0;i++)
-	{
-		/* Get the name parts */
-		name_start = g_func_table[i].name;
-		name_end = name_start + strlen(name_start);
-
-		/* Find the point to insert the ea bits */
-		switch(*(name_end-1))
-		{
-		case '8':
-			insert = name_end - 2;
-			break;
-		case '2': case '6':
-			insert = name_end - 3;
-			break;
-		default:
-			insert = name_end;
-		}
-
-		name_length = insert - name_start;
-
-		strcpy(name, name_start);
-		mask = g_func_table[i].op_mask;
-		match = g_func_table[i].op_match;
-		ea = g_func_table[i].ea_mask;
-		size = g_func_table[i].size;
-		clks = g_func_table[i].base_cycles;
-
-		/* This function has no ea modes, so just blast it through */
-		if(ea == 0)
-		{
-			PRINT_PROTOTYPE(prototype_file, name);
-			continue;
-		}
-
-		*(name+name_length) = 0;
-		mask |= 0x38;
-
-		/* Print out all the versions of htis functions as necessary */
-		if(ea & 0x200) /* AI */
-		{
-			sprintf(new_name, "%s_ai%s", name, insert);
-			PRINT_PROTOTYPE(prototype_file, new_name);
-		}
-		if(ea & 0x100) /* PI */
-		{
-			sprintf(new_name, "%s_pi%s", name, insert);
-			PRINT_PROTOTYPE(prototype_file, new_name);
-			if(size == 0)
-			{
-				sprintf(new_name, "%s_pi7%s", name, insert);
-				PRINT_PROTOTYPE(prototype_file, new_name);
-			}
-		}
-		if(ea & 0x80) /* PD */
-		{
-			sprintf(new_name, "%s_pd%s", name, insert);
-			PRINT_PROTOTYPE(prototype_file, new_name);
-			if(size == 0)
-			{
-				sprintf(new_name, "%s_pd7%s", name, insert);
-				PRINT_PROTOTYPE(prototype_file, new_name);
-			}
-		}
-		if(ea & 0x40) /* DI */
-		{
-			sprintf(new_name, "%s_di%s", name, insert);
-			PRINT_PROTOTYPE(prototype_file, new_name);
-		}
-		if(ea & 0x20) /* IX */
-		{
-			sprintf(new_name, "%s_ix%s", name, insert);
-			PRINT_PROTOTYPE(prototype_file, new_name);
-		}
-
-		mask |= 7;
-
-		if(ea & 0x10) /* AW */
-		{
-			sprintf(new_name, "%s_aw%s", name, insert);
-			PRINT_PROTOTYPE(prototype_file, new_name);
-		}
-		if(ea & 0x8) /* AL */
-		{
-			sprintf(new_name, "%s_al%s", name, insert);
-			PRINT_PROTOTYPE(prototype_file, new_name);
-		}
-		if(ea & 0x2) /* PCDI */
-		{
-			sprintf(new_name, "%s_pcdi%s", name, insert);
-			PRINT_PROTOTYPE(prototype_file, new_name);
-		}
-		if(ea & 0x1) /* PCIX */
-		{
-			sprintf(new_name, "%s_pcix%s", name, insert);
-			PRINT_PROTOTYPE(prototype_file, new_name);
-		}
-		if(ea & 0x4) /* IMM */
-		{
-			sprintf(new_name, "%s_i%s", name, insert);
-			PRINT_PROTOTYPE(prototype_file, new_name);
-		}
-	}
-	return 0;
-}
-
-
-int main(int ac, char **av)
-{
-	char output_path[255+1] = "";
-	char filename[255+1];
-    char* prototype_filename = "m68kops.h";
-	char* table_filename	 = "m68kops.c";
-	char* ops_ac_filename	 = "m68kopac.c";
-	char* ops_dm_filename	 = "m68kopdm.c";
-	char* ops_nz_filename	 = "m68kopnz.c";
-	FILE* prototype_file;
-	FILE* table_file;
-	FILE* ops_ac_file;
-	FILE* ops_dm_file;
-	FILE* ops_nz_file;
-
-	/* Check if output path and source for m68k_in.c are given */
-    if( ac > 1 )
-	{
-		char *p;
-		strcpy( output_path, av[1] );
-
-		for( p = strchr(output_path, '\\'); p; p = strchr(p, '\\') )
-			*p = '/';
-        if( output_path[strlen(output_path)-1] != '/' )
-			strcat( output_path, "/" );
-		if( ac > 2 )
-			strcpy(g_m68k_in_c, av[2]);
-	}
-
-	sprintf(filename, "%s%s", output_path, prototype_filename);
-	if((prototype_file = fopen(filename, "wt")) == NULL)
-	{
-		fprintf(stderr, "Unable to create prototype file (%s)\n", filename);
-		perror("");
-		exit(-1);
-	}
-
-	sprintf(filename, "%s%s", output_path, table_filename);
-	if((table_file = fopen(filename, "wt")) == NULL)
-	{
-		fprintf(stderr, "Unable to create table file (%s)\n", filename);
-		perror("");
-		exit(-1);
-	}
-
-	sprintf(filename, "%s%s", output_path, ops_ac_filename);
-	if((ops_ac_file = fopen(filename, "wt")) == NULL)
-	{
-		fprintf(stderr, "Unable to create ops a-c file (%s)\n", filename);
-		perror("");
-		exit(-1);
-	}
-	sprintf(filename, "%s%s", output_path, ops_dm_filename);
-	if((ops_dm_file = fopen(filename, "wt")) == NULL)
-	{
-		fprintf(stderr, "Unable to create ops d-m file (%s)\n", filename);
-		exit(-1);
-	}
-
-	sprintf(filename, "%s%s", output_path, ops_nz_filename);
-	if((ops_nz_file = fopen(filename, "wt")) == NULL)
-	{
-		fprintf(stderr, "Unable to create ops n-z file (%s)\n", filename);
-		perror("");
-		exit(-1);
-	}
-
-    add_prototype_header(prototype_file);
-	generate_prototypes(prototype_file);
-	add_prototype_footer(prototype_file);
-
-	add_table_header(table_file);
-	generate_table(table_file);
-	add_table_footer(table_file);
-
-	generate_funcs(ops_ac_file, ops_dm_file, ops_nz_file);
-
-	fclose(prototype_file);
-	fclose(table_file);
-	fclose(ops_ac_file);
-	fclose(ops_dm_file);
-	fclose(ops_nz_file);
-
-	printf("Process completed with %d errors\n", g_errors);
-
-	return g_errors ? -1 : 0;
-}
+/* ======================================================================== */
+/* ============================== END OF FILE ============================= */
+/* ======================================================================== */

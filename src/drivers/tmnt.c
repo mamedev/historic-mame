@@ -2865,6 +2865,40 @@ ROM_START( tmnt2pj )
 	ROM_LOAD( "963-a25",      0x00000, 0x80000, 0xfca078c7 )
 ROM_END
 
+ROM_START( tmnt2po )
+	ROM_REGION( 0x60000, REGION_CPU1 )	/* 2*128k and 2*64k for 68000 code */
+	ROM_LOAD_EVEN( "tmnt123.bin",  0x00000, 0x20000, 0x2d905183 )
+	ROM_LOAD_ODD ( "tmnt124.bin",  0x00000, 0x20000, 0xe0125352 )
+	ROM_LOAD_EVEN( "tmnt21.bin",   0x40000, 0x10000, 0x12deeafb )
+	ROM_LOAD_ODD ( "tmnt22.bin",   0x40000, 0x10000, 0xaec4f1c3 )
+
+	ROM_REGION( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
+	ROM_LOAD( "963-e20",      0x00000, 0x08000, 0x1692a6d6 )
+
+	ROM_REGION( 0x100000, REGION_GFX1 )	/* graphics (addressable by the main CPU) */
+	ROM_LOAD( "963-a28",      0x000000, 0x80000, 0xdb4769a8 )        /* 8x8 tiles */
+	ROM_LOAD( "963-a29",      0x080000, 0x80000, 0x8069cd2e )        /* 8x8 tiles */
+
+	ROM_REGION( 0x200000, REGION_GFX2 )	/* graphics (addressable by the main CPU) */
+	ROM_LOAD( "963-a17",      0x000000, 0x80000, 0xb5239a44 )        /* sprites */
+	ROM_LOAD( "963-a18",      0x080000, 0x80000, 0xdd51adef )        /* sprites */
+	ROM_LOAD( "963-a15",      0x100000, 0x80000, 0x1f324eed )        /* sprites */
+	ROM_LOAD( "963-a16",      0x180000, 0x80000, 0xd4bd9984 )        /* sprites */
+
+	ROM_REGION( 0x0200, REGION_PROMS )
+	ROM_LOAD( "tmnt.g7",      0x0000, 0x0100, 0xabd82680 )	/* sprite address decoder */
+	ROM_LOAD( "tmnt.g19",     0x0100, 0x0100, 0xf8004a1c )	/* priority encoder (not used) */
+
+	ROM_REGION( 0x20000, REGION_SOUND1 )	/* 128k for the samples */
+	ROM_LOAD( "963-a26",      0x00000, 0x20000, 0xe2ac3063 ) /* samples for 007232 */
+
+	ROM_REGION( 0x20000, REGION_SOUND2 )	/* 128k for the samples */
+	ROM_LOAD( "963-a27",      0x00000, 0x20000, 0x2dfd674b ) /* samples for UPD7759C */
+
+	ROM_REGION( 0x80000, REGION_SOUND3 )	/* 512k for the title music sample */
+	ROM_LOAD( "963-a25",      0x00000, 0x80000, 0xfca078c7 )
+ROM_END
+
 ROM_START( punkshot )
 	ROM_REGION( 0x40000, REGION_CPU1 )	/* 4*64k for 68000 code */
 	ROM_LOAD_EVEN( "907-j02.i7",   0x00000, 0x20000, 0xdbb3a23b )
@@ -3575,6 +3609,7 @@ GAME( 1989, tmht,     tmnt,     tmnt,     tmnt,     tmnt,     ROT0,  "Konami", "
 GAME( 1989, tmntj,    tmnt,     tmnt,     tmnt,     tmnt,     ROT0,  "Konami", "Teenage Mutant Ninja Turtles (4 Players Japan)" )
 GAME( 1989, tmht2p,   tmnt,     tmnt,     tmnt2p,   tmnt,     ROT0,  "Konami", "Teenage Mutant Hero Turtles (2 Players UK)" )
 GAME( 1990, tmnt2pj,  tmnt,     tmnt,     tmnt2p,   tmnt,     ROT0,  "Konami", "Teenage Mutant Ninja Turtles (2 Players Japan)" )
+GAME( 1989, tmnt2po,  tmnt,     tmnt,     tmnt2p,   tmnt,     ROT0,  "Konami", "Teenage Mutant Ninja Turtles (2 Players Oceania)" )
 
 GAME( 1990, punkshot, 0,        punkshot, punkshot, gfx,      ROT0,  "Konami", "Punk Shot (4 Players)" )
 GAME( 1990, punksht2, punkshot, punkshot, punksht2, gfx,      ROT0,  "Konami", "Punk Shot (2 Players)" )

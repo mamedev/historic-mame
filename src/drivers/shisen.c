@@ -249,7 +249,7 @@ static struct YM2151interface ym2151_interface =
 static struct DACinterface dac_interface =
 {
 	1,	/* 1 channel */
-	{ 100 }
+	{ 50 }
 };
 
 

@@ -24,6 +24,17 @@
 #include "driver.h"
 #include "ymdeltat.h"
 
+/* -------------------- log output  -------------------- */
+/* log output level */
+#define LOG_ERR  3      /* ERROR       */
+#define LOG_WAR  2      /* WARNING     */
+#define LOG_INF  1      /* INFORMATION */
+#define LOG_LEVEL LOG_INF
+
+#ifndef __RAINE__
+#define LOG(n,x) if( (n)>=LOG_LEVEL ) logerror x
+#endif
+
 UINT8 *ym_deltat_memory;      /* memory pointer */
 
 /* Forecast to next Forecast (rate = *8) */
@@ -71,20 +82,20 @@ void YM_DELTAT_ADPCM_Write(YM_DELTAT *DELTAT,int r,int v)
 			}
 			/**** PCM memory check & limit check ****/
 			if(DELTAT->memory == 0){			// Check memory Mapped
-				//Log(LOG_ERR,"YM Delta-T ADPCM rom not mapped\n");
+				LOG(LOG_ERR,("YM Delta-T ADPCM rom not mapped\n"));
 				DELTAT->flag = 0;
 				DELTAT->portstate = 0x00;
 				//logerror("DELTAT memory 0\n");
 			}else{
 				if( DELTAT->end >= DELTAT->memory_size )
 				{		// Check End in Range
-					//Log(LOG_ERR,"YM Delta-T ADPCM end out of range: $%08x\n",DELTAT->end);
+					LOG(LOG_ERR,("YM Delta-T ADPCM end out of range: $%08x\n",DELTAT->end));
 					DELTAT->end = DELTAT->memory_size - 1;
 					//logerror("DELTAT end over\n");
 				}
 				if( DELTAT->start >= DELTAT->memory_size )
 				{		// Check Start in Range
-					//Log(LOG_ERR,"YM Delta-T ADPCM start out of range: $%08x\n",DELTAT->start);
+					LOG(LOG_ERR,("YM Delta-T ADPCM start out of range: $%08x\n",DELTAT->start));
 					DELTAT->flag = 0;
 					DELTAT->portstate = 0x00;
 					//logerror("DELTAT start under\n");

@@ -24,7 +24,7 @@ static void tile_callback(int layer,int bank,int *code,int *color)
 
 ***************************************************************************/
 
-static void sprite_callback(int *code,int *color,int *priority_mask)
+static void sprite_callback(int *code,int *color,int *priority_mask,int *shadow)
 {
 	/* Sprite priority 1 means appear behind background, used only to mask sprites */
 	/* in the foreground */

@@ -38,7 +38,6 @@ struct GfxElement
 	int color_granularity;	/* number of colors for each color code */
 							/* (for example, 4 for 2 bitplanes gfx) */
 	unsigned short *colortable;	/* map color codes to screen pens */
-								/* if this is 0, the function does a verbatim copy */
 	int total_colors;
 	unsigned int *pen_usage;	/* an array of total_elements ints. */
 								/* It is a table of the pens each character uses */
@@ -79,7 +78,8 @@ enum
 	TRANSPARENCY_COLOR,			/* single remapped pen transparency with remapping */
 	TRANSPARENCY_THROUGH,		/* destination pixel overdraw with remapping */
 	TRANSPARENCY_THROUGH_RAW,	/* destination pixel overdraw with no remapping */
-	TRANSPARENCY_PEN_TABLE,		/* special pen remapping modes (see DRAWMODE_xxx below) */
+	TRANSPARENCY_PEN_TABLE,		/* special pen remapping modes (see DRAWMODE_xxx below) with remapping */
+	TRANSPARENCY_PEN_TABLE_RAW,	/* special pen remapping modes (see DRAWMODE_xxx below) with no remapping */
 	TRANSPARENCY_BLEND,			/* blend two bitmaps, shifting the source and ORing to the dest with remapping */
 	TRANSPARENCY_BLEND_RAW,		/* blend two bitmaps, shifting the source and ORing to the dest with no remapping */
 
@@ -92,8 +92,7 @@ enum
 {
 	DRAWMODE_NONE,
 	DRAWMODE_SOURCE,
-	DRAWMODE_SHADOW,
-	DRAWMODE_HIGHLIGHT
+	DRAWMODE_SHADOW
 };
 
 
@@ -123,14 +122,45 @@ void copybitmap(struct osd_bitmap *dest,struct osd_bitmap *src,int flipx,int fli
 		const struct rectangle *clip,int transparency,int transparent_color);
 void copybitmap_remap(struct osd_bitmap *dest,struct osd_bitmap *src,int flipx,int flipy,int sx,int sy,
 		const struct rectangle *clip,int transparency,int transparent_color);
-void copybitmapzoom(struct osd_bitmap *dest,struct osd_bitmap *src,int flipx,int flipy,int sx,int sy,
-		const struct rectangle *clip,int transparency,int transparent_color,int scalex,int scaley);
 void copyscrollbitmap(struct osd_bitmap *dest,struct osd_bitmap *src,
 		int rows,const int *rowscroll,int cols,const int *colscroll,
 		const struct rectangle *clip,int transparency,int transparent_color);
 void copyscrollbitmap_remap(struct osd_bitmap *dest,struct osd_bitmap *src,
 		int rows,const int *rowscroll,int cols,const int *colscroll,
 		const struct rectangle *clip,int transparency,int transparent_color);
+
+/*
+  Copy a bitmap applying rotation, zooming, and arbitrary distortion.
+  This function works in a way that mimics some real hardware like the Konami
+  051316, so it requires little or no further processing on the caller side.
+
+  Two 16.16 fixed point counters are used to keep track of the position on
+  the source bitmap. startx and starty are the initial values of those counters,
+  indicating the source pixel that will be drawn at coordinates (0,0) in the
+  destination bitmap. The destination bitmap is scanned left to right, top to
+  bottom; every time the cursor moves one pixel to the right, incxx is added
+  to startx and incxy is added to starty. Every time the curso moves to the
+  next line, incyx is added to startx and incyy is added to startyy.
+
+  What this means is that if incxy and incyx are both 0, the bitmap will be
+  copied with only zoom and no rotation. If e.g. incxx and incyy are both 0x8000,
+  the source bitmap will be doubled.
+
+  Rotation is performed this way:
+  incxx = 0x10000 * cos(theta)
+  incxy = 0x10000 * -sin(theta)
+  incyx = 0x10000 * sin(theta)
+  incyy = 0x10000 * cos(theta)
+  this will perform a rotation around (0,0), you'll have to adjust startx and
+  starty to move the center of rotation elsewhere.
+
+  Optionally the bitmap can be tiled across the screen instead of doing a single
+  copy. This is obtained by setting the wraparound parameter to true.
+ */
+void copyrozbitmap(struct osd_bitmap *dest,struct osd_bitmap *src,
+		UINT32 startx,UINT32 starty,int incxx,int incxy,int incyx,int incyy,int wraparound,
+		const struct rectangle *clip,int transparency,int transparent_color,UINT32 priority);
+
 void fillbitmap(struct osd_bitmap *dest,int pen,const struct rectangle *clip);
 void plot_pixel2(struct osd_bitmap *bitmap1,struct osd_bitmap *bitmap2,int x,int y,int pen);
 void drawgfxzoom( struct osd_bitmap *dest_bmp,const struct GfxElement *gfx,

@@ -36,7 +36,7 @@ typedef signed int							INT32;
 __extension__ typedef signed long long		INT64;
 
 /* Combine two 32-bit integers into a 64-bit integer */
-#define COMBINE_64_32_32(A,B)     ((((UINT64)(A))<<32) | (B))
+#define COMBINE_64_32_32(A,B)     ((((UINT64)(A))<<32) | (UINT32)(B))
 #define COMBINE_U64_U32_U32(A,B)  COMBINE_64_32_32(A,B)
 
 /* Return upper 32 bits of a 64-bit integer */

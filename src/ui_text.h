@@ -134,6 +134,19 @@ enum
 	UI_watchy,
 	UI_watch,
 
+	/* search stuff */
+	UI_search_lives,
+	UI_search_timers,
+	UI_search_energy,
+	UI_search_status,
+	UI_search_slow,
+	UI_search_speed,
+	UI_search_matches_found,
+	UI_search_noinit,
+	UI_search_nosave,
+	UI_search_done,
+	UI_search_OK,
+
 	UI_last_entry
 };
 

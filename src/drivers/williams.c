@@ -1990,23 +1990,6 @@ ROM_START( defence )
 ROM_END
 
 
-ROM_START( defcomnd )
-	ROM_REGION( 0x15000, REGION_CPU1 )
-	ROM_LOAD( "dfndr-c.rom", 0x0d000, 0x1000, 0x2a256b93 )
-	ROM_LOAD( "dfndr-b.rom", 0x0e000, 0x1000, 0xe34e87fc )
-	ROM_LOAD( "dfndr-a.rom", 0x0f000, 0x1000, 0xf78d62fa )
-	/* bank 0 is the place for CMOS ram */
-	ROM_LOAD( "dfndr-d.rom", 0x10000, 0x1000, 0xef2179fe )
-	ROM_LOAD( "dfndr-e.rom", 0x11000, 0x1000, 0x4fa3d99c )
-	ROM_LOAD( "dfndr-f.rom", 0x12000, 0x1000, 0x03721aa7 )
-	ROM_LOAD( "dfndr-i.rom", 0x13000, 0x1000, 0x5998a4cf )
-	ROM_LOAD( "dfndr-g.rom", 0x14000, 0x1000, 0xa1b63291 )
-
-	ROM_REGION( 0x10000, REGION_CPU2 )     /* 64k for the sound CPU */
-	ROM_LOAD( "dfndr-h.rom", 0xf000, 0x1000, 0x30fced3d )
-ROM_END
-
-
 ROM_START( mayday )
 	ROM_REGION( 0x15000, REGION_CPU1 )
 	ROM_LOAD( "ic03-3.bin",  0x0d000, 0x1000, 0xa1ff6e62 )
@@ -2511,7 +2494,6 @@ GAME( 1980, defendg,  defender, defender, defender, defender, ROT0,   "Williams"
 GAME( 1980, defendw,  defender, defender, defender, defender, ROT0,   "Williams", "Defender (White label)" )
 GAMEX(1980, defndjeu, defender, defender, defender, defndjeu, ROT0,   "Jeutel", "Defender ? (bootleg)", GAME_NOT_WORKING )
 GAME( 1980, defcmnd,  defender, defender, defender, defender, ROT0,   "bootleg", "Defense Command (set 1)" )
-GAMEX(1980, defcomnd, defender, defender, defender, defender, ROT0,   "<unknown>", "Defense Command (set 2)", GAME_NOT_WORKING )
 GAME( 1981, defence,  defender, defender, defender, defender, ROT0,   "Outer Limits", "Defence Command" )
 
 GAME( 1980, mayday,   0,        defender, defender, mayday,   ROT0,   "<unknown>", "Mayday (set 1)" )

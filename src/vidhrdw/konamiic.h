@@ -85,9 +85,12 @@ The callback must put:
 - in code the resulting sprite number
 - in color the resulting color index
 - if necessary, in priority the priority of the sprite wrt tilemaps
+- if necessary, alter shadow to indicate whether the sprite has shadows enabled.
+  shadow is preloaded with color & 0x80 so it doesn't need to be changed unless
+  the game has special treatment (Aliens)
 */
 int K051960_vh_start(int gfx_memory_region,int plane0,int plane1,int plane2,int plane3,
-		void (*callback)(int *code,int *color,int *priority));
+		void (*callback)(int *code,int *color,int *priority,int *shadow));
 void K051960_vh_stop(void);
 READ_HANDLER( K051960_r );
 WRITE_HANDLER( K051960_w );

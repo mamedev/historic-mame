@@ -475,6 +475,55 @@ static WRITE_HANDLER( ws_key_w ) {
 
 /*******************************************************************************
 *																			   *
+*	Key emulation (CUS181) for SplatterHouse								   *
+*																			   *
+*******************************************************************************/
+
+static READ_HANDLER( splatter_key_r ) {
+//	logerror("CPU #%d PC %08x: keychip read %04X=%02x\n",cpu_getactivecpu(),cpu_get_pc(),offset,key[offset]);
+	switch( ( offset >> 4 ) & 0x07 ) {
+		case 0x00:
+		case 0x06:
+			return 0xff;
+			break;
+
+		case 0x01:
+		case 0x02:
+		case 0x05:
+		case 0x07:
+			return ( ( offset & 0x0f ) << 4 ) | 0x0f;
+			break;
+
+		case 0x03:
+			return 0xb5;
+			break;
+
+		case 0x04:
+			{
+				int data = 0x29;
+
+				if ( offset >= 0x1000 )
+					data |= 0x80;
+				if ( offset >= 0x2000 )
+					data |= 0x04;
+
+				return data;
+			}
+			break;
+	}
+
+	/* make compiler happy */
+	return 0;
+}
+
+static WRITE_HANDLER( splatter_key_w ) {
+//	logerror("CPU #%d PC %08x: keychip write %04X=%02x\n",cpu_getactivecpu(),cpu_get_pc(),offset,data);
+	/* ignored */
+}
+
+
+/*******************************************************************************
+*																			   *
 *	Banking emulation (CUS117)												   *
 *																			   *
 *******************************************************************************/
@@ -1214,10 +1263,10 @@ void init_splatter( void )
 {
 	const struct namcos1_specific splatter_specific=
 	{
-		0x00,0x00,				/* key query , key id */
-		rev2_key_r,rev2_key_w,	/* key handler */
-		normal_slice,			/* CPU slice normal */
-		1						/* use tilemap flag : speedup optimize */
+		0x00,0x00,						/* key query , key id */
+		splatter_key_r,splatter_key_w,	/* key handler */
+		normal_slice,					/* CPU slice normal */
+		1								/* use tilemap flag : speedup optimize */
 	};
 	namcos1_driver_init(&splatter_specific);
 }

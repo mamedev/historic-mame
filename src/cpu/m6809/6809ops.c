@@ -144,7 +144,6 @@ INLINE void tst_di( void )
 	DIRBYTE(t);
 	CLR_NZV;
 	SET_NZ8(t);
-	WM(EAD,t);
 }
 
 /* $0E JMP direct ----- */
@@ -158,8 +157,7 @@ INLINE void jmp_di( void )
 /* $0F CLR direct -0100 */
 INLINE void clr_di( void )
 {
-	UINT8 t;
-	DIRBYTE(t);
+	DIRECT;
 	WM(EAD,0);
 	CLR_NZVC;
 	SEZ;
@@ -1167,7 +1165,6 @@ INLINE void tst_ix( void )
 	t = RM(EAD);
 	CLR_NZV;
 	SET_NZ8(t);
-	WM(EAD,t);
 }
 
 /* $6E JMP indexed ----- */
@@ -1181,9 +1178,7 @@ INLINE void jmp_ix( void )
 /* $6F CLR indexed -0100 */
 INLINE void clr_ix( void )
 {
-	UINT8 t;
 	fetch_effective_address();
-	t = RM(EAD);
     WM(EAD,0);
 	CLR_NZVC; SEZ;
 }
@@ -1288,7 +1283,6 @@ INLINE void tst_ex( void )
 {
 	UINT8 t;
 	EXTBYTE(t); CLR_NZV; SET_NZ8(t);
-	WM(EAD,t);
 }
 
 /* $7E JMP extended ----- */
@@ -1302,8 +1296,7 @@ INLINE void jmp_ex( void )
 /* $7F CLR extended -0100 */
 INLINE void clr_ex( void )
 {
-	UINT8 t;
-	EXTBYTE(t);
+	EXTENDED;
 	WM(EAD,0);
 	CLR_NZVC; SEZ;
 }

@@ -1,7 +1,13 @@
+/*###################################################################################################
+**
+**	TMS34010: Portable Texas Instruments TMS34010 emulator
+**
+**	Copyright (C) Alex Pasadyn/Zsolt Vasvari 1998
+**	 Parts based on code by Aaron Giles
+**
+**#################################################################################################*/
+
 #ifndef RECURSIVE_INCLUDE
-
-#define LOG_GRAPHICS_OPS		1
-
 
 #if LOG_GRAPHICS_OPS
 #define LOGGFX(x) logerror x
@@ -55,7 +61,7 @@ static void line(void)
 		PC -= 0x10;  /* not done yet, check for interrupts and restart instruction */
 		return;
 	}
-	FINISH_PIX_OP;
+	P_FLAG = 0;
 }
 
 
@@ -1047,9 +1053,9 @@ static void FUNCTION_NAME(pixblt)(int src_is_linear, int dst_is_linear)
 		}
 
 		/* apply the window for non-linear destinations */
-		BREG(13<<4) = 7 + (src_is_linear ? 0 : 2);
+		BREG(BINDEX(13)) = 7 + (src_is_linear ? 0 : 2);
 		if (!dst_is_linear)
-			BREG(13<<4) += 2 + (!src_is_linear) + apply_window(BITS_PER_PIXEL, src_is_linear);
+			BREG(BINDEX(13)) += 2 + (!src_is_linear) + apply_window(BITS_PER_PIXEL, src_is_linear);
 
 		/* compute the bounds of the operation */
 		dx = (INT16)DYDX_X;
@@ -1088,7 +1094,7 @@ static void FUNCTION_NAME(pixblt)(int src_is_linear, int dst_is_linear)
 			full_words /= PIXELS_PER_WORD;
 
 		/* compute cycles */
-		BREG(13<<4) += compute_pixblt_cycles(left_partials, right_partials, full_words, dy, PIXEL_OP_TIMING);
+		BREG(BINDEX(13)) += compute_pixblt_cycles(left_partials, right_partials, full_words, dy, PIXEL_OP_TIMING);
 		P_FLAG = 1;
 
 		/* loop over rows */
@@ -1231,15 +1237,15 @@ static void FUNCTION_NAME(pixblt)(int src_is_linear, int dst_is_linear)
 	}
 
 	/* eat cycles */
-	if (BREG(13<<4) > tms34010_ICount)
+	if (BREG(BINDEX(13)) > tms34010_ICount)
 	{
-		BREG(13<<4) -= tms34010_ICount;
+		BREG(BINDEX(13)) -= tms34010_ICount;
 		tms34010_ICount = 0;
 		PC -= 0x10;
 	}
 	else
 	{
-		tms34010_ICount -= BREG(13<<4);
+		tms34010_ICount -= BREG(BINDEX(13));
 		P_FLAG = 0;
 		if (src_is_linear)
 			SADDR += DYDX_Y * SPTCH + DYDX_X * BITS_PER_PIXEL;
@@ -1275,9 +1281,9 @@ static void FUNCTION_NAME(pixblt_r)(int src_is_linear, int dst_is_linear)
 		}
 
 		/* apply the window for non-linear destinations */
-		BREG(13<<4) = 7 + (src_is_linear ? 0 : 2);
+		BREG(BINDEX(13)) = 7 + (src_is_linear ? 0 : 2);
 		if (!dst_is_linear)
-			BREG(13<<4) += 2 + (!src_is_linear) + apply_window(BITS_PER_PIXEL, src_is_linear);
+			BREG(BINDEX(13)) += 2 + (!src_is_linear) + apply_window(BITS_PER_PIXEL, src_is_linear);
 
 		/* compute the bounds of the operation */
 		dx = (INT16)DYDX_X;
@@ -1320,7 +1326,7 @@ static void FUNCTION_NAME(pixblt_r)(int src_is_linear, int dst_is_linear)
 			full_words /= PIXELS_PER_WORD;
 
 		/* compute cycles */
-		BREG(13<<4) += compute_pixblt_cycles(left_partials, right_partials, full_words, dy, PIXEL_OP_TIMING);
+		BREG(BINDEX(13)) += compute_pixblt_cycles(left_partials, right_partials, full_words, dy, PIXEL_OP_TIMING);
 		P_FLAG = 1;
 
 		/* loop over rows */
@@ -1464,15 +1470,15 @@ static void FUNCTION_NAME(pixblt_r)(int src_is_linear, int dst_is_linear)
 	}
 
 	/* eat cycles */
-	if (BREG(13<<4) > tms34010_ICount)
+	if (BREG(BINDEX(13)) > tms34010_ICount)
 	{
-		BREG(13<<4) -= tms34010_ICount;
+		BREG(BINDEX(13)) -= tms34010_ICount;
 		tms34010_ICount = 0;
 		PC -= 0x10;
 	}
 	else
 	{
-		tms34010_ICount -= BREG(13<<4);
+		tms34010_ICount -= BREG(BINDEX(13));
 		P_FLAG = 0;
 		if (src_is_linear)
 			SADDR += DYDX_Y * SPTCH + DYDX_X * BITS_PER_PIXEL;
@@ -1512,9 +1518,9 @@ static void FUNCTION_NAME(pixblt_b)(int dst_is_linear)
 		}
 
 		/* apply the window for non-linear destinations */
-		BREG(13<<4) = 4;
+		BREG(BINDEX(13)) = 4;
 		if (!dst_is_linear)
-			BREG(13<<4) += 2 + apply_window(1, 1);
+			BREG(BINDEX(13)) += 2 + apply_window(1, 1);
 
 		/* compute the bounds of the operation */
 		dx = (INT16)DYDX_X;
@@ -1539,7 +1545,7 @@ static void FUNCTION_NAME(pixblt_b)(int dst_is_linear)
 			full_words /= PIXELS_PER_WORD;
 
 		/* compute cycles */
-		BREG(13<<4) += compute_pixblt_b_cycles(left_partials, right_partials, full_words, dy, PIXEL_OP_TIMING, BITS_PER_PIXEL);
+		BREG(BINDEX(13)) += compute_pixblt_b_cycles(left_partials, right_partials, full_words, dy, PIXEL_OP_TIMING, BITS_PER_PIXEL);
 		P_FLAG = 1;
 
 		/* loop over rows */
@@ -1665,15 +1671,15 @@ static void FUNCTION_NAME(pixblt_b)(int dst_is_linear)
 	}
 
 	/* eat cycles */
-	if (BREG(13<<4) > tms34010_ICount)
+	if (BREG(BINDEX(13)) > tms34010_ICount)
 	{
-		BREG(13<<4) -= tms34010_ICount;
+		BREG(BINDEX(13)) -= tms34010_ICount;
 		tms34010_ICount = 0;
 		PC -= 0x10;
 	}
 	else
 	{
-		tms34010_ICount -= BREG(13<<4);
+		tms34010_ICount -= BREG(BINDEX(13));
 		P_FLAG = 0;
 		SADDR += DYDX_Y * SPTCH + DYDX_X;
 		if (dst_is_linear)
@@ -1706,9 +1712,9 @@ static void FUNCTION_NAME(fill)(int dst_is_linear)
 		}
 
 		/* apply the window for non-linear destinations */
-		BREG(13<<4) = 4;
+		BREG(BINDEX(13)) = 4;
 		if (!dst_is_linear)
-			BREG(13<<4) += 2 + apply_window(0, 1);
+			BREG(BINDEX(13)) += 2 + apply_window(0, 1);
 
 		/* compute the bounds of the operation */
 		dx = (INT16)DYDX_X;
@@ -1732,7 +1738,7 @@ static void FUNCTION_NAME(fill)(int dst_is_linear)
 			full_words /= PIXELS_PER_WORD;
 
 		/* compute cycles */
-		BREG(13<<4) += compute_fill_cycles(left_partials, right_partials, full_words, dy, PIXEL_OP_TIMING);
+		BREG(BINDEX(13)) += compute_fill_cycles(left_partials, right_partials, full_words, dy, PIXEL_OP_TIMING);
 		P_FLAG = 1;
 
 		/* loop over rows */
@@ -1825,15 +1831,15 @@ static void FUNCTION_NAME(fill)(int dst_is_linear)
 	}
 
 	/* eat cycles */
-	if (BREG(13<<4) > tms34010_ICount)
+	if (BREG(BINDEX(13)) > tms34010_ICount)
 	{
-		BREG(13<<4) -= tms34010_ICount;
+		BREG(BINDEX(13)) -= tms34010_ICount;
 		tms34010_ICount = 0;
 		PC -= 0x10;
 	}
 	else
 	{
-		tms34010_ICount -= BREG(13<<4);
+		tms34010_ICount -= BREG(BINDEX(13));
 		P_FLAG = 0;
 		if (dst_is_linear)
 			DADDR += DYDX_Y * DPTCH + DYDX_X * BITS_PER_PIXEL;

@@ -20,7 +20,7 @@
 **#################################################################################################*/
 
 /* turn this on to support 2101 and later CPUs (not tested at all!) */
-#define SUPPORT_2101_EXTENSIONS 0
+#define SUPPORT_2101_EXTENSIONS 1
 
 
 /*###################################################################################################
@@ -30,6 +30,12 @@
 #define ADSP2100_DATA_OFFSET	0x00000
 #define ADSP2100_PGM_OFFSET		0x10000
 #define ADSP2100_SIZE			0x20000
+
+/* transmit and receive data callbacks types */
+#if SUPPORT_2101_EXTENSIONS
+typedef INT32 (*RX_CALLBACK)( int port );
+typedef void  (*TX_CALLBACK)( int port, INT32 data );
+#endif
 
 
 /*###################################################################################################
@@ -117,6 +123,41 @@ extern unsigned adsp2100_dasm(char *buffer, unsigned pc);
 
 #ifdef MAME_DEBUG
 extern unsigned DasmADSP2100(char *buffer, unsigned pc);
+#endif
+
+#if (HAS_ADSP2105)
+/**************************************************************************
+ * ADSP2105 section
+ **************************************************************************/
+
+#define adsp2105_icount adsp2100_icount
+
+#define ADSP2105_INT_NONE	-1		/* No interrupt requested */
+#define ADSP2105_IRQ0		0		/* IRQ0 */
+#define ADSP2105_IRQ1		1		/* IRQ1 */
+#define ADSP2105_IRQ2		2		/* IRQ2 */
+
+extern void adsp2105_reset(void *param);
+extern void adsp2105_exit(void);
+extern int adsp2105_execute(int cycles);    /* NS 970908 */
+extern unsigned adsp2105_get_context(void *dst);
+extern void adsp2105_set_context(void *src);
+extern unsigned adsp2105_get_pc(void);
+extern void adsp2105_set_pc(unsigned val);
+extern unsigned adsp2105_get_sp(void);
+extern void adsp2105_set_sp(unsigned val);
+extern unsigned adsp2105_get_reg(int regnum);
+extern void adsp2105_set_reg(int regnum, unsigned val);
+extern void adsp2105_set_nmi_line(int state);
+extern void adsp2105_set_irq_line(int irqline, int state);
+extern void adsp2105_set_irq_callback(int (*callback)(int irqline));
+extern const char *adsp2105_info(void *context, int regnum);
+extern unsigned adsp2105_dasm(char *buffer, unsigned pc);
+
+#if SUPPORT_2101_EXTENSIONS
+extern void adsp2105_set_rx_callback( RX_CALLBACK cb );
+extern void adsp2105_set_tx_callback( TX_CALLBACK cb );
+#endif
 #endif
 
 #endif /* _ADSP2100_H */

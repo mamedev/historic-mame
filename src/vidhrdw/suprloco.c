@@ -39,7 +39,7 @@ void suprloco_vh_convert_color_prom(unsigned char *palette, unsigned short *colo
 	int i;
 
 
-	for (i = 0;i < Machine->drv->total_colors; i++)
+	for (i = 0;i < 512;i++)
 	{
 		int bit0,bit1,bit2;
 
@@ -60,6 +60,17 @@ void suprloco_vh_convert_color_prom(unsigned char *palette, unsigned short *colo
 		*(palette++) = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
 
 		color_prom++;
+	}
+
+	/* generate a second bank of sprite palette with red changed to purple */
+	for (i = 0;i < 256;i++)
+	{
+		*(palette++) = palette[-256*3];
+		*(palette++) = palette[-256*3];
+		if ((i & 0x0f) == 0x09)
+			*(palette++) = 0xff;
+		else
+			*(palette++) = palette[-256*3];
 	}
 }
 
@@ -137,19 +148,14 @@ WRITE_HANDLER( suprloco_control_w )
    	/* Bit 0   - coin counter A */
 	/* Bit 1   - coin counter B (only used if coinage differs from A) */
 	/* Bit 2-3 - probably unused */
-	/* Bit 4   - ??? pulsated when loco turns "super" */
-	/* Bit 5   - ??? */
+	/* Bit 4   - ??? */
+	/* Bit 5   - pulsated when loco turns "super" */
 	/* Bit 6   - probably unused */
 	/* Bit 7   - flip screen */
 
 	if ((control & 0x10) != (data & 0x10))
 	{
 		/*logerror("Bit 4 = %d\n", (data >> 4) & 1); */
-	}
-
-	if ((control & 0x20) != (data & 0x20))
-	{
-		/*logerror("Bit 5 = %d\n", (data >> 5) & 1); */
 	}
 
 	coin_counter_w(0, data & 0x01);
@@ -209,7 +215,7 @@ static void render_sprite(struct osd_bitmap *bitmap,int spr_number)
 	skip = spr_reg[SPR_SKIP_LO] + (spr_reg[SPR_SKIP_HI] << 8);
 
 	height		= spr_reg[SPR_Y_BOTTOM] - spr_reg[SPR_Y_TOP];
-	spr_palette	= Machine->remapped_colortable + 0x10 * spr_reg[SPR_COL];
+	spr_palette	= Machine->remapped_colortable + 0x100 + 0x10 * spr_reg[SPR_COL] + ((control & 0x20)?0x100:0);
 	sx = spr_reg[SPR_X];
 	sy = spr_reg[SPR_Y_TOP] + 1;
 
@@ -266,7 +272,7 @@ static void render_sprite(struct osd_bitmap *bitmap,int spr_number)
 	}
 }
 
-void draw_sprites(struct osd_bitmap *bitmap)
+static void draw_sprites(struct osd_bitmap *bitmap)
 {
 	int spr_number;
 	unsigned char *spr_reg;

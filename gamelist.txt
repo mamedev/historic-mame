@@ -1,4 +1,4 @@
-This is the complete list of games supported by MAME 0.37 BETA 4 (Jun 16 2000)
+This is the complete list of games supported by MAME 0.37 BETA 5 (Jul 28 2000)
 Variants of the same game are not included, you can use the -listclones command
 to get a list of the alternate versions of a given game.
 
@@ -44,6 +44,7 @@ Internal Name - This is the unique name that should be specified on the command
 | 1942                             |  Yes  |  Yes  |  Yes  |  Yes  | 1942     |
 | 1943 - The Battle of Midway      |  Yes  |  Yes  |  Yes  |   No  | 1943     |
 | 1943 Kai                         |  Yes  |  Yes  |  Yes  |   No  | 1943kai  |
+| 2 On 2 Open Ice Challenge        |  Yes  |  Yes  |  Yes  |  Yes  | openice  |
 | 2020 Super Baseball              |  Yes  |  Yes  |  Yes  |  Yes  | 2020bb   |
 | 3 Count Bout / Fire Suplex       |  Yes  |  Yes  |  Yes  |  Yes  | 3countb  |
 | 4 Player Bowling                 |  Yes  |  Yes  |   No  |  Yes  | bowler   |
@@ -56,6 +57,7 @@ Internal Name - This is the unique name that should be specified on the command
 | Aero Fighters 2 / Sonic Wings 2  |  Yes  |  Yes  |  Yes  |  Yes  | sonicwi2 |
 | Aero Fighters 3 / Sonic Wings 3  |  Yes  |  Yes  |  Yes  |  Yes  | sonicwi3 |
 | Aggressors of Dark Kombat / Tsuuk|  Yes  |  Yes  |  Yes  |  Yes  | aodk     |
+| Ah Eikou no Koshien              |  Yes  |  Yes  |  Yes  |  Yes  | koshien  |
 | Air Buster                       |  Yes  |  Yes  |  Yes  |  Yes  | airbustr |
 | Air Duel                         |  Yes  |  Yes  |Partial|   No  | airduel  |
 | Air Wolf                         |  Yes  |  Yes  |  Yes  |  Yes  | airwolf  |
@@ -152,6 +154,7 @@ Internal Name - This is the unique name that should be specified on the command
 | Black Widow                      |  Yes  |  Yes  |  Yes  |  Yes  | bwidow   |
 | Blade Master                     |  Yes  |  Yes  |   No  |   No  | bmaster  |
 | Blades of Steel                  |  Yes  |  Yes  |Partial|  Yes  | bladestl |
+| Blandia [Prototype]              |  Yes  |  Yes  |Partial|  Yes  | blandia  |
 | Blast Off                        |  Yes  |  Yes  |  Yes  |  Yes  | blastoff |
 | Blasted                          |  Yes  |  Yes  |  Yes  |  Yes  | blasted  |
 | Blaster                          |  Yes  |  Yes  |  Yes  |  Yes  | blaster  |
@@ -164,6 +167,7 @@ Internal Name - This is the unique name that should be specified on the command
 | Block Hole                       |  Yes  |  Yes  |  Yes  |  Yes  | blockhl  |
 | Block Out                        |  Yes  |  Yes  |  Yes  |  Yes  | blockout |
 | Blockade                         |  Yes  |  Yes  |Part(2)|   No  | blockade |
+| Blocken                          |  Yes  |  Yes  |  Yes  |  Yes  | blocken  |
 | Blood Bros.                      |  Yes  |  Yes  |  Yes  |  Yes  | bloodbro |
 | Blue Print                       |  Yes  |  Yes  |  Yes  |  Yes  | blueprnt |
 | Blue Shark                       |  Yes  |  Yes  |   No  |  Yes  | blueshrk |
@@ -182,6 +186,7 @@ Internal Name - This is the unique name that should be specified on the command
 | Brain                            |  Yes  |  Yes  |  Yes  |   No  | brain    |
 | Break Thru                       |  Yes  |  Yes  |  Yes  |  Yes  | brkthru  |
 | Breakers                         |  Yes  |  Yes  |  Yes  |  Yes  | breakers |
+| Brute Force                      |  Yes  |  Yes  |  Yes  |  Yes  | brutforc |
 | Bubble Bobble                    |  Yes  |  Yes  |  Yes  |  Yes  | bublbobl |
 | Bubbles                          |  Yes  |  Yes  |  Yes  |  Yes  | bubbles  |
 | Burger Time                      |  Yes  |  Yes  |  Yes  |  Yes  | btime    |
@@ -191,7 +196,9 @@ Internal Name - This is the unique name that should be specified on the command
 | Cabal                            | No(1) |  Yes  |Partial|   No  | cabal    |
 | Cachat                           |  Yes  |  Yes  |  Yes  |   No  | cachat   |
 | Cadillacs and Dinosaurs          |  Yes  |  Yes  |  Yes  |  Yes  | dino     |
+| Caliber 50                       |  Yes  |  Yes  |Partial|  Yes  | calibr50 |
 | Calipso                          |  Yes  |  Yes  |  Yes  |  Yes  | calipso  |
+| Camel Try                        |  Yes  |  Yes  |  Yes  |  Yes  | cameltry |
 | Canyon Bomber                    |  Yes  |  Yes  |   No  |  Yes  | canyon   |
 | Capcom Baseball                  |  Yes  |  Yes  |  Yes  |  Yes  | cbasebal |
 | Capcom Bowling                   |  Yes  |  Yes  |  Yes  |  Yes  | capbowl  |
@@ -273,12 +280,13 @@ Internal Name - This is the unique name that should be specified on the command
 | Dangar - Ufo Robo                |  Yes  |  Yes  |  Yes  |  Yes  | dangar   |
 | Danger Zone                      |  Yes  |  Yes  |  Yes  |  Yes  | dangerz  |
 | Dangerous Seed                   |  Yes  |  Yes  |  Yes  |  Yes  | dangseed |
-| Dangun Feveron                   |  Yes  |  Yes  |   No  |  Yes  | dfeveron |
+| Dangun Feveron                   |  Yes  |  Yes  |  Yes  |  Yes  | dfeveron |
 | Danny Sullivan's Indy Heat       |  Yes  |  Yes  |  Yes  |  Yes  | indyheat |
 | Dark Planet                      |   No  |  Yes  |  Yes  |  Yes  | darkplnt |
 | Dark Seal                        |  Yes  |  Yes  |  Yes  |  Yes  | darkseal |
 | Darwin 4078                      |  Yes  |  Yes  |  Yes  |  Yes  | darwin   |
 | Datsun 280 Zzzap                 |  Yes  |  Yes  |   No  |  Yes  | 280zzzap |
+| Dead Connection                  |  Yes  |  Yes  |  Yes  |   No  | deadconx |
 | Dead Eye                         |  Yes  |  Yes  |  Yes  |  Yes  | deadeye  |
 | Defend the Terra Attack on the Re|  Yes  |  Yes  |  Yes  |  Yes  | redufo   |
 | Defender                         |  Yes  |  Yes  |  Yes  |  Yes  | defender |
@@ -295,21 +303,24 @@ Internal Name - This is the unique name that should be specified on the command
 | Dig Dug                          |  Yes  |  Yes  |  Yes  |  Yes  | digdug   |
 | Dig Dug II                       |  Yes  |  Yes  |  Yes  |  Yes  | digdug2  |
 | Digger                           |  Yes  |  Yes  |   No  |  Yes  | digger   |
+| Dino Rex                         |  Yes  |  Yes  |  Yes  |  Yes  | dinorex  |
 | Disco No.1                       |  Yes  |  Yes  |  Yes  |  Yes  | disco    |
 | Discs of Tron                    |  Yes  |  Yes  |  Yes  |  Yes  | dotron   |
 | Do! Run Run                      |  Yes  |  Yes  |  Yes  |  Yes  | dorunrun |
+| Dodonpachi                       |  Yes  |  Yes  |  Yes  |  Yes  | ddonpach |
 | Dog Fight                        |  Yes  | Close |  Yes  |  Yes  | dogfight |
 | Dog Patch                        |  Yes  |  Yes  |   No  |  Yes  | dogpatch |
 | Dogyuun                          |  Yes  |  Yes  |   No  |  Yes  | dogyuun  |
 | Dokaben                          |  Yes  |  Yes  |  Yes  |  Yes  | dokaben  |
 | Domino Man                       |  Yes  |  Yes  |  Yes  |  Yes  | domino   |
 | Dominos                          |  Yes  |  Yes  |   No  |  Yes  | dominos  |
+| Don Doko Don                     |  Yes  |  Yes  |  Yes  |  Yes  | dondokod |
 | Donkey Kong                      |  Yes  |  Yes  | Yes(2)|  Yes  | dkong    |
 | Donkey Kong 3                    |  Yes  |  Yes  |  Yes  |  Yes  | dkong3   |
 | Donkey Kong Junior               |  Yes  |  Yes  | Yes(2)|  Yes  | dkongjr  |
 | Dottori Kun                      |  Yes  |  Yes  |  Yes  |  Yes  | dotrikun |
+| Double Dragon                    |  Yes  |  Yes  |  Yes  |  Yes  | ddragon  |
 | Double Dragon                    |  Yes  |  Yes  |  Yes  |  Yes  | doubledr |
-| Double Dragon                    | No(1) |  Yes  |  Yes  |  Yes  | ddragon  |
 | Double Dragon 3 - The Rosetta Sto|  Yes  |  Yes  |  Yes  |   No  | ddragon3 |
 | Double Dragon II - The Revenge   |  Yes  |  Yes  |  Yes  |  Yes  | ddragon2 |
 | Double Dribble                   |  Yes  |  Yes  |  Yes  |  Yes  | ddribble |
@@ -319,8 +330,10 @@ Internal Name - This is the unique name that should be specified on the command
 | Dragon Buster                    |  Yes  |  Yes  |  Yes  |  Yes  | drgnbstr |
 | Dragon Saber                     |  Yes  |  Yes  |  Yes  |  Yes  | dsaber   |
 | Dragon Spirit                    |  Yes  |  Yes  |  Yes  |  Yes  | dspirit  |
+| Dragon Unit / Castle of Dragon   |  Yes  |  Yes  |Partial|  Yes  | drgnunit |
 | Dream Shopper                    |  Yes  |  Yes  |  Yes  |  Yes  | dremshpr |
 | Dream Soccer '94                 |  Yes  |  Yes  |   No  |  Yes  | dsoccr94 |
+| Drift Out                        |  Yes  |  Yes  |  Yes  |  Yes  | driftout |
 | Dyger                            |  Yes  |  Yes  |  Yes  |   No  | dyger    |
 | Dynamite Duke                    |  Yes  |  Yes  |   No  |  Yes  | dynduke  |
 | Dynamite Dux                     |  Yes  |  Yes  |  Yes  |  Yes  | dduxbl   |
@@ -335,7 +348,7 @@ Internal Name - This is the unique name that should be specified on the command
 | End, The                         |  Yes  |  Yes  |  Yes  |  Yes  | theend   |
 | Enduro Racer                     | No(1) |  Yes  |  Yes  |  Yes  | enduror  |
 | Escape from the Planet of the Rob|  Yes  |  Yes  |  Yes  |  Yes  | eprom    |
-| ESP Ra.De.                       |  Yes  |  Yes  |   No  |  Yes  | esprade  |
+| ESP Ra.De.                       |  Yes  |  Yes  |  Yes  |  Yes  | esprade  |
 | Espial                           |  Yes  |  Yes  |  Yes  |   No  | espial   |
 | Exciting Soccer                  |  Yes  |  Yes  |  Yes  |   No  | exctsccr |
 | Exed Exes                        |  Yes  |  Yes  |  Yes  |   No  | exedexes |
@@ -357,13 +370,15 @@ Internal Name - This is the unique name that should be specified on the command
 | Fatal Fury 2 / Garou Densetsu 2 -|  Yes  |  Yes  |  Yes  |  Yes  | fatfury2 |
 | Fatal Fury 3 - Road to the Final |  Yes  |  Yes  |  Yes  |  Yes  | fatfury3 |
 | Fatal Fury Special / Garou Denset|  Yes  |  Yes  |  Yes  |  Yes  | fatfursp |
-| Fax                              |  Yes  |  Yes  |Partial|  Yes  | fax      |
+| Fax                              |  Yes  |  Yes  |  Yes  |  Yes  | fax      |
 | Fight Fever / Crystal Legacy     |  Yes  |  Yes  |  Yes  |  Yes  | fightfev |
 | Fighting Golf                    |  Yes  |  Yes  |  Yes  |   No  | fitegolf |
 | Fighting Hawk                    |  Yes  |  Yes  |   No  |   No  | fhawk    |
 | Fighting Soccer                  |  Yes  |  Yes  |  Yes  |   No  | ftsoccer |
+| Final Blow                       |  Yes  |  Yes  |  Yes  |  Yes  | finalb   |
 | Final Fight                      |  Yes  |  Yes  |  Yes  |  Yes  | ffight   |
 | Final Round                      |  Yes  |  Yes  |  Yes  |  Yes  | fround   |
+| Final Star Force                 |  Yes  |  Yes  |  Yes  |  Yes  | fstarfrc |
 | Finalizer - Super Transformation |  Yes  |  Yes  |Partial|   No  | finalizr |
 | Finest Hour                      |  Yes  |  Yes  |  Yes  |  Yes  | finehour |
 | Fire One                         |  Yes  |  Yes  |   No  |  Yes  | fireone  |
@@ -375,6 +390,7 @@ Internal Name - This is the unique name that should be specified on the command
 | Fly-Boy                          | No(1) |  Yes  |  Yes  |  Yes  | flyboy   |
 | Flying Shark                     |  Yes  |  Yes  |  Yes  |  Yes  | fshark   |
 | Food Fight                       |  Yes  |  Yes  |  Yes  |   No  | foodf    |
+| Football Champ                   |  Yes  |  Yes  |  Yes  |   No  | footchmp |
 | Football Frenzy                  |  Yes  |  Yes  |  Yes  |  Yes  | fbfrenzy |
 | Forgotten Worlds                 |  Yes  |  Yes  |  Yes  |  Yes  | forgottn |
 | Formation Z                      |   No  |  Yes  |  Yes  |   No  | formatz  |
@@ -396,6 +412,7 @@ Internal Name - This is the unique name that should be specified on the command
 | Galivan - Cosmo Police           |  Yes  |  Yes  |  Yes  |  Yes  | galivan  |
 | Gallop - Armed police Unit       |  Yes  |  Yes  |Partial|   No  | gallop   |
 | Gals Panic                       |  Yes  |  Yes  |  Yes  |  Yes  | galpanic |
+| Ganbare Ginkun                   |  Yes  |  Yes  |  Yes  |  Yes  | ginkun   |
 | Gang Busters                     |  Yes  |  Yes  |  Yes  |  Yes  | gbusters |
 | Gang Wars                        |  Yes  |  Yes  |  Yes  |  Yes  | gangwars |
 | Gaplus                           |  Yes  |  Yes  | Yes(2)|  Yes  | gaplus   |
@@ -404,7 +421,7 @@ Internal Name - This is the unique name that should be specified on the command
 | Gauntlet                         |  Yes  |  Yes  |  Yes  |  Yes  | gauntlet |
 | Gauntlet II                      |  Yes  |  Yes  |  Yes  |  Yes  | gaunt2   |
 | Gee Bee                          |  Yes  |  Yes  |  Yes  |  Yes  | geebee   |
-| Gemini Wing                      |  Yes  |  Yes  |  Yes  |   No  | gemini   |
+| Gemini Wing                      |  Yes  |  Yes  |  Yes  |  Yes  | gemini   |
 | Genpei ToumaDen                  |  Yes  |  Yes  |  Yes  |  Yes  | genpeitd |
 | Ghost Pilots                     |  Yes  |  Yes  |  Yes  |  Yes  | gpilots  |
 | Ghosts'n Goblins                 |  Yes  |  Yes  |  Yes  |  Yes  | gng      |
@@ -430,10 +447,12 @@ Internal Name - This is the unique name that should be specified on the command
 | Green Beret                      |  Yes  |  Yes  |  Yes  |  Yes  | gberet   |
 | Gridiron Fight                   |  Yes  |  Yes  |  Yes  |  Yes  | gridiron |
 | Grobda                           |  Yes  |  Yes  |  Yes  |  Yes  | grobda   |
-| Growl                            |  Yes  |  Yes  |  Yes  |   No  | growl    |
+| Growl                            |  Yes  |  Yes  |  Yes  |  Yes  | growl    |
 | Guardian                         | No(1) |  Yes  |  Yes  |   No  | getstar  |
 | Guerrilla War                    |  Yes  |  Yes  |  Yes  |   No  | gwar     |
 | Guided Missile                   |  Yes  |  Yes  |   No  |  Yes  | gmissile |
+| Gun & Frontier                   |  Yes  |  Yes  |  Yes  |  Yes  | gunfront |
+| Gun Bird                         |  Yes  |  Yes  |  Yes  |   No  | gunbird  |
 | Gun Dealer                       |  Yes  |  Yes  |  Yes  |  Yes  | gundealr |
 | Gun Fight                        |  Yes  |  Yes  |   No  |  Yes  | gunfight |
 | Gun.Smoke                        |  Yes  |  Yes  |  Yes  |   No  | gunsmoke |
@@ -448,7 +467,7 @@ Internal Name - This is the unique name that should be specified on the command
 | Hammerin' Harry                  |  Yes  |  Yes  |  Yes  |   No  | hharry   |
 | Hana Awase                       |  Yes  |  Yes  |  Yes  |  Yes  | hanaawas |
 | Hang-On                          |  Yes  |  Yes  |  Yes  |  Yes  | hangon   |
-| Hard Hat                         |  Yes  |  Yes  |Partial|  Yes  | hardhat  |
+| Hard Hat                         |  Yes  |  Yes  |  Yes  |  Yes  | hardhat  |
 | Hat Trick                        |  Yes  |  Yes  |  Yes  |  Yes  | hattrick |
 | Hatris                           |  Yes  |  Yes  |  Yes  |  Yes  | hatris   |
 | Haunted Castle                   |  Yes  |  Yes  |  Yes  |   No  | hcastle  |
@@ -457,6 +476,7 @@ Internal Name - This is the unique name that should be specified on the command
 | Heavy Barrel                     |  Yes  |  Yes  |  Yes  |   No  | hbarrel  |
 | Heavy Metal                      |  Yes  |  Yes  |  Yes  |   No  | hvymetal |
 | Heavyweight Champ                |  Yes  |  Yes  |  Yes  |  Yes  | hwchamp  |
+| Hebereke no Popoon               |  Yes  |  Yes  |  Yes  |  Yes  | heberpop |
 | Heiankyo Alien                   |  Yes  |  Yes  |   No  |  Yes  | heiankyo |
 | HeliFire                         |  Yes  |  Yes  |   No  |  Yes  | helifire |
 | Hellfire                         |  Yes  |  Yes  |  Yes  |  Yes  | hellfire |
@@ -559,6 +579,7 @@ Internal Name - This is the unique name that should be specified on the command
 | Labyrinth Runner                 |   No  |  Yes  |  Yes  |  Yes  | labyrunr |
 | Lady Bug                         |  Yes  |  Yes  |  Yes  |  Yes  | ladybug  |
 | Laguna Racer                     |  Yes  |  Yes  |   No  |  Yes  | lagunar  |
+| Land Sea Air Squad / Riku Kai Kuu|  Yes  |  Yes  |  Yes  |  Yes  | lsasquad |
 | Lasso                            |  Yes  |  Yes  |  Yes  |  Yes  | lasso    |
 | Last Blade / Bakumatsu Roman - Ge|  Yes  |  Yes  |  Yes  |  Yes  | lastblad |
 | Last Blade 2 / Bakumatsu Roman - |  Yes  |  Yes  |  Yes  |  Yes  | lastbld2 |
@@ -578,7 +599,7 @@ Internal Name - This is the unique name that should be specified on the command
 | Levers                           |  Yes  |  Yes  |  Yes  |  Yes  | levers   |
 | Liberator                        |  Yes  |  Yes  |  Yes  |   No  | liberatr |
 | Lightning Fighters               |  Yes  |  Yes  |  Yes  |  Yes  | lgtnfght |
-| Liquid Kids                      |  Yes  |  Yes  |  Yes  |   No  | liquidk  |
+| Liquid Kids                      |  Yes  |  Yes  |  Yes  |  Yes  | liquidk  |
 | Lizard Wizard                    |  Yes  |  Yes  |  Yes  |  Yes  | lizwiz   |
 | Lock'n'Chase                     |  Yes  |  Yes  |  Yes  |  Yes  | lnc      |
 | Loco-Motion                      |  Yes  |  Yes  |  Yes  |  Yes  | locomotn |
@@ -608,6 +629,7 @@ Internal Name - This is the unique name that should be specified on the command
 | Mahjong Gakuen                   |  Yes  |  Yes  |  Yes  |  Yes  | mgakuen  |
 | Mahjong Gakuen 2 Gakuen-chou no F|  Yes  |  Yes  |  Yes  |  Yes  | mgakuen2 |
 | Mahjong Kyoretsuden              |  Yes  |  Yes  |  Yes  |  Yes  | mahretsu |
+| Mahjong Quest                    |  Yes  |  Yes  |  Yes  |  Yes  | mjnquest |
 | Main Event, The                  |  Yes  |  Yes  |  Yes  |  Yes  | mainevt  |
 | Major Havoc                      |  Yes  |  Yes  |  Yes  |  Yes  | mhavoc   |
 | Major League                     |  Yes  |  Yes  |  Yes  |  Yes  | mjleague |
@@ -623,6 +645,7 @@ Internal Name - This is the unique name that should be specified on the command
 | Mars                             |  Yes  |  Yes  |  Yes  |  Yes  | mars     |
 | Marvel Land                      |  Yes  |  Yes  |  Yes  |  Yes  | marvland |
 | Marvin's Maze                    |  Yes  |  Yes  |  Yes  |  Yes  | marvins  |
+| Master of Weapon                 |  Yes  |  Yes  |  Yes  |   No  | masterw  |
 | Mat Mania                        |  Yes  |  Yes  |  Yes  |  Yes  | matmania |
 | Max RPM                          |  Yes  |  Yes  |  Yes  |  Yes  | maxrpm   |
 | Mayday                           |  Yes  |  Yes  |  Yes  |  Yes  | mayday   |
@@ -663,10 +686,11 @@ Internal Name - This is the unique name that should be specified on the command
 | Moon Quasar                      |  Yes  |  Yes  |  Yes  |  Yes  | moonqsr  |
 | Moon Walker                      | No(1) |  Yes  |  Yes  |  Yes  | moonwalk |
 | Moon War II                      |  Yes  |  Yes  |  Yes  |  Yes  | moonwar2 |
-| Mortal Kombat                    | No(1) |  Yes  |  Yes  |  Yes  | mk       |
-| Mortal Kombat II                 |   No  |  Yes  |  Yes  |  Yes  | mk2      |
+| Mortal Kombat                    |  Yes  |  Yes  |  Yes  |  Yes  | mk       |
+| Mortal Kombat 3                  |  Yes  |  Yes  |  Yes  |  Yes  | mk3      |
+| Mortal Kombat II                 |  Yes  |  Yes  |  Yes  |  Yes  | mk2      |
 | Motos                            |  Yes  |  Yes  |  Yes  |  Yes  | motos    |
-| Mouse Trap                       |  Yes  |  Yes  |Partial|  Yes  | mtrap    |
+| Mouse Trap                       |  Yes  |  Yes  |  Yes  |  Yes  | mtrap    |
 | Mr. Do!                          |  Yes  |  Yes  |  Yes  |  Yes  | mrdo     |
 | Mr. Do's Castle                  |  Yes  |  Yes  |  Yes  |  Yes  | docastle |
 | Mr. Do's Wild Ride               |  Yes  |  Yes  |  Yes  |  Yes  | dowild   |
@@ -687,7 +711,8 @@ Internal Name - This is the unique name that should be specified on the command
 | Nastar                           |  Yes  |  Yes  |  Yes  |   No  | nastar   |
 | Naughty Boy                      |  Yes  |  Yes  |  Yes  |   No  | naughtyb |
 | Navalone                         |  Yes  |  Yes  |Partial|  Yes  | navalone |
-| NBA Jam                          |   No  |  Yes  |  Yes  |  Yes  | nbajam   |
+| NBA Jam                          |  Yes  |  Yes  |  Yes  |  Yes  | nbajam   |
+| NBA Maximum Hangtime             |  Yes  |  Yes  |  Yes  |  Yes  | nbamaxht |
 | Nemesis                          |  Yes  |  Yes  |  Yes  |  Yes  | nemesis  |
 | Nemo                             |  Yes  |  Yes  |  Yes  |  Yes  | nemo     |
 | Neo Bomberman                    |  Yes  |  Yes  |  Yes  |  Yes  | neobombe |
@@ -706,6 +731,7 @@ Internal Name - This is the unique name that should be specified on the command
 | Ninja Emaki                      |  Yes  |  Yes  |  Yes  |  Yes  | ninjemak |
 | Ninja Gaiden                     |  Yes  |  Yes  |  Yes  |  Yes  | gaiden   |
 | Ninja Kid II                     |  Yes  |  Yes  |   No  |  Yes  | ninjakd2 |
+| Ninja Kids                       |  Yes  |  Yes  |  Yes  |  Yes  | ninjak   |
 | Ninja Master's - haoh-ninpo-cho  |  Yes  |  Yes  |  Yes  |  Yes  | ninjamas |
 | Ninja Spirit                     |  Yes  |  Yes  |  Yes  |   No  | nspirit  |
 | No Man's Land                    |  Yes  |   No  |Partial|  Yes  | nomnlnd  |
@@ -714,6 +740,7 @@ Internal Name - This is the unique name that should be specified on the command
 | Off the Wall                     |  Yes  |  Yes  |  Yes  |  Yes  | offtwall |
 | Off the Wall                     |  Yes  |  Yes  |  Yes  |  Yes  | otwalls  |
 | Oh My God!                       |  Yes  |  Yes  |  Yes  |  Yes  | ohmygod  |
+| Oli-Boo-Chu                      |  Yes  |   No  |Partial|  Yes  | olibochu |
 | Omega Race                       |  Yes  |  Yes  |  Yes  |  Yes  | omegrace |
 | Operation Ragnagard / Shin-Oh-Ken|  Yes  |  Yes  |  Yes  |  Yes  | ragnagrd |
 | Orbitron                         |  Yes  |  Yes  |  Yes  |  Yes  | orbitron |
@@ -739,7 +766,7 @@ Internal Name - This is the unique name that should be specified on the command
 | Peek-a-Boo!                      |  Yes  |  Yes  |  Yes  |  Yes  | peekaboo |
 | Pengo                            |  Yes  |  Yes  |  Yes  |  Yes  | pengo    |
 | Penguin-Kun Wars                 |  Yes  |  Yes  |  Yes  |  Yes  | pkunwar  |
-| Pepper II                        |  Yes  |  Yes  |Partial|  Yes  | pepper2  |
+| Pepper II                        |  Yes  |  Yes  |  Yes  |  Yes  | pepper2  |
 | Percussor, The                   |  Yes  |  Yes  |  Yes  |  Yes  | percuss  |
 | Perfect Soldiers                 |  Yes  |  Yes  |   No  |   No  | psoldier |
 | Peter Pack-Rat                   |  Yes  |  Yes  |  Yes  |  Yes  | peterpak |
@@ -792,6 +819,7 @@ Internal Name - This is the unique name that should be specified on the command
 | Psycho Soldier                   |  Yes  |  Yes  |Partial|   No  | psychos  |
 | Psycho-Nics Oscar                |  Yes  |  Yes  |  Yes  |  Yes  | oscar    |
 | PuckMan                          |  Yes  |  Yes  |  Yes  |  Yes  | pacman   |
+| PuLiRuLa                         |  Yes  |  Yes  |  Yes  |  Yes  | pulirula |
 | Pulsar                           |  Yes  |  Yes  |  Yes  |  Yes  | pulsar   |
 | Pulstar                          |  Yes  |  Yes  |  Yes  |  Yes  | pulstar  |
 | Punch-Out!!                      |  Yes  |  Yes  |  Yes  |  Yes  | punchout |
@@ -810,13 +838,20 @@ Internal Name - This is the unique name that should be specified on the command
 | Quartet                          |  Yes  |  Yes  |  Yes  |  Yes  | quartet  |
 | Quester                          |  Yes  |  Yes  |  Yes  |  Yes  | quester  |
 | Quiz & Dragons                   |  Yes  |  Yes  |  Yes  |  Yes  | qad      |
+| Quiz Chikyu Bouei Gun            |  Yes  |  Yes  |  Yes  |  Yes  | qzchikyu |
+| Quiz Crayon Shinchan             |  Yes  |  Yes  |  Yes  |  Yes  | qcrayon  |
+| Quiz Crayon Shinchan Orato Asobo |  Yes  |  Yes  |  Yes  |  Yes  | qcrayon2 |
 | Quiz Daisousa Sen - The Last Coun|  Yes  |  Yes  |  Yes  |  Yes  | quizdais |
+| Quiz HQ                          |  Yes  |  Yes  |  Yes  |  Yes  | quizhq   |
+| Quiz Jinsei Gekijoh              |  Yes  |  Yes  |  Yes  |  Yes  | qjinsei  |
 | Quiz King of Fighters            |  Yes  |  Yes  |  Yes  |  Yes  | quizkof  |
 | Quiz Meintantei Neo Geo - Quiz Da|  Yes  |  Yes  |  Yes  |  Yes  | quizdai2 |
+| Quiz Quest - Hime to Yuusha no Mo|  Yes  |  Yes  |  Yes  |  Yes  | qzquest  |
 | Quiz Sangokushi                  |  Yes  |  Yes  |  Yes  |  Yes  | qsangoku |
 | Quiz Sekai wa SHOW by shobai     |  Yes  |  Yes  |  Yes  |   No  | qzshowby |
 | Quiz Tonosama no Yabou           |  Yes  |  Yes  |  Yes  |  Yes  | qtono1   |
 | Quiz Tonosama no Yabou 2 Zenkoku-|  Yes  |  Yes  |  Yes  |  Yes  | qtono2   |
+| Quiz Torimonochou                |  Yes  |  Yes  |  Yes  |  Yes  | qtorimon |
 | Qwak                             |  Yes  |  Yes  |  Yes  |   No  | qwakprot |
 | R-Type                           |  Yes  |  Yes  |  Yes  |   No  | rtype    |
 | R-Type II                        |  Yes  |  Yes  |  Yes  |   No  | rtype2   |
@@ -831,6 +866,7 @@ Internal Name - This is the unique name that should be specified on the command
 | Rally X                          |  Yes  |  Yes  | Yes(2)|  Yes  | rallyx   |
 | Rambo III                        |  Yes  |  Yes  |  Yes  |   No  | rambo3   |
 | Rampage                          |  Yes  |  Yes  |  Yes  |  Yes  | rampage  |
+| Rampage: World Tour              |  Yes  |  Yes  |  Yes  |  Yes  | rmpgwt   |
 | Rampart                          |  Yes  |  Yes  |  Yes  |  Yes  | rampart  |
 | Rastan                           |  Yes  |  Yes  |  Yes  |  Yes  | rastan   |
 | Razzmatazz                       |  Yes  |  Yes  |   No  |   No  | razmataz |
@@ -873,7 +909,8 @@ Internal Name - This is the unique name that should be specified on the command
 | Rompers                          |  Yes  |  Yes  |  Yes  |  Yes  | rompers  |
 | Round-Up                         |  Yes  |  Yes  |  Yes  |  Yes  | roundup  |
 | Route 16                         |  Yes  |  Yes  |  Yes  |  Yes  | route16  |
-| Rygar                            |  Yes  |  Yes  |  Yes  |   No  | rygar    |
+| Royal Mahjong                    |  Yes  |  Yes  |  Yes  |  Yes  | royalmah |
+| Rygar                            |  Yes  |  Yes  |  Yes  |  Yes  | rygar    |
 | S.P.Y. - Special Project Y       |   No  |  Yes  |  Yes  |  Yes  | spy      |
 | S.R.D. Mission                   |  Yes  |  Yes  |  Yes  |  Yes  | srdmissn |
 | Safari                           |  Yes  |  Yes  |   No  |  Yes  | safari   |
@@ -908,12 +945,14 @@ Internal Name - This is the unique name that should be specified on the command
 | Seicross                         |  Yes  |  Yes  |  Yes  |   No  | seicross |
 | Sengoku / Sengoku Denshou        |  Yes  |  Yes  |  Yes  |  Yes  | sengoku  |
 | Sengoku 2 / Sengoku Denshou 2    |  Yes  |  Yes  |  Yes  |  Yes  | sengoku2 |
+| Sengoku Ace                      |  Yes  |  Yes  |  Yes  |   No  | sngkace  |
 | Senjyo                           |  Yes  |  Yes  |  Yes  |  Yes  | senjyo   |
 | Sente Diagnostic Cartridge       |  Yes  |  Yes  |  Yes  |  Yes  | sentetst |
 | Shackled                         |  Yes  |  Yes  |  Yes  |  Yes  | shackled |
 | Shadow Dancer                    |  Yes  |  Yes  |  Yes  |  Yes  | shdancer |
 | Shadow Land                      |  Yes  |  Yes  |  Yes  |  Yes  | shadowld |
 | Shanghai                         |   No  |  Yes  |  Yes  |  Yes  | shanghai |
+| Shanghai III                     |  Yes  |  Yes  |  Yes  |  Yes  | shangha3 |
 | Shark Attack                     |  Yes  |  Yes  |  Yes  |  Yes  | sharkatt |
 | Sheriff                          |  Yes  |  Yes  |Partial|  Yes  | sheriff  |
 | Shinobi                          |  Yes  |  Yes  |  Yes  |  Yes  | shinobi  |
@@ -928,7 +967,8 @@ Internal Name - This is the unique name that should be specified on the command
 | Side Arms - Hyper Dyne           |  Yes  |  Yes  |  Yes  |   No  | sidearms |
 | Side Pocket                      |  Yes  |  Yes  |  Yes  |  Yes  | sidepckt |
 | Side Track                       |  Yes  |  Yes  | Yes(2)|  Yes  | sidetrac |
-| Silkworm                         |  Yes  |  Yes  |  Yes  |   No  | silkworm |
+| Silent Dragon                    |  Yes  |  Yes  |  Yes  |   No  | silentd  |
+| Silkworm                         |  Yes  |  Yes  |  Yes  |  Yes  | silkworm |
 | Simpsons, The                    |  Yes  |  Yes  |  Yes  |  Yes  | simpsons |
 | Sindbad Mystery                  |  Yes  |  Yes  |  Yes  |  Yes  | sindbadm |
 | Sinistar                         |  Yes  |  Yes  |  Yes  |  Yes  | sinistar |
@@ -952,9 +992,10 @@ Internal Name - This is the unique name that should be specified on the command
 | Solar Fox                        |  Yes  |  Yes  |  Yes  |  Yes  | solarfox |
 | Solar Quest                      |  Yes  |  Yes  | Yes(2)|  Yes  | solarq   |
 | Soldam                           |  Yes  |  Yes  |  Yes  |  Yes  | soldamj  |
+| Solitary Fighter                 |  Yes  |  Yes  |  Yes  |  Yes  | solfigtr |
 | Solomon's Key                    |  Yes  |  Yes  |  Yes  |  Yes  | solomon  |
 | Son of Phoenix                   |  Yes  |  Yes  |  Yes  |  Yes  | sonofphx |
-| Son Son                          |  Yes  |  Yes  |  Yes  |  Yes  | sonson   |
+| Son Son                          |  Yes  |  Yes  |  Yes  |   No  | sonson   |
 | SOS                              |  Yes  |  Yes  |Partial|  Yes  | sos      |
 | Souko Ban Deluxe                 |  Yes  |  Yes  |  Yes  |  Yes  | soukobdx |
 | Space Attack                     |  Yes  |  Yes  |   No  |  Yes  | sspaceat |
@@ -969,6 +1010,7 @@ Internal Name - This is the unique name that should be specified on the command
 | Space Harrier                    |  Yes  |  Yes  |  Yes  |  Yes  | sharrier |
 | Space Intruder                   |  Yes  |   No  |   No  |   No  | spaceint |
 | Space Invaders                   |  Yes  |  Yes  | Yes(2)|  Yes  | invaders |
+| Space Invaders DX                |  Yes  |  Yes  |  Yes  |   No  | spacedx  |
 | Space Invaders II                |  Yes  |  Yes  | Yes(2)|  Yes  | invad2ct |
 | Space Invaders Part II           |  Yes  |  Yes  | Yes(2)|  Yes  | invadpt2 |
 | Space Laser                      |  Yes  |  Yes  | Yes(2)|  Yes  | spclaser |
@@ -1015,7 +1057,7 @@ Internal Name - This is the unique name that should be specified on the command
 | Strategy X                       |  Yes  |  Yes  |  Yes  |  Yes  | stratgyx |
 | Stratovox                        |  Yes  |  Yes  |  Yes  |  Yes  | stratvox |
 | Streaking                        |  Yes  |  Yes  |  Yes  |  Yes  | streakng |
-| Street Fighter                   |  Yes  |  Yes  |  Yes  |  Yes  | sf1      |
+| Street Fighter                   |  Yes  |  Yes  |  Yes  |   No  | sf1      |
 | Street Fighter II - The World War|  Yes  |  Yes  |  Yes  |  Yes  | sf2      |
 | Street Fighter II' - Champion Edi|  Yes  |  Yes  |  Yes  |  Yes  | sf2ce    |
 | Street Football                  |  Yes  |  Yes  |  Yes  |  Yes  | sfootbal |
@@ -1051,7 +1093,7 @@ Internal Name - This is the unique name that should be specified on the command
 | Super Sidekicks / Tokuten Ou     |  Yes  |  Yes  |  Yes  |  Yes  | ssideki  |
 | Super Sidekicks 2 - The World Cha|  Yes  |  Yes  |  Yes  |  Yes  | ssideki2 |
 | Super Sidekicks 3 - The Next Glor|  Yes  |  Yes  |  Yes  |  Yes  | ssideki3 |
-| Super Space Invaders '91         |  Yes  |  Yes  |  Yes  |   No  | ssi      |
+| Super Space Invaders '91         |  Yes  |  Yes  |  Yes  |  Yes  | ssi      |
 | Super Sprint                     |  Yes  |  Yes  |  Yes  |  Yes  | ssprint  |
 | Super Spy, The                   |  Yes  |  Yes  |  Yes  |  Yes  | superspy |
 | Super Stingray                   |  Yes  |   No  |   No  |  Yes  | sstingry |
@@ -1064,6 +1106,7 @@ Internal Name - This is the unique name that should be specified on the command
 | Swimmer                          |  Yes  |  Yes  |  Yes  |  Yes  | swimmer  |
 | Syougi No Tatsujin - Master of Sy|  Yes  |  Yes  |  Yes  |  Yes  | mosyougi |
 | Syusse Oozumou                   |  Yes  |  Yes  |  Yes  |   No  | ssozumo  |
+| T.T. Mahjong                     |  Yes  |  Yes  |  Yes  |  Yes  | ttmahjng |
 | Tac/Scan                         |  Yes  |  Yes  | Yes(2)|  Yes  | tacscan  |
 | Tail to Nose - Great Championship|  Yes  |  Yes  |  Yes  |   No  | tail2nos |
 | Tailgunner                       |  Yes  |  Yes  |  Yes  |  Yes  | tailg    |
@@ -1083,7 +1126,7 @@ Internal Name - This is the unique name that should be specified on the command
 | Teki Paki                        |  Yes  |  Yes  |   No  |  Yes  | tekipaki |
 | Tempest                          |  Yes  |  Yes  |  Yes  |  Yes  | tempest  |
 | Tenchi wo Kurau                  |  Yes  |  Yes  |  Yes  |  Yes  | dwj      |
-| Terminator 2 - Judgment Day      |   No  |  Yes  |  Yes  |  Yes  | term2    |
+| Terminator 2 - Judgment Day      |  Yes  |  Yes  |  Yes  |  Yes  | term2    |
 | Terra Cresta                     |  Yes  |  Yes  |  Yes  |  Yes  | terracre |
 | Terra Force                      |  Yes  |  Yes  |  Yes  |   No  | terraf   |
 | Tetris                           |  Yes  |  Yes  |  Yes  |  Yes  | atetris  |
@@ -1093,7 +1136,8 @@ Internal Name - This is the unique name that should be specified on the command
 | Three Wonders                    |  Yes  |  Yes  |  Yes  |  Yes  | 3wonders |
 | Thunder Cross                    |   No  |  Yes  |  Yes  |  Yes  | thunderx |
 | Thunder Cross II                 |  Yes  |  Yes  |  Yes  |  Yes  | thndrx2  |
-| Thundercade                      |  Yes  |  Yes  |Partial|  Yes  | tndrcade |
+| Thunder Fox                      |  Yes  |  Yes  |  Yes  |  Yes  | thundfox |
+| Thundercade / Twin Formation     |  Yes  |  Yes  |Partial|  Yes  | tndrcade |
 | ThunderJaws                      |  Yes  |  Yes  |  Yes  |  Yes  | thunderj |
 | Tiger Heli                       | No(1) |  Yes  |  Yes  |   No  | tigerh   |
 | Tiger Road                       |  Yes  |  Yes  |  Yes  |   No  | tigeroad |
@@ -1121,6 +1165,7 @@ Internal Name - This is the unique name that should be specified on the command
 | Tough Turf                       |  Yes  |  Yes  |   No  |  Yes  | tturf    |
 | Tougyuu, The                     |  Yes  |  Yes  |  Yes  |   No  | bullfgtj |
 | Tower of Druaga                  |  Yes  |  Yes  |  Yes  |  Yes  | todruaga |
+| Toypop                           |  Yes  |  Yes  |  Yes  |  Yes  | toypop   |
 | Track & Field                    |  Yes  |  Yes  |  Yes  |  Yes  | trackfld |
 | Tranquilizer Gun                 |  Yes  |  Yes  |   No  |  Yes  | tranqgun |
 | Traverse USA / Zippy Race        |  Yes  |  Yes  |  Yes  |  Yes  | travrusa |
@@ -1157,7 +1202,7 @@ Internal Name - This is the unique name that should be specified on the command
 | Ultraman                         |  Yes  |  Yes  |  Yes  |  Yes  | ultraman |
 | Undercover Cops                  |  Yes  |  Yes  |   No  |   No  | uccops   |
 | UniWar S                         |  Yes  |  Yes  |  Yes  |  Yes  | uniwars  |
-| Uo Poko                          |  Yes  |  Yes  |   No  |  Yes  | uopoko   |
+| Uo Poko                          |  Yes  |  Yes  |  Yes  |  Yes  | uopoko   |
 | Up'n Down                        |  Yes  |  Yes  |  Yes  |   No  | upndown  |
 | Us vs. Them                      |   No  |  Yes  |  Yes  |  Yes  | usvsthem |
 | V-Five                           |  Yes  |  Yes  |   No  |  Yes  | vfive    |
@@ -1168,7 +1213,7 @@ Internal Name - This is the unique name that should be specified on the command
 | Varth - Operation Thunderstorm   |  Yes  |  Yes  |  Yes  |  Yes  | varth    |
 | Vastar                           |  Yes  |  Yes  |  Yes  |   No  | vastar   |
 | Vendetta                         |  Yes  |  Yes  |  Yes  |  Yes  | vendetta |
-| Venture                          |  Yes  |  Yes  |Partial|  Yes  | venture  |
+| Venture                          |  Yes  |  Yes  |  Yes  |  Yes  | venture  |
 | Victory                          |  Yes  |  Yes  |  Yes  |  Yes  | victory  |
 | Victory Road                     |  Yes  |  Yes  |  Yes  |   No  | victroad |
 | Video Hustler                    |  Yes  |  Yes  |  Yes  |  Yes  | hustler  |
@@ -1177,6 +1222,7 @@ Internal Name - This is the unique name that should be specified on the command
 | Vimana                           |  Yes  |  Yes  |   No  |  Yes  | vimana   |
 | Vindicators                      |  Yes  |  Yes  |  Yes  |  Yes  | vindictr |
 | Vindicators Part II              |  Yes  |  Yes  |  Yes  |  Yes  | vindctr2 |
+| Violence Fight                   |  Yes  |  Yes  |  Yes  |   No  | viofight |
 | Viper                            |  Yes  |  Yes  |  Yes  |  Yes  | viper    |
 | Voltage Fighter - Gowcaizer / Cho|  Yes  |  Yes  |  Yes  |  Yes  | gowcaizr |
 | Vulcan Venture                   |  Yes  |  Yes  |  Yes  |  Yes  | vulcan   |
@@ -1216,6 +1262,7 @@ Internal Name - This is the unique name that should be specified on the command
 | World Stadium                    |  Yes  |  Yes  |  Yes  |  Yes  | ws       |
 | World Tennis                     |  Yes  | Close |  Yes  |  Yes  | wtennis  |
 | Wrestle War                      |  Yes  |  Yes  |  Yes  |  Yes  | wrestwar |
+| WWF: Wrestlemania                |  Yes  |  Yes  |  Yes  |  Yes  | wwfmania |
 | X Multiply                       |  Yes  |  Yes  |  Yes  |   No  | xmultipl |
 | X-Men                            |  Yes  |  Yes  |Partial|  Yes  | xmen     |
 | Xain'd Sleena                    |  Yes  |  Yes  |  Yes  |  Yes  | xsleena  |
@@ -1224,8 +1271,10 @@ Internal Name - This is the unique name that should be specified on the command
 | Xybots                           |  Yes  |  Yes  |  Yes  |  Yes  | xybots   |
 | Yam! Yam!?                       |  Yes  |  Yes  |  Yes  |  Yes  | yamyam   |
 | Yamato                           |  Yes  |  Yes  |  Yes  |  Yes  | yamato   |
+| Yes/No Sinri Tokimeki Chart      |  Yes  |  Yes  |  Yes  |  Yes  | yesnoj   |
 | Yie Ar Kung-Fu                   |  Yes  |  Yes  |  Yes  |  Yes  | yiear    |
 | Yosaku To Donbee                 |  Yes  |  Yes  |   No  |  Yes  | yosakdon |
+| Yuuyu no Quiz de GO!GO!          |  Yes  |  Yes  |  Yes  |  Yes  | yuyugogo |
 | Zaxxon                           |  Yes  |  Yes  | Yes(2)|   No  | zaxxon   |
 | Zed Blade / Operation Ragnarok   |  Yes  |  Yes  |  Yes  |  Yes  | zedblade |
 | Zektor                           |  Yes  |  Yes  | Yes(2)|  Yes  | zektor   |

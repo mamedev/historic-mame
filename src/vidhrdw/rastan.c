@@ -144,7 +144,13 @@ WRITE_HANDLER( rastan_videocontrol_w )
 {
 	if (offset == 0)
 	{
+		/* bits 0 and 1 are coin lockout */
+		coin_lockout_w(1,~data & 0x01);
+		coin_lockout_w(0,~data & 0x02);
+
 		/* bits 2 and 3 are the coin counters */
+		coin_counter_w(1,data & 0x04);
+		coin_counter_w(0,data & 0x08);
 
 		/* bits 5-7 look like the sprite palette bank */
 		spritepalettebank = (data & 0xe0) >> 5;

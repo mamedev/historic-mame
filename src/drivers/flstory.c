@@ -3,18 +3,6 @@
 The FairyLand Story
 
 notes:
-- The 68705 doesn't pass the startup checksum test (causing "BAD HW"). This
-  is patched by changing one unused ROM byte to make it calculate the checksum
-  the main cpu expects. Possibilites:
-  1) The cpu<->mcu interface is wrong
-  2) the 68705 dump is bad
-  3) the 68705 program is for a different version of the main program
-- anyway, the 68705 isn't returning the expected data and the program hangs
-  when you start a game.
-- during the ROM checksum test the 68705 only reads 0x080-0x737 and 0x7f8-0x7ff.
-  During command processing, it reads 0x781 and 0x780 as if they were supposed
-  to change.
-- the wrong graphics are caused by the 68705.
 - sound communication not understood
 - sound section also has a MSM5232
 
@@ -394,7 +382,7 @@ ROM_START( flstory )
 	ROM_LOAD( "snd.23",       0x2000, 0x2000, 0x25e7fd9d )
 
 	ROM_REGION( 0x0800, REGION_CPU3 )	/* 2k for the microcontroller */
-	ROM_LOAD( "p5sa54-.09",   0x0000, 0x0800, 0x0e8b8846 )
+	ROM_LOAD( "a45.mcu",      0x0000, 0x0800, 0x00000000 )
 
 	ROM_REGION( 0x20000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "vid-a45.18",   0x00000, 0x4000, 0x6f08f69e )
@@ -418,7 +406,7 @@ ROM_START( flstoryj )
 	ROM_LOAD( "a45_13.9",     0x2000, 0x2000, 0x451f92f9 )
 
 	ROM_REGION( 0x0800, REGION_CPU3 )	/* 2k for the microcontroller */
-	ROM_LOAD( "p5sa54-.09",   0x0000, 0x0800, 0x0e8b8846 )	/* from the english version - might be wrong */
+	ROM_LOAD( "a45.mcu",      0x0000, 0x0800, 0x00000000 )
 
 	ROM_REGION( 0x20000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "vid-a45.18",   0x00000, 0x4000, 0x6f08f69e )
@@ -460,16 +448,6 @@ ROM_END
 
 
 
-static void init_flstory(void)
-{
-	/* patch one 68705 unused ROM location to make it pass the startup */
-	/* checksum test. It is supposed to return 0xf9, without this patch */
-	/* it would return 0x89 */
-	memory_region(REGION_CPU3)[0x2c0] = 0x6f;
-}
-
-
-
-GAMEX( 1985, flstory,  0,       flstory, flstory, flstory, ROT180, "Taito", "The FairyLand Story", GAME_NOT_WORKING )
-GAMEX( 1985, flstoryj, flstory, flstory, flstory, flstory, ROT180, "Taito", "The FairyLand Story (Japan)", GAME_NOT_WORKING )
-GAMEX( 1985, onna34ro, 0,       flstory, flstory, flstory, ROT180, "Taito", "Onna Sansirou (Japan)", GAME_NOT_WORKING )
+GAMEX( 1985, flstory,  0,       flstory, flstory, 0, ROT180, "Taito", "The FairyLand Story", GAME_NOT_WORKING )
+GAMEX( 1985, flstoryj, flstory, flstory, flstory, 0, ROT180, "Taito", "The FairyLand Story (Japan)", GAME_NOT_WORKING )
+GAMEX( 1985, onna34ro, 0,       flstory, flstory, 0, ROT180, "Taito", "Onna Sansirou (Japan)", GAME_NOT_WORKING )

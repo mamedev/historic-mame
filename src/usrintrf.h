@@ -45,5 +45,6 @@ int onscrd_active(void);
 int setup_active(void);
 
 void CLIB_DECL usrintf_showmessage(const char *text,...);
+void CLIB_DECL usrintf_showmessage_secs(int seconds, const char *text,...);
 
 #endif

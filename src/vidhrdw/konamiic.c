@@ -7,13 +7,14 @@ TODO:
 - in Aliens shadows should be disabled (tubes at the beginning of the game
   have a vertical line which is supposed to be white)
 - understand global Y position for the 053247
-- understand how the 051316 positioning works
+- understand how the 051316 positioning works (probably just an external timing thing)
+
 
 
                       Emulated
                          |
-                  board #|year    CPU      tiles        sprites  priority     other
-                    -----|----  ------ ------------- ------------- ------ ----------------
+                  board #|year    CPU      tiles        sprites  priority palette    other
+                    -----|---- ------- ------------- ------------- ------ ------ ----------------
 Hyper Crash         GX401 1985
 Twinbee             GX412*1985   68000           GX400
 Yie Ar Kung Fu      GX407*1985    6809
@@ -28,51 +29,53 @@ Green Beret         GX577*1985     Z80           005849
 Galactic Warriors   GX578*1985   68000           GX400
 Salamander          GX587*1986   68000           GX400
 WEC Le Mans 24      GX602*1986 2x68000
-BAW                 GX604 1987
-Combat School       GX611*1987    6309           007121(x2)               007327 (palette)
-Rock 'n Rage /      GX620*1986    6309 007342        007420               007327 (palette)
+BAW / Black Panther GX604 1987   68000           GX400                    007593
+Combat School /     GX611*1987    6309           007121(x2)               007327
+  Boot Camp
+Rock 'n Rage /      GX620*1986    6309 007342        007420               007327
   Koi no Hotrock
 Mr Kabuki/Mr Goemon GX621*1986     Z80           005849
 Jackal              GX631*1986    6809?          005885(x2)
-Contra / Gryzor     GX633*1987    6809?          007121(x2)               007593 (palette)
-Flak Attack         GX669*1987    6309           007121                   007327 (palette) 007452
+Contra / Gryzor     GX633*1987    6809?          007121(x2)               007593
+Flak Attack         GX669*1987    6309           007121                   007327 007452
 Devil World / Dark  GX687*1987 2x68000           TWIN16
   Adventure / Majuu no Oukoku
-Double Dribble      GX690*1986  3x6809           005885(x2)               007327 (palette) 007452
-Kitten Kaboodle     GX712+1988                   GX400                    007593 (palette) 051550
-Chequered Flag      GX717*1988  052001               051960 051937(x2)    051316(x2) (zoom/rotation) 051733 (protection)
-Fast Lane           GX752*1987    6309           007121                   051733 (protection) 007801
-Hot Chase           GX763*1988 2x68000                                    051316(x3) (zoom/rotation) 007634 007635 007558 007557
-Rack 'Em Up /       GX765*1987    6309 007342        007420               007327 (palette) 007324
+Double Dribble      GX690*1986  3x6809           005885(x2)               007327 007452
+Kitten Kaboodle /   GX712+1988                   GX400                    007593 051550
+  Nyan Nyan Panic
+Chequered Flag      GX717*1988  052001               051960 051937(x2)           051316(x2) (zoom/rotation) 051733 (protection)
+Fast Lane           GX752*1987    6309           007121                          051733 (protection) 007801
+Hot Chase           GX763*1988 2x68000                                           051316(x3) (zoom/rotation) 007634 007635 007558 007557
+Rack 'Em Up /       GX765*1987    6309 007342        007420               007327 007324
   The Hustler
-Haunted Castle      GX768*1988  052001           007121(x2)               007327 (palette)
-Ajax / Typhoon      GX770*1987   6309+ 052109 051962 051960 051937  PROM  051316 (zoom/rotation) 007327 (palette)
+Haunted Castle      GX768*1988  052001           007121(x2)               007327
+Ajax / Typhoon      GX770*1987   6309+ 052109 051962 051960 051937  PROM  007327 051316 (zoom/rotation)
                                 052001
-Labyrinth Runner    GX771*1987    6309           007121                   007593 (palette) 051733 (protection) 051550
-Super Contra        GX775*1988  052001 052109 051962 051960 051937  PROM  007327 (palette)
-Battlantis          GX777*1987    6309 007342        007420               007327 (palette) 007324
+Labyrinth Runner    GX771*1987    6309           007121                   007593 051733 (protection) 051550
+Super Contra        GX775*1988  052001 052109 051962 051960 051937  PROM  007327
+Battlantis          GX777*1987    6309 007342        007420               007327 007324
 Vulcan Venture /    GX785*1988 2x68000           TWIN16
   Gradius 2
-City Bomber         GX787+1987   68000           GX400                    007593 (palette) 051550
+City Bomber         GX787+1987   68000           GX400                    007593 051550
 Over Drive          GX789 1990
 Hyper Crash         GX790 1987
-Blades of Steel     GX797*1987    6309 007342        007420               007327 (palette) 051733 (protection)
+Blades of Steel     GX797*1987    6309 007342        007420               007327 051733 (protection)
 The Main Event      GX799*1988    6309 052109 051962 051960 051937  PROM
 Missing in Action   GX808*1989   68000 052109 051962 051960 051937  PROM
 Missing in Action J GX808*1989 2x68000           TWIN16
 Crime Fighters      GX821*1989  052526 052109 051962 051960 051937  PROM
-Special Project Y   GX857*1989    6309 052109 051962 051960 051937  PROM  052591 (protection)
-'88 Games           GX861*1988  052001 052109 051962 051960 051937  PROM  051316 (zoom/rotation)
+Special Project Y   GX857*1989    6309 052109 051962 051960 051937  PROM         052591 (protection)
+'88 Games           GX861*1988  052001 052109 051962 051960 051937  PROM         051316 (zoom/rotation)
 Final Round /       GX870*1988 1x68000           TWIN16?
   Hard Puncher
-Thunder Cross       GX873*1988  052001 052109 051962 051960 051937  PROM  007327 (palette) 052591 (protection)
+Thunder Cross       GX873*1988  052001 052109 051962 051960 051937  PROM  007327 052591 (protection)
 Aliens              GX875*1990  052526 052109 051962 051960 051937  PROM
 Gang Busters        GX878*1988  052526 052109 051962 051960 051937  PROM
-Devastators         GX890*1988    6309 052109 051962 051960 051937  PROM  007324 051733 (protection)
-Bottom of the Ninth GX891*1989    6809 052109 051962 051960 051937  PROM  051316 (zoom/rotation)
+Devastators         GX890*1988    6309 052109 051962 051960 051937  PROM         007324 051733 (protection)
+Bottom of the Ninth GX891*1989    6809 052109 051962 051960 051937  PROM         051316 (zoom/rotation)
 Cue Brick           GX903*1989 2x68000           TWIN16
 Punk Shot           GX907*1990   68000 052109 051962 051960 051937 053251
-Ultraman            GX910*1991   68000 ------ ------ 051960 051937  PROM  051316(x3) (zoom/rotation) 051550
+Ultraman            GX910*1991   68000 ------ ------ 051960 051937  PROM         051316(x3) (zoom/rotation) 051550
 Surprise Attack     GX911*1990  053248 052109 051962 053245 053244 053251
 Lightning Fighters /GX939*1990   68000 052109 051962 053245 053244 053251
   Trigon
@@ -80,39 +83,42 @@ Gradius 3           GX945*1989 2x68000 052109 051962 051960 051937  PROM
 Parodius            GX955*1990  053248 052109 051962 053245 053244 053251
 TMNT                GX963*1989   68000 052109 051962 051960 051937  PROM
 Block Hole          GX973*1989  052526 052109 051962 051960 051937  PROM
-Escape Kids         GX975 1991  053248 052109 051962 053247 053246 053251 053252 - same board as Vendetta
-Rollergames         GX999*1991  053248 ------ ------ 053245 053244        051316 (zoom/rotation) 053252
-Bells & Whistles /  GX060*1991   68000 052109 051962 053245 053244 053251 054000 (collision)
+Escape Kids         GX975 1991  053248 052109 051962 053247 053246 053251        053252 - same board as Vendetta
+Rollergames         GX999*1991  053248 ------ ------ 053245 053244               051316 (zoom/rotation) 053252
+Bells & Whistles /  GX060*1991   68000 052109 051962 053245 053244 053251        054000 (collision)
   Detana!! Twin Bee
-Golfing Greats      GX061*1991   68000 052109 051962 053245 053244 053251 053936 (3D)
-TMNT 2              GX063*1991   68000 052109 051962 053245 053244 053251 053990
-Sunset Riders       GX064*1991   68000 052109 051962 053245 053244 053251 054358
+Golfing Greats      GX061*1991   68000 052109 051962 053245 053244 053251        053936 (3D)
+TMNT 2              GX063*1991   68000 052109 051962 053245 053244 053251        053990
+Sunset Riders       GX064*1991   68000 052109 051962 053245 053244 053251        054358
 X-Men               GX065*1992   68000 052109 051962 053247 053246 053251
-XEXEX               GX067*1991   68000 054157 054156 053247 053246 053251 054338 054539
-Asterix             GX068+1992   68000 054157 054156 053245 053244 053251 054358
-G.I. Joe            GX069+1992   68000 054157 054156 053247 053246 053251 054539
+XEXEX               GX067*1991   68000 054157 054156 053247 053246 053251        054338 054539
+Asterix             GX068+1992   68000 054157 054156 053245 053244 053251        054358
+G.I. Joe            GX069+1992   68000 054157 054156 053247 053246 053251        054539
 The Simpsons        GX072*1991  053248 052109 051962 053247 053246 053251
-Thunder Cross 2     GX073*1991   68000 052109 051962 051960 051937 053251 054000 (collision)
-Vendetta /          GX081*1991  053248 052109 051962 053247 053246 053251 054000 (collision)
+Thunder Cross 2     GX073*1991   68000 052109 051962 051960 051937 053251        054000 (collision)
+Vendetta /          GX081*1991  053248 052109 051962 053247 053246 053251        054000 (collision)
   Crime Fighters 2
-Premier Soccer      GX101 1993   68000 052109 051962 053245 053244 053251 053936 (3D)
-Hexion              GX122+1992     Z80                                    052591 (protection) 053252
-Entapous /          GX123+1993   68000 054157 054156 055673 053246        053252 054000 055555
+Premier Soccer      GX101 1993   68000 052109 051962 053245 053244 053251        053936 (3D)
+Hexion              GX122+1992     Z80                                           052591 (protection) 053252
+Entapous /          GX123+1993   68000 054157 054156 055673 053246               053252 054000 055555
   Gaiapolis
 Mystic Warrior      GX128 1993
-Cowboys of Moo Mesa GX151 1993   68000 054157 054156 053247 053246        053252 054338 053990
-Violent Storm       GX168+1993   68000 054157 054156 055673 053246        054338 054539(x2) 055550 055555
-Bucky 'O Hare       GX173+1992   68000 054157 054156 053247 053246 053251 054338 054539
+Cowboys of Moo Mesa GX151 1993   68000 054157 054156 053247 053246               053252 054338 053990
+Violent Storm       GX168+1993   68000 054157 054156 055673 053246               054338 054539(x2) 055550 055555
+Bucky 'O Hare       GX173+1992   68000 054157 054156 053247 053246 053251        054338 054539
 Potrio              GX174 1992
-Lethal Enforcers    GX191 1992    6309 054157(x2) 054156 053245 053244(x2)    054000 054539 054906
+Lethal Enforcers    GX191 1992    6309 054157(x2) 054156 053245 053244(x2)       054000 054539 054906
 Metamorphic Force   GX224 1993
-Martial Champion    GX234+1993   68000 054157 054156 055673 053246        053252 054338 054539 055555 053990 054986 054573
-Run and Gun         GX247+1993   68000               055673 053246        053253(x2)
-Polygonet CommandersGX305 1993   68020                                    056230?063936?054539?054986?
+Martial Champion    GX234+1993   68000 054157 054156 055673 053246               053252 054338 054539 055555 053990 054986 054573
+Run and Gun         GX247+1993   68000               055673 053246               053253(x2)
+Polygonet CommandersGX305 1993   68020                                           056230?063936?054539?054986?
 
 
 Notes:
-the 051961 is an earlier version of the 052109, functionally equivalent
+- Old games use 051961 instead of 052109, it is an earlier version functionally
+  equivalent (maybe 052109 had bugs fixed). The list always shows 052109 because
+  the two are exchangeable and 052109's are found also on original boards whose
+  schematics show a 051961.
 
 
 
@@ -518,13 +524,18 @@ Manages a 32x32 tilemap (16x16 tiles, 512x512 pixels) which can be zoomed,
 distorted and rotated.
 It uses two internal 24 bit counters which are incremented while scanning the
 picture. The coordinates of the pixel in the tilemap that has to be drawn to
-the current beam position are the counters / (2^11). Of course if the value is
-outside (0..511), nothing is drawn.
+the current beam position are the counters / (2^11).
 The chip doesn't directly generate the color information for the pixel, it
 just generates a 24 bit address (whose top 16 bits are the contents of the
 tilemap RAM), and a "visible" signal. It's up to external circuitry to convert
 the address into a pixel color. Most games seem to use 4bpp graphics, but Ajax
 uses 7bpp.
+If the value in the internal counters is out of the visible range (0..511), it
+is truncated and the corresponding address is still generated, but the "visible"
+signal is not asserted. The external circuitry might ignore that signal and
+still generate the pixel, therefore making the tilemap a continuous playfield
+that wraps around instead of a large sprite.
+
 
 control registers
 000-001 X counter starting value / 256
@@ -585,8 +596,8 @@ For the most part, their meaning is unknown
 All registers are write only.
 There must be a way to enable/disable the three external PR inputs.
 Some games initialize the priorities of the sprite & background layers,
-others don't. It isn't clear whether these priorities are actually used,
-since the external ports are used.
+others don't. It isn't clear whether the data written to those registers is
+actually used, since the priority is taken from the external ports.
 
  0  priority of CI0 (higher = lower priority)
     punkshot: unused?
@@ -683,11 +694,12 @@ Memory map:
 15-17 W B center X
 18    R 0 = collision, 1 = no collision
 
+
 051733
 ------
 Sort of a protection device, used for collision detection, and for
 arithmetical operations.
-It is passed a few parameters, and returns result.
+It is passed a few parameters, and returns the result.
 
 Memory map(preliminary):
 ------------------------
@@ -720,7 +732,7 @@ $ac2f:
 (R) 0x2f86: unknown. Only uses bit 0.
 
 $a5de:
-writes to 0x2f84-0x2f85, waits a little, and the read from 0x2f84.
+writes to 0x2f84-0x2f85, waits a little, and then reads from 0x2f84.
 
 $7af3:
 (R) 0x2f86: unknown. Only uses bit 0.
@@ -2032,7 +2044,7 @@ int K052109_is_IRQ_enabled(void)
 
 static int K051960_memory_region;
 static struct GfxElement *K051960_gfx;
-static void (*K051960_callback)(int *code,int *color,int *priority);
+static void (*K051960_callback)(int *code,int *color,int *priority,int *shadow);
 static int K051960_romoffset;
 static int K051960_spriteflip,K051960_readroms,K051960_force_shadows;
 static unsigned char K051960_spriterombank[3];
@@ -2041,7 +2053,7 @@ static int K051960_irq_enabled, K051960_nmi_enabled;
 
 
 int K051960_vh_start(int gfx_memory_region,int plane0,int plane1,int plane2,int plane3,
-		void (*callback)(int *code,int *color,int *priority))
+		void (*callback)(int *code,int *color,int *priority,int *shadow))
 {
 	int gfx_index;
 	static struct GfxLayout spritelayout =
@@ -2101,7 +2113,7 @@ void K051960_vh_stop(void)
 
 static int K051960_fetchromdata(int byte)
 {
-	int code,color,pri,off1,addr;
+	int code,color,pri,shadow,off1,addr;
 
 
 	addr = K051960_romoffset + (K051960_spriterombank[0] << 8) +
@@ -2110,7 +2122,8 @@ static int K051960_fetchromdata(int byte)
 	off1 = addr & 0x1f;
 	color = ((K051960_spriterombank[1] & 0xfc) >> 2) + ((K051960_spriterombank[2] & 0x03) << 6);
 	pri = 0;
-	(*K051960_callback)(&code,&color,&pri);
+	shadow = color & 0x80;
+	(*K051960_callback)(&code,&color,&pri,&shadow);
 
 	addr = (code << 7) | (off1 << 2) | byte;
 	addr &= memory_region_length(K051960_memory_region)-1;
@@ -2289,7 +2302,7 @@ void K051960_sprites_draw(struct osd_bitmap *bitmap,int min_priority,int max_pri
 
 	for (pri_code = 0;pri_code < NUM_SPRITES;pri_code++)
 	{
-		int ox,oy,code,color,pri,size,w,h,x,y,flipx,flipy,zoomx,zoomy;
+		int ox,oy,code,color,pri,shadow,size,w,h,x,y,flipx,flipy,zoomx,zoomy;
 		/* sprites can be grouped up to 8x8. The draw order is
 			 0  1  4  5 16 17 20 21
 			 2  3  6  7 18 19 22 23
@@ -2312,8 +2325,8 @@ void K051960_sprites_draw(struct osd_bitmap *bitmap,int min_priority,int max_pri
 		code = K051960_ram[offs+2] + ((K051960_ram[offs+1] & 0x1f) << 8);
 		color = K051960_ram[offs+3] & 0xff;
 		pri = 0;
-
-		(*K051960_callback)(&code,&color,&pri);
+		shadow = color & 0x80;
+		(*K051960_callback)(&code,&color,&pri,&shadow);
 
 		if (max_priority != -1)
 			if (pri < min_priority || pri > max_priority) continue;
@@ -2365,7 +2378,7 @@ void K051960_sprites_draw(struct osd_bitmap *bitmap,int min_priority,int max_pri
 					else c += yoffset[y];
 
 					/* hack to simulate shadow */
-					if (K051960_force_shadows || (K051960_ram[offs+3] & 0x80))
+					if (K051960_force_shadows || shadow)
 					{
 						int o = K051960_gfx->colortable[16*color+15];
 						K051960_gfx->colortable[16*color+15] = palette_transparent_pen;
@@ -2426,7 +2439,7 @@ void K051960_sprites_draw(struct osd_bitmap *bitmap,int min_priority,int max_pri
 					else c += yoffset[y];
 
 					/* hack to simulate shadow */
-					if (K051960_force_shadows || (K051960_ram[offs+3] & 0x80))
+					if (K051960_force_shadows || shadow)
 					{
 						int o = K051960_gfx->colortable[16*color+15];
 						K051960_gfx->colortable[16*color+15] = palette_transparent_pen;
@@ -2500,12 +2513,13 @@ void K051960_mark_sprites_colors(void)
 	{
 		if (K051960_ram[offs] & 0x80)
 		{
-			int code,color,pri;
+			int code,color,pri,shadow;
 
 			code = K051960_ram[offs+2] + ((K051960_ram[offs+1] & 0x1f) << 8);
 			color = (K051960_ram[offs+3] & 0xff);
 			pri = 0;
-			(*K051960_callback)(&code,&color,&pri);
+			shadow = color & 0x80;
+			(*K051960_callback)(&code,&color,&pri,&shadow);
 			palette_map[color] |= 0xffff;
 		}
 	}
@@ -3766,6 +3780,7 @@ int K051316_vh_start_2(int gfx_memory_region,int bpp,
 void K051316_vh_stop(int chip)
 {
 	free(K051316_ram[chip]);
+	K051316_ram[chip] = 0;
 }
 
 void K051316_vh_stop_0(void)
@@ -3923,13 +3938,10 @@ void K051316_tilemap_update_2(void)
 }
 
 
-/* Note: rotation support doesn't handle asymmetrical visible areas. This doesn't */
-/* matter because in the Konami games the visible area is always symmetrical. */
 void K051316_zoom_draw(int chip, struct osd_bitmap *bitmap,UINT32 priority)
 {
-	UINT32 startx,starty,cx,cy;
+	UINT32 startx,starty;
 	int incxx,incxy,incyx,incyy;
-	int x,sx,sy,ex,ey;
 	struct osd_bitmap *srcbitmap = K051316_tilemap[chip]->pixmap;
 
 	startx = 256 * ((INT16)(256 * K051316_ctrlram[chip][0x00] + K051316_ctrlram[chip][0x01]));
@@ -3939,432 +3951,15 @@ void K051316_zoom_draw(int chip, struct osd_bitmap *bitmap,UINT32 priority)
 	incxy  =        (INT16)(256 * K051316_ctrlram[chip][0x08] + K051316_ctrlram[chip][0x09]);
 	incyy  =        (INT16)(256 * K051316_ctrlram[chip][0x0a] + K051316_ctrlram[chip][0x0b]);
 
-	startx += (Machine->visible_area.min_y - (16 + K051316_offset[chip][1])) * incyx;
-	starty += (Machine->visible_area.min_y - (16 + K051316_offset[chip][1])) * incyy;
+	startx -= (16 + K051316_offset[chip][1]) * incyx;
+	starty -= (16 + K051316_offset[chip][1]) * incyy;
 
-	startx += (Machine->visible_area.min_x - (89 + K051316_offset[chip][0])) * incxx;
-	starty += (Machine->visible_area.min_x - (89 + K051316_offset[chip][0])) * incxy;
+	startx -= (89 + K051316_offset[chip][0]) * incxx;
+	starty -= (89 + K051316_offset[chip][0]) * incxy;
 
-	sx = Machine->visible_area.min_x;
-	sy = Machine->visible_area.min_y;
-	ex = Machine->visible_area.max_x;
-	ey = Machine->visible_area.max_y;
-
-	if (Machine->orientation & ORIENTATION_SWAP_XY)
-	{
-		int t;
-
-		t = startx; startx = starty; starty = t;
-		t = sx; sx = sy; sy = t;
-		t = ex; ex = ey; ey = t;
-		t = incxx; incxx = incyy; incyy = t;
-		t = incxy; incxy = incyx; incyx = t;
-	}
-
-	if (Machine->orientation & ORIENTATION_FLIP_X)
-	{
-		int w = ex - sx;
-
-		incxy = -incxy;
-		incyx = -incyx;
-		startx = 0xfffff - startx;
-		startx -= incxx * w;
-		starty -= incxy * w;
-	}
-
-	if (Machine->orientation & ORIENTATION_FLIP_Y)
-	{
-		int h = ey - sy;
-
-		incxy = -incxy;
-		incyx = -incyx;
-		starty = 0xfffff - starty;
-		startx -= incyx * h;
-		starty -= incyy * h;
-	}
-
-	if (bitmap->depth == 8)
-	{
-		UINT8 *dest;
-
-		if (incxy == 0 && incyx == 0 && !K051316_wraparound[chip])
-		{
-			/* optimized loop for the not rotated case */
-
-			if (incxx == 0x800)
-			{
-				/* optimized loop for the not zoomed case */
-
-				/* startx is unsigned */
-				startx = ((INT32)startx) >> 11;
-
-				if (startx >= 512)
-				{
-					sx += -startx;
-					startx = 0;
-				}
-
-				if (sx <= ex)
-				{
-					while (sy <= ey)
-					{
-						if ((starty & 0xfff00000) == 0)
-						{
-							x = sx;
-							cx = startx;
-							cy = starty >> 11;
-							dest = &bitmap->line[sy][sx];
-							if (priority)
-							{
-								UINT8 *pri = &priority_bitmap->line[sy][sx];
-
-								while (x <= ex && cx < 512)
-								{
-									int c = srcbitmap->line[cy][cx];
-
-									if (c != palette_transparent_pen)
-									{
-										*dest = c;
-										*pri |= priority;
-									}
-
-									cx++;
-									x++;
-									dest++;
-									pri++;
-								}
-							}
-							else
-							{
-								while (x <= ex && cx < 512)
-								{
-									int c = srcbitmap->line[cy][cx];
-
-									if (c != palette_transparent_pen)
-										*dest = c;
-
-									cx++;
-									x++;
-									dest++;
-								}
-							}
-						}
-						starty += incyy;
-						sy++;
-					}
-				}
-			}
-			else
-			{
-				while ((startx & 0xfff00000) != 0 && sx <= ex)
-				{
-					startx += incxx;
-					sx++;
-				}
-
-				if ((startx & 0xfff00000) == 0)
-				{
-					while (sy <= ey)
-					{
-						if ((starty & 0xfff00000) == 0)
-						{
-							x = sx;
-							cx = startx;
-							cy = starty >> 11;
-							dest = &bitmap->line[sy][sx];
-							if (priority)
-							{
-								UINT8 *pri = &priority_bitmap->line[sy][sx];
-
-								while (x <= ex && (cx & 0xfff00000) == 0)
-								{
-									int c = srcbitmap->line[cy][cx >> 11];
-
-									if (c != palette_transparent_pen)
-									{
-										*dest = c;
-										*pri |= priority;
-									}
-
-									cx += incxx;
-									x++;
-									dest++;
-									pri++;
-								}
-							}
-							else
-							{
-								while (x <= ex && (cx & 0xfff00000) == 0)
-								{
-									int c = srcbitmap->line[cy][cx >> 11];
-
-									if (c != palette_transparent_pen)
-										*dest = c;
-
-									cx += incxx;
-									x++;
-									dest++;
-								}
-							}
-						}
-						starty += incyy;
-						sy++;
-					}
-				}
-			}
-		}
-		else
-		{
-			if (K051316_wraparound[chip])
-			{
-				/* plot with wraparound */
-				while (sy <= ey)
-				{
-					x = sx;
-					cx = startx;
-					cy = starty;
-					dest = &bitmap->line[sy][sx];
-					if (priority)
-					{
-						UINT8 *pri = &priority_bitmap->line[sy][sx];
-
-						while (x <= ex)
-						{
-							int c = srcbitmap->line[(cy >> 11) & 0x1ff][(cx >> 11) & 0x1ff];
-
-							if (c != palette_transparent_pen)
-							{
-								*dest = c;
-								*pri |= priority;
-							}
-
-							cx += incxx;
-							cy += incxy;
-							x++;
-							dest++;
-							pri++;
-						}
-					}
-					else
-					{
-						while (x <= ex)
-						{
-							int c = srcbitmap->line[(cy >> 11) & 0x1ff][(cx >> 11) & 0x1ff];
-
-							if (c != palette_transparent_pen)
-								*dest = c;
-
-							cx += incxx;
-							cy += incxy;
-							x++;
-							dest++;
-						}
-					}
-					startx += incyx;
-					starty += incyy;
-					sy++;
-				}
-			}
-			else
-			{
-				while (sy <= ey)
-				{
-					x = sx;
-					cx = startx;
-					cy = starty;
-					dest = &bitmap->line[sy][sx];
-					if (priority)
-					{
-						UINT8 *pri = &priority_bitmap->line[sy][sx];
-
-						while (x <= ex)
-						{
-							if ((cx & 0xfff00000) == 0 && (cy & 0xfff00000) == 0)
-							{
-								int c = srcbitmap->line[cy >> 11][cx >> 11];
-
-								if (c != palette_transparent_pen)
-								{
-									*dest = c;
-									*pri |= priority;
-								}
-							}
-
-							cx += incxx;
-							cy += incxy;
-							x++;
-							dest++;
-							pri++;
-						}
-					}
-					else
-					{
-						while (x <= ex)
-						{
-							if ((cx & 0xfff00000) == 0 && (cy & 0xfff00000) == 0)
-							{
-								int c = srcbitmap->line[cy >> 11][cx >> 11];
-
-								if (c != palette_transparent_pen)
-									*dest = c;
-							}
-
-							cx += incxx;
-							cy += incxy;
-							x++;
-							dest++;
-						}
-					}
-					startx += incyx;
-					starty += incyy;
-					sy++;
-				}
-			}
-		}
-	}
-	else
-	{
-		/* 16-bit case */
-		UINT16 *dest;
-
-		if (incxy == 0 && incyx == 0 && !K051316_wraparound[chip])
-		{
-			/* optimized loop for the not rotated case */
-
-			if (incxx == 0x800)
-			{
-				/* optimized loop for the not zoomed case */
-
-				/* startx is unsigned */
-				startx = ((INT32)startx) >> 11;
-
-				if (startx >= 512)
-				{
-					sx += -startx;
-					startx = 0;
-				}
-
-				if (sx <= ex)
-				{
-					while (sy <= ey)
-					{
-						if ((starty & 0xfff00000) == 0)
-						{
-							x = sx;
-							cx = startx;
-							cy = starty >> 11;
-							dest = &((unsigned short *)bitmap->line[sy])[sx];
-							while (x <= ex && cx < 512)
-							{
-								int c = ((unsigned short *)srcbitmap->line[cy])[cx];
-
-								if (c != palette_transparent_pen)
-									*dest = c;
-
-								cx++;
-								x++;
-								dest++;
-							}
-						}
-						starty += incyy;
-						sy++;
-					}
-				}
-			}
-			else
-			{
-				while ((startx & 0xfff00000) != 0 && sx <= ex)
-				{
-					startx += incxx;
-					sx++;
-				}
-
-				if ((startx & 0xfff00000) == 0)
-				{
-					while (sy <= ey)
-					{
-						if ((starty & 0xfff00000) == 0)
-						{
-							x = sx;
-							cx = startx;
-							cy = starty >> 11;
-							dest = &((unsigned short *)bitmap->line[sy])[sx];
-							while (x <= ex && (cx & 0xfff00000) == 0)
-							{
-								int c = ((unsigned short *)srcbitmap->line[cy])[cx >> 11];
-
-								if (c != palette_transparent_pen)
-									*dest = c;
-
-								cx += incxx;
-								x++;
-								dest++;
-							}
-						}
-						starty += incyy;
-						sy++;
-					}
-				}
-			}
-		}
-		else
-		{
-			if (K051316_wraparound[chip])
-			{
-				/* plot with wraparound */
-				while (sy <= ey)
-				{
-					x = sx;
-					cx = startx;
-					cy = starty;
-					dest = &((unsigned short *)bitmap->line[sy])[sx];
-					while (x <= ex)
-					{
-						int c = ((unsigned short *)srcbitmap->line[(cy >> 11) & 0x1ff])[(cx >> 11) & 0x1ff];
-
-						if (c != palette_transparent_pen)
-							*dest = c;
-
-						cx += incxx;
-						cy += incxy;
-						x++;
-						dest++;
-					}
-					startx += incyx;
-					starty += incyy;
-					sy++;
-				}
-			}
-			else
-			{
-				while (sy <= ey)
-				{
-					x = sx;
-					cx = startx;
-					cy = starty;
-					dest = &((unsigned short *)bitmap->line[sy])[sx];
-					while (x <= ex)
-					{
-						if ((cx & 0xfff00000) == 0 && (cy & 0xfff00000) == 0)
-						{
-							int c = ((unsigned short *)srcbitmap->line[cy >> 11])[cx >> 11];
-
-							if (c != palette_transparent_pen)
-								*dest = c;
-						}
-
-						cx += incxx;
-						cy += incxy;
-						x++;
-						dest++;
-					}
-					startx += incyx;
-					starty += incyy;
-					sy++;
-				}
-			}
-		}
-	}
+	copyrozbitmap(bitmap,srcbitmap,startx << 5,starty << 5,
+			incxx << 5,incxy << 5,incyx << 5,incyy << 5,K051316_wraparound[chip],
+			&Machine->visible_area,TRANSPARENCY_PEN,palette_transparent_pen,priority);
 #if 0
 	usrintf_showmessage("%02x%02x%02x%02x %02x%02x%02x%02x %02x%02x%02x%02x %02x%02x%02x%02x",
 			K051316_ctrlram[chip][0x00],
@@ -4511,6 +4106,8 @@ if (K054000_ram[0x0c] == 0xff) Acy+=3;
 
 	return 0;
 }
+
+
 
 static unsigned char K051733_ram[0x20];
 

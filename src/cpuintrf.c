@@ -100,7 +100,7 @@
 #if (HAS_PDP1)
 #include "cpu/pdp1/pdp1.h"
 #endif
-#if (HAS_ADSP2100)
+#if (HAS_ADSP2100) || (HAS_ADSP2105)
 #include "cpu/adsp2100/adsp2100.h"
 #endif
 #if (HAS_MIPS)
@@ -108,6 +108,9 @@
 #endif
 #if (HAS_SC61860)
 #include "cpu/sc61860/sc61860.h"
+#endif
+#if (HAS_ARM)
+#include "cpu/arm/arm.h"
 #endif
 
 
@@ -208,14 +211,19 @@ static int cpu_0_irq_callback(int irqline);
 static int cpu_1_irq_callback(int irqline);
 static int cpu_2_irq_callback(int irqline);
 static int cpu_3_irq_callback(int irqline);
+static int cpu_4_irq_callback(int irqline);
+static int cpu_5_irq_callback(int irqline);
+static int cpu_6_irq_callback(int irqline);
+static int cpu_7_irq_callback(int irqline);
 
 /* and a list of them for indexed access */
 static int (*cpu_irq_callbacks[MAX_CPU])(int) = {
-	cpu_0_irq_callback,
-	cpu_1_irq_callback,
-	cpu_2_irq_callback,
-	cpu_3_irq_callback
+	cpu_0_irq_callback, cpu_1_irq_callback, cpu_2_irq_callback, cpu_3_irq_callback,
+	cpu_4_irq_callback, cpu_5_irq_callback, cpu_6_irq_callback, cpu_7_irq_callback
 };
+
+/* and a list of driver interception hooks */
+static int (*drv_irq_callbacks[MAX_CPU])(int) = { NULL, };
 
 /* Default window layout for the debugger */
 UINT8 default_win_layout[] = {
@@ -251,7 +259,9 @@ static unsigned Dummy_dasm(char *buffer, unsigned pc);
 #define EXECUTE(index,cycles)			((*cpu[index].intf->execute)(cycles))
 #define GETCONTEXT(index,context)		((*cpu[index].intf->get_context)(context))
 #define SETCONTEXT(index,context)		((*cpu[index].intf->set_context)(context))
-#define GETPC(index)					((*cpu[index].intf->get_pc)())
+#define GETCYCLETBL(index,which)		((*cpu[index].intf->get_cycle_table)(which))
+#define SETCYCLETBL(index,which,cnts)	((*cpu[index].intf->set_cycle_table)(which,cnts))
+#define GETPC(index)                    ((*cpu[index].intf->get_pc)())
 #define SETPC(index,val)				((*cpu[index].intf->set_pc)(val))
 #define GETSP(index)					((*cpu[index].intf->get_sp)())
 #define SETSP(index,val)				((*cpu[index].intf->set_sp)(val))
@@ -281,7 +291,8 @@ static unsigned Dummy_dasm(char *buffer, unsigned pc);
 	{																			   \
 		CPU_##cpu,																   \
 		name##_reset, name##_exit, name##_execute, NULL,						   \
-		name##_get_context, name##_set_context, name##_get_pc, name##_set_pc,	   \
+		name##_get_context, name##_set_context, NULL, NULL, 					   \
+		name##_get_pc, name##_set_pc,											   \
 		name##_get_sp, name##_set_sp, name##_get_reg, name##_set_reg,			   \
 		name##_set_nmi_line, name##_set_irq_line, name##_set_irq_callback,		   \
 		NULL,NULL,NULL, name##_info, name##_dasm,								   \
@@ -297,7 +308,9 @@ static unsigned Dummy_dasm(char *buffer, unsigned pc);
 		CPU_##cpu,																   \
 		name##_reset, name##_exit, name##_execute,								   \
 		name##_burn,															   \
-		name##_get_context, name##_set_context, name##_get_pc, name##_set_pc,	   \
+		name##_get_context, name##_set_context, 								   \
+		name##_get_cycle_table, name##_set_cycle_table, 						   \
+		name##_get_pc, name##_set_pc,											   \
 		name##_get_sp, name##_set_sp, name##_get_reg, name##_set_reg,			   \
 		name##_set_nmi_line, name##_set_irq_line, name##_set_irq_callback,		   \
 		NULL,name##_state_save,name##_state_load, name##_info, name##_dasm, 	   \
@@ -313,7 +326,8 @@ static unsigned Dummy_dasm(char *buffer, unsigned pc);
 		CPU_##cpu,																   \
 		name##_reset, name##_exit, name##_execute,								   \
 		NULL,																	   \
-		name##_get_context, name##_set_context, name##_get_pc, name##_set_pc,	   \
+		name##_get_context, name##_set_context, NULL, NULL, 					   \
+        name##_get_pc, name##_set_pc,                                              \
 		name##_get_sp, name##_set_sp, name##_get_reg, name##_set_reg,			   \
 		name##_set_nmi_line, name##_set_irq_line, name##_set_irq_callback,		   \
 		name##_internal_interrupt,NULL,NULL, name##_info, name##_dasm,			   \
@@ -514,12 +528,20 @@ struct cpu_interface cpuintf[] =
 #define adsp2100_ICount adsp2100_icount
 	CPU0(ADSP2100, adsp2100, 4,  0,1.00,ADSP2100_INT_NONE, -1,			   -1,			   16lew,-1,14,LE,2, 4,16LEW),
 #endif
+#if (HAS_ADSP2105)
+/* IMO we should rename all *_ICount to *_icount - ie. no mixed case */
+#define adsp2105_ICount adsp2105_icount
+	CPU0(ADSP2105, adsp2105, 4,  0,1.00,ADSP2105_INT_NONE, -1,			   -1,			   16lew,-1,14,LE,2, 4,16LEW),
+#endif
 #if (HAS_MIPS)
 	CPU0(MIPS,	   mips,	 8, -1,1.00,MIPS_INT_NONE,	   MIPS_INT_NONE,  MIPS_INT_NONE,  32lew, 0,32,LE,4, 4,32LEW),
 #endif
 #if (HAS_SC61860)
 	#define sc61860_ICount sc61860_icount
 	CPU0(SC61860,  sc61860,  1,  0,1.00,-1,				   -1,			   -1,			   16,    0,16,BE,1, 4,16	),
+#endif
+#if (HAS_ARM)
+	CPU0(ARM,	   arm, 	 2,  0,1.00,ARM_INT_NONE,	   ARM_FIRQ,	   ARM_IRQ, 	   26lew, 0,26,LE,4, 4,26LEW),
 #endif
 };
 
@@ -655,6 +677,8 @@ logerror("Machine reset\n");
 	{
 		interrupt_enable[i] = 1;
 		interrupt_vector[i] = 0xff;
+        /* Reset any driver hooks into the IRQ acknowledge callbacks */
+        drv_irq_callbacks[i] = NULL;
 	}
 
 	/* do this AFTER the above so init_machine() can use cpu_halt() to hold the */
@@ -672,6 +696,7 @@ logerror("Machine reset\n");
 
 		/* Set the irq callback for the cpu */
 		SETIRQCALLBACK(i,cpu_irq_callbacks[i]);
+
 
 		/* save the CPU context if necessary */
 		if (cpu[i].save_context) GETCONTEXT (i, cpu[i].context);
@@ -814,18 +839,23 @@ logerror("Machine reset\n");
   Use this function to initialize, and later maintain, the watchdog. For
   convenience, when the machine is reset, the watchdog is disabled. If you
   call this function, the watchdog is initialized, and from that point
-  onwards, if you don't call it at least once every 10 video frames, the
-  machine will be reset.
+  onwards, if you don't call it at least once every 2 seconds, the machine
+  will be reset.
+
+  The 2 seconds delay is targeted at dondokod, which during boot stays more
+  than 1 second without resetting the watchdog.
 
 ***************************************************************************/
 WRITE_HANDLER( watchdog_reset_w )
 {
-	watchdog_counter = Machine->drv->frames_per_second;
+	if (watchdog_counter == -1) logerror("watchdog armed\n");
+	watchdog_counter = 2*Machine->drv->frames_per_second;
 }
 
 READ_HANDLER( watchdog_reset_r )
 {
-	watchdog_counter = Machine->drv->frames_per_second;
+	if (watchdog_counter == -1) logerror("watchdog armed\n");
+	watchdog_counter = 2*Machine->drv->frames_per_second;
 	return 0;
 }
 
@@ -867,6 +897,17 @@ void cpu_set_reset_line(int cpunum,int state)
 void cpu_set_halt_line(int cpunum,int state)
 {
 	timer_set(TIME_NOW, (cpunum & 7) | (state << 3), cpu_haltcallback);
+}
+
+
+/***************************************************************************
+
+  Use this function to install a callback for IRQ acknowledge
+
+***************************************************************************/
+void cpu_set_irq_callback(int cpunum, int (*callback)(int))
+{
+	drv_irq_callbacks[cpunum] = callback;
 }
 
 
@@ -1124,49 +1165,29 @@ int cpu_getiloops(void)
   is HOLD_LINE and returns the interrupt vector for that line.
 
 ***************************************************************************/
-static int cpu_0_irq_callback(int irqline)
-{
-	if( irq_line_state[0 * MAX_IRQ_LINES + irqline] == HOLD_LINE )
-	{
-		SETIRQLINE(0, irqline, CLEAR_LINE);
-		irq_line_state[0 * MAX_IRQ_LINES + irqline] = CLEAR_LINE;
-	}
-	LOG(("cpu_0_irq_callback(%d) $%04x\n", irqline, irq_line_vector[0 * MAX_IRQ_LINES + irqline]));
-	return irq_line_vector[0 * MAX_IRQ_LINES + irqline];
+#define MAKE_IRQ_CALLBACK(num)												\
+static int cpu_##num##_irq_callback(int irqline)							\
+{																			\
+	int vector = irq_line_vector[num * MAX_IRQ_LINES + irqline];			\
+    if( irq_line_state[num * MAX_IRQ_LINES + irqline] == HOLD_LINE )        \
+	{																		\
+		SETIRQLINE(num, irqline, CLEAR_LINE);								\
+		irq_line_state[num * MAX_IRQ_LINES + irqline] = CLEAR_LINE; 		\
+	}																		\
+	LOG(("cpu_##num##_irq_callback(%d) $%04x\n", irqline, vector));         \
+	if( drv_irq_callbacks[num] )											\
+		return (*drv_irq_callbacks[num])(vector);							\
+	return vector;															\
 }
 
-static int cpu_1_irq_callback(int irqline)
-{
-	if( irq_line_state[1 * MAX_IRQ_LINES + irqline] == HOLD_LINE )
-	{
-		SETIRQLINE(1, irqline, CLEAR_LINE);
-		irq_line_state[1 * MAX_IRQ_LINES + irqline] = CLEAR_LINE;
-	}
-	LOG(("cpu_1_irq_callback(%d) $%04x\n", irqline, irq_line_vector[1 * MAX_IRQ_LINES + irqline]));
-	return irq_line_vector[1 * MAX_IRQ_LINES + irqline];
-}
-
-static int cpu_2_irq_callback(int irqline)
-{
-	if( irq_line_state[2 * MAX_IRQ_LINES + irqline] == HOLD_LINE )
-	{
-		SETIRQLINE(2, irqline, CLEAR_LINE);
-		irq_line_state[2 * MAX_IRQ_LINES + irqline] = CLEAR_LINE;
-	}
-	LOG(("cpu_2_irq_callback(%d) $%04x\n", irqline, irq_line_vector[2 * MAX_IRQ_LINES + irqline]));
-	return irq_line_vector[2 * MAX_IRQ_LINES + irqline];
-}
-
-static int cpu_3_irq_callback(int irqline)
-{
-	if( irq_line_state[3 * MAX_IRQ_LINES + irqline] == HOLD_LINE )
-	{
-		SETIRQLINE(3, irqline, CLEAR_LINE);
-		irq_line_state[3 * MAX_IRQ_LINES + irqline] = CLEAR_LINE;
-	}
-	LOG(("cpu_3_irq_callback(%d) $%04x\n", irqline, irq_line_vector[2 * MAX_IRQ_LINES + irqline]));
-	return irq_line_vector[3 * MAX_IRQ_LINES + irqline];
-}
+MAKE_IRQ_CALLBACK(0)
+MAKE_IRQ_CALLBACK(1)
+MAKE_IRQ_CALLBACK(2)
+MAKE_IRQ_CALLBACK(3)
+MAKE_IRQ_CALLBACK(4)
+MAKE_IRQ_CALLBACK(5)
+MAKE_IRQ_CALLBACK(6)
+MAKE_IRQ_CALLBACK(7)
 
 /***************************************************************************
 
@@ -2395,6 +2416,22 @@ void cpu_set_context(void *context)
 {
 	int cpunum = (activecpu < 0) ? 0 : activecpu;
 	SETCONTEXT(cpunum,context);
+}
+
+/***************************************************************************
+  Retrieve or set a cycle counts lookup table for the active CPU
+***************************************************************************/
+
+void *cpu_get_cycle_table(int which)
+{
+	int cpunum = (activecpu < 0) ? 0 : activecpu;
+	return GETCYCLETBL(cpunum,which);
+}
+
+void cpu_set_cycle_tbl(int which, void *new_table)
+{
+	int cpunum = (activecpu < 0) ? 0 : activecpu;
+	SETCYCLETBL(cpunum,which,new_table);
 }
 
 /***************************************************************************

@@ -176,7 +176,7 @@ unsigned dasm2100(char *buffer, unsigned pc)
 	unsigned int op = *(UINT32 *)&OP_ROM[ADSP2100_PGM_OFFSET + (pc << 2)];
 	int temp;
 
-	switch (op >> 16)
+	switch ( ( op >> 16 ) & 0xff )
 	{
 		case 0x00:
 			/* 00000000 00000000 00000000  NOP */
@@ -263,7 +263,7 @@ unsigned dasm2100(char *buffer, unsigned pc)
 			break;
 		case 0x0a:
 			/* 00001010 00000000 0000xxxx  conditional return */
-			if ((op & 0x00fff0) == 0x000000)
+			if ((op & 0x00ffe0) == 0x000000)
 			{
 				buffer += sprintf(buffer, condition[op & 15]);
 				if (op & 0x000010)

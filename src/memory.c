@@ -4,10 +4,23 @@
 
   Functions which handle the CPU memory and I/O port access.
 
+  Caveats:
+
+  * The install_mem/port_*_handler functions are only intended to be
+    called at driver init time. Do not call them after this time.
+
+  * If your driver executes an opcode which crosses a bank-switched
+    boundary, it will pull the wrong data out of memory. Although not
+    a common case, you may need to revert to memcpy to work around this.
+    See machine/tnzs.c for an example.
+
 ***************************************************************************/
 
 #include "driver.h"
 #include "osd_cpu.h"
+
+
+#define VERBOSE 0
 
 /* #define MEM_DUMP */
 
@@ -268,7 +281,7 @@ static MHELE *get_element( MHELE *element , int ad , int elemask ,
 	/* create new element block */
 	if( (*ele_max)+banks > MH_ELEMAX )
 	{
-		logerror("memory element size over \n");
+		logerror("memory element size overflow\n");
 		return 0;
 	}
 	/* get new element nunber */
@@ -316,7 +329,7 @@ static void set_element( int cpu , MHELE *celement , int sp , int ep , MHELE typ
 		{
 			if( (sb|mask)==(eb|mask) )
 			{
-				/* same reasion */
+				/* same reason */
 				ele = (sele ? sele : eele);
 				for( i = sb ; i <= eb ; i++ ){
 					ele[i & mask] = type;
@@ -463,7 +476,6 @@ int memory_init(void)
 	const struct MemoryWriteAddress *mwa;
 	const struct IOReadPort *ioread;
 	const struct IOWritePort *iowrite;
-	MHELE hardware;
 	int abits1,abits2,abits3,abitsmin;
 	rdelement_max = 0;
 	wrelement_max = 0;
@@ -558,7 +570,7 @@ int memory_init(void)
 #endif
 	}
 
-	/* initialize grobal handler */
+	/* initialize global handler */
 	for( i = 0 ; i < MH_HARDMAX ; i++ ){
 		memoryreadoffset[i] = 0;
 		memorywriteoffset[i] = 0;
@@ -623,7 +635,7 @@ int memory_init(void)
 			return 0;
 		}
 
-		/* initialize curent element table */
+		/* initialize current element table */
 		for( i = 0 ; i < (1<<abits1) ; i++ )
 		{
 			cur_mr_element[cpu][i] = HT_NON;	/* no map memory */
@@ -642,69 +654,7 @@ int memory_init(void)
 
 			while (mra >= memoryread)
 			{
-				mem_read_handler handler = mra->handler;
-
-/* work around a compiler bug */
-#ifdef SGI_FIX_MWA_NOP
-				if ((FPTR)handler == (FPTR)MRA_NOP) {
-					hardware = HT_NOP;
-				} else {
-#endif
-				switch ((FPTR)handler)
-				{
-				case (FPTR)MRA_RAM:
-				case (FPTR)MRA_ROM:
-					hardware = HT_RAM;	/* sprcial case ram read */
-					break;
-				case (FPTR)MRA_BANK1:
-				case (FPTR)MRA_BANK2:
-				case (FPTR)MRA_BANK3:
-				case (FPTR)MRA_BANK4:
-				case (FPTR)MRA_BANK5:
-				case (FPTR)MRA_BANK6:
-				case (FPTR)MRA_BANK7:
-				case (FPTR)MRA_BANK8:
-				case (FPTR)MRA_BANK9:
-				case (FPTR)MRA_BANK10:
-				case (FPTR)MRA_BANK11:
-				case (FPTR)MRA_BANK12:
-				case (FPTR)MRA_BANK13:
-				case (FPTR)MRA_BANK14:
-				case (FPTR)MRA_BANK15:
-				case (FPTR)MRA_BANK16:
-				{
-					hardware = (int)MRA_BANK1 - (int)handler + 1;
-					memoryreadoffset[hardware] = bankreadoffset[hardware] = mra->start;
-					cpu_bankbase[hardware] = memory_find_base(cpu, mra->start);
-					break;
-				}
-				case (FPTR)MRA_NOP:
-					hardware = HT_NOP;
-					break;
-				default:
-					/* create newer hardware handler */
-					if( rdhard_max == MH_HARDMAX )
-					{
-						logerror("read memory hardware pattern over !\n");
-						hardware = 0;
-					}
-					else
-					{
-						/* regist hardware function */
-						hardware = rdhard_max++;
-						memoryreadhandler[hardware] = handler;
-						memoryreadoffset[hardware] = mra->start;
-					}
-				}
-#ifdef SGI_FIX_MWA_NOP
-				}
-#endif
-				/* hardware element table make */
-				set_element( cpu , cur_mr_element[cpu] ,
-					(((unsigned int) mra->start) >> abitsmin) ,
-					(((unsigned int) mra->end) >> abitsmin) ,
-					hardware , readhardware , &rdelement_max );
-
+				install_mem_read_handler (cpu, mra->start, mra->end, mra->handler);
 				mra--;
 			}
 		}
@@ -718,69 +668,7 @@ int memory_init(void)
 
 			while (mwa >= memorywrite)
 			{
-				mem_write_handler handler = mwa->handler;
-#ifdef SGI_FIX_MWA_NOP
-				if ((FPTR)handler == (FPTR)MWA_NOP) {
-					hardware = HT_NOP;
-				} else {
-#endif
-				switch( (FPTR)handler )
-				{
-				case (FPTR)MWA_RAM:
-					hardware = HT_RAM;	/* sprcial case ram write */
-					break;
-				case (FPTR)MWA_BANK1:
-				case (FPTR)MWA_BANK2:
-				case (FPTR)MWA_BANK3:
-				case (FPTR)MWA_BANK4:
-				case (FPTR)MWA_BANK5:
-				case (FPTR)MWA_BANK6:
-				case (FPTR)MWA_BANK7:
-				case (FPTR)MWA_BANK8:
-				case (FPTR)MWA_BANK9:
-				case (FPTR)MWA_BANK10:
-				case (FPTR)MWA_BANK11:
-				case (FPTR)MWA_BANK12:
-				case (FPTR)MWA_BANK13:
-				case (FPTR)MWA_BANK14:
-				case (FPTR)MWA_BANK15:
-				case (FPTR)MWA_BANK16:
-				{
-					hardware = (int)MWA_BANK1 - (int)handler + 1;
-					memorywriteoffset[hardware] = bankwriteoffset[hardware] = mwa->start;
-					cpu_bankbase[hardware] = memory_find_base(cpu, mwa->start);
-					break;
-				}
-				case (FPTR)MWA_NOP:
-					hardware = HT_NOP;
-					break;
-				case (FPTR)MWA_RAMROM:
-					hardware = HT_RAMROM;
-					break;
-				case (FPTR)MWA_ROM:
-					hardware = HT_ROM;
-					break;
-				default:
-					/* create newer hardware handler */
-					if( wrhard_max == MH_HARDMAX ){
-						logerror("write memory hardware pattern over !\n");
-						hardware = 0;
-					}else{
-						/* regist hardware function */
-						hardware = wrhard_max++;
-						memorywritehandler[hardware] = handler;
-						memorywriteoffset[hardware]  = mwa->start;
-					}
-				}
-#ifdef SGI_FIX_MWA_NOP
-				}
-#endif
-				/* hardware element table make */
-				set_element( cpu , cur_mw_element[cpu] ,
-					(int) (((unsigned int) mwa->start) >> abitsmin) ,
-					(int) (((unsigned int) mwa->end) >> abitsmin) ,
-					hardware , (MHELE *)writehardware , &wrelement_max );
-
+				install_mem_write_handler (cpu, mwa->start, mwa->end, mwa->handler);
 				mwa--;
 			}
 		}
@@ -1061,6 +949,10 @@ READBYTE(cpu_readmem24bew, TYPE_16BIT_BE, 24BEW)
 READWORD(cpu_readmem24bew, TYPE_16BIT_BE, 24BEW, CAN_BE_MISALIGNED)
 READLONG(cpu_readmem24bew, TYPE_16BIT_BE, 24BEW, CAN_BE_MISALIGNED)
 
+READBYTE(cpu_readmem26lew, TYPE_16BIT_LE, 26LEW)
+READWORD(cpu_readmem26lew, TYPE_16BIT_LE, 26LEW, ALWAYS_ALIGNED)
+READLONG(cpu_readmem26lew, TYPE_16BIT_LE, 26LEW, ALWAYS_ALIGNED)
+
 READBYTE(cpu_readmem29,    TYPE_16BIT_LE, 29)
 READWORD(cpu_readmem29,    TYPE_16BIT_LE, 29,	 CAN_BE_MISALIGNED)
 READLONG(cpu_readmem29,    TYPE_16BIT_LE, 29,	 CAN_BE_MISALIGNED)
@@ -1277,6 +1169,10 @@ WRITEBYTE(cpu_writemem24,	 TYPE_8BIT, 	24)
 WRITEBYTE(cpu_writemem24bew, TYPE_16BIT_BE, 24BEW)
 WRITEWORD(cpu_writemem24bew, TYPE_16BIT_BE, 24BEW, CAN_BE_MISALIGNED)
 WRITELONG(cpu_writemem24bew, TYPE_16BIT_BE, 24BEW, CAN_BE_MISALIGNED)
+
+WRITEBYTE(cpu_writemem26lew, TYPE_16BIT_LE, 26LEW)
+WRITEWORD(cpu_writemem26lew, TYPE_16BIT_LE, 26LEW, ALWAYS_ALIGNED)
+WRITELONG(cpu_writemem26lew, TYPE_16BIT_LE, 26LEW, ALWAYS_ALIGNED)
 
 WRITEBYTE(cpu_writemem29,	 TYPE_16BIT_LE, 29)
 WRITEWORD(cpu_writemem29,	 TYPE_16BIT_LE, 29,    CAN_BE_MISALIGNED)
@@ -1520,6 +1416,7 @@ void *install_mem_read_handler(int cpu, int start, int end, mem_read_handler han
 	MHELE hardware = 0;
 	int abitsmin;
 	int i, hw_set;
+#if VERBOSE
 	logerror("Install new memory read handler:\n");
 	logerror("             cpu: %d\n", cpu);
 	logerror("           start: 0x%08x\n", start);
@@ -1528,6 +1425,7 @@ void *install_mem_read_handler(int cpu, int start, int end, mem_read_handler han
 	logerror(" handler address: 0x%016lx\n", (unsigned long) handler);
 #else
 	logerror(" handler address: 0x%08x\n", (unsigned int) handler);
+#endif
 #endif
 	abitsmin = ABITSMIN (cpu);
 
@@ -1539,7 +1437,9 @@ void *install_mem_read_handler(int cpu, int start, int end, mem_read_handler han
 		if (( memoryreadhandler[i] == handler ) &&
 			(  memoryreadoffset[i] == start))
 		{
+#if VERBOSE
 			logerror("handler match - use old one\n");
+#endif
 			hardware = i;
 			hw_set = 1;
 		}
@@ -1548,7 +1448,7 @@ void *install_mem_read_handler(int cpu, int start, int end, mem_read_handler han
 	{
 		case (FPTR)MRA_RAM:
 		case (FPTR)MRA_ROM:
-			hardware = HT_RAM;	/* sprcial case ram read */
+			hardware = HT_RAM;	/* special case ram read */
 			hw_set = 1;
 			break;
 		case (FPTR)MRA_BANK1:
@@ -1569,6 +1469,8 @@ void *install_mem_read_handler(int cpu, int start, int end, mem_read_handler han
 		case (FPTR)MRA_BANK16:
 		{
 			hardware = (int)MRA_BANK1 - (int)handler + 1;
+			memoryreadoffset[hardware] = bankreadoffset[hardware] = start;
+			cpu_bankbase[hardware] = memory_find_base(cpu, start);
 			hw_set = 1;
 			break;
 		}
@@ -1599,9 +1501,11 @@ void *install_mem_read_handler(int cpu, int start, int end, mem_read_handler han
 		(((unsigned int) start) >> abitsmin) ,
 		(((unsigned int) end) >> abitsmin) ,
 		hardware , readhardware , &rdelement_max );
+#if VERBOSE
 	logerror("Done installing new memory handler.\n");
 	logerror("used read  elements %d/%d , functions %d/%d\n"
 			,rdelement_max,MH_ELEMAX , rdhard_max,MH_HARDMAX );
+#endif
 	return memory_find_base(cpu, start);
 }
 
@@ -1610,6 +1514,7 @@ void *install_mem_write_handler(int cpu, int start, int end, mem_write_handler h
 	MHELE hardware = 0;
 	int abitsmin;
 	int i, hw_set;
+#if VERBOSE
 	logerror("Install new memory write handler:\n");
 	logerror("             cpu: %d\n", cpu);
 	logerror("           start: 0x%08x\n", start);
@@ -1618,6 +1523,7 @@ void *install_mem_write_handler(int cpu, int start, int end, mem_write_handler h
 	logerror(" handler address: 0x%016lx\n", (unsigned long) handler);
 #else
 	logerror(" handler address: 0x%08x\n", (unsigned int) handler);
+#endif
 #endif
 	abitsmin = ABITSMIN (cpu);
 
@@ -1629,7 +1535,9 @@ void *install_mem_write_handler(int cpu, int start, int end, mem_write_handler h
 		if (( memorywritehandler[i] == handler ) &&
 			(  memorywriteoffset[i] == start))
 		{
+#if VERBOSE
 			logerror("handler match - use old one\n");
+#endif
 			hardware = i;
 			hw_set = 1;
 		}
@@ -1638,7 +1546,7 @@ void *install_mem_write_handler(int cpu, int start, int end, mem_write_handler h
 	switch( (FPTR)handler )
 	{
 		case (FPTR)MWA_RAM:
-			hardware = HT_RAM;	/* sprcial case ram write */
+			hardware = HT_RAM;	/* special case ram write */
 			hw_set = 1;
 			break;
 		case (FPTR)MWA_BANK1:
@@ -1659,6 +1567,8 @@ void *install_mem_write_handler(int cpu, int start, int end, mem_write_handler h
 		case (FPTR)MWA_BANK16:
 		{
 			hardware = (int)MWA_BANK1 - (int)handler + 1;
+			memorywriteoffset[hardware] = bankwriteoffset[hardware] = start;
+			cpu_bankbase[hardware] = memory_find_base(cpu, start);
 			hw_set = 1;
 			break;
 		}
@@ -1698,9 +1608,11 @@ void *install_mem_write_handler(int cpu, int start, int end, mem_write_handler h
 		(((unsigned int) start) >> abitsmin) ,
 		(((unsigned int) end) >> abitsmin) ,
 		hardware , writehardware , &wrelement_max );
+#if VERBOSE
 	logerror("Done installing new memory handler.\n");
 	logerror("used write elements %d/%d , functions %d/%d\n"
 			,wrelement_max,MH_ELEMAX , wrhard_max,MH_HARDMAX );
+#endif
 	return memory_find_base(cpu, start);
 }
 

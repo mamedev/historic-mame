@@ -1,47 +1,53 @@
-/*** TMS34010: Portable TMS34010 emulator ************************************
+/*###################################################################################################
+**
+**	TMS34010: Portable Texas Instruments TMS34010 emulator
+**
+**	Copyright (C) Alex Pasadyn/Zsolt Vasvari 1998
+**	 Parts based on code by Aaron Giles
+**
+**#################################################################################################*/
 
-	Copyright (C) Alex Pasadyn/Zsolt Vasvari 1998
 
-    Opcodes
+/*###################################################################################################
+**	MISC MACROS
+**#################################################################################################*/
 
-	Most of the opcodes were painfully tested to produce the fastest
-	possible code on DJGPP. If you make any changes, please test for
-	performace. Even a trivial change such as reordering a couple of
-	lines can have a change in performance.
+#define ZEXTEND(val,width) if (width) (val) &= ((UINT32)0xffffffff >> (32 - (width)))
+#define SEXTEND(val,width) if (width) (val) = (INT32)((val) << (32 - (width))) >> (32 - (width))
 
-	Most games seem to be especially sensitive to the XY instructions,
-	such as ADDXY and SUBXY.
-
-*****************************************************************************/
-
-/* clears flags */
-#define CLR_V (V_FLAG = 0)
-
-#define ZEXTEND(val,width) if (width) (val) &= ((UINT32)0xffffffff>>(32-(width)))
-#define SEXTEND(val,width) if (width)														  \
-						   {																  \
-						       (val) &= ((UINT32)0xffffffff>>(32-(width))); 			 	  \
-							   (val) |= (((val)&(1<<((width)-1)))?((0xffffffff)<<(width)):0); \
-						   }
-
-#define SET_Z(val) (NOTZ_FLAG = (val))
-#define SET_N(val) (N_FLAG = SIGN(val))
-#define SET_NZ(val) {SET_Z(val); SET_N(NOTZ_FLAG);}
-#define SET_V_SUB(a,b,r) (V_FLAG = SIGN( ((a)^(b))&((a)^(r))))
-#define SET_V_ADD(a,b,r) (V_FLAG = SIGN(~((a)^(b))&((a)^(r))))
-#define SET_C_SUB(a,b)  (C_FLAG = (((UINT32)  (b)) >((UINT32)(a))))
-#define SET_C_ADD(a,b)  (C_FLAG = (((UINT32)(~(a)))<((UINT32)(b))))
-#define SET_NZV_SUB(a,b,r)   {SET_NZ(r);SET_V_SUB(a,b,r);}
-#define SET_NZCV_SUB(a,b,r)  {SET_NZV_SUB(a,b,r);SET_C_SUB(a,b);}
-#define SET_NZCV_ADD(a,b,r)  {SET_NZ(r);SET_V_ADD(a,b,r);SET_C_ADD(a,b);}
-
-#define XYTOL(val) ((((INT32)((UINT16)(val.y) )<<state.xytolshiftcount1) |	\
-				    (((INT32)((UINT16)(val.x)))<<state.xytolshiftcount2)) + OFFSET)
+#define XYTOL(val)	((((INT32)((UINT16)(val.y)) << state.xytolshiftcount1) |	\
+				    (((INT32)((UINT16)(val.x))) << state.xytolshiftcount2)) + OFFSET)
 
 
 #define COUNT_CYCLES(x)	tms34010_ICount -= x
 #define COUNT_UNKNOWN_CYCLES(x) COUNT_CYCLES(x)
 
+
+
+/*###################################################################################################
+**	FLAG HANDLING MACROS
+**#################################################################################################*/
+
+#define SIGN(val)			((val) & 0x80000000)
+
+#define CLR_V 				(V_FLAG = 0)
+
+#define SET_Z(val)			(NOTZ_FLAG = (val))
+#define SET_N(val)			(N_FLAG = SIGN(val))
+#define SET_NZ(val)			{ SET_Z(val); SET_N(NOTZ_FLAG); }
+#define SET_V_SUB(a,b,r)	(V_FLAG = SIGN(((a) ^ (b)) & ((a) ^ (r))))
+#define SET_V_ADD(a,b,r)	(V_FLAG = SIGN(~((a) ^ (b)) & ((a) ^ (r))))
+#define SET_C_SUB(a,b)		(C_FLAG = (((UINT32)(b)) > ((UINT32)(a))))
+#define SET_C_ADD(a,b)		(C_FLAG = (((UINT32)(~(a))) < ((UINT32)(b))))
+#define SET_NZV_SUB(a,b,r)	{ SET_NZ(r); SET_V_SUB(a,b,r); }
+#define SET_NZCV_SUB(a,b,r)	{ SET_NZV_SUB(a,b,r); SET_C_SUB(a,b); }
+#define SET_NZCV_ADD(a,b,r)	{ SET_NZ(r); SET_V_ADD(a,b,r); SET_C_ADD(a,b); }
+
+
+
+/*###################################################################################################
+**	UNIMPLEMENTED INSTRUCTION
+**#################################################################################################*/
 
 static void unimpl(void)
 {
@@ -56,13 +62,16 @@ static void unimpl(void)
 	{
 		cpu_set_halt_line(cpu_getactivecpu(),ASSERT_LINE);
 #if MAME_DEBUG
-		{
-			extern int debug_key_pressed;
-			debug_key_pressed = 1;
-		}
+		debug_key_pressed = 1;
 #endif
 	}
 }
+
+
+
+/*###################################################################################################
+**	X/Y OPERATIONS
+**#################################################################################################*/
 
 #define ADD_XY(R)								\
 {												\
@@ -152,10 +161,15 @@ static void movx_b(void) { MOVX(B); }
 static void movy_a(void) { MOVY(A); }
 static void movy_b(void) { MOVY(B); }
 
+
+
+/*###################################################################################################
+**	PIXEL TRANSFER OPERATIONS
+**#################################################################################################*/
+
 #define PIXT_RI(R)			                        \
 {							 						\
 	WPIXEL(R##REG(R##DSTREG),R##REG(R##SRCREG));	\
-	FINISH_PIX_OP;									\
   	COUNT_UNKNOWN_CYCLES(2);						\
 }
 static void pixt_ri_a(void) { PIXT_RI(A); }
@@ -172,7 +186,6 @@ static void pixt_ri_b(void) { PIXT_RI(B); }
 		(R##REG_X(R##DSTREG) >= WSTART_X && R##REG_X(R##DSTREG) <= WEND_X &&		\
 		 R##REG_Y(R##DSTREG) >= WSTART_Y && R##REG_Y(R##DSTREG) <= WEND_Y))			\
 		WPIXEL(XYTOL(R##REG_XY(R##DSTREG)),R##REG(R##SRCREG));	\
-	FINISH_PIX_OP;									\
   	COUNT_UNKNOWN_CYCLES(4);						\
 }
 static void pixt_rixy_a(void) { PIXT_RIXY(A); }
@@ -181,7 +194,6 @@ static void pixt_rixy_b(void) { PIXT_RIXY(B); }
 #define PIXT_IR(R)			                        \
 {													\
 	R##REG(R##DSTREG) = V_FLAG = RPIXEL(R##REG(R##SRCREG));	\
-	FINISH_PIX_OP;									\
 	COUNT_CYCLES(4);								\
 }
 static void pixt_ir_a(void) { PIXT_IR(A); }
@@ -190,7 +202,6 @@ static void pixt_ir_b(void) { PIXT_IR(B); }
 #define PIXT_II(R)			                       	\
 {													\
 	WPIXEL(R##REG(R##DSTREG),RPIXEL(R##REG(R##SRCREG)));	\
-	FINISH_PIX_OP;									\
   	COUNT_UNKNOWN_CYCLES(4);						\
 }
 static void pixt_ii_a(void) { PIXT_II(A); }
@@ -199,7 +210,6 @@ static void pixt_ii_b(void) { PIXT_II(B); }
 #define PIXT_IXYR(R)			              		\
 {													\
 	R##REG(R##DSTREG) = V_FLAG = RPIXEL(XYTOL(R##REG_XY(R##SRCREG)));	\
-	FINISH_PIX_OP;									\
 	COUNT_CYCLES(6);								\
 }
 static void pixt_ixyr_a(void) { PIXT_IXYR(A); }
@@ -208,7 +218,6 @@ static void pixt_ixyr_b(void) { PIXT_IXYR(B); }
 #define PIXT_IXYIXY(R)			              			      		\
 {																	\
 	WPIXEL(XYTOL(R##REG_XY(R##DSTREG)),RPIXEL(XYTOL(R##REG_XY(R##SRCREG))));	\
-	FINISH_PIX_OP;													\
   	COUNT_UNKNOWN_CYCLES(7);										\
 }
 static void pixt_ixyixy_a(void) { PIXT_IXYIXY(A); }
@@ -225,14 +234,17 @@ static void pixt_ixyixy_b(void) { PIXT_IXYIXY(B); }
 															\
 	R##REG_X(R##DSTREG) += R##REG_X(R##SRCREG);				\
 	R##REG_Y(R##DSTREG) += R##REG_Y(R##SRCREG);				\
-	FINISH_PIX_OP;											\
   	COUNT_UNKNOWN_CYCLES(4);								\
 }
 static void drav_a(void) { DRAV(A); }
 static void drav_b(void) { DRAV(B); }
 
 
-/* General Instructions */
+
+/*###################################################################################################
+**	ARITHMETIC OPERATIONS
+**#################################################################################################*/
+
 #define ABS(R)			              			      		\
 {															\
 	INT32 *rd = &R##REG(R##DSTREG);							\
@@ -540,45 +552,6 @@ static void exgf1_b(void) { EXGF(1,B); }
 static void lmo_a(void) { LMO(A); }
 static void lmo_b(void) { LMO(B); }
 
-#if TMS34010_FAST_STACK
-#define MMFM(R,N)			       		       			    	\
-{																\
-	INT32 i;													\
-	UINT16 l = (UINT16) PARAM_WORD();							\
-	COUNT_CYCLES(3);											\
-	if (R##DSTREG == 15*N)										\
-	{															\
-		UINT32 bitaddr1 = SP;									\
-		UINT8 *bitaddr2 = STACKPTR(bitaddr1);					\
-		for (i = 15; i >= 0 ; i--)								\
-		{														\
-			if (l & 0x8000)										\
-			{													\
-				R##REG(i*N) = READ_WORD(bitaddr2) + (READ_WORD(bitaddr2+2) << 16); \
-				bitaddr1 += 0x20;								\
-				bitaddr2 += 4;									\
-				COUNT_CYCLES(4);								\
-			}													\
-			l <<= 1;											\
-		}														\
-		SP = bitaddr1;											\
-	}															\
-	else														\
-	{															\
-		INT32 rd = R##DSTREG;									\
-		for (i = 15; i >= 0 ; i--)								\
-		{														\
-			if (l & 0x8000)										\
-			{													\
-				R##REG(i*N) = RLONG(R##REG(rd));				\
-				R##REG(rd) += 0x20;								\
-				COUNT_CYCLES(4);								\
-			}													\
-			l <<= 1;											\
-		}														\
-	}															\
-}
-#else
 #define MMFM(R,N)			       		       			    	\
 {																\
 	INT32 i;													\
@@ -598,53 +571,9 @@ static void lmo_b(void) { LMO(B); }
 		}														\
 	}															\
 }
-#endif
 static void mmfm_a(void) { MMFM(A,1   ); }
 static void mmfm_b(void) { MMFM(B,0x10); }
 
-#if TMS34010_FAST_STACK
-#define MMTM(R,N)			       		       			    	\
-{			  													\
-	UINT32 i;													\
-	UINT16 l = (UINT16) PARAM_WORD();							\
-	COUNT_CYCLES(2);											\
-	if (R##DSTREG == 15*N)										\
-	{															\
-		UINT32 bitaddr1 = SP;									\
-		UINT8 *bitaddr2 = STACKPTR(bitaddr1);					\
-		SET_N(bitaddr1^0x80000000);								\
-		for (i = 0; i  < 16; i++)								\
-		{														\
-			if (l & 0x8000)										\
-			{													\
-				UINT32 reg = R##REG(i*N);						\
-				bitaddr1 -= 0x20;								\
-				bitaddr2 -= 4;						 			\
-				WRITE_WORD(bitaddr2  , (UINT16)reg);			\
-				WRITE_WORD(bitaddr2+2, reg >> 16);				\
-				COUNT_CYCLES(4);								\
-			}													\
-			l <<= 1;											\
-		}														\
-		SP = bitaddr1;											\
-	}															\
-	else														\
-	{															\
-		INT32 rd = R##DSTREG;									\
-		SET_N(R##REG(rd)^0x80000000);							\
-		for (i = 0; i  < 16; i++)								\
-		{														\
-			if (l & 0x8000)										\
-			{													\
-				R##REG(rd) -= 0x20;								\
-				WLONG(R##REG(rd),R##REG(i*N));					\
-				COUNT_CYCLES(4);								\
-			}													\
-			l <<= 1;											\
-		}														\
-	}															\
-}
-#else
 #define MMTM(R,N)			       		       			    	\
 {			  													\
 	UINT32 i;													\
@@ -665,7 +594,6 @@ static void mmfm_b(void) { MMFM(B,0x10); }
 		}														\
 	}															\
 }
-#endif
 static void mmtm_a(void) { MMTM(A,1   ); }
 static void mmtm_b(void) { MMTM(B,0x10); }
 
@@ -1054,7 +982,11 @@ static void zext1_a(void) { ZEXT(1,A); }
 static void zext1_b(void) { ZEXT(1,B); }
 
 
-/* Move Instructions */
+
+/*###################################################################################################
+**	MOVE INSTRUCTIONS
+**#################################################################################################*/
+
 #define MOVI_W(R)		       		       			    		\
 {			  													\
 	INT32 *rd = &R##REG(R##DSTREG);								\
@@ -1097,7 +1029,7 @@ static void movb_rn_b(void) { MOVB_RN(B); }
 #define MOVB_NR(R)		       		       			    		\
 {			  													\
 	INT32 *rd = &R##REG(R##DSTREG);								\
-	*rd = RBYTE(R##REG(R##SRCREG));								\
+	*rd = (INT8)RBYTE(R##REG(R##SRCREG));						\
 	SET_NZ(*rd);												\
 	CLR_V;														\
 	COUNT_CYCLES(3);											\
@@ -1126,7 +1058,7 @@ static void movb_r_no_b(void) { MOVB_R_NO(B); }
 {			  													\
 	INT32 *rd = &R##REG(R##DSTREG);								\
 	INT32 o = PARAM_WORD();										\
-	*rd = RBYTE(R##REG(R##SRCREG)+o);							\
+	*rd = (INT8)RBYTE(R##REG(R##SRCREG)+o);						\
 	SET_NZ(*rd);												\
 	CLR_V;														\
 	COUNT_CYCLES(5);											\
@@ -1155,7 +1087,7 @@ static void movb_ra_b(void) { MOVB_RA(B); }
 #define MOVB_AR(R)	       		       			    			\
 {			  													\
 	INT32 *rd = &R##REG(R##DSTREG);								\
-	*rd = RBYTE(PARAM_LONG());									\
+	*rd = (INT8)RBYTE(PARAM_LONG());							\
 	SET_NZ(*rd);												\
 	CLR_V;														\
 	COUNT_CYCLES(5);											\
@@ -1399,7 +1331,11 @@ static void move0_aa (void) { MOVE_AA(0); }
 static void move1_aa (void) { MOVE_AA(1); }
 
 
-/* Program Control and Context Switching */
+
+/*###################################################################################################
+**	PROGRAM CONTROL INSTRUCTIONS
+**#################################################################################################*/
+
 #define CALL(R)													\
 {																\
 	PUSH(PC);													\
@@ -1871,4 +1807,345 @@ static void trap(void)
 	RESET_ST();
 	PC = RLONG(0xffffffe0-(t<<5));
 	COUNT_CYCLES(16);
+}
+
+
+
+/*###################################################################################################
+**	34020 INSTRUCTIONS
+**#################################################################################################*/
+
+#define ADD_XYI(R)								\
+{												\
+	UINT32 a = PARAM_LONG();					\
+	XY *b = &R##REG_XY(R##DSTREG);				\
+	XY res;										\
+	res.x = b->x + (INT16)(a & 0xffff);			\
+	   N_FLAG = !res.x;							\
+	   V_FLAG = res.x & 0x8000;					\
+	res.y = b->y + ((INT32)a >> 16);			\
+	NOTZ_FLAG = res.y;							\
+	   C_FLAG = res.y & 0x8000;					\
+  	*b = res;									\
+  	COUNT_CYCLES(1);							\
+}
+
+static void addxyi_a(void)
+{
+	if (!state.is_34020)
+		unimpl();
+	ADD_XYI(A);
+}
+
+static void addxyi_b(void)
+{
+	if (!state.is_34020)
+		unimpl();
+	ADD_XYI(B);
+}
+
+static void blmove(void)
+{
+	if (!state.is_34020)
+		unimpl();
+}
+
+static void cexec_l(void)
+{
+	if (!state.is_34020)
+		unimpl();
+}
+
+static void cexec_s(void)
+{
+	if (!state.is_34020)
+		unimpl();
+}
+
+static void clip(void)
+{
+	if (!state.is_34020)
+		unimpl();
+}
+
+static void cmovcg_a(void)
+{
+	if (!state.is_34020)
+		unimpl();
+}
+
+static void cmovcg_b(void)
+{
+	if (!state.is_34020)
+		unimpl();
+}
+
+static void cmovcm_f(void)
+{
+	if (!state.is_34020)
+		unimpl();
+}
+
+static void cmovcm_b(void)
+{
+	if (!state.is_34020)
+		unimpl();
+}
+
+static void cmovgc_a(void)
+{
+	if (!state.is_34020)
+		unimpl();
+}
+
+static void cmovgc_b(void)
+{
+	if (!state.is_34020)
+		unimpl();
+}
+
+static void cmovgc_a_s(void)
+{
+	if (!state.is_34020)
+		unimpl();
+}
+
+static void cmovgc_b_s(void)
+{
+	if (!state.is_34020)
+		unimpl();
+}
+
+static void cmovmc_f(void)
+{
+	if (!state.is_34020)
+		unimpl();
+}
+
+static void cmovmc_f_va(void)
+{
+	if (!state.is_34020)
+		unimpl();
+}
+
+static void cmovmc_f_vb(void)
+{
+	if (!state.is_34020)
+		unimpl();
+}
+
+static void cmovmc_b(void)
+{
+	if (!state.is_34020)
+		unimpl();
+}
+
+static void cmp_k_a(void)
+{
+	if (!state.is_34020)
+		unimpl();
+}
+
+static void cmp_k_b(void)
+{
+	if (!state.is_34020)
+		unimpl();
+}
+
+static void cvdxyl_a(void)
+{
+	if (!state.is_34020)
+		unimpl();
+}
+
+static void cvdxyl_b(void)
+{
+	if (!state.is_34020)
+		unimpl();
+}
+
+static void cvmxyl_a(void)
+{
+	if (!state.is_34020)
+		unimpl();
+}
+
+static void cvmxyl_b(void)
+{
+	if (!state.is_34020)
+		unimpl();
+}
+
+static void cvsxyl_a(void)
+{
+	if (!state.is_34020)
+		unimpl();
+}
+
+static void cvsxyl_b(void)
+{
+	if (!state.is_34020)
+		unimpl();
+}
+
+static void exgps_a(void)
+{
+	if (!state.is_34020)
+		unimpl();
+}
+
+static void exgps_b(void)
+{
+	if (!state.is_34020)
+		unimpl();
+}
+
+static void fline(void)
+{
+	if (!state.is_34020)
+		unimpl();
+}
+
+static void fpixeq(void)
+{
+	if (!state.is_34020)
+		unimpl();
+}
+
+static void fpixne(void)
+{
+	if (!state.is_34020)
+		unimpl();
+}
+
+static void getps_a(void)
+{
+	if (!state.is_34020)
+		unimpl();
+}
+
+static void getps_b(void)
+{
+	if (!state.is_34020)
+		unimpl();
+}
+
+static void idle(void)
+{
+	if (!state.is_34020)
+		unimpl();
+}
+
+static void linit(void)
+{
+	if (!state.is_34020)
+		unimpl();
+}
+
+static void mwait(void)
+{
+	if (!state.is_34020)
+		unimpl();
+}
+
+static void pfill_xy(void)
+{
+	if (!state.is_34020)
+		unimpl();
+}
+
+static void pixblt_l_m_l(void)
+{
+	if (!state.is_34020)
+		unimpl();
+}
+
+static void retm(void)
+{
+	if (!state.is_34020)
+		unimpl();
+}
+
+static void rmo_a(void)
+{
+	if (!state.is_34020)
+		unimpl();
+}
+
+static void rmo_b(void)
+{
+	if (!state.is_34020)
+		unimpl();
+}
+
+static void rpix_a(void)
+{
+	if (!state.is_34020)
+		unimpl();
+}
+
+static void rpix_b(void)
+{
+	if (!state.is_34020)
+		unimpl();
+}
+
+static void setcdp(void)
+{
+	if (!state.is_34020)
+		unimpl();
+}
+
+static void setcmp(void)
+{
+	if (!state.is_34020)
+		unimpl();
+}
+
+static void setcsp(void)
+{
+	if (!state.is_34020)
+		unimpl();
+}
+
+static void swapf_a(void)
+{
+	if (!state.is_34020)
+		unimpl();
+}
+
+static void swapf_b(void)
+{
+	if (!state.is_34020)
+		unimpl();
+}
+
+static void tfill_xy(void)
+{
+	if (!state.is_34020)
+		unimpl();
+}
+
+static void trapl(void)
+{
+	if (!state.is_34020)
+		unimpl();
+}
+
+static void vblt_b_l(void)
+{
+	if (!state.is_34020)
+		unimpl();
+}
+
+static void vfill_l(void)
+{
+	if (!state.is_34020)
+		unimpl();
+}
+
+static void vlcol(void)
+{
+	if (!state.is_34020)
+		unimpl();
 }

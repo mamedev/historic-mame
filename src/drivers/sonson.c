@@ -176,7 +176,7 @@ INPUT_PORTS_START( sonson )
 	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_SERVICE( 0x40, IP_ACTIVE_LOW )
-	PORT_DIPNAME( 0x80, 0x80, "unknown" )	/* maybe flip screen */
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )	/* maybe flip screen */
 	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
@@ -330,4 +330,4 @@ ROM_END
 
 
 
-GAME( 1984, sonson, 0, sonson, sonson, 0, ROT0, "Capcom", "Son Son" )
+GAMEX( 1984, sonson, 0, sonson, sonson, 0, ROT0, "Capcom", "Son Son", GAME_NO_COCKTAIL )

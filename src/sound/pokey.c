@@ -12,6 +12,9 @@
  *  things means it is distributed as is, no warranties whatsoever.
  *	For more details read the readme.txt that comes with MAME.
  *
+ *	4.4:
+ *	- reversed sample values to make OFF channels produce a zero signal.
+ *	  actually de-reversed them; don't remember that I reversed them ;-/
  *	4.3:
  *	- for POT inputs returning zero, immediately assert the ALLPOT
  *	  bit after POTGO is written, otherwise start trigger timer
@@ -331,7 +334,7 @@ static UINT8 *rand17;
 		pokey[chip].samplepos_fract &= 0x000000ff;						\
 	}																	\
 	/* store sum of output signals into the buffer */					\
-	*buffer++ = (sum > 65535) ? 0x7fff : sum - 0x8000;					\
+	*buffer++ = (sum > 0x7fff) ? 0x7fff : sum;							\
 	length--
 
 #if HEAVY_MACRO_USAGE

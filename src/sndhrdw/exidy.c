@@ -7,7 +7,7 @@
 
 #define BASE_FREQ 			1789773
 #define BASE_TIME 			(1.0 / ((double)BASE_FREQ / 2000000.0))
-#define SH6840_FREQ 		(BASE_FREQ / 2)
+#define E_CLOCK				(11289000/16)
 #define CVSD_CLOCK_FREQ 	(1000000.0 / 34.0)
 
 #define RIOT_IDLE 0
@@ -29,6 +29,7 @@ static UINT8 riot_state;
 /* 6840 variables */
 static UINT8 sh6840_CR[3];
 static UINT8 sh6840_MSB;
+static UINT16 sh6840_count[3];
 static UINT16 sh6840_timer[3];
 static UINT8 exidy_sfxctrl;
 
@@ -51,9 +52,6 @@ struct channel_data
 };
 static int exidy_stream;
 static double freq_to_step;
-static UINT8 noise_state;
-static UINT8 last_noise;
-static UINT32 noise_shift;
 static struct channel_data music_channel[3];
 static struct channel_data sfx_channel[3];
 
@@ -98,32 +96,9 @@ static struct pia6821_interface victory_pia_0_intf =
     Start/Stop Sound
 ***************************************************************************/
 
-INLINE int next_random(void)
-{
-	/*
-		4 x 4-bit shift registers:
-
-			sr1(in) = sr2(out)
-			sr2(in) = sr2(out) ^ sr4(out)
-			sr3(in) = sr1(out) ^ address line 0
-			sr4(in) = sr3(out)
-
-		Stored in one 32-bit long as sr1-sr2-sr3-sr4, each in 8-bits
-
-		Output is sr4(in) = sr3(out)
-	*/
-	UINT32 temp = (noise_shift << 1) & 0x1e1e1e1e;
-	temp |= (temp << 4) & 0x01000000;
-	temp |= ((temp >> 4) ^ (temp << 12)) & 0x00010000;
-	temp |= ((temp >> 20) ^ rand()) & 0x00000100;
-	temp |= (temp >> 12) & 0x00000001;
-	noise_shift = temp;
-	return temp & 1;
-}
-
 static void exidy_stream_update(int param, INT16 *buffer, int length)
 {
-	UINT8 noise_buffer[44100 / 60 * 2];
+	double noise_freq=0;
 	int chan, i;
 
 	/* reset */
@@ -134,40 +109,15 @@ static void exidy_stream_update(int param, INT16 *buffer, int length)
 	{
 		/* if noise is clocked by the E, just generate at max frequency */
 		if (!(exidy_sfxctrl & 1))
-		{
-			for (i = 0; i < length; i++)
-			{
-				int new_noise = next_random();
-				noise_buffer[i] = noise_state;
-				noise_state ^= (last_noise ^ new_noise) & new_noise;
-				last_noise = new_noise;
-			}
-		}
+			noise_freq = (double)E_CLOCK;
 
 		/* otherwise, generate noise clocked by channel 1 of the 6840 */
 		else if (sfx_channel[0].enable)
-		{
-			struct channel_data *c = &sfx_channel[0];
-			UINT32 last_frac, frac = c->fraction;
-			UINT32 step = c->step;
-
-			for (i = 0; i < length; i++)
-			{
-				noise_buffer[i] = noise_state;
-				last_frac = frac;
-				frac += step;
-				if ((frac ^ last_frac) & 0xff000000)
-				{
-					int new_noise = next_random();
-					noise_state ^= (last_noise ^ new_noise) & new_noise;
-					last_noise = new_noise;
-				}
-			}
-		}
+			noise_freq = (sh6840_timer[0]) ? ((double)BASE_FREQ / (double)sh6840_timer[0] * 0.5) : 0;
 
 		/* if channel 1 isn't enabled, zap the buffer */
 		else
-			memset(noise_buffer, 0, length);
+			noise_freq = 0;
 	}
 
 	/* process sfx channels first */
@@ -189,20 +139,45 @@ static void exidy_stream_update(int param, INT16 *buffer, int length)
 				INT16 vol = c->volume;
 				for (i = 0; i < length; i++)
 				{
-					if (frac & 0x800000)
+					if (frac & 0x1000000)
 						buffer[i] += vol;
 					frac += step;
 				}
 				c->fraction = frac;
 			}
 
-			/* noisy case */
+			/* noisy case - determine the effective noise step */
 			else
 			{
+				/*
+					Explanation of noise
+
+					The noise source can be clocked by 1 of 2 sources, depending on sfxctrl bit 0
+
+						(sfxctrl & 1) == 0	--> clock = E
+						(sfxctrl & 1) != 0	--> clock = 6840 channel 0
+
+					The noise source then becomes the clock for any channels using the external
+					clock. On average, the frequency of the clock for that channel should be
+					1/4 of the noise frequency, with a random variance on each step. The external
+					clock still causes the timer to count, so we must further divide by the
+					timer's count value in order to determine the final frequency. To simulate
+					the variance, we compute the effective step value, and then apply a random
+					offset to it after each sample is generated
+				*/
+				UINT32 avgstep = (sh6840_timer[chan]) ? freq_to_step * (noise_freq * 0.25) / (double)sh6840_timer[chan] : 0;
+				UINT32 frac = c->fraction;
 				INT16 vol = c->volume;
+
+				avgstep /= 32768;
 				for (i = 0; i < length; i++)
-					if (noise_buffer[i])
+				{
+					if (frac & 0x1000000)
 						buffer[i] += vol;
+					/* add two random values to get a distribution that is weighted toward the middle */
+					frac += ((rand() & 32767) + (rand() & 32767)) * avgstep;
+				}
+				c->fraction = frac;
 			}
 		}
 	}
@@ -220,7 +195,7 @@ static void exidy_stream_update(int param, INT16 *buffer, int length)
 
 			for (i = 0; i < length; i++)
 			{
-				if (frac & 0x800000)
+				if (frac & 0x0800000)
 					buffer[i] += c->volume;
 				frac += step;
 			}
@@ -302,11 +277,6 @@ int victory_sh_start(const struct MachineSound *msound)
 	pia_config(0, PIA_STANDARD_ORDERING, &victory_pia_0_intf);
 	pia_0_cb1_w(0, 1);
 	return common_start();
-}
-
-
-void exidy_sh_stop(void)
-{
 }
 
 
@@ -565,9 +535,9 @@ WRITE_HANDLER( exidy_sh6840_w )
 		case 5:
 		case 7:
 			ch = (offset - 3) / 2;
-			sh6840_timer[ch] = (sh6840_MSB << 8) | (data & 0xff);
+			sh6840_count[ch] = sh6840_timer[ch] = (sh6840_MSB << 8) | (data & 0xff);
 			if (sh6840_timer[ch])
-				sfx_channel[ch].step = freq_to_step * (double)SH6840_FREQ / (double)sh6840_timer[ch];
+				sfx_channel[ch].step = freq_to_step * (double)BASE_FREQ / (double)sh6840_timer[ch];
 			else
 				sfx_channel[ch].step = 0;
 			break;

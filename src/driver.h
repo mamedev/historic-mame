@@ -228,11 +228,17 @@ enum
 #if (HAS_ADSP2100)
 	CPU_ADSP2100,
 #endif
+#if (HAS_ADSP2105)
+	CPU_ADSP2105,
+#endif
 #if (HAS_MIPS)
 	CPU_MIPS,
 #endif
 #if (HAS_SC61860)
 	CPU_SC61860,
+#endif
+#if (HAS_ARM)
+	CPU_ARM,
 #endif
     CPU_COUNT
 };
@@ -350,6 +356,11 @@ struct MachineDriver
 /* bit 2 of the video attributes indicates whether or not the driver modifies the palette */
 #define	VIDEO_MODIFIES_PALETTE	0x0004
 
+/* bit 3 of the video attributes indicates that the game's palette has 6 or more bits */
+/*       per gun, and would therefore require a 24-bit display. This is entirely up to */
+/*       the OS dpeendant layer, the bitmap will still be 16-bit. */
+#define VIDEO_NEEDS_6BITS_PER_GUN	0x0008
+
 /* ASG 980417 - added: */
 /* bit 4 of the video attributes indicates that the driver wants its refresh after */
 /*       the VBLANK instead of before. */
@@ -414,8 +425,9 @@ struct GameDriver
 #define NOT_A_DRIVER				0x4000	/* set by the fake "root" driver_ and by "containers" */
 											/* e.g. driver_neogeo. */
 #ifdef MESS
-#define GAME_COMPUTER	0x8000			/* Driver is a computer (needs full keyboard) */
-#define GAME_ALIAS		NOT_A_DRIVER	/* Driver is only an alias for an existing model */
+#define GAME_COMPUTER				0x8000	/* Driver is a computer (needs full keyboard) */
+#define GAME_COMPUTER_MODIFIED      0x0800	/* Official? Hack */
+#define GAME_ALIAS					NOT_A_DRIVER	/* Driver is only an alias for an existing model */
 #endif
 
 

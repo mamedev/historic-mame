@@ -52,10 +52,10 @@ void osd_free_bitmap(struct osd_bitmap *bitmap);
   run time. The VIDEO_PIXEL_ASPECT_RATIO flags should be honored to produce a
   display of correct proportions.
   Orientation is the screen orientation (as defined in driver.h) which will be done
-  by the core. This can be used to select thinner screen modes for vertical games,
-  or even to ask the user to rotate the monitor if it's a pivot model. Note that
-  the OS dependant code must NOT perform any rotation, this is done entirely in the
-  core.
+  by the core. This can be used to select thinner screen modes for vertical games
+  (ORIENTATION_SWAP_XY set), or even to ask the user to rotate the monitor if it's
+  a pivot model. Note that the OS dependant code must NOT perform any rotation,
+  this is done entirely in the core.
   Returns 0 on success.
 */
 int osd_create_display(int width,int height,int depth,int fps,int attributes,int orientation);
@@ -115,8 +115,8 @@ void osd_save_snapshot(struct osd_bitmap *bitmap);
   When the stream is stereo, left and right samples are alternated in the
   stream.
 
-  osd_start_audio_stream() and osd_stop_audio_stream() must return the number of
-  samples (or couples of samples, when using stereo) required for next frame.
+  osd_start_audio_stream() and osd_update_audio_stream() must return the number
+  of samples (or couples of samples, when using stereo) required for next frame.
   This will be around Machine->sample_rate / Machine->drv->frames_per_second,
   the code may adjust it by SMALL AMOUNTS to keep timing accurate and to maintain
   audio and video in sync when using vsync. Note that sound generation,

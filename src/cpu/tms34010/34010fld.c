@@ -1,10 +1,11 @@
-/*** TMS34010: Portable TMS34010 emulator ************************************
-
-	Copyright (C) Alex Pasadyn/Zsolt Vasvari 1998
-
-    Field Handling
-
-*****************************************************************************/
+/*###################################################################################################
+**
+**	TMS34010: Portable Texas Instruments TMS34010 emulator
+**
+**	Copyright (C) Alex Pasadyn/Zsolt Vasvari 1998
+**	 Parts based on code by Aaron Giles
+**
+**#################################################################################################*/
 
 #include <stdio.h>
 #include "driver.h"
@@ -13,621 +14,648 @@
 #include "tms34010.h"
 #include "34010ops.h"
 
-#ifdef MAME_DEBUG
-extern int debug_key_pressed;
-#endif
 
-void wfield_01(UINT32 bitaddr, UINT32 data)
+/*###################################################################################################
+**	FIELD WRITE FUNCTIONS
+**#################################################################################################*/
+
+WRITE_HANDLER( wfield_01 )
 {
 	WFIELDMAC(0x01,16);
 }
-void wfield_02(UINT32 bitaddr, UINT32 data)
+
+WRITE_HANDLER( wfield_02 )
 {
 	WFIELDMAC(0x03,15);
 }
-void wfield_03(UINT32 bitaddr, UINT32 data)
+
+WRITE_HANDLER( wfield_03 )
 {
 	WFIELDMAC(0x07,14);
 }
-void wfield_04(UINT32 bitaddr, UINT32 data)
+
+WRITE_HANDLER( wfield_04 )
 {
 	WFIELDMAC(0x0f,13);
 }
-void wfield_05(UINT32 bitaddr, UINT32 data)
+
+WRITE_HANDLER( wfield_05 )
 {
 	WFIELDMAC(0x1f,12);
 }
-void wfield_06(UINT32 bitaddr, UINT32 data)
+
+WRITE_HANDLER( wfield_06 )
 {
 	WFIELDMAC(0x3f,11);
 }
-void wfield_07(UINT32 bitaddr, UINT32 data)
+
+WRITE_HANDLER( wfield_07 )
 {
 	WFIELDMAC(0x7f,10);
 }
-void wfield_08(UINT32 bitaddr, UINT32 data)
+
+WRITE_HANDLER( wfield_08 )
 {
 	WFIELDMAC_8;
 }
-void wfield_09(UINT32 bitaddr, UINT32 data)
+
+WRITE_HANDLER( wfield_09 )
 {
 	WFIELDMAC(0x1ff,8);
 }
-void wfield_10(UINT32 bitaddr, UINT32 data)
+
+WRITE_HANDLER( wfield_10 )
 {
 	WFIELDMAC(0x3ff,7);
 }
-void wfield_11(UINT32 bitaddr, UINT32 data)
+
+WRITE_HANDLER( wfield_11 )
 {
 	WFIELDMAC(0x7ff,6);
 }
-void wfield_12(UINT32 bitaddr, UINT32 data)
+
+WRITE_HANDLER( wfield_12 )
 {
 	WFIELDMAC(0xfff,5);
 }
-void wfield_13(UINT32 bitaddr, UINT32 data)
+
+WRITE_HANDLER( wfield_13 )
 {
 	WFIELDMAC(0x1fff,4);
 }
-void wfield_14(UINT32 bitaddr, UINT32 data)
+
+WRITE_HANDLER( wfield_14 )
 {
 	WFIELDMAC(0x3fff,3);
 }
-void wfield_15(UINT32 bitaddr, UINT32 data)
+
+WRITE_HANDLER( wfield_15 )
 {
 	WFIELDMAC(0x7fff,2);
 }
-void wfield_16(UINT32 bitaddr, UINT32 data)
+
+WRITE_HANDLER( wfield_16 )
 {
-	if (bitaddr&0x0f)
+	if (offset & 0x0f)
 	{
 		WFIELDMAC(0xffff,1);
 	}
 	else
 	{
-		TMS34010_WRMEM_WORD(TOBYTE(bitaddr),data);
+		TMS34010_WRMEM_WORD(TOBYTE(offset),data);
 	}
 }
-void wfield_17(UINT32 bitaddr, UINT32 data)
+
+WRITE_HANDLER( wfield_17 )
 {
-	logerror("17-bit fields are not implemented!\n");
-#ifdef MAME_DEBUG
-	debug_key_pressed=1;
-#endif
+	WFIELDMAC(0x1ffff,0);
 }
-void wfield_18(UINT32 bitaddr, UINT32 data)
+
+WRITE_HANDLER( wfield_18 )
 {
-	logerror("18-bit fields are not implemented!\n");
-#ifdef MAME_DEBUG
-	debug_key_pressed=1;
-#endif
+	WFIELDMAC_BIG(0x3ffff,15);
 }
-void wfield_19(UINT32 bitaddr, UINT32 data)
+
+WRITE_HANDLER( wfield_19 )
 {
-	logerror("19-bit fields are not implemented!\n");
-#ifdef MAME_DEBUG
-	debug_key_pressed=1;
-#endif
+	WFIELDMAC_BIG(0x7ffff,14);
 }
-void wfield_20(UINT32 bitaddr, UINT32 data)
+
+WRITE_HANDLER( wfield_20 )
 {
-	logerror("20-bit fields are not implemented!\n");
-#ifdef MAME_DEBUG
-	debug_key_pressed=1;
-#endif
+	WFIELDMAC_BIG(0xfffff,13);
 }
-void wfield_21(UINT32 bitaddr, UINT32 data)
+
+WRITE_HANDLER( wfield_21 )
 {
-	logerror("21-bit fields are not implemented!\n");
-#ifdef MAME_DEBUG
-	debug_key_pressed=1;
-#endif
+	WFIELDMAC_BIG(0x1fffff,12);
 }
-void wfield_22(UINT32 bitaddr, UINT32 data)
+
+WRITE_HANDLER( wfield_22 )
 {
-	logerror("22-bit fields are not implemented!\n");
-#ifdef MAME_DEBUG
-	debug_key_pressed=1;
-#endif
+	WFIELDMAC_BIG(0x3fffff,11);
 }
-void wfield_23(UINT32 bitaddr, UINT32 data)
+
+WRITE_HANDLER( wfield_23 )
 {
-	logerror("23-bit fields are not implemented!\n");
-#ifdef MAME_DEBUG
-	debug_key_pressed=1;
-#endif
+	WFIELDMAC_BIG(0x7fffff,10);
 }
-void wfield_24(UINT32 bitaddr, UINT32 data)
+
+WRITE_HANDLER( wfield_24 )
 {
-	logerror("24-bit fields are not implemented!\n");
-#ifdef MAME_DEBUG
-	debug_key_pressed=1;
-#endif
+	WFIELDMAC_BIG(0xffffff,9);
 }
-void wfield_25(UINT32 bitaddr, UINT32 data)
+
+WRITE_HANDLER( wfield_25 )
 {
-	logerror("25-bit fields are not implemented!\n");
-#ifdef MAME_DEBUG
-	debug_key_pressed=1;
-#endif
+	WFIELDMAC_BIG(0x1ffffff,8);
 }
-void wfield_26(UINT32 bitaddr, UINT32 data)
+
+WRITE_HANDLER( wfield_26 )
 {
-	logerror("26-bit fields are not implemented!\n");
-#ifdef MAME_DEBUG
-	debug_key_pressed=1;
-#endif
+	WFIELDMAC_BIG(0x3ffffff,7);
 }
-void wfield_27(UINT32 bitaddr, UINT32 data)
+
+WRITE_HANDLER( wfield_27 )
 {
-	logerror("27-bit fields are not implemented!\n");
-#ifdef MAME_DEBUG
-	debug_key_pressed=1;
-#endif
+	WFIELDMAC_BIG(0x7ffffff,6);
 }
-void wfield_28(UINT32 bitaddr, UINT32 data)
+
+WRITE_HANDLER( wfield_28 )
 {
-	logerror("28-bit fields are not implemented!\n");
-#ifdef MAME_DEBUG
-	debug_key_pressed=1;
-#endif
+	WFIELDMAC_BIG(0xfffffff,5);
 }
-void wfield_29(UINT32 bitaddr, UINT32 data)
+
+WRITE_HANDLER( wfield_29 )
 {
-	logerror("29-bit fields are not implemented!\n");
-#ifdef MAME_DEBUG
-	debug_key_pressed=1;
-#endif
+	WFIELDMAC_BIG(0x1fffffff,4);
 }
-void wfield_30(UINT32 bitaddr, UINT32 data)
+
+WRITE_HANDLER( wfield_30 )
 {
-	logerror("30-bit fields are not implemented!\n");
-#ifdef MAME_DEBUG
-	debug_key_pressed=1;
-#endif
+	WFIELDMAC_BIG(0x3fffffff,3);
 }
-void wfield_31(UINT32 bitaddr, UINT32 data)
+
+WRITE_HANDLER( wfield_31 )
 {
-	logerror("31-bit fields are not implemented!\n");
-#ifdef MAME_DEBUG
-	debug_key_pressed=1;
-#endif
+	WFIELDMAC_BIG(0x7fffffff,2);
 }
-void wfield_32(UINT32 bitaddr, UINT32 data)
+
+WRITE_HANDLER( wfield_32 )
 {
 	WFIELDMAC_32;
 }
 
 
-/* Read field zero extended */
 
-INT32 rfield_z_01(UINT32 bitaddr)
+/*###################################################################################################
+**	FIELD READ FUNCTIONS (ZERO-EXTEND)
+**#################################################################################################*/
+
+READ_HANDLER( rfield_z_01 )
 {
-	RFIELDMAC_Z(0x01,16);
+	UINT32 ret;
+	RFIELDMAC(0x01,16);
+	return ret;
 }
-INT32 rfield_z_02(UINT32 bitaddr)
+
+READ_HANDLER( rfield_z_02 )
 {
-	RFIELDMAC_Z(0x03,15);
+	UINT32 ret;
+	RFIELDMAC(0x03,15);
+	return ret;
 }
-INT32 rfield_z_03(UINT32 bitaddr)
+
+READ_HANDLER( rfield_z_03 )
 {
-	RFIELDMAC_Z(0x07,14);
+	UINT32 ret;
+	RFIELDMAC(0x07,14);
+	return ret;
 }
-INT32 rfield_z_04(UINT32 bitaddr)
+
+READ_HANDLER( rfield_z_04 )
 {
-	RFIELDMAC_Z(0x0f,13);
+	UINT32 ret;
+	RFIELDMAC(0x0f,13);
+	return ret;
 }
-INT32 rfield_z_05(UINT32 bitaddr)
+
+READ_HANDLER( rfield_z_05 )
 {
-	RFIELDMAC_Z(0x1f,12);
+	UINT32 ret;
+	RFIELDMAC(0x1f,12);
+	return ret;
 }
-INT32 rfield_z_06(UINT32 bitaddr)
+
+READ_HANDLER( rfield_z_06 )
 {
-	RFIELDMAC_Z(0x3f,11);
+	UINT32 ret;
+	RFIELDMAC(0x3f,11);
+	return ret;
 }
-INT32 rfield_z_07(UINT32 bitaddr)
+
+READ_HANDLER( rfield_z_07 )
 {
-	RFIELDMAC_Z(0x7f,10);
+	UINT32 ret;
+	RFIELDMAC(0x7f,10);
+	return ret;
 }
-INT32 rfield_z_08(UINT32 bitaddr)
+
+READ_HANDLER( rfield_z_08 )
 {
-	RFIELDMAC_Z_8;
+	UINT32 ret;
+	RFIELDMAC_8;
+	return ret;
 }
-INT32 rfield_z_09(UINT32 bitaddr)
+
+READ_HANDLER( rfield_z_09 )
 {
-	RFIELDMAC_Z(0x1ff,8);
+	UINT32 ret;
+	RFIELDMAC(0x1ff,8);
+	return ret;
 }
-INT32 rfield_z_10(UINT32 bitaddr)
+
+READ_HANDLER( rfield_z_10 )
 {
-	RFIELDMAC_Z(0x3ff,7);
+	UINT32 ret;
+	RFIELDMAC(0x3ff,7);
+	return ret;
 }
-INT32 rfield_z_11(UINT32 bitaddr)
+
+READ_HANDLER( rfield_z_11 )
 {
-	RFIELDMAC_Z(0x7ff,6);
+	UINT32 ret;
+	RFIELDMAC(0x7ff,6);
+	return ret;
 }
-INT32 rfield_z_12(UINT32 bitaddr)
+
+READ_HANDLER( rfield_z_12 )
 {
-	RFIELDMAC_Z(0xfff,5);
+	UINT32 ret;
+	RFIELDMAC(0xfff,5);
+	return ret;
 }
-INT32 rfield_z_13(UINT32 bitaddr)
+
+READ_HANDLER( rfield_z_13 )
 {
-	RFIELDMAC_Z(0x1fff,4);
+	UINT32 ret;
+	RFIELDMAC(0x1fff,4);
+	return ret;
 }
-INT32 rfield_z_14(UINT32 bitaddr)
+
+READ_HANDLER( rfield_z_14 )
 {
-	RFIELDMAC_Z(0x3fff,3);
+	UINT32 ret;
+	RFIELDMAC(0x3fff,3);
+	return ret;
 }
-INT32 rfield_z_15(UINT32 bitaddr)
+
+READ_HANDLER( rfield_z_15 )
 {
-	RFIELDMAC_Z(0x7fff,2);
+	UINT32 ret;
+	RFIELDMAC(0x7fff,2);
+	return ret;
 }
-INT32 rfield_z_16(UINT32 bitaddr)
+
+READ_HANDLER( rfield_z_16 )
 {
-	if (bitaddr&0x0f)
+	UINT32 ret;
+	if (offset & 0x0f)
 	{
-		RFIELDMAC_Z(0xffff,1);
+		RFIELDMAC(0xffff,1);
 	}
+
 	else
-	{
-		return TMS34010_RDMEM_WORD(TOBYTE(bitaddr));
-	}
+		ret = TMS34010_RDMEM_WORD(TOBYTE(offset));
+	return ret;
 }
-INT32 rfield_z_17(UINT32 bitaddr)
+
+READ_HANDLER( rfield_z_17 )
 {
-	logerror("17-bit fields are not implemented!\n");
-#ifdef MAME_DEBUG
-	debug_key_pressed=1;
-#endif
-	return 0;
+	UINT32 ret;
+	RFIELDMAC(0x1ffff,0);
+	return ret;
 }
-INT32 rfield_z_18(UINT32 bitaddr)
+
+READ_HANDLER( rfield_z_18 )
 {
-	logerror("18-bit fields are not implemented!\n");
-#ifdef MAME_DEBUG
-	debug_key_pressed=1;
-#endif
-	return 0;
+	UINT32 ret;
+	RFIELDMAC_BIG(0x3ffff,15);
+	return ret;
 }
-INT32 rfield_z_19(UINT32 bitaddr)
+
+READ_HANDLER( rfield_z_19 )
 {
-	logerror("19-bit fields are not implemented!\n");
-#ifdef MAME_DEBUG
-	debug_key_pressed=1;
-#endif
-	return 0;
+	UINT32 ret;
+	RFIELDMAC_BIG(0x7ffff,14);
+	return ret;
 }
-INT32 rfield_z_20(UINT32 bitaddr)
+
+READ_HANDLER( rfield_z_20 )
 {
-	logerror("20-bit fields are not implemented!\n");
-#ifdef MAME_DEBUG
-	debug_key_pressed=1;
-#endif
-	return 0;
+	UINT32 ret;
+	RFIELDMAC_BIG(0xfffff,13);
+	return ret;
 }
-INT32 rfield_z_21(UINT32 bitaddr)
+
+READ_HANDLER( rfield_z_21 )
 {
-	logerror("21-bit fields are not implemented!\n");
-#ifdef MAME_DEBUG
-	debug_key_pressed=1;
-#endif
-	return 0;
+	UINT32 ret;
+	RFIELDMAC_BIG(0x1fffff,12);
+	return ret;
 }
-INT32 rfield_z_22(UINT32 bitaddr)
+
+READ_HANDLER( rfield_z_22 )
 {
-	logerror("22-bit fields are not implemented!\n");
-#ifdef MAME_DEBUG
-	debug_key_pressed=1;
-#endif
-	return 0;
+	UINT32 ret;
+	RFIELDMAC_BIG(0x3fffff,11);
+	return ret;
 }
-INT32 rfield_z_23(UINT32 bitaddr)
+
+READ_HANDLER( rfield_z_23 )
 {
-	logerror("23-bit fields are not implemented!\n");
-#ifdef MAME_DEBUG
-	debug_key_pressed=1;
-#endif
-	return 0;
+	UINT32 ret;
+	RFIELDMAC_BIG(0x7fffff,10);
+	return ret;
 }
-INT32 rfield_z_24(UINT32 bitaddr)
+
+READ_HANDLER( rfield_z_24 )
 {
-	logerror("24-bit fields are not implemented!\n");
-#ifdef MAME_DEBUG
-	debug_key_pressed=1;
-#endif
-	return 0;
+	UINT32 ret;
+	RFIELDMAC_BIG(0xffffff,9);
+	return ret;
 }
-INT32 rfield_z_25(UINT32 bitaddr)
+
+READ_HANDLER( rfield_z_25 )
 {
-	logerror("25-bit fields are not implemented!\n");
-#ifdef MAME_DEBUG
-	debug_key_pressed=1;
-#endif
-	return 0;
+	UINT32 ret;
+	RFIELDMAC_BIG(0x1ffffff,8);
+	return ret;
 }
-INT32 rfield_z_26(UINT32 bitaddr)
+
+READ_HANDLER( rfield_z_26 )
 {
-	logerror("26-bit fields are not implemented!\n");
-#ifdef MAME_DEBUG
-	debug_key_pressed=1;
-#endif
-	return 0;
+	UINT32 ret;
+	RFIELDMAC_BIG(0x3ffffff,7);
+	return ret;
 }
-INT32 rfield_z_27(UINT32 bitaddr)
+
+READ_HANDLER( rfield_z_27 )
 {
-	logerror("27-bit fields are not implemented!\n");
-#ifdef MAME_DEBUG
-	debug_key_pressed=1;
-#endif
-	return 0;
+	UINT32 ret;
+	RFIELDMAC_BIG(0x7ffffff,6);
+	return ret;
 }
-INT32 rfield_z_28(UINT32 bitaddr)
+
+READ_HANDLER( rfield_z_28 )
 {
-	logerror("28-bit fields are not implemented!\n");
-#ifdef MAME_DEBUG
-	debug_key_pressed=1;
-#endif
-	return 0;
+	UINT32 ret;
+	RFIELDMAC_BIG(0xfffffff,5);
+	return ret;
 }
-INT32 rfield_z_29(UINT32 bitaddr)
+
+READ_HANDLER( rfield_z_29 )
 {
-	logerror("29-bit fields are not implemented!\n");
-#ifdef MAME_DEBUG
-	debug_key_pressed=1;
-#endif
-	return 0;
+	UINT32 ret;
+	RFIELDMAC_BIG(0x1fffffff,4);
+	return ret;
 }
-INT32 rfield_z_30(UINT32 bitaddr)
+
+READ_HANDLER( rfield_z_30 )
 {
-	logerror("30-bit fields are not implemented!\n");
-#ifdef MAME_DEBUG
-	debug_key_pressed=1;
-#endif
-	return 0;
+	UINT32 ret;
+	RFIELDMAC_BIG(0x3fffffff,3);
+	return ret;
 }
-INT32 rfield_z_31(UINT32 bitaddr)
+
+READ_HANDLER( rfield_z_31 )
 {
-	logerror("31-bit fields are not implemented!\n");
-#ifdef MAME_DEBUG
-	debug_key_pressed=1;
-#endif
-	return 0;
+	UINT32 ret;
+	RFIELDMAC_BIG(0x7fffffff,2);
+	return ret;
 }
-INT32 rfield_32(UINT32 bitaddr)
+
+READ_HANDLER( rfield_32 )
 {
 	RFIELDMAC_32;
 }
 
 
 
+/*###################################################################################################
+**	FIELD READ FUNCTIONS (SIGN-EXTEND)
+**#################################################################################################*/
 
-/* Read field sign extended */
+READ_HANDLER( rfield_s_01 )
+{
+	UINT32 ret;
+	RFIELDMAC(0x01,16);
+	return ((INT32)(ret << 31)) >> 31;
+}
 
-INT32 rfield_s_01(UINT32 bitaddr)
+READ_HANDLER( rfield_s_02 )
 {
-	RFIELDMAC_S(0x01,16);
-	if (ret & 0x01)  ret |= 0xfffffffe;
-	return ret;
+	UINT32 ret;
+	RFIELDMAC(0x03,15);
+	return ((INT32)(ret << 30)) >> 30;
 }
-INT32 rfield_s_02(UINT32 bitaddr)
+
+READ_HANDLER( rfield_s_03 )
 {
-	RFIELDMAC_S(0x03,15);
-	if (ret & 0x02)  ret |= 0xfffffffc;
-	return ret;
+	UINT32 ret;
+	RFIELDMAC(0x07,14);
+	return ((INT32)(ret << 29)) >> 29;
 }
-INT32 rfield_s_03(UINT32 bitaddr)
+
+READ_HANDLER( rfield_s_04 )
 {
-	RFIELDMAC_S(0x07,14);
-	if (ret & 0x04)  ret |= 0xfffffff8;
-	return ret;
+	UINT32 ret;
+	RFIELDMAC(0x0f,13);
+	return ((INT32)(ret << 28)) >> 28;
 }
-INT32 rfield_s_04(UINT32 bitaddr)
+
+READ_HANDLER( rfield_s_05 )
 {
-	RFIELDMAC_S(0x0f,13);
-	if (ret & 0x08)  ret |= 0xfffffff0;
-	return ret;
+	UINT32 ret;
+	RFIELDMAC(0x1f,12);
+	return ((INT32)(ret << 27)) >> 27;
 }
-INT32 rfield_s_05(UINT32 bitaddr)
+
+READ_HANDLER( rfield_s_06 )
 {
-	RFIELDMAC_S(0x1f,12);
-	if (ret & 0x10)  ret |= 0xffffffe0;
-	return ret;
+	UINT32 ret;
+	RFIELDMAC(0x3f,11);
+	return ((INT32)(ret << 26)) >> 26;
 }
-INT32 rfield_s_06(UINT32 bitaddr)
+
+READ_HANDLER( rfield_s_07 )
 {
-	RFIELDMAC_S(0x3f,11);
-	if (ret & 0x20)  ret |= 0xffffffc0;
-	return ret;
+	UINT32 ret;
+	RFIELDMAC(0x7f,10);
+	return ((INT32)(ret << 25)) >> 25;
 }
-INT32 rfield_s_07(UINT32 bitaddr)
+
+READ_HANDLER( rfield_s_08 )
 {
-	RFIELDMAC_S(0x7f,10);
-	if (ret & 0x40)  ret |= 0xffffff80;
-	return ret;
-}
-INT32 rfield_s_08(UINT32 bitaddr)
-{
-	if (bitaddr&0x07)											
+	UINT32 ret;
+	if (offset & 0x07)											
 	{															
-		RFIELDMAC_S(0xff,9);
-		return (INT32)(INT8)ret;
-	}															
+		RFIELDMAC(0xff,9);
+	}
+															
 	else														
-	{															
-		return (INT32)(INT8)TMS34010_RDMEM(TOBYTE(bitaddr));					
-	}
+		ret = TMS34010_RDMEM(TOBYTE(offset));					
+	return (INT32)(INT8)ret;
 }
-INT32 rfield_s_09(UINT32 bitaddr)
+
+READ_HANDLER( rfield_s_09 )
 {
-	RFIELDMAC_S(0x1ff,8);
-	if (ret & 0x100)  ret |= 0xfffffe00;
-	return ret;
+	UINT32 ret;
+	RFIELDMAC(0x1ff,8);
+	return ((INT32)(ret << 23)) >> 23;
 }
-INT32 rfield_s_10(UINT32 bitaddr)
+
+READ_HANDLER( rfield_s_10 )
 {
-	RFIELDMAC_S(0x3ff,7);
-	if (ret & 0x200)  ret |= 0xfffffc00;
-	return ret;
+	UINT32 ret;
+	RFIELDMAC(0x3ff,7);
+	return ((INT32)(ret << 22)) >> 22;
 }
-INT32 rfield_s_11(UINT32 bitaddr)
+
+READ_HANDLER( rfield_s_11 )
 {
-	RFIELDMAC_S(0x7ff,6);
-	if (ret & 0x400)  ret |= 0xfffff800;
-	return ret;
+	UINT32 ret;
+	RFIELDMAC(0x7ff,6);
+	return ((INT32)(ret << 21)) >> 21;
 }
-INT32 rfield_s_12(UINT32 bitaddr)
+
+READ_HANDLER( rfield_s_12 )
 {
-	RFIELDMAC_S(0xfff,5);
-	if (ret & 0x800)  ret |= 0xfffff000;
-	return ret;
+	UINT32 ret;
+	RFIELDMAC(0xfff,5);
+	return ((INT32)(ret << 20)) >> 20;
 }
-INT32 rfield_s_13(UINT32 bitaddr)
+
+READ_HANDLER( rfield_s_13 )
 {
-	RFIELDMAC_S(0x1fff,4);
-	if (ret & 0x1000)  ret |= 0xffffe000;
-	return ret;
+	UINT32 ret;
+	RFIELDMAC(0x1fff,4);
+	return ((INT32)(ret << 19)) >> 19;
 }
-INT32 rfield_s_14(UINT32 bitaddr)
+
+READ_HANDLER( rfield_s_14 )
 {
-	RFIELDMAC_S(0x3fff,3);
-	if (ret & 0x2000)  ret |= 0xffffc000;
-	return ret;
+	UINT32 ret;
+	RFIELDMAC(0x3fff,3);
+	return ((INT32)(ret << 18)) >> 18;
 }
-INT32 rfield_s_15(UINT32 bitaddr)
+
+READ_HANDLER( rfield_s_15 )
 {
-	RFIELDMAC_S(0x7fff,2);
-	if (ret & 0x4000)  ret |= 0xffff8000;
-	return ret;
+	UINT32 ret;
+	RFIELDMAC(0x7fff,2);
+	return ((INT32)(ret << 17)) >> 17;
 }
-INT32 rfield_s_16(UINT32 bitaddr)
+
+READ_HANDLER( rfield_s_16 )
 {
-	if (bitaddr&0x0f)
+	UINT32 ret;
+	if (offset & 0x0f)
 	{
-		RFIELDMAC_S(0xffff,1);
-		return (INT32)(INT16)ret;
+		RFIELDMAC(0xffff,1);
 	}
+
 	else
 	{
-		return (INT32)(INT16)TMS34010_RDMEM_WORD(TOBYTE(bitaddr));
+		ret = TMS34010_RDMEM_WORD(TOBYTE(offset));
 	}
+
+	return (INT32)(INT16)ret;
 }
-INT32 rfield_s_17(UINT32 bitaddr)
+
+READ_HANDLER( rfield_s_17 )
 {
-	logerror("17-bit fields are not implemented!\n");
-#ifdef MAME_DEBUG
-	debug_key_pressed=1;
-#endif
-	return 0;
+	UINT32 ret;
+	RFIELDMAC(0x1ffff,0);
+	return ((INT32)(ret << 15)) >> 15;
 }
-INT32 rfield_s_18(UINT32 bitaddr)
+
+READ_HANDLER( rfield_s_18 )
 {
-	logerror("18-bit fields are not implemented!\n");
-#ifdef MAME_DEBUG
-	debug_key_pressed=1;
-#endif
-	return 0;
+	UINT32 ret;
+	RFIELDMAC_BIG(0x3ffff,15);
+	return ((INT32)(ret << 14)) >> 14;
 }
-INT32 rfield_s_19(UINT32 bitaddr)
+
+READ_HANDLER( rfield_s_19 )
 {
-	logerror("19-bit fields are not implemented!\n");
-#ifdef MAME_DEBUG
-	debug_key_pressed=1;
-#endif
-	return 0;
+	UINT32 ret;
+	RFIELDMAC_BIG(0x7ffff,14);
+	return ((INT32)(ret << 13)) >> 13;
 }
-INT32 rfield_s_20(UINT32 bitaddr)
+
+READ_HANDLER( rfield_s_20 )
 {
-	logerror("20-bit fields are not implemented!\n");
-#ifdef MAME_DEBUG
-	debug_key_pressed=1;
-#endif
-	return 0;
+	UINT32 ret;
+	RFIELDMAC_BIG(0xfffff,13);
+	return ((INT32)(ret << 12)) >> 12;
 }
-INT32 rfield_s_21(UINT32 bitaddr)
+
+READ_HANDLER( rfield_s_21 )
 {
-	logerror("21-bit fields are not implemented!\n");
-#ifdef MAME_DEBUG
-	debug_key_pressed=1;
-#endif
-	return 0;
+	UINT32 ret;
+	RFIELDMAC_BIG(0x1fffff,12);
+	return ((INT32)(ret << 11)) >> 11;
 }
-INT32 rfield_s_22(UINT32 bitaddr)
+
+READ_HANDLER( rfield_s_22 )
 {
-	logerror("22-bit fields are not implemented!\n");
-#ifdef MAME_DEBUG
-	debug_key_pressed=1;
-#endif
-	return 0;
+	UINT32 ret;
+	RFIELDMAC_BIG(0x3fffff,11);
+	return ((INT32)(ret << 10)) >> 10;
 }
-INT32 rfield_s_23(UINT32 bitaddr)
+
+READ_HANDLER( rfield_s_23 )
 {
-	logerror("23-bit fields are not implemented!\n");
-#ifdef MAME_DEBUG
-	debug_key_pressed=1;
-#endif
-	return 0;
+	UINT32 ret;
+	RFIELDMAC_BIG(0x7fffff,10);
+	return ((INT32)(ret << 9)) >> 9;
 }
-INT32 rfield_s_24(UINT32 bitaddr)
+
+READ_HANDLER( rfield_s_24 )
 {
-	logerror("24-bit fields are not implemented!\n");
-#ifdef MAME_DEBUG
-	debug_key_pressed=1;
-#endif
-	return 0;
+	UINT32 ret;
+	RFIELDMAC_BIG(0xffffff,9);
+	return ((INT32)(ret << 8)) >> 8;
 }
-INT32 rfield_s_25(UINT32 bitaddr)
+
+READ_HANDLER( rfield_s_25 )
 {
-	logerror("25-bit fields are not implemented!\n");
-#ifdef MAME_DEBUG
-	debug_key_pressed=1;
-#endif
-	return 0;
+	UINT32 ret;
+	RFIELDMAC_BIG(0x1ffffff,8);
+	return ((INT32)(ret << 7)) >> 7;
 }
-INT32 rfield_s_26(UINT32 bitaddr)
+
+READ_HANDLER( rfield_s_26 )
 {
-	logerror("26-bit fields are not implemented!\n");
-#ifdef MAME_DEBUG
-	debug_key_pressed=1;
-#endif
-	return 0;
+	UINT32 ret;
+	RFIELDMAC_BIG(0x3ffffff,7);
+	return ((INT32)(ret << 6)) >> 6;
 }
-INT32 rfield_s_27(UINT32 bitaddr)
+
+READ_HANDLER( rfield_s_27 )
 {
-	logerror("27-bit fields are not implemented!\n");
-#ifdef MAME_DEBUG
-	debug_key_pressed=1;
-#endif
-	return 0;
+	UINT32 ret;
+	RFIELDMAC_BIG(0x7ffffff,6);
+	return ((INT32)(ret << 5)) >> 5;
 }
-INT32 rfield_s_28(UINT32 bitaddr)
+
+READ_HANDLER( rfield_s_28 )
 {
-	logerror("28-bit fields are not implemented!\n");
-#ifdef MAME_DEBUG
-	debug_key_pressed=1;
-#endif
-	return 0;
+	UINT32 ret;
+	RFIELDMAC_BIG(0xfffffff,5);
+	return ((INT32)(ret << 4)) >> 4;
 }
-INT32 rfield_s_29(UINT32 bitaddr)
+
+READ_HANDLER( rfield_s_29 )
 {
-	logerror("29-bit fields are not implemented!\n");
-#ifdef MAME_DEBUG
-	debug_key_pressed=1;
-#endif
-	return 0;
+	UINT32 ret;
+	RFIELDMAC_BIG(0x1fffffff,4);
+	return ((INT32)(ret << 3)) >> 3;
 }
-INT32 rfield_s_30(UINT32 bitaddr)
+
+READ_HANDLER( rfield_s_30 )
 {
-	logerror("30-bit fields are not implemented!\n");
-#ifdef MAME_DEBUG
-	debug_key_pressed=1;
-#endif
-	return 0;
+	UINT32 ret;
+	RFIELDMAC_BIG(0x3fffffff,3);
+	return ((INT32)(ret << 2)) >> 2;
 }
-INT32 rfield_s_31(UINT32 bitaddr)
+
+READ_HANDLER( rfield_s_31 )
 {
-	logerror("31-bit fields are not implemented!\n");
-#ifdef MAME_DEBUG
-	debug_key_pressed=1;
-#endif
-	return 0;
+	UINT32 ret;
+	RFIELDMAC_BIG(0x7fffffff,2);
+	return ((INT32)(ret << 1)) >> 1;
 }
+
 

@@ -24,7 +24,7 @@ static void tile_callback(int layer,int bank,int *code,int *color)
 
 ***************************************************************************/
 
-static void sprite_callback(int *code,int *color,int *priority)
+static void sprite_callback(int *code,int *color,int *priority,int *shadow)
 {
 	/* Weird priority scheme. Why use three bits when two would suffice? */
 	/* The PROM allows for mixed priorities, where sprites would have */

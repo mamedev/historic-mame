@@ -364,7 +364,42 @@ ROM_START( tail2nos )
 	ROM_LOAD( "osb",          0x00000, 0x20000, 0xd49ab2f5 )
 ROM_END
 
+ROM_START( sformula )
+	ROM_REGION( 0x40000, REGION_CPU1 )	/* 68000 code */
+	ROM_LOAD_EVEN( "ic129.4",      0x00000, 0x10000, 0x672bf690 )
+	ROM_LOAD_ODD ( "ic130.7",      0x00000, 0x10000, 0x73f0c91c )
+	ROM_LOAD_EVEN( "v3",           0x20000, 0x10000, 0xe2e0abad )
+	ROM_LOAD_ODD ( "v6",           0x20000, 0x10000, 0x069817a7 )
+
+	ROM_REGION( 0x80000, REGION_USER1 )
+	/* extra ROM mapped at 200000 */
+	ROM_LOAD_WIDE_SWAP( "a23",     0x00000, 0x80000, 0xd851cf04 )
+
+	ROM_REGION( 0x20000, REGION_USER2 )
+	/* extra ROM mapped at 2c0000 */
+	ROM_LOAD_EVEN( "v5",           0x00000, 0x10000, 0xa9fe15a1 )
+	ROM_LOAD_ODD ( "v8",           0x00000, 0x10000, 0x4fb6a43e )
+
+	ROM_REGION( 0x20000, REGION_CPU2 )	/* 64k for the audio CPU + banks */
+	ROM_LOAD( "v2",           0x00000, 0x08000, 0x920d8920 )
+	ROM_LOAD( "v1",           0x10000, 0x10000, 0xbf35c1a4 )
+
+	ROM_REGION( 0x100000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "a24",          0x00000, 0x80000, 0xb1e9de43 )
+	ROM_LOAD( "o1s",          0x80000, 0x40000, 0xe27a8eb4 )
+
+	ROM_REGION( 0x080000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "oj1",          0x000000, 0x40000, 0x39c36b35 )
+	ROM_LOAD( "oj2",          0x040000, 0x40000, 0x77ccaea2 )
+
+	ROM_REGION( 0x20000, REGION_GFX3 )	/* gfx data for the 051316 */
+	/* RAM, not ROM - handled at run time */
+
+	ROM_REGION( 0x20000, REGION_SOUND1 ) /* sound samples */
+	ROM_LOAD( "osb",          0x00000, 0x20000, 0xd49ab2f5 )
+ROM_END
 
 
-/* note: this one has a 2608, not a 2610 */
-GAMEX( 1989, tail2nos, 0, tail2nos, tail2nos, 0, ROT90, "V-System Co.", "Tail to Nose - Great Championship", GAME_NO_COCKTAIL )
+
+GAMEX( 1989, tail2nos, 0,        tail2nos, tail2nos, 0, ROT90, "V-System Co.", "Tail to Nose - Great Championship", GAME_NO_COCKTAIL )
+GAMEX( 1989, sformula, tail2nos, tail2nos, tail2nos, 0, ROT90, "V-System Co.", "Super Formula (Japan)", GAME_NO_COCKTAIL )

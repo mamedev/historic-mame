@@ -23,7 +23,7 @@ static void tile_callback(int layer,int bank,int *code,int *color)
 
 ***************************************************************************/
 
-static void sprite_callback(int *code,int *color,int *priority)
+static void sprite_callback(int *code,int *color,int *priority,int *shadow)
 {
 	*priority = (*color & 0x10) >> 4;
 	*color = sprite_colorbase + (*color & 0x0f);

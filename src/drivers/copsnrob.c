@@ -48,6 +48,7 @@ extern unsigned char *copsnrob_bulletsram;
 extern unsigned char *copsnrob_carimage;
 extern unsigned char *copsnrob_cary;
 extern unsigned char *copsnrob_trucky;
+extern unsigned char *copsnrob_truckram;
 
 READ_HANDLER( copsnrob_gun_position_r );
 int copsnrob_vh_start(void);
@@ -75,12 +76,12 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x0500, 0x0503, MWA_RAM },
 	{ 0x0504, 0x0507, MWA_NOP },  // ???
 	{ 0x0600, 0x0600, MWA_RAM, &copsnrob_trucky },
-	{ 0x0700, 0x07ff, MWA_RAM },
+	{ 0x0700, 0x07ff, MWA_RAM, &copsnrob_truckram },
 	{ 0x0800, 0x08ff, MWA_RAM, &copsnrob_bulletsram },
 	{ 0x0900, 0x0903, MWA_RAM, &copsnrob_carimage },
 	{ 0x0a00, 0x0a03, MWA_RAM, &copsnrob_cary },
 	{ 0x0b00, 0x0bff, MWA_RAM },
-	{ 0x0c00, 0x0fff, videoram_w, &videoram, &videoram_size },
+	{ 0x0c00, 0x0fff, MWA_RAM, &videoram, &videoram_size },
 	{ 0x1000, 0x1003, MWA_NOP },
 	{ 0x1200, 0x1fff, MWA_ROM },
 	{ 0xfff8, 0xffff, MWA_ROM },

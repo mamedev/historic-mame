@@ -195,6 +195,10 @@ constants for each address space type we support.
 #define ABITS1_24BEW	15
 #define ABITS2_24BEW	8
 #define ABITS_MIN_24BEW 1			/* minimum memory block is 2 bytes */
+/* 26 bits address (little endian - dword access) */
+#define ABITS1_26LEW	16
+#define ABITS2_26LEW	8
+#define ABITS_MIN_26LEW 2			/* minimum memory block is 4 bytes */
 /* 29 bits address (dword access) */
 #define ABITS1_29		19
 #define ABITS2_29		8
@@ -261,7 +265,8 @@ extern unsigned char *cpu_bankbase[];	/* array of bank bases */
 #define change_pc21(pc) 	change_pc_generic(pc, ABITS2_21, ABITS_MIN_21, 0, cpu_setOPbase21)
 #define change_pc24(pc) 	change_pc_generic(pc, ABITS2_24, ABITS_MIN_24, 0, cpu_setOPbase24)
 #define change_pc24bew(pc)	change_pc_generic(pc, ABITS2_24BEW, ABITS_MIN_24BEW, 0, cpu_setOPbase24bew)
-#define change_pc29(pc) 	change_pc_generic(pc, ABITS2_29, ABITS_MIN_29, 3, cpu_setOPbase29)
+#define change_pc26lew(pc)	change_pc_generic(pc, ABITS2_26LEW, ABITS_MIN_26LEW, 0, cpu_setOPbase26lew)
+#define change_pc29(pc)     change_pc_generic(pc, ABITS2_29, ABITS_MIN_29, 3, cpu_setOPbase29)
 #define change_pc32(pc) 	change_pc_generic(pc, ABITS2_32, ABITS_MIN_32, 0, cpu_setOPbase32)
 #define change_pc32lew(pc)	change_pc_generic(pc, ABITS2_32LEW, ABITS_MIN_32LEW, 0, cpu_setOPbase32lew)
 
@@ -306,6 +311,9 @@ READ_HANDLER(cpu_readmem24);
 READ_HANDLER(cpu_readmem24bew);
 READ_HANDLER(cpu_readmem24bew_word);
 READ_HANDLER(cpu_readmem24bew_dword);
+READ_HANDLER(cpu_readmem26lew);
+READ_HANDLER(cpu_readmem26lew_word);
+READ_HANDLER(cpu_readmem26lew_dword);
 READ_HANDLER(cpu_readmem29);
 READ_HANDLER(cpu_readmem29_word);
 READ_HANDLER(cpu_readmem29_dword);
@@ -328,6 +336,9 @@ WRITE_HANDLER(cpu_writemem24);
 WRITE_HANDLER(cpu_writemem24bew);
 WRITE_HANDLER(cpu_writemem24bew_word);
 WRITE_HANDLER(cpu_writemem24bew_dword);
+WRITE_HANDLER(cpu_writemem26lew);
+WRITE_HANDLER(cpu_writemem26lew_word);
+WRITE_HANDLER(cpu_writemem26lew_dword);
 WRITE_HANDLER(cpu_writemem29);
 WRITE_HANDLER(cpu_writemem29_word);
 WRITE_HANDLER(cpu_writemem29_dword);
@@ -360,6 +371,7 @@ void cpu_setOPbase20(int pc);
 void cpu_setOPbase21(int pc);
 void cpu_setOPbase24(int pc);
 void cpu_setOPbase24bew(int pc);
+void cpu_setOPbase26lew(int pc);
 void cpu_setOPbase29(int pc);
 void cpu_setOPbase32(int pc);
 void cpu_setOPbase32lew(int pc);

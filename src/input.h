@@ -97,36 +97,13 @@ InputCode code_read_async(void);
 InputCode code_read_sync(void);
 INT8 code_read_hex_async(void);
 
-INLINE const char* keyboard_name(int code)
-{
-	return code_name(code);
-}
-
-/* Wrapper for compatibility */
-INLINE int keyboard_pressed(int code)
-{
-	return code_pressed(code);
-}
-
-INLINE int keyboard_pressed_memory(int code)
-{
-	return code_pressed_memory(code);
-}
-
-INLINE int keyboard_pressed_memory_repeat(int code, int speed)
-{
-	return code_pressed_memory_repeat(code,speed);
-}
-
-INLINE int keyboard_read_async(void)
-{
-	return code_read_async();
-}
-
-INLINE int keyboard_read_sync(void)
-{
-	return code_read_sync();
-}
+/* Wrappers for compatibility */
+#define keyboard_name                   code_name
+#define keyboard_pressed                code_pressed
+#define keyboard_pressed_memory         code_pressed_memory
+#define keyboard_pressed_memory_repeat  code_pressed_memory_repeat
+#define keyboard_read_async	        code_read_async
+#define keyboard_read_sync              code_read_sync
 
 /***************************************************************************/
 /* Sequence code funtions */

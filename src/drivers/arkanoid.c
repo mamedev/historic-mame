@@ -12,6 +12,9 @@
 			    inserted, NOT patched, so I don't think it's a bootleg
 				The 68705 code for this one was not available; I made it up from
 				the World version changing the level data pointer table.
+    arkatour    Tournament version
+				The 68705 code for this one was not available; I made it up from
+				the World version changing the level data pointer table.
 	arknoidj	Japanese version with level selector.
 				The 68705 code for this one was not available; I made it up from
 				the World version changing the level data pointer table.
@@ -446,6 +449,25 @@ ROM_START( arknoidu )
 	ROM_LOAD( "09.bpr",       0x0400, 0x0200, 0xa7c6c277 )	/* blue component */
 ROM_END
 
+ROM_START( arkatour )
+	ROM_REGION( 0x10000, REGION_CPU1 )	/* 64k for code */
+	ROM_LOAD( "t_ark1.bin",   0x0000, 0x8000, 0xe3b8faf5 )
+	ROM_LOAD( "t_ark2.bin",   0x8000, 0x8000, 0x326aca4d )
+
+	ROM_REGION( 0x0800, REGION_CPU2 )	/* 8k for the microcontroller */
+	ROM_LOAD( "arkatour.uc",  0x0000, 0x0800, BADCRC( 0xd3249559 ) )
+
+	ROM_REGION( 0x18000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "t_ark3.bin",   0x00000, 0x8000, 0x5ddea3cf )
+	ROM_LOAD( "t_ark4.bin",   0x08000, 0x8000, 0x5fcf2e85 )
+	ROM_LOAD( "t_ark5.bin",   0x10000, 0x8000, 0x7b76b192 )
+
+	ROM_REGION( 0x0600, REGION_PROMS )
+	ROM_LOAD( "07.bpr",       0x0000, 0x0200, 0x0af8b289 )	/* red component */
+	ROM_LOAD( "08.bpr",       0x0200, 0x0200, 0xabb002fb )	/* green component */
+	ROM_LOAD( "09.bpr",       0x0400, 0x0200, 0xa7c6c277 )	/* blue component */
+ROM_END
+
 ROM_START( arknoidj )
 	ROM_REGION( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "a75-21.rom",   0x0000, 0x8000, 0xbf0455fc )
@@ -575,3 +597,4 @@ GAME( 1986, arkatayt, arkanoid, bootleg,  arkatayt, 0, ROT90, "bootleg", "Arkano
 GAMEX(1986, arkblock, arkanoid, bootleg,  arknoidj, 0, ROT90, "bootleg", "Block (bootleg, Japanese)", GAME_NOT_WORKING )
 GAME( 1986, arkbloc2, arkanoid, bootleg,  arknoidj, 0, ROT90, "bootleg", "Block (Game Corporation bootleg)" )
 GAME( 1986, arkangc,  arkanoid, bootleg,  arknoidj, 0, ROT90, "bootleg", "Arkanoid (Game Corporation bootleg)" )
+GAME( 1987, arkatour, arkanoid, arkanoid, arkanoid, 0, ROT90, "Taito America Corporation (Romstar license)", "Tournament Arkanoid (US)" )

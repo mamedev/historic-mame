@@ -69,6 +69,8 @@ void decompose_rom_sample_path (char *rompath, char *samplepath);
 extern char *nvdir, *hidir, *cfgdir, *inpdir, *stadir, *memcarddir;
 extern char *artworkdir, *screenshotdir, *alternate_name;
 
+extern char *cheatdir;
+
 #ifdef MESS
 /* path to the CRC database files */
 char *crcdir;
@@ -427,7 +429,18 @@ void parse_cmdline (int argc, char **argv, int game_index)
 	/* misc configuration */
 	options.cheat      = get_bool ("config", "cheat", NULL, 0);
 	options.mame_debug = get_bool ("config", "debug", NULL, 0);
-	cheatfile  = get_string ("config", "cheatfile", "cf", "CHEAT.DAT");    /* JCK 980917 */
+
+	#ifndef MESS
+	cheatfile  = get_string ("config", "cheatfile", "cf", "CHEAT.DAT");
+	#else
+	tmpstr  = get_string ("config", "cheatfile", "cf", "CHEAT.CDB");
+	/* I assume that CHEAT.DAT (in old MESS.CFG files) and CHEAT.CDB are default filenames */
+	if ((!stricmp(tmpstr,"cheat.dat")) || (!stricmp(tmpstr,"cheat.cdb")))
+		sprintf(cheatfile,"%s.cdb",drivers[game_index]->name);
+	else
+		sprintf(cheatfile,"%s",tmpstr);
+	#endif
+
 
  	#ifndef MESS
  	history_filename  = get_string ("config", "historyfile", NULL, "HISTORY.DAT");    /* JCK 980917 */
@@ -448,9 +461,15 @@ void parse_cmdline (int argc, char **argv, int game_index)
 	memcarddir = get_string ("directory", "memcard", NULL, "MEMCARD");
 	stadir     = get_string ("directory", "sta",     NULL, "STA");
 	artworkdir = get_string ("directory", "artwork", NULL, "ARTWORK");
- 	#ifdef MESS
+
+ 	#ifndef MESS
+		cheatdir = get_string ("directory", "cheat", NULL, ".");
+ 	#else
 		crcdir = get_string ("directory", "crc", NULL, "CRC");
+		cheatdir = get_string ("directory", "cheat", NULL, "CHEAT");
  	#endif
+
+	logerror("cheatfile = %s - cheatdir = %s\n",cheatfile,cheatdir);
 
 	tmpstr = get_string ("config", "language", NULL, "english");
 	options.language_file = osd_fopen(0,tmpstr,OSD_FILETYPE_LANGUAGE,0);

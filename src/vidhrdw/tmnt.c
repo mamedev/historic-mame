@@ -56,18 +56,18 @@ static void detatwin_tile_callback(int layer,int bank,int *code,int *color)
 
 ***************************************************************************/
 
-static void mia_sprite_callback(int *code,int *color,int *priority)
+static void mia_sprite_callback(int *code,int *color,int *priority,int *shadow)
 {
 	*color = sprite_colorbase + (*color & 0x0f);
 }
 
-static void tmnt_sprite_callback(int *code,int *color,int *priority)
+static void tmnt_sprite_callback(int *code,int *color,int *priority,int *shadow)
 {
 	*code |= (*color & 0x10) << 9;
 	*color = sprite_colorbase + (*color & 0x0f);
 }
 
-static void punkshot_sprite_callback(int *code,int *color,int *priority_mask)
+static void punkshot_sprite_callback(int *code,int *color,int *priority_mask,int *shadow)
 {
 	int pri = 0x20 | ((*color & 0x60) >> 2);
 	if (pri <= layerpri[2])								*priority_mask = 0;
@@ -79,7 +79,7 @@ static void punkshot_sprite_callback(int *code,int *color,int *priority_mask)
 	*color = sprite_colorbase + (*color & 0x0f);
 }
 
-static void thndrx2_sprite_callback(int *code,int *color,int *priority_mask)
+static void thndrx2_sprite_callback(int *code,int *color,int *priority_mask,int *shadow)
 {
 	int pri = 0x20 | ((*color & 0x60) >> 2);
 	if (pri <= layerpri[2])								*priority_mask = 0;

@@ -138,7 +138,7 @@ static struct MemoryReadAddress master_readmem[] =
 	{ TOBYTE(0x02800000), TOBYTE(0x02807fff), MRA_BANK2 },
 	{ TOBYTE(0x03000000), TOBYTE(0x03ffffff), exterm_coderom_r },
 	{ TOBYTE(0x3f000000), TOBYTE(0x3fffffff), exterm_coderom_r },
-	{ TOBYTE(0xc0000000), TOBYTE(0xc00001ff), TMS34010_io_register_r },
+	{ TOBYTE(0xc0000000), TOBYTE(0xc00001ff), tms34010_io_register_r },
 	{ TOBYTE(0xff000000), TOBYTE(0xffffffff), MRA_BANK3 },
 	{ -1 }  /* end of table */
 };
@@ -159,7 +159,7 @@ static struct MemoryWriteAddress master_writemem[] =
 	{ TOBYTE(0x015c0000), TOBYTE(0x015c000f), watchdog_reset_w },
 	{ TOBYTE(0x01800000), TOBYTE(0x01807fff), exterm_paletteram_w, &paletteram },
 	{ TOBYTE(0x02800000), TOBYTE(0x02807fff), MWA_BANK2, &eeprom, &eeprom_size }, /* EEPROM */
-	{ TOBYTE(0xc0000000), TOBYTE(0xc00001ff), TMS34010_io_register_w },
+	{ TOBYTE(0xc0000000), TOBYTE(0xc00001ff), tms34010_io_register_w },
 	{ TOBYTE(0xff000000), TOBYTE(0xffffffff), MWA_BANK3, &exterm_code_rom, &code_rom_size },
 	{ -1 }  /* end of table */
 };
@@ -177,7 +177,7 @@ static struct tms34010_config slave_config =
 static struct MemoryReadAddress slave_readmem[] =
 {
 	{ TOBYTE(0x00000000), TOBYTE(0x000fffff), exterm_slave_videoram_r },
-	{ TOBYTE(0xc0000000), TOBYTE(0xc00001ff), TMS34010_io_register_r },
+	{ TOBYTE(0xc0000000), TOBYTE(0xc00001ff), tms34010_io_register_r },
 	{ TOBYTE(0xff800000), TOBYTE(0xffffffff), MRA_BANK4 },
 	{ -1 }  /* end of table */
 };
@@ -187,7 +187,7 @@ static struct MemoryWriteAddress slave_writemem[] =
 	{ TOBYTE(0x00000000), TOBYTE(0x000fffff), placeholder, &exterm_slave_videoram },
 /*{ TOBYTE(0x00000000), TOBYTE(0x000fffff), exterm_slave_videoram_16_w },      OR		*/
 /*{ TOBYTE(0x00000000), TOBYTE(0x000fffff), exterm_slave_videoram_8_w },       OR		*/
-	{ TOBYTE(0xc0000000), TOBYTE(0xc00001ff), TMS34010_io_register_w },
+	{ TOBYTE(0xc0000000), TOBYTE(0xc00001ff), tms34010_io_register_w },
 	{ TOBYTE(0xfffffb90), TOBYTE(0xfffffb90), exterm_slave_speedup_w, &exterm_slave_speedup },
 	{ TOBYTE(0xff800000), TOBYTE(0xffffffff), MWA_BANK4 },
 	{ -1 }  /* end of table */
@@ -317,14 +317,14 @@ static struct MachineDriver machine_driver_exterm =
 	{
 		{
 			CPU_TMS34010,
-			40000000/8,	/* 40 Mhz */
+			40000000/TMS34010_CLOCK_DIVIDER,	/* 40 Mhz */
             master_readmem,master_writemem,0,0,
             ignore_interrupt,0,  /* Display Interrupts caused internally */
             0,0,&master_config
 		},
 		{
 			CPU_TMS34010,
-			40000000/8,	/* 40 Mhz */
+			40000000/TMS34010_CLOCK_DIVIDER,	/* 40 Mhz */
             slave_readmem,slave_writemem,0,0,
             ignore_interrupt,0,  /* Display Interrupts caused internally */
             0,0,&slave_config
@@ -422,9 +422,6 @@ ROM_END
 void init_exterm(void)
 {
 	memcpy (exterm_code_rom,memory_region(REGION_CPU1),code_rom_size);
-
-	TMS34010_set_stack_base(0, cpu_bankbase[1], TOBYTE(0x00c00000));
-	TMS34010_set_stack_base(1, cpu_bankbase[4], TOBYTE(0xff800000));
 }
 
 

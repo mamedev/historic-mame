@@ -34,7 +34,7 @@ static void gradius3_tile_callback(int layer,int bank,int *code,int *color)
 
 ***************************************************************************/
 
-static void gradius3_sprite_callback(int *code,int *color,int *priority_mask)
+static void gradius3_sprite_callback(int *code,int *color,int *priority_mask,int *shadow)
 {
 	#define L0 0xaa
 	#define L1 0xcc

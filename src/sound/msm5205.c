@@ -319,3 +319,11 @@ void MSM5205_bitwidth_w (int num, int bitsel)
 		msm5205[num].bitwidth = bitwidth;
 	}
 }
+
+
+void MSM5205_set_volume(int num,int volume)
+{
+	struct MSM5205Voice *voice = &msm5205[num];
+
+	mixer_set_volume(voice->stream,volume);
+}

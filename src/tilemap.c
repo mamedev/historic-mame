@@ -723,6 +723,7 @@ static void draw_tile(
 }
 
 void tilemap_render( struct tilemap *tilemap ){
+profiler_mark(PROFILER_TILEMAP_RENDER);
 	if( tilemap==ALL_TILEMAPS ){
 		tilemap = first_tilemap;
 		while( tilemap ){
@@ -747,6 +748,7 @@ void tilemap_render( struct tilemap *tilemap ){
 			} /* next col */
 		} /* next row */
 	}
+profiler_mark(PROFILER_END);
 }
 
 /***********************************************************************************/
@@ -1181,6 +1183,7 @@ static void update_visible( struct tilemap *tilemap ){
 }
 
 void tilemap_update( struct tilemap *tilemap ){
+profiler_mark(PROFILER_TILEMAP_UPDATE);
 	if( tilemap==ALL_TILEMAPS ){
 		tilemap = first_tilemap;
 		while( tilemap ){
@@ -1192,6 +1195,7 @@ void tilemap_update( struct tilemap *tilemap ){
 		update_visible( tilemap );
 		update_tile_info( tilemap );
 	}
+profiler_mark(PROFILER_END);
 }
 
 /***********************************************************************************/
@@ -1249,6 +1253,7 @@ void tilemap_set_scrolly( struct tilemap *tilemap, int which, int value ){
 void tilemap_draw( struct osd_bitmap *dest, struct tilemap *tilemap, UINT32 priority ){
 	int xpos,ypos;
 
+profiler_mark(PROFILER_TILEMAP_DRAW);
 	if( tilemap->enable ){
 		void (*draw)( int, int );
 
@@ -1450,6 +1455,7 @@ void tilemap_draw( struct osd_bitmap *dest, struct tilemap *tilemap, UINT32 prio
 			}
 		}
 	}
+profiler_mark(PROFILER_END);
 }
 
 /***********************************************************************************/

@@ -240,7 +240,7 @@ int q = I.AF.b.h+R; 											\
 	if (cc) 													\
 	{															\
 		UINT16 a = ARG16(); 									\
-		i8085_ICount -= 7;										\
+		i8085_ICount -= 6;										\
 		M_PUSH(PC); 											\
 		I.PC.d = a; 											\
 		change_pc16(I.PC.d);									\

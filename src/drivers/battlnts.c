@@ -458,9 +458,60 @@ ROM_START( thehustj )
 	ROM_LOAD( "765-e05.13e", 0x00000, 0x40000, 0xef044655 )	/* sprites */
 ROM_END
 
+ROM_START( rackemup )
+	ROM_REGION( 0x20000, REGION_CPU1 ) /* code + banked roms */
+	ROM_LOAD( "765l02",      0x08000, 0x08000, 0x3dfc48bd )	/* fixed ROM */
+	ROM_LOAD( "765-j03.8e",  0x10000, 0x10000, 0xa13fd751 )	/* banked ROM */
+
+	ROM_REGION( 0x10000, REGION_CPU2 ) /* 64k for the sound CPU */
+	ROM_LOAD( "765-j01.10a", 0x00000, 0x08000, 0x77ae753e )
+
+	ROM_REGION( 0x40000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "765l04",      0x00000, 0x40000, 0xacfbeee2 )	/* tiles */
+
+	ROM_REGION( 0x40000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "765l05",      0x00000, 0x40000, 0x1bb6855f )	/* sprites */
+ROM_END
 
 
-GAME( 1987, battlnts, 0,        battlnts, battlnts, 0, ROT90, "Konami", "Battlantis" )
-GAME( 1987, battlntj, battlnts, battlnts, battlnts, 0, ROT90, "Konami", "Battlantis (Japan)" )
-GAME( 1987, thehustl, 0,        battlnts, thehustj, 0, ROT90, "Konami", "The Hustler (Japan version M)" )
-GAME( 1987, thehustj, thehustl, battlnts, thehustj, 0, ROT90, "Konami", "The Hustler (Japan version J)" )
+/*
+	This recursive function doesn't use additional memory
+	(it could be easily converted into an iterative one).
+	It's called shuffle because it mimics the shuffling of a deck of cards.
+*/
+static void shuffle(UINT8 *buf,int len)
+{
+	int i;
+	UINT8 t;
+
+	if (len == 2) return;
+
+	if (len % 4) exit(1);   /* must not happen */
+
+	len /= 2;
+
+	for (i = 0;i < len/2;i++)
+	{
+		t = buf[len/2 + i];
+		buf[len/2 + i] = buf[len + i];
+		buf[len + i] = t;
+	}
+
+	shuffle(buf,len);
+	shuffle(buf + len,len);
+}
+
+
+static void init_rackemup(void)
+{
+	/* rearrange char ROM */
+	shuffle(memory_region(REGION_GFX1),memory_region_length(REGION_GFX1));
+}
+
+
+
+GAME( 1987, battlnts, 0,        battlnts, battlnts, 0,        ROT90, "Konami", "Battlantis" )
+GAME( 1987, battlntj, battlnts, battlnts, battlnts, 0,        ROT90, "Konami", "Battlantis (Japan)" )
+GAME( 1987, thehustl, 0,        battlnts, thehustj, 0,        ROT90, "Konami", "The Hustler (Japan version M)" )
+GAME( 1987, thehustj, thehustl, battlnts, thehustj, 0,        ROT90, "Konami", "The Hustler (Japan version J)" )
+GAME( 1987, rackemup, thehustl, battlnts, thehustj, rackemup, ROT90, "Konami", "Rack 'em Up" )

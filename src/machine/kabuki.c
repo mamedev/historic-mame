@@ -179,7 +179,12 @@ void block_decode(void)    { mitchell_decode(0x02461357,0x64207531,0x0002,0x01);
 static void cps1_decode(int swap_key1,int swap_key2,int addr_key,int xor_key)
 {
 	unsigned char *rom = memory_region(REGION_CPU2);
+	unsigned char *backup = memory_region(REGION_USER1);
 	int diff = memory_region_length(REGION_CPU2) / 2;
+
+	/* the main CPU can read the ROM and checksum it to verify that it hasn't been */
+	/* replaced with a decrypted one. */
+	if (backup) memcpy(backup,rom,0x8000);
 
 	memory_set_opcode_base(1,rom+diff);
 	kabuki_decode(rom,rom+diff,rom,0x0000,0x8000, swap_key1,swap_key2,addr_key,xor_key);

@@ -23,7 +23,7 @@ static void tile_callback(int layer,int bank,int *code,int *color)
 
 ***************************************************************************/
 
-static void sprite_callback(int *code,int *color,int *priority_mask)
+static void sprite_callback(int *code,int *color,int *priority_mask,int *shadow)
 {
 	/* The PROM allows for mixed priorities, where sprites would have */
 	/* priority over text but not on one or both of the other two planes. */
@@ -40,6 +40,7 @@ static void sprite_callback(int *code,int *color,int *priority_mask)
 	}
 	*code |= (*color & 0x80) << 6;
 	*color = sprite_colorbase + (*color & 0x0f);
+	*shadow = 0;	/* shadows are not used by this game */
 }
 
 

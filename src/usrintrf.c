@@ -28,6 +28,7 @@ extern unsigned int coins[COIN_COUNTERS];
 extern unsigned int coinlockedout[COIN_COUNTERS];
 
 /* MARTINEZ.F 990207 Memory Card */
+#ifndef MESS
 #ifndef TINY_COMPILE
 int 		memcard_menu(struct osd_bitmap *bitmap, int);
 extern int	mcd_action;
@@ -35,6 +36,7 @@ extern int	mcd_number;
 extern int	memcard_status;
 extern int	memcard_number;
 extern int	memcard_manager;
+#endif
 #endif
 
 extern int neogeo_memcard_load(int);
@@ -931,6 +933,7 @@ void ui_displaymessagewindow(struct osd_bitmap *bitmap,const char *text)
 
 
 
+#ifndef MESS
 #ifndef TINY_COMPILE
 extern int no_of_tiles;
 void NeoMVSDrawGfx(unsigned char **line,const struct GfxElement *gfx,
@@ -940,6 +943,7 @@ void NeoMVSDrawGfx16(unsigned char **line,const struct GfxElement *gfx,
 		unsigned int code,unsigned int color,int flipx,int flipy,int sx,int sy,
 		int zx,int zy,const struct rectangle *clip);
 extern struct GameDriver driver_neogeo;
+#endif
 #endif
 
 static void showcharset(struct osd_bitmap *bitmap)
@@ -961,11 +965,13 @@ static void showcharset(struct osd_bitmap *bitmap)
 		memcpy(orig_used_colors,palette_used_colors,Machine->drv->total_colors * sizeof(unsigned char));
 	}
 
+#ifndef MESS
 #ifndef TINY_COMPILE
 	if (Machine->gamedrv->clone_of == &driver_neogeo ||
 			(Machine->gamedrv->clone_of &&
 				Machine->gamedrv->clone_of->clone_of == &driver_neogeo))
 		game_is_neogeo=1;
+#endif
 #endif
 
 	bank = -1;
@@ -1088,6 +1094,7 @@ static void showcharset(struct osd_bitmap *bitmap)
 
 				switch_true_orientation();
 			}
+#ifndef MESS
 #ifndef TINY_COMPILE
 			else	/* neogeo sprite tiles */
 			{
@@ -1126,6 +1133,7 @@ static void showcharset(struct osd_bitmap *bitmap)
 					lastdrawn = i+firstdrawn;
 				}
 			}
+#endif
 #endif
 
 			if (bank >= 0)
@@ -2612,15 +2620,15 @@ static int displayhistory (struct osd_bitmap *bitmap, int selected)
 		{
 			char msg[80];
 
-			strcpy (msg, "\t");
-			strcat (msg, ui_getstring(UI_historymissing));
-			strcat (msg, "\n\n\t");
-			strcat(buf,ui_getstring (UI_lefthilight));
-			strcat(buf," ");
-			strcat(buf,ui_getstring (UI_returntomain));
-			strcat(buf," ");
-			strcat(buf,ui_getstring (UI_righthilight));
-			ui_displaymessagewindow (bitmap,msg);
+			strcpy(msg,"\t");
+			strcat(msg,ui_getstring(UI_historymissing));
+			strcat(msg,"\n\n\t");
+			strcat(msg,ui_getstring (UI_lefthilight));
+			strcat(msg," ");
+			strcat(msg,ui_getstring (UI_returntomain));
+			strcat(msg," ");
+			strcat(msg,ui_getstring (UI_righthilight));
+			ui_displaymessagewindow(bitmap,msg);
 		}
 
 		if ((scroll > 0) && input_ui_pressed_repeat(IPT_UI_UP,4))
@@ -2663,6 +2671,7 @@ static int displayhistory (struct osd_bitmap *bitmap, int selected)
 }
 
 
+#ifndef MESS
 #ifndef TINY_COMPILE
 int memcard_menu(struct osd_bitmap *bitmap, int selection)
 {
@@ -2783,6 +2792,7 @@ int memcard_menu(struct osd_bitmap *bitmap, int selection)
 	return sel + 1;
 }
 #endif
+#endif
 
 
 #ifndef MESS
@@ -2854,6 +2864,7 @@ static void setup_menu_init(void)
 		menu_item[menu_total] = ui_getstring (UI_cheat); menu_action[menu_total++] = UI_CHEAT;
 	}
 
+#ifndef MESS
 #ifndef TINY_COMPILE
 	if (Machine->gamedrv->clone_of == &driver_neogeo ||
 			(Machine->gamedrv->clone_of &&
@@ -2861,6 +2872,7 @@ static void setup_menu_init(void)
 	{
 		menu_item[menu_total] = ui_getstring (UI_memorycard); menu_action[menu_total++] = UI_MEMCARD;
 	}
+#endif
 #endif
 
 	menu_item[menu_total] = ui_getstring (UI_resetgame); menu_action[menu_total++] = UI_RESET;
@@ -2923,10 +2935,12 @@ static int setup_menu(struct osd_bitmap *bitmap, int selected)
 			case UI_CHEAT:
 				res = cheat_menu(bitmap, sel >> SEL_BITS);
 				break;
+#ifndef MESS
 #ifndef TINY_COMPILE
 			case UI_MEMCARD:
 				res = memcard_menu(bitmap, sel >> SEL_BITS);
 				break;
+#endif
 #endif
 		}
 
@@ -3375,6 +3389,14 @@ void CLIB_DECL usrintf_showmessage(const char *text,...)
 	messagecounter = 2 * Machine->drv->frames_per_second;
 }
 
+void CLIB_DECL usrintf_showmessage_secs(int seconds, const char *text,...)
+{
+	va_list arg;
+	va_start(arg,text);
+	vsprintf(messagetext,text,arg);
+	va_end(arg);
+	messagecounter = seconds * Machine->drv->frames_per_second;
+}
 
 
 

@@ -620,7 +620,6 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 static void irqhandler(int linestate)
 {
 	cpu_set_irq_line(1,M6809_FIRQ_LINE,linestate);
-	//cpu_cause_interrupt(1,M6809_INT_FIRQ);
 }
 
 static struct YM3526interface ym3526_interface = {
@@ -698,10 +697,13 @@ ROM_START( renegade )
 	ROM_CONTINUE(             0x10000, 0x4000 )
 
 	ROM_REGION( 0x10000, REGION_CPU2 ) /* audio CPU (M6809) */
-	ROM_LOAD( "n0-5.bin",     0x08000, 0x08000, 0x3587de3b )
+	ROM_LOAD( "n0-5.bin",     0x8000, 0x8000, 0x3587de3b )
+
+	ROM_REGION( 0x10000, REGION_CPU3 ) /* mcu (missing) */
+	ROM_LOAD( "mcu",          0x8000, 0x8000, 0x00000000 )
 
 	ROM_REGION( 0x08000, REGION_GFX1 | REGIONFLAG_DISPOSE )
-	ROM_LOAD( "nc-5.bin",     0x00000, 0x8000, 0x9adfaa5d )	/* characters */
+	ROM_LOAD( "nc-5.bin",     0x0000, 0x8000, 0x9adfaa5d )	/* characters */
 
 	ROM_REGION( 0x30000, REGION_GFX2 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "n1-5.bin",     0x00000, 0x8000, 0x4a9f47f3 )	/* tiles */
@@ -738,10 +740,13 @@ ROM_START( kuniokun )
 	ROM_CONTINUE(             0x10000, 0x4000 )
 
 	ROM_REGION( 0x10000, REGION_CPU2 ) /* audio CPU (M6809) */
-	ROM_LOAD( "n0-5.bin",     0x08000, 0x08000, 0x3587de3b )
+	ROM_LOAD( "n0-5.bin",     0x8000, 0x8000, 0x3587de3b )
+
+	ROM_REGION( 0x10000, REGION_CPU3 ) /* mcu (missing) */
+	ROM_LOAD( "mcu",          0x8000, 0x8000, 0x00000000 )
 
 	ROM_REGION( 0x08000, REGION_GFX1 | REGIONFLAG_DISPOSE )
-	ROM_LOAD( "ta18-25.bin",  0x00000, 0x8000, 0x9bd2bea3 )	/* characters */
+	ROM_LOAD( "ta18-25.bin",  0x0000, 0x8000, 0x9bd2bea3 )	/* characters */
 
 	ROM_REGION( 0x30000, REGION_GFX2 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "ta18-01.bin",  0x00000, 0x8000, 0xdaf15024 )	/* tiles */
@@ -778,10 +783,10 @@ ROM_START( kuniokub )
 	ROM_CONTINUE(             0x10000, 0x4000 )
 
 	ROM_REGION( 0x10000, REGION_CPU2 ) /* audio CPU (M6809) */
-	ROM_LOAD( "n0-5.bin",     0x08000, 0x08000, 0x3587de3b )
+	ROM_LOAD( "n0-5.bin",     0x8000, 0x8000, 0x3587de3b )
 
 	ROM_REGION( 0x08000, REGION_GFX1 | REGIONFLAG_DISPOSE )
-	ROM_LOAD( "ta18-25.bin",  0x00000, 0x8000, 0x9bd2bea3 )	/* characters */
+	ROM_LOAD( "ta18-25.bin",  0x0000, 0x8000, 0x9bd2bea3 )	/* characters */
 
 	ROM_REGION( 0x30000, REGION_GFX2 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "ta18-01.bin",  0x00000, 0x8000, 0xdaf15024 )	/* tiles */

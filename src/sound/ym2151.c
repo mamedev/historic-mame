@@ -1090,7 +1090,7 @@ void YM2151WriteReg(int n, int r, int v)
 						chip->TimBTimer = timer_set (chip->TimerBTime[ chip->TimBIndex ], n, timer_callback_b);
 						chip->TimBOldIndex = chip->TimBIndex;
 					}
-					#if 1
+					#if 0
 					else
 					{
 						/*check if timer value has changed since last start and update if necessary*/
@@ -1129,7 +1129,7 @@ void YM2151WriteReg(int n, int r, int v)
 						chip->TimATimer = timer_set (chip->TimerATime[ chip->TimAIndex ], n, timer_callback_a);
 						chip->TimAOldIndex = chip->TimAIndex;
 					}
-					#if 1
+					#if 0
 					else
 					{
 						/*check if timer value has changed since last start and update if necessary*/

@@ -23,7 +23,7 @@ int sprite_colorbase,zoom_colorbase[2];
 
 ***************************************************************************/
 
-static void sprite_callback(int *code,int *color,int *priority)
+static void sprite_callback(int *code,int *color,int *priority,int *shadow)
 {
 //	*code |= (*color & 0x80) << 6;
 	*color = sprite_colorbase + (*color & 0x0f);

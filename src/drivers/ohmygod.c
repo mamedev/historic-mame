@@ -2,7 +2,7 @@
 
 Oh My God! (c) 1993 Atlus
 
-driver by nicola Salmoria
+driver by Nicola Salmoria
 
 Notes:
 - not sure about the scroll registers

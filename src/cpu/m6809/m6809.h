@@ -13,7 +13,7 @@ enum {
 #define M6809_INT_NONE  0   /* No interrupt required */
 #define M6809_INT_IRQ	1	/* Standard IRQ interrupt */
 #define M6809_INT_FIRQ	2	/* Fast IRQ */
-#define M6809_INT_NMI	4	/* NMI */	/* NS 970909 */
+#define M6809_INT_NMI	4	/* NMI */
 #define M6809_IRQ_LINE	0	/* IRQ line number */
 #define M6809_FIRQ_LINE 1   /* FIRQ line number */
 

@@ -252,7 +252,7 @@ static int validitychecks(void)
 				{
 					j = 0;
 
-					while (ipdn_defaultstrings[j] != DEF_STR( Unknown ))
+					for (j = 0;j < STR_TOTAL;j++)
 					{
 						if (inp->name == ipdn_defaultstrings[j]) break;
 						else if (!my_stricmp(inp->name,ipdn_defaultstrings[j]))
@@ -260,7 +260,6 @@ static int validitychecks(void)
 							printf("%s must use DEF_STR( %s )\n",drivers[i]->name,inp->name);
 							error = 1;
 						}
-						j++;
 					}
 
 					if (inp->name == DEF_STR( On ) && (inp+1)->name == DEF_STR( Off ))

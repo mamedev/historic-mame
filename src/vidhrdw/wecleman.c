@@ -1077,13 +1077,11 @@ void hotchase_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		fillbitmap(temp_bitmap2,palette_transparent_pen,0);
 		hotchase_draw_road(temp_bitmap2,0,&clip);
 
-		copybitmapzoom(	bitmap, temp_bitmap2,
-						0, 0,										// flip
-						-(64+32)*4+32, 0,							// pos
-						&Machine->visible_area,				// clip
-						TRANSPARENCY_PEN,palette_transparent_pen,	// transparency
-						(2<<16),(1<<16)								// scale: 16.16 fixed
-						);
+		copyrozbitmap( bitmap, temp_bitmap2,
+				11*16*0x10000,0,	/* start coordinates */
+				0x08000,0,0,0x10000,	/* double horizontally */
+				0,	/* no wraparound */
+				&Machine->visible_area,TRANSPARENCY_PEN,palette_transparent_pen,0);
 	}
 
 	/* Draw the sprites */

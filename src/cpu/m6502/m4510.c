@@ -169,6 +169,18 @@ static m4510_Regs m4510;
  * include the opcode macros, functions and tables
  ***************************************************************/
 
+INLINE int m4510_cpu_readop(void)
+{
+	register UINT16 t=m4510.pc.w.l++;
+	return cpu_readop(M4510_MEM(t));
+}
+
+INLINE int m4510_cpu_readop_arg(void)
+{
+	register UINT16 t=m4510.pc.w.l++;
+	return cpu_readop_arg(M4510_MEM(t));
+}
+
 #define M4510
 #include "t65ce02.c"
 

@@ -441,7 +441,6 @@ INLINE void blockmove_NtoN_transpen_noremap_flipx16(
 					DRAWMODE_NONE      transparent
 					DRAWMODE_SOURCE    normal, draw source pixel.
 					DRAWMODE_SHADOW    destination is changed through palette_shadow_table[]
-					DRAWMODE_HIGHLIGHT destination is changed through palette_highlight_table[]
 
 ***************************************************************************/
 
@@ -475,7 +474,7 @@ INLINE void common_drawgfx(struct osd_bitmap *dest,const struct GfxElement *gfx,
 		{
 			transmask = 1 << transparent_color;
 		}
-		else if (transparency == TRANSPARENCY_PENS)
+		else	/* transparency == TRANSPARENCY_PENS */
 		{
 			transmask = transparent_color;
 		}
@@ -483,7 +482,7 @@ INLINE void common_drawgfx(struct osd_bitmap *dest,const struct GfxElement *gfx,
 		if ((gfx->pen_usage[code] & ~transmask) == 0)
 			/* character is totally transparent, no need to draw */
 			return;
-		else if ((gfx->pen_usage[code] & transmask) == 0 && transparency != TRANSPARENCY_THROUGH && transparency != TRANSPARENCY_PEN_TABLE )
+		else if ((gfx->pen_usage[code] & transmask) == 0)
 			/* character is totally opaque, can disable transparency */
 			transparency = TRANSPARENCY_NONE;
 	}
@@ -563,14 +562,18 @@ void drawgfx(struct osd_bitmap *dest,const struct GfxElement *gfx,
 		unsigned int code,unsigned int color,int flipx,int flipy,int sx,int sy,
 		const struct rectangle *clip,int transparency,int transparent_color)
 {
+	profiler_mark(PROFILER_DRAWGFX);
 	common_drawgfx(dest,gfx,code,color,flipx,flipy,sx,sy,clip,transparency,transparent_color,NULL,0);
+	profiler_mark(PROFILER_END);
 }
 
 void pdrawgfx(struct osd_bitmap *dest,const struct GfxElement *gfx,
 		unsigned int code,unsigned int color,int flipx,int flipy,int sx,int sy,
 		const struct rectangle *clip,int transparency,int transparent_color,UINT32 priority_mask)
 {
+	profiler_mark(PROFILER_DRAWGFX);
 	common_drawgfx(dest,gfx,code,color,flipx,flipy,sx,sy,clip,transparency,transparent_color,priority_bitmap,priority_mask);
+	profiler_mark(PROFILER_END);
 }
 
 
@@ -605,6 +608,8 @@ void copybitmap_remap(struct osd_bitmap *dest,struct osd_bitmap *src,int flipx,i
 {
 	struct rectangle myclip;
 
+
+	profiler_mark(PROFILER_COPYBITMAP);
 
 	if (Machine->orientation & ORIENTATION_SWAP_XY)
 	{
@@ -669,239 +674,10 @@ void copybitmap_remap(struct osd_bitmap *dest,struct osd_bitmap *src,int flipx,i
 		copybitmap_core8(dest,src,flipx,flipy,sx,sy,clip,transparency,transparent_color);
 	else
 		copybitmap_core16(dest,src,flipx,flipy,sx,sy,clip,transparency,transparent_color);
+
+	profiler_mark(PROFILER_END);
 }
 
-
-void copybitmapzoom(struct osd_bitmap *dest_bmp,struct osd_bitmap *source_bmp,int flipx,int flipy,int sx,int sy,
-		const struct rectangle *clip,int transparency,int transparent_color,int scalex,int scaley)
-{
-	struct rectangle myclip;
-	int sprite_screen_height,sprite_screen_width;
-	int dx,dy,ex,ey;
-	int x_index_base,y_index,x,y;
-
-
-	/*
-	scalex and scaley are 16.16 fixed point numbers
-	1<<15 : shrink to 50%
-	1<<16 : uniform scale
-	1<<17 : double to 200%
-	*/
-
-	/* if necessary, remap the transparent color */
-	if (transparency == TRANSPARENCY_COLOR)
-		transparent_color = Machine->pens[transparent_color];
-
-	if (Machine->orientation & ORIENTATION_SWAP_XY)
-	{
-		int temp;
-
-		temp = sx;
-		sx = sy;
-		sy = temp;
-
-		temp = flipx;
-		flipx = flipy;
-		flipy = temp;
-
-		temp = scalex;
-		scalex = scaley;
-		scaley = temp;
-
-		if (clip)
-		{
-			/* clip and myclip might be the same, so we need a temporary storage */
-			temp = clip->min_x;
-			myclip.min_x = clip->min_y;
-			myclip.min_y = temp;
-			temp = clip->max_x;
-			myclip.max_x = clip->max_y;
-			myclip.max_y = temp;
-			clip = &myclip;
-		}
-	}
-	if (Machine->orientation & ORIENTATION_FLIP_X)
-	{
-		sx = dest_bmp->width - ((source_bmp->width * scalex + 0x7fff) >> 16) - sx;
-		if (clip)
-		{
-			int temp;
-
-
-			/* clip and myclip might be the same, so we need a temporary storage */
-			temp = clip->min_x;
-			myclip.min_x = dest_bmp->width-1 - clip->max_x;
-			myclip.max_x = dest_bmp->width-1 - temp;
-			myclip.min_y = clip->min_y;
-			myclip.max_y = clip->max_y;
-			clip = &myclip;
-		}
-	}
-	if (Machine->orientation & ORIENTATION_FLIP_Y)
-	{
-		sy = dest_bmp->height - ((source_bmp->height * scaley + 0x7fff) >> 16) - sy;
-		if (clip)
-		{
-			int temp;
-
-
-			myclip.min_x = clip->min_x;
-			myclip.max_x = clip->max_x;
-			/* clip and myclip might be the same, so we need a temporary storage */
-			temp = clip->min_y;
-			myclip.min_y = dest_bmp->height-1 - clip->max_y;
-			myclip.max_y = dest_bmp->height-1 - temp;
-			clip = &myclip;
-		}
-	}
-
-
-	sprite_screen_height = (scaley*source_bmp->height+0x8000)>>16;
-	sprite_screen_width = (scalex*source_bmp->width+0x8000)>>16;
-
-	/* compute sprite increment per screen pixel */
-	dx = (source_bmp->width<<16)/sprite_screen_width;
-	dy = (source_bmp->height<<16)/sprite_screen_height;
-
-	ex = sx+sprite_screen_width;
-	ey = sy+sprite_screen_height;
-
-	if( flipx )
-	{
-		x_index_base = (sprite_screen_width-1)*dx;
-		dx = -dx;
-	}
-	else
-	{
-		x_index_base = 0;
-	}
-
-	if( flipy )
-	{
-		y_index = (sprite_screen_height-1)*dy;
-		dy = -dy;
-	}
-	else
-	{
-		y_index = 0;
-	}
-
-
-	if (sx < 0)
-	{
-		x_index_base -= sx*dx;
-		sx = 0;
-	}
-	if (clip && sx < clip->min_x)
-	{
-		int pixels = clip->min_x-sx;
-		sx += pixels;
-		x_index_base += pixels*dx;
-	}
-	if (ex > dest_bmp->width) ex = dest_bmp->width;
-	if (clip && ex > clip->max_x+1) ex = clip->max_x+1;
-	if (sx >= ex) return;
-
-	if (sy < 0)
-	{
-		y_index -= sy*dy;
-		sy = 0;
-	}
-	if (clip && sy < clip->min_y)
-	{
-		int pixels = clip->min_y-sy;
-		sy += pixels;
-		y_index += pixels*dy;
-	}
-	if (ey > dest_bmp->height) ey = dest_bmp->height;
-	if (clip && ey > clip->max_y+1) ey = clip->max_y+1;
-	if (sy >= ey) return;
-
-
-	switch (transparency)
-	{
-		case TRANSPARENCY_NONE:
-			if (dest_bmp->depth == 16)
-			{
-				for( y=sy; y<ey; y++ )
-				{
-					UINT16 *source = (UINT16 *)source_bmp->line[(y_index>>16)];
-					UINT16 *dest = (UINT16 *)dest_bmp->line[y];
-
-					int x_index = x_index_base;
-					for( x=sx; x<ex; x++ )
-					{
-						dest[x] = source[x_index>>16];
-						x_index += dx;
-					}
-
-					y_index += dy;
-				}
-			}
-			else
-			{
-				for( y=sy; y<ey; y++ )
-				{
-					UINT8 *source = source_bmp->line[(y_index>>16)];
-					UINT8 *dest = dest_bmp->line[y];
-
-					int x_index = x_index_base;
-					for( x=sx; x<ex; x++ )
-					{
-						dest[x] = source[x_index>>16];
-						x_index += dx;
-					}
-
-					y_index += dy;
-				}
-			}
-			break;
-
-		case TRANSPARENCY_PEN:
-		case TRANSPARENCY_COLOR:
-			if (dest_bmp->depth == 16)
-			{
-				for( y=sy; y<ey; y++ )
-				{
-					UINT16 *source = (UINT16 *)source_bmp->line[(y_index>>16)];
-					UINT16 *dest = (UINT16 *)dest_bmp->line[y];
-
-					int x_index = x_index_base;
-					for( x=sx; x<ex; x++ )
-					{
-						int c = source[x_index>>16];
-						if( c != transparent_color ) dest[x] = c;
-						x_index += dx;
-					}
-
-					y_index += dy;
-				}
-			}
-			else
-			{
-				for( y=sy; y<ey; y++ )
-				{
-					UINT8 *source = source_bmp->line[(y_index>>16)];
-					UINT8 *dest = dest_bmp->line[y];
-
-					int x_index = x_index_base;
-					for( x=sx; x<ex; x++ )
-					{
-						int c = source[x_index>>16];
-						if( c != transparent_color ) dest[x] = c;
-						x_index += dx;
-					}
-
-					y_index += dy;
-				}
-			}
-			break;
-
-		case TRANSPARENCY_THROUGH:
-usrintf_showmessage("copybitmapzoom() TRANSPARENCY_THROUGH");
-			break;
-	}
-}
 
 
 /***************************************************************************
@@ -949,6 +725,8 @@ void copyscrollbitmap_remap(struct osd_bitmap *dest,struct osd_bitmap *src,
 		copybitmap(dest,src,0,0,0,0,clip,transparency,transparent_color);
 		return;
 	}
+
+	profiler_mark(PROFILER_COPYBITMAP);
 
 	if (Machine->orientation & ORIENTATION_SWAP_XY)
 	{
@@ -1157,7 +935,49 @@ void copyscrollbitmap_remap(struct osd_bitmap *dest,struct osd_bitmap *src,
 			row += cons;
 		}
 	}
+
+	profiler_mark(PROFILER_END);
 }
+
+
+/* notes:
+   - startx and starty MUST be UINT32 for calculations to work correctly
+   - srcbitmap->width and height are assumed to be a power of 2 to speed up wraparound
+   */
+void copyrozbitmap(struct osd_bitmap *dest,struct osd_bitmap *src,
+		UINT32 startx,UINT32 starty,int incxx,int incxy,int incyx,int incyy,int wraparound,
+		const struct rectangle *clip,int transparency,int transparent_color,UINT32 priority)
+{
+	profiler_mark(PROFILER_COPYBITMAP);
+
+	/* cheat, the core doesn't support TRANSPARENCY_NONE yet */
+	if (transparency == TRANSPARENCY_NONE)
+	{
+		transparency = TRANSPARENCY_PEN;
+		transparent_color = -1;
+	}
+
+	/* if necessary, remap the transparent color */
+	if (transparency == TRANSPARENCY_COLOR)
+	{
+		transparency = TRANSPARENCY_PEN;
+		transparent_color = Machine->pens[transparent_color];
+	}
+
+	if (transparency != TRANSPARENCY_PEN)
+	{
+		usrintf_showmessage("copyrozbitmap unsupported trans %02x",transparency);
+		return;
+	}
+
+	if (dest->depth != 16)
+		copyrozbitmap_core8(dest,src,startx,starty,incxx,incxy,incyx,incyy,wraparound,clip,transparency,transparent_color,priority);
+	else
+		copyrozbitmap_core16(dest,src,startx,starty,incxx,incxy,incyx,incyy,wraparound,clip,transparency,transparent_color,priority);
+
+	profiler_mark(PROFILER_END);
+}
+
 
 
 /* fill a bitmap using the specified pen */
@@ -1262,12 +1082,18 @@ INLINE void common_drawgfxzoom( struct osd_bitmap *dest_bmp,const struct GfxElem
 
 	if (!scalex || !scaley) return;
 
+	if (scalex == 0x10000 && scaley == 0x10000)
+	{
+		common_drawgfx(dest_bmp,gfx,code,color,flipx,flipy,sx,sy,clip,transparency,transparent_color,pri_buffer,pri_mask);
+		return;
+	}
+
 
 	pri_mask |= (1<<31);
 
-	/* only support TRANSPARENCY_PEN, TRANSPARENCY_PENS and TRANSPARENCY_COLOR */
-	if (transparency != TRANSPARENCY_PEN && transparency != TRANSPARENCY_PENS &&
-			transparency != TRANSPARENCY_COLOR)
+	if (transparency != TRANSPARENCY_PEN && transparency != TRANSPARENCY_PEN_RAW
+			&& transparency != TRANSPARENCY_PENS && transparency != TRANSPARENCY_COLOR
+			&& transparency != TRANSPARENCY_PEN_TABLE && transparency != TRANSPARENCY_PEN_TABLE_RAW)
 	{
 		usrintf_showmessage("drawgfxzoom unsupported trans %02x",transparency);
 		return;
@@ -1490,6 +1316,53 @@ INLINE void common_drawgfxzoom( struct osd_bitmap *dest_bmp,const struct GfxElem
 					}
 				}
 
+				/* case 1b: TRANSPARENCY_PEN_RAW */
+				if (transparency == TRANSPARENCY_PEN_RAW)
+				{
+					if (pri_buffer)
+					{
+						for( y=sy; y<ey; y++ )
+						{
+							UINT8 *source = gfx->gfxdata + (source_base+(y_index>>16)) * gfx->line_modulo;
+							UINT8 *dest = dest_bmp->line[y];
+							UINT8 *pri = pri_buffer->line[y];
+
+							int x, x_index = x_index_base;
+							for( x=sx; x<ex; x++ )
+							{
+								int c = source[x_index>>16];
+								if( c != transparent_color )
+								{
+									if (((1 << pri[x]) & pri_mask) == 0)
+										dest[x] = color + c;
+									pri[x] = 31;
+								}
+								x_index += dx;
+							}
+
+							y_index += dy;
+						}
+					}
+					else
+					{
+						for( y=sy; y<ey; y++ )
+						{
+							UINT8 *source = gfx->gfxdata + (source_base+(y_index>>16)) * gfx->line_modulo;
+							UINT8 *dest = dest_bmp->line[y];
+
+							int x, x_index = x_index_base;
+							for( x=sx; x<ex; x++ )
+							{
+								int c = source[x_index>>16];
+								if( c != transparent_color ) dest[x] = color + c;
+								x_index += dx;
+							}
+
+							y_index += dy;
+						}
+					}
+				}
+
 				/* case 2: TRANSPARENCY_PENS */
 				if (transparency == TRANSPARENCY_PENS)
 				{
@@ -1584,8 +1457,143 @@ INLINE void common_drawgfxzoom( struct osd_bitmap *dest_bmp,const struct GfxElem
 						}
 					}
 				}
-			}
 
+				/* case 4: TRANSPARENCY_PEN_TABLE */
+				if (transparency == TRANSPARENCY_PEN_TABLE)
+				{
+					if (pri_buffer)
+					{
+						for( y=sy; y<ey; y++ )
+						{
+							UINT8 *source = gfx->gfxdata + (source_base+(y_index>>16)) * gfx->line_modulo;
+							UINT8 *dest = dest_bmp->line[y];
+							UINT8 *pri = pri_buffer->line[y];
+
+							int x, x_index = x_index_base;
+							for( x=sx; x<ex; x++ )
+							{
+								int c = source[x_index>>16];
+								if( c != transparent_color )
+								{
+									if (((1 << pri[x]) & pri_mask) == 0)
+									{
+										switch(gfx_drawmode_table[c])
+										{
+										case DRAWMODE_SOURCE:
+											dest[x] = pal[c];
+											break;
+										case DRAWMODE_SHADOW:
+											dest[x] = palette_shadow_table[dest[x]];
+											break;
+										}
+									}
+									pri[x] = 31;
+								}
+								x_index += dx;
+							}
+
+							y_index += dy;
+						}
+					}
+					else
+					{
+						for( y=sy; y<ey; y++ )
+						{
+							UINT8 *source = gfx->gfxdata + (source_base+(y_index>>16)) * gfx->line_modulo;
+							UINT8 *dest = dest_bmp->line[y];
+
+							int x, x_index = x_index_base;
+							for( x=sx; x<ex; x++ )
+							{
+								int c = source[x_index>>16];
+								if( c != transparent_color )
+								{
+									switch(gfx_drawmode_table[c])
+									{
+									case DRAWMODE_SOURCE:
+										dest[x] = pal[c];
+										break;
+									case DRAWMODE_SHADOW:
+										dest[x] = palette_shadow_table[dest[x]];
+										break;
+									}
+								}
+								x_index += dx;
+							}
+
+							y_index += dy;
+						}
+					}
+				}
+
+				/* case 4b: TRANSPARENCY_PEN_TABLE_RAW */
+				if (transparency == TRANSPARENCY_PEN_TABLE_RAW)
+				{
+					if (pri_buffer)
+					{
+						for( y=sy; y<ey; y++ )
+						{
+							UINT8 *source = gfx->gfxdata + (source_base+(y_index>>16)) * gfx->line_modulo;
+							UINT8 *dest = dest_bmp->line[y];
+							UINT8 *pri = pri_buffer->line[y];
+
+							int x, x_index = x_index_base;
+							for( x=sx; x<ex; x++ )
+							{
+								int c = source[x_index>>16];
+								if( c != transparent_color )
+								{
+									if (((1 << pri[x]) & pri_mask) == 0)
+									{
+										switch(gfx_drawmode_table[c])
+										{
+										case DRAWMODE_SOURCE:
+											dest[x] = color + c;
+											break;
+										case DRAWMODE_SHADOW:
+											dest[x] = palette_shadow_table[dest[x]];
+											break;
+										}
+									}
+									pri[x] = 31;
+								}
+								x_index += dx;
+							}
+
+							y_index += dy;
+						}
+					}
+					else
+					{
+						for( y=sy; y<ey; y++ )
+						{
+							UINT8 *source = gfx->gfxdata + (source_base+(y_index>>16)) * gfx->line_modulo;
+							UINT8 *dest = dest_bmp->line[y];
+
+							int x, x_index = x_index_base;
+							for( x=sx; x<ex; x++ )
+							{
+								int c = source[x_index>>16];
+								if( c != transparent_color )
+								{
+									switch(gfx_drawmode_table[c])
+									{
+									case DRAWMODE_SOURCE:
+										dest[x] = color + c;
+										break;
+									case DRAWMODE_SHADOW:
+										dest[x] = palette_shadow_table[dest[x]];
+										break;
+									}
+								}
+								x_index += dx;
+							}
+
+							y_index += dy;
+						}
+					}
+				}
+			}
 		}
 	}
 
@@ -1708,6 +1716,53 @@ INLINE void common_drawgfxzoom( struct osd_bitmap *dest_bmp,const struct GfxElem
 					}
 				}
 
+				/* case 1b: TRANSPARENCY_PEN_RAW */
+				if (transparency == TRANSPARENCY_PEN_RAW)
+				{
+					if (pri_buffer)
+					{
+						for( y=sy; y<ey; y++ )
+						{
+							UINT8 *source = gfx->gfxdata + (source_base+(y_index>>16)) * gfx->line_modulo;
+							UINT16 *dest = (UINT16 *)dest_bmp->line[y];
+							UINT8 *pri = pri_buffer->line[y];
+
+							int x, x_index = x_index_base;
+							for( x=sx; x<ex; x++ )
+							{
+								int c = source[x_index>>16];
+								if( c != transparent_color )
+								{
+									if (((1 << pri[x]) & pri_mask) == 0)
+										dest[x] = color + c;
+									pri[x] = 31;
+								}
+								x_index += dx;
+							}
+
+							y_index += dy;
+						}
+					}
+					else
+					{
+						for( y=sy; y<ey; y++ )
+						{
+							UINT8 *source = gfx->gfxdata + (source_base+(y_index>>16)) * gfx->line_modulo;
+							UINT16 *dest = (UINT16 *)dest_bmp->line[y];
+
+							int x, x_index = x_index_base;
+							for( x=sx; x<ex; x++ )
+							{
+								int c = source[x_index>>16];
+								if( c != transparent_color ) dest[x] = color + c;
+								x_index += dx;
+							}
+
+							y_index += dy;
+						}
+					}
+				}
+
 				/* case 2: TRANSPARENCY_PENS */
 				if (transparency == TRANSPARENCY_PENS)
 				{
@@ -1802,6 +1857,142 @@ INLINE void common_drawgfxzoom( struct osd_bitmap *dest_bmp,const struct GfxElem
 						}
 					}
 				}
+
+				/* case 4: TRANSPARENCY_PEN_TABLE */
+				if (transparency == TRANSPARENCY_PEN_TABLE)
+				{
+					if (pri_buffer)
+					{
+						for( y=sy; y<ey; y++ )
+						{
+							UINT8 *source = gfx->gfxdata + (source_base+(y_index>>16)) * gfx->line_modulo;
+							UINT16 *dest = (UINT16 *)dest_bmp->line[y];
+							UINT8 *pri = pri_buffer->line[y];
+
+							int x, x_index = x_index_base;
+							for( x=sx; x<ex; x++ )
+							{
+								int c = source[x_index>>16];
+								if( c != transparent_color )
+								{
+									if (((1 << pri[x]) & pri_mask) == 0)
+									{
+										switch(gfx_drawmode_table[c])
+										{
+										case DRAWMODE_SOURCE:
+											dest[x] = pal[c];
+											break;
+										case DRAWMODE_SHADOW:
+											dest[x] = palette_shadow_table[dest[x]];
+											break;
+										}
+									}
+									pri[x] = 31;
+								}
+								x_index += dx;
+							}
+
+							y_index += dy;
+						}
+					}
+					else
+					{
+						for( y=sy; y<ey; y++ )
+						{
+							UINT8 *source = gfx->gfxdata + (source_base+(y_index>>16)) * gfx->line_modulo;
+							UINT16 *dest = (UINT16 *)dest_bmp->line[y];
+
+							int x, x_index = x_index_base;
+							for( x=sx; x<ex; x++ )
+							{
+								int c = source[x_index>>16];
+								if( c != transparent_color )
+								{
+									switch(gfx_drawmode_table[c])
+									{
+									case DRAWMODE_SOURCE:
+										dest[x] = pal[c];
+										break;
+									case DRAWMODE_SHADOW:
+										dest[x] = palette_shadow_table[dest[x]];
+										break;
+									}
+								}
+								x_index += dx;
+							}
+
+							y_index += dy;
+						}
+					}
+				}
+
+				/* case 4b: TRANSPARENCY_PEN_TABLE_RAW */
+				if (transparency == TRANSPARENCY_PEN_TABLE_RAW)
+				{
+					if (pri_buffer)
+					{
+						for( y=sy; y<ey; y++ )
+						{
+							UINT8 *source = gfx->gfxdata + (source_base+(y_index>>16)) * gfx->line_modulo;
+							UINT16 *dest = (UINT16 *)dest_bmp->line[y];
+							UINT8 *pri = pri_buffer->line[y];
+
+							int x, x_index = x_index_base;
+							for( x=sx; x<ex; x++ )
+							{
+								int c = source[x_index>>16];
+								if( c != transparent_color )
+								{
+									if (((1 << pri[x]) & pri_mask) == 0)
+									{
+										switch(gfx_drawmode_table[c])
+										{
+										case DRAWMODE_SOURCE:
+											dest[x] = color + c;
+											break;
+										case DRAWMODE_SHADOW:
+											dest[x] = palette_shadow_table[dest[x]];
+											break;
+										}
+									}
+									pri[x] = 31;
+								}
+								x_index += dx;
+							}
+
+							y_index += dy;
+						}
+					}
+					else
+					{
+						for( y=sy; y<ey; y++ )
+						{
+							UINT8 *source = gfx->gfxdata + (source_base+(y_index>>16)) * gfx->line_modulo;
+							UINT16 *dest = (UINT16 *)dest_bmp->line[y];
+
+							int x, x_index = x_index_base;
+							for( x=sx; x<ex; x++ )
+							{
+								int c = source[x_index>>16];
+								if( c != transparent_color )
+								{
+									switch(gfx_drawmode_table[c])
+									{
+									case DRAWMODE_SOURCE:
+										dest[x] = color + c;
+										break;
+									case DRAWMODE_SHADOW:
+										dest[x] = palette_shadow_table[dest[x]];
+										break;
+									}
+								}
+								x_index += dx;
+							}
+
+							y_index += dy;
+						}
+					}
+				}
 			}
 		}
 	}
@@ -1811,8 +2002,10 @@ void drawgfxzoom( struct osd_bitmap *dest_bmp,const struct GfxElement *gfx,
 		unsigned int code,unsigned int color,int flipx,int flipy,int sx,int sy,
 		const struct rectangle *clip,int transparency,int transparent_color,int scalex, int scaley)
 {
+	profiler_mark(PROFILER_DRAWGFX);
 	common_drawgfxzoom(dest_bmp,gfx,code,color,flipx,flipy,sx,sy,
 			clip,transparency,transparent_color,scalex,scaley,NULL,0);
+	profiler_mark(PROFILER_END);
 }
 
 void pdrawgfxzoom( struct osd_bitmap *dest_bmp,const struct GfxElement *gfx,
@@ -1820,8 +2013,10 @@ void pdrawgfxzoom( struct osd_bitmap *dest_bmp,const struct GfxElement *gfx,
 		const struct rectangle *clip,int transparency,int transparent_color,int scalex, int scaley,
 		UINT32 priority_mask)
 {
+	profiler_mark(PROFILER_DRAWGFX);
 	common_drawgfxzoom(dest_bmp,gfx,code,color,flipx,flipy,sx,sy,
 			clip,transparency,transparent_color,scalex,scaley,priority_bitmap,priority_mask);
+	profiler_mark(PROFILER_END);
 }
 
 
@@ -2001,11 +2196,12 @@ void set_pixel_functions(void)
 	}
 
 	/* while we're here, fill in the raw drawing mode table as well */
-	is_raw[TRANSPARENCY_NONE_RAW]    = 1;
-	is_raw[TRANSPARENCY_PEN_RAW]     = 1;
-	is_raw[TRANSPARENCY_PENS_RAW]    = 1;
-	is_raw[TRANSPARENCY_THROUGH_RAW] = 1;
-	is_raw[TRANSPARENCY_BLEND_RAW]   = 1;
+	is_raw[TRANSPARENCY_NONE_RAW]      = 1;
+	is_raw[TRANSPARENCY_PEN_RAW]       = 1;
+	is_raw[TRANSPARENCY_PENS_RAW]      = 1;
+	is_raw[TRANSPARENCY_THROUGH_RAW]   = 1;
+	is_raw[TRANSPARENCY_PEN_TABLE_RAW] = 1;
+	is_raw[TRANSPARENCY_BLEND_RAW]     = 1;
 }
 
 #else /* DECLARE */
@@ -3365,9 +3561,6 @@ DECLARE(blockmove_8toN_pen_table,(
 				case DRAWMODE_SHADOW:
 					*dstdata = palette_shadow_table[*dstdata];
 					break;
-				case DRAWMODE_HIGHLIGHT:
-					*dstdata = palette_highlight_table[*dstdata];
-					break;
 				}
 			}
 			dstdata++;
@@ -3408,8 +3601,84 @@ DECLARE(blockmove_8toN_pen_table_flipx,(
 				case DRAWMODE_SHADOW:
 					*dstdata = palette_shadow_table[*dstdata];
 					break;
-				case DRAWMODE_HIGHLIGHT:
-					*dstdata = palette_highlight_table[*dstdata];
+				}
+			}
+			dstdata++;
+		}
+
+		srcdata += srcmodulo;
+		dstdata += dstmodulo;
+		srcheight--;
+	}
+})
+
+DECLARE(blockmove_8toN_pen_table_raw,(
+		const UINT8 *srcdata,int srcwidth,int srcheight,int srcmodulo,
+		DATA_TYPE *dstdata,int dstmodulo,
+		unsigned int colorbase,int transcolor),
+{
+	DATA_TYPE *end;
+
+	srcmodulo -= srcwidth;
+	dstmodulo -= srcwidth;
+
+	while (srcheight)
+	{
+		end = dstdata + srcwidth;
+		while (dstdata < end)
+		{
+			int col;
+
+			col = *(srcdata++);
+			if (col != transcolor)
+			{
+				switch(gfx_drawmode_table[col])
+				{
+				case DRAWMODE_SOURCE:
+					*dstdata = colorbase + col;
+					break;
+				case DRAWMODE_SHADOW:
+					*dstdata = palette_shadow_table[*dstdata];
+					break;
+				}
+			}
+			dstdata++;
+		}
+
+		srcdata += srcmodulo;
+		dstdata += dstmodulo;
+		srcheight--;
+	}
+})
+
+DECLARE(blockmove_8toN_pen_table_raw_flipx,(
+		const UINT8 *srcdata,int srcwidth,int srcheight,int srcmodulo,
+		DATA_TYPE *dstdata,int dstmodulo,
+		unsigned int colorbase,int transcolor),
+{
+	DATA_TYPE *end;
+
+	srcmodulo += srcwidth;
+	dstmodulo -= srcwidth;
+	//srcdata += srcwidth-1;
+
+	while (srcheight)
+	{
+		end = dstdata + srcwidth;
+		while (dstdata < end)
+		{
+			int col;
+
+			col = *(srcdata--);
+			if (col != transcolor)
+			{
+				switch(gfx_drawmode_table[col])
+				{
+				case DRAWMODE_SOURCE:
+					*dstdata = colorbase + col;
+					break;
+				case DRAWMODE_SHADOW:
+					*dstdata = palette_shadow_table[*dstdata];
 					break;
 				}
 			}
@@ -3846,9 +4115,17 @@ usrintf_showmessage("pdrawgfx TRANS_THROUGH not supported");
 			case TRANSPARENCY_PEN_TABLE:
 				if (pribuf)
 usrintf_showmessage("pdrawgfx TRANS_PEN_TABLE not supported");
-//					BLOCKMOVE(8toN_pen_table,flipx,(sd,sw,sh,sm,dd,dm,paldata,transparent_color));
+//					BLOCKMOVE(8toN_pen_table_pri,flipx,(sd,sw,sh,sm,dd,dm,paldata,transparent_color));
 				else
 					BLOCKMOVE(8toN_pen_table,flipx,(sd,sw,sh,sm,dd,dm,paldata,transparent_color));
+				break;
+
+			case TRANSPARENCY_PEN_TABLE_RAW:
+				if (pribuf)
+usrintf_showmessage("pdrawgfx TRANS_PEN_TABLE_RAW not supported");
+//					BLOCKMOVE(8toN_pen_table_pri_raw,flipx,(sd,sw,sh,sm,dd,dm,color,transparent_color));
+				else
+					BLOCKMOVE(8toN_pen_table_raw,flipx,(sd,sw,sh,sm,dd,dm,color,transparent_color));
 				break;
 
 			case TRANSPARENCY_NONE_RAW:
@@ -3978,6 +4255,326 @@ DECLARE(copybitmap_core,(
 			default:
 				usrintf_showmessage("copybitmap pen mode not supported");
 				break;
+		}
+	}
+})
+
+DECLARE(copyrozbitmap_core,(struct osd_bitmap *bitmap,struct osd_bitmap *srcbitmap,
+		UINT32 startx,UINT32 starty,int incxx,int incxy,int incyx,int incyy,int wraparound,
+		const struct rectangle *clip,int transparency,int transparent_color,UINT32 priority),
+{
+	UINT32 cx;
+	UINT32 cy;
+	int x;
+	int sx;
+	int sy;
+	int ex;
+	int ey;
+	const int xmask = srcbitmap->width-1;
+	const int ymask = srcbitmap->height-1;
+	const int widthshifted = srcbitmap->width << 16;
+	const int heightshifted = srcbitmap->height << 16;
+	DATA_TYPE *dest;
+
+
+	if (clip)
+	{
+		startx += clip->min_x * incxx + clip->min_y * incyx;
+		starty += clip->min_x * incxy + clip->min_y * incyy;
+
+		sx = clip->min_x;
+		sy = clip->min_y;
+		ex = clip->max_x;
+		ey = clip->max_y;
+	}
+	else
+	{
+		sx = 0;
+		sy = 0;
+		ex = bitmap->width-1;
+		ey = bitmap->height-1;
+	}
+
+
+	if (Machine->orientation & ORIENTATION_SWAP_XY)
+	{
+		int t;
+
+		t = startx; startx = starty; starty = t;
+		t = sx; sx = sy; sy = t;
+		t = ex; ex = ey; ey = t;
+		t = incxx; incxx = incyy; incyy = t;
+		t = incxy; incxy = incyx; incyx = t;
+	}
+
+	if (Machine->orientation & ORIENTATION_FLIP_X)
+	{
+		int w = ex - sx;
+
+		incxy = -incxy;
+		incyx = -incyx;
+		startx = widthshifted - startx - 1;
+		startx -= incxx * w;
+		starty -= incxy * w;
+
+		w = sx;
+		sx = bitmap->width-1 - ex;
+		ex = bitmap->width-1 - w;
+	}
+
+	if (Machine->orientation & ORIENTATION_FLIP_Y)
+	{
+		int h = ey - sy;
+
+		incxy = -incxy;
+		incyx = -incyx;
+		starty = heightshifted - starty - 1;
+		startx -= incyx * h;
+		starty -= incyy * h;
+
+		h = sy;
+		sy = bitmap->height-1 - ey;
+		ey = bitmap->height-1 - h;
+	}
+
+	if (incxy == 0 && incyx == 0 && !wraparound)
+	{
+		/* optimized loop for the not rotated case */
+
+		if (incxx == 0x10000)
+		{
+			/* optimized loop for the not zoomed case */
+
+			/* startx is unsigned */
+			startx = ((INT32)startx) >> 16;
+
+			if (startx >= srcbitmap->width)
+			{
+				sx += -startx;
+				startx = 0;
+			}
+
+			if (sx <= ex)
+			{
+				while (sy <= ey)
+				{
+					if (starty < heightshifted)
+					{
+						x = sx;
+						cx = startx;
+						cy = starty >> 16;
+						dest = ((DATA_TYPE *)bitmap->line[sy]) + sx;
+						if (priority)
+						{
+							UINT8 *pri = &priority_bitmap->line[sy][sx];
+							DATA_TYPE *src = (DATA_TYPE *)srcbitmap->line[cy];
+
+							while (x <= ex && cx < srcbitmap->width)
+							{
+								int c = src[cx];
+
+								if (c != transparent_color)
+								{
+									*dest = c;
+									*pri |= priority;
+								}
+
+								cx++;
+								x++;
+								dest++;
+								pri++;
+							}
+						}
+						else
+						{
+							DATA_TYPE *src = (DATA_TYPE *)srcbitmap->line[cy];
+
+							while (x <= ex && cx < srcbitmap->width)
+							{
+								int c = src[cx];
+
+								if (c != transparent_color)
+									*dest = c;
+
+								cx++;
+								x++;
+								dest++;
+							}
+						}
+					}
+					starty += incyy;
+					sy++;
+				}
+			}
+		}
+		else
+		{
+			while (startx >= widthshifted && sx <= ex)
+			{
+				startx += incxx;
+				sx++;
+			}
+
+			if (sx <= ex)
+			{
+				while (sy <= ey)
+				{
+					if (starty < heightshifted)
+					{
+						x = sx;
+						cx = startx;
+						cy = starty >> 16;
+						dest = ((DATA_TYPE *)bitmap->line[sy]) + sx;
+						if (priority)
+						{
+							UINT8 *pri = &priority_bitmap->line[sy][sx];
+							DATA_TYPE *src = (DATA_TYPE *)srcbitmap->line[cy];
+
+							while (x <= ex && cx < widthshifted)
+							{
+								int c = src[cx >> 16];
+
+								if (c != transparent_color)
+								{
+									*dest = c;
+									*pri |= priority;
+								}
+
+								cx += incxx;
+								x++;
+								dest++;
+								pri++;
+							}
+						}
+						else
+						{
+							DATA_TYPE *src = (DATA_TYPE *)srcbitmap->line[cy];
+
+							while (x <= ex && cx < widthshifted)
+							{
+								int c = src[cx >> 16];
+
+								if (c != transparent_color)
+									*dest = c;
+
+								cx += incxx;
+								x++;
+								dest++;
+							}
+						}
+					}
+					starty += incyy;
+					sy++;
+				}
+			}
+		}
+	}
+	else
+	{
+		if (wraparound)
+		{
+			/* plot with wraparound */
+			while (sy <= ey)
+			{
+				x = sx;
+				cx = startx;
+				cy = starty;
+				dest = ((DATA_TYPE *)bitmap->line[sy]) + sx;
+				if (priority)
+				{
+					UINT8 *pri = &priority_bitmap->line[sy][sx];
+
+					while (x <= ex)
+					{
+						int c = ((DATA_TYPE *)srcbitmap->line[(cy >> 16) & xmask])[(cx >> 16) & ymask];
+
+						if (c != transparent_color)
+						{
+							*dest = c;
+							*pri |= priority;
+						}
+
+						cx += incxx;
+						cy += incxy;
+						x++;
+						dest++;
+						pri++;
+					}
+				}
+				else
+				{
+					while (x <= ex)
+					{
+						int c = ((DATA_TYPE *)srcbitmap->line[(cy >> 16) & xmask])[(cx >> 16) & ymask];
+
+						if (c != transparent_color)
+							*dest = c;
+
+						cx += incxx;
+						cy += incxy;
+						x++;
+						dest++;
+					}
+				}
+				startx += incyx;
+				starty += incyy;
+				sy++;
+			}
+		}
+		else
+		{
+			while (sy <= ey)
+			{
+				x = sx;
+				cx = startx;
+				cy = starty;
+				dest = ((DATA_TYPE *)bitmap->line[sy]) + sx;
+				if (priority)
+				{
+					UINT8 *pri = &priority_bitmap->line[sy][sx];
+
+					while (x <= ex)
+					{
+						if (cx < widthshifted && cy < heightshifted)
+						{
+							int c = ((DATA_TYPE *)srcbitmap->line[cy >> 16])[cx >> 16];
+
+							if (c != transparent_color)
+							{
+								*dest = c;
+								*pri |= priority;
+							}
+						}
+
+						cx += incxx;
+						cy += incxy;
+						x++;
+						dest++;
+						pri++;
+					}
+				}
+				else
+				{
+					while (x <= ex)
+					{
+						if (cx < widthshifted && cy < heightshifted)
+						{
+							int c = ((DATA_TYPE *)srcbitmap->line[cy >> 16])[cx >> 16];
+
+							if (c != transparent_color)
+								*dest = c;
+						}
+
+						cx += incxx;
+						cy += incxy;
+						x++;
+						dest++;
+					}
+				}
+				startx += incyx;
+				starty += incyy;
+				sy++;
+			}
 		}
 	}
 })

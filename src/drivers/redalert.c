@@ -366,4 +366,4 @@ ROM_END
 
 
 
-GAMEX( 1981, redalert, 0, redalert, redalert, 0, ROT270, "GDI + Irem", "Red Alert", GAME_WRONG_COLORS | GAME_IMPERFECT_SOUND)
+GAMEX( 1981, redalert, 0, redalert, redalert, 0, ROT270, "Irem + GDI", "Red Alert", GAME_WRONG_COLORS | GAME_IMPERFECT_SOUND)

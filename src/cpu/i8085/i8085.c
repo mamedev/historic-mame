@@ -1,10 +1,31 @@
 /*****************************************************************************
  *
  *	 i8085.c
- *	 Portable I8085A emulator V1.1
+ *	 Portable I8085A emulator V1.2
  *
  *	 Copyright (c) 1999 Juergen Buchmueller, all rights reserved.
  *	 Partially based on information out of Z80Em by Marcel De Kogel
+ *
+ * changes in V1.2
+ *	 - corrected cycle counts for these classes of opcodes
+ *	   Thanks go to Jim Battle <frustum@pacbell.bet>
+ *
+ *					808x	 Z80
+ *	   DEC A		   5	   4	\
+ *	   INC A		   5	   4	 \
+ *	   LD A,B		   5	   4	  >-- Z80 is faster
+ *	   JP (HL)		   5	   4	 /
+ *	   CALL cc,nnnn: 11/17	 10/17	/
+ *
+ *	   INC HL		   5	   6	\
+ *	   DEC HL		   5	   6	 \
+ *	   LD SP,HL 	   5	   6	  \
+ *	   ADD HL,BC	  10	  11	   \
+ *	   INC (HL) 	  10	  11		>-- 8080 is faster
+ *	   DEC (HL) 	  10	  11	   /
+ *	   IN A,(#) 	  10	  11	  /
+ *	   OUT (#),A	  10	  11	 /
+ *	   EX (SP),HL	  18	  19	/
  *
  *	 - This source code is released as freeware for non-commercial purposes.
  *	 - You are free to use and redistribute this code in modified or
@@ -15,8 +36,8 @@
  *	 - If you wish to use this for commercial purposes, please contact me at
  *	   pullmoll@t-online.de
  *	 - The author of this copywritten work reserves the right to change the
- *     terms of its usage and license at any time, including retroactively
- *   - This entire notice must remain in the source code.
+ *	   terms of its usage and license at any time, including retroactively
+ *	 - This entire notice must remain in the source code.
  *
  *****************************************************************************/
 
@@ -58,19 +79,19 @@ static UINT8 i8085_win_layout[] = {
 typedef struct {
 	int 	cputype;	/* 0 8080, 1 8085A */
 	PAIR	PC,SP,AF,BC,DE,HL,XX;
-    UINT8   HALT;
+	UINT8	HALT;
 	UINT8	IM; 		/* interrupt mask */
 	UINT8	IREQ;		/* requested interrupts */
 	UINT8	ISRV;		/* serviced interrupt */
 	UINT32	INTR;		/* vector for INTR */
 	UINT32	IRQ2;		/* scheduled interrupt address */
 	UINT32	IRQ1;		/* executed interrupt address */
-    INT8    nmi_state;
-    INT8    irq_state[4];
-    INT8    filler; /* align on dword boundary */
-    int     (*irq_callback)(int);
-    void    (*sod_callback)(int state);
-}   i8085_Regs;
+	INT8	nmi_state;
+	INT8	irq_state[4];
+	INT8	filler; /* align on dword boundary */
+	int 	(*irq_callback)(int);
+	void	(*sod_callback)(int state);
+}	i8085_Regs;
 
 int i8085_ICount = 0;
 
@@ -108,7 +129,7 @@ static void WM(UINT32 a, UINT8 v)
 	cpu_writemem16(a, v);
 }
 
-static  void illegal(void)
+static	void illegal(void)
 {
 #if VERBOSE
 	UINT16 pc = I.PC.w.l - 1;
@@ -129,13 +150,13 @@ INLINE void execute_one(int opcode)
 		case 0x02: i8085_ICount -= 7;	/* STAX B */
 			WM(I.BC.d, I.AF.b.h);
 			break;
-		case 0x03: i8085_ICount -= 6;	/* INX	B */
+		case 0x03: i8085_ICount -= 5;	/* INX	B */
 			I.BC.w.l++;
 			break;
-		case 0x04: i8085_ICount -= 4;	/* INR	B */
+		case 0x04: i8085_ICount -= 5;	/* INR	B */
 			M_INR(I.BC.b.h);
 			break;
-		case 0x05: i8085_ICount -= 4;	/* DCR	B */
+		case 0x05: i8085_ICount -= 5;	/* DCR	B */
 			M_DCR(I.BC.b.h);
 			break;
 		case 0x06: i8085_ICount -= 7;	/* MVI	B,nn */
@@ -148,19 +169,19 @@ INLINE void execute_one(int opcode)
 		case 0x08: i8085_ICount -= 4;	/* ???? */
 			illegal();
 			break;
-		case 0x09: i8085_ICount -= 11;	/* DAD	B */
+		case 0x09: i8085_ICount -= 10;	/* DAD	B */
 			M_DAD(BC);
 			break;
 		case 0x0a: i8085_ICount -= 7;	/* LDAX B */
 			I.AF.b.h = RM(I.BC.d);
 			break;
-		case 0x0b: i8085_ICount -= 6;	/* DCX	B */
+		case 0x0b: i8085_ICount -= 5;	/* DCX	B */
 			I.BC.w.l--;
 			break;
-		case 0x0c: i8085_ICount -= 4;	/* INR	C */
+		case 0x0c: i8085_ICount -= 5;	/* INR	C */
 			M_INR(I.BC.b.l);
 			break;
-		case 0x0d: i8085_ICount -= 4;	/* DCR	C */
+		case 0x0d: i8085_ICount -= 5;	/* DCR	C */
 			M_DCR(I.BC.b.l);
 			break;
 		case 0x0e: i8085_ICount -= 7;	/* MVI	C,nn */
@@ -179,13 +200,13 @@ INLINE void execute_one(int opcode)
 		case 0x12: i8085_ICount -= 7;	/* STAX D */
 			WM(I.DE.d, I.AF.b.h);
 			break;
-		case 0x13: i8085_ICount -= 6;	/* INX	D */
+		case 0x13: i8085_ICount -= 5;	/* INX	D */
 			I.DE.w.l++;
 			break;
-		case 0x14: i8085_ICount -= 4;	/* INR	D */
+		case 0x14: i8085_ICount -= 5;	/* INR	D */
 			M_INR(I.DE.b.h);
 			break;
-		case 0x15: i8085_ICount -= 4;	/* DCR	D */
+		case 0x15: i8085_ICount -= 5;	/* DCR	D */
 			M_DCR(I.DE.b.h);
 			break;
 		case 0x16: i8085_ICount -= 7;	/* MVI	D,nn */
@@ -198,19 +219,19 @@ INLINE void execute_one(int opcode)
 		case 0x18: i8085_ICount -= 7;	/* ????? */
 			illegal();
 			break;
-		case 0x19: i8085_ICount -= 11;	/* DAD	D */
+		case 0x19: i8085_ICount -= 10;	/* DAD	D */
 			M_DAD(DE);
 			break;
 		case 0x1a: i8085_ICount -= 7;	/* LDAX D */
 			I.AF.b.h = RM(I.DE.d);
 			break;
-		case 0x1b: i8085_ICount -= 6;	/* DCX	D */
+		case 0x1b: i8085_ICount -= 5;	/* DCX	D */
 			I.DE.w.l--;
 			break;
-		case 0x1c: i8085_ICount -= 4;	/* INR	E */
+		case 0x1c: i8085_ICount -= 5;	/* INR	E */
 			M_INR(I.DE.b.l);
 			break;
-		case 0x1d: i8085_ICount -= 4;	/* DCR	E */
+		case 0x1d: i8085_ICount -= 5;	/* DCR	E */
 			M_DCR(I.DE.b.l);
 			break;
 		case 0x1e: i8085_ICount -= 7;	/* MVI	E,nn */
@@ -229,7 +250,7 @@ INLINE void execute_one(int opcode)
 			else
 			{
 				i8085_ICount -= 7;		/* ???	*/
-            }
+			}
 			break;
 		case 0x21: i8085_ICount -= 10;	/* LXI	H,nnnn */
 			I.HL.w.l = ARG16();
@@ -240,13 +261,13 @@ INLINE void execute_one(int opcode)
 			I.XX.w.l++;
 			WM(I.XX.d, I.HL.b.h);
 			break;
-		case 0x23: i8085_ICount -= 6;	/* INX	H */
+		case 0x23: i8085_ICount -= 5;	/* INX	H */
 			I.HL.w.l++;
 			break;
-		case 0x24: i8085_ICount -= 4;	/* INR	H */
+		case 0x24: i8085_ICount -= 5;	/* INR	H */
 			M_INR(I.HL.b.h);
 			break;
-		case 0x25: i8085_ICount -= 4;	/* DCR	H */
+		case 0x25: i8085_ICount -= 5;	/* DCR	H */
 			M_DCR(I.HL.b.h);
 			break;
 		case 0x26: i8085_ICount -= 7;	/* MVI	H,nn */
@@ -263,7 +284,7 @@ INLINE void execute_one(int opcode)
 		case 0x28: i8085_ICount -= 7;	/* ???? */
 			illegal();
 			break;
-		case 0x29: i8085_ICount -= 11;	/* DAD	H */
+		case 0x29: i8085_ICount -= 10;	/* DAD	H */
 			M_DAD(HL);
 			break;
 		case 0x2a: i8085_ICount -= 16;	/* LHLD nnnn */
@@ -272,13 +293,13 @@ INLINE void execute_one(int opcode)
 			I.XX.w.l++;
 			I.HL.b.h = RM(I.XX.d);
 			break;
-		case 0x2b: i8085_ICount -= 6;	/* DCX	H */
+		case 0x2b: i8085_ICount -= 5;	/* DCX	H */
 			I.HL.w.l--;
 			break;
-		case 0x2c: i8085_ICount -= 4;	/* INR	L */
+		case 0x2c: i8085_ICount -= 5;	/* INR	L */
 			M_INR(I.HL.b.l);
 			break;
-		case 0x2d: i8085_ICount -= 4;	/* DCR	L */
+		case 0x2d: i8085_ICount -= 5;	/* DCR	L */
 			M_DCR(I.HL.b.l);
 			break;
 		case 0x2e: i8085_ICount -= 7;	/* MVI	L,nn */
@@ -291,7 +312,7 @@ INLINE void execute_one(int opcode)
 
 		case 0x30:
 			if( I.cputype )
-            {
+			{
 				i8085_ICount -= 7;		/* SIM	*/
 				if ((I.IM ^ I.AF.b.h) & 0x80)
 					if (I.sod_callback) (*I.sod_callback)(I.AF.b.h >> 7);
@@ -311,15 +332,15 @@ INLINE void execute_one(int opcode)
 			I.XX.d = ARG16();
 			WM(I.XX.d, I.AF.b.h);
 			break;
-		case 0x33: i8085_ICount -= 6;	/* INX	SP */
+		case 0x33: i8085_ICount -= 5;	/* INX	SP */
 			I.SP.w.l++;
 			break;
-		case 0x34: i8085_ICount -= 11;	/* INR	M */
+		case 0x34: i8085_ICount -= 10;	/* INR	M */
 			I.XX.b.l = RM(I.HL.d);
 			M_INR(I.XX.b.l);
 			WM(I.HL.d, I.XX.b.l);
 			break;
-		case 0x35: i8085_ICount -= 11;	/* DCR	M */
+		case 0x35: i8085_ICount -= 10;	/* DCR	M */
 			I.XX.b.l = RM(I.HL.d);
 			M_DCR(I.XX.b.l);
 			WM(I.HL.d, I.XX.b.l);
@@ -335,20 +356,20 @@ INLINE void execute_one(int opcode)
 		case 0x38: i8085_ICount -= 7;	/* ???? */
 			illegal();
 			break;
-		case 0x39: i8085_ICount -= 11;	/* DAD SP */
+		case 0x39: i8085_ICount -= 10;	/* DAD SP */
 			M_DAD(SP);
 			break;
 		case 0x3a: i8085_ICount -= 13;	/* LDAX nnnn */
 			I.XX.d = ARG16();
 			I.AF.b.h = RM(I.XX.d);
 			break;
-		case 0x3b: i8085_ICount -= 6;	/* DCX	SP */
+		case 0x3b: i8085_ICount -= 5;	/* DCX	SP */
 			I.SP.w.l--;
 			break;
-		case 0x3c: i8085_ICount -= 4;	/* INR	A */
+		case 0x3c: i8085_ICount -= 5;	/* INR	A */
 			M_INR(I.AF.b.h);
 			break;
-		case 0x3d: i8085_ICount -= 4;	/* DCR	A */
+		case 0x3d: i8085_ICount -= 5;	/* DCR	A */
 			M_DCR(I.AF.b.h);
 			break;
 		case 0x3e: i8085_ICount -= 7;	/* MVI	A,nn */
@@ -359,153 +380,153 @@ INLINE void execute_one(int opcode)
 					   ((I.AF.b.l & CF) << 4)) ^ CF;
 			break;
 
-		case 0x40: i8085_ICount -= 4;	/* MOV	B,B */
+		case 0x40: i8085_ICount -= 5;	/* MOV	B,B */
 			/* no op */
 			break;
-		case 0x41: i8085_ICount -= 4;	/* MOV	B,C */
+		case 0x41: i8085_ICount -= 5;	/* MOV	B,C */
 			I.BC.b.h = I.BC.b.l;
 			break;
-		case 0x42: i8085_ICount -= 4;	/* MOV	B,D */
+		case 0x42: i8085_ICount -= 5;	/* MOV	B,D */
 			I.BC.b.h = I.DE.b.h;
 			break;
-		case 0x43: i8085_ICount -= 4;	/* MOV	B,E */
+		case 0x43: i8085_ICount -= 5;	/* MOV	B,E */
 			I.BC.b.h = I.DE.b.l;
 			break;
-		case 0x44: i8085_ICount -= 4;	/* MOV	B,H */
+		case 0x44: i8085_ICount -= 5;	/* MOV	B,H */
 			I.BC.b.h = I.HL.b.h;
 			break;
-		case 0x45: i8085_ICount -= 4;	/* MOV	B,L */
+		case 0x45: i8085_ICount -= 5;	/* MOV	B,L */
 			I.BC.b.h = I.HL.b.l;
 			break;
 		case 0x46: i8085_ICount -= 7;	/* MOV	B,M */
 			I.BC.b.h = RM(I.HL.d);
 			break;
-		case 0x47: i8085_ICount -= 4;	/* MOV	B,A */
+		case 0x47: i8085_ICount -= 5;	/* MOV	B,A */
 			I.BC.b.h = I.AF.b.h;
 			break;
 
-		 case 0x48: i8085_ICount -= 4;	 /* MOV  C,B */
+		case 0x48: i8085_ICount -= 5;	/* MOV	C,B */
 			I.BC.b.l = I.BC.b.h;
 			break;
-		case 0x49: i8085_ICount -= 4;	/* MOV	C,C */
+		case 0x49: i8085_ICount -= 5;	/* MOV	C,C */
 			/* no op */
 			break;
-		case 0x4a: i8085_ICount -= 4;	/* MOV	C,D */
+		case 0x4a: i8085_ICount -= 5;	/* MOV	C,D */
 			I.BC.b.l = I.DE.b.h;
 			break;
-		case 0x4b: i8085_ICount -= 4;	/* MOV	C,E */
+		case 0x4b: i8085_ICount -= 5;	/* MOV	C,E */
 			I.BC.b.l = I.DE.b.l;
 			break;
-		case 0x4c: i8085_ICount -= 4;	/* MOV	C,H */
+		case 0x4c: i8085_ICount -= 5;	/* MOV	C,H */
 			I.BC.b.l = I.HL.b.h;
 			break;
-		case 0x4d: i8085_ICount -= 4;	/* MOV	C,L */
+		case 0x4d: i8085_ICount -= 5;	/* MOV	C,L */
 			I.BC.b.l = I.HL.b.l;
 			break;
 		case 0x4e: i8085_ICount -= 7;	/* MOV	C,M */
 			I.BC.b.l = RM(I.HL.d);
 			break;
-		case 0x4f: i8085_ICount -= 4;	/* MOV	C,A */
+		case 0x4f: i8085_ICount -= 5;	/* MOV	C,A */
 			I.BC.b.l = I.AF.b.h;
 			break;
 
-		case 0x50: i8085_ICount -= 4;	/* MOV	D,B */
+		case 0x50: i8085_ICount -= 5;	/* MOV	D,B */
 			I.DE.b.h = I.BC.b.h;
 			break;
-		case 0x51: i8085_ICount -= 4;	/* MOV	D,C */
+		case 0x51: i8085_ICount -= 5;	/* MOV	D,C */
 			I.DE.b.h = I.BC.b.l;
 			break;
-		case 0x52: i8085_ICount -= 4;	/* MOV	D,D */
+		case 0x52: i8085_ICount -= 5;	/* MOV	D,D */
 			/* no op */
 			break;
-		case 0x53: i8085_ICount -= 4;	/* MOV	D,E */
+		case 0x53: i8085_ICount -= 5;	/* MOV	D,E */
 			I.DE.b.h = I.DE.b.l;
 			break;
-		case 0x54: i8085_ICount -= 4;	/* MOV	D,H */
+		case 0x54: i8085_ICount -= 5;	/* MOV	D,H */
 			I.DE.b.h = I.HL.b.h;
 			break;
-		case 0x55: i8085_ICount -= 4;	/* MOV	D,L */
+		case 0x55: i8085_ICount -= 5;	/* MOV	D,L */
 			I.DE.b.h = I.HL.b.l;
 			break;
 		case 0x56: i8085_ICount -= 7;	/* MOV	D,M */
 			I.DE.b.h = RM(I.HL.d);
 			break;
-		case 0x57: i8085_ICount -= 4;	/* MOV	D,A */
+		case 0x57: i8085_ICount -= 5;	/* MOV	D,A */
 			I.DE.b.h = I.AF.b.h;
 			break;
 
-		case 0x58: i8085_ICount -= 4;	/* MOV	E,B */
+		case 0x58: i8085_ICount -= 5;	/* MOV	E,B */
 			I.DE.b.l = I.BC.b.h;
 			break;
-		case 0x59: i8085_ICount -= 4;	/* MOV	E,C */
+		case 0x59: i8085_ICount -= 5;	/* MOV	E,C */
 			I.DE.b.l = I.BC.b.l;
 			break;
-		case 0x5a: i8085_ICount -= 4;	/* MOV	E,D */
+		case 0x5a: i8085_ICount -= 5;	/* MOV	E,D */
 			I.DE.b.l = I.DE.b.h;
 			break;
-		case 0x5b: i8085_ICount -= 4;	/* MOV	E,E */
+		case 0x5b: i8085_ICount -= 5;	/* MOV	E,E */
 			/* no op */
 			break;
-		case 0x5c: i8085_ICount -= 4;	/* MOV	E,H */
+		case 0x5c: i8085_ICount -= 5;	/* MOV	E,H */
 			I.DE.b.l = I.HL.b.h;
 			break;
-		case 0x5d: i8085_ICount -= 4;	/* MOV	E,L */
+		case 0x5d: i8085_ICount -= 5;	/* MOV	E,L */
 			I.DE.b.l = I.HL.b.l;
 			break;
 		case 0x5e: i8085_ICount -= 7;	/* MOV	E,M */
 			I.DE.b.l = RM(I.HL.d);
 			break;
-		case 0x5f: i8085_ICount -= 4;	/* MOV	E,A */
+		case 0x5f: i8085_ICount -= 5;	/* MOV	E,A */
 			I.DE.b.l = I.AF.b.h;
 			break;
 
-		 case 0x60: i8085_ICount -= 4;	 /* MOV  H,B */
+		case 0x60: i8085_ICount -= 5;	/* MOV	H,B */
 			I.HL.b.h = I.BC.b.h;
 			break;
-		case 0x61: i8085_ICount -= 4;	/* MOV	H,C */
+		case 0x61: i8085_ICount -= 5;	/* MOV	H,C */
 			I.HL.b.h = I.BC.b.l;
 			break;
-		case 0x62: i8085_ICount -= 4;	/* MOV	H,D */
+		case 0x62: i8085_ICount -= 5;	/* MOV	H,D */
 			I.HL.b.h = I.DE.b.h;
 			break;
-		case 0x63: i8085_ICount -= 4;	/* MOV	H,E */
+		case 0x63: i8085_ICount -= 5;	/* MOV	H,E */
 			I.HL.b.h = I.DE.b.l;
 			break;
-		case 0x64: i8085_ICount -= 4;	/* MOV	H,H */
+		case 0x64: i8085_ICount -= 5;	/* MOV	H,H */
 			/* no op */
 			break;
-		case 0x65: i8085_ICount -= 4;	/* MOV	H,L */
+		case 0x65: i8085_ICount -= 5;	/* MOV	H,L */
 			I.HL.b.h = I.HL.b.l;
 			break;
 		case 0x66: i8085_ICount -= 7;	/* MOV	H,M */
 			I.HL.b.h = RM(I.HL.d);
 			break;
-		case 0x67: i8085_ICount -= 4;	/* MOV	H,A */
+		case 0x67: i8085_ICount -= 5;	/* MOV	H,A */
 			I.HL.b.h = I.AF.b.h;
 			break;
 
-		case 0x68: i8085_ICount -= 4;	/* MOV	L,B */
+		case 0x68: i8085_ICount -= 5;	/* MOV	L,B */
 			I.HL.b.l = I.BC.b.h;
 			break;
-		case 0x69: i8085_ICount -= 4;	/* MOV	L,C */
+		case 0x69: i8085_ICount -= 5;	/* MOV	L,C */
 			I.HL.b.l = I.BC.b.l;
 			break;
-		case 0x6a: i8085_ICount -= 4;	/* MOV	L,D */
+		case 0x6a: i8085_ICount -= 5;	/* MOV	L,D */
 			I.HL.b.l = I.DE.b.h;
 			break;
-		case 0x6b: i8085_ICount -= 4;	/* MOV	L,E */
+		case 0x6b: i8085_ICount -= 5;	/* MOV	L,E */
 			I.HL.b.l = I.DE.b.l;
 			break;
-		case 0x6c: i8085_ICount -= 4;	/* MOV	L,H */
+		case 0x6c: i8085_ICount -= 5;	/* MOV	L,H */
 			I.HL.b.l = I.HL.b.h;
 			break;
-		case 0x6d: i8085_ICount -= 4;	/* MOV	L,L */
+		case 0x6d: i8085_ICount -= 5;	/* MOV	L,L */
 			/* no op */
 			break;
 		case 0x6e: i8085_ICount -= 7;	/* MOV	L,M */
 			I.HL.b.l = RM(I.HL.d);
 			break;
-		case 0x6f: i8085_ICount -= 4;	/* MOV	L,A */
+		case 0x6f: i8085_ICount -= 5;	/* MOV	L,A */
 			I.HL.b.l = I.AF.b.h;
 			break;
 
@@ -536,28 +557,28 @@ INLINE void execute_one(int opcode)
 			WM(I.HL.d, I.AF.b.h);
 			break;
 
-		case 0x78: i8085_ICount -= 4;	/* MOV	A,B */
+		case 0x78: i8085_ICount -= 5;	/* MOV	A,B */
 			I.AF.b.h = I.BC.b.h;
 			break;
-		case 0x79: i8085_ICount -= 4;	/* MOV	A,C */
+		case 0x79: i8085_ICount -= 5;	/* MOV	A,C */
 			I.AF.b.h = I.BC.b.l;
 			break;
-		case 0x7a: i8085_ICount -= 4;	/* MOV	A,D */
+		case 0x7a: i8085_ICount -= 5;	/* MOV	A,D */
 			I.AF.b.h = I.DE.b.h;
 			break;
-		case 0x7b: i8085_ICount -= 4;	/* MOV	A,E */
+		case 0x7b: i8085_ICount -= 5;	/* MOV	A,E */
 			I.AF.b.h = I.DE.b.l;
 			break;
-		case 0x7c: i8085_ICount -= 4;	/* MOV	A,H */
+		case 0x7c: i8085_ICount -= 5;	/* MOV	A,H */
 			I.AF.b.h = I.HL.b.h;
 			break;
-		case 0x7d: i8085_ICount -= 4;	/* MOV	A,L */
+		case 0x7d: i8085_ICount -= 5;	/* MOV	A,L */
 			I.AF.b.h = I.HL.b.l;
 			break;
 		case 0x7e: i8085_ICount -= 7;	/* MOV	A,M */
 			I.AF.b.h = RM(I.HL.d);
 			break;
-		case 0x7f: i8085_ICount -= 4;	/* MOV	A,A */
+		case 0x7f: i8085_ICount -= 5;	/* MOV	A,A */
 			/* no op */
 			break;
 
@@ -609,7 +630,7 @@ INLINE void execute_one(int opcode)
 			break;
 		case 0x8f: i8085_ICount -= 4;	/* ADC	A */
 			M_ADC(I.AF.b.h);
-            break;
+			break;
 
 		case 0x90: i8085_ICount -= 4;	/* SUB	B */
 			M_SUB(I.BC.b.h);
@@ -773,7 +794,7 @@ INLINE void execute_one(int opcode)
 		case 0xc3: i8085_ICount -= 10;	/* JMP	nnnn */
 			M_JMP(1);
 			break;
-		case 0xc4: i8085_ICount -= 10;	/* CNZ	nnnn */
+		case 0xc4: i8085_ICount -= 11;	/* CNZ	nnnn */
 			M_CALL( !(I.AF.b.l & ZF) );
 			break;
 		case 0xc5: i8085_ICount -= 11;	/* PUSH B */
@@ -799,10 +820,10 @@ INLINE void execute_one(int opcode)
 		case 0xcb: i8085_ICount -= 4;	/* ???? */
 			illegal();
 			break;
-		case 0xcc: i8085_ICount -= 10;	/* CZ	nnnn */
+		case 0xcc: i8085_ICount -= 11;	/* CZ	nnnn */
 			M_CALL( I.AF.b.l & ZF );
 			break;
-		case 0xcd: i8085_ICount -= 10;	/* CALL nnnn */
+		case 0xcd: i8085_ICount -= 11;	/* CALL nnnn */
 			M_CALL(1);
 			break;
 		case 0xce: i8085_ICount -= 7;	/* ACI	nn */
@@ -822,10 +843,10 @@ INLINE void execute_one(int opcode)
 		case 0xd2: i8085_ICount -= 10;	/* JNC	nnnn */
 			M_JMP( !(I.AF.b.l & CF) );
 			break;
-		case 0xd3: i8085_ICount -= 11;	/* OUT	nn */
+		case 0xd3: i8085_ICount -= 10;	/* OUT	nn */
 			M_OUT;
 			break;
-		case 0xd4: i8085_ICount -= 10;	/* CNC	nnnn */
+		case 0xd4: i8085_ICount -= 11;	/* CNC	nnnn */
 			M_CALL( !(I.AF.b.l & CF) );
 			break;
 		case 0xd5: i8085_ICount -= 11;	/* PUSH D */
@@ -848,10 +869,10 @@ INLINE void execute_one(int opcode)
 		case 0xda: i8085_ICount -= 10;	/* JC	nnnn */
 			M_JMP( I.AF.b.l & CF );
 			break;
-		case 0xdb: i8085_ICount -= 11;	/* IN	nn */
+		case 0xdb: i8085_ICount -= 10;	/* IN	nn */
 			M_IN;
 			break;
-		case 0xdc: i8085_ICount -= 10;	/* CC	nnnn */
+		case 0xdc: i8085_ICount -= 11;	/* CC	nnnn */
 			M_CALL( I.AF.b.l & CF );
 			break;
 		case 0xdd: i8085_ICount -= 4;	/* ???? */
@@ -874,12 +895,12 @@ INLINE void execute_one(int opcode)
 		case 0xe2: i8085_ICount -= 10;	/* JPE	nnnn */
 			M_JMP( !(I.AF.b.l & VF) );
 			break;
-		case 0xe3: i8085_ICount -= 19;	/* XTHL */
+		case 0xe3: i8085_ICount -= 18;	/* XTHL */
 			M_POP(XX);
 			M_PUSH(HL);
 			I.HL.d = I.XX.d;
 			break;
-		case 0xe4: i8085_ICount -= 10;	/* CPE	nnnn */
+		case 0xe4: i8085_ICount -= 11;	/* CPE	nnnn */
 			M_CALL( !(I.AF.b.l & VF) );
 			break;
 		case 0xe5: i8085_ICount -= 11;	/* PUSH H */
@@ -896,7 +917,7 @@ INLINE void execute_one(int opcode)
 		case 0xe8: i8085_ICount -= 5;	/* RPO	*/
 			M_RET( I.AF.b.l & VF );
 			break;
-		case 0xe9: i8085_ICount -= 4;	/* PCHL */
+		case 0xe9: i8085_ICount -= 5;	/* PCHL */
 			I.PC.d = I.HL.w.l;
 			change_pc16(I.PC.d);
 			break;
@@ -908,7 +929,7 @@ INLINE void execute_one(int opcode)
 			I.DE.d = I.HL.d;
 			I.HL.d = I.XX.d;
 			break;
-		case 0xec: i8085_ICount -= 10;	/* CPO	nnnn */
+		case 0xec: i8085_ICount -= 11;	/* CPO	nnnn */
 			M_CALL( I.AF.b.l & VF );
 			break;
 		case 0xed: i8085_ICount -= 4;	/* ???? */
@@ -935,7 +956,7 @@ INLINE void execute_one(int opcode)
 			/* remove interrupt enable */
 			I.IM &= ~IM_IEN;
 			break;
-		case 0xf4: i8085_ICount -= 10;	/* CP	nnnn */
+		case 0xf4: i8085_ICount -= 11;	/* CP	nnnn */
 			M_CALL( !(I.AF.b.l & SF) );
 			break;
 		case 0xf5: i8085_ICount -= 11;	/* PUSH A */
@@ -952,7 +973,7 @@ INLINE void execute_one(int opcode)
 		case 0xf8: i8085_ICount -= 5;	/* RM	*/
 			M_RET( I.AF.b.l & SF );
 			break;
-		case 0xf9: i8085_ICount -= 6;	/* SPHL */
+		case 0xf9: i8085_ICount -= 5;	/* SPHL */
 			I.SP.d = I.HL.d;
 			break;
 		case 0xfa: i8085_ICount -= 10;	/* JM	nnnn */
@@ -961,7 +982,7 @@ INLINE void execute_one(int opcode)
 		case 0xfb: i8085_ICount -= 4;	/* EI */
 			/* set interrupt enable */
 			I.IM |= IM_IEN;
-            /* remove serviced IRQ flag */
+			/* remove serviced IRQ flag */
 			I.IREQ &= ~I.ISRV;
 			/* reset serviced IRQ */
 			I.ISRV = 0;
@@ -1020,10 +1041,10 @@ INLINE void execute_one(int opcode)
 				{
 					I.ISRV = IM_INTR;
 					I.IRQ2 = I.INTR;
-                }
-            }
+				}
+			}
 			break;
-		case 0xfc: i8085_ICount -= 10;	/* CM	nnnn */
+		case 0xfc: i8085_ICount -= 11;	/* CM	nnnn */
 			M_CALL( I.AF.b.l & SF );
 			break;
 		case 0xfd: i8085_ICount -= 4;	/* ???? */
@@ -1049,7 +1070,7 @@ static void Interrupt(void)
 	}
 	I.IM &= ~IM_IEN;		/* remove general interrupt enable bit */
 
-    if( I.ISRV == IM_INTR )
+	if( I.ISRV == IM_INTR )
 	{
 		LOG(("Interrupt get INTR vector\n"));
 		I.IRQ1 = (I.irq_callback)(0);
@@ -1076,7 +1097,7 @@ static void Interrupt(void)
 		}
 	}
 
-    switch( I.IRQ1 & 0xff0000 )
+	switch( I.IRQ1 & 0xff0000 )
 	{
 		case 0xcd0000:	/* CALL nnnn */
 			i8085_ICount -= 7;
@@ -1301,23 +1322,23 @@ void i8085_set_reg(int regnum, unsigned val)
 					WM( offset+1, (val>>8)&0xff );
 				}
 			}
-    }
+	}
 }
 
 /****************************************************************************/
-/* Set the 8085 SID input signal state                                      */
+/* Set the 8085 SID input signal state										*/
 /****************************************************************************/
 void i8085_set_SID(int state)
 {
 	LOG(("i8085: SID %d\n", state));
-    if (state)
+	if (state)
 		I.IM |= IM_SID;
 	else
 		I.IM &= ~IM_SID;
 }
 
 /****************************************************************************/
-/* Set a callback to be called at SOD output change                         */
+/* Set a callback to be called at SOD output change 						*/
 /****************************************************************************/
 void i8085_set_sod_callback(void (*callback)(int state))
 {
@@ -1325,7 +1346,7 @@ void i8085_set_sod_callback(void (*callback)(int state))
 }
 
 /****************************************************************************/
-/* Set TRAP signal state                                                    */
+/* Set TRAP signal state													*/
 /****************************************************************************/
 void i8085_set_TRAP(int state)
 {
@@ -1344,7 +1365,7 @@ void i8085_set_TRAP(int state)
 }
 
 /****************************************************************************/
-/* Set RST7.5 signal state                                                  */
+/* Set RST7.5 signal state													*/
 /****************************************************************************/
 void i8085_set_RST75(int state)
 {
@@ -1364,7 +1385,7 @@ void i8085_set_RST75(int state)
 }
 
 /****************************************************************************/
-/* Set RST6.5 signal state                                                  */
+/* Set RST6.5 signal state													*/
 /****************************************************************************/
 void i8085_set_RST65(int state)
 {
@@ -1386,7 +1407,7 @@ void i8085_set_RST65(int state)
 }
 
 /****************************************************************************/
-/* Set RST5.5 signal state                                                  */
+/* Set RST5.5 signal state													*/
 /****************************************************************************/
 void i8085_set_RST55(int state)
 {
@@ -1408,7 +1429,7 @@ void i8085_set_RST55(int state)
 }
 
 /****************************************************************************/
-/* Set INTR signal                                                          */
+/* Set INTR signal															*/
 /****************************************************************************/
 void i8085_set_INTR(int state)
 {
@@ -1450,8 +1471,8 @@ void i8085_set_irq_line(int irqline, int state)
 				case I8085_RST55_LINE: i8085_set_RST55(0); break;
 				case I8085_RST65_LINE: i8085_set_RST65(0); break;
 				case I8085_RST75_LINE: i8085_set_RST75(0); break;
-            }
-        }
+			}
+		}
 	}
 	else
 	{
@@ -1465,7 +1486,7 @@ void i8085_set_irq_line(int irqline, int state)
 				case I8085_RST75_LINE: i8085_set_RST75(1); break;
 			}
 		}
-    }
+	}
 }
 
 void i8085_set_irq_callback(int (*callback)(int))
@@ -1496,7 +1517,7 @@ void i8085_state_save(void *file)
 void i8085_state_load(void *file)
 {
 	int cpu = cpu_getactivecpu();
-    state_load_UINT16(file, "i8085", cpu, "AF", &I.AF.w.l, 1);
+	state_load_UINT16(file, "i8085", cpu, "AF", &I.AF.w.l, 1);
 	state_load_UINT16(file, "i8085", cpu, "BC", &I.BC.w.l, 1);
 	state_load_UINT16(file, "i8085", cpu, "DE", &I.DE.w.l, 1);
 	state_load_UINT16(file, "i8085", cpu, "HL", &I.HL.w.l, 1);
@@ -1527,7 +1548,7 @@ const char *i8085_info(void *context, int regnum)
 	if( !context )
 		r = &I;
 
-    switch( regnum )
+	switch( regnum )
 	{
 		case CPU_INFO_REG+I8085_AF: sprintf(buffer[which], "AF:%04X", r->AF.w.l); break;
 		case CPU_INFO_REG+I8085_BC: sprintf(buffer[which], "BC:%04X", r->BC.w.l); break;
@@ -1563,14 +1584,14 @@ const char *i8085_info(void *context, int regnum)
 		case CPU_INFO_CREDITS: return "Copyright (c) 1999 Juergen Buchmueller, all rights reserved.";
 		case CPU_INFO_REG_LAYOUT: return (const char *)i8085_reg_layout;
 		case CPU_INFO_WIN_LAYOUT: return (const char *)i8085_win_layout;
-    }
+	}
 	return buffer[which];
 }
 
 unsigned i8085_dasm(char *buffer, unsigned pc)
 {
 #ifdef MAME_DEBUG
-    return Dasm8085(buffer,pc);
+	return Dasm8085(buffer,pc);
 #else
 	sprintf( buffer, "$%02X", cpu_readop(pc) );
 	return 1;
@@ -1594,7 +1615,7 @@ static UINT8 i8080_win_layout[] = {
 	 0, 0,24,22,	/* disassembler window (left colums) */
 	25, 3,55,10,	/* memory #1 window (right, upper middle) */
 	25,14,55, 8,	/* memory #2 window (right, lower middle) */
-     0,23,80, 1,    /* command line window (bottom rows) */
+	 0,23,80, 1,	/* command line window (bottom rows) */
 };
 
 
@@ -1626,14 +1647,14 @@ void i8080_set_irq_line(int irqline, int state)
 	{
 		if (I.IM & IM_IEN)
 			i8085_set_INTR(1);
-    }
+	}
 }
 void i8080_set_irq_callback(int (*callback)(int irqline)) { i8085_set_irq_callback(callback); }
 
 void i8080_state_save(void *file)
 {
 	int cpu = cpu_getactivecpu();
-    state_save_UINT16(file, "i8080", cpu, "AF", &I.AF.w.l, 1);
+	state_save_UINT16(file, "i8080", cpu, "AF", &I.AF.w.l, 1);
 	state_save_UINT16(file, "i8080", cpu, "BC", &I.BC.w.l, 1);
 	state_save_UINT16(file, "i8080", cpu, "DE", &I.DE.w.l, 1);
 	state_save_UINT16(file, "i8080", cpu, "HL", &I.HL.w.l, 1);
@@ -1671,22 +1692,23 @@ void i8080_state_load(void *file)
 const char *i8080_info(void *context, int regnum)
 {
 	switch( regnum )
-    {
+	{
 		case CPU_INFO_NAME: return "8080";
-		case CPU_INFO_VERSION: return "1.0";
+		case CPU_INFO_VERSION: return "1.2";
 		case CPU_INFO_REG_LAYOUT: return (const char *)i8080_reg_layout;
 		case CPU_INFO_WIN_LAYOUT: return (const char *)i8080_win_layout;
-    }
+	}
 	return i8085_info(context,regnum);
 }
 
 unsigned i8080_dasm(char *buffer, unsigned pc)
 {
 #ifdef MAME_DEBUG
-    return Dasm8085(buffer,pc);
+	return Dasm8085(buffer,pc);
 #else
 	sprintf( buffer, "$%02X", cpu_readop(pc) );
 	return 1;
 #endif
 }
 #endif
+

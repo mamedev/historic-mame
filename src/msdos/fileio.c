@@ -31,6 +31,7 @@ int samplepathc = 0;
 
 char *cfgdir, *nvdir, *hidir, *inpdir, *stadir;
 char *memcarddir, *artworkdir, *screenshotdir;
+char *cheatdir;	/* Steph */
 
 char *alternate_name;				   /* for "-romdir" */
 
@@ -602,6 +603,29 @@ void *osd_fopen (const char *game, const char *filename, int filetype, int _writ
                                                  }
 					}
 
+					/* Steph - Zip disk images support for MESS */
+					if( !found && !_write )
+					{
+						extension = strrchr (name, '.');    /* find extension */
+						/* add .zip for zipfile */
+						if( extension )
+							strcpy(extension, ".zip");
+						else
+							strcat(extension, ".zip");
+						LOG(("Trying %s file\n", name));
+						if( cache_stat(name, &stat_buffer) == 0 )
+						{
+							if( load_zipped_file(name, filename, &f->data, &f->length) == 0 )
+							{
+								LOG(("Using (osd_fopen) zip file for %s\n", filename));
+								f->type = kZippedFile;
+								f->offset = 0;
+								f->crc = crc32(0L, f->data, f->length);
+								found = 1;
+							}
+						}
+					}
+
 					if (!found)
 					{
 						sprintf(name, "%s", dir_name);
@@ -930,7 +954,6 @@ void *osd_fopen (const char *game, const char *filename, int filetype, int _writ
 
 	case OSD_FILETYPE_HIGHSCORE_DB:
 	case OSD_FILETYPE_HISTORY:
-	case OSD_FILETYPE_CHEAT:
 		/* only for reading */
 		if( _write )
 		{
@@ -940,6 +963,15 @@ void *osd_fopen (const char *game, const char *filename, int filetype, int _writ
 		f->type = kPlainFile;
 		/* open as ASCII files, not binary like the others */
 		f->file = fopen (filename, _write ? "w" : "r");
+		found = f->file != 0;
+        break;
+
+	/* Steph */
+	case OSD_FILETYPE_CHEAT:
+		sprintf (name, "%s/%s", cheatdir, filename);
+		f->type = kPlainFile;
+		/* open as ASCII files, not binary like the others */
+		f->file = fopen (filename, _write ? "a" : "r");
 		found = f->file != 0;
         break;
 

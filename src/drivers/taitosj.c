@@ -18,20 +18,20 @@ read:
 
 8800      68705 data read
 8801      68705 status read
-            bit 0 = the 68705 has read data from the Z80
-            bit 1 = the 68705 has written data for the Z80
+	    bit 0 = the 68705 has read data from the Z80
+	    bit 1 = the 68705 has written data for the Z80
 d400-d403 hardware collision detection registers
-          d400 bit0-7 = sprite 0x00-0x07 collided
-          d401 bit0-7 = sprite 0x08-0x0f collided
-          d402 bit0-7 = sprite 0x18-0x1f collided
-          d403 bit0 = obj/pf1
-               bit1 = obj/pf2
-               bit2 = obj/pf3
-               bit3 = pf1/pf2
-               bit4 = pf1/pf3
-               bit5 = pf2/pf3
-               bit6 = nc
-               bit7 = nc
+	  d400 bit0-7 = sprite 0x00-0x07 collided
+	  d401 bit0-7 = sprite 0x08-0x0f collided
+	  d402 bit0-7 = sprite 0x18-0x1f collided
+	  d403 bit0 = obj/pf1
+	       bit1 = obj/pf2
+	       bit2 = obj/pf3
+	       bit3 = pf1/pf2
+	       bit4 = pf1/pf3
+	       bit5 = pf2/pf3
+	       bit6 = nc
+	       bit7 = nc
 d404      returns contents of graphic ROM, pointed by d509-d50a
 d408      IN0
 d409      IN1
@@ -40,8 +40,8 @@ d40b      IN2 - can come from a ROM or PAL chip
 d40c      COIN
 d40d      another input port (used for player 2 dial)
 d40f      8910 #0 read
-            port A DSW2
-            port B DSW3
+	    port A DSW2
+	    port B DSW3
 
 write
 8800      68705 data write
@@ -49,12 +49,12 @@ d000-d01f front playfield column scroll
 d020-d03f middle playfield column scroll
 d040-d05f back playfield column scroll
 d300      playfield priority control
-          bits 0-3 go to A4-A7 of a 256x4 PROM
+	  bits 0-3 go to A4-A7 of a 256x4 PROM
 		  bit 4 selects D0/D1 or D2/D3 of the PROM
 		  bit 5-7 n.c.
-          A0-A3 of the PROM is fed with a mask of the inactive planes
+	  A0-A3 of the PROM is fed with a mask of the inactive planes
 		    (i.e. all-zero) in the order sprites-front-middle-back
-          the 2-bit code which comes out from the PROM selects the plane
+	  the 2-bit code which comes out from the PROM selects the plane
 		  to display.
 d40e      8910 #0 control
 d40f      8910 #0 write
@@ -65,12 +65,12 @@ d503      middle playfield vertical scroll
 d504      back playfield horizontal scroll
 d505      back playfield vertical scroll
 d506      bits 0-2 = front playfield color code
-          bit 3 = front playfield character bank
-          bits 4-6 = middle playfield color code
-          bit 7 = middle playfield character bank
+	  bit 3 = front playfield character bank
+	  bits 4-6 = middle playfield color code
+	  bit 7 = middle playfield character bank
 d507      bits 0-2 = back playfield color code
-          bit 3 = back playfield character bank
-          bits 4-5 = sprite color bank (1 bank = 2 color codes)
+	  bit 3 = back playfield character bank
+	  bits 4-5 = sprite color bank (1 bank = 2 color codes)
 d508      clear hardware collision detection registers
 d509-d50a pointer to graphic ROM to read from d404
 d50b      command for the audio CPU
@@ -80,13 +80,13 @@ d50e      bit 7 = ROM bank selector
 d50f      can go to a ROM or PAL; the result is read from d40b
 		  ==> used in Alpine Ski (Set 1) for protection
 d600      bit 0 horizontal screen flip
-          bit 1 vertical screen flip
-          bit 2 ? sprite related, called OBJEX. It looks like there are 256
-                  bytes of sprite RAM, but only 128 can be acessed by the video
-                  hardware at a time. This select the high or low bank. The CPU
-                  can access all the memory linearly. I don't know if this is
-                  ever used.
-          bit 3 n.c.
+	  bit 1 vertical screen flip
+	  bit 2 ? sprite related, called OBJEX. It looks like there are 256
+		  bytes of sprite RAM, but only 128 can be acessed by the video
+		  hardware at a time. This select the high or low bank. The CPU
+		  can access all the memory linearly. I don't know if this is
+		  ever used.
+	  bit 3 n.c.
 		  bit 4 front playfield enable
 		  bit 5 middle playfield enable
 		  bit 6 back playfield enable
@@ -105,12 +105,12 @@ read:
 write:
 4800      8910 #1  control
 4801      8910 #1  write
-            PORT A  digital sound out
+	    PORT A  digital sound out
 4802      8910 #2  control
 4803      8910 #2  write
 4804      8910 #3  control
 4805      8910 #3  write
-            port B bit 0 SOUND CPU NMI disable
+	    port B bit 0 SOUND CPU NMI disable
 
 ***************************************************************************/
 
@@ -184,15 +184,15 @@ static struct MemoryReadAddress readmem[] =
 	{ 0xd100, 0xd17f, MRA_RAM },
 	{ 0xd400, 0xd403, taitosj_collision_reg_r },
 	{ 0xd404, 0xd404, taitosj_gfxrom_r },
-	{ 0xd408, 0xd408, input_port_0_r },	/* IN0 */
-	{ 0xd409, 0xd409, input_port_1_r },	/* IN1 */
-	{ 0xd40a, 0xd40a, input_port_5_r },	/* DSW1 */
-	{ 0xd40b, 0xd40b, input_port_2_r },	/* IN2 */
-	{ 0xd40c, 0xd40c, input_port_3_r },	/* Service */
+	{ 0xd408, 0xd408, input_port_0_r },     /* IN0 */
+	{ 0xd409, 0xd409, input_port_1_r },     /* IN1 */
+	{ 0xd40a, 0xd40a, input_port_5_r },     /* DSW1 */
+	{ 0xd40b, 0xd40b, input_port_2_r },     /* IN2 */
+	{ 0xd40c, 0xd40c, input_port_3_r },     /* Service */
 	{ 0xd40d, 0xd40d, input_port_4_r },
-	{ 0xd40f, 0xd40f, AY8910_read_port_0_r },	/* DSW2 and DSW3 */
+	{ 0xd40f, 0xd40f, AY8910_read_port_0_r },       /* DSW2 and DSW3 */
 	{ 0xe000, 0xefff, MRA_ROM },
-	{ -1 }	/* end of table */
+	{ -1 }  /* end of table */
 };
 
 static struct MemoryWriteAddress writemem[] =
@@ -220,7 +220,7 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0xd50f, 0xd50f, MWA_NOP },
 	{ 0xd600, 0xd600, taitosj_videoenable_w },
 	{ 0xe000, 0xefff, MWA_ROM },
-	{ -1 }	/* end of table */
+	{ -1 }  /* end of table */
 };
 
 /* only difference is taitosj_fake_ replaced with taitosj_mcu_ */
@@ -235,15 +235,15 @@ static struct MemoryReadAddress mcu_readmem[] =
 	{ 0xd100, 0xd17f, MRA_RAM },
 	{ 0xd400, 0xd403, taitosj_collision_reg_r },
 	{ 0xd404, 0xd404, taitosj_gfxrom_r },
-	{ 0xd408, 0xd408, input_port_0_r },	/* IN0 */
-	{ 0xd409, 0xd409, input_port_1_r },	/* IN1 */
-	{ 0xd40a, 0xd40a, input_port_5_r },	/* DSW1 */
-	{ 0xd40b, 0xd40b, input_port_2_r },	/* IN2 */
-	{ 0xd40c, 0xd40c, input_port_3_r },	/* Service */
+	{ 0xd408, 0xd408, input_port_0_r },     /* IN0 */
+	{ 0xd409, 0xd409, input_port_1_r },     /* IN1 */
+	{ 0xd40a, 0xd40a, input_port_5_r },     /* DSW1 */
+	{ 0xd40b, 0xd40b, input_port_2_r },     /* IN2 */
+	{ 0xd40c, 0xd40c, input_port_3_r },     /* Service */
 	{ 0xd40d, 0xd40d, input_port_4_r },
-	{ 0xd40f, 0xd40f, AY8910_read_port_0_r },	/* DSW2 and DSW3 */
+	{ 0xd40f, 0xd40f, AY8910_read_port_0_r },       /* DSW2 and DSW3 */
 	{ 0xe000, 0xefff, MRA_ROM },
-	{ -1 }	/* end of table */
+	{ -1 }  /* end of table */
 };
 
 static struct MemoryWriteAddress mcu_writemem[] =
@@ -270,7 +270,7 @@ static struct MemoryWriteAddress mcu_writemem[] =
 	{ 0xd50e, 0xd50e, taitosj_bankswitch_w },
 	{ 0xd600, 0xd600, taitosj_videoenable_w },
 	{ 0xe000, 0xefff, MWA_ROM },
-	{ -1 }	/* end of table */
+	{ -1 }  /* end of table */
 };
 
 
@@ -284,7 +284,7 @@ static struct MemoryReadAddress sound_readmem[] =
 	{ 0x4805, 0x4805, AY8910_read_port_3_r },
 	{ 0x5000, 0x5000, soundlatch_r },
 	{ 0xe000, 0xefff, MRA_ROM },
-	{ -1 }	/* end of table */
+	{ -1 }  /* end of table */
 };
 
 static struct MemoryWriteAddress sound_writemem[] =
@@ -297,7 +297,7 @@ static struct MemoryWriteAddress sound_writemem[] =
 	{ 0x4803, 0x4803, AY8910_write_port_2_w },
 	{ 0x4804, 0x4804, AY8910_control_port_3_w },
 	{ 0x4805, 0x4805, AY8910_write_port_3_w },
-	{ -1 }	/* end of table */
+	{ -1 }  /* end of table */
 };
 
 
@@ -308,7 +308,7 @@ static struct MemoryReadAddress m68705_readmem[] =
 	{ 0x0002, 0x0002, taitosj_68705_portC_r },
 	{ 0x0003, 0x007f, MRA_RAM },
 	{ 0x0080, 0x07ff, MRA_ROM },
-	{ -1 }	/* end of table */
+	{ -1 }  /* end of table */
 };
 
 static struct MemoryWriteAddress m68705_writemem[] =
@@ -317,7 +317,7 @@ static struct MemoryWriteAddress m68705_writemem[] =
 	{ 0x0001, 0x0001, taitosj_68705_portB_w },
 	{ 0x0003, 0x007f, MWA_RAM },
 	{ 0x0080, 0x07ff, MWA_ROM },
-	{ -1 }	/* end of table */
+	{ -1 }  /* end of table */
 };
 
 
@@ -448,7 +448,7 @@ INPUT_PORTS_START( spaceskr )
 	PORT_DIPNAME( 0x20, 0x20, "Year Display" )
 	PORT_DIPSETTING(    0x00, DEF_STR( No ) )
 	PORT_DIPSETTING(    0x20, DEF_STR( Yes ) )
-	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
+	PORT_BITX(    0x40, 0x40, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Invulnerability", IP_KEY_NONE, IP_JOY_NONE )
 	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Coinage ) )
@@ -574,7 +574,7 @@ INPUT_PORTS_START( alpine )
 
 	PORT_START      /* IN2 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN2 )
-	PORT_BIT( 0x1e, 0x00, IPT_UNUSED )				/* protection read */
+	PORT_BIT( 0x1e, 0x00, IPT_UNUSED )                              /* protection read */
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_COIN1 )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START2 )
@@ -585,7 +585,7 @@ INPUT_PORTS_START( alpine )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_COIN3 )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_TILT )		/* flips screen */
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_TILT )               /* flips screen */
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
@@ -598,7 +598,7 @@ INPUT_PORTS_START( alpine )
 	PORT_DIPSETTING(    0x01, "800-2000" )
 	PORT_DIPSETTING(    0x02, "1000-2500" )
 	PORT_DIPSETTING(    0x03, "2000-4000" )
-	PORT_BIT( 			0x04, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT(                       0x04, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_DIPNAME( 0x18, 0x18, "Time" )
 	PORT_DIPSETTING(    0x00, "1:00" )
 	PORT_DIPSETTING(    0x08, "1:30" )
@@ -665,7 +665,7 @@ INPUT_PORTS_START( alpinea )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START      /* IN2 */
-	PORT_BIT( 0x0f, 0x00, IPT_UNUSED )				/* protection read */
+	PORT_BIT( 0x0f, 0x00, IPT_UNUSED )                              /* protection read */
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_COIN2 )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START1 )
@@ -677,7 +677,7 @@ INPUT_PORTS_START( alpinea )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_COIN3 )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_TILT )		/* flips screen */
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_TILT )               /* flips screen */
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
@@ -690,7 +690,7 @@ INPUT_PORTS_START( alpinea )
 	PORT_DIPSETTING(    0x01, "800-2000" )
 	PORT_DIPSETTING(    0x02, "1000-2500" )
 	PORT_DIPSETTING(    0x03, "2000-4000" )
-	PORT_BIT( 			0x04, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT(                       0x04, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_DIPNAME( 0x18, 0x18, "Time" )
 	PORT_DIPSETTING(    0x00, "1:00" )
 	PORT_DIPSETTING(    0x08, "1:30" )
@@ -818,9 +818,9 @@ INPUT_PORTS_START( timetunl )
 	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x10, 0x00, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x10, 0x10, "Coinage Display" )
+	PORT_DIPSETTING(    0x10, "Coins/Credits" )
+	PORT_DIPSETTING(    0x00, "Insert Coin" )
 	PORT_DIPNAME( 0x20, 0x20, "Year Display" )
 	PORT_DIPSETTING(    0x00, DEF_STR( No ) )
 	PORT_DIPSETTING(    0x20, DEF_STR( Yes ) )
@@ -856,7 +856,7 @@ INPUT_PORTS_START( wwestern )
 	PORT_START      /* IN2 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN2 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x1c, 0x18, IPT_UNUSED )				/* protection read, the game resets after a while without it */
+	PORT_BIT( 0x1c, 0x18, IPT_UNUSED )                              /* protection read, the game resets after a while without it */
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START2 )
@@ -1173,7 +1173,7 @@ INPUT_PORTS_START( tinstar )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_RIGHT | IPF_8WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_DOWN | IPF_8WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_UP | IPF_8WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x30, 0x00, IPT_UNUSED )				/* protection read, the game hangs without it */
+	PORT_BIT( 0x30, 0x00, IPT_UNUSED )                              /* protection read, the game hangs without it */
 	PORT_BIT( 0xc0, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START      /* DSW1 */
@@ -1398,19 +1398,19 @@ INPUT_PORTS_START( bioatack )
 	DSW2_PORT
 
 	PORT_START      /* DSW3 */
-	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Unknown ) )	/* most likely unused */
+	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Unknown ) )  /* most likely unused */
 	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Unknown ) )	/* most likely unused */
+	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Unknown ) )  /* most likely unused */
 	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x04, 0x00, DEF_STR( Unknown ) )	/* most likely unused */
+	PORT_DIPNAME( 0x04, 0x00, DEF_STR( Unknown ) )  /* most likely unused */
 	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Unknown ) )	/* most likely unused */
+	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Unknown ) )  /* most likely unused */
 	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x10, 0x00, DEF_STR( Unknown ) )	/* most likely unused */
+	PORT_DIPNAME( 0x10, 0x00, DEF_STR( Unknown ) )  /* most likely unused */
 	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x20, 0x20, "Year Display" )
@@ -1509,9 +1509,9 @@ INPUT_PORTS_START( sfposeid )
 	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x10, 0x10, "Coinage Display" )
+	PORT_DIPSETTING(    0x10, "Coins/Credits" )
+	PORT_DIPSETTING(    0x00, "Insert Coin" )
 	PORT_DIPNAME( 0x20, 0x20, "Year Display" )
 	PORT_DIPSETTING(    0x00, DEF_STR( No ) )
 	PORT_DIPSETTING(    0x20, DEF_STR( Yes ) )
@@ -1623,35 +1623,35 @@ INPUT_PORTS_END
 
 static struct GfxLayout charlayout =
 {
-	8,8,	/* 8*8 characters */
-	256,	/* 256 characters */
-	3,	/* 3 bits per pixel */
-	{ 512*8*8, 256*8*8, 0 },	/* the bitplanes are separated */
+	8,8,    /* 8*8 characters */
+	256,    /* 256 characters */
+	3,      /* 3 bits per pixel */
+	{ 512*8*8, 256*8*8, 0 },        /* the bitplanes are separated */
 	{ 7, 6, 5, 4, 3, 2, 1, 0 },
 	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
-	8*8	/* every char takes 8 consecutive bytes */
+	8*8     /* every char takes 8 consecutive bytes */
 };
 static struct GfxLayout spritelayout =
 {
-	16,16,	/* 16*16 sprites */
-	64,		/* 64 sprites */
-	3,	/* 3 bits per pixel */
-	{ 128*16*16, 64*16*16, 0 },	/* the bitplanes are separated */
+	16,16,  /* 16*16 sprites */
+	64,             /* 64 sprites */
+	3,      /* 3 bits per pixel */
+	{ 128*16*16, 64*16*16, 0 },     /* the bitplanes are separated */
 	{ 7, 6, 5, 4, 3, 2, 1, 0,
 		8*8+7, 8*8+6, 8*8+5, 8*8+4, 8*8+3, 8*8+2, 8*8+1, 8*8+0 },
 	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8,
 			16*8, 17*8, 18*8, 19*8, 20*8, 21*8, 22*8, 23*8 },
-	32*8	/* every sprite takes 32 consecutive bytes */
+	32*8    /* every sprite takes 32 consecutive bytes */
 };
 
 
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 0, 0x9000, &charlayout,   0, 16 },	/* the game dynamically modifies this */
-	{ 0, 0x9000, &spritelayout, 0, 16 },	/* the game dynamically modifies this */
-	{ 0, 0xa800, &charlayout,   0, 16 },	/* the game dynamically modifies this */
-	{ 0, 0xa800, &spritelayout, 0, 16 },	/* the game dynamically modifies this */
+	{ 0, 0x9000, &charlayout,   0, 16 },    /* the game dynamically modifies this */
+	{ 0, 0x9000, &spritelayout, 0, 16 },    /* the game dynamically modifies this */
+	{ 0, 0xa800, &charlayout,   0, 16 },    /* the game dynamically modifies this */
+	{ 0, 0xa800, &spritelayout, 0, 16 },    /* the game dynamically modifies this */
 	{ -1 } /* end of array */
 };
 
@@ -1659,13 +1659,13 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 static struct AY8910interface ay8910_interface =
 {
-	4,	/* 4 chips */
-	6000000/4,	/* 1.5 MHz */
+	4,      /* 4 chips */
+	6000000/4,      /* 1.5 MHz */
 	{ 15, 15, 15, MIXERG(15,MIXER_GAIN_2x,MIXER_PAN_CENTER) },
-	{ input_port_6_r, 0, 0, 0 },		/* port Aread */
-	{ input_port_7_r, 0, 0, 0 },		/* port Bread */
-	{ 0, DAC_0_data_w, 0, 0 },			/* port Awrite */
-	{ 0, 0, 0, taitosj_sndnmi_msk_w }	/* port Bwrite */
+	{ input_port_6_r, 0, 0, 0 },            /* port Aread */
+	{ input_port_7_r, 0, 0, 0 },            /* port Bread */
+	{ 0, DAC_0_data_w, 0, 0 },                      /* port Awrite */
+	{ 0, 0, 0, taitosj_sndnmi_msk_w }       /* port Bwrite */
 };
 
 static struct DACinterface dac_interface =
@@ -1682,13 +1682,13 @@ static struct MachineDriver machine_driver_nomcu =
 	{
 		{
 			CPU_Z80,
-			8000000/2,	/* 4 Mhz */
+			8000000/2,      /* 4 Mhz */
 			readmem,writemem,0,0,
 			interrupt,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
-			6000000/2,	/* 3 Mhz */
+			6000000/2,      /* 3 Mhz */
 			sound_readmem,sound_writemem,0,0,
 			/* interrupts: */
 			/* - no interrupts synced with vblank */
@@ -1699,8 +1699,8 @@ static struct MachineDriver machine_driver_nomcu =
 			interrupt,27306667
 		}
 	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
+	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,  /* frames per second, vblank duration */
+	1,      /* 1 CPU slice per frame - interleaving is forced when a sound command is written */
 	taitosj_init_machine,
 
 	/* video hardware */
@@ -1736,13 +1736,13 @@ static struct MachineDriver machine_driver_mcu =
 	{
 		{
 			CPU_Z80,
-			8000000/2,	/* 4 Mhz */
+			8000000/2,      /* 4 Mhz */
 			mcu_readmem,mcu_writemem,0,0,
 			interrupt,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
-			6000000/2,	/* 3 Mhz */
+			6000000/2,      /* 3 Mhz */
 			sound_readmem,sound_writemem,0,0,
 			/* interrupts: */
 			/* - no interrupts synced with vblank */
@@ -1754,13 +1754,13 @@ static struct MachineDriver machine_driver_mcu =
 		},
 		{
 			CPU_M68705,
-			3000000/2,	/* xtal is 3MHz, I think it's divided by 2 internally */
+			3000000/2,      /* xtal is 3MHz, I think it's divided by 2 internally */
 			m68705_readmem,m68705_writemem,0,0,
-			ignore_interrupt,0	/* IRQs are caused by the main CPU */
+			ignore_interrupt,0      /* IRQs are caused by the main CPU */
 		}
 	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,	/* 1 CPU slice per frame - interleaving is forced when necessary */
+	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,  /* frames per second, vblank duration */
+	1,      /* 1 CPU slice per frame - interleaving is forced when necessary */
 	taitosj_init_machine,
 
 	/* video hardware */
@@ -1798,7 +1798,7 @@ static struct MachineDriver machine_driver_mcu =
 ***************************************************************************/
 
 ROM_START( spaceskr )
-	ROM_REGION( 0x12000, REGION_CPU1 )	/* 64k for code */
+	ROM_REGION( 0x12000, REGION_CPU1 )      /* 64k for code */
 	ROM_LOAD( "eb01",         0x0000, 0x1000, 0x92345b05 )
 	ROM_LOAD( "eb02",         0x1000, 0x1000, 0xa3e21420 )
 	ROM_LOAD( "eb03",         0x2000, 0x1000, 0xa077c52f )
@@ -1809,18 +1809,18 @@ ROM_START( spaceskr )
 	ROM_LOAD( "eb08",         0x7000, 0x1000, 0xf2e84015 )
 	/* 10000-11fff space for banked ROMs (not used) */
 
-	ROM_REGION( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
+	ROM_REGION( 0x10000, REGION_CPU2 )      /* 64k for the audio CPU */
 	ROM_LOAD( "eb13",         0x0000, 0x1000, 0x192f6536 )
 	ROM_LOAD( "eb14",         0x1000, 0x1000, 0xd04d0a21 )
 	ROM_LOAD( "eb15",         0x2000, 0x1000, 0x88194305 )
 
-	ROM_REGION( 0x8000, REGION_GFX1 )	/* graphic ROMs used at runtime */
+	ROM_REGION( 0x8000, REGION_GFX1 )       /* graphic ROMs used at runtime */
 	ROM_LOAD( "eb09",         0x0000, 0x1000, 0x77af540e )
 	ROM_LOAD( "eb10",         0x1000, 0x1000, 0xb10073de )
 	ROM_LOAD( "eb11",         0x2000, 0x1000, 0xc7954bd1 )
 	ROM_LOAD( "eb12",         0x3000, 0x1000, 0xcd6c087b )
 
-	ROM_REGION( 0x0100, REGION_PROMS )	/* layer PROM */
+	ROM_REGION( 0x0100, REGION_PROMS )      /* layer PROM */
 	ROM_LOAD( "eb16.22",      0x0000, 0x0100, 0xb833b5ea )
 ROM_END
 
@@ -1842,7 +1842,7 @@ ROM_START( junglek )
     ROM_LOAD( "kn38.bin",     0x1000, 0x1000, 0xbffd3d21 )
     ROM_LOAD( "kn59-1.bin",   0x2000, 0x1000, 0xcee485fc )
 
-    ROM_REGION( 0x8000, REGION_GFX1 )	/* graphic ROMs used at runtime */
+    ROM_REGION( 0x8000, REGION_GFX1 )   /* graphic ROMs used at runtime */
     ROM_LOAD( "kn29.bin",     0x0000, 0x1000, 0x8f83c290 )
     ROM_LOAD( "kn30.bin",     0x1000, 0x1000, 0x89fd19f1 )
     ROM_LOAD( "kn51.bin",     0x2000, 0x1000, 0x70e8fc12 )
@@ -1852,12 +1852,12 @@ ROM_START( junglek )
     ROM_LOAD( "kn55.bin",     0x6000, 0x1000, 0x70aef58f )
     ROM_LOAD( "kn56.bin",     0x7000, 0x1000, 0x932eb667 )
 
-	ROM_REGION( 0x0100, REGION_PROMS )	/* layer PROM */
+	ROM_REGION( 0x0100, REGION_PROMS )      /* layer PROM */
     ROM_LOAD( "eb16.22",      0x0000, 0x0100, 0xb833b5ea )
 ROM_END
 
 ROM_START( junglkj2 )
-	ROM_REGION( 0x12000, REGION_CPU1 )	/* 64k for code */
+	ROM_REGION( 0x12000, REGION_CPU1 )      /* 64k for code */
 	ROM_LOAD( "kn41.bin",     0x00000, 0x1000, 0x7e4cd631 )
 	ROM_LOAD( "kn42.bin",     0x01000, 0x1000, 0xbade53af )
 	ROM_LOAD( "kn43.bin",     0x02000, 0x1000, 0xa20e5a48 )
@@ -1867,14 +1867,14 @@ ROM_START( junglkj2 )
 	ROM_LOAD( "kn47.bin",     0x06000, 0x1000, 0x5c3199e0 )
 	ROM_LOAD( "kn48.bin",     0x07000, 0x1000, 0xe690b36e )
 	/* 10000-10fff space for another banked ROM (not used) */
-	ROM_LOAD( "kn60.bin",     0x11000, 0x1000, 0x1a9c0a26 )	/* banked at 7000 */
+	ROM_LOAD( "kn60.bin",     0x11000, 0x1000, 0x1a9c0a26 ) /* banked at 7000 */
 
-	ROM_REGION( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
+	ROM_REGION( 0x10000, REGION_CPU2 )      /* 64k for the audio CPU */
 	ROM_LOAD( "kn57-1.bin",   0x0000, 0x1000, 0x62f6763a )
 	ROM_LOAD( "kn58-1.bin",   0x1000, 0x1000, 0x9ef46c7f )
 	ROM_LOAD( "kn59-1.bin",   0x2000, 0x1000, 0xcee485fc )
 
-	ROM_REGION( 0x8000, REGION_GFX1 )	/* graphic ROMs used at runtime */
+	ROM_REGION( 0x8000, REGION_GFX1 )       /* graphic ROMs used at runtime */
 	ROM_LOAD( "kn49.bin",     0x0000, 0x1000, 0xfe275213 )
 	ROM_LOAD( "kn50.bin",     0x1000, 0x1000, 0xd9f93c55 )
 	ROM_LOAD( "kn51.bin",     0x2000, 0x1000, 0x70e8fc12 )
@@ -1884,12 +1884,12 @@ ROM_START( junglkj2 )
 	ROM_LOAD( "kn55.bin",     0x6000, 0x1000, 0x70aef58f )
 	ROM_LOAD( "kn56.bin",     0x7000, 0x1000, 0x932eb667 )
 
-	ROM_REGION( 0x0100, REGION_PROMS )	/* layer PROM */
+	ROM_REGION( 0x0100, REGION_PROMS )      /* layer PROM */
 	ROM_LOAD( "eb16.22",      0x0000, 0x0100, 0xb833b5ea )
 ROM_END
 
 ROM_START( jungleh )
-	ROM_REGION( 0x12000, REGION_CPU1 )	/* 64k for code */
+	ROM_REGION( 0x12000, REGION_CPU1 )      /* 64k for code */
 	ROM_LOAD( "kn41a",        0x00000, 0x1000, 0x6bf118d8 )
 	ROM_LOAD( "kn42.bin",     0x01000, 0x1000, 0xbade53af )
 	ROM_LOAD( "kn43.bin",     0x02000, 0x1000, 0xa20e5a48 )
@@ -1899,14 +1899,14 @@ ROM_START( jungleh )
 	ROM_LOAD( "kn47.bin",     0x06000, 0x1000, 0x5c3199e0 )
 	ROM_LOAD( "kn48a",        0x07000, 0x1000, 0xef80e931 )
 	/* 10000-10fff space for another banked ROM (not used) */
-	ROM_LOAD( "kn60.bin",     0x11000, 0x1000, 0x1a9c0a26 )	/* banked at 7000 */
+	ROM_LOAD( "kn60.bin",     0x11000, 0x1000, 0x1a9c0a26 ) /* banked at 7000 */
 
-	ROM_REGION( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
+	ROM_REGION( 0x10000, REGION_CPU2 )      /* 64k for the audio CPU */
 	ROM_LOAD( "kn57-1.bin",   0x0000, 0x1000, 0x62f6763a )
 	ROM_LOAD( "kn58-1.bin",   0x1000, 0x1000, 0x9ef46c7f )
 	ROM_LOAD( "kn59-1.bin",   0x2000, 0x1000, 0xcee485fc )
 
-	ROM_REGION( 0x8000, REGION_GFX1 )	/* graphic ROMs used at runtime */
+	ROM_REGION( 0x8000, REGION_GFX1 )       /* graphic ROMs used at runtime */
 	ROM_LOAD( "kn49a",        0x0000, 0x1000, 0xb139e792 )
 	ROM_LOAD( "kn50a",        0x1000, 0x1000, 0x1046019f )
 	ROM_LOAD( "kn51a",        0x2000, 0x1000, 0xda50c8a4 )
@@ -1916,12 +1916,12 @@ ROM_START( jungleh )
 	ROM_LOAD( "kn55.bin",     0x6000, 0x1000, 0x70aef58f )
 	ROM_LOAD( "kn56a",        0x7000, 0x1000, 0x679c1101 )
 
-	ROM_REGION( 0x0100, REGION_PROMS )	/* layer PROM */
+	ROM_REGION( 0x0100, REGION_PROMS )      /* layer PROM */
 	ROM_LOAD( "eb16.22",      0x0000, 0x0100, 0xb833b5ea )
 ROM_END
 
 ROM_START( alpine )
-	ROM_REGION( 0x12000, REGION_CPU1 )	/* 64k for code */
+	ROM_REGION( 0x12000, REGION_CPU1 )      /* 64k for code */
 	ROM_LOAD( "rh16.069",     0x0000, 0x1000, 0x6b2a69b7 )
 	ROM_LOAD( "rh17.068",     0x1000, 0x1000, 0xe344b0b7 )
 	ROM_LOAD( "rh18.067",     0x2000, 0x1000, 0x753bdd87 )
@@ -1932,21 +1932,21 @@ ROM_START( alpine )
 	ROM_LOAD( "rh23.054",     0x7000, 0x1000, 0x77c25acf )
 	/* 10000-11fff space for banked ROMs (not used) */
 
-	ROM_REGION( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
+	ROM_REGION( 0x10000, REGION_CPU2 )      /* 64k for the audio CPU */
 	ROM_LOAD( "rh13.070",     0x0000, 0x1000, 0xdcad1794 )
 
-	ROM_REGION( 0x8000, REGION_GFX1 )	/* graphic ROMs used at runtime */
+	ROM_REGION( 0x8000, REGION_GFX1 )       /* graphic ROMs used at runtime */
 	ROM_LOAD( "rh24.001",     0x0000, 0x1000, 0x4b1d9455 )
 	ROM_LOAD( "rh25.002",     0x1000, 0x1000, 0xbf71e278 )
 	ROM_LOAD( "rh26.003",     0x2000, 0x1000, 0x13da2a9b )
 	ROM_LOAD( "rh27.004",     0x3000, 0x1000, 0x425b52b0 )
 
-	ROM_REGION( 0x0100, REGION_PROMS )	/* layer PROM */
+	ROM_REGION( 0x0100, REGION_PROMS )      /* layer PROM */
 	ROM_LOAD( "eb16.22",      0x0000, 0x0100, 0xb833b5ea )
 ROM_END
 
 ROM_START( alpinea )
-	ROM_REGION( 0x12000, REGION_CPU1 )	/* 64k for code */
+	ROM_REGION( 0x12000, REGION_CPU1 )      /* 64k for code */
 	ROM_LOAD( "rh01-1.69",    0x0000, 0x1000, 0x7fbcb635 )
 	ROM_LOAD( "rh02.68",      0x1000, 0x1000, 0xc83f95af )
 	ROM_LOAD( "rh03.67",      0x2000, 0x1000, 0x211102bc )
@@ -1957,21 +1957,21 @@ ROM_START( alpinea )
 	ROM_LOAD( "rh08.54",      0x7000, 0x1000, 0xe0af9cb2 )
 	/* 10000-11fff space for banked ROMs (not used) */
 
-	ROM_REGION( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
+	ROM_REGION( 0x10000, REGION_CPU2 )      /* 64k for the audio CPU */
 	ROM_LOAD( "rh13.070",     0x0000, 0x1000, 0xdcad1794 )
 
-	ROM_REGION( 0x8000, REGION_GFX1 )	/* graphic ROMs used at runtime */
+	ROM_REGION( 0x8000, REGION_GFX1 )       /* graphic ROMs used at runtime */
 	ROM_LOAD( "rh24.001",     0x0000, 0x1000, 0x4b1d9455 )
 	ROM_LOAD( "rh25.002",     0x1000, 0x1000, 0xbf71e278 )
 	ROM_LOAD( "rh26.003",     0x2000, 0x1000, 0x13da2a9b )
 	ROM_LOAD( "rh12.4",       0x3000, 0x1000, 0x0ff0d1fe )
 
-	ROM_REGION( 0x0100, REGION_PROMS )	/* layer PROM */
+	ROM_REGION( 0x0100, REGION_PROMS )      /* layer PROM */
 	ROM_LOAD( "eb16.22",      0x0000, 0x0100, 0xb833b5ea )
 ROM_END
 
 ROM_START( timetunl )
-	ROM_REGION( 0x12000, REGION_CPU1 )	/* 64k for code */
+	ROM_REGION( 0x12000, REGION_CPU1 )      /* 64k for code */
 	ROM_LOAD( "un01.69",      0x00000, 0x1000, 0x2e56d946 )
 	ROM_LOAD( "un02.68",      0x01000, 0x1000, 0xf611d852 )
 	ROM_LOAD( "un03.67",      0x02000, 0x1000, 0x144b5e7f )
@@ -1980,13 +1980,13 @@ ROM_START( timetunl )
 	ROM_LOAD( "un06.64",      0x05000, 0x1000, 0xaf5a7d2a )
 	ROM_LOAD( "un07.55",      0x06000, 0x1000, 0x4ee50999 )
 	ROM_LOAD( "un08.54",      0x07000, 0x1000, 0x97259b57 )
-	ROM_LOAD( "un09.53",      0x10000, 0x1000, 0x771d0fb0 )	/* banked at 6000 */
-	ROM_LOAD( "un10.52",      0x11000, 0x1000, 0x8b6afad2 )	/* banked at 7000 */
+	ROM_LOAD( "un09.53",      0x10000, 0x1000, 0x771d0fb0 ) /* banked at 6000 */
+	ROM_LOAD( "un10.52",      0x11000, 0x1000, 0x8b6afad2 ) /* banked at 7000 */
 
-	ROM_REGION( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
+	ROM_REGION( 0x10000, REGION_CPU2 )      /* 64k for the audio CPU */
 	ROM_LOAD( "un19.70",      0x0000, 0x1000, 0xdbf726c6 )
 
-	ROM_REGION( 0x8000, REGION_GFX1 )	/* graphic ROMs used at runtime */
+	ROM_REGION( 0x8000, REGION_GFX1 )       /* graphic ROMs used at runtime */
 	ROM_LOAD( "un11.1",       0x0000, 0x1000, 0x3be4fed6 )
 	ROM_LOAD( "un12.2",       0x1000, 0x1000, 0x2dee1cf3 )
 	ROM_LOAD( "un13.3",       0x2000, 0x1000, 0x72b491a8 )
@@ -1996,12 +1996,12 @@ ROM_START( timetunl )
 	ROM_LOAD( "un17.7",       0x6000, 0x1000, 0xd66025b8 )
 	ROM_LOAD( "un18.8",       0x7000, 0x1000, 0xe67ff377 )
 
-	ROM_REGION( 0x0100, REGION_PROMS )	/* layer PROM */
+	ROM_REGION( 0x0100, REGION_PROMS )      /* layer PROM */
 	ROM_LOAD( "eb16.22",      0x0000, 0x0100, 0xb833b5ea )
 ROM_END
 
 ROM_START( wwestern )
-	ROM_REGION( 0x12000, REGION_CPU1 )	/* 64k for code */
+	ROM_REGION( 0x12000, REGION_CPU1 )      /* 64k for code */
 	ROM_LOAD( "ww01.bin",     0x0000, 0x1000, 0xbfe10753 )
 	ROM_LOAD( "ww02d.bin",    0x1000, 0x1000, 0x20579e90 )
 	ROM_LOAD( "ww03d.bin",    0x2000, 0x1000, 0x0e65be37 )
@@ -2011,10 +2011,10 @@ ROM_START( wwestern )
 	ROM_LOAD( "ww07.bin",     0x6000, 0x1000, 0x1937cc17 )
 	/* 10000-11fff space for banked ROMs (not used) */
 
-	ROM_REGION( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
+	ROM_REGION( 0x10000, REGION_CPU2 )      /* 64k for the audio CPU */
 	ROM_LOAD( "ww14.bin",     0x0000, 0x1000, 0x23776870 )
 
-	ROM_REGION( 0x8000, REGION_GFX1 )	/* graphic ROMs used at runtime */
+	ROM_REGION( 0x8000, REGION_GFX1 )       /* graphic ROMs used at runtime */
 	ROM_LOAD( "ww08.bin",     0x0000, 0x1000, 0x041a5a1c )
 	ROM_LOAD( "ww09.bin",     0x1000, 0x1000, 0x07982ac5 )
 	ROM_LOAD( "ww10.bin",     0x2000, 0x1000, 0xf32ae203 )
@@ -2022,12 +2022,12 @@ ROM_START( wwestern )
 	ROM_LOAD( "ww12.bin",     0x4000, 0x1000, 0xbe1b563a )
 	ROM_LOAD( "ww13.bin",     0x5000, 0x1000, 0x092cd9e5 )
 
-	ROM_REGION( 0x0100, REGION_PROMS )	/* layer PROM */
+	ROM_REGION( 0x0100, REGION_PROMS )      /* layer PROM */
 	ROM_LOAD( "ww17",         0x0000, 0x0100, 0x93447d2b )
 ROM_END
 
 ROM_START( wwester1 )
-	ROM_REGION( 0x12000, REGION_CPU1 )	/* 64k for code */
+	ROM_REGION( 0x12000, REGION_CPU1 )      /* 64k for code */
 	ROM_LOAD( "ww01.bin",     0x0000, 0x1000, 0xbfe10753 )
 	ROM_LOAD( "ww02",         0x1000, 0x1000, 0xf011103a )
 	ROM_LOAD( "ww03d.bin",    0x2000, 0x1000, 0x0e65be37 )
@@ -2037,10 +2037,10 @@ ROM_START( wwester1 )
 	ROM_LOAD( "ww07.bin",     0x6000, 0x1000, 0x1937cc17 )
 	/* 10000-11fff space for banked ROMs (not used) */
 
-	ROM_REGION( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
+	ROM_REGION( 0x10000, REGION_CPU2 )      /* 64k for the audio CPU */
 	ROM_LOAD( "ww14.bin",     0x0000, 0x1000, 0x23776870 )
 
-	ROM_REGION( 0x8000, REGION_GFX1 )	/* graphic ROMs used at runtime */
+	ROM_REGION( 0x8000, REGION_GFX1 )       /* graphic ROMs used at runtime */
 	ROM_LOAD( "ww08.bin",     0x0000, 0x1000, 0x041a5a1c )
 	ROM_LOAD( "ww09.bin",     0x1000, 0x1000, 0x07982ac5 )
 	ROM_LOAD( "ww10.bin",     0x2000, 0x1000, 0xf32ae203 )
@@ -2048,12 +2048,12 @@ ROM_START( wwester1 )
 	ROM_LOAD( "ww12.bin",     0x4000, 0x1000, 0xbe1b563a )
 	ROM_LOAD( "ww13.bin",     0x5000, 0x1000, 0x092cd9e5 )
 
-	ROM_REGION( 0x0100, REGION_PROMS )	/* layer PROM */
+	ROM_REGION( 0x0100, REGION_PROMS )      /* layer PROM */
 	ROM_LOAD( "ww17",         0x0000, 0x0100, 0x93447d2b )
 ROM_END
 
 ROM_START( frontlin )
-	ROM_REGION( 0x12000, REGION_CPU1 )	/* 64k for code */
+	ROM_REGION( 0x12000, REGION_CPU1 )      /* 64k for code */
 	ROM_LOAD( "fl69.u69",     0x00000, 0x1000, 0x93b64599 )
 	ROM_LOAD( "fl68.u68",     0x01000, 0x1000, 0x82dccdfb )
 	ROM_LOAD( "fl67.u67",     0x02000, 0x1000, 0x3fa1ba12 )
@@ -2063,17 +2063,17 @@ ROM_START( frontlin )
 	ROM_LOAD( "fl55.u55",     0x06000, 0x1000, 0x359242c2 )
 	ROM_LOAD( "fl54.u54",     0x07000, 0x1000, 0xd234c60f )
 	ROM_LOAD( "aa1_10.8",     0x0e000, 0x1000, 0x2704aa4c )
-	ROM_LOAD( "fl53.u53",     0x10000, 0x1000, 0x67429975 )	/* banked at 6000 */
-	ROM_LOAD( "fl52.u52",     0x11000, 0x1000, 0xcb223d34 )	/* banked at 7000 */
+	ROM_LOAD( "fl53.u53",     0x10000, 0x1000, 0x67429975 ) /* banked at 6000 */
+	ROM_LOAD( "fl52.u52",     0x11000, 0x1000, 0xcb223d34 ) /* banked at 7000 */
 
-	ROM_REGION( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
+	ROM_REGION( 0x10000, REGION_CPU2 )      /* 64k for the audio CPU */
 	ROM_LOAD( "fl70.u70",     0x0000, 0x1000, 0x15f4ed8c )
 	ROM_LOAD( "fl71.u71",     0x1000, 0x1000, 0xc3eb38e7 )
 
-	ROM_REGION( 0x0800, REGION_CPU3 )	/* 2k for the microcontroller */
+	ROM_REGION( 0x0800, REGION_CPU3 )       /* 2k for the microcontroller */
 	ROM_LOAD( "aa1.13",       0x0000, 0x0800, 0x7e78bdd3 )
 
-	ROM_REGION( 0x8000, REGION_GFX1 )	/* graphic ROMs used at runtime */
+	ROM_REGION( 0x8000, REGION_GFX1 )       /* graphic ROMs used at runtime */
 	ROM_LOAD( "fl1.u1",       0x0000, 0x1000, 0xe82c9f46 )
 	ROM_LOAD( "fl2.u2",       0x1000, 0x1000, 0x123055d3 )
 	ROM_LOAD( "fl3.u3",       0x2000, 0x1000, 0x7ea46347 )
@@ -2083,12 +2083,12 @@ ROM_START( frontlin )
 	ROM_LOAD( "fl7.u7",       0x6000, 0x1000, 0x613682a3 )
 	ROM_LOAD( "fl8.u8",       0x7000, 0x1000, 0xf73b0d5e )
 
-	ROM_REGION( 0x0100, REGION_PROMS )	/* layer PROM */
+	ROM_REGION( 0x0100, REGION_PROMS )      /* layer PROM */
 	ROM_LOAD( "eb16.22",      0x0000, 0x0100, 0xb833b5ea )
 ROM_END
 
 ROM_START( elevator )
-	ROM_REGION( 0x12000, REGION_CPU1 )	/* 64k for code */
+	ROM_REGION( 0x12000, REGION_CPU1 )      /* 64k for code */
 	ROM_LOAD( "ea-ic69.bin",  0x0000, 0x1000, 0x24e277ef )
 	ROM_LOAD( "ea-ic68.bin",  0x1000, 0x1000, 0x13702e39 )
 	ROM_LOAD( "ea-ic67.bin",  0x2000, 0x1000, 0x46f52646 )
@@ -2099,14 +2099,14 @@ ROM_START( elevator )
 	ROM_LOAD( "ea-ic54.bin",  0x7000, 0x1000, 0xf4647b4f )
 	/* 10000-11fff space for banked ROMs (not used) */
 
-	ROM_REGION( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
+	ROM_REGION( 0x10000, REGION_CPU2 )      /* 64k for the audio CPU */
 	ROM_LOAD( "ea-ic70.bin",  0x0000, 0x1000, 0x6d5f57cb )
 	ROM_LOAD( "ea-ic71.bin",  0x1000, 0x1000, 0xf0a769a1 )
 
-	ROM_REGION( 0x0800, REGION_CPU3 )	/* 2k for the microcontroller */
+	ROM_REGION( 0x0800, REGION_CPU3 )       /* 2k for the microcontroller */
 	ROM_LOAD( "ba3.11",       0x0000, 0x0800, 0x9ce75afc )
 
-	ROM_REGION( 0x8000, REGION_GFX1 )	/* graphic ROMs used at runtime */
+	ROM_REGION( 0x8000, REGION_GFX1 )       /* graphic ROMs used at runtime */
 	ROM_LOAD( "ea-ic1.bin",   0x0000, 0x1000, 0xbbbb3fba )
 	ROM_LOAD( "ea-ic2.bin",   0x1000, 0x1000, 0x639cc2fd )
 	ROM_LOAD( "ea-ic3.bin",   0x2000, 0x1000, 0x61317eea )
@@ -2116,12 +2116,12 @@ ROM_START( elevator )
 	ROM_LOAD( "ea-ic7.bin",   0x6000, 0x1000, 0x839112ec )
 	ROM_LOAD( "ea-ic8.bin",   0x7000, 0x1000, 0xdb7ff692 )
 
-	ROM_REGION( 0x0100, REGION_PROMS )	/* layer PROM */
+	ROM_REGION( 0x0100, REGION_PROMS )      /* layer PROM */
 	ROM_LOAD( "eb16.22",      0x0000, 0x0100, 0xb833b5ea )
 ROM_END
 
 ROM_START( elevatob )
-	ROM_REGION( 0x12000, REGION_CPU1 )	/* 64k for code */
+	ROM_REGION( 0x12000, REGION_CPU1 )      /* 64k for code */
 	ROM_LOAD( "ea69.bin",     0x0000, 0x1000, 0x66baa214 )
 	ROM_LOAD( "ea-ic68.bin",  0x1000, 0x1000, 0x13702e39 )
 	ROM_LOAD( "ea-ic67.bin",  0x2000, 0x1000, 0x46f52646 )
@@ -2131,13 +2131,13 @@ ROM_START( elevatob )
 	ROM_LOAD( "ea55.bin",     0x6000, 0x1000, 0xd546923e )
 	ROM_LOAD( "ea54.bin",     0x7000, 0x1000, 0x963ec5a5 )
 	/* 10000-10fff space for another banked ROM (not used) */
-	ROM_LOAD( "ea52.bin",     0x11000, 0x1000, 0x44b1314a )	/* protection crack, bank switched at 7000 */
+	ROM_LOAD( "ea52.bin",     0x11000, 0x1000, 0x44b1314a ) /* protection crack, bank switched at 7000 */
 
-	ROM_REGION( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
+	ROM_REGION( 0x10000, REGION_CPU2 )      /* 64k for the audio CPU */
 	ROM_LOAD( "ea-ic70.bin",  0x0000, 0x1000, 0x6d5f57cb )
 	ROM_LOAD( "ea-ic71.bin",  0x1000, 0x1000, 0xf0a769a1 )
 
-	ROM_REGION( 0x8000, REGION_GFX1 )	/* graphic ROMs used at runtime */
+	ROM_REGION( 0x8000, REGION_GFX1 )       /* graphic ROMs used at runtime */
 	ROM_LOAD( "ea-ic1.bin",   0x0000, 0x1000, 0xbbbb3fba )
 	ROM_LOAD( "ea-ic2.bin",   0x1000, 0x1000, 0x639cc2fd )
 	ROM_LOAD( "ea-ic3.bin",   0x2000, 0x1000, 0x61317eea )
@@ -2147,12 +2147,12 @@ ROM_START( elevatob )
 	ROM_LOAD( "ea-ic7.bin",   0x6000, 0x1000, 0x839112ec )
 	ROM_LOAD( "ea08.bin",     0x7000, 0x1000, 0x67ebf7c1 )
 
-	ROM_REGION( 0x0100, REGION_PROMS )	/* layer PROM */
+	ROM_REGION( 0x0100, REGION_PROMS )      /* layer PROM */
 	ROM_LOAD( "eb16.22",      0x0000, 0x0100, 0xb833b5ea )
 ROM_END
 
 ROM_START( tinstar )
-	ROM_REGION( 0x12000, REGION_CPU1 )	/* 64k for code */
+	ROM_REGION( 0x12000, REGION_CPU1 )      /* 64k for code */
 	ROM_LOAD( "ts.69",        0x0000, 0x1000, 0xa930af60 )
 	ROM_LOAD( "ts.68",        0x1000, 0x1000, 0x7f2714ca )
 	ROM_LOAD( "ts.67",        0x2000, 0x1000, 0x49170786 )
@@ -2163,15 +2163,15 @@ ROM_START( tinstar )
 	ROM_LOAD( "ts.54",        0x7000, 0x1000, 0xb352360f )
 	/* 10000-11fff space for banked ROMs (not used) */
 
-	ROM_REGION( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
+	ROM_REGION( 0x10000, REGION_CPU2 )      /* 64k for the audio CPU */
 	ROM_LOAD( "ts.70",        0x0000, 0x1000, 0x4771838d )
 	ROM_LOAD( "ts.71",        0x1000, 0x1000, 0x03c91332 )
 	ROM_LOAD( "ts.72",        0x2000, 0x1000, 0xbeeed8f3 )
 
-	ROM_REGION( 0x0800, REGION_CPU3 )	/* 2k for the microcontroller */
+	ROM_REGION( 0x0800, REGION_CPU3 )       /* 2k for the microcontroller */
 	ROM_LOAD( "a10-12",       0x0000, 0x0800, 0x889eefc9 )
 
-	ROM_REGION( 0x8000, REGION_GFX1 )	/* graphic ROMs used at runtime */
+	ROM_REGION( 0x8000, REGION_GFX1 )       /* graphic ROMs used at runtime */
 	ROM_LOAD( "ts.1",         0x0000, 0x1000, 0xf1160718 )
 	ROM_LOAD( "ts.2",         0x1000, 0x1000, 0x39dc6dbb )
 	ROM_LOAD( "ts.3",         0x2000, 0x1000, 0x079df429 )
@@ -2181,12 +2181,12 @@ ROM_START( tinstar )
 	ROM_LOAD( "ts.7",         0x6000, 0x1000, 0x894f6332 )
 	ROM_LOAD( "ts.8",         0x7000, 0x1000, 0x519aed19 )
 
-	ROM_REGION( 0x0100, REGION_PROMS )	/* layer PROM */
+	ROM_REGION( 0x0100, REGION_PROMS )      /* layer PROM */
 	ROM_LOAD( "eb16.22",      0x0000, 0x0100, 0xb833b5ea )
 ROM_END
 
 ROM_START( waterski )
-	ROM_REGION( 0x12000, REGION_CPU1 )	/* 64k for code */
+	ROM_REGION( 0x12000, REGION_CPU1 )      /* 64k for code */
 	ROM_LOAD( "a03-01",       0x0000, 0x1000, 0x322c4c2c )
 	ROM_LOAD( "a03-02",       0x1000, 0x1000, 0x8df176d1 )
 	ROM_LOAD( "a03-03",       0x2000, 0x1000, 0x420bd04f )
@@ -2196,23 +2196,23 @@ ROM_START( waterski )
 	ROM_LOAD( "a03-07",       0x6000, 0x1000, 0x8abc7522 )
 	/* 10000-11fff space for banked ROMs (not used) */
 
-	ROM_REGION( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
+	ROM_REGION( 0x10000, REGION_CPU2 )      /* 64k for the audio CPU */
 	ROM_LOAD( "a03-13",       0x0000, 0x1000, 0x78c7d37f )
 	ROM_LOAD( "a03-14",       0x1000, 0x1000, 0x31f991ca )
 
-	ROM_REGION( 0x8000, REGION_GFX1 )	/* graphic ROMs used at runtime */
-	ROM_LOAD( "a03-08",       0x0000, 0x1000, 0x00000000 )	/* minor bit rot */
+	ROM_REGION( 0x8000, REGION_GFX1 )       /* graphic ROMs used at runtime */
+	ROM_LOAD( "a03-08",       0x0000, 0x1000, 0x00000000 )  /* minor bit rot */
 	ROM_LOAD( "a03-09",       0x1000, 0x1000, 0x48ac912a )
-	ROM_LOAD( "a03-10",       0x2000, 0x1000, 0x00000000 )	/* corrupt! */
+	ROM_LOAD( "a03-10",       0x2000, 0x1000, 0x00000000 )  /* corrupt! */
 	ROM_LOAD( "a03-11",       0x3000, 0x1000, 0xf06cddd6 )
 	ROM_LOAD( "a03-12",       0x4000, 0x1000, 0x27dfd8c2 )
 
-	ROM_REGION( 0x0100, REGION_PROMS )	/* layer PROM */
+	ROM_REGION( 0x0100, REGION_PROMS )      /* layer PROM */
 	ROM_LOAD( "eb16.22",      0x0000, 0x0100, 0xb833b5ea )
 ROM_END
 
 ROM_START( bioatack )
-	ROM_REGION( 0x12000, REGION_CPU1 )	/* 64k for code */
+	ROM_REGION( 0x12000, REGION_CPU1 )      /* 64k for code */
 	ROM_LOAD( "aa8-01.69",    0x0000, 0x1000, 0xe5abc211 )
 	ROM_LOAD( "aa8-02.68",    0x1000, 0x1000, 0xb5bfde00 )
 	ROM_LOAD( "aa8-03.67",    0x2000, 0x1000, 0xe4e46e69 )
@@ -2223,10 +2223,10 @@ ROM_START( bioatack )
 	ROM_LOAD( "aa8-08.54",    0x7000, 0x1000, 0xdec5271f )
 	/* 10000-11fff space for banked ROMs (not used) */
 
-	ROM_REGION( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
+	ROM_REGION( 0x10000, REGION_CPU2 )      /* 64k for the audio CPU */
 	ROM_LOAD( "aa8-17.70",    0x0000, 0x1000, 0x36eb95b5 )
 
-	ROM_REGION( 0x8000, REGION_GFX1 )	/* graphic ROMs used at runtime */
+	ROM_REGION( 0x8000, REGION_GFX1 )       /* graphic ROMs used at runtime */
 	ROM_LOAD( "aa8-09.1",     0x0000, 0x1000, 0x1fee5fd6 )
 	ROM_LOAD( "aa8-10.2",     0x1000, 0x1000, 0xe0133423 )
 	ROM_LOAD( "aa8-11.3",     0x2000, 0x1000, 0x0f5715c6 )
@@ -2236,37 +2236,37 @@ ROM_START( bioatack )
 	ROM_LOAD( "aa8-15.7",     0x6000, 0x1000, 0xff5aad4b )
 	ROM_LOAD( "aa8-16.8",     0x7000, 0x1000, 0xceba4036 )
 
-	ROM_REGION( 0x0100, REGION_PROMS )	/* layer PROM */
+	ROM_REGION( 0x0100, REGION_PROMS )      /* layer PROM */
 	ROM_LOAD( "eb16.22",      0x0000, 0x0100, 0xb833b5ea )
 ROM_END
 
 ROM_START( sfposeid )
-	ROM_REGION( 0x12000, REGION_CPU1 )	/* 64k for code */
+	ROM_REGION( 0x12000, REGION_CPU1 )      /* 64k for code */
 	ROM_LOAD( "a14-01.1",     0x00000, 0x2000, 0xaa779fbb )
 	ROM_LOAD( "a14-02.2",     0x02000, 0x2000, 0xecec9dc3 )
 	ROM_LOAD( "a14-03.3",     0x04000, 0x2000, 0x469498c1 )
 	ROM_LOAD( "a14-04.6",     0x06000, 0x2000, 0x1db4bc02 )
-	ROM_LOAD( "a14-05.7",     0x10000, 0x2000, 0x95e2f903 )	/* banked at 6000 */
+	ROM_LOAD( "a14-05.7",     0x10000, 0x2000, 0x95e2f903 ) /* banked at 6000 */
 
-	ROM_REGION( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
+	ROM_REGION( 0x10000, REGION_CPU2 )      /* 64k for the audio CPU */
 	ROM_LOAD( "a14-10.70",    0x0000, 0x1000, 0xf1365f35 )
 	ROM_LOAD( "a14-11.71",    0x1000, 0x1000, 0x74a12fe2 )
 
-	ROM_REGION( 0x0800, REGION_CPU3 )	/* 2k for the microcontroller */
+	ROM_REGION( 0x0800, REGION_CPU3 )       /* 2k for the microcontroller */
 	ROM_LOAD( "a14-12",       0x0000, 0x0800, 0x091beed8 )
 
-	ROM_REGION( 0x8000, REGION_GFX1 )	/* graphic ROMs used at runtime */
+	ROM_REGION( 0x8000, REGION_GFX1 )       /* graphic ROMs used at runtime */
 	ROM_LOAD( "a14-06.4",     0x0000, 0x2000, 0x9740493b )
 	ROM_LOAD( "a14-07.5",     0x2000, 0x2000, 0x1c93de97 )
 	ROM_LOAD( "a14-08.9",     0x4000, 0x2000, 0x4367e65a )
 	ROM_LOAD( "a14-09.10",    0x6000, 0x2000, 0x677cffd5 )
 
-	ROM_REGION( 0x0100, REGION_PROMS )	/* layer PROM */
+	ROM_REGION( 0x0100, REGION_PROMS )      /* layer PROM */
 	ROM_LOAD( "eb16.22",      0x0000, 0x0100, 0xb833b5ea )
 ROM_END
 
 ROM_START( hwrace )
-	ROM_REGION( 0x12000, REGION_CPU1 )	/* 64k for code */
+	ROM_REGION( 0x12000, REGION_CPU1 )      /* 64k for code */
 	ROM_LOAD( "hw_race.01",   0x0000, 0x1000, 0x8beec11f )
 	ROM_LOAD( "hw_race.02",   0x1000, 0x1000, 0x72ad099d )
 	ROM_LOAD( "hw_race.03",   0x2000, 0x1000, 0xd0c221d7 )
@@ -2277,11 +2277,11 @@ ROM_START( hwrace )
 	ROM_LOAD( "hw_race.08",   0x7000, 0x1000, 0xbdbc1208 )
 	/* 10000-11fff space for banked ROMs (not used) */
 
-	ROM_REGION( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
+	ROM_REGION( 0x10000, REGION_CPU2 )      /* 64k for the audio CPU */
 	ROM_LOAD( "hw_race.17",   0x0000, 0x1000, 0xafe24f3e )
 	ROM_LOAD( "hw_race.18",   0x1000, 0x1000, 0xdbec897d )
 
-	ROM_REGION( 0x8000, REGION_GFX1 )	/* graphic ROMs used at runtime */
+	ROM_REGION( 0x8000, REGION_GFX1 )       /* graphic ROMs used at runtime */
 	ROM_LOAD( "hw_race.09",   0x0000, 0x1000, 0x345b9b88 )
 	ROM_LOAD( "hw_race.10",   0x1000, 0x1000, 0x598a3c3e )
 	ROM_LOAD( "hw_race.11",   0x2000, 0x1000, 0x3f436a7d )
@@ -2291,33 +2291,33 @@ ROM_START( hwrace )
 	ROM_LOAD( "hw_race.15",   0x6000, 0x1000, 0xe1057eb7 )
 	ROM_LOAD( "hw_race.16",   0x7000, 0x1000, 0xf7104668 )
 
-	ROM_REGION( 0x0100, REGION_PROMS )	/* layer PROM */
+	ROM_REGION( 0x0100, REGION_PROMS )      /* layer PROM */
 	ROM_LOAD( "eb16.22",      0x0000, 0x0100, 0xb833b5ea )
 ROM_END
 
 ROM_START( kikstart )
-	ROM_REGION( 0x12000, REGION_CPU1 )	/* 64k for code */
+	ROM_REGION( 0x12000, REGION_CPU1 )      /* 64k for code */
 	ROM_LOAD( "a20-01",       0x00000, 0x2000, 0x5810be97 )
 	ROM_LOAD( "a20-02",       0x02000, 0x2000, 0x13e9565d )
 	ROM_LOAD( "a20-03",       0x04000, 0x2000, 0x93d7a9e1 )
 	ROM_LOAD( "a20-04",       0x06000, 0x2000, 0x1f23c5d6 )
-	ROM_LOAD( "a20-05",       0x10000, 0x2000, 0x66e100aa )	/* banked at 6000 */
+	ROM_LOAD( "a20-05",       0x10000, 0x2000, 0x66e100aa ) /* banked at 6000 */
 
-	ROM_REGION( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
+	ROM_REGION( 0x10000, REGION_CPU2 )      /* 64k for the audio CPU */
 	ROM_LOAD( "a20-10",       0x0000, 0x1000, 0xde4352a4 )
 	ROM_LOAD( "a20-11",       0x1000, 0x1000, 0x8db12dd9 )
 	ROM_LOAD( "a20-12",       0x2000, 0x1000, 0xe7eeb933 )
 
-	ROM_REGION( 0x0800, REGION_CPU3 )	/* 2k for the microcontroller */
+	ROM_REGION( 0x0800, REGION_CPU3 )       /* 2k for the microcontroller */
 	ROM_LOAD( "a20-13",       0x0000, 0x0800, 0x11e23c5c )
 
-	ROM_REGION( 0x8000, REGION_GFX1 )	/* graphic ROMs used at runtime */
+	ROM_REGION( 0x8000, REGION_GFX1 )       /* graphic ROMs used at runtime */
 	ROM_LOAD( "a20-06",       0x0000, 0x2000, 0x6582fc89 )
 	ROM_LOAD( "a20-07",       0x2000, 0x2000, 0x8c0b76d2 )
 	ROM_LOAD( "a20-08",       0x4000, 0x2000, 0x0cca7a9d )
 	ROM_LOAD( "a20-09",       0x6000, 0x2000, 0xda625ccf )
 
-	ROM_REGION( 0x0100, REGION_PROMS )	/* layer PROM */
+	ROM_REGION( 0x0100, REGION_PROMS )      /* layer PROM */
 	ROM_LOAD( "eb16.22",      0x0000, 0x0100, 0xb833b5ea )
 ROM_END
 

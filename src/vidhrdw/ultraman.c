@@ -18,7 +18,7 @@ extern unsigned char* ultraman_regs;
 
 ***************************************************************************/
 
-static void sprite_callback(int *code,int *color,int *priority)
+static void sprite_callback(int *code,int *color,int *priority,int *shadow)
 {
 	*priority = (*color & 0x80) >> 7;
 	*color = sprite_colorbase + ((*color & 0x7e) >> 1);

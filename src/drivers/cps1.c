@@ -6,7 +6,7 @@
   Driver provided by:
   Paul Leaman (paul@vortexcomputing.demon.co.uk)
 
-  M680000 for game, Z80, YM-2151 and OKIM6295 for sound.
+  68000 for game, Z80, YM-2151 and OKIM6295 for sound.
 
   68000 clock speeds are unknown for all games (except where commented)
 
@@ -137,40 +137,6 @@ WRITE_HANDLER( cpsq_coinctrl2_w )
     }
 }
 
-READ_HANDLER( cps1_protection_ram_r )
-{
-	/*
-	   Protection (slammasters):
-
-	   The code does a checksum on an area of memory. I have no idea what
-	   this memory is. I have no idea whether it is RAM based or hard-wired.
-
-	   The code adds the low bytes of 0x415 words starting at 0xf0e000
-
-	   The result is ANDed with 0xffffff00 and then multiplied by 2. This
-	   value is stored and used throughout the game to calculate the
-	   base offset of the source scroll ROM data.
-
-	   The sum of the low bytes of the first 0x415 words starting at
-	   address 0xf0e000 should be 0x1df00
-
-	   In the absence of any real data, a rough calculation will do the
-	   job.
-	*/
-
-	if (offset < (0x411*2))
-	{
-		/*
-			0x411 * 0x76 = 0x1dfd6  (which is close enough)
-		*/
-		return 0x76;
-	}
-	else
-	{
-		return 0;
-	}
-}
-
 static int cps1_interrupt(void)
 {
 	/* Strider also has a IRQ4 handler. It is input port related, but the game */
@@ -202,6 +168,19 @@ int cps1_qsound_interrupt(void)
 		qsound_sharedram[0xfff] = 0x77;
 
 	return 2;
+}
+
+
+READ_HANDLER( qsound_rom_r )
+{
+	unsigned char *rom = memory_region(REGION_USER1);
+
+	if (rom) return rom[offset / 2] | 0xff00;
+	else
+	{
+		usrintf_showmessage("%06x: read sound ROM byte %04x",cpu_get_pc(),offset/2);
+		return 0;
+	}
 }
 
 static READ_HANDLER( qsound_sharedram_r )
@@ -317,8 +296,8 @@ static struct MemoryReadAddress cps1_readmem[] =
 	{ 0x8001fc, 0x8001fc, cps1_input2_r }, /* Input ports (SF Rev E) */
 	{ 0x800100, 0x8001ff, cps1_output_r },   /* Output ports */
 	{ 0x900000, 0x92ffff, MRA_BANK3 },	/* SF2CE executes code from here */
-	{ 0xf0e000, 0xf0efff, cps1_protection_ram_r }, /* Slammasters protection */
-	{ 0xf18000, 0xf19fff, qsound_sharedram_r },       /* Q RAM */
+	{ 0xf00000, 0xf0ffff, qsound_rom_r },		/* Slammasters protection */
+	{ 0xf18000, 0xf19fff, qsound_sharedram_r },	/* Q RAM */
 	{ 0xf1c000, 0xf1c001, cps1_input2_r },   /* Player 3 controls (later games) */
 	{ 0xf1c002, 0xf1c003, cps1_input3_r },   /* Player 4 controls (later games - muscle bombers) */
 	{ 0xf1c006, 0xf1c007, cps1_eeprom_port_r },
@@ -3629,10 +3608,10 @@ static struct MachineDriver machine_driver_qsound =
 
 
 MACHINE_DRIVER( forgottn, CPU_M68000,   10000000, 6061, 0 )
-MACHINE_DRIVER( cps1,     CPU_M68000,   10000000, 7576, 0 )  /* 10 MHz?? */
+MACHINE_DRIVER( cps1,     CPU_M68000,   10000000, 7576, 0 )	/* 10 MHz?? */
 MACHINE_DRIVER( sf2,      CPU_M68000,   12000000, 7576, 0 )	/* 12 MHz */
 MACHINE_DRIVER( sf2accp2, CPU_M68EC020, 12000000, 7576, 0 )	/* 12 MHz */
-MACHINE_DRIVER( pang3,    CPU_M68000,   10000000, 7576, pang3_nvram_handler )  /* 10 MHz?? */
+MACHINE_DRIVER( pang3,    CPU_M68000,   10000000, 7576, pang3_nvram_handler )	/* 10 MHz?? */
 
 
 
@@ -5588,6 +5567,9 @@ ROM_START( slammast )
 	ROM_LOAD( "mb_qa.rom",      0x00000, 0x08000, 0xe21a03c4 )
 	ROM_CONTINUE(               0x10000, 0x18000 )
 
+	ROM_REGION( 0x8000, REGION_USER1 )
+	/* the encrypted Z80 ROM will be copied here, where the main CPU can read it. */
+
 	ROM_REGION( 0x400000, REGION_SOUND1 ) /* QSound samples */
 	ROM_LOAD( "mb_q1.rom",      0x000000, 0x80000, 0x0630c3ce )
 	ROM_LOAD( "mb_q2.rom",      0x080000, 0x80000, 0x354f9c21 )
@@ -5626,6 +5608,9 @@ ROM_START( mbomberj )
 	ROM_REGION( 2*0x28000, REGION_CPU2 ) /* QSound Z80 code + space for decrypted opcodes */
 	ROM_LOAD( "mb_qa.rom",      0x00000, 0x08000, 0xe21a03c4 )
 	ROM_CONTINUE(               0x10000, 0x18000 )
+
+	ROM_REGION( 0x8000, REGION_USER1 )
+	/* the encrypted Z80 ROM will be copied here, where the main CPU can read it. */
 
 	ROM_REGION( 0x400000, REGION_SOUND1 ) /* QSound samples */
 	ROM_LOAD( "mb_q1.rom",      0x000000, 0x80000, 0x0630c3ce )

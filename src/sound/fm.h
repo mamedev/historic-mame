@@ -10,7 +10,7 @@
 #define BUILD_YM2608  (HAS_YM2608)		/* build YM2608(OPNA)  emulator */
 #define BUILD_YM2610  (HAS_YM2610)		/* build YM2610(OPNB)  emulator */
 #define BUILD_YM2610B (HAS_YM2610B)		/* build YM2610B(OPNB?)emulator */
-#define BUILD_YM2612  (HAS_YM2612)		/* build YM2612(OPN2)  emulator */
+#define BUILD_YM2612  (HAS_YM2612 || HAS_YM3438)		/* build YM2612(OPN2)  emulator */
 #define BUILD_YM2151  (HAS_YM2151)		/* build YM2151(OPM)   emulator */
 
 /* --- system optimize --- */

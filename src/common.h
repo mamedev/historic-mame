@@ -23,7 +23,7 @@ struct RomModule
 /* that marks the start of a new memory region. Confused? Well, don't worry, just use */
 /* the macros below. */
 
-#define ROMFLAG_MASK          0xf8000000           /* 5 bits worth of flags in the high nibble */
+#define ROMFLAG_MASK          0xfc000000           /* 6 bits worth of flags in the high nibble */
 
 /* Masks for individual ROMs */
 #define ROMFLAG_ALTERNATE     0x80000000           /* Alternate bytes, either even or odd, or nibbles, low or high */
@@ -31,6 +31,7 @@ struct RomModule
 #define ROMFLAG_SWAP          0x20000000           /* 16-bit ROM with bytes in wrong order */
 #define ROMFLAG_NIBBLE        0x10000000           /* Nibble-wide ROM image */
 #define ROMFLAG_QUAD          0x08000000           /* 32-bit data arranged as 4 interleaved 8-bit roms */
+#define ROMFLAG_OPTIONAL      0x04000000           /* Optional ROM, not needed for basic emulation */
 
 /* start of table */
 #define ROM_START(name) static struct RomModule rom_##name[] = {
@@ -110,6 +111,8 @@ enum {
 /* Data is split between 4 roms, always use this in groups of 4! */
 #define ROM_LOAD_QUAD(name,offset,length,crc) { name, offset, length | ROMFLAG_QUAD, crc },
 
+#define ROM_LOAD_OPTIONAL(name,offset,length,crc) { name, offset, length | ROMFLAG_OPTIONAL, crc },
+
 #ifdef LSB_FIRST
 #define ROM_LOAD_V20_EVEN	ROM_LOAD_EVEN
 #define ROM_RELOAD_V20_EVEN  ROM_RELOAD_EVEN
@@ -183,7 +186,7 @@ int memory_region_length(int num);
 int new_memory_region(int num, int length);
 void free_memory_region(int num);
 
-data_t flip_screen_x, flip_screen_y;
+extern data_t flip_screen_x, flip_screen_y;
 
 WRITE_HANDLER( flip_screen_w );
 WRITE_HANDLER( flip_screen_x_w );

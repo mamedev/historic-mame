@@ -360,8 +360,10 @@ static const INT32 RATE_0[32]=
 static void *cur_chip = 0;		/* pointer of current chip struct */
 static FM_ST  *State;			/* basic status */
 static FM_CH  *cch[8];			/* pointer of FM channels */
+#if (BUILD_LFO)
 #if FM_LFO_SUPPORT
 static UINT32 LFOCnt,LFOIncr;	/* LFO PhaseGenerator */
+#endif
 #endif
 
 /* runtime work */

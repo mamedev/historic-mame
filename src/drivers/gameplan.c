@@ -215,11 +215,11 @@ INPUT_PORTS_START( kaos )
 	PORT_DIPSETTING(   0x02, "1 Coin/13 Credits" )
 	PORT_DIPSETTING(   0x01, "1 Coin/14 Credits" )
 
-	PORT_DIPNAME(0x10, 0x10, "Unknown" ) /* -> 039A */
+	PORT_DIPNAME(0x10, 0x10, DEF_STR( Unknown ) ) /* -> 039A */
 	PORT_DIPSETTING(   0x10, DEF_STR( Off ) )
 	PORT_DIPSETTING(   0x00, DEF_STR( On ) )
 
-	PORT_DIPNAME(0x60, 0x20, "Unknown" ) /* -> 039C */
+	PORT_DIPNAME(0x60, 0x20, DEF_STR( Unknown ) ) /* -> 039C */
 	PORT_DIPSETTING(   0x60, "1" )
 	PORT_DIPSETTING(   0x40, "2" )
 	PORT_DIPSETTING(   0x20, "3" )
@@ -235,25 +235,25 @@ INPUT_PORTS_START( kaos )
 	PORT_DIPSETTING(   0x01, "3" )
 	PORT_DIPSETTING(   0x00, "4" )
 
-	PORT_DIPNAME(0x02, 0x00, "Unknown" )
+	PORT_DIPNAME(0x02, 0x00, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(   0x02, DEF_STR( Off ) )
 	PORT_DIPSETTING(   0x00, DEF_STR( On ) )
 
-	PORT_DIPNAME(0x0c, 0x00, "Unknown" )
+	PORT_DIPNAME(0x0c, 0x00, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(   0x0c, "1" )
 	PORT_DIPSETTING(   0x08, "2" )
 	PORT_DIPSETTING(   0x04, "3" )
 	PORT_DIPSETTING(   0x00, "4" )
 
-	PORT_DIPNAME(0x10, 0x00, "Unknown" )
+	PORT_DIPNAME(0x10, 0x00, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(   0x10, DEF_STR( Off ) )
 	PORT_DIPSETTING(   0x00, DEF_STR( On ) )
 
-	PORT_DIPNAME(0x20, 0x00, "Unknown" )
+	PORT_DIPNAME(0x20, 0x00, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(   0x20, DEF_STR( Off ) )
 	PORT_DIPSETTING(   0x00, DEF_STR( On ) )
 
-	PORT_DIPNAME(0x40, 0x00, "Unknown" )
+	PORT_DIPNAME(0x40, 0x00, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(   0x40, DEF_STR( Off ) )
 	PORT_DIPSETTING(   0x00, DEF_STR( On ) )
 

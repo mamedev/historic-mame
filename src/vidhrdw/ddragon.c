@@ -5,102 +5,107 @@
 ***************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
-#include <stdio.h>
 
-unsigned char *dd_videoram;
-int dd_scrollx_hi, dd_scrolly_hi;
-unsigned char *dd_scrollx_lo;
-unsigned char *dd_scrolly_lo;
-unsigned char *dd_spriteram;
+
+unsigned char *ddragon_bgvideoram,*ddragon_fgvideoram;
+int ddragon_scrollx_hi, ddragon_scrolly_hi;
+unsigned char *ddragon_scrollx_lo;
+unsigned char *ddragon_scrolly_lo;
+unsigned char *ddragon_spriteram;
 int dd2_video;
 
+static struct tilemap *fg_tilemap,*bg_tilemap;
 
 
-int dd_vh_start( void )
+
+/***************************************************************************
+
+  Callbacks for the TileMap code
+
+***************************************************************************/
+
+static UINT32 background_scan(UINT32 col,UINT32 row,UINT32 num_cols,UINT32 num_rows)
 {
-	dirtybuffer = malloc( 0x400 );
-	if( dirtybuffer )
+	/* logical (col,row) -> memory offset */
+	return (col & 0x0f) + ((row & 0x0f) << 4) + ((col & 0x10) << 4) + ((row & 0x10) << 5);
+}
+
+static void get_bg_tile_info(int tile_index)
+{
+	unsigned char attr = ddragon_bgvideoram[2*tile_index];
+	SET_TILE_INFO(2,ddragon_bgvideoram[2*tile_index+1] + ((attr & 0x07) << 8),(attr >> 3) & 0x07)
+	tile_info.flags = TILE_FLIPYX((attr & 0xc0) >> 6);
+}
+
+static void get_fg_tile_info(int tile_index)
+{
+	unsigned char attr = ddragon_fgvideoram[2*tile_index];
+	SET_TILE_INFO(0,ddragon_fgvideoram[2*tile_index+1] + ((attr & 0x07) << 8),attr >> 5)
+}
+
+
+/***************************************************************************
+
+  Start the video hardware emulation.
+
+***************************************************************************/
+
+int ddragon_vh_start(void)
+{
+	bg_tilemap = tilemap_create(get_bg_tile_info,background_scan,  TILEMAP_OPAQUE,     16,16,32,32);
+	fg_tilemap = tilemap_create(get_fg_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT, 8, 8,32,32);
+
+	if (!bg_tilemap || !fg_tilemap)
+		return 1;
+
+	fg_tilemap->transparent_pen = 0;
+
+	return 0;
+}
+
+
+/***************************************************************************
+
+  Memory handlers
+
+***************************************************************************/
+
+WRITE_HANDLER( ddragon_bgvideoram_w )
+{
+	if (ddragon_bgvideoram[offset] != data)
 	{
-		memset(dirtybuffer,1, 0x400);
-
-		tmpbitmap = bitmap_alloc(Machine->drv->screen_width*2,Machine->drv->screen_height*2);
-
-		if( tmpbitmap ) return 0;
-
-		free( dirtybuffer );
+		ddragon_bgvideoram[offset] = data;
+		tilemap_mark_tile_dirty(bg_tilemap,offset/2);
 	}
-
-	return 1;
 }
 
-
-
-void dd_vh_stop( void )
+WRITE_HANDLER( ddragon_fgvideoram_w )
 {
-	bitmap_free( tmpbitmap );
-	free( dirtybuffer );
-}
-
-
-WRITE_HANDLER( dd_background_w )
-{
-	if( dd_videoram[offset] != data ){
-		dd_videoram[offset] = data;
-		dirtybuffer[offset/2] = 1;
+	if (ddragon_fgvideoram[offset] != data)
+	{
+		ddragon_fgvideoram[offset] = data;
+		tilemap_mark_tile_dirty(fg_tilemap,offset/2);
 	}
 }
 
 
-static void dd_draw_background( struct osd_bitmap *bitmap )
-{
-	const struct GfxElement *gfx = Machine->gfx[2];
 
-	int scrollx = -dd_scrollx_hi - ( dd_scrollx_lo[0] );
-	int scrolly = -dd_scrolly_hi - ( dd_scrolly_lo[0] );
+/***************************************************************************
 
-	int offset;
+  Display refresh
 
-	for( offset = 0; offset<0x400; offset++ ){
-		int attributes = dd_videoram[offset*2];
-		int color = ( attributes >> 3 ) & 0x7;
-		if( dirtybuffer[offset] ){
-			int tile_number = dd_videoram[offset*2+1] + ((attributes&7)<<8);
-			int xflip = attributes & 0x40;
-			int yflip = attributes & 0x80;
-			int sx = 16*(((offset>>8)&1)*16 + (offset&0xff)%16);
-			int sy = 16*(((offset>>9)&1)*16 + (offset&0xff)/16);
-
-			/* CALB ????
-                          if( sx<0 || sx>=512 || sy<0 || sy>=512 ) ExitToShell();*/
-
-			drawgfx(tmpbitmap,gfx,
-				tile_number,
-				color,
-				xflip,yflip,
-				sx,sy,
-				0,TRANSPARENCY_NONE,0);
-
-			dirtybuffer[offset] = 0;
-		}
-	}
-
-	copyscrollbitmap(bitmap,tmpbitmap,
-			1,&scrollx,1,&scrolly,
-			&Machine->visible_area,
-			TRANSPARENCY_NONE,0);
-}
+***************************************************************************/
 
 #define DRAW_SPRITE( order, sx, sy ) drawgfx( bitmap, gfx, \
 					(which+order),color,flipx,flipy,sx,sy, \
 					clip,TRANSPARENCY_PEN,0);
 
-static void dd_draw_sprites( struct osd_bitmap *bitmap )
+static void draw_sprites(struct osd_bitmap *bitmap)
 {
 	const struct rectangle *clip = &Machine->visible_area;
 	const struct GfxElement *gfx = Machine->gfx[1];
 
-	unsigned char *src = &( dd_spriteram[0x800] );
+	unsigned char *src = &( ddragon_spriteram[0x800] );
 	int i;
 
 	for( i = 0; i < ( 64 * 5 ); i += 5 ) {
@@ -111,6 +116,7 @@ static void dd_draw_sprites( struct osd_bitmap *bitmap )
 			int size = ( attr & 0x30 ) >> 4;
 			int flipx = ( attr & 8 );
 			int flipy = ( attr & 4 );
+			int dx = -16,dy = -16;
 
 			int which;
 			int color;
@@ -123,25 +129,35 @@ static void dd_draw_sprites( struct osd_bitmap *bitmap )
 				which = src[i+3] + ( ( src[i+2] & 0x0f ) << 8 );
 			}
 
+			if (flip_screen)
+			{
+				sx = 240 - sx;
+				sy = 240 - sy;
+				flipx = !flipx;
+				flipy = !flipy;
+				dx = -dx;
+				dy = -dy;
+			}
+
 			switch ( size ) {
 				case 0: /* normal */
 				DRAW_SPRITE( 0, sx, sy );
 				break;
 
 				case 1: /* double y */
-				DRAW_SPRITE( 0, sx, sy - 16 );
+				DRAW_SPRITE( 0, sx, sy + dy );
 				DRAW_SPRITE( 1, sx, sy );
 				break;
 
 				case 2: /* double x */
-				DRAW_SPRITE( 0, sx - 16, sy );
+				DRAW_SPRITE( 0, sx + dx, sy );
 				DRAW_SPRITE( 2, sx, sy );
 				break;
 
 				case 3:
-				DRAW_SPRITE( 0, sx - 16, sy - 16 );
-				DRAW_SPRITE( 1, sx - 16, sy );
-				DRAW_SPRITE( 2, sx, sy - 16 );
+				DRAW_SPRITE( 0, sx + dx, sy + dy );
+				DRAW_SPRITE( 1, sx + dx, sy );
+				DRAW_SPRITE( 2, sx, sy + dy );
 				DRAW_SPRITE( 3, sx, sy );
 				break;
 			}
@@ -151,40 +167,23 @@ static void dd_draw_sprites( struct osd_bitmap *bitmap )
 
 #undef DRAW_SPRITE
 
-static void dd_draw_foreground( struct osd_bitmap *bitmap )
+
+void ddragon_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
-	const struct GfxElement *gfx = Machine->gfx[0];
-	unsigned char *source = videoram;
+	int scrollx = ddragon_scrollx_hi + *ddragon_scrollx_lo;
+	int scrolly = ddragon_scrolly_hi + *ddragon_scrolly_lo;
 
-	int sx,sy;
+	tilemap_set_scrollx(bg_tilemap,0,scrollx);
+	tilemap_set_scrolly(bg_tilemap,0,scrolly);
 
-	for( sy=0; sy<256; sy+=8 ){
-		for( sx=0; sx<256; sx+=8 ){
-			int attributes = source[0];
-			int tile_number = source[1] + 256*( attributes & 7 );
-			int color = ( attributes >> 5 ) & 0x7;
+	tilemap_update(ALL_TILEMAPS);
 
-			if ( tile_number ) {
-				drawgfx( bitmap,gfx, tile_number,
-				color,
-				0,0, /* no flip */
-				sx,sy,
-				0, /* no need to clip */
-				TRANSPARENCY_PEN,0);
-			}
-			source += 2;
-		}
-	}
-}
-
-
-
-void dd_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
-{
 	if (palette_recalc())
- 		memset(dirtybuffer,1, 0x400);
+		tilemap_mark_all_pixels_dirty(ALL_TILEMAPS);
 
-	dd_draw_background( bitmap );
-	dd_draw_sprites( bitmap );
-	dd_draw_foreground( bitmap );
+	tilemap_render(ALL_TILEMAPS);
+
+	tilemap_draw(bitmap,bg_tilemap,0);
+	draw_sprites(bitmap);
+	tilemap_draw(bitmap,fg_tilemap,0);
 }

@@ -406,7 +406,7 @@ extern int m68k_disassemble(char* str_buff, int pc);
 
 unsigned m68000_dasm(char *buffer, unsigned pc)
 {
-	change_pc24(pc);
+	change_pc24bew(pc);
 #ifdef MAME_DEBUG
     return m68k_disassemble(buffer, pc);
 #else
@@ -452,7 +452,7 @@ const char *m68010_info(void *context, int regnum)
 
 unsigned m68010_dasm(char *buffer, unsigned pc)
 {
-	change_pc24(pc);
+	change_pc24bew(pc);
 #ifdef MAME_DEBUG
     return m68k_disassemble(buffer, pc);
 #else
@@ -499,7 +499,7 @@ const char *m68ec020_info(void *context, int regnum)
 
 unsigned m68ec020_dasm(char *buffer, unsigned pc)
 {
-	change_pc24(pc);
+	change_pc24bew(pc);
 #ifdef MAME_DEBUG
     return m68k_disassemble(buffer, pc);
 #else
@@ -542,7 +542,7 @@ const char *m68020_info(void *context, int regnum)
 
 unsigned m68020_dasm(char *buffer, unsigned pc)
 {
-	change_pc24(pc);
+	change_pc24bew(pc);
 #ifdef MAME_DEBUG
     return m68k_disassemble(buffer, pc);
 #else

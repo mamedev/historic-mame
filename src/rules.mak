@@ -340,7 +340,7 @@ $(OBJ)/cpu/m68000/m68kops.o $(OBJ)/cpu/m68000/m68kopac.o \
 $(OBJ)/cpu/m68000/m68kopdm.o $(OBJ)/cpu/m68000/m68kopnz.o
 CPUOBJS += $(M68000_GENERATED_OBJS) $(OBJ)/cpu/m68000/m68kcpu.o $(OBJ)/cpu/m68000/m68kmame.o
 endif
-DBGOBJS += $(OBJ)/cpu/m68000/d68k.o
+DBGOBJS += $(OBJ)/cpu/m68000/m68kdasm.o
 endif
 
 CPU=$(strip $(findstring M68010@,$(CPUS)))
@@ -356,7 +356,7 @@ $(OBJ)/cpu/m68000/m68kops.o $(OBJ)/cpu/m68000/m68kopac.o \
 $(OBJ)/cpu/m68000/m68kopdm.o $(OBJ)/cpu/m68000/m68kopnz.o
 CPUOBJS += $(M68000_GENERATED_OBJS) $(OBJ)/cpu/m68000/m68kcpu.o $(OBJ)/cpu/m68000/m68kmame.o
 endif
-DBGOBJS += $(OBJ)/cpu/m68000/d68k.o
+DBGOBJS += $(OBJ)/cpu/m68000/m68kdasm.o
 endif
 
 CPU=$(strip $(findstring M68EC020@,$(CPUS)))
@@ -372,7 +372,7 @@ $(OBJ)/cpu/m68000/m68kops.o $(OBJ)/cpu/m68000/m68kopac.o \
 $(OBJ)/cpu/m68000/m68kopdm.o $(OBJ)/cpu/m68000/m68kopnz.o
 CPUOBJS += $(M68000_GENERATED_OBJS) $(OBJ)/cpu/m68000/m68kcpu.o $(OBJ)/cpu/m68000/m68kmame.o
 endif
-DBGOBJS += $(OBJ)/cpu/m68000/d68k.o
+DBGOBJS += $(OBJ)/cpu/m68000/m68kdasm.o
 endif
 
 CPU=$(strip $(findstring M68020@,$(CPUS)))
@@ -388,7 +388,7 @@ $(OBJ)/cpu/m68000/m68kops.o $(OBJ)/cpu/m68000/m68kopac.o \
 $(OBJ)/cpu/m68000/m68kopdm.o $(OBJ)/cpu/m68000/m68kopnz.o
 CPUOBJS += $(M68000_GENERATED_OBJS) $(OBJ)/cpu/m68000/m68kcpu.o $(OBJ)/cpu/m68000/m68kmame.o
 endif
-DBGOBJS += $(OBJ)/cpu/m68000/d68k.o
+DBGOBJS += $(OBJ)/cpu/m68000/m68kdasm.o
 endif
 
 CPU=$(strip $(findstring T11@,$(CPUS)))
@@ -511,6 +511,14 @@ DBGOBJS += $(OBJ)/cpu/adsp2100/2100dasm.o
 $(OBJ)/cpu/adsp2100/adsp2100.o: adsp2100.c adsp2100.h 2100ops.c
 endif
 
+CPU=$(strip $(findstring ADSP2105@,$(CPUS)))
+ifneq ($(CPU),)
+CPUDEFS += -DHAS_ADSP2105=1
+CPUOBJS += $(OBJ)/cpu/adsp2100/adsp2100.o
+DBGOBJS += $(OBJ)/cpu/adsp2100/2100dasm.o
+$(OBJ)/cpu/adsp2100/adsp2100.o: adsp2100.c adsp2100.h 2100ops.c
+endif
+
 CPU=$(strip $(findstring PDP1@,$(CPUS)))
 ifneq ($(CPU),)
 CPUDEFS += -DHAS_PDP1=1
@@ -534,6 +542,14 @@ CPUOBJS += $(OBJ)/cpu/sc61860/sc61860.o
 DBGOBJS += $(OBJ)/cpu/sc61860/disasm.o
 $(OBJ)/cpu/sc61860/sc61860.o: src/cpu/sc61860/sc61860.h \
 	src/cpu/sc61860/sc.h src/cpu/sc61860/ops.c src/cpu/sc61860/table.c
+endif
+
+CPU=$(strip $(findstring ARM@,$(CPUS)))
+ifneq ($(CPU),)
+CPUDEFS += -DHAS_ARM=1
+CPUOBJS += $(OBJ)/cpu/arm/arm.o
+DBGOBJS += $(OBJ)/cpu/arm/dasm.o
+$(OBJ)/cpu/arm/arm.o: src/cpu/arm/arm.h
 endif
 
 
@@ -624,6 +640,12 @@ SOUND=$(strip $(findstring YM3526@,$(SOUNDS)))
 ifneq ($(SOUND),)
 SOUNDDEFS += -DHAS_YM3526=1
 SOUNDOBJS += $(OBJ)/sound/3812intf.o $(OBJ)/sound/fmopl.o
+endif
+
+SOUND=$(strip $(findstring YMZ280B@,$(SOUNDS)))
+ifneq ($(SOUND),)
+SOUNDDEFS += -DHAS_YMZ280B=1
+SOUNDOBJS += $(OBJ)/sound/ymz280b.o
 endif
 
 SOUND=$(strip $(findstring Y8950@,$(SOUNDS)))

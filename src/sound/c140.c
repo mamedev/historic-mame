@@ -14,6 +14,10 @@ Unmapped registers:
 	0x1fa:irq ack? timer restart?
 	0x1fe:timer switch?(0:off 1:on)
 */
+/*
+	2000.06.26	CAB		fixed compressed pcm playback
+*/
+
 
 #include <math.h>
 #include "driver.h"
@@ -41,12 +45,14 @@ static int sample_rate;
 static int stream;
 
 /* internal buffers */
-static short *mixer_buffer_left;
-static short *mixer_buffer_right;
+static INT16 *mixer_buffer_left;
+static INT16 *mixer_buffer_right;
 
-static long baserate;
+static int baserate;
 static void *pRom;
 static UINT8 REG[0x200];
+
+static INT16 pcmtbl[8];		//2000.06.26 CAB
 
 typedef struct
 {
@@ -94,8 +100,7 @@ READ_HANDLER( C140_r )
 static long find_sample( long adrs, long bank)
 {
 	adrs=(bank<<16)+adrs;
-	/*return adrs&0xfffff;*/
-	return ((adrs&0x200000)>>2)|(adrs&0x7ffff);		/* 991104.CAB */
+	return ((adrs&0x200000)>>2)|(adrs&0x7ffff);		//SYSTEM2 mapping
 }
 
 WRITE_HANDLER( C140_w )
@@ -133,8 +138,7 @@ WRITE_HANDLER( C140_w )
 	}
 }
 
-/* 991112.CAB */
-INLINE int limit(int in)
+INLINE int limit(INT32 in)
 {
 	if(in>0x7fff)		return 0x7fff;
 	else if(in<-0x8000)	return -0x8000;
@@ -143,19 +147,20 @@ INLINE int limit(int in)
 
 static void update_stereo(int ch, INT16 **buffer, int length)
 {
-	long	i,j;
-	long	rvol,lvol;
-	long	dt;
-	long	sdt;
-	long	st,ed,sz;
+	int		i,j;
 
-	signed char	*pSampleData;
-	long	frequency,delta,offset,pos;
-	long	cnt;
-	long	lastdt,prevdt,dltdt;
+	INT32	rvol,lvol;
+	INT32	dt;
+	INT32	sdt;
+	INT32	st,ed,sz;
+
+	INT8	*pSampleData;
+	INT32	frequency,delta,offset,pos;
+	INT32	cnt;
+	INT32	lastdt,prevdt,dltdt;
 	float	pbase=(float)baserate*2.0 / (float)sample_rate;
 
-	short *lmix, *rmix;
+	INT16	*lmix, *rmix;
 
 	if(length>sample_rate) length=sample_rate;
 
@@ -205,14 +210,10 @@ static void update_stereo(int ch, INT16 **buffer, int length)
 			/* Switch on data type */
 			if(v->mode&8)
 			{
-				//Mu-law?? pcm(but still wrong...)
-				lvol *= 2.4;
-				rvol *= 2.4;
-
+				//compressed PCM (maybe correct...)
 				/* Loop for enough to fill sample buffer as requested */
 				for(j=0;j<length;j++)
 				{
-
 					offset += delta;
 					cnt = (offset>>16)&0x7fff;
 					offset &= 0xffff;
@@ -237,24 +238,22 @@ static void update_stereo(int ch, INT16 **buffer, int length)
 						/* Read the chosen sample byte */
 						dt=pSampleData[pos];
 
-						/* ???????? */
+						/* decompress to 13bit range */		//2000.06.26 CAB
 						sdt=dt>>3;				//signed
-						sdt = (sdt<<(dt&7));
+						if(sdt<0)	sdt = (sdt<<(dt&7)) - pcmtbl[dt&7];
+						else		sdt = (sdt<<(dt&7)) + pcmtbl[dt&7];
 
 						prevdt=lastdt;
-						lastdt=sdt;				//12bits
+						lastdt=sdt;
 						dltdt=(lastdt - prevdt);
 					}
 
 					/* Caclulate the sample value */
-					if( 1 )//bInterpolate)
-						dt=((dltdt*offset)>>16)+prevdt;
-					else
-						dt=lastdt;
+					dt=((dltdt*offset)>>16)+prevdt;
 
 					/* Write the data to the sample buffers */
-					*lmix++ +=(dt*lvol)>>(5+4+1);	//include 2.0xgain
-					*rmix++ +=(dt*rvol)>>(5+4+1);
+					*lmix++ +=(dt*lvol)>>(5+5);
+					*rmix++ +=(dt*rvol)>>(5+5);
 				}
 			}
 			else
@@ -290,10 +289,7 @@ static void update_stereo(int ch, INT16 **buffer, int length)
 					}
 
 					/* Caclulate the sample value */
-					if(1 )//bInterpolate)
-						dt=((dltdt*offset)>>16)+prevdt;
-					else
-						dt=lastdt;
+					dt=((dltdt*offset)>>16)+prevdt;
 
 					/* Write the data to the sample buffers */
 					*lmix++ +=(dt*lvol)>>5;
@@ -308,7 +304,6 @@ static void update_stereo(int ch, INT16 **buffer, int length)
 			v->prevdt=prevdt;
 			v->dltdt=dltdt;
 		}
-		//mute>>=1;
 	}
 
 	/* render to MAME's stream buffer */
@@ -319,11 +314,7 @@ static void update_stereo(int ch, INT16 **buffer, int length)
 		INT16 *dest2 = buffer[1];
 		for (i = 0; i < length; i++)
 		{
-			/*
-			*dest1++ = 8*(*lmix++);
-			*dest2++ = 8*(*rmix++);
-			*/
-			*dest1++ = limit(8*(*lmix++));			/* 991112.CAB */
+			*dest1++ = limit(8*(*lmix++));
 			*dest2++ = limit(8*(*rmix++));
 		}
 	}
@@ -344,6 +335,17 @@ int C140_sh_start( const struct MachineSound *msound )
 
 	pRom=memory_region(intf->region);
 
+	/* make decompress pcm table */		//2000.06.26 CAB
+	{
+		int i;
+		INT32 segbase=0;
+		for(i=0;i<8;i++)
+		{
+			pcmtbl[i]=segbase;	//segment base value
+			segbase += 16<<i;
+		}
+	}
+
 	memset(REG,0,0x200 );
 	{
 		int i;
@@ -351,7 +353,7 @@ int C140_sh_start( const struct MachineSound *msound )
 	}
 
 	/* allocate a pair of buffers to mix into - 1 second's worth should be more than enough */
-	mixer_buffer_left = malloc(2 * sizeof(short)*sample_rate );
+	mixer_buffer_left = malloc(2 * sizeof(INT16)*sample_rate );
 	if( mixer_buffer_left )
 	{
 		mixer_buffer_right = mixer_buffer_left + sample_rate;

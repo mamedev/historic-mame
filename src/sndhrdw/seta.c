@@ -7,7 +7,7 @@
 
 Sound Chip:
 
-	X1-010 					[Seta Custom?]
+	X1-010 					[Seta Custom]
 	Unsigned 16 Bit PCM 	[Fixed Per Game Pitch?]
 	16 Voices				[There's More Data Written!]
 
@@ -17,11 +17,11 @@ Format:
 
 	Reg:	Bits:		Meaning:
 
-	0		7654 3210
+	0		7654 321-
 			---- ---0	Key On / Off
 
-	1		7654 ----	Volume L/R
-			---- 3210	Volume R/L
+	1		7654 ----	Volume 1(L?)
+			---- 3210	Volume 2(R?)
 
 	2					? (high byte?)
 	3					? (low  byte?)
@@ -117,7 +117,8 @@ READ_HANDLER( seta_sound_r )
 
 
 #define DUMP_REGS \
-	logerror("X1-010 REGS: %02X %02X %02X %02X - %02X %02X %02X %02X\n", \
+	logerror("X1-010 REGS: ch %X] %02X %02X %02X %02X - %02X %02X %02X %02X\n", \
+							channel, \
 							seta_reg[channel][0],seta_reg[channel][1], \
 							seta_reg[channel][2],seta_reg[channel][3], \
 							seta_reg[channel][4],seta_reg[channel][5], \
@@ -137,10 +138,15 @@ WRITE_HANDLER( seta_sound_w )
 
 	if (channel >= SETA_NUM_CHANNELS)	return;
 
+	seta_reg[channel][reg] = data & 0xff;
+
 	switch (reg)
 	{
 
 		case 0:
+
+			DUMP_REGS
+
 			if (data & 1)	// key on
 			{
 				int volume	=	seta_reg[channel][1];
@@ -193,9 +199,6 @@ DUMP_REGS
 				mixer_stop_sample(channel + firstchannel);
 
 			break;
-
-		default:
-			seta_reg[channel][reg] = data & 0xff;
 
 	}
 }

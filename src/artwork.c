@@ -1470,8 +1470,8 @@ static void artwork_load_size_common(const char *filename, unsigned int start_pe
 	}
 
 	/* Scale the original picture to be the same size as the visible area */
-	scalex = ((*a)->orig_artwork->width<<16)/picture->width;
-	scaley = ((*a)->orig_artwork->height<<16)/picture->height;
+	scalex = 0x10000 * picture->width  / (*a)->orig_artwork->width;
+	scaley = 0x10000 * picture->height / (*a)->orig_artwork->height;
 	if (Machine->orientation & ORIENTATION_SWAP_XY)
 	{
 		int tmp;
@@ -1480,13 +1480,13 @@ static void artwork_load_size_common(const char *filename, unsigned int start_pe
 		scaley = tmp;
 	}
 
-	copybitmapzoom((*a)->orig_artwork, picture, 0, 0, 0, 0, 0, TRANSPARENCY_NONE, 0, scalex, scaley);
+	copyrozbitmap((*a)->orig_artwork, picture, 0, 0, scalex, 0, 0, scaley, 0, 0, TRANSPARENCY_NONE, 0, 0);
 	/* We don't need the original any more */
 	bitmap_free(picture);
 
 	if (alpha)
 	{
-		copybitmapzoom((*a)->alpha, alpha, 0, 0, 0, 0, 0, TRANSPARENCY_NONE, 0, scalex, scaley);
+		copyrozbitmap((*a)->alpha, alpha, 0, 0, scalex, 0, 0, scaley, 0, 0, TRANSPARENCY_NONE, 0, 0);
 		bitmap_free(alpha);
 	}
 

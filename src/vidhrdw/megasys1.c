@@ -314,23 +314,6 @@ WRITE_HANDLER( paletteram_RRRRGGGGBBBBRGBx_word_w )
 
 
 /* MS1-D */
-WRITE_HANDLER( paletteram_RRRRRGGGGGBBBBBx_word_w )
-{
-	/*	byte 0    byte 1	*/
-	/*	RRRR RGGG GGBB BBB?	*/
-	/*	4321 0432 1043 210?	*/
-
-	int oldword = READ_WORD (&paletteram[offset]);
-	int newword = COMBINE_WORD (oldword, data);
-
-	int r = ((newword >> 8) & 0xF8 );
-	int g = ((newword >> 3) & 0xF8 );
-	int b = ((newword << 2) & 0xF8 );
-
-	palette_change_color( offset/2, r,g,b );
-
-	WRITE_WORD (&paletteram[offset], newword);
-}
 
 
 /***************************************************************************
@@ -841,7 +824,6 @@ extern struct GameDriver driver_astyanax;
 extern struct GameDriver driver_bigstrik;
 extern struct GameDriver driver_chimerab;
 extern struct GameDriver driver_cybattlr;
-extern struct GameDriver driver_edf;
 extern struct GameDriver driver_hachoo;
 extern struct GameDriver driver_iganinju;
 extern struct GameDriver driver_kickoff;
@@ -888,10 +870,6 @@ static struct priority priorities[] =
 	{	&driver_cybattlr,
 		{ 0x04132,0xfffff,0xfffff,0xfffff,0x14032,0xfffff,0xfffff,0xfffff,
 		  0xfffff,0xfffff,0xfffff,0xfffff,0xfffff,0xfffff,0xfffff,0x04132 }
-	},
-	{	&driver_edf,
-		{ 0x04132,0x02413,0x03142,0xfffff,0xfffff,0xfffff,0xfffff,0xfffff,
-		  0xfffff,0xfffff,0xfffff,0xfffff,0xfffff,0xfffff,0xfffff,0xfffff }
 	},
 	{	&driver_hachoo,
 		{ 0x24130,0x01423,0xfffff,0x02413,0x04132,0xfffff,0x24130,0x13240,

@@ -1,11 +1,13 @@
 /******************************************************************************
 
- Super Locomotive
+Super Locomotive
 
 driver by Zsolt Vasvari
 
- TODO:
- Bit 4 in suprloco_control_w is pulsed when loco turns "super"
+TODO:
+- Bit 5 in suprloco_control_w is pulsed when loco turns "super". This is supposed
+  to make red parts of sprites blink to purple, it's not clear how this is
+  implemented in hardware, there's a hack to support it.
 
 ******************************************************************************/
 
@@ -88,11 +90,6 @@ static struct MemoryWriteAddress sound_writemem[] =
 	{ -1 } /* end of table */
 };
 
-static struct IOWritePort writeport[] =
-{
-	{ Z80_HALT_PORT, Z80_HALT_PORT+1, MWA_NOP },	/* HALT ports */
-	{ -1 }	/* end of table */
-};
 
 
 INPUT_PORTS_START( suprloco )
@@ -190,8 +187,8 @@ static struct GfxLayout charlayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	/* sprites use colors 0-255 */
-	{ REGION_GFX1, 0x6000, &charlayout, 256, 16 },
+	/* sprites use colors 256-511 + 512-767 */
+	{ REGION_GFX1, 0x6000, &charlayout, 0, 16 },
 	{ -1 } /* end of array */
 };
 
@@ -212,7 +209,7 @@ static struct MachineDriver machine_driver_suprloco =
 		{
 			CPU_Z80,
 			4000000,	/* 4 MHz (?) */
-			readmem,writemem,0,writeport,
+			readmem,writemem,0,0,
 			interrupt,1
 		},
 		{
@@ -230,8 +227,7 @@ static struct MachineDriver machine_driver_suprloco =
 	32*8, 32*8,				/* screen_width, screen_height */
 	{ 1*8, 31*8-1, 0*8, 28*8-1 },			/* struct rectangle visible_area */
 	gfxdecodeinfo,				/* GfxDecodeInfo */
-	512,				/* total colors */
-	512,				/* color table length */
+	768, 768,
 	suprloco_vh_convert_color_prom,		/* convert color prom routine */
 
 	VIDEO_TYPE_RASTER,
@@ -278,10 +274,10 @@ ROM_START( suprloco )
 							/*0x6000 empty */
 
 	ROM_REGION( 0x0620, REGION_PROMS )
-	ROM_LOAD( "ic100.bin",    0x0000, 0x0080, 0x7b0c8ce5 )  /* color PROM */
-	ROM_CONTINUE(             0x0100, 0x0080 )
-	ROM_CONTINUE(             0x0080, 0x0080 )
+	ROM_LOAD( "ic100.bin",    0x0100, 0x0080, 0x7b0c8ce5 )  /* color PROM */
+	ROM_CONTINUE(             0x0000, 0x0080 )
 	ROM_CONTINUE(             0x0180, 0x0080 )
+	ROM_CONTINUE(             0x0080, 0x0080 )
 	ROM_LOAD( "ic89.bin",     0x0200, 0x0400, 0x1d4b02cb )  /* 3bpp to 4bpp table */
 	ROM_LOAD( "ic7.bin",      0x0600, 0x0020, 0x89ba674f )	/* unknown */
 ROM_END

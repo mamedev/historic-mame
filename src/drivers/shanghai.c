@@ -774,4 +774,4 @@ ROM_END
 
 
 
-GAMEX( 1988, shanghai, 0, shanghai, shanghai, 0, ROT0, "Sun Electronics (licensed from Activision)", "Shanghai", GAME_NOT_WORKING )
+GAMEX( 1988, shanghai, 0, shanghai, shanghai, 0, ROT0, "Sunsoft", "Shanghai", GAME_NOT_WORKING )

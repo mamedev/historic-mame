@@ -383,6 +383,7 @@ int frontend_help (int argc, char **argv)
 		#ifdef MESS
 				if (!stricmp(argv[i],"-listdevices"))  list = LIST_MESSINFO;
 				if (!stricmp(argv[i],"-listtext")) list = LIST_MESSINFO;
+				if (!stricmp(argv[i],"-createdir")) list = LIST_MESSINFO;
 		#endif
 
 
@@ -438,7 +439,8 @@ int frontend_help (int argc, char **argv)
 				/* list all mess info options here */
 				if (
 					!stricmp(argv[i],"-listdevices") |
-					!stricmp(argv[i],"-listtext")
+					!stricmp(argv[i],"-listtext")    |
+					!stricmp(argv[i],"-createdir")
 				   )
 			 	{
 					/* send the gamename and arg to mess.c */

@@ -28,11 +28,14 @@
   P2) MAME's MAX_PENS colors palette (the "pens")
   P3) The OS specific hardware color registers (the "OS specific pens")
 
-  The array Machine->pens is a lookup table which maps game colors to OS
+  The array Machine->pens[] is a lookup table which maps game colors to OS
   specific pens (P1 to P3). When you are working on bitmaps at the pixel level,
   *always* use Machine->pens to map the color numbers. *Never* use constants.
   For example if you want to make pixel (x,y) of color 3, do:
   bitmap->line[y][x] = Machine->pens[3];
+  Also remember that when using a dynamic palette (see below) Machine->pens[]
+  is not constant, but changes as the games modifies its colors. Temporary
+  bitmaps must be completely redrawn when palette_recalc() asks to do so.
 
 
   Lookup table
@@ -67,28 +70,29 @@
      dynamically modified by the driver using the function
      palette_change_color(). MachineDriver->video_attributes must contain the
      flag VIDEO_MODIFIES_PALETTE.
+     The function palette_recalc() must be called every frame *before* doing
+     any rendering.
+     The return code of palette_recalc() tells the driver whether the lookup
+     table has changed, and therefore whether a screen refresh is needed.
   3) Dynamic shrinked palette. Use this for games which use RAM for color
-     generation and have more than MAX_PENS colors in the palette. The palette
-	 can be dynamically modified by the driver using the function
-     palette_change_color(). MachineDriver->video_attributes must contain the
-     flag VIDEO_MODIFIES_PALETTE.
+     generation and have more than MAX_PENS colors in the palette.
      The difference with case 2) above is that the driver must do some
      additional work to allow for palette reduction without loss of quality.
-     The function palette_recalc() must be called every frame before doing any
-     rendering. The palette_used_colors array can be changed to precisely
-     indicate to the function which of the game colors are used, so it can pick
-     only the needed colors, and make the palette fit into MAX_PENS colors.
-	 Colors can also be marked as "transparent".
-     The return code of palette_recalc() tells the driver whether the lookup
-     table has changed, and therefore whether a screen refresh is needed. Note
-     that this only applies to colors which were used in the previous frame:
-     that's why palette_recalc() must be called before ANY rendering takes
-     place.
+     The palette_used_colors[] array can be changed to precisely indicate to
+     the function which of the game colors are used. That way the palette
+     system, so it can pick only the needed colors, and make the palette fit
+     into MAX_PENS colors. Colors can also be marked as "transparent".
+     palette_recalc() asks for a complete refresh only if the lookup table has
+     changed for a color that was used both in the previous and in the current
+     frame, therefore you must be careful to mark as used all colors stored in
+     temporary bitmaps, even if you won't display them in the current frame: if
+     you don't do that, the contents of the bitmap might become invalid without
+     notice.
   4) 16-bit color. This should only be used for games which use more than
      MAX_PENS colors at a time. It is slower than the other modes, so it should
-	 be avoided whenever possible. Transparency support is limited.
+     be avoided whenever possible. Transparency support is limited.
      MachineDriver->video_attributes must contain VIDEO_MODIFIES_PALETTE, and
-	 GameDriver->flags must contain GAME_REQUIRES_16BIT.
+     GameDriver->flags must contain GAME_REQUIRES_16BIT.
 
   The dynamic shrinking of the palette works this way: as colors are requested,
   they are associated to a pen. When a color is no longer needed, the pen is
@@ -169,7 +173,6 @@ extern int palette_transparent_color;
 
 
 extern unsigned short *palette_shadow_table;
-extern unsigned short *palette_highlight_table;
 
 
 
@@ -221,6 +224,8 @@ WRITE_HANDLER( paletteram_xBBBBBGGGGGRRRRR_word_w );
 WRITE_HANDLER( paletteram_xRRRRRGGGGGBBBBB_w );
 WRITE_HANDLER( paletteram_xRRRRRGGGGGBBBBB_word_w );
 WRITE_HANDLER( paletteram_xGGGGGRRRRRBBBBB_word_w );
+WRITE_HANDLER( paletteram_RRRRRGGGGGBBBBBx_w );
+WRITE_HANDLER( paletteram_RRRRRGGGGGBBBBBx_word_w );
 WRITE_HANDLER( paletteram_IIIIRRRRGGGGBBBB_word_w );
 WRITE_HANDLER( paletteram_RRRRGGGGBBBBIIII_word_w );
 

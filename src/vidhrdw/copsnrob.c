@@ -23,6 +23,7 @@ unsigned char *copsnrob_bulletsram;
 unsigned char *copsnrob_carimage;
 unsigned char *copsnrob_cary;
 unsigned char *copsnrob_trucky;
+unsigned char *copsnrob_truckram;
 
 
 int copsnrob_vh_start(void)
@@ -42,7 +43,7 @@ int copsnrob_vh_start(void)
 ***************************************************************************/
 void copsnrob_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
-    int offs, x;
+	int offs, x, y;
 
 
 	palette_recalc();
@@ -104,18 +105,48 @@ void copsnrob_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 
     /* Draw the beer truck. Positioning was based on a screen shot.
-       Even though the manual says there can be up to 3 beer trucks
-       on the screen, after examining the code, I don't think that's the
-       case. I also verified this just by playing the game, if there were
-       invisible trucks, the bullets would disappear. */
+        We scan the truck's window RAM for a location whose bit is set and
+        which corresponds either to the truck's front end or the truck's back
+        end (based on the value of the truck image line sync register). We
+        then draw a truck image in the proper place and continue scanning.
+        This is not a perfect emulation of the game hardware, but it should
+        suffice for the way the game software uses the hardware.  It does take
+        care of the problem of displaying multiple beer trucks and of scrolling
+        truck images smoothly off the top of the screen. */
 
-    if (copsnrob_trucky[0])
-    {
-        drawgfx(bitmap,Machine->gfx[2],
-                0,0,
-                0,0,
-                0x80,256-copsnrob_trucky[0],
-                &Machine->visible_area,TRANSPARENCY_PEN,0);
+     for (y = 0; y < 256; y++)
+     {
+		/* y is going up the screen, but the truck window RAM locations
+		go down the screen. */
+
+		if (copsnrob_truckram[255-y])
+		{
+			/* The hardware only uses the low 5 bits of the truck image line
+			sync register. */
+			if ((copsnrob_trucky[0] & 0x1f) == ((y+31) & 0x1f))
+			{
+				/* We've hit a truck's back end, so draw the truck.  The front
+				   end may be off the top of the screen, but we don't care. */
+				drawgfx(bitmap,Machine->gfx[2],
+						0,0,
+						0,0,
+						0x80,256-(y+31),
+						&Machine->visible_area,TRANSPARENCY_PEN,0);
+				/* Skip past this truck's front end so we don't draw this
+				truck twice. */
+				y += 31;
+			}
+			else if ((copsnrob_trucky[0] & 0x1f) == (y & 0x1f))
+			{
+				/* We missed a truck's back end (it was off the bottom of the
+				   screen) but have hit its front end, so draw the truck. */
+				drawgfx(bitmap,Machine->gfx[2],
+						0,0,
+						0,0,
+						0x80,256-y,
+						&Machine->visible_area,TRANSPARENCY_PEN,0);
+			}
+		}
     }
 
 
@@ -125,7 +156,7 @@ void copsnrob_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
     for (x = 0; x < 256; x++)
     {
-	    int y, bullet, mask1, mask2, val;
+	    int bullet, mask1, mask2, val;
 
 
         val = copsnrob_bulletsram[x];

@@ -184,6 +184,9 @@ enum {
 #ifndef HAS_M68010
 #define HAS_M68010		0
 #endif
+#ifndef HAS_M68EC020
+#define HAS_M68EC020	0
+#endif
 #ifndef HAS_M68020
 #define HAS_M68020		0
 #endif
@@ -235,11 +238,17 @@ enum {
 #ifndef HAS_ADSP2100
 #define HAS_ADSP2100	0
 #endif
+#ifndef HAS_ADSP2105
+#define HAS_ADSP2105	0
+#endif
 #ifndef HAS_MIPS
 #define HAS_MIPS		0
 #endif
 #ifndef HAS_SC61860
 #define HAS_SC61860		0
+#endif
+#ifndef HAS_ARM
+#define HAS_ARM 		0
 #endif
 
 /* ASG 971222 -- added this generic structure */
@@ -252,7 +261,9 @@ struct cpu_interface
 	void (*burn)(int cycles);
 	unsigned (*get_context)(void *reg);
 	void (*set_context)(void *reg);
-	unsigned (*get_pc)(void);
+	void *(*get_cycle_table)(int which);
+	void (*set_cycle_table)(int which, void *new_table);
+    unsigned (*get_pc)(void);
 	void (*set_pc)(unsigned val);
 	unsigned (*get_sp)(void);
 	void (*set_sp)(unsigned val);
@@ -314,6 +325,11 @@ void cpu_set_sp(unsigned val);
 unsigned cpu_get_context(void *context);
 /* Set the active CPUs context */
 void cpu_set_context(void *context);
+
+/* Get a pointer to the active CPUs cycle count lookup table */
+void *cpu_get_cycle_table(int which);
+/* Override a pointer to the active CPUs cycle count lookup table */
+void cpu_set_cycle_tbl(int which, void *new_table);
 
 /* Returns a specific register value (mamedbg) */
 unsigned cpu_get_reg(int regnum);
@@ -402,6 +418,9 @@ void cpu_set_irq_line(int cpunum, int irqline, int state);
 void cpu_generate_internal_interrupt(int cpunum, int type);
 /* set the vector to be returned during a CPU's interrupt acknowledge cycle */
 void cpu_irq_line_vector_w(int cpunum, int irqline, int vector);
+
+/* use this function to install a driver callback for IRQ acknowledge */
+void cpu_set_irq_callback(int cpunum, int (*callback)(int));
 
 /* use these in your write memory/port handles to set an IRQ vector */
 /* offset corresponds to the irq line number here */

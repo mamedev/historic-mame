@@ -22,7 +22,10 @@ Note:	if MAME_DEBUG is defined, pressing:
 		[ 1024 Zooming Sprites ]
 
 		There are 2 spriterams. A hardware register's bit selects
-		the one to display (sprites double buffering)
+		the one to display (sprites double buffering).
+
+		The sprites are NOT tile based: the "tile" size and start
+		address is selectable for each sprite with a 16 pixel granularity.
 
 
 **************************************************************************/
@@ -36,35 +39,14 @@ unsigned char *cave_vram_0, *cave_vctrl_0;
 unsigned char *cave_vram_1, *cave_vctrl_1;
 unsigned char *cave_vram_2, *cave_vctrl_2;
 
-unsigned char *cave_soundram;
-
-
 /* Variables only used here: */
 
 static struct sprite_list *sprite_list;
 static struct tilemap *tilemap_0, *tilemap_1, *tilemap_2;
 
+/* Variables defined in driver: */
 
-
-
-WRITE_HANDLER( cave_soundram_w )
-{
-	int oldword, newword;
-
-	oldword = READ_WORD(&cave_soundram[offset]);
-	COMBINE_WORD_MEM(&cave_soundram[offset], data);
-	newword = READ_WORD(&cave_soundram[offset]);
-#if 0
-	if (newword != oldword)
-	{
-		char buf[80];
-		sprintf(buf,"%04X %04X",READ_WORD(&cave_soundram[0]),READ_WORD(&cave_soundram[2]));
-		usrintf_showmessage(buf);
-	}
-#endif
-}
-
-
+extern int cave_spritetype;
 
 
 /***************************************************************************
@@ -103,6 +85,13 @@ WRITE_HANDLER( cave_vram_##_n_##_w ) \
 	COMBINE_WORD_MEM(&cave_vram_##_n_[offset],data); \
 	if ( (offset/4) < DIM_NX * DIM_NY ) \
 		tilemap_mark_tile_dirty(tilemap_##_n_, offset/4 ); \
+} \
+\
+WRITE_HANDLER( cave_vram_##_n_##_8x8_w ) \
+{ \
+	offset %= (DIM_NX * DIM_NY * 4 * 4); /* mirrored RAM */ \
+	COMBINE_WORD_MEM(&cave_vram_##_n_[offset],data); \
+	tilemap_mark_tile_dirty(tilemap_##_n_, offset/4 ); \
 }
 
 CAVE_TILEMAP(0)
@@ -113,6 +102,127 @@ CAVE_TILEMAP(2)
 
 
 
+
+/***************************************************************************
+
+								Vh_Start
+
+***************************************************************************/
+
+
+/* 3 Layers (layer 3 is made of 8x8 tiles!) */
+int ddonpach_vh_start(void)
+{
+	tilemap_0 = tilemap_create(	get_tile_info_0,
+								tilemap_scan_rows,
+								TILEMAP_TRANSPARENT,
+								16,16,
+								DIM_NX,DIM_NY );
+
+	tilemap_1 = tilemap_create(	get_tile_info_1,
+								tilemap_scan_rows,
+								TILEMAP_TRANSPARENT,
+								16,16,
+								DIM_NX,DIM_NY );
+
+	/* 8x8 tiles here! */
+	tilemap_2 = tilemap_create(	get_tile_info_2,
+								tilemap_scan_rows,
+								TILEMAP_TRANSPARENT,
+								8,8,
+								DIM_NX*2,DIM_NY*2 );
+
+
+	sprite_list = sprite_list_create(spriteram_size / 0x10 / 2, SPRITE_LIST_BACK_TO_FRONT | SPRITE_LIST_RAW_DATA );
+
+	if (tilemap_0 && tilemap_1 && tilemap_2 && sprite_list)
+	{
+		tilemap_set_scroll_rows(tilemap_0,1);
+		tilemap_set_scroll_cols(tilemap_0,1);
+		tilemap_0->transparent_pen = 0;
+
+		tilemap_set_scroll_rows(tilemap_1,1);
+		tilemap_set_scroll_cols(tilemap_1,1);
+		tilemap_1->transparent_pen = 0;
+
+		tilemap_set_scroll_rows(tilemap_2,1);
+		tilemap_set_scroll_cols(tilemap_2,1);
+		tilemap_2->transparent_pen = 0;
+
+		tilemap_set_scrolldx( tilemap_0, -0x6c, -0x57 );
+		tilemap_set_scrolldx( tilemap_1, -0x6d, -0x56 );
+//		tilemap_set_scrolldx( tilemap_2, -0x6e, -0x55 );
+		tilemap_set_scrolldx( tilemap_2, -0x6e -7, -0x55 +7-1 );
+
+		tilemap_set_scrolldy( tilemap_0, -0x11, -0x100 );
+		tilemap_set_scrolldy( tilemap_1, -0x11, -0x100 );
+		tilemap_set_scrolldy( tilemap_2, -0x11, -0x100 );
+
+		sprite_list->max_priority = 3;
+		sprite_list->sprite_type = SPRITE_TYPE_ZOOM;
+
+		return 0;
+	}
+	else return 1;
+}
+
+/* 3 Layers (like esprade but with different scroll delta's) */
+int guwange_vh_start(void)
+{
+	tilemap_0 = tilemap_create(	get_tile_info_0,
+								tilemap_scan_rows,
+								TILEMAP_TRANSPARENT,
+								16,16,
+								DIM_NX,DIM_NY );
+
+	tilemap_1 = tilemap_create(	get_tile_info_1,
+								tilemap_scan_rows,
+								TILEMAP_TRANSPARENT,
+								16,16,
+								DIM_NX,DIM_NY );
+
+	tilemap_2 = tilemap_create(	get_tile_info_2,
+								tilemap_scan_rows,
+								TILEMAP_TRANSPARENT,
+								16,16,
+								DIM_NX,DIM_NY );
+
+
+	sprite_list = sprite_list_create(spriteram_size / 0x10 / 2, SPRITE_LIST_BACK_TO_FRONT | SPRITE_LIST_RAW_DATA );
+
+	if (tilemap_0 && tilemap_1 && tilemap_2 && sprite_list)
+	{
+		tilemap_set_scroll_rows(tilemap_0,1);
+		tilemap_set_scroll_cols(tilemap_0,1);
+		tilemap_0->transparent_pen = 0;
+
+		tilemap_set_scroll_rows(tilemap_1,1);
+		tilemap_set_scroll_cols(tilemap_1,1);
+		tilemap_1->transparent_pen = 0;
+
+		tilemap_set_scroll_rows(tilemap_2,1);
+		tilemap_set_scroll_cols(tilemap_2,1);
+		tilemap_2->transparent_pen = 0;
+
+//		tilemap_set_scrolldx( tilemap_0, -0x6c, -0x57 );
+//		tilemap_set_scrolldx( tilemap_1, -0x6d, -0x56 );
+//		tilemap_set_scrolldx( tilemap_2, -0x6e, -0x55 );
+tilemap_set_scrolldx( tilemap_0, -0x6c +2, -0x57 -2 );
+tilemap_set_scrolldx( tilemap_1, -0x6d +2, -0x56 -2 );
+tilemap_set_scrolldx( tilemap_2, -0x6e +2, -0x55 -2 );
+
+		tilemap_set_scrolldy( tilemap_0, -0x11, -0x100 );
+		tilemap_set_scrolldy( tilemap_1, -0x11, -0x100 );
+		tilemap_set_scrolldy( tilemap_2, -0x11, -0x100 );
+//tilemap_set_scrolldy( tilemap_2, -0x11 +8, -0x100 -8 );
+
+		sprite_list->max_priority = 3;
+		sprite_list->sprite_type = SPRITE_TYPE_ZOOM;
+
+		return 0;
+	}
+	else return 1;
+}
 
 
 
@@ -226,8 +336,6 @@ int dfeveron_vh_start(void)
 
 
 
-
-
 /* 1 Layer */
 int uopoko_vh_start(void)
 {
@@ -263,8 +371,15 @@ int uopoko_vh_start(void)
 
 
 
+/***************************************************************************
 
-/* 4 bit sprites here, rather than 8 bit */
+							Vh_Init_Palette
+
+***************************************************************************/
+
+/* Function needed for games with 4 bit sprites, rather than 8 bit */
+
+
 void dfeveron_vh_init_palette(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
 {
 	int color, pen;
@@ -279,6 +394,31 @@ void dfeveron_vh_init_palette(unsigned char *palette, unsigned short *colortable
 			colortable[color * 256 + pen] = color * 16 + pen;
 }
 
+
+
+void ddonpach_vh_init_palette(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
+{
+	int color, pen;
+
+	/* Fill the 8000-83ff range ($40 color codes * $10 pens) for
+	   layers 1 & 2 which are 4 bits deep rather than 8 bits deep
+	   like layer 3, but use the first 16 color of every 256 for
+	   any given color code. */
+
+	for( color = 0; color < 0x40; color++ )
+		for( pen = 0; pen < 16; pen++ )
+			colortable[color * 16 + pen + 0x8000] = 0x4000 + color * 256 + pen;
+}
+
+
+
+
+
+/***************************************************************************
+
+							Sprites Drawing
+
+***************************************************************************/
 
 
 /* --------------------------[ Sprites Format ]----------------------------
@@ -297,9 +437,9 @@ Offset:		Format:					Value:
 			---- ---- --54 ----		Priority
 			---- ---- ---- 3---		Flip X
 			---- ---- ---- -2--		Flip Y
-			---- ---- ---- --10		Unused?
+			---- ---- ---- --10		Code High Bit(s?)
 
-06.w								Code
+06.w								Code Low Bits
 
 08/0A.w								Zoom X / Y
 
@@ -332,16 +472,32 @@ static void get_sprite_info(void)
 
 	for (; sprite < finish; sprite++,source+=0x10 )
 	{
-		int	x			=		READ_WORD(&source[ 0x00 ]);
-		int	y			=		READ_WORD(&source[ 0x02 ]);
-		int	attr		=		READ_WORD(&source[ 0x04 ]);
-		int	code		=		READ_WORD(&source[ 0x06 ]);
-		int	zoomx		=		READ_WORD(&source[ 0x08 ]);
-		int	zoomy		=		READ_WORD(&source[ 0x0a ]);
-		int	size		=		READ_WORD(&source[ 0x0c ]);
+		int x,y,attr,code,zoomx,zoomy,size,flipx,flipy;
+		if ( cave_spritetype == 0)	// most of the games
+		{
+			x			=		READ_WORD(&source[ 0x00 ]);
+			y			=		READ_WORD(&source[ 0x02 ]);
+			attr		=		READ_WORD(&source[ 0x04 ]);
+			code		=		READ_WORD(&source[ 0x06 ]);
+			zoomx		=		READ_WORD(&source[ 0x08 ]);
+			zoomy		=		READ_WORD(&source[ 0x0a ]);
+			size		=		READ_WORD(&source[ 0x0c ]);
+		}
+		else						// ddonpach
+		{
+			attr		=		READ_WORD(&source[ 0x00 ]);
+			code		=		READ_WORD(&source[ 0x02 ]);
+			x			=		READ_WORD(&source[ 0x04 ]) << 6;
+			y			=		READ_WORD(&source[ 0x06 ]) << 6;
+			size		=		READ_WORD(&source[ 0x08 ]);
+			zoomx		=		0x100;
+			zoomy		=		0x100;
+		}
 
-		int	flipx		=		attr & 0x0008;
-		int	flipy		=		attr & 0x0004;
+		code		+=		(attr & 3) << 16;
+
+		flipx		=		attr & 0x0008;
+		flipy		=		attr & 0x0004;
 
 		if (x & 0x8000)	x -= 0x10000;
 		if (y & 0x8000)	y -= 0x10000;
@@ -351,8 +507,8 @@ static void get_sprite_info(void)
 		sprite->priority		=	(attr & 0x0030) >> 4;
 		sprite->flags			=	SPRITE_VISIBLE;
 
-		sprite->tile_width		=	( (size >> 8) & 0x0f ) * 16;
-		sprite->tile_height		=	( (size >> 0) & 0x0f ) * 16;
+		sprite->tile_width		=	( (size >> 8) & 0x1f ) * 16;
+		sprite->tile_height		=	( (size >> 0) & 0x1f ) * 16;
 
 		sprite->total_width		=	(sprite->tile_width  * zoomx) / 0x100;
 		sprite->total_height	=	(sprite->tile_height * zoomy) / 0x100;
@@ -403,6 +559,12 @@ static void get_sprite_info(void)
 }
 
 
+
+/***************************************************************************
+
+								Screen Drawing
+
+***************************************************************************/
 
 void cave_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
@@ -479,7 +641,17 @@ if ( keyboard_pressed(KEYCODE_Z) || keyboard_pressed(KEYCODE_X) || keyboard_pres
 
 	tilemap_render(ALL_TILEMAPS);
 
-	osd_clearbitmap(Machine->scrbitmap);
+	/* Clear the background if at least one of layer 0's tile priorities
+	   is lacking */
+
+	if ((layers_ctrl & 0xf) != 0xf)	osd_clearbitmap(Machine->scrbitmap);
+
+	/* Pen 0 of layer 0's tiles (any priority) goes below anything else */
+
+	for ( pri = 0; pri < 4; pri++ )
+		if ((layers_ctrl&(1<<(pri+0)))&&tilemap_0)	tilemap_draw(bitmap, tilemap_0, TILEMAP_IGNORE_TRANSPARENCY | pri);
+
+	/* Draw the rest with transparency */
 
 	for ( pri = 0; pri < 4; pri++ )
 	{

@@ -6,8 +6,8 @@
 
 	-------------------------------------
 
-	To enter service mode in Ataxx, press 1P start and then press
-	the service switch (F2).
+	To enter service mode in Ataxx and Brute Force, press 1P start and
+	then press the service switch (F2).
 
 	For World Soccer Finals, press the 1P button B and then press the
 	service switch.
@@ -857,6 +857,56 @@ INPUT_PORTS_START( indyheat )
 INPUT_PORTS_END
 
 
+INPUT_PORTS_START( brutforc )
+	PORT_START		/* 0xF6 */
+    PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT_IMPULSE( 0x02, IP_ACTIVE_HIGH, IPT_COIN2, 1 )
+    PORT_BIT_IMPULSE( 0x04, IP_ACTIVE_HIGH, IPT_COIN1, 1 )
+    PORT_BIT_IMPULSE( 0x08, IP_ACTIVE_HIGH, IPT_COIN3, 1 )
+    PORT_BIT( 0x70, IP_ACTIVE_LOW, IPT_UNUSED )
+    PORT_SERVICE_NO_TOGGLE( 0x80, IP_ACTIVE_LOW )
+
+	PORT_START		/* 0xF7 */
+    PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_SLAVEHALT )
+    PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_VBLANK )
+    PORT_BIT( 0xfc, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START		/* 0x20 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_EEPROM_DATA )
+	PORT_BIT( 0xfe, IP_ACTIVE_LOW, IPT_UNUSED )
+
+    PORT_START		/* 0x0D */
+    PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER2 )
+    PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER2 )
+    PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER2 )
+    PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER2 )
+    PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
+    PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
+    PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START2 )
+    PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNUSED )
+
+    PORT_START		/* 0x0E */
+    PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER1 )
+    PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER1 )
+    PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER1 )
+    PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER1 )
+    PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1 )
+    PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER1 )
+    PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START1 )
+    PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNUSED )
+
+    PORT_START		/* 0x0F */
+    PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER3 )
+    PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER3 )
+    PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER3 )
+    PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER3 )
+    PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
+    PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
+    PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START3 )
+    PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNUSED )
+INPUT_PORTS_END
+
+
 
 /*************************************
  *
@@ -1207,6 +1257,55 @@ ROM_START( indyheat )
 	ROM_REGION( battery_ram_size + extra_tram_size, REGION_USER2 ) /* extra RAM regions */
 ROM_END
 
+ROM_START( brutforc )
+	ROM_REGION( 0x90000, REGION_CPU1 )
+	ROM_LOAD( "u64",   0x00000, 0x20000, 0x008ae3b8 )
+	ROM_RELOAD(                 0x10000, 0x20000 )
+	ROM_LOAD( "u65",   0x30000, 0x20000, 0x6036e3fa )
+	ROM_LOAD( "u66",   0x50000, 0x20000, 0x7ebf0795 )
+	ROM_LOAD( "u67",   0x70000, 0x20000, 0xe3cbf8b4 )
+
+	ROM_REGION( 0x100000, REGION_CPU2 )
+	ROM_LOAD( "u151",  0x00000, 0x20000, 0xbd3b677b )
+	ROM_LOAD( "u152",  0x20000, 0x20000, 0x5f4434e7 )
+	ROM_LOAD( "u153",  0x40000, 0x20000, 0x20f7df53 )
+	ROM_LOAD( "u154",  0x60000, 0x20000, 0x69ce2329 )
+	ROM_LOAD( "u155",  0x80000, 0x20000, 0x33d92e25 )
+	ROM_LOAD( "u156",  0xa0000, 0x20000, 0xde7eca8b )
+	ROM_LOAD( "u157",  0xc0000, 0x20000, 0xe42b3dba )
+	ROM_LOAD( "u158",  0xe0000, 0x20000, 0xa0aa3220 )
+
+	ROM_REGION( 0x100000, REGION_CPU3 )
+	ROM_LOAD_V20_EVEN( "u3",  0x20000, 0x20000, 0x9984906c )
+	ROM_LOAD_V20_ODD ( "u6",  0x20000, 0x20000, 0xc9c5a413 )
+	ROM_LOAD_V20_EVEN( "u4",  0x60000, 0x20000, 0xca8ab3a6 )
+	ROM_RELOAD_V20_EVEN(      0xc0000, 0x20000 )
+	ROM_LOAD_V20_ODD ( "u5",  0x60000, 0x20000, 0xcbdb914b )
+	ROM_RELOAD_V20_ODD (      0xc0000, 0x20000 )
+
+	ROM_REGION( 0x180000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "u145",  0x000000, 0x40000, 0xc3d20d24 )
+	ROM_LOAD( "u146",  0x040000, 0x40000, 0x43e9dd87 )
+	ROM_LOAD( "u147",  0x080000, 0x40000, 0xfb855ce8 )
+	ROM_LOAD( "u148",  0x0c0000, 0x40000, 0xe4b54eae )
+	ROM_LOAD( "u149",  0x100000, 0x40000, 0xcf48401c )
+	ROM_LOAD( "u150",  0x140000, 0x40000, 0xca9e1e33 )
+
+	ROM_REGION( 0x40000, REGION_USER1 ) /* X-ROM (data used by main processor) */
+	ROM_LOAD( "u68",   0x00000, 0x10000, 0x77c8de62 )
+	ROM_CONTINUE(      0x20000, 0x10000 )
+	ROM_LOAD( "u69",   0x10000, 0x10000, 0x113aa6d5 )
+	ROM_CONTINUE(      0x30000, 0x10000 )
+
+	ROM_REGION( 0x80000, REGION_SOUND1 ) /* externally clocked DAC data */
+	ROM_LOAD( "u8",  0x00000, 0x20000, 0x1e0ead72 )
+	ROM_LOAD( "u9",  0x20000, 0x20000, 0x3195b305 )
+	ROM_LOAD( "u10", 0x40000, 0x20000, 0x1dc5f375 )
+	ROM_LOAD( "u11", 0x60000, 0x20000, 0x5ed4877f )
+
+	ROM_REGION( battery_ram_size + extra_tram_size, REGION_USER2 ) /* extra RAM regions */
+ROM_END
+
 
 
 /*************************************
@@ -1327,6 +1426,33 @@ static void init_indyheat(void)
 	leland_i86_optimize_address(0x613);
 }
 
+static void init_brutforc(void)
+{
+	/* initialize the default EEPROM state */
+	static const UINT16 brutforc_eeprom_data[] =
+	{
+		0x27,0x0303,
+		0x28,0x0003,
+		0x30,0x01ff,
+		0x31,0x0100,
+		0x35,0x0404,
+		0x36,0x0104,
+		0xffff
+	};
+	init_eeprom(0x00, brutforc_eeprom_data, 0x00);
+
+	leland_rotate_memory(0);
+	leland_rotate_memory(1);
+
+	/* set up additional input ports */
+	install_port_read_handler(0, 0x0d, 0x0d, input_port_3_r);
+	install_port_read_handler(0, 0x0e, 0x0e, input_port_4_r);
+	install_port_read_handler(0, 0x0f, 0x0f, input_port_5_r);
+
+	/* optimize the sound */
+	leland_i86_optimize_address(0x613);
+}
+
 
 
 /*************************************
@@ -1340,3 +1466,4 @@ GAME( 1990, ataxxa,   ataxx,  ataxx,   ataxx,    ataxx,    ROT0,   "Leland Corp.
 GAME( 1990, ataxxj,   ataxx,  ataxx,   ataxx,    ataxxj,   ROT0,   "Leland Corp.", "Ataxx (Japan)" )
 GAME( 1990, wsf,      0,      wsf,     wsf,      wsf,      ROT0,   "Leland Corp.", "World Soccer Finals" )
 GAME( 1991, indyheat, 0,      wsf,     indyheat, indyheat, ROT0,   "Leland Corp.", "Danny Sullivan's Indy Heat" )
+GAME( 1991, brutforc, 0,      wsf,     brutforc, brutforc, ROT0,   "Leland Corp.", "Brute Force" )

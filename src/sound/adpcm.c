@@ -107,15 +107,15 @@ static void compute_tables(void)
 		}
 	}
 
-	/* generate the volume table (currently just a guess) */
+	/* generate the OKI6295 volume table */
 	for (step = 0; step < 16; step++)
 	{
 		double out = 256.0;
 		int vol = step;
 
-		/* assume 2dB per step (most likely wrong!) */
+		/* 3dB per step */
 		while (vol-- > 0)
-			out /= 1.258925412;	/* = 10 ^ (2/20) = 2dB */
+			out /= 1.412537545;	/* = 10 ^ (3/20) = 3dB */
 		volume_table[step] = (UINT32)out;
 	}
 }

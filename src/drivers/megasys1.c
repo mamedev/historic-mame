@@ -1942,7 +1942,7 @@ ROM_START( edf )
 	ROM_LOAD( "edf_m01.rom",  0x000000, 0x040000, 0x9149286b )
 
 	ROM_REGION( 0x0200, REGION_PROMS )		/* Priority PROM */
-	ROM_LOAD( "prom",         0x0000, 0x0200, 0x00000000 )
+	ROM_LOAD( "prom.14m",    0x0000, 0x0200, 0x1d877538 )
 ROM_END
 
 INPUT_PORTS_START( edf )

@@ -123,7 +123,7 @@ char ipdn_defaultstrings[][MAX_DEFSTR_LEN] =
 	"Flip Screen",
 	"Service Mode",
 	"Unused",
-	"Unknown"	/* must be the last one, mame.c relies on that */
+	"Unknown"
 };
 
 struct ipd inputport_defaults[] =
