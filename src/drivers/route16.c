@@ -95,6 +95,7 @@ WRITE_HANDLER ( speakres_out2_w );
 
 static MEMORY_READ_START( cpu1_readmem )
 	{ 0x0000, 0x2fff, MRA_ROM },
+  /*{ 0x3000, 0x3001, MRA_NOP },	 Route 16 protection device */
 	{ 0x4000, 0x43ff, route16_sharedram_r },
 	{ 0x4800, 0x4800, input_port_0_r },
 	{ 0x5000, 0x5000, input_port_1_r },
@@ -104,6 +105,7 @@ MEMORY_END
 
 static MEMORY_WRITE_START( cpu1_writemem )
 	{ 0x0000, 0x2fff, MWA_ROM },
+  /*{ 0x3001, 0x3001, MWA_NOP },	 Route 16 protection device */
 	{ 0x4000, 0x43ff, route16_sharedram_w, &route16_sharedram },
 	{ 0x4800, 0x4800, route16_out0_w },
 	{ 0x5000, 0x5000, route16_out1_w },
@@ -464,6 +466,27 @@ ROM_START( route16 )
 	ROM_LOAD( "pr10",         0x0100, 0x0100, CRC(08793ef7) SHA1(bfc27aaf25d642cd57c0fbe73ab575853bd5f3ca) ) /* bottom bitmap */
 ROM_END
 
+ROM_START( route16a )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )  // 64k for the first CPU
+	ROM_LOAD( "vg-54",        0x0000, 0x0800, CRC(0c966319) SHA1(2f57e9a30dab864bbee2ccb0107c1b4212c5abaf) )
+	ROM_LOAD( "vg-55",        0x0800, 0x0800, CRC(a6a8c212) SHA1(a4a695d401b1e495c863c6938296a99592df0e7d) )
+	ROM_LOAD( "vg-56",        0x1000, 0x0800, CRC(5c74406a) SHA1(f106c27da6cac597afbabdef3ec7fa7d203905b0) )
+	ROM_LOAD( "vg-57",        0x1800, 0x0800, CRC(313e68ab) SHA1(01fa83898123eb92a14bffc6fe774e00b083e86c) )
+	ROM_LOAD( "vg-58",        0x2000, 0x0800, CRC(40824e3c) SHA1(bc157e6babf00d2119b389fdb9d5822e1c764f51) )
+	ROM_LOAD( "vg-59",        0x2800, 0x0800, CRC(9313d2c2) SHA1(e08112f44ca454820752800d8b3b6408b73a4284) )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )  // 64k for the second CPU
+	ROM_LOAD( "route16.b0",   0x0000, 0x0800, CRC(0f9588a7) SHA1(dfaffec4dbabd98cdc21a416bd2966d9d3ae6ad1) )
+	ROM_LOAD( "vg-61",        0x0800, 0x0800, CRC(b216c88c) SHA1(d011ef9f3727f87ae3482e271a0c2496f76036b4) )
+	ROM_LOAD( "route16.b2",   0x1000, 0x0800, CRC(529cad13) SHA1(b533d20df1f2580e237c3d60bfe3483486ad9a48) )
+	ROM_LOAD( "route16.b3",   0x1800, 0x0800, CRC(3bd8b899) SHA1(bc0c7909dbf5ea85eba5a1bb815fdd98c3aa794e) )
+
+	ROM_REGION( 0x0200, REGION_PROMS, 0 )
+	/* The upper 128 bytes are 0's, used by the hardware to blank the display */
+	ROM_LOAD( "pr09",         0x0000, 0x0100, CRC(08793ef7) SHA1(bfc27aaf25d642cd57c0fbe73ab575853bd5f3ca) ) /* top bitmap */
+	ROM_LOAD( "pr10",         0x0100, 0x0100, CRC(08793ef7) SHA1(bfc27aaf25d642cd57c0fbe73ab575853bd5f3ca) ) /* bottom bitmap */
+ROM_END
+
 ROM_START( route16b )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )  // 64k for the first CPU
 	ROM_LOAD( "rt16.0",       0x0000, 0x0800, CRC(b1f0f636) SHA1(f21915ed40ebdf64970fb7e3cd8071ebfc4aa0b5) )
@@ -557,7 +580,8 @@ DRIVER_INIT( route16b )
 DRIVER_INIT( route16 )
 {
 	unsigned char *rom = memory_region(REGION_CPU1);
-
+	/* Is this actually a bootleg? some of the protection has
+	   been removed */
 
 	/* patch the protection */
 	rom[0x00e9] = 0x3a;
@@ -569,6 +593,30 @@ DRIVER_INIT( route16 )
 	init_route16b();
 }
 
+DRIVER_INIT( route16a )
+{
+	UINT8 *ROM = memory_region(REGION_CPU1);
+	/* TO DO : Replace these patches with simulation of the protection device */
+
+	/* patch the protection */
+	ROM[0x00e9] = 0x3a;
+
+	ROM[0x0105] = 0x00; /* jp nz,$4109 (nirvana) - NOP's in route16 */
+	ROM[0x0106] = 0x00;
+	ROM[0x0107] = 0x00;
+
+	ROM[0x0731] = 0x00; /* jp nz,$4238 (nirvana) */
+	ROM[0x0732] = 0x00;
+	ROM[0x0733] = 0x00;
+
+	ROM[0x0747] = 0xc3;
+	ROM[0x0748] = 0x56;
+	ROM[0x0749] = 0x07;
+
+	init_route16b();
+}
+
+
 DRIVER_INIT( stratvox )
 {
     route16_hardware = 0;
@@ -577,6 +625,7 @@ DRIVER_INIT( stratvox )
 
 
 GAME( 1981, route16,  0,        route16,  route16,  route16,  ROT270, "Tehkan/Sun (Centuri license)", "Route 16" )
+GAME( 1981, route16a, route16,  route16,  route16,  route16a, ROT270, "Tehkan/Sun (Centuri license)", "Route 16 (set 2)" )
 GAME( 1981, route16b, route16,  route16,  route16,  route16b, ROT270, "bootleg", "Route 16 (bootleg)" )
 GAME( 1980, speakres, 0,        speakres, speakres, stratvox, ROT270, "Sun Electronics", "Speak & Rescue" )
 GAME( 1980, stratvox, speakres, stratvox, stratvox, stratvox, ROT270, "[Sun Electronics] (Taito license)", "Stratovox" )

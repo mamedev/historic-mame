@@ -17,8 +17,7 @@
 #define GFX_TX_BANK2	0x80
 
 #define TX_COLOR1	0x0b
-#define TX_COLOR2	0x09
-#define TX_COLOR3	0x3f
+#define TX_COLOR2	0x3f
 
 data8_t *chaknpop_txram;
 data8_t *chaknpop_sprram;
@@ -143,8 +142,13 @@ WRITE_HANDLER( chaknpop_attrram_w )
 	{
 		chaknpop_attrram[offset] = data;
 
+		switch (offset)
+		{
+		case TX_COLOR1:
+		case TX_COLOR2:
 		tx_tilemap_mark_all_dirty();
 	}
+}
 }
 
 
@@ -153,28 +157,21 @@ WRITE_HANDLER( chaknpop_attrram_w )
 ***************************************************************************/
 
 /*
- *  I'm not sure how to use attribute
+ *  I'm not sure how to handle attributes about color
  */
 
 static void chaknpop_get_tx_tile_info(int tile_index)
 {
 	int tile = chaknpop_txram[tile_index];
-	//int color = chaknpop_attrram[(tile>>3)*2+1];
-	int color = chaknpop_attrram[TX_COLOR1];
+	int tile_h_bank = (gfxmode & GFX_TX_BANK2) << 2;	/* 0x00-0xff -> 0x200-0x2ff */
+	int color = chaknpop_attrram[TX_COLOR2];
 
-	if (tile >= 0xc0)
-	{
-		if (gfxmode & GFX_TX_BANK1)
-			tile += 0xc0;
-	}
-	else if (tile >= 0x40)
-	{
-		if (tile != 0x74)
-			color = chaknpop_attrram[TX_COLOR2];
+	if (tile == 0x74)
+		color = chaknpop_attrram[TX_COLOR1];
 
-		if (gfxmode & GFX_TX_BANK2)
-			tile += 0x200;
-	}
+	if (gfxmode & GFX_TX_BANK1 && tile >= 0xc0)
+		tile += 0xc0;					/* 0xc0-0xff -> 0x180-0x1bf */
+	tile |= tile_h_bank;
 
 	SET_TILE_INFO(1, tile, color, 0)
 }

@@ -10,12 +10,10 @@ Video Chips :	?
 
 Sound CPU   :	Z80A
 
-Sound Chips :	Custom (NAMCO?)
+Sound Chips :	Custom (NAMCO)
 
-To Do:
+XTAL        :	18.432 MHz
 
-- Colors
-- Sound
 
 ***************************************************************************/
 
@@ -34,6 +32,7 @@ WRITE_HANDLER( clshroad_vram_1_w );
 WRITE_HANDLER( clshroad_flipscreen_w );
 
 PALETTE_INIT( firebatl );
+PALETTE_INIT( clshroad );
 VIDEO_START( firebatl );
 VIDEO_START( clshroad );
 VIDEO_UPDATE( clshroad );
@@ -109,8 +108,8 @@ INPUT_PORTS_START( clshroad )
 	PORT_BIT(  0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN )
 	PORT_BIT(  0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT )
 	PORT_BIT(  0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT )
-	PORT_BIT(  0x10, IP_ACTIVE_LOW, IPT_BUTTON1 )
-	PORT_BIT(  0x20, IP_ACTIVE_LOW, IPT_BUTTON2 )
+	PORT_BIT(  0x10, IP_ACTIVE_LOW, IPT_BUTTON2 )
+	PORT_BIT(  0x20, IP_ACTIVE_LOW, IPT_BUTTON1 )
 	PORT_BIT(  0x40, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT(  0x80, IP_ACTIVE_LOW, IPT_UNKNOWN  )
 
@@ -119,8 +118,8 @@ INPUT_PORTS_START( clshroad )
 	PORT_BIT(  0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_COCKTAIL )
 	PORT_BIT(  0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_COCKTAIL )
 	PORT_BIT(  0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_COCKTAIL )
-	PORT_BIT(  0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
-	PORT_BIT(  0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_COCKTAIL )
+	PORT_BIT(  0x10, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_COCKTAIL )
+	PORT_BIT(  0x20, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
 	PORT_BIT(  0x40, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT(  0x80, IP_ACTIVE_LOW, IPT_START2 )
 
@@ -187,6 +186,79 @@ But the values seems unused then.
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 INPUT_PORTS_END
 
+INPUT_PORTS_START( firebatl )
+	PORT_START	// IN0 - Player 1
+	PORT_BIT(  0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP )
+	PORT_BIT(  0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN )
+	PORT_BIT(  0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT )
+	PORT_BIT(  0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT )
+	PORT_BIT(  0x10, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT(  0x20, IP_ACTIVE_LOW, IPT_BUTTON2 )
+	PORT_BIT(  0x40, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT(  0x80, IP_ACTIVE_LOW, IPT_UNKNOWN  )
+
+	PORT_START	// IN1 - Player 2
+	PORT_BIT(  0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_COCKTAIL )
+	PORT_BIT(  0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_COCKTAIL )
+	PORT_BIT(  0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_COCKTAIL )
+	PORT_BIT(  0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_COCKTAIL )
+	PORT_BIT(  0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
+	PORT_BIT(  0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_COCKTAIL )
+	PORT_BIT(  0x40, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT(  0x80, IP_ACTIVE_LOW, IPT_START2 )
+
+	PORT_START	// IN2 - DSW 1
+	PORT_DIPNAME( 0x01, 0x01, "Unknown 1-0" )
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x02, 0x02, "Unknown 1-1" )
+	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_BITX(    0x04, 0x00, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Infinite Lives", IP_KEY_NONE, IP_JOY_NONE )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( On ) )
+	PORT_DIPNAME( 0x08, 0x08, "Unknown 1-3" )
+	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x10, 0x10, "Unknown 1-4" )
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x20, "Unknown 1-5" )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x40, "Unknown 1-6" )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x80, "Unknown 1-7" )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+
+	PORT_START	// IN3 - DSW 2
+	PORT_DIPNAME( 0x01, 0x01, "Unknown 2-0" )
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x02, 0x02, "Unknown 2-1" )
+	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x04, 0x04, "Unknown 2-2" )
+	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x08, 0x08, "Unknown 2-3" )
+	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x10, 0x10, "Unknown 2-4" )
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x20, "Unknown 2-5" )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x40, "Unknown 2-6" )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x80, "Unknown 2-7" )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+INPUT_PORTS_END
 
 
 static struct GfxLayout layout_8x8x2 =
@@ -225,7 +297,7 @@ static struct GfxLayout layout_16x16x4 =
 static struct GfxDecodeInfo firebatl_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &layout_16x16x4,   0, 16 }, // [0] Sprites
-	{ REGION_GFX2, 0, &layout_16x16x4, 16, 16 }, // [1] Layer 0
+	{ REGION_GFX2, 0, &layout_16x16x4,	 16,  1 }, // [1] Layer 0
 	{ REGION_GFX3, 0, &layout_8x8x2,   512, 64 }, // [2] Layer 1
 	{ -1 }
 };
@@ -233,7 +305,7 @@ static struct GfxDecodeInfo firebatl_gfxdecodeinfo[] =
 static struct GfxDecodeInfo clshroad_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &layout_16x16x4, 0, 16 }, // [0] Sprites
-	{ REGION_GFX2, 0, &layout_16x16x4, 0, 16 }, // [1] Layer 0
+	{ REGION_GFX2, 0, &layout_16x16x4, 0x90,  1 }, // [1] Layer 0
 	{ REGION_GFX3, 0, &layout_8x8x4,   0, 16 }, // [2] Layer 1
 	{ -1 }
 };
@@ -256,8 +328,8 @@ static MACHINE_DRIVER_START( firebatl )
 	MDRV_CPU_MEMORY(clshroad_readmem,clshroad_writemem)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)	/* IRQ, no NMI */
 
-	MDRV_CPU_ADD(Z80, 3000000)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* ? */
+	MDRV_CPU_ADD(Z80, 3000000)	/* ? */
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
 	MDRV_CPU_MEMORY(clshroad_sound_readmem,clshroad_sound_writemem)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)	/* IRQ, no NMI */
 
@@ -285,12 +357,12 @@ MACHINE_DRIVER_END
 static MACHINE_DRIVER_START( clshroad )
 
 	/* basic machine hardware */
-	MDRV_CPU_ADD(Z80, 3000000)	/* ? */
+	MDRV_CPU_ADD(Z80, 18432000/6)	/* ? */
 	MDRV_CPU_MEMORY(clshroad_readmem,clshroad_writemem)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)	/* IRQ, no NMI */
 
-	MDRV_CPU_ADD(Z80, 3000000)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* ? */
+	MDRV_CPU_ADD(Z80, 18432000/6)	/* ? */
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
 	MDRV_CPU_MEMORY(clshroad_sound_readmem,clshroad_sound_writemem)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)	/* IRQ, no NMI */
 
@@ -306,6 +378,7 @@ static MACHINE_DRIVER_START( clshroad )
 	MDRV_GFXDECODE(clshroad_gfxdecodeinfo)
 	MDRV_PALETTE_LENGTH(256)
 
+	MDRV_PALETTE_INIT(clshroad)
 	MDRV_VIDEO_START(clshroad)
 	MDRV_VIDEO_UPDATE(clshroad)
 
@@ -368,18 +441,21 @@ ROM_START( clshroad )
 	ROM_LOAD( "clashr2.bin", 0x0000, 0x2000, CRC(e6389ec1) SHA1(6ec94d5e389e9104f40fc48df6f15674415851c0) )
 
 	ROM_REGION( 0x08000, REGION_GFX1, ROMREGION_DISPOSE | ROMREGION_INVERT )	/* Sprites */
-	ROM_LOAD( "clashr6.bin", 0x0000, 0x4000, CRC(daa1daf3) SHA1(cc24c97c9950adc0041f68832774e40c87d1d4b2) )
-	ROM_LOAD( "clashr5.bin", 0x4000, 0x4000, CRC(094858b8) SHA1(a19f79cb665bbb1e25a94e9dd09a9e99f553afe8) )
+	ROM_LOAD( "clashr5.bin", 0x0000, 0x4000, CRC(094858b8) SHA1(a19f79cb665bbb1e25a94e9dd09a9e99f553afe8) )
+	ROM_LOAD( "clashr6.bin", 0x4000, 0x4000, CRC(daa1daf3) SHA1(cc24c97c9950adc0041f68832774e40c87d1d4b2) )
 
-	ROM_REGION( 0x08000, REGION_GFX2, ROMREGION_DISPOSE )	/* Layer 0 */
-	ROM_LOAD( "clashr9.bin", 0x0000, 0x4000, CRC(c15e8eed) SHA1(3b1e7fa014d176a01d5f9214051b0c8cc5556684) )
-	ROM_LOAD( "clashr8.bin", 0x4000, 0x4000, CRC(cbb66719) SHA1(2497575f84a956bc2b9e4c3f2c71ae42d036355e) )
+	ROM_REGION( 0x08000, REGION_GFX2, ROMREGION_DISPOSE | ROMREGION_INVERT )	/* Layer 0 */
+	ROM_LOAD( "clashr8.bin", 0x0000, 0x4000, CRC(cbb66719) SHA1(2497575f84a956bc2b9e4c3f2c71ae42d036355e) )
+	ROM_LOAD( "clashr9.bin", 0x4000, 0x4000, CRC(c15e8eed) SHA1(3b1e7fa014d176a01d5f9214051b0c8cc5556684) )
 
-	ROM_REGION( 0x04000, REGION_GFX3, ROMREGION_DISPOSE )	/* Layer 1 */
-	ROM_LOAD( "clashr7.bin", 0x0000, 0x2000, CRC(97973030) SHA1(cca7a9d2751add7f6dd9bac83f7f63ece8021dbc) )
-	ROM_LOAD( "clashr4.bin", 0x2000, 0x2000, CRC(664201d9) SHA1(4eb85306f0c9683d0e0cf787f6389df8fe4a3d9d) )
+	ROM_REGION( 0x04000, REGION_GFX3, ROMREGION_DISPOSE | ROMREGION_INVERT)	/* Layer 1 */
+	ROM_LOAD( "clashr4.bin", 0x0000, 0x2000, CRC(664201d9) SHA1(4eb85306f0c9683d0e0cf787f6389df8fe4a3d9d) )
+	ROM_LOAD( "clashr7.bin", 0x2000, 0x2000, CRC(97973030) SHA1(cca7a9d2751add7f6dd9bac83f7f63ece8021dbc) )
 
 	ROM_REGION( 0x0b40, REGION_PROMS, 0 )
+	ROM_LOAD( "82s129.6", 0x0000, 0x0100, CRC(38f443da) SHA1(a015217508b18eb3f1987cd5b53f31608b13de08) )	/* r */
+	ROM_LOAD( "82s129.7", 0x0100, 0x0100, CRC(977fab0c) SHA1(78e7b4f1e9891d2d9cf1e1ec0c4f59a311cef1c5) )	/* g */
+	ROM_LOAD( "82s129.8", 0x0200, 0x0100, CRC(ae7ae54d) SHA1(d7d4682e437f2f7adb7fceb813437c06f27f2711) )	/* b */
 	/* all other proms that firebatl has are missing */
 	ROM_LOAD( "clashrd.a2",  0x0900, 0x0100, CRC(4e2a2781) SHA1(7be2e066499ea0af76f6ae926fe87e02f8c36a6f) )	/* unknown */
 	ROM_LOAD( "clashrd.g4",  0x0a00, 0x0020, CRC(1afc04f0) SHA1(38207cf3e15bac7034ac06469b95708d22b57da4) )	/* timing? */
@@ -412,5 +488,5 @@ die once, it would be nice to avoid the hack however
 	ROM[0x05C8] = 0x23;
 }
 
-GAMEX( 1984, firebatl, 0, firebatl, clshroad, firebatl, ROT90, "Taito", "Fire Battle", GAME_IMPERFECT_GRAPHICS )
-GAMEX( 1986, clshroad, 0, clshroad, clshroad, 0, ROT0,  "Woodplace Inc.", "Clash-Road", GAME_WRONG_COLORS )
+GAMEX( 1984, firebatl, 0, firebatl, firebatl, firebatl, ROT90, "Taito", "Fire Battle", GAME_IMPERFECT_GRAPHICS )
+GAME ( 1986, clshroad, 0, clshroad, clshroad, 0, ROT0,  "Woodplace Inc.", "Clash-Road" )

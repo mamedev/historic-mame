@@ -53,6 +53,11 @@ static WRITE_HANDLER ( unknown_port_2_w )
 	//logerror("%04x: write to unknow port 2: 0x%02x\n", activecpu_get_pc(), data);
 }
 
+static WRITE_HANDLER ( coinlock_w )
+{
+	logerror("%04x: coin lock %sable\n", activecpu_get_pc(), data ? "dis" : "en");
+}
+
 
 /***************************************************************************
 
@@ -68,12 +73,11 @@ static MEMORY_READ_START( readmem )
 	{ 0x8802, 0x8802, chaknpop_mcu_portC_r },
 	{ 0x8805, 0x8805, AY8910_read_port_0_r },
 	{ 0x8807, 0x8807, AY8910_read_port_1_r },
-	{ 0x8808, 0x8808, input_port_3_r },		// DSW 1
+	{ 0x8808, 0x8808, input_port_3_r },		// DSW C
 	{ 0x8809, 0x8809, input_port_1_r },		// IN1
 	{ 0x880a, 0x880a, input_port_0_r },		// IN0
 	{ 0x880b, 0x880b, input_port_2_r },		// IN2
-	{ 0x880C, 0x880C, chaknpop_gfxmode_r },
-	{ 0x880D, 0x880D, interrupt_enable_r },
+	{ 0x880c, 0x880c, chaknpop_gfxmode_r },
 	{ 0x9000, 0x93ff, MRA_RAM },			// TX tilemap
 	{ 0x9800, 0x983f, MRA_RAM },			// Color attribute
 	{ 0x9840, 0x98ff, MRA_RAM },			// sprite
@@ -91,8 +95,8 @@ static MEMORY_WRITE_START( writemem )
 	{ 0x8805, 0x8805, AY8910_write_port_0_w },
 	{ 0x8806, 0x8806, AY8910_control_port_1_w },
 	{ 0x8807, 0x8807, AY8910_write_port_1_w },
-	{ 0x880C, 0x880C, chaknpop_gfxmode_w },
-	{ 0x880D, 0x880D, interrupt_enable_w },
+	{ 0x880c, 0x880c, chaknpop_gfxmode_w },
+	{ 0x880D, 0x880D, coinlock_w },			// coin lock out
 	{ 0x9000, 0x93ff, chaknpop_txram_w, &chaknpop_txram },
 	{ 0x9800, 0x983f, chaknpop_attrram_w, &chaknpop_attrram },
 	{ 0x9840, 0x98ff, MWA_RAM, &chaknpop_sprram, &chaknpop_sprram_size },
@@ -105,8 +109,8 @@ static struct AY8910interface ay8910_interface =
 	2,		/* 2 chips */
 	18432000 / 12,	/* 1.536 MHz? */
 	{ 15, 10 },
-	{ input_port_5_r, 0 },		// DSW 2
-	{ input_port_4_r, 0 },		// DSW 3
+	{ input_port_5_r, 0 },		// DSW A
+	{ input_port_4_r, 0 },		// DSW B
 	{ 0, unknown_port_1_w },	// ??
 	{ 0, unknown_port_2_w }		// ??
 };
@@ -122,65 +126,65 @@ INPUT_PORTS_START( chaknpop )
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN2 )	// LEFT COIN
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_COIN3 )	// RIGHT COIN
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN1 )	// LEFT COIN
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_COIN2 )	// RIGHT COIN
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_START2 )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_SERVICE1 )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_TILT )
 
 	PORT_START      /* IN1 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_4WAY | IPF_PLAYER1 )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY | IPF_PLAYER1 )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_4WAY | IPF_PLAYER1 )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_4WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER1 )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1 )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER1 )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START      /* IN2 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_4WAY | IPF_PLAYER2 )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY | IPF_PLAYER2 )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_4WAY | IPF_PLAYER2 )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_4WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER2 )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
-	PORT_START      /* IN3: DSW 1 */
+	PORT_START      /* IN3: DSW C */
 	PORT_DIPNAME( 0x01, 0x01, "Language" )
 	PORT_DIPSETTING(    0x00, "English" )
 	PORT_DIPSETTING(    0x01, "Japanese" )
 	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x04, 0x04, "DSW1 bit2" )
-	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x04, 0x04, "Super Chack'n" )
+	PORT_DIPSETTING(    0x04, "pi" )
+	PORT_DIPSETTING(    0x00, "1st Chance" )
 	PORT_BITX(    0x08, 0x08, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Endless", IP_KEY_NONE, IP_JOY_NONE )
 	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x10, 0x10, "Credit Info" )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x10, DEF_STR( On ) )
-	PORT_DIPNAME( 0x20, 0x20, "Copyright" )
-	PORT_DIPSETTING(    0x20, "Type A" )
-	PORT_DIPSETTING(    0x00, "Type B" )
+	PORT_DIPNAME( 0x20, 0x20, "Show Year" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( On ) )
 	PORT_BITX(    0x40, 0x40, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Infinite", IP_KEY_NONE, IP_JOY_NONE )
 	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x80, 0x00, "Coin Type" )
-	PORT_DIPSETTING(    0x00, "Type A" )
-	PORT_DIPSETTING(    0x80, "Type B" )
+	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Coinage ) )
+	PORT_DIPSETTING(    0x00, "1 Way" )
+	PORT_DIPSETTING(    0x80, "2 Way" )
 
-	PORT_START      /* IN4: DSW 2 */
-	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(    0x02, "Easy?" )
-	PORT_DIPSETTING(    0x03, "Medium?" )
-	PORT_DIPSETTING(    0x01, "Hard?" )
-	PORT_DIPSETTING(    0x00, "Hardest?" )
+	PORT_START      /* IN4: DSW B */
+	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Bonus_Life ) )
+	PORT_DIPSETTING(    0x00, "80k and every 100k" )
+	PORT_DIPSETTING(    0x01, "60k and every 100k" )
+	PORT_DIPSETTING(    0x02, "40k and every 100k" )
+	PORT_DIPSETTING(    0x03, "20k and every 100k" )
 	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Free_Play ) )
 	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
@@ -189,9 +193,9 @@ INPUT_PORTS_START( chaknpop )
 	PORT_DIPSETTING(    0x08, "3" )
 	PORT_DIPSETTING(    0x10, "2" )
 	PORT_DIPSETTING(    0x18, "1" )
-	PORT_DIPNAME( 0x20, 0x00, "Training" )
-	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x00, "Training/Difficulty" )
+	PORT_DIPSETTING(    0x20, "Off/Every 10 Min." )
+	PORT_DIPSETTING(    0x00, "On/Every 7 Min." )
 	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Flip_Screen ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
@@ -199,7 +203,7 @@ INPUT_PORTS_START( chaknpop )
 	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
 	PORT_DIPSETTING(    0x80, DEF_STR( Cocktail ) )
 
-	PORT_START      /* IN5: DSW 3 */
+	PORT_START      /* IN5: DSW A */
 	PORT_DIPNAME(0x0f,  0x00, DEF_STR( Coin_A ) )
 	PORT_DIPSETTING(    0x0f, DEF_STR( 9C_1C ) )
 	PORT_DIPSETTING(    0x0e, DEF_STR( 8C_1C ) )
@@ -277,7 +281,9 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 static MACHINE_DRIVER_START( chaknpop )
 
 	/* basic machine hardware */
-	MDRV_CPU_ADD(Z80, 18432000 / 9)		/* 2.048 MHz? */
+	/* the real board is 3.072MHz, but it is faster for MAME */
+	//MDRV_CPU_ADD(Z80, 18432000 / 6)	/* 3.072 MHz */
+	MDRV_CPU_ADD(Z80, 2860000)
 	MDRV_CPU_MEMORY(readmem,writemem)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 

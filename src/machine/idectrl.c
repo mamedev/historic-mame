@@ -160,7 +160,7 @@ INLINE void clear_interrupt(struct ide_state *ide)
  *
  *************************************/
 
-int ide_controller_init(int which, struct ide_interface *intf)
+int ide_controller_init_custom(int which, struct ide_interface *intf, void *diskhandle)
 {
 	struct ide_state *ide = &idestate[which];
 	const struct hard_disk_header *header;
@@ -173,8 +173,8 @@ int ide_controller_init(int which, struct ide_interface *intf)
 	memset(ide, 0, sizeof(*ide));
 	ide->intf = intf;
 
-	/* we only support one hard disk right now; get a handle to it */
-	ide->disk = get_disk_handle(0);
+	/* set MAME harddisk handle */
+	ide->disk = diskhandle;
 
 	/* get and copy the geometry */
 	if (ide->disk)
@@ -194,6 +194,12 @@ int ide_controller_init(int which, struct ide_interface *intf)
 	/* create a timer for timing status */
 	ide->last_status_timer = timer_alloc(NULL);
 	return 0;
+}
+
+int ide_controller_init(int which, struct ide_interface *intf)
+{
+	/* we only support one hard disk right now; get a handle to it */
+	return ide_controller_init_custom(which, intf, get_disk_handle(0));
 }
 
 

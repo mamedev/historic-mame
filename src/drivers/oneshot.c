@@ -471,8 +471,8 @@ ROM_END
 ROM_START( maddonnb )
 	ROM_REGION( 0x40000, REGION_CPU1, 0 ) /* 68000 Code */
 	/* program roms missing in this dump, gfx don't seem 100% correct for other ones */
-	ROM_LOAD16_BYTE( "maddonna.b16", 0x00000, 0x20000, NO_DUMP )
-	ROM_LOAD16_BYTE( "maddonna.b15", 0x00001, 0x20000, NO_DUMP )
+	ROM_LOAD16_BYTE( "maddonnb.b16", 0x00000, 0x20000, NO_DUMP )
+	ROM_LOAD16_BYTE( "maddonnb.b15", 0x00001, 0x20000, NO_DUMP )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* Z80 Code */
 	ROM_LOAD( "x13.ua2", 0x00000, 0x010000, CRC(f2080071) SHA1(68cbae9559879b2dc19c41a7efbd13ab4a569d3f) )
@@ -500,4 +500,4 @@ ROM_END
 
 GAMEX(199?, oneshot,  0,        oneshot,  oneshot , 0, ROT0, "unknown", "One Shot One Kill", GAME_IMPERFECT_GRAPHICS )
 GAME (1995, maddonna, 0,        maddonna, maddonna, 0, ROT0, "Tuning",  "Mad Donna (set 1)" )
-GAMEX(1995, maddonnb, maddonna, maddonna, maddonna, 0, ROT0, "Tuning",  "Mad Donna (set 2))", GAME_NOT_WORKING )
+GAMEX(1995, maddonnb, maddonna, maddonna, maddonna, 0, ROT0, "Tuning",  "Mad Donna (set 2)", GAME_NOT_WORKING )

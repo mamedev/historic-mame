@@ -15,6 +15,8 @@ static int bgscroll;
 static int bgbasecolor;
 static int flipscreen;
 
+static struct tilemap *fg_tilemap;
+static struct tilemap *bg_tilemap;
 
 
 /***************************************************************************
@@ -79,15 +81,60 @@ PALETTE_INIT( brkthru )
   Start the video hardware emulation.
 
 ***************************************************************************/
+
+static void get_bg_tile_info(int tile_index)
+{
+	/* BG RAM format
+		0         1
+		---- -c-- ---- ---- = Color
+		---- --xx xxxx xxxx = Code
+	*/
+
+	int code = (videoram[tile_index*2] | ((videoram[tile_index*2+1]) << 8)) & 0x3ff;
+	int region = 1 + (code >> 7);
+	int colour = bgbasecolor + ((videoram[tile_index*2+1] & 0x04) >> 2);
+
+	SET_TILE_INFO(region, code & 0x7f,colour,0)
+}
+
+WRITE_HANDLER( brkthru_bgram_w )
+{
+	if (videoram[offset] != data)
+	{
+		videoram[offset] = data;
+		tilemap_mark_tile_dirty(bg_tilemap,offset/2);
+	}
+}
+
+
+static void get_fg_tile_info(int tile_index)
+{
+	data8_t code = brkthru_videoram[tile_index];
+	SET_TILE_INFO(0, code, 0, 0)
+}
+
+WRITE_HANDLER( brkthru_fgram_w )
+{
+	if (brkthru_videoram[offset] != data)
+	{
+		brkthru_videoram[offset] = data;
+		tilemap_mark_tile_dirty(fg_tilemap,offset);
+	}
+}
+
 VIDEO_START( brkthru )
 {
-	if ((dirtybuffer = auto_malloc(videoram_size)) == 0)
-		return 1;
-	memset(dirtybuffer,1,videoram_size);
+	fg_tilemap = tilemap_create(get_fg_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,32,32);
+	bg_tilemap = tilemap_create(get_bg_tile_info,tilemap_scan_cols,TILEMAP_TRANSPARENT,16,16,32,16);
 
-	/* the background area is twice as wide as the screen */
-	if ((tmpbitmap = auto_bitmap_alloc(2*Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
+	if (!fg_tilemap)
 		return 1;
+
+	if (!bg_tilemap)
+		return 1;
+
+	tilemap_set_transparent_pen( fg_tilemap, 0 );
+	tilemap_set_transparent_pen( bg_tilemap, 0 );
 
 	return 0;
 }
@@ -112,14 +159,16 @@ WRITE_HANDLER( brkthru_1800_w )
 		if (((data & 0x38) >> 2) != bgbasecolor)
 		{
 			bgbasecolor = (data & 0x38) >> 2;
-			memset(dirtybuffer,1,videoram_size);
+			tilemap_mark_all_tiles_dirty (bg_tilemap);
 		}
 
 		/* bit 6 = screen flip */
 		if (flipscreen != (data & 0x40))
 		{
 			flipscreen = data & 0x40;
-			memset(dirtybuffer,1,videoram_size);
+			tilemap_set_flip(bg_tilemap,flipscreen ? (TILEMAP_FLIPY | TILEMAP_FLIPX) : 0);
+			tilemap_set_flip(fg_tilemap,flipscreen ? (TILEMAP_FLIPY | TILEMAP_FLIPX) : 0);
+
 		}
 
 		/* bit 7 = high bit of scroll */
@@ -128,6 +177,21 @@ WRITE_HANDLER( brkthru_1800_w )
 }
 
 
+#if 0
+static void show_register( struct mame_bitmap *bitmap, int x, int y, unsigned long data )
+{
+	int n;
+
+	for( n=0; n<4; n++ ){
+		drawgfx( bitmap, Machine->uifont,
+			"0123456789abcdef"[(data>>(12-4*n))&0xf],
+			0,
+			1,0,
+			y, x + n*8,
+			0,TRANSPARENCY_NONE,0);
+	}
+}
+#endif
 
 /***************************************************************************
 
@@ -136,62 +200,30 @@ WRITE_HANDLER( brkthru_1800_w )
   the main emulation engine.
 
 ***************************************************************************/
-VIDEO_UPDATE( brkthru )
-{
+
+static void brkthru_drawsprites( struct mame_bitmap *bitmap, const struct rectangle *cliprect, int prio )
+	{
 	int offs;
-
-
-	/* for every character in the Video RAM, check if it has been modified */
-	/* since last time and update it accordingly. */
-	for (offs = videoram_size - 2;offs >= 0;offs -= 2)
-	{
-		if (dirtybuffer[offs] || dirtybuffer[offs+1])
-		{
-			int sx,sy,code;
-
-
-			dirtybuffer[offs] = dirtybuffer[offs+1] = 0;
-
-			sx = (offs/2) / 16;
-			sy = (offs/2) % 16;
-			if (flipscreen)
-			{
-				sx = 31 - sx;
-				sy = 15 - sy;
-			}
-
-			code = videoram[offs] + 256 * (videoram[offs+1] & 3);
-			drawgfx(tmpbitmap,Machine->gfx[1 + (code >> 7)],
-					code & 0x7f,
-					bgbasecolor + ((videoram[offs+1] & 0x04) >> 2),
-					flipscreen,flipscreen,
-					16*sx,16*sy,
-					0,TRANSPARENCY_NONE,0);
-		}
-	}
-
-
-	/* copy the background graphics */
-	{
-		int scroll;
-
-
-		if (flipscreen) scroll = 256 + bgscroll;
-		else scroll = -bgscroll;
-		copyscrollbitmap(bitmap,tmpbitmap,1,&scroll,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
-	}
-
-
 	/* Draw the sprites. Note that it is important to draw them exactly in this */
 	/* order, to have the correct priorities. */
+
+	/* Sprite RAM format
+		0         1         2         3
+		ccc- ---- ---- ---- ---- ---- ---- ---- = Color
+		---d ---- ---- ---- ---- ---- ---- ---- = Double Size
+		---- p--- ---- ---- ---- ---- ---- ---- = Priority
+		---- -bb- ---- ---- ---- ---- ---- ---- = Bank
+		---- ---e ---- ---- ---- ---- ---- ---- = Enable/Disable
+		---- ---- ssss ssss ---- ---- ---- ---- = Sprite code
+		---- ---- ---- ---- yyyy yyyy ---- ---- = Y position
+		---- ---- ---- ---- ---- ---- xxxx xxxx = X position
+	*/
+
 	for (offs = 0;offs < spriteram_size; offs += 4)
 	{
-		if (spriteram[offs] & 0x01)	/* enable */
+		if ((spriteram[offs] & 0x09) == prio)	/* Enable && Low Priority */
 		{
 			int sx,sy,code,color;
-
-
-			/* the meaning of bit 3 of [offs] is unknown */
 
 			sx = 240 - spriteram[offs+3];
 			if (sx < -7) sx += 256;
@@ -232,6 +264,7 @@ VIDEO_UPDATE( brkthru )
 						flipscreen,flipscreen,
 						sx,sy + 256,
 						&Machine->visible_area,TRANSPARENCY_PEN,0);
+
 			}
 			else
 			{
@@ -249,30 +282,29 @@ VIDEO_UPDATE( brkthru )
 						flipscreen,flipscreen,
 						sx,sy + 256,
 						&Machine->visible_area,TRANSPARENCY_PEN,0);
+
+			}
 			}
 		}
 	}
 
-
-	/* draw the frontmost playfield. They are characters, but draw them as sprites */
-	for (offs = brkthru_videoram_size - 1;offs >= 0;offs--)
+VIDEO_UPDATE( brkthru )
 	{
-		int sx,sy;
+	tilemap_set_scrollx(bg_tilemap,0, bgscroll);
+	tilemap_draw(bitmap,cliprect,bg_tilemap,TILEMAP_IGNORE_TRANSPARENCY,0);
 
+	/* low priority sprites */
+	brkthru_drawsprites(bitmap, cliprect, 0x01 );
 
-		sx = offs % 32;
-		sy = offs / 32;
-		if (flipscreen)
-		{
-			sx = 31 - sx;
-			sy = 31 - sy;
-		}
+	/* draw background over low priority sprites */
+	tilemap_draw(bitmap,cliprect,bg_tilemap,0,0);
 
-		drawgfx(bitmap,Machine->gfx[0],
-				brkthru_videoram[offs],
-				0,
-				flipscreen,flipscreen,
-				8*sx,8*sy,
-				&Machine->visible_area,TRANSPARENCY_PEN,0);
-	}
+	/* high priority sprites */
+	brkthru_drawsprites(bitmap, cliprect, 0x09 );
+
+	/* fg layer */
+	tilemap_draw(bitmap,cliprect,fg_tilemap,0,0);
+
+/*	show_register(bitmap,8,8,(unsigned long)flipscreen); */
+
 }

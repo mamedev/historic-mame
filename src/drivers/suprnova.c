@@ -510,6 +510,86 @@ INPUT_PORTS_START( skns )
 
 INPUT_PORTS_END
 
+INPUT_PORTS_START( jjparads )
+
+	PORT_START  /* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER1 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER1 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON4 | IPF_PLAYER1 )
+
+	PORT_START  /* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER2 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON4 | IPF_PLAYER2 )
+
+	PORT_START  /* IN2 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_SERVICE )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_TILT )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_SERVICE1 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START  /* IN3 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON5 | IPF_PLAYER1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON5 | IPF_PLAYER2 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START  /* Paddle A */
+	PORT_ANALOG( 0xFF, 0x00, IPT_DIAL | IPF_REVERSE | IPF_PLAYER1, 100, 15, 0, 0 )
+
+	PORT_START  /* Paddle B */
+	PORT_ANALOG( 0xFF, 0x00, IPT_DIAL | IPF_REVERSE | IPF_PLAYER2, 100, 15, 0, 0 )
+
+	PORT_START  /* Paddle C */
+	PORT_ANALOG( 0xFF, 0x00, IPT_DIAL | IPF_REVERSE | IPF_PLAYER3, 100, 15, 0, 0 )
+
+	PORT_START  /* DSW */
+	PORT_SERVICE( 0x01, IP_ACTIVE_LOW )
+	PORT_DIPNAME( 0x02, 0x02, DEF_STR(Flip_Screen) ) // This port affects 0x040191c8 function
+	PORT_DIPSETTING(    0x02, DEF_STR(Off) )
+	PORT_DIPSETTING(    0x00, DEF_STR(On) )
+	PORT_DIPNAME( 0x04, 0x04, DEF_STR(Unknown) )
+	PORT_DIPSETTING(    0x04, DEF_STR(Off) )
+	PORT_DIPSETTING(    0x00, DEF_STR(On) )
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR(Unknown) )
+	PORT_DIPSETTING(    0x08, DEF_STR(Off) )
+	PORT_DIPSETTING(    0x00, DEF_STR(On) )
+	PORT_DIPNAME( 0x10, 0x10, "Test Mode" )
+	PORT_DIPSETTING(    0x10, DEF_STR(Off) )
+	PORT_DIPSETTING(    0x00, DEF_STR(On) )
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR(Unknown) )
+	PORT_DIPSETTING(    0x20, DEF_STR(Off) )
+	PORT_DIPSETTING(    0x00, DEF_STR(On) )
+	PORT_DIPNAME( 0x40, 0x40, "Use Backup Ram" )
+	PORT_DIPSETTING(    0x00, DEF_STR(No) )
+	PORT_DIPSETTING(    0x40, DEF_STR(Yes) )
+	PORT_DIPNAME( 0x80, 0x80, "Freeze" )
+	PORT_DIPSETTING(    0x00, "Freezes the game")
+	PORT_DIPSETTING(    0x80, "Right value")
+
+	PORT_START  /* Paddle D */
+	PORT_ANALOG( 0xFF, 0x00, IPT_DIAL | IPF_REVERSE | IPF_PLAYER4, 100, 15, 0, 0 )
+
+INPUT_PORTS_END
+
 
 static READ32_HANDLER( nova_input_port_0_r )
 {
@@ -1453,10 +1533,10 @@ GAMEX( 1999, panicstr, skns,    skns, skns, panicstr, ROT0,  "Kaneko", "Panic St
 GAMEX( 1999, senknow , skns,    skns, skns, senknow,  ROT0,  "Kaneko", "Sen-Know (Japan)", GAME_IMPERFECT_GRAPHICS )
 GAMEX( 1998, puzzloop, skns,    skns, skns, puzzloop, ROT0,  "Mitchell", "Puzz Loop (Europe)", GAME_IMPERFECT_GRAPHICS )
 GAMEX( 1998, puzloopj, puzzloop,skns, skns, puzloopj, ROT0,  "Mitchell", "Puzz Loop (Japan)", GAME_IMPERFECT_GRAPHICS )
-GAMEX( 1996, jjparads, skns,    skns, skns, jjparads, ROT0,  "Electro Design", "Jan Jan Paradise", GAME_IMPERFECT_GRAPHICS )
-GAMEX( 1997, jjparad2, skns,    skns, skns, jjparad2, ROT0,  "Electro Design", "Jan Jan Paradise 2", GAME_IMPERFECT_GRAPHICS )
+GAMEX( 1996, jjparads, skns,    skns, jjparads, jjparads, ROT0,  "Electro Design", "Jan Jan Paradise", GAME_IMPERFECT_GRAPHICS )
+GAMEX( 1997, jjparad2, skns,    skns, jjparads, jjparad2, ROT0,  "Electro Design", "Jan Jan Paradise 2", GAME_IMPERFECT_GRAPHICS )
 GAMEX( 1998, ryouran , skns,    skns, skns, ryouran,  ROT0,  "Electro Design", "Otome Ryouran", GAME_IMPERFECT_GRAPHICS )
-GAMEX( 1999, teljan  , skns,    skns, skns, teljan,   ROT0,  "Electro Design", "Tel Jan", GAME_IMPERFECT_GRAPHICS )
+GAMEX( 1999, teljan  , skns,    skns, jjparads, teljan,   ROT0,  "Electro Design", "Tel Jan", GAME_IMPERFECT_GRAPHICS )
 GAMEX( 1997, sengekis, skns,    skns, skns, sengekis, ROT270,"Kaneko / Warashi", "Sengeki Striker", GAME_IMPERFECT_GRAPHICS ) // should be rot90 + flipped sprites?
 GAMEX( 1997, vblokbrk, skns,    skns, skns, sarukani, ROT0,  "Kaneko / Mediaworks", "VS Block Breaker (Asia)", GAME_IMPERFECT_GRAPHICS )
 GAMEX( 1997, sarukani, vblokbrk,    skns, skns, sarukani, ROT0,  "Kaneko / Mediaworks", "Saru-Kani-Hamu-Zou (Japan)", GAME_IMPERFECT_GRAPHICS )

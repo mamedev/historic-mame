@@ -1252,4 +1252,4 @@ GAMEX( 1994, vshoot,   0,        namconb1, namconb1, vshoot,   ROT0,  "Namco", "
 //     YEAR, NAME,     PARENT,   MACHINE,  INPUT,    INIT,     MNTR,  COMPANY, FULLNAME,   FLAGS)
 GAMEX( 1994, outfxies, 0,		 namconb2, namconb1, outfxies, ROT0, "Namco", "Outfoxies", GAME_IMPERFECT_GRAPHICS|GAME_NO_SOUND )
 GAMEX( 1994, outfxesj, outfxies, namconb2, namconb1, outfxies, ROT0, "Namco", "Outfoxies (Japan)", GAME_IMPERFECT_GRAPHICS|GAME_NO_SOUND )
-GAMEX( 1995, machbrkr, 0,		 namconb2, namconb1, machbrkr, ROT0, "Namco", "Match Breakers (Japan)", GAME_IMPERFECT_GRAPHICS|GAME_NO_SOUND )
+GAMEX( 1995, machbrkr, 0,		 namconb2, namconb1, machbrkr, ROT0, "Namco", "Mach Breakers (Japan)", GAME_IMPERFECT_GRAPHICS|GAME_NO_SOUND )

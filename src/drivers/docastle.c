@@ -912,6 +912,34 @@ ROM_START( docastl2 )
 	ROM_LOAD( "09c.bin",      0x0000, 0x0200, CRC(066f52bc) SHA1(99f4f2d0181bcaf389c16f127cc3e632d62ee417) ) /* color prom */
 ROM_END
 
+ROM_START( docastlo )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )
+	ROM_LOAD( "c1.bin", 	0x0000, 0x2000, CRC(c9ce96ab) SHA1(3166aef4556ce334ecef27dceb285f51de371c35) )
+	ROM_LOAD( "c2.bin",     0x2000, 0x2000, CRC(42b28369) SHA1(8c9a618984db52cdc4ec3a6bcfa7659866d2709c) )
+	ROM_LOAD( "c3.bin",     0x4000, 0x2000, CRC(c8c13124) SHA1(2cfc15b232744b40350c174b0d89677495c077eb) )
+	ROM_LOAD( "c4.bin",     0x6000, 0x2000, CRC(7ca78471) SHA1(2804f9be825973e69bc35aa703145b3ef22a5ecd) )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )
+	ROM_LOAD( "dorev10.bin",  0x0000, 0x4000, CRC(4b1925e3) SHA1(1b229dd73eede3853d23576dfe397a4d2d952991) )
+
+	ROM_REGION( 0x10000, REGION_CPU3, 0 )
+	ROM_LOAD( "01d.bin",      0x0000, 0x0200, CRC(2747ca77) SHA1(abc0ca05925974c4b852827605ee2f1caefb8524) )
+
+	ROM_REGION( 0x4000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "03a_a5.bin",   0x0000, 0x4000, CRC(0636b8f4) SHA1(8b34773bf7b7071fb5c8ff443a08befae3b545ea) )
+
+	ROM_REGION( 0x8000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_LOAD( "dorev6.bin",   0x0000, 0x2000, CRC(9e335bf8) SHA1(30ccfb959c1d3069739280711ba3d7d8b7a1a2b0) )
+	ROM_LOAD( "dorev7.bin",   0x2000, 0x2000, CRC(f5d5701d) SHA1(f2731aaa7be3e269cf929aa14db1c967c9198dc6) )
+	ROM_LOAD( "dorev8.bin",   0x4000, 0x2000, CRC(7143ca68) SHA1(b5b45e3cf7d0287d93231eb01395a03f39f473fc) )
+	ROM_LOAD( "dorev9.bin",   0x6000, 0x2000, CRC(893fc004) SHA1(15559d11cc14341d2fec190d12205a649bdd484f) )
+
+	ROM_REGION( 0x0200, REGION_PROMS, 0 )
+	/* which prom? this set has the same gfx as douni so i'm using that prom */
+//	ROM_LOAD( "09c.bin",      0x0000, 0x0200, CRC(066f52bc) SHA1(99f4f2d0181bcaf389c16f127cc3e632d62ee417) ) /* color prom */
+	ROM_LOAD( "dorevc9.bin",  0x0000, 0x0200, CRC(96624ebe) SHA1(74ff21dc85dcb013c941ec6c06cafdb5bcc16960) ) /* color prom */
+ROM_END
+
 ROM_START( douni )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )
 	ROM_LOAD( "dorev1.bin",   0x0000, 0x2000, CRC(1e2cbb3c) SHA1(f3c6eab7f7f43a067d432d47f3403ab1d07575fe) )
@@ -1154,6 +1182,7 @@ ROM_END
 
 GAME( 1983, docastle, 0,        docastle, docastle, 0, ROT270, "Universal", "Mr. Do's Castle (set 1)" )
 GAME( 1983, docastl2, docastle, docastle, docastle, 0, ROT270, "Universal", "Mr. Do's Castle (set 2)" )
+GAME( 1983, docastlo, docastle, docastle, docastle, 0, ROT270, "Universal", "Mr. Do's Castle (older)" )
 GAME( 1983, douni,    docastle, docastle, docastle, 0, ROT270, "Universal", "Mr. Do vs. Unicorns" )
 GAME( 1984, dorunrun, 0,        dorunrun, dorunrun, 0, ROT0,   "Universal", "Do! Run Run (set 1)" )
 GAME( 1984, dorunru2, dorunrun, dorunrun, dorunrun, 0, ROT0,   "Universal", "Do! Run Run (set 2)" )

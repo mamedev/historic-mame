@@ -1502,6 +1502,8 @@ static int process_rom_entries(struct rom_load_data *romdata, const struct RomMo
 		/* handle files */
 		else if (ROMENTRY_ISFILE(romp))
 		{
+			if (!ROM_BIOSFLAGS(romp) || (ROM_BIOSFLAGS(romp) == (options.bios+1))) /* alternate bios sets */
+			{
 			const struct RomModule *baserom = romp;
 			int explength = 0;
 
@@ -1556,6 +1558,11 @@ static int process_rom_entries(struct rom_load_data *romdata, const struct RomMo
 				debugload("Closing ROM file\n");
 				mame_fclose(romdata->file);
 				romdata->file = NULL;
+			}
+		}
+			else
+			{
+				romp++; /* skip over file */
 			}
 		}
 	}

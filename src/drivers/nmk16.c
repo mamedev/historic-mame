@@ -4363,9 +4363,9 @@ GAMEX( 1991, tdragon,  0,       tdragon,  tdragon,  tdragon,  ROT270, "NMK / Tec
 GAME(  1991, tdragonb, tdragon, tdragonb, tdragon,  tdragonb, ROT270, "NMK / Tecmo",					"Thunder Dragon (Bootleg)" )
 GAMEX( 1992, ssmissin, 0,       ssmissin, ssmissin, ssmissin, ROT270, "Comad",				            "S.S. Mission", GAME_NO_COCKTAIL )
 GAMEX( 1991, hachamf,  0,       hachamf,  hachamf,  hachamf,  ROT0,   "NMK",							"Hacha Mecha Fighter", GAME_UNEMULATED_PROTECTION | GAME_NO_SOUND )
-GAMEX( 1992, macross,  0,       macross,  macross,  nmk,      ROT270, "Banpresto",						"Macross", GAME_NO_SOUND )
+GAMEX( 1992, macross,  0,       macross,  macross,  nmk,      ROT270, "Banpresto",						"Super Spacefortress Macross / Chou-Jikuu Yousai Macross", GAME_NO_SOUND )
 GAMEX( 1993, gunnail,  0,       gunnail,  gunnail,  nmk,      ROT270, "NMK / Tecmo",					"GunNail", GAME_NO_SOUND )
-GAMEX( 1993, macross2, 0,       macross2, macross2, 0,        ROT0,   "Banpresto",						"Macross II", GAME_NO_COCKTAIL )
+GAMEX( 1993, macross2, 0,       macross2, macross2, 0,        ROT0,   "Banpresto",						"Super Spacefortress Macross II / Chou-Jikuu Yousai Macross II", GAME_NO_COCKTAIL )
 GAMEX( 1993, tdragon2, 0,       tdragon2, tdragon2, 0,        ROT270, "NMK",				         	"Thunder Dragon 2", GAME_NO_COCKTAIL )
 GAMEX( 1993, bigbang,  tdragon2,tdragon2, tdragon2, 0,        ROT270, "NMK",				         	"Big Bang", GAME_NO_COCKTAIL )
 GAMEX( 1994, raphero,  0,       raphero,  tdragon2, 0,        ROT270, "Media Trading Corp",             "Rapid Hero (Japan?)", GAME_NO_SOUND ) // 23rd July 1993 in test mode, (c)1994 on title screen

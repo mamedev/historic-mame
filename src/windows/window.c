@@ -38,6 +38,9 @@ extern void win_pause_input(int pause);
 extern int win_is_mouse_captured(void);
 extern UINT8 win_trying_to_quit;
 
+// from wind3dfx.c
+int win_d3d_effects_in_use(void);
+
 
 
 //============================================================
@@ -75,11 +78,13 @@ int	win_triple_buffer;
 int	win_use_ddraw;
 int	win_use_d3d;
 int	win_dd_hw_stretch;
-int	win_d3d_filter;
+int	win_d3d_use_filter;
 int win_d3d_tex_manage;
+int win_force_int_stretch;
 int	win_gfx_width;
 int	win_gfx_height;
 int win_gfx_depth;
+int win_gfx_zoom;
 int win_old_scanlines;
 int win_switch_res;
 int win_switch_bpp;
@@ -98,6 +103,7 @@ HWND win_debug_window;
 
 // video bounds
 double win_aspect_ratio_adjust = 1.0;
+int win_default_constraints;
 
 // visible bounds
 RECT win_visible_rect;
@@ -120,6 +126,7 @@ int win_color32_bdst_shift = 0;
 // actual physical resolution
 int win_physical_width;
 int win_physical_height;
+
 
 
 //============================================================
@@ -467,7 +474,7 @@ int win_init_window(void)
 
 int win_create_window(int width, int height, int depth, int attributes, double aspect)
 {
-	int i, result;
+	int i, result = 0;
 
 	// clear the initial state
 	visible_area_set = 0;
@@ -515,33 +522,16 @@ int win_create_window(int width, int height, int depth, int attributes, double a
 	// copy that same data into the debug DIB info
 	memcpy(debug_dib_info_data, video_dib_info_data, sizeof(debug_dib_info_data));
 
-	// Determine which DirectX components to use
-	if (win_use_d3d) {
-		win_use_directx = USE_D3D;
-	}
-	else if (win_use_ddraw)
-	{
-		win_use_directx = USE_DDRAW;
-	}
-	
-	// finish off by trying to initialize DirectX	
-	if (win_use_directx)
-	{
-		if (win_use_directx == USE_D3D)
-		{
-			result = win_d3d_init(width, height, depth, attributes, &effect_table[win_blit_effect]);
-		}
-		else
-		{
-			result = win_ddraw_init(width, height, depth, attributes, &effect_table[win_blit_effect]);
-		}
-		
-		if (result)
-			return result;
-	}
+	win_default_constraints = 0;
 
+	// Determine which DirectX components to use
+	if (win_use_d3d)
+		win_use_directx = USE_D3D;
+	else if (win_use_ddraw)
+		win_use_directx = USE_DDRAW;
+	
 	// determine the aspect ratio: hardware stretch case
-	if (win_use_directx == USE_D3D || (win_use_directx == USE_DDRAW && win_dd_hw_stretch))
+	if (!win_force_int_stretch && (win_use_directx == USE_D3D || (win_use_directx == USE_DDRAW && win_dd_hw_stretch)))
 	{
 		aspect_ratio = aspect;
 	}
@@ -555,6 +545,31 @@ int win_create_window(int width, int height, int depth, int attributes, double a
 		else if (pixel_aspect_ratio == VIDEO_PIXEL_ASPECT_RATIO_1_2)
 			aspect_ratio /= 2.0;
 	}
+
+	// finish off by trying to initialize DirectX	
+	if (win_use_directx)
+	{
+		if (win_use_directx == USE_D3D)
+			result = win_d3d_init(width, height, depth, attributes, aspect_ratio, &effect_table[win_blit_effect]);
+		else
+			result = win_ddraw_init(width, height, depth, attributes, &effect_table[win_blit_effect]);
+	}
+
+	// warn the user if effects for an inactive/possibly inapropriate effects engine are selected
+	if (win_use_directx == USE_D3D)
+	{
+		if (win_blit_effect)
+			fprintf(stderr, "Warning: non-hardware-accelerated blitting-effects engine enabled\n         use the -d3deffect option to enable hardware acceleration\n");
+		}
+		else
+		{
+		if (win_d3d_effects_in_use())
+			fprintf(stderr, "Warning: hardware-accelerated blitting-effects selected, but currently disabled\n         use the -direct3d option to enable hardware acceleration\n");
+		}
+		
+	// return directx initialisation status
+	if (win_use_directx)
+			return result;
 
 	return 0;
 }
@@ -742,7 +757,7 @@ static LRESULT CALLBACK video_window_proc(HWND wnd, UINT message, WPARAM wparam,
 		{
 			RECT *rect = (RECT *)lparam;
 			if (win_keep_aspect && !(GetAsyncKeyState(VK_CONTROL) & 0x8000))
-				win_constrain_to_aspect_ratio(rect, wparam);
+				win_constrain_to_aspect_ratio(rect, wparam, 0);
 			InvalidateRect(win_video_window, NULL, FALSE);
 			break;
 		}
@@ -790,7 +805,7 @@ static LRESULT CALLBACK video_window_proc(HWND wnd, UINT message, WPARAM wparam,
 //	win_constrain_to_aspect_ratio
 //============================================================
 
-void win_constrain_to_aspect_ratio(RECT *rect, int adjustment)
+void win_constrain_to_aspect_ratio(RECT *rect, int adjustment, int constraints)
 {
 	double adjusted_ratio = aspect_ratio;
 	int extrawidth = wnd_extra_width();
@@ -801,7 +816,7 @@ void win_constrain_to_aspect_ratio(RECT *rect, int adjustment)
 	RECT rectcopy = *rect;
 
 	// adjust if hardware stretching
-	if (win_use_directx == USE_D3D || (win_use_directx == USE_DDRAW && win_dd_hw_stretch))
+	if (!win_force_int_stretch && (win_use_directx == USE_D3D || (win_use_directx == USE_DDRAW && win_dd_hw_stretch)))
 		adjusted_ratio *= win_aspect_ratio_adjust;
 
 	// determine the minimum rect
@@ -809,11 +824,11 @@ void win_constrain_to_aspect_ratio(RECT *rect, int adjustment)
 	if (win_visible_width < win_visible_height)
 	{
 		minrect.right = minrect.left + MIN_WINDOW_DIM + extrawidth;
-		minrect.bottom = minrect.top + (int)((double)MIN_WINDOW_DIM / adjusted_ratio) + extraheight;
+		minrect.bottom = minrect.top + (int)((double)MIN_WINDOW_DIM / adjusted_ratio + 0.5) + extraheight;
 	}
 	else
 	{
-		minrect.right = minrect.left + (int)((double)MIN_WINDOW_DIM * adjusted_ratio) + extrawidth;
+		minrect.right = minrect.left + (int)((double)MIN_WINDOW_DIM * adjusted_ratio + 0.5) + extrawidth;
 		minrect.bottom = minrect.top + MIN_WINDOW_DIM + extraheight;
 	}
 
@@ -835,28 +850,55 @@ void win_constrain_to_aspect_ratio(RECT *rect, int adjustment)
 	if (!win_keep_aspect)
 		return;
 
+	if (constraints == CONSTRAIN_INTEGER_WIDTH)
+	{
+		int maxwidth = (rectcopy.right - rectcopy.left - extrawidth) / win_visible_width;
+
+		while (maxwidth > 1 && maxrect.bottom - maxrect.top < (int)((double)maxwidth * win_visible_width / adjusted_ratio + 0.5) + extraheight)
+		{
+			maxwidth--;
+		}
+		if (maxrect.right - maxrect.left > maxwidth * win_visible_width + extrawidth)
+		{
+			maxrect.right = maxrect.left + maxwidth * win_visible_width + extrawidth;
+		}
+	}
+	else if (constraints == CONSTRAIN_INTEGER_HEIGHT)
+	{
+		int maxheight = (rectcopy.bottom - rectcopy.top - extraheight) / win_visible_height;
+
+		while (maxheight > 1 && maxrect.right - maxrect.left < (int)((double)maxheight * win_visible_height * adjusted_ratio + 0.5) + extrawidth)
+		{
+			maxheight--;
+		}
+		if (maxrect.bottom - maxrect.top > maxheight * win_visible_height + extraheight)
+		{
+			maxrect.bottom = maxrect.top + maxheight * win_visible_height + extraheight;
+		}
+	}
+
 	// compute the maximum requested width/height
 	switch (adjustment)
 	{
 		case WMSZ_LEFT:
 		case WMSZ_RIGHT:
 			reqwidth = rectcopy.right - rectcopy.left - extrawidth;
-			reqheight = (int)((double)reqwidth / adjusted_ratio);
+			reqheight = (int)((double)reqwidth / adjusted_ratio + 0.5);
 			break;
 
 		case WMSZ_TOP:
 		case WMSZ_BOTTOM:
 			reqheight = rectcopy.bottom - rectcopy.top - extraheight;
-			reqwidth = (int)((double)reqheight * adjusted_ratio);
+			reqwidth = (int)((double)reqheight * adjusted_ratio + 0.5);
 			break;
 
 		default:
 			reqwidth = rectcopy.right - rectcopy.left - extrawidth;
-			reqheight = (int)((double)reqwidth / adjusted_ratio);
+			reqheight = (int)((double)reqwidth / adjusted_ratio + 0.5);
 			if (reqheight < (rectcopy.bottom - rectcopy.top - extraheight))
 			{
 				reqheight = rectcopy.bottom - rectcopy.top - extraheight;
-				reqwidth = (int)((double)reqheight * adjusted_ratio);
+				reqwidth = (int)((double)reqheight * adjusted_ratio + 0.5);
 			}
 			break;
 	}
@@ -865,24 +907,24 @@ void win_constrain_to_aspect_ratio(RECT *rect, int adjustment)
 	if (reqwidth + extrawidth < minrect.right - minrect.left)
 	{
 		reqwidth = minrect.right - minrect.left - extrawidth;
-		reqheight = (int)((double)reqwidth / adjusted_ratio);
+		reqheight = (int)((double)reqwidth / adjusted_ratio + 0.5);
 	}
 	if (reqheight + extraheight < minrect.bottom - minrect.top)
 	{
 		reqheight = minrect.bottom - minrect.top - extraheight;
-		reqwidth = (int)((double)reqheight * adjusted_ratio);
+		reqwidth = (int)((double)reqheight * adjusted_ratio + 0.5);
 	}
 
 	// scale down if too big
 	if (reqwidth + extrawidth > maxrect.right - maxrect.left)
 	{
 		reqwidth = maxrect.right - maxrect.left - extrawidth;
-		reqheight = (int)((double)reqwidth / adjusted_ratio);
+		reqheight = (int)((double)reqwidth / adjusted_ratio + 0.5);
 	}
 	if (reqheight + extraheight > maxrect.bottom - maxrect.top)
 	{
 		reqheight = maxrect.bottom - maxrect.top - extraheight;
-		reqwidth = (int)((double)reqheight * adjusted_ratio);
+		reqwidth = (int)((double)reqheight * adjusted_ratio + 0.5);
 	}
 
 	// compute the adjustments we need to make
@@ -1005,7 +1047,9 @@ void win_adjust_window_for_visible(int min_x, int max_x, int min_y, int max_y)
 
 void win_toggle_maximize(void)
 {
-	RECT current, maximum;
+	RECT current, constrained, maximum;
+	int xoffset, yoffset;
+	int center_window = 0;
 
 	// get the current position
 	GetWindowRect(win_video_window, &current);
@@ -1013,25 +1057,71 @@ void win_toggle_maximize(void)
 	// get the desktop work area
 	get_work_area(&maximum);
 
-	// if already at max, restore the saved position
+	// get the maximum constrained area
+	constrained = maximum;
+	if (win_default_constraints)
+	{
+		win_constrain_to_aspect_ratio(&constrained, WMSZ_BOTTOMRIGHT, win_default_constraints);
+	}
+
+	if (win_default_constraints)
+	{
+		// toggle between maximised, contrained, and normal sizes
 	if ((current.right - current.left) >= (maximum.right - maximum.left) ||
 		(current.bottom - current.top) >= (maximum.bottom - maximum.top))
 	{
 		current = non_maximized_bounds;
 	}
+		else if ((current.right - current.left) == (constrained.right - constrained.left) &&
+				 (current.bottom - current.top) == (constrained.bottom - constrained.top))
+		{
+			current = maximum;
 
-	// otherwise, save the non_maximized_bounds position and set the new one
+			win_constrain_to_aspect_ratio(&current, WMSZ_BOTTOMRIGHT, 0);
+			center_window = 1;
+		}
+		else if ((current.right - current.left) > (constrained.right - constrained.left) &&
+				 (current.bottom - current.top) > (constrained.bottom - constrained.top))
+		{
+			// save the current location
+			non_maximized_bounds = current;
+
+			current = maximum;
+
+			win_constrain_to_aspect_ratio(&current, WMSZ_BOTTOMRIGHT, 0);
+			center_window = 1;
+		}
 	else
 	{
-		int xoffset, yoffset;
+			// save the current location
+			non_maximized_bounds = current;
 
+			current = constrained;
+			center_window = 1;
+		}
+	}
+	else
+	{
+		// toggle between maximised and mormal sizes
+		if ((current.right - current.left) >= (maximum.right - maximum.left) ||
+			(current.bottom - current.top) >= (maximum.bottom - maximum.top))
+		{
+			current = non_maximized_bounds;
+		}
+		else
+		{
 		// save the current location
 		non_maximized_bounds = current;
 
-		// compute the max size
 		current = maximum;
-		win_constrain_to_aspect_ratio(&current, WMSZ_BOTTOMRIGHT);
+			center_window = 1;
+		}
 
+		win_constrain_to_aspect_ratio(&current, WMSZ_BOTTOMRIGHT, 0);
+	}
+
+	if (center_window == 1)
+	{
 		// if we're not stretching, compute the multipliers
 		if (win_use_directx != USE_D3D && (win_use_directx != USE_DDRAW || !win_dd_hw_stretch))
 		{
@@ -1139,7 +1229,7 @@ void win_toggle_full_screen(void)
 	{
 		if (win_use_directx == USE_D3D)
 		{
-			if (win_d3d_init(0, 0, 0, 0, NULL))
+			if (win_d3d_init(0, 0, 0, 0, 0, NULL))
 				exit(1);
 		}
 		else
@@ -1171,7 +1261,7 @@ void win_adjust_window(void)
 	{
 		// constrain the existing size to the aspect ratio
 		window = original;
-		win_constrain_to_aspect_ratio(&window, WMSZ_BOTTOMRIGHT);
+		win_constrain_to_aspect_ratio(&window, WMSZ_BOTTOMRIGHT, 0);
 	}
 
 	// in full screen, make sure it covers the primary display

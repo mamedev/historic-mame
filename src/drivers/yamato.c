@@ -3,8 +3,6 @@
 TODO:
 - This runs on Crazy Climber hardware, should be merged with that driver.
 - Two ROMs are not used, I don't know what they are.
-- I'm only using the bottom half of the big sprite char ROM - there must
-  be a way for the game to address both
 
 */
 
@@ -142,7 +140,7 @@ static WRITE_HANDLER( flip_screen_y_w )
 
 static MEMORY_READ_START( yamato_readmem )
 	{ 0x0000, 0x5fff, MRA_ROM },
-	{ 0x6000, 0x67ff, MRA_RAM },
+	{ 0x6000, 0x6fff, MRA_RAM },
 	{ 0x7000, 0x7fff, MRA_ROM },
 	{ 0x8800, 0x8bff, MRA_RAM },
 	{ 0x9000, 0x93ff, MRA_RAM },	/* video RAM */
@@ -157,7 +155,7 @@ MEMORY_END
 
 static MEMORY_WRITE_START( yamato_writemem )
 	{ 0x0000, 0x5fff, MWA_ROM },
-	{ 0x6000, 0x67ff, MWA_RAM },
+	{ 0x6000, 0x6fff, MWA_RAM },
 	{ 0x7000, 0x7fff, MWA_ROM },
 	{ 0x8800, 0x88ff, cclimber_bigsprite_videoram_w, &cclimber_bsvideoram, &cclimber_bsvideoram_size },
 	{ 0x8900, 0x8bff, MWA_RAM },  /* not used, but initialized */
@@ -390,12 +388,8 @@ ROM_START( yamato )
 	ROM_CONTINUE(             0x3000, 0x1000 )
 
 	ROM_REGION( 0x2000, REGION_GFX2, ROMREGION_DISPOSE )
-	/* TODO: I'm swapping the two halves of the ROMs to use only the bottom */
-	/* 256 chars. There must be a way for the game to address both halves */
-	ROM_LOAD( "8.11c",        0x0800, 0x0800, CRC(28024d9a) SHA1(c871c4d74be72a8bfea99e89d43f91922f4b734b) )
-	ROM_CONTINUE(             0x0000, 0x0800 )
-	ROM_LOAD( "7.11a",        0x1800, 0x0800, CRC(4a179790) SHA1(7fb6b033de939ff8bd13055c073311dca2c1a6fe) )
-	ROM_CONTINUE(             0x1000, 0x0800 )
+	ROM_LOAD( "8.11c",        0x0000, 0x1000, CRC(28024d9a) SHA1(c871c4d74be72a8bfea99e89d43f91922f4b734b) )
+	ROM_LOAD( "7.11a",        0x1000, 0x1000, CRC(4a179790) SHA1(7fb6b033de939ff8bd13055c073311dca2c1a6fe) )
 
 	ROM_REGION( 0x00a0, REGION_PROMS, 0 )
 	ROM_LOAD( "1.bpr",        0x0000, 0x0020, CRC(ef2053ab) SHA1(2006cbf003f90a8e75f39047a88a3bba85d78e80) )
@@ -427,12 +421,8 @@ ROM_START( yamato2 )
 	ROM_CONTINUE(             0x3000, 0x1000 )
 
 	ROM_REGION( 0x2000, REGION_GFX2, ROMREGION_DISPOSE )
-	/* TODO: I'm swapping the two halves of the ROMs to use only the bottom */
-	/* 256 chars. There must be a way for the game to address both halves */
-	ROM_LOAD( "8.11c",        0x0800, 0x0800, CRC(28024d9a) SHA1(c871c4d74be72a8bfea99e89d43f91922f4b734b) )
-	ROM_CONTINUE(             0x0000, 0x0800 )
-	ROM_LOAD( "7.11a",        0x1800, 0x0800, CRC(4a179790) SHA1(7fb6b033de939ff8bd13055c073311dca2c1a6fe) )
-	ROM_CONTINUE(             0x1000, 0x0800 )
+	ROM_LOAD( "8.11c",        0x0000, 0x1000, CRC(28024d9a) SHA1(c871c4d74be72a8bfea99e89d43f91922f4b734b) )
+	ROM_LOAD( "7.11a",        0x1000, 0x1000, CRC(4a179790) SHA1(7fb6b033de939ff8bd13055c073311dca2c1a6fe) )
 
 	ROM_REGION( 0x00a0, REGION_PROMS, 0 )
 	ROM_LOAD( "1.bpr",        0x0000, 0x0020, CRC(ef2053ab) SHA1(2006cbf003f90a8e75f39047a88a3bba85d78e80) )

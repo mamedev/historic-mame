@@ -727,34 +727,34 @@ do { OP1(0xd9); MODRM_MABS(7, addr); } while (0)
 
 
 
-#define _fabs(addr) \
+#define _fabs() \
 do { OP1(0xd9); OP1(0xe1); } while (0)
 
-#define _faddp(addr) \
+#define _faddp() \
 do { OP1(0xde); OP1(0xc1); } while (0)
 
-#define _fchs(addr) \
+#define _fchs() \
 do { OP1(0xd9); OP1(0xe0); } while (0)
 
-#define _fcompp(addr) \
+#define _fcompp() \
 do { OP1(0xde); OP1(0xd9); } while (0)
 
-#define _fdivp(addr) \
+#define _fdivp() \
 do { OP1(0xde); OP1(0xf9); } while (0)
 
-#define _fmulp(addr) \
+#define _fmulp() \
 do { OP1(0xde); OP1(0xc9); } while (0)
 
-#define _fsqrt(addr) \
+#define _fsqrt() \
 do { OP1(0xd9); OP1(0xfa); } while (0)
 
-#define _fsubp(addr) \
+#define _fsubp() \
 do { OP1(0xde); OP1(0xe9); } while (0)
 
-#define _fsubrp(addr) \
+#define _fsubrp() \
 do { OP1(0xde); OP1(0xe1); } while (0)
 
-#define _fucompp(addr) \
+#define _fucompp() \
 do { OP1(0xda); OP1(0xe9); } while (0)
 
 

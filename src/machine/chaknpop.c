@@ -12,6 +12,8 @@
 static data8_t mcu_seed;
 static data8_t mcu_select;
 static data8_t mcu_result;
+static data8_t mcu_wait;
+static int mcu_countdown;
 
 /*  mcu data that is extracted from the real board! */
 static data8_t mcu_data[256] = {
@@ -75,6 +77,10 @@ READ_HANDLER( chaknpop_mcu_portA_r )
 READ_HANDLER( chaknpop_mcu_portB_r )
 {
 	//logerror("%04x: MCU portB read\n", activecpu_get_pc());
+
+	if (--mcu_wait)
+		return 0x00;
+
 	return 0xff;
 }
 
@@ -88,6 +94,21 @@ WRITE_HANDLER( chaknpop_mcu_portA_w )
 {
 	data8_t *RAM = memory_region(REGION_CPU1);
 	data8_t mcu_command;
+
+	if (mcu_countdown)
+	{
+	data16_t counter = (RAM[0x838a] << 8) + RAM[0x8389];
+
+	counter--;
+	RAM[0x8389] = counter & 0xff;
+	RAM[0x838a] = counter >> 8;
+
+		if (!counter)
+		{
+			mcu_countdown = 0;
+			logerror("MCU count down ended\n");
+		}
+	}
 
 	mcu_command = data + mcu_seed;
 	mcu_result = 0;
@@ -143,6 +164,19 @@ WRITE_HANDLER( chaknpop_mcu_portC_w )
 	//logerror("%04x: MCU portC write 0x%02x\n", activecpu_get_pc(), data);
 }
 
+WRITE_HANDLER( mcu_countdown_w )
+{
+	data8_t *RAM = memory_region(REGION_CPU1);
+
+	RAM[0x8389] = data;
+
+	/* I don't know what is trigger. Is it needed only ending? */
+	if (activecpu_get_previouspc() == 0x3560)
+	{
+		mcu_countdown = 1;
+		logerror("MCU count down started\n");
+	}
+}
 
 /***************************************************************************
   Initialize mcu emulation
@@ -150,12 +184,19 @@ WRITE_HANDLER( chaknpop_mcu_portC_w )
 
 DRIVER_INIT( chaknpop )
 {
+	/*  Count down by MCU */
+	install_mem_write_handler(0, 0x8389, 0x8389, mcu_countdown_w);
+
 	state_save_register_UINT8("chankpop", 0, "mcu_seed",    &mcu_seed,    1);
 	state_save_register_UINT8("chankpop", 0, "mcu_result",  &mcu_result,  1);
 	state_save_register_UINT8("chankpop", 0, "mcu_select",  &mcu_select,  1);
+	state_save_register_UINT8("chankpop", 0, "mcu_wait",       &mcu_wait,    1);
+	state_save_register_int(  "chankpop", 0, "mcu_countdown",  &mcu_countdown);
 }
 
 MACHINE_INIT( chaknpop )
 {
 	mcu_seed = MCU_INITIAL_SEED;
+	mcu_wait = 0;
+	mcu_countdown = 0;
 }

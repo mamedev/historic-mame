@@ -468,8 +468,8 @@ int discrete_sh_start (const struct MachineSound *msound)
 	{
 		int vol[2];
 		const char *stereo_names[2] = { "Discrete Left", "Discrete Right" };
-		vol[0] = output_node->input[2];
-		vol[1] = output_node->input[2];
+		vol[0] = MIXER((int)output_node->input[2],MIXER_PAN_LEFT);
+		vol[1] = MIXER((int)output_node->input[2],MIXER_PAN_RIGHT);
 		/* Initialise a stereo, stream, we always use stereo even if only a mono system */
 		discrete_stream=stream_init_multi(2,stereo_names,vol,Machine->sample_rate,0,discrete_stream_update_stereo);
 		discrete_log("discrete_sh_start() - Stereo Audio Stream Initialised", node_count);

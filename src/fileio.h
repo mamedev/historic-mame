@@ -9,7 +9,8 @@
 #ifndef FILEIO_H
 #define FILEIO_H
 
-#include "osd_cpu.h"
+#include <stdarg.h>
+#include "osdepend.h"
 #include "hash.h"
 
 #ifdef __cplusplus
@@ -81,6 +82,15 @@ char *mame_fgets(char *s, int n, mame_file *file);
 int mame_feof(mame_file *file);
 UINT64 mame_ftell(mame_file *file);
 
+int mame_fputs(mame_file *f, const char *s);
+int mame_vfprintf(mame_file *f, const char *fmt, va_list va);
+
+#ifdef __GNUC__
+int CLIB_DECL mame_fprintf(mame_file *f, const char *fmt, ...)
+      __attribute__ ((format (printf, 2, 3)));
+#else
+int CLIB_DECL mame_fprintf(mame_file *f, const char *fmt, ...);
+#endif /* __GNUC__ */
 
 #ifdef __cplusplus
 }

@@ -188,10 +188,7 @@ removal of hacks to change region / get info memory card manager
 -- added correct Bang Bead set (again based on Elsemi's Information)
 -- fixed bios filename (based on info from Guru)
 
-ToDo: (somebody else?)
-use ROM_LOAD_OPTIONAL to load all bios roms available on a user's
-system and update a fake dipswitch to switch between them in
-the DRIVER_INIT function giving an error if none were found.
+-- are the EURO bios roms infact ASIA bios roms?
 
 */
 
@@ -211,39 +208,6 @@ the DRIVER_INIT function giving an error if none were found.
 
 #define SCANLINE_ADJUST 3	/* in theory should be 0, give or take an off-by-one mistake */
 
-/****
- These are the known Bios Roms, Uncomment the one you want to use
- ****/
-
-/* Europe, 1 Slot (the old hacks were designed for this one) */
-#define NEOGEO_BIOS_NAME "sp-s2.sp1"
-#define NEOGEO_BIOS_CRC CRC(9036d879)
-/* Europe, 4 Slot */
-//#define NEOGEO_BIOS_NAME "sp-s.sp1"
-//#define NEOGEO_BIOS_CRC  CRC(c7f2fa45)
-/* Europe, 6 Slot (V5?) */
-//#define NEOGEO_BIOS_NAME "sp-e.sp1"
-//#define NEOGEO_BIOS_CRC  CRC(2723a5b5)
-/* Japan, Ver 6 VS Bios */
-//#define NEOGEO_BIOS_NAME "vs-bios.rom"
-//#define NEOGEO_BIOS_CRC  CRC(f0e8f27d)
-/* Japan, Older */
-//#define NEOGEO_BIOS_NAME "sp-j2.rom"
-//#define NEOGEO_BIOS_CRC  CRC(acede59c)
-/* Universe Bios v1.0 (hack) */
-//#define NEOGEO_BIOS_NAME "uni-bios.10"
-//#define NEOGEO_BIOS_CRC  CRC(0ce453a0)
-/* Universe Bios v1.1 (hack) */
-//#define NEOGEO_BIOS_NAME "uni-bios.11"
-//#define NEOGEO_BIOS_CRC  CRC(5dda0d84)
-/* Debug (Development) Bios */
-//#define NEOGEO_BIOS_NAME "neodebug.rom"
-//#define NEOGEO_BIOS_CRC  CRC(698ebb7d)
-
-
-/* we only have one irritating maze bios and thats asia */
-#define IRRMAZE_BIOS_NAME "236-bios.bin"
-#define IRRMAZE_BIOS_CRC CRC(853e6b96)
 
 /******************************************************************************/
 
@@ -502,6 +466,50 @@ static WRITE16_HANDLER( neo_z80_w )
 	cpu_set_irq_line(1, IRQ_LINE_NMI, PULSE_LINE);
 	/* spin for a while to let the Z80 read the command (fixes hanging sound in pspikes2) */
 	cpu_spinuntil_time(TIME_IN_USEC(10));
+}
+
+static int mjneogo_select;
+
+static WRITE16_HANDLER ( mjneogeo_w )
+{
+	mjneogo_select = data;
+}
+
+static READ16_HANDLER ( mjneogeo_r )
+{
+	data16_t res;
+
+/*
+cpu #0 (PC=00C18B9A): unmapped memory word write to 00380000 = 0012 & 00FF
+cpu #0 (PC=00C18BB6): unmapped memory word write to 00380000 = 001B & 00FF
+cpu #0 (PC=00C18D54): unmapped memory word write to 00380000 = 0024 & 00FF
+cpu #0 (PC=00C18D6C): unmapped memory word write to 00380000 = 0009 & 00FF
+cpu #0 (PC=00C18C40): unmapped memory word write to 00380000 = 0000 & 00FF
+*/
+	res = 0;
+
+	switch (mjneogo_select)
+	{
+		case 0x00:
+		res = 0; // nothing?
+		break;
+		case 0x09:
+		res = (readinputport(7) << 8); // a,b,c,d,e,g ....
+		break;
+		case 0x12:
+		res = (readinputport(8) << 8); // h,i,j,k,l ...
+		break;
+		case 0x1b:
+		res = (readinputport(0) << 8); // player 1 normal inputs?
+		break;
+		case 0x24:
+		res = (readinputport(9) << 8); // call etc.
+		break;
+		default:
+		break;
+	}
+
+	return res + readinputport(3);
 }
 
 
@@ -929,7 +937,11 @@ INPUT_PORTS_START( neogeo )
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_SERVICE1 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN ) // having this ACTIVE_HIGH causes you to start with 2 credits using USA bios roms
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN ) // having this ACTIVE_HIGH causes you to start with 2 credits using USA bios roms
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_SPECIAL )  /* handled by fake IN5 */
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 
 	/* Fake  IN 5 */
 	PORT_START
@@ -958,6 +970,128 @@ INPUT_PORTS_START( neogeo )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_SPECIAL )  /* handled by fake IN5 */
 	PORT_BITX( 0x80, IP_ACTIVE_LOW, 0, "Test Switch", KEYCODE_F2, IP_JOY_NONE )
 INPUT_PORTS_END
+
+INPUT_PORTS_START( mjneogeo )
+	PORT_START		/* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON3 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON4 )
+
+	PORT_START		/* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_PLAYER2 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_PLAYER2 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_PLAYER2 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_PLAYER2 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER2 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON4 | IPF_PLAYER2 )
+
+	PORT_START		/* IN2 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1 )   /* Player 1 Start */
+	PORT_BITX(0x02, IP_ACTIVE_LOW, 0, "Next Game",KEYCODE_7, IP_JOY_NONE ) // select
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_START2 )   /* Player 2 Start */
+	PORT_BITX(0x08, IP_ACTIVE_LOW, 0, "Previous Game",KEYCODE_8, IP_JOY_NONE )
+	PORT_BIT( 0x30, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* memory card inserted */
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* memory card write protection */
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START		/* IN3 */
+	PORT_DIPNAME( 0x01, 0x01, "Test Switch" )
+	PORT_DIPSETTING(	0x01, DEF_STR( Off ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x02, 0x02, "Coin Chutes?" )
+	PORT_DIPSETTING(	0x00, "1?" )
+	PORT_DIPSETTING(	0x02, "2?" )
+	PORT_DIPNAME( 0x04, 0x00, "Mahjong Control Panel" )
+	PORT_DIPSETTING(	0x04, DEF_STR( Off ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x38, 0x38, "COMM Setting" )
+	PORT_DIPSETTING(	0x38, DEF_STR( Off ) )
+	PORT_DIPSETTING(	0x30, "1" )
+	PORT_DIPSETTING(	0x20, "2" )
+	PORT_DIPSETTING(	0x10, "3" )
+	PORT_DIPSETTING(	0x00, "4" )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Free_Play ) )
+	PORT_DIPSETTING(	0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x80, "Freeze" )
+	PORT_DIPSETTING(	0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
+
+	PORT_START		/* IN4 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_SERVICE1 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN ) // having this ACTIVE_HIGH causes you to start with 2 credits using USA bios roms
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN ) // having this ACTIVE_HIGH causes you to start with 2 credits using USA bios roms
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_SPECIAL )  /* handled by fake IN5 */
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+
+	/* Fake  IN 5 */
+	PORT_START
+#if 0
+	PORT_DIPNAME( 0x03, 0x02,"Territory" )
+	PORT_DIPSETTING(	0x00,"Japan" )
+	PORT_DIPSETTING(	0x01,"USA" )
+	PORT_DIPSETTING(	0x02,"Europe" )
+//	PORT_DIPNAME( 0x04, 0x04,"Machine Mode" )
+//	PORT_DIPSETTING(	0x00,"Home" )
+//	PORT_DIPSETTING(	0x04,"Arcade" )
+	PORT_DIPNAME( 0x60, 0x60,"Game Slots" )		// Stored at 0x47 of NVRAM
+	PORT_DIPSETTING(	0x60,"2" )
+//	PORT_DIPSETTING(	0x40,"2" )
+	PORT_DIPSETTING(	0x20,"4" )
+	PORT_DIPSETTING(	0x00,"6" )
+#endif
+
+	PORT_START		/* Test switch */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_SPECIAL )  /* handled by fake IN5 */
+	PORT_BITX( 0x80, IP_ACTIVE_LOW, 0, "Test Switch", KEYCODE_F2, IP_JOY_NONE )
+
+	PORT_START
+	PORT_BITX(0x01, IP_ACTIVE_LOW, 0, "A",   KEYCODE_A,        IP_JOY_NONE )
+	PORT_BITX(0x02, IP_ACTIVE_LOW, 0, "B",   KEYCODE_B,        IP_JOY_NONE )
+	PORT_BITX(0x04, IP_ACTIVE_LOW, 0, "C",   KEYCODE_C,        IP_JOY_NONE )
+	PORT_BITX(0x08, IP_ACTIVE_LOW, 0, "D",   KEYCODE_D,        IP_JOY_NONE )
+	PORT_BITX(0x10, IP_ACTIVE_LOW, 0, "E",   KEYCODE_E,        IP_JOY_NONE )
+	PORT_BITX(0x20, IP_ACTIVE_LOW, 0, "F",   KEYCODE_F,        IP_JOY_NONE )
+	PORT_BITX(0x40, IP_ACTIVE_LOW, 0, "G",   KEYCODE_G,        IP_JOY_NONE )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START
+	PORT_BITX(0x01, IP_ACTIVE_LOW, 0, "H",   KEYCODE_H,        IP_JOY_NONE )
+	PORT_BITX(0x02, IP_ACTIVE_LOW, 0, "I",   KEYCODE_I,        IP_JOY_NONE )
+	PORT_BITX(0x04, IP_ACTIVE_LOW, 0, "J",   KEYCODE_J,        IP_JOY_NONE )
+	PORT_BITX(0x08, IP_ACTIVE_LOW, 0, "K",   KEYCODE_K,        IP_JOY_NONE )
+	PORT_BITX(0x10, IP_ACTIVE_LOW, 0, "L",   KEYCODE_L,        IP_JOY_NONE )
+	PORT_BITX(0x20, IP_ACTIVE_LOW, 0, "M",   KEYCODE_M,        IP_JOY_NONE )
+	PORT_BITX(0x40, IP_ACTIVE_LOW, 0, "N",   KEYCODE_N,        IP_JOY_NONE )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START
+	PORT_BITX(0x01, IP_ACTIVE_LOW, 0, "Pon",   KEYCODE_LALT,     IP_JOY_NONE )
+	PORT_BITX(0x02, IP_ACTIVE_LOW, 0, "Chi",   KEYCODE_SPACE,    IP_JOY_NONE )
+	PORT_BITX(0x04, IP_ACTIVE_LOW, 0, "Kan",   KEYCODE_LCONTROL, IP_JOY_NONE )
+	PORT_BITX(0x08, IP_ACTIVE_LOW, 0, "Ron",   KEYCODE_Z,        IP_JOY_NONE )
+	PORT_BITX(0x10, IP_ACTIVE_LOW, 0, "Reach", KEYCODE_LSHIFT,   IP_JOY_NONE )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+INPUT_PORTS_END
+
 
 INPUT_PORTS_START( irrmaze )
 	PORT_START		/* IN0 multiplexed */
@@ -1009,6 +1143,11 @@ INPUT_PORTS_START( irrmaze )
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_SERVICE1 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN ) // having this ACTIVE_HIGH causes you to start with 2 credits using USA bios roms
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN ) // having this ACTIVE_HIGH causes you to start with 2 credits using USA bios roms
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_SPECIAL )  /* handled by fake IN5 */
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 
 	/* Fake  IN 5 */
 	PORT_START
@@ -1107,7 +1246,10 @@ static MACHINE_DRIVER_START( neogeo )
 	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
 	MDRV_CPU_PORTS(neo_readio,neo_writeio)
 
-	MDRV_FRAMES_PER_SECOND(60)
+	/* Framerate should be 59, not 60?, with 59 the kof98 intro is correctly
+	   synced to the music, was neogeo067gre, should probably be verified against
+	   the original hardware */
+	MDRV_FRAMES_PER_SECOND(59)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	MDRV_MACHINE_INIT(neogeo)
@@ -1116,6 +1258,10 @@ static MACHINE_DRIVER_START( neogeo )
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
 	MDRV_SCREEN_SIZE(40*8, 32*8)
+	/* Screen width *should* be 320, at least in the test mode for the crosshatch,
+	   this has been verified on original hardware, however some games don't look
+	   correct with a width of 320 (mslug ingame, kof98 title screen) */
+//	MDRV_VISIBLE_AREA(0*8, 40*8-1, 2*8, 30*8-1)
 	MDRV_VISIBLE_AREA(1*8, 39*8-1, 2*8, 30*8-1)
 	MDRV_GFXDECODE(neogeo_mvs_gfxdecodeinfo)
 	MDRV_PALETTE_LENGTH(4096)
@@ -1152,9 +1298,36 @@ MACHINE_DRIVER_END
 
 /******************************************************************************/
 
+/****
+ These are the known Bios Roms, Set options.bios to the one you want
+ ****/
+#define ROM_LOAD16_WORD_SWAP_BIOS(bios,name,offset,length,hash) \
+		ROMX_LOAD(name, offset, length, hash, ROM_GROUPWORD | ROM_REVERSE | ROM_BIOS(bios+1)) /* Note '+1' */
+
+#define NEOGEO_BIOS \
+	ROM_LOAD16_WORD_SWAP_BIOS( 0, "sp-s2.sp1",    0x00000, 0x020000, CRC(9036d879) SHA1(4f5ed7105b7128794654ce82b51723e16e389543) ) /* Europe, 1 Slot, has also been found on a 4 Slot (the old hacks were designed for this one) */ \
+	ROM_LOAD16_WORD_SWAP_BIOS( 1, "sp-s.sp1",     0x00000, 0x020000, CRC(c7f2fa45) SHA1(09576ff20b4d6b365e78e6a5698ea450262697cd) ) /* Europe, 4 Slot */ \
+	ROM_LOAD16_WORD_SWAP_BIOS( 2, "usa_2slt.bin", 0x00000, 0x020000, CRC(e72943de) SHA1(5c6bba07d2ec8ac95776aa3511109f5e1e2e92eb) ) /* US, 2 Slot */ \
+	ROM_LOAD16_WORD_SWAP_BIOS( 3, "sp-e.sp1",     0x00000, 0x020000, CRC(2723a5b5) SHA1(5dbff7531cf04886cde3ef022fb5ca687573dcb8) ) /* US, 6 Slot (V5?) */ \
+	ROM_LOAD16_WORD_SWAP_BIOS( 4, "asia-s3.rom",  0x00000, 0x020000, CRC(91b64be3) SHA1(720a3e20d26818632aedf2c2fd16c54f213543e1) ) /* Asia */ \
+	ROM_LOAD16_WORD_SWAP_BIOS( 5, "vs-bios.rom",  0x00000, 0x020000, CRC(f0e8f27d) SHA1(ecf01eda815909f1facec62abf3594eaa8d11075) ) /* Japan, Ver 6 VS Bios */ \
+	ROM_LOAD16_WORD_SWAP_BIOS( 6, "sp-j2.rom",    0x00000, 0x020000, CRC(acede59c) SHA1(b6f97acd282fd7e94d9426078a90f059b5e9dd91) ) /* Japan, Older */ \
+
+/* note you'll have to modify the following ones to use them,
+   they're hacks / homebrew / console bios roms so Mame doesn't list them by default */
+
+//	ROM_LOAD16_WORD_SWAP_BIOS( 7, "uni-bios.10",  0x00000, 0x020000, CRC(0ce453a0) SHA1(3b4c0cd26c176fc6b26c3a2f95143dd478f6abf9) ) /* Universe Bios v1.0 (hack) */
+//	ROM_LOAD16_WORD_SWAP_BIOS( 8, "uni-bios.11",  0x00000, 0x020000, CRC(5dda0d84) SHA1(4153d533c02926a2577e49c32657214781ff29b7) ) /* Universe Bios v1.1 (hack) */
+//	ROM_LOAD16_WORD_SWAP_BIOS( 9, "neodebug.rom", 0x00000, 0x020000, CRC(698ebb7d) SHA1(081c49aa8cc7dad5939833dc1b18338321ea0a07) ) /* Debug (Development) Bios */
+
+
+/* we only have one irritating maze bios and thats asia */
+#define IRRMAZE_BIOS \
+	ROM_LOAD16_WORD_SWAP(         "236-bios.bin", 0x00000, 0x020000, CRC(853e6b96) ) \
+
 #define NEO_BIOS_SOUND_512K(name,sum) \
 	ROM_REGION16_BE( 0x20000, REGION_USER1, 0 ) \
-	ROM_LOAD16_WORD_SWAP( NEOGEO_BIOS_NAME, 0x00000, 0x020000, NEOGEO_BIOS_CRC ) \
+	NEOGEO_BIOS \
 	ROM_REGION( 0x90000, REGION_CPU2, 0 ) \
 	ROM_LOAD( "sm1.sm1", 0x00000, 0x20000, CRC(97cf998b) SHA1(977387a7c76ef9b21d0b01fa69830e949a9a9626) )  /* we don't use the BIOS anyway... */ \
 	ROM_LOAD( name, 		0x00000, 0x80000, sum ) /* so overwrite it with the real thing */ \
@@ -1164,7 +1337,7 @@ MACHINE_DRIVER_END
 
 #define NEO_BIOS_SOUND_256K(name,sum) \
 	ROM_REGION16_BE( 0x20000, REGION_USER1, 0 ) \
-	ROM_LOAD16_WORD_SWAP( NEOGEO_BIOS_NAME, 0x00000, 0x020000, NEOGEO_BIOS_CRC ) \
+	NEOGEO_BIOS \
 	ROM_REGION( 0x50000, REGION_CPU2, 0 ) \
 	ROM_LOAD( "sm1.sm1", 0x00000, 0x20000, CRC(97cf998b) SHA1(977387a7c76ef9b21d0b01fa69830e949a9a9626) )  /* we don't use the BIOS anyway... */ \
 	ROM_LOAD( name, 		0x00000, 0x40000, sum ) /* so overwrite it with the real thing */ \
@@ -1174,7 +1347,7 @@ MACHINE_DRIVER_END
 
 #define NEO_BIOS_SOUND_128K(name,sum) \
 	ROM_REGION16_BE( 0x20000, REGION_USER1, 0 ) \
-	ROM_LOAD16_WORD_SWAP( NEOGEO_BIOS_NAME, 0x00000, 0x020000, NEOGEO_BIOS_CRC ) \
+	NEOGEO_BIOS \
 	ROM_REGION( 0x50000, REGION_CPU2, 0 ) \
 	ROM_LOAD( "sm1.sm1", 0x00000, 0x20000, CRC(97cf998b) SHA1(977387a7c76ef9b21d0b01fa69830e949a9a9626) )  /* we don't use the BIOS anyway... */ \
 	ROM_LOAD( name, 		0x00000, 0x20000, sum ) /* so overwrite it with the real thing */ \
@@ -1184,7 +1357,7 @@ MACHINE_DRIVER_END
 
 #define NEO_BIOS_SOUND_64K(name,sum) \
 	ROM_REGION16_BE( 0x20000, REGION_USER1, 0 ) \
-	ROM_LOAD16_WORD_SWAP( NEOGEO_BIOS_NAME, 0x00000, 0x020000, NEOGEO_BIOS_CRC ) \
+	NEOGEO_BIOS \
 	ROM_REGION( 0x50000, REGION_CPU2, 0 ) \
 	ROM_LOAD( "sm1.sm1", 0x00000, 0x20000, CRC(97cf998b) SHA1(977387a7c76ef9b21d0b01fa69830e949a9a9626) )  /* we don't use the BIOS anyway... */ \
 	ROM_LOAD( name, 		0x00000, 0x10000, sum ) /* so overwrite it with the real thing */ \
@@ -4071,7 +4244,7 @@ ROM_START( irrmaze )
 
 	ROM_REGION16_BE( 0x20000, REGION_USER1, 0 )
 	/* special BIOS with trackball support */
-	ROM_LOAD16_WORD_SWAP( IRRMAZE_BIOS_NAME, 0x00000, 0x020000, IRRMAZE_BIOS_CRC )
+	IRRMAZE_BIOS
 	ROM_REGION( 0x50000, REGION_CPU2, 0 )
 	ROM_LOAD( "sm1.sm1", 0x00000, 0x20000, CRC(97cf998b) SHA1(977387a7c76ef9b21d0b01fa69830e949a9a9626) )  /* we don't use the BIOS anyway... */
 	ROM_LOAD( "236-m1.bin", 0x00000, 0x20000, CRC(880a1abd) SHA1(905afa157aba700e798243b842792e50729b19a0) )  /* so overwrite it with the real thing */
@@ -4973,8 +5146,9 @@ ROM_START( bangbead ) /* Original Version - Encrypted GFX */
 	ROM_LOAD16_BYTE( "259-c2.bin", 0x0000001, 0x800000, CRC(0efd98ff) SHA1(d350315d3c7f26d638458e5ccf2126069a4c7a5b) )
 ROM_END
 
-/* same data, diff. format roms, not encrypted */
-
+/* same data, diff. format roms, not encrypted, it could be a bootleg, not a prototype, since its identical
+   when decrypted i'm disabling it for now */
+#if 0
 ROM_START( bangbedp )
 	ROM_REGION( 0x200000, REGION_CPU1, 0 )
 	ROM_LOAD16_WORD_SWAP( "259-p1.bin", 0x100000, 0x100000, CRC(88a37f8b) SHA1(566db84850fad5e8fe822e8bba910a33e083b550) )
@@ -4997,6 +5171,7 @@ ROM_START( bangbedp )
 	ROM_LOAD16_BYTE( "259-c3p.bin", 0x400000, 0x100000, CRC(c8e52157) SHA1(f10f58e905c4cbaf182b20e63abe5364462133c5) ) /* Plane 0,1 */
 	ROM_LOAD16_BYTE( "259-c4p.bin", 0x400001, 0x100000, CRC(69fa8e60) SHA1(29c1fbdb79dedf1470683202e2cb3435732d9275) ) /* Plane 2,3 */
 ROM_END
+#endif
 
 ROM_START( nitd ) /* Original Version - Encrypted GFX */
 	ROM_REGION( 0x100000, REGION_CPU1, 0 )
@@ -5215,15 +5390,7 @@ ROM_END
 /* dummy entry for the dummy bios driver */
 ROM_START( neogeo )
 	ROM_REGION16_BE( 0x020000, REGION_USER1, 0 )
-	/* put them all here for reference, this isn't actually used for loading */
-	ROM_LOAD16_WORD_SWAP( "sp-s2.sp1",    0x00000, 0x020000, CRC(9036d879) SHA1(4f5ed7105b7128794654ce82b51723e16e389543) )
-	ROM_LOAD16_WORD_SWAP( "sp-s.sp1",     0x00000, 0x020000, CRC(c7f2fa45) SHA1(09576ff20b4d6b365e78e6a5698ea450262697cd) )
-	ROM_LOAD16_WORD_SWAP( "sp-e.sp1",     0x00000, 0x020000, CRC(2723a5b5) SHA1(5dbff7531cf04886cde3ef022fb5ca687573dcb8) )
-	ROM_LOAD16_WORD_SWAP( "vs-bios.rom",  0x00000, 0x020000, CRC(f0e8f27d) SHA1(ecf01eda815909f1facec62abf3594eaa8d11075) )
-	ROM_LOAD16_WORD_SWAP( "sp-j2.rom",    0x00000, 0x020000, CRC(acede59c) SHA1(b6f97acd282fd7e94d9426078a90f059b5e9dd91) )
-//	ROM_LOAD16_WORD_SWAP( "uni-bios.10",  0x00000, 0x020000, CRC(0ce453a0) )
-//	ROM_LOAD16_WORD_SWAP( "uni-bios.11",  0x00000, 0x020000, CRC(5dda0d84) )
-	ROM_LOAD16_WORD_SWAP( "neodebug.rom", 0x00000, 0x020000, CRC(698ebb7d) SHA1(081c49aa8cc7dad5939833dc1b18338321ea0a07) )
+	NEOGEO_BIOS
 
 	ROM_REGION( 0x50000, REGION_CPU2, 0 )
 	ROM_LOAD( "sm1.sm1", 0x00000, 0x20000, CRC(97cf998b) SHA1(977387a7c76ef9b21d0b01fa69830e949a9a9626) )
@@ -5583,12 +5750,19 @@ DRIVER_INIT( kof2002 )
 	init_neogeo();
 }
 
+DRIVER_INIT( mjneogeo )
+{
+	install_mem_read16_handler (0, 0x300000, 0x300001, mjneogeo_r);
+	install_mem_write16_handler(0, 0x380000, 0x380001, mjneogeo_w);
+
+	init_neogeo();
+}
 
 /******************************************************************************/
 
 /* A dummy driver, so that the bios can be debugged, and to serve as */
-/* parent for the NEOGEO_BIOS_NAME file, so that we do not have to include */
-/* it in every zip file */
+/* parent for the NEOGEO_BIOS files, so that we do not have to include */
+/* them in every zip file */
 GAMEX( 1990, neogeo, 0, neogeo, neogeo, neogeo, ROT0, "SNK", "Neo-Geo", NOT_A_DRIVER )
 
 /******************************************************************************/
@@ -5599,7 +5773,7 @@ GAMEX( 1990, neogeo, 0, neogeo, neogeo, neogeo, ROT0, "SNK", "Neo-Geo", NOT_A_DR
 GAME( 1990, nam1975,  neogeo,   neogeo, neogeo,  neogeo,   ROT0, "SNK", "NAM-1975" )
 GAME( 1990, bstars,   neogeo,   neogeo, neogeo,  neogeo,   ROT0, "SNK", "Baseball Stars Professional" )
 GAME( 1990, tpgolf,   neogeo,   raster, neogeo,  neogeo,   ROT0, "SNK", "Top Player's Golf" )
-GAME( 1990, mahretsu, neogeo,   neogeo, neogeo,  neogeo,   ROT0, "SNK", "Mahjong Kyoretsuden" )
+GAME( 1990, mahretsu, neogeo,   neogeo, mjneogeo,mjneogeo, ROT0, "SNK", "Mahjong Kyoretsuden" )
 GAME( 1990, ridhero,  neogeo,   raster, neogeo,  neogeo,   ROT0, "SNK", "Riding Hero (set 1)" )
 GAME( 1990, ridheroh, ridhero,  raster, neogeo,  neogeo,   ROT0, "SNK", "Riding Hero (set 2)" )
 GAME( 1991, alpham2,  neogeo,   neogeo, neogeo,  neogeo,   ROT0, "SNK", "Alpha Mission II / ASO II - Last Guardian" )
@@ -5627,7 +5801,7 @@ GAME( 1992, fbfrenzy, neogeo,   neogeo, neogeo,  neogeo,   ROT0, "SNK", "Footbal
 GAME( 1992, kotm2,    neogeo,   neogeo, neogeo,  neogeo,   ROT0, "SNK", "King of the Monsters 2 - The Next Thing" )
 GAME( 1993, sengoku2, neogeo,   raster, neogeo,  neogeo,   ROT0, "SNK", "Sengoku 2 / Sengoku Denshou 2")
 GAME( 1992, bstars2,  neogeo,   neogeo, neogeo,  neogeo,   ROT0, "SNK", "Baseball Stars 2" )
-GAME( 1992, quizdai2, neogeo,   neogeo, neogeo,  neogeo,   ROT0, "SNK", "Quiz Meitantei Neo Geo - Quiz Daisousa Sen Part 2" )
+GAME( 1992, quizdai2, neogeo,   neogeo, neogeo,  neogeo,   ROT0, "SNK", "Quiz Meintantei Neo & Geo - Quiz Daisousa Sen part 2" )
 GAME( 1993, 3countb,  neogeo,   neogeo, neogeo,  neogeo,   ROT0, "SNK", "3 Count Bout / Fire Suplex" )
 GAME( 1992, aof,      neogeo,   raster, neogeo,  neogeo,   ROT0, "SNK", "Art of Fighting / Ryuuko no Ken" )
 GAME( 1993, samsho,   neogeo,   neogeo, neogeo,  neogeo,   ROT0, "SNK", "Samurai Shodown / Samurai Spirits" )
@@ -5647,20 +5821,20 @@ GAME( 1995, samsho3,  neogeo,   raster, neogeo,  neogeo,   ROT0, "SNK", "Samurai
 GAME( 1995, rbff1,    neogeo,   neogeo, neogeo,  neogeo,   ROT0, "SNK", "Real Bout Fatal Fury / Real Bout Garou Densetsu" )
 GAME( 1996, aof3,     neogeo,   neogeo, neogeo,  neogeo,   ROT0, "SNK", "Art of Fighting 3 - The Path of the Warrior / Art of Fighting - Ryuuko no Ken Gaiden" )
 GAME( 1996, kof96,    neogeo,   neogeo, neogeo,  neogeo,   ROT0, "SNK", "The King of Fighters '96" )
-GAME( 1996, ssideki4, neogeo,   raster, neogeo,  neogeo,   ROT0, "SNK", "The Ultimate 11 / Tokuten Ou - Honoo no Libero" )
+GAME( 1996, ssideki4, neogeo,   raster, neogeo,  neogeo,   ROT0, "SNK", "Ultimate 11 - The SNK Football Championship / Tokuten Ou - Honoo no Libero, The" )
 GAME( 1996, kizuna,   neogeo,   neogeo, neogeo,  neogeo,   ROT0, "SNK", "Kizuna Encounter - Super Tag Battle / Fu'un Super Tag Battle" )
 GAME( 1996, samsho4,  neogeo,   neogeo, neogeo,  neogeo,   ROT0, "SNK", "Samurai Shodown IV - Amakusa's Revenge / Samurai Spirits - Amakusa Kourin" )
 GAME( 1996, rbffspec, neogeo,   neogeo, neogeo,  neogeo,   ROT0, "SNK", "Real Bout Fatal Fury Special / Real Bout Garou Densetsu Special" )
 GAME( 1997, kof97,    neogeo,   neogeo, neogeo,  neogeo,   ROT0, "SNK", "The King of Fighters '97 (set 1)" )
 GAME( 1997, kof97a,   kof97,    neogeo, neogeo,  neogeo,   ROT0, "SNK", "The King of Fighters '97 (set 2)" )
-GAME( 1997, lastblad, neogeo,   neogeo, neogeo,  neogeo,   ROT0, "SNK", "The Last Blade / Bakumatsu Roman - Gekkano Kenshi (set 1)" )
-GAME( 1997, lastblda, lastblad, neogeo, neogeo,  neogeo,   ROT0, "SNK", "The Last Blade / Bakumatsu Roman - Gekkano Kenshi (set 2)" )
+GAME( 1997, lastblad, neogeo,   neogeo, neogeo,  neogeo,   ROT0, "SNK", "Last Blade / Bakumatsu Roman - Gekka no Kenshi, The (set 1)" )
+GAME( 1997, lastblda, lastblad, neogeo, neogeo,  neogeo,   ROT0, "SNK", "Last Blade / Bakumatsu Roman - Gekka no Kenshi, The (set 2)" )
 GAME( 1997, irrmaze,  neogeo,   neogeo, irrmaze, neogeo,   ROT0, "SNK / Saurus", "The Irritating Maze / Ultra Denryu Iraira Bou" )
 GAME( 1998, rbff2,    neogeo,   neogeo, neogeo,  neogeo,   ROT0, "SNK", "Real Bout Fatal Fury 2 - The Newcomers / Real Bout Garou Densetsu 2 - the newcomers (set 1)" )
 GAME( 1998, rbff2a,   rbff2,    neogeo, neogeo,  neogeo,   ROT0, "SNK", "Real Bout Fatal Fury 2 - The Newcomers / Real Bout Garou Densetsu 2 - the newcomers (set 2)" )
 GAME( 1998, mslug2,   neogeo,   raster, neogeo,  neogeo,   ROT0, "SNK", "Metal Slug 2 - Super Vehicle-001/II" )
 GAME( 1998, kof98,    neogeo,   neogeo, neogeo,  neogeo,   ROT0, "SNK", "The King of Fighters '98 - The Slugfest / King of Fighters '98 - dream match never ends" )
-GAME( 1998, lastbld2, neogeo,   raster, neogeo,  neogeo,   ROT0, "SNK", "The Last Blade 2 / Bakumatsu Roman - Dai Ni Maku Gekkano Kenshi" )
+GAME( 1998, lastbld2, neogeo,   raster, neogeo,  neogeo,   ROT0, "SNK", "Last Blade 2 / Bakumatsu Roman - Dai Ni Maku Gekka no Kenshi, The" )
 GAME( 1998, neocup98, neogeo,   raster, neogeo,  neogeo,   ROT0, "SNK", "Neo-Geo Cup '98 - The Road to the Victory" )
 GAME( 1999, mslugx,   neogeo,   neogeo, neogeo,  neogeo,   ROT0, "SNK", "Metal Slug X - Super Vehicle-001" )
 GAME( 1999, kof99,    neogeo,   raster, neogeo,  kof99,    ROT0, "SNK", "The King of Fighters '99 - Millennium Battle" ) /* Encrypted Code & GFX */
@@ -5697,7 +5871,7 @@ GAME( 1996, ninjamas, neogeo,   neogeo, neogeo,  neogeo,   ROT0, "ADK / SNK",   
 GAME( 1996, twinspri, neogeo,   neogeo, neogeo,  neogeo,   ROT0, "ADK",              "Twinkle Star Sprites" )
 
 /* Aicom */
-GAME( 1994, janshin,  neogeo,   neogeo, neogeo,  neogeo,   ROT0, "Aicom", "Jyanshin Densetsu - Quest of Jongmaster" )
+GAME( 1994, janshin,  neogeo,   neogeo, mjneogeo,mjneogeo, ROT0, "Aicom", "Jyanshin Densetsu - Quest of Jongmaster" )
 GAME( 1995, pulstar,  neogeo,   raster, neogeo,  neogeo,   ROT0, "Aicom", "Pulstar" )
 
 /* Data East Corporation */
@@ -5717,12 +5891,12 @@ GAME( 1997, miexchng, neogeo,   neogeo, neogeo,  neogeo,   ROT0, "Face", "Money 
 
 /* Hudson Soft */
 GAME( 1994, panicbom, neogeo,   neogeo, neogeo,  neogeo,   ROT0, "Eighting / Hudson", "Panic Bomber" )
-GAME( 1995, kabukikl, neogeo,   neogeo, neogeo,  neogeo,   ROT0, "Hudson", "Kabuki Klash - Far East of Eden / Tengai Makyou Shinden - Far East of Eden" )
+GAME( 1995, kabukikl, neogeo,   neogeo, neogeo,  neogeo,   ROT0, "Hudson", "Far East of Eden - Kabuki Klash / Tengai Makyou - Shin Den" )
 GAME( 1997, neobombe, neogeo,   neogeo, neogeo,  neogeo,   ROT0, "Hudson", "Neo Bomberman" )
 
 /* Monolith Corp. */
-GAME( 1990, minasan,  neogeo,   neogeo, neogeo,  neogeo,   ROT0, "Monolith Corp.", "Minnasanno Okagesamadesu" )
-GAME( 1991, bakatono, neogeo,   neogeo, neogeo,  neogeo,   ROT0, "Monolith Corp.", "Bakatonosama Mahjong Manyuki" )
+GAME( 1990, minasan,  neogeo,   neogeo, mjneogeo,mjneogeo, ROT0, "Monolith Corp.", "Minnasanno Okagesamadesu" )
+GAME( 1991, bakatono, neogeo,   neogeo, mjneogeo,mjneogeo, ROT0, "Monolith Corp.", "Bakatonosama Mahjong Manyuki" )
 
 /* Nazca */
 GAME( 1996, turfmast, neogeo,   raster, neogeo,  neogeo,   ROT0, "Nazca", "Neo Turf Masters / Big Tournament Golf" )
@@ -5740,7 +5914,7 @@ GAME( 1992, viewpoin, neogeo,   raster, neogeo,  neogeo,   ROT0, "Sammy", "Viewp
 /* Saurus */
 GAME( 1995, quizkof,  neogeo,   neogeo, neogeo,  neogeo,   ROT0, "Saurus", "Quiz King of Fighters" )
 GAME( 1995, stakwin,  neogeo,   neogeo, neogeo,  neogeo,   ROT0, "Saurus", "Stakes Winner / Stakes Winner - GI kinzen seihae no michi" )
-GAME( 1996, ragnagrd, neogeo,   neogeo, neogeo,  neogeo,   ROT0, "Saurus", "Operation Ragnagard / Shin-Oh-Ken" )
+GAME( 1996, ragnagrd, neogeo,   neogeo, neogeo,  neogeo,   ROT0, "Saurus", "Ragnagard / Shin-Oh-Ken" )
 GAME( 1996, pgoal,    neogeo,   neogeo, neogeo,  neogeo,   ROT0, "Saurus", "Pleasure Goal / Futsal - 5 on 5 Mini Soccer" )
 GAME( 1996, stakwin2, neogeo,   neogeo, neogeo,  neogeo,   ROT0, "Saurus", "Stakes Winner 2" )
 GAME( 1997, shocktro, neogeo,   neogeo, neogeo,  neogeo,   ROT0, "Saurus", "Shock Troopers" )
@@ -5781,18 +5955,20 @@ GAME( 1997, popbounc, neogeo,   neogeo, neogeo,  neogeo,   ROT0, "Video System C
 
 /* Visco */
 GAME( 1992, androdun, neogeo,   neogeo, neogeo,  neogeo,   ROT0, "Visco", "Andro Dunos" )
-GAME( 1995, puzzledp, neogeo,   neogeo, neogeo,  neogeo,   ROT0, "Taito (Visco license)", "Puzzle De Pon" )
+GAME( 1995, puzzledp, neogeo,   neogeo, neogeo,  neogeo,   ROT0, "Taito (Visco license)", "Puzzle De Pon!" )
 GAME( 1996, neomrdo,  neogeo,   neogeo, neogeo,  neogeo,   ROT0, "Visco", "Neo Mr. Do!" )
 GAME( 1995, goalx3,   neogeo,   neogeo, neogeo,  neogeo,   ROT0, "Visco", "Goal! Goal! Goal!" )
 GAME( 1996, neodrift, neogeo,   raster, neogeo,  neogeo,   ROT0, "Visco", "Neo Drift Out - New Technology" )
 GAME( 1996, breakers, neogeo,   neogeo, neogeo,  neogeo,   ROT0, "Visco", "Breakers" )
-GAME( 1997, puzzldpr, puzzledp, neogeo, neogeo,  neogeo,   ROT0, "Taito (Visco license)", "Puzzle De Pon R" )
+GAME( 1997, puzzldpr, puzzledp, neogeo, neogeo,  neogeo,   ROT0, "Taito (Visco license)", "Puzzle De Pon! R!" )
 GAME( 1998, breakrev, breakers, neogeo, neogeo,  neogeo,   ROT0, "Visco", "Breakers Revenge")
 GAME( 1998, flipshot, neogeo,   neogeo, neogeo,  neogeo,   ROT0, "Visco", "Battle Flip Shot" )
 GAME( 1999, ctomaday, neogeo,   neogeo, neogeo,  neogeo,   ROT0, "Visco", "Captain Tomaday" )
 GAME( 1999, ganryu,   neogeo,   neogeo, neogeo,  ganryu,   ROT0, "Visco", "Musashi Ganryuuki" )	/* Encrypted GFX */
 GAME( 2000, bangbead, neogeo,   raster, neogeo,  bangbead, ROT0, "Visco", "Bang Bead" )
+#if 0
 GAME( 2000, bangbedp, bangbead, raster, neogeo,  neogeo,   ROT0, "Visco", "Bang Bead (prototype)" )
+#endif
 
 /* Eolith */
 GAME( 2001, kof2001,  neogeo,   neogeo, neogeo,  kof2001,  ROT0, "Eolith / SNK", "The King of Fighters 2001" )

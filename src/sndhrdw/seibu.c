@@ -80,14 +80,14 @@ static UINT8 decrypt_opcode(int a,int src)
 {
 	if ( BIT(a,9)  &  BIT(a,8))             src ^= 0x80;
 	if ( BIT(a,11) &  BIT(a,4) &  BIT(a,1)) src ^= 0x40;
-	if ( BIT(a,12))                         src ^= 0x20;
+	if (~BIT(a,13) & BIT(a,12))             src ^= 0x20;
 	if (~BIT(a,6)  &  BIT(a,1))             src ^= 0x10;
 	if (~BIT(a,12) &  BIT(a,2))             src ^= 0x08;
 	if ( BIT(a,11) & ~BIT(a,8) &  BIT(a,1)) src ^= 0x04;
-//	if ( BIT(a,13) & ~BIT(a,6) &  BIT(a,4)) src ^= 0x02; might be (as for data), but there's no code there
+	if ( BIT(a,13) & ~BIT(a,6) &  BIT(a,4)) src ^= 0x02;
 	if (~BIT(a,11) &  BIT(a,9) &  BIT(a,2)) src ^= 0x01;
 
-//	if (BIT(a,13) &  BIT(a,4)) src = BITSWAP8(src,7,6,5,4,3,2,0,1); might be (as for data), but there's no code there
+	if (BIT(a,13) &  BIT(a,4)) src = BITSWAP8(src,7,6,5,4,3,2,0,1);
 	if (BIT(a, 8) &  BIT(a,4)) src = BITSWAP8(src,7,6,5,4,2,3,1,0);
 	if (BIT(a,12) &  BIT(a,9)) src = BITSWAP8(src,7,6,4,5,3,2,1,0);
 	if (BIT(a,11) & ~BIT(a,6)) src = BITSWAP8(src,6,7,5,4,3,2,1,0);

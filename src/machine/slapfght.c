@@ -20,6 +20,8 @@ int getstar_sh_intenabled;
 static int slapfight_status_state;
 extern unsigned char *getstar_e803;
 
+unsigned char mcu_val;
+
 /* Perform basic machine initialisation */
 
 MACHINE_INIT( slapfight )
@@ -34,6 +36,9 @@ MACHINE_INIT( slapfight )
 
 	/* SOUND CPU */
 	cpu_set_reset_line(1,ASSERT_LINE);
+
+	/* MCU */
+	mcu_val = 0;
 }
 
 /* Interrupt handlers cpu & sound */
@@ -136,7 +141,7 @@ READ_HANDLER( slapfight_port_00_r )
 */
 READ_HANDLER( getstar_e803_r )
 {
-unsigned char seq[] = { 0, 1, ((0+5)^0x56)+0x10 };
+unsigned char seq[] = { 0, 1, ((0+5)^0x56) };
 unsigned char val;
 
 	val = seq[getstar_sequence_index];
@@ -158,7 +163,6 @@ The bootlegs patches this with different ways:
 
 -AS 1 may 2k3
 */
-unsigned char mcu_val;
 
 READ_HANDLER( tigerh_e803_r )
 {

@@ -15,6 +15,7 @@ struct ide_interface
 };
 
 int ide_controller_init(int which, struct ide_interface *intf);
+int ide_controller_init_custom(int which, struct ide_interface *intf, void *diskhandle);
 void ide_controller_reset(int which);
 UINT8 *ide_get_features(int which);
 

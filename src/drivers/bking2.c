@@ -104,6 +104,16 @@ static READ_HANDLER( mcu_status_r )
 	return res;//cpu data / MCU ready
 }
 
+
+/*
+Birdie King 3 MCU simulation
+Nothing really special to report,just the typical protection HW test and another
+protection routine with 0x30 command when the player have to shot on the green.
+
+Todo:
+\-How to handle the reads at port($6f)?
+\-In-depth game untested.
+*/
 unsigned char mcu_val;
 
 static WRITE_HANDLER( mcu_data_w )
@@ -112,21 +122,19 @@ static WRITE_HANDLER( mcu_data_w )
 	logerror("mcu_data_w = %x\n",data);
 #endif
 	mcu_val = data;
+	/* HW test */
+	/* all bits of port ($02) except the MSB are connected to the command,
+	   in all cases it should return 0x5e.This one is here to avoid to get a big
+   	   switch-case statement in the mcu_data_r function... */
+	if(mcu_val <= 0xff && mcu_val >= 0x80)
+		mcu_val = 0x5e;
 }
-
-/*
-Birdie King 3 MCU simulation
-Nothing really special to report,just the typical protection HW test and another
-protection routine with 0x30 command when the player have to shot on the green.
-*/
 
 static READ_HANDLER( mcu_data_r )
 {
 //	usrintf_showmessage("MCU-r1 PC = %04x %02x",activecpu_get_pc(),mcu_val);
 	switch(mcu_val)
 	{
-		/* HW test */
-		case 0xfe: return (mcu_val-0xa0);
 		/* Shot counter control at the green (check $bdf and afterwards in that condition)*/
 		case 0x30: return (mcu_val-0x1e);
 		default:   return (mcu_val);

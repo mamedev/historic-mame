@@ -569,7 +569,8 @@ VIDEO_UPDATE( gwar )
 
 		if(	!strcmp(Machine->gamedrv->name,"gwar")  ||
 			!strcmp(Machine->gamedrv->name,"gwarj") ||
-			!strcmp(Machine->gamedrv->name,"gwarb"))
+			!strcmp(Machine->gamedrv->name,"gwarb") ||
+			!strcmp(Machine->gamedrv->name,"choppera"))
 		{
 			sp16_y += (bg_attribute & 0x10) ? 256:0;
 			sp16_x += (bg_attribute & 0x40) ? 256:0;

@@ -81,7 +81,7 @@ static int num_games;
 /*
  * DriverDataCompareFunc -- compare function for GetGameNameIndex
  */
-static int DriverDataCompareFunc(const void *arg1,const void *arg2)
+static int CLIB_DECL DriverDataCompareFunc(const void *arg1,const void *arg2)
 {
     return strcmp( ((driver_data_type *)arg1)->name, ((driver_data_type *)arg2)->name );
 }

@@ -131,7 +131,10 @@ VIDEO_UPDATE( subs )
 		sx = spriteram[0x00 + (offs * 2)] - 16;
 		sy = spriteram[0x08 + (offs * 2)] - 16;
 		charcode = spriteram[0x09 + (offs * 2)];
-		sub_enable = spriteram[0x01 + (offs * 2)];
+		if (offs < 2)
+			sub_enable = spriteram[0x01 + (offs * 2)] & 0x80;
+		else
+			sub_enable = 1;
 
 		prom_set = charcode & 0x01;
 		charcode = (charcode >> 3) & 0x1F;
@@ -156,4 +159,8 @@ VIDEO_UPDATE( subs )
 					&Machine->visible_area,TRANSPARENCY_PEN,0);
 		}
 	}
+
+	/* Update sound */
+	discrete_sound_w(2, spriteram[5] & 0x0f);		// Launch data
+	discrete_sound_w(3, (spriteram[5] >> 4) & 0x0f);	// Crash/explode data
 }

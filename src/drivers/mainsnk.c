@@ -336,10 +336,10 @@ ROM_START( mainsnk)
 	ROM_LOAD( "snk.p18",	0x0e000, 0x2000, CRC(838b12a3) )
 	ROM_LOAD( "snk.p21",	0x10000, 0x2000, CRC(8961a51e) )
 
-	ROM_REGION( 0xc00, REGION_PROMS, 0 )
-	ROM_LOAD( "main1.bin",  0x000, 0x400, CRC(deb895c4) )
-	ROM_LOAD( "main2.bin",  0x400, 0x400, CRC(7c314c93) )
-	ROM_LOAD( "main3.bin",  0x800, 0x400, CRC(78b29dde) )
+	ROM_REGION( 0x1800, REGION_PROMS, 0 )
+	ROM_LOAD( "main1.bin",  0x0000, 0x800, CRC(deb895c4) )
+	ROM_LOAD( "main2.bin",  0x0800, 0x800, CRC(7c314c93) )
+	ROM_LOAD( "main3.bin",  0x1000, 0x800, CRC(78b29dde) )
 ROM_END
 
 GAMEX( 1984, mainsnk,      0,          mainsnk, mainsnk, 0,          ROT0, "SNK", "Main Event (1984)", GAME_NO_SOUND | GAME_NOT_WORKING )

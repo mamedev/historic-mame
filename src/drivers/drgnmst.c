@@ -6,9 +6,6 @@ the hardware seems to fall somewhere between the
 hardware playmark commonly used and the hardware
 unico used for zero point etc.
 
-todo:
-map dipswitches
-
 */
 
 #include "driver.h"
@@ -271,53 +268,52 @@ INPUT_PORTS_START( drgnmst )
 	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START
-	PORT_DIPNAME( 0x0100, 0x0100, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x0100, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0200, 0x0200, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x0200, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0400, 0x0400, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x0400, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0800, 0x0800, DEF_STR( Unknown ) )
+	PORT_DIPNAME( 0x0700, 0x0700, DEF_STR( Coinage ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(      0x0100, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(      0x0200, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(      0x0700, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(      0x0600, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(      0x0500, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(      0x0400, DEF_STR( 1C_4C ) )
+	PORT_DIPNAME( 0x0800, 0x0000, "Continue" )
 	PORT_DIPSETTING(      0x0800, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x1000, 0x1000, DEF_STR( Unknown ) )
+	PORT_DIPNAME( 0x1000, 0x0000, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(      0x1000, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x2000, 0x2000, DEF_STR( Unknown ) )
+	PORT_DIPNAME( 0x2000, 0x2000, "Two credits to start" )
 	PORT_DIPSETTING(      0x2000, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x4000, 0x4000, DEF_STR( Unknown ) )
+	PORT_DIPNAME( 0x4000, 0x4000, DEF_STR ( Free_Play ) )
 	PORT_DIPSETTING(      0x4000, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x8000, 0x8000, DEF_STR( Unknown ) )
+	PORT_DIPNAME( 0x8000, 0x8000, "Freeze" )
 	PORT_DIPSETTING(      0x8000, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
 
 	PORT_START
-	PORT_DIPNAME( 0x0100, 0x0100, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x0100, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0200, 0x0200, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x0200, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0400, 0x0400, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x0400, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0800, 0x0800, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x0800, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x1000, 0x1000, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x1000, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x2000, 0x2000, DEF_STR( Unknown ) )
+	PORT_DIPNAME( 0x0700, 0x0400, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(      0x0700, "Easiest" )
+	PORT_DIPSETTING(      0x0600, "Easier" )
+	PORT_DIPSETTING(      0x0500, "Easy" )
+	PORT_DIPSETTING(      0x0400, "Normal" )
+	PORT_DIPSETTING(      0x0300, "Medium" )
+	PORT_DIPSETTING(      0x0200, "Hard" )
+	PORT_DIPSETTING(      0x0100, "Harder" )
+	PORT_DIPSETTING(      0x0000, "Hardest" )
+	PORT_DIPNAME( 0x0800, 0x0800, "Language" )
+	PORT_DIPSETTING(      0x0800, "English" )
+	PORT_DIPSETTING(      0x0000, "Korea" )
+	PORT_DIPNAME( 0x1000, 0x1000, "Game Time" )
+	PORT_DIPSETTING(      0x1000, "Normal" )
+	PORT_DIPSETTING(      0x0000, "Short" )
+	PORT_DIPNAME( 0x2000, 0x2000, "Stage Skip" )
 	PORT_DIPSETTING(      0x2000, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x4000, 0x4000, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x4000, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x4000, 0x4000, "Spit Color" )
+	PORT_DIPSETTING(      0x4000, "Grey" )
+	PORT_DIPSETTING(      0x0000, "Red" )
 	PORT_SERVICE( 0x8000, IP_ACTIVE_LOW )
 
 	PORT_START
@@ -391,18 +387,18 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 static struct OKIM6295interface dual_okim6295_interface =
 {
 	2,										/* 2 chips */
-	{ 32000000/16/165, 32000000/32/165 },   /* frequency (Hz). ??? to two 6295 (using ? mode / ? mode) */
+	{ 32000000/32/132, 32000000/32/132 },   /* Confirmed */
 	{ REGION_SOUND1, REGION_SOUND2 },		/* memory region */
-	{ 25, 25 }
+	{ 50, 50 }
 };
 
 
 static MACHINE_DRIVER_START( drgnmst )
-	MDRV_CPU_ADD(M68000, 16000000)
+	MDRV_CPU_ADD(M68000, 12000000) /* Confirmed */
 	MDRV_CPU_MEMORY(drgnmst_readmem,drgnmst_writemem)
 	MDRV_CPU_VBLANK_INT(irq2_line_hold,1)
 
-	MDRV_CPU_ADD(PIC16C55, ((16000000/4)/PIC16C5x_CLOCK_DIVIDER))
+	MDRV_CPU_ADD(PIC16C55, 4000000) /* Confirmed -- wrong -- missing PIC divider, being fixed */
 	MDRV_CPU_MEMORY(drgnmst_sound_readmem,drgnmst_sound_writemem)
 	MDRV_CPU_PORTS(drgnmst_sound_readport,drgnmst_sound_writeport)
 

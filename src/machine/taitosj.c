@@ -29,6 +29,7 @@ MACHINE_INIT( taitosj )
 
 	zaccept = 1;
 	zready = 0;
+ 	if (Machine->drv->cpu[2].cpu_type != CPU_DUMMY)
 	cpu_set_irq_line(2,0,CLEAR_LINE);
 }
 

@@ -845,7 +845,7 @@
 /*                        |            |                                */
 /*    ENAB       -0------}| FREE/CLAMP |                                */
 /*                        |            |                                */
-/*    RAMP       -1------}| Up/Down    |                                */
+/*    RAMP       -1------}| FW/REV     |                                */
 /*                        |            |                                */
 /*    GRAD       -2------}| Grad/sec   |                                */
 /*                        |            |----}   Netlist node            */
@@ -872,8 +872,8 @@
 /*     DISCRETE_RAMP(NODE_9,NODE_10,NODE_11,10.0,-10.0,10.0,0)          */
 /*                                                                      */
 /*  Node10 when not zero will allow ramp to operate, when 0 then output */
-/*  is clamped to clamp value specified. Node11 ramp when 0 then +ve    */
-/*  gradient, not zero equals -ve gradient. Output is clamped to max-   */
+/*  is clamped to clamp value specified. Node11 ramp when 0 change      */
+/*  gradient from start to end. 1 is reverse. Output is clamped to max- */
 /*  min values. Gradient is specified in change/second.                 */
 /*                                                                      */
 /************************************************************************/
@@ -949,7 +949,7 @@
 /*                                                                      */
 /************************************************************************/
 /*                                                                      */
-/* DISCRETE_LOGIC_INV  - Logic invertor                                 */
+/* DISCRETE_LOGIC_INVERT - Logic invertor                               */
 /* DISCRETE_LOGIC_AND  - Logic AND gate (3 & 4 input also available)    */
 /* DISCRETE_LOGIC_NAND - Logic NAND gate (3 & 4 input also available)   */
 /* DISCRETE_LOGIC_OR   - Logic OR gate (3 & 4 input also available)     */
@@ -982,7 +982,7 @@
 /*                                                                      */
 /*  Example config lines                                                */
 /*                                                                      */
-/*     DISCRETE_LOGIC_INV(NODE_03,1,NODE_12)                            */
+/*     DISCRETE_LOGIC_INVERT(NODE_03,1,NODE_12)                         */
 /*     DISCRETE_LOGIC_AND(NODE_03,1,NODE_12,NODE_13)                    */
 /*     DISCRETE_LOGIC_NOR4(NODE_03,1,NODE_12,NODE_13,NODE_14,NODE_15)   */
 /*                                                                      */
@@ -1395,7 +1395,7 @@ enum {
 #define DISCRETE_LADDER(NODE,ENAB,INP0,SELECT,GAIN,OFFSET,LADDER)       { NODE, DST_LADDER      , 5, { ENAB,INP0,SELECT,GAIN,OFFSET }, { ENAB,INP0,SELECT,GAIN,OFFSET }, LADDER, "Resistor Ladder" },
 #define DISCRETE_SAMPLHOLD(NODE,ENAB,INP0,CLOCK,CLKTYPE)                { NODE, DST_SAMPHOLD    , 4, { ENAB,INP0,CLOCK,NODE_NC }, { ENAB,INP0,CLOCK,CLKTYPE }, NULL, "Sample & Hold" },
 
-#define	DISCRETE_LOGIC_INVERT(NODE,ENAB,INP0)                          { NODE, DST_LOGIC_INV   , 1, { ENAB,INP0 }, { ENAB,INP0 }, NULL, "Logic Invertor" },
+#define	DISCRETE_LOGIC_INVERT(NODE,ENAB,INP0)                          { NODE, DST_LOGIC_INV   , 2, { ENAB,INP0 }, { ENAB,INP0 }, NULL, "Logic Invertor" },
 #define	DISCRETE_LOGIC_AND(NODE,ENAB,INP0,INP1)                        { NODE, DST_LOGIC_AND   , 5, { ENAB,INP0,INP1,NODE_NC,NODE_NC }, { ENAB,INP0,INP1,1.0,1.0 }, NULL, "Logic AND (2inp)" },
 #define	DISCRETE_LOGIC_AND3(NODE,ENAB,INP0,INP1,INP2)                  { NODE, DST_LOGIC_AND   , 5, { ENAB,INP0,INP1,INP2,NODE_NC }, { ENAB,INP0,INP1,INP2,1.0 }, NULL, "Logic AND (3inp)" },
 #define	DISCRETE_LOGIC_AND4(NODE,ENAB,INP0,INP1,INP2,INP3)             { NODE, DST_LOGIC_AND   , 5, { ENAB,INP0,INP1,INP2,INP3 }, { ENAB,INP0,INP1,INP2,INP3 } ,NULL, "Logic AND (4inp)" },

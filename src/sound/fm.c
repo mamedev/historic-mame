@@ -7,12 +7,15 @@
 ** Copyright (C) 2001, 2002, 2003 Jarek Burczynski
 ** Copyright (C) 1998 Tatsuyuki Satoh , MultiArcadeMachineEmulator development
 **
-** Version 1.1 (final beta)
+** Version 1.2 (final beta)
 **
 */
 
 /*
 ** History:
+**
+** 22-05-2003 Jarek Burczynski:
+**  - fixed LFO PM calculations (copy&paste bugfix)
 **
 ** 08-05-2003 Jarek Burczynski:
 **  - fixed SSG support
@@ -1254,9 +1257,9 @@ INLINE void chan_calc(FM_OPN *OPN, FM_CH *CH)
 			fc = OPN->fn_table[fn]>>(7-blk);
 
 			CH->SLOT[SLOT1].phase += ((fc+CH->SLOT[SLOT1].DT[kc])*CH->SLOT[SLOT1].mul) >> 1;
-			CH->SLOT[SLOT1].phase += ((fc+CH->SLOT[SLOT1].DT[kc])*CH->SLOT[SLOT1].mul) >> 1;
-			CH->SLOT[SLOT1].phase += ((fc+CH->SLOT[SLOT1].DT[kc])*CH->SLOT[SLOT1].mul) >> 1;
-			CH->SLOT[SLOT1].phase += ((fc+CH->SLOT[SLOT1].DT[kc])*CH->SLOT[SLOT1].mul) >> 1;
+			CH->SLOT[SLOT2].phase += ((fc+CH->SLOT[SLOT2].DT[kc])*CH->SLOT[SLOT2].mul) >> 1;
+			CH->SLOT[SLOT3].phase += ((fc+CH->SLOT[SLOT3].DT[kc])*CH->SLOT[SLOT3].mul) >> 1;
+			CH->SLOT[SLOT4].phase += ((fc+CH->SLOT[SLOT4].DT[kc])*CH->SLOT[SLOT4].mul) >> 1;
 		}
 		else	/* LFO phase modulation  = zero */
 		{

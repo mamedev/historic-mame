@@ -380,7 +380,7 @@ static void print_game_rom(FILE* out, const struct GameDriver* game)
 			for (chunk = rom_first_chunk(rom); chunk; chunk = rom_next_chunk(chunk))
 				length += ROM_GETLENGTH(chunk);
 
-			if (ROM_NOGOODDUMP(rom) && game->clone_of)
+			if (!ROM_NOGOODDUMP(rom) && game->clone_of)
 			{
 				fprom=NULL;
 				for (pregion = rom_first_region(game->clone_of); pregion; pregion = rom_next_region(pregion))
@@ -423,10 +423,10 @@ static void print_game_rom(FILE* out, const struct GameDriver* game)
 			if (!OUTPUT_XML)
 			{
 				if (hash_data_has_info(ROM_GETHASHDATA(rom), HASH_INFO_NO_DUMP))
-					fprintf(out, L2P "nodump" L2N);
+					fprintf(out, L2P "flags nodump" L2N);
 				
 				if (hash_data_has_info(ROM_GETHASHDATA(rom), HASH_INFO_BAD_DUMP))
-					fprintf(out, L2P "baddump" L2N);
+					fprintf(out, L2P "flags baddump" L2N);
 			}
 
 			// Dump checksum informatoins only if there is a known dump

@@ -1021,6 +1021,39 @@ INPUT_PORTS_START( dsccr94j )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 INPUT_PORTS_END
 
+INPUT_PORTS_START( gunforc2 )
+	IREM_JOYSTICK_1_2(1)
+	IREM_JOYSTICK_1_2(2)
+	PORT_UNUSED
+	PORT_UNUSED
+	IREM_COINS
+	IREM_SYSTEM_DIPSWITCH
+
+	PORT_START	/* Dip switch bank 1 */
+	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Lives ) )
+	PORT_DIPSETTING(    0x02, "3" )
+	PORT_DIPSETTING(    0x03, "2" )
+	PORT_DIPSETTING(    0x01, "4" )
+	PORT_DIPSETTING(    0x00, "1" )
+	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(    0x00, "Very Easy" )
+	PORT_DIPSETTING(    0x08, "Easy" )
+	PORT_DIPSETTING(    0x0c, "Normal" )
+	PORT_DIPSETTING(    0x04, "Hard" )
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Bonus_Life ) )
+	PORT_DIPSETTING(    0x00, "15000 35000 75000 120000" )
+	PORT_DIPSETTING(    0x10, "20000 40000 90000 150000" )
+	PORT_DIPNAME( 0x20, 0x20, "Allow Continue" )
+	PORT_DIPSETTING(    0x00, DEF_STR( No ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Yes ) )
+	PORT_DIPNAME( 0x40, 0x00, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_SERVICE( 0x80, IP_ACTIVE_LOW )
+
+	PORT_UNUSED	/* Game manual only mentions 2 dips */
+INPUT_PORTS_END
+
 /***************************************************************************/
 
 static struct GfxLayout charlayout =
@@ -2345,5 +2378,5 @@ GAMEX(1993, nbbatman, 0,        raster,    nbbatman, nbbatman, ROT0,   "Irem Ame
 GAMEX(1993, leaguemn, nbbatman, raster,    nbbatman, nbbatman, ROT0,   "Irem",         "Yakyuu Kakutou League-Man (Japan)", GAME_IMPERFECT_GRAPHICS )
 GAMEX(1993, psoldier, 0,        psoldier,  psoldier, psoldier, ROT0,   "Irem",         "Perfect Soldiers (Japan)", GAME_IMPERFECT_SOUND )
 GAME( 1994, dsccr94j, dsoccr94, psoldier,  dsccr94j, dsccr94j, ROT0,   "Irem",         "Dream Soccer '94 (Japan)" )
-GAME( 1994, gunforc2, 0,        raster,    gunforce, gunforc2, ROT0,   "Irem",         "Gunforce 2 (US)" )
-GAME( 1994, geostorm, gunforc2, raster,    gunforce, gunforc2, ROT0,   "Irem",         "Geostorm (Japan)" )
+GAME( 1994, gunforc2, 0,        raster,    gunforc2, gunforc2, ROT0,   "Irem",         "Gunforce 2 (US)" )
+GAME( 1994, geostorm, gunforc2, raster,    gunforc2, gunforc2, ROT0,   "Irem",         "Geostorm (Japan)" )

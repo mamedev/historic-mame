@@ -239,6 +239,8 @@ int osd_rc_read(struct rc_struct *rc, mame_file *f, const char *description,
       /* get complete rest of line */
       arg = strtok(NULL, "\r\n");
 
+      if (arg)
+      {
       /* ignore white space */
       for (; (*arg == '\t' || *arg == ' '); arg++) {}
 
@@ -249,6 +251,7 @@ int osd_rc_read(struct rc_struct *rc, mame_file *f, const char *description,
          arg = strtok (arg, "'");
       else
          arg = strtok (arg, " \t\r\n");
+      }
 
       if(!(option = rc_get_option2(rc->option, name)))
       {
@@ -343,6 +346,64 @@ int rc_read(struct rc_struct *rc, FILE *f, const char *description,
          return -1;
    }
    return 0;
+}
+
+static int real_rc_write(struct rc_option *option, mame_file *f, const char *description)
+{
+	int i;
+
+	if (description)
+		mame_fprintf(f, "### %s ###\n", description);
+
+	for(i=0; option[i].type; i++)
+	{
+		switch (option[i].type)
+		{
+			case rc_seperator:
+				mame_fprintf(f, "\n### %s ###\n", option[i].name);
+				break;
+
+			case rc_link:
+				if (real_rc_write(option[i].dest, f, NULL))
+					return -1;
+				break;
+
+			case rc_string:
+				if(!*(char **)option[i].dest)
+				{
+					mame_fprintf(f, "# %-19s   <NULL> (not set)\n", option[i].name);
+					break;
+				}
+				/* fall through */
+
+			case rc_bool:
+			case rc_int:
+			case rc_float:
+				mame_fprintf(f, "%-21s   ", option[i].name);
+				switch(option[i].type)
+				{
+					case rc_bool:
+					case rc_int:
+						mame_fprintf(f, "%d\n", *(int *)option[i].dest);
+						break;
+					case rc_float:
+						mame_fprintf(f, "%f\n", *(float *)option[i].dest);
+						break;
+					case rc_string:
+						mame_fprintf(f, "%s\n", *(char **)option[i].dest);
+						break;
+				}
+				break;
+		}
+	}
+	if (description)
+		mame_fprintf(f, "\n");
+	return 0;
+}
+
+int osd_rc_write(struct rc_struct *rc, mame_file *f, const char *description)
+{
+	return real_rc_write(rc->option, f, description);
 }
 
 /* needed to walk the tree */

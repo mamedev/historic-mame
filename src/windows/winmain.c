@@ -402,7 +402,7 @@ static int get_code_base_size(UINT32 *base, UINT32 *size)
 //	compare_hits -- qsort callbacks to sort on
 //============================================================
 
-static int compare_start(const void *item1, const void *item2)
+static int CLIB_DECL compare_start(const void *item1, const void *item2)
 {
 	return ((const struct map_entry *)item1)->start - ((const struct map_entry *)item2)->start;
 }

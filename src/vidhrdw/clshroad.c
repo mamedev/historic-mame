@@ -53,6 +53,15 @@ WRITE_HANDLER( clshroad_flipscreen_w )
 }
 
 
+PALETTE_INIT( clshroad )
+{
+	int i;
+	for (i = 0;i < 256;i++)
+		palette_set_color(i,	color_prom[i + 256 * 0] * 0x11,
+								color_prom[i + 256 * 1] * 0x11,
+								color_prom[i + 256 * 2] * 0x11	);
+}
+
 PALETTE_INIT( firebatl )
 {
 	int i;
@@ -121,27 +130,27 @@ Offset:
 
 static void get_tile_info_0a( int tile_index )
 {
-	data8_t code, color;
+	data8_t code;
 	tile_index = (tile_index & 0x1f) + (tile_index & ~0x1f)*2;
 	code	=	clshroad_vram_0[ tile_index * 2 + 0x40 ];
-	color	=	clshroad_vram_0[ tile_index * 2 + 0x41 ];
+//	color	=	clshroad_vram_0[ tile_index * 2 + 0x41 ];
 	SET_TILE_INFO(
 			1,
 			code,
-			color & 0x0f,
+			0,
 			0)
 }
 
 static void get_tile_info_0b( int tile_index )
 {
-	data8_t code, color;
+	data8_t code;
 	tile_index = (tile_index & 0x1f) + (tile_index & ~0x1f)*2;
 	code	=	clshroad_vram_0[ tile_index * 2 + 0x00 ];
-	color	=	clshroad_vram_0[ tile_index * 2 + 0x01 ];
+//	color	=	clshroad_vram_0[ tile_index * 2 + 0x01 ];
 	SET_TILE_INFO(
 			1,
 			code,
-			color & 0x0f,
+			0,
 			0)
 }
 
@@ -275,9 +284,9 @@ VIDEO_START( clshroad )
 	tilemap_set_scrolldx( tilemap_0a, -0x30, -0xb5);
 	tilemap_set_scrolldx( tilemap_0b, -0x30, -0xb5);
 
-	tilemap_set_transparent_pen( tilemap_0a, 0 );
-	tilemap_set_transparent_pen( tilemap_0b, 0 );
-	tilemap_set_transparent_pen( tilemap_1,  0 );
+	tilemap_set_transparent_pen( tilemap_0a, 0x0f );
+	tilemap_set_transparent_pen( tilemap_0b, 0x0f );
+	tilemap_set_transparent_pen( tilemap_1,  0x0f );
 
 	return 0;
 }
@@ -305,7 +314,8 @@ Offset:		Format:		Value:
 
 	6					X (High bits)
 
-	7					Color?
+	7		7654----
+			----3210	Color
 
 - Sprite flipping ?
 

@@ -9,7 +9,8 @@ OSOBJS = $(OBJ)/windows/winmain.o $(OBJ)/windows/fileio.o $(OBJ)/windows/config.
 	 $(OBJ)/windows/ticker.o $(OBJ)/windows/fronthlp.o $(OBJ)/windows/video.o \
 	 $(OBJ)/windows/input.o $(OBJ)/windows/sound.o $(OBJ)/windows/blit.o \
 	 $(OBJ)/windows/snprintf.o $(OBJ)/windows/rc.o $(OBJ)/windows/misc.o \
-	 $(OBJ)/windows/window.o $(OBJ)/windows/winddraw.o $(OBJ)/windows/wind3d.o \
+	 $(OBJ)/windows/window.o $(OBJ)/windows/wind3d.o $(OBJ)/windows/wind3dfx.o \
+	 $(OBJ)/windows/winddraw.o \
 	 $(OBJ)/windows/asmblit.o $(OBJ)/windows/asmtile.o
 
 # uncomment this line to enable guard pages on all memory allocations

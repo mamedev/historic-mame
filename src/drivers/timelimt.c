@@ -7,8 +7,6 @@ driver by Ernesto Corvi
 
 Notes:
 - Sprite colors are wrong (missing colortable?)
-  (probably, its been mentioned Progress has 3 colour proms, there are only
-   2 being loaded for Time Limit)
 
 ***************************************************************************/
 
@@ -162,7 +160,7 @@ INPUT_PORTS_START( progress )
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 )
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_BUTTON2 )
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )	/* probably unused */
-	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )	/* probably unused */
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_BUTTON3 )
 
 	PORT_START	/* IN1 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
@@ -232,6 +230,14 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 	{ -1 } /* end of array */
 };
 
+static struct GfxDecodeInfo progress_gfxdecodeinfo[] =
+{
+	{ REGION_GFX1, 0, &charlayout,   32, 1 },	/* seems correct */
+	{ REGION_GFX2, 0, &charlayout,    0, 1 },	/* seems correct */
+	{ REGION_GFX3, 0, &spritelayout, 64, 4 },	/* seems correct */
+	{ -1 } /* end of array */
+};
+
 /***************************************************************************/
 
 static struct AY8910interface ay8910_interface =
@@ -288,6 +294,15 @@ static MACHINE_DRIVER_START( timelimt )
 	MDRV_SOUND_ADD(AY8910, ay8910_interface)
 MACHINE_DRIVER_END
 
+static MACHINE_DRIVER_START( progress )
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(timelimt)
+
+	MDRV_GFXDECODE(progress_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(96)
+	MDRV_COLORTABLE_LENGTH(96)
+
+MACHINE_DRIVER_END
 
 /***************************************************************************
 
@@ -344,15 +359,15 @@ ROM_START( progress )
 	ROM_LOAD( "pg12.bin",   0x1000, 0x1000, CRC(c837c5f5) SHA1(dbfc0d8afe0a8e9dd213cb4095b23b7aa8e2b6f4) )
 
 	ROM_REGION( 0x6000, REGION_GFX3, ROMREGION_DISPOSE )	/* sprites */
-	ROM_LOAD( "pg3.bin",    0x0000, 0x2000, CRC(2b21c2fb) SHA1(8c95889a19057d32790c9ccddc0977980eddbd0e) )
+	ROM_LOAD( "pg1.bin",    0x0000, 0x2000, CRC(155c8f7f) SHA1(0d32ebceb9b2a0b3faf1f91b7a6800999889b331) )
 	ROM_LOAD( "pg2.bin",    0x2000, 0x2000, CRC(a6ca4dfc) SHA1(4243c9ea98e365bf342cf928ff97cafb35cdc7b6) )
-	ROM_LOAD( "pg1.bin",    0x4000, 0x2000, CRC(155c8f7f) SHA1(0d32ebceb9b2a0b3faf1f91b7a6800999889b331) )
+	ROM_LOAD( "pg3.bin",    0x4000, 0x2000, CRC(2b21c2fb) SHA1(8c95889a19057d32790c9ccddc0977980eddbd0e) )
 
 	ROM_REGION( 0x0060, REGION_PROMS, 0 )
-	ROM_LOAD( "prom1", 0x0000, 0x0020, NO_DUMP )
-	ROM_LOAD( "prom2", 0x0020, 0x0020, NO_DUMP )
-	ROM_LOAD( "prom3", 0x0040, 0x0020, NO_DUMP )
+	ROM_LOAD( "35.bin", 0x0000, 0x0020, CRC(8c5ca730) SHA1(be2554e1aa4a74d976919e2c37bce5fb4d40352b) )
+	ROM_LOAD( "48.bin", 0x0020, 0x0020, CRC(12dd62cd) SHA1(8322b02d73c3eb44b587f76daeaabe6beea58456) )
+	ROM_LOAD( "57.bin", 0x0040, 0x0020, CRC(18455a79) SHA1(e4d64368560e3116a922588129f5f91a4c520f7d) )
 ROM_END
 
 GAMEX( 1983, timelimt, 0, timelimt, timelimt, 0, ROT90, "Chuo Co. Ltd", "Time Limit", GAME_IMPERFECT_COLORS )
-GAMEX( 1984, progress, 0, timelimt, progress, 0, ROT90, "Chuo Co. Ltd", "Progress", GAME_WRONG_COLORS )
+GAME ( 1984, progress, 0, progress, progress, 0, ROT90, "Chuo Co. Ltd", "Progress" )

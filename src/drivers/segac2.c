@@ -1668,6 +1668,76 @@ INPUT_PORTS_START( puckpkmn ) /* Puckman Pockimon Input Ports */
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 INPUT_PORTS_END
 
+INPUT_PORTS_START( pclub ) /* Print Club Input Ports */
+	PORT_START		 /* Coins */
+    PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
+    PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
+    PORT_BITX(0x04, IP_ACTIVE_LOW, IPT_SERVICE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE )
+    PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_SERVICE1 )
+	PORT_BIT( 0xf0, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* Probably Unused */
+
+	PORT_START		 /* Controls */
+	PORT_BIT( 0x0f, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* Probably Unused */
+    PORT_BIT_NAME( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1, "Ok" )
+    PORT_BIT_NAME( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2, "Cancel" )
+    PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_2WAY )
+    PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_2WAY )
+
+	PORT_START		 /* Controls */
+	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* Probably Unused */
+
+	PORT_START		 /* Coinage */
+	PORT_DIPNAME( 0x07, 0x07, DEF_STR( Coinage ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 7C_1C ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( 6C_1C ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( 5C_1C ) )
+	PORT_DIPSETTING(    0x03, DEF_STR( 4C_1C ) )
+    PORT_DIPSETTING(    0x07, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x05, DEF_STR( 1C_1C ) )
+    PORT_DIPSETTING(    0x06, DEF_STR( Free_Play ) )
+    PORT_DIPNAME( 0x08, 0x08, "Unknown 4-4" )
+    PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+    PORT_DIPNAME( 0x10, 0x10, "Unknown 4-5" )
+    PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+    PORT_DIPNAME( 0x20, 0x20, "Unknown 4-6" )
+    PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+    PORT_DIPNAME( 0x40, 0x40, "Unknown 4-7" )
+    PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+    PORT_DIPNAME( 0x80, 0x80, "Unknown 4-8" )
+    PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+
+	PORT_START		 /* Game Options */
+    PORT_DIPNAME( 0x01, 0x01, "Unknown 5-1" )
+    PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
+    PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+    PORT_DIPNAME( 0x02, 0x02, "Unknown 5-2" )
+    PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+    PORT_DIPNAME( 0x04, 0x04, "Unknown 5-3" )
+    PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+    PORT_DIPNAME( 0x08, 0x08, "Unknown 5-4" )
+    PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+    PORT_DIPNAME( 0x10, 0x10, "Unknown 5-5" )
+    PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+    PORT_DIPNAME( 0x20, 0x20, DEF_STR( Demo_Sounds ))
+    PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( On ) )
+    PORT_DIPNAME( 0x40, 0x40, "Unknown 5-7" )
+    PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+    PORT_DIPNAME( 0x80, 0x80, "Unknown 5-8" )
+    PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+INPUT_PORTS_END
 
 /******************************************************************************
 	Sound interfaces
@@ -1908,6 +1978,13 @@ ROM_START( tantrbl2 ) /* Tant-R (Puzzle & Action) (Alt Bootleg Running on C Boar
 	ROM_LOAD16_BYTE( "mpr15615.33",  0x100001, 0x080000, CRC(36a88bd4) SHA1(cc7f6a947d1b79bb86957c43035b53d6d2bcfa28) )
 ROM_END
 
+ROM_START( ichidntb ) /* Ichident-R (Puzzle & Action 2) (Bootleg Running on C Board?, No Samples) */
+	ROM_REGION( 0x200000, REGION_CPU1, 0 )
+	ROM_LOAD16_BYTE( "27c4000.2",0x000000, 0x080000, CRC(5a194f44) SHA1(67a4d21b91704f8c2210b5106e82e22ba3366f4c) )
+	ROM_LOAD16_BYTE( "27c4000.1",0x000001, 0x080000, CRC(de209f84) SHA1(0860d0ebfab2952e82fc1e292bf9410d673d9322) )
+	ROM_LOAD16_BYTE( "epr16888", 0x100000, 0x080000, CRC(85d73722) SHA1(7ebe81b4d6c89f87f60200a3a8cddb07d581adef) )
+	ROM_LOAD16_BYTE( "epr16887", 0x100001, 0x080000, CRC(bc3bbf25) SHA1(e760ad400bc183b38e9787d88c8ac084fbe2ae21) )
+ROM_END
 
 /* ----- System C-2 Games ----- */
 
@@ -2060,7 +2137,6 @@ ROM_START( ichidnte ) /* Ichident-R (Puzzle & Action 2)  (c)1994 Sega */
 	ROM_LOAD( "pa2_02.bin", 0x000000, 0x080000, CRC(fc7b0da5) SHA1(46770aa7e19b4f8a183be3f433c48ad677b552b1) )
 ROM_END
 
-
 ROM_START( stkclmns ) /* Stack Columns  (c)1994 Sega */
 	ROM_REGION( 0x200000, REGION_CPU1, 0 )
 	ROM_LOAD16_BYTE( "epr16795.32", 0x000000, 0x080000, CRC(b478fd02) SHA1(aaf9d9f9f4dc900b4e8ff6f258f26e782e5c3166) )
@@ -2116,7 +2192,49 @@ ROM_START( puckpkmn ) /* Puckman Pockimon  (c)2000 Genie */
 	ROM_LOAD( "puckpoke.u3", 0x00000, 0x40000, CRC(7b066bac) SHA1(429616e21c672b07e0705bc63234249cac3af56f) )
 ROM_END
 
+ROM_START( pclubj ) /* Print Club (c)1995 Atlus */
+	ROM_REGION( 0x200000, REGION_CPU1, 0 )
+	ROM_LOAD16_BYTE( "epr18171.32", 0x000000, 0x080000, CRC(6c8eb8e2) )
+	ROM_LOAD16_BYTE( "epr18170.31", 0x000001, 0x080000, CRC(72c631e6) )
+	ROM_LOAD16_BYTE( "epr18173.34", 0x100000, 0x080000, CRC(9809dc72) )
+	ROM_LOAD16_BYTE( "epr18172.33", 0x100001, 0x080000, CRC(c61d819b) )
 
+	ROM_REGION( 0x080000, REGION_SOUND1, 0 )
+	ROM_LOAD( "epr18169.4", 0x000000, 0x080000, CRC(5c00ccfb) )
+ROM_END
+
+ROM_START( pclubjv2 ) /* Print Club vol.2 (c)1995 Atlus */
+	ROM_REGION( 0x200000, REGION_CPU1, 0 )
+	ROM_LOAD16_BYTE( "p2jwn.u32", 0x000000, 0x080000, CRC(dfc0f7f1) )
+	ROM_LOAD16_BYTE( "p2jwn.u31", 0x000001, 0x080000, CRC(6ab4c694) )
+	ROM_LOAD16_BYTE( "p2jwn.u34", 0x100000, 0x080000, CRC(854fd456) )
+	ROM_LOAD16_BYTE( "p2jwn.u33", 0x100001, 0x080000, CRC(64428a69) )
+
+	ROM_REGION( 0x080000, REGION_SOUND1, 0 )
+	ROM_LOAD( "epr18169.4", 0x000000, 0x080000, CRC(5c00ccfb) )
+ROM_END
+
+ROM_START( pclubjv4 ) /* Print Club vol.4 (c)1996 Atlus */
+	ROM_REGION( 0x200000, REGION_CPU1, 0 )
+	ROM_LOAD16_BYTE( "p4jsm.u32", 0x000000, 0x080000, CRC(36ff5f80) )
+	ROM_LOAD16_BYTE( "p4jsm.u31", 0x000001, 0x080000, CRC(f3c021ad) )
+	ROM_LOAD16_BYTE( "p4jsm.u34", 0x100000, 0x080000, CRC(d0fd4b33) )
+	ROM_LOAD16_BYTE( "p4jsm.u33", 0x100001, 0x080000, CRC(ec667875) )
+
+	ROM_REGION( 0x080000, REGION_SOUND1, 0 )
+	ROM_LOAD( "epr18169.4", 0x000000, 0x080000, CRC(5c00ccfb) )
+ROM_END
+
+ROM_START( pclubjv5 ) /* Print Club vol.5 (c)1996 Atlus */
+	ROM_REGION( 0x200000, REGION_CPU1, 0 )
+	ROM_LOAD16_BYTE( "p5jat.u32", 0x000000, 0x080000, CRC(72220e69) )
+	ROM_LOAD16_BYTE( "p5jat.u31", 0x000001, 0x080000, CRC(06d83fde) )
+	ROM_LOAD16_BYTE( "p5jat.u34", 0x100000, 0x080000, CRC(b172ab58) )
+	ROM_LOAD16_BYTE( "p5jat.u33", 0x100001, 0x080000, CRC(ba38ec50) )
+
+	ROM_REGION( 0x080000, REGION_SOUND1, 0 )
+	ROM_LOAD( "epr18169.4", 0x000000, 0x080000, CRC(5c00ccfb) )
+ROM_END
 
 /******************************************************************************
 	Machine Init Functions
@@ -2423,6 +2541,44 @@ static DRIVER_INIT( zunkyou )
 	init_saves();
 }
 
+/* Print Club hardware (C2 with a printer) */
+
+static int cam_data;
+
+static READ16_HANDLER( printer_r )
+{
+	return cam_data;
+}
+
+static WRITE16_HANDLER( print_club_camera_w )
+{
+	cam_data = data;
+}
+
+static DRIVER_INIT( pclub )
+{
+	static const UINT32 printc1_table[256/8] =
+	{
+		0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff,
+		0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff,
+		0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff,
+		0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff,
+		0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff,
+		0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff,
+		0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff,
+		0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff
+	};
+	prot_table = printc1_table;
+	bloxeed_sound = 0;
+	init_saves();
+
+	install_mem_read16_handler(0,  0x880120, 0x880121, printer_r );/*Print Club Vol.1*/
+	install_mem_read16_handler(0,  0x880124, 0x880125, printer_r );/*Print Club Vol.2*/
+	install_mem_write16_handler(0, 0x880124, 0x880125, print_club_camera_w);
+}
+
+/* Genie's Hardware (contains no real sega parts) */
+
 DRIVER_INIT( puckpkmn )
 {
 	data8_t *rom	=	memory_region(REGION_CPU1);
@@ -2475,9 +2631,15 @@ GAME ( 1992, puyopuya, puyopuyo, segac2,   puyopuyo, puyopuyo, ROT0, "Sega / Com
 GAME ( 1992, puyopuyb, puyopuyo, segac2,   puyopuyo, puyopuyo, ROT0, "bootleg",                "Puyo Puyo (English) (bootleg)" )
 GAME ( 1994, ichidant, 0,        segac2,   ichidant, ichidant, ROT0, "Sega",                   "Ichidant-R (Puzzle & Action 2) (Japan)" )
 GAME ( 1994, ichidnte, ichidant, segac2,   ichidant, ichidnte, ROT0, "Sega",                   "Ichidant-R (Puzzle & Action 2) (English)" )
+GAME ( 1994, ichidntb, ichidant, segac,    ichidant, segac2,   ROT0, "bootleg",                "Ichidant-R (Puzzle & Action 2) (Japan) (bootleg)" )
 GAME ( 1994, stkclmns, 0,        segac2,   stkclmns, stkclmns, ROT0, "Sega",                   "Stack Columns (Japan)" )
 GAME ( 1994, puyopuy2, 0,        segac2,   puyopuy2, puyopuy2, ROT0, "Compile (Sega license)", "Puyo Puyo 2 (Japan)" )
 GAME ( 1994, potopoto, 0,        segac2,   potopoto, potopoto, ROT0, "Sega",                   "Poto Poto (Japan)" )
 GAME ( 1994, zunkyou,  0,        segac2,   zunkyou,  zunkyou,  ROT0, "Sega",                   "Zunzunkyou No Yabou (Japan)" )
 GAME ( 2000, puckpkmn, 0,        puckpkmn, puckpkmn, puckpkmn, ROT0, "Genie",                  "Puckman Pockimon" )
 
+/* Atlus Print Club 'Games' (C-2 Hardware, might not be possible to support them because they use camera + printer, really just put here for reference) */
+GAMEX( 1995, pclubj,   0,        segac2, pclub,    pclub,    ROT0, "Atlus",                   "Print Club (Japan Vol.1)", GAME_NOT_WORKING )
+GAMEX( 1995, pclubjv2, pclubj,   segac2, pclub,    pclub,    ROT0, "Atlus",                   "Print Club (Japan Vol.2)", GAME_NOT_WORKING )
+GAMEX( 1996, pclubjv4, pclubj,   segac2, pclub,    pclub,    ROT0, "Atlus",                   "Print Club (Japan Vol.4)", GAME_NOT_WORKING )
+GAMEX( 1996, pclubjv5, pclubj,   segac2, pclub,    pclub,    ROT0, "Atlus",                   "Print Club (Japan Vol.5)", GAME_NOT_WORKING )

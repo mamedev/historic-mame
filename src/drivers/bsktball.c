@@ -279,8 +279,6 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 /* bsktball Sound System Analog emulation                               */
 /************************************************************************/
 
-int bsktballWhistl555 = DISC_555_ASTBL_CAP | DISC_555_ASTBL_AC;
-
 const struct discrete_lfsr_desc bsktball_lfsr={
 	16,			/* Bit Length */
 	0,			/* Reset Value */

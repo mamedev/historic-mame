@@ -9,6 +9,7 @@
 #include "dominos.h"
 
 static int dominos_attract = 0;
+static int ac_line = 0x00;
 
 /***************************************************************************
 Read Ports
@@ -81,6 +82,11 @@ READ_HANDLER( dominos_port_r )
 	}
 }
 
+void dominos_ac_signal_flip(int dummy)
+{
+	ac_line = ac_line ^ 0x80;
+}
+
 /***************************************************************************
 Sync
 
@@ -88,21 +94,13 @@ When reading from SYNC:
    D4 = ATTRACT
    D5 = VRESET
    D6 = VBLANK*
-   D7 = some alternating signal!?!
-
-NOTE: D7 is a 60Hz AC line reference pulse.  This code should be fixed. DR. May 7/03
+   D7 = 60Hz AC line reference
 
 The only one of these I really understand is the VBLANK...
 ***************************************************************************/
 READ_HANDLER( dominos_sync_r )
 {
-	static int ac_line=0x00;
-
-	ac_line=(ac_line+1) % 3;
-	if (ac_line==0)
-		return ((input_port_4_r(0) & 0x7F) | dominos_attract | 0x80);
-	else
-		return ((input_port_4_r(0) & 0x7F) | dominos_attract );
+	return ((input_port_4_r(0) & 0x60) | dominos_attract | ac_line);
 }
 
 
@@ -112,7 +110,7 @@ Attract
 ***************************************************************************/
 WRITE_HANDLER( dominos_attract_w )
 {
-	dominos_attract = (offset & 0x01) << 6;
+	dominos_attract = (offset & 0x01) << 4;
 	discrete_sound_w(3, !(offset & 0x01));
 }
 

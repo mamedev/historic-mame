@@ -17,6 +17,7 @@
 
 #ifdef MESS
   #include "mess.h"
+#include "mesintrf.h"
 #endif
 
 
@@ -2925,7 +2926,9 @@ int memcard_menu(struct mame_bitmap *bitmap, int selection)
 	menuitem[menutotal++] = buf;
 	menuitem[menutotal++] = ui_getstring (UI_ejectcard);
 	menuitem[menutotal++] = ui_getstring (UI_createcard);
+#ifdef MESS
 	menuitem[menutotal++] = ui_getstring (UI_resetcard);
+#endif
 	menuitem[menutotal++] = ui_getstring (UI_returntomain);
 	menuitem[menutotal] = 0;
 
@@ -3003,6 +3006,7 @@ int memcard_menu(struct mame_bitmap *bitmap, int selection)
 				else
 					mcd_action = 5;
 				break;
+#ifdef MESS
 			case 3:
 				memcard_manager=1;
 				sel=-2;
@@ -3011,6 +3015,13 @@ int memcard_menu(struct mame_bitmap *bitmap, int selection)
 			case 4:
 				sel=-1;
 				break;
+#else
+			case 3:
+				sel=-1;
+				break;
+#endif
+
+
 			}
 		}
 
@@ -3094,7 +3105,9 @@ static void setup_menu_init(void)
 #else
 	menu_item[menu_total] = ui_getstring (UI_imageinfo); menu_action[menu_total++] = UI_IMAGEINFO;
 	menu_item[menu_total] = ui_getstring (UI_filemanager); menu_action[menu_total++] = UI_FILEMANAGER;
+#if HAS_WAVE
 	menu_item[menu_total] = ui_getstring (UI_tapecontrol); menu_action[menu_total++] = UI_TAPECONTROL;
+#endif
 	menu_item[menu_total] = ui_getstring (UI_history); menu_action[menu_total++] = UI_HISTORY;
 #endif
 
@@ -3168,9 +3181,11 @@ static int setup_menu(struct mame_bitmap *bitmap, int selected)
 			case UI_FILEMANAGER:
 				res = filemanager(bitmap, sel >> SEL_BITS);
 				break;
+#if HAS_WAVE
 			case UI_TAPECONTROL:
 				res = tapecontrol(bitmap, sel >> SEL_BITS);
 				break;
+#endif /* HAS_WAVE */
 #endif
 			case UI_HISTORY:
 				res = displayhistory(bitmap, sel >> SEL_BITS);
@@ -3300,7 +3315,7 @@ static void displayosd(struct mame_bitmap *bitmap,const char *text,int percentag
 }
 
 /* K.Wilkins Feb2003 Additional of Disrete Sound System ADJUSTMENT sliders */
-
+#if HAS_DISCRETE
 static void onscrd_discrete(struct mame_bitmap *bitmap,int increment,int arg)
 {
 	int ourval,initial;
@@ -3366,7 +3381,7 @@ static void onscrd_discrete(struct mame_bitmap *bitmap,int increment,int arg)
 	}
 	displayosd(bitmap,buf,ourval,initial);
 }
-
+#endif /* HAS_DISCRETE */
 /* K.Wilkins Feb2003 Additional of Disrete Sound System ADJUSTMENT sliders */
 
 static void onscrd_volume(struct mame_bitmap *bitmap,int increment,int arg)
@@ -3597,7 +3612,10 @@ static int onscrd_total_items;
 
 static void onscrd_init(void)
 {
-	int item,ch,soundnum;
+	int item,ch;
+#if HAS_DISCRETE
+	int soundnum;
+#endif /* HAS_DISCRETE */
 
 
 	item = 0;
@@ -3619,7 +3637,7 @@ static void onscrd_init(void)
 		}
 
 		/* K.Wilkins Feb2003 Additional of Disrete Sound System ADJUSTMENT sliders */
-
+#if HAS_DISCRETE
 		/* See if there is a discrete sound sub-system present */
 		for (soundnum = 0; soundnum < MAX_SOUND; soundnum++)
 		{
@@ -3640,7 +3658,7 @@ static void onscrd_init(void)
 				}
 			}
 		}
-
+#endif /* HAS_DISCRETE */
 		/* K.Wilkins Feb2003 Additional of Disrete Sound System ADJUSTMENT sliders */
 	}
 
@@ -3879,68 +3897,7 @@ int handle_user_interface(struct mame_bitmap *bitmap)
 	static int show_profiler;
 
 #ifdef MESS
-if (Machine->gamedrv->flags & GAME_COMPUTER)
-{
-	static int ui_active = 0, ui_toggle_key = 0;
-	static int ui_display_count = 4 * 60;
-
-	if( input_ui_pressed(IPT_UI_TOGGLE_UI) )
-	{
-		if( !ui_toggle_key )
-		{
-			ui_toggle_key = 1;
-			ui_active = !ui_active;
-			ui_display_count = 4 * 60;
-			schedule_full_refresh();
-		 }
-	}
-	else
-	{
-		ui_toggle_key = 0;
-	}
-
-	if( ui_active )
-	{
-		if( ui_display_count > 0 )
-		{
-			char text[] = "KBD: UI  (ScrLock)";
-			int x, x0 = uirotwidth - sizeof(text) * Machine->uifont->width - 2;
-			int y0 = uirotbounds.min_y + uirotheight - Machine->uifont->height - 2;
-			for( x = 0; text[x]; x++ )
-			{
-				artwork_mark_ui_dirty(x0 + x * Machine->uifont->width, y0,
-						x0 + x * Machine->uifont->width + uirotcharwidth - 1, y0 + uirotcharheight - 1);
-				drawgfx(bitmap,
-					Machine->uifont,text[x],0,0,0,
-					x0+x*Machine->uifont->width,
-					y0,0,TRANSPARENCY_NONE,0);
-			}
-			if( --ui_display_count == 0 )
-				schedule_full_refresh();
-		}
-	}
-	else
-	{
-		if( ui_display_count > 0 )
-		{
-			char text[] = "KBD: EMU (ScrLock)";
-			int x, x0 = uirotwidth - sizeof(text) * Machine->uifont->width - 2;
-			int y0 = uirotbounds.min_y + uirotheight - Machine->uifont->height - 2;
-			for( x = 0; text[x]; x++ )
-			{
-				artwork_mark_ui_dirty(x0 + x * Machine->uifont->width, y0,
-						x0 + x * Machine->uifont->width + uirotcharwidth - 1, y0 + uirotcharheight - 1);
-				drawgfx(bitmap,
-					Machine->uifont,text[x],0,0,0,
-					x0+x*Machine->uifont->width,
-					y0,0,TRANSPARENCY_NONE,0);
-			}
-			if( --ui_display_count == 0 )
-				schedule_full_refresh();
-		}
-		return 0;
-	}
-}
+	extern int mess_pause_for_ui;
 #endif
 
 	/* if the user pressed F12, save the screen to a file */

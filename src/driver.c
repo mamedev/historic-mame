@@ -100,9 +100,14 @@ const struct GameDriver *test_drivers[] =
 	DRIVER( newpuckx )	/* hack */
 	DRIVER( pacheart )	/* hack */
 	DRIVER( joyman )	/* hack */
+	DRIVER( newpuc2 )	/* hack */
+	DRIVER( newpuc2b )	/* hack */
 	DRIVER( piranha )	/* GL */
 	DRIVER( piranhao )	/* GL */
 	DRIVER( piranhah )	/* hack */
+	DRIVER( nmouse )	/* (c) 1981 Amenip (Palcom Queen River) */
+	DRIVER( nmouseb )	/* (c) 1981 Amenip Nova Games Ltd. */
+						/* Woodpecker somewhere around here?*/
 	DRIVER( pacplus )
 	DRIVER( mspacman )	/* (c) 1981 Midway */	/* made by Gencomp */
 	DRIVER( mspacmab )	/* bootleg */
@@ -111,6 +116,7 @@ const struct GameDriver *test_drivers[] =
 	DRIVER( pacgal )	/* hack */
 	DRIVER( mschamp )	/* hack */
 	DRIVER( maketrax )	/* (c) 1981 Williams, high score table says KRL (fur Kural) */
+	DRIVER( maketrxb )	/* (c) 1981 [Kural] (Williams license) */
 	DRIVER( crush )		/* (c) 1981 Kural Samno Electric Ltd */
 	DRIVER( crush2 )	/* (c) 1981 Kural Esco Electric Ltd - bootleg? */
 	DRIVER( crush3 )	/* Kural Electric Ltd - bootleg? */
@@ -125,6 +131,8 @@ const struct GameDriver *test_drivers[] =
 	DRIVER( lizwiz )	/* (c) 1985 Techstar + "Sunn presents" */
 	DRIVER( theglobp )	/* (c) 1983 Epos Corporation */
 	DRIVER( beastf )	/* (c) 1984 Epos Corporation */
+	DRIVER( acitya )	/* (c) 1983 Epos Corporation */
+	DRIVER( bwcasino )	/* (c) 1983 Epos Coropration */
 	DRIVER( dremshpr )	/* (c) 1982 Sanritsu */
 	DRIVER( vanvan )	/* (c) 1983 Sanritsu */
 	DRIVER( vanvank )	/* (c) 1983 Karateco (bootleg?) */
@@ -449,7 +457,8 @@ const struct GameDriver *test_drivers[] =
 	DRIVER( phoenix3 )	/* bootleg */
 	DRIVER( phoenixc )	/* bootleg */
 	DRIVER( condor )	/* bootleg */
-	DRIVER( vautour )	/* Jeutel */
+	DRIVER( falcon )	/* bootleg */
+	DRIVER( vautour )	/* bootleg (Jeutel) */
 	DRIVER( pleiads )	/* (c) 1981 Tehkan */
 	DRIVER( pleiadbl )	/* bootleg */
 	DRIVER( pleiadce )	/* (c) 1981 Centuri + Tehkan */
@@ -740,6 +749,7 @@ TESTDRIVER( victlap )
 	DRIVER( yankeedo )	/* bootleg */
 	DRIVER( docastle )	/* (c) 1983 */
 	DRIVER( docastl2 )	/* (c) 1983 */
+	DRIVER( docastlo )	/* (c) 1983 */
 	DRIVER( douni )		/* (c) 1983 */
 	DRIVER( dorunrun )	/* (c) 1984 */
 	DRIVER( dorunru2 )	/* (c) 1984 */
@@ -1340,6 +1350,7 @@ TESTDRIVER( cyclshtg )	/* A97 (c) 1986 Taito Corporation */
 	DRIVER( jumping )	/* bootleg */
 	DRIVER( arkanoid )	/* A75 (c) 1986 Taito Corporation Japan (World) */
 	DRIVER( arknoidu )	/* A75 (c) 1986 Taito America Corporation + Romstar license (US) */
+	DRIVER( arknoiuo )	/* A75 (c) 1986 Taito America Corporation + Romstar license (US) */
 	DRIVER( arknoidj )	/* A75 (c) 1986 Taito Corporation (Japan) */
 	DRIVER( arkbl2 )	/* bootleg */
 	DRIVER( arkbl3 )	/* bootleg */
@@ -1962,6 +1973,7 @@ TESTDRIVER( defndjeu )	/* bootleg */
 	DRIVER( sf2ue )		/* 28/02/1991 (c) 1991 (US)    */
 	DRIVER( sf2uf )		/* 11/04/1991 (c) 1991 (US)    */
 	DRIVER( sf2ui )		/* 22/05/1991 (c) 1991 (US)    */
+	DRIVER( sf2uk )		/* 01/11/1991 (c) 1991 (US)    */
 	DRIVER( sf2j )		/* 10/12/1991 (c) 1991 (Japan) */
 	DRIVER( sf2ja )		/* 14/02/1991 (c) 1991 (Japan) */
 	DRIVER( sf2jc )		/* 06/03/1991 (c) 1991 (Japan) */
@@ -2263,6 +2275,8 @@ TESTDRIVER( dynobop )	/* (c) 1990 Grand Products/Incredible Technologies */
 	DRIVER( pairs )		/* (c) 1994 Strata/Incredible Technologies */
 TESTDRIVER( drivedge )	/* (c) 1994 Strata/Incredible Technologies */
 	DRIVER( wcbowl )	/* (c) 1995 Incredible Technologies */
+	DRIVER( wcbwl165 )	/* (c) 1995 Incredible Technologies */
+	DRIVER( wcbwl12 )	/* (c) 1995 Incredible Technologies */
 	DRIVER( sftm )		/* (c) 1995 Capcom/Incredible Technologies */
 	DRIVER( sftm110 )	/* (c) 1995 Capcom/Incredible Technologies */
 	DRIVER( sftmj )		/* (c) 1995 Capcom/Incredible Technologies */
@@ -2533,6 +2547,7 @@ TESTDRIVER( toutruna )	/* (protected) */
 	DRIVER( fantzone )	/* (c) 1986 */
 	DRIVER( fantzono )	/* (c) 1986 */
 	DRIVER( fpointbl )	/* (c) 1989 (Datsu bootleg) */
+	DRIVER( fpointbj )	/* (c) 1989 (Datsu bootleg, Japan) */
 	DRIVER( goldnabl )	/* (c) 1989 (bootleg) */
 	DRIVER( goldnaxa )	/* (c) 1989 */
 	DRIVER( goldnaxe )	/* (c) 1989 */
@@ -2547,6 +2562,7 @@ TESTDRIVER( toutruna )	/* (protected) */
 	DRIVER( passshtb )	/* bootleg */
 	DRIVER( quartet )	/* (c) 1986 */
 	DRIVER( quartet2 )	/* (c) 1986 */
+	DRIVER( quartt2j )	/* (c) 1986 */
 	DRIVER( quartetj )	/* (c) 1986 */
 	DRIVER( riotcity )	/* (c) 1991 Sega / Westone */
 	DRIVER( sdi )		/* (c) 1987 */
@@ -2617,6 +2633,7 @@ TESTDRIVER( qrouka )
 TESTDRIVER( f1lap )
 TESTDRIVER( dbzvrvs )
 TESTDRIVER( darkedge )
+TESTDRIVER( slipstrm )	/* Capcom */
 
 	/* Sega Multi System 32 games */
 	DRIVER( orunners )	/* (c) 1992 (US) */
@@ -2712,10 +2729,19 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( puyopuyb )	/* bootleg */
 	DRIVER( ichidant )	/* (c) 1994 Sega */
 	DRIVER( ichidnte )	/* (c) 1994 Sega */
+	DRIVER( ichidntb )	/* bootleg */
 	DRIVER( stkclmns )	/* (c) 1994 Sega */
 	DRIVER( puyopuy2 )	/* (c) 1994 Compile + Sega license */
 	DRIVER( potopoto )	/* (c) 1994 Sega */
 	DRIVER( zunkyou )	/* (c) 1994 Sega */
+
+	/* Atlus Print Club 'Games' C-2 board */
+TESTDRIVER( pclubj )
+TESTDRIVER( pclubjv2 )
+TESTDRIVER( pclubjv4 )
+TESTDRIVER( pclubjv5 )
+
+	/* Genie Hardware (uses Genesis VDP)*/
 	DRIVER( puckpkmn )	/* (c) 2000 Genie */
 
 	/* Data East "Burger Time hardware" games */
@@ -3105,6 +3131,7 @@ TESTDRIVER( whizquiz )	/* (c) 1985 Zilec-Zenitone */
 	DRIVER( fastlane )	/* GX752 (c) 1987 */
 	DRIVER( tricktrp )	/* GX771 (c) 1987 */
 	DRIVER( labyrunr )	/* GX771 (c) 1987 (Japan) */
+	DRIVER( labyrunk )	/* GX771 (c) 1987 (Japan) */
 	DRIVER( thehustl )	/* GX765 (c) 1987 (Japan) */
 	DRIVER( thehustj )	/* GX765 (c) 1987 (Japan) */
 	DRIVER( rackemup )	/* GX765 (c) 1987 */
@@ -3124,7 +3151,8 @@ TESTDRIVER( whizquiz )	/* (c) 1985 Zilec-Zenitone */
 	DRIVER( thunderx )	/* GX873 (c) 1988 */
 	DRIVER( thnderxj )	/* GX873 (c) 1988 (Japan) */
 	DRIVER( mainevt )	/* GX799 (c) 1988 */
-	DRIVER( mainevt2 )	/* GX799 (c) 1988 */
+	DRIVER( mainevto )	/* GX799 (c) 1988 */
+	DRIVER( mainev2p )	/* GX799 (c) 1988 */
 	DRIVER( ringohja )	/* GX799 (c) 1988 (Japan) */
 	DRIVER( devstors )	/* GX890 (c) 1988 */
 	DRIVER( devstor2 )	/* GX890 (c) 1988 */
@@ -3245,6 +3273,7 @@ TESTDRIVER( xmen6p )	/* GX065 (c) 1992 */
 	DRIVER( astrxeaa )	/* GX068 (c) 1992 (World) */
 	DRIVER( gijoe )		/* GX069 (c) 1991 (World) */
 	DRIVER( gijoeu )	/* GX069 (c) 1991 (US) */
+	DRIVER( gijoej )	/* GX069 (c) 1991 (Japan) */
 	DRIVER( thndrx2 )	/* GX073 (c) 1991 (Japan) */
 	DRIVER( thndrx2a )	/* GX073 (c) 1991 (Asia) */
 	DRIVER( prmrsocr )	/* GX101 (c) 1993 (Japan) */
@@ -3262,6 +3291,7 @@ TESTDRIVER( xmen6p )	/* GX065 (c) 1992 */
 	DRIVER( viostrma )	/* GX168 (c) 1993 (Asia) */
 	DRIVER( dadandrn )	/* GX170 (c) 1993 (Japan) */
 	DRIVER( metamrph )	/* GX224 (c) 1993 (US) */
+	DRIVER( metamrpj )	/* GX224 (c) 1993 (Japan) */
 	DRIVER( mtlchmpj )	/* GX234 (c) 1993 (Japan) */
 	DRIVER( rungun )	/* GX247 (c) 1993 (World) */
 	DRIVER( rungunu )	/* GX247 (c) 1993 (US) */
@@ -3273,6 +3303,9 @@ TESTDRIVER( xmen6p )	/* GX065 (c) 1992 */
 	DRIVER( gradius3 )	/* GX945 (c) 1989 (Japan) */
 	DRIVER( grdius3a )	/* GX945 (c) 1989 (Asia) */
 	DRIVER( grdius3e )	/* GX945 (c) 1989 (World?) */
+
+	/* Konami 68020 games */
+TESTDRIVER( plygonet )	/* GX305 (c) 1993 */
 
 	/* Konami System GX games */
 	/* 1994.03 Golfing Greats 2 (GX218) */
@@ -3301,8 +3334,10 @@ TESTDRIVER( rungun2 )	/* GX505 */
 	DRIVER( carpolo )	/* (c) 1977 */
 	DRIVER( sidetrac )	/* (c) 1979 */
 	DRIVER( targ )		/* (c) 1980 */
+	DRIVER( targc )		/* (c) 1980 */
 	DRIVER( spectar )	/* (c) 1980 */
 	DRIVER( spectar1 )	/* (c) 1980 */
+	DRIVER( rallys )	/* (c) 1980 bootleg? */
 	DRIVER( venture )	/* (c) 1981 */
 	DRIVER( venture2 )	/* (c) 1981 */
 	DRIVER( venture4 )	/* (c) 1981 */
@@ -3367,6 +3402,7 @@ TESTDRIVER( rungun2 )	/* GX505 */
 	DRIVER( atarifb )	/* 033xxx			1978/10 [6502] */
 	DRIVER( atarifb1 )	/* 033xxx			1978/10 [6502] */
 	DRIVER( orbit )		/* 033689-033702	1978/11 [6800] */
+	DRIVER( wolfpack )	/* ?????? prototype         [6502] */
 	DRIVER( videopin )	/* 034253-034267	1979/02 [6502] */
 	DRIVER( atarifb4 )	/* 034754			1979/04 [6502] */
 	DRIVER( subs )		/* 033714			1979/05 [6502] */
@@ -3430,7 +3466,8 @@ TESTDRIVER( rungun2 )	/* GX505 */
 	DRIVER( qwakprot )	/* (proto)			(c) 1982 */
 
 	/* misc Atari games */
-	DRIVER( tunhunt )	/* 136000			(c) 1981 */
+	DRIVER( tunhunt )	/* 136000			(c) 1979 */
+	DRIVER( tunhuntc )	/* 136000			(c) 1981 */ /* licensed to / distributed by Centuri */
 	DRIVER( liberatr )	/* 136012			(c) 1982 */
 TESTDRIVER( liberat2 )	/* 136012			(c) 1982 */
 	DRIVER( foodf )		/* 136020			(c) 1982 */	/* made by Gencomp */
@@ -3603,6 +3640,8 @@ TESTDRIVER( mainsnk )	/* fill in */
 	DRIVER( psychos )	/*       'PS' (c) 1987 */
 	DRIVER( psychosj )	/*       'PS' (c) 1987 (Japan) */
 	DRIVER( chopper )	/* A7003 'KK' (c) 1988 */
+	DRIVER( choppera )	/* A7003 'KK' (c) 1988 */
+	DRIVER( chopperb )	/* A7003 'KK' (c) 1988 */
 	DRIVER( legofair )	/* A7003 'KK' (c) 1988 */
 	DRIVER( ftsoccer )	/*            (c) 1988 */
 	DRIVER( tdfever )	/* A6006 'TD' (c) 1987 */
@@ -3784,6 +3823,12 @@ TESTDRIVER( hachamf )	/* (c) 1991 NMK */
 	DRIVER( ssmissin )	/* (c) 1992 Comad */
 	DRIVER( raphero )	/* (c) 1994 Media Trading Corp */
 
+	/* Jaleco Mahjong Games, Similar Hardware to the NMK ones above? */
+TESTDRIVER( daireika )
+TESTDRIVER( mjzoomin )
+TESTDRIVER( kakumei )
+TESTDRIVER( kakumei2 )
+
 	/* don't know what hardare Banpresto used for these games */
 	DRIVER( macrossp )	/* (c) 1996 Banpresto */
 	DRIVER( quizmoon )	/* (c) 1997 Banpresto */
@@ -3929,6 +3974,7 @@ TESTDRIVER( hachamf )	/* (c) 1991 NMK */
 	DRIVER( empcity )	/* (c) 1986 Seibu Kaihatsu (bootleg?) */
 	DRIVER( empcityj )	/* (c) 1986 Taito Corporation (Japan) */
 	DRIVER( stfight )	/* (c) 1986 Seibu Kaihatsu (Germany) (bootleg?) */
+TESTDRIVER( mustache )	/* (c) 1987 March */
 TESTDRIVER( cshooter )	/* (c) 1987 Taito */
 TESTDRIVER( cshootre )
 TESTDRIVER( airraid )
@@ -4331,6 +4377,7 @@ TESTDRIVER( jsk )		/* (c) 1997 Visco */
 	DRIVER( stratvox )	/* [1980 Sun Electronics] Taito */
 	DRIVER( spacecho )	/* bootleg */
 	DRIVER( route16 )	/* (c) 1981 Tehkan/Sun + Centuri license */
+	DRIVER( route16a )	/* (c) 1981 Tehkan/Sun + Centuri license */
 	DRIVER( route16b )	/* bootleg */
 	DRIVER( ttmahjng )	/* Taito */
 	DRIVER( fnkyfish )	/* (c) 1981 Sun Electronics */
@@ -4477,6 +4524,7 @@ TESTDRIVER( brickzn3 )
 	DRIVER( skybump )	/* (c) 1982 Venture Line */
 
 	/* Yun Sung games */
+	DRIVER( paradise )	/* (c) >1994 Yun Sung */
 	DRIVER( cannball )	/* (c) 1995 Yun Sung / Soft Visio */
 	DRIVER( magix )		/* (c) 1995 Yun Sung */
 	DRIVER( magicbub )	/* (c) Yun Sung */
@@ -4699,6 +4747,7 @@ TESTDRIVER( spdbuggy )
 	DRIVER( aquarium )	/* (c) 1996 Excellent System */
 	DRIVER( policetr )	/* (c) 1996 P&P Marketing */
 	DRIVER( policeto )	/* (c) 1996 P&P Marketing */
+	DRIVER( plctr13b )  /* (c) 1996 P&P Marketing */
 	DRIVER( sshooter )	/* (c) 1998 P&P Marketing */
 	DRIVER( pass )		/* (c) 1992 Oksan */
 	DRIVER( news )		/* "Virus"??? ((c) 1993 Poby in ROM VIRUS.4) */
@@ -4750,6 +4799,7 @@ TESTDRIVER( 9ballsh3 )	/* (c) 1993 E-Scape EnterMedia + "marketed by Bundra Game
 	DRIVER( eggvntdx )	/* (c) 1997 The Game Room */
 	DRIVER( rotaryf )
 TESTDRIVER( sbugger )	/* (c) 1981 Game-A-Tron */
+TESTDRIVER( portrait )	/* (c) 1983 Olympia */
 #endif /* CPSMAME */
 #endif /* NEOMAME */
 #ifndef CPSMAME
@@ -4933,7 +4983,6 @@ TESTDRIVER( sbugger )	/* (c) 1981 Game-A-Tron */
 	DRIVER( kof2000n )	/* 0257 (c) 2000 SNK */
 	/* 0258 SNK vs. Capcom? (prototype) */
 	DRIVER( bangbead )	/* 0259 (c) 2000 Visco */
-	DRIVER( bangbedp )	/* 0259 (c) 2000 Visco (prototype) */
 	DRIVER( nitd )		/* 0260 (c) 2000 Eleven / Gavaking */
 	DRIVER( zupapa )	/* 0070 (c) 2001 SNK */
 	DRIVER( sengoku3 )	/* 0261 (c) 2001 SNK */

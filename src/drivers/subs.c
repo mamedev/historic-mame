@@ -71,8 +71,9 @@ static MEMORY_WRITE_START( writemem )
 	{ 0x0062, 0x0063, subs_lamp2_w },
 	{ 0x0064, 0x0065, subs_sonar2_w },
 	{ 0x0066, 0x0067, subs_sonar1_w },
-	{ 0x0068, 0x0069, subs_crash_w },
-	{ 0x006a, 0x006b, subs_explode_w },
+// Schematics show crash and explode reversed.  But this is proper.
+	{ 0x0068, 0x0069, subs_explode_w },
+	{ 0x006a, 0x006b, subs_crash_w },
 	{ 0x006c, 0x006d, subs_invert1_w },
 	{ 0x006e, 0x006f, subs_invert2_w },
 	{ 0x0090, 0x009f, spriteram_w, &spriteram },
@@ -128,15 +129,15 @@ INPUT_PORTS_START( subs )
 	PORT_BIT ( 0x04, IP_ACTIVE_HIGH, IPT_COIN2 )
 	PORT_BIT ( 0x08, IP_ACTIVE_LOW, IPT_START2 )
 	PORT_BIT ( 0x10, IP_ACTIVE_LOW, IPT_VBLANK )
-	PORT_BIT ( 0x20, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT ( 0x20, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
 	PORT_BITX( 0x40, IP_ACTIVE_LOW, IPT_SERVICE | IPF_TOGGLE, "Self Test", KEYCODE_F2, IP_JOY_NONE )
-	PORT_BIT ( 0x80, IP_ACTIVE_LOW, IPT_BUTTON2 )
+	PORT_BIT ( 0x80, IP_ACTIVE_LOW, IPT_BUTTON1 )
 
 	PORT_START      /* IN3 */
-	PORT_ANALOG( 0xff, 0x00, IPT_DIAL, 100, 10, 0, 0 )
+	PORT_ANALOG( 0xff, 0x00, IPT_DIAL | IPF_PLAYER2, 100, 20, 0, 0 )
 
 	PORT_START      /* IN4 */
-	PORT_ANALOG( 0xff, 0x00, IPT_DIAL | IPF_PLAYER2, 100, 10, 0, 0 )
+	PORT_ANALOG( 0xff, 0x00, IPT_DIAL, 100, 20, 0, 0 )
 
 INPUT_PORTS_END
 
@@ -183,6 +184,118 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 };
 
 
+/************************************************************************/
+/* subs Sound System Analog emulation                               */
+/************************************************************************/
+
+const struct discrete_lfsr_desc subs_lfsr={
+	16,			/* Bit Length */
+	0,			/* Reset Value */
+	13,			/* Use Bit 13 as XOR input 0 */
+	14,			/* Use Bit 14 as XOR input 1 */
+	DISC_LFSR_XNOR,		/* Feedback stage1 is XNOR */
+	DISC_LFSR_OR,		/* Feedback stage2 is just stage 1 output OR with external feed */
+	DISC_LFSR_REPLACE,	/* Feedback stage3 replaces the shifted register contents */
+	0x000001,		/* Everything is shifted into the first bit only */
+	0,			/* Output is already inverted by XNOR */
+	13			/* Output bit */
+};
+
+/* Nodes - Inputs */
+#define SUBS_SONAR1_EN			NODE_01
+#define SUBS_SONAR2_EN			NODE_02
+#define SUBS_LAUNCH_DATA		NODE_03
+#define SUBS_CRASH_DATA			NODE_04
+#define SUBS_CRASH_EN			NODE_05
+#define SUBS_EXPLODE_EN			NODE_06
+#define SUBS_NOISE_RESET		NODE_07
+/* Nodes - Sounds */
+#define SUBS_NOISE			NODE_10
+#define SUBS_SONAR1_SND			NODE_11
+#define SUBS_SONAR2_SND			NODE_12
+#define SUBS_LAUNCH_SND			NODE_13
+#define SUBS_CRASH_SND			NODE_14
+#define SUBS_EXPLODE_SND		NODE_15
+
+static DISCRETE_SOUND_START(subs_sound_interface)
+	/************************************************/
+	/* subs  Effects Relataive Gain Table           */
+	/*                                              */
+	/* NOTE: The schematic does not show the amp    */
+	/*  stage so I will assume a 5K volume control. */
+	/*                                              */
+	/* Effect       V-ampIn   Gain ratio  Relative  */
+	/* Sonar         2.33     5/(5+2.7)     320.8   */
+	/* Launch        3.8      5/(5+47)       77.5   */
+	/* Crash         3.8      5/(5+22)      149.2   */
+	/* Explosion     10.0     5/(5+5.6)    1000.0   */
+	/************************************************/
+
+	/************************************************/
+	/* Input register mapping for subs              */
+	/************************************************/
+	/*                   NODE              ADDR  MASK    GAIN      OFFSET  INIT */
+	DISCRETE_INPUTX     (SUBS_SONAR1_EN,   0x00, 0x000f, 400.0,     0,     0.0)
+	DISCRETE_INPUTX     (SUBS_SONAR2_EN,   0x01, 0x000f, 400.0,     0,     0.0)
+	DISCRETE_INPUTX     (SUBS_LAUNCH_DATA, 0x02, 0x000f,  77.5/15,  0,     0.0)
+	DISCRETE_INPUTX     (SUBS_CRASH_DATA,  0x03, 0x000f, 149.2/15,  0,     0.0)
+	DISCRETE_INPUT      (SUBS_CRASH_EN,    0x04, 0x000f,                   0.0)
+	DISCRETE_INPUT      (SUBS_EXPLODE_EN,  0x05, 0x000f,                   0.0)
+	DISCRETE_INPUT_PULSE(SUBS_NOISE_RESET, 0x06, 0x000f,                   1.0)
+
+	/************************************************/
+	/* Noise source                                 */
+	/* LFSR clk = 256H = 15750.0Hz                  */
+	/************************************************/
+	DISCRETE_LFSR_NOISE(SUBS_NOISE, SUBS_NOISE_RESET, SUBS_NOISE_RESET, 15750.0, 1.0, 0, 0, &subs_lfsr)
+
+	/************************************************/
+	/* Launch is just amplitude contolled noise     */
+	/************************************************/
+	DISCRETE_MULTIPLY(SUBS_LAUNCH_SND, 1, SUBS_NOISE, SUBS_LAUNCH_DATA)
+
+	/************************************************/
+	/* Crash resamples the noise at 8V and then     */
+	/* controls the amplitude.                      */
+	/* 8V = Hsync/2/8 = 15750/2/8                   */
+	/************************************************/
+	DISCRETE_SQUAREWFIX(NODE_20, 1, 15750.0/2/8, 1.0, 50, 1.0/2, 0)	/* Resample freq. */
+	DISCRETE_SAMPLHOLD(NODE_21, 1, SUBS_NOISE, NODE_20, DISC_SAMPHOLD_REDGE)
+	DISCRETE_MULTIPLY(SUBS_CRASH_SND, SUBS_CRASH_EN, NODE_21, SUBS_CRASH_DATA)
+
+	/************************************************/
+	/* Explode filters the crash sound.             */
+	/* I'm not sure of the exact filter freq.       */
+	/************************************************/
+	DISCRETE_TRANSFORM3(NODE_30, 1, NODE_21, SUBS_CRASH_DATA, 1000.0 / 149.2, "01*2*")
+	DISCRETE_FILTER2(SUBS_EXPLODE_SND, SUBS_EXPLODE_EN, NODE_30, 100.0, (1.0 / 7.6), DISC_FILTER_BANDPASS)
+
+	/************************************************/
+	/* Not sure how the sonar works yet.            */
+	/************************************************/
+	DISCRETE_RCDISC2(NODE_40, SUBS_SONAR1_EN, SUBS_SONAR1_EN, 680000.0, SUBS_SONAR1_EN, 1000.0, 1e-6)	/* Decay envelope */
+	DISCRETE_ADDER2(NODE_41, 1, NODE_40, 800)
+	DISCRETE_LOGIC_AND(NODE_42, 1, SUBS_SONAR1_EN, SUBS_NOISE)
+	DISCRETE_TRIANGLEWAVE(SUBS_SONAR1_SND, NODE_42, NODE_41, 320.8, 0.0, 0)
+	
+	DISCRETE_RCDISC2(NODE_50, SUBS_SONAR2_EN, SUBS_SONAR2_EN, 18600.0, SUBS_SONAR2_EN, 20.0, 4.7e-6)	/* Decay envelope */
+	DISCRETE_ADDER2(NODE_51, 1, NODE_50, 800)
+	DISCRETE_LOGIC_AND(NODE_52, 1, SUBS_SONAR2_EN, SUBS_NOISE)
+	DISCRETE_TRIANGLEWAVE(SUBS_SONAR2_SND, NODE_52, NODE_51, 320.8, 0.0, 0)
+
+	/************************************************/
+	/* Combine all sound sources.                   */
+	/* Add some final gain to get to a good sound   */
+	/* level.                                       */
+	/************************************************/
+
+	DISCRETE_ADDER4(NODE_90, 1, 0, SUBS_LAUNCH_SND, SUBS_CRASH_SND, SUBS_EXPLODE_SND)
+	DISCRETE_ADDER4(NODE_91, 1, 0, SUBS_LAUNCH_SND, SUBS_CRASH_SND, SUBS_EXPLODE_SND)
+	DISCRETE_GAIN(NODE_92, NODE_90, 65534.0/(320.8+77.5+149.2+1000.0))
+	DISCRETE_GAIN(NODE_93, NODE_91, 65534.0/(320.8+77.5+149.2+1000.0))
+	DISCRETE_OUTPUT_STEREO(NODE_92, NODE_93, 100)
+DISCRETE_SOUND_END
+
 
 /*************************************
  *
@@ -214,6 +327,10 @@ static MACHINE_DRIVER_START( subs )
 	MDRV_PALETTE_INIT(subs)
 	MDRV_VIDEO_START(generic)
 	MDRV_VIDEO_UPDATE(subs)
+
+	/* sound hardware */
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD_TAG("discrete", DISCRETE, subs_sound_interface)
 MACHINE_DRIVER_END
 
 
@@ -275,4 +392,4 @@ static DRIVER_INIT( subs )
  *
  *************************************/
 
-GAMEX( 1977, subs, 0, subs, subs, subs, ROT0, "Atari", "Subs", GAME_NO_SOUND )
+GAMEX( 1977, subs, 0, subs, subs, subs, ROT0, "Atari", "Subs", GAME_IMPERFECT_SOUND )

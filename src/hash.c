@@ -119,7 +119,7 @@
  *   skeleton for a driver, containing already rom names, lengths, and 
  *   checksums (both CRC and SHA1). 
  *
- * The tool is available on the FTP as platform-independent source code 
+ * The tool is available on www.mame.net as platform-independent source code
  * (in Python), or win32 standalone executable.
  *
  */
@@ -127,6 +127,7 @@
 #include <stddef.h>
 #include <ctype.h>
 #include <string.h>
+#include <zlib.h>
 #include "hash.h"
 #include "md5.h"
 #include "sha1.h"
@@ -544,7 +545,7 @@ void hash_compute(char* dst, const unsigned char* data, unsigned long length, un
 
 void hash_data_print(const char* data, unsigned int functions, char* buffer)
 {
-	int i;
+	int i, j;
 	char first = 1;
 
 	if (functions == 0)
@@ -565,7 +566,8 @@ void hash_data_print(const char* data, unsigned int functions, char* buffer)
 			first = 0;
 			
 			strcpy(temp, hash_function_name(func));
-			strupr(temp);
+			for (j = 0; temp[j]; j++)
+				temp[j] = toupper(temp[j]);
 			strcat(buffer, temp);
 			strcat(buffer, "(");
             
@@ -582,7 +584,6 @@ void hash_data_print(const char* data, unsigned int functions, char* buffer)
  *********************************************************************/
 
 static UINT32 crc;
-extern unsigned int crc32(unsigned int curcrc, const UINT8 *buf, unsigned int len);
 
 static void h_crc_begin(void)
 {

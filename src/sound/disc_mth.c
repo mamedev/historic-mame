@@ -27,6 +27,7 @@
 /*                                                                      */
 /************************************************************************/
 
+#include <float.h>
 
 struct dss_ramp_context
 {
@@ -241,7 +242,7 @@ int dst_divide_step(struct node_description *node)
 	{
 		if(node->input[2]==0)
 		{
-			node->output=_HUGE;	/* Max out but dont break */
+			node->output=DBL_MAX;	/* Max out but dont break */
 			discrete_log("dst_divider_step() - Divide by Zero attempted.");
 		}
 		else

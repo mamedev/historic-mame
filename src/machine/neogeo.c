@@ -221,6 +221,7 @@ DRIVER_INIT( neogeo )
 
 		/* Rom internal checksum fails for now.. */
 		mem16[0x11c62/2] = 0x4e71;
+		mem16[0x11c64/2] = 0x4e71;
 	}
 	else
 	{
@@ -270,8 +271,7 @@ DRIVER_INIT( neogeo )
 WRITE16_HANDLER (neogeo_select_bios_vectors)
 {
 	data8_t* gamerom = memory_region(REGION_CPU1);
-	int ng_bios = readinputport(8);
-	data8_t* biosrom = memory_region(REGION_USER1)+ng_bios*0x20000;
+	data8_t* biosrom = memory_region(REGION_USER1);
 
 	memcpy( gamerom, biosrom, 0x80 );
 }

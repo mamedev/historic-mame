@@ -263,7 +263,10 @@ enum
 #define ROM_INHERITFLAGSMASK		0x08000000			/* inherit all flags from previous definition */
 #define		ROM_INHERITFLAGS		0x08000000
 
-#define ROM_INHERITEDFLAGS			(ROM_GROUPMASK | ROM_SKIPMASK | ROM_REVERSEMASK | ROM_BITWIDTHMASK | ROM_BITSHIFTMASK)
+#define ROM_BIOSFLAGSMASK			0xf0000000			/* only loaded if value matches global bios value */
+#define 	ROM_BIOS(n)				(((n) & 15) << 28)
+
+#define ROM_INHERITEDFLAGS			(ROM_GROUPMASK | ROM_SKIPMASK | ROM_REVERSEMASK | ROM_BITWIDTHMASK | ROM_BITSHIFTMASK | ROM_BIOSFLAGSMASK)
 
 /* ----- per-ROM macros ----- */
 #define ROM_GETNAME(r)				((r)->_name)
@@ -279,6 +282,7 @@ enum
 #define ROM_GETBITWIDTH(r)			(((ROM_GETFLAGS(r) & ROM_BITWIDTHMASK) >> 21) + 8 * ((ROM_GETFLAGS(r) & ROM_BITWIDTHMASK) == 0))
 #define ROM_GETBITSHIFT(r)			((ROM_GETFLAGS(r) & ROM_BITSHIFTMASK) >> 24)
 #define ROM_INHERITSFLAGS(r)		((ROM_GETFLAGS(r) & ROM_INHERITFLAGSMASK) == ROM_INHERITFLAGS)
+#define ROM_BIOSFLAGS(r)			((ROM_GETFLAGS(r) & ROM_BIOSFLAGSMASK) >> 28)
 #define ROM_NOGOODDUMP(r)			(hash_data_has_info((r)->_hashdata, HASH_INFO_NO_DUMP))
 
 /* ----- per-disk macros ----- */

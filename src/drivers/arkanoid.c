@@ -12,6 +12,10 @@
 			    inserted, NOT patched, so I don't think it's a bootleg
 				The 68705 code for this one was not available; I made it up from
 				the World version changing the level data pointer table.
+	arknoiuo	USA version, probably an earlier revision
+				ROM	a7510.bin should be identical to the real World one.
+				(It only differs in the country byte from A75_11.ROM)
+				This version works fine with the real MCU ROM
     arkatour    Tournament version
 				The 68705 code for this one was not available; I made it up from
 				the World version changing the level data pointer table.
@@ -443,6 +447,25 @@ ROM_START( arknoidu )
 	ROM_LOAD( "09.bpr",       0x0400, 0x0200, CRC(a7c6c277) SHA1(adaa003dcd981576ea1cc5f697d709b2d6b2ea29) )	/* blue component */
 ROM_END
 
+ROM_START( arknoiuo )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
+	ROM_LOAD( "a75_01-1.rom", 0x0000, 0x8000, CRC(5bcda3b0) SHA1(52cadd38b5f8e8856f007a9c602d6b508f30be65) )
+	ROM_LOAD( "a7510.bin",    0x8000, 0x8000, CRC(a1769e15) SHA1(fbb45731246a098b29eb08de5d63074b496aaaba) )
+
+	ROM_REGION( 0x0800, REGION_CPU2, 0 )	/* 8k for the microcontroller */
+	ROM_LOAD( "arkanoid.uc",  0x0000, 0x0800, CRC(515d77b6) SHA1(a302937683d11f663abd56a2fd7c174374e4d7fb) )
+
+	ROM_REGION( 0x18000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "a75_03.rom",   0x00000, 0x8000, CRC(038b74ba) SHA1(ac053cc4908b4075f918748b89570e07a0ba5116) )
+	ROM_LOAD( "a75_04.rom",   0x08000, 0x8000, CRC(71fae199) SHA1(5d253c46ccf4cd2976a5fb8b8713f0f345443d06) )
+	ROM_LOAD( "a75_05.rom",   0x10000, 0x8000, CRC(c76374e2) SHA1(7520dd48de20db60a2038f134dcaa454988e7874) )
+
+	ROM_REGION( 0x0600, REGION_PROMS, 0 )
+	ROM_LOAD( "07.bpr",       0x0000, 0x0200, CRC(0af8b289) SHA1(6bc589e8a609b4cf450aebedc8ce02d5d45c970f) )	/* red component */
+	ROM_LOAD( "08.bpr",       0x0200, 0x0200, CRC(abb002fb) SHA1(c14f56b8ef103600862e7930709d293b0aa97a73) )	/* green component */
+	ROM_LOAD( "09.bpr",       0x0400, 0x0200, CRC(a7c6c277) SHA1(adaa003dcd981576ea1cc5f697d709b2d6b2ea29) )	/* blue component */
+ROM_END
+
 ROM_START( arkatour )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
 	ROM_LOAD( "t_ark1.bin",   0x0000, 0x8000, CRC(e3b8faf5) SHA1(4c09478fa41881fa89ee6afb676aeb780f17ac2e) )
@@ -607,6 +630,7 @@ static DRIVER_INIT( paddle2 )
 
 GAME( 1986, arkanoid, 0,        arkanoid, arkanoid, 0,       ROT90, "Taito Corporation Japan", "Arkanoid (World)" )
 GAME( 1986, arknoidu, arkanoid, arkanoid, arkanoid, 0,       ROT90, "Taito America Corporation (Romstar license)", "Arkanoid (US)" )
+GAME( 1986, arknoiuo, arkanoid, arkanoid, arkanoid, 0,       ROT90, "Taito America Corporation (Romstar license)", "Arkanoid (US, older)" )
 GAME( 1986, arknoidj, arkanoid, arkanoid, arknoidj, 0,       ROT90, "Taito Corporation", "Arkanoid (Japan)" )
 GAMEX(1986, arkbl2,   arkanoid, arkanoid, arknoidj, 0,       ROT90, "bootleg", "Arkanoid (Japanese bootleg Set 2)", GAME_NOT_WORKING )
 GAMEX(1986, arkbl3,   arkanoid, bootleg,  arknoidj, paddle2, ROT90, "bootleg", "Arkanoid (Japanese bootleg Set 3)", GAME_NOT_WORKING )

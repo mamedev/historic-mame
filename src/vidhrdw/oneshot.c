@@ -187,6 +187,7 @@ VIDEO_UPDATE( oneshot )
 {
 	fillbitmap(bitmap, get_black_pen(), cliprect);
 
+	tilemap_set_scrollx(oneshot_mid_tilemap,0, oneshot_scroll[0]-0x1f5);
 	tilemap_set_scrolly(oneshot_mid_tilemap,0, oneshot_scroll[1]);
 
 	tilemap_draw(bitmap,cliprect,oneshot_bg_tilemap,0,0);

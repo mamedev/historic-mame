@@ -187,6 +187,22 @@ static MEMORY_WRITE_START( main_writemem )
 	{ 0x8000, 0xffff, MWA_ROM },
 MEMORY_END
 
+static MEMORY_WRITE_START( rallys_writemem )
+	{ 0x0000, 0x0fff, MWA_RAM },
+	{ 0x1000, 0x3fff, MWA_ROM },
+	{ 0x4000, 0x43ff, videoram_w, &videoram, &videoram_size },
+	{ 0x4400, 0x47ff, videoram_w },
+	{ 0x4800, 0x4fff, exidy_characterram_w, &exidy_characterram },
+	{ 0x5000, 0x5000, MWA_RAM, &exidy_sprite1_xpos },
+	{ 0x5001, 0x5001, MWA_RAM, &exidy_sprite1_ypos },
+	{ 0x5100, 0x5100, MWA_RAM, &exidy_sprite_no },
+	{ 0x5101, 0x5101, MWA_RAM, &exidy_sprite_enable },
+	{ 0x5200, 0x520F, pia_0_w },
+	{ 0x5210, 0x5212, exidy_color_w, &exidy_color_latch },
+	{ 0x5300, 0x5300, MWA_RAM, &exidy_sprite2_xpos },
+	{ 0x5301, 0x5301, MWA_RAM, &exidy_sprite2_ypos },
+	{ 0x8000, 0xffff, MWA_ROM },
+MEMORY_END
 
 static MEMORY_READ_START( fax_readmem )
 	{ 0x0000, 0x03ff, MRA_RAM },
@@ -441,6 +457,56 @@ INPUT_PORTS_START( spectar )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 INPUT_PORTS_END
 
+INPUT_PORTS_START( rallys )
+	PORT_START              /* DSW0 */
+	PORT_BIT ( 0x01, IP_ACTIVE_LOW, IPT_COIN2 ) /* upright/cocktail switch? */
+	PORT_DIPNAME( 0x02, 0x00, "P Coinage" )
+	PORT_DIPSETTING(    0x00, "10P/1 C 50P Coin/6 Cs" )
+	PORT_DIPSETTING(    0x02, "2x10P/1 C 50P Coin/3 Cs" )
+	PORT_DIPNAME( 0x04, 0x00, "Top Score Award" )
+	PORT_DIPSETTING(    0x00, "Credit" )
+	PORT_DIPSETTING(    0x04, "Extended Play" )
+	PORT_DIPNAME( 0x18, 0x08, "Q Coinage" )
+	PORT_DIPSETTING(    0x10, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x00, "1C/1C (no display)" )
+	PORT_DIPSETTING(    0x18, DEF_STR( 1C_2C ) )
+	PORT_DIPNAME( 0x60, 0x40, DEF_STR( Lives ) )
+	PORT_DIPSETTING(    0x60, "2" )
+	PORT_DIPSETTING(    0x40, "3" )
+	PORT_DIPSETTING(    0x20, "4" )
+	PORT_DIPSETTING(    0x00, "5" )
+	PORT_DIPNAME( 0x80, 0x80, "Currency" )
+	PORT_DIPSETTING(    0x80, "Quarters" )
+	PORT_DIPSETTING(    0x00, "Pence" )
+
+	PORT_START      /* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_4WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_4WAY )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP    | IPF_4WAY )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN  | IPF_4WAY )
+	PORT_BIT( 0x7f, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START      /* IN1 */
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START      /* IN2 */
+	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START      /* IN3 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+INPUT_PORTS_END
 
 INPUT_PORTS_START( mtrap )
 	PORT_START      /* DSW0 */
@@ -832,6 +898,15 @@ static MACHINE_DRIVER_START( targ )
 	MDRV_SOUND_ADD_TAG("dac",    DAC,     targ_DAC_interface)
 MACHINE_DRIVER_END
 
+static MACHINE_DRIVER_START( rallys )
+
+	MDRV_IMPORT_FROM(targ)
+
+	/* basic machine hardware */
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_MEMORY(main_readmem,rallys_writemem)
+MACHINE_DRIVER_END
+
 
 static MACHINE_DRIVER_START( venture )
 
@@ -921,6 +996,18 @@ ROM_START( targ )
 	ROM_LOAD( "targ11d1",    0x0000, 0x0400, CRC(9f03513e) SHA1(aa4763e49df65e5686a96431543580b8d8285893) )
 ROM_END
 
+ROM_START( targc )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 ) /* 64k for code */
+	ROM_LOAD( "ctl.10a",     0x1800, 0x0800, CRC(058b3983) SHA1(8079667613c9273e95131c3c68cd92ce34c18148) )
+	ROM_LOAD( "ctl.9a1",     0x2000, 0x0800, CRC(3ac44b6b) SHA1(8261ee7ee1c3cb05b2549464086bf6df09685743) )
+	ROM_LOAD( "ctl.8a1",     0x2800, 0x0800, CRC(5c470021) SHA1(3638fc6827640857848cd649f10c1493025014de) )
+	ROM_LOAD( "ctl.7a1",     0x3000, 0x0800, CRC(c774fd9b) SHA1(46272a64ad5cda0ff5ef3e9eeedefc555100a71a) )
+	ROM_LOAD( "ctl.6a1",     0x3800, 0x0800, CRC(3d020439) SHA1(ebde4c851c9ecc310f110c7643a80275d97dc02c) )
+	ROM_RELOAD(              0xf800, 0x0800 ) /* for the reset/interrupt vectors */
+
+	ROM_REGION( 0x0400, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "targ11d1",    0x0000, 0x0400, CRC(9f03513e) SHA1(aa4763e49df65e5686a96431543580b8d8285893) )
+ROM_END
 
 ROM_START( spectar )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 ) /* 64k for code */
@@ -951,6 +1038,27 @@ ROM_START( spectar1 )
 	ROM_REGION( 0x0400, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "hrl11d-2",    0x0000, 0x0400, CRC(c55b645d) SHA1(0c18277939d74e3e1281a7f114a34781d30c2baf) )  /* this is actually not used (all FF) */
 	ROM_CONTINUE(            0x0000, 0x0400 )  /* overwrite with the real one */
+ROM_END
+
+ROM_START( rallys )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 ) /* 64k for code */
+	ROM_LOAD( "rallys.01",     0x1000, 0x0400, CRC(a192b22b) SHA1(aaae0b1822f934df30b354f787ffa8848c71b52f) )
+	ROM_LOAD( "rallys.02",     0x1400, 0x0400, CRC(19e730aa) SHA1(4f4e87d26c14a9ff2be5b4173c4e5804db551e33) )
+	ROM_LOAD( "rallys.03",     0x1800, 0x0400, CRC(2a3e7b69) SHA1(d31a3e6acca87881741e88e70d46a4a0ee59fcf8) )
+	ROM_LOAD( "rallys.04",     0x1c00, 0x0400, CRC(6d224696) SHA1(586bc8efdc8ac0a73e4a4300459efaf89021f6f5) )
+	ROM_LOAD( "rallys.05",     0x2000, 0x0400, CRC(af943b5e) SHA1(819fa8a6ee78a39cdade49789cd42b4a215f82f0) )
+	ROM_LOAD( "rallys.06",     0x2400, 0x0400, CRC(9b3d9e61) SHA1(b183e0844706713eb0a241a6e45c09c53e4077a3) )
+	ROM_LOAD( "rallys.07",     0x2800, 0x0400, CRC(8ef8bc67) SHA1(c8d80cc8e89a9bc5d957d648d704e4c66b17932d) )
+	ROM_LOAD( "rallys.08",     0x2c00, 0x0400, CRC(243c54f2) SHA1(813b3ecbd5642034b5de0bae96698ed2b036fc7b) )
+	ROM_LOAD( "rallys.10",     0x3400, 0x0400, CRC(46f473d2) SHA1(e6a180fdcf2ac13ffab624554ef8aab128e80321) )
+	ROM_LOAD( "rallys.09",     0x3c00, 0x0400, CRC(56ce8a94) SHA1(becd31cda58e59267517a39c82ccfa70abdd31c6) )
+	ROM_RELOAD(              0xfc00, 0x0400 ) /* for the reset/interrupt vectors */
+
+	ROM_REGION( 0x0400, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "targ11d1",    0x0000, 0x0400, CRC(9f03513e) SHA1(aa4763e49df65e5686a96431543580b8d8285893) )
+
+	ROM_REGION( 0x0020, REGION_PROMS, 0 )
+	ROM_LOAD( "targ82s.123", 0x0000, 0x0020, CRC(9eb9125c) SHA1(660ad9b2c7c28c3fda4b10c1401c03165d131c61) )	/* unknown */
 ROM_END
 
 
@@ -1291,8 +1399,10 @@ DRIVER_INIT( fax )
 
 GAME( 1979, sidetrac, 0,       targ,    sidetrac, sidetrac, ROT0, "Exidy", "Side Track" )
 GAME( 1980, targ,     0,       targ,    targ,     targ,     ROT0, "Exidy", "Targ" )
+GAME( 1980, targc,    targ,    targ,    targ,     targ,     ROT0, "Exidy", "Targ (cocktail?)" )
 GAME( 1980, spectar,  0,       targ,    spectar,  spectar,  ROT0, "Exidy", "Spectar (revision 3)" )
 GAME( 1980, spectar1, spectar, targ,    spectar,  spectar,  ROT0, "Exidy", "Spectar (revision 1?)" )
+GAME( 1980, rallys,   spectar, rallys,  rallys,   spectar,  ROT0, "Novar", "Rallys (bootleg?)" )
 GAME( 1981, mtrap,    0,       mtrap,   mtrap,    mtrap,    ROT0, "Exidy", "Mouse Trap (version 5)" )
 GAME( 1981, mtrap3,   mtrap,   mtrap,   mtrap,    mtrap,    ROT0, "Exidy", "Mouse Trap (version 3)" )
 GAME( 1981, mtrap4,   mtrap,   mtrap,   mtrap,    mtrap,    ROT0, "Exidy", "Mouse Trap (version 4)" )

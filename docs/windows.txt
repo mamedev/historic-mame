@@ -322,6 +322,19 @@ operating system. This may not work in every case, so it can be disabled
 and MAME turned once again into a CPU hog. The default is ON (-sleep).
 
 
+Windows sound options
+---------------------
+
+* -audio_latency
+This controls the amount of latency built into the audio streaming. By
+default MAME tries to keep the DirectSound audio buffer between 1/5 and
+2/5 full. On some systems, this is pushing it too close to the edge, and
+you get poor sound sometimes. The latency parameter controls the lower
+threshold. The default is 1 (meaning lower=1/5 and upper=2/5). Set it to
+2 (-audio_latency 2) to keep the sound buffer between 2/5 and 3/5 full.
+If you crank it up to 4, you can definitely notice the lag.
+
+
 Input device options
 --------------------
 
@@ -494,6 +507,11 @@ INP/filename.inp.
 Creates a log of illegal memory accesses in ERROR.LOG. The default is OFF
 (-nolog).
 
+* -maxlogsize
+Expects a number as parameter. If the size of error.log (in kilobytes) hits
+that number, MAME will exit. By default, this is set fairly low (10 MB). This
+is in effect only if you are actually generating the error.log file.
+
 
 Other MAME frontend options
 ----------------------------
@@ -605,6 +623,10 @@ Very terse romident.
 * -sortname
 * -sortdriver
 Used internally for creating gamelist.txt
+
+* -crconly
+Uses only CRC-32 for all integrity checks. Disables the use of SHA-1 checks
+when loading the ROMs.
 
 
 Keys

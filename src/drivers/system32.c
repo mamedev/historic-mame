@@ -2711,6 +2711,38 @@ ROM_START( jpark )
 	ROM_LOAD( "ep13908.xx", 0x00000, 0x8000, CRC(6228c1d2) SHA1(bd37fe775534fb94c9af80546948ce5f9c47bbf5) ) /* cabinet movement */
 ROM_END
 
+ROM_START( slipstrm )
+	ROM_REGION( 0x200000, REGION_CPU1, 0 ) /* v60 code */
+	ROM_LOAD16_WORD( "slipstrm.u6", 0x000000, 0x80000, CRC(7d066307) SHA1(d87e04167263b435b77830db02ed58651ccc020c) )
+	ROM_RELOAD     (               0x080000, 0x80000 )
+	ROM_LOAD16_BYTE( "slipstrm.u14",0x100000, 0x80000, CRC(c3ff6309) SHA1(dcc857736fe0f15aa7909c3ee88a7e239c8f0228) )
+	ROM_LOAD16_BYTE( "slipstrm.u7", 0x100001, 0x80000, CRC(0e605c81) SHA1(47c64195cab9a07b234d5a375d26168e53ffaa17) )
+
+	ROM_REGION( 0x480000, REGION_CPU2, 0 ) /* sound CPU */
+	ROM_LOAD( "slipstrm.u35", 0x00000, 0x20000, CRC(0fee2278) SHA1(7533a03c3fc46d65dfdd07bddf1e6e0bbc368752) )
+	ROM_RELOAD(              0x100000, 0x20000             )
+	ROM_LOAD( "slipstrm.u31", 0x180000, 0x080000, CRC(ae7be5f2) SHA1(ba089355e64864435bcc3b0c208e4bce1ea66295) )
+
+	ROM_REGION( 0x200000, REGION_GFX1, ROMREGION_DISPOSE ) /* tiles */
+	ROM_LOAD32_BYTE( "slipstrm.u38", 0x000000, 0x080000, CRC(3cbb2d0b) SHA1(b94006347b72cd60a889b0e279f62f677cedfd2e) )
+	ROM_LOAD32_BYTE( "slipstrm.u34", 0x000002, 0x080000, CRC(4167be55) SHA1(96b34d311b318c00c3fad917e341589a70ba0a15) )
+	ROM_LOAD32_BYTE( "slipstrm.u29", 0x000001, 0x080000, CRC(52c4bb85) SHA1(4fbee1072a19c75c25b5fd269acc75640923d69c) )
+	ROM_LOAD32_BYTE( "slipstrm.u25", 0x000003, 0x080000, CRC(4948604a) SHA1(d5a1b9781fef7976a59a0af9b755a04fcacf9381) )
+
+	ROM_REGION( 0x1000000, REGION_GFX2, 0 ) /* sprites */
+	ROMX_LOAD( "slipstrm.u36", 0x800000, 0x80000, CRC(cffe9e0d) SHA1(5272d54ff142de927a9abd61f3646e963c7d22c4) , ROM_SKIP(7) )
+	ROMX_LOAD( "slipstrm.u32", 0x800001, 0x80000, CRC(4ebd1383) SHA1(ce35f4d15e7904bfde55e58cdde925cba8002763) , ROM_SKIP(7) )
+	ROMX_LOAD( "slipstrm.u27", 0x800002, 0x80000, CRC(b3cf4fe2) SHA1(e13199522e1e3e8b9cfe72cc29b33f25dad542ef) , ROM_SKIP(7) )
+	ROMX_LOAD( "slipstrm.u23", 0x800003, 0x80000, CRC(c6345391) SHA1(155758097911ffca0c5c0b2a24a8033339dcfcbb) , ROM_SKIP(7) )
+	ROMX_LOAD( "slipstrm.u37", 0x800004, 0x80000, CRC(2de4288e) SHA1(8e794f79f506293edb7609187a7908516ce76849) , ROM_SKIP(7) )
+	ROMX_LOAD( "slipstrm.u33", 0x800005, 0x80000, CRC(6cfb74fb) SHA1(b74c886959910cd069427418525b23300a9b7b18) , ROM_SKIP(7) )
+	ROMX_LOAD( "slipstrm.u28", 0x800006, 0x80000, CRC(53234bf4) SHA1(1eca538dcb86e44c31310ab1ab42a2b66b69c8fe) , ROM_SKIP(7) )
+	ROMX_LOAD( "slipstrm.u24", 0x800007, 0x80000, CRC(22c129cf) SHA1(0f64680511a357038f6a556253c13fbb5417dd1a) , ROM_SKIP(7) )
+
+	ROM_REGION( 0x20000, REGION_GFX3, 0 ) /* FG tiles */
+	/* populated at runtime */
+ROM_END
+
 static WRITE16_HANDLER( trap_w )
 {
 //	printf("Write %x to magic (mask=%x) at PC=%x\n", data, mem_mask, activecpu_get_pc());
@@ -2896,5 +2928,6 @@ GAMEX(1991, arabfgt,  0,        system32, spidey,   arf,      ROT0, "Sega", "Ara
 GAMEX(199?, f1lap,    0,        system32, system32, f1sl,     ROT0, "Sega", "F1 Super Lap", GAME_NOT_WORKING ) /* blank screen, also requires 2 linked sys32 boards to function */
 GAMEX(199?, dbzvrvs,  0,        sys32_hi, system32, s32,      ROT0, "Sega", "Dragon Ball Z VRVS", GAME_NOT_WORKING | GAME_UNEMULATED_PROTECTION) /* does nothing useful, known to be heavily protected */
 GAMEX(1992, darkedge, 0,        sys32_hi, system32, s32,      ROT0, "Sega", "Dark Edge", GAME_NOT_WORKING | GAME_UNEMULATED_PROTECTION ) /* locks up on some levels, sprites are submerged, protected */
+GAMEX(199?, slipstrm, 0,        sys32_hi, f1en,     f1en,     ROT0, "Capcom", "Slipstream", GAME_NOT_WORKING ) /* unhandled v60 opcodes .... */
 /* Air Rescue */
 /* Loony Toons (maybe) */

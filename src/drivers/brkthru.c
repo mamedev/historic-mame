@@ -55,6 +55,8 @@ extern unsigned char *brkthru_videoram;
 extern size_t brkthru_videoram_size;
 
 WRITE_HANDLER( brkthru_1800_w );
+WRITE_HANDLER( brkthru_bgram_w );
+WRITE_HANDLER( brkthru_fgram_w );
 VIDEO_START( brkthru );
 PALETTE_INIT( brkthru );
 VIDEO_UPDATE( brkthru );
@@ -101,9 +103,9 @@ static MEMORY_READ_START( readmem )
 MEMORY_END
 
 static MEMORY_WRITE_START( writemem )
-	{ 0x0000, 0x03ff, MWA_RAM, &brkthru_videoram, &brkthru_videoram_size },
+	{ 0x0000, 0x03ff, brkthru_fgram_w, &brkthru_videoram, &brkthru_videoram_size },
 	{ 0x0400, 0x0bff, MWA_RAM },
-	{ 0x0c00, 0x0fff, videoram_w, &videoram, &videoram_size },
+	{ 0x0c00, 0x0fff, brkthru_bgram_w, &videoram, &videoram_size },
 	{ 0x1000, 0x10ff, MWA_RAM, &spriteram, &spriteram_size },
 	{ 0x1100, 0x17ff, MWA_RAM },
 	{ 0x1800, 0x1801, brkthru_1800_w },	/* bg scroll and color, ROM bank selection, flip screen */
@@ -126,8 +128,8 @@ static MEMORY_READ_START( darwin_readmem )
 MEMORY_END
 
 static MEMORY_WRITE_START( darwin_writemem )
-	{ 0x1000, 0x13ff, MWA_RAM, &brkthru_videoram, &brkthru_videoram_size },
-	{ 0x1c00, 0x1fff, videoram_w, &videoram, &videoram_size },
+	{ 0x1000, 0x13ff, brkthru_fgram_w, &brkthru_videoram, &brkthru_videoram_size },
+	{ 0x1c00, 0x1fff, brkthru_bgram_w, &videoram, &videoram_size },
 	{ 0x0000, 0x00ff, MWA_RAM, &spriteram, &spriteram_size },
 	{ 0x1400, 0x1bff, MWA_RAM },
 	{ 0x0100, 0x01ff, MWA_NOP  }, /*tidyup, nothing realy here?*/
