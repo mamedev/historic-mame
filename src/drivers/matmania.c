@@ -16,17 +16,6 @@ MAIN BOARD:
 2600-27ff Background attribute RAM #2
 4000-ffff ROM
 
-Changes:
-25 Jan 98 LBO
-	* Split off from mystston.c
-	* Added Mania Challenge driver
-
-TODO:
-	* Mania Challenge needs the audio CPU working. However, it's not clear how
-	  it's set up. There is some extra 6502 code, but it appears to be for the main CPU.
-	  I also understood that it was somehow using a 6809 for the audio CPU but I
-	  can find no program ROMs that are 6809 code.
-
 ***************************************************************************/
 
 #include "driver.h"
@@ -51,6 +40,19 @@ int matmania_vh_start(void);
 void matmania_vh_stop(void);
 void matmania_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
+int maniach_68705_portA_r(int offset);
+void maniach_68705_portA_w(int offset,int data);
+int maniach_68705_portB_r(int offset);
+void maniach_68705_portB_w(int offset,int data);
+int maniach_68705_portC_r(int offset);
+void maniach_68705_portC_w(int offset,int data);
+void maniach_68705_ddrA_w(int offset,int data);
+void maniach_68705_ddrB_w(int offset,int data);
+void maniach_68705_ddrC_w(int offset,int data);
+void maniach_mcu_w(int offset,int data);
+int maniach_mcu_r(int offset);
+int maniach_mcu_status_r(int offset);
+
 
 
 void matmania_sh_command_w (int offset, int data)
@@ -62,27 +64,6 @@ void matmania_sh_command_w (int offset, int data)
 void matmania_dac_w(int offset,int data)
 {
 	DAC_signed_data_w(0,data);
-}
-
-
-static int maniach_3040;
-
-void maniach_3040_w(int offset,int data)
-{
-	maniach_3040 = data + 4;
-}
-
-int maniach_3040_r(int offset)
-{
-	if (errorlog) fprintf (errorlog, "3040_r @ pc:%04x\n", cpu_get_pc());
-/*	return 0x4a; */
-	return maniach_3040;
-}
-
-int maniach_3041_r(int offset)
-{
-	if (errorlog) fprintf (errorlog, "3041_r @ pc:%04x\n", cpu_get_pc());
-	return 0x02;
 }
 
 
@@ -103,8 +84,6 @@ static struct MemoryReadAddress matmania_readmem[] =
 	{ 0x3010, 0x3010, input_port_1_r },
 	{ 0x3020, 0x3020, input_port_2_r },
 	{ 0x3030, 0x3030, input_port_3_r },
-	{ 0x3040, 0x3040, maniach_3040_r },
-	{ 0x3041, 0x3041, maniach_3041_r },
 	{ 0x4000, 0xffff, MRA_ROM },
 	{ -1 }	/* end of table */
 };
@@ -122,9 +101,24 @@ static struct MemoryWriteAddress matmania_writemem[] =
 	{ 0x3000, 0x3000, MWA_RAM, &matmania_pageselect },
 	{ 0x3010, 0x3010, matmania_sh_command_w },
 	{ 0x3020, 0x3020, MWA_RAM, &matmania_scroll },
-	{ 0x3030, 0x3030, MWA_NOP },	/* ?? */
+//	{ 0x3030, 0x3030, MWA_NOP },	/* ?? */
 	{ 0x3050, 0x307f, matmania_paletteram_w, &paletteram },
 	{ 0x4000, 0xffff, MWA_ROM },
+	{ -1 }	/* end of table */
+};
+
+static struct MemoryReadAddress maniach_readmem[] =
+{
+	{ 0x0000, 0x077f, MRA_RAM },
+	{ 0x1000, 0x17ff, MRA_RAM },
+	{ 0x2000, 0x27ff, MRA_RAM },
+	{ 0x3000, 0x3000, input_port_0_r },
+	{ 0x3010, 0x3010, input_port_1_r },
+	{ 0x3020, 0x3020, input_port_2_r },
+	{ 0x3030, 0x3030, input_port_3_r },
+	{ 0x3040, 0x3040, maniach_mcu_r },
+	{ 0x3041, 0x3041, maniach_mcu_status_r },
+	{ 0x4000, 0xffff, MRA_ROM },
 	{ -1 }	/* end of table */
 };
 
@@ -142,7 +136,7 @@ static struct MemoryWriteAddress maniach_writemem[] =
 	{ 0x3010, 0x3010, maniach_sh_command_w },
 	{ 0x3020, 0x3020, MWA_RAM, &matmania_scroll },
 	{ 0x3030, 0x3030, MWA_NOP },	/* ?? */
-	{ 0x3040, 0x3040, maniach_3040_w },	/* ??? */
+	{ 0x3040, 0x3040, maniach_mcu_w },
 	{ 0x3050, 0x307f, matmania_paletteram_w, &paletteram },
 	{ 0x4000, 0xffff, MWA_ROM },
 	{ -1 }	/* end of table */
@@ -185,6 +179,31 @@ static struct MemoryWriteAddress maniach_sound_writemem[] =
 	{ 0x4000, 0xffff, MWA_ROM },
 	{ -1 }	/* end of table */
 };
+
+static struct MemoryReadAddress mcu_readmem[] =
+{
+	{ 0x0000, 0x0000, maniach_68705_portA_r },
+	{ 0x0001, 0x0001, maniach_68705_portB_r },
+	{ 0x0002, 0x0002, maniach_68705_portC_r },
+	{ 0x0010, 0x007f, MRA_RAM },
+	{ 0x0080, 0x07ff, MRA_ROM },
+	{ -1 }	/* end of table */
+};
+
+static struct MemoryWriteAddress mcu_writemem[] =
+{
+	{ 0x0000, 0x0000, maniach_68705_portA_w },
+	{ 0x0001, 0x0001, maniach_68705_portB_w },
+	{ 0x0002, 0x0002, maniach_68705_portC_w },
+	{ 0x0004, 0x0004, maniach_68705_ddrA_w },
+	{ 0x0005, 0x0005, maniach_68705_ddrB_w },
+	{ 0x0006, 0x0006, maniach_68705_ddrC_w },
+	{ 0x0010, 0x007f, MWA_RAM },
+	{ 0x0080, 0x07ff, MWA_ROM },
+	{ -1 }	/* end of table */
+};
+
+
 
 INPUT_PORTS_START( matmania_input_ports )
 	PORT_START	/* IN0 */
@@ -419,7 +438,7 @@ static struct YM3526interface ym3526_interface =
 {
 	1,			/* 1 chip (no more supported) */
 	3600000,	/* 3.6 MHz ? */
-	{ 255 },		/* (not supported) */
+	{ 60 },		/* (not supported) */
 	{ irqhandler },
 };
 
@@ -432,7 +451,7 @@ static struct MachineDriver maniach_machine_driver =
 			CPU_M6502,
 			1500000,	/* 1.5 Mhz ???? */
 			0,
-			matmania_readmem,maniach_writemem,0,0,
+			maniach_readmem,maniach_writemem,0,0,
 			interrupt,1
 		},
 		{
@@ -443,9 +462,16 @@ static struct MachineDriver maniach_machine_driver =
 			ignore_interrupt,0,	/* FIRQs are caused by the YM3526 */
 								/* IRQs are caused by the main CPU */
 		},
+		{
+			CPU_M68705,
+			500000,	/* .5 Mhz (don't know really how fast, but it doesn't need to even be this fast) */
+			4,
+			mcu_readmem,mcu_writemem,0,0,
+			ignore_interrupt,1
+		}
 	},
 	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
+	100,	/* 100 CPU slice per frame - high interleaving to sync main and mcu */
 	0,
 
 	/* video hardware */
@@ -621,6 +647,9 @@ ROM_START( maniach_rom )
 	ROM_LOAD( "mc-m50.bin",   0x4000, 0x4000, 0xba415d68 )
 	ROM_LOAD( "mc-m40.bin",   0x8000, 0x4000, 0x2a217ed0 )
 	ROM_LOAD( "mc-m30.bin",   0xc000, 0x4000, 0x95af1723 )
+
+	ROM_REGION(0x0800)	/* 8k for the microcontroller */
+	ROM_LOAD( "01",           0x0000, 0x0800, 0x00c7f80c )
 ROM_END
 
 ROM_START( maniach2_rom )
@@ -671,6 +700,9 @@ ROM_START( maniach2_rom )
 	ROM_LOAD( "mc-m50.bin",   0x4000, 0x4000, 0xba415d68 )
 	ROM_LOAD( "mc-m40.bin",   0x8000, 0x4000, 0x2a217ed0 )
 	ROM_LOAD( "mc-m30.bin",   0xc000, 0x4000, 0x95af1723 )
+
+	ROM_REGION(0x0800)	/* 8k for the microcontroller */
+	ROM_LOAD( "01",           0x0000, 0x0800, 0x00c7f80c )
 ROM_END
 
 
@@ -841,7 +873,7 @@ struct GameDriver maniach_driver =
 	"1986",
 	"Technos (Taito America license)",
 	"Brad Oliver (MAME driver)\nTim Lindquist (color info)",
-	GAME_NOT_WORKING | GAME_WRONG_COLORS,
+	0,
 	&maniach_machine_driver,
 	0,
 
@@ -863,11 +895,11 @@ struct GameDriver maniach2_driver =
 	__FILE__,
 	&maniach_driver,
 	"maniach2",
-	"Mania Challenge (set 2)",
+	"Mania Challenge (set 2)",	/* earlier version? */
 	"1986",
 	"Technos (Taito America license)",
 	"Brad Oliver (MAME driver)\nTim Lindquist (color info)",
-	GAME_NOT_WORKING | GAME_WRONG_COLORS,
+	0,
 	&maniach_machine_driver,
 	0,
 

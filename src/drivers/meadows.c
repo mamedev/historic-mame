@@ -107,21 +107,21 @@
 /* Externals                                                 */
 /*                                                           */
 /*************************************************************/
-int 	deadeye_vh_start(void);
-int 	gypsyjug_vh_start(void);
-void    meadows_vh_stop(void);
-void	meadows_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
-void    meadows_videoram_w(int offset, int data);
-void    meadows_sprite_w(int offset, int data);
+int deadeye_vh_start(void);
+int gypsyjug_vh_start(void);
+void meadows_vh_stop(void);
+void meadows_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void meadows_videoram_w(int offset, int data);
+void meadows_sprite_w(int offset, int data);
 
-int     meadows_sh_start(void);
-void    meadows_sh_stop(void);
-void	meadows_sh_dac_w(int data);
-void    meadows_sh_update(void);
-extern	unsigned char	meadows_0c00;
-extern	unsigned char	meadows_0c01;
-extern	unsigned char	meadows_0c02;
-extern	unsigned char	meadows_0c03;
+int meadows_sh_start(void);
+void meadows_sh_stop(void);
+void meadows_sh_dac_w(int data);
+void meadows_sh_update(void);
+extern unsigned char meadows_0c00;
+extern unsigned char meadows_0c01;
+extern unsigned char meadows_0c02;
+extern unsigned char meadows_0c03;
 
 
 /*************************************************************/
@@ -147,7 +147,7 @@ static  unsigned char flip_bits[0x100] = {
 	0x07,0x87,0x47,0xc7,0x27,0xa7,0x67,0xe7,0x17,0x97,0x57,0xd7,0x37,0xb7,0x77,0xf7,
 	0x0f,0x8f,0x4f,0xcf,0x2f,0xaf,0x6f,0xef,0x1f,0x9f,0x5f,0xdf,0x3f,0xbf,0x7f,0xff,
 };
-static	int cycles_at_vsync = 0;
+static int cycles_at_vsync = 0;
 
 /*************************************************************/
 /*                                                           */
@@ -342,34 +342,37 @@ INPUT_PORTS_START( meadows_input_ports )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
 	PORT_START		/* IN1 control 1 */
 	PORT_ANALOG( 0xff, 0x80, IPT_AD_STICK_X, 100, 10, 0, 0x10, 0xf0 )
+
 	PORT_START		/* IN2 dip switch */
-	PORT_BITX( 0x07, 0x00, IPT_DIPSWITCH_NAME, "Misses", IP_KEY_NONE, IP_JOY_NONE )
-	PORT_DIPSETTING( 0x00, "2")
-	PORT_DIPSETTING( 0x01, "3")
-	PORT_DIPSETTING( 0x02, "4")
-	PORT_DIPSETTING( 0x03, "5")
-	PORT_DIPSETTING( 0x04, "6")
-	PORT_DIPSETTING( 0x05, "7")
-	PORT_DIPSETTING( 0x06, "8")
-	PORT_DIPSETTING( 0x07, "9")
-	PORT_BITX( 0x18, 0x00, IPT_DIPSWITCH_NAME, "Coins / play", IP_KEY_NONE, IP_JOY_NONE )
-	PORT_DIPSETTING( 0x00, "1c / 1p")
-	PORT_DIPSETTING( 0x08, "2c / 1p")
-	PORT_DIPSETTING( 0x10, "1c / 2p")
-	PORT_DIPSETTING( 0x18, "free play")
-	PORT_BITX( 0x20, 0x20, IPT_DIPSWITCH_NAME, "Attract music", IP_KEY_NONE, IP_JOY_NONE )
-	PORT_DIPSETTING( 0x00, DEF_STR( Off ))
-	PORT_DIPSETTING( 0x20, DEF_STR( On ))
-	PORT_BITX( 0xc0, 0x40, IPT_DIPSWITCH_NAME, "Extended play", IP_KEY_NONE, IP_JOY_NONE )
-	PORT_DIPSETTING( 0x00, "none")
-	PORT_DIPSETTING( 0x40, "5000 pts")
-	PORT_DIPSETTING( 0x80, "15000 pts")
-	PORT_DIPSETTING( 0xc0, "35000 pts")
+	PORT_DIPNAME( 0x07, 0x01, DEF_STR( Lives ) )
+	PORT_DIPSETTING(    0x00, "2" )
+	PORT_DIPSETTING(    0x01, "3" )
+	PORT_DIPSETTING(    0x02, "4" )
+	PORT_DIPSETTING(    0x03, "5" )
+	PORT_DIPSETTING(    0x04, "6" )
+	PORT_DIPSETTING(    0x05, "7" )
+	PORT_DIPSETTING(    0x06, "8" )
+	PORT_DIPSETTING(    0x07, "9" )
+	PORT_DIPNAME( 0x18, 0x00, DEF_STR( Coinage ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x18, DEF_STR( Free_Play ) )
+	PORT_DIPNAME( 0x20, 0x20, "Demo Sounds?" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( On ) )
+	PORT_DIPNAME( 0xc0, 0x40, DEF_STR( Bonus_Life ) )
+	PORT_DIPSETTING(    0x40, "5000")
+	PORT_DIPSETTING(    0x80, "15000")
+	PORT_DIPSETTING(    0xc0, "35000")
+	PORT_DIPSETTING(    0x00, "None")
+
 	PORT_START		/* FAKE coinage */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 )
-	PORT_BIT( 0x8e, IP_ACTIVE_LOW,	IPT_UNUSED )
+	PORT_BIT( 0x8e, IP_ACTIVE_LOW, IPT_UNUSED )
 INPUT_PORTS_END
 
 static struct GfxLayout charlayout =
@@ -465,7 +468,7 @@ static struct MachineDriver deadeye_machine_driver =
 
 	/* sound hardware */
 	0,
-    &meadows_sh_start,
+	&meadows_sh_start,
 	&meadows_sh_stop,
 	0,
 	{
@@ -688,5 +691,5 @@ struct GameDriver gypsyjug_driver =
 	colortable,
 	ORIENTATION_DEFAULT,
 
-    deadeye_hiload,deadeye_hisave
+	deadeye_hiload,deadeye_hisave
 };

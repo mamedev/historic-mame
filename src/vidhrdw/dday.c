@@ -107,7 +107,7 @@ static void drawgfx_shadow(struct osd_bitmap *dest,const struct GfxElement *gfx,
 				{
 					bm  = dest->line[y];
 					bme = bm + ex;
-					sd = gfx->gfxdata->line[start] + (sx-ox);
+					sd = gfx->gfxdata + start * gfx->line_modulo + (sx-ox);
 					for( bm += sx ; bm <= bme-7 ; bm+=8)
 					{
 						shadow = *(shadow_mask++);
@@ -132,7 +132,7 @@ static void drawgfx_shadow(struct osd_bitmap *dest,const struct GfxElement *gfx,
 				{
 					bm  = dest->line[y];
 					bme = bm + ex;
-					sd = gfx->gfxdata->line[start] + (sx-ox);
+					sd = gfx->gfxdata + start * gfx->line_modulo + (sx-ox);
 					for( bm += sx ; bm <= bme-7 ; bm+=8)
 					{
 						shadow = *(shadow_mask++);
@@ -158,7 +158,7 @@ static void drawgfx_shadow(struct osd_bitmap *dest,const struct GfxElement *gfx,
 			{
 				bm  = dest->line[y];
 				bme = bm + ex;
-				sd4 = (int *)(gfx->gfxdata->line[start] + (sx-ox));
+				sd4 = (int *)(gfx->gfxdata + start * gfx->line_modulo + (sx-ox));
 				f = 0;
 				for( bm += sx ; bm <= bme-3 ; bm+=4, f^=1 )
 				{

@@ -12,7 +12,7 @@ static int bg_colorbase,sprite_colorbase,layer_colorbase[3];
 
 ***************************************************************************/
 
-static void tile_callback(int layer,int bank,int *code,int *color,unsigned char *flags)
+static void tile_callback(int layer,int bank,int *code,int *color)
 {
 	*code |= ((*color & 0x3f) << 8) | (bank << 14);
 	*color = ((*color & 0xc0) >> 6);
@@ -92,7 +92,7 @@ static void simpsons_drawsprites(struct osd_bitmap *bitmap,int min_priority,int 
 
 	for (pri_code = NUM_SPRITES-1;pri_code >= 0;pri_code--)
 	{
-		int ox,oy,col,code,size,w,h,x,y,xa,ya,flipx,flipy,zoomx,zoomy,pri;
+		int ox,oy,col,code,size,w,h,x,y,xa,ya,flipx,flipy,zoomx,zoomy,mirrorx,mirrory,pri;
 		/* sprites can be grouped up to 8x8. The draw order is
 			 0  1  4  5 16 17 20 21
 			 2  3  6  7 18 19 22 23
@@ -134,14 +134,13 @@ static void simpsons_drawsprites(struct osd_bitmap *bitmap,int min_priority,int 
 		if (code & 0x20) ya += 4;
 		code &= ~0x3f;
 
-		col = sprite_colorbase + (SPRITEWORD(offs+0x0c) & 0x000f);
+		col = sprite_colorbase + (SPRITEWORD(offs+0x0c) & 0x001f);
 
-//	specialflipy = SPRITEWORD(offs+0x0c) & 0x8000;
 #if 0
-if (keyboard_pressed(KEYCODE_Q) && (SPRITEWORD(offs+0x02) & 0x8000)) col = rand();
-if (keyboard_pressed(KEYCODE_W) && (SPRITEWORD(offs+0x04) & 0xfc00)) col = rand();
-if (keyboard_pressed(KEYCODE_E) && (SPRITEWORD(offs+0x06) & 0xfc00)) col = rand();
-if (keyboard_pressed(KEYCODE_R) && (SPRITEWORD(offs+0x0e) & 0xffff)) col = rand();
+if (keyboard_pressed(KEYCODE_Q) && (SPRITEWORD(offs+0x0c) & 0x8000)) col = rand();
+if (keyboard_pressed(KEYCODE_W) && (SPRITEWORD(offs+0x0c) & 0x4000)) col = rand();
+if (keyboard_pressed(KEYCODE_E) && (SPRITEWORD(offs+0x0c) & 0x2000)) col = rand();
+if (keyboard_pressed(KEYCODE_R) && (SPRITEWORD(offs+0x0c) & 0x1000)) col = rand();
 #endif
 		ox = (SPRITEWORD(offs+0x06) & 0x3ff) + 16+16;
 		oy = 512-(SPRITEWORD(offs+0x04) & 0x3ff) - 128+8;
@@ -170,6 +169,8 @@ if (keyboard_pressed(KEYCODE_R) && (SPRITEWORD(offs+0x0e) & 0xffff)) col = rand(
 
 		flipx = SPRITEWORD(offs) & 0x1000;
 		flipy = SPRITEWORD(offs) & 0x2000;
+		mirrorx = SPRITEWORD(offs+0x0c) & 0x4000;
+		mirrory = SPRITEWORD(offs+0x0c) & 0x8000;
 
 		if (zoomx == 0x10000 && zoomy == 0x10000)
 		{
@@ -195,6 +196,13 @@ if (keyboard_pressed(KEYCODE_R) && (SPRITEWORD(offs+0x0e) & 0xffff)) col = rand(
 							flipx,flipy,
 							sx,sy,
 							&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+if (mirrory && h == 1)	/* fix for shadows */
+	drawgfx(bitmap,Machine->gfx[0],
+			c,
+			col,
+			flipx,!flipy,
+			sx,sy,
+			&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
 				}
 			}
 		}
@@ -231,10 +239,26 @@ if (keyboard_pressed(KEYCODE_R) && (SPRITEWORD(offs+0x0e) & 0xffff)) col = rand(
 	}
 }
 
+/* useful function to sort the three tile layers by priority order */
+static void sortlayers(int *layer,int *pri)
+{
+#define SWAP(a,b) \
+	if (pri[a] < pri[b]) \
+	{ \
+		int t; \
+		t = pri[a]; pri[a] = pri[b]; pri[b] = t; \
+		t = layer[a]; layer[a] = layer[b]; layer[b] = t; \
+	}
+
+	SWAP(0,1)
+	SWAP(0,2)
+	SWAP(1,2)
+}
+
 void simpsons_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	int i,offs;
-	int pri0,pri1,pri2,prib;
+	int pri[3],layer[3];
 
 
 	bg_colorbase       = K053251_get_palette_index(K053251_CI0);
@@ -281,19 +305,23 @@ void simpsons_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 	tilemap_render(ALL_TILEMAPS);
 
-	prib = K053251_get_priority(K053251_CI0);
-	pri1 = K053251_get_priority(K053251_CI3);
-	pri2 = K053251_get_priority(K053251_CI4);
-	pri0 = K053251_get_priority(K053251_CI2);
+	layer[0] = 0;
+	pri[0] = K053251_get_priority(K053251_CI2);
+	layer[1] = 1;
+	pri[1] = K053251_get_priority(K053251_CI3);
+	layer[2] = 2;
+	pri[2] = K053251_get_priority(K053251_CI4);
+
+	sortlayers(layer,pri);
 
 	fillbitmap(bitmap,Machine->pens[16 * bg_colorbase],&Machine->drv->visible_area);
-	simpsons_drawsprites(bitmap,pri1+1,prib);
-	K052109_tilemap_draw(bitmap,1,0);
-	simpsons_drawsprites(bitmap,pri2+1,pri1);
-	K052109_tilemap_draw(bitmap,2,0);
-	simpsons_drawsprites(bitmap,pri0+1,pri2);
-	K052109_tilemap_draw(bitmap,0,0);
-	simpsons_drawsprites(bitmap,0,pri0);
+	simpsons_drawsprites(bitmap,pri[0]+1,0x3f);
+	K052109_tilemap_draw(bitmap,layer[0],0);
+	simpsons_drawsprites(bitmap,pri[1]+1,pri[0]);
+	K052109_tilemap_draw(bitmap,layer[1],0);
+	simpsons_drawsprites(bitmap,pri[2]+1,pri[1]);
+	K052109_tilemap_draw(bitmap,layer[2],0);
+	simpsons_drawsprites(bitmap,0,pri[2]);
 
 #if 0
 if (keyboard_pressed(KEYCODE_D))
@@ -321,7 +349,6 @@ static void simpsons_K052109_w( int offset, int data ) { K052109_w( offset + 0x2
 
 void simpsons_video_banking( int select )
 {
-
 	switch( select )
 	{
 		case 0x00: /* 052109 */

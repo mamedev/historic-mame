@@ -85,6 +85,15 @@ static void z80_bankswitch_w( int offset, int data )
 	cpu_setbank( 2, &RAM[ offset ] );
 }
 
+static int nmi_enabled;
+
+static void sound_nmi_callback( int param )
+{
+	cpu_set_nmi_line( 1, ( nmi_enabled ) ? CLEAR_LINE : ASSERT_LINE );
+
+	nmi_enabled = 0;
+}
+
 static void nmi_callback(int param)
 {
 	cpu_set_nmi_line(1,ASSERT_LINE);
@@ -92,6 +101,7 @@ static void nmi_callback(int param)
 
 static void z80_arm_nmi(int offset,int data)
 {
+//	sound_nmi_enabled = 1;
 	cpu_set_nmi_line(1,CLEAR_LINE);
 	timer_set(TIME_IN_USEC(50),0,nmi_callback);	/* kludge until the K053260 is emulated correctly */
 }
@@ -279,7 +289,7 @@ static struct YM2151interface ym2151_interface =
 {
 	1,			/* 1 chip */
 	3579545,	/* 3.579545 MHz */
-	{ YM3012_VOL(35,MIXER_PAN_LEFT,35,MIXER_PAN_RIGHT) },
+	{ YM3012_VOL(30,MIXER_PAN_CENTER,0,MIXER_PAN_CENTER) },	/* only left channel is connected */
 	{ 0 }
 };
 
@@ -288,7 +298,7 @@ static struct K053260_interface k053260_interface =
 	3579545,
 	4, /* memory region */
 	{ MIXER(75,MIXER_PAN_LEFT), MIXER(75,MIXER_PAN_RIGHT) },
-	0
+//	nmi_callback
 };
 
 static int simpsons_irq( void )
@@ -313,7 +323,7 @@ static struct MachineDriver machine_driver =
 	{
 		{
 			CPU_KONAMI,
-			6000000, /* ? */
+			3000000, /* ? */
 			0,
 			readmem,writemem,0,0,
 			simpsons_irq,2,	/* IRQ triggered by the 052109, FIRQ by the sprite hardware */
@@ -334,7 +344,7 @@ static struct MachineDriver machine_driver =
 	/* video hardware */
 	64*8, 32*8, { 14*8, (64-14)*8-1, 2*8, 30*8-1 },
 	gfxdecodeinfo,
-	16*128, 16*128,
+	2048, 2048,
 	0,
 
 	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
@@ -418,6 +428,35 @@ ROM_START( simpsn2p_rom )
 	ROM_LOAD( "simp_1d.rom", 0x100000, 0x040000, 0x78778013 )
 ROM_END
 
+ROM_START( simps2pj_rom )
+	ROM_REGION( 0x90000 ) /* code + banked roms + banked ram */
+	ROM_LOAD( "072-s02.16c",  0x10000, 0x20000, 0x265f7a47 )
+	ROM_LOAD( "072-t01.17c",  0x30000, 0x20000, 0x91de5c2d )
+	ROM_LOAD( "072-213.13c",  0x50000, 0x20000, 0xb326a9ae )
+    ROM_LOAD( "072-212.15c",  0x70000, 0x18000, 0x584d9d37 )
+	ROM_CONTINUE(		      0x08000, 0x08000 )
+
+	ROM_REGION( 0x100000 ) /* graphics ( dont dispose as the program can read them ) */
+	ROM_LOAD( "simp_18h.rom", 0x000000, 0x080000, 0xba1ec910 ) /* tiles */
+	ROM_LOAD( "simp_16h.rom", 0x080000, 0x080000, 0xcf2bbcab ) /* tiles */
+
+	ROM_REGION( 0x400000 ) /* graphics ( dont dispose as the program can read them ) */
+	ROM_LOAD( "simp_3n.rom",  0x000000, 0x100000, 0x7de500ad ) /* sprites? */
+	ROM_LOAD( "simp_12n.rom", 0x100000, 0x100000, 0x577dbd53 ) /* sprites? */
+	ROM_LOAD( "simp_8n.rom",  0x200000, 0x100000, 0xaa085093 ) /* sprites? */
+	ROM_LOAD( "simp_16l.rom", 0x300000, 0x100000, 0x55fab05d ) /* sprites? */
+
+	ROM_REGION( 0x28000 ) /* Z80 code + banks */
+	ROM_LOAD( "simp_g03.rom", 0x00000, 0x08000, 0x76c1850c )
+	ROM_CONTINUE(			  0x10000, 0x18000 )
+
+	ROM_REGION( 0x140000 ) /* samples for the 053260 */
+	ROM_LOAD( "simp_1f.rom", 0x000000, 0x100000, 0x1397a73b )
+	ROM_LOAD( "simp_1d.rom", 0x100000, 0x040000, 0x78778013 )
+ROM_END
+
+
+
 /***************************************************************************
 
   Game driver(s)
@@ -468,6 +507,31 @@ struct GameDriver simpsn2p_driver =
 	0,
 
 	simpsn2p_rom,
+	gfx_untangle, 0,
+	0,
+	0,	/* sound_prom */
+
+	simpsn2p_input_ports,
+
+	0, 0, 0,
+    ORIENTATION_DEFAULT,
+	simpsons_eeprom_load, simpsons_eeprom_save
+};
+
+struct GameDriver simps2pj_driver =
+{
+	__FILE__,
+	&simpsons_driver,
+	"simps2pj",
+	"The Simpsons (2 Players Japan)",
+	"1991",
+	"Konami",
+	"Ernesto Corvi",
+	0,
+	&machine_driver,
+	0,
+
+	simps2pj_rom,
 	gfx_untangle, 0,
 	0,
 	0,	/* sound_prom */

@@ -119,15 +119,12 @@ void combatsc_sh_irqtrigger_w(int offset, int data);
 void combatsc_play_w(int offset,int data)
 {
 	if (data & 0x02)
-		UPD7759_start_w(offset, data);
+        UPD7759_start_w(0, 0);
 }
 
 void combatsc_voice_reset_w(int offset,int data)
 {
-	if ((data & 0x01) == 0)
- 	{
- 		UPD7759_reset_w(0,data);
- 	}
+    UPD7759_reset_w(0,data & 1);
 }
 
 void combatsc_portA_w(int offset,int data)
@@ -559,7 +556,7 @@ static struct UPD7759_interface upd7759_interface =
 	1,							/* number of chips */
 	UPD7759_STANDARD_CLOCK,
 	{ 70 },						/* volume */
-	4,							/* memory region */
+	{ 4 },							/* memory region */
 	UPD7759_STANDALONE_MODE,	/* chip mode */
 	{0}
 };

@@ -4,15 +4,19 @@
 
   Functions to emulate the video hardware of the machine.
 
+changes:
+Aug 16, 1999 - Rotation (-ror and -rol) implementation fixed by Chad Hendrickson
+
 ***************************************************************************/
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
 
+//#define ACCURATE_BLITTER	/* doesn't work!! (wrong colors) */
+
 #define VIDEORAM_START 0x8000
 
-void kangaroo_bankselect_w(int offset,int data);
 
 unsigned char *kangaroo_bank_select;
 unsigned char *kangaroo_blitter;
@@ -20,7 +24,6 @@ unsigned char *kangaroo_blitter;
 static struct osd_bitmap *tmpbitmap_b;
 static unsigned char inverse_palette[256];
 static unsigned char inverse_palette_b[256];
-
 
 
 /***************************************************************************
@@ -160,17 +163,17 @@ void kangaroo_blitter_w(int offset,int data)
 		src = kangaroo_blitter[0] + 256 * kangaroo_blitter[1];
 		dest = kangaroo_blitter[2] + 256 * kangaroo_blitter[3];
 
-		ofsx = (dest - VIDEORAM_START) % 256;
-		ofsy = (0x3f - (dest - VIDEORAM_START) / 256) * 4;
-		xb = kangaroo_blitter[4];
-		yb = kangaroo_blitter[5];
+		ofsx = ((dest - VIDEORAM_START) / 256) * 4;
+		ofsy = (dest - VIDEORAM_START) % 256;
+		xb = kangaroo_blitter[5];
+		yb = kangaroo_blitter[4];
 		/* kangaroo_blitter[6] (vertical start address in bitmap) and */
 		/* kangaroo_blitter[7] (horizontal start address in bitmap) seem */
 		/* to be always 0 */
 
-		for (y = 0;y <= yb;y++)
+		for (x = 0;x <= xb;x++)
 		{
-			for (x = 0;x <= xb;x++)
+			for (y = 0;y <= yb;y++)
 			{
 #ifdef ACCURATE_BLITTER	/* doesn't work!! */
 				if ((*kangaroo_bank_select & 0x05) && (*kangaroo_bank_select & 0x0a))
@@ -180,22 +183,22 @@ void kangaroo_blitter_w(int offset,int data)
 
 					/* if both planes active, write to one at a time */
 					old = *kangaroo_bank_select;
-					kangaroo_bankselect_w(0,old & 0x05);
-					cpu_writemem16(dest + x + 256*y,cpu_readmem16(src));
-					kangaroo_bankselect_w(0,old & 0x0a);
-					cpu_writemem16(dest + x + 256*y,cpu_readmem16(src));
-					kangaroo_bankselect_w(0,old);
+					*kangaroo_bank_select = old & 0x05;
+					cpu_writemem16(dest + y + 256*x,cpu_readmem16(src));
+					*kangaroo_bank_select = old & 0x0a;
+					cpu_writemem16(dest + y + 256*x,cpu_readmem16(src));
+					*kangaroo_bank_select = old;
 				}
 				else
-					cpu_writemem16(dest + x + 256*y,cpu_readmem16(src));
+					cpu_writemem16(dest + y + 256*x,cpu_readmem16(src));
 #else
 				if (*kangaroo_bank_select & 0x0c)
 					drawgfx(tmpbitmap_b,Machine->gfx[0],src,1,0,0,
-							ofsx + x,ofsy - 4*y,
+							ofsx + 4 * x,ofsy + y,
 							&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
 				if (*kangaroo_bank_select & 0x03)
 					drawgfx(tmpbitmap,Machine->gfx[0],src,0,0,0,
-							ofsx + x,ofsy - 4*y,
+							ofsx + 4 * x,ofsy + y,
 							&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
 #endif
 				src++;
@@ -214,7 +217,7 @@ void kangaroo_videoram_w(int offset,int data)
 	int a_Z_R,a_G_B,b_Z_R,b_G_B;
 	unsigned char *bm;
 	int sx, sy;
-
+	int dx=1, dy=0;
 
 	a_Z_R = *kangaroo_bank_select & 0x01;
 	a_G_B = *kangaroo_bank_select & 0x02;
@@ -222,17 +225,36 @@ void kangaroo_videoram_w(int offset,int data)
 	b_G_B = *kangaroo_bank_select & 0x08;
 
 
-	sx = offset % 256;
-	sy = (0x3f - (offset / 256)) * 4;
+	sx = (offset / 256) * 4;
+	sy = offset % 256;
+
+	if (Machine->orientation & ORIENTATION_SWAP_XY)
+	{
+		int t;
+
+		t = sx; sx = sy; sy = t;
+		t = dx; dx = dy; dy = t;
+	}
+	if (Machine->orientation & ORIENTATION_FLIP_X)
+	{
+		sx = sx ^ 0xff;
+		dx = -dx;
+	}
+	if (Machine->orientation & ORIENTATION_FLIP_Y)
+	{
+		sy = sy ^ 0xff;
+		dy = -dy;
+	}
+
 
 	tmpbitmap->line[sy][sx] = inverse_palette[ tmpbitmap->line[sy][sx] ];
-	tmpbitmap->line[sy+1][sx] = inverse_palette[ tmpbitmap->line[sy+1][sx] ];
-	tmpbitmap->line[sy+2][sx] = inverse_palette[ tmpbitmap->line[sy+2][sx] ];
-	tmpbitmap->line[sy+3][sx] = inverse_palette[ tmpbitmap->line[sy+3][sx] ];
+	tmpbitmap->line[sy+dy][sx+dx] = inverse_palette[ tmpbitmap->line[sy+dy][sx+dx] ];
+	tmpbitmap->line[sy+2*dy][sx+2*dx] = inverse_palette[ tmpbitmap->line[sy+2*dy][sx+2*dx] ];
+	tmpbitmap->line[sy+3*dy][sx+3*dx] = inverse_palette[ tmpbitmap->line[sy+3*dy][sx+3*dx] ];
 	tmpbitmap_b->line[sy][sx] = inverse_palette_b[ tmpbitmap_b->line[sy][sx] ];
-	tmpbitmap_b->line[sy+1][sx] = inverse_palette_b[ tmpbitmap_b->line[sy+1][sx] ];
-	tmpbitmap_b->line[sy+2][sx] = inverse_palette_b[ tmpbitmap_b->line[sy+2][sx] ];
-	tmpbitmap_b->line[sy+3][sx] = inverse_palette_b[ tmpbitmap_b->line[sy+3][sx] ];
+	tmpbitmap_b->line[sy+dy][sx+dx] = inverse_palette_b[ tmpbitmap_b->line[sy+dy][sx+dx] ];
+	tmpbitmap_b->line[sy+2*dy][sx+2*dx] = inverse_palette_b[ tmpbitmap_b->line[sy+2*dy][sx+2*dx] ];
+	tmpbitmap_b->line[sy+3*dy][sx+3*dx] = inverse_palette_b[ tmpbitmap_b->line[sy+3*dy][sx+3*dx] ];
 
 
 	if (a_G_B)
@@ -240,30 +262,30 @@ void kangaroo_videoram_w(int offset,int data)
 		bm = tmpbitmap->line[sy] + sx;
 		*bm &= 0xfc;
 		/* Green */
-		if (data & 0x80) *bm |= 2;
+		if (data & 0x10) *bm |= 2;
 		/* Blue */
-		if (data & 0x08) *bm |= 1;
+		if (data & 0x01) *bm |= 1;
 
-		bm = tmpbitmap->line[sy+1] + sx;
-		*bm &= 0xfc;
-		/* Green */
-		if (data & 0x40) *bm |= 2;
-		/* Blue */
-		if (data & 0x04) *bm |= 1;
-
-		bm = tmpbitmap->line[sy+2] + sx;
+		bm = tmpbitmap->line[sy+dy] + (sx+dx);
 		*bm &= 0xfc;
 		/* Green */
 		if (data & 0x20) *bm |= 2;
 		/* Blue */
 		if (data & 0x02) *bm |= 1;
 
-		bm = tmpbitmap->line[sy+3] + sx;
+		bm = tmpbitmap->line[sy+2*dy] + (sx+2*dx);
 		*bm &= 0xfc;
 		/* Green */
-		if (data & 0x10) *bm |= 2;
+		if (data & 0x40) *bm |= 2;
 		/* Blue */
-		if (data & 0x01) *bm |= 1;
+		if (data & 0x04) *bm |= 1;
+
+		bm = tmpbitmap->line[sy+3*dy] + (sx+3*dx);
+		*bm &= 0xfc;
+		/* Green */
+		if (data & 0x80) *bm |= 2;
+		/* Blue */
+		if (data & 0x08) *bm |= 1;
 	}
 
 	if (a_Z_R)
@@ -271,30 +293,30 @@ void kangaroo_videoram_w(int offset,int data)
 		bm = tmpbitmap->line[sy] + sx;
 		*bm &= 0xf3;
 		/* Z - mask */
-		if (data & 0x80) *bm |= 8;
+		if (data & 0x10) *bm |= 8;
 		/* Red */
-		if (data & 0x08) *bm |= 4;
+		if (data & 0x01) *bm |= 4;
 
-		bm = tmpbitmap->line[sy+1] + sx;
-		*bm &= 0xf3;
-		/* Z - mask */
-		if (data & 0x40) *bm |= 8;
-		/* Red */
-		if (data & 0x04) *bm |= 4;
-
-		bm = tmpbitmap->line[sy+2] + sx;
+		bm = tmpbitmap->line[sy+dy] + (sx+dx);
 		*bm &= 0xf3;
 		/* Z - mask */
 		if (data & 0x20) *bm |= 8;
 		/* Red */
 		if (data & 0x02) *bm |= 4;
 
-		bm = tmpbitmap->line[sy+3] + sx;
+		bm = tmpbitmap->line[sy+2*dy] + (sx+2*dx);
 		*bm &= 0xf3;
 		/* Z - mask */
-		if (data & 0x10) *bm |= 8;
+		if (data & 0x40) *bm |= 8;
 		/* Red */
-		if (data & 0x01) *bm |= 4;
+		if (data & 0x04) *bm |= 4;
+
+		bm = tmpbitmap->line[sy+3*dy] + (sx+3*dx);
+		*bm &= 0xf3;
+		/* Z - mask */
+		if (data & 0x80) *bm |= 8;
+		/* Red */
+		if (data & 0x08) *bm |= 4;
 	}
 
 	if (b_G_B)
@@ -302,30 +324,30 @@ void kangaroo_videoram_w(int offset,int data)
 		bm = tmpbitmap_b->line[sy] + sx;
 		*bm &= 0xfc;
 		/* Green */
-		if (data & 0x80) *bm |= 2;
+		if (data & 0x10) *bm |= 2;
 		/* Blue */
-		if (data & 0x08) *bm |= 1;
+		if (data & 0x01) *bm |= 1;
 
-		bm = tmpbitmap_b->line[sy+1] + sx;
-		*bm &= 0xfc;
-		/* Green */
-		if (data & 0x40) *bm |= 2;
-		/* Blue */
-		if (data & 0x04) *bm |= 1;
-
-		bm = tmpbitmap_b->line[sy+2] + sx;
+		bm = tmpbitmap_b->line[sy+dy] + (sx+dx);
 		*bm &= 0xfc;
 		/* Green */
 		if (data & 0x20) *bm |= 2;
 		/* Blue */
 		if (data & 0x02) *bm |= 1;
 
-		bm = tmpbitmap_b->line[sy+3] + sx;
+		bm = tmpbitmap_b->line[sy+2*dy] + (sx+2*dx);
 		*bm &= 0xfc;
 		/* Green */
-		if (data & 0x10) *bm |= 2;
+		if (data & 0x40) *bm |= 2;
 		/* Blue */
-		if (data & 0x01) *bm |= 1;
+		if (data & 0x04) *bm |= 1;
+
+		bm = tmpbitmap_b->line[sy+3*dy] + (sx+3*dx);
+		*bm &= 0xfc;
+		/* Green */
+		if (data & 0x80) *bm |= 2;
+		/* Blue */
+		if (data & 0x08) *bm |= 1;
 	}
 
 	if (b_Z_R)
@@ -333,43 +355,50 @@ void kangaroo_videoram_w(int offset,int data)
 		bm = tmpbitmap_b->line[sy] + sx;
 		*bm &= 0xf3;
 		/* Z - mask */
-		if (data & 0x80) *bm |= 8;
+		if (data & 0x10) *bm |= 8;
 		/* Red */
-		if (data & 0x08) *bm |= 4;
+		if (data & 0x01) *bm |= 4;
 
-		bm = tmpbitmap_b->line[sy+1] + sx;
-		*bm &= 0xf3;
-		/* Z - mask */
-		if (data & 0x40) *bm |= 8;
-		/* Red */
-		if (data & 0x04) *bm |= 4;
-
-		bm = tmpbitmap_b->line[sy+2] + sx;
+		bm = tmpbitmap_b->line[sy+dy] + (sx+dx);
 		*bm &= 0xf3;
 		/* Z - mask */
 		if (data & 0x20) *bm |= 8;
 		/* Red */
 		if (data & 0x02) *bm |= 4;
 
-		bm = tmpbitmap_b->line[sy+3] + sx;
+		bm = tmpbitmap_b->line[sy+2*dy] + (sx+2*dx);
 		*bm &= 0xf3;
 		/* Z - mask */
-		if (data & 0x10) *bm |= 8;
+		if (data & 0x40) *bm |= 8;
 		/* Red */
-		if (data & 0x01) *bm |= 4;
+		if (data & 0x04) *bm |= 4;
+
+		bm = tmpbitmap_b->line[sy+3*dy] + (sx+3*dx);
+		*bm &= 0xf3;
+		/* Z - mask */
+		if (data & 0x80) *bm |= 8;
+		/* Red */
+		if (data & 0x08) *bm |= 4;
 	}
 
 
 	tmpbitmap->line[sy][sx]    = Machine->gfx[0]->colortable[tmpbitmap->line[sy][sx]];
-	tmpbitmap->line[sy+1][sx]  = Machine->gfx[0]->colortable[tmpbitmap->line[sy+1][sx]];
-	tmpbitmap->line[sy+2][sx]  = Machine->gfx[0]->colortable[tmpbitmap->line[sy+2][sx]];
-	tmpbitmap->line[sy+3][sx]  = Machine->gfx[0]->colortable[tmpbitmap->line[sy+3][sx]];
+	tmpbitmap->line[sy+dy][sx+dx]  = Machine->gfx[0]->colortable[tmpbitmap->line[sy+dy][sx+dx]];
+	tmpbitmap->line[sy+2*dy][sx+2*dx]  = Machine->gfx[0]->colortable[tmpbitmap->line[sy+2*dy][sx+2*dx]];
+	tmpbitmap->line[sy+3*dy][sx+3*dx]  = Machine->gfx[0]->colortable[tmpbitmap->line[sy+3*dy][sx+3*dx]];
 	tmpbitmap_b->line[sy][sx]   = Machine->gfx[0]->colortable[16 + tmpbitmap_b->line[sy][sx]];
-	tmpbitmap_b->line[sy+1][sx] = Machine->gfx[0]->colortable[16 + tmpbitmap_b->line[sy+1][sx]];
-	tmpbitmap_b->line[sy+2][sx] = Machine->gfx[0]->colortable[16 + tmpbitmap_b->line[sy+2][sx]];
-	tmpbitmap_b->line[sy+3][sx] = Machine->gfx[0]->colortable[16 + tmpbitmap_b->line[sy+3][sx]];
+	tmpbitmap_b->line[sy+dy][sx+dx] = Machine->gfx[0]->colortable[16 + tmpbitmap_b->line[sy+dy][sx+dx]];
+	tmpbitmap_b->line[sy+2*dy][sx+2*dx] = Machine->gfx[0]->colortable[16 + tmpbitmap_b->line[sy+2*dy][sx+2*dx]];
+	tmpbitmap_b->line[sy+3*dy][sx+3*dx] = Machine->gfx[0]->colortable[16 + tmpbitmap_b->line[sy+3*dy][sx+3*dx]];
 
-	osd_mark_dirty (sx,sy,sx,sy+3,0);
+	if (dx >= 0 && dy >= 0)
+		osd_mark_dirty(sx,sy,sx+3*dx,sy+3*dy,0);
+	else if (dx >= 0)
+		osd_mark_dirty(sx,sy+3*dy,sx+3*dx,sy,0);
+	else if (dy >= 0)
+		osd_mark_dirty(sx+3*dx,sy,sx,sy+3*dy,0);
+	else
+		osd_mark_dirty(sx+3*dx,sy+3*dy,sx,sy,0);
 }
 
 

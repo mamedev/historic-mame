@@ -14,7 +14,6 @@ unsigned char *stfight_text_attr_ram;
 unsigned char *stfight_vh_latch_ram;
 unsigned char *stfight_sprite_ram;
 
-static struct tilemap *text_tilemap;
 static struct tilemap *fg_tilemap;
 static struct tilemap *bg_tilemap;
 static int stfight_flipscreen = 0;
@@ -55,14 +54,43 @@ void stfight_vh_convert_color_prom(unsigned char *palette, unsigned short *color
 	#define COLOR(gfxn,offs) (colortable[Machine->drv->gfxdecodeinfo[gfxn].color_codes_start + offs])
 
 
-	/* ALL WRONG! */
-	for (i = 0;i < TOTAL_COLORS(0);i += 4)
+	/* unique color for transparency */
+	palette[256*3+0] = 0x04;
+	palette[256*3+1] = 0x04;
+	palette[256*3+2] = 0x04;
+
+	/* text uses colors 192-207 */
+	for (i = 0;i < TOTAL_COLORS(0);i++)
 	{
-		COLOR(0,i) = 0;					/* black background */
-		COLOR(0,i + 1) = 0;	/* not used */
-		COLOR(0,i + 2) = 192 + i / 4;	/* colored foreground */
-		COLOR(0,i + 3) = 192 + i / 4 + 1;	/* colored foreground */
+		if ((*color_prom & 0x0f) == 0x0f) COLOR(0,i) = 256;	/* transparent */
+		else COLOR(0,i) = (*color_prom & 0x0f) + 0xc0;
+		color_prom++;
 	}
+	color_prom += 256 - TOTAL_COLORS(0);	/* rest of the PROM is unused */
+
+	/* fg uses colors 64-127 */
+	for (i = 0;i < TOTAL_COLORS(1);i++)
+	{
+		COLOR(1,i) = (color_prom[256] & 0x0f) + 16 * (color_prom[0] & 0x03) + 0x40;
+		color_prom++;
+	}
+	color_prom += 256;
+
+	/* bg uses colors 0-63 */
+	for (i = 0;i < TOTAL_COLORS(2);i++)
+	{
+		COLOR(2,i) = (color_prom[256] & 0x0f) + 16 * (color_prom[0] & 0x03) + 0x00;
+		color_prom++;
+	}
+	color_prom += 256;
+
+	/* sprites use colors 128-191 */
+	for (i = 0;i < TOTAL_COLORS(4);i++)
+	{
+		COLOR(4,i) = (color_prom[256] & 0x0f) + 16 * (color_prom[0] & 0x03) + 0x80;
+		color_prom++;
+	}
+	color_prom += 256;
 }
 
 /***************************************************************************
@@ -71,22 +99,9 @@ void stfight_vh_convert_color_prom(unsigned char *palette, unsigned short *color
 
 ***************************************************************************/
 
-static void get_text_tile_info( int col, int row )
-{
-	int             tile_index = (row<<5)+col;
-	unsigned char   attr = stfight_text_attr_ram[tile_index];
-    int             tile_base = ( attr & 0x80 ? 0x100 : 0 );
-
-	SET_TILE_INFO( 0,
-                   tile_base + stfight_text_char_ram[tile_index],
-                   attr & 0x0F ) ;
-
-	tile_info.flags = TILE_FLIPYX( ( attr & 0x60 ) >> 5 );
-}
-
 static void get_fg_tile_info( int col, int row )
 {
-	unsigned char   *fgMap = Machine->memory_region[5];
+	unsigned char   *fgMap = Machine->memory_region[4];
 
     int             tile_index;
     int             attr;
@@ -105,12 +120,12 @@ static void get_fg_tile_info( int col, int row )
 
 	SET_TILE_INFO( 1,
                    tile_base + fgMap[tile_index],
-                   8 );
+                   attr & 0x07 );
 }
 
 static void get_bg_tile_info(int col,int row)
 {
-	unsigned char   *bgMap = Machine->memory_region[7];
+	unsigned char   *bgMap = Machine->memory_region[6];
 
     int             tile_index;
     int             attr;
@@ -133,12 +148,12 @@ static void get_bg_tile_info(int col,int row)
                  ( ( col & 0x0f ) >> 1 );
 
     attr = bgMap[0x8000+tile_index];
-    tile_bank = ( attr >> 5 ) & 0x01;
-    tile_base = ( attr << 1 ) & 0x100;
+    tile_bank = ( attr & 0x20 ) >> 5;
+    tile_base = ( attr & 0x80 ) << 1;
 
 	SET_TILE_INFO( 2+tile_bank,
                    tile_base + bgMap[tile_index],
-                   8 );
+                   attr & 0x07 );
 }
 
 
@@ -151,13 +166,6 @@ static void get_bg_tile_info(int col,int row)
 
 int stfight_vh_start(void)
 {
-	text_tilemap = tilemap_create(
-		get_text_tile_info,
-		TILEMAP_TRANSPARENT,
-		8, 8,
-		32, 32
-	);
-
 	fg_tilemap = tilemap_create(
 		get_fg_tile_info,
 		TILEMAP_TRANSPARENT,
@@ -172,10 +180,9 @@ int stfight_vh_start(void)
 		16+1, 16
 	);
 
-	if( text_tilemap && fg_tilemap && bg_tilemap )
+	if( fg_tilemap && bg_tilemap )
 	{
 		fg_tilemap->transparent_pen = 0x0F;
-		text_tilemap->transparent_pen = 0x00;
 
 		return( 0 );
 	}
@@ -196,7 +203,6 @@ void stfight_text_char_w( int offset, int data )
     if( stfight_text_char_ram[offset] != data )
     {
         stfight_text_char_ram[offset] = data;
-		tilemap_mark_tile_dirty( text_tilemap, offset & 0x1F, offset >> 5 );
     }
 }
 
@@ -205,7 +211,6 @@ void stfight_text_attr_w( int offset, int data )
     if( stfight_text_attr_ram[offset] != data )
     {
         stfight_text_attr_ram[offset] = data;
-		tilemap_mark_tile_dirty( text_tilemap, offset & 0x1F, offset >> 5 );
     }
 }
 
@@ -238,7 +243,6 @@ void stfight_vh_latch_w( int offset, int data )
             break;
 
         case 0x07 :
-            tilemap_set_enable( text_tilemap, ( data & 0x80 ) != 0 );
             tilemap_set_enable( bg_tilemap, ( data & 0x20 ) != 0 );
             tilemap_set_enable( fg_tilemap, ( data & 0x10 ) != 0 );
             stfight_flipscreen = ( data & 0x01 );
@@ -256,21 +260,21 @@ void stfight_vh_latch_w( int offset, int data )
 
 ***************************************************************************/
 
-static void draw_sprites( struct osd_bitmap *bitmap,
-                          int first_sprite, int last_sprite )
+static void draw_sprites(struct osd_bitmap *bitmap,int priority)
 {
-    int sprite = first_sprite;
-	int offs = first_sprite << 5;
-	int sx, sy;
+	int offs,sx,sy;
 
-    do
+	for (offs = 4096-32;offs >= 0;offs -= 32)
 	{
         int code;
         int attr = stfight_sprite_ram[offs+1];
         int flipx = ( ( ( attr & 0x10 ) != 0 ) ^
                       stfight_flipscreen );
         int flipy = ( stfight_flipscreen );
-		int color = (attr & 0x03) | ((attr & 0x08) >> 1) | ((attr & 0x20) >> 2);	/* wrong! */
+		int color = attr & 0x0f;
+		int pri = (attr & 0x20) >> 5;
+
+		if (pri != priority) continue;
 
         sy = stfight_sprite_ram[offs+2];
         sx = stfight_sprite_ram[offs+3];
@@ -302,16 +306,14 @@ static void draw_sprites( struct osd_bitmap *bitmap,
 					 sx,sy,
 				     &Machine->drv->visible_area,TRANSPARENCY_PEN,0x0f);
         }
-
-        sprite--;
-        offs -= 0x20;
-
-	} while( sprite >= last_sprite );
+	}
 }
 
 
 void stfight_vh_screenrefresh( struct osd_bitmap *bitmap,int full_refresh )
 {
+	int offs;
+
     // Only dirty layer if we scroll to next tile
     if( ( stfight_bg_x >> 4 ) != stfight_bg_x_tile ||
         ( stfight_bg_y >> 4 ) != stfight_bg_y_tile )
@@ -338,14 +340,12 @@ void stfight_vh_screenrefresh( struct osd_bitmap *bitmap,int full_refresh )
 
 	tilemap_update( fg_tilemap );
 	tilemap_update( bg_tilemap );
-	tilemap_update( text_tilemap );
 
 	if (palette_recalc())
 		tilemap_mark_all_pixels_dirty(ALL_TILEMAPS);
 
 	tilemap_render( fg_tilemap );
 	tilemap_render( bg_tilemap );
-	tilemap_render( text_tilemap );
 
     /*
      *  Now draw everything
@@ -358,12 +358,40 @@ void stfight_vh_screenrefresh( struct osd_bitmap *bitmap,int full_refresh )
 
     /* Draw sprites which appear behind the foreground layer */
 	if( stfight_vh_latch_ram[0x07] & 0x40 )
-        draw_sprites( bitmap, 127, 9 );
+        draw_sprites( bitmap, 1 );
 
 	tilemap_draw( bitmap, fg_tilemap, 0 );
-	tilemap_draw( bitmap, text_tilemap, 0 );
 
     /* Draw sprites which appear on top */
 	if( stfight_vh_latch_ram[0x07] & 0x40 )
-        draw_sprites( bitmap, 8, 0 );
+        draw_sprites( bitmap, 0 );
+
+	if( stfight_vh_latch_ram[0x07] & 0x80 )
+	{
+		for (offs = 0x400 - 1;offs >= 0;offs--)
+		{
+			int sx,sy,flipx,flipy;
+			unsigned char   attr = stfight_text_attr_ram[offs];
+
+
+			sx = offs % 32;
+			sy = offs / 32;
+			flipx = attr & 0x20;
+			flipy = attr & 0x40;
+			if (stfight_flipscreen)
+			{
+				sx = 31 - sx;
+				sy = 31 - sy;
+				flipx = !flipx;
+				flipy = !flipy;
+			}
+
+			drawgfx(bitmap,Machine->gfx[0],
+					stfight_text_char_ram[offs] + 2 * (attr & 0x80),
+					attr & 0x0f,
+					flipx,flipy,
+					8*sx,8*sy,
+					&Machine->drv->visible_area,TRANSPARENCY_COLOR,256);
+		}
+	}
 }

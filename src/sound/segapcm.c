@@ -178,7 +178,7 @@ INLINE int ILimit(int v, int max, int min) { return v > max ? max : (v < min ? m
 void SEGAPCMUpdate( int num, void **buffer, int length )
 {
 	int i, j;
-	unsigned int addr, old_addr, end_addr;
+	unsigned int addr, old_addr, end_addr, end_check_addr;
 	unsigned char *pcm_buf;
 	int  lv, rv;
 	SEGAPCM_SMP  *datap[2];
@@ -195,6 +195,18 @@ void SEGAPCMUpdate( int num, void **buffer, int length )
 
 	for( i = 0; i < SEGAPCM_MAX; i++ )
 	{
+
+		if( spcm.flag[i] == 2)
+
+		{
+
+			spcm.flag[i]=0;
+
+			spcm.add_addr[i] = (( (((int)spcm.addr_h[i]<<8)&0xff00) |
+
+				  (spcm.addr_l[i]&0x00ff) ) << PCM_ADDR_SHIFT) &0x0ffff000;
+
+		}
 		if( !spcm.flag[i] )
 		{
 			lv = spcm.vol[i][L_PAN];   rv = spcm.vol[i][R_PAN];
@@ -204,15 +216,19 @@ void SEGAPCMUpdate( int num, void **buffer, int length )
 			addr = (spcm.add_addr[i]>>PCM_ADDR_SHIFT)&0x0000ffff;
 			end_addr = ((((unsigned int)spcm.end_h[i]<<8)&0xff00) + 0x00ff);
 
+			if(spcm.end_h[i] < spcm.addr_h[i]) end_addr+=0x10000;
+
 			for( j = 0; j < length; j++ )
 			{
 				old_addr = addr;
 				/**** make address ****/
-				addr = (spcm.add_addr[i]>>PCM_ADDR_SHIFT)&0x0000ffff;
+
+				end_check_addr = (spcm.add_addr[i]>>PCM_ADDR_SHIFT);
+				addr = end_check_addr&0x0000ffff;
 				for(; old_addr <= addr; old_addr++ )
 				{
 					/**** end address check ****/
-					if( addr >= end_addr )
+					if( end_check_addr >= end_addr )
 					{
 						if(spcm.writeram[i*8+0x86] & 0x02)
 						{
@@ -262,6 +278,7 @@ void SEGAPCMWriteReg( int r, int v )
 	int channel = (r>>3)&0x0f;
 
 	spcm.writeram[r&0x07ff] = (char)v;		/* write value data */
+
 	switch( (r&0x87) )
 	{
 		case 0x00:
@@ -305,9 +322,11 @@ remake_vol:
 			else
 			{
 				/**** start D/A ****/
-				spcm.flag[channel] = 0;
-				spcm.add_addr[channel] = (( (((int)spcm.addr_h[channel]<<8)&0xff00) |
-					  (spcm.addr_l[channel]&0x00ff) ) << PCM_ADDR_SHIFT) &0x0ffff000;
+//				spcm.flag[channel] = 0;
+				spcm.flag[channel] = 2;
+
+//				spcm.add_addr[channel] = (( (((int)spcm.addr_h[channel]<<8)&0xff00) |
+//					  (spcm.addr_l[channel]&0x00ff) ) << PCM_ADDR_SHIFT) &0x0ffff000;
 				spcm.pcmd[channel] = 0;
 			}
 			break;

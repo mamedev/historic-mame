@@ -354,7 +354,7 @@ static void YM3812_irqhandler(int linestate)
 static struct YM3812interface ym3812_interface =
 {
 	1,
-	4000000,
+	3600000,
 	{ 50 },
 	{ YM3812_irqhandler },
 };

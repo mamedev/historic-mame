@@ -54,6 +54,8 @@
  */
 #define M68K_INSTR_HOOK    0
 
+/* If on, the CPU will simulate the 4-byte prefetch queue of a real 68000 */
+#define M68K_USE_PREFETCH  0
 
 /* Define the default mode the CPU runs in if none has been specified */
 #define M68K_DEFAULT_CPU_MODE   M68K_CPU_MODE_68000

@@ -497,7 +497,7 @@ INPUT_PORTS_END
 static struct GfxLayout charlayout =
 {
 	8,8,    /* 8x8 characters */
-	2048,	/* 2048 characters */
+	1024,	/* 1024 characters */
 	4,      /* 4 bits per pixel */
 	{ 0, 1, 2, 3 }, /* the four bitplanes for pixel are packed into one nibble */
 	{ 0, 4, 8, 12, 16, 20, 24, 28 },

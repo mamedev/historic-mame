@@ -153,18 +153,16 @@ int hydra_vh_start(void)
 	if (Machine->gfx[0])
 	{
 		const unsigned char *src = &Machine->memory_region[4][0x80000];
-		unsigned char **lines = Machine->gfx[0]->gfxdata->line;
 		unsigned int *pen_usage = Machine->gfx[0]->pen_usage;
-		int height = Machine->gfx[0]->gfxdata->height;
 		int n, h, w;
+		unsigned char *dst = Machine->gfx[0]->gfxdata;
 
-		for (n = 0; n < height; n += 8)
+		for (n = 0; n < Machine->gfx[0]->total_elements; n ++)
 		{
 			unsigned int usage = 0;
 
 			for (h = 0; h < 8; h++)
 			{
-				unsigned char *dst = *lines++;
 				unsigned char bits = *src++;
 
 				for (w = 0; w < 8; w++, dst += (1 << HIGH_RES), bits <<= 1)

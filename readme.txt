@@ -91,7 +91,8 @@ How to Contact Us
 
 The official MAME home page is http://mame.retrogames.com/. You can always
 find the latest release there, including beta versions and information on
-things being worked on.
+things being worked on. Also, a totally legal and free ROM set of Robby
+Roto is available on the same page.
 
 If you have bugs to report, check the MAME Testing Project at
 http://zan.emuunlim.com/mametesters/
@@ -241,7 +242,7 @@ options:
               Some games need 65k color modes to get accurate graphics. To
               improve speed, you can turn that off using -depth 8, which limits
               to the standard 256 color modes.
--gamma n      (default: 1.2)
+-gamma n      (default: 1.0)
               Set the initial gamma correction value.
 -vgafreq n    where n can be 0 (default) 1, 2 or 3.
               use different frequencies for the custom video modes. This

@@ -385,7 +385,7 @@ void drawgfx_backdrop(struct osd_bitmap *dest,const struct GfxElement *gfx,
 			{
 				bm  = dest->line[y];
 				bme = bm + ex;
-				sd = gfx->gfxdata->line[start] + gfx->width-1 - (sx-ox);
+				sd = gfx->gfxdata + start * gfx->line_modulo + gfx->width-1 - (sx-ox);
                 sb = back->line[y] + sx;
 				for( bm += sx ; bm <= bme ; bm++ )
 				{
@@ -405,7 +405,7 @@ void drawgfx_backdrop(struct osd_bitmap *dest,const struct GfxElement *gfx,
 			{
 				bm  = dest->line[y];
 				bme = bm + ex;
-				sd = gfx->gfxdata->line[start] + (sx-ox);
+				sd = gfx->gfxdata + start * gfx->line_modulo + (sx-ox);
                 sb = back->line[y] + sx;
 				for( bm += sx ; bm <= bme ; bm++ )
 				{
@@ -428,7 +428,7 @@ void drawgfx_backdrop(struct osd_bitmap *dest,const struct GfxElement *gfx,
 			{
 				bm = dest->line[y];
 				bme = bm + ex;
-				sd = gfx->gfxdata->line[start] + gfx->width-1 - (sx-ox);
+				sd = gfx->gfxdata + start * gfx->line_modulo + gfx->width-1 - (sx-ox);
                 sb = back->line[y] + sx;
 				for( bm = bm+sx ; bm <= bme ; bm++ )
 				{
@@ -448,7 +448,7 @@ void drawgfx_backdrop(struct osd_bitmap *dest,const struct GfxElement *gfx,
 			{
 				bm = dest->line[y];
 				bme = bm + ex;
-				sd = gfx->gfxdata->line[start] + (sx-ox);
+				sd = gfx->gfxdata + start * gfx->line_modulo + (sx-ox);
                 sb = back->line[y] + sx;
 				for( bm = bm+sx ; bm <= bme ; bm++ )
 				{

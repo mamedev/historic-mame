@@ -1085,3 +1085,11 @@ int devilfsg_vh_interrupt(void)
 
 	return interrupt();
 }
+
+int hunchbks_vh_interrupt(void)
+{
+	cpu_irq_line_vector_w(0,0,0x03);
+	cpu_set_irq_line(0,0,PULSE_LINE);
+
+	return ignore_interrupt();
+}

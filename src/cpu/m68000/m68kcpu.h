@@ -132,15 +132,18 @@ INLINE int MAKE_INT_32(int value)
 #define FUNCTION_CODE_CPU_SPACE          7
 
 /* CPU modes for deciding what to emulate */
-#define CPU_MODE_000  M68K_CPU_MODE_68000
-#define CPU_MODE_010  M68K_CPU_MODE_68010
-#define CPU_MODE_020  M68K_CPU_MODE_68020
+#define CPU_MODE_000   M68K_CPU_MODE_68000
+#define CPU_MODE_010   M68K_CPU_MODE_68010
+#define CPU_MODE_EC020 M68K_CPU_MODE_68EC020
+#define CPU_MODE_020   M68K_CPU_MODE_68020
 
-#define CPU_MODE_ALL       (CPU_MODE_000 | CPU_MODE_010 | CPU_MODE_020)
-#define CPU_MODE_010_PLUS  (CPU_MODE_010 | CPU_MODE_020)
+#define CPU_MODE_ALL       (CPU_MODE_000 | CPU_MODE_010 | CPU_MODE_EC020 | CPU_MODE_020)
+#define CPU_MODE_010_PLUS  (CPU_MODE_010 | CPU_MODE_EC020 | CPU_MODE_020)
 #define CPU_MODE_010_LESS  (CPU_MODE_000 | CPU_MODE_010)
+#define CPU_MODE_EC020_PLUS  (CPU_MODE_EC020 | CPU_MODE_020)
+#define CPU_MODE_EC020_LESS  (CPU_MODE_000 | CPU_MODE_010 | CPU_MODE_EC020)
 #define CPU_MODE_020_PLUS  CPU_MODE_020
-#define CPU_MODE_020_LESS  (CPU_MODE_000 | CPU_MODE_010 | CPU_MODE_020)
+#define CPU_MODE_020_LESS  (CPU_MODE_000 | CPU_MODE_010 | CPU_MODE_EC020 | CPU_MODE_020)
 
 
 /* ======================================================================== */
@@ -193,8 +196,10 @@ INLINE int MAKE_INT_32(int value)
 #define HIGH_NIBBLE(A) ((A) & 0xf0)
 
 /* These are used to isolate 8, 16, and 32 bit sizes */
+#define MASK_OUT_ABOVE_2(A)  ((A) & 3)
 #define MASK_OUT_ABOVE_8(A)  ((A) & 0xff)
 #define MASK_OUT_ABOVE_16(A) ((A) & 0xffff)
+#define MASK_OUT_BELOW_2(A)  ((A) & ~3)
 #define MASK_OUT_BELOW_8(A)  ((A) & ~0xff)
 #define MASK_OUT_BELOW_16(A) ((A) & ~0xffff)
 
@@ -291,6 +296,8 @@ INLINE int MAKE_INT_32(int value)
 #define CPU_STOPPED      m68k_cpu.stopped
 #define CPU_HALTED       m68k_cpu.halted
 #define CPU_INT_CYCLES   m68k_cpu.int_cycles /* ASG */
+#define CPU_PREF_ADDR    m68k_cpu.pref_addr
+#define CPU_PREF_DATA    m68k_cpu.pref_data
 
 #define CPU_INT_ACK_CALLBACK     m68k_cpu.int_ack_callback
 #define CPU_BKPT_ACK_CALLBACK    m68k_cpu.bkpt_ack_callback
@@ -532,6 +539,8 @@ typedef struct
    uint stopped;     /* Stopped state */
    uint halted;      /* Halted state */
    uint int_cycles;  /* ASG: extra cycles from generated interrupts */
+   uint pref_addr;   /* Last prefetch address */
+   uint pref_data;   /* Data in the prefetch queue */
 
    /* Callbacks to host */
    int  (*int_ack_callback)(int int_line);  /* Interrupt Acknowledge */
@@ -646,30 +655,85 @@ INLINE void m68ki_write_32(uint address, uint value)
 /* Set the function code and read memory immediately following the PC. */
 INLINE uint m68ki_read_imm_8(void)
 {
-   m68ki_set_fc(CPU_S ? FUNCTION_CODE_SUPERVISOR_DATA : FUNCTION_CODE_USER_DATA);
+#if M68K_USE_PREFETCH
+   m68ki_set_fc(CPU_S ? FUNCTION_CODE_SUPERVISOR_PROGRAM : FUNCTION_CODE_USER_PROGRAM);
+   if(MASK_OUT_BELOW_2(CPU_PC) != CPU_PREF_ADDR)
+   {
+      CPU_PREF_ADDR = MASK_OUT_BELOW_2(CPU_PC);
+      CPU_PREF_DATA = m68k_read_immediate_32(ADDRESS_68K(CPU_PREF_ADDR));
+   }
+   CPU_PC += 2;
+   return MASK_OUT_ABOVE_8(CPU_PREF_DATA >> ((2-((CPU_PC-2)&2))<<3));
+#else
+   m68ki_set_fc(CPU_S ? FUNCTION_CODE_SUPERVISOR_PROGRAM : FUNCTION_CODE_USER_PROGRAM);
    CPU_PC += 2;
    return m68k_read_immediate_8(ADDRESS_68K(CPU_PC-1));
+#endif /* M68K_USE_PREFETCH */
 }
 INLINE uint m68ki_read_imm_16(void)
 {
-   m68ki_set_fc(CPU_S ? FUNCTION_CODE_SUPERVISOR_DATA : FUNCTION_CODE_USER_DATA);
+#if M68K_USE_PREFETCH
+   m68ki_set_fc(CPU_S ? FUNCTION_CODE_SUPERVISOR_PROGRAM : FUNCTION_CODE_USER_PROGRAM);
+   if(MASK_OUT_BELOW_2(CPU_PC) != CPU_PREF_ADDR)
+   {
+      CPU_PREF_ADDR = MASK_OUT_BELOW_2(CPU_PC);
+      CPU_PREF_DATA = m68k_read_immediate_32(ADDRESS_68K(CPU_PREF_ADDR));
+   }
+   CPU_PC += 2;
+   return MASK_OUT_ABOVE_16(CPU_PREF_DATA >> ((2-((CPU_PC-2)&2))<<3));
+#else
+   m68ki_set_fc(CPU_S ? FUNCTION_CODE_SUPERVISOR_PROGRAM : FUNCTION_CODE_USER_PROGRAM);
    CPU_PC += 2;
    return m68k_read_immediate_16(ADDRESS_68K(CPU_PC-2));
+#endif /* M68K_USE_PREFETCH */
 }
 INLINE uint m68ki_read_imm_32(void)
 {
-   m68ki_set_fc(CPU_S ? FUNCTION_CODE_SUPERVISOR_DATA : FUNCTION_CODE_USER_DATA);
+#if M68K_USE_PREFETCH
+   uint temp_val;
+
+   m68ki_set_fc(CPU_S ? FUNCTION_CODE_SUPERVISOR_PROGRAM : FUNCTION_CODE_USER_PROGRAM);
+   if(MASK_OUT_BELOW_2(CPU_PC) != CPU_PREF_ADDR)
+   {
+      CPU_PREF_ADDR = MASK_OUT_BELOW_2(CPU_PC);
+      CPU_PREF_DATA = m68k_read_immediate_32(ADDRESS_68K(CPU_PREF_ADDR));
+   }
+   temp_val = CPU_PREF_DATA;
+   CPU_PC += 2;
+   if(MASK_OUT_BELOW_2(CPU_PC) != CPU_PREF_ADDR)
+   {
+      CPU_PREF_ADDR = MASK_OUT_BELOW_2(CPU_PC);
+      CPU_PREF_DATA = m68k_read_immediate_32(ADDRESS_68K(CPU_PREF_ADDR));
+      temp_val = MASK_OUT_ABOVE_32((temp_val << 16) | (CPU_PREF_DATA >> 16));
+   }
+   CPU_PC += 2;
+
+   return temp_val;
+#else
+   m68ki_set_fc(CPU_S ? FUNCTION_CODE_SUPERVISOR_PROGRAM : FUNCTION_CODE_USER_PROGRAM);
    CPU_PC += 4;
    return m68k_read_immediate_32(ADDRESS_68K(CPU_PC-4));
+#endif /* M68K_USE_PREFETCH */
 }
 
 
 /* Set the function code and read an instruction immediately following the PC. */
 INLINE uint m68ki_read_instruction(void)
 {
+#if M68K_USE_PREFETCH
+   m68ki_set_fc(CPU_S ? FUNCTION_CODE_SUPERVISOR_PROGRAM : FUNCTION_CODE_USER_PROGRAM);
+   if(MASK_OUT_BELOW_2(CPU_PC) != CPU_PREF_ADDR)
+   {
+      CPU_PREF_ADDR = MASK_OUT_BELOW_2(CPU_PC);
+      CPU_PREF_DATA = m68k_read_immediate_32(ADDRESS_68K(CPU_PREF_ADDR));
+   }
+   CPU_PC += 2;
+   return MASK_OUT_ABOVE_16(CPU_PREF_DATA >> ((2-((CPU_PC-2)&2))<<3));
+#else
    m68ki_set_fc(CPU_S ? FUNCTION_CODE_SUPERVISOR_PROGRAM : FUNCTION_CODE_USER_PROGRAM);
    CPU_PC += 2;
    return m68k_read_instruction(ADDRESS_68K(CPU_PC-2));
+#endif /* M68k_USE_PREFETCH */
 }
 
 
@@ -848,7 +912,7 @@ INLINE void m68ki_set_s_flag(int value)
 INLINE void m68ki_set_m_flag(int value)
 {
    /* ASG: Only do the rest if we're changing */
-   value = (value != 0 && CPU_MODE & CPU_MODE_020_PLUS)<<1;
+   value = (value != 0 && CPU_MODE & CPU_MODE_EC020_PLUS)<<1;
    if (CPU_M != value)
    {
       /* Backup the old stack pointer */
@@ -865,14 +929,14 @@ INLINE void m68ki_set_sm_flag(int s_value, int m_value)
 {
    /* ASG: Only do the rest if we're changing */
    s_value = (s_value != 0);
-   m_value = (m_value != 0 && CPU_MODE & CPU_MODE_020_PLUS)<<1;
+   m_value = (m_value != 0 && CPU_MODE & CPU_MODE_EC020_PLUS)<<1;
    if (CPU_S != s_value || CPU_M != m_value)
    {
       /* Backup the old stack pointer */
       CPU_SP[CPU_S | (CPU_M & (CPU_S<<1))] = CPU_A[7];
       /* Set the S and M flags */
       CPU_S = s_value != 0;
-      CPU_M = (m_value != 0 && CPU_MODE & CPU_MODE_020_PLUS)<<1;
+      CPU_M = (m_value != 0 && CPU_MODE & CPU_MODE_EC020_PLUS)<<1;
       /* Set the new stack pointer */
       CPU_A[7] = CPU_SP[CPU_S | (CPU_M & (CPU_S<<1))];
    }

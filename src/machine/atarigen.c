@@ -3125,7 +3125,7 @@ void atarigen_expanded_666_paletteram_w(int offset, int data)
 
 void atarigen_shade_render(struct osd_bitmap *bitmap, const struct GfxElement *gfx, int code, int hflip, int x, int y, const struct rectangle *clip, const unsigned char *shade_table)
 {
-	unsigned char **base = (unsigned char **)&gfx->gfxdata->line[code * gfx->height];
+	unsigned char *base = gfx->gfxdata + code * gfx->char_modulo;
 	int width = gfx->width;
 	int height = gfx->height;
 	int i, j, diff, xoff = 0;
@@ -3141,15 +3141,15 @@ void atarigen_shade_render(struct osd_bitmap *bitmap, const struct GfxElement *g
 	/* apply Y clipping */
 	diff = clip->min_y - y;
 	if (diff > 0)
-		base += diff, y += diff, height -= diff;
+		base += gfx->line_modulo * diff, y += diff, height -= diff;
 	diff = y + height - clip->max_y;
 	if (diff > 0)
 		height -= diff;
 
 	/* loop over the data */
-	for (i = 0; i < height; i++, y++, base++)
+	for (i = 0; i < height; i++, y++, base+=gfx->line_modulo)
 	{
-		const unsigned char *src = &(*base)[xoff];
+		const unsigned char *src = &base[xoff];
 		unsigned char *dst = &bitmap->line[y][x + xoff];
 
 		if (hflip)

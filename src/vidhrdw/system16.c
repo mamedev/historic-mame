@@ -24,6 +24,7 @@ void dump_tilemap(void);
 #define NumOfShadowColors 32
 #define ShadowColorsShift 8
 unsigned char shade_table[256];
+int sys16_sh_shadowpal;
 #else
 #define NumOfShadowColors 0
 #endif
@@ -42,6 +43,7 @@ static struct sprite_list *sprite_list;
 int sys16_spritesystem;
 int sys16_sprxoffset;
 int sys16_bgxoffset;
+int sys16_fgxoffset;
 int *sys16_obj_bank;
 int sys16_textmode;
 int sys16_yflip;
@@ -1294,12 +1296,13 @@ static void get_sprite_info( void ){
 
 				sprite->x = ((source[1] & 0x3ff) + sys16_sprxoffset);
 				if(sprite->x >= 0x200) sprite->x-=0x200;
-				sprite->y = top;
+				sprite->y = top+1;
 				sprite->priority = 0;
 				sprite->pal_data = base_pal + (pal<<4);
 
 				sprite->total_height = bottom-top;
-				sprite->tile_height = sprite->total_height*(0x400+zoomy)/0x400;
+//				sprite->tile_height = sprite->total_height*(0x400+zoomy)/0x400;
+				sprite->tile_height = ((sprite->total_height)<<4|0xf)*(0x400+zoomy)/0x4000;
 
 				sprite->line_offset = (width&0x7f)*4;
 
@@ -1308,14 +1311,13 @@ static void get_sprite_info( void ){
 				if( width&0x080 ) sprite->flags |= SPRITE_FLIPY;
 
 #ifdef TRANSPARENT_SHADOWS
-				if (pal==0)	// shadow sprite
+				if (pal==sys16_sh_shadowpal)	// shadow sprite
 					sprite->flags|= SPRITE_SHADOW;
 #endif
-
 				if( sprite->flags&SPRITE_FLIPY ){
 					sprite->line_offset = 512-sprite->line_offset;
 					if( sprite->flags&SPRITE_FLIPX ){
-						gfx += 4 - sprite->line_offset*(sprite->tile_height+1) /*+4*/;			// +2 ???
+						gfx += 4 - sprite->line_offset*(sprite->tile_height+1) /*+4*/;
 					}
 					else {
 						gfx -= sprite->line_offset*sprite->tile_height;
@@ -1410,7 +1412,7 @@ static void get_sprite_info( void ){
 			}
 			sprite->flags = 0;
 
-			if (!(source[0]&0x4000) /*&& ((source[5]&0xff) || source[1]&0x7f00)*/)// no shadows
+			if (!(source[0]&0x4000))
 			{
 				UINT16 bank=(source[0]>>8)&7;
 				UINT16 pal=(source[5])&0x7f;
@@ -1420,7 +1422,7 @@ static void get_sprite_info( void ){
 				int x;
 
 				zoom=source[4]&0xfff;
-				if (zoom==0x32c) zoom=0x3cf;	//???
+//				if (zoom==0x32c) zoom=0x3cf;	//???
 
 				if(zoom==0) zoom=1;
 
@@ -1435,7 +1437,9 @@ static void get_sprite_info( void ){
 				sprite->pal_data = base_pal + (pal<<4) + 1024;
 
 				sprite->total_height = (source[5]>>8)+1;
-				sprite->tile_height = sprite->total_height*(zoom)/0x200;
+//				sprite->tile_height = sprite->total_height*(zoom)/0x200;
+//				sprite->total_height = (source[5]>>8);
+				sprite->tile_height = ((sprite->total_height<<4)| 0xf)*(zoom)/0x2000;
 
 				sprite->line_offset = (width&0x7f)*4;
 
@@ -1444,14 +1448,13 @@ static void get_sprite_info( void ){
 				if(pal==0)
 					sprite->flags|= SPRITE_SHADOW;
 #endif
-
 				if(!(source[4]&0x2000))
 				{
 					if(!(source[4]&0x4000))
 					{
 						// Should be drawn right to left, but this should be ok.
 						x-=(sprite->line_offset*2)*0x200/zoom;
-						gfx+=4;
+						gfx+=4-sprite->line_offset;
 					}
 					else
 					{
@@ -1650,7 +1653,7 @@ void sys16_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh){
 		tilemap_set_scrollx( background, 0, -320-sys16_bg_scrollx+sys16_bgxoffset );
 		tilemap_set_scrolly( background, 0, -256+sys16_bg_scrolly );
 
-		tilemap_set_scrollx( foreground, 0, -320-sys16_fg_scrollx+sys16_bgxoffset );
+		tilemap_set_scrollx( foreground, 0, -320-sys16_fg_scrollx+sys16_fgxoffset );
 		tilemap_set_scrolly( foreground, 0, -256+sys16_fg_scrolly );
 
 		tilemap_update(  ALL_TILEMAPS  );
@@ -1769,14 +1772,14 @@ void sys18_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh){
 				if((sys16_fg2_scrollx &0xff00) != 0x8000)
 					scroll2 = sys16_fg2_scrollx;
 
-				tilemap_set_scrollx( foreground , (i+offset)&0x3f, -320-(scroll&0x3ff)+sys16_bgxoffset );
-				tilemap_set_scrollx( foreground2, (i+offset2)&0x3f, -320-(scroll2&0x3ff)+sys16_bgxoffset );
+				tilemap_set_scrollx( foreground , (i+offset)&0x3f, -320-(scroll&0x3ff)+sys16_fgxoffset );
+				tilemap_set_scrollx( foreground2, (i+offset2)&0x3f, -320-(scroll2&0x3ff)+sys16_fgxoffset );
 			}
 		}
 		else
 		{
-			tilemap_set_scrollx( foreground , 0, -320-(sys16_fg_scrollx&0x3ff)+sys16_bgxoffset );
-			tilemap_set_scrollx( foreground2, 0, -320-(sys16_fg2_scrollx&0x3ff)+sys16_bgxoffset );
+			tilemap_set_scrollx( foreground , 0, -320-(sys16_fg_scrollx&0x3ff)+sys16_fgxoffset );
+			tilemap_set_scrollx( foreground2, 0, -320-(sys16_fg2_scrollx&0x3ff)+sys16_fgxoffset );
 		}
 
 		if(sys18_splittab_fg_y)
@@ -2075,7 +2078,7 @@ void sys16_ho_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh){
 	if( sys16_refreshenable ){
 
 		tilemap_set_scrollx( background, 0, -320-sys16_bg_scrollx+sys16_bgxoffset );
-		tilemap_set_scrollx( foreground, 0, -320-sys16_fg_scrollx+sys16_bgxoffset );
+		tilemap_set_scrollx( foreground, 0, -320-sys16_fg_scrollx+sys16_fgxoffset );
 
 		tilemap_set_scrolly( background, 0, -256+sys16_bg_scrolly );
 		tilemap_set_scrolly( foreground, 0, -256+sys16_fg_scrolly );
@@ -2120,7 +2123,6 @@ static void grv2_colors(void)
 	for(i=0;i<224;i++)
 	{
 		ver_data=READ_WORD(data_ver);
-		palette_used_colors[((ver_data>>8)&0x3f) + gr_palette] = PALETTE_COLOR_USED;
 
 		if(!(ver_data & 0x800))
 		{
@@ -2134,6 +2136,10 @@ static void grv2_colors(void)
 			palette_used_colors[ gr_colorflip[colorflip][0] + gr_palette_default ] = PALETTE_COLOR_USED;
 			palette_used_colors[ gr_colorflip[colorflip][1] + gr_palette_default ] = PALETTE_COLOR_USED;
 			palette_used_colors[ gr_colorflip[colorflip][2] + gr_palette_default ] = PALETTE_COLOR_USED;
+		}
+		else
+		{
+			palette_used_colors[(ver_data&0x3f) + gr_palette] = PALETTE_COLOR_USED;
 		}
 		data_ver+=2;
 	}
@@ -2181,7 +2187,7 @@ static void render_grv2(struct osd_bitmap *bitmap,int priority)
 
 				if(ver_data & 0x800)
 				{
-					colors[0] = paldata1[ (ver_data>>8)&0x3f ];
+					colors[0] = paldata1[ ver_data&0x3f ];
 					// fill line
 					for(j=0;j<320;j++)
 					{
@@ -2258,7 +2264,7 @@ static void render_grv2(struct osd_bitmap *bitmap,int priority)
 
 				if(ver_data & 0x800)
 				{
-					colors[0] = paldata1[ (ver_data>>8)&0x3f ];
+					colors[0] = paldata1[ ver_data&0x3f ];
 					// fill line
 					line32 = (UINT32 *)bitmap->line[ypos];
 					fastfill = colors[0] + (colors[0] << 8) + (colors[0] << 16) + (colors[0] << 24);
@@ -2339,7 +2345,7 @@ void sys16_or_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh){
 	if( sys16_refreshenable ){
 
 		tilemap_set_scrollx( background, 0, -320-sys16_bg_scrollx+sys16_bgxoffset );
-		tilemap_set_scrollx( foreground, 0, -320-sys16_fg_scrollx+sys16_bgxoffset );
+		tilemap_set_scrollx( foreground, 0, -320-sys16_fg_scrollx+sys16_fgxoffset );
 
 		tilemap_set_scrolly( background, 0, -256+sys16_bg_scrolly );
 		tilemap_set_scrolly( foreground, 0, -256+sys16_fg_scrolly );

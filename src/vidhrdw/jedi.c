@@ -151,6 +151,7 @@ void jedi_backgroundram_w(int offset,int data)
 void jedi_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	int offs;
+	static unsigned short colortable[16] = { 0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15 };
 
 
 	if (palette_recalc())
@@ -172,6 +173,9 @@ void jedi_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	/* without doing a palette lookup. After drawing into three temporary */
 	/* bitmaps, we do a final composition step mapping the 10-bit combined value */
 	/* to the correct palette entry. */
+
+	Machine->gfx[0]->colortable = Machine->gfx[1]->colortable =
+			Machine->gfx[2]->colortable = colortable;
 
     /* foreground */
     for (offs = videoram_size - 1;offs >= 0;offs--)
@@ -256,6 +260,10 @@ void jedi_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 					(spriteram[offs+0x100]) | (b << 8),240-spriteram[offs+0x80]-16,
 					&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
     }
+
+
+	Machine->gfx[0]->colortable = Machine->gfx[1]->colortable =
+			Machine->gfx[2]->colortable = 0;
 
 
 	/* compose the three layers */

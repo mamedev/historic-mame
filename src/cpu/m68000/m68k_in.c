@@ -1379,7 +1379,7 @@ void m68000_bhi_16(void)
 
 void m68020_bhi_32(void)
 {
-	if (CPU_MODE & CPU_MODE_020_PLUS)
+	if (CPU_MODE & CPU_MODE_EC020_PLUS)
 	{
 		if (CONDITION_HI)
 		{
@@ -1425,7 +1425,7 @@ void m68000_bls_16(void)
 
 void m68020_bls_32(void)
 {
-	if (CPU_MODE & CPU_MODE_020_PLUS)
+	if (CPU_MODE & CPU_MODE_EC020_PLUS)
 	{
 		if (CONDITION_LS)
 		{
@@ -1471,7 +1471,7 @@ void m68000_bcc_16(void)
 
 void m68020_bcc_32(void)
 {
-	if (CPU_MODE & CPU_MODE_020_PLUS)
+	if (CPU_MODE & CPU_MODE_EC020_PLUS)
 	{
 		if (CONDITION_CC)
 		{
@@ -1517,7 +1517,7 @@ void m68000_bcs_16(void)
 
 void m68020_bcs_32(void)
 {
-	if (CPU_MODE & CPU_MODE_020_PLUS)
+	if (CPU_MODE & CPU_MODE_EC020_PLUS)
 	{
 		if (CONDITION_CS)
 		{
@@ -1563,7 +1563,7 @@ void m68000_bne_16(void)
 
 void m68020_bne_32(void)
 {
-	if (CPU_MODE & CPU_MODE_020_PLUS)
+	if (CPU_MODE & CPU_MODE_EC020_PLUS)
 	{
 		if (CONDITION_NE)
 		{
@@ -1609,7 +1609,7 @@ void m68000_beq_16(void)
 
 void m68020_beq_32(void)
 {
-	if (CPU_MODE & CPU_MODE_020_PLUS)
+	if (CPU_MODE & CPU_MODE_EC020_PLUS)
 	{
 		if (CONDITION_EQ)
 		{
@@ -1655,7 +1655,7 @@ void m68000_bvc_16(void)
 
 void m68020_bvc_32(void)
 {
-	if (CPU_MODE & CPU_MODE_020_PLUS)
+	if (CPU_MODE & CPU_MODE_EC020_PLUS)
 	{
 		if (CONDITION_VC)
 		{
@@ -1701,7 +1701,7 @@ void m68000_bvs_16(void)
 
 void m68020_bvs_32(void)
 {
-	if (CPU_MODE & CPU_MODE_020_PLUS)
+	if (CPU_MODE & CPU_MODE_EC020_PLUS)
 	{
 		if (CONDITION_VS)
 		{
@@ -1747,7 +1747,7 @@ void m68000_bpl_16(void)
 
 void m68020_bpl_32(void)
 {
-	if (CPU_MODE & CPU_MODE_020_PLUS)
+	if (CPU_MODE & CPU_MODE_EC020_PLUS)
 	{
 		if (CONDITION_PL)
 		{
@@ -1793,7 +1793,7 @@ void m68000_bmi_16(void)
 
 void m68020_bmi_32(void)
 {
-	if (CPU_MODE & CPU_MODE_020_PLUS)
+	if (CPU_MODE & CPU_MODE_EC020_PLUS)
 	{
 		if (CONDITION_MI)
 		{
@@ -1839,7 +1839,7 @@ void m68000_bge_16(void)
 
 void m68020_bge_32(void)
 {
-	if (CPU_MODE & CPU_MODE_020_PLUS)
+	if (CPU_MODE & CPU_MODE_EC020_PLUS)
 	{
 		if (CONDITION_GE)
 		{
@@ -1885,7 +1885,7 @@ void m68000_blt_16(void)
 
 void m68020_blt_32(void)
 {
-	if (CPU_MODE & CPU_MODE_020_PLUS)
+	if (CPU_MODE & CPU_MODE_EC020_PLUS)
 	{
 		if (CONDITION_LT)
 		{
@@ -1931,7 +1931,7 @@ void m68000_bgt_16(void)
 
 void m68020_bgt_32(void)
 {
-	if (CPU_MODE & CPU_MODE_020_PLUS)
+	if (CPU_MODE & CPU_MODE_EC020_PLUS)
 	{
 		if (CONDITION_GT)
 		{
@@ -1977,7 +1977,7 @@ void m68000_ble_16(void)
 
 void m68020_ble_32(void)
 {
-	if (CPU_MODE & CPU_MODE_020_PLUS)
+	if (CPU_MODE & CPU_MODE_EC020_PLUS)
 	{
 		if (CONDITION_LE)
 		{
@@ -2376,7 +2376,7 @@ void m68010_bkpt(void)
 {
 	if (CPU_MODE & CPU_MODE_010_PLUS)
 	{
-		m68ki_bkpt_ack(CPU_MODE & CPU_MODE_020_PLUS ? CPU_IR & 7 : 0);	/* auto-disable (see m68kcpu.h) */
+		m68ki_bkpt_ack(CPU_MODE & CPU_MODE_EC020_PLUS ? CPU_IR & 7 : 0);	/* auto-disable (see m68kcpu.h) */
 		USE_CLKS(11);
 	}
 	m68000_illegal();
@@ -2401,7 +2401,7 @@ void m68000_bra_16(void)
 
 void m68020_bra_32(void)
 {
-	if (CPU_MODE & CPU_MODE_020_PLUS)
+	if (CPU_MODE & CPU_MODE_EC020_PLUS)
 	{
 		m68ki_add_trace();			   /* auto-disable (see m68kcpu.h) */
 		m68ki_branch_word(m68ki_read_32(CPU_PC));
@@ -2478,7 +2478,7 @@ void m68000_bsr_16(void)
 
 void m68020_bsr_32(void)
 {
-	if (CPU_MODE & CPU_MODE_020_PLUS)
+	if (CPU_MODE & CPU_MODE_EC020_PLUS)
 	{
 		m68ki_add_trace();			   /* auto-disable (see m68kcpu.h) */
 		m68ki_push_32(CPU_PC + 2);
@@ -2522,12 +2522,13 @@ void m68000_btst_s(void)
 
 void m68020_callm(void)
 {
-	if (CPU_MODE & CPU_MODE_020)
+	if (CPU_MODE & (CPU_MODE_EC020 | CPU_MODE_020))
 	{
 		uint ea = m68ki_get_ea_32();
 
 		m68ki_add_trace();			   /* auto-disable (see m68kcpu.h) */
 		CPU_PC += 2;
+(void)ea;	/* just to avoid an 'unused variable' warning */
 		M68K_DO_LOG((M68K_LOG, "%s at %08x: called unimplemented instruction %04x (%s)\n",
 					 m68k_cpu_names[CPU_MODE], ADDRESS_68K(CPU_PC - 2), CPU_IR,
 					 m68k_disassemble_quick(ADDRESS_68K(CPU_PC - 2))));
@@ -2540,7 +2541,7 @@ void m68020_callm(void)
 
 void m68020_cas_8(void)
 {
-	if (CPU_MODE & CPU_MODE_020_PLUS)
+	if (CPU_MODE & CPU_MODE_EC020_PLUS)
 	{
 		uint word2 = m68ki_read_imm_16();
 		uint ea = m68ki_get_ea_8();
@@ -2567,7 +2568,7 @@ void m68020_cas_8(void)
 
 void m68020_cas_16(void)
 {
-	if (CPU_MODE & CPU_MODE_020_PLUS)
+	if (CPU_MODE & CPU_MODE_EC020_PLUS)
 	{
 		uint word2 = m68ki_read_imm_16();
 		uint ea = m68ki_get_ea_16();
@@ -2594,7 +2595,7 @@ void m68020_cas_16(void)
 
 void m68020_cas_32(void)
 {
-	if (CPU_MODE & CPU_MODE_020_PLUS)
+	if (CPU_MODE & CPU_MODE_EC020_PLUS)
 	{
 		uint word2 = m68ki_read_imm_16();
 		uint ea = m68ki_get_ea_32();
@@ -2621,7 +2622,7 @@ void m68020_cas_32(void)
 
 void m68020_cas2_16(void)
 {
-	if (CPU_MODE & CPU_MODE_020_PLUS)
+	if (CPU_MODE & CPU_MODE_EC020_PLUS)
 	{
 		uint word2 = m68ki_read_imm_32();
 		uint *r_src1 = &CPU_D[(word2 >> 16) & 7];
@@ -2667,7 +2668,7 @@ void m68020_cas2_16(void)
 
 void m68020_cas2_32(void)
 {
-	if (CPU_MODE & CPU_MODE_020_PLUS)
+	if (CPU_MODE & CPU_MODE_EC020_PLUS)
 	{
 		uint word2 = m68ki_read_imm_32();
 		uint *r_src1 = &CPU_D[(word2 >> 16) & 7];
@@ -2743,7 +2744,7 @@ void m68000_chk_16(void)
 
 void m68020_chk_d_32(void)
 {
-	if (CPU_MODE & CPU_MODE_020_PLUS)
+	if (CPU_MODE & CPU_MODE_EC020_PLUS)
 	{
 		int src = DX;
 		int bound = DY;
@@ -2763,7 +2764,7 @@ void m68020_chk_d_32(void)
 
 void m68020_chk_32(void)
 {
-	if (CPU_MODE & CPU_MODE_020_PLUS)
+	if (CPU_MODE & CPU_MODE_EC020_PLUS)
 	{
 		int src = DX;
 		int bound = m68ki_read_32(m68ki_get_ea_32());
@@ -2783,7 +2784,7 @@ void m68020_chk_32(void)
 
 void m68020_chk2_cmp2_8(void)
 {
-	if (CPU_MODE & CPU_MODE_020_PLUS)
+	if (CPU_MODE & CPU_MODE_EC020_PLUS)
 	{
 		uint word2 = m68ki_read_imm_16();
 		uint src = m68k_cpu_dar[word2 >> 15][(word2 >> 12) & 7];
@@ -2814,7 +2815,7 @@ void m68020_chk2_cmp2_8(void)
 
 void m68020_chk2_cmp2_16(void)
 {
-	if (CPU_MODE & CPU_MODE_020_PLUS)
+	if (CPU_MODE & CPU_MODE_EC020_PLUS)
 	{
 		uint word2 = m68ki_read_imm_16();
 		uint src = m68k_cpu_dar[word2 >> 15][(word2 >> 12) & 7];
@@ -2845,7 +2846,7 @@ void m68020_chk2_cmp2_16(void)
 
 void m68020_chk2_cmp2_32(void)
 {
-	if (CPU_MODE & CPU_MODE_020_PLUS)
+	if (CPU_MODE & CPU_MODE_EC020_PLUS)
 	{
 		uint word2 = m68ki_read_imm_16();
 		uint src = m68k_cpu_dar[word2 >> 15][(word2 >> 12) & 7];
@@ -3152,7 +3153,7 @@ void m68000_cmpi_8(void)
 
 void m68020_cmpi_pcdi_8(void)
 {
-	if (CPU_MODE & CPU_MODE_020_PLUS)
+	if (CPU_MODE & CPU_MODE_EC020_PLUS)
 	{
 		uint src = m68ki_read_imm_8();
 		uint old_pc = (CPU_PC += 2) - 2;
@@ -3173,7 +3174,7 @@ void m68020_cmpi_pcdi_8(void)
 
 void m68020_cmpi_pcix_8(void)
 {
-	if (CPU_MODE & CPU_MODE_020_PLUS)
+	if (CPU_MODE & CPU_MODE_EC020_PLUS)
 	{
 		uint src = m68ki_read_imm_8();
 		uint dst = m68ki_read_8(EA_PCIX);
@@ -3220,7 +3221,7 @@ void m68000_cmpi_16(void)
 
 void m68020_cmpi_pcdi_16(void)
 {
-	if (CPU_MODE & CPU_MODE_020_PLUS)
+	if (CPU_MODE & CPU_MODE_EC020_PLUS)
 	{
 		uint src = m68ki_read_imm_16();
 		uint old_pc = (CPU_PC += 2) - 2;
@@ -3241,7 +3242,7 @@ void m68020_cmpi_pcdi_16(void)
 
 void m68020_cmpi_pcix_16(void)
 {
-	if (CPU_MODE & CPU_MODE_020_PLUS)
+	if (CPU_MODE & CPU_MODE_EC020_PLUS)
 	{
 		uint src = m68ki_read_imm_16();
 		uint dst = m68ki_read_16(EA_PCIX);
@@ -3288,7 +3289,7 @@ void m68000_cmpi_32(void)
 
 void m68020_cmpi_pcdi_32(void)
 {
-	if (CPU_MODE & CPU_MODE_020_PLUS)
+	if (CPU_MODE & CPU_MODE_EC020_PLUS)
 	{
 		uint src = m68ki_read_imm_32();
 		uint old_pc = (CPU_PC += 2) - 2;
@@ -3309,7 +3310,7 @@ void m68020_cmpi_pcdi_32(void)
 
 void m68020_cmpi_pcix_32(void)
 {
-	if (CPU_MODE & CPU_MODE_020_PLUS)
+	if (CPU_MODE & CPU_MODE_EC020_PLUS)
 	{
 		uint src = m68ki_read_imm_32();
 		uint dst = m68ki_read_32(EA_PCIX);
@@ -3412,7 +3413,7 @@ void m68000_cmpm_32(void)
 
 void m68020_cpbcc(void)
 {
-	if (CPU_MODE & CPU_MODE_020_PLUS)
+	if (CPU_MODE & CPU_MODE_EC020_PLUS)
 	{
 		M68K_DO_LOG((M68K_LOG, "%s at %08x: called unimplemented instruction %04x (%s)\n",
 					 m68k_cpu_names[CPU_MODE], ADDRESS_68K(CPU_PC - 2), CPU_IR,
@@ -3425,7 +3426,7 @@ void m68020_cpbcc(void)
 
 void m68020_cpdbcc(void)
 {
-	if (CPU_MODE & CPU_MODE_020_PLUS)
+	if (CPU_MODE & CPU_MODE_EC020_PLUS)
 	{
 		M68K_DO_LOG((M68K_LOG, "%s at %08x: called unimplemented instruction %04x (%s)\n",
 					 m68k_cpu_names[CPU_MODE], ADDRESS_68K(CPU_PC - 2), CPU_IR,
@@ -3438,7 +3439,7 @@ void m68020_cpdbcc(void)
 
 void m68020_cpgen(void)
 {
-	if (CPU_MODE & CPU_MODE_020_PLUS)
+	if (CPU_MODE & CPU_MODE_EC020_PLUS)
 	{
 		M68K_DO_LOG((M68K_LOG, "%s at %08x: called unimplemented instruction %04x (%s)\n",
 					 m68k_cpu_names[CPU_MODE], ADDRESS_68K(CPU_PC - 2), CPU_IR,
@@ -3451,7 +3452,7 @@ void m68020_cpgen(void)
 
 void m68020_cpscc(void)
 {
-	if (CPU_MODE & CPU_MODE_020_PLUS)
+	if (CPU_MODE & CPU_MODE_EC020_PLUS)
 	{
 		M68K_DO_LOG((M68K_LOG, "%s at %08x: called unimplemented instruction %04x (%s)\n",
 					 m68k_cpu_names[CPU_MODE], ADDRESS_68K(CPU_PC - 2), CPU_IR,
@@ -3464,7 +3465,7 @@ void m68020_cpscc(void)
 
 void m68020_cptrapcc(void)
 {
-	if (CPU_MODE & CPU_MODE_020_PLUS)
+	if (CPU_MODE & CPU_MODE_EC020_PLUS)
 	{
 		M68K_DO_LOG((M68K_LOG, "%s at %08x: called unimplemented instruction %04x (%s)\n",
 					 m68k_cpu_names[CPU_MODE], ADDRESS_68K(CPU_PC - 2), CPU_IR,
@@ -3954,7 +3955,7 @@ void m68000_divu_16(void)
 
 void m68020_divl_d_32(void)
 {
-	if (CPU_MODE & CPU_MODE_020_PLUS)
+	if (CPU_MODE & CPU_MODE_EC020_PLUS)
 	{
 		uint word2 = m68ki_read_imm_16();
 		uint divisor = DY;
@@ -4054,7 +4055,7 @@ void m68020_divl_d_32(void)
 
 void m68020_divl_32(void)
 {
-	if (CPU_MODE & CPU_MODE_020_PLUS)
+	if (CPU_MODE & CPU_MODE_EC020_PLUS)
 	{
 		uint word2 = m68ki_read_imm_16();
 		uint divisor = m68ki_read_32(m68ki_get_ea_32());
@@ -4393,7 +4394,7 @@ void m68000_ext_32(void)
 
 void m68020_extb(void)
 {
-	if (CPU_MODE & CPU_MODE_020_PLUS)
+	if (CPU_MODE & CPU_MODE_EC020_PLUS)
 	{
 		uint *d_dst = &DY;
 
@@ -4470,7 +4471,7 @@ void m68000_link_16(void)
 
 void m68020_link_32_a7(void)
 {
-	if (CPU_MODE & CPU_MODE_020_PLUS)
+	if (CPU_MODE & CPU_MODE_EC020_PLUS)
 	{
 		CPU_A[7] -= 4;
 		m68ki_write_32(CPU_A[7], CPU_A[7]);
@@ -4484,7 +4485,7 @@ void m68020_link_32_a7(void)
 
 void m68020_link_32(void)
 {
-	if (CPU_MODE & CPU_MODE_020_PLUS)
+	if (CPU_MODE & CPU_MODE_EC020_PLUS)
 	{
 		uint *a_dst = &AY;
 
@@ -6363,7 +6364,7 @@ void m68000_mulu_16(void)
 
 void m68020_mull_d_32(void)
 {
-	if (CPU_MODE & CPU_MODE_020_PLUS)
+	if (CPU_MODE & CPU_MODE_EC020_PLUS)
 	{
 		uint word2 = m68ki_read_imm_16();
 		uint src = DY;
@@ -6422,7 +6423,7 @@ void m68020_mull_d_32(void)
 
 void m68020_mull_32(void)
 {
-	if (CPU_MODE & CPU_MODE_020_PLUS)
+	if (CPU_MODE & CPU_MODE_EC020_PLUS)
 	{
 		uint word2 = m68ki_read_imm_16();
 		uint src = m68ki_read_32(m68ki_get_ea_32());
@@ -7018,7 +7019,7 @@ void m68000_ori_to_sr(void)
 
 void m68020_pack_rr(void)
 {
-	if (CPU_MODE & CPU_MODE_020_PLUS)
+	if (CPU_MODE & CPU_MODE_EC020_PLUS)
 	{
 		uint src = DX + m68ki_read_imm_16();
 
@@ -7032,7 +7033,7 @@ void m68020_pack_rr(void)
 
 void m68020_pack_mm_ax7(void)
 {
-	if (CPU_MODE & CPU_MODE_020_PLUS)
+	if (CPU_MODE & CPU_MODE_EC020_PLUS)
 	{
 		uint src = m68ki_read_16(AX -= 2);
 
@@ -7047,7 +7048,7 @@ void m68020_pack_mm_ax7(void)
 
 void m68020_pack_mm_ay7(void)
 {
-	if (CPU_MODE & CPU_MODE_020_PLUS)
+	if (CPU_MODE & CPU_MODE_EC020_PLUS)
 	{
 		uint src = m68ki_read_32(CPU_A[7] -= 4);
 
@@ -7063,7 +7064,7 @@ void m68020_pack_mm_ay7(void)
 
 void m68020_pack_mm_axy7(void)
 {
-	if (CPU_MODE & CPU_MODE_020_PLUS)
+	if (CPU_MODE & CPU_MODE_EC020_PLUS)
 	{
 		uint src = m68ki_read_32(CPU_A[7] -= 4);
 
@@ -7078,7 +7079,7 @@ void m68020_pack_mm_axy7(void)
 
 void m68020_pack_mm(void)
 {
-	if (CPU_MODE & CPU_MODE_020_PLUS)
+	if (CPU_MODE & CPU_MODE_EC020_PLUS)
 	{
 		uint src = m68ki_read_16(AX -= 2);
 
@@ -7769,7 +7770,7 @@ void m68000_rte(void)
 
 void m68020_rtm(void)
 {
-	if (CPU_MODE & CPU_MODE_020)
+	if (CPU_MODE & (CPU_MODE_EC020 | CPU_MODE_020))
 	{
 		m68ki_add_trace();			   /* auto-disable (see m68kcpu.h) */
 		M68K_DO_LOG((M68K_LOG, "%s at %08x: called unimplemented instruction %04x (%s)\n",
@@ -8894,7 +8895,7 @@ void m68000_trap(void)
 
 void m68020_trapt_0(void)
 {
-	if (CPU_MODE & CPU_MODE_020_PLUS)
+	if (CPU_MODE & CPU_MODE_EC020_PLUS)
 	{
 		m68ki_interrupt(EXCEPTION_TRAPV);	/* HJB 990403 */
 		return;
@@ -8905,7 +8906,7 @@ void m68020_trapt_0(void)
 
 void m68020_trapt_16(void)
 {
-	if (CPU_MODE & CPU_MODE_020_PLUS)
+	if (CPU_MODE & CPU_MODE_EC020_PLUS)
 	{
 		m68ki_interrupt(EXCEPTION_TRAPV);	/* HJB 990403 */
 		return;
@@ -8916,7 +8917,7 @@ void m68020_trapt_16(void)
 
 void m68020_trapt_32(void)
 {
-	if (CPU_MODE & CPU_MODE_020_PLUS)
+	if (CPU_MODE & CPU_MODE_EC020_PLUS)
 	{
 		m68ki_interrupt(EXCEPTION_TRAPV);	/* HJB 990403 */
 		return;
@@ -8927,7 +8928,7 @@ void m68020_trapt_32(void)
 
 void m68020_trapf_0(void)
 {
-	if (CPU_MODE & CPU_MODE_020_PLUS)
+	if (CPU_MODE & CPU_MODE_EC020_PLUS)
 	{
 		USE_CLKS(4);
 		return;
@@ -8938,7 +8939,7 @@ void m68020_trapf_0(void)
 
 void m68020_trapf_16(void)
 {
-	if (CPU_MODE & CPU_MODE_020_PLUS)
+	if (CPU_MODE & CPU_MODE_EC020_PLUS)
 	{
 		USE_CLKS(6);
 		CPU_PC += 2;
@@ -8950,7 +8951,7 @@ void m68020_trapf_16(void)
 
 void m68020_trapf_32(void)
 {
-	if (CPU_MODE & CPU_MODE_020_PLUS)
+	if (CPU_MODE & CPU_MODE_EC020_PLUS)
 	{
 		USE_CLKS(8);
 		CPU_PC += 4;
@@ -8962,7 +8963,7 @@ void m68020_trapf_32(void)
 
 void m68020_traphi_0(void)
 {
-	if (CPU_MODE & CPU_MODE_020_PLUS)
+	if (CPU_MODE & CPU_MODE_EC020_PLUS)
 	{
 		if (CONDITION_HI)
 			m68ki_interrupt(EXCEPTION_TRAPV);	/* HJB 990403 */
@@ -8976,7 +8977,7 @@ void m68020_traphi_0(void)
 
 void m68020_traphi_16(void)
 {
-	if (CPU_MODE & CPU_MODE_020_PLUS)
+	if (CPU_MODE & CPU_MODE_EC020_PLUS)
 	{
 		if (CONDITION_HI)
 			m68ki_interrupt(EXCEPTION_TRAPV);	/* HJB 990403 */
@@ -8991,7 +8992,7 @@ void m68020_traphi_16(void)
 
 void m68020_traphi_32(void)
 {
-	if (CPU_MODE & CPU_MODE_020_PLUS)
+	if (CPU_MODE & CPU_MODE_EC020_PLUS)
 	{
 		if (CONDITION_HI)
 			m68ki_interrupt(EXCEPTION_TRAPV);	/* HJB 990403 */
@@ -9006,7 +9007,7 @@ void m68020_traphi_32(void)
 
 void m68020_trapls_0(void)
 {
-	if (CPU_MODE & CPU_MODE_020_PLUS)
+	if (CPU_MODE & CPU_MODE_EC020_PLUS)
 	{
 		if (CONDITION_LS)
 			m68ki_interrupt(EXCEPTION_TRAPV);	/* HJB 990403 */
@@ -9020,7 +9021,7 @@ void m68020_trapls_0(void)
 
 void m68020_trapls_16(void)
 {
-	if (CPU_MODE & CPU_MODE_020_PLUS)
+	if (CPU_MODE & CPU_MODE_EC020_PLUS)
 	{
 		if (CONDITION_LS)
 			m68ki_interrupt(EXCEPTION_TRAPV);	/* HJB 990403 */
@@ -9035,7 +9036,7 @@ void m68020_trapls_16(void)
 
 void m68020_trapls_32(void)
 {
-	if (CPU_MODE & CPU_MODE_020_PLUS)
+	if (CPU_MODE & CPU_MODE_EC020_PLUS)
 	{
 		if (CONDITION_LS)
 			m68ki_interrupt(EXCEPTION_TRAPV);	/* HJB 990403 */
@@ -9050,7 +9051,7 @@ void m68020_trapls_32(void)
 
 void m68020_trapcc_0(void)
 {
-	if (CPU_MODE & CPU_MODE_020_PLUS)
+	if (CPU_MODE & CPU_MODE_EC020_PLUS)
 	{
 		if (CONDITION_CC)
 			m68ki_interrupt(EXCEPTION_TRAPV);	/* HJB 990403 */
@@ -9064,7 +9065,7 @@ void m68020_trapcc_0(void)
 
 void m68020_trapcc_16(void)
 {
-	if (CPU_MODE & CPU_MODE_020_PLUS)
+	if (CPU_MODE & CPU_MODE_EC020_PLUS)
 	{
 		if (CONDITION_CC)
 			m68ki_interrupt(EXCEPTION_TRAPV);	/* HJB 990403 */
@@ -9079,7 +9080,7 @@ void m68020_trapcc_16(void)
 
 void m68020_trapcc_32(void)
 {
-	if (CPU_MODE & CPU_MODE_020_PLUS)
+	if (CPU_MODE & CPU_MODE_EC020_PLUS)
 	{
 		if (CONDITION_CC)
 			m68ki_interrupt(EXCEPTION_TRAPV);	/* HJB 990403 */
@@ -9094,7 +9095,7 @@ void m68020_trapcc_32(void)
 
 void m68020_trapcs_0(void)
 {
-	if (CPU_MODE & CPU_MODE_020_PLUS)
+	if (CPU_MODE & CPU_MODE_EC020_PLUS)
 	{
 		if (CONDITION_CS)
 			m68ki_interrupt(EXCEPTION_TRAPV);	/* HJB 990403 */
@@ -9108,7 +9109,7 @@ void m68020_trapcs_0(void)
 
 void m68020_trapcs_16(void)
 {
-	if (CPU_MODE & CPU_MODE_020_PLUS)
+	if (CPU_MODE & CPU_MODE_EC020_PLUS)
 	{
 		if (CONDITION_CS)
 			m68ki_interrupt(EXCEPTION_TRAPV);	/* HJB 990403 */
@@ -9123,7 +9124,7 @@ void m68020_trapcs_16(void)
 
 void m68020_trapcs_32(void)
 {
-	if (CPU_MODE & CPU_MODE_020_PLUS)
+	if (CPU_MODE & CPU_MODE_EC020_PLUS)
 	{
 		if (CONDITION_CS)
 			m68ki_interrupt(EXCEPTION_TRAPV);	/* HJB 990403 */
@@ -9138,7 +9139,7 @@ void m68020_trapcs_32(void)
 
 void m68020_trapne_0(void)
 {
-	if (CPU_MODE & CPU_MODE_020_PLUS)
+	if (CPU_MODE & CPU_MODE_EC020_PLUS)
 	{
 		if (CONDITION_NE)
 			m68ki_interrupt(EXCEPTION_TRAPV);	/* HJB 990403 */
@@ -9152,7 +9153,7 @@ void m68020_trapne_0(void)
 
 void m68020_trapne_16(void)
 {
-	if (CPU_MODE & CPU_MODE_020_PLUS)
+	if (CPU_MODE & CPU_MODE_EC020_PLUS)
 	{
 		if (CONDITION_NE)
 			m68ki_interrupt(EXCEPTION_TRAPV);	/* HJB 990403 */
@@ -9167,7 +9168,7 @@ void m68020_trapne_16(void)
 
 void m68020_trapne_32(void)
 {
-	if (CPU_MODE & CPU_MODE_020_PLUS)
+	if (CPU_MODE & CPU_MODE_EC020_PLUS)
 	{
 		if (CONDITION_NE)
 			m68ki_interrupt(EXCEPTION_TRAPV);	/* HJB 990403 */
@@ -9182,7 +9183,7 @@ void m68020_trapne_32(void)
 
 void m68020_trapeq_0(void)
 {
-	if (CPU_MODE & CPU_MODE_020_PLUS)
+	if (CPU_MODE & CPU_MODE_EC020_PLUS)
 	{
 		if (CONDITION_EQ)
 			m68ki_interrupt(EXCEPTION_TRAPV);	/* HJB 990403 */
@@ -9196,7 +9197,7 @@ void m68020_trapeq_0(void)
 
 void m68020_trapeq_16(void)
 {
-	if (CPU_MODE & CPU_MODE_020_PLUS)
+	if (CPU_MODE & CPU_MODE_EC020_PLUS)
 	{
 		if (CONDITION_EQ)
 			m68ki_interrupt(EXCEPTION_TRAPV);	/* HJB 990403 */
@@ -9211,7 +9212,7 @@ void m68020_trapeq_16(void)
 
 void m68020_trapeq_32(void)
 {
-	if (CPU_MODE & CPU_MODE_020_PLUS)
+	if (CPU_MODE & CPU_MODE_EC020_PLUS)
 	{
 		if (CONDITION_EQ)
 			m68ki_interrupt(EXCEPTION_TRAPV);	/* HJB 990403 */
@@ -9226,7 +9227,7 @@ void m68020_trapeq_32(void)
 
 void m68020_trapvc_0(void)
 {
-	if (CPU_MODE & CPU_MODE_020_PLUS)
+	if (CPU_MODE & CPU_MODE_EC020_PLUS)
 	{
 		if (CONDITION_VC)
 			m68ki_interrupt(EXCEPTION_TRAPV);	/* HJB 990403 */
@@ -9240,7 +9241,7 @@ void m68020_trapvc_0(void)
 
 void m68020_trapvc_16(void)
 {
-	if (CPU_MODE & CPU_MODE_020_PLUS)
+	if (CPU_MODE & CPU_MODE_EC020_PLUS)
 	{
 		if (CONDITION_VC)
 			m68ki_interrupt(EXCEPTION_TRAPV);	/* HJB 990403 */
@@ -9255,7 +9256,7 @@ void m68020_trapvc_16(void)
 
 void m68020_trapvc_32(void)
 {
-	if (CPU_MODE & CPU_MODE_020_PLUS)
+	if (CPU_MODE & CPU_MODE_EC020_PLUS)
 	{
 		if (CONDITION_VC)
 			m68ki_interrupt(EXCEPTION_TRAPV);	/* HJB 990403 */
@@ -9270,7 +9271,7 @@ void m68020_trapvc_32(void)
 
 void m68020_trapvs_0(void)
 {
-	if (CPU_MODE & CPU_MODE_020_PLUS)
+	if (CPU_MODE & CPU_MODE_EC020_PLUS)
 	{
 		if (CONDITION_VS)
 			m68ki_interrupt(EXCEPTION_TRAPV);	/* HJB 990403 */
@@ -9284,7 +9285,7 @@ void m68020_trapvs_0(void)
 
 void m68020_trapvs_16(void)
 {
-	if (CPU_MODE & CPU_MODE_020_PLUS)
+	if (CPU_MODE & CPU_MODE_EC020_PLUS)
 	{
 		if (CONDITION_VS)
 			m68ki_interrupt(EXCEPTION_TRAPV);	/* HJB 990403 */
@@ -9299,7 +9300,7 @@ void m68020_trapvs_16(void)
 
 void m68020_trapvs_32(void)
 {
-	if (CPU_MODE & CPU_MODE_020_PLUS)
+	if (CPU_MODE & CPU_MODE_EC020_PLUS)
 	{
 		if (CONDITION_VS)
 			m68ki_interrupt(EXCEPTION_TRAPV);	/* HJB 990403 */
@@ -9314,7 +9315,7 @@ void m68020_trapvs_32(void)
 
 void m68020_trappl_0(void)
 {
-	if (CPU_MODE & CPU_MODE_020_PLUS)
+	if (CPU_MODE & CPU_MODE_EC020_PLUS)
 	{
 		if (CONDITION_PL)
 			m68ki_interrupt(EXCEPTION_TRAPV);	/* HJB 990403 */
@@ -9328,7 +9329,7 @@ void m68020_trappl_0(void)
 
 void m68020_trappl_16(void)
 {
-	if (CPU_MODE & CPU_MODE_020_PLUS)
+	if (CPU_MODE & CPU_MODE_EC020_PLUS)
 	{
 		if (CONDITION_PL)
 			m68ki_interrupt(EXCEPTION_TRAPV);	/* HJB 990403 */
@@ -9343,7 +9344,7 @@ void m68020_trappl_16(void)
 
 void m68020_trappl_32(void)
 {
-	if (CPU_MODE & CPU_MODE_020_PLUS)
+	if (CPU_MODE & CPU_MODE_EC020_PLUS)
 	{
 		if (CONDITION_PL)
 			m68ki_interrupt(EXCEPTION_TRAPV);	/* HJB 990403 */
@@ -9358,7 +9359,7 @@ void m68020_trappl_32(void)
 
 void m68020_trapmi_0(void)
 {
-	if (CPU_MODE & CPU_MODE_020_PLUS)
+	if (CPU_MODE & CPU_MODE_EC020_PLUS)
 	{
 		if (CONDITION_MI)
 			m68ki_interrupt(EXCEPTION_TRAPV);	/* HJB 990403 */
@@ -9372,7 +9373,7 @@ void m68020_trapmi_0(void)
 
 void m68020_trapmi_16(void)
 {
-	if (CPU_MODE & CPU_MODE_020_PLUS)
+	if (CPU_MODE & CPU_MODE_EC020_PLUS)
 	{
 		if (CONDITION_MI)
 			m68ki_interrupt(EXCEPTION_TRAPV);	/* HJB 990403 */
@@ -9387,7 +9388,7 @@ void m68020_trapmi_16(void)
 
 void m68020_trapmi_32(void)
 {
-	if (CPU_MODE & CPU_MODE_020_PLUS)
+	if (CPU_MODE & CPU_MODE_EC020_PLUS)
 	{
 		if (CONDITION_MI)
 			m68ki_interrupt(EXCEPTION_TRAPV);	/* HJB 990403 */
@@ -9402,7 +9403,7 @@ void m68020_trapmi_32(void)
 
 void m68020_trapge_0(void)
 {
-	if (CPU_MODE & CPU_MODE_020_PLUS)
+	if (CPU_MODE & CPU_MODE_EC020_PLUS)
 	{
 		if (CONDITION_GE)
 			m68ki_interrupt(EXCEPTION_TRAPV);	/* HJB 990403 */
@@ -9416,7 +9417,7 @@ void m68020_trapge_0(void)
 
 void m68020_trapge_16(void)
 {
-	if (CPU_MODE & CPU_MODE_020_PLUS)
+	if (CPU_MODE & CPU_MODE_EC020_PLUS)
 	{
 		if (CONDITION_GE)
 			m68ki_interrupt(EXCEPTION_TRAPV);	/* HJB 990403 */
@@ -9431,7 +9432,7 @@ void m68020_trapge_16(void)
 
 void m68020_trapge_32(void)
 {
-	if (CPU_MODE & CPU_MODE_020_PLUS)
+	if (CPU_MODE & CPU_MODE_EC020_PLUS)
 	{
 		if (CONDITION_GE)
 			m68ki_interrupt(EXCEPTION_TRAPV);	/* HJB 990403 */
@@ -9446,7 +9447,7 @@ void m68020_trapge_32(void)
 
 void m68020_traplt_0(void)
 {
-	if (CPU_MODE & CPU_MODE_020_PLUS)
+	if (CPU_MODE & CPU_MODE_EC020_PLUS)
 	{
 		if (CONDITION_LT)
 			m68ki_interrupt(EXCEPTION_TRAPV);	/* HJB 990403 */
@@ -9460,7 +9461,7 @@ void m68020_traplt_0(void)
 
 void m68020_traplt_16(void)
 {
-	if (CPU_MODE & CPU_MODE_020_PLUS)
+	if (CPU_MODE & CPU_MODE_EC020_PLUS)
 	{
 		if (CONDITION_LT)
 			m68ki_interrupt(EXCEPTION_TRAPV);	/* HJB 990403 */
@@ -9475,7 +9476,7 @@ void m68020_traplt_16(void)
 
 void m68020_traplt_32(void)
 {
-	if (CPU_MODE & CPU_MODE_020_PLUS)
+	if (CPU_MODE & CPU_MODE_EC020_PLUS)
 	{
 		if (CONDITION_LT)
 			m68ki_interrupt(EXCEPTION_TRAPV);	/* HJB 990403 */
@@ -9490,7 +9491,7 @@ void m68020_traplt_32(void)
 
 void m68020_trapgt_0(void)
 {
-	if (CPU_MODE & CPU_MODE_020_PLUS)
+	if (CPU_MODE & CPU_MODE_EC020_PLUS)
 	{
 		if (CONDITION_GT)
 			m68ki_interrupt(EXCEPTION_TRAPV);	/* HJB 990403 */
@@ -9504,7 +9505,7 @@ void m68020_trapgt_0(void)
 
 void m68020_trapgt_16(void)
 {
-	if (CPU_MODE & CPU_MODE_020_PLUS)
+	if (CPU_MODE & CPU_MODE_EC020_PLUS)
 	{
 		if (CONDITION_GT)
 			m68ki_interrupt(EXCEPTION_TRAPV);	/* HJB 990403 */
@@ -9519,7 +9520,7 @@ void m68020_trapgt_16(void)
 
 void m68020_trapgt_32(void)
 {
-	if (CPU_MODE & CPU_MODE_020_PLUS)
+	if (CPU_MODE & CPU_MODE_EC020_PLUS)
 	{
 		if (CONDITION_GT)
 			m68ki_interrupt(EXCEPTION_TRAPV);	/* HJB 990403 */
@@ -9534,7 +9535,7 @@ void m68020_trapgt_32(void)
 
 void m68020_traple_0(void)
 {
-	if (CPU_MODE & CPU_MODE_020_PLUS)
+	if (CPU_MODE & CPU_MODE_EC020_PLUS)
 	{
 		if (CONDITION_LE)
 			m68ki_interrupt(EXCEPTION_TRAPV);	/* HJB 990403 */
@@ -9548,7 +9549,7 @@ void m68020_traple_0(void)
 
 void m68020_traple_16(void)
 {
-	if (CPU_MODE & CPU_MODE_020_PLUS)
+	if (CPU_MODE & CPU_MODE_EC020_PLUS)
 	{
 		if (CONDITION_LE)
 			m68ki_interrupt(EXCEPTION_TRAPV);	/* HJB 990403 */
@@ -9563,7 +9564,7 @@ void m68020_traple_16(void)
 
 void m68020_traple_32(void)
 {
-	if (CPU_MODE & CPU_MODE_020_PLUS)
+	if (CPU_MODE & CPU_MODE_EC020_PLUS)
 	{
 		if (CONDITION_LE)
 			m68ki_interrupt(EXCEPTION_TRAPV);	/* HJB 990403 */
@@ -9612,7 +9613,7 @@ void m68000_tst_8(void)
 
 void m68020_tst_pcdi_8(void)
 {
-	if (CPU_MODE & CPU_MODE_020_PLUS)
+	if (CPU_MODE & CPU_MODE_EC020_PLUS)
 	{
 		uint old_pc = (CPU_PC += 2) - 2;
 		uint ea = old_pc + MAKE_INT_16(m68ki_read_16(old_pc));
@@ -9630,7 +9631,7 @@ void m68020_tst_pcdi_8(void)
 
 void m68020_tst_pcix_8(void)
 {
-	if (CPU_MODE & CPU_MODE_020_PLUS)
+	if (CPU_MODE & CPU_MODE_EC020_PLUS)
 	{
 		uint res = m68ki_read_8(EA_PCIX);
 
@@ -9646,7 +9647,7 @@ void m68020_tst_pcix_8(void)
 
 void m68020_tst_imm_8(void)
 {
-	if (CPU_MODE & CPU_MODE_020_PLUS)
+	if (CPU_MODE & CPU_MODE_EC020_PLUS)
 	{
 		uint res = m68ki_read_imm_8();
 
@@ -9673,7 +9674,7 @@ void m68000_tst_d_16(void)
 
 void m68020_tst_a_16(void)
 {
-	if (CPU_MODE & CPU_MODE_020_PLUS)
+	if (CPU_MODE & CPU_MODE_EC020_PLUS)
 	{
 		uint res = MASK_OUT_ABOVE_16(AY);
 
@@ -9700,7 +9701,7 @@ void m68000_tst_16(void)
 
 void m68020_tst_pcdi_16(void)
 {
-	if (CPU_MODE & CPU_MODE_020_PLUS)
+	if (CPU_MODE & CPU_MODE_EC020_PLUS)
 	{
 		uint old_pc = (CPU_PC += 2) - 2;
 		uint ea = old_pc + MAKE_INT_16(m68ki_read_16(old_pc));
@@ -9718,7 +9719,7 @@ void m68020_tst_pcdi_16(void)
 
 void m68020_tst_pcix_16(void)
 {
-	if (CPU_MODE & CPU_MODE_020_PLUS)
+	if (CPU_MODE & CPU_MODE_EC020_PLUS)
 	{
 		uint res = m68ki_read_16(EA_PCIX);
 
@@ -9734,7 +9735,7 @@ void m68020_tst_pcix_16(void)
 
 void m68020_tst_imm_16(void)
 {
-	if (CPU_MODE & CPU_MODE_020_PLUS)
+	if (CPU_MODE & CPU_MODE_EC020_PLUS)
 	{
 		uint res = m68ki_read_imm_16();
 
@@ -9761,7 +9762,7 @@ void m68000_tst_d_32(void)
 
 void m68020_tst_a_32(void)
 {
-	if (CPU_MODE & CPU_MODE_020_PLUS)
+	if (CPU_MODE & CPU_MODE_EC020_PLUS)
 	{
 		uint res = AY;
 
@@ -9788,7 +9789,7 @@ void m68000_tst_32(void)
 
 void m68020_tst_pcdi_32(void)
 {
-	if (CPU_MODE & CPU_MODE_020_PLUS)
+	if (CPU_MODE & CPU_MODE_EC020_PLUS)
 	{
 		uint old_pc = (CPU_PC += 2) - 2;
 		uint ea = old_pc + MAKE_INT_16(m68ki_read_16(old_pc));
@@ -9806,7 +9807,7 @@ void m68020_tst_pcdi_32(void)
 
 void m68020_tst_pcix_32(void)
 {
-	if (CPU_MODE & CPU_MODE_020_PLUS)
+	if (CPU_MODE & CPU_MODE_EC020_PLUS)
 	{
 		uint res = m68ki_read_32(EA_PCIX);
 
@@ -9822,7 +9823,7 @@ void m68020_tst_pcix_32(void)
 
 void m68020_tst_imm_32(void)
 {
-	if (CPU_MODE & CPU_MODE_020_PLUS)
+	if (CPU_MODE & CPU_MODE_EC020_PLUS)
 	{
 		uint res = m68ki_read_imm_32();
 
@@ -9855,7 +9856,7 @@ void m68000_unlk(void)
 
 void m68020_unpk_rr(void)
 {
-	if (CPU_MODE & CPU_MODE_020_PLUS)
+	if (CPU_MODE & CPU_MODE_EC020_PLUS)
 	{
 		uint src = DX;
 
@@ -9869,7 +9870,7 @@ void m68020_unpk_rr(void)
 
 void m68020_unpk_mm_ax7(void)
 {
-	if (CPU_MODE & CPU_MODE_020_PLUS)
+	if (CPU_MODE & CPU_MODE_EC020_PLUS)
 	{
 		uint src = m68ki_read_8(--AX);
 
@@ -9885,7 +9886,7 @@ void m68020_unpk_mm_ax7(void)
 
 void m68020_unpk_mm_ay7(void)
 {
-	if (CPU_MODE & CPU_MODE_020_PLUS)
+	if (CPU_MODE & CPU_MODE_EC020_PLUS)
 	{
 		uint src = m68ki_read_8(CPU_A[7] -= 2);
 
@@ -9901,7 +9902,7 @@ void m68020_unpk_mm_ay7(void)
 
 void m68020_unpk_mm_axy7(void)
 {
-	if (CPU_MODE & CPU_MODE_020_PLUS)
+	if (CPU_MODE & CPU_MODE_EC020_PLUS)
 	{
 		uint src = m68ki_read_8(CPU_A[7] -= 2);
 
@@ -9917,7 +9918,7 @@ void m68020_unpk_mm_axy7(void)
 
 void m68020_unpk_mm(void)
 {
-	if (CPU_MODE & CPU_MODE_020_PLUS)
+	if (CPU_MODE & CPU_MODE_EC020_PLUS)
 	{
 		uint src = m68ki_read_8(--AX);
 

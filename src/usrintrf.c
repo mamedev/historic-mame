@@ -922,6 +922,7 @@ static void showcharset(void)
 				{
 					extern unsigned short *game_colortable;	/* in palette.c */
 					int table_offs;
+					int flipx,flipy;
 
 					/* hack: force the display into standard orientation to avoid */
 					/* rotating the user interface */
@@ -935,14 +936,23 @@ static void showcharset(void)
 								+ Machine->gfx[bank]->color_granularity * color;
 						for (i = 0;i < Machine->gfx[bank]->color_granularity;i++)
 							palette_used_colors[game_colortable[table_offs + i]] = PALETTE_COLOR_USED;
-						palette_recalc();
+						palette_recalc();	/* do it twice in case of previous overflow */
+						palette_recalc();	/*(we redraw the screen only when it changes) */
 					}
+
+#ifndef PREROTATE_GFX
+					flipx = (Machine->orientation ^ trueorientation) & ORIENTATION_FLIP_X;
+					flipy = (Machine->orientation ^ trueorientation) & ORIENTATION_FLIP_Y;
+#else
+					flipx = 0;
+					flipy = 0;
+#endif
 
 					for (i = 0; i+firstdrawn < Machine->gfx[bank]->total_elements && i<cpx*cpy; i++)
 					{
 						drawgfx(Machine->scrbitmap,Machine->gfx[bank],
 								i+firstdrawn,color,  /*sprite num, color*/
-								0,0,
+								flipx,flipy,
 								(i % cpx) * Machine->gfx[bank]->width + Machine->uixmin,
 								Machine->uifontheight + (i / cpx) * Machine->gfx[bank]->height + Machine->uiymin,
 								0,TRANSPARENCY_NONE,0);
@@ -962,7 +972,8 @@ static void showcharset(void)
 					{
 						memset(palette_used_colors,PALETTE_COLOR_UNUSED,Machine->drv->total_colors * sizeof(unsigned char));
 						memset(palette_used_colors+256*palpage,PALETTE_COLOR_USED,colors * sizeof(unsigned char));
-						palette_recalc();
+						palette_recalc();	/* do it twice in case of previous overflow */
+						palette_recalc();	/*(we redraw the screen only when it changes) */
 					}
 
 					for (i = 0;i < 16;i++)
@@ -988,11 +999,27 @@ static void showcharset(void)
 						{
 							for (x = 0;x < Machine->uifontwidth*3/2;x++)
 							{
+								int tx,ty;
+								if (Machine->ui_orientation & ORIENTATION_SWAP_XY)
+								{
+									ty = sx + x;
+									tx = sy + y;
+								}
+								else
+								{
+									tx = sx + x;
+									ty = sy + y;
+								}
+								if (Machine->ui_orientation & ORIENTATION_FLIP_X)
+									tx = Machine->scrbitmap->width-1 - tx;
+								if (Machine->ui_orientation & ORIENTATION_FLIP_Y)
+									ty = Machine->scrbitmap->height-1 - ty;
+
 								if (Machine->scrbitmap->depth == 16)
-									((unsigned short *)Machine->scrbitmap->line[sy + y])[sx + x]
+									((unsigned short *)Machine->scrbitmap->line[ty])[tx]
 											= Machine->pens[i + 256*palpage];
 								else
-									Machine->scrbitmap->line[sy + y][sx + x]
+									Machine->scrbitmap->line[ty][tx]
 											= Machine->pens[i + 256*palpage];
 							}
 						}
@@ -1014,7 +1041,8 @@ static void showcharset(void)
 				{
 					memset(palette_used_colors,PALETTE_COLOR_TRANSPARENT,Machine->drv->total_colors * sizeof(unsigned char));
 					memset(palette_used_colors+Machine->gfx[bank]->color_granularity*color,PALETTE_COLOR_USED,Machine->gfx[bank]->color_granularity * sizeof(unsigned char));
-					palette_recalc();
+					palette_recalc();	/* do it twice in case of previous overflow */
+					palette_recalc();	/*(we redraw the screen only when it changes) */
 				}
 
 				for (i = 0; i+firstdrawn < no_of_tiles && i<cpx*cpy; i++)

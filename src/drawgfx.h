@@ -26,9 +26,7 @@ struct GfxElement
 {
 	int width,height;
 
-	struct osd_bitmap *gfxdata;	/* graphic data */
 	unsigned int total_elements;	/* total number of characters/sprites */
-
 	int color_granularity;	/* number of colors for each color code */
 							/* (for example, 4 for 2 bitplanes gfx) */
 	unsigned short *colortable;	/* map color codes to screen pens */
@@ -39,6 +37,9 @@ struct GfxElement
 								/* (bit 0 = pen 0, and so on). This is used by */
 								/* drawgfgx() to do optimizations like skipping */
 								/* drawing of a totally transparent characters */
+	unsigned char *gfxdata;	/* pixel data */
+	int line_modulo;	/* amount to add to get to the next line (usually = width) */
+	int char_modulo;	/* = line_modulo * height */
 };
 
 struct GfxDecodeInfo

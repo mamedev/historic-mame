@@ -65,7 +65,7 @@ void leland_draw_bkchar(int x, int y, int ch)
     unsigned char *bm;
     unsigned char *sd;
     int ny;
-    sd= Machine->gfx[0]->gfxdata->line[ch*8];
+    sd= Machine->gfx[0]->gfxdata + ch * Machine->gfx[0]->char_modulo;
     for (ny = 0;ny < 8;ny++)
     {
         bm=background_bitmap->line[8*y+ny] + 8*x;
@@ -575,7 +575,7 @@ void leland_draw_bitmap(struct osd_bitmap *bitmap, struct osd_bitmap *bkbitmap)
     copybitmap(bitmap,screen_bitmap,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_PEN,palette_transparent_pen);
 
 #ifdef MAME_DEBUG
-	if (keyboard_pressed(KEYCODE_F))
+    if (keyboard_pressed(KEYCODE_F))
 	{
 		FILE *fp=fopen("VIDEOR.DMP", "w+b");
 		if (fp)
@@ -675,7 +675,7 @@ void pigout_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
   Different from other Leland games.
   1) 12 bit palette instead of 8 bit palette.
-  2) RAM based background (called QRAM in the self test)
+  2) RAM based background (called quadrant RAM in the self test)
   3) Background characters are 6 bits per pixel with no funny banking.
 
 ***************************************************************************/

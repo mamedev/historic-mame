@@ -536,113 +536,6 @@ DECLARE(drawgfx_core,(
 	int oy;
 	int ex;
 	int ey;
-	struct rectangle myclip;
-
-	if (!gfx) return;
-
-	code %= gfx->total_elements;
-	color %= gfx->total_colors;
-
-	/* if necessary, remap the transparent color */
-	if (transparency == TRANSPARENCY_COLOR)
-		transparent_color = Machine->pens[transparent_color];
-
-	if (gfx->pen_usage)
-	{
-		int transmask;
-
-
-		transmask = 0;
-
-		if (transparency == TRANSPARENCY_PEN)
-		{
-			transmask = 1 << transparent_color;
-		}
-		else if (transparency == TRANSPARENCY_PENS)
-		{
-			transmask = transparent_color;
-		}
-		else if (transparency == TRANSPARENCY_COLOR && gfx->colortable)
-		{
-			int i;
-			const unsigned short *paldata;
-
-
-			paldata = &gfx->colortable[gfx->color_granularity * color];
-
-			for (i = gfx->color_granularity - 1;i >= 0;i--)
-			{
-				if (paldata[i] == transparent_color)
-					transmask |= 1 << i;
-			}
-		}
-
-		if ((gfx->pen_usage[code] & ~transmask) == 0)
-			/* character is totally transparent, no need to draw */
-			return;
-		else if ((gfx->pen_usage[code] & transmask) == 0 && transparency != TRANSPARENCY_THROUGH)
-			/* character is totally opaque, can disable transparency */
-			transparency = TRANSPARENCY_NONE;
-	}
-
-	if (Machine->orientation & ORIENTATION_SWAP_XY)
-	{
-		int temp;
-
-		temp = sx;
-		sx = sy;
-		sy = temp;
-
-		temp = flipx;
-		flipx = flipy;
-		flipy = temp;
-
-		if (clip)
-		{
-			/* clip and myclip might be the same, so we need a temporary storage */
-			temp = clip->min_x;
-			myclip.min_x = clip->min_y;
-			myclip.min_y = temp;
-			temp = clip->max_x;
-			myclip.max_x = clip->max_y;
-			myclip.max_y = temp;
-			clip = &myclip;
-		}
-	}
-	if (Machine->orientation & ORIENTATION_FLIP_X)
-	{
-		sx = dest->width - gfx->width - sx;
-		if (clip)
-		{
-			int temp;
-
-
-			/* clip and myclip might be the same, so we need a temporary storage */
-			temp = clip->min_x;
-			myclip.min_x = dest->width-1 - clip->max_x;
-			myclip.max_x = dest->width-1 - temp;
-			myclip.min_y = clip->min_y;
-			myclip.max_y = clip->max_y;
-			clip = &myclip;
-		}
-	}
-	if (Machine->orientation & ORIENTATION_FLIP_Y)
-	{
-		sy = dest->height - gfx->height - sy;
-		if (clip)
-		{
-			int temp;
-
-
-			myclip.min_x = clip->min_x;
-			myclip.max_x = clip->max_x;
-			/* clip and myclip might be the same, so we need a temporary storage */
-			temp = clip->min_y;
-			myclip.min_y = dest->height-1 - clip->max_y;
-			myclip.max_y = dest->height-1 - temp;
-			clip = &myclip;
-		}
-	}
 
 
 	/* check bounds */
@@ -665,12 +558,11 @@ DECLARE(drawgfx_core,(
 
 	osd_mark_dirty (sx,sy,ex,ey,0);	/* ASG 971011 */
 
-	if (gfx->colortable)	/* remap colors */
 	{
-		UINT8 *sd = gfx->gfxdata->line[code * gfx->height];		/* source data */
+		UINT8 *sd = gfx->gfxdata + code * gfx->char_modulo;		/* source data */
 		int sw = ex-sx+1;										/* source width */
 		int sh = ey-sy+1;										/* source height */
-		int sm = gfx->gfxdata->line[1]-gfx->gfxdata->line[0];	/* source modulo */
+		int sm = gfx->line_modulo;								/* source modulo */
 		DATA_TYPE *dd = ((DATA_TYPE *)dest->line[sy]) + sx;		/* dest data */
 		int dm = ((DATA_TYPE *)dest->line[1])-((DATA_TYPE *)dest->line[0]);	/* dest modulo */
 		const unsigned short *paldata = &gfx->colortable[gfx->color_granularity * color];
@@ -694,64 +586,23 @@ DECLARE(drawgfx_core,(
 		switch (transparency)
 		{
 			case TRANSPARENCY_NONE:
-				BLOCKMOVE(opaque,(sd,sw,sh,sm,dd,dm,paldata));
+				BLOCKMOVE(opaque,flipx,(sd,sw,sh,sm,dd,dm,paldata));
 				break;
 
 			case TRANSPARENCY_PEN:
-				BLOCKMOVE(transpen,(sd,sw,sh,sm,dd,dm,paldata,transparent_color));
+				BLOCKMOVE(transpen,flipx,(sd,sw,sh,sm,dd,dm,paldata,transparent_color));
 				break;
 
 			case TRANSPARENCY_PENS:
-				BLOCKMOVE(transmask,(sd,sw,sh,sm,dd,dm,paldata,transparent_color));
+				BLOCKMOVE(transmask,flipx,(sd,sw,sh,sm,dd,dm,paldata,transparent_color));
 				break;
 
 			case TRANSPARENCY_COLOR:
-				BLOCKMOVE(transcolor,(sd,sw,sh,sm,dd,dm,paldata,transparent_color));
+				BLOCKMOVE(transcolor,flipx,(sd,sw,sh,sm,dd,dm,paldata,transparent_color));
 				break;
 
 			case TRANSPARENCY_THROUGH:
-				BLOCKMOVE(transthrough,(sd,sw,sh,sm,dd,dm,paldata,transparent_color));
-				break;
-		}
-	}
-	else	/* verbatim copy */
-	{
-		DATA_TYPE *sd = ((DATA_TYPE *)gfx->gfxdata->line[code * gfx->height]);	/* source data */
-		int sw = ex-sx+1;														/* source width */
-		int sh = ey-sy+1;														/* source height */
-		int sm = ((DATA_TYPE *)gfx->gfxdata->line[1])-((DATA_TYPE *)gfx->gfxdata->line[0]);	/* source modulo */
-		DATA_TYPE *dd = ((DATA_TYPE *)dest->line[sy]) + sx;						/* dest data */
-		int dm = ((DATA_TYPE *)dest->line[1])-((DATA_TYPE *)dest->line[0]);		/* dest modulo */
-
-		if (flipx)
-		{
-			if ((sx-ox) == 0) sd += gfx->width - sw;
-		}
-		else
-			sd += (sx-ox);
-
-		if (flipy)
-		{
-			if ((sy-oy) == 0) sd += sm * (gfx->height - sh);
-			dd += dm * (sh - 1);
-			dm = -dm;
-		}
-		else
-			sd += sm * (sy-oy);
-
-		switch (transparency)
-		{
-			case TRANSPARENCY_NONE:
-				BLOCKMOVE(opaque_noremap,(sd,sw,sh,sm,dd,dm));
-				break;
-
-			case TRANSPARENCY_PEN:
-			case TRANSPARENCY_COLOR:
-				BLOCKMOVE(transpen_noremap,(sd,sw,sh,sm,dd,dm,transparent_color));
-				break;
-
-			case TRANSPARENCY_THROUGH:
-				BLOCKMOVE(transthrough_noremap,(sd,sw,sh,sm,dd,dm,transparent_color));
+				BLOCKMOVE(transthrough,flipx,(sd,sw,sh,sm,dd,dm,paldata,transparent_color));
 				break;
 		}
 	}
@@ -768,71 +619,6 @@ DECLARE(copybitmap_core,(
 	int oy;
 	int ex;
 	int ey;
-	struct rectangle myclip;
-
-
-	/* if necessary, remap the transparent color */
-	if (transparency == TRANSPARENCY_COLOR)
-		transparent_color = Machine->pens[transparent_color];
-
-	if (Machine->orientation & ORIENTATION_SWAP_XY)
-	{
-		int temp;
-
-		temp = sx;
-		sx = sy;
-		sy = temp;
-
-		temp = flipx;
-		flipx = flipy;
-		flipy = temp;
-
-		if (clip)
-		{
-			/* clip and myclip might be the same, so we need a temporary storage */
-			temp = clip->min_x;
-			myclip.min_x = clip->min_y;
-			myclip.min_y = temp;
-			temp = clip->max_x;
-			myclip.max_x = clip->max_y;
-			myclip.max_y = temp;
-			clip = &myclip;
-		}
-	}
-	if (Machine->orientation & ORIENTATION_FLIP_X)
-	{
-		sx = dest->width - src->width - sx;
-		if (clip)
-		{
-			int temp;
-
-
-			/* clip and myclip might be the same, so we need a temporary storage */
-			temp = clip->min_x;
-			myclip.min_x = dest->width-1 - clip->max_x;
-			myclip.max_x = dest->width-1 - temp;
-			myclip.min_y = clip->min_y;
-			myclip.max_y = clip->max_y;
-			clip = &myclip;
-		}
-	}
-	if (Machine->orientation & ORIENTATION_FLIP_Y)
-	{
-		sy = dest->height - src->height - sy;
-		if (clip)
-		{
-			int temp;
-
-
-			myclip.min_x = clip->min_x;
-			myclip.max_x = clip->max_x;
-			/* clip and myclip might be the same, so we need a temporary storage */
-			temp = clip->min_y;
-			myclip.min_y = dest->height-1 - clip->max_y;
-			myclip.max_y = dest->height-1 - temp;
-			clip = &myclip;
-		}
-	}
 
 
 	/* check bounds */
@@ -880,16 +666,16 @@ DECLARE(copybitmap_core,(
 		switch (transparency)
 		{
 			case TRANSPARENCY_NONE:
-				BLOCKMOVE(opaque_noremap,(sd,sw,sh,sm,dd,dm));
+				BLOCKMOVE(opaque_noremap,flipx,(sd,sw,sh,sm,dd,dm));
 				break;
 
 			case TRANSPARENCY_PEN:
 			case TRANSPARENCY_COLOR:
-				BLOCKMOVE(transpen_noremap,(sd,sw,sh,sm,dd,dm,transparent_color));
+				BLOCKMOVE(transpen_noremap,flipx,(sd,sw,sh,sm,dd,dm,transparent_color));
 				break;
 
 			case TRANSPARENCY_THROUGH:
-				BLOCKMOVE(transthrough_noremap,(sd,sw,sh,sm,dd,dm,transparent_color));
+				BLOCKMOVE(transthrough_noremap,flipx,(sd,sw,sh,sm,dd,dm,transparent_color));
 				break;
 		}
 	}

@@ -1582,11 +1582,18 @@ static struct VLM5030interface gx400_vlm5030_interface =
     0,         /* VCU            */
 };
 
+static void volume_callback(int v)
+{
+	K007232_set_volume(0,0,(v >> 4) * 0x11,0);
+	K007232_set_volume(0,1,0,(v & 0x0f) * 0x11);
+}
+
 static struct K007232_interface k007232_interface =
 {
 	1,		/* number of chips */
 	{ 4 },	/* memory regions */
-	{ 12 }	/* volume */
+	{ K007232_VOL(15,MIXER_PAN_CENTER,15,MIXER_PAN_CENTER) },	/* volume */
+	{ volume_callback }	/* external port callback */
 };
 
 /******************************************************************************/

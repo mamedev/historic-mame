@@ -24,21 +24,22 @@ static int layer_colorbase[3],sprite_colorbase;
 
 ***************************************************************************/
 
-static void mainevt_tile_callback(int layer,int bank,int *code,int *color,unsigned char *flags)
+static void mainevt_tile_callback(int layer,int bank,int *code,int *color)
 {
-	*flags = (*color & 0x02) ? TILE_FLIPX : 0;
-	/* TODO: My understanding would be that HALF priority sprites only have priority */
-	/* over tiles with color bit 5 set. However, that bit is set everywhere *except* */
-	/* for where it would be needed, that is behind the score display. So I must */
-	/* be doing someting wrong. */
+	tile_info.flags = (*color & 0x02) ? TILE_FLIPX : 0;
+
+	/* priority relative to HALF priority sprites */
+	if (layer == 2) tile_info.priority = (*color & 0x20) >> 5;
+	else tile_info.priority = 0;
+
 	*code |= ((*color & 0x01) << 8) | ((*color & 0x1c) << 7);
 	*color = ((*color & 0xc0) >> 6);
 	*color += layer_colorbase[layer];
 }
 
-static void dv_tile_callback(int layer,int bank,int *code,int *color,unsigned char *flags)
+static void dv_tile_callback(int layer,int bank,int *code,int *color)
 {
-	*flags = (*color & 0x02) ? TILE_FLIPX : 0;
+	tile_info.flags = (*color & 0x02) ? TILE_FLIPX : 0;
 	*code |= ((*color & 0x01) << 8) | ((*color & 0x3c) << 7);
 	*color = ((*color & 0xc0) >> 6);
 	*color += layer_colorbase[layer];
@@ -53,9 +54,11 @@ static void dv_tile_callback(int layer,int bank,int *code,int *color,unsigned ch
 
 static void mainevt_sprite_callback(int *code,int *color,int *priority)
 {
-	/* bit 6 = priority over layer B */
-	/* bit 5 = HALF priority over layer B (used for top part of the display) */
-	*priority = (*color & 0x60) >> 5;
+	/* bit 5 = priority over layer B (has precedence) */
+	/* bit 6 = HALF priority over layer B (used for crowd when you get out of the ring) */
+	if (*color & 0x20) *priority = 1;
+	else if (*color & 0x40) *priority = 2;
+	/* bit 7 is shadow, not used */
 
 /* kludge to fix ropes until sprite/sprite priority is supported correctly */
 	if (*code == 0x3f8 || *code == 0x3f9) *priority = 2;
@@ -65,6 +68,7 @@ static void mainevt_sprite_callback(int *code,int *color,int *priority)
 
 static void dv_sprite_callback(int *code,int *color,int *priority)
 {
+	/* TODO: the priority/shadow handling (bits 5-7) seems to be quite complex (see PROM) */
 	*color = sprite_colorbase + (*color & 0x07);
 }
 
@@ -126,7 +130,24 @@ void mainevt_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 	K052109_tilemap_draw(bitmap,1,TILEMAP_IGNORE_TRANSPARENCY);
 	K051960_draw_sprites(bitmap,0,0);
+	K052109_tilemap_draw(bitmap,2,1);	/* low priority part of layer */
+	K051960_draw_sprites(bitmap,2,2);
+	K052109_tilemap_draw(bitmap,2,0);	/* high priority part of layer */
+	K051960_draw_sprites(bitmap,1,1);
+	K052109_tilemap_draw(bitmap,0,0);
+}
+
+void dv_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+{
+	K052109_tilemap_update();
+
+	if (palette_recalc())
+		tilemap_mark_all_pixels_dirty(ALL_TILEMAPS);
+
+	tilemap_render(ALL_TILEMAPS);
+
+	K052109_tilemap_draw(bitmap,1,TILEMAP_IGNORE_TRANSPARENCY);
 	K052109_tilemap_draw(bitmap,2,0);
-	K051960_draw_sprites(bitmap,1,3);
+	K051960_draw_sprites(bitmap,0,0);
 	K052109_tilemap_draw(bitmap,0,0);
 }

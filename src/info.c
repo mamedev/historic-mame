@@ -1,3 +1,5 @@
+#include <ctype.h>
+
 #include "driver.h"
 #include "info.h"
 #include "datafile.h"
@@ -77,6 +79,30 @@ static void print_c_string(FILE* out, const char* s) {
 		}
 	}
 	fprintf(out, "\"");
+}
+
+/* Print a string in statement format (remove space, parentesis, ") */
+static void print_statement_string(FILE* out, const char* s) {
+	if (s) {
+		while (*s) {
+			if (isspace(*s)) {
+				fprintf(out, "_");
+			} else {
+				switch (*s) {
+					case '(' :
+					case ')' :
+					case '"' :
+						fprintf(out, "_");
+						break;
+					default:
+						fprintf(out, "%c", *s);
+				}
+			}
+			++s;
+		}
+	} else {
+		fprintf(out, "null");
+	}
 }
 
 static void print_game_switch(FILE* out, const struct GameDriver* game) {
@@ -340,7 +366,9 @@ static void print_game_micro(FILE* out, const struct GameDriver* game)
 			else
 				fprintf(out, L2P "type cpu" L2N);
 
-			fprintf(out, L2P "name %s" L2N, cputype_name(cpu[j].cpu_type));
+			fprintf(out, L2P "name ");
+			print_statement_string(out, cputype_name(cpu[j].cpu_type));
+			fprintf(out, "%s", L2N);
 
 			fprintf(out, L2P "clock %d" L2N, cpu[j].cpu_clock);
 			fprintf(out, L2E L1N);
@@ -360,7 +388,9 @@ static void print_game_micro(FILE* out, const struct GameDriver* game)
 			{
 				fprintf(out, L1P "chip" L2B);
 				fprintf(out, L2P "type audio" L2N);
-				fprintf(out, L2P "name %s" L2N, sound_name(&sound[j]));
+				fprintf(out, L2P "name ");
+				print_statement_string(out, sound_name(&sound[j]));
+				fprintf(out, "%s", L2N);
 				if (sound_clock(&sound[j]))
 					fprintf(out, L2P "clock %d" L2N, sound_clock(&sound[j]));
 				fprintf(out, L2E L1N);
@@ -516,8 +546,9 @@ static void print_game_info(FILE* out, const struct GameDriver* game) {
 	}
 
 	/* print the year only if is a number */
-	if (game->year && strspn(game->year,"0123456789")==strlen(game->year))
+	if (game->year && strspn(game->year,"0123456789")==strlen(game->year)) {
 		fprintf(out, L1P "year %s" L1N, game->year );
+	}
 
 	if (game->manufacturer) {
 		fprintf(out, L1P "manufacturer ");

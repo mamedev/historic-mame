@@ -8,7 +8,6 @@
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-#include "tilemap.h"
 
 static struct tilemap *tilemap0;
 static struct tilemap *tilemap1;

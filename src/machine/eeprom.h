@@ -7,7 +7,9 @@ struct EEPROM_interface
 	int data_bits;		/* every cell has this many bits (8 or 16) */
 	char *cmd_read;		/*  read command string, e.g. "0110" */
 	char *cmd_write;	/* write command string, e.g. "0111" */
-	char *cmd_erase;	/* erase command string, e.g. "0101" */
+	char *cmd_erase;	/* erase command string, or 0 if n/a */
+	char *cmd_lock;		/* lock command string, or 0 if n/a */
+	char *cmd_unlock;	/* unlock command string, or 0 if n/a */
 };
 
 
@@ -15,7 +17,7 @@ void EEPROM_init(struct EEPROM_interface *interface);
 
 void EEPROM_write_bit(int bit);
 int EEPROM_read_bit(void);
-void EEPROM_set_reset_line(int state);
+void EEPROM_set_cs_line(int state);
 void EEPROM_set_clock_line(int state);
 
 void EEPROM_load(void *file);

@@ -17,32 +17,33 @@
 /* Use the x86 assembly core */
 typedef struct
 {
-    int   d[8];             /* 0x0004 8 Data registers */
-    int   a[8];             /* 0x0024 8 Address registers */
+    int d[8];             /* 0x0004 8 Data registers */
+    int a[8];             /* 0x0024 8 Address registers */
 
-    int   usp;              /* 0x0044 Stack registers (They will overlap over reg_a7) */
-    int   isp;              /* 0x0048 */
+    int isp;              /* 0x0048 */
 
-    int   sr_high;          /* 0x004C System registers */
-    int   ccr;              /* 0x0050 CCR in Intel Format */
-    int   x_carry;          /* 0x0054 Extended Carry */
+    int sr_high;          /* 0x004C System registers */
+    int ccr;              /* 0x0050 CCR in Intel Format */
+    int x_carry;          /* 0x0054 Extended Carry */
 
-    int   pc;               /* 0x0058 Program Counter */
+    int pc;               /* 0x0058 Program Counter */
 
-    int   IRQ_level;        /* 0x005C IRQ level you want the MC68K process (0=None)  */
+    int IRQ_level;        /* 0x005C IRQ level you want the MC68K process (0=None)  */
 
     /* Backward compatible with C emulator - Only set in Debug compile */
 
-    int   sr;
+    int sr;
 
     int (*irq_callback)(int irqline);
 
+    int previous_pc;      /* last PC used */
 
-    int   previous_pc;      /* last PC used */
+    int (*reset_callback)(void);
 
-    int vbr;                /* Vector Base Register.  Will be used in 68010 */
-    int sfc;                /* Source Function Code.  Will be used in 68010 */
-    int dfc;                /* Destination Function Code.  Will be used in 68010 */
+    int sfc;              /* Source Function Code. (68010) */
+    int dfc;              /* Destination Function Code. (68010) */
+    int usp;              /* User Stack (All) */
+    int vbr;              /* Vector Base Register. (68010) */
 
 } m68k_cpu_context;
 
@@ -81,8 +82,8 @@ void m68000_reset(void *param)
 {
 	memset(&regs,0,sizeof(regs));
 
-    regs.a[7] = regs.isp = cpu_readmem24_dword(0);
-    regs.pc   = cpu_readmem24_dword(4) & 0xffffff;
+    regs.a[7] = regs.isp = (( cpu_readop16(0) << 16 ) | cpu_readop16(2));
+    regs.pc   = (( cpu_readop16(4) << 16 ) | cpu_readop16(6)) & 0xffffff;
     regs.sr_high = 0x27;
 
 	#ifdef MAME_DEBUG
@@ -322,6 +323,11 @@ void m68000_set_irq_line(int irqline, int state)
 void m68000_set_irq_callback(int (*callback)(int irqline))
 {
 	regs.irq_callback = callback;
+}
+
+void m68000_set_reset_callback(int (*callback)(void))
+{
+	regs.reset_callback = callback;
 }
 
 /****************************************************************************

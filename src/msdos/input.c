@@ -275,6 +275,21 @@ static void init_joy_list(void)
 		}
 	}
 
+	if (tot == 0)
+	{
+		/* if we have no joystick installed, put it button 1,2,3 for the mouse */
+		i = 0;
+		for (j = 0;j < 3;j++)
+		{
+			sprintf(buf,"J%d BUTTON %d",i+1,j+1);
+			strncpy(joynames[tot],buf,MAX_JOY_NAME_LEN);
+			joynames[tot][MAX_JOY_NAME_LEN] = 0;
+			joylist[tot].name = joynames[tot];
+			joylist[tot].code = JOYCODE(i+1,0,j+1,0);
+			tot++;
+		}
+	}
+
 	/* terminate array */
 	joylist[tot].name = 0;
 	joylist[tot].code = 0;
@@ -311,28 +326,23 @@ int osd_is_joy_pressed(int joycode)
 	int joy_num,stick;
 
 
+	/* special case for mouse buttons */
+	switch (joycode)
+	{
+		case JOYCODE(1,0,1,0):
+			if (mouse_b & 1) return 1; break;
+		case JOYCODE(1,0,2,0):
+			if (mouse_b & 2) return 1; break;
+		case JOYCODE(1,0,3,0):
+			if (mouse_b & 4) return 1; break;
+	}
+
 	joy_num = GET_JOYCODE_JOY(joycode);
 
 	/* do we have as many sticks? */
 	if (joy_num == 0 || joy_num > num_joysticks)
 		return 0;
 	joy_num--;
-
-	if (joy_num == 0)
-	{
-		/* special case for mouse buttons */
-		switch (joycode)
-		{
-			case JOYCODE(1,0,1,0):
-				if (mouse_b & 1) return 1; break;
-			case JOYCODE(1,0,2,0):
-				if (mouse_b & 2) return 1; break;
-			case JOYCODE(1,0,3,0):
-				if (mouse_b & 4) return 1; break;
-			case JOYCODE(1,0,4,0): /* any mouse button */
-				if (mouse_b) return 1; break;
-		}
-	}
 
 	stick = GET_JOYCODE_STICK(joycode);
 
@@ -551,9 +561,9 @@ void msdos_init_input (void)
 				fprintf (errorlog, "Installed %s %s\n",
 						joystick_driver->name, joystick_driver->desc);
 		}
-
-		init_joy_list();
 	}
+
+	init_joy_list();
 
 	if (use_mouse && install_mouse() != -1)
 		use_mouse = 1;

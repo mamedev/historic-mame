@@ -3473,7 +3473,7 @@ struct GameDriver zzzap_driver =
 	__FILE__,
 	0,
 	"280zzzap",
-	"280-ZZZAP",
+	"Datsun 280 Zzzap",
 	"1976",
 	"Midway",
 	"Space Invaders Team\nLee Taylor\n",

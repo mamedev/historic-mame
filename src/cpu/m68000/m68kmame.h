@@ -14,6 +14,7 @@
 #undef M68K_SET_FC
 #undef M68K_INSTR_HOOK
 #undef M68K_DEFAULT_CPU_MODE
+#undef M68K_USE_PREFETCH
 #define M68K_INT_ACK            1
 #define M68K_BKPT_ACK           0
 #define M68K_TRACE              0
@@ -22,6 +23,7 @@
 #define M68K_PC_CHANGED         0 /* 1 disabled for speed */
 #define M68K_SET_FC             0 /* MAME needs a way to handle function codes */
 #define M68K_INSTR_HOOK         0 /* 1 disabled for speed */
+#define M68K_USE_PREFETCH       1
 #define M68K_DEFAULT_CPU_MODE   M68K_CPU_MODE_68000
 
 

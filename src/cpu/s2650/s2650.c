@@ -123,7 +123,7 @@ static	UINT8 ccc[0x200] = {
 			}													\
 			LOG((errorlog, "S2650 interrupt to $%04x\n", S.ea));\
 			S.psu  = (S.psu & ~SP) | ((S.psu + 1) & SP) | II;	\
-			S.ras[S.psu & SP] = S.iar;							\
+			S.ras[S.psu & SP] = S.page + S.iar;					\
 			S.page = S.ea & PAGE;								\
 			S.iar  = S.ea & PMSK;								\
 		}														\
@@ -363,7 +363,7 @@ static	int 	S2650_relative[0x100] =
 	{															\
 		REL_EA(S.page); 										\
 		S.psu  = (S.psu & ~SP) | ((S.psu + 1) & SP);			\
-		S.ras[S.psu & SP] = S.iar;								\
+		S.ras[S.psu & SP] = S.page + S.iar;						\
 		S.page = S.ea & PAGE;									\
 		S.iar  = S.ea & PMSK;									\
 		change_pc(S.ea);										\
@@ -378,7 +378,7 @@ static	int 	S2650_relative[0x100] =
 {																\
 	REL_EA(0x0000); 											\
 	S.psu  = (S.psu & ~SP) | ((S.psu + 1) & SP);				\
-	S.ras[S.psu & SP] = S.iar;									\
+	S.ras[S.psu & SP] = S.page + S.iar;							\
 	S.page = S.ea & PAGE;										\
 	S.iar  = S.ea & PMSK;										\
 	change_pc(S.ea);											\
@@ -394,7 +394,7 @@ static	int 	S2650_relative[0x100] =
 	{															\
 		BRA_EA();												\
 		S.psu = (S.psu & ~SP) | ((S.psu + 1) & SP); 			\
-		S.ras[S.psu & SP] = S.iar;								\
+		S.ras[S.psu & SP] = S.page + S.iar;						\
 		S.page = S.ea & PAGE;									\
 		S.iar  = S.ea & PMSK;									\
 		change_pc(S.ea);										\
@@ -410,7 +410,7 @@ static	int 	S2650_relative[0x100] =
 	BRA_EA();													\
 	S.ea  = (S.ea + S.reg[3]) & AMSK;							\
 	S.psu = (S.psu & ~SP) | ((S.psu + 1) & SP); 				\
-	S.ras[S.psu & SP] = S.iar;									\
+	S.ras[S.psu & SP] = S.page + S.iar;							\
 	S.page = S.ea & PAGE;										\
 	S.iar  = S.ea & PMSK;										\
 	change_pc(S.ea);											\
@@ -551,10 +551,17 @@ static	int 	S2650_relative[0x100] =
  * M_DAR
  * Decimal adjust register
  ***************************************************************/
-#define M_DAR(dest) 											\
+#define M_DAR(dest)												\
 {																\
-	if( (S.psl & IDC) == 0 ) dest += 0x0a;						\
-	if( (S.psl & C) == 0 ) dest += 0xa0;						\
+	if((S.psl & IDC) != 0)										\
+	{															\
+		if((S.psl & C) == 0) dest -= 0x60;						\
+	}															\
+	else														\
+	{															\
+		if( (S.psl & C) != 0 ) dest -= 0x06;					\
+		else dest -= 0x66;										\
+	}															\
 }
 
 /***************************************************************

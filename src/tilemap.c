@@ -1318,6 +1318,18 @@ void tilemap_update( struct tilemap *tilemap ){
 			int tile_flip = 0;
 			if( tilemap->attributes&TILEMAP_FLIPX ) tile_flip |= TILE_FLIPX;
 			if( tilemap->attributes&TILEMAP_FLIPY ) tile_flip |= TILE_FLIPY;
+#ifndef PREROTATE_GFX
+			if( orientation & ORIENTATION_SWAP_XY )
+			{
+				if( orientation & ORIENTATION_FLIP_X ) tile_flip ^= TILE_FLIPY;
+				if( orientation & ORIENTATION_FLIP_Y ) tile_flip ^= TILE_FLIPX;
+			}
+			else
+			{
+				if( orientation & ORIENTATION_FLIP_X ) tile_flip ^= TILE_FLIPX;
+				if( orientation & ORIENTATION_FLIP_Y ) tile_flip ^= TILE_FLIPY;
+			}
+#endif
 
 			tile_info.flags = 0;
 			tile_info.priority = 0;

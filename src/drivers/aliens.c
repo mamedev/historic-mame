@@ -88,7 +88,7 @@ static void aliens_snd_bankswitch_w(int offset, int data)
 	int bank_A = 0x20000*((data >> 1) & 0x01);
 	int bank_B = 0x20000*((data) & 0x01);
 
-	K007232_bankswitch_0_w(RAM + bank_A,RAM + bank_B);
+	K007232_bankswitch(1,RAM + bank_A,RAM + bank_B);
 }
 
 
@@ -202,15 +202,15 @@ INPUT_PORTS_START( input_ports )
 	PORT_DIPSETTING(	0x60, "Easy" )
 	PORT_DIPSETTING(	0x40, "Normal" )
 	PORT_DIPSETTING(	0x20, "Difficult" )
-	PORT_DIPSETTING(	0x00, "Very difficult" )
+	PORT_DIPSETTING(	0x00, "Very Difficult" )
 	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(	0x80, DEF_STR( Off ) )
 	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
 
 	PORT_START	/* DSW #3 */
 	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Flip_Screen ) )
-	PORT_DIPSETTING(	0x01, DEF_STR( Off ) )
-	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
@@ -253,18 +253,25 @@ INPUT_PORTS_END
 
 ***************************************************************************/
 
+static void volume_callback(int v)
+{
+	K007232_set_volume(0,0,(v & 0x0f) * 0x11,0);
+	K007232_set_volume(0,1,0,(v >> 4) * 0x11);
+}
+
 static struct K007232_interface k007232_interface =
 {
-	1,			/* number of chips */
-	{ 4 },		/* memory region */
-	{ 20 }		/* volume */
+	1,		/* number of chips */
+	{ 4 },	/* memory regions */
+	{ K007232_VOL(20,MIXER_PAN_CENTER,20,MIXER_PAN_CENTER) },	/* volume */
+	{ volume_callback }	/* external port callback */
 };
 
 static struct YM2151interface ym2151_interface =
 {
 	1, /* 1 chip */
 	3579545, /* 3.579545 MHz */
-	{ YM3012_VOL(35,MIXER_PAN_LEFT,35,MIXER_PAN_RIGHT) },
+	{ YM3012_VOL(60,MIXER_PAN_LEFT,60,MIXER_PAN_RIGHT) },
 	{ 0 },
 	{ aliens_snd_bankswitch_w }
 };
@@ -275,7 +282,7 @@ static struct MachineDriver machine_driver =
 	{
 		{
 			CPU_KONAMI,
-			6000000,		/* ? */
+			3000000,		/* ? */
 			0,
 			aliens_readmem,aliens_writemem,0,0,
             aliens_interrupt,1
@@ -289,13 +296,13 @@ static struct MachineDriver machine_driver =
 		}
 	},
 	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	10,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
+	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
 	aliens_init_machine,
 
 	/* video hardware */
 	64*8, 32*8, { 14*8, (64-14)*8-1, 2*8, 30*8-1 },
 	0,	/* gfx decoded by konamiic.c */
-	32*16,32*16,
+	512, 512,
 	0,
 
 	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
@@ -383,6 +390,35 @@ ROM_START( aliens2_rom )
 	ROM_LOAD( "875b04.bin",  0x00000, 0x40000, 0x4e209ac8 )
 ROM_END
 
+ROM_START( aliensj_rom )
+	ROM_REGION( 0x38000 ) /* code + banked roms */
+	ROM_LOAD( "875m02.e24",  0x10000, 0x08000, 0x54a774e5 )
+	ROM_CONTINUE(            0x08000, 0x08000 )
+	ROM_LOAD( "875m01.c24",  0x18000, 0x20000, 0x1663d3dc )
+
+	ROM_REGION( 0x200000 ) /* graphics */
+	ROM_LOAD( "k13_b11.bin", 0x000000, 0x80000, 0x89c5c885 )	/* characters (set 1) */
+	ROM_LOAD( "j13_b07.bin", 0x080000, 0x40000, 0xe9c56d66 )	/* characters (set 2) */
+	/* second half empty */
+	ROM_LOAD( "k19_b12.bin", 0x100000, 0x80000, 0xea6bdc17 )	/* characters (set 1) */
+	ROM_LOAD( "j19_b08.bin", 0x180000, 0x40000, 0xf9387966 )	/* characters (set 2) */
+	/* second half empty */
+
+	ROM_REGION( 0x200000 ) /* graphics */
+	ROM_LOAD( "k08_b10.bin", 0x000000, 0x80000, 0x0b1035b1 )	/* sprites (set 1) */
+	ROM_LOAD( "j08_b06.bin", 0x080000, 0x40000, 0x081a0566 )	/* sprites (set 2) */
+	/* second half empty */
+	ROM_LOAD( "k02_b09.bin", 0x100000, 0x80000, 0xe76b3c19 )	/* sprites (set 1) */
+	ROM_LOAD( "j02_b05.bin", 0x180000, 0x40000, 0x19a261f2 )	/* sprites (set 2) */
+	/* second half empty */
+
+	ROM_REGION( 0x10000 ) /* 64k for the sound CPU */
+	ROM_LOAD( "875k03.g4",   0x00000, 0x08000, 0xbd86264d )
+
+	ROM_REGION( 0x40000 ) /* samples for 007232 */
+	ROM_LOAD( "875b04.bin",  0x00000, 0x40000, 0x4e209ac8 )
+ROM_END
+
 
 /***************************************************************************
 
@@ -395,32 +431,11 @@ static void aliens_banking( int lines )
 	unsigned char *RAM = Machine->memory_region[0];
 	int offs = 0x18000;
 
-#if 1
+
 	if (lines & 0x10) offs -= 0x8000;
 
 	offs += (lines & 0x0f)*0x2000;
 	cpu_setbank( 1, &RAM[offs] );
-
-#else
-fprintf( errorlog, "CPU #0 PC %04x: bank selected (%02x)\n", cpu_get_pc(), lines );
-	if ((lines & 0xf0) == 0x80 || (lines & 0xf0) == 0xa0)
-	{
-		/* ROM c24_j01.bin */
-		offs = 0x18000 + ( ( lines & 0x0f ) * 0x2000 );
-		memcpy(&RAM[0x2000], &RAM[offs], 0x2000);
-	}
-	else if ((lines & 0xf0) == 0x90 && (lines & 0x0f) < 4)
-	{
-		/* ROM e24_j02.bin */
-		offs = 0x10000 + ( ( lines & 0x0f ) * 0x2000 );
-		memcpy(&RAM[0x2000], &RAM[offs], 0x2000);
-	}
-	else
-		if ( errorlog )
-			fprintf( errorlog, "CPU #0 PC %04x: Unknown bank selected (%02x)\n", cpu_get_pc(), lines );
-
-//	cpu_setbank( 1, &RAM[offs] );
-#endif
 }
 
 static void aliens_init_machine( void )
@@ -482,6 +497,31 @@ struct GameDriver aliens2_driver =
 	0,
 
 	aliens2_rom,
+	gfx_untangle, 0,
+	0,
+	0,	/* sound_prom */
+
+	input_ports,
+
+	0, 0, 0,
+    ORIENTATION_DEFAULT,
+	0, 0
+};
+
+struct GameDriver aliensj_driver =
+{
+	__FILE__,
+	&aliens_driver,
+	"aliensj",
+	"Aliens (Japan)",
+	"1990",
+	"Konami",
+	"Manuel Abadia",
+	0,
+	&machine_driver,
+	0,
+
+	aliensj_rom,
 	gfx_untangle, 0,
 	0,
 	0,	/* sound_prom */

@@ -43,6 +43,7 @@ int RF5C68_sh_start( const struct MachineSound *msound )
 	if (Machine->sample_rate == 0) return 0;
 
 	if(pcmbuf==NULL) pcmbuf=(unsigned char *)malloc(0x10000);
+	if(pcmbuf==NULL) return 1;
 
 	intf = inintf;
 	buffer_len = rate / Machine->drv->frames_per_second;
@@ -72,6 +73,7 @@ int RF5C68_sh_start( const struct MachineSound *msound )
 		vol[1] = (MIXER_PAN_RIGHT<<8) | (intf->volume&0xff);
 
 		stream = stream_init_multi( RF_LR_PAN, name, vol, rate, 16, 0, RF5C68Update );
+		if(stream == -1) return 1;
 	}
 	return 0;
 }
@@ -130,8 +132,7 @@ void RF5C68Update( int num, void **buffer, int length )
 						rpcm.addr[i] = rpcm.loop[i] + ((addr - old_addr)<<BASE_SHIFT);
 						addr = (rpcm.addr[i]>>BASE_SHIFT)&0xffff;
 						/**** PCM loop check ****/
-//						if( (((unsigned int)pcmbuf[addr])&0x00ff) == (unsigned int)0x00ff )	// this causes looping problems
-						if(wreg[0x04]==0)		// loop check based on s16ae emulator
+						if( (((unsigned int)pcmbuf[addr])&0x00ff) == (unsigned int)0x00ff )	// this causes looping problems
 						{
 							rpcm.flag[i] = 0;
 							break;

@@ -4,7 +4,7 @@
 
 static const char* copyright_notice =
 "DEBABELIZER\n"
-"Version 2.2\n"
+"Version 2.3 internal alpha 1\n"
 "A portable Motorola M680x0 disassembler.\n"
 "Copyright 1999 Karl Stenerud.  All rights reserved.\n"
 "\n"
@@ -13,7 +13,7 @@ static const char* copyright_notice =
 "containing this code in compiled form.\n"
 "\n"
 "The latest version of this code can be obtained at:\n"
-"http://milliways.scas.bcit.bc.ca/~karl/musashi\n"
+"(home page pending)\n"
 ;
 
 
@@ -166,6 +166,7 @@ static void (*g_instruction_table[0x10000])(void);
 static int  g_initialized = 0;
 
 static char g_dasm_str[100]; /* string to hold disassembly */
+static char g_helper_str[100]; /* string to hold helpful info */
 static uint g_cpu_pc;        /* program counter */
 static uint g_cpu_ir;        /* instruction register */
 
@@ -319,6 +320,7 @@ static char* get_ea_mode_str(uint instruction, uint size)
    uint preindex;
    uint postindex;
    uint comma = 0;
+   uint temp_value = 0;
 
    /* Switch buffers so we don't clobber on a double-call to this function */
    mode = mode == b1 ? b2 : b1;
@@ -437,7 +439,9 @@ static char* get_ea_mode_str(uint instruction, uint size)
          break;
       case 0x3a:
       /* program counter with displacement */
-         sprintf(mode, "(%s,PC)", make_signed_hex_str_16(read_imm_16()));
+         temp_value = read_imm_16();
+         sprintf(mode, "(%s,PC)", make_signed_hex_str_16(temp_value));
+         sprintf(g_helper_str, "; ($%x)", (make_int_16(temp_value) + g_cpu_pc) & 0xffffffff);
          break;
       case 0x3b:
       /* program counter with index */
@@ -542,9 +546,10 @@ int m68k_disassemble(char* str_buff, int pc)
       g_initialized = 1;
    }
    g_cpu_pc = pc;
+   g_helper_str[0] = 0;
    g_cpu_ir = read_imm_16();
    g_instruction_table[g_cpu_ir]();
-   strcpy(str_buff, g_dasm_str);
+   sprintf(str_buff, "%s%s", g_dasm_str, g_helper_str);
    return g_cpu_pc - pc;
 }
 
@@ -558,9 +563,10 @@ char* m68k_disassemble_quick(int pc)
       g_initialized = 1;
    }
    g_cpu_pc = pc;
+   g_helper_str[0] = 0;
    g_cpu_ir = read_imm_16();
    g_instruction_table[g_cpu_ir]();
-   strcpy(dasm_str, g_dasm_str);
+   sprintf(dasm_str, "%s%s", g_dasm_str, g_helper_str);
    return dasm_str;
 }
 
@@ -762,30 +768,30 @@ static void d68000_and_re_32(void)
 
 static void d68000_andi_8(void)
 {
-   char* str = get_imm_str_s8();
+   char* str = get_imm_str_u8();
    sprintf(g_dasm_str, "andi.b  %s, %s", str, get_ea_mode_str_8(g_cpu_ir));
 }
 
 static void d68000_andi_16(void)
 {
-   char* str = get_imm_str_s16();
+   char* str = get_imm_str_u16();
    sprintf(g_dasm_str, "andi.w  %s, %s", str, get_ea_mode_str_16(g_cpu_ir));
 }
 
 static void d68000_andi_32(void)
 {
-   char* str = get_imm_str_s32();
+   char* str = get_imm_str_u32();
    sprintf(g_dasm_str, "andi.l  %s, %s", str, get_ea_mode_str_32(g_cpu_ir));
 }
 
 static void d68000_andi_to_ccr(void)
 {
-   sprintf(g_dasm_str, "andi    %s, CCR", get_imm_str_s8());
+   sprintf(g_dasm_str, "andi    %s, CCR", get_imm_str_u8());
 }
 
 static void d68000_andi_to_sr(void)
 {
-   sprintf(g_dasm_str, "andi    %s, SR", get_imm_str_s16());
+   sprintf(g_dasm_str, "andi    %s, SR", get_imm_str_u16());
 }
 
 static void d68000_asr_s_8(void)
@@ -860,19 +866,17 @@ static void d68000_asl_ea(void)
 
 static void d68000_bcc_8(void)
 {
-   sprintf(g_dasm_str, "b%-2s     #%s; %x", g_cc[(g_cpu_ir>>8)&0xf], make_signed_hex_str_8(g_cpu_ir), g_cpu_pc + make_int_8(g_cpu_ir));
+   sprintf(g_dasm_str, "b%-2s     %x", g_cc[(g_cpu_ir>>8)&0xf], g_cpu_pc + make_int_8(g_cpu_ir));
 }
 
 static void d68000_bcc_16(void)
 {
-   uint new_pc = g_cpu_pc + make_int_16(peek_imm_16());
-   sprintf(g_dasm_str, "b%-2s     %s; %x", g_cc[(g_cpu_ir>>8)&0xf], get_imm_str_s16(), new_pc);
+   sprintf(g_dasm_str, "b%-2s     %x", g_cc[(g_cpu_ir>>8)&0xf], g_cpu_pc + make_int_16(read_imm_16()));
 }
 
 static void d68020_bcc_32(void)
 {
-   uint new_pc = g_cpu_pc + peek_imm_32();
-   sprintf(g_dasm_str, "b%-2s     %s; %x (2+)", g_cc[(g_cpu_ir>>8)&0xf], get_imm_str_s32(), new_pc);
+   sprintf(g_dasm_str, "b%-2s     %x; (2+)", g_cc[(g_cpu_ir>>8)&0xf], g_cpu_pc + read_imm_32());
 }
 
 static void d68000_bchg_r(void)
@@ -1040,19 +1044,17 @@ static void d68020_bftst(void)
 
 static void d68000_bra_8(void)
 {
-   sprintf(g_dasm_str, "bra     #%s; %x", make_signed_hex_str_8(g_cpu_ir), g_cpu_pc + make_int_8(g_cpu_ir));
+   sprintf(g_dasm_str, "bra     %x", g_cpu_pc + make_int_8(g_cpu_ir));
 }
 
 static void d68000_bra_16(void)
 {
-   uint new_pc = g_cpu_pc + make_int_16(peek_imm_16());
-   sprintf(g_dasm_str, "bra     %s; %x", get_imm_str_s16(), new_pc);
+   sprintf(g_dasm_str, "bra     %x", g_cpu_pc + make_int_16(read_imm_16()));
 }
 
 static void d68020_bra_32(void)
 {
-   uint new_pc = g_cpu_pc + peek_imm_32();
-   sprintf(g_dasm_str, "bra     %s; %x (2+)", get_imm_str_s32(), new_pc);
+   sprintf(g_dasm_str, "bra     %x; (2+)", g_cpu_pc + read_imm_32());
 }
 
 static void d68000_bset_r(void)
@@ -1068,19 +1070,17 @@ static void d68000_bset_s(void)
 
 static void d68000_bsr_8(void)
 {
-   sprintf(g_dasm_str, "bsr     #%s; %x", make_signed_hex_str_8(g_cpu_ir), g_cpu_pc + make_int_8(g_cpu_ir));
+   sprintf(g_dasm_str, "bsr     %x", g_cpu_pc + make_int_8(g_cpu_ir));
 }
 
 static void d68000_bsr_16(void)
 {
-   uint new_pc = g_cpu_pc + make_int_16(peek_imm_16());
-   sprintf(g_dasm_str, "bsr     %s; %x", get_imm_str_s16(), new_pc);
+   sprintf(g_dasm_str, "bsr     %x", g_cpu_pc + make_int_16(read_imm_16()));
 }
 
 static void d68020_bsr_32(void)
 {
-   uint new_pc = g_cpu_pc + peek_imm_32();
-   sprintf(g_dasm_str, "bsr     %s; %x (2+)", get_imm_str_s32(), new_pc);
+   sprintf(g_dasm_str, "bsr     %x; (2+)", g_cpu_pc + peek_imm_32());
 }
 
 static void d68000_btst_r(void)
@@ -1378,14 +1378,12 @@ static void d68040_cpush(void)
 
 static void d68000_dbra(void)
 {
-   uint new_pc = g_cpu_pc + make_int_16(peek_imm_16());
-   sprintf(g_dasm_str, "dbra    D%d, %s; %x", g_cpu_ir & 7, get_imm_str_s16(), new_pc);
+   sprintf(g_dasm_str, "dbra    D%d, %x", g_cpu_ir & 7, g_cpu_pc + make_int_16(read_imm_16()));
 }
 
 static void d68000_dbcc(void)
 {
-   uint new_pc = g_cpu_pc + make_int_16(peek_imm_16());
-   sprintf(g_dasm_str, "db%-2s    D%d, %s; %x", g_cc[(g_cpu_ir>>8)&0xf], g_cpu_ir & 7, get_imm_str_s16(), new_pc);
+   sprintf(g_dasm_str, "db%-2s    D%d, %x", g_cc[(g_cpu_ir>>8)&0xf], g_cpu_ir & 7, g_cpu_pc + make_int_16(read_imm_16()));
 }
 
 static void d68000_divs(void)
@@ -1427,30 +1425,30 @@ static void d68000_eor_32(void)
 
 static void d68000_eori_8(void)
 {
-   char* str = get_imm_str_s8();
+   char* str = get_imm_str_u8();
    sprintf(g_dasm_str, "eori.b  %s, %s", str, get_ea_mode_str_8(g_cpu_ir));
 }
 
 static void d68000_eori_16(void)
 {
-   char* str = get_imm_str_s16();
+   char* str = get_imm_str_u16();
    sprintf(g_dasm_str, "eori.w  %s, %s", str, get_ea_mode_str_16(g_cpu_ir));
 }
 
 static void d68000_eori_32(void)
 {
-   char* str = get_imm_str_s32();
+   char* str = get_imm_str_u32();
    sprintf(g_dasm_str, "eori.l  %s, %s", str, get_ea_mode_str_32(g_cpu_ir));
 }
 
 static void d68000_eori_to_ccr(void)
 {
-   sprintf(g_dasm_str, "eori    %s, CCR", get_imm_str_s8());
+   sprintf(g_dasm_str, "eori    %s, CCR", get_imm_str_u8());
 }
 
 static void d68000_eori_to_sr(void)
 {
-   sprintf(g_dasm_str, "eori    %s, SR", get_imm_str_s16());
+   sprintf(g_dasm_str, "eori    %s, SR", get_imm_str_u16());
 }
 
 static void d68000_exg_dd(void)
@@ -1642,7 +1640,7 @@ static void d68010_movec(void)
    char* reg_name;
    char* processor;
 
-   switch(g_cpu_ir & 0xfff)
+   switch(extension & 0xfff)
    {
       case 0x000:
          reg_name = "SFC";
@@ -1709,7 +1707,7 @@ static void d68010_movec(void)
          processor = "4+";
          break;
       default:
-         reg_name = make_signed_hex_str_16(g_cpu_ir & 0xfff);
+         reg_name = make_signed_hex_str_16(extension & 0xfff);
          processor = "?";
    }
 
@@ -2167,30 +2165,30 @@ static void d68000_or_re_32(void)
 
 static void d68000_ori_8(void)
 {
-   char* str = get_imm_str_s8();
+   char* str = get_imm_str_u8();
    sprintf(g_dasm_str, "ori.b   %s, %s", str, get_ea_mode_str_8(g_cpu_ir));
 }
 
 static void d68000_ori_16(void)
 {
-   char* str = get_imm_str_s16();
+   char* str = get_imm_str_u16();
    sprintf(g_dasm_str, "ori.w   %s, %s", str, get_ea_mode_str_16(g_cpu_ir));
 }
 
 static void d68000_ori_32(void)
 {
-   char* str = get_imm_str_s32();
+   char* str = get_imm_str_u32();
    sprintf(g_dasm_str, "ori.l   %s, %s", str, get_ea_mode_str_32(g_cpu_ir));
 }
 
 static void d68000_ori_to_ccr(void)
 {
-   sprintf(g_dasm_str, "ori     %s, CCR", get_imm_str_s8());
+   sprintf(g_dasm_str, "ori     %s, CCR", get_imm_str_u8());
 }
 
 static void d68000_ori_to_sr(void)
 {
-   sprintf(g_dasm_str, "ori     %s, SR", get_imm_str_s16());
+   sprintf(g_dasm_str, "ori     %s, SR", get_imm_str_u16());
 }
 
 static void d68020_pack_rr(void)

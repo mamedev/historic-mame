@@ -19,12 +19,14 @@ to list them.
 | 4D Warriors          |  Yes   |  Yes   |  Yes   |  Yes   |   No   | 4dwarrio |
 | 64th Street          |  Yes   |  Yes   |  Yes   |   No   |   No   | 64street |
 | 720 Degrees          |   No   |  Yes   |  Yes   |  Yes   |   No   | 720      |
+| '88 Games            |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | 88games  |
 | Act Fancer           |  Yes   |  Yes   |  Yes   |   No   |  Yes   | actfancr |
 | Adv.Quiz 2 Hatena no Dai-Bouken  Yes   |Partial |   No   |  Yes   | hatena   |
 | Adv.of Robby Roto,The|  Yes   |   No   |   No   |  Yes   |  Yes   | robby    |
 | Aero Fighters        |  Yes   |  Yes   |  Yes   |   No   |   No   | aerofgt  |
 | Air Buster           |  Yes   |  Yes   |  Yes   |  Yes   |   No   | airbustr |
-| Ajax                 |  Yes   |  Yes   |Partial |   No   |  Yes   | ajax     |
+| Air Wolf             |  Yes   |  Yes   |  Yes   |   No   |  Yes   | airwolf  |
+| Ajax                 |  Yes   |  Yes   |  Yes   |   No   |  Yes   | ajax     |
 | Alex Kidd            |   No   |  Yes   |   No   |   No   |   No   | alexkidd |
 | Ali Baba and 40 Thieves Yes   |   No   |  Bad   |   No   |  Yes   | alibaba  |
 | Alien Storm          |   No   |  Yes   |   No   |   No   |   No   | astormbl |
@@ -98,6 +100,7 @@ to list them.
 | Cabal                |  Yes   |  Yes   | Wrong  |   No   |   No   | cabal    |
 | Calipso              |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | calipso  |
 | Canyon Bomber        |  Yes   |  b/w   |   No   |  Yes   |   No   | canyon   |
+| Capcom Baseball      |  Yes   |  Yes   |Partial |   No   |  Yes   | cbasebal |
 | Capcom Bowling       |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | capbowl  |
 | Capcom World         |  Yes   |  Yes   |Partial |  Yes   |  Yes   | cworld   |
 | Captain Commando     |  Yes   |  Yes   |  Yes   |   No   |   No   | captcomm |
@@ -160,7 +163,7 @@ to list them.
 | Demon's World        |  Yes   |  Yes   |  Yes   |   No   |   No   | demonwld |
 | Demolition Derby     |  Yes   |  Yes   |  Yes   |   No   |   No   | destderb |
 | Depth Charge         |  Yes   |  b/w   |   No   |   No   |   No   | depthch  |
-| Devastators          |   No   |  Yes   |   No   |   No   |  Yes   | devstors |
+| Devastators          |   No   |  Yes   |  Yes   |   No   |  Yes   | devstors |
 | Devil Fish           |  Yes   |  Yes   |  Yes   |   No   |   No   | devilfsh |
 | Devil Zone           |  Yes   |   No   |Partial |   No   |   No   | devzone  |
 | Diamond Run          |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | diamond  |
@@ -169,7 +172,8 @@ to list them.
 | Digger               |  Yes   |  Yes   |   No   |   No   |   No   | digger   |
 | Disco No. 1          |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | disco    |
 | Discs of Tron        |  Yes   |  Yes   |  Yes   |  Yes   |   No   | dotron   |
-| Dog Fight            |  Yes   |   No   |  Yes   |   No   |   No   | dogfight |
+| Dog Fight            |  Yes   |   No   |  Yes   |  Yes   |   No   | dogfight |
+| Dokaben              |  Yes   |  Yes   |Partial |   No   |  Yes   | dokaben  |
 | Domino Man           |  Yes   |  Yes   |  Yes   |  Yes   |   No   | domino   |
 | Dominos              |  Yes   |  b/w   |   No   |   No   |   No   | dominos  |
 | Donkey Kong          |  Yes   |  Yes   | Yes(1) |  Yes   |  Yes   | dkong    |
@@ -187,6 +191,7 @@ to list them.
 | Electric Yo-Yo,The   |  Yes   |  Yes   |  Yes   |  Yes   |   No   | elecyoyo |
 | Elevator Action      |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | elevator |
 | Eliminator           |  Yes   | Close  | Yes(1) |  Yes   |   No   | elim2    |
+| Empire City: 1931    |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | empcity  |
 | Empire Strikes Back,The Yes   |  Yes   |  Yes   |   No   |   No   | esb      |
 | End,The              |  Yes   |  Yes?  |  Yes   |  Yes   |   No   | theend   |
 | Escape from the Planet  Yes   |  Yes   |  Yes   |  Yes   |   No   | eprom    |
@@ -207,6 +212,7 @@ to list them.
 | Final Fight          |  Yes   |  Yes   |  Yes   |   No   |   No   | ffight   |
 | Fire One             |Partial.|   No   |   No   |   No   |   No   | fireone  |
 | Fire Trap            |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | firetrap |
+| Flash Gal            |  Yes   |  Yes   |  Yes   |   No   |  Yes   | flashgal |
 | Flash Point          |   No   |  Yes   |   No   |   No   |   No   | fpointbl |
 | Flicky               |  Yes   |  Yes   |  Yes   |  Yes   |   No   | flicky   |
 | Fly Boy              |  Yes   |   No   |  Yes   |  Yes   |  Yes   | flyboy   |
@@ -240,6 +246,7 @@ to list them.
 | Gingateikoku No GyakushuYes   |  Yes   |  Yes   |  Yes   |   No   | japirem  |
 | Gladiator            |  Yes   |  Yes   |  Yes   |  Yes   |   No   | gladiatr |
 | Glob,The             |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | theglob  |
+| Go Go Mr. Yamaguchi  |   No   |   No   |  Bad   |   No   |  Yes   | yamagchi |
 | Goindol              |  Yes   |  Yes   |  Yes   |   No   |   No   | goindol  |
 | Gold Medalist        |   No   |  Yes   |  Yes   |   No   |   No   | goldmedl |
 | Golden Axe           |  Yes   |  Yes   |  Yes   |   No   |   No   | goldnaxe |
@@ -276,6 +283,7 @@ to list them.
 | Hoccer               |  Yes   |  Yes   |  Yes   |   No   |  Yes   | hoccer   |
 | Hopper Robo          |  Yes   |  Yes   |  Yes   |   No   |  Yes   | hopprobo |
 | Hot Shocker          |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | hotshock |
+| Hunchback            |  Yes   |   No   |  Yes   |   No   |  Yes   | hunchbkd |
 | Hustle               |  Yes   |  b/w   |   No   |   No   |   No   | hustle   |
 | Hydra                |  Yes   |  Yes   |  Yes   |  Yes   |   No   | hydra    |
 | Hyper Sports         |  Yes   |  Yes   | Yes(1) |  Yes   |  Yes   | hyperspt |
@@ -357,13 +365,13 @@ to list them.
 | Mad Planets          |  Yes   |  Yes?  |  Yes   |  Yes   |   No   | mplanets |
 | Magic Sword          |  Yes   |  Yes   |  Yes   |   No   |   No   | msword   |
 | Magical Spot II      |  Yes   |  Yes   |Partial |   No   |   No   | magspot2 |
-| Mahjong Gakuen       |  Yes   |  Yes   |Partial |   No   |  Yes   | mgakuen  |
+| Mahjong Gakuen       |  Yes   |  Yes   |Partial |  Yes   |  Yes   | mgakuen  |
 | Mahjong Gakuen 2     |  Yes   |  Yes   |Partial |   No   |  Yes   | mgakuen2 |
 | Main Event,The       |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | mainevt  |
 | Major Havoc          |  Yes   |  Yes   |  Yes   |   No   |   No   | mhavoc   |
 | Major League         |   No   |  Yes   |   No   |   No   |   No   | mjleague |
 | Make Trax            |  Yes   |  Yes?  |  Yes   |  Yes   |  Yes   | maketrax |
-| Mania Challenge      |   No   |  Yes?  |  Yes   |  Yes   |   No   | maniach  |
+| Mania Challenge      |  Yes   |  Yes?  |  Yes   |  Yes   |   No   | maniach  |
 | Mappy                |  Yes   |  Yes   |  Yes   |  Yes   |   No   | mappy    |
 | Marble Madness       |  Yes   |  Yes   |  Yes   |  Yes   |   No   | marble   |
 | Marine Boy           |  Yes   |  Yes   |  Yes   |   No   |  Yes   | marineb  |
@@ -388,7 +396,7 @@ to list them.
 | Missile Command      |  Yes   |  Yes   |  Yes   |  Yes   |   No   | missile  |
 | Missing in Action    |  Yes   |  Yes   |  Yes   |   No   |  Yes   | mia      |
 | Mister Viking        |  Yes   |  Yes   |  Yes   |  Yes   |   No   | mrviking |
-| Moguchan             |  Yes   |   No   |  Yes   |   No   |   No   | moguchan |
+| Moguchan             |  Yes   |   No   |  Yes   |  Yes   |   No   | moguchan |
 | Money Money          |  Yes   |  Yes   |   No   |  Yes   |   No   | monymony |
 | Monster Bash         |  Yes   |  Yes   | Yes(1) |  Yes   |  Yes   | monsterb |
 | Moon Alien Part 2    |  Yes   |  Yes   |  Yes   |   No   |  Yes   | moonal2  |
@@ -425,16 +433,18 @@ to list them.
 | Ninja Kid 2          |  Yes   |  Yes   |  Yes   |  Yes   |   No   | ninjakd2 |
 | No Man's Land        |  Yes   |   No   |Partial |   No   |   No   | nomnland |
 | Nova 2001            |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | nova2001 |
+| Nunchackun           |  Yes   |   No   |  Bad   |   No   |  Yes   | nunchaku |
+| Off the Wall         |  Yes   |  Yes   |  Yes   |  Yes   |   No   | offtwall |
 | Omega Race           |  Yes   |  Yes   |  Yes   |  Yes   |   No   | omegrace |
 | Out Zone             |  Yes   |  Yes   |  Yes   |   No   |   No   | outzone  |
 | P-47                 |  Yes   |  Yes   |  Yes   |   No   |   No   | p47      |
 | P.O.W.               |  Yes   |  Yes   |  Yes   |   No   |   No   | pow      |
 | Pac & Pal            |  Yes   |  Yes   |  Yes   |  Yes   |   No   | pacnpal  |
-| Pac Man              |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | pacman   |
 | Pac Man Plus         |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | pacplus  |
 | Pac-Land             |  Yes   |  Yes   |Partial |  Yes   |   No   | pacland  |
 | Pang                 |  Yes   |  Yes   |Partial |   No   |  Yes   | pang     |
 | Paper Boy            |  Yes   |  Yes   |  Yes   |  Yes   |   No   | paperboy |
+| Parodius             |  Yes   |  Yes   |  Yes   |   No   |  Yes   | parodius |
 | Passing Shot         |  Yes   |  Yes   |  Yes   |   No   |   No   | passshtb |
 | Pengo                |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | pengo    |
 | Penguin-Kun Wars     |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | pkunwar  |
@@ -467,6 +477,7 @@ to list them.
 | Prehistoric Isle in 1930Yes   |  Yes   |  Yes   |   No   |   No   | prehisle |
 | Psychic 5            |  Yes   |  Yes   |  Yes   |  Yes   |   No   | psychic5 |
 | Psycho-Nics Oscar    |  Yes   |  Yes   |  Yes   |   No   |   No   | oscar    |
+| PuckMan              |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | pacman   |
 | Pulsar               |  Yes   |  Yes   |   No   |   No   |   No   | pulsar   |
 | Punch Out            |  Yes   |  Yes   |Partial |  Yes   |  n/a   | punchout |
 | Punk Shot            |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | punkshot |
@@ -517,7 +528,8 @@ to list them.
 | SWAT                 |  Yes   |  Yes   |  Yes   |  Yes   |   No   | swat     |
 | Safari               |  Yes   |  b/w   |   No   |   No   |  n/a   | safari   |
 | Salamander           |  Yes   |  Yes   |Partial |   No   |   No   | salamand |
-| Samurai              |  Yes   |  Yes?  |   No   |   No   |   No   | samurai  |
+| Samurai (Sega)       |  Yes   |  Yes?  |   No   |   No   |   No   | samurai  |
+| Samurai (Taito)      |  Yes   | Close  |  Bad   |   No   |  Yes   | tsamurai |
 | SAR - Search and Rescue Yes   |  Yes   |  Yes   |   No   |   No   | searchar |
 | Sarge                |  Yes   |  Yes   |  Yes   |  Yes   |   No   | sarge    |
 | Sasuke vs. Commander |  Yes   |   No   |   No   |   No   |  Yes   | sasuke   |
@@ -597,7 +609,6 @@ to list them.
 | Stinger              |  Yes   |   No   | Wrong  |  Yes   |  Yes   | stinger  |
 | Strategy X           |  Yes   |  Yes   |  Yes   |  Yes   |   No   | stratgyx |
 | Stratovox            |  Yes   |  Yes   | Yes(1) |  Yes   |  Yes   | stratvox |
-| Street Fight         |  Yes   |   No   |  Yes   |  Yes   |  Yes   | stfight  |
 | Street Fighter       |  Yes   |  Yes   |Partial |   No   |   No   | sf1      |
 | Street Fighter 2     |  Yes   |  Yes   |  Yes   |   No   |   No   | sf2      |
 | Street Smart         |  Yes   |  Yes   |  Yes   |   No   |   No   | streetsm |
@@ -613,6 +624,7 @@ to list them.
 | Super Casino         |  Yes   |  Yes   |  Yes   |  n/a   |  Yes   | sucasino |
 | Super Champion Baseball  No   |  Yes   |  Yes   |   No   |   No   | sbasebal |
 | Super Cobra          |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | scobra   |
+| Super Contra         |  Yes   |  Yes   |  Yes   |   No   |  Yes   | scontra  |
 | Super Hi Impact      |  Yes   |  Yes   |  Yes   |  Yes   |   No   | shimpact |
 | Super Locomotive     |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | suprloco |
 | Super Marukin-Ban    |  Yes   |  Yes   |Partial |   No   |  Yes   | marukin  |
@@ -646,6 +658,7 @@ to list them.
 | Tetris (Atari)       |  Yes   |  Yes   |  Yes   |  Yes   |  n/a   | atetris  |
 | Tetris (Sega)        |  Yes   |  Yes   |  Yes   |   No   |   No   | tetrisbl |
 | Three Stooges        |  Yes   |  Yes   |Partial |  Yes   |   No   | 3stooges |
+| Thunder Cross        |   No   |  Yes   |  Yes   |   No   |  Yes   | thunderx |
 | ThunderJaws          |  Yes   |  Yes   |  Yes   |  Yes   |   No   | thunderj |
 | Tiger Heli           |  Yes   |  Yes   |  Yes   |  Yes   |   No   | tigerh   |
 | Tiger Road           |  Yes   |  Yes   |  Yes   |  Yes   |   No   | tigeroad |
@@ -696,6 +709,7 @@ to list them.
 | Vapor Trail          |  Yes   |  Yes   |  Yes   |   No   |  Yes   | vaportra |
 | Varth                |  Yes   |  Yes   |  Yes   |   No   |   No   | varth    |
 | Vastar               |  Yes   |  Yes   |  Yes   |  Yes   |   No   | vastar   |
+| Vendetta             |  Yes   |  Yes   |  Yes   |   No   |  Yes   | vendetta |
 | Venture              |  Yes   |  Yes   |   No   |  Yes   |   No   | venture  |
 | Victory Road         |  Yes   |  Yes   |Partial |  Yes   |   No   | victroad |
 | Video Hustler        |  Yes   |  Yes   |  Yes   |  Yes   |   No   | hustler  |
@@ -738,7 +752,7 @@ to list them.
 | Zero Zone            |  Yes   |  Yes   |  Yes   |  Yes   |   No   | zerozone |
 | Zig Zag              |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | zigzag   |
 | Zoar                 |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | zoar     |
-| Zodiack              |  Yes   |   No   |  Yes   |   No   |   No   | zodiack  |
+| Zodiack              |  Yes   |   No   |  Yes   |  Yes   |   No   | zodiack  |
 | Zoo Keeper           |  Yes   |  Yes   |  Yes   |  Yes   |   No   | zookeep  |
 | Zzyzzyxx             |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | zzyzzyxx |
 |----------------------|--------|--------|--------|--------|--------|----------|
@@ -1894,13 +1908,6 @@ Known issues:
 
 
 
-Mania Challenge ("maniach")
-===========================
-Clones supported:
-  alternate version, probably earlier ("maniach2")
-
-
-
 Marble Madness ("marble")
 =========================
 Clones supported:
@@ -2162,19 +2169,6 @@ Clones supported:
 
 Known issues:
 - Due to encryption, sound works only in the alternate version.
-
-
-
-Pac Man ("pacman")
-==================
-Clones supported:
-  Pac Man modification ("pacmod")
-  Namco Pac Man ("namcopac")
-  another Namco version, slightly different from the above ("pacmanjp")
-  Hangly Man ("hangly")
-  Puck Man ("puckman")
-  Piranha ("piranha")
-  bootleg version running on Galaxian hardware ("pacmanbl")
 
 
 
@@ -2764,8 +2758,6 @@ in shape, and the blinking white box actually illuminates a box labelled
 
 Sunset Riders ("ssriders")
 ==========================
-The first time you start the game, you'll get an EEPROM error. Keep F2 pressed
-and hit F3 to initialize it.
 To enter service mode, hit F2 while the game is in attract mode. Make sure to
 go in the game options and enable stereo sound.
 
@@ -2836,8 +2828,6 @@ Known issues:
 
 T.M.N.T. 2 ("tmnt2")
 ====================
-You MUST initialize the EEPROM the first time you run the game. Keep F2 pressed
-and hit F3 to do that.
 To enter service mode, hit F2 while the game is in attract mode. Make sure to
 go in the game options and enable stereo sound.
 
@@ -3082,14 +3072,6 @@ Known issues:
 World Tennis ("wtennis")
 ========================
 On startup, you have to reset the game (F3) to make it exit service mode.
-
-
-
-X-Men ("xmen")
-==============
-You MUST initialize the EEPROM the first time you run the game. Keep F2 pressed
-and hit F3 to do that.
-To enter service mode, hit F2 while the game is in attract mode.
 
 
 

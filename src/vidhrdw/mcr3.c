@@ -58,12 +58,15 @@ void mcr3_vh_convert_color_prom(unsigned char *palette, unsigned short *colortab
 		{
 			sprite_transparency[i] = 0;
 
+			dp = gfx->gfxdata + i * gfx->char_modulo;
 			for (y=0;y<gfx->height;y++)
 			{
-				dp = gfx->gfxdata->line[i * gfx->height + y];
 				for (x=0;x<gfx->width;x++)
+				{
 					if (dp[x] == 8)
 						sprite_transparency[i] = 1;
+				}
+				dp += gfx->line_modulo;
 			}
 
 			if (sprite_transparency[i])

@@ -300,6 +300,7 @@ INLINE void setline_di( void );
 INLINE void setline_ex( void );
 INLINE void bmove( void );
 INLINE void decbjnz( void );
+INLINE void decxjnz( void );
 INLINE void bset( void );
 INLINE void bset2( void );
 INLINE void lmul(void);
@@ -353,7 +354,7 @@ static void (*konami_main[0x100])(void) = {
 	tsta   ,tstb   ,illegal,lsra   ,lsrb   ,illegal,rora   ,rorb   ,	/* 90 */
 	illegal,asra   ,asrb   ,illegal,asla   ,aslb   ,illegal,rti    ,
 	rola   ,rolb   ,illegal,illegal,illegal,illegal,illegal,illegal,	/* a0 */
-	illegal,illegal,bsr    ,lbsr   ,decbjnz,illegal,nop	   ,illegal,
+	illegal,illegal,bsr    ,lbsr   ,decbjnz,decxjnz,nop	   ,illegal,
 	abx    ,daa	   ,sex    ,mul    ,lmul   ,divx   ,bmove  ,illegal,	/* b0 */
 	lsrd   ,illegal,rord   ,illegal,asrd   ,illegal,asld   ,illegal,
 	rold   ,illegal,clrd   ,illegal,negd   ,illegal,incd   ,illegal,	/* c0 */

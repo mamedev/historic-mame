@@ -196,7 +196,7 @@ static void get_sprite_info( void ){
 			if( attributes&0x4000 ) flags |= SPRITE_FLIPY; /* ? */
 			color = attributes&0xf;
 
-			sprite->pen_data = gfx->gfxdata->line[number*16];
+			sprite->pen_data = gfx->gfxdata + number * gfx->char_modulo;
 			sprite->pal_data = &gfx->colortable[gfx->color_granularity * color];
 
 			sprite->pen_usage = 0;

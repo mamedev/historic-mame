@@ -98,7 +98,7 @@ static void get_sprite_info( void ){
 			sprite->pal_data = &gfx->colortable[gfx->color_granularity * color];
 			sprite->pen_usage = gfx->pen_usage[number/64];
 
-			sprite->pen_data = gfx->gfxdata->line[(number/64)*64];
+			sprite->pen_data = gfx->gfxdata + (number/64) * gfx->char_modulo;
 			sprite->x_offset = 0;
 			sprite->y_offset = 0;
 			if( number&0x01 ) sprite->x_offset += 8;

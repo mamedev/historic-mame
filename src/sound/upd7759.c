@@ -94,6 +94,8 @@ Changes:
 #define LOG(n,x)
 #endif
 
+#define STATIC_SAMPLE_RATE 0	/* EHC - 13/08/99 */
+
 /* number of samples stuffed into the rom */
 static unsigned char numsam;
 
@@ -169,7 +171,7 @@ static int sampnum[MAX_UPD7759];
 #define INDEX_SHIFT_MAX 16
 static int index_shift[INDEX_SHIFT_MAX] = {
 	0,	 1,  2,  3,  6,  7, 10, 15,
-	15, 10,  7,  6,  3,  2,  1,  0,
+	0,  15, 10,  7,  6,  3,  2,  1
 };
 
 /* lookup table for the precomputed difference */
@@ -214,7 +216,7 @@ static void ComputeTables (void)
 
 
 
-static int find_sample(int sample_num,struct UPD7759sample *sample)
+static int find_sample(int num, int sample_num,struct UPD7759sample *sample)
 {
 	int j;
 	int nextoff = 0;
@@ -223,7 +225,7 @@ static int find_sample(int sample_num,struct UPD7759sample *sample)
 	unsigned char *data;
 
 
-	memrom = Machine->memory_region[upd7759_intf->region];
+	memrom = Machine->memory_region[upd7759_intf->region[num]];
 
 	numsam = (unsigned int)memrom[0]; /* get number of samples from sound rom */
 	header = &(memrom[1]);
@@ -248,11 +250,12 @@ static int find_sample(int sample_num,struct UPD7759sample *sample)
 
 	nextoff = 2 * sample_num;
 	sample->offset = ((((unsigned int)(header[nextoff]))<<8)+(header[nextoff+1]))*2;
-	data = &Machine->memory_region[upd7759_intf->region][sample->offset];
+	data = &Machine->memory_region[upd7759_intf->region[num]][sample->offset];
 	/* guesswork, probably wrong */
 	j = 0;
 	if (!data[j]) j++;
 	if ((data[j] & 0xf0) != 0x50) j++;
+#if STATIC_SAMPLE_RATE
 	switch (data[j])
 	{
 		case 0x53: sample->freq = 8000; break;
@@ -260,6 +263,12 @@ static int find_sample(int sample_num,struct UPD7759sample *sample)
 		default:
 			sample->freq = 5000;
 	}
+#else
+	if ( ( data[j] & 0xf0 ) == 0x50 )
+		sample->freq = 9000 - ( ( data[j] & 0x0f ) * 333 );
+	else
+		return 0;
+#endif
 
 	if (sample_num == numsam)
 	{
@@ -271,7 +280,7 @@ static int find_sample(int sample_num,struct UPD7759sample *sample)
 
 if (errorlog)
 {
-	data = &Machine->memory_region[upd7759_intf->region][sample->offset];
+	data = &Machine->memory_region[upd7759_intf->region[num]][sample->offset];
 	fprintf( errorlog,"play sample %3d, offset $%06x, length %5d, freq = %4d [data $%02x $%02x $%02x]\n",
 		sample_num,
 		sample->offset,
@@ -517,7 +526,7 @@ void UPD7759_message_w (int num, int data)
         }
 		if (offset > 0)
 		{
-			voice->base = &Machine->memory_region[upd7759_intf->region][offset];
+			voice->base = &Machine->memory_region[upd7759_intf->region[num]][offset];
 			//LOG(1,(errorlog, "upd7759_message_w set base $%08x\n", offset));
 			if (errorlog)
 				fprintf(errorlog, "upd7759_message_w set base $%08x\n", offset);
@@ -660,6 +669,10 @@ void UPD7759_start_w (int num, int data)
 	{
 		struct UPD7759sample sample;
 
+		/* if !ST is high, do nothing */ /* EHC - 13/08/99 */
+		if (data > 0)
+			return;
+
 		/* bail if the chip is busy */
 		if (voice->playing)
 			return;
@@ -667,14 +680,14 @@ void UPD7759_start_w (int num, int data)
 		LOG(2,(errorlog,"UPD7759_start_w: %d\n", data));
 
 		/* find a match */
-		if (find_sample(sampnum[num],&sample))
+		if (find_sample(num,sampnum[num],&sample))
 		{
 			/* update the  voice */
 			stream_update(channel[num], 0);
 			voice->freq = sample.freq;
 			/* set up the voice to play this sample */
 			voice->playing = 1;
-			voice->base = &Machine->memory_region[upd7759_intf->region][sample.offset];
+			voice->base = &Machine->memory_region[upd7759_intf->region[num]][sample.offset];
 			voice->sample = 0;
 			/* sample length needs to be doubled (counting nibbles) */
 			voice->count = sample.length * 2;
@@ -712,6 +725,12 @@ int UPD7759_data_r(int num, int offs)
 		LOG(1,(errorlog,"error: UPD7759_data_r() called with channel = %d, but only %d channels allocated\n", num, upd7759_intf->num));
 		return 0x00;
     }
+
+	if ( voice->base == NULL )
+	{
+		LOG(1,(errorlog,"error: UPD7759_data_r() called with channel = %d, but updadpcm[%d].base == NULL\n", num, num));
+		return 0x00;
+	}
 
 #if VERBOSE
     if (!(offs&0xff)) LOG(1, (errorlog,"UPD7759#%d sample offset = $%04x\n", num, offs));

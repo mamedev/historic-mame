@@ -2,9 +2,10 @@
 /* ========================= LICENSING & COPYRIGHT ======================== */
 /* ======================================================================== */
 
+#if 0
 static const char* copyright_notice =
 "MUSASHI\n"
-"Version 2.0a (1999-02-21)\n"
+"Version 2.1 (1999-07-20)\n"
 "A portable Motorola M680x0 processor emulation engine.\n"
 "Copyright 1999 Karl Stenerud.  All rights reserved.\n"
 "\n"
@@ -16,8 +17,9 @@ static const char* copyright_notice =
 "(Karl Stenerud) to negotiate commercial licensing terms.\n"
 "\n"
 "The latest version of this code can be obtained at:\n"
-"http://milliways.scas.bcit.bc.ca/~karl/musashi\n"
+"(homepage pending)\n"
 ;
+#endif
 
 
 /* ======================================================================== */
@@ -56,24 +58,32 @@ uint         m68k_tracing = 0;
 
 #ifdef M68K_LOG
 uint  m68k_pc_offset = 2;
-char* m68k_cpu_names[5] =
+char* m68k_cpu_names[9] =
 {
    "Invalid CPU",
    "M68000",
    "M68010",
+   "Invalid CPU",
+   "M68EC020"
+   "Invalid CPU",
+   "Invalid CPU",
    "Invalid CPU",
    "M68020"
 };
 #endif /* M68K_LOG */
 
 /* Mask which bits of the SR ar eimplemented */
-uint m68k_sr_implemented_bits[5] =
+uint m68k_sr_implemented_bits[9] =
 {
    0x0000, /* invalid */
-   0xa71f, /* 68000: T1 -- S  -- -- I2 I1 I0 -- -- -- X  N  Z  V  C  */
-   0xa71f, /* 68010: T1 -- S  -- -- I2 I1 I0 -- -- -- X  N  Z  V  C  */
+   0xa71f, /* 68000:   T1 -- S  -- -- I2 I1 I0 -- -- -- X  N  Z  V  C  */
+   0xa71f, /* 68010:   T1 -- S  -- -- I2 I1 I0 -- -- -- X  N  Z  V  C  */
    0x0000, /* invalid */
-   0xf71f, /* 68020: T1 T0 S  M  -- I2 I1 I0 -- -- -- X  N  Z  V  C  */
+   0xf71f, /* 68EC020: T1 T0 S  M  -- I2 I1 I0 -- -- -- X  N  Z  V  C  */
+   0x0000, /* invalid */
+   0x0000, /* invalid */
+   0x0000, /* invalid */
+   0xf71f, /* 68020:   T1 T0 S  M  -- I2 I1 I0 -- -- -- X  N  Z  V  C  */
 };
 
 /* The CPU core */
@@ -294,9 +304,9 @@ void m68k_poke_pc(unsigned int value)     { m68ki_set_pc(ADDRESS_68K(value)); }
 void m68k_poke_sr(int value)              { m68ki_set_sr(MASK_OUT_ABOVE_16(value)); }
 void m68k_poke_ir(int value)              { CPU_IR = MASK_OUT_ABOVE_16(value); }
 void m68k_poke_t1_flag(int value)         { CPU_T1 = (value != 0); }
-void m68k_poke_t0_flag(int value)         { if(CPU_MODE & CPU_MODE_020_PLUS) CPU_T0 = (value != 0); }
+void m68k_poke_t0_flag(int value)         { if(CPU_MODE & CPU_MODE_EC020_PLUS) CPU_T0 = (value != 0); }
 void m68k_poke_s_flag(int value)          { m68ki_set_s_flag(value); }
-void m68k_poke_m_flag(int value)          { if(CPU_MODE & CPU_MODE_020_PLUS) m68ki_set_m_flag(value); }
+void m68k_poke_m_flag(int value)          { if(CPU_MODE & CPU_MODE_EC020_PLUS) m68ki_set_m_flag(value); }
 void m68k_poke_int_mask(int value)        { CPU_INT_MASK = value & 7; }
 void m68k_poke_x_flag(int value)          { CPU_X = (value != 0); }
 void m68k_poke_n_flag(int value)          { CPU_N = (value != 0); }
@@ -319,7 +329,7 @@ void m68k_poke_isp(int value)
 }
 void m68k_poke_msp(int value)
 {
-   if(CPU_MODE & CPU_MODE_020_PLUS)
+   if(CPU_MODE & CPU_MODE_EC020_PLUS)
    {
       if(CPU_S && CPU_M)
          CPU_A[7] = MASK_OUT_ABOVE_32(value);
@@ -366,6 +376,7 @@ void m68k_set_cpu_mode(int cpu_mode)
    {
       case M68K_CPU_MODE_68000:
       case M68K_CPU_MODE_68010:
+      case M68K_CPU_MODE_68EC020:
       case M68K_CPU_MODE_68020:
          CPU_MODE = cpu_mode;
          return;
@@ -491,21 +502,13 @@ void m68k_pulse_reset(void *param)
    CPU_S = 1;
    CPU_M = 0;
    CPU_INT_MASK = 7;
-/* ASG: removed a bunch of this initialization....
-   CPU_X = CPU_N = CPU_V = CPU_C = 0;
-   CPU_NOT_Z = 1;
-   CPU_USP = 0;
-   CPU_MSP = 0;
-   CPU_IR = 0;
-   CPU_D[0] = CPU_D[1] = CPU_D[2] = CPU_D[3] =
-   CPU_D[4] = CPU_D[5] = CPU_D[6] = CPU_D[7] =
-   CPU_A[0] = CPU_A[1] = CPU_A[2] = CPU_A[3] =
-   CPU_A[4] = CPU_A[5] = CPU_A[6] = CPU_A[7] = 0;*/
    CPU_VBR = 0;
-/* CPU_SFC = 0;
-   CPU_DFC = 0;*/
-   CPU_A[7] = /*CPU_ISP =*/ m68ki_read_32(0);
+   CPU_A[7] = m68ki_read_32(0);
    m68ki_set_pc(m68ki_read_32(4));
+#if M68K_USE_PREFETCH
+   CPU_PREF_ADDR = MASK_OUT_BELOW_2(CPU_PC);
+   CPU_PREF_DATA = m68k_read_immediate_32(ADDRESS_68K(CPU_PREF_ADDR));
+#endif /* M68K_USE_PREFETCH */
    m68k_clks_left = 0;
 
    if (CPU_MODE == 0) CPU_MODE = M68K_DEFAULT_CPU_MODE;	/* KW 990319 */
@@ -515,8 +518,6 @@ void m68k_pulse_reset(void *param)
    else
    {
       m68ki_build_opcode_table();
-/*    if(CPU_MODE == 0)
-         CPU_MODE = M68K_DEFAULT_CPU_MODE;*/
       m68k_set_int_ack_callback(NULL);
       m68k_set_bkpt_ack_callback(NULL);
       m68k_set_reset_instr_callback(NULL);
@@ -565,6 +566,8 @@ unsigned m68k_get_context(void* dst)
 		cpu->pc_changed_callback  = CPU_PC_CHANGED_CALLBACK;
 		cpu->set_fc_callback	  = CPU_SET_FC_CALLBACK;
 		cpu->instr_hook_callback  = CPU_INSTR_HOOK_CALLBACK;
+		cpu->pref_addr			  = CPU_PREF_ADDR;
+		cpu->pref_data			  = CPU_PREF_DATA;
 	}
 	return sizeof(m68k_cpu_context);
 }
@@ -596,6 +599,8 @@ void m68k_set_context(void* src)
 		CPU_PC_CHANGED_CALLBACK  = cpu->pc_changed_callback;
 		CPU_SET_FC_CALLBACK 	 = cpu->set_fc_callback;
 		CPU_INSTR_HOOK_CALLBACK  = cpu->instr_hook_callback;
+		CPU_PREF_ADDR 			 = cpu->pref_addr;
+		CPU_PREF_DATA 			 = cpu->pref_data;
 
 		/* ASG: check for interrupts */
 		m68ki_check_interrupts();
@@ -621,7 +626,7 @@ int m68k_is_valid_instruction(int instruction, int cpu_mode)
       if((instruction & 0xffff) == 0x4e74) /* rtd */
          return 0;
    }
-   if(!(cpu_mode & CPU_MODE_020_PLUS))
+   if(!(cpu_mode & CPU_MODE_EC020_PLUS))
    {
       if((instruction & 0xf0ff) == 0x60ff) /* bcc.l */
          return 0;

@@ -832,5 +832,8 @@ int osd_display_loading_rom_message(const char *name,int current,int total)
 		fprintf(stdout,"                    \r");
 	fflush(stdout);
 
+	if (keyboard_pressed(KEYCODE_LCONTROL) && keyboard_pressed(KEYCODE_C))
+		return 1;
+
 	return 0;
 }

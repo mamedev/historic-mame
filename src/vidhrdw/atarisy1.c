@@ -251,15 +251,18 @@ int atarisys1_vh_start(void)
 					/* scan each entry, marking which pens are used */
 					memset(pen_usage[e], 0, gfx->total_elements * 2 * sizeof(int));
 					for (i = 0, entry = pen_usage[e]; i < gfx->total_elements; i++, entry += 2)
+					{
+						unsigned char *dp = gfx->gfxdata + i * gfx->char_modulo;
 						for (y = 0; y < gfx->height; y++)
 						{
-							unsigned char *dp = gfx->gfxdata->line[i * gfx->height + y];
 							for (x = 0; x < gfx->width; x++)
 							{
 								int color = dp[x];
 								entry[(color >> 5) & 1] |= 1 << (color & 31);
 							}
+							dp += gfx->line_modulo;
 						}
+					}
 				}
 			}
 		}

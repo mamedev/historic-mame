@@ -597,7 +597,7 @@ static void rallybik_find_sprites (void)
 static void toaplan1_render (struct osd_bitmap *bitmap)
 {
 	int i;
-	int priority;
+	int priority,pen;
 	tile_struct *tinfo;
 
 	fillbitmap (bitmap, palette_transparent_pen, &Machine->drv->visible_area);
@@ -605,14 +605,23 @@ static void toaplan1_render (struct osd_bitmap *bitmap)
 	for ( priority = 0 ; priority < 16 ; priority++ )	/* draw priority layers in order */
 	{
 		tinfo = (tile_struct *)&(tile_list[priority][0]) ;
-		for ( i = 0 ; i < tile_count[priority] ; i++ )	/* draw only tiles in list */
+		/* hack to fix black blobs in Demon's World sky */
+		if ( priority == 1 )
+			pen = TRANSPARENCY_NONE ;
+		else
+			pen = TRANSPARENCY_PEN ;
+		for ( i = 0 ; i < tile_count[priority] ; i++ ) /* draw only tiles in list */
 		{
+			/* hack to fix blue blobs in Zero Wing attract mode */
+			if ((pen == TRANSPARENCY_NONE) && ((tinfo->color&0x3f)==0))
+				pen = TRANSPARENCY_PEN ;
+
 			drawgfx(bitmap,Machine->gfx[(tinfo->color>>7)&1],	/* bit 7 set for sprites */
 				tinfo->tile_num,
 				(tinfo->color&0x3f), 			/* bit 7 not for colour */
 				(tinfo->color & 0x0100),(tinfo->color & 0x0200),	/* flipx,flipy */
 				tinfo->xpos,tinfo->ypos,
-				&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+				&Machine->drv->visible_area,pen,0);
 			tinfo++ ;
 		}
 	}

@@ -200,21 +200,21 @@ int run_game(int game)
 				printf("Unable to start machine emulation\n");
 			}
 
-			osd_exit();
+			shutdown_machine();
 		}
 		else if (!bailing)
 		{
 			bailing = 1;
 			printf("Unable to initialize machine emulation\n");
 		}
+
+		osd_exit();
 	}
 	else if (!bailing)
 	{
 		bailing = 1;
 		printf ("Unable to initialize system\n");
 	}
-
-	shutdown_machine();
 
 	return err;
 }
@@ -261,6 +261,7 @@ int init_machine(void)
 	if (readroms() != 0)
 	{
 		free(Machine->input_ports);
+		Machine->input_ports = 0;
 		return 1;
 	}
 
@@ -288,6 +289,7 @@ int init_machine(void)
 		if ((ROM = malloc(Machine->memory_region_length[0])) == 0)
 		{
 			free(Machine->input_ports);
+			Machine->input_ports = 0;
 			/* TODO: should also free the allocated memory regions */
 			return 1;
 		}
@@ -315,6 +317,7 @@ int init_machine(void)
 	if( !initmemoryhandlers() )
 	{
 		free(Machine->input_ports);
+		Machine->input_ports = 0;
 		return 1;
 	}
 

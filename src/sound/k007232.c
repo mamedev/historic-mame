@@ -14,6 +14,10 @@
 		(Nb:  Should different memory regions per channel be needed
 		the bankswitching function can set this up).
 
+NS990821
+support for the K007232_VOL() macro.
+added external port callback, and functions to set the volume of the channels
+
 */
 
 
@@ -26,7 +30,7 @@
 
 typedef struct kdacApcm
 {
-	unsigned char vol[KDAC_A_PCM_MAX];
+	unsigned char vol[KDAC_A_PCM_MAX][2];	/* volume for the left and right channel */
 	unsigned int  addr[KDAC_A_PCM_MAX];
 	unsigned int  start[KDAC_A_PCM_MAX];
 	unsigned int  step[KDAC_A_PCM_MAX];
@@ -41,8 +45,8 @@ typedef struct kdacApcm
 static KDAC_A_PCM    kpcm[MAX_K007232];
 
 static int pcm_chan[MAX_K007232];
-static unsigned int pcm_limit;	/* Mish - I don't think we need this.. */
 
+static const struct K007232_interface *intf;
 
 #define   BASE_SHIFT    (12)
 
@@ -205,30 +209,42 @@ static void KDAC_A_make_fncode( void ){
 /*    Konami PCM update                         */
 /************************************************/
 
-static void KDAC_A_update(int arg, void **buffer, int buffer_len, int chip)
+static void KDAC_A_update(int chip, void **buffer, int buffer_len)
 {
 	int i;
 	int sample_bits;
 	signed char *buf8[2];
 	signed short *buf16[2];
 
-	sample_bits = arg >> 8;
+	sample_bits = Machine->sample_bits;
 
 	buf8[0] = (signed char *)buffer[0];
 	buf8[1] = (signed char *)buffer[1];
 	buf16[0] = (signed short *)buffer[0];
 	buf16[1] = (signed short *)buffer[1];
 
+	if (sample_bits == 8)
+	{
+		memset(buf8[0],0,buffer_len * sizeof(signed char));
+		memset(buf8[1],0,buffer_len * sizeof(signed char));
+	}
+	else
+	{
+		memset(buf16[0],0,buffer_len * sizeof(signed short));
+		memset(buf16[1],0,buffer_len * sizeof(signed short));
+	}
+
 	for( i = 0; i < KDAC_A_PCM_MAX; i++ )
 	{
 		if (kpcm[chip].play[i])
 		{
-			int vol,j;
+			int volA,volB,j,out;
 			unsigned int addr, old_addr;
 
 			/**** PCM setup ****/
 			addr = kpcm[chip].start[i] + ((kpcm[chip].addr[i]>>BASE_SHIFT)&0x000fffff);
-			vol = kpcm[chip].vol[i] * 0x22;
+			volA = 2 * kpcm[chip].vol[i][0];
+			volB = 2 * kpcm[chip].vol[i][1];
 			for( j = 0; j < buffer_len; j++ )
 			{
 				old_addr = addr;
@@ -257,41 +273,27 @@ static void KDAC_A_update(int arg, void **buffer, int buffer_len, int chip)
 				}
 
 				if (kpcm[chip].play[i] == 0)
-				{
-					if (sample_bits == 8)
-						memset(buf8[i],0,(buffer_len - j) * sizeof(signed char));
-					else
-						memset(buf16[i],0,(buffer_len - j) * sizeof(signed short));
 					break;
-				}
 
 				kpcm[chip].addr[i] += kpcm[chip].step[i];
 
+				out = (kpcm[chip].pcmbuf[i][addr] & 0x7f) - 0x40;
+
 				if (sample_bits == 8)
-					buf8[i][j] = (((kpcm[chip].pcmbuf[i][addr] & 0x7f) - 0x40) * vol) >> 8;
+				{
+					buf8[0][j] += (out * volA) >> 8;
+					buf8[1][j] += (out * volB) >> 8;
+				}
 				else
-					buf16[i][j] = (((kpcm[chip].pcmbuf[i][addr] & 0x7f) - 0x40) * vol);
+				{
+					buf16[0][j] += out * volA;
+					buf16[1][j] += out * volB;
+				}
 			}
-		}
-		else
-		{
-			if (sample_bits == 8)
-				memset(buf8[i],0,buffer_len * sizeof(signed char));
-			else
-				memset(buf16[i],0,buffer_len * sizeof(signed short));
 		}
 	}
 }
 
-static void K007232_0_update(int arg, void **buffer, int buffer_len)
-{
-	KDAC_A_update(arg, buffer, buffer_len, 0);
-}
-
-static void K007232_1_update(int arg, void **buffer, int buffer_len)
-{
-	KDAC_A_update(arg, buffer, buffer_len, 1);
-}
 
 /************************************************/
 /*    Konami PCM start                          */
@@ -299,45 +301,45 @@ static void K007232_1_update(int arg, void **buffer, int buffer_len)
 int K007232_sh_start(const struct MachineSound *msound)
 {
 	int i,j;
-	char buf[2][40];
-	const char *name[2][2];
-	const struct K007232_interface *intf = msound->sound_interface;
-	int vol[2][2];
 
-	/* Mish - I think limit can be hardwired to 0x20000... */
-	if( !intf->limit )    pcm_limit = 0x00020000;	/* default limit */
-	else                  pcm_limit = intf->limit;
+	intf = msound->sound_interface;
 
 	/* Set up the chips */
-	for (j=0; j<intf->num_chips; j++) {
+	for (j=0; j<intf->num_chips; j++)
+	{
+		char buf[2][40];
+		const char *name[2];
+		int vol[2];
+
 		kpcm[j].pcmbuf[0] = (unsigned char *)Machine->memory_region[intf->bank[j]];
 		kpcm[j].pcmbuf[1] = (unsigned char *)Machine->memory_region[intf->bank[j]];
 
 		for( i = 0; i < KDAC_A_PCM_MAX; i++ )
 		{
-			kpcm[j].vol[i] = 0;
 			kpcm[j].start[i] = 0;
 			kpcm[j].step[i] = 0;
 			kpcm[j].play[i] = 0;
 			kpcm[j].loop[i] = 0;
 		}
+		kpcm[j].vol[0][0] = 255;	/* channel A output to output A */
+		kpcm[j].vol[0][1] = 0;
+		kpcm[j].vol[1][0] = 0;
+		kpcm[j].vol[1][1] = 255;	/* channel B output to output B */
+
 		for( i = 0; i < 0x10; i++ )  kpcm[j].wreg[i] = 0;
 
 		for (i = 0;i < 2;i++)
 		{
-			name[j][i] = buf[i];
-			sprintf(buf[i],"Konami 007232 %d Ch %c",j,'A'+i);
+			name[i] = buf[i];
+			sprintf(buf[i],"007232 #%d Ch %c",j,'A'+i);
 		}
 
-		vol[j][0]=intf->volume[j];
-		vol[j][1]=intf->volume[j];
-	}
+		vol[0]=intf->volume[j] & 0xffff;
+		vol[1]=intf->volume[j] >> 16;
 
-	pcm_chan[0] = stream_init_multi(2,name[0],vol[0],Machine->sample_rate,
-			Machine->sample_bits,Machine->sample_bits << 8,K007232_0_update);
-	if (intf->num_chips>1)
-		pcm_chan[1] = stream_init_multi(2,name[1],vol[1],Machine->sample_rate,
-			Machine->sample_bits,Machine->sample_bits << 8,K007232_1_update);
+		pcm_chan[j] = stream_init_multi(2,name,vol,Machine->sample_rate,
+				Machine->sample_bits,j,KDAC_A_update);
+	}
 
 	KDAC_A_make_fncode();
 
@@ -366,13 +368,8 @@ static void K007232_WriteReg( int r, int v, int chip )
 	}
 	else if (r == 0x0c)
 	{
-		/* volume */
-		/* volume is externally controlled so it could be anything, but I guess */
-		/* this is a standard setup. It's the one used in TMNT. */
-		/* the pin is marked BLEV so it could be intended to control only channel B */
-
-		kpcm[chip].vol[0] = (v >> 4) & 0x0f;
-		kpcm[chip].vol[1] = (v >> 0) & 0x0f;
+		/* external port, usually volume control */
+		if (intf->portwritehandler[chip]) (*intf->portwritehandler[chip])(v);
 		return;
 	}
 	else
@@ -448,7 +445,7 @@ static int  K007232_ReadReg( int r, int chip )
 {
 	if (r == 0x0005)
 	{
-		if (kpcm[chip].start[0] < pcm_limit)
+		if (kpcm[chip].start[0] < 0x20000)
 		{
 			kpcm[chip].play[0] = 1;
 			kpcm[chip].addr[0] = 0;
@@ -457,7 +454,7 @@ static int  K007232_ReadReg( int r, int chip )
 	}
 	else if (r == 0x000b)
 	{
-		if (kpcm[chip].start[1] < pcm_limit)
+		if (kpcm[chip].start[1] < 0x20000)
 		{
 			kpcm[chip].play[1] = 1;
 			kpcm[chip].addr[1] = 0;
@@ -479,12 +476,6 @@ int K007232_read_port_0_r(int r)
 	return K007232_ReadReg(r,0);
 }
 
-void K007232_bankswitch_0_w(unsigned char *ptr_A,unsigned char *ptr_B)
-{
-	kpcm[0].pcmbuf[0]=ptr_A;
-	kpcm[0].pcmbuf[1]=ptr_B;
-}
-
 void K007232_write_port_1_w(int r,int v)
 {
 	K007232_WriteReg(r,v,1);
@@ -495,10 +486,16 @@ int K007232_read_port_1_r(int r)
 	return K007232_ReadReg(r,1);
 }
 
-void K007232_bankswitch_1_w(unsigned char *ptr_A,unsigned char *ptr_B)
+void K007232_bankswitch(int chip,unsigned char *ptr_A,unsigned char *ptr_B)
 {
-	kpcm[1].pcmbuf[0]=ptr_A;
-	kpcm[1].pcmbuf[1]=ptr_B;
+	kpcm[chip].pcmbuf[0] = ptr_A;
+	kpcm[chip].pcmbuf[1] = ptr_B;
+}
+
+void K007232_set_volume(int chip,int channel,int volumeA,int volumeB)
+{
+	kpcm[chip].vol[channel][0] = volumeA;
+	kpcm[chip].vol[channel][1] = volumeB;
 }
 
 /*****************************************************************************/

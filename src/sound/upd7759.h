@@ -1,7 +1,7 @@
 #ifndef UPD7759S_H
 #define UPD7759S_H
 
-#define MAX_UPD7759 1
+#define MAX_UPD7759 2
 
 /* There are two modes for the uPD7759, selected through the !MD pin.
    This is the mode select input.  High is stand alone, low is slave.
@@ -18,7 +18,7 @@ struct UPD7759_interface
 	int num;		/* num of upd chips */
 	int clock_rate;
 	int volume[MAX_UPD7759];
-	int region; 	/* memory region from which the samples came */
+	int region[MAX_UPD7759]; 	/* memory region from which the samples came */
 	int mode;		/* standalone or slave mode */
 	void (*irqcallback[MAX_UPD7759])(int param);	/* for slave mode only */
 };

@@ -8,6 +8,7 @@
 Game				System		Dumped?		Supported?
 ------------------------------------------------------
 64th Street				C		AraCORN 	Yes
+64th Street (Japan)		C		J-Rom	 	Yes
 Astyanax				?	 	Yes			encrypted
 Avenging Spirit			B		AraCORN 	Yes
 Cybattler				?		AraCORN 	encrypted
@@ -1071,7 +1072,7 @@ layout16x16(spritelayout_C,0x20000*8)
 
 static struct GfxDecodeInfo gfxdecodeinfo_Z[] =
 {
-	{ 1, 0x000000, &tilelayout,		256*0, 16 },	// [0] scroll 1
+	{ 1, 0x000000, &charlayout,		256*0, 16 },	// [0] scroll 1
 	{ 1, 0x020000, &tilelayout1,	256*2, 16 },	// [2] scroll 2
 	{ 1, 0x030000, &spritelayout_Z,	256*1, 16 },	// [3] sprites
 	{ -1 }
@@ -1316,6 +1317,31 @@ ROM_START( street64_rom )
 
 ROM_END
 
+ROM_START( streej64_rom )
+
+	ROM_REGION(0x80000)		/* Region 0 - main cpu code */
+	ROM_LOAD_EVEN( "91105-3.bin", 0x000000, 0x040000, 0xa211a83b )
+	ROM_LOAD_ODD(  "91105-2.bin", 0x000000, 0x040000, 0x27c1f436 )
+
+	ROM_REGION(0x220000)	/* Region 1 - temporary for gfx roms */
+	ROM_LOAD( "64th_01.rom", 0x000000, 0x080000, 0x06222f90 )
+	ROM_LOAD( "64th_06.rom", 0x080000, 0x080000, 0x2bfcdc75 )
+	ROM_LOAD( "64th_09.rom", 0x100000, 0x020000, 0xa4a97db4 ) /* Text */
+	ROM_LOAD( "64th_05.rom", 0x120000, 0x080000, 0xa89a7020 ) /* similar */
+	ROM_LOAD( "64th_04.rom", 0x1a0000, 0x080000, 0x98f83ef6 ) /* train/boat boss*/
+
+	ROM_REGION(0x20000)		/* Region 2 - sound cpu code */
+	ROM_LOAD_EVEN( "64th_08.rom", 0x000000, 0x010000, 0x632be0c1 )
+	ROM_LOAD_ODD(  "64th_07.rom", 0x000000, 0x010000, 0x13595d01 )
+
+	ROM_REGION(0x20000)		/* Region 3 - ADPCM sound samples */
+	ROM_LOAD( "64th_11.rom", 0x000000, 0x020000, 0xb0b8a65c )
+
+	ROM_REGION(0x40000)		/* Region 4 - ADPCM sound samples */
+	ROM_LOAD( "64th_10.rom", 0x000000, 0x040000, 0xa3390561 )
+
+ROM_END
+
 INPUT_PORTS_START( input_ports_street64 )
 	SERVICE
 	JOY(0)
@@ -1362,7 +1388,7 @@ struct GameDriver street64_driver =\
 	__FILE__,\
 	0,\
 	"64street",\
-	"64th. Street - A Detective Story",\
+	"64th. Street - A Detective Story (World?)",\
 	"1991",\
 	"Jaleco",\
 	MEGASYS1_CREDITS,\
@@ -1379,6 +1405,27 @@ struct GameDriver street64_driver =\
 	0,0\
 };
 
+struct GameDriver streej64_driver =\
+{\
+	__FILE__,\
+	&street64_driver,\
+	"64streej",\
+	"64th. Street - A Detective Story (Japan)",\
+	"1991",\
+	"Jaleco",\
+	MEGASYS1_CREDITS,\
+	0,\
+	&machine_driver_C,\
+	&driver_init_C,\
+	streej64_rom,\
+	street64_patch, 0,\
+	0,\
+	0,\
+	input_ports_street64,\
+	0, 0, 0,\
+	ORIENTATION_DEFAULT,\
+	0,0\
+};
 
 
 /***************************************************************************

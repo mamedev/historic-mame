@@ -224,10 +224,10 @@ void cps1_eeprom_port_w(int offset, int data)
 	/*
 	bit 0 = data
 	bit 6 = clock
-	bit 7 = start
+	bit 7 = cs
 	*/
 	EEPROM_write_bit(data & 0x01);
-	EEPROM_set_reset_line((data & 0x80) ? CLEAR_LINE : ASSERT_LINE);
+	EEPROM_set_cs_line((data & 0x80) ? CLEAR_LINE : ASSERT_LINE);
 	EEPROM_set_clock_line((data & 0x40) ? ASSERT_LINE : CLEAR_LINE);
 }
 
@@ -1323,7 +1323,7 @@ INPUT_PORTS_START( mercs_input_ports )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY | IPF_PLAYER1 )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1 )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER1 )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER1 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START      /* Player 2 */
@@ -1333,7 +1333,7 @@ INPUT_PORTS_START( mercs_input_ports )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY | IPF_PLAYER2 )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER2 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START      /* Player 3 */
@@ -3842,6 +3842,33 @@ ROM_START( striderj_rom )
 	ROM_LOAD( "strider.19",   0x20000, 0x20000, 0x444536d7 )
 ROM_END
 
+ROM_START( stridrja_rom )
+	ROM_REGION(CODE_SIZE)      /* 68000 code */
+	ROM_LOAD_EVEN( "sth36.bin",   0x00000, 0x20000, 0x53c7b006 )
+	ROM_LOAD_ODD ( "sth42.bin",   0x00000, 0x20000, 0x4037f65f )
+	ROM_LOAD_EVEN( "sth37.bin",   0x40000, 0x20000, 0x80e8877d )
+	ROM_LOAD_ODD ( "sth43.bin",   0x40000, 0x20000, 0x6b3fa466 )
+	ROM_LOAD_WIDE_SWAP( "strider.32",   0x80000, 0x80000, 0x9b3cfc08 )
+
+	ROM_REGION_DISPOSE(0x400000)     /* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "strider.02",   0x000000, 0x80000, 0x7705aa46 )
+	ROM_LOAD( "strider.01",   0x080000, 0x80000, 0xb7d04e8b )
+	ROM_LOAD( "strider.06",   0x100000, 0x80000, 0x4eee9aea )
+	ROM_LOAD( "strider.05",   0x180000, 0x80000, 0x005f000b )
+	ROM_LOAD( "strider.04",   0x200000, 0x80000, 0x5b18b722 )
+	ROM_LOAD( "strider.03",   0x280000, 0x80000, 0x6b4713b4 )
+	ROM_LOAD( "strider.08",   0x300000, 0x80000, 0x2d7f21e4 )
+	ROM_LOAD( "strider.07",   0x380000, 0x80000, 0xb9441519 )
+
+	ROM_REGION(0x18000) /* 64k for the audio CPU (+banks) */
+	ROM_LOAD( "strider.09",   0x00000, 0x10000, 0x2ed403bc )
+	ROM_RELOAD(               0x08000, 0x10000 )
+
+	ROM_REGION(0x40000) /* Samples */
+	ROM_LOAD( "strider.18",   0x00000, 0x20000, 0x4386bc80 )
+	ROM_LOAD( "strider.19",   0x20000, 0x20000, 0x444536d7 )
+ROM_END
+
 ROM_START( dwj_rom )
 	ROM_REGION(CODE_SIZE)      /* 68000 code */
 	ROM_LOAD_EVEN( "36.bin",       0x00000, 0x20000, 0x1a516657 )
@@ -6002,7 +6029,8 @@ GAME_DRIVER      (forgottn,          "Forgotten Worlds (US)",             "1988"
 GAME_DRIVER      (ghouls,            "Ghouls'n Ghosts (World?)",          "1988","Capcom",ORIENTATION_DEFAULT)
 GAME_DRIVER_CLONE(ghoulsj, ghouls,   "Dai Makai-Mura (Japan)",            "1988","Capcom",ORIENTATION_DEFAULT)
 GAME_DRIVER      (strider,           "Strider (US)",                      "1989","Capcom",ORIENTATION_DEFAULT)
-GAME_DRIVER_CLONE(striderj,strider,  "Strider Hiryu (Japan)",             "1989","Capcom",ORIENTATION_DEFAULT)
+GAME_DRIVER_CLONE(striderj,strider,  "Strider Hiryu (Japan, set 1)",      "1989","Capcom",ORIENTATION_DEFAULT)
+GAME_DRIVER_CLONE(stridrja,strider,  "Strider Hiryu (Japan, set 2)",      "1989","Capcom",ORIENTATION_DEFAULT)
 GAME_DRIVER      (dwj,               "Tenchi wo Kurau",                   "1989","Capcom",ORIENTATION_DEFAULT)
 GAME_DRIVER      (willow,            "Willow (Japan, English)",           "1989","Capcom",ORIENTATION_DEFAULT)
 GAME_DRIVER_CLONE(willowj, willow,   "Willow (Japan, Japanese)",          "1989","Capcom",ORIENTATION_DEFAULT)
@@ -6056,8 +6084,8 @@ GAME_DRIVER_CLONE(sf2t,    sf2ce,    "Street Fighter II' - Hyper Fighting (US)",
 GAME_DRIVER_CLONE(sf2tj,   sf2ce,    "Street Fighter II' Turbo - Hyper Fighting (Japan)",   "1992","Capcom",ORIENTATION_DEFAULT)
 GAME_DRIVER_QSOUND      (dino,              "Cadillacs and Dinosaurs (World)", "1993","Capcom",ORIENTATION_DEFAULT)
 GAME_DRIVER_QSOUND_CLONE(dinoj,dino,        "Cadillacs Kyouryuu-Shinseiki (Japan)", "1993","Capcom",ORIENTATION_DEFAULT)
-GAME_DRIVER_QSOUND      (punisher,          "Punisher (World)",                "1993","Capcom",ORIENTATION_DEFAULT)
-GAME_DRIVER_QSOUND_CLONE(punishrj,punisher, "Punisher (Japan)",                "1993","Capcom",ORIENTATION_DEFAULT)
+GAME_DRIVER_QSOUND      (punisher,          "The Punisher (World)",       "1993","Capcom",ORIENTATION_DEFAULT)
+GAME_DRIVER_QSOUND_CLONE(punishrj,punisher, "The Punisher (Japan)",       "1993","Capcom",ORIENTATION_DEFAULT)
 GAME_DRIVER      (pnickj,            "Pnickies (Japan)",                  "1994","Capcom (licensed from Compile)",ORIENTATION_DEFAULT)
 GAME_DRIVER      (qad,               "Quiz & Dragons (US)",               "1992","Capcom",ORIENTATION_DEFAULT)
 GAME_DRIVER_CLONEI(qadj,    qad,      "Quiz & Dragons (Japan)",            "1994","Capcom",ORIENTATION_DEFAULT)
@@ -6098,7 +6126,7 @@ struct GameDriver slammast_driver =
 	__FILE__,
 	0,
 	"slammast",
-	"Slam Masters (World)",
+	"Saturday Night Slam Masters (World)",
 	"1993",
 	"Capcom",
 	CPS1_CREDITS,
@@ -6240,3 +6268,6 @@ struct GameDriver pang3_driver =
 	ORIENTATION_DEFAULT,
 	cps1_eeprom_load, cps1_eeprom_save
 };
+
+
+#include "cps2.c"

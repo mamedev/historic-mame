@@ -4,7 +4,7 @@ The current ROM set is strange because two ROMs overlap two others replacing
 the program.
 
 It's definitely a Kaneko boardset, but it could very well be they converted
-some other game to run Gal's Panic, because there's some ROMs piggybacked
+some other game to run Gals Panic, because there's some ROMs piggybacked
 on top of each other and some ROMs on a daughterboard plugged into smaller
 sized ROM sockets. It's not a pirate version. The piggybacked ROMs even have
 Kaneko stickers. The silkscreen on the board says PAMERA-4.

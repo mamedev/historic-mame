@@ -1014,8 +1014,8 @@ INPUT_PORTS_START( tnk3_input_ports )
 	PORT_DIPSETTING(    0x04, "Normal?" )
 	PORT_DIPSETTING(    0x02, "Hard?" )
 	PORT_DIPSETTING(    0x00, "Hardest?" )
-	PORT_DIPNAME( 0x18, 0x18, "Game Mode" )
-	PORT_DIPSETTING(    0x18, "Normal" )
+	PORT_DIPNAME( 0x18, 0x10, "Game Mode" )
+	PORT_DIPSETTING(    0x18, "Demo Sounds Off" )
 	PORT_DIPSETTING(    0x10, "Demo Sounds On" )
 	PORT_DIPSETTING(    0x00, "Freeze" )
 	PORT_BITX( 0,       0x08, IPT_DIPSWITCH_SETTING | IPF_CHEAT, "Infinite Lives", IP_KEY_NONE, IP_JOY_NONE )
@@ -1053,43 +1053,41 @@ BUTTONS
 	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START  /* DSW 1 */
-	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unused ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Flip_Screen ) )
 	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x04, 0x04, "Bonus Occurrance?" )
-	PORT_DIPSETTING(    0x00, "1st & every 2nd?" )
-	PORT_DIPSETTING(    0x04, "1st & 2nd only?" )
+	PORT_DIPNAME( 0x04, 0x04, "Bonus Occurrance" )
+	PORT_DIPSETTING(    0x04, "1st & every 2nd" )
+	PORT_DIPSETTING(    0x00, "1st & 2nd only" )
 	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x08, "3" )
 	PORT_DIPSETTING(    0x00, "5" )
 COINAGE
 
 	PORT_START  /* DSW 2 */
-	PORT_DIPNAME( 0x03, 0x03, "Difficulty?" )
-	PORT_DIPSETTING(    0x02, "Easy?" )
-	PORT_DIPSETTING(    0x03, "Normal?" )
-	PORT_DIPSETTING(    0x01, "Hard?" )
-	PORT_DIPSETTING(    0x00, "Very Hard?" )
-	PORT_DIPNAME( 0x04, 0x04, "Demo Sounds?" )
-	PORT_DIPSETTING(    0x00, "Off?" )
-	PORT_DIPSETTING(    0x04, "On" )
-	PORT_DIPNAME( 0x08, 0x08, "Unknown" )
-	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x30, 0x30, "Bonus Life?" )
-	PORT_DIPSETTING(    0x30, "50k 100k?" )
-	PORT_DIPSETTING(    0x20, "60k 120k?" )
-	PORT_DIPSETTING(    0x10, "100k 200k?" )
-	PORT_DIPSETTING(    0x00, "None?" )
-	PORT_DIPNAME( 0x40, 0x40, "Allow Continue" )
-	PORT_DIPSETTING(    0x40, DEF_STR( No ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Yes ) )
-	PORT_DIPNAME( 0x80, 0x80, "Unknown" )
-	PORT_DIPSETTING(    0x80, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(    0x03, "Easy" )
+	PORT_DIPSETTING(    0x02, "Normal" )
+	PORT_DIPSETTING(    0x01, "Hard" )
+	PORT_DIPSETTING(    0x00, "Very Hard" )
+	PORT_DIPNAME( 0x0c, 0x08, "Game Mode" )
+	PORT_DIPSETTING(    0x08, "Demo Sounds On" )
+	PORT_DIPSETTING(    0x0c, "Demo Sounds Off" )
+	PORT_DIPSETTING(    0x00, "Freeze" )
+	PORT_BITX( 0,       0x04, IPT_DIPSWITCH_SETTING | IPF_CHEAT, "Infinite Lives", IP_KEY_NONE, IP_JOY_NONE )
+	PORT_DIPNAME( 0x30, 0x30, DEF_STR( Bonus_Life ) )
+	PORT_DIPSETTING(    0x30, "50k 100k" )
+	PORT_DIPSETTING(    0x20, "60k 120k" )
+	PORT_DIPSETTING(    0x10, "100 200k" )
+	PORT_DIPSETTING(    0x00, "None" )
+	PORT_DIPNAME( 0xc0, 0xc0, "Game Style" )
+	PORT_DIPSETTING(    0xc0, "Normal without continue" )
+	PORT_DIPSETTING(    0x80, "Normal with continue" )
+	PORT_DIPSETTING(    0x40, "Time attack 3 minutes" )
+	PORT_DIPSETTING(    0x00, "Time attack 5 minutes" )
 
 ROTARY
 
@@ -2735,11 +2733,60 @@ ROM_START( bermudat_rom )
 	ROM_LOAD( "bt_p3.rom",  0x00000, 0x10000, 0x53a82e50 )    /* YM3526 */
 
 	ROM_REGION( 0x1400 ) /* color proms */
-	ROM_LOAD( "mb7122e.1k",   0x0000, 0x0400, 0x1e8fc4c3 ) /* red */
-	ROM_LOAD( "mb7122e.2l",   0x0400, 0x0400, 0x23ce9707 ) /* green */
-	ROM_LOAD( "mb7122e.1l",   0x0800, 0x0400, 0x26caf985 ) /* blue */
-	ROM_LOAD( "mb7122e.h5",   0x0c00, 0x0400, 0xc20b197b ) /* ? */
-	ROM_LOAD( "mb7122e.h6",   0x1000, 0x0400, 0x5d0c617f ) /* ? */
+	ROM_LOAD( "btj_01r.prm", 0x0000, 0x0400, 0xf4b54d06 ) /* red */
+	ROM_LOAD( "btj_02g.prm", 0x0400, 0x0400, 0xbaac139e ) /* green */
+	ROM_LOAD( "btj_03b.prm", 0x0800, 0x0400, 0x2edf2e0b ) /* blue */
+	ROM_LOAD( "btj_h.prm",   0x0c00, 0x0400, 0xc20b197b ) /* ? */
+	ROM_LOAD( "btj_v.prm",   0x1000, 0x0400, 0x5d0c617f ) /* ? */
+
+	ROM_REGION_DISPOSE( 0x8000 ) /* characters */
+	ROM_LOAD( "bt_p10.rom", 0x0000, 0x8000,  0xd3650211 )
+
+	ROM_REGION_DISPOSE( 0x40000 ) /* background tiles */
+	ROM_LOAD( "bt_p22.rom", 0x00000, 0x10000, 0x8daf7df4 )
+	ROM_LOAD( "bt_p21.rom", 0x10000, 0x10000, 0xb7689599 )
+	ROM_LOAD( "bt_p20.rom", 0x20000, 0x10000, 0xab6217b7 )
+	ROM_LOAD( "bt_p19.rom", 0x30000, 0x10000, 0x8ed759a0 )
+
+	ROM_REGION_DISPOSE( 0x40000 ) /* 16x16 sprites */
+	ROM_LOAD( "bt_p6.rom",  0x00000, 0x8000, 0x8ffdf969 )
+	ROM_LOAD( "bt_p7.rom",  0x10000, 0x8000, 0x268d10df )
+	ROM_LOAD( "bt_p8.rom",  0x20000, 0x8000, 0x3e39e9dd )
+	ROM_LOAD( "bt_p9.rom",  0x30000, 0x8000, 0xbf56da61 )
+
+	ROM_REGION_DISPOSE( 0x80000 ) /* 32x32 sprites */
+	ROM_LOAD( "bt_p11.rom", 0x00000, 0x10000, 0xaae7410e )
+	ROM_LOAD( "bt_p12.rom", 0x10000, 0x10000, 0x18914f70 )
+	ROM_LOAD( "bt_p13.rom", 0x20000, 0x10000, 0xcd79ce81 )
+	ROM_LOAD( "bt_p14.rom", 0x30000, 0x10000, 0xedc57117 )
+	ROM_LOAD( "bt_p15.rom", 0x40000, 0x10000, 0x448bf9f4 )
+	ROM_LOAD( "bt_p16.rom", 0x50000, 0x10000, 0x119999eb )
+	ROM_LOAD( "bt_p17.rom", 0x60000, 0x10000, 0xb5462139 )
+	ROM_LOAD( "bt_p18.rom", 0x70000, 0x10000, 0xcb416227 )
+
+	ROM_REGION(0x20000)	/* ADPCM Samples */
+	ROM_LOAD( "bt_p4.rom",  0x00000, 0x10000, 0x4bc83229 )
+	ROM_LOAD( "bt_p5.rom",  0x10000, 0x10000, 0x817bd62c )
+ROM_END
+
+/***********************************************************************/
+
+ROM_START( bermudaj_rom )
+	ROM_REGION(0x10000)	/* 64k for cpuA code */
+	ROM_LOAD( "btj_p01.bin", 0x0000, 0x10000,  0xeda75f36 )
+
+	ROM_REGION(0x10000)	/* 64k for cpuB code */
+	ROM_LOAD( "bt_p2.rom",   0x00000, 0x10000, 0x0e193265 )
+
+	ROM_REGION(0x10000)	/* 64k for sound code */
+	ROM_LOAD( "btj_p03.bin", 0x00000, 0x10000, 0xfea8a096 )    /* YM3526 */
+
+	ROM_REGION( 0x1400 ) /* color proms */
+	ROM_LOAD( "btj_01r.prm", 0x0000, 0x0400, 0xf4b54d06 ) /* red */
+	ROM_LOAD( "btj_02g.prm", 0x0400, 0x0400, 0xbaac139e ) /* green */
+	ROM_LOAD( "btj_03b.prm", 0x0800, 0x0400, 0x2edf2e0b ) /* blue */
+	ROM_LOAD( "btj_h.prm",   0x0c00, 0x0400, 0xc20b197b ) /* ? */
+	ROM_LOAD( "btj_v.prm",   0x1000, 0x0400, 0x5d0c617f ) /* ? */
 
 	ROM_REGION_DISPOSE( 0x8000 ) /* characters */
 	ROM_LOAD( "bt_p10.rom",  0x0000, 0x8000,  0xd3650211 )
@@ -2751,10 +2798,10 @@ ROM_START( bermudat_rom )
 	ROM_LOAD( "bt_p19.rom",  0x30000, 0x10000, 0x8ed759a0 )
 
 	ROM_REGION_DISPOSE( 0x40000 ) /* 16x16 sprites */
-	ROM_LOAD( "bt_p6.rom",  0x00000, 0x8000, 0x8ffdf969 )
-	ROM_LOAD( "bt_p7.rom",  0x10000, 0x8000, 0x268d10df )
-	ROM_LOAD( "bt_p8.rom",  0x20000, 0x8000, 0x3e39e9dd )
-	ROM_LOAD( "bt_p9.rom",  0x30000, 0x8000, 0xbf56da61 )
+	ROM_LOAD( "bt_p6.rom",   0x00000, 0x8000, 0x8ffdf969 )
+	ROM_LOAD( "bt_p7.rom",   0x10000, 0x8000, 0x268d10df )
+	ROM_LOAD( "bt_p8.rom",   0x20000, 0x8000, 0x3e39e9dd )
+	ROM_LOAD( "bt_p9.rom",   0x30000, 0x8000, 0xbf56da61 )
 
 	ROM_REGION_DISPOSE( 0x80000 ) /* 32x32 sprites */
 	ROM_LOAD( "bt_p11.rom",  0x00000, 0x10000, 0xaae7410e )
@@ -2767,8 +2814,8 @@ ROM_START( bermudat_rom )
 	ROM_LOAD( "bt_p18.rom",  0x70000, 0x10000, 0xcb416227 )
 
 	ROM_REGION(0x20000)	/* ADPCM Samples */
-	ROM_LOAD( "bt_p4.rom",  0x00000, 0x10000, 0x4bc83229 )
-	ROM_LOAD( "bt_p5.rom",  0x10000, 0x10000, 0x817bd62c )
+	ROM_LOAD( "btj_p04.bin", 0x00000, 0x10000, 0xb2e01129 )
+	ROM_LOAD( "btj_p05.bin", 0x10000, 0x10000, 0x924c24f7 )
 ROM_END
 
 /***********************************************************************/
@@ -3862,7 +3909,7 @@ struct GameDriver bermudat_driver =
 	__FILE__,
 	0,
 	"bermudat",
-	"Bermuda Triangle",
+	"Bermuda Triangle (World?)",
 	"1987",
 	"SNK",
 	CREDITS,
@@ -3871,6 +3918,32 @@ struct GameDriver bermudat_driver =
 	0,
 
 	bermudat_rom,
+	bermudat_decode, 0,
+	0,
+	0, /* sound_prom */
+
+	bermudat_input_ports,
+
+	PROM_MEMORY_REGION( MEM_COLOR ), 0, 0,
+	ORIENTATION_ROTATE_270,
+
+        bermudat_hiload, bermudat_hisave
+};
+
+struct GameDriver bermudaj_driver =
+{
+	__FILE__,
+	&bermudat_driver,
+	"bermudaj",
+	"Bermuda Triangle (Japan)",
+	"1987",
+	"SNK",
+	CREDITS,
+	0,
+	&bermudat_machine_driver,
+	0,
+
+	bermudaj_rom,
 	bermudat_decode, 0,
 	0,
 	0, /* sound_prom */
@@ -4039,7 +4112,7 @@ struct GameDriver tdfeverj_driver =
 	__FILE__,
         &tdfever_driver,
 	"tdfeverj",
-	"TouchDown Fever (Japanese)",
+	"TouchDown Fever (Japan)",
 	"1987",
 	"SNK",
 	CREDITS,

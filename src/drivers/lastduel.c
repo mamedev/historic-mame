@@ -4,7 +4,7 @@
   Last Duel (USA set 2)           - Capcom, 1988
   Last Duel (Bootleg set)         - Capcom, 1988
   LED Storm (USA set)             - Capcom, 1988
-  Mad Gear (World set)            - Capcom, 1989
+  Mad Gear (World? set)           - Capcom, 1989
 
   Mad Gear (Japan set) has rom code MDJ and is not dumped yet, presumably
   other versions of Last Duel exist too.
@@ -14,15 +14,6 @@
   Trivia ;)  The Mad Gear pcb has an unused pad on the board for an i8751
 microcontroller.
 
-
-1999.06.12 JB
-In current MAME setup (35b13) Mad Gear and Led Storm use the same sound code
-In opposition to Last Duel there is simple bankswitching stuff.
-
-Also Mad Gear and Led Storm sound code uses YM-2203 port A for something.
-At the very beginning it writes 0x01 to this port and seems to never write
-there anything again. Weird !
-
 **************************************************************************/
 
 #include "driver.h"
@@ -30,13 +21,17 @@ there anything again. Weird !
 
 extern int lastduel_vram_r(int offset);
 extern void lastduel_vram_w(int offset,int value);
+extern void lastduel_flip_w(int offset,int value);
 extern int lastduel_scroll2_r(int offset);
-extern void lastduel_scroll2_w(int offset,int value);
 extern int lastduel_scroll1_r(int offset);
 extern void lastduel_scroll1_w(int offset,int value);
+extern void lastduel_scroll2_w(int offset,int value);
+extern void madgear_scroll1_w(int offset,int value);
+extern void madgear_scroll2_w(int offset,int value);
 extern int lastduel_vh_start(void);
-extern void lastduel_vh_stop(void);
+extern int madgear_vh_start(void);
 extern void lastduel_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+extern void ledstorm_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 extern void lastduel_scroll_w( int offset, int data );
 
 extern unsigned char *lastduel_vram,*lastduel_scroll2,*lastduel_scroll1;
@@ -87,15 +82,7 @@ static int madgear_inputs_r(int offset)
 
 static void lastduel_sound_w( int offset, int data )
 {
-	switch( offset )
-	{
-		case 0:
-		  // Unknown - looks like a watchdog
-			break;
-		case 2:
-			soundlatch_w(offset,data & 0xff);
-			break;
-	}
+	soundlatch_w(offset,data & 0xff);
 }
 
 /******************************************************************************/
@@ -103,7 +90,7 @@ static void lastduel_sound_w( int offset, int data )
 static struct MemoryReadAddress lastduel_readmem[] =
 {
 	{ 0x000000, 0x05ffff, MRA_ROM },
-	{ 0xfc0800, 0xfc0cff, MRA_BANK2 },
+	{ 0xfc0800, 0xfc0fff, MRA_BANK2 },
 	{ 0xfc4000, 0xfc4007, lastduel_inputs_r },
 	{ 0xfcc000, 0xfcdfff, lastduel_vram_r },
 	{ 0xfd0000, 0xfd3fff, lastduel_scroll1_r },
@@ -117,8 +104,9 @@ static struct MemoryWriteAddress lastduel_writemem[] =
 {
 	{ 0x000000, 0x05ffff, MWA_ROM },
 	{ 0xfc0000, 0xfc0003, MWA_NOP }, /* Written rarely */
-	{ 0xfc0800, 0xfc0d07, MWA_BANK2, &spriteram },
-	{ 0xfc4000, 0xfc4003, lastduel_sound_w },
+	{ 0xfc0800, 0xfc0fff, MWA_BANK2, &spriteram },
+	{ 0xfc4000, 0xfc4001, lastduel_flip_w },
+	{ 0xfc4002, 0xfc4003, lastduel_sound_w },
 	{ 0xfc8000, 0xfc800f, lastduel_scroll_w },
 	{ 0xfcc000, 0xfcdfff, lastduel_vram_w,    &lastduel_vram },
 	{ 0xfd0000, 0xfd3fff, lastduel_scroll1_w, &lastduel_scroll1 },
@@ -145,12 +133,13 @@ static struct MemoryWriteAddress madgear_writemem[] =
 {
 	{ 0x000000, 0x07ffff, MWA_ROM },
 	{ 0xfc1800, 0xfc1fff, MWA_BANK2, &spriteram },
-	{ 0xfc4000, 0xfc4003, lastduel_sound_w },
+	{ 0xfc4000, 0xfc4001, lastduel_flip_w },
+	{ 0xfc4002, 0xfc4003, lastduel_sound_w },
 	{ 0xfc8000, 0xfc9fff, lastduel_vram_w,    &lastduel_vram },
 	{ 0xfcc000, 0xfcc7ff, paletteram_RRRRGGGGBBBBIIII_word_w, &paletteram },
 	{ 0xfd0000, 0xfd000f, lastduel_scroll_w },
-	{ 0xfd4000, 0xfd7fff, lastduel_scroll1_w, &lastduel_scroll1 },
-	{ 0xfd8000, 0xfdffff, lastduel_scroll2_w, &lastduel_scroll2 },
+	{ 0xfd4000, 0xfd7fff, madgear_scroll1_w, &lastduel_scroll1 },
+	{ 0xfd8000, 0xfdffff, madgear_scroll2_w, &lastduel_scroll2 },
 	{ 0xff0000, 0xffffff, MWA_BANK1,&lastduel_ram },
 	{ -1 }	/* end of table */
 };
@@ -178,7 +167,6 @@ static struct MemoryWriteAddress sound_writemem[] =
 	{ -1 }	/* end of table */
 };
 
-
 static void mg_bankswitch_w(int offset, int data)
 {
 	int bankaddress;
@@ -187,7 +175,6 @@ static void mg_bankswitch_w(int offset, int data)
 	bankaddress = 0x10000 + (data & 0x01) * 0x4000;
 	cpu_setbank(3,&RAM[bankaddress]);
 }
-
 
 static struct MemoryReadAddress mg_sound_readmem[] =
 {
@@ -284,12 +271,57 @@ static struct GfxLayout scroll2layout =
   64*8   /* each tile takes 64 consecutive bytes */
 };
 
+static struct GfxLayout madgear_tile =
+{
+	16,16,
+	2048,
+	4,
+	{ 12,8,4,0 },
+	{
+		0, 1, 2, 3,
+		16,17,18,19,
+
+		0+64*8, 1+64*8, 2+64*8, 3+64*8,
+		16+64*8,17+64*8,18+64*8,19+64*8,
+	},
+	{ 0*32, 1*32, 2*32, 3*32, 4*32, 5*32, 6*32, 7*32,
+			8*32, 9*32, 10*32, 11*32, 12*32, 13*32, 14*32, 15*32 },
+	128*8
+};
+
+static struct GfxLayout madgear_tile2 =
+{
+	16,16,
+	4096,
+	4,
+	{ 4,12,0,8 },
+	{
+		0, 1, 2, 3,
+		16,17,18,19,
+
+		0+64*8, 1+64*8, 2+64*8, 3+64*8,
+		16+64*8,17+64*8,18+64*8,19+64*8,
+	},
+	{ 0*32, 1*32, 2*32, 3*32, 4*32, 5*32, 6*32, 7*32,
+			8*32, 9*32, 10*32, 11*32, 12*32, 13*32, 14*32, 15*32 },
+	128*8
+};
+
 static struct GfxDecodeInfo lastduel_gfxdecodeinfo[] =
 {
   {  1, 0x40000,&sprites,       512, 16 },	/* colors 512-767 */
   {  1, 0xc0000,&text_layout,   768, 16 },	/* colors 768-831 */
   {  1, 0x00000,&scroll1layout,   0, 16 },	/* colors   0-255 */
   {  1, 0xc8000,&scroll2layout,	256, 16 },	/* colors 256-511 */
+  { -1 }
+};
+
+static struct GfxDecodeInfo madgear_gfxdecodeinfo[] =
+{
+  {  1, 0x40000,&sprites,       512, 16 },	/* colors 512-767 */
+  {  1, 0xc0000,&text_layout,   768, 16 },	/* colors 768-831 */
+  {  1, 0x00000,&madgear_tile,    0, 16 },	/* colors   0-255 */
+  {  1, 0xc8000,&madgear_tile2,	256, 16 },	/* colors 256-511 */
   { -1 }
 };
 
@@ -306,7 +338,7 @@ static struct OKIM6295interface okim6295_interface =
 	1,              /* 1 chip */
 	{ 8000 },           /* 8000Hz frequency */
 	{ 3 },			/* memory region 3 */
-	{ 80 }
+	{ 90 }
 };
 
 static struct YM2203interface ym2203_interface =
@@ -367,7 +399,7 @@ static struct MachineDriver lastduel_machine_driver =
 	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_BEFORE_VBLANK,
 	0,
 	lastduel_vh_start,
-	lastduel_vh_stop,
+	0,
 	lastduel_vh_screenrefresh,
 
 	/* sound hardware */
@@ -404,17 +436,17 @@ static struct MachineDriver madgear_machine_driver =
 	0,
 
 	/* video hardware */
-	64*8, 32*8, { 8*8, 56*8-1, 1*8, 31*8-1 }, /* 384 x 242? */
+	64*8, 32*8, { 8*8, 56*8-1, 1*8, 31*8-1 }, /* 384 x 240? */
 
-	lastduel_gfxdecodeinfo,
+	madgear_gfxdecodeinfo,
 	1024, 1024,
 	0,
 
 	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_BEFORE_VBLANK,
 	0,
-	lastduel_vh_start,
-	lastduel_vh_stop,
-	lastduel_vh_screenrefresh,
+	madgear_vh_start,
+	0,
+	ledstorm_vh_screenrefresh,
 
 	/* sound hardware */
 	0,0,0,0,
@@ -773,7 +805,7 @@ ROM_START( madgear_rom )
 	ROM_LOAD_ODD ( "mg_01.rom",    0x40000, 0x20000, 0x1cea2af0 )
 
 	ROM_REGION_DISPOSE(0x148000) /* temporary space for graphics */
-	ROM_LOAD( "gfx1",         0x000000, 0x40000, 0x00000000 )	/* No tile roms :( :( */
+	ROM_LOAD( "ls-12",        0x000000, 0x40000, BADCRC( 0x6c1b2c6c ) )
 	ROM_LOAD( "mg_m11.rom",   0x040000, 0x10000, 0xee319a64 )	/* Interleaved sprites */
 	ROM_LOAD( "mg_m07.rom",   0x050000, 0x10000, 0xe5c0b211 )
 	ROM_LOAD( "mg_m12.rom",   0x060000, 0x10000, 0x887ef120 )
@@ -783,7 +815,7 @@ ROM_START( madgear_rom )
 	ROM_LOAD( "mg_m14.rom",   0x0a0000, 0x10000, 0x21e5424c )
 	ROM_LOAD( "mg_m10.rom",   0x0b0000, 0x10000, 0xb64afb54 )
 	ROM_LOAD( "mg_06.rom",    0x0c0000, 0x08000, 0x382ee59b )	/* 8x8 text */
-	ROM_LOAD( "gfx2",         0x0c8000, 0x80000, 0x00000000 )	/* No tile roms :( :( */
+	ROM_LOAD( "ls-11",        0x0c8000, 0x80000, BADCRC( 0x6bf81c64 ) )
 
 	ROM_REGION( 0x18000 ) /* audio CPU */
 	ROM_LOAD( "mg_05.rom",    0x00000,  0x08000, 0x2fbfc945 )
@@ -802,7 +834,7 @@ ROM_START( ledstorm_rom )
 	ROM_LOAD_ODD ( "mg_01.rom", 0x40000, 0x20000, 0x1cea2af0 )
 
 	ROM_REGION_DISPOSE(0x148000) /* temporary space for graphics */
-	ROM_LOAD( "gfx1",         0x000000, 0x40000, 0x00000000 )	/* No tile roms :( :( */
+	ROM_LOAD( "ls-12",        0x000000, 0x40000, 0x6c1b2c6c )
 	ROM_LOAD( "mg_m11.rom",   0x040000, 0x10000, 0xee319a64 )	/* Interleaved sprites */
 	ROM_LOAD( "07",           0x050000, 0x10000, 0x7152b212 )
 	ROM_LOAD( "mg_m12.rom",   0x060000, 0x10000, 0x887ef120 )
@@ -812,7 +844,7 @@ ROM_START( ledstorm_rom )
 	ROM_LOAD( "mg_m14.rom",   0x0a0000, 0x10000, 0x21e5424c )
 	ROM_LOAD( "10",           0x0b0000, 0x10000, 0x6db7ca64 )
 	ROM_LOAD( "06",           0x0c0000, 0x08000, 0x54bfdc02 )	/* 8x8 text */
-	ROM_LOAD( "gfx2",         0x0c8000, 0x80000, 0x00000000 )	/* No tile roms :( :( */
+	ROM_LOAD( "ls-11",        0x0c8000, 0x80000, 0x6bf81c64 )
 
 	ROM_REGION( 0x18000 ) /* audio CPU */
 	ROM_LOAD( "mg_05.rom",    0x00000,  0x08000, 0x2fbfc945 )
@@ -1029,8 +1061,8 @@ struct GameDriver madgear_driver =
 	"Mad Gear (US)",
 	"1989",
 	"Capcom",
-	"Bryan McPhail\n\nDriver Notes: \n  Tile roms missing!\n",
-	GAME_NOT_WORKING,
+	"Bryan McPhail",
+	0,
 	&madgear_machine_driver,
 	0,
 
@@ -1052,8 +1084,8 @@ struct GameDriver ledstorm_driver =
 	"Led Storm (US)",
 	"1988",
 	"Capcom",
-	"Bryan McPhail\n\nDriver Notes: \n  Tile roms missing!\n",
-	GAME_NOT_WORKING,
+	"Bryan McPhail",
+	0,
 	&madgear_machine_driver,
 	0,
 

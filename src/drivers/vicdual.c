@@ -1833,7 +1833,7 @@ struct GameDriver samurai_driver =
 	__FILE__,
 	0,
 	"samurai",
-	"Samurai",
+	"Samurai (Sega)",
 	"1980",
 	"Sega",
 	"Mike Coates\nRichard Davies\nNicola Salmoria\nZsolt Vasvari",

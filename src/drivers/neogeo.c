@@ -1824,34 +1824,23 @@ ROM_END
 
 ROM_START( ttbb_rom )
 	ROM_REGION(0x100000)
-	ROM_LOAD_ODD ( "n046001a.038", 0x000000, 0x040000, 0xefb016a2 )
-	ROM_CONTINUE (                 0x000000 & ~1, 0x040000 | ROMFLAG_ALTERNATE )
+	ROM_LOAD_WIDE_SWAP( "2020_p1.rom", 0x000000, 0x080000, 0xd396c9cb )
 
-	NEO_SFIX_128K( "n046001a.378", 0x7015b8fc )
+	NEO_SFIX_128K( "2020_s1.rom", 0x7015b8fc )
 
-	NEO_BIOS_SOUND_128K( "n046001a.4f8", 0xbf755068 )
+	NEO_BIOS_SOUND_128K( "2020_m1.rom", 0x4cf466ec )
 
 	ROM_REGION_OPTIONAL(0x200000) /* sound samples */
-	ROM_LOAD( "n046001a.1f8", 0x000000, 0x080000, 0x33e7886e )
-	ROM_LOAD( "n046001a.1fc", 0x080000, 0x080000, 0xe7ca3882 )
-	ROM_LOAD( "n046001b.1f8", 0x100000, 0x080000, 0x3cf9a433 )
-	ROM_LOAD( "n046001b.1fc", 0x180000, 0x080000, 0x88b10192 )
+	ROM_LOAD( "2020_v1.rom", 0x000000, 0x100000, 0xd4ca364e )
+	ROM_LOAD( "2020_v2.rom", 0x100000, 0x100000, 0x54994455 )
 
 	NO_DELTAT_REGION
 
 	ROM_REGION(0x300000)
-	ROM_LOAD( "n046001a.538", 0x000000, 0x40000, 0x746bf48a ) /* Plane 0,1 */
-	ROM_CONTINUE(             0x180000, 0x40000 )
-	ROM_LOAD( "n046001a.53c", 0x040000, 0x40000, 0x57bdcec0 ) /* Plane 0,1 */
-	ROM_CONTINUE(             0x1c0000, 0x40000 )
-	ROM_LOAD( "n046001b.538", 0x080000, 0x40000, 0x0b054a38 ) /* Plane 0,1 */
-	ROM_CONTINUE(             0x200000, 0x40000 )
-	ROM_LOAD( "n046001a.638", 0x0c0000, 0x40000, 0x5c123d9c ) /* Plane 2,3 */
-	ROM_CONTINUE(             0x240000, 0x40000 )
-	ROM_LOAD( "n046001a.63c", 0x100000, 0x40000, 0x2f4bb615 ) /* Plane 2,3 */
-	ROM_CONTINUE(             0x280000, 0x40000 )
-	ROM_LOAD( "n046001b.638", 0x140000, 0x40000, 0xb2a86447 ) /* Plane 2,3 */
-	ROM_CONTINUE(             0x2c0000, 0x40000 )
+	ROM_LOAD_GFX_EVEN( "2020_c1.rom", 0x000000, 0x100000, 0x4f5e19bd ) /* Plane 0,1 */
+	ROM_LOAD_GFX_ODD ( "2020_c2.rom", 0x000000, 0x100000, 0xd6314bf0 ) /* Plane 2,3 */
+	ROM_LOAD_GFX_EVEN( "2020_c3.rom", 0x200000, 0x080000, 0x6a87ae30 ) /* Plane 0,1 */
+	ROM_LOAD_GFX_ODD ( "2020_c4.rom", 0x200000, 0x080000, 0xbef75dd0 ) /* Plane 2,3 */
 ROM_END
 
 ROM_START( socbrawl_rom )
@@ -4583,29 +4572,6 @@ struct GameDriver NEO_NAME##_driver  = \
 	neogeo_sram_load,neogeo_sram_save  \
 };
 
-#define NEODRIVERMGD2X(NEO_NAME,NEO_ROMNAME,NEO_REALNAME,NEO_YEAR,NEO_MANU,NEO_MACHINE) \
-struct GameDriver NEO_NAME##_driver  = \
-{                               \
-	__FILE__,                   \
-	&neogeo_bios,               \
-	NEO_ROMNAME,                \
-	NEO_REALNAME,               \
-	NEO_YEAR,                   \
-	NEO_MANU,                   \
-	NGCRED,          \
-	0,                          \
-	NEO_MACHINE,                \
-	neogeo_onetime_init_machine,		\
-	NEO_NAME##_rom,             \
-	neogeo_mgd2_untangle, 0,           \
-	0,                          \
-	0, 	    	                \
-	neogeo_ports,               \
-	0, 0, 0,                    \
-	ORIENTATION_DEFAULT,        \
-	neogeo_sram_load,neogeo_sram_save  \
-};
-
 /* A dummy driver, so that the bios can be debugged, and to serve as */
 /* parent for the neo-geo.rom file, so that we do not have to include */
 /* it in every zip file */
@@ -4642,7 +4608,7 @@ NEODRIVER(mahretsu,"Mahjong Kyoretsuden","1990","SNK",&neogeo_machine_driver)
 NEODRIVERMGD2(ridhero, "Riding Hero","1990","SNK",&neogeo_machine_driver)
 NEODRIVER(alpham2, "Alpha Mission II / ASO II - Last Guardian","1991","SNK",&neogeo_machine_driver)
 NEODRIVER(cyberlip,"Cyber-Lip","1990","SNK",&neogeo_machine_driver)
-NEODRIVERMGD2(superspy,"Super Spy","1990","SNK",&neogeo_machine_driver)
+NEODRIVERMGD2(superspy,"The Super Spy","1990","SNK",&neogeo_machine_driver)
 NEODRIVERMGD2(mutnat,  "Mutation Nation","1992","SNK",&neogeo_machine_driver)
 NEODRIVERMGD2(kotm,    "King of the Monsters","1991","SNK",&neogeo_16bit_machine_driver)
 NEODRIVERMGD2(sengoku, "Sengoku / Sengoku Denshou","1991","SNK",&neogeo_machine_driver)
@@ -4654,7 +4620,7 @@ NEODRIVER(quizdais,"Quiz Daisousa Sen - The Last Count Down","1991","SNK",&neoge
 NEODRIVERMGD2(lresort, "Last Resort","1992","SNK",&neogeo_machine_driver)
 NEODRIVERMGD2(eightman,"Eight Man","1991","SNK / Pallas",&neogeo_machine_driver)
 NEODRIVER(legendos,"Legend of Success Joe / Ashitano Joe Densetsu","1991","SNK",&neogeo_machine_driver)
-NEODRIVERMGD2X(ttbb,   "2020bb","2020 Super Baseball","1991","SNK / Pallas",&neogeo_machine_driver)
+NEODRIVERX(ttbb,   "2020bb","2020 Super Baseball","1991","SNK / Pallas",&neogeo_machine_driver)
 NEODRIVER(socbrawl,"Soccer Brawl","1991","SNK",&neogeo_machine_driver)
 NEODRIVER(fatfury1,"Fatal Fury - King of Fighters / Garou Densetsu - shukumei no tatakai","1991","SNK",&neogeo_machine_driver)
 NEODRIVER(roboarmy,"Robo Army","1991","SNK",&neogeo_machine_driver)
@@ -4665,7 +4631,7 @@ NEODRIVER(bstars2, "Baseball Stars 2","1992","SNK",&neogeo_machine_driver)
 NEODRIVER(quizdai2,"Quiz Meintantei Neo Geo - Quiz Daisousa Sen Part 2","1992","SNK",&neogeo_machine_driver)
 NEODRIVERX(countb, "3countb","3 Count Bout / Fire Suplex","1993","SNK",&neogeo_16bit_machine_driver)
 NEODRIVERMGD2(aof,     "Art of Fighting / Ryuuko no Ken","1992","SNK",&neogeo_machine_driver)
-NEODRIVER(samsho,  "Samurai Shodown / Samurai Spirits","1993","SNK",&neogeo_machine_driver)
+NEODRIVER(samsho,  "Samurai Shodown / Samurai Spirits","1993","SNK",&neogeo_16bit_machine_driver)
 NEODRIVER(tophuntr,"Top Hunter - Roddy & Cathy","1994","SNK",&neogeo_16bit_machine_driver)
 NEODRIVER(fatfury2,"Fatal Fury 2 / Garou Densetsu 2 - arata-naru tatakai","1992","SNK",&neogeo_machine_driver)
 NEODRIVER(ssideki, "Super Sidekicks / Tokuten Ou","1992","SNK",&neogeo_machine_driver)
@@ -4675,7 +4641,7 @@ NEODRIVER(fatfursp,"Fatal Fury Special / Garou Densetsu Special","1993","SNK",&n
 NEODRIVER(savagere,"Savage Reign / Fu'un Mokushiroku - kakutou sousei","1995","SNK",&neogeo_16bit_machine_driver)
 NEODRIVER(ssideki2,"Super Sidekicks 2 - The World Championship / Tokuten Ou 2 - real fight football","1994","SNK",&neogeo_raster_machine_driver)
 NEODRIVER(samsho2, "Samurai Shodown II / Shin Samurai Spirits - Haohmaru jigokuhen","1994","SNK",&neogeo_16bit_machine_driver)
-NEODRIVER(fatfury3,"Fatal Fury 3 / Garou Densetsu 3 - haruka-naru tatakai","1995","SNK",&neogeo_16bit_machine_driver)
+NEODRIVER(fatfury3,"Fatal Fury 3 - Road to the Final Victory / Garou Densetsu 3 - haruka-naru tatakai","1995","SNK",&neogeo_16bit_machine_driver)
 NEODRIVER(ssideki3,"Super Sidekicks 3 - The Next Glory / Tokuten Ou 3 - eikoue no michi","1995","SNK",&neogeo_raster_machine_driver)
 NEODRIVER(kof95,   "The King of Fighters '95","1995","SNK",&neogeo_16bit_machine_driver)
 NEODRIVER(samsho3, "Samurai Shodown III / Samurai Spirits - Zankurou Musouken","1995","SNK",&neogeo_16bit_machine_driver)

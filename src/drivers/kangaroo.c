@@ -284,12 +284,12 @@ INPUT_PORTS_END
 
 static struct GfxLayout sprlayout =
 {
-	1,4,    /* 4 * 1 lines */
+	4,1,    /* 4 * 1 lines */
 	8192,   /* 8192 "characters" */
 	4,      /* 4 bpp        */
 	{ 0, 4, 0x2000*8, 0x2000*8+4 },       /* 4 and 8192 bytes between planes */
+	{ 3,2,1,0 },
 	{ 0 },
-	{ 0,1,2,3 },
 	1*8
 };
 
@@ -341,7 +341,7 @@ static struct MachineDriver machine_driver =
 	kangaroo_init_machine,
 
 	/* video hardware */
-	32*8, 32*8, { 0x0b, 0xfa, 0, 32*8-1 },
+	32*8, 32*8, { 0, 255, 8, 255-8 },
 	gfxdecodeinfo,
 	8+8+8,2*16,
 	kangaroo_vh_convert_color_prom,
@@ -474,7 +474,7 @@ struct GameDriver kangaroo_driver =
 	input_ports,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
+	ORIENTATION_ROTATE_270,
 
 	kangaroo_hiload, kangaroo_hisave
 };
@@ -500,7 +500,7 @@ struct GameDriver kangarob_driver =
 	input_ports,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
+	ORIENTATION_ROTATE_270,
 
 	kangaroo_hiload, kangaroo_hisave
 };

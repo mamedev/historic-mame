@@ -8,12 +8,11 @@ Emulation by Bryan McPhail, mish@tendril.force9.net
 Notes:
 * Schematics show a palette/work RAM bank selector, but this doesn't seem
   to be used?
-* Devastators not playable...  Protected?  Unimplemented opcodes?
+* Devastators not playable...  Protected (custom CPU 051733)
 * Sprite priorities are not correct (ropes appear behind fighters).
   Sprite/sprite priorities have to be orthogonal to sprite/tile priorities
   for this to work correctly.
   This is fixed with a kludge in mainevt_sprite_callback().
-* No sound in Devastators
 
 ***************************************************************************/
 
@@ -24,6 +23,7 @@ Notes:
 
 
 void mainevt_vh_screenrefresh (struct osd_bitmap *bitmap,int full_refresh);
+void dv_vh_screenrefresh (struct osd_bitmap *bitmap,int full_refresh);
 int mainevt_vh_start (void);
 int dv_vh_start (void);
 void mainevt_vh_stop (void);
@@ -118,12 +118,25 @@ void mainevt_sh_bankswitch_w(int offset,int data)
 	/* bits 0-3 select the 007232 banks */
 	bank_A=0x20000 * (data&0x3);
 	bank_B=0x20000 * ((data>>2)&0x3);
-	K007232_bankswitch_0_w(RAM+bank_A,RAM+bank_B);
+	K007232_bankswitch(0,RAM+bank_A,RAM+bank_B);
 
 	/* bits 4-5 select the UPD7759 bank */
 	src = &Machine->memory_region[5][0x20000];
 	dest = Machine->memory_region[5];
 	memcpy(dest,&src[((data >> 4) & 0x03) * 0x20000],0x20000);
+}
+
+void dv_sh_bankswitch_w(int offset,int data)
+{
+	unsigned char *RAM = Machine->memory_region[4];
+	int bank_A,bank_B;
+
+//if (errorlog) fprintf(errorlog,"CPU #1 PC: %04x bank switch = %02x\n",cpu_get_pc(),data);
+
+	/* bits 0-3 select the 007232 banks */
+	bank_A=0x20000 * (data&0x3);
+	bank_B=0x20000 * ((data>>2)&0x3);
+	K007232_bankswitch(0,RAM+bank_A,RAM+bank_B);
 }
 
 
@@ -179,6 +192,8 @@ static struct MemoryReadAddress dv_readmem[] =
 static struct MemoryWriteAddress dv_writemem[] =
 {
 	{ 0x1f80, 0x1f80, mainevt_bankswitch_w },
+	{ 0x1f84, 0x1f84, soundlatch_w },				/* probably */
+	{ 0x1f88, 0x1f88, mainevt_sh_irqtrigger_w },	/* probably */
 	{ 0x1f90, 0x1f90, mainevt_coin_w },	/* coin counters + lamps */
 	{ 0x1fb2, 0x1fb2, dv_nmienable_w },
 
@@ -188,7 +203,6 @@ static struct MemoryWriteAddress dv_writemem[] =
 	{ 0x6000, 0xffff, MWA_ROM },
 	{ -1 }	/* end of table */
 };
-
 
 
 static struct MemoryReadAddress sound_readmem[] =
@@ -209,6 +223,28 @@ static struct MemoryWriteAddress sound_writemem[] =
 	{ 0x9000, 0x9000, UPD7759_message_w },
 	{ 0xe000, 0xe000, mainevt_sh_irqcontrol_w },
 	{ 0xf000, 0xf000, mainevt_sh_bankswitch_w },
+	{ -1 }	/* end of table */
+};
+
+static struct MemoryReadAddress dv_sound_readmem[] =
+{
+	{ 0x0000, 0x7fff, MRA_ROM },
+	{ 0x8000, 0x83ff, MRA_RAM },
+	{ 0xa000, 0xa000, soundlatch_r },
+	{ 0xb000, 0xb00d, K007232_read_port_0_r },
+	{ 0xc001, 0xc001, YM2151_status_port_0_r },
+	{ -1 }	/* end of table */
+};
+
+static struct MemoryWriteAddress dv_sound_writemem[] =
+{
+	{ 0x0000, 0x7fff, MWA_ROM },
+	{ 0x8000, 0x83ff, MWA_RAM },
+	{ 0xb000, 0xb00d, K007232_write_port_0_w },
+	{ 0xc000, 0xc000, YM2151_register_port_0_w },
+	{ 0xc001, 0xc001, YM2151_data_port_0_w },
+	{ 0xe000, 0xe000, mainevt_sh_irqcontrol_w },
+	{ 0xf000, 0xf000, dv_sh_bankswitch_w },
 	{ -1 }	/* end of table */
 };
 
@@ -452,21 +488,36 @@ INPUT_PORTS_END
 
 /*****************************************************************************/
 
+static void volume_callback(int v)
+{
+	K007232_set_volume(0,0,(v >> 4) * 0x11,0);
+	K007232_set_volume(0,1,0,(v & 0x0f) * 0x11);
+}
+
 static struct K007232_interface k007232_interface =
 {
-	1,		/* 1 chip */
-	{ 4 },	/* memory region */
-	{ 20 }	/* volume */
+	1,		/* number of chips */
+	{ 4 },	/* memory regions */
+	{ K007232_VOL(20,MIXER_PAN_CENTER,20,MIXER_PAN_CENTER) },	/* volume */
+	{ volume_callback }	/* external port callback */
 };
 
 static struct UPD7759_interface upd7759_interface =
 {
 	1,		/* number of chips */
 	UPD7759_STANDARD_CLOCK,
-	{ 60 }, /* volume */
-	5,		/* memory region */
+	{ 50 }, /* volume */
+	{ 5 },		/* memory region */
 	UPD7759_STANDALONE_MODE,		/* chip mode */
 	{0}
+};
+
+static struct YM2151interface ym2151_interface =
+{
+	1,			/* 1 chip */
+	3579545,	/* 3.579545 MHz */
+	{ YM3012_VOL(30,MIXER_PAN_CENTER,30,MIXER_PAN_CENTER) },
+	{ 0 }
 };
 
 static struct MachineDriver machine_driver =
@@ -475,14 +526,14 @@ static struct MachineDriver machine_driver =
 	{
  		{
 			CPU_M6309,
-			2000000,
+			3000000,	/* ?? */
 			0,
 			readmem,writemem,0,0,
 			mainevt_interrupt,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
-			4000000,	/* ??? */
+			3579545,	/* 3.579545 MHz */
 			3,
 			sound_readmem,sound_writemem,0,0,
 			nmi_interrupt,8	/* ??? */
@@ -524,18 +575,18 @@ static struct MachineDriver dv_machine_driver =
 	{
  		{
 			CPU_M6309,
-			1000000,
+			3000000,	/* ?? */
 			0,
 			dv_readmem,dv_writemem,0,0,
 			dv_interrupt,1
-		}/*,
+		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
-			3000000,
+			3579545,	/* 3.579545 MHz */
 			3,
-			sound_readmem,sound_writemem,0,0,
+			dv_sound_readmem,dv_sound_writemem,0,0,
 			interrupt,4
-		}  */
+		}
 	},
 	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
 	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
@@ -551,10 +602,20 @@ static struct MachineDriver dv_machine_driver =
 	0,
 	dv_vh_start,
 	mainevt_vh_stop,
-	mainevt_vh_screenrefresh,
+	dv_vh_screenrefresh,
 
 	/* sound hardware */
-	0,0,0,0
+	0,0,0,0,
+	{
+		{
+			SOUND_YM2151,
+			&ym2151_interface
+		},
+		{
+			SOUND_K007232,
+			&k007232_interface,
+		}
+	}
 };
 
 
@@ -586,9 +647,9 @@ ROM_START( mainevt_rom )
 	ROM_REGION(0x80000)	/* 512k for 007232 samples */
 	ROM_LOAD( "799b03.d4",    0x00000, 0x80000, 0xf1cfd342 )
 
-	ROM_REGION(0xa0000)	/* 128+512k for the samples */
+	ROM_REGION(0xa0000)	/* 128+512k for the UPD7759C samples */
 	/* 00000-1ffff space where the following ROM is bank switched */
-	ROM_LOAD( "799b06.c22",   0x20000, 0x80000, 0x2c8c47d7 ) /* samples for UPD7759C */
+	ROM_LOAD( "799b06.c22",   0x20000, 0x80000, 0x2c8c47d7 )
 
 	ROM_REGION(0x0100)	/* PROMs */
 	ROM_LOAD( "63s141n.bin",  0x0000, 0x0100, 0x61f6c8d1 )	/* priority encoder (not used) */
@@ -615,9 +676,9 @@ ROM_START( mainevt2_rom )
 	ROM_REGION(0x80000)	/* 512k for 007232 samples */
 	ROM_LOAD( "799b03.d4",    0x00000, 0x80000, 0xf1cfd342 )
 
-	ROM_REGION(0xa0000)	/* 128+512k for the samples */
+	ROM_REGION(0xa0000)	/* 128+512k for the UPD7759C samples */
 	/* 00000-1ffff space where the following ROM is bank switched */
-	ROM_LOAD( "799b06.c22",   0x20000, 0x80000, 0x2c8c47d7 ) /* samples for UPD7759C */
+	ROM_LOAD( "799b06.c22",   0x20000, 0x80000, 0x2c8c47d7 )
 
 	ROM_REGION(0x0100)	/* PROMs */
 	ROM_LOAD( "63s141n.bin",  0x0000, 0x0100, 0x61f6c8d1 )	/* priority encoder (not used) */
@@ -641,8 +702,11 @@ ROM_START( devstors_rom )
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
 	ROM_LOAD( "dev-k01.rom",  0x00000, 0x08000, 0xd44b3eb0 )
 
-	ROM_REGION(0x80000)
+	ROM_REGION(0x80000)	/* 512k for 007232 samples */
  	ROM_LOAD( "dev-f03.rom",  0x00000, 0x80000, 0x19065031 )
+
+	ROM_REGION(0x0100)	/* PROMs */
+	ROM_LOAD( "devaprom.bin", 0x0000, 0x0100, 0xd3620106 )	/* priority encoder (not used) */
 ROM_END
 
 ROM_START( devstor2_rom )
@@ -663,8 +727,11 @@ ROM_START( devstor2_rom )
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
 	ROM_LOAD( "dev-k01.rom",  0x00000, 0x08000, 0xd44b3eb0 )
 
-	ROM_REGION(0x80000)
+	ROM_REGION(0x80000)	/* 512k for 007232 samples */
  	ROM_LOAD( "dev-f03.rom",  0x00000, 0x80000, 0x19065031 )
+
+	ROM_REGION(0x0100)	/* PROMs */
+	ROM_LOAD( "devaprom.bin", 0x0000, 0x0100, 0xd3620106 )	/* priority encoder (not used) */
 ROM_END
 
 

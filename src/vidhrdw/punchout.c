@@ -533,16 +533,16 @@ void punchout_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		{
 			sx = 1024 - (punchout_bigsprite1[2] + 256 * (punchout_bigsprite1[3] & 0x0f)) / 4;
 			if (sx > 1024-127) sx -= 1024;
-			sx = sx * 0x1000 / zoom / 4;	/* adjust x position basing on zoom */
+			sx = sx * (0x1000 / 4) / zoom;	/* adjust x position basing on zoom */
 			sx -= 57;	/* adjustment to match the screen shots */
 
 			sy = -punchout_bigsprite1[4] + 256 * (punchout_bigsprite1[5] & 1);
-			sy = sy * 0x1000 / zoom / 4;	/* adjust y position basing on zoom */
+			sy = sy * (0x1000 / 4) / zoom;	/* adjust y position basing on zoom */
 
 			/* when the sprite is reduced, it fits more than */
 			/* once in the screen, so if the first draw is */
 			/* offscreen the second can be visible */
-			height = 256 * 0x1000 / zoom / 4;	/* height of the zoomed sprite */
+			height = 256 * (0x1000 / 4) / zoom;	/* height of the zoomed sprite */
 			if (sy <= -height+16) sy += 2*height;	/* if offscreen, try moving it lower */
 
 			sy += 3;	/* adjustment to match the screen shots */
@@ -556,7 +556,7 @@ void punchout_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 						punchout_bigsprite1[6] & 1,0,
 						sx,sy - 8*(32-TOP_MONITOR_ROWS),
 						&topvisiblearea,TRANSPARENCY_COLOR,1024,
-						0x10000 * 0x1000 / zoom / 4,0x10000 * 0x1000 / zoom / 4);
+						0x10000 * 0x1000 / 4 / zoom,0x10000 * 0x1000 / 4 / zoom);
 			}
 			if (punchout_bigsprite1[7] & 2)	/* display in bottom monitor */
 			{
@@ -564,7 +564,7 @@ void punchout_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 						punchout_bigsprite1[6] & 1,0,
 						sx,sy + 8*TOP_MONITOR_ROWS,
 						&bottomvisiblearea,TRANSPARENCY_COLOR,1024,
-						0x10000 * 0x1000 / zoom / 4,0x10000 * 0x1000 / zoom / 4);
+						0x10000 * 0x1000 / 4 / zoom,0x10000 * 0x1000 / 4 / zoom);
 			}
 		}
 	}
@@ -696,16 +696,16 @@ void armwrest_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		{
 			sx = 1024 - (punchout_bigsprite1[2] + 256 * (punchout_bigsprite1[3] & 0x0f)) / 4;
 			if (sx > 1024-127) sx -= 1024;
-			sx = sx * 0x1000 / zoom / 4;	/* adjust x position basing on zoom */
+			sx = sx * (0x1000 / 4) / zoom;	/* adjust x position basing on zoom */
 			sx -= 57;	/* adjustment to match the screen shots */
 
 			sy = -punchout_bigsprite1[4] + 256 * (punchout_bigsprite1[5] & 1);
-			sy = sy * 0x1000 / zoom / 4;	/* adjust y position basing on zoom */
+			sy = sy * (0x1000 / 4) / zoom;	/* adjust y position basing on zoom */
 
 			/* when the sprite is reduced, it fits more than */
 			/* once in the screen, so if the first draw is */
 			/* offscreen the second can be visible */
-			height = 256 * 0x1000 / zoom / 4;	/* height of the zoomed sprite */
+			height = 256 * (0x1000 / 4) / zoom;	/* height of the zoomed sprite */
 			if (sy <= -height+16) sy += 2*height;	/* if offscreen, try moving it lower */
 
 			sy += 3;	/* adjustment to match the screen shots */
@@ -719,7 +719,7 @@ void armwrest_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 						punchout_bigsprite1[6] & 1,0,
 						sx,sy - 8*(32-TOP_MONITOR_ROWS),
 						&topvisiblearea,TRANSPARENCY_COLOR,1024,
-						0x10000 * 0x1000 / zoom / 4,0x10000 * 0x1000 / zoom / 4);
+						0x10000 * 0x1000 / 4 / zoom,0x10000 * 0x1000 / 4 / zoom);
 			}
 			if (punchout_bigsprite1[7] & 2)	/* display in bottom monitor */
 			{
@@ -727,7 +727,7 @@ void armwrest_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 						punchout_bigsprite1[6] & 1,0,
 						sx,sy + 8*TOP_MONITOR_ROWS,
 						&bottomvisiblearea,TRANSPARENCY_COLOR,1024,
-						0x10000 * 0x1000 / zoom / 4,0x10000 * 0x1000 / zoom / 4);
+						0x10000 * 0x1000 / 4 / zoom,0x10000 * 0x1000 / 4 / zoom);
 			}
 		}
 	}

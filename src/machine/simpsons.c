@@ -2,6 +2,7 @@
 #include "vidhrdw/generic.h"
 #include "vidhrdw/konamiic.h"
 #include "cpu/konami/konami.h"
+#include "machine/eeprom.h"
 
 /* from vidhrdw */
 extern void simpsons_video_banking( int select );
@@ -14,121 +15,46 @@ int simpsons_firq_enabled;
 
 ***************************************************************************/
 
-static int eeprom_ack;
-static int eeprom_data;
-static int eeprom_mode;
-static unsigned char eeprom_memory[128];
-static int eeprom_unlocked;
+static int init_eeprom_count;
 
-int konami_eeprom_read( void ) {
-	int data = ( eeprom_data >> 7 ) & 1; /* get the bit to read */
 
-	eeprom_data <<= 1; /* update the shift read register */
-
-	return data;
-}
-
-int konami_eeprom_ack( void ) {
-	int data = eeprom_ack;
-
-	eeprom_ack = 0; /* clear on read */
-
-	return data;
-}
+static struct EEPROM_interface eeprom_interface =
+{
+	7,				/* address bits */
+	8,				/* data bits */
+	"011000",		/*  read command */
+	"011100",		/* write command */
+	0,				/* erase command */
+	"0100000000000",/* lock command */
+	"0100110000000" /* unlock command */
+};
 
 int simpsons_eeprom_r( int offset )
 {
-	int data = konami_eeprom_read();
+	int res;
 
-	data <<= 4; /* put it on the right pin */
+	res = (EEPROM_read_bit() << 4);
 
-	data |= konami_eeprom_ack() << 5; /* add the ack */
+	res |= 0x20;//konami_eeprom_ack() << 5; /* add the ack */
 
-	data |= readinputport( 5 ) & 1; /* test switch */
+	res |= readinputport( 5 ) & 1; /* test switch */
 
-	return data;
-}
-
-void konami_eeprom_w( int clk, int dat, int active )
-{
-	static int last_clk = 0, bit_count = 0;
-	static int shift_register = 0, write_pending;
-	static int eeprom_addr;
-
-	/* latch on 0 -> 1 transition */
-	if ( last_clk == 0 && clk == 1 )
+	if (init_eeprom_count)
 	{
-		if ( active == 1 )
-		{ /* if active */
-			shift_register <<= 1;
-			shift_register |= dat;
-			bit_count++;
-			if ( bit_count == 13 )
-			{
-				switch ( shift_register & 0x1f80 )
-				{
-					case 0x980: /* unlock command */
-						eeprom_unlocked = 1;
-					break;
-
-					case 0xe00: /* write data */
-						eeprom_addr = shift_register & 0x7f; /* fetch address */
-						if ( eeprom_unlocked )
-							write_pending = 1;
-					break;
-
-					case 0xc00: /* read data */
-						eeprom_addr = shift_register & 0x7f; /* fetch address */
-						eeprom_data = eeprom_memory[eeprom_addr]; /* fetch data */
-					break;
-
-					case 0x800: /* lock command */
-						eeprom_unlocked = 0;
-					break;
-				}
-			}
-
-			if ( bit_count > 31 )
-			{
-				bit_count = 0;
-				shift_register = 0;
-				if ( errorlog )
-					fprintf( errorlog, "Eeprom serial shift register overflow\n" );
-			}
-		}
-		else
-		{
-			/* on to off transition */
-			if ( eeprom_mode == 1 )
-			{
-				/* see if we have a write pending */
-				if ( write_pending )
-				{
-					eeprom_memory[eeprom_addr] = shift_register & 0xff; /* do the write */
-					eeprom_ack = 1; /* signal we're succesfull */
-					write_pending = 0;
-				}
-				bit_count = 0;
-				shift_register = 0;
-			}
-		}
-
-		eeprom_mode = active;
+		init_eeprom_count--;
+		res &= 0xfe;
 	}
-
-	last_clk = clk;
+	return res;
 }
 
 void simpsons_eeprom_w( int offset, int data )
 {
-	int clk = ( data >> 4 ) & 1;
-	int dat = ( data >> 7 ) & 1; /* data pin */
-	int mode = ( data >> 3 ) & 1; /* 1 = selected - 0 = deselected */
-
 	if ( data == 0xff )
 		return;
 
-	konami_eeprom_w( clk, dat, mode );
+	EEPROM_write_bit(data & 0x80);
+	EEPROM_set_cs_line((data & 0x08) ? CLEAR_LINE : ASSERT_LINE);
+	EEPROM_set_clock_line((data & 0x10) ? ASSERT_LINE : CLEAR_LINE);
 
 	simpsons_video_banking( data & 3 );
 
@@ -274,25 +200,22 @@ void simpsons_init_machine( void )
 	cpu_setbank( 2, &RAM[0x10000] );
 
 	simpsons_video_banking( 0 );
+
+	EEPROM_init(&eeprom_interface);
+	init_eeprom_count = 0;
 }
 
 int simpsons_eeprom_load(void)
 {
 	void *f;
 
-
-	/* Try loading static RAM */
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
 	{
-		/* just load in everything, the game will overwrite what it doesn't want */
-		osd_fread(f,eeprom_memory,128);
+		EEPROM_load(f);
 		osd_fclose(f);
 	}
 	else
-	{
-		memset(eeprom_memory,0xff,128);
-		usrintf_showmessage("Press F2+F3 to reset EEPROM");
-	}
+		init_eeprom_count = 10;
 
 	return 1;
 }
@@ -301,10 +224,9 @@ void simpsons_eeprom_save(void)
 {
 	void *f;
 
-
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{
-		osd_fwrite(f,eeprom_memory,128);
+		EEPROM_save(f);
 		osd_fclose(f);
 	}
 }

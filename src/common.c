@@ -181,7 +181,8 @@ int readroms(void)
 					else
 						explength += length;
 
-					if (romp->offset + length > region_size)
+					if (romp->offset + length > region_size ||
+						((romp->length & ROMFLAG_ALTERNATE) && (romp->offset&~1) + 2*length > region_size))
 					{
 						printf("Error in RomModule definition: %s out of memory region space\n",name);
 						osd_fclose(f);
@@ -305,11 +306,31 @@ int readroms(void)
 
 				do
 				{
-					int i;
+					if (fatalerror == 0)
+					{
+						int i;
 
-					/* fill space with random data */
-					for (i = 0;i < (romp->length & ~ROMFLAG_MASK);i++)
-						Machine->memory_region[region][romp->offset + i] = rand();
+						/* fill space with random data */
+						if (romp->length & ROMFLAG_ALTERNATE)
+						{
+							unsigned char *c;
+
+							/* ROM_LOAD_EVEN and ROM_LOAD_ODD */
+						#ifdef LSB_FIRST
+							c = Machine->memory_region[region] + (romp->offset ^ 1);
+						#else
+							c = Machine->memory_region[region] + romp->offset;
+						#endif
+
+							for (i = 0;i < (romp->length & ~ROMFLAG_MASK);i++)
+								c[2*i] = rand();
+						}
+						else
+						{
+							for (i = 0;i < (romp->length & ~ROMFLAG_MASK);i++)
+								Machine->memory_region[region][romp->offset + i] = rand();
+						}
+					}
 					romp++;
 				} while (romp->length && (romp->name == 0 || romp->name == (char *)-1));
 			}

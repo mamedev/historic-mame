@@ -207,6 +207,7 @@ Long versions of the branchs are the number + 8.
 0xaa bsr xx
 0xab lbsr xx xx
 0xac decb,jnz xx
+0xad decx,jnz xx
 0xae nop
 
 0xb0 abx
@@ -284,15 +285,15 @@ static unsigned char get_next_byte( void ) {
 }
 
 /* Table for indexed operations */
-static char index_reg[8] = {
-	'?', /* 0 - extended mode */
-	'?', /* 1 */
-	'x', /* 2 */
-	'y', /* 3 */
-	'?', /* 4 - direct page */
-	'u', /* 5 */
-	's', /* 6 */
-	'?', /* 7 */
+static char index_reg[8][3] = {
+	"?", /* 0 - extended mode */
+	"?", /* 1 */
+	"x", /* 2 */
+	"y", /* 3 */
+	"?", /* 4 - direct page */
+	"u", /* 5 */
+	"s", /* 6 */
+	"pc" /* 7 - pc */
 };
 
 /* Table for tfr/exg operations */
@@ -343,11 +344,11 @@ static void calc_indexed( unsigned char mode, char *buf ) {
 		if ( type & 8 ) { /* indirect */
 			switch ( type & 7 ) {
 				case 0x00: /* register a */
-					sprintf( buf2, "[a,%c]", index_reg[idx] );
+					sprintf( buf2, "[a,%s]", index_reg[idx] );
 				break;
 
 				case 0x01: /* register b */
-					sprintf( buf2, "[b,%c]", index_reg[idx] );
+					sprintf( buf2, "[b,%s]", index_reg[idx] );
 				break;
 
 				case 0x04: /* direct - mode */
@@ -355,21 +356,21 @@ static void calc_indexed( unsigned char mode, char *buf ) {
 				break;
 
 				case 0x07: /* register d */
-					sprintf( buf2, "[d,%c]", index_reg[idx] );
+					sprintf( buf2, "[d,%s]", index_reg[idx] );
 				break;
 
 				default:
-					sprintf( buf2, "[?,%c]", index_reg[idx] );
+					sprintf( buf2, "[?,%s]", index_reg[idx] );
 				break;
 			}
 		} else {
 			switch ( type & 7 ) {
 				case 0x00: /* register a */
-					sprintf( buf2, "a,%c", index_reg[idx] );
+					sprintf( buf2, "a,%s", index_reg[idx] );
 				break;
 
 				case 0x01: /* register b */
-					sprintf( buf2, "b,%c", index_reg[idx] );
+					sprintf( buf2, "b,%s", index_reg[idx] );
 				break;
 
 				case 0x04: /* direct - mode */
@@ -377,11 +378,11 @@ static void calc_indexed( unsigned char mode, char *buf ) {
 				break;
 
 				case 0x07: /* register d */
-					sprintf( buf2, "d,%c", index_reg[idx] );
+					sprintf( buf2, "d,%s", index_reg[idx] );
 				break;
 
 				default:
-					sprintf( buf2, "????,%c", index_reg[idx] );
+					sprintf( buf2, "????,%s", index_reg[idx] );
 				break;
 			}
 		}
@@ -389,19 +390,19 @@ static void calc_indexed( unsigned char mode, char *buf ) {
 		if ( type & 8 ) { /* indirect */
 			switch ( type & 7 ) {
 				case 0: /* auto increment */
-					sprintf( buf2, "[,%c+]", index_reg[idx] );
+					sprintf( buf2, "[,%s+]", index_reg[idx] );
 				break;
 
 				case 1: /* auto increment double */
-					sprintf( buf2, "[,%c++]", index_reg[idx] );
+					sprintf( buf2, "[,%s++]", index_reg[idx] );
 				break;
 
 				case 2: /* auto decrement */
-					sprintf( buf2, "[,-%c]", index_reg[idx] );
+					sprintf( buf2, "[,-%s]", index_reg[idx] );
 				break;
 
 				case 3: /* auto decrement double */
-					sprintf( buf2, "[,--%c]", index_reg[idx] );
+					sprintf( buf2, "[,--%s]", index_reg[idx] );
 				break;
 
 				case 4: /* post byte offset */
@@ -409,9 +410,9 @@ static void calc_indexed( unsigned char mode, char *buf ) {
 						int val = get_next_byte();
 
 						if ( val & 0x80 )
-							sprintf( buf2, "[#$-%02x,%c]", 0x100 - val, index_reg[idx] );
+							sprintf( buf2, "[#$-%02x,%s]", 0x100 - val, index_reg[idx] );
 						else
-							sprintf( buf2, "[#$%02x,%c]", val, index_reg[idx] );
+							sprintf( buf2, "[#$%02x,%s]", val, index_reg[idx] );
 					}
 				break;
 
@@ -422,14 +423,14 @@ static void calc_indexed( unsigned char mode, char *buf ) {
 						val |= get_next_byte();
 
 						if ( val & 0x8000 )
-							sprintf( buf2, "[#$-%04x,%c]", 0x10000 - val, index_reg[idx] );
+							sprintf( buf2, "[#$-%04x,%s]", 0x10000 - val, index_reg[idx] );
 						else
-							sprintf( buf2, "[#$%04x,%c]", val, index_reg[idx] );
+							sprintf( buf2, "[#$%04x,%s]", val, index_reg[idx] );
 					}
 				break;
 
 				case 6: /* simple */
-					sprintf( buf2, "[,%c]", index_reg[idx] );
+					sprintf( buf2, "[,%s]", index_reg[idx] );
 				break;
 
 				case 7: /* extended */
@@ -445,19 +446,19 @@ static void calc_indexed( unsigned char mode, char *buf ) {
 		} else {
 			switch ( type & 7 ) {
 				case 0: /* auto increment */
-					sprintf( buf2, ",%c+", index_reg[idx] );
+					sprintf( buf2, ",%s+", index_reg[idx] );
 				break;
 
 				case 1: /* auto increment double */
-					sprintf( buf2, ",%c++", index_reg[idx] );
+					sprintf( buf2, ",%s++", index_reg[idx] );
 				break;
 
 				case 2: /* auto decrement */
-					sprintf( buf2, ",-%c", index_reg[idx] );
+					sprintf( buf2, ",-%s", index_reg[idx] );
 				break;
 
 				case 3: /* auto decrement double */
-					sprintf( buf2, ",--%c", index_reg[idx] );
+					sprintf( buf2, ",--%s", index_reg[idx] );
 				break;
 
 				case 4: /* post byte offset */
@@ -465,9 +466,9 @@ static void calc_indexed( unsigned char mode, char *buf ) {
 						int val = get_next_byte();
 
 						if ( val & 0x80 )
-							sprintf( buf2, "#$-%02x,%c", 0x100 - val , index_reg[idx] );
+							sprintf( buf2, "#$-%02x,%s", 0x100 - val , index_reg[idx] );
 						else
-							sprintf( buf2, "#$%02x,%c", val, index_reg[idx] );
+							sprintf( buf2, "#$%02x,%s", val, index_reg[idx] );
 					}
 				break;
 
@@ -478,14 +479,14 @@ static void calc_indexed( unsigned char mode, char *buf ) {
 						val |= get_next_byte();
 
 						if ( val & 0x8000 )
-							sprintf( buf2, "#$-%04x,%c", 0x10000 - val, index_reg[idx] );
+							sprintf( buf2, "#$-%04x,%s", 0x10000 - val, index_reg[idx] );
 						else
-							sprintf( buf2, "#$%04x,%c", val, index_reg[idx] );
+							sprintf( buf2, "#$%04x,%s", val, index_reg[idx] );
 					}
 				break;
 
 				case 6: /* simple */
-					sprintf( buf2, ",%c", index_reg[idx] );
+					sprintf( buf2, ",%s", index_reg[idx] );
 				break;
 
 				case 7: /* extended */
@@ -1263,6 +1264,11 @@ static void decbjnz( char *buf ) {
 	do_relative( buf );
 }
 
+static void decxjnz( char *buf ) {
+	sprintf( buf, "decx,jnz " );
+	do_relative( buf );
+}
+
 static void addd( char *buf ) {
 	int val = get_next_byte() << 8;
 
@@ -1719,7 +1725,7 @@ static konami_opcode_def op_table[256] = {
 	/* aa */	{ bsr, 1 },
 	/* ab */	{ lbsr, 1 },
 	/* ac */	{ decbjnz, 0 },
-	/* ad */	{ illegal, 0 },
+	/* ad */	{ decxjnz, 0 },
 	/* ae */	{ nop, 0 },
 	/* af */	{ illegal, 0 },
 

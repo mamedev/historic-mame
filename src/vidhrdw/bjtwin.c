@@ -105,7 +105,7 @@ void bjtwin_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	for (offs = 0; offs < 256*16; offs += 16)
 	{
 		if (READ_WORD(&bjtwin_spriteram[offs]) != 0)
-			memset(&palette_used_colors[256 + 16*bjtwin_spriteram[offs+14]],PALETTE_COLOR_USED,16);
+			memset(&palette_used_colors[256 + 16*READ_WORD(&bjtwin_spriteram[offs+14])],PALETTE_COLOR_USED,16);
 	}
 
 	if (palette_recalc() || (oldbgstart != bgstart))
@@ -151,8 +151,8 @@ void bjtwin_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			int sx = (READ_WORD(&bjtwin_spriteram[offs+8]) & 0x1ff) + 64;
 			int sy = (READ_WORD(&bjtwin_spriteram[offs+12]) & 0x1ff);
 			int tilecode = READ_WORD(&bjtwin_spriteram[offs+6]);
-			int xx = (bjtwin_spriteram[offs+2] & 0x0f) + 1;
-			int yy = (bjtwin_spriteram[offs+2] >> 4) + 1;
+			int xx = (READ_WORD(&bjtwin_spriteram[offs+2]) & 0x0f) + 1;
+			int yy = (READ_WORD(&bjtwin_spriteram[offs+2]) >> 4) + 1;
 			int width = xx;
 			int delta = 16;
 			int startx = sx;
@@ -171,7 +171,7 @@ void bjtwin_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 				{
 					drawgfx(bitmap,Machine->gfx[2],
 							tilecode & 0x1fff,
-							bjtwin_spriteram[offs+14],
+							READ_WORD(&bjtwin_spriteram[offs+14]),
 							flipscreen, flipscreen,
 							sx & 0x1ff,sy & 0x1ff,
 							&Machine->drv->visible_area,TRANSPARENCY_PEN,15);

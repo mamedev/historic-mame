@@ -113,7 +113,7 @@ static void sound_bank_w(int offset, int data)
 	int bank_A=0x20000 * (data&0x3);
 	int bank_B=0x20000 * ((data>>2)&0x3);
 
-	K007232_bankswitch_0_w(RAM+bank_A,RAM+bank_B);
+	K007232_bankswitch(0,RAM+bank_A,RAM+bank_B);
 }
 
 static struct MemoryReadAddress sound_readmem[] =
@@ -181,17 +181,16 @@ INPUT_PORTS_START( input_ports )
 	PORT_DIPNAME( 0x04, 0x00, DEF_STR( Cabinet ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
 	PORT_DIPSETTING(    0x04, DEF_STR( Cocktail ) )
-	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x60, 0x40, "Difficulty 2" )
-	PORT_DIPSETTING(    0x00, "Very Easy" )
-	PORT_DIPSETTING(    0x20, "Easy" )
+	PORT_DIPNAME( 0x18, 0x18, "Difficulty" )
+	PORT_DIPSETTING(    0x18, "Easy" )
+	PORT_DIPSETTING(    0x10, "Normal" )
+	PORT_DIPSETTING(    0x08, "Hard" )
+	PORT_DIPSETTING(    0x00, "Hardest" )
+	PORT_DIPNAME( 0x60, 0x60, "Energy" )
+	PORT_DIPSETTING(    0x60, "Strong" )
 	PORT_DIPSETTING(    0x40, "Normal" )
-	PORT_DIPSETTING(    0x60, "Hard" )
+	PORT_DIPSETTING(    0x20, "Weak" )
+	PORT_DIPSETTING(    0x00, "Very Weak" )
 	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
@@ -264,7 +263,7 @@ static struct GfxLayout char_8x8 =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x000000, &char_8x8,    0, 16 },
+	{ 1, 0x000000, &char_8x8,    0, 8 },
 	{ -1 } /* end of array */
 };
 
@@ -275,11 +274,18 @@ static void irqhandler(int linestate)
 //	cpu_set_irq_line(1,0,linestate);static void irqhandler(void)
 }
 
+static void volume_callback(int v)
+{
+	K007232_set_volume(0,0,(v >> 4) * 0x11,0);
+	K007232_set_volume(0,1,0,(v & 0x0f) * 0x11);
+}
+
 static struct K007232_interface k007232_interface =
 {
-	1,		/* Number of chips */
-	{ 3 },	/* Memory region */
-	{ 40 }	/* Volume */
+	1,		/* number of chips */
+	{ 3 },	/* memory regions */
+	{ K007232_VOL(40,MIXER_PAN_CENTER,40,MIXER_PAN_CENTER) },	/* volume */
+	{ volume_callback }	/* external port callback */
 };
 
 static struct YM3812interface ym3812_interface =
@@ -296,7 +302,7 @@ static struct MachineDriver machine_driver =
 	{
  		{
 			CPU_KONAMI,
-			4000000,	/* Derived from 24 MHz clock */
+			3000000,	/* Derived from 24 MHz clock */
 			0,
 			readmem,writemem,0,0,
 			interrupt,1
@@ -378,6 +384,24 @@ ROM_START( hcastlea_rom )
 	ROM_LOAD( "d93.e17",  0x00000, 0x80000, 0x01f9889c )
 ROM_END
 
+ROM_START( hcastlej_rom )
+	ROM_REGION(0x30000)
+	ROM_LOAD( "768p03.k12",0x08000, 0x08000, 0xd509e340 )
+	ROM_LOAD( "768j06.k8", 0x10000, 0x20000, 0x42283c3e )
+
+	ROM_REGION_DISPOSE(0x200000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "d91.j5",   0x000000, 0x80000, 0x2960680e )
+	ROM_LOAD( "d92.j6",   0x080000, 0x80000, 0x65a2f227 )
+	ROM_LOAD( "d94.g19",  0x100000, 0x80000, 0x9633db8b )
+	ROM_LOAD( "d95.g21",  0x180000, 0x80000, 0xe3be3fdd )
+
+	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_LOAD( "768.e01",   0x00000, 0x08000, 0xb9fff184 )
+
+	ROM_REGION(0x80000)	/* 512k for the samples */
+	ROM_LOAD( "d93.e17",  0x00000, 0x80000, 0x01f9889c )
+ROM_END
+
 /***************************************************************************/
 
 struct GameDriver hcastle_driver =
@@ -389,7 +413,7 @@ struct GameDriver hcastle_driver =
 	"1988",
 	"Konami",
 	"Bryan McPhail",
-	0,
+	GAME_IMPERFECT_COLORS,
 	&machine_driver,
 	0,
 
@@ -415,11 +439,37 @@ struct GameDriver hcastlea_driver =
 	"1988",
 	"Konami",
 	"Bryan McPhail",
-	0,
+	GAME_IMPERFECT_COLORS,
 	&machine_driver,
 	0,
 
 	hcastlea_rom,
+	0, 0,
+	0,
+	0,	/* sound_prom */
+
+	input_ports,
+
+	0, 0, 0,
+	ORIENTATION_DEFAULT,
+
+	0, 0
+};
+
+struct GameDriver hcastlej_driver =
+{
+	__FILE__,
+	&hcastle_driver,
+	"hcastlej",
+	"Akuma-Jou Dracula (Japan)",
+	"1988",
+	"Konami",
+	"Bryan McPhail",
+	GAME_IMPERFECT_COLORS,
+	&machine_driver,
+	0,
+
+	hcastlej_rom,
 	0, 0,
 	0,
 	0,	/* sound_prom */

@@ -125,7 +125,7 @@ int namcos1_vh_start( void ) {
 
 			for(line=0;line<height;line++)
 			{
-				unsigned char  *maskbm = mask->gfxdata->line[c*height+line];
+				unsigned char  *maskbm = mask->gfxdata + (c*height+line) * mask->line_modulo;
 				for (x=0;x<width;x++)
 				{
 					ordata  |= maskbm[x];
@@ -146,7 +146,7 @@ int namcos1_vh_start( void ) {
 				memset(penmap,0,256);
 				for(line=0;line<height;line++)
 				{
-					unsigned char  *pensbm = pens->gfxdata->line[c*height+line];
+					unsigned char  *pensbm = pens->gfxdata + (c*height+line) * pens->line_modulo;
 					for (x=0;x<width;x++)
 						penmap[pensbm[x]]=1;
 				}
@@ -158,8 +158,8 @@ int namcos1_vh_start( void ) {
 				/* fill transparency color */
 				for(line=0;line<height;line++)
 				{
-					unsigned char  *maskbm = pens->gfxdata->line[c*height+line];
-					unsigned char  *pensbm = pens->gfxdata->line[c*height+line];
+					unsigned char  *maskbm = pens->gfxdata + (c*height+line) * pens->line_modulo;
+					unsigned char  *pensbm = pens->gfxdata + (c*height+line) * pens->line_modulo;
 					for (x=0;x<width;x++)
 					{
 						if(!maskbm[x]) pensbm[x] = trans_pen;
@@ -480,16 +480,14 @@ static void namcos1_drawgfx(struct osd_bitmap *dest,const struct GfxElement *gfx
 	{
 		const struct GfxElement *mask = Machine->gfx[mask_region];
 		const unsigned char *sdmask;
-		const struct osd_bitmap *sbm = gfx->gfxdata;
-		const struct osd_bitmap *mbm = mask->gfxdata;
 		const int sdiff = gfx->width-1 - (sx-ox);
 		const int mdiff = mask->width-1 - (sx-ox);
 		for (y = sy;y <= ey;y++)
 		{
 			bm  = (unsigned short *)dest->line[y];
 			bme = bm + ex;
-			sd = sbm->line[start] + sdiff;
-			sdmask = mbm->line[start] + mdiff;
+			sd = gfx->gfxdata + start * gfx->line_modulo + sdiff;
+			sdmask = mask->gfxdata + start * mask->line_modulo + mdiff;
 			for( bm += sx ; bm <= bme ; bm++ )
 			{
 				if (*sdmask)
@@ -506,15 +504,13 @@ static void namcos1_drawgfx(struct osd_bitmap *dest,const struct GfxElement *gfx
 	{
 		const struct GfxElement *mask = Machine->gfx[mask_region];
 		const unsigned char *sdmask;
-		const struct osd_bitmap *sbm = gfx->gfxdata;
-		const struct osd_bitmap *mbm = mask->gfxdata;
 		const int diff = (sx-ox);
 		for (y = sy;y <= ey;y++)
 		{
 			bm  = (unsigned short *)dest->line[y];
 			bme = bm + ex;
-			sd = sbm->line[start] + diff;
-			sdmask = mbm->line[start] + diff;
+			sd = gfx->gfxdata + start * gfx->line_modulo + diff;
+			sdmask = mask->gfxdata + start * mask->line_modulo + diff;
 			for( bm += sx ; bm <= bme ; bm++ )
 			{
 				if (*sdmask)

@@ -64,12 +64,12 @@ Weaknesses:
 
 Known games:
                                          swap_key1 swap_key2 addr_key xor_key
-Mahjong Gakuen 2 Gakuen-chou no Fukushuu &
-  Poker Ladies                           76543210  01234567    aa55     a5
-Pang / Buster Bros / Pomping World       01234567  76543210    6548     24
-Dokaben                                               unknown
+Mahjong Gakuen 2 Gakuen-chou no Fukushuu 76543210  01234567    aa55     a5
+Poker Ladies                              "    "    "    "      ""      ""
+Dokaben                                   "    "    "    "      ""      ""
 Dokaben 2                                             unknown
-Capcom Baseball                                       unknown
+Pang / Buster Bros / Pomping World       01234567  76543210    6548     24
+Capcom Baseball                           "    "    "    "      ""      ""
 Capcom World                             04152637  40516273    5751     43
 Adventure Quiz 2 Hatena ? no Dai-Bouken  45670123  45670123    5751     43
 Super Pang                               45670123  45670123    5852     43
@@ -157,12 +157,12 @@ void mitchell_decode(int swap_key1,int swap_key2,int addr_key,int xor_key)
 	int i;
 	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 	kabuki_decode(RAM,ROM,RAM,0x0000,0x8000, swap_key1,swap_key2,addr_key,xor_key);
-	for (i = 0x10000;i < 0x50000;i += 0x4000)
+	for (i = 0x10000;i < Machine->memory_region_length[Machine->drv->cpu[0].memory_region];i += 0x4000)
 		kabuki_decode(RAM+i,ROM+i,RAM+i,0x8000,0x4000, swap_key1,swap_key2,addr_key,xor_key);
 }
 
 void mgakuen2_decode(void) { mitchell_decode(0x76543210,0x01234567,0xaa55,0xa5); }
-void bbros_decode(void)    { mitchell_decode(0x01234567,0x76543210,0x6548,0x24); }
+void pang_decode(void)     { mitchell_decode(0x01234567,0x76543210,0x6548,0x24); }
 void cworld_decode(void)   { mitchell_decode(0x04152637,0x40516273,0x5751,0x43); }
 void hatena_decode(void)   { mitchell_decode(0x45670123,0x45670123,0x5751,0x43); }
 void spang_decode(void)    { mitchell_decode(0x45670123,0x45670123,0x5852,0x43); }

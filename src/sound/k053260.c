@@ -1,6 +1,6 @@
 /*********************************************************
 
-	Konami 053260 PCM Sound Chip
+	Konami 053260 PCM/ADPCM Sound Chip
 
 *********************************************************/
 
@@ -18,7 +18,6 @@ static struct K053260_channel_def {
 	unsigned long		pos;
 	int					loop;
 	int					adpcm;
-	int					nibble;
 	int					adpcm_data;
 } K053260_channel[4];
 
@@ -29,11 +28,12 @@ static struct K053260_chip_def {
 	int								regs[0x30];
 	unsigned char					*rom;
 	int								rom_size;
+	void							*timer; /* SH1 int timer */
 } K053260_chip;
 
-static int adpcm_lookup[] = {
-	1,		2,		4,		8,		16,		32,		64,		128,
-	-128,	-64,	-32,	-16,	-8,		-4,		-2,		-1
+static int adpcm_lookup[] = { /* 4 bit signed */
+	0,		1,		2,		4,		8,		16,		32,		64,
+	0,	  -64,	  -32,	  -16,	   -8,		-4,		-2,		-1
 };
 
 static unsigned long *delta_table;
@@ -72,7 +72,6 @@ static void K053260_reset( void ) {
 		K053260_channel[i].pos = 0;
 		K053260_channel[i].loop = 0;
 		K053260_channel[i].adpcm = 0;
-		K053260_channel[i].nibble = 0;
 		K053260_channel[i].adpcm_data = 0;
 	}
 }
@@ -90,7 +89,7 @@ INLINE int limit( int val, int max, int min ) {
 #define MINOUT -0x8000
 
 void K053260_update( int param, void **buffer, int length ) {
-	int i, j, vol[4], val[4], pan[4], play[4], loop[4], nibble[4], adpcm_data[4], adpcm[4];
+	int i, j, lvol[4], rvol[4], play[4], loop[4], adpcm_data[4], adpcm[4];
 	unsigned char *rom[4];
 	unsigned long delta[4], end[4], pos[4];
 	unsigned char **buf = ( unsigned char ** )buffer;
@@ -102,14 +101,13 @@ void K053260_update( int param, void **buffer, int length ) {
 	for ( i = 0; i < 4; i++ ) {
 		rom[i]= &K053260_chip.rom[K053260_channel[i].start + ( K053260_channel[i].bank << 16 )];
 		delta[i] = delta_table[K053260_channel[i].rate & 0x0fff];
-		vol[i] = K053260_channel[i].volume;
+		lvol[i] = K053260_channel[i].volume * K053260_channel[i].pan;
+		rvol[i] = K053260_channel[i].volume * ( 8 - K053260_channel[i].pan );
 		end[i] = K053260_channel[i].size;
 		pos[i] = K053260_channel[i].pos;
-		pan[i] = K053260_channel[i].pan;
 		play[i] = K053260_channel[i].play;
 		loop[i] = K053260_channel[i].loop;
 		adpcm[i] = K053260_channel[i].adpcm;
-		nibble[i] = K053260_channel[i].nibble;
 		adpcm_data[i] = K053260_channel[i].adpcm_data;
 	}
 
@@ -120,54 +118,52 @@ void K053260_update( int param, void **buffer, int length ) {
 			dataL = dataR = 0;
 
 			for ( i = 0; i < 4; i++ ) {
-				val[i] = 0;
 				/* see if the voice is on */
 				if ( play[i] ) {
 					/* see if we're done */
 					if ( ( pos[i] >> 16 ) >= end[i] ) {
+
+						adpcm_data[i] = 0;
+
 						if ( loop[i] )
 							pos[i] = 0;
-						else
+						else {
 							play[i] = 0;
-						nibble[i] = adpcm_data[i] = 0;
-					} else {
-						if ( adpcm[i] ) { /* ADPCM */
-							if ( nibble[i] ) {
-								adpcm_data[i] += adpcm_lookup[ rom[i][pos[i] >> 16] & 0x0f ];
-								pos[i] += delta[i];
-							} else
-								adpcm_data[i] += adpcm_lookup[ ( ( rom[i][pos[i] >> 16] ) >> 4 ) & 0x0f ];
-
-							nibble[i] ^= 1;
-
-							adpcm_data[i] /= 2; /* Normalize */
-
-							dataL += ( adpcm_data[i] * vol[i] * pan[i] ) >> 2;
-							dataR += ( adpcm_data[i] * vol[i] * ( 8 - pan[i] ) ) >> 2;
-						} else { /* PCM */
-							d = rom[i][pos[i] >> 16];
-
-							dataL += ( d * vol[i] * pan[i] ) >> 2;
-							dataR += ( d * vol[i] * ( 8 - pan[i] ) ) >> 2;
-
-							pos[i] += delta[i];
+							continue;
 						}
+					}
+
+					if ( adpcm[i] ) { /* ADPCM */
+						if ( pos[i] & 0x8000 )
+							adpcm_data[i] += adpcm_lookup[ rom[i][pos[i] >> 16] & 0x0f ];
+						else
+							adpcm_data[i] += adpcm_lookup[ ( ( rom[i][pos[i] >> 16] ) >> 4 ) & 0x0f ];
+
+						adpcm_data[i] /= 2; /* Normalize */
+
+						if ( K053260_chip.mode & 4 )
+							dataL += ( adpcm_data[i] * lvol[i] ) >> 2;
+
+						if ( K053260_chip.mode & 2 )
+							dataR += ( adpcm_data[i] * rvol[i] ) >> 2;
+
+						pos[i] += delta[i] / 2;
+					} else { /* PCM */
+						d = rom[i][pos[i] >> 16];
+
+						if ( K053260_chip.mode & 4 )
+							dataL += ( d * lvol[i] ) >> 2;
+
+						if ( K053260_chip.mode & 2 )
+							dataR += ( d * rvol[i] ) >> 2;
+
+						pos[i] += delta[i];
 					}
 				}
 			}
 
-			dataL = limit( dataL, MAXOUT, MINOUT );
-			dataR = limit( dataR, MAXOUT, MINOUT );
-
-			if ( K053260_chip.mode & 4 )
-				buf16[0][j] = dataL;
-			else
-				buf16[0][j] = 0;
-
-			if ( K053260_chip.mode & 2 )
-				buf16[1][j] = dataR;
-			else
-				buf16[1][j] = 0;
+			buf16[1][j] = limit( dataL, MAXOUT, MINOUT );
+			buf16[0][j] = limit( dataR, MAXOUT, MINOUT );
 		}
 	} else { /* 8 bit case */
 		for ( j = 0; j < length; j++ ) {
@@ -175,38 +171,46 @@ void K053260_update( int param, void **buffer, int length ) {
 			dataL = dataR = 0;
 
 			for ( i = 0; i < 4; i++ ) {
-				val[i] = 0;
 				/* see if the voice is on */
 				if ( play[i] ) {
 					/* see if we're done */
 					if ( ( pos[i] >> 16 ) >= end[i] ) {
+
+						adpcm_data[i] = 0;
+
 						if ( loop[i] )
 							pos[i] = 0;
-						else
+						else {
 							play[i] = 0;
-						nibble[i] = adpcm_data[i] = 0;
-					} else {
-						if ( adpcm[i] ) { /* ADPCM */
-							if ( nibble[i] ) {
-								adpcm_data[i] += adpcm_lookup[ ( rom[i][pos[i] >> 16] ) & 0x0f ];
-								pos[i] += delta[i];
-							} else
-								adpcm_data[i] += adpcm_lookup[ ( ( rom[i][pos[i] >> 16] ) >> 4 ) & 0x0f ];
-
-							adpcm_data[i] /= 2; /* Normalize */
-
-							nibble[i] ^= 1;
-
-							dataL += ( adpcm_data[i] * vol[i] * pan[i] ) >> 2;
-							dataR += ( adpcm_data[i] * vol[i] * ( 8 - pan[i] ) ) >> 2;
-						} else { /* PCM */
-							d = rom[i][pos[i] >> 16];
-
-							dataL += ( d * vol[i] * pan[i] ) >> 2;
-							dataR += ( d * vol[i] * ( 8 - pan[i] ) ) >> 2;
-
-							pos[i] += delta[i];
+							continue;
 						}
+					}
+
+					if ( adpcm[i] ) { /* ADPCM */
+						if ( pos[i] & 0x8000 )
+							adpcm_data[i] += adpcm_lookup[ ( rom[i][pos[i] >> 16] ) & 0x0f ];
+						else
+							adpcm_data[i] += adpcm_lookup[ ( ( rom[i][pos[i] >> 16] ) >> 4 ) & 0x0f ];
+
+						adpcm_data[i] /= 2; /* Normalize */
+
+						if ( K053260_chip.mode & 4 )
+							dataL += ( adpcm_data[i] * lvol[i] ) >> 2;
+
+						if ( K053260_chip.mode & 2 )
+							dataR += ( adpcm_data[i] * rvol[i] ) >> 2;
+
+						pos[i] += delta[i] / 2;
+					} else { /* PCM */
+						d = rom[i][pos[i] >> 16];
+
+						if ( K053260_chip.mode & 4 )
+							dataL += ( d * lvol[i] ) >> 2;
+
+						if ( K053260_chip.mode & 2 )
+							dataR += ( d * rvol[i] ) >> 2;
+
+						pos[i] += delta[i];
 					}
 				}
 			}
@@ -214,15 +218,8 @@ void K053260_update( int param, void **buffer, int length ) {
 			dataL = limit( dataL, MAXOUT, MINOUT );
 			dataR = limit( dataR, MAXOUT, MINOUT );
 
-			if ( K053260_chip.mode & 4 )
-				buf[0][j] = dataL >> 8;
-			else
-				buf[0][j] = 0;
-
-			if ( K053260_chip.mode & 2 )
-				buf[1][j] = dataR >> 8;
-			else
-				buf[1][j] = 0;
+			buf[1][j] = dataL >> 8;
+			buf[0][j] = dataR >> 8;
 		}
 	}
 
@@ -230,7 +227,6 @@ void K053260_update( int param, void **buffer, int length ) {
 	for ( i = 0; i < 4; i++ ) {
 		K053260_channel[i].pos = pos[i];
 		K053260_channel[i].play = play[i];
-		K053260_channel[i].nibble = nibble[i];
 		K053260_channel[i].adpcm_data = adpcm_data[i];
 	}
 }
@@ -240,16 +236,16 @@ int K053260_sh_start(const struct MachineSound *msound) {
 	char ch_names[2][40];
 	int i;
 
-	K053260_reset();
-
-	for ( i = 0; i < 0x30; i++ )
-		K053260_chip.regs[i] = 0;
-
 	/* Initialize our chip structure */
 	K053260_chip.intf = msound->sound_interface;
 	K053260_chip.mode = 0;
 	K053260_chip.rom = Machine->memory_region[K053260_chip.intf->region];
 	K053260_chip.rom_size = Machine->memory_region_length[K053260_chip.intf->region] - 1;
+
+	K053260_reset();
+
+	for ( i = 0; i < 0x30; i++ )
+		K053260_chip.regs[i] = 0;
 
 	delta_table = ( unsigned long * )malloc( 0x1000 * sizeof( unsigned long ) );
 
@@ -267,17 +263,30 @@ int K053260_sh_start(const struct MachineSound *msound) {
 
 	InitDeltaTable();
 
+	/* setup SH1 timer if necessary */
+	if ( K053260_chip.intf->irq )
+		K053260_chip.timer = timer_pulse( TIME_IN_HZ( ( K053260_chip.intf->clock / 32 ) ), 0, K053260_chip.intf->irq );
+	else
+		K053260_chip.timer = 0;
+
     return 0;
 }
 
 void K053260_sh_stop( void ) {
 	if ( delta_table )
 		free( delta_table );
+
+	delta_table = 0;
+
+	if ( K053260_chip.timer )
+		timer_remove( K053260_chip.timer );
+
+	K053260_chip.timer = 0;
 }
 
 INLINE void check_bounds( int channel ) {
 	int channel_start = ( K053260_channel[channel].bank << 16 ) + K053260_channel[channel].start;
-	int channel_end = channel_start + K053260_channel[channel].size;
+	int channel_end = channel_start + K053260_channel[channel].size - 1;
 
 	if ( channel_start > K053260_chip.rom_size ) {
 		if ( errorlog )
@@ -317,7 +326,6 @@ void K053260_WriteReg( int r,int v ) {
 				if ( v & ( 1 << i ) ) {
 					K053260_channel[i].play = 1;
 					K053260_channel[i].pos = 0;
-					K053260_channel[i].nibble = 0;
 					K053260_channel[i].adpcm_data = 0;
 					check_bounds( i );
 				} else

@@ -408,7 +408,7 @@ static void nemesis_drawgfx_zoomup(struct osd_bitmap *dest,const struct GfxEleme
 			if(y>=clip->min_y && y<=clip->max_y)
 			{
 				bm  = dest->line[y]+sx;
-				sd = (gfx->gfxdata->line[start] + gfx->width -1);
+				sd = (gfx->gfxdata + start * gfx->line_modulo + gfx->width -1);
 				dda_x=0x80;
 				ex_count=sx;
 				col = *(sd);
@@ -451,7 +451,7 @@ static void nemesis_drawgfx_zoomup(struct osd_bitmap *dest,const struct GfxEleme
 			if(y>=clip->min_y && y<=clip->max_y)
 			{
 				bm  = dest->line[y]+sx;
-				sd = (gfx->gfxdata->line[start]);
+				sd = (gfx->gfxdata + start * gfx->line_modulo);
 				dda_x=0x80;
 				ex_count=sx;
 				col = *(sd);
@@ -618,7 +618,7 @@ static void nemesis_drawgfx_zoomdown(struct osd_bitmap *dest,const struct GfxEle
 				if(y>=clip->min_y && y<=clip->max_y)
 				{
 					bm  = dest->line[y]+sx;
-					sd = (gfx->gfxdata->line[start] + gfx->width -1);
+					sd = (gfx->gfxdata + start * gfx->line_modulo + gfx->width -1);
 					dda_x=0-scale/2;
 					real_x=sx;
 					for(ex_count=0;ex_count<xsize;ex_count++)
@@ -658,7 +658,7 @@ static void nemesis_drawgfx_zoomdown(struct osd_bitmap *dest,const struct GfxEle
 				if(y>=clip->min_y && y<=clip->max_y)
 				{
 					bm  = dest->line[y]+sx;
-					sd = (gfx->gfxdata->line[start]);
+					sd = (gfx->gfxdata + start * gfx->line_modulo);
 					dda_x=0-scale/2;
 					real_x=sx;
 					for(ex_count=0;ex_count<xsize;ex_count++)

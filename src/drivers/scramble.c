@@ -97,6 +97,7 @@ void pisces_gfxbank_w(int offset,int data);
 
 int  scramble_vh_interrupt(void);
 int  mariner_vh_interrupt(void);
+int  hunchbks_vh_interrupt(void);
 void scramble_filter_w(int offset, int data);
 
 int scramble_portB_r(int offset);
@@ -211,6 +212,35 @@ static struct MemoryReadAddress hotshock_readmem[] =
 	{ -1 }	/* end of table */
 };
 
+int hunchbks_mirror_r(int offset)
+{
+	return cpu_readmem16(0x1000+offset);
+}
+
+void hunchbks_mirror_w(int offset,int data)
+{
+	cpu_writemem16(0x1000+offset,data);
+}
+
+static struct MemoryReadAddress hunchbks_readmem[] =
+{
+	{ 0x0000, 0x0fff, MRA_ROM },
+	{ 0x2000, 0x2fff, MRA_ROM },
+	{ 0x4000, 0x4fff, MRA_ROM },
+	{ 0x6000, 0x6fff, MRA_ROM },
+	{ 0x1c00, 0x1fff, MRA_RAM },
+	{ 0x1800, 0x1bff, videoram_r },
+	{ 0x1400, 0x147f, MRA_RAM },	/* screen attributes, sprites, bullets */
+	{ 0x1500, 0x1500, input_port_0_r },	/* IN0 */
+	{ 0x1501, 0x1501, input_port_1_r },	/* IN1 */
+	{ 0x1502, 0x1502, input_port_2_r },	/* IN2 */
+	{ 0x1680, 0x1680, watchdog_reset_r },
+    { 0x3000, 0x3fff, hunchbks_mirror_r },
+    { 0x5000, 0x5fff, hunchbks_mirror_r },
+    { 0x7000, 0x7fff, hunchbks_mirror_r },
+	{ -1 }	/* end of table */
+};
+
 
 static struct MemoryWriteAddress scramble_writemem[] =
 {
@@ -312,6 +342,26 @@ static struct MemoryWriteAddress hotshock_writemem[] =
 	{ -1 }	/* end of table */
 };
 
+static struct MemoryWriteAddress hunchbks_writemem[] =
+{
+	{ 0x0000, 0x0fff, MWA_ROM },
+	{ 0x2000, 0x2fff, MWA_ROM },
+	{ 0x4000, 0x4fff, MWA_ROM },
+	{ 0x6000, 0x6fff, MWA_ROM },
+	{ 0x1800, 0x1bff, videoram_w, &videoram, &videoram_size },
+	{ 0x1c00, 0x1fff, MWA_RAM },
+	{ 0x1400, 0x143f, galaxian_attributes_w, &galaxian_attributesram },
+	{ 0x1440, 0x145f, MWA_RAM, &spriteram, &spriteram_size },
+	{ 0x1460, 0x147f, MWA_RAM, &galaxian_bulletsram, &galaxian_bulletsram_size },
+	{ 0x1606, 0x1606, galaxian_flipx_w },
+	{ 0x1607, 0x1607, galaxian_flipy_w },
+	{ 0x1210, 0x1210, soundlatch_w },
+	{ 0x1211, 0x1211, scramble_sh_irqtrigger_w },
+    { 0x3000, 0x3fff, hunchbks_mirror_w },
+    { 0x5000, 0x5fff, hunchbks_mirror_w },
+    { 0x7000, 0x7fff, hunchbks_mirror_w },
+	{ -1 }	/* end of table */
+};
 
 static struct IOReadPort triplep_readport[] =
 {
@@ -1275,6 +1325,55 @@ static struct MachineDriver mariner_machine_driver =
 	}
 };
 
+/**********************************************************/
+/* hunchbks is *very* different, as it uses an S2650 CPU */
+/*  epoxied in a plastic case labelled Century Playpack   */
+/**********************************************************/
+
+static struct MachineDriver hunchbks_machine_driver =
+{
+	/* basic machine hardware */
+	{
+		{
+			CPU_S2650,
+			18432000/6,
+			0,
+			hunchbks_readmem,hunchbks_writemem,0,0,
+			hunchbks_vh_interrupt,1
+		},
+		{
+			CPU_Z80 | CPU_AUDIO_CPU,
+			14318000/8,	/* 1.78975 MHz */
+			3,	/* memory region #3 */
+			scramble_sound_readmem,scramble_sound_writemem,scramble_sound_readport,scramble_sound_writeport,
+			ignore_interrupt,1
+		}
+	},
+	60, 2500,	/* frames per second, vblank duration */
+	1,
+	0,
+
+	/* video hardware */
+	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
+	scramble_gfxdecodeinfo,
+	32+64+10,8*4+2*2+128*1,	/* 32 for the characters, 64 for the stars, 10 for background */
+	galaxian_vh_convert_color_prom,
+
+	VIDEO_TYPE_RASTER,
+	0,
+	scramble_vh_start,
+	generic_vh_stop,
+	galaxian_vh_screenrefresh,
+
+	/* sound hardware */
+	0,0,0,0,
+	{
+		{
+			SOUND_AY8910,
+			&scramble_ay8910_interface
+		}
+	}
+};
 
 /***************************************************************************
 
@@ -1582,6 +1681,27 @@ ROM_START( hotshock_rom )
 	ROM_LOAD( "hotshock.b4",  0x1000, 0x1000, 0xc2135a44 )
 ROM_END
 
+ROM_START( hunchbks_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "2c_hb01.bin",           0x0000, 0x0800, 0x8bebd834 )
+	ROM_LOAD( "2e_hb02.bin",           0x0800, 0x0800, 0x07de4229 )
+	ROM_LOAD( "2f_hb03.bin",           0x2000, 0x0800, 0xb75a0dfc )
+	ROM_LOAD( "2h_hb04.bin",           0x2800, 0x0800, 0xf3206264 )
+	ROM_LOAD( "2j_hb05.bin",           0x4000, 0x0800, 0x1bb78728 )
+	ROM_LOAD( "2l_hb06.bin",           0x4800, 0x0800, 0xf25ed680 )
+	ROM_LOAD( "2m_hb07.bin",           0x6000, 0x0800, 0xc72e0e17 )
+	ROM_LOAD( "2p_hb08.bin",           0x6800, 0x0800, 0x412087b0 )
+
+	ROM_REGION_DISPOSE(0x1000)	/* temporary space for graphics */
+	ROM_LOAD( "5f_hb09.bin",           0x0000, 0x0800, 0xdb489c3d )
+	ROM_LOAD( "5h_hb10.bin",           0x0800, 0x0800, 0x3977650e )
+
+	ROM_REGION(0x0020)	/* color prom */
+	ROM_LOAD( "6e_prom.bin",           0x0000, 0x0020, 0x4e3caeab )
+
+	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_LOAD( "11d_snd.bin",           0x0000, 0x0800, 0x88226086 )
+ROM_END
 
 static void scramble_driver_init(void)
 {
@@ -2229,3 +2349,30 @@ struct GameDriver hotshock_driver =
 	0, 0
 };
 
+extern struct GameDriver hunchbkd_driver;
+
+struct GameDriver hunchbks_driver =
+{
+	__FILE__,
+	&hunchbkd_driver,
+	"hunchbks",
+	"Hunchback (Scramble conversion)",
+	"1983",
+	"Century",
+	"Mike Coates",
+	0,
+	&hunchbks_machine_driver,
+	0,
+
+	hunchbks_rom,
+	0, 0,
+	0,
+	0,	/* sound_prom */
+
+	scramble_input_ports,
+
+	PROM_MEMORY_REGION(2), 0, 0,
+	ORIENTATION_ROTATE_90,
+
+	0,0
+};

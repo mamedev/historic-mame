@@ -1389,6 +1389,12 @@ INLINE void changecolor_xxxxBBBBRRRRGGGG(int color,int data)
 	palette_change_color(color,r,g,b);
 }
 
+void paletteram_xxxxBBBBRRRRGGGG_w(int offset,int data)
+{
+	paletteram[offset] = data;
+	changecolor_xxxxBBBBRRRRGGGG(offset / 2,paletteram[offset & ~1] | (paletteram[offset | 1] << 8));
+}
+
 void paletteram_xxxxBBBBRRRRGGGG_swap_w(int offset,int data)
 {
 	paletteram[offset] = data;

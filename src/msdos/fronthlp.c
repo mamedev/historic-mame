@@ -476,22 +476,30 @@ int frontend_help (int argc, char **argv)
 			break;
 
 		case LIST_LMR:
-			for (i = 0; drivers[i]; i++)
 			{
-				static int first_missing = 1;
-				get_rom_sample_path (argc, argv, i);
-				if (RomsetMissing (i))
+				int total;
+
+				total = 0;
+				for (i = 0; drivers[i]; i++)
+						total++;
+				for (i = 0; drivers[i]; i++)
 				{
-					if (first_missing)
+					static int first_missing = 1;
+					get_rom_sample_path (argc, argv, i);
+					if (RomsetMissing (i))
 					{
-						first_missing = 0;
-						printf ("game      clone of  description\n");
-						printf ("--------  --------  -----------\n");
+						if (first_missing)
+						{
+							first_missing = 0;
+							printf ("game      clone of  description\n");
+							printf ("--------  --------  -----------\n");
+						}
+						printf ("%-10s%-10s%s\n",
+								drivers[i]->name,
+								(drivers[i]->clone_of) ? drivers[i]->clone_of->name : "",
+								drivers[i]->description);
 					}
-					printf ("%-10s%-10s%s\n",
-							drivers[i]->name,
-							(drivers[i]->clone_of) ? drivers[i]->clone_of->name : "",
-							drivers[i]->description);
+					fprintf(stderr,"%d%%\r",100 * (i+1) / total);
 				}
 			}
 			return 0;

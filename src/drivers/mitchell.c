@@ -2,8 +2,9 @@
 
   "Mitchell hardware". Actually used mostly by Capcom.
 
-  All games run on the same hardware except for mgakuen, which runs on an
+  All games run on the same hardware except mgakuen, which runs on an
   earlier version, without RAM banking and not encrypted (standard Z80).
+
 
 TODO:
 - understand what bits 0 and 3 of input port 0x05 are
@@ -16,7 +17,7 @@ TODO:
 
 /* in machine/kabuki.c */
 void mgakuen2_decode(void);
-void bbros_decode(void);
+void pang_decode(void);
 void cworld_decode(void);
 void hatena_decode(void);
 void spang_decode(void);
@@ -221,17 +222,17 @@ if (Machine->gamedrv == &mgakuen2_driver)	/* hack... music doesn't work otherwis
 	return (input_port_1_r(0) & 0x76) | bit;
 }
 
-static void pang_eeprom_reset_w(int offset,int data)
+static void eeprom_cs_w(int offset,int data)
 {
-	EEPROM_set_reset_line(data ? CLEAR_LINE : ASSERT_LINE);
+	EEPROM_set_cs_line(data ? CLEAR_LINE : ASSERT_LINE);
 }
 
-static void pang_eeprom_clock_w(int offset,int data)
+static void eeprom_clock_w(int offset,int data)
 {
 	EEPROM_set_clock_line(data ? CLEAR_LINE : ASSERT_LINE);
 }
 
-static void pang_eeprom_serial_w(int offset,int data)
+static void eeprom_serial_w(int offset,int data)
 {
 	EEPROM_write_bit(data);
 }
@@ -413,9 +414,9 @@ static struct IOWritePort writeport[] =
 	{ 0x05, 0x05, OKIM6295_data_0_w },
 	{ 0x06, 0x06, MWA_NOP },	/* watchdog? irq ack? */
 	{ 0x07, 0x07, pang_video_bank_w },      /* Video RAM bank register */
-	{ 0x08, 0x08, pang_eeprom_reset_w },
-	{ 0x10, 0x10, pang_eeprom_clock_w },
-	{ 0x18, 0x18, pang_eeprom_serial_w },
+	{ 0x08, 0x08, eeprom_cs_w },
+	{ 0x10, 0x10, eeprom_clock_w },
+	{ 0x18, 0x18, eeprom_serial_w },
 	{ -1 }  /* end of table */
 };
 
@@ -996,7 +997,6 @@ static struct GfxLayout spritelayout =
 	64*8    /* every sprite takes 64 consecutive bytes */
 };
 
-
 static struct GfxDecodeInfo mgakuen_gfxdecodeinfo[] =
 {
 	{ 1, 0x000000, &marukin_charlayout, 0,  64 }, /* colors 0-1023 */
@@ -1024,7 +1024,7 @@ static struct YM2413interface ym2413_interface=
 {
 	1,	/* 1 chip */
 	8000000,	/* 8MHz ??? (hand tuned) */
-	{ 255 },	/* Volume */
+	{ 50 },	/* Volume */
 };
 
 static struct OKIM6295interface okim6295_interface =
@@ -1032,7 +1032,7 @@ static struct OKIM6295interface okim6295_interface =
 	1,			/* 1 chip */
 	{ 8000 },	/* 8000Hz ??? */
 	{ 2 },		/* memory region 2 */
-	{ 60 }
+	{ 50 }
 };
 
 
@@ -1056,7 +1056,7 @@ static struct MachineDriver mgakuen_machine_driver =
 	mgakuen_gfxdecodeinfo,
 	1024, 1024,	/* less colors than the others */
 	0,
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_BEFORE_VBLANK,	/* jerky otherwise */
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
 	0,
 	pang_vh_start,
 	pang_vh_stop,
@@ -1093,7 +1093,7 @@ static struct MachineDriver machine_driver =
 	gfxdecodeinfo,
 	2048, 2048,
 	0,
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_BEFORE_VBLANK,	/* jerky otherwise */
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
 	0,
 	pang_vh_start,
 	pang_vh_stop,
@@ -1130,7 +1130,7 @@ static struct MachineDriver marukin_machine_driver =
 	marukin_gfxdecodeinfo,
 	2048, 2048,
 	0,
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_BEFORE_VBLANK,	/* jerky otherwise */
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
 	0,
 	pang_vh_start,
 	pang_vh_stop,
@@ -1203,34 +1203,24 @@ ROM_START( pkladies_rom )
 	ROM_LOAD( "pko-voi2.3d",  0x20000, 0x20000, 0x18398bf6 )
 ROM_END
 
-ROM_START( pkladisb_rom )
+ROM_START( dokaben_rom )
 	ROM_REGION(0x50000)
-	/* bootleg with ROMs partially decrypted */
-	ROM_LOAD( "01_ic112",    0x00000, 0x10000, 0xca4cfaf9 )
-	ROM_LOAD( "02_ic126",    0x10000, 0x20000, 0xdec1ba5b )
+	ROM_LOAD( "db06.11h",     0x00000, 0x08000, 0x413e0886 )
+	ROM_LOAD( "db07.13h",     0x10000, 0x20000, 0x8bdcf49e )
+	ROM_LOAD( "db08.14h",     0x30000, 0x20000, 0x1643bdd9 )
 
-	ROM_REGION_DISPOSE(0x240000)     /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "04_ic102",     0x000000, 0x20000, 0xb798d926 )	/* chars */
-	ROM_LOAD( "05_ic109",     0x020000, 0x20000, 0x8819affb )
-	ROM_LOAD( "06_ic110",     0x040000, 0x20000, 0x96c7eed0 )
-	ROM_LOAD( "07_ic101",     0x060000, 0x20000, 0xd6a7a95b )
-	ROM_LOAD( "08_ic103",     0x080000, 0x20000, 0x2132c239 )
-	ROM_LOAD( "09_ic108",     0x0a0000, 0x20000, 0x9059d383 )
-	ROM_LOAD( "10_ic95",      0x0c0000, 0x20000, 0x97424238 )
-	ROM_LOAD( "11_ic100",     0x0e0000, 0x20000, 0x7f995c59 )
-	ROM_LOAD( "12_ic104",     0x100000, 0x20000, 0x09aa3215 )
-	ROM_LOAD( "13_ic107",     0x120000, 0x20000, 0x10be806b )
-	ROM_LOAD( "14_ic96",      0x140000, 0x20000, 0x3fd2684d )
-	ROM_LOAD( "15_ic99",      0x160000, 0x20000, 0x0a52206a )
-	ROM_LOAD( "18_ic105",     0x180000, 0x20000, 0x1280a069 )
-	ROM_LOAD( "19_ic106",     0x1a0000, 0x20000, 0x95d838cf )
-	ROM_LOAD( "20_ic97",      0x1c0000, 0x20000, 0x1f537087 )
-	ROM_LOAD( "21_ic98",      0x1e0000, 0x20000, 0x6c18df0d )
-	ROM_LOAD( "16_ic42",      0x200000, 0x20000, 0xc6decb5e )	/* sprites */
-	ROM_LOAD( "17_ic41",      0x220000, 0x20000, 0x338b4b13 )
+	ROM_REGION_DISPOSE(0x140000)     /* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "db02.1e",      0x000000, 0x20000, 0x9aa8470c )	/* chars */
+	ROM_LOAD( "db03.2e",      0x020000, 0x20000, 0x3324e43d )
+	/* 40000-7ffff empty */
+	ROM_LOAD( "db04.1g",      0x080000, 0x20000, 0xc0c5b6c2 )
+	ROM_LOAD( "db05.2g",      0x0a0000, 0x20000, 0xd2ab25f2 )
+	/* c0000-fffff empty */
+	ROM_LOAD( "db10.2k",      0x100000, 0x20000, 0x9e70f7ae )	/* sprites */
+	ROM_LOAD( "db09.1k",      0x120000, 0x20000, 0x2d9263f7 )
 
 	ROM_REGION(0x80000)	/* OKIM */
-	ROM_LOAD( "03_ic127",     0x00000, 0x20000, 0x16b79788 )
+	ROM_LOAD( "db01.1d",      0x00000, 0x20000, 0x62fa6b81 )
 ROM_END
 
 ROM_START( pang_rom )
@@ -1546,6 +1536,49 @@ static void blockbl_decode(void)
 
 
 
+/****  Mahjong Gakuen high score save routine - RJF (Aug 5, 1999)  ****/
+static int mgakuen_hiload(void)
+{
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+	/* check if the hi score table has already been initialized */
+        if (memcmp(&RAM[0xe702],"\x01\x00\x00",3) == 0)
+	{
+		void *f;
+
+		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
+		{
+                        osd_fread(f,&RAM[0xe700], 32*5);        /* HS table */
+
+                        RAM[0xe622] = RAM[0xe702];      /* update high score */
+                        RAM[0xe623] = RAM[0xe703];      /* on top of screen */
+                        RAM[0xe624] = RAM[0xe704];
+                        RAM[0xe625] = RAM[0xe705];
+                        RAM[0xe626] = RAM[0xe706];
+                        RAM[0xe627] = RAM[0xe707];
+
+			osd_fclose(f);
+		}
+
+		return 1;
+	}
+	else return 0;	/* we can't load the hi scores yet */
+}
+
+static void mgakuen_hisave(void)
+{
+	void *f;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
+	{
+                osd_fwrite(f,&RAM[0xe700], 32*5);      /* HS whole table */
+		osd_fclose(f);
+	}
+}
+
+
+
 struct GameDriver mgakuen_driver =
 {
 	__FILE__,
@@ -1568,7 +1601,7 @@ struct GameDriver mgakuen_driver =
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
-	0, 0	/* no EEPROM */
+	mgakuen_hiload, mgakuen_hisave    /* no EEPROM */
 };
 
 struct GameDriver mgakuen2_driver =
@@ -1621,25 +1654,25 @@ struct GameDriver pkladies_driver =
 	nvram_load, nvram_save
 };
 
-struct GameDriver pkladisb_driver =
+struct GameDriver dokaben_driver =
 {
 	__FILE__,
-	&pkladies_driver,
-	"pkladisb",
-	"Poker Ladies (???)",
+	0,
+	"dokaben",
+	"Dokaben (Japan)",
 	"1989",
-	"?????",
+	"Capcom",
 	"Paul Leaman",
 	0,
-	&marukin_machine_driver,
-	mahjong_init,
+	&machine_driver,
+	standard_init,
 
-	pkladisb_rom,
-	0, 0,//mgakuen2_decode,
+	dokaben_rom,
+	0, mgakuen2_decode,
 	0,
 	0,      /* sound_prom */
 
-	pkladies_input_ports,
+	pang_input_ports,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
@@ -1660,7 +1693,7 @@ struct GameDriver pang_driver =
 	standard_init,
 
 	pang_rom,
-	0, bbros_decode,
+	0, pang_decode,
 	0,
 	0,      /* sound_prom */
 
@@ -1710,7 +1743,7 @@ struct GameDriver bbros_driver =
 	standard_init,
 
 	bbros_rom,
-	0, bbros_decode,
+	0, pang_decode,
 	0,
 	0,      /* sound_prom */
 
@@ -1735,7 +1768,7 @@ struct GameDriver pompingw_driver =
 	standard_init,
 
 	pompingw_rom,
-	0, bbros_decode,
+	0, pang_decode,
 	0,
 	0,      /* sound_prom */
 

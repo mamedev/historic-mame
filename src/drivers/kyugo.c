@@ -4,12 +4,19 @@ This driver supports the following games:
 
 Gyrodine - (c) 1984 Taito Corporation.
 Son of Phoenix - (c) 1985 Associated Overseas MFR, Inc.
+Repulse - (c) 1985 Sega
+'99 The last war - (c) 1985 Proma
+Flash Gal - (c) 1985 Sega
 SRD Mission - (c) 1986 Taito Corporation.
+Air Wolf - (c) 1987 Kyugo
 
 
 Preliminary driver by:
 Ernesto Corvi
 someone@secureshell.com
+
+Notes:
+- attract mode in Son of Phoenix doesn't work
 
 ***************************************************************************/
 
@@ -18,14 +25,14 @@ someone@secureshell.com
 #include "cpu/z80/z80.h"
 
 /* from vidhrdw */
-extern unsigned char *taitos84_videoram;
-extern int taitos84_videoram_size;
-extern unsigned char *taitos84_back_scrollY_lo;
-extern unsigned char *taitos84_back_scrollX;
-void taitos84_gfxctrl_w(int offset,int data);
-void taitos84_flipscreen_w(int offset,int data);
-void taitos84_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
-void taitos84_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
+extern unsigned char *kyugo_videoram;
+extern int kyugo_videoram_size;
+extern unsigned char *kyugo_back_scrollY_lo;
+extern unsigned char *kyugo_back_scrollX;
+void kyugo_gfxctrl_w(int offset,int data);
+void kyugo_flipscreen_w(int offset,int data);
+void kyugo_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void kyugo_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 
 
 static unsigned char *shared_ram;
@@ -67,12 +74,12 @@ static int special_spriteram_r( int offs )
 		{ 0x0000, 0x7fff, MWA_ROM },												\
 		{ 0x8000, 0x87ff, videoram_w, &videoram, &videoram_size },					\
 		{ 0x8800, 0x8fff, colorram_w, &colorram },									\
-		{ 0x9000, 0x97ff, MWA_RAM, &taitos84_videoram, &taitos84_videoram_size },	\
+		{ 0x9000, 0x97ff, MWA_RAM, &kyugo_videoram, &kyugo_videoram_size },	\
 		{ 0x9800, 0x9fff, MWA_RAM, &spriteram_2 },	/* 4 bits wide */				\
 		{ 0xa000, 0xa7ff, MWA_RAM, &spriteram, &spriteram_size },					\
-		{ 0xa800, 0xa800, MWA_RAM, &taitos84_back_scrollY_lo }, /* back scroll Y */	\
-		{ 0xb000, 0xb000, taitos84_gfxctrl_w }, /* back scroll MSB + other stuff */	\
-		{ 0xb800, 0xb800, MWA_RAM, &taitos84_back_scrollX }, /* back scroll X */	 \
+		{ 0xa800, 0xa800, MWA_RAM, &kyugo_back_scrollY_lo }, /* back scroll Y */	\
+		{ 0xb000, 0xb000, kyugo_gfxctrl_w }, /* back scroll MSB + other stuff */	\
+		{ 0xb800, 0xb800, MWA_RAM, &kyugo_back_scrollX }, /* back scroll X */	 \
 		{ shared, shared+0x7ff, shared_ram_w, &shared_ram }, /* shared RAM */		\
 		{ 0xf800, 0xffff, shared_ram_w }, /* shared mirror always here */			\
 		{ watchdog, watchdog, watchdog_reset_w },								\
@@ -100,9 +107,11 @@ static int special_spriteram_r( int offs )
 /* actual definitions */
 Main_MemMap( gyrodine, 0xf000, 0xe000 )
 Main_MemMap( sonofphx, 0xf000, 0x0000 )
+Main_MemMap( flashgal, 0xf000, 0x0000 )
 Main_MemMap( srdmissn, 0xe000, 0x0000 )
 Sub_MemMap( gyrodine, 0x1fff, 0x4000, 0x0000, 0x8080, 0x8040, 0x8000 )
 Sub_MemMap( sonofphx, 0x7fff, 0xa000, 0x0000, 0xc080, 0xc040, 0xc000 )
+Sub_MemMap( flashgal, 0x7fff, 0xa000, 0x0000, 0xc080, 0xc040, 0xc000 )
 Sub_MemMap( srdmissn, 0x7fff, 0x8000, 0x8800, 0xf400, 0xf401, 0xf402 )
 
 static void sub_cpu_control_w( int offs, int data ) {
@@ -122,7 +131,7 @@ static void sub_cpu_control_w( int offs, int data ) {
 																\
 	static struct IOWritePort name##_writeport[] = {			\
 		{ base+0, base+0, interrupt_enable_w },					\
-		{ base+1, base+1, taitos84_flipscreen_w },				\
+		{ base+1, base+1, kyugo_flipscreen_w },				\
 		{ base+2, base+2, sub_cpu_control_w },					\
 		{ -1 }	/* end of table */								\
 	};
@@ -144,9 +153,11 @@ static void sub_cpu_control_w( int offs, int data ) {
 /* actual definitions */
 Main_PortMap( gyrodine, 0x00 )
 Main_PortMap( sonofphx, 0x00 )
+Main_PortMap( flashgal, 0x40 )
 Main_PortMap( srdmissn, 0x08 )
 Sub_PortMap( gyrodine, 0x00, 0xc0 )
 Sub_PortMap( sonofphx, 0x00, 0x40 )
+Sub_PortMap( flashgal, 0x00, 0x40 )
 Sub_PortMap( srdmissn, 0x80, 0x84 )
 
 /***************************************************************************
@@ -238,7 +249,7 @@ INPUT_PORTS_START( gyrodine_input_ports )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( input_ports )	/* sonofphx and lstmissn */
+INPUT_PORTS_START( input_ports )	/* sonofphx, srdmissn */
 	PORT_START      /* DSW1 */
 	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x03, "3" )
@@ -321,6 +332,88 @@ INPUT_PORTS_START( input_ports )	/* sonofphx and lstmissn */
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 INPUT_PORTS_END
 
+INPUT_PORTS_START( flashgal_input_ports )
+	PORT_START      /* DSW1 */
+	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Lives ) )
+	PORT_DIPSETTING(    0x03, "3" )
+	PORT_DIPSETTING(    0x02, "4" )
+	PORT_DIPSETTING(    0x01, "5" )
+	PORT_DIPSETTING(    0x00, "6" )
+	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x08, 0x08, "Slow Motion" )
+	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x20, "Sound Test" )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x00, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Cocktail ) )
+	PORT_DIPNAME( 0x80, 0x80, "Freeze" )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+
+	PORT_START      /* DSW2 */
+	PORT_DIPNAME( 0x07, 0x07, DEF_STR( Coin_A ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( 3C_2C ) )
+	PORT_DIPSETTING(    0x07, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x06, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x05, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( 1C_4C ) )
+	PORT_DIPSETTING(    0x03, DEF_STR( 1C_6C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Free_Play ) )
+	PORT_DIPNAME( 0x38, 0x38, DEF_STR( Coin_B ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 5C_1C ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0x18, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x38, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( 3C_4C ) )
+	PORT_DIPSETTING(    0x30, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x28, DEF_STR( 1C_3C ) )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+
+	PORT_START	/* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_COIN2 )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_COIN3 )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_START1 )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_START2 )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+
+	PORT_START	/* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_8WAY )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP    | IPF_8WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN  | IPF_8WAY )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_BUTTON2 )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+
+	PORT_START	/* IN2 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_COCKTAIL )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_BUTTON2 | IPF_COCKTAIL )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+INPUT_PORTS_END
 
 
 /***************************************************************************
@@ -353,7 +446,8 @@ static struct GfxLayout spritelayout =
 	32*8	/* every sprite takes 32 consecutive bytes */
 };
 
-static struct GfxLayout tilelayout = {
+static struct GfxLayout tilelayout =
+{
 	8,8,	/* 16*16 tiles */
 	1024,	/* 1024 tiles */
 	3,		/* 3 bits per pixel */
@@ -383,7 +477,7 @@ static struct AY8910interface ay8910_interface =
 {
 	2,      /* 2 chips */
 	1500000,        /* 1.5 MHz ? */
-	{ 40, 40 },
+	{ MIXER(50,MIXER_PAN_LEFT), MIXER(50,MIXER_PAN_RIGHT) },	/* ?? */
 	AY8910_DEFAULT_GAIN,
 	{ input_port_0_r, 0 },
 	{ input_port_1_r, 0 },
@@ -424,16 +518,16 @@ static struct AY8910interface ay8910_interface =
 		64*8, 32*8, { 0*8, 36*8-1, 2*8, 30*8-1 },													\
 		gfxdecodeinfo,																		\
 		256, 256,																					\
-		taitos84_vh_convert_color_prom,																\
+		kyugo_vh_convert_color_prom,																\
 																									\
 		VIDEO_TYPE_RASTER,																			\
 		0,																							\
 		generic_vh_start,																			\
 		generic_vh_stop,																			\
-		taitos84_vh_screenrefresh,																	\
+		kyugo_vh_screenrefresh,																	\
 																									\
 		/* sound hardware */																		\
-		0,0,0,0,																					\
+		SOUND_SUPPORTS_STEREO,0,0,0,																\
 		{																							\
 			{																						\
 				SOUND_AY8910,																		\
@@ -446,6 +540,7 @@ static struct AY8910interface ay8910_interface =
 Machine_Driver( gyrodine )
 Machine_Driver( sonofphx )
 Machine_Driver( srdmissn )
+Machine_Driver( flashgal )
 
 /***************************************************************************
 
@@ -489,35 +584,6 @@ ROM_START( gyrodine_rom )
 	ROM_LOAD( "a21.01", 0x0000, 0x2000, 0xb2ce0aa2 )
 ROM_END
 
-ROM_START( srdmissn_rom )
-	ROM_REGION( 0x10000 ) /* 64k for code */
-	ROM_LOAD( "5.t2",   0x0000, 0x4000, 0xa682b48c )
-	ROM_LOAD( "7.t3",   0x4000, 0x4000, 0x1719c58c )
-
-	ROM_REGION( 0x1f000 ) /* temporary space for graphics */
-	ROM_LOAD( "15.4a",  0x00000, 0x1000, 0x4961f7fd ) /* chars */
-	ROM_LOAD( "14.6a",  0x01000, 0x4000, 0x3d4c0447 ) /* sprites - plane 0 */
-	ROM_LOAD( "13.7a",  0x05000, 0x4000, 0x22414a67 ) /* sprites - plane 0 */
-	ROM_LOAD( "12.8a",  0x09000, 0x4000, 0x61e34283 ) /* sprites - plane 1 */
-	ROM_LOAD( "11.9a",  0x0d000, 0x4000, 0xbbbaffef ) /* sprites - plane 1 */
-	ROM_LOAD( "10.10a", 0x11000, 0x4000, 0xde564f97 ) /* sprites - plane 2 */
-	ROM_LOAD( "9.11a",  0x15000, 0x4000, 0x890dc815 ) /* sprites - plane 2 */
-	ROM_LOAD( "17.9h",  0x19000, 0x2000, 0x41211458 ) /* tiles - plane 1 */
-	ROM_LOAD( "18.10h", 0x1b000, 0x2000, 0x740eccd4 ) /* tiles - plane 0 */
-	ROM_LOAD( "16.11h", 0x1d000, 0x2000, 0xc1f4a5db ) /* tiles - plane 2 */
-
-	ROM_REGION( 0x340 ) /* PROMs */
-	ROM_LOAD( "mr.1j",  0x0000, 0x0100, 0x110a436e ) /* red */
-	ROM_LOAD( "mg.1h",  0x0100, 0x0100, 0x0fbfd9f0 ) /* green */
-	ROM_LOAD( "mb.1f",  0x0200, 0x0100, 0xa342890c ) /* blue */
-	ROM_LOAD( "m2.5j",  0x0300, 0x0020, 0x190a55ad ) /* char lookup table */
-	ROM_LOAD( "m1.2c",  0x0320, 0x0020, 0x83a39201 ) /* timing? not used */
-
-	ROM_REGION( 0x10000 ) /* 64k for code */
-	ROM_LOAD( "1.t7",   0x0000, 0x4000, 0xdc48595e )
-	ROM_LOAD( "3.t8",   0x4000, 0x4000, 0x216be1e8 )
-ROM_END
-
 ROM_START( sonofphx_rom )
 	ROM_REGION( 0x10000 ) /* 64k for code */
 	ROM_LOAD( "5.f4",   0x0000, 0x2000, 0xe0d2c6cf )
@@ -550,13 +616,231 @@ ROM_START( sonofphx_rom )
 	ROM_LOAD( "4.k2",   0x6000, 0x2000, 0x4f3695a1 )
 ROM_END
 
+ROM_START( repulse_rom )
+	ROM_REGION( 0x10000 ) /* 64k for code */
+	ROM_LOAD( "repulse.b5", 0x0000, 0x2000, 0xfb2b7c9d )
+	ROM_LOAD( "repulse.b6", 0x2000, 0x2000, 0x99129918 )
+	ROM_LOAD( "7.j4",       0x4000, 0x2000, 0x57a8e900 )
+
+	ROM_REGION( 0x1f000 ) /* temporary space for graphics */
+	ROM_LOAD( "repulse.a11",  0x00000, 0x1000, 0x8e1de90a ) /* chars */
+	ROM_LOAD( "8.6a",   0x01000, 0x4000, 0x0e9f757e ) /* sprites - plane 0 */
+	ROM_LOAD( "9.7a",   0x05000, 0x4000, 0xf7d2e650 ) /* sprites - plane 0 */
+	ROM_LOAD( "10.8a",  0x09000, 0x4000, 0xe717baf4 ) /* sprites - plane 1 */
+	ROM_LOAD( "11.9a",  0x0d000, 0x4000, 0x04b2250b ) /* sprites - plane 1 */
+	ROM_LOAD( "12.10a", 0x11000, 0x4000, 0xd110e140 ) /* sprites - plane 2 */
+	ROM_LOAD( "13.11a", 0x15000, 0x4000, 0x8fdc713c ) /* sprites - plane 2 */
+	ROM_LOAD( "15.9h",  0x19000, 0x2000, 0xc9213469 ) /* tiles - plane 0 */
+	ROM_LOAD( "16.10h", 0x1b000, 0x2000, 0x7de5d39e ) /* tiles - plane 1 */
+	ROM_LOAD( "17.11h", 0x1d000, 0x2000, 0x0ba5f72c ) /* tiles - plane 2 */
+
+	ROM_REGION( 0x340 ) /* PROMs */
+	ROM_LOAD( "r.1f",   0x0200, 0x0100, 0xb7f48b41 ) /* red */
+	ROM_LOAD( "g.1h",   0x0100, 0x0100, 0xacd7a69e ) /* green */
+	ROM_LOAD( "b.1j",   0x0000, 0x0100, 0x3ea35431 ) /* blue */
+	/* 0x0300-0x031f empty - looks like there isn't a lookup table PROM */
+	ROM_LOAD( "2c",     0x0320, 0x0020, 0x83a39201 ) /* timing? (not used) */
+
+	ROM_REGION( 0x10000 ) /* 64k for code */
+	ROM_LOAD( "1.f2",       0x0000, 0x2000, 0xc485c621 )
+	ROM_LOAD( "2.h2",       0x2000, 0x2000, 0xb3c6a886 )
+	ROM_LOAD( "3.j2",       0x4000, 0x2000, 0x197e314c )
+	ROM_LOAD( "repulse.b4", 0x6000, 0x2000, 0x86b267f3 )
+ROM_END
+
+ROM_START( c99_rom )
+	ROM_REGION( 0x10000 ) /* 64k for code */
+	ROM_LOAD( "99.4f",   0x0000, 0x2000, 0xe3cfc09f )
+	ROM_LOAD( "99.4h",   0x2000, 0x2000, 0xfd58c6e1 )
+	ROM_LOAD( "7.j4",    0x4000, 0x2000, 0x57a8e900 )
+
+	ROM_REGION( 0x1f000 ) /* temporary space for graphics */
+	ROM_LOAD( "99.4a",  0x00000, 0x1000, 0x49a2383e ) /* chars */
+	ROM_LOAD( "8.6a",   0x01000, 0x4000, 0x0e9f757e ) /* sprites - plane 0 */
+	ROM_LOAD( "9.7a",   0x05000, 0x4000, 0xf7d2e650 ) /* sprites - plane 0 */
+	ROM_LOAD( "10.8a",  0x09000, 0x4000, 0xe717baf4 ) /* sprites - plane 1 */
+	ROM_LOAD( "11.9a",  0x0d000, 0x4000, 0x04b2250b ) /* sprites - plane 1 */
+	ROM_LOAD( "12.10a", 0x11000, 0x4000, 0xd110e140 ) /* sprites - plane 2 */
+	ROM_LOAD( "13.11a", 0x15000, 0x4000, 0x8fdc713c ) /* sprites - plane 2 */
+	ROM_LOAD( "15.9h",  0x19000, 0x2000, 0xc9213469 ) /* tiles - plane 0 */
+	ROM_LOAD( "16.10h", 0x1b000, 0x2000, 0x7de5d39e ) /* tiles - plane 1 */
+	ROM_LOAD( "17.11h", 0x1d000, 0x2000, 0x0ba5f72c ) /* tiles - plane 2 */
+
+	ROM_REGION( 0x340 ) /* PROMs */
+	ROM_LOAD( "r.1f",   0x0200, 0x0100, 0xb7f48b41 ) /* red */
+	ROM_LOAD( "g.1h",   0x0100, 0x0100, 0xacd7a69e ) /* green */
+	ROM_LOAD( "b.1j",   0x0000, 0x0100, 0x3ea35431 ) /* blue */
+	/* 0x0300-0x031f empty - looks like there isn't a lookup table PROM */
+	ROM_LOAD( "2c",     0x0320, 0x0020, 0x83a39201 ) /* timing? (not used) */
+
+	ROM_REGION( 0x10000 ) /* 64k for code */
+	ROM_LOAD( "1.f2",       0x0000, 0x2000, 0xc485c621 )
+	ROM_LOAD( "2.h2",       0x2000, 0x2000, 0xb3c6a886 )
+	ROM_LOAD( "3.j2",       0x4000, 0x2000, 0x197e314c )
+	ROM_LOAD( "repulse.b4", 0x6000, 0x2000, 0x86b267f3 )
+ROM_END
+
+ROM_START( flashgal_rom )
+	ROM_REGION( 0x10000 ) /* 64k for code */
+	ROM_LOAD( "15.4f",        0x0000, 0x2000, 0xcf5ad733 )
+	ROM_LOAD( "16.4h",        0x2000, 0x2000, 0x00c4851f )
+	ROM_LOAD( "17.4j",        0x4000, 0x2000, 0x1ef0b8f7 )
+	ROM_LOAD( "18.4k",        0x6000, 0x2000, 0x885d53de )
+
+	ROM_REGION( 0x1f000 ) /* temporary space for graphics */
+	ROM_LOAD( "19.4b",        0x00000, 0x1000, 0xdca9052f ) /* chars */
+	ROM_LOAD( "20.6b",        0x01000, 0x4000, 0x62caf2a1 ) /* sprites - plane 0 */
+	ROM_LOAD( "21.7b",        0x05000, 0x4000, 0x10f78a10 ) /* sprites - plane 0 */
+	ROM_LOAD( "22.8b",        0x09000, 0x4000, 0x36ea1d59 ) /* sprites - plane 1 */
+	ROM_LOAD( "23.9b",        0x0d000, 0x4000, 0xf527d837 ) /* sprites - plane 1 */
+	ROM_LOAD( "24.10b",       0x11000, 0x4000, 0xba76e4c1 ) /* sprites - plane 2 */
+	ROM_LOAD( "25.11b",       0x15000, 0x4000, 0xf095d619 ) /* sprites - plane 2 */
+	ROM_LOAD( "26.9h",        0x19000, 0x2000, 0x2f5b62c0 ) /* tiles - plane 0 */
+	ROM_LOAD( "27.10h",       0x1b000, 0x2000, 0x8fbb49b5 ) /* tiles - plane 1 */
+	ROM_LOAD( "28.11h",       0x1d000, 0x2000, 0x26a8e5c3 ) /* tiles - plane 2 */
+
+	ROM_REGION( 0x340 ) /* PROMs */
+	ROM_LOAD( "flashgal.prr", 0x0000, 0x0100, 0x02c4043f ) /* red */
+	ROM_LOAD( "flashgal.prg", 0x0100, 0x0100, 0x225938d1 ) /* green */
+	ROM_LOAD( "flashgal.prb", 0x0200, 0x0100, 0x1e0a1cd3 ) /* blue */
+	ROM_LOAD( "flashgal.pr2", 0x0300, 0x0020, 0xcce2e29f ) /* char lookup table */
+	ROM_LOAD( "flashgal.pr1", 0x0320, 0x0020, 0x83a39201 ) /* timing? (not used) */
+
+	ROM_REGION( 0x10000 ) /* 64k for code */
+	ROM_LOAD( "11.2f",        0x0000, 0x2000, 0xeee2134d )
+	ROM_LOAD( "12.2h",        0x2000, 0x2000, 0xe5e0cd22 )
+	ROM_LOAD( "13.2j",        0x4000, 0x2000, 0x4cd3fe5e )
+	ROM_LOAD( "14.2k",        0x6000, 0x2000, 0x552ca339 )
+ROM_END
+
+ROM_START( srdmissn_rom )
+	ROM_REGION( 0x10000 ) /* 64k for code */
+	ROM_LOAD( "5.t2",   0x0000, 0x4000, 0xa682b48c )
+	ROM_LOAD( "7.t3",   0x4000, 0x4000, 0x1719c58c )
+
+	ROM_REGION( 0x1f000 ) /* temporary space for graphics */
+	ROM_LOAD( "15.4a",  0x00000, 0x1000, 0x4961f7fd ) /* chars */
+	ROM_LOAD( "14.6a",  0x01000, 0x4000, 0x3d4c0447 ) /* sprites - plane 0 */
+	ROM_LOAD( "13.7a",  0x05000, 0x4000, 0x22414a67 ) /* sprites - plane 0 */
+	ROM_LOAD( "12.8a",  0x09000, 0x4000, 0x61e34283 ) /* sprites - plane 1 */
+	ROM_LOAD( "11.9a",  0x0d000, 0x4000, 0xbbbaffef ) /* sprites - plane 1 */
+	ROM_LOAD( "10.10a", 0x11000, 0x4000, 0xde564f97 ) /* sprites - plane 2 */
+	ROM_LOAD( "9.11a",  0x15000, 0x4000, 0x890dc815 ) /* sprites - plane 2 */
+	ROM_LOAD( "17.9h",  0x19000, 0x2000, 0x41211458 ) /* tiles - plane 1 */
+	ROM_LOAD( "18.10h", 0x1b000, 0x2000, 0x740eccd4 ) /* tiles - plane 0 */
+	ROM_LOAD( "16.11h", 0x1d000, 0x2000, 0xc1f4a5db ) /* tiles - plane 2 */
+
+	ROM_REGION( 0x340 ) /* PROMs */
+	ROM_LOAD( "mr.1j",  0x0000, 0x0100, 0x110a436e ) /* red */
+	ROM_LOAD( "mg.1h",  0x0100, 0x0100, 0x0fbfd9f0 ) /* green */
+	ROM_LOAD( "mb.1f",  0x0200, 0x0100, 0xa342890c ) /* blue */
+	ROM_LOAD( "m2.5j",  0x0300, 0x0020, 0x190a55ad ) /* char lookup table */
+	ROM_LOAD( "m1.2c",  0x0320, 0x0020, 0x83a39201 ) /* timing? not used */
+
+	ROM_REGION( 0x10000 ) /* 64k for code */
+	ROM_LOAD( "1.t7",   0x0000, 0x4000, 0xdc48595e )
+	ROM_LOAD( "3.t8",   0x4000, 0x4000, 0x216be1e8 )
+ROM_END
+
+ROM_START( airwolf_rom )
+	ROM_REGION( 0x10000 ) /* 64k for code */
+	ROM_LOAD( "b.2s",        0x0000, 0x8000, 0x8c993cce )
+
+	ROM_REGION( 0x1f000 ) /* temporary space for graphics */
+	ROM_LOAD( "f.4a",        0x00000, 0x1000, 0x4df44ce9 ) /* chars */
+	ROM_LOAD( "e.6a",        0x01000, 0x2000, 0xe8fbc7d2 ) /* sprites - plane 0 */
+	ROM_CONTINUE(            0x05000, 0x2000 )
+	ROM_CONTINUE(            0x03000, 0x2000 )
+	ROM_CONTINUE(            0x07000, 0x2000 )
+	ROM_LOAD( "d.8a",        0x09000, 0x2000, 0xc5d4156b ) /* sprites - plane 1 */
+	ROM_CONTINUE(            0x0d000, 0x2000 )
+	ROM_CONTINUE(            0x0b000, 0x2000 )
+	ROM_CONTINUE(            0x0f000, 0x2000 )
+	ROM_LOAD( "c.10a",       0x11000, 0x2000, 0xde91dfb1 ) /* sprites - plane 2 */
+	ROM_CONTINUE(            0x15000, 0x2000 )
+	ROM_CONTINUE(            0x13000, 0x2000 )
+	ROM_CONTINUE(            0x17000, 0x2000 )
+	ROM_LOAD( "09h_14.bin",  0x19000, 0x2000, 0x25e57e1f ) /* tiles - plane 1 */
+	ROM_LOAD( "10h_13.bin",  0x1b000, 0x2000, 0xcf0de5e9 ) /* tiles - plane 0 */
+	ROM_LOAD( "11h_12.bin",  0x1d000, 0x2000, 0x4050c048 ) /* tiles - plane 2 */
+
+	ROM_REGION( 0x340 ) /* PROMs */
+	ROM_LOAD( "01j.bin",     0x0000, 0x0100, 0x6a94b2a3 ) /* red */
+	ROM_LOAD( "01h.bin",     0x0100, 0x0100, 0xec0923d3 ) /* green */
+	ROM_LOAD( "01f.bin",     0x0200, 0x0100, 0xade97052 ) /* blue */
+	/* 0x0300-0x031f empty - looks like there isn't a lookup table PROM */
+	ROM_LOAD( "02c_m1.bin",  0x0320, 0x0020, 0x83a39201 ) /* timing? not used */
+
+	ROM_REGION( 0x10000 ) /* 64k for code */
+	ROM_LOAD( "a.7s",        0x0000, 0x8000, 0xa3c7af5c )
+ROM_END
+
+ROM_START( skywolf_rom )
+	ROM_REGION( 0x10000 ) /* 64k for code */
+	ROM_LOAD( "02s_03.bin",  0x0000, 0x4000, 0xa0891798 )
+	ROM_LOAD( "03s_04.bin",  0x4000, 0x4000, 0x5f515d46 )
+
+	ROM_REGION( 0x1f000 ) /* temporary space for graphics */
+	ROM_LOAD( "04a_11.bin",  0x00000, 0x1000, 0x219de9aa ) /* chars */
+	ROM_LOAD( "06a_10.bin",  0x01000, 0x4000, 0x1c809383 ) /* sprites - plane 0 */
+	ROM_LOAD( "07a_09.bin",  0x05000, 0x4000, 0x5665d774 ) /* sprites - plane 0 */
+	ROM_LOAD( "08a_08.bin",  0x09000, 0x4000, 0x6dda8f2a ) /* sprites - plane 1 */
+	ROM_LOAD( "09a_07.bin",  0x0d000, 0x4000, 0x6a21ddb8 ) /* sprites - plane 1 */
+	ROM_LOAD( "10a_06.bin",  0x11000, 0x4000, 0xf2e548e0 ) /* sprites - plane 2 */
+	ROM_LOAD( "11a_05.bin",  0x15000, 0x4000, 0x8681b112 ) /* sprites - plane 2 */
+	ROM_LOAD( "09h_14.bin",  0x19000, 0x2000, 0x25e57e1f ) /* tiles - plane 1 */
+	ROM_LOAD( "10h_13.bin",  0x1b000, 0x2000, 0xcf0de5e9 ) /* tiles - plane 0 */
+	ROM_LOAD( "11h_12.bin",  0x1d000, 0x2000, 0x4050c048 ) /* tiles - plane 2 */
+
+	ROM_REGION( 0x340 ) /* PROMs */
+	ROM_LOAD( "01j.bin",     0x0000, 0x0100, 0x6a94b2a3 ) /* red */
+	ROM_LOAD( "01h.bin",     0x0100, 0x0100, 0xec0923d3 ) /* green */
+	ROM_LOAD( "01f.bin",     0x0200, 0x0100, 0xade97052 ) /* blue */
+	/* 0x0300-0x031f empty - looks like there isn't a lookup table PROM */
+	ROM_LOAD( "02c_m1.bin",  0x0320, 0x0020, 0x83a39201 ) /* timing? not used */
+
+	ROM_REGION( 0x10000 ) /* 64k for code */
+	ROM_LOAD( "07s_01.bin",  0x0000, 0x4000, 0xc680a905 )
+	ROM_LOAD( "08s_02.bin",  0x4000, 0x4000, 0x3d66bf26 )
+ROM_END
+
+ROM_START( skywolf2_rom )
+	ROM_REGION( 0x10000 ) /* 64k for code */
+	ROM_LOAD( "z80_2.bin",   0x0000, 0x8000, 0x34db7bda )
+
+	ROM_REGION( 0x1f000 ) /* temporary space for graphics */
+	ROM_LOAD( "04a_11.bin",  0x00000, 0x1000, 0x219de9aa ) /* chars */
+	ROM_LOAD( "06a_10.bin",  0x01000, 0x4000, 0x1c809383 ) /* sprites - plane 0 */
+	ROM_LOAD( "07a_09.bin",  0x05000, 0x4000, 0x5665d774 ) /* sprites - plane 0 */
+	ROM_LOAD( "08a_08.bin",  0x09000, 0x4000, 0x6dda8f2a ) /* sprites - plane 1 */
+	ROM_LOAD( "09a_07.bin",  0x0d000, 0x4000, 0x6a21ddb8 ) /* sprites - plane 1 */
+	ROM_LOAD( "10a_06.bin",  0x11000, 0x4000, 0xf2e548e0 ) /* sprites - plane 2 */
+	ROM_LOAD( "11a_05.bin",  0x15000, 0x4000, 0x8681b112 ) /* sprites - plane 2 */
+	ROM_LOAD( "09h_14.bin",  0x19000, 0x2000, 0x25e57e1f ) /* tiles - plane 1 */
+	ROM_LOAD( "10h_13.bin",  0x1b000, 0x2000, 0xcf0de5e9 ) /* tiles - plane 0 */
+	ROM_LOAD( "11h_12.bin",  0x1d000, 0x2000, 0x4050c048 ) /* tiles - plane 2 */
+
+	ROM_REGION( 0x340 ) /* PROMs */
+	ROM_LOAD( "01j.bin",     0x0000, 0x0100, 0x6a94b2a3 ) /* red */
+	ROM_LOAD( "01h.bin",     0x0100, 0x0100, 0xec0923d3 ) /* green */
+	ROM_LOAD( "01f.bin",     0x0200, 0x0100, 0xade97052 ) /* blue */
+	/* 0x0300-0x031f empty - looks like there isn't a lookup table PROM */
+	ROM_LOAD( "02c_m1.bin",  0x0320, 0x0020, 0x83a39201 ) /* timing? not used */
+
+	ROM_REGION( 0x10000 ) /* 64k for code */
+	ROM_LOAD( "07s_01.bin",  0x0000, 0x4000, 0xc680a905 )
+	ROM_LOAD( "08s_02.bin",  0x4000, 0x4000, 0x3d66bf26 )
+ROM_END
+
+
 /***************************************************************************
 
   Game driver(s)
 
 ***************************************************************************/
 
-struct GameDriver gyrodine_driver = {
+struct GameDriver gyrodine_driver =
+{
 	__FILE__,
 	0,
 	"gyrodine",
@@ -580,7 +864,8 @@ struct GameDriver gyrodine_driver = {
 	0, 0
 };
 
-struct GameDriver sonofphx_driver = {
+struct GameDriver sonofphx_driver =
+{
 	__FILE__,
 	0,
 	"sonofphx",
@@ -604,7 +889,83 @@ struct GameDriver sonofphx_driver = {
 	0, 0
 };
 
-struct GameDriver srdmissn_driver = {
+struct GameDriver repulse_driver =
+{
+	__FILE__,
+	&sonofphx_driver,
+	"repulse",
+	"Repulse",
+	"1985",
+	"Sega",
+	"Ernesto Corvi",
+	0,
+	&sonofphx_machine_driver,
+	0,
+
+	repulse_rom,
+	0, 0,
+	0,
+	0,	/* sound_prom */
+
+	input_ports,
+
+	PROM_MEMORY_REGION(2), 0, 0,
+	ORIENTATION_ROTATE_90,
+	0, 0
+};
+
+struct GameDriver c99_driver =
+{
+	__FILE__,
+	&sonofphx_driver,
+	"99",
+	"'99 The Last War",
+	"1985",
+	"Proma",
+	"Ernesto Corvi",
+	0,
+	&sonofphx_machine_driver,
+	0,
+
+	c99_rom,
+	0, 0,
+	0,
+	0,	/* sound_prom */
+
+	input_ports,
+
+	PROM_MEMORY_REGION(2), 0, 0,
+	ORIENTATION_ROTATE_90,
+	0, 0
+};
+
+struct GameDriver flashgal_driver =
+{
+	__FILE__,
+	0,
+	"flashgal",
+	"Flash Gal",
+	"1985",
+	"Sega",
+	"Ernesto Corvi",
+	0,
+	&flashgal_machine_driver,
+	0,
+
+	flashgal_rom,
+	0, 0,
+	0,
+	0,	/* sound_prom */
+
+	flashgal_input_ports,
+
+	PROM_MEMORY_REGION(2), 0, 0,
+	ORIENTATION_DEFAULT,
+	0, 0
+};
+
+struct GameDriver srdmissn_driver =
+{
 	__FILE__,
 	0,
 	"srdmissn",
@@ -625,5 +986,80 @@ struct GameDriver srdmissn_driver = {
 
 	PROM_MEMORY_REGION(2), 0, 0,
 	ORIENTATION_ROTATE_90,
+	0, 0
+};
+
+struct GameDriver airwolf_driver =
+{
+	__FILE__,
+	0,
+	"airwolf",
+	"Air Wolf",
+	"1987",
+	"Kyugo",
+	"Ernesto Corvi",
+	0,
+	&srdmissn_machine_driver,
+	0,
+
+	airwolf_rom,
+	0, 0,
+	0,
+	0,	/* sound_prom */
+
+	input_ports,
+
+	PROM_MEMORY_REGION(2), 0, 0,
+	ORIENTATION_DEFAULT,
+	0, 0
+};
+
+struct GameDriver skywolf_driver =
+{
+	__FILE__,
+	&airwolf_driver,
+	"skywolf",
+	"Sky Wolf (set 1)",
+	"1987",
+	"bootleg",
+	"Ernesto Corvi",
+	0,
+	&srdmissn_machine_driver,
+	0,
+
+	skywolf_rom,
+	0, 0,
+	0,
+	0,	/* sound_prom */
+
+	input_ports,
+
+	PROM_MEMORY_REGION(2), 0, 0,
+	ORIENTATION_DEFAULT,
+	0, 0
+};
+
+struct GameDriver skywolf2_driver =
+{
+	__FILE__,
+	&airwolf_driver,
+	"skywolf2",
+	"Sky Wolf (set 2)",
+	"1987",
+	"bootleg",
+	"Ernesto Corvi",
+	0,
+	&srdmissn_machine_driver,
+	0,
+
+	skywolf2_rom,
+	0, 0,
+	0,
+	0,	/* sound_prom */
+
+	input_ports,
+
+	PROM_MEMORY_REGION(2), 0, 0,
+	ORIENTATION_DEFAULT,
 	0, 0
 };

@@ -23,10 +23,11 @@ The callback is passed:
 The callback must put:
 - in code the resulting tile number
 - in color the resulting color index
-- if necessary, in flags the flags for the TileMap code (e.g. TILE_FLIPX)
+- if necessary, put flags and/or priority for the TileMap code in the tile_info
+  structure (e.g. TILE_FLIPX)
 */
 int K052109_vh_start(int gfx_memory_region,int plane0,int plane1,int plane2,int plane3,
-		void (*callback)(int layer,int bank,int *code,int *color,unsigned char *flags));
+		void (*callback)(int layer,int bank,int *code,int *color));
 void K052109_vh_stop(void);
 /* plain 8-bit access */
 int K052109_r(int offset);
@@ -40,7 +41,8 @@ int K052109_is_IRQ_enabled(void);
 /*
 The callback is passed:
 - code (range 00-1FFF, output of the pins CA5-CA17)
-- color (range 00-FF, output of the pins OC0-OC7)
+- color (range 00-FF, output of the pins OC0-OC7). Note that most of the
+  time COL7 seems to be "shadow", but not always (e.g. Aliens).
 The callback must put:
 - in code the resulting sprite number
 - in color the resulting color index
@@ -63,6 +65,19 @@ int K051960_is_IRQ_enabled(void);
 int K052109_051960_r(int offset);
 void K052109_051960_w(int offset,int data);
 
+
+int K053245_vh_start(int gfx_memory_region,int plane0,int plane1,int plane2,int plane3,
+		void (*callback)(int *code,int *color,int *priority));
+void K053245_vh_stop(void);
+int K053245_word_r(int offset);
+void K053245_word_w(int offset,int data);
+int K053245_r(int offset);
+void K053245_w(int offset,int data);
+int K053244_r(int offset);
+void K053244_w(int offset,int data);
+void K053245_bankselect(int bank);	/* used by TMNT2 for ROM testing */
+void K053245_draw_sprites(struct osd_bitmap *bitmap,int min_priority,int max_priority);
+void K053245_mark_sprites_colors(void);
 
 
 void K053251_w(int offset,int data);

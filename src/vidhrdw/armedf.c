@@ -6,7 +6,6 @@
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-#include "tilemap.h"
 
 static int scroll_type;
 

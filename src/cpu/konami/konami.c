@@ -1,7 +1,7 @@
 /*** konami: Portable Konami cpu emulator ******************************************
 
 	Copyright (C) The MAME Team 1999
-	
+
 	Based on M6809 cpu core	copyright (C) John Butler 1997
 
 	References:
@@ -365,7 +365,7 @@ static UINT8 cycles1[] =
   /*7*/	  3,  3,  3,  3,  3,  3,  3,  3,  5,  5,  5,  5,  5,  5,  5,  5,
   /*8*/	  2,  2,E+2,  2,  2,E+2,  2,  2,E+2,  2,  2,E+2,  2,  2,E+2,  5,
   /*9*/	  2,  2,E+2,  2,  2,E+2,  2,  2,E+2,  2,  2,E+2,  2,  2,E+2,  6,
-  /*A*/	  2,  2,E+2,E+4,E+4,E+4,E+4,E+4,E+2,E+2,  2,  2,  3,  1,  2,  1,
+  /*A*/	  2,  2,E+2,E+4,E+4,E+4,E+4,E+4,E+2,E+2,  2,  2,  3,  3,  2,  1,
   /*B*/	  3,  2,  2, 11, 22, 11,  2,  1,  3,  1,  3,  1,  3,  1,  3,  1,
   /*C*/	  3,  1,  3,E+3,  3,E+3,  3,E+3,  3,E+3,  3,E+3,  2,  2,  3,  2,
   /*D*/	  2,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,
@@ -931,38 +931,38 @@ INLINE UINT8 fetch_effective_address( UINT8 mode )
 	UINT8 ec = 0;
 
 	switch ( mode ) {
-	case 0x00: EA=0;												break; /* auto increment */
-	case 0x01: EA=0;												break; /* double auto increment */
-	case 0x02: EA=0;												break; /* auto decrement */
-	case 0x03: EA=0;												break; /* double auto decrement */
-	case 0x04: EA=0;												break; /* postbyte offs */
-	case 0x05: EA=0;												break; /* postword offs */
-	case 0x06: EA=0;												break; /* normal */
-	case 0x07: EA=0;												break; /* extended */
-	case 0x08: EA=0;												break; /* indirect - auto increment */
-	case 0x09: EA=0;												break; /* indirect - double auto increment */
-	case 0x0a: EA=0;												break; /* indirect - auto decrement */
-	case 0x0b: EA=0;												break; /* indirect - double auto decrement */
-	case 0x0c: EA=0;												break; /* indirect - postbyte offs */
-	case 0x0d: EA=0;												break; /* indirect - postword offs */
-	case 0x0e: EA=0;												break; /* indirect - normal */
+//	case 0x00: EA=0;												break; /* auto increment */
+//	case 0x01: EA=0;												break; /* double auto increment */
+//	case 0x02: EA=0;												break; /* auto decrement */
+//	case 0x03: EA=0;												break; /* double auto decrement */
+//	case 0x04: EA=0;												break; /* postbyte offs */
+//	case 0x05: EA=0;												break; /* postword offs */
+//	case 0x06: EA=0;												break; /* normal */
+//	case 0x07: EA=0;												break; /* extended */
+//	case 0x08: EA=0;												break; /* indirect - auto increment */
+//	case 0x09: EA=0;												break; /* indirect - double auto increment */
+//	case 0x0a: EA=0;												break; /* indirect - auto decrement */
+//	case 0x0b: EA=0;												break; /* indirect - double auto decrement */
+//	case 0x0c: EA=0;												break; /* indirect - postbyte offs */
+//	case 0x0d: EA=0;												break; /* indirect - postword offs */
+//	case 0x0e: EA=0;												break; /* indirect - normal */
 	case 0x0f: IMMWORD(ea);					RM16(EAD,&ea);	ec=4;	break; /* indirect - extended */
-	case 0x10: EA=0;												break; /* auto increment */
-	case 0x11: EA=0;												break; /* double auto increment */
-	case 0x12: EA=0;												break; /* auto decrement */
-	case 0x13: EA=0;												break; /* double auto decrement */
-	case 0x14: EA=0;												break; /* postbyte offs */
-	case 0x15: EA=0;												break; /* postword offs */
-	case 0x16: EA=0;												break; /* normal */
-	case 0x17: EA=0;												break; /* extended */
-	case 0x18: EA=0;												break; /* indirect - auto increment */
-	case 0x19: EA=0;												break; /* indirect - double auto increment */
-	case 0x1a: EA=0;												break; /* indirect - auto decrement */
-	case 0x1b: EA=0;												break; /* indirect - double auto decrement */
-	case 0x1c: EA=0;												break; /* indirect - postbyte offs */
-	case 0x1d: EA=0;												break; /* indirect - postword offs */
-	case 0x1e: EA=0;												break; /* indirect - normal */
-	case 0x1f: EA=0;												break; /* indirect - extended */
+//	case 0x10: EA=0;												break; /* auto increment */
+//	case 0x11: EA=0;												break; /* double auto increment */
+//	case 0x12: EA=0;												break; /* auto decrement */
+//	case 0x13: EA=0;												break; /* double auto decrement */
+//	case 0x14: EA=0;												break; /* postbyte offs */
+//	case 0x15: EA=0;												break; /* postword offs */
+//	case 0x16: EA=0;												break; /* normal */
+//	case 0x17: EA=0;												break; /* extended */
+//	case 0x18: EA=0;												break; /* indirect - auto increment */
+//	case 0x19: EA=0;												break; /* indirect - double auto increment */
+//	case 0x1a: EA=0;												break; /* indirect - auto decrement */
+//	case 0x1b: EA=0;												break; /* indirect - double auto decrement */
+//	case 0x1c: EA=0;												break; /* indirect - postbyte offs */
+//	case 0x1d: EA=0;												break; /* indirect - postword offs */
+//	case 0x1e: EA=0;												break; /* indirect - normal */
+//	case 0x1f: EA=0;												break; /* indirect - extended */
 	case 0x20: EA=X;	X++;								ec=2;	break; /* auto increment */
 	case 0x21: EA=X;	X+=2;								ec=3;	break; /* double auto increment */
 	case 0x22: X--;		EA=X;								ec=2;	break; /* auto decrement */
@@ -970,7 +970,7 @@ INLINE UINT8 fetch_effective_address( UINT8 mode )
 	case 0x24: IMMBYTE(EA); 	EA=X+SIGNED(EA);			ec=2;	break; /* postbyte offs */
 	case 0x25: IMMWORD(ea); 	EA+=X;						ec=4;	break; /* postword offs */
 	case 0x26: EA=X;												break; /* normal */
-	case 0x27: EA=0;												break; /* extended */
+//	case 0x27: EA=0;												break; /* extended */
 	case 0x28: EA=X;	X++;				RM16(EAD,&ea);	ec=5;	break; /* indirect - auto increment */
 	case 0x29: EA=X;	X+=2;				RM16(EAD,&ea);	ec=6;	break; /* indirect - double auto increment */
 	case 0x2a: X--;		EA=X;				RM16(EAD,&ea);	ec=5;	break; /* indirect - auto decrement */
@@ -978,7 +978,7 @@ INLINE UINT8 fetch_effective_address( UINT8 mode )
 	case 0x2c: IMMBYTE(EA); EA=X+SIGNED(EA);RM16(EAD,&ea);	ec=4;	break; /* indirect - postbyte offs */
 	case 0x2d: IMMWORD(ea); EA+=X;			RM16(EAD,&ea);	ec=7;	break; /* indirect - postword offs */
 	case 0x2e: EA=X;						RM16(EAD,&ea);	ec=3;	break; /* indirect - normal */
-	case 0x2f: EA=0;												break; /* indirect - extended */
+//	case 0x2f: EA=0;												break; /* indirect - extended */
 	case 0x30: EA=Y;	Y++;								ec=2;	break; /* auto increment */
 	case 0x31: EA=Y;	Y+=2;								ec=3;	break; /* double auto increment */
 	case 0x32: Y--;		EA=Y;								ec=2;	break; /* auto decrement */
@@ -986,7 +986,7 @@ INLINE UINT8 fetch_effective_address( UINT8 mode )
 	case 0x34: IMMBYTE(EA); 	EA=Y+SIGNED(EA);			ec=2;	break; /* postbyte offs */
 	case 0x35: IMMWORD(ea); 	EA+=Y;						ec=4;	break; /* postword offs */
 	case 0x36: EA=Y;												break; /* normal */
-	case 0x37: EA=0;												break; /* extended */
+//	case 0x37: EA=0;												break; /* extended */
 	case 0x38: EA=Y;	Y++;				RM16(EAD,&ea);	ec=5;	break; /* indirect - auto increment */
 	case 0x39: EA=Y;	Y+=2;				RM16(EAD,&ea);	ec=6;	break; /* indirect - double auto increment */
 	case 0x3a: Y--;		EA=Y;				RM16(EAD,&ea);	ec=5;	break; /* indirect - auto decrement */
@@ -994,23 +994,23 @@ INLINE UINT8 fetch_effective_address( UINT8 mode )
 	case 0x3c: IMMBYTE(EA); EA=Y+SIGNED(EA);RM16(EAD,&ea);	ec=4;	break; /* indirect - postbyte offs */
 	case 0x3d: IMMWORD(ea); EA+=Y;			RM16(EAD,&ea);	ec=7;	break; /* indirect - postword offs */
 	case 0x3e: EA=Y;						RM16(EAD,&ea);	ec=3;	break; /* indirect - normal */
-	case 0x3f: EA=0;												break; /* indirect - extended */
-	case 0x40: EA=0;												break; /* auto increment */
-	case 0x41: EA=0;												break; /* double auto increment */
-	case 0x42: EA=0;												break; /* auto decrement */
-	case 0x43: EA=0;												break; /* double auto decrement */
-	case 0x44: EA=0;												break; /* postbyte offs */
-	case 0x45: EA=0;												break; /* postword offs */
-	case 0x46: EA=0;												break; /* normal */
-	case 0x47: EA=0;												break; /* extended */
-	case 0x48: EA=0;												break; /* indirect - auto increment */
-	case 0x49: EA=0;												break; /* indirect - double auto increment */
-	case 0x4a: EA=0;												break; /* indirect - auto decrement */
-	case 0x4b: EA=0;												break; /* indirect - double auto decrement */
-	case 0x4c: EA=0;												break; /* indirect - postbyte offs */
-	case 0x4d: EA=0;												break; /* indirect - postword offs */
-	case 0x4e: EA=0;												break; /* indirect - normal */
-	case 0x4f: EA=0;												break; /* indirect - extended */
+//	case 0x3f: EA=0;												break; /* indirect - extended */
+//	case 0x40: EA=0;												break; /* auto increment */
+//	case 0x41: EA=0;												break; /* double auto increment */
+//	case 0x42: EA=0;												break; /* auto decrement */
+//	case 0x43: EA=0;												break; /* double auto decrement */
+//	case 0x44: EA=0;												break; /* postbyte offs */
+//	case 0x45: EA=0;												break; /* postword offs */
+//	case 0x46: EA=0;												break; /* normal */
+//	case 0x47: EA=0;												break; /* extended */
+//	case 0x48: EA=0;												break; /* indirect - auto increment */
+//	case 0x49: EA=0;												break; /* indirect - double auto increment */
+//	case 0x4a: EA=0;												break; /* indirect - auto decrement */
+//	case 0x4b: EA=0;												break; /* indirect - double auto decrement */
+//	case 0x4c: EA=0;												break; /* indirect - postbyte offs */
+//	case 0x4d: EA=0;												break; /* indirect - postword offs */
+//	case 0x4e: EA=0;												break; /* indirect - normal */
+//	case 0x4f: EA=0;												break; /* indirect - extended */
 	case 0x50: EA=U;	U++;								ec=2;	break; /* auto increment */
 	case 0x51: EA=U;	U+=2;								ec=3;	break; /* double auto increment */
 	case 0x52: U--;		EA=U;								ec=2;	break; /* auto decrement */
@@ -1018,7 +1018,7 @@ INLINE UINT8 fetch_effective_address( UINT8 mode )
 	case 0x54: IMMBYTE(EA); 	EA=U+SIGNED(EA);			ec=2;	break; /* postbyte offs */
 	case 0x55: IMMWORD(ea); 	EA+=U;						ec=4;	break; /* postword offs */
 	case 0x56: EA=U;												break; /* normal */
-	case 0x57: EA=0;												break; /* extended */
+//	case 0x57: EA=0;												break; /* extended */
 	case 0x58: EA=U;	U++;				RM16(EAD,&ea);	ec=5;	break; /* indirect - auto increment */
 	case 0x59: EA=U;	U+=2;				RM16(EAD,&ea);	ec=6;	break; /* indirect - double auto increment */
 	case 0x5a: U--;		EA=U;				RM16(EAD,&ea);	ec=5;	break; /* indirect - auto decrement */
@@ -1026,7 +1026,7 @@ INLINE UINT8 fetch_effective_address( UINT8 mode )
 	case 0x5c: IMMBYTE(EA); EA=U+SIGNED(EA);RM16(EAD,&ea);	ec=4;	break; /* indirect - postbyte offs */
 	case 0x5d: IMMWORD(ea); EA+=U;			RM16(EAD,&ea);	ec=7;	break; /* indirect - postword offs */
 	case 0x5e: EA=U;						RM16(EAD,&ea);	ec=3;	break; /* indirect - normal */
-	case 0x5f: EA=0;												break; /* indirect - extended */
+//	case 0x5f: EA=0;												break; /* indirect - extended */
 	case 0x60: EA=S;	S++;								ec=2;	break; /* auto increment */
 	case 0x61: EA=S;	S+=2;								ec=3;	break; /* double auto increment */
 	case 0x62: S--;		EA=S;								ec=2;	break; /* auto decrement */
@@ -1034,7 +1034,7 @@ INLINE UINT8 fetch_effective_address( UINT8 mode )
 	case 0x64: IMMBYTE(EA); 	EA=S+SIGNED(EA);			ec=2;	break; /* postbyte offs */
 	case 0x65: IMMWORD(ea); 	EA+=S;						ec=4;	break; /* postword offs */
 	case 0x66: EA=S;												break; /* normal */
-	case 0x67: EA=0;												break; /* extended */
+//	case 0x67: EA=0;												break; /* extended */
 	case 0x68: EA=S;	S++;				RM16(EAD,&ea);	ec=5;	break; /* indirect - auto increment */
 	case 0x69: EA=S;	S+=2;				RM16(EAD,&ea);	ec=6;	break; /* indirect - double auto increment */
 	case 0x6a: S--;		EA=S;				RM16(EAD,&ea);	ec=5;	break; /* indirect - auto decrement */
@@ -1042,151 +1042,156 @@ INLINE UINT8 fetch_effective_address( UINT8 mode )
 	case 0x6c: IMMBYTE(EA); EA=S+SIGNED(EA);RM16(EAD,&ea);	ec=4;	break; /* indirect - postbyte offs */
 	case 0x6d: IMMWORD(ea); EA+=S;			RM16(EAD,&ea);	ec=7;	break; /* indirect - postword offs */
 	case 0x6e: EA=S;						RM16(EAD,&ea);	ec=3;	break; /* indirect - normal */
-	case 0x6f: EA=0;												break; /* indirect - extended */
-	case 0x70: EA=0;												break; /* auto increment */
-	case 0x71: EA=0;												break; /* double auto increment */
-	case 0x72: EA=0;												break; /* auto decrement */
-	case 0x73: EA=0;												break; /* double auto decrement */
-	case 0x74: EA=0;												break; /* postbyte offs */
-	case 0x75: EA=0;												break; /* postword offs */
-	case 0x76: EA=0;												break; /* normal */
-	case 0x77: EA=0;												break; /* extended */
-	case 0x78: EA=0;												break; /* indirect - auto increment */
-	case 0x79: EA=0;												break; /* indirect - double auto increment */
-	case 0x7a: EA=0;												break; /* indirect - auto decrement */
-	case 0x7b: EA=0;												break; /* indirect - double auto decrement */
-	case 0x7c: EA=0;												break; /* indirect - postbyte offs */
-	case 0x7d: EA=0;												break; /* indirect - postword offs */
-	case 0x7e: EA=0;												break; /* indirect - normal */
-	case 0x7f: EA=0;												break; /* indirect - extended */
-	case 0x80: EA=0;												break; /* register a */
-	case 0x81: EA=0;												break; /* register b */
-	case 0x82: EA=0;												break; /* ???? */
-	case 0x83: EA=0;												break; /* ???? */
-	case 0x84: EA=0;												break; /* ???? */
-	case 0x85: EA=0;												break; /* ???? */
-	case 0x86: EA=0;												break; /* ???? */
-	case 0x87: EA=0;												break; /* register d */
-	case 0x88: EA=0;												break; /* indirect - register a */
-	case 0x89: EA=0;												break; /* indirect - register b */
-	case 0x8a: EA=0;												break; /* indirect - ???? */
-	case 0x8b: EA=0;												break; /* indirect - ???? */
-	case 0x8c: EA=0;												break; /* indirect - ???? */
-	case 0x8d: EA=0;												break; /* indirect - ???? */
-	case 0x8e: EA=0;												break; /* indirect - register d */
-	case 0x8f: EA=0;												break; /* indirect - ???? */
-	case 0x90: EA=0;												break; /* register a */
-	case 0x91: EA=0;												break; /* register b */
-	case 0x92: EA=0;												break; /* ???? */
-	case 0x93: EA=0;												break; /* ???? */
-	case 0x94: EA=0;												break; /* ???? */
-	case 0x95: EA=0;												break; /* ???? */
-	case 0x96: EA=0;												break; /* ???? */
-	case 0x97: EA=0;												break; /* register d */
-	case 0x98: EA=0;												break; /* indirect - register a */
-	case 0x99: EA=0;												break; /* indirect - register b */
-	case 0x9a: EA=0;												break; /* indirect - ???? */
-	case 0x9b: EA=0;												break; /* indirect - ???? */
-	case 0x9c: EA=0;												break; /* indirect - ???? */
-	case 0x9d: EA=0;												break; /* indirect - ???? */
-	case 0x9e: EA=0;												break; /* indirect - register d */
-	case 0x9f: EA=0;												break; /* indirect - ???? */
+//	case 0x6f: EA=0;												break; /* indirect - extended */
+	case 0x70: EA=PC;	PC++;								ec=2;	break; /* auto increment */
+	case 0x71: EA=PC;	PC+=2;								ec=3;	break; /* double auto increment */
+	case 0x72: PC--;	EA=PC;								ec=2;	break; /* auto decrement */
+	case 0x73: PC-=2;	EA=PC;								ec=3;	break; /* double auto decrement */
+	case 0x74: IMMBYTE(EA); 	EA=PC-1+SIGNED(EA);			ec=2;	break; /* postbyte offs */
+	case 0x75: IMMWORD(ea); 	EA+=PC-2;					ec=4;	break; /* postword offs */
+	case 0x76: EA=PC;												break; /* normal */
+//	case 0x77: EA=0;												break; /* extended */
+	case 0x78: EA=PC;	PC++;				RM16(EAD,&ea);	ec=5;	break; /* indirect - auto increment */
+	case 0x79: EA=PC;	PC+=2;				RM16(EAD,&ea);	ec=6;	break; /* indirect - double auto increment */
+	case 0x7a: PC--;	EA=PC;				RM16(EAD,&ea);	ec=5;	break; /* indirect - auto decrement */
+	case 0x7b: PC-=2;	EA=PC;				RM16(EAD,&ea);	ec=6;	break; /* indirect - double auto decrement */
+	case 0x7c: IMMBYTE(EA); EA=PC-1+SIGNED(EA);RM16(EAD,&ea);ec=4;	break; /* indirect - postbyte offs */
+	case 0x7d: IMMWORD(ea); EA+=PC-2;		RM16(EAD,&ea);	ec=7;	break; /* indirect - postword offs */
+	case 0x7e: EA=PC;						RM16(EAD,&ea);	ec=3;	break; /* indirect - normal */
+//	case 0x7f: EA=0;												break; /* indirect - extended */
+//	case 0x80: EA=0;												break; /* register a */
+//	case 0x81: EA=0;												break; /* register b */
+//	case 0x82: EA=0;												break; /* ???? */
+//	case 0x83: EA=0;												break; /* ???? */
+//	case 0x84: EA=0;												break; /* ???? */
+//	case 0x85: EA=0;												break; /* ???? */
+//	case 0x86: EA=0;												break; /* ???? */
+//	case 0x87: EA=0;												break; /* register d */
+//	case 0x88: EA=0;												break; /* indirect - register a */
+//	case 0x89: EA=0;												break; /* indirect - register b */
+//	case 0x8a: EA=0;												break; /* indirect - ???? */
+//	case 0x8b: EA=0;												break; /* indirect - ???? */
+//	case 0x8c: EA=0;												break; /* indirect - ???? */
+//	case 0x8d: EA=0;												break; /* indirect - ???? */
+//	case 0x8e: EA=0;												break; /* indirect - register d */
+//	case 0x8f: EA=0;												break; /* indirect - ???? */
+//	case 0x90: EA=0;												break; /* register a */
+//	case 0x91: EA=0;												break; /* register b */
+//	case 0x92: EA=0;												break; /* ???? */
+//	case 0x93: EA=0;												break; /* ???? */
+//	case 0x94: EA=0;												break; /* ???? */
+//	case 0x95: EA=0;												break; /* ???? */
+//	case 0x96: EA=0;												break; /* ???? */
+//	case 0x97: EA=0;												break; /* register d */
+//	case 0x98: EA=0;												break; /* indirect - register a */
+//	case 0x99: EA=0;												break; /* indirect - register b */
+//	case 0x9a: EA=0;												break; /* indirect - ???? */
+//	case 0x9b: EA=0;												break; /* indirect - ???? */
+//	case 0x9c: EA=0;												break; /* indirect - ???? */
+//	case 0x9d: EA=0;												break; /* indirect - ???? */
+//	case 0x9e: EA=0;												break; /* indirect - register d */
+//	case 0x9f: EA=0;												break; /* indirect - ???? */
 	case 0xa0: EA=X+SIGNED(A);								ec=1;	break; /* register a */
 	case 0xa1: EA=X+SIGNED(B);								ec=1;	break; /* register b */
-	case 0xa2: EA=0;												break; /* ???? */
-	case 0xa3: EA=0;												break; /* ???? */
-	case 0xa4: EA=0;												break; /* ???? */
-	case 0xa5: EA=0;												break; /* ???? */
-	case 0xa6: EA=0;										ec=4;	break; /* ???? */
+//	case 0xa2: EA=0;												break; /* ???? */
+//	case 0xa3: EA=0;												break; /* ???? */
+//	case 0xa4: EA=0;												break; /* ???? */
+//	case 0xa5: EA=0;												break; /* ???? */
+//	case 0xa6: EA=0;										ec=4;	break; /* ???? */
 	case 0xa7: EA=X+D;										ec=4;	break; /* register d */
 	case 0xa8: EA=X+SIGNED(A);				RM16(EAD,&ea);	ec=4;	break; /* indirect - register a */
 	case 0xa9: EA=X+SIGNED(B);				RM16(EAD,&ea);	ec=4;	break; /* indirect - register b */
-	case 0xaa: EA=0;												break; /* indirect - ???? */
-	case 0xab: EA=0;												break; /* indirect - ???? */
-	case 0xac: EA=0;												break; /* indirect - ???? */
-	case 0xad: EA=0;												break; /* indirect - ???? */
-	case 0xae: EA=0;												break; /* indirect - ???? */
+//	case 0xaa: EA=0;												break; /* indirect - ???? */
+//	case 0xab: EA=0;												break; /* indirect - ???? */
+//	case 0xac: EA=0;												break; /* indirect - ???? */
+//	case 0xad: EA=0;												break; /* indirect - ???? */
+//	case 0xae: EA=0;												break; /* indirect - ???? */
 	case 0xaf: EA=X+D;						RM16(EAD,&ea);	ec=7;	break; /* indirect - register d */
 	case 0xb0: EA=Y+SIGNED(A);								ec=1;	break; /* register a */
 	case 0xb1: EA=Y+SIGNED(B);								ec=1;	break; /* register b */
-	case 0xb2: EA=0;												break; /* ???? */
-	case 0xb3: EA=0;												break; /* ???? */
-	case 0xb4: EA=0;												break; /* ???? */
-	case 0xb5: EA=0;												break; /* ???? */
-	case 0xb6: EA=0;												break; /* ???? */
+//	case 0xb2: EA=0;												break; /* ???? */
+//	case 0xb3: EA=0;												break; /* ???? */
+//	case 0xb4: EA=0;												break; /* ???? */
+//	case 0xb5: EA=0;												break; /* ???? */
+//	case 0xb6: EA=0;												break; /* ???? */
 	case 0xb7: EA=Y+D;										ec=4;	break; /* register d */
 	case 0xb8: EA=Y+SIGNED(A);				RM16(EAD,&ea);	ec=4;	break; /* indirect - register a */
 	case 0xb9: EA=Y+SIGNED(B);				RM16(EAD,&ea);	ec=4;	break; /* indirect - register b */
-	case 0xba: EA=0;												break; /* indirect - ???? */
-	case 0xbb: EA=0;												break; /* indirect - ???? */
-	case 0xbc: EA=0;												break; /* indirect - ???? */
-	case 0xbd: EA=0;												break; /* indirect - ???? */
-	case 0xbe: EA=0;												break; /* indirect - ???? */
+//	case 0xba: EA=0;												break; /* indirect - ???? */
+//	case 0xbb: EA=0;												break; /* indirect - ???? */
+//	case 0xbc: EA=0;												break; /* indirect - ???? */
+//	case 0xbd: EA=0;												break; /* indirect - ???? */
+//	case 0xbe: EA=0;												break; /* indirect - ???? */
 	case 0xbf: EA=Y+D;						RM16(EAD,&ea);	ec=7;	break; /* indirect - register d */
-	case 0xc0: EA=0;												break; /* register a */
-	case 0xc1: EA=0;												break; /* register b */
-	case 0xc2: EA=0;												break; /* ???? */
-	case 0xc3: EA=0;												break; /* ???? */
-	case 0xc4: EA=0;												break; /* ???? */
-	case 0xc5: EA=0;												break; /* ???? */
-	case 0xc6: EA=0;												break; /* ???? */
-	case 0xc7: EA=0;												break; /* register d */
-	case 0xc8: EA=0;												break; /* indirect - register a */
-	case 0xc9: EA=0;												break; /* indirect - register b */
-	case 0xca: EA=0;												break; /* indirect - ???? */
-	case 0xcb: EA=0;												break; /* indirect - ???? */
+//	case 0xc0: EA=0;												break; /* register a */
+//	case 0xc1: EA=0;												break; /* register b */
+//	case 0xc2: EA=0;												break; /* ???? */
+//	case 0xc3: EA=0;												break; /* ???? */
+//	case 0xc4: EA=0;												break; /* ???? */
+//	case 0xc5: EA=0;												break; /* ???? */
+//	case 0xc6: EA=0;												break; /* ???? */
+//	case 0xc7: EA=0;												break; /* register d */
+//	case 0xc8: EA=0;												break; /* indirect - register a */
+//	case 0xc9: EA=0;												break; /* indirect - register b */
+//	case 0xca: EA=0;												break; /* indirect - ???? */
+//	case 0xcb: EA=0;												break; /* indirect - ???? */
 	case 0xcc: DIRWORD(ea);									ec=4;	break; /* indirect - direct */
-	case 0xcd: EA=0;												break; /* indirect - ???? */
-	case 0xce: EA=0;												break; /* indirect - register d */
-	case 0xcf: EA=0;												break; /* indirect - ???? */
+//	case 0xcd: EA=0;												break; /* indirect - ???? */
+//	case 0xce: EA=0;												break; /* indirect - register d */
+//	case 0xcf: EA=0;												break; /* indirect - ???? */
 	case 0xd0: EA=U+SIGNED(A);								ec=1;	break; /* register a */
 	case 0xd1: EA=U+SIGNED(B);								ec=1;	break; /* register b */
-	case 0xd2: EA=0;												break; /* ???? */
-	case 0xd3: EA=0;												break; /* ???? */
-	case 0xd4: EA=0;												break; /* ???? */
-	case 0xd5: EA=0;												break; /* ???? */
-	case 0xd6: EA=0;												break; /* ???? */
+//	case 0xd2: EA=0;												break; /* ???? */
+//	case 0xd3: EA=0;												break; /* ???? */
+//	case 0xd4: EA=0;												break; /* ???? */
+//	case 0xd5: EA=0;												break; /* ???? */
+//	case 0xd6: EA=0;												break; /* ???? */
 	case 0xd7: EA=U+D;										ec=4;	break; /* register d */
 	case 0xd8: EA=U+SIGNED(A);				RM16(EAD,&ea);	ec=4;	break; /* indirect - register a */
 	case 0xd9: EA=U+SIGNED(B);				RM16(EAD,&ea);	ec=4;	break; /* indirect - register b */
-	case 0xda: EA=0;												break; /* indirect - ???? */
-	case 0xdb: EA=0;												break; /* indirect - ???? */
-	case 0xdc: EA=0;												break; /* indirect - ???? */
-	case 0xdd: EA=0;												break; /* indirect - ???? */
-	case 0xde: EA=0;												break; /* indirect - ???? */
+//	case 0xda: EA=0;												break; /* indirect - ???? */
+//	case 0xdb: EA=0;												break; /* indirect - ???? */
+//	case 0xdc: EA=0;												break; /* indirect - ???? */
+//	case 0xdd: EA=0;												break; /* indirect - ???? */
+//	case 0xde: EA=0;												break; /* indirect - ???? */
 	case 0xdf: EA=U+D;						RM16(EAD,&ea);	ec=7;	break; /* indirect - register d */
 	case 0xe0: EA=S+SIGNED(A);								ec=1;	break; /* register a */
 	case 0xe1: EA=S+SIGNED(B);								ec=1;	break; /* register b */
-	case 0xe2: EA=0;												break; /* ???? */
-	case 0xe3: EA=0;												break; /* ???? */
-	case 0xe4: EA=0;												break; /* ???? */
-	case 0xe5: EA=0;												break; /* ???? */
-	case 0xe6: EA=0;												break; /* ???? */
+//	case 0xe2: EA=0;												break; /* ???? */
+//	case 0xe3: EA=0;												break; /* ???? */
+//	case 0xe4: EA=0;												break; /* ???? */
+//	case 0xe5: EA=0;												break; /* ???? */
+//	case 0xe6: EA=0;												break; /* ???? */
 	case 0xe7: EA=S+D;										ec=4;	break; /* register d */
 	case 0xe8: EA=S+SIGNED(A);				RM16(EAD,&ea);	ec=4;	break; /* indirect - register a */
 	case 0xe9: EA=S+SIGNED(B);				RM16(EAD,&ea);	ec=4;	break; /* indirect - register b */
-	case 0xea: EA=0;												break; /* indirect - ???? */
-	case 0xeb: EA=0;												break; /* indirect - ???? */
-	case 0xec: EA=0;												break; /* indirect - ???? */
-	case 0xed: EA=0;												break; /* indirect - ???? */
-	case 0xee: EA=0;												break; /* indirect - ???? */
+//	case 0xea: EA=0;												break; /* indirect - ???? */
+//	case 0xeb: EA=0;												break; /* indirect - ???? */
+//	case 0xec: EA=0;												break; /* indirect - ???? */
+//	case 0xed: EA=0;												break; /* indirect - ???? */
+//	case 0xee: EA=0;												break; /* indirect - ???? */
 	case 0xef: EA=S+D;						RM16(EAD,&ea);	ec=7;	break; /* indirect - register d */
-	case 0xf0: EA=0;												break; /* register a */
-	case 0xf1: EA=0;												break; /* register b */
-	case 0xf2: EA=0;												break; /* ???? */
-	case 0xf3: EA=0;												break; /* ???? */
-	case 0xf4: EA=0;												break; /* ???? */
-	case 0xf5: EA=0;												break; /* ???? */
-	case 0xf6: EA=0;												break; /* ???? */
-	case 0xf7: EA=0;												break; /* register d */
-	case 0xf8: EA=0;												break; /* indirect - register a */
-	case 0xf9: EA=0;												break; /* indirect - register b */
-	case 0xfa: EA=0;												break; /* indirect - ???? */
-	case 0xfb: EA=0;												break; /* indirect - ???? */
-	case 0xfc: EA=0;												break; /* indirect - ???? */
-	case 0xfd: EA=0;												break; /* indirect - ???? */
-	case 0xfe: EA=0;												break; /* indirect - ???? */
-	case 0xff: EA=0;												break; /* indirect - register d */
+	case 0xf0: EA=PC+SIGNED(A);								ec=1;	break; /* register a */
+	case 0xf1: EA=PC+SIGNED(B);								ec=1;	break; /* register b */
+//	case 0xf2: EA=0;												break; /* ???? */
+//	case 0xf3: EA=0;												break; /* ???? */
+//	case 0xf4: EA=0;												break; /* ???? */
+//	case 0xf5: EA=0;												break; /* ???? */
+//	case 0xf6: EA=0;												break; /* ???? */
+	case 0xf7: EA=PC+D;										ec=4;	break; /* register d */
+	case 0xf8: EA=PC+SIGNED(A);				RM16(EAD,&ea);	ec=4;	break; /* indirect - register a */
+	case 0xf9: EA=PC+SIGNED(B);				RM16(EAD,&ea);	ec=4;	break; /* indirect - register b */
+//	case 0xfa: EA=0;												break; /* indirect - ???? */
+//	case 0xfb: EA=0;												break; /* indirect - ???? */
+//	case 0xfc: EA=0;												break; /* indirect - ???? */
+//	case 0xfd: EA=0;												break; /* indirect - ???? */
+//	case 0xfe: EA=0;												break; /* indirect - ???? */
+	case 0xff: EA=PC+D;						RM16(EAD,&ea);	ec=7;	break; /* indirect - register d */
+	default:
+		if ( errorlog )
+			fprintf( errorlog, "KONAMI: Unknown/Invalid postbyte at PC = %04x\n", PC -1 );
+		EA = 0;
+	break;
 	}
 
 	return (ec);

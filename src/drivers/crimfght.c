@@ -10,10 +10,18 @@ Preliminary driver by:
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "cpu/konami/konami.h" /* for the callback and the firq irq definition */
+#include "vidhrdw/konamiic.h"
+
 
 /* prototypes */
 static void crimfght_init_machine( void );
 static void crimfght_banking( int lines );
+
+void crimfght_vh_stop( void );
+int crimfght_vh_start( void );
+void crimfght_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+
+
 
 static int paletteram_selected;
 static unsigned char *ram;
@@ -34,7 +42,8 @@ static void bankedram_w(int offset,int data)
 		ram[offset] = data;
 }
 
-void crimfght_sh_irqtrigger_w(int offset, int data){
+void crimfght_sh_irqtrigger_w(int offset, int data)
+{
 	soundlatch_w(offset,data);
 	cpu_cause_interrupt(1,0xff);
 }
@@ -48,118 +57,9 @@ static void crimfght_snd_bankswitch_w(int offset, int data)
 	int bank_A = 0x20000*((data >> 1) & 0x01);
 	int bank_B = 0x20000*((data) & 0x01);
 
-	K007232_bankswitch_0_w(RAM + bank_A,RAM + bank_B);
+	K007232_bankswitch(0,RAM + bank_A,RAM + bank_B);
 }
 
-
-/* to vidhrdw */
-#include "tilemap.h"
-#include "vidhrdw/konamiic.h"
-
-static int layer_colorbase[3],sprite_colorbase;
-
-/***************************************************************************
-
-  Callbacks for the K052109
-
-***************************************************************************/
-
-static void tile_callback(int layer,int bank,int *code,int *color,unsigned char *flags)
-{
-	*flags = (*color & 0x20) ? TILE_FLIPX : 0;
-	*code |= ((*color & 0x1f) << 8) | (bank << 13);
-	*color = ((*color & 0xc0) >> 6);
-	*color += layer_colorbase[layer];
-}
-
-/***************************************************************************
-
-  Callbacks for the K051960
-
-***************************************************************************/
-
-static void sprite_callback(int *code,int *color,int *priority)
-{
-	/* Weird priority scheme. Why use three bits when two would suffice? */
-	switch (*color & 0x70)
-	{
-		case 0x10: *priority = 0; break;
-		case 0x00: *priority = 1; break;
-		case 0x40: *priority = 2; break;
-		default:
-		{
-			char buf[40];
-			sprintf(buf,"sprite priority %02x",(*color&0x70)>>4);
-			usrintf_showmessage(buf);
-			*color = rand();
-			*priority = 0;
-			break;
-		}
-	}
-	/* bit 7 is on in the "Game Over" sprites, meaning unknown */
-	/* in Aliens it is the top bit of the code, but that's not needed here */
-	*color = sprite_colorbase + (*color & 0x0f);
-}
-
-
-/***************************************************************************
-
-	Start the video hardware emulation.
-
-***************************************************************************/
-
-void crimfght_vh_stop( void )
-{
-	free(paletteram);
-	K052109_vh_stop();
-	K051960_vh_stop();
-}
-
-#define TILEROM_MEM_REGION 1
-#define SPRITEROM_MEM_REGION 2
-
-int crimfght_vh_start( void )
-{
-	paletteram = malloc(0x400);
-	if (!paletteram) return 1;
-
-	layer_colorbase[0] = 0;
-	layer_colorbase[1] = 4;
-	layer_colorbase[2] = 8;
-	sprite_colorbase = 16;
-	if (K052109_vh_start(TILEROM_MEM_REGION,NORMAL_PLANE_ORDER,tile_callback))
-	{
-		free(paletteram);
-		return 1;
-	}
-	if (K051960_vh_start(SPRITEROM_MEM_REGION,NORMAL_PLANE_ORDER,sprite_callback))
-	{
-		free(paletteram);
-		K052109_vh_stop();
-		return 1;
-	}
-
-	return 0;
-}
-
-void crimfght_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
-{
-	K052109_tilemap_update();
-
-	palette_init_used_colors();
-	K051960_mark_sprites_colors();
-	if (palette_recalc())
-		tilemap_mark_all_pixels_dirty(ALL_TILEMAPS);
-
-	tilemap_render(ALL_TILEMAPS);
-
-	K052109_tilemap_draw(bitmap,1,TILEMAP_IGNORE_TRANSPARENCY);
-	K051960_draw_sprites(bitmap,2,2);
-	K052109_tilemap_draw(bitmap,2,0);
-	K051960_draw_sprites(bitmap,1,1);
-	K052109_tilemap_draw(bitmap,0,0);
-	K051960_draw_sprites(bitmap,0,0);
-}
 
 /********************************************/
 
@@ -382,12 +282,21 @@ static struct YM2151interface ym2151_interface =
 	{ crimfght_snd_bankswitch_w }
 };
 
+static void volume_callback(int v)
+{
+	K007232_set_volume(0,0,(v & 0x0f) * 0x11,0);
+	K007232_set_volume(0,1,0,(v >> 4) * 0x11);
+}
+
 static struct K007232_interface k007232_interface =
 {
-	1,			/* number of chips */
-	{ 4 },		/* memory regions */
-	{ 15 }		/* volume */
+	1,		/* number of chips */
+	{ 4 },	/* memory regions */
+	{ K007232_VOL(20,MIXER_PAN_CENTER,20,MIXER_PAN_CENTER) },	/* volume */
+	{ volume_callback }	/* external port callback */
 };
+
+
 
 static struct MachineDriver machine_driver =
 {
@@ -395,20 +304,20 @@ static struct MachineDriver machine_driver =
 	{
 		{
 			CPU_KONAMI,
-			5000000,		/* ? */
+			3000000,		/* ? */
 			0,
 			crimfght_readmem,crimfght_writemem,0,0,
             interrupt,1
         },
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
-			1500000,		/* ? */
+			3579545,
 			3,
 			crimfght_readmem_sound, crimfght_writemem_sound,0,0,
 			ignore_interrupt,0	/* interrupts are triggered by the main CPU */
 		}
 	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
+	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
 	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
 	crimfght_init_machine,
 

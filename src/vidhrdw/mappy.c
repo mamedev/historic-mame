@@ -80,14 +80,17 @@ void mappy_vh_convert_color_prom(unsigned char *palette, unsigned short *colorta
       gfx = Machine->gfx[0];
       for (i = 0; i < gfx->total_elements; i++)
       {
-			color = gfx->gfxdata->line[i * gfx->height][0];
+			color = gfx->gfxdata[i * gfx->char_modulo];
 
+			dp = gfx->gfxdata + i * gfx->char_modulo;
 			for (y = 0; y < gfx->height; y++)
 			{
-				dp = gfx->gfxdata->line[i * gfx->height + y];
 				for (x = 0; x < gfx->width; x++)
+				{
 					if (dp[x] != color)
 						goto done;
+				}
+				dp += gfx->line_modulo;
 			}
 
 			for (y = 0; y < 64; y++)

@@ -86,44 +86,44 @@ unsigned char *starfire_ram;
 
 static struct MemoryReadAddress starfire_readmem[] =
 {
-        { 0x0000, 0x57FF, MRA_ROM },
-        { 0x8000, 0x83ff, MRA_RAM, &starfire_ram },
-		{ 0x8400, 0x97ff, starfire_shadow_r },
-        { 0x9800, 0x9fff, starfire_input_r },
-        { 0xA000, 0xBfff, starfire_colorram_r },
-        { 0xC000, 0xffff, starfire_videoram_r },
-        { -1 }  /* end of table */
+	{ 0x0000, 0x57ff, MRA_ROM },
+	{ 0x8000, 0x83ff, MRA_RAM, &starfire_ram },
+	{ 0x8400, 0x97ff, starfire_shadow_r },
+	{ 0x9800, 0x9fff, starfire_input_r },
+	{ 0xa000, 0xbfff, starfire_colorram_r },
+	{ 0xc000, 0xffff, starfire_videoram_r },
+	{ -1 }  /* end of table */
 };
 
 static struct MemoryWriteAddress starfire_writemem[] =
 {
-        { 0x8000, 0x83ff, MWA_RAM },
-		{ 0x8400, 0x8fff, starfire_shadow_w },
-		{ 0x9000, 0x9fff, starfire_output_w },
-        { 0xA000, 0xBfff, starfire_colorram_w },
-        { 0xC000, 0xffff, starfire_videoram_w },
-		{ -1 }	/* end of table */
+	{ 0x8000, 0x83ff, MWA_RAM },
+	{ 0x8400, 0x8fff, starfire_shadow_w },
+	{ 0x9000, 0x9fff, starfire_output_w },
+	{ 0xa000, 0xbfff, starfire_colorram_w },
+	{ 0xc000, 0xffff, starfire_videoram_w },
+	{ -1 }	/* end of table */
 };
 
 static struct MemoryReadAddress fireone_readmem[] =
 {
-        { 0x0000, 0x6FFF, MRA_ROM },
-        { 0x8000, 0x83ff, MRA_RAM, &starfire_ram },
-		{ 0x8400, 0x97ff, starfire_shadow_r },
-        { 0x9800, 0x9fff, fireone_input_r },
-        { 0xA000, 0xBfff, starfire_colorram_r },
-        { 0xC000, 0xffff, starfire_videoram_r },
-        { -1 }  /* end of table */
+	{ 0x0000, 0x6fff, MRA_ROM },
+	{ 0x8000, 0x83ff, MRA_RAM, &starfire_ram },
+	{ 0x8400, 0x97ff, starfire_shadow_r },
+	{ 0x9800, 0x9fff, fireone_input_r },
+	{ 0xa000, 0xbfff, starfire_colorram_r },
+	{ 0xc000, 0xffff, starfire_videoram_r },
+	{ -1 }  /* end of table */
 };
 
 static struct MemoryWriteAddress fireone_writemem[] =
 {
-        { 0x8000, 0x83ff, MWA_RAM },
-		{ 0x8400, 0x8fff, starfire_shadow_w },
-		{ 0x9000, 0x9fff, fireone_output_w },
-        { 0xA000, 0xBfff, starfire_colorram_w },
-        { 0xC000, 0xffff, starfire_videoram_w },
-		{ -1 }	/* end of table */
+	{ 0x8000, 0x83ff, MWA_RAM },
+	{ 0x8400, 0x8fff, starfire_shadow_w },
+	{ 0x9000, 0x9fff, fireone_output_w },
+	{ 0xa000, 0xbfff, starfire_colorram_w },
+	{ 0xc000, 0xffff, starfire_videoram_w },
+	{ -1 }	/* end of table */
 };
 
 
@@ -134,23 +134,23 @@ INPUT_PORTS_START( starfire_input_ports )
 	PORT_DIPSETTING(    0x01, "80 Sec" )
 	PORT_DIPSETTING(    0x02, "70 Sec" )
 	PORT_DIPSETTING(    0x03, "60 Sec" )
-	PORT_DIPNAME( 0x04, 0x00, "Coins to Start" )
-	PORT_DIPSETTING(    0x00, "1 Coint" )
-	PORT_DIPSETTING(    0x04, "2 Coins" )
-	PORT_DIPNAME( 0x08, 0x00, "Fuel" )
+	PORT_DIPNAME( 0x04, 0x00, "Coin(s) to Start" )
+	PORT_DIPSETTING(    0x00, "1" )
+	PORT_DIPSETTING(    0x04, "2" )
+	PORT_DIPNAME( 0x08, 0x00, "Fuel per Coin" )
 	PORT_DIPSETTING(    0x00, "300" )
 	PORT_DIPSETTING(    0x08, "600" )
 	PORT_DIPNAME( 0x30, 0x00, "Bonus" )
-	PORT_DIPSETTING(    0x00, "no bonus" )
-	PORT_DIPSETTING(    0x10, "700 points" )
-	PORT_DIPSETTING(    0x20, "500 points" )
-	PORT_DIPSETTING(    0x30, "300 points" )
+	PORT_DIPSETTING(    0x00, "300 points" )
+	PORT_DIPSETTING(    0x10, "500 points" )
+	PORT_DIPSETTING(    0x20, "700 points" )
+	PORT_DIPSETTING(    0x30, "None" )
 	PORT_DIPNAME( 0x40, 0x00, "Score Table Hold" )
 	PORT_DIPSETTING(    0x00, "fixed length" )
 	PORT_DIPSETTING(    0x40, "fixed length+fire" )
-	PORT_DIPNAME( 0x80, 0x00, "Mode" )
-	PORT_DIPSETTING(    0x80, "Diagnostic" )
-	PORT_DIPSETTING(    0x00, "Normal" )
+	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Service_Mode ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
 
 	PORT_START      /* IN1 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1)
@@ -174,11 +174,11 @@ INPUT_PORTS_END
 
 INPUT_PORTS_START( fireone_input_ports )
 	PORT_START      /* DSW0 */
-	PORT_DIPNAME( 0x03, 0x00, "Coins" )
-	PORT_DIPSETTING(    0x00, "1/2" )
-	PORT_DIPSETTING(    0x01, "1/1" )
-	PORT_DIPSETTING(    0x02, "2/2" )
-	PORT_DIPSETTING(    0x03, "2/4" )
+	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Coinage ) )
+	PORT_DIPSETTING(    0x03, "2 Coins/1 Player" )
+	PORT_DIPSETTING(    0x02, "2 Coins/1 or 2 Players" )
+	PORT_DIPSETTING(    0x00, "1 Coin/1 Player" )
+	PORT_DIPSETTING(    0x01, "1 Coin/1 or 2 Players" )
 	PORT_DIPNAME( 0x0c, 0x0c, "Time" )
 	PORT_DIPSETTING(    0x00, "75 Sec" )
 	PORT_DIPSETTING(    0x04, "90 Sec" )
@@ -186,13 +186,13 @@ INPUT_PORTS_START( fireone_input_ports )
 	PORT_DIPSETTING(    0x0c, "120 Sec" )
 	PORT_DIPNAME( 0x30, 0x00, "Bonus difficulty" )
 	PORT_DIPSETTING(    0x00, "Easy" )
-	PORT_DIPSETTING(    0x10, "Average" )
-	PORT_DIPSETTING(    0x20, "Tough" )
-	PORT_DIPSETTING(    0x30, "Very tough" )
-	PORT_DIPNAME( 0x40, 0x00, "Sound in attract mode" )
-	PORT_DIPSETTING(    0x00, DEF_STR( Yes ) )
-	PORT_DIPSETTING(    0x40, DEF_STR( No ) )
-	PORT_DIPNAME( 0x80, 0x00, "Test mode" )
+	PORT_DIPSETTING(    0x10, "Normal" )
+	PORT_DIPSETTING(    0x20, "Hard" )
+	PORT_DIPSETTING(    0x30, "Very hard" )
+	PORT_DIPNAME( 0x40, 0x00, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Service_Mode ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
 
@@ -332,7 +332,7 @@ struct GameDriver starfire_driver =
 	__FILE__,
 	0,
 	"starfire",
-	"Starfire",
+	"Star Fire",
 	"1979",
 	"Exidy",
 	"Daniel Boris\nOlivier Galibert",

@@ -74,7 +74,7 @@ static void get_sprite_info( void ){
 			else {
 				sprite->total_height = 16;
 			}
-			sprite->pen_data = gfx->gfxdata->line[number*16];
+			sprite->pen_data = gfx->gfxdata + number * gfx->char_modulo;
 		}
 		sprite->flags = flags;
 		sprite++;

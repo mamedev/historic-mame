@@ -3029,6 +3029,15 @@ INLINE void decbjnz( void )
 	BRANCH( !(CC&CC_Z) );
 }
 
+/* DECX,JNZ relative ----- */
+INLINE void decxjnz( void )
+{
+	--X;
+	CLR_NZV;
+	SET_NZ16(X);	/* should affect V as well? */
+	BRANCH( !(CC&CC_Z) );
+}
+
 INLINE void bset( void )
 {
 	UINT8	t;

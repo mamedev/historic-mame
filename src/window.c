@@ -167,7 +167,7 @@ static void win_update_map(void)
 
 	memset(p_shadow_map, 0xff, screen_w * screen_h);
 
-	for( pwin = &p_windows[MAX_WINDOWS], i = MAX_WINDOWS; i >= 0; --i, --pwin )
+	for( pwin = &p_windows[MAX_WINDOWS-1], i = MAX_WINDOWS-1; i >= 0; --i, --pwin )
 	{
 		/* Let's figure out if we should be doing a shadow */
 

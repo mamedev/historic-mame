@@ -1011,7 +1011,6 @@ ROM_END
 
 
 ROM_START( getstar_rom )
-
 	ROM_REGION(0x18000)		/* Region 0 - main cpu code */
 	ROM_LOAD( "gs_14.rom", 0x00000, 0x4000, 0x1a57a920 )
 	ROM_LOAD( "gs_13.rom", 0x04000, 0x4000, 0x805f8e77 )
@@ -1029,13 +1028,13 @@ ROM_START( getstar_rom )
 	ROM_LOAD( "gs_03.rom", 0x34000, 0x8000, 0xf24158cf )
 	ROM_LOAD( "gs_04.rom", 0x3c000, 0x8000, 0x643fb282 )
 
-/* colors missing but ought to load something */
-	ROM_REGION(0x2000)		/* Region 2 - color proms */
-	ROM_LOAD( "gs_05.rom", 0x0000, 0x2000, 0x18daa44c)
+	ROM_REGION(0x0300) /* Region 2 - color proms (still missing) */
+    ROM_LOAD( "prom_1.bin", 0x0000, 0x0100, 0x00000000 )
+    ROM_LOAD( "prom_2.bin", 0x0100, 0x0100, 0x00000000 )
+    ROM_LOAD( "prom_3.bin", 0x0200, 0x0100, 0x00000000 )
 
 	ROM_REGION(0x10000)		/* Region 3 - sound cpu code */
 	ROM_LOAD( "gs_05.rom", 0x0000, 0x2000, 0x18daa44c)
-
 ROM_END
 
 

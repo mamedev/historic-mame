@@ -40,6 +40,64 @@ static void get_bg_tile_info(int col,int row)
 }
 
 
+
+/***************************************************************************
+		Video init
+***************************************************************************/
+
+int pang_vh_start(void (*getinfo)(int col,int row))
+{
+	pang_objram=NULL;
+	paletteram=NULL;
+
+
+	bg_tilemap = tilemap_create(
+		get_bg_tile_info,
+		TILEMAP_OPAQUE,
+		8,8,
+		64,32
+	);
+
+	if (!bg_tilemap)
+		return 1;
+
+	/*
+		OBJ RAM
+	*/
+	pang_objram=malloc(pang_videoram_size);
+	if (!pang_objram)
+	{
+		pang_vh_stop();
+		return 1;
+	}
+	memset(pang_objram, 0, pang_videoram_size);
+
+	/*
+		Palette RAM
+	*/
+	paletteram = malloc(2*Machine->drv->total_colors);
+	if (!paletteram)
+	{
+		pang_vh_stop();
+		return 1;
+	}
+	memset(paletteram, 0, 2*Machine->drv->total_colors);
+
+	palette_transparent_color = 0; /* background color (Block Block uses this on the title screen) */
+
+	return 0;
+}
+
+void pang_vh_stop(void)
+{
+	free(pang_objram);
+	pang_objram = 0;
+	free(paletteram);
+	paletteram = 0;
+}
+
+
+
 /***************************************************************************
   OBJ / CHAR RAM HANDLERS (BANK 0 = CHAR, BANK 1=OBJ)
 ***************************************************************************/
@@ -167,61 +225,6 @@ void mgakuen_paletteram_w(int offset,int data)
 int mgakuen_paletteram_r(int offset)
 {
 	return paletteram_r(offset);
-}
-
-/***************************************************************************
-		Video init
-***************************************************************************/
-
-int pang_vh_start(void)
-{
-	pang_objram=NULL;
-	paletteram=NULL;
-
-
-	bg_tilemap = tilemap_create(
-		get_bg_tile_info,
-		TILEMAP_OPAQUE,
-		8,8,
-		64,32
-	);
-
-	if (!bg_tilemap)
-		return 1;
-
-	/*
-		OBJ RAM
-	*/
-	pang_objram=malloc(pang_videoram_size);
-	if (!pang_objram)
-	{
-		pang_vh_stop();
-		return 1;
-	}
-	memset(pang_objram, 0, pang_videoram_size);
-
-	/*
-		Palette RAM
-	*/
-	paletteram = malloc(2*Machine->drv->total_colors);
-	if (!paletteram)
-	{
-		pang_vh_stop();
-		return 1;
-	}
-	memset(paletteram, 0, 2*Machine->drv->total_colors);
-
-	palette_transparent_color = 0; /* background color (Block Block uses this on the title screen) */
-
-	return 0;
-}
-
-void pang_vh_stop(void)
-{
-	free(pang_objram);
-	pang_objram = 0;
-	free(paletteram);
-	paletteram = 0;
 }
 
 

@@ -422,7 +422,7 @@ static struct GfxLayout fglayout =
 	16,16,	    /* 16*16 pixels */
 	1024,	    /* 1024 tiles */
 	4,	        /* 4 bits per pixel */
-	{ 64*1024*8+0, 64*1024*8+4, 4, 0 },
+	{ 64*1024*8+0, 64*1024*8+4, 0, 4 },
 	{      0,      1,       2,       3,
            8,      9,      10,      11,
       32*8+0, 32*8+1, 32*8+ 2, 32*8+ 3,
@@ -441,24 +441,7 @@ static struct GfxLayout fglayout =
  */
 
 /* background tiles */
-static struct GfxLayout bglayout1 =
-{
-	16,16,	    /* 16*16 pixels */
-	512,	    /* 512 tiles */
-	4,	        /* 4 bits per pixel */
-	{ 64*1024*8+4, 64*1024*8+0, 4, 0 },
-	{      0,      1,       2,       3,
-           8,      9,      10,      11,
-      64*8+0, 64*8+1, 64*8+ 2, 64*8+ 3,
-      64*8+8, 64*8+9, 64*8+10, 64*8+11 },
-	{  0*8,  2*8,  4*8,  6*8,
-       8*8, 10*8, 12*8, 14*8,
-      16*8, 18*8, 20*8, 22*8,
-      24*8, 26*8, 28*8, 30*8 },
-	128*8	    /* every tile takes 64/128 consecutive bytes */
-};
-
-static struct GfxLayout bglayout2 =
+static struct GfxLayout bglayout =
 {
 	16,16,	    /* 16*16 pixels */
 	512,	    /* 512 tiles */
@@ -481,7 +464,7 @@ static struct GfxLayout spritelayout =
 	16,16,	    /* 16*16 pixels */
 	1024,	    /* 1024 sprites */
 	4,	        /* 4 bits per pixel */
-	{ 64*1024*8+4, 64*1024*8+0, 4, 0 },
+	{ 64*1024*8+0, 64*1024*8+4, 0, 4 },
 	{      0,      1,       2,       3,
            8,      9,      10,      11,
       32*8+0, 32*8+1, 32*8+ 2, 32*8+ 3,
@@ -496,11 +479,11 @@ static struct GfxLayout spritelayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 8, 0x0000, &charlayout,        256, 16 },    // I think?!?
-	{ 4, 0x0000, &fglayout,            0, 16 },    // ??? no idea
-	{ 6, 0x0000, &bglayout1,           0, 16 },    // ??? no idea
-	{ 6, 0x0020, &bglayout2,           0, 16 },    // ??? no idea
-	{ 9, 0x0000, &spritelayout,        0, 16 },    // ??? no idea
+	{ 7, 0x0000, &charlayout,   0,                16 },
+	{ 3, 0x0000, &fglayout,     16*4,             16 },
+	{ 5, 0x0000, &bglayout,     16*4+16*16,       16 },
+	{ 5, 0x0020, &bglayout,     16*4+16*16,       16 },
+	{ 8, 0x0000, &spritelayout, 16*4+16*16+16*16, 16 },
 
 	{ -1 } /* end of array */
 };
@@ -540,7 +523,7 @@ static struct MachineDriver stfight_machine_driver =
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			3000000,	/* 3 Mhz */
-			2,
+			1,
 			readmem_cpu2, writemem_cpu2, 0, 0,
 			0, 0,
             stfight_interrupt_2, 120
@@ -553,7 +536,7 @@ static struct MachineDriver stfight_machine_driver =
 	/* video hardware */
 	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
 	gfxdecodeinfo,
-	256, 256+16*4,
+	256+1, 16*4+16*16+16*16+16*16,
 	stfight_vh_convert_color_prom,
 
 	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
@@ -584,12 +567,61 @@ static struct MachineDriver stfight_machine_driver =
 
 ***************************************************************************/
 
-ROM_START( stfight_rom )
-	ROM_REGION(0x10000)	        /* 64k for the first CPU */
-	ROM_LOAD( "a-1.4q",     0x00000, 0x8000, 0xff83f316 )
+ROM_START( empcity_rom )
+	ROM_REGION(0x18000)	        /* 64k for the first CPU */
+	ROM_LOAD( "ec_01.rom",  0x00000, 0x8000, 0xfe01d9b1 )
+	ROM_LOAD( "ec_02.rom",  0x10000, 0x8000, 0xb3cf1ef7 )	/* bank switched */
 
-	ROM_REGION(0x08000)	        /* bank-switched into first CPU space */
-	ROM_LOAD( "sf02.bin",   0x00000, 0x8000, 0xe626ce9e )
+	ROM_REGION(0x10000)	        /* 64k for the second CPU */
+	ROM_LOAD( "ec_04.rom",  0x0000,  0x8000, 0xaa3e7d1e )
+
+	ROM_REGION(0x08000)	        /* adpcm voice data */
+	ROM_LOAD( "sf04.bin",   0x00000, 0x8000, 0x1b8d0c07 )
+
+	ROM_REGION_DISPOSE(0x20000) /* foreground tile pixel data */
+	ROM_LOAD( "sf07.bin",   0x10000, 0x8000, 0x2c6caa5f )
+	ROM_LOAD( "sf08.bin",   0x18000, 0x8000, 0xe11ded31 )
+	ROM_LOAD( "sf05.bin",   0x00000, 0x8000, 0x0c099a31 )
+	ROM_LOAD( "sf06.bin",   0x08000, 0x8000, 0x3cc77c31 )
+
+	ROM_REGION(0x10000)	        /* foreground map data */
+	ROM_LOAD( "sf09.bin",   0x00000, 0x8000, 0x8ceaf4fe )
+	ROM_LOAD( "sf10.bin",   0x08000, 0x8000, 0x5a1a227a )
+
+	ROM_REGION_DISPOSE(0x20000)	/* background tile pixel data */
+	ROM_LOAD( "sf13.bin",   0x10000, 0x8000, 0x0ae48dd3 )
+	ROM_LOAD( "sf14.bin",   0x18000, 0x8000, 0xdebf5d76 )
+	ROM_LOAD( "sf11.bin",   0x00000, 0x8000, 0x8261ecfe )
+	ROM_LOAD( "sf12.bin",   0x08000, 0x8000, 0x71137301 )
+
+	ROM_REGION(0x10000)	        /* background map data */
+	ROM_LOAD( "sf15.bin",   0x00000, 0x8000, 0x27a310bc )
+	ROM_LOAD( "sf16.bin",   0x08000, 0x8000, 0x3d19ce18 )
+
+	ROM_REGION_DISPOSE(0x02000)	/* character data */
+	ROM_LOAD( "sf17.bin",   0x0000, 0x2000, 0x1b3706b5 )
+
+	ROM_REGION_DISPOSE(0x20000)	/* sprite data */
+	ROM_LOAD( "sf20.bin",   0x10000, 0x8000, 0x8299f247 )
+	ROM_LOAD( "sf21.bin",   0x18000, 0x8000, 0xb57dc037 )
+	ROM_LOAD( "sf18.bin",   0x00000, 0x8000, 0x68acd627 )
+	ROM_LOAD( "sf19.bin",   0x08000, 0x8000, 0x5170a057 )
+
+	ROM_REGION(0x0800)	/* PROMs */
+	ROM_LOAD( "82s129.006", 0x0000, 0x0100, 0xf9424b5b )	/* text lookup table */
+	ROM_LOAD( "82s129.002", 0x0100, 0x0100, 0xc883d49b )	/* fg lookup table */
+	ROM_LOAD( "82s129.003", 0x0200, 0x0100, 0xaf81882a )
+	ROM_LOAD( "82s129.004", 0x0300, 0x0100, 0x1831ce7c )	/* bg lookup table */
+	ROM_LOAD( "82s129.005", 0x0400, 0x0100, 0x96cb6293 )
+	ROM_LOAD( "82s129.052", 0x0500, 0x0100, 0x3d915ffc )	/* sprite lookup table */
+	ROM_LOAD( "82s129.066", 0x0600, 0x0100, 0x51e8832f )
+	ROM_LOAD( "82s129.015", 0x0700, 0x0100, 0x0eaf5158 )	/* timing? (not used) */
+ROM_END
+
+ROM_START( stfight_rom )
+	ROM_REGION(0x18000)	        /* 64k for the first CPU */
+	ROM_LOAD( "a-1.4q",     0x00000, 0x8000, 0xff83f316 )
+	ROM_LOAD( "sf02.bin",   0x10000, 0x8000, 0xe626ce9e )	/* bank switched */
 
 	ROM_REGION(0x10000)	        /* 64k for the second CPU */
 	ROM_LOAD( "sf03.bin",   0x0000,  0x8000, 0x6a8cb7a6 )
@@ -625,8 +657,17 @@ ROM_START( stfight_rom )
 	ROM_LOAD( "sf21.bin",   0x18000, 0x8000, 0xb57dc037 )
 	ROM_LOAD( "sf18.bin",   0x00000, 0x8000, 0x68acd627 )
 	ROM_LOAD( "sf19.bin",   0x08000, 0x8000, 0x5170a057 )
-ROM_END
 
+	ROM_REGION(0x0800)	/* PROMs */
+	ROM_LOAD( "82s129.006", 0x0000, 0x0100, 0xf9424b5b )	/* text lookup table */
+	ROM_LOAD( "82s129.002", 0x0100, 0x0100, 0xc883d49b )	/* fg lookup table */
+	ROM_LOAD( "82s129.003", 0x0200, 0x0100, 0xaf81882a )
+	ROM_LOAD( "82s129.004", 0x0300, 0x0100, 0x1831ce7c )	/* bg lookup table */
+	ROM_LOAD( "82s129.005", 0x0400, 0x0100, 0x96cb6293 )
+	ROM_LOAD( "82s129.052", 0x0500, 0x0100, 0x3d915ffc )	/* sprite lookup table */
+	ROM_LOAD( "82s129.066", 0x0600, 0x0100, 0x51e8832f )
+	ROM_LOAD( "82s129.015", 0x0700, 0x0100, 0x0eaf5158 )	/* timing? (not used) */
+ROM_END
 
 
 static int stfight_hiload( void )
@@ -663,16 +704,44 @@ static void stfight_hisave( void )
 	}
 }
 
-struct GameDriver stfight_driver =
+
+
+struct GameDriver empcity_driver =
 {
 	__FILE__,
 	0,
+	"empcity",
+	"Empire City: 1931",
+	"1986",
+	"Seibu Kaihatsu",
+	"Mark McDougall (MAME Driver)\nJames Jenkins (Graphics Info)",
+	0,
+	&stfight_machine_driver,
+	0,
+
+	empcity_rom,
+    0,stfight_decode,
+	0,
+	0,	/* sound_prom */
+
+	stfight_input_ports,
+
+	PROM_MEMORY_REGION(9), 0, 0,
+	ORIENTATION_DEFAULT,
+
+	stfight_hiload, stfight_hisave
+};
+
+struct GameDriver stfight_driver =
+{
+	__FILE__,
+	&empcity_driver,
 	"stfight",
 	"Street Fight (Germany)",
 	"1986",
-	"Seibu",
+	"Seibu Kaihatsu",
 	"Mark McDougall (MAME Driver)\nJames Jenkins (Graphics Info)",
-	GAME_WRONG_COLORS,
+	0,
 	&stfight_machine_driver,
 	0,
 
@@ -683,7 +752,7 @@ struct GameDriver stfight_driver =
 
 	stfight_input_ports,
 
-	0, 0, 0,
+	PROM_MEMORY_REGION(9), 0, 0,
 	ORIENTATION_DEFAULT,
 
 	stfight_hiload, stfight_hisave

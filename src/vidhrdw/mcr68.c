@@ -23,7 +23,6 @@ unsigned char *mcr68_spriteram;
 
 void mcr68_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
 {
-	struct osd_bitmap *bitmap = Machine->gfx[0]->gfxdata;
 	int y, x, i;
 
 	#define TOTAL_COLORS(gfxn) (Machine->gfx[gfxn]->total_colors * Machine->gfx[gfxn]->color_granularity)
@@ -49,19 +48,19 @@ void mcr68_vh_convert_color_prom(unsigned char *palette, unsigned short *colorta
 
       gfx = Machine->gfx[1];
       for (i=0;i<gfx->total_elements;i++)
+	  {
+			dp = gfx->gfxdata + i * gfx->char_modulo;
 			for (y=0;y<gfx->height;y++)
 			{
-				dp = gfx->gfxdata->line[i * gfx->height + y];
 				for (x=0;x<gfx->width;x++)
+				{
 					if (dp[x] == 8)
                     	dp[x] = 0;
+				}
+				dp += gfx->line_modulo;
 			}
+		}
    }
-
-	/* the tile graphics are reverse colors; we preswap them here */
-	for (y = bitmap->height - 1; y >= 0; y--)
-		for (x = bitmap->width - 1; x >= 0; x--)
-			bitmap->line[y][x] ^= 15;
 }
 
 /******************************************************************************/

@@ -145,7 +145,7 @@ static struct MemoryWriteAddress sub_writemem[] =
 
 INPUT_PORTS_START( input_ports )
 	PORT_START /* IN 0 - 0x3800 */
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_VBLANK )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_VBLANK )
 
 	PORT_START /* DSW 0 - 0x1800 */
 	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Coin_A ) )

@@ -6,14 +6,11 @@ Preliminary driver by:
 	Manuel Abadia <manu@teleline.es>
 
 TO DO:
-	- add sprites with rotating and scaling effects (gfx[0])
-		* characters test routine at $cf45 (6309)
-			ROM N22	(770c13)
-			ROM K22 (770c12)
-			ROM F4	(770c06)
-			ROM H4	(770c07)
-	- fix sprite/layer priorities
-	- find start lamp check, power up lamp check and joystick lamp check addresses
+- more efficient handling of the palette usage count when the zoom layer changes
+  often (major slowdown in stage 4)
+- sometimes when you kill the final boss the game stays there instead of showing
+  the end sequence
+- find start lamp check, power up lamp check and joystick lamp check addresses
 
 ***************************************************************************/
 
@@ -22,21 +19,28 @@ TO DO:
 
 extern unsigned char *ajax_sharedram;
 
+static void k007232_extvol_w(int offset,int data);
+
+
 /* from machine/ajax.c */
-extern void ajax_bankswitch_w( int offset, int data );
-extern void ajax_bankswitch_w_2( int offset, int data );
-extern int ajax_sharedram_r( int offset );
-extern int ajax_0000_r( int offset );
-extern void ajax_sharedram_w( int offset, int data );
-extern void ajax_init_machine( void );
-extern int ajax_interrupt( void );
-extern int ajax_interrupt_2( void );
-extern void ajax_sh_irqtrigger_w( int offset, int data );
+void ajax_bankswitch_w( int offset, int data );
+void ajax_bankswitch_w_2( int offset, int data );
+int ajax_sharedram_r( int offset );
+void ajax_sharedram_w( int offset, int data );
+void ajax_init_machine( void );
+int ajax_interrupt( void );
+int ajax_interrupt_2( void );
+void ajax_sh_irqtrigger_w( int offset, int data );
 
 /* from vidhrdw/ajax.c */
-extern int ajax_052109_vh_start( void );
-extern void ajax_052109_vh_stop( void );
-extern void ajax_052109_vh_screenrefresh( struct osd_bitmap *bitmap, int fullrefresh );
+extern unsigned char *ajax_051316_ram;
+int ajax_zoomram_r(int offset);
+void ajax_zoomram_w(int offset,int data);
+int ajax_052109_vh_start( void );
+void ajax_052109_vh_stop( void );
+void ajax_052109_vh_screenrefresh( struct osd_bitmap *bitmap, int fullrefresh );
+
+
 
 static void sound_bank_w(int offset, int data)
 {
@@ -46,41 +50,29 @@ static void sound_bank_w(int offset, int data)
 	RAM = Machine->memory_region[6];
 	bank_A = 0x20000 * ((data >> 1) & 0x01);
 	bank_B = 0x20000 * ((data >> 0) & 0x01);
-	K007232_bankswitch_0_w(RAM + bank_A,RAM + bank_B);
+	K007232_bankswitch(0,RAM + bank_A,RAM + bank_B);
 	RAM = Machine->memory_region[7];
 	bank_A = 0x20000 * ((data >> 4) & 0x03);
 	bank_B = 0x20000 * ((data >> 2) & 0x03);
-	K007232_bankswitch_1_w(RAM + bank_A,RAM + bank_B);
+	K007232_bankswitch(1,RAM + bank_A,RAM + bank_B);
 }
 
 
+static unsigned char *bank;
+
+int ajax_051316_r(int offset)
+{
+	return Machine->memory_region[3][offset + (*bank << 11)];
+}
+
 /****************************************************************************/
 
+int ajax_0000_r( int offset )
+{
+	return rand();
+}
+
 static struct MemoryReadAddress ajax_readmem[] =
-{
-	{ 0x0000, 0x07ff, MRA_RAM },
-	{ 0x1000, 0x17ff, MRA_RAM },
-	{ 0x2000, 0x3fff, ajax_sharedram_r },		/* shared RAM with the 052001 */
-	{ 0x4000, 0x7fff, K052109_r },			/* video RAM + color RAM + vieo registers */
-	{ 0x8000, 0x9fff, MRA_BANK1 },					/* banked ROM */
-	{ 0xa000, 0xffff, MRA_ROM },					/* ROM */
-	{ -1 }
-};
-
-static struct MemoryWriteAddress ajax_writemem[] =
-{
-	{ 0x0000, 0x07ff, MWA_RAM },
-	{ 0x0800, 0x080f, MWA_RAM },					/* ??? */
-	{ 0x1000, 0x17ff, MWA_RAM },
-	{ 0x1800, 0x1800, ajax_bankswitch_w },		/* bankswitch control */
-	{ 0x2000, 0x3fff, ajax_sharedram_w, &ajax_sharedram },/* shared RAM with the 052001 */
-	{ 0x4000, 0x7fff, K052109_w },			/* video RAM + color RAM + vieo registers */
-	{ 0x8000, 0x9fff, MWA_ROM },					/* banked ROM */
-	{ 0xa000, 0xffff, MWA_ROM },					/* ROM */
-	{ -1 }
-};
-
-static struct MemoryReadAddress ajax_readmem_2[] =
 {
 	{ 0x0000, 0x0001, ajax_0000_r },				/* without this hangs at hiscore table */
 	{ 0x0100, 0x0100, input_port_5_r },				/* 2P inputs */
@@ -92,17 +84,17 @@ static struct MemoryReadAddress ajax_readmem_2[] =
 	{ 0x0800, 0x0807, K051937_r },
 	{ 0x0c00, 0x0fff, K051960_r },
 	{ 0x1000, 0x1fff, MRA_RAM },					/* RAM */
-	{ 0x2000, 0x3fff, ajax_sharedram_r },		/* shared RAM with the 6309 */
+	{ 0x2000, 0x3fff, ajax_sharedram_r },		/* shared RAM with the 6809 */
 	{ 0x4000, 0x5fff, MRA_RAM },					/* RAM */
 	{ 0x6000, 0x7fff, MRA_BANK2 },					/* banked ROM */
 	{ 0x8000, 0xffff, MRA_ROM },					/* ROM */
 	{ -1 }
 };
 
-static struct MemoryWriteAddress ajax_writemem_2[] =
+static struct MemoryWriteAddress ajax_writemem[] =
 {
 	{ 0x0000, 0x0001, MWA_RAM },					/* ??? */
-	{ 0x00c0, 0x00c0, ajax_bankswitch_w_2 },		/* bankswitch control */
+	{ 0x00c0, 0x00c0, ajax_bankswitch_w },		/* bankswitch control */
 	{ 0x0020, 0x0020, MWA_RAM },					/* ??? */
 	{ 0x0040, 0x0040, MWA_RAM },					/* ??? */
 	{ 0x0080, 0x0080, ajax_sh_irqtrigger_w },	/* sound command */
@@ -110,10 +102,34 @@ static struct MemoryWriteAddress ajax_writemem_2[] =
 	{ 0x0800, 0x0807, K051937_w },
 	{ 0x0c00, 0x0fff, K051960_w },
 	{ 0x1000, 0x1fff, paletteram_xBBBBBGGGGGRRRRR_swap_w, &paletteram },
-	{ 0x2000, 0x3fff, ajax_sharedram_w },		/* shared RAM with the 6309 */
+	{ 0x2000, 0x3fff, ajax_sharedram_w },		/* shared RAM with the 6809 */
 	{ 0x4000, 0x5fff, MWA_RAM },					/* RAM */
 	{ 0x6000, 0x7fff, MWA_ROM },					/* banked ROM */
 	{ 0x8000, 0xffff, MWA_ROM },					/* ROM */
+	{ -1 }
+};
+
+static struct MemoryReadAddress ajax_readmem_2[] =
+{
+	{ 0x0000, 0x07ff, ajax_zoomram_r },
+	{ 0x1000, 0x17ff, ajax_051316_r },		/* 051316 (ROM test) */
+	{ 0x2000, 0x3fff, ajax_sharedram_r },	/* shared RAM with the 052001 */
+	{ 0x4000, 0x7fff, K052109_r },			/* video RAM + color RAM + video registers */
+	{ 0x8000, 0x9fff, MRA_BANK1 },					/* banked ROM */
+	{ 0xa000, 0xffff, MRA_ROM },					/* ROM */
+	{ -1 }
+};
+
+static struct MemoryWriteAddress ajax_writemem_2[] =
+{
+	{ 0x0000, 0x07ff, ajax_zoomram_w, &ajax_051316_ram },
+	{ 0x080c, 0x080c, MWA_RAM, &bank },	/* 051316 for ROM testing */
+//	{ 0x080e, 0x080e, ajax_051316rmrd_w },	/* 051316, 0 = test ROMs */
+	{ 0x1800, 0x1800, ajax_bankswitch_w_2 },	/* bankswitch control */
+	{ 0x2000, 0x3fff, ajax_sharedram_w, &ajax_sharedram },/* shared RAM with the 052001 */
+	{ 0x4000, 0x7fff, K052109_w },			/* video RAM + color RAM + video registers */
+	{ 0x8000, 0x9fff, MWA_ROM },			/* banked ROM */
+	{ 0xa000, 0xffff, MWA_ROM },			/* ROM */
 	{ -1 }
 };
 
@@ -135,7 +151,8 @@ static struct MemoryWriteAddress ajax_writemem_sound[] =
 	{ 0x9000, 0x9000, sound_bank_w },
 	{ 0xa000, 0xa00d, K007232_write_port_0_w },		/* 007232 registers (chip 1) */
 	{ 0xb000, 0xb00d, K007232_write_port_1_w },		/* 007232 registers (chip 2) */
-//	{ 0xb800, 0xb80d, K007232_write_port_1_w },		/* extended pan */
+	{ 0xb80c, 0xb80c, k007232_extvol_w },	/* extra volume, goes to the 007232 w/ A11 */
+											/* selecting a different latch for the external port */
 	{ 0xc000, 0xc000, YM2151_register_port_0_w },	/* YM2151 */
 	{ 0xc001, 0xc001, YM2151_data_port_0_w },		/* YM2151 */
 	{ -1 }	/* end of table */
@@ -207,13 +224,13 @@ INPUT_PORTS_START( ajax_input_ports )
 	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Flip_Screen ) )
 	PORT_DIPSETTING(	0x01, DEF_STR( Off ) )
 	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Cabinet ) )	/* TO DO: dependant of DSW #2 & 0x04 */
-	PORT_DIPSETTING(	0x02, "2p alternating upright" )
-	PORT_DIPSETTING(	0x00, "2p interactive upright" )
+	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown ) )	/* service mode calls this cabinet */
+	PORT_DIPSETTING(	0x02, DEF_STR( Off ) )		/* type (alternating/interactive) */
+	PORT_DIPSETTING(	0x00, DEF_STR( On ) )		/* but it doesn't apply */
 	PORT_BITX(    0x04, 0x04, IPT_DIPSWITCH_NAME | IPF_TOGGLE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE )
 	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x08, 0x00, "Control in 3D Stages" )
+	PORT_DIPNAME( 0x08, 0x08, "Control in 3D Stages" )
 	PORT_DIPSETTING(	0x08, "Normal" )
 	PORT_DIPSETTING(	0x00, "Inverted" )
 	PORT_BIT( 0xf0, IP_ACTIVE_LOW, IPT_UNUSED )
@@ -253,22 +270,24 @@ INPUT_PORTS_END
 
 static struct GfxLayout zoomlayout =
 {
-	16,16,	/* 16*16 sprites */
-	2048,	/* 2048 sprites */
-	8,	/* 8 bits per pixel */
-	{ 0, 1, 2, 3, 4, 5, 6, 7 },
+	16,16,	/* 16*16 tiles */
+	2048,	/* 2048 tiles */
+	7,	/* 7 bits per pixel */
+	{ 1, 2, 3, 4, 5, 6, 7 },
 	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8,
 			8*8, 9*8, 10*8, 11*8, 12*8, 13*8, 14*8, 15*8 },
 	{ 0*128, 1*128, 2*128, 3*128, 4*128, 5*128, 6*128, 7*128,
 			8*128, 9*128, 10*128, 11*128, 12*128, 13*128, 14*128, 15*128 },
-	256*8	/* every sprite takes 256 consecutive bytes */
+	256*8	/* every tile takes 256 consecutive bytes */
 };
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 3, 0x000000, &zoomlayout,   0, 8 },
+	{ 3, 0x000000, &zoomlayout,   0, 16 },
 	{ -1 }
 };
+
+
 
 static struct YM2151interface ym2151_interface =
 {
@@ -278,39 +297,61 @@ static struct YM2151interface ym2151_interface =
 	{ 0 },
 };
 
+static void volume_callback0(int v)
+{
+	K007232_set_volume(0,0,(v >> 4) * 0x11,0);
+	K007232_set_volume(0,1,0,(v & 0x0f) * 0x11);
+}
+
+static void k007232_extvol_w(int offset,int v)
+{
+	/* channel A volume (mono) */
+	K007232_set_volume(1,0,(v & 0x0f) * 0x11/2,(v & 0x0f) * 0x11/2);
+}
+
+static void volume_callback1(int v)
+{
+	/* channel B volume/pan */
+	K007232_set_volume(1,1,(v & 0x0f) * 0x11/2,(v >> 4) * 0x11/2);
+}
+
 static struct K007232_interface k007232_interface =
 {
-	2,				/* number of chips */
-	{ 6, 7 },		/* memory regions */
-	{ 20, 20 }		/* volume */
+	2,			/* number of chips */
+	{ 6, 7 },	/* memory regions */
+	{ K007232_VOL(20,MIXER_PAN_CENTER,20,MIXER_PAN_CENTER),
+			K007232_VOL(50,MIXER_PAN_LEFT,50,MIXER_PAN_RIGHT) },	/* volume */
+	{ volume_callback0,  volume_callback1 }	/* external port callback */
 };
+
+
 
 static struct MachineDriver ajax_machine_driver =
 {
 	{
 		{
-			CPU_M6309,
-			4000000,	/* ? */
+			CPU_KONAMI,	/* 052001 */
+			3000000,	/* ? */
 			0,
-			ajax_readmem, ajax_writemem,0,0,
+			ajax_readmem,ajax_writemem,0,0,
 			ajax_interrupt,1
 		},
 		{
-			CPU_KONAMI,	/* 052001 */
-			4000000,	/* ? */
+			CPU_M6809,
+			3000000,	/* ? */
 			4,
-			ajax_readmem_2,ajax_writemem_2,0,0,
-            ajax_interrupt_2,1
-        },
+			ajax_readmem_2, ajax_writemem_2,0,0,
+			ajax_interrupt_2,1
+		},
 		{
 			CPU_Z80,
-			1500000,	/* ? */
+			3579545,	/* ? */
 			5,
 			ajax_readmem_sound, ajax_writemem_sound,0,0,
 			ignore_interrupt,0	/* interrupts are triggered by the 052001 */
 		}
 	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
+	60, DEFAULT_60HZ_VBLANK_DURATION,
 	1, /* 1 CPU slice per frame - interleaving is forced when a sound command is written */
 	ajax_init_machine,
 
@@ -342,36 +383,39 @@ static struct MachineDriver ajax_machine_driver =
 
 
 ROM_START( ajax_rom )
-	ROM_REGION(0x22000)	/* 64k + 72k for banked ROMs */
-	ROM_LOAD( "l05.i16", 0x20000, 0x02000, 0xed64fbb2 )	/* banked ROM */
-	ROM_CONTINUE(		 0x0a000, 0x06000 )				/* fixed ROM */
-	ROM_LOAD( "f04.g16", 0x10000, 0x10000, 0xe0e4ec9c )	/* banked ROM */
+	ROM_REGION(0x28000)	/* 052001 code */
+	ROM_LOAD( "m01.n11",      0x10000, 0x08000, 0x4a64e53a )	/* banked ROM */
+	ROM_CONTINUE(		      0x08000, 0x08000 )				/* fixed ROM */
+	ROM_LOAD( "l02.n12",      0x18000, 0x10000, 0xad7d592b )	/* banked ROM */
 
     ROM_REGION(0x080000)	/* graphics (addressable by the main CPU) */
-	ROM_LOAD( "770c13",  0x000000, 0x040000, 0xb859ca4e )	/* characters (N22) */
-	ROM_LOAD( "770c12",  0x040000, 0x040000, 0x50d14b72 )	/* characters (K22) */
+	ROM_LOAD( "770c13",       0x000000, 0x040000, 0xb859ca4e )	/* characters (N22) */
+	ROM_LOAD( "770c12",       0x040000, 0x040000, 0x50d14b72 )	/* characters (K22) */
 
     ROM_REGION(0x100000)	/* graphics (addressable by the main CPU) */
-	ROM_LOAD( "770c09",  0x000000, 0x080000, 0x1ab4a7ff )	/* sprites (N4) */
-	ROM_LOAD( "770c08",  0x080000, 0x080000, 0xa8e80586 )	/* sprites (K4) */
+	ROM_LOAD( "770c09",       0x000000, 0x080000, 0x1ab4a7ff )	/* sprites (N4) */
+	ROM_LOAD( "770c08",       0x080000, 0x080000, 0xa8e80586 )	/* sprites (K4) */
 
 	ROM_REGION(0x080000)	/* graphics (addressable by the main CPU) */
-	ROM_LOAD( "770c07",  0x000000, 0x040000, 0x0b399fb1 )	/* zooming sprites (H4) */
-	ROM_LOAD( "770c06",  0x040000, 0x040000, 0xd0c592ee )	/* zooming sprites (N4) */
+	ROM_LOAD( "770c06",       0x000000, 0x040000, 0xd0c592ee )	/* zoom/rotate (F4) */
+	ROM_LOAD( "770c07",       0x040000, 0x040000, 0x0b399fb1 )	/* zoom/rotate (H4) */
 
-	ROM_REGION(0x28000)	/* 052001 code */
-	ROM_LOAD( "m01.n11", 0x10000, 0x08000, 0x4a64e53a )	/* banked ROM */
-	ROM_CONTINUE(		 0x08000, 0x08000 )				/* fixed ROM */
-	ROM_LOAD( "l02.n12", 0x18000, 0x10000, 0xad7d592b )	/* banked ROM */
+	ROM_REGION(0x22000)	/* 64k + 72k for banked ROMs */
+	ROM_LOAD( "l05.i16",      0x20000, 0x02000, 0xed64fbb2 )	/* banked ROM */
+	ROM_CONTINUE(		      0x0a000, 0x06000 )				/* fixed ROM */
+	ROM_LOAD( "f04.g16",      0x10000, 0x10000, 0xe0e4ec9c )	/* banked ROM */
 
 	ROM_REGION(0x10000)	/* 64k for the SOUND CPU */
-	ROM_LOAD( "h03.f16", 0x00000, 0x08000, 0x2ffd2afc )
+	ROM_LOAD( "h03.f16",      0x00000, 0x08000, 0x2ffd2afc )
 
 	ROM_REGION( 0x040000 )	/* 007232 data (chip 1) */
-	ROM_LOAD( "770c10",	 0x000000, 0x040000, 0x7fac825f )
+	ROM_LOAD( "770c10",	      0x000000, 0x040000, 0x7fac825f )
 
 	ROM_REGION( 0x080000 )	/* 007232 data (chip 2) */
-	ROM_LOAD( "770c11",  0x000000, 0x080000, 0x299a615a )
+	ROM_LOAD( "770c11",       0x000000, 0x080000, 0x299a615a )
+
+	ROM_REGION(0x0200)	/* PROMs */
+	ROM_LOAD( "63s241.j11",   0x0000, 0x0200, 0x9bdd719f )	/* priority encoder (not used) */
 ROM_END
 
 
@@ -393,7 +437,7 @@ struct GameDriver ajax_driver =
 	"1987",
 	"Konami",
 	"Manuel Abadia",
-	GAME_NOT_WORKING,
+	0,
 	&ajax_machine_driver,
 	0,
 

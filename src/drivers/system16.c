@@ -1,31 +1,45 @@
 /*
 
+  sys18 sound fixed - 2612intf.c
+  hangon sound fixed - segapcm.c
+  hangon & super hangon added control centering
+  outrun graphics fixed
+		 + controls changed, centering and 2 button gears
+		 + gradiant color effect fixed on name entry
+  space harrier - 'you're doing great' fixed. Stopped controls working during demo mode.
+  leds added to hangon, sharrier, hwchamp, outrun, shangon (based on s16ae leds. Not sure if they are correct though.)
+
+  enduro racer added (3 sets)
+  eswat (protected) added
+----------------------------------------------
+
 	working:
-		Alex Kidd (bootleg)
+		Alex Kidd
 		Alien Storm (bootleg)
 		Alien Syndrome
 		Altered Beast (Ver 1)
 		Altered Beast (Ver 2)	(No Sound)
-		Atomic Point			(No Sound ROM)
+		Atomic Point			(No Sound)
 		Aurail					(Speech quality sounds poor)
 		Bay Route
 		Body Slam
 		Dynamite Dux (bootleg)
+		Enduro Racer (bootleg)
 		E-Swat (bootleg)
 		Fantasy Zone
 		Flash Point  (bootleg): dipswitches are wrong
 		Golden Axe (Ver 1)
 		Golden Axe (Ver 2)
-		Hang-on					(Sound goes wrong after crash)
+		Hang-on
 		Heavyweight Champ: some minor graphics glitches
 		Major League: No game over.
 		Moonwalker (bootleg)
-		Outrun (bootleg set 1): road & sprites not correctly synced
-		Outrun (bootleg set 2): road & sprites not correctly synced
+		Outrun (set 1): road & sprites not correctly synced
+		Outrun (set 2): road & sprites not correctly synced
 		Outrun (custom bootleg): road & sprites not correctly synced
 		Passing Shot (bootleg)
-		Quartet: Glitch on highscore list
-		Quartet 2: Glitch on highscore list
+		Quartet: Glitch on highscore list + title screen rotation effect missing.
+		Quartet 2: Glitch on highscore list + title screen rotation effect missing.
 		Riot City
 		SDI
 		Shadow Dancer
@@ -54,6 +68,9 @@
 		Bay Route (317-0116)
 		Bay Route (protected bootleg 1)
 		Bay Route (protected bootleg 2)
+		Enduro Racer
+		Enduro Racer (custom bootleg)
+		E-Swat
 		Flash Point
 		Golden Axe (Ver 2 317-0110)
 		Golden Axe (Ver 2 317-0122)
@@ -73,7 +90,6 @@
 		Cotton
 		DD Crew
 		Dunk Shot
-		Enduro Racer
 		Laser Ghost
 		Line of Fire
 		MVP
@@ -107,6 +123,7 @@ including ESwat, Alien Storm and Altered Beast.
 
 #ifdef TRANSPARENT_SHADOWS
 #define NumOfShadowColors 32
+extern int sys16_sh_shadowpal;
 #else
 #define NumOfShadowColors 0
 #endif
@@ -141,6 +158,7 @@ extern void sys18_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 extern int sys16_spritesystem;
 extern int sys16_sprxoffset;
 extern int sys16_bgxoffset;
+extern int sys16_fgxoffset;
 extern int *sys16_obj_bank;
 extern int sys16_textmode;
 extern int sys16_yflip;
@@ -220,6 +238,10 @@ void sys16_7751_sh_offset_a4_a7_w(int offset, int data);
 void sys16_7751_sh_offset_a8_a11_w(int offset, int data);
 void sys16_7751_sh_rom_select_w(int offset, int data);
 
+
+// encryption decoding
+void endurob2_decode_data(unsigned char *dest,unsigned char *source,int size);
+void endurob2_decode_data2(unsigned char *dest,unsigned char *source,int size);
 
 /* shared memory */
 static int mirror1_hi_addr;
@@ -586,11 +608,7 @@ int sys16_interrupt( void ){
 	if(sys16_custom_irq) sys16_custom_irq();
 	return 4; /* Interrupt vector 4, used by VBlank */
 }
-int sys16_interrupt2( void ){
-	int intleft=cpu_getiloops();
-	if(intleft!=0) return 2;
-	else return 4;
-}
+
 /***************************************************************************/
 
 static void sound_cause_nmi(int chip)
@@ -731,7 +749,7 @@ static struct UPD7759_interface upd7759_interface =
 	1,			/* 1 chip */
 	UPD7759_STANDARD_CLOCK,
 	{ 60 }, 	/* volumes */
-	3,			/* memory region 3 contains the sample data */
+	{ 3 },			/* memory region 3 contains the sample data */
     UPD7759_SLAVE_MODE,
 	{ sound_cause_nmi },
 };
@@ -765,12 +783,6 @@ static struct MemoryWriteAddress sound_writemem_18[] =
 	{ -1 }  /* end of table */
 };
 
-
-static int ym2612_status_r(int offset)
-{
-	return YM2612_status_port_0_A_r(0) | YM2612_status_port_1_A_r(0);
-}
-
 static struct RF5C68interface rf5c68_interface = {
   //3580000 * 2,
   3579545*2,
@@ -800,26 +812,27 @@ static void sys18_soundbank_w(int offset,int data)
 			break;
 	}
 	sys18_SoundMemBank = &RAM[Bank+0x10000];
-
 }
 
 static struct IOReadPort sound_readport_18[] =
 {
-	{ 0x80, 0x80, ym2612_status_r },
+	{ 0x80, 0x80, YM2612_status_port_0_A_r },
+//	{ 0x82, 0x82, YM2612_status_port_0_B_r },
+//	{ 0x90, 0x90, YM2612_status_port_1_A_r },
+//	{ 0x92, 0x92, YM2612_status_port_1_B_r },
 	{ 0xc0, 0xc0, soundlatch_r },
 	{ -1 }	/* end of table */
 };
 
 
-
 static struct IOWritePort sound_writeport_18[] =
 {
 	{ 0x80, 0x80, YM2612_control_port_0_A_w },
-	{ 0x81, 0x81, YM2612_data_port_0_A_w },			// this needs something added (see s16ae code)
+	{ 0x81, 0x81, YM2612_data_port_0_A_w },
 	{ 0x82, 0x82, YM2612_control_port_0_B_w },
 	{ 0x83, 0x83, YM2612_data_port_0_B_w },
 	{ 0x90, 0x90, YM2612_control_port_1_A_w },
-	{ 0x91, 0x91, YM2612_data_port_1_A_w },			// this needs something added (see s16ae code)
+	{ 0x91, 0x91, YM2612_data_port_1_A_w },
 	{ 0x92, 0x92, YM2612_control_port_1_B_w },
 	{ 0x93, 0x93, YM2612_data_port_1_B_w },
 	{ 0xa0, 0xa0, sys18_soundbank_w },
@@ -852,21 +865,21 @@ static struct SEGAPCMinterface segapcm_interface_15k = {
 	SEGAPCM_SAMPLE15K,
 	BANK_256,
 	3,		// memory region
-	100
+	50
 };
 
 static struct SEGAPCMinterface segapcm_interface_15k_512 = {
 	SEGAPCM_SAMPLE15K,
 	BANK_512,
 	3,		// memory region
-	100
+	50
 };
 
 static struct SEGAPCMinterface segapcm_interface_32k = {
 	SEGAPCM_SAMPLE32K,
 	BANK_256,
 	3,
-	100
+	50
 };
 
 
@@ -1599,7 +1612,7 @@ ROM_START( alexkidd_rom )
 	ROM_LOAD( "10436.2", 0x8000, 0x8000, 0x96c76613 )
 ROM_END
 
-ROM_START( alexkiddbl_rom )
+ROM_START( alexkidda_rom )
 	ROM_REGION( 0x040000 ) /* 68000 code */
 	ROM_LOAD_ODD ( "10445.26", 0x000000, 0x10000, 0x25ce5b6f )
 	ROM_LOAD_EVEN( "10447.43", 0x000000, 0x10000, 0x29e87f71 )
@@ -1692,7 +1705,7 @@ void alexkidd_init_machine( void ){
 	sys16_textmode=1;
 	sys16_spritesystem = 2;
 	sys16_sprxoffset = -0xbc;
-	sys16_bgxoffset = 7;
+	sys16_fgxoffset = sys16_bgxoffset = 7;
 
 	patch_code(0xb0f,0x01);
 
@@ -1746,7 +1759,7 @@ struct GameDriver alexkidd_driver =
 	__FILE__,
 	0,
 	"alexkidd",
-	"Alex Kidd",
+	"Alex Kidd (set 1)",
 	"1986",
 	"Sega",
 	SYS16_CREDITS,
@@ -1763,19 +1776,19 @@ struct GameDriver alexkidd_driver =
 	0, 0
 };
 
-struct GameDriver alexkdbl_driver =
+struct GameDriver alexkida_driver =
 {
 	__FILE__,
 	&alexkidd_driver,
-	"alexkdbl",
-	"Alex Kidd (bootleg)",
+	"alexkida",
+	"Alex Kidd (set 2)",
 	"1986",
-	"bootleg",
+	"Sega",
 	SYS16_CREDITS,
 	0,
 	&alexkidd_machine_driver,
 	sys16_onetime_init_machine,
-	alexkiddbl_rom,
+	alexkidda_rom,
 	alexkidd_sprite_decode, 0,
 	0,
 	0,
@@ -1984,7 +1997,7 @@ static struct UPD7759_interface aliensyn_upd7759_interface =
 	1,			/* 1 chip */
 	480000,
 	{ 60 }, 	/* volumes */
-	3,			/* memory region 3 contains the sample data */
+	{ 3 },			/* memory region 3 contains the sample data */
     UPD7759_SLAVE_MODE,
 	{ sound_cause_nmi },
 };
@@ -2457,7 +2470,7 @@ void astormbl_update_proc( void ){
 void astormbl_init_machine( void ){
 	static int bank[16] = {0x00,0x02,0x04,0x06,0x08,0x0A,0x0C,0x0E,0x10,0x12,0x14,0x16,0x18,0x1A,0x1C,0x1E};
 	sys16_obj_bank = bank;
-	sys16_bgxoffset = -9;
+	sys16_fgxoffset = sys16_bgxoffset = -9;
 
 	patch_code( 0x2D6E, 0x32 );
 	patch_code( 0x2D6F, 0x3c );
@@ -2665,8 +2678,6 @@ ROM_START( atomicp_rom )
 
 	ROM_REGION( 0x1 ) /* sprites */
 
-	ROM_REGION( 0x10000 ) /* sound CPU */
-
 ROM_END
 
 /***************************************************************************/
@@ -2678,13 +2689,14 @@ static int atomicp_skip(int offset)
 	return READ_WORD(&sys16_workingram[0xc902]);
 }
 
+
 static struct MemoryReadAddress atomicp_readmem[] =
 {
 	{ 0x000000, 0x03ffff, MRA_ROM },
 
-	{ 0x080000, 0x09ffff, MRA_EXTRAM5 },
-	{ 0x120000, 0x12ffff, MRA_EXTRAM },
-	{ 0x3f0000, 0x3fffff, MRA_EXTRAM3 },
+//	{ 0x080000, 0x09ffff, MRA_EXTRAM5 },
+//	{ 0x120000, 0x12ffff, MRA_EXTRAM },
+//	{ 0x3f0000, 0x3f0003, MRA_NOP },
 	{ 0x410000, 0x410fff, MRA_TEXTRAM },
 	{ 0x400000, 0x40ffff, MRA_TILERAM },
 	{ 0x440000, 0x440fff, MRA_SPRITERAM },
@@ -2693,31 +2705,42 @@ static struct MemoryReadAddress atomicp_readmem[] =
 	{ 0xc41002, 0xc41003, io_player2_r },
 	{ 0xc41004, 0xc41005, io_dip1_r },
 	{ 0xc41006, 0xc41007, io_dip2_r },
-	{ 0xc40000, 0xc40fff, MRA_EXTRAM2 },
-	{ 0xc80000, 0xc8ffff, MRA_EXTRAM4 },
+//	{ 0xc40000, 0xc40001, MRA_EXTRAM2 },
+//	{ 0xc80000, 0xc8ffff, MRA_EXTRAM4 },
 
-	{ 0xffc902, 0xffc903, atomicp_skip },
+//	{ 0xffc902, 0xffc903, atomicp_skip },
 
 	{ 0xff0000, 0xffffff, MRA_WORKINGRAM },
 	{-1}
 };
 
+static void atomicp_sound_w(int offset,int data)
+{
+	if(offset==0)
+		YM2413_register_port_0_w(0,(data>>8)&0xff);
+	else
+		YM2413_data_port_0_w(0,(data>>8)&0xff);
+}
+
 static struct MemoryWriteAddress atomicp_writemem[] =
 {
 	{ 0x000000, 0x03ffff, MWA_ROM },
-	{ 0x080000, 0x09ffff, MWA_EXTRAM5 },
-//	{ 0xfe0006, 0xfe0007, sound_command_w },
-	{ 0x120000, 0x12ffff, MWA_EXTRAM },
-	{ 0x3f0000, 0x3fffff, MWA_EXTRAM3 },
+	{ 0x080000, 0x080003, atomicp_sound_w },
+//	{ 0x120000, 0x12ffff, MWA_EXTRAM },
+	{ 0x3f0000, 0x3f0003, MWA_NOP },
 	{ 0x410000, 0x410fff, MWA_TEXTRAM },
 	{ 0x400000, 0x40ffff, MWA_TILERAM },
 	{ 0x440000, 0x44ffff, MWA_SPRITERAM },
 	{ 0x840000, 0x840fff, MWA_PALETTERAM },
-	{ 0xc40000, 0xc40fff, MWA_EXTRAM2 },
-	{ 0xc80000, 0xc8ffff, MWA_EXTRAM4 },
+	{ 0xc40000, 0xc40001, MWA_EXTRAM2 },
+//	{ 0xc80000, 0xc8ffff, MWA_EXTRAM4 },
 	{ 0xff0000, 0xffffff, MWA_WORKINGRAM },
 	{-1}
 };
+
+
+//	{ 0x0a, 0x0a, YM2413_register_port_0_w },
+//	{ 0x0b, 0x0b, YM2413_data_port_0_w },
 
 /***************************************************************************/
 
@@ -2738,7 +2761,6 @@ void atomicp_init_machine( void ){
 }
 
 void atomicp_sprite_decode( void ){
-//	sys16_sprite_decode( 4,0x20000 );
 }
 
 /***************************************************************************/
@@ -2823,9 +2845,52 @@ PORT_START  //dip2
 INPUT_PORTS_END
 
 /***************************************************************************/
+static int ap_interrupt( void ){
+	int intleft=cpu_getiloops();
+	if(intleft!=0) return 2;
+	else return 4;
+}
 
-MACHINE_DRIVER( atomicp_machine_driver, \
-	atomicp_readmem,atomicp_writemem,atomicp_init_machine, gfx8 /*,upd7759_interface*/ )
+
+static struct YM2413interface ym2413_interface=
+{
+    1,
+    8000000,	/* ??? */
+    { 30 },
+};
+
+
+static struct MachineDriver atomicp_machine_driver =
+{
+	{
+		{
+			CPU_M68000,
+			10000000,
+			0,
+			atomicp_readmem,atomicp_writemem,0,0,
+			ap_interrupt,2
+		}
+	},
+	60, DEFAULT_60HZ_VBLANK_DURATION,
+	1,
+	atomicp_init_machine,
+	40*8, 28*8, { 0*8, 40*8-1, 0*8, 28*8-1 },
+	gfx8,
+	2048+NumOfShadowColors,2048+NumOfShadowColors,
+	0,
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	0,
+	sys16_vh_start,
+	sys16_vh_stop,
+	sys16_vh_screenrefresh,
+	0,0,0,0,
+	{
+		{
+			SOUND_YM2413,
+			&ym2413_interface
+		}
+	}
+};
 
 struct GameDriver atomicp_driver =
 {
@@ -3549,7 +3614,7 @@ void bodyslam_init_machine( void ){
 	sys16_textmode=1;
 	sys16_spritesystem = 2;
 	sys16_sprxoffset = -0xbc;
-	sys16_bgxoffset = 7;
+	sys16_fgxoffset = sys16_bgxoffset = 7;
 	sys16_bg_priority_mode = 2;
 	sys16_bg_priority_value=0x0e00;
 
@@ -3881,6 +3946,29 @@ struct GameDriver dduxbl_driver =
 
 /***************************************************************************/
 // sys16B
+ROM_START( eswat_rom )
+	ROM_REGION( 0x080000 ) /* 68000 code */
+	ROM_LOAD_ODD ( "12656", 0x000000, 0x40000, 0xbe3f9d28 )
+	ROM_LOAD_EVEN( "12657", 0x000000, 0x40000, 0xcfb935e9 )
+
+	ROM_REGION( 0xc0000 ) /* tiles */
+	ROM_LOAD( "e12624r", 0x00000, 0x40000, 0xe7b8545e )
+	ROM_LOAD( "e12625r", 0x40000, 0x40000, 0xb418582c )
+	ROM_LOAD( "e12626r", 0x80000, 0x40000, 0xba65789b )
+
+	ROM_REGION( 0x180000*2 ) /* sprites */
+	ROM_LOAD( "e12618r", 0x000000, 0x040000, 0x2d9ae975 )
+	ROM_LOAD( "e12621r", 0x040000, 0x040000, 0x1e6c4cf7 )
+	ROM_LOAD( "e12619r", 0x080000, 0x040000, 0x5f7ee6f6 )
+	ROM_LOAD( "e12622r", 0x0c0000, 0x040000, 0x33251fde )
+	ROM_LOAD( "e12620r", 0x100000, 0x040000, 0x905f9be2 )
+	ROM_LOAD( "e12623r", 0x140000, 0x040000, 0xa25ea1fc )
+
+	ROM_REGION( 0x30000 ) /* sound CPU */
+	ROM_LOAD( "e12617", 0x00000, 0x08000, 0x537930cb )
+	ROM_LOAD( "e12616r",0x10000, 0x20000, 0xf213fa4a )
+ROM_END
+
 ROM_START( eswatbl_rom )
 	ROM_REGION( 0x050000 ) /* 68000 code */
 	ROM_LOAD_ODD ( "eswat_f.rom", 0x000000, 0x10000, 0xf7b2d388 )
@@ -3907,7 +3995,6 @@ ROM_START( eswatbl_rom )
 	ROM_LOAD( "ic8.bin", 0x0000, 0x8000, 0x7efecf23 )
 	ROM_LOAD( "ic6.bin", 0x10000, 0x40000, 0x254347c2 )
 ROM_END
-
 /***************************************************************************/
 
 static int eswatbl_skip(int offset)
@@ -4016,10 +4103,32 @@ INPUT_PORTS_END
 MACHINE_DRIVER_7759( eswatbl_machine_driver, \
 	eswatbl_readmem,eswatbl_writemem,eswatbl_init_machine, gfx4,upd7759_interface )
 
-struct GameDriver eswatbl_driver =
+struct GameDriver eswat_driver =
 {
 	__FILE__,
 	0,
+	"eswat",
+	"E-Swat",
+	"1989",
+	"Sega",
+	SYS16_CREDITS,
+	0,
+	&eswatbl_machine_driver,
+	sys16_onetime_init_machine,
+	eswat_rom,
+	eswatbl_sprite_decode, 0,
+	0,
+	0,
+	eswatbl_input_ports,
+	0, 0, 0,
+	ORIENTATION_DEFAULT,
+	0, 0
+};
+
+struct GameDriver eswatbl_driver =
+{
+	__FILE__,
+	&eswat_driver,
 	"eswatbl",
 	"E-Swat (bootleg)",
 	"1989",
@@ -4151,7 +4260,7 @@ void fantzone_init_machine( void ){
 	sys16_textmode=1;
 	sys16_spritesystem = 3;
 	sys16_sprxoffset = -0xbe;
-	sys16_bgxoffset = 8;
+	sys16_fgxoffset = sys16_bgxoffset = 8;
 
 	patch_code( 0x20e7, 0x16 );
 	patch_code( 0x30ef, 0x16 );
@@ -5115,6 +5224,7 @@ static struct MemoryWriteAddress hwchamp_writemem[] =
 /***************************************************************************/
 
 void hwchamp_update_proc( void ){
+	int leds;
 	sys16_fg_scrollx = READ_WORD( &sys16_textram[0x0e98] );
 	sys16_bg_scrollx = READ_WORD( &sys16_textram[0x0e9a] );
 	sys16_fg_scrolly = READ_WORD( &sys16_textram[0x0e90] );
@@ -5127,6 +5237,20 @@ void hwchamp_update_proc( void ){
 	sys16_tile_bank1 = READ_WORD( &sys16_extraram[0x0002] )&0xf;
 
 	set_refresh( READ_WORD( &sys16_extraram2[0] ) );
+
+	leds=READ_WORD( &sys16_extraram2[0x3034] );
+	if(leds & 0x20)
+		osd_led_w(0,1);
+	else
+		osd_led_w(0,0);
+	if(leds & 0x80)
+		osd_led_w(1,1);
+	else
+		osd_led_w(1,0);
+	if(leds & 0x40)
+		osd_led_w(2,1);
+	else
+		osd_led_w(2,0);
 }
 
 void hwchamp_init_machine( void ){
@@ -5376,7 +5500,7 @@ void mjleague_init_machine( void ){
 	sys16_textmode=1;
 	sys16_spritesystem = 2;
 	sys16_sprxoffset = -0xbd;
-	sys16_bgxoffset = 7;
+	sys16_fgxoffset = sys16_bgxoffset = 7;
 
 	// remove memory test because it fails.
 	patch_code( 0xBD42, 0x66 );
@@ -5956,7 +6080,7 @@ struct GameDriver passsht_driver =
 	__FILE__,
 	0,
 	"passsht",
-	"Passing Shot (2 Player)",
+	"Passing Shot (2 Players)",
 	"????",
 	"Sega",
 	SYS16_CREDITS,
@@ -5978,7 +6102,7 @@ struct GameDriver passshtb_driver =
 	__FILE__,
 	&passsht_driver,
 	"passshtb",
-	"Passing Shot (2 Player) (bootleg)",
+	"Passing Shot (2 Players) (bootleg)",
 	"????",
 	"bootleg",
 	SYS16_CREDITS,
@@ -6112,7 +6236,7 @@ void quartet_init_machine( void ){
 	sys16_textmode=1;
 	sys16_spritesystem = 2;
 	sys16_sprxoffset = -0xbc;
-	sys16_bgxoffset = 7;
+	sys16_fgxoffset = sys16_bgxoffset = 7;
 
 	sys16_update_proc = quartet_update_proc;
 }
@@ -6329,7 +6453,7 @@ void quartet2_init_machine( void ){
 	sys16_textmode=1;
 	sys16_spritesystem = 2;
 	sys16_sprxoffset = -0xbc;
-	sys16_bgxoffset = 7;
+	sys16_fgxoffset = sys16_bgxoffset = 7;
 
 	sys16_update_proc = quartet2_update_proc;
 }
@@ -7411,7 +7535,7 @@ struct GameDriver shinobi_driver =
 	__FILE__,
 	0,
 	"shinobi",
-	"Shinobi (set 2)",
+	"Shinobi (set 1)",
 	"1987",
 	"Sega",
 	SYS16_CREDITS,
@@ -7566,7 +7690,7 @@ void shinobl_init_machine( void ){
 	sys16_textmode=1;
 	sys16_spritesystem = 2;
 	sys16_sprxoffset = -0xbc;
-	sys16_bgxoffset = 7;
+	sys16_fgxoffset = sys16_bgxoffset = 7;
 	sys16_tilebank_switch=0x2000;
 
 	sys16_dactype = 1;
@@ -7585,7 +7709,7 @@ struct GameDriver shinobia_driver =
 	__FILE__,
 	&shinobi_driver,
 	"shinobia",
-	"Shinobi (set 1)",
+	"Shinobi (set 2)",
 	"1987",
 	"Sega",
 	SYS16_CREDITS,
@@ -9036,6 +9160,7 @@ static struct IOWritePort hangon_sound_writeport[] =
 /***************************************************************************/
 
 void hangon_update_proc( void ){
+	int leds;
 	sys16_fg_scrollx = READ_WORD( &sys16_textram[0x0ff8] ) & 0x01ff;
 	sys16_bg_scrollx = READ_WORD( &sys16_textram[0x0ffa] ) & 0x01ff;
 	sys16_fg_scrolly = READ_WORD( &sys16_textram[0x0f24] ) & 0x00ff;
@@ -9044,6 +9169,20 @@ void hangon_update_proc( void ){
 	set_fg_page1( READ_WORD( &sys16_textram[0x0e9e] ) );
 	set_bg_page1( READ_WORD( &sys16_textram[0x0e9c] ) );
 //	set_refresh( READ_WORD( &sys16_extraram4[0x2] ) );
+
+	leds=READ_WORD( &sys16_extraram4[0x2] );
+	if(leds & 4)
+	{
+		osd_led_w(0,1);
+		osd_led_w(1,1);
+		osd_led_w(2,1);
+	}
+	else
+	{
+		osd_led_w(0,0);
+		osd_led_w(1,0);
+		osd_led_w(2,0);
+	}
 }
 
 void hangon_init_machine( void ){
@@ -9052,7 +9191,7 @@ void hangon_init_machine( void ){
 	sys16_textmode=1;
 	sys16_spritesystem = 5;
 	sys16_sprxoffset = -0xc0;
-	sys16_bgxoffset = 8;
+	sys16_fgxoffset = 8;
 	sys16_textlayer_lo_min=0;
 	sys16_textlayer_lo_max=0;
 	sys16_textlayer_hi_min=0;
@@ -9090,7 +9229,7 @@ void hangon_sprite_decode( void ){
 
 INPUT_PORTS_START( hangon_input_ports )
 PORT_START	/* Steering */
-	PORT_ANALOG ( 0xff, 0x7f, IPT_PADDLE | IPF_REVERSE, 70, 3, 0, 0x48, 0xb7 )
+	PORT_ANALOG ( 0xff, 0x7f, IPT_AD_STICK_X | IPF_REVERSE | IPF_CENTER , 100, 3, 0, 0x48, 0xb7 )
 
 #ifdef HANGON_DIGITAL_CONTROLS
 
@@ -9233,41 +9372,48 @@ ROM_START( harrier_rom )
 	ROM_LOAD( "ic28.bin", 0x008000, 0x008000, 0xedbf5fc3 )
 	ROM_LOAD( "ic118.bin",0x010000, 0x008000, 0xe8c537d8 )
 	ROM_LOAD( "ic8.bin",  0x018000, 0x008000, 0x22844fa4 )
+
 	ROM_LOAD( "ic35.bin", 0x020000, 0x008000, 0xcd6e7500 )
 	ROM_LOAD( "ic27.bin", 0x028000, 0x008000, 0x41f25a9c )
 	ROM_LOAD( "ic17.bin", 0x030000, 0x008000, 0x5bb09a67 )
 	ROM_LOAD( "ic7.bin",  0x038000, 0x008000, 0xdcaa2ebf )
+
 	ROM_LOAD( "ic34.bin", 0x040000, 0x008000, 0xd5e15e66 )
 	ROM_LOAD( "ic26.bin", 0x048000, 0x008000, 0xac62ae2e )
 	ROM_LOAD( "ic16.bin", 0x050000, 0x008000, 0x9c782295 )
 	ROM_LOAD( "ic6.bin",  0x058000, 0x008000, 0x3711105c )
+
 	ROM_LOAD( "ic33.bin", 0x060000, 0x008000, 0x60d7c1bb )
 	ROM_LOAD( "ic25.bin", 0x068000, 0x008000, 0xf6330038 )
 	ROM_LOAD( "ic15.bin", 0x070000, 0x008000, 0x60737b98 )
 	ROM_LOAD( "ic5.bin",  0x078000, 0x008000, 0x70fb5ebb )
+
 	ROM_LOAD( "ic32.bin", 0x080000, 0x008000, 0x6d7b5c97 )
 	ROM_LOAD( "ic24.bin", 0x088000, 0x008000, 0xcebf797c )
 	ROM_LOAD( "ic14.bin", 0x090000, 0x008000, 0x24596a8b )
 	ROM_LOAD( "ic4.bin",  0x098000, 0x008000, 0xb537d082 )
+
 	ROM_LOAD( "ic31.bin", 0x0a0000, 0x008000, 0x5e784271 )
 	ROM_LOAD( "ic23.bin", 0x0a8000, 0x008000, 0x510e5e10 )
 	ROM_LOAD( "ic13.bin", 0x0b0000, 0x008000, 0x7a2dad15 )
 	ROM_LOAD( "ic3.bin",  0x0b8000, 0x008000, 0xf5ba4e08 )
+
 	ROM_LOAD( "ic30.bin", 0x0c0000, 0x008000, 0xec42c9ef )
 	ROM_LOAD( "ic22.bin", 0x0c8000, 0x008000, 0x6d4a7d7a )
 	ROM_LOAD( "ic12.bin", 0x0d0000, 0x008000, 0x0f732717 )
 	ROM_LOAD( "ic2.bin",  0x0d8000, 0x008000, 0xfc3bf8f3 )
+
 	ROM_LOAD( "ic29.bin", 0x0e0000, 0x008000, 0xed51fdc4 )
 	ROM_LOAD( "ic21.bin", 0x0e8000, 0x008000, 0xdfe75f3d )
 	ROM_LOAD( "ic11.bin", 0x0f0000, 0x008000, 0xa2c07741 )
 	ROM_LOAD( "ic1.bin",  0x0f8000, 0x008000, 0xb191e22f )
 
-	ROM_REGION( 0x28000 ) /* sound CPU */
+	ROM_REGION( 0x20000 ) /* sound CPU */
 	ROM_LOAD( "ic73.bin", 0x00000, 0x004000, 0xd6397933 )
 	ROM_LOAD( "ic72.bin", 0x04000, 0x004000, 0x504e76d9 )
 	ROM_LOAD( "snd7231.256", 0x10000, 0x008000, 0x871c6b14 )
 	ROM_LOAD( "snd7232.256", 0x18000, 0x008000, 0x4b59340c )
-	ROM_LOAD( "snd7231.256", 0x20000, 0x008000, 0x871c6b14 )
+//	ROM_LOAD( "snd7231.256", 0x20000, 0x008000, 0x871c6b14 )
 
 
 
@@ -9292,7 +9438,7 @@ static int sh_motor_status_r(int offset) { return 0x0; }
 static struct MemoryReadAddress harrier_readmem[] =
 {
 	{ 0x000000, 0x03ffff, MRA_ROM },
-	{ 0x040492, 0x040493, sh_io_joy_r },
+//	{ 0x040492, 0x040493, sh_io_joy_r },
 	{ 0x040000, 0x04ffff, MRA_EXTRAM },
 	{ 0x100000, 0x107fff, MRA_TILERAM },
 	{ 0x108000, 0x108fff, MRA_TEXTRAM },
@@ -9308,7 +9454,7 @@ static struct MemoryReadAddress harrier_readmem[] =
 	{ 0x140014, 0x140015, io_dip1_r },
 	{ 0x140016, 0x140017, io_dip2_r },
 
-	{ 0x140024, 0x140025, sh_motor_status_r },
+	{ 0x140024, 0x140027, sh_motor_status_r },
 
 	{ 0x140000, 0x14ffff, MRA_EXTRAM3 },		//io
 	{ 0xc60000, 0xc7ffff, MRA_EXTRAM2 },
@@ -9403,7 +9549,19 @@ void harrier_update_proc( void ){
 	sys16_bg_page[3] = (data>>4)&0xf;
 	sys16_bg_page[2] = data&0xf;
 
-	set_refresh_3d( READ_WORD( &sys16_extraram3[2] ) );
+	WRITE_WORD(&sys16_extraram[0x492],sh_io_joy_r(0));
+
+	data=READ_WORD( &sys16_extraram3[2] );
+	set_refresh_3d( data );
+
+	if(data & 8)
+		osd_led_w(0,1);
+	else
+		osd_led_w(0,0);
+	if(data & 4)
+		osd_led_w(1,1);
+	else
+		osd_led_w(1,0);
 }
 
 void harrier_init_machine( void ){
@@ -9412,7 +9570,7 @@ void harrier_init_machine( void ){
 	sys16_textmode=1;
 	sys16_spritesystem = 6;
 	sys16_sprxoffset = -0xc0;
-	sys16_bgxoffset = 8;
+	sys16_fgxoffset = 8;
 	sys16_textlayer_lo_min=0;
 	sys16_textlayer_lo_max=0;
 	sys16_textlayer_hi_min=0;
@@ -9446,6 +9604,8 @@ void harrier_init_machine( void ){
 	gr_colorflip[1][1]=0x00 / 2;
 	gr_colorflip[1][2]=0x06 / 2;
 	gr_colorflip[1][3]=0x00 / 2;
+
+	sys16_sh_shadowpal=0;
 }
 
 
@@ -9545,7 +9705,8 @@ static struct MachineDriver harrier_machine_driver =
 			4096000,
 			3,
 			harrier_sound_readmem,harrier_sound_writemem,harrier_sound_readport,harrier_sound_writeport,
-			ignore_interrupt,1
+//			ignore_interrupt,1
+			interrupt,4
 		},
 		{
 			CPU_M68000,
@@ -9613,10 +9774,10 @@ as digital as well to see what works better */
 // hangon hardware
 ROM_START( shangon_rom )
 	ROM_REGION( 0x040000 ) /* 68000 code - protected */
-	ROM_LOAD_ODD ( "ic133", 0x000000, 0x10000, 0xe52721fe )
-	ROM_LOAD_EVEN( "ic118", 0x000000, 0x10000, 0x5fee09f6 )
-	ROM_LOAD_ODD ( "ic132", 0x020000, 0x10000, 0x5d55d65f )
-	ROM_LOAD_EVEN( "ic117", 0x020000, 0x10000, 0xb967e8c3 )
+	ROM_LOAD_ODD ( "ic118", 0x000000, 0x10000, 0x5fee09f6 )
+	ROM_LOAD_EVEN( "ic133", 0x000000, 0x10000, 0xe52721fe )
+	ROM_LOAD_ODD ( "ic117", 0x020000, 0x10000, 0xb967e8c3 )
+	ROM_LOAD_EVEN( "ic132", 0x020000, 0x10000, 0x5d55d65f )
 
 	ROM_REGION( 0x18000 ) /* tiles */
 	ROM_LOAD( "ic54",        0x00000, 0x08000, 0x260286f9 )
@@ -9652,10 +9813,10 @@ ROM_START( shangon_rom )
 	ROM_LOAD( "ic69", 0x28000, 0x08000, 0x473cc411 )
 
 	ROM_REGION( 0x40000 ) /* second 68000 CPU  - protected */
-	ROM_LOAD_ODD( "ic76", 0x0000, 0x10000, 0x02be68db )
-	ROM_LOAD_EVEN("ic58", 0x0000, 0x10000, 0xf13e8bee )
-	ROM_LOAD_ODD( "ic57", 0x20000, 0x10000, 0x8cdbcde8 )
-	ROM_LOAD_EVEN("ic75", 0x20000, 0x10000, 0x1627c224 )
+	ROM_LOAD_ODD ( "ic58", 0x0000, 0x10000, 0xf13e8bee )
+	ROM_LOAD_EVEN( "ic76", 0x0000, 0x10000, 0x02be68db )
+	ROM_LOAD_ODD ( "ic57", 0x20000, 0x10000, 0x8cdbcde8 )
+	ROM_LOAD_EVEN( "ic75", 0x20000, 0x10000, 0x1627c224 )
 
 	ROM_REGION( 0x40000 ) /* Road Graphics  (region size should be gr_bitmapwidth*256 )*/
 	ROM_LOAD( "ic47", 0x0000, 0x8000, 0x7836bcc3 )
@@ -9800,6 +9961,7 @@ static struct MemoryWriteAddress shangon_sound_writemem[] =
 /***************************************************************************/
 
 void shangon_update_proc( void ){
+	int leds;
 	sys16_fg_scrollx = READ_WORD( &sys16_textram[0x0ff8] ) & 0x01ff;
 	sys16_bg_scrollx = READ_WORD( &sys16_textram[0x0ffa] ) & 0x01ff;
 	sys16_fg_scrolly = READ_WORD( &sys16_textram[0x0f24] ) & 0x00ff;
@@ -9807,6 +9969,19 @@ void shangon_update_proc( void ){
 
 	set_fg_page1( READ_WORD( &sys16_textram[0x0e9e] ) );
 	set_bg_page1( READ_WORD( &sys16_textram[0x0e9c] ) );
+	leds=READ_WORD( &sys16_extraram4[0x2] );
+	if(leds & 4)
+	{
+		osd_led_w(0,1);
+		osd_led_w(1,1);
+		osd_led_w(2,1);
+	}
+	else
+	{
+		osd_led_w(0,0);
+		osd_led_w(1,0);
+		osd_led_w(2,0);
+	}
 }
 
 void shangon_init_machine( void ){
@@ -9815,7 +9990,7 @@ void shangon_init_machine( void ){
 	sys16_textmode=1;
 	sys16_spritesystem = 5;
 	sys16_sprxoffset = -0xc0;
-	sys16_bgxoffset = 8;
+	sys16_fgxoffset = 8;
 	sys16_textlayer_lo_min=0;
 	sys16_textlayer_lo_max=0;
 	sys16_textlayer_hi_min=0;
@@ -9862,7 +10037,7 @@ void shangonb_sprite_decode( void ){
 
 INPUT_PORTS_START( shangon_input_ports )
 PORT_START	/* Steering */
-	PORT_ANALOG ( 0xff, 0x7f, IPT_PADDLE | IPF_REVERSE, 70, 3, 0, 0x42, 0xbd )
+	PORT_ANALOG ( 0xff, 0x7f, IPT_AD_STICK_X | IPF_REVERSE | IPF_CENTER , 100, 3, 0, 0x42, 0xbd )
 
 #ifdef HANGON_DIGITAL_CONTROLS
 
@@ -10225,6 +10400,21 @@ static int or_io_acc_steer_r( int offset ){ return (input_port_0_r( offset ) << 
 static int or_io_brake_r( int offset ){ return input_port_5_r( offset ) << 8; }
 #endif
 
+static int or_gear=0;
+
+static int or_io_service_r( int offset )
+{
+	int ret=input_port_2_r( offset );
+	int data=input_port_1_r( offset );
+	if(data & 4) or_gear=0;
+	else if(data & 8) or_gear=1;
+
+	if(or_gear) ret|=0x10;
+	else ret&=0xef;
+
+	return ret;
+}
+
 static int or_reset2_r( int offset )
 {
 	cpu_reset(2);
@@ -10246,7 +10436,7 @@ static struct MemoryReadAddress outrun_readmem[] =
 	{ 0x130000, 0x13ffff, MRA_SPRITERAM },
 	{ 0x120000, 0x12ffff, MRA_PALETTERAM },
 
-	{ 0x140010, 0x140011, io_service_r },
+	{ 0x140010, 0x140011, or_io_service_r },
 	{ 0x140014, 0x140015, io_dip1_r },
 	{ 0x140016, 0x140017, io_dip2_r },
 
@@ -10339,6 +10529,7 @@ static struct MemoryWriteAddress outrun_sound_writemem[] =
 /***************************************************************************/
 
 void outrun_update_proc( void ){
+	int data;
 	sys16_fg_scrollx = READ_WORD( &sys16_textram[0x0e98] );
 	sys16_bg_scrollx = READ_WORD( &sys16_textram[0x0e9a] );
 	sys16_fg_scrolly = READ_WORD( &sys16_textram[0x0e90] );
@@ -10347,7 +10538,18 @@ void outrun_update_proc( void ){
 	set_fg_page( READ_WORD( &sys16_textram[0x0e80] ) );
 	set_bg_page( READ_WORD( &sys16_textram[0x0e82] ) );
 
-	set_refresh( READ_WORD( &sys16_extraram5[0xb6e] ) );
+	data=READ_WORD( &sys16_extraram5[0xb6e] );
+	set_refresh( data );
+
+	if(data & 0x2)
+		osd_led_w(0,1);
+	else
+		osd_led_w(0,0);
+
+	if(data & 0x4)
+		osd_led_w(1,1);
+	else
+		osd_led_w(1,0);
 }
 
 void outrun_init_machine( void ){
@@ -10588,13 +10790,16 @@ void outrunb_onetime_init_machine( void ){
 
 INPUT_PORTS_START( outrun_input_ports )
 PORT_START	/* Steering */
-	PORT_ANALOG ( 0xff, 0x7f, IPT_PADDLE , 70, 3, 0, 0x48, 0xb8 )
+	PORT_ANALOG ( 0xff, 0x80, IPT_AD_STICK_X | IPF_CENTER, 100, 3, 0, 0x48, 0xb8 )
+//	PORT_ANALOG ( 0xff, 0x7f, IPT_PADDLE , 70, 3, 0, 0x48, 0xb8 )
 
 #ifdef HANGON_DIGITAL_CONTROLS
 
 PORT_START	/* Buttons */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_BUTTON2 )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_BUTTON1 )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_BUTTON3 )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_BUTTON4 )
 
 #else
 
@@ -10608,7 +10813,7 @@ PORT_START
 	PORT_BITX(0x02, IP_ACTIVE_LOW, IPT_SERVICE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN3 )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_START1 )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON3 )
+//	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON3 )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN2 )
@@ -10649,6 +10854,12 @@ PORT_START	/* Brake */
 INPUT_PORTS_END
 
 /***************************************************************************/
+static int or_interrupt( void ){
+	int intleft=cpu_getiloops();
+	if(intleft!=0) return 2;
+	else return 4;
+}
+
 
 #define MACHINE_DRIVER_OUTRUN( GAMENAME,INITMACHINE) \
 static struct MachineDriver GAMENAME = \
@@ -10659,7 +10870,7 @@ static struct MachineDriver GAMENAME = \
 			12000000, \
 			0, \
 			outrun_readmem,outrun_writemem,0,0, \
-			sys16_interrupt2,2 \
+			or_interrupt,2 \
 		}, \
 		{ \
 			CPU_Z80 | CPU_AUDIO_CPU, \
@@ -10677,7 +10888,7 @@ static struct MachineDriver GAMENAME = \
 		}, \
 	}, \
 	60, 100 /*DEFAULT_60HZ_VBLANK_DURATION*/, \
-	30, /* needed to sync processors */ \
+	2, /* needed to sync processors */ \
 	INITMACHINE, \
 	40*8, 28*8, { 0*8, 40*8-1, 0*8, 28*8-1 }, \
 	gfx1, \
@@ -10711,7 +10922,7 @@ struct GameDriver outrun_driver =
 	"outrun",
 	"Out Run (set 1)",
 	"1986",
-	"bootleg",
+	"Sega",
 	SYS16_CREDITS,
 	0,
 	&outrun_machine_driver,
@@ -10734,7 +10945,7 @@ struct GameDriver outruna_driver =
 	"outruna",
 	"Out Run (set 2)",
 	"1986",
-	"bootleg",
+	"Sega",
 	SYS16_CREDITS,
 	0,
 	&outruna_machine_driver,
@@ -10770,6 +10981,632 @@ struct GameDriver outrunb_driver =
 	ORIENTATION_DEFAULT,
 	0, 0
 };
+
+
+/*****************************************************************************/
+// Enduro Racer
+
+ROM_START( enduror_rom )
+	ROM_REGION( 0x040000 ) /* 68000 code */
+	ROM_LOAD_ODD ( "7636a.rom",0x00000, 0x8000, 0x84131639 )
+	ROM_LOAD_EVEN( "7640a.rom",0x00000, 0x8000, 0x1d1dc5d4 )
+
+	ROM_LOAD_ODD ( "7637.rom", 0x10000, 0x8000, 0x82a27a8c )
+	ROM_LOAD_EVEN( "7641.rom", 0x10000, 0x8000, 0x2503ae7c )
+	ROM_LOAD_ODD ( "7638.rom", 0x20000, 0x8000, 0x70544779 )
+	ROM_LOAD_EVEN( "7642.rom", 0x20000, 0x8000, 0x1c453bea )
+
+	ROM_REGION( 0x18000 ) /* tiles */
+	ROM_LOAD( "46.1-1", 0x00000, 0x08000, 0xe7a4ff90 )
+	ROM_LOAD( "47.1-2", 0x08000, 0x08000, 0x4caa0095 )
+	ROM_LOAD( "48.1-3", 0x10000, 0x08000, 0x7e432683 )
+
+	ROM_REGION( 0x100000*2 ) /* sprites */
+
+	ROM_LOAD( "29.47", 0x000000, 0x008000, 0x9fb5e656 )
+	ROM_LOAD( "21.39", 0x008000, 0x008000, 0xdbbe2f6e )
+	ROM_LOAD( "45.31", 0x010000, 0x008000, 0xcb0c13c5 )
+	ROM_LOAD( "37.23", 0x018000, 0x008000, 0x2db6520d )
+
+	ROM_LOAD( "28.46", 0x020000, 0x008000, 0x7764765b )
+	ROM_LOAD( "20.38", 0x028000, 0x008000, 0xf9525faa )
+	ROM_LOAD( "44.30", 0x030000, 0x008000, 0xfe93a79b )
+	ROM_LOAD( "36.22", 0x038000, 0x008000, 0x46a52114 )
+
+	ROM_LOAD( "27.45", 0x040000, 0x008000, 0x2e42e0d4 )
+	ROM_LOAD( "19.37", 0x048000, 0x008000, 0xe115ce33 )
+	ROM_LOAD( "43.29", 0x050000, 0x008000, 0x86dfbb68 )
+	ROM_LOAD( "35.21", 0x058000, 0x008000, 0x2880cfdb )
+
+	ROM_LOAD( "26.44", 0x060000, 0x008000, 0x05cd2d61 )
+	ROM_LOAD( "18.36", 0x068000, 0x008000, 0x923bde9d )
+	ROM_LOAD( "42.28", 0x070000, 0x008000, 0x629dc8ce )
+	ROM_LOAD( "34.20", 0x078000, 0x008000, 0xd7902bad )
+
+	ROM_LOAD( "25.43", 0x080000, 0x008000, 0x1a129acf )
+	ROM_LOAD( "17.35", 0x088000, 0x008000, 0x23697257 )
+	ROM_LOAD( "41.27", 0x090000, 0x008000, 0x1677f24f )
+	ROM_LOAD( "33.19", 0x098000, 0x008000, 0x642635ec )
+
+	ROM_LOAD( "24.42", 0x0a0000, 0x008000, 0x82602394 )
+	ROM_LOAD( "16.34", 0x0a8000, 0x008000, 0x12d77607 )
+	ROM_LOAD( "40.26", 0x0b0000, 0x008000, 0x8158839c )
+	ROM_LOAD( "32.18", 0x0b8000, 0x008000, 0x4edba14c )
+
+	ROM_LOAD( "23.41", 0x0c0000, 0x008000, 0xd11452f7 )
+	ROM_LOAD( "15.33", 0x0c8000, 0x008000, 0x0df2cfad )
+	ROM_LOAD( "39.25", 0x0d0000, 0x008000, 0x6c741272 )
+	ROM_LOAD( "31.17", 0x0d8000, 0x008000, 0x983ea830 )
+
+	ROM_LOAD( "22.40", 0x0e0000, 0x008000, 0xb0c7fdc6 )
+	ROM_LOAD( "7663.rom", 0x0e8000, 0x008000, 0x2b0b8f08 )
+	ROM_LOAD( "38.24", 0x0f0000, 0x008000, 0x3433fe7b )
+	ROM_LOAD( "30.16", 0x0f8000, 0x008000, 0x2e7fbec0 )
+
+	ROM_REGION( 0x28000 ) /* sound CPU */
+	ROM_LOAD( "7635a.rom",0x00000, 0x8000, 0xb2fce96f )
+	ROM_LOAD( "10.f2", 0x10000, 0x008000, 0xbc0c4d12 )
+	ROM_LOAD( "11.e2", 0x18000, 0x008000, 0x627b3c8c )
+
+	ROM_REGION( 0x10000 ) /* second 68000 CPU */
+	ROM_LOAD_ODD ("3.8f", 0x0000, 0x8000, 0x22f762ab )
+	ROM_LOAD_EVEN("2.8e", 0x0000, 0x8000, 0x3e07fd32 )
+
+	ROM_REGION( 0x40000 ) /* Road Graphics  (region size should be gr_bitmapwidth*256 )*/
+	ROM_LOAD( "1.3a", 0x0000, 0x8000, 0x6f146210 )
+ROM_END
+
+
+
+ROM_START( endurobl_rom )
+	ROM_REGION( 0x040000 ) /* 68000 code */
+	ROM_LOAD_ODD ( "4.13h", 0x030000, 0x08000, 0x43bff873 )						// rom de-coded
+	ROM_CONTINUE (          0x000001, 0x08000 | ROMFLAG_ALTERNATE )		// data de-coded
+	ROM_LOAD_EVEN( "7.13j", 0x030000, 0x08000, 0xf1d6b4b7 )
+	ROM_CONTINUE (          0x000000, 0x08000 | ROMFLAG_ALTERNATE )
+
+	ROM_LOAD_ODD ( "5.14h", 0x010000, 0x08000, 0x0a97992c )
+	ROM_LOAD_EVEN( "8.14j", 0x010000, 0x08000, 0x2153154a )
+	ROM_LOAD_ODD ( "6.15h", 0x020000, 0x08000, 0x54b1885a )
+	ROM_LOAD_EVEN( "9.15j", 0x020000, 0x08000, 0xdb3bff1c )
+
+	ROM_REGION( 0x18000 ) /* tiles */
+	ROM_LOAD( "46.1-1", 0x00000, 0x08000, 0xe7a4ff90 )
+	ROM_LOAD( "47.1-2", 0x08000, 0x08000, 0x4caa0095 )
+	ROM_LOAD( "48.1-3", 0x10000, 0x08000, 0x7e432683 )
+
+	ROM_REGION( 0x100000*2 ) /* sprites */
+
+	ROM_LOAD( "29.47", 0x000000, 0x008000, 0x9fb5e656 )
+	ROM_LOAD( "21.39", 0x008000, 0x008000, 0xdbbe2f6e )
+	ROM_LOAD( "45.31", 0x010000, 0x008000, 0xcb0c13c5 )
+	ROM_LOAD( "37.23", 0x018000, 0x008000, 0x2db6520d )
+
+	ROM_LOAD( "28.46", 0x020000, 0x008000, 0x7764765b )
+	ROM_LOAD( "20.38", 0x028000, 0x008000, 0xf9525faa )
+	ROM_LOAD( "44.30", 0x030000, 0x008000, 0xfe93a79b )
+	ROM_LOAD( "36.22", 0x038000, 0x008000, 0x46a52114 )
+
+	ROM_LOAD( "27.45", 0x040000, 0x008000, 0x2e42e0d4 )
+	ROM_LOAD( "19.37", 0x048000, 0x008000, 0xe115ce33 )
+	ROM_LOAD( "43.29", 0x050000, 0x008000, 0x86dfbb68 )
+	ROM_LOAD( "35.21", 0x058000, 0x008000, 0x2880cfdb )
+
+	ROM_LOAD( "26.44", 0x060000, 0x008000, 0x05cd2d61 )
+	ROM_LOAD( "18.36", 0x068000, 0x008000, 0x923bde9d )
+	ROM_LOAD( "42.28", 0x070000, 0x008000, 0x629dc8ce )
+	ROM_LOAD( "34.20", 0x078000, 0x008000, 0xd7902bad )
+
+	ROM_LOAD( "25.43", 0x080000, 0x008000, 0x1a129acf )
+	ROM_LOAD( "17.35", 0x088000, 0x008000, 0x23697257 )
+	ROM_LOAD( "41.27", 0x090000, 0x008000, 0x1677f24f )
+	ROM_LOAD( "33.19", 0x098000, 0x008000, 0x642635ec )
+
+	ROM_LOAD( "24.42", 0x0a0000, 0x008000, 0x82602394 )
+	ROM_LOAD( "16.34", 0x0a8000, 0x008000, 0x12d77607 )
+	ROM_LOAD( "40.26", 0x0b0000, 0x008000, 0x8158839c )
+	ROM_LOAD( "32.18", 0x0b8000, 0x008000, 0x4edba14c )
+
+	ROM_LOAD( "23.41", 0x0c0000, 0x008000, 0xd11452f7 )
+	ROM_LOAD( "15.33", 0x0c8000, 0x008000, 0x0df2cfad )
+	ROM_LOAD( "39.25", 0x0d0000, 0x008000, 0x6c741272 )
+	ROM_LOAD( "31.17", 0x0d8000, 0x008000, 0x983ea830 )
+
+	ROM_LOAD( "22.40", 0x0e0000, 0x008000, 0xb0c7fdc6 )
+	ROM_LOAD( "7663.rom", 0x0e8000, 0x008000, 0x2b0b8f08 )
+	ROM_LOAD( "38.24", 0x0f0000, 0x008000, 0x3433fe7b )
+	ROM_LOAD( "30.16", 0x0f8000, 0x008000, 0x2e7fbec0 )
+
+	ROM_REGION( 0x28000 ) /* sound CPU */
+	ROM_LOAD( "13.16d", 0x00000, 0x004000, 0x81c82fc9 )
+	ROM_LOAD( "12.16e", 0x04000, 0x004000, 0x755bfdad )
+	ROM_LOAD( "10.f2", 0x10000, 0x008000, 0xbc0c4d12 )
+	ROM_LOAD( "11.e2", 0x18000, 0x008000, 0x627b3c8c )
+
+	ROM_REGION( 0x10000 ) /* second 68000 CPU */
+	ROM_LOAD_ODD ("3.8f", 0x0000, 0x8000, 0x22f762ab )
+	ROM_LOAD_EVEN("2.8e", 0x0000, 0x8000, 0x3e07fd32 )
+
+	ROM_REGION( 0x40000 ) /* Road Graphics  (region size should be gr_bitmapwidth*256 )*/
+	ROM_LOAD( "1.3a", 0x0000, 0x8000, 0x6f146210 )
+ROM_END
+
+ROM_START( endurob2_rom )
+	ROM_REGION( 0x040000 ) /* 68000 code */
+	ROM_LOAD_ODD ( "enduro.a04", 0x000000, 0x08000, 0xf584fbd9 )
+	ROM_LOAD_EVEN( "enduro.a07", 0x000000, 0x08000, 0x259069bc )
+	ROM_LOAD_ODD ( "enduro.a05", 0x010000, 0x08000, 0xa525dd57 )
+	ROM_LOAD_EVEN( "enduro.a08", 0x010000, 0x08000, 0xd234918c )
+	ROM_LOAD_ODD ( "enduro.a06", 0x020000, 0x08000, 0x79b367d7 )
+	ROM_LOAD_EVEN( "enduro.a09", 0x020000, 0x08000, 0xf6391091 )
+
+	ROM_REGION( 0x18000 ) /* tiles */
+	ROM_LOAD( "46.1-1", 0x00000, 0x08000, 0xe7a4ff90 )
+	ROM_LOAD( "47.1-2", 0x08000, 0x08000, 0x4caa0095 )
+	ROM_LOAD( "48.1-3", 0x10000, 0x08000, 0x7e432683 )
+
+	ROM_REGION( 0x100000*2 ) /* sprites */
+
+	ROM_LOAD( "29.47", 0x000000, 0x008000, 0x9fb5e656 )
+	ROM_LOAD( "21.39", 0x008000, 0x008000, 0xdbbe2f6e )
+	ROM_LOAD( "45.31", 0x010000, 0x008000, 0xcb0c13c5 )
+	ROM_LOAD( "37.23", 0x018000, 0x008000, 0x2db6520d )
+
+	ROM_LOAD( "28.46", 0x020000, 0x008000, 0x7764765b )
+	ROM_LOAD( "20.38", 0x028000, 0x008000, 0xf9525faa )
+	ROM_LOAD( "enduro.a34", 0x030000, 0x008000, 0x296454d8 )
+	ROM_LOAD( "36.22", 0x038000, 0x008000, 0x46a52114 )
+
+	ROM_LOAD( "27.45", 0x040000, 0x008000, 0x2e42e0d4 )
+	ROM_LOAD( "19.37", 0x048000, 0x008000, 0xe115ce33 )
+	ROM_LOAD( "enduro.a35", 0x050000, 0x008000, 0x1ebe76df )
+	ROM_LOAD( "35.21", 0x058000, 0x008000, 0x2880cfdb )
+
+	ROM_LOAD( "enduro.a20", 0x060000, 0x008000, 0x7c280bc8 )
+	ROM_LOAD( "enduro.a28", 0x068000, 0x008000, 0x321f034b )
+	ROM_LOAD( "enduro.a36", 0x070000, 0x008000, 0x243e34e5 )
+	ROM_LOAD( "enduro.a44", 0x078000, 0x008000, 0x84bb12a1 )
+
+	ROM_LOAD( "25.43", 0x080000, 0x008000, 0x1a129acf )
+	ROM_LOAD( "17.35", 0x088000, 0x008000, 0x23697257 )
+	ROM_LOAD( "41.27", 0x090000, 0x008000, 0x1677f24f )
+	ROM_LOAD( "33.19", 0x098000, 0x008000, 0x642635ec )
+
+	ROM_LOAD( "24.42", 0x0a0000, 0x008000, 0x82602394 )
+	ROM_LOAD( "16.34", 0x0a8000, 0x008000, 0x12d77607 )
+	ROM_LOAD( "40.26", 0x0b0000, 0x008000, 0x8158839c )
+	ROM_LOAD( "32.18", 0x0b8000, 0x008000, 0x4edba14c )
+
+	ROM_LOAD( "23.41", 0x0c0000, 0x008000, 0xd11452f7 )
+	ROM_LOAD( "15.33", 0x0c8000, 0x008000, 0x0df2cfad )
+	ROM_LOAD( "enduro.a39", 0x0d0000, 0x008000, 0x1ff3a5e2 )
+	ROM_LOAD( "31.17", 0x0d8000, 0x008000, 0x983ea830 )
+
+	ROM_LOAD( "22.40", 0x0e0000, 0x008000, 0xb0c7fdc6 )
+	ROM_LOAD( "7663.rom", 0x0e8000, 0x008000, 0x2b0b8f08 )
+	ROM_LOAD( "38.24", 0x0f0000, 0x008000, 0x3433fe7b )
+	ROM_LOAD( "30.16", 0x0f8000, 0x008000, 0x2e7fbec0 )
+
+	ROM_REGION( 0x28000 ) /* sound CPU */
+	ROM_LOAD( "enduro.a16", 0x00000, 0x008000, 0xd2cb6eb5 )
+	ROM_LOAD( "10.f2", 0x10000, 0x008000, 0xbc0c4d12 )
+	ROM_LOAD( "11.e2", 0x18000, 0x008000, 0x627b3c8c )
+
+	ROM_REGION( 0x10000 ) /* second 68000 CPU */
+	ROM_LOAD_ODD ("3.8f", 0x0000, 0x8000, 0x22f762ab )
+	ROM_LOAD_EVEN("2.8e", 0x0000, 0x8000, 0x3e07fd32 )
+
+	ROM_REGION( 0x40000 ) /* Road Graphics  (region size should be gr_bitmapwidth*256 )*/
+	ROM_LOAD( "1.3a", 0x0000, 0x8000, 0x6f146210 )
+ROM_END
+
+/***************************************************************************/
+
+static int er_io_analog_r( int offset )
+{
+	switch(READ_WORD(&sys16_extraram3[0x30]))
+	{
+		case 0:		// accel
+			if(input_port_1_r( offset ) & 1)
+				return 0xff;
+			else
+				return 0;
+		case 4:		// brake
+			if(input_port_1_r( offset ) & 2)
+				return 0xff;
+			else
+				return 0;
+		case 8:		// bank up down?
+			if(input_port_1_r( offset ) & 4)
+				return 0xff;
+			else
+				return 0;
+		case 12:	// handle
+			return input_port_0_r( offset );
+
+	}
+	return 0;
+}
+
+static int er_reset2_r( int offset )
+{
+	cpu_reset(2);
+	return 0;
+}
+
+static struct MemoryReadAddress enduror_readmem[] =
+{
+	{ 0x000000, 0x03ffff, MRA_ROM },
+	{ 0x040000, 0x04ffff, MRA_EXTRAM },
+	{ 0x100000, 0x107fff, MRA_TILERAM },
+	{ 0x108000, 0x108fff, MRA_TEXTRAM },
+
+	{ 0x124000, 0x127fff, shared_ram_r, &shared_ram },
+
+	{ 0x130000, 0x13ffff, MRA_SPRITERAM },
+	{ 0x110000, 0x11ffff, MRA_PALETTERAM },
+
+	{ 0x140010, 0x140011, io_service_r },
+	{ 0x140014, 0x140015, io_dip1_r },
+	{ 0x140016, 0x140017, io_dip2_r },
+
+	{ 0x140030, 0x140031, er_io_analog_r },
+
+	{ 0x140000, 0x1400ff, MRA_EXTRAM3 },		//io
+	{ 0xe00000, 0xe00001, er_reset2_r },
+	{ 0xff0000, 0xffffff, MRA_WORKINGRAM },
+
+	{-1}
+};
+
+static struct MemoryWriteAddress enduror_writemem[] =
+{
+	{ 0x000000, 0x03ffff, MWA_ROM },
+	{ 0x040000, 0x04ffff, MWA_EXTRAM },
+	{ 0x100000, 0x107fff, MWA_TILERAM },
+	{ 0x108000, 0x108fff, MWA_TEXTRAM },
+	{ 0x124000, 0x127fff, shared_ram_w, &shared_ram },
+	{ 0x130000, 0x13ffff, MWA_SPRITERAM },
+	{ 0x110000, 0x11ffff, MWA_PALETTERAM },
+	{ 0x140000, 0x140001, sound_command_nmi_w },
+	{ 0x140000, 0x1400ff, MWA_EXTRAM3 },		//io
+	{ 0xff0000, 0xffffff, MWA_WORKINGRAM },
+
+	{-1}
+};
+
+
+static int enduro_p2_skip_r(int offset)
+{
+	if (cpu_get_pc()==0x4ba) {cpu_spinuntil_int(); return 0xffff;}
+
+	return READ_WORD(&shared_ram[0x2000]);
+}
+
+static struct MemoryReadAddress enduror_readmem2[] =
+{
+	{ 0x000000, 0x03ffff, MRA_ROM },
+	{ 0xc7e000, 0xc7e001, enduro_p2_skip_r },
+	{ 0xc7c000, 0xc7ffff, shared_ram_r, &shared_ram },
+	{ 0xc60000, 0xc7ffff, MRA_EXTRAM2 },
+	{-1}
+};
+
+static struct MemoryWriteAddress enduror_writemem2[] =
+{
+	{ 0x000000, 0x03ffff, MWA_ROM },
+	{ 0xc7c000, 0xc7ffff, shared_ram_w, &shared_ram },
+	{ 0xc60000, 0xc7ffff, MWA_EXTRAM2 },
+	{-1}
+};
+
+static struct MemoryReadAddress enduror_sound_readmem[] =
+{
+	{ 0x0000, 0x7fff, MRA_ROM },
+	{ 0xc000, 0xc7ff, MRA_RAM },
+	{ 0xd000, 0xd000, YM2203_status_port_0_r },
+	{ 0xe000, 0xe7ff, SEGAPCMReadReg },
+	{ -1 }  /* end of table */
+};
+
+static struct MemoryWriteAddress enduror_sound_writemem[] =
+{
+	{ 0x0000, 0x7fff, MWA_ROM },
+	{ 0xc000, 0xc7ff, MWA_RAM },
+	{ 0xd000, 0xd000, YM2203_control_port_0_w },
+	{ 0xd001, 0xd001, YM2203_write_port_0_w },
+	{ 0xe000, 0xe7ff, SEGAPCMWriteReg },
+	{ -1 }  /* end of table */
+};
+
+static struct IOReadPort enduror_sound_readport[] =
+{
+	{ 0x40, 0x40, soundlatch_r },
+	{ -1 }	/* end of table */
+};
+
+
+static struct IOWritePort enduror_sound_writeport[] =
+{
+	{ -1 }
+};
+
+/***************************************************************************/
+static void enduror_update_proc( void ){
+	int data;
+	sys16_fg_scrollx = READ_WORD( &sys16_textram[0x0ff8] ) & 0x01ff;
+	sys16_bg_scrollx = READ_WORD( &sys16_textram[0x0ffa] ) & 0x01ff;
+	sys16_fg_scrolly = READ_WORD( &sys16_textram[0x0f24] ) & 0x01ff;
+	sys16_bg_scrolly = READ_WORD( &sys16_textram[0x0f26] ) & 0x01ff;
+
+	data = READ_WORD( &sys16_textram[0x0e9e] );
+
+	sys16_fg_page[0] = data>>12;
+	sys16_fg_page[1] = (data>>8)&0xf;
+	sys16_fg_page[3] = (data>>4)&0xf;
+	sys16_fg_page[2] = data&0xf;
+
+	data = READ_WORD( &sys16_textram[0x0e9c] );
+	sys16_bg_page[0] = data>>12;
+	sys16_bg_page[1] = (data>>8)&0xf;
+	sys16_bg_page[3] = (data>>4)&0xf;
+	sys16_bg_page[2] = data&0xf;
+
+	set_refresh_3d( READ_WORD( &sys16_extraram3[2] ) );
+}
+
+
+static void enduror_init_machine( void ){
+	static int bank[16] = { 00,01,02,03,04,05,06,07,00,00,00,00,00,00,00,00};
+	sys16_obj_bank = bank;
+	sys16_textmode=1;
+	sys16_spritesystem = 6;
+	sys16_sprxoffset = -0xc0;
+	sys16_fgxoffset = 13;
+//	sys16_sprxoffset = -0xbb;
+//	sys16_fgxoffset = 8;
+	sys16_textlayer_lo_min=0;
+	sys16_textlayer_lo_max=0;
+	sys16_textlayer_hi_min=0;
+	sys16_textlayer_hi_max=0xff;
+
+	sys16_update_proc = enduror_update_proc;
+
+	gr_ver = &sys16_extraram2[0x8000];
+	gr_hor = gr_ver+0x200;
+	gr_pal = gr_ver+0x400;
+	gr_flip= gr_ver+0x600;
+	gr_palette= 0xf80 / 2;
+	gr_palette_default = 0x70 /2;
+	gr_colorflip[0][0]=0x00 / 2;
+	gr_colorflip[0][1]=0x02 / 2;
+	gr_colorflip[0][2]=0x04 / 2;
+	gr_colorflip[0][3]=0x00 / 2;
+	gr_colorflip[1][0]=0x00 / 2;
+	gr_colorflip[1][1]=0x00 / 2;
+	gr_colorflip[1][2]=0x06 / 2;
+	gr_colorflip[1][3]=0x00 / 2;
+
+	sys16_sh_shadowpal=0xff;
+}
+
+
+
+static void enduror_sprite_decode( void ){
+	sys16_sprite_decode2( 8,0x020000 ,1);
+	generate_gr_screen(512,1024,8,0,4,0x8000);
+}
+
+static void endurora_opcode_decode( void ){
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	memcpy(ROM+0x10000,RAM+0x10000,0x20000);
+	memcpy(ROM,RAM+0x30000,0x10000);
+
+
+	// patch code to force a reset on cpu2 when starting a new game.
+	// Undoubtly wrong, but something like it is needed for the game to work
+	WRITE_WORD(&ROM[0x1866],0x4a79);
+	WRITE_WORD(&ROM[0x1868],0x00e0);
+	WRITE_WORD(&ROM[0x186a],0x0000);
+}
+
+static void endurob2_opcode_decode( void ){
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	memcpy(ROM,RAM,0x30000);
+
+	endurob2_decode_data(RAM,ROM,0x10000);
+	endurob2_decode_data2(RAM+0x10000,ROM+0x10000,0x10000);
+
+	// patch code to force a reset on cpu2 when starting a new game.
+	// Undoubtly wrong, but something like it is needed for the game to work
+	WRITE_WORD(&ROM[0x1866],0x4a79);
+	WRITE_WORD(&ROM[0x1868],0x00e0);
+	WRITE_WORD(&ROM[0x186a],0x0000);
+
+}
+
+static void enduror_onetime_init_machine( void )
+{
+	sys16_onetime_init_machine();
+//	sys16_MaxShadowColors=NumOfShadowColors / 2;
+	sys16_MaxShadowColors=0;
+
+}
+/***************************************************************************/
+
+INPUT_PORTS_START( enduror_input_ports )
+PORT_START	/* handle right left */
+	PORT_ANALOG ( 0xff, 0x7f, IPT_AD_STICK_X | IPF_REVERSE | IPF_CENTER, 100, 4, 0, 0x0, 0xff )
+
+PORT_START	/* Fake Buttons */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_BUTTON1 )	// accel
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_BUTTON2 )	// brake
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN )	// wheelie
+
+PORT_START
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BITX(0x04, IP_ACTIVE_LOW, IPT_SERVICE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_COIN3 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	SYS16_COINAGE
+
+PORT_START	/* DSW1 */
+	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x00, "Upright" )
+	PORT_DIPSETTING(    0x01, "Moving" )
+	PORT_DIPNAME( 0x06, 0x06, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(    0x04, "Easy" )
+	PORT_DIPSETTING(    0x06, "Normal" )
+	PORT_DIPSETTING(    0x02, "Hard" )
+	PORT_DIPSETTING(    0x00, "Hardest" )
+	PORT_DIPNAME( 0x18, 0x18, "Time Adjust" )
+	PORT_DIPSETTING(    0x10, "Easy" )
+	PORT_DIPSETTING(    0x18, "Normal" )
+	PORT_DIPSETTING(    0x08, "Hard" )
+	PORT_DIPSETTING(    0x00, "Hardest" )
+	PORT_DIPNAME( 0x60, 0x60, "Time Control" )
+	PORT_DIPSETTING(    0x40, "Easy" )
+	PORT_DIPSETTING(    0x60, "Normal" )
+	PORT_DIPSETTING(    0x20, "Hard" )
+	PORT_DIPSETTING(    0x00, "Hardest" )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+
+//PORT_START	/* Y */
+//	PORT_ANALOG ( 0xff, 0x0, IPT_AD_STICK_Y | IPF_CENTER , 100, 8, 0, 0x0, 0xff )
+
+INPUT_PORTS_END
+
+/***************************************************************************/
+
+static struct MachineDriver enduror_machine_driver =
+{
+	{
+		{
+			CPU_M68000,
+			10000000,
+			0,
+			enduror_readmem,enduror_writemem,0,0,
+			sys16_interrupt,1
+		},
+		{
+			CPU_Z80 | CPU_AUDIO_CPU,
+			4096000,
+			3,
+			enduror_sound_readmem,enduror_sound_writemem,enduror_sound_readport,enduror_sound_writeport,
+			interrupt,4
+		},
+		{
+			CPU_M68000,
+			10000000,
+			4,
+			enduror_readmem2,enduror_writemem2,0,0,
+			sys16_interrupt,1
+		},
+	},
+	60, DEFAULT_60HZ_VBLANK_DURATION,
+	1,
+	enduror_init_machine,
+	40*8, 28*8, { 0*8, 40*8-1, 0*8, 28*8-1 },
+	gfx8,
+	2048+NumOfShadowColors,2048+NumOfShadowColors,
+	0,
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	0,
+	sys16_ho_vh_start,
+	sys16_vh_stop,
+	sys16_ho_vh_screenrefresh,
+	SOUND_SUPPORTS_STEREO,0,0,0,
+	{
+		{
+			SOUND_YM2203,
+			&ym2203_interface
+		},
+		{
+			SOUND_SEGAPCM,
+			&segapcm_interface_32k,
+		}
+	}
+};
+
+
+struct GameDriver enduror_driver =
+{
+	__FILE__,
+	0,
+	"enduror",
+	"Enduro Racer",
+	"1985",
+	"Sega",
+	SYS16_CREDITS,
+	GAME_NOT_WORKING,
+	&enduror_machine_driver,
+	enduror_onetime_init_machine,
+	enduror_rom,
+	enduror_sprite_decode, 0,
+	0,
+	0,
+	enduror_input_ports,
+	0, 0, 0,
+	ORIENTATION_DEFAULT,
+	0, 0
+};
+
+struct GameDriver endurobl_driver =
+{
+	__FILE__,
+	&enduror_driver,
+	"endurobl",
+	"Enduro Racer (bootleg)",
+	"1985",
+	"bootleg",
+	SYS16_CREDITS,
+	0,
+	&enduror_machine_driver,
+	enduror_onetime_init_machine,
+	endurobl_rom,
+	enduror_sprite_decode, endurora_opcode_decode,
+	0,
+	0,
+	enduror_input_ports,
+	0, 0, 0,
+	ORIENTATION_DEFAULT,
+	0, 0
+};
+
+struct GameDriver endurob2_driver =
+{
+	__FILE__,
+	&enduror_driver,
+	"endurob2",
+	"Enduro Racer (bootleg set 2)",
+	"1985",
+	"bootleg",
+	SYS16_CREDITS,
+	0,
+	&enduror_machine_driver,
+	enduror_onetime_init_machine,
+	endurob2_rom,
+	enduror_sprite_decode, endurob2_opcode_decode,
+	0,
+	0,
+	enduror_input_ports,
+	0, 0, 0,
+	ORIENTATION_DEFAULT,
+	0, 0
+};
+
+
+
+
+
+
 
 
 
@@ -11269,113 +12106,6 @@ struct GameDriver dunkshot_driver =
 	0, 0
 };
 
-/*****************************************************************************/
-// Enduro Racer
-
-ROM_START( enduror_rom )
-	ROM_REGION( 0x100000 ) /* 68000 code */
-//	ROM_LOAD_ODD ( "", 0x000000, 0x10000, 0x)
-//	ROM_LOAD_EVEN( "", 0x000000, 0x10000, 0x)
-
-// all roms
-	ROM_LOAD( "6844.rom", 0x00000, 0x2000, 0xe3ec7bd6 )
-	ROM_LOAD( "7633.rom", 0x00000, 0x8000, 0x6f146210 )
-	ROM_LOAD( "7634.rom", 0x00000, 0x8000, 0x3e07fd32 )
-	ROM_LOAD( "7634a.rom",0x00000, 0x8000, 0xaec83731 )
-	ROM_LOAD( "7635.rom", 0x00000, 0x8000, 0x22f762ab )
-	ROM_LOAD( "7635a.rom",0x00000, 0x8000, 0xb2fce96f )
-	ROM_LOAD( "7636a.rom",0x00000, 0x8000, 0x84131639 )
-	ROM_LOAD( "7637.rom", 0x00000, 0x8000, 0x82a27a8c )
-	ROM_LOAD( "7638.rom", 0x00000, 0x8000, 0x70544779 )
-	ROM_LOAD( "7640a.rom",0x00000, 0x8000, 0x1d1dc5d4 )
-	ROM_LOAD( "7641.rom", 0x00000, 0x8000, 0x2503ae7c )
-	ROM_LOAD( "7642.rom", 0x00000, 0x8000, 0x1c453bea )
-	ROM_LOAD( "7644.rom", 0x00000, 0x8000, 0xe7a4ff90 )
-	ROM_LOAD( "7645.rom", 0x00000, 0x8000, 0x4caa0095 )
-	ROM_LOAD( "7646.rom", 0x00000, 0x8000, 0x7e432683 )
-	ROM_LOAD( "7647.rom", 0x00000, 0x8000, 0x2e7fbec0 )
-	ROM_LOAD( "7648.rom", 0x00000, 0x8000, 0x983ea830 )
-	ROM_LOAD( "7649.rom", 0x00000, 0x8000, 0x4edba14c )
-	ROM_LOAD( "7650.rom", 0x00000, 0x8000, 0x642635ec )
-	ROM_LOAD( "7651.rom", 0x00000, 0x8000, 0xd7902bad )
-	ROM_LOAD( "7652.rom", 0x00000, 0x8000, 0x2880cfdb )
-	ROM_LOAD( "7653.rom", 0x00000, 0x8000, 0x46a52114 )
-	ROM_LOAD( "7654.rom", 0x00000, 0x8000, 0x2db6520d )
-	ROM_LOAD( "7655.rom", 0x00000, 0x8000, 0x3433fe7b )
-	ROM_LOAD( "7656.rom", 0x00000, 0x8000, 0x6c741272 )
-	ROM_LOAD( "7657.rom", 0x00000, 0x8000, 0x8158839c )
-	ROM_LOAD( "7658.rom", 0x00000, 0x8000, 0x1677f24f )
-	ROM_LOAD( "7659.rom", 0x00000, 0x8000, 0x629dc8ce )
-	ROM_LOAD( "7660.rom", 0x00000, 0x8000, 0x86dfbb68 )
-	ROM_LOAD( "7661.rom", 0x00000, 0x8000, 0xfe93a79b )
-	ROM_LOAD( "7662.rom", 0x00000, 0x8000, 0xcb0c13c5 )
-	ROM_LOAD( "7663.rom", 0x00000, 0x8000, 0x2b0b8f08 )
-	ROM_LOAD( "7664.rom", 0x00000, 0x8000, 0x0df2cfad )
-	ROM_LOAD( "7665.rom", 0x00000, 0x8000, 0x12d77607 )
-	ROM_LOAD( "7666.rom", 0x00000, 0x8000, 0x23697257 )
-	ROM_LOAD( "7667.rom", 0x00000, 0x8000, 0x923bde9d )
-	ROM_LOAD( "7668.rom", 0x00000, 0x8000, 0xe115ce33 )
-	ROM_LOAD( "7669.rom", 0x00000, 0x8000, 0xf9525faa )
-	ROM_LOAD( "7670.rom", 0x00000, 0x8000, 0xdbbe2f6e )
-	ROM_LOAD( "7671.rom", 0x00000, 0x8000, 0xb0c7fdc6 )
-	ROM_LOAD( "7672.rom", 0x00000, 0x8000, 0xd11452f7 )
-	ROM_LOAD( "7673.rom", 0x00000, 0x8000, 0x82602394 )
-	ROM_LOAD( "7674.rom", 0x00000, 0x8000, 0x1a129acf )
-	ROM_LOAD( "7675.rom", 0x00000, 0x8000, 0x05cd2d61 )
-	ROM_LOAD( "7676.rom", 0x00000, 0x8000, 0x2e42e0d4 )
-	ROM_LOAD( "7677.rom", 0x00000, 0x8000, 0x7764765b )
-	ROM_LOAD( "7678.rom", 0x00000, 0x8000, 0x9fb5e656 )
-	ROM_LOAD( "7680.rom", 0x00000, 0x8000, 0x627b3c8c )
-	ROM_LOAD( "7681.rom", 0x00000, 0x8000, 0xbc0c4d12 )
-	ROM_LOAD( "7682.rom", 0x00000, 0x8000, 0xc4efbf48 )
-
-	ROM_REGION( 0x30000 ) /* tiles */
-//	ROM_LOAD( "", 0x00000, 0x10000, 0x)
-//	ROM_LOAD( "", 0x10000, 0x10000, 0x)
-//	ROM_LOAD( "", 0x20000, 0x10000, 0x)
-
-	ROM_REGION( 0x100000*2 ) /* sprites */
-//	ROM_LOAD( "", 0x00000, 0x10000, 0x )
-//	ROM_LOAD( "", 0x10000, 0x10000, 0x )
-//	ROM_LOAD( "", 0x20000, 0x10000, 0x )
-//	ROM_LOAD( "", 0x30000, 0x10000, 0x )
-//	ROM_LOAD( "", 0x40000, 0x10000, 0x )
-//	ROM_LOAD( "", 0x50000, 0x10000, 0x )
-//	ROM_LOAD( "", 0x60000, 0x10000, 0x )
-//	ROM_LOAD( "", 0x70000, 0x10000, 0x )
-//	ROM_LOAD( "", 0x80000, 0x10000, 0x )
-//	ROM_LOAD( "", 0x90000, 0x10000, 0x )
-//	ROM_LOAD( "", 0xa0000, 0x10000, 0x )
-//	ROM_LOAD( "", 0xb0000, 0x10000, 0x )
-
-	ROM_REGION( 0x50000 ) /* sound CPU */
-//	ROM_LOAD( "",	 0x00000, 0x10000, 0x )
-//	ROM_LOAD( "",    0x10000, 0x10000, 0x )
-//	ROM_LOAD( "",    0x20000, 0x10000, 0x )
-
-ROM_END
-
-struct GameDriver enduror_driver =
-{
-	__FILE__,
-	0,
-	"enduror",
-	"Enduro Racer",
-	"????",
-	"????",
-	SYS16_CREDITS,
-	GAME_NOT_WORKING,
-	&sys16_dummy_machine_driver,
-	sys16_onetime_init_machine,
-	enduror_rom,
-	sys16_dummy_sprite_decode, 0,
-	0,
-	0,
-	sys16_dummy_input_ports,
-	0, 0, 0,
-	ORIENTATION_DEFAULT,
-	0, 0
-};
 
 /*****************************************************************************/
 // Laser Ghost
@@ -11782,3 +12512,4 @@ struct GameDriver toutruna_driver =
 	ORIENTATION_DEFAULT,
 	0, 0
 };
+

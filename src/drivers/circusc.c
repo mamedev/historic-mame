@@ -367,6 +367,34 @@ ROM_END
 
 ROM_START( circuscc_rom )
 	ROM_REGION(0x10000)     /* 64k for code */
+	ROM_LOAD( "cc_u05.h3",    0x6000, 0x2000, 0x964c035a )
+	ROM_LOAD( "p04",          0x8000, 0x2000, 0xdd0c0ee7 )
+	ROM_LOAD( "p03",          0xa000, 0x2000, 0x190247af )
+	ROM_LOAD( "p02",          0xc000, 0x2000, 0x7e63725e )
+	ROM_LOAD( "p01",          0xe000, 0x2000, 0xeedaa5b2 )
+
+	ROM_REGION_DISPOSE(0x10000)    /* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "a04_j12.bin",  0x0000, 0x2000, 0x56e5b408 )
+	ROM_LOAD( "a05_k13.bin",  0x2000, 0x2000, 0x5aca0193 )
+	ROM_LOAD( "e11_j06.bin",  0x4000, 0x2000, 0xdf0405c6 )
+	ROM_LOAD( "e12_j07.bin",  0x6000, 0x2000, 0x23dfe3a6 )
+	ROM_LOAD( "e13_j08.bin",  0x8000, 0x2000, 0x3ba95390 )
+	ROM_LOAD( "e14_j09.bin",  0xa000, 0x2000, 0xa9fba85a )
+	ROM_LOAD( "e15_j10.bin",  0xc000, 0x2000, 0x0532347e )
+	ROM_LOAD( "e16_j11.bin",  0xe000, 0x2000, 0xe1725d24 )
+
+	ROM_REGION(0x220)      /* color proms */
+	ROM_LOAD( "a02_j18.bin",  0x0000, 0x020, 0x10dd4eaa ) /* palette */
+	ROM_LOAD( "c10_j16.bin",  0x0020, 0x100, 0xc244f2aa ) /* character lookup table */
+	ROM_LOAD( "b07_j17.bin",  0x0120, 0x100, 0x13989357 ) /* sprite lookup table */
+
+	ROM_REGION(0x10000)     /* 64k for the audio CPU */
+	ROM_LOAD( "cd05_l14.bin", 0x0000, 0x2000, 0x607df0fb )
+	ROM_LOAD( "cd07_l15.bin", 0x2000, 0x2000, 0xa6ad30e1 )
+ROM_END
+
+ROM_START( circusce_rom )
+	ROM_REGION(0x10000)     /* 64k for code */
 	ROM_LOAD( "p05",          0x6000, 0x2000, 0x7ca74494 )
 	ROM_LOAD( "p04",          0x8000, 0x2000, 0xdd0c0ee7 )
 	ROM_LOAD( "p03",          0xa000, 0x2000, 0x190247af )
@@ -392,6 +420,7 @@ ROM_START( circuscc_rom )
 	ROM_LOAD( "cd05_l14.bin", 0x0000, 0x2000, 0x607df0fb )
 	ROM_LOAD( "cd07_l15.bin", 0x2000, 0x2000, 0xa6ad30e1 )
 ROM_END
+
 
 static void circusc_decode(void)
 {
@@ -534,3 +563,30 @@ struct GameDriver circuscc_driver =
 
 	hiload, hisave
 };
+
+struct GameDriver circusce_driver =
+{
+	__FILE__,
+	&circusc_driver,
+	"circusce",
+	"Circus Charlie (Centuri, earlier)",
+	"1984",
+	"Konami (Centuri licence)",
+	"Chris Hardy (MAME driver)\nPaul Swan (color info)",
+	0,
+	&machine_driver,
+	0,
+
+	circusce_rom,
+	0, circusc_decode,
+	0,
+	0,      /* sound_prom */
+
+	input_ports,
+
+	PROM_MEMORY_REGION(2), 0, 0,
+	ORIENTATION_ROTATE_90,
+
+	hiload, hisave
+};
+

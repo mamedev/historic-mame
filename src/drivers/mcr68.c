@@ -560,6 +560,17 @@ ROM_START( zwackery_rom )
 
 ROM_END
 
+
+void gfx_invert(void)
+{
+	int i;
+
+	/* tile graphics are inverted */
+	for (i = 0; i < 0x10000; i++)
+		Machine->memory_region[1][i] ^= 0xff;
+}
+
+
 struct GameDriver xenophob_driver =
 {
 	__FILE__,
@@ -574,7 +585,7 @@ struct GameDriver xenophob_driver =
 	0,
 
 	xenophob_rom,
-	0, 0,
+	gfx_invert, 0,
 	0,
 	0,	/* sound_prom */
 
@@ -600,7 +611,7 @@ struct GameDriver spyhunt2_driver =
 	0,
 
 	spyhunt2_rom,
-	0, 0,
+	gfx_invert, 0,
 	0,
 	0,	/* sound_prom */
 
@@ -626,7 +637,7 @@ struct GameDriver blasted_driver =
 	0,
 
 	blasted_rom,
-	0, 0,
+	gfx_invert, 0,
 	0,
 	0,	/* sound_prom */
 
@@ -652,7 +663,7 @@ struct GameDriver zwackery_driver =
 	0,
 
 	zwackery_rom,
-	0, 0,
+	gfx_invert, 0,
 	0,
 	0,	/* sound_prom */
 

@@ -822,7 +822,7 @@ static struct TextLine HelpLine[MAX_TEXT_LINE];
 
 /* This variables are not static because of extern statement */
 char *cheatfile = "CHEAT.DAT";
-char database[16];
+char database[CHEAT_FILENAME_MAXLEN+1];
 
 char *helpfile = "CHEAT.HLP";
 
@@ -1110,10 +1110,10 @@ void DisplayVersion(void)
   strcpy(buffer, LAST_CODER);
   strcat(buffer, " - ");
   strcat(buffer, LAST_UPDATE);
-//  xprintf(0, 1, MachHeight-FontHeight, buffer);
+/*  xprintf(0, 1, MachHeight-FontHeight, buffer); */
   #else
   strcpy(buffer, CHEAT_VERSION);
-//  xprintf(0, 1, MachHeight-FontHeight, buffer);
+/*  xprintf(0, 1, MachHeight-FontHeight, buffer); */
   #endif
   xprintf(0, 1, MachHeight-FontHeight, "");
 
@@ -2170,9 +2170,9 @@ void LoadCheat(int merge, char *filename)
   if ((f = fopen(filename,"r")) != 0)
   {
 	yPos = (MachHeight - FontHeight) / 2 - FontHeight;
-//	xprintf(0, 0, yPos, "Loading cheats from file");
+/*	xprintf(0, 0, yPos, "Loading cheats from file"); */
       yPos += FontHeight;
-//	xprintf(0, 0, yPos, "%s...",filename);
+/*	xprintf(0, 0, yPos, "%s...",filename); */
 
 	for(;;)
 	{
@@ -2288,8 +2288,8 @@ void LoadCheat(int merge, char *filename)
 void LoadDatabases(int InCheat)
 {
   char *ptr;
-  char str[128];
-  char filename[16];
+  char str[CHEAT_FILENAME_MAXLEN+1];
+  char filename[CHEAT_FILENAME_MAXLEN+1];
 
   int pos1, pos2;
 
@@ -3204,7 +3204,7 @@ void SelectCheat(void)
 	int j;
 
 	char fmt[32];
-	char buf[40];
+	char buf[CHEAT_FILENAME_MAXLEN+1];
 
 	cheat_clearbitmap();
 

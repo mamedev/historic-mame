@@ -6,7 +6,7 @@
 /* ======================================================================== */
 /*
  *                                  MUSASHI
- *                                Version 2.0a
+ *                                Version 2.1
  *
  * A portable Motorola M680x0 processor emulation engine.
  * Copyright 1999 Karl Stenerud.  All rights reserved.
@@ -19,7 +19,7 @@
  * (Karl Stenerud) to negotiate commercial licensing terms.
  *
  * The latest version of this code can be obtained at:
- * http://milliways.scas.bcit.bc.ca/~karl/musashi
+ * (home page pending)
  */
 
 
@@ -90,7 +90,8 @@
 /* CPU types for use in m68k_set_cpu_type() */
 #define M68K_CPU_MODE_68000 1
 #define M68K_CPU_MODE_68010 2
-#define M68K_CPU_MODE_68020 4
+#define M68K_CPU_MODE_68EC020 4
+#define M68K_CPU_MODE_68020 8
 
 
 /* ======================================================================== */
@@ -115,6 +116,8 @@ typedef struct                 /* CPU Context */
    unsigned int  halted;       /* Halted state: only reset can restart */
    unsigned int  int_state;	   /* Current interrupt line states -- ASG: changed from ints_pending */
    unsigned int  int_cycles;   /* Extra cycles taken due to interrupts -- ASG: added */
+   unsigned int  pref_addr;    /* Last prefetch address */
+   unsigned int  pref_data;    /* Data in the prefetch queue */
    int  (*int_ack_callback)(int int_level); /* Interrupt Acknowledge */
    void (*bkpt_ack_callback)(int data);     /* Breakpoint Acknowledge */
    void (*reset_instr_callback)(void);      /* Called when a RESET instruction is encountered */

@@ -2,12 +2,12 @@
 #include "vidhrdw/generic.h"
 
 
-unsigned char *taitos84_videoram;
-int taitos84_videoram_size;
-unsigned char *taitos84_back_scrollY_lo;
-unsigned char *taitos84_back_scrollX;
+unsigned char *kyugo_videoram;
+int kyugo_videoram_size;
+unsigned char *kyugo_back_scrollY_lo;
+unsigned char *kyugo_back_scrollX;
 
-static unsigned char taitos84_back_scrollY_hi;
+static unsigned char kyugo_back_scrollY_hi;
 static int palbank,frontcolor;
 static int flipscreen;
 static const unsigned char *color_codes;
@@ -18,7 +18,7 @@ static const unsigned char *color_codes;
   Convert the color PROMs into a more useable format.
 
 ***************************************************************************/
-void taitos84_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
+void kyugo_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
 {
 	int i;
 
@@ -56,10 +56,10 @@ void taitos84_vh_convert_color_prom(unsigned char *palette, unsigned short *colo
 
 
 
-void taitos84_gfxctrl_w(int offset,int data)
+void kyugo_gfxctrl_w(int offset,int data)
 {
 	/* bit 0 is scroll MSB */
-	taitos84_back_scrollY_hi = data & 0x01;
+	kyugo_back_scrollY_hi = data & 0x01;
 
 	/* bit 5 is front layer color (Son of Phoenix only) */
 	frontcolor = (data & 0x20) >> 5;
@@ -80,7 +80,7 @@ if (data & 0x9e)
 }
 
 
-void taitos84_flipscreen_w(int offset,int data)
+void kyugo_flipscreen_w(int offset,int data)
 {
 	if (flipscreen != (data & 0x01))
 	{
@@ -97,7 +97,7 @@ static void draw_sprites(struct osd_bitmap *bitmap)
 	/* and uses a portion of the text layer memory (outside the visible area) */
 	unsigned char *spriteram_area1 = &spriteram[0x28];
 	unsigned char *spriteram_area2 = &spriteram_2[0x28];
-	unsigned char *spriteram_area3 = &taitos84_videoram[0x28];
+	unsigned char *spriteram_area3 = &kyugo_videoram[0x28];
 
 	int n;
 
@@ -143,7 +143,7 @@ static void draw_sprites(struct osd_bitmap *bitmap)
 
 
 
-void taitos84_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void kyugo_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	int offs;
 
@@ -185,13 +185,13 @@ void taitos84_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 		if (flipscreen)
 		{
-			scrollx = -32 - ( ( taitos84_back_scrollY_lo[0] ) + ( taitos84_back_scrollY_hi * 256 ) );
-			scrolly = taitos84_back_scrollX[0];
+			scrollx = -32 - ( ( kyugo_back_scrollY_lo[0] ) + ( kyugo_back_scrollY_hi * 256 ) );
+			scrolly = kyugo_back_scrollX[0];
 		}
 		else
 		{
-			scrollx = -32 - ( ( taitos84_back_scrollY_lo[0] ) + ( taitos84_back_scrollY_hi * 256 ) );
-			scrolly = -taitos84_back_scrollX[0];
+			scrollx = -32 - ( ( kyugo_back_scrollY_lo[0] ) + ( kyugo_back_scrollY_hi * 256 ) );
+			scrolly = -kyugo_back_scrollX[0];
 		}
 
 		/* copy the temporary bitmap to the screen */
@@ -202,7 +202,7 @@ void taitos84_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	draw_sprites(bitmap);
 
 	/* front layer */
-	for( offs = taitos84_videoram_size - 1;offs >= 0;offs-- )
+	for( offs = kyugo_videoram_size - 1;offs >= 0;offs-- )
 	{
 		int sx,sy,code;
 
@@ -214,7 +214,7 @@ void taitos84_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			sy = 31 - sy;
 		}
 
-		code = taitos84_videoram[offs];
+		code = kyugo_videoram[offs];
 
 		drawgfx( bitmap, Machine->gfx[0],
 				code,

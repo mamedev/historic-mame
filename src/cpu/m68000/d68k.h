@@ -6,7 +6,7 @@
 /* ======================================================================== */
 /*
  *                                DEBABELIZER
- *                                Version 2.2
+ *                                Version 2.3
  *
  * A portable Motorola M680x0 disassembler.
  * Copyright 1999 Karl Stenerud.  All rights reserved.
@@ -16,7 +16,7 @@
  * containing this code in compiled form.
  *
  * The latest version of this code can be obtained at:
- * http://milliways.scas.bcit.bc.ca/~karl/musashi
+ * (home page pending)
  */
 
 

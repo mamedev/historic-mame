@@ -10,7 +10,7 @@ struct K053260_interface {
 	int clock;					/* clock */
 	int region;					/* memory region of sample ROM(s) */
 	int mixing_level[2];		/* volume */
-	void (*irq)( int channel );	/* called when succesfully loaded channel(s) */
+	void (*irq)( int param );	/* called on SH1 complete cycle ( clock / 32 ) */
 };
 
 

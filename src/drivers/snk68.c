@@ -169,7 +169,7 @@ static void D7759_write_port_0_w(int offset, int data)
 {
 	UPD7759_reset_w (0,0);
 	UPD7759_message_w(offset,data);
-	UPD7759_start_w (0,1);
+	UPD7759_start_w (0,0);
 }
 
 static struct IOReadPort sound_readport[] =
@@ -784,7 +784,7 @@ static struct UPD7759_interface upd7759_interface =
 	1,		/* number of chips */
 	UPD7759_STANDARD_CLOCK,
 	{ 50 }, /* volume */
-	3,		/* memory region */
+	{ 3 },		/* memory region */
 	UPD7759_STANDALONE_MODE,		/* chip mode */
 	{0}
 };
