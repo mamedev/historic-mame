@@ -35,8 +35,6 @@ void playch10_vh_convert_color_prom( unsigned char *palette, unsigned short *col
 		*palette++ = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
 
 		color_prom++;
-
-		colortable[i] = i;
 	}
 
 	ppu2c03b_init_palette( palette );

@@ -93,7 +93,7 @@ int nemesis_interrupt(void)
 {
 	if (irq_on) return 1;
 
-	return 0;
+	return ignore_interrupt();
 }
 
 WRITE16_HANDLER( salamand_soundlatch_word_w )
@@ -118,7 +118,7 @@ int konamigt_interrupt(void)
 		if (irq2_on) return 2;
 	}
 
-	return 0;
+	return ignore_interrupt();
 }
 
 int gx400_interrupt(void)
@@ -138,7 +138,7 @@ int gx400_interrupt(void)
 			break;
 	}
 
-	return 0;
+	return ignore_interrupt();
 }
 
 WRITE16_HANDLER( gx400_irq1_enable_word_w )

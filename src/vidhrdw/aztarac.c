@@ -31,7 +31,7 @@ WRITE16_HANDLER( aztarac_ubr_w )
     int x, y, c, intensity, xoffset, yoffset, color;
     int defaddr, objaddr=0, ndefs;
 
-    if (data) // data is the global intensity (always 0xff in Aztarac).
+    if (data) /* data is the global intensity (always 0xff in Aztarac). */
     {
         vector_clear_list();
 
@@ -55,8 +55,7 @@ WRITE16_HANDLER( aztarac_ubr_w )
                 {
                     /* latch color only once */
                     intensity = (c >> 8);
-                    color = c & 0x3f;
-
+					color = VECTOR_COLOR222(c & 0x3f);
                     while (ndefs--)
                     {
                         defaddr++;
@@ -74,7 +73,8 @@ WRITE16_HANDLER( aztarac_ubr_w )
                     {
                         defaddr++;
                         read_vectorram (defaddr, &x, &y, &c);
-                        AVECTOR (x + xoffset, y + yoffset, c & 0x3f, c >> 8);
+						color = VECTOR_COLOR222(c & 0x3f);
+                        AVECTOR (x + xoffset, y + yoffset, color, c >> 8);
                     }
                 }
             }
@@ -85,21 +85,6 @@ WRITE16_HANDLER( aztarac_ubr_w )
 int aztarac_vg_interrupt(void)
 {
     return 4;
-}
-
-void aztarac_init_colors (unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
-{
-    int r, g, b, i;
-
-    for (i = 4; i > 0; i--)
-        for (r = 0; r < 4; r++)
-            for (g = 0; g < 4; g++)
-                for (b = 0; b < 4; b++)
-                {
-                    *palette++ = (255 * r * i)/ 12;
-                    *palette++ = (255 * g * i)/ 12;
-                    *palette++ = (255 * b * i)/ 12;
-                }
 }
 
 int aztarac_vh_start (void)

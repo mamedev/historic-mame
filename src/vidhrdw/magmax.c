@@ -220,7 +220,7 @@ void magmax_vh_convert_color_prom(unsigned char *palette, unsigned short *colort
 		bit1 = (color_prom[Machine->drv->total_colors] >> 1) & 0x01;
 		bit2 = (color_prom[Machine->drv->total_colors] >> 2) & 0x01;
 		bit3 = (color_prom[Machine->drv->total_colors] >> 3) & 0x01;
-		*(palette++) = (0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3);
+		*(palette++) = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
 		bit0 = (color_prom[2*Machine->drv->total_colors] >> 0) & 0x01;
 		bit1 = (color_prom[2*Machine->drv->total_colors] >> 1) & 0x01;
 		bit2 = (color_prom[2*Machine->drv->total_colors] >> 2) & 0x01;
@@ -314,7 +314,7 @@ void magmax_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			UINT32 rom15F_addr   = (((scroll_v + v) & 0x07)<<2) + (map_v_scr_100<<5);
 			UINT32 map_v_scr_1fe_6 =((scroll_v + v) & 0x1fe)<<6;
 
-			UINT32 *pens = &Machine->pens[2*16 + (map_v_scr_100>>1)];
+			pen_t *pens = &Machine->pens[2*16 + (map_v_scr_100>>1)];
 
 			if (!map_v_scr_100)
 			{

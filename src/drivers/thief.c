@@ -683,8 +683,17 @@ ROM_START( natodefa )
 ROM_END
 
 
+static void init_thief(void)
+{
+	UINT8 *dest = memory_region( REGION_CPU1 );
+	const UINT8 *source = memory_region( REGION_CPU2 );
 
-GAME( 1980, sharkatt, 0,       sharkatt, sharkatt, 0, ROT0, "Pacific Novelty", "Shark Attack" )
-GAME( 1981, thief,    0,       thief,    thief,    0, ROT0, "Pacific Novelty", "Thief" )
-GAME( 1982, natodef,  0,       natodef,  natodef,  0, ROT0, "Pacific Novelty", "NATO Defense"  )
-GAME( 1982, natodefa, natodef, natodef,  natodef,  0, ROT0, "Pacific Novelty", "NATO Defense (alternate mazes)"  )
+	/* C8 is mapped (banked) in CPU1's address space; it contains Z80 code */
+	memcpy( &dest[0xe010], &source[0x290], 0x20 );
+}
+
+
+GAME( 1980, sharkatt, 0,       sharkatt, sharkatt, 0,     ROT0, "Pacific Novelty", "Shark Attack" )
+GAME( 1981, thief,    0,       thief,    thief,    thief, ROT0, "Pacific Novelty", "Thief" )
+GAME( 1982, natodef,  0,       natodef,  natodef,  thief, ROT0, "Pacific Novelty", "NATO Defense"  )
+GAME( 1982, natodefa, natodef, natodef,  natodef,  thief, ROT0, "Pacific Novelty", "NATO Defense (alternate mazes)"  )

@@ -18,9 +18,6 @@ enum {
         I286_VECTOR, I286_PENDING, I286_NMI_STATE, I286_IRQ_STATE, I286_EMPTY
 };
 
-#define I286_INT_NONE I86_INT_NONE
-#define I286_NMI_INT I86_NMI_INT
-
 /* Public variables */
 extern int i286_ICount;
 
@@ -31,13 +28,8 @@ extern void i286_exit(void);
 extern int i286_execute(int cycles);
 extern unsigned i286_get_context(void *dst);
 extern void i286_set_context(void *src);
-extern unsigned i286_get_pc(void);
-extern void i286_set_pc(unsigned val);
-extern unsigned i286_get_sp(void);
-extern void i286_set_sp(unsigned val);
 extern unsigned i286_get_reg(int regnum);
 extern void i286_set_reg(int regnum, unsigned val);
-extern void i286_set_nmi_line(int state);
 extern void i286_set_irq_line(int irqline, int state);
 extern void i286_set_irq_callback(int (*callback)(int irqline));
 extern const char *i286_info(void *context, int regnum);

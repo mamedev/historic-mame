@@ -1765,35 +1765,13 @@ void i8x41_set_context(void *src)
 		memcpy(&i8x41, src, sizeof(I8X41));
 }
 
-/* Get program counter */
-unsigned i8x41_get_pc(void)
-{
-	return PC;
-}
-
-/* Set program counter */
-void i8x41_set_pc(unsigned val)
-{
-	PC = val & 0x7ff;
-}
-
-/* Get stack pointer */
-unsigned i8x41_get_sp(void)
-{
-	return PSW & SP;
-}
-
-/* Set stack pointer */
-void i8x41_set_sp(unsigned val)
-{
-	PSW = (PSW & ~SP) | (val & SP);
-}
-
 unsigned i8x41_get_reg(int regnum)
 {
 	switch( regnum )
 	{
+	case REG_PC:
 	case I8X41_PC:	return PC;
+	case REG_SP:
 	case I8X41_SP:	return PSW & SP;
 	case I8X41_PSW: return PSW;
 	case I8X41_A:	return A;
@@ -1827,7 +1805,9 @@ void i8x41_set_reg (int regnum, unsigned val)
 {
 	switch( regnum )
 	{
+	case REG_PC:
 	case I8X41_PC:	PC = val & 0x7ff;
+	case REG_SP:
 	case I8X41_SP:	PSW = (PSW & ~SP) | (val & SP);
 	case I8X41_PSW: PSW = val;
 	case I8X41_A:	A = val;
@@ -1875,11 +1855,6 @@ void i8x41_set_reg (int regnum, unsigned val)
 			}
 		}
 	}
-}
-
-void i8x41_set_nmi_line(int state)
-{
-	/* not applicable */
 }
 
 void i8x41_set_irq_line(int irqline, int state)

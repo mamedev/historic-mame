@@ -68,24 +68,24 @@ int palette_start(void)
 	else
 		colormode = PALETTIZED_16BIT;
 
-	Machine->pens = malloc(total_colors * sizeof(UINT32));
-	Machine->debug_pens = malloc(DEBUGGER_TOTAL_COLORS * sizeof(UINT32));
+	Machine->pens = malloc(total_colors * sizeof(*Machine->pens));
+	Machine->debug_pens = malloc(DEBUGGER_TOTAL_COLORS * sizeof(*Machine->debug_pens));
 
 	if (Machine->drv->color_table_len)
 	{
-		Machine->game_colortable = malloc(Machine->drv->color_table_len * sizeof(Machine->game_colortable[0]));
-		Machine->remapped_colortable = malloc(Machine->drv->color_table_len * sizeof(Machine->remapped_colortable[0]));
+		Machine->game_colortable = malloc(Machine->drv->color_table_len * sizeof(*Machine->game_colortable));
+		Machine->remapped_colortable = malloc(Machine->drv->color_table_len * sizeof(*Machine->remapped_colortable));
 	}
 	else
 	{
 		Machine->game_colortable = 0;
 		Machine->remapped_colortable = Machine->pens;	/* straight 1:1 mapping from palette to colortable */
 	}
-	Machine->debug_remapped_colortable = malloc(2*DEBUGGER_TOTAL_COLORS*DEBUGGER_TOTAL_COLORS * sizeof(UINT32));
+	Machine->debug_remapped_colortable = malloc(2*DEBUGGER_TOTAL_COLORS*DEBUGGER_TOTAL_COLORS * sizeof(*Machine->debug_remapped_colortable));
 
 	if (colormode == PALETTIZED_16BIT)
 	{
-		palette_shadow_table = malloc(total_colors * sizeof(palette_shadow_table[0]));
+		palette_shadow_table = malloc(total_colors * sizeof(*palette_shadow_table));
 		if (palette_shadow_table == 0)
 		{
 			palette_stop();
@@ -167,7 +167,7 @@ int palette_init(void)
 {
 	int i;
 	UINT8 *debug_palette;
-	UINT32 *debug_pens;
+	pen_t *debug_pens;
 
 #ifdef MAME_DEBUG
 	if (mame_debug)
@@ -1084,4 +1084,54 @@ WRITE16_HANDLER( paletteram16_RRRRGGGGBBBBRGBx_word_w )
 {
 	COMBINE_DATA(&paletteram16[offset]);
 	changecolor_RRRRGGGGBBBBRGBx(offset,paletteram16[offset]);
+}
+
+
+
+/******************************************************************************
+
+ Commonly used color PROM handling functions
+
+******************************************************************************/
+
+/***************************************************************************
+
+  This assumes the commonly used resistor values:
+
+  bit 3 -- 220 ohm resistor  -- RED/GREEN/BLUE
+        -- 470 ohm resistor  -- RED/GREEN/BLUE
+        -- 1  kohm resistor  -- RED/GREEN/BLUE
+  bit 0 -- 2.2kohm resistor  -- RED/GREEN/BLUE
+
+***************************************************************************/
+void palette_RRRR_GGGG_BBBB_convert_prom(unsigned char *obsolete,unsigned short *colortable,const unsigned char *color_prom)
+{
+	int i;
+
+
+	for (i = 0;i < Machine->drv->total_colors;i++)
+	{
+		int bit0,bit1,bit2,bit3,r,g,b;
+
+		/* red component */
+		bit0 = (color_prom[i] >> 0) & 0x01;
+		bit1 = (color_prom[i] >> 1) & 0x01;
+		bit2 = (color_prom[i] >> 2) & 0x01;
+		bit3 = (color_prom[i] >> 3) & 0x01;
+		r = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
+		/* green component */
+		bit0 = (color_prom[i + Machine->drv->total_colors] >> 0) & 0x01;
+		bit1 = (color_prom[i + Machine->drv->total_colors] >> 1) & 0x01;
+		bit2 = (color_prom[i + Machine->drv->total_colors] >> 2) & 0x01;
+		bit3 = (color_prom[i + Machine->drv->total_colors] >> 3) & 0x01;
+		g = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
+		/* blue component */
+		bit0 = (color_prom[i + 2*Machine->drv->total_colors] >> 0) & 0x01;
+		bit1 = (color_prom[i + 2*Machine->drv->total_colors] >> 1) & 0x01;
+		bit2 = (color_prom[i + 2*Machine->drv->total_colors] >> 2) & 0x01;
+		bit3 = (color_prom[i + 2*Machine->drv->total_colors] >> 3) & 0x01;
+		b = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
+
+		palette_set_color(i,r,g,b);
+	}
 }

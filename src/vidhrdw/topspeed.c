@@ -5,7 +5,7 @@
 data16_t *topspeed_spritemap;
 data16_t *topspeed_raster_ctrl;
 
-/***************************************************************************/
+/****************************************************************************/
 
 int topspeed_vh_start (void)
 {
@@ -55,7 +55,9 @@ void topspeed_draw_sprites(struct osd_bitmap *bitmap)
 	UINT8 j,k,px,py,zx,zy,zoomx,zoomy;
 	int primasks[2] = {0xff00,0xfffc};	/* Sprites are over bottom layer or under top layer */
 
-	for (offs = 0;offs <(spriteram_size/2);offs += 4)
+	/* Most of spriteram is not used by the 68000: rest is scratch space for the h/w perhaps ? */
+
+	for (offs = 0;offs <(0x2c0/2);offs += 4)
 	{
 		data = spriteram16[offs+2];
 
@@ -70,7 +72,7 @@ void topspeed_draw_sprites(struct osd_bitmap *bitmap)
 		priority = (data & 0x8000) >> 15;
 //		unknown = (data & 0x2000) >> 13;
 
-//		if (!tilenum) continue;	// what marks a dead sprite?
+		if (y == 0x180) continue;	/* dead sprite */
 
 		map_offset = tilenum << 7;
 

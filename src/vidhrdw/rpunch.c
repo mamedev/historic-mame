@@ -321,7 +321,7 @@ static void draw_sprites(struct osd_bitmap *bitmap, int start, int stop)
 
 static void draw_bitmap(struct osd_bitmap *bitmap)
 {
-	UINT32 *pens = &Machine->pens[512 + (videoflags & 15) * 16];
+	pen_t *pens = &Machine->pens[512 + (videoflags & 15) * 16];
 	int x, y;
 
 	/* draw any non-transparent scanlines from the VRAM directly */

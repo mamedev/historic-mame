@@ -452,7 +452,7 @@ struct snd_interface sndintf[] =
 #if (HAS_YM2203)
     {
 		SOUND_YM2203,
-		"YM-2203",
+		"YM2203",
 		YM2203_num,
 		YM2203_clock,
 		YM2203_sh_start,
@@ -464,7 +464,7 @@ struct snd_interface sndintf[] =
 #if (HAS_YM2151 || HAS_YM2151_ALT)
     {
 		SOUND_YM2151,
-		"YM-2151",
+		"YM2151",
 		YM2151_num,
 		YM2151_clock,
 		YM2151_sh_start,
@@ -476,7 +476,7 @@ struct snd_interface sndintf[] =
 #if (HAS_YM2608)
     {
 		SOUND_YM2608,
-		"YM-2608",
+		"YM2608",
 		YM2608_num,
 		YM2608_clock,
 		YM2608_sh_start,
@@ -488,7 +488,7 @@ struct snd_interface sndintf[] =
 #if (HAS_YM2610)
     {
 		SOUND_YM2610,
-		"YM-2610",
+		"YM2610",
 		YM2610_num,
 		YM2610_clock,
 		YM2610_sh_start,
@@ -500,7 +500,7 @@ struct snd_interface sndintf[] =
 #if (HAS_YM2610B)
     {
 		SOUND_YM2610B,
-		"YM-2610B",
+		"YM2610B",
 		YM2610_num,
 		YM2610_clock,
 		YM2610B_sh_start,
@@ -512,7 +512,7 @@ struct snd_interface sndintf[] =
 #if (HAS_YM2612)
     {
 		SOUND_YM2612,
-		"YM-2612",
+		"YM2612",
 		YM2612_num,
 		YM2612_clock,
 		YM2612_sh_start,
@@ -524,7 +524,7 @@ struct snd_interface sndintf[] =
 #if (HAS_YM3438)
     {
 		SOUND_YM3438,
-		"YM-3438",
+		"YM3438",
 		YM2612_num,
 		YM2612_clock,
 		YM2612_sh_start,
@@ -536,7 +536,7 @@ struct snd_interface sndintf[] =
 #if (HAS_YM2413)
     {
 		SOUND_YM2413,
-		"YM-2413",
+		"YM2413",
 		YM2413_num,
 		YM2413_clock,
 		YM2413_sh_start,
@@ -548,7 +548,7 @@ struct snd_interface sndintf[] =
 #if (HAS_YM3812)
     {
 		SOUND_YM3812,
-		"YM-3812",
+		"YM3812",
 		YM3812_num,
 		YM3812_clock,
 		YM3812_sh_start,
@@ -560,7 +560,7 @@ struct snd_interface sndintf[] =
 #if (HAS_YM3526)
     {
 		SOUND_YM3526,
-		"YM-3526",
+		"YM3526",
 		YM3812_num,
 		YM3812_clock,
 		YM3812_sh_start,

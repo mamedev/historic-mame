@@ -755,6 +755,10 @@ static void generate_samples(struct ES5506Chip *chip, INT32 *left, INT32 *right,
 		struct ES5506Voice *voice = &chip->voice[v];
 		UINT16 *base = chip->region_base[voice->control >> 14];
 
+		/* special case: if end == start, stop the voice */
+		if (voice->start == voice->end)
+			voice->control |= CONTROL_STOP0;
+
 		/* generate from the appropriate source */
 		if (!base)
 			generate_dummy(voice, base, left, right, samples);

@@ -169,6 +169,7 @@ $F987 - Addresses table at $f98d containing four structs:
 
 /* VIDHRDW */
 
+void nyny_init_palette(unsigned char *obsolete,unsigned short *game_colortable,const unsigned char *color_prom);
 int  spiders_vh_start(void);
 void spiders_vh_stop(void);
 void spiders_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
@@ -183,10 +184,6 @@ int spiders_timed_irq(void);
 
 static MEMORY_READ_START( readmem )
 	{ 0x0000, 0xbfff, MRA_RAM },
-//	{ 0x1c00, 0x1cff, MRA_RAM },	// Data page
-//	{ 0x4000, 0x5bff, MRA_RAM },	// Video ram 1
-//	{ 0x8000, 0x9bff, MRA_RAM },	// Video ram 2
-//	{ 0x7800, 0x7fff, MRA_RAM },	// Stack space
 	{ 0xc001, 0xc001, crtc6845_register_r },
 	{ 0xc044, 0xc047, pia_0_r },
 	{ 0xc048, 0xc04b, pia_1_r },
@@ -199,10 +196,6 @@ MEMORY_END
 
 static MEMORY_WRITE_START( writemem )
 	{ 0x0000, 0xbfff, MWA_RAM },
-//	{ 0x1c00, 0x1cff, MWA_RAM },
-//	{ 0x4000, 0x5bff, MWA_RAM },
-//	{ 0x8000, 0x9bff, MWA_RAM },
-//	{ 0x7800, 0x7fff, MWA_RAM },
 	{ 0xc000, 0xc000, crtc6845_address_w },
 	{ 0xc001, 0xc001, crtc6845_register_w },
 	{ 0xc044, 0xc047, pia_0_w },
@@ -212,9 +205,9 @@ static MEMORY_WRITE_START( writemem )
 MEMORY_END
 
 
-#if 0
 static MEMORY_READ_START( sound_readmem )
 	{ 0x0000, 0x007f, MRA_RAM },
+	{ 0x0080, 0x0080, soundlatch_r },
 	{ 0xf800, 0xffff, MRA_ROM },
 MEMORY_END
 
@@ -222,14 +215,14 @@ static MEMORY_WRITE_START( sound_writemem )
 	{ 0x0000, 0x007f, MWA_RAM },
 	{ 0xf800, 0xffff, MWA_ROM },
 MEMORY_END
-#endif
+
 
 
 INPUT_PORTS_START( spiders )
     PORT_START      /* IN0 */
     PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 )
-    PORT_BITX(0x02, 0x00, IP_ACTIVE_HIGH , "PS2 (Operator coin)", KEYCODE_4, IP_JOY_NONE )
-    PORT_BITX(0x04, 0x00, IP_ACTIVE_HIGH , "PS3 (Coin Counter)", KEYCODE_F1, IP_JOY_NONE )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_SERVICE1 )	/* PIA0 PA1 */
+	PORT_BITX(0x04, IP_ACTIVE_HIGH, IPT_SERVICE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE )	/* PIA0 PA2 */
     PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_BUTTON1 )
     PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_START1 )
     PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_START2 )
@@ -309,56 +302,33 @@ INPUT_PORTS_END
 
 
 
-/* The bitmap RAM is directly mapped to colors, no PROM. */
-static unsigned char palette[] =
-{
-	0x00,0x00,0x00,
-	0xff,0x00,0x00,
-	0x00,0xff,0x00,
-	0xff,0xff,0x00,
-	0x00,0x00,0xff,
-	0xff,0x00,0xff,
-	0x00,0xff,0xff,
-	0xff,0xff,0xff,
-};
-static void init_palette(unsigned char *game_palette, unsigned short *game_colortable,const unsigned char *color_prom)
-{
-	memcpy(game_palette,palette,sizeof(palette));
-}
-
-
-
 static const struct MachineDriver machine_driver_spiders =
 {
-        /* basic machine hardware */
-    {
-        {
-            CPU_M6809,
-            2800000,
-            readmem,writemem,0,0,
-            0,0,                     /* Vblank Int */
-            spiders_timed_irq , 25   /* Timed Int  */
-        },
-//        {
-//            CPU_M6802 | CPU_AUDIO_CPU,
-//            3000000/4,
-//            1,
-//            sound_readmem,sound_writemem,0,0,
-//            0,0,
-//            0,0
-//        }
+	/* basic machine hardware */
+	{
+		{
+			CPU_M6809,
+			2800000,
+			readmem,writemem,0,0,
+			ignore_interrupt,0,      /* Vblank Int */
+			spiders_timed_irq , 25   /* Timed Int  */
+		},
+		{
+			CPU_M6802 | CPU_AUDIO_CPU,
+			3000000/4,
+			sound_readmem,sound_writemem,0,0,
+			ignore_interrupt,0,
+		}
 	},
-	60,
-	DEFAULT_REAL_60HZ_VBLANK_DURATION,
-	10,     /* 10 CPU slices per frame - enough for the sound CPU to read all commands */
+	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
+	1,     /* CPU slices per frame */
 	spiders_init_machine,
 
 	/* video hardware */
-	32*8, 28*8,                         /* Width/Height         */
-	{ 0*8, 32*8-1, 0*8, 28*8-1 },       /* Visible area         */
+	32*8, 28*8, { 0*8, 32*8-1, 0*8, 28*8-1 },       /* Visible area         */
 	0,
-	sizeof(palette) / sizeof(palette[0]) / 3, 0,
-	init_palette,
+	8, 0,
+	nyny_init_palette,
 
 	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY,                  /* Video attributes     */
 	0,                                  /* Video initialisation */

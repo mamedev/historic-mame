@@ -94,6 +94,8 @@ void toaplan1_vh_stop(void);
 int  rallybik_vh_start(void);
 void rallybik_vh_stop(void);
 void toaplan1_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void zerowing_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void demonwld_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 void rallybik_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 extern data16_t *toaplan1_colorram1;
@@ -1468,7 +1470,7 @@ static const struct MachineDriver machine_driver_hellfire =
 	toaplan1_eof_callback,
 	toaplan1_vh_start,
 	toaplan1_vh_stop,
-	toaplan1_vh_screenrefresh,
+	zerowing_vh_screenrefresh,
 
 	/* sound hardware */
 	0,0,0,0,
@@ -1511,7 +1513,7 @@ static const struct MachineDriver machine_driver_zerowing =
 	toaplan1_eof_callback,
 	toaplan1_vh_start,
 	toaplan1_vh_stop,
-	toaplan1_vh_screenrefresh,
+	zerowing_vh_screenrefresh,
 
 	/* sound hardware */
 	0,0,0,0,
@@ -1560,7 +1562,7 @@ static const struct MachineDriver machine_driver_demonwld =
 	toaplan1_eof_callback,
 	toaplan1_vh_start,
 	toaplan1_vh_stop,
-	toaplan1_vh_screenrefresh,
+	demonwld_vh_screenrefresh,
 
 	/* sound hardware */
 	0,0,0,0,
@@ -1597,7 +1599,7 @@ static const struct MachineDriver machine_driver_samesame =
 	samesame_eof_callback,
 	toaplan1_vh_start,
 	toaplan1_vh_stop,
-	toaplan1_vh_screenrefresh,
+	zerowing_vh_screenrefresh,
 
 	/* sound hardware */
 	0,0,0,0,
@@ -1677,7 +1679,7 @@ static const struct MachineDriver machine_driver_vimana =
 	toaplan1_eof_callback,
 	toaplan1_vh_start,
 	toaplan1_vh_stop,
-	toaplan1_vh_screenrefresh,
+	zerowing_vh_screenrefresh,
 
 	/* sound hardware */
 	0,0,0,0,

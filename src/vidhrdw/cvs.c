@@ -44,7 +44,6 @@ static int    scroll_reg = 0;
 static int    stars_scroll=0;
 
 int  s2650_get_flag(void);
-int  s2650_get_pc(void);
 
 unsigned char *dirty_character;
 unsigned char *character_1_ram;
@@ -136,7 +135,7 @@ void cvs_vh_convert_color_prom(unsigned char *palette, unsigned short *colortabl
 
 WRITE_HANDLER( cvs_video_fx_w )
 {
-	logerror("%4x : Data Port = %2x\n",s2650_get_pc(),data);
+	logerror("%4x : Data Port = %2x\n",activecpu_get_pc(),data);
 
     /* Unimplemented */
 

@@ -299,7 +299,7 @@ void qix_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 	/* draw the bitmap */
 	for (y = 0; y < 256; y++)
 	{
-		UINT32 *pens = &Machine->pens[(palette_cache[y] & 3) * 256];
+		pen_t *pens = &Machine->pens[(palette_cache[y] & 3) * 256];
 		draw_scanline8(bitmap, 0, y, 256, &videoram_cache[y * 256], pens, -1);
 	}
 }

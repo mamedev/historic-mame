@@ -576,13 +576,13 @@ struct MachineDriver machine_driver_fromanc2 =
 		},
 		{
 			CPU_Z80,
-			32000000/4,		/* 8.00 Mhz ? */
+			32000000/4,		/* 8.00 MHz ? */
 			fromanc2_readmem_sub, fromanc2_writemem_sub, fromanc2_readport_sub, fromanc2_writeport_sub,
 			ignore_interrupt, 1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
-			32000000/4,		/* 8.00 Mhz ? */
+			32000000/4,		/* 8.00 MHz ? */
 			fromanc2_readmem_sound, fromanc2_writemem_sound, fromanc2_readport_sound, fromanc2_writeport_sound,
 			ignore_interrupt, 0
 		}
@@ -627,13 +627,13 @@ struct MachineDriver machine_driver_fromancr =
 		},
 		{
 			CPU_Z80,
-			32000000/4,		/* 8.00 Mhz ? */
+			32000000/4,		/* 8.00 MHz ? */
 			fromanc2_readmem_sub, fromanc2_writemem_sub, fromanc2_readport_sub, fromanc2_writeport_sub,
 			ignore_interrupt, 1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
-			32000000/4,		/* 8.00 Mhz ? */
+			32000000/4,		/* 8.00 MHz ? */
 			fromanc2_readmem_sound, fromanc2_writemem_sound, fromanc2_readport_sound, fromanc2_writeport_sound,
 			ignore_interrupt, 0
 		}

@@ -2097,46 +2097,15 @@ void z180_set_cycle_table (int which, void *new_table)
 }
 
 /****************************************************************************
- * Return program counter
- ****************************************************************************/
-unsigned z180_get_pc (void)
-{
-	return _PCD;
-}
-
-/****************************************************************************
- * Set program counter
- ****************************************************************************/
-void z180_set_pc (unsigned val)
-{
-	_PC = val;
-	z180_change_pc(_PCD);
-}
-
-/****************************************************************************
- * Return stack pointer
- ****************************************************************************/
-unsigned z180_get_sp (void)
-{
-	return _SPD;
-}
-
-/****************************************************************************
- * Set stack pointer
- ****************************************************************************/
-void z180_set_sp (unsigned val)
-{
-	_SP = val;
-}
-
-/****************************************************************************
  * Return a specific register
  ****************************************************************************/
 unsigned z180_get_reg (int regnum)
 {
 	switch( regnum )
 	{
+		case REG_PC: return _PCD;
 		case Z180_PC: return Z180.PC.w.l;
+		case REG_SP: return _SPD;
 		case Z180_SP: return Z180.SP.w.l;
 		case Z180_AF: return Z180.AF.w.l;
 		case Z180_BC: return Z180.BC.w.l;
@@ -2246,7 +2215,9 @@ void z180_set_reg (int regnum, unsigned val)
 {
 	switch( regnum )
 	{
+		case REG_PC: _PC = val; z180_change_pc(_PCD); break;
 		case Z180_PC: Z180.PC.w.l = val; break;
+		case REG_SP: _SP = val; break;
 		case Z180_SP: Z180.SP.w.l = val; break;
 		case Z180_AF: Z180.AF.w.l = val; break;
 		case Z180_BC: Z180.BC.w.l = val; break;
@@ -2264,7 +2235,7 @@ void z180_set_reg (int regnum, unsigned val)
 		case Z180_IFF1: Z180.IFF1 = val; break;
 		case Z180_IFF2: Z180.IFF2 = val; break;
 		case Z180_HALT: Z180.HALT = val; break;
-        case Z180_NMI_STATE: z180_set_nmi_line(val); break;
+        case Z180_NMI_STATE: z180_set_irq_line(IRQ_LINE_NMI,val); break;
 		case Z180_INT0_STATE: z180_set_irq_line(0,val); break;
 		case Z180_INT1_STATE: z180_set_irq_line(1,val); break;
 		case Z180_INT2_STATE: z180_set_irq_line(2,val); break;
@@ -2361,77 +2332,76 @@ WRITE_HANDLER( z180_internal_w )
 }
 
 /****************************************************************************
- * Set NMI line state
- ****************************************************************************/
-void z180_set_nmi_line(int state)
-{
-	if( Z180.nmi_state == state ) return;
-
-	LOG(("Z180 #%d set_nmi_line %d\n", cpu_getactivecpu(), state));
-	Z180.nmi_state = state;
-	if( state == CLEAR_LINE ) return;
-
-	LOG(("Z180 #%d take NMI\n", cpu_getactivecpu()));
-	_PPC = -1;			/* there isn't a valid previous program counter */
-	LEAVE_HALT; 		/* Check if processor was halted */
-
-	/* disable DMA transfers!! */
-	IO_DSTAT &= ~Z180_DSTAT_DME;
-
-	_IFF1 = 0;
-	PUSH( PC );
-	_PCD = 0x0066;
-	Z180.extra_cycles += 11;
-}
-
-/****************************************************************************
  * Set IRQ line state
  ****************************************************************************/
 void z180_set_irq_line(int irqline, int state)
 {
-	LOG(("Z180 #%d set_irq_line %d\n",cpu_getactivecpu() , state));
-	Z180.irq_state[irqline] = state;
-	if( state == CLEAR_LINE ) return;
-
-	if( irqline == 0 && Z180.irq_max )
+	if (irqline == IRQ_LINE_NMI)
 	{
-		int daisychain, device, int_state;
-		daisychain = (*Z180.irq_callback)(irqline);
-		device = daisychain >> 8;
-		int_state = daisychain & 0xff;
-		LOG(("Z180 #%d daisy chain $%04x -> device %d, state $%02x",cpu_getactivecpu(), daisychain, device, int_state));
+		if( Z180.nmi_state == state ) return;
 
-		if( Z180.int_state[device] != int_state )
-		{
-			LOG((" change\n"));
-			/* set new interrupt status */
-			Z180.int_state[device] = int_state;
-			/* check interrupt status */
-			Z180.request_irq = Z180.service_irq = -1;
+		LOG(("Z180 #%d set_irq_line (NMI) %d\n", cpu_getactivecpu(), state));
+		Z180.nmi_state = state;
+		if( state == CLEAR_LINE ) return;
 
-			/* search higher IRQ or IEO */
-			for( device = 0 ; device < Z180.irq_max ; device ++ )
-			{
-				/* IEO = disable ? */
-				if( Z180.int_state[device] & Z80_INT_IEO )
-				{
-					Z180.request_irq = -1;		 /* if IEO is disable , masking lower IRQ */
-					Z180.service_irq = device;	 /* set highest interrupt service device */
-				}
-				/* IRQ = request ? */
-				if( Z180.int_state[device] & Z80_INT_REQ )
-					Z180.request_irq = device;
-			}
-			LOG(("Z180 #%d daisy chain service_irq $%02x, request_irq $%02x\n", cpu_getactivecpu(), Z180.service_irq, Z180.request_irq));
-			if( Z180.request_irq < 0 ) return;
-		}
-		else
-		{
-			LOG((" no change\n"));
-			return;
-		}
+		LOG(("Z180 #%d take NMI\n", cpu_getactivecpu()));
+		_PPC = -1;			/* there isn't a valid previous program counter */
+		LEAVE_HALT; 		/* Check if processor was halted */
+
+		/* disable DMA transfers!! */
+		IO_DSTAT &= ~Z180_DSTAT_DME;
+
+		_IFF1 = 0;
+		PUSH( PC );
+		_PCD = 0x0066;
+		Z180.extra_cycles += 11;
 	}
-	take_interrupt(irqline);
+	else
+	{
+		LOG(("Z180 #%d set_irq_line %d\n",cpu_getactivecpu() , state));
+		Z180.irq_state[irqline] = state;
+		if( state == CLEAR_LINE ) return;
+
+		if( irqline == 0 && Z180.irq_max )
+		{
+			int daisychain, device, int_state;
+			daisychain = (*Z180.irq_callback)(irqline);
+			device = daisychain >> 8;
+			int_state = daisychain & 0xff;
+			LOG(("Z180 #%d daisy chain $%04x -> device %d, state $%02x",cpu_getactivecpu(), daisychain, device, int_state));
+
+			if( Z180.int_state[device] != int_state )
+			{
+				LOG((" change\n"));
+				/* set new interrupt status */
+				Z180.int_state[device] = int_state;
+				/* check interrupt status */
+				Z180.request_irq = Z180.service_irq = -1;
+
+				/* search higher IRQ or IEO */
+				for( device = 0 ; device < Z180.irq_max ; device ++ )
+				{
+					/* IEO = disable ? */
+					if( Z180.int_state[device] & Z80_INT_IEO )
+					{
+						Z180.request_irq = -1;		 /* if IEO is disable , masking lower IRQ */
+						Z180.service_irq = device;	 /* set highest interrupt service device */
+					}
+					/* IRQ = request ? */
+					if( Z180.int_state[device] & Z80_INT_REQ )
+						Z180.request_irq = device;
+				}
+				LOG(("Z180 #%d daisy chain service_irq $%02x, request_irq $%02x\n", cpu_getactivecpu(), Z180.service_irq, Z180.request_irq));
+				if( Z180.request_irq < 0 ) return;
+			}
+			else
+			{
+				LOG((" no change\n"));
+				return;
+			}
+		}
+		take_interrupt(irqline);
+	}
 }
 
 /****************************************************************************

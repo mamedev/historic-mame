@@ -4,12 +4,12 @@ Taito B System
 
 driver by Jarek Burczynski, with help from:
 Nicola Salmoria, Brian A. Troha, Stephane Humbert, Gerardo Oporto Jorrin, David Graves
-
 heavily based on Taito F2 System driver by Brad Oliver, Andrew Prime
 
 The board uses TC0220IOC, TC0260DAR, TC0180VCU, and TC0140SYT.
 Sonic Blast Man uses TC0510NIO instead of TC0220IOC.
 
+The palette resolution is 12 bits in some games and 15 bits in others.
 
 TODO:
 - hitice: ice trails might not be 100% correct (I'm doubling them horizontally)
@@ -220,14 +220,14 @@ static int masterw_interrupt(void)
 	return MC68000_IRQ_5;
 }
 
-void silentd_interrupt4(int x)
+void silentd_interrupt6(int x)
 {
 	cpu_cause_interrupt(0,MC68000_IRQ_6);
 }
 
 static int silentd_interrupt(void)
 {
-	timer_set(TIME_IN_CYCLES(5000,0),0,silentd_interrupt4);
+	timer_set(TIME_IN_CYCLES(5000,0),0,silentd_interrupt6);
 	return MC68000_IRQ_4;
 }
 
@@ -242,14 +242,14 @@ static int selfeena_interrupt(void)
 	return MC68000_IRQ_6;
 }
 
-void sbm_interrupt6(int x)//4
+void sbm_interrupt5(int x)//4
 {
 	cpu_cause_interrupt(0,MC68000_IRQ_5);
 }
 
 static int sbm_interrupt(void)//5
 {
-	timer_set(TIME_IN_CYCLES(10000,0),0,sbm_interrupt6);
+	timer_set(TIME_IN_CYCLES(10000,0),0,sbm_interrupt5);
 	return MC68000_IRQ_4;
 }
 
@@ -420,128 +420,140 @@ static READ16_HANDLER( pbobble_input_bypass_r )
 
 
 
+#define TC0180VCU_MEMR( ADDR )											\
+	{ ADDR+0x00000, ADDR+0x0ffff, TC0180VCU_word_r },					\
+	{ ADDR+0x10000, ADDR+0x1197f, MRA16_RAM },							\
+	{ ADDR+0x11980, ADDR+0x11fff, MRA16_RAM },							\
+	{ ADDR+0x13800, ADDR+0x13fff, MRA16_RAM },							\
+	{ ADDR+0x18000, ADDR+0x1801f, taitob_v_control_r },					\
+	{ ADDR+0x40000, ADDR+0x7ffff, TC0180VCU_framebuffer_word_r },
+
+#define TC0180VCU_MEMW( ADDR )											\
+	{ ADDR+0x00000, ADDR+0x0ffff, TC0180VCU_word_w, &TC0180VCU_ram },	\
+	{ ADDR+0x10000, ADDR+0x1197f, MWA16_RAM, &taitob_spriteram },		\
+	{ ADDR+0x11980, ADDR+0x137ff, MWA16_RAM },							\
+	{ ADDR+0x13800, ADDR+0x13fff, MWA16_RAM, &taitob_scroll },			\
+	{ ADDR+0x18000, ADDR+0x1801f, taitob_v_control_w },					\
+	{ ADDR+0x40000, ADDR+0x7ffff, TC0180VCU_framebuffer_word_w },
+
 
 static MEMORY_READ16_START( rastsag2_readmem )
 	{ 0x000000, 0x07ffff, MRA16_ROM },
-	{ 0x200000, 0x201fff, MRA16_RAM },			/* palette */
-	{ 0x400000, 0x40ffff, TC0180VCU_word_r },
-	{ 0x410000, 0x41197f, MRA16_RAM },
-	{ 0x411980, 0x411fff, MRA16_RAM },
-	{ 0x413800, 0x413bff, MRA16_RAM },
-	{ 0x413c00, 0x413fff, MRA16_RAM },
-	{ 0x418000, 0x41801f, taitob_v_control_r },
-	{ 0x440000, 0x47ffff, TC0180VCU_framebuffer_word_r },
 	{ 0x600000, 0x607fff, MRA16_RAM },			/* Main RAM */
+
+	{ 0x200000, 0x201fff, MRA16_RAM },			/* palette */
+
+	TC0180VCU_MEMR( 0x400000 )
+
+	{ 0xa00000, 0xa0000f, TC0220IOC_halfword_byteswap_r },
+
 	{ 0x800000, 0x800001, MRA16_NOP },
 	{ 0x800002, 0x800003, taitosound_comm16_msb_r },
-	{ 0xa00000, 0xa0000f, TC0220IOC_halfword_byteswap_r },
 MEMORY_END
 
 static MEMORY_WRITE16_START( rastsag2_writemem )
 	{ 0x000000, 0x07ffff, MWA16_ROM },
-	{ 0x200000, 0x201fff, paletteram16_RRRRGGGGBBBBxxxx_word_w, &paletteram16 },
-	{ 0x400000, 0x40ffff, TC0180VCU_word_w, &TC0180VCU_ram },
-	{ 0x410000, 0x41197f, MWA16_RAM, &taitob_spriteram },
-	{ 0x411980, 0x411fff, MWA16_RAM }, /*ashura clears this area only*/
-	{ 0x413800, 0x413fff, MWA16_RAM, &taitob_scroll },
-	{ 0x418000, 0x41801f, taitob_v_control_w },
-	{ 0x440000, 0x47ffff, TC0180VCU_framebuffer_word_w },
 	{ 0x600000, 0x607fff, MWA16_RAM },	/* Main RAM */ /*ashura up to 603fff only*/
+
+	{ 0x200000, 0x201fff, paletteram16_RRRRGGGGBBBBxxxx_word_w, &paletteram16 },
+
+	TC0180VCU_MEMW( 0x400000 )
+
+	{ 0xa00000, 0xa0000f, TC0220IOC_halfword_byteswap_w },
+
 	{ 0x800000, 0x800001, taitosound_port16_msb_w },
 	{ 0x800002, 0x800003, taitosound_comm16_msb_w },
-	{ 0xa00000, 0xa0000f, TC0220IOC_halfword_byteswap_w },
 MEMORY_END
 
 
 static MEMORY_READ16_START( crimec_readmem )
 	{ 0x000000, 0x07ffff, MRA16_ROM },
+	{ 0xa00000, 0xa0ffff, MRA16_RAM },	/* Main RAM */
+
+	{ 0x800000, 0x801fff, MRA16_RAM },
+
+	TC0180VCU_MEMR( 0x400000 )
+
 	{ 0x200000, 0x20000f, TC0220IOC_halfword_byteswap_r },
-	{ 0x400000, 0x40ffff, TC0180VCU_word_r },
-	{ 0x410000, 0x41197f, MRA16_RAM },
-	{ 0x413800, 0x413bff, MRA16_RAM },
-	{ 0x413c00, 0x413fff, MRA16_RAM },
-	{ 0x418000, 0x41801f, taitob_v_control_r },
-	{ 0x440000, 0x47ffff, TC0180VCU_framebuffer_word_r },
+
 	{ 0x600000, 0x600001, MRA16_NOP },
 	{ 0x600002, 0x600003, taitosound_comm16_msb_r },
-	{ 0x800000, 0x801fff, MRA16_RAM },
-	{ 0xa00000, 0xa0ffff, MRA16_RAM },	/* Main RAM */
 MEMORY_END
 
 static MEMORY_WRITE16_START( crimec_writemem )
 	{ 0x000000, 0x07ffff, MWA16_ROM },
+	{ 0xa00000, 0xa0ffff, MWA16_RAM },	/* Main RAM */
+
+	{ 0x800000, 0x801fff, paletteram16_RRRRGGGGBBBBxxxx_word_w, &paletteram16 },
+
+	TC0180VCU_MEMW( 0x400000 )
+
 	{ 0x200000, 0x20000f, TC0220IOC_halfword_byteswap_w },
-	{ 0x400000, 0x40ffff, TC0180VCU_word_w, &TC0180VCU_ram },
-	{ 0x410000, 0x41197f, MWA16_RAM, &taitob_spriteram },
-	{ 0x413800, 0x413fff, MWA16_RAM, &taitob_scroll },
-	{ 0x418000, 0x41801f, taitob_v_control_w },
-	{ 0x440000, 0x47ffff, TC0180VCU_framebuffer_word_w },
+
 	{ 0x600000, 0x600001, taitosound_port16_msb_w },
 	{ 0x600002, 0x600003, taitosound_comm16_msb_w },
-	{ 0x800000, 0x801fff, paletteram16_RRRRGGGGBBBBxxxx_word_w, &paletteram16 },
-	{ 0xa00000, 0xa0ffff, MWA16_RAM },	/* Main RAM */
 MEMORY_END
 
 
 static MEMORY_READ16_START( tetrist_readmem )
 	{ 0x000000, 0x07ffff, MRA16_ROM },
+	{ 0x800000, 0x807fff, MRA16_RAM },	/* Main RAM */
+
+	{ 0xa00000, 0xa01fff, MRA16_RAM }, /*palette*/
+
+	TC0180VCU_MEMR( 0x400000 )
+
+	{ 0x600000, 0x60000f, TC0220IOC_halfword_byteswap_r },
+
 	{ 0x200000, 0x200001, MRA16_NOP },
 	{ 0x200002, 0x200003, taitosound_comm16_msb_r },
-	{ 0x400000, 0x40ffff, TC0180VCU_word_r },
-	{ 0x410000, 0x41197f, MRA16_RAM },
-	{ 0x413800, 0x413bff, MRA16_RAM },
-	{ 0x413c00, 0x413fff, MRA16_RAM },
-	{ 0x418000, 0x41801f, taitob_v_control_r },
-	{ 0x440000, 0x47ffff, TC0180VCU_framebuffer_word_r },
-	{ 0x600000, 0x60000f, TC0220IOC_halfword_byteswap_r },
-	{ 0x800000, 0x807fff, MRA16_RAM },	/* Main RAM */
-	{ 0xa00000, 0xa01fff, MRA16_RAM }, /*palette*/
 MEMORY_END
 
 static MEMORY_WRITE16_START( tetrist_writemem )
 	{ 0x000000, 0x07ffff, MWA16_ROM },
+	{ 0x800000, 0x807fff, MWA16_RAM },	/* Main RAM */
+
+	{ 0xa00000, 0xa01fff, paletteram16_RRRRGGGGBBBBRGBx_word_w, &paletteram16 },
+
+	TC0180VCU_MEMW( 0x400000 )
+
+	{ 0x600000, 0x60000f, TC0220IOC_halfword_byteswap_w },
+
 	{ 0x200000, 0x200001, taitosound_port16_msb_w },
 	{ 0x200002, 0x200003, taitosound_comm16_msb_w },
-	{ 0x400000, 0x40ffff, TC0180VCU_word_w, &TC0180VCU_ram },
-	{ 0x410000, 0x41197f, MWA16_RAM, &taitob_spriteram },
-	{ 0x413800, 0x413fff, MWA16_RAM, &taitob_scroll },
-	{ 0x418000, 0x41801f, taitob_v_control_w },
-	{ 0x440000, 0x47ffff, TC0180VCU_framebuffer_word_w },
-	{ 0x600000, 0x60000f, TC0220IOC_halfword_byteswap_w },
-	{ 0x800000, 0x807fff, MWA16_RAM },	/* Main RAM */
-	{ 0xa00000, 0xa01fff, paletteram16_RRRRGGGGBBBBxxxx_word_w, &paletteram16 },
 MEMORY_END
 
 
 static MEMORY_READ16_START( hitice_readmem )
-	{ 0x000000, 0x05ffff, MRA16_ROM },
-	{ 0x400000, 0x40ffff, TC0180VCU_word_r },
-	{ 0x410000, 0x411fff, MRA16_RAM },
-	{ 0x413800, 0x413bff, MRA16_RAM },
-	{ 0x413c00, 0x413fff, MRA16_RAM },
-	{ 0x418000, 0x41801f, taitob_v_control_r },
-	{ 0x440000, 0x47ffff, TC0180VCU_framebuffer_word_r },
+	{ 0x000000, 0x07ffff, MRA16_ROM },
+	{ 0x800000, 0x803fff, MRA16_RAM },	/* Main RAM */
+
+	{ 0xa00000, 0xa01fff, MRA16_RAM },
+
+	TC0180VCU_MEMR( 0x400000 )
+
 	{ 0x600000, 0x60000f, TC0220IOC_halfword_byteswap_r },
 	{ 0x610000, 0x610001, input_port_5_word_r },		/* player 3,4 inputs*/
+
 	{ 0x700000, 0x700001, MRA16_NOP },
 	{ 0x700002, 0x700003, taitosound_comm16_msb_r },
-	{ 0x800000, 0x803fff, MRA16_RAM },	/* Main RAM */
-	{ 0xa00000, 0xa01fff, MRA16_RAM },
+
 	{ 0xb00000, 0xb7ffff, MRA16_RAM },
 MEMORY_END
 
 static MEMORY_WRITE16_START( hitice_writemem )
-	{ 0x000000, 0x05ffff, MWA16_ROM },
-	{ 0x400000, 0x40ffff, TC0180VCU_word_w, &TC0180VCU_ram },
-	{ 0x410000, 0x411fff, MWA16_RAM, &taitob_spriteram },
-	{ 0x413800, 0x413fff, MWA16_RAM, &taitob_scroll },
-	{ 0x418000, 0x41801f, taitob_v_control_w },
-	{ 0x440000, 0x47ffff, TC0180VCU_framebuffer_word_w },
+	{ 0x000000, 0x07ffff, MWA16_ROM },
+	{ 0x800000, 0x803fff, MWA16_RAM },	/* Main RAM */
+
+	{ 0xa00000, 0xa01fff, paletteram16_RRRRGGGGBBBBxxxx_word_w, &paletteram16 },
+
+	TC0180VCU_MEMW( 0x400000 )
+
 	{ 0x600000, 0x60000f, TC0220IOC_halfword_byteswap_w },
+
 	{ 0x700000, 0x700001, taitosound_port16_msb_w },
 	{ 0x700002, 0x700003, taitosound_comm16_msb_w },
-	{ 0x800000, 0x803fff, MWA16_RAM },	/* Main RAM */
-	{ 0xa00000, 0xa01fff, paletteram16_RRRRGGGGBBBBxxxx_word_w, &paletteram16 },
+
 	{ 0xb00000, 0xb7ffff, hitice_pixelram_w, &taitob_pixelram },
 //	{ 0xbffff0, 0xbffff1, ???
 	{ 0xbffff2, 0xbffff5, hitice_pixel_scroll_w },
@@ -551,14 +563,12 @@ MEMORY_END
 
 static MEMORY_READ16_START( rambo3_readmem )
 	{ 0x000000, 0x07ffff, MRA16_ROM },
-	{ 0x200000, 0x200001, MRA16_NOP },
-	{ 0x200002, 0x200003, taitosound_comm16_msb_r },
-	{ 0x400000, 0x40ffff, TC0180VCU_word_r },
-	{ 0x410000, 0x411fff /*97f*/, MRA16_RAM },
-	{ 0x413800, 0x413bff, MRA16_RAM },
-	{ 0x413c00, 0x413fff, MRA16_RAM },
-	{ 0x418000, 0x41801f, taitob_v_control_r },
-	{ 0x440000, 0x47ffff, TC0180VCU_framebuffer_word_r },
+	{ 0x800000, 0x803fff, MRA16_RAM },	/* Main RAM */
+
+	{ 0xa00000, 0xa01fff, MRA16_RAM },
+
+	TC0180VCU_MEMR( 0x400000 )
+
 	{ 0x600000, 0x60000f, TC0220IOC_halfword_byteswap_r },
 	{ 0x600010, 0x600011, tracky1_lo_r }, /*player 1*/
 	{ 0x600012, 0x600013, tracky1_hi_r },
@@ -568,21 +578,23 @@ static MEMORY_READ16_START( rambo3_readmem )
 	{ 0x60001a, 0x60001b, tracky2_hi_r },
 	{ 0x60001c, 0x60001d, trackx2_lo_r },
 	{ 0x60001e, 0x60001f, trackx2_hi_r },
-	{ 0x800000, 0x803fff, MRA16_RAM },	/* Main RAM */
-	{ 0xa00000, 0xa01fff, MRA16_RAM },
+
+	{ 0x200000, 0x200001, MRA16_NOP },
+	{ 0x200002, 0x200003, taitosound_comm16_msb_r },
 MEMORY_END
 
 static MEMORY_WRITE16_START( rambo3_writemem )
 	{ 0x000000, 0x07ffff, MWA16_ROM },
+	{ 0x800000, 0x803fff, MWA16_RAM },	/* Main RAM */
+
+	{ 0xa00000, 0xa01fff, paletteram16_RRRRGGGGBBBBxxxx_word_w, &paletteram16 },
+
+	TC0180VCU_MEMW( 0x400000 )
+
+	{ 0x600000, 0x60000f, TC0220IOC_halfword_byteswap_w },
+
 	{ 0x200000, 0x200001, taitosound_port16_msb_w },
 	{ 0x200002, 0x200003, taitosound_comm16_msb_w },
-	{ 0x400000, 0x40ffff, TC0180VCU_word_w, &TC0180VCU_ram },
-	{ 0x410000, 0x411fff /*97f*/, MWA16_RAM, &taitob_spriteram },
-	{ 0x413800, 0x413fff, MWA16_RAM, &taitob_scroll },
-	{ 0x418000, 0x41801f, taitob_v_control_w },
-	{ 0x600000, 0x60000f, TC0220IOC_halfword_byteswap_w },
-	{ 0x800000, 0x803fff, MWA16_RAM },	/* Main RAM */
-	{ 0xa00000, 0xa01fff, paletteram16_RRRRGGGGBBBBxxxx_word_w, &paletteram16 },
 MEMORY_END
 
 
@@ -592,18 +604,12 @@ static MEMORY_READ16_START( pbobble_readmem )
 
 	{ 0x800000, 0x801fff, MRA16_RAM },
 
-	{ 0x400000, 0x40ffff, TC0180VCU_word_r },
-	{ 0x410000, 0x41197f, MRA16_RAM },
-	{ 0x413800, 0x413bff, MRA16_RAM },
-	{ 0x413c00, 0x413fff, MRA16_RAM },
-	{ 0x418000, 0x41801f, taitob_v_control_r },
-	{ 0x440000, 0x47ffff, TC0180VCU_framebuffer_word_r },
+	TC0180VCU_MEMR( 0x400000 )
 
 	{ 0x500000, 0x50000f, pbobble_input_bypass_r },
 	{ 0x500024, 0x500025, input_port_5_word_r },	/* shown in service mode, game omits to read it */
 	{ 0x500026, 0x500027, eep_latch_r },	/* not read by this game */
 	{ 0x50002e, 0x50002f, input_port_6_word_r },	/* shown in service mode, game omits to read it */
-
 
 	{ 0x700000, 0x700001, MRA16_NOP },
 	{ 0x700002, 0x700003, taitosound_comm16_msb_r },
@@ -615,18 +621,15 @@ static MEMORY_WRITE16_START( pbobble_writemem )
 
 	{ 0x800000, 0x801fff, paletteram16_RRRRGGGGBBBBRGBx_word_w, &paletteram16 },
 
-	{ 0x400000, 0x40ffff, TC0180VCU_word_w, &TC0180VCU_ram },
-	{ 0x410000, 0x41197f, MWA16_RAM, &taitob_spriteram },
-	{ 0x413800, 0x413fff, MWA16_RAM, &taitob_scroll },
-	{ 0x418000, 0x41801f, taitob_v_control_w },
+	TC0180VCU_MEMW( 0x400000 )
 
 	{ 0x500000, 0x50000f, TC0640FIO_halfword_byteswap_w },
 	{ 0x500026, 0x500027, eeprom_w },
 	{ 0x500028, 0x500029, player_34_coin_ctrl_w },	/* simply locks coins 3&4 out */
 
-	{ 0x600000, 0x600003, gain_control_w },
 	{ 0x700000, 0x700001, taitosound_port16_msb_w },
 	{ 0x700002, 0x700003, taitosound_comm16_msb_w },
+	{ 0x600000, 0x600003, gain_control_w },
 MEMORY_END
 
 static MEMORY_READ16_START( spacedx_readmem )
@@ -635,12 +638,7 @@ static MEMORY_READ16_START( spacedx_readmem )
 
 	{ 0x800000, 0x801fff, MRA16_RAM },
 
-	{ 0x400000, 0x40ffff, TC0180VCU_word_r },
-	{ 0x410000, 0x41197f, MRA16_RAM },
-	{ 0x413800, 0x413bff, MRA16_RAM },
-	{ 0x413c00, 0x413fff, MRA16_RAM },
-	{ 0x418000, 0x41801f, taitob_v_control_r },
-	{ 0x440000, 0x47ffff, TC0180VCU_framebuffer_word_r },
+	TC0180VCU_MEMR( 0x400000 )
 
 	{ 0x500000, 0x50000f, pbobble_input_bypass_r },
 	{ 0x500024, 0x500025, input_port_5_word_r },
@@ -657,98 +655,123 @@ static MEMORY_WRITE16_START( spacedx_writemem )
 
 	{ 0x800000, 0x801fff, paletteram16_RRRRGGGGBBBBRGBx_word_w, &paletteram16 },
 
-	{ 0x400000, 0x40ffff, TC0180VCU_word_w, &TC0180VCU_ram },
-	{ 0x410000, 0x41197f, MWA16_RAM, &taitob_spriteram },
-	{ 0x413800, 0x413fff, MWA16_RAM, &taitob_scroll },
-	{ 0x418000, 0x41801f, taitob_v_control_w },
-	{ 0x440000, 0x47ffff, TC0180VCU_framebuffer_word_w },
+	TC0180VCU_MEMW( 0x400000 )
 
 	{ 0x500000, 0x50000f, TC0640FIO_halfword_byteswap_w },
 	{ 0x500026, 0x500027, eeprom_w },
 	{ 0x500028, 0x500029, player_34_coin_ctrl_w },	/* simply locks coins 3&4 out */
 
-	{ 0x600000, 0x600003, gain_control_w },
 	{ 0x700000, 0x700001, taitosound_port16_msb_w },
 	{ 0x700002, 0x700003, taitosound_comm16_msb_w },
+	{ 0x600000, 0x600003, gain_control_w },
+MEMORY_END
+
+static MEMORY_READ16_START( spacedxo_readmem )
+	{ 0x000000, 0x07ffff, MRA16_ROM },
+	{ 0x400000, 0x40ffff, MRA16_RAM },	/* Main RAM */
+
+	{ 0x300000, 0x303fff, MRA16_RAM },
+
+	TC0180VCU_MEMR( 0x500000 )
+
+	{ 0x200000, 0x20000f, TC0220IOC_halfword_r },
+	{ 0x210000, 0x210001, input_port_5_word_r },
+	{ 0x220000, 0x220001, input_port_6_word_r },
+	{ 0x230000, 0x230001, input_port_7_word_r },
+
+	{ 0x100000, 0x100001, MRA16_NOP },
+	{ 0x100002, 0x100003, taitosound_comm16_msb_r },
+MEMORY_END
+
+static MEMORY_WRITE16_START( spacedxo_writemem )
+	{ 0x000000, 0x07ffff, MWA16_ROM },
+	{ 0x400000, 0x40ffff, MWA16_RAM },	/* Main RAM */
+
+	{ 0x300000, 0x301fff, paletteram16_RRRRGGGGBBBBRGBx_word_w, &paletteram16 },
+
+	TC0180VCU_MEMW( 0x500000 )
+
+	{ 0x200000, 0x20000f, TC0220IOC_halfword_w },
+
+	{ 0x100000, 0x100001, taitosound_port16_msb_w },
+	{ 0x100002, 0x100003, taitosound_comm16_msb_w },
 MEMORY_END
 
 static MEMORY_READ16_START( qzshowby_readmem )
 	{ 0x000000, 0x0fffff, MRA16_ROM },
+	{ 0x900000, 0x90ffff, MRA16_RAM },	/* Main RAM */
+
+	{ 0x800000, 0x801fff, MRA16_RAM },
+
+	TC0180VCU_MEMR( 0x400000 )
+
 	{ 0x200000, 0x20000f, pbobble_input_bypass_r },
 	{ 0x200024, 0x200025, input_port_5_word_r },	/* player 3,4 start */
 	{ 0x200028, 0x200029, player_34_coin_ctrl_r },
 	{ 0x20002e, 0x20002f, input_port_6_word_r },	/* player 3,4 buttons */
-	{ 0x400000, 0x40ffff, TC0180VCU_word_r },
-	{ 0x410000, 0x41197f, MRA16_RAM },
-	{ 0x413800, 0x413bff, MRA16_RAM },
-	{ 0x413c00, 0x413fff, MRA16_RAM },
-	{ 0x418000, 0x41801f, taitob_v_control_r },
-	{ 0x440000, 0x47ffff, TC0180VCU_framebuffer_word_r },
+
 	{ 0x600000, 0x600001, MRA16_NOP },
 	{ 0x600002, 0x600003, taitosound_comm16_msb_r },
-	{ 0x800000, 0x801fff, MRA16_RAM },
-	{ 0x900000, 0x90ffff, MRA16_RAM },	/* Main RAM */
 MEMORY_END
 
 static MEMORY_WRITE16_START( qzshowby_writemem )
 	{ 0x000000, 0x0fffff, MWA16_ROM },
+	{ 0x900000, 0x90ffff, MWA16_RAM },	/* Main RAM */
+
+	{ 0x800000, 0x801fff, paletteram16_RRRRGGGGBBBBRGBx_word_w, &paletteram16 },
+
+	TC0180VCU_MEMW( 0x400000 )
+
 	{ 0x200000, 0x20000f, TC0640FIO_halfword_byteswap_w },
 	{ 0x200026, 0x200027, eeprom_w },
 	{ 0x200028, 0x200029, player_34_coin_ctrl_w },
-	{ 0x400000, 0x40ffff, TC0180VCU_word_w, &TC0180VCU_ram },
-	{ 0x410000, 0x41197f, MWA16_RAM, &taitob_spriteram },
-	{ 0x413800, 0x413fff, MWA16_RAM, &taitob_scroll },
-	{ 0x418000, 0x41801f, taitob_v_control_w },
+
 	{ 0x600000, 0x600001, taitosound_port16_msb_w },
 	{ 0x600002, 0x600003, taitosound_comm16_msb_w },
 	{ 0x700000, 0x700003, gain_control_w },
-	{ 0x800000, 0x801fff, paletteram16_RRRRGGGGBBBBRGBx_word_w, &paletteram16 },
-	{ 0x900000, 0x90ffff, MWA16_RAM },	/* Main RAM */
 MEMORY_END
 
 
 static MEMORY_READ16_START( viofight_readmem )
 	{ 0x000000, 0x07ffff, MRA16_ROM },
+	{ 0xa00000, 0xa03fff, MRA16_RAM },	/* Main RAM */
+
+	{ 0x600000, 0x601fff, MRA16_RAM },
+
+	TC0180VCU_MEMR( 0x400000 )
+
+	{ 0x800000, 0x80000f, TC0220IOC_halfword_byteswap_r },
+
 	{ 0x200000, 0x200001, MRA16_NOP },
 	{ 0x200002, 0x200003, taitosound_comm16_msb_r },
-	{ 0x400000, 0x40ffff, TC0180VCU_word_r },
-	{ 0x410000, 0x41197f, MRA16_RAM },
-	{ 0x413800, 0x413bff, MRA16_RAM },
-	{ 0x413c00, 0x413fff, MRA16_RAM },
-	{ 0x418000, 0x41801f, taitob_v_control_r },
-	{ 0x440000, 0x47ffff, TC0180VCU_framebuffer_word_r },
-	{ 0x600000, 0x601fff, MRA16_RAM },
-	{ 0x800000, 0x80000f, TC0220IOC_halfword_byteswap_r },
-	{ 0xa00000, 0xa03fff, MRA16_RAM },	/* Main RAM */
 MEMORY_END
 
 static MEMORY_WRITE16_START( viofight_writemem )
 	{ 0x000000, 0x07ffff, MWA16_ROM },
+	{ 0xa00000, 0xa03fff, MWA16_RAM },	/* Main RAM */
+
+	{ 0x600000, 0x601fff, paletteram16_RRRRGGGGBBBBxxxx_word_w, &paletteram16 },
+
+	TC0180VCU_MEMW( 0x400000 )
+
+	{ 0x800000, 0x80000f, TC0220IOC_halfword_byteswap_w },
+
 	{ 0x200000, 0x200001, taitosound_port16_msb_w },
 	{ 0x200002, 0x200003, taitosound_comm16_msb_w },
-	{ 0x400000, 0x40ffff, TC0180VCU_word_w, &TC0180VCU_ram },
-	{ 0x410000, 0x41197f, MWA16_RAM, &taitob_spriteram },
-	{ 0x413800, 0x413fff, MWA16_RAM, &taitob_scroll },
-	{ 0x418000, 0x41801f, taitob_v_control_w },
-	{ 0x440000, 0x47ffff, TC0180VCU_framebuffer_word_w },
-	{ 0x600000, 0x601fff, paletteram16_RRRRGGGGBBBBxxxx_word_w, &paletteram16 },
-	{ 0x800000, 0x80000f, TC0220IOC_halfword_byteswap_w },
-	{ 0xa00000, 0xa03fff, MWA16_RAM },	/* Main RAM */
 MEMORY_END
 
 
 static MEMORY_READ16_START( masterw_readmem )
 	{ 0x000000, 0x07ffff, MRA16_ROM },
 	{ 0x200000, 0x203fff, MRA16_RAM },			/* Main RAM */
-	{ 0x400000, 0x40ffff, TC0180VCU_word_r },
-	{ 0x410000, 0x411fff, MRA16_RAM },
-	{ 0x413800, 0x413bff, MRA16_RAM },
-	{ 0x413c00, 0x413fff, MRA16_RAM },
-	{ 0x418000, 0x41801f, taitob_v_control_r },
-	{ 0x440000, 0x47ffff, TC0180VCU_framebuffer_word_r },
-	{ 0x600000, 0x6007ff, MRA16_RAM },	/*palette*/
+
+	{ 0x600000, 0x601fff, MRA16_RAM },	/*palette*/
+
+	TC0180VCU_MEMR( 0x400000 )
+
 	{ 0x800000, 0x800001, TC0220IOC_halfword_byteswap_portreg_r },	/* DSW A/B, player inputs*/
 	{ 0x800002, 0x800003, TC0220IOC_halfword_byteswap_port_r /*watchdog_reset16_r*/ },
+
 	{ 0xa00000, 0xa00001, MRA16_NOP },
 	{ 0xa00002, 0xa00003, taitosound_comm16_msb_r },
 MEMORY_END
@@ -756,13 +779,14 @@ MEMORY_END
 static MEMORY_WRITE16_START( masterw_writemem )
 	{ 0x000000, 0x07ffff, MWA16_ROM },
 	{ 0x200000, 0x203fff, MWA16_RAM },	/* Main RAM */
-	{ 0x400000, 0x40ffff, TC0180VCU_word_w, &TC0180VCU_ram },
-	{ 0x410000, 0x411fff, MWA16_RAM, &taitob_spriteram },
-	{ 0x413800, 0x413fff, MWA16_RAM, &taitob_scroll },
-	{ 0x418000, 0x41801f, taitob_v_control_w },
-	{ 0x600000, 0x6007ff, paletteram16_RRRRGGGGBBBBxxxx_word_w, &paletteram16 },
+
+	{ 0x600000, 0x601fff, paletteram16_RRRRGGGGBBBBxxxx_word_w, &paletteram16 },
+
+	TC0180VCU_MEMW( 0x400000 )
+
 	{ 0x800000, 0x800001, TC0220IOC_halfword_byteswap_portreg_w },
 	{ 0x800002, 0x800003, TC0220IOC_halfword_byteswap_port_w },
+
 	{ 0xa00000, 0xa00001, taitosound_port16_msb_w },
 	{ 0xa00002, 0xa00003, taitosound_comm16_msb_w },
 MEMORY_END
@@ -770,53 +794,51 @@ MEMORY_END
 
 static MEMORY_READ16_START( silentd_readmem )
 	{ 0x000000, 0x07ffff, MRA16_ROM },
-	{ 0x100000, 0x100001, MRA16_NOP },
-	{ 0x100002, 0x100003, taitosound_comm16_msb_r },
-//	{ 0x10001a, 0x10001b, MRA16_NOP },	// ??? read at $1e344
-//	{ 0x10001c, 0x10001d, MRA16_NOP },	// ??? read at $1e356
+	{ 0x400000, 0x403fff, MRA16_RAM },	/* Main RAM */
+
+	{ 0x300000, 0x301fff, MRA16_RAM },
+
+	TC0180VCU_MEMR( 0x500000 )
+
 	{ 0x200000, 0x20000f, TC0220IOC_halfword_r },
 	{ 0x210000, 0x210001, input_port_5_word_r },
 	{ 0x220000, 0x220001, input_port_6_word_r },
 	{ 0x230000, 0x230001, input_port_7_word_r },
 //	{ 0x240000, 0x240001, MRA16_NOP },	/* read 4 times at init */
-	{ 0x300000, 0x301fff, MRA16_RAM },
-	{ 0x400000, 0x403fff, MRA16_RAM },	/* Main RAM */
-	{ 0x500000, 0x50ffff, TC0180VCU_word_r },
-	{ 0x510000, 0x511fff, MRA16_RAM },
-	{ 0x512000, 0x5137ff, MRA16_RAM },
-	{ 0x513800, 0x513bff, MRA16_RAM },
-	{ 0x513c00, 0x513fff, MRA16_RAM },
-	{ 0x518000, 0x51801f, taitob_v_control_r },
+
+	{ 0x100000, 0x100001, MRA16_NOP },
+	{ 0x100002, 0x100003, taitosound_comm16_msb_r },
+//	{ 0x10001a, 0x10001b, MRA16_NOP },	// ??? read at $1e344
+//	{ 0x10001c, 0x10001d, MRA16_NOP },	// ??? read at $1e356
 MEMORY_END
 
 static MEMORY_WRITE16_START( silentd_writemem )
 	{ 0x000000, 0x07ffff, MWA16_ROM },
-	{ 0x100000, 0x100001, taitosound_port16_msb_w },
-	{ 0x100002, 0x100003, taitosound_comm16_msb_w },
+	{ 0x400000, 0x403fff, MWA16_RAM },	/* Main RAM */
+
+	{ 0x300000, 0x301fff, paletteram16_RRRRGGGGBBBBRGBx_word_w, &paletteram16 },
+
+	TC0180VCU_MEMW( 0x500000 )
+
 	{ 0x200000, 0x20000f, TC0220IOC_halfword_w },
 	{ 0x240000, 0x240001, MWA16_NOP }, // ???
-	{ 0x300000, 0x301fff, paletteram16_RRRRGGGGBBBBRGBx_word_w, &paletteram16 },
-	{ 0x400000, 0x403fff, MWA16_RAM },	/* Main RAM */
-	{ 0x500000, 0x50ffff, TC0180VCU_word_w, &TC0180VCU_ram },
-	{ 0x510000, 0x511fff, MWA16_RAM, &taitob_spriteram },
-	{ 0x512000, 0x5137ff, MWA16_RAM },
-	{ 0x513800, 0x513fff, MWA16_RAM, &taitob_scroll },
-	{ 0x518000, 0x51801f, taitob_v_control_w },
+
+	{ 0x100000, 0x100001, taitosound_port16_msb_w },
+	{ 0x100002, 0x100003, taitosound_comm16_msb_w },
 MEMORY_END
 
 
 static MEMORY_READ16_START( selfeena_readmem )
 	{ 0x000000, 0x07ffff, MRA16_ROM },
 	{ 0x100000, 0x103fff, MRA16_RAM },	/* Main RAM */
-	{ 0x200000, 0x20ffff, TC0180VCU_word_r },
-	{ 0x210000, 0x211fff, MRA16_RAM },
-	{ 0x212000, 0x2137ff, MRA16_RAM },
-	{ 0x213800, 0x213bff, MRA16_RAM },
-	{ 0x213c00, 0x213fff, MRA16_RAM },
-	{ 0x218000, 0x21801f, taitob_v_control_r },
+
 	{ 0x300000, 0x301fff, MRA16_RAM },
+
+	TC0180VCU_MEMR( 0x200000 )
+
 	{ 0x400000, 0x40000f, TC0220IOC_halfword_byteswap_r },
 	{ 0x410000, 0x41000f, TC0220IOC_halfword_byteswap_r }, /* mirror address - seems to be only used for coin control */
+
 	{ 0x500000, 0x500001, MRA16_NOP },
 	{ 0x500002, 0x500003, taitosound_comm16_msb_r },
 MEMORY_END
@@ -824,14 +846,14 @@ MEMORY_END
 static MEMORY_WRITE16_START( selfeena_writemem )
 	{ 0x000000, 0x07ffff, MWA16_ROM },
 	{ 0x100000, 0x103fff, MWA16_RAM },	/* Main RAM */
-	{ 0x200000, 0x20ffff, TC0180VCU_word_w, &TC0180VCU_ram },
-	{ 0x210000, 0x211fff, MWA16_RAM, &taitob_spriteram },
-	{ 0x212000, 0x2137ff, MWA16_RAM },
-	{ 0x213800, 0x213fff, MWA16_RAM, &taitob_scroll },
-	{ 0x218000, 0x21801f, taitob_v_control_w },
+
 	{ 0x300000, 0x301fff, paletteram16_RRRRGGGGBBBBRGBx_word_w, &paletteram16 },
+
+	TC0180VCU_MEMW( 0x200000 )
+
 	{ 0x400000, 0x40000f, TC0220IOC_halfword_byteswap_w },
 	{ 0x410000, 0x41000f, TC0220IOC_halfword_byteswap_w }, /* mirror address - seems to be only used for coin control */
+
 	{ 0x500000, 0x500001, taitosound_port16_msb_w },
 	{ 0x500002, 0x500003, taitosound_comm16_msb_w },
 MEMORY_END
@@ -840,28 +862,29 @@ MEMORY_END
 static MEMORY_READ16_START( sbm_readmem )
 	{ 0x000000, 0x07ffff, MRA16_ROM },
 	{ 0x100000, 0x10ffff, MRA16_RAM },	/* Main RAM */
+
 	{ 0x200000, 0x201fff, MRA16_RAM },
+
+	TC0180VCU_MEMR( 0x900000 )
+
 	{ 0x300000, 0x30000f, TC0510NIO_halfword_wordswap_r },
+
 	{ 0x320000, 0x320001, MRA16_NOP },
 	{ 0x320002, 0x320003, taitosound_comm16_msb_r },
-	{ 0x900000, 0x90ffff, TC0180VCU_word_r },
-	{ 0x910000, 0x91197f, MRA16_RAM },
-	{ 0x913800, 0x913bff, MRA16_RAM },
-	{ 0x913c00, 0x913fff, MRA16_RAM },
-	{ 0x918000, 0x91801f, taitob_v_control_r },
 MEMORY_END
 
 static MEMORY_WRITE16_START( sbm_writemem )
 	{ 0x000000, 0x07ffff, MWA16_ROM },
 	{ 0x100000, 0x10ffff, MWA16_RAM },	/* Main RAM */
-	{ 0x200000, 0x201fff, paletteram16_RRRRGGGGBBBBRGBx_word_w, &paletteram16 },
+
+	{ 0x200000, 0x201fff, paletteram16_RRRRGGGGBBBBxxxx_word_w, &paletteram16 },
+
+	TC0180VCU_MEMW( 0x900000 )
+
 	{ 0x300000, 0x30000f, TC0510NIO_halfword_wordswap_w },
+
 	{ 0x320000, 0x320001, taitosound_port16_msb_w },
 	{ 0x320002, 0x320003, taitosound_comm16_msb_w },
-	{ 0x900000, 0x90ffff, TC0180VCU_word_w, &TC0180VCU_ram },
-	{ 0x910000, 0x91197f, MWA16_RAM, &taitob_spriteram },
-	{ 0x913800, 0x913fff, MWA16_RAM, &taitob_scroll },
-	{ 0x918000, 0x91801f, taitob_v_control_w },
 MEMORY_END
 
 
@@ -1762,6 +1785,95 @@ INPUT_PORTS_START( pbobble )	/* Missing P3&4 controls ! */
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER4 )
 INPUT_PORTS_END
 
+INPUT_PORTS_START( spacedxo )
+	PORT_START /* DSW A */
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Cocktail ) )
+	TAITO_B_DSWA_2_4
+	TAITO_COINAGE_JAPAN_NEW_8
+
+	PORT_START /* DSW B */
+	TAITO_DIFFICULTY_8
+	PORT_DIPNAME( 0x0c, 0x0c, "Match Point" )
+	PORT_DIPSETTING(    0x08, "4" )
+	PORT_DIPSETTING(    0x0c, "3" )
+	PORT_DIPSETTING(    0x04, "5" )
+	PORT_DIPSETTING(    0x00, "2" )
+	PORT_DIPNAME( 0x30, 0x30, DEF_STR( Lives ) )
+	PORT_DIPSETTING(    0x30, "3" )
+	PORT_DIPSETTING(    0x20, "4" )
+	PORT_DIPSETTING(    0x10, "5" )
+	PORT_DIPSETTING(    0x00, "6" )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Bonus_Life ) )
+	PORT_DIPSETTING(    0x40, "1500 Points" )
+	PORT_DIPSETTING(    0x00, "1000 Points" )
+	PORT_DIPNAME( 0x80, 0x80, "Game Type" )
+	PORT_DIPSETTING(    0x80, "Double Company" )
+	PORT_DIPSETTING(    0x00, "Single Company" )
+
+	PORT_START	/* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER1 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER1 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER2 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START	/* IN1 */
+	PORT_BIT(         0x01, IP_ACTIVE_LOW, IPT_TILT )
+	PORT_BIT(         0x02, IP_ACTIVE_LOW, IPT_SERVICE1 )
+	PORT_BIT(         0x04, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT(         0x08, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT_IMPULSE( 0x10, IP_ACTIVE_LOW, IPT_COIN1, 2 )
+	PORT_BIT_IMPULSE( 0x20, IP_ACTIVE_LOW, IPT_COIN2, 2 )
+	PORT_BIT(         0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT(         0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START	/* IN2 */ /*all OK*/
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER2 )
+
+	PORT_START      /* IN5 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START3 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER3 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER3 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER3 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER3 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER3 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER3 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER3 )
+
+	PORT_START      /* IN6 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START4 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER4 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER4 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER4 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER4 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER4 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER4 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER4 )
+
+	PORT_START      /* IN7 */
+	PORT_BIT_IMPULSE( 0x01, IP_ACTIVE_LOW, IPT_COIN3, 2 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_SERVICE2 )
+	PORT_BIT_IMPULSE( 0x04, IP_ACTIVE_LOW, IPT_COIN4, 2 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_SERVICE3 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+INPUT_PORTS_END
+
 INPUT_PORTS_START( qzshowby )
 	PORT_START /* DSW B */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN ) /*unused in test mode*/
@@ -1783,7 +1895,7 @@ INPUT_PORTS_START( qzshowby )
 	PORT_BIT_IMPULSE( 0x40, IP_ACTIVE_LOW, IPT_COIN3, 2 ) /*ok*/
 	PORT_BIT_IMPULSE( 0x80, IP_ACTIVE_LOW, IPT_COIN4, 2 ) /*ok*/
 
-	PORT_START      /* IN2 */ /*all OK*/
+	PORT_START      /* IN0 */ /*all OK*/
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_TILT )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_SERVICE1 )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_SERVICE2 )
@@ -1793,7 +1905,7 @@ INPUT_PORTS_START( qzshowby )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START3 )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START4 )
 
-	PORT_START /* IN X */ /*all OK*/
+	PORT_START		/* IN 1 */ /*all OK*/
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN  ) /* IPT_START1 in test mode */
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
@@ -1803,7 +1915,7 @@ INPUT_PORTS_START( qzshowby )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
-	PORT_START      /* IN0 */ /*all OK*/
+	PORT_START      /* IN2 */ /*all OK*/
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER1 )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON4 | IPF_PLAYER1 )
@@ -2764,7 +2876,6 @@ static const struct MachineDriver machine_driver_rambo3a =
 	}
 };
 
-
 static const struct MachineDriver machine_driver_pbobble =
 {
 	/* basic machine hardware */
@@ -2859,6 +2970,50 @@ static const struct MachineDriver machine_driver_spacedx =
 
 };
 
+static const struct MachineDriver machine_driver_spacedxo =
+{
+	/* basic machine hardware */
+	{
+		{
+			CPU_M68000,
+			12000000,	/* 12 MHz */
+			spacedxo_readmem,spacedxo_writemem,0,0,
+			selfeena_interrupt,1
+		},
+		{
+			CPU_Z80,
+			4000000,	/* 4 MHz */
+			sound_readmem, sound_writemem,0,0,
+			ignore_interrupt,0	/* IRQs are triggered by the YM2610 */
+		}
+	},
+	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
+	10,
+	0,
+
+	/* video hardware */
+	64*8, 32*8, { 0*8, 40*8-1, 2*8, 30*8-1 },
+
+	gfxdecodeinfo,
+	4096, 0,
+	0,
+
+	VIDEO_TYPE_RASTER,
+	taitob_eof_callback,
+	taitob_vh_start_color_order2,
+	taitob_vh_stop,
+	taitob_vh_screenrefresh,
+
+	/* sound hardware */
+	0,0,0,0,
+	{
+		{
+			SOUND_YM2610,
+			&ym2610_interface_crimec
+		}
+	},
+
+};
 
 static const struct MachineDriver machine_driver_qzshowby =
 {
@@ -3275,59 +3430,59 @@ ROM_END
 
 ROM_START( crimec )
 	ROM_REGION( 0x80000, REGION_CPU1, 0 )     /* 512k for 68000 code */
-	ROM_LOAD16_BYTE( "b99-07",    0x00000, 0x20000, 0x26e886e6 )
-	ROM_LOAD16_BYTE( "b99-05",    0x00001, 0x20000, 0xff7f9a9d )
-	ROM_LOAD16_BYTE( "b99-06",    0x40000, 0x20000, 0x1f26aa92 )
-	ROM_LOAD16_BYTE( "b99-14",    0x40001, 0x20000, 0x71c8b4d7 )
+	ROM_LOAD16_BYTE( "b99_07.40",    0x00000, 0x20000, 0x26e886e6 )
+	ROM_LOAD16_BYTE( "b99_05.29",    0x00001, 0x20000, 0xff7f9a9d )
+	ROM_LOAD16_BYTE( "b99_06.39",    0x40000, 0x20000, 0x1f26aa92 )
+	ROM_LOAD16_BYTE( "b99_14.28",    0x40001, 0x20000, 0x71c8b4d7 )
 
 	ROM_REGION( 0x1c000, REGION_CPU2, 0 )     /* 64k for Z80 code */
-	ROM_LOAD( "b99-08", 0x00000, 0x4000, 0x26135451 )
-	ROM_CONTINUE(       0x10000, 0xc000 ) /* banked stuff */
+	ROM_LOAD( "b99_08.45", 0x00000, 0x4000, 0x26135451 )
+	ROM_CONTINUE(          0x10000, 0xc000 ) /* banked stuff */
 
 	ROM_REGION( 0x100000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "b99-02.ch1", 0x000000, 0x080000, 0x2a5d4a26 )
-	ROM_LOAD( "b99-01.ch0", 0x080000, 0x080000, 0xa19e373a )
+	ROM_LOAD( "b99_02.18", 0x000000, 0x080000, 0x2a5d4a26 )
+	ROM_LOAD( "b99_01.19", 0x080000, 0x080000, 0xa19e373a )
 
 	ROM_REGION( 0x80000, REGION_SOUND1, 0 )
-	ROM_LOAD( "b99-03.roa", 0x00000, 0x80000, 0xdda10df7 )
+	ROM_LOAD( "b99_03.37", 0x000000, 0x080000, 0xdda10df7 )
 ROM_END
 
 ROM_START( crimecu )
 	ROM_REGION( 0x80000, REGION_CPU1, 0 )     /* 512k for 68000 code */
-	ROM_LOAD16_BYTE( "b99-07",    0x00000, 0x20000, 0x26e886e6 )
-	ROM_LOAD16_BYTE( "b99-05",    0x00001, 0x20000, 0xff7f9a9d )
-	ROM_LOAD16_BYTE( "b99-06",    0x40000, 0x20000, 0x1f26aa92 )
-	ROM_LOAD16_BYTE( "b99-13",    0x40001, 0x20000, 0x06cf8441 )
+	ROM_LOAD16_BYTE( "b99_07.40",    0x00000, 0x20000, 0x26e886e6 )
+	ROM_LOAD16_BYTE( "b99_05.29",    0x00001, 0x20000, 0xff7f9a9d )
+	ROM_LOAD16_BYTE( "b99_06.39",    0x40000, 0x20000, 0x1f26aa92 )
+	ROM_LOAD16_BYTE( "b99_13.28",    0x40001, 0x20000, 0x06cf8441 )
 
 	ROM_REGION( 0x1c000, REGION_CPU2, 0 )     /* 64k for Z80 code */
-	ROM_LOAD( "b99-08", 0x00000, 0x4000, 0x26135451 )
-	ROM_CONTINUE(       0x10000, 0xc000 ) /* banked stuff */
+	ROM_LOAD( "b99_08.45", 0x00000, 0x4000, 0x26135451 )
+	ROM_CONTINUE(          0x10000, 0xc000 ) /* banked stuff */
 
 	ROM_REGION( 0x100000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "b99-02.ch1", 0x000000, 0x080000, 0x2a5d4a26 )
-	ROM_LOAD( "b99-01.ch0", 0x080000, 0x080000, 0xa19e373a )
+	ROM_LOAD( "b99_02.18", 0x000000, 0x080000, 0x2a5d4a26 )
+	ROM_LOAD( "b99_01.19", 0x080000, 0x080000, 0xa19e373a )
 
 	ROM_REGION( 0x80000, REGION_SOUND1, 0 )
-	ROM_LOAD( "b99-03.roa", 0x00000, 0x80000, 0xdda10df7 )
+	ROM_LOAD( "b99_03.37", 0x000000, 0x080000, 0xdda10df7 )
 ROM_END
 
 ROM_START( crimecj )
 	ROM_REGION( 0x80000, REGION_CPU1, 0 )     /* 512k for 68000 code */
-	ROM_LOAD16_BYTE( "b99-07", 0x00000, 0x20000, 0x26e886e6 )
-	ROM_LOAD16_BYTE( "b99-05", 0x00001, 0x20000, 0xff7f9a9d )
-	ROM_LOAD16_BYTE( "b99-06", 0x40000, 0x20000, 0x1f26aa92 )
-	ROM_LOAD16_BYTE( "15",     0x40001, 0x20000, 0xe8c1e56d )
+	ROM_LOAD16_BYTE( "b99_07.40", 0x00000, 0x20000, 0x26e886e6 )
+	ROM_LOAD16_BYTE( "b99_05.29", 0x00001, 0x20000, 0xff7f9a9d )
+	ROM_LOAD16_BYTE( "b99_06.39", 0x40000, 0x20000, 0x1f26aa92 )
+	ROM_LOAD16_BYTE( "b99_15.28", 0x40001, 0x20000, 0xe8c1e56d )
 
 	ROM_REGION( 0x1c000, REGION_CPU2, 0 )     /* 64k for Z80 code */
-	ROM_LOAD( "b99-08", 0x00000, 0x4000, 0x26135451 )
-	ROM_CONTINUE(       0x10000, 0xc000 ) /* banked stuff */
+	ROM_LOAD( "b99_08.45", 0x00000, 0x4000, 0x26135451 )
+	ROM_CONTINUE(          0x10000, 0xc000 ) /* banked stuff */
 
 	ROM_REGION( 0x100000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "b99-02.ch1", 0x000000, 0x080000, 0x2a5d4a26 )
-	ROM_LOAD( "b99-01.ch0", 0x080000, 0x080000, 0xa19e373a )
+	ROM_LOAD( "b99_02.18", 0x000000, 0x080000, 0x2a5d4a26 )
+	ROM_LOAD( "b99_01.19", 0x080000, 0x080000, 0xa19e373a )
 
 	ROM_REGION( 0x80000, REGION_SOUND1, 0 )
-	ROM_LOAD( "b99-03.roa", 0x00000, 0x80000, 0xdda10df7 )
+	ROM_LOAD( "b99_03.37", 0x000000, 0x080000, 0xdda10df7 )
 ROM_END
 
 ROM_START( ashura )
@@ -3471,6 +3626,27 @@ ROM_START( rambo3a )
 	ROM_LOAD( "ramb3-05.bin", 0x00000, 0x80000, 0x0179dc40 )
 ROM_END
 
+ROM_START( rambo3ae )
+	ROM_REGION( 0x80000, REGION_CPU1, 0 )     /* 512k for 68000 code */
+	ROM_LOAD16_BYTE( "ramb3-11.bin",  0x00000, 0x20000, 0x1cc42247 )
+	ROM_LOAD16_BYTE( "ramb3-14.bin",  0x00001, 0x20000, 0x7d917c21 )
+	ROM_LOAD16_BYTE( "ramb3-07.bin",  0x40000, 0x20000, 0xc973ff6f )
+	ROM_LOAD16_BYTE( "ramb3-06.bin",  0x40001, 0x20000, 0xa83d3fd5 )
+
+	ROM_REGION( 0x1c000, REGION_CPU2, 0 )     /* 64k for Z80 code */
+	ROM_LOAD( "ramb3-10.bin", 0x00000, 0x4000, 0xb18bc020 )
+	ROM_CONTINUE(             0x10000, 0xc000 ) /* banked stuff */
+
+	ROM_REGION( 0x200000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "ramb3-03.bin",  0x000000, 0x80000, 0xf5808c41 )
+	ROM_LOAD( "ramb3-04.bin",  0x080000, 0x80000, 0xc57831ce )
+	ROM_LOAD( "ramb3-01.bin",  0x100000, 0x80000, 0xc55fcf54 )
+	ROM_LOAD( "ramb3-02.bin",  0x180000, 0x80000, 0x9dd014c6 )
+
+	ROM_REGION( 0x80000, REGION_SOUND1, 0 )
+	ROM_LOAD( "ramb3-05.bin", 0x00000, 0x80000, 0x0179dc40 )
+ROM_END
+
 ROM_START( pbobble )
 	ROM_REGION( 0x80000, REGION_CPU1, 0 )     /* 512k for 68000 code */
 	ROM_LOAD16_BYTE( "pb-1c18.bin", 0x00000, 0x40000, 0x5de14f49 )
@@ -3490,19 +3666,53 @@ ROM_END
 
 ROM_START( spacedx )
 	ROM_REGION( 0x80000, REGION_CPU1, 0 )     /* 512k for 68000 code */
+	ROM_LOAD16_BYTE( "d89-06",       0x00000, 0x40000, 0x7122751e )
+	ROM_LOAD16_BYTE( "si-dxusa.ic2", 0x00001, 0x40000, 0x50a4b8d1 )
+
+	ROM_REGION( 0x1c000, REGION_CPU2, 0 )     /* 64k for Z80 code */
+	ROM_LOAD( "d89-07.27", 0x00000, 0x4000, 0xbd743401 )
+	ROM_CONTINUE(          0x10000, 0xc000 ) /* banked stuff */
+
+	ROM_REGION( 0x100000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "d89-02.14", 0x00000, 0x80000, 0xc36544b9 )
+	ROM_LOAD( "d89-01.9",  0x80000, 0x80000, 0xfffa0660 )
+
+	ROM_REGION( 0x80000, REGION_SOUND1, 0 )	/* adpcm samples */
+	ROM_LOAD( "d89-03.15", 0x00000, 0x80000, 0x218f31a4 )
+ROM_END
+
+ROM_START( spacedxj )
+	ROM_REGION( 0x80000, REGION_CPU1, 0 )     /* 512k for 68000 code */
 	ROM_LOAD16_BYTE( "d89-06", 0x00000, 0x40000, 0x7122751e )
 	ROM_LOAD16_BYTE( "d89-05", 0x00001, 0x40000, 0xbe1638af )
 
 	ROM_REGION( 0x1c000, REGION_CPU2, 0 )     /* 64k for Z80 code */
-	ROM_LOAD( "d89-07",  0x00000, 0x4000, 0xbd743401 )
-	ROM_CONTINUE(        0x10000, 0xc000 ) /* banked stuff */
+	ROM_LOAD( "d89-07.27", 0x00000, 0x4000, 0xbd743401 )
+	ROM_CONTINUE(          0x10000, 0xc000 ) /* banked stuff */
 
 	ROM_REGION( 0x100000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "d89-02",  0x00000, 0x80000, 0xc36544b9 )
-	ROM_LOAD( "d89-01",  0x80000, 0x80000, 0xfffa0660 )
+	ROM_LOAD( "d89-02.14", 0x00000, 0x80000, 0xc36544b9 )
+	ROM_LOAD( "d89-01.9" , 0x80000, 0x80000, 0xfffa0660 )
 
 	ROM_REGION( 0x80000, REGION_SOUND1, 0 )	/* adpcm samples */
-	ROM_LOAD( "d89-03",  0x00000, 0x80000, 0x218f31a4 )
+	ROM_LOAD( "d89-03.15", 0x00000, 0x80000, 0x218f31a4 )
+ROM_END
+
+ROM_START( spacedxo )
+	ROM_REGION( 0x80000, REGION_CPU1, 0 )     /* 256k for 68000 code */
+	ROM_LOAD16_BYTE( "d89-08.bin",  0x00000, 0x20000, 0x0c2fe7f9 )
+	ROM_LOAD16_BYTE( "d89-09j.bin", 0x00001, 0x20000, 0x7f0a0ba4 )
+
+	ROM_REGION( 0x1c000, REGION_CPU2, 0 )     /* 64k for Z80 code */
+	ROM_LOAD( "d89-07.27", 0x00000, 0x4000, 0xbd743401 )
+	ROM_CONTINUE(          0x10000, 0xc000 ) /* banked stuff */
+
+	ROM_REGION( 0x100000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "d89-12.bin",0x00000, 0x80000, 0x53df86f1 )
+	ROM_LOAD( "d89-13.bin",0x80000, 0x80000, 0xc44c1352 )
+
+	ROM_REGION( 0x80000, REGION_SOUND1, 0 )	/* adpcm samples */
+	ROM_LOAD( "d89-03.15", 0x00000, 0x80000, 0x218f31a4 )
 ROM_END
 
 ROM_START( qzshowby )
@@ -3673,8 +3883,9 @@ GAMEX( 1989, masterw,  0,       masterw,  masterw,  0, ROT270, "Taito Corporatio
 GAMEX( 1988, nastar,   0,       rastsag2, nastar,   0, ROT0,   "Taito Corporation Japan", "Nastar (World)", GAME_NO_COCKTAIL )
 GAMEX( 1988, nastarw,  nastar,  rastsag2, nastarw,  0, ROT0,   "Taito America Corporation", "Nastar Warrior (US)", GAME_NO_COCKTAIL )
 GAMEX( 1988, rastsag2, nastar,  rastsag2, rastsag2, 0, ROT0,   "Taito Corporation", "Rastan Saga 2 (Japan)", GAME_NO_COCKTAIL )
-GAMEX( 1989, rambo3,   0,       rambo3,   rambo3,   0, ROT180, "Taito Europe Corporation", "Rambo III (set 1, Europe)", GAME_NO_COCKTAIL )
-GAMEX( 1989, rambo3a,  rambo3,  rambo3a,  rambo3a,  0, ROT180, "Taito America Corporation", "Rambo III (set 2, US)", GAME_NO_COCKTAIL)
+GAMEX( 1989, rambo3,   0,       rambo3,   rambo3,   0, ROT180, "Taito Europe Corporation", "Rambo III (Europe set 1)", GAME_NO_COCKTAIL )
+GAMEX( 1989, rambo3ae, rambo3,  rambo3a,  rambo3a,  0, ROT180, "Taito Europe Corporation", "Rambo III (Europe set 2)", GAME_NO_COCKTAIL)
+GAMEX( 1989, rambo3a,  rambo3,  rambo3a,  rambo3a,  0, ROT180, "Taito America Corporation", "Rambo III (US)", GAME_NO_COCKTAIL)
 GAMEX( 1989, crimec,   0,       crimec,   crimec,   0, ROT0,   "Taito Corporation Japan", "Crime City (World)", GAME_NO_COCKTAIL )
 GAMEX( 1989, crimecu,  crimec,  crimec,   crimecu,  0, ROT0,   "Taito America Corporation", "Crime City (US)", GAME_NO_COCKTAIL )
 GAMEX( 1989, crimecj,  crimec,  crimec,   crimecj,  0, ROT0,   "Taito Corporation", "Crime City (Japan)", GAME_NO_COCKTAIL )
@@ -3689,8 +3900,9 @@ GAMEX( 1992, silentdj, silentd, silentd,  silentdj, 0, ROT0,   "Taito Corporatio
 GAMEX( 1993, ryujin,   0,       ryujin,   ryujin,   0, ROT270, "Taito Corporation", "Ryu Jin (Japan)", GAME_NO_COCKTAIL )
 GAMEX( 1993, qzshowby, 0,       qzshowby, qzshowby, 0, ROT0,   "Taito Corporation", "Quiz Sekai wa SHOW by shobai (Japan)", GAME_NO_COCKTAIL )
 GAMEX( 1994, pbobble,  0,       pbobble,  pbobble,  0, ROT0,   "Taito Corporation", "Puzzle Bobble (Japan, B-System)", GAME_NO_COCKTAIL )
-GAMEX( 1994, spacedx,  0,       spacedx,  pbobble,  0, ROT0,   "Taito Corporation", "Space Invaders DX (Japan)", GAME_NO_COCKTAIL )
-
+GAMEX( 1994, spacedx,  0,       spacedx,  pbobble,  0, ROT0,   "Taito Corporation", "Space Invaders DX (US) v2.1", GAME_NO_COCKTAIL )
+GAMEX( 1994, spacedxj, spacedx, spacedx,  pbobble,  0, ROT0,   "Taito Corporation", "Space Invaders DX (Japan) v2.1", GAME_NO_COCKTAIL )
+GAMEX( 1994, spacedxo, spacedx, spacedxo, spacedxo, 0, ROT0,   "Taito Corporation", "Space Invaders DX (Japan) v2.0", GAME_NO_COCKTAIL )
 /*
 	Sonic Blast Man is a ticket dispensing game.
 	(Japanese version however does not dispense them, only US does - try the "sbm_patch" in the machine_driver).
@@ -3699,4 +3911,3 @@ GAMEX( 1994, spacedx,  0,       spacedx,  pbobble,  0, ROT0,   "Taito Corporatio
  	the enemy.
 */
 GAME(  1990, sbm,      0,       sbm,      sbm,      0, ROT0,   "Taito Corporation", "Sonic Blast Man (Japan)" )
-

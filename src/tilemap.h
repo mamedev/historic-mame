@@ -48,7 +48,7 @@ extern struct tile_info
 		games that don't need them don't need to explicitly set them to 0
 	*/
 	const UINT8 *pen_data;
-	const UINT32 *pal_data;
+	const pen_t *pal_data;
 	UINT32 flags;
 	int skip;
 	UINT32 tile_number;		/* needed for tilemap_mark_gfxdata_dirty */

@@ -4,7 +4,10 @@ Hole Land
 
 driver by Mathis Rosenhauer
 
-Bugs: Usage of the other sprite banks is unknown.
+TODO:
+- tile/sprite priority in holeland
+- missing high bit of sprite X coordinate? (see round 2 and 3 of attract mode
+  in crzrally)
 
 ***************************************************************************/
 
@@ -12,43 +15,17 @@ Bugs: Usage of the other sprite banks is unknown.
 #include "vidhrdw/generic.h"
 
 int holeland_vh_start( void );
-void holeland_vh_convert_color_prom(unsigned char *obsolete,unsigned short *colortable,const unsigned char *color_prom);
+int crzrally_vh_start( void );
 void holeland_vh_screenrefresh( struct osd_bitmap *bitmap,int full_refresh );
+void crzrally_vh_screenrefresh( struct osd_bitmap *bitmap,int full_refresh );
 
 WRITE_HANDLER( holeland_videoram_w );
 WRITE_HANDLER( holeland_colorram_w );
 WRITE_HANDLER( holeland_flipscreen_w );
 WRITE_HANDLER( holeland_pal_offs_w );
+WRITE_HANDLER( crzrally_spritepal_w );
+WRITE_HANDLER( holeland_scroll_w );
 
-static int ff1, ff2;
-
-static READ_HANDLER( holeland_reset_r )
-{
-	ff1 = 1;
-	ff2 = 1;
-	return 0;
-}
-static READ_HANDLER( holeland_controls_r )
-{
-	if (ff1)
-	{
-		ff1 = 0;
-		return input_port_0_r(offset);
-	}
-	else
-		return input_port_1_r(offset);
-
-}
-static READ_HANDLER( holeland_dsw_r )
-{
-	if (ff2)
-	{
-		ff2 = 0;
-		return input_port_2_r(offset);
-	}
-	else
-		return input_port_3_r(offset);
-}
 
 static MEMORY_READ_START( readmem )
 	{ 0x0000, 0x7fff, MRA_ROM },
@@ -62,18 +39,33 @@ static MEMORY_WRITE_START( writemem )
 	{ 0x8000, 0x87ff, MWA_RAM },
 	{ 0xa000, 0xbfff, MWA_ROM },
 	{ 0xc000, 0xc001, holeland_pal_offs_w },
-//	{ 0xc002, 0xc003, MWA_NOP }, /* unknown */
-//	{ 0xc004, 0xc005, MWA_NOP }, /* seems to be coin related */
 	{ 0xc006, 0xc007, holeland_flipscreen_w },
 	{ 0xe000, 0xe3ff, holeland_colorram_w, &colorram },
 	{ 0xe400, 0xe7ff, holeland_videoram_w, &videoram, &videoram_size },
 	{ 0xf000, 0xf3ff, MWA_RAM, &spriteram, &spriteram_size },
 MEMORY_END
 
+static MEMORY_READ_START( crzrally_readmem )
+	{ 0x0000, 0xbfff, MRA_ROM },
+	{ 0xc000, 0xc7ff, MRA_RAM },
+	{ 0xe800, 0xebff, MRA_RAM },
+MEMORY_END
+
+static MEMORY_WRITE_START( crzrally_writemem )
+	{ 0x0000, 0xbfff, MWA_ROM },
+	{ 0xc000, 0xc7ff, MWA_RAM },
+	{ 0xe000, 0xe3ff, holeland_colorram_w, &colorram },
+	{ 0xe400, 0xe7ff, holeland_videoram_w, &videoram, &videoram_size },
+	{ 0xe800, 0xebff, MWA_RAM, &spriteram, &spriteram_size },
+	{ 0xf000, 0xf000, holeland_scroll_w },
+	{ 0xf800, 0xf801, holeland_pal_offs_w },
+	{ 0xf806, 0xf806, crzrally_spritepal_w },
+MEMORY_END
+
 static PORT_READ_START( readport )
-	{ 0x01, 0x01, holeland_reset_r },
-	{ 0x04, 0x04, holeland_controls_r },
-	{ 0x06, 0x06, holeland_dsw_r },
+	{ 0x01, 0x01, watchdog_reset_r },	/* ? */
+	{ 0x04, 0x04, AY8910_read_port_0_r },
+	{ 0x06, 0x06, AY8910_read_port_1_r },
 PORT_END
 
 static PORT_WRITE_START( writeport )
@@ -83,6 +75,8 @@ static PORT_WRITE_START( writeport )
 	{ 0x07, 0x07, AY8910_write_port_1_w },
 PORT_END
 
+
+
 INPUT_PORTS_START( holeland )
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON2 )
@@ -91,6 +85,8 @@ INPUT_PORTS_START( holeland )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_COIN2 )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START      /* IN1 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
@@ -99,6 +95,8 @@ INPUT_PORTS_START( holeland )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_START2 )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_PLAYER2 )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_PLAYER2 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START
 	PORT_SERVICE( 0x01, IP_ACTIVE_HIGH )
@@ -130,7 +128,7 @@ INPUT_PORTS_START( holeland )
 	PORT_DIPSETTING(    0x01, "2" )
 	PORT_DIPSETTING(    0x02, "3" )
 	PORT_DIPSETTING(    0x03, "4" )
-	PORT_DIPNAME( 0x0c, 0x00, DEF_STR( Lives ) )
+	PORT_DIPNAME( 0x0c, 0x04, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x00, "2" )
 	PORT_DIPSETTING(    0x04, "3" )
 	PORT_DIPSETTING(    0x08, "4" )
@@ -148,46 +146,156 @@ INPUT_PORTS_START( holeland )
 	PORT_DIPSETTING(    0x80, "Play" )
 INPUT_PORTS_END
 
-static struct GfxLayout charlayout =
-{
-	8,8,	/* 8*8 characters */
-	1024,	/* 1024 characters */
-	2,	/* 2 bits per pixel */
-	{ 4, 0},
-	{ 0, 1, 2, 3, 8+0, 8+1, 8+2, 8+3 },
-	{ 0*8*2, 1*8*2, 2*8*2, 3*8*2, 4*8*2, 5*8*2, 6*8*2, 7*8*2 },
-	8*8*2	/* every char takes 16 consecutive bytes */
-};
+INPUT_PORTS_START( crzrally )
+	PORT_START      /* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
-static struct GfxLayout spritelayout =
+	PORT_START      /* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_PLAYER2 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_PLAYER2 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START
+	PORT_SERVICE( 0x01, IP_ACTIVE_LOW )
+	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0c, 0x00, "Drive" )
+	PORT_DIPSETTING(    0x00, "A" )
+	PORT_DIPSETTING(    0x04, "B" )
+	PORT_DIPSETTING(    0x08, "C" )
+	PORT_DIPSETTING(    0x0c, "D" )
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Free_Play ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x60, 0x60, "Extra Time" )
+	PORT_DIPSETTING(    0x00, "None" )
+	PORT_DIPSETTING(    0x20, "5 Sec" )
+	PORT_DIPSETTING(    0x40, "10 Sec" )
+	PORT_DIPSETTING(    0x60, "15 Sec" )
+	PORT_DIPNAME( 0x80, 0x00, "Coin Mode" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Cocktail ) )
+
+	PORT_START
+	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Coin_A ) )
+	PORT_DIPSETTING(    0x03, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
+	PORT_DIPNAME( 0x0c, 0x00, DEF_STR( Coin_B ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( 1C_4C ) )
+	PORT_DIPSETTING(    0x0c, DEF_STR( 1C_6C ) )
+	PORT_DIPNAME( 0x10, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(    0x00, "Easy" )
+	PORT_DIPSETTING(    0x20, "Hard" )
+	PORT_DIPNAME( 0x40, 0x40, "Controller" )
+	PORT_DIPSETTING(    0x40, "Joystick" )
+	PORT_DIPSETTING(    0x00, "Wheel" )
+	PORT_DIPNAME( 0x80, 0x80, "Mode" ) /* seems to have no effect */
+	PORT_DIPSETTING(    0x00, "Stop" )
+	PORT_DIPSETTING(    0x80, "Play" )
+INPUT_PORTS_END
+
+
+
+static struct GfxLayout holeland_charlayout =
 {
-	16,16,	/* 16*16 sprites */
-	128,	/* 128 sprites */
-	2,	/* 2 bits per pixel */
+	16,16,
+	RGN_FRAC(1,1),
+	2,
 	{ 4, 0 },
-	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8,
-	  8*8, 9*8, 10*8, 11*8, 12*8, 13*8, 14*8, 15*8},
-	{ 0, 1, 2, 3, 16*8+0, 16*8+1, 16*8+2, 16*8+3,
-	  32*8+0, 32*8+1, 32*8+2, 32*8+3, 48*8+0, 48*8+1, 48*8+2, 48*8+3 },
-	64*8	/* every sprite takes 64 consecutive bytes */
+	{ 0,0, 1,1, 2,2, 3,3, 8+0,8+0, 8+1,8+1, 8+2,8+2, 8+3,8+3 },
+	{ 0*16,0*16, 1*16,1*16, 2*16,2*16, 3*16,3*16, 4*16,4*16, 5*16,5*16, 6*16,6*16, 7*16,7*16 },
+	8*16
 };
 
-static struct GfxDecodeInfo gfxdecodeinfo[] =
+static struct GfxLayout crzrally_charlayout =
 {
-	{ REGION_GFX1, 0, &charlayout  , 0, 256 },
-	{ REGION_GFX2, 0, &spritelayout  , 0, 256 },
-	{ REGION_GFX3, 0, &spritelayout  , 0, 256 },
-	{ REGION_GFX4, 0, &spritelayout  , 0, 256 },
-	{ REGION_GFX5, 0, &spritelayout  , 0, 256 },
+	8,8,
+	RGN_FRAC(1,1),
+	2,
+	{ 4, 0 },
+	{ 0, 1, 2, 3, 8+0, 8+1, 8+2, 8+3 },
+	{ 0*16, 1*16, 2*16, 3*16, 4*16, 5*16, 6*16, 7*16 },
+	8*16
+};
+
+static struct GfxLayout holeland_spritelayout =
+{
+	32,32,
+	RGN_FRAC(1,4),
+	2,
+	{ 4, 0 },
+	{ 0, 2, 1, 3, 1*8+0, 1*8+2, 1*8+1, 1*8+3, 2*8+0, 2*8+2, 2*8+1, 2*8+3, 3*8+0, 3*8+2, 3*8+1, 3*8+3,
+			4*8+0, 4*8+2, 4*8+1, 4*8+3, 5*8+0, 5*8+2, 5*8+1, 5*8+3, 6*8+0, 6*8+2, 6*8+1, 6*8+3, 7*8+0, 7*8+2, 7*8+1, 7*8+3 },
+	{ 0, 4*64, RGN_FRAC(1,4), RGN_FRAC(1,4)+4*64, RGN_FRAC(2,4), RGN_FRAC(2,4)+4*64, RGN_FRAC(3,4), RGN_FRAC(3,4)+4*64,
+		1*64, 5*64, RGN_FRAC(1,4)+1*64, RGN_FRAC(1,4)+5*64, RGN_FRAC(2,4)+1*64, RGN_FRAC(2,4)+5*64, RGN_FRAC(3,4)+1*64, RGN_FRAC(3,4)+5*64,
+		2*64, 6*64, RGN_FRAC(1,4)+2*64, RGN_FRAC(1,4)+6*64, RGN_FRAC(2,4)+2*64, RGN_FRAC(2,4)+6*64, RGN_FRAC(3,4)+2*64, RGN_FRAC(3,4)+6*64,
+		3*64, 7*64, RGN_FRAC(1,4)+3*64, RGN_FRAC(1,4)+7*64, RGN_FRAC(2,4)+3*64, RGN_FRAC(2,4)+7*64, RGN_FRAC(3,4)+3*64, RGN_FRAC(3,4)+7*64 },
+	64*8
+};
+
+static struct GfxLayout crzrally_spritelayout =
+{
+	16,16,
+	RGN_FRAC(1,4),
+	2,
+	{ 0, 1 },
+	{ 3*2, 2*2, 1*2, 0*2, 7*2, 6*2, 5*2, 4*2,
+			16+3*2, 16+2*2, 16+1*2, 16+0*2, 16+7*2, 16+6*2, 16+5*2, 16+4*2 },
+	{		RGN_FRAC(3,4)+0*16, RGN_FRAC(2,4)+0*16, RGN_FRAC(1,4)+0*16, RGN_FRAC(0,4)+0*16,
+			RGN_FRAC(3,4)+2*16, RGN_FRAC(2,4)+2*16, RGN_FRAC(1,4)+2*16, RGN_FRAC(0,4)+2*16,
+			RGN_FRAC(3,4)+4*16, RGN_FRAC(2,4)+4*16, RGN_FRAC(1,4)+4*16, RGN_FRAC(0,4)+4*16,
+			RGN_FRAC(3,4)+6*16, RGN_FRAC(2,4)+6*16, RGN_FRAC(1,4)+6*16, RGN_FRAC(0,4)+6*16 },
+	8*16
+};
+
+static struct GfxDecodeInfo holeland_gfxdecodeinfo[] =
+{
+	{ REGION_GFX1, 0, &holeland_charlayout,   0, 256 },
+	{ REGION_GFX2, 0, &holeland_spritelayout, 0, 256 },
 	{ -1 } /* end of array */
 };
+
+static struct GfxDecodeInfo crzrally_gfxdecodeinfo[] =
+{
+	{ REGION_GFX1, 0, &crzrally_charlayout,   0, 256 },
+	{ REGION_GFX2, 0, &crzrally_spritelayout, 0, 256 },
+	{ -1 } /* end of array */
+};
+
+
 
 static struct AY8910interface ay8910_interface =
 {
 	2,	/* 2 chips */
 	1818182,	/* 1.82 MHz ? */
-	{ 20, 20 }
+	{ 25, 25 },
+	{ input_port_0_r, input_port_2_r },
+	{ input_port_1_r, input_port_3_r },
+	{ 0, 0 },
+	{ 0, 0 },
 };
+
+
 
 static struct MachineDriver machine_driver_holeland =
 {
@@ -205,10 +313,10 @@ static struct MachineDriver machine_driver_holeland =
 	0,
 
 	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
-	gfxdecodeinfo,
+	32*16, 32*16, { 0*16, 32*16-1, 2*16, 30*16-1 },
+	holeland_gfxdecodeinfo,
 	256, 0,
-	holeland_vh_convert_color_prom,
+	palette_RRRR_GGGG_BBBB_convert_prom,
 
 	VIDEO_TYPE_RASTER,
 	0,
@@ -226,51 +334,43 @@ static struct MachineDriver machine_driver_holeland =
 	}
 };
 
-static void init_holeland(void)
+static struct MachineDriver machine_driver_crzrally =
 {
-	int i, j;
-	UINT8 *src, *dst1, *dst2, *dst3, *dst4;
-
-	src = memory_region(REGION_GFX1);
-	for (i = 0; i < 0x4000; i++)
-		src[i] ^= 0xff;
-
-	src = memory_region(REGION_GFX6);
-	dst1 = memory_region(REGION_GFX2);
-	dst2 = memory_region(REGION_GFX3);
-	dst3 = memory_region(REGION_GFX4);
-	dst4 = memory_region(REGION_GFX5);
-
-	/* The sprite roms are interleaved */
-	for (i = 0; i < 128; i++)
+	/* basic machine hardware */
 	{
-		for (j = 0; j < 32; j++)
 		{
-			*dst1++ = ((src[0] & 0x22) << 2) | ((src[0x2000] & 0x22) << 1)
-				| ((src[0x4000] & 0x22)) | ((src[0x6000] & 0x22) >> 1);
-			*dst1++ = ((src[0] & 0x11) << 3) | ((src[0x2000] & 0x11) << 2)
-				| ((src[0x4000] & 0x11) << 1) | ((src[0x6000] & 0x11));
-
-			*dst2++ = ((src[0x20] & 0x22) << 2) | ((src[0x2020] & 0x22) << 1)
-				| ((src[0x4020] & 0x22)) | ((src[0x6020] & 0x22) >> 1);
-			*dst2++ = ((src[0x20] & 0x11) << 3) | ((src[0x2020] & 0x11) << 2)
-				| ((src[0x4020] & 0x11) << 1) | ((src[0x6020] & 0x11));
-
-			*dst3++ = ((src[0] & 0x88)) | ((src[0x2000] & 0x88) >> 1)
-				| ((src[0x4000] & 0x88) >> 2) | ((src[0x6000] & 0x88) >> 3);
-			*dst3++ = ((src[0] & 0x44) << 1) | ((src[0x2000] & 0x44))
-				| ((src[0x4000] & 0x44) >> 1) | ((src[0x6000] & 0x44) >> 2);
-
-			*dst4++ = ((src[0x20] & 0x88)) | ((src[0x2020] & 0x88) >> 1)
-				| ((src[0x4020] & 0x88) >> 2) | ((src[0x6020] & 0x88) >> 3);
-			*dst4++ = ((src[0x20] & 0x44) << 1) | ((src[0x2020] & 0x44))
-				| ((src[0x4020] & 0x44) >> 1) | ((src[0x6020] & 0x44) >> 2);
-
-			src++;
+			CPU_Z80,
+			4000000,        /* 4 MHz ? */
+			crzrally_readmem, crzrally_writemem,readport, writeport,
+			interrupt, 1
 		}
-		src+=32;
+	},
+	60, DEFAULT_60HZ_VBLANK_DURATION,
+	1,      /* single CPU, no need for interleaving */
+	0,
+
+	/* video hardware */
+	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
+	crzrally_gfxdecodeinfo,
+	256, 0,
+	palette_RRRR_GGGG_BBBB_convert_prom,
+
+	VIDEO_TYPE_RASTER,
+	0,
+	crzrally_vh_start,
+	0,
+	crzrally_vh_screenrefresh,
+
+	/* sound hardware */
+	0,0,0,0,
+	{
+		{
+			SOUND_AY8910,
+			&ay8910_interface
+		}
 	}
-}
+};
+
 
 /***************************************************************************
 
@@ -279,36 +379,52 @@ static void init_holeland(void)
 ***************************************************************************/
 
 ROM_START( holeland )
-	ROM_REGION( 0x10000, REGION_CPU1, 0 )          /* 64k for code */
-	ROM_LOAD( "holeland.0",     0x00000, 0x2000, 0xb640e12b )
-	ROM_LOAD( "holeland.1",     0x02000, 0x2000, 0x2f180851 )
-	ROM_LOAD( "holeland.2",     0x04000, 0x2000, 0x35cfde75 )
-	ROM_LOAD( "holeland.3",     0x06000, 0x2000, 0x5537c22e )
-	ROM_LOAD( "holeland.4",     0x0a000, 0x2000, 0xc95c355d )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )
+	ROM_LOAD( "holeland.0",  0x0000, 0x2000, 0xb640e12b )
+	ROM_LOAD( "holeland.1",  0x2000, 0x2000, 0x2f180851 )
+	ROM_LOAD( "holeland.2",  0x4000, 0x2000, 0x35cfde75 )
+	ROM_LOAD( "holeland.3",  0x6000, 0x2000, 0x5537c22e )
+	ROM_LOAD( "holeland.4",  0xa000, 0x2000, 0xc95c355d )
 
-	ROM_REGION( 0x04000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "holeland.5",     0x00000, 0x2000, 0x7f19e1f9 )
-	ROM_LOAD( "holeland.6",     0x02000, 0x2000, 0x844400e3 )
+	ROM_REGION( 0x4000, REGION_GFX1, ROMREGION_DISPOSE | ROMREGION_INVERT )
+	ROM_LOAD( "holeland.5",  0x0000, 0x2000, 0x7f19e1f9 )
+	ROM_LOAD( "holeland.6",  0x2000, 0x2000, 0x844400e3 )
 
-	ROM_REGION( 0x02000, REGION_GFX2, ROMREGION_DISPOSE )
-
-	ROM_REGION( 0x02000, REGION_GFX3, ROMREGION_DISPOSE )
-
-	ROM_REGION( 0x02000, REGION_GFX4, ROMREGION_DISPOSE )
-
-	ROM_REGION( 0x02000, REGION_GFX5, ROMREGION_DISPOSE )
-
-	ROM_REGION( 0x08000, REGION_GFX6, ROMREGION_DISPOSE )
-	ROM_LOAD( "holeland.7",     0x00000, 0x2000, 0xd7feb25b )
-	ROM_LOAD( "holeland.8",     0x02000, 0x2000, 0x4b6eec16 )
-	ROM_LOAD( "holeland.9",     0x04000, 0x2000, 0x6fe7fcc0 )
-	ROM_LOAD( "holeland.10",    0x06000, 0x2000, 0xe1e11e8f )
+	ROM_REGION( 0x8000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_LOAD( "holeland.7",  0x0000, 0x2000, 0xd7feb25b )
+	ROM_LOAD( "holeland.8",  0x2000, 0x2000, 0x4b6eec16 )
+	ROM_LOAD( "holeland.9",  0x4000, 0x2000, 0x6fe7fcc0 )
+	ROM_LOAD( "holeland.10", 0x6000, 0x2000, 0xe1e11e8f )
 
 	ROM_REGION( 0x0300, REGION_PROMS, 0 )
-	ROM_LOAD( "3m",    0x0000, 0x0100, 0x9d6fef5a )  /* Red component */
-	ROM_LOAD( "3l",    0x0100, 0x0100, 0xf6682705 )  /* Green component */
-	ROM_LOAD( "3n",    0x0200, 0x0100, 0x3d7b3af6 )  /* Blue component */
+	ROM_LOAD( "3m",          0x0000, 0x0100, 0x9d6fef5a )  /* Red component */
+	ROM_LOAD( "3l",          0x0100, 0x0100, 0xf6682705 )  /* Green component */
+	ROM_LOAD( "3n",          0x0200, 0x0100, 0x3d7b3af6 )  /* Blue component */
+ROM_END
+
+ROM_START( crzrally )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )
+	ROM_LOAD( "1.7g",        0x0000, 0x4000, 0x8fe01f86 )
+	ROM_LOAD( "2.7f",        0x4000, 0x4000, 0x67110f1d )
+	ROM_LOAD( "3.7d",        0x8000, 0x4000, 0x25c861c3 )
+
+	ROM_REGION( 0x4000, REGION_GFX1, ROMREGION_DISPOSE | ROMREGION_INVERT )
+	ROM_LOAD( "4.5g",        0x0000, 0x2000, 0x29dece8b )
+	ROM_LOAD( "5.5f",        0x2000, 0x2000, 0xb34aa904 )
+
+	ROM_REGION( 0x8000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_LOAD( "6.1f",        0x0000, 0x2000, 0xa909ff0f )
+	ROM_LOAD( "7.1l",        0x2000, 0x2000, 0x38fb0a16 )
+	ROM_LOAD( "8.1k",        0x4000, 0x2000, 0x660aa0f0 )
+	ROM_LOAD( "9.1i",        0x6000, 0x2000, 0x37d0790e )
+
+	ROM_REGION( 0x0300, REGION_PROMS, 0 )
+	ROM_LOAD( "82s129.9n",   0x0000, 0x0100, 0x98ff725a )  /* Red component */
+	ROM_LOAD( "82s129.9m",   0x0100, 0x0100, 0xd41f5800 )  /* Green component */
+	ROM_LOAD( "82s129.9l",   0x0200, 0x0100, 0x9ed49cb4 )  /* Blue component */
 ROM_END
 
 
-GAME( 1984, holeland, 0, holeland, holeland, holeland, ROT0, "Tecfri", "Hole Land" )
+
+GAMEX( 1984, holeland, 0, holeland, holeland, 0, ROT0,   "Tecfri", "Hole Land", GAME_IMPERFECT_GRAPHICS )
+GAMEX( 1985, crzrally, 0, crzrally, crzrally, 0, ROT270, "Tecfri", "Crazy Rally", GAME_IMPERFECT_GRAPHICS )

@@ -284,7 +284,7 @@ static void pdraw_masked_tile(
 		sx < bitmap->width &&
 		sy < bitmap->height ) /* all-or-nothing clip */
 	{
-		const UINT32 *paldata = &gfx->colortable[gfx->color_granularity * color];
+		const pen_t *paldata = &gfx->colortable[gfx->color_granularity * color];
 		data8_t *gfx_addr = gfx->gfxdata + code * gfx->char_modulo;
 		int gfx_pitch = gfx->line_modulo;
 

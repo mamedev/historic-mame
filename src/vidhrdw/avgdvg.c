@@ -241,7 +241,7 @@ static void dvg_generate_vector_list(void)
 					z = z * BRIGHTNESS;
 				else
 					if (z) z = (z << 4) | 0x0f;
-				vector_add_point (currentx, currenty, colorram[1], z);
+				vector_add_point (currentx, currenty, VECTOR_COLOR111(colorram[1]), z);
 
 				break;
 
@@ -332,7 +332,7 @@ static void dvg_generate_vector_list(void)
 					z = z * BRIGHTNESS;
 				else
 					if (z) z = (z << 4) | 0x0f;
-				vector_add_point (currentx, currenty, colorram[1], z);
+				vector_add_point (currentx, currenty, VECTOR_COLOR111(colorram[1]), z);
 				break;
 
 			default:
@@ -557,7 +557,7 @@ static void avg_generate_vector_list (void)
 						color = 2;
 				}
 
-				vector_add_point (currentx, currenty, colorram[color], z);
+				vector_add_point (currentx, currenty, VECTOR_COLOR111(colorram[color]), z);
 
 #ifdef VG_DEBUG
 				logerror("VCTR x:%d y:%d z:%d statz:%d", x, y, z, statz);
@@ -600,7 +600,7 @@ static void avg_generate_vector_list (void)
 					color = rand() & 0x07;
 				}
 
-				vector_add_point (currentx, currenty, colorram[color], z);
+				vector_add_point (currentx, currenty, VECTOR_COLOR111(colorram[color]), z);
 
 #ifdef VG_DEBUG
 				logerror("SVEC x:%d y:%d z:%d statz:%d", x, y, z, statz);
@@ -877,26 +877,6 @@ int avgdvg_init (int vgType)
  * These functions initialise the colors for all atari games.
  */
 
-#define RED   0x04
-#define GREEN 0x02
-#define BLUE  0x01
-#define WHITE RED|GREEN|BLUE
-
-static void shade_fill (unsigned char *palette, int rgb, int start_index, int end_index, int start_inten, int end_inten)
-{
-	int i, inten, index_range, inten_range;
-
-	index_range = end_index-start_index;
-	inten_range = end_inten-start_inten;
-	for (i = start_index; i <= end_index; i++)
-	{
-		inten = start_inten + (inten_range) * (i-start_index) / (index_range);
-		palette[3*i  ] = (rgb & RED  )? inten : 0;
-		palette[3*i+1] = (rgb & GREEN)? inten : 0;
-		palette[3*i+2] = (rgb & BLUE )? inten : 0;
-	}
-}
-
 #define VEC_PAL_WHITE	1
 #define VEC_PAL_AQUA	2
 #define VEC_PAL_BZONE	3
@@ -909,20 +889,7 @@ static void shade_fill (unsigned char *palette, int rgb, int start_index, int en
  * MachineDriver. Use "avg_init_palette_XXXXX" instead. */
 void avg_init_palette (int paltype, unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
 {
-	int i,j,k;
-
-	int trcl1[] = { 0,0,2,2,1,1 };
-	int trcl2[] = { 1,2,0,1,0,2 };
-	int trcl3[] = { 2,1,1,0,2,0 };
-
-	/* initialize the first 8 colors with the basic colors */
-	/* Only these are selected by writes to the colorram. */
-	for (i = 0; i < 8; i++)
-	{
-		palette[3*i  ] = (i & RED  ) ? 0xff : 0;
-		palette[3*i+1] = (i & GREEN) ? 0xff : 0;
-		palette[3*i+2] = (i & BLUE ) ? 0xff : 0;
-	}
+	int i;
 
 	/* initialize the colorram */
 	for (i = 0; i < 16; i++)
@@ -933,7 +900,6 @@ void avg_init_palette (int paltype, unsigned char *palette, unsigned short *colo
 	{
 		/* Black and White vector colors (Asteroids,Omega Race) .ac JAN2498 */
 		case  VEC_PAL_WHITE:
-			shade_fill (palette, RED|GREEN|BLUE, 8, 128+8, 0, 255);
 			colorram[1] = 7; /* BW games use only color 1 (== white) */
 			break;
 
@@ -941,54 +907,19 @@ void avg_init_palette (int paltype, unsigned char *palette, unsigned short *colo
 		case  VEC_PAL_ASTDELUX:
 			/* Use backdrop if present MLR OCT0598 */
 			backdrop_load("astdelux.png", 256);
-			shade_fill (palette, GREEN|BLUE, 8, 128+8, 1, 254);
 			colorram[1] =  3; /* for Asteroids */
 			break;
 
 		case  VEC_PAL_AQUA:
-			shade_fill (palette, GREEN|BLUE, 8, 128+8, 1, 254);
 			colorram[0] =  3; /* for Red Baron */
 			break;
 
 		/* Monochrome Green/Red vector colors (Battlezone) .ac JAN2498 */
 		case  VEC_PAL_BZONE:
-			shade_fill (palette, RED  ,  8, 23, 1, 254);
-			shade_fill (palette, GREEN, 24, 31, 1, 254);
-			shade_fill (palette, WHITE, 32, 47, 1, 254);
 			/* Use backdrop if present MLR OCT0598 */
 			backdrop_load("bzone.png", 256);
 			break;
 
-		/* Colored games (Major Havoc, Star Wars, Tempest) .ac JAN2498 */
-		case  VEC_PAL_MULTI:
-		case  VEC_PAL_SWARS:
-			/* put in 40 shades for red, blue and magenta */
-			shade_fill (palette, RED       ,   8,  47, 10, 250);
-			shade_fill (palette, BLUE      ,  48,  87, 10, 250);
-			shade_fill (palette, RED|BLUE  ,  88, 127, 10, 250);
-
-			/* put in 20 shades for yellow and green */
-			shade_fill (palette, GREEN     , 128, 147, 10, 250);
-			shade_fill (palette, RED|GREEN , 148, 167, 10, 250);
-
-			/* and 14 shades for cyan and white */
-			shade_fill (palette, BLUE|GREEN, 168, 181, 10, 250);
-			shade_fill (palette, WHITE     , 182, 194, 10, 250);
-
-			/* Fill in unused gaps with more anti-aliasing colors. */
-			/* There are 60 slots available.           .ac JAN2498 */
-			i=195;
-			for (j=0; j<6; j++)
-			{
-				for (k=7; k<=16; k++)
-				{
-					palette[3*i+trcl1[j]] = ((256*k)/16)-1;
-					palette[3*i+trcl2[j]] = ((128*k)/16)-1;
-					palette[3*i+trcl3[j]] = 0;
-					i++;
-				}
-			}
-			break;
 		default:
 			logerror("Wrong palette type in avgdvg.c");
 			break;

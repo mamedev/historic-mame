@@ -6,6 +6,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include "palette.h"
 
 #ifdef MESS
 #include "mess.h"
@@ -30,15 +31,15 @@ struct RunningMachine
 	struct GfxElement *gfx[MAX_GFX_ELEMENTS];	/* graphic sets (chars, sprites) */
 	struct osd_bitmap *scrbitmap;	/* bitmap to draw into */
 	struct rectangle visible_area;
-	UINT32 *pens;	/* remapped palette pen numbers. When you write */
+	pen_t *pens;	/* remapped palette pen numbers. When you write */
 					/* directly to a bitmap, never use absolute values, */
 					/* use this array to get the pen number. For example, */
 					/* if you want to use color #6 in the palette, use */
 					/* pens[6] instead of just 6. */
 	UINT16 *game_colortable;	/* lookup table used to map gfx pen numbers */
 								/* to color numbers */
-	UINT32 *remapped_colortable;	/* the above, already remapped through */
-									/* Machine->pens */
+	pen_t *remapped_colortable;	/* the above, already remapped through */
+								/* Machine->pens */
 	const struct GameDriver *gamedrv;	/* contains the definition of the game machine */
 	const struct MachineDriver *drv;	/* same as gamedrv->drv */
 	int color_depth;	/* video color depth: 8, 16, 15 or 32 */
@@ -61,8 +62,8 @@ struct RunningMachine
 
 	/* stuff for the debugger */
 	struct osd_bitmap *debug_bitmap;
-	UINT32 *debug_pens;
-	UINT32 *debug_remapped_colortable;
+	pen_t *debug_pens;
+	pen_t *debug_remapped_colortable;
 	struct GfxElement *debugger_font;
 };
 

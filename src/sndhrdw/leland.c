@@ -588,9 +588,6 @@ static void leland_i186_reset(void)
 	if (LOG_OPTIMIZATION) logerror("  - trigger due to reset\n");
 	cpu_trigger(CPU_RESUME_TRIGGER);
 	total_reads = 0;
-
-	/* reset the sound systems */
-	sound_reset();
 }
 
 

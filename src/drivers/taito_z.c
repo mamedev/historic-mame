@@ -11,6 +11,8 @@ source was very helpful in many areas particularly the sprites.)
 
 - Changes Log -
 
+09-01-01 Preliminary TC0150ROD support
+08-28-01 Fixed uncentered steer inputs, Nightstr controls
 05-27-01 Inputs through taitoic ioc routines, contcirc subwoofer filter
 04-12-01 Centered steering AD inputs, added digital steer
 02-18-01 Added Spacegun gunsights (Insideoutboy)
@@ -91,6 +93,53 @@ TCO020VAR [DG: not "VRA" as contcirc dump notes claim?]
 TCO050VDZ
 TCO050VDZ
 TCO050VDZ
+
+ChaseHQ (Guru)
+-------
+
+Video board
+-----------
+                 Pal  b52-28d  b52-28b
+                 Pal      17d      17b
+                 Pal      28c      28a
+                 Pal      77c      17a
+
+b52-30
+    34
+    31
+    35
+    32                     b52-27  pal20       TC020VAR  b52-03  b52-127
+    36                         51                        b52-126  b52-124 Pal
+                               50
+                               49                  Pal   b52-125
+    33   Pal  b52-19                                      Pal   b52-25
+    37    38                 b52-18b                      Pal   122
+         Pal      Pal        b52-18a                      Pal   123
+         b52-20   b52-21     b52-18
+
+
+CPU board
+---------
+                                                    b52-119 Pal
+                                                    b52-118 Pal
+                                68000-12
+                            b52-131    129
+b52-113                     b52-130    136
+b52-114
+b52-115                 TC0140SYT
+b52-116
+
+             YM2610                          b52-29
+                                                      26.686MHz
+                                                      24 MHz
+           16MHz                             TC0100SCN
+
+       Pal b52-121
+       Pal b52-120                      TC0170ABT   TC0110PCR    b52-01
+          68000-12
+                                        b52-06
+         TC0040IOC  b52-133 b52-132  TC0150ROD    b52-28
+
 
 
 ChaseHQ2(SCI) custom chips (Guru) (DG: same as Bshark except 0140SYT?)
@@ -241,11 +290,6 @@ Chips:	uPD72105C
 TODO Lists
 ==========
 
-NB: Some historic comments related to fixed issues have been
-left in for reference. They are enclosed in square brackets.
-Obviously they can be ditched as soon as the basic remaining
-problem - emulating the TC0150ROD - is solved.
-
 Add cpu idle time skip to improve speed.
 
 Is the no-Z80 sound handling correct: some voices in Bshark
@@ -259,7 +303,7 @@ DIPs
 Continental Circus
 ------------------
 
-No road.
+Road colors entirely wrong.
 
 The 8 level accel / brake should be possible to control with
 analogue pedal. Don't think mame can do this.
@@ -267,16 +311,17 @@ analogue pedal. Don't think mame can do this.
 Junk (?) stuff often written in high byte of sound word.
 
 Speculative YM2610 a/b/c channel filtering as these may be
-outputs to subwoofer (vibration). They sound a lot better now.
+outputs to subwoofer (vibration). They sound better now.
 
 
 Chasehq
 -------
 
-No road.
+Road needs clipping, colors dubious.
 
-Mask sprites not implemented, Raine seems to fudge these...
-(e.g. junk sprites when you reach criminal car)
+Used to have junk sprites when you reach criminal car (the 'criminals
+here' indicator): due to two bits above tile number being used in
+this sprite entry. What effect is desired... sprite flicker?
 
 Motor CPU: appears to be identical to one in Topspeed.
 
@@ -284,13 +329,13 @@ Motor CPU: appears to be identical to one in Topspeed.
 Battle Shark
 ------------
 
-No road [only used on some levels].
+Road looks odd.
 
 
 Chasehq2
 --------
 
-No road.
+Road needs clipping, colors dubious.
 
 Sprite frames were plotted in opposite order so flickered.
 Reversing this has lost us alternate frames: we may have
@@ -300,25 +345,16 @@ to buffer sprite ram by one frame to solve this?
 Night Striker
 -------------
 
-No road.
+Road needs clipping, colors dubious.
 
-Control stick unsatisfactory: there is a "dead patch" around
-stick center (in case the centering of the arcade stick
-wasn't very good?) so your movement gets very sluggish there.
-Use a lookup table to eliminate dead patch?
+Control stick imperfect: the "dead patch" around stick center has been
+alleviated with a lookup table.
 
 Strange page in test mode which lets you alter all sorts of settings
 that may relate to the game's sit-in cockpit? Can't find a dip that
 disables this - perhaps only cockpit version existed.
 
 Does a variety of writes to TC0220IOC offset 3... significant?
-
-[CPUA int4 at $11c0 calls sub which writes to control stick area
-requesting a/d conversion. When done this hardware causes int6
-($106xx) which reads out the value from the hardware [and also
-requests another a/d conversion, causing another int6... probably
-4 per frame to get all the necessary values]. Bshark stick works
-in a similar way.]
 
 
 Aqua Jack
@@ -327,7 +363,9 @@ Aqua Jack
 Sprites left on screen under hiscore table. Maybe there is a
 sprite disable bit somewhere.
 
-No road. Not sure of visible screen size (your boat seems slightly
+Road needs clipping, colors dubious.
+
+Not sure of visible screen size (your boat seems slightly
 cut off at bottom, but that was needed so the grey garage as you
 start game stretches properly to bottom of screen).
 
@@ -367,7 +405,7 @@ Light gun interrupt timing arbitrary.
 Double Axle
 -----------
 
-No road.
+Road needs clipping, colors dubious.
 
 Double Axle has poor sound: one ADPCM rom should be twice as long?
 [In log we saw stuff like this, suggesting extra ADPCM rom needed:
@@ -379,7 +417,7 @@ country course. Fall off the ledge and crash and you will see
 the explosion sprites make other mountain sprites vanish, as
 though their entries in spriteram are being overwritten. (Perhaps
 an int6 timing/number issue: sprites seem to be ChaseHQ2ish with
-a spriteframe toggle - currently this never changes which seems
+a spriteframe toggle - currently this never changes which may be
 wrong.)
 
 No sprite/tile variable priority implemented, I'm hoping it is
@@ -480,7 +518,7 @@ static WRITE16_HANDLER( cpua_noz80_ctrl_w )	/* assumes no Z80 */
 
 
 /***********************************************************
-				INTERRUPTS
+                        INTERRUPTS
 ***********************************************************/
 
 /* 68000 A */
@@ -623,11 +661,7 @@ static int dblaxle_cpub_interrupt(void)
 
 
 /******************************************************************
-					EEPROM
-
-This is an earlier version of the eeprom used in some TaitoB games.
-The eeprom unlock command is different, and the write/clock/reset
-bits are different.
+                              EEPROM
 ******************************************************************/
 
 static data8_t default_eeprom[128]=
@@ -703,7 +737,7 @@ static WRITE16_HANDLER( spacegun_output_bypass_w )
 
 
 /**********************************************************
-				GAME INPUTS
+                       GAME INPUTS
 **********************************************************/
 
 static READ16_HANDLER( contcirc_input_bypass_r )
@@ -716,7 +750,8 @@ static READ16_HANDLER( contcirc_input_bypass_r )
 
 	if (!(fake &0x10))	/* Analogue steer (the real control method) */
 	{
-		steer = input_port_5_word_r(0,0);	/* steer */
+		/* center around zero and reduce span to 0xc0 */
+		steer = ((input_port_5_word_r(0,0) - 0x80) * 0xc0) / 0x100;
 
 	}
 	else	/* Digital steer */
@@ -755,8 +790,8 @@ static READ16_HANDLER( chasehq_input_bypass_r )
 
 	if (!(fake &0x10))	/* Analogue steer (the real control method) */
 	{
-		steer = input_port_9_word_r(0,0);	/* IN6 */
-
+		/* center around zero */
+		steer = input_port_9_word_r(0,0) - 0x80;
 	}
 	else	/* Digital steer */
 	{
@@ -818,6 +853,39 @@ logerror("CPU #0 PC %06x: warning - read unmapped stick offset %06x\n",cpu_get_p
 	return 0xff;
 }
 
+static data8_t nightstr_stick[128]=
+{
+	0xb8,0xb9,0xba,0xbb,0xbc,0xbd,0xbe,0xbf,0xc0,0xc1,0xc2,0xc3,0xc4,0xc5,0xc6,0xc7,
+	0xc8,0xc9,0xca,0xcb,0xcc,0xcd,0xce,0xcf,0xd0,0xd1,0xd2,0xd3,0xd4,0xd5,0xd6,0xd7,
+	0xd8,0xd9,0xda,0xdb,0xdc,0xdd,0xde,0xdf,0xe0,0xe1,0xe2,0xe3,0xe4,0xe5,0xe6,0xe7,
+	0xe8,0x00,0x18,0x19,0x1a,0x1b,0x1c,0x1d,0x1e,0x1f,0x20,0x21,0x22,0x23,0x24,0x25,
+	0x26,0x27,0x28,0x29,0x2a,0x2b,0x2c,0x2d,0x2e,0x2f,0x30,0x31,0x32,0x33,0x34,0x35,
+	0x36,0x37,0x38,0x39,0x3a,0x3b,0x3c,0x3d,0x3e,0x3f,0x40,0x41,0x42,0x43,0x44,0x45,
+	0x46,0x47,0x48,0x49,0xb8
+};
+
+static READ16_HANDLER( nightstr_stick_r )
+{
+	switch (offset)
+	{
+		case 0x00:
+			return nightstr_stick[(input_port_5_word_r(0,mem_mask) * 0x64) / 0x100];
+
+		case 0x01:
+			return nightstr_stick[(input_port_6_word_r(0,mem_mask) * 0x64) / 0x100];
+
+		case 0x02:
+			return input_port_7_word_r(0,mem_mask);
+
+		case 0x03:
+			return input_port_8_word_r(0,mem_mask);
+	}
+
+logerror("CPU #0 PC %06x: warning - read unmapped stick offset %06x\n",cpu_get_pc(),offset);
+
+	return 0xff;
+}
+
 static WRITE16_HANDLER( bshark_stick_w )
 {
 	/* Each write invites a new interrupt as soon as the
@@ -837,7 +905,8 @@ static READ16_HANDLER( sci_steer_input_r )
 
 	if (!(fake &0x10))	/* Analogue steer (the real control method) */
 	{
-		steer = input_port_5_word_r(0,0) - 0x80;	/* steer */
+		/* center around zero and reduce span to 0xc0 */
+		steer = ((input_port_5_word_r(0,0) - 0x80) * 0xc0) / 0x100;
 	}
 	else	/* Digital steer */
 	{
@@ -919,7 +988,8 @@ static READ16_HANDLER( dblaxle_steer_input_r )
 
 	if (!(fake &0x10))	/* Analogue steer (the real control method) */
 	{
-		steer = input_port_5_word_r(0,0);	/* steer */
+		/* center around zero and reduce span to 0x80 */
+		steer = ((input_port_5_word_r(0,0) - 0x80) * 0x80) / 0x100;
 	}
 	else	/* Digital steer */
 	{
@@ -978,7 +1048,7 @@ static READ16_HANDLER( aquajack_unknown_r )
 
 
 /*****************************************************
-				SOUND
+                        SOUND
 *****************************************************/
 
 static int banknum = -1;
@@ -1046,7 +1116,7 @@ static READ16_HANDLER( taitoz_msb_sound_r )
 
 
 /***********************************************************
-			 MEMORY STRUCTURES
+                   MEMORY STRUCTURES
 ***********************************************************/
 
 
@@ -1246,7 +1316,7 @@ static MEMORY_READ16_START( nightstr_readmem )
 	{ 0xc00000, 0xc0ffff, TC0100SCN_word_0_r },	/* tilemaps */
 	{ 0xc20000, 0xc2000f, TC0100SCN_ctrl_word_0_r },
 	{ 0xd00000, 0xd007ff, MRA16_RAM },	/* spriteram */
-	{ 0xe40000, 0xe40007, bshark_stick_r },
+	{ 0xe40000, 0xe40007, nightstr_stick_r },
 MEMORY_END
 
 static MEMORY_WRITE16_START( nightstr_writemem )
@@ -1452,7 +1522,7 @@ MEMORY_END
 
 
 /***********************************************************
-			 INPUT PORTS, DIPs
+                   INPUT PORTS, DIPs
 ***********************************************************/
 
 INPUT_PORTS_START( contcirc )
@@ -1525,8 +1595,9 @@ INPUT_PORTS_START( contcirc )
 
 	PORT_START      /* IN2, unused */
 
-	PORT_START      /* IN3, "handle" used for steering */
-	PORT_ANALOG( 0xffff, 0x8000, IPT_AD_STICK_X | IPF_REVERSE | IPF_PLAYER1, 50, 15, 0xff9f, 0x60)
+	PORT_START      /* IN3, "handle" i.e. steering */
+//	PORT_ANALOG( 0xffff, 0x8000, IPT_AD_STICK_X | IPF_REVERSE | IPF_PLAYER1, 50, 15, 0xff9f, 0x60)
+	PORT_ANALOG( 0xff, 0x80, IPT_AD_STICK_X | IPF_REVERSE | IPF_PLAYER1, 50, 15, 0x00, 0xff)
 
 	PORT_START      /* IN4, fake allowing digital steer */
 	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_2WAY | IPF_PLAYER1 )
@@ -1645,7 +1716,8 @@ INPUT_PORTS_START( chasehq )	// IN3-6 perhaps used with cockpit setup? //
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START      /* IN7, steering */
-	PORT_ANALOG( 0xffff, 0x8000, IPT_AD_STICK_X | IPF_PLAYER1, 50, 25, 0xff80, 0x7f )
+//	PORT_ANALOG( 0xffff, 0x8000, IPT_AD_STICK_X | IPF_PLAYER1, 50, 25, 0xff80, 0x7f )
+	PORT_ANALOG( 0xff, 0x80, IPT_AD_STICK_X | IPF_PLAYER1, 50, 25, 0x00, 0xff )
 
 	PORT_START      /* IN8, fake allowing digital steer */
 	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_2WAY | IPF_PLAYER1 )
@@ -1726,13 +1798,13 @@ INPUT_PORTS_START( bshark )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON6 | IPF_PLAYER1 )	/* same as "Fire" */
 
 	PORT_START	/* values chosen to match allowed crosshair area */
-	PORT_ANALOG( 0xff, 0x80, IPT_AD_STICK_X | IPF_REVERSE | IPF_PLAYER1, 20, 4, 0xcc, 0x35)
+	PORT_ANALOG( 0xff, 0x00, IPT_AD_STICK_X | IPF_REVERSE | IPF_PLAYER1, 20, 4, 0xcc, 0x35)
 
 	PORT_START	/* "X adjust" */
 	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START	/* values chosen to match allowed crosshair area */
-	PORT_ANALOG( 0xff, 0x80, IPT_AD_STICK_Y | IPF_PLAYER1, 20, 4, 0xd5, 0x32)
+	PORT_ANALOG( 0xff, 0x00, IPT_AD_STICK_Y | IPF_PLAYER1, 20, 4, 0xd5, 0x32)
 
 	PORT_START	/* "Y adjust" */
 	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
@@ -1808,7 +1880,7 @@ INPUT_PORTS_START( sci )	// dsws may be slightly wrong
 	PORT_START      /* IN2, unused */
 
 	PORT_START      /* IN3, steering */
-	PORT_ANALOG( 0xff, 0x80, IPT_AD_STICK_X | IPF_PLAYER1, 50, 15, 0x20, 0xdf )
+	PORT_ANALOG( 0xff, 0x80, IPT_AD_STICK_X | IPF_PLAYER1, 50, 15, 0x00, 0xff )
 
 	PORT_START      /* IN4, fake allowing digital steer */
 	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_2WAY | IPF_PLAYER1 )
@@ -1888,11 +1960,13 @@ INPUT_PORTS_START( nightstr )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1 )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER1 )
 
-	PORT_START	/* boundary values seem about right, bit too wide perhaps */
-	PORT_ANALOG( 0xff, 0x80, IPT_AD_STICK_X | IPF_PLAYER1, 20, 10, 0xb8, 0x49)
+	PORT_START
+//	PORT_ANALOG( 0xff, 0x00, IPT_AD_STICK_X | IPF_PLAYER1, 20, 10, 0xb8, 0x49)
+	PORT_ANALOG( 0xff, 0x80, IPT_AD_STICK_X | IPF_PLAYER1, 40, 10, 0x00, 0xff)
 
-	PORT_START	/* boundary values seem about right, bit too wide perhaps */
-	PORT_ANALOG( 0xff, 0x80, IPT_AD_STICK_Y | IPF_REVERSE | IPF_PLAYER1, 20, 10, 0xb8, 0x49)
+	PORT_START
+//	PORT_ANALOG( 0xff, 0x00, IPT_AD_STICK_Y | IPF_REVERSE | IPF_PLAYER1, 20, 10, 0xb8, 0x49)
+	PORT_ANALOG( 0xff, 0x80, IPT_AD_STICK_Y | IPF_REVERSE | IPF_PLAYER1, 40, 10, 0x00, 0xff)
 
 	PORT_START	/* X offset */
 	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
@@ -2129,8 +2203,9 @@ INPUT_PORTS_START( dblaxle )
 
 	PORT_START      /* IN2, unused */
 
-	PORT_START      /* IN3, steering: unsure of range */
-	PORT_ANALOG( 0xffff, 0x8000, IPT_AD_STICK_X | IPF_PLAYER1, 20, 10, 0xffc0, 0x3f )
+	PORT_START      /* IN3, steering */
+//	PORT_ANALOG( 0xffff, 0x8000, IPT_AD_STICK_X | IPF_PLAYER1, 20, 10, 0xffc0, 0x3f )
+	PORT_ANALOG( 0xff, 0x80, IPT_AD_STICK_X | IPF_PLAYER1, 40, 10, 0x00, 0xff )
 
 	PORT_START      /* IN4, fake allowing digital steer */
 	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_2WAY | IPF_PLAYER1 )
@@ -2142,29 +2217,7 @@ INPUT_PORTS_END
 
 
 /***********************************************************
-				GFX DECODING
-
-Raine gives these details on obj layouts:
-- Chase HQ
-- Night Striker
-
-00000-3FFFF = Object 128x128 [16x16] [19900/80:0332] gfx bank#1
-40000-5FFFF = Object  64x128 [16x16] [0CC80/40:0332] gfx bank#2
-60000-7FFFF = Object  32x128 [16x16] [06640/20:0332] gfx bank#2
-
-- Top Speed
-- Full Throttle
-- Continental Circus
-
-00000-7FFFF = Object 128x128 [16x8] [xxxxx/100:xxxx] gfx bank#1
-
-- Aqua Jack
-- Chase HQ 2
-- Battle Shark
-- Space Gun
-- Operation Thunderbolt
-
-00000-7FFFF = Object 64x64 [16x8] [xxxxx/40:xxxx] gfx bank#1
+                       GFX DECODING
 ***********************************************************/
 
 static struct GfxLayout tile16x8_layout =
@@ -2212,6 +2265,13 @@ static struct GfxLayout dblaxle_charlayout =
 	128*8     /* every sprite takes 128 consecutive bytes */
 };
 
+static struct GfxDecodeInfo taitoz_gfxdecodeinfo[] =
+{
+	{ REGION_GFX2, 0x0, &tile16x8_layout,  0, 256 },	/* sprite parts */
+	{ REGION_GFX1, 0x0, &charlayout,  0, 256 },		/* sprites & playfield */
+	{ -1 } /* end of array */
+};
+
 /* taitoic.c TC0100SCN routines expect scr stuff to be in second gfx
    slot, so 2nd batch of obj must be placed third */
 
@@ -2220,30 +2280,6 @@ static struct GfxDecodeInfo chasehq_gfxdecodeinfo[] =
 	{ REGION_GFX2, 0x0, &tile16x16_layout,  0, 256 },	/* sprite parts */
 	{ REGION_GFX1, 0x0, &charlayout,  0, 256 },		/* sprites & playfield */
 	{ REGION_GFX4, 0x0, &tile16x16_layout,  0, 256 },	/* sprite parts */
-	// Road Lines too wide for gfxdecoding ?
-	{ -1 } /* end of array */
-};
-
-static struct GfxDecodeInfo sci_gfxdecodeinfo[] =
-{
-	{ REGION_GFX2, 0x0, &tile16x8_layout,  0, 256 },	/* sprite parts */
-	{ REGION_GFX1, 0x0, &charlayout,  0, 256 },		/* sprites & playfield */
-	// Road Lines too wide for gfxdecoding ?
-	{ -1 } /* end of array */
-};
-
-static struct GfxDecodeInfo contcirc_gfxdecodeinfo[] =
-{
-	{ REGION_GFX2, 0x0, &tile16x8_layout,  0, 256 },	/* sprite parts */
-	{ REGION_GFX1, 0x0, &charlayout,  0, 256 },		/* sprites & playfield */
-	// Road Lines too wide for gfxdecoding ?
-	{ -1 } /* end of array */
-};
-
-static struct GfxDecodeInfo spacegun_gfxdecodeinfo[] =
-{
-	{ REGION_GFX2, 0, &tile16x8_layout,  0, 256 },	/* sprite parts */
-	{ REGION_GFX1, 0, &charlayout,  0, 256 },	/* sprites & playfield */
 	{ -1 } /* end of array */
 };
 
@@ -2251,17 +2287,15 @@ static struct GfxDecodeInfo dblaxle_gfxdecodeinfo[] =
 {
 	{ REGION_GFX2, 0x0, &tile16x8_layout,  0, 256 },	/* sprite parts */
 	{ REGION_GFX1, 0x0, &dblaxle_charlayout,  0, 256 },	/* sprites & playfield */
-	// Road Lines too wide for gfxdecoding ?
 	{ -1 } /* end of array */
 };
 
 
 
 /**************************************************************
-			     YM2610 (SOUND)
+                         YM2610 (SOUND)
 
 The first interface is for game boards with twin 68000 and Z80.
-
 Interface B is for games which lack a Z80 (Spacegun, Bshark).
 **************************************************************/
 
@@ -2310,7 +2344,7 @@ static struct YM2610interface ym2610_interfaceb =
 
 
 /**************************************************************
-			     SUBWOOFER (SOUND)
+                         SUBWOOFER (SOUND)
 **************************************************************/
 
 static int subwoofer_sh_start(const struct MachineSound *msound)
@@ -2320,9 +2354,9 @@ static int subwoofer_sh_start(const struct MachineSound *msound)
 	/* 150 Hz is a common top frequency played by a generic */
 	/* subwoofer, the real Arcade Machine may differs */
 
-	mixer_set_lowpass_frequency(0,50);
-	mixer_set_lowpass_frequency(1,50);
-	mixer_set_lowpass_frequency(2,50);
+	mixer_set_lowpass_frequency(0,20);
+	mixer_set_lowpass_frequency(1,20);
+	mixer_set_lowpass_frequency(2,20);
 
 	return 0;
 }
@@ -2336,7 +2370,7 @@ static struct CustomSound_interface subwoofer_interface =
 
 
 /***********************************************************
-			     MACHINE DRIVERS
+                      MACHINE DRIVERS
 
 Chasehq2 needs high interleaving to have sound.
 Bshark needs the high cpu interleaving to run test mode.
@@ -2380,7 +2414,7 @@ static struct MachineDriver machine_driver_contcirc =
 	/* video hardware */
 	40*8, 32*8, { 0*8, 40*8-1, 2*8, 32*8-1 },
 
-	contcirc_gfxdecodeinfo,
+	taitoz_gfxdecodeinfo,
 	4096, 0,
 	0,
 
@@ -2476,7 +2510,7 @@ static struct MachineDriver machine_driver_bshark =
 	/* video hardware */
 	40*8, 32*8, { 0*8, 40*8-1, 2*8, 32*8-1 },
 
-	sci_gfxdecodeinfo,
+	taitoz_gfxdecodeinfo,
 	4096, 0,
 	0,
 
@@ -2525,7 +2559,7 @@ static struct MachineDriver machine_driver_sci =
 	/* video hardware */
 	40*8, 32*8, { 0*8, 40*8-1, 2*8, 32*8-1 },
 
-	sci_gfxdecodeinfo,
+	taitoz_gfxdecodeinfo,
 	4096, 0,
 	0,
 
@@ -2623,7 +2657,7 @@ static struct MachineDriver machine_driver_aquajack =
 	/* video hardware */
 	40*8, 32*8, { 0*8, 40*8-1, 2*8, 32*8-1 },
 
-	sci_gfxdecodeinfo,
+	taitoz_gfxdecodeinfo,
 	4096, 0,
 	0,
 
@@ -2666,7 +2700,7 @@ static struct MachineDriver machine_driver_spacegun =
 	/* video hardware */
 	40*8, 32*8, { 0*8, 40*8-1, 2*8, 32*8-1 },
 
-	spacegun_gfxdecodeinfo,
+	taitoz_gfxdecodeinfo,
 	4096, 0,
 	0,
 
@@ -2740,7 +2774,7 @@ static struct MachineDriver machine_driver_dblaxle =
 
 
 /***************************************************************************
-					DRIVERS
+                                 DRIVERS
 
 Contcirc, Dblaxle sound sample rom order is uncertain as sound imperfect
 ***************************************************************************/
@@ -2827,103 +2861,119 @@ ROM_END
 
 ROM_START( chasehq )
 	ROM_REGION( 0x80000, REGION_CPU1, 0 )	/* 512K for 68000 code (CPU A) */
-	ROM_LOAD16_BYTE( "b52-130.rom", 0x00000, 0x20000, 0x4e7beb46 )
-	ROM_LOAD16_BYTE( "b52-136.rom", 0x00001, 0x20000, 0x2f414df0 )
-	ROM_LOAD16_BYTE( "b52-131.rom", 0x40000, 0x20000, 0xaa945d83 )
-	ROM_LOAD16_BYTE( "b52-129.rom", 0x40001, 0x20000, 0x0eaebc08 )
+	ROM_LOAD16_BYTE( "b52-130.36", 0x00000, 0x20000, 0x4e7beb46 )
+	ROM_LOAD16_BYTE( "b52-136.29", 0x00001, 0x20000, 0x2f414df0 )
+	ROM_LOAD16_BYTE( "b52-131.37", 0x40000, 0x20000, 0xaa945d83 )
+	ROM_LOAD16_BYTE( "b52-129.30", 0x40001, 0x20000, 0x0eaebc08 )
 
 	ROM_REGION( 0x20000, REGION_CPU3, 0 )	/* 128K for 68000 code (CPU B) */
-	ROM_LOAD16_BYTE( "b52-132.rom", 0x00000, 0x10000, 0xa2f54789 )
-	ROM_LOAD16_BYTE( "b52-133.rom", 0x00001, 0x10000, 0x12232f95 )
+	ROM_LOAD16_BYTE( "b52-132.39", 0x00000, 0x10000, 0xa2f54789 )
+	ROM_LOAD16_BYTE( "b52-133.55", 0x00001, 0x10000, 0x12232f95 )
 
 	ROM_REGION( 0x1c000, REGION_CPU2, 0 )	/* Z80 sound cpu */
-	ROM_LOAD( "b52-137.rom",   0x00000, 0x04000, 0x37abb74a )
-	ROM_CONTINUE(              0x10000, 0x0c000 )	/* banked stuff */
+	ROM_LOAD( "b52-137.51",   0x00000, 0x04000, 0x37abb74a )
+	ROM_CONTINUE(             0x10000, 0x0c000 )	/* banked stuff */
 
 	ROM_REGION( 0x80000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "b52-m29.rom", 0x00000, 0x80000, 0x8366d27c )	/* SCR 8x8 */
+	ROM_LOAD( "b52-29.27", 0x00000, 0x80000, 0x8366d27c )	/* SCR 8x8 */
 
 	ROM_REGION( 0x200000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD32_BYTE( "b52-m34.rom", 0x000000, 0x080000, 0x7d8dce36 )
-	ROM_LOAD32_BYTE( "b52-m35.rom", 0x000001, 0x080000, 0x78eeec0d )	/* OBJ A 16x16 */
-	ROM_LOAD32_BYTE( "b52-m36.rom", 0x000002, 0x080000, 0x61e89e91 )
-	ROM_LOAD32_BYTE( "b52-m37.rom", 0x000003, 0x080000, 0xf02e47b9 )
+	ROM_LOAD32_BYTE( "b52-34.5",  0x000000, 0x080000, 0x7d8dce36 )
+	ROM_LOAD32_BYTE( "b52-35.7",  0x000001, 0x080000, 0x78eeec0d )	/* OBJ A 16x16 */
+	ROM_LOAD32_BYTE( "b52-36.9",  0x000002, 0x080000, 0x61e89e91 )
+	ROM_LOAD32_BYTE( "b52-37.11", 0x000003, 0x080000, 0xf02e47b9 )
 
 	ROM_REGION( 0x80000, REGION_GFX3, 0 )	/* don't dispose */
-	ROM_LOAD( "b52-m28.rom", 0x00000, 0x80000, 0x963bc82b )	/* ROD, road lines */
+	ROM_LOAD( "b52-28.4", 0x00000, 0x80000, 0x963bc82b )	/* ROD, road lines */
 
 	ROM_REGION( 0x200000, REGION_GFX4, ROMREGION_DISPOSE )
-	ROM_LOAD32_BYTE( "b52-m30.rom", 0x000000, 0x080000, 0x1b8cc647 )
-	ROM_LOAD32_BYTE( "b52-m31.rom", 0x000001, 0x080000, 0xf1998e20 )	/* OBJ B 16x16 */
-	ROM_LOAD32_BYTE( "b52-m32.rom", 0x000002, 0x080000, 0x8620780c )
-	ROM_LOAD32_BYTE( "b52-m33.rom", 0x000003, 0x080000, 0xe6f4b8c4 )
+	ROM_LOAD32_BYTE( "b52-30.4",  0x000000, 0x080000, 0x1b8cc647 )
+	ROM_LOAD32_BYTE( "b52-31.6",  0x000001, 0x080000, 0xf1998e20 )	/* OBJ B 16x16 */
+	ROM_LOAD32_BYTE( "b52-32.8",  0x000002, 0x080000, 0x8620780c )
+	ROM_LOAD32_BYTE( "b52-33.10", 0x000003, 0x080000, 0xe6f4b8c4 )
 
 	ROM_REGION16_LE( 0x80000, REGION_USER1, 0 )
-	ROM_LOAD16_WORD( "b52-m38.fix", 0x00000, 0x80000, 0x5b5bf7f6 )	/* STY spritemap */
+	ROM_LOAD16_WORD( "b52-38.34", 0x00000, 0x80000, 0x5b5bf7f6 )	/* STY spritemap */
 
 	ROM_REGION( 0x180000, REGION_SOUND1, 0 )	/* ADPCM samples */
-	ROM_LOAD( "b52-m115.rom", 0x000000, 0x080000, 0x4e117e93 )
-	ROM_LOAD( "b52-m114.rom", 0x080000, 0x080000, 0x3a73d6b1 )
-	ROM_LOAD( "b52-m113.rom", 0x100000, 0x080000, 0x2c6a3a05 )
+	ROM_LOAD( "b52-115.71", 0x000000, 0x080000, 0x4e117e93 )
+	ROM_LOAD( "b52-114.72", 0x080000, 0x080000, 0x3a73d6b1 )
+	ROM_LOAD( "b52-113.73", 0x100000, 0x080000, 0x2c6a3a05 )
 
 	ROM_REGION( 0x80000, REGION_SOUND2, 0 )	/* Delta-T samples */
-	ROM_LOAD( "b52-m116.rom", 0x00000, 0x80000, 0xad46983c )
+	ROM_LOAD( "b52-116.70", 0x00000, 0x80000, 0xad46983c )
 
 	ROM_REGION( 0x10000, REGION_USER2, 0 )
-	ROM_LOAD( "b52-50.rom", 0x00000, 0x10000, 0xc189781c )	/* unused roms */
-	ROM_LOAD( "b52-51.rom", 0x00000, 0x10000, 0x30cc1f79 )
+	ROM_LOAD( "b52-01.7",    0x00000, 0x00100, 0x89719d17 )	/* unused roms */
+	ROM_LOAD( "b52-03.135",  0x00000, 0x00400, 0xa3f8490d )
+	ROM_LOAD( "b52-06.24",   0x00000, 0x00100, 0xfbf81f30 )
+	ROM_LOAD( "b52-18.93",   0x00000, 0x00100, 0x60bdaf1a )	// identical to b52-18b
+	ROM_LOAD( "b52-18a",     0x00000, 0x00100, 0x6271be0d )
+	ROM_LOAD( "b52-49.68",   0x00000, 0x02000, 0x60dd2ed1 )
+	ROM_LOAD( "b52-50.66",   0x00000, 0x10000, 0xc189781c )
+	ROM_LOAD( "b52-51.65",   0x00000, 0x10000, 0x30cc1f79 )
+	ROM_LOAD( "b52-126.136", 0x00000, 0x00400, 0xfa2f840e )
+	ROM_LOAD( "b52-127.156", 0x00000, 0x00400, 0x77682a4f )
 
-	// Many more are listed in Malcor's notes: b52-118 thru 127,
-	// b52-1/3/6, b52-16 thru 21, b52-25 thru 27
+	// Various pals are listed in Malcor's notes: b52-118 thru 125,
+	// b52-16 thru 21, b52-25 thru 27
 ROM_END
 
 ROM_START( chasehqj )
 	ROM_REGION( 0x80000, REGION_CPU1, 0 )	/* 512K for 68000 code (CPU A) */
-	ROM_LOAD16_BYTE( "b52-140",     0x00000, 0x20000, 0xc1298a4b )
-	ROM_LOAD16_BYTE( "b52-139",     0x00001, 0x20000, 0x997f732e )
-	ROM_LOAD16_BYTE( "b52-131.rom", 0x40000, 0x20000, 0xaa945d83 )
-	ROM_LOAD16_BYTE( "b52-129.rom", 0x40001, 0x20000, 0x0eaebc08 )
+	ROM_LOAD16_BYTE( "b52-140.36", 0x00000, 0x20000, 0xc1298a4b )
+	ROM_LOAD16_BYTE( "b52-139.29", 0x00001, 0x20000, 0x997f732e )
+	ROM_LOAD16_BYTE( "b52-131.37", 0x40000, 0x20000, 0xaa945d83 )
+	ROM_LOAD16_BYTE( "b52-129.30", 0x40001, 0x20000, 0x0eaebc08 )
 
 	ROM_REGION( 0x20000, REGION_CPU3, 0 )	/* 128K for 68000 code (CPU B) */
-	ROM_LOAD16_BYTE( "b52-132.rom", 0x00000, 0x10000, 0xa2f54789 )
-	ROM_LOAD16_BYTE( "b52-133.rom", 0x00001, 0x10000, 0x12232f95 )
+	ROM_LOAD16_BYTE( "b52-132.39", 0x00000, 0x10000, 0xa2f54789 )
+	ROM_LOAD16_BYTE( "b52-133.55", 0x00001, 0x10000, 0x12232f95 )
 
 	ROM_REGION( 0x1c000, REGION_CPU2, 0 )	/* Z80 sound cpu */
-	ROM_LOAD( "b52-134",    0x00000, 0x04000, 0x91faac7f )
+	ROM_LOAD( "b52-134.51",    0x00000, 0x04000, 0x91faac7f )
 	ROM_CONTINUE(           0x10000, 0x0c000 )	/* banked stuff */
 
 	ROM_REGION( 0x80000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "b52-m29.rom", 0x00000, 0x80000, 0x8366d27c )	/* SCR 8x8*/
+	ROM_LOAD( "b52-29.27", 0x00000, 0x80000, 0x8366d27c )	/* SCR 8x8*/
 
 	ROM_REGION( 0x200000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD32_BYTE( "b52-m34.rom", 0x000000, 0x080000, 0x7d8dce36 )
-	ROM_LOAD32_BYTE( "b52-m35.rom", 0x000001, 0x080000, 0x78eeec0d )	/* OBJ A 16x16 */
-	ROM_LOAD32_BYTE( "b52-m36.rom", 0x000002, 0x080000, 0x61e89e91 )
-	ROM_LOAD32_BYTE( "b52-m37.rom", 0x000003, 0x080000, 0xf02e47b9 )
+	ROM_LOAD32_BYTE( "b52-34.5",  0x000000, 0x080000, 0x7d8dce36 )
+	ROM_LOAD32_BYTE( "b52-35.7",  0x000001, 0x080000, 0x78eeec0d )	/* OBJ A 16x16 */
+	ROM_LOAD32_BYTE( "b52-36.9",  0x000002, 0x080000, 0x61e89e91 )
+	ROM_LOAD32_BYTE( "b52-37.11", 0x000003, 0x080000, 0xf02e47b9 )
 
 	ROM_REGION( 0x80000, REGION_GFX3, 0 )	/* don't dispose */
-	ROM_LOAD( "b52-m28.rom", 0x00000, 0x80000, 0x963bc82b )	/* ROD, road lines */
+	ROM_LOAD( "b52-28.4", 0x00000, 0x80000, 0x963bc82b )	/* ROD, road lines */
 
 	ROM_REGION( 0x200000, REGION_GFX4, ROMREGION_DISPOSE )
-	ROM_LOAD32_BYTE( "b52-m30.rom", 0x000000, 0x080000, 0x1b8cc647 )
-	ROM_LOAD32_BYTE( "b52-m31.rom", 0x000001, 0x080000, 0xf1998e20 )	/* OBJ B 16x16 */
-	ROM_LOAD32_BYTE( "b52-m32.rom", 0x000002, 0x080000, 0x8620780c )
-	ROM_LOAD32_BYTE( "b52-m33.rom", 0x000003, 0x080000, 0xe6f4b8c4 )
+	ROM_LOAD32_BYTE( "b52-30.4",  0x000000, 0x080000, 0x1b8cc647 )
+	ROM_LOAD32_BYTE( "b52-31.6",  0x000001, 0x080000, 0xf1998e20 )	/* OBJ B 16x16 */
+	ROM_LOAD32_BYTE( "b52-32.8",  0x000002, 0x080000, 0x8620780c )
+	ROM_LOAD32_BYTE( "b52-33.10", 0x000003, 0x080000, 0xe6f4b8c4 )
 
 	ROM_REGION16_LE( 0x80000, REGION_USER1, 0 )
-	ROM_LOAD16_WORD( "b52-m38.fix", 0x00000, 0x80000, 0x5b5bf7f6 )	/* STY spritemap */
+	ROM_LOAD16_WORD( "b52-38.34", 0x00000, 0x80000, 0x5b5bf7f6 )	/* STY spritemap */
 
 	ROM_REGION( 0x180000, REGION_SOUND1, 0 )	/* ADPCM samples */
-	ROM_LOAD( "b52-41", 0x000000, 0x80000, 0x8204880c )
-	ROM_LOAD( "b52-40", 0x080000, 0x80000, 0xf0551055 )
-	ROM_LOAD( "b52-39", 0x100000, 0x80000, 0xac9cbbd3 )
+	ROM_LOAD( "b52-41.71", 0x000000, 0x80000, 0x8204880c )
+	ROM_LOAD( "b52-40.72", 0x080000, 0x80000, 0xf0551055 )
+	ROM_LOAD( "b52-39.73", 0x100000, 0x80000, 0xac9cbbd3 )
 
 	ROM_REGION( 0x80000, REGION_SOUND2, 0 )	/* Delta-T samples */
-	ROM_LOAD( "b52-42", 0x00000, 0x80000, 0x6e617df1 )
+	ROM_LOAD( "b52-42.70", 0x00000, 0x80000, 0x6e617df1 )
 
 	ROM_REGION( 0x10000, REGION_USER2, 0 )
-	ROM_LOAD( "b52-50.rom", 0x00000, 0x10000, 0xc189781c )	/* unused roms */
-	ROM_LOAD( "b52-51.rom", 0x00000, 0x10000, 0x30cc1f79 )
+	ROM_LOAD( "b52-01.7",    0x00000, 0x00100, 0x89719d17 )	/* unused roms */
+	ROM_LOAD( "b52-03.135",  0x00000, 0x00400, 0xa3f8490d )
+	ROM_LOAD( "b52-06.24",   0x00000, 0x00100, 0xfbf81f30 )
+	ROM_LOAD( "b52-18.93",   0x00000, 0x00100, 0x60bdaf1a )	// identical to b52-18b
+	ROM_LOAD( "b52-18a",     0x00000, 0x00100, 0x6271be0d )
+	ROM_LOAD( "b52-49.68",   0x00000, 0x02000, 0x60dd2ed1 )
+	ROM_LOAD( "b52-50.66",   0x00000, 0x10000, 0xc189781c )
+	ROM_LOAD( "b52-51.65",   0x00000, 0x10000, 0x30cc1f79 )
+	ROM_LOAD( "b52-126.136", 0x00000, 0x00400, 0xfa2f840e )
+	ROM_LOAD( "b52-127.156", 0x00000, 0x00400, 0x77682a4f )
 ROM_END
 
 ROM_START( bshark )
@@ -3274,41 +3324,41 @@ ROM_END
 
 ROM_START( spacegun )
 	ROM_REGION( 0x80000, REGION_CPU1, 0 )	/* 512K for 68000 code (CPU A) */
-	ROM_LOAD16_BYTE( "c57-18", 0x00000, 0x20000, 0x19d7d52e )
-	ROM_LOAD16_BYTE( "c57-20", 0x00001, 0x20000, 0x2e58253f )
-	ROM_LOAD16_BYTE( "c57-17", 0x40000, 0x20000, 0xe197edb8 )
-	ROM_LOAD16_BYTE( "c57-22", 0x40001, 0x20000, 0x5855fde3 )
+	ROM_LOAD16_BYTE( "c57-18.62", 0x00000, 0x20000, 0x19d7d52e )
+	ROM_LOAD16_BYTE( "c57-20.74", 0x00001, 0x20000, 0x2e58253f )
+	ROM_LOAD16_BYTE( "c57-17.59", 0x40000, 0x20000, 0xe197edb8 )
+	ROM_LOAD16_BYTE( "c57-22.73", 0x40001, 0x20000, 0x5855fde3 )
 
 	ROM_REGION( 0x40000, REGION_CPU2, 0 )	/* 256K for 68000 code (CPU B) */
-	ROM_LOAD16_BYTE( "c57-15", 0x00000, 0x20000, 0xb36eb8f1 )
-	ROM_LOAD16_BYTE( "c57-16", 0x00001, 0x20000, 0xbfb5d1e7 )
+	ROM_LOAD16_BYTE( "c57-15.27", 0x00000, 0x20000, 0xb36eb8f1 )
+	ROM_LOAD16_BYTE( "c57-16.29", 0x00001, 0x20000, 0xbfb5d1e7 )
 
 	ROM_REGION( 0x80000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "c57-06", 0x00000, 0x80000, 0x4ebadd5b )		/* SCR 8x8 */
+	ROM_LOAD( "c57-06.52", 0x00000, 0x80000, 0x4ebadd5b )		/* SCR 8x8 */
 
 	ROM_REGION( 0x400000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD32_BYTE( "c57-01", 0x000000, 0x100000, 0xf901b04e )	/* OBJ 16x8 */
-	ROM_LOAD32_BYTE( "c57-02", 0x000001, 0x100000, 0x21ee4633 )
-	ROM_LOAD32_BYTE( "c57-03", 0x000002, 0x100000, 0xfafca86f )
-	ROM_LOAD32_BYTE( "c57-04", 0x000003, 0x100000, 0xa9787090 )
+	ROM_LOAD32_BYTE( "c57-01.25", 0x000000, 0x100000, 0xf901b04e )	/* OBJ 16x8 */
+	ROM_LOAD32_BYTE( "c57-02.24", 0x000001, 0x100000, 0x21ee4633 )
+	ROM_LOAD32_BYTE( "c57-03.12", 0x000002, 0x100000, 0xfafca86f )
+	ROM_LOAD32_BYTE( "c57-04.11", 0x000003, 0x100000, 0xa9787090 )
 
 	ROM_REGION16_LE( 0x80000, REGION_USER1, 0 )
-	ROM_LOAD16_WORD( "c57-05", 0x00000, 0x80000, 0x6a70eb2e )	/* STY spritemap */
+	ROM_LOAD16_WORD( "c57-05.36", 0x00000, 0x80000, 0x6a70eb2e )	/* STY spritemap */
 
 	ROM_REGION( 0x80000, REGION_SOUND1, 0 )	/* ADPCM samples */
-	ROM_LOAD( "c57-07", 0x00000, 0x80000, 0xad653dc1 )
+	ROM_LOAD( "c57-07.76", 0x00000, 0x80000, 0xad653dc1 )
 
 	ROM_REGION( 0x80000, REGION_SOUND2, 0 )	/* Delta-T samples */
-	ROM_LOAD( "c57-08", 0x00000, 0x80000, 0x22593550 )
+	ROM_LOAD( "c57-08.75", 0x00000, 0x80000, 0x22593550 )
 
-/*	(there probably should be an unused 0x10000 rom like the rest) */
+/*	(no unused 0x10000 rom like the rest?) */
 	ROM_REGION( 0x10000, REGION_USER2, 0 )
-//	ROM_LOAD( "c57-09", 0x00000, 0xada, 0x306f130b )	/* pals ? */
-//	ROM_LOAD( "c57-10", 0x00000, 0xcd5, 0xf11474bd )
-//	ROM_LOAD( "c57-11", 0x00000, 0xada, 0xb33be19f )
-//	ROM_LOAD( "c57-12", 0x00000, 0xcd5, 0xf1847096 )
-//	ROM_LOAD( "c57-13", 0x00000, 0xada, 0x795f0a85 )
-//	ROM_LOAD( "c57-14", 0x00000, 0xada, 0x5b3c40b7 )
+//	ROM_LOAD( "c57-09.9",  0x00000, 0xada, 0x306f130b )	/* pals */
+//	ROM_LOAD( "c57-10.47", 0x00000, 0xcd5, 0xf11474bd )
+//	ROM_LOAD( "c57-11.48", 0x00000, 0xada, 0xb33be19f )
+//	ROM_LOAD( "c57-12.61", 0x00000, 0xcd5, 0xf1847096 )
+//	ROM_LOAD( "c57-13.72", 0x00000, 0xada, 0x795f0a85 )
+//	ROM_LOAD( "c57-14.96", 0x00000, 0xada, 0x5b3c40b7 )
 ROM_END
 
 ROM_START( dblaxle )
@@ -3441,17 +3491,17 @@ GAME ( 1990, spacegun, 0,        spacegun, spacegun, bshark,   ORIENTATION_FLIP_
 
 /* Busted Games, release date order: contcirc 1989 (c) date is bogus */
 
-GAMEX( 1989, contcirc, 0,        contcirc, contcirc, taitoz,   ROT0,               "Taito Corporation Japan", "Continental Circus (World)", GAME_NOT_WORKING )
-GAMEX( 1987, contcrcu, contcirc, contcirc, contcirc, taitoz,   ROT0,               "Taito America Corporation", "Continental Circus (US)", GAME_NOT_WORKING )
-GAMEX( 1988, chasehq,  0,        chasehq,  chasehq,  taitoz,   ROT0,               "Taito Corporation Japan", "Chase HQ (World)", GAME_NOT_WORKING )
-GAMEX( 1988, chasehqj, chasehq,  chasehq,  chasehq,  taitoz,   ROT0,               "Taito Corporation", "Chase HQ (Japan)", GAME_NOT_WORKING )
-GAMEX( 1989, bshark,   0,        bshark,   bshark,   bshark,   ORIENTATION_FLIP_X, "Taito America Corporation", "Battle Shark (US)", GAME_NOT_WORKING )
-GAMEX( 1989, bsharkj,  bshark,   bshark,   bshark,   bshark,   ORIENTATION_FLIP_X, "Taito Corporation", "Battle Shark (Japan)", GAME_NOT_WORKING )
-GAMEX( 1989, sci,      0,        sci,      sci,      taitoz,   ROT0,               "Taito Corporation Japan", "Special Criminal Investigation (World set 1)", GAME_NOT_WORKING )
-GAMEX( 1989, scia,     sci,      sci,      sci,      taitoz,   ROT0,               "Taito Corporation Japan", "Special Criminal Investigation (World set 2)", GAME_NOT_WORKING )
-GAMEX( 1989, sciu,     sci,      sci,      sci,      taitoz,   ROT0,               "Taito America Corporation", "Special Criminal Investigation (US)", GAME_NOT_WORKING )
-GAMEX( 1989, nightstr, 0,        nightstr, nightstr, taitoz,   ROT0,               "Taito America Corporation", "Night Striker (US)", GAME_NOT_WORKING )
-GAMEX( 1990, aquajack, 0,        aquajack, aquajack, taitoz,   ROT0,               "Taito Corporation Japan", "Aqua Jack (World)", GAME_NOT_WORKING )
-GAMEX( 1990, aquajckj, aquajack, aquajack, aquajack, taitoz,   ROT0,               "Taito Corporation", "Aqua Jack (Japan)", GAME_NOT_WORKING )
-GAMEX( 1991, dblaxle,  0,        dblaxle,  dblaxle,  taitoz,   ROT0,               "Taito America Corporation", "Double Axle (US)", GAME_NOT_WORKING )
-GAMEX( 1991, pwheelsj, dblaxle,  dblaxle,  dblaxle,  taitoz,   ROT0,               "Taito Corporation", "Power Wheels (Japan)", GAME_NOT_WORKING )
+GAMEX( 1989, contcirc, 0,        contcirc, contcirc, taitoz,   ROT0,               "Taito Corporation Japan", "Continental Circus (World)", GAME_IMPERFECT_GRAPHICS )
+GAMEX( 1987, contcrcu, contcirc, contcirc, contcirc, taitoz,   ROT0,               "Taito America Corporation", "Continental Circus (US)", GAME_IMPERFECT_GRAPHICS )
+GAMEX( 1988, chasehq,  0,        chasehq,  chasehq,  taitoz,   ROT0,               "Taito Corporation Japan", "Chase HQ (World)", GAME_IMPERFECT_GRAPHICS )
+GAMEX( 1988, chasehqj, chasehq,  chasehq,  chasehq,  taitoz,   ROT0,               "Taito Corporation", "Chase HQ (Japan)", GAME_IMPERFECT_GRAPHICS )
+GAMEX( 1989, bshark,   0,        bshark,   bshark,   bshark,   ORIENTATION_FLIP_X, "Taito America Corporation", "Battle Shark (US)", GAME_IMPERFECT_GRAPHICS )
+GAMEX( 1989, bsharkj,  bshark,   bshark,   bshark,   bshark,   ORIENTATION_FLIP_X, "Taito Corporation", "Battle Shark (Japan)", GAME_IMPERFECT_GRAPHICS )
+GAMEX( 1989, sci,      0,        sci,      sci,      taitoz,   ROT0,               "Taito Corporation Japan", "Special Criminal Investigation (World set 1)", GAME_IMPERFECT_GRAPHICS )
+GAMEX( 1989, scia,     sci,      sci,      sci,      taitoz,   ROT0,               "Taito Corporation Japan", "Special Criminal Investigation (World set 2)", GAME_IMPERFECT_GRAPHICS )
+GAMEX( 1989, sciu,     sci,      sci,      sci,      taitoz,   ROT0,               "Taito America Corporation", "Special Criminal Investigation (US)", GAME_IMPERFECT_GRAPHICS )
+GAMEX( 1989, nightstr, 0,        nightstr, nightstr, taitoz,   ROT0,               "Taito America Corporation", "Night Striker (US)", GAME_IMPERFECT_GRAPHICS )
+GAMEX( 1990, aquajack, 0,        aquajack, aquajack, taitoz,   ROT0,               "Taito Corporation Japan", "Aqua Jack (World)", GAME_IMPERFECT_GRAPHICS )
+GAMEX( 1990, aquajckj, aquajack, aquajack, aquajack, taitoz,   ROT0,               "Taito Corporation", "Aqua Jack (Japan)", GAME_IMPERFECT_GRAPHICS )
+GAMEX( 1991, dblaxle,  0,        dblaxle,  dblaxle,  taitoz,   ROT0,               "Taito America Corporation", "Double Axle (US)", GAME_IMPERFECT_GRAPHICS )
+GAMEX( 1991, pwheelsj, dblaxle,  dblaxle,  dblaxle,  taitoz,   ROT0,               "Taito Corporation", "Power Wheels (Japan)", GAME_IMPERFECT_GRAPHICS )

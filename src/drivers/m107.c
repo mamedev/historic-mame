@@ -469,7 +469,7 @@ static int m107_raster_interrupt(void)
 	if (line==255)
 		m107_vblank=0;
 
-	return 0;
+	return ignore_interrupt();
 }
 
 static const struct MachineDriver machine_driver_firebarr =

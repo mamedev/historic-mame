@@ -67,7 +67,6 @@
 #include <string.h>
 
 extern FILE * errorlog;
-extern unsigned cpu_get_pc(void);
 
 static UINT8 reg_layout[] = {
 	H6280_PC, H6280_S, H6280_P, H6280_A, H6280_X, H6280_Y, -1,
@@ -247,31 +246,13 @@ void h6280_set_context (void *src)
 		h6280 = *(h6280_Regs*)src;
 }
 
-unsigned h6280_get_pc (void)
-{
-    return PCD;
-}
-
-void h6280_set_pc (unsigned val)
-{
-	PCW = val;
-}
-
-unsigned h6280_get_sp (void)
-{
-	return S;
-}
-
-void h6280_set_sp (unsigned val)
-{
-	S = val;
-}
-
 unsigned h6280_get_reg (int regnum)
 {
 	switch( regnum )
 	{
+		case REG_PC:
 		case H6280_PC: return PCD;
+		case REG_SP:
 		case H6280_S: return S;
 		case H6280_P: return P;
 		case H6280_A: return A;
@@ -309,7 +290,9 @@ void h6280_set_reg (int regnum, unsigned val)
 {
 	switch( regnum )
 	{
+		case REG_PC:
 		case H6280_PC: PCW = val; break;
+		case REG_SP:
 		case H6280_S: S = val; break;
 		case H6280_P: P = val; break;
 		case H6280_A: A = val; break;
@@ -317,7 +300,7 @@ void h6280_set_reg (int regnum, unsigned val)
 		case H6280_Y: Y = val; break;
 		case H6280_IRQ_MASK: h6280.irq_mask = val; CHECK_IRQ_LINES; break;
 		case H6280_TIMER_STATE: h6280.timer_status = val; break;
-		case H6280_NMI_STATE: h6280_set_nmi_line( val ); break;
+		case H6280_NMI_STATE: h6280_set_irq_line( IRQ_LINE_NMI, val ); break;
 		case H6280_IRQ1_STATE: h6280_set_irq_line( 0, val ); break;
 		case H6280_IRQ2_STATE: h6280_set_irq_line( 1, val ); break;
 		case H6280_IRQT_STATE: h6280_set_irq_line( 2, val ); break;
@@ -346,25 +329,27 @@ void h6280_set_reg (int regnum, unsigned val)
 
 /*****************************************************************************/
 
-void h6280_set_nmi_line(int state)
-{
-	if (h6280.nmi_state == state) return;
-	h6280.nmi_state = state;
-	if (state != CLEAR_LINE)
-    {
-		DO_INTERRUPT(H6280_NMI_VEC);
-	}
-}
-
 void h6280_set_irq_line(int irqline, int state)
 {
-    h6280.irq_state[irqline] = state;
+	if (irqline == IRQ_LINE_NMI)
+	{
+		if (h6280.nmi_state == state) return;
+		h6280.nmi_state = state;
+		if (state != CLEAR_LINE)
+	    {
+			DO_INTERRUPT(H6280_NMI_VEC);
+		}
+	}
+	else if (irqline < 3)
+	{
+	    h6280.irq_state[irqline] = state;
 
-	/* If line is cleared, just exit */
-	if (state == CLEAR_LINE) return;
+		/* If line is cleared, just exit */
+		if (state == CLEAR_LINE) return;
 
-	/* Check if interrupts are enabled and the IRQ mask is clear */
-	CHECK_IRQ_LINES;
+		/* Check if interrupts are enabled and the IRQ mask is clear */
+		CHECK_IRQ_LINES;
+	}
 }
 
 void h6280_set_irq_callback(int (*callback)(int irqline))

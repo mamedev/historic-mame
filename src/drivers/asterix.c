@@ -122,7 +122,7 @@ static WRITE_HANDLER( sound_arm_nmi_w )
 
 static WRITE16_HANDLER( sound_irq_w )
 {
-	cpu_set_irq_line(1, Z80_IRQ_INT, HOLD_LINE);
+	cpu_set_irq_line(1, 0, HOLD_LINE);
 }
 
 // Check the routine at 7f30 in the ead version.

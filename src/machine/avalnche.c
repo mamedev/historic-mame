@@ -140,6 +140,6 @@ int avalnche_interrupt(void)
 	if (time_16V==0)
 		return nmi_interrupt();
 	else
-		return 0;
+		return ignore_interrupt();
 }
 

@@ -139,40 +139,6 @@ void ccpu_set_context(void *src)
 }
 
 
-unsigned ccpu_get_pc(void)
-{
-	CONTEXTCCPU context;
-
-	cGetContext (&context);
-	return context.eRegPC;
-}
-
-void ccpu_set_pc(unsigned val)
-{
-	CONTEXTCCPU context;
-
-	cGetContext (&context);
-	context.eRegPC = val;
-	cSetContext (&context);
-}
-
-unsigned ccpu_get_sp(void)
-{
-	CONTEXTCCPU context;
-
-	cGetContext (&context);
-	return context.eRegP;	/* Is this a stack pointer? */
-}
-
-void ccpu_set_sp(unsigned val)
-{
-	CONTEXTCCPU context;
-
-	cGetContext (&context);
-	context.eRegP = val;   /* Is this a stack pointer? */
-	cSetContext (&context);
-}
-
 unsigned ccpu_get_reg(int regnum)
 {
 	CONTEXTCCPU context;
@@ -184,11 +150,13 @@ unsigned ccpu_get_reg(int regnum)
 		case CCPU_CMP: return context.cmpVal;
 		case CCPU_PA0: return context.pa0;
 		case CCPU_CFLAG: return context.cFlag;
+		case REG_PC:
 		case CCPU_PC: return context.eRegPC;
 		case CCPU_A: return context.eRegA;
 		case CCPU_B: return context.eRegB;
 		case CCPU_I: return context.eRegI;
 		case CCPU_J: return context.eRegJ;
+		case REG_SP:
 		case CCPU_P: return context.eRegP;
 		case CCPU_CSTATE: return context.eCState;
 /* TODO: return contents of [SP + wordsize * (REG_SP_CONTENTS-regnum)] */
@@ -210,11 +178,13 @@ void ccpu_set_reg(int regnum, unsigned val)
 		case CCPU_CMP: context.cmpVal = val; break;
 		case CCPU_PA0: context.pa0 = val; break;
 		case CCPU_CFLAG: context.cFlag = val; break;
+		case REG_PC:
 		case CCPU_PC: context.eRegPC = val; break;
 		case CCPU_A: context.eRegA = val; break;
 		case CCPU_B: context.eRegB = val; break;
 		case CCPU_I: context.eRegI = val; break;
 		case CCPU_J: context.eRegJ = val; break;
+		case REG_SP:
 		case CCPU_P: context.eRegP = val; break;
 		case CCPU_CSTATE: context.eCState = (CINESTATE) val; break;
 /* TODO: set contents of [SP + wordsize * (REG_SP_CONTENTS-regnum)] */
@@ -228,11 +198,6 @@ void ccpu_set_reg(int regnum, unsigned val)
 	cSetContext (&context);
 }
 
-
-void ccpu_set_nmi_line(int state)
-{
-	/* nothing to do */
-}
 
 void ccpu_set_irq_line(int irqline, int state)
 {

@@ -33,7 +33,6 @@ enum
 **	INTERRUPT CONSTANTS
 **#################################################################################################*/
 
-#define ASAP_INT_NONE	-1		/* No interrupt requested */
 #define ASAP_IRQ0		0		/* IRQ0 */
 
 
@@ -54,13 +53,8 @@ extern void asap_exit(void);
 extern int asap_execute(int cycles);
 extern unsigned asap_get_context(void *dst);
 extern void asap_set_context(void *src);
-extern unsigned asap_get_pc(void);
-extern void asap_set_pc(unsigned val);
-extern unsigned asap_get_sp(void);
-extern void asap_set_sp(unsigned val);
 extern unsigned asap_get_reg(int regnum);
 extern void asap_set_reg(int regnum, unsigned val);
-extern void asap_set_nmi_line(int state);
 extern void asap_set_irq_line(int irqline, int state);
 extern void asap_set_irq_callback(int (*callback)(int irqline));
 extern const char *asap_info(void *context, int regnum);

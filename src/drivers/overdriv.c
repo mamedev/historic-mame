@@ -159,7 +159,7 @@ static int cpuA_interrupt(void)
 static int cpuB_interrupt(void)
 {
 	if (K053246_is_IRQ_enabled()) return 4;
-	else return 0;
+	else return ignore_interrupt();
 }
 
 

@@ -37,8 +37,6 @@ enum {
 
 #if (HAS_TMS9900)
 
-#define TMS9900_NONE  -1
-
 extern	int tms9900_ICount;
 
 extern void tms9900_init(void);
@@ -47,13 +45,8 @@ extern int tms9900_execute(int cycles);
 extern void tms9900_exit(void);
 extern unsigned tms9900_get_context(void *dst);
 extern void tms9900_set_context(void *src);
-extern unsigned tms9900_get_pc(void);
-extern void tms9900_set_pc(unsigned val);
-extern unsigned tms9900_get_sp(void);
-extern void tms9900_set_sp(unsigned val);
 extern unsigned tms9900_get_reg(int regnum);
 extern void tms9900_set_reg(int regnum, unsigned val);
-extern void tms9900_set_nmi_line(int state);
 extern void tms9900_set_irq_line(int irqline, int state);
 extern void tms9900_set_irq_callback(int (*callback)(int irqline));
 extern const char *tms9900_info(void *context, int regnum);
@@ -63,8 +56,6 @@ extern unsigned tms9900_dasm(char *buffer, unsigned pc);
 
 #if (HAS_TMS9940)
 
-#define TMS9940_NONE  -1
-
 extern	int tms9940_ICount;
 
 extern void tms9940_init(void);
@@ -73,13 +64,8 @@ extern int tms9940_execute(int cycles);
 extern void tms9940_exit(void);
 extern unsigned tms9940_get_context(void *dst);
 extern void tms9940_set_context(void *src);
-extern unsigned tms9940_get_pc(void);
-extern void tms9940_set_pc(unsigned val);
-extern unsigned tms9940_get_sp(void);
-extern void tms9940_set_sp(unsigned val);
 extern unsigned tms9940_get_reg(int regnum);
 extern void tms9940_set_reg(int regnum, unsigned val);
-extern void tms9940_set_nmi_line(int state);
 extern void tms9940_set_irq_line(int irqline, int state);
 extern void tms9940_set_irq_callback(int (*callback)(int irqline));
 extern const char *tms9940_info(void *context, int regnum);
@@ -89,8 +75,6 @@ extern unsigned tms9940_dasm(char *buffer, unsigned pc);
 
 #if (HAS_TMS9980)
 
-#define TMS9980A_NONE  -1
-
 extern	int tms9980a_ICount;
 
 extern void tms9980a_init(void);
@@ -99,13 +83,8 @@ extern int tms9980a_execute(int cycles);
 extern void tms9980a_exit(void);
 extern unsigned tms9980a_get_context(void *dst);
 extern void tms9980a_set_context(void *src);
-extern unsigned tms9980a_get_pc(void);
-extern void tms9980a_set_pc(unsigned val);
-extern unsigned tms9980a_get_sp(void);
-extern void tms9980a_set_sp(unsigned val);
 extern unsigned tms9980a_get_reg(int regnum);
 extern void tms9980a_set_reg(int regnum, unsigned val);
-extern void tms9980a_set_nmi_line(int state);
 extern void tms9980a_set_irq_line(int irqline, int state);
 extern void tms9980a_set_irq_callback(int (*callback)(int irqline));
 extern const char *tms9980a_info(void *context, int regnum);
@@ -115,8 +94,6 @@ extern unsigned tms9980a_dasm(char *buffer, unsigned pc);
 
 #if (HAS_TMS9985)
 
-#define TMS9985_NONE  -1
-
 extern	int tms9985_ICount;
 
 extern void tms9985_init(void);
@@ -125,13 +102,8 @@ extern int tms9985_execute(int cycles);
 extern void tms9985_exit(void);
 extern unsigned tms9985_get_context(void *dst);
 extern void tms9985_set_context(void *src);
-extern unsigned tms9985_get_pc(void);
-extern void tms9985_set_pc(unsigned val);
-extern unsigned tms9985_get_sp(void);
-extern void tms9985_set_sp(unsigned val);
 extern unsigned tms9985_get_reg(int regnum);
 extern void tms9985_set_reg(int regnum, unsigned val);
-extern void tms9985_set_nmi_line(int state);
 extern void tms9985_set_irq_line(int irqline, int state);
 extern void tms9985_set_irq_callback(int (*callback)(int irqline));
 extern const char *tms9985_info(void *context, int regnum);
@@ -141,8 +113,6 @@ extern unsigned tms9985_dasm(char *buffer, unsigned pc);
 
 #if (HAS_TMS9989)
 
-#define TMS9989_NONE  -1
-
 extern	int tms9989_ICount;
 
 extern void tms9989_init(void);
@@ -151,13 +121,8 @@ extern int tms9989_execute(int cycles);
 extern void tms9989_exit(void);
 extern unsigned tms9989_get_context(void *dst);
 extern void tms9989_set_context(void *src);
-extern unsigned tms9989_get_pc(void);
-extern void tms9989_set_pc(unsigned val);
-extern unsigned tms9989_get_sp(void);
-extern void tms9989_set_sp(unsigned val);
 extern unsigned tms9989_get_reg(int regnum);
 extern void tms9989_set_reg(int regnum, unsigned val);
-extern void tms9989_set_nmi_line(int state);
 extern void tms9989_set_irq_line(int irqline, int state);
 extern void tms9989_set_irq_callback(int (*callback)(int irqline));
 extern const char *tms9989_info(void *context, int regnum);
@@ -167,8 +132,6 @@ extern unsigned tms9989_dasm(char *buffer, unsigned pc);
 
 #if (HAS_TMS9995)
 
-#define TMS9995_NONE  -1
-
 extern	int tms9995_ICount;
 
 extern void tms9995_init(void);
@@ -177,13 +140,8 @@ extern int tms9995_execute(int cycles);
 extern void tms9995_exit(void);
 extern unsigned tms9995_get_context(void *dst);
 extern void tms9995_set_context(void *src);
-extern unsigned tms9995_get_pc(void);
-extern void tms9995_set_pc(unsigned val);
-extern unsigned tms9995_get_sp(void);
-extern void tms9995_set_sp(unsigned val);
 extern unsigned tms9995_get_reg(int regnum);
 extern void tms9995_set_reg(int regnum, unsigned val);
-extern void tms9995_set_nmi_line(int state);
 extern void tms9995_set_irq_line(int irqline, int state);
 extern void tms9995_set_irq_callback(int (*callback)(int irqline));
 extern const char *tms9995_info(void *context, int regnum);
@@ -203,8 +161,6 @@ typedef struct tms9995reset_param
 
 #if (HAS_TMS99105A)
 
-#define TMS99105A_NONE  -1
-
 extern	int tms99105a_ICount;
 
 extern void tms99105a_init(void);
@@ -213,13 +169,8 @@ extern int tms99105a_execute(int cycles);
 extern void tms99105a_exit(void);
 extern unsigned tms99105a_get_context(void *dst);
 extern void tms99105a_set_context(void *src);
-extern unsigned tms99105a_get_pc(void);
-extern void tms99105a_set_pc(unsigned val);
-extern unsigned tms99105a_get_sp(void);
-extern void tms99105a_set_sp(unsigned val);
 extern unsigned tms99105a_get_reg(int regnum);
 extern void tms99105a_set_reg(int regnum, unsigned val);
-extern void tms99105a_set_nmi_line(int state);
 extern void tms99105a_set_irq_line(int irqline, int state);
 extern void tms99105a_set_irq_callback(int (*callback)(int irqline));
 extern const char *tms99105a_info(void *context, int regnum);
@@ -229,8 +180,6 @@ extern unsigned tms99105a_dasm(char *buffer, unsigned pc);
 
 #if (HAS_TMS99110A)
 
-#define TMS99110A_NONE  -1
-
 extern	int tms99110A_ICount;
 
 extern void tms99110a_init(void);
@@ -239,13 +188,8 @@ extern int tms99110a_execute(int cycles);
 extern void tms99110a_exit(void);
 extern unsigned tms99110a_get_context(void *dst);
 extern void tms99110a_set_context(void *src);
-extern unsigned tms99110a_get_pc(void);
-extern void tms99110a_set_pc(unsigned val);
-extern unsigned tms99110a_get_sp(void);
-extern void tms99110a_set_sp(unsigned val);
 extern unsigned tms99110a_get_reg(int regnum);
 extern void tms99110a_set_reg(int regnum, unsigned val);
-extern void tms99110a_set_nmi_line(int state);
 extern void tms99110a_set_irq_line(int irqline, int state);
 extern void tms99110a_set_irq_callback(int (*callback)(int irqline));
 extern const char *tms99110a_info(void *context, int regnum);

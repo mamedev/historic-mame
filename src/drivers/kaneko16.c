@@ -2110,7 +2110,21 @@ static struct OKIM6295interface okim6295_intf_8kHz =
 static struct OKIM6295interface okim6295_intf_12kHz =
 {
 	1,
-	{ 12000 },
+	{ 12000000/6/165 }, /* 2MHz -> 6295 (mode A) */
+	{ REGION_SOUND1 },
+	{ 100 }
+};
+static struct OKIM6295interface okim6295_intf_15kHz =
+{
+	1,
+	{ 12000000/6/132 }, /* 2MHz -> 6295 (mode B) */
+	{ REGION_SOUND1 },
+	{ 100 }
+};
+static struct OKIM6295interface okim6295_intf_18kHz =
+{
+	1,
+	{ 12000000/4/165 }, /* 3MHz -> 6295 (mode A) */
 	{ REGION_SOUND1 },
 	{ 100 }
 };
@@ -2196,7 +2210,7 @@ static const struct MachineDriver machine_driver_berlwall =
 	SOUND_SUPPORTS_STEREO,0,0,0,
 	{
 		{	SOUND_AY8910,	&ay8910_intf_2x1MHz_DSW	},
-		{	SOUND_OKIM6295,	&okim6295_intf_8kHz		}
+		{	SOUND_OKIM6295,	&okim6295_intf_12kHz	}
 	}
 };
 
@@ -2379,7 +2393,7 @@ static const struct MachineDriver machine_driver_mgcrystl =
 	0,0,0,0,
 	{
 		{	SOUND_AY8910,	&ay8910_intf_2x2MHz_EEPROM	},
-		{	SOUND_OKIM6295,	&okim6295_intf_8kHz			}
+		{	SOUND_OKIM6295,	&okim6295_intf_18kHz		}
 	},
 
 	nvram_handler_93C46
@@ -2446,7 +2460,7 @@ static const struct MachineDriver machine_driver_sandscrp =
 	/* sound hardware */
 	SOUND_SUPPORTS_STEREO,0,0,0,
 	{
-		{	SOUND_OKIM6295,	&okim6295_intf_12kHz	},
+		{	SOUND_OKIM6295,	&okim6295_intf_15kHz	},
 		{	SOUND_YM2203,	&ym2203_intf_sandscrp	},
 	}
 };

@@ -2221,7 +2221,7 @@ static const struct MachineDriver machine_driver_##name =		\
 	name ## _init,											\
 															\
 	40*8, 32*8, { 0*8, 40*8-1, 2*8, 30*8-1 },				\
-	gfxdecodeinfo1,											\
+	gfxdecodeinfo2,											\
 	256, 0,													\
 	0,														\
 															\
@@ -2410,14 +2410,36 @@ ROM_START( kurikint )
 	ROM_LOAD( "b42-07.22",   0x00000, 0x10000, 0x0f2719c0 )
 
 	ROM_REGION( 0x100000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "kk_1-1l.rom", 0x00000, 0x20000, 0xdf1d4fcd )
-	ROM_LOAD( "kk_2-2l.rom", 0x20000, 0x20000, 0xfca7f647 )
-	ROM_LOAD( "kk_5-3l.rom", 0x40000, 0x20000, 0xd080fde1 )
-	ROM_LOAD( "kk_7-4l.rom", 0x60000, 0x20000, 0xf5bf6829 )
-	ROM_LOAD( "kk_3-1h.rom", 0x80000, 0x20000, 0x71af848e )
-	ROM_LOAD( "kk_4-2h.rom", 0xa0000, 0x20000, 0xcebb5bac )
-	ROM_LOAD( "kk_6-3h.rom", 0xc0000, 0x20000, 0x322e3752 )
-	ROM_LOAD( "kk_8-4h.rom", 0xe0000, 0x20000, 0x117bde99 )
+	ROM_LOAD( "b42-01.1",    0x00000, 0x80000, 0x7d1a1fec )
+	ROM_LOAD( "b42-02.5",    0x80000, 0x80000, 0x1a52e65c )
+ROM_END
+
+ROM_START( kurikinu )
+	ROM_REGION( 0xb0000, REGION_CPU1, 0 )
+	ROM_LOAD( "b42-08.2",    0x00000, 0x20000, 0x7075122e )
+	ROM_RELOAD(              0x10000, 0x20000 )
+	ROM_LOAD( "b42-06.6",    0x30000, 0x20000, 0xfa15fd65 )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )
+	ROM_LOAD( "b42-07.22",   0x00000, 0x10000, 0x0f2719c0 )
+
+	ROM_REGION( 0x100000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "b42-01.1",    0x00000, 0x80000, 0x7d1a1fec )
+	ROM_LOAD( "b42-02.5",    0x80000, 0x80000, 0x1a52e65c )
+ROM_END
+
+ROM_START( kurikinj )
+	ROM_REGION( 0xb0000, REGION_CPU1, 0 )
+	ROM_LOAD( "b42_05.2",    0x00000, 0x20000, 0x077222b8 )
+	ROM_RELOAD(              0x10000, 0x20000 )
+	ROM_LOAD( "b42-06.6",    0x30000, 0x20000, 0xfa15fd65 )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )
+	ROM_LOAD( "b42-07.22",   0x00000, 0x10000, 0x0f2719c0 )
+
+	ROM_REGION( 0x100000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "b42-01.1",    0x00000, 0x80000, 0x7d1a1fec )
+	ROM_LOAD( "b42-02.5",    0x80000, 0x80000, 0x1a52e65c )
 ROM_END
 
 ROM_START( kurikina )
@@ -2577,6 +2599,8 @@ GAME( 1989, champwru, champwr,  champwr,  champwru, 0,        ROT0,   "Taito Ame
 GAME( 1989, champwrj, champwr,  champwr,  champwrj, 0,        ROT0,   "Taito Corporation", "Champion Wrestler (Japan)" )
 
 GAME( 1988, kurikint, 0,        kurikint, kurikint, 0,        ROT0,   "Taito Corporation Japan", "Kuri Kinton (World)" )
+GAME( 1988, kurikinu, kurikint, kurikint, kurikint, 0,        ROT0,   "Taito America Corporation", "Kuri Kinton (US)" )
+GAME( 1988, kurikinj, kurikint, kurikint, kurikint, 0,        ROT0,   "Taito Corporation", "Kuri Kinton (Japan)" )
 GAME( 1988, kurikina, kurikint, kurikint, kurikina, 0,        ROT0,   "Taito Corporation Japan", "Kuri Kinton (prototype?)" )
 
 GAME( 1989, plotting, 0,        plotting, plotting, plotting, ROT0,   "Taito Corporation Japan", "Plotting (World)" )

@@ -8,8 +8,7 @@
 
 enum { M6805_PC=1, M6805_S, M6805_CC, M6805_A, M6805_X, M6805_IRQ_STATE };
 
-#define M6805_INT_NONE  0           /* No interrupt required */
-#define M6805_INT_IRQ	1 			/* Standard IRQ interrupt */
+#define M6805_IRQ_LINE		0
 
 /* PUBLIC GLOBALS */
 extern int  m6805_ICount;
@@ -21,13 +20,8 @@ extern void m6805_exit(void);
 extern int	m6805_execute(int cycles);
 extern unsigned m6805_get_context(void *dst);
 extern void m6805_set_context(void *src);
-extern unsigned m6805_get_pc(void);
-extern void m6805_set_pc(unsigned val);
-extern unsigned m6805_get_sp(void);
-extern void m6805_set_sp(unsigned val);
 extern unsigned m6805_get_reg(int regnum);
 extern void m6805_set_reg(int regnum, unsigned val);
-extern void m6805_set_nmi_line(int state);
 extern void m6805_set_irq_line(int irqline, int state);
 extern void m6805_set_irq_callback(int (*callback)(int irqline));
 extern const char *m6805_info(void *context, int regnum);
@@ -44,8 +38,7 @@ extern unsigned m6805_dasm(char *buffer, unsigned pc);
 #define M68705_CC					M6805_CC
 #define M68705_IRQ_STATE			M6805_IRQ_STATE
 
-#define M68705_INT_NONE             M6805_INT_NONE
-#define M68705_INT_IRQ				M6805_INT_IRQ
+#define M68705_IRQ_LINE				M6805_IRQ_LINE
 
 #define m68705_ICount				m6805_ICount
 extern void m68705_init(void);
@@ -54,13 +47,8 @@ extern void m68705_exit(void);
 extern int	m68705_execute(int cycles);
 extern unsigned m68705_get_context(void *dst);
 extern void m68705_set_context(void *src);
-extern unsigned m68705_get_pc(void);
-extern void m68705_set_pc(unsigned val);
-extern unsigned m68705_get_sp(void);
-extern void m68705_set_sp(unsigned val);
 extern unsigned m68705_get_reg(int regnum);
 extern void m68705_set_reg(int regnum, unsigned val);
-extern void m68705_set_nmi_line(int state);
 extern void m68705_set_irq_line(int irqline, int state);
 extern void m68705_set_irq_callback(int (*callback)(int irqline));
 extern const char *m68705_info(void *context, int regnum);
@@ -81,10 +69,6 @@ extern unsigned m68705_dasm(char *buffer, unsigned pc);
 #define HD63705_IRQ2_STATE			M6805_IRQ_STATE+2
 #define HD63705_ADCONV_STATE		M6805_IRQ_STATE+3
 
-#define HD63705_INT_NONE			M6805_INT_NONE
-#define HD63705_INT_IRQ				M6805_INT_IRQ
-#define HD63705_INT_NMI				0x08
-
 #define HD63705_INT_MASK			0x1ff
 
 #define HD63705_INT_IRQ1			0x00
@@ -95,6 +79,7 @@ extern unsigned m68705_dasm(char *buffer, unsigned pc);
 #define	HD63705_INT_PCI				0x05
 #define	HD63705_INT_SCI				0x06
 #define	HD63705_INT_ADCONV			0x07
+#define HD63705_INT_NMI				0x08
 
 #define hd63705_ICount				m6805_ICount
 extern void hd63705_init(void);
@@ -103,13 +88,8 @@ extern void hd63705_exit(void);
 extern int	hd63705_execute(int cycles);
 extern unsigned hd63705_get_context(void *dst);
 extern void hd63705_set_context(void *src);
-extern unsigned hd63705_get_pc(void);
-extern void hd63705_set_pc(unsigned val);
-extern unsigned hd63705_get_sp(void);
-extern void hd63705_set_sp(unsigned val);
 extern unsigned hd63705_get_reg(int regnum);
 extern void hd63705_set_reg(int regnum, unsigned val);
-extern void hd63705_set_nmi_line(int state);
 extern void hd63705_set_irq_line(int irqline, int state);
 extern void hd63705_set_irq_callback(int (*callback)(int irqline));
 extern const char *hd63705_info(void *context, int regnum);

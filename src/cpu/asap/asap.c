@@ -396,12 +396,6 @@ INLINE void check_irqs(void)
 }
 
 
-void asap_set_nmi_line(int state)
-{
-	/* no NMI line */
-}
-
-
 void asap_set_irq_line(int irqline, int state)
 {
 	asap.irq_state = (state != CLEAR_LINE);
@@ -448,36 +442,6 @@ void asap_set_context(void *src)
 		/* check for IRQs */
 		check_irqs();
 	}
-}
-
-
-
-/*###################################################################################################
-**	SPECIAL REGISTER GETTERS AND SETTERS
-**#################################################################################################*/
-
-unsigned asap_get_pc(void)
-{
-	return asap.pc;
-}
-
-
-void asap_set_pc(unsigned val)
-{
-	asap.pc = val;
-}
-
-
-unsigned asap_get_sp(void)
-{
-	/* no stack pointer */
-	return 0;
-}
-
-
-void asap_set_sp(unsigned val)
-{
-	/* no stack pointer */
 }
 
 
@@ -623,6 +587,7 @@ unsigned asap_get_reg(int regnum)
 {
 	switch (regnum)
 	{
+		case REG_PC:
 		case ASAP_PC:		return asap.pc;
 		case ASAP_PS:		return GET_FLAGS(&asap);
 
@@ -674,6 +639,7 @@ void asap_set_reg(int regnum, unsigned val)
 {
 	switch (regnum)
 	{
+		case REG_PC:
 		case ASAP_PC:		asap.pc = val;					break;
 		case ASAP_PS:		SET_FLAGS(&asap, val); 			break;
 

@@ -53,7 +53,7 @@ YM2151 Test register (0x01):
 	+----------+-----+------+-----+-----+------+------+------+-------+
 	| hex val. | 80  |  40  | 20  | 10  |  08  |  04  |  02  |   01  |
 	+----------+-----+------+-----+-----+------+------+------+-------+
-	|          |LS/MS| RIen | HEG | NEG | HPGL | uLFO | HLFO | u_clk |
+	|          |LS/MS| RIen | HEG | NEG | HPGL | ILFO | HLFO | u_clk |
 	+----------+-----+------+-----+-----+------+------+------+-------+
 
 
@@ -126,19 +126,21 @@ bit 3 - HPGL (Halt Phase Generator AND LFO amplitude modulation)
 
 
 
-bit 2 - uLFO (unknown, but LFO related)
+bit 2 - ILFO (Internal LFO related)
 
-	I do not know what this bit really does. I only noticed that when it is
-	set, _something_ LFO related happens.
-	I know for sure LFO Amplitude Modulation gets "tweaked" when this bit is set,
-	I do not know if it alters Phase Modulation in any way.
+	When 1 - LFO output (depends on selected waveform)
+
+	LFO outputs some internal signals...what are they ?
+	I did not test if this bit alters Phase Modulation in any way.
+
 	Also alters timer A somehow. At least it sounds like a restart.
 
 
 
 bit 1 - HLFO (Halt LFO)
 
-	When 1 - LFO gets HALTED.
+	When 1 - LFO gets HALTED (at maximum amplitude in case of AM).
+
 	On the 1 to 0 transition LFO will be RESET to startup of the waveform
 	(phase of the LFO _only_).
 

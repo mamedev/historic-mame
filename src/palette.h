@@ -74,6 +74,8 @@
 extern "C" {
 #endif
 
+typedef UINT32 pen_t;
+
 int palette_start(void);
 void palette_stop(void);
 int palette_init(void);
@@ -153,6 +155,8 @@ WRITE16_HANDLER( paletteram16_IIIIRRRRGGGGBBBB_word_w );
 WRITE16_HANDLER( paletteram16_RRRRGGGGBBBBIIII_word_w );
 WRITE16_HANDLER( paletteram16_xrgb_word_w );
 WRITE16_HANDLER( paletteram16_RRRRGGGGBBBBRGBx_word_w );
+
+void palette_RRRR_GGGG_BBBB_convert_prom(unsigned char *obsolete,unsigned short *colortable,const unsigned char *color_prom);
 
 #ifdef __cplusplus
 }

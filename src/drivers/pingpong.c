@@ -5,18 +5,31 @@
 void pingpong_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 void pingpong_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 
-static unsigned char *intenable;
 
+
+static int intenable;
+
+static WRITE_HANDLER( coin_w )
+{
+	/* bit 2 = irq enable, bit 3 = nmi enable */
+	intenable = data & 0x0c;
+
+	/* bit 0/1 = coin counters */
+	coin_counter_w(0,data & 1);
+	coin_counter_w(1,data & 2);
+
+	/* other bits unknown */
+}
 
 static int pingpong_interrupt(void)
 {
 	if (cpu_getiloops() == 0)
 	{
-		if (*intenable & 0x04) return interrupt();
+		if (intenable & 0x04) return interrupt();
 	}
 	else if (cpu_getiloops() % 2)
 	{
-		if (*intenable & 0x08) return nmi_interrupt();
+		if (intenable & 0x08) return nmi_interrupt();
 	}
 
 	return ignore_interrupt();
@@ -25,41 +38,42 @@ static int pingpong_interrupt(void)
 
 
 static MEMORY_READ_START( readmem )
-	{ 0x0000, 0x7FFF, MRA_ROM },
-	{ 0x8000, 0x87FF, MRA_RAM },
-	{ 0x9000, 0x97FF, MRA_RAM },
-	{ 0xA800, 0xA800, input_port_0_r },
-	{ 0xA880, 0xA880, input_port_1_r },
-	{ 0xA900, 0xA900, input_port_2_r },
-	{ 0xA980, 0xA980, input_port_3_r },
+	{ 0x0000, 0x7fff, MRA_ROM },
+	{ 0x8000, 0x87ff, MRA_RAM },
+	{ 0x9000, 0x97ff, MRA_RAM },
+	{ 0xa800, 0xa800, input_port_0_r },
+	{ 0xa880, 0xa880, input_port_1_r },
+	{ 0xa900, 0xa900, input_port_2_r },
+	{ 0xa980, 0xa980, input_port_3_r },
 MEMORY_END
 
 static MEMORY_WRITE_START( writemem )
-	{ 0x0000, 0x7FFF, MWA_ROM },
-	{ 0x8000, 0x83FF, colorram_w, &colorram },
-	{ 0x8400, 0x87FF, videoram_w, &videoram, &videoram_size },
+	{ 0x0000, 0x7fff, MWA_ROM },
+	{ 0x8000, 0x83ff, colorram_w, &colorram },
+	{ 0x8400, 0x87ff, videoram_w, &videoram, &videoram_size },
 	{ 0x9000, 0x9002, MWA_RAM },
 	{ 0x9003, 0x9052, MWA_RAM, &spriteram, &spriteram_size },
-	{ 0x9053, 0x97FF, MWA_RAM },
-	{ 0xA000, 0xA000, MWA_RAM, &intenable },	/* bit 2 = irq enable, bit 3 = nmi enable */
-												/* bit 0/1 = coin counters */
-												/* other bits unknown */
-	{ 0xA200, 0xA200, MWA_NOP },		/* SN76496 data latch */
-	{ 0xA400, 0xA400, SN76496_0_w },	/* trigger read */
-	{ 0xA600, 0xA600, watchdog_reset_w },
+	{ 0x9053, 0x97ff, MWA_RAM },
+	{ 0xa000, 0xa000, coin_w },	/* coin counters + irq enables */
+	{ 0xa200, 0xa200, MWA_NOP },		/* SN76496 data latch */
+	{ 0xa400, 0xa400, SN76496_0_w },	/* trigger read */
+	{ 0xa600, 0xa600, watchdog_reset_w },
 MEMORY_END
 
 
 
 INPUT_PORTS_START( pingpong )
-
 	PORT_START	/* IN0 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unused ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unused ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_SERVICE( 0x04, IP_ACTIVE_LOW )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_START2 )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_START1 )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_COIN3 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_SERVICE1 )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN2 )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN1 )
 
@@ -118,19 +132,19 @@ INPUT_PORTS_START( pingpong )
 	PORT_DIPSETTING(    0x02, "Normal" )
 	PORT_DIPSETTING(    0x04, "Difficult" )
 	PORT_DIPSETTING(    0x00, "Very Difficult" )
-	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unused ) )
 	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x10, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unused ) )
 	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unused ) )
 	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x40, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unused ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unused ) )
 	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 INPUT_PORTS_END

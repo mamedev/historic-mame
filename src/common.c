@@ -995,12 +995,14 @@ static int open_rom_file(struct rom_load_data *romdata, const struct RomModule *
 	/* first attempt reading up the chain through the parents */
 	romdata->file = NULL;
 	for (drv = Machine->gamedrv; !romdata->file && drv; drv = drv->clone_of)
-		romdata->file = osd_fopen(drv->name, ROM_GETNAME(romp), OSD_FILETYPE_ROM, 0);
+		if (drv->name && *drv->name)
+			romdata->file = osd_fopen(drv->name, ROM_GETNAME(romp), OSD_FILETYPE_ROM, 0);
 
 	/* if that failed, attempt to open via CRC */
 	sprintf(crc, "%08x", ROM_GETCRC(romp));
 	for (drv = Machine->gamedrv; !romdata->file && drv; drv = drv->clone_of)
-		romdata->file = osd_fopen(drv->name, crc, OSD_FILETYPE_ROM, 0);
+		if (drv->name && *drv->name)
+			romdata->file = osd_fopen(drv->name, crc, OSD_FILETYPE_ROM, 0);
 
 	/* return the result */
 	return (romdata->file != NULL);

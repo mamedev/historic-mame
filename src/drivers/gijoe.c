@@ -124,7 +124,7 @@ static WRITE16_HANDLER( sound_cmd_w )
 
 static WRITE16_HANDLER( sound_irq_w )
 {
-	cpu_set_irq_line(1, Z80_IRQ_INT, HOLD_LINE);
+	cpu_set_irq_line(1, 0, HOLD_LINE);
 }
 
 static READ16_HANDLER( sound_status_r )

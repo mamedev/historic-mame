@@ -42,13 +42,8 @@ extern void h6280_exit(void);					/* Shut down CPU */
 extern int h6280_execute(int cycles);			/* Execute cycles - returns number of cycles actually run */
 extern unsigned h6280_get_context(void *dst);	/* Get registers, return context size */
 extern void h6280_set_context(void *src);		/* Set registers */
-extern unsigned h6280_get_pc(void); 			/* Get program counter */
-extern void h6280_set_pc(unsigned val); 		/* Set program counter */
-extern unsigned h6280_get_sp(void); 			/* Get stack pointer */
-extern void h6280_set_sp(unsigned val); 		/* Set stack pointer */
 extern unsigned h6280_get_reg (int regnum);
 extern void h6280_set_reg (int regnum, unsigned val);
-extern void h6280_set_nmi_line(int state);
 extern void h6280_set_irq_line(int irqline, int state);
 extern void h6280_set_irq_callback(int (*callback)(int irqline));
 extern const char *h6280_info(void *context, int regnum);

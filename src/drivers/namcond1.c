@@ -170,7 +170,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 };
 
 /******************************************
-  ND-1 Master clock = 49.152Mhz
+  ND-1 Master clock = 49.152MHz
   - 680000  = 12288000 (CLK/4)
   - H8/3002 = 16666667 (CLK/3) ??? huh?
   - H8/3002 = 16384000 (CLK/3)

@@ -32,7 +32,6 @@ extern unsigned char *kyugo_back_scrollX;
 WRITE_HANDLER( kyugo_gfxctrl_w );
 WRITE_HANDLER( kyugo_flipscreen_w );
 void kyugo_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
-void kyugo_vh_convert_color_prom(unsigned char *obsolete,unsigned short *colortable,const unsigned char *color_prom);
 
 
 static unsigned char *shared_ram;
@@ -204,18 +203,18 @@ INPUT_PORTS_START( gyrodine )
 	PORT_DIPSETTING(    0x02, "4" )
 	PORT_DIPSETTING(    0x01, "5" )
 	PORT_DIPSETTING(    0x00, "6" )
-	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ) )
+	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unused ) )
 	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unused ) )
 	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Difficulty ) )
 	PORT_DIPSETTING(    0x10, "Easy" )
 	PORT_DIPSETTING(    0x00, "Hard" )
-	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Bonus_Life ) )
+	PORT_DIPSETTING(    0x20, "20000 50000" )
+	PORT_DIPSETTING(    0x00, "40000 70000" )
 	PORT_DIPNAME( 0x40, 0x00, DEF_STR( Cabinet ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( Cocktail ) )
@@ -225,10 +224,10 @@ INPUT_PORTS_START( gyrodine )
 
 	PORT_START      /* DSW2 */
     COIN_A_B
-	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unused ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unused ) )
 	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
@@ -606,7 +605,7 @@ static const struct MachineDriver machine_driver_##name =											\
 	64*8, 32*8, { 0*8, 36*8-1, 2*8, 30*8-1 },												\
 	gfxdecodeinfo,																			\
 	256, 0,																					\
-	kyugo_vh_convert_color_prom,															\
+	palette_RRRR_GGGG_BBBB_convert_prom,													\
 																							\
 	VIDEO_TYPE_RASTER,																		\
 	0,																						\

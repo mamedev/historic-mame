@@ -379,7 +379,7 @@ struct GfxElement *builduifont(void)
 	};
 
 	struct GfxElement *font;
-	static UINT32 colortable[2*2];	/* ASG 980209 */
+	static pen_t colortable[2*2];	/* ASG 980209 */
 
 
 	switch_ui_orientation();
@@ -965,10 +965,7 @@ void ui_displaymessagewindow(struct osd_bitmap *bitmap,const char *text)
 #ifndef TINY_COMPILE
 #ifndef CPSMAME
 extern int no_of_tiles;
-void NeoMVSDrawGfx(UINT8 **line,const struct GfxElement *gfx,
-		unsigned int code,unsigned int color,int flipx,int flipy,int sx,int sy,
-		int zx,int zy,const struct rectangle *clip);
-void NeoMVSDrawGfx16(UINT16 **line,const struct GfxElement *gfx,
+void NeoMVSDrawGfx(UINT16 **line,const struct GfxElement *gfx,
 		unsigned int code,unsigned int color,int flipx,int flipy,int sx,int sy,
 		int zx,int zy,const struct rectangle *clip);
 extern struct GameDriver driver_neogeo;
@@ -985,7 +982,7 @@ static void showcharset(struct osd_bitmap *bitmap)
 	int changed;
 	int game_is_neogeo=0;
 	int total_colors = 0;
-	UINT32 *colortable = NULL;
+	pen_t *colortable = NULL;
 
 
 #ifndef MESS
@@ -1133,20 +1130,12 @@ static void showcharset(struct osd_bitmap *bitmap)
 
 				for (i = 0; i+firstdrawn < no_of_tiles && i<cpx*cpy; i++)
 				{
-					if (bitmap->depth == 16)
-						NeoMVSDrawGfx16((UINT16 **)bitmap->line,Machine->gfx[bank],
-							i+firstdrawn,color,  /*sprite num, color*/
-							0,0,
-							(i % cpx) * Machine->gfx[bank]->width + Machine->uixmin,
-							Machine->uifontheight+1 + (i / cpx) * Machine->gfx[bank]->height + Machine->uiymin,
-							16,16,&clip);
-					else
-						NeoMVSDrawGfx((UINT8 **)bitmap->line,Machine->gfx[bank],
-							i+firstdrawn,color,  /*sprite num, color*/
-							0,0,
-							(i % cpx) * Machine->gfx[bank]->width + Machine->uixmin,
-							Machine->uifontheight+1 + (i / cpx) * Machine->gfx[bank]->height + Machine->uiymin,
-							16,16,&clip);
+					NeoMVSDrawGfx((UINT16 **)bitmap->line,Machine->gfx[bank],
+						i+firstdrawn,color,  /*sprite num, color*/
+						0,0,
+						(i % cpx) * Machine->gfx[bank]->width + Machine->uixmin,
+						Machine->uifontheight+1 + (i / cpx) * Machine->gfx[bank]->height + Machine->uiymin,
+						16,16,&clip);
 
 					lastdrawn = i+firstdrawn;
 				}

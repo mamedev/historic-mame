@@ -13,6 +13,8 @@
 extern "C" {
 #endif
 
+#include "palette.h"
+
 #define MAX_GFX_PLANES 8
 #define MAX_GFX_SIZE 64
 
@@ -61,7 +63,7 @@ struct GfxElement
 	unsigned int total_elements;	/* total number of characters/sprites */
 	int color_granularity;	/* number of colors for each color code */
 							/* (for example, 4 for 2 bitplanes gfx) */
-	UINT32 *colortable;	/* map color codes to screen pens */
+	pen_t *colortable;	/* map color codes to screen pens */
 	int total_colors;
 	UINT32 *pen_usage;	/* an array of total_elements entries. */
 						/* It is a table of the pens each character uses */
@@ -175,10 +177,10 @@ void copyscrollbitmap(struct osd_bitmap *dest,struct osd_bitmap *src,
 void copyscrollbitmap_remap(struct osd_bitmap *dest,struct osd_bitmap *src,
 		int rows,const int *rowscroll,int cols,const int *colscroll,
 		const struct rectangle *clip,int transparency,int transparent_color);
-void draw_scanline8(struct osd_bitmap *bitmap,int x,int y,int length,const UINT8 *src,UINT32 *pens,int transparent_pen);
-void draw_scanline16(struct osd_bitmap *bitmap,int x,int y,int length,const UINT16 *src,UINT32 *pens,int transparent_pen);
-void pdraw_scanline8(struct osd_bitmap *bitmap,int x,int y,int length,const UINT8 *src,UINT32 *pens,int transparent_pen,UINT32 orient,int pri);
-void pdraw_scanline16(struct osd_bitmap *bitmap,int x,int y,int length,const UINT16 *src,UINT32 *pens,int transparent_pen,UINT32 orient,int pri);
+void draw_scanline8(struct osd_bitmap *bitmap,int x,int y,int length,const UINT8 *src,pen_t *pens,int transparent_pen);
+void draw_scanline16(struct osd_bitmap *bitmap,int x,int y,int length,const UINT16 *src,pen_t *pens,int transparent_pen);
+void pdraw_scanline8(struct osd_bitmap *bitmap,int x,int y,int length,const UINT8 *src,pen_t *pens,int transparent_pen,UINT32 orient,int pri);
+void pdraw_scanline16(struct osd_bitmap *bitmap,int x,int y,int length,const UINT16 *src,pen_t *pens,int transparent_pen,UINT32 orient,int pri);
 void extract_scanline8(struct osd_bitmap *bitmap,int x,int y,int length,UINT8 *dst);
 void extract_scanline16(struct osd_bitmap *bitmap,int x,int y,int length,UINT16 *dst);
 

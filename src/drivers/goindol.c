@@ -11,7 +11,6 @@ int  goindol_vh_start(void);
 WRITE_HANDLER( goindol_fg_videoram_w );
 WRITE_HANDLER( goindol_bg_videoram_w );
 void goindol_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
-void goindol_vh_convert_color_prom(unsigned char *obsolete,unsigned short *colortable,const unsigned char *color_prom);
 
 extern data8_t *goindol_fg_scrollx;
 extern data8_t *goindol_fg_scrolly;
@@ -290,7 +289,7 @@ static const struct MachineDriver machine_driver_goindol =
 	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
 	gfxdecodeinfo,
 	256, 0,
-	goindol_vh_convert_color_prom,
+	palette_RRRR_GGGG_BBBB_convert_prom,
 
 	VIDEO_TYPE_RASTER,
 	0,

@@ -219,7 +219,7 @@ INLINE void mips_advance_pc( void )
 {
 	if( mipscpu.delay )
 	{
-		mips_set_pc( mipscpu.delaypc );
+		mips_set_reg( REG_PC, mipscpu.delaypc );
 	}
 	else
 	{
@@ -242,11 +242,11 @@ static void mips_exception( int exception )
 	}
 	if( mipscpu.cp0r[ CP0_SR ] & SR_BEV )
 	{
-		mips_set_pc( 0xbfc00180 );
+		mips_set_reg( REG_PC, 0xbfc00180 );
 	}
 	else
 	{
-		mips_set_pc( 0x80000080 );
+		mips_set_reg( REG_PC, 0x80000080 );
 	}
 }
 
@@ -259,7 +259,7 @@ void mips_reset( void *param )
 	mips_set_cp0r( CP0_SR, ( mipscpu.cp0r[ CP0_SR ] & ~( SR_TS | SR_SWC | SR_KUC | SR_IEC ) ) | SR_BEV );
 	mips_set_cp0r( CP0_RANDOM, 63 ); /* todo: */
 	mips_set_cp0r( CP0_PRID, 0x00000200 ); /* todo: */
-	mips_set_pc( 0xbfc00000 );
+	mips_set_reg( REG_PC, 0xbfc00000 );
 }
 
 void mips_exit( void )
@@ -1658,36 +1658,11 @@ void mips_set_context( void *src )
 	}
 }
 
-unsigned mips_get_pc( void )
-{
-	return mipscpu.pc;
-}
-
-void mips_set_pc( unsigned val )
-{
-	mipscpu.pc = val;
-	change_pc32lew( val );
-	mipscpu.delaypc = 0;
-	mipscpu.delay = 0;
-}
-
-unsigned mips_get_sp(void)
-{
-	/* because there is no hardware stack and the pipeline causes the cpu to execute the
-	instruction after a subroutine call before the subroutine there is little chance of
-	cmd_step_over() in mamedbg.c working. */
-	return 0;
-}
-
-void mips_set_sp( unsigned val )
-{
-	/* no hardware stack */
-}
-
 unsigned mips_get_reg( int regnum )
 {
 	switch( regnum )
 	{
+	case REG_PC:
 	case MIPS_PC:		return mipscpu.pc;
 	case MIPS_DELAYPC:	return mipscpu.delaypc;
 	case MIPS_DELAY:	return mipscpu.delay;
@@ -1765,7 +1740,13 @@ void mips_set_reg( int regnum, unsigned val )
 {
 	switch( regnum )
 	{
-	case MIPS_PC:		mips_set_pc( val );	break;
+	case REG_PC:
+	case MIPS_PC:
+		mipscpu.pc = val;
+		change_pc32lew( val );
+		mipscpu.delaypc = 0;
+		mipscpu.delay = 0;
+		break;
 	case MIPS_DELAYPC:	mipscpu.delaypc = val;	break;
 	case MIPS_DELAY:	mipscpu.delay = val & 1; break;
 	case MIPS_HI:		mipscpu.hi = val;		break;
@@ -1835,11 +1816,6 @@ void mips_set_reg( int regnum, unsigned val )
 	case MIPS_CP0R30:	mips_set_cp0r( 30, val );	break;
 	case MIPS_CP0R31:	mips_set_cp0r( 31, val );	break;
 	}
-}
-
-void mips_set_nmi_line( int state )
-{
-	/* no nmi */
 }
 
 void mips_set_irq_line( int irqline, int state )

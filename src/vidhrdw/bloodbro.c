@@ -110,6 +110,41 @@ WRITE16_HANDLER( bloodbro_txvideoram_w )
 
   Display refresh
 
+
+	Blood Bros / Skysmash Spriteram
+	-------------------------------
+
+	Slightly more sophisticated successor to the Toki sprite chip.
+
+	It has "big sprites" created by setting width or height >0. Tile
+	numbers are read consecutively.
+
+      +0   x....... ........  sprite disabled if set
+	+0   .x...... ........  Flip y (no evidence for this!!)
+	+0   ..x..... ........  Flip x
+	+0   ....x... ........  Priority (1=high)
+	+0   ......xx x.......  Width: do this many tiles horizontally
+	+0   ........ .xxx....  Height: do this many tiles vertically
+ 	+0   ........ ....xxxx  Color bank
+
+	+1   ...xxxxx xxxxxxxx  Tile number
+	+2   .......x xxxxxxxx  X coordinate
+	+3   .......x xxxxxxxx  Y coordinate
+
+
+	Weststry Bootleg Spriteram
+	--------------------------
+
+	Lacks the "big sprite" feature of the original. Needs some
+	tile number remapping for some reason.
+
+	+0   .......x xxxxxxxx  Sprite Y coordinate
+	+1   ...xxxxx xxxxxxxx  Sprite tile number
+ 	+2   xxxx.... ........  Sprite color bank
+ 	+2   ......x. ........  Sprite flip x
+ 	+2   ........ x.......  Priority ??
+	+3   .......x xxxxxxxx  Sprite X coordinate
+
 ***************************************************************************/
 
 /* SPRITE INFO (8 bytes)
@@ -118,6 +153,7 @@ WRITE16_HANDLER( bloodbro_txvideoram_w )
    ---TTTTT TTTTTTTT
    -------X XXXXXXXX
    -------- YYYYYYYY */
+
 static void bloodbro_draw_sprites( struct osd_bitmap *bitmap)
 {
 	int offs;
@@ -230,3 +266,21 @@ void weststry_vh_screenrefresh( struct osd_bitmap *bitmap, int fullrefresh )
 	weststry_draw_sprites(bitmap);
 	tilemap_draw(bitmap,tx_tilemap,0,0);
 }
+
+
+void skysmash_vh_screenrefresh( struct osd_bitmap *bitmap, int fullrefresh )
+{
+	tilemap_set_scrollx(bg_tilemap,0,bloodbro_scroll[0x08]);
+	tilemap_set_scrolly(bg_tilemap,0,bloodbro_scroll[0x09]);	/* ? */
+	tilemap_set_scrollx(fg_tilemap,0,bloodbro_scroll[0x0a]);
+	tilemap_set_scrolly(fg_tilemap,0,bloodbro_scroll[0x0b]);	/* ? */
+
+	fillbitmap(priority_bitmap,0,NULL);
+
+	tilemap_draw(bitmap,bg_tilemap,0,0);
+	tilemap_draw(bitmap,fg_tilemap,0,1);
+	bloodbro_draw_sprites(bitmap);
+	tilemap_draw(bitmap,tx_tilemap,0,0);
+}
+
+

@@ -75,7 +75,6 @@ WRITE_HANDLER( vastar_bg2videoram_w );
 WRITE_HANDLER( vastar_fgvideoram_w );
 READ_HANDLER( vastar_bg1videoram_r );
 READ_HANDLER( vastar_bg2videoram_r );
-void vastar_vh_convert_color_prom(unsigned char *obsolete,unsigned short *colortable,const unsigned char *color_prom);
 int vastar_vh_start(void);
 void vastar_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
@@ -352,7 +351,7 @@ static const struct MachineDriver machine_driver_vastar =
 	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
 	gfxdecodeinfo,
 	256, 0,
-	vastar_vh_convert_color_prom,
+	palette_RRRR_GGGG_BBBB_convert_prom,
 
 	VIDEO_TYPE_RASTER,
 	0,

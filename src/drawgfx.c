@@ -585,7 +585,7 @@ int pdrawgfx_shadow_lowpri = 0;
 #undef LOOKUP
 #undef SETPIXELCOLOR
 
-#define COLOR_ARG const UINT32 *paldata,UINT8 *pridata,UINT32 pmask
+#define COLOR_ARG const pen_t *paldata,UINT8 *pridata,UINT32 pmask
 #define LOOKUP(n) (paldata[n])
 #define SETPIXELCOLOR(dest,n) { if (((1 << (pridata[dest] & 0x1f)) & pmask) == 0) { if (pridata[dest] & 0x80) { dstdata[dest] = palette_shadow_table[n];} else { dstdata[dest] = (n);} } pridata[dest] = (pridata[dest] & 0x7f) | afterdrawmask; }
 #define DECLARE_SWAP_RAW_PRI(function,args,body) void function##_swapxy_pri8 args body
@@ -607,7 +607,7 @@ int pdrawgfx_shadow_lowpri = 0;
 #undef LOOKUP
 #undef SETPIXELCOLOR
 
-#define COLOR_ARG const UINT32 *paldata
+#define COLOR_ARG const pen_t *paldata
 #define LOOKUP(n) (paldata[n])
 #define SETPIXELCOLOR(dest,n) {dstdata[dest] = (n);}
 #define DECLARE_SWAP_RAW_PRI(function,args,body) void function##_swapxy8 args body
@@ -640,7 +640,7 @@ int pdrawgfx_shadow_lowpri = 0;
 #undef LOOKUP
 #undef SETPIXELCOLOR
 
-#define COLOR_ARG const UINT32 *paldata,UINT8 *pridata,UINT32 pmask
+#define COLOR_ARG const pen_t *paldata,UINT8 *pridata,UINT32 pmask
 #define LOOKUP(n) (paldata[n])
 #define SETPIXELCOLOR(dest,n) { if (((1 << (pridata[dest] & 0x1f)) & pmask) == 0) { if (pridata[dest] & 0x80) { dstdata[dest] = palette_shadow_table[n];} else { dstdata[dest] = (n);} } pridata[dest] = (pridata[dest] & 0x7f) | afterdrawmask; }
 #define DECLARE_SWAP_RAW_PRI(function,args,body) void function##_pri8 args body
@@ -662,7 +662,7 @@ int pdrawgfx_shadow_lowpri = 0;
 #undef LOOKUP
 #undef SETPIXELCOLOR
 
-#define COLOR_ARG const UINT32 *paldata
+#define COLOR_ARG const pen_t *paldata
 #define LOOKUP(n) (paldata[n])
 #define SETPIXELCOLOR(dest,n) {dstdata[dest] = (n);}
 #define DECLARE_SWAP_RAW_PRI(function,args,body) void function##8 args body
@@ -736,7 +736,7 @@ int pdrawgfx_shadow_lowpri = 0;
 #undef LOOKUP
 #undef SETPIXELCOLOR
 
-#define COLOR_ARG const UINT32 *paldata,UINT8 *pridata,UINT32 pmask
+#define COLOR_ARG const pen_t *paldata,UINT8 *pridata,UINT32 pmask
 #define LOOKUP(n) (paldata[n])
 #define SETPIXELCOLOR(dest,n) { if (((1 << (pridata[dest] & 0x1f)) & pmask) == 0) { if (pridata[dest] & 0x80) { dstdata[dest] = palette_shadow_table[n];} else { dstdata[dest] = (n);} } pridata[dest] = (pridata[dest] & 0x7f) | afterdrawmask; }
 #define DECLARE_SWAP_RAW_PRI(function,args,body) void function##_swapxy_pri16 args body
@@ -758,7 +758,7 @@ int pdrawgfx_shadow_lowpri = 0;
 #undef LOOKUP
 #undef SETPIXELCOLOR
 
-#define COLOR_ARG const UINT32 *paldata
+#define COLOR_ARG const pen_t *paldata
 #define LOOKUP(n) (paldata[n])
 #define SETPIXELCOLOR(dest,n) {dstdata[dest] = (n);}
 #define DECLARE_SWAP_RAW_PRI(function,args,body) void function##_swapxy16 args body
@@ -791,7 +791,7 @@ int pdrawgfx_shadow_lowpri = 0;
 #undef LOOKUP
 #undef SETPIXELCOLOR
 
-#define COLOR_ARG const UINT32 *paldata,UINT8 *pridata,UINT32 pmask
+#define COLOR_ARG const pen_t *paldata,UINT8 *pridata,UINT32 pmask
 #define LOOKUP(n) (paldata[n])
 #define SETPIXELCOLOR(dest,n) { if (((1 << (pridata[dest] & 0x1f)) & pmask) == 0) { if (pridata[dest] & 0x80) { dstdata[dest] = palette_shadow_table[n];} else { dstdata[dest] = (n);} } pridata[dest] = (pridata[dest] & 0x7f) | afterdrawmask; }
 #define DECLARE_SWAP_RAW_PRI(function,args,body) void function##_pri16 args body
@@ -813,7 +813,7 @@ int pdrawgfx_shadow_lowpri = 0;
 #undef LOOKUP
 #undef SETPIXELCOLOR
 
-#define COLOR_ARG const UINT32 *paldata
+#define COLOR_ARG const pen_t *paldata
 #define LOOKUP(n) (paldata[n])
 #define SETPIXELCOLOR(dest,n) {dstdata[dest] = (n);}
 #define DECLARE_SWAP_RAW_PRI(function,args,body) void function##16 args body
@@ -888,7 +888,7 @@ int pdrawgfx_shadow_lowpri = 0;
 #undef LOOKUP
 #undef SETPIXELCOLOR
 
-#define COLOR_ARG const UINT32 *paldata,UINT8 *pridata,UINT32 pmask
+#define COLOR_ARG const pen_t *paldata,UINT8 *pridata,UINT32 pmask
 #define LOOKUP(n) (paldata[n])
 #define SETPIXELCOLOR(dest,n) { if (((1 << (pridata[dest] & 0x1f)) & pmask) == 0) { if (pridata[dest] & 0x80) { dstdata[dest] = palette_shadow_table[n];} else { dstdata[dest] = (n);} } pridata[dest] = (pridata[dest] & 0x7f) | afterdrawmask; }
 #define DECLARE_SWAP_RAW_PRI(function,args,body) void function##_swapxy_pri32 args body
@@ -910,7 +910,7 @@ int pdrawgfx_shadow_lowpri = 0;
 #undef LOOKUP
 #undef SETPIXELCOLOR
 
-#define COLOR_ARG const UINT32 *paldata
+#define COLOR_ARG const pen_t *paldata
 #define LOOKUP(n) (paldata[n])
 #define SETPIXELCOLOR(dest,n) {dstdata[dest] = (n);}
 #define DECLARE_SWAP_RAW_PRI(function,args,body) void function##_swapxy32 args body
@@ -943,7 +943,7 @@ int pdrawgfx_shadow_lowpri = 0;
 #undef LOOKUP
 #undef SETPIXELCOLOR
 
-#define COLOR_ARG const UINT32 *paldata,UINT8 *pridata,UINT32 pmask
+#define COLOR_ARG const pen_t *paldata,UINT8 *pridata,UINT32 pmask
 #define LOOKUP(n) (paldata[n])
 #define SETPIXELCOLOR(dest,n) { if (((1 << (pridata[dest] & 0x1f)) & pmask) == 0) { if (pridata[dest] & 0x80) { dstdata[dest] = palette_shadow_table[n];} else { dstdata[dest] = (n);} } pridata[dest] = (pridata[dest] & 0x7f) | afterdrawmask; }
 #define DECLARE_SWAP_RAW_PRI(function,args,body) void function##_pri32 args body
@@ -965,7 +965,7 @@ int pdrawgfx_shadow_lowpri = 0;
 #undef LOOKUP
 #undef SETPIXELCOLOR
 
-#define COLOR_ARG const UINT32 *paldata
+#define COLOR_ARG const pen_t *paldata
 #define LOOKUP(n) (paldata[n])
 #define SETPIXELCOLOR(dest,n) {dstdata[dest] = (n);}
 #define DECLARE_SWAP_RAW_PRI(function,args,body) void function##32 args body
@@ -1867,7 +1867,7 @@ INLINE void common_drawgfxzoom( struct osd_bitmap *dest_bmp,const struct GfxElem
 	{
 		if( gfx && gfx->colortable )
 		{
-			const UINT32 *pal = &gfx->colortable[gfx->color_granularity * (color % gfx->total_colors)]; /* ASG 980209 */
+			const pen_t *pal = &gfx->colortable[gfx->color_granularity * (color % gfx->total_colors)]; /* ASG 980209 */
 			int source_base = (code % gfx->total_elements) * gfx->height;
 
 			int sprite_screen_height = (scaley*gfx->height+0x8000)>>16;
@@ -2375,7 +2375,7 @@ INLINE void common_drawgfxzoom( struct osd_bitmap *dest_bmp,const struct GfxElem
 	{
 		if( gfx && gfx->colortable )
 		{
-			const UINT32 *pal = &gfx->colortable[gfx->color_granularity * (color % gfx->total_colors)]; /* ASG 980209 */
+			const pen_t *pal = &gfx->colortable[gfx->color_granularity * (color % gfx->total_colors)]; /* ASG 980209 */
 			int source_base = (code % gfx->total_elements) * gfx->height;
 
 			int sprite_screen_height = (scaley*gfx->height+0x8000)>>16;
@@ -2986,7 +2986,7 @@ INLINE void common_drawgfxzoom( struct osd_bitmap *dest_bmp,const struct GfxElem
 	{
 		if( gfx && gfx->colortable )
 		{
-			const UINT32 *pal = &gfx->colortable[gfx->color_granularity * (color % gfx->total_colors)]; /* ASG 980209 */
+			const pen_t *pal = &gfx->colortable[gfx->color_granularity * (color % gfx->total_colors)]; /* ASG 980209 */
 			int source_base = (code % gfx->total_elements) * gfx->height;
 
 			int sprite_screen_height = (scaley*gfx->height+0x8000)>>16;
@@ -5052,7 +5052,7 @@ DECLARE(blockmove_NtoN_opaque_noremap_flipx,(
 DECLARE(blockmove_NtoN_opaque_remap,(
 		const DATA_TYPE *srcdata,int srcwidth,int srcheight,int srcmodulo,
 		DATA_TYPE *dstdata,int dstmodulo,
-		const UINT32 *paldata),
+		const pen_t *paldata),
 {
 	DATA_TYPE *end;
 
@@ -5087,7 +5087,7 @@ DECLARE(blockmove_NtoN_opaque_remap,(
 DECLARE(blockmove_NtoN_opaque_remap_flipx,(
 		const DATA_TYPE *srcdata,int srcwidth,int srcheight,int srcmodulo,
 		DATA_TYPE *dstdata,int dstmodulo,
-		const UINT32 *paldata),
+		const pen_t *paldata),
 {
 	DATA_TYPE *end;
 
@@ -5195,7 +5195,7 @@ DECLARE(blockmove_NtoN_blend_noremap_flipx,(
 DECLARE(blockmove_NtoN_blend_remap,(
 		const DATA_TYPE *srcdata,int srcwidth,int srcheight,int srcmodulo,
 		DATA_TYPE *dstdata,int dstmodulo,
-		const UINT32 *paldata,int srcshift),
+		const pen_t *paldata,int srcshift),
 {
 	DATA_TYPE *end;
 
@@ -5233,7 +5233,7 @@ DECLARE(blockmove_NtoN_blend_remap,(
 DECLARE(blockmove_NtoN_blend_remap_flipx,(
 		const DATA_TYPE *srcdata,int srcwidth,int srcheight,int srcmodulo,
 		DATA_TYPE *dstdata,int dstmodulo,
-		const UINT32 *paldata,int srcshift),
+		const pen_t *paldata,int srcshift),
 {
 	DATA_TYPE *end;
 
@@ -5317,7 +5317,7 @@ DECLARE(drawgfx_core,(
 		int dw = ex-sx+1;										/* dest width */
 		int dh = ey-sy+1;										/* dest height */
 		int dm = ((DATA_TYPE *)dest->line[1])-((DATA_TYPE *)dest->line[0]);	/* dest modulo */
-		const UINT32 *paldata = &gfx->colortable[gfx->color_granularity * color];
+		const pen_t *paldata = &gfx->colortable[gfx->color_granularity * color];
 		UINT8 *pribuf = (pri_buffer) ? ((UINT8 *)pri_buffer->line[sy]) + sx : NULL;
 
 
@@ -5927,7 +5927,7 @@ DECLARE(copyrozbitmap_core,(struct osd_bitmap *bitmap,struct osd_bitmap *srcbitm
 
 DECLAREG(draw_scanline, (
 		struct osd_bitmap *bitmap,int x,int y,int length,
-		const DATA_TYPE *src,UINT32 *pens,int transparent_pen),
+		const DATA_TYPE *src,pen_t *pens,int transparent_pen),
 {
 	/* 8bpp destination */
 	if (bitmap->depth == 8)
@@ -6098,7 +6098,7 @@ DECLAREG(draw_scanline, (
 
 DECLAREG(pdraw_scanline, (
 		struct osd_bitmap *bitmap,int x,int y,int length,
-		const DATA_TYPE *src,UINT32 *pens,int transparent_pen,UINT32 orient,int pri),
+		const DATA_TYPE *src,pen_t *pens,int transparent_pen,UINT32 orient,int pri),
 {
 	/* 8bpp destination */
 	if (bitmap->depth == 8)

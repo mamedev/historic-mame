@@ -53,7 +53,7 @@ enum {
 };
 
 /* default monochromatic colortable */
-UINT32 default_colortable_mono[] =
+pen_t default_colortable_mono[] =
 {
 	0,1,2,3,
 	0,1,2,3,
@@ -70,7 +70,7 @@ typedef struct {
 	struct osd_bitmap		*bitmap;				/* target bitmap */
 	UINT8					*videoram;				/* video ram */
 	UINT8					*spriteram;				/* sprite ram */
-	UINT32					*colortable_mono;		/* monochromatic color table modified at run time */
+	pen_t					*colortable_mono;		/* monochromatic color table modified at run time */
 	UINT8					*dirtychar;				/* an array flagging dirty characters */
 	int						chars_are_dirty;		/* master flag to check if theres any dirty character */
 	void 					*scanline_timer;		/* scanline timer */
@@ -381,8 +381,8 @@ static void draw_background( const int num, UINT8 *line_priority )
 	UINT8 scroll_x_coarse, scroll_y_coarse, scroll_y_fine, color_mask;
 	int x, tile_index, start, i;
 
-	const UINT32 *color_table;
-	const UINT32 *paldata;
+	const pen_t *color_table;
+	const pen_t *paldata;
 	const UINT8 *sd;
 
 	/* setup the color mask and colortable to use */
@@ -489,7 +489,7 @@ static void draw_sprites( const int num, UINT8 *line_priority )
 	const int char_modulo = Machine->gfx[gfx_bank]->char_modulo;
 	const int line_modulo = Machine->gfx[gfx_bank]->line_modulo;
 	const UINT8 *sprites = chips[num].spriteram;
-	UINT32 *color_table = Machine->gfx[gfx_bank]->colortable;
+	pen_t *color_table = Machine->gfx[gfx_bank]->colortable;
 	UINT8 *gfx_data = Machine->gfx[gfx_bank]->gfxdata;
 	int *ppu_regs = &chips[num].regs[0];
 
@@ -504,7 +504,7 @@ static void draw_sprites( const int num, UINT8 *line_priority )
 	int drawn;
 	int start;
 
-	const UINT32 *paldata;
+	const pen_t *paldata;
 	const UINT8 *sd;
 
 	/* determine if the sprites are 8x8 or 8x16 */

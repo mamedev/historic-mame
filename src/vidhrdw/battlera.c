@@ -470,5 +470,5 @@ int battlera_interrupt(void)
 		last_line=0;
 	}
 
-	return 0;
+	return ignore_interrupt();
 }

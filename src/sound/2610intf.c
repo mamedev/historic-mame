@@ -144,7 +144,7 @@ int YM2610B_sh_start(const struct MachineSound *msound)
 	intf = msound->sound_interface;
 	if( intf->num > MAX_2610 ) return 1;
 
-	if (AY8910_sh_start(msound)) return 1;
+	if (AY8910_sh_start_ym(msound)) return 1;
 
 	/* Timer Handler set */
 	FMTimerInit();
@@ -187,6 +187,7 @@ int YM2610B_sh_start(const struct MachineSound *msound)
 void YM2610_sh_stop(void)
 {
 	YM2610Shutdown();
+	AY8910_sh_stop_ym();
 }
 
 /* reset */

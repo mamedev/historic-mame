@@ -1,6 +1,6 @@
 /*** t11: Portable DEC T-11 emulator ******************************************
 
-	Copyright (C) Aaron Giles 1998
+	Copyright (C) Aaron Giles 1998-2001
 
 	System dependencies:	long must be at least 32 bits
 	                        word must be 16 bit unsigned int
@@ -19,13 +19,23 @@
 #include "t11.h"
 
 
-static UINT8 t11_reg_layout[] = {
+
+/*************************************
+ *
+ *	Debugger layouts
+ *
+ *************************************/
+
+static UINT8 t11_reg_layout[] =
+{
 	T11_PC, T11_SP, T11_PSW, T11_IRQ0_STATE, T11_IRQ1_STATE, T11_IRQ2_STATE, T11_IRQ3_STATE, -1,
 	T11_R0,T11_R1,T11_R2,T11_R3,T11_R4,T11_R5, -1,
 	T11_BANK0,T11_BANK1,T11_BANK2,T11_BANK3, T11_BANK4,T11_BANK5,T11_BANK6,T11_BANK7, 0
 };
 
-static UINT8 t11_win_layout[] = {
+
+static UINT8 t11_win_layout[] =
+{
 	 0, 0,80, 4,	/* register window (top rows) */
 	 0, 5,31,17,	/* disassembler window (left colums) */
 	32, 5,48, 8,	/* memory #1 window (right, upper middle) */
@@ -33,36 +43,67 @@ static UINT8 t11_win_layout[] = {
 	 0,23,80, 1,	/* command line window (bottom rows) */
 };
 
-/* T-11 Registers */
+
+
+/*************************************
+ *
+ *	Internal state representation
+ *
+ *************************************/
+
 typedef struct
 {
 	PAIR	ppc;	/* previous program counter */
-    PAIR    reg[8];
-    PAIR    psw;
-    UINT16  op;
+    PAIR	reg[8];
+    PAIR	psw;
+    UINT16	op;
     UINT8	wait_state;
-    UINT8   *bank[8];
-    INT8    irq_state[4];
+    UINT8 *	bank[8];
+    UINT8	irq_state;
     int		interrupt_cycles;
-    int     (*irq_callback)(int irqline);
+    int		(*irq_callback)(int irqline);
 } t11_Regs;
 
 static t11_Regs t11;
 
-/* public globals */
-int	t11_ICount=50000;
 
-/* register definitions and shortcuts */
+
+/*************************************
+ *
+ *	Global variables
+ *
+ *************************************/
+
+int	t11_ICount;
+
+
+
+/*************************************
+ *
+ *	Macro shortcuts
+ *
+ *************************************/
+
+/* registers of various sizes */
 #define REGD(x) t11.reg[x].d
 #define REGW(x) t11.reg[x].w.l
 #define REGB(x) t11.reg[x].b.l
+
+/* PC, SP, and PSW definitions */
 #define SP REGW(6)
 #define PC REGW(7)
 #define SPD REGD(6)
 #define PCD REGD(7)
 #define PSW t11.psw.b.l
 
-/* shortcuts for reading opcodes */
+
+
+/*************************************
+ *
+ *	Low-level memory operations
+ *
+ *************************************/
+
 INLINE int ROPCODE(void)
 {
 	int pc = PCD;
@@ -70,27 +111,44 @@ INLINE int ROPCODE(void)
 	return READ_WORD(&t11.bank[pc >> 13][pc & 0x1fff]);
 }
 
-/* shortcuts for reading/writing memory bytes */
-#define RBYTE(addr)      T11_RDMEM(addr)
-#define WBYTE(addr,data) T11_WRMEM((addr), (data))
 
-/* shortcuts for reading/writing memory words */
+INLINE int RBYTE(int addr)
+{
+	return T11_RDMEM(addr);
+}
+
+
+INLINE void WBYTE(int addr, int data)
+{
+	T11_WRMEM(addr, data);
+}
+
+
 INLINE int RWORD(int addr)
 {
 	return T11_RDMEM_WORD(addr & 0xfffe);
 }
+
 
 INLINE void WWORD(int addr, int data)
 {
 	T11_WRMEM_WORD(addr & 0xfffe, data);
 }
 
-/* pushes/pops a value from the stack */
+
+
+/*************************************
+ *
+ *	Low-level stack operations
+ *
+ *************************************/
+
 INLINE void PUSH(int val)
 {
 	SP -= 2;
 	WWORD(SPD, val);
 }
+
 
 INLINE int POP(void)
 {
@@ -98,6 +156,14 @@ INLINE int POP(void)
 	SP += 2;
 	return result;
 }
+
+
+
+/*************************************
+ *
+ *	Flag definitions and operations
+ *
+ *************************************/
 
 /* flag definitions */
 #define CFLAG 1
@@ -123,43 +189,86 @@ INLINE int POP(void)
 #define SET_Z (PSW |= ZFLAG)
 #define SET_N (PSW |= NFLAG)
 
-/****************************************************************************
- * Checks active interrupts for a valid one
- ****************************************************************************/
+
+
+/*************************************
+ *
+ *	Interrupt handling
+ *
+ *************************************/
+
+struct irq_table_entry
+{
+	UINT8	priority;
+	UINT8	vector;
+};
+
+static const struct irq_table_entry irq_table[] =
+{
+	{ 0<<5, 0x00 },
+	{ 4<<5, 0x38 },
+	{ 4<<5, 0x34 },
+	{ 4<<5, 0x30 },
+	{ 5<<5, 0x5c },
+	{ 5<<5, 0x58 },
+	{ 5<<5, 0x54 },
+	{ 5<<5, 0x50 },
+	{ 6<<5, 0x4c },
+	{ 6<<5, 0x48 },
+	{ 6<<5, 0x44 },
+	{ 6<<5, 0x40 },
+	{ 7<<5, 0x6c },
+	{ 7<<5, 0x68 },
+	{ 7<<5, 0x64 },
+	{ 7<<5, 0x60 }
+};
+
 static void t11_check_irqs(void)
 {
+	const struct irq_table_entry *irq = &irq_table[t11.irq_state & 15];
 	int priority = PSW & 0xe0;
-	int irq;
 
-	/* loop over IRQs from highest to lowest */
-	for (irq = 0; irq < 4; irq++)
+	/* compare the priority of the interrupt to the PSW */
+	if (irq->priority > priority)
 	{
-	    if (t11.irq_state[irq] != CLEAR_LINE)
+		/* get the priority of this interrupt */
+		int new_pc = RWORD(irq->vector);
+		int new_psw = RWORD(irq->vector + 2);
+		
+		/* call the callback */
+		if (t11.irq_callback)
 		{
-			/* get the priority of this interrupt */
-			int new_pc = RWORD(0x38 + (irq * 0x10));
-			int new_psw = RWORD(0x3a + (irq * 0x10));
+			int vector = 0;
+			
+			if (t11.irq_state & 8) vector = 3;
+			else if (t11.irq_state & 4) vector = 2;
+			else if (t11.irq_state & 2) vector = 1;
+			(*t11.irq_callback)(vector);
+		}
 
-			/* if it's greater than the current priority, take it */
-			if ((new_psw & 0xe0) > priority)
-			{
-				if (t11.irq_callback)
-					(*t11.irq_callback)(irq);
+		/* kludge for 720 - fix me! */
+		if (new_pc == 0)
+			return;
 
-				/* push the old state, set the new one */
-				PUSH(PSW);
-				PUSH(PC);
-				PCD = new_pc;
-				PSW = new_psw;
-				priority = new_psw & 0xe0;
+		/* push the old state, set the new one */
+		PUSH(PSW);
+		PUSH(PC);
+		PCD = new_pc;
+		PSW = new_psw;
 
-				/* count 50 cycles (who knows what it really is) and clear the WAIT flag */
-				t11.interrupt_cycles += 50;
-				t11.wait_state = 0;
-			}
-	    }
+		/* count cycles and clear the WAIT flag */
+		t11.interrupt_cycles += 114;
+		t11.wait_state = 0;
 	}
 }
+
+
+
+/*************************************
+ *
+ *	Core opcodes
+ *
+ *************************************/
 
 /* includes the static function prototypes and the master opcode table */
 #include "t11table.c"
@@ -167,180 +276,204 @@ static void t11_check_irqs(void)
 /* includes the actual opcode implementations */
 #include "t11ops.c"
 
-/****************************************************************************
- * Get all registers in given buffer
- ****************************************************************************/
+
+
+/*************************************
+ *
+ *	Fetch current context into buffer
+ *
+ *************************************/
+
 unsigned t11_get_context(void *dst)
 {
-	if( dst )
-		*(t11_Regs*)dst = t11;
+	if (dst)
+		*(t11_Regs *)dst = t11;
 	return sizeof(t11_Regs);
 }
 
-/****************************************************************************
- * Set all registers to given values
- ****************************************************************************/
+
+
+/*************************************
+ *
+ *	Retrieve context from buffer
+ *
+ *************************************/
+
 void t11_set_context(void *src)
 {
-	if( src )
-		t11 = *(t11_Regs*)src;
+	if (src)
+		t11 = *(t11_Regs *)src;
 	t11_check_irqs();
 }
 
-/****************************************************************************
- * Return program counter
- ****************************************************************************/
-unsigned t11_get_pc(void)
-{
-	return PCD;
-}
 
-/****************************************************************************
- * Set program counter
- ****************************************************************************/
-void t11_set_pc(unsigned val)
-{
-	PC = val;
-}
 
-/****************************************************************************
- * Return stack pointer
- ****************************************************************************/
-unsigned t11_get_sp(void)
-{
-	return SPD;
-}
+/*************************************
+ *
+ *	External register getting
+ *
+ *************************************/
 
-/****************************************************************************
- * Set stack pointer
- ****************************************************************************/
-void t11_set_sp(unsigned val)
-{
-	SP = val;
-}
-
-/****************************************************************************
- * Return a specific register
- ****************************************************************************/
 unsigned t11_get_reg(int regnum)
 {
-	switch( regnum )
+	switch (regnum)
 	{
-		case T11_PC: return PCD;
-		case T11_SP: return SPD;
-		case T11_PSW: return PSW;
-		case T11_R0: return REGD(0);
-		case T11_R1: return REGD(1);
-		case T11_R2: return REGD(2);
-		case T11_R3: return REGD(3);
-		case T11_R4: return REGD(4);
-		case T11_R5: return REGD(5);
-		case T11_IRQ0_STATE: return t11.irq_state[T11_IRQ0];
-		case T11_IRQ1_STATE: return t11.irq_state[T11_IRQ1];
-		case T11_IRQ2_STATE: return t11.irq_state[T11_IRQ2];
-		case T11_IRQ3_STATE: return t11.irq_state[T11_IRQ3];
-		case T11_BANK0: return (unsigned)(t11.bank[0] - OP_RAM);
-		case T11_BANK1: return (unsigned)(t11.bank[1] - OP_RAM);
-		case T11_BANK2: return (unsigned)(t11.bank[2] - OP_RAM);
-		case T11_BANK3: return (unsigned)(t11.bank[3] - OP_RAM);
-		case T11_BANK4: return (unsigned)(t11.bank[4] - OP_RAM);
-		case T11_BANK5: return (unsigned)(t11.bank[5] - OP_RAM);
-		case T11_BANK6: return (unsigned)(t11.bank[6] - OP_RAM);
-		case T11_BANK7: return (unsigned)(t11.bank[7] - OP_RAM);
-		case REG_PREVIOUSPC: return t11.ppc.w.l;
+		case REG_PC:
+		case T11_PC:			return PCD;
+		case REG_SP:
+		case T11_SP:			return SPD;
+		case T11_PSW:			return PSW;
+		case T11_R0:			return REGD(0);
+		case T11_R1:			return REGD(1);
+		case T11_R2:			return REGD(2);
+		case T11_R3:			return REGD(3);
+		case T11_R4:			return REGD(4);
+		case T11_R5:			return REGD(5);
+		case T11_IRQ0_STATE:	return (t11.irq_state & 1) ? ASSERT_LINE : CLEAR_LINE;
+		case T11_IRQ1_STATE:	return (t11.irq_state & 2) ? ASSERT_LINE : CLEAR_LINE;
+		case T11_IRQ2_STATE:	return (t11.irq_state & 4) ? ASSERT_LINE : CLEAR_LINE;
+		case T11_IRQ3_STATE:	return (t11.irq_state & 8) ? ASSERT_LINE : CLEAR_LINE;
+		case T11_BANK0:			return (unsigned)(t11.bank[0] - OP_RAM);
+		case T11_BANK1:			return (unsigned)(t11.bank[1] - OP_RAM);
+		case T11_BANK2:			return (unsigned)(t11.bank[2] - OP_RAM);
+		case T11_BANK3:			return (unsigned)(t11.bank[3] - OP_RAM);
+		case T11_BANK4:			return (unsigned)(t11.bank[4] - OP_RAM);
+		case T11_BANK5:			return (unsigned)(t11.bank[5] - OP_RAM);
+		case T11_BANK6:			return (unsigned)(t11.bank[6] - OP_RAM);
+		case T11_BANK7:			return (unsigned)(t11.bank[7] - OP_RAM);
+		case REG_PREVIOUSPC:	return t11.ppc.w.l;
 		default:
-			if( regnum <= REG_SP_CONTENTS )
+			if (regnum <= REG_SP_CONTENTS)
 			{
 				unsigned offset = SPD + 2 * (REG_SP_CONTENTS - regnum);
-				if( offset < 0xffff )
-					return RWORD( offset );
+				if (offset < 0xffff)
+					return RWORD(offset);
 			}
 	}
 	return 0;
 }
 
-/****************************************************************************
- * Set a specific register
- ****************************************************************************/
+
+
+/*************************************
+ *
+ *	External register setting
+ *
+ *************************************/
+
 void t11_set_reg(int regnum, unsigned val)
 {
-	switch( regnum )
+	switch (regnum)
 	{
-		case T11_PC: PC = val; /* change_pc16 not needed */ break;
-		case T11_SP: SP = val; break;
-		case T11_PSW: PSW = val; break;
-		case T11_R0: REGW(0) = val; break;
-		case T11_R1: REGW(1) = val; break;
-		case T11_R2: REGW(2) = val; break;
-		case T11_R3: REGW(3) = val; break;
-		case T11_R4: REGW(4) = val; break;
-		case T11_R5: REGW(5) = val; break;
-		case T11_IRQ0_STATE: t11_set_irq_line(T11_IRQ0,val); break;
-		case T11_IRQ1_STATE: t11_set_irq_line(T11_IRQ1,val); break;
-		case T11_IRQ2_STATE: t11_set_irq_line(T11_IRQ2,val); break;
-		case T11_IRQ3_STATE: t11_set_irq_line(T11_IRQ3,val); break;
-		case T11_BANK0: t11.bank[0] = &OP_RAM[val]; break;
-		case T11_BANK1: t11.bank[1] = &OP_RAM[val]; break;
-		case T11_BANK2: t11.bank[2] = &OP_RAM[val]; break;
-		case T11_BANK3: t11.bank[3] = &OP_RAM[val]; break;
-		case T11_BANK4: t11.bank[4] = &OP_RAM[val]; break;
-		case T11_BANK5: t11.bank[5] = &OP_RAM[val]; break;
-		case T11_BANK6: t11.bank[6] = &OP_RAM[val]; break;
-		case T11_BANK7: t11.bank[7] = &OP_RAM[val]; break;
+		case REG_PC:
+		case T11_PC:			PC = val; /* change_pc16 not needed */ break;
+		case REG_SP:
+		case T11_SP:			SP = val; break;
+		case T11_PSW:			PSW = val; break;
+		case T11_R0:			REGW(0) = val; break;
+		case T11_R1:			REGW(1) = val; break;
+		case T11_R2:			REGW(2) = val; break;
+		case T11_R3:			REGW(3) = val; break;
+		case T11_R4:			REGW(4) = val; break;
+		case T11_R5:			REGW(5) = val; break;
+		case T11_IRQ0_STATE:	t11_set_irq_line(T11_IRQ0, val); break;
+		case T11_IRQ1_STATE:	t11_set_irq_line(T11_IRQ1, val); break;
+		case T11_IRQ2_STATE:	t11_set_irq_line(T11_IRQ2, val); break;
+		case T11_IRQ3_STATE:	t11_set_irq_line(T11_IRQ3, val); break;
+		case T11_BANK0:			t11.bank[0] = &OP_RAM[val]; break;
+		case T11_BANK1:			t11.bank[1] = &OP_RAM[val]; break;
+		case T11_BANK2:			t11.bank[2] = &OP_RAM[val]; break;
+		case T11_BANK3:			t11.bank[3] = &OP_RAM[val]; break;
+		case T11_BANK4:			t11.bank[4] = &OP_RAM[val]; break;
+		case T11_BANK5:			t11.bank[5] = &OP_RAM[val]; break;
+		case T11_BANK6:			t11.bank[6] = &OP_RAM[val]; break;
+		case T11_BANK7:			t11.bank[7] = &OP_RAM[val]; break;
 		default:
-			if( regnum < REG_SP_CONTENTS )
+			if (regnum < REG_SP_CONTENTS)
 			{
 				unsigned offset = SPD + 2 * (REG_SP_CONTENTS - regnum);
-				if( offset < 0xffff )
-					WWORD( offset, val & 0xffff );
+				if (offset < 0xffff)
+					WWORD(offset, val & 0xffff);
 			}
     }
 }
 
-/****************************************************************************
- * Sets the banking
- ****************************************************************************/
-void t11_SetBank(int offset, unsigned char *base)
-{
-	t11.bank[offset >> 13] = base;
-}
 
+
+/*************************************
+ *
+ *	Low-level initialization/cleanup
+ *
+ *************************************/
 
 void t11_init(void)
 {
 }
 
-void t11_reset(void *param)
-{
-	int i;
-
-	memset(&t11, 0, sizeof(t11));
-	SP = 0x0400;
-	PC = 0x8000;
-	PSW = 0xe0;
-
-	for (i = 0; i < 8; i++)
-		t11.bank[i] = &OP_RAM[i * 0x2000];
-	for (i = 0; i < 4; i++)
-		t11.irq_state[i] = CLEAR_LINE;
-}
 
 void t11_exit(void)
 {
 	/* nothing to do */
 }
 
-void t11_set_nmi_line(int state)
+
+
+/*************************************
+ *
+ *	CPU reset
+ *
+ *************************************/
+
+void t11_reset(void *param)
 {
-	/* T-11 has no dedicated NMI line */
+	static const UINT16 initial_pc[] =
+	{
+		0xc000, 0x8000, 0x4000, 0x2000,
+		0x1000, 0x0000, 0xf600, 0xf400
+	};
+	struct t11_setup *setup = param;
+	int i;
+
+	/* reset the state */
+	memset(&t11, 0, sizeof(t11));
+	
+	/* initial SP is 376 octal, or 0xfe */
+	SP = 0x00fe;
+	
+	/* initial PC comes from the setup word */
+	PC = initial_pc[setup->mode >> 13];
+
+	/* PSW starts off at highest priority */
+	PSW = 0xe0;
+
+	/* initialize the banking */
+	for (i = 0; i < 8; i++)
+		t11.bank[i] = &OP_RAM[i * 0x2000];
+	
+	/* initialize the IRQ state */
+	t11.irq_state = 0;
 }
+
+
+
+/*************************************
+ *
+ *	Interrupt handling
+ *
+ *************************************/
 
 void t11_set_irq_line(int irqline, int state)
 {
-    t11.irq_state[irqline] = state;
-    if (state != CLEAR_LINE)
-    	t11_check_irqs();
+	/* set the appropriate bit */
+	if (state == CLEAR_LINE)
+		t11.irq_state &= ~(1 << irqline);
+	else
+		t11.irq_state |= 1 << irqline;
+
+	/* recheck for interrupts */
+   	t11_check_irqs();
 }
+
 
 void t11_set_irq_callback(int (*callback)(int irqline))
 {
@@ -348,7 +481,13 @@ void t11_set_irq_callback(int (*callback)(int irqline))
 }
 
 
-/* execute instructions on this CPU until icount expires */
+
+/*************************************
+ *
+ *	Core execution
+ *
+ *************************************/
+
 int t11_execute(int cycles)
 {
 	t11_ICount = cycles;
@@ -370,8 +509,6 @@ int t11_execute(int cycles)
 		t11.op = ROPCODE();
 		(*opcode_table[t11.op >> 3])();
 
-		t11_ICount -= 22;
-
 	} while (t11_ICount > 0);
 
 getout:
@@ -382,9 +519,14 @@ getout:
 	return cycles - t11_ICount;
 }
 
-/****************************************************************************
- * Return a formatted string for a register
- ****************************************************************************/
+
+
+/*************************************
+ *
+ *	Return formatted string
+ *
+ *************************************/
+
 const char *t11_info( void *context, int regnum )
 {
 	static char buffer[16][47+1];
@@ -408,10 +550,10 @@ const char *t11_info( void *context, int regnum )
 		case CPU_INFO_REG+T11_R3: sprintf(buffer[which], "R3:%04X", r->reg[3].w.l); break;
 		case CPU_INFO_REG+T11_R4: sprintf(buffer[which], "R4:%04X", r->reg[4].w.l); break;
 		case CPU_INFO_REG+T11_R5: sprintf(buffer[which], "R5:%04X", r->reg[5].w.l); break;
-		case CPU_INFO_REG+T11_IRQ0_STATE: sprintf(buffer[which], "IRQ0:%X", r->irq_state[T11_IRQ0]); break;
-		case CPU_INFO_REG+T11_IRQ1_STATE: sprintf(buffer[which], "IRQ1:%X", r->irq_state[T11_IRQ1]); break;
-		case CPU_INFO_REG+T11_IRQ2_STATE: sprintf(buffer[which], "IRQ2:%X", r->irq_state[T11_IRQ2]); break;
-		case CPU_INFO_REG+T11_IRQ3_STATE: sprintf(buffer[which], "IRQ3:%X", r->irq_state[T11_IRQ3]); break;
+		case CPU_INFO_REG+T11_IRQ0_STATE: sprintf(buffer[which], "IRQ0:%X", (r->irq_state & 1) ? ASSERT_LINE : CLEAR_LINE); break;
+		case CPU_INFO_REG+T11_IRQ1_STATE: sprintf(buffer[which], "IRQ1:%X", (r->irq_state & 2) ? ASSERT_LINE : CLEAR_LINE); break;
+		case CPU_INFO_REG+T11_IRQ2_STATE: sprintf(buffer[which], "IRQ2:%X", (r->irq_state & 4) ? ASSERT_LINE : CLEAR_LINE); break;
+		case CPU_INFO_REG+T11_IRQ3_STATE: sprintf(buffer[which], "IRQ3:%X", (r->irq_state & 8) ? ASSERT_LINE : CLEAR_LINE); break;
 		case CPU_INFO_REG+T11_BANK0: sprintf(buffer[which], "B0:%06X", (unsigned)(r->bank[0] - OP_RAM)); break;
 		case CPU_INFO_REG+T11_BANK1: sprintf(buffer[which], "B1:%06X", (unsigned)(r->bank[1] - OP_RAM)); break;
 		case CPU_INFO_REG+T11_BANK2: sprintf(buffer[which], "B2:%06X", (unsigned)(r->bank[2] - OP_RAM)); break;
@@ -442,6 +584,14 @@ const char *t11_info( void *context, int regnum )
 	return buffer[which];
 }
 
+
+
+/*************************************
+ *
+ *	Disassembly hook
+ *
+ *************************************/
+
 unsigned t11_dasm(char *buffer, unsigned pc)
 {
 #ifdef MAME_DEBUG
@@ -451,4 +601,3 @@ unsigned t11_dasm(char *buffer, unsigned pc)
 	return 2;
 #endif
 }
-

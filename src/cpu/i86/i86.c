@@ -164,71 +164,39 @@ void i86_set_context(void *src)
 	}
 }
 
-unsigned i86_get_pc(void)
-{
-	return I.pc;
-}
-
-void i86_set_pc(unsigned val)
-{
-	if (val - I.base[CS] >= 0x10000)
-	{
-		I.base[CS] = val & 0xffff0;
-		I.sregs[CS] = I.base[CS] >> 4;
-	}
-	I.pc = val;
-}
-
-unsigned i86_get_sp(void)
-{
-	return I.base[SS] + I.regs.w[SP];
-}
-
-void i86_set_sp(unsigned val)
-{
-	if (val - I.base[SS] < 0x10000)
-	{
-		I.regs.w[SP] = val - I.base[SS];
-	}
-	else
-	{
-		I.base[SS] = val & 0xffff0;
-		I.sregs[SS] = I.base[SS] >> 4;
-		I.regs.w[SP] = val & 0x0000f;
-	}
-}
-
 unsigned i86_get_reg(int regnum)
 {
 	switch (regnum)
 	{
-	case I86_IP:		return I.pc - I.base[CS];
-	case I86_SP:		return I.regs.w[SP];
-	case I86_FLAGS: 	CompressFlags(); return I.flags;
-	case I86_AX:		return I.regs.w[AX];
-	case I86_CX:		return I.regs.w[CX];
-	case I86_DX:		return I.regs.w[DX];
-	case I86_BX:		return I.regs.w[BX];
-	case I86_BP:		return I.regs.w[BP];
-	case I86_SI:		return I.regs.w[SI];
-	case I86_DI:		return I.regs.w[DI];
-	case I86_ES:		return I.sregs[ES];
-	case I86_CS:		return I.sregs[CS];
-	case I86_SS:		return I.sregs[SS];
-	case I86_DS:		return I.sregs[DS];
-	case I86_VECTOR:	return I.int_vector;
-	case I86_PENDING:	return I.irq_state;
-	case I86_NMI_STATE: return I.nmi_state;
-	case I86_IRQ_STATE: return I.irq_state;
-	case REG_PREVIOUSPC:return I.prevpc;
-	default:
-		if (regnum <= REG_SP_CONTENTS)
-		{
-			unsigned offset = ((I.base[SS] + I.regs.w[SP]) & AMASK) + 2 * (REG_SP_CONTENTS - regnum);
+		case REG_PC:		return I.pc;
+		case I86_IP:		return I.pc - I.base[CS];
+		case REG_SP:		return I.base[SS] + I.regs.w[SP];
+		case I86_SP:		return I.regs.w[SP];
+		case I86_FLAGS: 	CompressFlags(); return I.flags;
+		case I86_AX:		return I.regs.w[AX];
+		case I86_CX:		return I.regs.w[CX];
+		case I86_DX:		return I.regs.w[DX];
+		case I86_BX:		return I.regs.w[BX];
+		case I86_BP:		return I.regs.w[BP];
+		case I86_SI:		return I.regs.w[SI];
+		case I86_DI:		return I.regs.w[DI];
+		case I86_ES:		return I.sregs[ES];
+		case I86_CS:		return I.sregs[CS];
+		case I86_SS:		return I.sregs[SS];
+		case I86_DS:		return I.sregs[DS];
+		case I86_VECTOR:	return I.int_vector;
+		case I86_PENDING:	return I.irq_state;
+		case I86_NMI_STATE: return I.nmi_state;
+		case I86_IRQ_STATE: return I.irq_state;
+		case REG_PREVIOUSPC:return I.prevpc;
+		default:
+			if (regnum <= REG_SP_CONTENTS)
+			{
+				unsigned offset = ((I.base[SS] + I.regs.w[SP]) & AMASK) + 2 * (REG_SP_CONTENTS - regnum);
 
-			if (offset < AMASK)
-				return cpu_readmem20(offset) | (cpu_readmem20(offset + 1) << 8);
-		}
+				if (offset < AMASK)
+					return cpu_readmem20(offset) | (cpu_readmem20(offset + 1) << 8);
+			}
 	}
 	return 0;
 }
@@ -237,56 +205,78 @@ void i86_set_reg(int regnum, unsigned val)
 {
 	switch (regnum)
 	{
-	case I86_IP:		I.pc = I.base[CS] + val;	break;
-	case I86_SP:		I.regs.w[SP] = val; 		break;
-	case I86_FLAGS: 	I.flags = val;	ExpandFlags(val); break;
-	case I86_AX:		I.regs.w[AX] = val; 		break;
-	case I86_CX:		I.regs.w[CX] = val; 		break;
-	case I86_DX:		I.regs.w[DX] = val; 		break;
-	case I86_BX:		I.regs.w[BX] = val; 		break;
-	case I86_BP:		I.regs.w[BP] = val; 		break;
-	case I86_SI:		I.regs.w[SI] = val; 		break;
-	case I86_DI:		I.regs.w[DI] = val; 		break;
-	case I86_ES:		I.sregs[ES] = val;	I.base[ES] = SegBase(ES);	break;
-	case I86_CS:		I.sregs[CS] = val;	I.base[CS] = SegBase(CS);	break;
-	case I86_SS:		I.sregs[SS] = val;	I.base[SS] = SegBase(SS);	break;
-	case I86_DS:		I.sregs[DS] = val;	I.base[DS] = SegBase(DS);	break;
-	case I86_VECTOR:	I.int_vector = val; 		break;
-	case I86_PENDING:								break;
-	case I86_NMI_STATE: i86_set_nmi_line(val);		break;
-	case I86_IRQ_STATE: i86_set_irq_line(0, val);	break;
-	default:
-		if (regnum <= REG_SP_CONTENTS)
-		{
-			unsigned offset = ((I.base[SS] + I.regs.w[SP]) & AMASK) + 2 * (REG_SP_CONTENTS - regnum);
-
-			if (offset < AMASK - 1)
+		case REG_PC:
+			if (val - I.base[CS] >= 0x10000)
 			{
-				cpu_writemem20(offset, val & 0xff);
-				cpu_writemem20(offset + 1, (val >> 8) & 0xff);
+				I.base[CS] = val & 0xffff0;
+				I.sregs[CS] = I.base[CS] >> 4;
 			}
-		}
+			I.pc = val;
+			break;
+		case I86_IP:		I.pc = I.base[CS] + val;	break;
+		case REG_SP:
+			if (val - I.base[SS] < 0x10000)
+			{
+				I.regs.w[SP] = val - I.base[SS];
+			}
+			else
+			{
+				I.base[SS] = val & 0xffff0;
+				I.sregs[SS] = I.base[SS] >> 4;
+				I.regs.w[SP] = val & 0x0000f;
+			}
+			break;
+		case I86_SP:		I.regs.w[SP] = val; 		break;
+		case I86_FLAGS: 	I.flags = val;	ExpandFlags(val); break;
+		case I86_AX:		I.regs.w[AX] = val; 		break;
+		case I86_CX:		I.regs.w[CX] = val; 		break;
+		case I86_DX:		I.regs.w[DX] = val; 		break;
+		case I86_BX:		I.regs.w[BX] = val; 		break;
+		case I86_BP:		I.regs.w[BP] = val; 		break;
+		case I86_SI:		I.regs.w[SI] = val; 		break;
+		case I86_DI:		I.regs.w[DI] = val; 		break;
+		case I86_ES:		I.sregs[ES] = val;	I.base[ES] = SegBase(ES);	break;
+		case I86_CS:		I.sregs[CS] = val;	I.base[CS] = SegBase(CS);	break;
+		case I86_SS:		I.sregs[SS] = val;	I.base[SS] = SegBase(SS);	break;
+		case I86_DS:		I.sregs[DS] = val;	I.base[DS] = SegBase(DS);	break;
+		case I86_VECTOR:	I.int_vector = val; 		break;
+		case I86_PENDING:								break;
+		case I86_NMI_STATE: i86_set_irq_line(IRQ_LINE_NMI,val);		break;
+		case I86_IRQ_STATE: i86_set_irq_line(0, val);	break;
+		default:
+			if (regnum <= REG_SP_CONTENTS)
+			{
+				unsigned offset = ((I.base[SS] + I.regs.w[SP]) & AMASK) + 2 * (REG_SP_CONTENTS - regnum);
+
+				if (offset < AMASK - 1)
+				{
+					cpu_writemem20(offset, val & 0xff);
+					cpu_writemem20(offset + 1, (val >> 8) & 0xff);
+				}
+			}
 	}
-}
-
-void i86_set_nmi_line(int state)
-{
-	if (I.nmi_state == state)
-		return;
-	I.nmi_state = state;
-
-	/* on a rising edge, signal the NMI */
-	if (state != CLEAR_LINE)
-		PREFIX(_interrupt)(I86_NMI_INT);
 }
 
 void i86_set_irq_line(int irqline, int state)
 {
-	I.irq_state = state;
+	if (irqline == IRQ_LINE_NMI)
+	{
+		if (I.nmi_state == state)
+			return;
+		I.nmi_state = state;
 
-	/* if the IF is set, signal an interrupt */
-	if (state != CLEAR_LINE && I.IF)
-		PREFIX(_interrupt)(-1);
+		/* on a rising edge, signal the NMI */
+		if (state != CLEAR_LINE)
+			PREFIX(_interrupt)(I86_NMI_INT_VECTOR);
+	}
+	else
+	{
+		I.irq_state = state;
+
+		/* if the IF is set, signal an interrupt */
+		if (state != CLEAR_LINE && I.IF)
+			PREFIX(_interrupt)(-1);
+	}
 }
 
 void i86_set_irq_callback(int (*callback) (int))
@@ -546,7 +536,7 @@ static void v30_interrupt(unsigned int_num, BOOLEAN md_flag)
 	unsigned dest_seg, dest_off;
 
 #if 0
-	logerror("PC=%05x : NEC Interrupt %02d", cpu_get_pc(), int_num);
+	logerror("PC=%05x : NEC Interrupt %02d", activecpu_get_pc(), int_num);
 #endif
 
 	v30_pushf();
@@ -569,7 +559,7 @@ static void v30_interrupt(unsigned int_num, BOOLEAN md_flag)
 	I.base[CS] = SegBase(CS);
 	I.pc = (I.base[CS] + dest_off) & AMASK;
 	change_pc20(I.pc);
-/*	logerror("=%06x\n",cpu_get_pc()); */
+/*	logerror("=%06x\n",activecpu_get_pc()); */
 }
 
 void v30_trap(void)

@@ -446,7 +446,7 @@ static struct MachineDriver machine_driver_gridlee =
 	{
 		{
 			CPU_M6809,
-			5000000/4,                     /* 5Mhz/4 */
+			5000000/4,                     /* 5MHz/4 */
 			readmem_cpu1,writemem_cpu1,0,0,
 			ignore_interrupt,1
 		}

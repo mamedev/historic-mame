@@ -110,18 +110,16 @@ enum {
 extern int z180_icount; 			/* T-state count */
 #define z180_ICount z180_icount
 
-#define Z180_IGNORE_INT -1			/* Ignore interrupt */
-#define Z180_NMI		-2			/* Execute NMI */
-#define Z180_INT0		-1000		/* Execute INT0 */
-#define Z180_INT1		0			/* Execute INT1 */
-#define Z180_INT2		1			/* Execute INT2 */
-#define Z180_INT_PRT0	2			/* Internal PRT channel 0 */
-#define Z180_INT_PRT1	3			/* Internal PRT channel 1 */
-#define Z180_INT_DMA0	4			/* Internal DMA channel 0 */
-#define Z180_INT_DMA1	5			/* Internal DMA channel 1 */
-#define Z180_INT_CSIO	6			/* Internal CSI/O */
-#define Z180_INT_ASCI0	7			/* Internal ASCI channel 0 */
-#define Z180_INT_ASCI1	8			/* Internal ASCI channel 1 */
+#define Z180_INT0		0			/* Execute INT1 */
+#define Z180_INT1		1			/* Execute INT1 */
+#define Z180_INT2		2			/* Execute INT2 */
+#define Z180_INT_PRT0	3			/* Internal PRT channel 0 */
+#define Z180_INT_PRT1	4			/* Internal PRT channel 1 */
+#define Z180_INT_DMA0	5			/* Internal DMA channel 0 */
+#define Z180_INT_DMA1	6			/* Internal DMA channel 1 */
+#define Z180_INT_CSIO	7			/* Internal CSI/O */
+#define Z180_INT_ASCI0	8			/* Internal ASCI channel 0 */
+#define Z180_INT_ASCI1	9			/* Internal ASCI channel 1 */
 
 /* MMU mapped memory lookup */
 extern data_t cpu_readmemz180(offs_t offset);
@@ -136,15 +134,10 @@ extern unsigned z180_get_context (void *dst);
 extern void z180_set_context (void *src);
 extern void *z180_get_cycle_table (int which);
 extern void z180_set_cycle_table (int which, void *new_tbl);
-extern unsigned z180_get_pc (void);
-extern void z180_set_pc (unsigned val);
-extern unsigned z180_get_sp (void);
-extern void z180_set_sp (unsigned val);
 extern unsigned z180_get_reg (int regnum);
 extern READ_HANDLER( z180_internal_r );
 extern WRITE_HANDLER( z180_internal_w );
 extern void z180_set_reg (int regnum, unsigned val);
-extern void z180_set_nmi_line(int state);
 extern void z180_set_irq_line(int irqline, int state);
 extern void z180_set_irq_callback(int (*irq_callback)(int));
 extern void z180_state_save(void *file);

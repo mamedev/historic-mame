@@ -60,8 +60,8 @@ void mhavoc_init_machine (void)
 	gamma_rcvd=0;
 	gamma_xmtd=0;
 	player_1 = 0;
-	if (gamma_timer)
-			timer_remove(gamma_timer);
+//	if (gamma_timer)
+//		timer_remove(gamma_timer);
 	gamma_timer = timer_pulse(TIME_IN_HZ(LS161_CLOCK/16), 0, mhavoc_gamma_irq);
 }
 

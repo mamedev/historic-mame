@@ -3481,7 +3481,7 @@ GAME( 1981, warofbug, 0,        galaxian, warofbug, pisces,   ROT90,  "Armenia",
 GAME( 19??, redufo,   0,        galaxian, redufo,   pisces,   ROT90,  "bootleg", "Defend the Terra Attack on the Red UFO (bootleg)" )
 GAME( 19??, exodus,   redufo,   galaxian, exodus,   pisces,   ROT90,  "Subelectro", "Exodus (bootleg?)" )
 GAMEX(1980, streakng, 0,        pacmanbl, streakng, 0,        ROT90,  "Shoei", "Streaking", GAME_IMPERFECT_COLORS )
-GAMEX(1981, ghostmun, puckman,  pacmanbl, streakng, 0,   	  ROT90,  "bootleg", "Ghost Muncher", GAME_IMPERFECT_COLORS )
+GAME( 1981, ghostmun, puckman,  pacmanbl, streakng, 0,   	  ROT90,  "bootleg", "Ghost Muncher" )
 GAME( 1981, pacmanbl, puckman,  pacmanbl, pacmanbl, pisces,   ROT270, "bootleg", "Pac-Man (bootleg on Galaxian hardware)" )
 GAME( 1984, devilfsg, devilfsh, devilfsg, devilfsg, 0,        ROT270, "Vision / Artic", "Devil Fish (Galaxian hardware, bootleg?)" )
 GAME( 1982, zigzag,   0,        zigzag,   zigzag,   0,        ROT90,  "LAX", "Zig Zag (Galaxian hardware, set 1)" )

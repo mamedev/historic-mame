@@ -204,7 +204,7 @@ static void render_sprite(struct osd_bitmap *bitmap,int spr_number)
 {
 	int sx,sy,col,row,height,src,adjy,dy;
 	unsigned char *spr_reg;
-	UINT32 *spr_palette;
+	pen_t *spr_palette;
 	short skip;	/* bytes to skip before drawing each row (can be negative) */
 
 

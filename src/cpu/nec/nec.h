@@ -1,6 +1,8 @@
 typedef enum { ES, CS, SS, DS } SREGS;
 typedef enum { AW, CW, DW, BW, SP, BP, IX, IY } WREGS;
 
+#define NEC_NMI_INT_VECTOR 2
+
 /* Cpu types, steps of 8 to help the cycle count calculation */
 #define V33 0
 #define V30 8

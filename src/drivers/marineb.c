@@ -798,7 +798,7 @@ PCB Number: F-005A
 
 CPU: NEC D780C (Z80)
 SND 2 x AY-3-8912
-XTAL: 12.000Mhz
+XTAL: 12.000MHz
 DIPS: 2 x 8 position
 
 All roms type 2764
@@ -809,7 +809,7 @@ PCB Layout:
 
        NECD780C                      D-84_4  D-84_5  D-84_6  D-84_7
 
-8416  D-84_1  D-84_2  D-84_3                  D2125    AM9122        12.000Mhz
+8416  D-84_1  D-84_2  D-84_3                  D2125    AM9122        12.000MHz
                                               D2125
                                               M5L2114
                                               M5L2114

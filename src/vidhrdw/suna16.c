@@ -221,6 +221,6 @@ static void suna16_draw_sprites(struct osd_bitmap *bitmap)
 void suna16_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	/* I believe background is black */
-	fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);
+	fillbitmap(bitmap,Machine->pens[512],&Machine->visible_area);
 	suna16_draw_sprites(bitmap);
 }

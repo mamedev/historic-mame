@@ -1375,13 +1375,13 @@ static void irqhandler(int irq)
 	cpu_set_irq_line(1,0,irq ? ASSERT_LINE : CLEAR_LINE);
 }
 
-static struct YM2151interface ym2151_intf_8MHz =
+static struct YM2151interface ym2151_intf_4MHz =
 {
 	1,
-	8000000,		/* ? */
+	16000000/4, /* ? */
 	{ YM3012_VOL(100,MIXER_PAN_LEFT,100,MIXER_PAN_RIGHT) },
-	{ irqhandler },	/* irq handler */
-	{ 0 }			/* port_write */
+	{ irqhandler }, /* irq handler */
+	{ 0 } /* port_write */
 };
 
 static struct YM2203interface ym2203_intf_4MHz =
@@ -1729,7 +1729,7 @@ static const struct MachineDriver machine_driver_sailormn =
 	/* sound hardware */
 	SOUND_SUPPORTS_STEREO,0,0,0,
 	{
-		{	SOUND_YM2151,	&ym2151_intf_8MHz			},
+		{	SOUND_YM2151,	&ym2151_intf_4MHz			},
 		{	SOUND_OKIM6295,	&okim6295_intf_16kHz_16kHz	}
 	},
 

@@ -20,7 +20,7 @@ int mexico86_m68705_interrupt(void)
 	else
 		cpu_set_irq_line(2,0,ASSERT_LINE);
 
-    return 0;
+    return ignore_interrupt();
 }
 
 

@@ -57,7 +57,7 @@ extern size_t brkthru_videoram_size;
 WRITE_HANDLER( brkthru_1800_w );
 int brkthru_vh_start(void);
 void brkthru_vh_stop(void);
-void brkthru_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
+void brkthru_vh_convert_color_prom(unsigned char *obsolete,unsigned short *colortable,const unsigned char *color_prom);
 void brkthru_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 
@@ -420,16 +420,16 @@ static struct GfxLayout spritelayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ REGION_GFX1, 0x00000, &charlayout,      0, 1 },
-	{ REGION_GFX2, 0x00000, &tilelayout1, 8+8*8, 16 },
-	{ REGION_GFX2, 0x01000, &tilelayout2, 8+8*8, 16 },
-	{ REGION_GFX2, 0x08000, &tilelayout1, 8+8*8, 16 },
-	{ REGION_GFX2, 0x09000, &tilelayout2, 8+8*8, 16 },
-	{ REGION_GFX2, 0x10000, &tilelayout1, 8+8*8, 16 },
-	{ REGION_GFX2, 0x11000, &tilelayout2, 8+8*8, 16 },
-	{ REGION_GFX2, 0x18000, &tilelayout1, 8+8*8, 16 },
-	{ REGION_GFX2, 0x19000, &tilelayout2, 8+8*8, 16 },
-	{ REGION_GFX3, 0x00000, &spritelayout,    8, 8 },
+	{ REGION_GFX1, 0x00000, &charlayout,   0x00,  1 },	/* use colors 0x00-0x07 */
+	{ REGION_GFX2, 0x00000, &tilelayout1,  0x80, 16 },	/* use colors 0x80-0xff */
+	{ REGION_GFX2, 0x01000, &tilelayout2,  0x80, 16 },
+	{ REGION_GFX2, 0x08000, &tilelayout1,  0x80, 16 },
+	{ REGION_GFX2, 0x09000, &tilelayout2,  0x80, 16 },
+	{ REGION_GFX2, 0x10000, &tilelayout1,  0x80, 16 },
+	{ REGION_GFX2, 0x11000, &tilelayout2,  0x80, 16 },
+	{ REGION_GFX2, 0x18000, &tilelayout1,  0x80, 16 },
+	{ REGION_GFX2, 0x19000, &tilelayout2,  0x80, 16 },
+	{ REGION_GFX3, 0x00000, &spritelayout, 0x40,  8 },	/* use colors 0x40-0x7f */
 	{ -1 } /* end of array */
 };
 
@@ -485,7 +485,7 @@ static const struct MachineDriver machine_driver_brkthru =
 	/* video hardware */
 	32*8, 32*8, { 1*8, 31*8-1, 1*8, 31*8-1 },	/* not sure */
 	gfxdecodeinfo,
-	256,8+8*8+16*8,
+	256, 0,
 	brkthru_vh_convert_color_prom,
 
 	VIDEO_TYPE_RASTER,
@@ -544,7 +544,7 @@ static const struct MachineDriver machine_driver_darwin =
 	/* video hardware */
 	32*8, 32*8, { 1*8, 31*8-1, 1*8, 31*8-1 },
 	gfxdecodeinfo,
-	256,8+8*8+16*8,
+	256, 0,
 	brkthru_vh_convert_color_prom,
 
 	VIDEO_TYPE_RASTER,

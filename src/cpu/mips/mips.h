@@ -44,8 +44,6 @@ enum
 
 extern int mips_ICount;
 
-#define MIPS_INT_NONE	( -1 )
-
 #define MIPS_IRQ0	( 0 )
 #define MIPS_IRQ1	( 1 )
 #define MIPS_IRQ2	( 2 )
@@ -179,13 +177,8 @@ extern void mips_exit(void);
 extern int mips_execute(int cycles);
 extern unsigned mips_get_context(void *dst);
 extern void mips_set_context(void *src);
-extern unsigned mips_get_pc(void);
-extern void mips_set_pc(unsigned val);
-extern unsigned mips_get_sp(void);
-extern void mips_set_sp(unsigned val);
 extern unsigned mips_get_reg(int regnum);
 extern void mips_set_reg(int regnum, unsigned val);
-extern void mips_set_nmi_line(int linestate);
 extern void mips_set_irq_line(int irqline, int linestate);
 extern void mips_set_irq_callback(int (*callback)(int irqline));
 extern const char *mips_info(void *context, int regnum);
@@ -204,13 +197,8 @@ extern unsigned DasmMIPS(char *buff, unsigned _pc);
 #define psxcpu_execute mips_execute
 #define psxcpu_get_context mips_get_context
 #define psxcpu_set_context mips_set_context
-#define psxcpu_get_pc mips_get_pc
-#define psxcpu_set_pc mips_set_pc
-#define psxcpu_get_sp mips_get_sp
-#define psxcpu_set_sp mips_set_sp
 #define psxcpu_get_reg mips_get_reg
 #define psxcpu_set_reg mips_set_reg
-#define psxcpu_set_nmi_line mips_set_nmi_line
 #define psxcpu_set_irq_line mips_set_irq_line
 #define psxcpu_set_irq_callback mips_set_irq_callback
 #define psxcpu_state_save mips_state_save

@@ -24,13 +24,8 @@ extern void m6809_exit(void);
 extern int m6809_execute(int cycles);  /* NS 970908 */
 extern unsigned m6809_get_context(void *dst);
 extern void m6809_set_context(void *src);
-extern unsigned m6809_get_pc(void);
-extern void m6809_set_pc(unsigned val);
-extern unsigned m6809_get_sp(void);
-extern void m6809_set_sp(unsigned val);
 extern unsigned m6809_get_reg(int regnum);
 extern void m6809_set_reg(int regnum, unsigned val);
-extern void m6809_set_nmi_line(int state);
 extern void m6809_set_irq_line(int irqline, int state);
 extern void m6809_set_irq_callback(int (*callback)(int irqline));
 extern const char *m6809_info(void *context,int regnum);

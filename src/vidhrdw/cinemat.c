@@ -68,9 +68,9 @@ void CinemaVectorData (int fromx, int fromy, int tox, int toy, int color)
 		vector_add_point (fromx << VEC_SHIFT, fromy << VEC_SHIFT, 0, 0);
 
     if (color_display)
-        vector_add_point (tox << VEC_SHIFT, toy << VEC_SHIFT, color & 0x07, color & 0x08 ? 0x80: 0x40);
+        vector_add_point (tox << VEC_SHIFT, toy << VEC_SHIFT, VECTOR_COLOR111(color & 0x07), color & 0x08 ? 0x80: 0x40);
     else
-        vector_add_point (tox << VEC_SHIFT, toy << VEC_SHIFT, WHITE, color * 12);
+        vector_add_point (tox << VEC_SHIFT, toy << VEC_SHIFT, VECTOR_COLOR111(WHITE), color * 12);
 
 	lastx = tox;
 	lasty = toy;
@@ -86,41 +86,9 @@ void cinemat_select_artwork (int monitor_type, int overlay_req, int backdrop_req
 	cinemat_simple_overlay = simple_overlay;
 }
 
-static void shade_fill (unsigned char *palette, int rgb, int start_index, int end_index, int start_inten, int end_inten)
-{
-	int i, inten, index_range, inten_range;
-
-	index_range = end_index-start_index;
-	inten_range = end_inten-start_inten;
-	for (i = start_index; i <= end_index; i++)
-	{
-		inten = start_inten + (inten_range) * (i-start_index) / (index_range);
-		palette[3*i  ] = (rgb & RED  )? inten : 0;
-		palette[3*i+1] = (rgb & GREEN)? inten : 0;
-		palette[3*i+2] = (rgb & BLUE )? inten : 0;
-	}
-}
-
-
 void cinemat_init_colors (unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
 {
-	int i,j,k, nextcol;
 	char filename[1024];
-
-	int trcl1[] = { 0,0,2,2,1,1 };
-	int trcl2[] = { 1,2,0,1,0,2 };
-	int trcl3[] = { 2,1,1,0,2,0 };
-
-	/* initialize the first 8 colors with the basic colors */
-	for (i = 0; i < 8; i++)
-	{
-		palette[3*i  ] = (i & RED  ) ? 0xff : 0;
-		palette[3*i+1] = (i & GREEN) ? 0xff : 0;
-		palette[3*i+2] = (i & BLUE ) ? 0xff : 0;
-	}
-
-	shade_fill (palette, WHITE, 8, 23, 0, 255);
-    nextcol = 24;
 
 	/* fill the rest of the 256 color entries depending on the game */
 	switch (cinemat_monitor_type)
@@ -132,7 +100,7 @@ void cinemat_init_colors (unsigned char *palette, unsigned short *colortable,con
 			if (cinemat_backdrop_req)
 			{
                 sprintf (filename, "%sb.png", Machine->gamedrv->name );
-				backdrop_load(filename, nextcol);
+				backdrop_load(filename, 0);
 			}
 			/* Attempt to load overlay if requested */
 			if (cinemat_overlay_req)
@@ -143,46 +111,19 @@ void cinemat_init_colors (unsigned char *palette, unsigned short *colortable,con
 					artwork_elements_scale(cinemat_simple_overlay,
 										   Machine->scrbitmap->width,
 										   Machine->scrbitmap->height);
-					overlay_create(cinemat_simple_overlay, nextcol);
+					overlay_create(cinemat_simple_overlay, 0);
 				}
 				else
 				{
 					/* load overlay from file */
 	                sprintf (filename, "%so.png", Machine->gamedrv->name );
-					overlay_load(filename, nextcol);
+					overlay_load(filename, 0);
 				}
 			}
 			break;
 
 		case  CCPU_MONITOR_WOWCOL:
             color_display = TRUE;
-			/* TODO: support real color */
-			/* put in 40 shades for red, blue and magenta */
-			shade_fill (palette, RED       ,   8,  47, 10, 250);
-			shade_fill (palette, BLUE      ,  48,  87, 10, 250);
-			shade_fill (palette, RED|BLUE  ,  88, 127, 10, 250);
-
-			/* put in 20 shades for yellow and green */
-			shade_fill (palette, GREEN     , 128, 147, 10, 250);
-			shade_fill (palette, RED|GREEN , 148, 167, 10, 250);
-
-			/* and 14 shades for cyan and white */
-			shade_fill (palette, BLUE|GREEN, 168, 181, 10, 250);
-			shade_fill (palette, WHITE     , 182, 194, 10, 250);
-
-			/* Fill in unused gaps with more anti-aliasing colors. */
-			/* There are 60 slots available.           .ac JAN2498 */
-			i=195;
-			for (j=0; j<6; j++)
-			{
-				for (k=7; k<=16; k++)
-				{
-					palette[3*i+trcl1[j]] = ((256*k)/16)-1;
-					palette[3*i+trcl2[j]] = ((128*k)/16)-1;
-					palette[3*i+trcl3[j]] = 0;
-					i++;
-				}
-			}
 			break;
 	}
 }
@@ -190,31 +131,18 @@ void cinemat_init_colors (unsigned char *palette, unsigned short *colortable,con
 
 void spacewar_init_colors (unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
 {
-	int width, height, i, nextcol;
+	int width, height;
 
     color_display = FALSE;
-
-	/* initialize the first 8 colors with the basic colors */
-	for (i = 0; i < 8; i++)
-	{
-		palette[3*i  ] = (i & RED  ) ? 0xff : 0;
-		palette[3*i+1] = (i & GREEN) ? 0xff : 0;
-		palette[3*i+2] = (i & BLUE ) ? 0xff : 0;
-	}
-
-	for (i = 0; i < 16; i++)
-		palette[3*(i+8)]=palette[3*(i+8)+1]=palette[3*(i+8)+2]= (255*i)/15;
 
 	spacewar_pressed_panel = NULL;
 	width = Machine->scrbitmap->width;
 	height = 0.16 * width;
 
-	nextcol = 24;
-
-	artwork_load_size(&spacewar_panel, "spacewr1.png", nextcol, width, height);
+	artwork_load_size(&spacewar_panel, "spacewr1.png", 0, width, height);
 	if (spacewar_panel != NULL)
 	{
-		artwork_load_size(&spacewar_pressed_panel, "spacewr2.png", nextcol, width, height);
+		artwork_load_size(&spacewar_pressed_panel, "spacewr2.png", 0, width, height);
 		if (spacewar_pressed_panel == NULL)
 		{
 			artwork_free (&spacewar_panel);

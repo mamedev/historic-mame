@@ -5,21 +5,6 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-/*
-** prototypes
-*/
-WRITE_HANDLER( tsamurai_bgcolor_w );
-WRITE_HANDLER( tsamurai_textbank1_w );
-WRITE_HANDLER( tsamurai_textbank2_w );
-WRITE_HANDLER( tsamurai_scrolly_w );
-WRITE_HANDLER( tsamurai_scrollx_w );
-
-WRITE_HANDLER( tsamurai_bg_videoram_w );
-WRITE_HANDLER( tsamurai_fg_videoram_w );
-
-void tsamurai_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-void tsamurai_vh_screenrefresh( struct osd_bitmap *bitmap, int fullrefresh );
-int tsamurai_vh_start( void );
 
 /*
 ** variables
@@ -30,43 +15,6 @@ static int textbank1, textbank2;
 
 static struct tilemap *background, *foreground;
 
-
-/*
-** color prom decoding
-*/
-
-void tsamurai_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
-{
-	int i;
-
-	for (i = 0;i < Machine->drv->total_colors;i++)
-	{
-		int bit0,bit1,bit2,bit3;
-
-
-		/* red component */
-		bit0 = (color_prom[0] >> 0) & 0x01;
-		bit1 = (color_prom[0] >> 1) & 0x01;
-		bit2 = (color_prom[0] >> 2) & 0x01;
-		bit3 = (color_prom[0] >> 3) & 0x01;
-		*(palette++) = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
-		/* green component */
-		bit0 = (color_prom[Machine->drv->total_colors] >> 0) & 0x01;
-		bit1 = (color_prom[Machine->drv->total_colors] >> 1) & 0x01;
-		bit2 = (color_prom[Machine->drv->total_colors] >> 2) & 0x01;
-		bit3 = (color_prom[Machine->drv->total_colors] >> 3) & 0x01;
-		*(palette++) = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
-		/* blue component */
-		bit0 = (color_prom[2*Machine->drv->total_colors] >> 0) & 0x01;
-		bit1 = (color_prom[2*Machine->drv->total_colors] >> 1) & 0x01;
-		bit2 = (color_prom[2*Machine->drv->total_colors] >> 2) & 0x01;
-		bit3 = (color_prom[2*Machine->drv->total_colors] >> 3) & 0x01;
-		*(palette++) = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
-
-		color_prom++;
-	}
-
-}
 
 
 /***************************************************************************

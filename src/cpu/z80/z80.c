@@ -4306,55 +4306,6 @@ void z80_set_cycle_table (int which, void *new_table)
 }
 
 /****************************************************************************
- * Return program counter
- ****************************************************************************/
-#ifdef Z80_MSX
-unsigned z80_msx_get_pc (void)
-#else
-unsigned z80_get_pc (void)
-#endif
-{
-	return _PCD;
-}
-
-/****************************************************************************
- * Set program counter
- ****************************************************************************/
-#ifdef Z80_MSX
-void z80_msx_set_pc (unsigned val)
-#else
-void z80_set_pc (unsigned val)
-#endif
-{
-	_PC = val;
-	change_pc16(_PCD);
-}
-
-/****************************************************************************
- * Return stack pointer
- ****************************************************************************/
-#ifdef Z80_MSX
-unsigned z80_msx_get_sp (void)
-#else
-unsigned z80_get_sp (void)
-#endif
-{
-	return _SPD;
-}
-
-/****************************************************************************
- * Set stack pointer
- ****************************************************************************/
-#ifdef Z80_MSX
-void z80_msx_set_sp (unsigned val)
-#else
-void z80_set_sp (unsigned val)
-#endif
-{
-	_SP = val;
-}
-
-/****************************************************************************
  * Return a specific register
  ****************************************************************************/
 #ifdef Z80_MSX
@@ -4365,7 +4316,9 @@ unsigned z80_get_reg (int regnum)
 {
 	switch( regnum )
 	{
+		case REG_PC: return _PCD;
 		case Z80_PC: return Z80.PC.w.l;
+		case REG_SP: return _SPD;
 		case Z80_SP: return Z80.SP.w.l;
 		case Z80_AF: return Z80.AF.w.l;
 		case Z80_BC: return Z80.BC.w.l;
@@ -4412,7 +4365,9 @@ void z80_set_reg (int regnum, unsigned val)
 {
 	switch( regnum )
 	{
+		case REG_PC: _PC = val; change_pc16(_PCD); break;
 		case Z80_PC: Z80.PC.w.l = val; break;
+		case REG_SP: _SP = val; break;
 		case Z80_SP: Z80.SP.w.l = val; break;
 		case Z80_AF: Z80.AF.w.l = val; break;
 		case Z80_BC: Z80.BC.w.l = val; break;
@@ -4431,10 +4386,10 @@ void z80_set_reg (int regnum, unsigned val)
 		case Z80_IFF2: Z80.IFF2 = val; break;
 		case Z80_HALT: Z80.HALT = val; break;
 #ifdef Z80_MSX
-		case Z80_NMI_STATE: z80_msx_set_nmi_line(val); break;
+		case Z80_NMI_STATE: z80_msx_set_irq_line(IRQ_LINE_NMI,val); break;
 		case Z80_IRQ_STATE: z80_msx_set_irq_line(0,val); break;
 #else
-		case Z80_NMI_STATE: z80_set_nmi_line(val); break;
+		case Z80_NMI_STATE: z80_set_irq_line(IRQ_LINE_NMI,val); break;
 		case Z80_IRQ_STATE: z80_set_irq_line(0,val); break;
 #endif
 		case Z80_DC0: Z80.int_state[0] = val; break;
@@ -4455,31 +4410,6 @@ void z80_set_reg (int regnum, unsigned val)
 }
 
 /****************************************************************************
- * Set NMI line state
- ****************************************************************************/
-#ifdef Z80_MSX
-void z80_msx_set_nmi_line(int state)
-#else
-void z80_set_nmi_line(int state)
-#endif
-{
-	if( Z80.nmi_state == state ) return;
-
-	LOG(("Z80 #%d set_nmi_line %d\n", cpu_getactivecpu(), state));
-	Z80.nmi_state = state;
-	if( state == CLEAR_LINE ) return;
-
-	LOG(("Z80 #%d take NMI\n", cpu_getactivecpu()));
-	_PPC = -1;			/* there isn't a valid previous program counter */
-	LEAVE_HALT; 		/* Check if processor was halted */
-
-	_IFF1 = 0;
-	PUSH( PC );
-	_PCD = 0x0066;
-	Z80.extra_cycles += 11;
-}
-
-/****************************************************************************
  * Set IRQ line state
  ****************************************************************************/
 #ifdef Z80_MSX
@@ -4488,49 +4418,69 @@ void z80_msx_set_irq_line(int irqline, int state)
 void z80_set_irq_line(int irqline, int state)
 #endif
 {
-	LOG(("Z80 #%d set_irq_line %d\n",cpu_getactivecpu() , state));
-	Z80.irq_state = state;
-	if( state == CLEAR_LINE ) return;
-
-	if( Z80.irq_max )
+	if (irqline == IRQ_LINE_NMI)
 	{
-		int daisychain, device, int_state;
-		daisychain = (*Z80.irq_callback)(irqline);
-		device = daisychain >> 8;
-		int_state = daisychain & 0xff;
-		LOG(("Z80 #%d daisy chain $%04x -> device %d, state $%02x",cpu_getactivecpu(), daisychain, device, int_state));
+		if( Z80.nmi_state == state ) return;
 
-		if( Z80.int_state[device] != int_state )
-		{
-			LOG((" change\n"));
-			/* set new interrupt status */
-			Z80.int_state[device] = int_state;
-			/* check interrupt status */
-			Z80.request_irq = Z80.service_irq = -1;
+		LOG(("Z80 #%d set_irq_line (NMI) %d\n", cpu_getactivecpu(), state));
+		Z80.nmi_state = state;
+		if( state == CLEAR_LINE ) return;
 
-			/* search higher IRQ or IEO */
-			for( device = 0 ; device < Z80.irq_max ; device ++ )
-			{
-				/* IEO = disable ? */
-				if( Z80.int_state[device] & Z80_INT_IEO )
-				{
-					Z80.request_irq = -1;		/* if IEO is disable , masking lower IRQ */
-					Z80.service_irq = device;	/* set highest interrupt service device */
-				}
-				/* IRQ = request ? */
-				if( Z80.int_state[device] & Z80_INT_REQ )
-					Z80.request_irq = device;
-			}
-			LOG(("Z80 #%d daisy chain service_irq $%02x, request_irq $%02x\n", cpu_getactivecpu(), Z80.service_irq, Z80.request_irq));
-			if( Z80.request_irq < 0 ) return;
-		}
-		else
-		{
-			LOG((" no change\n"));
-			return;
-		}
+		LOG(("Z80 #%d take NMI\n", cpu_getactivecpu()));
+		_PPC = -1;			/* there isn't a valid previous program counter */
+		LEAVE_HALT; 		/* Check if processor was halted */
+
+		_IFF1 = 0;
+		PUSH( PC );
+		_PCD = 0x0066;
+		Z80.extra_cycles += 11;
 	}
-	take_interrupt();
+	else
+	{
+		LOG(("Z80 #%d set_irq_line %d\n",cpu_getactivecpu() , state));
+		Z80.irq_state = state;
+		if( state == CLEAR_LINE ) return;
+
+		if( Z80.irq_max )
+		{
+			int daisychain, device, int_state;
+			daisychain = (*Z80.irq_callback)(irqline);
+			device = daisychain >> 8;
+			int_state = daisychain & 0xff;
+			LOG(("Z80 #%d daisy chain $%04x -> device %d, state $%02x",cpu_getactivecpu(), daisychain, device, int_state));
+
+			if( Z80.int_state[device] != int_state )
+			{
+				LOG((" change\n"));
+				/* set new interrupt status */
+				Z80.int_state[device] = int_state;
+				/* check interrupt status */
+				Z80.request_irq = Z80.service_irq = -1;
+
+				/* search higher IRQ or IEO */
+				for( device = 0 ; device < Z80.irq_max ; device ++ )
+				{
+					/* IEO = disable ? */
+					if( Z80.int_state[device] & Z80_INT_IEO )
+					{
+						Z80.request_irq = -1;		/* if IEO is disable , masking lower IRQ */
+						Z80.service_irq = device;	/* set highest interrupt service device */
+					}
+					/* IRQ = request ? */
+					if( Z80.int_state[device] & Z80_INT_REQ )
+						Z80.request_irq = device;
+				}
+				LOG(("Z80 #%d daisy chain service_irq $%02x, request_irq $%02x\n", cpu_getactivecpu(), Z80.service_irq, Z80.request_irq));
+				if( Z80.request_irq < 0 ) return;
+			}
+			else
+			{
+				LOG((" no change\n"));
+				return;
+			}
+		}
+		take_interrupt();
+	}
 }
 
 /****************************************************************************

@@ -614,7 +614,7 @@ int readuncompresszip(ZIP* zip, struct zipent* ent, char* data) {
 #ifdef ZIP_CACHE
 
 /* ZIP cache entries */
-#define ZIP_CACHE_MAX 2
+#define ZIP_CACHE_MAX 5
 
 /* ZIP cache buffer LRU ( Last Recently Used )
      zip_cache_map[0] is the newer

@@ -74,9 +74,8 @@ WRITE_HANDLER( gberet_scroll_w );
 WRITE_HANDLER( gberetb_scroll_w );
 void gberet_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 int gberet_vh_start(void);
-void init_gberet(void);
-void init_gberetb(void);
 void gberet_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void gberetb_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 int gberet_interrupt(void);
 
@@ -634,7 +633,7 @@ static const struct MachineDriver machine_driver_gberetb =
 	0,
 	gberet_vh_start,
 	0,
-	gberet_vh_screenrefresh,
+	gberetb_vh_screenrefresh,
 
 	/* sound hardware */
 	0,0,0,0,
@@ -774,8 +773,8 @@ ROM_END
 
 
 
-GAME( 1985, gberet,   0,      gberet,   gberet,   gberet,  ROT0, "Konami", "Green Beret" )
-GAME( 1985, rushatck, gberet, gberet,   gberet,   gberet,  ROT0, "Konami", "Rush'n Attack" )
-GAME( 1985, gberetb,  gberet, gberetb,  gberetb,  gberetb, ROT0, "bootleg", "Green Beret (bootleg)" )
-GAME( 1986, mrgoemon, 0,      mrgoemon, mrgoemon, gberet,  ROT0, "Konami", "Mr. Goemon (Japan)" )
+GAME( 1985, gberet,   0,      gberet,   gberet,   0, ROT0, "Konami", "Green Beret" )
+GAME( 1985, rushatck, gberet, gberet,   gberet,   0, ROT0, "Konami", "Rush'n Attack" )
+GAME( 1985, gberetb,  gberet, gberetb,  gberetb,  0, ROT0, "bootleg", "Green Beret (bootleg)" )
+GAME( 1986, mrgoemon, 0,      mrgoemon, mrgoemon, 0, ROT0, "Konami", "Mr. Goemon (Japan)" )
 

@@ -15,6 +15,13 @@
 #include "i8039.h"
 
 
+/* HJB 01/05/99 changed to positive values to use pending_irq as a flag */
+#define I8039_IGNORE_INT	0
+#define I8039_EXT_INT		1	/* Execute a normal extern interrupt	*/
+#define I8039_TIMER_INT 	2	/* Execute a Timer interrupt			*/
+#define I8039_COUNT_INT 	4	/* Execute a Counter interrupt			*/
+
+
 /* Layout of the registers in the debugger */
 static UINT8 i8039_reg_layout[] = {
 	I8039_PC, I8039_SP, I8039_PSW, I8039_A, I8039_IRQ_STATE,I8039_P1, I8039_P2, -1,
@@ -717,42 +724,6 @@ void i8039_set_context (void *src)
 }
 
 
-/****************************************************************************
- * Return program counter
- ****************************************************************************/
-unsigned i8039_get_pc (void)
-{
-	return R.PC.d;
-}
-
-
-/****************************************************************************
- * Return program counter
- ****************************************************************************/
-void i8039_set_pc (unsigned val)
-{
-	R.PC.w.l = val;
-}
-
-
-/****************************************************************************
- * Return stack pointer
- ****************************************************************************/
-unsigned i8039_get_sp (void)
-{
-	return R.SP;
-}
-
-
-/****************************************************************************
- * Set stack pointer
- ****************************************************************************/
-void i8039_set_sp (unsigned val)
-{
-	R.SP = val;
-}
-
-
 /****************************************************************************/
 /* Get a specific register                                                  */
 /****************************************************************************/
@@ -760,7 +731,9 @@ unsigned i8039_get_reg (int regnum)
 {
 	switch( regnum )
 	{
+		case REG_PC:
 		case I8039_PC: return R.PC.w.l;
+		case REG_SP:
 		case I8039_SP: return R.SP;
 		case I8039_PSW: return R.PSW;
 		case I8039_A: return R.A;
@@ -794,7 +767,9 @@ void i8039_set_reg (int regnum, unsigned val)
 {
 	switch( regnum )
 	{
+		case REG_PC:
 		case I8039_PC: R.PC.w.l = val; break;
+		case REG_SP:
 		case I8039_SP: R.SP = val; break;
 		case I8039_PSW: R.PSW = val; break;
 		case I8039_A: R.A = val; break;
@@ -819,14 +794,6 @@ void i8039_set_reg (int regnum, unsigned val)
 	}
 }
 
-
-/****************************************************************************/
-/* Set NMI line state														*/
-/****************************************************************************/
-void i8039_set_nmi_line(int state)
-{
-	/* I8039 does not have a NMI line */
-}
 
 /****************************************************************************/
 /* Set IRQ line state														*/
@@ -936,13 +903,8 @@ void i8035_exit(void) { i8039_exit(); }
 int i8035_execute(int cycles) { return i8039_execute(cycles); }
 unsigned i8035_get_context(void *dst) { return i8039_get_context(dst); }
 void i8035_set_context(void *src)  { i8039_set_context(src); }
-unsigned i8035_get_pc(void) { return i8039_get_pc(); }
-void i8035_set_pc(unsigned val) { i8039_set_pc(val); }
-unsigned i8035_get_sp(void) { return i8039_get_sp(); }
-void i8035_set_sp(unsigned val) { i8039_set_sp(val); }
 unsigned i8035_get_reg(int regnum) { return i8039_get_reg(regnum); }
 void i8035_set_reg(int regnum, unsigned val) { i8039_set_reg(regnum,val); }
-void i8035_set_nmi_line(int state) { i8039_set_nmi_line(state); }
 void i8035_set_irq_line(int irqline, int state) { i8039_set_irq_line(irqline,state); }
 void i8035_set_irq_callback(int (*callback)(int irqline)) { i8039_set_irq_callback(callback); }
 const char *i8035_info(void *context, int regnum)
@@ -994,13 +956,8 @@ void i8048_exit(void) { i8039_exit(); }
 int i8048_execute(int cycles) { return i8039_execute(cycles); }
 unsigned i8048_get_context(void *dst) { return i8039_get_context(dst); }
 void i8048_set_context(void *src)  { i8039_set_context(src); }
-unsigned i8048_get_pc(void) { return i8039_get_pc(); }
-void i8048_set_pc(unsigned val) { i8039_set_pc(val); }
-unsigned i8048_get_sp(void) { return i8039_get_sp(); }
-void i8048_set_sp(unsigned val) { i8039_set_sp(val); }
 unsigned i8048_get_reg(int regnum) { return i8039_get_reg(regnum); }
 void i8048_set_reg(int regnum, unsigned val) { i8039_set_reg(regnum,val); }
-void i8048_set_nmi_line(int state) { i8039_set_nmi_line(state); }
 void i8048_set_irq_line(int irqline, int state) { i8039_set_irq_line(irqline,state); }
 void i8048_set_irq_callback(int (*callback)(int irqline)) { i8039_set_irq_callback(callback); }
 const char *i8048_info(void *context, int regnum)
@@ -1050,13 +1007,8 @@ void n7751_exit(void) { i8039_exit(); }
 int n7751_execute(int cycles) { return i8039_execute(cycles); }
 unsigned n7751_get_context(void *dst) { return i8039_get_context(dst); }
 void n7751_set_context(void *src)  { i8039_set_context(src); }
-unsigned n7751_get_pc(void) { return i8039_get_pc(); }
-void n7751_set_pc(unsigned val) { i8039_set_pc(val); }
-unsigned n7751_get_sp(void) { return i8039_get_sp(); }
-void n7751_set_sp(unsigned val) { i8039_set_sp(val); }
 unsigned n7751_get_reg(int regnum) { return i8039_get_reg(regnum); }
 void n7751_set_reg(int regnum, unsigned val) { i8039_set_reg(regnum,val); }
-void n7751_set_nmi_line(int state) { i8039_set_nmi_line(state); }
 void n7751_set_irq_line(int irqline, int state) { i8039_set_irq_line(irqline,state); }
 void n7751_set_irq_callback(int (*callback)(int irqline)) { i8039_set_irq_callback(callback); }
 const char *n7751_info(void *context, int regnum)

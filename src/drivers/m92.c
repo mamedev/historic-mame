@@ -24,9 +24,10 @@
 	Ninja Baseball Batman (USA)				(c) 1993 Irem America Corp
 	Yakyuu Kakutou League-Man (Japan)		(c) 1993 Irem Corp
 	Perfect Soldiers (Japan)		M92-G	(c) 1993 Irem Corp
+	Dream Soccer 94 (Japan)			M92-G	(c) 1994 Irem Corp
 
 System notes:
-	Each game has an encrypted sound cpu (see m97.c), the sound cpu and
+	Each game has an encrypted sound cpu (see irem_cpu.c), the sound cpu and
 	the sprite chip are on the game board rather than the main board and
 	can differ between games.
 
@@ -39,6 +40,7 @@ System notes:
 
 	These are slow to emulate, and can be turned on/off by pressing
 	F1 - they are on by default.
+	Todo:  Raster effects don't work in flipscreen mode.
 
 Glitch list!
 
@@ -51,8 +53,6 @@ Glitch list!
 		Gives 99 credits.
 
 	Irem Skins:
-		- The palette banking handling is surely wrong, but it seems to work
-		  during the game; the character test in service mode is wrong, though.
 		- Priority bug: you can't see the arrow on the top right map.
 		- Gfx problems at the players information during attract mode in
 		  Skins Game *only*, Major Title is fine (that part of attract mode
@@ -60,19 +60,17 @@ Glitch list!
 		- Eeprom load/save not yet implemented - when done, MT2EEP should
 		  be removed from the ROM definition.
 
-	Blade Master:
-		Sprite list register isn't updated in service mode.
-
-	Ninja Baseball:
-		Very picky about interrupts..
-		Doesn't work!
-
 	Perfect Soliders:
 		Shortly into the fight, the sound CPU enters a tight loop, conitnuously
 		writing to the status port and with interrupts disabled. I don't see how
 		it is supposed to get out of that loop. Maybe it's not supposed to enter
 		it at all?
 
+	LeagueMan:
+		Raster effects don't work properly (not even cpu time per line?).
+
+	Dream Soccer 94:
+		Slight priority problems when goal scoring animation is played
 
 	Emulation by Bryan McPhail, mish@tendril.co.uk
 	Thanks to Chris Hardy and Olli Bergmann too!
@@ -96,7 +94,6 @@ Perfect Soldiers			  1993  Rev 3.50 M92
 Fire Barrel                   1993  Rev 3.52 M92
 Dream Soccer '94              1994  Rev 3.53 M92
 
-
 *****************************************************************************/
 
 #include "driver.h"
@@ -104,21 +101,21 @@ Dream Soccer '94              1994  Rev 3.53 M92
 #include "m92.h"
 #include "machine/irem_cpu.h"
 
-static int m92_irq_vectorbase,m92_vblank;
-static unsigned char *m92_eeprom,*m92_ram;
-
+static int m92_irq_vectorbase;
+static unsigned char *m92_ram;
 
 #define M92_IRQ_0 ((m92_irq_vectorbase+0)/4)  /* VBL interrupt*/
-#define M92_IRQ_1 ((m92_irq_vectorbase+4)/4)  /* End of VBL interrupt?? */
+#define M92_IRQ_1 ((m92_irq_vectorbase+4)/4)  /* Sprite buffer complete interrupt */
 #define M92_IRQ_2 ((m92_irq_vectorbase+8)/4)  /* Raster interrupt */
-#define M92_IRQ_3 ((m92_irq_vectorbase+12)/4) /* Sprite buffer complete interrupt? */
+#define M92_IRQ_3 ((m92_irq_vectorbase+12)/4) /* Sound cpu interrupt */
+
+#define M92_SCANLINES	256
 
 /* From vidhrdw/m92.c */
 WRITE_HANDLER( m92_spritecontrol_w );
-WRITE_HANDLER( m92_spritebuffer_w );
-WRITE_HANDLER( majtitl2_spritebuffer_w );
-READ_HANDLER( majtitl2_paletteram_r );
-WRITE_HANDLER( majtitl2_paletteram_w );
+WRITE_HANDLER( m92_videocontrol_w );
+READ_HANDLER( m92_paletteram_r );
+WRITE_HANDLER( m92_paletteram_w );
 READ_HANDLER( m92_vram_r );
 WRITE_HANDLER( m92_vram_w );
 WRITE_HANDLER( m92_pf1_control_w );
@@ -126,15 +123,14 @@ WRITE_HANDLER( m92_pf2_control_w );
 WRITE_HANDLER( m92_pf3_control_w );
 WRITE_HANDLER( m92_master_control_w );
 int m92_vh_start(void);
-int majtitl2_vh_start(void);
-void majtitl2_vh_stop(void);
+void m92_vh_stop(void);
 void m92_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 void m92_vh_raster_partial_refresh(struct osd_bitmap *bitmap,int start_line,int end_line);
 
-extern int m92_raster_irq_position,m92_spritechip,m92_raster_machine,m92_raster_enable;
+extern int m92_raster_irq_position,m92_raster_enable;
 extern unsigned char *m92_vram_data,*m92_spritecontrol;
 
-extern int m92_game_kludge;
+extern int m92_sprite_buffer_busy,m92_game_kludge;
 
 /*****************************************************************************/
 
@@ -142,14 +138,13 @@ static READ_HANDLER( m92_eeprom_r )
 {
 	unsigned char *RAM = memory_region(REGION_USER1);
 //	logerror("%05x: EEPROM RE %04x\n",cpu_get_pc(),offset);
-
 	return RAM[offset/2];
 }
 
 static WRITE_HANDLER( m92_eeprom_w )
 {
 	unsigned char *RAM = memory_region(REGION_USER1);
-	logerror("%05x: EEPROM WR %04x\n",cpu_get_pc(),offset);
+//	logerror("%05x: EEPROM WR %04x\n",cpu_get_pc(),offset);
 	RAM[offset/2]=data;
 }
 
@@ -158,60 +153,25 @@ static WRITE_HANDLER( m92_coincounter_w )
 	if (offset==0) {
 		coin_counter_w(0,data & 0x01);
 		coin_counter_w(1,data & 0x02);
-
-#if 0
-		if (m92_game_kludge==2) {
-			unsigned char *RAM = memory_region(REGION_CPU1);
-			RAM[0x1840]=0x90; /* For Leagueman */
-			RAM[0x1841]=0x90;
-			RAM[0x830]=0x90;
-			RAM[0x831]=0x90;
-			RAM[0x666]=0x90;
-			RAM[0x667]=0x90;
-		}
-#endif
-
 		/* Bit 0x8 is Motor(?!), used in Hook, In The Hunt, UCops */
 		/* Bit 0x8 is Memcard related in RTypeLeo */
 		/* Bit 0x40 set in Blade Master test mode input check */
 	}
-#if 0
-	if (/*offset==0 &&*/ data!=0) {
-		char t[16];
-		sprintf(t,"%02x",data);
-		usrintf_showmessage(t);
-	}
-#endif
-}
-
-static WRITE_HANDLER( m92_unknown_w )
-{
-#if 0
-	static int d[2];
-	d[offset]=data;
-	if (1/*offset==1*/) {
-		char t[16];
-		sprintf(t,"%02x",d[0] | (d[1]<<8));
-		usrintf_showmessage(t);
-	}
-#endif
 }
 
 static WRITE_HANDLER( m92_bankswitch_w )
 {
 	unsigned char *RAM = memory_region(REGION_CPU1);
-
-//	logerror("%04x: Bank %04x (%02x)\n",cpu_get_pc(),data,offset);
 	if (offset==1) return; /* Unused top byte */
-
 	cpu_setbank(1,&RAM[0x100000 + ((data&0x7)*0x10000)]);
 }
 
 static READ_HANDLER( m92_port_4_r )
 {
-	if (m92_vblank) return readinputport(4) | 0;
-	return readinputport(4) | 0x80;
+	return readinputport(4) | m92_sprite_buffer_busy; /* Bit 7 low indicates busy */
 }
+
+/*****************************************************************************/
 
 enum { VECTOR_INIT, YM2151_ASSERT, YM2151_CLEAR, V30_ASSERT, V30_CLEAR };
 
@@ -253,35 +213,10 @@ static int sound_status;
 
 static READ_HANDLER( m92_sound_status_r )
 {
-	if (offset == 0)
-	{
 //logerror("%06x: read sound status\n",cpu_get_pc());
-
-/*
-
-	Gunforce waits on bit 1 (word) going high on bootup, just after
-	setting up interrupt controller.
-
-	Gunforce reads bit 2 (word) on every coin insert, doesn't seem to
-	do much though..
-
-	Ninja Batman polls this.
-
-	R-Type Leo reads it now & again..
-
-*/
-		if (Machine->sample_rate)
-			return sound_status;
-		else
-		{
-			/* rtypeleo uses the sound answer for protection */
-			if (m92_game_kludge==1)
-				m92_ram[0x53]=1; /* FIXES RTYPE LEO! */
-
-			return 0xff;
-		}
-	}
-	else return 0xff;
+	if (offset == 0)
+		return sound_status&0xff;
+	return sound_status>>8;
 }
 
 static READ_HANDLER( m92_soundlatch_r )
@@ -298,20 +233,18 @@ static READ_HANDLER( m92_soundlatch_r )
 static WRITE_HANDLER( m92_sound_irq_ack_w )
 {
 	if (offset == 0)
-	{
 		timer_set(TIME_NOW,V30_CLEAR,setvector_callback);
-	}
 }
 
 static WRITE_HANDLER( m92_sound_status_w )
 {
-	if (offset == 0)
-	{
-//		usrintf_showmessage("sound answer %02x",data);
-		sound_status = data;
+	if (offset == 0) {
+		sound_status = data | (sound_status&0xff00);
+		cpu_cause_interrupt(0,M92_IRQ_3);
 	}
+	else
+		sound_status = (data<<8) | (sound_status&0xff);
 }
-
 
 /*****************************************************************************/
 
@@ -322,7 +255,7 @@ static MEMORY_READ_START( readmem )
 	{ 0xd0000, 0xdffff, m92_vram_r },
 	{ 0xe0000, 0xeffff, MRA_RAM },
 	{ 0xf8000, 0xf87ff, MRA_RAM },
-	{ 0xf8800, 0xf8fff, paletteram_r },
+	{ 0xf8800, 0xf8fff, m92_paletteram_r },
 	{ 0xffff0, 0xfffff, MRA_ROM },
 MEMORY_END
 
@@ -331,13 +264,13 @@ static MEMORY_WRITE_START( writemem )
 	{ 0xd0000, 0xdffff, m92_vram_w, &m92_vram_data },
 	{ 0xe0000, 0xeffff, MWA_RAM, &m92_ram }, /* System ram */
 	{ 0xf8000, 0xf87ff, MWA_RAM, &spriteram, &spriteram_size },
-	{ 0xf8800, 0xf8fff, paletteram_xBBBBBGGGGGRRRRR_w, &paletteram },
+	{ 0xf8800, 0xf8fff, m92_paletteram_w },
 	{ 0xf9000, 0xf900f, m92_spritecontrol_w, &m92_spritecontrol },
-	{ 0xf9800, 0xf9801, m92_spritebuffer_w },
+	{ 0xf9800, 0xf9801, m92_videocontrol_w },
 	{ 0xffff0, 0xfffff, MWA_ROM },
 MEMORY_END
 
-static MEMORY_READ_START( lethalth_readmem )
+static MEMORY_READ_START( lethalth_readmem ) /* Same as above but with different VRAM addressing PAL */
 	{ 0x00000, 0x7ffff, MRA_ROM },
 	{ 0x80000, 0x8ffff, m92_vram_r },
 	{ 0xe0000, 0xeffff, MRA_RAM },
@@ -351,33 +284,9 @@ static MEMORY_WRITE_START( lethalth_writemem )
 	{ 0x80000, 0x8ffff, m92_vram_w, &m92_vram_data },
 	{ 0xe0000, 0xeffff, MWA_RAM, &m92_ram }, /* System ram */
 	{ 0xf8000, 0xf87ff, MWA_RAM, &spriteram, &spriteram_size },
-	{ 0xf8800, 0xf8fff, paletteram_xBBBBBGGGGGRRRRR_w, &paletteram },
+	{ 0xf8800, 0xf8fff, m92_paletteram_w },
 	{ 0xf9000, 0xf900f, m92_spritecontrol_w, &m92_spritecontrol },
-	{ 0xf9800, 0xf9801, m92_spritebuffer_w },
-	{ 0xffff0, 0xfffff, MWA_ROM },
-MEMORY_END
-
-static MEMORY_READ_START( majtitl2_readmem )
-	{ 0x00000, 0x9ffff, MRA_ROM },
-	{ 0xa0000, 0xbffff, MRA_BANK1 },
-	{ 0xc0000, 0xcffff, MRA_BANK2 }, /* Mirror of rom:  Used by In The Hunt as protection */
-	{ 0xd0000, 0xdffff, m92_vram_r },
-	{ 0xe0000, 0xeffff, MRA_RAM },
-	{ 0xf0000, 0xf3fff, m92_eeprom_r }, /* Eeprom, Major Title 2 only */
-	{ 0xf8000, 0xf87ff, MRA_RAM },
-	{ 0xf8800, 0xf8fff, majtitl2_paletteram_r },
-	{ 0xffff0, 0xfffff, MRA_ROM },
-MEMORY_END
-
-static MEMORY_WRITE_START( majtitl2_writemem )
-	{ 0x00000, 0xbffff, MWA_ROM },
-	{ 0xd0000, 0xdffff, m92_vram_w, &m92_vram_data },
-	{ 0xe0000, 0xeffff, MWA_RAM, &m92_ram }, /* System ram */
-	{ 0xf0000, 0xf3fff, m92_eeprom_w, &m92_eeprom }, /* Eeprom, Major Title 2 only */
-	{ 0xf8000, 0xf87ff, MWA_RAM, &spriteram, &spriteram_size },
-	{ 0xf8800, 0xf8fff, majtitl2_paletteram_w },
-	{ 0xf9000, 0xf900f, m92_spritecontrol_w, &m92_spritecontrol },
-	{ 0xf9800, 0xf9801, majtitl2_spritebuffer_w },
+	{ 0xf9800, 0xf9801, m92_videocontrol_w },
 	{ 0xffff0, 0xfffff, MWA_ROM },
 MEMORY_END
 
@@ -1057,6 +966,65 @@ INPUT_PORTS_START( psoldier )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 INPUT_PORTS_END
 
+INPUT_PORTS_START( dsccr94j )
+	PORT_PLAYER1_2BUTTON_JOYSTICK
+	PORT_PLAYER2_2BUTTON_JOYSTICK
+	PORT_UNUSED
+	PORT_UNUSED
+	PORT_COINS_VBLANK
+	PORT_SYSTEM_DIPSWITCH
+
+	PORT_START	/* Dip switch bank 1 */
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_SERVICE( 0x80, IP_ACTIVE_LOW )
+
+	PORT_START	/* Dip switch bank 2 */
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+INPUT_PORTS_END
+
 /***************************************************************************/
 
 static struct GfxLayout charlayout =
@@ -1097,22 +1065,15 @@ static struct GfxLayout spritelayout2 =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ REGION_GFX1, 0, &charlayout,   0, 64 },
-	{ REGION_GFX2, 0, &spritelayout, 0, 64 },
-	{ -1 } /* end of array */
-};
-
-static struct GfxDecodeInfo majtitl2_gfxdecodeinfo[] =
-{
-	{ REGION_GFX1, 0, &charlayout,      0, 64 },
-	{ REGION_GFX2, 0, &spritelayout, 1024, 64 },
+	{ REGION_GFX1, 0, &charlayout,   0, 128 },
+	{ REGION_GFX2, 0, &spritelayout, 0, 128 },
 	{ -1 } /* end of array */
 };
 
 static struct GfxDecodeInfo gfxdecodeinfo2[] =
 {
-	{ REGION_GFX1, 0, &charlayout,    0, 64 },
-	{ REGION_GFX2, 0, &spritelayout2, 0, 64 },
+	{ REGION_GFX1, 0, &charlayout,    0, 128 },
+	{ REGION_GFX2, 0, &spritelayout2, 0, 128 },
 	{ -1 } /* end of array */
 };
 
@@ -1145,9 +1106,8 @@ static struct IremGA20_interface iremGA20_interface =
 
 static int m92_interrupt(void)
 {
-	m92_vblank=m92_raster_machine=0;
 	if (osd_skip_this_frame()==0)
-		m92_vh_raster_partial_refresh(Machine->scrbitmap,0,248);
+		m92_vh_raster_partial_refresh(Machine->scrbitmap,0,249);
 
 	return M92_IRQ_0; /* VBL */
 }
@@ -1155,44 +1115,36 @@ static int m92_interrupt(void)
 static int m92_raster_interrupt(void)
 {
 	static int last_line=0;
-	int line = 256 - cpu_getiloops();
-	m92_raster_machine=1;
+	int line = M92_SCANLINES - cpu_getiloops();
 
 	/* Raster interrupt */
 	if (m92_raster_enable && line==m92_raster_irq_position) {
 		if (osd_skip_this_frame()==0)
-			m92_vh_raster_partial_refresh(Machine->scrbitmap,last_line,line);
+			m92_vh_raster_partial_refresh(Machine->scrbitmap,last_line,line+1);
 		last_line=line+1;
-
 		return M92_IRQ_2;
 	}
 
 	/* Redraw screen, then set vblank and trigger the VBL interrupt */
-	if (line==248) {
+	if (line==249) { /* 248 is last visible line */
 		if (osd_skip_this_frame()==0)
-			m92_vh_raster_partial_refresh(Machine->scrbitmap,last_line,248);
-		last_line=248;
-		m92_vblank=1;
+			m92_vh_raster_partial_refresh(Machine->scrbitmap,last_line,249);
+		last_line=249;
 		return M92_IRQ_0;
 	}
 
 	/* End of vblank */
-	if (line==255) {
-		m92_vblank=last_line=0;
-		return 0;
+	if (line==M92_SCANLINES-1) {
+		last_line=0;
+		return ignore_interrupt();
 	}
 
-	if (m92_game_kludge==2 && line==250) /* Leagueman */
-		return M92_IRQ_1;
-
-	return 0;
+	return ignore_interrupt();
 }
 
-/* I believe the spritechip interrupts the main CPU once sprite buffering
-is complete, there isn't a whole lot of evidence for this but it's an idea..*/
 void m92_sprite_interrupt(void)
 {
-	cpu_cause_interrupt(0,M92_IRQ_3);
+	cpu_cause_interrupt(0,M92_IRQ_1);
 }
 
 static struct MachineDriver machine_driver_raster =
@@ -1203,10 +1155,10 @@ static struct MachineDriver machine_driver_raster =
 			CPU_V33,	/* NEC V33 */
 			18000000,	/* 18 MHz clock */
 			readmem,writemem,readport,writeport,
-			m92_raster_interrupt,256 /* 8 prelines, 240 visible lines, 8 for vblank? */
+			m92_raster_interrupt,M92_SCANLINES /* First visible line 8? */
 		},
 		{
-			CPU_V30 | CPU_AUDIO_CPU,
+			CPU_V30, //| CPU_AUDIO_CPU,
 			14318180,	/* 14.31818 MHz */
 			sound_readmem,sound_writemem,0,0,
 			ignore_interrupt,0
@@ -1220,65 +1172,17 @@ static struct MachineDriver machine_driver_raster =
 	512, 512, { 80, 511-112, 128+8, 511-128-8 }, /* 320 x 240 */
 
 	gfxdecodeinfo,
-	1024, 0,
+	2048, 0,
 	0,
 
 	VIDEO_TYPE_RASTER | VIDEO_BUFFERS_SPRITERAM,
 	0,
 	m92_vh_start,
-	0,
+	m92_vh_stop,
 	m92_vh_screenrefresh,
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		{
-			SOUND_YM2151,
-			&ym2151_interface
-		},
-		{
-			SOUND_IREMGA20,
-			&iremGA20_interface
-		}
-	}
-};
-
-static struct MachineDriver machine_driver_majtitl2 =
-{
-	/* basic machine hardware */
-	{
-		{
-			CPU_V33,	/* NEC V33 */
-			18000000,	/* 18 MHz clock */
-			majtitl2_readmem,majtitl2_writemem,readport,writeport,
-			m92_raster_interrupt,256 /* 8 prelines, 240 visible lines, 8 for vblank? */
-		},
-		{
-			CPU_V30 | CPU_AUDIO_CPU,
-			14318180,	/* 14.31818 MHz */
-			sound_readmem,sound_writemem,0,0,
-			ignore_interrupt,0
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
-	0,
-
-	/* video hardware */
-	512, 512, { 80, 511-112, 128+8, 511-128-8 }, /* 320 x 240 */
-
-	majtitl2_gfxdecodeinfo,
-	2048, 0,	/* twice the colors of the other games */
-	0,
-
-	VIDEO_TYPE_RASTER | VIDEO_BUFFERS_SPRITERAM,
-	0,
-	majtitl2_vh_start,
-	majtitl2_vh_stop,
-	m92_vh_screenrefresh,
-
-	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
+	0,0,0,0,
 	{
 		{
 			SOUND_YM2151,
@@ -1316,17 +1220,17 @@ static struct MachineDriver machine_driver_nonraster =
 	512, 512, { 80, 511-112, 128+8, 511-128-8 }, /* 320 x 240 */
 
 	gfxdecodeinfo,
-	1024, 0,
+	2048, 0,
 	0,
 
 	VIDEO_TYPE_RASTER | VIDEO_BUFFERS_SPRITERAM,
 	0,
 	m92_vh_start,
-	0,
+	m92_vh_stop,
 	m92_vh_screenrefresh,
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
+	0,0,0,0,
 	{
 		{
 			SOUND_YM2151,
@@ -1364,17 +1268,17 @@ static struct MachineDriver machine_driver_lethalth =
 	512, 512, { 80, 511-112, 128+8, 511-128-8 }, /* 320 x 240 */
 
 	gfxdecodeinfo,
-	1024, 0,
+	2048, 0,
 	0,
 
 	VIDEO_TYPE_RASTER | VIDEO_BUFFERS_SPRITERAM,
 	0,
 	m92_vh_start,
-	0,
+	m92_vh_stop,
 	m92_vh_screenrefresh,
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
+	0,0,0,0,
 	{
 		{
 			SOUND_YM2151,
@@ -1412,17 +1316,17 @@ static struct MachineDriver machine_driver_psoldier =
 	512, 512, { 80, 511-112, 128+8, 511-128-8 }, /* 320 x 240 */
 
 	gfxdecodeinfo2,
-	1024, 0,
+	2048, 0,
 	0,
 
 	VIDEO_TYPE_RASTER | VIDEO_BUFFERS_SPRITERAM,
 	0,
 	m92_vh_start,
-	0,
+	m92_vh_stop,
 	m92_vh_screenrefresh,
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
+	0,0,0,0,
 	{
 		{
 			SOUND_YM2151,
@@ -2044,6 +1948,37 @@ ROM_START( psoldier )
 	ROM_LOAD( "f3_w95.da" ,0x000000, 0x080000, 0xf7ca432b )
 ROM_END
 
+ROM_START( dsccr94j )
+	ROM_REGION( 0x180000, REGION_CPU1, 0 )
+	ROM_LOAD16_BYTE("a3_-h0-e.bin", 0x000001, 0x040000, 0x8de1dbcd )
+	ROM_LOAD16_BYTE("a3_-l0-e.bin", 0x000000, 0x040000, 0xd3df8bfd )
+	ROM_LOAD16_BYTE("ds_h1-c.rom",  0x100001, 0x040000, 0x6109041b )
+	ROM_LOAD16_BYTE("ds_l1-c.rom",  0x100000, 0x040000, 0x97a01f6b )
+
+	ROM_REGION( 0x100000 * 2, REGION_CPU2, 0 )
+	ROM_LOAD16_BYTE("ds_sh0.rom",   0x000001, 0x010000, 0x23fe6ffc )
+	ROM_LOAD16_BYTE("ds_sl0.rom",   0x000000, 0x010000, 0x768132e5 )
+
+	ROM_REGION( 0x400000, REGION_GFX1, ROMREGION_DISPOSE )	/* chars */
+	ROM_LOAD("c0.bin",   0x000000, 0x100000, 0x83ea8a47 )
+	ROM_LOAD("c1.bin",   0x100000, 0x100000, 0x64063e6d )
+	ROM_LOAD("c2.bin",   0x200000, 0x100000, 0xcc1f621a )
+	ROM_LOAD("c3.bin",   0x300000, 0x100000, 0x515829e1 )
+
+	ROM_REGION( 0x400000, REGION_GFX2, ROMREGION_DISPOSE )	/* sprites */
+	ROM_LOAD16_BYTE("a3-o00-w.bin",   0x000001, 0x80000, 0xb094e5ad )
+	ROM_LOAD16_BYTE("a3-o01-w.bin",   0x000000, 0x80000, 0x91f34018 )
+	ROM_LOAD16_BYTE("a3-o10-w.bin",   0x100001, 0x80000, 0xedddeef4 )
+	ROM_LOAD16_BYTE("a3-o11-w.bin",   0x100000, 0x80000, 0x274a9526 )
+	ROM_LOAD16_BYTE("a3-o20-w.bin",   0x200001, 0x80000, 0x32064393 )
+	ROM_LOAD16_BYTE("a3-o21-w.bin",   0x200000, 0x80000, 0x57bae3d9 )
+	ROM_LOAD16_BYTE("a3-o30-w.bin",   0x300001, 0x80000, 0xbe838e2f )
+	ROM_LOAD16_BYTE("a3-o31-w.bin",   0x300000, 0x80000, 0xbf899f0d )
+
+	ROM_REGION( 0x100000, REGION_SOUND1, 0 )
+	ROM_LOAD("ds_da0.rom" ,  0x000000, 0x100000, 0x67fc52fd )
+ROM_END
+
 /***************************************************************************/
 
 static READ_HANDLER( lethalth_cycle_r )
@@ -2168,6 +2103,23 @@ static READ_HANDLER( gunforce_cycle_r )
 	return m92_ram[0x61d0 + offset];
 }
 
+static READ_HANDLER( dsccr94j_cycle_r )
+{
+	int a=m92_ram[0x965a]+(m92_ram[0x965b]<<8);
+	int d=cpu_geticount();
+
+	if (cpu_get_pc()==0x988 && m92_ram[0x8636]==0 && offset==0) {
+		cpu_spinuntil_int();
+
+		/* Update internal counter based on cycles left to run */
+		a=(a+d/56)&0xffff; /* 56 cycles per loop increment */
+		m92_ram[0x965a]=a&0xff;
+		m92_ram[0x965b]=a>>8;
+	}
+
+	return m92_ram[0x8636 + offset];
+}
+
 /***************************************************************************/
 
 static void m92_startup(void)
@@ -2184,10 +2136,10 @@ static void m92_startup(void)
 	RAM = memory_region(REGION_CPU2);
 	memcpy(RAM+0xffff0,RAM+0x1fff0,0x10); /* Sound cpu Start vector */
 
+	m92_game_kludge=0;
 	m92_irq_vectorbase=0x80;
 	m92_raster_enable=1;
-	m92_spritechip=0;
-	m92_game_kludge=0;
+	m92_sprite_buffer_busy=0x80;
 }
 
 static void init_m92(unsigned char *decryption_table)
@@ -2218,28 +2170,31 @@ static void init_hook(void)
 static void init_mysticri(void)
 {
 	init_m92(mysticri_decryption_table);
-	m92_spritechip=1;
 }
 
 static void init_uccops(void)
 {
 	install_mem_read_handler(0, 0xe3a02, 0xe3a03, uccops_cycle_r);
 	init_m92(dynablaster_decryption_table);
-	m92_spritechip=1;
 }
 
 static void init_rtypeleo(void)
 {
 	install_mem_read_handler(0, 0xe0032, 0xe0033, rtypeleo_cycle_r);
 	init_m92(rtypeleo_decryption_table);
+	m92_irq_vectorbase=0x20;
 	m92_game_kludge=1;
-	m92_spritechip=1;
-	m92_irq_vectorbase=0x20; /* M92-A-B motherboard */
 }
 
 static void init_majtitl2(void)
 {
 	init_m92(majtitl2_decryption_table);
+
+	/* This game has an eprom on the game board */
+	install_mem_read_handler(0, 0xf0000, 0xf3fff, m92_eeprom_r);
+	install_mem_write_handler(0, 0xf0000, 0xf3fff, m92_eeprom_w);
+
+	m92_game_kludge=2;
 }
 
 static void init_inthunt(void)
@@ -2252,53 +2207,61 @@ static void init_lethalth(void)
 {
 	install_mem_read_handler(0, 0xe001e, 0xe001f, lethalth_cycle_r);
 	init_m92(lethalth_decryption_table);
-	m92_spritechip=1;
-	m92_irq_vectorbase=0x20; /* M92-A-B motherboard */
+	m92_irq_vectorbase=0x20;
 
 	/* This game sets the raster IRQ position, but the interrupt routine
 		is just an iret, no need to emulate it */
 	m92_raster_enable=0;
+	m92_game_kludge=3; /* No upper palette bank? It could be a different motherboard */
 }
 
 static void init_nbbatman(void)
 {
+	unsigned char *RAM = memory_region(REGION_CPU1);
+
 	init_m92(leagueman_decryption_table);
-	m92_game_kludge=2;
-	m92_spritechip=1;
+
+	memcpy(RAM+0x80000,RAM+0x100000,0x20000);
 }
 
 static void init_psoldier(void)
 {
 	install_mem_read_handler(0, 0xe1aec, 0xe1aed, psoldier_cycle_r);
 	init_m92(psoldier_decryption_table);
-	m92_spritechip=1;
-	m92_irq_vectorbase=0x20; /* M92-A-B motherboard */
+	m92_irq_vectorbase=0x20;
 	/* main CPU expects an answer even before writing the first command */
 	sound_status = 0x80;
+}
+
+static void init_dsccr94j(void)
+{
+	install_mem_read_handler(0, 0xe8636, 0xe8637, dsccr94j_cycle_r);
+	init_m92(dsoccr94_decryption_table);
 }
 
 /***************************************************************************/
 
 /* The 'nonraster' machine is for games that don't use the raster interrupt feature - slightly faster to emulate */
-GAMEX( 1991, gunforce, 0,        raster,    gunforce, gunforce, ROT0,   "Irem",         "Gunforce - Battle Fire Engulfed Terror Island (World)", GAME_NO_COCKTAIL )
-GAMEX( 1991, gunforcj, gunforce, raster,    gunforce, gunforce, ROT0,   "Irem",         "Gunforce - Battle Fire Engulfed Terror Island (Japan)", GAME_NO_COCKTAIL )
-GAMEX( 1991, gunforcu, gunforce, raster,    gunforce, gunforce, ROT0,   "Irem America", "Gunforce - Battle Fire Engulfed Terror Island (US)", GAME_NO_COCKTAIL )
-GAMEX( 1991, bmaster,  0,        nonraster, bmaster,  bmaster,  ROT0,   "Irem",         "Blade Master (World)", GAME_NO_COCKTAIL )
-GAMEX( 1991, lethalth, 0,        lethalth,  lethalth, lethalth, ROT270, "Irem",         "Lethal Thunder (World)", GAME_NO_COCKTAIL )
-GAMEX( 1991, thndblst, lethalth, lethalth,  lethalth, lethalth, ROT270, "Irem",         "Thunder Blaster (Japan)", GAME_NO_COCKTAIL )
-GAMEX( 1992, uccops,   0,        raster,    uccops,   uccops,   ROT0,   "Irem",         "Undercover Cops (World)", GAME_NO_COCKTAIL )
-GAMEX( 1992, uccopsj,  uccops,   raster,    uccops,   uccops,   ROT0,   "Irem",         "Undercover Cops (Japan)", GAME_NO_COCKTAIL )
-GAMEX( 1992, mysticri, 0,        nonraster, mysticri, mysticri, ROT0,   "Irem",         "Mystic Riders (World)", GAME_NO_COCKTAIL )
-GAMEX( 1992, gunhohki, mysticri, nonraster, mysticri, mysticri, ROT0,   "Irem",         "Gun Hohki (Japan)", GAME_NO_COCKTAIL )
-GAMEX( 1992, majtitl2, 0,        majtitl2,  majtitl2, majtitl2, ROT0,   "Irem",         "Major Title 2 (World)", GAME_IMPERFECT_GRAPHICS | GAME_NO_COCKTAIL )
-GAMEX( 1992, skingame, majtitl2, majtitl2,  majtitl2, majtitl2, ROT0,   "Irem America", "The Irem Skins Game (US set 1)", GAME_IMPERFECT_GRAPHICS | GAME_NO_COCKTAIL )
-GAMEX( 1992, skingam2, majtitl2, majtitl2,  majtitl2, majtitl2, ROT0,   "Irem America", "The Irem Skins Game (US set 2)", GAME_IMPERFECT_GRAPHICS | GAME_NO_COCKTAIL )
-GAMEX( 1992, hook,     0,        nonraster, hook,     hook,     ROT0,   "Irem",         "Hook (World)", GAME_NO_COCKTAIL )
-GAMEX( 1992, hooku,    hook,     nonraster, hook,     hook,     ROT0,   "Irem America", "Hook (US)", GAME_NO_COCKTAIL )
-GAMEX( 1992, rtypeleo, 0,        raster,    rtypeleo, rtypeleo, ROT0,   "Irem",         "R-Type Leo (Japan)", GAME_NO_COCKTAIL )
-GAMEX( 1993, inthunt,  0,        raster,    inthunt,  inthunt,  ROT0,   "Irem",         "In The Hunt (World)", GAME_NO_COCKTAIL )
-GAMEX( 1993, inthuntu, inthunt,  raster,    inthunt,  inthunt,  ROT0,   "Irem America", "In The Hunt (US)", GAME_NO_COCKTAIL )
-GAMEX( 1993, kaiteids, inthunt,  raster,    inthunt,  inthunt,  ROT0,   "Irem",         "Kaitei Daisensou (Japan)", GAME_NO_COCKTAIL )
-GAMEX( 1993, nbbatman, 0,        raster,    nbbatman, nbbatman, ROT0,   "Irem America", "Ninja Baseball Batman (US)", GAME_NOT_WORKING | GAME_NO_COCKTAIL )
-GAMEX( 1993, leaguemn, nbbatman, raster,    nbbatman, nbbatman, ROT0,   "Irem",         "Yakyuu Kakutou League-Man (Japan)", GAME_NOT_WORKING | GAME_NO_COCKTAIL )
-GAMEX( 1993, psoldier, 0,        psoldier,  psoldier, psoldier, ROT0,   "Irem",         "Perfect Soldiers (Japan)", GAME_IMPERFECT_SOUND | GAME_NO_COCKTAIL )
+GAME( 1991, gunforce, 0,        raster,    gunforce, gunforce, ROT0,   "Irem",         "Gunforce - Battle Fire Engulfed Terror Island (World)" )
+GAME( 1991, gunforcj, gunforce, raster,    gunforce, gunforce, ROT0,   "Irem",         "Gunforce - Battle Fire Engulfed Terror Island (Japan)" )
+GAME( 1991, gunforcu, gunforce, raster,    gunforce, gunforce, ROT0,   "Irem America", "Gunforce - Battle Fire Engulfed Terror Island (US)" )
+GAME( 1991, bmaster,  0,        nonraster, bmaster,  bmaster,  ROT0,   "Irem",         "Blade Master (World)" )
+GAME( 1991, lethalth, 0,        lethalth,  lethalth, lethalth, ROT270, "Irem",         "Lethal Thunder (World)" )
+GAME( 1991, thndblst, lethalth, lethalth,  lethalth, lethalth, ROT270, "Irem",         "Thunder Blaster (Japan)" )
+GAME( 1992, uccops,   0,        raster,    uccops,   uccops,   ROT0,   "Irem",         "Undercover Cops (World)" )
+GAME( 1992, uccopsj,  uccops,   raster,    uccops,   uccops,   ROT0,   "Irem",         "Undercover Cops (Japan)" )
+GAME( 1992, mysticri, 0,        nonraster, mysticri, mysticri, ROT0,   "Irem",         "Mystic Riders (World)" )
+GAME( 1992, gunhohki, mysticri, nonraster, mysticri, mysticri, ROT0,   "Irem",         "Gun Hohki (Japan)" )
+GAMEX(1992, majtitl2, 0,        raster,    majtitl2, majtitl2, ROT0,   "Irem",         "Major Title 2 (World)", GAME_IMPERFECT_GRAPHICS )
+GAMEX(1992, skingame, majtitl2, raster,    majtitl2, majtitl2, ROT0,   "Irem America", "The Irem Skins Game (US set 1)", GAME_IMPERFECT_GRAPHICS )
+GAMEX(1992, skingam2, majtitl2, raster,    majtitl2, majtitl2, ROT0,   "Irem America", "The Irem Skins Game (US set 2)", GAME_IMPERFECT_GRAPHICS )
+GAME( 1992, hook,     0,        nonraster, hook,     hook,     ROT0,   "Irem",         "Hook (World)" )
+GAME( 1992, hooku,    hook,     nonraster, hook,     hook,     ROT0,   "Irem America", "Hook (US)" )
+GAME( 1992, rtypeleo, 0,        raster,    rtypeleo, rtypeleo, ROT0,   "Irem",         "R-Type Leo (Japan)" )
+GAME( 1993, inthunt,  0,        raster,    inthunt,  inthunt,  ROT0,   "Irem",         "In The Hunt (World)" )
+GAME( 1993, inthuntu, inthunt,  raster,    inthunt,  inthunt,  ROT0,   "Irem America", "In The Hunt (US)" )
+GAME( 1993, kaiteids, inthunt,  raster,    inthunt,  inthunt,  ROT0,   "Irem",         "Kaitei Daisensou (Japan)" )
+GAMEX(1993, nbbatman, 0,        raster,    nbbatman, nbbatman, ROT0,   "Irem America", "Ninja Baseball Batman (US)", GAME_IMPERFECT_GRAPHICS )
+GAMEX(1993, leaguemn, nbbatman, raster,    nbbatman, nbbatman, ROT0,   "Irem",         "Yakyuu Kakutou League-Man (Japan)", GAME_IMPERFECT_GRAPHICS )
+GAMEX(1993, psoldier, 0,        psoldier,  psoldier, psoldier, ROT0,   "Irem",         "Perfect Soldiers (Japan)", GAME_IMPERFECT_SOUND )
+GAME( 1994, dsccr94j, dsoccr94, psoldier,  dsccr94j, dsccr94j, ROT0,   "Irem",         "Dream Soccer '94 (Japan)" )

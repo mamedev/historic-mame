@@ -76,7 +76,7 @@ int YM2203_sh_start(const struct MachineSound *msound)
 {
 	int i;
 
-	if (AY8910_sh_start(msound)) return 1;
+	if (AY8910_sh_start_ym(msound)) return 1;
 
 	intf = msound->sound_interface;
 
@@ -105,6 +105,7 @@ int YM2203_sh_start(const struct MachineSound *msound)
 void YM2203_sh_stop(void)
 {
 	YM2203Shutdown();
+	AY8910_sh_stop_ym();
 }
 
 void YM2203_sh_reset(void)

@@ -20,6 +20,20 @@
 
 #define MAX_PIXELS 850000  /* Maximum of pixels we can remember */
 
+#define VECTOR_COLOR111(c) \
+(((c) & 1)? 0x0000ff : 0) \
+|(((c) & 2)? 0x00ff00: 0) \
+|(((c) & 4)? 0xff0000: 0)
+
+#define VECTOR_COLOR222(c) \
+(((c) & 3) * 0x55) \
+|(((((c) >> 2) & 3) * 0x55) << 8) \
+|(((((c) >> 4) & 3) * 0x55) << 16)
+
+#define VECTOR_COLOR444(c) \
+(((c) & 0xf) * 0x11) \
+|(((((c) >> 4) & 0xf) * 0x11) << 8) \
+|(((((c) >> 8) & 0xf) * 0x11) << 16)
 
 extern int translucency;  /* translucent vectors  */
 

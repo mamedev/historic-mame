@@ -83,10 +83,6 @@ Tons of thanks to the guy who posted these, whoever he is...
 	#define TMS99XX_EXECUTE tms9900_execute
 	#define TMS99XX_GET_CONTEXT tms9900_get_context
 	#define TMS99XX_SET_CONTEXT tms9900_set_context
-	#define TMS99XX_GET_PC tms9900_get_pc
-	#define TMS99XX_SET_PC tms9900_set_pc
-	#define TMS99XX_GET_SP tms9900_get_sp
-	#define TMS99XX_SET_SP tms9900_set_sp
 	#define TMS99XX_GET_REG tms9900_get_reg
 	#define TMS99XX_SET_REG tms9900_set_reg
 	#define TMS99XX_SET_IRQ_CALLBACK tms9900_set_irq_callback
@@ -104,10 +100,6 @@ Tons of thanks to the guy who posted these, whoever he is...
 	#define TMS99XX_EXECUTE tms9940_execute
 	#define TMS99XX_GET_CONTEXT tms9940_get_context
 	#define TMS99XX_SET_CONTEXT tms9940_set_context
-	#define TMS99XX_GET_PC tms9940_get_pc
-	#define TMS99XX_SET_PC tms9940_set_pc
-	#define TMS99XX_GET_SP tms9940_get_sp
-	#define TMS99XX_SET_SP tms9940_set_sp
 	#define TMS99XX_GET_REG tms9940_get_reg
 	#define TMS99XX_SET_REG tms9940_set_reg
 	#define TMS99XX_SET_IRQ_CALLBACK tms9940_set_irq_callback
@@ -127,10 +119,6 @@ Tons of thanks to the guy who posted these, whoever he is...
 	#define TMS99XX_EXECUTE tms9980a_execute
 	#define TMS99XX_GET_CONTEXT tms9980a_get_context
 	#define TMS99XX_SET_CONTEXT tms9980a_set_context
-	#define TMS99XX_GET_PC tms9980a_get_pc
-	#define TMS99XX_SET_PC tms9980a_set_pc
-	#define TMS99XX_GET_SP tms9980a_get_sp
-	#define TMS99XX_SET_SP tms9980a_set_sp
 	#define TMS99XX_GET_REG tms9980a_get_reg
 	#define TMS99XX_SET_REG tms9980a_set_reg
 	#define TMS99XX_SET_IRQ_CALLBACK tms9980a_set_irq_callback
@@ -148,10 +136,6 @@ Tons of thanks to the guy who posted these, whoever he is...
 	#define TMS99XX_EXECUTE tms9985_execute
 	#define TMS99XX_GET_CONTEXT tms9985_get_context
 	#define TMS99XX_SET_CONTEXT tms9985_set_context
-	#define TMS99XX_GET_PC tms9985_get_pc
-	#define TMS99XX_SET_PC tms9985_set_pc
-	#define TMS99XX_GET_SP tms9985_get_sp
-	#define TMS99XX_SET_SP tms9985_set_sp
 	#define TMS99XX_GET_REG tms9985_get_reg
 	#define TMS99XX_SET_REG tms9985_set_reg
 	#define TMS99XX_SET_IRQ_CALLBACK tms9985_set_irq_callback
@@ -171,10 +155,6 @@ Tons of thanks to the guy who posted these, whoever he is...
 	#define TMS99XX_EXECUTE tms9989_execute
 	#define TMS99XX_GET_CONTEXT tms9989_get_context
 	#define TMS99XX_SET_CONTEXT tms9989_set_context
-	#define TMS99XX_GET_PC tms9989_get_pc
-	#define TMS99XX_SET_PC tms9989_set_pc
-	#define TMS99XX_GET_SP tms9989_get_sp
-	#define TMS99XX_SET_SP tms9989_set_sp
 	#define TMS99XX_GET_REG tms9989_get_reg
 	#define TMS99XX_SET_REG tms9989_set_reg
 	#define TMS99XX_SET_IRQ_CALLBACK tms9989_set_irq_callback
@@ -194,10 +174,6 @@ Tons of thanks to the guy who posted these, whoever he is...
 	#define TMS99XX_EXECUTE tms9995_execute
 	#define TMS99XX_GET_CONTEXT tms9995_get_context
 	#define TMS99XX_SET_CONTEXT tms9995_set_context
-	#define TMS99XX_GET_PC tms9995_get_pc
-	#define TMS99XX_SET_PC tms9995_set_pc
-	#define TMS99XX_GET_SP tms9995_get_sp
-	#define TMS99XX_SET_SP tms9995_set_sp
 	#define TMS99XX_GET_REG tms9995_get_reg
 	#define TMS99XX_SET_REG tms9995_set_reg
 	#define TMS99XX_SET_IRQ_CALLBACK tms9995_set_irq_callback
@@ -215,10 +191,6 @@ Tons of thanks to the guy who posted these, whoever he is...
 	#define TMS99XX_EXECUTE tms99105a_execute
 	#define TMS99XX_GET_CONTEXT tms99105a_get_context
 	#define TMS99XX_SET_CONTEXT tms99105a_set_context
-	#define TMS99XX_GET_PC tms99105a_get_pc
-	#define TMS99XX_SET_PC tms99105a_set_pc
-	#define TMS99XX_GET_SP tms99105a_get_sp
-	#define TMS99XX_SET_SP tms99105a_set_sp
 	#define TMS99XX_GET_REG tms99105a_get_reg
 	#define TMS99XX_SET_REG tms99105a_set_reg
 	#define TMS99XX_SET_IRQ_CALLBACK tms99105a_set_irq_callback
@@ -238,10 +210,6 @@ Tons of thanks to the guy who posted these, whoever he is...
 	#define TMS99XX_EXECUTE tms99110a_execute
 	#define TMS99XX_GET_CONTEXT tms99110a_get_context
 	#define TMS99XX_SET_CONTEXT tms99110a_set_context
-	#define TMS99XX_GET_PC tms99110a_get_pc
-	#define TMS99XX_SET_PC tms99110a_set_pc
-	#define TMS99XX_GET_SP tms99110a_get_sp
-	#define TMS99XX_SET_SP tms99110a_set_sp
 	#define TMS99XX_GET_REG tms99110a_get_reg
 	#define TMS99XX_SET_REG tms99110a_set_reg
 	#define TMS99XX_SET_IRQ_CALLBACK tms99110a_set_irq_callback
@@ -951,37 +919,14 @@ void TMS99XX_SET_CONTEXT(void *src)
 	}
 }
 
-unsigned TMS99XX_GET_PC(void)
-{
-	return I.PC;
-}
-
-void TMS99XX_SET_PC(unsigned val)
-{
-	I.PC = val;
-}
-
-/*
-	Note : the WP register actually has nothing to do with a stack.
-
-	To make this even weirder, some later versions of the TMS9900 do have a processor stack.
-*/
-unsigned TMS99XX_GET_SP(void)
-{
-	return I.WP;
-}
-
-void TMS99XX_SET_SP(unsigned val)
-{
-	I.WP = val;
-}
-
 unsigned TMS99XX_GET_REG(int regnum)
 {
 	switch( regnum )
 	{
+		case REG_PC:
 		case TMS9900_PC: return I.PC;
 		case TMS9900_IR: return I.IR;
+		case REG_SP:
 		case TMS9900_WP: return I.WP;
 		case TMS9900_STATUS: return I.STATUS;
 #ifdef MAME_DEBUG
@@ -1010,8 +955,10 @@ void TMS99XX_SET_REG(int regnum, unsigned val)
 {
 	switch( regnum )
 	{
+		case REG_PC:
 		case TMS9900_PC: I.PC = val; break;
 		case TMS9900_IR: I.IR = val; break;
+		case REG_SP:
 		case TMS9900_WP: I.WP = val; break;
 		case TMS9900_STATUS: I.STATUS = val; break;
 #ifdef MAME_DEBUG
@@ -1038,7 +985,7 @@ void TMS99XX_SET_REG(int regnum, unsigned val)
 #if (TMS99XX_MODEL == TMS9900_ID)
 
 /*
-void tms9900_set_nmi_line(int state) : change the state of the LOAD* line
+void tms9900_set_irq_line(IRQ_LINE_NMI, int state) : change the state of the LOAD* line
 
 	state == 0 -> LOAD* goes high (inactive)
 	state != 0 -> LOAD* goes low (active)
@@ -1050,12 +997,6 @@ void tms9900_set_nmi_line(int state) : change the state of the LOAD* line
 	perfectly happy with the current scheme, but others might be more clever and wait for the IAQ
 	(Instruction acquisition) line to go high, and this needs a callback function to emulate.
 */
-void tms9900_set_nmi_line(int state)
-{
-	I.load_state = state;   /* save new state */
-
-	field_interrupt();  /* interrupt status changed */
-}
 
 /*
 void tms9900_set_irq_line(int irqline, int state) : sets the state of the interrupt line.
@@ -1114,35 +1055,39 @@ void tms9900_set_irq_line(int irqline, int state) : sets the state of the interr
 */
 void tms9900_set_irq_line(int irqline, int state)
 {
-	/*if (I.irq_state == state)
-		return;*/
+	if (irqline == IRQ_LINE_NMI)
+	{
+		I.load_state = state;   /* save new state */
 
-	I.irq_state = state;
-
-	if (state == CLEAR_LINE)
-		I.irq_level = 16;
-		/* trick : 16 will always be bigger than the IM (0-15), so there will never be interrupts */
+		field_interrupt();  /* interrupt status changed */
+	}
 	else
 	{
-#if SILLY_INTERRUPT_HACK
-		I.irq_level = IRQ_MAGIC_LEVEL;
-#else
-		I.irq_level = (* I.irq_callback)(0);
-#endif
-	}
+		/*if (I.irq_state == state)
+			return;*/
 
-	field_interrupt();  /* interrupt state is likely to have changed */
+		I.irq_state = state;
+
+		if (state == CLEAR_LINE)
+			I.irq_level = 16;
+			/* trick : 16 will always be bigger than the IM (0-15), so there will never be interrupts */
+		else
+		{
+	#if SILLY_INTERRUPT_HACK
+			I.irq_level = IRQ_MAGIC_LEVEL;
+	#else
+			I.irq_level = (* I.irq_callback)(0);
+	#endif
+		}
+
+		field_interrupt();  /* interrupt state is likely to have changed */
+	}
 }
 
 #elif (TMS99XX_MODEL == TMS9980_ID)
 /*
 	interrupt system similar to tms9900, but only 3 interrupt pins (IC0-IC2)
 */
-
-void tms9980a_set_nmi_line(int state)
-{
-	/*no dedicated nmi line*/
-}
 
 void tms9980a_set_irq_line(int irqline, int state)
 {
@@ -1198,18 +1143,6 @@ void tms9980a_set_irq_line(int irqline, int state)
 
 #elif (TMS99XX_MODEL == TMS9995_ID)
 /*
-	we latch interrupts when they make an inactive to active transition
-*/
-
-void tms9995_set_nmi_line(int state)
-{
-	I.load_state = state;   /* save new state */
-
-	field_interrupt();  /* interrupt status changed */
-}
-
-
-/*
   this call-back is called by MESS timer system when the timer reaches 0.
 */
 static void decrementer_callback(int ignored)
@@ -1262,38 +1195,47 @@ static void reset_decrementer(void)
 */
 void tms9995_set_irq_line(int irqline, int state)
 {
-	int mask = (irqline == 0) ? 0x2 : 0x10;
-	int flag_mask = (irqline == 0) ? 0x4 : 0x10;
+	if (irqline == IRQ_LINE_NMI)
+	{
+		I.load_state = state;   /* save new state */
 
-	if (((I.int_state & mask) != 0) ^ (state != 0))
-	{	/* only if state changes */
-		if (state)
-		{
-			I.int_state |= mask;
+		field_interrupt();  /* interrupt status changed */
+	}
+	else
+	{
+		int mask = (irqline == 0) ? 0x2 : 0x10;
+		int flag_mask = (irqline == 0) ? 0x4 : 0x10;
 
-			if ((irqline == 1) && (I.flag & 1))
-			{	/* event counter mode : INT4* triggers no interrupt... */
-				if (I.decrementer_enabled)
-				{	/* decrement, then interrupt if reach 0 */
-					if ((-- I.decrementer_count) == 0)
-					{
-						decrementer_callback(0);
-						I.decrementer_count = I.decrementer_interval;	/* reload */
+		if (((I.int_state & mask) != 0) ^ (state != 0))
+		{	/* only if state changes */
+			if (state)
+			{
+				I.int_state |= mask;
+
+				if ((irqline == 1) && (I.flag & 1))
+				{	/* event counter mode : INT4* triggers no interrupt... */
+					if (I.decrementer_enabled)
+					{	/* decrement, then interrupt if reach 0 */
+						if ((-- I.decrementer_count) == 0)
+						{
+							decrementer_callback(0);
+							I.decrementer_count = I.decrementer_interval;	/* reload */
+						}
 					}
+				}
+				else
+				{	/* plain interrupt mode */
+					I.int_latch |= mask;
+					I.flag |= flag_mask;
 				}
 			}
 			else
-			{	/* plain interrupt mode */
-				I.int_latch |= mask;
-				I.flag |= flag_mask;
+			{
+				I.int_state &= ~ mask;
 			}
-		}
-		else
-		{
-			I.int_state &= ~ mask;
-		}
 
-		field_interrupt();  /* interrupt status changed */
+			field_interrupt();  /* interrupt status changed */
+		}
 	}
 }
 

@@ -267,28 +267,23 @@ static int vblank_interrupt(void)
 	if (interrupt_enable[0] & 8)
 		atarigen_video_int_gen();
 
-	return 0;
+	return ignore_interrupt();
 }
 
 
 static WRITE16_HANDLER( int0_ack_w )
 {
 	/* reset sound IRQ */
-	if (offset == 0x00)
-	{
-		p2portrd_state = 0;
-		atarigen_update_interrupts();
-	}
+	p2portrd_state = 0;
+	atarigen_update_interrupts();
 }
 
 
 static WRITE16_HANDLER( int1_ack_w )
 {
 	/* reset sound CPU */
-	if (ACCESSING_MSB)
-		cpu_set_reset_line(1, ASSERT_LINE);
 	if (ACCESSING_LSB)
-		cpu_set_reset_line(1, CLEAR_LINE);
+		cpu_set_reset_line(1, (data & 1) ? ASSERT_LINE : CLEAR_LINE);
 }
 
 
@@ -330,7 +325,7 @@ static WRITE16_HANDLER( bankselect_w )
 	base = &memory_region(REGION_CPU1)[bankoffset[(newword >> 10) & 0x3f]];
 
 	cpu_setbank(1 + offset, base);
-	t11_SetBank(0x4000 + 0x2000 * offset, base);
+	cpu_set_reg(T11_BANK2 + offset, base - OP_RAM);
 }
 
 
@@ -494,6 +489,20 @@ static WRITE_HANDLER( tms5220_strobe_w )
 
 /*************************************
  *
+ *	Misc. sound
+ *
+ *************************************/
+
+static WRITE_HANDLER( coincount_w )
+{
+	coin_counter_w(0, (data >> 0) & 1);
+	coin_counter_w(1, (data >> 1) & 1);
+}
+
+
+
+/*************************************
+ *
  *	Main CPU memory handlers
  *
  *************************************/
@@ -563,7 +572,7 @@ static MEMORY_WRITE_START( sound_writemem )
 	{ 0x1870, 0x1870, tms5220_w },
 	{ 0x1872, 0x1873, tms5220_strobe_w },
 	{ 0x1874, 0x1874, sound_6502_w },
-	{ 0x1876, 0x1876, MWA_NOP },
+	{ 0x1876, 0x1876, coincount_w },
 	{ 0x1878, 0x1878, atarigen_6502_irq_ack_w },
 	{ 0x187a, 0x187a, mixer_w },
 	{ 0x187c, 0x187c, switch_6502_w },
@@ -1177,6 +1186,11 @@ static struct TMS5220interface tms5220_interface =
  *
  *************************************/
 
+static struct t11_setup t11_data =
+{
+	0x36ff			/* initial mode word has DAL15,14,11,8 pulled low */
+};
+
 static const struct MachineDriver machine_driver_paperboy =
 {
 	/* basic machine hardware */
@@ -1185,7 +1199,9 @@ static const struct MachineDriver machine_driver_paperboy =
 			CPU_T11,
 			ATARI_CLOCK_20MHz/2,
 			main_readmem,main_writemem,0,0,
-			vblank_interrupt,1
+			vblank_interrupt,1,
+			0,0,
+			&t11_data
 		},
 		{
 			CPU_M6502,
@@ -1214,18 +1230,9 @@ static const struct MachineDriver machine_driver_paperboy =
 	/* sound hardware */
 	SOUND_SUPPORTS_STEREO,0,0,0,
 	{
-		{
-			SOUND_YM2151,
-			&ym2151_interface
-		},
-		{
-			SOUND_POKEY,
-			&pokey_interface
-		},
-		{
-			SOUND_TMS5220,
-			&tms5220_interface
-		}
+		{ SOUND_YM2151,  &ym2151_interface  },
+		{ SOUND_POKEY,   &pokey_interface   },
+		{ SOUND_TMS5220, &tms5220_interface }
 	},
 
 	atarigen_nvram_handler
@@ -1240,11 +1247,13 @@ static const struct MachineDriver machine_driver_a720 =
 			CPU_T11,
 			ATARI_CLOCK_20MHz/2,
 			main_readmem,main_writemem,0,0,
-			vblank_interrupt,1
+			vblank_interrupt,1,
+			0,0,
+			&t11_data
 		},
 		{
 			CPU_M6502,
-			2000000,	/* artifically high to prevent deadlock at startup ATARI_CLOCK_14MHz/8,*/
+			2200000,	/* artifically high to prevent deadlock at startup ATARI_CLOCK_14MHz/8,*/
 			sound_readmem,sound_writemem,0,0,
 			0,0,
 			atarigen_6502_irq_gen,(UINT32)(1000000000.0/((double)ATARI_CLOCK_20MHz/2/16/16/16/10))
@@ -1269,18 +1278,9 @@ static const struct MachineDriver machine_driver_a720 =
 	/* sound hardware */
 	SOUND_SUPPORTS_STEREO,0,0,0,
 	{
-		{
-			SOUND_YM2151,
-			&ym2151_interface
-		},
-		{
-			SOUND_POKEY,
-			&pokey_interface
-		},
-		{
-			SOUND_TMS5220,
-			&tms5220_interface
-		}
+		{ SOUND_YM2151,  &ym2151_interface  },
+		{ SOUND_POKEY,   &pokey_interface   },
+		{ SOUND_TMS5220, &tms5220_interface }
 	},
 
 	atarigen_nvram_handler
@@ -1295,7 +1295,9 @@ static const struct MachineDriver machine_driver_sprint =
 			CPU_T11,
 			ATARI_CLOCK_20MHz/2,
 			main_readmem,main_writemem,0,0,
-			vblank_interrupt,1
+			vblank_interrupt,1,
+			0,0,
+			&t11_data
 		},
 		{
 			CPU_M6502,
@@ -1315,7 +1317,7 @@ static const struct MachineDriver machine_driver_sprint =
 	256, 0,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_UPDATE_BEFORE_VBLANK,
+	VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN | VIDEO_UPDATE_BEFORE_VBLANK,
 	0,
 	atarisys2_vh_start,
 	atarisys2_vh_stop,
@@ -1324,14 +1326,8 @@ static const struct MachineDriver machine_driver_sprint =
 	/* sound hardware */
 	SOUND_SUPPORTS_STEREO,0,0,0,
 	{
-		{
-			SOUND_YM2151,
-			&ym2151_interface
-		},
-		{
-			SOUND_POKEY,
-			&pokey_interface
-		}
+		{ SOUND_YM2151,  &ym2151_interface  },
+		{ SOUND_POKEY,   &pokey_interface   }
 	},
 
 	atarigen_nvram_handler

@@ -377,13 +377,8 @@ struct cpu_interface
 	void		(*set_context)(void *reg);
 	void *		(*get_cycle_table)(int which);
 	void		(*set_cycle_table)(int which, void *new_table);
-	unsigned	(*get_pc)(void);
-	void		(*set_pc)(unsigned val);
-	unsigned	(*get_sp)(void);
-	void		(*set_sp)(unsigned val);
 	unsigned	(*get_reg)(int regnum);
 	void		(*set_reg)(int regnum, unsigned val);
-	void		(*set_nmi_line)(int linestate);
 	void		(*set_irq_line)(int irqline, int linestate);
 	void		(*set_irq_callback)(int(*callback)(int irqline));
 	const char *(*cpu_info)(void *context,int regnum);
@@ -466,23 +461,11 @@ unsigned activecpu_get_reg(int regnum);
 /* set the value of a register on the active CPU */
 void activecpu_set_reg(int regnum, unsigned val);
 
-/* return the value of the PC on the active CPU */
-offs_t activecpu_get_pc(void);
-
 /* return the PC, corrected to a byte offset, on the active CPU */
 offs_t activecpu_get_pc_byte(void);
 
-/* set the value of the PC on the active CPU */
-void activecpu_set_pc(offs_t val);
-
 /* update the banking on the active CPU */
 void activecpu_set_op_base(unsigned val);
-
-/* return the value of the stack pointer on the active CPU */
-offs_t activecpu_get_sp(void);
-
-/* set the value of the stack pointer on the active CPU */
-void activecpu_set_sp(offs_t val);
 
 /* disassemble a line at a given PC on the active CPU */
 unsigned activecpu_dasm(char *buffer, unsigned pc);
@@ -580,23 +563,11 @@ unsigned cpunum_get_reg(int cpunum, int regnum);
 /* set the value of a register on a given CPU */
 void cpunum_set_reg(int cpunum, int regnum, unsigned val);
 
-/* return the value of the PC on a given CPU */
-offs_t cpunum_get_pc(int cpunum);
-
 /* return the PC, corrected to a byte offset, on a given CPU */
 offs_t cpunum_get_pc_byte(int cpunum);
 
-/* set the value of the PC on a given CPU */
-void cpunum_set_pc(int cpunum, offs_t val);
-
 /* update the banking on a given CPU */
 void cpunum_set_op_base(int cpunum, unsigned val);
-
-/* return the value of the stack pointer on a given CPU */
-offs_t cpunum_get_sp(int cpunum);
-
-/* set the value of the stack pointer on a given CPU */
-void cpunum_set_sp(int cpunum, offs_t val);
 
 /* disassemble a line at a given PC on a given CPU */
 unsigned cpunum_dasm(int cpunum, char *buffer, unsigned pc);
@@ -729,7 +700,7 @@ void cpu_dump_states(void);
 void cpu_set_m68k_reset(int cpunum, void (*resetfn)(void));
 
 /* convert IRQ number to IRQ line for old-style interrupts */
-int convert_type_to_irq_line(int cpunum, int num);
+int convert_type_to_irq_line(int cpunum, int num, int *vector);
 
 
 
@@ -740,7 +711,16 @@ int convert_type_to_irq_line(int cpunum, int num);
  *************************************/
 
 #define		activecpu_get_previouspc()	activecpu_get_reg(REG_PREVIOUSPC)
-#define		cpunum_get_previouspc()		cpunum_get_reg(REG_PREVIOUSPC)
+#define		activecpu_get_pc()			activecpu_get_reg(REG_PC)
+#define		activecpu_get_sp()			activecpu_get_reg(REG_SP)
+#define		activecpu_set_pc(val)		activecpu_set_reg(REG_PC, val)
+#define		activecpu_set_sp(val)		activecpu_set_reg(REG_SP, val)
+
+#define		cpunum_get_previouspc(cpu)	cpunum_get_reg(cpu, REG_PREVIOUSPC)
+#define		cpunum_get_pc(cpu)			cpunum_get_reg(cpu, REG_PC)
+#define		cpunum_get_sp(cpu)			cpunum_get_reg(cpu, REG_SP)
+#define		cpunum_set_pc(cpu, val)		cpunum_set_reg(cpu, REG_PC, val)
+#define		cpunum_set_sp(cpu, val)		cpunum_set_reg(cpu, REG_SP, val)
 
 /* this is kind of gross - is it necessary */
 #define 	cpu_geturnpc() 				activecpu_get_reg(REG_SP_CONTENTS)

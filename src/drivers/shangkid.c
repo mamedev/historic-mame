@@ -26,7 +26,7 @@ Shanghai Kid / (Hokuha Syourin) Hiryu no Ken
 
 	3 Z-80A CPU
 	1 AY-3-8910
-	1 XTAL 18.432Mhz
+	1 XTAL 18.432MHz
 
 Also distributed with Data East and Memetron license.
 
@@ -55,7 +55,6 @@ Games by Nihon Game/Culture Brain:
 #include "cpu/z80/z80.h"
 
 /* from vidhrdw/shangkid.c */
-extern void shangkid_vh_convert_color_prom(unsigned char *obsolete,unsigned short *colortable,const unsigned char *color_prom);
 extern int shangkid_vh_start( void );
 extern void shangkid_vh_stop( void );
 extern void shangkid_screenrefresh( struct osd_bitmap *bitmap, int fullfresh );
@@ -391,7 +390,7 @@ static struct MachineDriver machine_driver_##NAME = { \
 	40*8, 28*8, { 16, 319-16, 0, 223 }, \
 	NAME##_gfxdecodeinfo, \
 	256, 0, \
-	shangkid_vh_convert_color_prom, \
+	palette_RRRR_GGGG_BBBB_convert_prom, \
 	VIDEO_TYPE_RASTER, \
 	0, \
 	shangkid_vh_start, \
@@ -460,6 +459,7 @@ static struct MachineDriver machine_driver_dynamski = {
 	dynamski_gfxdecodeinfo,
 	256, 0,
 	0,
+
 	VIDEO_TYPE_RASTER,
 	0,
 	0,//vh_start,

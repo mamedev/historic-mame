@@ -523,7 +523,7 @@ static const struct MachineDriver machine_driver_bzone =
 	256+32768, 0,
 	avg_init_palette_bzone,
 
-	VIDEO_TYPE_VECTOR | VIDEO_SUPPORTS_DIRTY,
+	VIDEO_TYPE_VECTOR | VIDEO_SUPPORTS_DIRTY | VIDEO_RGB_DIRECT,
 	0,
 	avg_start_bzone,
 	avg_stop,
@@ -592,7 +592,7 @@ static const struct MachineDriver machine_driver_redbaron =
 	256, 0,
 	avg_init_palette_aqua,
 
-	VIDEO_TYPE_VECTOR | VIDEO_SUPPORTS_DIRTY,
+	VIDEO_TYPE_VECTOR | VIDEO_SUPPORTS_DIRTY | VIDEO_RGB_DIRECT,
 	0,
 	avg_start_redbaron,
 	avg_stop,

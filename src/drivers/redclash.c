@@ -1,6 +1,6 @@
 /***************************************************************************
 
-Red Clash
+Zero Hour / Red Clash
 
 runs on hardware similar to Lady Bug
 
@@ -9,6 +9,16 @@ driver by inkling
 Notes:
 - In the Tehkan set the ship doesn't move during attract mode. Earlier version?
   Gameplay is different too.
+
+TODO:
+- Missing Galaxian-like starfield (speed is controlled by three output ports)
+
+- Colors might be right, need screen shots to verify
+
+- Some graphical problems in both games, but without screenshots its hard to
+  know what we're aiming for
+
+- Sound (analog, schematics available for Zero Hour)
 
 ***************************************************************************/
 
@@ -20,14 +30,41 @@ extern data8_t *redclash_textram;
 
 void redclash_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 void redclash_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+
 WRITE_HANDLER( redclash_gfxbank_w );
 WRITE_HANDLER( redclash_flipscreen_w );
 
+WRITE_HANDLER( redclash_star0_w );
+WRITE_HANDLER( redclash_star1_w );
+WRITE_HANDLER( redclash_star2_w );
+WRITE_HANDLER( redclash_star_reset_w );
 
 
-static MEMORY_READ_START( readmem )
+/*
+  This game doesn't have VBlank interrupts.
+  Interrupts are still used, but they are related to coin
+  slots. Left slot generates an IRQ, Right slot a NMI.
+*/
+int redclash_interrupt(void)
+{
+	if (readinputport(4) & 1)	/* Left Coin */
+		cpu_set_irq_line(0,0,ASSERT_LINE);
+	else if (readinputport(4) & 2)	/* Right Coin */
+		cpu_set_nmi_line(0,PULSE_LINE);
+
+	return ignore_interrupt();
+}
+
+static WRITE_HANDLER( irqack_w )
+{
+	cpu_set_irq_line(0,0,CLEAR_LINE);
+}
+
+
+
+static MEMORY_READ_START( zero_readmem )
 	{ 0x0000, 0x2fff, MRA_ROM },
-	{ 0x6000, 0x67ff, MRA_RAM },
+	{ 0x3000, 0x37ff, MRA_RAM },
 	{ 0x4800, 0x4800, input_port_0_r }, /* IN0 */
 	{ 0x4801, 0x4801, input_port_1_r }, /* IN1 */
 	{ 0x4802, 0x4802, input_port_2_r }, /* DSW0 */
@@ -35,36 +72,47 @@ static MEMORY_READ_START( readmem )
 	{ 0x4000, 0x43ff, MRA_RAM },  /* video RAM */
 MEMORY_END
 
+static MEMORY_WRITE_START( zero_writemem )
+	{ 0x0000, 0x2fff, MWA_ROM },
+	{ 0x3000, 0x37ff, MWA_RAM },
+	{ 0x3800, 0x3bff, MWA_RAM, &spriteram, &spriteram_size },
+	{ 0x4000, 0x43ff, MWA_RAM, &redclash_textram },
+	{ 0x5000, 0x5007, MWA_NOP },	/* to sound board */
+	{ 0x5800, 0x5800, redclash_star0_w },
+	{ 0x5801, 0x5804, MWA_NOP },	/* to sound board */
+	{ 0x5805, 0x5805, redclash_star1_w },
+	{ 0x5806, 0x5806, redclash_star2_w },
+	{ 0x5807, 0x5807, redclash_flipscreen_w },
+	{ 0x7000, 0x7000, redclash_star_reset_w },
+	{ 0x7800, 0x7800, irqack_w },
+MEMORY_END
+
+static MEMORY_READ_START( readmem )
+	{ 0x0000, 0x2fff, MRA_ROM },
+	{ 0x4800, 0x4800, input_port_0_r }, /* IN0 */
+	{ 0x4801, 0x4801, input_port_1_r }, /* IN1 */
+	{ 0x4802, 0x4802, input_port_2_r }, /* DSW0 */
+	{ 0x4803, 0x4803, input_port_3_r }, /* DSW1 */
+	{ 0x4000, 0x43ff, MRA_RAM },  /* video RAM */
+	{ 0x6000, 0x67ff, MRA_RAM },
+MEMORY_END
+
 static MEMORY_WRITE_START( writemem )
 	{ 0x0000, 0x2fff, MWA_ROM },
 //	{ 0x3000, 0x3000, MWA_NOP },
 //	{ 0x3800, 0x3800, MWA_NOP },
-//	{ 0x5000, 0x5000, MWA_NOP },
-//	{ 0x5004, 0x5004, MWA_NOP },
-	{ 0x5800, 0x5800, redclash_flipscreen_w },
+	{ 0x4000, 0x43ff, MWA_RAM, &redclash_textram },
+	{ 0x5000, 0x5007, MWA_NOP },	/* to sound board */
+	{ 0x5800, 0x5800, redclash_star0_w },
 	{ 0x5801, 0x5801, redclash_gfxbank_w },
+	{ 0x5805, 0x5805, redclash_star1_w },
+	{ 0x5806, 0x5806, redclash_star2_w },
+	{ 0x5807, 0x5807, redclash_flipscreen_w },
 	{ 0x6000, 0x67ff, MWA_RAM },
 	{ 0x6800, 0x6bff, MWA_RAM, &spriteram, &spriteram_size },
-	{ 0x4000, 0x43ff, MWA_RAM, &redclash_textram },
+	{ 0x7000, 0x7000, redclash_star_reset_w },
+	{ 0x7800, 0x7800, irqack_w },
 MEMORY_END
-
-
-
-/***************************************************************************
-
-  Lady Bug doesn't have VBlank interrupts.
-  Interrupts are still used by the game: but they are related to coin
-  slots. Left slot generates a NMI, Right slot an IRQ.
-
-***************************************************************************/
-int redclash_interrupt(void)
-{
-	if (readinputport(4) & 1)	/* Left Coin */
-		return nmi_interrupt();
-	else if (readinputport(4) & 2)	/* Right Coin */
-		return interrupt();
-	else return ignore_interrupt();
-}
 
 
 
@@ -116,7 +164,7 @@ INPUT_PORTS_START( redclash )
 	PORT_DIPSETTING(    0x40, "7" )
 
 	PORT_START	/* DSW1 */
-	PORT_DIPNAME( 0x0f, 0x0f, DEF_STR( Coin_B ) )
+	PORT_DIPNAME( 0x0f, 0x0f, DEF_STR( Coin_A ) )
 	PORT_DIPSETTING(    0x04, DEF_STR( 6C_1C ) )
 	PORT_DIPSETTING(    0x05, DEF_STR( 5C_1C ) )
 	PORT_DIPSETTING(    0x06, DEF_STR( 4C_1C ) )
@@ -133,7 +181,7 @@ INPUT_PORTS_START( redclash )
 	PORT_DIPSETTING(    0x02, DEF_STR( 1C_7C ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( 1C_8C ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( 1C_9C ) )
-	PORT_DIPNAME( 0xf0, 0xf0, DEF_STR( Coin_A ) )
+	PORT_DIPNAME( 0xf0, 0xf0, DEF_STR( Coin_B ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( 6C_1C ) )
 	PORT_DIPSETTING(    0x50, DEF_STR( 5C_1C ) )
 	PORT_DIPSETTING(    0x60, DEF_STR( 4C_1C ) )
@@ -207,23 +255,66 @@ static struct GfxLayout spritelayout24x24 =
 	64*32
 };
 
+static struct GfxLayout spritelayout16x16bis =
+{
+	16,16,
+	RGN_FRAC(1,1),
+	2,
+	{ 1, 0 },
+	{ STEP8(0,2), STEP8(8*2,2) },
+	{ STEP8(15*64,-64), STEP8(7*64,-64) },
+	32*32
+};
+
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0x0000, &charlayout,          0,  8 },
 	{ REGION_GFX3, 0x0000, &spritelayout8x8,   4*8, 16 },
 	{ REGION_GFX2, 0x0000, &spritelayout16x16, 4*8, 16 },
 	{ REGION_GFX2, 0x0000, &spritelayout24x24, 4*8, 16 },
+	{ REGION_GFX2, 0x0000, &spritelayout16x16bis, 4*8, 16 },
+	{ REGION_GFX2, 0x0004, &spritelayout16x16bis, 4*8, 16 },
 	{ -1 } /* end of array */
 };
 
 
+
+static const struct MachineDriver machine_driver_zerohour =
+{
+	{
+		{
+		  CPU_Z80,
+		  4000000,  /* 4 MHz */
+		  zero_readmem,zero_writemem,0,0,
+		  redclash_interrupt,1
+		}
+	},
+	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,  /* frames per second, vblank duration */
+	1,  /* single CPU, no need for interleaving */
+	0,
+
+	/* video hardware */
+	32*8, 32*8, { 1*8, 31*8-1, 4*8, 28*8-1 },
+	gfxdecodeinfo,
+	32,4*24,
+	redclash_vh_convert_color_prom,
+
+	VIDEO_TYPE_RASTER,
+	0,
+	0,
+	0,
+	redclash_vh_screenrefresh,
+
+	/* sound hardware */
+	0,0,0,0,
+};
 
 static const struct MachineDriver machine_driver_redclash =
 {
 	{
 		{
 		  CPU_Z80,
-		  4000000,  /* 4 Mhz */
+		  4000000,  /* 4 MHz */
 		  readmem,writemem,0,0,
 		  redclash_interrupt,1
 		}
@@ -248,13 +339,36 @@ static const struct MachineDriver machine_driver_redclash =
 	0,0,0,0,
 };
 
-
-
 /***************************************************************************
 
   Game driver(s)
 
 ***************************************************************************/
+
+ROM_START( zerohour )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
+	ROM_LOAD( "zerohour.1",   0x0000, 0x0800, 0x0dff4b48 )
+	ROM_LOAD( "zerohour.2",   0x0800, 0x0800, 0xcf41b6ac )
+	ROM_LOAD( "zerohour.3",	  0x1000, 0x0800, 0x5ef48b67 )
+	ROM_LOAD( "zerohour.4",	  0x1800, 0x0800, 0x25c5872d )
+	ROM_LOAD( "zerohour.5",	  0x2000, 0x0800, 0xd7ce3add )
+	ROM_LOAD( "zerohour.6",	  0x2800, 0x0800, 0x8a93ae6e )
+
+	ROM_REGION( 0x0800, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "zerohour.9",   0x0000, 0x0800, 0x17ae6f13 )
+
+	ROM_REGION( 0x1000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_LOAD( "zerohour.7",	  0x0000, 0x0800, 0x4c12f59d )
+	ROM_LOAD( "zerohour.8",	  0x0800, 0x0800, 0x6b9a6b6e )
+
+	ROM_REGION( 0x1000, REGION_GFX3, ROMREGION_DISPOSE )
+	/* gfx data will be rearranged here for 8x8 sprites */
+
+	ROM_REGION( 0x0600, REGION_PROMS, 0 )
+	ROM_LOAD( "zerohour.ic2", 0x0000, 0x0020, 0xb55aee56 ) /* palette */
+	ROM_LOAD( "zerohour.n2",  0x0020, 0x0020, 0x9adabf46 ) /* sprite color lookup table */
+	ROM_LOAD( "zerohour.u6",  0x0040, 0x0020, 0x27fa3a50 ) /* ?? */
+ROM_END
 
 ROM_START( redclash )
 	ROM_REGION(0x10000, REGION_CPU1, 0 ) /* 64k for code */
@@ -266,13 +380,15 @@ ROM_START( redclash )
 	ROM_LOAD( "rc6.12a",      0x0000, 0x0800, 0xda9bbcc2 )
 
 	ROM_REGION( 0x2000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "rc4.3e",       0x0000, 0x1000, 0x64ca8b63 )
-	ROM_LOAD( "rc5.3d",       0x1000, 0x1000, 0xfce610a2 )
+	ROM_LOAD( "rc4.3e",       0x0000, 0x0800, 0x64ca8b63 )
+	ROM_CONTINUE(             0x1000, 0x0800 )
+	ROM_LOAD( "rc5.3d",       0x0800, 0x0800, 0xfce610a2 )
+	ROM_CONTINUE(             0x1800, 0x0800 )
 
 	ROM_REGION( 0x2000, REGION_GFX3, ROMREGION_DISPOSE )
 	/* gfx data will be rearranged here for 8x8 sprites */
 
-	ROM_REGION( 0x0060, REGION_PROMS , 0 )
+	ROM_REGION( 0x0060, REGION_PROMS, 0 )
 	ROM_LOAD( "6331-1.12f",   0x0000, 0x0020, 0x43989681 ) /* palette */
 	ROM_LOAD( "6331-2.4a",    0x0020, 0x0020, 0x9adabf46 ) /* sprite color lookup table */
 	ROM_LOAD( "6331-3.11e",   0x0040, 0x0020, 0x27fa3a50 ) /* ?? */
@@ -291,8 +407,10 @@ ROM_START( redclask )
 	ROM_LOAD( "rc6.12a",      0x0000, 0x0800, 0xda9bbcc2 ) /* rc9.7m */
 
 	ROM_REGION( 0x2000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "rc4.4m",       0x0000, 0x1000, 0x483a1293 )
-	ROM_LOAD( "rc5.5m",       0x1000, 0x1000, 0xc45d9601 )
+	ROM_LOAD( "rc4.4m",       0x0000, 0x0800, 0x483a1293 )
+	ROM_CONTINUE(             0x1000, 0x0800 )
+	ROM_LOAD( "rc5.5m",       0x0800, 0x0800, 0xc45d9601 )
+	ROM_CONTINUE(             0x1800, 0x0800 )
 
 	ROM_REGION( 0x2000, REGION_GFX3, ROMREGION_DISPOSE )
 	/* gfx data will be rearranged here for 8x8 sprites */
@@ -303,21 +421,20 @@ ROM_START( redclask )
 	ROM_LOAD( "6331-3.11e",   0x0040, 0x0020, 0x27fa3a50 ) /* 6331.6w */
 ROM_END
 
-
-
 static void init_redclash(void)
 {
 	int i,j;
 
 	/* rearrange the sprite graphics */
-	for (i = 0; i < 0x2000; i++)
+	for (i = 0;i < memory_region_length(REGION_GFX3);i++)
 	{
-		j = (i & 0x1fc1) | ((i & 0x0e) << 2) | ((i & 0x30) >> 3);
+		j = (i & ~0x003e) | ((i & 0x0e) << 2) | ((i & 0x30) >> 3);
 		memory_region(REGION_GFX3)[i] = memory_region(REGION_GFX2)[j];
 	}
 }
 
 
 
-GAMEX( 1981, redclash, 0,        redclash, redclash, redclash, ROT270, "Tehkan", "Red Clash", GAME_NO_SOUND | GAME_WRONG_COLORS | GAME_IMPERFECT_GRAPHICS )
-GAMEX( 1981, redclask, redclash, redclash, redclash, redclash, ROT270, "Kaneko", "Red Clash (Kaneko)", GAME_NO_SOUND | GAME_WRONG_COLORS | GAME_IMPERFECT_GRAPHICS )
+GAMEX( 1980?,zerohour, 0,        zerohour, redclash, redclash, ROT270, "Universal", "Zero Hour",          GAME_NO_SOUND | GAME_WRONG_COLORS | GAME_IMPERFECT_GRAPHICS )
+GAMEX( 1981, redclash, 0,        redclash, redclash, redclash, ROT270, "Tehkan",    "Red Clash",          GAME_NO_SOUND | GAME_WRONG_COLORS | GAME_IMPERFECT_GRAPHICS )
+GAMEX( 1981, redclask, redclash, redclash, redclash, redclash, ROT270, "Kaneko",    "Red Clash (Kaneko)", GAME_NO_SOUND | GAME_WRONG_COLORS | GAME_IMPERFECT_GRAPHICS )

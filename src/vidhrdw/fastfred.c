@@ -71,41 +71,41 @@ static void convert_color(int i, int* r, int* g, int* b)
 
 void fastfred_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
 {
-        int i;
-        #define TOTAL_COLORS(gfxn) (Machine->gfx[gfxn]->total_colors * Machine->gfx[gfxn]->color_granularity)
-        #define COLOR(gfxn,offs) (colortable[Machine->drv->gfxdecodeinfo[gfxn].color_codes_start + offs])
+	int i;
+	#define TOTAL_COLORS(gfxn) (Machine->gfx[gfxn]->total_colors * Machine->gfx[gfxn]->color_granularity)
+	#define COLOR(gfxn,offs) (colortable[Machine->drv->gfxdecodeinfo[gfxn].color_codes_start + offs])
 
 
-		fastfred_color_prom = color_prom;	/* we'll need this later */
+	fastfred_color_prom = color_prom;	/* we'll need this later */
 
-        for (i = 0;i < Machine->drv->total_colors;i++)
-        {
-                int r,g,b;
+	for (i = 0;i < Machine->drv->total_colors;i++)
+	{
+		int r,g,b;
 
-				convert_color(i, &r, &g, &b);
+		convert_color(i, &r, &g, &b);
 
-				*(palette++) = r;
-				*(palette++) = g;
-				*(palette++) = b;
-        }
+		*(palette++) = r;
+		*(palette++) = g;
+		*(palette++) = b;
+	}
 
 
-        /* characters and sprites use the same palette */
-        for (i = 0;i < TOTAL_COLORS(0);i++)
-        {
-			int color;
+	/* characters and sprites use the same palette */
+	for (i = 0;i < TOTAL_COLORS(0);i++)
+	{
+		int color;
 
-			if (!(i & 0x07))
-			{
-				color = 0;
-			}
-			else
-			{
-				color = i;
-			}
+		if (!(i & 0x07))
+		{
+			color = 0;
+		}
+		else
+		{
+			color = i;
+		}
 
-			COLOR(0,i) = COLOR(1,i) = color;
-        }
+		COLOR(0,i) = COLOR(1,i) = color;
+	}
 }
 
 

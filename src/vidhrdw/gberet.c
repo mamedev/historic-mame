@@ -17,7 +17,6 @@ unsigned char *gberet_scrollram;
 static struct tilemap *bg_tilemap;
 static int interruptenable;
 static int flipscreen;
-static int sprites_type;
 
 
 /***************************************************************************
@@ -94,7 +93,8 @@ static void get_tile_info(int tile_index)
 			0,
 			gberet_videoram[tile_index] + ((attr & 0x40) << 2),
 			attr & 0x0f,
-			TILE_FLIPYX((attr & 0x30) >> 4) | TILE_SPLIT((attr & 0x80) >> 7))
+			TILE_FLIPYX((attr & 0x30) >> 4))
+	tile_info.priority = (attr & 0x80) >> 7;
 }
 
 
@@ -107,26 +107,15 @@ static void get_tile_info(int tile_index)
 
 int gberet_vh_start(void)
 {
-	bg_tilemap = tilemap_create(get_tile_info,tilemap_scan_rows,TILEMAP_SPLIT,8,8,64,32);
+	bg_tilemap = tilemap_create(get_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT_COLOR,8,8,64,32);
 
 	if (!bg_tilemap)
 		return 0;
 
-	tilemap_set_transmask(bg_tilemap,0,0x0001,0xfffe); /* split type 0 has pen 1 transparent in front half */
-	tilemap_set_transmask(bg_tilemap,1,0xffff,0x0000); /* split type 1 is totally transparent in front half */
+	tilemap_set_transparent_pen(bg_tilemap,0x10);
 	tilemap_set_scroll_rows(bg_tilemap,32);
 
 	return 0;
-}
-
-void init_gberet(void)
-{
-	sprites_type = 0;
-}
-
-void init_gberetb(void)
-{
-	sprites_type = 1;
 }
 
 
@@ -208,7 +197,7 @@ int gberet_interrupt(void)
 
 ***************************************************************************/
 
-static void draw_sprites0(struct osd_bitmap *bitmap)
+static void draw_sprites(struct osd_bitmap *bitmap)
 {
 	int offs;
 	unsigned char *sr;
@@ -226,7 +215,6 @@ static void draw_sprites0(struct osd_bitmap *bitmap)
 
 			sx = sr[offs+2] - 2*(sr[offs+1] & 0x80);
 			sy = sr[offs+3];
-			if (sprites_type) sy = 240 - sy;
 			flipx = sr[offs+1] & 0x10;
 			flipy = sr[offs+1] & 0x20;
 
@@ -248,7 +236,7 @@ static void draw_sprites0(struct osd_bitmap *bitmap)
 	}
 }
 
-static void draw_sprites1(struct osd_bitmap *bitmap)
+static void draw_sprites_bootleg(struct osd_bitmap *bitmap)
 {
 	int offs;
 	unsigned char *sr;
@@ -264,7 +252,7 @@ static void draw_sprites1(struct osd_bitmap *bitmap)
 
 			sx = sr[offs+2] - 2*(sr[offs+3] & 0x80);
 			sy = sr[offs+1];
-			if (sprites_type) sy = 240 - sy;
+			sy = 240 - sy;
 			flipx = sr[offs+3] & 0x10;
 			flipy = sr[offs+3] & 0x20;
 
@@ -289,8 +277,16 @@ static void draw_sprites1(struct osd_bitmap *bitmap)
 
 void gberet_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
-	tilemap_draw(bitmap,bg_tilemap,TILEMAP_BACK,0);
-	if (sprites_type == 0) draw_sprites0(bitmap);	/* original */
-	else draw_sprites1(bitmap);	/* bootleg */
-	tilemap_draw(bitmap,bg_tilemap,TILEMAP_FRONT,0);
+	tilemap_draw(bitmap,bg_tilemap,TILEMAP_IGNORE_TRANSPARENCY|0,0);
+	tilemap_draw(bitmap,bg_tilemap,TILEMAP_IGNORE_TRANSPARENCY|1,0);
+	draw_sprites(bitmap);
+	tilemap_draw(bitmap,bg_tilemap,0,0);
+}
+
+void gberetb_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+{
+	tilemap_draw(bitmap,bg_tilemap,TILEMAP_IGNORE_TRANSPARENCY|0,0);
+	tilemap_draw(bitmap,bg_tilemap,TILEMAP_IGNORE_TRANSPARENCY|1,0);
+	draw_sprites_bootleg(bitmap);
+	tilemap_draw(bitmap,bg_tilemap,0,0);
 }

@@ -208,7 +208,7 @@ int sqix_interrupt(void)
 		return nmi_interrupt();
 	}
 	else
-		return 0;
+		return ignore_interrupt();
 }
 
 static const struct MachineDriver machine_driver_superqix =

@@ -273,9 +273,9 @@ static struct CPS1config cps1_config_table[]=
 	{"sf2ja",   CPS_B_17, 2,2,2, 0x0000,0xffff,0x0000,0xffff },
 	{"sf2jc",   CPS_B_12, 2,2,2, 0x0000,0xffff,0x0000,0xffff },
 	/* from here onwards the CPS-B board has suicide battery and multiply protection */
-	{"3wonders",BATTRY_1, 0,1,1, 0x0000,0xffff,0x0000,0xffff, 2 },
-	{"3wonderu",BATTRY_1, 0,1,1, 0x0000,0xffff,0x0000,0xffff, 2 },
-	{"wonder3", BATTRY_1, 0,1,1, 0x0000,0xffff,0x0000,0xffff, 2 },
+	{"3wonders",BATTRY_1, 0,1,0, 0x0000,0xffff,0x0000,0xffff, 2 },
+	{"3wonderu",BATTRY_1, 0,1,0, 0x0000,0xffff,0x0000,0xffff, 2 },
+	{"wonder3", BATTRY_1, 0,1,0, 0x0000,0xffff,0x0000,0xffff, 2 },
 	{"kod",     BATTRY_2, 0,0,0, 0x0000,0xffff,0x0000,0xffff },
 	{"kodu",    BATTRY_2, 0,0,0, 0x0000,0xffff,0x0000,0xffff },
 	{"kodj",    BATTRY_2, 0,0,0, 0x0000,0xffff,0x0000,0xffff },
@@ -973,21 +973,21 @@ static void get_tile1_info(int tile_index)
 
 static void get_tile2_info(int tile_index)
 {
-	int base = cps1_game_config->bank_scroll3 * 0x01000;
+	int base = cps1_game_config->bank_scroll3 * 0x1000;
 	const int startcode = cps1_game_config->start_scroll3;
 	const int endcode   = cps1_game_config->end_scroll3;
 	int code = cps1_scroll3[2*tile_index];
 	int attr = cps1_scroll3[2*tile_index+1];
 
-	if (cps1_game_config->kludge == 2 && code >= 0x01500)
+	if (cps1_game_config->kludge == 2 && code < 0x0e00)
 	{
-		code -= 0x1000;
+		code += 0x1000;
 	}
-	if (cps1_game_config->kludge == 8 && code >= 0x05800)
+	if (cps1_game_config->kludge == 8 && code >= 0x5800)
 	{
 		code -= 0x4000;
 	}
-	if (cps1_game_config->kludge == 9 && code < 0x05600)
+	if (cps1_game_config->kludge == 9 && code < 0x5600)
 	{
 		code += 0x4000;
 	}
@@ -1166,14 +1166,26 @@ void cps1_build_palette(void)
 		{
 		   int red, green, blue, bright;
 
-		   bright = 0x10 + (palette>>12);
+			if (cps_version == 2)
+			{
+				bright = 0x10 + (palette>>12);
 
-		   red   = ((palette>>8)&0x0f) * bright * 0x11 / 0x1f;
-		   green = ((palette>>4)&0x0f) * bright * 0x11 / 0x1f;
-		   blue  = ((palette>>0)&0x0f) * bright * 0x11 / 0x1f;
+				red   = ((palette>>8)&0x0f) * bright * 0x11 / 0x1f;
+				green = ((palette>>4)&0x0f) * bright * 0x11 / 0x1f;
+				blue  = ((palette>>0)&0x0f) * bright * 0x11 / 0x1f;
+			}
+			else
+			{
+				bright = (palette>>12);
+				if (bright) bright += 2;
 
-		   palette_set_color (offset, red, green, blue);
-		   cps1_old_palette[offset] = palette;
+				red   = ((palette>>8)&0x0f) * bright;
+				green = ((palette>>4)&0x0f) * bright;
+				blue  = ((palette>>0)&0x0f) * bright;
+			}
+
+			palette_set_color (offset, red, green, blue);
+			cps1_old_palette[offset] = palette;
 		}
 	}
 }

@@ -2218,7 +2218,7 @@ SUNA ELECTRONICS IND CO., LTD
 
 CPU Z0840006PSC (ZILOG)
 
-Chrystal : 24.000 Mhz
+Chrystal : 24.000 MHz
 
 Sound CPU : Z084006PSC (ZILOG) + AY3-8910A
 
@@ -2327,7 +2327,7 @@ Sound is a Yamaha YM3812 and a  AY-3-8910A
 
 3 RAMS are 6264LP- 10   and 5) HM6116K-90 rams  (small package)
 
-24 mhz
+24 MHz
 
 ***************************************************************************/
 

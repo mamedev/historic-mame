@@ -317,7 +317,7 @@ static const struct MachineDriver machine_driver_quantum =
 	256, 0,
 	avg_init_palette_multi,
 
-	VIDEO_TYPE_VECTOR | VIDEO_SUPPORTS_DIRTY,
+	VIDEO_TYPE_VECTOR | VIDEO_SUPPORTS_DIRTY | VIDEO_RGB_DIRECT,
 	0,
 	avg_start_quantum,
 	avg_stop,

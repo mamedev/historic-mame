@@ -47,7 +47,7 @@ static data16_t	wms_control;
 static UINT8	wms_using_34020;
 
 /* palette-related variables */
-static UINT32 *	pen_map;
+static pen_t *	pen_map;
 
 /* videoram-related variables */
 static UINT32 	gfxbank_offset[2];
@@ -659,7 +659,7 @@ static void dma_callback(int is_in_34010_context)
 		TMS_SET_IRQ_LINE(ASSERT_LINE);
 	}
 	else
-		cpu_cause_interrupt(0,TMS34010_INT1);
+		cpu_cause_interrupt(0, 0);
 }
 
 

@@ -10,10 +10,6 @@ enum {
 	KONAMI_PC=1, KONAMI_S, KONAMI_CC ,KONAMI_A, KONAMI_B, KONAMI_U, KONAMI_X, KONAMI_Y,
 	KONAMI_DP, KONAMI_NMI_STATE, KONAMI_IRQ_STATE, KONAMI_FIRQ_STATE };
 
-#define KONAMI_INT_NONE  0   /* No interrupt required */
-#define KONAMI_INT_IRQ	1	/* Standard IRQ interrupt */
-#define KONAMI_INT_FIRQ	2	/* Fast IRQ */
-#define KONAMI_INT_NMI	4	/* NMI */	/* NS 970909 */
 #define KONAMI_IRQ_LINE	0	/* IRQ line number */
 #define KONAMI_FIRQ_LINE 1   /* FIRQ line number */
 
@@ -28,13 +24,8 @@ extern void konami_exit(void);
 extern int konami_execute(int cycles);  /* NS 970908 */
 extern unsigned konami_get_context(void *dst);
 extern void konami_set_context(void *src);
-extern unsigned konami_get_pc(void);
-extern void konami_set_pc(unsigned val);
-extern unsigned konami_get_sp(void);
-extern void konami_set_sp(unsigned val);
 extern unsigned konami_get_reg(int regnum);
 extern void konami_set_reg(int regnum, unsigned val);
-extern void konami_set_nmi_line(int state);
 extern void konami_set_irq_line(int irqline, int state);
 extern void konami_set_irq_callback(int (*callback)(int irqline));
 extern const char *konami_info(void *context,int regnum);

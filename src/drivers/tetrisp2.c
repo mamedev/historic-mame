@@ -522,7 +522,7 @@ BRIEF HARDWARE OVERVIEW
 
 Toshiba TMP68HC000P-12
 Yamaha YMZ280B-F
-OSC: 12.000Mhz, 48.000Mhz, 16.9344Mhz
+OSC: 12.000MHz, 48.000MHz, 16.9344MHz
 
 Listing of custom chips. (Some on scan are hard to read).
 

@@ -404,43 +404,6 @@ void konami_set_context(void *src)
     CHECK_IRQ_LINES;
 }
 
-/****************************************************************************
- * Return program counter
- ****************************************************************************/
-unsigned konami_get_pc(void)
-{
-	return PC;
-}
-
-
-/****************************************************************************
- * Set program counter
- ****************************************************************************/
-void konami_set_pc(unsigned val)
-{
-	PC = val;
-	change_pc16(PC);
-}
-
-
-/****************************************************************************
- * Return stack pointer
- ****************************************************************************/
-unsigned konami_get_sp(void)
-{
-	return S;
-}
-
-
-/****************************************************************************
- * Set stack pointer
- ****************************************************************************/
-void konami_set_sp(unsigned val)
-{
-	S = val;
-}
-
-
 /****************************************************************************/
 /* Return a specific register                                               */
 /****************************************************************************/
@@ -448,7 +411,9 @@ unsigned konami_get_reg(int regnum)
 {
 	switch( regnum )
 	{
+		case REG_PC:
 		case KONAMI_PC: return PC;
+		case REG_SP:
 		case KONAMI_S: return S;
 		case KONAMI_CC: return CC;
 		case KONAMI_U: return U;
@@ -480,7 +445,9 @@ void konami_set_reg(int regnum, unsigned val)
 {
 	switch( regnum )
 	{
+		case REG_PC:
 		case KONAMI_PC: PC = val; change_pc16(PC); break;
+		case REG_SP:
 		case KONAMI_S: S = val; break;
 		case KONAMI_CC: CC = val; CHECK_IRQ_LINES; break;
 		case KONAMI_U: U = val; break;
@@ -537,52 +504,51 @@ void konami_exit(void)
 
 /* Generate interrupts */
 /****************************************************************************
- * Set NMI line state
- ****************************************************************************/
-void konami_set_nmi_line(int state)
-{
-	if (konami.nmi_state == state) return;
-	konami.nmi_state = state;
-	LOG(("KONAMI#%d set_nmi_line %d\n", cpu_getactivecpu(), state));
-	if( state == CLEAR_LINE ) return;
-
-	/* if the stack was not yet initialized */
-    if( !(konami.int_state & KONAMI_LDS) ) return;
-
-    konami.int_state &= ~KONAMI_SYNC;
-	/* state already saved by CWAI? */
-	if( konami.int_state & KONAMI_CWAI )
-	{
-		konami.int_state &= ~KONAMI_CWAI;
-		konami.extra_cycles += 7;	/* subtract +7 cycles next time */
-    }
-	else
-	{
-		CC |= CC_E; 				/* save entire state */
-		PUSHWORD(pPC);
-		PUSHWORD(pU);
-		PUSHWORD(pY);
-		PUSHWORD(pX);
-		PUSHBYTE(DP);
-		PUSHBYTE(B);
-		PUSHBYTE(A);
-		PUSHBYTE(CC);
-		konami.extra_cycles += 19;	/* subtract +19 cycles next time */
-	}
-	CC |= CC_IF | CC_II;			/* inhibit FIRQ and IRQ */
-	PCD = RM16(0xfffc);
-	change_pc16(PC);					/* TS 971002 */
-}
-
-/****************************************************************************
  * Set IRQ line state
  ****************************************************************************/
 void konami_set_irq_line(int irqline, int state)
 {
-    LOG(("KONAMI#%d set_irq_line %d, %d\n", cpu_getactivecpu(), irqline, state));
-	konami.irq_state[irqline] = state;
-	if (state == CLEAR_LINE) return;
-	CHECK_IRQ_LINES;
+	if (irqline == IRQ_LINE_NMI)
+	{
+		if (konami.nmi_state == state) return;
+		konami.nmi_state = state;
+		LOG(("KONAMI#%d set_nmi_line %d\n", cpu_getactivecpu(), state));
+		if( state == CLEAR_LINE ) return;
+
+		/* if the stack was not yet initialized */
+	    if( !(konami.int_state & KONAMI_LDS) ) return;
+
+	    konami.int_state &= ~KONAMI_SYNC;
+		/* state already saved by CWAI? */
+		if( konami.int_state & KONAMI_CWAI )
+		{
+			konami.int_state &= ~KONAMI_CWAI;
+			konami.extra_cycles += 7;	/* subtract +7 cycles next time */
+	    }
+		else
+		{
+			CC |= CC_E; 				/* save entire state */
+			PUSHWORD(pPC);
+			PUSHWORD(pU);
+			PUSHWORD(pY);
+			PUSHWORD(pX);
+			PUSHBYTE(DP);
+			PUSHBYTE(B);
+			PUSHBYTE(A);
+			PUSHBYTE(CC);
+			konami.extra_cycles += 19;	/* subtract +19 cycles next time */
+		}
+		CC |= CC_IF | CC_II;			/* inhibit FIRQ and IRQ */
+		PCD = RM16(0xfffc);
+		change_pc16(PC);					/* TS 971002 */
+	}
+	else if (irqline < 2)
+	{
+	    LOG(("KONAMI#%d set_irq_line %d, %d\n", cpu_getactivecpu(), irqline, state));
+		konami.irq_state[irqline] = state;
+		if (state == CLEAR_LINE) return;
+		CHECK_IRQ_LINES;
+	}
 }
 
 /****************************************************************************

@@ -37,7 +37,7 @@ int bsktball_interrupt(void)
 	else if (NMION)
 		return nmi_interrupt();
 	else
-		return 0;
+		return ignore_interrupt();
 }
 
 /***************************************************************************

@@ -246,7 +246,7 @@ int hd68k_irq_gen(void)
 {
 	irq_state = 1;
 	atarigen_update_interrupts();
-	return 0;
+	return ignore_interrupt();
 }
 
 

@@ -159,7 +159,7 @@ int atarigen_scanline_int_gen(void)
 {
 	atarigen_scanline_int_state = 1;
 	(*update_int_callback)();
-	return 0;
+	return ignore_interrupt();
 }
 
 
@@ -190,7 +190,7 @@ int atarigen_sound_int_gen(void)
 {
 	atarigen_sound_int_state = 1;
 	(*update_int_callback)();
-	return 0;
+	return ignore_interrupt();
 }
 
 
@@ -221,7 +221,7 @@ int atarigen_video_int_gen(void)
 {
 	atarigen_video_int_state = 1;
 	(*update_int_callback)();
-	return 0;
+	return ignore_interrupt();
 }
 
 
@@ -531,7 +531,7 @@ int atarigen_6502_irq_gen(void)
 {
 	timed_int = 1;
 	update_6502_irq();
-	return 0;
+	return ignore_interrupt();
 }
 
 
@@ -544,7 +544,7 @@ READ_HANDLER( atarigen_6502_irq_ack_r )
 {
 	timed_int = 0;
 	update_6502_irq();
-	return 0;
+	return ignore_interrupt();
 }
 
 WRITE_HANDLER( atarigen_6502_irq_ack_w )

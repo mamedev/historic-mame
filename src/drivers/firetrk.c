@@ -268,8 +268,8 @@ static DISCRETE_SOUND_START(firetruck_sound_interface)
 	/* Crash circuit is built around a noise        */
 	/* generator built from 2 shift registers that  */
 	/* are clocked by the 2V signal.                */
-	/* 1H = 3MHz and 1V = 32H /2 = 3Mhz/32/2/2      */
-	/*               2V = 3Mhz/32/4 = 23483Hz       */
+	/* 1H = 3MHz and 1V = 32H /2 = 3MHz/32/2/2      */
+	/*               2V = 3MHz/32/4 = 23483Hz       */
 	/* Output is binary weighted with 4 bits of     */
 	/* crash volume.                                */
 	/* Volume is inverted by input register mapping */

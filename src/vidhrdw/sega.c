@@ -88,7 +88,7 @@ void sega_generate_vector_list (void)
 				currentX += deltax >> 7;
 				currentY -= deltay >> 7;
 
-				color = attrib & 0x7e;
+				color = VECTOR_COLOR222((attrib >> 1) & 0x3f);
 				if ((attrib & 1) && color)
 				{
 					if (translucency)
@@ -108,61 +108,6 @@ void sega_generate_vector_list (void)
 			break;
 
 	} while (!(draw & 0x80));
-}
-/***************************************************************************
-
-  The Sega vector games don't have a color PROM, it uses RGB values for the
-  vector guns.
-  This routine sets up the color tables to simulate it.
-
-***************************************************************************/
-
-
-void sega_init_colors (unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
-{
-	int i,r,g,b;
-
-	/* Bits are-> Red: 6&5 (0x60), Green: 4&3 (0x18), Blue: 2&1 (0x06) */
-	for (i=0; i<128; i+=2)
-	{
-		palette[3*i  ] = 85 * ((i>>5)&0x3);
-		palette[3*i+1] = 85 * ((i>>3)&0x3);
-		palette[3*i+2] = 85 * ((i>>1)&0x3);
-	}
-	/*
-	 * Fill in the holes with good anti-aliasing colors.  This is a very good
-	 * range of colors based on the previous palette entries.     .ac JAN2498
-	 */
-	i=1;
-	for (r=0; r<=6; r++)
-	{
-		for (g=0; g<=6; g++)
-		{
-			for (b=0; b<=6; b++)
-			{
-				if (!((r|g|b)&0x1) ) continue;
-				if ((g==5 || g==6) && (b==1 || b==2 || r==1 || r==2)) continue;
-				if ((g==3 || g==4) && (b==1         || r==1        )) continue;
-				if ((b==6 || r==6) && (g==1 || g==2                )) continue;
-				if ((r==5)         && (b==1)                        ) continue;
-				if ((b==5)         && (r==1)                        ) continue;
-				palette[3*i  ] = (255*r) / 6;
-				palette[3*i+1] = (255*g) / 6;
-				palette[3*i+2] = (255*b) / 6;
-				if (i < 128)
-					i+=2;
-				else
-					i++;
-			}
-		}
-	}
-	/* There are still 4 colors left, just going to put some grays in. */
-	for (i=252; i<=255; i++)
-	{
-		palette[3*i  ] =
-		palette[3*i+1] =
-		palette[3*i+2] = 107 + (42*(i-252));
-	}
 }
 
 /***************************************************************************

@@ -1814,7 +1814,7 @@ void osd_debugger_focus(int debugger_has_focus)
 
 static int init_direct_mapped(unsigned int totalcolors,
 		const UINT8 *palette,UINT32 *rgb_components,
-		const UINT8 *debug_palette,UINT32 *debug_pens)
+		const UINT8 *debug_palette,pen_t *debug_pens)
 {
 	if (video_depth == 16)
 	{

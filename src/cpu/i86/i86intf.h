@@ -11,9 +11,6 @@ enum {
 	I86_VECTOR, I86_PENDING, I86_NMI_STATE, I86_IRQ_STATE
 };
 
-#define I86_INT_NONE 0
-#define I86_NMI_INT 2
-
 /* Public variables */
 extern int i86_ICount;
 
@@ -25,13 +22,8 @@ extern void i86_exit(void);
 extern int i86_execute(int cycles);
 extern unsigned i86_get_context(void *dst);
 extern void i86_set_context(void *src);
-extern unsigned i86_get_pc(void);
-extern void i86_set_pc(unsigned val);
-extern unsigned i86_get_sp(void);
-extern void i86_set_sp(unsigned val);
 extern unsigned i86_get_reg(int regnum);
 extern void i86_set_reg(int regnum, unsigned val);
-extern void i86_set_nmi_line(int state);
 extern void i86_set_irq_line(int irqline, int state);
 extern void i86_set_irq_callback(int (*callback)(int irqline));
 extern unsigned i86_dasm(char *buffer, unsigned pc);

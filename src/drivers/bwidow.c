@@ -631,7 +631,7 @@ static const struct MachineDriver machine_driver_bwidow =
 	256, 0,
 	avg_init_palette_multi,
 
-	VIDEO_TYPE_VECTOR | VIDEO_SUPPORTS_DIRTY,
+	VIDEO_TYPE_VECTOR | VIDEO_SUPPORTS_DIRTY | VIDEO_RGB_DIRECT,
 	0,
 	avg_start,
 	avg_stop,
@@ -668,7 +668,7 @@ static const struct MachineDriver machine_driver_gravitar =
 	256, 0,
 	avg_init_palette_multi,
 
-	VIDEO_TYPE_VECTOR | VIDEO_SUPPORTS_DIRTY,
+	VIDEO_TYPE_VECTOR | VIDEO_SUPPORTS_DIRTY | VIDEO_RGB_DIRECT,
 	0,
 	avg_start,
 	avg_stop,
@@ -707,7 +707,7 @@ static const struct MachineDriver machine_driver_spacduel =
 	256, 0,
 	avg_init_palette_multi,
 
-	VIDEO_TYPE_VECTOR | VIDEO_SUPPORTS_DIRTY,
+	VIDEO_TYPE_VECTOR | VIDEO_SUPPORTS_DIRTY | VIDEO_RGB_DIRECT,
 	0,
 	avg_start,
 	avg_stop,

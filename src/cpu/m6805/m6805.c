@@ -73,7 +73,7 @@ typedef struct
 	UINT8	x;				/* Index register */
 	UINT8	cc; 			/* Condition codes */
 
-	UINT8	pending_interrupts; /* MB */
+	UINT16	pending_interrupts; /* MB */
 	int 	(*irq_callback)(int irqline);
 	int 	irq_state[8];		/* KW Additional lines for HD63705 */
 	int		nmi_state;
@@ -313,9 +313,9 @@ static void Interrupt(void)
 		m6805_ICount -= 11;
 
 	}
-	else if( (m6805.pending_interrupts & (M6805_INT_IRQ|HD63705_INT_MASK)) != 0 && (CC & IFLAG) == 0 )
+	else if( (m6805.pending_interrupts & ((1<<M6805_IRQ_LINE)|HD63705_INT_MASK)) != 0 && (CC & IFLAG) == 0 )
 #else
-	if( (m6805.pending_interrupts & M6805_INT_IRQ) != 0 && (CC & IFLAG) == 0 )
+	if( (m6805.pending_interrupts & (1<<M6805_IRQ_LINE)) != 0 && (CC & IFLAG) == 0 )
 #endif
 	{
         /* standard IRQ */
@@ -383,7 +383,7 @@ static void Interrupt(void)
 		else
 #endif
 		{
-			m6805.pending_interrupts &= ~M6805_INT_IRQ;
+			m6805.pending_interrupts &= ~(1<<M6805_IRQ_LINE);
 			RM16( AMASK - 5, &pPC );
 		}
 		m6805_ICount -= 11;
@@ -398,7 +398,7 @@ static void state_register(const char *type)
 	state_save_register_UINT16(type, cpu, "S", &S, 1);
 	state_save_register_UINT8(type, cpu, "X", &X, 1);
 	state_save_register_UINT8(type, cpu, "CC", &CC, 1);
-	state_save_register_UINT8(type, cpu, "PENDING", &m6805.pending_interrupts, 1);
+	state_save_register_UINT16(type, cpu, "PENDING", &m6805.pending_interrupts, 1);
 	state_save_register_INT32(type, cpu, "IRQ_STATE", &m6805.irq_state[0], 1);
 }
 
@@ -452,42 +452,6 @@ void m6805_set_context(void *src)
 
 
 /****************************************************************************
- * Return program counter
- ****************************************************************************/
-unsigned m6805_get_pc(void)
-{
-	return PC & AMASK;
-}
-
-
-/****************************************************************************
- * Set program counter
- ****************************************************************************/
-void m6805_set_pc(unsigned val)
-{
-	PC = val & AMASK;
-}
-
-
-/****************************************************************************
- * Return stack pointer
- ****************************************************************************/
-unsigned m6805_get_sp(void)
-{
-	return SP_ADJUST(S);
-}
-
-
-/****************************************************************************
- * Set stack pointer
- ****************************************************************************/
-void m6805_set_sp(unsigned val)
-{
-	S = SP_ADJUST(val);
-}
-
-
-/****************************************************************************
  * Return a specific register
  ****************************************************************************/
 unsigned m6805_get_reg(int regnum)
@@ -495,7 +459,9 @@ unsigned m6805_get_reg(int regnum)
 	switch( regnum )
 	{
 		case M6805_A: return A;
+		case REG_PC: return PC & AMASK;
 		case M6805_PC: return PC;
+		case REG_SP:
 		case M6805_S: return SP_ADJUST(S);
 		case M6805_X: return X;
 		case M6805_CC: return CC;
@@ -520,7 +486,9 @@ void m6805_set_reg(int regnum, unsigned val)
 	switch( regnum )
 	{
 		case M6805_A: A = val; break;
+		case REG_PC:
 		case M6805_PC: PC = val & AMASK; break;
+		case REG_SP:
 		case M6805_S: S = SP_ADJUST(val); break;
 		case M6805_X: X = val; break;
 		case M6805_CC: CC = val; break;
@@ -539,11 +507,6 @@ void m6805_set_reg(int regnum, unsigned val)
 }
 
 
-void m6805_set_nmi_line(int state)
-{
-	/* 6805 has no NMI line... but the HD63705 does !! see specific version */
-}
-
 void m6805_set_irq_line(int irqline, int state)
 {
 	/* Basic 6805 only has one IRQ line */
@@ -552,7 +515,7 @@ void m6805_set_irq_line(int irqline, int state)
 
 	m6805.irq_state[0] = state;
 	if (state != CLEAR_LINE)
-		m6805.pending_interrupts |= M6805_INT_IRQ;
+		m6805.pending_interrupts |= 1<<M6805_IRQ_LINE;
 }
 
 void m6805_set_irq_callback(int (*callback)(int irqline))
@@ -735,7 +698,7 @@ int m6805_execute(int cycles)
 			case 0x98: CLC; break;
 			case 0x99: SEC; break;
 #if IRQ_LEVEL_DETECT
-			case 0x9a: CLI; if (m6805.irq_state != CLEAR_LINE) m6805.pending_interrupts |= M6805_INT_IRQ; break;
+			case 0x9a: CLI; if (m6805.irq_state != CLEAR_LINE) m6805.pending_interrupts |= 1<<M6805_IRQ_LINE; break;
 #else
 			case 0x9a: CLI; break;
 #endif
@@ -941,13 +904,8 @@ void m68705_exit(void) { m6805_exit(); }
 int  m68705_execute(int cycles) { return m6805_execute(cycles); }
 unsigned m68705_get_context(void *dst) { return m6805_get_context(dst); }
 void m68705_set_context(void *src) { m6805_set_context(src); }
-unsigned m68705_get_pc(void) { return m6805_get_pc(); }
-void m68705_set_pc(unsigned val) { m6805_set_pc(val); }
-unsigned m68705_get_sp(void) { return m6805_get_sp(); }
-void m68705_set_sp(unsigned val) { m6805_set_pc(val); }
 unsigned m68705_get_reg(int regnum)  { return m6805_get_reg(regnum); }
 void m68705_set_reg(int regnum, unsigned val)  { m6805_set_reg(regnum,val); }
-void m68705_set_nmi_line(int state)  { m6805_set_nmi_line(state); }
 void m68705_set_irq_line(int irqline, int state)  { m6805_set_irq_line(irqline,state); }
 void m68705_set_irq_callback(int (*callback)(int irqline))	{ m6805_set_irq_callback(callback); }
 
@@ -1022,30 +980,26 @@ void hd63705_exit(void) { m6805_exit(); }
 int	hd63705_execute(int cycles) { return m6805_execute(cycles); }
 unsigned hd63705_get_context(void *dst) { return m6805_get_context(dst); }
 void hd63705_set_context(void *src) { m6805_set_context(src); }
-unsigned hd63705_get_pc(void) { return m6805_get_pc(); }
-void hd63705_set_pc(unsigned val) { m6805_set_pc(val); }
-unsigned hd63705_get_sp(void) { return m6805_get_sp(); }
-void hd63705_set_sp(unsigned val) { m6805_set_pc(val); }
 
 unsigned hd63705_get_reg(int regnum)  { return m6805_get_reg(regnum); }
 void hd63705_set_reg(int regnum, unsigned val)  { m6805_set_reg(regnum,val); }
 
-void hd63705_set_nmi_line(int state)
-{
-	if (m6805.nmi_state == state) return;
-
-	m6805.nmi_state = state;
-	if (state != CLEAR_LINE)
-		m6805.pending_interrupts |= HD63705_INT_NMI;
-}
-
 void hd63705_set_irq_line(int irqline, int state)
 {
-	if(irqline>HD63705_INT_ADCONV) return;
+	if (irqline == IRQ_LINE_NMI)
+	{
+		if (m6805.nmi_state == state) return;
 
-	if (m6805.irq_state[irqline] == state) return;
-	m6805.irq_state[irqline] = state;
-	if (state != CLEAR_LINE) m6805.pending_interrupts |= 1<<irqline;
+		m6805.nmi_state = state;
+		if (state != CLEAR_LINE)
+			m6805.pending_interrupts |= 1<<HD63705_INT_NMI;
+	}
+	else if (irqline <= HD63705_INT_ADCONV)
+	{
+		if (m6805.irq_state[irqline] == state) return;
+		m6805.irq_state[irqline] = state;
+		if (state != CLEAR_LINE) m6805.pending_interrupts |= 1<<irqline;
+	}
 }
 
 void hd63705_set_irq_callback(int (*callback)(int irqline))  { m6805_set_irq_callback(callback); }

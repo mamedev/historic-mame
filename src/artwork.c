@@ -21,6 +21,9 @@
 #include "artwork.h"
 #include <ctype.h>
 
+#define LIMIT5(x) ((x < 0x1f)? x : 0x1f)
+#define LIMIT8(x) ((x < 0xff)? x : 0xff)
+
 /* the backdrop instance */
 struct artwork_info *artwork_backdrop = NULL;
 
@@ -100,26 +103,6 @@ static void HSVtoRGB( float *r, float *g, float *b, float h, float s, float v )
 
 }
 
-static UINT8 *create_15bit_palette ( void )
-{
-	int r, g, b;
-	UINT8 *palette, *tmp;
-
-	if ((palette = malloc (3 * 32768)) == 0)
-		return 0;
-
-	tmp = palette;
-	for (r = 0; r < 32; r++)
-		for (g = 0; g < 32; g++)
-			for (b = 0; b < 32; b++)
-			{
-				*tmp++ = (r << 3) | (r >> 2);
-				*tmp++ = (g << 3) | (g >> 2);
-				*tmp++ = (b << 3) | (b >> 2);
-			}
-	return palette;
-}
-
 static void merge_cmy(struct artwork_info *a, struct osd_bitmap *source, struct osd_bitmap *source_alpha,int sx, int sy)
 {
 	int c1, c2, m1, m2, y1, y2, pen1, pen2, max, alpha;
@@ -145,29 +128,29 @@ static void merge_cmy(struct artwork_info *a, struct osd_bitmap *source, struct 
 		{
 			pen1 = read_pixel(dest, sx + x, sy + y);
 
-			c1 = 0xff - a->orig_palette[3*pen1];
-			m1 = 0xff - a->orig_palette[3*pen1+1];
-			y1 = 0xff - a->orig_palette[3*pen1+2];
+			c1 = 0x1f - (pen1 >> 10);
+			m1 = 0x1f - ((pen1 >> 5) & 0x1f);
+			y1 = 0x1f - (pen1 & 0x1f);
 
 			pen2 = read_pixel(source, x, y);
-			c2 = 0xff - a->orig_palette[3*pen2] + c1;
-			m2 = 0xff - a->orig_palette[3*pen2+1] + m1;
-			y2 = 0xff - a->orig_palette[3*pen2+2] + y1;
+			c2 = 0x1f - (pen2 >> 10) + c1;
+			m2 = 0x1f - ((pen2 >> 5) & 0x1f) + m1;
+			y2 = 0x1f - (pen2 & 0x1f) + y1;
 
 			max = MAX(c2, MAX(m2, y2));
-			if (max > 0xff)
+			if (max > 0x1f)
 			{
-				c2 = (c2 * 0xf8) / max;
-				m2 = (m2 * 0xf8) / max;
-				y2 = (y2 * 0xf8) / max;
+				c2 = (c2 * 0x1f) / max;
+				m2 = (m2 * 0x1f) / max;
+				y2 = (y2 * 0x1f) / max;
 			}
 
 			alpha = MIN (0xff, read_pixel(source_alpha, x, y)
 						 + read_pixel(dest_alpha, sx + x, sy + y));
 			plot_pixel(dest, sx + x, sy + y,
-					   (((0xff - c2) & 0xf8) << 7)
-					   | (((0xff - m2) & 0xf8) << 2)
-					   | ((0xff - y2) >> 3));
+					   ((0x1f - c2) << 10)
+					   | ((0x1f - m2) << 5)
+					   | (0x1f - y2));
 
 			plot_pixel(dest_alpha, sx + x, sy + y, alpha);
 		}
@@ -195,9 +178,6 @@ static void allocate_artwork_mem (int width, int height, struct artwork_info **a
 		logerror("Not enough memory for artwork!\n");
 		return;
 	}
-
-	(*a)->transparency = NULL;
-	(*a)->orig_palette = NULL;
 
 	if (((*a)->orig_artwork = bitmap_alloc(width, height)) == 0)
 	{
@@ -300,41 +280,46 @@ static struct osd_bitmap *create_disk (int r, int fg, int bg)
 static void artwork_remap(struct artwork_info *a)
 {
 	int x, y;
-	for ( y = 0; y < a->orig_artwork->height; y++)
-		for (x = 0; x < a->orig_artwork->width; x++)
-			((UINT16 *)a->artwork->line[y])[x] = ((UINT16 *)a->orig_artwork->line[y])[x]+a->start_pen;
+	if (Machine->color_depth == 16)
+	{
+		for ( y = 0; y < a->orig_artwork->height; y++)
+			for (x = 0; x < a->orig_artwork->width; x++)
+				((UINT16 *)a->artwork->line[y])[x] = ((UINT16 *)a->orig_artwork->line[y])[x]+a->start_pen;
+	}
+	else
+		copybitmap(a->artwork, a->orig_artwork ,0,0,0,0,NULL,TRANSPARENCY_NONE,0);
 }
 
 /*********************************************************************
-  load_palette
+  init_palette
 
-  This sets the palette colors used by the backdrop to the new colors
-  passed in as palette.	 The values should be stored as one byte of red,
-  one byte of blue, one byte of green.	This could hopefully be used
-  for special effects, like lightening and darkening the backdrop.
+  This sets the palette colors used by the backdrop. It is a simple
+  rgb555 palette of 32768 entries.
  *********************************************************************/
-static void load_palette(struct artwork_info *a, UINT8 *palette)
+static void init_palette(int start_pen)
 {
-	int i;
+	int r, g, b;
 
-	/* Load colors into the palette */
-	for (i = 0; i < a->num_pens_used; i++)
-		palette_set_color(i + a->start_pen, palette[i*3], palette[i*3+1], palette[i*3+2]);
+	for (r = 0; r < 32; r++)
+		for (g = 0; g < 32; g++)
+			for (b = 0; b < 32; b++)
+				palette_set_color(start_pen++, (r << 3) | (r >> 2), (g << 3) | (g >> 2), (b << 3) | (b >> 2));
 }
 
 /*********************************************************************
 
-  Reads a PNG for a artwork struct and checks if it has the right
-  format.
-
+  Reads a PNG for a artwork struct and converts it into a format
+  usable for mame.
  *********************************************************************/
 static int decode_png(const char *file_name, struct osd_bitmap **bitmap, struct osd_bitmap **alpha, struct png_info *p)
 {
 	UINT8 *tmp;
-	int x, y, pen;
+	UINT32 x, y, pen;
 	void *fp;
-	int file_name_len;
+	int file_name_len, depth;
 	char file_name2[256];
+
+	depth = Machine->color_depth;
 
 	/* check for .png */
 	strcpy(file_name2, file_name);
@@ -384,7 +369,7 @@ static int decode_png(const char *file_name, struct osd_bitmap **bitmap, struct 
 		}
 
 		tmp = p->image;
-		/* convert to 15bit */
+		/* convert to 15/32 bit */
 		if (p->num_trans > 0)
 			if ((*alpha = bitmap_alloc(p->width,p->height)) == 0)
 			{
@@ -395,7 +380,10 @@ static int decode_png(const char *file_name, struct osd_bitmap **bitmap, struct 
 		for (y=0; y<p->height; y++)
 			for (x=0; x<p->width; x++)
 			{
-				pen = ((p->palette[*tmp * 3] & 0xf8) << 7) | ((p->palette[*tmp * 3 + 1] & 0xf8) << 2) | (p->palette[*tmp * 3 + 2] >> 3);
+				if (depth == 32)
+					pen = (p->palette[*tmp * 3] << 16) | (p->palette[*tmp * 3 + 1] << 8) | p->palette[*tmp * 3 + 2];
+				else
+					pen = ((p->palette[*tmp * 3] & 0xf8) << 7) | ((p->palette[*tmp * 3 + 1] & 0xf8) << 2) | (p->palette[*tmp * 3 + 2] >> 3);
 				plot_pixel(*bitmap, x, y, pen);
 
 				if (p->num_trans > 0)
@@ -409,14 +397,6 @@ static int decode_png(const char *file_name, struct osd_bitmap **bitmap, struct 
 			}
 
 		free (p->palette);
-
-		/* create 15 bit palette */
-		if ((p->palette = create_15bit_palette()) == 0)
-		{
-			logerror("Unable to allocate memory for artwork\n");
-			return 0;
-		}
-		p->num_palette = 32768;
 		break;
 
 	case 6:
@@ -433,23 +413,14 @@ static int decode_png(const char *file_name, struct osd_bitmap **bitmap, struct 
 			return 0;
 		}
 
-		/* create 15 bit palette */
-		if ((p->palette = create_15bit_palette()) == 0)
-		{
-			logerror("Unable to allocate memory for artwork\n");
-			return 0;
-		}
-
-		p->num_palette = 32768;
-		p->trans = NULL;
-		p->num_trans = 0;
-
-		/* reduce true color to 15 bit */
 		tmp = p->image;
 		for (y=0; y<p->height; y++)
 			for (x=0; x<p->width; x++)
 			{
-				pen = ((tmp[0] & 0xf8) << 7) | ((tmp[1] & 0xf8) << 2) | (tmp[2] >> 3);
+				if (depth == 32)
+					pen = (tmp[0] << 16) | (tmp[1] << 8) | tmp[2];
+				else
+					pen = ((tmp[0] & 0xf8) << 7) | ((tmp[1] & 0xf8) << 2) | (tmp[2] >> 3);
 				plot_pixel(*bitmap, x, y, pen);
 
 				if (p->color_type == 6)
@@ -477,9 +448,6 @@ static int decode_png(const char *file_name, struct osd_bitmap **bitmap, struct 
 
   This is what loads your backdrop in from disk.
   start_pen = the first pen available for the backdrop to use
-  So, for example, suppose you want to load "dotron.png", have it
-  start with color 192, and only use 48 pens.  You would call
-  backdrop = backdrop_load("dotron.png",192,48);
  *********************************************************************/
 
 static void load_png(const char *filename, unsigned int start_pen,
@@ -500,13 +468,6 @@ static void load_png(const char *filename, unsigned int start_pen,
 
 	if (*a==NULL)
 		return;
-
-	(*a)->start_pen = start_pen;
-
-	(*a)->num_pens_used = p.num_palette;
-	(*a)->num_pens_trans = p.num_trans;
-	(*a)->orig_palette = p.palette;
-	(*a)->transparency = p.trans;
 
 	/* Scale the original picture to be the same size as the visible area */
 	scalex = 0x10000 * picture->width  / (*a)->artwork->width;
@@ -530,9 +491,14 @@ static void load_png(const char *filename, unsigned int start_pen,
 		bitmap_free(alpha);
 	}
 
-	/* If the game uses dynamic colors, we assume that it's safe
-	   to init the palette and remap the colors now */
-	load_palette(*a,(*a)->orig_palette);
+	if (Machine->color_depth == 16)
+	{
+		(*a)->start_pen = start_pen;
+		init_palette(start_pen);
+	}
+	else
+		(*a)->start_pen = 0;
+
 	artwork_remap(*a);
 }
 
@@ -595,7 +561,7 @@ static void overlay_init(struct artwork_info *a)
   overlay_draw
 
   Supports different levels of intensity on the screen and different
-  levels of transparancy of the overlay (only in 16 bpp modes).
+  levels of transparancy of the overlay.
  *********************************************************************/
 
 static void overlay_draw(struct osd_bitmap *dest, struct osd_bitmap *source)
@@ -612,33 +578,83 @@ static void overlay_draw(struct osd_bitmap *dest, struct osd_bitmap *source)
 	height = source->height;
 	width = source->width;
 
-	if (artwork_overlay->start_pen == 2)
+	switch (Machine->color_depth)
 	{
-		/* fast version */
-		height = artwork_overlay->artwork->height;
-		width = artwork_overlay->artwork->width;
-
-		for ( j = 0; j < height; j++)
+	case 16:
+		if (artwork_overlay->start_pen == 2)
 		{
-			dst = (UINT16 *)dest->line[j];
-			src = (UINT16 *)source->line[j];
-			bg = (UINT16 *)artwork_overlay->artwork->line[j];
-			fg = (UINT16 *)artwork_overlay->artwork1->line[j];
-			for (i = width; i > 0; i--)
+			/* fast version */
+			height = artwork_overlay->artwork->height;
+			width = artwork_overlay->artwork->width;
+
+			for ( j = 0; j < height; j++)
 			{
-				if (*src!=0)
-					*dst = *fg;
-				else
-					*dst = *bg;
-				dst++;
-				src++;
-				fg++;
-				bg++;
+				dst = (UINT16 *)dest->line[j];
+				src = (UINT16 *)source->line[j];
+				bg = (UINT16 *)artwork_overlay->artwork->line[j];
+				fg = (UINT16 *)artwork_overlay->artwork1->line[j];
+				for (i = width; i > 0; i--)
+				{
+					if (*src!=0)
+						*dst = *fg;
+					else
+						*dst = *bg;
+					dst++;
+					src++;
+					fg++;
+					bg++;
+				}
 			}
 		}
-	}
-	else /* slow version */
-	{
+		else /* slow version */
+		{
+			rgb = artwork_overlay->rgb;
+			start_pen = artwork_overlay->start_pen;
+			copybitmap(dest, artwork_overlay->artwork ,0,0,0,0,NULL,TRANSPARENCY_NONE,0);
+			black = -1;
+			for ( j = 0; j < height; j++)
+			{
+				dst = (UINT16 *)dest->line[j];
+				src = (UINT16 *)source->line[j];
+
+				for (i = width; i > 0; i--)
+				{
+					if (*src != black)
+					{
+						bp = bright[*src];
+						if (bp)
+						{
+							if (bp == 0xffffffff)
+							{
+								palette_get_color(*src, &r8, &g8, &b8);
+								bright[*src]=bp=(222*r8+707*g8+71*b8)/1000;
+							}
+
+							v = *rgb >> 24;
+							vn =(*rgb >> 16) & 0x1f;
+							vn += ((0x1f - vn) * (bp >> 3)) / 0x1f;
+							if (v > 0)
+							{
+								r = (((*rgb >> 10) & 0x1f) * vn) / v;
+								g = (((*rgb >> 5)  & 0x1f) * vn) / v;
+								b = ((*rgb & 0x1f) * vn) / v;
+								*dst = ((r << 10) | (g << 5) | b) + start_pen;
+							}
+							else
+								*dst = ((vn << 10) | (vn << 5) | vn) + start_pen;
+						}
+						else
+							black = *src;
+					}
+					src++;
+					dst++;
+					rgb++;
+				}
+			}
+
+		}
+		break;
+	case 15:
 		rgb = artwork_overlay->rgb;
 		start_pen = artwork_overlay->start_pen;
 		copybitmap(dest, artwork_overlay->artwork ,0,0,0,0,NULL,TRANSPARENCY_NONE,0);
@@ -656,23 +672,22 @@ static void overlay_draw(struct osd_bitmap *dest, struct osd_bitmap *source)
 					if (bp)
 					{
 						if (bp == 0xffffffff)
-						{
-							palette_get_color(*src, &r8, &g8, &b8);
-							bright[*src]=bp=(222*r8+707*g8+71*b8)/1000;
-						}
+							bright[*src]=bp=(222*(*src >> 10)
+											 +707*((*src >> 5) & 0x1f)
+											 +71*(*src & 0x1f))/1000;
 
 						v = *rgb >> 24;
 						vn =(*rgb >> 16) & 0x1f;
-						vn += ((0x1f - vn) * (bp >> 3)) / 0x1f;
+						vn += ((0x1f - vn) * bp) / 0x1f;
 						if (v > 0)
 						{
 							r = (((*rgb >> 10) & 0x1f) * vn) / v;
 							g = (((*rgb >> 5)  & 0x1f) * vn) / v;
 							b = ((*rgb & 0x1f) * vn) / v;
-							*dst = ((r << 10) | (g << 5) | b) + start_pen;
+							*dst = ((r << 10) | (g << 5) | b);
 						}
 						else
-							*dst = ((vn << 10) | (vn << 5) | vn) + start_pen;
+							*dst = ((vn << 10) | (vn << 5) | vn);
 					}
 					else
 						black = *src;
@@ -682,6 +697,10 @@ static void overlay_draw(struct osd_bitmap *dest, struct osd_bitmap *source)
 				rgb++;
 			}
 		}
+		break;
+	default:
+		logerror ("Color depth of %d not supported with overlays\n", Machine->color_depth);
+		break;
 	}
 }
 
@@ -694,51 +713,104 @@ static void backdrop_draw(struct osd_bitmap *dest, struct osd_bitmap *source)
 {
 	int i, j, brgb, bp, black = -1;
 	UINT8 r, g, b;
-	UINT16 *dst, *bdr, *src;
 	UINT32 bright[65536];
 
 	memset (bright, 0xff, sizeof(int)*65536);
 	copybitmap(dest, artwork_backdrop->artwork ,0,0,0,0,NULL,TRANSPARENCY_NONE,0);
 
-	for ( j = 0; j < source->height; j++)
+	switch (Machine->color_depth)
 	{
-		dst = (UINT16 *)dest->line[j];
-		src = (UINT16 *)source->line[j];
-		bdr = (UINT16 *)artwork_backdrop->artwork->line[j];
-		for (i = 0; i < source->width; i++)
+	case 16:
+	{
+		UINT16 *dst, *bdr, *src;
+		for ( j = 0; j < source->height; j++)
 		{
-			if (*src != black)
+			dst = (UINT16 *)dest->line[j];
+			src = (UINT16 *)source->line[j];
+			bdr = (UINT16 *)artwork_backdrop->artwork->line[j];
+			for (i = 0; i < source->width; i++)
 			{
-				bp = bright[*src];
-				if (bp)
+				if (*src != black)
 				{
-					if (bp == 0xffffffff)
+					bp = bright[*src];
+					if (bp)
 					{
-						palette_get_color(*src, &r, &g, &b);
-						bright[*src]=(222*r+707*g+71*b)/1000;
+						if (bp == 0xffffffff)
+						{
+							palette_get_color(*src, &r, &g, &b);
+							bright[*src]=(222*r+707*g+71*b)/1000;
+						}
+						else
+							palette_get_color(*src, &r, &g, &b);
+
+						r >>= 3;
+						g >>= 3;
+						b >>= 3;
+						brgb = *bdr - artwork_backdrop->start_pen;
+						r += brgb >> 10;
+						if (r > 0x1f) r = 0x1f;
+						g += (brgb >> 5) & 0x1f;
+						if (g > 0x1f) g = 0x1f;
+						b += brgb & 0x1f;
+						if (b > 0x1f) b = 0x1f;
+						*dst = ((r << 10) | (g << 5) | b) + artwork_backdrop->start_pen;
 					}
 					else
-						palette_get_color(*src, &r, &g, &b);
-
-					r >>= 3;
-					g >>= 3;
-					b >>= 3;
-					brgb = *bdr - artwork_backdrop->start_pen;
-					r += brgb >> 10;
-					if (r > 0x1f) r = 0x1f;
-					g += (brgb >> 5) & 0x1f;
-					if (g > 0x1f) g = 0x1f;
-					b += brgb & 0x1f;
-					if (b > 0x1f) b = 0x1f;
-					*dst = ((r << 10) | (g << 5) | b) + artwork_backdrop->start_pen;
+						black = *src;
 				}
-				else
-					black = *src;
+				dst++;
+				src++;
+				bdr++;
 			}
-			dst++;
-			src++;
-			bdr++;
 		}
+		break;
+	}
+	case 15:
+	{
+		UINT16 *dst, *src, *bdr;
+		for ( j = 0; j < source->height; j++)
+		{
+			dst = (UINT16 *)dest->line[j];
+			src = (UINT16 *)source->line[j];
+			bdr = (UINT16 *)artwork_backdrop->artwork->line[j];
+			for (i = 0; i < source->width; i++)
+			{
+				if (*src)
+				{
+					*dst = LIMIT5((*src & 0x1f) + (*bdr & 0x1f))
+						| (LIMIT5(((*src >> 5) & 0x1f) + ((*bdr >> 5) & 0x1f)) << 5)
+						| (LIMIT5((*src >> 10) + (*bdr >> 10)) << 10);
+				}
+				dst++;
+				src++;
+				bdr++;
+			}
+		}
+		break;
+	}
+	case 32:
+	{
+		UINT32 *dst, *src, *bdr;
+		for ( j = 0; j < source->height; j++)
+		{
+			dst = (UINT32 *)dest->line[j];
+			src = (UINT32 *)source->line[j];
+			bdr = (UINT32 *)artwork_backdrop->artwork->line[j];
+			for (i = 0; i < source->width; i++)
+			{
+				if (*src)
+				{
+					*dst = LIMIT8((*src & 0xff) + (*bdr & 0xff))
+						| (LIMIT8(((*src >> 8) & 0xff) + ((*bdr >> 8) & 0xff)) << 8)
+						| (LIMIT8((*src >> 16) + (*bdr >> 16)) << 16);
+				}
+				dst++;
+				src++;
+				bdr++;
+			}
+		}
+		break;
+	}
 	}
 }
 
@@ -766,10 +838,6 @@ void artwork_free(struct artwork_info **a)
 			bitmap_free((*a)->alpha);
 		if ((*a)->orig_artwork)
 			bitmap_free((*a)->orig_artwork);
-		if ((*a)->orig_palette)
-			free ((*a)->orig_palette);
-		if ((*a)->transparency)
-			free ((*a)->transparency);
 		if ((*a)->rgb)
 			free ((*a)->rgb);
 		free(*a);
@@ -816,7 +884,6 @@ void overlay_load(const char *filename, unsigned int start_pen)
 			logerror("Not enough memory for artwork!\n");
 			return;
 		}
-		load_palette(artwork_overlay,artwork_overlay->orig_palette);
 		overlay_init(artwork_overlay);
 	}
 }
@@ -945,15 +1012,6 @@ void overlay_create(const struct artwork_element *ae, unsigned int start_pen)
 		return;
 	}
 
-	artwork_overlay->start_pen = start_pen;
-
-	if ((artwork_overlay->orig_palette = create_15bit_palette()) == 0)
-	{
-		logerror("Unable to allocate memory for artwork\n");
-		artwork_kill();
-		return;
-	}
-	artwork_overlay->num_pens_used = 32768;
 	transparent_pen = 0xffff;
 	white_pen = 0x7fff;
 	fillbitmap (artwork_overlay->orig_artwork, white_pen, 0);
@@ -1043,7 +1101,14 @@ void overlay_create(const struct artwork_element *ae, unsigned int start_pen)
 		ae++;
 	}
 
-	load_palette(artwork_overlay,artwork_overlay->orig_palette);
+	if (Machine->color_depth == 16)
+	{
+		artwork_overlay->start_pen = start_pen;
+		init_palette(start_pen);
+	}
+	else
+		artwork_overlay->start_pen = 0;
+
 	artwork_remap(artwork_overlay);
 	overlay_init(artwork_overlay);
 }

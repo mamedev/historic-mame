@@ -33,7 +33,7 @@ int subs_interrupt(void)
 	if ((input_port_2_r(0) & 0x40)==0x40)
 		return nmi_interrupt();
 
-	return 0;
+	return ignore_interrupt();
 }
 
 /***************************************************************************

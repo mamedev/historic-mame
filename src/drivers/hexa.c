@@ -36,7 +36,6 @@ NOTES:
 
 
 
-void hexa_vh_convert_color_prom(unsigned char *obsolete,unsigned short *colortable,const unsigned char *color_prom);
 void hexa_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 WRITE_HANDLER( hexa_d008_w );
 
@@ -153,7 +152,7 @@ static const struct MachineDriver machine_driver_hexa =
 	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
 	gfxdecodeinfo,
 	256, 0,
-	hexa_vh_convert_color_prom,
+	palette_RRRR_GGGG_BBBB_convert_prom,
 
 
 	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY,

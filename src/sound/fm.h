@@ -34,22 +34,22 @@
 /* int n    = chip number        */
 /* int clk  = MasterClock(Hz)    */
 /* int rate = sample rate(Hz) */
-#define SSGClk(chip,clock) AY8910_set_clock(chip,clock)
+#define SSGClk(chip,clock) AY8910_set_clock((chip)+ay8910_index_ym,clock)
 
 /* SSGWrite : Write SSG port     */
 /* int n    = chip number        */
 /* int a    = address            */
 /* int v    = data               */
-#define SSGWrite(n,a,v) AY8910Write(n,a,v)
+#define SSGWrite(n,a,v) AY8910Write((n)+ay8910_index_ym,a,v)
 
 /* SSGRead  : Read SSG port */
 /* int n    = chip number   */
 /* return   = Read data     */
-#define SSGRead(n) AY8910Read(n)
+#define SSGRead(n) AY8910Read((n)+ay8910_index_ym)
 
 /* SSGReset : Reset SSG chip */
 /* int n    = chip number   */
-#define SSGReset(chip) AY8910_reset(chip)
+#define SSGReset(chip) AY8910_reset((chip)+ay8910_index_ym)
 
 /* --- external callback funstions for realtime update --- */
 

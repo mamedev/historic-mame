@@ -10,10 +10,6 @@ enum {
 	HD6309_PC=1, HD6309_S, HD6309_CC ,HD6309_A, HD6309_B, HD6309_U, HD6309_X, HD6309_Y, HD6309_DP, HD6309_NMI_STATE,
 	HD6309_IRQ_STATE, HD6309_FIRQ_STATE, HD6309_E, HD6309_F, HD6309_V, HD6309_MD };
 
-#define HD6309_INT_NONE  0	 /* No interrupt required */
-#define HD6309_INT_IRQ	1	/* Standard IRQ interrupt */
-#define HD6309_INT_FIRQ 2	/* Fast IRQ */
-#define HD6309_INT_NMI	4	/* NMI */	/* NS 970909 */
 #define HD6309_IRQ_LINE 0	/* IRQ line number */
 #define HD6309_FIRQ_LINE 1	 /* FIRQ line number */
 
@@ -28,13 +24,8 @@ extern void hd6309_exit(void);
 extern int hd6309_execute(int cycles);	/* NS 970908 */
 extern unsigned hd6309_get_context(void *dst);
 extern void hd6309_set_context(void *src);
-extern unsigned hd6309_get_pc(void);
-extern void hd6309_set_pc(unsigned val);
-extern unsigned hd6309_get_sp(void);
-extern void hd6309_set_sp(unsigned val);
 extern unsigned hd6309_get_reg(int regnum);
 extern void hd6309_set_reg(int regnum, unsigned val);
-extern void hd6309_set_nmi_line(int state);
 extern void hd6309_set_irq_line(int irqline, int state);
 extern void hd6309_set_irq_callback(int (*callback)(int irqline));
 extern const char *hd6309_info(void *context,int regnum);

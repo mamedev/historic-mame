@@ -690,7 +690,7 @@ static struct YM2203interface ym2203_interface =
 static struct OKIM6295interface okim6295_interface =
 {
 	1,
-	{ 18000 },		/* ?? */
+	{ 12000000/4/165 }, /* 3MHz -> 6295 (mode A) */
 	{ REGION_SOUND1 },
 	{ 50 }
 };

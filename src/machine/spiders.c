@@ -9,6 +9,7 @@
 
 #include "driver.h"
 #include "machine/6821pia.h"
+#include "cpu/m6800/m6800.h"
 #include "cpu/m6809/m6809.h"
 
 
@@ -23,8 +24,14 @@ void spiders_irq2a(int state) { cpu_set_irq_line(0,M6809_IRQ_LINE,state ? ASSERT
 void spiders_irq2b(int state) { cpu_set_irq_line(0,M6809_IRQ_LINE,state ? ASSERT_LINE : CLEAR_LINE); }
 
 /* Sound CPU */
-void spiders_irq3a(int state) { }
-void spiders_irq3b(int state) { }
+void spiders_irq3a(int state) { logerror("PIA3 irqA %d\n",state); }
+void spiders_irq3b(int state) { logerror("PIA3 irqB %d\n",state); }
+
+static WRITE_HANDLER( soundcmd_w )
+{
+	soundlatch_w(0,data);
+	cpu_set_irq_line(1,M6802_IRQ_LINE,(~data & 0x80) ? CLEAR_LINE : ASSERT_LINE);
+}
 
 /* Function prototypes */
 
@@ -55,7 +62,7 @@ static struct pia6821_interface pia_1_intf =
 static struct pia6821_interface pia_2_intf =
 {
 	/*inputs : A/B,CA/B1,CA/B2 */ 0, 0, 0, 0, 0, 0,
-	/*outputs: A/B,CA/B2       */ 0, 0, 0, 0,
+	/*outputs: A/B,CA/B2       */ 0, soundcmd_w, 0, 0,
 	/*irqs   : A/B             */ spiders_irq2a, spiders_irq2b
 };
 

@@ -75,7 +75,6 @@ TODO
 unsigned char *sauro_videoram2;
 unsigned char *sauro_colorram2;
 
-void sauro_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 void sauro_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 WRITE_HANDLER( sauro_scroll1_w );
@@ -289,8 +288,8 @@ static const struct MachineDriver machine_driver_sauro =
 	/* video hardware */
 	32*8, 32*8, { 1*8, 31*8-1, 2*8, 30*8-1 },
 	gfxdecodeinfo,
-	1024, 1024,
-	sauro_vh_convert_color_prom,
+	1024, 0,
+	palette_RRRR_GGGG_BBBB_convert_prom,
 
 	VIDEO_TYPE_RASTER,
 	0,

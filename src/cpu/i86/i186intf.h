@@ -7,9 +7,6 @@
 
 #include "i86intf.h"
 
-#define I186_INT_NONE I86_INT_NONE
-#define I186_NMI_INT I86_NMI_INT
-
 /* Public variables */
 #define i186_ICount i86_ICount
 
@@ -20,13 +17,8 @@
 extern int i186_execute(int cyclecount);
 #define i186_get_context i86_get_context
 #define i186_set_context i86_set_context
-#define i186_get_pc i86_get_pc
-#define i186_set_pc i86_set_pc
-#define i186_get_sp i86_get_sp
-#define i186_set_sp i86_set_sp
 #define i186_get_reg i86_get_reg
 #define i186_set_reg i86_set_reg
-#define i186_set_nmi_line i86_set_nmi_line
 #define i186_set_irq_line i86_set_irq_line
 #define i186_set_irq_callback i86_set_irq_callback
 extern const char *i186_info(void *context, int regnum);

@@ -380,9 +380,9 @@ WRITE_HANDLER( hunchbkd_data_w )
 
 READ_HANDLER( hunchbkd_port0_r )
 {
-	logerror("port 0 : pc = %4x\n",s2650_get_pc());
+	logerror("port 0 : pc = %4x\n",activecpu_get_pc());
 
-	switch (s2650_get_pc())
+	switch (activecpu_get_pc())
 	{
 		case 0x00e9:  return 0xff;
 		case 0x0114:  return 0xfb;
@@ -398,7 +398,7 @@ READ_HANDLER( hunchbkd_port1_r )
 
 READ_HANDLER( herbiedk_port1_r )
 {
-	switch (s2650_get_pc())
+	switch (activecpu_get_pc())
 	{
         case 0x002b:
 		case 0x09dc:  return 0x0;

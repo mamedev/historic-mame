@@ -73,7 +73,7 @@ static void (*modify_ypos)(UINT8*);	/* function to call to do modify how vertica
 static void frogger_modify_ypos(UINT8 *sy);
 
 /* star circuit */
-#define STAR_COUNT  250
+#define STAR_COUNT  252
 struct star
 {
 	int x,y,color;
@@ -1221,6 +1221,12 @@ void galaxian_init_stars(unsigned char **palette)
 				}
 			}
 		}
+	}
+
+	if (total_stars != STAR_COUNT)
+	{
+		logerror("total_stars = %d, STAR_COUNT = %d\n",total_stars,STAR_COUNT);
+		exit(1);
 	}
 }
 

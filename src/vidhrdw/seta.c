@@ -1,6 +1,6 @@
 /***************************************************************************
 
-								-= Seta Games =-
+							-= Seta Hardware =-
 
 					driver by	Luca Elia (l.elia@tin.it)
 
@@ -134,30 +134,25 @@ Note:	if MAME_DEBUG is defined, pressing Z with:
 
 
 ***************************************************************************/
+
 #include "vidhrdw/generic.h"
+#include "seta.h"
 
 /* Variables only used here */
-static struct tilemap *tilemap_0,*tilemap_1, *tilemap_2,*tilemap_3;
+
+static struct tilemap *tilemap_0, *tilemap_1;	// Layer 0
+static struct tilemap *tilemap_2, *tilemap_3;	// Layer 1
 static int tilemaps_flip;
 
-/* Variables that driver has access to */
+/* Variables used elsewhere */
+
+int seta_tiles_offset;
+
 data16_t *seta_vram_0, *seta_vram_1, *seta_vctrl_0;
 data16_t *seta_vram_2, *seta_vram_3, *seta_vctrl_2;
 data16_t *seta_vregs;
 
-int seta_tiles_offset;	// tiles banking, can be 0 or $4000
-
-/* Variables & functions defined in driver */
-
-extern int blandia_samples_bank;
-
-void seta_coin_lockout_w(int data);
-
-/* Variables & functions defined in sndhrdw */
-
-void seta_sound_enable_w(int data);
-
-
+extern int seta_tiles_offset;
 
 
 WRITE16_HANDLER( seta_vregs_w )
@@ -198,11 +193,11 @@ WRITE16_HANDLER( seta_vregs_w )
 
 				new_bank = (data >> 3) & 0x7;
 
-				if (new_bank != blandia_samples_bank)
+				if (new_bank != seta_samples_bank)
 				{
 					int samples_len, addr;
 
-					blandia_samples_bank = new_bank;
+					seta_samples_bank = new_bank;
 
 					samples_len = memory_region_length(REGION_SOUND1);
 
@@ -381,6 +376,16 @@ int seta_vh_start_1_layer(void)
 	else return 1;
 }
 
+
+/* NO layers, only sprites */
+int seta_vh_start_no_layers(void)
+{
+	tilemap_0 = 0;
+	tilemap_1 = 0;
+	tilemap_2 = 0;
+	tilemap_3 = 0;
+	return 0;
+}
 
 int seta_vh_start_2_layers_offset_0x02(void)
 {
@@ -775,12 +780,9 @@ if (keyboard_pressed(KEYCODE_Z))
 	if (keyboard_pressed(KEYCODE_A))	msk |= 8;
 	if (msk != 0) layers_ctrl &= msk;
 
-	if (tilemap_2)
-		usrintf_showmessage("%04X-%04X-%04X %04X-%04X",
-							seta_vregs[ 0/2 ], seta_vregs[ 2/2 ], seta_vregs[ 4/2 ],
-							seta_vctrl_0[ 4/2 ],seta_vctrl_2[ 4/2 ]	);
-	else
-		usrintf_showmessage("%04X",	seta_vctrl_0[ 4/2 ]);		}
+	if (tilemap_2)		usrintf_showmessage("VR:%04X-%04X-%04X L0:%04X L1:%04X",seta_vregs[0],seta_vregs[1],seta_vregs[2],seta_vctrl_0[4/2],seta_vctrl_2[4/2]);
+	else if (tilemap_0)	usrintf_showmessage("L0:%04X",seta_vctrl_0[4/2]);
+}
 #endif
 
 	fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);

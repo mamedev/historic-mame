@@ -13,7 +13,7 @@
   - These games don't have cocktail mode.
   - The divisor 4 was derived using the timing loop used to split the screen
     in the middle.  This loop takes roughly 24200 cycles, giving
-    2500 + (24200 - 2500) * 2 * 60 = 2754000 = 2.75Mhz for the CPU speed,
+    2500 + (24200 - 2500) * 2 * 60 = 2754000 = 2.75MHz for the CPU speed,
     assuming 60 fps and a 2500 cycle VBLANK period.  Since the schematics
     are available, so this should be easy to check.
   - I think theglob2 is earlier than theglob.  They only differ in one routine,

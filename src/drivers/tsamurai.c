@@ -54,7 +54,6 @@ WRITE_HANDLER( tsamurai_textbank2_w );
 WRITE_HANDLER( tsamurai_scrolly_w );
 WRITE_HANDLER( tsamurai_scrollx_w );
 extern void tsamurai_vh_screenrefresh( struct osd_bitmap *bitmap, int fullrefresh );
-extern void tsamurai_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 WRITE_HANDLER( tsamurai_bg_videoram_w );
 WRITE_HANDLER( tsamurai_fg_videoram_w );
 WRITE_HANDLER( tsamurai_fg_colorram_w );
@@ -929,8 +928,8 @@ static struct MachineDriver machine_driver_tsamurai =
 	/* video hardware */
 	32*8, 32*8, { 0, 255, 8, 255-8 },
 	gfxdecodeinfo,
-	256,256,
-	tsamurai_convert_color_prom,
+	256, 0,
+	palette_RRRR_GGGG_BBBB_convert_prom,
 
 	VIDEO_TYPE_RASTER,
 	0,
@@ -987,8 +986,8 @@ static struct MachineDriver machine_driver_m660 =
 	/* video hardware */
 	32*8, 32*8, { 0, 255, 8, 255-8 },
 	gfxdecodeinfo,
-	256,256,
-	tsamurai_convert_color_prom,
+	256, 0,
+	palette_RRRR_GGGG_BBBB_convert_prom,
 
 	VIDEO_TYPE_RASTER,
 	0,
@@ -1034,8 +1033,8 @@ static struct MachineDriver machine_driver_vsgongf =
 	/* video hardware */
 	32*8, 32*8, { 0, 255, 8, 255-8 },
 	gfxdecodeinfo,
-	256,256,
-	tsamurai_convert_color_prom,
+	256, 0,
+	palette_RRRR_GGGG_BBBB_convert_prom,
 
 	VIDEO_TYPE_RASTER,
 	0,

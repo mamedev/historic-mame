@@ -60,7 +60,6 @@ WRITE_HANDLER( exzisus_videoram_1_w );
 WRITE_HANDLER( exzisus_objectram_0_w );
 WRITE_HANDLER( exzisus_objectram_1_w );
 
-void exzisus_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 void exzisus_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh);
 
 
@@ -386,7 +385,7 @@ static const struct MachineDriver machine_driver_exzisus =
 	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
 	exzisus_gfxdecodeinfo,
 	1024, 0,
-	exzisus_vh_convert_color_prom,
+	palette_RRRR_GGGG_BBBB_convert_prom,
 
 	VIDEO_TYPE_RASTER,
 	0,

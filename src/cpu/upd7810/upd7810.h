@@ -20,16 +20,15 @@ enum {
 	UPD7810_PORTA, UPD7810_PORTB, UPD7810_PORTC, UPD7810_PORTD, UPD7810_PORTF
 };
 
+/* IRQ lines */
+#define UPD7810_INTF1		0
+#define UPD7810_INTF2		1
+
 /* Supply an instance of this function in your driver code:
  * It will be called whenever an output signal changes or a new
  * input line state is to be sampled.
  */
 typedef int (*upd7810_io_callback)(int ioline, int state);
-
-#define UPD7810_INT_NONE	-1
-#define UPD7810_INTNMI		0
-#define UPD7810_INTF1		1
-#define UPD7810_INTF2		2
 
 extern int upd7810_icount;						/* cycle count */
 
@@ -39,13 +38,8 @@ extern void upd7810_exit  (void);				/* Shut down CPU core */
 extern int	upd7810_execute(int cycles);		/* Execute cycles - returns number of cycles actually run */
 extern unsigned upd7810_get_context (void *dst);/* Get registers, return context size */
 extern void upd7810_set_context (void *src);	/* Set registers */
-extern unsigned upd7810_get_pc (void);			/* Get program counter */
-extern void upd7810_set_pc (unsigned val);		/* Set program counter */
-extern unsigned upd7810_get_sp (void);			/* Get stack pointer */
-extern void upd7810_set_sp (unsigned val);		/* Set stack pointer */
 extern unsigned upd7810_get_reg (int regnum);
 extern void upd7810_set_reg (int regnum, unsigned val);
-extern void upd7810_set_nmi_line(int state);
 extern void upd7810_set_irq_line(int irqline, int state);
 extern void upd7810_set_irq_callback(int (*callback)(int irqline));
 extern const char *upd7810_info(void *context, int regnum);

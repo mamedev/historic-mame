@@ -1,6 +1,6 @@
 /****************************************************************************
 
-	Got-Ya driver by Zsolt Vasvari
+	Gotya / The Hand driver by Zsolt Vasvari
 
 
 TODO: Emulated sound
@@ -10,6 +10,21 @@ TODO: Emulated sound
 
 	  I think HD38880 is a CPU/MCU, because the game just sends it a sound command (0-0x1a)
 
+****************************************************************************/
+
+/****************************************************************************
+ About GotYa (from the board owner)
+
+ I believe it is a prototype for several reasons.
+ There were quite a few jumpers on the board, hand written labels with
+ the dates on them. I also have the manual, the game name is clearly Got-Ya
+ and is a Game-A-Tron game.  The game itself had a few flyers from GAT inside
+ so I have a hard time believing it was a bootleg.
+
+----
+
+ so despite the fact that 'gotya' might look like its a bootleg of thehand,
+ its more likely just a prototype / alternate version, its hard to tell
 ****************************************************************************/
 
 #include "driver.h"
@@ -215,6 +230,34 @@ static const struct MachineDriver machine_driver_gotya =
 
 ***************************************************************************/
 
+ROM_START( thehand )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )     /* 64k for main CPU */
+	ROM_LOAD( "hand6.bin",	0x0000, 0x1000, 0xa33b806c )
+	ROM_LOAD( "hand5.bin",	0x1000, 0x1000, 0x89bcde82 )
+	ROM_LOAD( "hand4.bin",	0x2000, 0x1000, 0xc6844a83 )
+	ROM_LOAD( "gb-03.bin",	0x3000, 0x1000, 0xf34d90ab )
+
+	ROM_REGION( 0x1000,  REGION_GFX1, ROMREGION_DISPOSE )	/* characters */
+	ROM_LOAD( "hand12.bin",	0x0000, 0x1000, 0x95773b46 )
+
+	ROM_REGION( 0x1000,  REGION_GFX2, ROMREGION_DISPOSE )	/* sprites */
+	ROM_LOAD( "gb-11.bin",	0x0000, 0x1000, 0x5d5eca1b )
+
+	ROM_REGION( 0x0120,  REGION_PROMS, 0 )
+	ROM_LOAD( "prom.1a",    0x0000, 0x0020, 0x4864a5a0 )    /* color PROM */
+	ROM_LOAD( "prom.4c",    0x0020, 0x0100, 0x4745b5f6 )    /* lookup table */
+
+	ROM_REGION( 0x1000,  REGION_USER1, 0 )		/* no idea what these are */
+	ROM_LOAD( "hand1.bin",	0x0000, 0x0800, 0xccc537e0 )
+	ROM_LOAD( "gb-02.bin",	0x0800, 0x0800, 0x65a7e284 )
+
+	ROM_REGION( 0x4000,  REGION_USER2, 0 )		/* HD38880 code? */
+	ROM_LOAD( "gb-10.bin",	0x0000, 0x1000, 0x8101915f )
+	ROM_LOAD( "gb-09.bin",	0x1000, 0x1000, 0x619bba76 )
+	ROM_LOAD( "gb-08.bin",	0x2000, 0x1000, 0x82f59528 )
+	ROM_LOAD( "hand7.bin",	0x3000, 0x1000, 0xfbf1c5de )
+ROM_END
+
 ROM_START( gotya )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )     /* 64k for main CPU */
 	ROM_LOAD( "gb-06.bin",	0x0000, 0x1000, 0x7793985a )
@@ -243,5 +286,5 @@ ROM_START( gotya )
 	ROM_LOAD( "gb-07.bin",	0x3000, 0x1000, 0x92a9f8bf )
 ROM_END
 
-
-GAME( 1981, gotya, 0, gotya, gotya, 0, ROT270, "Game-A-Tron", "Got-Ya (12/24/1981, prototype?)" )
+GAME( 1981, thehand, 0,       gotya, gotya, 0, ROT270, "T.I.C."     , "The Hand" )
+GAME( 1981, gotya,   thehand, gotya, gotya, 0, ROT270, "Game-A-Tron", "Got-Ya (12/24/1981, prototype?)" )

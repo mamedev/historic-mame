@@ -529,7 +529,7 @@ A1020b is close to U67-70
 
 68HC000 p16 is close to  U32,33
 
-16.000000 Mhz
+16.000000 MHz
 
 Sound section uses "KS8001" and "KS8002" and SMD --> Z80
 and SMD "AD-65"

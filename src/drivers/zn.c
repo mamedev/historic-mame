@@ -608,7 +608,7 @@ static void zn_vh_screenrefresh( struct osd_bitmap *bitmap, int full_refresh )
 {
 	UINT16 n_x;
 	UINT16 n_y;
-	UINT32 *pens = Machine->pens;
+	pen_t *pens = Machine->pens;
 
 	if( full_refresh )
 	{

@@ -50,15 +50,15 @@ MEMORY_END
 
 static MEMORY_READ_START( readmem_sound )
 	{ 0x0000, 0x0fff, MRA_RAM },
-//	{ 0x4002, 0x4002, YM2203_read_port_1_r },	/* ?? */
+//	{ 0x4002, 0x4002, AY8910_read_port_0_r },	/* ?? */
 	{ 0x6001, 0x6001, YM2203_read_port_0_r },
 	{ 0x8000, 0xffff, MRA_ROM },
 MEMORY_END
 
 static MEMORY_WRITE_START( writemem_sound )
 	{ 0x0000, 0x0fff, MWA_RAM },
-	{ 0x4000, 0x4000, YM2203_control_port_1_w },
-	{ 0x4001, 0x4001, YM2203_write_port_1_w },
+	{ 0x4000, 0x4000, AY8910_control_port_0_w },
+	{ 0x4001, 0x4001, AY8910_write_port_0_w },
 	{ 0x6000, 0x6000, YM2203_control_port_0_w },
 	{ 0x6001, 0x6001, YM2203_write_port_0_w },
 	{ 0x8000, 0xffff, MWA_ROM },
@@ -198,13 +198,22 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 
 
-/* actually there is one AY8910 and one YM2203, but the sound core doesn't */
-/* support that so we use 2 YM2203 */
+static struct AY8910interface ay8910_interface =
+{
+	1,			/* 1 chip */
+	1250000,	/* 1.25 MHz */
+	{ MIXERG(20,MIXER_GAIN_2x,MIXER_PAN_CENTER) },
+	{ 0 },
+	{ 0 },
+	{ 0 },
+	{ 0 }
+};
+
 static struct YM2203interface ym2203_interface =
 {
-	2,			/* 2 chips */
+	1,			/* 1 chip */
 	1250000,	/* 1.25 MHz */
-	{ YM2203_VOL(20,MIXERG(20,MIXER_GAIN_2x,MIXER_PAN_CENTER)), YM2203_VOL(20,MIXERG(20,MIXER_GAIN_2x,MIXER_PAN_CENTER)) },
+	{ YM2203_VOL(20,MIXERG(20,MIXER_GAIN_2x,MIXER_PAN_CENTER)) },
 	{ soundlatch_r },
 	{ soundlatch2_r },
 	{ 0 },
@@ -249,6 +258,10 @@ static const struct MachineDriver machine_driver_citycon =
 	/* sound hardware */
 	0,0,0,0,
 	{
+		{
+			SOUND_AY8910,
+			&ay8910_interface
+		},
 		{
 			SOUND_YM2203,
 			&ym2203_interface

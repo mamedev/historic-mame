@@ -362,6 +362,42 @@ ROM_START( ajax )
 	ROM_LOAD( "770c11",		0x000000, 0x080000, 0x299a615a )
 ROM_END
 
+ROM_START( typhoon )
+	ROM_REGION( 0x28000, REGION_CPU1, 0 )	/* 052001 code */
+	ROM_LOAD( "n11.bin",	0x10000, 0x08000, 0x5ba74a22 )	/* banked ROM */
+	ROM_CONTINUE(			0x08000, 0x08000 )				/* fixed ROM */
+	ROM_LOAD( "n12.bin",	0x18000, 0x10000, 0x3bcf782a )	/* banked ROM */
+
+	ROM_REGION( 0x22000, REGION_CPU2, 0 )	/* 64k + 72k for banked ROMs */
+	ROM_LOAD( "i16.bin",	0x20000, 0x02000, 0x0f1bebbb )	/* banked ROM */
+	ROM_CONTINUE(			0x0a000, 0x06000 )				/* fixed ROM */
+	ROM_LOAD( "f04.g16",	0x10000, 0x10000, 0xe0e4ec9c )	/* banked ROM */
+
+	ROM_REGION( 0x10000, REGION_CPU3, 0 )	/* 64k for the SOUND CPU */
+	ROM_LOAD( "h03.f16",	0x00000, 0x08000, 0x2ffd2afc )
+
+    ROM_REGION( 0x080000, REGION_GFX1, 0 )	/* graphics (addressable by the main CPU) */
+	ROM_LOAD( "770c13",		0x000000, 0x040000, 0xb859ca4e )	/* characters (N22) */
+	ROM_LOAD( "770c12",		0x040000, 0x040000, 0x50d14b72 )	/* characters (K22) */
+
+    ROM_REGION( 0x100000, REGION_GFX2, 0 )	/* graphics (addressable by the main CPU) */
+	ROM_LOAD( "770c09",		0x000000, 0x080000, 0x1ab4a7ff )	/* sprites (N4) */
+	ROM_LOAD( "770c08",		0x080000, 0x080000, 0xa8e80586 )	/* sprites (K4) */
+
+	ROM_REGION( 0x080000, REGION_GFX3, 0 )	/* graphics (addressable by the main CPU) */
+	ROM_LOAD( "770c06",		0x000000, 0x040000, 0xd0c592ee )	/* zoom/rotate (F4) */
+	ROM_LOAD( "770c07",		0x040000, 0x040000, 0x0b399fb1 )	/* zoom/rotate (H4) */
+
+	ROM_REGION( 0x0200, REGION_PROMS, 0 )
+	ROM_LOAD( "63s241.j11",	0x0000, 0x0200, 0x9bdd719f )	/* priority encoder (not used) */
+
+	ROM_REGION( 0x040000, REGION_SOUND1, 0 )	/* 007232 data (chip 1) */
+	ROM_LOAD( "770c10",		0x000000, 0x040000, 0x7fac825f )
+
+	ROM_REGION( 0x080000, REGION_SOUND2, 0 )	/* 007232 data (chip 2) */
+	ROM_LOAD( "770c11",		0x000000, 0x080000, 0x299a615a )
+ROM_END
+
 ROM_START( ajaxj )
 	ROM_REGION( 0x28000, REGION_CPU1, 0 )	/* 052001 code */
 	ROM_LOAD( "770l01.bin",	0x10000, 0x08000, 0x7cea5274 )	/* banked ROM */
@@ -407,5 +443,6 @@ static void init_ajax(void)
 
 
 
-GAME( 1987, ajax, 0,     ajax, ajax, ajax, ROT90, "Konami", "Ajax" )
-GAME( 1987, ajaxj, ajax, ajax, ajax, ajax, ROT90, "Konami", "Ajax (Japan)" )
+GAME( 1987, ajax,    0,    ajax, ajax, ajax, ROT90, "Konami", "Ajax" )
+GAME( 1987, typhoon, ajax, ajax, ajax, ajax, ROT90, "Konami", "Typhoon" )
+GAME( 1987, ajaxj,   ajax, ajax, ajax, ajax, ROT90, "Konami", "Ajax (Japan)" )

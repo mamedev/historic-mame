@@ -315,8 +315,6 @@ INLINE void set_irq(int type)
 {
     switch ((type >> 8) & 255)
     {
-        case Z8000_INT_NONE >> 8:
-            return;
         case Z8000_TRAP >> 8:
             if (IRQ_SRV >= Z8000_TRAP)
                 return; /* double TRAP.. very bad :( */
@@ -519,32 +517,13 @@ void z8000_set_context(void *src)
 	}
 }
 
-unsigned z8000_get_pc(void)
-{
-    return PC;
-}
-
-void z8000_set_pc(unsigned val)
-{
-	PC = val;
-	change_pc16bew(PC);
-}
-
-unsigned z8000_get_sp(void)
-{
-	return NSP;
-}
-
-void z8000_set_sp(unsigned val)
-{
-	NSP = val;
-}
-
 unsigned z8000_get_reg(int regnum)
 {
 	switch( regnum )
 	{
+		case REG_PC:
 		case Z8000_PC: return PC;
+		case REG_SP:
         case Z8000_NSP: return NSP;
         case Z8000_FCW: return FCW;
 		case Z8000_PSAP: return PSAP;
@@ -587,7 +566,9 @@ void z8000_set_reg(int regnum, unsigned val)
 {
 	switch( regnum )
 	{
+		case REG_PC: PC = val; change_pc16bew(PC); break;
 		case Z8000_PC: PC = val; break;
+		case REG_SP:
 		case Z8000_NSP: NSP = val; break;
 		case Z8000_FCW: FCW = val; break;
 		case Z8000_PSAP: PSAP = val; break;
@@ -624,49 +605,51 @@ void z8000_set_reg(int regnum, unsigned val)
     }
 }
 
-void z8000_set_nmi_line(int state)
-{
-	if (Z.nmi_state == state)
-		return;
-
-    Z.nmi_state = state;
-
-    if (state != CLEAR_LINE)
-	{
-		if (IRQ_SRV >= Z8000_NMI)	/* no NMIs inside trap */
-			return;
-		IRQ_REQ = Z8000_NMI;
-		IRQ_VEC = NMI;
-	}
-}
-
 void z8000_set_irq_line(int irqline, int state)
 {
-	Z.irq_state[irqline] = state;
-	if (irqline == 0)
+	if (irqline == IRQ_LINE_NMI)
 	{
-		if (state == CLEAR_LINE)
+		if (Z.nmi_state == state)
+			return;
+
+	    Z.nmi_state = state;
+
+	    if (state != CLEAR_LINE)
 		{
-			if (!(FCW & F_NVIE))
-				IRQ_REQ &= ~Z8000_NVI;
+			if (IRQ_SRV >= Z8000_NMI)	/* no NMIs inside trap */
+				return;
+			IRQ_REQ = Z8000_NMI;
+			IRQ_VEC = NMI;
 		}
-		else
-		{
-			if (FCW & F_NVIE)
-				IRQ_REQ |= Z8000_NVI;
-        }
 	}
-	else
+	else if (irqline < 2)
 	{
-		if (state == CLEAR_LINE)
+		Z.irq_state[irqline] = state;
+		if (irqline == 0)
 		{
-			if (!(FCW & F_VIE))
-				IRQ_REQ &= ~Z8000_VI;
+			if (state == CLEAR_LINE)
+			{
+				if (!(FCW & F_NVIE))
+					IRQ_REQ &= ~Z8000_NVI;
+			}
+			else
+			{
+				if (FCW & F_NVIE)
+					IRQ_REQ |= Z8000_NVI;
+	        }
 		}
 		else
 		{
-			if (FCW & F_VIE)
-				IRQ_REQ |= Z8000_VI;
+			if (state == CLEAR_LINE)
+			{
+				if (!(FCW & F_VIE))
+					IRQ_REQ &= ~Z8000_VI;
+			}
+			else
+			{
+				if (FCW & F_VIE)
+					IRQ_REQ |= Z8000_VI;
+			}
 		}
 	}
 }

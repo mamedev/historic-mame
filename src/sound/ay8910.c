@@ -13,13 +13,13 @@
 #include "driver.h"
 #include "ay8910.h"
 
-
 #define MAX_OUTPUT 0x7fff
 
 #define STEP 0x8000
 
 
-static int num;
+static int num = 0;
+int ay8910_index_ym = 0; /* index of first chip of YM2203's SSG */
 
 struct AY8910
 {
@@ -275,15 +275,15 @@ unsigned char AYReadReg(int n, int r)
 	{
 	case AY_PORTA:
 		if ((PSG->Regs[AY_ENABLE] & 0x40) != 0)
-logerror("warning: read from 8910 #%d Port A set as output\n",n);
-if (PSG->PortAread) PSG->Regs[AY_PORTA] = (*PSG->PortAread)(0);
-else logerror("PC %04x: warning - read 8910 #%d Port A\n",cpu_get_pc(),n);
+			logerror("warning: read from 8910 #%d Port A set as output\n",n);
+		if (PSG->PortAread) PSG->Regs[AY_PORTA] = (*PSG->PortAread)(0);
+		else logerror("PC %04x: warning - read 8910 #%d Port A\n",cpu_get_pc(),n);
 		break;
 	case AY_PORTB:
 		if ((PSG->Regs[AY_ENABLE] & 0x80) != 0)
-logerror("warning: read from 8910 #%d Port B set as output\n",n);
-if (PSG->PortBread) PSG->Regs[AY_PORTB] = (*PSG->PortBread)(0);
-else logerror("PC %04x: warning - read 8910 #%d Port B\n",cpu_get_pc(),n);
+			logerror("warning: read from 8910 #%d Port B set as output\n",n);
+		if (PSG->PortBread) PSG->Regs[AY_PORTB] = (*PSG->PortBread)(0);
+		else logerror("PC %04x: warning - read 8910 #%d Port B\n",cpu_get_pc(),n);
 		break;
 	}
 	return PSG->Regs[r];
@@ -685,7 +685,6 @@ void AY8910_reset(int chip)
 	int i;
 	struct AY8910 *PSG = &AYPSG[chip];
 
-
 	PSG->register_latch = 0;
 	PSG->RNG = 1;
 	PSG->OutputA = 0;
@@ -707,13 +706,13 @@ void AY8910_sh_reset(void)
 		AY8910_reset(i);
 }
 
-static int AY8910_init(const struct MachineSound *msound,int chip,
+static int AY8910_init(const char *chip_name,int chip,
 		int clock,int volume,int sample_rate,
 		mem_read_handler portAread,mem_read_handler portBread,
 		mem_write_handler portAwrite,mem_write_handler portBwrite)
 {
 	int i;
-	struct AY8910 *PSG = &AYPSG[chip];
+	struct AY8910 *PSG = &AYPSG[chip+ay8910_index_ym];
 	char buf[3][40];
 	const char *name[3];
 	int vol[3];
@@ -729,37 +728,53 @@ static int AY8910_init(const struct MachineSound *msound,int chip,
 	{
 		vol[i] = volume;
 		name[i] = buf[i];
-		sprintf(buf[i],"%s #%d Ch %c",sound_name(msound),chip,'A'+i);
+		sprintf(buf[i],"%s #%d Ch %c",chip_name,chip,'A'+i);
 	}
-	PSG->Channel = stream_init_multi(3,name,vol,sample_rate,chip,AY8910Update);
+	PSG->Channel = stream_init_multi(3,name,vol,sample_rate,chip+ay8910_index_ym,AY8910Update);
 
 	if (PSG->Channel == -1)
 		return 1;
 
-	AY8910_set_clock(chip,clock);
+	AY8910_set_clock(chip+ay8910_index_ym,clock);
 
 	return 0;
 }
-
 
 
 int AY8910_sh_start(const struct MachineSound *msound)
 {
 	int chip;
 	const struct AY8910interface *intf = msound->sound_interface;
-
+	ay8910_index_ym = num;
 
 	num = intf->num;
 
 	for (chip = 0;chip < num;chip++)
 	{
-		if (AY8910_init(msound,chip,intf->baseclock,
+		if (AY8910_init(sound_name(msound),chip,intf->baseclock,
 				intf->mixing_level[chip] & 0xffff,
 				Machine->sample_rate,
 				intf->portAread[chip],intf->portBread[chip],
 				intf->portAwrite[chip],intf->portBwrite[chip]) != 0)
 			return 1;
-		build_mixer_table(chip);
+		build_mixer_table(chip+ay8910_index_ym);
 	}
 	return 0;
+}
+
+void AY8910_sh_stop_ym(void)
+{
+	num -= ay8910_index_ym;
+	ay8910_index_ym = 0;
+}
+
+int AY8910_sh_start_ym(const struct MachineSound *msound)
+{
+	const struct AY8910interface *intf = msound->sound_interface;
+
+	if( num + intf->num > MAX_8910)
+		return 1;
+
+	ay8910_index_ym = num;
+	return AY8910_sh_start(msound);
 }

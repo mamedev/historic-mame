@@ -476,10 +476,10 @@ static const struct MachineDriver machine_driver_starwars =
 	/* video hardware */
 	400, 300, { 0, 250, 0, 280 },
 	0,
-	256,0,
+	256, 0,
 	avg_init_palette_swars,
 
-	VIDEO_TYPE_VECTOR | VIDEO_SUPPORTS_DIRTY,
+	VIDEO_TYPE_VECTOR | VIDEO_SUPPORTS_DIRTY | VIDEO_RGB_DIRECT,
 	0,
 	avg_start_starwars,
 	avg_stop,

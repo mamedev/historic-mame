@@ -71,10 +71,10 @@ enum
 enum
 {
 	/* generic "none" vector */
-	INTERRUPT_NONE = -126,
+	INTERRUPT_NONE = 126,
 
 	/* generic NMI vector */
-	INTERRUPT_NMI = -127
+	INTERRUPT_NMI = IRQ_LINE_NMI
 };
 
 
@@ -215,12 +215,15 @@ void cpu_set_irq_callback(int cpunum, int (*callback)(int irqline));
 /* Set the vector to be returned during a CPU's interrupt acknowledge cycle */
 void cpu_irq_line_vector_w(int cpunum, int irqline, int vector);
 
-/* set the NMI line state for a CPU, normally use PULSE_LINE */
-void cpu_set_nmi_line(int cpunum, int state);
-
 /* set the IRQ line state for a specific irq line of a CPU */
 /* normally use state HOLD_LINE, irqline 0 for first IRQ type of a cpu */
 void cpu_set_irq_line(int cpunum, int irqline, int state);
+
+/* set the IRQ line state and a vector for the IRQ */
+void cpu_set_irq_line_and_vector(int cpunum, int irqline, int state, int vector);
+
+/* macro for handling NMI lines */
+#define cpu_set_nmi_line(cpunum, state) cpu_set_irq_line(cpunum, IRQ_LINE_NMI, state)
 
 
 
@@ -256,46 +259,24 @@ int m68_level7_irq(void);
 /* defines for backward compatibility */
 #define Z80_NMI_INT 		INTERRUPT_NMI
 #define Z80_IRQ_INT 		-1000
-
+#define M6502_INT_IRQ		M6502_IRQ_LINE
+#define M6502_INT_NMI		INTERRUPT_NMI
+#define M6809_INT_IRQ		M6809_IRQ_LINE
+#define M6809_INT_FIRQ		M6809_FIRQ_LINE
+#define M6809_INT_NMI		INTERRUPT_NMI
+#define HD6309_INT_IRQ		HD6309_IRQ_LINE
+#define HD6309_INT_FIRQ		HD6309_FIRQ_LINE
+#define HD63705_INT_IRQ		HD63705_INT_IRQ1
+#define M68705_INT_IRQ		M68705_IRQ_LINE
+#define KONAMI_INT_IRQ		KONAMI_IRQ_LINE
+#define KONAMI_INT_FIRQ		KONAMI_FIRQ_LINE
+#define I8035_EXT_INT		0
+#define I8039_EXT_INT		0
 #define H6280_INT_IRQ1		0
 #define H6280_INT_IRQ2		1
 #define H6280_INT_NMI		INTERRUPT_NMI
-
-#define M6502_INT_IRQ		0
-#define M6502_INT_NMI		INTERRUPT_NMI
-#define M6510_INT_IRQ		M6502_INT_IRQ
-#define M6510_INT_NMI		M6502_INT_NMI
-#define M6510T_INT_IRQ		M6502_INT_IRQ
-#define M6510T_INT_NMI		M6502_INT_NMI
-#define M7501_INT_IRQ		M6502_INT_IRQ
-#define M7501_INT_NMI		M6502_INT_NMI
-#define M8502_INT_IRQ		M6502_INT_IRQ
-#define M8502_INT_NMI		M6502_INT_NMI
-#define N2A03_INT_IRQ		M6502_INT_IRQ
-#define N2A03_INT_NMI		M6502_INT_NMI
-#define M65C02_INT_IRQ		M6502_INT_IRQ
-#define M65C02_INT_NMI		M6502_INT_NMI
-#define M65SC02_INT_IRQ 	M6502_INT_IRQ
-#define M65SC02_INT_NMI 	M6502_INT_NMI
-
-#define M6800_INT_NMI		INTERRUPT_NMI
-#define M6800_INT_IRQ		0
-#define M6801_INT_IRQ		M6800_INT_IRQ
-#define M6801_INT_NMI		M6800_INT_NMI
-#define M6802_INT_IRQ		M6800_INT_IRQ
-#define M6802_INT_NMI		M6800_INT_NMI
-#define M6803_INT_IRQ		M6800_INT_IRQ
-#define M6803_INT_NMI		M6800_INT_NMI
-#define M6808_INT_IRQ       M6800_INT_IRQ
-#define M6808_INT_NMI       M6800_INT_NMI
-#define HD63701_INT_IRQ 	M6800_INT_IRQ
-#define HD63701_INT_NMI 	M6800_INT_NMI
-#define NSC8105_INT_IRQ 	M6800_INT_IRQ
-#define NSC8105_INT_NMI 	M6800_INT_NMI
-
-#define M6809_INT_NMI		INTERRUPT_NMI
-#define M6809_INT_IRQ		0
-#define M6809_INT_FIRQ		1
+#define HD63701_INT_NMI 	INTERRUPT_NMI
+#define I8085_RST75     	I8085_RST75_LINE
 
 /* OBSOLETE OBSOLETE OBSOLETE OBSOLETE OBSOLETE OBSOLETE OBSOLETE OBSOLETE */
 /* OBSOLETE OBSOLETE OBSOLETE OBSOLETE OBSOLETE OBSOLETE OBSOLETE OBSOLETE */

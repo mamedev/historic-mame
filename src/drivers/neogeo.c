@@ -323,7 +323,7 @@ static int neogeo_interrupt(void)
 	}
 
 	update_interrupts();
-	return 0;
+	return ignore_interrupt();
 }
 
 
@@ -412,7 +412,7 @@ if (!strcmp(Machine->gamedrv->name,"zedblade"))
 		neogeo_vh_raster_partial_refresh(Machine->scrbitmap,current_scanline);
 
 	update_interrupts();
-	return 0;
+	return ignore_interrupt();
 }
 
 static int neogeo_raster_interrupt(void)
@@ -505,11 +505,10 @@ static READ16_HANDLER( controller4_16_r )
 	return readinputport(6);
 }
 
-static WRITE16_HANDLER( neo_bankswitch_16_w )
+static WRITE16_HANDLER( neo_bankswitch_w )
 {
 	unsigned char *RAM = memory_region(REGION_CPU1);
 	int bankaddress;
-
 
 	if (memory_region_length(REGION_CPU1) <= 0x100000)
 	{
@@ -662,8 +661,7 @@ static MEMORY_WRITE16_START( neogeo_writemem )
 /* both games write to 0000fe before writing to 200000. The two things could be related. */
 /* sidkicks reads and writes to several addresses in this range, using this for copy */
 /* protection. Custom parts instead of the banked ROMs? */
-//	{ 0x280050, 0x280051, pd4990a_control_16_w },
-	{ 0x2ffff0, 0x2fffff, neo_bankswitch_16_w },	/* NOTE THIS CHANGE TO END AT FF !!! */
+	{ 0x2ffff0, 0x2fffff, neo_bankswitch_w },	/* NOTE THIS CHANGE TO END AT FF !!! */
 	{ 0x300000, 0x300001, watchdog_reset16_w },
 	{ 0x320000, 0x320001, neo_z80_w },				/* Sound CPU */
 	{ 0x380000, 0x380001, trackball_select_16_w },	/* Used by bios, unknown */
@@ -4403,17 +4401,17 @@ ROM_START( mslugx )
 	ROM_LOAD16_BYTE( "msx_c6.rom", 0x2000001, 0x800000, 0x83e3e69d ) /* Plane 0,1 */
 ROM_END
 
-ROM_START( kof99 ) /* Original Version - Encrypted Code(?) & GFX */
-	ROM_REGION( 0x500000, REGION_CPU1, 0 )
-	/* Current Dump of Code is Bad, although the original is thought to be encrypted anyway
-	   figures at end of lines indicate size and CRC32 of current dumps                     */
-	ROM_LOAD16_WORD_SWAP( "kof99_p1.rom", 0x000000, 0x100000, 0x00000000 ) /* 0x400000 0x006e4532 */
-	ROM_LOAD16_WORD_SWAP( "kof99_p2.rom", 0x100000, 0x400000, 0x00000000 ) /* 0x400000 0x90175f12 */
+ROM_START( kof99 ) /* Original Version - Encrypted Code & GFX */
+	ROM_REGION( 0x900000, REGION_CPU1, 0 )
+	ROM_LOAD16_WORD_SWAP( "kof99_p1.rom", 0x100000, 0x400000, 0x006e4532 )
+	ROM_LOAD16_WORD_SWAP( "kof99_p2.rom", 0x500000, 0x400000, 0x90175f15 )
 
-	/* The Encrypted Boards do _not_ have an s1 rom, data for it comes from elsewhere? */
-	ROM_REGION( 0x40000, REGION_GFX1, 0 )
-	ROM_FILL(                 0x000000, 0x20000, 0 )
-	ROM_LOAD( "ng-sfix.rom",  0x020000, 0x20000, 0x354029fc )
+	ROM_REGION16_BE( 0x100000, REGION_USER2, ROMREGION_DISPOSE )
+	ROM_LOAD16_WORD_SWAP( "kf99_p1d.rom", 0x000000, 0x100000, 0x909b18c4 )	/* decrypted version until we work it out */
+
+	/* The Encrypted Boards do _not_ have an s1 rom */
+	/* This is taken from the CD version and modified */
+	NEO_SFIX_128K( "kf99_s1d.rom", BADCRC( 0x1b0133fe ) )
 
 	NEO_BIOS_SOUND_128K( "kof99_m1.rom", 0x5e74539c )
 
@@ -4426,15 +4424,24 @@ ROM_START( kof99 ) /* Original Version - Encrypted Code(?) & GFX */
 	ROM_LOAD( "kof99_v4.rom", 0x000000, 0x200000, 0xb49e6178 )
 
 	ROM_REGION( 0x4000000, REGION_GFX2, 0 )
-	/* Encrypted */
-	ROM_LOAD16_BYTE( "kof99_c1.rom", 0x0000000, 0x800000, 0x0f9e93fe )
-	ROM_LOAD16_BYTE( "kof99_c2.rom", 0x0000001, 0x800000, 0xe71e2ea3 )
-	ROM_LOAD16_BYTE( "kof99_c3.rom", 0x1000000, 0x800000, 0x238755d2 )
-	ROM_LOAD16_BYTE( "kof99_c4.rom", 0x1000001, 0x800000, 0x438c8b22 )
-	ROM_LOAD16_BYTE( "kof99_c5.rom", 0x2000000, 0x800000, 0x0b0abd0a )
-	ROM_LOAD16_BYTE( "kof99_c6.rom", 0x2000001, 0x800000, 0x65bbf281 )
-	ROM_LOAD16_BYTE( "kof99_c7.rom", 0x3000000, 0x800000, 0xff65f62e )
-	ROM_LOAD16_BYTE( "kof99_c8.rom", 0x3000001, 0x800000, 0x8d921c68 )
+	/* Encrypted, so */
+	/* load prototype ones on top of the original */
+	ROM_LOAD16_BYTE( "kof99_c1.rom", 0x0000000, 0x800000, 0x0f9e93fe ) /* Plane 0,1 */
+	ROM_LOAD16_BYTE( "kf99p_c1.rom", 0x0000000, 0x800000, 0xe5d8ffa4 )
+	ROM_LOAD16_BYTE( "kof99_c2.rom", 0x0000001, 0x800000, 0xe71e2ea3 ) /* Plane 2,3 */
+	ROM_LOAD16_BYTE( "kf99p_c2.rom", 0x0000001, 0x800000, 0xd822778f )
+	ROM_LOAD16_BYTE( "kof99_c3.rom", 0x1000000, 0x800000, 0x238755d2 ) /* Plane 0,1 */
+	ROM_LOAD16_BYTE( "kf99p_c3.rom", 0x1000000, 0x800000, 0xf20959e8 )
+	ROM_LOAD16_BYTE( "kof99_c4.rom", 0x1000001, 0x800000, 0x438c8b22 ) /* Plane 2,3 */
+	ROM_LOAD16_BYTE( "kf99p_c4.rom", 0x1000001, 0x800000, 0x54ffbe9f )
+	ROM_LOAD16_BYTE( "kof99_c5.rom", 0x2000000, 0x800000, 0x0b0abd0a ) /* Plane 0,1 */
+	ROM_LOAD16_BYTE( "kf99p_c5.rom", 0x2000000, 0x800000, 0xd87a3bbc )
+	ROM_LOAD16_BYTE( "kof99_c6.rom", 0x2000001, 0x800000, 0x65bbf281 ) /* Plane 2,3 */
+	ROM_LOAD16_BYTE( "kf99p_c6.rom", 0x2000001, 0x800000, 0x4d40a691 )
+	ROM_LOAD16_BYTE( "kof99_c7.rom", 0x3000000, 0x800000, 0xff65f62e ) /* Plane 0,1 */
+	ROM_LOAD16_BYTE( "kf99p_c7.rom", 0x3000000, 0x800000, 0xa4479a58 )
+	ROM_LOAD16_BYTE( "kof99_c8.rom", 0x3000001, 0x800000, 0x8d921c68 ) /* Plane 2,3 */
+	ROM_LOAD16_BYTE( "kf99p_c8.rom", 0x3000001, 0x800000, 0xead513ce )
 ROM_END
 
 ROM_START( kof99p ) /* Prototype Version - Possibly Hacked */
@@ -4559,6 +4566,46 @@ ROM_START( neogeo )
 	ROM_LOAD( "ng-sfix.rom",  0x020000, 0x20000, 0x354029fc )
 ROM_END
 
+
+
+void init_kof99(void)
+{
+	data16_t *rom;
+	int i,j;
+
+	rom = (data16_t *)(memory_region(REGION_CPU1) + 0x100000);
+	/* swap data lines on the whole ROMs */
+	for (i = 0;i < 0x800000/2;i++)
+	{
+		rom[i] = BITSWAP16(rom[i],13,7,3,0,9,4,5,6,1,12,8,14,10,11,2,15);
+	}
+
+	/* swap address lines for the banked part */
+	for (i = 0;i < 0x600000/2;i+=0x800/2)
+	{
+		data16_t buffer[0x800/2];
+		memcpy(buffer,&rom[i],0x800);
+		for (j = 0;j < 0x800/2;j++)
+		{
+			rom[i+j] = buffer[BITSWAP24(j,23,22,21,20,19,18,17,16,15,14,13,12,11,10,6,2,4,9,8,3,1,7,0,5)];
+		}
+	}
+
+	/* swap address lines & relocate fixed part */
+	rom = (data16_t *)memory_region(REGION_CPU1);
+	for (i = 0;i < 0x100000/2;i++)
+	{
+		rom[i] = rom[0x700000/2 + BITSWAP24(i,23,22,21,20,19,18,11,6,14,17,16,5,8,10,12,0,4,3,2,7,9,15,13,1)];
+	}
+
+	/* where does this last part come from??? */
+	memcpy(rom + 0x0c0000/2,memory_region(REGION_USER2) + 0x0c0000,0x040000);
+
+	init_neogeo();
+}
+
+
+
 /******************************************************************************/
 
 /* A dummy driver, so that the bios can be debugged, and to serve as */
@@ -4635,7 +4682,7 @@ GAME( 1998, kof98,    neogeo,   neogeo, neogeo,  neogeo, ROT0, "SNK", "The King 
 GAME( 1998, lastbld2, neogeo,   raster, neogeo,  neogeo, ROT0, "SNK", "The Last Blade 2 / Bakumatsu Roman - Dai Ni Maku Gekkano Kenshi" )
 GAME( 1998, neocup98, neogeo,   raster, neogeo,  neogeo, ROT0, "SNK", "Neo-Geo Cup '98 - The Road to the Victory" )
 GAME( 1999, mslugx,   neogeo,   neogeo, neogeo,  neogeo, ROT0, "SNK", "Metal Slug X - Super Vehicle-001" )
-GAMEX(1999, kof99,    neogeo,   raster, neogeo,  neogeo, ROT0, "SNK", "The King of Fighters '99 - Millennium Battle", GAME_NOT_WORKING ) /* Encrypted Code & GFX, Bad Dump */
+GAME( 1999, kof99,    neogeo,   raster, neogeo,  kof99,  ROT0, "SNK", "The King of Fighters '99 - Millennium Battle" ) /* Encrypted Code & GFX, Bad Dump */
 GAME( 1999, kof99p,   kof99,    raster, neogeo,  neogeo, ROT0, "SNK", "The King of Fighters '99 - Millennium Battle (prototype)" )
 GAME( 1999, garoup,   neogeo,   raster, neogeo,  neogeo, ROT0, "SNK", "Garou - Mark of the Wolves (prototype)" )
 GAMEX(1999, preisle2, neogeo,   neogeo, neogeo,  neogeo, ROT0, "SNK / Yumekobo", "Prehistoric Isle 2", GAME_NOT_WORKING ) /* Encrypted GFX, Incomplete Dump */

@@ -50,13 +50,8 @@ int tms320c10_execute(int cycles);				/* Execute cycles T-States -	*/
 												/* returns number of cycles actually run */
 unsigned tms320c10_get_context(void *dst);		/* Get registers			*/
 void tms320c10_set_context(void *src);			/* Set registers			*/
-unsigned tms320c10_get_pc(void);				/* Get program counter		*/
-void tms320c10_set_pc(unsigned val);			/* Set program counter		*/
-unsigned tms320c10_get_sp(void);				/* Get stack pointer		*/
-void tms320c10_set_sp(unsigned val);			/* Set stack pointer		*/
 unsigned tms320c10_get_reg(int regnum); 		/* Get specific register	*/
 void tms320c10_set_reg(int regnum, unsigned val);/* Set specific register	*/
-void tms320c10_set_nmi_line(int state);
 void tms320c10_set_irq_line(int irqline, int state);
 void tms320c10_set_irq_callback(int (*callback)(int irqline));
 const char *tms320c10_info(void *context, int regnum);

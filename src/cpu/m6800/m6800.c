@@ -628,50 +628,15 @@ void m6800_set_context(void *src)
 
 
 /****************************************************************************
- * Return program counter
- ****************************************************************************/
-unsigned m6800_get_pc(void)
-{
-	return PC;
-}
-
-
-/****************************************************************************
- * Set program counter
- ****************************************************************************/
-void m6800_set_pc(unsigned val)
-{
-	PC = val;
-	CHANGE_PC();
-}
-
-
-/****************************************************************************
- * Return stack pointer
- ****************************************************************************/
-unsigned m6800_get_sp(void)
-{
-	return S;
-}
-
-
-/****************************************************************************
- * Set stack pointer
- ****************************************************************************/
-void m6800_set_sp(unsigned val)
-{
-	S = val;
-}
-
-
-/****************************************************************************
  * Return a specific register
  ****************************************************************************/
 unsigned m6800_get_reg(int regnum)
 {
 	switch( regnum )
 	{
+		case REG_PC: return PC;
 		case M6800_PC: return m6800.pc.w.l;
+		case REG_SP: return S;
 		case M6800_S: return m6800.s.w.l;
 		case M6800_CC: return m6800.cc;
 		case M6800_A: return m6800.d.b.h;
@@ -699,13 +664,15 @@ void m6800_set_reg(int regnum, unsigned val)
 {
 	switch( regnum )
 	{
+		case REG_PC: PC = val; CHANGE_PC(); break;
 		case M6800_PC: m6800.pc.w.l = val; break;
+		case REG_SP: S = val; break;
 		case M6800_S: m6800.s.w.l = val; break;
 		case M6800_CC: m6800.cc = val; break;
 		case M6800_A: m6800.d.b.h = val; break;
 		case M6800_B: m6800.d.b.l = val; break;
 		case M6800_X: m6800.x.w.l = val; break;
-		case M6800_NMI_STATE: m6800_set_nmi_line(val); break;
+		case M6800_NMI_STATE: m6800_set_irq_line(IRQ_LINE_NMI, val); break;
 		case M6800_IRQ_STATE: m6800_set_irq_line(M6800_IRQ_LINE,val); break;
 		default:
 			if( regnum <= REG_SP_CONTENTS )
@@ -721,46 +688,48 @@ void m6800_set_reg(int regnum, unsigned val)
 }
 
 
-void m6800_set_nmi_line(int state)
-{
-	if (m6800.nmi_state == state) return;
-	LOG(("M6800#%d set_nmi_line %d \n", cpu_getactivecpu(), state));
-	m6800.nmi_state = state;
-	if (state == CLEAR_LINE) return;
-
-	/* NMI */
-	ENTER_INTERRUPT("M6800#%d take NMI\n",0xfffc);
-}
-
 void m6800_set_irq_line(int irqline, int state)
 {
-	int eddge;
-
-	if (m6800.irq_state[irqline] == state) return;
-	LOG(("M6800#%d set_irq_line %d,%d\n", cpu_getactivecpu(), irqline, state));
-	m6800.irq_state[irqline] = state;
-
-	switch(irqline)
+	if (irqline == IRQ_LINE_NMI)
 	{
-	case M6800_IRQ_LINE:
+		if (m6800.nmi_state == state) return;
+		LOG(("M6800#%d set_nmi_line %d \n", cpu_getactivecpu(), state));
+		m6800.nmi_state = state;
 		if (state == CLEAR_LINE) return;
-		break;
-	case M6800_TIN_LINE:
-		eddge = (state == CLEAR_LINE ) ? 2 : 0;
-		if( ((m6800.tcsr&TCSR_IEDG) ^ (state==CLEAR_LINE ? TCSR_IEDG : 0))==0 )
-			return;
-		/* active edge in */
-		m6800.tcsr |= TCSR_ICF;
-		m6800.pending_tcsr |= TCSR_ICF;
-		m6800.input_capture = CT;
-		MODIFIED_tcsr;
-		if( !(CC & 0x10) )
-			CHECK_IRQ2
-		break;
-	default:
-		return;
+
+		/* NMI */
+		ENTER_INTERRUPT("M6800#%d take NMI\n",0xfffc);
 	}
-	CHECK_IRQ_LINES(); /* HJB 990417 */
+	else
+	{
+		int eddge;
+
+		if (m6800.irq_state[irqline] == state) return;
+		LOG(("M6800#%d set_irq_line %d,%d\n", cpu_getactivecpu(), irqline, state));
+		m6800.irq_state[irqline] = state;
+
+		switch(irqline)
+		{
+		case M6800_IRQ_LINE:
+			if (state == CLEAR_LINE) return;
+			break;
+		case M6800_TIN_LINE:
+			eddge = (state == CLEAR_LINE ) ? 2 : 0;
+			if( ((m6800.tcsr&TCSR_IEDG) ^ (state==CLEAR_LINE ? TCSR_IEDG : 0))==0 )
+				return;
+			/* active edge in */
+			m6800.tcsr |= TCSR_ICF;
+			m6800.pending_tcsr |= TCSR_ICF;
+			m6800.input_capture = CT;
+			MODIFIED_tcsr;
+			if( !(CC & 0x10) )
+				CHECK_IRQ2
+			break;
+		default:
+			return;
+		}
+		CHECK_IRQ_LINES(); /* HJB 990417 */
+	}
 }
 
 void m6800_set_irq_callback(int (*callback)(int irqline))
@@ -1151,13 +1120,8 @@ void m6801_exit(void) { m6800_exit(); }
 int  m6801_execute(int cycles) { return m6803_execute(cycles); }
 unsigned m6801_get_context(void *dst) { return m6800_get_context(dst); }
 void m6801_set_context(void *src) { m6800_set_context(src); }
-unsigned m6801_get_pc(void) { return m6800_get_pc(); }
-void m6801_set_pc(unsigned val) { m6800_set_pc(val); }
-unsigned m6801_get_sp(void) { return m6800_get_sp(); }
-void m6801_set_sp(unsigned val) { m6800_set_sp(val); }
 unsigned m6801_get_reg(int regnum) { return m6800_get_reg(regnum); }
 void m6801_set_reg(int regnum, unsigned val) { m6800_set_reg(regnum,val); }
-void m6801_set_nmi_line(int state) { m6800_set_nmi_line(state); }
 void m6801_set_irq_line(int irqline, int state) { m6800_set_irq_line(irqline,state); }
 void m6801_set_irq_callback(int (*callback)(int irqline)) { m6800_set_irq_callback(callback); }
 const char *m6801_info(void *context, int regnum)
@@ -1213,13 +1177,8 @@ void m6802_exit(void) { m6800_exit(); }
 int  m6802_execute(int cycles) { return m6800_execute(cycles); }
 unsigned m6802_get_context(void *dst) { return m6800_get_context(dst); }
 void m6802_set_context(void *src) { m6800_set_context(src); }
-unsigned m6802_get_pc(void) { return m6800_get_pc(); }
-void m6802_set_pc(unsigned val) { m6800_set_pc(val); }
-unsigned m6802_get_sp(void) { return m6800_get_sp(); }
-void m6802_set_sp(unsigned val) { m6800_set_sp(val); }
 unsigned m6802_get_reg(int regnum) { return m6800_get_reg(regnum); }
 void m6802_set_reg(int regnum, unsigned val) { m6800_set_reg(regnum,val); }
-void m6802_set_nmi_line(int state) { m6800_set_nmi_line(state); }
 void m6802_set_irq_line(int irqline, int state) { m6800_set_irq_line(irqline,state); }
 void m6802_set_irq_callback(int (*callback)(int irqline)) { m6800_set_irq_callback(callback); }
 const char *m6802_info(void *context, int regnum)
@@ -1573,13 +1532,8 @@ int m6803_execute(int cycles)
 #if (HAS_M6803)
 unsigned m6803_get_context(void *dst) { return m6800_get_context(dst); }
 void m6803_set_context(void *src) { m6800_set_context(src); }
-unsigned m6803_get_pc(void) { return m6800_get_pc(); }
-void m6803_set_pc(unsigned val) { m6800_set_pc(val); }
-unsigned m6803_get_sp(void) { return m6800_get_sp(); }
-void m6803_set_sp(unsigned val) { m6800_set_sp(val); }
 unsigned m6803_get_reg(int regnum) { return m6800_get_reg(regnum); }
 void m6803_set_reg(int regnum, unsigned val) { m6800_set_reg(regnum,val); }
-void m6803_set_nmi_line(int state) { m6800_set_nmi_line(state); }
 void m6803_set_irq_line(int irqline, int state) { m6800_set_irq_line(irqline,state); }
 void m6803_set_irq_callback(int (*callback)(int irqline)) { m6800_set_irq_callback(callback); }
 const char *m6803_info(void *context, int regnum)
@@ -1635,13 +1589,8 @@ void m6808_exit(void) { m6800_exit(); }
 int  m6808_execute(int cycles) { return m6800_execute(cycles); }
 unsigned m6808_get_context(void *dst) { return m6800_get_context(dst); }
 void m6808_set_context(void *src) { m6800_set_context(src); }
-unsigned m6808_get_pc(void) { return m6800_get_pc(); }
-void m6808_set_pc(unsigned val) { m6800_set_pc(val); }
-unsigned m6808_get_sp(void) { return m6800_get_sp(); }
-void m6808_set_sp(unsigned val) { m6800_set_sp(val); }
 unsigned m6808_get_reg(int regnum) { return m6800_get_reg(regnum); }
 void m6808_set_reg(int regnum, unsigned val) { m6800_set_reg(regnum,val); }
-void m6808_set_nmi_line(int state) { m6800_set_nmi_line(state); }
 void m6808_set_irq_line(int irqline, int state) { m6800_set_irq_line(irqline,state); }
 void m6808_set_irq_callback(int (*callback)(int irqline)) { m6800_set_irq_callback(callback); }
 const char *m6808_info(void *context, int regnum)
@@ -1990,13 +1939,8 @@ int hd63701_execute(int cycles)
 
 unsigned hd63701_get_context(void *dst) { return m6800_get_context(dst); }
 void hd63701_set_context(void *src) { m6800_set_context(src); }
-unsigned hd63701_get_pc(void) { return m6800_get_pc(); }
-void hd63701_set_pc(unsigned val) { m6800_set_pc(val); }
-unsigned hd63701_get_sp(void) { return m6800_get_sp(); }
-void hd63701_set_sp(unsigned val) { m6800_set_sp(val); }
 unsigned hd63701_get_reg(int regnum) { return m6800_get_reg(regnum); }
 void hd63701_set_reg(int regnum, unsigned val) { m6800_set_reg(regnum,val); }
-void hd63701_set_nmi_line(int state) { m6800_set_nmi_line(state); }
 void hd63701_set_irq_line(int irqline, int state) { m6800_set_irq_line(irqline,state); }
 void hd63701_set_irq_callback(int (*callback)(int irqline)) { m6800_set_irq_callback(callback); }
 const char *hd63701_info(void *context, int regnum)
@@ -2368,13 +2312,8 @@ int nsc8105_execute(int cycles)
 
 unsigned nsc8105_get_context(void *dst) { return m6800_get_context(dst); }
 void nsc8105_set_context(void *src) { m6800_set_context(src); }
-unsigned nsc8105_get_pc(void) { return m6800_get_pc(); }
-void nsc8105_set_pc(unsigned val) { m6800_set_pc(val); }
-unsigned nsc8105_get_sp(void) { return m6800_get_sp(); }
-void nsc8105_set_sp(unsigned val) { m6800_set_sp(val); }
 unsigned nsc8105_get_reg(int regnum) { return m6800_get_reg(regnum); }
 void nsc8105_set_reg(int regnum, unsigned val) { m6800_set_reg(regnum,val); }
-void nsc8105_set_nmi_line(int state) { m6800_set_nmi_line(state); }
 void nsc8105_set_irq_line(int irqline, int state) { m6800_set_irq_line(irqline,state); }
 void nsc8105_set_irq_callback(int (*callback)(int irqline)) { m6800_set_irq_callback(callback); }
 const char *nsc8105_info(void *context, int regnum)

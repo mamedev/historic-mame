@@ -61,6 +61,8 @@
 #define LOG(x)
 #endif
 
+#define I8085_INTR      0xff
+
 /* Layout of the registers in the debugger */
 static UINT8 i8085_reg_layout[] = {
 	I8085_PC,I8085_SP,I8085_AF,I8085_BC,I8085_DE,I8085_HL, -1,
@@ -1118,7 +1120,7 @@ static void Interrupt(void)
 				case IM_RST65:
 				case IM_RST55:
 					M_PUSH(PC);
-					if (I.IRQ1 != I8085_RST75)
+					if (I.IRQ1 != (1 << I8085_RST75_LINE))
 						I.PC.d = I.IRQ1;
 					else
 						I.PC.d = 0x3c;
@@ -1250,46 +1252,15 @@ void i8085_set_context(void *src)
 }
 
 /****************************************************************************
- * Get the current 8085 PC
- ****************************************************************************/
-unsigned i8085_get_pc(void)
-{
-	return I.PC.d;
-}
-
-/****************************************************************************
- * Set the current 8085 PC
- ****************************************************************************/
-void i8085_set_pc(unsigned val)
-{
-	I.PC.w.l = val;
-	change_pc16(I.PC.d);
-}
-
-/****************************************************************************
- * Get the current 8085 SP
- ****************************************************************************/
-unsigned i8085_get_sp(void)
-{
-	return I.SP.d;
-}
-
-/****************************************************************************
- * Set the current 8085 SP
- ****************************************************************************/
-void i8085_set_sp(unsigned val)
-{
-	I.SP.w.l = val;
-}
-
-/****************************************************************************
  * Get a specific register
  ****************************************************************************/
 unsigned i8085_get_reg(int regnum)
 {
 	switch( regnum )
 	{
+		case REG_PC: return I.PC.d;
 		case I8085_PC: return I.PC.w.l;
+		case REG_SP: return I.SP.d;
 		case I8085_SP: return I.SP.w.l;
 		case I8085_AF: return I.AF.w.l;
 		case I8085_BC: return I.BC.w.l;
@@ -1324,7 +1295,9 @@ void i8085_set_reg(int regnum, unsigned val)
 {
 	switch( regnum )
 	{
+		case REG_PC: I.PC.w.l = val; change_pc16(I.PC.d); break;
 		case I8085_PC: I.PC.w.l = val; break;
+		case REG_SP: I.SP.w.l = val; break;
 		case I8085_SP: I.SP.w.l = val; break;
 		case I8085_AF: I.AF.w.l = val; break;
 		case I8085_BC: I.BC.w.l = val; break;
@@ -1479,39 +1452,41 @@ void i8085_set_INTR(int state)
 	}
 }
 
-void i8085_set_nmi_line(int state)
-{
-	I.nmi_state = state;
-	if( state != CLEAR_LINE )
-		i8085_set_TRAP(1);
-}
-
 void i8085_set_irq_line(int irqline, int state)
 {
-	I.irq_state[irqline] = state;
-	if (state == CLEAR_LINE)
+	if (irqline == IRQ_LINE_NMI)
 	{
-		if( !(I.IM & IM_IEN) )
+		I.nmi_state = state;
+		if( state != CLEAR_LINE )
+			i8085_set_TRAP(1);
+	}
+	else if (irqline < 4)
+	{
+		I.irq_state[irqline] = state;
+		if (state == CLEAR_LINE)
 		{
-			switch (irqline)
+			if( !(I.IM & IM_IEN) )
 			{
-				case I8085_INTR_LINE: i8085_set_INTR(0); break;
-				case I8085_RST55_LINE: i8085_set_RST55(0); break;
-				case I8085_RST65_LINE: i8085_set_RST65(0); break;
-				case I8085_RST75_LINE: i8085_set_RST75(0); break;
+				switch (irqline)
+				{
+					case I8085_INTR_LINE: i8085_set_INTR(0); break;
+					case I8085_RST55_LINE: i8085_set_RST55(0); break;
+					case I8085_RST65_LINE: i8085_set_RST65(0); break;
+					case I8085_RST75_LINE: i8085_set_RST75(0); break;
+				}
 			}
 		}
-	}
-	else
-	{
-		if( I.IM & IM_IEN )
+		else
 		{
-			switch( irqline )
+			if( I.IM & IM_IEN )
 			{
-				case I8085_INTR_LINE: i8085_set_INTR(1); break;
-				case I8085_RST55_LINE: i8085_set_RST55(1); break;
-				case I8085_RST65_LINE: i8085_set_RST65(1); break;
-				case I8085_RST75_LINE: i8085_set_RST75(1); break;
+				switch( irqline )
+				{
+					case I8085_INTR_LINE: i8085_set_INTR(1); break;
+					case I8085_RST55_LINE: i8085_set_RST55(1); break;
+					case I8085_RST65_LINE: i8085_set_RST65(1); break;
+					case I8085_RST75_LINE: i8085_set_RST75(1); break;
+				}
 			}
 		}
 	}
@@ -1633,25 +1608,27 @@ void i8080_exit(void) { i8085_exit(); }
 int i8080_execute(int cycles) { return i8085_execute(cycles); }
 unsigned i8080_get_context(void *dst) { return i8085_get_context(dst); }
 void i8080_set_context(void *src) { i8085_set_context(src); }
-unsigned i8080_get_pc(void) { return i8085_get_pc(); }
-void i8080_set_pc(unsigned val) { i8085_set_pc(val); }
-unsigned i8080_get_sp(void) { return i8085_get_sp(); }
-void i8080_set_sp(unsigned val) { i8085_set_sp(val); }
 unsigned i8080_get_reg(int regnum) { return i8085_get_reg(regnum); }
 void i8080_set_reg(int regnum, unsigned val)  { i8085_set_reg(regnum,val); }
-void i8080_set_nmi_line(int state)	{ i8085_set_nmi_line(state); }
 void i8080_set_irq_line(int irqline, int state)
 {
-	I.irq_state[irqline] = state;
-	if (state == CLEAR_LINE)
+	if (irqline == IRQ_LINE_NMI)
 	{
-		if (!(I.IM & IM_IEN))
-			i8085_set_INTR(0);
+		i8085_set_irq_line(irqline, state);
 	}
 	else
 	{
-		if (I.IM & IM_IEN)
-			i8085_set_INTR(1);
+		I.irq_state[irqline] = state;
+		if (state == CLEAR_LINE)
+		{
+			if (!(I.IM & IM_IEN))
+				i8085_set_INTR(0);
+		}
+		else
+		{
+			if (I.IM & IM_IEN)
+				i8085_set_INTR(1);
+		}
 	}
 }
 void i8080_set_irq_callback(int (*callback)(int irqline)) { i8085_set_irq_callback(callback); }

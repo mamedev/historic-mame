@@ -1988,7 +1988,7 @@ static int ghostb_interrupt(void)
 
 	if (nmi_enable) return M6809_INT_NMI; /* VBL */
 
-	return 0; /* VBL */
+	return ignore_interrupt();
 }
 
 static int gondo_interrupt(void)
@@ -1996,7 +1996,7 @@ static int gondo_interrupt(void)
 	if (nmi_enable)
 		return M6809_INT_NMI; /* VBL */
 
-	return 0; /* VBL */
+	return ignore_interrupt();
 }
 
 /* Coins generate NMI's */
@@ -2010,7 +2010,7 @@ static int oscar_interrupt(void)
     	cpu_cause_interrupt (0, M6809_INT_NMI);
     }
 
-	return 0;
+	return ignore_interrupt();
 }
 
 /******************************************************************************/

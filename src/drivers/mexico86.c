@@ -33,7 +33,6 @@ WRITE_HANDLER( mexico86_68705_ddrB_w );
 /* in vidhrdw/mexico86.c */
 extern unsigned char *mexico86_videoram,*mexico86_objectram;
 extern size_t mexico86_objectram_size;
-void mexico86_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 WRITE_HANDLER( mexico86_bankswitch_w );
 void mexico86_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 void kikikai_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
@@ -347,7 +346,7 @@ static struct YM2203interface ym2203_interface =
 
 
 #define MACHINEDRIVER(NAME) 														\
-static const struct MachineDriver machine_driver_##NAME = 								\
+static const struct MachineDriver machine_driver_##NAME = 							\
 {																					\
 	{																				\
 		{																			\
@@ -378,7 +377,7 @@ static const struct MachineDriver machine_driver_##NAME = 								\
 	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },										\
 	gfxdecodeinfo,																	\
 	256, 0,																			\
-	mexico86_vh_convert_color_prom,													\
+	palette_RRRR_GGGG_BBBB_convert_prom,											\
 																					\
 	VIDEO_TYPE_RASTER,																\
 	0,																				\

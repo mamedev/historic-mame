@@ -600,7 +600,7 @@ static const struct MachineDriver machine_driver_asteroid =
 	256+32768, 0,
 	avg_init_palette_white,
 
-	VIDEO_TYPE_VECTOR | VIDEO_SUPPORTS_DIRTY,
+	VIDEO_TYPE_VECTOR | VIDEO_SUPPORTS_DIRTY | VIDEO_RGB_DIRECT,
 	0,
 	dvg_start,
 	dvg_stop,
@@ -637,7 +637,7 @@ static const struct MachineDriver machine_driver_asteroib =
 	256+32768, 0,
 	avg_init_palette_white,
 
-	VIDEO_TYPE_VECTOR | VIDEO_SUPPORTS_DIRTY,
+	VIDEO_TYPE_VECTOR | VIDEO_SUPPORTS_DIRTY | VIDEO_RGB_DIRECT,
 	0,
 	dvg_start,
 	dvg_stop,	vector_vh_screenrefresh,
@@ -693,7 +693,7 @@ static const struct MachineDriver machine_driver_astdelux =
 	256+32768, 0,
 	avg_init_palette_astdelux,
 
-	VIDEO_TYPE_VECTOR | VIDEO_SUPPORTS_DIRTY,
+	VIDEO_TYPE_VECTOR | VIDEO_SUPPORTS_DIRTY | VIDEO_RGB_DIRECT,
 	0,
 	dvg_start,
 	dvg_stop,
@@ -737,7 +737,7 @@ static const struct MachineDriver machine_driver_llander =
 	256+32768, 0,
 	llander_init_colors,
 
-	VIDEO_TYPE_VECTOR | VIDEO_SUPPORTS_DIRTY,
+	VIDEO_TYPE_VECTOR | VIDEO_SUPPORTS_DIRTY | VIDEO_RGB_DIRECT,
 	0,
 	llander_start,
 	llander_stop,

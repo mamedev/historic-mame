@@ -48,7 +48,6 @@
 void arkanoid_init_machine(void);
 
 WRITE_HANDLER( arkanoid_d008_w );
-void arkanoid_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 void arkanoid_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 READ_HANDLER( arkanoid_Z80_mcu_r );
@@ -343,7 +342,7 @@ static const struct MachineDriver machine_driver_arkanoid =
 	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
 	gfxdecodeinfo,
 	512, 0,
-	arkanoid_vh_convert_color_prom,
+	palette_RRRR_GGGG_BBBB_convert_prom,
 
 	VIDEO_TYPE_RASTER,
 	0,
@@ -380,7 +379,7 @@ static const struct MachineDriver machine_driver_bootleg =
 	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
 	gfxdecodeinfo,
 	512, 0,
-	arkanoid_vh_convert_color_prom,
+	palette_RRRR_GGGG_BBBB_convert_prom,
 
 	VIDEO_TYPE_RASTER,
 	0,

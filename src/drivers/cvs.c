@@ -172,7 +172,7 @@ WRITE_HANDLER( control_port_w )
 {
 	/* Controls both Speech and Effects */
 
-	logerror("%4x : Sound Port = %2x\n",s2650_get_pc(),data);
+	logerror("%4x : Sound Port = %2x\n",activecpu_get_pc(),data);
 
     /* Sample CPU write - Causes interrupt if bit 7 set */
 
@@ -195,7 +195,7 @@ WRITE_HANDLER( control_port_w )
             speech_rom_address = ((data & 0x3f) * 0x80);
            	speech_rom_bit     = 0;
 
-			logerror("%4x : Speech = %4x\n",s2650_get_pc(),speech_rom_address);
+			logerror("%4x : Speech = %4x\n",activecpu_get_pc(),speech_rom_address);
 
             start_talking();
         }
@@ -206,6 +206,8 @@ int cvs_speech_rom_read_bit(void)
 {
 	unsigned char *ROM = memory_region(REGION_SOUND1);
     int bit;
+
+	speech_rom_address %= memory_region_length(REGION_SOUND1);
 
 	bit = (ROM[speech_rom_address] >> speech_rom_bit ) & 1;
 
@@ -553,6 +555,15 @@ CVS_ROM(hero    ,hr,0x82f39788,hr,0x79607812,hr,0x2902715c,hr,0x696d2f8e,hr,0x93
 CVS_ROM(logger  ,lg,0x0022b9ed,lg,0x23c5c8dc,lg,0xf9288f74,lg,0xe52ef7bf,lg,0x4ee04359,lg,0xe4ede80e,lg,0xd3de8e5b,lg,0x9b8d1031,lg,0x5af8da17,0x1000,lg,0x74f67815,0x0800)
 CVS_ROM(cosmos  ,cs,0x7eb96ddf,cs,0x6975a8f7,cs,0x76904b13,cs,0xbdc89719,cs,0x94be44ea,cs,0x6a48c898,cs,0xdb0dfd8c,cs,0x01eee875,cs,0xb385b669,0x0800,cs,0x3c7fe86d,0x1000)
 CVS_ROM(heartatk,ha,0xe8297c23,ha,0xf7632afc,ha,0xa9ce3c6a,ha,0x090f30a9,ha,0x163b3d2d,ha,0x2d0f6d13,ha,0x7f5671bd,ha,0x35b05ab4,ha,0xb9c466a0,0x1000,ha,0xfa21422a,0x1000)
+CVS_ROM(spacefrt,sf,0x1158fc3a,sf,0x8b4e1582,sf,0x48f05102,sf,0xc5b14631,sf,0xd7eca1b6,sf,0xda194a68,sf,0xb96977c7,sf,0xf5d67b9a,sf,0x339a327f,0x0800,sf,0xc5628d30,0x1000)
+
+static void init_spacefrt(void)
+{
+	/* Patch out 2nd Character Mode Change */
+
+    memory_region(REGION_CPU1)[0x0260] = 0xc0;
+    memory_region(REGION_CPU1)[0x0261] = 0xc0;
+}
 
 static void init_cosmos(void)
 {
@@ -641,20 +652,21 @@ GAMEX( 1981, cvs,        0,        cvs,      cvs,    0,          ROT90, "Century
 
 /******************************************************************************/
 
-GAME( 1981, cosmos,      cvs,      cvs,      cvs,    cosmos,     ROT90, "Century Electronics","Cosmos" )
-GAME( 1981, darkwar,     cvs,      cvs,      cvs,    0,          ROT90, "Century Electronics","Dark Warrior" )
-GAME( 1982, 8ball,       cvs,      cvs,      cvs,    0,          ROT90, "Century Electronics","Video Eight Ball" )
-GAME( 1982, 8ball1,      8ball,    cvs,      cvs,    0,          ROT90, "Century Electronics","Video Eight Ball (Rev.1)" )
-GAME( 1982, logger,      cvs,      cvs,      cvs,    0,          ROT90, "Century Electronics","Logger" )
-GAME( 1982, dazzler,     cvs,      cvs,      cvs,    0,          ROT90, "Century Electronics","Dazzler" )
-GAME( 1982, wallst,      cvs,      cvs,      cvs,    0,          ROT90, "Century Electronics","Wall Street" )
-GAME( 1982, radarzon,    cvs,      cvs,      cvs,    0,          ROT90, "Century Electronics","Radar Zone" )
-GAME( 1982, radarzn1,    radarzon, cvs,      cvs,    0,          ROT90, "Century Electronics","Radar Zone (Rev.1)" )
-GAME( 1982, radarznt,    radarzon, cvs,      cvs,    0,          ROT90, "Century Electronics (Tuni Electro Service Inc)","Radar Zone (Tuni)" )
-GAME( 1982, outline,     radarzon, cvs,      cvs,    0,          ROT90, "Century Electronics","Outline" )
-GAME( 1982, goldbug,     cvs,      cvs,      cvs,    goldbug,    ROT90, "Century Electronics","Gold Bug" )
-GAME( 1983, heartatk,    cvs,      cvs,      cvs,    0,          ROT90, "Century Electronics","Heart Attack" )
-GAME( 1983, hunchbak,    cvs,      cvs,      cvs,    0,          ROT90, "Century Electronics","Hunchback" )
-GAME( 1983, superbik,    cvs,      cvs,      cvs,    superbik,   ROT90, "Century Electronics","Superbike" )
-GAME( 1983, hero,        cvs,      cvs,      cvs,    hero,       ROT90, "Seatongrove Ltd","Hero" )
-GAME( 1984, huncholy,    cvs,      cvs,      cvs,    huncholy,   ROT90, "Seatongrove Ltd","Hunchback Olympic" )
+GAMEX( 1981, cosmos,      cvs,      cvs,      cvs,    cosmos,     ROT90, "Century Electronics", "Cosmos", GAME_IMPERFECT_SOUND )
+GAMEX( 1981, darkwar,     cvs,      cvs,      cvs,    0,          ROT90, "Century Electronics", "Dark Warrior", GAME_IMPERFECT_SOUND )
+GAMEX( 1981, spacefrt,    cvs,      cvs,      cvs,    spacefrt,   ROT90, "Century Electronics", "Space Fortress", GAME_IMPERFECT_SOUND )
+GAMEX( 1982, 8ball,       cvs,      cvs,      cvs,    0,          ROT90, "Century Electronics", "Video Eight Ball", GAME_IMPERFECT_SOUND )
+GAMEX( 1982, 8ball1,      8ball,    cvs,      cvs,    0,          ROT90, "Century Electronics", "Video Eight Ball (Rev.1)", GAME_IMPERFECT_SOUND )
+GAMEX( 1982, logger,      cvs,      cvs,      cvs,    0,          ROT90, "Century Electronics", "Logger", GAME_IMPERFECT_SOUND )
+GAMEX( 1982, dazzler,     cvs,      cvs,      cvs,    0,          ROT90, "Century Electronics", "Dazzler", GAME_IMPERFECT_SOUND )
+GAMEX( 1982, wallst,      cvs,      cvs,      cvs,    0,          ROT90, "Century Electronics", "Wall Street", GAME_IMPERFECT_SOUND )
+GAMEX( 1982, radarzon,    cvs,      cvs,      cvs,    0,          ROT90, "Century Electronics", "Radar Zone", GAME_IMPERFECT_SOUND )
+GAMEX( 1982, radarzn1,    radarzon, cvs,      cvs,    0,          ROT90, "Century Electronics", "Radar Zone (Rev.1)", GAME_IMPERFECT_SOUND )
+GAMEX( 1982, radarznt,    radarzon, cvs,      cvs,    0,          ROT90, "Century Electronics (Tuni Electro Service Inc)", "Radar Zone (Tuni)", GAME_IMPERFECT_SOUND )
+GAMEX( 1982, outline,     radarzon, cvs,      cvs,    0,          ROT90, "Century Electronics", "Outline", GAME_IMPERFECT_SOUND )
+GAMEX( 1982, goldbug,     cvs,      cvs,      cvs,    goldbug,    ROT90, "Century Electronics", "Gold Bug", GAME_IMPERFECT_SOUND )
+GAMEX( 1983, heartatk,    cvs,      cvs,      cvs,    0,          ROT90, "Century Electronics", "Heart Attack", GAME_IMPERFECT_SOUND )
+GAMEX( 1983, hunchbak,    cvs,      cvs,      cvs,    0,          ROT90, "Century Electronics", "Hunchback", GAME_IMPERFECT_SOUND )
+GAMEX( 1983, superbik,    cvs,      cvs,      cvs,    superbik,   ROT90, "Century Electronics", "Superbike", GAME_IMPERFECT_SOUND )
+GAMEX( 1983, hero,        cvs,      cvs,      cvs,    hero,       ROT90, "Seatongrove Ltd", "Hero", GAME_IMPERFECT_SOUND )
+GAMEX( 1984, huncholy,    cvs,      cvs,      cvs,    huncholy,   ROT90, "Seatongrove Ltd", "Hunchback Olympic", GAME_IMPERFECT_SOUND )

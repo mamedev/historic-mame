@@ -3,6 +3,7 @@
 
 #include "osd_cpu.h"
 #include "inptport.h"
+#include "palette.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -112,7 +113,7 @@ void osd_set_visible_area(int min_x,int max_x,int min_y,int max_y);
 */
 int osd_allocate_colors(unsigned int totalcolors,
 		const UINT8 *palette,UINT32 *rgb_components,
-		const UINT8 *debug_palette,UINT32 *debug_pens);
+		const UINT8 *debug_palette,pen_t *debug_pens);
 void osd_modify_pen(int pen,unsigned char red, unsigned char green, unsigned char blue);
 
 void osd_mark_dirty(int xmin,int ymin,int xmax,int ymax);

@@ -29,10 +29,6 @@ struct artwork_info
 	struct osd_bitmap *artwork1;
 	struct osd_bitmap *alpha;
 	struct osd_bitmap *orig_artwork;   /* needed for palette recalcs */
-	UINT8 *orig_palette;               /* needed for restoring the colors after special effects? */
-	int num_pens_used;
-	UINT8 *transparency;
-	int num_pens_trans;
 	int start_pen;
 	UINT32 *rgb;
 };
@@ -70,7 +66,7 @@ extern struct osd_bitmap *artwork_real_scrbitmap;
 void overlay_load(const char *filename, unsigned int start_pen);
 void overlay_create(const struct artwork_element *ae, unsigned int start_pen);
 void backdrop_load(const char *filename, unsigned int start_pen);
-//void backdrop_refresh(struct artwork_info *a);
+/*void backdrop_refresh(struct artwork_info *a); */
 void artwork_load(struct artwork_info **a,const char *filename, unsigned int start_pen);
 void artwork_load_size(struct artwork_info **a,const char *filename, unsigned int start_pen, int width, int height);
 void artwork_elements_scale(struct artwork_element *ae, int width, int height);

@@ -1356,32 +1356,13 @@ void upd7810_set_context (void *src)
 		memcpy(&upd7810, src, sizeof(upd7810));
 }
 
-unsigned upd7810_get_pc (void)
-{
-	return PC;
-}
-
-void upd7810_set_pc (unsigned val)
-{
-	PC = val;
-	change_pc16(PCD);
-}
-
-unsigned upd7810_get_sp (void)
-{
-	return SP;
-}
-
-void upd7810_set_sp (unsigned val)
-{
-	SP = val;
-}
-
 unsigned upd7810_get_reg (int regnum)
 {
 	switch (regnum)
 	{
+	case REG_PC:
 	case UPD7810_PC:	return PC;
+	case REG_SP:
 	case UPD7810_SP:	return SP;
 	case UPD7810_PSW:	return PSW;
 	case UPD7810_EA:	return EA;
@@ -1448,7 +1429,9 @@ void upd7810_set_reg (int regnum, unsigned val)
 {
 	switch (regnum)
 	{
+	case REG_PC:		PC = val; change_pc16(PCD); break;
 	case UPD7810_PC:	PC = val;	break;
+	case REG_SP:
 	case UPD7810_SP:	SP = val;	break;
 	case UPD7810_PSW:	PSW = val;	break;
 	case UPD7810_EA:	EA = val;	break;
@@ -1508,33 +1491,27 @@ void upd7810_set_reg (int regnum, unsigned val)
 	}
 }
 
-void upd7810_set_nmi_line(int state)
-{
-	if (state != CLEAR_LINE)
-	{
-		/* no nested NMIs ? */
-        if (0 == (IRR & INTNMI))
-		{
-            IRR |= INTNMI;
-			SP--;
-			WM( SP, PSW );
-			SP--;
-			WM( SP, PCH );
-			SP--;
-			WM( SP, PCL );
-			IFF = 0;
-			PC = 0x0004;
-			change_pc16( PCD );
-		}
-	}
-}
-
 void upd7810_set_irq_line(int irqline, int state)
 {
 	if (state != CLEAR_LINE)
 	{
-		if (irqline == UPD7810_INTNMI)
-			upd7810_set_nmi_line(state);
+		if (irqline == IRQ_LINE_NMI)
+		{
+			/* no nested NMIs ? */
+	        if (0 == (IRR & INTNMI))
+			{
+	            IRR |= INTNMI;
+				SP--;
+				WM( SP, PSW );
+				SP--;
+				WM( SP, PCH );
+				SP--;
+				WM( SP, PCL );
+				IFF = 0;
+				PC = 0x0004;
+				change_pc16( PCD );
+			}
+		}
 		else
 		if (irqline == UPD7810_INTF1)
 			IRR |= INTF1;

@@ -123,10 +123,6 @@ void thief_vh_stop( void ){
 }
 
 int thief_vh_start( void ){
-	UINT8 *dest = memory_region( REGION_CPU1 );
-	const UINT8 *source = memory_region( REGION_CPU2 );
-	memcpy( &dest[0xe010], &source[0x290], 0x20 );
-
 	memset( &thief_coprocessor, 0x00, sizeof(thief_coprocessor) );
 
 	thief_page0	= bitmap_alloc( 256,256 );
@@ -152,7 +148,7 @@ int thief_vh_start( void ){
 void thief_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh){
 	unsigned int offs;
 	int flipscreen = thief_video_control&1;
-	const UINT32 *pal_data = Machine->pens;
+	const pen_t *pal_data = Machine->pens;
 	UINT8 *dirty = dirtybuffer;
 	const UINT8 *source = videoram;
 	struct osd_bitmap *page;

@@ -76,11 +76,31 @@ extern data16_t *neogeo_ram16;
 extern unsigned int neogeo_frame_counter;
 extern int neogeo_game_fix;
 
-void NeoMVSDrawGfx(UINT8 **line,const struct GfxElement *gfx,
+void NeoMVSDrawGfx(UINT16 **line,const struct GfxElement *gfx,
 		unsigned int code,unsigned int color,int flipx,int flipy,int sx,int sy,
 		int zx,int zy,const struct rectangle *clip);
 
-static char dda_x_skip[16];
+/* X zoom table - verified on real hardware */
+static char dda_x_skip_tables[16][16] =
+{
+	{ 0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0 },
+	{ 0,0,0,0,1,0,0,0,1,0,0,0,0,0,0,0 },
+	{ 0,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0 },
+	{ 0,0,1,0,1,0,0,0,1,0,0,0,1,0,0,0 },
+	{ 0,0,1,0,1,0,0,0,1,0,0,0,1,0,1,0 },
+	{ 0,0,1,0,1,0,1,0,1,0,0,0,1,0,1,0 },
+	{ 0,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0 },
+	{ 1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0 },
+	{ 1,0,1,0,1,0,1,0,1,1,1,0,1,0,1,0 },
+	{ 1,0,1,1,1,0,1,0,1,1,1,0,1,0,1,0 },
+	{ 1,0,1,1,1,0,1,0,1,1,1,0,1,0,1,1 },
+	{ 1,0,1,1,1,0,1,1,1,1,1,0,1,0,1,1 },
+	{ 1,0,1,1,1,0,1,1,1,1,1,0,1,1,1,1 },
+	{ 1,1,1,1,1,0,1,1,1,1,1,0,1,1,1,1 },
+	{ 1,1,1,1,1,0,1,1,1,1,1,1,1,1,1,1 },
+	{ 1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1 }
+};
+static char *dda_x_skip;
 static char dda_y_skip[17];
 static char full_y_skip[16]={0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1};
 
@@ -335,192 +355,7 @@ WRITE16_HANDLER( neo_game_fix_16_w )
 /******************************************************************************/
 
 
-void NeoMVSDrawGfx(UINT8 **line,const struct GfxElement *gfx, /* AJP */
-		unsigned int code,unsigned int color,int flipx,int flipy,int sx,int sy,
-		int zx,int zy,const struct rectangle *clip)
-{
-	int oy,ey,y,dy;
-	unsigned char *bm;
-	int col;
-	int l; /* Line skipping counter */
-
-	int mydword;
-
-	UINT32 *fspr = (UINT32 *)memory_region(REGION_GFX2);
-
-	char *l_y_skip;
-
-
-	/* Mish/AJP - Most clipping is done in main loop */
-	oy = sy;
-	ey = sy + zy -1;	/* Clip for size of zoomed object */
-
-	if (sy < clip->min_y) sy = clip->min_y;
-	if (ey >= clip->max_y) ey = clip->max_y;
-	if (sx <= -16) return;
-
-	/* Safety feature */
-	code %= no_of_tiles;
-
-	if (gfx->pen_usage[code] == 0)	/* decode tile if it hasn't been yet */
-		decodetile(code);
-
-	/* Check for total transparency, no need to draw */
-	if ((gfx->pen_usage[code] & ~1) == 0)
-		return;
-
-	if (zy==16)
-		 l_y_skip=full_y_skip;
-	else
-		 l_y_skip=dda_y_skip;
-
-	if (flipy)	/* Y flip */
-	{
-		dy = -2;
-		fspr+=(code+1)*32 - 2 - (sy-oy)*2;
-	}
-	else		/* normal */
-	{
-		dy = 2;
-		fspr+=code*32 + (sy-oy)*2;
-	}
-
-	{
-		const UINT32 *paldata;	/* ASG 980209 */
-		paldata = &gfx->colortable[gfx->color_granularity * color];
-		if (flipx)	/* X flip */
-		{
-			l=0;
-			if (zx == 16)
-			{
-				for (y = sy;y <= ey;y++)
-				{
-					bm	= line[y]+sx;
-
-					fspr+=l_y_skip[l]*dy;
-
-					mydword = fspr[1];
-					col = (mydword>> 0)&0xf; if (col) bm[ 0] = paldata[col];
-					col = (mydword>> 4)&0xf; if (col) bm[ 1] = paldata[col];
-					col = (mydword>> 8)&0xf; if (col) bm[ 2] = paldata[col];
-					col = (mydword>>12)&0xf; if (col) bm[ 3] = paldata[col];
-					col = (mydword>>16)&0xf; if (col) bm[ 4] = paldata[col];
-					col = (mydword>>20)&0xf; if (col) bm[ 5] = paldata[col];
-					col = (mydword>>24)&0xf; if (col) bm[ 6] = paldata[col];
-					col = (mydword>>28)&0xf; if (col) bm[ 7] = paldata[col];
-
-					mydword = fspr[0];
-					col = (mydword>> 0)&0xf; if (col) bm[ 8] = paldata[col];
-					col = (mydword>> 4)&0xf; if (col) bm[ 9] = paldata[col];
-					col = (mydword>> 8)&0xf; if (col) bm[10] = paldata[col];
-					col = (mydword>>12)&0xf; if (col) bm[11] = paldata[col];
-					col = (mydword>>16)&0xf; if (col) bm[12] = paldata[col];
-					col = (mydword>>20)&0xf; if (col) bm[13] = paldata[col];
-					col = (mydword>>24)&0xf; if (col) bm[14] = paldata[col];
-					col = (mydword>>28)&0xf; if (col) bm[15] = paldata[col];
-
-					l++;
-				}
-			}
-			else
-			{
-				for (y = sy;y <= ey;y++)
-				{
-					bm	= line[y]+sx;
-					fspr+=l_y_skip[l]*dy;
-
-					mydword = fspr[1];
-					if (dda_x_skip[ 0]) { col = (mydword>> 0)&0xf; if (col) *bm = paldata[col]; bm++; }
-					if (dda_x_skip[ 1]) { col = (mydword>> 4)&0xf; if (col) *bm = paldata[col]; bm++; }
-					if (dda_x_skip[ 2]) { col = (mydword>> 8)&0xf; if (col) *bm = paldata[col]; bm++; }
-					if (dda_x_skip[ 3]) { col = (mydword>>12)&0xf; if (col) *bm = paldata[col]; bm++; }
-					if (dda_x_skip[ 4]) { col = (mydword>>16)&0xf; if (col) *bm = paldata[col]; bm++; }
-					if (dda_x_skip[ 5]) { col = (mydword>>20)&0xf; if (col) *bm = paldata[col]; bm++; }
-					if (dda_x_skip[ 6]) { col = (mydword>>24)&0xf; if (col) *bm = paldata[col]; bm++; }
-					if (dda_x_skip[ 7]) { col = (mydword>>28)&0xf; if (col) *bm = paldata[col]; bm++; }
-
-					mydword = fspr[0];
-					if (dda_x_skip[ 8]) { col = (mydword>> 0)&0xf; if (col) *bm = paldata[col]; bm++; }
-					if (dda_x_skip[ 9]) { col = (mydword>> 4)&0xf; if (col) *bm = paldata[col]; bm++; }
-					if (dda_x_skip[10]) { col = (mydword>> 8)&0xf; if (col) *bm = paldata[col]; bm++; }
-					if (dda_x_skip[11]) { col = (mydword>>12)&0xf; if (col) *bm = paldata[col]; bm++; }
-					if (dda_x_skip[12]) { col = (mydword>>16)&0xf; if (col) *bm = paldata[col]; bm++; }
-					if (dda_x_skip[13]) { col = (mydword>>20)&0xf; if (col) *bm = paldata[col]; bm++; }
-					if (dda_x_skip[14]) { col = (mydword>>24)&0xf; if (col) *bm = paldata[col]; bm++; }
-					if (dda_x_skip[15]) { col = (mydword>>28)&0xf; if (col) *bm = paldata[col]; bm++; }
-
-					l++;
-				}
-			}
-		}
-		else		/* normal */
-		{
-			l=0;
-			if (zx == 16)
-			{
-				for (y = sy ;y <= ey;y++)
-				{
-					bm	= line[y] + sx;
-					fspr+=l_y_skip[l]*dy;
-
-					mydword = fspr[0];
-					col = (mydword>>28)&0xf; if (col) bm[ 0] = paldata[col];
-					col = (mydword>>24)&0xf; if (col) bm[ 1] = paldata[col];
-					col = (mydword>>20)&0xf; if (col) bm[ 2] = paldata[col];
-					col = (mydword>>16)&0xf; if (col) bm[ 3] = paldata[col];
-					col = (mydword>>12)&0xf; if (col) bm[ 4] = paldata[col];
-					col = (mydword>> 8)&0xf; if (col) bm[ 5] = paldata[col];
-					col = (mydword>> 4)&0xf; if (col) bm[ 6] = paldata[col];
-					col = (mydword>> 0)&0xf; if (col) bm[ 7] = paldata[col];
-
-					mydword = fspr[1];
-					col = (mydword>>28)&0xf; if (col) bm[ 8] = paldata[col];
-					col = (mydword>>24)&0xf; if (col) bm[ 9] = paldata[col];
-					col = (mydword>>20)&0xf; if (col) bm[10] = paldata[col];
-					col = (mydword>>16)&0xf; if (col) bm[11] = paldata[col];
-					col = (mydword>>12)&0xf; if (col) bm[12] = paldata[col];
-					col = (mydword>> 8)&0xf; if (col) bm[13] = paldata[col];
-					col = (mydword>> 4)&0xf; if (col) bm[14] = paldata[col];
-					col = (mydword>> 0)&0xf; if (col) bm[15] = paldata[col];
-
-					l++;
-				}
-			}
-			else
-			{
-				for (y = sy ;y <= ey;y++)
-				{
-					bm	= line[y] + sx;
-					fspr+=l_y_skip[l]*dy;
-
-					mydword = fspr[0];
-					if (dda_x_skip[ 0]) { col = (mydword>>28)&0xf; if (col) *bm = paldata[col]; bm++; }
-					if (dda_x_skip[ 1]) { col = (mydword>>24)&0xf; if (col) *bm = paldata[col]; bm++; }
-					if (dda_x_skip[ 2]) { col = (mydword>>20)&0xf; if (col) *bm = paldata[col]; bm++; }
-					if (dda_x_skip[ 3]) { col = (mydword>>16)&0xf; if (col) *bm = paldata[col]; bm++; }
-					if (dda_x_skip[ 4]) { col = (mydword>>12)&0xf; if (col) *bm = paldata[col]; bm++; }
-					if (dda_x_skip[ 5]) { col = (mydword>> 8)&0xf; if (col) *bm = paldata[col]; bm++; }
-					if (dda_x_skip[ 6]) { col = (mydword>> 4)&0xf; if (col) *bm = paldata[col]; bm++; }
-					if (dda_x_skip[ 7]) { col = (mydword>> 0)&0xf; if (col) *bm = paldata[col]; bm++; }
-
-					mydword = fspr[1];
-					if (dda_x_skip[ 8]) { col = (mydword>>28)&0xf; if (col) *bm = paldata[col]; bm++; }
-					if (dda_x_skip[ 9]) { col = (mydword>>24)&0xf; if (col) *bm = paldata[col]; bm++; }
-					if (dda_x_skip[10]) { col = (mydword>>20)&0xf; if (col) *bm = paldata[col]; bm++; }
-					if (dda_x_skip[11]) { col = (mydword>>16)&0xf; if (col) *bm = paldata[col]; bm++; }
-					if (dda_x_skip[12]) { col = (mydword>>12)&0xf; if (col) *bm = paldata[col]; bm++; }
-					if (dda_x_skip[13]) { col = (mydword>> 8)&0xf; if (col) *bm = paldata[col]; bm++; }
-					if (dda_x_skip[14]) { col = (mydword>> 4)&0xf; if (col) *bm = paldata[col]; bm++; }
-					if (dda_x_skip[15]) { col = (mydword>> 0)&0xf; if (col) *bm = paldata[col]; bm++; }
-
-					l++;
-				}
-			}
-		}
-	}
-}
-
-void NeoMVSDrawGfx16(UINT16 **line,const struct GfxElement *gfx, /* AJP */
+void NeoMVSDrawGfx(UINT16 **line,const struct GfxElement *gfx, /* AJP */
 		unsigned int code,unsigned int color,int flipx,int flipy,int sx,int sy,
 		int zx,int zy,const struct rectangle *clip)
 {
@@ -571,7 +406,7 @@ void NeoMVSDrawGfx16(UINT16 **line,const struct GfxElement *gfx, /* AJP */
 	}
 
 	{
-		const UINT32 *paldata;	/* ASG 980209 */
+		const pen_t *paldata;	/* ASG 980209 */
 		paldata = &gfx->colortable[gfx->color_granularity * color];
 		if (flipx)	/* X flip */
 		{
@@ -715,7 +550,7 @@ static void screenrefresh(struct osd_bitmap *bitmap,const struct rectangle *clip
 	int offs,i,count,y,x;
 	int tileno,tileatr,t1,t2,t3;
 	char fullmode=0;
-	int ddax=0,dday=0,rzx=15,yskip=0;
+	int dday=0,rzx=16,yskip=0;
 	void **line=bitmap->line;
 	unsigned int *pen_usage;
 	struct GfxElement *gfx=Machine->gfx[2]; /* Save constant struct dereference */
@@ -814,30 +649,14 @@ if (!dotiles) { 					/* debug */
 				if (my > 0x10) my = 0x10;
 			}
 			if (my > 0x20) my=0x20;
-
-			ddax=0; /* =16; NS990110 neodrift fix */		/* setup x zoom */
 		}
 
 		/* No point doing anything if tile strip is 0 */
 		if (my==0) continue;
 
 		/* Process x zoom */
-		if (zx != 15)
-		{
-			rzx = 0;
-			for(i = 0; i < 16; i++)
-			{
-				ddax -= zx+1;
-				if (ddax <= 0)
-				{
-					ddax += 15+1;
-					dda_x_skip[i] = 1;
-					rzx++;
-				}
-				else dda_x_skip[i] = 0;
-			}
-		}
-		else rzx=16;
+		rzx = zx+1;
+		dda_x_skip = dda_x_skip_tables[zx];
 
 		if (sx >= 320)
 			continue;
@@ -893,24 +712,14 @@ if (!dotiles) { 					/* debug */
 
 			if (sy+15 >= clip->min_y && sy <= clip->max_y)
 			{
-				if (Machine->scrbitmap->depth != 8)
-					NeoMVSDrawGfx16((UINT16 **)line,
-						gfx,
-						tileno,
-						tileatr >> 8,
-						tileatr & 0x01,tileatr & 0x02,
-						sx,sy,rzx,yskip,
-						clip
-					);
-				else
-					NeoMVSDrawGfx((UINT8 **)line,
-						gfx,
-						tileno,
-						tileatr >> 8,
-						tileatr & 0x01,tileatr & 0x02,
-						sx,sy,rzx,yskip,
-						clip
-					);
+				NeoMVSDrawGfx((UINT16 **)line,
+					gfx,
+					tileno,
+					tileatr >> 8,
+					tileatr & 0x01,tileatr & 0x02,
+					sx,sy,rzx,yskip,
+					clip
+				);
 			}
 
 			sy +=yskip;
@@ -965,7 +774,7 @@ if (!dotiles) { 					/* debug */
 				if (tileatr&0x8) tileno=(tileno&~7)+((tileno+neogeo_frame_counter)&7);
 				else if (tileatr&0x4) tileno=(tileno&~3)+((tileno+neogeo_frame_counter)&3);
 
-				NeoMVSDrawGfx((UINT8 **)line,
+				NeoMVSDrawGfx((UINT16 **)line,
 					Machine->gfx[2],
 					tileno,
 					tileatr >> 8,

@@ -248,51 +248,13 @@ void i286_set_context(void *src)
 	}
 }
 
-unsigned i286_get_pc(void)
-{
-	return I.pc;
-}
-
-void i286_set_pc(unsigned val)
-{
-	if (PM) {
-	} else {
-		if (val - I.base[CS] >= 0x10000)
-		{
-			I.base[CS] = val & 0xffff0;
-			I.sregs[CS] = I.base[CS] >> 4;
-		}
-		I.pc = val;
-	}
-}
-
-unsigned i286_get_sp(void)
-{
-	return I.base[SS] + I.regs.w[SP];
-}
-
-void i286_set_sp(unsigned val)
-{
-	if (PM) {
-	} else {
-		if( val - I.base[SS] < 0x10000 )
-		{
-			I.regs.w[SP] = val - I.base[SS];
-		}
-		else
-		{
-			I.base[SS] = val & 0xffff0;
-			I.sregs[SS] = I.base[SS] >> 4;
-			I.regs.w[SP] = val & 0x0000f;
-		}
-	}
-}
-
 unsigned i286_get_reg(int regnum)
 {
 	switch( regnum )
 	{
+		case REG_PC: return I.pc;
 		case I286_IP: return I.pc - I.base[CS];
+		case REG_SP: return I.base[SS] + I.regs.w[SP];
 		case I286_SP: return I.regs.w[SP];
 		case I286_FLAGS: CompressFlags(); return I.flags;
 		case I286_AX: return I.regs.w[AX];
@@ -326,7 +288,33 @@ void i286_set_reg(int regnum, unsigned val)
 {
 	switch( regnum )
 	{
+		case REG_PC:
+			if (PM) {
+			} else {
+				if (val - I.base[CS] >= 0x10000)
+				{
+					I.base[CS] = val & 0xffff0;
+					I.sregs[CS] = I.base[CS] >> 4;
+				}
+				I.pc = val;
+			}
+			break;
 		case I286_IP: I.pc = I.base[CS] + val; break;
+		case REG_SP:
+			if (PM) {
+			} else {
+				if( val - I.base[SS] < 0x10000 )
+				{
+					I.regs.w[SP] = val - I.base[SS];
+				}
+				else
+				{
+					I.base[SS] = val & 0xffff0;
+					I.sregs[SS] = I.base[SS] >> 4;
+					I.regs.w[SP] = val & 0x0000f;
+				}
+			}
+			break;
 		case I286_SP: I.regs.w[SP] = val; break;
 		case I286_FLAGS: I.flags = val; ExpandFlags(val); break;
 		case I286_AX: I.regs.w[AX] = val; break;
@@ -342,7 +330,7 @@ void i286_set_reg(int regnum, unsigned val)
 		case I286_DS: I.sregs[DS] = val; break;
 		case I286_VECTOR: I.int_vector = val; break;
 		case I286_PENDING: /* obsolete */ break;
-		case I286_NMI_STATE: i286_set_nmi_line(val); break;
+		case I286_NMI_STATE: i286_set_irq_line(IRQ_LINE_NMI,val); break;
 		case I286_IRQ_STATE: i286_set_irq_line(0,val); break;
 		default:
 			if( regnum <= REG_SP_CONTENTS )
@@ -357,24 +345,26 @@ void i286_set_reg(int regnum, unsigned val)
     }
 }
 
-void i286_set_nmi_line(int state)
-{
-	if (I.nmi_state == state)
-		return;
-	I.nmi_state = state;
-
-	/* on a rising edge, signal the NMI */
-	if (state != CLEAR_LINE)
-		PREFIX(_interrupt)(I86_NMI_INT);
-}
-
 void i286_set_irq_line(int irqline, int state)
 {
-	I.irq_state = state;
+	if (irqline == IRQ_LINE_NMI)
+	{
+		if (I.nmi_state == state)
+			return;
+		I.nmi_state = state;
 
-	/* if the IF is set, signal an interrupt */
-	if (state != CLEAR_LINE && I.IF)
-		PREFIX(_interrupt)(-1);
+		/* on a rising edge, signal the NMI */
+		if (state != CLEAR_LINE)
+			PREFIX(_interrupt)(I86_NMI_INT_VECTOR);
+	}
+	else
+	{
+		I.irq_state = state;
+
+		/* if the IF is set, signal an interrupt */
+		if (state != CLEAR_LINE && I.IF)
+			PREFIX(_interrupt)(-1);
+	}
 }
 
 void i286_set_irq_callback(int (*callback)(int))

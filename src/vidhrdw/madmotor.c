@@ -203,68 +203,70 @@ WRITE16_HANDLER( madmotor_pf1_rowscroll_w )
 
 /******************************************************************************/
 
-static void dec0_drawsprites(struct osd_bitmap *bitmap,int pri_mask,int pri_val)
+static void madmotor_drawsprites(struct osd_bitmap *bitmap,int pri_mask,int pri_val)
 {
 	int offs;
 
-	for (offs = 0;offs < 0x400;offs += 4)
+	offs = 0;
+	while (offs < 0x400)
 	{
-		int x,y,sprite,colour,multi,fx,fy,inc,flash,mult;
+		int sx,sy,code,color,w,h,flipx,flipy,incy,flash,mult,x,y;
 
-		y = spriteram16[offs];
-		if ((y&0x8000) == 0) continue;
+		sy = spriteram16[offs];
+		sx = spriteram16[offs+2];
+		color = sx >> 12;
 
-		x = spriteram16[offs+2];
-		colour = x >> 12;
-		if ((colour & pri_mask) != pri_val) continue;
+		flash=sx&0x800;
 
-		flash=x&0x800;
-		if (flash && (cpu_getcurrentframe() & 1)) continue;
+		flipx = sy & 0x2000;
+		flipy = sy & 0x4000;
+		h = (1 << ((sy & 0x1800) >> 11));	/* 1x, 2x, 4x, 8x height */
+		w = (1 << ((sy & 0x0600) >>  9));	/* 1x, 2x, 4x, 8x width */
+		/* multi width used only on the title screen? */
 
-		fx = y & 0x2000;
-		fy = y & 0x4000;
-		multi = (1 << ((y & 0x1800) >> 11)) - 1;	/* 1x, 2x, 4x, 8x height */
-											/* multi = 0   1   3   7 */
+		code = spriteram16[offs+1] & 0x1fff;
 
-		sprite = spriteram16[offs+1] & 0x1fff;
+		sx = sx & 0x01ff;
+		sy = sy & 0x01ff;
+		if (sx >= 256) sx -= 512;
+		if (sy >= 256) sy -= 512;
+		sx = 240 - sx;
+		sy = 240 - sy;
 
-		x = x & 0x01ff;
-		y = y & 0x01ff;
-		if (x >= 256) x -= 512;
-		if (y >= 256) y -= 512;
-		x = 240 - x;
-		y = 240 - y;
-
-		if (x>256) continue; /* Speedup */
-
-		sprite &= ~multi;
-		if (fy)
-			inc = -1;
+		code &= ~(h-1);
+		if (flipy)
+			incy = -1;
 		else
 		{
-			sprite += multi;
-			inc = 1;
+			code += h-1;
+			incy = 1;
 		}
 
 		if (flipscreen) {
-			y=240-y;
-			x=240-x;
-			if (fx) fx=0; else fx=1;
-			if (fy) fy=0; else fy=1;
+			sy=240-sy;
+			sx=240-sx;
+			if (flipx) flipx=0; else flipx=1;
+			if (flipy) flipy=0; else flipy=1;
 			mult=16;
 		}
 		else mult=-16;
 
-		while (multi >= 0)
+		for (x = 0;x < w;x++)
 		{
-			drawgfx(bitmap,Machine->gfx[3],
-					sprite - multi * inc,
-					colour,
-					fx,fy,
-					x,y + mult * multi,
-					&Machine->visible_area,TRANSPARENCY_PEN,0);
+			for (y = 0;y < h;y++)
+			{
+				if ((color & pri_mask) == pri_val &&
+							(!flash || (cpu_getcurrentframe() & 1)))
+					drawgfx(bitmap,Machine->gfx[3],
+							code - y * incy + h * x,
+							color,
+							flipx,flipy,
+							sx + mult * x,sy + mult * y,
+							&Machine->visible_area,TRANSPARENCY_PEN,0);
+			}
 
-			multi--;
+			offs += 4;
+			if (spriteram16[offs] & 0x8000) break;	// seems the expected behaviour on the title screen
 		}
 	}
 }
@@ -299,6 +301,6 @@ void madmotor_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	else
 		tilemap_draw(bitmap,madmotor_pf3a_tilemap,0,0);
 	tilemap_draw(bitmap,madmotor_pf2_tilemap,0,0);
-	dec0_drawsprites(bitmap,0x00,0x00);
+	madmotor_drawsprites(bitmap,0x00,0x00);
 	tilemap_draw(bitmap,madmotor_pf1_tilemap,0,0);
 }

@@ -658,7 +658,7 @@ static struct MachineDriver machine_driver_tunhunt =
 	{
 		{
 			CPU_M6502,
-			2000000, /* ? CPU speed in Mhz */
+			2000000, /* ??? */
 			readmem,writemem,0,0,
 			interrupt,2 /* ? probably wrong */
 		}

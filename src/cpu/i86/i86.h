@@ -9,6 +9,8 @@
 /* compile with V20,V30,V33 when configured (HAS_V20,...) */
 //#define INCLUDE_V20
 
+#define I86_NMI_INT_VECTOR 2
+
 typedef enum { ES, CS, SS, DS } SREGS;
 typedef enum { AX, CX, DX, BX, SP, BP, SI, DI } WREGS;
 

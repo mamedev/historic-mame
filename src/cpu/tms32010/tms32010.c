@@ -735,41 +735,6 @@ void tms320c10_set_context (void *src)
 		R = *(tms320c10_Regs*)src;
 }
 
-/****************************************************************************
- * Return program counter
- ****************************************************************************/
-unsigned tms320c10_get_pc (void)
-{
-    return R.PC;
-}
-
-
-/****************************************************************************
- * Set program counter
- ****************************************************************************/
-void tms320c10_set_pc (unsigned val)
-{
-	R.PC = val;
-}
-
-
-/****************************************************************************
- * Return stack pointer
- ****************************************************************************/
-unsigned tms320c10_get_sp (void)
-{
-	return R.STACK[3];
-}
-
-
-/****************************************************************************
- * Set stack pointer
- ****************************************************************************/
-void tms320c10_set_sp (unsigned val)
-{
-	R.STACK[3] = val;
-}
-
 
 /****************************************************************************
  * Return a specific register
@@ -778,8 +743,10 @@ unsigned tms320c10_get_reg(int regnum)
 {
 	switch( regnum )
 	{
+		case REG_PC:
 		case TMS320C10_PC: return R.PC;
 		/* This is actually not a stack pointer, but the stack contents */
+		case REG_SP:
 		case TMS320C10_STK3: return R.STACK[3];
 		case TMS320C10_ACC: return R.ACC;
 		case TMS320C10_STR: return R.STR;
@@ -806,8 +773,10 @@ void tms320c10_set_reg(int regnum, unsigned val)
 {
 	switch( regnum )
 	{
+		case REG_PC:
 		case TMS320C10_PC: R.PC = val; break;
 		/* This is actually not a stack pointer, but the stack contents */
+		case REG_SP:
 		case TMS320C10_STK3: R.STACK[3] = val; break;
 		case TMS320C10_STR: R.STR = val; break;
 		case TMS320C10_ACC: R.ACC = val; break;
@@ -825,14 +794,6 @@ void tms320c10_set_reg(int regnum, unsigned val)
     }
 }
 
-
-/****************************************************************************
- * Set NMI line state
- ****************************************************************************/
-void tms320c10_set_nmi_line(int state)
-{
-	/* TMS320C10 does not have a NMI line */
-}
 
 /****************************************************************************
  * Set IRQ line state

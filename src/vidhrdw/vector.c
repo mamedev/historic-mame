@@ -25,6 +25,7 @@
  *        modified avgdvg.c and sega.c to support new line draw routine
  *        added two new tables Tinten and Tmerge (for 256 color support)
  *        added find_color routine to build above tables .ac
+ * 010903 added support for direct RGB modes MLR
  *
  **************************************************************************** */
 
@@ -81,16 +82,8 @@ static unsigned int *pixel;
 static int p_index=0;
 
 static UINT32 *pTcosin;            /* adjust line width */
-static UINT8  *pTinten;            /* intensity         */
-static UINT16 *pTmerge;            /* mergeing pixels   */
-static UINT16 *invpens;            /* maps OS colors to pens */
-
-static UINT32 *pens;
-static UINT16 total_colors;
 
 #define Tcosin(x)   pTcosin[(x)]          /* adjust line width */
-#define Tinten(x,y) pTinten[(x)*total_colors+(y)]  /* intensity         */
-#define Tmerge(x,y) pTmerge[(x)*total_colors+(y)]  /* mergeing pixels   */
 
 #define ANTIALIAS_GUNBIT  6             /* 6 bits per gun in vga (1-8 valid) */
 #define ANTIALIAS_GUNNUM  (1<<ANTIALIAS_GUNBIT)
@@ -105,8 +98,10 @@ static int xmin, ymin, xmax, ymax; /* clipping area */
 
 static int vector_runs;	/* vector runs per refresh */
 
-static void (*vector_pp)(struct osd_bitmap *bitmap,int x,int y,int pen);
-static int  (*vector_rp)(struct osd_bitmap *bitmap,int x,int y);
+static void (*vector_draw_aa_pixel)(int x, int y, int col, int dirty);
+
+static void vector_draw_aa_pixel_15 (int x, int y, int col, int dirty);
+static void vector_draw_aa_pixel_32 (int x, int y, int col, int dirty);
 
 /*
  * multiply and divide routines for drawing lines
@@ -149,45 +144,10 @@ INLINE int vec_div(int parm1, int parm2)
 }
 #endif
 
-static void vector_pp_8(struct osd_bitmap *b,int x,int y,int p)  { ((UINT8 *)b->line[y])[x] = p; }
-static void vector_pp_16(struct osd_bitmap *b,int x,int y,int p)  { ((UINT16 *)b->line[y])[x] = p; }
-static int vector_rp_8(struct osd_bitmap *b,int x,int y)  { return ((UINT8 *)b->line[y])[x]; }
-static int vector_rp_16(struct osd_bitmap *b,int x,int y)  { return ((UINT16 *)b->line[y])[x]; }
-
-/*
- * finds closest color and returns the index (for 256 color)
- */
-
-static UINT16 find_pen(unsigned char r,unsigned char g,unsigned char b)
-{
-	int i,bi,ii;
-	long x,y,z,bc;
-	ii = 32;
-	bi = 256;
-	bc = 0x01000000;
-
-	do
-	{
-		for( i = 0; i < total_colors; i++ )
-		{
-			unsigned char r1,g1,b1;
-
-			palette_get_color(i,&r1,&g1,&b1);
-			if((x=(long)(abs(r1-r)+1)) > ii) continue;
-			if((y=(long)(abs(g1-g)+1)) > ii) continue;
-			if((z=(long)(abs(b1-b)+1)) > ii) continue;
-			x = x*y*z;
-			if (x < bc)
-			{
-				bc = x;
-				bi = i;
-			}
-		}
-		ii<<=1;
-	} while (bi==256);
-
-	return(bi);
-}
+#define Tinten(intensity, col) \
+((((col) & 0xff) * (intensity)) >> 8) \
+	| (((((col) >> 8) & 0xff) * (intensity)) & 0xff00) \
+	| (((((col) >> 16) * (intensity)) >> 8) << 16)
 
 /* MLR 990316 new gamma handling added */
 void vector_set_gamma(float _gamma)
@@ -236,7 +196,7 @@ float vector_get_intensity(void)
 
 int vector_vh_start (void)
 {
-	int h,i,j,k,c[3];
+	int i;
 
 	/* Grab the settings for this session */
 	antialias = options.antialias;
@@ -244,19 +204,6 @@ int vector_vh_start (void)
 	vector_set_flicker(options.vector_flicker);
 	beam = options.beam;
 
-	pens = Machine->pens;
-	total_colors = MIN(256, Machine->drv->total_colors);
-
-	if (Machine->color_depth == 8)
-	{
-		vector_pp = vector_pp_8;
-		vector_rp = vector_rp_8;
-	}
-	else
-	{
-		vector_pp = vector_pp_16;
-		vector_rp = vector_rp_16;
-	}
 
 	if (beam == 0x00010000)
 		beam_diameter_is_one = 1;
@@ -269,17 +216,28 @@ int vector_vh_start (void)
 	old_index = 0;
 	vector_runs = 0;
 
+	switch(Machine->color_depth)
+	{
+	case 15:
+		vector_draw_aa_pixel = vector_draw_aa_pixel_15;
+		break;
+	case 32:
+		vector_draw_aa_pixel = vector_draw_aa_pixel_32;
+		break;
+	default:
+		logerror ("Vector games have to use direct RGB modes!\n");
+		return 1;
+		break;
+	}
+
 	/* allocate memory for tables */
 	pTcosin = malloc ( (2048+1) * sizeof(INT32));   /* yes! 2049 is correct */
-	pTinten = malloc ( total_colors * 256 * sizeof(UINT8));
-	pTmerge = malloc (total_colors * total_colors * sizeof(UINT32));
-	invpens = malloc (65536 * sizeof(UINT16));
 	pixel = malloc (MAX_PIXELS * sizeof (UINT32));
 	old_list = malloc (MAX_POINTS * sizeof (point));
 	new_list = malloc (MAX_POINTS * sizeof (point));
 
 	/* did we get the requested memory? */
-	if (!(pTcosin && pTinten && pTmerge && invpens && pixel && old_list && new_list))
+	if (!(pTcosin && pixel && old_list && new_list))
 	{
 		/* vector_vh_stop should better be called by the main engine */
 		/* if vector_vh_start fails */
@@ -291,57 +249,6 @@ int vector_vh_start (void)
 	for (i=0; i<=2048; i++)
 	{
 		Tcosin(i) = (int)((double)(1.0/cos(atan((double)(i)/2048.0)))*0x10000000 + 0.5);
-	}
-
-	memset (invpens, 0, 65536 * sizeof(unsigned short));
-	for( i = 0; i < total_colors ;i++ )
-		invpens[Machine->pens[i]] = i;
-
-	/* build anti-alias table */
-	h = 256 / ANTIALIAS_GUNNUM;           /* to generate table faster */
-	for (i = 0; i < 256; i += h )               /* intensity */
-	{
-		for (j = 0; j < total_colors; j++)               /* color */
-		{
-			UINT8 r1,g1,b1,pen,n;
-			palette_get_color(j,&r1,&g1,&b1);
-			pen = find_pen( (r1*(i+1))>>8, (g1*(i+1))>>8, (b1*(i+1))>>8 );
-			for (n = 0; n < h; n++ )
-			{
-				Tinten(i + n, j) = pen;
-			}
-		}
-	}
-
-	/* build merge color table */
-	for( i = 0; i < total_colors ;i++ )                /* color1 */
-	{
-		unsigned char rgb1[3],rgb2[3];
-
-		palette_get_color(i,&rgb1[0],&rgb1[1],&rgb1[2]);
-		for( j = 0; j <= i ;j++ )               /* color2 */
-		{
-			palette_get_color(j,&rgb2[0],&rgb2[1],&rgb2[2]);
-
-			for (k = 0; k < 3; k++)
-			if (translucency) /* add gun values */
-			{
-				int tmp;
-				tmp = rgb1[k] + rgb2[k];
-				if (tmp > 255)
-					c[k] = 255;
-				else
-					c[k] = tmp;
-			}
-			else /* choose highest gun value */
-			{
-				if (rgb1[k] > rgb2[k])
-					c[k] = rgb1[k];
-				else
-					c[k] = rgb2[k];
-			}
-			Tmerge(i,j) = Tmerge(j,i) = find_pen(c[0],c[1],c[2]);
-		}
 	}
 
 	vector_set_flip_x(0);
@@ -395,19 +302,26 @@ void vector_set_shift (int shift)
  */
 static void vector_clear_pixels (void)
 {
-	unsigned char bg=pens[0];
 	int i;
 	int coords;
 
-
-	for (i=p_index-1; i>=0; i--)
+	if (Machine->color_depth == 32)
 	{
-		coords = pixel[i];
-		vector_pp (vecbitmap, coords >> 16, coords & 0x0000ffff, bg);
+		for (i=p_index-1; i>=0; i--)
+		{
+			coords = pixel[i];
+			((UINT32 *)vecbitmap->line[coords & 0xffff])[coords >> 16] = 0;
+		}
 	}
-
+	else
+	{
+		for (i=p_index-1; i>=0; i--)
+		{
+			coords = pixel[i];
+			((UINT16 *)vecbitmap->line[coords & 0xffff])[coords >> 16] = 0;
+		}
+	}
 	p_index=0;
-
 }
 
 /*
@@ -418,12 +332,6 @@ void vector_vh_stop (void)
 	if (pTcosin)
 		free (pTcosin);
 	pTcosin = NULL;
-	if (pTinten)
-		free (pTinten);
-	pTinten = NULL;
-	if (pTmerge)
-		free (pTmerge);
-	pTmerge = NULL;
 	if (pixel)
 		free (pixel);
 	pixel = NULL;
@@ -438,14 +346,47 @@ void vector_vh_stop (void)
 /*
  * draws an anti-aliased pixel (blends pixel with background)
  */
-INLINE void vector_draw_aa_pixel (int x, int y, int col, int dirty)
+#define LIMIT5(x) ((x < 0x1f)? x : 0x1f)
+#define LIMIT8(x) ((x < 0xff)? x : 0xff)
+
+static void vector_draw_aa_pixel_15 (int x, int y, int col, int dirty)
 {
+	UINT32 dst;
+
 	if (x < xmin || x >= xmax)
 		return;
 	if (y < ymin || y >= ymax)
 		return;
 
-	vector_pp (vecbitmap, x, y, pens[Tmerge(invpens[vector_rp(vecbitmap, x, y)], col)]);
+	dst = ((UINT16 *)vecbitmap->line[y])[x];
+	((UINT16 *)vecbitmap->line[y])[x] = LIMIT5(((col>>3) & 0x1f) + (dst & 0x1f))
+		| (LIMIT5(((col >> 11) & 0x1f) + ((dst >> 5) & 0x1f)) << 5)
+		| (LIMIT5((col >> 19) + (dst >> 10)) << 10);
+
+	if (p_index<MAX_PIXELS)
+	{
+		pixel[p_index] = y | (x << 16);
+		p_index++;
+	}
+
+	/* Mark this pixel as dirty */
+	if (dirty)
+		osd_mark_vector_dirty (x, y);
+}
+
+static void vector_draw_aa_pixel_32 (int x, int y, int col, int dirty)
+{
+	UINT32 dst;
+
+	if (x < xmin || x >= xmax)
+		return;
+	if (y < ymin || y >= ymax)
+		return;
+
+	dst = ((UINT32 *)vecbitmap->line[y])[x];
+	((UINT32 *)vecbitmap->line[y])[x] = LIMIT8((col & 0xff) + (dst & 0xff))
+		| (LIMIT8(((col >> 8) & 0xff) + ((dst >> 8) & 0xff)) << 8)
+		| (LIMIT8((col >> 16) + (dst >> 16)) << 16);
 
 	if (p_index<MAX_PIXELS)
 	{
@@ -478,10 +419,6 @@ void vector_draw_to (int x2, int y2, int col, int intensity, int dirty)
 	static int x1,yy1;
 	int xx,yy;
 	int xy_swap;
-
-#if 0
-	logerror("line:%d,%d nach %d,%d color %d\n",x1,yy1,x2,y2,col);
-#endif
 
 	/* [1] scale coordinates to display */
 
@@ -900,7 +837,7 @@ void vector_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 
 	if (full_refresh)
-		fillbitmap(bitmap,Machine->uifont->colortable[0],NULL);
+		fillbitmap(bitmap,0,NULL);
 
 
 	/* copy parameters */

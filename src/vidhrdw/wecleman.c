@@ -10,7 +10,7 @@ struct sprite {
 	const UINT8 *pen_data;	/* points to top left corner of tile data */
 	int line_offset;
 
-	const UINT32 *pal_data;
+	const pen_t *pal_data;
 	UINT32 pen_usage;
 
 	int x_offset, y_offset;
@@ -205,7 +205,7 @@ static void do_blit_zoom( const struct sprite *sprite ){
 
 	{
 		const unsigned char *pen_data = sprite->pen_data;
-		const UINT32 *pal_data = sprite->pal_data;
+		const pen_t *pal_data = sprite->pal_data;
 		int x,y;
 		unsigned char pen;
 		int pitch = blit.line_offset*dy;
@@ -323,7 +323,7 @@ static void do_blit_zoom16( const struct sprite *sprite ){
 
 	{
 		const unsigned char *pen_data = sprite->pen_data;
-		const UINT32 *pal_data = sprite->pal_data;
+		const pen_t *pal_data = sprite->pal_data;
 		int x,y;
 		unsigned char pen;
 		int pitch = blit.line_offset*dy/2;
@@ -1240,7 +1240,7 @@ The factors are in the range 0 (no shrinking) - 3F (half size).
 
 static void get_sprite_info(void)
 {
-	const UINT32         *base_pal	= Machine->remapped_colortable;
+	const pen_t          *base_pal	= Machine->remapped_colortable;
 	const unsigned char  *base_gfx	= memory_region(REGION_GFX1);
 
 	const int gfx_max = memory_region_length(REGION_GFX1);
@@ -1326,7 +1326,7 @@ static void get_sprite_info(void)
 #ifdef MAME_DEBUG
 static void browser(struct osd_bitmap *bitmap)
 {
-	const UINT32         *base_pal	=	Machine->gfx[0]->colortable + 0;
+	const pen_t          *base_pal	=	Machine->gfx[0]->colortable + 0;
 	const unsigned char  *base_gfx	=	memory_region(REGION_GFX1);
 
 	const int gfx_max				=	memory_region_length(REGION_GFX1);

@@ -288,7 +288,7 @@ static int shootout_interrupt(void)
 	} else
 		coin = 0;
 
-	return 0;
+	return ignore_interrupt();
 }
 
 static const struct MachineDriver machine_driver_shootout =

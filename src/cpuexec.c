@@ -26,7 +26,6 @@
 
 #define VERBOSE 0
 
-#define SAVE_STATE_TEST 0
 #if VERBOSE
 #define LOG(x)	logerror x
 #else
@@ -1048,78 +1047,30 @@ void cpu_irq_line_vector_w(int cpunum, int irqline, int vector)
 
 /*************************************
  *
- *	Generate an NMI interrupt
- *
- *************************************/
-
-static void cpu_manualnmicallback(int param)
-{
-	int cpunum = param & 0xff;
-	int state = param >> 8;
-
-	LOG(("cpu_manualnmicallback %d,%d\n", cpunum, state));
-
-	/* swap to the CPU's context */
-	cpuintrf_push_context(cpunum);
-
-	/* switch off the requested state */
-	switch (state)
-	{
-		case PULSE_LINE:
-			activecpu_set_irq_line(IRQ_LINE_NMI, INTERNAL_ASSERT_LINE);
-			activecpu_set_irq_line(IRQ_LINE_NMI, INTERNAL_CLEAR_LINE);
-			break;
-
-		case HOLD_LINE:
-		case ASSERT_LINE:
-			activecpu_set_irq_line(IRQ_LINE_NMI, INTERNAL_ASSERT_LINE);
-			break;
-
-		case CLEAR_LINE:
-			activecpu_set_irq_line(IRQ_LINE_NMI, INTERNAL_CLEAR_LINE);
-			break;
-
-		default:
-			logerror("cpu_manualnmicallback cpu #%d unknown state %d\n", cpunum, state);
-	}
-	cpuintrf_pop_context();
-
-	/* generate a trigger to unsuspend any CPUs waiting on the interrupt */
-	if (state != CLEAR_LINE)
-		cpu_triggerint(cpunum);
-}
-
-
-void cpu_set_nmi_line(int cpunum, int state)
-{
-	/* don't trigger interrupts on suspended CPUs */
-	if (cpu_getstatus(cpunum) == 0)
-		return;
-
-	LOG(("cpu_set_nmi_line(%d,%d)\n", cpunum, state));
-	timer_set(TIME_NOW, (cpunum & 0xff) | (state << 8), cpu_manualnmicallback);
-}
-
-
-
-/*************************************
- *
  *	Generate a IRQ interrupt
  *
  *************************************/
 
 static void cpu_manualirqcallback(int param)
 {
-	int cpunum = param & 0xff;
-	int state = (param >> 8) & 0xff;
-	int irqline = param >> 16;
+	int cpunum = param & 0x0f;
+	int state = (param >> 4) & 0x0f;
+	int irqline = (param >> 8) & 0x7f;
+	int set_vector = (param >> 15) & 0x01;
+	int vector = param >> 16;
 
 	LOG(("cpu_manualirqcallback %d,%d,%d\n",cpunum,irqline,state));
 
 	/* swap to the CPU's context */
 	cpuintrf_push_context(cpunum);
+
+	/* set the IRQ line state and vector */
 	if (irqline >= 0 && irqline < MAX_IRQ_LINES)
+	{
 		irq_line_state[cpunum][irqline] = state;
+		if (set_vector)
+			irq_line_vector[cpunum][irqline] = vector;
+	}
 
 	/* switch off the requested state */
 	switch (state)
@@ -1151,12 +1102,33 @@ static void cpu_manualirqcallback(int param)
 
 void cpu_set_irq_line(int cpunum, int irqline, int state)
 {
+	int vector = 0xff;
+
 	/* don't trigger interrupts on suspended CPUs */
 	if (cpu_getstatus(cpunum) == 0)
 		return;
 
-	LOG(("cpu_set_irq_line(%d,%d,%d)\n", cpunum, irqline, state));
-	timer_set(TIME_NOW, (cpunum & 0xff) | ((state & 0xff) << 8) | (irqline << 16), cpu_manualirqcallback);
+	/* determine the current vector */
+	if (irqline >= 0 && irqline < MAX_IRQ_LINES)
+		vector = irq_line_vector[cpunum][irqline];
+
+	LOG(("cpu_set_irq_line(%d,%d,%d,%02x)\n", cpunum, irqline, state, vector));
+
+	/* set a timer to go off */
+	timer_set(TIME_NOW, (cpunum & 0x0f) | ((state & 0x0f) << 4) | ((irqline & 0x7f) << 8), cpu_manualirqcallback);
+}
+
+
+void cpu_set_irq_line_and_vector(int cpunum, int irqline, int state, int vector)
+{
+	/* don't trigger interrupts on suspended CPUs */
+	if (cpu_getstatus(cpunum) == 0)
+		return;
+
+	LOG(("cpu_set_irq_line(%d,%d,%d,%02x)\n", cpunum, irqline, state, vector));
+
+	/* set a timer to go off */
+	timer_set(TIME_NOW, (cpunum & 0x0f) | ((state & 0x0f) << 4) | ((irqline & 0x7f) << 8) | (1 << 15) | (vector << 16), cpu_manualirqcallback);
 }
 
 
@@ -1180,11 +1152,15 @@ void cpu_cause_interrupt(int cpunum, int type)
 
 	/* special case for NMI type */
 	else if (type == INTERRUPT_NMI)
-		cpu_set_nmi_line(cpunum, PULSE_LINE);
+		cpu_set_irq_line(cpunum, IRQ_LINE_NMI, PULSE_LINE);
 
 	/* otherwise, convert to an IRQ */
 	else
-		cpu_set_irq_line(cpunum, convert_type_to_irq_line(cpunum, type), HOLD_LINE);
+	{
+		int vector, irqline;
+		irqline = convert_type_to_irq_line(cpunum, type, &vector);
+		cpu_set_irq_line_and_vector(cpunum, irqline, HOLD_LINE, vector);
+	}
 }
 
 
@@ -1197,13 +1173,14 @@ void cpu_cause_interrupt(int cpunum, int type)
 
 static void cpu_clearintcallback(int cpunum)
 {
+	int irqcount = cputype_get_interface(Machine->drv->cpu[cpunum].cpu_type & ~CPU_FLAGS_MASK)->num_irqs;
 	int irqline;
 
 	cpuintrf_push_context(cpunum);
 
 	/* clear NMI and all IRQs */
 	activecpu_set_irq_line(IRQ_LINE_NMI, INTERNAL_CLEAR_LINE);
-	for (irqline = 0; irqline < MAX_IRQ_LINES; irqline++)
+	for (irqline = 0; irqline < irqcount; irqline++)
 		activecpu_set_irq_line(irqline, INTERNAL_CLEAR_LINE);
 
 	cpuintrf_pop_context();

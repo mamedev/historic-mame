@@ -6,12 +6,12 @@
 
 
 Main  CPU    :  68000
-Video Chips  :	TI TPC1020AFN-084 ?
-Sound Chips  :	OKI M6295
+Video Chips  :	TI TPC1020AFN-084 (= Actel A1020A PL84C 9548)
+Sound Chips  :	K-665 9546 (= M6295)
 
 To Do:
 
-- Flip screen unused ?)
+- Flip screen unused ?
 - Better driving wheel(s) support
 
 ***************************************************************************/
@@ -109,7 +109,8 @@ static READ16_HANDLER( blmbycar_opt_wheel_r )
 static MEMORY_READ16_START( blmbycar_readmem )
 	{ 0x000000, 0x0fffff, MRA16_ROM					},	// ROM
 	{ 0xfec000, 0xfeffff, MRA16_RAM					},	// RAM
-	{ 0x200000, 0x203fff, MRA16_RAM					},	//
+	{ 0x200000, 0x2005ff, MRA16_RAM					},	// Palette
+	{ 0x200600, 0x203fff, MRA16_RAM					},	//
 	{ 0x204000, 0x2045ff, MRA16_RAM					},	// Palette
 	{ 0x204600, 0x207fff, MRA16_RAM					},	//
 	{ 0x104000, 0x105fff, MRA16_RAM					},	// Layer 1
@@ -133,7 +134,8 @@ static MEMORY_WRITE16_START( blmbycar_writemem )
 	{ 0x108000, 0x10bfff, MWA16_RAM								},	//
 	{ 0x10c000, 0x10c003, MWA16_RAM, &blmbycar_scroll_1			},	// Scroll 1
 	{ 0x10c004, 0x10c007, MWA16_RAM, &blmbycar_scroll_0			},	// Scroll 0
-	{ 0x200000, 0x203fff, MWA16_RAM								},	//
+	{ 0x200000, 0x2005ff, blmbycar_palette_w					},	// Palette
+	{ 0x200600, 0x203fff, MWA16_RAM								},	//
 	{ 0x204000, 0x2045ff, blmbycar_palette_w, &paletteram16		},	// Palette
 	{ 0x204600, 0x207fff, MWA16_RAM								},	//
 	{ 0x440000, 0x441fff, MWA16_RAM								},	//
@@ -296,7 +298,6 @@ static const struct MachineDriver machine_driver_blmbycar =
 	blmbycar_gfxdecodeinfo,
 	0x300, 0,
 	0,
-
 	VIDEO_TYPE_RASTER,
 	0,
 	blmbycar_vh_start,
@@ -336,6 +337,23 @@ GFX : TI TPC1020AFN-084
 
 ROM_START( blmbycar )
 	ROM_REGION( 0x100000, REGION_CPU1, 0 )		/* 68000 Code */
+	ROM_LOAD16_BYTE( "bcrom4.bin", 0x000000, 0x080000, 0x06d490ba )
+	ROM_LOAD16_BYTE( "bcrom6.bin", 0x000001, 0x080000, 0x33aca664 )
+
+	ROM_REGION( 0x200000, REGION_GFX1, ROMREGION_DISPOSE )	/* Sprites */
+	ROM_LOAD( "bc_rom7",   0x000000, 0x080000, 0xe55ca79b )
+	ROM_LOAD( "bc_rom8",   0x080000, 0x080000, 0xcdf38c96 )
+	ROM_LOAD( "bc_rom9",   0x100000, 0x080000, 0x0337ab3d )
+	ROM_LOAD( "bc_rom10",  0x180000, 0x080000, 0x5458917e )
+
+	ROM_REGION( 0x140000, REGION_SOUND1, 0 )	/* 8 bit adpcm (banked) */
+	ROM_LOAD( "bc_rom1",     0x040000, 0x080000, 0xac6f8ba1 )
+	ROM_LOAD( "bc_rom2",     0x0c0000, 0x080000, 0xa4bc31bf )
+	ROM_COPY( REGION_SOUND1, 0x040000, 0x000000,   0x040000 )
+ROM_END
+
+ROM_START( blmbycau )
+	ROM_REGION( 0x100000, REGION_CPU1, 0 )		/* 68000 Code */
 	ROM_LOAD16_BYTE( "bc_rom4", 0x000000, 0x080000, 0x76f054a2 )
 	ROM_LOAD16_BYTE( "bc_rom6", 0x000001, 0x080000, 0x2570b4c5 )
 
@@ -352,6 +370,19 @@ ROM_START( blmbycar )
 ROM_END
 
 
+void init_blmbycar(void)
+{
+	data16_t *RAM  = (data16_t *) memory_region(REGION_CPU1);
+	size_t    size = memory_region_length(REGION_CPU1) / 2;
+	int i;
+
+	for (i = 0; i < size; i++)
+	{
+		data16_t x = RAM[i];
+		x = (x & ~0x0606) | ((x & 0x0202) << 1) | ((x & 0x0404) >> 1);
+		RAM[i] = x;
+	}
+}
 
 /***************************************************************************
 
@@ -361,4 +392,5 @@ ROM_END
 
 ***************************************************************************/
 
-GAME( 1994, blmbycar, 0, blmbycar, blmbycar, 0, ROT0, "ABM & Gecas", "Blomby Car" )
+GAME( 1994, blmbycar, 0,        blmbycar, blmbycar, blmbycar, ROT0, "ABM & Gecas", "Blomby Car" )
+GAME( 1994, blmbycau, blmbycar, blmbycar, blmbycar, 0,        ROT0, "ABM & Gecas", "Blomby Car (not encrypted)" )

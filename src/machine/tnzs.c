@@ -529,6 +529,9 @@ void init_drtoppel(void)
 	/* there's code which falls through from the fixed ROM to bank #0, I have to */
 	/* copy it there otherwise the CPU bank switching support will not catch it. */
 	memcpy(&RAM[0x08000],&RAM[0x18000],0x4000);
+
+	/* drtoppel writes to the palette RAM area even if it has PROMs! We have to patch it out. */
+	install_mem_write_handler(0, 0xf800, 0xfbff, MWA_NOP);
 }
 
 void init_chukatai(void)

@@ -156,7 +156,6 @@ void tacscan_sh_update(void);
 WRITE_HANDLER( startrek_sh_w );
 
 /* Video hardware prototypes */
-void sega_init_colors (unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 int sega_vh_start (void);
 void sega_vh_stop (void);
 void sega_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
@@ -782,9 +781,9 @@ static const struct MachineDriver machine_driver_spacfury =
 	400, 300, { 512, 1536, 552, 1464 },
 	0,
 	256, 0,
-	sega_init_colors,
+	0,
 
-	VIDEO_TYPE_VECTOR | VIDEO_SUPPORTS_DIRTY,
+	VIDEO_TYPE_VECTOR | VIDEO_SUPPORTS_DIRTY | VIDEO_RGB_DIRECT,
 	0,
 	sega_vh_start,
 	sega_vh_stop,
@@ -884,9 +883,9 @@ static const struct MachineDriver machine_driver_zektor =
 	400, 300, { 512, 1536, 624, 1432 },
 	0,
 	256, 0,
-	sega_init_colors,
+	0,
 
-	VIDEO_TYPE_VECTOR | VIDEO_SUPPORTS_DIRTY,
+	VIDEO_TYPE_VECTOR | VIDEO_SUPPORTS_DIRTY | VIDEO_RGB_DIRECT,
 	0,
 	sega_vh_start,
 	sega_vh_stop,
@@ -981,9 +980,9 @@ static const struct MachineDriver machine_driver_tacscan =
 	400, 300, { 496, 1552, 592, 1456 },
 	0,
 	256, 0,
-	sega_init_colors,
+	0,
 
-	VIDEO_TYPE_VECTOR | VIDEO_SUPPORTS_DIRTY,
+	VIDEO_TYPE_VECTOR | VIDEO_SUPPORTS_DIRTY | VIDEO_RGB_DIRECT,
 	0,
 	sega_vh_start,
 	sega_vh_stop,
@@ -1057,9 +1056,9 @@ static const struct MachineDriver machine_driver_elim2 =
 	400, 300, { 512, 1536, 600, 1440 },
 	0,
 	256, 0,
-	sega_init_colors,
+	0,
 
-	VIDEO_TYPE_VECTOR | VIDEO_SUPPORTS_DIRTY,
+	VIDEO_TYPE_VECTOR | VIDEO_SUPPORTS_DIRTY | VIDEO_RGB_DIRECT,
 	0,
 	sega_vh_start,
 	sega_vh_stop,
@@ -1102,9 +1101,9 @@ static const struct MachineDriver machine_driver_elim4 =
 	400, 300, { 512, 1536, 600, 1440 },
 	0,
 	256, 0,
-	sega_init_colors,
+	0,
 
-	VIDEO_TYPE_VECTOR | VIDEO_SUPPORTS_DIRTY,
+	VIDEO_TYPE_VECTOR | VIDEO_SUPPORTS_DIRTY | VIDEO_RGB_DIRECT,
 	0,
 	sega_vh_start,
 	sega_vh_stop,
@@ -1217,9 +1216,9 @@ static const struct MachineDriver machine_driver_startrek =
 	400, 300, { 512, 1536, 616, 1464 },
 	0,
 	256, 0,
-	sega_init_colors,
+	0,
 
-	VIDEO_TYPE_VECTOR | VIDEO_SUPPORTS_DIRTY,
+	VIDEO_TYPE_VECTOR | VIDEO_SUPPORTS_DIRTY | VIDEO_RGB_DIRECT,
 	0,
 	sega_vh_start,
 	sega_vh_stop,
@@ -1405,10 +1404,10 @@ ROM_START( startrek )
 	ROM_LOAD( "1869",         0xb000, 0x0800, 0xe5663070 )
 	ROM_LOAD( "1870",         0xb800, 0x0800, 0x4340616d )
 
-// I'm not sure where these roms are supposed to go, but they are speech
-// related (from what I've read), so I just took a wild guess here,
-// until their location is determined and speech is emulated, plus, it
-// helps make sure everyone has them for the future... MRH
+/* I'm not sure where these roms are supposed to go, but they are speech */
+/* related (from what I've read), so I just took a wild guess here, */
+/* until their location is determined and speech is emulated, plus, it */
+/* helps make sure everyone has them for the future... MRH */
 	ROM_LOAD ("1670",         0xc000, 0x0800, 0xb779884b )
 	ROM_LOAD ("1871",         0xc800, 0x1000, 0x03713920 )
 	ROM_LOAD ("1872",         0xd800, 0x1000, 0xebb5c3a9 )

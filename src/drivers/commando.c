@@ -50,7 +50,6 @@ WRITE_HANDLER( commando_scrollx_w );
 WRITE_HANDLER( commando_scrolly_w );
 WRITE_HANDLER( commando_c804_w );
 int commando_vh_start(void);
-void commando_vh_convert_color_prom(unsigned char *obsolete,unsigned short *colortable,const unsigned char *color_prom);
 void commando_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 void commando_eof_callback(void);
 
@@ -349,7 +348,7 @@ static const struct MachineDriver machine_driver_commando =
 	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
 	gfxdecodeinfo,
 	256, 0,
-	commando_vh_convert_color_prom,
+	palette_RRRR_GGGG_BBBB_convert_prom,
 
 	VIDEO_TYPE_RASTER | VIDEO_BUFFERS_SPRITERAM,
 	commando_eof_callback,

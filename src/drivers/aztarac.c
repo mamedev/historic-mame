@@ -11,7 +11,6 @@
 #include "vidhrdw/vector.h"
 
 /* from vidhrdw/aztarac.c */
-void aztarac_init_colors (unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 int aztarac_vh_start (void);
 WRITE16_HANDLER( aztarac_ubr_w );
 int aztarac_vg_interrupt(void);
@@ -172,10 +171,10 @@ static const struct MachineDriver machine_driver_aztarac =
 	/* video hardware */
 	400, 300, { 0, 1024-1, 0, 768-1 },
 	0,
-	256, 0,
-	aztarac_init_colors,
+	32768, 0,
+	0,
 
-	VIDEO_TYPE_VECTOR | VIDEO_SUPPORTS_DIRTY,
+	VIDEO_TYPE_VECTOR | VIDEO_SUPPORTS_DIRTY | VIDEO_RGB_DIRECT,
 	0,
 	aztarac_vh_start,
 	vector_vh_stop,

@@ -115,7 +115,7 @@ int YM2608_sh_start(const struct MachineSound *msound)
 	intf = msound->sound_interface;
 	if( intf->num > MAX_2608 ) return 1;
 
-	if (AY8910_sh_start(msound)) return 1;
+	if (AY8910_sh_start_ym(msound)) return 1;
 
 	/* Timer Handler set */
 	FMTimerInit();
@@ -215,6 +215,7 @@ void YM2608_sh_stop(void)
 	YM2608Shutdown();
 	if( rhythm_buf ) free(rhythm_buf);
 	rhythm_buf = 0;
+	AY8910_sh_stop_ym();
 }
 /* reset */
 void YM2608_sh_reset(void)

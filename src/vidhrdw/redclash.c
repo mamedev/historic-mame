@@ -12,6 +12,7 @@
 
 data8_t *redclash_textram;
 
+static int star_speed;
 static int gfxbank;
 
 
@@ -19,18 +20,8 @@ static int gfxbank;
 
   Convert the color PROMs into a more useable format.
 
-  Lady Bug has a 32 bytes palette PROM and a 32 bytes sprite color lookup
-  table PROM.
-  The palette PROM is connected to the RGB output this way:
-
-  bit 7 -- inverter -- 220 ohm resistor  -- BLUE
-        -- inverter -- 220 ohm resistor  -- GREEN
-        -- inverter -- 220 ohm resistor  -- RED
-        -- inverter -- 470 ohm resistor  -- BLUE
-        -- unused
-        -- inverter -- 470 ohm resistor  -- GREEN
-        -- unused
-  bit 0 -- inverter -- 470 ohm resistor  -- RED
+  I'm using the same palette conversion as Lady Bug, but the Zero Hour
+  schematics show a different resistor network.
 
 ***************************************************************************/
 void redclash_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
@@ -88,16 +79,29 @@ void redclash_vh_convert_color_prom(unsigned char *palette, unsigned short *colo
 
 WRITE_HANDLER( redclash_gfxbank_w )
 {
-	if (data & 0xfe) usrintf_showmessage("5801 = %02x",data);
-	gfxbank = data;
+	gfxbank = data & 1;
 }
 
 WRITE_HANDLER( redclash_flipscreen_w )
 {
 	flip_screen_set(data & 1);
-	if ((data & 0xfe) != 0x04) usrintf_showmessage("5800 = %02x",data);
 }
 
+/*
+star_speed:
+0 = unused
+1 = unused
+2 = forward fast
+3 = forward medium
+4 = forward slow
+5 = backwards slow
+6 = backwards medium
+7 = backwards fast
+*/
+WRITE_HANDLER( redclash_star0_w ) { star_speed = (star_speed & ~1) | ((data & 1) << 0); }
+WRITE_HANDLER( redclash_star1_w ) { star_speed = (star_speed & ~2) | ((data & 1) << 1); }
+WRITE_HANDLER( redclash_star2_w ) { star_speed = (star_speed & ~4) | ((data & 1) << 2); }
+WRITE_HANDLER( redclash_star_reset_w ) { }
 
 
 /***************************************************************************
@@ -130,42 +134,68 @@ void redclash_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 				int sx = spriteram[offs + i + 3];
 				int sy = offs / 4 + (spriteram[offs + i] & 0x07);
 
-				if (spriteram[offs + i] & 0x10)
+
+				switch ((spriteram[offs + i] & 0x18) >> 3)
 				{
-					if (spriteram[offs + i] & 0x20)	/* 24x24 */
+					case 3:	/* 24x24 */
 					{
+						int code = ((spriteram[offs + i + 1] & 0xf0) >> 4) + ((gfxbank & 1) << 4);
+
 						drawgfx(bitmap,Machine->gfx[3],
-								((spriteram[offs + i + 1] & 0x70) >> 4) + ((gfxbank & 1) << 3) +
-										((spriteram[offs + i + 1] & 0x80) >> 3),
+								code,
 								color,
 								0,0,
 								sx,sy - 16,
 								&Machine->visible_area,TRANSPARENCY_PEN,0);
 						/* wraparound */
 						drawgfx(bitmap,Machine->gfx[3],
-								((spriteram[offs + i + 1] & 0x70) >> 4) + ((gfxbank & 1) << 3) +
-										((spriteram[offs + i + 1] & 0x80) >> 3),
+								code,
 								color,
 								0,0,
 								sx - 256,sy - 16,
 								&Machine->visible_area,TRANSPARENCY_PEN,0);
+						break;
 					}
-					else	/* 16x16 */
-						drawgfx(bitmap,Machine->gfx[2],
-								((spriteram[offs + i + 1] & 0x70) >> 4) + ((gfxbank & 1) << 3) +
-										((spriteram[offs + i + 1] & 0x80) >> 3),
+
+					case 2:	/* 16x16 */
+						if (spriteram[offs + i] & 0x20)	/* zero hour spaceships */
+						{
+							int code = ((spriteram[offs + i + 1] & 0xf8) >> 3) + ((gfxbank & 1) << 5);
+							int bank = (spriteram[offs + i + 1] & 0x02) >> 1;
+
+							drawgfx(bitmap,Machine->gfx[4+bank],
+									code,
+									color,
+									0,0,
+									sx,sy - 16,
+									&Machine->visible_area,TRANSPARENCY_PEN,0);
+						}
+						else
+						{
+							int code = ((spriteram[offs + i + 1] & 0xf0) >> 4) + ((gfxbank & 1) << 4);
+
+							drawgfx(bitmap,Machine->gfx[2],
+									code,
+									color,
+									0,0,
+									sx,sy - 16,
+									&Machine->visible_area,TRANSPARENCY_PEN,0);
+						}
+						break;
+
+					case 1:	/* 8x8 */
+						drawgfx(bitmap,Machine->gfx[1],
+								spriteram[offs + i + 1],// + 4 * (spriteram[offs + i + 2] & 0x10),
 								color,
 								0,0,
 								sx,sy - 16,
 								&Machine->visible_area,TRANSPARENCY_PEN,0);
+						break;
+
+					case 0:
+usrintf_showmessage("unknown sprite size 0");
+						break;
 				}
-				else	/* 8x8 */
-					drawgfx(bitmap,Machine->gfx[1],
-							spriteram[offs + i + 1],// + 4 * (spriteram[offs + i + 2] & 0x10),
-							color,
-							0,0,
-							sx,sy - 16,
-							&Machine->visible_area,TRANSPARENCY_PEN,0);
 			}
 		}
 	}
@@ -205,4 +235,6 @@ void redclash_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 				8*sx,8*sy,
 				&Machine->visible_area,TRANSPARENCY_PEN,0);
 	}
+
+//usrintf_showmessage("%d%d%d",star2,star1,star0);
 }

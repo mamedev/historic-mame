@@ -336,7 +336,10 @@ static MEMORY_WRITE_START( writemem )
 	{ 0xf200, 0xf3ff, MWA_RAM, &tnzs_scrollram }, /* scrolling info */
 	{ 0xf400, 0xf400, MWA_NOP },	/* ? */
 	{ 0xf600, 0xf600, tnzs_bankswitch_w },
-	{ 0xf800, 0xfbff, paletteram_xRRRRRGGGGGBBBBB_w, &paletteram },	/* not in extrmatn and arkanoi2 (PROMs instead) */
+	/* arkanoi2, extrmatn, plumppop and drtoppel have PROMs instead of RAM */
+	/* drtoppel writes here anyway! (maybe leftover from tests during development) */
+	/* so the handler is patched out in init_drtopple() */
+	{ 0xf800, 0xfbff, paletteram_xRRRRRGGGGGBBBBB_w, &paletteram },
 MEMORY_END
 
 static MEMORY_READ_START( sub_readmem )

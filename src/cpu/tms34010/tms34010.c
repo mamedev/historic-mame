@@ -396,7 +396,6 @@ INLINE tms34010_regs *FINDCONTEXT(int cpu)
 #define TEMP			BREG(BINDEX(14))
 
 
-
 /*###################################################################################################
 **	INLINE SHORTCUTS
 **#################################################################################################*/
@@ -978,71 +977,6 @@ void tms34020_set_context(void *src)
 
 
 /*###################################################################################################
-**	Return program counter
-**#################################################################################################*/
-
-unsigned tms34010_get_pc(void)
-{
-	return PC;
-}
-
-unsigned tms34020_get_pc(void)
-{
-	return tms34010_get_pc();
-}
-
-
-
-/*###################################################################################################
-**	Set program counter
-**#################################################################################################*/
-
-void tms34010_set_pc(unsigned val)
-{
-	PC = val;
-	change_pc29lew(TOBYTE(PC));
-}
-
-void tms34020_set_pc(unsigned val)
-{
-	tms34010_set_pc(val);
-}
-
-
-
-/*###################################################################################################
-**	Return stack pointer
-**#################################################################################################*/
-
-unsigned tms34010_get_sp(void)
-{
-	return SP;
-}
-
-unsigned tms34020_get_sp(void)
-{
-	return tms34010_get_sp();
-}
-
-
-
-/*###################################################################################################
-**	Set stack pointer
-**#################################################################################################*/
-
-void tms34010_set_sp(unsigned val)
-{
-	SP = val;
-}
-
-void tms34020_set_sp(unsigned val)
-{
-	tms34010_set_sp(val);
-}
-
-
-
-/*###################################################################################################
 **	Return a specific register
 **#################################################################################################*/
 
@@ -1050,7 +984,9 @@ unsigned tms34010_get_reg(int regnum)
 {
 	switch (regnum)
 	{
+		case REG_PC:
 		case TMS34010_PC:  return PC;
+		case REG_SP:
 		case TMS34010_SP:  return SP;
 		case TMS34010_ST:  return ST;
 		case TMS34010_A0:  return AREG(0);
@@ -1109,7 +1045,9 @@ void tms34010_set_reg(int regnum, unsigned val)
 {
 	switch (regnum)
 	{
+		case REG_PC:       PC = val; change_pc29lew(TOBYTE(PC)); break;
 		case TMS34010_PC:  PC = val; break;
+		case REG_SP:
 		case TMS34010_SP:  SP = val; break;
 		case TMS34010_ST:  ST = val; break;
 		case TMS34010_A0:  AREG(0) = val; break;
@@ -1160,22 +1098,6 @@ void tms34020_set_reg(int regnum, unsigned val)
 
 
 /*###################################################################################################
-**	Set NMI line state
-**#################################################################################################*/
-
-void tms34010_set_nmi_line(int linestate)
-{
-	/* Does not apply: the NMI is an internal interrupt for the TMS34010 */
-}
-
-void tms34020_set_nmi_line(int linestate)
-{
-	tms34010_set_nmi_line(linestate);
-}
-
-
-
-/*###################################################################################################
 **	Set IRQ line state
 **#################################################################################################*/
 
@@ -1192,6 +1114,7 @@ void tms34010_set_irq_line(int irqline, int linestate)
 			else
 				IOREG(REG_INTPEND) &= ~TMS34010_INT1;
 			break;
+			
 		case 1:
 			if (linestate != CLEAR_LINE)
 				IOREG(REG_INTPEND) |= TMS34010_INT2;
@@ -1684,7 +1607,7 @@ static void common_io_register_w(int cpunum, tms34010_regs *context, int reg, in
 			break;
 
 		case REG_PMASK:
-			if (data) logerror("Plane masking not supported. PC=%08X\n", cpu_get_pc());
+			if (data) logerror("Plane masking not supported. PC=%08X\n", activecpu_get_pc());
 			break;
 
 		case REG_DPYCTL:

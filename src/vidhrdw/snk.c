@@ -49,38 +49,9 @@ static void print( struct osd_bitmap *bitmap, int num, int row ){
 		0,TRANSPARENCY_NONE,0);
 }
 
-void snk_vh_convert_color_prom(unsigned char *obsolete,unsigned short *colortable,const unsigned char *color_prom){
-	int i;
-	int num_colors = 1024;
-	for( i=0; i<num_colors; i++ )
-	{
-		int bit0,bit1,bit2,bit3,r,g,b;
-
-		bit0 = (color_prom[i] >> 0) & 0x01;
-		bit1 = (color_prom[i] >> 1) & 0x01;
-		bit2 = (color_prom[i] >> 2) & 0x01;
-		bit3 = (color_prom[i] >> 3) & 0x01;
-		r = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
-
-		bit0 = (color_prom[i + num_colors] >> 0) & 0x01;
-		bit1 = (color_prom[i + num_colors] >> 1) & 0x01;
-		bit2 = (color_prom[i + num_colors] >> 2) & 0x01;
-		bit3 = (color_prom[i + num_colors] >> 3) & 0x01;
-		g = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
-
-		bit0 = (color_prom[i + 2*num_colors] >> 0) & 0x01;
-		bit1 = (color_prom[i + 2*num_colors] >> 1) & 0x01;
-		bit2 = (color_prom[i + 2*num_colors] >> 2) & 0x01;
-		bit3 = (color_prom[i + 2*num_colors] >> 3) & 0x01;
-		b = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
-
-		palette_set_color(i,r,g,b);
-	}
-}
-
 void snk_3bpp_shadow_vh_convert_color_prom(unsigned char *obsolete,unsigned short *colortable,const unsigned char *color_prom){
 	int i;
-	snk_vh_convert_color_prom(obsolete, colortable, color_prom);
+	palette_RRRR_GGGG_BBBB_convert_prom(obsolete, colortable, color_prom);
 
 	if (!(Machine->drv->video_attributes & VIDEO_HAS_SHADOWS))
 	usrintf_showmessage("driver should use VIDEO_HAS_SHADOWS");
@@ -96,7 +67,7 @@ void snk_3bpp_shadow_vh_convert_color_prom(unsigned char *obsolete,unsigned shor
 
 void snk_4bpp_shadow_vh_convert_color_prom(unsigned char *obsolete,unsigned short *colortable,const unsigned char *color_prom){
 	int i;
-	snk_vh_convert_color_prom(obsolete, colortable, color_prom);
+	palette_RRRR_GGGG_BBBB_convert_prom(obsolete, colortable, color_prom);
 
 	if (!(Machine->drv->video_attributes & VIDEO_HAS_SHADOWS))
 	usrintf_showmessage("driver should use VIDEO_HAS_SHADOWS");
