@@ -213,7 +213,7 @@ static struct YM3812interface ym3812_interface =
 static struct OKIM6295interface okim6295_interface =
 {
 	1,
-	{ 6000 },	/* ? guess */
+	{ 8000 },	/* ? guess */
 	{ REGION_SOUND1 },
 	{ 100 }
 };

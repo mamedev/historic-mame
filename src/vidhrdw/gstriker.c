@@ -491,6 +491,13 @@ VIDEO_UPDATE(gstriker)
 
 #if 0
 	usrintf_showmessage("%04x %04x %04x %04x %04x %04x %04x %04x",
+		(UINT16)MB60553[0].regs[0], (UINT16)MB60553[0].regs[1], (UINT16)MB60553[0].regs[2], (UINT16)MB60553[0].regs[3],
+		(UINT16)MB60553[0].regs[4], (UINT16)MB60553[0].regs[5], (UINT16)MB60553[0].regs[6], (UINT16)MB60553[0].regs[7]
+	);
+#endif
+
+#if 0
+	usrintf_showmessage("%04x %04x %04x %04x %04x %04x %04x %04x",
 		(UINT16)gs_mixer_regs[8], (UINT16)gs_mixer_regs[9], (UINT16)gs_mixer_regs[10], (UINT16)gs_mixer_regs[11],
 		(UINT16)gs_mixer_regs[12], (UINT16)gs_mixer_regs[13], (UINT16)gs_mixer_regs[14], (UINT16)gs_mixer_regs[15]
 	);
@@ -520,3 +527,28 @@ VIDEO_START(gstriker)
 
 	return 0;
 }
+
+VIDEO_START(worldc94)
+{
+	// Palette bases are hardcoded, but should be probably extracted from the mixer registers
+
+	// Initalize the chip for the score plane
+	VS920A_init(1);
+	VS920A_set_gfx_region(0, 0);
+	VS920A_set_pal_base(0, 0x40);
+	tilemap_set_transparent_pen(VS920A_get_tilemap(0),  0xf);
+
+	// Initalize the chip for the screen plane
+	MB60553_init(1);
+	MB60553_set_gfx_region(0, 1);
+	MB60553_set_pal_base(0, 0x50);
+	tilemap_set_transparent_pen(MB60553_get_tilemap(0), 0xf);
+
+	// Initialize the sprite generator
+	CG10103_init(1);
+	CG10103_set_gfx_region(0, 2);
+	CG10103_set_pal_base(0, 0x60);
+
+	return 0;
+}
+

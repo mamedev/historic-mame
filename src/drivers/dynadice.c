@@ -271,4 +271,4 @@ static DRIVER_INIT( dynadice )
 
 }
 
-GAME( 19??, dynadice, 0, dynadice, dynadice, dynadice, ROT90, "????", "Dynamic Dice" )
+GAME( 19??, dynadice, 0, dynadice, dynadice, dynadice, ROT90, "<unknown>", "Dynamic Dice" )

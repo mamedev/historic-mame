@@ -533,7 +533,7 @@ INLINE uint EA_SIY(void)   {return EA_S() + REG_DB + REG_Y;}
 	if (SRC&0x40)	\
 		m37710i_push_8(REG_PB>>16);	\
 	if (SRC&0x80)	\
-		m37710i_push_8(m37710i_get_reg_p());
+		m37710i_push_8(m37710i_get_reg_p());	
 #else	// FLAG_SET_X
 #define OP_PSH(MODE)	\
 	SRC	= OPER_8_##MODE();	\
@@ -617,7 +617,7 @@ INLINE uint EA_SIY(void)   {return EA_S() + REG_DB + REG_Y;}
 	if (SRC&0x2)	\
 		REG_BA = m37710i_pull_8();	\
 	if (SRC&0x1)	\
-		REG_A = m37710i_pull_8();
+		REG_A = m37710i_pull_8();	
 #else
 #define OP_PUL(MODE)	\
 	SRC	= OPER_8_##MODE();	\
@@ -636,7 +636,7 @@ INLINE uint EA_SIY(void)   {return EA_S() + REG_DB + REG_Y;}
 	if (SRC&0x2)	\
 		REG_BA = m37710i_pull_8();	\
 	if (SRC&0x1)	\
-		REG_A = m37710i_pull_8();
+		REG_A = m37710i_pull_8();	
 #endif
 #else
 #if FLAG_SET_X
@@ -657,7 +657,7 @@ INLINE uint EA_SIY(void)   {return EA_S() + REG_DB + REG_Y;}
 	if (SRC&0x2)	\
 		REG_BA = m37710i_pull_16();	\
 	if (SRC&0x1)	\
-		REG_A = m37710i_pull_16();
+		REG_A = m37710i_pull_16();	
 #else
 #define OP_PUL(MODE)	\
 	SRC	= OPER_8_##MODE();	\
@@ -676,7 +676,7 @@ INLINE uint EA_SIY(void)   {return EA_S() + REG_DB + REG_Y;}
 	if (SRC&0x2)	\
 		REG_BA = m37710i_pull_16();	\
 	if (SRC&0x1)	\
-		REG_A = m37710i_pull_16();
+		REG_A = m37710i_pull_16();	
 #endif
 #endif
 
@@ -692,6 +692,28 @@ INLINE uint EA_SIY(void)   {return EA_S() + REG_DB + REG_Y;}
 	CLK(CLK_OP + CLK_R16 + CLK_##MODE);	\
 	SRC = OPER_16_##MODE();			\
 	{ int temp = SRC * REG_A;  REG_A = temp & 0xffff;  REG_BA = (temp>>16)&0xffff; FLAG_Z = temp; FLAG_N = (temp & 0x80000000) ? 1 : 0; }
+#endif
+
+/* M37710   Divide */
+#undef OP_DIV
+#if FLAG_SET_M
+#define OP_DIV(MODE)	\
+	CLK(CLK_OP + CLK_R8 + CLK_##MODE + 25);	\
+	SRC = (REG_BA&0xff)<<8 | (REG_A & 0xff);	\
+	DST = OPER_8_##MODE();			\
+	if (DST != 0) {	REG_A = SRC / DST; REG_BA = SRC % DST; SRC /= DST; }		\
+	FLAG_N = (SRC & 0x80) ? 1 : 0;	\
+	FLAG_Z = MAKE_UINT_8(SRC);	\
+	if (DST != 0) {	FLAG_V = 0; FLAG_C = 0; }
+#else
+#define OP_DIV(MODE)	\
+	CLK(CLK_OP + CLK_R16 + CLK_##MODE + 25);	\
+	SRC = (REG_BA<<16) | REG_A;	\
+	DST = OPER_16_##MODE();		\
+	if (DST != 0) { REG_A = SRC / DST; REG_BA = SRC % DST; SRC /= DST; }	\
+	FLAG_N = (SRC & 0x8000) ? 1 : 0;	\
+	FLAG_Z = SRC;	\
+	if (DST != 0) {	FLAG_V = 0; FLAG_C = 0; }
 #endif
 
 /* M37710   Add With Carry */
@@ -1182,7 +1204,6 @@ INLINE uint EA_SIY(void)   {return EA_S() + REG_DB + REG_Y;}
 			m37710i_jump_24(DST)
 
 /* M37710   Jump to Subroutine */
-//			DST = EA_##MODE();
 #undef OP_JSR
 #define OP_JSR(MODE)														\
 			CLK(CLK_OP + CLK_W16 + CLK_##MODE);								\
@@ -1256,7 +1277,7 @@ INLINE uint EA_SIY(void)   {return EA_S() + REG_DB + REG_Y;}
 				CLK(CLK_OP + CLK_RELATIVE_8 + 1); 	\
 				m37710i_branch_8(DST);		\
 				BREAKOUT;			\
-			}
+			}					
 #else
 #define OP_BBS(MODE)														\
 			CLK(CLK_OP + CLK_R16 + CLK_##MODE);	\
@@ -1270,7 +1291,7 @@ INLINE uint EA_SIY(void)   {return EA_S() + REG_DB + REG_Y;}
 				CLK(CLK_OP + CLK_RELATIVE_8 + 1); 	\
 				m37710i_branch_8(DST);		\
 				BREAKOUT;			\
-			}
+			}					
 #endif
 
 /* M37710   Branch if bits clear */
@@ -1287,7 +1308,7 @@ INLINE uint EA_SIY(void)   {return EA_S() + REG_DB + REG_Y;}
 				CLK(CLK_OP + CLK_RELATIVE_8 + 1); 	\
 				m37710i_branch_8(DST);		\
 				BREAKOUT;			\
-			}
+			}					
 #else
 #define OP_BBC(MODE)														\
 			CLK(CLK_OP + CLK_R16 + CLK_##MODE);	\
@@ -1301,7 +1322,7 @@ INLINE uint EA_SIY(void)   {return EA_S() + REG_DB + REG_Y;}
 				CLK(CLK_OP + CLK_RELATIVE_8 + 1); 	\
 				m37710i_branch_8(DST);		\
 				BREAKOUT;			\
-			}
+			}					
 #endif
 
 /* M37710   Swap accumulators */
@@ -1691,10 +1712,10 @@ INLINE uint EA_SIY(void)   {return EA_S() + REG_DB + REG_Y;}
 #undef OP_RLA
 #if FLAG_SET_M
 #define OP_RLA(MODE)														\
-	{ int cnt = OPER_8_##MODE(); while (cnt >= 0) { OP_ROL(); cnt--; } }
+	{ int cnt = OPER_8_##MODE(); int tmp; while (cnt > 0) { CLK(6); tmp = REG_A; REG_A<<=1; REG_A |= (tmp>>7); cnt--; } }
 #else
 #define OP_RLA(MODE)														\
-	{ int cnt = OPER_16_##MODE(); while (cnt >= 0) { OP_ROL(); cnt--; } }
+	{ int cnt = OPER_16_##MODE(); int tmp; while (cnt > 0) { CLK(6); tmp = REG_A; REG_A<<=1; REG_A |= (tmp>>15); cnt--; } }
 #endif
 
 /* M37710   Rotate Left an operand */
@@ -1732,6 +1753,23 @@ INLINE uint EA_SIY(void)   {return EA_S() + REG_DB + REG_Y;}
 			FLAG_C = REG_A << 8;											\
 			FLAG_Z = REG_A >>= 1;											\
 			FLAG_N = NFLAG_16(REG_A)
+#endif
+
+/* M37710   Rotate Right the B accumulator */
+#undef OP_RORB
+#if FLAG_SET_M
+#define OP_RORB()															\
+			CLK(CLK_OP + CLK_IMPLIED);										\
+			REG_BA |= FLAG_C & 0x100;										\
+			FLAG_C = REG_BA << 8;											\
+			FLAG_N = FLAG_Z = REG_BA >>= 1
+#else
+#define OP_RORB()															\
+			CLK(CLK_OP + CLK_IMPLIED);										\
+			REG_BA |= (FLAG_C<<8) & 0x10000;									\
+			FLAG_C = REG_BA << 8;											\
+			FLAG_Z = REG_BA >>= 1;											\
+			FLAG_N = NFLAG_16(REG_BA)
 #endif
 
 /* M37710   Rotate Right an operand */
@@ -2116,7 +2154,7 @@ INLINE uint EA_SIY(void)   {return EA_S() + REG_DB + REG_Y;}
 			REG_IM = read_8_##MODE(DST);									\
 			REG_IM2 = read_8_NORM(REG_PC);	\
 			REG_PC++;			\
-			write_8_##MODE(DST, REG_IM & ~REG_IM2);
+			write_8_##MODE(DST, REG_IM & ~REG_IM2);							
 #else
 #define OP_CLB(MODE)														\
 			CLK(CLK_OP + CLK_RMW16 + CLK_W_##MODE);							\
@@ -2124,7 +2162,7 @@ INLINE uint EA_SIY(void)   {return EA_S() + REG_DB + REG_Y;}
 			REG_IM = read_16_##MODE(DST);									\
 			REG_IM2 = read_16_NORM(REG_PC);	\
 			REG_PC+=2;			\
-			write_16_##MODE(DST, REG_IM & ~REG_IM2);
+			write_16_##MODE(DST, REG_IM & ~REG_IM2);							
 #endif
 
 /* M37710  set bit */
@@ -2136,7 +2174,7 @@ INLINE uint EA_SIY(void)   {return EA_S() + REG_DB + REG_Y;}
 			REG_IM = read_8_##MODE(DST);									\
 			REG_IM2 = read_8_NORM(REG_PC);	\
 			REG_PC++;			\
-			write_8_##MODE(DST, REG_IM | REG_IM2);
+			write_8_##MODE(DST, REG_IM | REG_IM2);							
 #else
 #define OP_SEB(MODE)														\
 			CLK(CLK_OP + CLK_RMW16 + CLK_W_##MODE);							\
@@ -2144,7 +2182,7 @@ INLINE uint EA_SIY(void)   {return EA_S() + REG_DB + REG_Y;}
 			REG_IM = read_16_##MODE(DST);									\
 			REG_IM2 = read_16_NORM(REG_PC);	\
 			REG_PC+=2;			\
-			write_16_##MODE(DST, REG_IM | REG_IM2);
+			write_16_##MODE(DST, REG_IM | REG_IM2);							
 #endif
 
 /* M37710  Wait for interrupt */
@@ -2516,6 +2554,7 @@ OP(165, OP_ADCB  ( D           ) ) /* ADCB d       */
 OP(167, OP_ADCB  ( DLI         ) ) /* ADCB dli (G) */
 OP(168, OP_PLAB  (             ) ) /* PLB          */
 OP(169, OP_ADCB  ( IMM         ) ) /* ADCB imm     */
+OP(16a, OP_RORB  (             ) ) /* ROR Bacc     */
 OP(16d, OP_ADCB  ( A           ) ) /* ADCB a       */
 OP(16f, OP_ADCB  ( AL          ) ) /* ADCB al  (G) */
 OP(171, OP_ADCB  ( DIY         ) ) /* ADCB diy     */
@@ -2541,10 +2580,12 @@ OP(197, OP_STB   ( DLIY        ) ) /* STB dliy(G) */
 OP(199, OP_STB   ( AY          ) ) /* STB ay      */
 OP(19d, OP_STB   ( AX          ) ) /* STB ax      */
 OP(19f, OP_STB   ( ALX         ) ) /* STB alx (G) */
+OP(1a1, OP_LDB   ( DXI         ) ) /* LDB dxi     */
 OP(1a5, OP_LDB   ( D           ) ) /* LDB d       */
 OP(1a8, OP_TBX   ( REG_Y       ) ) /* TBY         */
 OP(1a9, OP_LDB   ( IMM         ) ) /* LDB imm     */
 OP(1aa, OP_TBX   ( REG_X       ) ) /* TBX         */
+OP(1ad, OP_LDB   ( A           ) ) /* LDB a       */
 OP(1b2, OP_LDB   ( DI          ) ) /* LDB di  (C) */
 OP(1b5, OP_LDB   ( DX          ) ) /* LDB dx      */
 OP(1b9, OP_LDB   ( AY          ) ) /* LDB ay      */
@@ -2565,12 +2606,15 @@ OP(1d9, OP_CMPB  ( AY          ) ) /* CMPB ay      */
 OP(1dd, OP_CMPB  ( AX          ) ) /* CMPB ax      */
 OP(1df, OP_CMPB  ( ALX         ) ) /* CMPB alx (G) */
 OP(200, OP_UNIMP (             ) ) /* unimplemented */
+OP(203, OP_MPY   ( S           ) ) /* MPY s       */
 OP(205, OP_MPY   ( D           ) ) /* MPY d       */
 OP(209, OP_MPY   ( IMM         ) ) /* MPY imm     */
 OP(215, OP_MPY   ( DX          ) ) /* MPY dx      */
+OP(225, OP_DIV   ( D           ) ) /* DIV d       */
 OP(228, OP_XAB   (             ) ) /* XAB         */
+OP(235, OP_DIV   ( DX          ) ) /* DIV dx      */
 OP(249, OP_RLA   ( IMM         ) ) /* RLA imm     */
-OP(2c2, OP_LDT   ( IMM         ) ) /* LDT imm     */
+OP(2c2, OP_LDT   ( IMM         ) ) /* LDT imm     */ 
 
 TABLE_OPCODES =
 {
@@ -2623,15 +2667,15 @@ TABLE_OPCODES2 =
 	O(200),O(200),O(200),O(200),O(200),O(200),O(200),O(200),	// 50
 	O(200),O(200),O(200),O(200),O(200),O(200),O(200),O(200),
 	O(200),O(161),O(200),O(163),O(200),O(165),O(200),O(167),	// 60
-	O(168),O(169),O(200),O(200),O(200),O(16d),O(200),O(16f),
+	O(168),O(169),O(16a),O(200),O(200),O(16d),O(200),O(16f),
 	O(200),O(171),O(172),O(173),O(200),O(175),O(200),O(177),	// 70
 	O(200),O(179),O(200),O(200),O(200),O(17d),O(200),O(17f),
 	O(200),O(181),O(200),O(183),O(200),O(185),O(200),O(187),	// 80
 	O(200),O(200),O(18a),O(200),O(200),O(18d),O(200),O(18f),
 	O(200),O(191),O(192),O(193),O(200),O(195),O(200),O(197),	// 90
 	O(200),O(199),O(200),O(200),O(200),O(19d),O(200),O(19f),
-	O(200),O(200),O(200),O(200),O(200),O(1a5),O(200),O(200),	// a0
-	O(1a8),O(1a9),O(1aa),O(200),O(200),O(200),O(200),O(200),
+	O(200),O(1a1),O(200),O(200),O(200),O(1a5),O(200),O(200),	// a0
+	O(1a8),O(1a9),O(1aa),O(200),O(200),O(1ad),O(200),O(200),
 	O(200),O(200),O(1b2),O(200),O(200),O(1b5),O(200),O(200),	// b0
 	O(200),O(1b9),O(200),O(200),O(200),O(1bd),O(200),O(200),
 	O(200),O(1c1),O(200),O(1c3),O(200),O(1c5),O(200),O(1c7),	// c0
@@ -2646,36 +2690,36 @@ TABLE_OPCODES2 =
 
 TABLE_OPCODES3 =
 {
-	O(200),O(200),O(200),O(200),O(200),O(205),O(200),O(200),
+	O(200),O(200),O(200),O(203),O(200),O(205),O(200),O(200),
 	O(200),O(209),O(200),O(200),O(200),O(200),O(200),O(200),
 	O(200),O(200),O(200),O(200),O(200),O(215),O(200),O(200),	// 10
-	O(200),O(200),O(200),O(200),O(200),O(200),O(200),O(200),
-	O(200),O(200),O(200),O(200),O(200),O(200),O(200),O(200),	// 20
-	O(228),O(200),O(200),O(200),O(200),O(200),O(200),O(200),
-	O(200),O(200),O(200),O(200),O(200),O(200),O(200),O(200),	// 30
-	O(200),O(200),O(200),O(200),O(200),O(200),O(200),O(200),
+	O(200),O(200),O(200),O(200),O(200),O(200),O(200),O(200),	     
+	O(200),O(200),O(200),O(200),O(200),O(225),O(200),O(200),	// 20
+	O(228),O(200),O(200),O(200),O(200),O(200),O(200),O(200),	     
+	O(200),O(200),O(200),O(200),O(200),O(235),O(200),O(200),	// 30
+	O(200),O(200),O(200),O(200),O(200),O(200),O(200),O(200),	     
 	O(200),O(200),O(200),O(200),O(200),O(200),O(200),O(200),	// 40
-	O(200),O(249),O(200),O(200),O(200),O(200),O(200),O(200),
+	O(200),O(249),O(200),O(200),O(200),O(200),O(200),O(200),	     
 	O(200),O(200),O(200),O(200),O(200),O(200),O(200),O(200),	// 50
-	O(200),O(200),O(200),O(200),O(200),O(200),O(200),O(200),
+	O(200),O(200),O(200),O(200),O(200),O(200),O(200),O(200),	     
 	O(200),O(200),O(200),O(200),O(200),O(200),O(200),O(200),	// 60
-	O(200),O(200),O(200),O(200),O(200),O(200),O(200),O(200),
+	O(200),O(200),O(200),O(200),O(200),O(200),O(200),O(200),	     
 	O(200),O(200),O(200),O(200),O(200),O(200),O(200),O(200),	// 70
-	O(200),O(200),O(200),O(200),O(200),O(200),O(200),O(200),
+	O(200),O(200),O(200),O(200),O(200),O(200),O(200),O(200),	     
 	O(200),O(200),O(200),O(200),O(200),O(200),O(200),O(200),	// 80
-	O(200),O(200),O(200),O(200),O(200),O(200),O(200),O(200),
+	O(200),O(200),O(200),O(200),O(200),O(200),O(200),O(200),	     
 	O(200),O(200),O(200),O(200),O(200),O(200),O(200),O(200),	// 90
-	O(200),O(200),O(200),O(200),O(200),O(200),O(200),O(200),
+	O(200),O(200),O(200),O(200),O(200),O(200),O(200),O(200),	     
 	O(200),O(200),O(200),O(200),O(200),O(200),O(200),O(200),	// a0
-	O(200),O(200),O(200),O(200),O(200),O(200),O(200),O(200),
+	O(200),O(200),O(200),O(200),O(200),O(200),O(200),O(200),	     
 	O(200),O(200),O(200),O(200),O(200),O(200),O(200),O(200),	// b0
-	O(200),O(200),O(200),O(200),O(200),O(200),O(200),O(200),
+	O(200),O(200),O(200),O(200),O(200),O(200),O(200),O(200),	     
 	O(200),O(200),O(2c2),O(200),O(200),O(200),O(200),O(200),	// c0
-	O(200),O(200),O(200),O(200),O(200),O(200),O(200),O(200),
+	O(200),O(200),O(200),O(200),O(200),O(200),O(200),O(200),	     
 	O(200),O(200),O(200),O(200),O(200),O(200),O(200),O(200),	// d0
-	O(200),O(200),O(200),O(200),O(200),O(200),O(200),O(200),
+	O(200),O(200),O(200),O(200),O(200),O(200),O(200),O(200),	     
 	O(200),O(200),O(200),O(200),O(200),O(200),O(200),O(200),	// e0
-	O(200),O(200),O(200),O(200),O(200),O(200),O(200),O(200),
+	O(200),O(200),O(200),O(200),O(200),O(200),O(200),O(200),	     
 	O(200),O(200),O(200),O(200),O(200),O(200),O(200),O(200),	// f0
 	O(200),O(200),O(200),O(200),O(200),O(200),O(200),O(200)
 };
@@ -2693,9 +2737,9 @@ TABLE_FUNCTION(void, set_line, (int line, int state))
 		case M37710_LINE_UART1RECV:
 		case M37710_LINE_UART0XMIT:
 		case M37710_LINE_UART0RECV:
-		case M37710_LINE_TIMERB2:
-		case M37710_LINE_TIMERB1:
-		case M37710_LINE_TIMERB0:
+		case M37710_LINE_TIMERB2: 
+		case M37710_LINE_TIMERB1: 
+		case M37710_LINE_TIMERB0: 
 		case M37710_LINE_TIMERA4:
 		case M37710_LINE_TIMERA3:
 		case M37710_LINE_TIMERA2:

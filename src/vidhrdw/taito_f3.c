@@ -54,7 +54,8 @@ Line ram memory map:
 				Where bit 3 of x enables effect on playfield 4
 	0x0200: Line control ram for 0x5000 section.
 	0x0400: Line control ram for 0x6000 section.
-		(Alpha control)
+		180x:   Where bit 0 of x latches sprite alpha value
+				Where bit 1 of x latches tilemap alpha value
 	0x0600: Sprite control ram
 		1c0x:	Where x enables sprite control word for that line
 	0x0800: Zoom line control ram (256 lines)
@@ -128,8 +129,7 @@ Line ram memory map:
 	0xb400: Playfield 3 priority
 	0xb600: Playfield 4 priority
 		0xf000 = Disable playfield (ElvAct2 second level)
-		0x8000 = Enable alpha-blending for this line
-		0x4000 = Playfield can be alpha-blended against?  (Otherwise, playfield shouldn't be in blend calculation?)
+		0xc000 = 0x4000 = alpha mode 1, 0x8000 = alpha mode 2, 0 = no alpha, 0xc000 = disable
 		0x2000 = Enable line? (Darius Gaiden 0x5000 = disable, 0x3000, 0xb000 & 0x7000 = display)
 		0x1000 = ?
 		0x0800 = Disable line (Used by KTiger2 to clip screen)
@@ -253,6 +253,8 @@ static const struct F3config f3_config_table[] =
 	{ PBOBBLE4,  0,      0,          0,         1,          1/**/},
 	{ POPNPOP,   1,      0,        -23,         0,          1/**/},
 	{ LANDMAKR,  1,      0,        -23,         0,          1/**/},
+	{ RECALH,    1,      1,        -23,         0,          1/**/}, // not verified
+	{ COMMANDW,  1,      0,        -23,         0,          1/**/}, // not verified
 	{0}
 };
 
@@ -702,7 +704,7 @@ VIDEO_START( f3 )
 	state_save_register_UINT32("f3", 0, "vcontrol1", f3_control_1, 8);
 
 	/* Why?!??  These games have different offsets for the two middle playfields only */
-	if (f3_game==LANDMAKR || f3_game==EACTION2 || f3_game==DARIUSG || f3_game==GEKIRIDO)
+	if (f3_game==LANDMAKR || f3_game==EACTION2 || f3_game==DARIUSG || f3_game==GEKIRIDO || f3_game==RECALH)
 		pf23_y_kludge=23;
 	else
 		pf23_y_kludge=0;
@@ -905,8 +907,8 @@ WRITE32_HANDLER( f3_palette_24bit_w )
 		}
 	}
 
-	/* Another weird one */
-	else if (f3_game==TWINQIX) {
+	/* Another weird couple - perhaps this is alpha blending related? */
+	else if (f3_game==TWINQIX || f3_game==RECALH) {
 		if (offset>0x1c00) {
 		 	r = ((paletteram32[offset] >>16) & 0x7f)<<1;
 			g = ((paletteram32[offset] >> 8) & 0x7f)<<1;
@@ -2524,7 +2526,8 @@ static void f3_draw_vram_layer(struct mame_bitmap *bitmap,const struct rectangle
 			tile = videoram32[offs>>2]>>16;
 
         /* Transparency hack, 6010 for PB2, 1205 for PB3 */
-		if (tile==0x6010 || tile==0x1205) continue;
+		if (tile==0x6010 || tile==0x1205 || tile==0x12be) continue;
+		if (f3_game==RECALH && tile==0x12be) continue;
 
         color = (tile>>9) &0x3f;
 		fx = tile&0x0100;
@@ -2898,17 +2901,31 @@ static void get_sprite_info(const data32_t *spriteram32_ptr)
 
 	struct tempsprite *sprite_ptr = spritelist;
 
+	int total_sprites=0;
+
 	color=0;
     flipx=flipy=0;
     old_y=old_x=0;
     y=x=0;
 
 	sprite_top=0x1000;
-	for (offs = 0; offs < sprite_top; offs += 4)
+	for (offs = 0; offs < sprite_top && (total_sprites < 0x400); offs += 4)
 	{
+		const int current_offs=offs; /* Offs can change during loop, current_offs cannot */
+
+		/* Check if the sprite list jump command bit is set */
+		if ((spriteram32_ptr[current_offs+3]>>16) & 0x8000) {
+			data32_t jump = (spriteram32_ptr[current_offs+3]>>16)&0x3ff;
+
+			data32_t new_offs=((offs&0x2000)|((jump<<4)/4));
+			if (new_offs==offs)
+				break;
+			offs=new_offs - 4;
+		}
+
 		/* Check if special command bit is set */
-		if (spriteram32_ptr[offs+1] & 0x8000) {
-			data32_t cntrl=(spriteram32_ptr[offs+2])&0xffff;
+		if (spriteram32_ptr[current_offs+1] & 0x8000) {
+			data32_t cntrl=(spriteram32_ptr[current_offs+2])&0xffff;
 			flipscreen=cntrl&0x2000;
 
 			/*	cntrl&0x1000 = disabled?  (From F2 driver, doesn't seem used anywhere)
@@ -2921,50 +2938,41 @@ static void get_sprite_info(const data32_t *spriteram32_ptr)
 				offs=offs|0x2000;
 				sprite_top=sprite_top|0x2000;
 			}
-			continue;
-		}
-
-		/* Check if the sprite list jump command bit is set */
-		if ((spriteram32_ptr[offs+3]>>16) & 0x8000) {
-			data32_t jump = (spriteram32_ptr[offs+3]>>16)&0x3ff;
-
-			offs=((offs&0x2000)|((jump<<4)/4));
-			continue;
 		}
 
 		/* Set global sprite scroll */
-		if (((spriteram32_ptr[offs+1]>>16) & 0xf000) == 0xa000) {
-			global_x = (spriteram32_ptr[offs+1]>>16) & 0xfff;
+		if (((spriteram32_ptr[current_offs+1]>>16) & 0xf000) == 0xa000) {
+			global_x = (spriteram32_ptr[current_offs+1]>>16) & 0xfff;
 			if (global_x >= 0x800) global_x -= 0x1000;
-			global_y = spriteram32_ptr[offs+1] & 0xfff;
+			global_y = spriteram32_ptr[current_offs+1] & 0xfff;
 			if (global_y >= 0x800) global_y -= 0x1000;
 		}
 
 		/* And sub-global sprite scroll */
-		if (((spriteram32_ptr[offs+1]>>16) & 0xf000) == 0x5000) {
-			subglobal_x = (spriteram32_ptr[offs+1]>>16) & 0xfff;
+		if (((spriteram32_ptr[current_offs+1]>>16) & 0xf000) == 0x5000) {
+			subglobal_x = (spriteram32_ptr[current_offs+1]>>16) & 0xfff;
 			if (subglobal_x >= 0x800) subglobal_x -= 0x1000;
-			subglobal_y = spriteram32_ptr[offs+1] & 0xfff;
+			subglobal_y = spriteram32_ptr[current_offs+1] & 0xfff;
 			if (subglobal_y >= 0x800) subglobal_y -= 0x1000;
 		}
 
-		if (((spriteram32_ptr[offs+1]>>16) & 0xf000) == 0xb000) {
-			subglobal_x = (spriteram32_ptr[offs+1]>>16) & 0xfff;
+		if (((spriteram32_ptr[current_offs+1]>>16) & 0xf000) == 0xb000) {
+			subglobal_x = (spriteram32_ptr[current_offs+1]>>16) & 0xfff;
 			if (subglobal_x >= 0x800) subglobal_x -= 0x1000;
-			subglobal_y = spriteram32_ptr[offs+1] & 0xfff;
+			subglobal_y = spriteram32_ptr[current_offs+1] & 0xfff;
 			if (subglobal_y >= 0x800) subglobal_y -= 0x1000;
 			global_y=subglobal_y;
 			global_x=subglobal_x;
 		}
 
 		/* A real sprite to process! */
-		sprite = (spriteram32_ptr[offs]>>16) | ((spriteram32_ptr[offs+2]&1)<<16);
-		spritecont = spriteram32_ptr[offs+2]>>24;
+		sprite = (spriteram32_ptr[current_offs]>>16) | ((spriteram32_ptr[current_offs+2]&1)<<16);
+		spritecont = spriteram32_ptr[current_offs+2]>>24;
 
 /* These games either don't set the XY control bits properly (68020 bug?), or
 	have some different mode from the others */
 #ifdef DARIUSG_KLUDGE
-		if (f3_game==DARIUSG || f3_game==GEKIRIDO || f3_game==CLEOPATR)
+		if (f3_game==DARIUSG || f3_game==GEKIRIDO || f3_game==CLEOPATR || f3_game==RECALH)
 			multi=spritecont&0xf0;
 #endif
 
@@ -2972,21 +2980,21 @@ static void get_sprite_info(const data32_t *spriteram32_ptr)
 		if (multi) {
 			/* Bit 0x4 is 'use previous colour' for this block part */
 			if (spritecont&0x4) color=last_color;
-			else color=(spriteram32_ptr[offs+2]>>16)&0xff;
+			else color=(spriteram32_ptr[current_offs+2]>>16)&0xff;
 
 #ifdef DARIUSG_KLUDGE
-			if (f3_game==DARIUSG || f3_game==GEKIRIDO || f3_game==CLEOPATR) {
+			if (f3_game==DARIUSG || f3_game==GEKIRIDO || f3_game==CLEOPATR || f3_game==RECALH) {
 				/* Adjust X Position */
 				if ((spritecont & 0x40) == 0) {
 					if (spritecont & 0x4) {
 						x = block_x;
 					} else {
-						this_x = spriteram32_ptr[offs+1]>>16;
+						this_x = spriteram32_ptr[current_offs+1]>>16;
 						if (this_x&0x800) this_x= 0 - (0x800 - (this_x&0x7ff)); else this_x&=0x7ff;
 
-						if ((spriteram32_ptr[offs+1]>>16)&0x8000) {
+						if ((spriteram32_ptr[current_offs+1]>>16)&0x8000) {
 							this_x+=0;
-						} else if ((spriteram32_ptr[offs+1]>>16)&0x4000) {
+						} else if ((spriteram32_ptr[current_offs+1]>>16)&0x4000) {
 							/* Ignore subglobal (but apply global) */
 							this_x+=global_x;
 						} else { /* Apply both scroll offsets */
@@ -3008,12 +3016,12 @@ static void get_sprite_info(const data32_t *spriteram32_ptr)
 					if (spritecont & 0x4) {
 						y = block_y;
 					} else {
-						this_y = spriteram32_ptr[offs+1]&0xffff;
+						this_y = spriteram32_ptr[current_offs+1]&0xffff;
 						if (this_y&0x800) this_y= 0 - (0x800 - (this_y&0x7ff)); else this_y&=0x7ff;
 
-						if ((spriteram32_ptr[offs+1]>>16)&0x8000) {
+						if ((spriteram32_ptr[current_offs+1]>>16)&0x8000) {
 							this_y+=0;
-						} else if ((spriteram32_ptr[offs+1]>>16)&0x4000) {
+						} else if ((spriteram32_ptr[current_offs+1]>>16)&0x4000) {
 							/* Ignore subglobal (but apply global) */
 							this_y+=global_y;
 						} else { /* Apply both scroll offsets */
@@ -3057,20 +3065,20 @@ static void get_sprite_info(const data32_t *spriteram32_ptr)
 		}
 		/* Else this sprite is the possible start of a block */
 		else {
-			color = (spriteram32_ptr[offs+2]>>16)&0xff;
+			color = (spriteram32_ptr[current_offs+2]>>16)&0xff;
 			last_color=color;
 
 			/* Sprite positioning */
-			this_y = spriteram32_ptr[offs+1]&0xffff;
-			this_x = spriteram32_ptr[offs+1]>>16;
+			this_y = spriteram32_ptr[current_offs+1]&0xffff;
+			this_x = spriteram32_ptr[current_offs+1]>>16;
 			if (this_y&0x800) this_y= 0 - (0x800 - (this_y&0x7ff)); else this_y&=0x7ff;
 			if (this_x&0x800) this_x= 0 - (0x800 - (this_x&0x7ff)); else this_x&=0x7ff;
 
 			/* Ignore both scroll offsets for this block */
-			if ((spriteram32_ptr[offs+1]>>16)&0x8000) {
+			if ((spriteram32_ptr[current_offs+1]>>16)&0x8000) {
 				this_x+=0;
 				this_y+=0;
-			} else if ((spriteram32_ptr[offs+1]>>16)&0x4000) {
+			} else if ((spriteram32_ptr[current_offs+1]>>16)&0x4000) {
 				/* Ignore subglobal (but apply global) */
 				this_x+=global_x;
 				this_y+=global_y;
@@ -3082,7 +3090,7 @@ static void get_sprite_info(const data32_t *spriteram32_ptr)
 	        block_y = y = this_y;
             block_x = x = this_x;
 
-			block_zoom_x=spriteram32_ptr[offs];
+			block_zoom_x=spriteram32_ptr[current_offs];
 			block_zoom_y=(block_zoom_x>>8)&0xff;
 			block_zoom_x&=0xff;
 
@@ -3138,6 +3146,7 @@ static void get_sprite_info(const data32_t *spriteram32_ptr)
 		sprite_ptr->zoomy = y_addition;
 		sprite_ptr->pri = (color & 0xc0) >> 6;
 		sprite_ptr++;
+		total_sprites++;
 	}
 	sprite_end = sprite_ptr;
 }
@@ -3309,7 +3318,7 @@ if (!deb_enable || !code_pressed(KEYCODE_M))
 
 
 #if DEBUG_F3
-	if (0 && code_pressed(KEYCODE_O))
+	if (1 && code_pressed(KEYCODE_A))
 		print_debug_info(0,0,0,0,0,0,0,0);
 #endif	//DEBUG_F3
 

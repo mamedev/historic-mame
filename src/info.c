@@ -726,9 +726,15 @@ static void print_game_driver(FILE* out, const struct GameDriver* game)
 #ifdef MESS
 static void print_game_device(FILE* out, const struct GameDriver* game)
 {
-	const struct IODevice* dev = device_first(game);
+	const struct IODevice* dev;
 
-	while (dev) {
+	begin_resource_tracking();
+
+	dev = devices_allocate(game);
+	if (dev)
+	{
+		while(dev->type < IO_COUNT)
+		{
 		fprintf(out, "\t\t<device");
 		fprintf(out, " name=\"%s\"", normalize_string(device_typename(dev->type)));
 		fprintf(out, ">\n");
@@ -745,10 +751,14 @@ static void print_game_device(FILE* out, const struct GameDriver* game)
 
 		fprintf(out, "\t\t</device>\n");
 
-		dev = device_next(game, dev);
+			dev++;
+		}
 	}
+	end_resource_tracking();
 }
-#endif
+#endif /* MESS */
+
+
 
 /* Print the MAME info record for a game */
 static void print_game_info(FILE* out, const struct GameDriver* game)

@@ -16,10 +16,4 @@
 
 #define HAVE_MEMMOVE
 
-#define XMLPARSEAPI(type) type
-
-#include "expat.h"
-
-#undef XMLPARSEAPI
-
 #endif

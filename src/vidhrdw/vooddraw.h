@@ -187,7 +187,7 @@ static int add_rasterizer(void *callback)
 	info->next = raster_head;
 	raster_head = info;
 	
-	info->callback = callback;
+	info->callback = (void (*)(void))callback;
 	info->needs_texMode0 = ((voodoo_regs[fbzColorPath] >> 27) & 1);
 	info->needs_texMode1 = info->needs_texMode0 &&
 				(((voodoo_regs[0x100 + textureMode] >> 12) & 1) == 0 ||

@@ -1,4 +1,4 @@
-/* 
+/*
 	Namco (Super) System 23
 	Stub driver
 
@@ -59,7 +59,7 @@ Notes:
       * - These parts are underneath the PCB.
 
       Main Parts List:
-      
+
       CPU
       ---
           NKK NR4650 - R4600-based 64bit RISC CPU (Main CPU, QFP208, clock input source = CY2291)
@@ -188,13 +188,13 @@ Notes:
                            CCRH - size fixed at 16M
                            PT*  - size fixed at 32M
                            MT*  - size fixed at 64M
-      
+
       KEYCUS   - Mach211 CPLD (PLCC44, labelled 'KC029')
       PAL(1)   - PALCE20V8H  (PLCC28, stamped 'SS22M2')  \ Both identical
-      PAL(2)   - PALCE20V8H  (PLCC28, stamped 'SS22M2')  / 
+      PAL(2)   - PALCE20V8H  (PLCC28, stamped 'SS22M2')  /
       PAL(3)   - PALCE16V8H  (PLCC20, stamped 'SS22M1')
            *   - Unpopulated position for PAL (PLCC20, labelled 'SS23M1')
-           
+
       All ROMs are SOP44 MaskROMs
       Note: ROMs at locations 7M, 7K, 5M, 5K, 5J & 5F are not included in the archive since they're copies of
             other ROMs which are included in the archive.
@@ -212,8 +212,145 @@ VIDEO_START( ss23 )
 	return 0;
 }
 
+static double
+Normalize( UINT32 data )
+{
+	data &=  0xffffff;
+	if( data&0x800000 )
+	{
+		data |= 0xff000000;
+	}
+	return (INT32)data;
+}
+
+static void
+DrawLine( struct mame_bitmap *bitmap, int x0, int y0, int x1, int y1 )
+{
+	if( x0>=0 && x0<bitmap->width &&
+		x1>=0 && x1<bitmap->width &&
+		y0>=0 && y0<bitmap->height &&
+		y1>=0 && y1<bitmap->height )
+	{
+		int sx,sy,dy;
+		if( x0>x1 )
+		{
+			int temp = x0;
+			x0 = x1;
+			x1 = temp;
+
+			temp = y0;
+			y0 = y1;
+			y1 = temp;
+		}
+
+		if( x1>x0 )
+		{
+			sy = y0<<16;
+			dy = ((y1-y0)<<16)/(x1-x0);
+			for( sx=x0; sx<x1; sx++ )
+			{
+				UINT16 *pDest = (UINT16 *)bitmap->line[sy>>16];
+				pDest[sx] = 1;
+				sy += dy;
+			}
+		}
+	}
+} /* DrawLine */
+
+static void
+DrawPoly( struct mame_bitmap *bitmap, const UINT32 *pSource, int n, int bNew )
+{
+	UINT32 flags = *pSource++;
+	UINT32 unk = *pSource++;
+	UINT32 intensity = *pSource++;
+	double x[4],y[4],z[4];
+	int i;
+	if( bNew )
+	{
+		printf( "polydata: 0x%08x 0x%08x 0x%08x\n", flags, unk, intensity );
+	}
+	for( i=0; i<n; i++ )
+	{
+		x[i] = Normalize(*pSource++);
+		y[i] = Normalize(*pSource++);
+		z[i] = Normalize(*pSource++);
+
+		if( bNew )
+		{
+			printf( "\t(%lf,%lf,%lf)\n", x[i], y[i], z[i] );
+		}
+	}
+	for( i=0; i<n; i++ )
+	{
+		#define KDIST 0x400
+		int j = (i+1)%n;
+		double z0 = z[i]+KDIST;
+		double z1 = z[j]+KDIST;
+
+		if( z0>0 && z1>0 )
+		{
+			int x0 = bitmap->width*x[i]/z0 + bitmap->width/2;
+			int y0 = bitmap->width*y[i]/z0 + bitmap->height/2;
+			int x1 = bitmap->width*x[j]/z1 + bitmap->width/2;
+			int y1 = bitmap->width*y[j]/z1 + bitmap->height/2;
+			if( bNew )
+			{
+				printf( "[%d,%d]..[%d,%d]\n", x0,y0,x1,y1 );
+			}
+			DrawLine( bitmap, x0,y0,x1,y1 );
+		}
+	}
+}
+
 VIDEO_UPDATE( ss23 )
 {
+#if 0
+	static int bNew = 1;
+	static int code = 0x80;
+	const UINT32 *pSource = (UINT32 *)memory_region(REGION_GFX4);
+
+	pSource = pSource + pSource[code];
+
+	fillbitmap( bitmap, 0, 0 );
+	for(;;)
+	{
+		UINT32 opcode = *pSource++;
+		int bDone = (opcode&0x10000);
+
+		switch( opcode&0x0f00 )
+		{
+		case 0x0300:
+			DrawPoly( bitmap, pSource, 3, bNew );
+			pSource += 3 + 3*3;
+			break;
+
+		case 0x0400:
+			DrawPoly( bitmap, pSource, 4, bNew );
+			pSource += 3 + 4*3;
+			break;
+
+		default:
+			printf( "unk opcode: 0x%x\n", opcode );
+			bDone = 1;
+			break;
+		}
+
+
+		if( bDone )
+		{
+			break;
+		}
+	}
+
+	bNew = 0;
+
+	if( keyboard_pressed(KEYCODE_SPACE) )
+	{
+		while( keyboard_pressed(KEYCODE_SPACE) ){}
+		code++;
+		bNew = 1;
+	}
+#endif
 }
 
 static READ32_HANDLER( keycus_KC029_r ) /* KC029 for GP500 */
@@ -247,16 +384,16 @@ static READ32_HANDLER( keycus_KC029_r ) /* KC029 for GP500 */
 			break;
 
 		case 11:
-			if (activecpu_get_pc() == 0xbfc0215c) 
+			if (activecpu_get_pc() == 0xbfc0215c)
 				return 0;
-			else	
+			else
 				return 0x00280028;
 			break;
 
 		default:
 			break;
 	}
-	
+
 	return 0;
 }
 
@@ -283,7 +420,43 @@ INPUT_PORTS_END
 
 DRIVER_INIT(ss23)
 {
+/*
+	data32_t * pSrc = (data32_t *)memory_region(REGION_GFX4);
+	int i;
+	for( i=0; i<0x200000; i++ )
+	{
+		if( (i&0xf)==0 ) logerror( "\n%08x:", i );
+		logerror( " %08x", *pSrc++ );
+	}
+*/
 }
+#if 0
+static struct GfxLayout sprite_layout =
+{
+	32,32,
+	RGN_FRAC(1,1),
+	8,
+	{ 0,1,2,3,4,5,6,7 },
+	{
+		0*8,1*8,2*8,3*8,4*8,5*8,6*8,7*8,
+		8*8,9*8,10*8,11*8,12*8,13*8,14*8,15*8,
+		16*8,17*8,18*8,19*8,20*8,21*8,22*8,23*8,
+		24*8,25*8,26*8,27*8,28*8,29*8,30*8,31*8 },
+	{
+		0*32*8,1*32*8,2*32*8,3*32*8,4*32*8,5*32*8,6*32*8,7*32*8,
+		8*32*8,9*32*8,10*32*8,11*32*8,12*32*8,13*32*8,14*32*8,15*32*8,
+		16*32*8,17*32*8,18*32*8,19*32*8,20*32*8,21*32*8,22*32*8,23*32*8,
+		24*32*8,25*32*8,26*32*8,27*32*8,28*32*8,29*32*8,30*32*8,31*32*8 },
+	32*32*8
+};
+
+
+static struct GfxDecodeInfo gfxdecodeinfo[] =
+{
+	{ REGION_GFX1, 0, &sprite_layout,  0, 0x80 },
+	{ -1 },
+};
+#endif
 
 static struct mips3_config config =
 {
@@ -302,15 +475,20 @@ MACHINE_DRIVER_START( ss23 )
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
-	MDRV_SCREEN_SIZE(768, 512)
-	MDRV_VISIBLE_AREA(0, 767, 0, 511)
+	MDRV_SCREEN_SIZE(256,256)
+	MDRV_VISIBLE_AREA(0, 255, 0, 255)
+//	MDRV_SCREEN_SIZE(768, 512)
+//	MDRV_VISIBLE_AREA(0, 767, 0, 511)
 	MDRV_PALETTE_LENGTH(0x2000)
+
+//	MDRV_GFXDECODE(gfxdecodeinfo)
 
 	MDRV_VIDEO_START(ss23)
 	MDRV_VIDEO_UPDATE(ss23)
 MACHINE_DRIVER_END
 
 ROM_START( gp500 )
+	/* r4650-generic-xrom-generic: NMON 1.0.8-sys23-19990105 P for SYSTEM23 P1 */
 	ROM_REGION( 0x080000, REGION_CPU1, 0 )	/* dummy region for R4650 */
 
 	ROM_REGION32_BE( 0x400000, REGION_USER1, 0 ) /* 4 megs for main R4650 code */
@@ -321,10 +499,14 @@ ROM_START( gp500 )
         ROM_LOAD16_WORD_SWAP( "5gp3verc.3",   0x000000, 0x080000, CRC(b323abdf) SHA1(8962e39b48a7074a2d492afb5db3f5f3e5ae2389) )
 
 	ROM_REGION( 0x2000000, REGION_GFX1, 0 )	/* sprite? tilemap? tiles */
-        ROM_LOAD( "5gp1mtbl.2f",  0x0000000, 0x800000, CRC(66640606) SHA1(c69a0219748241c49315d7464f8156f8068e9cf5) )
-        ROM_LOAD( "5gp1mtbh.2m",  0x0800000, 0x800000, CRC(352360e8) SHA1(d621dfac3385059c52d215f6623901589a8658a3) )
-        ROM_LOAD( "5gp1mtal.2h",  0x1000000, 0x800000, CRC(1bb00c7b) SHA1(922be45d57330c31853b2dc1642c589952b09188) )
-        ROM_LOAD( "5gp1mtah.2j",  0x1800000, 0x800000, CRC(246e4b7a) SHA1(75743294b8f48bffb84f062febfbc02230d49ce9) )
+		ROM_LOAD16_BYTE( "5gp1mtal.2h",  0x0000000, 0x800000, CRC(1bb00c7b) SHA1(922be45d57330c31853b2dc1642c589952b09188) )
+        ROM_LOAD16_BYTE( "5gp1mtah.2j",  0x0000001, 0x800000, CRC(246e4b7a) SHA1(75743294b8f48bffb84f062febfbc02230d49ce9) )
+
+		/* COMMON FUJII YASUI WAKAO KURE INOUE
+		 * 0x000000..0x57ffff: all 0xff
+		 */
+        ROM_LOAD16_BYTE( "5gp1mtbl.2f",  0x1000000, 0x800000, CRC(66640606) SHA1(c69a0219748241c49315d7464f8156f8068e9cf5) )
+        ROM_LOAD16_BYTE( "5gp1mtbh.2m",  0x1000001, 0x800000, CRC(352360e8) SHA1(d621dfac3385059c52d215f6623901589a8658a3) )
 
 	ROM_REGION( 0x2000000, REGION_GFX2, 0 )	/* texture tiles */
         ROM_LOAD( "5gp1cguu.4f",  0x0000000, 0x800000, CRC(c411163b) SHA1(ae644d62357b8b806b160774043e41908fba5d05) )
@@ -336,16 +518,18 @@ ROM_START( gp500 )
         ROM_LOAD( "5gp1ccrl.7f",  0x000000, 0x400000, CRC(e7c77e1f) SHA1(0231ddbe2afb880099dfe2657c41236c74c730bb) )
         ROM_LOAD( "5gp1ccrh.7e",  0x400000, 0x200000, CRC(b2eba764) SHA1(5e09d1171f0afdeb9ed7337df1dbc924f23d3a0b) )
 
-	ROM_REGION( 0x1000000, REGION_GFX4, 0 )	/* 3D model data */
-        ROM_LOAD( "5gp1pt0l.7c",  0x000000, 0x400000, CRC(a0ece0a1) SHA1(b7aab2d78e1525f865214c7de387ccd585de5d34) )
-        ROM_LOAD( "5gp1pt0h.7a",  0x000000, 0x400000, CRC(5746a8cd) SHA1(e70fc596ab9360f474f716c73d76cb9851370c76) )
-        ROM_LOAD( "5gp1pt1l.5c",  0x000000, 0x400000, CRC(80b25ad2) SHA1(e9a03fe5bb4ce925f7218ab426ed2a1ca1a26a62) )
-        ROM_LOAD( "5gp1pt1h.5a",  0x000000, 0x400000, CRC(b1feb5df) SHA1(45db259215511ac3e472895956f70204d4575482) )
-        ROM_LOAD( "5gp1pt2l.4c",  0x000000, 0x400000, CRC(9289dbeb) SHA1(ec546ad3b1c90609591e599c760c70049ba3b581) )
-        ROM_LOAD( "5gp1pt2h.4a",  0x000000, 0x400000, CRC(9a693771) SHA1(c988e04cd91c3b7e75b91376fd73be4a7da543e7) )
-        ROM_LOAD( "5gp1pt3l.3c",  0x000000, 0x400000, CRC(480b120d) SHA1(6c703550faa412095d9633cf508050614e15fbae) )
-        ROM_LOAD( "5gp1pt3h.3a",  0x000000, 0x400000, CRC(26eaa400) SHA1(0157b76fffe81b40eb970e84c98398807ced92c4) )
+	ROM_REGION32_LE( 0x2000000, REGION_GFX4, 0 )	/* 3D model data */
+        ROM_LOAD32_WORD( "5gp1pt0l.7c",  0x0000000, 0x400000, CRC(a0ece0a1) SHA1(b7aab2d78e1525f865214c7de387ccd585de5d34) )
+        ROM_LOAD32_WORD( "5gp1pt0h.7a",  0x0000002, 0x400000, CRC(5746a8cd) SHA1(e70fc596ab9360f474f716c73d76cb9851370c76) )
 
+        ROM_LOAD32_WORD( "5gp1pt1l.5c",  0x0800000, 0x400000, CRC(80b25ad2) SHA1(e9a03fe5bb4ce925f7218ab426ed2a1ca1a26a62) )
+        ROM_LOAD32_WORD( "5gp1pt1h.5a",  0x0800002, 0x400000, CRC(b1feb5df) SHA1(45db259215511ac3e472895956f70204d4575482) )
+
+		ROM_LOAD32_WORD( "5gp1pt2l.4c",  0x1000000, 0x400000, CRC(9289dbeb) SHA1(ec546ad3b1c90609591e599c760c70049ba3b581) )
+        ROM_LOAD32_WORD( "5gp1pt2h.4a",  0x1000002, 0x400000, CRC(9a693771) SHA1(c988e04cd91c3b7e75b91376fd73be4a7da543e7) )
+
+		ROM_LOAD32_WORD( "5gp1pt3l.3c",  0x1800000, 0x400000, CRC(480b120d) SHA1(6c703550faa412095d9633cf508050614e15fbae) )
+        ROM_LOAD32_WORD( "5gp1pt3h.3a",  0x1800002, 0x400000, CRC(26eaa400) SHA1(0157b76fffe81b40eb970e84c98398807ced92c4) )
 
 	ROM_REGION( 0x1000000, REGION_SOUND1, 0 ) /* C352 PCM samples */
         ROM_LOAD( "5gp1wavel.2c", 0x000000, 0x800000, CRC(aa634cc2) SHA1(e96f5c682039bc6ef22bf90e98f4da78486bd2b1) )

@@ -429,7 +429,7 @@ static int h8_execute(int cycles)
 #ifdef MAME_DEBUG
 		CALL_MAME_DEBUG;
 #endif
-		opcode = cpu_readop32(h8.pc);
+		opcode = cpu_readop16(h8.pc);
 		h8.pc += 2;
 
 		switch((opcode>>12) & 0xf)
@@ -1873,7 +1873,7 @@ static void h8_group7(UINT16 opcode)
 				// bclr.b #imm, @Rn
 				case 2: address24 = h8_getreg32((opcode>>4) & 0x7); udata8 = h8_mem_read8(address24); udata8 = h8_bclr8((sdata16>>4)&7, udata8); h8_mem_write8(address24, udata8); H8_IFETCH_TIMING(2); H8_BYTE_TIMING(2, address24); break;
 				// btst.b #imm, @Rn
-				case 3: address24 = h8_getreg32((opcode>>4) & 0x7); udata8 = h8_mem_read8(address24); udata8 >>= (sdata16>>4)&7; udata8 &= 0x1; h8.h8zflag = udata8; H8_IFETCH_TIMING(2); H8_BYTE_TIMING(1, address24); break;
+				case 3: address24 = h8_getreg32((opcode>>4) & 0x7); udata8 = h8_mem_read8(address24); udata8 >>= (sdata16>>4)&7; udata8 &= 0x1; h8.h8zflag = (udata8 == 0); H8_IFETCH_TIMING(2); H8_BYTE_TIMING(1, address24); break;
 				// bxor.b #imm, @Rn
 				case 5:	address24 = h8_getreg32((opcode>>4) & 0x7); udata8 = h8_mem_read8(address24); udata8 >>= (sdata16>>4)&7; udata8 &= 0x1; h8.h8cflag ^= udata8; H8_IFETCH_TIMING(2); H8_BYTE_TIMING(1, address24); break;
 				// bld.b #imm, @Rn

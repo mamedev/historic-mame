@@ -1,7 +1,7 @@
 /*
 	Mitsubishi M37710 CPU Emulator
 
-	The 7700 series is based on the WDC 65C816 core, with the following 
+	The 7700 series is based on the WDC 65C816 core, with the following
 	notable changes:
 
 	- Second accumulator called "B" (on the 65816, "A" and "B" were the
@@ -16,16 +16,16 @@
 	- CLM and SEM (clear and set "M" status bit) replace CLD/SED.  Decimal
 	  mode is still available via REP/SEP instructions.
 	- INC and DEC (0x1A and 0x3A) switch places for no particular reason.
-	- The microcode bug that caused MVN/NVP to take 2 extra cycles per byte 
+	- The microcode bug that caused MVN/NVP to take 2 extra cycles per byte
 	  on the 65816 seems to have been fixed.
 	- The WDM (0x42) and BIT immediate (0x89) instructions are now prefixes.
 	  0x42 when used before an instruction involving the A accumulator makes
 	  it use the B accumulator instead.  0x89 adds multiply and divide
 	  opcodes, which the real 65816 doesn't have.
 
-	The various 7700 series models differ primarily by their on board 
+	The various 7700 series models differ primarily by their on board
 	peripherals.  The 7750 and later models do include some additional
-	instructions, vs. the 770x/1x/2x, notably signed multiply/divide and 
+	instructions, vs. the 770x/1x/2x, notably signed multiply/divide and
 	sign extension opcodes.
 
 	Peripherals common across the 7700 series include: programmable timers,
@@ -72,8 +72,8 @@ int m37710_irq_levels[M37710_LINE_MAX] =
 	0x70,	// ADC
 	0x73,	// UART 1 XMIT
 	0x74,	// UART 1 RECV
-	0x71,	// UART 0 XMIT 
-	0x72,	// UART 0 RECV 
+	0x71,	// UART 0 XMIT
+	0x72,	// UART 0 RECV
 	0x7c,	// Timer B2
 	0x7b,	// Timer B1
 	0x7a,	// Timer B0
@@ -85,7 +85,7 @@ int m37710_irq_levels[M37710_LINE_MAX] =
 	0x7f,	// IRQ 2
 	0x7e,	// IRQ 1
 	0x7d,	// IRQ 0
-	
+
 	// non-maskable
 	0,	// watchdog
 	0,	// debugger control
@@ -282,7 +282,7 @@ static char *m37710_tnames[8] =
 static void m37710_timer_a0_cb(int num)
 {
 	timer_adjust(m37710i_cpu.timers[0], TIME_IN_HZ(m37710i_cpu.reload[0]), 0, 0);
-	
+
 	m37710i_cpu.m37710_regs[m37710_irq_levels[12]] |= 0x04;
 	m37710_set_irq_line(M37710_LINE_TIMERA0, PULSE_LINE);
 }
@@ -343,6 +343,36 @@ static void m37710_timer_b2_cb(int num)
 	m37710_set_irq_line(M37710_LINE_TIMERB2, PULSE_LINE);
 }
 
+static void m37710_external_tick(int timer, int state)
+{
+	// we only care if the state is "on"
+	if (!state)
+	{
+		return;
+	}
+
+	// check if enabled
+	if (m37710i_cpu.m37710_regs[0x40] & (1<<timer))
+	{
+		if ((m37710i_cpu.m37710_regs[0x56+timer] & 0x3) == 1)
+		{
+			if (m37710i_cpu.m37710_regs[0x46+(timer*2)] == 0xff)
+			{
+				m37710i_cpu.m37710_regs[0x46+(timer*2)] = 0;
+				m37710i_cpu.m37710_regs[0x46+(timer*2)+1]++;
+			}
+			else
+			{
+				m37710i_cpu.m37710_regs[0x46+(timer*2)]++;
+			}
+		}
+		else
+		{
+			logerror("M37710: external tick for timer %d, not in event counter mode!\n", timer);
+		}
+	}
+}
+
 static void m37710_recalc_timer(int timer)
 {
 	int tval;
@@ -363,7 +393,7 @@ static void m37710_recalc_timer(int timer)
 		// check timer's mode
 		// modes are slightly different between timer groups A and B
 		if (timer < 5)
-		{	
+		{
 			switch (m37710i_cpu.m37710_regs[0x56+timer] & 0x3)
 			{
 				case 0:	      	// timer mode
@@ -373,7 +403,7 @@ static void m37710_recalc_timer(int timer)
 
 					time = (double)16000000 / tscales[m37710i_cpu.m37710_regs[tcr[timer]]>>6];
 					time /= ((double)tval+1.0);
-	
+
 					timer_adjust(m37710i_cpu.timers[timer], TIME_IN_HZ(time), 0, 0);
 					m37710i_cpu.reload[timer] = time;
 					break;
@@ -408,7 +438,7 @@ static void m37710_recalc_timer(int timer)
 
 					time = (double)16000000 / tscales[m37710i_cpu.m37710_regs[tcr[timer]]>>6];
 					time /= ((double)tval+1.0);
-	
+
 					timer_adjust(m37710i_cpu.timers[timer], TIME_IN_HZ(time), 0, 0);
 					m37710i_cpu.reload[timer] = time;
 					break;
@@ -425,7 +455,7 @@ static void m37710_recalc_timer(int timer)
 					#endif
 					break;
 
-				case 3:	      
+				case 3:
 					#if M37710_DEBUG
 					logerror("Timer %d in unknown mode!\n", timer);
 					#endif
@@ -435,33 +465,94 @@ static void m37710_recalc_timer(int timer)
 	}
 }
 
-int toggle = 0;
-
 static data8_t m37710_internal_r(int offset)
 {
 	#if M37710_DEBUG
+	if (offset > 1)
 	logerror("m37710_internal_r from %02x: %s (PC=%x)\n", (int)offset, m37710_rnames[(int)offset], REG_PB<<16 | REG_PC);
 	#endif
 
 	switch (offset)
 	{
 		case 2: // p0
+			return io_read_byte_8(M37710_PORT0);
+			break;
 		case 3: // p1
+			return io_read_byte_8(M37710_PORT1);
+			break;
 		case 6: // p2
+			return io_read_byte_8(M37710_PORT2);
+			break;
 		case 7: // p3
+			return io_read_byte_8(M37710_PORT3);
+			break;
 		case 0xa: // p4
+			return io_read_byte_8(M37710_PORT4);
+			break;
 		case 0xb: // p5
+			return io_read_byte_8(M37710_PORT5);
+			break;
+		case 0xe: // p6
+			return io_read_byte_8(M37710_PORT6);
+			break;
 		case 0xf: // p7
+			return io_read_byte_8(M37710_PORT7);
+			break;
 		case 0x12: // p8
-			#if M37710_DEBUG
-//			logerror("m37710: read I/O port @ %x (PC=%06x)\n", offset, REG_PC);
-			#endif
-			return 0;
+			return io_read_byte_8(M37710_PORT8);
 			break;
 
-		case 0xe: // p6
-			toggle ^= 0xff;
-			return toggle;
+		case 0x20:
+			return io_read_byte_8(M37710_ADC0_L);
+			break;
+		case 0x21:
+			return io_read_byte_8(M37710_ADC0_H);
+			break;
+		case 0x22:
+			return io_read_byte_8(M37710_ADC1_L);
+			break;
+		case 0x23:
+			return io_read_byte_8(M37710_ADC1_H);
+			break;
+		case 0x24:
+			return io_read_byte_8(M37710_ADC2_L);
+			break;
+		case 0x25:
+			return io_read_byte_8(M37710_ADC2_H);
+			break;
+		case 0x26:
+			return io_read_byte_8(M37710_ADC3_L);
+			break;
+		case 0x27:
+			return io_read_byte_8(M37710_ADC3_H);
+			break;
+		case 0x28:
+			return io_read_byte_8(M37710_ADC4_L);
+			break;
+		case 0x29:
+			return io_read_byte_8(M37710_ADC4_H);
+			break;
+		case 0x2a:
+			return io_read_byte_8(M37710_ADC5_L);
+			break;
+		case 0x2b:
+			return io_read_byte_8(M37710_ADC5_H);
+			break;
+		case 0x2c:
+			return io_read_byte_8(M37710_ADC6_L);
+			break;
+		case 0x2d:
+			return io_read_byte_8(M37710_ADC6_H);
+			break;
+		case 0x2e:
+			return io_read_byte_8(M37710_ADC7_L);
+			break;
+		case 0x2f:
+			return io_read_byte_8(M37710_ADC7_H);
+			break;
+
+		case 0x70:	// A/D IRQ control
+			return m37710i_cpu.m37710_regs[offset] | 8;
 			break;
 	}
 
@@ -475,17 +566,40 @@ static void m37710_internal_w(int offset, data8_t data)
 	switch(offset)
 	{
 		case 2: // p0
+			io_write_byte_8(M37710_PORT0, data);
+			return;
+			break;
 		case 3: // p1
+			io_write_byte_8(M37710_PORT1, data);
+			return;
+			break;
 		case 6: // p2
+			io_write_byte_8(M37710_PORT2, data);
+			return;
+			break;
 		case 7: // p3
+			io_write_byte_8(M37710_PORT3, data);
+			return;
+			break;
 		case 0xa: // p4
+			io_write_byte_8(M37710_PORT4, data);
+			return;
+			break;
 		case 0xb: // p5
+			io_write_byte_8(M37710_PORT5, data);
+			return;
+			break;
 		case 0xe: // p6
+			io_write_byte_8(M37710_PORT6, data);
+			return;
+			break;
 		case 0xf: // p7
+			io_write_byte_8(M37710_PORT7, data);
+			return;
+			break;
 		case 0x12: // p8
-			#if M37710_DEBUG
-//			logerror("m37710: %02x to I/O port @ %x (PC=%06x)\n", data, offset, REG_PC);
-			#endif
+			io_write_byte_8(M37710_PORT8, data);
+			return;
 			break;
 
 		case 0x40:	// count start
@@ -511,6 +625,7 @@ static void m37710_internal_w(int offset, data8_t data)
 	m37710i_cpu.m37710_regs[offset] = data;
 
 	#if M37710_DEBUG
+	if (offset >= 0x1e && offset <= 0x30)
 	logerror("m37710_internal_w %x to %02x: %s = %x\n", data, (int)offset, m37710_rnames[(int)offset], m37710i_cpu.m37710_regs[offset]);
 	#endif
 }
@@ -713,7 +828,7 @@ void m37710i_update_irqs(void)
 		// push PB, then PC, then status
 		CLK(8);
 //		logerror("taking IRQ %d: PC = %06x, SP = %04x\n", wantedIRQ, REG_PB | REG_PC, REG_S);
-		m37710i_push_8(REG_PB>>16); 
+		m37710i_push_8(REG_PB>>16);
 		m37710i_push_16(REG_PC);
 		m37710i_push_8(m37710i_get_reg_p());
 		m37710i_push_8(m37710i_cpu.ipl);
@@ -723,7 +838,7 @@ void m37710i_update_irqs(void)
 		m37710i_cpu.ipl = curpri;
 		// then PB=0, PC=(vector)
 		REG_PB = 0;
-		REG_PC = m37710_read_8(m37710_irq_vectors[wantedIRQ]) | 
+		REG_PC = m37710_read_8(m37710_irq_vectors[wantedIRQ]) |
 			 m37710_read_8(m37710_irq_vectors[wantedIRQ]+1)<<8;
 //		logerror("IRQ @ %06x\n", REG_PB | REG_PC);
 		m37710i_jumping(REG_PB | REG_PC);
@@ -762,7 +877,7 @@ void m37710_reset(void* param)
 
 	/* Set the function tables to emulation mode */
 	m37710i_set_execution_mode(EXECUTION_MODE_M0X0);
-	
+
 	FLAG_Z = ZFLAG_CLEAR;
 	REG_S = 0x1ff;
 
@@ -890,7 +1005,7 @@ unsigned m37710_dasm(char *buffer, unsigned pc)
 
 
 void m37710_init(void)
-{ 
+{
 	m37710i_cpu.timers[0] = timer_alloc(m37710_timer_a0_cb);
 	m37710i_cpu.timers[1] = timer_alloc(m37710_timer_a1_cb);
 	m37710i_cpu.timers[2] = timer_alloc(m37710_timer_a2_cb);
@@ -910,9 +1025,19 @@ static void m37710_set_info(UINT32 state, union cpuinfo *info)
 	switch (state)
 	{
 		/* --- the following bits of info are set as 64-bit signed integers --- */
+		case CPUINFO_INT_INPUT_STATE + M37710_LINE_ADC: 	m37710_set_irq_line(M37710_LINE_ADC, info->i); break;
 		case CPUINFO_INT_INPUT_STATE + M37710_LINE_IRQ0: 	m37710_set_irq_line(M37710_LINE_IRQ0, info->i); break;
 		case CPUINFO_INT_INPUT_STATE + M37710_LINE_IRQ1: 	m37710_set_irq_line(M37710_LINE_IRQ1, info->i); break;
 		case CPUINFO_INT_INPUT_STATE + M37710_LINE_IRQ2: 	m37710_set_irq_line(M37710_LINE_IRQ2, info->i); break;
+
+		case CPUINFO_INT_INPUT_STATE + M37710_LINE_TIMERA0TICK: m37710_external_tick(state - CPUINFO_INT_INPUT_STATE - M37710_LINE_TIMERA0TICK, info->i); break;
+		case CPUINFO_INT_INPUT_STATE + M37710_LINE_TIMERA1TICK: m37710_external_tick(state - CPUINFO_INT_INPUT_STATE - M37710_LINE_TIMERA0TICK, info->i); break;
+		case CPUINFO_INT_INPUT_STATE + M37710_LINE_TIMERA2TICK: m37710_external_tick(state - CPUINFO_INT_INPUT_STATE - M37710_LINE_TIMERA0TICK, info->i); break;
+		case CPUINFO_INT_INPUT_STATE + M37710_LINE_TIMERA3TICK: m37710_external_tick(state - CPUINFO_INT_INPUT_STATE - M37710_LINE_TIMERA0TICK, info->i); break;
+		case CPUINFO_INT_INPUT_STATE + M37710_LINE_TIMERA4TICK: m37710_external_tick(state - CPUINFO_INT_INPUT_STATE - M37710_LINE_TIMERA0TICK, info->i); break;
+		case CPUINFO_INT_INPUT_STATE + M37710_LINE_TIMERB0TICK: m37710_external_tick(state - CPUINFO_INT_INPUT_STATE - M37710_LINE_TIMERA0TICK, info->i); break;
+		case CPUINFO_INT_INPUT_STATE + M37710_LINE_TIMERB1TICK: m37710_external_tick(state - CPUINFO_INT_INPUT_STATE - M37710_LINE_TIMERA0TICK, info->i); break;
+		case CPUINFO_INT_INPUT_STATE + M37710_LINE_TIMERB2TICK: m37710_external_tick(state - CPUINFO_INT_INPUT_STATE - M37710_LINE_TIMERA0TICK, info->i); break;
 
 		case CPUINFO_INT_PC:					REG_PB = info->i & 0xff0000; m37710_set_pc(info->i & 0xffff);	break;
 		case CPUINFO_INT_SP:					m37710_set_sp(info->i);	     			break;
@@ -959,7 +1084,7 @@ void m37710_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_MIN_CYCLES:					info->i = 1;					break;
 		case CPUINFO_INT_MAX_CYCLES:					info->i = 20; /* rough guess */			break;
 		case CPUINFO_INT_INPUT_LINES:        				info->i = M37710_LINE_MAX;                      break;
-		
+
 		case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_PROGRAM:	info->i = 16;				break;
 		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_PROGRAM: info->i = 24;				break;
 		case CPUINFO_INT_ADDRBUS_SHIFT + ADDRESS_SPACE_PROGRAM: info->i = 0;				break;

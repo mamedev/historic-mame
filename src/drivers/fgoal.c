@@ -13,7 +13,6 @@ Differences between these sets include
 	- when bonus score reaches 1000...
 	    set #1: paddle gets sticky
 	    set #2: paddle reflects the ball vertically upward
-	- dip switches
 
 ***************************************************************************/
 
@@ -39,23 +38,26 @@ static unsigned shift_bits;
 static int prev_coin;
 
 
-static int intensity(int v)
+static int intensity(int bits)
 {
-	/* some resistor values are unreadable, following weights are guesswork */
+	int v = 0;
 
-	switch (v)
+	/* contrary to the schems pull-up resistors are 270 and not 390 */
+
+	if (1)
 	{
-	case 0:
-		return 0x18;
-	case 1:
-		return 0x58;
-	case 2:
-		return 0xc0;
-	case 3:
-		return 0xff;
+		v += 0x2e; /* 100 + 270 */
+	}
+	if (bits & 1)
+	{
+		v += 0x27; /* 100 + 330 */
+	}
+	if (bits & 2)
+	{
+		v += 0xaa; /* 100 */
 	}
 
-	return 0;
+	return v;
 }
 
 
@@ -76,14 +78,14 @@ static PALETTE_INIT( fgoal )
 	}
 
 	palette_set_color(0x40,
-		0x00,
+		0x2e,
 		0x80,
-		0x00);
+		0x2e);
 
 	palette_set_color(0x41,
-		0x00,
-		0x00,
-		0x00);
+		0x2e,
+		0x2e,
+		0x2e);
 
 	/* for B/W screens PCB can be jumpered to use lower half of PROM */
 
@@ -304,69 +306,11 @@ INPUT_PORTS_START( fgoal )
 	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Lives ))
 	PORT_DIPSETTING(    0x00, "3" )
 	PORT_DIPSETTING(    0x20, "5" )
-	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown )) /* actually a jumper */
-	PORT_DIPSETTING(    0x10, DEF_STR( Off ))
-	PORT_DIPSETTING(    0x00, DEF_STR( On ))
-	PORT_DIPNAME( 0x08, 0x08, "Enable Extra Credits" ) /* this dip differs between sets */
-	PORT_DIPSETTING(    0x00, DEF_STR( No ))
-	PORT_DIPSETTING(    0x08, DEF_STR( Yes ))
-	PORT_DIPNAME( 0x07, 0x05, "Initial Extra Credit Score" )
-	PORT_DIPSETTING(    0x00, "9000" )
-	PORT_DIPSETTING(    0x01, "17000" )
-	PORT_DIPSETTING(    0x02, "28000" )
-	PORT_DIPSETTING(    0x03, "39000" )
-	PORT_DIPSETTING(    0x04, "50000" )
-	PORT_DIPSETTING(    0x05, "65000" )
-	PORT_DIPSETTING(    0x06, "79000" )
-	PORT_DIPSETTING(    0x07, "93000" )
-
-	/* extra credit score changes depending on player's performance */
-
-	PORT_START
-	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_SPECIAL ) /* 128V */
-	PORT_DIPNAME( 0x40, 0x00, DEF_STR( Cabinet ))
-	PORT_DIPSETTING(    0x00, DEF_STR( Upright ))
-	PORT_DIPSETTING(    0x40, DEF_STR( Cocktail ))
-	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Coinage ))
-	PORT_DIPSETTING(    0x20, DEF_STR( 1C_1C ))
-	PORT_DIPSETTING(    0x00, DEF_STR( 1C_2C ))
-	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Language ))
-	PORT_DIPSETTING(    0x00, DEF_STR( Japanese ))
-	PORT_DIPSETTING(    0x10, DEF_STR( English ))
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_START2 )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_START1 )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN1 )
-	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ))
-	PORT_DIPSETTING(    0x01, DEF_STR( Off ))
-	PORT_DIPSETTING(    0x00, DEF_STR( On ))
-
-	/* game freezes when analog controls read $00 or $ff */
-
-	PORT_START
-	PORT_BIT( 0xff, 0x80, IPT_PADDLE ) PORT_MINMAX(1, 254) PORT_SENSITIVITY(50) PORT_KEYDELTA(10) PORT_CENTERDELTA(0) PORT_REVERSE PORT_PLAYER(1)
-
-	PORT_START
-	PORT_BIT( 0xff, 0x80, IPT_PADDLE ) PORT_MINMAX(1, 254) PORT_SENSITIVITY(50) PORT_KEYDELTA(10) PORT_CENTERDELTA(0) PORT_REVERSE PORT_PLAYER(2)
-
-INPUT_PORTS_END
-
-
-INPUT_PORTS_START( fgoala )
-
-	PORT_START
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_TILT )
-	PORT_DIPNAME( 0x40, 0x40, "Display Coinage Settings" )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ))
-	PORT_DIPSETTING(    0x40, DEF_STR( On ))
-	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Lives ))
-	PORT_DIPSETTING(    0x00, "3" )
-	PORT_DIPSETTING(    0x20, "5" )
-	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown )) /* actually a jumper */
-	PORT_DIPSETTING(    0x10, DEF_STR( Off ))
-	PORT_DIPSETTING(    0x00, DEF_STR( On ))
-	PORT_DIPNAME( 0x08, 0x08, "Replace Helmets" ) /* this dip differs between sets */
-	PORT_DIPSETTING(    0x00, "One Row Clear" )
-	PORT_DIPSETTING(    0x08, "All Rows Clear" )
+	PORT_DIPNAME( 0x18, 0x18, "Options" ) /* bit #4 comes from a jumper */
+	PORT_DIPSETTING(    0x00, "Clear All Helmets" )
+	PORT_DIPSETTING(    0x08, "No Extra Ball" )
+	PORT_DIPSETTING(    0x10, "No Extra Credit" )
+	PORT_DIPSETTING(    0x18, "Default" )
 	PORT_DIPNAME( 0x07, 0x05, "Initial Extra Credit Score" )
 	PORT_DIPSETTING(    0x00, "9000" )
 	PORT_DIPSETTING(    0x01, "17000" )
@@ -519,5 +463,5 @@ ROM_START( fgoala )
 ROM_END
 
 
-GAMEX( 1979, fgoal,  0,     fgoal, fgoal,  0, ROT90, "Taito", "Field Goal",             GAME_NO_SOUND )
-GAMEX( 1979, fgoala, fgoal, fgoal, fgoala, 0, ROT90, "Taito", "Field Goal (different)", GAME_NO_SOUND )
+GAMEX( 1979, fgoal,  0,     fgoal, fgoal, 0, ROT90, "Taito", "Field Goal",             GAME_NO_SOUND )
+GAMEX( 1979, fgoala, fgoal, fgoal, fgoal, 0, ROT90, "Taito", "Field Goal (different)", GAME_NO_SOUND )

@@ -268,7 +268,7 @@ static opcode_struct g_opcodes_prefix89[256] =
 // 0x40
 	{RTI, I, IMP }, {EOR, M, DXI }, {WDM, I, IMP }, {EOR, M, S   },
 	{MVP, I, MVP }, {EOR, M, D   }, {LSR, M, D   }, {EOR, M, DLI },
-	{PHA, I, IMP }, {EOR, M, IMM }, {LSR, M, ACC }, {PHK, I, IMP },
+	{PHA, I, IMP }, {RLA, M, IMM }, {LSR, M, ACC }, {PHK, I, IMP },
 	{JMP, I, A   }, {EOR, M, A   }, {LSR, M, A   }, {EOR, M, AL  },
 // 0x50
 	{BVC, I, RELB}, {EOR, M, DIY }, {EOR, M, DI  }, {EOR, M, SIY },

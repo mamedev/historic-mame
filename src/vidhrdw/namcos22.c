@@ -15,6 +15,26 @@ static int mbSuperSystem22; /* used to conditionally support Super System22-spec
 static INT32 mWindowPri;
 static INT32 mMasterBias;
 
+static data16_t mCode; /* 3d primitive to render */
+static namcos22_camera mCamera;
+
+static double mViewMatrix[4][4];
+
+#define DSP_FIXED_TO_FLOAT( X ) (((INT16)(X))/(double)0x7fff)
+
+#define MAX_LIT_SURFACES 16
+static struct LitSurfaceInfo
+{
+	struct
+	{
+		double x;
+		double y;
+		double z;
+	} normal[4];
+} mLitSurfaceInfo[MAX_LIT_SURFACES];
+static unsigned mLitSurfaceCount;
+static unsigned mLitSurfaceIndex;
+
 #define SPRITERAM_SIZE (0x9b0000-0x980000)
 
 #define CGRAM_SIZE 0x1e000
@@ -24,6 +44,102 @@ static int mPtRomSize;
 static const data8_t *mpPolyH;
 static const data8_t *mpPolyM;
 static const data8_t *mpPolyL;
+
+#define MAX_DIRECT_POLY 16
+#define DIRECT_POLY_SIZE 0x1c
+static int mDirectPolyCount;
+static data16_t mDirectPolyBuf[MAX_DIRECT_POLY][DIRECT_POLY_SIZE];
+
+static double
+DspFloatToNativeFloat( data32_t iVal )
+{
+	double mantissa = (iVal&0xffff);
+	int exponent = (iVal>>16)&0xff;
+	while( exponent<0x2e )
+	{
+		mantissa /= 2.0;
+		exponent++;
+	}
+	return mantissa;
+}
+
+void
+namcos22_draw_direct_poly( const data16_t *pSource )
+{
+	if( mDirectPolyCount < MAX_DIRECT_POLY )
+	{
+		memcpy( mDirectPolyBuf[mDirectPolyCount++], pSource, DIRECT_POLY_SIZE*sizeof(data16_t) );
+	}
+}
+
+static void
+DrawDirectPolys( void )
+{
+	while( mDirectPolyCount )
+	{
+		const data16_t *pSource = mDirectPolyBuf[--mDirectPolyCount];
+		/**
+		 * 0x03a2 // 0x0fff zcode?
+		 * 0x0001 // 0x000f tpage?
+		 * 0xbd00 // color
+		 * 0x13a2 // flags
+		 *
+		 * 0x0100 0x009c // u,v
+		 * 0x0072 0xf307 // sx,sy
+		 * 0x602b 0x9f28 // i,zpos
+		 *
+		 * 0x00bf 0x0060 // u,v
+		 * 0x0040 0xf3ec // sx,sy
+		 * 0x602b 0xad48 // i,zpos
+		 *
+		 * 0x00fb 0x00ca // u,v
+		 * 0x0075 0xf205 // sx,sy
+		 * 0x602b 0x93e8 // i,zpos
+		 *
+		 * 0x00fb 0x00ca // u,v
+		 * 0x0075 0xf205 // sx,sy
+		 * 0x602b 0x93e8 // i,zpos
+		 */
+		INT32 zcode = pSource[0];
+//		int unk = pSource[1];
+		unsigned color = pSource[2]&0x7f00;
+		INT32 flags = pSource[3];
+		struct VerTex v[5];
+		int i;
+		pSource += 4;
+		for( i=0; i<4; i++ )
+		{
+			struct VerTex *pVerTex = &v[i];
+			pVerTex->u = pSource[0];
+			pVerTex->v = pSource[1];//+(tpage<<12);
+			pVerTex->x = (INT16)pSource[2];
+			pVerTex->y = -(INT16)pSource[3];
+			pVerTex->z = DspFloatToNativeFloat( (pSource[4]<<16) | pSource[5] );
+			pVerTex->i = pSource[4]>>8;
+			/**
+			 * (x,y) are already in screen window coordinates.
+			 * for now, as a quick workaround, we assign an arbitrary z coordinate to all
+			 * four vertexes, big enough to avoid near-plane clipping.
+			 */
+			pVerTex->z = 1000;
+			pSource += 6;
+		}
+		//zrep = (zmin+zmax)/2.0;
+		//zcode = pSource[0]+(INT32)zrep;
+
+		mCamera.zoom = 1000; /* compensate for fake z coordinate */
+		mCamera.cx = 640/2;
+		mCamera.cy = 480/2;
+		mCamera.clip.min_x = 0;
+		mCamera.clip.min_y = 0;
+		mCamera.clip.max_x = 640;
+		mCamera.clip.max_y = 320;
+
+		namcos22_BlitTri( Machine->scrbitmap, &v[0], color, zcode, flags, &mCamera ); /* 0,1,2 */
+		v[4] = v[0]; /* wrap */
+		namcos22_BlitTri( Machine->scrbitmap, &v[2], color, zcode, flags, &mCamera ); /* 2,3,0 */
+	}
+}
 
 static INT32
 GetPolyData( INT32 addr )
@@ -41,7 +157,8 @@ GetPolyData( INT32 addr )
 	return result;
 } /* GetPolyData */
 
-data32_t namcos22_point_rom_r( offs_t offs )
+data32_t
+namcos22_point_rom_r( offs_t offs )
 {
 	return GetPolyData(offs);
 }
@@ -211,7 +328,7 @@ mydrawgfxzoom(
 			}
 		}
 	}
-}
+} /* mydrawgfxzoom */
 
 static void
 DrawSpritesHelper(
@@ -328,7 +445,7 @@ DrawSpritesHelper(
 		pSource -= 4;
 		pPal -= 2;
 	}
-}
+} /* DrawSpritesHelper */
 
 
 static void
@@ -390,6 +507,32 @@ DrawSprites( struct mame_bitmap *bitmap, const struct rectangle *cliprect )
 	const data32_t *pPal = &spriteram32[0x20000/4]+num_sprites*2;
 	int deltax = spriteram32[0x14/4]>>16;
 	int deltay = spriteram32[0x18/4]>>16;
+/*
+Cyber Cycles:
+The "reference" - Table is _NOT_ a reference Table ! Checked this with
+Cyber Cycles & all I get is totally garbage !
+To see sprites in Cyber Cycles (*HACK*):
+
+if (game_load == CYBER_CYCLES)
+{
+	deltax = 0x0280;
+	deltay = 0x0400;
+}
+
+And: The y-size is right, but wrong (!!!). Don't know _why_, but the
+sprites have same x / y size, but they are drawn distorted. fixed this
+by if (game_load == CYBER_CYCLES) sizey *= 2;
+
+Now the Y-Position is wrong for OSD- Sprites.
+You will see:
+- The Game-Screen has a Skyline. Checked some real screenshots & found
+out
+that it starts at the bottom of the screen
+- For The Position - Meter the Y-coords have to be multiplied by 2
+- Same for "3-2-1-Go!".
+But: The "dirt" when driving through grass or the skid seems to be
+positioned well this way.
+*/
 	DrawSpritesHelper( bitmap, cliprect, pSource, pPal, num_sprites, deltax, deltay, 0 );
 
 	/* VICS RAM provides two additional banks */
@@ -560,105 +703,51 @@ DrawTextLayer( struct mame_bitmap *bitmap, const struct rectangle *cliprect )
 
 /*********************************************************************************************/
 
-/**
- * 00000
- * 00004 set by main CPU; triggers DSP to start drawing scene.  DSP stores zero when finished.
- * 00008
- * 0000c
- * 0002c busy status(?)
- * 00010 display list bank select
- *
- * 00030
- * 00040	Point RAM Write Enable (ff=enable)
- * 00044	Point RAM IDC (index count register)
- * 00058
- * 0005c
- *
- * 00c00..0ffff  Point RAM Port (Point RAM has 128K words, 512KB space (128K 24bit)
- *
- * 0e000: used for collision detection? (Time Crisis)
- *
- * 10000..1007f
- *	00)10000:	0000000f (always?)
- *
- *	01)10004	000019b1 00007d64 // rolx (master camera)
- *	03)1000c	00005ece 000055fe // roly (master camera)
- *	05)10014	000001dd 00007ffc // rolz (master camera)
- *	07)1001c	00000002 (rolt)
- *
- *	08)10020	000000c8 // light power   [C008]
- *	09)10024	00000014 // light ambient [C009]
- *	0a)10028	00000000 00005a82 ffffa57e // light vector [C00A]
- *
- *	0d)10034	00000002 (always?)        [C00D]
- *	0e)10038	00000780 // field of view [C00E]
- *	0f)1003c	00000140                  [C00F]
- *  10)10040	000000f0                  [C010]
- *
- *	11)10048	00000000 00000000 00000000[C011..C013]
- *
- *	14)10050	00000007 // priority          [C014]
- *	15)10054	00000000 // viewport center x [C015]
- *	16)10058	00000000 // viewport center y [C016]
- *
- *	17)1005c	00000000 00007fff // rolx? [C017 C018]
- *				00000000 00007fff // roly? [C019 C01A]
- *				00000000 00007fff // rolz? [C01B C01C]
- *
- *	1d)10074	00010000 // flags?         [C01D]
- *	1e)			00000000 00000000 // unknown
- *
- * 10080..100ff
- * 10100..1017f
- * 10180..101ff
- * 10200..1027f
- * 10280..102ff
- * 10300..1037f
- * 10380..103ff
- *
- * 10400..17fff: scene data
- *
- * 18000..183ff: bank#2 window attr
- * 18400..1ffff: bank#2, scene data
- */
-static namcos22_camera mCamera;
+static void
+TransformPoint( double *vx, double *vy, double *vz, double m[4][4] )
+{
+	double x = *vx;
+	double y = *vy;
+	double z = *vz;
+	*vx = m[0][0]*x + m[1][0]*y + m[2][0]*z + m[3][0];
+	*vy = m[0][1]*x + m[1][1]*y + m[2][1]*z + m[3][1];
+	*vz = m[0][2]*x + m[1][2]*y + m[2][2]*z + m[3][2];
+}
 
 static void
-SetupWindow( const INT32 *pWindow, int which )
+TransformNormal( double *nx, double *ny, double *nz, double m[4][4] )
 {
-	double fov = pWindow[0x38/4];
-	double vw,vh;
-	pWindow += which*0x80/4;
-	vw = pWindow[0x3c/4];
-	vh = pWindow[0x40/4];
-	mCamera.cx  = 320+pWindow[0x54/4];
-	mCamera.cy  = 240-pWindow[0x58/4];
-	mCamera.clip.min_x = mCamera.cx - vw;
-	mCamera.clip.min_y = mCamera.cy - vh;
-	mCamera.clip.max_x = mCamera.cx + vw;
-	mCamera.clip.max_y = mCamera.cy + vh;
-	if( mCamera.clip.min_x <   0 ) mCamera.clip.min_x = 0;
-	if( mCamera.clip.min_y <   0 ) mCamera.clip.min_y = 0;
-	if( mCamera.clip.max_x > NAMCOS22_NUM_COLS*16 ) mCamera.clip.max_x = NAMCOS22_NUM_COLS*16;
-	if( mCamera.clip.max_y > NAMCOS22_NUM_ROWS*16 ) mCamera.clip.max_y = NAMCOS22_NUM_ROWS*16;
-	if( namcos22_gametype == NAMCOS22_PROP_CYCLE )
-	{
-		fov /= 32.0;
-	}
-	else if( namcos22_gametype == NAMCOS22_TIME_CRISIS )
-	{
-		fov /= 32.0;
-	}
-	fov = fov*3.141592654/180.0; /* degrees to radians */
-	mCamera.zoom = vw/tan(fov/2.0);
-//	mWindowPri = pWindow[0x50/4]&0x7;
-//	mCamera.power   = (INT16)(pWindow[0x20/4])/(double)0xff;
-//	mCamera.ambient = (INT16)(pWindow[0x24/4])/(double)0xff;
-	mCamera.x       = (INT16)(pWindow[0x28/4])/(double)0x7fff;
-	mCamera.y       = (INT16)(pWindow[0x2c/4])/(double)0x7fff;
-	mCamera.z       = (INT16)(pWindow[0x30/4])/(double)0x7fff;
-} /* SetupWindow */
+	double x = *nx;
+	double y = *ny;
+	double z = *nz;
+	*nx = m[0][0]*x + m[1][0]*y + m[2][0]*z;
+	*ny = m[0][1]*x + m[1][1]*y + m[2][1]*z;
+	*nz = m[0][2]*x + m[1][2]*y + m[2][2]*z;
+}
 
+/**
+ * @brief render a single quad
+ *
+ * @param flags
+ *		x.----.-x--.--x- (1042) (always set?)
+ *		-.-xxx.----.---- (0700) representative z algorithm to use?
+ *		-.----.--x-.---- (0020) one-sided poly
+ *		-.----.----.---x (0001) poly/tilemap priority?
+ *
+ *		1163 // sky
+ *		1262 // score (front)
+ *		1242 // score (hinge)
+ *		1243 // ?
+ *		1063 // n/a
+ *		1243 // various (2-sided?)
+ *		1263 // everything else (1-sided?)
+ *		1663 // ?
+ *
+ * @param color
+ *		-------- xxxxxxxx unused?
+ *		-xxxxxxx -------- palette select
+ *      x------- -------- unknown
+ */
 static void
 BlitQuadHelper(
 		struct mame_bitmap *pBitmap,
@@ -668,29 +757,73 @@ BlitQuadHelper(
 		INT32 zcode,
 		INT32 flags )
 {
+	struct LitSurfaceInfo *pLitSurfaceInfo = NULL;
 	double zmin, zmax, zrep;
 	struct VerTex v[5];
 	int i;
 
+//	if( (flags&0x0400) && code_pressed(KEYCODE_W) ) color = (rand()&0x7f)<<8;
+//	if( (flags&0x0200) && code_pressed(KEYCODE_E) ) color = (rand()&0x7f)<<8;
+//	if( (flags&0x0100) && code_pressed(KEYCODE_R) ) color = (rand()&0x7f)<<8;
+//	if( (flags&0x0020) && code_pressed(KEYCODE_T) ) color = (rand()&0x7f)<<8;
+//	if( (flags&0x0001) && code_pressed(KEYCODE_Y) ) color = (rand()&0x7f)<<8;
+
+//	if( (color&0x8000) && code_pressed(KEYCODE_U) ) color = (rand()&0x7f)<<8;
+//	if( (color&0x00ff) && code_pressed(KEYCODE_I) ) color = (rand()&0x7f)<<8;
+
 	zmin = zmax = 0;
 
-	color &= 0x7f00;
+	if( code_pressed(KEYCODE_Q) )
+	{
+		logerror( "\tquad:zcode=%08x flags=%08x color=%08x\n", zcode, flags, color );
+	}
+
+	if( mLitSurfaceIndex < mLitSurfaceCount )
+	{
+		pLitSurfaceInfo = &mLitSurfaceInfo[mLitSurfaceIndex++];
+	}
 
 	for( i=0; i<4; i++ )
 	{
 		struct VerTex *pVerTex = &v[i];
-		double lx = GetPolyData(  8+i*3+addr );
-		double ly = GetPolyData(  9+i*3+addr );
-		double lz = GetPolyData( 10+i*3+addr );
-		pVerTex->x = m[0][0]*lx + m[1][0]*ly + m[2][0]*lz + m[3][0];
-		pVerTex->y = m[0][1]*lx + m[1][1]*ly + m[2][1]*lz + m[3][1];
-		pVerTex->z = m[0][2]*lx + m[1][2]*ly + m[2][2]*lz + m[3][2];
+
+		pVerTex->x = GetPolyData(  8+i*3+addr );
+		pVerTex->y = GetPolyData(  9+i*3+addr );
+		pVerTex->z = GetPolyData( 10+i*3+addr );
 		pVerTex->u = GetPolyData( 0+2*i+addr )&0x0fff;
 		pVerTex->v = GetPolyData( 1+2*i+addr )&0xffff;
 		pVerTex->i = (GetPolyData(i+addr)>>16)&0xff;
+
+		TransformPoint( &pVerTex->x, &pVerTex->y, &pVerTex->z, m );
 		if( i==0 || pVerTex->z > zmax ) zmax = pVerTex->z;
 		if( i==0 || pVerTex->z < zmin ) zmin = pVerTex->z;
-	}
+
+		if( pLitSurfaceInfo )
+		{
+			/* extract normal vector */
+			double nx = pLitSurfaceInfo->normal[i].x;
+			double ny = pLitSurfaceInfo->normal[i].y;
+			double nz = pLitSurfaceInfo->normal[i].z;
+
+			double lx = mCamera.x;
+			double ly = mCamera.y;
+			double lz = mCamera.z;
+
+			double dotproduct;
+
+			/* transform normal vector */
+			TransformNormal( &nx, &ny, &nz, m );
+
+			/* transform light vector */
+			TransformNormal( &lx, &ly, &lz, mViewMatrix );
+
+			dotproduct = nx*ly + ny*ly + nz*lz;
+			if( dotproduct>=0.0 )
+			{
+				pVerTex->i = mCamera.ambient + mCamera.power*dotproduct;
+			}
+		} /* pLitSurfaceInfo */
+	} /* for( i=0; i<4; i++ ) */
 
 	/**
 	 * The method for computing represenative z value may vary per polygon.
@@ -713,7 +846,7 @@ BlitQuadHelper(
 	 * ------xx xxxxxxxx xxxxxxxx shift z-representative value
 	 */
 
-	if( namcos22_gametype == NAMCOS22_PROP_CYCLE )
+	if( namcos22_gametype == NAMCOS22_PROP_CYCLE || namcos22_gametype == NAMCOS22_TIME_CRISIS )
 	{ /* for now, assume all polygons use relative priority */
 		INT32 dw = (zcode&0x1c0000)>>18; /* window (master)priority bias */
 		INT32 dz = (zcode&0x03ffff); /* bias for representative z coordinate */
@@ -754,7 +887,7 @@ BlitQuadHelper(
 	}
 	else
 	{
-		zcode = 0x10000 + (INT32)zrep;
+		zcode = zmax;
 	}
 
 	namcos22_BlitTri( pBitmap, &v[0], color, zcode, flags, &mCamera ); /* 0,1,2 */
@@ -779,38 +912,22 @@ BlitQuads( struct mame_bitmap *pBitmap, INT32 addr, double m[4][4], INT32 base )
 		switch( size )
 		{
 		case 0x17:
+			/**
+			 * word 0: opcode (8a24c0)
+			 * word 1: flags
+			 * word 2: color
+			 */
 			flags = GetPolyData(addr+1);
 			color = GetPolyData(addr+2);
 			bias = 0;
-			BlitQuadHelper( pBitmap,color,addr+3,m,0,flags );
+			BlitQuadHelper( pBitmap,color,addr+3,m,bias,flags );
 			break;
 
 		case 0x18:
 			/**
-			 * word 0: ?
-			 *		0b3480 ?
-			 *		800000 ?
-			 *		000040 ?
-			 *
-			 * word 1: (flags)
-			 *		1042 (always set?)
-			 *		0200 ?
-			 *		0100 ?
-			 *		0020 one-sided
-			 *		0001 ?
-			 *
-			 *		1163 // sky
-			 *		1262 // score (front)
-			 *		1242 // score (hinge)
-			 *		1063 // n/a
-			 *		1243 // various (2-sided?)
-			 *		1263 // everything else (1-sided?)
-			 *
+			 * word 0: opcode (0b3480 for first N-1 quads or 8b3480 for final quad in primitive)
+			 * word 1: flags
 			 * word 2: color
-			 *			-------- xxxxxxxx unused?
-			 *			-xxxxxxx -------- palette select
-			 *          x------- -------- palette bank? (normally 0x4000; see Cyber Commando)
-			 *
 			 * word 3: depth bias
 			 */
 			flags = GetPolyData(addr+1);
@@ -819,22 +936,52 @@ BlitQuads( struct mame_bitmap *pBitmap, INT32 addr, double m[4][4], INT32 base )
 			BlitQuadHelper( pBitmap,color,addr+4,m,bias,flags );
 			break;
 
-		case 0x10: /* apply lighting effects */
-		/*
-			333401 000000 000000 004000 parameters
-			  	000000 000000 007fff normal vector
-			  	000000 000000 007fff normal vector
-			  	000000 000000 007fff normal vector
-  				000000 000000 007fff normal vector
-		*/
+		case 0x10: /* vertex lighting */
+			/*
+			333401 (opcode)
+				000000 000000 004000 (parameters; 2nd param is num 300401 following)
+			  	000000 000000 007fff // normal vector
+			  	000000 000000 007fff // normal vector
+			  	000000 000000 007fff // normal vector
+  				000000 000000 007fff // normal vector
+			*/
+			mLitSurfaceCount = 0;
+			mLitSurfaceIndex = 0;
+			if( mLitSurfaceCount < MAX_LIT_SURFACES )
+			{
+				struct LitSurfaceInfo *pLitSurfaceInfo = &mLitSurfaceInfo[mLitSurfaceCount++];
+				int i;
+				for( i=0; i<4; i++ )
+				{
+					pLitSurfaceInfo->normal[i].x = DSP_FIXED_TO_FLOAT(GetPolyData(addr+4+i*3+0));
+					pLitSurfaceInfo->normal[i].y = DSP_FIXED_TO_FLOAT(GetPolyData(addr+4+i*3+1));
+					pLitSurfaceInfo->normal[i].z = DSP_FIXED_TO_FLOAT(GetPolyData(addr+4+i*3+2));
+				}
+			}
 			break;
 
-		case 0x0d:
-			/* unknown! */
+		case 0x0d: /* additional normals */
+			/*
+			300401 (opcode)
+				007b09 ffdd04 0004c2
+				007a08 ffd968 0001c1
+				ff8354 ffe401 000790
+				ff84f7 ffdd04 0004c2
+			*/
+			if( mLitSurfaceCount < MAX_LIT_SURFACES )
+			{
+				struct LitSurfaceInfo *pLitSurfaceInfo = &mLitSurfaceInfo[mLitSurfaceCount++];
+				int i;
+				for( i=0; i<4; i++ )
+				{
+					pLitSurfaceInfo->normal[i].x = DSP_FIXED_TO_FLOAT(GetPolyData(addr+1+i*3+0));
+					pLitSurfaceInfo->normal[i].y = DSP_FIXED_TO_FLOAT(GetPolyData(addr+1+i*3+1));
+					pLitSurfaceInfo->normal[i].z = DSP_FIXED_TO_FLOAT(GetPolyData(addr+1+i*3+2));
+				}
+			}
 			break;
 
 		default:
-			//printf( "unexpected point data %08x at %08x.%08x\n", size, base, start );
 			break;
 		}
 		addr += size;
@@ -845,11 +992,6 @@ static void
 BlitPolyObject( struct mame_bitmap *pBitmap, int code, double M[4][4] )
 {
 	unsigned addr1 = GetPolyData(code);
-	if( namcos22_gametype == NAMCOS22_CYBER_CYCLES )
-	{ /* HACK! */
-		if( code == 0x69c || code == 0x69b ||
-		    code == 0x6b1 || code == 0x6b2 ) return;
-	}
 	for(;;)
 	{
 		INT32 addr2 = GetPolyData(addr1++);
@@ -861,7 +1003,7 @@ BlitPolyObject( struct mame_bitmap *pBitmap, int code, double M[4][4] )
 	}
 } /* BlitPolyObject */
 
-/****************************************************************/
+/*******************************************************************************/
 
 READ32_HANDLER( namcos22_dspram_r )
 {
@@ -871,60 +1013,10 @@ READ32_HANDLER( namcos22_dspram_r )
 WRITE32_HANDLER( namcos22_dspram_w )
 {
 	COMBINE_DATA( &namcos22_polygonram[offset] );
-//	namcos22_UploadCodeToDSP();
-}
-
-static float
-FloatDspToNative( data32_t iVal )
-{
-	int expVal = (iVal>>16) - 0x24;
-	float fVal = (iVal&0xffff);
-	while( expVal>0 )
-	{
-		fVal /= 2.0;
-		expVal--;
-	}
-	while( expVal<0 )
-	{
-		fVal *= 2.0;
-		expVal++;
-	}
-	return fVal;
+	namcos22_UploadCodeToDSP();
 }
 
 /*******************************************************************************/
-//#define SLAVE_BUFSIZE 0x4000 /* TBA: dynamically allocate */
-//static data32_t mSlaveBuf[SLAVE_BUFSIZE];
-//static int mSlaveBufWriteIdx;
-//static int mSlaveBufReadIdx;
-//
-//void
-//namcos22_WriteDataToRenderDevice( data32_t data )
-//{
-//	mSlaveBuf[mSlaveBufWriteIdx++] = data;
-//	logerror( "render: 0x%08x\n", data );
-//	if( mSlaveBufWriteIdx>=SLAVE_BUFSIZE )
-//	{
-//		mSlaveBufWriteIdx = 0;
-//	}
-//}
-//
-//static int
-//SlaveBufSize( void )
-//{
-//	return (mSlaveBufWriteIdx - mSlaveBufReadIdx)&(SLAVE_BUFSIZE-1);
-//}
-//
-//static data32_t
-//ReadDataFromSlaveBuf( void )
-//{
-//	data32_t result = mSlaveBuf[mSlaveBufReadIdx++];
-//	if( mSlaveBufReadIdx>=SLAVE_BUFSIZE )
-//	{
-//		mSlaveBufReadIdx = 0;
-//	}
-//	return result;
-//}
 
 /**
  * master DSP can write directly to render device via port 0xc.
@@ -944,22 +1036,19 @@ FloatDspToNative( data32_t iVal )
  *		z.mantissa
  *
  * master DSP can specify 3d objects indirectly (along with view transforms),
- * via the "transmit" PDP opcode.  the "render device" emits object records in the
- * same format above, performing viewspace clipping, projection, and lighting calculations
+ * via the "transmit" PDP opcode.  the "render device" sends quad data to the slave DSP
+ * viewspace clipping and projection
  *
  * most "3d object" references are 0x45 and greater.  references less than 0x45 are "special"
  * commands, using a similar point rom format.  the point rom header may point to point ram.
  *
- *
- * slave DSP can read records via port 4
- * its primary purpose appears to be sorting the list of quads, and passing them on to a "draw device"
- *
+ * slave DSP reads records via port 4
+ * its primary purpose is applying lighting calculations
+ * the slave DSP forwards draw commands to a "draw device"
  */
 
 /*******************************************************************************/
 
-static INT32 mCode;
-static double M[4][4], V[4][4];
 /**
  * 0xfffd
  * 0x0: transform
@@ -970,109 +1059,125 @@ static double M[4][4], V[4][4];
  */
 
 static void
-Handle00BB0003( const INT32 *pSource )
+HandleBB0003( const INT32 *pSource )
 {
 	/*
-		00bb0003 (fov = 0x980)
-		001400c8
-		00010000 // ?,   light.dx
-		00065a82 // pri, light.dy
-		0000a57e // ?,   light.dz
-		00000000
-		00280000
-		0020a801		0020a801
-		001fbc01		001fbc01
-		002e0000
-		----7ffe		----0000		----0000
-		----0000		----7ffe		----0000
-		----0000		----0000		----7ffe
+		w.setViewport (float (320 + vx0 - vw), float (240 - vy0 - vh),
+                 float (vw * 2), float (vh * 2),
+                  z0, z1, margin);
 
-		003b0003 (fov = 0x780)
-		001400c8
-		00010000 // ?,   light.dx
-		00075a82 // pri, light.dy
-		0000a57e // ?,   light.dz
-		00000000
-		00294548
-		001fb7f4		001fb7f4
-		001e9fee		001e9fee
-		002e0000
-		----7ffc		----0000		----0000
-		----0000		----7ffc		----0000
-		----0000		----0000		----7ffc
+		00bb0003
+		001400c8			light.ambient     light.power
+		00010000			?                 light.dx
+		00065a82			window priority   light.dy
+		0000a57e			?                 light.dz
+		00c80081			cx,cy
+
+		00296092			zoom = 772.5625
+		001e95f8 001e95f8		     0.5858154296875
+		001eb079 001eb079            0.6893463134765625
+		002958e8				   711.25 (see time crisis)
+
+		7ffe 0000 0000
+		0000 7ffe 0000
+		0000 0000 7ffe
 	*/
-	mWindowPri = pSource[0x3]>>16;
-	mCamera.power   = (INT16)(pSource[0x1]&0xffff)/(double)0xff;
-	mCamera.ambient = (INT16)(pSource[0x1]>>16)/(double)0xff;
-	//mCamera.zoom = FloatDspToNative(pSource[6]);
-	/**
-	 *	light.dx      = (INT16)pSource[0x2];
-	 *	light.dy      = (INT16)pSource[0x3];
-	 *	light.dz      = (INT16)pSource[0x4];
-	 *
-	 * field of view related (floating point)
-	 *	pSource[0x6]
-	 *	pSource[0x7]==pSource[0x8]
-	 *	pSource[0x9]==pSource[0xa]
-	 */
-	V[0][0] = ((INT16)pSource[0x0c])/(double)0x7fff;
-	V[1][0] = ((INT16)pSource[0x0d])/(double)0x7fff;
-	V[2][0] = ((INT16)pSource[0x0e])/(double)0x7fff;
-	V[0][1] = ((INT16)pSource[0x0f])/(double)0x7fff;
-	V[1][1] = ((INT16)pSource[0x10])/(double)0x7fff;
-	V[2][1] = ((INT16)pSource[0x11])/(double)0x7fff;
-	V[0][2] = ((INT16)pSource[0x12])/(double)0x7fff;
-	V[1][2] = ((INT16)pSource[0x13])/(double)0x7fff;
-	V[2][2] = ((INT16)pSource[0x14])/(double)0x7fff;
+	mCamera.power   = pSource[0x1]&0xffff;
+	mCamera.ambient = pSource[0x1]>>16;
 
-	{ /* hack for time crisis */
-		int i,j;
-		int bGood = 0;
-		for( i=0; i<3; i++ )
-		{
-			for( j=0; j<3; j++ )
-			{
-				if( V[i][j] ) bGood = 1;
-			}
-		}
-		if( !bGood )
-		{
-			struct RotParam param;
-			const INT32 *pSrc = 1 + &namcos22_polygonram[0x10080/4];
-			param.thx_sin = ((INT16)pSrc[0])/(double)0x7fff;
-			param.thx_cos = ((INT16)pSrc[1])/(double)0x7fff;
-			param.thy_sin = ((INT16)pSrc[2])/(double)0x7fff;
-			param.thy_cos = ((INT16)pSrc[3])/(double)0x7fff;
-			param.thz_sin = ((INT16)pSrc[4])/(double)0x7fff;
-			param.thz_cos = ((INT16)pSrc[5])/(double)0x7fff;
-			param.rolt = (INT16)pSrc[6];
-			matrix3d_Identity( V );
-			namcos3d_Rotate( V, &param );
-		}
-	}
-}
+	mCamera.x       = DSP_FIXED_TO_FLOAT(pSource[0x2]);
+	mCamera.y       = DSP_FIXED_TO_FLOAT(pSource[0x3]);
+	mCamera.z       = DSP_FIXED_TO_FLOAT(pSource[0x4]);
+
+	mWindowPri      = pSource[0x3]>>16;
+	mCamera.zoom    = DspFloatToNativeFloat(pSource[6]);
+
+	/* HACK! contains cx in upper 16 bits, cy in lower 16 bits; for now just ignore these polygons */
+	if( pSource[5] ) mCamera.zoom = 0;
+	/*
+		DspFloatToNativeFloat(pSource[0x7]);
+		DspFloatToNativeFloat(pSource[0x8]);
+
+		DspFloatToNativeFloat(pSource[0x9]);
+		DspFloatToNativeFloat(pSource[0xa]);
+
+		DspFloatToNativeFloat(pSource[0xb]);
+	*/
+
+	mViewMatrix[0][0] = DSP_FIXED_TO_FLOAT(pSource[0x0c]);
+	mViewMatrix[1][0] = DSP_FIXED_TO_FLOAT(pSource[0x0d]);
+	mViewMatrix[2][0] = DSP_FIXED_TO_FLOAT(pSource[0x0e]);
+
+	mViewMatrix[0][1] = DSP_FIXED_TO_FLOAT(pSource[0x0f]);
+	mViewMatrix[1][1] = DSP_FIXED_TO_FLOAT(pSource[0x10]);
+	mViewMatrix[2][1] = DSP_FIXED_TO_FLOAT(pSource[0x11]);
+
+	mViewMatrix[0][2] = DSP_FIXED_TO_FLOAT(pSource[0x12]);
+	mViewMatrix[1][2] = DSP_FIXED_TO_FLOAT(pSource[0x13]);
+	mViewMatrix[2][2] = DSP_FIXED_TO_FLOAT(pSource[0x14]);
+} /* HandleBB0003 */
 
 static void
-Handle00200002( const INT32 *pSource )
+Handle200002( const INT32 *pSource )
 {
-	M[0][0] = ((INT16)pSource[0x1])/(double)0x7fff;
-	M[1][0] = ((INT16)pSource[0x2])/(double)0x7fff;
-	M[2][0] = ((INT16)pSource[0x3])/(double)0x7fff;
-	M[0][1] = ((INT16)pSource[0x4])/(double)0x7fff;
-	M[1][1] = ((INT16)pSource[0x5])/(double)0x7fff;
-	M[2][1] = ((INT16)pSource[0x6])/(double)0x7fff;
-	M[0][2] = ((INT16)pSource[0x7])/(double)0x7fff;
-	M[1][2] = ((INT16)pSource[0x8])/(double)0x7fff;
-	M[2][2] = ((INT16)pSource[0x9])/(double)0x7fff;
-	M[3][0] = pSource[0xa]; /* xpos */
-	M[3][1] = pSource[0xb]; /* ypos */
-	M[3][2] = pSource[0xc]; /* zpos */
 	if( mCode>=0x45 )
 	{
-		matrix3d_Multiply( M, V );
-		BlitPolyObject( Machine->scrbitmap, mCode, M );
+		double m[4][4]; /* row major */
+
+		matrix3d_Identity( m );
+
+		m[0][0] = DSP_FIXED_TO_FLOAT(pSource[0x1]);
+		m[1][0] = DSP_FIXED_TO_FLOAT(pSource[0x2]);
+		m[2][0] = DSP_FIXED_TO_FLOAT(pSource[0x3]);
+
+		m[0][1] = DSP_FIXED_TO_FLOAT(pSource[0x4]);
+		m[1][1] = DSP_FIXED_TO_FLOAT(pSource[0x5]);
+		m[2][1] = DSP_FIXED_TO_FLOAT(pSource[0x6]);
+
+		m[0][2] = DSP_FIXED_TO_FLOAT(pSource[0x7]);
+		m[1][2] = DSP_FIXED_TO_FLOAT(pSource[0x8]);
+		m[2][2] = DSP_FIXED_TO_FLOAT(pSource[0x9]);
+
+		m[3][0] = pSource[0xa]; /* xpos */
+		m[3][1] = pSource[0xb]; /* ypos */
+		m[3][2] = pSource[0xc]; /* zpos */
+
+		matrix3d_Multiply( m, mViewMatrix );
+		BlitPolyObject( Machine->scrbitmap, mCode, m );
 	}
-}
+} /* Handle200002 */
+
+static void
+Handle300000( const INT32 *pSource )
+{ /* set view transform */
+	mViewMatrix[0][0] = DSP_FIXED_TO_FLOAT(pSource[1]);
+	mViewMatrix[1][0] = DSP_FIXED_TO_FLOAT(pSource[2]);
+	mViewMatrix[2][0] = DSP_FIXED_TO_FLOAT(pSource[3]);
+
+	mViewMatrix[0][1] = DSP_FIXED_TO_FLOAT(pSource[4]);
+	mViewMatrix[1][1] = DSP_FIXED_TO_FLOAT(pSource[5]);
+	mViewMatrix[2][1] = DSP_FIXED_TO_FLOAT(pSource[6]);
+
+	mViewMatrix[0][2] = DSP_FIXED_TO_FLOAT(pSource[7]);
+	mViewMatrix[1][2] = DSP_FIXED_TO_FLOAT(pSource[8]);
+	mViewMatrix[2][2] = DSP_FIXED_TO_FLOAT(pSource[9]);
+} /* Handle300000 */
+
+static void
+Handle233002( const INT32 *pSource )
+{ /* set modal rendering options */
+//	mMasterBias = pSource[2];
+/*
+	00233002 (always?)
+	00000000
+	0003dd00 // z bias adjust
+	001fffff
+	00007fff 00000000 00000000
+	00000000 00007fff 00000000
+	00000000 00000000 00007fff
+	00000000 00000000 00000000
+*/
+} /* Handle233002 */
 
 static void
 SimulateSlaveDSP( int bDebug )
@@ -1080,8 +1185,14 @@ SimulateSlaveDSP( int bDebug )
 	const INT32 *pSource = 0x300 + (INT32 *)namcos22_polygonram;
 	INT16 len;
 
-	matrix3d_Identity( V );
-	matrix3d_Identity( M );
+	mCamera.cx  = 320;
+	mCamera.cy  = 240;
+	mCamera.clip.min_x = 0;
+	mCamera.clip.min_y = 0;
+	mCamera.clip.max_x = NAMCOS22_NUM_COLS*16;
+	mCamera.clip.max_y = NAMCOS22_NUM_ROWS*16;
+
+	matrix3d_Identity( mViewMatrix );
 
 	if( mbSuperSystem22 )
 	{
@@ -1100,8 +1211,7 @@ SimulateSlaveDSP( int bDebug )
 		if( bDebug )
 		{
 			int i;
-		//	logerror( "addr=0x%04x ", 0x8000 + (pSource - namcos22_polygonram) );
-			logerror( "[code=0x%x; len=0x%x]\n", mCode, len );
+			logerror( "[code=0x%04x; len=0x%02x] ", mCode, len );
 			for( i=0; i<len; i++ )
 			{
 				logerror( " %08x", pSource[i] );
@@ -1112,19 +1222,19 @@ SimulateSlaveDSP( int bDebug )
 		switch( len )
 		{
 		case 0x15:
-			Handle00BB0003( pSource ); /* define viewport */
+			HandleBB0003( pSource ); /* define viewport */
 			break;
 
 		case 0x10:
-			/* unknown (used with 0x8010) */
+			Handle233002( pSource ); /* set modal rendering options */
 			break;
 
 		case 0x0a:
-			/* unknown 3x3 Matrix */
+			Handle300000( pSource ); /* modify view transform */
 			break;
 
 		case 0x0d:
-			Handle00200002( pSource );
+			Handle200002( pSource ); /* render primitive */
 			break;
 
 		default:
@@ -1135,12 +1245,6 @@ SimulateSlaveDSP( int bDebug )
 		pSource += len;
 		marker = (INT16)*pSource++; /* always 0xffff */
 		next   = (INT16)*pSource++; /* link to next command */
-
-		if( bDebug )
-		{
-			logerror( "cmd: %04x %04x\n", marker, next );
-		}
-
 		if( (next&0x7fff) != (pSource - (INT32 *)namcos22_polygonram) )
 		{ /* end of list */
 			break;
@@ -1148,18 +1252,18 @@ SimulateSlaveDSP( int bDebug )
 	} /* for(;;) */
 } /* SimulateSlaveDSP */
 
-//static void DrawPolyOrig( struct mame_bitmap *bitmap );
-
 static void
 DrawPolygons( struct mame_bitmap *bitmap )
 {
-	const INT32 *pWindow = (INT32 *)&namcos22_polygonram[0x10000/4];
-	SetupWindow( pWindow,0 ); /* HACK! */
 	if( mbDSPisActive )
 	{
-		SimulateSlaveDSP( code_pressed(KEYCODE_Q) );
+		int bDebug = 0;
+#ifdef MAME_DEBUG
+		bDebug = code_pressed(KEYCODE_Q);
+#endif
+		SimulateSlaveDSP( bDebug );
 
-		if( 0 && code_pressed(KEYCODE_Q) )
+		if( bDebug )
 		{
 			int i;
 			for( i=0x10000; i<0x20000; i+=4 )
@@ -1167,9 +1271,9 @@ DrawPolygons( struct mame_bitmap *bitmap )
 				if( (i&0x7f)==0 ) logerror( "\n%08x: ", i );
 				logerror( " %08x", namcos22_polygonram[i/4] );
 			}
+			while( code_pressed(KEYCODE_Q) ){}
 		}
-
-		while( code_pressed(KEYCODE_Q) ){}
+		DrawDirectPolys();
 	}
 } /* DrawPolygons */
 
@@ -1293,6 +1397,83 @@ WRITE32_HANDLER( namcos22_textram_w )
 VIDEO_START( namcos22s )
 {
 	mbDSPisActive = 0;
+	memset( namcos22_polygonram, 0xcc, 0x20000 );
+/**
+ * +0x00 0	always 0xf?
+ * +0x04 1	sin(x) world-view matrix
+ * +0x08 2	cos(x)
+ * +0x0c 3	sin(y)
+ * +0x10 4	cos(y)
+ * +0x14 5	sin(z)
+ * +0x18 6	cos(z)
+ * +0x1c 7	ROLT? always 0x0002?
+ * +0x20 8	light power
+ * +0x24 9	light ambient
+ * +0x28 10	light vector(x)
+ * +0x2c 11	light vector(y)
+ * +0x30 12	light vector(z)
+ * +0x34 13	always 0x0002?
+ * +0x38 14	field of view angle (fovx) in degrees
+ * +0x3c 15	viewport width
+ * +0x40 16	viewport height
+ * +0x44 17
+ * +0x48 18
+ * +0x4c 19
+ * +0x50 20	priority (top 7 > .. > 0 behind)
+ * +0x54 21	viewport center x
+ * +0x58 22	viewport center y
+ * +0x5c 23	sin(x) ?
+ * +0x60 24	cos(x)
+ * +0x64 25	sin(y)
+ * +0x68 26	cos(y)
+ * +0x6c 27	sin(z)
+ * +0x70 28	cos(z)
+ * +0x74 29	flags (axis flipping?) 0004, 0003
+ * +0x78 30	6630, 0001
+ * +0x7c 31	7f02
+ */
+	/*
+	namcos22_polygonram[0x100] = 0x7fff;
+	namcos22_polygonram[0x101] = 0x0000;
+	namcos22_polygonram[0x102] = 0x0000;
+	namcos22_polygonram[0x103] = 0x0000;
+	namcos22_polygonram[0x104] = 0x7fff;
+	namcos22_polygonram[0x105] = 0x0000;
+	namcos22_polygonram[0x106] = 0x0000;
+	namcos22_polygonram[0x107] = 0x0000;
+	namcos22_polygonram[0x108] = 0x7fff;
+
+	namcos22_polygonram[0x112] = 0x3c; // fov
+	namcos22_polygonram[0x113] = 0x0; // xsize exp
+	namcos22_polygonram[0x114] = 0x0; // xsize mantissa
+
+	namcos22_polygonram[0x119] = 0;// (45d3)
+	namcos22_polygonram[0x11a] = 0;// (45d5)
+	namcos22_polygonram[0x11b] = 0;// 0x4294
+	namcos22_polygonram[0x11c] = 0;// 0x4294
+
+	namcos22_polygonram[0x120] = 0x00c8;
+	namcos22_polygonram[0x121] = 0x0014;
+	namcos22_polygonram[0x122] = 0x0000;
+	namcos22_polygonram[0x123] = 0x5a82;
+	namcos22_polygonram[0x123] = 0xa57e;
+	namcos22_polygonram[0x124] = 0x0002; // 0x4291
+	namcos22_polygonram[0x125] = 0x0140;
+	namcos22_polygonram[0x126] = 0x00f0;
+	namcos22_polygonram[0x127] = 0x0000;
+	namcos22_polygonram[0x128] = 0x0000;
+	namcos22_polygonram[0x129] = 0x0000;
+	namcos22_polygonram[0x12a] = 0x0007;
+	namcos22_polygonram[0x12b] = 0x0000;
+	namcos22_polygonram[0x12c] = 0x0000;
+	namcos22_polygonram[0x12d] = 0x0000;
+	namcos22_polygonram[0x12e] = 0x7fff;
+	namcos22_polygonram[0x12f] = 0x0000;
+	namcos22_polygonram[0x130] = 0x7fff;
+	namcos22_polygonram[0x131] = 0x0000;
+	namcos22_polygonram[0x132] = 0x7fff; // 0x4293
+	namcos22_polygonram[0x133] = 0x0002; // 0x429b
+*/
 	if( namcos3d_Init(
 		NAMCOS22_SCREEN_WIDTH,
 		NAMCOS22_SCREEN_HEIGHT,
@@ -1372,42 +1553,30 @@ static data16_t namcos22_dspram_bank;
 WRITE16_HANDLER( namcos22_dspram16_bank_w )
 {
 	COMBINE_DATA( &namcos22_dspram_bank );
-	namcos22_UploadCodeToDSP();
 }
+
+static data16_t mUpperWordLatch;
 
 READ16_HANDLER( namcos22_dspram16_r )
 {
 	data32_t value = namcos22_polygonram[offset];
+
 	switch( namcos22_dspram_bank )
 	{
+	case 0:
+		value &= 0xffff;
+		break;
+
 	case 1:
 		value>>=16;
 		break;
 
-	default:
+	case 2:
+		mUpperWordLatch = value>>16;
 		value &= 0xffff;
-//		if( offset==0xe014-0x8000 || offset==0xc014-0x8000 )
-//		{
-//			return 0x3;
-//		}
-//		if( offset==0xe034-0x8000 || offset==0xc034-0x8000 )
-//		{
-//			return 0x4;
-//		}
-/*	0e)10038	00000780 // field of view [C00E]
- *	0f)1003c	00000140                  [C00F]
- *  10)10040	000000f0                  [C010]
- *
- *	11)10048	00000000 00000000 00000000[C011..C013]
- *
- *	14)10050	00000007 // priority          [C014]
- *	15)10054	00000000 // viewport center x [C015]
- *	16)10058	00000000 // viewport center y [C016]
- *
- *	17)1005c	00000000 00007fff // rolx? [C017 C018]
- *				00000000 00007fff // roly? [C019 C01A]
- *				00000000 00007fff // rolz? [C01B C01C]
- */
+		break;
+
+	default:
 		break;
 	}
 	return (data16_t)value;
@@ -1430,19 +1599,11 @@ WRITE16_HANDLER( namcos22_dspram16_w )
 
 	case 2:
 		COMBINE_DATA( &lo );
-		if( lo&0x8000 )
-		{
-			hi = 0xffff;
-		}
-		else
-		{
-			hi = 0x0000;
-		}
+		hi = mUpperWordLatch;
 		break;
 
 	default:
 		break;
 	}
 	namcos22_polygonram[offset] = (hi<<16)|lo;
-	namcos22_UploadCodeToDSP();
 }

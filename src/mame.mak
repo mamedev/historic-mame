@@ -17,7 +17,7 @@ CPUS+=DECO16@
 #CPUS+=M4510@
 CPUS+=H6280@
 CPUS+=I86@
-#CPUS+=I88@
+CPUS+=I88@
 CPUS+=I186@
 #CPUS+=I188@
 #CPUS+=I286@
@@ -199,7 +199,8 @@ DRVLIBS = \
 	$(OBJ)/usgames.a $(OBJ)/sanritsu.a $(OBJ)/rare.a \
 	$(OBJ)/nihonsys.a $(OBJ)/alba.a $(OBJ)/homedata.a $(OBJ)/artmagic.a \
 	$(OBJ)/taiyo.a $(OBJ)/edevices.a $(OBJ)/other.a $(OBJ)/excelent.a $(OBJ)/nix.a \
-	$(OBJ)/othertrv.a $(OBJ)/other68k.a $(OBJ)/otherz80.a $(OBJ)/other.a \
+	$(OBJ)/othertrv.a $(OBJ)/other68k.a $(OBJ)/otherz80.a \
+	$(OBJ)/hyprston.a $(OBJ)/other.a \
 	$(OBJ)/neogeo.a \
 
 $(OBJ)/pacman.a: \
@@ -229,7 +230,7 @@ $(OBJ)/nichibut.a: \
 	$(OBJ)/drivers/bigfghtr.o \
 	$(OBJ)/machine/nb1413m3.o \
 	$(OBJ)/vidhrdw/hyhoo.o $(OBJ)/drivers/hyhoo.o \
-	$(OBJ)/vidhrdw/pastelgl.o $(OBJ)/drivers/pastelgl.o \
+	$(OBJ)/vidhrdw/pastelg.o $(OBJ)/drivers/pastelg.o \
 	$(OBJ)/vidhrdw/nbmj8688.o $(OBJ)/drivers/nbmj8688.o \
 	$(OBJ)/vidhrdw/nbmj8891.o $(OBJ)/drivers/nbmj8891.o \
 	$(OBJ)/vidhrdw/nbmj8991.o $(OBJ)/drivers/nbmj8991.o \
@@ -289,7 +290,7 @@ $(OBJ)/univers.a: \
 $(OBJ)/nintendo.a: \
 	$(OBJ)/drivers/n8080.o $(OBJ)/vidhrdw/n8080.o $(OBJ)/sndhrdw/n8080.o \
 	$(OBJ)/vidhrdw/dkong.o $(OBJ)/sndhrdw/dkong.o $(OBJ)/drivers/dkong.o \
-	$(OBJ)/machine/strtheat.o \
+	$(OBJ)/machine/strtheat.o $(OBJ)/machine/drakton.o \
 	$(OBJ)/vidhrdw/mario.o $(OBJ)/sndhrdw/mario.o $(OBJ)/drivers/mario.o \
 	$(OBJ)/vidhrdw/popeye.o $(OBJ)/drivers/popeye.o \
 	$(OBJ)/vidhrdw/punchout.o $(OBJ)/drivers/punchout.o \
@@ -340,7 +341,7 @@ $(OBJ)/irem.a: \
 	$(OBJ)/vidhrdw/troangel.o $(OBJ)/drivers/troangel.o \
 	$(OBJ)/vidhrdw/yard.o $(OBJ)/drivers/yard.o \
 	$(OBJ)/vidhrdw/travrusa.o $(OBJ)/drivers/travrusa.o \
-	$(OBJ)/drivers/wilytowr.o \
+	$(OBJ)/drivers/wilytowr.o $(OBJ)/sndhrdw/fghtbskt.o \
 	$(OBJ)/vidhrdw/m62.o $(OBJ)/drivers/m62.o \
 	$(OBJ)/vidhrdw/vigilant.o $(OBJ)/drivers/vigilant.o \
 	$(OBJ)/vidhrdw/m72.o $(OBJ)/sndhrdw/m72.o $(OBJ)/drivers/m72.o \
@@ -751,6 +752,7 @@ $(OBJ)/snk.a: \
 	$(OBJ)/vidhrdw/marvins.o $(OBJ)/drivers/marvins.o \
 	$(OBJ)/vidhrdw/jcross.o $(OBJ)/drivers/jcross.o \
 	$(OBJ)/vidhrdw/mainsnk.o $(OBJ)/drivers/mainsnk.o \
+	$(OBJ)/drivers/dmndrby.o \
 	$(OBJ)/drivers/hal21.o \
 	$(OBJ)/vidhrdw/snk.o $(OBJ)/drivers/snk.o \
 	$(OBJ)/drivers/sgladiat.o \
@@ -815,6 +817,7 @@ $(OBJ)/upl.a: \
 
 $(OBJ)/nmk.a: \
 	$(OBJ)/vidhrdw/nmk16.o $(OBJ)/drivers/nmk16.o \
+	$(OBJ)/drivers/acommand.o \
 	$(OBJ)/drivers/jalmah.o \
 	$(OBJ)/drivers/quizpani.o $(OBJ)/vidhrdw/quizpani.o \
 	$(OBJ)/vidhrdw/macrossp.o $(OBJ)/drivers/macrossp.o \
@@ -927,7 +930,7 @@ $(OBJ)/kaneko.a: \
 	$(OBJ)/vidhrdw/galpani2.o $(OBJ)/drivers/galpani2.o \
 	$(OBJ)/drivers/galpani3.o \
 	$(OBJ)/drivers/jchan.o \
-	$(OBJ)/vidhrdw/kaneko16.o $(OBJ)/drivers/kaneko16.o \
+	$(OBJ)/machine/kaneko16.o $(OBJ)/vidhrdw/kaneko16.o $(OBJ)/drivers/kaneko16.o \
 	$(OBJ)/vidhrdw/suprnova.o $(OBJ)/drivers/suprnova.o \
 
 $(OBJ)/neogeo.a: \
@@ -1005,6 +1008,7 @@ $(OBJ)/yunsung.a: \
 	$(OBJ)/vidhrdw/paradise.o $(OBJ)/drivers/paradise.o \
 	$(OBJ)/vidhrdw/yunsung8.o $(OBJ)/drivers/yunsung8.o \
 	$(OBJ)/vidhrdw/yunsun16.o $(OBJ)/drivers/yunsun16.o \
+	$(OBJ)/drivers/nmg5.o \
 
 $(OBJ)/zilec.a: \
 	$(OBJ)/vidhrdw/blueprnt.o $(OBJ)/drivers/blueprnt.o \
@@ -1128,6 +1132,7 @@ $(OBJ)/other68k.a: \
 	$(OBJ)/drivers/bmcbowl.o \
 	$(OBJ)/drivers/dcheese.o \
 	$(OBJ)/drivers/micro3d.o \
+	$(OBJ)/drivers/pntnpuzl.o \
 
 $(OBJ)/otherz80.a: \
 	$(OBJ)/vidhrdw/astinvad.o $(OBJ)/sndhrdw/astinvad.o $(OBJ)/drivers/astinvad.o \
@@ -1164,6 +1169,13 @@ $(OBJ)/otherz80.a: \
 	$(OBJ)/drivers/tcl.o \
 	$(OBJ)/drivers/onetwo.o \
 	$(OBJ)/drivers/pbchmp95.o \
+	$(OBJ)/drivers/suprgolf.o \
+	$(OBJ)/drivers/trucocl.o $(OBJ)/vidhrdw/trucocl.o \
+	
+$(OBJ)/hyprston.a: \
+	$(OBJ)/drivers/vamphalf.o \
+	$(OBJ)/drivers/dfpix.o \
+	$(OBJ)/drivers/eolith.o \
 
 $(OBJ)/other.a: \
 	$(OBJ)/vidhrdw/redalert.o $(OBJ)/sndhrdw/redalert.o $(OBJ)/drivers/redalert.o \
@@ -1180,10 +1192,10 @@ $(OBJ)/other.a: \
 	$(OBJ)/vidhrdw/lethalj.o $(OBJ)/drivers/lethalj.o \
 	$(OBJ)/vidhrdw/sbugger.o $(OBJ)/drivers/sbugger.o \
 	$(OBJ)/drivers/ltcasino.o \
-	$(OBJ)/drivers/vamphalf.o \
 	$(OBJ)/drivers/malzak.o $(OBJ)/vidhrdw/malzak.o \
 	$(OBJ)/drivers/supertnk.o \
 	$(OBJ)/drivers/dynadice.o \
+	$(OBJ)/drivers/hotblock.o \
 
 
 COREOBJS += $(OBJ)/driver.o $(OBJ)/cheat.o

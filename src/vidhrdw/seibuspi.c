@@ -165,6 +165,7 @@ static void get_back_tile_info( int tile_index )
 	int color = (tile >> 13) & 0x7;
 
 	tile &= 0x1fff;
+	//tile |= 0x4000;
 
 	SET_TILE_INFO(1, tile, color, 0)
 }
@@ -177,6 +178,7 @@ static void get_mid_tile_info( int tile_index )
 
 	tile &= 0x1fff;
 	tile |= 0x2000;
+	//tile |= 0x4000;
 
 	SET_TILE_INFO(1, tile, color + 16, 0)
 }
@@ -188,11 +190,13 @@ static void get_fore_tile_info( int tile_index )
 	int color = (tile >> 13) & 0x7;
 
 	tile &= 0x1fff;
-	if( bg_size == 0 ) {
-		tile |= 0x2000;
-	} else {
-		tile |= 0x4000;
+	switch(bg_size)
+	{
+		case 0: tile |= 0x2000; break;
+		case 1:	tile |= 0x4000; break;
+		case 2: tile |= 0x8000; break;
 	}
+	//tile |= 0x4000;
 	tile |= ((layer_bank >> 27) & 0x1) << 13;
 
 	SET_TILE_INFO(1, tile, color + 8, 0)

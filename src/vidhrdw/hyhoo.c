@@ -11,22 +11,20 @@
 #include "nb1413m3.h"
 
 
-static int hyhoo_scrolly;
-static int hyhoo_drawx, hyhoo_drawy;
-static int hyhoo_sizex, hyhoo_sizey;
-static int hyhoo_radrx, hyhoo_radry;
+static int blitter_destx, blitter_desty;
+static int blitter_sizex, blitter_sizey;
+static int blitter_src_addr;
+static int blitter_direction_x, blitter_direction_y;
 static int hyhoo_gfxrom;
-static int hyhoo_gfxflag1;
-static int hyhoo_gfxflag2;
 static int hyhoo_dispflag;
+static int hyhoo_highcolorflag;
 static int hyhoo_flipscreen;
-static int hyhoo_flipx, hyhoo_flipy;
 static int hyhoo_screen_refresh;
 
 static struct mame_bitmap *hyhoo_tmpbitmap;
 static unsigned short *hyhoo_videoram;
 static unsigned short *hyhoo_videoworkram;
-static unsigned char *hyhoo_palette;
+static unsigned char *hyhoo_clut;
 
 
 static void hyhoo_vramflip(void);
@@ -40,12 +38,11 @@ static void hyhoo_gfxdraw(void);
 PALETTE_INIT( hyhoo )
 {
 	int i;
+	int r, g, b;
 
 	/* initialize 655 RGB lookup */
 	for (i = 0; i < 65536; i++)
 	{
-		int r, g, b;
-
 		// bbbbbggg_ggrrrrrr
 		r = ((i >>  0) & 0x3f);
 		g = ((i >>  6) & 0x1f);
@@ -54,94 +51,57 @@ PALETTE_INIT( hyhoo )
 		r = ((r << 2) | (r >> 3));
 		g = ((g << 3) | (g >> 2));
 		b = ((b << 3) | (b >> 2));
-		palette_set_color(i,r,g,b);
+
+		palette_set_color(i, r, g, b);
 	}
 }
 
-WRITE8_HANDLER( hyhoo_palette_w )
+WRITE8_HANDLER( hyhoo_clut_w )
 {
-	hyhoo_palette[offset & 0x0f] = (data ^ 0xff);
+	hyhoo_clut[offset & 0x0f] = (data ^ 0xff);
 }
 
 /******************************************************************************
 
 
 ******************************************************************************/
-void hyhoo_radrx_w(int data)
+WRITE8_HANDLER( hyhoo_blitter_w )
 {
-	hyhoo_radrx = data;
-}
-
-void hyhoo_radry_w(int data)
-{
-	hyhoo_radry = data;
-}
-
-void hyhoo_sizex_w(int data)
-{
-	hyhoo_sizex = data;
-}
-
-void hyhoo_sizey_w(int data)
-{
-	hyhoo_sizey = data;
-
-	hyhoo_gfxdraw();
-}
-
-void hyhoo_gfxflag1_w(int data)
-{
-	static int hyhoo_flipscreen_old = -1;
-
-	hyhoo_gfxflag1 = data;
-
-	hyhoo_flipx = (data & 0x01) ? 1 : 0;
-	hyhoo_flipy = (data & 0x02) ? 1 : 0;
-	hyhoo_flipscreen = (data & 0x04) ? 0 : 1;
-	hyhoo_dispflag = (data & 0x08) ? 0 : 1;
-
-	if ((nb1413m3_type == NB1413M3_HYHOO) ||
-	    (nb1413m3_type == NB1413M3_HYHOO2))
+	switch (offset)
 	{
-		hyhoo_flipscreen ^= 1;
-	}
-
-	if (hyhoo_flipscreen != hyhoo_flipscreen_old)
-	{
-		hyhoo_vramflip();
-		hyhoo_screen_refresh = 1;
-		hyhoo_flipscreen_old = hyhoo_flipscreen;
+		case 0x00:	blitter_src_addr = (blitter_src_addr & 0xff00) | data;
+					nb1413m3_gfxradr_l_w(0, data); break;
+		case 0x01:	blitter_src_addr = (blitter_src_addr & 0x00ff) | (data << 8);
+					nb1413m3_gfxradr_h_w(0, data); break;
+		case 0x02:	blitter_destx = data; break;
+		case 0x03:	blitter_desty = data; break;
+		case 0x04:	blitter_sizex = data; break;
+		case 0x05:	blitter_sizey = data;
+					/* writing here also starts the blit */
+					hyhoo_gfxdraw();
+					break;
+		case 0x06:	blitter_direction_x = (data & 0x01) ? 1 : 0;
+					blitter_direction_y = (data & 0x02) ? 1 : 0;
+					hyhoo_flipscreen = (data & 0x04) ? 0 : 1;
+					hyhoo_dispflag = (data & 0x08) ? 0 : 1;
+					hyhoo_vramflip();
+					break;
+		case 0x07:	break;
 	}
 }
 
-void hyhoo_gfxflag2_w(int data)
-{
-	hyhoo_gfxflag2 = data;
-}
-
-void hyhoo_drawx_w(int data)
-{
-	hyhoo_drawx = (data ^ 0xff);
-}
-
-void hyhoo_drawy_w(int data)
-{
-	hyhoo_drawy = (data ^ 0xff);
-
-	if (hyhoo_flipscreen) hyhoo_scrolly = -2;
-	else hyhoo_scrolly = 0;
-}
-
-void hyhoo_romsel_w(int data)
+WRITE8_HANDLER( hyhoo_romsel_w )
 {
 	hyhoo_gfxrom = (((data & 0xc0) >> 4) + (data & 0x03));
+	hyhoo_highcolorflag = data;
+	nb1413m3_gfxrombank_w(0, data);
 
-	if ((hyhoo_gfxrom << 17) > (memory_region_length(REGION_GFX1) - 1))
+	if ((0x20000 * hyhoo_gfxrom) > (memory_region_length(REGION_GFX1) - 1))
 	{
 #ifdef MAME_DEBUG
 		usrintf_showmessage("GFXROM BANK OVER!!");
 #endif
-		hyhoo_gfxrom = 0;
+		hyhoo_gfxrom &= (memory_region_length(REGION_GFX1) / 0x20000 - 1);
 	}
 }
 
@@ -151,8 +111,11 @@ void hyhoo_romsel_w(int data)
 ******************************************************************************/
 void hyhoo_vramflip(void)
 {
+	static int hyhoo_flipscreen_old = 0;
 	int x, y;
 	unsigned short color1, color2;
+
+	if (hyhoo_flipscreen == hyhoo_flipscreen_old) return;
 
 	for (y = 0; y < (Machine->drv->screen_height / 2); y++)
 	{
@@ -169,6 +132,21 @@ void hyhoo_vramflip(void)
 			hyhoo_videoworkram[((y ^ 0xff) * Machine->drv->screen_width) + (x ^ 0x1ff)] = color1;
 		}
 	}
+
+	hyhoo_flipscreen_old = hyhoo_flipscreen;
+	hyhoo_screen_refresh = 1;
+}
+
+static void update_pixel(int x, int y)
+{
+	int color = hyhoo_videoram[(y * 512) + x];
+	plot_pixel(hyhoo_tmpbitmap, x, y, Machine->pens[color]);
+}
+
+
+static void blitter_timer_callback(int param)
+{
+	nb1413m3_busyflag = 1;
 }
 
 void hyhoo_gfxdraw(void)
@@ -181,49 +159,44 @@ void hyhoo_gfxdraw(void)
 	int sizex, sizey;
 	int skipx, skipy;
 	int ctrx, ctry;
-	int tflag1, tflag2;
 	int gfxaddr;
-	unsigned short r, g, b;
 	unsigned short color, color1, color2;
-	unsigned short drawcolor1, drawcolor2;
+	unsigned char r, g, b;
+
+	nb1413m3_busyctr = 0;
 
 	hyhoo_gfxrom |= ((nb1413m3_sndrombank1 & 0x02) << 3);
 
-	if (hyhoo_flipx)
+	startx = blitter_destx + blitter_sizex;
+	starty = blitter_desty + blitter_sizey;
+
+	if (blitter_direction_x)
 	{
-		hyhoo_drawx -= (hyhoo_sizex << 1);
-		startx = hyhoo_sizex;
-		sizex = ((hyhoo_sizex ^ 0xff) + 1);
-		skipx = -1;
-	}
-	else
-	{
-		hyhoo_drawx = (hyhoo_drawx - hyhoo_sizex);
-		startx = 0;
-		sizex = (hyhoo_sizex + 1);
+		sizex = blitter_sizex ^ 0xff;
 		skipx = 1;
 	}
-
-	if (hyhoo_flipy)
+	else
 	{
-		hyhoo_drawy -= ((hyhoo_sizey << 1) + 1);
-		starty = hyhoo_sizey;
-		sizey = ((hyhoo_sizey ^ 0xff) + 1);
-		skipy = -1;
+		sizex = blitter_sizex;
+		skipx = -1;
+	}
+
+	if (blitter_direction_y)
+	{
+		sizey = blitter_sizey ^ 0xff;
+		skipy = 1;
 	}
 	else
 	{
-		hyhoo_drawy = (hyhoo_drawy - hyhoo_sizey - 1);
-		starty = 0;
-		sizey = (hyhoo_sizey + 1);
-		skipy = 1;
+		sizey = blitter_sizey;
+		skipy = -1;
 	}
 
-	gfxaddr = ((hyhoo_gfxrom << 17) + (hyhoo_radry << 9) + (hyhoo_radrx << 1));
+	gfxaddr = (hyhoo_gfxrom << 17) + (blitter_src_addr << 1);
 
-	for (y = starty, ctry = sizey; ctry > 0; y += skipy, ctry--)
+	for (y = starty, ctry = sizey; ctry >= 0; y += skipy, ctry--)
 	{
-		for (x = startx, ctrx = sizex; ctrx > 0; x += skipx, ctrx--)
+		for (x = startx, ctrx = sizex; ctrx >= 0; x += skipx, ctrx--)
 		{
 			if ((gfxaddr > (memory_region_length(REGION_GFX1) - 1)))
 			{
@@ -235,116 +208,115 @@ void hyhoo_gfxdraw(void)
 
 			color = GFX[gfxaddr++];
 
+			dx1 = (2 * x + 0) & 0x1ff;
+			dx2 = (2 * x + 1) & 0x1ff;
+			dy = y & 0xff;
+
 			if (hyhoo_flipscreen)
 			{
-				dx1 = (((((hyhoo_drawx + x) * 2) + 0) ^ 0x1ff) & 0x1ff);
-				dx2 = (((((hyhoo_drawx + x) * 2) + 1) ^ 0x1ff) & 0x1ff);
-				dy = (((hyhoo_drawy + y) ^ 0xff) & 0xff);
-			}
-			else
-			{
-				dx1 = ((((hyhoo_drawx + x) * 2) + 0) & 0x1ff);
-				dx2 = ((((hyhoo_drawx + x) * 2) + 1) & 0x1ff);
-				dy = ((hyhoo_drawy + y) & 0xff);
+				dx1 ^= 0x1ff;
+				dx2 ^= 0x1ff;
+				dy ^= 0xff;
 			}
 
-			if (hyhoo_gfxflag2 & 0x04)
+			if (hyhoo_highcolorflag & 0x04)
 			{
-				// 65536 colors mode
+				// direct mode
 
-				if (hyhoo_gfxflag2 & 0x20)
+				if (hyhoo_highcolorflag & 0x20)
 				{
-					// 65536 colors (lower)
+					/* least significant bits */
 
 					// src xxxxxxxx_bbbggrrr
 					// dst xxbbbxxx_ggxxxrrr
+
 					r = (((color & 0x07) >> 0) & 0x07);
 					g = (((color & 0x18) >> 3) & 0x03);
 					b = (((color & 0xe0) >> 5) & 0x07);
-					drawcolor1 = drawcolor2 = ((b << (11 + 0)) | (g << (6 + 0)) | (r << (0 + 0)));
+					color = ((b << (11 + 0)) | (g << (6 + 0)) | (r << (0 + 0)));
 
-					drawcolor1 |= hyhoo_videoworkram[(dy * Machine->drv->screen_width) + dx1];
-					drawcolor2 |= hyhoo_videoworkram[(dy * Machine->drv->screen_width) + dx2];
+					if (color != 0xff)
+					{
+						hyhoo_videoram[(dy * Machine->drv->screen_width) + dx1] |= color;
+						hyhoo_videoram[(dy * Machine->drv->screen_width) + dx2] |= color;
+						update_pixel(dx1, dy);
+						update_pixel(dx2, dy);
+					}
 
-					tflag1 = (drawcolor1 != 0xffff) ? 1 : 0;
-					tflag2 = (drawcolor2 != 0xffff) ? 1 : 0;
+					continue;
 				}
 				else
 				{
-					// 65536 colors (higher)
-
-					tflag1 = tflag2 = 1;	// dummy
+					/* most significant bits */
 
 					// src xxxxxxxx_bbgggrrr
 					// dst bbxxxggg_xxrrrxxx
+
 					r = (((color & 0x07) >> 0) & 0x07);
 					g = (((color & 0x38) >> 3) & 0x07);
 					b = (((color & 0xc0) >> 6) & 0x03);
-					drawcolor1 = drawcolor2 = ((b << (11 + 3)) | (g << (6 + 2)) | (r << (0 + 3)));
+					color = ((b << (11 + 3)) | (g << (6 + 2)) | (r << (0 + 3)));
 
-					hyhoo_videoworkram[(dy * Machine->drv->screen_width) + dx1] = drawcolor1;
-					hyhoo_videoworkram[(dy * Machine->drv->screen_width) + dx2] = drawcolor2;
-
-					continue;
+					if (color != 0xff)
+					{
+						hyhoo_videoram[(dy * Machine->drv->screen_width) + dx1] = color;
+						hyhoo_videoram[(dy * Machine->drv->screen_width) + dx2] = color;
+						update_pixel(dx1, dy);
+						update_pixel(dx2, dy);
+					}
 				}
 			}
 			else
 			{
-				// Palettized picture mode
+				// lookup table mode
 
-				if (hyhoo_flipx)
+				if (blitter_direction_x)
 				{
 					// flip
-					color1 = (color & 0xf0) >> 4;
-					color2 = (color & 0x0f) >> 0;
+					color1 = (color & 0x0f) >> 0;
+					color2 = (color & 0xf0) >> 4;
 				}
 				else
 				{
 					// normal
-					color1 = (color & 0x0f) >> 0;
-					color2 = (color & 0xf0) >> 4;
+					color1 = (color & 0xf0) >> 4;
+					color2 = (color & 0x0f) >> 0;
 				}
 
-				tflag1 = (hyhoo_palette[color1] != 0xff) ? 1 : 0;
-				tflag2 = (hyhoo_palette[color2] != 0xff) ? 1 : 0;
+				if (hyhoo_clut[color1] != 0xff)
+				{
+					// src xxxxxxxx_bbgggrrr
+					// dst bbxxxggg_xxrrrxxx
 
-				// src xxxxxxxx_bbgggrrr
-				// dst bbxxxggg_xxrrrxxx
+					r = (hyhoo_clut[color1] & 0x07) >> 0;
+					g = (hyhoo_clut[color1] & 0x38) >> 3;
+					b = (hyhoo_clut[color1] & 0xc0) >> 6;
+					color1 = ((b << (11 + 3)) | (g << (6 + 2)) | (r << (0 + 3)));
 
-				r = (hyhoo_palette[color1] & 0x07) >> 0;
-				g = (hyhoo_palette[color1] & 0x38) >> 3;
-				b = (hyhoo_palette[color1] & 0xc0) >> 6;
+					hyhoo_videoram[(dy * Machine->drv->screen_width) + dx1] = color1;
+					update_pixel(dx1, dy);
+				}
 
-				drawcolor1 = ((b << (11 + 3)) | (g << (6 + 2)) | (r << (0 + 3)));
+				if (hyhoo_clut[color2] != 0xff)
+				{
+					// src xxxxxxxx_bbgggrrr
+					// dst bbxxxggg_xxrrrxxx
 
-				// src xxxxxxxx_bbgggrrr
-				// dst bbxxxggg_xxrrrxxx
+					r = (hyhoo_clut[color2] & 0x07) >> 0;
+					g = (hyhoo_clut[color2] & 0x38) >> 3;
+					b = (hyhoo_clut[color2] & 0xc0) >> 6;
+					color2 = ((b << (11 + 3)) | (g << (6 + 2)) | (r << (0 + 3)));
 
-				r = (hyhoo_palette[color2] & 0x07) >> 0;
-				g = (hyhoo_palette[color2] & 0x38) >> 3;
-				b = (hyhoo_palette[color2] & 0xc0) >> 6;
-
-				drawcolor2 = ((b << (11 + 3)) | (g << (6 + 2)) | (r << (0 + 3)));
+					hyhoo_videoram[(dy * Machine->drv->screen_width) + dx2] = color2;
+					update_pixel(dx2, dy);
+				}
 			}
-
-			nb1413m3_busyctr++;
-
-			if (tflag1)
-			{
-				hyhoo_videoram[(dy * Machine->drv->screen_width) + dx1] = drawcolor1;
-				plot_pixel(hyhoo_tmpbitmap, dx1, dy, Machine->pens[drawcolor1]);
-			}
-			if (tflag2)
-			{
-				hyhoo_videoram[(dy * Machine->drv->screen_width) + dx2] = drawcolor2;
-				plot_pixel(hyhoo_tmpbitmap, dx2, dy, Machine->pens[drawcolor2]);
-			}
-
 			nb1413m3_busyctr++;
 		}
 	}
 
-	nb1413m3_busyflag = (nb1413m3_busyctr > 10000) ? 0 : 1;
+	nb1413m3_busyflag = 0;
+	timer_set((double)nb1413m3_busyctr * TIME_IN_NSEC(2500), 0, blitter_timer_callback);
 }
 
 /******************************************************************************
@@ -354,10 +326,10 @@ void hyhoo_gfxdraw(void)
 VIDEO_START( hyhoo )
 {
 	if ((hyhoo_tmpbitmap = auto_bitmap_alloc(Machine->drv->screen_width, Machine->drv->screen_height)) == 0) return 1;
-	if ((hyhoo_videoram = auto_malloc(Machine->drv->screen_width * Machine->drv->screen_height * sizeof(short))) == 0) return 1;
-	if ((hyhoo_videoworkram = auto_malloc(Machine->drv->screen_width * Machine->drv->screen_height * sizeof(short))) == 0) return 1;
-	if ((hyhoo_palette = auto_malloc(0x10 * sizeof(char))) == 0) return 1;
-	memset(hyhoo_videoram, 0x0000, (Machine->drv->screen_width * Machine->drv->screen_height * sizeof(short)));
+	if ((hyhoo_videoram = auto_malloc(Machine->drv->screen_width * Machine->drv->screen_height * sizeof(data16_t))) == 0) return 1;
+	if ((hyhoo_videoworkram = auto_malloc(Machine->drv->screen_width * Machine->drv->screen_height * sizeof(data16_t))) == 0) return 1;
+	if ((hyhoo_clut = auto_malloc(0x10 * sizeof(data8_t))) == 0) return 1;
+	memset(hyhoo_videoram, 0x0000, (Machine->drv->screen_width * Machine->drv->screen_height * sizeof(data16_t)));
 	return 0;
 }
 
@@ -368,24 +340,23 @@ VIDEO_START( hyhoo )
 VIDEO_UPDATE( hyhoo )
 {
 	int x, y;
-	unsigned short color;
 
 	if (get_vh_global_attribute_changed() || hyhoo_screen_refresh)
 	{
 		hyhoo_screen_refresh = 0;
+
 		for (y = 0; y < Machine->drv->screen_height; y++)
 		{
 			for (x = 0; x < Machine->drv->screen_width; x++)
 			{
-				color = hyhoo_videoram[(y * Machine->drv->screen_width) + x];
-				plot_pixel(hyhoo_tmpbitmap, x, y, Machine->pens[color]);
+				update_pixel(x, y);
 			}
 		}
 	}
 
 	if (hyhoo_dispflag)
 	{
-		copyscrollbitmap(bitmap, hyhoo_tmpbitmap, 0, 0, 1, &hyhoo_scrolly, &Machine->visible_area, TRANSPARENCY_NONE, 0);
+		copyscrollbitmap(bitmap, hyhoo_tmpbitmap, 0, 0, 0, 0, &Machine->visible_area, TRANSPARENCY_NONE, 0);
 	}
 	else
 	{

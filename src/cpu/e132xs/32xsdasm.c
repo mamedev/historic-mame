@@ -3,10 +3,6 @@
  Hyperstone disassembler
  written by Pierpaolo Prazzoli
 
-
-  TODO:
-  - Add the unimplemented opcodes
-
 */
 
 #include <math.h>
@@ -1002,36 +998,36 @@ unsigned dasm_e132xs(char *buffer, unsigned pc, unsigned h_flag)
 						// LDHS.A
 						if( dis & 1 )
 						{
-							buffer += sprintf(buffer, "LDHS.A 0, %s, %x", source, dis);
+							buffer += sprintf(buffer, "LDHS.A 0, %s, %x", source, dis & ~1);
 						}
 						// LDHU.A
 						else
 						{
-							buffer += sprintf(buffer, "LDHU.A 0, %s, %x", source, dis);
+							buffer += sprintf(buffer, "LDHU.A 0, %s, %x", source, dis & ~1);
 						}
 
 						break;
 
 					case 3:
 						// LDD.IOA
-						if( ( dis & 2 ) && ( dis & 1 ) )
+						if( (dis & 3) == 3 )
 						{
-							buffer += sprintf(buffer, "LDD.IOA 0, %s, %x", source, dis);
+							buffer += sprintf(buffer, "LDD.IOA 0, %s, %x", source, dis & ~3);
 						}
 						// LDW.IOA
-						else if( ( dis & 2 ) && !( dis & 1 ) )
+						else if( (dis & 3) == 2 )
 						{
-							buffer += sprintf(buffer, "LDW.IOA 0, %s, %x", source, dis);
+							buffer += sprintf(buffer, "LDW.IOA 0, %s, %x", source, dis & ~3);
 						}
 						// LDD.A
-						else if( !( dis & 2 ) && ( dis & 1 ) )
+						else if( (dis & 3) == 1 )
 						{
-							buffer += sprintf(buffer, "LDD.A 0, %s, %x", source, dis);
+							buffer += sprintf(buffer, "LDD.A 0, %s, %x", source, dis & ~1);
 						}
 						// LDW.A
 						else
 						{
-							buffer += sprintf(buffer, "LDW.A 0, %s, %x", source, dis);
+							buffer += sprintf(buffer, "LDW.A 0, %s, %x", source, dis & ~1);
 						}
 
 						break;
@@ -1055,35 +1051,35 @@ unsigned dasm_e132xs(char *buffer, unsigned pc, unsigned h_flag)
 						// LDHS.D
 						if( dis & 1 )
 						{
-							buffer += sprintf(buffer, "LDHS.D %s, %s, %x", dest, source, dis);
+							buffer += sprintf(buffer, "LDHS.D %s, %s, %x", dest, source, dis & ~1);
 						}
 						// LDHU.D
 						else
 						{
-							buffer += sprintf(buffer, "LDHU.D %s, %s, %x", dest, source, dis);
+							buffer += sprintf(buffer, "LDHU.D %s, %s, %x", dest, source, dis & ~1);
 						}
 						break;
 
 					case 3:
 						// LDD.IOD
-						if( ( dis & 2 ) && ( dis & 1 ) )
+						if( (dis & 3) == 3 )
 						{
-							buffer += sprintf(buffer, "LDD.IOD %s, %s, %x", dest, source, dis);
+							buffer += sprintf(buffer, "LDD.IOD %s, %s, %x", dest, source, dis & ~3);
 						}
 						// LDW.IOD
-						else if( ( dis & 2 ) && !( dis & 1 ) )
+						else if( (dis & 3) == 2 )
 						{
-							buffer += sprintf(buffer, "LDW.IOD %s, %s, %x", dest, source, dis);
+							buffer += sprintf(buffer, "LDW.IOD %s, %s, %x", dest, source, dis & ~3);
 						}
 						// LDD.D
-						else if( !( dis & 2 ) && ( dis & 1 ) )
+						else if( (dis & 3) == 1 )
 						{
-							buffer += sprintf(buffer, "LDD.D %s, %s, %x", dest, source, dis);
+							buffer += sprintf(buffer, "LDD.D %s, %s, %x", dest, source, dis & ~1);
 						}
 						// LDW.D
 						else
 						{
-							buffer += sprintf(buffer, "LDW.D %s, %s, %x", dest, source, dis);
+							buffer += sprintf(buffer, "LDW.D %s, %s, %x", dest, source, dis & ~1);
 						}
 
 						break;
@@ -1124,36 +1120,36 @@ unsigned dasm_e132xs(char *buffer, unsigned pc, unsigned h_flag)
 					// LDHS.N
 					if( dis & 1 )
 					{
-						buffer += sprintf(buffer, "LDHS.N %s, %s, %x", dest, source, dis);
+						buffer += sprintf(buffer, "LDHS.N %s, %s, %x", dest, source, dis & ~1);
 					}
 					// LDHU.N
 					else
 					{
-						buffer += sprintf(buffer, "LDHU.N %s, %s, %x", dest, source, dis);
+						buffer += sprintf(buffer, "LDHU.N %s, %s, %x", dest, source, dis & ~1);
 					}
 
 					break;
 
 				case 3:
 					// LDW.S
-					if( ( dis & 2 ) && ( dis & 1 ) )
+					if( (dis & 3) == 3 )
 					{
-						buffer += sprintf(buffer, "LDW.S %s, %s, %x", dest, source, dis);
+						buffer += sprintf(buffer, "LDW.S %s, %s, %x", dest, source, dis & ~3);
 					}
 					// Reserved
-					else if( ( dis & 2 ) && !( dis & 1 ) )
+					else if( (dis & 3) == 2 )
 					{
 						buffer += sprintf(buffer, "Reserved");
 					}
 					// LDD.N
-					else if( !( dis & 2 ) && ( dis & 1 ) )
+					else if( (dis & 3) == 1 )
 					{
-						buffer += sprintf(buffer, "LDD.N %s, %s, %x", dest, source, dis);
+						buffer += sprintf(buffer, "LDD.N %s, %s, %x", dest, source, dis & ~1);
 					}
 					// LDW.N
 					else
 					{
-						buffer += sprintf(buffer, "LDW.N %s, %s, %x", dest, source, dis);
+						buffer += sprintf(buffer, "LDW.N %s, %s, %x", dest, source, dis & ~1);
 					}
 
 					break;
@@ -1192,36 +1188,36 @@ unsigned dasm_e132xs(char *buffer, unsigned pc, unsigned h_flag)
 						// STHS.A
 						if( dis & 1 )
 						{
-							buffer += sprintf(buffer, "STHS.A 0, %s, %x", source, dis);
+							buffer += sprintf(buffer, "STHS.A 0, %s, %x", source, dis & ~1);
 						}
 						// STHU.A
 						else
 						{
-							buffer += sprintf(buffer, "STHU.A 0, %s, %x", source, dis);
+							buffer += sprintf(buffer, "STHU.A 0, %s, %x", source, dis & ~1);
 						}
 
 						break;
 
 					case 3:
 						// STD.IOA
-						if( ( dis & 2 ) && ( dis & 1 ) )
+						if( (dis & 3) == 3 )
 						{
-							buffer += sprintf(buffer, "STD.IOA 0, %s, %x", source, dis);
+							buffer += sprintf(buffer, "STD.IOA 0, %s, %x", source, dis & ~3);
 						}
 						// STW.IOA
-						else if( ( dis & 2 ) && !( dis & 1 ) )
+						else if( (dis & 3) == 2 )
 						{
-							buffer += sprintf(buffer, "STW.IOA 0, %s, %x", source, dis);
+							buffer += sprintf(buffer, "STW.IOA 0, %s, %x", source, dis & ~3);
 						}
 						// STD.A
-						else if( !( dis & 2 ) && ( dis & 1 ) )
+						else if( (dis & 3) == 1 )
 						{
-							buffer += sprintf(buffer, "STD.A 0, %s, %x", source, dis);
+							buffer += sprintf(buffer, "STD.A 0, %s, %x", source, dis & ~1);
 						}
 						// STW.A
 						else
 						{
-							buffer += sprintf(buffer, "STW.A 0, %s, %x", source, dis);
+							buffer += sprintf(buffer, "STW.A 0, %s, %x", source, dis & ~1);
 						}
 
 						break;
@@ -1245,35 +1241,35 @@ unsigned dasm_e132xs(char *buffer, unsigned pc, unsigned h_flag)
 						// STHS.D
 						if( dis & 1 )
 						{
-							buffer += sprintf(buffer, "STHS.D %s, %s, %x", dest, source, dis);
+							buffer += sprintf(buffer, "STHS.D %s, %s, %x", dest, source, dis & ~1);
 						}
 						// STHU.D
 						else
 						{
-							buffer += sprintf(buffer, "STHU.D %s, %s, %x", dest, source, dis);
+							buffer += sprintf(buffer, "STHU.D %s, %s, %x", dest, source, dis & ~1);
 						}
 						break;
 
 					case 3:
 						// STD.IOD
-						if( ( dis & 2 ) && ( dis & 1 ) )
+						if( (dis & 3) == 3 )
 						{
-							buffer += sprintf(buffer, "STD.IOD %s, %s, %x", dest, source, dis);
+							buffer += sprintf(buffer, "STD.IOD %s, %s, %x", dest, source, dis & ~3);
 						}
 						// STW.IOD
-						else if( ( dis & 2 ) && !( dis & 1 ) )
+						else if( (dis & 3) == 2 )
 						{
-							buffer += sprintf(buffer, "STW.IOD %s, %s, %x", dest, source, dis);
+							buffer += sprintf(buffer, "STW.IOD %s, %s, %x", dest, source, dis & ~3);
 						}
 						// STD.D
-						else if( !( dis & 2 ) && ( dis & 1 ) )
+						else if( (dis & 3) == 1 )
 						{
-							buffer += sprintf(buffer, "STD.D %s, %s, %x", dest, source, dis);
+							buffer += sprintf(buffer, "STD.D %s, %s, %x", dest, source, dis & ~1);
 						}
 						// STW.D
 						else
 						{
-							buffer += sprintf(buffer, "STW.D %s, %s, %x", dest, source, dis);
+							buffer += sprintf(buffer, "STW.D %s, %s, %x", dest, source, dis & ~1);
 						}
 
 						break;
@@ -1317,36 +1313,36 @@ unsigned dasm_e132xs(char *buffer, unsigned pc, unsigned h_flag)
 					// STHS.N
 					if( dis & 1 )
 					{
-						buffer += sprintf(buffer, "STHS.N %s, %s, %x", dest, source, dis);
+						buffer += sprintf(buffer, "STHS.N %s, %s, %x", dest, source, dis & ~1);
 					}
 					// STHU.N
 					else
 					{
-						buffer += sprintf(buffer, "STHU.N %s, %s, %x", dest, source, dis);
+						buffer += sprintf(buffer, "STHU.N %s, %s, %x", dest, source, dis & ~1);
 					}
 
 					break;
 
 				case 3:
 					// STW.S
-					if( ( dis & 2 ) && ( dis & 1 ) )
+					if( (dis & 3) == 3 )
 					{
-						buffer += sprintf(buffer, "STW.S %s, %s, %x", dest, source, dis);
+						buffer += sprintf(buffer, "STW.S %s, %s, %x", dest, source, dis & ~3);
 					}
 					// Reserved
-					else if( ( dis & 2 ) && !( dis & 1 ) )
+					else if( (dis & 3) == 2 )
 					{
 						buffer += sprintf(buffer, "Reserved");
 					}
 					// STD.N
-					else if( !( dis & 2 ) && ( dis & 1 ) )
+					else if( (dis & 3) == 1 )
 					{
-						buffer += sprintf(buffer, "STD.N %s, %s, %x", dest, source, dis);
+						buffer += sprintf(buffer, "STD.N %s, %s, %x", dest, source, dis & ~1);
 					}
 					// STW.N
 					else
 					{
-						buffer += sprintf(buffer, "STW.N %s, %s, %x", dest, source, dis);
+						buffer += sprintf(buffer, "STW.N %s, %s, %x", dest, source, dis & ~1);
 					}
 
 					break;
@@ -1436,98 +1432,126 @@ unsigned dasm_e132xs(char *buffer, unsigned pc, unsigned h_flag)
 		// FADD
 		case 0xc0:
 
-			buffer += sprintf(buffer, "FADD");
+			LL_format(source, dest, op);
+
+			buffer += sprintf(buffer, "FADD %s, %s", dest, source);
 
 			break;
 
 		// FADDD
 		case 0xc1:
 
-			buffer += sprintf(buffer, "FADDD");
+			LL_format(source, dest, op);
+
+			buffer += sprintf(buffer, "FADDD %s, %s", dest, source);
 
 			break;
 
 		// FSUB
 		case 0xc2:
 
-			buffer += sprintf(buffer, "FSUB");
+			LL_format(source, dest, op);
+
+			buffer += sprintf(buffer, "FSUB %s, %s", dest, source);
 
 			break;
 
 		// FSUBD
 		case 0xc3:
 
-			buffer += sprintf(buffer, "FSUBD");
+			LL_format(source, dest, op);
+
+			buffer += sprintf(buffer, "FSUBD %s, %s", dest, source);
 
 			break;
 
 		// FMUL
 		case 0xc4:
 
-			buffer += sprintf(buffer, "FMUL");
+			LL_format(source, dest, op);
+
+			buffer += sprintf(buffer, "FMUL %s, %s", dest, source);
 
 			break;
 
 		// FMULD
 		case 0xc5:
 
-			buffer += sprintf(buffer, "FMULD");
+			LL_format(source, dest, op);
+
+			buffer += sprintf(buffer, "FMULD %s, %s", dest, source);
 
 			break;
 
 		// FDIV
 		case 0xc6:
 
-			buffer += sprintf(buffer, "FDIV");
+			LL_format(source, dest, op);
+
+			buffer += sprintf(buffer, "FDIV %s, %s", dest, source);
 
 			break;
 
 		// FDIVD
 		case 0xc7:
 
-			buffer += sprintf(buffer, "FDIVD");
+			LL_format(source, dest, op);
+
+			buffer += sprintf(buffer, "FDIVD %s, %s", dest, source);
 
 			break;
 
 		// FCMP
 		case 0xc8:
 
-			buffer += sprintf(buffer, "FCMP");
+			LL_format(source, dest, op);
+
+			buffer += sprintf(buffer, "FCMP %s, %s", dest, source);
 
 			break;
 
 		// FCMPD
 		case 0xc9:
 
-			buffer += sprintf(buffer, "FCMPD");
+			LL_format(source, dest, op);
+
+			buffer += sprintf(buffer, "FCMPD %s, %s", dest, source);
 
 			break;
 
 		// FCMPU
 		case 0xca:
 
-			buffer += sprintf(buffer, "FCMPU");
+			LL_format(source, dest, op);
+
+			buffer += sprintf(buffer, "FCMPU %s, %s", dest, source);
 
 			break;
 
 		// FCMPUD
 		case 0xcb:
 
-			buffer += sprintf(buffer, "FCMPUD");
+			LL_format(source, dest, op);
+
+			buffer += sprintf(buffer, "FCMPUD %s, %s", dest, source);
 
 			break;
 
 		// FCVT
 		case 0xcc:
 
-			buffer += sprintf(buffer, "FCVT");
+			LL_format(source, dest, op);
+
+			buffer += sprintf(buffer, "FCVT %s, %s", dest, source);
 
 			break;
 
 		// FCVTD
 		case 0xcd:
 
-			buffer += sprintf(buffer, "FCVTD");
+			LL_format(source, dest, op);
+
+			buffer += sprintf(buffer, "FCVTD %s, %s", dest, source);
 
 			break;
 
@@ -1613,7 +1637,9 @@ unsigned dasm_e132xs(char *buffer, unsigned pc, unsigned h_flag)
 		// DO
 		case 0xcf:
 
-			buffer += sprintf(buffer, "DO");
+			LL_format(source, dest, op);
+
+			buffer += sprintf(buffer, "DO %s, %s", dest, source);
 
 			break;
 
@@ -2058,11 +2084,6 @@ unsigned dasm_e132xs(char *buffer, unsigned pc, unsigned h_flag)
 
 			break;
 		}
-
-		default:
-
-			logerror("Illegal Opcode: %x @ %x\n",op_num,pc);
-			break;
 	}
 
 	return size;

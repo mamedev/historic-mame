@@ -754,80 +754,17 @@ READ8_HANDLER( namcos2_mcu_port_d_r )
 READ8_HANDLER( namcos2_input_port_0_r )
 {
 	int data=readinputport(0);
-
-	int one_joy_trans0[2][10]={
-        {0x05,0x01,0x09,0x08,0x0a,0x02,0x06,0x04,0x12,0x14},
-        {0x00,0x20,0x20,0x20,0x08,0x08,0x00,0x08,0x02,0x02}};
-
-	int datafake, i;
-
-	switch(namcos2_gametype)
-	{
-		case NAMCOS2_ASSAULT:
-		case NAMCOS2_ASSAULT_JP:
-		case NAMCOS2_ASSAULT_PLUS:
-			datafake=~readinputport(15) & 0xff;
-			logerror("xxx=%08x\n",datafake);
-			for (i=0;i<10;i++)
-				if (datafake==one_joy_trans0[0][i])
-				{
-					data&=~one_joy_trans0[1][i];
-					break;
-				}
-	}
 	return data;
 }
 
 READ8_HANDLER( namcos2_input_port_10_r )
 {
 	int data=readinputport(10);
-
-	int one_joy_trans10[2][10]=
-	{
-		{0x05,0x01,0x09,0x08,0x0a,0x02,0x06,0x04,0x1a,0x18},
-		{0x08,0x08,0x00,0x02,0x00,0x02,0x02,0x08,0x80,0x80}
-	};
-
-	int datafake, i;
-
-	switch(namcos2_gametype)
-	{
-		case NAMCOS2_ASSAULT:
-		case NAMCOS2_ASSAULT_JP:
-		case NAMCOS2_ASSAULT_PLUS:
-			datafake=~readinputport(15) & 0xff;
-			for (i=0;i<10;i++)
-				if (datafake==one_joy_trans10[0][i])
-				{
-					data&=~one_joy_trans10[1][i];
-					break;
-				}
-	}
 	return data;
 }
 
 READ8_HANDLER( namcos2_input_port_12_r )
 {
 	int data=readinputport(12);
-
-	int one_joy_trans12[2][4]={
-        {0x12,0x14,0x11,0x18},
-        {0x02,0x08,0x08,0x02}};
-
-	int datafake, i;
-
-	switch(namcos2_gametype)
-	{
-		case NAMCOS2_ASSAULT:
-		case NAMCOS2_ASSAULT_JP:
-		case NAMCOS2_ASSAULT_PLUS:
-			datafake=~readinputport(15) & 0xff;
-			for (i=0;i<4;i++)
-				if (datafake==one_joy_trans12[0][i])
-				{
-					data&=~one_joy_trans12[1][i];
-					break;
-				}
-	}
 	return data;
 }

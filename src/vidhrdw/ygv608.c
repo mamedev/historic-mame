@@ -120,6 +120,7 @@ static void get_tile_info_A_8( int offset )
 		int sx, sy, page;
 		int i = pattern_name_base + (((row << ygv608.pny_shift) + col) << ygv608.bits16);
 		int j = ygv608.pattern_name_table[i];
+        int f = 0;
 
 		if( ygv608.bits16 )
 		{
@@ -127,6 +128,12 @@ static void get_tile_info_A_8( int offset )
 			// attribute only valid in 16 color mode
 			if (set == GFX_8X8_4BIT)
 				attr = ygv608.pattern_name_table[i+1] >> 4;
+
+            if (ygv608.regs.s.r7 & r7_flip)
+            {
+                if (ygv608.pattern_name_table[i+1] & (1<<3)) f |= TILE_FLIPX;
+                if (ygv608.pattern_name_table[i+1] & (1<<2)) f |= TILE_FLIPY;
+            }
 		}
 
 		/* calculate page according to scroll data */
@@ -177,8 +184,7 @@ static void get_tile_info_A_8( int offset )
 			j += namcond1_gfxbank * 0x8000;
 		}
 
-
-		SET_TILE_INFO( set, j, attr & 0x0F, 0 );
+		SET_TILE_INFO( set, j, attr & 0x0F, f );
 	}
 }
 
@@ -211,11 +217,18 @@ static void get_tile_info_B_8( int offset )
 		int sx, sy, page;
 		int i = pattern_name_base + (((row << ygv608.pny_shift) + col) << ygv608.bits16);
 		int j = ygv608.pattern_name_table[i];
+        int f = 0;
 
 		if (ygv608.bits16)
 		{
 			j += ((int)(ygv608.pattern_name_table[i+1] & ygv608.na8_mask )) << 8;
 			attr = ygv608.pattern_name_table[i+1] >> 4; /*& 0x00; 0xf0;*/
+
+            if (ygv608.regs.s.r7 & r7_flip)
+            {
+                if (ygv608.pattern_name_table[i+1] & (1<<3)) f |= TILE_FLIPX;
+                if (ygv608.pattern_name_table[i+1] & (1<<2)) f |= TILE_FLIPY;
+            }
 		}
 
 		/* calculate page according to scroll data */
@@ -268,7 +281,7 @@ static void get_tile_info_B_8( int offset )
 			j += namcond1_gfxbank * 0x8000;
 		}
 
-		SET_TILE_INFO( set, j, attr, 0 );
+		SET_TILE_INFO( set, j, attr, f );
 	}
 }
 
@@ -294,6 +307,7 @@ static void get_tile_info_A_16( int offset )
     int sx, sy, page;
     int j;
     int i = ( ( ( row << ygv608.pny_shift ) + col ) << ygv608.bits16 );
+    int f = 0;
     i += pattern_name_base;
 
     j = ygv608.pattern_name_table[i];
@@ -302,6 +316,12 @@ static void get_tile_info_A_16( int offset )
       // attribute only valid in 16 color mode
       if( set == GFX_16X16_4BIT )
         attr = ygv608.pattern_name_table[i+1] >> 4;
+
+      if (ygv608.regs.s.r7 & r7_flip)
+      {
+        if (ygv608.pattern_name_table[i+1] & (1<<3)) f |= TILE_FLIPX;
+        if (ygv608.pattern_name_table[i+1] & (1<<2)) f |= TILE_FLIPY;
+      }
     }
 
     /* calculate page according to scroll data */
@@ -350,7 +370,7 @@ static void get_tile_info_A_16( int offset )
 		}
 
 
-		SET_TILE_INFO( set, j, attr, 0 );
+		SET_TILE_INFO( set, j, attr, f );
 	}
 }
 
@@ -379,12 +399,19 @@ static void get_tile_info_B_16( int offset )
     int sx, sy, page;
     int j;
     int i = ( ( ( row << ygv608.pny_shift ) + col ) << ygv608.bits16 );
+    int f = 0;
     i += pattern_name_base;
 
     j = ygv608.pattern_name_table[i];
     if( ygv608.bits16 ) {
       j += ((int)(ygv608.pattern_name_table[i+1] & ygv608.na8_mask )) << 8;
       attr = ygv608.pattern_name_table[i+1] >> 4; /*& 0x00; 0xf0;*/
+
+      if (ygv608.regs.s.r7 & r7_flip)
+      {
+        if (ygv608.pattern_name_table[i+1] & (1<<3)) f |= TILE_FLIPX;
+        if (ygv608.pattern_name_table[i+1] & (1<<2)) f |= TILE_FLIPY;
+      }
     }
 
     /* calculate page according to scroll data */
@@ -434,7 +461,7 @@ static void get_tile_info_B_16( int offset )
 		}
 
 
-		SET_TILE_INFO( set, j, attr, 0 );
+		SET_TILE_INFO( set, j, attr, f );
 	}
 }
 

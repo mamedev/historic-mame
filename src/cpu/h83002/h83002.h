@@ -28,7 +28,7 @@ enum
 	H8_E7,
 
 	H8_PC,
-	H8_CCR,
+	H8_CCR
 };
 
 // external interrupt lines
@@ -39,7 +39,7 @@ enum
 	H8_IRQ2,
 	H8_IRQ3,
 	H8_IRQ4,
-	H8_IRQ5,
+	H8_IRQ5
 };
 
 // I/O ports
@@ -66,7 +66,7 @@ enum
 
 	// serial ports
 	H8_SERIAL_A = 0x20,
-	H8_SERIAL_B,
+	H8_SERIAL_B
 };
 
 void h8_3002_get_info(UINT32 state, union cpuinfo *info);

@@ -714,12 +714,9 @@ static ADDRESS_MAP_START( ozon1_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x4000, 0x4200) AM_WRITE(MWA8_RAM)
 	AM_RANGE(0x4300, 0x43ff) AM_WRITE(MWA8_RAM)
 	AM_RANGE(0x4800, 0x4bff) AM_WRITE(galaxian_videoram_w) AM_BASE(&galaxian_videoram)
-	AM_RANGE(0x4c18, 0x4c1f) AM_WRITE(MWA8_NOP)
-	AM_RANGE(0x4c38, 0x4c3f) AM_WRITE(MWA8_NOP)
-	AM_RANGE(0x4de0, 0x4fe0) AM_WRITE(MWA8_NOP) //writes every 0x20
+	AM_RANGE(0x4c00, 0x4fff) AM_WRITE(galaxian_videoram_w)
 	AM_RANGE(0x5000, 0x503f) AM_WRITE(galaxian_attributesram_w) AM_BASE(&galaxian_attributesram)
 	AM_RANGE(0x5040, 0x505f) AM_WRITE(MWA8_RAM) AM_BASE(&galaxian_spriteram) AM_SIZE(&galaxian_spriteram_size)
-	AM_RANGE(0x5060, 0x5060) AM_WRITE(MWA8_NOP) //after this, it writes 0x4fe0 - 0x4de0
 	AM_RANGE(0x6801, 0x6801) AM_WRITE(MWA8_NOP) //continuosly 0 and 1
 	AM_RANGE(0x6802, 0x6802) AM_WRITE(galaxian_coin_counter_w)
 	AM_RANGE(0x6806, 0x6806) AM_WRITE(MWA8_NOP) //only one 0 at reset

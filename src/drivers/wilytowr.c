@@ -1,6 +1,7 @@
 /***************************************************************************
 
-Wily Tower   (c) 1984 Irem
+Wily Tower				(c) 1984 Irem
+Fighting Basketball		(c) 1984 Paradise Co. Ltd.
 
 driver by Nicola Salmoria
 
@@ -24,10 +25,12 @@ TODO:
 #include "vidhrdw/generic.h"
 #include "cpu/i8039/i8039.h"
 
+extern int fghtbskt_sh_start(const struct MachineSound *msound);
+extern WRITE8_HANDLER( fghtbskt_samples_w );
 
 UINT8 *wilytowr_videoram2, *wilytowr_scrollram;
 
-static int pal_bank;
+static int pal_bank, fg_flag, sy_offset;
 
 static struct tilemap *bg_tilemap, *fg_tilemap;
 
@@ -133,6 +136,13 @@ WRITE8_HANDLER( wilytwr_flipscreen_w )
 	}
 }
 
+WRITE8_HANDLER( fghtbskt_flipscreen_w )
+{
+	flip_screen_set(data);
+	fg_flag = flip_screen ? TILE_FLIPX : 0;
+}
+
+
 static void get_bg_tile_info(int tile_index)
 {
 	int attr = colorram[tile_index];
@@ -146,7 +156,7 @@ static void get_fg_tile_info(int tile_index)
 {
 	int code = wilytowr_videoram2[tile_index];
 
-	SET_TILE_INFO(0, code, 0, 0)
+	SET_TILE_INFO(0, code, 0, fg_flag)
 }
 
 VIDEO_START( wilytowr )
@@ -166,6 +176,8 @@ VIDEO_START( wilytowr )
 	tilemap_set_scroll_cols(bg_tilemap, 32);
 	tilemap_set_transparent_pen(fg_tilemap, 0);
 
+	fg_flag = 0;
+
 	return 0;
 }
 
@@ -175,17 +187,17 @@ static void wilytowr_draw_sprites( struct mame_bitmap *bitmap )
 
 	for (offs = 0;offs < spriteram_size;offs += 4)
 	{
-		int code = spriteram[offs + 1];
+		int code = spriteram[offs + 1] | ((spriteram[offs + 2] & 0x10) << 4);
 		int color = (spriteram[offs + 2] & 0x0f) + (pal_bank << 4);
-		int flipx = 0;
+		int flipx = spriteram[offs + 2] & 0x20;
 		int flipy = 0;
 		int sx = spriteram[offs + 3];
-		int sy = 238 - spriteram[offs];
+		int sy = sy_offset - spriteram[offs];
 
 		if (flip_screen)
 		{
 			sx = 240 - sx;
-			sy = 238 - sy;
+			sy = sy_offset - sy;
 			flipx = !flipx;
 			flipy = !flipy;
 		}
@@ -222,6 +234,7 @@ static WRITE8_HANDLER( snd_irq_w )
 {
 	cpunum_set_input_line(1, 0, PULSE_LINE);
 }
+
 
 
 static int p1,p2;
@@ -278,6 +291,33 @@ static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0xf800, 0xf800) AM_WRITE(soundlatch_w)
 	AM_RANGE(0xf801, 0xf801) AM_WRITE(watchdog_reset_w)	/* unknown (cleared by NMI handler) */
 	AM_RANGE(0xf803, 0xf803) AM_WRITE(snd_irq_w)
+ADDRESS_MAP_END
+
+static ADDRESS_MAP_START( fghtbskt_map, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x5fff) AM_ROM
+	AM_RANGE(0x8000, 0xbfff) AM_ROM
+	AM_RANGE(0xc000, 0xc7ff) AM_RAM
+	AM_RANGE(0xd000, 0xd1ff) AM_RAM
+	AM_RANGE(0xd200, 0xd2ff) AM_RAM AM_BASE(&spriteram) AM_SIZE(&spriteram_size)
+	AM_RANGE(0xd300, 0xd3ff) AM_RAM AM_BASE(&wilytowr_scrollram)
+	AM_RANGE(0xd400, 0xd7ff) AM_READWRITE(MRA8_RAM, wilytowr_videoram2_w) AM_BASE(&wilytowr_videoram2)
+	AM_RANGE(0xd800, 0xdbff) AM_READWRITE(MRA8_RAM, wilytowr_videoram_w) AM_BASE(&videoram)
+	AM_RANGE(0xdc00, 0xdfff) AM_READWRITE(MRA8_RAM, wilytowr_colorram_w) AM_BASE(&colorram)
+	AM_RANGE(0xf000, 0xf000) AM_READNOP //sound status
+	AM_RANGE(0xf001, 0xf001) AM_READ(input_port_0_r)
+	AM_RANGE(0xf002, 0xf002) AM_READ(input_port_1_r)
+	AM_RANGE(0xf003, 0xf003) AM_READ(input_port_2_r)
+	AM_RANGE(0xf000, 0xf000) AM_WRITE(snd_irq_w)
+	AM_RANGE(0xf001, 0xf001) AM_WRITENOP
+	AM_RANGE(0xf002, 0xf002) AM_WRITE(soundlatch_w)
+	AM_RANGE(0xf800, 0xf800) AM_WRITENOP
+	AM_RANGE(0xf801, 0xf801) AM_WRITE(interrupt_enable_w)
+	AM_RANGE(0xf802, 0xf802) AM_WRITE(fghtbskt_flipscreen_w)
+	AM_RANGE(0xf803, 0xf803) AM_WRITENOP
+	AM_RANGE(0xf804, 0xf804) AM_WRITENOP
+	AM_RANGE(0xf805, 0xf805) AM_WRITENOP
+	AM_RANGE(0xf806, 0xf806) AM_WRITENOP
+	AM_RANGE(0xf807, 0xf807) AM_WRITE(fghtbskt_samples_w)
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( i8039_readmem, ADDRESS_SPACE_PROGRAM, 8 )
@@ -379,6 +419,51 @@ INPUT_PORTS_START( wilytowr )
 	PORT_SERVICE( 0x80, IP_ACTIVE_HIGH )
 INPUT_PORTS_END
 
+INPUT_PORTS_START( fghtbskt )
+	PORT_START
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN )  PORT_8WAY
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP )    PORT_8WAY
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT ) PORT_8WAY
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT )  PORT_8WAY
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_COIN1 )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_START2 )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_START1 )
+
+	PORT_START
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN )  PORT_8WAY PORT_COCKTAIL
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP )    PORT_8WAY PORT_COCKTAIL
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT ) PORT_8WAY PORT_COCKTAIL
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT )  PORT_8WAY PORT_COCKTAIL
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 ) PORT_COCKTAIL
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_COIN2 )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+
+	PORT_START
+	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Coin_A ) )
+	PORT_DIPSETTING(    0x03, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( 1C_2C ) )
+	PORT_DIPNAME( 0x0c, 0x04, DEF_STR( Coin_B ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( 1C_4C ) )
+	PORT_DIPSETTING(    0x0c, "99 Credits / Sound Test" )
+	PORT_DIPNAME( 0x10, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x00, "Time Count Down" )
+	PORT_DIPSETTING(    0x00, "Slow" )
+	PORT_DIPSETTING(    0x20, "Too Fast" )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Cocktail ) )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
+INPUT_PORTS_END
 
 
 static struct GfxLayout charlayout =
@@ -425,6 +510,13 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 	{ -1 } /* end of array */
 };
 
+static struct GfxDecodeInfo fghtbskt_gfxdecodeinfo[] =
+{
+	{ REGION_GFX1, 0, &charlayout,   16, 1 },
+	{ REGION_GFX2, 0, &tilelayout,    0, 32 },
+	{ REGION_GFX3, 0, &spritelayout,  0, 32 },
+	{ -1 } /* end of array */
+};
 
 
 static struct AY8910interface ay8910_interface =
@@ -438,6 +530,23 @@ static struct AY8910interface ay8910_interface =
 	{ 0, 0 }
 };
 
+static struct AY8910interface fghtbskt_ay8910_interface =
+{
+	1,             /* 1 chip */
+	12000000/4/2,  /* 1.5 Mhz */
+	{ 100 },
+	{ 0 },
+	{ 0 },
+	{ 0 },
+	{ 0 }
+};
+
+static struct CustomSound_interface custom_interface =
+{
+	fghtbskt_sh_start,
+	0,
+	0
+};
 
 
 static MACHINE_DRIVER_START( wilytowr )
@@ -470,6 +579,36 @@ static MACHINE_DRIVER_START( wilytowr )
 	MDRV_SOUND_ADD(AY8910, ay8910_interface)
 MACHINE_DRIVER_END
 
+static MACHINE_DRIVER_START( fghtbskt )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(Z80, 12000000/4)     /* 3 MHz */
+	MDRV_CPU_PROGRAM_MAP(fghtbskt_map,0)
+	MDRV_CPU_VBLANK_INT(nmi_line_pulse,1)
+
+	MDRV_CPU_ADD(I8039,12000000/4/I8039_CLOCK_DIVIDER)	/* ????? */
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	MDRV_CPU_PROGRAM_MAP(i8039_readmem,i8039_writemem)
+	MDRV_CPU_IO_MAP(i8039_readport,i8039_writeport)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+
+	/* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(fghtbskt_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(256)
+
+	MDRV_PALETTE_INIT(RRRR_GGGG_BBBB)
+	MDRV_VIDEO_START(wilytowr)
+	MDRV_VIDEO_UPDATE(wilytowr)
+
+	/* sound hardware */
+	MDRV_SOUND_ADD(AY8910, fghtbskt_ay8910_interface)
+	MDRV_SOUND_ADD(CUSTOM, custom_interface)
+MACHINE_DRIVER_END
 
 
 /***************************************************************************
@@ -560,6 +699,59 @@ ROM_START( atomboy )
 	ROM_LOAD( "wt_b-9l-.bpr", 0x0300, 0x0020, CRC(d2728744) SHA1(e6b1a570854ca90326414874432ab03ec85b9c8e) )	/* char palette */
 ROM_END
 
+ROM_START( fghtbskt )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )     /* 64k for main CPU */
+	ROM_LOAD( "fb14.0f",      0x0000, 0x2000, CRC(82032853) SHA1(e103ace4cac6df3a429b785f9789b302ae8cdade) )
+	ROM_LOAD( "fb13.2f",      0x2000, 0x2000, CRC(5306df0f) SHA1(11be226e7167703bb08e48510a113b2d43b211a4) )
+	ROM_LOAD( "fb12.3f",      0x4000, 0x2000, CRC(ee9210d4) SHA1(c63d036314d635f65a2b5bb192ceb312a587db6e) )
+	ROM_LOAD( "fb10.6f",      0x8000, 0x2000, CRC(6b47efba) SHA1(cb55c7a9d5afe748c1c88f87dd1909e106932798) )
+	ROM_LOAD( "fb09.7f",      0xa000, 0x2000, CRC(be69e087) SHA1(be95ecafa494cb0787ee18eb3ecea4ad545a6ae3) )
 
-GAMEX( 1984, wilytowr, 0,        wilytowr, wilytowr, 0, ROT180, "Irem",                    "Wily Tower", GAME_NO_SOUND )
-GAMEX( 1985, atomboy,  wilytowr, wilytowr, wilytowr, 0, ROT180, "Irem (Memetron license)", "Atomic Boy", GAME_NO_SOUND )
+	ROM_REGION( 0x3000, REGION_CPU2, 0 )	/* 8039 */
+	ROM_LOAD( "fb07.0b",      0x0000, 0x1000, CRC(50432dbd) SHA1(35a2218ed243bde47dbe06b5a11a65502ba734ea) )
+	/* on the real pcb if you remove it the ay8910 doesn't sound anymore, probably the cpu reads it somehow */
+	ROM_LOAD( "fb06.12a",     0x1000, 0x2000, CRC(bea3df99) SHA1(18b795f8626b22f6a1620e04c23f4967c3122c89) )
+
+	ROM_REGION( 0x2000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "fb08.12f",     0x0000, 0x1000, CRC(271cd7b8) SHA1(00cfeb6ba429cf6cc59d6542dea8de2ca79155ed) )
+	ROM_FILL(				  0x1000, 0x1000, 0 )
+
+	ROM_REGION( 0x6000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_LOAD( "fb21.25e",     0x0000, 0x2000, CRC(02843591) SHA1(e38ccc97dcbd642d0ac768837f7baf1573fdb91f) )
+	ROM_LOAD( "fb22.23e",     0x2000, 0x2000, CRC(cd51d8e7) SHA1(16d55d13b47dddb7c7e6b28b1512540938a4a596) )
+	ROM_LOAD( "fb23.22e",     0x4000, 0x2000, CRC(62bcac87) SHA1(dd2272d8c7e46bd0a742b4490c9e960b2bfe14c3) )
+
+	ROM_REGION( 0xc000, REGION_GFX3, ROMREGION_DISPOSE )
+	ROM_LOAD( "fb16.35a",     0x0000, 0x2000, CRC(a5df1652) SHA1(76d1443c523851aa418574c6a879f4a8e46dc887) )
+	ROM_LOAD( "fb15.37a",     0x2000, 0x2000, CRC(59c4de06) SHA1(594411f10d6bb3577c649c66133b90c6423184d7) )
+	ROM_LOAD( "fb18.32a",     0x4000, 0x2000, CRC(c23ddcd7) SHA1(f73d142ac0baae519ed633a923e132eb1836adbb) )
+	ROM_LOAD( "fb17.34a",     0x6000, 0x2000, CRC(7db28013) SHA1(305e6a6254f69625c81ae107f4420fd76f9a24ba) )
+	ROM_LOAD( "fb20.29a",     0x8000, 0x2000, CRC(1a1b48f8) SHA1(62f7774807aea86f73f0b9380bb1c237d55bf451) )
+	ROM_LOAD( "fb19.31a",     0xa000, 0x2000, CRC(7ff7e321) SHA1(4fe4eee9c6260599950080c600187ce8e9dab7d2) )	
+
+	ROM_REGION( 0xa000, REGION_SOUND1, 0 ) /* Samples */
+	ROM_LOAD( "fb01.42a",     0x0000, 0x2000, CRC(1200b220) SHA1(8a5f896441c6a6507e72b9b302a8183cc361d118) )
+	ROM_LOAD( "fb02.41a",     0x2000, 0x2000, CRC(0b67aa82) SHA1(59b6cf733150eab0bd807beeeb1d2f784ccb6f58) )
+	ROM_LOAD( "fb03.40a",     0x4000, 0x2000, CRC(c71269ed) SHA1(71cc6f43877b28d50beb744587c189dabbbaa067) )
+	ROM_LOAD( "fb04.39a",     0x6000, 0x2000, CRC(02ddc42d) SHA1(9d40967071f674592c174b5a5470db56a5f99adf) )
+	ROM_LOAD( "fb05.38a",     0x8000, 0x2000, CRC(72ea6b49) SHA1(e081a1cad5abf373a2489169b5c86ee63dcf5823) )
+
+	ROM_REGION( 0x0300, REGION_PROMS, 0 )
+	ROM_LOAD( "fb_r.9e",      0x0000, 0x0100, CRC(c5cdc8ba) SHA1(3fcef3ebe0dda72dfa35e042ff611758c345d749) )
+	ROM_LOAD( "fb_g.10e",     0x0100, 0x0100, CRC(1460c936) SHA1(f99a544c83931de098a6cfac391f63ae43f5cdd0) )
+	ROM_LOAD( "fb_b.11e",     0x0200, 0x0100, CRC(fca5bf0e) SHA1(5846f43aa2906cac58e300fdab197b99f896e3ef) )
+ROM_END
+
+DRIVER_INIT( wilytowr )
+{
+	sy_offset = 238;
+}
+
+DRIVER_INIT( fghtbskt )
+{
+	sy_offset = 240;
+}
+
+GAMEX( 1984, wilytowr, 0,        wilytowr, wilytowr, wilytowr, ROT180, "Irem",                    "Wily Tower", GAME_NO_SOUND )
+GAMEX( 1985, atomboy,  wilytowr, wilytowr, wilytowr, wilytowr, ROT180, "Irem (Memetron license)", "Atomic Boy", GAME_NO_SOUND )
+GAMEX( 1984, fghtbskt, 0,        fghtbskt, fghtbskt, fghtbskt, ROT0,   "Paradise Co. Ltd.",       "Fighting Basketball", GAME_IMPERFECT_SOUND )

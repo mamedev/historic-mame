@@ -185,7 +185,7 @@ CPU68 PCB:
 #include "vidhrdw/generic.h"
 #include "namcos2.h"
 #include "cpu/m6809/m6809.h"
-//#include "cpu/tms32025/tms32025.h"
+#include "cpu/tms32025/tms32025.h"
 #include "namcoic.h"
 
 /* globals (shared by videohrdw/namcos21.c) */
@@ -201,6 +201,159 @@ static data8_t	*mpDualPortRAM;
 
 static data16_t namcos21_dsp_control[1]; /* ??? */
 static data16_t namcos21_dsp_data[1]; /* ??? */
+
+/* memory handlers for shared DSP RAM (used to pass 3d parameters) */
+
+static READ16_HANDLER( dspram16_r )
+{
+	return namcos21_dspram16[offset];
+}
+
+static WRITE16_HANDLER( dspram16_w )
+{
+	COMBINE_DATA( &namcos21_dspram16[offset] );
+}
+
+/************************************************************************************/
+
+#define CPU_DSP_MASTER_ID		4
+#define CPU_DSP_MASTER_REGION	REGION_CPU5
+
+#define CPU_DSP_SLAVE_ID		5
+#define CPU_DSP_SLAVE_REGION	REGION_CPU6
+
+static void
+InitDSP( void )
+{
+	cpunum_set_input_line(CPU_DSP_SLAVE_ID,INPUT_LINE_HALT,ASSERT_LINE);
+
+	{
+		data16_t *pMem = (data16_t *)memory_region(CPU_DSP_MASTER_REGION);
+		data16_t pc = 0;
+		data16_t *pUploadDest = 0x8000 + (data16_t *)memory_region(CPU_DSP_MASTER_REGION);
+		int addr = 0x2046e;
+		const data16_t *pSrc = addr/2 + (data16_t *)memory_region(REGION_CPU1);
+		size_t len = *pSrc++;
+		memcpy( pUploadDest, pSrc, len*2 );
+
+		pMem[pc] = 0xc804;pc++; /* ldpk 004h */
+		pMem[pc] = 0xca00;pc++; /* zac */
+		pMem[pc] = 0x6000;pc++; /* sacl $00,0 */
+		pMem[pc] = 0xca01;pc++; /* lack 01h */
+		pMem[pc] = 0x6001;pc++; /* sacl $01,0 */
+
+		pMem[pc] = 0xff80;pc++; /* b */
+		pMem[pc] = pc;pc++;
+	}
+
+	{
+		data16_t *pMem = (data16_t *)memory_region(CPU_DSP_SLAVE_REGION);
+		data16_t pc = 0;
+		data16_t *pUploadDest = 0x8000 + (data16_t *)memory_region(CPU_DSP_SLAVE_REGION);
+		int addr = 0x220f6;
+		const data16_t *pSrc = addr/2 + (data16_t *)memory_region(REGION_CPU1);
+		size_t len = *pSrc++;
+		memcpy( pUploadDest, pSrc, len*2 );
+		pMem[pc] = 0xff80;pc++; /* b */
+		pMem[pc] = pc;pc++;
+	}
+}
+
+static READ16_HANDLER( dsp_HOLD_signal_r )
+{
+	return 0;
+}
+
+static WRITE16_HANDLER( dsp_HOLD_ACK_w )
+{
+	logerror( "TMS32025:%04x Writing %01x level to HOLD-Acknowledge signal\n",
+		activecpu_get_previouspc(), data );
+}
+
+static WRITE16_HANDLER( dsp_XF_output_w )
+{
+	logerror( "TMS32025:%04x XF output %01x\n",
+		activecpu_get_previouspc(), data );
+}
+
+/////////////////////////////////////////////////////////////////////////////////////
+//extern int debug_key_pressed;
+
+static READ16_HANDLER( dsp_port1_r )
+{
+//	debug_key_pressed = 1;
+	return 0x8000;
+}
+#if 0
+static WRITE16_HANDLER( dsp_port2_w )
+{
+}
+static READ16_HANDLER( dsp_port3_r )
+{
+	return 0;
+}
+static WRITE16_HANDLER( dsp_port4_w )
+{
+}
+#endif
+static READ16_HANDLER( dsp_port8_r )
+{
+	return 0x0001;
+}
+static READ16_HANDLER( dsp_port9_r )
+{
+	return 0x0000;
+}
+#if 0
+static WRITE16_HANDLER( dsp_portA_w )
+{
+}
+static WRITE16_HANDLER( dsp_portB_w )
+{
+}
+#endif
+/////////////////////////////////////////////////////////////////////////////////////
+
+static ADDRESS_MAP_START( master_dsp_program, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x0000, 0x01ff) AM_READ(MRA16_ROM) /* internal ROM */
+	AM_RANGE(0x8000, 0x8fff) AM_READ(MRA16_ROM) /* uploaded code */
+ADDRESS_MAP_END
+
+static ADDRESS_MAP_START( master_dsp_data, ADDRESS_SPACE_DATA, 16 )
+	AM_RANGE(0x8000, 0xffff) AM_READ(dspram16_r) AM_WRITE(dspram16_w) /* 0x8000 words */
+ADDRESS_MAP_END
+
+static ADDRESS_MAP_START( master_dsp_io, ADDRESS_SPACE_IO, 16 )
+	AM_RANGE(0x01,0x01)  AM_READ(dsp_port1_r)
+//	AM_RANGE(0x02,0x02)  AM_WRITE(dsp_port2_w)
+//	AM_RANGE(0x03,0x03)  AM_READ(dsp_port3_r)
+//	AM_RANGE(0x04,0x04)  AM_WRITE(dsp_port4_w)
+	AM_RANGE(0x08,0x08)  AM_READ(dsp_port8_r)
+	AM_RANGE(0x09,0x09)  AM_READ(dsp_port9_r)
+//	AM_RANGE(0x0a,0x0a)  AM_WRITE(dsp_portA_w)
+//	AM_RANGE(0x0b,0x0b)  AM_WRITE(dsp_portB_w)
+	AM_RANGE(TMS32025_HOLD,  TMS32025_HOLD)  AM_READ(dsp_HOLD_signal_r)
+	AM_RANGE(TMS32025_HOLDA, TMS32025_HOLDA) AM_WRITE(dsp_HOLD_ACK_w)
+	AM_RANGE(TMS32025_XF,    TMS32025_XF)    AM_WRITE(dsp_XF_output_w)
+ADDRESS_MAP_END
+
+/////////////////////////////////////////////////////////////////////////////////////
+
+static ADDRESS_MAP_START( slave_dsp_program, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x0000, 0x01ff) AM_READ(MRA16_ROM) /* internal ROM */
+	AM_RANGE(0x8000, 0x8fff) AM_READ(MRA16_ROM) /* uploaded code */
+ADDRESS_MAP_END
+
+static ADDRESS_MAP_START( slave_dsp_data, ADDRESS_SPACE_DATA, 16 )
+ADDRESS_MAP_END
+
+static ADDRESS_MAP_START( slave_dsp_io, ADDRESS_SPACE_IO, 16 )
+	AM_RANGE(TMS32025_HOLD,  TMS32025_HOLD)  AM_READ(dsp_HOLD_signal_r)
+	AM_RANGE(TMS32025_HOLDA, TMS32025_HOLDA) AM_WRITE(dsp_HOLD_ACK_w)
+	AM_RANGE(TMS32025_XF,    TMS32025_XF)    AM_WRITE(dsp_XF_output_w)
+ADDRESS_MAP_END
+
+/************************************************************************************/
 
 static WRITE16_HANDLER( namcos21_dsp_control_w )
 {
@@ -259,22 +412,12 @@ static WRITE16_HANDLER( shareram1_w )
 	COMBINE_DATA( &mpSharedRAM1[offset] );
 }
 
-/* memory handlers for shared DSP RAM (used to pass 3d parameters) */
-
-static READ16_HANDLER( dspram16_r )
-{
-	return namcos21_dspram16[offset];
-}
-
-static WRITE16_HANDLER( dspram16_w )
-{
-	COMBINE_DATA( &namcos21_dspram16[offset] );
-}
-
+#if 0
 static READ16_HANDLER( dsp_status_r )
 {
 	return 1;
 }
+#endif
 
 /* some games have read-only areas where more ROMs are mapped */
 
@@ -678,6 +821,16 @@ static MACHINE_DRIVER_START( s21base )
 	MDRV_CPU_PROGRAM_MAP(readmem_mcu,writemem_mcu)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
+	MDRV_CPU_ADD(TMS32025,24000000) /* 24 MHz? */
+	MDRV_CPU_PROGRAM_MAP(master_dsp_program,0)
+	MDRV_CPU_DATA_MAP(master_dsp_data,0)
+	MDRV_CPU_IO_MAP(master_dsp_io,0)
+
+	MDRV_CPU_ADD(TMS32025,24000000) /* 24 MHz? */
+	MDRV_CPU_PROGRAM_MAP(slave_dsp_program,0)
+	MDRV_CPU_DATA_MAP(slave_dsp_data,0)
+	MDRV_CPU_IO_MAP(slave_dsp_io,0)
+
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 	MDRV_INTERLEAVE(100) /* 100 CPU slices per frame */
@@ -775,6 +928,11 @@ ROM_START( aircombu )
 	ROM_LOAD( "sys2mcpu.bin",  0x000000, 0x002000, CRC(a342a97e) SHA1(2c420d34dba21e409bf78ddca710fc7de65a6642) )
 	ROM_LOAD( "sys2c65c.bin",  0x008000, 0x008000, CRC(a5b2a4ff) SHA1(068bdfcc71a5e83706e8b23330691973c1c214dc) )
 
+	ROM_REGION( 0x20000, REGION_CPU5, 0 ) /* Master DSP */
+
+	ROM_REGION( 0x20000, REGION_CPU6, 0 ) /* Slave DSP */
+
+
 	ROM_REGION( 0x400000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "obj0.ac2",  0x000000, 0x80000, CRC(8327ff22) SHA1(16f6022dedb7a74590898bc8ed3e8a97993c4635) )
 	ROM_LOAD( "obj4.ac2",  0x080000, 0x80000, CRC(e433e344) SHA1(98ade550cf066fcb5c09fa905f441a1464d4d625) )
@@ -821,6 +979,10 @@ ROM_START( aircombj )
 	ROM_LOAD( "sys2mcpu.bin",  0x000000, 0x002000, CRC(a342a97e) SHA1(2c420d34dba21e409bf78ddca710fc7de65a6642) )
 	ROM_LOAD( "sys2c65c.bin",  0x008000, 0x008000, CRC(a5b2a4ff) SHA1(068bdfcc71a5e83706e8b23330691973c1c214dc) )
 
+	ROM_REGION( 0x20000, REGION_CPU5, 0 ) /* Master DSP */
+
+	ROM_REGION( 0x20000, REGION_CPU6, 0 ) /* Slave DSP */
+
 	ROM_REGION( 0x400000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "obj0.ac1",  0x000000, 0x80000, CRC(d2310c6a) SHA1(9bb8fdfc2c232574777248f4959975f9a20e3105) )
 	ROM_LOAD( "obj4.ac1",  0x080000, 0x80000, CRC(0c93b478) SHA1(a92ffbcf04b64e0eee5bcf37008e247700641b25) )
@@ -866,6 +1028,10 @@ ROM_START( cybsled )
 	ROM_REGION( 0x010000, REGION_CPU4, 0 ) /* I/O MCU */
 	ROM_LOAD( "sys2mcpu.bin",  0x000000, 0x002000, CRC(a342a97e) SHA1(2c420d34dba21e409bf78ddca710fc7de65a6642) )
 	ROM_LOAD( "sys2c65c.bin",  0x008000, 0x008000, CRC(a5b2a4ff) SHA1(068bdfcc71a5e83706e8b23330691973c1c214dc) )
+
+	ROM_REGION( 0x20000, REGION_CPU5, 0 ) /* Master DSP */
+
+	ROM_REGION( 0x20000, REGION_CPU6, 0 ) /* Slave DSP */
 
 	ROM_REGION( 0x400000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "obj0.5s",  0x000000, 0x80000, CRC(5ae542d5) SHA1(99b1a3ed476da4a97cb864538909d7b831f0fd3b) )
@@ -916,6 +1082,10 @@ ROM_START( starblad )
 	ROM_LOAD( "sys2mcpu.bin",  0x000000, 0x002000, CRC(a342a97e) SHA1(2c420d34dba21e409bf78ddca710fc7de65a6642) )
 	ROM_LOAD( "sys2c65c.bin",  0x008000, 0x008000, CRC(a5b2a4ff) SHA1(068bdfcc71a5e83706e8b23330691973c1c214dc) )
 
+	ROM_REGION( 0x20000, REGION_CPU5, 0 ) /* Master DSP */
+
+	ROM_REGION( 0x20000, REGION_CPU6, 0 ) /* Slave DSP */
+
 	ROM_REGION( 0x200000, REGION_GFX1, ROMREGION_DISPOSE ) /* sprites */
 	ROM_LOAD( "st1obj0.bin",  0x000000, 0x80000, CRC(5d42c71e) SHA1(f1aa2bb31bbbcdcac8e94334b1c78238cac1a0e7) )
 	ROM_LOAD( "st1obj1.bin",  0x080000, 0x80000, CRC(c98011ad) SHA1(bc34c21428e0ef5887051c0eb0fdef5397823a82) )
@@ -958,6 +1128,10 @@ ROM_START( solvalou )
 	ROM_REGION( 0x010000, REGION_CPU4, 0 ) /* I/O MCU */
 	ROM_LOAD( "sys2mcpu.bin",  0x000000, 0x002000, CRC(a342a97e) SHA1(2c420d34dba21e409bf78ddca710fc7de65a6642) )
 	ROM_LOAD( "sys2c65c.bin",  0x008000, 0x008000, CRC(a5b2a4ff) SHA1(068bdfcc71a5e83706e8b23330691973c1c214dc) )
+
+	ROM_REGION( 0x20000, REGION_CPU5, 0 ) /* Master DSP */
+
+	ROM_REGION( 0x20000, REGION_CPU6, 0 ) /* Slave DSP */
 
 	ROM_REGION( 0x400000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "sv1obj0.bin",  0x000000, 0x80000, CRC(773798bb) SHA1(51ab76c95030bab834f1a74ae677b2f0afc18c52) )
@@ -1048,6 +1222,7 @@ static void namcos21_init( int game_type )
 	}
 	namcos2_gametype = game_type;
 	mpDataROM = (data16_t *)memory_region( REGION_USER1 );
+	InitDSP();
 } /* namcos21_init */
 
 static DRIVER_INIT( winrun )
@@ -1102,7 +1277,7 @@ DRIVER_INIT( solvalou )
 /*															 */
 /*************************************************************/
 
-static INPUT_PORTS_START( default )
+static INPUT_PORTS_START( s21default )
 	PORT_START		/* 63B05Z0 - PORT B */
 	PORT_BIT( 0x3f, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START2 )
@@ -1339,13 +1514,13 @@ INPUT_PORTS_END
 
 
 /*    YEAR, NAME,     PARENT,   MACHINE,          INPUT,        INIT,     MONITOR,    COMPANY, FULLNAME,	    	FLAGS */
-GAMEX( 1992, aircombj, 0,	    poly_c140_typeB,  aircombt, 	aircombt, ROT0,		  "Namco", "Air Combat (Japan)",	GAME_NOT_WORKING ) /* mostly working */
-GAMEX( 1992, aircombu, aircombj,poly_c140_typeB,  aircombt, 	aircombt, ROT0, 	  "Namco", "Air Combat (US)",	GAME_NOT_WORKING ) /* mostly working */
+GAMEX( 1992, aircombj, 0,       poly_c140_typeB,  aircombt, 	aircombt, ROT0,	      "Namco", "Air Combat (Japan)",	GAME_NOT_WORKING ) /* mostly working */
+GAMEX( 1992, aircombu, aircombj,poly_c140_typeB,  aircombt, 	aircombt, ROT0,       "Namco", "Air Combat (US)",	GAME_NOT_WORKING ) /* mostly working */
 GAMEX( 1993, cybsled,  0,       poly_c140_typeA,  cybsled,      cybsled,  ROT0,       "Namco", "Cyber Sled",		GAME_NOT_WORKING ) /* mostly working */
 /* 199?, Driver's Eyes */
 /* 1992, ShimDrive */
-GAMEX( 1991, solvalou, 0, 	    poly_c140_typeA,  default,	    solvalou, ROT0, 	  "Namco", "Solvalou (Japan)",	GAME_IMPERFECT_GRAPHICS ) /* working and playable */
-GAMEX( 1991, starblad, 0, 	    poly_c140_typeA,  default,  	starblad, ROT0, 	  "Namco", "Starblade",			GAME_IMPERFECT_GRAPHICS ) /* working and playable */
+GAMEX( 1991, solvalou, 0,       poly_c140_typeA,  s21default,	    solvalou, ROT0,   "Namco", "Solvalou (Japan)",	GAME_IMPERFECT_GRAPHICS ) /* working and playable */
+GAMEX( 1991, starblad, 0,       poly_c140_typeA,  s21default,  	starblad, ROT0,       "Namco", "Starblade",		GAME_IMPERFECT_GRAPHICS ) /* working and playable */
 /* 1988, Winning Run */
 /* 1989, Winning Run Suzuka Grand Prix */
-GAMEX( 1991, winrun91, 0, poly_winrun_c140_typeB, default,	    winrun,	  ROT0, 	  "Namco", "Winning Run 91", 	GAME_NOT_WORKING ) /* not working */
+GAMEX( 1991, winrun91, 0,       poly_winrun_c140_typeB, s21default,winrun,ROT0,       "Namco", "Winning Run 91", 	GAME_NOT_WORKING ) /* not working */

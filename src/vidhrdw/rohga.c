@@ -25,6 +25,8 @@ VIDEO_START( rohga )
 	deco16_set_tilemap_bank_callback(2,wizdfire_bank_callback);
 	deco16_set_tilemap_bank_callback(3,wizdfire_bank_callback);
 
+	Machine->gfx[3]->color_granularity=64;
+
 	return 0;
 }
 
@@ -86,7 +88,7 @@ static void rohga_drawsprites(struct mame_bitmap *bitmap, const data16_t *sprite
 		case 0x8000: pri=0xf0|0xcc; break;
 		case 0xc000: pri=0xf0|0xcc; break; /* Perhaps 0xf0|0xcc|0xaa (Sprite under bottom layer) */
 		}
-//todo - test above..
+
 		y = spriteptr[offs];
 		flash=y&0x1000;
 		if (flash && (cpu_getcurrentframe() & 1)) continue;
@@ -425,7 +427,7 @@ sprite 2:
 VIDEO_UPDATE( rohga )
 {
 	/* Update playfields */
-//	flip_screen_set( deco16_pf12_control[0]&0x80 );
+	flip_screen_set( deco16_pf12_control[0]&0x80 );
 	deco16_pf12_update(deco16_pf1_rowscroll,deco16_pf2_rowscroll);
 	deco16_pf34_update(deco16_pf3_rowscroll,deco16_pf4_rowscroll);
 
@@ -433,11 +435,11 @@ VIDEO_UPDATE( rohga )
 	fillbitmap(priority_bitmap,0,cliprect);
 	fillbitmap(bitmap,Machine->pens[512],cliprect);
 
-	if (!code_pressed(KEYCODE_Z))
+//	if (!code_pressed(KEYCODE_Z))
 	deco16_tilemap_4_draw(bitmap,cliprect,TILEMAP_IGNORE_TRANSPARENCY,1);
-	if (!code_pressed(KEYCODE_X))
+//	if (!code_pressed(KEYCODE_X))
 	deco16_tilemap_3_draw(bitmap,cliprect,0,2);
-	if (!code_pressed(KEYCODE_C))
+//	if (!code_pressed(KEYCODE_C))
 	deco16_tilemap_2_draw(bitmap,cliprect,0,4);
 
 	rohga_drawsprites(bitmap,spriteram16);

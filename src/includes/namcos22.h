@@ -1,6 +1,8 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
+#define USE_NAMCOS22_SPEED_HACK
+
 extern enum namcos22_gametype
 {
 	NAMCOS22_AIR_COMBAT22,
@@ -10,6 +12,7 @@ extern enum namcos22_gametype
 	NAMCOS22_PROP_CYCLE,
 	NAMCOS22_RAVE_RACER,
 	NAMCOS22_RIDGE_RACER,
+	NAMCOS22_RIDGE_RACER2,
 	NAMCOS22_TIME_CRISIS,
 	NAMCOS22_VICTORY_LAP,
 	NAMCOS22_ACE_DRIVER
@@ -52,4 +55,6 @@ VIDEO_UPDATE( namcos22 );
 VIDEO_START( namcos22s );
 VIDEO_UPDATE( namcos22s );
 
+void namcos22_WriteDataToRenderDevice( data32_t data );
 void namcos22_UploadCodeToDSP( void );
+void namcos22_draw_direct_poly( const data16_t *pSource );

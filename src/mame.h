@@ -19,6 +19,10 @@
 #include "drawgfx.h"
 #include "palette.h"
 
+#ifdef MESS
+#include "device.h"
+#endif /* MESS */
+
 extern char build_version[];
 extern int gbPriorityBitmapIsDirty;
 
@@ -162,6 +166,10 @@ struct RunningMachine
 
 	/* font used by the debugger */
 	struct GfxElement *		debugger_font;
+
+#ifdef MESS
+	struct IODevice *devices;
+#endif /* MESS */
 };
 
 
@@ -180,17 +188,16 @@ struct RunningMachine
 
 
 #ifdef MESS
-#define MAX_IMAGES	32
 /*
  * This is a filename and it's associated peripheral type
- * The types are defined in mess.h (IO_...)
+ * The types are defined in device.h (IO_...)
  */
 struct ImageFile
 {
 	const char *name;
-	int type;
+	iodevice_t type;
 };
-#endif
+#endif /* MESS */
 
 /* The host platform should fill these fields with the preferences specified in the GUI */
 /* or on the commandline. */
@@ -241,14 +248,13 @@ struct GameOptions
 
 	#ifdef MESS
 	UINT32 ram;
-	struct ImageFile image_files[MAX_IMAGES];
+	struct ImageFile image_files[32];
 	int		image_count;
-	int		(*mess_printf_output)(const char *fmt, va_list arg);
 	int disable_normal_ui;
 
 	int		min_width;		/* minimum width for the display */
 	int		min_height;		/* minimum height for the display */
-	#endif
+#endif /* MESS */
 };
 
 

@@ -9,6 +9,9 @@
 #include "driver.h"
 #include "fastfred.h"
 
+extern int galaxian_stars_on;
+extern void galaxian_init_stars(int colors_offset);
+extern void galaxian_draw_stars(struct mame_bitmap *bitmap);
 
 data8_t *fastfred_videoram;
 data8_t *fastfred_spriteram;
@@ -35,7 +38,7 @@ static int flip_screen_x;
 static int flip_screen_y;
 int fastfred_hardware_type;
 static const UINT8 *fastfred_color_prom;
-static struct tilemap *bg_tilemap, *fg_tilemap;
+static struct tilemap *bg_tilemap, *fg_tilemap, *web_tilemap;
 
 /***************************************************************************
 
@@ -53,22 +56,20 @@ static void set_color(pen_t pen, int i)
 	UINT8 r,g,b;
 	int bit0, bit1, bit2, bit3;
 
-	pen_t total = Machine->drv->total_colors;
-
-	bit0 = (fastfred_color_prom[i + 0*total] >> 0) & 0x01;
-	bit1 = (fastfred_color_prom[i + 0*total] >> 1) & 0x01;
-	bit2 = (fastfred_color_prom[i + 0*total] >> 2) & 0x01;
-	bit3 = (fastfred_color_prom[i + 0*total] >> 3) & 0x01;
+	bit0 = (fastfred_color_prom[i] >> 0) & 0x01;
+	bit1 = (fastfred_color_prom[i] >> 1) & 0x01;
+	bit2 = (fastfred_color_prom[i] >> 2) & 0x01;
+	bit3 = (fastfred_color_prom[i] >> 3) & 0x01;
 	r = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
-	bit0 = (fastfred_color_prom[i + 1*total] >> 0) & 0x01;
-	bit1 = (fastfred_color_prom[i + 1*total] >> 1) & 0x01;
-	bit2 = (fastfred_color_prom[i + 1*total] >> 2) & 0x01;
-	bit3 = (fastfred_color_prom[i + 1*total] >> 3) & 0x01;
+	bit0 = (fastfred_color_prom[i + 0x100] >> 0) & 0x01;
+	bit1 = (fastfred_color_prom[i + 0x100] >> 1) & 0x01;
+	bit2 = (fastfred_color_prom[i + 0x100] >> 2) & 0x01;
+	bit3 = (fastfred_color_prom[i + 0x100] >> 3) & 0x01;
 	g = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
-	bit0 = (fastfred_color_prom[i + 2*total] >> 0) & 0x01;
-	bit1 = (fastfred_color_prom[i + 2*total] >> 1) & 0x01;
-	bit2 = (fastfred_color_prom[i + 2*total] >> 2) & 0x01;
-	bit3 = (fastfred_color_prom[i + 2*total] >> 3) & 0x01;
+	bit0 = (fastfred_color_prom[i + 0x200] >> 0) & 0x01;
+	bit1 = (fastfred_color_prom[i + 0x200] >> 1) & 0x01;
+	bit2 = (fastfred_color_prom[i + 0x200] >> 2) & 0x01;
+	bit3 = (fastfred_color_prom[i + 0x200] >> 3) & 0x01;
 	b = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
 
 	palette_set_color(pen,r,g,b);
@@ -102,7 +103,6 @@ PALETTE_INIT( fastfred )
 		COLOR(0,i) = COLOR(1,i) = color;
 	}
 }
-
 
 /***************************************************************************
 
@@ -282,11 +282,16 @@ static void draw_sprites(struct mame_bitmap *bitmap, const struct rectangle *cli
 			// Imago
 
 			//fastfred_spriteram[offs + 2] & 0xf8 get only set at startup
-
 			//the code is greater than 0x3f only at startup
-			code  = (fastfred_spriteram[offs + 1]) & 0x3f;
 
-			/* To Do: find the correct bank for sprites */
+			/* TODO: find correct sprites banking */
+
+			code  = (fastfred_spriteram[offs + 1]) & 0x1f;
+
+			code |= fastfred_spriteram[offs + 2]<<5;
+
+			if(fastfred_spriteram[offs + 1] & 0x20)
+				code ^= 0xff;
 			
 			flipx = 0;
 			flipy = 0;
@@ -356,9 +361,13 @@ static void imago_get_tile_info_bg(int tile_index)
 static void imago_get_tile_info_fg(int tile_index)
 {
 	int code = imago_fg_videoram[tile_index];
-	SET_TILE_INFO(2, code, 0, 0)
+	SET_TILE_INFO(2, code, 2, 0)
 }
 
+static void imago_get_tile_info_web(int tile_index)
+{
+	SET_TILE_INFO(3, tile_index & 0x1ff, 0, 0)
+}
 
 WRITE8_HANDLER( imago_fg_videoram_w )
 {
@@ -380,19 +389,33 @@ WRITE8_HANDLER( imago_charbank_w )
 
 VIDEO_START( imago )
 {
-	bg_tilemap = tilemap_create(imago_get_tile_info_bg,tilemap_scan_rows,TILEMAP_OPAQUE,8,8,32,32);
-	fg_tilemap = tilemap_create(imago_get_tile_info_fg,tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,32,32);
+	web_tilemap = tilemap_create(imago_get_tile_info_web,tilemap_scan_rows,TILEMAP_OPAQUE,     8,8,32,32);
+	bg_tilemap   = tilemap_create(imago_get_tile_info_bg, tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,32,32);
+	fg_tilemap   = tilemap_create(imago_get_tile_info_fg, tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,32,32);
 
-	if( !bg_tilemap || !fg_tilemap )
+	if( !web_tilemap || !bg_tilemap || !fg_tilemap )
 		return 1;
 
+	tilemap_set_transparent_pen(bg_tilemap, 0);
 	tilemap_set_transparent_pen(fg_tilemap, 0);
+
+	/* the game has a galaxian starfield */
+	galaxian_init_stars(256);
+	galaxian_stars_on = 1;
+
+	/* web colors */
+	palette_set_color(256+64+0,0x50,0x00,0x00);
+	palette_set_color(256+64+1,0x00,0x00,0x00);
 
 	return 0;
 }
 
 VIDEO_UPDATE( imago )
 {
+	tilemap_draw(bitmap,cliprect,web_tilemap,0,0);
+
+	galaxian_draw_stars(bitmap);
+
 	tilemap_draw(bitmap,cliprect,bg_tilemap,0,0);
 
 	draw_sprites(bitmap, cliprect);

@@ -717,7 +717,7 @@ VIDEO_UPDATE(skns)
 
 	btiles = memory_region (REGION_GFX3);
 
-	if (!(skns_v3_regs[0x0c/4] & 0x0100)); // if tilemap b is in 8bpp mode
+//	if (!(skns_v3_regs[0x0c/4] & 0x0100)); // if tilemap b is in 8bpp mode
 	{
 		if (skns_v3t_somedirty)
 		{
@@ -743,7 +743,7 @@ VIDEO_UPDATE(skns)
 		}
 	}
 
-	if (skns_v3_regs[0x0c/4] & 0x0100); // if tilemap b is in 4bpp mode
+//	if (skns_v3_regs[0x0c/4] & 0x0100); // if tilemap b is in 4bpp mode
 	{
 		if (skns_v3t_4bpp_somedirty)
 		{

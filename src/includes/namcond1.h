@@ -20,6 +20,7 @@ extern void nvsram( offs_t offset, data16_t data );
 /* MACHINE */
 extern int namcond1_gfxbank;
 
+extern UINT8 namcond1_h8_irq5_enabled;
 extern unsigned short int *namcond1_shared_ram;
 extern unsigned short int *namcond1_eeprom;
 

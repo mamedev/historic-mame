@@ -2,13 +2,15 @@
 
 	Gomoku sound driver (quick hack of the Wiping sound driver)
 
+	used by wiping.c
+
 ***************************************************************************/
 
 #include "driver.h"
 
 
 /* 4 voices max */
-#define MAX_VOICES 8
+#define MAX_VOICES 4
 
 
 static const int samplerate = 48000;
@@ -18,25 +20,25 @@ static const int defgain = 48;
 /* this structure defines the parameters for a channel */
 typedef struct
 {
+	int channel;
 	int frequency;
 	int counter;
 	int volume;
 	const unsigned char *wave;
-	int oneshot;
 	int oneshotplaying;
 } sound_channel;
 
 
 /* globals available to everyone */
-unsigned char *gomoku_soundregs;
-unsigned char *gomoku_wavedata;
+unsigned char *gomoku_soundregs1;
+unsigned char *gomoku_soundregs2;
 
 /* data about the sound system */
 static sound_channel channel_list[MAX_VOICES];
 static sound_channel *last_channel;
 
 /* global sound parameters */
-static const unsigned char *sound_prom, *sound_rom;
+static const unsigned char *sound_rom;
 static int num_voices;
 static int sound_enable;
 static int stream;
@@ -81,6 +83,7 @@ static void gomoku_update_mono(int ch, INT16 *buffer, int length)
 {
 	sound_channel *voice;
 	short *mix;
+	int offs;
 	int i;
 
 	/* if no sound, we're done */
@@ -94,9 +97,9 @@ static void gomoku_update_mono(int ch, INT16 *buffer, int length)
 	memset(mixer_buffer, 0, length * sizeof(short));
 
 	/* loop over each voice and add its contribution */
-	for (voice = channel_list; voice < last_channel; voice++)
+	for (ch = 0, voice = channel_list; voice < last_channel; ch++, voice++)
 	{
-		int f = 16*voice->frequency;
+		int f = 16 * voice->frequency;
 		int v = voice->volume;
 
 		/* only update if we have non-zero volume and frequency */
@@ -110,33 +113,11 @@ static void gomoku_update_mono(int ch, INT16 *buffer, int length)
 			/* add our contribution */
 			for (i = 0; i < length; i++)
 			{
-				int offs;
-
 				c += f;
 
-				if (voice->oneshot)
+				if (ch < 3)
 				{
-					if (voice->oneshotplaying)
-					{
-						offs = (c >> 15);
-						if (w[offs>>1] == 0xff)
-						{
-							voice->oneshotplaying = 0;
-						}
-
-						if (voice->oneshotplaying)
-						{
-							/* use full byte, first the high 4 bits, then the low 4 bits */
-							if (offs & 1)
-								*mix++ += ((w[offs>>1] & 0x0f) - 8) * v;
-							else
-								*mix++ += (((w[offs>>1]>>4) & 0x0f) - 8) * v;
-						}
-					}
-				}
-				else
-				{
-					offs = (c >> 15) & 0x1f;
+					offs = (c >> 15) & 0x3f;
 
 					/* use full byte, first the high 4 bits, then the low 4 bits */
 					if (offs & 1)
@@ -144,10 +125,27 @@ static void gomoku_update_mono(int ch, INT16 *buffer, int length)
 					else
 						*mix++ += (((w[offs>>1]>>4) & 0x0f) - 8) * v;
 				}
-			}
+				else
+				{
+					offs = (c >> 15);
+					if (w[offs>>1] == 0xff)
+					{
+							voice->oneshotplaying = 0;
+					}
 
-			/* update the counter for this voice */
-			voice->counter = c;
+					if (voice->oneshotplaying)
+					{
+						/* use full byte, first the high 4 bits, then the low 4 bits */
+						if (offs & 1)
+							*mix++ += ((w[offs>>1] & 0x0f) - 8) * v;
+						else
+							*mix++ += (((w[offs>>1]>>4) & 0x0f) - 8) * v;
+					}
+				}
+
+				/* update the counter for this voice */
+				voice->counter = c;
+			}
 		}
 	}
 
@@ -161,11 +159,12 @@ static void gomoku_update_mono(int ch, INT16 *buffer, int length)
 
 int gomoku_sh_start(const struct MachineSound *msound)
 {
-	const char *mono_name = "gomoku";
+	const char *mono_name = "Gomoku";
 	sound_channel *voice;
+	int ch;
 
 	/* get stream channels */
-	stream = stream_init(mono_name, 100, samplerate, 0, gomoku_update_mono);
+	stream = stream_init(mono_name,100/*intf->volume*/, samplerate, 0, gomoku_update_mono);
 
 	/* allocate a pair of buffers to mix into - 1 second's worth should be more than enough */
 	if ((mixer_buffer = auto_malloc(2 * sizeof(short) * samplerate)) == 0)
@@ -177,22 +176,23 @@ int gomoku_sh_start(const struct MachineSound *msound)
 		return 1;
 
 	/* extract globals from the interface */
-	num_voices = 4;
+	num_voices = MAX_VOICES;
 	last_channel = channel_list + num_voices;
 
 	sound_rom = memory_region(REGION_SOUND1);
-	sound_prom = memory_region(REGION_SOUND1);
 
 	/* start with sound enabled, many games don't have a sound enable register */
 	sound_enable = 1;
 
 	/* reset all the voices */
-	for (voice = channel_list; voice < last_channel; voice++)
+	for (ch = 0, voice = channel_list; voice < last_channel; ch++, voice++)
 	{
+		voice->channel = ch;
 		voice->frequency = 0;
-		voice->volume = 0;
-		voice->wave = &sound_prom[0];
 		voice->counter = 0;
+		voice->volume = 0;
+		voice->wave = &sound_rom[0];
+		voice->oneshotplaying = 0;
 	}
 
 	return 0;
@@ -206,47 +206,67 @@ void gomoku_sh_stop(void)
 
 /********************************************************************************/
 
-WRITE8_HANDLER( gomoku_sound_w )
+WRITE8_HANDLER( gomoku_sound1_w )
 {
 	sound_channel *voice;
 	int base;
+	int ch;
 
 	/* update the streams */
 	stream_update(stream, 0);
 
 	/* set the register */
-	gomoku_soundregs[offset] = data;
+	gomoku_soundregs1[offset] = data;
 
 	/* recompute all the voice parameters */
-	if (offset <= 0x1f)
+	for (ch = 0, base = 0, voice = channel_list; voice < channel_list + 3; ch++, voice++, base += 8)
 	{
-		for (base = 0, voice = channel_list; voice < last_channel; voice++, base += 8)
-		{
-			voice->frequency = gomoku_soundregs[0x02 + base] & 0x0f;
-			voice->frequency = voice->frequency * 16 + ((gomoku_soundregs[0x01 + base]) & 0x0f);
-			voice->frequency = voice->frequency * 16 + ((gomoku_soundregs[0x00 + base]) & 0x0f);
-
-			voice->volume = gomoku_soundregs[0x806 + base] & 0x0f;
-			if (gomoku_soundregs[0x800 + base] & 0xf0)
-			{
-				voice->wave = &sound_rom[128 * (16 * (gomoku_soundregs[0x805 + base] & 0x0f)
-						+ (gomoku_soundregs[0x805 + base] & 0x0f))];
-				voice->oneshot = 1;
-			}
-			else
-			{
-				voice->wave = &sound_rom[16 * (gomoku_soundregs[0x6 + base] & 0x0f)];
-				voice->oneshot = 0;
-			}
-		}
+		voice->channel = ch;
+		voice->frequency = gomoku_soundregs1[0x02 + base] & 0x0f;
+		voice->frequency = voice->frequency * 16 + ((gomoku_soundregs1[0x01 + base]) & 0x0f);
+		voice->frequency = voice->frequency * 16 + ((gomoku_soundregs1[0x00 + base]) & 0x0f);
+		voice->wave = &sound_rom[32 * (gomoku_soundregs1[0x06 + base] & 0x0f)];
 	}
-	else if (offset >= 0x800)
+}
+
+WRITE8_HANDLER( gomoku_sound2_w )
+{
+	sound_channel *voice;
+	int base;
+	int ch;
+
+	/* update the streams */
+	stream_update(stream, 0);
+
+	/* set the register */
+	gomoku_soundregs2[offset] = data;
+
+	/* recompute all the voice parameters */
+	for (ch = 0, base = 0, voice = channel_list; voice < channel_list + 3; ch++, voice++, base += 8)
 	{
-		voice = &channel_list[(offset & 0x1f) / 8];
-		if (voice->oneshot)
-		{
-			voice->counter = 0;
+		voice->channel = ch;
+		voice->volume = gomoku_soundregs2[0x06 + base] & 0x0f;
+		voice->oneshotplaying = 0;
+	}
+
+	if (offset == 0x1d)
+	{
+		voice = &channel_list[3];
+		voice->channel = 3;
+
+		// oneshot frequency is hand tune...
+		if ((gomoku_soundregs2[0x1d] & 0x0f) < 0x0c)
+			voice->frequency = 3000 / 16;			// ichi, ni, san, yon, go
+		else
+			voice->frequency = 8000 / 16;			// shoot
+
+		voice->volume = 8;
+		voice->wave = &sound_rom[(0x100 * (gomoku_soundregs2[0x1d] & 0x0f))];
+		voice->counter = 0;
+
+		if (gomoku_soundregs2[0x1d] & 0x0f)
 			voice->oneshotplaying = 1;
-		}
+		else
+			voice->oneshotplaying = 0;
 	}
 }

@@ -273,11 +273,9 @@ int run_game(int game)
 
 	begin_resource_tracking();
 
-#ifdef MAME_DEBUG
-	/* validity checks -- debug build only */
+	/* validity checks -- perform these in all builds now due to the number of incorrect submissions */
 	if (mame_validitychecks())
 		return 1;
-#endif
 
 	/* first give the machine a good cleaning */
 	memset(Machine, 0, sizeof(Machine));
@@ -2017,7 +2015,7 @@ int mame_validitychecks(void)
 		if (drivers[i]->construct_ipt)
 		{
 			begin_resource_tracking();
-			
+
 			inp = input_port_allocate(drivers[i]->construct_ipt);
 
 			while (inp->type != IPT_END)
@@ -2119,7 +2117,7 @@ int mame_validitychecks(void)
 	}
 
 #ifdef MESS
-	if (messvaliditychecks())
+	if (mess_validitychecks())
 		error = 1;
 #endif /* MESS */
 

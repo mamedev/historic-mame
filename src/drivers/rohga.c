@@ -1,17 +1,68 @@
 /***************************************************************************
 
-	'Rohga' era hardware:
+	Data East 'Rohga' era hardware:
 
 	Rogha Armour Attack			(c) 1991 Data East Corporation
 	Wizard Fire					(c) 1992 Data East Corporation
 	Nitro Ball					(c) 1992 Data East Corporation
+	Schmeiser Robo				(c) 1993 Hot B
 
 	This hardware is capable of alpha-blending on sprites and playfields
 
 	Todo:  On Wizard Fire when you insert a coin and press start, the start
 	button being held seems to select the knight right away.  Emulation bug.
 
+	Todo:  Rohga protection emulation is still incomplete.  Game only works
+	up to level 5 and the priority register does not seem to be written.
+
+	Schmeiser Robo runs on a slightly modified Rohga pcb.
+
 	Emulation by Bryan McPhail, mish@tendril.co.uk
+
+	Schmeiser Robo PCB Layout
+	-------------------------
+
+	DE-0353-3
+	|---------------------------------------------------|
+	|62256  62256                         104  DSW2 DSW1|
+	|                                                   |
+	|               59     PAL                          |
+	|                      PAL                          |
+	|SR001J  SR006J                            DSW3     |
+	|                      6264                         |
+	|SR002-74  PAL         6264           113           |
+	|SR003-74       74     6264                        J|
+	|                      6264   HB00031E             A|
+	|                             PAL                  M|
+	|                                                  M|
+	|               55            SR011                A|
+	|                             SR012   M6295#2       |
+	|                                                   |
+	|                      45     YM2151  M6295#1    CN2|
+	|       SR007   52            LH5168                |
+	|       SR008          71     SR013   YM3014        |
+	|SR004  SR009   52                    JP3 VOL1 VOL2 |
+	|SR005  SR010                                       |
+	|                     28MHz  32.220MHz      TA8205  |
+	|---------------------------------------------------|
+
+	Notes:
+				68000 clock: 14.000MHz
+				VSync: 58kHz
+				HSync: 15.68kHz
+				YM2151 clock: 3.58MHz
+				M6295#1 clock: 1.00MHz, Sample Rate: = / 132
+				M6295#2 clock: 2.00MHz, Sample Rate: = / 132
+				CN2: Connector for stereo sound out
+				Vol1, Vol2: Volume POT for left/right speakers. In Mono mode, only right volume is used.
+				JP3: jumper to set mono/stereo output
+				PCB has several wire mods also
+	            
+				SR001, SR002 : 27C040
+				SR003, SR004 : 4M Mask (40 pin 16 bit)
+				SR004 - SR010: 8M Mask (42 pin 16 bit)
+				SR011, SR012 : 4M Mask (32 pin 8 bit)
+				HB00031E     : MB7116 (512 bytes x 4 bit) PROM near chip 113
 
 ***************************************************************************/
 
@@ -31,6 +82,7 @@ VIDEO_UPDATE( nitrobal );
 
 static READ16_HANDLER( rohga_dip3_r ) { return readinputport(3); }
 static READ16_HANDLER( nitrobal_control_r ) { return readinputport(3); }
+static READ16_HANDLER( schmeisr_control_r ) { return readinputport(1); }
 
 /**********************************************************************************/
 
@@ -54,9 +106,9 @@ static ADDRESS_MAP_START( rohga_writemem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x240000, 0x24000f) AM_WRITE(MWA16_RAM) AM_BASE(&deco16_pf34_control)
 	AM_RANGE(0x280000, 0x2807ff) AM_WRITE(deco16_104_rohga_prot_w) AM_BASE(&deco16_prot_ram) /* Protection writes */
 	AM_RANGE(0x280800, 0x280fff) AM_WRITE(deco16_104_rohga_prot_w) /* Mirror */
-//	AM_RANGE(0x300000, 0x300001) AM_WRITE(MWA16_NOP)
-//	AM_RANGE(0x310000, 0x310003) AM_WRITE(MWA16_NOP)
-	AM_RANGE(0x310008, 0x31000b) AM_WRITE(MWA16_NOP) /* Palette control?  0000 1111 always written */
+	AM_RANGE(0x300000, 0x300001) AM_WRITE(MWA16_NOP)
+	AM_RANGE(0x310000, 0x31000b) AM_WRITE(MWA16_NOP) /* Palette control? */
+	AM_RANGE(0x320000, 0x320001) AM_WRITE(MWA16_NOP) /* Priority? */
 	AM_RANGE(0x322000, 0x322001) AM_WRITE(deco16_priority_w)
 	AM_RANGE(0x3c0000, 0x3c1fff) AM_WRITE(deco16_pf1_data_w) AM_BASE(&deco16_pf1_data)
 	AM_RANGE(0x3c2000, 0x3c2fff) AM_WRITE(deco16_pf2_data_w) AM_BASE(&deco16_pf2_data)
@@ -174,6 +226,50 @@ static ADDRESS_MAP_START( nitrobal_writemem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0xfec000, 0xffffff) AM_WRITE(MWA16_RAM) /* Main ram */
 ADDRESS_MAP_END
 
+static ADDRESS_MAP_START( schmeisr_readmem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x0fffff) AM_READ(MRA16_ROM)
+	AM_RANGE(0x280000, 0x2807ff) AM_READ(deco16_104_rohga_prot_r) /* Protection device */
+	AM_RANGE(0x2c0000, 0x2c0001) AM_READ(rohga_dip3_r)
+	AM_RANGE(0x300000, 0x300001) AM_READ(nitrobal_control_r)
+	AM_RANGE(0x310002, 0x310003) AM_READ(schmeisr_control_r)
+	AM_RANGE(0x321100, 0x321101) AM_READ(MRA16_NOP) /* Irq ack?  Value not used */
+	AM_RANGE(0x3c0000, 0x3c1fff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x3c2000, 0x3c2fff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x3c4000, 0x3c4fff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x3c6000, 0x3c6fff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x3d0000, 0x3d07ff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x3e0000, 0x3e1fff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x3e2000, 0x3e3fff) AM_READ(MRA16_RAM) /* Mirror of above? */
+	AM_RANGE(0xff0000, 0xff7fff) AM_READ(MRA16_RAM)
+ADDRESS_MAP_END
+
+static ADDRESS_MAP_START( schmeisr_writemem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x0fffff) AM_WRITE(MWA16_ROM)
+	AM_RANGE(0x200000, 0x20000f) AM_WRITE(MWA16_RAM) AM_BASE(&deco16_pf12_control)
+	AM_RANGE(0x240000, 0x24000f) AM_WRITE(MWA16_RAM) AM_BASE(&deco16_pf34_control)
+	AM_RANGE(0x280000, 0x2807ff) AM_WRITE(deco16_104_rohga_prot_w) AM_BASE(&deco16_prot_ram) /* Protection writes */
+	AM_RANGE(0x280800, 0x280fff) AM_WRITE(deco16_104_rohga_prot_w) /* Mirror */
+	AM_RANGE(0x300000, 0x300001) AM_WRITE(MWA16_NOP)
+	AM_RANGE(0x310000, 0x31000b) AM_WRITE(MWA16_NOP) /* Palette control? */
+	AM_RANGE(0x320000, 0x320001) AM_WRITE(MWA16_NOP) /* Priority? */
+	AM_RANGE(0x322000, 0x322001) AM_WRITE(deco16_priority_w)
+	AM_RANGE(0x3c0000, 0x3c1fff) AM_WRITE(deco16_pf1_data_w) AM_BASE(&deco16_pf1_data)
+	AM_RANGE(0x3c2000, 0x3c2fff) AM_WRITE(deco16_pf2_data_w) AM_BASE(&deco16_pf2_data)
+	AM_RANGE(0x3c3000, 0x3c3fff) AM_WRITE(MWA16_RAM) /* Mirror of above? */
+	AM_RANGE(0x3c4000, 0x3c4fff) AM_WRITE(deco16_pf3_data_w) AM_BASE(&deco16_pf3_data)
+	AM_RANGE(0x3c5000, 0x3c5fff) AM_WRITE(MWA16_RAM) /* Mirror of above? */
+	AM_RANGE(0x3c6000, 0x3c6fff) AM_WRITE(deco16_pf4_data_w) AM_BASE(&deco16_pf4_data)
+	AM_RANGE(0x3c7000, 0x3c7fff) AM_WRITE(MWA16_RAM) /* Mirror of above? */
+	AM_RANGE(0x3c8000, 0x3c87ff) AM_WRITE(MWA16_RAM) AM_BASE(&deco16_pf1_rowscroll)
+	AM_RANGE(0x3ca000, 0x3ca7ff) AM_WRITE(MWA16_RAM) AM_BASE(&deco16_pf2_rowscroll)
+	AM_RANGE(0x3cc000, 0x3cc7ff) AM_WRITE(MWA16_RAM) AM_BASE(&deco16_pf3_rowscroll)
+	AM_RANGE(0x3ce000, 0x3ce7ff) AM_WRITE(MWA16_RAM) AM_BASE(&deco16_pf4_rowscroll)
+	AM_RANGE(0x3d0000, 0x3d07ff) AM_WRITE(MWA16_RAM) AM_BASE(&spriteram16) AM_SIZE(&spriteram_size)
+	AM_RANGE(0x3e0000, 0x3e1fff) AM_WRITE(deco16_nonbuffered_palette_w) AM_BASE(&paletteram16)
+	AM_RANGE(0x3e2000, 0x3e3fff) AM_WRITE(MWA16_RAM) /* Mirror of above? */
+	AM_RANGE(0xff0000, 0xff7fff) AM_WRITE(MWA16_RAM) /* Main ram */
+ADDRESS_MAP_END
+
 /******************************************************************************/
 
 static ADDRESS_MAP_START( sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
@@ -188,7 +284,7 @@ ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x000000, 0x00ffff) AM_WRITE(MWA8_ROM)
-	AM_RANGE(0x100000, 0x100001) AM_WRITE(MWA8_NOP) /* Todo:  Check Nitroball/Rohga */
+	AM_RANGE(0x100000, 0x100001) AM_WRITE(MWA8_NOP)
 	AM_RANGE(0x110000, 0x110001) AM_WRITE(YM2151_word_0_w)
 	AM_RANGE(0x120000, 0x120001) AM_WRITE(OKIM6295_data_0_w)
 	AM_RANGE(0x130000, 0x130001) AM_WRITE(OKIM6295_data_1_w)
@@ -207,7 +303,7 @@ INPUT_PORTS_START( rohga )
 	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_8WAY
 	PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_BUTTON1 )
 	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_BUTTON2 )
-	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_BUTTON3 )
 	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_8WAY PORT_PLAYER(2)
 	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_8WAY PORT_PLAYER(2)
@@ -215,7 +311,7 @@ INPUT_PORTS_START( rohga )
 	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_8WAY PORT_PLAYER(2)
 	PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(2)
 	PORT_BIT( 0x2000, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(2)
-	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_BUTTON3 ) PORT_PLAYER(2)
 	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_START2 )
 
 	PORT_START
@@ -452,6 +548,108 @@ INPUT_PORTS_START( nitrobal )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_SERVICE2 )
 INPUT_PORTS_END
 
+INPUT_PORTS_START( schmeisr )
+	PORT_START
+	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_8WAY
+	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_8WAY
+	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_8WAY
+	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_8WAY
+	PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_BUTTON2 )
+	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_BUTTON3 )
+	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_8WAY PORT_PLAYER(2)
+	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_8WAY PORT_PLAYER(2)
+	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_8WAY PORT_PLAYER(2)
+	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_8WAY PORT_PLAYER(2)
+	PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(2)
+	PORT_BIT( 0x2000, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(2)
+	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_BUTTON3 ) PORT_PLAYER(2)
+	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_START2 )
+
+	PORT_START
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_SERVICE1 )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_VBLANK )
+
+	PORT_START	/* Dip switch bank 1/2 */
+	PORT_DIPNAME( 0x0007, 0x0007, DEF_STR( Coin_A ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(      0x0001, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(      0x0007, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(      0x0006, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(      0x0005, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(      0x0004, DEF_STR( 1C_4C ) )
+	PORT_DIPSETTING(      0x0003, DEF_STR( 1C_5C ) )
+	PORT_DIPSETTING(      0x0002, DEF_STR( 1C_6C ) )
+	PORT_DIPNAME( 0x0038, 0x0038, DEF_STR( Coin_B ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(      0x0008, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(      0x0038, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(      0x0030, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(      0x0028, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(      0x0020, DEF_STR( 1C_4C ) )
+	PORT_DIPSETTING(      0x0018, DEF_STR( 1C_5C ) )
+	PORT_DIPSETTING(      0x0010, DEF_STR( 1C_6C ) )
+	PORT_DIPNAME( 0x0040, 0x0040, DEF_STR( Flip_Screen ) )
+	PORT_DIPSETTING(      0x0040, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0080, 0x0080, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0080, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0100, 0x0100, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0100, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0200, 0x0200, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0200, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0400, 0x0400, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0400, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0800, 0x0800, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0800, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x1000, 0x1000, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x1000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x2000, 0x2000, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x2000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x4000, 0x4000, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x4000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x8000, 0x8000, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x8000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+
+	PORT_START	/* Dip switch bank 3 */
+	PORT_DIPNAME( 0x0001, 0x0001, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0001, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0002, 0x0002, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0002, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0004, 0x0004, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0004, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0008, 0x0008, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0008, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0010, 0x0010, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0010, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0020, 0x0020, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0020, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0040, 0x0040, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0040, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0080, 0x0080, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0080, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+INPUT_PORTS_END
+
 /**********************************************************************************/
 
 static struct GfxLayout charlayout =
@@ -491,6 +689,19 @@ static struct GfxLayout spritelayout_6bpp =
 	64*8
 };
 
+static struct GfxLayout spritelayout2 =
+{
+	16,16,
+	4096*8,
+	4,
+	{ 0x200000*8+8, 0x200000*8, 8, 0 },
+	{ 7,6,5,4,3,2,1,0,
+	32*8+7, 32*8+6, 32*8+5, 32*8+4, 32*8+3, 32*8+2, 32*8+1, 32*8+0,  },
+	{ 15*16, 14*16, 13*16, 12*16, 11*16, 10*16, 9*16, 8*16,
+			7*16, 6*16, 5*16, 4*16, 3*16, 2*16, 1*16, 0*16 },
+	64*8
+};
+
 static struct GfxLayout tilelayout =
 {
 	16,16,
@@ -522,7 +733,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 	{ REGION_GFX1, 0, &charlayout,          0, 32 },	/* Characters 8x8 */
 	{ REGION_GFX2, 0, &tilelayout,          0, 32 },	/* Tiles 16x16 */
 	{ REGION_GFX3, 0, &tilelayout,        512, 32 },	/* Tiles 16x16 */
-	{ REGION_GFX4, 0, &spritelayout_6bpp,1024, 32 },	/* Sprites 16x16 */
+	{ REGION_GFX4, 0, &spritelayout_6bpp,1024, 16 },	/* Sprites 16x16 */
 	{ -1 } /* end of array */
 };
 
@@ -543,6 +754,15 @@ static struct GfxDecodeInfo gfxdecodeinfo_nitrobal[] =
 	{ REGION_GFX3, 0, &tilelayout_8bpp, 512,  2 },  /* Gfx chip 2 as 16x16 */
 	{ REGION_GFX4, 0, &spritelayout,   1024, 32 },  /* Sprites 16x16 */
 	{ REGION_GFX5, 0, &spritelayout,   1536, 32 },
+	{ -1 } /* end of array */
+};
+
+static struct GfxDecodeInfo gfxdecodeinfo_schmeisr[] =
+{
+	{ REGION_GFX1, 0, &charlayout,          0, 32 },	/* Characters 8x8 */
+	{ REGION_GFX2, 0, &tilelayout,          0, 32 },	/* Tiles 16x16 */
+	{ REGION_GFX3, 0, &tilelayout,        512, 32 },	/* Tiles 16x16 */
+	{ REGION_GFX4, 0, &spritelayout2,     1024, 32 },	/* Sprites 16x16 */
 	{ -1 } /* end of array */
 };
 
@@ -589,7 +809,7 @@ static MACHINE_DRIVER_START( rohga )
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
 	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
 
-	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_FRAMES_PER_SECOND(58)
 	MDRV_VBLANK_DURATION(529)
 
 	/* video hardware */
@@ -619,7 +839,7 @@ static MACHINE_DRIVER_START( wizdfire )
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
 	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
 
-	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_FRAMES_PER_SECOND(58)
 	MDRV_VBLANK_DURATION(529)
 
 	/* video hardware */
@@ -649,7 +869,7 @@ static MACHINE_DRIVER_START( nitrobal )
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
 	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
 
-	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_FRAMES_PER_SECOND(58)
 	MDRV_VBLANK_DURATION(529)
 
 	/* video hardware */
@@ -661,6 +881,36 @@ static MACHINE_DRIVER_START( nitrobal )
 
 	MDRV_VIDEO_START(nitrobal)
 	MDRV_VIDEO_UPDATE(nitrobal)
+
+	/* sound hardware */
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(YM2151, ym2151_interface)
+	MDRV_SOUND_ADD(OKIM6295, okim6295_interface)
+MACHINE_DRIVER_END
+
+static MACHINE_DRIVER_START( schmeisr )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68000, 14000000)
+	MDRV_CPU_PROGRAM_MAP(schmeisr_readmem,schmeisr_writemem)
+	MDRV_CPU_VBLANK_INT(irq6_line_hold,1)
+
+	MDRV_CPU_ADD(H6280,32220000/8)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
+
+	MDRV_FRAMES_PER_SECOND(58)
+	MDRV_VBLANK_DURATION(529)
+
+	/* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN | VIDEO_BUFFERS_SPRITERAM)
+	MDRV_SCREEN_SIZE(40*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 40*8-1, 1*8, 31*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo_schmeisr)
+	MDRV_PALETTE_LENGTH(2048)
+
+	MDRV_VIDEO_START(rohga)
+	MDRV_VIDEO_UPDATE(rohga)
 
 	/* sound hardware */
 	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
@@ -700,10 +950,10 @@ ROM_START( rohgau )
 	ROM_LOAD( "mam03.17a", 0x400000, 0x100000,  CRC(fc4dfd48) SHA1(0c5f5a09833ebeb3018e65edd6f7ce06d4ba84ed) )
 	ROM_LOAD( "mam04.18a", 0x500000, 0x100000,  CRC(7d3b38bf) SHA1(9f83ad7497ed57405ad648f403eb69f776567a50) )
 
-	ROM_REGION(0x80000, REGION_SOUND1, 0 ) /* Oki samples */
+	ROM_REGION(0x80000, REGION_SOUND2, 0 ) /* Oki samples */
 	ROM_LOAD( "mam12.14p", 0x00000,  0x80000,  CRC(6f00b791) SHA1(c9fbc9ab5ce84fec79efa0a23373be97a27bf898) )
 
-	ROM_REGION(0x80000, REGION_SOUND2, 0 ) /* Oki samples */
+	ROM_REGION(0x80000, REGION_SOUND1, 0 ) /* Oki samples */
 	ROM_LOAD( "mam13.15p", 0x00000,  0x80000,  CRC(525b9461) SHA1(1d9bb3725dfe601b05a779b84b4191455087b969) )
 
 	ROM_REGION( 512, REGION_PROMS, 0 )
@@ -740,10 +990,10 @@ ROM_START( rohgah )
 	ROM_LOAD( "mam03.17a", 0x400000, 0x100000,  CRC(fc4dfd48) SHA1(0c5f5a09833ebeb3018e65edd6f7ce06d4ba84ed) )
 	ROM_LOAD( "mam04.18a", 0x500000, 0x100000,  CRC(7d3b38bf) SHA1(9f83ad7497ed57405ad648f403eb69f776567a50) )
 
-	ROM_REGION(0x80000, REGION_SOUND1, 0 ) /* Oki samples */
+	ROM_REGION(0x80000, REGION_SOUND2, 0 ) /* Oki samples */
 	ROM_LOAD( "mam12.14p", 0x00000,  0x80000,  CRC(6f00b791) SHA1(c9fbc9ab5ce84fec79efa0a23373be97a27bf898) )
 
-	ROM_REGION(0x80000, REGION_SOUND2, 0 ) /* Oki samples */
+	ROM_REGION(0x80000, REGION_SOUND1, 0 ) /* Oki samples */
 	ROM_LOAD( "mam13.15p", 0x00000,  0x80000,  CRC(525b9461) SHA1(1d9bb3725dfe601b05a779b84b4191455087b969) )
 
 	ROM_REGION( 512, REGION_PROMS, 0 )
@@ -780,10 +1030,10 @@ ROM_START( rohga )
 	ROM_LOAD( "mam03.17a", 0x400000, 0x100000,  CRC(fc4dfd48) SHA1(0c5f5a09833ebeb3018e65edd6f7ce06d4ba84ed) )
 	ROM_LOAD( "mam04.18a", 0x500000, 0x100000,  CRC(7d3b38bf) SHA1(9f83ad7497ed57405ad648f403eb69f776567a50) )
 
-	ROM_REGION(0x80000, REGION_SOUND1, 0 ) /* Oki samples */
+	ROM_REGION(0x80000, REGION_SOUND2, 0 ) /* Oki samples */
 	ROM_LOAD( "mam12.14p", 0x00000,  0x80000,  CRC(6f00b791) SHA1(c9fbc9ab5ce84fec79efa0a23373be97a27bf898) )
 
-	ROM_REGION(0x80000, REGION_SOUND2, 0 ) /* Oki samples */
+	ROM_REGION(0x80000, REGION_SOUND1, 0 ) /* Oki samples */
 	ROM_LOAD( "mam13.15p", 0x00000,  0x80000,  CRC(525b9461) SHA1(1d9bb3725dfe601b05a779b84b4191455087b969) )
 
 	ROM_REGION( 512, REGION_PROMS, 0 )
@@ -920,12 +1170,48 @@ ROM_START( nitrobal )
 	ROM_LOAD( "mav11.r19",  0x00000,  0x80000,  CRC(ef513908) SHA1(72db6c704071d7a784b3768c256fc51087e9e93c) )
 ROM_END
 
+ROM_START( schmeisr )
+	ROM_REGION(0x100000, REGION_CPU1, 0 ) /* 68000 code */
+	ROM_LOAD16_BYTE( "sr001j.8a",  0x000000, 0x80000, CRC(ed31f3ff) SHA1(3e0ae92a07ef94f377730c19069560bda864a64b) )
+	ROM_LOAD16_BYTE( "sr006j.8d",  0x000001, 0x80000, CRC(9e9cfa5d) SHA1(10421198739f76e5a5b7ec85b57ead83ae4572d4) )
+
+	ROM_REGION(0x10000, REGION_CPU2, 0 ) /* Sound CPU */
+	ROM_LOAD( "sr013.18p",  0x00000,  0x10000,  CRC(4ac00cbb) SHA1(cbc21e13978ae5e8940c8c22932dc424605c0ba4) )
+
+	ROM_REGION( 0x020000, REGION_GFX1, ROMREGION_DISPOSE )
+	/* Filled in later */
+
+	ROM_REGION( 0x100000, REGION_GFX2, ROMREGION_DISPOSE ) /* Encrypted tiles */
+	ROM_LOAD( "sr002-74.9a",  0x000000, 0x080000,  CRC(97e15c7b) SHA1(8697115d4b5ed94a1392034060821d3e354bceb0) ) 
+	ROM_LOAD( "sr003-74.11a", 0x080000, 0x080000,  CRC(ea367971) SHA1(365c27bdef4daa01e926fbcf11ce622186133106) )
+
+	ROM_REGION( 0x200000, REGION_GFX3, ROMREGION_DISPOSE ) /* Encrypted tiles */
+	ROM_LOAD( "sr007.17d",  0x000000, 0x100000,  CRC(886f80c7) SHA1(c06efc1ce7f51d4e503267e63dc9f762d55ad528) ) 
+	ROM_LOAD( "sr008.18d",  0x100000, 0x100000,  CRC(a74cbc90) SHA1(1aabfec7cd64e7097aa55f0ddc5a2c9e1e25618a) )
+
+	ROM_REGION( 0x400000, REGION_GFX4, ROMREGION_DISPOSE )
+	ROM_LOAD( "sr004.19a", 0x000000, 0x100000,  CRC(e25434a1) SHA1(136ebb36e9b6caeac885423e8f365008ddcea778) ) 
+	ROM_LOAD( "sr005.20a", 0x100000, 0x100000,  CRC(1630033b) SHA1(e2a5fd7f8839db9d5b41d3cada598a6c07a97368) )
+	ROM_LOAD( "sr009.19d", 0x200000, 0x100000,  CRC(7b9d982f) SHA1(55d89ee68ceaf3ca8059177721b6c9a16103b1b4) )
+	ROM_LOAD( "sr010.20d", 0x300000, 0x100000,  CRC(6e9e5352) SHA1(357659ff5ab9ce94df3313e9a60125769c7fe10a) )
+
+	ROM_REGION(0x80000, REGION_SOUND2, 0 ) /* Oki samples */
+	ROM_LOAD( "sr011.14p", 0x00000,  0x80000,  CRC(81805616) SHA1(cdca2eb6d12924b9b578b4ce95d5816c7d82f345) )
+
+	ROM_REGION(0x80000, REGION_SOUND1, 0 ) /* Oki samples */
+	ROM_LOAD( "sr012.15p", 0x00000,  0x80000,  CRC(38843d4d) SHA1(0eda60a4d2caa1e57582c354b8be926905d7fb0c) )
+
+	ROM_REGION( 512, REGION_PROMS, 0 )
+	ROM_LOAD( "hb-00.11p", 0x00000,  0x200,  CRC(b7a7baad) SHA1(39781c3412493b985d3616ac31142fc00bbcddf4) )
+ROM_END
+
 /**********************************************************************************/
 
 static DRIVER_INIT( rohga )
 {
 	deco56_decrypt(REGION_GFX1);
 	deco56_decrypt(REGION_GFX2);
+	deco16_104_rohga_reset();
 }
 
 static DRIVER_INIT( wizdfire )
@@ -942,9 +1228,24 @@ static DRIVER_INIT( nitrobal )
 	deco74_decrypt(REGION_GFX3);
 }
 
+static DRIVER_INIT( schmeisr )
+{	
+	const data8_t *src = memory_region(REGION_GFX2);
+	data8_t *dst = memory_region(REGION_GFX1);
+
+	memcpy(dst,src,0x10000);
+	memcpy(dst+0x10000,src+0x80000,0x10000);
+
+	deco74_decrypt(REGION_GFX1);
+	deco74_decrypt(REGION_GFX2);
+
+	deco16_104_rohga_reset();
+}
+
 GAMEX(1991, rohga,    0,       rohga,    rohga,    rohga,    ROT0,   "Data East Corporation", "Rohga Armour Force (Asia/Europe v3.0)", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING  )
 GAMEX(1991, rohgah,   rohga,   rohga,    rohga,    rohga,    ROT0,   "Data East Corporation", "Rohga Armour Force (Hong Kong v3.0)", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
 GAMEX(1991, rohgau,   rohga,   rohga,    rohga,    rohga,    ROT0,   "Data East Corporation", "Rohga Armour Force (US v1.0)", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
 GAME( 1992, wizdfire, 0,       wizdfire, wizdfire, wizdfire, ROT0,   "Data East Corporation", "Wizard Fire (US v1.1)" )
 GAME( 1992, darksel2, wizdfire,wizdfire, wizdfire, wizdfire, ROT0,   "Data East Corporation", "Dark Seal 2 (Japan v2.1)" )
 GAME( 1992, nitrobal, 0,       nitrobal, nitrobal, nitrobal, ROT270, "Data East Corporation", "Nitro Ball (US)" )
+GAMEX(1993, schmeisr, 0,       schmeisr, schmeisr, schmeisr, ROT0,   "Hot B",                 "Schmeiser Robo", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )

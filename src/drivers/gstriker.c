@@ -182,6 +182,7 @@ data16_t *gs_mixer_regs;
 WRITE16_HANDLER( gsx_videoram3_w );
 VIDEO_UPDATE( gstriker );
 VIDEO_START( gstriker );
+VIDEO_START( worldc94 );
 
 
 /*** MISC READ / WRITE HANDLERS **********************************************/
@@ -294,6 +295,8 @@ static struct YM2610interface ym2610_interface =
 
 /*** MEMORY LAYOUTS **********************************************************/
 
+static data16_t *work_ram;
+
 static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x000000, 0x0fffff) AM_READ(MRA16_ROM)
 	AM_RANGE(0x100000, 0x103fff) AM_READ(MRA16_RAM)
@@ -314,14 +317,14 @@ ADDRESS_MAP_END
 static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x000000, 0x0fffff) AM_WRITE(MWA16_ROM)
 	AM_RANGE(0x100000, 0x101fff) AM_WRITE(MB60553_0_vram_w) AM_BASE(&MB60553_0_vram)
-	AM_RANGE(0x102000, 0x103fff) AM_WRITE(gsx_videoram3_w) AM_BASE(&gs_videoram3)
+	AM_RANGE(0x102000, 0x103fff) AM_WRITE(gsx_videoram3_w) AM_BASE(&gs_videoram3)/*used in worldc94 (right field)*/
 	AM_RANGE(0x140000, 0x141fff) AM_WRITE(MWA16_RAM) AM_BASE(&CG10103_0_vram)
 	AM_RANGE(0x180000, 0x181fff) AM_WRITE(VS920A_0_vram_w) AM_BASE(&VS920A_0_vram)
 	AM_RANGE(0x1c0000, 0x1c0fff) AM_WRITE(paletteram16_xRRRRRGGGGGBBBBB_word_w) AM_BASE(&paletteram16)
 	AM_RANGE(0x200000, 0x20000f) AM_WRITE(MB60553_0_regs_w)
 	AM_RANGE(0x200040, 0x20005f) AM_WRITE(MWA16_RAM) AM_BASE(&gs_mixer_regs)
 	AM_RANGE(0x2000a0, 0x2000a1) AM_WRITE(sound_command_w)
-	AM_RANGE(0xffc000, 0xffffff) AM_WRITE(MWA16_RAM)
+	AM_RANGE(0xffc000, 0xffffff) AM_WRITE(MWA16_RAM) AM_BASE(&work_ram)
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
@@ -464,6 +467,11 @@ static MACHINE_DRIVER_START( gstriker )
 	MDRV_SOUND_ADD(YM2610, ym2610_interface)
 MACHINE_DRIVER_END
 
+static MACHINE_DRIVER_START( worldc94 )
+	MDRV_IMPORT_FROM( gstriker )
+	MDRV_VIDEO_START( worldc94 )
+MACHINE_DRIVER_END
+
 /*** ROM LOADING *************************************************************/
 
 ROM_START( gstriker )
@@ -572,6 +580,47 @@ ROM_START( worldc94 )
 	ROM_LOAD( "u104",         0x000000, 0x100000, CRC(df07d0af) SHA1(356560e164ff222bc9004fe202f829c93244a6c9) )
 ROM_END
 
+
+/******************************************************************************************
+Simple protection check concept.The M68k writes a command and the MCU
+returns the PC at address 0xffc000.
+The problem is that only the concept is easy,beating this protection requires a good
+amount of time without a trojan...
+
+Misc Notes:
+-Protection routine is at 0x890
+-An original feature of this game is that if you enter into service mode the game gives you
+the possibility to test various stuff on a pre-registered play such as the speed or
+the zooming.To use it,you should use Player 2 Start button to show the test screens
+or to advance into the tests.
+******************************************************************************************/
+#define PC(_num_)\
+work_ram[0x000/2] = (_num_ & 0xffff0000) >> 16;\
+work_ram[0x002/2] = (_num_ & 0x0000ffff) >> 0;
+
+static WRITE16_HANDLER( worldc94_mcu_w )
+{
+	switch(data)
+	{
+		/*P.O.S.T. / Test Mode*/
+		case 0x53: PC(0x00000a4c); break;
+		/*Time Up*/
+		case 0x68: break;
+		/*Title Screen*/
+		case 0x69: break;
+		/*Gameplay / Attract mode*/
+		case 0x6b: PC(0x00000746); break;
+		/*(after the P.O.S.T.)*/
+		case 0x6e: PC(0x00000746); break;/*WRONG?*/
+		default: usrintf_showmessage("Unknown MCU CMD %04x",data);
+	}
+}
+
+static DRIVER_INIT( worldc94 )
+{
+	memory_install_write16_handler(0, ADDRESS_SPACE_PROGRAM, 0x20008a, 0x20008b, 0, 0, worldc94_mcu_w);
+}
+
 /*** GAME DRIVERS ************************************************************/
 
 GAMEX(1993, gstriker, 0,        gstriker, gstriker, 0,        ROT0, "Human", "Grand Striker", GAME_IMPERFECT_GRAPHICS )
@@ -579,4 +628,4 @@ GAMEX(1993, gstriker, 0,        gstriker, gstriker, 0,        ROT0, "Human", "Gr
 /* Similar, but not identical hardware, appear to be protected by an MCU :-( */
 GAMEX(199?, vgoalsoc, 0,        gstriker, gstriker, 0,        ROT0, "Tecmo", "V Goal Soccer", GAME_NOT_WORKING )
 GAMEX(199?, vgoalsca, vgoalsoc, gstriker, gstriker, 0,        ROT0, "Tecmo", "V Goal Soccer (alt)", GAME_NOT_WORKING )
-GAMEX(199?, worldc94, 0,        gstriker, gstriker, 0,        ROT0, "Tecmo", "World Cup '94", GAME_NOT_WORKING )
+GAMEX(199?, worldc94, 0,        worldc94, gstriker, worldc94,        ROT0, "Tecmo", "World Cup '94", GAME_NOT_WORKING | GAME_UNEMULATED_PROTECTION | GAME_IMPERFECT_GRAPHICS )

@@ -12,7 +12,7 @@ typedef enum {
 	DS2404_STATE_READ_MEMORY,			/* Read Memory command active */
 	DS2404_STATE_WRITE_SCRATCHPAD,		/* Write Scratchpad command active */
 	DS2404_STATE_READ_SCRATCHPAD,		/* Read Scratchpad command active */
-	DS2404_STATE_COPY_SCRATCHPAD,		/* Copy Scratchpad command active */
+	DS2404_STATE_COPY_SCRATCHPAD		/* Copy Scratchpad command active */
 } DS2404_STATE;
 
 typedef struct {

@@ -1,7 +1,7 @@
 /***************************************************************************
 
 	Beast Busters			A9003	(c) 1989 SNK Corporation
-	Mechanized Attack			A8002	(c) 1989 SNK Corporation
+	Mechanized Attack		A8002	(c) 1989 SNK Corporation
 
 	Beast Busters is a large dedicated (non-jamma) triple machine gun game,
 	the gun positions values are read in an interrupt routine that must be
@@ -538,10 +538,11 @@ INPUT_PORTS_START( mechatt )
 	PORT_DIPSETTING(      0x0300, DEF_STR( Normal ) )
 	PORT_DIPSETTING(      0x0100, DEF_STR( Hard ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( Hardest ) )
-	PORT_DIPSETTING(      0x0400, "Infinite Energy (Cheat)")
 	PORT_DIPNAME( 0x0c00, 0x0c00, "Game Mode" )
 	PORT_DIPSETTING(      0x0800, "Demo Sounds Off" )
 	PORT_DIPSETTING(      0x0c00, "Demo Sounds On" )
+	PORT_DIPSETTING(      0x0400, "Infinite Energy (Cheat)")
+	PORT_DIPSETTING(      0x0000, "Freeze" )
 	PORT_DIPNAME( 0x1000, 0x1000, DEF_STR( Unused ) )
 	PORT_DIPSETTING(      0x1000, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )

@@ -1521,6 +1521,22 @@ ROM_START( tornado2 )
 	ROM_LOAD( "to_s.bin", 0xf800, 0x0800, CRC(cb79ae42) SHA1(d22bef68ef62aa012f1919338a33621138c2278b) ) // same as defndjeu s
 ROM_END
 
+ROM_START( zero )
+	ROM_REGION( 0x15000, REGION_CPU1, 0 )
+	ROM_LOAD( "zero-15", 0x0d000, 0x1000, CRC(706a24bd) SHA1(60cef3d4f7204eff42de2c08244863e83bc842b4) )
+	ROM_LOAD( "zero-16", 0x0e000, 0x1000, CRC(a79213b2) SHA1(ff9a59cb1d28af396a7b93df82a4bb825581bcce) )
+	ROM_LOAD( "zero-17", 0x0f000, 0x1000, CRC(25287eca) SHA1(ec81181a5a0ac2adf7c0dabbec638f886c13e6ec) )
+	/* bank 0 is the place for CMOS ram */
+	ROM_LOAD( "zero-18", 0x10000, 0x1000, CRC(e99d5679) SHA1(b4344a32aed6cc64284661c03993a59718289c82) )
+	ROM_LOAD( "zero-19", 0x11000, 0x1000, CRC(f2bef850) SHA1(78e50c790e3a8ebc4b65f2d827be8bd375bf4ef4) )
+	ROM_LOAD( "zero-20", 0x12000, 0x1000, CRC(0757967f) SHA1(445e399f1fc834a9333549440171beb6e19a24a7) )
+	ROM_LOAD( "zero-21", 0x13000, 0x1000, CRC(7ca35cfd) SHA1(9afa4f6641082f73bfc3e2b800acf82dcc2bafb3) )
+	ROM_RELOAD(          0x14000, 0x1000 )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )
+	ROM_LOAD( "defend.snd",   0xf800, 0x0800, CRC(fefd5b48) SHA1(ceb0d18483f0691978c604db94417e6941ad7ff2) )
+ROM_END
+
 ROM_START( defcmnd )
 	ROM_REGION( 0x15000, REGION_CPU1, 0 )
 	ROM_LOAD( "defcmnda.1",   0x0d000, 0x1000, CRC(68effc1d) SHA1(459fd95cdf94233e1a4302d1c166e0f7cc239579) )
@@ -2582,6 +2598,7 @@ GAME( 1980, defendw,  defender, defender, defender, defender, ROT0,   "Williams"
 GAMEX(1980, defndjeu, defender, defender, defender, defndjeu, ROT0,   "Jeutel", "Defender ? (bootleg)", GAME_NOT_WORKING )
 GAMEX(1980, tornado1, defender, defender, defender, defndjeu, ROT0,   "Jeutel", "Tornado? (bootleg set 1)", GAME_NOT_WORKING )
 GAMEX(1980, tornado2, defender, defender, defender, defndjeu, ROT0,   "Jeutel", "Tornado? (bootleg set 2)", GAME_NOT_WORKING ) // bad dump?
+GAMEX(1980, zero,     defender, defender, defender, defndjeu, ROT0,   "Jeutel", "Zero ?", GAME_NOT_WORKING )
 GAME( 1980, defcmnd,  defender, defender, defender, defender, ROT0,   "bootleg", "Defense Command (set 1)" )
 GAME( 1981, defence,  defender, defender, defender, defender, ROT0,   "Outer Limits", "Defence Command" )
 

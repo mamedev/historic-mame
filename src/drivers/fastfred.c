@@ -164,8 +164,8 @@ static ADDRESS_MAP_START( imago_map, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x2000, 0x6fff) AM_ROM
 	AM_RANGE(0xb000, 0xb3ff) AM_RAM
 	AM_RANGE(0xc000, 0xc7ff) AM_RAM
-	AM_RANGE(0xc800, 0xcbff) AM_MIRROR(0x400) AM_READWRITE(MRA8_RAM, imago_fg_videoram_w) AM_BASE(&imago_fg_videoram)
-	AM_RANGE(0xd000, 0xd3ff) AM_MIRROR(0x400) AM_READWRITE(MRA8_RAM, fastfred_videoram_w) AM_BASE(&fastfred_videoram)
+	AM_RANGE(0xc800, 0xcbff) AM_READWRITE(MRA8_RAM, imago_fg_videoram_w) AM_BASE(&imago_fg_videoram)
+	AM_RANGE(0xd000, 0xd3ff) AM_READWRITE(MRA8_RAM, fastfred_videoram_w) AM_BASE(&fastfred_videoram)
 	AM_RANGE(0xd800, 0xd83f) AM_READWRITE(MRA8_RAM, fastfred_attributes_w) AM_BASE(&fastfred_attributesram)
 	AM_RANGE(0xd840, 0xd85f) AM_RAM AM_BASE(&fastfred_spriteram) AM_SIZE(&fastfred_spriteram_size)
 	AM_RANGE(0xd860, 0xd8ff) AM_RAM // Unused, but initialized
@@ -177,11 +177,10 @@ static ADDRESS_MAP_START( imago_map, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0xf003, 0xf003) AM_WRITE(fastfred_colorbank2_w)
 	AM_RANGE(0xf004, 0xf004) AM_WRITE(MWA8_NOP) // initialized with 0 then when written always 1
 	AM_RANGE(0xf005, 0xf005) AM_WRITE(imago_charbank_w)
-	AM_RANGE(0xf006, 0xf006) AM_WRITE(MWA8_NOP) // always 0
-	AM_RANGE(0xf007, 0xf007) AM_WRITE(MWA8_NOP) // always 0
+	AM_RANGE(0xf006, 0xf006) AM_WRITE(fastfred_flip_screen_x_w) // always 0
+	AM_RANGE(0xf007, 0xf007) AM_WRITE(fastfred_flip_screen_y_w) // always 0
 	AM_RANGE(0xf800, 0xf800) AM_READWRITE(MRA8_NOP, soundlatch_w)
 ADDRESS_MAP_END
-
 
 static ADDRESS_MAP_START( sound_map, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0000, 0x1fff) AM_ROM
@@ -472,7 +471,7 @@ INPUT_PORTS_START( imago )
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 
-	PORT_START_TAG("IN2")
+	PORT_START_TAG("DSW")
 	PORT_DIPNAME( 0x03, 0x01, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x00, "2" )
 	PORT_DIPSETTING(    0x01, "3" )
@@ -522,6 +521,17 @@ static struct GfxLayout spritelayout =
 	32*8
 };
 
+static struct GfxLayout imago_char_1bpp =
+{
+	8,8,
+	RGN_FRAC(1,1),
+	1,
+	{ 0 },
+	{ 0, 1, 2, 3, 4, 5, 6, 7 },
+	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
+	8*8
+};
+
 static struct GfxDecodeInfo fastfred_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &charlayout,   0, 32 },
@@ -538,9 +548,10 @@ static struct GfxDecodeInfo jumpcoas_gfxdecodeinfo[] =
 
 static struct GfxDecodeInfo imago_gfxdecodeinfo[] =
 {
-	{ REGION_GFX1, 0, &charlayout,	 0, 32 },
-	{ REGION_GFX2, 0, &spritelayout, 0, 32 },
-	{ REGION_GFX3, 0, &charlayout,	 0, 32 },
+	{ REGION_GFX1, 0, &charlayout,	        0, 32 },
+	{ REGION_GFX2, 0, &spritelayout,        0, 32 },
+	{ REGION_GFX3, 0, &charlayout,          0, 32 },
+	{ REGION_GFX4, 0, &imago_char_1bpp, 0x140,  1 },
 	{ -1 } /* end of array */
 };
 
@@ -624,6 +635,8 @@ static MACHINE_DRIVER_START( imago )
 	MDRV_CPU_PROGRAM_MAP(imago_map,0)
 
 	/* video hardware */
+	MDRV_PALETTE_LENGTH(256+64+2) /* 256 for characters, 64 for the stars and 2 for the web */
+	MDRV_COLORTABLE_LENGTH(32*8+64+2)
 	MDRV_GFXDECODE(imago_gfxdecodeinfo)
 
 	MDRV_VIDEO_START(imago)
@@ -813,39 +826,38 @@ ROM_END
 
 ROM_START( imago )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )     /* 64k for main CPU */
-	ROM_LOAD( "11",    0x0000, 0x1000, CRC(3cce69b4) SHA1(e7d52e388e09e86abb597493f5807ee088cf7a40) )
-	ROM_CONTINUE(	   0x2000, 0x1000 )
-	ROM_LOAD( "12",    0x3000, 0x2000, CRC(8dff98c0) SHA1(e7311d9ca4544f1263e894e6d93ca52c87fc83bf) )
-	ROM_LOAD( "13",    0x5000, 0x2000, CRC(f0f14b4d) SHA1(92b82080575a9c95df926c404c19875ac66c2b00) )
+	ROM_LOAD( "imago11.82", 0x0000, 0x1000, CRC(3cce69b4) SHA1(e7d52e388e09e86abb597493f5807ee088cf7a40) )
+	ROM_CONTINUE(	        0x2000, 0x1000 )
+	ROM_LOAD( "imago12.83", 0x3000, 0x2000, CRC(8dff98c0) SHA1(e7311d9ca4544f1263e894e6d93ca52c87fc83bf) )
+	ROM_LOAD( "imago13.84", 0x5000, 0x2000, CRC(f0f14b4d) SHA1(92b82080575a9c95df926c404c19875ac66c2b00) )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )     /* 64k for audio CPU */
-	ROM_LOAD( "8",	   0x0000, 0x1000, CRC(4f77c2c9) SHA1(1e046786fbad7fb8c7c462b7bd5d80152c6b8779) )
+	ROM_LOAD( "imago08.60", 0x0000, 0x1000, CRC(4f77c2c9) SHA1(1e046786fbad7fb8c7c462b7bd5d80152c6b8779) )
 
 	ROM_REGION( 0x3000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "2",     0x0000, 0x1000, CRC(71354480) SHA1(f5f5e1cc336cae1778b7f6c744eb1bdc4226f138) )
-	ROM_LOAD( "3",     0x1000, 0x1000, CRC(7aba3d98) SHA1(5d058f39bf1339d523fe015b67083d44ff6a81d4) )
-	ROM_FILL(	       0x2000, 0x1000, 0 )
+	ROM_LOAD( "imago01.39", 0x0000, 0x1000, CRC(f09fe0d4) SHA1(058af955f1758db81acd021ae3e8464c18de6bb6) )
+	ROM_LOAD( "imago02.40", 0x1000, 0x1000, CRC(71354480) SHA1(f5f5e1cc336cae1778b7f6c744eb1bdc4226f138) )
+	ROM_LOAD( "imago03.41", 0x2000, 0x1000, CRC(7aba3d98) SHA1(5d058f39bf1339d523fe015b67083d44ff6a81d4) )
 
 	ROM_REGION( 0x6000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "4",     0x0000, 0x1000, CRC(ed987b3e) SHA1(2f88a0463b4323adb27467fb3d022144a4943793) )
-	ROM_LOAD( "5",     0x1000, 0x1000, CRC(77ee68ce) SHA1(a47af1bec81977d0f47463bd88e9f526fd2d6611) )
-	ROM_LOAD( "7",     0x2000, 0x1000, CRC(48b35190) SHA1(3a000264aad03f55fe67eed7c868acf87e804c0f) )
-	ROM_LOAD( "6",     0x3000, 0x1000, CRC(136990fc) SHA1(f3ecba92db25fbeb7df83c26667b7447c2d03b58) )
-	ROM_LOAD( "9",     0x4000, 0x1000, CRC(9efb806d) SHA1(504cc27cf071873714ec61835d9da676884fe1c8) )
-	ROM_LOAD( "10",    0x5000, 0x1000, CRC(801a18d3) SHA1(f798978a47124f50be25ab4e5c6a4974d9003634) )
+	ROM_LOAD( "imago04.51", 0x0000, 0x1000, CRC(ed987b3e) SHA1(2f88a0463b4323adb27467fb3d022144a4943793) )
+	ROM_LOAD( "imago05.52", 0x1000, 0x1000, CRC(77ee68ce) SHA1(a47af1bec81977d0f47463bd88e9f526fd2d6611) )
+	ROM_LOAD( "imago07.56", 0x2000, 0x1000, CRC(48b35190) SHA1(3a000264aad03f55fe67eed7c868acf87e804c0f) )
+	ROM_LOAD( "imago06.55", 0x3000, 0x1000, CRC(136990fc) SHA1(f3ecba92db25fbeb7df83c26667b7447c2d03b58) )
+	ROM_LOAD( "imago09.64", 0x4000, 0x1000, CRC(9efb806d) SHA1(504cc27cf071873714ec61835d9da676884fe1c8) )
+	ROM_LOAD( "imago10.65", 0x5000, 0x1000, CRC(801a18d3) SHA1(f798978a47124f50be25ab4e5c6a4974d9003634) )
 
 	ROM_REGION( 0x3000, REGION_GFX3, ROMREGION_DISPOSE )
-	ROM_LOAD( "14",    0x0000, 0x1000, CRC(eded37f6) SHA1(c2ff5d4c1b001740ec4453467f879035db196a9b) )
-	ROM_FILL(		   0x1000, 0x2000, 0 )
+	ROM_LOAD( "imago14.170", 0x0000, 0x1000, CRC(eded37f6) SHA1(c2ff5d4c1b001740ec4453467f879035db196a9b) )
+	ROM_FILL(                0x1000, 0x2000, 0 )
+
+	ROM_REGION( 0x1000, REGION_GFX4, ROMREGION_DISPOSE )
+	ROM_LOAD( "imago15.191", 0x0000, 0x1000, CRC(85fcc195) SHA1(a76f24201c037d1e6f909fb0ea4ad59b1d6ddd57) )
 
 	ROM_REGION( 0x0300, REGION_PROMS, 0 )
-	ROM_LOAD( "red",   0x0000, 0x0100, NO_DUMP )
-	ROM_LOAD( "green", 0x0100, 0x0100, NO_DUMP )
-	ROM_LOAD( "blue",  0x0200, 0x0100, NO_DUMP )
-
-	ROM_REGION( 0x2000, REGION_USER1, 0 )
-	ROM_LOAD( "1",      0x0000, 0x1000, CRC(b0a1fb54) SHA1(fbc746748947a7aa35a428dc862ff4ad53516d38) ) //contains the same 2 bytes
-	ROM_LOAD( "15",     0x1000, 0x1000, CRC(85fcc195) SHA1(a76f24201c037d1e6f909fb0ea4ad59b1d6ddd57) ) //unknown
+	ROM_LOAD( "imago.96", 0x0000, 0x0100, CRC(5ba81edc) SHA1(b64ebbe054052583688cdf0f064794436c095e7e) )
+	ROM_LOAD( "imago.95", 0x0100, 0x0100, CRC(e2b7aa09) SHA1(f8edfccdd698793d9a9f423953a582b0f7b9b697) )
+	ROM_LOAD( "imago.97", 0x0200, 0x0100, CRC(e28a7f00) SHA1(05b4882c5ea5da332735866d858872bc5eeaca24) )
 ROM_END
 
 extern int fastfred_hardware_type;
@@ -894,4 +906,4 @@ GAME( 1982, fastfred, flyboy, fastfred, fastfred, fastfred, ROT90, "Atari", "Fas
 GAME( 1983, jumpcoas, 0,      jumpcoas, jumpcoas, jumpcoas, ROT90, "Kaneko", "Jump Coaster" )
 GAME( 1983, boggy84,  0,      jumpcoas, boggy84,  boggy84,  ROT90, "bootleg", "Boggy '84" )
 GAME( 1986, redrobin, 0,      fastfred, redrobin, flyboyb,  ROT90, "Elettronolo", "Red Robin" )
-GAMEX(1983, imago,	  0,	  imago,	imago,	  imago,	ROT90, "Acom", "Imago", GAME_IMPERFECT_GRAPHICS | GAME_WRONG_COLORS )
+GAMEX(1983, imago,	  0,	  imago,	imago,	  imago,	ROT90, "Acom", "Imago", GAME_IMPERFECT_GRAPHICS )

@@ -3,7 +3,6 @@
 #include "includes/namcos22.h"
 #include <math.h>
 
-//#define MIN_Z (100) /* for near-plane clipping; this constant was arbitrarily chosen */
 #define MIN_Z (1)
 
 /*
@@ -27,7 +26,6 @@ Depth BIAS:
 
 Mixer:
 	(RGB',gamma table)->RGB''
-
 
 	Other techniques:
 		bump mapping perturbation (BX,BY)
@@ -62,6 +60,7 @@ static data16_t *mpTextureTileMap16;
 static data8_t *mpTextureTileMapAttr;
 static data8_t *mpTextureTileData;
 static data8_t mXYAttrToPixel[16][16][16];
+static unsigned texel( unsigned x, unsigned y );
 
 static void
 InitXYAttrToPixel( void )
@@ -83,6 +82,35 @@ InitXYAttrToPixel( void )
 	}
 }
 
+static void
+PatchTexture( void )
+{
+	int i;
+
+	switch( namcos22_gametype )
+	{
+	case NAMCOS22_RIDGE_RACER:
+	case NAMCOS22_RIDGE_RACER2:
+	case NAMCOS22_ACE_DRIVER:
+	case NAMCOS22_CYBER_COMMANDO:
+		break;
+
+	default:
+		return;
+	}
+	
+	for( i=0; i<0x100000; i++ )
+	{
+		int tile = mpTextureTileMap16[i];
+		int attr = mpTextureTileMapAttr[i];
+		if( (attr&0x1)==0 )
+		{
+			tile = (tile&0x3fff)|0x8000;
+			mpTextureTileMap16[i] = tile;
+		}
+	}
+}
+
 int
 namcos3d_Init( int width, int height, void *pTilemapROM, void *pTextureROM )
 {
@@ -92,21 +120,23 @@ namcos3d_Init( int width, int height, void *pTilemapROM, void *pTextureROM )
 		if( pTilemapROM && pTextureROM )
 		{ /* following setup is Namco System 22 specific */
 			int i;
-			const data8_t *pSource = 0x200000 + (data8_t *)pTilemapROM;
-			data8_t *pDest = auto_malloc(0x80000*2); /* TBA: recycle pTilemapROM */
-			if( pDest )
+			const data8_t *pPackedTileAttr = 0x200000 + (data8_t *)pTilemapROM;
+			data8_t *pUnpackedTileAttr = auto_malloc(0x080000*2);
+			if( pUnpackedTileAttr )
 			{
 				InitXYAttrToPixel();
-				mpTextureTileMapAttr = pDest;
+				mpTextureTileMapAttr = pUnpackedTileAttr;
 				for( i=0; i<0x80000; i++ )
 				{
-					*pDest++ = (*pSource)>>4;
-					*pDest++ = (*pSource)&0xf;
-					pSource++;
+					*pUnpackedTileAttr++ = (*pPackedTileAttr)>>4;
+					*pUnpackedTileAttr++ = (*pPackedTileAttr)&0xf;
+					pPackedTileAttr++;
 				}
+
 				mpTextureTileMap16 = pTilemapROM;
+				
 				#ifndef LSB_FIRST
-				/* if not little endian, swap each word */
+				/* if not little endian, byteswap each word */
 				{
 					unsigned i;
 					for( i=0; i<0x200000/2; i++ )
@@ -116,8 +146,56 @@ namcos3d_Init( int width, int height, void *pTilemapROM, void *pTextureROM )
 					}
 				}
 				#endif
+
 				mpTextureTileData = pTextureROM;
-			} /* pDest */
+				PatchTexture(); /* HACK! */
+
+				if( 0 )
+				{
+					int tpage;
+					for( tpage=0; tpage<0x10; tpage++ )
+					{
+						int ty;
+						char fname[32];
+						FILE *fOut;
+						sprintf( fname, "tpage-%x.bmp", tpage );
+						fOut = fopen( fname, "wb" );
+						if( fOut )
+						{
+							FILE *fIn = fopen( "template.bmp", "rb" );
+							if( fIn )
+							{
+								int i;
+								for( i=0; i<14+40; i++ )
+								{
+									int dat = fgetc( fIn );
+									fputc( dat, fOut );
+								}
+								fclose( fIn );
+
+								for( i=0; i<256; i++ )
+								{
+									fputc( 0x00, fOut );
+									fputc( i, fOut );
+									fputc( (i*3)&0xff, fOut );
+									fputc( (i*7)&0xff, fOut );
+								}
+
+								for( ty=0xfff; ty>=0; ty--)
+								{
+									int tx;
+									for( tx=0; tx<0x1000; tx++ )
+									{
+										int color = texel(tx,ty+tpage*0x1000);
+										fputc( color, fOut );
+									}
+								}
+							}
+							fclose( fOut );
+						}
+					}
+				}
+			} /* pUnpackedTileAttr */
 		}
 		return 0;
 	}
@@ -193,7 +271,8 @@ static INT32 mZSort;
 static unsigned texel( unsigned x, unsigned y )
 {
 	unsigned offs = ((y&0xfff0)<<4)|((x&0xff0)>>4);
-	return mpTextureTileData[(mpTextureTileMap16[offs]<<8)|mXYAttrToPixel[mpTextureTileMapAttr[offs]][x&0xf][y&0xf]];
+	unsigned tile = mpTextureTileMap16[offs];
+	return mpTextureTileData[(tile<<8)|mXYAttrToPixel[mpTextureTileMapAttr[offs]][x&0xf][y&0xf]];
 } /* texel */
 
 typedef void drawscanline_t( const edge *e1, const edge *e2, int sy, const struct rectangle *clip );
@@ -269,6 +348,7 @@ renderscanline_uvi( const edge *e1, const edge *e2, int sy, const struct rectang
 			double dz = (e2->z - e1->z)/w;
 			double di = (e2->i - e1->i)/w;
 			int x, crop;
+			int baseColor = mColor&0x7f00;
 
 			crop = clip->min_x - x0;
 			if( crop>0 )
@@ -288,7 +368,7 @@ renderscanline_uvi( const edge *e1, const edge *e2, int sy, const struct rectang
 			{
 				if( mZSort<pZBuf[x] )
 				{
-					UINT32 color = Machine->pens[texel(u/z,v/z)|mColor];
+					UINT32 color = Machine->pens[texel(u/z,v/z)|baseColor];
 					int r = color>>16;
 					int g = (color>>8)&0xff;
 					int b = color&0xff;
@@ -474,6 +554,7 @@ ProjectPoint( const struct VerTex *v, vertex *pv, const namcos22_camera *camera 
 	pv->u = (v->u+0.5)/v->z;
 	pv->v = (v->v+0.5)/v->z;
 	pv->i = (v->i+0.5 - 0x40)/v->z;
+//	pv->i = (v->i+0.5)/v->z;
 	pv->z = 1/v->z;
 }
 
@@ -540,37 +621,6 @@ namcos22_BlitTri(
 			return; /* backface cull */
 		}
 	}
-
-#if 0
-	{ /* lighting (preliminary) */
-		double a1 = v[1].x - v[0].x;
-		double a2 = v[1].y - v[0].y;
-		double a3 = v[1].z - v[0].z;
-
-		double b1 = v[2].x - v[1].x;
-		double b2 = v[2].y - v[1].y;
-		double b3 = v[2].z - v[1].z;
-
-		/* compute cross product of d1,d2 */
-		double ux = a2*b3 - a3*b2;
-		double uy = a3*b1 - a1*b3;
-		double uz = a1*b2 - a2*b1;
-
-		/* normalize */
-		double dist = sqrt(ux*ux+uy*uy+uz*uz);
-		ux /= dist;
-		uy /= dist;
-		uz /= dist;
-
-		{
-			double dotproduct = ux*camera->x + uy*camera->y + uz*camera->z;
-			if( dotproduct<0 ) dotproduct = -dotproduct;
-			mLight = dotproduct*camera->power + camera->ambient;
-			if( mLight<0 ) mLight = 0;
-			if( mLight>1.0 ) mLight = 1.0;
-		}
-	}
-#endif
 
 	for( i=0; i<3; i++ )
 	{

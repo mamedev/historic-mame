@@ -522,6 +522,37 @@ MACHINE_DRIVER_END
 
 /******************************************************************************/
 
+ROM_START( commandw )
+	ROM_REGION(0x200000, REGION_CPU1, 0) /* 68020 code */
+ 	ROM_LOAD32_BYTE("cw_mpr3.bin", 0x000000, 0x40000, CRC(636944fc) SHA1(47deffed68ac179f27bfdb21ed62d6555a4b8988) )
+	ROM_LOAD32_BYTE("cw_mpr2.bin", 0x000001, 0x40000, CRC(1151a42b) SHA1(e938913ecd3211a8fb4041ec5a5694cd9df9be69) )
+	ROM_LOAD32_BYTE("cw_mpr1.bin", 0x000002, 0x40000, CRC(93669389) SHA1(11336a15900c4f419f3af5c423fbc502f4db616b) )
+	ROM_LOAD32_BYTE("cw_mpr0.bin", 0x000003, 0x40000, CRC(0468df52) SHA1(0da923aa779b541e700c5249272e9c59ab59e863) )
+
+	ROM_REGION(0x1000000, REGION_GFX1 , ROMREGION_DISPOSE) /* Sprites */
+	ROM_LOAD16_BYTE("cw_objl0.bin",  0x000000, 0x200000, CRC(9822102e) SHA1(c4e80ab4d54c39676ee6e557a03828250077765b) )
+  	ROM_LOAD16_BYTE("cw_objm0.bin",  0x000001, 0x200000, CRC(f7687684) SHA1(0bed6362dee96083e2e8b6448c9f7bfa5166bfb7) )
+	ROM_LOAD16_BYTE("cw_objl1.bin",  0x400000, 0x200000,  CRC(ca3ad7f6) SHA1(849fbb89f0b132c83db5b7d699078da3cc10baf6) )
+  	ROM_LOAD16_BYTE("cw_objm1.bin",  0x400001, 0x200000, CRC(504b1bf5) SHA1(7b8ff7834907a9cdab5416bf713487bf71b9070e) )
+	ROM_LOAD       ("cw_objh0.bin",  0xc00000, 0x200000, CRC(83d7e0ae) SHA1(774a07d0cadc2c8f5ec155270bf927e4462654e2) )
+	ROM_LOAD       ("cw_objh1.bin",  0xe00000, 0x200000, CRC(324f5832) SHA1(ff91243c5d09c4c46904640fe278a7485db70577) )
+	ROM_FILL       (                 0x800000, 0x400000, 0 )
+
+	ROM_REGION(0x400000, REGION_GFX2 , ROMREGION_DISPOSE) /* Tiles */
+	ROM_LOAD16_BYTE("cw_scr_l.bin", 0x000000, 0x100000, CRC(4d202323) SHA1(0150bcba6d2bf2c3cde88bb519f57f3b58314244) )
+	ROM_LOAD16_BYTE("cw_scr_m.bin", 0x000001, 0x100000, CRC(537b1c7d) SHA1(bc61aa61891366cbea4b8ecb820d93e28d01f8d2) )
+	ROM_LOAD       ("cw_scr_h.bin", 0x300000, 0x100000, CRC(001f85dd) SHA1(2532377c0b54bc964ea4e74911ff62fea2d53975) )
+	ROM_FILL       (                0x200000, 0x100000, 0 )
+
+	ROM_REGION(0x140000, REGION_CPU2, 0)	/* sound CPU */
+	ROM_LOAD16_BYTE("cw_spr1.bin", 0x100000, 0x20000, CRC(c8f81c25) SHA1(1c914053826587cc2d5d2c0220a3e29a641fe6f9) )
+	ROM_LOAD16_BYTE("cw_spr0.bin", 0x100001, 0x20000, CRC(2aaa9dfb) SHA1(6d4c36ff54a84035c0ddf40e4f3eafd2adc15a5e) )
+
+	ROM_REGION16_BE(0x800000, REGION_SOUND1 , ROMREGION_SOUNDONLY | ROMREGION_ERASE00 )
+	ROM_LOAD16_BYTE("cw_pcm_0.bin", 0x000000, 0x200000, CRC(a1e26629) SHA1(0c5899a767f66f67a5d59b8d287d74b54f8c3727) )
+	ROM_LOAD16_BYTE("cw_pcm_1.bin", 0x400000, 0x200000, CRC(39fc6cf4) SHA1(d43ef294af62765bfec089fac1d67ad81e1b06da) )
+ROM_END
+
 ROM_START( ringrage )
 	ROM_REGION(0x200000, REGION_CPU1, 0) /* 68020 code */
  	ROM_LOAD32_BYTE("d21-23.40", 0x000000, 0x40000, CRC(14e9ed65) SHA1(956db484375a43bcdf5a6a104e3c7d7ef5baaa1b) )
@@ -1374,6 +1405,32 @@ ROM_START( hthero94 )
 	ROM_REGION16_BE(0xa00000, REGION_SOUND1 , ROMREGION_SOUNDONLY | ROMREGION_ERASE00 )
 	ROM_LOAD16_BYTE("d49-04.38", 0x000000, 0x200000, CRC(44b365a9) SHA1(14c4a6b193a0069360406c74c500ba24f2a55b62) )
 	ROM_LOAD16_BYTE("d49-05.41", 0x600000, 0x100000, CRC(ed894fe1) SHA1(5bf2fb6abdcf25bc525a2c3b29dbf7aca0b18fea) )
+ROM_END
+
+ROM_START( recalh )
+	ROM_REGION(0x200000, REGION_CPU1, 0) /* 68020 code */
+ 	ROM_LOAD32_BYTE("rh_mpr3.bin", 0x000000, 0x80000, CRC(65202dd4) SHA1(8d5748d03868b127a7d727e00c1bce51a5bae129) )
+	ROM_LOAD32_BYTE("rh_mpr2.bin", 0x000001, 0x80000, CRC(3eda66db) SHA1(6d726762404d85008d6bebe5a77cebe505b650fc) )
+	ROM_LOAD32_BYTE("rh_mpr1.bin", 0x000002, 0x80000, CRC(536e74ca) SHA1(2a50bb2e93563273c4b0c0c59143893fe25d007e) )
+	ROM_LOAD32_BYTE("rh_mpr0.bin", 0x000003, 0x80000, CRC(38025817) SHA1(fa4cf98cfca95c462b19b873a7660f7cec71cf56) )
+
+	ROM_REGION(0x400000, REGION_GFX1 , ROMREGION_DISPOSE) /* Sprites */
+	ROM_LOAD16_BYTE("rh_objl.bin", 0x000000, 0x100000, CRC(c1772b55) SHA1(f9a04b968c63e61fa8ca60d6f331f6df0d7dd10a) )
+	ROM_LOAD16_BYTE("rh_objm.bin", 0x000001, 0x100000, CRC(ef87c0fd) SHA1(63e99f331d05a1ff4faf0ea94019393fe2117f54) )
+	ROM_FILL       (               0x200000, 0x200000, 0 )
+
+	ROM_REGION(0x400000, REGION_GFX2 , ROMREGION_DISPOSE) /* Tiles */
+	ROM_LOAD16_BYTE("rh_scrl.bin", 0x000000, 0x100000, CRC(1e3f6b79) SHA1(fef029def6393a13f4a638686a7ec7c13851a5c0) )
+	ROM_LOAD16_BYTE("rh_scrm.bin", 0x000001, 0x100000, CRC(37200968) SHA1(4a8d5a17af7eb732f481bf174099845e8d8d6b87) )
+	ROM_FILL       (               0x200000, 0x200000, 0 )
+
+	ROM_REGION(0x140000, REGION_CPU2, 0)	/* sound CPU */
+	ROM_LOAD16_BYTE("rh_spr1.bin", 0x100000, 0x20000, CRC(504cbc1d) SHA1(35a775c1ebc8107c553e43b9d84eb735446c26fd) )
+	ROM_LOAD16_BYTE("rh_spr0.bin", 0x100001, 0x20000, CRC(78fba467) SHA1(4586b061724be7ec413784b820c33cc0d6bbcd0c) )
+
+	ROM_REGION16_BE(0x800000, REGION_SOUND1 , ROMREGION_SOUNDONLY | ROMREGION_ERASE00 )
+	ROM_LOAD16_BYTE("rh_snd0.bin", 0x000000, 0x200000, CRC(386f5e1b) SHA1(d67d5f057c6db3092643f10ea10f977b1caa662f) )
+	ROM_LOAD16_BYTE("rh_snd1.bin", 0x400000, 0x100000, CRC(ed894fe1) SHA1(5bf2fb6abdcf25bc525a2c3b29dbf7aca0b18fea) )
 ROM_END
 
 ROM_START( kaiserkn )
@@ -3295,8 +3352,21 @@ static DRIVER_INIT( intcup94 )
 	tile_decode(1);
 }
 
+static DRIVER_INIT( recalh )
+{
+	f3_game=RECALH;
+	tile_decode(0);
+}
+
+static DRIVER_INIT( commandw )
+{
+	f3_game=COMMANDW;
+	tile_decode(1);
+}
+
 /******************************************************************************/
 
+GAMEX(1992, commandw, 0,        f3_224b, f3, commandw, ROT0,   "Taito Corporation",         "Command War - Super Special Battle & War Game (Prototype)", GAME_IMPERFECT_GRAPHICS )
 GAMEX(1992, ringrage, 0,        f3_224a, f3, ringrage, ROT0,   "Taito Corporation Japan",   "Ring Rage (World)", GAME_IMPERFECT_SOUND )
 GAMEX(1992, ringragj, ringrage, f3_224a, f3, ringrage, ROT0,   "Taito Corporation",         "Ring Rage (Japan)", GAME_IMPERFECT_SOUND )
 GAMEX(1992, ringragu, ringrage, f3_224a, f3, ringrage, ROT0,   "Taito America Corporation", "Ring Rage (US)", GAME_IMPERFECT_SOUND )
@@ -3327,6 +3397,7 @@ GAME( 1993, prmtmfgo, trstar,   f3,      f3, trstaroj, ROT0,   "Taito America Co
 GAME( 1993, dungeonm, 0,        f3_224a, f3, lightbr,  ROT0,   "Taito Corporation Japan",   "Dungeon Magic (World)" )
 GAME( 1993, lightbr,  dungeonm, f3_224a, f3, lightbr,  ROT0,   "Taito Corporation",         "Light Bringer (Japan)" )
 GAME( 1993, dungenmu, dungeonm, f3_224a, f3, lightbr,  ROT0,   "Taito America Corporation", "Dungeon Magic (US)" )
+GAME( 1994, recalh,   0,        f3,      f3, recalh,   ROT0,   "Taito Corporation",         "Recalhorn (Prototype)" )
 GAME( 1994, kaiserkn, 0,        f3_224a, kn, kaiserkn, ROT0,   "Taito Corporation Japan",   "Kaiser Knuckle (World)" )
 GAME( 1994, kaiserkj, kaiserkn, f3_224a, kn, kaiserkn, ROT0,   "Taito Corporation",         "Kaiser Knuckle (Japan)" )
 GAME( 1994, gblchmp,  kaiserkn, f3_224a, kn, kaiserkn, ROT0,   "Taito America Corporation", "Global Champion (US)" )

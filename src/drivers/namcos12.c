@@ -82,14 +82,14 @@ static WRITE16_HANDLER( sharedram_sub_w )
 {
 	data16_t *shared16 = (data16_t *)namcos12_sharedram;
 
-	COMBINE_DATA( &shared16[ offset ] );
+	COMBINE_DATA(&shared16[BYTE_XOR_LE(offset)]);
 }
 
 static READ16_HANDLER( sharedram_sub_r )
 {
 	data16_t *shared16 = (data16_t *)namcos12_sharedram;
 
-	return shared16[ offset ];
+	return shared16[BYTE_XOR_LE(offset)];
 }
 
 static INTERRUPT_GEN( namcos12_vblank )
@@ -141,7 +141,7 @@ static WRITE32_HANDLER( bankoffset_w )
 		else
 		{
 			m_n_bankoffset = data & 0x7;
-		} 
+		}
 	}
 	else
 	{
@@ -242,7 +242,7 @@ static DRIVER_INIT( namcos12 )
 	psx_driver_init();
 
 	psx_dma_install_read_handler( 5, namcos12_rom_read );
-										
+
 	state_save_register_UINT32( "namcos12", 0, "m_n_dmaoffset", &m_n_dmaoffset, 1 );
 	state_save_register_UINT32( "namcos12", 0, "m_n_dmabias", &m_n_dmabias, 1 );
 	state_save_register_UINT32( "namcos12", 0, "m_n_bankoffset", &m_n_bankoffset, 1 );
@@ -384,10 +384,10 @@ static WRITE8_HANDLER( s12_mcu_settings_w )
 
 		if (s12_setnum == 7)
 		{
-			logerror("S12 video settings: Contrast: %02x  R: %02x  G: %02x  B: %02x\n", 
-				BITSWAP8(s12_settings[0], 0, 1, 2, 3, 4, 5, 6, 7), 
-				BITSWAP8(s12_settings[1], 0, 1, 2, 3, 4, 5, 6, 7),  
-				BITSWAP8(s12_settings[2], 0, 1, 2, 3, 4, 5, 6, 7),  
+			logerror("S12 video settings: Contrast: %02x  R: %02x  G: %02x  B: %02x\n",
+				BITSWAP8(s12_settings[0], 0, 1, 2, 3, 4, 5, 6, 7),
+				BITSWAP8(s12_settings[1], 0, 1, 2, 3, 4, 5, 6, 7),
+				BITSWAP8(s12_settings[2], 0, 1, 2, 3, 4, 5, 6, 7),
 				BITSWAP8(s12_settings[3], 0, 1, 2, 3, 4, 5, 6, 7));
 		}
 	}
@@ -409,7 +409,8 @@ static READ8_HANDLER( s12_mcu_gun_h_r )
 	}
 
 	// lower 8 bits
-	return readinputportbytag("IN3");
+	if (port_tag_to_index("IN3")!=-1) return readinputportbytag("IN3");
+	else return 0;
 }
 
 static READ8_HANDLER( s12_mcu_gun_v_r )
@@ -420,7 +421,8 @@ static READ8_HANDLER( s12_mcu_gun_v_r )
 	}
 
 	// lower 8 bits
-	return readinputportbytag("IN4");
+	if (port_tag_to_index("IN4")!=-1) return readinputportbytag("IN4");
+	else return 0;
 }
 
 static ADDRESS_MAP_START( s12h8iomap, ADDRESS_SPACE_IO, 8 )
@@ -432,7 +434,7 @@ static ADDRESS_MAP_START( s12h8iomap, ADDRESS_SPACE_IO, 8 )
 	AM_RANGE(H8_ADC_0_L, H8_ADC_0_H) AM_NOP
 	AM_RANGE(H8_ADC_1_L, H8_ADC_1_H) AM_READ( s12_mcu_gun_h_r )	// golgo 13 gun X-axis
 	AM_RANGE(H8_ADC_2_L, H8_ADC_2_H) AM_READ( s12_mcu_gun_v_r )	// golgo 13 gun Y-axis
-	AM_RANGE(H8_ADC_3_L, H8_ADC_3_H) AM_NOP 
+	AM_RANGE(H8_ADC_3_L, H8_ADC_3_H) AM_NOP
 ADDRESS_MAP_END
 
 static struct C352interface c352_interface =
@@ -514,9 +516,9 @@ INPUT_PORTS_START( namcos12 )
 	PORT_BIT( 0x2000, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(2)
 	PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(2)
 	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_8WAY PORT_PLAYER(2)
-	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_8WAY PORT_PLAYER(2) 
-	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_8WAY PORT_PLAYER(2) 
-	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_8WAY PORT_PLAYER(2) 
+	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_8WAY PORT_PLAYER(2)
+	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_8WAY PORT_PLAYER(2)
+	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_8WAY PORT_PLAYER(2)
 
 	/* IN 2 */
 	PORT_START_TAG("IN2")
@@ -559,9 +561,9 @@ INPUT_PORTS_START( golgo13 )
 	PORT_BIT( 0x2000, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(2)
 	PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(2)
 	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_8WAY PORT_PLAYER(2)
-	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_8WAY PORT_PLAYER(2) 
-	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_8WAY PORT_PLAYER(2) 
-	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_8WAY PORT_PLAYER(2) 
+	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_8WAY PORT_PLAYER(2)
+	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_8WAY PORT_PLAYER(2)
+	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_8WAY PORT_PLAYER(2)
 
 	/* IN 2 */
 	PORT_START_TAG("IN2")

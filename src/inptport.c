@@ -11,79 +11,79 @@
 	------------
 	OSD controls
 	------------
-	
-	There are three types of controls that the OSD can provide as potential 
+
+	There are three types of controls that the OSD can provide as potential
 	input devices: digital controls, absolute analog controls, and relative
 	analog controls.
 
-	Digital controls have only two states: on or off. They are generally 
-	mapped to buttons and digital joystick directions (like a gamepad or a 
-	joystick hat). The OSD layer must return either 0 (off) or 1 (on) for 
+	Digital controls have only two states: on or off. They are generally
+	mapped to buttons and digital joystick directions (like a gamepad or a
+	joystick hat). The OSD layer must return either 0 (off) or 1 (on) for
 	these types of controls.
 
-	Absolute analog controls are analog in the sense that they return a 
-	range of values depending on how much a given control is moved, but they 
-	are physically bounded. This means that there is a minimum and maximum 
-	limit to how far the control can be moved. They are generally mapped to 
-	analog joystick axes, lightguns, most PC steering wheels, and pedals. 
-	The OSD layer must determine the minimum and maximum range of each 
-	analog device and scale that to a value between -65536 and +65536 
-	representing the position of the control. -65536 generally refers to 
-	the topmost or leftmost position, while +65536 refers to the bottommost 
-	or rightmost position. Note that pedals are a special case here, 
+	Absolute analog controls are analog in the sense that they return a
+	range of values depending on how much a given control is moved, but they
+	are physically bounded. This means that there is a minimum and maximum
+	limit to how far the control can be moved. They are generally mapped to
+	analog joystick axes, lightguns, most PC steering wheels, and pedals.
+	The OSD layer must determine the minimum and maximum range of each
+	analog device and scale that to a value between -65536 and +65536
+	representing the position of the control. -65536 generally refers to
+	the topmost or leftmost position, while +65536 refers to the bottommost
+	or rightmost position. Note that pedals are a special case here,
 	mapping only in one direction, with a range of 0 to -65536.
 
-	Relative analog controls are analog as well, but are not physically 
-	bounded. They can be moved continually in one direction without limit. 
-	They are generally mapped to trackballs and mice. Because they are 
+	Relative analog controls are analog as well, but are not physically
+	bounded. They can be moved continually in one direction without limit.
+	They are generally mapped to trackballs and mice. Because they are
 	unbounded, the OSD layer can only return delta values since the last
-	read. Because of this, it is difficult to scale appropriately. For 
-	MAME's purposes, when mapping a mouse devices to a relative analog 
-	control, one pixel of movement should correspond to 512 units. Other 
-	analog control types should be scaled to return values of a similar 
-	magnitude. Like absolute analog controls, negative values refer to 
-	upward or leftward movement, while positive values refer to downward 
+	read. Because of this, it is difficult to scale appropriately. For
+	MAME's purposes, when mapping a mouse devices to a relative analog
+	control, one pixel of movement should correspond to 512 units. Other
+	analog control types should be scaled to return values of a similar
+	magnitude. Like absolute analog controls, negative values refer to
+	upward or leftward movement, while positive values refer to downward
 	or rightward movement.
 
 	-------------
 	Game controls
 	-------------
-	
-	Similarly, the types of controls used by arcade games fall into the same 
-	three categories: digital, absolute analog, and relative analog. The 
-	tricky part is how to map any arbitrary type of OSD control to an 
+
+	Similarly, the types of controls used by arcade games fall into the same
+	three categories: digital, absolute analog, and relative analog. The
+	tricky part is how to map any arbitrary type of OSD control to an
 	arbitrary type of game control.
 
-	Digital controls: used for game buttons and standard 4/8-way joysticks, 
-	as well as many other types of game controls. Mapping an OSD digital 
+	Digital controls: used for game buttons and standard 4/8-way joysticks,
+	as well as many other types of game controls. Mapping an OSD digital
 	control to a game's OSD control is trivial. For OSD analog controls,
-	the MAME core does not directly support mapping any OSD analog devices 
-	to digital controls. However, the OSD layer is free to enumerate digital 
-	equivalents for analog devices. For example, each analog axis in the 
-	Windows OSD code enumerates to two digital controls, one for the 
-	negative direction (up/left) and one for the position direction 
-	(down/right). When these "digital" inputs are queried, the OSD layer 
-	checks the axis position against the center, adding in a dead zone, 
+	the MAME core does not directly support mapping any OSD analog devices
+	to digital controls. However, the OSD layer is free to enumerate digital
+	equivalents for analog devices. For example, each analog axis in the
+	Windows OSD code enumerates to two digital controls, one for the
+	negative direction (up/left) and one for the position direction
+	(down/right). When these "digital" inputs are queried, the OSD layer
+	checks the axis position against the center, adding in a dead zone,
 	and returns 0 or 1 to indicate its position.
 
-	Absolute analog controls: used for analog joysticks, lightguns, pedals, 
-	and wheel controls. Mapping an OSD absolute analog control to this type 
-	is easy. OSD relative analog controls can be mapped here as well by 
-	accumulating the deltas and bounding the results. OSD digital controls 
-	are mapped to these types of controls in pairs, one for a decrement and 
-	one for an increment, but apart from that, operate the same as the OSD 
-	relative analog controls by accumulating deltas and applying bounds. 
+	Absolute analog controls: used for analog joysticks, lightguns, pedals,
+	and wheel controls. Mapping an OSD absolute analog control to this type
+	is easy. OSD relative analog controls can be mapped here as well by
+	accumulating the deltas and bounding the results. OSD digital controls
+	are mapped to these types of controls in pairs, one for a decrement and
+	one for an increment, but apart from that, operate the same as the OSD
+	relative analog controls by accumulating deltas and applying bounds.
 	The speed of the digital delta is user-configurable per analog input.
 	In addition, most absolute analog control types have an autocentering
 	feature that is activated when using the digital increment/decrement
 	sequences, which returns the control back to the center at a user-
 	controllable speed if no digital sequences are pressed.
 
-	Relative analog controls: used for trackballs and dial controls. Again, 
-	mapping an OSD relative analog control to this type is straightforward. 
-	OSD absolute analog controls can't map directly to these, but if the OSD 
-	layer provides a digital equivalent for each direction, it can be done. 
-	OSD digital controls map just like they do for absolute analog controls, 
+	Relative analog controls: used for trackballs and dial controls. Again,
+	mapping an OSD relative analog control to this type is straightforward.
+	OSD absolute analog controls can't map directly to these, but if the OSD
+	layer provides a digital equivalent for each direction, it can be done.
+	OSD digital controls map just like they do for absolute analog controls,
 	except that the accumulated deltas are not bounded, but rather wrap.
 
 ***************************************************************************/
@@ -159,7 +159,7 @@ struct AnalogPortInfo
 	UINT8				shift;		/* left shift to apply to the final result */
 	UINT8				bits;		/* how many bits of resolution are expected? */
 	UINT8				absolute;	/* is this an absolute or relative input? */
-	UINT8				reverse;	/* reverse the sense of this input? */
+	UINT8				pedal;		/* is this a pedal input? */
 	UINT8				autocenter;	/* autocenter this input? */
 	UINT8				interpolate;/* should we do linear interpolation for mid-frame reads? */
 	UINT8				lastdigital;/* was the last modification caused by a digital form? */
@@ -196,8 +196,8 @@ struct IptInitParams
 #define JOYSTICK_INFO_FOR_PORT(in)	(&joystick_info[(in)->player][((in)->type - __ipt_digital_joystick_start) / 4])
 #define JOYSTICK_DIR_FOR_PORT(in)	(((in)->type - __ipt_digital_joystick_start) % 4)
 
-#define APPLY_SENSITIVITY(x,s)		(((x) >= 0) ? (((x) * (s) + 50) / 100) : ((-(x) * (s) + 50) / -100))
-#define APPLY_INVERSE_SENSITIVITY(x,s) (((x) >= 0) ? (((x) * 100 - 50) / (s)) : ((-(x) * 100 - 50) / -(s)))
+#define APPLY_SENSITIVITY(x,s)		(((x) >= 0) ? (((INT64)(x) * (s) + 50) / 100) : ((-(INT64)(x) * (s) + 50) / -100))
+#define APPLY_INVERSE_SENSITIVITY(x,s) (((x) >= 0) ? (((INT64)(x) * 100 - 50) / (s)) : ((-(INT64)(x) * 100 - 50) / -(s)))
 
 
 /*************************************
@@ -452,8 +452,8 @@ static const struct InputPortDefinition inputport_list_defaults[] =
 	INPUT_PORT_DIGITAL_DEF( 4, IPG_PLAYER4,	BUTTON8,			"P4 Button 8",			SEQ_DEF_1(JOYCODE_4_BUTTON8) )
 	INPUT_PORT_DIGITAL_DEF( 4, IPG_PLAYER4,	BUTTON9,			"P4 Button 9",			SEQ_DEF_1(JOYCODE_4_BUTTON9) )
 	INPUT_PORT_DIGITAL_DEF( 4, IPG_PLAYER4,	BUTTON10,			"P4 Button 10",			SEQ_DEF_1(JOYCODE_4_BUTTON10) )
-	INPUT_PORT_DIGITAL_DEF( 4, IPG_PLAYER4, START,				"P4 Start",				SEQ_DEF_3(KEYCODE_3, CODE_OR, JOYCODE_3_START) )
-	INPUT_PORT_DIGITAL_DEF( 4, IPG_PLAYER4, SELECT,				"P4 Select",			SEQ_DEF_3(KEYCODE_7, CODE_OR, JOYCODE_3_SELECT) )
+	INPUT_PORT_DIGITAL_DEF( 4, IPG_PLAYER4, START,				"P4 Start",				SEQ_DEF_3(KEYCODE_4, CODE_OR, JOYCODE_4_START) )
+	INPUT_PORT_DIGITAL_DEF( 4, IPG_PLAYER4, SELECT,				"P4 Select",			SEQ_DEF_3(KEYCODE_8, CODE_OR, JOYCODE_4_SELECT) )
 
 	INPUT_PORT_DIGITAL_DEF( 5, IPG_PLAYER5,	JOYSTICK_UP,		"P5 Up",				SEQ_DEF_1(JOYCODE_5_UP) )
 	INPUT_PORT_DIGITAL_DEF( 5, IPG_PLAYER5,	JOYSTICK_DOWN,      "P5 Down",    			SEQ_DEF_1(JOYCODE_5_DOWN) )
@@ -821,11 +821,11 @@ static void interpolate_analog_port(int port);
 int load_input_port_settings(void)
 {
 	int loaded;
-	
+
 	/* start with the raw defaults and ask the OSD to customize them in the backup array */
 	memcpy(inputport_list_backup, inputport_list_defaults, sizeof(inputport_list_backup));
 	osd_customize_inputport_list(inputport_list_backup);
-	
+
 	/* load the controller-specific info -- note that even though we are still modifying */
 	/* the inputport_list_backup, token_to_port_type relies on inputport_list being valid */
 	memcpy(inputport_list, inputport_list_backup, sizeof(inputport_list));
@@ -872,13 +872,13 @@ static void inputport_init(void)
 	int portnum = -1, bitnum = 0;
 	struct InputPort *port;
 	UINT32 mask;
-	
+
 	/* reset the pointers */
 	memset(&input_port_tag, 0, sizeof(input_port_tag));
 	memset(&bit_info, 0, sizeof(bit_info));
 	memset(&analog_info, 0, sizeof(analog_info));
 	memset(&joystick_info, 0, sizeof(joystick_info));
-	
+
 	/* loop over the ports and identify all the analog inputs */
 	for (port = Machine->input_ports; port->type != IPT_END; port++)
 	{
@@ -889,19 +889,19 @@ static void inputport_init(void)
 			bitnum = 0;
 			input_port_tag[portnum] = port->start.tag;
 		}
-		
+
 		/* if this is not a DIP setting or config setting, add it to the list */
 		else if (port->type != IPT_DIPSWITCH_SETTING && port->type != IPT_CONFIG_SETTING)
 		{
 			/* fatal error if we didn't hit an IPT_PORT */
 			if (portnum < 0)
 				osd_die("Error in InputPort definition: expecting PORT_START\n");
-				
+
 			/* fatal error if too many bits */
 			if (bitnum >= MAX_BITS_PER_PORT)
 				osd_die("Error in InputPort definition: too many bits for a port (%d max)\n", MAX_BITS_PER_PORT);
 
-			/* fill in the bit info */				
+			/* fill in the bit info */
 			bit_info[portnum][bitnum].port = port;
 			bit_info[portnum][bitnum].impulse = 0;
 			bit_info[portnum][bitnum++].last = 0;
@@ -910,24 +910,24 @@ static void inputport_init(void)
 			if (IS_ANALOG(port))
 			{
 				struct AnalogPortInfo *info;
-			
+
 				/* allocate memory */
 				info = auto_malloc(sizeof(*info));
 				if (!info)
 					osd_die("Out of memory allocating analog port info\n");
 				memset(info, 0, sizeof(*info));
-				
+
 				/* fill in the data */
 				info->port = port;
 				for (mask = port->mask; !(mask & 1); mask >>= 1)
 					info->shift++;
 				for ( ; mask & 1; mask >>= 1)
 					info->bits++;
-				
+
 				/* workaround: if bits < 8, clamp to 8; we will mask them at the end */
 				if (info->bits < 8)
 					info->bits = 8;
-				
+
 				/* based on the port type determine if we need absolute or relative coordinates */
 				info->minimum = ANALOG_VALUE_MIN;
 				info->maximum = ANALOG_VALUE_MAX;
@@ -939,7 +939,7 @@ static void inputport_init(void)
 					case IPT_PEDAL2:
 					case IPT_PEDAL3:
 						info->maximum = 0;
-						info->reverse = 1;
+						info->pedal = 1;
 						/* fall through... */
 
 					/* pedals, paddles and analog joysticks are absolute and autocenter */
@@ -951,7 +951,7 @@ static void inputport_init(void)
 						info->absolute = 1;
 						info->autocenter = 1;
 						break;
-					
+
 					/* lightguns are absolute as well, but don't autocenter and don't interpolate their values */
 					case IPT_LIGHTGUN_X:
 					case IPT_LIGHTGUN_Y:
@@ -960,6 +960,9 @@ static void inputport_init(void)
 						break;
 
 					/* dials, mice and trackballs are relative devices */
+					/* these have fixed "min" and "max" values based on how many bits are in the port */
+					/* in addition, we set the wrap around min/max values to 512 * the min/max values */
+					/* this takes into account the mapping that one mouse unit ~= 512 analog units */
 					case IPT_DIAL:
 					case IPT_DIAL_V:
 					case IPT_MOUSE_X:
@@ -969,8 +972,10 @@ static void inputport_init(void)
 						info->absolute = 0;
 						port->analog.min = 0;
 						port->analog.max = (1 << info->bits) - 1;
+						info->minimum = 0;
+						info->maximum = port->analog.max * 512;
 						break;
-					
+
 					default:
 						osd_die("Unknown analog port type -- don't know if it is absolute or not\n");
 						break;
@@ -990,20 +995,19 @@ static void inputport_init(void)
 						info->scaleneg = (double)((INT32)((port->default_value - port->analog.min) << (32 - info->bits)) >> (32 - info->bits)) / (double)(0 - ANALOG_VALUE_MIN);
 					}
 				}
+
+				/* relative controls all map directly with a 512x scale factor */
 				else
-				{
-					if (port->analog.max > port->analog.min)
-						info->scalepos = info->scaleneg = (double)(port->analog.max - port->analog.min) / (double)(ANALOG_VALUE_MAX - ANALOG_VALUE_MIN);
-					else
-						info->scalepos = info->scaleneg = (double)((INT32)((port->analog.max - port->analog.min) << (32 - info->bits)) >> (32 - info->bits)) / (double)(ANALOG_VALUE_MAX - ANALOG_VALUE_MIN);
-				}
+					info->scalepos = info->scaleneg = 1.0 / 512.0;
+
+				/* compute scale for keypresses */
 				info->keyscale = 1.0 / (0.5 * (info->scalepos + info->scaleneg));
 
 				/* hook in the list */
 				info->next = analog_info[portnum];
 				analog_info[portnum] = info;
 			}
-			
+
 			/* if this is a digital joystick port, update info on it */
 			else if (IS_DIGITAL_JOYSTICK(port))
 			{
@@ -1032,16 +1036,16 @@ struct InputPort *input_port_initialize(struct IptInitParams *iip, UINT32 type)
 	struct InputPort *port;
 	input_code_t code;
 
-	/* allocate a port from the array */	 
+	/* allocate a port from the array */
 	if (iip->current_port >= iip->max_ports)
 		osd_die("Too many input ports");
 	port = &iip->ports[iip->current_port++];
-	
+
 	/* set up defaults */
 	memset(port, 0, sizeof(*port));
 	port->name = IP_NAME_DEFAULT;
 	port->type = type;
-	
+
 	/* sets up default port codes */
 	switch (port->type)
 	{
@@ -1056,7 +1060,7 @@ struct InputPort *input_port_initialize(struct IptInitParams *iip, UINT32 type)
 			code = CODE_DEFAULT;
 			break;
 	}
-	
+
 	/* set the default codes */
 	seq_set_1(&port->seq, code);
 	if (IS_ANALOG(port))
@@ -1082,18 +1086,18 @@ struct InputPort *input_port_allocate(void construct_ipt(struct IptInitParams *p
 	if (!iip.ports)
 		return NULL;
 	memset(iip.ports, 0, iip.max_ports * sizeof(*iip.ports));
-	
+
 	/* construct the ports */
  	construct_ipt(&iip);
- 	
+
 	/* append final IPT_END */
 	input_port_initialize(&iip, IPT_END);
- 	
+
 #ifdef MESS
 	/* process MESS specific extensions to the port */
 	inputx_handle_mess_extensions(iip.ports);
 #endif
-  
+
 	return iip.ports;
 }
 
@@ -1128,12 +1132,12 @@ const char *port_type_to_token(int type, int player)
 {
 	static char tempbuf[32];
 	int ipnum;
-	
+
 	/* scan the token list to find the one we want */
 	for (ipnum = 0; ipnum < inputport_count; ipnum++)
 		if (inputport_list[ipnum].type == type && inputport_list[ipnum].player == player)
 			return inputport_list[ipnum].token;
-	
+
 	/* if that fails, carry on */
 	sprintf(tempbuf, "TYPE_OTHER(%d,%d)", type, player);
 	return tempbuf;
@@ -1143,7 +1147,7 @@ const char *port_type_to_token(int type, int player)
 int token_to_port_type(const char *string, int *player)
 {
 	int ipnum;
-	
+
 	/* check for our failsafe case first */
 	if (sscanf(string, "TYPE_OTHER(%d,%d)", &ipnum, player) == 2)
 		return ipnum;
@@ -1155,7 +1159,7 @@ int token_to_port_type(const char *string, int *player)
 			*player = inputport_list[ipnum].player;
 			return inputport_list[ipnum].type;
 		}
-	
+
 	/* if we fail, return IPT_UNKNOWN */
 	*player = 0;
 	return IPT_UNKNOWN;
@@ -1204,7 +1208,7 @@ int port_type_to_group(int type, int player)
 int port_tag_to_index(const char *tag)
 {
 	int port;
-	
+
 	/* find the matching tag */
 	for (port = 0; port < MAX_INPUT_PORTS; port++)
 		if (input_port_tag[port] != NULL && !strcmp(input_port_tag[port], tag))
@@ -1235,7 +1239,7 @@ input_seq_t *input_port_seq(struct InputPort *port, int seqtype)
 {
 	static input_seq_t ip_none = SEQ_DEF_1(CODE_NONE);
 	input_seq_t *portseq;
-	
+
 	/* if port is disabled, return no key */
 	if (port->unused)
 		return &ip_none;
@@ -1246,19 +1250,19 @@ input_seq_t *input_port_seq(struct InputPort *port, int seqtype)
 		case SEQ_TYPE_STANDARD:
 			portseq = &port->seq;
 			break;
-		
+
 		case SEQ_TYPE_INCREMENT:
 			if (!IS_ANALOG(port))
 				return &ip_none;
 			portseq = &port->analog.incseq;
 			break;
-		
+
 		case SEQ_TYPE_DECREMENT:
 			if (!IS_ANALOG(port))
 				return &ip_none;
 			portseq = &port->analog.decseq;
 			break;
-		
+
 		default:
 			return &ip_none;
 	}
@@ -1276,7 +1280,7 @@ input_seq_t *input_port_default_seq(int type, int player, int seqtype)
 {
 	static input_seq_t ip_none = SEQ_DEF_1(CODE_NONE);
 	int ipnum;
-	
+
 	/* find the default setting */
 	for (ipnum = 0; inputport_list[ipnum].type != IPT_END; ipnum++)
 		if (inputport_list[ipnum].type == type && inputport_list[ipnum].player == player)
@@ -1324,7 +1328,7 @@ int input_port_type_pressed(int type, int player)
 	for (listnum = 0; inputport_list[listnum].type != IPT_END; listnum++)
 		if (inputport_list[listnum].type == type && inputport_list[listnum].player == player)
 			return seq_pressed(&inputport_list[listnum].defaultseq);
-	
+
 	return 0;
 }
 
@@ -1334,7 +1338,7 @@ int input_ui_pressed(int code)
 	int pressed;
 
 profiler_mark(PROFILER_INPUT);
-	
+
 	/* get the status of this key (assumed to be only in the defaults) */
 	pressed = seq_pressed(input_port_default_seq(code, 0, SEQ_TYPE_STANDARD));
 
@@ -1381,19 +1385,19 @@ profiler_mark(PROFILER_INPUT);
 			keydelay = 3;
 			counter = 0;
 		}
-		
+
 		/* if this is an autorepeat case, set a 1x delay and leave pressed = 1 */
 		else if (++counter > keydelay * speed * Machine->refresh_rate / 60)
 		{
 			keydelay = 1;
 			counter = 0;
 		}
-		
+
 		/* otherwise, reset pressed = 0 */
 		else
 			pressed = 0;
 	}
-	
+
 	/* if we're not pressed, reset the memory field */
 	else
 		ui_memory[code] = 0;
@@ -1454,16 +1458,16 @@ profiler_mark(PROFILER_INPUT);
 		struct InputBitInfo *info;
 		UINT32 vblank = 0;
 		UINT32 value = 0;
-		
+
 		/* first compute the default value for the entire port */
 		for (bitnum = 0, info = &bit_info[portnum][0]; bitnum < MAX_BITS_PER_PORT && info->port; bitnum++, info++)
 			value = (value & ~info->port->mask) | (info->port->default_value & info->port->mask);
-		
+
 		/* now loop back and modify based on the inputs */
 		for (bitnum = 0, info = &bit_info[portnum][0]; bitnum < MAX_BITS_PER_PORT && info->port; bitnum++, info++)
 		{
 			struct InputPort *port = info->port;
-			
+
 			/* handle the VBLANK type */
 			if (port->type == IPT_VBLANK)
 			{
@@ -1472,7 +1476,7 @@ profiler_mark(PROFILER_INPUT);
 				if (Machine->drv->vblank_duration == 0)
 					logerror("Warning: you are using IPT_VBLANK with vblank_duration = 0. You need to increase vblank_duration for IPT_VBLANK to work.\n");
 			}
-			
+
 			/* handle non-analog types, but only when the UI isn't visible */
 			else if (!IS_ANALOG(port) && !ui_visible)
 			{
@@ -1494,7 +1498,7 @@ profiler_mark(PROFILER_INPUT);
 						if (info->last == 0)
 							info->impulse = port->impulse;
 					}
-					
+
 					/* if this is a downward press and we're a toggle control, toggle the value */
 					else if (port->toggle)
 					{
@@ -1504,7 +1508,7 @@ profiler_mark(PROFILER_INPUT);
 							value ^= port->mask;
 						}
 					}
-					
+
 					/* if this is a digital joystick type, apply either standard or 4-way rules */
 					else if (IS_DIGITAL_JOYSTICK(port))
 					{
@@ -1513,11 +1517,11 @@ profiler_mark(PROFILER_INPUT);
 						if ((mask >> JOYSTICK_DIR_FOR_PORT(port)) & 1)
 							value ^= port->mask;
 					}
-					
+
 					/* otherwise, just set it raw */
 					else
 						value ^= port->mask;
-					
+
 					/* track the last value */
 					info->last = 1;
 				}
@@ -1532,10 +1536,10 @@ profiler_mark(PROFILER_INPUT);
 					value ^= port->mask;
 				}
 			}
-			
+
 			/* note that analog ports are handled instantaneously at port read time */
 		}
-			
+
 		/* update the value and VBLANK */
 		input_port_value[portnum] = value;
 		input_port_vblank[portnum] = vblank;
@@ -1597,7 +1601,7 @@ profiler_mark(PROFILER_END);
 static void update_digital_joysticks(void)
 {
 	int player, joyindex;
-	
+
 	/* loop over all the joysticks */
 	for (player = 0; player < MAX_PLAYERS; player++)
 		for (joyindex = 0; joyindex < DIGITAL_JOYSTICKS_PER_PLAYER; joyindex++)
@@ -1607,7 +1611,7 @@ static void update_digital_joysticks(void)
 			{
 				info->previous = info->current;
 				info->current = 0;
-				
+
 				/* read all the associated ports */
 				if (info->port[JOYDIR_UP] != NULL && seq_pressed(input_port_seq(info->port[JOYDIR_UP], SEQ_TYPE_STANDARD)))
 					info->current |= JOYDIR_UP_BIT;
@@ -1617,13 +1621,13 @@ static void update_digital_joysticks(void)
 					info->current |= JOYDIR_LEFT_BIT;
 				if (info->port[JOYDIR_RIGHT] != NULL && seq_pressed(input_port_seq(info->port[JOYDIR_RIGHT], SEQ_TYPE_STANDARD)))
 					info->current |= JOYDIR_RIGHT_BIT;
-				
+
 				/* lock out opposing directions (left + right or up + down) */
 				if ((info->current & (JOYDIR_UP_BIT | JOYDIR_DOWN_BIT)) == (JOYDIR_UP_BIT | JOYDIR_DOWN_BIT))
 					info->current &= ~(JOYDIR_UP_BIT | JOYDIR_DOWN_BIT);
 				if ((info->current & (JOYDIR_LEFT_BIT | JOYDIR_RIGHT_BIT)) == (JOYDIR_LEFT_BIT | JOYDIR_RIGHT_BIT))
 					info->current &= ~(JOYDIR_LEFT_BIT | JOYDIR_RIGHT_BIT);
-				
+
 				/* only update 4-way case if joystick has moved */
 				if (info->current != info->previous)
 				{
@@ -1696,7 +1700,7 @@ INLINE INT32 apply_analog_min_max(const struct AnalogPortInfo *info, INT32 value
 		else if (value < adjmin)
 			value = adjmin;
 	}
-	
+
 	/* for relative devices, wrap around when we go past the edge */
 	else
 	{
@@ -1726,13 +1730,13 @@ static void update_analog_port(int portnum)
 		struct InputPort *port = info->port;
 		INT32 delta = 0, rawvalue;
 		int analog_type, keypressed = 0;
-			
+
 		/* clamp the previous value to the min/max range and remember it */
 		info->previous = info->accum = apply_analog_min_max(info, info->accum);
 
 		/* get the new raw analog value and its type */
 		rawvalue = seq_analog_value(input_port_seq(port, SEQ_TYPE_STANDARD), &analog_type);
-		
+
 		/* if we got it from a relative device, use that as the starting delta */
 		/* also note that the last input was not a digital one */
 		if (analog_type == ANALOG_TYPE_RELATIVE && rawvalue != 0)
@@ -1740,7 +1744,7 @@ static void update_analog_port(int portnum)
 			delta = rawvalue;
 			info->lastdigital = 0;
 		}
-		
+
 		/* if the decrement code sequence is pressed, add the key delta to */
 		/* the accumulated delta; also note that the last input was a digital one */
 		if (seq_pressed(input_port_seq(info->port, SEQ_TYPE_DECREMENT)))
@@ -1748,14 +1752,14 @@ static void update_analog_port(int portnum)
 			delta -= (INT32)(port->analog.delta * info->keyscale);
 			keypressed = info->lastdigital = 1;
 		}
-		
+
 		/* same for the increment code sequence */
 		if (seq_pressed(input_port_seq(info->port, SEQ_TYPE_INCREMENT)))
 		{
 			delta += (INT32)(port->analog.delta * info->keyscale);
 			keypressed = info->lastdigital = 1;
 		}
-		
+
 		/* if resetting is requested, clear the accumulated position to 0 before */
 		/* applying the deltas so that we only return this frame's delta */
 		/* note that centering only works for relative controls */
@@ -1774,7 +1778,7 @@ static void update_analog_port(int portnum)
 			info->accum = APPLY_INVERSE_SENSITIVITY(rawvalue, port->analog.sensitivity);
 			info->lastdigital = 0;
 		}
-		
+
 		/* if our last movement was due to a digital input, and if this control */
 		/* type autocenters, and if neither the increment nor the decrement seq */
 		/* was pressed, apply autocentering */
@@ -1810,7 +1814,7 @@ static void update_analog_port(int portnum)
 static void interpolate_analog_port(int port)
 {
 	struct AnalogPortInfo *info;
-	
+
 profiler_mark(PROFILER_INPUT);
 
 	/* loop over all analog ports in this port number */
@@ -1824,13 +1828,17 @@ profiler_mark(PROFILER_INPUT);
 			current = info->previous + cpu_scalebyfcount(info->accum - info->previous);
 		else
 			current = info->accum;
-		
+
 		/* apply the min/max and then the sensitivity */
 		current = apply_analog_min_max(info, current);
 		current = APPLY_SENSITIVITY(current, info->port->analog.sensitivity);
 
-		/* apply reversal */
-		if (!info->port->analog.reverse ^ !info->reverse)
+		/* apply special reversal rules for pedals */
+		if (info->pedal)
+			current = !info->port->analog.reverse ? (info->maximum - current) : (-info->minimum + current);
+
+		/* apply standard reversal rules for everything else */
+		else if (info->port->analog.reverse)
 			current = -current;
 
 		/* map differently for positive and negative values */
@@ -1875,7 +1883,7 @@ UINT32 readinputportbytag(const char *tag)
 	if (port != -1)
 		return readinputport(port);
 
-	/* otherwise fail horribly */	
+	/* otherwise fail horribly */
 	osd_die("Unable to locate input port '%s'", tag);
 	return -1;
 }

@@ -150,14 +150,14 @@ REF. 970429
 #include "machine/eeprom.h"
 
 
-#define ENABLE_SOUND	0
-#define SOUND_CHANNELS	3
+#define SOUND_CHANNELS	4
 
 
 static data32_t *adsp_ram_base;
 static data16_t *m68k_ram_base;
 static data16_t *tms_comm_base;
 static data16_t sound_data;
+static data8_t sound_status;
 static offs_t tms_offset_xor;
 static data8_t analog_ports[4];
 static data8_t framenum;
@@ -202,10 +202,6 @@ static void init_machine_common(void)
 	
 	cpu_setbank(1, &src[0x0000]);
 
-#if (!ENABLE_SOUND)
-	cpunum_suspend(2, SUSPEND_REASON_DISABLE, 1);
-#endif
-	
 	/* keep the TMS32031 halted until the code is ready to go */
 	cpunum_set_input_line(1, INPUT_LINE_RESET, ASSERT_LINE);
 }
@@ -344,6 +340,23 @@ static READ16_HANDLER( sound_data_r )
 	logerror("sound_data_r(%02X)\n", sound_data);
 	cpunum_set_input_line(2, ADSP2115_IRQ2, CLEAR_LINE);
 	return sound_data;
+}
+
+
+static READ16_HANDLER( sound_status_r )
+{
+	logerror("%06X:sound_status_r(%02X) = %02X\n", activecpu_get_pc(), offset, sound_status);
+	if (!(mem_mask & 0xff))
+		return sound_status;
+	return 0xffff;
+}
+static READ32_HANDLER( sound_status_020_r ) { if ((mem_mask & 0x0000ffff) != 0x0000ffff) return sound_status_r(offset, mem_mask); return ~0; }
+
+
+static WRITE16_HANDLER( sound_status_w )
+{
+	logerror("sound_status_w(%02X)\n", sound_data);
+	sound_status = data;
 }
 
 
@@ -578,7 +591,7 @@ static void adsp_autobuffer_irq(int state)
 	reg += adsp_size;
 
 	/* check for wrapping */
-//	if (reg >= adsp_ireg_base + adsp_size)
+	if (reg >= adsp_ireg_base + adsp_size)
 	{
 		/* reset the base pointer */
 		reg = adsp_ireg_base;
@@ -664,15 +677,6 @@ static void adsp_tx_callback(int port, INT32 data)
  *
  *************************************/
 
-static READ32_HANDLER( unknown_043_r )
-{
-	if (!(mem_mask & 0xff))
-		logerror("%06X:unknown_043_r()\n", activecpu_get_pc());
-	else
-		logerror("%06X:unknown_043_r(%02X) & %08X\n", activecpu_get_pc(), offset, ~mem_mask);
-	return ~0;
-}
-
 static WRITE32_HANDLER( unknown_107_w )
 {
 	/* arbitrary data written */
@@ -744,6 +748,7 @@ static ADDRESS_MAP_START( main_map, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x51001c, 0x51001d) AM_READ(input_port_1_word_r)
 	AM_RANGE(0x51002c, 0x51002d) AM_READ(analog_port_r)
 	AM_RANGE(0x510040, 0x510041) AM_WRITE(sound_data_w)
+	AM_RANGE(0x510042, 0x510043) AM_READ(sound_status_r)
 	AM_RANGE(0x510100, 0x510101) AM_READ(eeprom_data_r)
 	AM_RANGE(0x510100, 0x510101) AM_WRITE(irq_ack_w)
 	AM_RANGE(0x51010a, 0x51010b) AM_WRITENOP		// very noisy when starting a new game
@@ -768,7 +773,7 @@ static ADDRESS_MAP_START( main020_map, ADDRESS_SPACE_PROGRAM, 32 )
 	AM_RANGE(0x51000c, 0x51000f) AM_READ(input_port_0_020_r)
 	AM_RANGE(0x51001c, 0x51001f) AM_READ(input_port_1_020_r)
 	AM_RANGE(0x51002c, 0x51002f) AM_READ(analog_port_020_r)
-	AM_RANGE(0x510040, 0x510043) AM_READ(unknown_043_r)
+	AM_RANGE(0x510040, 0x510043) AM_READ(sound_status_020_r)
 	AM_RANGE(0x510040, 0x510043) AM_WRITE(sound_data_020_w)
 	AM_RANGE(0x510100, 0x510103) AM_READ(eeprom_data_020_r)
 	AM_RANGE(0x510100, 0x510103) AM_WRITE(irq_ack_020_w)
@@ -804,7 +809,7 @@ ADDRESS_MAP_END
 static ADDRESS_MAP_START( adsp_data_map, ADDRESS_SPACE_DATA, 16 )
 	AM_RANGE(0x0000, 0x0001) AM_WRITE(adsp_rombank_w)
 	AM_RANGE(0x0000, 0x1fff) AM_ROMBANK(1)
-	AM_RANGE(0x2000, 0x2000) AM_READ(sound_data_r)
+	AM_RANGE(0x2000, 0x2000) AM_READWRITE(sound_data_r, sound_status_w)
 	AM_RANGE(0x3800, 0x39ff) AM_RAM	AM_BASE(&adsp_fastram_base)	/* 512 words internal RAM */
 	AM_RANGE(0x3fe0, 0x3fff) AM_WRITE(adsp_control_w) AM_BASE(&adsp_control_regs)
 ADDRESS_MAP_END
@@ -1120,6 +1125,6 @@ static DRIVER_INIT( gaelco3d )
  *
  *************************************/
 
-GAMEX( 1996, speedup,  0,        gaelco3d,  surfplnt, gaelco3d, ROT0, "Gaelco", "Speed Up", GAME_NOT_WORKING | (ENABLE_SOUND ? GAME_IMPERFECT_SOUND : GAME_NO_SOUND) )
-GAMEX( 1997, surfplnt, 0,        gaelco3d,  surfplnt, gaelco3d, ROT0, "Gaelco", "Surf Planet", GAME_IMPERFECT_GRAPHICS | (ENABLE_SOUND ? GAME_IMPERFECT_SOUND : GAME_NO_SOUND) )
-GAMEX( 1998, radikalb, 0,        gaelco3d2, radikalb, gaelco3d, ROT0, "Gaelco", "Radikal Bikers", GAME_IMPERFECT_GRAPHICS | (ENABLE_SOUND ? GAME_IMPERFECT_SOUND : GAME_NO_SOUND) )
+GAMEX( 1996, speedup,  0,        gaelco3d,  surfplnt, gaelco3d, ROT0, "Gaelco", "Speed Up", GAME_NOT_WORKING )
+GAMEX( 1997, surfplnt, 0,        gaelco3d,  surfplnt, gaelco3d, ROT0, "Gaelco", "Surf Planet", GAME_IMPERFECT_GRAPHICS )
+GAMEX( 1998, radikalb, 0,        gaelco3d2, radikalb, gaelco3d, ROT0, "Gaelco", "Radikal Bikers", GAME_IMPERFECT_GRAPHICS )

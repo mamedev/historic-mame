@@ -106,6 +106,7 @@ The roms are piggy-backed in the same way.
 ***************************************************************************/
 
 #include "driver.h"
+#include "machine/kaneko16.h"
 #include "machine/random.h"
 #include "vidhrdw/generic.h"
 
@@ -154,106 +155,6 @@ static WRITE16_HANDLER( galpanic_6295_bankswitch_w )
 }
 
 
-static data16_t *galpanib_calc_data;
-
-static struct {
-	UINT16 x1p, y1p, x1s, y1s;
-	UINT16 x2p, y2p, x2s, y2s;
-
-	INT16 x12, y12, x21, y21;
-
-	UINT16 mult_a, mult_b;
-} hit;
-
-static READ16_HANDLER(galpanib_calc_r)
-{
-	UINT16 data = 0;
-
-	switch (offset)
-	{
-		case 0x00 >> 1:	// watchdog
-			return watchdog_reset_r(0);
-
-		case 0x04 >> 1:
-			/* This is similar to the hit detection from SuperNova, but much simpler */
-
-			// X Absolute Collision
-			if      (hit.x1p >  hit.x2p)	data |= 0x0200;
-			else if (hit.x1p == hit.x2p)	data |= 0x0400;
-			else if (hit.x1p <  hit.x2p)	data |= 0x0800;
-
-			// Y Absolute Collision
-			if      (hit.y1p >  hit.y2p)	data |= 0x2000;
-			else if (hit.y1p == hit.y2p)	data |= 0x4000;
-			else if (hit.y1p <  hit.y2p)	data |= 0x8000;
-
-			// XY Overlap Collision
-			hit.x12 = (hit.x1p) - (hit.x2p + hit.x2s);
-			hit.y12 = (hit.y1p) - (hit.y2p + hit.y2s);
-			hit.x21 = (hit.x1p + hit.x1s) - (hit.x2p);
-			hit.y21 = (hit.y1p + hit.y1s) - (hit.y2p);
-
-			if ((hit.x12 < 0) && (hit.y12 < 0) &&
-				(hit.x21 >= 0) && (hit.y21 >= 0))
-					data |= 0x0001;
-
-			return data;
-
-		case 0x10 >> 1:
-			return (((UINT32)hit.mult_a * (UINT32)hit.mult_b) >> 16);
-		case 0x12 >> 1:
-			return (((UINT32)hit.mult_a * (UINT32)hit.mult_b) & 0xffff);
-
-		case 0x14 >> 1:
-			return (mame_rand() & 0xffff);
-
-		default:
-			logerror("CPU #0 PC %06x: warning - read unmapped calc address %06x\n",activecpu_get_pc(),offset<<1);
-	}
-
-	return 0;
-}
-
-static WRITE16_HANDLER(galpanib_calc_w)
-{
-	switch (offset)
-	{
-		// p is position, s is size
-		case 0x00 >> 1:
-			hit.x1p = data;
-			break;
-		case 0x02 >> 1:
-			hit.x1s = data;
-			break;
-		case 0x04 >> 1:
-			hit.y1p = data;
-			break;
-		case 0x06 >> 1:
-			hit.y1s = data;
-			break;
-		case 0x08 >> 1:
-			hit.x2p = data;
-			break;
-		case 0x0a >> 1:
-			hit.x2s = data;
-			break;
-		case 0x0c >> 1:
-			hit.y2p = data;
-			break;
-		case 0x0e >> 1:
-			hit.y2s = data;
-			break;
-		case 0x10 >> 1:
-			hit.mult_a = data;
-			break;
-		case 0x12 >> 1:
-			hit.mult_b = data;
-			break;
-		default:
-			logerror("CPU #0 PC %06x: warning - write unmapped hit address %06x\n",activecpu_get_pc(),offset<<1);
-	}
-}
-
 static WRITE16_HANDLER( galpanic_bgvideoram_mirror_w )
 {
 	int i;
@@ -264,25 +165,16 @@ static WRITE16_HANDLER( galpanic_bgvideoram_mirror_w )
 	}
 }
 
-static ADDRESS_MAP_START( galpanic_readmem, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x000000, 0x3fffff) AM_READ(MRA16_ROM)
-	AM_RANGE(0x400000, 0x400001) AM_READ(OKIM6295_status_0_lsb_r)
-	AM_RANGE(0x500000, 0x51ffff) AM_READ(MRA16_RAM)
-	AM_RANGE(0x520000, 0x53ffff) AM_READ(MRA16_RAM)
-	AM_RANGE(0x600000, 0x6007ff) AM_READ(MRA16_RAM)
-	AM_RANGE(0x700000, 0x7047ff) AM_READ(MRA16_RAM)
+static ADDRESS_MAP_START( galpanic, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x3fffff) AM_ROM
+	AM_RANGE(0x400000, 0x400001) AM_READWRITE(OKIM6295_status_0_lsb_r,OKIM6295_data_0_lsb_w)
+	AM_RANGE(0x500000, 0x51ffff) AM_RAM AM_BASE(&galpanic_fgvideoram) AM_SIZE(&galpanic_fgvideoram_size)
+	AM_RANGE(0x520000, 0x53ffff) AM_READWRITE(MRA16_RAM,galpanic_bgvideoram_w) AM_BASE(&galpanic_bgvideoram)	/* + work RAM */
+	AM_RANGE(0x600000, 0x6007ff) AM_READWRITE(MRA16_RAM,galpanic_paletteram_w) AM_BASE(&paletteram16)	/* 1024 colors, but only 512 seem to be used */
+	AM_RANGE(0x700000, 0x7047ff) AM_RAM AM_BASE(&spriteram16) AM_SIZE(&spriteram_size)
 	AM_RANGE(0x800000, 0x800001) AM_READ(input_port_0_word_r)
 	AM_RANGE(0x800002, 0x800003) AM_READ(input_port_1_word_r)
 	AM_RANGE(0x800004, 0x800005) AM_READ(input_port_2_word_r)
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( galpanic_writemem, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x000000, 0x3fffff) AM_WRITE(MWA16_ROM)
-	AM_RANGE(0x400000, 0x400001) AM_WRITE(OKIM6295_data_0_lsb_w)
-	AM_RANGE(0x500000, 0x51ffff) AM_WRITE(MWA16_RAM) AM_BASE(&galpanic_fgvideoram) AM_SIZE(&galpanic_fgvideoram_size)
-	AM_RANGE(0x520000, 0x53ffff) AM_WRITE(galpanic_bgvideoram_w) AM_BASE(&galpanic_bgvideoram)	/* + work RAM */
-	AM_RANGE(0x600000, 0x6007ff) AM_WRITE(galpanic_paletteram_w) AM_BASE(&paletteram16)	/* 1024 colors, but only 512 seem to be used */
-	AM_RANGE(0x700000, 0x7047ff) AM_WRITE(MWA16_RAM) AM_BASE(&spriteram16) AM_SIZE(&spriteram_size)
 	AM_RANGE(0x900000, 0x900001) AM_WRITE(galpanic_6295_bankswitch_w)
 	AM_RANGE(0xa00000, 0xa00001) AM_WRITE(MWA16_NOP)	/* ??? */
 	AM_RANGE(0xb00000, 0xb00001) AM_WRITE(MWA16_NOP)	/* ??? */
@@ -290,64 +182,42 @@ static ADDRESS_MAP_START( galpanic_writemem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0xd00000, 0xd00001) AM_WRITE(MWA16_NOP)	/* ??? */
 ADDRESS_MAP_END
 
-static ADDRESS_MAP_START( galpanib_readmem, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x000000, 0x3fffff) AM_READ(MRA16_ROM)
-	AM_RANGE(0x400000, 0x400001) AM_READ(OKIM6295_status_0_lsb_r)
-	AM_RANGE(0x500000, 0x51ffff) AM_READ(MRA16_RAM)
-	AM_RANGE(0x520000, 0x53ffff) AM_READ(MRA16_RAM)
-	AM_RANGE(0x600000, 0x6007ff) AM_READ(MRA16_RAM)
-	AM_RANGE(0x700000, 0x7047ff) AM_READ(MRA16_RAM)
+static ADDRESS_MAP_START( galpanib, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x3fffff) AM_ROM
+	AM_RANGE(0x400000, 0x400001) AM_READWRITE(OKIM6295_status_0_lsb_r,OKIM6295_data_0_lsb_w)
+	AM_RANGE(0x500000, 0x51ffff) AM_RAM AM_BASE(&galpanic_fgvideoram) AM_SIZE(&galpanic_fgvideoram_size)
+	AM_RANGE(0x520000, 0x53ffff) AM_READWRITE(MRA16_RAM,galpanic_bgvideoram_w) AM_BASE(&galpanic_bgvideoram)	/* + work RAM */
+	AM_RANGE(0x600000, 0x6007ff) AM_READWRITE(MRA16_RAM,galpanic_paletteram_w) AM_BASE(&paletteram16)	/* 1024 colors, but only 512 seem to be used */
+	AM_RANGE(0x700000, 0x7047ff) AM_RAM AM_BASE(&spriteram16) AM_SIZE(&spriteram_size)
 	AM_RANGE(0x800000, 0x800001) AM_READ(input_port_0_word_r)
 	AM_RANGE(0x800002, 0x800003) AM_READ(input_port_1_word_r)
 	AM_RANGE(0x800004, 0x800005) AM_READ(input_port_2_word_r)
-	AM_RANGE(0xe00000, 0xe00015) AM_READ(galpanib_calc_r)
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( galpanib_writemem, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x000000, 0x3fffff) AM_WRITE(MWA16_ROM)
-	AM_RANGE(0x400000, 0x400001) AM_WRITE(OKIM6295_data_0_lsb_w)
-	AM_RANGE(0x500000, 0x51ffff) AM_WRITE(MWA16_RAM) AM_BASE(&galpanic_fgvideoram) AM_SIZE(&galpanic_fgvideoram_size)
-	AM_RANGE(0x520000, 0x53ffff) AM_WRITE(galpanic_bgvideoram_w) AM_BASE(&galpanic_bgvideoram)	/* + work RAM */
-	AM_RANGE(0x600000, 0x6007ff) AM_WRITE(galpanic_paletteram_w) AM_BASE(&paletteram16)	/* 1024 colors, but only 512 seem to be used */
-	AM_RANGE(0x700000, 0x7047ff) AM_WRITE(MWA16_RAM) AM_BASE(&spriteram16) AM_SIZE(&spriteram_size)
 	AM_RANGE(0x900000, 0x900001) AM_WRITE(galpanic_6295_bankswitch_w)
 	AM_RANGE(0xa00000, 0xa00001) AM_WRITE(MWA16_NOP)	/* ??? */
 	AM_RANGE(0xb00000, 0xb00001) AM_WRITE(MWA16_NOP)	/* ??? */
 	AM_RANGE(0xc00000, 0xc00001) AM_WRITE(MWA16_NOP)	/* ??? */
 	AM_RANGE(0xd00000, 0xd00001) AM_WRITE(MWA16_NOP)	/* ??? */
-	AM_RANGE(0xe00000, 0xe00015) AM_WRITE(galpanib_calc_w) AM_BASE(&galpanib_calc_data)
+	AM_RANGE(0xe00000, 0xe00015) AM_READWRITE(galpanib_calc_r,galpanib_calc_w)
 ADDRESS_MAP_END
 
-static ADDRESS_MAP_START( galpania_readmem, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x000000, 0x3fffff) AM_READ(MRA16_ROM)
-	AM_RANGE(0x400000, 0x400001) AM_READ(OKIM6295_status_0_lsb_r )
-	AM_RANGE(0x500000, 0x51ffff) AM_READ(MRA16_RAM)
-	AM_RANGE(0x520000, 0x53ffff) AM_READ(MRA16_RAM)
-	AM_RANGE(0x580000, 0x583fff) AM_READ(MRA16_RAM)
-	AM_RANGE(0x600000, 0x600fff) AM_READ(MRA16_RAM)
-	AM_RANGE(0x700000, 0x700fff) AM_READ(MRA16_RAM)
-	AM_RANGE(0x800000, 0x800001) AM_READ(input_port_0_word_r)
-	AM_RANGE(0x800002, 0x800003) AM_READ(input_port_1_word_r)
-	AM_RANGE(0x800004, 0x800005) AM_READ(input_port_2_word_r)
-	AM_RANGE(0xc80000, 0xc8ffff) AM_READ(MRA16_RAM)
-	AM_RANGE(0xe00000, 0xe00015) AM_READ(galpanib_calc_r)
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( galpania_writemem, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x000000, 0x3fffff) AM_WRITE(MWA16_ROM)
-	AM_RANGE(0x400000, 0x400001) AM_WRITE(OKIM6295_data_0_lsb_w)
-	AM_RANGE(0x500000, 0x51ffff) AM_WRITE(MWA16_RAM) AM_BASE(&galpanic_fgvideoram) AM_SIZE(&galpanic_fgvideoram_size)
-	AM_RANGE(0x520000, 0x53ffff) AM_WRITE(galpanic_bgvideoram_w) AM_BASE(&galpanic_bgvideoram )	/* + work RAM */
-	AM_RANGE(0x580000, 0x583fff) AM_WRITE(MWA16_RAM) /* another tilemap? */
-	AM_RANGE(0x600000, 0x600fff) AM_WRITE(galpanic_paletteram_w) AM_BASE(&paletteram16)	/* 1024 colors, but only 512 seem to be used */
-	AM_RANGE(0x700000, 0x700fff) AM_WRITE(MWA16_RAM) AM_BASE(&spriteram16) AM_SIZE(&spriteram_size)
-	AM_RANGE(0x900000, 0x900001) AM_WRITE(galpanic_6295_bankswitch_w)
-	AM_RANGE(0xa00000, 0xa00001) AM_WRITE(MWA16_NOP)	/* ??? */
-	AM_RANGE(0xc80000, 0xc8ffff) AM_WRITE(MWA16_RAM) /* work RAM */
-	AM_RANGE(0x780000, 0x78001f) AM_WRITE(MWA16_NOP)	/* ??? */
+static ADDRESS_MAP_START( galpania, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x3fffff) AM_ROM
+	AM_RANGE(0x400000, 0x400001) AM_READWRITE(OKIM6295_status_0_lsb_r,OKIM6295_data_0_lsb_w)
+	AM_RANGE(0x500000, 0x51ffff) AM_RAM AM_BASE(&galpanic_fgvideoram) AM_SIZE(&galpanic_fgvideoram_size)
+	AM_RANGE(0x520000, 0x53ffff) AM_READWRITE(MRA16_RAM,galpanic_bgvideoram_w) AM_BASE(&galpanic_bgvideoram )	/* + work RAM */
+	AM_RANGE(0x580000, 0x583fff) AM_RAM	/* another tilemap? */
+	AM_RANGE(0x600000, 0x600fff) AM_READWRITE(MRA16_RAM,galpanic_paletteram_w) AM_BASE(&paletteram16)	/* 1024 colors, but only 512 seem to be used */
 	AM_RANGE(0x680000, 0x68001f) AM_WRITE(MWA16_NOP)	/* ??? */
+	AM_RANGE(0x700000, 0x700fff) AM_RAM AM_BASE(&spriteram16) AM_SIZE(&spriteram_size)
+	AM_RANGE(0x780000, 0x78001f) AM_WRITE(MWA16_NOP)	/* ??? */
+	AM_RANGE(0x800000, 0x800001) AM_READ(input_port_0_word_r)
+	AM_RANGE(0x800002, 0x800003) AM_READ(input_port_1_word_r)
+	AM_RANGE(0x800004, 0x800005) AM_READ(input_port_2_word_r)
+	AM_RANGE(0x900000, 0x900001) AM_WRITE(galpanic_6295_bankswitch_w)
+	AM_RANGE(0xa00000, 0xa00001) AM_WRITE(MWA16_NOP)	/* ??? */
+	AM_RANGE(0xc80000, 0xc8ffff) AM_RAM	/* work RAM */
 	AM_RANGE(0xd80000, 0xd80001) AM_WRITE(MWA16_NOP)	/* ??? */
-	AM_RANGE(0xe00000, 0xe00015) AM_WRITE(galpanib_calc_w)
+	AM_RANGE(0xe00000, 0xe00015) AM_READWRITE(galpanib_calc_r,galpanib_calc_w)
 	AM_RANGE(0xe80000, 0xe80001) AM_WRITE(MWA16_NOP)	/* ??? */
 ADDRESS_MAP_END
 
@@ -898,7 +768,7 @@ static MACHINE_DRIVER_START( galpanic )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD_TAG("main", M68000, 8000000)
-	MDRV_CPU_PROGRAM_MAP(galpanic_readmem,galpanic_writemem)
+	MDRV_CPU_PROGRAM_MAP(galpanic,0)
 	MDRV_CPU_VBLANK_INT(galpanic_interrupt,2)
 
 	MDRV_FRAMES_PER_SECOND(60)
@@ -926,7 +796,7 @@ static MACHINE_DRIVER_START( galpanib )
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(galpanic)
 	MDRV_CPU_REPLACE("main", M68000, 10000000)
-	MDRV_CPU_PROGRAM_MAP(galpanib_readmem,galpanib_writemem)
+	MDRV_CPU_PROGRAM_MAP(galpanib,0)
 
 	/* arm watchdog */
 	MDRV_MACHINE_INIT(galpanib)
@@ -937,7 +807,7 @@ static MACHINE_DRIVER_START( galpania )
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(galpanic)
 	MDRV_CPU_REPLACE("main", M68000, 10000000)
-	MDRV_CPU_PROGRAM_MAP(galpania_readmem,galpania_writemem)
+	MDRV_CPU_PROGRAM_MAP(galpania,0)
 
 	/* arm watchdog */
 	MDRV_MACHINE_INIT(galpanib)

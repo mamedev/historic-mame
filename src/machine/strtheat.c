@@ -20,11 +20,6 @@ plaintext version of the roms produces things like 30 second long coinup sounds.
 
 #include "driver.h"
 
-/*void machine_init_pacman(void);*/
-
-static int counter=0;
-
-
 static void strtheat_decrypt_rom_8(void)
 {
 	int oldbyte,inverted_oldbyte,newbyte;
@@ -56,10 +51,7 @@ static void strtheat_decrypt_rom_8(void)
 
 		RAM[mem + 0x10000] = newbyte;
 	}
-
-	return;
 }
-
 
 static void strtheat_decrypt_rom_9(void)
 {
@@ -84,20 +76,13 @@ static void strtheat_decrypt_rom_9(void)
 		newbyte |= (inverted_oldbyte & 0x40) << 0;
 		newbyte |= (inverted_oldbyte & 0x20) >> 5;
 		newbyte |= (inverted_oldbyte & 0x10) << 1;
-
 		newbyte |= (inverted_oldbyte & 0x08) << 0;
 		newbyte |= (inverted_oldbyte & 0x04) >> 1;
 		newbyte |= (inverted_oldbyte & 0x02) << 3;
 		newbyte |= (oldbyte & 0x01) << 7;
 
-
-
-
-
 		RAM[mem + 0x14000] = newbyte;
 	}
-
-	return;
 }
 
 static void strtheat_decrypt_rom_A(void)
@@ -118,28 +103,18 @@ static void strtheat_decrypt_rom_A(void)
 			PAL10H8 driven by the counter. */
 		newbyte = 0;
 
-
 		/* DAHF bGcE   dis B   */
-
-
-
 		newbyte  = (inverted_oldbyte & 0x80) >> 3;
 		newbyte |= (inverted_oldbyte & 0x40) << 1;
 		newbyte |= (inverted_oldbyte & 0x20) >> 5;
 		newbyte |= (inverted_oldbyte & 0x10) >> 2;
-
 		newbyte |= (oldbyte & 0x08) << 3;
 		newbyte |= (inverted_oldbyte & 0x04) >> 1;
 		newbyte |= (oldbyte & 0x02) << 4;
 		newbyte |= (inverted_oldbyte & 0x01) << 3;
 
-
 		RAM[mem + 0x18000] = newbyte;
-
-
 	}
-
-	return;
 }
 
 static void strtheat_decrypt_rom_B(void)
@@ -160,7 +135,7 @@ static void strtheat_decrypt_rom_B(void)
 			PAL10H8 driven by the counter. */
 		newbyte = 0;
 
-			/*  a  ascii fAHCbGDE  */
+		/*  a  ascii fAHCbGDE  */
 		newbyte  = (oldbyte & 0x80) >> 5;
 		newbyte |= (inverted_oldbyte & 0x40) << 1;
 		newbyte |= (inverted_oldbyte & 0x20) >> 5;
@@ -170,49 +145,12 @@ static void strtheat_decrypt_rom_B(void)
 		newbyte |= (inverted_oldbyte & 0x02) << 3;
 		newbyte |= (inverted_oldbyte & 0x01) << 3;
 
-
-
 		RAM[mem + 0x1C000] = newbyte;
 	}
-
-	return;
 }
 
-
-READ8_HANDLER( strtheat_decrypt_rom )
+DRIVER_INIT( strtheat )
 {
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-	if (offset & 0x01)
-	{
-		counter = counter - 1;
-		if (counter < 0)
-			counter = 0x0F;
-	}
-	else
-	{
-		counter = (counter + 1) & 0x0F;
-	}
-
-	switch(counter)
-	{
-		case 0x08:	cpu_setbank (1, &RAM[0x10000]);		break;
-		case 0x09:	cpu_setbank (1, &RAM[0x14000]);		break;
-		case 0x0A:	cpu_setbank (1, &RAM[0x18000]);		break;
-		case 0x0B:	cpu_setbank (1, &RAM[0x1C000]);		break;
-		default:
-			logerror("Invalid counter = %02X\n",counter);
-			break;
-	}
-
-	return 0;
-}
-
-
-MACHINE_INIT( strtheat )
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
 	/* While the PAL supports up to 16 decryption methods, only four
 		are actually used in the PAL.  Therefore, we'll take a little
 		memory overhead and decrypt the ROMs using each method in advance. */
@@ -220,17 +158,5 @@ MACHINE_INIT( strtheat )
 	strtheat_decrypt_rom_9();
 	strtheat_decrypt_rom_A();
 	strtheat_decrypt_rom_B();
-
-	/* The initial state of the counter is 0x0B */
-	counter = 0x08;
-	cpu_setbank (1, &RAM[0x10000]);
-
-	/*machine_init_pacman();*/
 }
 
-/*
-WRITE8_HANDLER( strtheat_writeport)
-{
-logerror("Port Write: pc = %4x ############## \n",activecpu_get_pc());
-}
-*/

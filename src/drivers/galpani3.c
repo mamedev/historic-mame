@@ -90,7 +90,64 @@ VIDEO_UPDATE(galpani3)
 	skns_drawsprites (bitmap,cliprect);
 }
 
-INPUT_PORTS_START( galpani3 )
+INPUT_PORTS_START( galpani3 ) /* everything is assumption except IN3 */
+
+	PORT_START	// IN0 - Player Controls
+	PORT_BIT(  0x0100, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_8WAY PORT_PLAYER(1)
+	PORT_BIT(  0x0200, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_8WAY PORT_PLAYER(1)
+	PORT_BIT(  0x0400, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_8WAY PORT_PLAYER(1)
+	PORT_BIT(  0x0800, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_8WAY PORT_PLAYER(1)
+	PORT_BIT(  0x1000, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(1)
+	PORT_BIT(  0x2000, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(1)
+	PORT_BIT(  0x4000, IP_ACTIVE_LOW, IPT_BUTTON3 ) PORT_PLAYER(1)
+	PORT_BIT(  0x8000, IP_ACTIVE_LOW, IPT_BUTTON4 ) PORT_PLAYER(1)
+
+	PORT_START	// IN1 - Player Controls
+	PORT_BIT(  0x0100, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_8WAY PORT_PLAYER(2)
+	PORT_BIT(  0x0200, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_8WAY PORT_PLAYER(2)
+	PORT_BIT(  0x0400, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_8WAY PORT_PLAYER(2)
+	PORT_BIT(  0x0800, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_8WAY PORT_PLAYER(2)
+	PORT_BIT(  0x1000, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(2)
+	PORT_BIT(  0x2000, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(2)
+	PORT_BIT(  0x4000, IP_ACTIVE_LOW, IPT_BUTTON3 ) PORT_PLAYER(2)
+	PORT_BIT(  0x8000, IP_ACTIVE_LOW, IPT_BUTTON4 ) PORT_PLAYER(2)
+
+	PORT_START	// IN2 - Coins
+	PORT_BIT(  0x0100, IP_ACTIVE_LOW, IPT_START1	)
+	PORT_BIT(  0x0200, IP_ACTIVE_LOW, IPT_START2	)
+	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_COIN1 ) PORT_IMPULSE(2)
+	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_COIN2 ) PORT_IMPULSE(2)
+	PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_SERVICE ) PORT_NAME( DEF_STR( Service_Mode )) PORT_CODE(KEYCODE_F2)
+	PORT_BIT(  0x2000, IP_ACTIVE_LOW, IPT_TILT		)
+	PORT_BIT(  0x4000, IP_ACTIVE_LOW, IPT_SERVICE1	)
+	PORT_BIT(  0x8000, IP_ACTIVE_LOW, IPT_UNKNOWN	)
+
+	PORT_START	// IN3 - DSW provided by the MCU - $200386.b <- $400200
+	PORT_DIPNAME( 0x0100, 0x0100, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0100, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0200, 0x0200, DEF_STR( Free_Play ) )
+	PORT_DIPSETTING(      0x0200, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0400, 0x0400, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0400, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0800, 0x0800, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0800, DEF_STR( On ) )
+	PORT_DIPNAME( 0x1000, 0x1000, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x1000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x2000, 0x2000, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x2000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x4000, 0x4000, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x4000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x8000, 0x0000, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x8000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+
 INPUT_PORTS_END
 
 
@@ -114,7 +171,120 @@ WRITE16_HANDLER( galpani3_suprnova_sprite32regs_w )
 
 
 
-/* @ $24c8 : 'Gals Panic 3 v0.96 95/08/29(Tue)' */
+/***************************************************************************
+
+							MCU Code Simulation
+				(follows the implementation of kaneko16.c)
+
+***************************************************************************/
+static data16_t *mcu_ram, galpani3_mcu_com[4];
+
+void galpani3_mcu_run(void)
+{
+	data16_t mcu_command = mcu_ram[0x0010/2];
+	data16_t mcu_offset  = mcu_ram[0x0012/2] / 2; // 'param1' where MCU writes result
+	data16_t mcu_data    = mcu_ram[0x0014/2];
+
+	logerror("(PC=%06X): MCU executed command : %04X %04X\n",activecpu_get_pc(),mcu_command,mcu_offset*2);
+
+	/* the only MCU commands found in program code are:
+		 0x04: protection: provide code/data, that's exactly where we are stuck !!!
+		 0x03: read DSW
+		 0x02: load NVRAM settings \ ATMEL AT93C46 chip,
+		 0x42: save NVRAM settings / 128 bytes serial EEPROM
+ 	*/
+	switch (mcu_command >> 8)
+	{
+		case 0x03: // $388D2
+		{
+			/* MCU writes Coins? status */
+			mcu_ram[mcu_offset] = readinputport(3);
+		}
+		break;
+
+		case 0x02: // $38950 - load NVRAM settings
+		{
+			/* NOTE: code @ $38B46 & $38ab8 does exactly what is checked after MCU command
+			         so that's what we'll mimic here... probably the initial NVRAM settings */
+			int i;
+
+			/* MCU writes 128 bytes to shared ram: last byte is the byte-sum */
+			/* first 32 bytes (header): 0x8BE08E71.L, then the string "95/06/30 Gals Panic3Ver 0.95"; */
+			mcu_ram[mcu_offset +  0] = 0x8BE0; mcu_ram[mcu_offset +  1] = 0x8E71;
+			mcu_ram[mcu_offset +  2] = 0x3935; mcu_ram[mcu_offset +  3] = 0x2F30;
+			mcu_ram[mcu_offset +  4] = 0x362F; mcu_ram[mcu_offset +  5] = 0x3330;
+			mcu_ram[mcu_offset +  6] = 0x2047; mcu_ram[mcu_offset +  7] = 0x616C;
+			mcu_ram[mcu_offset +  8] = 0x7320; mcu_ram[mcu_offset +  9] = 0x5061;
+			mcu_ram[mcu_offset + 10] = 0x6E69; mcu_ram[mcu_offset + 11] = 0x6333;
+			mcu_ram[mcu_offset + 12] = 0x5665; mcu_ram[mcu_offset + 13] = 0x7220;
+			mcu_ram[mcu_offset + 14] = 0x302E; mcu_ram[mcu_offset + 15] = 0x3935;
+			/* next 11 bytes - initial NVRAM settings */
+			mcu_ram[mcu_offset + 16] = 0x0001; mcu_ram[mcu_offset + 17] = 0x0101;
+			mcu_ram[mcu_offset + 18] = 0x0100; mcu_ram[mcu_offset + 19] = 0x0208;
+			mcu_ram[mcu_offset + 20] = 0x02FF; mcu_ram[mcu_offset + 21] = 0x0000;
+			/* rest is zeroes */
+			for (i=22;i<63;i++)
+				mcu_ram[mcu_offset + i] = 0;
+			/* and sum is $0c.b */
+			mcu_ram[mcu_offset + 63] = 0x000c;
+		}
+		break;
+
+		case 0x04: // $38842 - provides code/data?
+		{
+			switch(mcu_data)
+			{
+				case 0x00: /* $1a9c - provides code @ $40f000 */
+					break;
+				case 0x01: /* $1aa8 - provides data @ $400400 */
+					break;
+			}
+		}
+		break;
+
+		case 0x42: // $389ee - save NVRAM settings
+		{
+			// found, TODO: trace call in code !!!
+		}
+		break;
+
+		default:
+			logerror("UNKNOWN COMMAND\n");
+	}
+}
+
+/*
+  MCU doesn't execute exactly as it is coded right know (ala jchan):
+   * com0=com1=0xFFFF -> command to execute
+   * com2=com3=0xFFFF -> status reading only
+*/
+#define GALPANI3_MCU_COM_W(_n_) \
+WRITE16_HANDLER( galpani3_mcu_com##_n_##_w ) \
+{ \
+	COMBINE_DATA(&galpani3_mcu_com[_n_]); \
+	if (galpani3_mcu_com[0] != 0xFFFF)	return; \
+	if (galpani3_mcu_com[1] != 0xFFFF)	return; \
+	if (galpani3_mcu_com[2] != 0xFFFF)	return; \
+	if (galpani3_mcu_com[3] != 0xFFFF)	return; \
+\
+	memset(galpani3_mcu_com, 0, 4 * sizeof( data16_t ) ); \
+	galpani3_mcu_run(); \
+}
+
+GALPANI3_MCU_COM_W(0)
+GALPANI3_MCU_COM_W(1)
+GALPANI3_MCU_COM_W(2)
+GALPANI3_MCU_COM_W(3)
+
+READ16_HANDLER( galpani3_mcu_status_r )
+{
+	logerror("cpu #%d (PC=%06X): read mcu status\n", cpu_getactivecpu(), activecpu_get_previouspc());
+	return 0;
+}
+
+
+
+/* NOTE: $24c8 = 'Gals Panic 3 v0.96 95/08/29(Tue)' */
 
 static ADDRESS_MAP_START( galpani3_map, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x000000, 0x0fffff) AM_ROM
@@ -125,11 +295,17 @@ static ADDRESS_MAP_START( galpani3_map, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x300000, 0x303fff) AM_RAM AM_BASE(&galpani3_spriteram) AM_WRITE(galpani3_suprnova_sprite32_w)
 	AM_RANGE(0x380000, 0x38003f) AM_RAM AM_BASE(&galpani3_sprregs) AM_WRITE(galpani3_suprnova_sprite32regs_w)
 
-	AM_RANGE(0x400000, 0x40ffff) AM_RAM // area [C]
+	AM_RANGE(0x400000, 0x40ffff) AM_RAM AM_BASE(&mcu_ram) // area [C]
 
-//	AM_RANGE(0x800C02, 0x800C03) AM_RAM // MCU related ? see subroutine $3a03e
-//	AM_RANGE(0xa00C02, 0xa00C03) AM_RAM // MCU related ? see subroutine $3a03e
-//	AM_RANGE(0xc00C02, 0xc00C03) AM_RAM // MCU related ? see subroutine $3a03e
+	AM_RANGE(0x580000, 0x580001) AM_WRITE(galpani3_mcu_com0_w)	// ] see $387e8: these 2 locations are written (w.#$ffff)
+	AM_RANGE(0x600000, 0x600001) AM_WRITE(galpani3_mcu_com1_w)	// ] then bit #0 of $780000.l is tested: 0 = OK!
+	AM_RANGE(0x680000, 0x680001) AM_WRITE(galpani3_mcu_com2_w)	// ] see $387e8: these 2 locations are written (w.#$ffff)
+	AM_RANGE(0x700000, 0x700001) AM_WRITE(galpani3_mcu_com3_w)	// ] then bit #0 of $780000.l is tested: 0 = OK!
+	AM_RANGE(0x780000, 0x780003) AM_READ(galpani3_mcu_status_r)
+
+//	AM_RANGE(0x800C02, 0x800C03) AM_RAM // ??? see subroutine $3a03e
+//	AM_RANGE(0xa00C02, 0xa00C03) AM_RAM // ??? see subroutine $3a03e
+//	AM_RANGE(0xc00C02, 0xc00C03) AM_RAM // ??? see subroutine $3a03e
 
 	AM_RANGE(0x880000, 0x8801ff) AM_RAM // area [G]
 	AM_RANGE(0x900000, 0x97ffff) AM_RAM // area [D]
@@ -222,5 +398,10 @@ ROM_START( galpani3 )
 	ROM_LOAD16_BYTE( "g3g0j0.101", 0x800000, 0x040000, CRC(fbb1e0dc) SHA1(14f6377afd93054aa5dc38af235ae12b932e847f) )
 	ROM_LOAD16_BYTE( "g3g1j0.100", 0x800001, 0x040000, CRC(18edb5f0) SHA1(5e2ed0105b3e6037f6116494d3b186a368824171) )
 ROM_END
+
+DRIVER_INIT( galpani3 )
+{
+	memset(galpani3_mcu_com, 0, 4 * sizeof( data16_t) );
+}
 
 GAMEX( 1995, galpani3, 0, galpani3, galpani3, 0, ROT90, "Kaneko", "Gals Panic 3", GAME_NOT_WORKING | GAME_NO_SOUND )

@@ -121,7 +121,7 @@ enum
 	V810_res30,
 	V810_res31,
 	
-	V810_PC, 
+	V810_PC
 };
 #endif
 

@@ -40,14 +40,14 @@
 	I/O Write:
 
 	0500-0503 Direction of the cars
-	0504-0507 ???
+	0504-0507 (sounds/enable) - 0506: LED 1
 	0600      Beer Truck Y
 	0700-07ff Beer Truck Sync Area
 	0800-08ff Bullets RAM
 	0900-0903 Car Sprite #
 	0a00-0a03 Car Y Pos
 	0b00-0bff Car Sync Area
-	1000      ??? Sound effect and start led triggers must be here
+	1000      Sound effect and start led triggers must be here - 1000: LED 2
 	1001-1003 ???
 
 ***************************************************************************/
@@ -89,6 +89,32 @@ OVERLAY_END
 
 /*************************************
  *
+ *	LEDs
+ *
+ *************************************/
+
+static UINT8 misc = 0;
+
+static READ8_HANDLER( copsnrob_misc_r )
+{
+	return misc | (readinputport(0) & 0x80);
+}
+
+static WRITE8_HANDLER( copsnrob_misc_w )
+{
+	misc = data & 0x7f;
+	set_led_status(1, ~data & 0x40);
+}
+
+static WRITE8_HANDLER( copsnrob_led_w )
+{
+	set_led_status(0, ~data & 0x01);
+}
+
+
+
+/*************************************
+ *
  *	Main CPU memory handlers
  *
  *************************************/
@@ -97,7 +123,8 @@ static ADDRESS_MAP_START( main_map, ADDRESS_SPACE_PROGRAM, 8 )
 	ADDRESS_MAP_FLAGS( AMEF_ABITS(13) )
 	AM_RANGE(0x0000, 0x01ff) AM_RAM
 	AM_RANGE(0x0500, 0x0503) AM_WRITE(MWA8_RAM)
-	AM_RANGE(0x0504, 0x0507) AM_WRITE(MWA8_NOP)  // ???
+//	AM_RANGE(0x0504, 0x0507) AM_WRITE(MWA8_NOP)  // ???
+	AM_RANGE(0x0506, 0x0506) AM_WRITE(copsnrob_led_w)
 	AM_RANGE(0x0600, 0x0600) AM_WRITE(MWA8_RAM) AM_BASE(&copsnrob_trucky)
 	AM_RANGE(0x0700, 0x07ff) AM_WRITE(MWA8_RAM) AM_BASE(&copsnrob_truckram)
 	AM_RANGE(0x0800, 0x08ff) AM_RAM AM_BASE(&copsnrob_bulletsram)
@@ -105,8 +132,10 @@ static ADDRESS_MAP_START( main_map, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0a00, 0x0a03) AM_WRITE(MWA8_RAM) AM_BASE(&copsnrob_cary)
 	AM_RANGE(0x0b00, 0x0bff) AM_RAM
 	AM_RANGE(0x0c00, 0x0fff) AM_RAM AM_BASE(&videoram) AM_SIZE(&videoram_size)
-	AM_RANGE(0x1000, 0x1003) AM_WRITENOP
-	AM_RANGE(0x1000, 0x1000) AM_READ(input_port_0_r)
+//	AM_RANGE(0x1000, 0x1003) AM_WRITENOP
+//	AM_RANGE(0x1000, 0x1000) AM_READ(input_port_0_r)
+	AM_RANGE(0x1000, 0x1000) AM_READ(copsnrob_misc_r)
+	AM_RANGE(0x1000, 0x1000) AM_WRITE(copsnrob_misc_w)
 	AM_RANGE(0x1002, 0x100e) AM_READ(copsnrob_gun_position_r)
 	AM_RANGE(0x1012, 0x1012) AM_READ(input_port_3_r)
 	AM_RANGE(0x1016, 0x1016) AM_READ(input_port_1_r)

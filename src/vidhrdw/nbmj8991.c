@@ -11,26 +11,25 @@
 #include "nb1413m3.h"
 
 
-static int pstadium_scrollx, pstadium_scrollx1, pstadium_scrollx2;
-static int pstadium_scrolly, pstadium_scrolly1, pstadium_scrolly2;
-static int pstadium_drawx, pstadium_drawx1, pstadium_drawx2;
-static int pstadium_drawy, pstadium_drawy1, pstadium_drawy2;
-static int pstadium_sizex, pstadium_sizey;
-static int pstadium_radrx, pstadium_radry;
-static int pstadium_gfxrom;
-static int pstadium_dispflag;
-static int pstadium_flipscreen;
-static int pstadium_flipx, pstadium_flipy;
-static int pstadium_paltblnum;
-static int pstadium_screen_refresh;
+static int nbmj8991_scrollx, nbmj8991_scrolly;
+static int blitter_destx, blitter_desty;
+static int blitter_sizex, blitter_sizey;
+static int blitter_src_addr;
+static int blitter_direction_x, blitter_direction_y;
+static int nbmj8991_gfxrom;
+static int nbmj8991_dispflag;
+static int nbmj8991_flipscreen;
+static int nbmj8991_clutsel;
+static int nbmj8991_screen_refresh;
 
-static struct mame_bitmap *pstadium_tmpbitmap;
-static unsigned char *pstadium_videoram;
-static unsigned char *pstadium_paltbl;
+static struct mame_bitmap *nbmj8991_tmpbitmap;
+static data8_t *nbmj8991_videoram;
+static data8_t *nbmj8991_clut;
 
 
-static void pstadium_vramflip(void);
-static void pstadium_gfxdraw(void);
+static void nbmj8991_vramflip(void);
+static void nbmj8991_gfxdraw(void);
+static void update_pixel(int x, int y);
 
 
 /******************************************************************************
@@ -38,28 +37,7 @@ static void pstadium_gfxdraw(void);
 
 ******************************************************************************/
 
-WRITE8_HANDLER( pstadium_palette_w )
-{
-	int r, g, b;
-
-	paletteram[offset] = data;
-
-	if (!(offset & 1)) return;
-
-	offset &= 0x1fe;
-
-	r = ((paletteram[offset + 1] & 0x0f) << 4);
-	g = ((paletteram[offset + 0] & 0xf0) << 0);
-	b = ((paletteram[offset + 0] & 0x0f) << 4);
-
-	r = (r | (r >> 4));
-	g = (g | (g >> 4));
-	b = (b | (b >> 4));
-
-	palette_set_color((offset >> 1), r, g, b);
-}
-
-WRITE8_HANDLER( galkoku_palette_w )
+WRITE8_HANDLER( nbmj8991_palette_type1_w )
 {
 	int r, g, b;
 
@@ -80,7 +58,7 @@ WRITE8_HANDLER( galkoku_palette_w )
 	palette_set_color((offset >> 1), r, g, b);
 }
 
-WRITE8_HANDLER( galkaika_palette_w )
+WRITE8_HANDLER( nbmj8991_palette_type2_w )
 {
 	int r, g, b;
 
@@ -101,149 +79,128 @@ WRITE8_HANDLER( galkaika_palette_w )
 	palette_set_color((offset / 2), r, g, b);
 }
 
+WRITE8_HANDLER( nbmj8991_palette_type3_w )
+{
+	int r, g, b;
+
+	paletteram[offset] = data;
+
+	if (!(offset & 1)) return;
+
+	offset &= 0x1fe;
+
+	r = ((paletteram[offset + 1] & 0x0f) << 4);
+	g = ((paletteram[offset + 0] & 0xf0) << 0);
+	b = ((paletteram[offset + 0] & 0x0f) << 4);
+
+	r = (r | (r >> 4));
+	g = (g | (g >> 4));
+	b = (b | (b >> 4));
+
+	palette_set_color((offset >> 1), r, g, b);
+}
+
 /******************************************************************************
 
 
 ******************************************************************************/
-static void pstadium_calc_scrollx(void)
+WRITE8_HANDLER( nbmj8991_blitter_w )
 {
-	pstadium_scrollx = ((((pstadium_scrollx2 + pstadium_scrollx1) ^ 0x1ff) & 0x1ff) << 1);
-}
-
-static void pstadium_calc_scrolly(void)
-{
-	if (pstadium_flipscreen) pstadium_scrolly = (((pstadium_scrolly2 + pstadium_scrolly1 - 0xf0) ^ 0x1ff) & 0x1ff);
-	else pstadium_scrolly = (((pstadium_scrolly2 + pstadium_scrolly1 + 1) - 0x10) & 0x1ff);
-}
-
-static void pstadium_calc_drawx(void)
-{
-	pstadium_drawx = ((pstadium_drawx2 + pstadium_drawx1) ^ 0x1ff) & 0x1ff;
-}
-
-static void pstadium_calc_drawy(void)
-{
-	pstadium_drawy = ((pstadium_drawy2 + pstadium_drawy1) ^ 0x1ff) & 0x1ff;
-}
-
-void pstadium_radrx_w(int data)
-{
-	pstadium_radrx = data;
-}
-
-void pstadium_radry_w(int data)
-{
-	pstadium_radry = data;
-}
-
-void pstadium_sizex_w(int data)
-{
-	pstadium_sizex = data;
-}
-
-void pstadium_sizey_w(int data)
-{
-	pstadium_sizey = data;
-
-	pstadium_gfxdraw();
-}
-
-void pstadium_gfxflag_w(int data)
-{
-	static int pstadium_flipscreen_old = -1;
-
-	pstadium_flipx = (data & 0x01) ? 1 : 0;
-	pstadium_flipy = (data & 0x02) ? 1 : 0;
-	pstadium_flipscreen = (data & 0x04) ? 0 : 1;
-	pstadium_dispflag = (data & 0x10) ? 0 : 1;
-
-	if (pstadium_flipscreen != pstadium_flipscreen_old)
+	switch (offset)
 	{
-		pstadium_vramflip();
-		pstadium_screen_refresh = 1;
-		pstadium_flipscreen_old = pstadium_flipscreen;
+		case 0x00:	blitter_src_addr = (blitter_src_addr & 0xff00) | data; break;
+		case 0x01:	blitter_src_addr = (blitter_src_addr & 0x00ff) | (data << 8); break;
+		case 0x02:	break;
+		case 0x03:	break;
+		case 0x04:	blitter_sizex = data; break;
+		case 0x05:	blitter_sizey = data;
+					/* writing here also starts the blit */
+					nbmj8991_gfxdraw();
+					break;
+		case 0x06:	blitter_direction_x = (data & 0x01) ? 1 : 0;
+					blitter_direction_y = (data & 0x02) ? 1 : 0;
+					nbmj8991_flipscreen = (data & 0x04) ? 0 : 1;
+					nbmj8991_dispflag = (data & 0x10) ? 0 : 1;
+					nbmj8991_vramflip();
+					break;
+		case 0x07:	break;
+		case 0x10:	blitter_destx = (blitter_destx & 0xff00) | data; break;
+		case 0x20:	blitter_desty = (blitter_desty & 0xff00) | data; break;
+		case 0x30:	nbmj8991_scrollx = (nbmj8991_scrollx & 0xff00) | data; break;
+		case 0x40:	nbmj8991_scrolly = (nbmj8991_scrolly & 0xff00) | data; break;
+		case 0x50: 	blitter_destx = (blitter_destx & 0x00ff) | ((data & 0x01) << 8);
+					blitter_desty = (blitter_desty & 0x00ff) | ((data & 0x02) << 7);
+					nbmj8991_scrollx = (nbmj8991_scrollx & 0x00ff) | ((data & 0x04) << 6);
+					nbmj8991_scrolly = (nbmj8991_scrolly & 0x00ff) | ((data & 0x08) << 5);
+					break;
+		case 0x60:	nbmj8991_gfxrom = data; break;
+		case 0x70:	nbmj8991_clutsel = data; break;
 	}
-}
 
-void pstadium_gfxflag2_w(int data)
-{
-	pstadium_drawx2 = (((data & 0x01) >> 0) << 8);
-	pstadium_drawy2 = (((data & 0x02) >> 1) << 8);
-	pstadium_scrollx2 = (((data & 0x04) >> 2) << 8);
-	pstadium_scrolly2 = (((data & 0x08) >> 3) << 8);
-}
-
-void pstadium_drawx_w(int data)
-{
-	pstadium_drawx1 = data;
-}
-
-void pstadium_drawy_w(int data)
-{
-	pstadium_drawy1 = data;
-}
-
-void pstadium_scrollx_w(int data)
-{
-	pstadium_scrollx1 = data;
-}
-
-void pstadium_scrolly_w(int data)
-{
-	pstadium_scrolly1 = data;
-}
-
-void pstadium_romsel_w(int data)
-{
-	pstadium_gfxrom = data;
-
-	if ((0x20000 * pstadium_gfxrom) > (memory_region_length(REGION_GFX1) - 1))
+	if ((0x20000 * nbmj8991_gfxrom) > (memory_region_length(REGION_GFX1) - 1))
 	{
 #ifdef MAME_DEBUG
 		usrintf_showmessage("GFXROM BANK OVER!!");
 #endif
-		pstadium_gfxrom = 0;
+		nbmj8991_gfxrom &= (memory_region_length(REGION_GFX1) / 0x20000 - 1);
 	}
 }
 
-void pstadium_paltblnum_w(int data)
+READ8_HANDLER( nbmj8991_clut_r )
 {
-	pstadium_paltblnum = data;
+	return nbmj8991_clut[offset];
 }
 
-READ8_HANDLER( pstadium_paltbl_r )
+WRITE8_HANDLER( nbmj8991_clut_w )
 {
-	return pstadium_paltbl[offset];
-}
-
-WRITE8_HANDLER( pstadium_paltbl_w )
-{
-	pstadium_paltbl[((pstadium_paltblnum & 0x7f) * 0x10) + (offset & 0x0f)] = data;
+	nbmj8991_clut[((nbmj8991_clutsel & 0x7f) * 0x10) + (offset & 0x0f)] = data;
 }
 
 /******************************************************************************
 
 
 ******************************************************************************/
-static void pstadium_vramflip(void)
+static void nbmj8991_vramflip(void)
 {
+	static int nbmj8991_flipscreen_old = 0;
 	int x, y;
 	unsigned char color1, color2;
 
-	for (y = 0; y < (Machine->drv->screen_height / 2); y++)
-	{
-		for (x = 0; x < Machine->drv->screen_width; x++)
-		{
-			color1 = pstadium_videoram[(y * Machine->drv->screen_width) + x];
-			color2 = pstadium_videoram[((y ^ 0x1ff) * Machine->drv->screen_width) + (x ^ 0x3ff)];
+	if (nbmj8991_flipscreen == nbmj8991_flipscreen_old) return;
 
-			pstadium_videoram[(y * Machine->drv->screen_width) + x] = color2;
-			pstadium_videoram[((y ^ 0x1ff) * Machine->drv->screen_width) + (x ^ 0x3ff)] = color1;
+	for (y = 0; y < Machine->drv->screen_height / 2; y++)
+	{
+		for (x = 0; x < Machine->drv->screen_width / 2; x++)
+		{
+			// rotate 180 degrees (   0,   0) - ( 511, 511)
+			color1 = nbmj8991_videoram[(y * Machine->drv->screen_width) + x];
+			color2 = nbmj8991_videoram[(((Machine->drv->screen_height - 1) - y) * Machine->drv->screen_width) + (((Machine->drv->screen_width / 2) - 1) - x)];
+			nbmj8991_videoram[(y * Machine->drv->screen_width) + x] = color2;
+			nbmj8991_videoram[(((Machine->drv->screen_height - 1) - y) * Machine->drv->screen_width) + (((Machine->drv->screen_width / 2) - 1) - x)] = color1;
+			// rotate 180 degrees ( 512,   0) - (1023, 511)
+			color1 = nbmj8991_videoram[(y * Machine->drv->screen_width) + (x + (Machine->drv->screen_width / 2))];
+			color2 = nbmj8991_videoram[(((Machine->drv->screen_height - 1) - y) * Machine->drv->screen_width) + ((((Machine->drv->screen_width / 2) - 1) - x) + (Machine->drv->screen_width / 2))];
+			nbmj8991_videoram[(y * Machine->drv->screen_width) + (x + (Machine->drv->screen_width / 2))] = color2;
+			nbmj8991_videoram[(((Machine->drv->screen_height - 1) - y) * Machine->drv->screen_width) + ((((Machine->drv->screen_width / 2) - 1) - x) + (Machine->drv->screen_width / 2))] = color1;
 		}
 	}
+
+	nbmj8991_flipscreen_old = nbmj8991_flipscreen;
+	nbmj8991_screen_refresh = 1;
 }
 
-static void pstadium_gfxdraw(void)
+static void update_pixel(int x, int y)
+{
+	UINT8 color = nbmj8991_videoram[(y * Machine->drv->screen_width) + x];
+	plot_pixel(nbmj8991_tmpbitmap, x, y, Machine->pens[color]);
+}
+
+static void blitter_timer_callback(int param)
+{
+	nb1413m3_busyflag = 1;
+}
+
+static void nbmj8991_gfxdraw(void)
 {
 	unsigned char *GFX = memory_region(REGION_GFX1);
 
@@ -253,149 +210,145 @@ static void pstadium_gfxdraw(void)
 	int sizex, sizey;
 	int skipx, skipy;
 	int ctrx, ctry;
-	int tflag1, tflag2;
 	unsigned char color, color1, color2;
-	unsigned char drawcolor1, drawcolor2;
 	int gfxaddr;
 
-	pstadium_calc_drawx();
-	pstadium_calc_drawy();
+	nb1413m3_busyctr = 0;
 
-	if (pstadium_flipx)
+	if (blitter_direction_x)
 	{
-		pstadium_drawx -= pstadium_sizex;
-		startx = pstadium_sizex;
-		sizex = ((pstadium_sizex ^ 0xff) + 1);
-		skipx = -1;
-	}
-	else
-	{
-		pstadium_drawx = (pstadium_drawx - pstadium_sizex);
-		startx = 0;
-		sizex = (pstadium_sizex + 1);
+		startx = blitter_destx;
+		sizex = blitter_sizex ^ 0xff;
 		skipx = 1;
 	}
-
-	if (pstadium_flipy)
+	else
 	{
-		pstadium_drawy -= (pstadium_sizey + 1);
-		starty = pstadium_sizey;
-		sizey = ((pstadium_sizey ^ 0xff) + 1);
-		skipy = -1;
+		startx = blitter_destx + blitter_sizex;
+		sizex = blitter_sizex;
+		skipx = -1;
+	}
+
+	if (blitter_direction_y)
+	{
+		starty = blitter_desty;
+		sizey = blitter_sizey ^ 0xff;
+		skipy = 1;
 	}
 	else
 	{
-		pstadium_drawy = (pstadium_drawy - pstadium_sizey - 1);
-		starty = 0;
-		sizey = (pstadium_sizey + 1);
-		skipy = 1;
+		starty = blitter_desty + blitter_sizey;
+		sizey = blitter_sizey;
+		skipy = -1;
 	}
 
-	gfxaddr = ((pstadium_gfxrom << 17) + (pstadium_radry << 9) + (pstadium_radrx << 1));
+	gfxaddr = (nbmj8991_gfxrom << 17) + (blitter_src_addr << 1);
 
-	for (y = starty, ctry = sizey; ctry > 0; y += skipy, ctry--)
+	for (y = starty, ctry = sizey; ctry >= 0; y += skipy, ctry--)
 	{
-		for (x = startx, ctrx = sizex; ctrx > 0; x += skipx, ctrx--)
+		for (x = startx, ctrx = sizex; ctrx >= 0; x += skipx, ctrx--)
 		{
 			if ((gfxaddr > (memory_region_length(REGION_GFX1) - 1)))
 			{
 #ifdef MAME_DEBUG
 				usrintf_showmessage("GFXROM ADDRESS OVER!!");
 #endif
-				gfxaddr = 0;
+				gfxaddr &= (memory_region_length(REGION_GFX1) - 1);
 			}
 
 			color = GFX[gfxaddr++];
 
-			if (pstadium_flipscreen)
+			dx1 = (2 * x + 0) & 0x3ff;
+			dx2 = (2 * x + 1) & 0x3ff;
+			dy = y & 0x1ff;
+
+			if (!nbmj8991_flipscreen)
 			{
-				dx1 = (((((pstadium_drawx + x) * 2) + 0) ^ 0x3ff) & 0x3ff);
-				dx2 = (((((pstadium_drawx + x) * 2) + 1) ^ 0x3ff) & 0x3ff);
-				dy = (((pstadium_drawy + y) ^ 0x1ff) & 0x1ff);
-			}
-			else
-			{
-				dx1 = ((((pstadium_drawx + x) * 2) + 0) & 0x3ff);
-				dx2 = ((((pstadium_drawx + x) * 2) + 1) & 0x3ff);
-				dy = ((pstadium_drawy + y) & 0x1ff);
+				dx1 ^= 0x1ff;
+				dx2 ^= 0x1ff;
+				dy ^= 0x1ff;
 			}
 
-			if (pstadium_flipx)
+			if (blitter_direction_x)
 			{
 				// flip
-				color1 = (color & 0xf0) >> 4;
-				color2 = (color & 0x0f) >> 0;
+				color1 = (color & 0x0f) >> 0;
+				color2 = (color & 0xf0) >> 4;
 			}
 			else
 			{
 				// normal
-				color1 = (color & 0x0f) >> 0;
-				color2 = (color & 0xf0) >> 4;
+				color1 = (color & 0xf0) >> 4;
+				color2 = (color & 0x0f) >> 0;
 			}
 
-			drawcolor1 = pstadium_paltbl[((pstadium_paltblnum & 0x7f) * 0x10) + color1];
-			drawcolor2 = pstadium_paltbl[((pstadium_paltblnum & 0x7f) * 0x10) + color2];
+			color1 = nbmj8991_clut[((nbmj8991_clutsel & 0x7f) * 0x10) + color1];
+			color2 = nbmj8991_clut[((nbmj8991_clutsel & 0x7f) * 0x10) + color2];
 
-			tflag1 = (drawcolor1 != 0xff) ? 1 : 0;
-			tflag2 = (drawcolor2 != 0xff) ? 1 : 0;
+			if (color1 != 0xff)
+			{
+				nbmj8991_videoram[(dy * Machine->drv->screen_width) + dx1] = color1;
+				update_pixel(dx1, dy);
+			}
+			if (color2 != 0xff)
+			{
+				nbmj8991_videoram[(dy * Machine->drv->screen_width) + dx2] = color2;
+				update_pixel(dx2, dy);
+			}
 
 			nb1413m3_busyctr++;
-
-			if (tflag1)
-			{
-				pstadium_videoram[(dy * Machine->drv->screen_width) + dx1] = drawcolor1;
-				plot_pixel(pstadium_tmpbitmap, dx1, dy, Machine->pens[drawcolor1]);
-			}
-			if (tflag2)
-			{
-				pstadium_videoram[(dy * Machine->drv->screen_width) + dx2] = drawcolor2;
-				plot_pixel(pstadium_tmpbitmap, dx2, dy, Machine->pens[drawcolor2]);
-			}
 		}
 	}
 
-	nb1413m3_busyflag = (nb1413m3_busyctr > 7500) ? 0 : 1;
-
+	nb1413m3_busyflag = 0;
+	timer_set((double)nb1413m3_busyctr * TIME_IN_NSEC(1650), 0, blitter_timer_callback);
 }
 
 /******************************************************************************
 
 
 ******************************************************************************/
-VIDEO_START( pstadium )
+VIDEO_START( nbmj8991 )
 {
-	if ((pstadium_tmpbitmap = auto_bitmap_alloc(Machine->drv->screen_width, Machine->drv->screen_height)) == 0) return 1;
-	if ((pstadium_videoram = auto_malloc(Machine->drv->screen_width * Machine->drv->screen_height * sizeof(char))) == 0) return 1;
-	if ((pstadium_paltbl = auto_malloc(0x800 * sizeof(char))) == 0) return 1;
-	memset(pstadium_videoram, 0x00, (Machine->drv->screen_width * Machine->drv->screen_height * sizeof(char)));
+	if ((nbmj8991_tmpbitmap = auto_bitmap_alloc(Machine->drv->screen_width, Machine->drv->screen_height)) == 0) return 1;
+	if ((nbmj8991_videoram = auto_malloc(Machine->drv->screen_width * Machine->drv->screen_height * sizeof(data8_t))) == 0) return 1;
+	if ((nbmj8991_clut = auto_malloc(0x800 * sizeof(data8_t))) == 0) return 1;
+	memset(nbmj8991_videoram, 0x00, (Machine->drv->screen_width * Machine->drv->screen_height * sizeof(data8_t)));
 	return 0;
 }
 
-VIDEO_UPDATE( pstadium )
+VIDEO_UPDATE( nbmj8991_type1 )
 {
 	int x, y;
-	int color;
 
-	if (get_vh_global_attribute_changed() || pstadium_screen_refresh)
+	if (get_vh_global_attribute_changed() || nbmj8991_screen_refresh)
 	{
-		pstadium_screen_refresh = 0;
+		nbmj8991_screen_refresh = 0;
 
 		for (y = 0; y < Machine->drv->screen_height; y++)
 		{
 			for (x = 0; x < Machine->drv->screen_width; x++)
 			{
-				color = pstadium_videoram[(y * Machine->drv->screen_width) + x];
-				plot_pixel(pstadium_tmpbitmap, x, y, Machine->pens[color]);
+				update_pixel(x, y);
 			}
 		}
 	}
 
-	pstadium_calc_scrollx();
-	pstadium_calc_scrolly();
-
-	if (nb1413m3_inputport & 0x20)
+	if (nbmj8991_dispflag)
 	{
-		copyscrollbitmap(bitmap, pstadium_tmpbitmap, 1, &pstadium_scrollx, 1, &pstadium_scrolly, &Machine->visible_area, TRANSPARENCY_NONE, 0);
+		static int scrollx, scrolly;
+
+		if (nbmj8991_flipscreen)
+		{
+			scrollx = (((-nbmj8991_scrollx) + 0x000) & 0x1ff) * 2;
+			scrolly =  ((-nbmj8991_scrolly) - 0x00f) & 0x1ff;
+		}
+		else
+		{
+			scrollx = (((-nbmj8991_scrollx) - 0x100) & 0x1ff) * 2;
+			scrolly =  (( nbmj8991_scrolly) + 0x0f1) & 0x1ff;
+		}
+
+		copyscrollbitmap(bitmap, nbmj8991_tmpbitmap, 1, &scrollx, 1, &scrolly, &Machine->visible_area, TRANSPARENCY_NONE, 0);
 	}
 	else
 	{
@@ -403,31 +356,39 @@ VIDEO_UPDATE( pstadium )
 	}
 }
 
-VIDEO_UPDATE( galkoku )
+VIDEO_UPDATE( nbmj8991_type2 )
 {
 	int x, y;
-	int color;
 
-	if (get_vh_global_attribute_changed() || pstadium_screen_refresh)
+	if (get_vh_global_attribute_changed() || nbmj8991_screen_refresh)
 	{
-		pstadium_screen_refresh = 0;
+		nbmj8991_screen_refresh = 0;
 
 		for (y = 0; y < Machine->drv->screen_height; y++)
 		{
 			for (x = 0; x < Machine->drv->screen_width; x++)
 			{
-				color = pstadium_videoram[(y * Machine->drv->screen_width) + x];
-				plot_pixel(pstadium_tmpbitmap, x, y, Machine->pens[color]);
+				update_pixel(x, y);
 			}
 		}
 	}
 
-	pstadium_calc_scrollx();
-	pstadium_calc_scrolly();
-
-	if (pstadium_dispflag)
+	if (nb1413m3_inputport & 0x20)
 	{
-		copyscrollbitmap(bitmap, pstadium_tmpbitmap, 1, &pstadium_scrollx, 1, &pstadium_scrolly, &Machine->visible_area, TRANSPARENCY_NONE, 0);
+		static int scrollx, scrolly;
+
+		if (nbmj8991_flipscreen)
+		{
+			scrollx = (((-nbmj8991_scrollx) + 0x000) & 0x1ff) * 2;
+			scrolly =  ((-nbmj8991_scrolly) - 0x00f) & 0x1ff;
+		}
+		else
+		{
+			scrollx = (((-nbmj8991_scrollx) - 0x100) & 0x1ff) * 2;
+			scrolly =  (( nbmj8991_scrolly) + 0x0f1) & 0x1ff;
+		}
+
+		copyscrollbitmap(bitmap, nbmj8991_tmpbitmap, 1, &scrollx, 1, &scrolly, &Machine->visible_area, TRANSPARENCY_NONE, 0);
 	}
 	else
 	{

@@ -25,17 +25,17 @@ data8_t *gomoku_bg_dirty;
 
 /******************************************************************************
 
+	palette RAM
 
 ******************************************************************************/
 
 PALETTE_INIT( gomoku )
 {
 	int i;
+	int bit0, bit1, bit2, r, g, b;
 
 	for (i = 0; i < Machine->drv->total_colors; i++)
 	{
-		int bit0, bit1, bit2, r, g, b;
-
 		/* red component */
 		bit0 = (*color_prom >> 0) & 0x01;
 		bit1 = (*color_prom >> 1) & 0x01;
@@ -57,8 +57,10 @@ PALETTE_INIT( gomoku )
 	}
 }
 
+
 /******************************************************************************
 
+	Tilemap callbacks
 
 ******************************************************************************/
 
@@ -104,8 +106,10 @@ WRITE8_HANDLER( gomoku_bg_dispsw_w )
 	gomoku_bg_dispsw = (data & 0x02) ? 0 : 1;
 }
 
+
 /******************************************************************************
 
+	Start the video hardware emulation
 
 ******************************************************************************/
 
@@ -136,17 +140,17 @@ VIDEO_START( gomoku )
 	/* make background bitmap */
 	fillbitmap(gomoku_bg_bitmap, 0x20, 0);
 
-	// 盤外、碁盤
+	// board
 	for (y = 0; y < 256; y++)
 	{
 		for (x = 0; x < 256; x++)
 		{
 			bgdata = GOMOKU_BG_D[ GOMOKU_BG_X[x] + (GOMOKU_BG_Y[y] << 4) ];
 
-			color = 0x20;				// 黒(枠外)
+			color = 0x20;						// outside frame (black)
 
-			if (bgdata & 0x01) color = 0x21;	// 茶(盤)
-			if (bgdata & 0x02) color = 0x20;	// 黒(枠線)
+			if (bgdata & 0x01) color = 0x21;	// board (brown)
+			if (bgdata & 0x02) color = 0x20;	// frame line (while)
 
 			plot_pixel(gomoku_bg_bitmap, (255 - x + 7), (255 - y - 1), color);
 		}
@@ -155,10 +159,13 @@ VIDEO_START( gomoku )
 	return 0;
 }
 
+
 /******************************************************************************
 
+	Display refresh
 
 ******************************************************************************/
+
 VIDEO_UPDATE( gomoku )
 {
 	unsigned char *GOMOKU_BG_X = memory_region( REGION_USER1 );
@@ -176,64 +183,59 @@ VIDEO_UPDATE( gomoku )
 		/* copy bg bitmap */
 		copybitmap(bitmap, gomoku_bg_bitmap, 0, 0, 0, 0, cliprect, TRANSPARENCY_NONE, 0);
 
-		// 石
+		// stone
 		for (y = 0; y < 256; y++)
 		{
 			for (x = 0; x < 256; x++)
 			{
 				bgoffs = ((((255 - x - 2) / 14) | (((255 - y - 10) / 14) << 4)) & 0xff);
 
-				{
-					bgdata = GOMOKU_BG_D[ GOMOKU_BG_X[x] + (GOMOKU_BG_Y[y] << 4) ];
-					bgram = gomoku_bgram[bgoffs];
+				bgdata = GOMOKU_BG_D[ GOMOKU_BG_X[x] + (GOMOKU_BG_Y[y] << 4) ];
+				bgram = gomoku_bgram[bgoffs];
 
-					if (bgdata & 0x04)
+				if (bgdata & 0x04)
+				{
+					if (bgram & 0x01)
 					{
-						if (bgram & 0x01)
-						{
-							color = 0x2f;	// 明るい黒(石)
-						}
-						else if (bgram & 0x02)
-						{
-							color = 0x22;	// 白(石)
-						}
-						else continue;
+						color = 0x2f;	// stone (black)
+					}
+					else if (bgram & 0x02)
+					{
+						color = 0x22;	// stone (white)
 					}
 					else continue;
-
-					plot_pixel(bitmap, (255 - x + 7), (255 - y - 1), color);
 				}
+				else continue;
+
+				plot_pixel(bitmap, (255 - x + 7), (255 - y - 1), color);
 			}
 		}
 
-		// カーソル
+		// cursor
 		for (y = 0; y < 256; y++)
 		{
 			for (x = 0; x < 256; x++)
 			{
 				bgoffs = ((((255 - x - 2) / 14) | (((255 - y - 10) / 14) << 4)) & 0xff);
 
-				{
-					bgdata = GOMOKU_BG_D[ GOMOKU_BG_X[x] + (GOMOKU_BG_Y[y] << 4) ];
-					bgram = gomoku_bgram[bgoffs];
+				bgdata = GOMOKU_BG_D[ GOMOKU_BG_X[x] + (GOMOKU_BG_Y[y] << 4) ];
+				bgram = gomoku_bgram[bgoffs];
 
-					if (bgdata & 0x08)
+				if (bgdata & 0x08)
+				{
+					if (bgram & 0x04)
 					{
-						if (bgram & 0x04)
-						{
-							color = 0x2f;	// 明るい黒(カーソル)
-						}
-						else if (bgram & 0x08)
-						{
-							color = 0x22;	// 白(カーソル)
-						}
-						else continue;
+							color = 0x2f;	// cursor (black)
+					}
+					else if (bgram & 0x08)
+					{
+						color = 0x22;		// cursor (white)
 					}
 					else continue;
-
-					plot_pixel(bitmap, (255 - x + 7), (255 - y - 1), color);
-
 				}
+				else continue;
+
+				plot_pixel(bitmap, (255 - x + 7), (255 - y - 1), color);
 			}
 		}
 	}
@@ -242,78 +244,5 @@ VIDEO_UPDATE( gomoku )
 		fillbitmap(bitmap, 0x20, 0);
 	}
 
-	tilemap_draw(bitmap,cliprect,fg_tilemap,0,0);
-
-#if 0
-	{
-		char buf[80];
-	//	int x, y;
-		static int key_ins = 0;
-		static int dispsw = 0;
-
-		if (code_pressed(KEYCODE_INSERT)) {
-			if (key_ins == 0) {
-				key_ins = 1;
-				dispsw ^= 1;
-			}
-		} else key_ins = 0;
-
-		if (dispsw)
-		{
-			for (y = 0; y < 16; y++)
-			{
-				for (x = 0; x < 16; x++)
-				{
-					sprintf(buf, "%02X", gomoku_bgram[((y * 16) + x)] & 0xff);
-				//	sprintf(buf, "%02X", spriteram[((y * 16) + x)] & 0xff);
-				//	sprintf(buf, "%02X", videoram[((y * 16) + x)] & 0xff);
-				//	sprintf(buf, "%02X", colorram[((y * 16) + x)] & 0xff);
-					ui_text(Machine->scrbitmap, buf, (16 + (x * 14)), (24 + (y * 8)));
-				}
-			}
-		}
-	}
-#endif
-
-#if 0
-	{
-		unsigned char *RAM = memory_region(REGION_CPU1);
-		char buf[80];
-	//	int x, y;
-
-		for (y = 0; y < 4; y++)
-		{
-			for (x = 0; x < 8; x++)
-			{
-				// 0x6000 - 0x601f
-				sprintf(buf, "%02X", RAM[0x6000 + ((y * 8) + x)] & 0xff);
-				ui_text(Machine->scrbitmap, buf, (0 + (x * 14)), (0 + (y * 8)));
-			}
-		}
-		for (y = 0; y < 4; y++)
-		{
-			for (x = 0; x < 8; x++)
-			{
-				// 0x6800 - 0x681f
-				sprintf(buf, "%02X", RAM[0x6800 + ((y * 8) + x)] & 0xff);
-				ui_text(Machine->scrbitmap, buf, (0 + (x * 14)), (40 + (y * 8)));
-			}
-		}
-	}
-#endif
-
-#if 0
-if (code_pressed(KEYCODE_F))
-{
-	FILE *fp;
-	fp=fopen("TILE_VID.DMP", "w+b");
-	if (fp)
-	{
-		fwrite(&videoram[0], videoram_size, 1, fp);
-		usrintf_showmessage("saved");
-		fclose(fp);
-	}
+	tilemap_draw(bitmap, cliprect, fg_tilemap, 0, 0);
 }
-#endif
-}
-

@@ -30,6 +30,8 @@ typedef struct
 
 	void *timer[5];
 
+	int cpu_number;
+
 } h83002_state;
 
 extern h83002_state h8;

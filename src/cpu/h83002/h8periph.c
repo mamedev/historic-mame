@@ -16,7 +16,6 @@
 #include "h8priv.h"
 
 #define H8_REG_START	(0x00ffff10)
-#define H8_CLOCK 	(14745600)	// need to get this some other way...
 
 // timer registers
 #define TSTR	(0x60)
@@ -128,7 +127,7 @@ static void h8_itu_refresh_timer(int tnum)
 	}
 
 
-	time = (double)H8_CLOCK / tscales[ourTCR & 3];
+	time = (double)TIME_TO_CYCLES(h8.cpu_number, 1) / tscales[ourTCR & 3];
 	time /= ((double)65536.0 - (double)ourTVAL);
 
 	if (ourTCR & 4)
@@ -165,7 +164,7 @@ static void h8_itu_sync_timers(int tnum)
 	}
 
 	// get the time per unit
-	time = (double)H8_CLOCK / tscales[ourTCR & 3];
+	time = (double)TIME_TO_CYCLES(h8.cpu_number, 1) / tscales[ourTCR & 3];
 	time = 1.0 / time;
 
 	cur = timer_timeelapsed(h8.timer[tnum]);		
@@ -498,6 +497,8 @@ void h8_itu_init(void)
 	h8.timer[4] = timer_alloc(h8itu_timer_4_cb); 
 
 	h8_itu_reset();
+
+	h8.cpu_number = cpu_getactivecpu();
 }
 
 void h8_itu_reset(void)

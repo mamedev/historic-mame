@@ -34,7 +34,7 @@ To know how to apply the bit swap, take the address of the byte to decode and:
 - if the byte is data, XOR the address with 1FC0, add 1, and then add addr_key
 You'll get a 16-bit word. The first two bitswaps depend on bits 0-7 of that
 word, while the second two on bits 8-15. When a bit in the word is 1, swap the
-two bits, oherwise don't. The exact couple of bits affected depends on the
+two bits, otherwise don't. The exact couple of bits affected depends on the
 game and is identified in this file with two keys: swap_key1 and swap_key2
 (which are just permutations of the numbers 0-7, not full 32-bit integers).
 
@@ -77,7 +77,8 @@ Pang / Buster Bros / Pomping World       01234567  76543210    6548     24
 Capcom Baseball                           "    "    "    "      ""      ""
 Capcom World                             04152637  40516273    5751     43
 Adventure Quiz 2 Hatena ? no Dai-Bouken  45670123  45670123    5751     43
-Super Pang                               45670123  45670123    5852     43
+Super Pang (World)                       45670123  45670123    5852     43
+Super Pang (Japan)                       45123670  67012345    55aa     5a
 Super Buster Bros                        45670123  45670123    2130     12
 Super Marukin-Ban                        54321076  54321076    4854     4f
 Quiz Tonosama no Yabou                   12345670  12345670    1111     11
@@ -167,6 +168,15 @@ static void mitchell_decode(int swap_key1,int swap_key2,int addr_key,int xor_key
 	kabuki_decode(rom,rom+diff,rom,0x0000,0x8000, swap_key1,swap_key2,addr_key,xor_key);
 	for (i = 0x10000;i < diff;i += 0x4000)
 		kabuki_decode(rom+i,rom+i+diff,rom+i,0x8000,0x4000, swap_key1,swap_key2,addr_key,xor_key);
+/*
+	{
+		FILE *f;
+		f = fopen("a","wb");
+		fwrite(rom,1,0x8000,f);
+		fwrite(rom+0x10000,1,0x40000,f);
+		fclose(f);
+	}
+*/
 }
 
 void mgakuen2_decode(void) { mitchell_decode(0x76543210,0x01234567,0xaa55,0xa5); }
@@ -174,6 +184,7 @@ void pang_decode(void)     { mitchell_decode(0x01234567,0x76543210,0x6548,0x24);
 void cworld_decode(void)   { mitchell_decode(0x04152637,0x40516273,0x5751,0x43); }
 void hatena_decode(void)   { mitchell_decode(0x45670123,0x45670123,0x5751,0x43); }
 void spang_decode(void)    { mitchell_decode(0x45670123,0x45670123,0x5852,0x43); }
+void spangj_decode(void)   { mitchell_decode(0x45123670,0x67012345,0x55aa,0x5a); }
 void sbbros_decode(void)   { mitchell_decode(0x45670123,0x45670123,0x2130,0x12); }
 void marukin_decode(void)  { mitchell_decode(0x54321076,0x54321076,0x4854,0x4f); }
 void qtono1_decode(void)   { mitchell_decode(0x12345670,0x12345670,0x1111,0x11); }

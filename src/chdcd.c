@@ -52,6 +52,17 @@
 	}	\
 	token[j] = '\0';
 
+#define TOKENIZETOCOLONINC	\
+	j = 0; \
+	while ((linebuffer[i] != ':') && (i < 512) && (j < 128))	\
+	{	\
+		token[j] = linebuffer[i];	\
+		i++;	\
+		j++;	\
+	}	\
+	token[j++] = ':';	\
+	token[j] = '\0';
+
 /***************************************************************************
 	PROTOTYPES
 ***************************************************************************/
@@ -178,7 +189,7 @@ int cdrom_parse_toc(char *tocfname, struct cdrom_toc *outtoc, struct cdrom_track
 				{
 					/* no offset, just M:S:F */
 					outinfo->offset[trknum] = 0;
-					TOKENIZETOCOLON
+					TOKENIZETOCOLONINC
 				}
 
 				/*
@@ -188,10 +199,11 @@ int cdrom_parse_toc(char *tocfname, struct cdrom_toc *outtoc, struct cdrom_track
 				   it's a raw number.
 				*/
 
+trycolonagain:
 				foundcolon = 0;
 				for (k = 0; k < strlen(token); k++)
 				{
-					if (token[k] <= ' ')
+					if ((token[k] <= ' ') && (token[k] != ':'))
 					{
 						break;
 					}
@@ -211,8 +223,18 @@ int cdrom_parse_toc(char *tocfname, struct cdrom_toc *outtoc, struct cdrom_track
 						i--;
 					}
 
+					// check for spurious offset included by newer CDRDAOs
+					if ((token[0] == '0') && (token[1] == ' '))
+					{
+						i++;
+						EATWHITESPACE
+						TOKENIZETOCOLONINC
+						goto trycolonagain;
+					}
+
 					i++;
 					TOKENIZE
+
 
 					f = strtoul(token, NULL, 10);
 				}

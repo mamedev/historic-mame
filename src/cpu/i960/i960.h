@@ -45,14 +45,14 @@ enum {
   I960_PC = 35,
   I960_AC = 36,
   I960_IP = 37,
-  I960_PIP = 38,
+  I960_PIP = 38
 };
 
 enum {
   I960_IRQ0 = 0,
   I960_IRQ1 = 1,
   I960_IRQ2 = 2,
-  I960_IRQ3 = 3,
+  I960_IRQ3 = 3
 };
 
 void i960_get_info(UINT32 state, union cpuinfo *info);

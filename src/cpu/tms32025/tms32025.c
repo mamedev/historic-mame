@@ -318,26 +318,64 @@ INLINE void MODIFY_ARB(int data) { R.STR1 &= ~ARB_REG; R.STR1 |= ((data << 13) &
 
 static int mHackIgnoreARP; /* special handling for lst, lst1 instructions */
 
+static data16_t reverse_carry_add( data16_t arg0, data16_t arg1 )
+{
+	data16_t result = 0;
+	int carry = 0;
+	int count;
+	for( count=0; count<16; count++ )
+	{
+		int sum = (arg0>>15)+(arg1>>15)+carry;
+		result = (result<<1)|(sum&1);
+		carry = sum>>1;
+		arg0<<=1;
+		arg1<<=1;
+	}
+	return result;
+}
+
 INLINE void MODIFY_AR_ARP(void)
 { /* modify address register referenced by ARP */
 	switch (R.opcode.b.l & 0x70)		/* Cases ordered by predicted useage */
 	{
-		case 0x00:		break;
-		case 0x10:		R.AR[ARP] -- ; break;
-		case 0x20:		R.AR[ARP] ++ ; break;
-		case 0x50:		R.AR[ARP] -= R.AR[0]; break;
-		case 0x60:		R.AR[ARP] += R.AR[0]; break;
-		case 0x40:		R.AR[ARP] -= (R.AR[0]>>1); break;	/* reverse carry propogation */
-		case 0x70:		R.AR[ARP] += (R.AR[0]>>1); break;	/* reverse carry propogation */
-		case 0x30:		break;	/* Reserved. Lets use it for LAR instruction */
-		default:		break;
+		case 0x00: /* 000   nop      */
+			break;
+
+		case 0x10: /* 001   *-       */
+			R.AR[ARP] -- ;
+			break;
+
+		case 0x20: /* 010   *+       */
+			R.AR[ARP] ++ ;
+			break;
+
+		case 0x30: /* 011   reserved */
+			break;
+
+		case 0x40: /* 100   *BR0-    */
+			R.AR[ARP] = reverse_carry_add(R.AR[ARP],-R.AR[0]);
+			break;
+
+		case 0x50: /* 101   *0-      */
+			R.AR[ARP] -= R.AR[0];
+			break;
+
+		case 0x60: /* 110   *0+      */
+			R.AR[ARP] += R.AR[0];
+			break;
+
+		case 0x70: /* 111   *BR0+    */
+			R.AR[ARP] += reverse_carry_add(R.AR[ARP],R.AR[0]);
+			break;
+
+		default:
+			break;
 	}
 
 	if( !mHackIgnoreARP )
 	{
 		if (R.opcode.b.l & 8)
-		{
-	//		MODIFY_ARB(ARP);
+		{ /* bit 3 determines if new value is loaded into ARP */
 			MODIFY_ARP(R.opcode.b.l & 7);
 		}
 	}
@@ -365,18 +403,26 @@ INLINE void CALCULATE_SUB_CARRY(void)
 
 INLINE void CALCULATE_ADD_OVERFLOW(INT32 addval)
 {
-	if ((INT32)(~(oldacc.d ^ addval) & (oldacc.d ^ R.ACC.d)) < 0) {
+	if ((INT32)(~(oldacc.d ^ addval) & (oldacc.d ^ R.ACC.d)) < 0)
+	{
 		SET0(OV_FLAG);
 		if (OVM)
-			R.ACC.d = ((INT32)oldacc.d < 0) ? 0x80000000 : 0x7fffffff;
+		{
+		// Stroff:HACK! support for overflow capping as implemented results in bad DSP floating point math in many
+		// System22 games - for example, the score display in Prop Cycle.
+		//	R.ACC.d = ((INT32)oldacc.d < 0) ? 0x80000000 : 0x7fffffff;
+		}
 	}
 }
 INLINE void CALCULATE_SUB_OVERFLOW(INT32 subval)
 {
-	if ((INT32)((oldacc.d ^ subval) & (oldacc.d ^ R.ACC.d)) < 0) {
+	if ((INT32)((oldacc.d ^ subval) & (oldacc.d ^ R.ACC.d)) < 0)
+	{
 		SET0(OV_FLAG);
 		if (OVM)
+		{
 			R.ACC.d = ((INT32)oldacc.d < 0) ? 0x80000000 : 0x7fffffff;
+		}
 	}
 }
 
@@ -418,16 +464,29 @@ INLINE void SHIFT_Preg_TO_ALU(void)
 
 INLINE void GETDATA(int shift,int signext)
 {
-	if (R.opcode.b.l & 0x80) memaccess = IND;
-	else memaccess = DMA;
+	if (R.opcode.b.l & 0x80)
+	{ /* indirect memory access */
+		memaccess = IND;
+	}
+	else
+	{ /* direct memory address */
+		memaccess = DMA;
+	}
 
-	if (memaccess >= 0x800) R.external_mem_access = 1;	/* Pause if hold pin is active */
-	else R.external_mem_access = 0;
+	if (memaccess >= 0x800)
+	{
+		R.external_mem_access = 1;	/* Pause if hold pin is active */
+	}
+	else
+	{
+		R.external_mem_access = 0;
+	}
 
 	R.ALU.d = (UINT16)M_RDRAM(memaccess);
 	if (signext) R.ALU.d = (INT16)R.ALU.d;
 	R.ALU.d <<= shift;
 
+	/* next ARP */
 	if (R.opcode.b.l & 0x80) MODIFY_AR_ARP();
 }
 
@@ -489,6 +548,7 @@ static void add(void)		/* #### add carry support - see page 3-31 (70) #### */
 		oldacc.d = R.ACC.d;
 		GETDATA((R.opcode.b.h & 0xf),SXM);
 		R.ACC.d += R.ALU.d;
+
 		CALCULATE_ADD_OVERFLOW(R.ALU.d);
 		CALCULATE_ADD_CARRY();
 }
@@ -1111,19 +1171,18 @@ static void nop(void) { }	// NOP is a subset of the MAR instruction
 */
 static void norm(void)
 {
-		if (R.ACC.d == 0) {
-			SET1(TC_FLAG);
-		}
-		else {
-			if ( ((R.ACC.d & 0x80000000) ^ (R.ACC.d & 0x40000000)) ) {
-				SET1(TC_FLAG);
-			}
-			else {
-				CLR1(TC_FLAG);
-				R.ACC.d <<= 1;
-				MODIFY_AR_ARP();	/* ARP not changed in this instruction */
-			}
-		}
+	data32_t acc = R.ACC.d;
+
+	if( acc == 0 || ((acc^(acc<<1))&(1<<31))!=0 )
+	{
+		SET1(TC_FLAG); /* 1 -> TC */
+	}
+	else
+	{
+		CLR1(TC_FLAG); /* 0 -> TC */
+		R.ACC.d <<= 1; /* (ACC)*2 -> ACC */
+		MODIFY_AR_ARP();
+	}
 }
 static void or(void)
 {
@@ -1377,22 +1436,40 @@ static void subb(void)
 		CALCULATE_SUB_OVERFLOW(R.ALU.d);
 		CALCULATE_SUB_CARRY();
 }
+
+
 static void subc(void)
 {
-		oldacc.d = R.ACC.d;
-		GETDATA(15,0);
-		R.ALU.d = R.ACC.d - R.ALU.d;
-		if ((INT32)((oldacc.d ^ R.ALU.d) & (oldacc.d ^ R.ACC.d)) < 0) {
-			SET0(OV_FLAG);			/* Not affected by OVM */
-		}
-		CALCULATE_SUB_CARRY();
-		if ( (INT32)(R.ALU.d) >= 0 ) {
-			R.ACC.d = ((R.ALU.d << 1) + 1);
-		}
-		else {
-			R.ACC.d = (R.ACC.d << 1);
-		}
+	/**
+	 * conditional subtraction, which may be used for division
+	 * execute 16 times for 16-bit division
+	 *
+	 * input:	32 bit numerator in accumulator
+	 *			16 bit denominator in data memory
+	 *
+	 * output:	remainder in upper 16 bits
+	 *			quotient in lower 16 bits
+	 */
+	GETDATA(15,SXM);
+	if( R.ACC.d >= R.ALU.d )
+	{
+		R.ACC.d = (R.ACC.d - R.ALU.d)*2+1;
+	}
+	else
+	{
+		R.ACC.d = R.ACC.d*2;
+	}
+// Stroff: HACK! support for overflow capping as implemented results in bad DSP floating point math in many
+// System22 games - for example, the score display in Prop Cycle.
+//	R.ACC.d = ((INT32)oldacc.d < 0) ? 0x80000000 : 0x7fffffff;
+
+//		if ((INT32)((oldacc.d ^ subval ) & (oldacc.d ^ R.ALU.d)) < 0)
+//		{
+//			SET0(OV_FLAG);
+//		}
+//		CALCULATE_SUB_CARRY();
 }
+
 static void subh(void)
 {
 		oldacc.d = R.ACC.d;
@@ -1439,7 +1516,10 @@ static void sxf(void)
 }
 static void tblr(void)
 {
-		if (R.init_load_addr) R.PFC = R.ACC.w.l;
+		if (R.init_load_addr)
+		{
+			R.PFC = R.ACC.w.l;
+		}
 		R.ALU.w.l = M_RDROM(R.PFC);
 		if ( (CNF0) && ( (UINT16)(R.PFC) >= 0xff00 ) ) {}	/** TMS32025 only */
 		else tms32025_icount -= (1*CLK);
@@ -1448,7 +1528,10 @@ static void tblr(void)
 }
 static void tblw(void)
 {
-		if (R.init_load_addr) R.PFC = R.ACC.w.l;
+		if (R.init_load_addr)
+		{
+			R.PFC = R.ACC.w.l;
+		}
 		tms32025_icount -= (1*CLK);
 		GETDATA(0,0);
 		if (R.external_mem_access) tms32025_icount -= (1*CLK);
@@ -2096,12 +2179,12 @@ static void tms32025_set_info(UINT32 state, union cpuinfo *info)
 	switch (state)
 	{
 		/* --- the following bits of info are set as 64-bit signed integers --- */
-		case CPUINFO_INT_INPUT_STATE + TMS32025_INT0:	set_irq_line(TMS32025_INT0, info->i);	break;
-		case CPUINFO_INT_INPUT_STATE + TMS32025_INT1:	set_irq_line(TMS32025_INT1, info->i);	break;
-		case CPUINFO_INT_INPUT_STATE + TMS32025_INT2:	set_irq_line(TMS32025_INT2, info->i);	break;
-		case CPUINFO_INT_INPUT_STATE + TMS32025_TINT:	set_irq_line(TMS32025_TINT, info->i);	break;
-		case CPUINFO_INT_INPUT_STATE + TMS32025_RINT:	set_irq_line(TMS32025_RINT, info->i);	break;
-		case CPUINFO_INT_INPUT_STATE + TMS32025_XINT:	set_irq_line(TMS32025_XINT, info->i);	break;
+		case CPUINFO_INT_INPUT_STATE + TMS32025_INT0:		set_irq_line(TMS32025_INT0, info->i);	break;
+		case CPUINFO_INT_INPUT_STATE + TMS32025_INT1:		set_irq_line(TMS32025_INT1, info->i);	break;
+		case CPUINFO_INT_INPUT_STATE + TMS32025_INT2:		set_irq_line(TMS32025_INT2, info->i);	break;
+		case CPUINFO_INT_INPUT_STATE + TMS32025_TINT:		set_irq_line(TMS32025_TINT, info->i);	break;
+		case CPUINFO_INT_INPUT_STATE + TMS32025_RINT:		set_irq_line(TMS32025_RINT, info->i);	break;
+		case CPUINFO_INT_INPUT_STATE + TMS32025_XINT:		set_irq_line(TMS32025_XINT, info->i);	break;
 
 		case CPUINFO_INT_PC:
 		case CPUINFO_INT_REGISTER + TMS32025_PC:		R.PC = info->i;							break;
@@ -2154,7 +2237,7 @@ void tms32025_get_info(UINT32 state, union cpuinfo *info)
 	{
 		/* --- the following bits of info are returned as 64-bit signed integers --- */
 		case CPUINFO_INT_CONTEXT_SIZE:					info->i = sizeof(R);					break;
-		case CPUINFO_INT_INPUT_LINES:					info->i = 6;							break;
+		case CPUINFO_INT_INPUT_LINES:						info->i = 6;							break;
 		case CPUINFO_INT_DEFAULT_IRQ_VECTOR:			info->i = 0;							break;
 		case CPUINFO_INT_ENDIANNESS:					info->i = CPU_IS_BE;					break;
 		case CPUINFO_INT_CLOCK_DIVIDER:					info->i = 1;							break;
@@ -2164,21 +2247,21 @@ void tms32025_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_MAX_CYCLES:					info->i = 5*CLK;						break;
 		
 		case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_PROGRAM:	info->i = 16;					break;
-		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_PROGRAM: info->i = 16;					break;
+		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_PROGRAM: info->i = 16+1;					break;
 		case CPUINFO_INT_ADDRBUS_SHIFT + ADDRESS_SPACE_PROGRAM: info->i = -1;					break;
 		case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_DATA:	info->i = 16;					break;
-		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_DATA: 	info->i = 16;					break;
+		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_DATA: 	info->i = 16+1;					break;
 		case CPUINFO_INT_ADDRBUS_SHIFT + ADDRESS_SPACE_DATA: 	info->i = -1;					break;
 		case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_IO:		info->i = 16;					break;
 		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_IO: 		info->i = 17;					break;
 		case CPUINFO_INT_ADDRBUS_SHIFT + ADDRESS_SPACE_IO: 		info->i = -1;					break;
 
-		case CPUINFO_INT_INPUT_STATE + TMS32025_INT0:	info->i = (R.IFR & 0x01) ? ASSERT_LINE : CLEAR_LINE; break;
-		case CPUINFO_INT_INPUT_STATE + TMS32025_INT1:	info->i = (R.IFR & 0x02) ? ASSERT_LINE : CLEAR_LINE; break;
-		case CPUINFO_INT_INPUT_STATE + TMS32025_INT2:	info->i = (R.IFR & 0x04) ? ASSERT_LINE : CLEAR_LINE; break;
-		case CPUINFO_INT_INPUT_STATE + TMS32025_TINT:	info->i = (R.IFR & 0x08) ? ASSERT_LINE : CLEAR_LINE; break;
-		case CPUINFO_INT_INPUT_STATE + TMS32025_RINT:	info->i = (R.IFR & 0x10) ? ASSERT_LINE : CLEAR_LINE; break;
-		case CPUINFO_INT_INPUT_STATE + TMS32025_XINT:	info->i = (R.IFR & 0x20) ? ASSERT_LINE : CLEAR_LINE; break;
+		case CPUINFO_INT_INPUT_STATE + TMS32025_INT0:		info->i = (R.IFR & 0x01) ? ASSERT_LINE : CLEAR_LINE; break;
+		case CPUINFO_INT_INPUT_STATE + TMS32025_INT1:		info->i = (R.IFR & 0x02) ? ASSERT_LINE : CLEAR_LINE; break;
+		case CPUINFO_INT_INPUT_STATE + TMS32025_INT2:		info->i = (R.IFR & 0x04) ? ASSERT_LINE : CLEAR_LINE; break;
+		case CPUINFO_INT_INPUT_STATE + TMS32025_TINT:		info->i = (R.IFR & 0x08) ? ASSERT_LINE : CLEAR_LINE; break;
+		case CPUINFO_INT_INPUT_STATE + TMS32025_RINT:		info->i = (R.IFR & 0x10) ? ASSERT_LINE : CLEAR_LINE; break;
+		case CPUINFO_INT_INPUT_STATE + TMS32025_XINT:		info->i = (R.IFR & 0x20) ? ASSERT_LINE : CLEAR_LINE; break;
 
 		case CPUINFO_INT_PREVIOUSPC:					info->i = R.PREVPC;						break;
 

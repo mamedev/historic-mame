@@ -154,6 +154,45 @@ static WRITE8_HANDLER( coin_w )
 	coin_counter_w(offset,data & 1);
 }
 
+static WRITE8_HANDLER( questions_bank_w )
+{	
+	if( data != 0xff )
+	{
+		UINT8 *questions = memory_region(REGION_USER1);
+		int bankaddr = 0;
+
+		switch( ~data & 0xff )
+		{
+		case 0x01:
+			bankaddr = 0;
+			break;
+		case 0x02:
+			bankaddr = 0x8000;
+			break;
+		case 0x04:
+			bankaddr = 0x10000;
+			break;
+		case 0x08:
+			bankaddr = 0x18000;
+			break;
+		case 0x10:
+			bankaddr = 0x20000;
+			break;
+		case 0x20:
+			bankaddr = 0x28000;
+			break;
+		case 0x40:
+			bankaddr = 0x30000;
+			break;
+		case 0x80:
+			bankaddr = 0x38000;
+			break;
+		}
+
+		cpu_setbank(1,&questions[bankaddr]);
+	}
+}
+
 
 static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x1200, 0x1200) AM_READ(input_port_4_r) /* DIP 2 */
@@ -216,6 +255,34 @@ static ADDRESS_MAP_START( mastkin_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x3000, 0x37ff) AM_WRITE(trackfld_videoram_w) AM_BASE(&videoram)
 	AM_RANGE(0x3800, 0x3fff) AM_WRITE(trackfld_colorram_w) AM_BASE(&colorram)
 	AM_RANGE(0x6000, 0xffff) AM_WRITE(MWA8_ROM)
+ADDRESS_MAP_END
+
+static ADDRESS_MAP_START( wizzquiz_map, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x007f) AM_RAM
+	AM_RANGE(0x1000, 0x1000) AM_READWRITE(watchdog_reset_r, watchdog_reset_w)
+	AM_RANGE(0x1080, 0x1080) AM_WRITE(trackfld_flipscreen_w)
+	AM_RANGE(0x1081, 0x1081) AM_WRITE(konami_sh_irqtrigger_w)  /* cause interrupt on audio CPU */
+	AM_RANGE(0x1083, 0x1084) AM_WRITE(coin_w)
+	AM_RANGE(0x1087, 0x1087) AM_WRITE(interrupt_enable_w)
+	AM_RANGE(0x1100, 0x1100) AM_WRITE(soundlatch_w)	
+	AM_RANGE(0x1200, 0x1200) AM_READ(input_port_4_r) /* DIP 2 */
+	AM_RANGE(0x1280, 0x1280) AM_READ(input_port_0_r) /* IO Coin */
+	AM_RANGE(0x1281, 0x1281) AM_READ(input_port_1_r) /* P1 IO */
+	AM_RANGE(0x1282, 0x1282) AM_READ(input_port_2_r) /* P2 IO */
+	AM_RANGE(0x1283, 0x1283) AM_READ(input_port_3_r) /* DIP 1 */
+	AM_RANGE(0x1800, 0x183f) AM_RAM AM_BASE(&spriteram_2)
+	AM_RANGE(0x1840, 0x185f) AM_RAM AM_BASE(&trackfld_scroll)
+	AM_RANGE(0x1860, 0x1bff) AM_RAM
+	AM_RANGE(0x1c00, 0x1c3f) AM_RAM AM_BASE(&spriteram) AM_SIZE(&spriteram_size)
+	AM_RANGE(0x1c40, 0x1c5f) AM_RAM AM_BASE(&trackfld_scroll2)
+	AM_RANGE(0x1c60, 0x1fff) AM_RAM
+	AM_RANGE(0x2800, 0x2bff) AM_RAM
+	AM_RANGE(0x2c00, 0x2fff) AM_RAM
+	AM_RANGE(0x3000, 0x37ff) AM_READ(MRA8_RAM) AM_WRITE(trackfld_videoram_w) AM_BASE(&videoram)
+	AM_RANGE(0x3800, 0x3fff) AM_READ(MRA8_RAM) AM_WRITE(trackfld_colorram_w) AM_BASE(&colorram)
+	AM_RANGE(0xc000, 0xc000) AM_WRITE(questions_bank_w)	
+	AM_RANGE(0x6000, 0xdfff) AM_READ(MRA8_BANK1)
+	AM_RANGE(0xe000, 0xffff) AM_ROM
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
@@ -444,6 +511,99 @@ INPUT_PORTS_START( mastkin )
 //	PORT_DIPSETTING(    0xf0, DEF_STR( 1C_1C ) )
 INPUT_PORTS_END
 
+INPUT_PORTS_START( wizzquiz )
+	PORT_START
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_SERVICE1 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON3 ) PORT_PLAYER(2) PORT_NAME("P2 - C")
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(2) PORT_NAME("P2 - B")
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(2) PORT_NAME("P2 - A")
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON4 ) PORT_NAME("Set")
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON3 ) PORT_PLAYER(1) PORT_NAME("P1 - C")
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(1) PORT_NAME("P1 - B")
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(1) PORT_NAME("P1 - A")
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN3 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON5 ) PORT_NAME("Select")
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START
+	PORT_DIPNAME( 0x0f, 0x0f, DEF_STR( Coin_A ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(    0x05, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( 3C_2C ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( 4C_3C ) )
+	PORT_DIPSETTING(    0x0f, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x03, DEF_STR( 3C_4C ) )
+	PORT_DIPSETTING(    0x07, DEF_STR( 2C_3C ) )
+	PORT_DIPSETTING(    0x0e, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x06, DEF_STR( 2C_5C ) )
+	PORT_DIPSETTING(    0x0d, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(    0x0c, DEF_STR( 1C_4C ) )
+	PORT_DIPSETTING(    0x0b, DEF_STR( 1C_5C ) )
+	PORT_DIPSETTING(    0x0a, DEF_STR( 1C_6C ) )
+	PORT_DIPSETTING(    0x09, DEF_STR( 1C_7C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Free_Play ) ) // must set both Free Play
+	PORT_DIPNAME( 0xf0, 0xf0, DEF_STR( Coin_B ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(    0x50, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( 3C_2C ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( 4C_3C ) )
+	PORT_DIPSETTING(    0xf0, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x30, DEF_STR( 3C_4C ) )
+	PORT_DIPSETTING(    0x70, DEF_STR( 2C_3C ) )
+	PORT_DIPSETTING(    0xe0, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x60, DEF_STR( 2C_5C ) )
+	PORT_DIPSETTING(    0xd0, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(    0xc0, DEF_STR( 1C_4C ) )
+	PORT_DIPSETTING(    0xb0, DEF_STR( 1C_5C ) )
+	PORT_DIPSETTING(    0xa0, DEF_STR( 1C_6C ) )
+	PORT_DIPSETTING(    0x90, DEF_STR( 1C_7C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Free_Play ) ) // must set both Free Play
+
+	PORT_START
+	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Lives ) )	
+	PORT_DIPSETTING(    0x03, "3" )
+	PORT_DIPSETTING(    0x02, "4" )
+	PORT_DIPSETTING(    0x01, "5" )
+	PORT_DIPSETTING(    0x00, "6" )
+	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x40, "Show Correct Answer" )
+	PORT_DIPSETTING(    0x40, DEF_STR( No ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Yes ) )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+INPUT_PORTS_END
+
 
 
 static struct GfxLayout charlayout =
@@ -569,7 +729,16 @@ static MACHINE_DRIVER_START( mastkin )
 	MDRV_NVRAM_HANDLER(mastkin)
 MACHINE_DRIVER_END
 
+static MACHINE_DRIVER_START( wizzquiz )
 
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(trackfld)
+	MDRV_CPU_REPLACE("main",M6803,2048000)		/* 1.400 MHz ??? */
+	MDRV_CPU_PROGRAM_MAP(wizzquiz_map,0)
+	MDRV_CPU_VBLANK_INT(nmi_line_pulse,1)
+
+	MDRV_NVRAM_HANDLER(NULL)
+MACHINE_DRIVER_END
 
 /***************************************************************************
 
@@ -735,19 +904,27 @@ ROM_START( mastkin )
 	ROM_LOAD( "mk2",          0x0000, 0x2000, CRC(f546a56b) SHA1(caee3d8546eb7a75ce2a578c6a1a630246aec6b8) )
 ROM_END
 
-ROM_START( whizquiz )
+ROM_START( wizzquiz )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )     /* 64k for code */
-	ROM_LOAD( "ic9_a1.bin",   0xe000, 0x2000, CRC(608e1ff3) SHA1(f3350a3367df59ec1780bb22c7a6a227e7b10d5e) )	/* encrypted? */
+	ROM_LOAD( "ic9_a1.bin",   0xe000, 0x2000, CRC(608e1ff3) SHA1(f3350a3367df59ec1780bb22c7a6a227e7b10d5e) )
 
-	ROM_REGION( 0x40000, REGION_USER1, 0 )     /* questions data */
-	ROM_LOAD( "ic1_q06.bin",  0x00000, 0x8000, CRC(c62f25b1) SHA1(22694716b2675dd0c725ce788bb0ffe7a1808cf6) )
-	ROM_LOAD( "ic2_q28.bin",  0x08000, 0x8000, CRC(2bd00476) SHA1(88ed9d26909873c52273290686b4783563edfb61) )
-	ROM_LOAD( "ic3_q27.bin",  0x10000, 0x8000, CRC(46d28aaf) SHA1(af19b166eabdab59712eb755ae3d83545ea7db62) )
-	ROM_LOAD( "ic4_q23.bin",  0x18000, 0x8000, CRC(3f46f702) SHA1(f41a9ea5a47f2677cea8ad55847860a955521374) )
-	ROM_LOAD( "ic5_q26.bin",  0x20000, 0x8000, CRC(9d130515) SHA1(bfc32219d4d4eaca4efa02c3c46125144c8cd286) )
-	ROM_LOAD( "ic6_q09.bin",  0x28000, 0x8000, CRC(636f89b4) SHA1(0b9b471e52fff343f9c7e7b1212f03aba52839f2) )
-	ROM_LOAD( "ic7_q15.bin",  0x30000, 0x8000, CRC(b35332b1) SHA1(18c5cf3cc6fb6d1fe6d672d745d22b2498d8324e) )
-	ROM_LOAD( "ic8_q19.bin",  0x38000, 0x8000, CRC(8d152da0) SHA1(8404256775b6236d80869f5023d912aa9ebb6582) )
+	ROM_REGION( 0x40000, REGION_USER1, 0 )    /* questions data */
+	ROM_LOAD( "ic1_q06.bin",  0x02000, 0x6000, CRC(c62f25b1) SHA1(22694716b2675dd0c725ce788bb0ffe7a1808cf6) )
+	ROM_CONTINUE(             0x00000, 0x2000 )
+	ROM_LOAD( "ic2_q28.bin",  0x0a000, 0x6000, CRC(2bd00476) SHA1(88ed9d26909873c52273290686b4783563edfb61) )
+	ROM_CONTINUE(             0x08000, 0x2000 )
+	ROM_LOAD( "ic3_q27.bin",  0x12000, 0x6000, CRC(46d28aaf) SHA1(af19b166eabdab59712eb755ae3d83545ea7db62) )
+	ROM_CONTINUE(             0x10000, 0x2000 )
+	ROM_LOAD( "ic4_q23.bin",  0x1a000, 0x6000, CRC(3f46f702) SHA1(f41a9ea5a47f2677cea8ad55847860a955521374) )
+	ROM_CONTINUE(             0x18000, 0x2000 )
+	ROM_LOAD( "ic5_q26.bin",  0x22000, 0x6000, CRC(9d130515) SHA1(bfc32219d4d4eaca4efa02c3c46125144c8cd286) )
+	ROM_CONTINUE(             0x20000, 0x2000 )
+	ROM_LOAD( "ic6_q09.bin",  0x2a000, 0x6000, CRC(636f89b4) SHA1(0b9b471e52fff343f9c7e7b1212f03aba52839f2) )
+	ROM_CONTINUE(             0x28000, 0x2000 )
+	ROM_LOAD( "ic7_q15.bin",  0x32000, 0x6000, CRC(b35332b1) SHA1(18c5cf3cc6fb6d1fe6d672d745d22b2498d8324e) )
+	ROM_CONTINUE(             0x30000, 0x2000 )
+	ROM_LOAD( "ic8_q19.bin",  0x3a000, 0x6000, CRC(8d152da0) SHA1(8404256775b6236d80869f5023d912aa9ebb6582) )
+	ROM_CONTINUE(             0x38000, 0x2000 )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for the audio CPU */
 	ROM_LOAD( "02c.bin",      0x0000, 0x2000, CRC(3daca93a) SHA1(743c2b787aeb2c893ea476efc95d92e33b9bd159) )
@@ -762,9 +939,9 @@ ROM_START( whizquiz )
 	ROM_LOAD( "14c.bin",      0x2000, 0x2000, CRC(5bff1607) SHA1(20c4b74c93511f9cafd6e3f2d048baad3a3a8aa4) )
 
 	ROM_REGION( 0x0220, REGION_PROMS, 0 )
-	ROM_LOAD( "prom.1",       0x0000, 0x0020, NO_DUMP ) /* palette */
-	ROM_LOAD( "prom.3",       0x0020, 0x0100, NO_DUMP ) /* sprite lookup table */
-	ROM_LOAD( "prom.2",       0x0120, 0x0100, NO_DUMP ) /* char lookup table */
+	ROM_LOAD( "tfprom.1",     0x0000, 0x0020, CRC(d55f30b5) SHA1(4d6a851f4886778307f75771645078b97ad55f5f) ) /* palette */
+	ROM_LOAD( "tfprom.3",     0x0020, 0x0100, CRC(d2ba4d32) SHA1(894b5cedf01ba9225a0d6215291857e455b84903) ) /* sprite lookup table */
+	ROM_LOAD( "tfprom.2",     0x0120, 0x0100, CRC(053e5861) SHA1(6740a62cf7b6938a4f936a2fed429704612060a5) ) /* char lookup table */
 ROM_END
 
 
@@ -794,10 +971,30 @@ static DRIVER_INIT( mastkin )
 	}
 }
 
+static DRIVER_INIT( wizzquiz )
+{
+	UINT8 *ROM = memory_region(REGION_CPU1) + 0xe000;
+	int i;
+
+	/* decrypt program rom */
+	for( i = 0; i < 0x2000; i++ )
+	{
+		ROM[i] = BITSWAP8(ROM[i],0,1,2,3,4,5,6,7);
+	}
+
+	ROM = memory_region(REGION_USER1);
+
+	/* decrypt questions roms */
+	for( i = 0; i < 0x40000; i++ )
+	{
+		ROM[i] = BITSWAP8(ROM[i],0,1,2,3,4,5,6,7);
+	}
+}
+
 
 GAME( 1983, trackfld, 0,        trackfld, trackfld, trackfld, ROT0, "Konami", "Track & Field" )
 GAME( 1983, trackflc, trackfld, trackfld, trackfld, trackfld, ROT0, "Konami (Centuri license)", "Track & Field (Centuri)" )
 GAME( 1983, hyprolym, trackfld, trackfld, trackfld, trackfld, ROT0, "Konami", "Hyper Olympic" )
 GAME( 1983, hyprolyb, trackfld, hyprolyb, trackfld, trackfld, ROT0, "bootleg", "Hyper Olympic (bootleg)" )
-GAMEX(1985, whizquiz, 0,        trackfld, trackfld, mastkin,  ROT0, "Zilec-Zenitone", "Whiz Quiz", GAME_NOT_WORKING )
 GAMEX(1988, mastkin,  0,        mastkin,  mastkin,  mastkin,  ROT0, "Du Tech", "The Masters of Kin", GAME_WRONG_COLORS )
+GAME( 1985, wizzquiz, 0,        wizzquiz, wizzquiz, wizzquiz, ROT0, "Zilec - Zenitone", "Wizz Quiz (version 4)" )

@@ -24,7 +24,6 @@ unknown
 To Do:
 
 - raster effects (rabbit only?, see left side of one of the levels in rabbit)
-- eeprom (when i try and fix it i end up breaking rabbit test mode, tmmjprd needs it to work)
 - clean up zoom code and make zoom effect more accurate
 - sound (adpcm of some kind)
 
@@ -32,6 +31,7 @@ To Do:
   the tilegfx, this means we also have to invert the palette write addresses,
   low bits of the palette number for 4bpp tiles, the blitter data as it
   is read from the gfx roms, and the data read by the rom test.
+
 
 */
 
@@ -116,6 +116,7 @@ INLINE void get_rabbit_tilemap_info(int whichtilemap, int tilesize, int tile_ind
 	colour =  (rabbit_tilemap_ram[whichtilemap][tile_index]>>20)&0xff;
 	flipxy =  (rabbit_tilemap_ram[whichtilemap][tile_index]>>29)&3;
 
+	/* only right for rabbit .. */
 	switch (bank)
 	{
 		case 0x8:
@@ -137,14 +138,14 @@ INLINE void get_rabbit_tilemap_info(int whichtilemap, int tilesize, int tile_ind
 		tileno >>=(1+tilesize*2);
 		colour&=0x0f;
 		colour+=0x20;
-		SET_TILE_INFO(4+tilesize,tileno,colour,TILE_FLIPXY(flipxy))
+		SET_TILE_INFO(6+tilesize,tileno,colour,TILE_FLIPXY(flipxy))
 	}
 	else
 	{
 		tileno >>=(0+tilesize*2);
 		colour+=0x200;
 		colour ^=0xf; // ^0xf because we've inverted palette writes (see notes in driver init)
-		SET_TILE_INFO(2+tilesize,tileno,colour,TILE_FLIPXY(flipxy))
+		SET_TILE_INFO(4+tilesize,tileno,colour,TILE_FLIPXY(flipxy))
 	}
 }
 
@@ -216,7 +217,6 @@ sprites invisible at the end of a round in rabbit, why?
 
 static void rabbit_drawsprites( struct mame_bitmap *bitmap, const struct rectangle *cliprect )
 {
-	/* end of list missing? (or clear every frame like now?) .. global sprite zoom needs adding (render to bitmap then zoom it?) */
 	int xpos,ypos,tileno,xflip,yflip, colr;
 	const struct GfxElement *gfx = Machine->gfx[1];
 	int todraw = (rabbit_spriteregs[5]&0x0fff0000)>>16; // how many sprites to draw (start/end reg..) what is the other half?
@@ -445,15 +445,25 @@ VIDEO_UPDATE(rabbit)
 }
 
 
-/* wrong - fix me */
 READ32_HANDLER( rabbit_input_r )
 {
-	return (readinputport(1)<<16)|((readinputport(0))^(mame_rand()&0x0001));
+	int rv;
 
-//	return (( (readinputport(1)<<16) | (readinputport(0))  )  &0xff7f) | ((EEPROM_read_bit() & 0x01)<<7);
+	rv = (readinputport(1)<<16)|(readinputport(0));
+	rv &= ~1;
+	rv |= EEPROM_read_bit();	// as per code at 4d932
+	return rv;
 }
 
+READ32_HANDLER( tmmjprd_input_r )
+{
+	int rv;
 
+	rv = (readinputport(1)<<16)|(readinputport(0));
+	rv &= ~0x80;
+	rv |= (EEPROM_read_bit()<<7);	// as per code at 778
+	return rv;
+}
 
 static WRITE32_HANDLER( rabbit_paletteram_dword_w )
 {
@@ -709,17 +719,21 @@ WRITE32_HANDLER( rabbit_blitter_w )
 	}
 }
 
-/* wrong -- fix me */
 WRITE32_HANDLER( rabbit_eeprom_write )
 {
+	// don't disturb the EEPROM if we're not actually writing to it
+	// (in particular, data & 0x100 here with mask = ffff00ff looks to be the watchdog)
+	if (mem_mask == 0x00ffffff)
+	{
 	// latch the bit
-	EEPROM_write_bit(data & 0x00000100);
+		EEPROM_write_bit(data & 0x01000000);
 
 	// reset line asserted: reset.
 	EEPROM_set_cs_line((data & 0x04000000) ? CLEAR_LINE : ASSERT_LINE );
 
 	// clock line asserted: write latch or select next bit to read
 	EEPROM_set_clock_line((data & 0x02000000) ? ASSERT_LINE : CLEAR_LINE );
+}
 }
 
 static ADDRESS_MAP_START( rabbit_writemem, ADDRESS_SPACE_PROGRAM, 32 )
@@ -758,47 +772,79 @@ ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( tmmjprd_readmem, ADDRESS_SPACE_PROGRAM, 32 )
 	AM_RANGE(0x000000, 0x1fffff) AM_READ(MRA32_ROM)
+	AM_RANGE(0x200010, 0x200013) AM_READ(randomrabbits) // gfx chip status?
+	AM_RANGE(0x200980, 0x200983) AM_READ(randomrabbits) // sound chip status?
+	AM_RANGE(0x200984, 0x200987) AM_READ(randomrabbits) // sound chip status?
 	AM_RANGE(0x280000, 0x283fff) AM_READ(rabbit_tilemap0_r)
 	AM_RANGE(0x284000, 0x287fff) AM_READ(rabbit_tilemap1_r)
 	AM_RANGE(0x288000, 0x28bfff) AM_READ(rabbit_tilemap2_r)
 	AM_RANGE(0x28c000, 0x28ffff) AM_READ(rabbit_tilemap3_r)
 	AM_RANGE(0x290000, 0x29ffff) AM_READ(MRA32_RAM)
-	AM_RANGE(0x400000, 0x400003) AM_READ(rabbit_input_r)
+	AM_RANGE(0x400000, 0x400003) AM_READ(tmmjprd_input_r)
 	AM_RANGE(0xf00000, 0xffffff) AM_READ(MRA32_RAM)
 ADDRESS_MAP_END
+
+static WRITE32_HANDLER( tmmjprd_paletteram_dword_w )
+{
+	int r,g,b;
+	COMBINE_DATA(&paletteram32[offset]);
+
+	b = ((paletteram32[offset] & 0x000000ff) >>0);
+	r = ((paletteram32[offset] & 0x0000ff00) >>8);
+	g = ((paletteram32[offset] & 0x00ff0000) >>16);
+
+	palette_set_color((offset^0xff)+0x2000,r,g,b);
+}
+
 
 static ADDRESS_MAP_START( tmmjprd_writemem, ADDRESS_SPACE_PROGRAM, 32 )
 	AM_RANGE(0x000000, 0x1fffff) AM_WRITE(MWA32_ROM)
 	AM_RANGE(0x200160, 0x200177) AM_WRITE(MWA32_RAM) AM_BASE( &rabbit_tilemap_regs[3] ) // tilemap regs4
+
+/* check these are used .. */
+
+//	AM_RANGE(0x200010, 0x200013) AM_WRITE(MWA32_RAM) AM_BASE( &rabbit_viewregs0 )
+//	AM_RANGE(0x200100, 0x200117) AM_WRITE(MWA32_RAM) AM_BASE( &rabbit_tilemap_regs[0] ) // tilemap regs1
+//	AM_RANGE(0x200120, 0x200137) AM_WRITE(MWA32_RAM) AM_BASE( &rabbit_tilemap_regs[1] ) // tilemap regs2
+//	AM_RANGE(0x200140, 0x200157) AM_WRITE(MWA32_RAM) AM_BASE( &rabbit_tilemap_regs[2] ) // tilemap regs3
+//	AM_RANGE(0x200200, 0x20021b) AM_WRITE(MWA32_RAM) AM_BASE( &rabbit_spriteregs ) // sprregs?
+//	AM_RANGE(0x200300, 0x200303) AM_WRITE(rabbit_rombank_w) // used during rom testing, rombank/area select + something else?
+//	AM_RANGE(0x200400, 0x200413) AM_WRITE(MWA32_RAM) AM_BASE( &rabbit_viewregs6 ) // some global controls? (brightness etc.?)
+//	AM_RANGE(0x200500, 0x200503) AM_WRITE(MWA32_RAM) AM_BASE( &rabbit_viewregs7 )
+//	AM_RANGE(0x200700, 0x20070f) AM_WRITE(rabbit_blitter_w) AM_BASE( &rabbit_blitterregs )
+//	AM_RANGE(0x200800, 0x20080f) AM_WRITE(MWA32_RAM) AM_BASE( &rabbit_viewregs9 ) // never changes?
+//	AM_RANGE(0x200900, 0x20098f) AM_WRITE(rabbit_audio_w)
+	/* hmm */
+//	AM_RANGE(0x279700, 0x279713) AM_WRITE(MWA32_RAM) AM_BASE( &rabbit_viewregs10 )
+	/* tilemaps */
+
+
+
+
 	AM_RANGE(0x280000, 0x283fff) AM_WRITE(rabbit_tilemap0_w)
 	AM_RANGE(0x284000, 0x287fff) AM_WRITE(rabbit_tilemap1_w)
 	AM_RANGE(0x288000, 0x28bfff) AM_WRITE(rabbit_tilemap2_w)
 	AM_RANGE(0x28c000, 0x28ffff) AM_WRITE(rabbit_tilemap3_w)
-	AM_RANGE(0x290000, 0x29ffff) AM_WRITE(MWA32_RAM) AM_BASE(&rabbit_spriteram)
+	/* ?? is palette ram shared with sprites in this case or just a different map */
+	AM_RANGE(0x290000, 0x29bfff) AM_WRITE(MWA32_RAM) AM_BASE(&rabbit_spriteram)
+	AM_RANGE(0x29c000, 0x29ffff) AM_WRITE(tmmjprd_paletteram_dword_w) AM_BASE(&paletteram32)
 	AM_RANGE(0x400000, 0x400003) AM_WRITE(rabbit_eeprom_write)
 	AM_RANGE(0xf00000, 0xffffff) AM_WRITE(MWA32_RAM)
 ADDRESS_MAP_END
 
+/* bit 1 is unlabeled in input test, with Hazes old eeprom random# hookup this would be stuck on
+with hazes attempt at proper eeprom hookup this would freeze the game during startup if left on.
+with Arbee's working eeprom hookup this is stuck off */
 INPUT_PORTS_START( rabbit )
 	PORT_START	/* 16bit */
-	PORT_DIPNAME( 0x0001, 0x0001, "0" )
-	PORT_DIPSETTING(      0x0001, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0002, 0x0002, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x0002, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_UNKNOWN ) // unlabeled in test mode eeprom related?
+	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_UNKNOWN ) // unlabeled in input test
 	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_START2 )
-	PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_COIN1 )
-	PORT_DIPNAME( 0x0020, 0x0020, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x0020, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0040, 0x0040, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x0040, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0080, 0x0080, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x0080, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_SERVICE1 )
+	PORT_SERVICE( 0x0020, IP_ACTIVE_LOW )
+	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_COIN2 )
 	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_8WAY PORT_PLAYER(1)
 	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_8WAY PORT_PLAYER(1)
 	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_8WAY PORT_PLAYER(1)
@@ -845,9 +891,7 @@ INPUT_PORTS_START( rabbit )
 INPUT_PORTS_END
 
 
-/* these decodes might not be needed if the cpu accesses the data directly */
-
-static struct GfxLayout rabbit_layout =
+static struct GfxLayout rabbit_sprite_8x8x4_layout =
 {
 	8,8,
 	RGN_FRAC(1,1),
@@ -858,7 +902,20 @@ static struct GfxLayout rabbit_layout =
 	8*32
 };
 
-static struct GfxLayout rabbit2_layout =
+static struct GfxLayout rabbit_sprite_8x8x8_layout =
+{
+	8,8,
+	RGN_FRAC(1,1),
+	8,
+	{ 0,1,2,3,4,5,6,7 },
+	{ 8,0, 40,32,24,16,56, 48 },
+	{ 0*64, 1*64, 2*64, 3*64, 4*64, 5*64, 6*64, 7*64 },
+	8*64
+};
+
+
+
+static struct GfxLayout rabbit_sprite_16x16x4_layout =
 {
 	16,16,
 	RGN_FRAC(1,2),
@@ -869,7 +926,18 @@ static struct GfxLayout rabbit2_layout =
 	16*32
 };
 
-static struct GfxLayout rabbit3_layout =
+static struct GfxLayout rabbit_sprite_16x16x8_layout =
+{
+	16,16,
+	RGN_FRAC(1,2),
+	8,
+	{ 0,1,2,3,4,5,6,7 },
+	{ RGN_FRAC(1,2)+8,RGN_FRAC(1,2)+0,RGN_FRAC(1,2)+24,RGN_FRAC(1,2)+16,RGN_FRAC(1,2)+40,RGN_FRAC(1,2)+32,RGN_FRAC(1,2)+56,RGN_FRAC(1,2)+48, 8,0,24,16, 40,32,56,48  },
+	{ 0*64, 1*64, 2*64, 3*64, 4*64, 5*64, 6*64, 7*64,8*64,9*64,10*64,11*64,12*64,13*64,14*64,15*64 },
+	16*64
+};
+
+static struct GfxLayout rabbit_8x8x4_layout =
 {
 	8,8,
 	RGN_FRAC(1,1),
@@ -880,7 +948,7 @@ static struct GfxLayout rabbit3_layout =
 	8*32
 };
 
-static struct GfxLayout rabbit4_layout =
+static struct GfxLayout rabbit_16x16x4_layout =
 {
 	16,16,
 	RGN_FRAC(1,1),
@@ -891,7 +959,7 @@ static struct GfxLayout rabbit4_layout =
 	16*64
 };
 
-static struct GfxLayout rabbit5_layout =
+static struct GfxLayout rabbit_8x8x8_layout =
 {
 	8,8,
 	RGN_FRAC(1,1),
@@ -902,7 +970,7 @@ static struct GfxLayout rabbit5_layout =
 	8*64
 };
 
-static struct GfxLayout rabbit6_layout =
+static struct GfxLayout rabbit_16x16x8_layout =
 {
 	16,16,
 	RGN_FRAC(1,1),
@@ -912,17 +980,23 @@ static struct GfxLayout rabbit6_layout =
 	{ 0*128, 1*128, 2*128,3*128,4*128,5*128,6*128,7*128,8*128,9*128,10*128,11*128,12*128,13*128,14*128,15*128 },
 	16*128
 };
+
+
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
 	/* this seems to be sprites */
-	{ REGION_USER1, 0, &rabbit_layout,   0x0, 0x1000  },
-	{ REGION_USER1, 0, &rabbit2_layout,   0x0, 0x1000  },
+	{ REGION_USER1, 0, &rabbit_sprite_8x8x4_layout,   0x0, 0x1000  },
+	{ REGION_USER1, 0, &rabbit_sprite_16x16x4_layout,   0x0, 0x1000  },
+	{ REGION_USER1, 0, &rabbit_sprite_8x8x8_layout,   0x0, 0x1000  }, // wrong
+	{ REGION_USER1, 0, &rabbit_sprite_16x16x8_layout,   0x0, 0x1000  }, // wrong
 
 	/* this seems to be backgrounds and tilemap gfx */
-	{ REGION_USER2, 0, &rabbit3_layout,   0x0, 0x1000  },
-	{ REGION_USER2, 0, &rabbit4_layout,   0x0, 0x1000  },
-	{ REGION_USER2, 0, &rabbit5_layout,   0x0, 0x1000  },
-	{ REGION_USER2, 0, &rabbit6_layout,   0x0, 0x1000  },
+	{ REGION_USER2, 0, &rabbit_8x8x4_layout,   0x0, 0x1000  },
+	{ REGION_USER2, 0, &rabbit_16x16x4_layout,   0x0, 0x1000  },
+	{ REGION_USER2, 0, &rabbit_8x8x8_layout,   0x0, 0x1000  },
+	{ REGION_USER2, 0, &rabbit_16x16x8_layout,   0x0, 0x1000  },
+//	{ REGION_USER2, 0, &rabbit_32x32x8_layout,   0x0, 0x1000  },
+
 
 	{ -1 } /* end of array */
 };
@@ -987,18 +1061,87 @@ MACHINE_DRIVER_END
 
 
 
+static void get_tmmjprd_tilemap0_tile_info(int tile_index)
+{
+	get_rabbit_tilemap_info(0,0,tile_index);
+}
+
+static void get_tmmjprd_tilemap1_tile_info(int tile_index)
+{
+	get_rabbit_tilemap_info(1,1,tile_index);
+}
+
+static void get_tmmjprd_tilemap2_tile_info(int tile_index)
+{
+	get_rabbit_tilemap_info(2,1,tile_index);
+}
+
+static void get_tmmjprd_tilemap3_tile_info(int tile_index)
+{
+	get_rabbit_tilemap_info(3,1,tile_index);
+}
+
+VIDEO_START(tmmjprd)
+{
+	/* NOTE tilemap sizes are different.. game can also select between 16x16 and 8x8.. it NEEDS this to work */
+
+	/* the tilemaps are bigger than the regions the cpu can see, need to allocate the ram here */
+	/* or maybe not for this game/hw .... */
+	rabbit_tilemap_ram[0] = auto_malloc(0x20000);
+	rabbit_tilemap_ram[1] = auto_malloc(0x20000);
+	rabbit_tilemap_ram[2] = auto_malloc(0x20000);
+	rabbit_tilemap_ram[3] = auto_malloc(0x20000);
+	memset(rabbit_tilemap_ram[0], 0, 0x20000);
+	memset(rabbit_tilemap_ram[1], 0, 0x20000);
+	memset(rabbit_tilemap_ram[2], 0, 0x20000);
+	memset(rabbit_tilemap_ram[3], 0, 0x20000);
+
+	rabbit_tilemap[0] = tilemap_create(get_tmmjprd_tilemap0_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT ,     8, 8, 64,64);
+	rabbit_tilemap[1] = tilemap_create(get_tmmjprd_tilemap1_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT ,     16, 16, 64,64);
+	rabbit_tilemap[2] = tilemap_create(get_tmmjprd_tilemap2_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT ,     16, 16, 64,64);
+	rabbit_tilemap[3] = tilemap_create(get_tmmjprd_tilemap3_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT ,     16, 16, 64,64);
+	tilemap_set_transparent_pen(rabbit_tilemap[0],0x0);
+	tilemap_set_transparent_pen(rabbit_tilemap[1],0x0);
+	tilemap_set_transparent_pen(rabbit_tilemap[2],0x0);
+	tilemap_set_transparent_pen(rabbit_tilemap[3],0x0);
+	rabbit_sprite_bitmap = auto_bitmap_alloc(0x1000,0x1000);
+	rabbit_sprite_clip.min_x = 0;
+	rabbit_sprite_clip.max_x = 0x1000-1;
+	rabbit_sprite_clip.min_y = 0;
+	rabbit_sprite_clip.max_y = 0x1000-1;
+
+	return 0;
+}
+
+
 VIDEO_UPDATE( tmmjprd )
 {
 	fillbitmap(bitmap,get_black_pen(),cliprect);
 	tilemap_draw(bitmap,cliprect,rabbit_tilemap[3],0,0);
+	tilemap_draw(bitmap,cliprect,rabbit_tilemap[2],0,0);
+	tilemap_draw(bitmap,cliprect,rabbit_tilemap[1],0,0);
+	tilemap_draw(bitmap,cliprect,rabbit_tilemap[0],0,0);
+}
+
+static INTERRUPT_GEN( tmmjprd_interrupt )
+{
+	int intlevel = 0;
+
+	if (cpu_getiloops()==0)
+		intlevel = 5;
+	else
+		intlevel = 3;
+
+	cpunum_set_input_line(0, intlevel, HOLD_LINE);
 }
 
 static MACHINE_DRIVER_START( tmmjprd )
 	MDRV_IMPORT_FROM(rabbit)
 	MDRV_CPU_MODIFY("main")
 	MDRV_CPU_PROGRAM_MAP(tmmjprd_readmem,tmmjprd_writemem)
+	MDRV_CPU_VBLANK_INT(tmmjprd_interrupt,2)
 
-	MDRV_VIDEO_START(rabbit)
+	MDRV_VIDEO_START(tmmjprd)
 	MDRV_VIDEO_UPDATE(tmmjprd)
 MACHINE_DRIVER_END
 
@@ -1020,7 +1163,7 @@ DRIVER_INIT(tmmjprd)
 {
 	init_rabbit_common();
 	rabbit_vblirqlevel = 5;
-	rabbit_bltirqlevel = 3;
+	rabbit_bltirqlevel = 3; // actually palette related?
 	/* other irqs aren't valid */
 }
 

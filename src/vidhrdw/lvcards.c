@@ -1,14 +1,7 @@
-/***************************************************************************
-
-  vidhrdw.c
-
-  Functions to emulate the video hardware of the machine.
-
-***************************************************************************/
-
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
+static struct tilemap *bg_tilemap;
 
 /***************************************************************************
 
@@ -23,6 +16,7 @@
   Color Fixed by Boochip 10/sep/03
 
 ***************************************************************************/
+
 PALETTE_INIT( lvcards )
 {
 
@@ -32,26 +26,26 @@ PALETTE_INIT( lvcards )
 	{
 		int bit0,bit1,bit2,bit3,r,g,b;
 
-				/* red component */
-				bit0 = (color_prom[0] >> 0) & 0x11;
-				bit1 = (color_prom[0] >> 1) & 0x11;
-				bit2 = (color_prom[0] >> 2) & 0x11;
-				bit3 = (color_prom[0] >> 3) & 0x11;
-				r = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
+		/* red component */
+		bit0 = (color_prom[0] >> 0) & 0x11;
+		bit1 = (color_prom[0] >> 1) & 0x11;
+		bit2 = (color_prom[0] >> 2) & 0x11;
+		bit3 = (color_prom[0] >> 3) & 0x11;
+		r = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
 
-				/* green component */
-				bit0 = (color_prom[Machine->drv->total_colors] >> 0) & 0x11;
-				bit1 = (color_prom[Machine->drv->total_colors] >> 1) & 0x11;
-				bit2 = (color_prom[Machine->drv->total_colors] >> 2) & 0x11;
-				bit3 = (color_prom[Machine->drv->total_colors] >> 3) & 0x11;
-				g = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
+		/* green component */
+		bit0 = (color_prom[Machine->drv->total_colors] >> 0) & 0x11;
+		bit1 = (color_prom[Machine->drv->total_colors] >> 1) & 0x11;
+		bit2 = (color_prom[Machine->drv->total_colors] >> 2) & 0x11;
+		bit3 = (color_prom[Machine->drv->total_colors] >> 3) & 0x11;
+		g = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
 
-				/* blue component */
-				bit0 = (color_prom[2*Machine->drv->total_colors] >> 0) & 0x11;
-				bit1 = (color_prom[2*Machine->drv->total_colors] >> 1) & 0x11;
-				bit2 = (color_prom[2*Machine->drv->total_colors] >> 2) & 0x11;
-				bit3 = (color_prom[2*Machine->drv->total_colors] >> 3) & 0x11;
-				b = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
+		/* blue component */
+		bit0 = (color_prom[2*Machine->drv->total_colors] >> 0) & 0x11;
+		bit1 = (color_prom[2*Machine->drv->total_colors] >> 1) & 0x11;
+		bit2 = (color_prom[2*Machine->drv->total_colors] >> 2) & 0x11;
+		bit3 = (color_prom[2*Machine->drv->total_colors] >> 3) & 0x11;
+		b = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
 
 		palette_set_color(i,r,g,b);
 
@@ -59,43 +53,46 @@ PALETTE_INIT( lvcards )
 	}
 }
 
+WRITE8_HANDLER( lvcards_videoram_w )
+{
+	if (videoram[offset] != data)
+	{
+		videoram[offset] = data;
+		tilemap_mark_tile_dirty(bg_tilemap, offset);
+	}
+}
 
-/***************************************************************************
+WRITE8_HANDLER( lvcards_colorram_w )
+{
+	if (colorram[offset] != data)
+	{
+		colorram[offset] = data;
+		tilemap_mark_tile_dirty(bg_tilemap, offset);
+	}
+}
 
-  Draw the game screen in the given mame_bitmap.
-  Do NOT call osd_update_display() from this function, it will be called by
-  the main emulation engine.
+static void get_bg_tile_info(int tile_index)
+{
+	int attr = colorram[tile_index];
+	int code = videoram[tile_index] + ((attr & 0x30) << 4) + ((attr & 0x80) << 3);
+	int color = attr & 0x0f;
+	int flags = (attr & 0x40) ? TILE_FLIPX : 0;
 
-***************************************************************************/
+	SET_TILE_INFO(0, code, color, flags)
+}
+
+VIDEO_START( lvcards )
+{
+	bg_tilemap = tilemap_create(get_bg_tile_info, tilemap_scan_rows, 
+		TILEMAP_OPAQUE, 8, 8, 32, 32);
+
+	if ( !bg_tilemap )
+		return 1;
+
+	return 0;
+}
+
 VIDEO_UPDATE( lvcards )
 {
-	int offs;
-
-
-	/* for every character in the Video RAM, check if it has been modified */
-	/* since last time and update it accordingly. */
-	for (offs = videoram_size; offs >= 0; offs--)
-	{
-		if (dirtybuffer[offs])
-		{
-			int col,sx,sy,flipx;
-
-			dirtybuffer[offs] = 0;
-
-			sx    = offs % 32;
-			sy    = offs / 32;
-			col   =  colorram[offs] & 0x0f;
-			flipx =  colorram[offs] & 0x40;
-
-			drawgfx(tmpbitmap,Machine->gfx[0],
-					videoram[offs] + ((colorram[offs] & 0x30) << 4),
-					col,
-					flipx,0,
-					8*sx,8*sy,
-					&Machine->visible_area,TRANSPARENCY_NONE,0);
-		}
-	}
-
-	/* copy the temporary bitmap to the screen */
-	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
+	tilemap_draw(bitmap, cliprect, bg_tilemap, 0, 0);
 }

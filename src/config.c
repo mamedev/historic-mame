@@ -13,6 +13,9 @@
 #include "expat.h"
 
 
+#define DEBUG_CONFIG		0
+
+
 
 /*************************************
  *
@@ -384,13 +387,24 @@ static void config_element_start(void *data, const XML_Char *name, const XML_Cha
 						break;
 					
 					case FILE_TYPE_CONTROLLER:
+					{
+						const char *srcfile = strrchr(Machine->gamedrv->source_file, '/');
+						if (!srcfile) srcfile = strrchr(Machine->gamedrv->source_file, '\\');
+						if (!srcfile) srcfile = strrchr(Machine->gamedrv->source_file, ':');
+						if (!srcfile) srcfile = Machine->gamedrv->source_file;
+						else srcfile++;
+						
 						curfile.data.ignore_game = 
 							(strcmp(attributes[attr + 1], "default") != 0 &&
 							 strcmp(attributes[attr + 1], Machine->gamedrv->name) != 0 &&
-							 strcmp(attributes[attr + 1], Machine->gamedrv->source_file) != 0 &&
+							 strcmp(attributes[attr + 1], srcfile) != 0 &&
 							 (Machine->gamedrv->clone_of == NULL || strcmp(attributes[attr + 1], Machine->gamedrv->clone_of->name) != 0) &&
 							 (Machine->gamedrv->clone_of == NULL || Machine->gamedrv->clone_of->clone_of == NULL || strcmp(attributes[attr + 1], Machine->gamedrv->clone_of->clone_of->name) != 0));
+
+						if (DEBUG_CONFIG && !curfile.data.ignore_game)
+							printf("Entry: %s -- processing\n", attributes[attr + 1]);
 						break;
+					}
 				}
 				curfile.data.loaded_count += !curfile.data.ignore_game;
 			}
@@ -520,18 +534,22 @@ static void config_element_end(void *data, const XML_Char *name)
 {
 	XML_Char *p;
 
-	/* set the defseq sequence */
-	if (!stricmp(curfile.parse.tag, "/mameconfig/system/input/port/defseq") && curfile.parse.seq_index != -1)
+	/* only process if we match the current game */
+	if (!curfile.data.ignore_game)
 	{
-		if (string_to_seq(curfile.parse.data, &curfile.data.port->defseq[curfile.parse.seq_index]) == 0)
-			seq_set_1(&curfile.data.port->defseq[curfile.parse.seq_index], get_default_code(curfile.data.port->type));
-		seq_copy(&curfile.data.port->newseq[curfile.parse.seq_index], &curfile.data.port->defseq[curfile.parse.seq_index]);
-	}
+		/* set the defseq sequence */
+		if (!stricmp(curfile.parse.tag, "/mameconfig/system/input/port/defseq") && curfile.parse.seq_index != -1)
+		{
+			if (string_to_seq(curfile.parse.data, &curfile.data.port->defseq[curfile.parse.seq_index]) == 0)
+				seq_set_1(&curfile.data.port->defseq[curfile.parse.seq_index], get_default_code(curfile.data.port->type));
+			seq_copy(&curfile.data.port->newseq[curfile.parse.seq_index], &curfile.data.port->defseq[curfile.parse.seq_index]);
+		}
 
-	/* set the newseq sequence */
-	if (!stricmp(curfile.parse.tag, "/mameconfig/system/input/port/newseq") && curfile.parse.seq_index != -1)
-		if (string_to_seq(curfile.parse.data, &curfile.data.port->newseq[curfile.parse.seq_index]) == 0)
-			seq_set_1(&curfile.data.port->newseq[curfile.parse.seq_index], get_default_code(curfile.data.port->type));
+		/* set the newseq sequence */
+		if (!stricmp(curfile.parse.tag, "/mameconfig/system/input/port/newseq") && curfile.parse.seq_index != -1)
+			if (string_to_seq(curfile.parse.data, &curfile.data.port->newseq[curfile.parse.seq_index]) == 0)
+				seq_set_1(&curfile.data.port->newseq[curfile.parse.seq_index], get_default_code(curfile.data.port->type));
+	}
 
 	/* remove the last tag */	
 	p = strrchr(curfile.parse.tag, '/');

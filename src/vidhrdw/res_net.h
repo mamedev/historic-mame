@@ -7,37 +7,38 @@
 
  Function can evaluate from one to three networks at a time.
 
- The output weights can be either scaled with automatically calculated scaler
- or scaled with 'scaler' provided on entry.
+ The output weights can either be scaled with automatically calculated scaler
+ or scaled with a 'scaler' provided on entry.
 
  On entry
  --------
 
- 'minval','maxval' specify range of output signals (sum of weights).
- 'scaler'        if negative, function will calculate proper scaler,
-                 otherwise it will use the one provided here.
- 'count_x'       is a number of resistors in this network
- 'resistances_x' is a pointer to a table containing the resistances
- 'weights_x'     is a pointer to a table to be filled with weights
-                 (can contain negative values if 'minval' is below zero).
- 'pulldown_x'    is a resistance of a pulldown resistor (0 means no pulldown resistor)
- 'pullup_x'      is a resistance of a pullup resistor (0 means no pullup resistor)
+ 'minval','maxval' specify the range of output signals (sum of weights).
+ 'scaler'          if negative, function will calculate proper scaler,
+                   otherwise it will use the one provided here.
+ 'count_x'         is the number of resistors in this network
+ 'resistances_x'   is the pointer to a table containing the resistances
+ 'weights_x'       is the pointer to a table to be filled with the weights
+                   (it can contain negative values if 'minval' is below zero).
+ 'pulldown_x'      is the resistance of a pulldown resistor (0 means there's no pulldown resistor)
+ 'pullup_x'        is the resistance of a pullup resistor (0 means there's no pullup resistor)
 
 
  Return value
  ------------
 
- Value of the scaler that was used to fit the output within the expected range.
- Note that if you provide your own scaler on entry, it will be returned here.
+ The value of the scaler that was used for fitting the output within the expected range.
+ Note that if you provide your own scaler on entry it will be returned here.
 
- All resistances expected in Ohms.
+
+ All resistances are expected in Ohms.
 
 
  Hint
  ----
 
- If there is no need to calculate three networks at a time, just specify '0'
- for the 'count_x' for unused network.
+ If there is no need to calculate all three networks at a time, just specify '0'
+ for the 'count_x' for unused network(s).
 
 *****************************************************************************/
 
@@ -60,7 +61,7 @@ static double compute_resistor_weights(
 /* this should be moved to one of the core files */
 
 #define MAX_NETS 3
-#define MAX_RES_PER_NET 8
+#define MAX_RES_PER_NET 18
 
 static double compute_resistor_weights(
 	int minval, int maxval, double scaler,
@@ -119,6 +120,15 @@ static double compute_resistor_weights(
 				break;
 		}
 
+		/* parameters validity check */
+		if (count > MAX_RES_PER_NET)
+		{
+			logerror(" ERROR: res_net.h: compute_resistor_weights(): too many resistors in net #%i. The maximum allowed is %i, the number requested was: %i\n",n, MAX_RES_PER_NET, count);
+			/* quit */
+			return (0.0);
+		}
+
+
 		if (count > 0)
 		{
 			rescount[networks_no] = count;
@@ -135,7 +145,7 @@ static double compute_resistor_weights(
 	if (networks_no < 1)
 	{
 		/* error - no networks to anaylse */
-		logerror("compute_resistor_weights: ERROR - no input data\n");
+		logerror(" ERROR: res_net.h: compute_resistor_weights(): no input data\n");
 		return (0.0);
 	}
 
@@ -212,7 +222,7 @@ static double compute_resistor_weights(
 
 /* debug code */
 #ifdef MAME_DEBUG
-	logerror("compute_resistor_networks:  scaler = %15.10f\n",scale);
+	logerror("compute_resistor_weights():  scaler = %15.10f\n",scale);
 	logerror("min val :%i  max val:%i  Total number of networks :%i\n", minval, maxval, networks_no );
 
 	for(i = 0; i < networks_no;i++)
@@ -242,7 +252,7 @@ static double compute_resistor_weights(
 
 
 
-/* for open collector outputs PROMs */
+/* for the open collector outputs PROMs */
 
 static double compute_resistor_net_outputs(
 	int minval, int maxval, double scaler,
@@ -262,8 +272,8 @@ static double compute_resistor_net_outputs(
 
 	int rescount[MAX_NETS];		/* number of resistors in each of the nets */
 	double r[MAX_NETS][MAX_RES_PER_NET];		/* resistances */
-	double o[MAX_NETS][1<<MAX_RES_PER_NET];		/* calulated outputs */
-	double os[MAX_NETS][1<<MAX_RES_PER_NET];	/* calulated, scaled outputss */
+	double *o;					/* calulated outputs */
+	double *os;					/* calulated, scaled outputss */
 	int r_pd[MAX_NETS];			/* pulldown resistances */
 	int r_pu[MAX_NETS];			/* pullup resistances */
 
@@ -277,6 +287,9 @@ static double compute_resistor_net_outputs(
 	double max;
 
 	/* parse input parameters */
+
+	o  = (double *) malloc( sizeof(double) * (1<<MAX_RES_PER_NET) *  MAX_NETS);
+	os = (double *) malloc( sizeof(double) * (1<<MAX_RES_PER_NET) *  MAX_NETS);
 
 	networks_no = 0;
 	for (n = 0; n < MAX_NETS; n++)
@@ -310,6 +323,16 @@ static double compute_resistor_net_outputs(
 				break;
 		}
 
+		/* parameters validity check */
+		if (count > MAX_RES_PER_NET)
+		{
+			logerror(" ERROR: res_net.h: compute_resistor_net_outputs(): too many resistors in net #%i. The maximum allowed is %i, the number requested was: %i\n",n, MAX_RES_PER_NET, count);
+			/* quit */
+			free(o);
+			free(os);
+			return (0.0);
+		}
+
 		if (count > 0)
 		{
 			rescount[networks_no] = count;
@@ -323,10 +346,13 @@ static double compute_resistor_net_outputs(
 			networks_no++;
 		}
 	}
+
 	if (networks_no<1)
 	{
 		/* error - no networks to anaylse */
-		logerror("compute_resistor_weights: ERROR - no input data\n");
+		logerror(" ERROR: res_net.h: compute_resistor_net_outputs(): no input data\n");
+		free(o);
+		free(os);
 		return (0.0);
 	}
 
@@ -356,7 +382,7 @@ static double compute_resistor_net_outputs(
 			/* and convert it to a destination value */
 			dst = (Vout < minval) ? minval : (Vout > maxval) ? maxval : Vout;
 
-			o[i][n] = dst;
+			o[i*(1<<MAX_RES_PER_NET)+n] = dst;
 		}
 	}
 
@@ -372,10 +398,10 @@ static double compute_resistor_net_outputs(
 
 		for (n = 0; n < (1<<rescount[i]); n++)
 		{
-			if (min_tmp > o[i][n])
-				min_tmp = o[i][n];
-			if (max_tmp < o[i][n])
-				max_tmp = o[i][n];
+			if (min_tmp > o[i*(1<<MAX_RES_PER_NET)+n])
+				min_tmp = o[i*(1<<MAX_RES_PER_NET)+n];
+			if (max_tmp < o[i*(1<<MAX_RES_PER_NET)+n])
+				max_tmp = o[i*(1<<MAX_RES_PER_NET)+n];
 		}
 
 		max_out[i] = max_tmp;	/* maximum output */
@@ -400,19 +426,19 @@ static double compute_resistor_net_outputs(
 	else				/* use scaler provided on entry */
 		scale = scaler;
 
-	/* calculate scaled output and fill the output table(s)*/
+	/* calculate scaled output and fill the output table(s) */
 	for(i = 0; i < networks_no; i++)
 	{
 		for (n = 0; n < (1<<rescount[i]); n++)
 		{
-			os[i][n] = (o[i][n] - min) * scale;	/* scale the result */
-			(out[i])[n] = os[i][n];		/* fill the output table */
+			os[i*(1<<MAX_RES_PER_NET)+n] = (o[i*(1<<MAX_RES_PER_NET)+n] - min) * scale;	/* scale the result */
+			(out[i])[n] = os[i*(1<<MAX_RES_PER_NET)+n];		/* fill the output table */
 		}
 	}
 
 /* debug code */
 #ifdef MAME_DEBUG
-	logerror("compute_resistor_networks:  scaler = %15.10f\n",scale);
+	logerror("compute_resistor_net_outputs():  scaler = %15.10f\n",scale);
 	logerror("min val :%i  max val:%i  Total number of networks :%i\n", minval, maxval, networks_no );
 
 	for(i = 0; i < networks_no;i++)
@@ -430,12 +456,14 @@ static double compute_resistor_net_outputs(
 		}
 		for (n = 0; n < (1<<rescount[i]); n++)
 		{
-			logerror("   combination %2i  out=%10.5f (scaled = %15.10f)\n", n, o[i][n], os[i][n] );
+			logerror("   combination %2i  out=%10.5f (scaled = %15.10f)\n", n, o[i*(1<<MAX_RES_PER_NET)+n], os[i*(1<<MAX_RES_PER_NET)+n] );
 		}
 	}
 #endif
 /* debug end */
 
+	free(o);
+	free(os);
 	return (scale);
 
 }

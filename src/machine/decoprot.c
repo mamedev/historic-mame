@@ -39,7 +39,7 @@
 	it's hard to tell what values should be bit shifted in what way.
 
 	It's also been found some chips contain a hardwired XOR port and hardwired
-	AND port which affects only certain read values.
+	NAND port which affects only certain read values.
 
 	The chips also handle the interface to the sound cpu via a write address,
 	and game inputs via several read addresses.  The I/O input data is also
@@ -56,6 +56,7 @@
 
 #include "driver.h"
 #include "machine/eeprom.h"
+#include "state.h"
 
 #define DECO_PORT(p) (deco16_prot_ram[p/2])
 
@@ -1117,47 +1118,120 @@ READ16_HANDLER( deco16_146_funkyjet_prot_r )
 
 /***************************************************************************/
 
+static data8_t deco16_prot_backbuffer_selected=0;
+static data16_t deco16_prot_backbuffer[0x100];
+
+void deco16_104_rohga_reset(void)
+{
+	deco16_prot_backbuffer_selected=0;
+	state_save_register_UINT8("rohga", 0, "protstate", &deco16_prot_backbuffer_selected, 1);
+	state_save_register_UINT16("rohga", 0, "prot", deco16_prot_backbuffer, 0x100);
+}
+
 WRITE16_HANDLER( deco16_104_rohga_prot_w )
 {
-/*	if (offset!=(0x20>>1) && offset!=(0x22>>1) && offset!=(0x26>>1) && offset!=(0x2c>>1)
-		&& offset!=(0x2e>>1) && offset!=(0x30>>1) && offset!=(0x32>>1) && offset!=(0x40>>1)
-		&& offset!=(0x42>>1) && offset!=(0x46>>1) && offset!=(0x6a>>1) && offset!=(0x74>>1)
-		&& offset!=(0xd4>>1) && offset!=(0xee>>1) && offset!=(0x8ee>>1) && offset!=(0x8ee>>1)
-		)
-*/
-logerror("CONTROL PC %06x: warning - write protection memory address %04x %04x\n",activecpu_get_pc(),offset<<1,data);
+	/* 
+		Schmeizr uses a feature of this chip that other games don't seem to exploit.  There
+		appear to be two banks of data ports (referred to here as front and back buffers).
+		These banks are switched when certain addresses are read - also very good protection
+		against trojans as it is non-obvious when data ports are switched.
 
-	COMBINE_DATA(&deco16_prot_ram[offset]);
-//	if (offset==0xa8/2) rohga_sound_w(0,0,data);
-//	if (errorlog && offset!=0x6a ) fprintf(errorlog,"Protection PC %06x: warning - write unmapped memory address %04x %04x\n",cpu_get_pc(),offset,data);
+		It appears to work as follows..  When the front buffer is active (the state upon
+		reset) any writes to data ports push the existing front buffer word into the back
+		buffer (ie, a FIFO latch type of system).  When the back buffer is active, any writes
+		to data ports affect the back buffer only - the front buffer data is not affected, and
+		there is no FIFO action.
+
+		By default the read ports return a scrambled address and scrambled data from a 
+		front buffer port.  When the back buffer is active most read ports return scrambled
+		data from the back buffer, however some ports work exclusively on front buffer data
+		even if the back buffer is selected.  
+
+		There doesn't appear to be any way to detect what bank is currently selected - it
+		seems game code must maintain this state (if it matters).
+	*/
+
+	if (deco16_prot_backbuffer_selected) {
+		COMBINE_DATA(&deco16_prot_backbuffer[offset]);
+
+//		if (offset==0x7e/2)
+//			logerror("Wrote %04x into back only\n",data);
+	} else {
+		/* FIFO */
+//		if (offset==0x7e/2)
+//			logerror("Wrote %04x into front, %04x to back\n",data,deco16_prot_ram[offset]);
+		deco16_prot_backbuffer[offset]=deco16_prot_ram[offset];
+		COMBINE_DATA(&deco16_prot_ram[offset]);
+	}
+
+	if (offset==(0xa8/2)) {
+		soundlatch_w(0,data&0xff);
+		cpunum_set_input_line(1,0,HOLD_LINE);
+		return;
+	}
+
+	
+	offset=offset*2;
+
+//	if (offset==0x60)
+//	logerror("CONTROL PC %06x: warning - write protection memory address %04x %04x\n",activecpu_get_pc(),offset,data);
+	
+	//logerror("CONTROL PC %06x: warning - write protection memory address %04x %04x\n",activecpu_get_pc(),offset,data);
+	if (offset==0xee || offset==0x42 || offset==0xa8)
+		return;
+
+//	logerror("CONTROL PC %06x: warning - write protection memory address %04x %04x\n",activecpu_get_pc(),offset,data);
+
+#if 1
+// 66 7c 7e 28 58 4a 9e
+	if (offset==0x66 || offset==0x7c || offset==0x7e || offset==0x28 || offset==0x58 || offset==0x4a)
+		return;
+	if (offset==0x9e || offset==0x7c || offset==0x7e || offset==0x28 || offset==0x58 || offset==0x4a)
+		return;
+#endif
+
+#if 1
+	if (offset>=0x80 && offset<0xa0)
+		return;
+	if (offset>=0xc0 && offset<0xd0)
+		return;
+
+//	if (offset==0x3c)
+//		logerror("CONTROL PC %06x: warning - write protection memory address %04x %04x\n",activecpu_get_pc(),offset,data);
+// Actually read:
+//	22 24 26 2c 2e 30 32 3c 40 44 46 48 60 62 66 6a 6e 76 7e 80 82 84 86 88 8a 8c 90 94 96 98 9a 9c a0 c0 c4 c6 c8 cc ce d6 dc de 
+
+// check 74 b0 b4 d4
+
+//  24 2a 2c 2e 30 3c 44 48 66 6a 74 a0 b0 b4 d4 d6 
+//  32 60 7e
+//  22 26 a4 a6
+//  62 6e d0 dc de d2 d8 da 46
+	if (offset==0x24 || offset==0x2a || offset==0x2c || offset==0x2e || offset==0x30 || offset==0x3c)
+		return;
+	if (offset==0x44 || offset==0x48 || offset==0x66 || offset==0x6a || offset==0x74 || offset==0xa0)
+		return;
+	if (offset==0xb0 || offset==0xb4 || offset==0xd4 || offset==0xd6)
+		return;
+	if (offset==0x32 || offset==0x60 || offset==0x7e || offset==0xa4 || offset==0xa6)
+		return;
+	if (offset==0x22 || offset==0x26 || offset==0x62 || offset==0xd0 || offset==0xdc)
+		return;
+	if (offset==0xde || offset==0xd2 || offset==0xd8 || offset==0xda || offset==0x46)
+		return;
+	if (offset==0x20 || offset==0x40)
+		return;
+	if (offset==0x6e || offset==0xaa || offset==0xac || offset==0xa2)
+		return;
+#endif
+
+	logerror("CONTROL PC %06x: warning - write unmapped protection memory address %04x %04x\n",activecpu_get_pc(),offset,data);
 }
 
 READ16_HANDLER( deco16_104_rohga_prot_r )
 {
-//	if (offset!=(0x16e>>1))
- //	logerror("Protection PC %06x: warning - read unmapped memory address %04x\n",activecpu_get_pc(),offset<<1);
-
-//	logerror("Protection PC %06x: warning - read unmapped memory address %04x\n",activecpu_get_pc(),offset<<1);
-/*
-
-Print6:
-
-	420 == 2e (2143)			DONE
-	424 == 60 (2134)
-	390 == 2c (1234)
-	754 == 	0000 for top line
-			0dcb for 2nd line (POKEPROT	#$ee,#$1234)
-			e000 for 12th line (POKEPROT	#$42,#$1234)
-			4000 for 20th line (POKEPROT	#$76,#$1234)
-	756 == 60 (8123)	 for 15th line (POKEPROT	#$60,#$1234
-	34c == 0810 const
-	384 == $dc (2311)
-	292 == DIPS
-
-Print7:
-	Garbage
-
-*/
+//	if (offset!=0x88/2 && offset!=0x44c/2 && offset!=0x36c/2 && offset!=0x292/2)
+//logerror("Protection PC %06x: warning - read prot address %04x\n",activecpu_get_pc(),offset<<1);
 
 	switch (offset) {
 		case 0x88/2: /* Player 1 & 2 input ports */
@@ -1169,29 +1243,25 @@ Print7:
 
 		case 0x292/2: /* Dips */
 			return readinputport(2);
-
+#if 1
 		case 0x420/2:
 			return ((deco16_prot_ram[0x2e/2]&0xf000)>>4) | ((deco16_prot_ram[0x2e/2]&0x0f00)<<4) | ((deco16_prot_ram[0x2e/2]&0x00f0)>>4) | ((deco16_prot_ram[0x2e/2]&0x000f)<<4);
 
 		case 0x390/2:
 			return deco16_prot_ram[0x2c/2];
 
-		case 0x754/2: /* XOR and MASK registers used */
-			return (((deco16_prot_ram[0x76/2]&0x000f)<<12) ^ deco16_prot_ram[0x42/2]) & (~deco16_prot_ram[0xee/2]);
+//		case 0x754/2: //fails verify
+//			return (((deco16_prot_ram[0x76/2]&0x000f)<<12) ^ deco16_prot_ram[0x42/2]) & (~deco16_prot_ram[0xee/2]);
 
-		case 0x756/2: /* bit 2 checked freq*/
+		case 0x756/2:
 			return ((deco16_prot_ram[0x60/2]&0xfff0)>>4) | ((deco16_prot_ram[0x60/2]&0x0007)<<13) | ((deco16_prot_ram[0x60/2]&0x0008)<<9);
 		case 0x424/2:
 			return ((deco16_prot_ram[0x60/2]&0xf000)>>4) | ((deco16_prot_ram[0x60/2]&0x0f00)<<4) | ((deco16_prot_ram[0x60/2]&0x00f0)>>0) | ((deco16_prot_ram[0x60/2]&0x000f)<<0);
 
-		case 0x722/2:
-			return ((deco16_prot_ram[0xdc/2]&0x0fff)<<4) & (~deco16_prot_ram[0xee/2]);
 		case 0x156/2:
 			return (((deco16_prot_ram[0xde/2]&0xff00)<<0) | ((deco16_prot_ram[0xde/2]&0x000f)<<4) | ((deco16_prot_ram[0xde/2]&0x00f0)>>4)) & (~deco16_prot_ram[0xee/2]);
 		case 0xa8/2:
 			return (((deco16_prot_ram[0xde/2]&0xff00)>>4) | ((deco16_prot_ram[0xde/2]&0x000f)<<0) | ((deco16_prot_ram[0xde/2]&0x00f0)<<8)) & (~deco16_prot_ram[0xee/2]);
-		case 0x574/2:
-			return (((deco16_prot_ram[0xdc/2]&0xfff0)>>0) | ((deco16_prot_ram[0xdc/2]&0x0003)<<2) | ((deco16_prot_ram[0xdc/2]&0x000c)>>2)) & (~deco16_prot_ram[0xee/2]);
 		case 0x64a/2:
 			return (((deco16_prot_ram[0xde/2]&0xfff0)>>4) | ((deco16_prot_ram[0xde/2]&0x000c)<<10) | ((deco16_prot_ram[0xde/2]&0x0003)<<14)) & (~deco16_prot_ram[0xee/2]);
 
@@ -1211,16 +1281,10 @@ Print7:
 		case 0x162/2:
 			return deco16_prot_ram[0x6e/2];
 
-		case 0x150/2:
-			return deco16_prot_ram[0x7e/2];
 
 		case 0x384/2:
 			return ((deco16_prot_ram[0xdc/2]&0xf000)>>12) | ((deco16_prot_ram[0xdc/2]&0x0ff0)<<4) | ((deco16_prot_ram[0xdc/2]&0x000c)<<2) | ((deco16_prot_ram[0xdc/2]&0x0003)<<6);
 
-		case 0x5ae/2:
-			return deco16_prot_ram[0xdc/2];
-		case 0x340/2:
-			return deco16_prot_ram[0x4c/2];
 		case 0x302/2:
 			return deco16_prot_ram[0x24/2];
 		case 0x334/2:
@@ -1230,79 +1294,372 @@ Print7:
 
 		case 0x514/2:
 			return (((deco16_prot_ram[0x32/2]&0x0ff0)<<4) | ((deco16_prot_ram[0x32/2]&0x000c)<<2) | ((deco16_prot_ram[0x32/2]&0x0003)<<6)) & (~deco16_prot_ram[0xee/2]);
-
 		case 0x444/2:
 			return ((deco16_prot_ram[0x66/2]&0x00f0)<<8) | ((deco16_prot_ram[0x66/2]&0x0007)<<9)  | ((deco16_prot_ram[0x66/2]&0x0008)<<5);
 
-//		case 0x302/2: /* sprite related, demo mode (sub??? */
-//			return deco16_prot_ram[0x3c/2];
-//check above 2...
-
-/*
-	5ae = $dc - done
-	340==$4c - done
-	292 == 7fff, controls or dips???
-	70a = $4c ^ 0xff00???
-
-
-Page 3;
-	QPRINT	#0, #2, #$420
-	QPRINT	#10,#2, #$36c
-	QPRINT	#20,#2, #$512
-	QPRINT	#30,#2, #$212
-	QPRINT	#40,#2, #$334
-	QPRINT	#50,#2, #$756
-	QPRINT	#60,#2, #$424
-	QPRINT	#70,#2, #$302
-
-	420 == $2e (2143)
-	36c == VBL
-	302 == $24 done
-	334 == $30 done
-
-	212 == 0 for all regs==ffff
-	Write 1234 to 42
-	Then 212 becomes edcb == 42 is inverse mask register?
-	Write 1234 to 6a
-	Then 212 becomes 2310 therefore
-		212 = 6a (...
-
-	424 == $46 (2134)
-	756 == $46 (  1234 becomes 8123) assume, 4123 with <<1 on the 4)
-	512 == 0800 const..
-
-Page 4:
-
-
-
-
-
-
-*/
-
-/*
-	To check..
-
-Page2:
-	340 wrong??  Might be xor read port??
-	574 - affected by mask
-	70a data port is de (mask and xor?)
-
-
-
-
-*/
-
-
-		case 0x410/2:
-			return deco16_prot_ram[0xde/2];
 		case 0x34e/2:
 			return ((deco16_prot_ram[0xde/2]&0x0ff0)<<4) | ((deco16_prot_ram[0xde/2]&0xf000)>>8) | ((deco16_prot_ram[0xde/2]&0x000f)<<0);
+		case 0x722/2: /* XOR applied before MASK */
+			return (((deco16_prot_ram[0xdc/2]&0x0fff)<<4) ^ deco16_prot_ram[0x42/2]) & (~deco16_prot_ram[0xee/2]);
+		case 0x574/2: /* XOR applied before MASK */
+			return ((((deco16_prot_ram[0xdc/2]&0xfff0)>>0) | ((deco16_prot_ram[0xdc/2]&0x0003)<<2) | ((deco16_prot_ram[0xdc/2]&0x000c)>>2)) ^ deco16_prot_ram[0x42/2]) & (~deco16_prot_ram[0xee/2]);
 
 
+		case 0x5ae/2:
+			return deco16_prot_ram[0xdc/2];
+		case 0x410/2:
+			return deco16_prot_ram[0xde/2];
+		case 0x340/2:
+			return ((deco16_prot_ram[0x90/2]&0xfff0) | ((deco16_prot_ram[0x90/2]&0x7)<<1) | ((deco16_prot_ram[0x90/2]&0x8)>>3)) ^ deco16_prot_ram[0x42/2];
+		case 0x4a4/2:
+			return (((deco16_prot_ram[0xce/2]&0x0ff0) | ((deco16_prot_ram[0xce/2]&0xf000)>>12) | ((deco16_prot_ram[0xce/2]&0x000f)<<12)) ^ deco16_prot_ram[0x42/2]) & (~deco16_prot_ram[0xee/2]);
+		case 0x256/2:
+			return ((((deco16_prot_ram[0xce/2]&0xf000)>>12) | ((deco16_prot_ram[0xce/2]&0x0fff)<<4))) & (~deco16_prot_ram[0xee/2]);
+		case 0x79a/2:
+			return (((deco16_prot_ram[0xc8/2]&0xfff0)>>4) | ((deco16_prot_ram[0xc8/2]&0x0008)<<9) | ((deco16_prot_ram[0xc8/2]&0x0007)<<13)) ^ deco16_prot_ram[0x42/2];
+		case 0x65e/2:
+			return deco16_prot_ram[0x9c/2];
+		case 0x79c/2:
+			return ((deco16_prot_ram[0xc6/2]&0xf000) | ((deco16_prot_ram[0xc6/2]&0x00ff)<<4) | ((deco16_prot_ram[0xc6/2]&0x0f00)>>8)) & (~deco16_prot_ram[0xee/2]);
+		case 0x15e/2:
+			return (((deco16_prot_ram[0x98/2]&0x0ff0)<<4) | ((deco16_prot_ram[0x98/2]&0xf000)>>12) | ((deco16_prot_ram[0x98/2]&0x0003)<<6) | ((deco16_prot_ram[0x98/2]&0x000c)<<2)) ^ deco16_prot_ram[0x42/2];
+		case 0x6e4/2:
+			return deco16_prot_ram[0x98/2];
+		case 0x1e/2:
+			return ((((deco16_prot_ram[0xc4/2]&0xf000)>>4) | ((deco16_prot_ram[0xc4/2]&0x0f00)<<4) | ((deco16_prot_ram[0xc4/2]&0x00ff)<<0)) ^ deco16_prot_ram[0x42/2]) & (~deco16_prot_ram[0xee/2]);
+		case 0x23a/2:
+			return ((((deco16_prot_ram[0x86/2]&0xfff0)>>0) | ((deco16_prot_ram[0x86/2]&0x0003)<<2) | ((deco16_prot_ram[0x86/2]&0x000c)>>2)) ^ deco16_prot_ram[0x42/2]);
+		case 0x6e/2:
+			return ((((deco16_prot_ram[0x96/2]&0xf000)>>8) | ((deco16_prot_ram[0x96/2]&0x0f0f)<<0) | ((deco16_prot_ram[0x96/2]&0x00f0)<<8)) ^ deco16_prot_ram[0x42/2]);
+		case 0x3a2/2:
+			return ((((deco16_prot_ram[0x94/2]&0xf000)>>8) | ((deco16_prot_ram[0x94/2]&0x0f00)>>8) | ((deco16_prot_ram[0x94/2]&0x00f0)<<8) | ((deco16_prot_ram[0x94/2]&0x000e)<<7) | ((deco16_prot_ram[0x94/2]&0x0001)<<11)) ^ deco16_prot_ram[0x42/2]);// & (~deco16_prot_ram[0xee/2]);
+		case 0x4a6/2:
+			return ((deco16_prot_ram[0x8c/2]&0xff00)>>0) | ((deco16_prot_ram[0x8c/2]&0x00f0)>>4) | ((deco16_prot_ram[0x8c/2]&0x000f)<<4);
+		case 0x7b0/2:
+			return deco16_prot_ram[0x80/2];
+		case 0x5aa/2: // need to verify (added mask as test)
+			return ((((deco16_prot_ram[0x98/2]&0x0f00)>>8) | ((deco16_prot_ram[0x98/2]&0xf000)>>8) | ((deco16_prot_ram[0x98/2]&0x00f0)<<8) | ((deco16_prot_ram[0x98/2]&0x000e)<<7) | ((deco16_prot_ram[0x98/2]&0x0001)<<11)) ^ deco16_prot_ram[0x42/2]) & (~deco16_prot_ram[0xee/2]);
+		case 0x662/2:
+			return deco16_prot_ram[0x8c/2];
+		case 0x624/2:
+			return deco16_prot_ram[0x9a/2];
+		case 0x2c/2:
+			return (((deco16_prot_ram[0x82/2]&0x0f0f)>>0) | ((deco16_prot_ram[0x82/2]&0xf000)>>8) | ((deco16_prot_ram[0x82/2]&0x00f0)<<8)) & (~deco16_prot_ram[0xee/2]);
+
+
+		case 0x41a/2:
+			return ((((deco16_prot_ram[0x84/2]&0x00f0)<<8) | ((deco16_prot_ram[0x84/2]&0xf000)>>8) | ((deco16_prot_ram[0x84/2]&0x0f00)>>8) | ((deco16_prot_ram[0x84/2]&0x0003)<<10) | ((deco16_prot_ram[0x84/2]&0x000c)<<6)) ^ deco16_prot_ram[0x42/2]);
+		case 0x168/2:
+			return ((((deco16_prot_ram[0x84/2]&0x0ff0)<<4) | ((deco16_prot_ram[0x84/2]&0x000e)<<3) | ((deco16_prot_ram[0x84/2]&0x0001)<<5))) & (~deco16_prot_ram[0xee/2]);
+		case 0x314/2:
+			return ((((deco16_prot_ram[0x84/2]&0x0ff0)<<4) | ((deco16_prot_ram[0x84/2]&0x000e)<<3) | ((deco16_prot_ram[0x84/2]&0x0001)<<5)));
+		case 0x1b4/2: 
+			return ((deco16_prot_ram[0xcc/2]&0x00f0)<<4) | ((deco16_prot_ram[0xcc/2]&0x000f)<<12);
+		case 0x5e2/2: 
+			return ((((deco16_prot_ram[0x84/2]&0x00f0)<<8) | ((deco16_prot_ram[0x84/2]&0x000e)<<7) | ((deco16_prot_ram[0x84/2]&0x0001)<<9)));
+		case 0x22c/2: 
+			return ((deco16_prot_ram[0xc4/2]&0x00f0)<<8);
+		case 0x27e/2:
+			return ((((deco16_prot_ram[0x94/2]&0x00f0)<<8)) ^ deco16_prot_ram[0x42/2]) & (~deco16_prot_ram[0xee/2]);
+		case 0x77e/2:
+			return ((deco16_prot_ram[0x62/2]&0xf000)>>12) | ((deco16_prot_ram[0x62/2]&0x0ff0)<<0) | ((deco16_prot_ram[0x62/2]&0x000f)<<12);
+		case 0xc/2:
+			return ((deco16_prot_ram[0xd6/2]&0xf000)>>12) | ((deco16_prot_ram[0xd6/2]&0x0fff)<<4);
+
+
+		case 0x90/2:
+			return deco16_prot_ram[0x44/2];
+		case 0x246/2:
+			return ((((deco16_prot_ram[0x48/2]&0xff00)>>8) | ((deco16_prot_ram[0x48/2]&0x00f0)<<8) | ((deco16_prot_ram[0x48/2]&0x0f00)>>8) | ((deco16_prot_ram[0x48/2]&0x0003)<<10) | ((deco16_prot_ram[0x48/2]&0x000c)<<6)) ^ deco16_prot_ram[0x42/2]);
+		case 0x546/2:
+			return (((deco16_prot_ram[0x62/2]&0xf0f0)>>0) | ((deco16_prot_ram[0x62/2]&0x000f)<<8)) & (~deco16_prot_ram[0xee/2]);
+		case 0x7ce/2:
+			return ((deco16_prot_ram[0x80/2]&0x000e)<<11) | ((deco16_prot_ram[0x80/2]&0x0001)<<15);
+		case 0x2e2/2:
+			return ((deco16_prot_ram[0xc6/2]&0x000e)<<11) | ((deco16_prot_ram[0xc6/2]&0x0001)<<15);
+		case 0x40e/2:
+			return ((((deco16_prot_ram[0x8a/2]&0xf000)>>0) | ((deco16_prot_ram[0x8a/2]&0x00ff)<<4)) ^ deco16_prot_ram[0x42/2]) & (~deco16_prot_ram[0xee/2]);
+		case 0x248/2:
+			return ((((deco16_prot_ram[0x8c/2]&0xff00)>>8) | ((deco16_prot_ram[0x8c/2]&0x00f0)<<4) | ((deco16_prot_ram[0x8c/2]&0x000f)<<12)) ^ deco16_prot_ram[0x42/2]) & (~deco16_prot_ram[0xee/2]);
+		case 0x3c0/2:
+			return deco16_prot_ram[0x22/2];
+		case 0x4b8/2:
+			return (((deco16_prot_ram[0x46/2]&0xf000)>>12) | ((deco16_prot_ram[0x46/2]&0x0f00)>>4) | ((deco16_prot_ram[0x46/2]&0x00ff)<<8)) ^ deco16_prot_ram[0x42/2];
+		case 0x65c/2:
+			return ((((deco16_prot_ram[0x44/2]&0xf000)>>12) | ((deco16_prot_ram[0x44/2]&0x0fff)<<4)) ^ deco16_prot_ram[0x42/2]) & (~deco16_prot_ram[0xee/2]);
+
+
+		case 0x32a/2:
+			return ((((deco16_prot_ram[0xc0/2]&0x0ff0)<<4) | ((deco16_prot_ram[0xc0/2]&0x000e)<<3) | ((deco16_prot_ram[0xc0/2]&0x0001)<<7))) & (~deco16_prot_ram[0xee/2]);// ^ deco16_prot_ram[0x42/2];
+		case 0x8/2:
+			return ((((deco16_prot_ram[0x94/2]&0xfff0)<<0) | ((deco16_prot_ram[0x94/2]&0x000e)>>1) | ((deco16_prot_ram[0x94/2]&0x0001)<<3))) & (~deco16_prot_ram[0xee/2]);// ^ deco16_prot_ram[0x42/2];
+		case 0x456/2:
+			return (((deco16_prot_ram[0x26/2]&0xfff0)<<0) | ((deco16_prot_ram[0x26/2]&0x0007)<<1) | ((deco16_prot_ram[0x26/2]&0x0008)>>3));// ^ deco16_prot_ram[0x42/2];
+		case 0x190/2:
+			return ((((deco16_prot_ram[0x44/2]&0xf000)<<0) | ((deco16_prot_ram[0x44/2]&0x00ff)<<4))) & (~deco16_prot_ram[0xee/2]);// ^ deco16_prot_ram[0x42/2];
+		case 0x3f2/2:
+			return ((((deco16_prot_ram[0x48/2]&0x000f)<<12) | ((deco16_prot_ram[0x48/2]&0x00f0)<<4))) & (~deco16_prot_ram[0xee/2]);// ^ deco16_prot_ram[0x42/2];
+		case 0x2be/2:
+			return ((deco16_prot_ram[0x40/2]&0x00ff)<<8);
+
+		case 0x178/2:
+			return (((deco16_prot_ram[0x88/2]&0x00ff)<<8) | ((deco16_prot_ram[0x88/2]&0xff00)>>8)) & (~deco16_prot_ram[0xee/2]);
+		case 0x19e/2:
+			return ((((deco16_prot_ram[0x3c/2]&0xf000)>>12) | ((deco16_prot_ram[0x3c/2]&0x0f00)<<4) | ((deco16_prot_ram[0x3c/2]&0x00f0)>>0) | ((deco16_prot_ram[0x3c/2]&0x000f)<<8)) ^ deco16_prot_ram[0x42/2]) & (~deco16_prot_ram[0xee/2]);
+
+		case 0x2a2/2:
+			return ((((deco16_prot_ram[0x44/2]&0xff00)>>8) | ((deco16_prot_ram[0x44/2]&0x00f0)<<8) | ((deco16_prot_ram[0x44/2]&0x000e)<<7) | ((deco16_prot_ram[0x44/2]&0x0001)<<11)) ^ deco16_prot_ram[0x42/2]) & (~deco16_prot_ram[0xee/2]);
+
+		case 0x748/2:
+			return (((deco16_prot_ram[0x44/2]&0xfff0)<<0) | ((deco16_prot_ram[0x44/2]&0x000e)>>1) | ((deco16_prot_ram[0x44/2]&0x0001)<<3));// & (~deco16_prot_ram[0xee/2]);
+		case 0x686/2:
+			return (((deco16_prot_ram[0x46/2]&0xf000)>>4) | ((deco16_prot_ram[0x46/2]&0x0f00)>>8) | ((deco16_prot_ram[0x46/2]&0x00f0)<<8) | ((deco16_prot_ram[0x46/2]&0x000f)<<4));// & (~deco16_prot_ram[0xee/2]);
+
+		case 0x4c4/2:
+			return ((deco16_prot_ram[0x3c/2]&0x000f)<<12) & (~deco16_prot_ram[0xee/2]);
+		case 0x538/2:
+			return ((deco16_prot_ram[0x3c/2]&0x000f)<<12);
+		case 0x63a/2:
+			return ((deco16_prot_ram[0x3c/2]&0x000f)<<12);
+		// 63a as above?? more tests needed.
+
+
+		case 0x348/2:
+			return ((((deco16_prot_ram[0x44/2]&0xf000)>>12) | ((deco16_prot_ram[0x44/2]&0x0ff0)<<4) | ((deco16_prot_ram[0x44/2]&0x000e)<<3) | ((deco16_prot_ram[0x44/2]&0x0001)<<7))) ^ deco16_prot_ram[0x42/2];// & (~deco16_prot_ram[0xee/2]);
+		case 0x200/2:
+			return (((deco16_prot_ram[0xa0/2]&0xfff0)>>4) | ((deco16_prot_ram[0xa0/2]&0x0007)<<13) | ((deco16_prot_ram[0xa0/2]&0x0008)<<9));// & (~deco16_prot_ram[0xee/2]);
+		case 0x254/2:
+			return ((((deco16_prot_ram[0x7e/2]&0x0ff0)<<4) | ((deco16_prot_ram[0x7e/2]&0x000c)<<2) | ((deco16_prot_ram[0x7e/2]&0x0003)<<6))) ^ deco16_prot_ram[0x42/2];// & (~deco16_prot_ram[0xee/2]);
+		case 0x182/2:
+			return ((deco16_prot_ram[0x46/2]&0xf000)<<0) | ((deco16_prot_ram[0x46/2]&0x0f00)>>8) | ((deco16_prot_ram[0x46/2]&0x00f0)>>0) | ((deco16_prot_ram[0x46/2]&0x000f)<<8);
+		case 0x58/2:
+			return deco16_prot_ram[0x46/2];
+		case 0x48e/2: // fails verify (remove xor as test)
+			return ((((deco16_prot_ram[0x46/2]&0xf000)>>12) | ((deco16_prot_ram[0x46/2]&0x0f00)>>4) | ((deco16_prot_ram[0x46/2]&0x00f0)<<4) | ((deco16_prot_ram[0x46/2]&0x000f)<<12)));// /*^ deco16_prot_ram[0x42/2]*/) & (~deco16_prot_ram[0xee/2]);
+
+		case 0x72a/2:
+			return ((((deco16_prot_ram[0x86/2]&0xfff0)>>4) | ((deco16_prot_ram[0x86/2]&0x0003)<<14) | ((deco16_prot_ram[0x86/2]&0x000c)<<10)) ^ deco16_prot_ram[0x42/2]) & (~deco16_prot_ram[0xee/2]);
+
+		case 0x4ba/2:
+			return (((deco16_prot_ram[0x24/2]&0xf000)>>12) | ((deco16_prot_ram[0x24/2]&0x0ff0)<<4) | ((deco16_prot_ram[0x24/2]&0x000c)<<2) | ((deco16_prot_ram[0x24/2]&0x0003)<<6)) & (~deco16_prot_ram[0xee/2]);
+		case 0x92/2:
+			return (((deco16_prot_ram[0x3c/2]&0xfff0)>>0) | ((deco16_prot_ram[0x3c/2]&0x0007)<<1) | ((deco16_prot_ram[0x3c/2]&0x0008)>>3));
+		case 0x1f0/2:
+			return ((((deco16_prot_ram[0xa2/2]&0xf000)>>12) | ((deco16_prot_ram[0xa2/2]&0x0f00)>>4) | ((deco16_prot_ram[0xa2/2]&0x00ff)<<8)) ^ deco16_prot_ram[0x42/2]) & (~deco16_prot_ram[0xee/2]);
+		case 0x24e/2:
+			return ((((deco16_prot_ram[0x46/2]&0xf000)>>8) | ((deco16_prot_ram[0x46/2]&0x0f00)>>0) | ((deco16_prot_ram[0x46/2]&0x00f0)>>4) | ((deco16_prot_ram[0x46/2]&0x000f)<<12)) ^ deco16_prot_ram[0x42/2]);// & (~deco16_prot_ram[0xee/2]);
+		case 0x594/2:
+			return ((((deco16_prot_ram[0x40/2]&0x00f0)<<8) | ((deco16_prot_ram[0x40/2]&0x000c)<<6) | ((deco16_prot_ram[0x40/2]&0x0003)<<10)) ^ deco16_prot_ram[0x42/2]);// & (~deco16_prot_ram[0xee/2]);
+
+		case 0x7e2/2:
+			return ((((deco16_prot_ram[0x96/2]&0xf000)<<0) | ((deco16_prot_ram[0x96/2]&0x00f0)<<4) | ((deco16_prot_ram[0x96/2]&0x000f)<<4))) ^ deco16_prot_ram[0x42/2];// | ((deco16_prot_ram[0x96/2]&0x0001)<<7));// ^ deco16_prot_ram[0x42/2]);// & (~deco16_prot_ram[0xee/2]);
+		case 0x18c/2:
+			return (((deco16_prot_ram[0x22/2]&0xfff0)>>4) | ((deco16_prot_ram[0x22/2]&0x000e)<<11) | ((deco16_prot_ram[0x22/2]&0x0001)<<15));// ^ deco16_prot_ram[0x42/2]);// & (~deco16_prot_ram[0xee/2]);
+		case 0x1fa/2:
+			return ((((deco16_prot_ram[0x26/2]&0xf000)>>8) | ((deco16_prot_ram[0x26/2]&0x0f00)<<0) | ((deco16_prot_ram[0x26/2]&0x00f0)>>4) | ((deco16_prot_ram[0x26/2]&0x000f)<<12))) ^ deco16_prot_ram[0x42/2];// & (~deco16_prot_ram[0xee/2]);
+		case 0x70e/2:
+			return ((((deco16_prot_ram[0x26/2]&0x0ff0)<<4) | ((deco16_prot_ram[0x26/2]&0x000c)<<2) | ((deco16_prot_ram[0x26/2]&0x0003)<<6))) ^ deco16_prot_ram[0x42/2];// & (~deco16_prot_ram[0xee/2]);
+		case 0x33a/2:
+			return deco16_prot_ram[0x60/2] & (~deco16_prot_ram[0xee/2]);
+		case 0x1e2/2:
+			return ((deco16_prot_ram[0xd0/2]&0xf000)>>12) | ((deco16_prot_ram[0xd0/2]&0x0f00)>>4) | ((deco16_prot_ram[0xd0/2]&0x00ff)<<8);
+		case 0x3f4/2: // fails verify
+			return deco16_prot_ram[0x6e/2]<<4;// & (~deco16_prot_ram[0xee/2]);
+
+		case 0x2ae/2:
+			return ((deco16_prot_ram[0x9c/2]&0xf000)<<0) | ((deco16_prot_ram[0x9c/2]&0x0ff0)>>4) | ((deco16_prot_ram[0x9c/2]&0x000f)<<8);// & (~deco16_prot_ram[0xee/2]);
+		case 0x96/2:
+			return ((((deco16_prot_ram[0x22/2]&0xff00)>>8) | ((deco16_prot_ram[0x22/2]&0x00f0)<<8) | ((deco16_prot_ram[0x22/2]&0x000e)<<7) | ((deco16_prot_ram[0x22/2]&0x0001)<<11)) ^ deco16_prot_ram[0x42/2]) & (~deco16_prot_ram[0xee/2]);
+		// 53e changes to 1000 from d000 (write 1234 to ce 9c 9e)
+
+// 444 suspected as flip address..
+
+// 53e changes on ce 9c or 9e - use special test
+// 780 is stuck at 2300 on standard test - no xor or mask
+
+//		case 0x3c:
+// 3c when written returns 3c for 1 read only.. (then returns to zero)
+		
+		case 0x2d0/2:
+			return (((deco16_prot_ram[0x66/2]&0xf000)>>4) | ((deco16_prot_ram[0x66/2]&0x00f0)<<8)) ^ deco16_prot_ram[0x42/2];
+		case 0x33e/2:
+			return (((deco16_prot_ram[0x0/2]&0xf000)>>12) | ((deco16_prot_ram[0x0/2]&0x0f00)>>4) | ((deco16_prot_ram[0x0/2]&0x00f0)<<4) | ((deco16_prot_ram[0x0/2]&0x000f)<<12)) & (~deco16_prot_ram[0xee/2]);
+		case 0x2b8/2: 
+			return ((deco16_prot_ram[0x66/2]&0x00f0)<<8) ^ deco16_prot_ram[0x42/2];
+
+			
+			// $2d0 goes to 7500 when 5678 written to $66 (no xor, no mask), goes to 3100 when 1234 written
+// $33e goes to 8765 when 5678 written to 0		- no xor, yes mask  (4321)
+
+
+// these not affected by any known data write
+// $174 return 4 hardwired (no xor, yes mask)
+// $3ca return 40 hardwired (xor, no mask)
+// $2ac return 400 hardwired (no xor, no mask)
+// $12e hardwired 9000 (xor & mask)
+// $21a hardwired a860 (no xor no mask)  a020 on different boot?
+
+		// From 0x3d5cc - writes to ee, a4, a6 don't seem to affect read
+		case 0x44e/2:
+			return 0x1000 ^ deco16_prot_ram[0x42/2];
+
+		// From 0x609ca - writes to 0xfe have no effect
+		case 0x3ca/2: // also returns 0x1040??
+			return 0x40 ^ deco16_prot_ram[0x42/2];
+		case 0x2ac/2:
+			return 0x400;
+
+		// From 0x60c3e - writes to 0xfe have no effect
+		case 0x3c/2:
+			return 0;
+		case 0x174/2: // also 0x404?
+			return 0x4 & (~deco16_prot_ram[0xee/2]);
+
+// TODO LATEST
+/*
+Protection PC 04907c: warning - read unmapped protection address 053e
+Protection PC 0032fc: warning - read unmapped protection address 0780
+Protection PC 045854: warning - read unmapped protection address 0454
+Protection PC 0032fc: warning - read unmapped protection address 0700
+
+Protection PC 066c9a: warning - read unmapped protection address 0294
+CONTROL PC 066c9c: warning - write protection memory address 0010 0000
+
+CONTROL PC 0609c4: warning - write protection memory address 00fe 0000
+cpu #0 (PC=00058A38): unmapped memory word read from 00A60004 & 00FF
+*/
+
+//		case 0x294/2:
+//			return 0x2000;
+//		case 0x21a/2: // sometimes a020... hmm - flip address?
+//			return 0xa020;
+
+//		case 0x44e/2:
+//			return ((((deco16_prot_ram[0x44/2]&0x00f0)<<4) | ((deco16_prot_ram[0x44/2]&0x000f)<<12))) ^ deco16_prot_ram[0x42/2];// & (~deco16_prot_ram[0xee/2]);
+
+//		case 0x12e/2:
+//			return ((((deco16_prot_ram[0x2/2]&0xf000)>>0) | ((deco16_prot_ram[0x2/2]&0x0ff0)>>4) | ((deco16_prot_ram[0x2/2]&0x000f)<<8)) ^ deco16_prot_ram[0x42/2]) & (~deco16_prot_ram[0xee/2]);
+
+		case 0x34a/2:
+			return (((deco16_prot_ram[0x4/2]&0xff00)>>0) | ((deco16_prot_ram[0x4/2]&0x00f0)>>4) | ((deco16_prot_ram[0x4/2]&0x000f)<<4)) & (~deco16_prot_ram[0xee/2]);
+		case 0x324/2:
+			return (((deco16_prot_ram[0x6/2]&0xf000)>>12) | ((deco16_prot_ram[0x6/2]&0x0ff0)<<4) | ((deco16_prot_ram[0x6/2]&0x0007)<<5) | ((deco16_prot_ram[0x6/2]&0x0008)<<1));
+		case 0x344/2:
+			return (((deco16_prot_ram[0x8/2]&0xf000)>>8) | ((deco16_prot_ram[0x8/2]&0x0f00)>>8) | ((deco16_prot_ram[0x8/2]&0x00f0)<<4) | ((deco16_prot_ram[0x8/2]&0x000f)<<12));
+		case 0x72/2:
+			return ((((deco16_prot_ram[0xa/2]&0xf000)>>8) | ((deco16_prot_ram[0xa/2]&0x0ff0)<<4) | ((deco16_prot_ram[0xa/2]&0x000f)>>0))) & (~deco16_prot_ram[0xee/2]);
+		case 0x36e/2:
+			return ((((deco16_prot_ram[0xc/2]&0xf000)>>0) | ((deco16_prot_ram[0xc/2]&0x0ff0)>>4) | ((deco16_prot_ram[0xc/2]&0x000f)<<8))) & (~deco16_prot_ram[0xee/2]);
+
+		case 0x590/2:
+			return ((((deco16_prot_ram[0xe/2]&0xfff0)>>4) | ((deco16_prot_ram[0xe/2]&0x000e)<<11) | ((deco16_prot_ram[0xe/2]&0x0001)<<15))) ^ deco16_prot_ram[0x42/2];
+		case 0x7b6/2:
+			return ((((deco16_prot_ram[0x2/2]&0xf000)>>8) | ((deco16_prot_ram[0x2/2]&0x0ff0)<<4) | ((deco16_prot_ram[0x2/2]&0x000f)<<0)) ^ deco16_prot_ram[0x42/2]) & (~deco16_prot_ram[0xee/2]);
+		case 0x588/2:
+			return ((((deco16_prot_ram[0x4/2]&0xff00)>>4) | ((deco16_prot_ram[0x4/2]&0x00f0)<<8) | ((deco16_prot_ram[0x4/2]&0x000f)<<0)) ^ deco16_prot_ram[0x42/2]) & (~deco16_prot_ram[0xee/2]);
+		case 0x1f6/2:
+			return (((deco16_prot_ram[0x6/2]&0xf000)>>12) | ((deco16_prot_ram[0x6/2]&0x0ff0)<<4) | ((deco16_prot_ram[0x6/2]&0x0007)<<5) | ((deco16_prot_ram[0x6/2]&0x0008)<<1)) ^ deco16_prot_ram[0x42/2];
+		case 0x4c0/2:
+			return (((deco16_prot_ram[0x8/2]&0xf000)>>4) | ((deco16_prot_ram[0x8/2]&0x0f00)<<4) | ((deco16_prot_ram[0x8/2]&0x00f0)>>4) | ((deco16_prot_ram[0x8/2]&0x000f)<<4)) & (~deco16_prot_ram[0xee/2]);
+		case 0x63e/2:
+			return ((((deco16_prot_ram[0xa/2]&0x0ff0)<<4) | ((deco16_prot_ram[0xa/2]&0xf000)>>12) | ((deco16_prot_ram[0xa/2]&0x0003)<<6) | ((deco16_prot_ram[0xa/2]&0x000c)<<2)));
+		case 0x7cc/2:
+			return ((((deco16_prot_ram[0xc/2]&0xfff0)>>4) | ((deco16_prot_ram[0xc/2]&0x000e)<<11) | ((deco16_prot_ram[0xc/2]&0x0001)<<15)) ^ deco16_prot_ram[0x42/2]) & (~deco16_prot_ram[0xee/2]);
+		case 0x1bc/2:
+			return (((deco16_prot_ram[0xe/2]&0xf000)>>12) | ((deco16_prot_ram[0xe/2]&0x0f00)>>4) | ((deco16_prot_ram[0xe/2]&0x00ff)<<8)) & (~deco16_prot_ram[0xee/2]);
+
+// 44e returns 8700 for 5678 on 44			XOR
+
+// $12e returns 5867 on  2					XOR	MASK
+// $34a 5687 on 4								MASK
+// $324 returns 6715 on 6
+// $344 8756   on 8 
+// $72 6758   on a				MASK
+// $36e 5867   on e				MASK
+
+#endif
+
+		case 0x150/2: // shared#
+if (deco16_prot_backbuffer_selected)
+		logerror("Protection PC %06x: warning - read %04x for $7e\n",activecpu_get_pc(),deco16_prot_backbuffer[0x7e/2]);
+else
+		logerror("Protection PC %06x: warning - read %04x for $7e\n",activecpu_get_pc(),deco16_prot_ram[0x7e/2]);
+
+			if (deco16_prot_backbuffer_selected)
+				return deco16_prot_backbuffer[0x7e/2];
+			return deco16_prot_ram[0x7e/2];
+
+		case 0x6c4/2: /* Schmeizr Robo only - reads from here flip buffers */
+			deco16_prot_backbuffer_selected^=1;
+
+			logerror("Protection PC %06x: warning - read flip address %04x - backbuffer now %d\n",activecpu_get_pc(),offset<<1,deco16_prot_backbuffer_selected);
+
+
+			return ((deco16_prot_ram[0x66/2]&0xf0f0) | ((deco16_prot_ram[0x66/2]&0x000f)<<8)) & (~deco16_prot_ram[0xee/2]);
+
+
+		case 0x10e/2: /* Schmeizr Robo only - front buffer only read port */
+			if (deco16_prot_backbuffer_selected)
+				return deco16_prot_backbuffer[0x7c/2];
+			return deco16_prot_ram[0x7c/2];
+		case 0x56a/2: /* Schmeizr Robo only - front buffer only read port */
+			if (deco16_prot_backbuffer_selected)
+				return (((deco16_prot_backbuffer[0x7c/2]&0xfff0)>>4) | ((deco16_prot_backbuffer[0x7c/2]&0x000e)<<11) | ((deco16_prot_backbuffer[0x7c/2]&0x0001)<<15)) & (~deco16_prot_backbuffer[0xee/2]);
+			return (((deco16_prot_ram[0x7c/2]&0xfff0)>>4) | ((deco16_prot_ram[0x7c/2]&0x000e)<<11) | ((deco16_prot_ram[0x7c/2]&0x0001)<<15)) & (~deco16_prot_ram[0xee/2]);
+
+		case 0x39a/2: /* Schmeizr Robo only */
+if (deco16_prot_backbuffer_selected)
+		logerror("Protection PC %06x: warning - 39a read %04x for $7e\n",activecpu_get_pc(),deco16_prot_backbuffer[0x7e/2]);
+else
+		logerror("Protection PC %06x: warning - 39a read %04x for $7e\n",activecpu_get_pc(),deco16_prot_ram[0x7e/2]);
+
+
+			if (deco16_prot_backbuffer_selected)
+				return ((((deco16_prot_backbuffer[0x7e/2]&0xfff0)>>4) | ((deco16_prot_backbuffer[0x7e/2]&0x000e)<<11) | ((deco16_prot_backbuffer[0x7e/2]&0x0001)<<15)) ^ deco16_prot_ram[0x42/2]) & (~deco16_prot_backbuffer[0xee/2]);
+			return ((((deco16_prot_ram[0x7e/2]&0xfff0)>>4) | ((deco16_prot_ram[0x7e/2]&0x000e)<<11) | ((deco16_prot_ram[0x7e/2]&0x0001)<<15)) ^ deco16_prot_ram[0x42/2]) & (~deco16_prot_ram[0xee/2]);
+		case 0x188/2: /* Schmeizr Robo only */
+	//		logerror("Protection PC %06x: warning - read prot address %04x\n",activecpu_get_pc(),offset<<1);
+			return 0;
+		case 0x3cc/2: /* Schmeizr Robo only */
+	//			logerror("Protection PC %06x: warning - read prot address %04x\n",activecpu_get_pc(),offset<<1);
+		return deco16_prot_ram[0xee/2];
+		case 0x4a/2: /* Schmeizr Robo only */
+			if (deco16_prot_backbuffer_selected)
+				return (deco16_prot_backbuffer[0x9e/2]&0xffff) & (~deco16_prot_backbuffer[0xee/2]);
+			return (deco16_prot_ram[0x9e/2]&0xffff) & (~deco16_prot_ram[0xee/2]);
+		case 0x7e8/2: /* Schmeizr Robo only */
+			if (deco16_prot_backbuffer_selected)
+				return (deco16_prot_backbuffer[0x4a/2]&0xffff) ^ deco16_prot_ram[0x42/2];
+			return (deco16_prot_ram[0x4a/2]&0xffff) ^ deco16_prot_ram[0x42/2];
+		case 0xfc/2: /* Schmeizr Robo only */
+			if (deco16_prot_backbuffer_selected)
+				return deco16_prot_backbuffer[0x4a/2];
+			return deco16_prot_ram[0x4a/2];
+		case 0x38c/2: /* Schmeizr Robo only */
+			if (deco16_prot_backbuffer_selected)
+				return deco16_prot_backbuffer[0x28/2];
+			return deco16_prot_ram[0x28/2];
+		case 0x28/2: /* Schmeizr Robo only  */
+			if (deco16_prot_backbuffer_selected)
+				return deco16_prot_backbuffer[0x58/2];
+			return deco16_prot_ram[0x58/2];
 	}
 
-	logerror("Protection PC %06x: warning - read unmapped memory address %04x\n",activecpu_get_pc(),offset<<1);
+/*
+	Sprite routine:
+
+	Writes data into 7c
+	puts $0 into $66
+
+	tsts 66
+	if 0
+	puts data into 7c
+	puts ffff into 66
+
+
+*/
+
+	logerror("Protection PC %06x: warning - read unmapped protection address %04x\n",activecpu_get_pc(),offset<<1);
 
 	return 0;
 }

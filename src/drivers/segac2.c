@@ -4827,7 +4827,7 @@ GAMEX( 1996, pclubjv5, pclubj,   segac2, pclub,    pclub,    ROT0, "Atlus",     
 /* 25 */ GAMEX( 1989, mt_gaxe,  megatech, megatech, megatech, segac2, ROT0, "Sega",                  "Mega-Tech: Golden Axe", GAME_NOT_WORKING )
 /* 26 */ // unknown
 /* 27 */ GAMEX( 1989, mt_mystd, megatech, megatech, megatech, segac2, ROT0, "Sega",                  "Mega-Tech: Mystic Defender", GAME_NOT_WORKING )
-/* 28 */ GAMEX( 1989, mt_revsh, megatech, megatech, megatech, segac2, ROT0, "Sega",                  "Mega-Tech: The Revenge Of Shinobi", GAME_NOT_WORKING )
+/* 28 */ GAMEX( 1989, mt_revsh, megatech, megatech, megatech, segac2, ROT0, "Sega",                  "Mega-Tech: The Revenge of Shinobi", GAME_NOT_WORKING )
 /* 29 */ GAMEX( 19??, mt_parlg, megatech, megatech, megatech, segac2, ROT0, "Sega",                  "Mega-Tech: Parlour Games", GAME_NOT_WORKING ) /* sms! */
 /* 30 */ // unknown
 /* 31 */ GAMEX( 1989, mt_tgolf, megatech, megatech, megatech, segac2, ROT0, "Sega",                  "Mega-Tech: Arnold Palmer Tournament Golf", GAME_NOT_WORKING )
@@ -4851,8 +4851,8 @@ GAMEX( 1996, pclubjv5, pclubj,   segac2, pclub,    pclub,    ROT0, "Atlus",     
 /* 49 */ GAMEX( 1991, mt_bbros, megatech, megatech, megatech, segac2, ROT0, "Sega",                  "Mega-Tech: Bonanza Bros.", GAME_NOT_WORKING )
 /* 50 */ // unknown
 /* 51 */ // unknown
-/* 52 */ GAMEX( 1991, mt_sonic, megatech, megatech, megatech, segac2, ROT0, "Sega",                  "Mega-Tech: Sonic the Hedgehog (set 1)", GAME_NOT_WORKING )
-/*    */ GAMEX( 1991, mt_sonia, mt_sonic, megatech, megatech, segac2, ROT0, "Sega",                  "Mega-Tech: Sonic the Hedgehog (set 2)", GAME_NOT_WORKING )
+/* 52 */ GAMEX( 1991, mt_sonic, megatech, megatech, megatech, segac2, ROT0, "Sega",                  "Mega-Tech: Sonic The Hedgehog (set 1)", GAME_NOT_WORKING )
+/*    */ GAMEX( 1991, mt_sonia, mt_sonic, megatech, megatech, segac2, ROT0, "Sega",                  "Mega-Tech: Sonic The Hedgehog (set 2)", GAME_NOT_WORKING )
 /* 53 */ GAMEX( 1990, mt_fshrk, megatech, megatech, megatech, segac2, ROT0, "Toaplan / Sega",        "Mega-Tech: Fire Shark", GAME_NOT_WORKING )
 /* 54 */ // unknown
 /* 55 */ // unknown
@@ -4862,7 +4862,7 @@ GAMEX( 1996, pclubjv5, pclubj,   segac2, pclub,    pclub,    ROT0, "Atlus",     
 /* 59 */ // unknown
 /* 60 */ GAMEX( 1992, mt_kcham, megatech, megatech, megatech, segac2, ROT0, "Sega",                  "Mega-Tech: Kid Chameleon", GAME_NOT_WORKING )
 /* 61 */ // unknown
-/* 62 */ GAMEX( 1992, mt_soni2, megatech, megatech, megatech, segac2, ROT0, "Sega",                  "Mega-Tech: Sonic the Hedgehog 2", GAME_NOT_WORKING )
+/* 62 */ GAMEX( 1992, mt_soni2, megatech, megatech, megatech, segac2, ROT0, "Sega",                  "Mega-Tech: Sonic The Hedgehog 2", GAME_NOT_WORKING )
 /* more? */
 
 
@@ -4876,9 +4876,9 @@ static DRIVER_INIT (megaplay)
 
 }
 
-/* -- */ GAMEBX(1993, megaplay, 0,        megaplay, megaplay, megaplay, megaplay, ROT0, "Sega",                  "MegaPlay: BIOS", NOT_A_DRIVER )
-/* 01 */ GAMEB( 1993, mp_sonic, megaplay, megaplay, megaplay, mp_sonic, megaplay, ROT0, "Sega",                  "MegaPlay: Sonic the Hedgehog"  )
-/* 02 */ GAMEB( 1993, mp_gaxe2, megaplay, megaplay, megaplay, mp_gaxe2, megaplay, ROT0, "Sega",                  "MegaPlay: Golden Axe II"  )
+/* -- */ GAMEBX(1993, megaplay, 0,        megaplay, megaplay, megaplay, megaplay, ROT0, "Sega",                  "Mega Play: BIOS", NOT_A_DRIVER )
+/* 01 */ GAMEB( 1993, mp_sonic, megaplay, megaplay, megaplay, mp_sonic, megaplay, ROT0, "Sega",                  "Mega Play: Sonic The Hedgehog"  )
+/* 02 */ GAMEB( 1993, mp_gaxe2, megaplay, megaplay, megaplay, mp_gaxe2, megaplay, ROT0, "Sega",                  "Mega Play: Golden Axe II"  )
 /* 03 */ // unknown
-/* 04 */ GAMEB( 1993, mp_twc,   megaplay, megaplay, megaplay, mp_twc,	megaplay, ROT0, "Sega",                  "MegaPlay: Tecmo World Cup"  )
+/* 04 */ GAMEB( 1993, mp_twc,   megaplay, megaplay, megaplay, mp_twc,	megaplay, ROT0, "Sega",                  "Mega Play: Tecmo World Cup"  )
 /* Also known to exist: bio hazard battle, gunstar heroes, streets of rage 2, mazin wars, grandslam tennis */

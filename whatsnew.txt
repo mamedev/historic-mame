@@ -1,273 +1,465 @@
-0.86
-----
+0.87
 
-While there are no new working games in this release it remains
-interesting from a technical and development point of view mainly
-due to the new PPC core as well as the Hyperstone and 37710 fixes.
-It should also be a fairly stable release after the many input changes
-which have taken place recently.
-
-Driver Improvements:
+General Improvements:
 --------------------
 
-M37710, NamcoSS22 and C352 improvements [R.Belmont]
-	M37710 changes (m37710.diff):
-	- Data bus is actually 16 bit, not 8
-	- Fixed saving of status register on interrupts
-	- Fixed errors in PHB, PHT, PLT, and ANDB opcodes
-	- Added XAB, PLB, and ROLB opcodes
-	- Fixed IRQ dispatch errors
-	- Various get_info fixes
+Small update to the Kaneko drivers [Sebastien Volpe]
+	- correct dipswitches for bonkadv
+	- galpanib protection moved to machine\kaneko16.c, and sandscrp uses it
+	- merged read/write memory maps for the 3 galpanic sets
 
-	NamcoSS22 changes (s22.diff):
-	- All CPU clocks changed to measured-by-Guru values
-	- Handle the changed M37710 bus width
-	- Temporarily disconnect shared RAM.  There's a
-	problem where the 68020's shared RAM test wipes out
-	the 37710's work variables and causes it to crash.  I
-	suspect there's a register that halts or resets the
-	37710.  (note: Prop Cycle has no POST and doesn't
-	cause this problem, but all the other games do).
+Support 16 Joystick buttons [Norix]
 
-	C352 change (c352.diff):
-	- Remove debug printf that accidentally snuck in
+8-way input fix for some mappy.c games (grobda, motos, phozon)
+These games were set to 4-way input in the previous update. [anonymous]
 
-SPI Improvements [Ville Linde]
-	- Improved (but not yet correct) tilemap decryption
-	- Preliminary sprite priority support
+Various Improvements [Angelo Salese]
+	vamphalf.c
+	improvements to vamphalf making it almost playable* it actually
+	is now playable thanks to further improvements from others (see
+	below)
 
-PowerPC 403 core [Ville Linde, Bart Trzynadlowski, Stefano Teso]
-	This is basically SuperModel (Sega Model 3 emu)'s PPC
-	core minus the FPU and 6xx-series specific
-	instructions (that stuff isn't ported to MAME yet). 
-	As such, it's passed all manner of synthetic PPC
-	torture tests and should be quite reliable for any
-	PPC403-based hardware.
+	yumefuda.c
+	temporarly patched eeprom check,fixed the graphics bankswitching
+	& added sound in Yumefuda.I don't have added controls yet so it
+	isn't playable.
 	
-Virtua Racing improvements [Olivier Galibert, Andrew Gardner]
+	acommand.c
+	Preliminary driver for Alien Command.Doesn't work yet...
 
-Hyperstone CPU Core Improvements [Tomasz Slanina, Pierpaolo Prazzoli]
-	Tomasz Slanina 
-	- interrputs after call and before frame are prohibited now
-	- emulation of FCR register
-	- Floating point opcodes (preliminary) 
-	- Fixed stack addressing in RET/FRAME opcodes
-	- Fixed bug in SET_RS macro
-	- Fixed bug in return opcode (S flag)
-	- Added C/N flags calculation in add/adc/addi/adds/addsi and some shift opcodes
-	- Added writeback to ROL
-	- Fixed ROL/SAR/SARD/SHR/SHRD/SHL/SHLD opcode decoding (Local/Global regs)
-	- Fixed I and T flag in RET opcode
-	- Fixed XX/XM opcodes
-	- Fixed MOV opcode, when RD = PC
-	- Fixed execute_trap() 
-	- Fixed ST opcodes, when when RS = SR
-	- Added interrupts
-	- Fixed I/O addressing 
+	gstriker.c
+	Very preliminary MCU emulation for World Cup '94.Hangs in
+	various places since I don't have worked on them yet...
+
+Implements the LEDs in "copsnrob" [Stefan Jokisch]
+
+Fixed res_net.h related crash in Strike Bowling [Jarek Burczynski]
+
+Improvements to Paint and Puzzle, game is almost playable [Nicola Salmoria]
+
+Taito F3 Improvements [Bryan McPhail]
+	Recalhorn now up to a playable standard.  This game exposed some bugs in the
+	way the sprite renderer handled the special command bits (ie, the sprite
+	list jump command occurs _after_ the current sprite has been processed, not
+	before, plus bankswitch & global positioning flags can be set on the same
+	sprite - they aren't exclusive, all makes perfect sense from a hardware
+	point of view).  These fixes really should be put into taito_f2 and hybrid
+	f3 games as well, though I doubt it will make any visual difference.
+	
+	Command War is playable too, except for the fact a layer doesn't seem to
+	disappear when in the fighting sequence, and it's offset by 8 pixels in the
+	movement sequence.
+
+Rohga driver Improvements [Bryan McPhail]
+	Rohga - Despite massive amounts of time spent on writing trojan's to probe
+	the protection this still isn't complete.  The game hangs at the end of
+	level 5.  A quick look at decoprot.c should reveal just how nasty this game
+	is...  Graphics emulation is complete but the priority register never seems
+	to be written properly (protection?) so some things look wrong.
+	
+	Schmeiser Robo - Not working 100%.  The game puts graphics info through the
+	protection chip so in this case the game looks wrong even though the
+	gameplay is actually running correctly.  Uses a strange double buffer
+	feature of the protection chip that the Deco games don't (seem to) use.
+
+Truco Clemente driver [Ernesto Corvi]
+	This is as good I could get it working...
+	Problems:
+	- Wrong Colors
+	- Audio is not 100% yet, I think.
+	
+	The board is definitely a conversion of some other board. My guess is a 
+	Pacman-style board, since
+	some of the addresses match (watchdog, etc). Maybe somebody more 
+	familiar with those type
+	of boards can figure out if they used the same color proms (I tried the 
+	MsPacman ones, and didn't
+	match).
+	
+SPI background Decryption improvements [Ville Linde] 
+
+Fixed mrtnt colours (verified to use pacman proms) [vernimark]
+
+Hyperstone core fixes [Tomasz Slanina, Pierpaolo Prazzoli]
+	Tomasz Slanina
+	- Added "undefined" C flag to shift left instructions
 
 	Pierpaolo Prazzoli
-	- Fixed fetch
-	- Fixed decode of e132xs_xm opcode
-	- Fixed 7 bits difference number in FRAME / RET instructions
-	- Some debbugger fixes
-	- Added generic registers decode function
-	- Some other little fixes.
+	- Added interrupts-block for delay instructions
+	- Fixed get_emu_code_addr
+	- Added LDW.S and STW.S instructions
+	- Fixed floating point opcodes
 
-Jaleco Mahjong Driver update [Angelo Salese]
-	some games are *almost* playable but still have protection issues
+
+New Clones supported or promoted from GAME_NOT_WORKING status:
+--------------------------------------------------------------
+
+Super Pang (Japan) [Nicola Salmoria]
+	set was decrypted, game now working
+
+New Games supported or promoted from GAME_NOT_WORKING status:
+-------------------------------------------------------------
+
+Wizz Quiz [Pierpaolo Prazzoli]
+Miss Bingo [Brian Troha]
+
+Recalhorn [Brian McPhail]
+	may crash on hi-score screen
+
+Command War [Brian McPhail]
+	still some clipping / layer problems
+
+Vamp 1/2 [Angelo Salese, Pierpaolo Prazzoli]
+	first working hyperstone based game
+
+Truco Clemente [Ernesto Corvi]
+	some graphical problems (see notes above)
+
+New Non-Working games / clones supported
+----------------------------------------
+
+Alien Command [Angelo Salese]
+	parts of the hardware still unemulated
+
+Schmeiser Robo [Bryan McPhail]
+	protection issues
+
+
+0.86u5
+
+General Improvements:
+--------------------
+
+Cleaned up some MESS related code [Nathan Woods]
+
+Improved inputs in rabbit [deadscreem]
+
+Fixed drakton dipswitches [David Widel]
+
+Improvements to Exciting Soccer II protection handling [Pierpaolo Prazzoli]
+
+rongrong dipswitch fixes [sonikos]
+
+Adjusted sound frequency in crospang [Pierpaolo Prazzoli]
+
+fixed dips in subs & fixed chelnov inputs [Iñigo Luja]
+
+New Games supported or promoted from GAME_NOT_WORKING status:
+-------------------------------------------------------------
+
+(New) Multi 5 [Pierpaolo Prazzoli]
+
+New Non-Working games / clones supported
+----------------------------------------
+
+Recalhorn (prototype)
+Command Wars (prototype)
+	these have been added to the taito_f3 driver but both have serious issues
 	
-Adjusted Top Speed volume balance
 
-Changes to the main program:
-----------------------------
+0.86u4
 
-Misc Fixes [Nathan Woods]
-	src/inptport.c:
-	src/inptport.h:
-	- Fixes PORT_INCLUDE by making the final IPT_END appended within 
-	input_port_allocate()
-	- Added some MESS specific defaults
-	- Spelling fix in IPT_BILL default
+CPU / Sound Core Improvements
+-----------------------------
 
-Fixed some Multisession win32 bugs [Chris Kirmse]	
+M37710 update [R.Belmont]
+	* Added support for externally-pulsed timers (Prop
+	Cycle uses this to read the pedals
+
+General Improvements:
+--------------------
+
+Reorganised and cleaned up the kaneko16.c and related drivers splitting protection
+related code into a separate file [Sebastien Volpe]
+
+Tile Flipping in NCV2 [Mark McDougall]
+
+Preliminary background zoom in HNG64 [David Haywood]
+
+Misc name changes [Darren Hatton]
+
+Fixed broken controls in Hydra [Pierpaolo Prazzoli]
+
+Misc changes [Curt Coder]
+	* Lovely Cards
+	drivers/lvcards.c
+	vidhrdw/lvcards.c
+	- Converted to use tilemaps
+	- Fixed tile rendering, the tile ROM is not a bad dump, the gfx routine was bad!
+	
+	* Outrunners
+	drivers/multi32.c
+	- Changed name to "OutRunners" as per title screen and flyers
+	
+	* Sonic the Hedgehog
+	drivers/system32.c
+	drivers/segac2.c
+	- Changed "Sonic the Hedgehog" to "Sonic The Hedgehog". "The" is Sonic's
+	middle name according to "The Ultimate History of Video Games", p. 428:
+	''The "T" in Sonic The Hedgehog is capitalized. Sega Marketing wizard Al
+	Nilsen had the "The" registered as Sonic's middle name.''
+	- Changed "The Revenge Of Shinobi" to "The Revenge of Shinobi"
+	- Changed "MegaPlay" to "Mega Play" as per system16.com
+
+Hooked up eeprom in rabbit driver [R.Belmont]
+
+Some improvements to tmmjprds in rabbit driver [David Haywood]
+
+Added sound to SWA [R.Belmont]
+
+Improvements to SPI decryption [Ville Linde]
+
+Beast Busters DSW fix [Iñigo Luja]
 
 New Games supported or promoted from GAME_NOT_WORKING status:
 -------------------------------------------------------------
-none
+
+Hot Blocks - Tetrix II [David Haywood]
+	eeprom not hooked up
+	
+Fighting Basketball [Pierpaolo Prazzoli]
+	some problems with sprites flickering, incomplete sound emulation
 
 New Clones supported or promoted from GAME_NOT_WORKING status:
 --------------------------------------------------------------
-Field Goal (different) [Andy Welburn]
+
+Tetris (B-System, YM2203 sound) [Charles MacDonald]
+Street Fighter II' - Hyper Fighting (World 921209) [smf]
+	
+New Non-Working games / clones supported
+----------------------------------------
+
+Paint & Puzzle [David Haywood]
+	work on this is being continued by another dev
+	
+0.86u3
+
+Driver Improvements:
+--------------------
+
+Converted some CD images to CHD [R.Belmont]
+
+Regression Fixes for Starblad and Simpsons [R.Belmont]
+	restored polygon drawing in starblad
+	corrected clocks in simpsons
+	
+Fixed black squares in ozon1 [Pierpaolo Prazzoli]
+
+Fixed filenames in some of the sets added in the previous update [Pierpaolo Prazzoli]
+
+Donkey Kong Sample improvements [Pete Rittwage, Derrick Renaud]
+
+Namco Classics Improvements [R.Belmont]
+	- Added H8/3002 MCU and C352 sound chip.  Both ncv1
+	and ncv2 are now fully playable with full sound and
+	music.
+	
+Hyper Neogeo 64 Improvements [David Haywood]
+	I won't be doing much work on this again until I buy some more RAM
+	so don't expect too much.  Needs a kludge in the MIPS core so the
+	changes aren't very visible in a normal build (details of the
+	required kludge are in the source)
+
+Gottlieb Input Changes [B.S.Ruggeri]
+
+CPU / Sound Core Improvements
+-----------------------------
+
+H8/3002 Fixes [R.Belmont]
+	- Fixed btst #imm, @Rn instruction - it was giving
+	reversed results, which crashed ncv2's MCU program.
+
+Namco C352 update [R.Belmont]
+	- Many many fixes to wave start/end/bank handling plus
+	added chain mode support.  Thanks to cap @ VivaNonno
+	for the tips.
+
+General Improvements:
+--------------------
+
+CHDMAN update [R.Belmont]
+	This makes the parser deal with .toc files output by
+	current cdrdao better.  I need to just give in and
+	rewrite it for 2-pass operation sometime, it'll be
+	much cleaner then.
+
+	Incidentally, if anyone has any idea where to get
+	specs for e.g. CloneCD or some other popularish image
+	format(s) let me know and I'll add support.
+
+Fixed for the random key mappings bug with new config system [Aaron Giles]
+
+Input Port Fixes [Aaron Giles]
+	- reversed pedals now work correctly (e.g., brake in Hard Drivin')
+	- all relative controls (dial, trackball, mouse) scale the same regardless 
+	of the number of bits allocated for that port
+
+
+New Games supported or promoted from GAME_NOT_WORKING status:
+-------------------------------------------------------------
+
+Namco Classics Vol.2 [R.Belmont]
+	some tile flip problems in classic pacman / rallyx
+	some sound problems (hanging sound in digdug classic)
+	
+New Non-Working games / clones supported
+----------------------------------------
+
+Zero (bootleg of Defender) [Pierpaolo Prazzoli]
+
+
+0.86u2
+
+Quick update but since there have been some large submissions I feel it is
+worthwhile
+
+Driver Improvements:
+--------------------
+
+Misc Updates [R.Belmont]
+	m37710.diff:
+	- Added analog and digital I/O port support. (anyone
+	know how to control PC case fans from software?  Prop
+	Cycle's "fan" output is bit 1 of 37710 port 5... ;-)
+	- Added LDB absolute and DIV direct opcodes.
+	- Rewrote the RLA instruction.  Pretty much everything
+	was wrong with it including the result, flags, and
+	cycle count.
+	- Fixed disassembly for RLA.
+	
+	flash.diff:
+	- Added word-wide flash ROM support (specifically IDs
+	itself as the Sharp LH28F400 found on Konami "Beat the
+	Champ" PCBs).
+
+
+Boomer Rangr + Touchdown Fever Dipswitches [Brian Troha]
+
+Fixed Dragon Bowl sprite colours with new set [Pierpaolo Prazzoli]
+
+Improved Field Goal colours [Stefan Jokisch]
+
+Turned off auto-center in some games [Stefan Jokisch]
+
+Added missing button in dblpoint [Pierpaolo Prazzoli]
+
+
+Improvements to HyperNeogeo64 emulation [ElSemi, David Haywood]
+
+Large Mahjong Update from Takahiro Nogi (updated to compile by Pierpaolo Prazzoli)
+---------------------------------------
+
+drivers/gomoku.c - improved sound
+vidhrdw/gomoku.c
+sndhrdw/gomoku.c
+
+drivers/pastelg.c - added dipsw1&2 handling(2Player is not implemented
+yet)
+
+vidhrdw/pastelg.c - rewrote drawing routine
+
+machine/nb1413m3.c - added some process
+machine/nb1413m3.h - added some definitions
+
+drivers/nbmj8688.c - added mjsikakc, mjsikakd, mmsikaku, mcitylov, livegal, kaguya2, korinaim, kyuhito, mjcamerb
+vidhrdw/nbmj8688.c - fixes to add mmsikaku, livegal
+
+drivers/nbmj8891.c - added lovehous, mmaiko, mgion, omotesnd, taiwanmb(testdriver)
+vidhrdw/nbmj8891.c - changed drawing routine, added font process routine for
+hanamomo
+
+drivers/nbmj9195.c - added sailorwa(sailorws clone), jituroku, wcatcher, yosimoto, janbari(mjanbari
+is now clone of janbari)
+vidhrdw/nbmj9195.c - changed drawing routine (fixed screen misalign in
+attract mode of "Otachidai no Okite")
+
+drivers/niyanpai.c - added musobana, 4psimasy, mhhonban
+vidhrdw/niyanpai.c - changed drawing routine, added highcolor process
+routine for musobana
+
+drivers/hyhoo.c - changed key mapping
+vidhrdw/hyhoo.c - fixed title screen of hyhoo2
+
+pairsten - fixed inputs
+
+adjusting interrupt of drivers using machine/nb1413.c/.h
+So, some titles are broken.
+
+
+New Clones supported or promoted from GAME_NOT_WORKING status:
+--------------------------------------------------------------
+Street Fighter EX 2 Plus (USA) [Brian Troha]
+D&D Tower of Doom (alt Japan set) [Razoola]
 
 
 New Non-Working games / clones supported
 ----------------------------------------
 
-Various Konami PPC based games [Ville Linde]
-	gticlub, gradius4, sscope, sscope2, racingj, racingj2, thrilld
-	midnrun, windheat
-	These are to demonstrate the PPC core in action, they contain only very
-	preliminary emulation and do nothing more than display the initial test
-	screens.
-Cool Riders [David Haywood]
-	skeleton driver, to be continued at a later date
-Pit Boss
-	added to merit driver, not investigated the issues yet
-Tatakae! Big Fighter [Tomasz Slanina]
- 	serious protection issues
-Cool Mini
-	Hyperstone based game, incomplete set
+Roads Edge / Round Trip
+Samurai Shodown: Warrior's Rage
+Fatal Fury: Wild Ambition
+	Hyper Neogeo 64 based, these need more complete MMU emulation in the MIPS core
+	amongst other things, driver is still only preliminary
+	
 
-
-0.85u3
-------
+0.86u1
 
 Driver Improvements:
 --------------------
 
-- Improved video performance in suprnova games. [Carlos Santillan]
+M37710 Fixes [R.Belmont]
+	- Adds the following opcodes: ROR B, LDB direct
+	indexed, MPY stack relative, and DIV direct.  
 
-- Improved sound balance for nyanpani, citybomb, topspeed.
+Misc Patches [Lawrence Gold]
+	- Substituted isnan() for inunordered(), which is only available in C99.
+	- Fixed a few C89 warnings about an extra comma at the end of enums.
+	- Updated the expat code to 1.95.8, which is the latest release.
 
-- Fixed visible area and controls in hanaawas. [Pierpaolo Prazzoli]
+Namco System 22 Improvements [Phil Stroffolino]	
+	- input ports mapped for most games
+	- DSP communications RAM latch mode hooked up; fixes
+	graphics for many titles
+	- texture banking for old hardware hooked up
+	- patches to tms32025 emulation (DSP math bugs)
+	- preliminary dynamic lighting for system22 (rarely
+	actually used - see Prop Cycle turning score/time
+	digits)
 
-- Additional input port cleanup. [El Condor]
+Imago Improvements [Pierpaolo Prazzoli, Chris Hardy]
+	hooked up starfield and background tilemap, fixed colours
+	still problems with the sprites
+	
+Fixed endianness problem in h83002 [R.Belmont]
 
-- Fixed sound board error in Tapper. [B.S.Ruggeri]
+Added Sound to the Gaelco 3d driver [Aaron Giles]
 
-- Fixed numerous problems in Return of Lady Frog. [Pierpaolo Prazzoli]
-
-- Added preliminary sound to Return of Lady Frog. [R. Belmont]
-
-- Fixed colors in usclssic. [David Haywood]
-
-- Fixed music tempo in athena. [unzu]
-
-
-Changes to the main program:
-----------------------------
-
-- Incorporated bugfix to the zlib code that was missing from the
-  official distribution. [smf]
-
-
-New Games supported or promoted from GAME_NOT_WORKING status:
--------------------------------------------------------------
-Field Goal [Stefan Jokisch]
-Robo Wres 2001 [Tomasz Slanina]
-Jumping Pop [David Haywood, Guru, R. Belmont]
-
-
-
-0.85u2
-------
-
-Driver Improvements:
---------------------
-
-- Turned off autocentering by default in warlords, sbrkout, and
-  destroyr. There are probably others that should have this as well.
-  Please post on www.mametesters.org if you have suggestions.
-  [Aaron Giles]
-
-- Fixed a number of recent errors introduced into the input port
-  definitions of several drivers. [El Condor]
-
-- Fixed various stuff with the jalmah.c driver, including suchipi
-  booting, improved the video emulation a bit & attempted to add
-  controls. [Angelo Salese]
-
-- Updated Namco Super System 22 driver to use preliminary M37710
-  core, but it doesn't do anything useful yet. [R. Belmont]
-
-- Added conditional coinage to snowbros. [Inigo Luja]
-
-- Fixed backwards controls in ckong. [Inigo Luja]
-
-
-Changes to the main program:
-----------------------------
-
-- Renamed PORT_CENTER to PORT_RESET to more accurates describe what
-  it does. Also added PORT_CENTERDELTA(x) to control the autocentering
-  behavior. [Aaron Giles]
-
-- Added a WIP Mitsu M7700 series CPU core, specifically targeting 
-  the M37710. [R. Belmont]
-
-- Removed the static MAX_DATAFILE_ENTRIES define, by retrieving the 
-  game count at runtime. [Rene Single]
-
-- Fixed bug that prevented the mixer from loading data unless all
-  channels had been modified. [Aaron Giles]
+Fixed some bugs that were in 0.86
+	Tube Panic, Namco S12, Zero Point etc. [various]
+	
+Some input fixes [B.S.Ruggeri]
 
 
 New Games supported or promoted from GAME_NOT_WORKING status:
 -------------------------------------------------------------
-The Return of Lady Frog [David Haywood]
-Virtua Fighter 1 [Andrew Gardner, Olivier Galibert]
-
+Drakton [Pierpaolo Prazzoli]
+	no sound
+Various games on the System 22 driver [Phil Stroffolino]
+	*disclaimer* i had trouble getting controls working
+	in several of them.
 
 New Clones supported or promoted from GAME_NOT_WORKING status:
 --------------------------------------------------------------
-Twin Cobra 2 (World) (2 sets) [Brian Troha]
-Counter Run (bootleg set 1) [Tomasz Slanina]
-
-
-
-0.85u1
-------
-
-Driver Improvements:
---------------------
-
-- Fixed input port definition errors in megasys1. [Mamesick]
-
-- Fixed input port definition errors in tnzs. [Inigo Luja]
-
-- Fixed input port definition errors in taitosj, galaxian.
-  [Aaron Giles]
-
-- Changed 720' controls to use an analog joystick instead of a
-  dial so that the original controller motion can be replicated.
-  Thanks to MAME Analog+ for the logic. [Aaron Giles]
-
-- Fixed the colors in the Status trivia games. [Stefan Jokisch]
-
-- Conditional DIP switches in rallyx, mcatadv, galpanic.
-  [Inigo Luja]
-
-
-Changes to the main program:
-----------------------------
-
-- Fixed loading of ctrlr files so that they actually take effect now.
-  [Aaron Giles]
-
-- Fixed bug preventing saving of lightgun control changes.
-  [Aaron Giles]
-
-- Changed all the analog mapping defaults back to 'keyboard' as the
-  default values were confusing people. [Aaron Giles]
-
-- Added the ability for analog axes to return "invalid" as a value
-  from the OSD layer, allowing them to dynamically disable themselves.
-  Using this feature, the Windows version now autodetects analog
-  versus digital axes and dynamically disables the analog values if
-  it thinks you are using a digital axis. Note that this even works
-  if you have a "switchable" gamepad. [Aaron Giles]
-
-- Fixed debugger crash when using F10 with the i960 core. [R. Belmont]
-
-- Cleaned up some #ifdef MESS and united the two definitions of 
-  my_stricmp. [Rene Single]
-
+Raystorm (ver 2.06O) [Brian Troha]
+Rival Schools (USA) [Brian Troha]
 
 New Non-Working games / clones supported
 ----------------------------------------
-Party Time: Gonta the Diver II [Brian Troha]
-Versus Net Soccer (ver JAB) [Brian Troha]
-Phraze Craze [Pierpaolo Prazzoli]
-Tic Tac Trivia [Pierpaolo Prazzoli]
-Trivia Whiz [Pierpaolo Prazzoli]
-Trivia Whiz II [Pierpaolo Prazzoli]
+Diamond Derby [David Haywood]
+	this is a gambling game and will probably be removed once the
+	driver is complete, it's just here while it is developed.
+Super Golf [Tomasz Slanina]
+	very preliminary. simple graphic layer hooked up, rom banking
+	hooked up in a way which allows rom test to pass etc.
+Wing War (World Set)
+	other set was US set (Recycle It Logo)

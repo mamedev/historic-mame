@@ -166,11 +166,14 @@ Changes:
 #include "cpu/i8039/i8039.h"
 #include "cpu/s2650/s2650.h"
 #include "cpu/m6502/m6502.h"
+#include <math.h>
 
 static int page = 0,mcustatus;
 static int p[8] = { 255,255,255,255,255,255,255,255 };
 static int t[2] = { 1,1 };
-
+static double envelope,tt;
+static int decay;
+static int counter = 0;
 
 extern WRITE8_HANDLER( radarscp_grid_enable_w );
 extern WRITE8_HANDLER( radarscp_grid_color_w );
@@ -189,6 +192,9 @@ extern VIDEO_UPDATE( dkong );
 extern VIDEO_UPDATE( pestplce );
 extern VIDEO_UPDATE( spclforc );
 
+extern DRIVER_INIT( strtheat );
+extern DRIVER_INIT( drakton );
+
 extern WRITE8_HANDLER( dkong_sh_w );
 extern WRITE8_HANDLER( dkongjr_sh_death_w );
 extern WRITE8_HANDLER( dkongjr_sh_drop_w );
@@ -205,8 +211,8 @@ extern WRITE8_HANDLER( dkong_sh1_w );
 
 
 WRITE8_HANDLER( dkong_sh_sound3_w )     { p[2] = ACTIVELOW_PORT_BIT(p[2],5,data); }
-WRITE8_HANDLER( dkong_sh_sound4_w )    { t[1] = ~data & 1; }
-WRITE8_HANDLER( dkong_sh_sound5_w )    { t[0] = ~data & 1; }
+WRITE8_HANDLER( dkong_sh_sound4_w )     { t[1] = ~data & 1; }
+WRITE8_HANDLER( dkong_sh_sound5_w )     { t[0] = ~data & 1; }
 WRITE8_HANDLER( dkong_sh_tuneselect_w ) { soundlatch_w(offset,data ^ 0x0f); }
 
 WRITE8_HANDLER( dkongjr_sh_test6_w )      { p[2] = ACTIVELOW_PORT_BIT(p[2],6,data); }
@@ -234,16 +240,6 @@ static READ8_HANDLER( dkong_sh_tune_r )
 	return (SND[2048+(page & 7)*256+offset]);
 }
 
-MACHINE_INIT( strtheat );
-READ8_HANDLER( strtheat_decrypt_rom );
-//WRITE8_HANDLER( strtheat_writeport );
-
-
-#include <math.h>
-
-static double envelope,tt;
-static int decay;
-
 #define TSTEP 0.001
 
 static WRITE8_HANDLER( dkong_sh_p1_w )
@@ -267,10 +263,58 @@ static WRITE8_HANDLER( dkong_sh_p2_w )
 	mcustatus = ((~data & 0x10) >> 4);
 }
 
-
 static READ8_HANDLER( dkong_in2_r )
 {
 	return input_port_2_r(offset) | (mcustatus << 6);
+}
+
+/* EPOS games */
+
+static MACHINE_INIT( strtheat )
+{
+	unsigned char *ROM = memory_region(REGION_CPU1);
+
+	/* The initial state of the counter is 0x08 */
+	counter = 0x08;
+	cpu_setbank (1, &ROM[0x10000]);
+}
+
+static MACHINE_INIT( drakton )
+{
+	unsigned char *ROM = memory_region(REGION_CPU1);
+
+	/* The initial state of the counter is 0x09 */
+	counter = 0x09;
+	cpu_setbank (1, &ROM[0x14000]);
+}
+
+static READ8_HANDLER( epos_decrypt_rom )
+{
+	unsigned char *ROM = memory_region(REGION_CPU1);
+
+	if (offset & 0x01)
+	{
+		counter = counter - 1;
+		if (counter < 0)
+			counter = 0x0F;
+	}
+	else
+	{
+		counter = (counter + 1) & 0x0F;
+	}
+
+	switch(counter)
+	{
+		case 0x08:	cpu_setbank (1, &ROM[0x10000]);		break;
+		case 0x09:	cpu_setbank (1, &ROM[0x14000]);		break;
+		case 0x0A:	cpu_setbank (1, &ROM[0x18000]);		break;
+		case 0x0B:	cpu_setbank (1, &ROM[0x1C000]);		break;
+		default:
+			logerror("Invalid counter = %02X\n",counter);
+			break;
+	}
+
+	return 0;
 }
 
 
@@ -383,34 +427,30 @@ static ADDRESS_MAP_START( hunchbkd_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x7000, 0x7fff) AM_WRITE(hunchbks_mirror_w)
 ADDRESS_MAP_END
 
-static ADDRESS_MAP_START( strtheat_readmem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x3fff) AM_READ(MRA8_BANK1)	/* DK: 0000-3fff */
-	AM_RANGE(0x6000, 0x6fff) AM_READ(MRA8_RAM)	/* including sprites RAM */
-	AM_RANGE(0x7400, 0x77ff) AM_READ(MRA8_RAM)	/* video RAM */
+static ADDRESS_MAP_START( epos_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x3fff) AM_READ(MRA8_BANK1)		/* DK: 0000-3fff */
+	AM_RANGE(0x6000, 0x6fff) AM_READ(MRA8_RAM)			/* including sprites RAM */
+	AM_RANGE(0x7400, 0x77ff) AM_READ(MRA8_RAM)			/* video RAM */
+	AM_RANGE(0x7808, 0x7808) AM_READ(MRA8_RAM)			/* ???? */
 	AM_RANGE(0x7c00, 0x7c00) AM_READ(input_port_0_r)	/* IN0 */
 	AM_RANGE(0x7c80, 0x7c80) AM_READ(input_port_1_r)	/* IN1 */
-	AM_RANGE(0x7d00, 0x7d00) AM_READ(dkong_in2_r)	/* IN2/DSW2 */
+	AM_RANGE(0x7d00, 0x7d00) AM_READ(dkong_in2_r)		/* IN2/DSW2 */
 	AM_RANGE(0x7d80, 0x7d80) AM_READ(input_port_3_r)	/* DSW1 */
-	AM_RANGE(0x8000, 0x9fff) AM_READ(MRA8_ROM)	/* DK3 and bootleg DKjr only */
 ADDRESS_MAP_END
 
-static ADDRESS_MAP_START( strtheat_writemem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x5fff) AM_WRITE(MWA8_ROM)
+static ADDRESS_MAP_START( epos_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x3fff) AM_WRITE(MWA8_ROM)
 	AM_RANGE(0x6000, 0x61ff) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram) AM_SIZE(&spriteram_size)
-	AM_RANGE(0x6200, 0x6a7f) AM_WRITE(MWA8_RAM)
-	AM_RANGE(0x6a80, 0x6fff) AM_WRITE(MWA8_RAM)
-	AM_RANGE(0x7000, 0x73ff) AM_WRITE(MWA8_RAM)    /* ???? */
+	AM_RANGE(0x6200, 0x6fff) AM_WRITE(MWA8_RAM)
 	AM_RANGE(0x7400, 0x77ff) AM_WRITE(dkong_videoram_w) AM_BASE(&videoram)
 	AM_RANGE(0x7800, 0x7803) AM_WRITE(MWA8_RAM)	/* ???? */
 	AM_RANGE(0x7808, 0x7808) AM_WRITE(MWA8_RAM)	/* ???? */
 	AM_RANGE(0x7c00, 0x7c00) AM_WRITE(dkong_sh_tuneselect_w)
-//	AM_RANGE(0x7c80, 0x7c80)
-	AM_RANGE(0x7d00, 0x7d02) AM_WRITE(dkong_sh1_w)	/* walk/jump/boom sample trigger */
 	AM_RANGE(0x7d03, 0x7d03) AM_WRITE(dkong_sh_sound3_w)
 	AM_RANGE(0x7d04, 0x7d04) AM_WRITE(dkong_sh_sound4_w)
 	AM_RANGE(0x7d05, 0x7d05) AM_WRITE(dkong_sh_sound5_w)
+	AM_RANGE(0x7d06, 0x7d06) AM_WRITE(MWA8_RAM) /* ???? */
 	AM_RANGE(0x7d80, 0x7d80) AM_WRITE(dkong_sh_w)
-	AM_RANGE(0x7d81, 0x7d81) AM_WRITE(MWA8_RAM)	/* ???? */
 	AM_RANGE(0x7d82, 0x7d82) AM_WRITE(dkong_flipscreen_w)
 	AM_RANGE(0x7d83, 0x7d83) AM_WRITE(MWA8_RAM)
 	AM_RANGE(0x7d84, 0x7d84) AM_WRITE(interrupt_enable_w)
@@ -547,9 +587,10 @@ static ADDRESS_MAP_START( readport_hunchbkd_sound, ADDRESS_SPACE_IO, 8 )
 	AM_RANGE(I8039_t1, I8039_t1) AM_READ(dkong_sh_t1_r)
 ADDRESS_MAP_END
 
-static ADDRESS_MAP_START( strtheat_readport, ADDRESS_SPACE_IO, 8 )
-	AM_RANGE(0x00, 0xff) AM_READ(strtheat_decrypt_rom) 	/* Switch protection logic */
+static ADDRESS_MAP_START( epos_readport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0xff) AM_READ(epos_decrypt_rom) 	/* Switch protection logic */
 ADDRESS_MAP_END
+
 
 static ADDRESS_MAP_START( dkongjr_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0000, 0x5fff) AM_WRITE(MWA8_ROM)
@@ -694,10 +735,7 @@ INPUT_PORTS_START( dkong )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 
 	PORT_START      /* IN2 */
-	PORT_BIT(0x01, IP_ACTIVE_HIGH, IPT_SERVICE ) PORT_NAME( DEF_STR( Service_Mode )) PORT_CODE(KEYCODE_F2)
-//	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Service_Mode ) )
-//	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-//	PORT_DIPSETTING(    0x01, DEF_STR( On ) )
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_SERVICE ) PORT_NAME(DEF_STR( Service_Mode )) PORT_CODE(KEYCODE_F2)
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_START1 )
 	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_START2 )
@@ -772,7 +810,7 @@ INPUT_PORTS_START( dkong3 )
 	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x20, DEF_STR( On ) )
-	PORT_BIT(0x40, IP_ACTIVE_HIGH, IPT_SERVICE ) PORT_NAME( DEF_STR( Service_Mode )) PORT_CODE(KEYCODE_F2)
+	PORT_BIT(0x40, IP_ACTIVE_HIGH, IPT_SERVICE ) PORT_NAME(DEF_STR( Service_Mode )) PORT_CODE(KEYCODE_F2)
 	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Cabinet ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
 	PORT_DIPSETTING(    0x80, DEF_STR( Cocktail ) )
@@ -1174,7 +1212,7 @@ INPUT_PORTS_START( pestplce )
 	PORT_DIPSETTING(    0x00, "20000" )
 	PORT_DIPSETTING(    0x40, "30000" )
 	PORT_DIPSETTING(    0x80, "40000" )
-	PORT_DIPSETTING(    0xc0, DEF_STR( None ) )
+	PORT_DIPSETTING(    0xc0, DEF_STR ( None ) )
 INPUT_PORTS_END
 
 
@@ -1302,12 +1340,14 @@ INPUT_PORTS_START( 8ballact )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_VBLANK )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( strtheat )
+
+INPUT_PORTS_START( drakton )
 	PORT_START      /* IN0 */
-	PORT_BIT ( 0x03, 0x03, IPT_DIAL ) PORT_MINMAX(0x00,0xff) PORT_SENSITIVITY(60) PORT_KEYDELTA(10) PORT_REVERSE
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_BUTTON1 )
-	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_BUTTON4 )
-	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON2 )
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT ) PORT_4WAY
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT ) PORT_4WAY
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP ) PORT_4WAY
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN ) PORT_4WAY
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 )
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
@@ -1323,10 +1363,7 @@ INPUT_PORTS_START( strtheat )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 
 	PORT_START      /* IN2 */
-	PORT_BIT(0x01, IP_ACTIVE_HIGH, IPT_SERVICE ) PORT_NAME( DEF_STR( Service_Mode )) PORT_CODE(KEYCODE_F2)
-//	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Service_Mode ) )
-//	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-//	PORT_DIPSETTING(    0x01, DEF_STR( On ) )
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_START1 )
 	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_START2 )
@@ -1336,28 +1373,85 @@ INPUT_PORTS_START( strtheat )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_COIN1 )
 
 	PORT_START      /* DSW0 */
-	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Lives ) )
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( On ) )
+	PORT_DIPNAME( 0x06, 0x04, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x00, "3" )
-	PORT_DIPSETTING(    0x01, "4" )
-	PORT_DIPSETTING(    0x02, "5" )
-	PORT_DIPSETTING(    0x03, "6" )
-	PORT_DIPNAME( 0x0c, 0x00, DEF_STR( Bonus_Life ) )
-	PORT_DIPSETTING(    0x00, "7000" )
-	PORT_DIPSETTING(    0x04, "10000" )
-	PORT_DIPSETTING(    0x08, "15000" )
-	PORT_DIPSETTING(    0x0c, "20000" )
-	PORT_DIPNAME( 0x70, 0x00, DEF_STR( Coinage ) )
-	PORT_DIPSETTING(    0x70, DEF_STR( 5C_1C ) )
-	PORT_DIPSETTING(    0x50, DEF_STR( 4C_1C ) )
-	PORT_DIPSETTING(    0x30, DEF_STR( 3C_1C ) )
-	PORT_DIPSETTING(    0x10, DEF_STR( 2C_1C ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
-	PORT_DIPSETTING(    0x20, DEF_STR( 1C_2C ) )
-	PORT_DIPSETTING(    0x40, DEF_STR( 1C_3C ) )
-	PORT_DIPSETTING(    0x60, DEF_STR( 1C_4C ) )
-	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Cabinet ) )
-	PORT_DIPSETTING(    0x80, DEF_STR( Upright ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Cocktail ) )
+	PORT_DIPSETTING(    0x02, "4" )
+	PORT_DIPSETTING(    0x04, "5" )
+	PORT_DIPSETTING(    0x06, "6" )
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Easy ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( Normal ) )
+	PORT_DIPNAME( 0x70, 0x10, DEF_STR( Bonus_Life ) )
+	PORT_DIPSETTING(    0x00, "10000" )
+	PORT_DIPSETTING(    0x10, "20000" )
+	PORT_DIPSETTING(    0x20, "30000" )
+	PORT_DIPSETTING(    0x30, "40000" )
+	PORT_DIPSETTING(    0x40, "50000" )
+	PORT_DIPSETTING(    0x50, "60000" )
+	PORT_DIPSETTING(    0x60, "70000" )
+	PORT_DIPSETTING(    0x70, "80000" )
+	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Cocktail ) )
+INPUT_PORTS_END
+
+
+INPUT_PORTS_START( strtheat )
+	PORT_START      /* IN0 */
+	PORT_BIT( 0x03, 0x03, IPT_DIAL ) PORT_MINMAX(0x00,0xff) PORT_SENSITIVITY(60) PORT_KEYDELTA(10) PORT_REVERSE
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_BUTTON1 )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_BUTTON2 )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON3 )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+
+	PORT_START      /* IN1 */
+	PORT_BIT( 0x03, 0x03, IPT_DIAL ) PORT_MINMAX(0x00,0xff) PORT_SENSITIVITY(60) PORT_KEYDELTA(10) PORT_REVERSE PORT_COCKTAIL
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_BUTTON1 ) PORT_COCKTAIL
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_BUTTON2 ) PORT_COCKTAIL
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON3 ) PORT_COCKTAIL
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+
+	PORT_START      /* IN2 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_START1 )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_START2 )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_SPECIAL )	/* status from sound cpu */
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_COIN1 )
+
+	PORT_START      /* DSW0 */
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( On ) )
+	PORT_DIPNAME( 0x06, 0x00, DEF_STR( Lives ) )
+	PORT_DIPSETTING(    0x00, "3" )
+	PORT_DIPSETTING(    0x02, "4" )
+	PORT_DIPSETTING(    0x04, "5" )
+	PORT_DIPSETTING(    0x06, "6" )
+	PORT_DIPNAME( 0x38, 0x00, DEF_STR( Bonus_Life ) )
+	PORT_DIPSETTING(    0x00, "10000" )
+	PORT_DIPSETTING(    0x08, "20000" )
+	PORT_DIPSETTING(    0x10, "30000" )
+	PORT_DIPSETTING(    0x18, "40000" )
+	PORT_DIPSETTING(    0x20, "50000" )
+	PORT_DIPSETTING(    0x28, "60000" )
+	PORT_DIPSETTING(    0x30, "70000" )
+	PORT_DIPSETTING(    0x38, "80000" )
+	PORT_DIPNAME( 0x40, 0x00,"Control type" )
+	PORT_DIPSETTING(    0x00, "Steering Wheel" )
+	PORT_DIPSETTING(    0x40, DEF_STR ( Joystick ) ) // TODO: Add support with conditional dis-switch
+	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Cocktail ) )
 INPUT_PORTS_END
 
 static struct GfxLayout charlayout =
@@ -1420,9 +1514,11 @@ static struct DACinterface dkong_dac_interface =
 static const char *dkong_sample_names[] =
 {
 	"*dkong",
-	"effect00.wav",
-	"effect01.wav",
-	"effect02.wav",
+	"run01.wav",
+	"run02.wav",
+	"run03.wav",
+	"jump.wav",
+	"dkstomp.wav",
 	0	/* end of array */
 };
 
@@ -1432,11 +1528,15 @@ static const char *dkongjr_sample_names[] =
 	"jump.wav",
 	"land.wav",
 	"roar.wav",
-	"climb.wav",   /* HC */
-	"death.wav",  /* HC */
-	"drop.wav",  /* HC */
-	"walk.wav", /* HC */
-	"snapjaw.wav",  /* HC */
+        "climb0.wav",
+        "climb1.wav",
+        "climb2.wav",
+        "death.wav",
+        "drop.wav",
+        "walk0.wav",
+        "walk1.wav",
+        "walk2.wav",
+        "snapjaw.wav",
 	0	/* end of array */
 };
 
@@ -1661,12 +1761,12 @@ static MACHINE_DRIVER_START( pestplce )
 	/* samples*/
 MACHINE_DRIVER_END
 
-static MACHINE_DRIVER_START( strtheat )
+static MACHINE_DRIVER_START( epos )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80, 3072000)	/* 3.072 MHz (?) */
-	MDRV_CPU_PROGRAM_MAP(strtheat_readmem,strtheat_writemem)
-	MDRV_CPU_IO_MAP(strtheat_readport,0)
+	MDRV_CPU_PROGRAM_MAP(epos_readmem,epos_writemem)
+	MDRV_CPU_IO_MAP(epos_readport,0)
 	MDRV_CPU_VBLANK_INT(nmi_line_pulse,1)
 
 	MDRV_CPU_ADD(I8035,6000000/15)
@@ -1676,7 +1776,6 @@ static MACHINE_DRIVER_START( strtheat )
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
-	MDRV_MACHINE_INIT(strtheat)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
@@ -1692,7 +1791,18 @@ static MACHINE_DRIVER_START( strtheat )
 
 	/* sound hardware */
 	MDRV_SOUND_ADD(DAC, dkong_dac_interface)
-	MDRV_SOUND_ADD(SAMPLES, dkongjr_samples_interface)
+MACHINE_DRIVER_END
+
+static MACHINE_DRIVER_START( strtheat )
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(epos)
+	MDRV_MACHINE_INIT(strtheat)
+MACHINE_DRIVER_END
+
+static MACHINE_DRIVER_START( drakton )
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(epos)
+	MDRV_MACHINE_INIT(drakton)
 MACHINE_DRIVER_END
 
 static struct NESinterface nes_interface =
@@ -2490,8 +2600,9 @@ ROM_START( 8ballat2 )
 	ROM_LOAD( "8b.2n",        0x0200, 0x0100, CRC(30586988) SHA1(a9c246fd01cb3ff371ad33b55d5b2fe4898c4d1b) )
 ROM_END
 
+/* encrypted */
 ROM_START( drakton )
-	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
+	ROM_REGION( 0x20000, REGION_CPU1, 0 )	/* 64k for code + 4*16k for decrypted code */
 	ROM_LOAD( "2764.u2",      0x0000, 0x2000, CRC(d9a33205) SHA1(06dc96412e7162fd8a4f6ef4d14d1510c06b1d00) )
 	ROM_LOAD( "2764.u3",      0x2000, 0x2000, CRC(69583a35) SHA1(061271be4e9ddfd8dff4217f1434215ad35ba505) )
 
@@ -2518,31 +2629,30 @@ ROM_END
 
 /* encrypted */
 ROM_START( strtheat )
-	ROM_REGION( 0x20000, REGION_CPU1, 0 )	/* 64k for code */
+	ROM_REGION( 0x20000, REGION_CPU1, 0 )	/* 64k for code + 4*16k for decrypted code */
 	ROM_LOAD( "2764.u2",   0x0000, 0x2000, CRC(8d3e82c3) SHA1(ec26fb1c6015721da1f61eca76a4b3390d8dcc76) )
-	ROM_LOAD( "2764.u3",   0x2000, 0x2000, CRC(f0759e76) SHA1(e086f02d1861269194c4cd2ada71696b48ed1a1d)  )
-	/* space for diagnostic ROM */
+	ROM_LOAD( "2764.u3",   0x2000, 0x2000, CRC(f0759e76) SHA1(e086f02d1861269194c4cd2ada71696b48ed1a1d) )
 
 	ROM_REGION( 0x1000, REGION_CPU2, 0 )	/* sound */
 	ROM_LOAD( "2716.3h",   0x0000, 0x0800, CRC(4cd17174) SHA1(5ed9b5275b0779d1ca05d6e62d3ad8a682ebde37) )
-	ROM_RELOAD(0x0800,0x0800)
+	ROM_RELOAD(            0x0800, 0x0800 )
 
 	ROM_REGION( 0x2000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "2716.3n",   0x0000, 0x0800, CRC(29e57678) SHA1(cbbb980c44c7f5c45d5f0b85209658f53b7ba4a7))
-	ROM_RELOAD(0x0800,0x0800)
-	ROM_LOAD( "2716.3p",    0x1000, 0x0800, CRC(31171146) SHA1(e26b22e73b528810b566b2b9f6d81e2d7856523d))
-	ROM_RELOAD(0x1800,0x0800)
+	ROM_LOAD( "2716.3n",   0x0000, 0x0800, CRC(29e57678) SHA1(cbbb980c44c7f5c45d5f0b85209658f53b7ba4a7) )
+	ROM_RELOAD(            0x0800, 0x0800 )
+	ROM_LOAD( "2716.3p",   0x1000, 0x0800, CRC(31171146) SHA1(e26b22e73b528810b566b2b9f6d81e2d7856523d) )
+	ROM_RELOAD(            0x1800, 0x0800 )
 
 	ROM_REGION( 0x2000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "2716.7c",   0x0000, 0x0800, CRC(a8238e9c) SHA1(947bbe48ce1c705ef974e37b138929f1c846ed79))
+	ROM_LOAD( "2716.7c",   0x0000, 0x0800, CRC(a8238e9c) SHA1(947bbe48ce1c705ef974e37b138929f1c846ed79) )
 	ROM_LOAD( "2716.7d",   0x0800, 0x0800, CRC(71202138) SHA1(b4edc77ed2844ef46aee4a492282e4785bdb7224) )
-	ROM_LOAD( "2716.7e",   0x1000, 0x0800, CRC(dc7785ac) SHA1(4ccb3f9f938fd1d9bd20f1601a16a2780c84588b)  )
+	ROM_LOAD( "2716.7e",   0x1000, 0x0800, CRC(dc7785ac) SHA1(4ccb3f9f938fd1d9bd20f1601a16a2780c84588b) )
 	ROM_LOAD( "2716.7f",   0x1800, 0x0800, CRC(ede71d86) SHA1(0bce1b1d4180173537685a08055ce44b9dedc76a) )
 
 	ROM_REGION( 0x0300, REGION_PROMS, 0 )
-	ROM_LOAD( "82s129.2e",     0x0000, 0x0100, CRC(1311ba28) SHA1(d9b5bc07c8943d83592833e8b1c2ff57e4accb55)  ) /* palette low 4 bits (inverted) */
+	ROM_LOAD( "82s129.2e",     0x0000, 0x0100, CRC(1311ba28) SHA1(d9b5bc07c8943d83592833e8b1c2ff57e4accb55) ) /* palette low 4 bits (inverted) */
 	ROM_LOAD( "82s129.2f",     0x0100, 0x0100, CRC(18d90d4f) SHA1(b956fd652dcc5eb50eaec8729762d19cfd475bc7) ) /* palette high 4 bits (inverted) */
-	ROM_LOAD( "82s129.2n",    0x0200, 0x0100, CRC(a515d59b) SHA1(930616c4bcd819c2a4432a6619a8c6da74f3e8c5) ) /* character color codes on a per-column basis */
+	ROM_LOAD( "82s129.2n",     0x0200, 0x0100, CRC(a515d59b) SHA1(930616c4bcd819c2a4432a6619a8c6da74f3e8c5) ) /* character color codes on a per-column basis */
 ROM_END
 
 ROM_START( shootgal )
@@ -2652,5 +2762,5 @@ GAMEX(1983, pestplce, mario,	pestplce, pestplce, 0,        ROT180, "bootleg", "P
 GAMEX(1985, spclforc, 0,		spclforc, spclforc, 0,        ROT90, "Senko Industries (Magic Eletronics Inc. licence)", "Special Forces", GAME_NO_SOUND )
 GAMEX(1985, spcfrcii, 0,		spclforc, spclforc, 0,        ROT90, "Senko Industries (Magic Eletronics Inc. licence)", "Special Forces II", GAME_NO_SOUND )
 
-GAMEX(198?, drakton,  0,        dkong,    dkong,    0,        ROT90, "Epos Corporation", "Drakton", GAME_NOT_WORKING )
-GAMEX(1985, strtheat, 0,        strtheat, strtheat, 0,        ROT90, "Epos Corporation", "Street Heat - Cardinal Amusements", GAME_NO_SOUND)
+GAMEX(1984, drakton,  0,        drakton,  drakton,  drakton,  ROT90, "Epos Corporation", "Drakton", GAME_NO_SOUND )
+GAMEX(1985, strtheat, 0,        strtheat, strtheat, strtheat, ROT90, "Epos Corporation", "Street Heat - Cardinal Amusements", GAME_NO_SOUND )

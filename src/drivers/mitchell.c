@@ -17,6 +17,9 @@ Notes:
   appears. This forces the game to initialize the EEPROM, otherwise it will
   not work.
   This is simulated with a kluge in input_r.
+  This doesn't work with spangj! The data written to EEPROM is wrong. This is
+  currently fixed by patching the ROM data so the EEPROM is right. It would be
+  better to just preload the correct EEPROM, without needing the input_r kludge.
 
 TODO:
 - understand what bits 0 and 3 of input port 0x05 are
@@ -35,6 +38,7 @@ void pang_decode(void);
 void cworld_decode(void);
 void hatena_decode(void);
 void spang_decode(void);
+void spangj_decode(void);
 void sbbros_decode(void);
 void marukin_decode(void);
 void qtono1_decode(void);
@@ -1376,10 +1380,10 @@ ROM_START( spangj )
 
 	ROM_REGION( 0x100000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "spj02_1e.bin",   0x000000, 0x20000,  CRC(419f69d7) SHA1(e3431b5ce3e687ba9a45cb6e0e0a2dfa3a9e5b29) )	/* chars */
-	ROM_LOAD( "spj03_3e.bin",   0x020000, 0x20000, CRC(3ae28bc1) SHA1(4f6d9a86f624598ebc0825b50941adfb7436e98a) )
+	ROM_LOAD( "03.f2",          0x020000, 0x20000, CRC(3ae28bc1) SHA1(4f6d9a86f624598ebc0825b50941adfb7436e98a) )	// spj03_3e.bin
 	/* 40000-7ffff empty */
 	ROM_LOAD( "spj04_1g.bin",   0x080000, 0x20000, CRC(6870506f) SHA1(13a12c012ea2efb0c8cd9dcfb4b5757ac08ee912) )
-	ROM_LOAD( "spj05_2g.bin",   0x0a0000, 0x20000, CRC(4a060884) SHA1(f83d713aee4230fc04a1d5f1d4d79c64a5bf2753) )
+	ROM_LOAD( "05.g2",          0x0a0000, 0x20000, CRC(4a060884) SHA1(f83d713aee4230fc04a1d5f1d4d79c64a5bf2753) )	// spj05_2g.bin
 	/* c0000-fffff empty */
 
 	ROM_REGION( 0x040000, REGION_GFX2, ROMREGION_DISPOSE )
@@ -1387,7 +1391,7 @@ ROM_START( spangj )
 	ROM_LOAD( "spj09_1k.bin",   0x020000, 0x20000, CRC(04b41b75) SHA1(946ed04a17f1f71085143d43905aa310ce1e05f4) )
 
 	ROM_REGION( 0x80000, REGION_SOUND1, 0 )	/* OKIM */
-	ROM_LOAD( "spj01_1d.bin",   0x00000, 0x20000, CRC(b96ea126) SHA1(83fa71994518d40b8938520faa8701c63b7f579e) )
+	ROM_LOAD( "01.d1",          0x00000, 0x20000, CRC(b96ea126) SHA1(83fa71994518d40b8938520faa8701c63b7f579e) )	// spj01_1d.bin
 ROM_END
 
 ROM_START( sbbros )
@@ -1627,6 +1631,21 @@ static DRIVER_INIT( spang )
 	nvram = &memory_region(REGION_CPU1)[0xe000];	/* NVRAM */
 	spang_decode();
 }
+static DRIVER_INIT( spangj )
+{
+	input_type = 3;
+	nvram_size = 0x80;
+	nvram = &memory_region(REGION_CPU1)[0xe000];	/* NVRAM */
+	spangj_decode();
+
+	/* fix data that will be written to nvram */
+	{
+		UINT8 *rom = memory_region(REGION_CPU1) + 0x10000;
+		rom[0x0183] = 0xcd;
+		rom[0x0184] = 0x81;
+		rom[0x0185] = 0x0e;
+	}
+}
 static DRIVER_INIT( sbbros )
 {
 	input_type = 3;
@@ -1692,7 +1711,7 @@ GAME( 1989, pompingw, pang,     pang,    pang,     pang,     ROT0,   "Mitchell",
 GAME( 1989, cworld,   0,        pang,    qtono1,   cworld,   ROT0,   "Capcom", "Capcom World (Japan)" )
 GAME( 1990, hatena,   0,        pang,    qtono1,   hatena,   ROT0,   "Capcom", "Adventure Quiz 2 Hatena Hatena no Dai-Bouken (Japan)" )
 GAME( 1990, spang,    0,        pang,    pang,     spang,    ROT0,   "Mitchell", "Super Pang (World)" )
-GAMEX( 1990, spangj,   spang,    pang,    pang,     spang,    ROT0,   "Mitchell", "Super Pang (Japan)", GAME_NOT_WORKING ) // wrong decode
+GAME( 1990, spangj,   spang,    pang,    pang,     spangj,   ROT0,   "Mitchell", "Super Pang (Japan)" )
 GAME( 1990, sbbros,   spang,    pang,    pang,     sbbros,   ROT0,   "Mitchell + Capcom", "Super Buster Bros. (US)" )
 GAME( 1990, marukin,  0,        marukin, marukin,  marukin,  ROT0,   "Yuga", "Super Marukin-Ban" )
 GAME( 1991, qtono1,   0,        pang,    qtono1,   qtono1,   ROT0,   "Capcom", "Quiz Tonosama no Yabou (Japan)" )

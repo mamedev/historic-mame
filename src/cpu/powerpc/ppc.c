@@ -220,7 +220,7 @@ INLINE void ppc_set_spr(int spr, UINT32 value)
 		case SPR_ICCR:		ppc.spr[SPR_ICCR] = value; break;
 		case SPR_DCCR:		ppc.spr[SPR_DCCR] = value; break;
 		case SPR_TBHI:		ppc.tb &= 0xffffffff; ppc.tb |= (UINT64)value << 32; break;
-		case SPR_TBLO:		ppc.tb &= 0xffffffff00000000; ppc.tb |= value; break;
+		case SPR_TBLO:		ppc.tb &= U64(0xffffffff00000000); ppc.tb |= value; break;
 		case SPR_PIT:		ppc.spr[SPR_PIT] = value; break;
 		case SPR_SPRG0:		ppc.spr[SPR_SPRG0] = value; break;
 		case SPR_SPRG1:		ppc.spr[SPR_SPRG1] = value; break;

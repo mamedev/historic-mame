@@ -6,7 +6,7 @@
 
 	Games supported:
 		* Subs
-		
+
 	Known issues:
 		* none at this time
 
@@ -98,11 +98,11 @@ INPUT_PORTS_START( subs )
 	PORT_DIPNAME( 0x02, 0x00, "Credit/Time" )
 	PORT_DIPSETTING(    0x00, "Each Coin Buys Time" )
 	PORT_DIPSETTING(    0x02, "Fixed Time" )
-	PORT_DIPNAME( 0x0c, 0x00, "Game Language" )
+	PORT_DIPNAME( 0x0c, 0x00, DEF_STR( Language ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( English ) )
-	PORT_DIPSETTING(    0x04, DEF_STR( Spanish ) )
-	PORT_DIPSETTING(    0x08, DEF_STR( French ) )
-	PORT_DIPSETTING(    0x0c, DEF_STR( German ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( French ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( Spanish) )
+	PORT_DIPSETTING(    0x0c, DEF_STR( German) )
 	PORT_DIPNAME( 0x10, 0x00, DEF_STR( Free_Play ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x10, DEF_STR( On ) )
@@ -277,7 +277,7 @@ static DISCRETE_SOUND_START(subs_sound_interface)
 	DISCRETE_ADDER2(NODE_41, 1, NODE_40, 800)
 	DISCRETE_LOGIC_AND(NODE_42, 1, SUBS_SONAR1_EN, SUBS_NOISE)
 	DISCRETE_TRIANGLEWAVE(SUBS_SONAR1_SND, NODE_42, NODE_41, 320.8, 0.0, 0)
-	
+
 	DISCRETE_RCDISC2(NODE_50, SUBS_SONAR2_EN, SUBS_SONAR2_EN, 18600.0, SUBS_SONAR2_EN, 20.0, 4.7e-6)	/* Decay envelope */
 	DISCRETE_ADDER2(NODE_51, 1, NODE_50, 800)
 	DISCRETE_LOGIC_AND(NODE_52, 1, SUBS_SONAR2_EN, SUBS_NOISE)
@@ -313,7 +313,7 @@ static MACHINE_DRIVER_START( subs )
 
 	MDRV_FRAMES_PER_SECOND(57)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
-	
+
 	MDRV_MACHINE_INIT(subs)
 
 	/* video hardware */
@@ -324,7 +324,7 @@ static MACHINE_DRIVER_START( subs )
 	MDRV_GFXDECODE(gfxdecodeinfo)
 	MDRV_PALETTE_LENGTH(4)
 	MDRV_COLORTABLE_LENGTH(sizeof(colortable_source) / sizeof(colortable_source[0]))
-	
+
 	MDRV_PALETTE_INIT(subs)
 	MDRV_VIDEO_START(generic)
 	MDRV_VIDEO_UPDATE(subs)

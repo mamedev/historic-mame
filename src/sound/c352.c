@@ -1,6 +1,6 @@
 /*
     c352.c - Namco C352 custom PCM chip emulation
-    v0.1
+    v0.2
     By R. Belmont
 
     Thanks to Cap of VivaNonno for info and The_Author for preliminary reverse-engineering
@@ -22,7 +22,8 @@
 
 // flags
 
-#define C352_FLGEX_LOOPFIXUP	0x10000	// have we done a "loop fixup" for this voice?
+#define C352_FLG_LONGPHASE	0x10000 // first phase of "long sample mode" complete
+#define C352_FLG_CONTINUE	0x8000	// second phase of "long sample mode"
 #define	C352_FLG_ACTIVE		0x4000	// channel is active
 #define C352_FLG_PHASE		0x0080	// invert phase 180 degrees (e.g. flip sign of sample)
 #define C352_FLG_LONG		0x0020	// "long-format" sample (can't loop, not sure what else it means)
@@ -49,6 +50,7 @@ typedef struct
 	UINT32	current_addr;
 	UINT32	stop_addr;
 	UINT32	loop_addr;
+	UINT32  loop_point;
 	UINT32	pos;
 } c352_ch_t;
 
@@ -126,8 +128,16 @@ static void c352_mix_one_channel(unsigned long ch, long sample_count)
 		{
 			pos -= cnt;
 
-			if (pos <= c352_ch[ch].loop_addr) 
+			if (pos <= c352_ch[ch].loop_point) 
 			{
+				if (flag & C352_FLG_LONG)
+				{
+//					printf("ch %02d: end chain part 1\n", ch);
+					c352_ch[ch].flag &= ~C352_FLG_ACTIVE;
+					c352_ch[ch].flag |= C352_FLG_LONGPHASE;
+					return;
+				}
+
 				if (flag & C352_FLG_LOOP)
 				{
 					pos = c352_ch[ch].stop_addr;
@@ -145,9 +155,17 @@ static void c352_mix_one_channel(unsigned long ch, long sample_count)
 
 			if (pos >= c352_ch[ch].stop_addr) 
 			{
+				if (flag & C352_FLG_LONG)
+				{
+//					printf("ch %02d: end chain part 1\n", ch);
+					c352_ch[ch].flag &= ~C352_FLG_ACTIVE;
+					c352_ch[ch].flag |= C352_FLG_LONGPHASE;
+					return;
+				}
+
 				if (flag & C352_FLG_LOOP)
 				{
-					pos = c352_ch[ch].loop_addr;
+					pos = c352_ch[ch].loop_point;
 				}
 				else
 				{
@@ -195,10 +213,10 @@ static void c352_mix_one_channel(unsigned long ch, long sample_count)
 			sample = mulaw_table[(unsigned char)sample];
 		}
 
-		channel_l[i] += ((sample * level_table[c352_ch[ch].vol_l])>>8);  
-		channel_r[i] += ((sample * level_table[c352_ch[ch].vol_r])>>8);  
-		channel_l2[i] += ((sample * level_table[c352_ch[ch].vol_l2])>>8);  
-		channel_r2[i] += ((sample * level_table[c352_ch[ch].vol_r2])>>8);  
+		channel_l[i] += ((sample * c352_ch[ch].vol_l)>>8);  
+		channel_r[i] += ((sample * c352_ch[ch].vol_r)>>8);  
+		channel_l2[i] += ((sample * c352_ch[ch].vol_l2)>>8);  
+		channel_r2[i] += ((sample * c352_ch[ch].vol_r2)>>8);  
 	}
 
 	c352_ch[ch].pos = offset;
@@ -245,7 +263,16 @@ static unsigned short c352_read_reg16(unsigned long address)
 	}
 	else
 	{
-		val = c352_ch[chan].flag;
+		if ((address & 0xf) == 6)
+		{
+			int bits = (c352_ch[chan].flag & 0x0020) ? 0x8800 : 0x8000;
+			val = c352_ch[chan].flag;
+			val = (val & ~0x8800) | ((val & C352_FLG_LONGPHASE) ? bits : 0x0000);
+		}
+		else
+		{
+			val = 0;
+		}
 	}
 	return val;
 }
@@ -296,75 +323,101 @@ static void c352_write_reg16(unsigned long address, unsigned short val)
 		#if VERBOSE
 		logerror("CH %02d FLAG %02x\n", chan, val);
 		#endif
-		// clear all flags except our internal one
-		c352_ch[chan].flag &= C352_FLGEX_LOOPFIXUP;
-		// and OR in the values
-		c352_ch[chan].flag |= val;
+		c352_ch[chan].flag = val;
 
-		if (!(val & C352_FLG_ACTIVE))
+		// not chain mode, normal setup
+		if ((val & 0x8020) == 0)
 		{
-			return;
-		}
+			temp = c352_ch[chan].bank<<16;
+			temp += c352_ch[chan].start_addr;
+			c352_ch[chan].current_addr = temp;
 
-		temp = c352_ch[chan].bank<<16;
-		temp += c352_ch[chan].start_addr;
-		c352_ch[chan].current_addr = temp;
-		temp = c352_ch[chan].bank<<16;
-		temp += c352_ch[chan].end_addr;
-		c352_ch[chan].stop_addr = temp;
+			temp = c352_ch[chan].bank<<16;
+			temp += c352_ch[chan].end_addr;
+			c352_ch[chan].stop_addr = temp;
 
-		if (!(c352_ch[chan].flag & C352_FLGEX_LOOPFIXUP))
-		{
-			c352_ch[chan].flag |= C352_FLGEX_LOOPFIXUP;
+			temp = c352_ch[chan].bank<<16;
+			temp += c352_ch[chan].loop_addr;
+			c352_ch[chan].loop_point = temp;
 
-			if (val & C352_FLG_REVERSE)
+			switch (val & 3)
 			{
-				if (c352_ch[chan].current_addr < c352_ch[chan].stop_addr)
-				{
-					if (c352_ch[chan].stop_addr >= 0x10000)
+				case 0:	// normal	
+				case 2:	// loop
+				case 3:	// reverse loop
+					if (c352_ch[chan].current_addr >= c352_ch[chan].stop_addr)
+					{
+						c352_ch[chan].stop_addr += 0x10000;
+						c352_ch[chan].loop_point += 0x10000;
+					}
+					break;
+				case 1:	// reverse
+					if (c352_ch[chan].current_addr <= c352_ch[chan].stop_addr)
+					{
 						c352_ch[chan].stop_addr -= 0x10000;
-					if (c352_ch[chan].loop_addr >= 0x10000)
-						c352_ch[chan].loop_addr -= 0x10000;
-				}
-
-				c352_ch[chan].loop_addr += (c352_ch[chan].bank<<16);
-
-				// don't loop if loop start is out of range.
-				// don't loop if the LONG flag is set (from vivanonno HLE code)
-				// (supported by golgo13 song 2 - the percussion loops when it shouldn't and sounds bad if we don't do this)
-				if ((c352_ch[chan].flag & C352_FLG_LONG))
-				{     
-					c352_ch[chan].flag &= ~C352_FLG_LOOP;
-				}
-
+						c352_ch[chan].loop_point -= 0x10000;
+					}
+					break;
 			}
-			else
+	
+/*			printf("ch %02d: normal start: %06x -> (%06x -> %06x)\n", chan,
+				c352_ch[chan].current_addr,
+				c352_ch[chan].loop_point,
+				c352_ch[chan].stop_addr);*/
+
+			c352_ch[chan].pos = 0;
+		}
+		else if ((val & 0x8020) == 0x0020) // chain mode, start first part
+		{
+			int bank2 = (c352_ch[chan].loop_addr & 0xff)<<16;
+
+			c352_ch[chan].current_addr = c352_ch[chan].start_addr + (c352_ch[chan].bank<<16);
+			c352_ch[chan].stop_addr = c352_ch[chan].end_addr + bank2;
+			c352_ch[chan].pos = 0;
+
+			c352_ch[chan].stop_addr &= 0xffffff;
+
+//			printf("ch %02d: start chain part 1: %06x -> %06x\n", chan, c352_ch[chan].current_addr, c352_ch[chan].stop_addr);
+
+		}
+		else if ((val & 0x8000) == 0x8000) // chain mode, phase 2
+		{
+			int bank = (c352_ch[chan].start_addr & 0xff)<<16;
+
+			c352_ch[chan].loop_point = c352_ch[chan].end_addr + bank; 
+			c352_ch[chan].stop_addr = c352_ch[chan].end_addr + bank; 
+			c352_ch[chan].flag &= ~(C352_FLG_LONGPHASE|C352_FLG_LONG);
+			c352_ch[chan].flag |= C352_FLG_ACTIVE;
+			c352_ch[chan].current_addr = c352_ch[chan].loop_point;
+			c352_ch[chan].pos = 0;
+
+			switch (val & 3)
 			{
-				if (c352_ch[chan].current_addr > c352_ch[chan].stop_addr)
-				{
-					c352_ch[chan].stop_addr += 0x10000;
-					c352_ch[chan].loop_addr += 0x10000;
-				}
-
-				c352_ch[chan].loop_addr += (c352_ch[chan].bank<<16);
-
-				if ((c352_ch[chan].loop_addr > c352_ch[chan].stop_addr) || (c352_ch[chan].flag & C352_FLG_LONG))
-				{
-					c352_ch[chan].flag &= ~C352_FLG_LOOP;
-				}
+				case 0:	// normal	
+				case 2:	// loop
+				case 3:	// reverse loop
+					if (c352_ch[chan].current_addr >= c352_ch[chan].stop_addr)
+					{
+						c352_ch[chan].stop_addr += 0x10000;
+					}
+					break;
+				case 1:	// reverse
+					if (c352_ch[chan].current_addr <= c352_ch[chan].stop_addr)
+					{
+						c352_ch[chan].stop_addr -= 0x10000;
+					}
+					break;
 			}
+
+//			printf("ch %02d: start chain part 2: %06x -> %06x\n", chan, c352_ch[chan].current_addr, c352_ch[chan].stop_addr);
 		}
 
-		c352_ch[chan].pos = 0;
 		break;
 
 	case 0x8:
-		// lower part is bank (ie bits 23-16 of address)
-		// upper part is unknown
+		// bank (bits 16-31 of address);
 		c352_ch[chan].bank = val & 0xff;
-		c352_ch[chan].unk9 = val >> 8;
 		#if VERBOSE
-		logerror("CH %02d UNK8 %02x", chan, c352_ch[chan].unk9);
 		logerror("CH %02d BANK %02x", chan, c352_ch[chan].bank);
 		#endif
 		break;
@@ -374,7 +427,6 @@ static void c352_write_reg16(unsigned long address, unsigned short val)
 		#if VERBOSE
 		logerror("CH %02d SADDR %04x\n", chan, val);
 		#endif
-		c352_ch[chan].flag &= ~C352_FLGEX_LOOPFIXUP;
 		c352_ch[chan].start_addr = val;
 		break;
 
@@ -383,7 +435,6 @@ static void c352_write_reg16(unsigned long address, unsigned short val)
 		#if VERBOSE
 		logerror("CH %02d EADDR %04x\n", chan, val);
 		#endif
-		c352_ch[chan].flag &= ~C352_FLGEX_LOOPFIXUP;
 		c352_ch[chan].end_addr = val;
 		break;
 
@@ -392,7 +443,6 @@ static void c352_write_reg16(unsigned long address, unsigned short val)
 		#if VERBOSE
 		logerror("CH %02d LADDR %04x\n", chan, val);
 		#endif
-		c352_ch[chan].flag &= ~C352_FLGEX_LOOPFIXUP;
 		c352_ch[chan].loop_addr = val;
 		break;
 
@@ -406,11 +456,10 @@ static void c352_write_reg16(unsigned long address, unsigned short val)
 
 static void c352_init(void)
 {
-	int i, sign;
+	int i;
 	double x_max = 25000.0;
 	double y_max = 127.0;
 	double u = 8.0;
-	double y, x;
 
 	// clear all channels states
 	memset(c352_ch, 0, sizeof(c352_ch_t)*32);
@@ -418,15 +467,14 @@ static void c352_init(void)
 	// generate mulaw table for mulaw format samples
 	for (i = 0; i < 256; i++)
 	{
-		sign = i & 0x80;
-		y = (double)(i & 0x7f);
-		x = (exp (y / y_max * log (1.0 + u)) - 1.0) * x_max / u;
-
-		if (sign) 
-		{
-			x = -x;
-		}
-		mulaw_table[i] = (short)x;
+	      double y = (double) (i & 0x7f);
+	      double x = (exp (y / y_max * log (1.0 + u)) - 1.0) * x_max / u;
+	
+	      if (i & 0x80)
+	      {
+	        x = -x;
+	      }
+	      mulaw_table[i] = (short)x;
 	}
 
 	// init noise generator

@@ -91,12 +91,6 @@ ROM_START( sfiii )
 	ROM_REGION( 0x080000, REGION_USER1, 0 ) /* bios region */
 	ROM_LOAD( "sf3bios",  0x000000, 0x080000, CRC(74205250) SHA1(c3e83ace7121d32da729162662ec6b5285a31211) )
 
-	/* Convert this to CHD? */
-	ROM_REGION( 0x0000800, REGION_USER2, 0 ) /* cd cue image */
-	ROM_LOAD( "sf3.cue",  0x0000000, 0x0000046, CRC(54c89005) SHA1(601d2aaac1298aa5d2eddb52e2a0a5194d790cd7) )
-	ROM_REGION( 0x331f980, REGION_USER3, 0 ) /* cd bin image */
-	ROM_LOAD( "sf3.bin",  0x0000000, 0x331f980, CRC(6e72edcc) SHA1(dc46e22e9f04d1a5940dfdd81d011a2d7e5aa571) )
-
 	#ifdef LOAD_CD_CONTENT
 	/* Note: These regions contains the rom data extracted from the cd.
 	         This is done only to make analysis easier. Once correct
@@ -112,6 +106,9 @@ ROM_START( sfiii )
 	ROM_LOAD( "50",  0x2000000, 0x400000, CRC(58933dc2) SHA1(1f1723be676a817237e96b6e20263b935c59daae) )
 	/* 90,91,92,93 are bmp images, not extracted */
 	#endif
+
+	DISK_REGION( REGION_DISKS )
+	DISK_IMAGE_READONLY( "sfiii", 0, MD5(cdc5c5423bd8c053de7cdd927dc60da7) SHA1(cc72c9eb2096f4d51f2cf6df18f29fd79d05067c) )
 ROM_END
 
 ROM_START( sfiii2 )
@@ -119,12 +116,6 @@ ROM_START( sfiii2 )
 
 	ROM_REGION( 0x080000, REGION_USER1, 0 ) /* bios region */
 	ROM_LOAD( "sf32ibios.rom",  0x000000, 0x080000, CRC(faea0a3e) SHA1(a03cd63bcf52e4d57f7a598c8bc8e243694624ec) )
-
-	/* Convert this to CHD? */
-	ROM_REGION( 0x0000800, REGION_USER2, 0 ) /* cd cue image */
-	ROM_LOAD( "cap-3ga-1.cue",  0x0000000, 0x000004b, CRC(2ba55809) SHA1(6e32186345eca6ab49e01dcf41ad92e22b21409d) )
-	ROM_REGION( 0x4a17980, REGION_USER3, 0 ) /* cd bin image */
-	ROM_LOAD( "cap-3ga-1.bin",  0x0000000, 0x4a17980, CRC(1c95fdd3) SHA1(f5b13ef2eacabf4aea9beb8244b75e9e01868dbc) )
 
 	#ifdef LOAD_CD_CONTENT
 	/* Note: These regions contains the rom data extracted from the cd.
@@ -143,6 +134,9 @@ ROM_START( sfiii2 )
 	ROM_LOAD( "51",  0x2800000, 0x800000, CRC(1102b8eb) SHA1(c7dd2ee3a3214c6ec47a03fe3e8c941775d57f76) )
 	/* 90,91,92,93 are bmp images, not extracted */
 	#endif
+
+	DISK_REGION( REGION_DISKS )
+	DISK_IMAGE_READONLY( "sfiii2", 0, MD5(941c7e8d0838db9880ea7bf169ad310d) SHA1(76e9fdef020c4b85a10aa8828a63e67c7dca22bd) )
 ROM_END
 
 ROM_START( sfiii3 )
@@ -150,12 +144,6 @@ ROM_START( sfiii3 )
 
 	ROM_REGION( 0x080000, REGION_USER1, 0 ) /* bios region */
 	ROM_LOAD( "sf33rdbios.rom",  0x000000, 0x080000, BAD_DUMP CRC(9fa37a05) SHA1(22829c03d5109c451fc677a21592407cc09bcaa1) ) // fixed bits
-
-	/* Convert this to CHD? */
-	ROM_REGION( 0x0000800, REGION_USER2, 0 ) /* cd cue image */
-	ROM_LOAD( "cap-33s-1.cue",  0x0000000, 0x000004b, CRC(bd084ff0) SHA1(cff0ea9fafc287d8cb70f1bf86366717e90453d0) )
-	ROM_REGION( 0x5c77980, REGION_USER3, 0 ) /* cd bin image */
-	ROM_LOAD( "cap-33s-1.bin",  0x0000000, 0x5c77980, CRC(bc8845b9) SHA1(36445f7bc80371bfba23ab5917c0477204d5a04d) )
 
 	#ifdef LOAD_CD_CONTENT
 	/* Note: These regions contains the rom data extracted from the cd.
@@ -176,6 +164,9 @@ ROM_START( sfiii3 )
 	ROM_LOAD( "61",  0x3800000, 0x800000, CRC(b813a1b1) SHA1(16de0ee3dfd6bf33d07b0ff2e797ebe2cfe6589e) )
 	/* 92,93 are bmp images, not extracted */
 	#endif
+
+	DISK_REGION( REGION_DISKS )
+	DISK_IMAGE_READONLY( "sfiii3", 0, MD5(f159ad85cc94ced3ddb9ef5e92173a9f) SHA1(47c7ae0f2dc47c7d28bdf66d378a3aaba4c99c75) )
 ROM_END
 
 ROM_START( warzard )
@@ -183,12 +174,6 @@ ROM_START( warzard )
 
 	ROM_REGION( 0x080000, REGION_USER1, 0 ) /* bios region */
 	ROM_LOAD( "warzard_cart_flashrom.bin",  0x000000, 0x080000, CRC(f8e2f0c6) SHA1(93d6a986f44c211fff014e55681eca4d2a2774d6) )
-
-	/* Convert this to CHD? */
-	ROM_REGION( 0x0000800, REGION_USER2, 0 ) /* cd cue image */
-	ROM_LOAD( "wz.cue",  0x0000000, 0x0000045,  CRC(46dfcbee) SHA1(94841bd478383727377de41e77114a0517c0a379) )
-	ROM_REGION( 0x331f980, REGION_USER3, 0 ) /* cd bin image */
-	ROM_LOAD( "wz.bin",  0x0000000, 0x331f980, CRC(0d93d45a) SHA1(d121936c99d9fc3a9649a4b2534764d5a083e963) )
 
 	#ifdef LOAD_CD_CONTENT
 	/* Note: These regions contains the rom data extracted from the cd.
@@ -205,6 +190,9 @@ ROM_START( warzard )
 	ROM_LOAD( "50",  0x2000000, 0x400000, CRC(2f5b44bd) SHA1(7ffdbed5b6899b7e31414a0828e04543d07435e4) )
 	/* 90,91,92,93 are bmp images, not extracted */
 	#endif
+
+	DISK_REGION( REGION_DISKS )
+	DISK_IMAGE_READONLY( "warzard", 0, MD5(028ff12a4ce34118dd0091e87c8cdd08) SHA1(6d4e6b7fff4ff3f04e349479fa5a1cbe63e673b8) )
 ROM_END
 
 ROM_START( jojo )
@@ -212,12 +200,6 @@ ROM_START( jojo )
 
 	ROM_REGION( 0x080000, REGION_USER1, 0 ) /* bios region */
 	ROM_LOAD( "jojocart.bin",  0x000000, 0x080000, CRC(02778f60) SHA1(a167f9ebe030592a0cdb0c6a3c75835c6a43be4c) )
-
-	/* Convert this to CHD? */
-	ROM_REGION( 0x0000800, REGION_USER2, 0 ) /* cd cue image */
-	ROM_LOAD( "cap-jjk-140.cue",  0x0000000, 0x000004d, CRC(7eae4b4d) SHA1(2ded408229fc8919d61404e556b264cac34a5919) )
-	ROM_REGION( 0x3c4f980, REGION_USER3, 0 ) /* cd bin image */
-	ROM_LOAD( "cap-jjk-140.bin",  0x0000000, 0x3c4f980, CRC(beb952ae) SHA1(fbe80bcf3521259be6dbc6890780a419d87ccdbb) )
 
 	#ifdef LOAD_CD_CONTENT
 	/* Note: These regions contains the rom data extracted from the cd.
@@ -235,6 +217,9 @@ ROM_START( jojo )
 	ROM_LOAD( "50",  0x2000000, 0x400000, CRC(1c749cc7) SHA1(23df741360476d8035c68247e645278fbab53b59) )
 	/* 92,93 are bmp images, not extracted */
 	#endif
+
+	DISK_REGION( REGION_DISKS )
+	DISK_IMAGE_READONLY( "jojo", 0, MD5(05440ecf90e836207a27a99c817a3328) SHA1(d5a11315ac21e573ffe78e63602ec2cb420f361f) )
 ROM_END
 
 
@@ -245,12 +230,6 @@ ROM_START( jojoba )
 	// this was from a version which doesn't require the cd to run
 	ROM_LOAD( "jojoba.rom",  0x000000, 0x080000, CRC(4dab19f5) SHA1(ba07190e7662937fc267f07285c51e99a45c061e) )
 
-	/* Convert this to CHD? */
-	ROM_REGION( 0x0000800, REGION_USER2, 0 ) /* cd cue image */
-	ROM_LOAD( "cap-jjm-110.cue",  0x0000000, 0x000004d, CRC(c9d6c2e8) SHA1(40d72a034b9d1ffa432d73cd7771de9abd0cf613) )
-	ROM_REGION( 0x4a17980, REGION_USER3, 0 ) /* cd bin image */
-	ROM_LOAD( "cap-jjm-110.bin",  0x0000000, 0x4a17980, CRC(6b02c63a) SHA1(66b9a20560bc7d033420adf73e34f26c49893d80) )
-
 	#ifdef LOAD_CD_CONTENT
 	/* Note: These regions contains the rom data extracted from the cd.
 	         This is done only to make analysis easier. Once correct
@@ -268,6 +247,9 @@ ROM_START( jojoba )
 	ROM_LOAD( "51",  0x2800000, 0x800000, CRC(eedf19ca) SHA1(a7660bf9ff87911afb4f83b64456245059986830) )
 	/* 92,93 are bmp images, not extracted */
 	#endif
+
+	DISK_REGION( REGION_DISKS )
+	DISK_IMAGE_READONLY( "jojoba", 0, MD5(bf6b90334bf1f6bd8dbfed737face2d6) SHA1(688520bb83ccbf4b31c3bfe26bd0cc8292a8c558) )
 ROM_END
 
 ROM_START( jojobaa )
@@ -276,12 +258,6 @@ ROM_START( jojobaa )
 	ROM_REGION( 0x080000, REGION_USER1, 0 ) /* bios region */
 	ROM_LOAD( "jojobacart.bin",  0x000000, 0x080000,  CRC(3085478c) SHA1(055eab1fc42816f370a44b17fd7e87ffcb10e8b7) )
 
-	/* Convert this to CHD? */
-	ROM_REGION( 0x0000800, REGION_USER2, 0 ) /* cd cue image */
-	ROM_LOAD( "cap-jjm-110.cue",  0x0000000, 0x000004d, CRC(c9d6c2e8) SHA1(40d72a034b9d1ffa432d73cd7771de9abd0cf613) )
-	ROM_REGION( 0x4a17980, REGION_USER3, 0 ) /* cd bin image */
-	ROM_LOAD( "cap-jjm-110.bin",  0x0000000, 0x4a17980, CRC(6b02c63a) SHA1(66b9a20560bc7d033420adf73e34f26c49893d80) )
-
 	#ifdef LOAD_CD_CONTENT
 	/* Note: These regions contains the rom data extracted from the cd.
 	         This is done only to make analysis easier. Once correct
@@ -299,6 +275,9 @@ ROM_START( jojobaa )
 	ROM_LOAD( "51",  0x2800000, 0x800000, CRC(eedf19ca) SHA1(a7660bf9ff87911afb4f83b64456245059986830) )
 	/* 92,93 are bmp images, not extracted */
 	#endif
+
+	DISK_REGION( REGION_DISKS )
+	DISK_IMAGE_READONLY( "jojoba", 0, MD5(bf6b90334bf1f6bd8dbfed737face2d6) SHA1(688520bb83ccbf4b31c3bfe26bd0cc8292a8c558) )
 ROM_END
 
 

@@ -22,38 +22,39 @@ Memo:
 ******************************************************************************/
 
 #include "driver.h"
-#include "cpu/z80/z80.h"
 #include "vidhrdw/generic.h"
 #include "nb1413m3.h"
 
 
 #define	SIGNED_DAC	0		// 0:unsigned DAC, 1:signed DAC
+#if SIGNED_DAC
+#define DAC_0_WRITE	DAC_0_signed_data_w
+#else
+#define DAC_0_WRITE	DAC_0_data_w
+#endif
 
 
-PALETTE_INIT( hyhoo );
-VIDEO_UPDATE( hyhoo );
-VIDEO_START( hyhoo );
+extern PALETTE_INIT( hyhoo );
+extern VIDEO_UPDATE( hyhoo );
+extern VIDEO_START( hyhoo );
 
-WRITE8_HANDLER( hyhoo_palette_w );
-void hyhoo_radrx_w(int data);
-void hyhoo_radry_w(int data);
-void hyhoo_sizex_w(int data);
-void hyhoo_sizey_w(int data);
-void hyhoo_gfxflag1_w(int data);
-void hyhoo_gfxflag2_w(int data);
-void hyhoo_drawx_w(int data);
-void hyhoo_drawy_w(int data);
-void hyhoo_romsel_w(int data);
+extern WRITE8_HANDLER( hyhoo_clut_w );
+extern WRITE8_HANDLER( hyhoo_blitter_w );
+extern WRITE8_HANDLER( hyhoo_romsel_w );
 
 
 static DRIVER_INIT( hyhoo )
 {
 	nb1413m3_type = NB1413M3_HYHOO;
+
+	init_nb1413m3();
 }
 
 static DRIVER_INIT( hyhoo2 )
 {
 	nb1413m3_type = NB1413M3_HYHOO2;
+
+	init_nb1413m3();
 }
 
 
@@ -68,72 +69,29 @@ static ADDRESS_MAP_START( writemem_hyhoo, ADDRESS_SPACE_PROGRAM, 8 )
 ADDRESS_MAP_END
 
 
-static READ8_HANDLER( io_hyhoo_r )
-{
-	offset = (((offset & 0xff00) >> 8) | ((offset & 0x00ff) << 8));
-
-	if (offset < 0x8000) return nb1413m3_sndrom_r(offset);
-
-	switch (offset & 0xff00)
-	{
-		case	0x8100:	return AY8910_read_port_0_r(0);
-		case	0x9000:	return nb1413m3_inputport0_r(0);
-		case	0xa000:	return nb1413m3_inputport1_r(0);
-		case	0xb000:	return nb1413m3_inputport2_r(0);
-		case	0xf000:	return nb1413m3_dipsw1_r(0);
-		case	0xf100:	return nb1413m3_dipsw2_r(0);
-		case	0xe000:	return nb1413m3_gfxrom_r((offset & 0x0100) >> 8);
-		case	0xe100:	return nb1413m3_gfxrom_r((offset & 0x0100) >> 8);
-		default:	return 0xff;
-	}
-}
-
 static ADDRESS_MAP_START( readport_hyhoo, ADDRESS_SPACE_IO, 8 )
-	AM_RANGE(0x0000, 0xffff) AM_READ(io_hyhoo_r)
+	AM_RANGE(0x00, 0x7f) AM_READ(nb1413m3_sndrom_r)
+	AM_RANGE(0x81, 0x81) AM_READ(AY8910_read_port_0_r)
+	AM_RANGE(0x90, 0x90) AM_READ(nb1413m3_inputport0_r)
+	AM_RANGE(0xa0, 0xa0) AM_READ(nb1413m3_inputport1_r)
+	AM_RANGE(0xb0, 0xb0) AM_READ(nb1413m3_inputport2_r)
+	AM_RANGE(0xd0, 0xd0) AM_READ(MRA8_NOP)					// unknown
+	AM_RANGE(0xe0, 0xe1) AM_READ(nb1413m3_gfxrom_r)
+	AM_RANGE(0xf0, 0xf0) AM_READ(nb1413m3_dipsw1_r)
+	AM_RANGE(0xf1, 0xf1) AM_READ(nb1413m3_dipsw2_r)
 ADDRESS_MAP_END
 
-static WRITE8_HANDLER( io_hyhoo_w )
-{
-	offset = (((offset & 0xff00) >> 8) | ((offset & 0x00ff) << 8));
-
-	if ((0xc000 <= offset) && (0xd000 > offset))
-	{
-		hyhoo_palette_w(((offset & 0x0f00) >> 8), data);
-		return;
-	}
-
-	switch (offset & 0xff00)
-	{
-		case	0x0000:	break;
-		case	0x8200:	AY8910_write_port_0_w(0, data); break;
-		case	0x8300:	AY8910_control_port_0_w(0, data); break;
-		case	0x9000:	hyhoo_radrx_w(data);
-				nb1413m3_gfxradr_l_w(data); break;
-		case	0x9100:	hyhoo_radry_w(data);
-				nb1413m3_gfxradr_h_w(data); break;
-		case	0x9200:	hyhoo_drawx_w(data); break;
-		case	0x9300:	hyhoo_drawy_w(data); break;
-		case	0x9400:	hyhoo_sizex_w(data); break;
-		case	0x9500:	hyhoo_sizey_w(data); break;
-		case	0x9600:	hyhoo_gfxflag1_w(data); break;
-		case	0x9700:	break;
-		case	0xa000:	nb1413m3_inputportsel_w(0,data); break;
-		case	0xb000:	nb1413m3_sndrombank1_w(0,data); break;
-#if SIGNED_DAC
-		case	0xd000:	DAC_0_signed_data_w(0, data); break;
-#else
-		case	0xd000:	DAC_0_data_w(0, data); break;
-#endif
-		case	0xe000:	hyhoo_romsel_w(data);
-				hyhoo_gfxflag2_w(data);
-				nb1413m3_gfxrombank_w(data);
-				break;
-		case	0xf000:	break;
-	}
-}
-
 static ADDRESS_MAP_START( writeport_hyhoo, ADDRESS_SPACE_IO, 8 )
-	AM_RANGE(0x0000, 0xffff) AM_WRITE(io_hyhoo_w)
+//	AM_RANGE(0x00, 0x00) AM_WRITE(nb1413m3_nmi_clock_w)
+	AM_RANGE(0x82, 0x82) AM_WRITE(AY8910_write_port_0_w)
+	AM_RANGE(0x83, 0x83) AM_WRITE(AY8910_control_port_0_w)
+	AM_RANGE(0x90, 0x97) AM_WRITE(hyhoo_blitter_w)
+	AM_RANGE(0xa0, 0xa0) AM_WRITE(nb1413m3_inputportsel_w)
+	AM_RANGE(0xb0, 0xb0) AM_WRITE(nb1413m3_sndrombank1_w)
+	AM_RANGE(0xc0, 0xcf) AM_WRITE(hyhoo_clut_w)
+	AM_RANGE(0xd0, 0xd0) AM_WRITE(DAC_0_WRITE)
+	AM_RANGE(0xe0, 0xe0) AM_WRITE(hyhoo_romsel_w)
+//	AM_RANGE(0xf0, 0xf0) AM_WRITE(MWA8_NOP)
 ADDRESS_MAP_END
 
 
@@ -183,22 +141,22 @@ INPUT_PORTS_START( hyhoo )
 	PORT_DIPSETTING(    0x00, "95%" )
 
 	PORT_START	/* (2) PORT 0 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNUSED )		// DRAW BUSY
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNUSED )		//
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNUSED )			// DRAW BUSY
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNUSED )			//
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_SERVICE1 )		// SERVICE
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_SERVICE3 )		// MEMORY RESET
-	PORT_SERVICE( 0x10, IP_ACTIVE_LOW )			// TEST
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_COIN1 )		// COIN1
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START3 )		// NOT USED
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN2 )		// COIN2
+	PORT_SERVICE( 0x10, IP_ACTIVE_LOW )					// TEST
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_COIN1 )			// COIN1
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START3 )			// NOT USED
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN2 )			// COIN2
 
 	PORT_START	/* (3) PORT 1-0 */
-	PORT_BIT(0x01, IP_ACTIVE_LOW, IPT_OTHER ) PORT_NAME("P1-A") PORT_CODE(KEYCODE_Z)
-	PORT_BIT(0x02, IP_ACTIVE_LOW, IPT_OTHER ) PORT_NAME("P1-B") PORT_CODE(KEYCODE_X)
-	PORT_BIT(0x04, IP_ACTIVE_LOW, IPT_OTHER ) PORT_NAME("P1-C") PORT_CODE(KEYCODE_C)
-	PORT_BIT(0x08, IP_ACTIVE_LOW, IPT_OTHER ) PORT_NAME("P2-A") PORT_CODE(KEYCODE_V)
-	PORT_BIT(0x10, IP_ACTIVE_LOW, IPT_OTHER ) PORT_NAME("P2-B") PORT_CODE(KEYCODE_B)
-	PORT_BIT(0x20, IP_ACTIVE_LOW, IPT_OTHER ) PORT_NAME("P2-C") PORT_CODE(KEYCODE_N)
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(1)
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(1)
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON3 ) PORT_PLAYER(1)
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(2)
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(2)
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON3 ) PORT_PLAYER(2)
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNUSED )
 
@@ -213,12 +171,12 @@ INPUT_PORTS_START( hyhoo )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START	/* (5) PORT 2-0 */
-	PORT_BIT(0x01, IP_ACTIVE_LOW, IPT_OTHER ) PORT_NAME("P3-A") PORT_CODE(KEYCODE_A)
-	PORT_BIT(0x02, IP_ACTIVE_LOW, IPT_OTHER ) PORT_NAME("P3-B") PORT_CODE(KEYCODE_S)
-	PORT_BIT(0x04, IP_ACTIVE_LOW, IPT_OTHER ) PORT_NAME("P3-C") PORT_CODE(KEYCODE_D)
-	PORT_BIT(0x08, IP_ACTIVE_LOW, IPT_OTHER ) PORT_NAME("P4-A") PORT_CODE(KEYCODE_F)
-	PORT_BIT(0x10, IP_ACTIVE_LOW, IPT_OTHER ) PORT_NAME("P4-B") PORT_CODE(KEYCODE_G)
-	PORT_BIT(0x20, IP_ACTIVE_LOW, IPT_OTHER ) PORT_NAME("P4-C") PORT_CODE(KEYCODE_H)
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(3)
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(3)
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON3 ) PORT_PLAYER(3)
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(4)
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(4)
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON3 ) PORT_PLAYER(4)
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNUSED )
 INPUT_PORTS_END
@@ -258,22 +216,22 @@ INPUT_PORTS_START( hyhoo2 )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START	/* (2) PORT 0 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNUSED )		// DRAW BUSY
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNUSED )		//
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNUSED )			// DRAW BUSY
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNUSED )			//
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_SERVICE1 )		// SERVICE
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_SERVICE3 )		// MEMORY RESET
-	PORT_SERVICE( 0x10, IP_ACTIVE_LOW )			// TEST
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_COIN1 )		// COIN1
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START3 )		// NOT USED
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN2 )		// COIN2
+	PORT_SERVICE( 0x10, IP_ACTIVE_LOW )					// TEST
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_COIN1 )			// COIN1
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START3 )			// NOT USED
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN2 )			// COIN2
 
 	PORT_START	/* (3) PORT 1-0 */
-	PORT_BIT(0x01, IP_ACTIVE_LOW, IPT_OTHER ) PORT_NAME("P1-A") PORT_CODE(KEYCODE_Z)
-	PORT_BIT(0x02, IP_ACTIVE_LOW, IPT_OTHER ) PORT_NAME("P1-B") PORT_CODE(KEYCODE_X)
-	PORT_BIT(0x04, IP_ACTIVE_LOW, IPT_OTHER ) PORT_NAME("P1-C") PORT_CODE(KEYCODE_C)
-	PORT_BIT(0x08, IP_ACTIVE_LOW, IPT_OTHER ) PORT_NAME("P2-A") PORT_CODE(KEYCODE_V)
-	PORT_BIT(0x10, IP_ACTIVE_LOW, IPT_OTHER ) PORT_NAME("P2-B") PORT_CODE(KEYCODE_B)
-	PORT_BIT(0x20, IP_ACTIVE_LOW, IPT_OTHER ) PORT_NAME("P2-C") PORT_CODE(KEYCODE_N)
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(1)
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(1)
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON3 ) PORT_PLAYER(1)
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(2)
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(2)
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON3 ) PORT_PLAYER(2)
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNUSED )
 
@@ -288,12 +246,12 @@ INPUT_PORTS_START( hyhoo2 )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START	/* (5) PORT 2-0 */
-	PORT_BIT(0x01, IP_ACTIVE_LOW, IPT_OTHER ) PORT_NAME("P3-A") PORT_CODE(KEYCODE_A)
-	PORT_BIT(0x02, IP_ACTIVE_LOW, IPT_OTHER ) PORT_NAME("P3-B") PORT_CODE(KEYCODE_S)
-	PORT_BIT(0x04, IP_ACTIVE_LOW, IPT_OTHER ) PORT_NAME("P3-C") PORT_CODE(KEYCODE_D)
-	PORT_BIT(0x08, IP_ACTIVE_LOW, IPT_OTHER ) PORT_NAME("P4-A") PORT_CODE(KEYCODE_F)
-	PORT_BIT(0x10, IP_ACTIVE_LOW, IPT_OTHER ) PORT_NAME("P4-B") PORT_CODE(KEYCODE_G)
-	PORT_BIT(0x20, IP_ACTIVE_LOW, IPT_OTHER ) PORT_NAME("P4-C") PORT_CODE(KEYCODE_H)
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(3)
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(3)
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON3 ) PORT_PLAYER(3)
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(4)
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(4)
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON3 ) PORT_PLAYER(4)
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNUSED )
 INPUT_PORTS_END
@@ -301,18 +259,18 @@ INPUT_PORTS_END
 
 static struct AY8910interface ay8910_interface =
 {
-	1,				/* 1 chip */
-	1250000,			/* 1.25 MHz ?? */
+	1,								/* 1 chip */
+	1250000,						/* 1.25 MHz ?? */
 	{ 35 },
-	{ input_port_0_r },		// DIPSW-A read
-	{ input_port_1_r },		// DIPSW-B read
+	{ input_port_0_r },				// DIPSW-A read
+	{ input_port_1_r },				// DIPSW-B read
 	{ 0 },
 	{ 0 }
 };
 
 static struct DACinterface dac_interface =
 {
-	1,				/* 1 channels */
+	1,								/* 1 channels */
 	{ 50 }
 };
 
@@ -320,11 +278,10 @@ static struct DACinterface dac_interface =
 static MACHINE_DRIVER_START( hyhoo )
 
 	/* basic machine hardware */
-	MDRV_CPU_ADD(Z80, 5000000/1)	/* 2.50 MHz */
-	MDRV_CPU_FLAGS(CPU_16BIT_PORT)
-	MDRV_CPU_PROGRAM_MAP(readmem_hyhoo,writemem_hyhoo)
-	MDRV_CPU_IO_MAP(readport_hyhoo,writeport_hyhoo)
-	MDRV_CPU_VBLANK_INT(nb1413m3_interrupt,128)
+	MDRV_CPU_ADD(Z80, 5000000/1)	/* 5.00 MHz ?? */
+	MDRV_CPU_PROGRAM_MAP(readmem_hyhoo, writemem_hyhoo)
+	MDRV_CPU_IO_MAP(readport_hyhoo, writeport_hyhoo)
+	MDRV_CPU_VBLANK_INT(nb1413m3_interrupt, 1)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
@@ -335,7 +292,7 @@ static MACHINE_DRIVER_START( hyhoo )
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_PIXEL_ASPECT_RATIO_1_2 | VIDEO_NEEDS_6BITS_PER_GUN)
 	MDRV_SCREEN_SIZE(512, 256)
-	MDRV_VISIBLE_AREA(0, 512-1, 15, 239-1)
+	MDRV_VISIBLE_AREA(0, 512-1, 16, 240-1)
 	MDRV_PALETTE_LENGTH(65536)
 	MDRV_COLORTABLE_LENGTH(65536)
 
@@ -351,10 +308,10 @@ MACHINE_DRIVER_END
 
 ROM_START( hyhoo )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 ) /* program */
-	ROM_LOAD( "hyhoo.1",  0x00000, 0x08000, CRC(c2852861) SHA1(ad23d8f5b196f15f863862010c8fb0dc4c072172) )
+	ROM_LOAD( "hyhoo.1",     0x00000, 0x08000, CRC(c2852861) SHA1(ad23d8f5b196f15f863862010c8fb0dc4c072172) )
 
 	ROM_REGION( 0x10000, REGION_SOUND1, 0 ) /* voice */
-	ROM_LOAD( "hyhoo.2",  0x00000, 0x10000, CRC(1fffcc84) SHA1(b95b5f143f5314c7ef09a60051b6ad5b5779de4c) )
+	ROM_LOAD( "hyhoo.2",     0x00000, 0x10000, CRC(1fffcc84) SHA1(b95b5f143f5314c7ef09a60051b6ad5b5779de4c) )
 
 	ROM_REGION( 0x380000, REGION_GFX1, 0 ) /* gfx */
 	ROM_LOAD( "hy1506-1.1i", 0x000000, 0x80000, CRC(42c9fa34) SHA1(dec70c7b52cdd08f0719436ab4ad143253fb9f55) )
@@ -366,11 +323,11 @@ ROM_END
 
 ROM_START( hyhoo2 )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 ) /* program */
-	ROM_LOAD( "hyhoo2.2",  0x00000, 0x08000, CRC(d8733cdc) SHA1(e683e3a799ed06fb5d4149e1ba76ebd6828b6369) )
-	ROM_LOAD( "hyhoo2.1",  0x08000, 0x08000, CRC(4a1d9493) SHA1(ee9288e9cb1f681216a98fb31539cb75b4548935) )
+	ROM_LOAD( "hyhoo2.2",    0x00000, 0x08000, CRC(d8733cdc) SHA1(e683e3a799ed06fb5d4149e1ba76ebd6828b6369) )
+	ROM_LOAD( "hyhoo2.1",    0x08000, 0x08000, CRC(4a1d9493) SHA1(ee9288e9cb1f681216a98fb31539cb75b4548935) )
 
 	ROM_REGION( 0x10000, REGION_SOUND1, 0 ) /* voice */
-	ROM_LOAD( "hyhoo2.3",  0x00000, 0x10000, CRC(d7e82b23) SHA1(41b9fa943ec1fc80b5f31aad62b5975485fa1742) )
+	ROM_LOAD( "hyhoo2.3",    0x00000, 0x10000, CRC(d7e82b23) SHA1(41b9fa943ec1fc80b5f31aad62b5975485fa1742) )
 
 	ROM_REGION( 0x380000, REGION_GFX1, 0 ) /* gfx */
 	ROM_LOAD( "hy1506-1.1i", 0x000000, 0x80000, CRC(42c9fa34) SHA1(dec70c7b52cdd08f0719436ab4ad143253fb9f55) )

@@ -595,6 +595,35 @@ static ADDRESS_MAP_START( tetrist_writemem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x200002, 0x200003) AM_WRITE(taitosound_comm16_msb_w)
 ADDRESS_MAP_END
 
+static ADDRESS_MAP_START( tetrista_readmem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x07ffff) AM_READ(MRA16_ROM)
+	AM_RANGE(0x800000, 0x803fff) AM_READ(MRA16_RAM)			/* Main RAM */
+
+	AM_RANGE(0x200000, 0x201fff) AM_READ(MRA16_RAM)	/*palette*/
+
+	TC0180VCU_MEMR( 0x400000 )
+
+	AM_RANGE(0x600000, 0x600001) AM_READ(TC0220IOC_halfword_byteswap_portreg_r)	/* DSW A/B, player inputs*/
+	AM_RANGE(0x600002, 0x600003) AM_READ(TC0220IOC_halfword_byteswap_port_r /*watchdog_reset16_r*/ )
+
+	AM_RANGE(0xa00000, 0xa00001) AM_READ(MRA16_NOP)
+	AM_RANGE(0xa00002, 0xa00003) AM_READ(taitosound_comm16_msb_r)
+ADDRESS_MAP_END
+
+static ADDRESS_MAP_START( tetrista_writemem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x07ffff) AM_WRITE(MWA16_ROM)
+	AM_RANGE(0x800000, 0x803fff) AM_WRITE(MWA16_RAM)	/* Main RAM */
+
+	AM_RANGE(0x200000, 0x201fff) AM_WRITE(paletteram16_RRRRGGGGBBBBxxxx_word_w) AM_BASE(&paletteram16)
+
+	TC0180VCU_MEMW( 0x400000 )
+
+	AM_RANGE(0x600000, 0x600001) AM_WRITE(TC0220IOC_halfword_byteswap_portreg_w)
+	AM_RANGE(0x600002, 0x600003) AM_WRITE(TC0220IOC_halfword_byteswap_port_w)
+
+	AM_RANGE(0xa00000, 0xa00001) AM_WRITE(taitosound_port16_msb_w)
+	AM_RANGE(0xa00002, 0xa00003) AM_WRITE(taitosound_comm16_msb_w)
+ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( hitice_readmem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x000000, 0x07ffff) AM_READ(MRA16_ROM)
@@ -2185,7 +2214,7 @@ INPUT_PORTS_START( silentd )	/* World Version */
 	PORT_START_TAG("IN7")
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN3 ) PORT_IMPULSE(2)
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN3 ) PORT_IMPULSE(2) PORT_NAME ("Coin 3 2nd input")/*not sure if this is legal under MAME*/
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN4 ) PORT_IMPULSE(2) 
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN4 ) PORT_IMPULSE(2)
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_COIN4 ) PORT_IMPULSE(2) PORT_NAME ("Coin 4 2nd input")/*not sure if this is legal under MAME*/
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
@@ -2778,6 +2807,34 @@ static MACHINE_DRIVER_START( tetrist )
 	MDRV_SOUND_ADD(YM2610, ym2610_interface_rsaga2)
 MACHINE_DRIVER_END
 
+static MACHINE_DRIVER_START( tetrista )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68000, 12000000)	/* 12 MHz */
+	MDRV_CPU_PROGRAM_MAP(tetrista_readmem,tetrista_writemem)
+	MDRV_CPU_VBLANK_INT(masterw_interrupt,1)
+
+	MDRV_CPU_ADD(Z80, 4000000)	/* 4 MHz */
+	MDRV_CPU_PROGRAM_MAP(masterw_sound_readmem,masterw_sound_writemem)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(10)
+
+	/* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(64*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 40*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(4096)
+
+	MDRV_VIDEO_START(taitob_color_order2)
+	MDRV_VIDEO_EOF(taitob)
+	MDRV_VIDEO_UPDATE(taitob)
+
+	/* sound hardware */
+	MDRV_SOUND_ADD(YM2203, ym2203_interface)
+MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( hitice )
 
@@ -3395,6 +3452,30 @@ ROM_START( tetrist )
 	/* empty */
 ROM_END
 
+ROM_START( tetrista )
+	ROM_REGION( 0x80000, REGION_CPU1, 0 )     /* 512k for 68000 code */
+	ROM_LOAD16_BYTE( "c35-04.bin", 0x000000, 0x020000, CRC(fa6e42ff) SHA1(1c586243aaf57b46338f22ae0fcdba2897ccb98a) )
+	ROM_LOAD16_BYTE( "c35-03.bin", 0x000001, 0x020000, CRC(aebd8539) SHA1(5230c0513581513ba971da55c04da8ba451a16e2) )
+	ROM_LOAD16_BYTE( "c35-02.bin", 0x040000, 0x020000, CRC(128e9927) SHA1(227b4a43074b66c9ba6f4497eb329fbcc5e3f52b) ) // ==c12_05
+	ROM_LOAD16_BYTE( "c35-01.bin", 0x040001, 0x020000, CRC(5da7a319) SHA1(0c903b3274f6eafe24c8b5ef476dc5e8e3131b20) ) // ==c12_04
+
+	ROM_REGION( 0x1c000, REGION_CPU2, 0 )     /* 64k for Z80 code */
+	ROM_LOAD( "c35-05.bin", 0x00000, 0x4000, CRC(785c63fb) SHA1(13db76d8ce52ff21bfda0866c9c6b52147c6fc9d) )
+	ROM_CONTINUE(           0x10000, 0xc000 ) /* banked stuff */
+
+	ROM_REGION( 0x100000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_REGION( 0x100000, REGION_GFX2, ROMREGION_DISPOSE )
+	/* these roms (present on the original board) are actually from from master of weapon
+	 b72-01.rom              mow-m01.rom             IDENTICAL
+	 b72-02.rom              mow-m02.rom             99.999809% (maybe one of them is bad?)
+	  the game doesn't use any tiles from here but the roms must be present on the board to avoid
+	  tile 0 being solid and obscuring the bitmap (however if we load them in the correct region
+	  unwanted tiles from here are shown after gameover which is wrong)
+	 */
+	ROM_LOAD( "b72-02.rom", 0x000000, 0x080000, CRC(843444eb) SHA1(2b466045f882996c80e0090009ee957e11d32825) )
+	ROM_LOAD( "b72-01.rom", 0x080000, 0x080000, CRC(a24ac26e) SHA1(895715a2bb0cb15334cba2283bd228b4fc08cd0c) )
+ROM_END
+
 ROM_START( hitice )
 	ROM_REGION( 0x80000, REGION_CPU1, 0 )     /* 512k for 68000 code */
 	ROM_LOAD16_BYTE( "c59-10", 0x00000, 0x20000, CRC(e4ffad15) SHA1(87da85e1489fe57bd012177a70434152e5475009) )
@@ -3771,7 +3852,8 @@ GAME( 1989, rambo3a,  rambo3,  rambo3a,  rambo3a,  0, ROT0,   "Taito America Cor
 GAME( 1989, crimec,   0,       crimec,   crimec,   0, ROT0,   "Taito Corporation Japan", "Crime City (World)" )
 GAME( 1989, crimecu,  crimec,  crimec,   crimecu,  0, ROT0,   "Taito America Corporation", "Crime City (US)" )
 GAME( 1989, crimecj,  crimec,  crimec,   crimecj,  0, ROT0,   "Taito Corporation", "Crime City (Japan)" )
-GAME( 1989, tetrist,  tetris,  tetrist,  tetrist,  0, ROT0,   "Sega", "Tetris (Japan, B-System)" )
+GAME( 1989, tetrist,  tetris,  tetrist,  tetrist,  0, ROT0,   "Sega", "Tetris (Japan, B-System, YM2610)" )
+GAME( 1989, tetrista, tetris,  tetrista, tetrist,  0, ROT0,   "Sega", "Tetris (Japan, B-System, YM2203)" )
 GAME( 1989, viofight, 0,       viofight, viofight, 0, ROT0,   "Taito Corporation Japan", "Violence Fight (World)" )
 GAME( 1989, viofighu, viofight,viofight, viofight, 0, ROT0,   "Taito America Corporation", "Violence Fight (US)" )
 GAME( 1990, ashura,   0,       ashura,   ashura,   0, ROT270, "Taito Corporation", "Ashura Blaster (Japan)" )

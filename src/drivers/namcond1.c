@@ -1,6 +1,7 @@
 /*************************************************************
 
     Namco ND-1 Driver - Mark McDougall
+                        R. Belmont
 
         With contributions from:
             James Jenkins
@@ -10,17 +11,65 @@
         Namco Classics Vol #1
         Namco Classics Vol #2
 
-    T.B.D.
-        Sound
+PCB Layout
+----------
+
+8655960101 (8655970101)
+|----------------------------------------|
+|    LA4705        NC1_MAIN0B.14D  68000 |
+|   4558  LC78815  NC1_MAIN1B.13D        |
+|J  POT1                                 |
+|                      AT28C16           |
+|A                                       |
+|                                        |
+|M                                       |
+|                    NC1_CG0.10C    *    |
+|M       M9524LT                         |
+|               POT2                     |
+|A                                       |
+|                    YGV608-F            |
+|                                        |
+|                                        |
+|        NC1_VOICE.7B    49.152MHz       |
+|N                  25.326MHz            |
+|A                                       |
+|M       C352                            |
+|C                 MACH210         C416  |
+|O                                       |
+|4                                       |
+|8       H8/3002                 62256   |
+|                  NC1_SUB.1C    62256   |
+|----------------------------------------|
+Notes:
+      68000 clock  : 12.288MHz (49.152 / 2)
+      H8/3002 clock: 16.384MHz (49.152 / 3)
+      VSync        : 60Hz
+
+      POT1    : Master volume
+      POT2    : Brightness adjustment (video level)
+      M9524LT : ? possibly some sort of RGB video output chip
+      AT28C16 : 2K x8 EEPROM
+      YGV608-F: Yamaha YVG608-F video controller
+      C352    : Namco custom QFP100
+      C416    : Namco custom QFP176
+      H8/3002 : Hitachi H8/3002 HD6413002F16 QFP100 microcontroller (H8/3002 has no internal ROM capability)
+      MACH210 : PLCC44 CPLD, Namco KEYCUS, stamped 'KC001'
+      62256   : 32K x8 SOJ28 SRAM 
+      *       : Unpopulated position for SOP44 Mask ROM 'CG1'
+
+      NC1_MAIN0B.14D: 512K x16 EPROM type 27C240
+      NC1_MAIN1B.13D: 512K x16 EPROM type 27C240
+      NC1_SUB.1C    : 512K x16 EPROM type 27C240
+      NC1_CG0.10C   : 16MBit SOP44 Mask ROM
+      NC1_VOICE.7B  : 16MBit SOP44 Mask ROM
 
  *************************************************************/
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-#include "cpu/m6809/m6809.h"
 #include "vidhrdw/ygv608.h"
+#include "cpu/h83002/h83002.h"
 #include "namcond1.h"
-
 
 /*************************************************************/
 
@@ -47,42 +96,35 @@ ADDRESS_MAP_END
 
 INPUT_PORTS_START( namcond1 )
 	PORT_START      /* player 1 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START1 )
-
-	PORT_START      /* player 2 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_PLAYER(2)
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_PLAYER(2)
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_PLAYER(2)
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_PLAYER(2)
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(2)
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(2)
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT )
+	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT )
+	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN )
+	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_JOYSTICK_UP )
+	PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_BUTTON2 )
+	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_PLAYER(2)
+	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_PLAYER(2)
+	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_PLAYER(2)
+	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_PLAYER(2)
+	PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(2)
+	PORT_BIT( 0x2000, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(2)
+	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_START2 )
 
 	PORT_START  	/* dipswitches */
-	PORT_DIPNAME( 0x01, 0x00, "Freeze" )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x01, DEF_STR( On ) )
-	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Test ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x02, DEF_STR( On ) )
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_SERVICE ) PORT_NAME(DEF_STR( Test )) PORT_CODE(KEYCODE_F2) PORT_TOGGLE
-	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_SERVICE1 ) PORT_IMPULSE(1)
-	PORT_BIT( 0xE8, IP_ACTIVE_HIGH, IPT_UNUSED )
-
-	PORT_START    /* coin mech inputs - a hack */
-	PORT_BIT( 0xf0, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_COIN4 )
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_COIN2 )
-	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_COIN3 )
-	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 )
+	PORT_DIPNAME( 0x0100, 0x0100, "Freeze" )
+	PORT_DIPSETTING(    0x0100, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0200, 0x0200, DEF_STR( Test ) )
+	PORT_DIPSETTING(    0x0200, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x0000, DEF_STR( On ) )
+	PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x2000, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_SERVICE ) PORT_NAME(DEF_STR( Test )) PORT_CODE(KEYCODE_F2) PORT_TOGGLE
+	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_SERVICE1 )
+	PORT_BIT( 0x00ff, IP_ACTIVE_LOW, IPT_UNUSED )
 INPUT_PORTS_END
 
 
@@ -167,6 +209,66 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 	{ -1 }
 };
 
+static WRITE16_HANDLER( sharedram_sub_w )
+{
+	COMBINE_DATA(&namcond1_shared_ram[offset]);
+}
+
+static READ16_HANDLER( sharedram_sub_r )
+{
+	return namcond1_shared_ram[offset];
+}
+
+static int p8;
+
+static READ8_HANDLER( mcu_p7_read )
+{
+	return 0xff;
+}
+
+static READ8_HANDLER( mcu_pa_read )
+{
+	return 0xff;
+}
+
+static WRITE8_HANDLER( mcu_pa_write )
+{
+	p8 = data;
+}
+
+/* H8/3002 MCU stuff */
+static ADDRESS_MAP_START( nd1h8rwmap, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x07ffff) AM_READ(MRA16_ROM)
+	AM_RANGE(0x200000, 0x20ffff) AM_READWRITE( sharedram_sub_r, sharedram_sub_w )
+	AM_RANGE(0xa00000, 0xa07fff) AM_READWRITE( c352_0_r, c352_0_w )
+	AM_RANGE(0xc00000, 0xc00001) AM_READ( input_port_1_word_r )
+	AM_RANGE(0xc00002, 0xc00003) AM_READ( input_port_0_word_r )
+	AM_RANGE(0xc00010, 0xc00011) AM_NOP
+	AM_RANGE(0xc00030, 0xc00031) AM_NOP
+	AM_RANGE(0xc00040, 0xc00041) AM_NOP
+ADDRESS_MAP_END
+
+static ADDRESS_MAP_START( nd1h8iomap, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(H8_PORT7, H8_PORT7) AM_READ( mcu_p7_read )
+	AM_RANGE(H8_PORTA, H8_PORTA) AM_READWRITE( mcu_pa_read, mcu_pa_write )
+	AM_RANGE(H8_ADC_0_L, H8_ADC_3_H) AM_NOP // MCU reads these, but the games have no analog controls
+ADDRESS_MAP_END
+
+static struct C352interface c352_interface =
+{
+	YM3012_VOL(50, MIXER_PAN_LEFT, 50, MIXER_PAN_RIGHT),
+	YM3012_VOL(50, MIXER_PAN_LEFT, 50, MIXER_PAN_RIGHT),
+	REGION_SOUND1,
+};
+
+static INTERRUPT_GEN( mcu_interrupt )
+{
+    if( namcond1_h8_irq5_enabled )
+    {
+    	cpunum_set_input_line(1, H8_IRQ5, PULSE_LINE);
+    }
+}
+
 /******************************************
   ND-1 Master clock = 49.152MHz
   - 680000  = 12288000 (CLK/4)
@@ -182,6 +284,11 @@ static MACHINE_DRIVER_START( namcond1 )
 	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
 	MDRV_CPU_VBLANK_INT(irq1_line_hold, 1)
 	MDRV_CPU_PERIODIC_INT(ygv608_timed_interrupt, 1000)
+
+	MDRV_CPU_ADD(H83002, 16384000 )
+	MDRV_CPU_PROGRAM_MAP( nd1h8rwmap, 0 )
+	MDRV_CPU_IO_MAP( nd1h8iomap, 0 )
+	MDRV_CPU_VBLANK_INT( mcu_interrupt, 1 );
 
 	MDRV_FRAMES_PER_SECOND(60.0)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
@@ -200,6 +307,10 @@ static MACHINE_DRIVER_START( namcond1 )
 	MDRV_VIDEO_START(ygv608)
 	MDRV_VIDEO_UPDATE(ygv608)
 	MDRV_VIDEO_STOP(ygv608)
+
+	/* sound hardware */
+	MDRV_SOUND_ATTRIBUTES( SOUND_SUPPORTS_STEREO )
+	MDRV_SOUND_ADD(C352, c352_interface)
 MACHINE_DRIVER_END
 
 
@@ -271,7 +382,7 @@ ROM_START( ncv2j )
 	ROM_LOAD16_WORD( "ncs1mn1j.13e", 0x80000, 0x80000, CRC(af4ba4f6) SHA1(ff5adfdd462cfd3f17fbe2401dfc88ff8c71b6f8) )
 
 	ROM_REGION( 0x80000,REGION_CPU2, 0 )		/* sub CPU */
-	ROM_LOAD( "ncs1sub.1d",          0x00000, 0x80000, CRC(365cadbf) SHA1(7263220e1630239e3e88b828c00389d02628bd7d) )
+	ROM_LOAD("ncs1sub.1d",          0x00000, 0x80000, CRC(365cadbf) SHA1(7263220e1630239e3e88b828c00389d02628bd7d) )
 
 	ROM_REGION( 0x400000,REGION_GFX1, ROMREGION_DISPOSE )	/* 4MB character generator */
 	ROM_LOAD( "ncs1cg0.10e",         0x000000, 0x200000, CRC(fdd24dbe) SHA1(4dceaae3d853075f58a7408be879afc91d80292e) )
@@ -281,36 +392,8 @@ ROM_START( ncv2j )
     ROM_LOAD( "ncs1voic.7c",     0x000000, 0x200000, CRC(ed05fd88) SHA1(ad88632c89a9946708fc6b4c9247e1bae9b2944b) )
 ROM_END
 
-#if 0
-
-static void namcond1_patch( int *addr )
-{
-    unsigned char *ROM = memory_region(REGION_CPU1);
-    int             i;
-
-    for( i=0; addr[i]; i++ )
-      // insert a NOP instruction
-      WRITE_WORD( &ROM[addr[i]], 0x4e71 );
-}
-
-/*
- *  These are the patch locations to skip coldboot check
- *  - they were required before the MCU simulation was
- *    sufficiently advanced.
- *  - please do not delete these comments *just in case*!
- *
- *  ncv1    0x15038
- *  ncv1j   0x151c0
- *  ncv1j2  0x152e4
- *  ncv2    0x17974
- *  ncv2j   0x17afc
- */
-
-#endif
-
-
-GAMEX( 1995, ncv1,      0, namcond1, namcond1, 0, ROT90, "Namco", "Namco Classics Collection Vol.1", GAME_NO_SOUND | GAME_IMPERFECT_GRAPHICS )
-GAMEX( 1995, ncv1j,  ncv1, namcond1, namcond1, 0, ROT90, "Namco", "Namco Classics Collection Vol.1 (Japan set 1)", GAME_NO_SOUND | GAME_IMPERFECT_GRAPHICS )
-GAMEX( 1995, ncv1j2, ncv1, namcond1, namcond1, 0, ROT90, "Namco", "Namco Classics Collection Vol.1 (Japan set 2)", GAME_NO_SOUND | GAME_IMPERFECT_GRAPHICS )
-GAMEX( 1996, ncv2,      0, namcond1, namcond1, 0, ROT90, "Namco", "Namco Classics Collection Vol.2", GAME_NOT_WORKING | GAME_NO_SOUND | GAME_IMPERFECT_GRAPHICS )
-GAMEX( 1996, ncv2j,  ncv2, namcond1, namcond1, 0, ROT90, "Namco", "Namco Classics Collection Vol.2 (Japan)", GAME_NOT_WORKING | GAME_NO_SOUND | GAME_IMPERFECT_GRAPHICS )
+GAMEX( 1995, ncv1,      0, namcond1, namcond1, 0, ROT90, "Namco", "Namco Classics Collection Vol.1", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
+GAMEX( 1995, ncv1j,  ncv1, namcond1, namcond1, 0, ROT90, "Namco", "Namco Classics Collection Vol.1 (Japan set 1)", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
+GAMEX( 1995, ncv1j2, ncv1, namcond1, namcond1, 0, ROT90, "Namco", "Namco Classics Collection Vol.1 (Japan set 2)", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
+GAMEX( 1996, ncv2,      0, namcond1, namcond1, 0, ROT90, "Namco", "Namco Classics Collection Vol.2", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
+GAMEX( 1996, ncv2j,  ncv2, namcond1, namcond1, 0, ROT90, "Namco", "Namco Classics Collection Vol.2 (Japan)", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )

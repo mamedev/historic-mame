@@ -2,15 +2,11 @@
 
 (c) Kaneko 1995
 
-Very preliminary WIP Driver by Sebastien Volpe, based on "this does nothing" by Haze ;)
-
--> I can provide disassembly of main/sub 68k with my notes, just ask!
+WIP Driver by Sebastien Volpe, based on "this does nothing" by Haze ;)
 
  started: May 12 2004
 
 STILL TO DO:
-  - gfx decode (probably 16x16 tiles)
-
   - video registers meaning:
     have a look at subcpu routines $11,$12 (different registers init according flipscreen dsw)
 
@@ -18,9 +14,10 @@ STILL TO DO:
     subcpu routines $05,$06,$07 + elsewhere  (search for $10600c in dasm)
     status/data register is probably $10600c + 2/6 (hooked up but commented out for now)
 
-  - player controls not understood - they end up @ $2000b1.b,$2000b5.b, see $21e2a
+  - player controls not really understood - they end up @ $2000b1.b,$2000b5.b, see $21e2a
 
   - sub68k IT not hooked up (except the one triggered by main68k)
+    NOTE: triggering any IT at VBL makes self-test HANG!
 
 DONE:
   - almost figured out Main<->Sub 68k communication (read below)
@@ -41,7 +38,7 @@ DONE:
  - $400004(W) : subcpu result, read by maincpu, when required
  - $400000(W) : subcpu writes cmd.w, which triggers IT3 on main68k (*)
 
-(*) this happens @ $5b4(cmd 3),$5f2(cmd 1) (diagnostic routine), IT4(7cmd ), and inside subcpu routines $18,$19
+(*) this happens @ $5b4(cmd 3),$5f2(cmd 1) (diagnostic routine), IT4(cmd 7), and inside subcpu routines $18,$19
 
 ********
 
@@ -204,6 +201,7 @@ there are 9 PALS on the pcb (not dumped)
  */
 
 #include "driver.h"
+#include "vidhrdw/generic.h"
 
 extern data32_t* skns_spc_regs;
 
@@ -213,31 +211,45 @@ extern data32_t* skns_spc_regs;
 							MCU Code Simulation
 				(follows the implementation of kaneko16.c)
 
+Provided we found a working PCB, trojan code will help:
+- to get this game working (but there are many #4 sub-commands!)
+- to have more patterns and eventualy defeat the MCU 'encryption'
+
+This will benefit galpani3 and other kaneko16 games with TOYBOX MCU.
+
 ***************************************************************************/
 static data16_t *mcu_ram, jchan_mcu_com[4];
 
 void jchan_mcu_run(void)
 {
-	data16_t mcu_command = mcu_ram[0x0010/2];
-	data16_t mcu_offset  = mcu_ram[0x0012/2] / 2;
-	data16_t mcu_data    = mcu_ram[0x0014/2];
+	data16_t mcu_command = mcu_ram[0x0010/2];		/* command nb */
+	data16_t mcu_offset  = mcu_ram[0x0012/2] / 2;	/* offset in shared RAM where MCU will write */
+	data16_t mcu_subcmd  = mcu_ram[0x0014/2];		/* sub-command parameter, happens only for command #4 */
 
-	logerror("CPU #0 (PC=%06X) : MCU executed command: %04X %04X %04X\n",activecpu_get_pc(),mcu_command,mcu_offset*2,mcu_data);
+	logerror("CPU #0 (PC=%06X) : MCU executed command: %04X %04X %04X ",activecpu_get_pc(),mcu_command,mcu_offset*2,mcu_subcmd);
+
+/*
+	the only MCU commands found in program code are:
+	- 0x04: protection: provide data (see below) and code
+	- 0x03: read DSW
+	- 0x02: load game settings \ stored in ATMEL AT93C46 chip,
+	- 0x42: save game settings / 128 bytes serial EEPROM
+*/
 
 	switch (mcu_command >> 8)
 	{
-		case 0x04: // Protection part 1: ('Check G')
+		case 0x04: /* Protection: during self-test for mcu_subcmd = 0x3d, 0x3e, 0x3f */
 		{
-			switch(mcu_data)
+			switch(mcu_subcmd)
 			{
-				case 0x3d: /* $f34-$f66 */
+				case 0x3d: /* $f3c ($f34-$f66) */
 					/* MCU writes the string "USMM0713-TB1994 " to shared ram */
 					mcu_ram[mcu_offset + 0] = 0x5553; mcu_ram[mcu_offset + 1] = 0x4D4D;
 					mcu_ram[mcu_offset + 2] = 0x3037; mcu_ram[mcu_offset + 3] = 0x3133;
 					mcu_ram[mcu_offset + 4] = 0x2D54; mcu_ram[mcu_offset + 5] = 0x4231;
 					mcu_ram[mcu_offset + 6] = 0x3939; mcu_ram[mcu_offset + 7] = 0x3420;
 					break;
-				case 0x3e: /* $f6a-$fc6 */
+				case 0x3e: /* $f72 ($f6a-$fc6) */
 					/* MCU writes the string "1995/05/24 The kung-Fu Master Jackie Chan   " to shared ram */
 					mcu_ram[mcu_offset +  0] = 0x3139; mcu_ram[mcu_offset +  1] = 0x3935;
 					mcu_ram[mcu_offset +  2] = 0x2F30; mcu_ram[mcu_offset +  3] = 0x352F;
@@ -251,7 +263,7 @@ void jchan_mcu_run(void)
 					mcu_ram[mcu_offset + 18] = 0x2043; mcu_ram[mcu_offset + 19] = 0x6861;
 					mcu_ram[mcu_offset + 20] = 0x6E20; mcu_ram[mcu_offset + 21] = 0x2020;
 					break;
-				case 0x3f: /* $fca-$101a */
+				case 0x3f: /* $fd2 ($fca-$101a) */
 					/* MCU writes the string "(C)1995 KANEKO // TEAM JACKIE CHAN  " to shared ram */
 					mcu_ram[mcu_offset +  0] = 0x2843; mcu_ram[mcu_offset +  1] = 0x2931;
 					mcu_ram[mcu_offset +  2] = 0x3939; mcu_ram[mcu_offset +  3] = 0x3520;
@@ -263,27 +275,37 @@ void jchan_mcu_run(void)
 					mcu_ram[mcu_offset + 14] = 0x4520; mcu_ram[mcu_offset + 15] = 0x4348;
 					mcu_ram[mcu_offset + 16] = 0x414E; mcu_ram[mcu_offset + 17] = 0x2020;
 					break;
-				default:
-					logerror("UNKNOWN PARAMETER %02X TO COMMAND 4\n",mcu_data);
+
+				case 0x1b: /* $12dbe, $12dd4 */
+				case 0x2d: /* $209f4 */
+				default:   /* $1b3e0, $1ca40, $20a12, $20b0e, $2140a, $21436, $214cc, $21552 (dynamic) */
+					mcu_ram[mcu_offset] = 0x4e75; // faked with an RTS for now
+					logerror("- UNKNOWN PARAMETER %02X", mcu_subcmd);
 			}
+			logerror("\n");
 		}
 		break;
 
-		case 0x03: // Protection part 2: ('Check G') /* $101e-$108c */
+		case 0x03: /* MCU writes Coins status ($101e-$108c) */
 		{
-			/* MCU writes Coins status */
 			mcu_ram[mcu_offset] = readinputport(3);
+			logerror("(read DSW)\n");
 		}
 		break;
 
-		case 0x02: // Protection part 3: ('Check G') /* $1090-$10dc */
+		case 0x02: /* load game settings from 93C46 EEPROM ($1090-$10dc) */
 		{
-			/* NOTE: code @ $5196 & $50d4 does exactly what is checked after MCU command
-			         so that's what we'll mimic here... probably the initial NVRAM settings */
-			int i;
+/*
+Current feeling of devs is that this EEPROM might also play a role in the protection scheme,
+but I (SV) feel that it is very unlikely because of the following, which has been verified:
+if the checksum test fails at most 3 times, then the initial settings, stored in main68k ROM,
+are loaded in RAM then saved with cmd 0x42 (see code @ $5196 & $50d4)
+*/
+#if 0
+			int	i;
 
 			/* MCU writes 128 bytes to shared ram: last byte is the byte-sum */
-			/* first 32 bytes: 0x8BE08E71.L, then the string "95/05/24 Jackie ChanVer 1.20"; */
+			/* first 32 bytes (header): 0x8BE08E71.L, then the string "95/05/24 Jackie ChanVer 1.20"; */
 			mcu_ram[mcu_offset +  0] = 0x8BE0; mcu_ram[mcu_offset +  1] = 0x8E71;
 			mcu_ram[mcu_offset +  2] = 0x3935; mcu_ram[mcu_offset +  3] = 0x2F30;
 			mcu_ram[mcu_offset +  4] = 0x352F; mcu_ram[mcu_offset +  5] = 0x3234;
@@ -292,7 +314,7 @@ void jchan_mcu_run(void)
 			mcu_ram[mcu_offset + 10] = 0x4368; mcu_ram[mcu_offset + 11] = 0x616E;
 			mcu_ram[mcu_offset + 12] = 0x5665; mcu_ram[mcu_offset + 13] = 0x7220;
 			mcu_ram[mcu_offset + 14] = 0x312E; mcu_ram[mcu_offset + 15] = 0x3230;
-			/* next 12 bytes */
+			/* next 12 bytes - initial NVRAM settings */
 			mcu_ram[mcu_offset + 16] = 0x0001; mcu_ram[mcu_offset + 17] = 0x0101;
 			mcu_ram[mcu_offset + 18] = 0x0100; mcu_ram[mcu_offset + 19] = 0x0310;
 			mcu_ram[mcu_offset + 20] = 0x1028; mcu_ram[mcu_offset + 21] = 0x0201;
@@ -301,11 +323,31 @@ void jchan_mcu_run(void)
 				mcu_ram[mcu_offset + i] = 0;
 			/* and sum is $62.b */
 			mcu_ram[mcu_offset + 63] = 0x0062;
+#endif
+			mame_file *f;
+			if ((f = mame_fopen(Machine->gamedrv->name,0,FILETYPE_NVRAM,0)) != 0)
+			{
+				mame_fread(f,&mcu_ram[mcu_offset], 128);
+				mame_fclose(f);
+			}
+			logerror("(load NVRAM settings)\n");
+		}
+		break;
+
+		case 0x42: /* save game settings to 93C46 EEPROM ($50d4) */
+		{
+			mame_file *f;
+			if ((f = mame_fopen(Machine->gamedrv->name,0,FILETYPE_NVRAM,1)) != 0)
+			{
+				mame_fwrite(f,&mcu_ram[mcu_offset], 128);
+				mame_fclose(f);
+			}
+			logerror("(save NVRAM settings)\n");
 		}
 		break;
 
 		default:
-			logerror("UNKNOWN COMMAND\n");
+			logerror("- UNKNOWN COMMAND!!!\n");
 	}
 }
 
@@ -327,7 +369,7 @@ JCHAN_MCU_COM_W(1)
 JCHAN_MCU_COM_W(2)
 JCHAN_MCU_COM_W(3)
 
-READ16_HANDLER( mcu_status_r )
+READ16_HANDLER( jchan_mcu_status_r )
 {
 	logerror("cpu #%d (PC=%06X): read mcu status\n", cpu_getactivecpu(), activecpu_get_previouspc());
 	return 0;
@@ -349,7 +391,6 @@ INTERRUPT_GEN( jchan_vblank )
 		cpunum_set_input_line(0, 2, HOLD_LINE);
 }
 
-#include "vidhrdw/generic.h"
 
 
 VIDEO_START(jchan)
@@ -374,14 +415,26 @@ VIDEO_UPDATE(jchan)
 
 /***************************************************************************
 
- controls - working like this but not understood :/
+ controls - working like this but not really understood :/
 
 ***************************************************************************/
+/*
+	controls handling routine is $21e2a, part of IT 1
+	player 1/2 controls are read from $f00000/$f00002 resp.
+	$f00006 is read and impacts controls 'decoding' 
+	$f00000 is the only location also written
+*/
 static data16_t *jchan_ctrl;
 
 WRITE16_HANDLER( jchan_ctrl_w )
 {
+// Player 1 buttons C/D for are ON
+// Coin 1 affects Button C and sometimes(!) makes Player 2 buttons C/D both ON definitively
+// Coin 2 affects Button D and sometimes(!) makes Player 2 buttons C/D both ON definitively
 	jchan_ctrl[6/2] = data;
+
+// both players C/D buttons don't work
+	jchan_ctrl[6/2] = -1;
 }
 
 READ16_HANDLER ( jchan_ctrl_r )
@@ -390,7 +443,7 @@ READ16_HANDLER ( jchan_ctrl_r )
 	{
 		case 0/2: return readinputport(0); // Player 1 controls
 		case 2/2: return readinputport(1); // Player 2 controls
-		default: logerror("jchan_ctrl_r"); break;
+		default: logerror("jchan_ctrl_r unknown!"); break;
 	}
 	return jchan_ctrl[offset];
 }
@@ -455,10 +508,9 @@ static data16_t *mainsub_shared_ram;
 
 WRITE16_HANDLER( main2sub_cmd_w )
 {
-	main2sub_cmd = data;
+	COMBINE_DATA(&main2sub_cmd);
 	logerror("cpu #%d (PC=%06X): write cmd %04x to subcpu\n", cpu_getactivecpu(), activecpu_get_previouspc(), main2sub_cmd);
 	cpunum_set_input_line(1, 4, HOLD_LINE);
-
 }
 READ16_HANDLER ( main2sub_status_r )
 {
@@ -466,7 +518,7 @@ READ16_HANDLER ( main2sub_status_r )
 }
 WRITE16_HANDLER( main2sub_status_w )
 {
-	main2sub_status = data;
+	COMBINE_DATA(&main2sub_status);
 	logerror("cpu #%d (PC=%06X): write status (%04x)\n", cpu_getactivecpu(), activecpu_get_previouspc(), main2sub_status);
 }
 READ16_HANDLER ( main2sub_result_r )
@@ -474,19 +526,24 @@ READ16_HANDLER ( main2sub_result_r )
 	logerror("cpu #%d (PC=%06X): read subcpu result (%04x)\n", cpu_getactivecpu(), activecpu_get_previouspc(), main2sub_result);
 	return main2sub_result;
 }
+WRITE16_HANDLER( main2sub_unknown )
+{
+#define mainsub_unknown (0x400100+offset/2)
+	COMBINE_DATA(&mainsub_shared_ram[offset]);
+	logerror("cpu #%d (PC=%06X): write unknown (%06X):%04x to subcpu\n", cpu_getactivecpu(), activecpu_get_previouspc(), mainsub_unknown, main2sub_param(offset));
+}
 
 WRITE16_HANDLER( main2sub_param_w )
 {
-	main2sub_param(offset) = data;
-	logerror("cpu #%d (PC=%06X): write param(%d):%04x to subcpu\n", cpu_getactivecpu(), activecpu_get_previouspc(), offset/2, main2sub_param(offset));
+	COMBINE_DATA(&main2sub_param(offset));
+	logerror("cpu #%d (PC=%06X): write param(%d):%04x to subcpu\n", cpu_getactivecpu(), activecpu_get_previouspc(), offset, main2sub_param(offset));
 }
 
 WRITE16_HANDLER( sub2main_cmd_w )
 {
-	sub2main_cmd = data;
+	COMBINE_DATA(&sub2main_cmd);
 	logerror("cpu #%d (PC=%06X): write cmd %04x to maincpu\n", cpu_getactivecpu(), activecpu_get_previouspc(), sub2main_cmd);
 	cpunum_set_input_line(0, 3, HOLD_LINE);
-
 }
 READ16_HANDLER ( sub2main_cmd_r )
 {
@@ -524,24 +581,25 @@ static ADDRESS_MAP_START( jchan_main, ADDRESS_SPACE_PROGRAM, 16 )
 
 	AM_RANGE(0x300000, 0x30ffff) AM_RAM AM_BASE(&mcu_ram)	// [G] mcu ??? grid tested, cleared ($a5a-$ad8)
 	AM_RANGE(0x330000, 0x330001) AM_WRITE(jchan_mcu_com0_w)	// _[ these 2 are set to 0xFFFF
-	AM_RANGE(0x340000, 0x340001) AM_WRITE(jchan_mcu_com1_w)	//  [ to run mcu cmd ?
+	AM_RANGE(0x340000, 0x340001) AM_WRITE(jchan_mcu_com1_w)	//  [ to trigger mcu to run cmd ?
 	AM_RANGE(0x350000, 0x350001) AM_WRITE(jchan_mcu_com2_w)	// _[ these 2 are set to 0xFFFF
-	AM_RANGE(0x360000, 0x360001) AM_WRITE(jchan_mcu_com3_w)	//  [ for mcu to acquire parameters ?
-	AM_RANGE(0x370000, 0x370001) AM_READ(mcu_status_r)
+	AM_RANGE(0x360000, 0x360001) AM_WRITE(jchan_mcu_com3_w)	//  [ for mcu to return its status ?
+	AM_RANGE(0x370000, 0x370001) AM_READ(jchan_mcu_status_r)
 
 	AM_RANGE(0x400000, 0x400001) AM_READ(sub2main_cmd_r) // some subcpu cmd writes @ $400000, IT3 of main reads this location
 	AM_RANGE(0x400002, 0x400003) AM_READWRITE(main2sub_status_r, main2sub_status_w)
 	AM_RANGE(0x400004, 0x400005) AM_READ(main2sub_result_r)
 //	AM_RANGE(0x400006, 0x400007) // ???
-	AM_RANGE(0x403c02, 0x403c07) AM_WRITE(main2sub_param_w)
+	AM_RANGE(0x400100, 0x400123) AM_WRITE(main2sub_unknown)
+	AM_RANGE(0x403c02, 0x403c09) AM_WRITE(main2sub_param_w) // probably much more, see subcpu routine $7 @ $14aa
 	AM_RANGE(0x403ffe, 0x403fff) AM_WRITE(main2sub_cmd_w)
 
 	/* (0x500000, 0x503fff) = spriteram as a hole ? makes sense: 1024 sprites, each sprite being 16 bytes long */
 //	AM_RANGE(0x500000, 0x5005ff) AM_RAM //     grid tested ($924-$97c), cleared ($982-$9a4) until $503fff
 //	AM_RANGE(0x500600, 0x503fff) AM_RAM // [B] grid tested, cleared ($b68-$be6)
-	AM_RANGE(0x500000, 0x503fff) AM_RAM AM_BASE(&jchan_spriteram) AM_WRITE(jchan_suprnova_sprite32_w)
+	AM_RANGE(0x500000, 0x503fff) AM_RAM AM_WRITE(jchan_suprnova_sprite32_w) AM_BASE(&jchan_spriteram) 
 
-	AM_RANGE(0x600000, 0x60003f) AM_RAM AM_BASE(&jchan_sprregs) AM_WRITE(jchan_suprnova_sprite32regs_w)
+	AM_RANGE(0x600000, 0x60003f) AM_RAM AM_WRITE(jchan_suprnova_sprite32regs_w) AM_BASE(&jchan_sprregs) 
 
 	/* (0x700000, 0x707fff) = palette zone  - but there seems to be 'sub-zones' used differently */
 //	AM_RANGE(0x700000, 0x707fff) AM_RAM //     grid tested, cleared ($dbc-$e3a), $2000 bytes (8Kb) copied from $aae40 ($e40-$e56)
@@ -550,11 +608,11 @@ static ADDRESS_MAP_START( jchan_main, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x708000, 0x70ffff) AM_RAM AM_WRITE(paletteram16_xGGGGGRRRRRBBBBB_word_w) AM_BASE(&paletteram16) // palette for sprites?
 //	AM_RANGE(0x700000, 0x70ffff) AM_RAM AM_WRITE(paletteram16_xGGGGGRRRRRBBBBB_word_w) AM_BASE(&paletteram16) // palette for sprites?
 
-	AM_RANGE(0xf00000, 0xf00003) AM_BASE(&jchan_ctrl) AM_WRITE(jchan_ctrl_w) AM_READ(jchan_ctrl_r)
+	AM_RANGE(0xf00000, 0xf00003) AM_READWRITE(jchan_ctrl_r, jchan_ctrl_w) AM_BASE(&jchan_ctrl)
 	AM_RANGE(0xf00004, 0xf00005) AM_READ(input_port_2_word_r) // DSW2
-	AM_RANGE(0xf00006, 0xf00007) AM_RAM // Player Controls
+	AM_RANGE(0xf00006, 0xf00007) AM_RAM // ???
 
-	AM_RANGE(0xf80000, 0xf80001) AM_RAM // [F] watchdog ? always written (after each grid test, interrupt #2, plus elsewhere)
+	AM_RANGE(0xf80000, 0xf80001) AM_RAM // [F] watchdog ? always written (after each grid test, IT #2, plus elsewhere)
 ADDRESS_MAP_END
 
 
@@ -580,10 +638,10 @@ static ADDRESS_MAP_START( jchan_sub, ADDRESS_SPACE_PROGRAM, 16 )
 
 //	AM_RANGE(0x600000, 0x60000f) // video registers (tilemap)???
 
-	/* this could be the SPRB region .. maybe used ingame ? */
+/* 500000-503fff should be spriteram, since 700000-703fff is probably tilemap ram, see $11d2 */
 	AM_RANGE(0x700000, 0x703fff) AM_RAM // [C] grid tested, cleared ($1e2a), also cleared at startup ($7dc-$80a)
 //	AM_RANGE(0x700000, 0x703fff) AM_RAM AM_BASE(&jchan_spriteram) AM_WRITE(jchan_suprnova_sprite32_w)
-	AM_RANGE(0x780000, 0x780035) // video registers (sprites)???
+	AM_RANGE(0x780000, 0x78003f) // video registers (sprites)???
 //	AM_RANGE(0x780000, 0x78003f) AM_RAM AM_BASE(&jchan_sprregs) AM_WRITE(jchan_suprnova_sprite32regs_w)
 
 	AM_RANGE(0x800000, 0x800003) AM_NOP // sound related ??? see $21a44
@@ -641,19 +699,6 @@ static struct YMZ280Binterface ymz280b_intf =
 };
 #endif
 
-#if 0
-struct GfxLayout
-{
-	UINT16 width,height; /* width and height (in pixels) of chars/sprites */
-	UINT32 total; /* total numer of chars/sprites in the rom */
-	UINT16 planes; /* number of bitplanes */
-	UINT32 planeoffset[MAX_GFX_PLANES]; /* start of every bitplane (in bits) */
-	UINT32 xoffset[MAX_GFX_SIZE]; /* position of the bit corresponding to the pixel */
-	UINT32 yoffset[MAX_GFX_SIZE]; /* of the given coordinates */
-	UINT32 charincrement; /* distance between two consecutive characters/sprites (in bits) */
-};
-#endif
-
 /* gfx decode , this one seems ok */
 static struct GfxLayout charlayout =
 {
@@ -689,17 +734,6 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 	{ -1 } /* end of array */
 };
 
-#if 0
-struct GfxDecodeInfo
-{
-	int memory_region;	/* memory region where the data resides (usually 1) */
-						/* -1 marks the end of the array */
-	UINT32 start;	/* beginning of data to decode */
-	struct GfxLayout *gfxlayout;
-	UINT16 color_codes_start;	/* offset in the color lookup table where color codes start */
-	UINT16 total_color_codes;	/* total number of color codes */
-};
-#endif
 
 /* input ports */
 
@@ -708,7 +742,7 @@ INPUT_PORTS_START( jchan )
 /* TO BE VERIFIED: Player 1 & 2 - see subroutine $21e2a of main68k IT1 */
 /* TO BE VERIFIED: dips assignements according infos by BrianT at http://www.crazykong.com - seems ok */
 
-	PORT_START_TAG("IN0")	// Player Controls - $f00006.w (-> $2000b1.b)
+	PORT_START_TAG("IN0")	// Player Controls - $f00000.w (-> $2000b1.b)
 	PORT_BIT(  0x0100, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_8WAY PORT_PLAYER(1)
 	PORT_BIT(  0x0200, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_8WAY PORT_PLAYER(1)
 	PORT_BIT(  0x0400, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_8WAY PORT_PLAYER(1)
@@ -718,7 +752,7 @@ INPUT_PORTS_START( jchan )
 	PORT_BIT(  0x4000, IP_ACTIVE_LOW, IPT_BUTTON3 ) PORT_PLAYER(1)
 	PORT_BIT(  0x8000, IP_ACTIVE_LOW, IPT_BUTTON4 ) PORT_PLAYER(1)
 
-	PORT_START_TAG("IN1")	// Player Controls - $f00006.w (-> $2000b5.b)
+	PORT_START_TAG("IN1")	// Player Controls - $f00002.w (-> $2000b5.b)
 	PORT_BIT(  0x0100, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_8WAY PORT_PLAYER(2)
 	PORT_BIT(  0x0200, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_8WAY PORT_PLAYER(2)
 	PORT_BIT(  0x0400, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_8WAY PORT_PLAYER(2)
@@ -786,7 +820,6 @@ static MACHINE_DRIVER_START( jchan )
 
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
 	MDRV_SCREEN_SIZE(64*8, 64*8)
-//	MDRV_VISIBLE_AREA(0*8, 64*8-1, 0*8, 64*8-1)
 	MDRV_VISIBLE_AREA(0*8, 40*8-1, 0*8, 30*8-1)
 
 	MDRV_PALETTE_LENGTH(32768)
@@ -818,12 +851,12 @@ ROM_START( jchan )
 	ROM_LOAD( "jc-100-00.179", 0x0000000, 0x0400000, CRC(578d928c) SHA1(1cfe04f9b02c04f95a85d6fe7c4306a535ff969f) ) // SPA0 kaneko logo
 	ROM_LOAD( "jc-101-00.180", 0x0400000, 0x0400000, CRC(7f5e1aca) SHA1(66ed3deedfd55d88e7dcd017b9c2ce523ccb421a) ) // SPA1
 	ROM_LOAD( "jc-102-00.181", 0x0800000, 0x0400000, CRC(72caaa68) SHA1(f6b98aa949768a306ac9bc5f9c05a1c1a3fb6c3f) ) // SPA2
-	ROM_LOAD( "jc-103-00.182", 0x0c00000, 0x0400000, CRC(4e9e9fc9) SHA1(bf799cdee930b7f71aea4d55c3dd6a760f7478bb) ) // title logo? + char select SPA3
+	ROM_LOAD( "jc-103-00.182", 0x0c00000, 0x0400000, CRC(4e9e9fc9) SHA1(bf799cdee930b7f71aea4d55c3dd6a760f7478bb) ) // SPA3 title logo? + char select
 	ROM_LOAD( "jc-104-00.183", 0x1000000, 0x0200000, CRC(6b2a2e93) SHA1(e34010e39043b67493bcb23a04828ab7cda8ba4d) ) // SPA4
-	ROM_LOAD( "jc-105-00.184", 0x1200000, 0x0200000, CRC(73cad1f0) SHA1(5dbe4e318948e4f74bfc2d0d59455d43ba030c0d) ) // 11xxxxxxxxxxxxxxxxxxx = 0xFF  // SPA5
-	ROM_LOAD( "jc-108-00.185", 0x1400000, 0x0200000, CRC(67dd1131) SHA1(96f334378ae0267bdb3dc528635d8d03564bd859) ) // text SPA6
-	ROM_LOAD16_BYTE( "jcs0x3.164", 0x1600000, 0x040000, CRC(9a012cbc) SHA1(b3e7390220c90d55dccfb96397f0af73925e36f9) ) // female portraits
-	ROM_LOAD16_BYTE( "jcs1x3.165", 0x1600001, 0x040000, CRC(57ae7c8d) SHA1(4086f638c2aabcee84e838243f0fd15cec5c040d) ) // female portraits
+	ROM_LOAD( "jc-105-00.184", 0x1200000, 0x0200000, CRC(73cad1f0) SHA1(5dbe4e318948e4f74bfc2d0d59455d43ba030c0d) ) // SPA5 11xxxxxxxxxxxxxxxxxxx = 0xFF
+	ROM_LOAD( "jc-108-00.185", 0x1400000, 0x0200000, CRC(67dd1131) SHA1(96f334378ae0267bdb3dc528635d8d03564bd859) ) // SPA6 text
+	ROM_LOAD16_BYTE( "jcs0x3.164", 0x1600000, 0x040000, CRC(9a012cbc) SHA1(b3e7390220c90d55dccfb96397f0af73925e36f9) ) // SPA-7A female portraits
+	ROM_LOAD16_BYTE( "jcs1x3.165", 0x1600001, 0x040000, CRC(57ae7c8d) SHA1(4086f638c2aabcee84e838243f0fd15cec5c040d) ) // SPA-7B female portraits
 
 	ROM_REGION( 0x1000000, REGION_GFX2, ROMREGION_DISPOSE ) /* SPB GFX (we haven't used yet, not sure where they map, 2nd sprite layer maybe?) */
 	ROM_LOAD( "jc-106-00.171", 0x000000, 0x200000, CRC(bc65661b) SHA1(da28b8fcd7c7a0de427a54be2cf41a1d6a295164) ) // SPB0
