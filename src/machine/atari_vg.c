@@ -52,7 +52,7 @@ int atari_vg_earom_load(void)
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
 	{
 		osd_fread(f,&earom[0],0x40);
-		fclose(f);
+		osd_fclose(f);
 	}
 	return 1;
 }
@@ -64,6 +64,6 @@ void atari_vg_earom_save(void)
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{
 		osd_fwrite(f,&earom[0],0x40);
-		fclose(f);
+		osd_fclose(f);
 	}
 }

@@ -3,7 +3,7 @@
 
 
 static unsigned char speech[0x6000];	/* 24k for speech */
-int rallyx_sh_start(void);
+int pengo_sh_start(void);
 
 int bosco_sh_start(void)
 {
@@ -20,12 +20,12 @@ int bosco_sh_start(void)
 		speech[2 * i + 1] = (bits | (bits >> 4)) + 0x80;
 	}
 
-	return rallyx_sh_start();
+	return pengo_sh_start();
 }
 
 void bosco_sample_play(int offset, int length)
 {
-	if (play_sound == 0)
+	if (Machine->sample_rate == 0)
 		return;
 
 	osd_play_sample(4,speech + offset,length,4000,0xff,0);

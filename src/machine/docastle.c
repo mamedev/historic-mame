@@ -69,7 +69,7 @@ void docastle_shared1_w(int offset,int data)
 void docastle_nmitrigger(int offset,int data)
 {
 	/* we should cause a NMI interrupt on the second CPU here; however, to */
-	/* make things tick the way they are supposed to be (due to the way the */
+	/* make things tick the way they are supposed to (due to the way the */
 	/* hardware works) we trigger it in docastle_shared1_w(), when the */
 	/* first CPU has finised writing to the shared area. */
 //	cpu_cause_interrupt(1,Z80_NMI_INT);

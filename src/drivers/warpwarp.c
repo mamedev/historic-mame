@@ -55,25 +55,24 @@ int warpwarp_interrupt();
 
 static struct MemoryReadAddress readmem[] =
 {
-	{ 0x8000, 0x83FF, MRA_RAM },
 	{ 0x0000, 0x37ff, MRA_ROM },
-	{ 0x4000, 0x47FF, MRA_RAM },
-	{ 0x4800, 0x4FFF, MRA_ROM },
-        { 0xc000, 0xc007, warpwarp_input_c000_7_r },
-        { 0xc010, 0xc010, warpwarp_input_controller_r },
-        { 0xc020, 0xc027, warpwarp_input_c020_27_r },
+	{ 0x4000, 0x47ff, MRA_RAM },
+	{ 0x4800, 0x4fff, MRA_ROM },
+	{ 0x8000, 0x83ff, MRA_RAM },
+	{ 0xc000, 0xc007, warpwarp_input_c000_7_r },
+	{ 0xc010, 0xc010, warpwarp_input_controller_r },
+	{ 0xc020, 0xc027, warpwarp_input_c020_27_r },
 	{ -1 }	/* end of table */
 };
 
 static struct MemoryWriteAddress writemem[] =
 {
-	{ 0x8000, 0x83FF, MWA_RAM },
+	{ 0x0000, 0x37ff, MWA_ROM },
 	{ 0x4000, 0x43ff, videoram_w, &videoram, &videoram_size },
 	{ 0x4400, 0x47ff, colorram_w, &colorram },
+	{ 0x4800, 0x4fff, MWA_ROM },
+	{ 0x8000, 0x83ff, MWA_RAM },
 	{ 0xC000, 0xC001, MWA_RAM, &warpwarp_bulletsram },
-
-	{ 0x0000, 0x37ff, MWA_ROM },
-	{ 0x4800, 0x4FFF, MWA_ROM },
 	{ -1 }	/* end of table */
 };
 
@@ -102,11 +101,6 @@ static struct InputPort input_ports[] =
 	{ -1 }	/* end of table */
 };
 
-
-static struct TrakPort trak_ports[] =
-{
-        { -1 }
-};
 
 
 static struct KEYSet keys[] =
@@ -157,8 +151,8 @@ static struct GfxLayout spritelayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x0000, &charlayout,   0, 16 },
-	{ 1, 0x0000, &spritelayout, 0, 16 },
+	{ 0, 0x4800, &charlayout,   0, 16 },
+	{ 0, 0x4800, &spritelayout, 0, 16 },
 	{ -1 } /* end of array */
 };
 
@@ -228,14 +222,13 @@ static struct MachineDriver machine_driver =
 	sizeof(palette)/3 ,sizeof(colortable),
 	0,
 
-	VIDEO_TYPE_RASTER,
+	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY,
 	0,
 	generic_vh_start,
 	generic_vh_stop,
 	warpwarp_vh_screenrefresh,
 
 	/* sound hardware */
-	0,
 	0,
 	0,
 	0,
@@ -251,9 +244,6 @@ ROM_START( warpwarp_rom )
 	ROM_LOAD( "warp_1p.bin",  0x2000, 0x1000, 0x30ad0f77 )
 	ROM_LOAD( "warp_1t.bin",  0x3000, 0x0800, 0x3426c0b0 )
 	ROM_LOAD( "warp_s12.bin", 0x4800, 0x0800, 0xb0468bf8 )
-
-	ROM_REGION(0x1000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "warp_s12.bin", 0x0000, 0x0800, 0xb0468bf8 )
 ROM_END
 
 
@@ -303,9 +293,10 @@ struct GameDriver warpwarp_driver =
 
 	warpwarp_rom,
 	0, 0,
-        0,
+	0,
+	0,	/* sound_prom */
 
-	input_ports, 0, trak_ports, dsw, keys,
+	input_ports, 0, 0/*TBR*/,dsw, keys,
 
 	0, palette, colortable,
 	ORIENTATION_DEFAULT,

@@ -367,10 +367,10 @@ INPUT_PORTS_START( input_ports )
 	PORT_BIT ( 0x80, IP_ACTIVE_LOW, IPT_START2 )
 
 	PORT_START /* IN4 - port 0x15 - spinner */
-	PORT_ANALOG (0x3f, 0x00, IPT_DIAL, 100, 0, 0, 0 )
+	PORT_ANALOG (0x3f, 0x00, IPT_DIAL, 25, 0, 0, 0 )
 
 	PORT_START /* IN5 - port 0x16 - second spinner */
-	PORT_ANALOG (0x3f, 0x00, IPT_DIAL | IPF_COCKTAIL, 100, 0, 0, 0 )
+	PORT_ANALOG (0x3f, 0x00, IPT_DIAL | IPF_COCKTAIL, 25, 0, 0, 0 )
 INPUT_PORTS_END
 
 static struct GfxLayout fakelayout =
@@ -390,26 +390,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
         { -1 } /* end of array */
 };
 
-static unsigned char color_prom[] =
-{
-        0x00,0x00,0x00, /* BLACK */
-        0x00,0x00,0x01, /* BLUE */
-        0x00,0x01,0x00, /* GREEN */
-        0x00,0x01,0x01, /* CYAN */
-        0x01,0x00,0x00, /* RED */
-        0x01,0x00,0x01, /* MAGENTA */
-        0x01,0x01,0x00, /* YELLOW */
-        0x01,0x01,0x01, /* WHITE */
-        0x00,0x00,0x00, /* BLACK */
-        0x00,0x00,0x01, /* BLUE */
-        0x00,0x01,0x00, /* GREEN */
-        0x00,0x01,0x02, /* CYAN */
-        0x01,0x00,0x00, /* RED */
-        0x01,0x00,0x01, /* MAGENTA */
-        0x01,0x01,0x00, /* YELLOW */
-        0x01,0x01,0x01  /* WHITE */
-};
-
+static unsigned char color_prom[] = { 0 };
 
 static struct MachineDriver machine_driver =
 {
@@ -420,17 +401,17 @@ static struct MachineDriver machine_driver =
 			3000000,	/* 3.0 Mhz */
 			0,
 			readmem,writemem,readport,writeport,
-			omegrace_interrupt,6 	/* 240 Hz */
+			omegrace_interrupt,4 	/* 240 Hz */
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			1500000,	/* 1.5 Mhz */
 			2, 		/* memory region 1*/
 			sound_readmem,sound_writemem,sound_readport,sound_writeport,
-			omegrace_sh_interrupt,12 /* gets divided by 2, so 240Hz */
+			omegrace_sh_interrupt,8 /* gets divided by 2, so 240Hz */
 		}
 	},
-	40,
+	60,
 	10, /* 10 CPU slices per frame - enough for the sound CPU to read all commands */
 
 	omegrace_init_machine,
@@ -448,7 +429,6 @@ static struct MachineDriver machine_driver =
 	dvg_screenrefresh,
 
 	/* sound hardware */
-	0,
 	0,
 	omegrace_sh_start,
 	AY8910_sh_stop,
@@ -524,6 +504,7 @@ struct GameDriver omegrace_driver =
 	omegrace_rom,
 	0, 0,
 	0,
+	0,	/* sound_prom */
 
 	0,input_ports, 0, 0, 0,
 

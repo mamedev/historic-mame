@@ -90,7 +90,7 @@ static struct MemoryReadAddress readmem[] =
 	{ 0x1000, 0x2fff, MRA_ROM },
 	{ 0x3000, 0x57ff, MRA_RAM },
 	{ 0x5800, 0x5800, input_port_0_r },     /* DSW */
-	{ 0x5801, 0x5801, krull_IN1_r },     /* buttons */
+	{ 0x5801, 0x5801, input_port_1_r },     /* buttons */
 	{ 0x5802, 0x5802, input_port_2_r },     /* trackball: not used */
 	{ 0x5803, 0x5803, input_port_3_r },     /* trackball: not used */
 	{ 0x5804, 0x5804, input_port_4_r },     /* joystick */
@@ -149,84 +149,59 @@ static struct MemoryWriteAddress krull_sound_writemem[] =
 	{ -1 }  /* end of table */
 };
 
-static struct InputPort input_ports[] =
-{
-	{       /* DSW */
-		0x00,
-		{ 0, 0, 0, 0, 0, 0, 0, 0 },
-		{ 0, 0, 0, 0, 0, 0, 0, 0 }
-	},
-	{       /* buttons */
-		0x01,
-		{ 0,                    /* diag mode */
-		  OSD_KEY_F2,            /* select */
-		  OSD_KEY_3, OSD_KEY_4, /* coin 1 & 2 */
-		  0,0,                  /* not connected ? */
-		  OSD_KEY_1,
-		  OSD_KEY_2 },
-		{ 0, 0, 0, 0, 0, 0, 0, 0 }
-	},
-	{       /* trackball: not used */
-		0xff,
-		{ 0, 0, 0, 0, 0, 0, 0, 0 },
-		{ 0, 0, 0, 0, 0, 0, 0, 0 }
-	},
-	{       /* trackball: not used */
-		0xff,
-		{ 0, 0, 0, 0, 0, 0, 0, 0 },
-		{ 0, 0, 0, 0, 0, 0, 0, 0 }
-	},
-	{       /* joysticks */
-		0x00,
-		{
-		OSD_KEY_E,OSD_KEY_F,OSD_KEY_D,OSD_KEY_S,
-		OSD_KEY_UP,OSD_KEY_RIGHT,OSD_KEY_DOWN,OSD_KEY_LEFT},
-		{ OSD_JOY_FIRE2, OSD_JOY_FIRE4, OSD_JOY_FIRE3, OSD_JOY_FIRE1, /* V.V */
-		OSD_JOY_UP, OSD_JOY_RIGHT, OSD_JOY_DOWN, OSD_JOY_LEFT }       /* V.V */
-	},
-	{ -1 }  /* end of table */
-};
+INPUT_PORTS_START( input_ports )
+	PORT_START      /* DSW0 */
+	PORT_DIPNAME( 0x01, 0x00, "Attract Sound", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPSETTING(    0x01, "Off" )
+	PORT_DIPNAME( 0x02, 0x00, "Difficulty", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "Normal" )
+	PORT_DIPSETTING(    0x02, "Hard" )
+	PORT_DIPNAME( 0x08, 0x00, "Lives", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "3" )
+	PORT_DIPSETTING(    0x08, "5" )
+	PORT_DIPNAME( 0x14, 0x00, "Coinage", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x04, "2 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x00, "1 Coin/1 Credit" )
+	PORT_DIPSETTING(    0x10, "1 Coin/2 Credits" )
+	PORT_DIPSETTING(    0x14, "Free play" )
+	PORT_DIPNAME( 0x20, 0x00, "Hexagon", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "Roving" )
+	PORT_DIPSETTING(    0x20, "Stationary" )
+	PORT_DIPNAME( 0xc0, 0x00, "Bonus Life", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x40, "30000 30000" )
+	PORT_DIPSETTING(    0x00, "30000 50000" )
+	PORT_DIPSETTING(    0x80, "40000 50000" )
+	PORT_DIPSETTING(    0xc0, "50000 75000" )
 
-static struct TrakPort trak_ports[] =
-{
-	{ -1 }
-};
+	PORT_START      /* IN0 */
+	PORT_BITX(    0x01, 0x01, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE, 0 )
+	PORT_DIPSETTING(    0x01, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_BITX(0x02, IP_ACTIVE_HIGH, IPT_SERVICE, "Advance in Service Mode", OSD_KEY_F1, IP_JOY_NONE, 0 )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_COIN1 )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_COIN2 )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_START1 )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_START2 )
 
-static struct KEYSet keys[] =
-{
-	{ 4, 4, "MOVE UP" },
-	{ 4, 7, "MOVE LEFT"  },
-	{ 4, 5, "MOVE RIGHT" },
-	{ 4, 6, "MOVE DOWN" },
-	{ 4, 0, "FIRE UP" },
-	{ 4, 3, "FIRE LEFT"  },
-	{ 4, 1, "FIRE RIGHT" },
-	{ 4, 2, "FIRE DOWN" },
-	{ -1 }
-};
+	PORT_START      /* IN1 Trackball: not used */
+	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
 
+	PORT_START      /* IN2 Trackball: not used */
+	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
 
-static struct DSW dsw[] =
-{
-	{ 0, 0x08, "LIVES PER GAME", { "3","5" } },
-	{ 0, 0x01, "ATTRACT MODE SOUND", { "ON", "OFF" } },
-	{ 0, 0x1C, "", {
-		"1 PLAY FOR 1 COIN" , "1 PLAY FOR 2 COINS",
-		"1 PLAY FOR 1 COIN" , "1 PLAY FOR 2 COINS",
-		"2 PLAYS FOR 1 COIN", "FREE PLAY",
-		"2 PLAYS FOR 1 COIN", "FREE PLAY"
-		} },
-	{ 0, 0x20, "HEXAGON", { "ROVING", "STATIONARY" } },
-	{ 0, 0x02, "DIFFICULTY", { "NORMAL", "HARD" } },
-	{ 0, 0xC0, "", {
-		"LIFE AT 30000 THEN EVERY 50000",
-		"LIFE AT 30000 THEN EVERY 30000",
-		"LIFE AT 40000 THEN EVERY 50000",
-		"LIFE AT 50000 THEN EVERY 75000"
-		} },
-	/*{ 1, 0x01, "TEST MODE", {"ON", "OFF"} },*/
-	{ -1 }
-};
+	PORT_START      /* IN3 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICKLEFT_UP | IPF_8WAY )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICKLEFT_RIGHT | IPF_8WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICKLEFT_DOWN | IPF_8WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICKLEFT_LEFT | IPF_8WAY )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_JOYSTICKRIGHT_UP | IPF_8WAY )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICKRIGHT_RIGHT | IPF_8WAY )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICKRIGHT_DOWN | IPF_8WAY )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_JOYSTICKRIGHT_LEFT | IPF_8WAY )
+INPUT_PORTS_END
 
 
 static struct GfxLayout charlayout =
@@ -300,7 +275,6 @@ static const struct MachineDriver machine_driver =
 	gottlieb_vh_screenrefresh,
 
 	/* sound hardware */
-	0,      /* samples */
 	0,
 	gottlieb_sh_start,
 	gottlieb_sh_stop,
@@ -385,14 +359,15 @@ struct GameDriver krull_driver =
 {
 	"Krull",
 	"krull",
-	"FABRICE FRANCES",
+	"Fabrice Frances (MAME driver)\nMarco Cassili",
 	&machine_driver,
 
 	krull_rom,
 	0, 0,   /* rom decode and opcode decode functions */
 	0,
+	0,	/* sound_prom */
 
-	input_ports, 0, trak_ports, dsw, keys,
+	0/*TBR*/, input_ports, 0/*TBR*/, 0/*TBR*/, 0/*TBR*/,
 
 	0, 0, 0,
 	ORIENTATION_ROTATE_270,

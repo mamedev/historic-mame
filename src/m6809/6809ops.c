@@ -19,7 +19,7 @@ static void illegal( void )
 INLINE void illegal( void )
 #endif
 {
-	if(errorlog)fprintf(errorlog, "M6809: illegal opcode\n");
+	if(errorlog)fprintf(errorlog, "M6809: illegal opcode at %04x\n",pcreg);
 }
 
 #if macintosh
@@ -102,11 +102,7 @@ INLINE void dec_di( void )
 {
 	byte t;
 	DIRBYTE(t); --t;
-#ifdef NEW_FLAG
 	CLR_NZV; SET_FLAGS8D(t);
-#else
-	CLR_NZV; if(t==0x7F) SEV; SET_NZ8(t);
-#endif
 	M_WRMEM(eaddr,t);
 }
 
@@ -117,11 +113,7 @@ INLINE void inc_di( void )
 {
 	byte t;
 	DIRBYTE(t); ++t;
-#ifdef NEW_FLAG
 	CLR_NZV; SET_FLAGS8I(t);
-#else
-	CLR_NZV; if(t==0x80) SEV; SET_NZ8(t);
-#endif
 	M_WRMEM(eaddr,t);
 }
 
@@ -165,6 +157,7 @@ INLINE void sync( void )
 	/* SYNC should stop processing instructions until an interrupt occurs.
 	   A decent fake is probably to force an immediate IRQ. */
 	m6809_ICount = 0;
+	pending_interrupts |= M6809_SYNC;	/* NS 980101 */
 }
 
 /* $14 ILLEGAL */
@@ -266,11 +259,7 @@ INLINE void tfr( void )
 INLINE void bra( void )
 {
 	byte t;
-#ifdef NEW_BR
 	IMMBYTE(t);pcreg+=SIGNED(t);change_pc(pcreg);	/* TS 971002 */
-#else
-	BRANCH(1);
-#endif
 	/* JB 970823 - speed up busy loops */
 	if (t==0xfe) m6809_ICount = 0;
 }
@@ -279,22 +268,14 @@ INLINE void bra( void )
 INLINE void brn( void )
 {
 	byte t;
-#ifdef NEW_BR
 	IMMBYTE(t);
-#else
-	BRANCH(0);
-#endif
 }
 
 /* $1021 LBRN relative ----- */
 INLINE void lbrn( void )
 {
 	word t;
-#ifdef NEW_BR
 	IMMWORD(t);
-#else
-	LBRANCH(0);
-#endif
 }
 
 /* $22 BHI relative ----- */
@@ -621,8 +602,13 @@ INLINE void cwai( void )
 	byte t;
 	IMMBYTE(t); cc&=t;
 	/* CWAI should stack the entire machine state on the hardware stack,
-		then wait for an interrupt. A poor fake is to force an IRQ. */
+		then wait for an interrupt. We just wait for an interrupt. */
+	if ((pending_interrupts & M6809_INT_IRQ) != 0 && (cc & 0x10) == 0)
+		return;
+	else if ((pending_interrupts & M6809_INT_FIRQ) != 0 && (cc & 0x40) == 0)
+		return;
 	m6809_ICount = 0;
+	pending_interrupts |= M6809_CWAI;	/* NS 980101 */
 }
 
 /* $3D MUL inherent --*-@ */
@@ -755,11 +741,7 @@ INLINE void rola( void )
 INLINE void deca( void )
 {
 	--areg;
-#ifdef NEW_FLAG
 	CLR_NZV; SET_FLAGS8D(areg);
-#else
-	CLR_NZV; if(areg==0x7F) SEV; SET_NZ8(areg);
-#endif
 }
 
 /* $4B ILLEGAL */
@@ -768,11 +750,7 @@ INLINE void deca( void )
 INLINE void inca( void )
 {
 	++areg;
-#ifdef NEW_FLAG
 	CLR_NZV; SET_FLAGS8I(areg);
-#else
-	CLR_NZV; if(areg==0x80) SEV; SET_NZ8(areg);
-#endif
 }
 
 /* $4D TSTA inherent -**0- */
@@ -863,11 +841,7 @@ INLINE void rolb( void )
 INLINE void decb( void )
 {
 	--breg;
-#ifdef NEW_FLAG
 	CLR_NZV; SET_FLAGS8D(breg);
-#else
-	CLR_NZV; if(breg==0x7F) SEV; SET_NZ8(breg);
-#endif
 }
 
 /* $5B ILLEGAL */
@@ -876,11 +850,7 @@ INLINE void decb( void )
 INLINE void incb( void )
 {
 	++breg;
-#ifdef NEW_FLAG
 	CLR_NZV; SET_FLAGS8I(breg);
-#else
-	CLR_NZV; if(breg==0x80) SEV; SET_NZ8(breg);
-#endif
 }
 
 /* $5D TSTB inherent -**0- */
@@ -978,11 +948,7 @@ INLINE void dec_ix( void )
 {
 	byte t;
 	t=M_RDMEM(eaddr)-1;
-#ifdef NEW_FLAG
 	CLR_NZV; SET_FLAGS8D(t);
-#else
-	CLR_NZV; if(t==0x7F) SEV; SET_NZ8(t);
-#endif
 	M_WRMEM(eaddr,t);
 }
 
@@ -993,11 +959,7 @@ INLINE void inc_ix( void )
 {
 	byte t;
 	t=M_RDMEM(eaddr)+1;
-#ifdef NEW_FLAG
 	CLR_NZV; SET_FLAGS8I(t);
-#else
-	CLR_NZV; if(t==0x80) SEV; SET_NZ8(t);
-#endif
 	M_WRMEM(eaddr,t);
 }
 
@@ -1101,11 +1063,7 @@ INLINE void dec_ex( void )
 {
 	byte t;
 	EXTBYTE(t); --t;
-#ifdef NEW_FLAG
 	CLR_NZV; SET_FLAGS8D(t);
-#else
-	CLR_NZV; if(t==0x7F) SEV; SET_NZ8(t);
-#endif
 	M_WRMEM(eaddr,t);
 }
 
@@ -1116,11 +1074,7 @@ INLINE void inc_ex( void )
 {
 	byte t;
 	EXTBYTE(t); ++t;
-#ifdef NEW_FLAG
 	CLR_NZV; SET_FLAGS8I(t);
-#else
-	CLR_NZV; if(t==0x80) SEV; SET_NZ8(t);
-#endif
 	M_WRMEM(eaddr,t);
 }
 

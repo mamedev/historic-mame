@@ -165,7 +165,7 @@ OUTPUT:
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "sndhrdw/generic.h"
-#include "sndhrdw/8910intf.h"
+#include "sndhrdw/2203intf.h"
 
 
 
@@ -182,29 +182,29 @@ extern int gng_bgvideoram_size;
 extern unsigned char *gng_scrollx,*gng_scrolly;
 void gng_bgvideoram_w(int offset,int data);
 void gng_bgcolorram_w(int offset,int data);
+void gng_flipscreen_w(int offset,int data);
 int gng_vh_start(void);
 int diamond_vh_start(void);
 void gng_vh_stop(void);
 void gng_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
 void gng_vh_screenrefresh(struct osd_bitmap *bitmap);
 
-int capcom_sh_start(void);
-int capcom_sh_interrupt(void);
+int capcomOPN_sh_start(void);
 
 
 
 static struct MemoryReadAddress readmem[] =
 {
 	{ 0x0000, 0x2fff, MRA_RAM },
-	{ 0x4000, 0x5fff, MRA_BANK1 },
-	{ 0x6184, 0x6184, gng_catch_loop_r }, /* JB 970823 */
-	{ 0x6000, 0xffff, MRA_ROM },
-	{ 0x3c00, 0x3c00, MRA_NOP },    /* watchdog? */
 	{ 0x3000, 0x3000, input_port_0_r },
 	{ 0x3001, 0x3001, input_port_1_r },
 	{ 0x3002, 0x3002, input_port_2_r },
 	{ 0x3003, 0x3003, input_port_3_r },
 	{ 0x3004, 0x3004, input_port_4_r },
+	{ 0x3c00, 0x3c00, MRA_NOP },    /* watchdog? */
+	{ 0x4000, 0x5fff, MRA_BANK1 },
+	{ 0x6184, 0x6184, gng_catch_loop_r }, /* JB 970823 */
+	{ 0x6000, 0xffff, MRA_ROM },
 	{ -1 }	/* end of table */
 };
 
@@ -212,31 +212,32 @@ static struct MemoryReadAddress readmem[] =
 static struct MemoryReadAddress diamond_readmem[] =
 {
 	{ 0x0000, 0x2fff, MRA_RAM },
-	{ 0x4000, 0x5fff, MRA_BANK1 },
-	{ 0x6000, 0xffff, MRA_ROM },
-	{ 0x3c00, 0x3c00, MRA_NOP },    /* watchdog? */
 	{ 0x3000, 0x3000, input_port_0_r },
 	{ 0x3001, 0x3001, input_port_1_r },
 	{ 0x3002, 0x3002, input_port_2_r },
 	{ 0x3003, 0x3003, input_port_3_r },
 	{ 0x3004, 0x3004, input_port_4_r },
+	{ 0x3c00, 0x3c00, MRA_NOP },    /* watchdog? */
+	{ 0x4000, 0x5fff, MRA_BANK1 },
+	{ 0x6000, 0xffff, MRA_ROM },
 	{ -1 }	/* end of table */
 };
 
 static struct MemoryWriteAddress writemem[] =
 {
 	{ 0x0000, 0x1dff, MWA_RAM },
+	{ 0x1e00, 0x1fff, MWA_RAM, &spriteram, &spriteram_size },
 	{ 0x2000, 0x23ff, videoram_w, &videoram, &videoram_size },
 	{ 0x2400, 0x27ff, colorram_w, &colorram },
 	{ 0x2800, 0x2bff, gng_bgvideoram_w, &gng_bgvideoram, &gng_bgvideoram_size },
 	{ 0x2c00, 0x2fff, gng_bgcolorram_w, &gng_bgcolorram },
-	{ 0x3c00, 0x3c00, MWA_NOP },   /* watchdog? */
 	{ 0x3800, 0x39ff, gng_paletteram_w, &gng_paletteram },
-	{ 0x3e00, 0x3e00, gng_bankswitch_w },
-	{ 0x1e00, 0x1fff, MWA_RAM, &spriteram, &spriteram_size },
+	{ 0x3a00, 0x3a00, sound_command_w },
 	{ 0x3b08, 0x3b09, MWA_RAM, &gng_scrollx },
 	{ 0x3b0a, 0x3b0b, MWA_RAM, &gng_scrolly },
-	{ 0x3a00, 0x3a00, sound_command_w },
+	{ 0x3c00, 0x3c00, MWA_NOP },   /* watchdog? */
+	{ 0x3d00, 0x3d00, gng_flipscreen_w },
+	{ 0x3e00, 0x3e00, gng_bankswitch_w },
 	{ 0x4000, 0xffff, MWA_ROM },
 	{ -1 }	/* end of table */
 };
@@ -254,74 +255,179 @@ static struct MemoryReadAddress sound_readmem[] =
 static struct MemoryWriteAddress sound_writemem[] =
 {
 	{ 0xc000, 0xc7ff, MWA_RAM },
-	{ 0xe000, 0xe000, AY8910_control_port_0_w },
-	{ 0xe001, 0xe001, AY8910_write_port_0_w },
-	{ 0xe002, 0xe002, AY8910_control_port_1_w },
-	{ 0xe003, 0xe003, AY8910_write_port_1_w },
+	{ 0xe000, 0xe000, YM2203_control_port_0_w },
+	{ 0xe001, 0xe001, YM2203_write_port_0_w },
+	{ 0xe002, 0xe002, YM2203_control_port_1_w },
+	{ 0xe003, 0xe003, YM2203_write_port_1_w },
 	{ 0x0000, 0x7fff, MWA_ROM },
 	{ -1 }	/* end of table */
 };
 
+INPUT_PORTS_START( gng_input_ports )
+	PORT_START	/* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_COIN3 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN2 )
 
+	PORT_START	/* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
-static struct InputPort input_ports[] =
-{
-	{	/* IN0 */
-		0xff,
-		{ OSD_KEY_1, OSD_KEY_2, 0, 0, 0, 0, 0, OSD_KEY_3 },
-		{ 0, 0, 0, 0, 0, 0, 0, 0 }
-	},
-	{	/* IN1 */
-		0xff,
-		{ OSD_KEY_RIGHT, OSD_KEY_LEFT, OSD_KEY_DOWN, OSD_KEY_UP,
-				OSD_KEY_LCONTROL, OSD_KEY_ALT, 0, 0 },
-		{ OSD_JOY_RIGHT, OSD_JOY_LEFT, OSD_JOY_DOWN, OSD_JOY_UP,
-				OSD_JOY_FIRE1, OSD_JOY_FIRE2, 0, 0 }
-	},
-	{	/* IN2 */
-		0xff,
-		{ 0, 0, 0, 0, 0, 0, 0, 0 },
-		{ 0, 0, 0, 0, 0, 0, 0, 0 }
-	},
-	{	/* DSW1 */
-		0xdf,
-		{ 0, 0, 0, 0, 0, 0, OSD_KEY_F2, 0 },
-		{ 0, 0, 0, 0, 0, 0, 0, 0 }
-	},
-	{	/* DSW2 */
-		0xfb,
-		{ 0, 0, 0, 0, 0, 0, 0, 0 },
-		{ 0, 0, 0, 0, 0, 0, 0, 0 }
-	},
-	{ -1 }	/* end of table */
-};
+	PORT_START	/* IN2 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_COCKTAIL )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
-static struct TrakPort trak_ports[] =
-{
-        { -1 }
-};
+	PORT_START	/* DSW0 */
+	PORT_DIPNAME( 0x0f, 0x0f, "Coinage", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x02, "4 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x05, "3 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x08, "2 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x04, "3 Coins/2 Credits" )
+	PORT_DIPSETTING(    0x01, "4 Coins/3 Credits" )
+	PORT_DIPSETTING(    0x0f, "1 Coin/1 Credit" )
+	PORT_DIPSETTING(    0x03, "3 Coins/4 Credits" )
+	PORT_DIPSETTING(    0x07, "2 Coins/3 Credits" )
+	PORT_DIPSETTING(    0x0e, "1 Coin/2 Credits" )
+	PORT_DIPSETTING(    0x06, "2 Coins/5 Credits" )
+	PORT_DIPSETTING(    0x0d, "1 Coin/3 Credits" )
+	PORT_DIPSETTING(    0x0c, "1 Coin/4 Credits" )
+	PORT_DIPSETTING(    0x0b, "1 Coin/5 Credits" )
+	PORT_DIPSETTING(    0x0a, "1 Coin/6 Credits" )
+	PORT_DIPSETTING(    0x09, "1 Coin/7 Credits" )
+	PORT_DIPSETTING(    0x00, "Free Play" )
+	PORT_DIPNAME( 0x10, 0x10, "Coinage affects", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x10, "Coin A" )
+	PORT_DIPSETTING(    0x00, "Coin B" )
+	PORT_DIPNAME( 0x20, 0x00, "Demo Sounds", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x20, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_BITX(    0x40, 0x40, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE, 0 )
+	PORT_DIPSETTING(    0x40, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x80, 0x80, "Flip Screen", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x80, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
 
-static struct KEYSet keys[] =
-{
-	{ 1, 3, "MOVE UP" },
-	{ 1, 1, "MOVE LEFT"  },
-	{ 1, 0, "MOVE RIGHT" },
-	{ 1, 2, "MOVE DOWN" },
-	{ 1, 4, "FIRE" },
-	{ 1, 5, "JUMP" },
-	{ -1 }
-};
+	PORT_START	/* DSW1 */
+	PORT_DIPNAME( 0x03, 0x03, "Lives", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x03, "3" )
+	PORT_DIPSETTING(    0x02, "4" )
+	PORT_DIPSETTING(    0x01, "5" )
+	PORT_DIPSETTING(    0x00, "7" )
+	PORT_DIPNAME( 0x04, 0x00, "Cabinet", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "Upright" )
+	PORT_DIPSETTING(    0x04, "Cocktail" )
+	PORT_DIPNAME( 0x18, 0x18, "Bonus Life", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x18, "20000 70000 70000" )
+	PORT_DIPSETTING(    0x10, "30000 80000 80000" )
+	PORT_DIPSETTING(    0x08, "20000 80000" )
+	PORT_DIPSETTING(    0x00, "30000 80000" )
+	PORT_DIPNAME( 0x60, 0x60, "Difficulty", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x40, "Easy" )
+	PORT_DIPSETTING(    0x60, "Normal" )
+	PORT_DIPSETTING(    0x20, "Difficult" )
+	PORT_DIPSETTING(    0x00, "Very Difficult" )
+	PORT_DIPNAME( 0x80, 0x80, "unknown", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x80, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+INPUT_PORTS_END
 
+INPUT_PORTS_START( diamond_input_ports )
+	PORT_START	/* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN2 )
 
-static struct DSW dsw[] =
-{
-	{ 4, 0x03, "LIVES", { "7", "5", "4", "3" }, 1 },
-	{ 4, 0x18, "BONUS", { "30000 80000", "20000 70000", "30000 80000 80000", "20000 70000 70000" }, 1 },
-	{ 4, 0x60, "DIFFICULTY", { "HARDEST", "HARD", "EASY", "NORMAL" }, 1 },
-	{ 3, 0x20, "DEMO SOUNDS", { "ON", "OFF" }, 1 },
-	{ -1 }
-};
+	PORT_START	/* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_4WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_4WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_4WAY )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
+	PORT_START	/* IN2 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START	 /* DSW0 */
+	PORT_DIPNAME( 0x03, 0x01, "Lives", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "2" )
+	PORT_DIPSETTING(    0x01, "3" )
+	PORT_DIPSETTING(    0x02, "4" )
+	PORT_DIPSETTING(    0x03, "5" )
+	PORT_DIPNAME( 0x0c, 0x00, "Coin A", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "*1" )
+	PORT_DIPSETTING(    0x04, "*2" )
+	PORT_DIPSETTING(    0x08, "*3" )
+	PORT_DIPSETTING(    0x0c, "*4" )
+	PORT_DIPNAME( 0x30, 0x00, "Coinage", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x30, "4 Coins/1 Credit")
+	PORT_DIPSETTING(    0x20, "3 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x10, "2 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x00, "1 Coin/1 Credit" )
+	PORT_DIPNAME( 0x40, 0x00, "Unknown DSW1 7", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x40, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x80, 0x80, "Flip Screen", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x80, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+
+	PORT_START	/* DSW1 */
+	PORT_DIPNAME( 0x01, 0x00, "Unknown DSW2 1", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x01, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x02, 0x00, "Unknown DSW2 2", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x02, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x04, 0x00, "Unknown DSW2 3", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x04, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x08, 0x00, "Unknown DSW2 4", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x08, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x30, 0x00, "Coin B", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "*1" )
+	PORT_DIPSETTING(    0x10, "*2" )
+	PORT_DIPSETTING(    0x20, "*3" )
+	PORT_DIPSETTING(    0x30, "*4" )
+	PORT_DIPNAME( 0x40, 0x00, "Unknown DSW2 7", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x40, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x80, 0x00, "Unknown DSW2 8", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x80, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+INPUT_PORTS_END
 
 
 static struct GfxLayout charlayout =
@@ -386,7 +492,7 @@ static struct MachineDriver machine_driver =
 			3072000,	/* 3 Mhz ??? */
 			2,	/* memory region #2 */
 			sound_readmem,sound_writemem,0,0,
-			capcom_sh_interrupt,12
+			interrupt,4
 		}
 	},
 	60,
@@ -407,10 +513,9 @@ static struct MachineDriver machine_driver =
 
 	/* sound hardware */
 	0,
-	0,
-	capcom_sh_start,
-	AY8910_sh_stop,
-	AY8910_sh_update
+	capcomOPN_sh_start,
+	YM2203_sh_stop,
+	YM2203_sh_update
 };
 
 /* JB 970823 - separate diamond run from gng */
@@ -430,7 +535,7 @@ static struct MachineDriver diamond_machine_driver =
 			3072000,	/* 3 Mhz ??? */
 			2,	/* memory region #2 */
 			sound_readmem,sound_writemem,0,0,
-			capcom_sh_interrupt,12
+			interrupt,4
 		}
 	},
 	60,
@@ -451,10 +556,9 @@ static struct MachineDriver diamond_machine_driver =
 
 	/* sound hardware */
 	0,
-	0,
-	capcom_sh_start,
-	AY8910_sh_stop,
-	AY8910_sh_update
+	capcomOPN_sh_start,
+	YM2203_sh_stop,
+	YM2203_sh_update
 };
 
 
@@ -513,6 +617,31 @@ ROM_START( gngcross_rom )
 
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
 	ROM_LOAD( "gg2.bin", 0x0000, 0x8000, 0x0b7edfd2 )   /* Audio CPU is a Z80 */
+ROM_END
+
+ROM_START( gngjap_rom )
+	ROM_REGION(0x18000)	/* 64k for code * 5 pages */
+	ROM_LOAD( "8n.rom",   0x8000, 0x8000, 0xe787d6cf )
+	ROM_LOAD( "10n.rom",  0x4000, 0x4000, 0x6ae8f4b8 )	/* 4000-5fff is page 0 */
+	ROM_LOAD( "12n.rom", 0x10000, 0x8000, 0x0d9a17cc )	/* page 1, 2, 3 e 4 */
+
+	ROM_REGION(0x34000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "11e.rom", 0x00000, 0x4000, 0xfc6a97b2 )	/* characters */
+	ROM_LOAD( "3e.rom",  0x04000, 0x4000, 0x8425662b )	/* tiles 0-1 Plane 1*/
+	ROM_LOAD( "1e.rom",  0x08000, 0x4000, 0x332b9d85 )	/* tiles 2-3 Plane 1*/
+	ROM_LOAD( "3c.rom",  0x0c000, 0x4000, 0xf6433b0f )	/* tiles 0-1 Plane 2*/
+	ROM_LOAD( "1c.rom",  0x10000, 0x4000, 0x24a66776 )	/* tiles 2-3 Plane 2*/
+	ROM_LOAD( "3b.rom",  0x14000, 0x4000, 0x6e6e3ec0 )	/* tiles 0-1 Plane 3*/
+	ROM_LOAD( "1b.rom",  0x18000, 0x4000, 0x248ddf8b )	/* tiles 2-3 Plane 3*/
+	ROM_LOAD( "4n.rom",  0x1c000, 0x4000, 0x1b48124e )	/* sprites 0 Plane 1-2 */
+	ROM_LOAD( "3n.rom",  0x20000, 0x4000, 0xc29702c5 )	/* sprites 1 Plane 1-2 */
+	ROM_LOAD( "1n.rom",  0x24000, 0x4000, 0x0309f6a7 )	/* sprites 2 Plane 1-2 */
+	ROM_LOAD( "4l.rom",  0x28000, 0x4000, 0x0553b263 )	/* sprites 0 Plane 3-4 */
+	ROM_LOAD( "3l.rom",  0x2c000, 0x4000, 0x3e603938 )	/* sprites 1 Plane 3-4 */
+	ROM_LOAD( "1l.rom",  0x30000, 0x4000, 0x8ec77b4f )	/* sprites 2 Plane 3-4 */
+
+	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_LOAD( "14h.rom", 0x0000, 0x8000, 0x0b7edfd2 )   /* Audio CPU is a Z80 */
 ROM_END
 
 ROM_START( diamond_rom )
@@ -645,14 +774,15 @@ struct GameDriver gng_driver =
 {
 	"Ghosts'n Goblins",
 	"gng",
-	"ROBERTO VENTURA\nMIRKO BUFFONI\nNICOLA SALMORIA\nGABRIO SECCO",
+	"Roberto Ventura\nMirko Buffoni\nNicola Salmoria\nGabrio Secco\nMarco Cassili",
 	&machine_driver,
 
 	gng_rom,
 	0, 0,
 	0,
+	0,	/* sound_prom */
 
-	input_ports, 0, trak_ports, dsw, keys,
+	0/*TBR*/, gng_input_ports, 0/*TBR*/, 0/*TBR*/, 0/*TBR*/,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
@@ -664,14 +794,35 @@ struct GameDriver gngcross_driver =
 {
 	"Ghosts'n Goblins (Cross)",
 	"gngcross",
-	"ROBERTO VENTURA\nMIRKO BUFFONI\nNICOLA SALMORIA\nGABRIO SECCO",
+	"Roberto Ventura\nMirko Buffoni\nNicola Salmoria\nGabrio Secco\nMarco Cassili",
 	&machine_driver,
 
 	gngcross_rom,
 	0, 0,
 	0,
+	0,	/* sound_prom */
 
-	input_ports, 0, trak_ports, dsw, keys,
+	0/*TBR*/, gng_input_ports, 0/*TBR*/, 0/*TBR*/, 0/*TBR*/,
+
+	0, 0, 0,
+	ORIENTATION_DEFAULT,
+
+	gng_hiload, gng_hisave
+};
+
+struct GameDriver gngjap_driver =
+{
+	"Ghosts'n Goblins (Japanese)",
+	"gngjap",
+	"Roberto Ventura\nMirko Buffoni\nNicola Salmoria\nGabrio Secco\nMarco Cassili",
+	&machine_driver,
+
+	gngjap_rom,
+	0, 0,
+	0,
+	0,	/* sound_prom */
+
+	0/*TBR*/, gng_input_ports, 0/*TBR*/, 0/*TBR*/, 0/*TBR*/,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
@@ -683,14 +834,15 @@ struct GameDriver diamond_driver =
 {
 	"Diamond Run",
 	"diamond",
-	"ROBERTO VENTURA\nMIRKO BUFFONI\nNICOLA SALMORIA\nMIKE BALFOUR",
+	"Roberto Ventura\nMirko Buffoni\nNicola Salmoria\nMike Balfour",
 	&diamond_machine_driver,	/* JB 970823 - separate machine driver for D.R. */
 
 	diamond_rom,
 	0, 0,
 	0,
+	0,	/* sound_prom */
 
-	input_ports, 0, trak_ports, dsw, keys,
+	0/*TBR*/, diamond_input_ports, 0/*TBR*/, 0/*TBR*/, 0/*TBR*/,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,

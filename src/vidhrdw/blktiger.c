@@ -290,7 +290,12 @@ void blktiger_vh_screenrefresh(struct osd_bitmap *bitmap)
                         offs    |= chTableRED[red];
                         offs    |= chTableBLUE[blue];
 
-                        Machine->gfx[j]->colortable[i] = Machine->pens[offs];
+					/* for tiles, pen 15 is the transparent color. However there */
+					/* is no other plane behind them, so we just set them to black */
+						if (j == 1 && i % 16 == 15)
+	                        Machine->gfx[j]->colortable[i] = Machine->pens[0];
+						else
+	                        Machine->gfx[j]->colortable[i] = Machine->pens[offs];
                     }
                     base++;
                     bluebase++;
@@ -351,7 +356,7 @@ void blktiger_vh_screenrefresh(struct osd_bitmap *bitmap)
                                            attr & 0x80,
                                            0,
                                            x*16, y*16,
-                                           0,TRANSPARENCY_NONE,16);
+                                           0,TRANSPARENCY_NONE,0);
                        }
                     }
                 }
@@ -399,7 +404,7 @@ void blktiger_vh_screenrefresh(struct osd_bitmap *bitmap)
                                            attr & 0x80,
                                            0,
                                            x*16, y*16,
-                                           0,TRANSPARENCY_NONE,16);
+                                           0,TRANSPARENCY_NONE,0);
                          }
                      }
                 }
@@ -452,20 +457,23 @@ void blktiger_vh_screenrefresh(struct osd_bitmap *bitmap)
 	/* draw the frontmost playfield. They are characters, but draw them as sprites */
 	for (offs = videoram_size - 1;offs >= 0;offs--)
 	{
-                int code=videoram[offs] + (((int)(colorram[offs] & 0xe0)<<3));
-                if (code != 0x20)     /* don't draw spaces */
-                {
+		int code;
+
+		code = videoram[offs] + ((colorram[offs] & 0xe0) << 3);
+		if (code != 0x20)     /* don't draw spaces */
+		{
 			int sx,sy;
 
-                        sy = 8 * (offs / 32);
-                        sx = 8 * (offs % 32);
+			sy = 8 * (offs / 32);
+			sx = 8 * (offs % 32);
 
 			drawgfx(bitmap,Machine->gfx[0],
-                                        code,
-                                        colorram[offs] & 0x0f,
-                                        0,0,sx,sy,
-                                        &Machine->drv->visible_area,TRANSPARENCY_PEN,3);
+					code,
+					colorram[offs] & 0x1f,
+					0,0,sx,sy,
+					&Machine->drv->visible_area,TRANSPARENCY_PEN,3);
 		}
-        }
-        memset(scrollpalette_dirty, 0, sizeof(scrollpalette_dirty));
+	}
+
+	memset(scrollpalette_dirty, 0, sizeof(scrollpalette_dirty));
 }

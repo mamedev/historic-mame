@@ -122,6 +122,18 @@ void naughtyb_vh_screenrefresh(struct osd_bitmap *bitmap);
 // int naughtyb_sh_start(void);
 // void naughtyb_sh_update(void);
 
+void phoenix_sound_control_a_w(int offset, int data);
+void phoenix_sound_control_b_w(int offset, int data);
+int phoenix_sh_init(const char *gamename);
+int phoenix_sh_start(void);
+void phoenix_sh_update(void);
+void pleiads_sound_control_a_w(int offset, int data);
+void pleiads_sound_control_b_w(int offset, int data);
+int pleiads_sh_init(const char *gamename);
+int pleiads_sh_start(void);
+void pleiads_sh_update(void);
+
+#define USE_PLEIADS
 
 static struct MemoryReadAddress readmem[] =
 {
@@ -142,6 +154,14 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x9800, 0x9fff, MWA_RAM, &naughtyb_scrollreg },
 //        { 0xa000, 0xa7ff, naughtyb_sound_control_a_w },
 //        { 0xa800, 0xafff, naughtyb_sound_control_b_w },
+#ifdef USE_PHOENIX
+	{ 0xa000, 0xa7ff, phoenix_sound_control_a_w },
+	{ 0xa800, 0xafff, phoenix_sound_control_b_w },
+#endif
+#ifdef USE_PLEIADS
+	{ 0xa000, 0xa7ff, pleiads_sound_control_a_w },
+	{ 0xa800, 0xafff, pleiads_sound_control_b_w },
+#endif
 	{ -1 }  /* end of table */
 };
 
@@ -337,11 +357,22 @@ static struct MachineDriver machine_driver =
 	naughtyb_vh_screenrefresh,
 
 	/* sound hardware */
+#ifdef USE_PHOENIX
+	phoenix_sh_init,
+	phoenix_sh_start,
 	0,
+	phoenix_sh_update
+#endif
+#ifdef USE_PLEIADS
+	pleiads_sh_init,
+	pleiads_sh_start,
 	0,
-	0,
-	0,
-	0
+	pleiads_sh_update
+#endif
+//	0,
+//	0,
+//	0,
+//	0
 };
 
 
@@ -480,6 +511,7 @@ struct GameDriver naughtyb_driver =
 	naughtyb_rom,
 	0, 0,
 	0,
+	0,	/* sound_prom */
 
 	0/*TBR*/,input_ports,0/*TBR*/,0/*TBR*/,0/*TBR*/,
 
@@ -499,6 +531,7 @@ struct GameDriver popflame_driver =
 	popflame_rom,
 	0, 0,
 	0,
+	0,	/* sound_prom */
 
 	0/*TBR*/,input_ports,0/*TBR*/,0/*TBR*/,0/*TBR*/,
 

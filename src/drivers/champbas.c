@@ -110,28 +110,27 @@ INPUT_PORTS_START( input_ports )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_COCKTAIL )
 
 	PORT_START	/* DSW */
-	PORT_DIPNAME( 0x01, 0x00, "1", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "Off")
-	PORT_DIPSETTING(    0x01, "On" )
-	PORT_DIPNAME( 0x02, 0x00, "2", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "Off")
-	PORT_DIPSETTING(    0x02, "On" )
-	PORT_DIPNAME( 0x04, 0x00, "3", IP_KEY_NONE )
+	PORT_DIPNAME( 0x03, 0x02, "Coinage", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x03, "A 2/1 B 3/2" )
+	PORT_DIPSETTING(    0x02, "A 1/1 B 2/1")
+	PORT_DIPSETTING(    0x01, "A 1/2 B 1/6" )
+	PORT_DIPSETTING(    0x00, "A 1/3 B 1/6")
+	PORT_DIPNAME( 0x04, 0x00, "Flip Screen", IP_KEY_NONE )
 	PORT_DIPSETTING(    0x00, "Off")
 	PORT_DIPSETTING(    0x04, "On" )
-	PORT_DIPNAME( 0x08, 0x00, "4", IP_KEY_NONE )
+	PORT_DIPNAME( 0x08, 0x00, "Unknown 4", IP_KEY_NONE )
 	PORT_DIPSETTING(    0x00, "Off")
 	PORT_DIPSETTING(    0x08, "On" )
-	PORT_DIPNAME( 0x10, 0x00, "5", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "Off")
-	PORT_DIPSETTING(    0x10, "On" )
-	PORT_DIPNAME( 0x20, 0x00, "6", IP_KEY_NONE )
+	PORT_DIPNAME( 0x10, 0x00, "Cabinet", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "Upright")
+	PORT_DIPSETTING(    0x10, "Cocktail" )
+	PORT_DIPNAME( 0x20, 0x00, "Unknown 6 (difficulty?)", IP_KEY_NONE )
 	PORT_DIPSETTING(    0x00, "Off")
 	PORT_DIPSETTING(    0x20, "On" )
-	PORT_DIPNAME( 0x40, 0x00, "7", IP_KEY_NONE )
+	PORT_DIPNAME( 0x40, 0x00, "Unknown 7", IP_KEY_NONE )
 	PORT_DIPSETTING(    0x00, "Off")
 	PORT_DIPSETTING(    0x40, "On" )
-	PORT_DIPNAME( 0x80, 0x00, "8", IP_KEY_NONE )
+	PORT_DIPNAME( 0x80, 0x00, "Unknown 8", IP_KEY_NONE )
 	PORT_DIPSETTING(    0x00, "Off")
 	PORT_DIPSETTING(    0x80, "On" )
 
@@ -245,7 +244,6 @@ static struct MachineDriver machine_driver =
 
 	/* sound hardware */
 	0,
-	0,
 	champbas_sh_start,
 	AY8910_sh_stop,
 	AY8910_sh_update
@@ -287,6 +285,7 @@ struct GameDriver champbas_driver =
 	champbas_rom,
 	0, 0,
 	0,
+	0,	/* sound_prom */
 
 	0/*TBR*/,input_ports,0/*TBR*/,0/*TBR*/,0/*TBR*/,
 

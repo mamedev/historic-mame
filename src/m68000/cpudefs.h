@@ -65,7 +65,7 @@ WORD wat_readmemw(void *a);
 #define READ_MEMW(a,b) b=wat_readmemw(a)
 #endif
 
-extern unsigned char *RAM;
+/* ASG 971108 extern unsigned char *RAM;*/
 
 /* ASG 971010 -- changed to macros: */
 #if 0
@@ -76,12 +76,12 @@ extern void put_byte(LONG a, UBYTE b);
 extern void put_word(LONG a, UWORD b);
 extern void put_long(LONG a, ULONG b);
 #else
-#define get_byte(a) cpu_readmem24(a)
-#define get_word(a) cpu_readmem24_word(a)
-#define get_long(a) cpu_readmem24_dword(a)
-#define put_byte(a,b) cpu_writemem24(a,b)
-#define put_word(a,b) cpu_writemem24_word(a,b)
-#define put_long(a,b) cpu_writemem24_dword(a,b)
+#define get_byte(a) cpu_readmem24((a)&0xffffff)
+#define get_word(a) cpu_readmem24_word((a)&0xffffff)
+#define get_long(a) cpu_readmem24_dword((a)&0xffffff)
+#define put_byte(a,b) cpu_writemem24((a)&0xffffff,b)
+#define put_word(a,b) cpu_writemem24_word((a)&0xffffff,b)
+#define put_long(a,b) cpu_writemem24_dword((a)&0xffffff,b)
 #endif
 
 /* LBO 090597 - unused
@@ -161,19 +161,20 @@ static __inline__ UWORD nextiword(void)
 {
     unsigned int i=regs.pc&0xffffff;
     regs.pc+=2;
-    return ( (RAM[i]<<8) | RAM[i+1] );
+    return ( (cpu_readop(i)<<8) | cpu_readop(i+1) );	/* ASG 971108 */
 }
 
 static __inline__ ULONG nextilong(void)
 {
     unsigned int i=regs.pc&0xffffff;
     regs.pc+=4;
-    return ( (RAM[i]<<24) | (RAM[i+1]<<16) | (RAM[i+2]<<8) | RAM[i+3] );
+    return ( (cpu_readop(i)<<24) | (cpu_readop(i+1)<<16) | (cpu_readop(i+2)<<8) | cpu_readop(i+3) );	/* ASG 971108 */
 }
 
 static __inline__ void m68k_setpc(CPTR newpc)
 {
     regs.pc = newpc;
+    change_pc24(regs.pc&0xffffff);	/* ASG 971108 */
 }
 
 static __inline__ CPTR m68k_getpc(void)

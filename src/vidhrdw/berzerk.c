@@ -38,6 +38,8 @@ void berzerk_videoram_w(int offset,int data)
   if (y < 0)
      return;
 
+	osd_mark_dirty(x,y,x+8,y,0);	/* ASG 971015 */
+
   /* CMK optimize the most common case--all blank */
   if (data == 0)
   {
@@ -74,6 +76,7 @@ void berzerk_colorram_w(int offset,int data)
   if (y < 0)
      return;
 
+	osd_mark_dirty(x,y,x+7,y+3,0);	/* ASG 971015 */
 
   for (i = 0; i < 4; i++, y++)
   {
@@ -221,6 +224,7 @@ int berzerk_magicram_r(int offset)
 void berzerk_magicram_control_w(int offset,int data)
 {
   magicram_control = data;
+  magicram_latch = 0;
   collision = 0;
 }
 

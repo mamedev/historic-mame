@@ -121,6 +121,13 @@ void cloak_clearbmp_w(int offset, int data)
 
 int graph_processor_r(int offset)
 {
+        int n;
+
+        if (!bmap)
+                n = inverse_palette[tmpbitmap->line[by][bx]] & 0x07;
+	else
+                n = inverse_palette[tmpbitmap2->line[by][bx]] & 0x07;
+
 	switch(offset)
         {
 		case 0x0:
@@ -144,11 +151,7 @@ int graph_processor_r(int offset)
 			bx++;
 			break;
 	}
-
-	if (!bmap)
-		return inverse_palette[tmpbitmap->line[by][bx]] & 0x07;
-	else
-		return inverse_palette[tmpbitmap2->line[by][bx]] & 0x07;
+        return n;
 }
 
 void graph_processor_w(int offset, int data)
@@ -287,9 +290,9 @@ void cloak_vh_screenrefresh(struct osd_bitmap *bitmap)
 
 
 	if (bmap)
-		copybitmap(bitmap,tmpbitmap2,0,0,-5,-23,&Machine->drv->visible_area,TRANSPARENCY_COLOR,16);
+                copybitmap(bitmap,tmpbitmap2,0,0,-6,-24,&Machine->drv->visible_area,TRANSPARENCY_COLOR,16);
 	else
-		copybitmap(bitmap,tmpbitmap,0,0,-5,-23,&Machine->drv->visible_area,TRANSPARENCY_COLOR,16);
+                copybitmap(bitmap,tmpbitmap,0,0,-6,-24,&Machine->drv->visible_area,TRANSPARENCY_COLOR,16);
 
 
 	/* Draw the sprites */

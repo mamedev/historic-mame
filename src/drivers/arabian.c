@@ -166,11 +166,6 @@ static struct InputPort input_ports[] =
 	{ -1 }  /* end of table */
 };
 
-static struct TrakPort trak_ports[] =
-{
-        { -1 }
-};
-
 static struct KEYSet keys[] =
 {
         { 3, 2, "PL1 MOVE UP" },
@@ -274,14 +269,13 @@ static struct MachineDriver machine_driver =
 	sizeof(palette)/3,sizeof(colortable),
 	0,
 
-	VIDEO_TYPE_RASTER,
+	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY,
 	0,
 	arabian_vh_start,
 	arabian_vh_stop,
 	arabian_vh_screenrefresh,
 
 	/* sound hardware */
-	0,
 	0,
 	arabian_sh_start,
 	AY8910_sh_stop,
@@ -304,8 +298,9 @@ ROM_START( arabian_rom )
 	ROM_LOAD( "ic4.90", 0x6000, 0x2000, 0xcd8565b1 )
 
 	ROM_REGION(0x2000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_OBSOLETELOAD( "ic84.91", 0x0000, 0x2000 )	/*this is not used at all*/
-                                                /* might be removed */
+	/* empty memory region - not used by the game, but needed bacause the main */
+	/* core currently always frees region #1 after initialization. */
+
 	ROM_REGION(0x10000) /* space for graphics roms */
 	ROM_LOAD( "ic84.91", 0x0000, 0x2000, 0xb8edb68d )	/* because of very rare way */
 	ROM_LOAD( "ic85.92", 0x2000, 0x2000, 0x3e0048d8 )  /* CRT controller uses these roms */
@@ -362,8 +357,9 @@ struct GameDriver arabian_driver =
 	arabian_rom,
 	0, 0,
 	0,
+	0,	/* sound_prom */
 
-	input_ports, 0, trak_ports, dsw, keys,
+	input_ports, 0, 0/*TBR*/,dsw, keys,
 
 	0, palette, colortable,
 	ORIENTATION_DEFAULT,

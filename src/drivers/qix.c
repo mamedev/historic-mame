@@ -8,6 +8,12 @@ Communication between the two CPUs is done using a 4K RAM space at $8000
 which both CPUs have direct access.  FIRQs (fast interrupts) are generated
 by each CPU to interrupt the other at specific times.
 
+A third CPU, a 6802, is used for sample playback.  It drives an 8-bit
+DAC and according to the schematics a TMS5220 speech chip, which is never
+accessed.  ROM u27 is the only code needed.  A sound command from the
+data CPU causes an IRQ to fire on the 6802 and the sound playback is
+started.
+
 The coin door switches and player controls are connected to the CPUs by
 Mototola 6821 PIAs.  These devices are memory mapped as shown below.
 
@@ -117,12 +123,13 @@ NONVOLATILE CMOS MEMORY MAP (CPU #2 -- Video) $8400-$87ff
 ***************************************************************************/
 
 #include "driver.h"
+#include "machine/6821pia.h"
+#include "sndhrdw/dac.h"
 
 extern unsigned char *qix_sharedram;
 int qix_scanline_r(int offset);
 void qix_data_firq_w(int offset, int data);
 void qix_video_firq_w(int offset, int data);
-/* int m6821_r(int offset); */
 
 
 extern unsigned char *qix_paletteram,*qix_palettebank;
@@ -145,19 +152,23 @@ int qix_vh_start(void);
 void qix_vh_stop(void);
 void qix_init_machine(void);
 
+int qix_data_io_r (int offset);
+int qix_sound_io_r (int offset);
+void qix_data_io_w (int offset, int data);
+void qix_sound_io_w (int offset, int data);
+int qix_sh_start (void);
+void qix_sh_stop (void);
+void qix_sh_update (void);
 
 
 static struct MemoryReadAddress readmem_cpu_data[] =
 {
-	/*{ 0x2000, 0x2001, m6821_r },*/
-	/*{ 0x4000, 0x4003, m6821_r },*/
 	{ 0x8000, 0x83ff, qix_sharedram_r_1, &qix_sharedram },
 	{ 0x8400, 0x87ff, MRA_RAM },
-	/*{ 0x9000, 0x9003, m6821_r },*/
-	{ 0x9400, 0x9400, input_port_0_r }, /* PIA 1 PORT A -- Player controls */
-	{ 0x9402, 0x9402, input_port_1_r }, /* PIA 1 PORT B -- Coin door switches */
-	/*{ 0x9900, 0x9903, m6821_r },*/
-	/*{ 0x9c00, 0x9c03, m6821_r },*/
+	{ 0x9000, 0x9003, pia_4_r },
+	{ 0x9400, 0x9403, pia_1_r },
+	{ 0x9900, 0x9903, pia_2_r },
+	{ 0x9c00, 0x9c03, pia_3_r },
 	{ 0xc000, 0xffff, MRA_ROM },
 	{ -1 } /* end of table */
 };
@@ -169,21 +180,28 @@ static struct MemoryReadAddress readmem_cpu_video[] =
 	{ 0x8400, 0x87ff, MRA_RAM },
 	{ 0x9400, 0x9400, qix_addresslatch_r },
 	{ 0x9800, 0x9800, qix_scanline_r },
-	{ 0xc800, 0xffff, MRA_ROM },
+	{ 0xc000, 0xffff, MRA_ROM },
+	{ -1 } /* end of table */
+};
+
+static struct MemoryReadAddress readmem_cpu_sound[] =
+{
+	{ 0x0000, 0x007f, MRA_RAM },
+	{ 0x2000, 0x2003, pia_6_r },
+	{ 0x4000, 0x4003, pia_5_r },
+	{ 0xf800, 0xffff, MRA_ROM },
 	{ -1 } /* end of table */
 };
 
 static struct MemoryWriteAddress writemem_cpu_data[] =
 {
-	/*{ 0x2000, 0x2001, m6821_w },*/
-	/*{ 0x4000, 0x4003, m6821_w },*/
 	{ 0x8000, 0x83ff, qix_sharedram_w },
 	{ 0x8400, 0x87ff, MWA_RAM },
 	{ 0x8c00, 0x8c00, qix_video_firq_w },
-	/*{ 0x9000, 0x9003, m6821_w },*/
-	/*{ 0x9400, 0x9403, m6821_w },*/
-	/*{ 0x9900, 0x9903, m6821_w },*/
-	/*{ 0x9C00, 0x9C03, m6821_w },*/
+	{ 0x9000, 0x9003, pia_4_w },
+	{ 0x9400, 0x9403, pia_1_w },
+	{ 0x9900, 0x9903, pia_2_w },
+	{ 0x9c00, 0x9c03, pia_3_w },
 	{ 0xc000, 0xffff, MWA_ROM },
 	{ -1 } /* end of table */
 };
@@ -198,67 +216,41 @@ static struct MemoryWriteAddress writemem_cpu_video[] =
 	{ 0x9000, 0x93ff, qix_paletteram_w, &qix_paletteram },
 	{ 0x9400, 0x9400, qix_addresslatch_w },
 	{ 0x9402, 0x9403, MWA_RAM, &qix_videoaddress },
-	{ 0xc800, 0xffff, MWA_ROM },
+	{ 0xc000, 0xffff, MWA_ROM },
+	{ -1 } /* end of table */
+};
+
+static struct MemoryWriteAddress writemem_cpu_sound[] =
+{
+	{ 0x0000, 0x007f, MWA_RAM },
+	{ 0x2000, 0x2003, pia_6_w },
+	{ 0x4000, 0x4003, pia_5_w },
+	{ 0xf800, 0xffff, MWA_ROM },
 	{ -1 } /* end of table */
 };
 
 
-static struct InputPort input_ports[] =
-{
-	{	/* PORT 0 -- PIA 1 Port A -- Controls [01234567] */
-		0xff,	/* default_value */
+INPUT_PORTS_START( input_ports )
+	PORT_START	/* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_4WAY )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_4WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_4WAY )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON2 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON1 )
 
-		/* keyboard controls */
-		{ OSD_KEY_UP, OSD_KEY_RIGHT, OSD_KEY_DOWN, OSD_KEY_LEFT,
-		  OSD_KEY_ALT /* slow draw */, OSD_KEY_2 /* 2P start */,
-		  OSD_KEY_1 /* 1P start */,  OSD_KEY_LCONTROL /* fast draw */ },
-
-		/* joystick controls */
-		{ OSD_JOY_UP, OSD_JOY_RIGHT, OSD_JOY_DOWN, OSD_JOY_LEFT,
-		  OSD_JOY_FIRE2 /* slow draw */, 0, 0, OSD_JOY_FIRE1 /* fast draw */ } /* EBM 970517 */
-	},
-	{	/* PORT 1 -- PIA 1 Port B -- Coin door switches */
-		0xff,	/* default_value */
-
-		/* keyboard controls */
-		{ OSD_KEY_F1, OSD_KEY_F2, OSD_KEY_UP, OSD_KEY_DOWN,
-//		{ OSD_KEY_F1 /* adv. test */, OSD_KEY_F2 /* sub. test */,/* EBM 970519 */
-//		  OSD_KEY_F5 /* slew up */, OSD_KEY_F6 /* slew down */,  /* EBM 970519 */
-		  OSD_KEY_3 /* left coin */, OSD_KEY_4 /* right coin */, /* EBM 970517 */
-		  OSD_KEY_5 /* coin sw */,  OSD_KEY_T /* tilt */ },
-
-		/* joystick controls (not used)  */
-		{ 0, 0, 0, 0, 0, 0, 0, 0 }
-	},
-	{ -1 }  /* end of table */
-};
-
-static struct TrakPort trak_ports[] =
-{
-        { -1 }
-};
-
-/* These are only here to allow user to change the key settings */
-/* Note:  Also need keys for the coin door switches. */
-static struct KEYSet keys[] =
-{
-	/* port, bit num., setting name */
-        { 0, 0, "MOVE UP" },
-        { 0, 1, "MOVE RIGHT" },
-        { 0, 2, "MOVE DOWN" },
-        { 0, 3, "MOVE LEFT" },
-        { 0, 4, "SLOW DRAW" },
-        { 0, 7, "FAST DRAW" },
-        { -1 }
-};
-
-
-/* Qix has no DIP switches */
-static struct DSW qix_dsw[] =
-{
-	{ -1 }
-};
-
+	PORT_START	/* IN1 */
+	PORT_BITX(0x01, IP_ACTIVE_LOW, IPT_SERVICE, "Test Advance", OSD_KEY_F1, IP_JOY_DEFAULT, 0)
+	PORT_BITX(0x02, IP_ACTIVE_LOW, IPT_SERVICE, "Test Next line", OSD_KEY_F2, IP_JOY_DEFAULT, 0)
+	PORT_BITX(0x04, IP_ACTIVE_LOW, IPT_SERVICE, "Test Slew Up", OSD_KEY_F5, IP_JOY_DEFAULT, 0)
+	PORT_BITX(0x08, IP_ACTIVE_LOW, IPT_SERVICE, "Test Slew Down", OSD_KEY_F6, IP_JOY_DEFAULT, 0)
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN3 ) /* Coin switch */
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_TILT )
+INPUT_PORTS_END
 
 
 static struct MachineDriver machine_driver =
@@ -283,6 +275,14 @@ static struct MachineDriver machine_driver =
 			readmem_cpu_video, writemem_cpu_video, 0, 0,
 			ignore_interrupt,
 			1
+		},
+		{
+			CPU_M6802 | CPU_AUDIO_CPU,
+			3680000/4,		/* 0.92 Mhz */
+			3,			/* memory region #3 */
+			readmem_cpu_sound, writemem_cpu_sound, 0, 0,
+			ignore_interrupt,
+			1
 		}
 	},
 	60,					/* frames per second */
@@ -292,24 +292,24 @@ static struct MachineDriver machine_driver =
 
 	/* video hardware */
 	256, 256,				/* screen_width, screen_height */
-	{ 0, 256-1, 0, 256-1 },		        /* struct rectangle visible_area */
+	/* this is the maximum viewable area, as shown by the test mode */
+	{ 3, 253, 2, 252 },		        /* struct rectangle visible_area */
 	0,				/* GfxDecodeInfo * */
 	256,			/* total colors */
 	0,			/* color table length */
 	qix_vh_convert_color_prom,					/* convert color prom routine */
 
-	VIDEO_TYPE_RASTER|VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER|VIDEO_MODIFIES_PALETTE|VIDEO_SUPPORTS_DIRTY,
 	0,					/* vh_init routine */
 	qix_vh_start,				/* vh_start routine */ /* JB 970524 */
 	qix_vh_stop,				/* vh_stop routine */ /* JB 970524 */
 	qix_vh_screenrefresh,		        /* vh_update routine */	/* JB 970524 */
 
 	/* sound hardware */
-	0,					/* pointer to samples */
 	0,					/* sh_init routine */
-	0,					/* sh_start routine */
-	0,					/* sh_stop routine */
-	0					/* sh_update routine */
+	qix_sh_start,			/* sh_start routine */
+	DAC_sh_stop,			/* sh_stop routine */
+	DAC_sh_update			/* sh_update routine */
 };
 
 
@@ -331,11 +331,9 @@ ROM_START( qix_rom )
 	ROM_LOAD( "u18", 0xF000, 0x800, 0x22ae35fa )
 	ROM_LOAD( "u19", 0xF800, 0x800, 0x1bf904ff )
 
-	/* This is temporary space not really used but necessary because MAME
-	 * always throws away memory region 1.
-	 */
 	ROM_REGION(0x800)
-	ROM_OBSOLETELOAD( "u10",  0x0000, 0x0800 )	/* not needed - could be removed */
+	/* empty memory region - not used by the game, but needed bacause the main */
+	/* core currently always frees region #1 after initialization. */
 
 	ROM_REGION(0x10000)	/* 64k for code for the second CPU (Video) */
 	ROM_LOAD(  "u4", 0xC800, 0x800, 0x08bbfc51 )
@@ -345,7 +343,40 @@ ROM_START( qix_rom )
 	ROM_LOAD(  "u8", 0xE800, 0x800, 0xe1c7b84b )
 	ROM_LOAD(  "u9", 0xF000, 0x800, 0xb662095a )
 	ROM_LOAD( "u10", 0xF800, 0x800, 0x559ebf32 )
+
+	ROM_REGION(0x10000) 	/* 64k for code for the third CPU (sound) */
+	ROM_LOAD( "u27", 0xF800, 0x800, 0xdc9c8536 )
 ROM_END
+
+ROM_START( qix2_rom )
+	ROM_REGION(0x10000)	/* 64k for code for the first CPU (Data) */
+	ROM_LOAD( "u12.rmb", 0xC000, 0x800, 0x2ff446f6 )
+	ROM_LOAD( "u13.rmb", 0xC800, 0x800, 0x51a32aeb )
+	ROM_LOAD( "u14.rmb", 0xD000, 0x800, 0xa887b715 )
+	ROM_LOAD( "u15.rmb", 0xD800, 0x800, 0x0c84a5e8 )
+	ROM_LOAD( "u16.rmb", 0xE000, 0x800, 0xcf49e3e5 )
+	ROM_LOAD( "u17.rmb", 0xE800, 0x800, 0x026e58b0 )
+	ROM_LOAD( "u18.rmb", 0xF000, 0x800, 0x5be9ed5f )
+	ROM_LOAD( "u19.rmb", 0xF800, 0x800, 0x83908386 )
+
+	ROM_REGION(0x800)
+	/* empty memory region - not used by the game, but needed bacause the main */
+	/* core currently always frees region #1 after initialization. */
+
+	ROM_REGION(0x10000)	/* 64k for code for the second CPU (Video) */
+	ROM_LOAD(  "u3.rmb", 0xC000, 0x800, 0xfae6cc6e )
+	ROM_LOAD(  "u4.rmb", 0xC800, 0x800, 0xfa03efcb )
+	ROM_LOAD(  "u5.rmb", 0xD000, 0x800, 0x55b90e87 )
+	ROM_LOAD(  "u6.rmb", 0xD800, 0x800, 0xdfabdc37 )
+	ROM_LOAD(  "u7.rmb", 0xE000, 0x800, 0x11800d28 )
+	ROM_LOAD(  "u8.rmb", 0xE800, 0x800, 0x57303416 )
+	ROM_LOAD(  "u9.rmb", 0xF000, 0x800, 0xf875b473 )
+	ROM_LOAD( "u10.rmb", 0xF800, 0x800, 0xd6a50cbb )
+
+	ROM_REGION(0x10000) 	/* 64k for code for the third CPU (sound) */
+	ROM_LOAD( "u27.rmb", 0xF800, 0x800, 0xdc9c8536 )
+ROM_END
+
 
 
 
@@ -388,17 +419,39 @@ struct GameDriver qix_driver =
 {
 	"Qix",
 	"qix",
-	"JOHN BUTLER\nED MUELLER\nAARON GILES",
+	"John Butler\nEd Mueller\nAaron Giles\nMarco Cassili",
 	&machine_driver,
 
 	qix_rom,
 	0, 0,   /* ROM decode and opcode decode functions */
 	0,      /* Sample names */
+	0,	/* sound_prom */
 
-	input_ports, 0, trak_ports, qix_dsw, keys,
+	0/*TBR*/, input_ports, 0/*TBR*/, 0/*TBR*/, 0/*TBR*/,
 
 	0, 0, 0,   /* colors, palette, colortable */
 	ORIENTATION_DEFAULT,
 
 	hiload, hisave	       /* High score load and save */
 };
+
+struct GameDriver qix2_driver =
+{
+	"Qix II (Tournament)",
+	"qix2",
+	"John Butler\nEd Mueller\nAaron Giles\nMarco Cassili",
+	&machine_driver,
+
+	qix2_rom,
+	0, 0,   /* ROM decode and opcode decode functions */
+	0,      /* Sample names */
+	0,	/* sound_prom */
+
+	0/*TBR*/, input_ports, 0/*TBR*/, 0/*TBR*/, 0/*TBR*/,
+
+	0, 0, 0,   /* colors, palette, colortable */
+	ORIENTATION_DEFAULT,
+
+	hiload, hisave	       /* High score load and save */
+};
+

@@ -110,10 +110,6 @@ static struct InputPort input_ports[] =
 	{ -1 }	/* end of table */
 };
 
-static struct TrakPort trak_ports[] =
-{
-        { -1 }
-};
 
 
 static struct KEYSet keys[] =
@@ -122,6 +118,7 @@ static struct KEYSet keys[] =
         { 0, 2, "MOVE LEFT" },
         { 0, 3, "MOVE RIGHT" },
         { 0, 1, "MOVE DOWN" },
+        { 1, 6, "FIRE" },
         { -1 }
 };
 
@@ -214,7 +211,6 @@ static struct MachineDriver machine_driver =
 
 	/* sound hardware */
 	0,
-	0,
 	seicross_sh_start,
 	AY8910_sh_stop,
 	AY8910_sh_update
@@ -261,8 +257,9 @@ struct GameDriver seicross_driver =
 	seicross_rom,
 	0, 0,
 	0,
+	0,	/* sound_prom */
 
-	input_ports, 0, trak_ports, dsw, keys,
+	input_ports, 0, 0/*TBR*/,dsw, keys,
 
 	color_prom, 0, 0,
 	ORIENTATION_DEFAULT,

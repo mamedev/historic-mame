@@ -92,6 +92,7 @@ int panic_vh_start(void)
 		return 1;
 
 	/* initialize the bitmap to our background color */
+
 	fillbitmap(tmpbitmap,Machine->gfx[0]->colortable[0],&Machine->drv->visible_area);
 
 	return 0;
@@ -141,39 +142,148 @@ void panic_videoram_w(int offset,int data)
         	    else col = Machine->gfx[0]->colortable[20+(ColTab & 0x0F)];
             }
 
-		    for (i = 0;i < 8;i++)
-		    {
+            /* Allow Rotate */
 
-			    if (data & 0x01) tmpbitmap->line[y][x] = col;
-			    else tmpbitmap->line[y][x] = Machine->gfx[0]->colortable[0]; /* black */
+            if (Machine->orientation & ORIENTATION_SWAP_XY)
+            {
+				if (!(Machine->orientation & ORIENTATION_FLIP_X))
+					x = 255 - x;
 
-			    y++;
-			    data >>= 1;
-		    }
+			    if (Machine->orientation & ORIENTATION_FLIP_Y)
+                {
+				    osd_mark_dirty(y,x,y+7,x,0);
+
+			        for (i = 0;i < 8;i++)
+			        {
+				        if (data & 0x01) tmpbitmap->line[x][y] = col;
+				        else tmpbitmap->line[x][y] = Machine->gfx[0]->colortable[0]; /* black */
+
+				        y++;
+				        data >>= 1;
+                    }
+                }
+                else
+                {
+				    y = 255 - y;
+				    osd_mark_dirty(y-7,x,y,x,0);
+
+			        for (i = 0;i < 8;i++)
+			        {
+				        if (data & 0x01) tmpbitmap->line[x][y] = col;
+				        else tmpbitmap->line[x][y] = Machine->gfx[0]->colortable[0]; /* black */
+
+				        y--;
+				        data >>= 1;
+                    }
+                }
+            }
+            else
+            {
+            	/* Normal */
+
+				if (Machine->orientation & ORIENTATION_FLIP_X)
+					x = 255 - x;
+
+			    if (!(Machine->orientation & ORIENTATION_FLIP_Y))
+                {
+				    osd_mark_dirty(x,y,x,y+7,0);
+
+			        for (i = 0;i < 8;i++)
+			        {
+				        if (data & 0x01) tmpbitmap->line[y][x] = col;
+				        else tmpbitmap->line[y][x] = Machine->gfx[0]->colortable[0]; /* black */
+
+				        y++;
+				        data >>= 1;
+                    }
+                }
+                else
+                {
+				    y = 255 - y;
+				    osd_mark_dirty(x,y-7,x,y,0);
+
+			        for (i = 0;i < 8;i++)
+			        {
+				        if (data & 0x01) tmpbitmap->line[y][x] = col;
+				        else tmpbitmap->line[y][x] = Machine->gfx[0]->colortable[0]; /* black */
+
+				        y--;
+				        data >>= 1;
+                    }
+                }
+            }
 	    }
         else
         {
           if (offset >= 0x2FC && offset <= 0x2FE) /* Colour Map Registers */
     	    {
-                int x,y,col,ColTab;
+				/* Need to re-colour existing screen! */
+
+				int x,y,col,ColTab;
+               	int ex,ey;
 
                 ColourMap = (RAM[0x42fc]>>7) + (RAM[0x42fd]>>6) + (RAM[0x42fe]>>5);
 
-                for(x=0;x<256;x++) /* Need to re-colour existing screen! */
-		{
-                    for(y=0;y<256;y++)
-                    {
-                        if(tmpbitmap->line[y][x] != Machine->gfx[0]->colortable[0])
+                if (Machine->orientation & ORIENTATION_SWAP_XY)
+                {
+                    for(x=0;x<256;x++)
+				    {
+				    	if (Machine->orientation & ORIENTATION_FLIP_X)
+						    ex = 255 - x;
+                        else
+                        	ex = x;
+
+                        for(y=0;y<256;y++)
+                        {
+					        if (!(Machine->orientation & ORIENTATION_FLIP_Y))
+                            	ey = y;
+                            else
+                            	ey = 255 - y;
+
+                            if(tmpbitmap->line[ex][ey] != Machine->gfx[0]->colortable[0])
                             {
                                 ColTab = RAM[CLT[ColourMap][0] + Band[y / 8] + x / 8 - 2];
 
                                 if (CLT[ColourMap][1] == 1) col = Machine->gfx[0]->colortable[20+(ColTab >> 4)];
                                 else col = Machine->gfx[0]->colortable[20+(ColTab & 0x0F)];
 
-                                tmpbitmap->line[y][x] = col;
+                                tmpbitmap->line[ex][ey] = col;
                             }
+                        }
                     }
                 }
+                else
+                {
+            	    /* Normal */
+
+                    for(x=0;x<256;x++)
+				    {
+				    	if (Machine->orientation & ORIENTATION_FLIP_X)
+						    ex = 255 - x;
+                        else
+                        	ex = x;
+
+                        for(y=0;y<256;y++)
+                        {
+					        if (Machine->orientation & ORIENTATION_FLIP_Y)
+                            	ey = 255 - y;
+                            else
+                            	ey = y;
+
+                            if(tmpbitmap->line[ey][ex] != Machine->gfx[0]->colortable[0])
+                            {
+                                ColTab = RAM[CLT[ColourMap][0] + Band[y / 8] + x / 8 - 2];
+
+                                if (CLT[ColourMap][1] == 1) col = Machine->gfx[0]->colortable[20+(ColTab >> 4)];
+                                else col = Machine->gfx[0]->colortable[20+(ColTab & 0x0F)];
+
+                                tmpbitmap->line[ey][ex] = col;
+                            }
+                        }
+                    }
+                }
+
+			    osd_mark_dirty(0,0,255,255,0);	/* ASG 971015 */
             }
         }
 	}
@@ -195,8 +305,7 @@ void panic_vh_screenrefresh(struct osd_bitmap *bitmap)
 
 	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
 
-	/* Draw the sprites. Note that it is important to draw them exactly in this */
-	/* order, to have the correct priorities. */
+	/* Draw the sprites */
 
 	for (offs = 0;offs < spriteram_size;offs += 4)
 	{

@@ -106,8 +106,6 @@ static struct MemoryWriteAddress writemem[] =
 	{ -1 }  /* end of table */
 };
 
-#if 0
-/* Wrong guesses here 8-) */
 static struct MemoryReadAddress stooges_sound_readmem[] =
 {
 	{ 0x0000, 0x0fff, MRA_RAM },
@@ -125,7 +123,6 @@ struct MemoryWriteAddress stooges_sound_writemem[] =
 	{ 0xe000, 0xffff, MWA_ROM },
 	{ -1 }  /* end of table */
 };
-#endif
 
 
 static struct InputPort input_ports[] =
@@ -172,11 +169,6 @@ static struct InputPort input_ports[] =
 		{ OSD_JOY_UP, OSD_JOY_RIGHT, OSD_JOY_DOWN, OSD_JOY_LEFT, 0, 0, 0, 0 }
 	},
 	{ -1 }  /* end of table */
-};
-
-static struct TrakPort trak_ports[] =
-{
-	{ -1 }
 };
 
 static struct KEYSet keys[] =
@@ -258,9 +250,16 @@ static const struct MachineDriver machine_driver =
 			readmem,writemem,0,0,
 			nmi_interrupt,1
 		},
+		{
+			CPU_M6502 | CPU_AUDIO_CPU ,
+			3579545/4,
+			2,             /* memory region #2 */
+			stooges_sound_readmem,stooges_sound_writemem,0,0,
+			gottlieb_sh_interrupt,1
+		}
 	},
 	60,     /* frames / second */
-	1,	/* single CPU, no need for interleaving */
+	10,	/* 10 CPU slices per frame - enough for the sound CPU to read all commands */
 	0,      /* init machine */
 
 	/* video hardware */
@@ -276,7 +275,6 @@ static const struct MachineDriver machine_driver =
 	gottlieb_vh_screenrefresh,
 
 	/* sound hardware */
-	0,
 	0,
 	gottlieb_sh_start,
 	gottlieb_sh_stop,
@@ -299,8 +297,7 @@ ROM_START( stooges_rom )
 	ROM_LOAD( "GV113FG0", 0x6000, 0x2000, 0xa2b57805 )       /* sprites */
 
 	ROM_REGION(0x10000)      /* 64k for sound cpu */
-//      ROM_LOAD( "DROM", 0xe000, 0x2000, 0x3aa5d107 )
-//      ROM_RELOAD(0x6000, 0x2000) /* A15 not decoded ?? */
+	ROM_LOAD( "DROM1", 0xe000, 0x2000, 0x3aa5d107 )
 ROM_END
 
 static int hiload(void)
@@ -337,8 +334,9 @@ struct GameDriver stooges_driver =
 	stooges_rom,
 	0, 0,   /* rom decode and opcode decode functions */
 	0,
+	0,	/* sound_prom */
 
-	input_ports, 0, trak_ports, dsw, keys,
+	input_ports, 0, 0/*TBR*/,dsw, keys,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,

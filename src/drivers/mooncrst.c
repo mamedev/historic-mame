@@ -88,10 +88,6 @@ static struct InputPort input_ports[] =
 	{ -1 }	/* end of table */
 };
 
-static struct TrakPort trak_ports[] =
-{
-        { -1 }
-};
 
 
 static struct KEYSet keys[] =
@@ -173,17 +169,6 @@ static unsigned char fantazia_color_prom[] =
 	0x00,0xC0,0xB8,0x1F,0x00,0x1E,0x79,0x0F,0x00,0xFE,0x07,0xF8,0x00,0x7E,0x07,0xC6
 };
 
-static unsigned char samples[32*2] =
-{
-   0x88, 0x88, 0x88, 0x88, 0xaa, 0xaa, 0xaa, 0xaa,
-   0xcc, 0xcc, 0xcc, 0xcc, 0xee, 0xee, 0xee, 0xee,
-   0x11, 0x11, 0x11, 0x11, 0x22, 0x22, 0x22, 0x22,
-   0x44, 0x44, 0x44, 0x44, 0x66, 0x66, 0x66, 0x66,
-   0x44, 0x44, 0x44, 0x44, 0x44, 0x44, 0x44, 0x44,
-   0x44, 0x44, 0x44, 0x44, 0x44, 0x44, 0x44, 0x44,
-   0xcc, 0xcc, 0xcc, 0xcc, 0xcc, 0xcc, 0xcc, 0xcc,
-   0xcc, 0xcc, 0xcc, 0xcc, 0xcc, 0xcc, 0xcc, 0xcc
-};
 
 
 static struct MachineDriver machine_driver =
@@ -215,7 +200,6 @@ static struct MachineDriver machine_driver =
 	galaxian_vh_screenrefresh,
 
 	/* sound hardware */
-	samples,
 	mooncrst_sh_init,
 	mooncrst_sh_start,
 	mooncrst_sh_stop,
@@ -312,9 +296,9 @@ ROM_END
 
 static const char *mooncrst_sample_names[] =
 {
+	"*galaxian",
 	"shot.sam",
-        "death.sam",
-        "backgrnd.sam",
+	"death.sam",
 	0	/* end of array */
 };
 
@@ -450,8 +434,9 @@ struct GameDriver mooncrst_driver =
 	mooncrst_rom,
 	moonqsr_decode, 0,
 	mooncrst_sample_names,
+	0,	/* sound_prom */
 
-	input_ports, 0, trak_ports, dsw, keys,
+	input_ports, 0, 0/*TBR*/,dsw, keys,
 
 	mooncrst_color_prom, 0, 0,
 	ORIENTATION_ROTATE_90,
@@ -469,8 +454,9 @@ struct GameDriver mooncrsg_driver =
 	mooncrsg_rom,
 	0, 0,
 	mooncrst_sample_names,
+	0,	/* sound_prom */
 
-	input_ports, 0, trak_ports, dsw, keys,
+	input_ports, 0, 0/*TBR*/,dsw, keys,
 
 	mooncrst_color_prom, 0, 0,
 	ORIENTATION_ROTATE_90,
@@ -488,8 +474,9 @@ struct GameDriver mooncrsb_driver =
 	mooncrsb_rom,
 	0, 0,
 	mooncrst_sample_names,
+	0,	/* sound_prom */
 
-	input_ports, 0, trak_ports, dsw, keys,
+	input_ports, 0, 0/*TBR*/,dsw, keys,
 
 	mooncrst_color_prom, 0, 0,
 	ORIENTATION_ROTATE_90,
@@ -507,8 +494,9 @@ struct GameDriver fantazia_driver =
 	fantazia_rom,
 	0, 0,
 	mooncrst_sample_names,
+	0,	/* sound_prom */
 
-	input_ports, 0, trak_ports, dsw, keys,
+	input_ports, 0, 0/*TBR*/,dsw, keys,
 
 	fantazia_color_prom, 0, 0,
 	ORIENTATION_ROTATE_90,

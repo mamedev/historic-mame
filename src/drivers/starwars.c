@@ -10,48 +10,6 @@ Current e-mail contact address:  sjb@ohm.york.ac.uk
 
 Release 2.0 (6 August 1997)
 
-***************************************************************************
-
-Comments:
-
-Release 2.0:
-
-My first contribution to MAME as well.  Added Pokey Sound Support.
-Seems to cut out some music prematurely, when there are other sounds going,
-but otherwise ok.  Attract mode music may not work quite right either.
-No speech yet.
-
-Release 1.0:
-
-This is the first release of my Star Wars driver for MAME. This is also my
-first ever driver for MAME!
-
-Known Bugs/Issues:
-
-1) The vector generator I'm using sometimes draws lines in the wrong place
-when in the trench sequence (you'll see what I mean).  I think this is due to
-a wraparound effect somewhere in the vector code and should be fixed soon.
-
-2) On the Death Star surface run the ship banks in the correct direction
-in response to left/right movements, but the surface moves in the other
-direction.  I'm a bit puzzled by this, maybe I've got buggy ROMS?
-
-3) No mouse support yet
-
-4) No sound support yet
-
-5) DIP setting in MAME doesn't work, but the game has internal DIP switch
-setting which does work, so this doesn't really matter.  Press and hold
-the SELF TEST key, and accounting info is shown. Still holding that key, press
-AUX COIN, and the settings menu appears.
-
-6) NovRAM, Mathbox self tests fail.  This doesn't matter, they work
-properley for the purposes of everything but the self-test.
-
-7) PAUSE doesn't clear itself when un-paused
-
-That's all I can think of at the moment
-
 ***************************************************************************/
 
 #include "driver.h"
@@ -145,8 +103,7 @@ static struct MemoryWriteAddress writemem2[] =
 	{ 0x1000, 0x107f, MWA_RAM }, /* 6532 ram */
 	{ 0x1080, 0x109f, m6532_w },
 
-	{ 0x1800, 0x181f, starwars_pokey_sound_w },
-	{ 0x1820, 0x183f, starwars_pokey_ctl_w },
+	{ 0x1800, 0x183f, quad_pokey_w },
 
 	{ 0x2000, 0x27ff, MWA_RAM }, /* program RAM */
 	{ 0x4000, 0x7fff, MWA_ROM }, /* sound rom */
@@ -157,10 +114,10 @@ static struct MemoryWriteAddress writemem2[] =
 
 INPUT_PORTS_START( input_ports )
 	PORT_START	/* IN0 */
-	PORT_BIT ( 0x01, IP_ACTIVE_LOW, IPT_COIN1)
-	PORT_BIT ( 0x02, IP_ACTIVE_LOW, IPT_COIN2)
+	PORT_BIT ( 0x01, IP_ACTIVE_LOW, IPT_COIN2)
+	PORT_BIT ( 0x02, IP_ACTIVE_LOW, IPT_COIN1)
 	PORT_BIT ( 0x04, IP_ACTIVE_LOW, IPT_COIN3)
-	PORT_BITX( 0x08, IP_ACTIVE_LOW, IPT_TILT, "Slam", OSD_KEY_S, IP_JOY_NONE, 0 )
+	PORT_BIT ( 0x08, IP_ACTIVE_LOW, IPT_TILT )
 	PORT_BITX(    0x10, 0x10, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE, 0 )
 	PORT_DIPSETTING(    0x10, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
@@ -211,10 +168,10 @@ INPUT_PORTS_START( input_ports )
 	PORT_BIT ( 0xfc, IP_ACTIVE_HIGH, IPT_UNKNOWN)
 
 	PORT_START	/* IN4 */
-	PORT_ANALOG ( 0xff, 0x7f, IPT_AD_STICK_Y, 100, 0, 0, 255 )
+	PORT_ANALOG ( 0xff, 0x80, IPT_AD_STICK_Y, 100, 0, 0, 255 )
 
 	PORT_START	/* IN5 */
-	PORT_ANALOG ( 0xff, 0x7f, IPT_AD_STICK_X, 100, 0, 0, 255 )
+	PORT_ANALOG ( 0xff, 0x80, IPT_AD_STICK_X, 100, 0, 0, 255 )
 INPUT_PORTS_END
 
 
@@ -297,11 +254,10 @@ static struct MachineDriver machine_driver =
 	avg_screenrefresh,			/* Do a screen refresh */
 
 	/* sound hardware */
-	0,
 	0,							/* Initialise audio hardware */
 	starwars_sh_start,			/* Start audio  */
-	pokey_sh_stop,				/* Stop audio   */
-	pokey_sh_update				/* Update audio */
+	starwars_sh_stop,				/* Stop audio   */
+	starwars_sh_update				/* Update audio */
 };
 
 
@@ -338,12 +294,12 @@ ROM_START( starwars_rom )
 	ROM_LOAD( "136021.112",0x0800,0x0400, 0xcb5ab0da ) /* PROM 2 */
 	ROM_LOAD( "136021.113",0x0c00,0x0400, 0x4d20bcd2 ) /* PROM 3 */
 
-	ROM_REGION(0x0400)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "136021.113",0x0000,0x0400, 0x4d20bcd2 ) /* not needed - could be removed */
+	ROM_REGION(0x1000)      /* temporary space for graphics (disposed after conversion) */
+	/* empty memory region - not used by the game, but needed bacause the main */
+	/* core currently always frees region #1 after initialization. */
 
 	/* Sound ROMS */
 	ROM_REGION(0x10000)     /* Really only 32k, but it looks like 64K */
-
 	ROM_LOAD("136021.107",0x4000,0x2000, 0xc0006994) /* Sound ROM 0 */
 	ROM_RELOAD(           0xc000,0x2000) /* Copied again for */
 	ROM_LOAD("136021.208",0x6000,0x2000, 0xa000bc38) /* Sound ROM 0 */
@@ -356,13 +312,13 @@ ROM_END
 #if(EMPIRE==1)
         ROM_REGION(0x14000)     /* 64k for code, and another 16k on the end for banked ROMS */
 
-        ROM_OBSOLETELOAD( "136031.111", 0x3000, 0x1000 )    /* 3000-3fff is 4k vector rom */
+        ROM_LOAD( "136031.111", 0x3000, 0x1000, 0 )    /* 3000-3fff is 4k vector rom */
 
-/* Expansion board location   ROM_LOAD( "136021.102", 0x8000, 0x2000 )   8k ROM 1 bank */
-        ROM_OBSOLETELOAD( "136031.102", 0xa000, 0x2000 ) /*  8k ROM 2 bank */
-        ROM_OBSOLETELOAD( "136021.103", 0xc000, 0x2000 ) /*  8k ROM 3 bank */
-        ROM_OBSOLETELOAD( "136031.104", 0xe000, 0x2000 ) /*  8k ROM 4 bank */
-        ROM_OBSOLETELOAD( "136031.101", 0x10000, 0x4000 )   /* Paged ROM 0 */
+/* Expansion board location   ROM_LOAD( "136021.102", 0x8000, 0x2000, 0 )   8k ROM 1 bank */
+        ROM_LOAD( "136031.102", 0xa000, 0x2000, 0 ) /*  8k ROM 2 bank */
+        ROM_LOAD( "136021.103", 0xc000, 0x2000, 0 ) /*  8k ROM 3 bank */
+        ROM_LOAD( "136031.104", 0xe000, 0x2000, 0 ) /*  8k ROM 4 bank */
+        ROM_LOAD( "136031.101", 0x10000, 0x4000, 0 )   /* Paged ROM 0 */
 ROM_END
 #endif
 
@@ -421,6 +377,7 @@ struct GameDriver starwars_driver =
 	starwars_rom,
 	translate_proms, 0,  /* ROM decryption, Opcode decryption */
 	0,     /* Sample Array (optional) */
+	0,	/* sound_prom */
 
 	0/*TBR*/, input_ports, 0/*TBR*/, 0/*TBR*/, 0/*TBR*/,
 	color_prom, /* Colour PROM */

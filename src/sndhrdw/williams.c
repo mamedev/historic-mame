@@ -1,22 +1,17 @@
 #include "driver.h"
 #include "sndhrdw\generic.h"
 #include "M6808.h"
-
+#include "dac.h"
 
 unsigned char *williams_dac;
 
-
-#define AUDIO_CONV(A) (A+0x80)
-
-#define TARGET_EMULATION_RATE 44100     /* will be adapted to be a multiple of buffer_len */
-static int emulation_rate;
-static int buffer_len;
-static unsigned char *buffer;
-static int sample_pos;
-
-static unsigned char amplitude_DAC;
-
-
+static struct DACinterface DAinterface =
+{
+	1,
+	441000,
+	{255,255 },
+	{  1,  1 }
+};
 
 /* #define HARDWARE_SOUND */
 
@@ -63,50 +58,24 @@ void williams_sh_w(int offset,int data)
 
 void williams_digital_out_w(int offset,int data)
 {
-	int totcycles,leftcycles,newpos;
-
-
 	*williams_dac = data;
-
-	totcycles = Machine->drv->cpu[1].cpu_clock / Machine->drv->frames_per_second;
-	leftcycles = cpu_getfcount();
-	newpos = buffer_len * (totcycles-leftcycles) / totcycles;
-
-	while (sample_pos < newpos-1)
-	    buffer[sample_pos++] = amplitude_DAC;
-
-    amplitude_DAC=AUDIO_CONV(data);
-
-    buffer[sample_pos++] = amplitude_DAC;
+	DAC_data_w(0,data);
 }
 
 
 
 int williams_sh_start(void)
 {
-    buffer_len = TARGET_EMULATION_RATE / Machine->drv->frames_per_second;
-    emulation_rate = buffer_len * Machine->drv->frames_per_second;
-
-    if ((buffer = malloc(buffer_len)) == 0)
-		return 1;
-    memset(buffer,0x80,buffer_len);
-
-    sample_pos = 0;
-
+	if( DAC_sh_start(&DAinterface) ) return 1;
 	return 0;
 }
 
 void williams_sh_stop(void)
 {
-    free(buffer);
+	DAC_sh_stop();
 }
 
 void williams_sh_update(void)
 {
-	while (sample_pos < buffer_len)
-		buffer[sample_pos++] = amplitude_DAC;
-
-	osd_play_streamed_sample(0,buffer,buffer_len,emulation_rate,255);
-
-	sample_pos=0;
+	DAC_sh_update();
 }

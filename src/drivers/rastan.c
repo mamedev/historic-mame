@@ -1,9 +1,20 @@
 /***************************************************************************
+
+
 ***************************************************************************/
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "sndhrdw/generic.h"
+#include "sndhrdw/2151intf.h"
+
+extern int rastan_ram_size;
+extern int rastan_paletteram_size;
+extern int rastan_videoram1_size;
+extern int rastan_videoram2_size;
+extern int rastan_videoram3_size;
+extern int rastan_videoram4_size;
+extern int rastan_spriteram_size;
 
 void rastan_paletteram_w(int offset,int data);
 int rastan_paletteram_r(int offset);
@@ -21,10 +32,8 @@ int rastan_videoram4_r(int offset);
 void rastan_scrollY_w(int offset,int data);
 void rastan_scrollX_w(int offset,int data);
 
-void rastan_ram_w(int offset,int data);
-int rastan_ram_r(int offset);
-
 int rastan_interrupt(void);
+int rastan_s_interrupt(void);
 
 void rastan_background_w(int offset,int data);
 void rastan_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
@@ -33,166 +42,250 @@ void rastan_vh_screenrefresh(struct osd_bitmap *bitmap);
 int  rastan_vh_start(void);
 void rastan_vh_stop(void);
 
-int rastan_s_interrupt(void);
 int rastan_input_r (int offset);
 
 void rastan_sound_w(int offset,int data);
 int rastan_sound_r(int offset);
 
+void rastan_speedup_w(int offset,int data);
+int rastan_speedup_r(int offset);
 
-int rYMport(int offset);
-int rYMdata(int offset);
-void wYMport(int offset,int data);
-void wYMdata(int offset,int data);
 
 int r_rd_a000(int offset);
 int r_rd_a001(int offset);
 void r_wr_a000(int offset,int data);
 void r_wr_a001(int offset,int data);
 
-/*void osd_ym2151_update(void); */
-
 int  rastan_sh_init(const char *gamename);
+int  rastan_sh_start(void);
 void r_wr_b000(int offset,int data);
 void r_wr_c000(int offset,int data);
 void r_wr_d000(int offset,int data);
 
-void rastan_machine_init(void);
 
-/* ASG 971010 -- converted to 4-byte memory access granularity */
 static struct MemoryReadAddress rastan_readmem[] =
 {
-	{ 0x200000, 0x20ffff, rastan_paletteram_r },
-	{ 0xc00000, 0xc03fff, rastan_videoram1_r},
-	{ 0xc04000, 0xc07fff, rastan_videoram2_r},
-	{ 0xc08000, 0xc0bfff, rastan_videoram3_r},
-	{ 0xc0c000, 0xc0ffff, rastan_videoram4_r},
-	{ 0xd00000, 0xd0ffff, rastan_spriteram_r},
-
-	{ 0x3e0000, 0x3e0003, rastan_sound_r },
-
-	{ 0x390000, 0x39000f, rastan_input_r },
-
-	{ 0x10c000, 0x10ffff, MRA_BANK1 },	/* RAM */
 	{ 0x000000, 0x05ffff, MRA_ROM },
+//	{ 0x10dc10, 0x10dc13, rastan_speedup_r },
+	{ 0x10c000, 0x10ffff, MRA_BANK1, 0, &rastan_ram_size },	/* RAM */
+	{ 0x200000, 0x20ffff, rastan_paletteram_r, 0, &rastan_paletteram_size },
+	{ 0x3e0000, 0x3e0003, rastan_sound_r },
+	{ 0x390000, 0x39000f, rastan_input_r },
+	{ 0xc00000, 0xc03fff, rastan_videoram1_r,  0, &rastan_videoram1_size },
+	{ 0xc04000, 0xc07fff, MRA_BANK2,  0, &rastan_videoram2_size },
+	{ 0xc08000, 0xc0bfff, rastan_videoram3_r,  0, &rastan_videoram3_size },
+	{ 0xc0c000, 0xc0ffff, MRA_BANK3,  0, &rastan_videoram4_size },
+	{ 0xd00000, 0xd0ffff, MRA_BANK4,  0, &rastan_spriteram_size },
 	{ -1 }  /* end of table */
 };
 
-/* ASG 971010 -- converted to 4-byte memory access granularity */
 static struct MemoryWriteAddress rastan_writemem[] =
 {
+	{ 0x000000, 0x05ffff, MWA_ROM },
+//	{ 0x10dc10, 0x10dc13, rastan_speedup_w },
+	{ 0x10c000, 0x10ffff, MWA_BANK1 },
 	{ 0x200000, 0x20ffff, rastan_paletteram_w },
-	{ 0xc00000, 0xc03fff, rastan_videoram1_w, &videoram, &videoram_size }, /*this is just a fake */
-	{ 0xc04000, 0xc07fff, rastan_videoram2_w },
-	{ 0xc08000, 0xc0bfff, rastan_videoram3_w },
-	{ 0xc0c000, 0xc0ffff, rastan_videoram4_w },
-
-	{ 0xc20000, 0xc20003, rastan_scrollY_w },  /* scroll Y  1st.w plane1  2nd.w plane2 */
-	{ 0xc40000, 0xc40003, rastan_scrollX_w },  /* scroll X  1st.w plane1  2nd.w plane2 */
-	{ 0xd00000, 0xd0ffff, rastan_spriteram_w },
-
-	{ 0x3e0000, 0x3e0003, rastan_sound_w },
-
-	{ 0xc50000, 0xc50003, MWA_NOP },     /* 0 only (rarely)*/
 	{ 0x350008, 0x35000b, MWA_NOP },     /* 0 only (often) ? */
 	{ 0x380000, 0x380003, MWA_NOP },     /*0000,0060,0063,0063b   ? */
 	{ 0x3c0000, 0x3c0003, MWA_NOP },     /*0000,0020,0063,0992,1753 (very often) watchdog? */
-	{ 0x10c000, 0x10ffff, MWA_BANK1 },
-	{ 0x000000, 0x05ffff, MWA_ROM },
+	{ 0x3e0000, 0x3e0003, rastan_sound_w },
+	{ 0xc00000, 0xc03fff, rastan_videoram1_w }, /*this is just a fake */
+	{ 0xc04000, 0xc07fff, MWA_BANK2 },
+	{ 0xc08000, 0xc0bfff, rastan_videoram3_w },
+	{ 0xc0c000, 0xc0ffff, MWA_BANK3 },
+	{ 0xc20000, 0xc20003, rastan_scrollY_w },  /* scroll Y  1st.w plane1  2nd.w plane2 */
+	{ 0xc40000, 0xc40003, rastan_scrollX_w },  /* scroll X  1st.w plane1  2nd.w plane2 */
+	{ 0xc50000, 0xc50003, MWA_NOP },     /* 0 only (rarely)*/
+	{ 0xd00000, 0xd0ffff, MWA_BANK4 },
 	{ -1 }  /* end of table */
 };
-
-
 
 
 static struct MemoryReadAddress rastan_s_readmem[] =
 {
 	{ 0x0000, 0x7fff, MRA_ROM },
 	{ 0x8000, 0x8fff, MRA_RAM },
-        { 0x9000, 0x9000, rYMport },
-        { 0x9001, 0x9001, rYMdata },
-        { 0x9002, 0x9100, MRA_RAM },
-        { 0xa000, 0xa000, r_rd_a000 },
-        { 0xa001, 0xa001, r_rd_a001 },
+	{ 0x9001, 0x9001, YM2151_status_port_0_r },
+	{ 0x9002, 0x9100, MRA_RAM },
+	{ 0xa000, 0xa000, r_rd_a000 },
+	{ 0xa001, 0xa001, r_rd_a001 },
 	{ -1 }  /* end of table */
 };
 
 static struct MemoryWriteAddress rastan_s_writemem[] =
 {
-	{ 0x8000, 0x8fff, MWA_RAM },
-        { 0xa000, 0xa000, r_wr_a000 },
-        { 0xa001, 0xa001, r_wr_a001 },
-	{ 0x9000, 0x9000, wYMport },
-	{ 0x9001, 0x9001, wYMdata },
-        { 0xb000, 0xb000, r_wr_b000 },
-        { 0xc000, 0xc000, r_wr_c000 },
-        { 0xd000, 0xd000, r_wr_d000 },
 	{ 0x0000, 0x7fff, MWA_ROM },
+	{ 0x8000, 0x8fff, MWA_RAM },
+	{ 0x9000, 0x9000, YM2151_register_port_0_w },
+	{ 0x9001, 0x9001, YM2151_data_port_0_w },
+	{ 0xa000, 0xa000, r_wr_a000 },
+	{ 0xa001, 0xa001, r_wr_a001 },
+	{ 0xb000, 0xb000, r_wr_b000 },
+	{ 0xc000, 0xc000, r_wr_c000 },
+	{ 0xd000, 0xd000, r_wr_d000 },
 	{ -1 }  /* end of table */
 };
 
 
 
+INPUT_PORTS_START( rastan_input_ports )
+	PORT_START	/* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
-static struct InputPort input_ports[] =
-{
-	{	/* IN0 */
-		0xff,
-		{ OSD_KEY_UP, OSD_KEY_DOWN, OSD_KEY_LEFT, OSD_KEY_RIGHT,
-				OSD_KEY_LCONTROL, OSD_KEY_ALT, 0, 0 },
-		{ 0, 0, 0, 0, 0, 0, 0, 0 }
-	},
-	{	/* IN1 */
-		0x00,
-		{ 0, 0, 0, 0, 0, 0, 0, 0 },
-		{ 0, 0, 0, 0, 0, 0, 0, 0 }
-	},
-	{	/* IN2 */
-		0xff-0x40-0x20 -0x80,
-		{ OSD_KEY_7, 0, OSD_KEY_6, OSD_KEY_1, OSD_KEY_2, OSD_KEY_3, OSD_KEY_4, OSD_KEY_8 },
-		{ 0, 0, 0, 0, 0, 0, 0, 0 }
-	},
-	{	/* DSW1 */
-		0xff,
-		{ 0, 0, 0, 0, 0, 0, 0, 0 },
-		{ 0, 0, 0, 0, 0, 0, 0, 0 }
-	},
-	{	/* DSW2 */
-		0xff,
-		{ 0, 0, 0, 0, 0, 0, 0, 0 },
-		{ 0, 0, 0, 0, 0, 0, 0, 0 }
-	},
-	{ -1 }  /* end of table */
-};
+	PORT_START	/* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_COCKTAIL )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
-static struct TrakPort trak_ports[] =
-{
-        { -1 }
-};
+	PORT_START	/* IN2 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN3 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_TILT )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_COIN1 )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_COIN2 )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 
-static struct KEYSet keys[] =
-{
-        { 0, 0, "MOVE UP" },
-        { 0, 2, "MOVE LEFT"  },
-        { 0, 3, "MOVE RIGHT" },
-        { 0, 1, "MOVE DOWN" },
-        { 0, 4, "FIRE" },
-        { 0, 5, "WARP" },
-        { -1 }
-};
+	PORT_START	/* DSW0 */
+	PORT_DIPNAME( 0x01, 0x00, "Cabinet", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "Upright" )
+	PORT_DIPSETTING(    0x01, "Cocktail" )
+	PORT_DIPNAME( 0x02, 0x02, "Flip Screen", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x02, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_BITX(    0x04, 0x04, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE, 0 )
+	PORT_DIPSETTING(    0x04, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x08, 0x08, "Unknown 1", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x08, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x30, 0x30, "Coin A", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "4 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x10, "3 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x20, "2 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x30, "1 Coin/1 Credit" )
+	PORT_DIPNAME( 0xc0, 0xc0, "Coin B", IP_KEY_NONE )
+	PORT_DIPSETTING(    0xc0, "1 Coin/2 Credits" )
+	PORT_DIPSETTING(    0x80, "1 Coin/3 Credits" )
+	PORT_DIPSETTING(    0x40, "1 Coin/4 Credits" )
+	PORT_DIPSETTING(    0x00, "1 Coin/6 Credits" )
 
+	PORT_START	/* DSW1 */
+	PORT_DIPNAME( 0x03, 0x03, "Difficulty", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x02, "Easy" )
+	PORT_DIPSETTING(    0x03, "Medium" )
+	PORT_DIPSETTING(    0x01, "Hard" )
+	PORT_DIPSETTING(    0x00, "Hardest" )
+	PORT_DIPNAME( 0x0c, 0x0c, "Bonus Life", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x0c, "100000" )
+	PORT_DIPSETTING(    0x08, "150000" )
+	PORT_DIPSETTING(    0x04, "200000" )
+	PORT_DIPSETTING(    0x00, "250000" )
+	PORT_DIPNAME( 0x30, 0x30, "Lives", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x30, "3" )
+	PORT_DIPSETTING(    0x20, "4" )
+	PORT_DIPSETTING(    0x10, "5" )
+	PORT_DIPSETTING(    0x00, "6" )
+	PORT_DIPNAME( 0x40, 0x40, "Allow Continue", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "No" )
+	PORT_DIPSETTING(    0x40, "Yes" )
+	PORT_DIPNAME( 0x80, 0x80, "Unknown 2", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x80, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+INPUT_PORTS_END
 
-static struct DSW dsw[] =
-{
-	{ 3, 0x04, "TEST MODE", { "ON", "OFF" } },
-	{ 4, 0x03, "DIFFICULTY", { "HARDEST", "DIFFICULT", "EASIEST", "EASY" } },
-		/* not a mistake, EASIEST and EASY are swapped */
-	{ 4, 0x0c, "BONUS PLAYER", { "250 000 PTS", "200 000 PTS", "150 000 PTS", "100 000 PTS" } },
-	{ 4, 0x30, "LIVES", { "6", "5", "4", "3" } },
-	{ 4, 0x40, "CONTINUE MODE", { "OFF", "ON" } },
-	{ -1 }
-};
+/* same as rastan, coinage is different */
+INPUT_PORTS_START( rastsaga_input_ports )
+	PORT_START	/* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_4WAY )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_4WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_4WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
+	PORT_START	/* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_COCKTAIL )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START	/* IN2 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN3 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_TILT )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_COIN1 )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_COIN2 )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+
+	PORT_START	/* DSW0 */
+	PORT_DIPNAME( 0x01, 0x00, "Cabinet", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "Upright" )
+	PORT_DIPSETTING(    0x01, "Cocktail" )
+	PORT_DIPNAME( 0x02, 0x02, "Flip Screen", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x02, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_BITX(    0x04, 0x04, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE, 0 )
+	PORT_DIPSETTING(    0x04, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x08, 0x08, "Unknown 1", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x08, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x30, 0x30, "Coin A", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x10, "2 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x30, "1 Coin/1 Credit" )
+	PORT_DIPSETTING(    0x00, "2 Coins/3 Credits" )
+	PORT_DIPSETTING(    0x20, "1 Coin/2 Credits" )
+	PORT_DIPNAME( 0xc0, 0xc0, "Coin B", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x40, "2 Coins/1 Credit" )
+	PORT_DIPSETTING(    0xc0, "1 Coin/1 Credit" )
+	PORT_DIPSETTING(    0x00, "2 Coins/3 Credits" )
+	PORT_DIPSETTING(    0x80, "1 Coin/2 Credits" )
+
+	PORT_START	/* DSW1 */
+	PORT_DIPNAME( 0x03, 0x03, "Difficulty", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x02, "Easy" )
+	PORT_DIPSETTING(    0x03, "Medium" )
+	PORT_DIPSETTING(    0x01, "Hard" )
+	PORT_DIPSETTING(    0x00, "Hardest" )
+	PORT_DIPNAME( 0x0c, 0x0c, "Bonus Life", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x0c, "100000" )
+	PORT_DIPSETTING(    0x08, "150000" )
+	PORT_DIPSETTING(    0x04, "200000" )
+	PORT_DIPSETTING(    0x00, "250000" )
+	PORT_DIPNAME( 0x30, 0x30, "Lives", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x30, "3" )
+	PORT_DIPSETTING(    0x20, "4" )
+	PORT_DIPSETTING(    0x10, "5" )
+	PORT_DIPSETTING(    0x00, "6" )
+	PORT_DIPNAME( 0x40, 0x40, "Allow Continue", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "No" )
+	PORT_DIPSETTING(    0x40, "Yes" )
+	PORT_DIPNAME( 0x80, 0x80, "Unknown 2", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x80, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+INPUT_PORTS_END
 
 
 static struct GfxLayout spritelayout1 =
@@ -241,15 +334,15 @@ static struct GfxLayout fakelayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x00000, &spritelayout1,  0, 0x50 },	/* sprites 8x8*/
-	{ 1, 0x20000, &spritelayout1,  0, 0x50 },	/* sprites 8x8*/
-	{ 1, 0x40000, &spritelayout1,  0, 0x50 },	/* sprites 8x8*/
-	{ 1, 0x60000, &spritelayout1,  0, 0x50 },	/* sprites 8x8*/
-	{ 1, 0x80000, &spritelayout2,  0, 0x50 },	/* sprites 16x16*/
-	{ 1, 0xa0000, &spritelayout2,  0, 0x50 },	/* sprites 16x16*/
-	{ 1, 0xC0000, &spritelayout2,  0, 0x50 },	/* sprites 16x16*/
-	{ 1, 0xE0000, &spritelayout2,  0, 0x50 },	/* sprites 16x16*/
-	{ 0, 0,      &fakelayout,    0x50*16, 0xff },
+	{ 1, 0x00000, &spritelayout1,  0, 0x80 },	/* sprites 8x8*/
+	{ 1, 0x20000, &spritelayout1,  0, 0x80 },	/* sprites 8x8*/
+	{ 1, 0x40000, &spritelayout1,  0, 0x80 },	/* sprites 8x8*/
+	{ 1, 0x60000, &spritelayout1,  0, 0x80 },	/* sprites 8x8*/
+	{ 1, 0x80000, &spritelayout2,  0, 0x80 },	/* sprites 16x16*/
+	{ 1, 0xa0000, &spritelayout2,  0, 0x80 },	/* sprites 16x16*/
+	{ 1, 0xC0000, &spritelayout2,  0, 0x80 },	/* sprites 16x16*/
+	{ 1, 0xE0000, &spritelayout2,  0, 0x80 },	/* sprites 16x16*/
+	{ 0, 0,      &fakelayout,    0x80*16, 0xff },
 	{ -1 } /* end of array */
 };
 
@@ -276,17 +369,17 @@ static struct MachineDriver machine_driver =
 			4000000,	/* 4 Mhz */
 			2,
 			rastan_s_readmem,rastan_s_writemem,0,0,
-			rastan_s_interrupt,4
+			ignore_interrupt,1
 		}
 	},
 	60,
 	10,	/* 10 CPU slices per frame - enough for the sound CPU to read all commands */
-	rastan_machine_init,
+	0,
 
 	/* video hardware */
 	40*8, 30*8, { 0*8, 40*8-1, 0*8, 30*8-1 },
 	gfxdecodeinfo,
-	256,0x50*16+256, /* looking on palette it seems that RASTAN uses 0x0-0x4f color schemes 16 colors each*/
+	256,0x80*16+256, /* looking on palette it seems that RASTAN uses 0x0-0x4f color schemes 16 colors each*/
 	rastan_vh_convert_color_prom,
 
 	VIDEO_TYPE_RASTER,
@@ -296,11 +389,10 @@ static struct MachineDriver machine_driver =
 	rastan_vh_screenrefresh,
 
 	/* sound hardware */
-	0,
 	rastan_sh_init,
-	0, //rastan_sh_start,
-	0, //AY8910_sh_stop,
-	0  //osd_ym2151_update  //AY8910_sh_update
+	rastan_sh_start,
+	YM2151_sh_stop,
+	YM2151_sh_update,
 };
 
 
@@ -312,7 +404,6 @@ static struct MachineDriver machine_driver =
 ***************************************************************************/
 ROM_START( rastan_rom )
 	ROM_REGION(0x60000)	/* 6*64k for 68000 code */
-/* ASG 970926 -- switched over to ROM_LOAD_EVEN/ROM_LOAD_ODD */
 	ROM_LOAD_EVEN( "IC19_38.bin", 0x00000, 0x10000, 0x7407497b )
 	ROM_LOAD_ODD ( "IC07_37.bin", 0x00000, 0x10000, 0x7938d6ce )
 	ROM_LOAD_EVEN( "IC20_40.bin", 0x20000, 0x10000, 0xb7e92d83 )
@@ -347,7 +438,6 @@ ROM_END
 
 ROM_START( rastsaga_rom )
 	ROM_REGION(0x60000)	/* 6*64k for 68000 code */
-/* ASG 970926 -- switched over to ROM_LOAD_EVEN/ROM_LOAD_ODD */
 	ROM_LOAD_EVEN( "IC19_38.bin", 0x00000, 0x10000, 0x7428495a )
 	ROM_LOAD_ODD ( "IC07_37.bin", 0x00000, 0x10000, 0x7632da3c )
 	ROM_LOAD_EVEN( "IC20_40.bin", 0x20000, 0x10000, 0x092456b0 )
@@ -386,14 +476,15 @@ struct GameDriver rastan_driver =
 {
 	"RASTAN",
 	"rastan",
-	"JAREK BURCZYNSKI",
+	"Jarek Burczynski\nMarco Cassili",
 	&machine_driver,
 
 	rastan_rom,
 	0, 0,
 	0,
+	0,	/* sound_prom */
 
-	input_ports, 0, trak_ports, dsw, keys,
+	0/*TBR*/, rastan_input_ports, 0/*TBR*/, 0/*TBR*/, 0/*TBR*/,
 
 	0, 0, 0,   /* colors, palette, colortable */
 	ORIENTATION_DEFAULT,
@@ -404,14 +495,15 @@ struct GameDriver rastsaga_driver =
 {
 	"Rastan Saga",
 	"rastsaga",
-	"JAREK BURCZYNSKI",
+	"Jarek Burczynski\nMarco Cassili",
 	&machine_driver,
 
 	rastsaga_rom,
 	0, 0,
 	0,
+	0,	/* sound_prom */
 
-	input_ports, 0, trak_ports, dsw, keys,
+	0/*TBR*/, rastsaga_input_ports, 0/*TBR*/, 0/*TBR*/, 0/*TBR*/,
 
 	0, 0, 0,   /* colors, palette, colortable */
 	ORIENTATION_DEFAULT,

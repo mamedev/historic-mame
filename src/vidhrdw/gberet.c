@@ -13,6 +13,8 @@
 
 unsigned char *gberet_scroll;
 unsigned char *gberet_spritebank;
+static int interruptenable;
+static int flipscreen;
 
 
 
@@ -106,6 +108,36 @@ void gberet_vh_stop(void)
 
 
 
+void gberet_e044_w(int offset,int data)
+{
+	/* bit 0 enables interrupts */
+	interruptenable = data & 1;
+
+	/* bit 3 flips screen */
+	if (flipscreen != (data & 0x08))
+	{
+		flipscreen = data & 0x08;
+		memset(dirtybuffer,1,videoram_size);
+	}
+
+	/* don't know about the other bits */
+}
+
+
+
+int gberet_interrupt(void)
+{
+	if (cpu_getiloops() == 0) return interrupt();
+	else if (cpu_getiloops() % 2)
+	{
+		if (interruptenable) return nmi_interrupt();
+	}
+
+	return ignore_interrupt();
+}
+
+
+
 /***************************************************************************
 
   Draw the game screen in the given osd_bitmap.
@@ -115,7 +147,7 @@ void gberet_vh_stop(void)
 ***************************************************************************/
 void gberet_vh_screenrefresh(struct osd_bitmap *bitmap)
 {
-	int offs,i;
+	int offs;
 
 
 	/* for every character in the Video RAM, check if it has been modified */
@@ -124,19 +156,28 @@ void gberet_vh_screenrefresh(struct osd_bitmap *bitmap)
 	{
 		if (dirtybuffer[offs])
 		{
-			int sx,sy;
+			int sx,sy,flipx,flipy;
 
 
 			dirtybuffer[offs] = 0;
 
-			sx = 8 * (offs % 64);
-			sy = 8 * (offs / 64) - 8;
+			sx = offs % 64;
+			sy = offs / 64;
+			flipx = colorram[offs] & 0x10;
+			flipy = colorram[offs] & 0x20;
+			if (flipscreen)
+			{
+				sx = 63 - sx;
+				sy = 31 - sy;
+				flipx = !flipx;
+				flipy = !flipy;
+			}
 
 			drawgfx(tmpbitmap,Machine->gfx[0],
 					videoram[offs] + 4 * (colorram[offs] & 0x40),
 					colorram[offs] & 0x0f,
-					colorram[offs] & 0x10,colorram[offs] & 0x20,
-					sx,sy,
+					flipx,flipy,
+					8*sx,8*sy,
 					0,TRANSPARENCY_NONE,0);
 		}
 	}
@@ -147,8 +188,16 @@ void gberet_vh_screenrefresh(struct osd_bitmap *bitmap)
 		int scroll[32];
 
 
-		for (i = 1;i < 31;i++)
-			scroll[i] = -(gberet_scroll[i+1] + 256 * gberet_scroll[i+1 + 32]);
+		if (flipscreen)
+		{
+			for (offs = 0;offs < 32;offs++)
+				scroll[31-offs] = 256 + (gberet_scroll[offs] + 256 * gberet_scroll[offs + 32]);
+		}
+		else
+		{
+			for (offs = 0;offs < 32;offs++)
+				scroll[offs] = -(gberet_scroll[offs] + 256 * gberet_scroll[offs + 32]);
+		}
 
 		copyscrollbitmap(bitmap,tmpbitmap,32,scroll,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
 	}
@@ -167,10 +216,26 @@ void gberet_vh_screenrefresh(struct osd_bitmap *bitmap)
 		{
 			if (sr[offs+3])
 			{
+				int sx,sy,flipx,flipy;
+
+
+				sx = sr[offs+2] - 2*(sr[offs+1] & 0x80);
+				sy = sr[offs+3];
+				flipx = sr[offs+1] & 0x10;
+				flipy = sr[offs+1] & 0x20;
+
+				if (flipscreen)
+				{
+					sx = 240 - sx;
+					sy = 240 - sy;
+					flipx = !flipx;
+					flipy = !flipy;
+				}
+
 				drawgfx(bitmap,Machine->gfx[(sr[offs+1] & 0x40) ? 2 : 1],
 						sr[offs],sr[offs+1] & 0x0f,
-						sr[offs+1] & 0x10,sr[offs+1] & 0x20,
-						sr[offs+2] - 2*(sr[offs+1] & 0x80),sr[offs+3]-8,
+						flipx,flipy,
+						sx,sy,
 						&Machine->drv->visible_area,TRANSPARENCY_COLOR,0);
 			}
 		}

@@ -61,9 +61,6 @@ typedef struct
   byte A,P,X,Y,S;     /* CPU registers and program counter   */
   pair PC;
 
-  pair previousPC;		/* -RAY- */
-                                /* pc before a memory read/write */
-
 /*  int IPeriod  NS 970927 */
  int ICount; /* Set IPeriod to number of CPU cycles */
                       /* between calls to Loop6502()         */
@@ -120,6 +117,8 @@ word Run6502(register M6502 *R,int cycles);	/* NS 970904 */
 #define Rd6502(A) ((unsigned)cpu_readmem16(A))
 /*byte Op6502(register word Addr);*/
 #define FAST_RDOP
+/* ASG 971210 -- added this macro for 0-page read accesses */
+#define Zr6502(A) ((unsigned)cpu_readmem16(A))
 #define Op6502(A) ((unsigned)cpu_readop_arg(A))
 #define Op6502_1(A) ((unsigned)cpu_readop(A))
 

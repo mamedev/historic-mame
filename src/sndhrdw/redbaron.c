@@ -23,7 +23,6 @@ int redbaron_joy_r(int offset);
 static struct POKEYinterface interface =
 {
 	1,	/* 1 chip */
-	1,	/* 1 updates per video frame (low quality) */
 	FREQ_17_APPROX,	/* 1.7 Mhz */
 	255,
 	NO_CLIP,
@@ -50,14 +49,14 @@ void redbaron_sounds_w (int offset,int data) {
 
 	static int lastValue = 0;
 	static int explosionPlaying = 0;
-	
+
 	rb_input_select = (data & 0x01);
 
 	if (Machine->samples == 0) return;
 
 	if (lastValue == data) return;
 	lastValue = data;
-	
+
 	/* Enable explosion output */
 	if (data & 0xf0) {
 		if (Machine->samples->sample[kExplode] != 0)
@@ -68,7 +67,7 @@ void redbaron_sounds_w (int offset,int data) {
 		if (!explosionPlaying) explosionPlaying = 1;
 		}
 	else explosionPlaying = 0;
-	
+
 	/* Enable nosedive output */
 	if (data & 0x02) {
 		if (Machine->samples->sample[kNosedive] != 0)

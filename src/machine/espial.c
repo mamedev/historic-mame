@@ -10,9 +10,7 @@
 #include "driver.h"
 
 
-
 static int interrupt_enable;
-
 
 
 void espial_init_machine(void)
@@ -28,9 +26,17 @@ void espial_interrupt_enable_w(int offset,int data)
 	interrupt_enable = !(data & 1);
 }
 
-
-
 int espial_interrupt(void)
+{
+	if (cpu_getiloops() != 0)
+	{
+		return interrupt();
+	}
+	if (interrupt_enable) return nmi_interrupt();
+	else return interrupt();
+}
+
+int espial_sh_interrupt(void)
 {
 	if (interrupt_enable) return nmi_interrupt();
 	else return ignore_interrupt();

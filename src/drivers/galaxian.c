@@ -77,6 +77,8 @@ extern unsigned char *galaxian_attributesram;
 extern unsigned char *galaxian_bulletsram;
 extern int galaxian_bulletsram_size;
 void galaxian_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
+void galaxian_flipx_w(int offset,int data);
+void galaxian_flipy_w(int offset,int data);
 void galaxian_attributes_w(int offset,int data);
 void galaxian_stars_w(int offset,int data);
 void pisces_gfxbank_w(int offset,int data);
@@ -102,7 +104,7 @@ static struct MemoryReadAddress readmem[] =
 	{ 0x6000, 0x6000, input_port_0_r },	/* IN0 */
 	{ 0x6800, 0x6800, input_port_1_r },	/* IN1 */
 	{ 0x7000, 0x7000, input_port_2_r },	/* DSW */
-	{ 0x7800, 0x7800, MRA_NOP },
+	{ 0x7800, 0x7800, watchdog_reset_r },
 	{ -1 }	/* end of table */
 };
 
@@ -122,6 +124,8 @@ static struct MemoryWriteAddress galaxian_writemem[] =
 	{ 0x6000, 0x6001, osd_led_w },
 	{ 0x6004, 0x6007, mooncrst_lfo_freq_w },
 	{ 0x7004, 0x7004, galaxian_stars_w },
+	{ 0x7006, 0x7006, galaxian_flipx_w },
+	{ 0x7007, 0x7007, galaxian_flipy_w },
 	{ 0x0000, 0x27ff, MWA_ROM },
 	{ -1 }	/* end of table */
 };
@@ -142,6 +146,8 @@ static struct MemoryWriteAddress pisces_writemem[] =
 	{ 0x6002, 0x6002, pisces_gfxbank_w },
 	{ 0x6004, 0x6007, mooncrst_lfo_freq_w },
 	{ 0x7004, 0x7004, galaxian_stars_w },
+	{ 0x7006, 0x7006, galaxian_flipx_w },
+	{ 0x7007, 0x7007, galaxian_flipy_w },
 	{ 0x0000, 0x3fff, MWA_ROM },	/* not all games use all the space */
 	{ -1 }	/* end of table */
 };
@@ -170,10 +176,6 @@ static struct InputPort galaxian_input_ports[] =
 	{ -1 }	/* end of table */
 };
 
-static struct TrakPort trak_ports[] =
-{
-        { -1 }
-};
 
 
 static struct KEYSet keys[] =
@@ -427,18 +429,6 @@ static unsigned char pacmanbl_color_prom[] =
 
 
 
-static unsigned char samples[32*2] =
-{
-   0x88, 0x88, 0x88, 0x88, 0xaa, 0xaa, 0xaa, 0xaa,
-   0xcc, 0xcc, 0xcc, 0xcc, 0xee, 0xee, 0xee, 0xee,
-   0x11, 0x11, 0x11, 0x11, 0x22, 0x22, 0x22, 0x22,
-   0x44, 0x44, 0x44, 0x44, 0x66, 0x66, 0x66, 0x66,
-   0x44, 0x44, 0x44, 0x44, 0x44, 0x44, 0x44, 0x44,
-   0x44, 0x44, 0x44, 0x44, 0x44, 0x44, 0x44, 0x44,
-   0xcc, 0xcc, 0xcc, 0xcc, 0xcc, 0xcc, 0xcc, 0xcc,
-   0xcc, 0xcc, 0xcc, 0xcc, 0xcc, 0xcc, 0xcc, 0xcc
-};
-
 static struct MachineDriver galaxian_machine_driver =
 {
 	/* basic machine hardware */
@@ -468,7 +458,6 @@ static struct MachineDriver galaxian_machine_driver =
 	galaxian_vh_screenrefresh,
 
 	/* sound hardware */
-	samples,
 	mooncrst_sh_init,
 	mooncrst_sh_start,
 	mooncrst_sh_stop,
@@ -506,7 +495,6 @@ static struct MachineDriver pisces_machine_driver =
 	galaxian_vh_screenrefresh,
 
 	/* sound hardware */
-	samples,
 	mooncrst_sh_init,
 	mooncrst_sh_start,
 	mooncrst_sh_stop,
@@ -542,7 +530,6 @@ static struct MachineDriver pacmanbl_machine_driver =
 	galaxian_vh_screenrefresh,
 
 	/* sound hardware */
-	samples,
 	mooncrst_sh_init,
 	mooncrst_sh_start,
 	mooncrst_sh_stop,
@@ -551,9 +538,9 @@ static struct MachineDriver pacmanbl_machine_driver =
 
 static const char *mooncrst_sample_names[] =
 {
+	"*galaxian",
 	"shot.sam",
-        "death.sam",
-        "backgrnd.sam",
+	"death.sam",
 	0	/* end of array */
 };
 
@@ -840,8 +827,6 @@ static int warofbug_hiload(void)
 	else return 0;	/* we can't load the hi scores yet */
 }
 
-
-
 static void warofbug_hisave(void)
 {
 	void *f;
@@ -850,6 +835,59 @@ static void warofbug_hisave(void)
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{
 		osd_fwrite(f,&RAM[0x4034],3);
+		osd_fclose(f);
+	}
+}
+
+
+
+static int pacmanbl_hiload(void)
+{
+	/* wait for "HIGH" to be on screen */
+	if (memcmp(&RAM[0x5240],"\x48\x40",2) == 0)
+	{
+		void *f;
+
+		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
+		{
+			int hi;
+			osd_fread(f,&RAM[0x4288],3);
+			osd_fclose(f);
+
+			hi = (RAM[0x4288] & 0x0f) +
+					(RAM[0x4288] >> 4) * 10 +
+					(RAM[0x4289] & 0x0f) * 100 +
+					(RAM[0x4289] >> 4) * 1000 +
+					(RAM[0x428a] & 0x0f) * 10000 +
+					(RAM[0x428a] >> 4) * 100000;
+
+			if (hi > 0)
+				RAM[0x5180] = RAM[0x4288] & 0x0F;
+			if (hi >= 10)
+				RAM[0x51A0] = RAM[0x4288] >> 4;
+			if (hi >= 100)
+				RAM[0x51C0] = RAM[0x4289] & 0x0F;
+			if (hi >= 1000)
+				RAM[0x51E0] = RAM[0x4289] >> 4;
+			if (hi >= 10000)
+				RAM[0x5200] = RAM[0x428a] & 0x0F;
+			if (hi >= 100000)
+				RAM[0x5220] = RAM[0x428a] >> 4;
+		}
+
+		return 1;
+	}
+	else return 0;  /* we can't load the hi scores yet */
+}
+
+static void pacmanbl_hisave(void)
+{
+	void *f;
+
+
+	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
+	{
+		osd_fwrite(f,&RAM[0x4288],3);
 		osd_fclose(f);
 	}
 }
@@ -866,8 +904,9 @@ struct GameDriver galaxian_driver =
 	galaxian_rom,
 	0, 0,
 	mooncrst_sample_names,
+	0,	/* sound_prom */
 
-	galaxian_input_ports, 0, trak_ports, galaxian_dsw, keys,
+	galaxian_input_ports, 0, 0/*TBR*/,galaxian_dsw, keys,
 
 	galaxian_color_prom, 0, 0,
 	ORIENTATION_ROTATE_90,
@@ -885,8 +924,9 @@ struct GameDriver galmidw_driver =
 	galmidw_rom,
 	0, 0,
 	mooncrst_sample_names,
+	0,	/* sound_prom */
 
-	galaxian_input_ports, 0, trak_ports, galaxian_dsw, keys,
+	galaxian_input_ports, 0, 0/*TBR*/,galaxian_dsw, keys,
 
 	galaxian_color_prom, 0, 0,
 	ORIENTATION_ROTATE_90,
@@ -904,8 +944,9 @@ struct GameDriver galnamco_driver =
 	galnamco_rom,
 	0, 0,
 	mooncrst_sample_names,
+	0,	/* sound_prom */
 
-	galaxian_input_ports, 0, trak_ports, galboot_dsw, keys,
+	galaxian_input_ports, 0, 0/*TBR*/,galboot_dsw, keys,
 
 	galaxian_color_prom, 0, 0,
 	ORIENTATION_ROTATE_90,
@@ -923,8 +964,9 @@ struct GameDriver superg_driver =
 	superg_rom,
 	0, 0,
 	mooncrst_sample_names,
+	0,	/* sound_prom */
 
-	galaxian_input_ports, 0, trak_ports, galboot_dsw, keys,
+	galaxian_input_ports, 0, 0/*TBR*/,galboot_dsw, keys,
 
 	galaxian_color_prom, 0, 0,
 	ORIENTATION_ROTATE_90,
@@ -942,8 +984,9 @@ struct GameDriver galapx_driver =
 	galapx_rom,
 	0, 0,
 	mooncrst_sample_names,
+	0,	/* sound_prom */
 
-	galaxian_input_ports, 0, trak_ports, galboot_dsw, keys,
+	galaxian_input_ports, 0, 0/*TBR*/,galboot_dsw, keys,
 
 	galaxian_color_prom, 0, 0,
 	ORIENTATION_ROTATE_90,
@@ -961,8 +1004,9 @@ struct GameDriver galap1_driver =
 	galap1_rom,
 	0, 0,
 	mooncrst_sample_names,
+	0,	/* sound_prom */
 
-	galaxian_input_ports, 0, trak_ports, galboot_dsw, keys,
+	galaxian_input_ports, 0, 0/*TBR*/,galboot_dsw, keys,
 
 	galaxian_color_prom, 0, 0,
 	ORIENTATION_ROTATE_90,
@@ -980,8 +1024,9 @@ struct GameDriver galap4_driver =
 	galap4_rom,
 	0, 0,
 	mooncrst_sample_names,
+	0,	/* sound_prom */
 
-	galaxian_input_ports, 0, trak_ports, galboot_dsw, keys,
+	galaxian_input_ports, 0, 0/*TBR*/,galboot_dsw, keys,
 
 	galaxian_color_prom, 0, 0,
 	ORIENTATION_ROTATE_90,
@@ -999,8 +1044,9 @@ struct GameDriver galturbo_driver =
 	galturbo_rom,
 	0, 0,
 	mooncrst_sample_names,
+	0,	/* sound_prom */
 
-	galaxian_input_ports, 0, trak_ports, galboot_dsw, keys,
+	galaxian_input_ports, 0, 0/*TBR*/,galboot_dsw, keys,
 
 	galaxian_color_prom, 0, 0,
 	ORIENTATION_ROTATE_90,
@@ -1018,8 +1064,9 @@ struct GameDriver pisces_driver =
 	pisces_rom,
 	0, 0,
 	mooncrst_sample_names,
+	0,	/* sound_prom */
 
-	galaxian_input_ports, 0, trak_ports, pisces_dsw, keys,
+	galaxian_input_ports, 0, 0/*TBR*/,pisces_dsw, keys,
 
 	galaxian_color_prom, 0, 0,
 	ORIENTATION_ROTATE_90,
@@ -1037,8 +1084,9 @@ struct GameDriver japirem_driver =
 	japirem_rom,
 	0, 0,
 	mooncrst_sample_names,
+	0,	/* sound_prom */
 
-	galaxian_input_ports, 0, trak_ports, japirem_dsw, keys,
+	galaxian_input_ports, 0, 0/*TBR*/,japirem_dsw, keys,
 
 	japirem_color_prom, 0, 0,
 	ORIENTATION_ROTATE_90,
@@ -1056,8 +1104,9 @@ struct GameDriver uniwars_driver =
 	uniwars_rom,
 	0, 0,
 	mooncrst_sample_names,
+	0,	/* sound_prom */
 
-	galaxian_input_ports, 0, trak_ports, japirem_dsw, keys,
+	galaxian_input_ports, 0, 0/*TBR*/,japirem_dsw, keys,
 
 	uniwars_color_prom, 0, 0,
 	ORIENTATION_ROTATE_90,
@@ -1075,8 +1124,9 @@ struct GameDriver warofbug_driver =
 	warofbug_rom,
 	0, 0,
 	mooncrst_sample_names,
+	0,	/* sound_prom */
 
-	warofbug_input_ports, 0, trak_ports, warofbug_dsw, warofbug_keys,
+	warofbug_input_ports, 0, 0/*TBR*/,warofbug_dsw, warofbug_keys,
 
 	warofbug_color_prom, 0, 0,
 	ORIENTATION_ROTATE_90,
@@ -1088,36 +1138,38 @@ struct GameDriver redufo_driver =
 {
 	"Defend the Terra Attack on the Red UFO",
 	"redufo",
-	"ROBERT ANSCHUETZ\nNICOLA SALMORIA\nANDREW SCOTT",
+	"ROBERT ANSCHUETZ\nNICOLA SALMORIA\nANDREW SCOTT\nVALERIO VERRANDO",
 	&galaxian_machine_driver,
 
 	redufo_rom,
 	0, 0,
 	mooncrst_sample_names,
+	0,      /* sound_prom */
 
-	galaxian_input_ports, 0, trak_ports, galaxian_dsw, keys,
+	galaxian_input_ports, 0, 0/*TBR*/,galaxian_dsw, keys,
 
 	galaxian_color_prom, 0, 0,
 	ORIENTATION_ROTATE_90,
 
-	0, 0
+	galaxian_hiload, galaxian_hisave
 };
 
 struct GameDriver pacmanbl_driver =
 {
 	"Pac Man (bootleg on Galaxian hardware)",
 	"pacmanbl",
-	"ROBERT ANSCHUETZ\nNICOLA SALMORIA\nANDREW SCOTT",
+	"ROBERT ANSCHUETZ\nNICOLA SALMORIA\nANDREW SCOTT\nVALERIO VERRANDO",
 	&pacmanbl_machine_driver,
 
 	pacmanbl_rom,
 	0, 0,
 	mooncrst_sample_names,
+	0,      /* sound_prom */
 
-	pacmanbl_input_ports, 0, trak_ports, pacmanbl_dsw, pacmanbl_keys,
+	pacmanbl_input_ports, 0, 0/*TBR*/,pacmanbl_dsw, pacmanbl_keys,
 
 	pacmanbl_color_prom, 0, 0,
-	ORIENTATION_ROTATE_90,
+	ORIENTATION_ROTATE_270,
 
-	0, 0
+	pacmanbl_hiload, pacmanbl_hisave
 };

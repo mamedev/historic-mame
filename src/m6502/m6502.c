@@ -19,6 +19,7 @@
 #include "M6502.h"
 #include "Tables.h"
 #include <stdio.h>
+#include "osd_dbg.h"
 
 /** INLINE ***************************************************/
 /** Different compilers inline C functions differently.     **/
@@ -57,9 +58,9 @@ INLINE byte Op6502(register word A) { return(Page[A>>13][A&0x1FFF]); }
 #define MC_Ax(Rg)	M_LDWORD(Rg);Rg.W+=R->X
 #define MC_Ay(Rg)	M_LDWORD(Rg);Rg.W+=R->Y
 #define MC_Ix(Rg)	K.B.l=Op6502(R->PC.W++)+R->X;K.B.h=0; \
-			Rg.B.l=Op6502(K.W++);Rg.B.h=Op6502(K.W)
+			Rg.B.l=Zr6502(K.W++);Rg.B.h=Zr6502(K.W) /* ASG 971210 -- changed from Op6502 to Zr6502 */
 #define MC_Iy(Rg)	K.B.l=Op6502(R->PC.W++);K.B.h=0; \
-			Rg.B.l=Op6502(K.W++);Rg.B.h=Op6502(K.W); \
+			Rg.B.l=Zr6502(K.W++);Rg.B.h=Zr6502(K.W); /* ASG 971210 -- changed from Op6502 to Zr6502 */\
 			Rg.W+=R->Y
 
 /** Reading From Memory **************************************/
@@ -102,7 +103,7 @@ INLINE byte Op6502(register word A) { return(Page[A>>13][A&0x1FFF]); }
 #define M_LDWORD(Rg)	Rg.B.l=Op6502(R->PC.W++);Rg.B.h=Op6502(R->PC.W++)
 
 #define M_PUSH(Rg)	Wr6502(0x0100|R->S,Rg);R->S--
-#define M_POP(Rg)	R->S++;Rg=Op6502(0x0100|R->S)
+#define M_POP(Rg)	R->S++;Rg=Zr6502(0x0100|R->S)  /* ASG 971210 -- changed from Op6502 to Zr6502 */
 #define M_JR		R->PC.W+=(offset)Op6502(R->PC.W)+1;R->ICount--
 
 #define M_ADC(Rg) \
@@ -189,6 +190,7 @@ void Reset6502(M6502 *R)
   R->S=0xFF;
   R->PC.B.l=Rd6502(0xFFFC);
   R->PC.B.h=Rd6502(0xFFFD);
+  change_pc16(R->PC.W);/*ASG 971124*/
 /*  R->ICount=R->IPeriod; */	/* NS 970908 */
 /*  R->IRequest=INT_NONE; */	/* NS 970904 */
   M6502_Clear_Pending_Interrupts(R);	/* NS 970904 */
@@ -228,13 +230,14 @@ static void Int6502(M6502 *R/*,byte Type*/)	/* NS 970904 */
   register pair J;
 
 /*  if((Type==INT_NMI)||((Type==INT_IRQ)&&!(R->P&I_FLAG)))*/
-  if((R->pending_nmi != 0)||((R->pending_irq != 0)&&!(R->P&I_FLAG)))	/* NS 970904 */
+  if ((R->pending_nmi != 0) || ((R->pending_irq != 0)&&!(R->P&I_FLAG)))	/* NS 970904 */
   {
     R->ICount-=7;
     M_PUSH(R->PC.B.h);
     M_PUSH(R->PC.B.l);
     M_PUSH(R->P&~B_FLAG);
     R->P&=~D_FLAG;
+    R->P|=I_FLAG; /* LBO 971204 NMIs will also set the I flag so that IRQs won't interrupt them */
 /*    if(Type==INT_NMI)*/ /* NS 970904 */
 	if (R->pending_nmi != 0)	/* NS 970904 */
 	{
@@ -244,10 +247,12 @@ static void Int6502(M6502 *R/*,byte Type*/)	/* NS 970904 */
 	else
 	{
 		R->pending_irq = 0;	/* NS 970904 */
-		R->P|=I_FLAG;J.W=0xFFFE;
+		/*R->P|=I_FLAG;J.W=0xFFFE;  LBO 971204 */
+		J.W=0xFFFE;
 	}
     R->PC.B.l=Rd6502(J.W++);
     R->PC.B.h=Rd6502(J.W);
+    change_pc16(R->PC.W);/*ASG 971124*/
   }
 #if 0	/* NS 970904 */
   else if ((Type==INT_IRQ)&&(R->P&I_FLAG))	/* -NS- */
@@ -282,6 +287,8 @@ word Run6502(M6502 *R,int cycles)	/* NS 970904 */
 
  R->ICount=cycles;	/* NS 970904 */
 
+  change_pc16 (R->PC.W);
+
   do
   {
 #ifdef DEBUG
@@ -291,12 +298,20 @@ word Run6502(M6502 *R,int cycles)	/* NS 970904 */
     if(R->Trace)
       if(!Debug6502(R)) return(R->PC.W);
 #endif
+#ifdef MAME_DEBUG
+{
+  extern int mame_debug;
+  if (mame_debug) MAME_Debug();
+}
+#endif
 
-	/* RAY */
-	R->previousPC.W = R->PC.W;
-
+{	/* NS 971024 */
+	extern int previouspc;
+	previouspc = R->PC.W;
+}
     I=Op6502_1(R->PC.W++);	/* -NS- */
     R->ICount-=Cycles[I];
+
     switch(I)
     {
 #include "Codes.h"

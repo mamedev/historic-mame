@@ -103,10 +103,7 @@ static struct InputPort input_ports[] =
 	{ -1 }
 };
 
-static struct TrakPort trak_ports[] =
-{
-        { -1 }
-};
+
 
 static struct KEYSet keys[] =
 {
@@ -220,14 +217,13 @@ static struct MachineDriver machine_driver =
 	sizeof(palette)/3,sizeof(colortable),
 	0,
 
-	VIDEO_TYPE_RASTER,
+	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY,
 	0,
 	panic_vh_start,
 	panic_vh_stop,
 	panic_vh_screenrefresh,
 
 	/* sound hardware */
-	0,
 	0,
 	0,
 	0,
@@ -326,8 +322,9 @@ struct GameDriver panic_driver =
 	panic_rom,
 	0, 0,
 	0,
+	0,	/* sound_prom */
 
-	input_ports, 0, trak_ports, dsw, keys,
+	input_ports, 0, 0/*TBR*/,dsw, keys,
 
 	0, palette, colortable,
 	ORIENTATION_DEFAULT,
@@ -345,8 +342,9 @@ struct GameDriver panica_driver =
 	panica_rom,
 	0, 0,
 	0,
+	0,	/* sound_prom */
 
-	input_ports, 0, trak_ports, dsw, keys,
+	input_ports, 0, 0/*TBR*/,dsw, keys,
 
 	0, palette, colortable,
 	ORIENTATION_DEFAULT,

@@ -109,10 +109,6 @@ static struct InputPort input_ports[] =
 	{ -1 }	/* end of table */
 };
 
-static struct TrakPort trak_ports[] =
-{
-        { -1 }
-};
 
 
 static struct KEYSet keys[] =
@@ -185,17 +181,6 @@ static unsigned char color_prom[] =
 	0x00,0x7f,0xcf,0xf9,0x00,0x57,0xb7,0xc3,0x00,0xff,0x7f,0x87,0x00,0x79,0x4f,0xff
 };
 
-static unsigned char samples[32*2] =
-{
-   0x88, 0x88, 0x88, 0x88, 0xaa, 0xaa, 0xaa, 0xaa,
-   0xcc, 0xcc, 0xcc, 0xcc, 0xee, 0xee, 0xee, 0xee,
-   0x11, 0x11, 0x11, 0x11, 0x22, 0x22, 0x22, 0x22,
-   0x44, 0x44, 0x44, 0x44, 0x66, 0x66, 0x66, 0x66,
-   0x44, 0x44, 0x44, 0x44, 0x44, 0x44, 0x44, 0x44,
-   0x44, 0x44, 0x44, 0x44, 0x44, 0x44, 0x44, 0x44,
-   0xcc, 0xcc, 0xcc, 0xcc, 0xcc, 0xcc, 0xcc, 0xcc,
-   0xcc, 0xcc, 0xcc, 0xcc, 0xcc, 0xcc, 0xcc, 0xcc
-};
 
 
 static struct MachineDriver machine_driver =
@@ -227,7 +212,6 @@ static struct MachineDriver machine_driver =
 	galaxian_vh_screenrefresh,
 
 	/* sound hardware */
-	samples,
 	mooncrst_sh_init,
 	mooncrst_sh_start,
 	mooncrst_sh_stop,
@@ -336,8 +320,6 @@ static int hiload(void)
 	else return 0;	/* we can't load the hi scores yet */
 }
 
-
-
 static void hisave(void)
 {
 	void *f;
@@ -350,11 +332,13 @@ static void hisave(void)
 	}
 }
 
+
+
 static const char *mooncrst_sample_names[] =
 {
+	"*galaxian",
 	"shot.sam",
-        "death.sam",
-        "backgrnd.sam",
+	"death.sam",
 	0	/* end of array */
 };
 
@@ -363,14 +347,15 @@ struct GameDriver moonqsr_driver =
 {
 	"Moon Quasar",
 	"moonqsr",
-	"ROBERT ANSCHUETZ\nNICOLA SALMORIA\nGARY WALTON\nSIMON WALLS\nANDREW SCOTT",
+	"Robert Anschuetz (Arcade emulator)\nMike Coates (decryption info)\nNicola Salmoria (MAME driver)\nGary Walton (color info)\nSimon Walls (color info)\nAndrew Scott",
 	&machine_driver,
 
 	moonqsr_rom,
 	0, moonqsr_decode,
 	mooncrst_sample_names,
+	0,	/* sound_prom */
 
-	input_ports, 0, trak_ports, dsw, keys,
+	input_ports, 0, 0/*TBR*/,dsw, keys,
 
 	color_prom, 0, 0,
 	ORIENTATION_ROTATE_90,

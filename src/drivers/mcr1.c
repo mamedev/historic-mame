@@ -62,7 +62,6 @@ int mcr_readport(int port);
 void mcr_soundstatus_w (int offset,int data);
 int mcr_soundlatch_r (int offset);
 
-int mcr_sh_interrupt(void);
 int mcr_sh_start(void);
 
 static struct MemoryReadAddress mcr1_readmem[] =
@@ -301,7 +300,7 @@ static struct MachineDriver kick_machine_driver =
 			2000000,	/* 2 Mhz */
 			2,	/* memory region #2 */
 			sound_readmem,sound_writemem,0,0,
-			mcr_sh_interrupt,26
+			interrupt,26
 		}
 	},
 	30,
@@ -321,7 +320,6 @@ static struct MachineDriver kick_machine_driver =
 	mcr1_vh_screenrefresh,
 
 	/* sound hardware */
-	0,
 	0,
 	mcr_sh_start,
 	AY8910_sh_stop,
@@ -345,7 +343,7 @@ static struct MachineDriver solarfox_machine_driver =
 			2000000,	/* 2 Mhz */
 			2,	/* memory region #2 */
 			sound_readmem,sound_writemem,0,0,
-			mcr_sh_interrupt,26
+			interrupt,26
 		}
 	},
 	30,
@@ -365,7 +363,6 @@ static struct MachineDriver solarfox_machine_driver =
 	mcr1_vh_screenrefresh,
 
 	/* sound hardware */
-	0,
 	0,
 	mcr_sh_start,
 	AY8910_sh_stop,
@@ -509,6 +506,7 @@ struct GameDriver kick_driver =
 	kick_rom,
 	0, 0,
 	0,
+	0,	/* sound_prom */
 
 	0/*TBR*/, kick_input_ports, 0/*TBR*/, 0/*TBR*/, 0/*TBR*/,
 
@@ -528,6 +526,7 @@ struct GameDriver solarfox_driver =
 	solarfox_rom,
 	0, 0,
 	0,
+	0,	/* sound_prom */
 
 	0/*TBR*/, solarfox_input_ports, 0/*TBR*/, 0/*TBR*/, 0/*TBR*/,
 

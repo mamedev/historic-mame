@@ -5,11 +5,10 @@
 
 
 
-static struct AY8910interface interface =
+static struct AY8910interface btime_interface =
 {
 	2,	/* 2 chips */
-	1,	/* 1 update per video frame (low quality) */
-	1536000000,	/* 1 MHZ ? */
+	1536000,	/* 1 MHZ ? */
 	{ 255, 255 },
 	{ 0 },
 	{ 0 },
@@ -17,6 +16,16 @@ static struct AY8910interface interface =
 	{ 0 }
 };
 
+static struct AY8910interface bnj_interface =
+{
+	2,	/* 2 chips */
+	1536000,	/* 1 MHZ ? */
+	{ 0x20ff, 0x20ff },
+	{ 0 },
+	{ 0 },
+	{ 0 },
+	{ 0 }
+};
 
 
 static int interrupt_enable;
@@ -49,5 +58,12 @@ int btime_sh_start(void)
 {
 	pending_commands = 0;
 
-	return AY8910_sh_start(&interface);
+	return AY8910_sh_start(&btime_interface);
+}
+
+int bnj_sh_start(void)
+{
+	pending_commands = 0;
+
+	return AY8910_sh_start(&bnj_interface);
 }

@@ -96,7 +96,6 @@ int ccastles_trakball_y(int data);
 
 int ccastles_trakball_r(int offset);
 int ccastles_xy_r(int offset);
-int ccastles_rom_r(int offset);
 int ccastles_bitmode_r(int offset);
 
 void ccastles_xy_w(int offset, int data);
@@ -104,13 +103,13 @@ void ccastles_axy_w(int offset, int data);
 void ccastles_bitmode_w(int offset, int data);
 void ccastles_bitmapram_w(int offset,int data);
 void ccastles_flipscreen_w(int offset,int data);
-void ccastles_bankswitch_w(int offset,int data);
+
+
 
 /* Misc sound code */
 static struct POKEYinterface interface =
 {
 	2,	/* 2 chips */
-	1,	/* 1 update per video frame (low quality) */
 	FREQ_17_APPROX,	/* 1.7 Mhz */
 	255,
 	NO_CLIP,
@@ -128,16 +127,21 @@ static struct POKEYinterface interface =
 };
 
 
-int ccastles_sh_start(void)
+static int ccastles_sh_start(void)
 {
 	return pokey_sh_start (&interface);
 }
 
-void ccastles_led_w(int offset,int data)
+static void ccastles_led_w(int offset,int data)
 {
 	osd_led_w(offset,~data);
 }
 
+static void ccastles_bankswitch_w(int offset, int data)
+{
+	if (data) { cpu_setbank(1,&RAM[0x10000]); }
+	else { cpu_setbank(1,&RAM[0xa000]); }
+}
 
 static struct MemoryReadAddress readmem[] =
 {
@@ -153,7 +157,7 @@ static struct MemoryReadAddress readmem[] =
 	{ 0x9600, 0x9600, input_port_0_r },	/* IN0 */
 	{ 0x9800, 0x980f, pokey1_r }, /* Random # generator on a Pokey */
 	{ 0x9a00, 0x9a0f, pokey2_r }, /* Random #, IN1 */
-	{ 0xA000, 0xDFFF, ccastles_rom_r },
+	{ 0xA000, 0xDFFF, MRA_BANK1 },
 	{ 0xE000, 0xFFFF, MRA_ROM },	/* ROMs/interrupt vectors */
 	{ -1 }	/* end of table */
 };
@@ -177,6 +181,7 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x9F02, 0x9F03, MWA_RAM },
 	{ 0x9F05, 0x9F07, MWA_RAM },
 	{ 0x9F80, 0x9FBF, ccastles_paletteram_w },
+	{ 0xA000, 0xFFFF, MWA_ROM },
 	{ -1 }	/* end of table */
 };
 
@@ -245,7 +250,8 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 
 
-static struct MachineDriver ccastles_machine = {
+static struct MachineDriver ccastles_machine =
+{
 	/* basic machine hardware */
 	{
 		{
@@ -272,7 +278,6 @@ static struct MachineDriver ccastles_machine = {
 	ccastles_vh_screenrefresh,
 
 	/* sound hardware */
-	0,
 	0,
 	ccastles_sh_start,
 	pokey_sh_stop,
@@ -345,6 +350,7 @@ struct GameDriver ccastles_driver =
 	ccastles_rom,
 	0, 0,
 	0,
+	0,	/* sound_prom */
 
 	0/*TBR*/, input_ports, 0/*TBR*/, 0/*TBR*/, 0/*TBR*/,
 

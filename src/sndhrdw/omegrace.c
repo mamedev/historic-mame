@@ -6,8 +6,6 @@
 
 int omegrace_sh_interrupt(void)
 {
-	AY8910_update();
-
 	if (cpu_getiloops() % 2 == 0) return nmi_interrupt();
 	else
 	{
@@ -20,9 +18,8 @@ int omegrace_sh_interrupt(void)
 static struct AY8910interface interface =
 {
 	2,	/* 2 chips */
-	12,	/* 12 updates per video frame (good quality) */
-	1500000000,	/* 1.5 MHZ */
-	{ 255, 255 },
+	1500000,	/* 1.5 MHZ */
+	{ 0x20ff, 0x20ff },
 	{ 0 },
 	{ 0 },
 	{ 0 },

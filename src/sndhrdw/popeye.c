@@ -6,17 +6,6 @@
 static int dswbit;
 
 
-int popeye_sh_interrupt(void)
-{
-	AY8910_update();
-
-	/* the CPU needs 2 interrupts per frame, the handler is called 20 times */
-	if (cpu_getiloops() % 10 == 0) return nmi_interrupt();
-	else return ignore_interrupt();
-}
-
-
-
 static void popeye_portB_w(int offset,int data)
 {
 	dswbit = data / 2;
@@ -40,8 +29,7 @@ static int popeye_portA_r(int offset)
 static struct AY8910interface interface =
 {
 	1,	/* 1 chip */
-	20,	/* 20 updates per video frame (good quality) (the frame rate is 30fps) */
-	1832727040,	/* 1.832727040 MHZ ????? */
+	1832727,	/* 1.832727040 MHZ ????? */
 	{ 255 },
 	{ popeye_portA_r },
 	{ 0 },

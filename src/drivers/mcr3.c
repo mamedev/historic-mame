@@ -33,15 +33,22 @@ the service key (F2) during the startup self-test.
 
 IN4
 
-extra inputs
+extra inputs; also used to control sound for external boards
+
+
+The MCR/III games used a plethora of sound boards; all of them seem to do
+roughly the same thing.  We have:
+
+* Chip Squeak Deluxe (CSD) - used for music on Spy Hunter
+* Turbo Chip Squeak (TCS) - used for all sound effects on Sarge
+* Sounds Good (SG) - used for all sound effects on Rampage and Xenophobe
+* Squawk & Talk (SNT) - used for speech on Discs of Tron
 
 Known issues:
 
 * Destruction Derby has no sound
 * Destruction Derby player 3 and 4 steering wheels are not properly muxed
-* Rampage has no sound (uses a 68000-based sound board -- we're SOL for now)
-* Spy Hunter has no sound (music uses a 68000-based board; SSIO ROMs are corrupt)
-* Discs of Tron halts between levels 6? and 7? Could be speech-related...
+* Discs of Tron halts between levels 6? and 7?
 
 ***************************************************************************/
 
@@ -49,6 +56,8 @@ Known issues:
 #include "vidhrdw/generic.h"
 #include "sndhrdw/generic.h"
 #include "sndhrdw/8910intf.h"
+#include "sndhrdw/dac.h"
+#include "machine/6821pia.h"
 #include "Z80.h"
 
 void mcr3_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
@@ -68,7 +77,6 @@ extern unsigned char *spyhunt_alpharam;
 extern int spyhunt_alpharam_size;
 
 void mcr_init_machine(void);
-void mcr_init_machine_no_watchdog(void);
 int mcr_interrupt(void);
 extern int mcr_loadnvram;
 
@@ -79,11 +87,33 @@ int mcr_soundlatch_r (int offset);
 
 int destderb_port_r(int offset);
 
-int spyhunt_port_r(int offset);
+void spyhunt_init_machine(void);
+int spyhunt_port_1_r(int offset);
+int spyhunt_port_2_r(int offset);
 void spyhunt_writeport(int port,int value);
 
-int mcr_sh_interrupt(void);
+void rampage_init_machine(void);
+void rampage_writeport(int port,int value);
+
+void sarge_init_machine(void);
+int sarge_IN1_r(int offset);
+int sarge_IN2_r(int offset);
+void sarge_writeport(int port,int value);
+
+void dotron_init_machine(void);
+void dotron_writeport(int port,int value);
+
+extern int mcr_sound_ram_size;
 int mcr_sh_start(void);
+int rampage_sh_start(void);
+void rampage_sh_stop(void);
+int sarge_sh_start(void);
+int spyhunt_sh_start(void);
+void spyhunt_sh_stop(void);
+void spyhunt_sh_update(void);
+int dotron_sh_start(void);
+void dotron_sh_stop(void);
+void dotron_sh_update(void);
 
 static struct MemoryReadAddress readmem[] =
 {
@@ -192,6 +222,72 @@ static struct MemoryWriteAddress timber_sound_writemem[] =
 	{ -1 }	/* end of table */
 };
 
+static struct MemoryReadAddress csd_readmem[] =
+{
+	{ 0x000000, 0x007fff, MRA_ROM },
+	{ 0x018000, 0x018007, pia_1_r },
+	{ 0x01c000, 0x01cfff, MRA_BANK1 },
+	{ -1 }	/* end of table */
+};
+
+static struct MemoryWriteAddress csd_writemem[] =
+{
+	{ 0x000000, 0x007fff, MWA_ROM },
+	{ 0x018000, 0x018007, pia_1_w },
+	{ 0x01c000, 0x01cfff, MWA_BANK1, 0, &mcr_sound_ram_size },
+	{ -1 }	/* end of table */
+};
+
+static struct MemoryReadAddress sg_readmem[] =
+{
+	{ 0x000000, 0x01ffff, MRA_ROM },
+	{ 0x060000, 0x060007, pia_1_r },
+	{ 0x070000, 0x070fff, MRA_BANK1 },
+	{ -1 }	/* end of table */
+};
+
+static struct MemoryWriteAddress sg_writemem[] =
+{
+	{ 0x000000, 0x01ffff, MWA_ROM },
+	{ 0x060000, 0x060007, pia_1_w },
+	{ 0x070000, 0x070fff, MWA_BANK1, 0, &mcr_sound_ram_size },
+	{ -1 }	/* end of table */
+};
+
+static struct MemoryReadAddress snt_readmem[] =
+{
+	{ 0x0000, 0x007f, MRA_RAM },
+	{ 0x0080, 0x0083, pia_1_r },
+	{ 0x0090, 0x0093, pia_2_r },
+	{ 0xd000, 0xffff, MRA_ROM },
+	{ -1 }	/* end of table */
+};
+
+static struct MemoryWriteAddress snt_writemem[] =
+{
+	{ 0x0000, 0x007f, MWA_RAM },
+	{ 0x0080, 0x0083, pia_1_w },
+	{ 0x0090, 0x0093, pia_2_w },
+	{ 0xd000, 0xffff, MWA_ROM },
+	{ -1 }	/* end of table */
+};
+
+static struct MemoryReadAddress tcs_readmem[] =
+{
+	{ 0x0000, 0x03ff, MRA_RAM },
+	{ 0x6000, 0x6003, pia_1_r },
+	{ 0xc000, 0xffff, MRA_ROM },
+	{ -1 }	/* end of table */
+};
+
+static struct MemoryWriteAddress tcs_writemem[] =
+{
+	{ 0x0000, 0x03ff, MWA_RAM },
+	{ 0x6000, 0x6003, pia_1_w },
+	{ 0xc000, 0xffff, MWA_ROM },
+	{ -1 }	/* end of table */
+};
+
 
 /***************************************************************************
 
@@ -255,8 +351,8 @@ INPUT_PORTS_START( dotron_input_ports )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY )
-	PORT_BITX(0x10, IP_ACTIVE_LOW, 0, "Aim Down", OSD_KEY_Z, IP_KEY_NONE, 0 )
-	PORT_BITX(0x20, IP_ACTIVE_LOW, 0, "Aim Up", OSD_KEY_A, IP_KEY_NONE, 0 )
+	PORT_BITX(0x10, IP_ACTIVE_LOW, IPT_BUTTON3, "Aim Down", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0 )
+	PORT_BITX(0x20, IP_ACTIVE_LOW, IPT_BUTTON4, "Aim Up", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0 )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON2 )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )	/* this needs to be low to allow 1 player games? */
 
@@ -377,11 +473,11 @@ INPUT_PORTS_START( rampage_input_ports )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_TILT )
 	PORT_BITX(    0x20, 0x20, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE, 0 )
 	PORT_DIPSETTING(    0x20, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_SERVICE )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START	/* IN1 */
@@ -430,6 +526,66 @@ INPUT_PORTS_START( rampage_input_ports )
 INPUT_PORTS_END
 
 
+INPUT_PORTS_START( sarge_input_ports )
+	PORT_START	/* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_TILT )
+	PORT_BITX(    0x20, 0x20, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE, 0 )
+	PORT_DIPSETTING(    0x20, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START	/* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_UP | IPF_2WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_DOWN | IPF_2WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICKRIGHT_UP | IPF_2WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICKRIGHT_DOWN | IPF_2WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x30, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1 )
+	PORT_BIT( 0xc0, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER1 )
+
+	PORT_START	/* IN2 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_UP | IPF_2WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_DOWN | IPF_2WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICKRIGHT_UP | IPF_2WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICKRIGHT_DOWN | IPF_2WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x30, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
+	PORT_BIT( 0xc0, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
+
+	PORT_START	/* IN3 -- dipswitches */
+	PORT_BIT( 0x07, IP_ACTIVE_LOW, IPT_UNKNOWN )
+ 	PORT_DIPNAME( 0x08, 0x08, "Free Play", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x08, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+ 	PORT_DIPNAME( 0x30, 0x30, "Coinage", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x20, "1 Coin/2 Credits" )
+	PORT_DIPSETTING(    0x30, "1 Coin/1 Credit" )
+	PORT_DIPSETTING(    0x00, "2 Coins/2 Credits" )
+	PORT_DIPSETTING(    0x10, "2 Coins/1 Credit" )
+	PORT_BIT( 0xc0, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START	/* IN4 */
+	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START	/* AIN0 */
+	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START	/* fake port for single joystick control */
+	/* This fake port is handled via sarge_IN1_r and sarge_IN2_r */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_8WAY | IPF_CHEAT | IPF_PLAYER1 )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_CHEAT | IPF_PLAYER1 )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_CHEAT | IPF_PLAYER1 )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_CHEAT | IPF_PLAYER1 )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_8WAY | IPF_CHEAT | IPF_PLAYER2 )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_CHEAT | IPF_PLAYER2 )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_CHEAT | IPF_PLAYER2 )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_CHEAT | IPF_PLAYER2 )
+INPUT_PORTS_END
+
+
 INPUT_PORTS_START( spyhunt_input_ports )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
@@ -449,7 +605,8 @@ INPUT_PORTS_START( spyhunt_input_ports )
 	PORT_BITX( 0x04, IP_ACTIVE_LOW, IPT_BUTTON3, "Weapon Truck", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0 )
 	PORT_BITX( 0x08, IP_ACTIVE_LOW, IPT_BUTTON2, "Smoke Screen", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0 )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 ) /* machine guns */
-	PORT_BIT( 0xe0, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x60, IP_ACTIVE_HIGH, IPT_UNUSED ) /* CSD status bits */
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START	/* IN2 -- actually not used at all, but read as a trakport */
 	PORT_BIT( 0xff, IP_ACTIVE_HIGH, IPT_UNUSED )
@@ -492,17 +649,6 @@ static struct IOReadPort readport[] =
    { -1 }
 };
 
-static struct IOReadPort dotron_readport[] =
-{
-   { 0x00, 0x00, input_port_0_r },
-   { 0x01, 0x01, input_port_1_r },
-   { 0x02, 0x02, input_port_2_r },
-   { 0x03, 0x03, input_port_3_r },
-   { 0x04, 0x04, input_port_4_r },
-   { 0x05, 0xff, mcr_readport },
-   { -1 }
-};
-
 static struct IOReadPort destderb_readport[] =
 {
    { 0x00, 0x00, input_port_0_r },
@@ -513,11 +659,22 @@ static struct IOReadPort destderb_readport[] =
    { -1 }
 };
 
+static struct IOReadPort sarge_readport[] =
+{
+   { 0x00, 0x00, input_port_0_r },
+   { 0x01, 0x01, sarge_IN1_r },
+   { 0x02, 0x02, sarge_IN2_r },
+   { 0x03, 0x03, input_port_3_r },
+   { 0x04, 0x04, input_port_4_r },
+   { 0x05, 0xff, mcr_readport },
+   { -1 }
+};
+
 static struct IOReadPort spyhunt_readport[] =
 {
    { 0x00, 0x00, input_port_0_r },
-   { 0x01, 0x01, input_port_1_r },
-   { 0x02, 0x02, spyhunt_port_r },
+   { 0x01, 0x01, spyhunt_port_1_r },
+   { 0x02, 0x02, spyhunt_port_2_r },
    { 0x03, 0x03, input_port_3_r },
    { 0x04, 0x04, input_port_4_r },
    { 0x05, 0xff, mcr_readport },
@@ -526,13 +683,31 @@ static struct IOReadPort spyhunt_readport[] =
 
 static struct IOWritePort writeport[] =
 {
-   { 0, 0xFF, mcr_writeport },
+   { 0, 0xff, mcr_writeport },
    { -1 }	/* end of table */
 };
 
 static struct IOWritePort sh_writeport[] =
 {
-   { 0, 0xFF, spyhunt_writeport },
+   { 0, 0xff, spyhunt_writeport },
+   { -1 }	/* end of table */
+};
+
+static struct IOWritePort rm_writeport[] =
+{
+   { 0, 0xff, rampage_writeport },
+   { -1 }	/* end of table */
+};
+
+static struct IOWritePort sa_writeport[] =
+{
+   { 0, 0xff, sarge_writeport },
+   { -1 }	/* end of table */
+};
+
+static struct IOWritePort dt_writeport[] =
+{
+   { 0, 0xff, dotron_writeport },
    { -1 }	/* end of table */
 };
 
@@ -705,6 +880,13 @@ static struct GfxDecodeInfo rampage_gfxdecodeinfo[] =
 	{ -1 } /* end of array */
 };
 
+static struct GfxDecodeInfo sarge_gfxdecodeinfo[] =
+{
+	{ 1, 0x0000, &mcr3_charlayout_512,   0, 4 },
+	{ 1, 0x4000, &mcr3_spritelayout_256, 0, 4 },
+	{ -1 } /* end of array */
+};
+
 static struct GfxDecodeInfo spyhunt_gfxdecodeinfo[] =
 {
 	{ 1, 0x0000, &spyhunt_charlayout_128,    0, 4 },
@@ -737,7 +919,7 @@ static struct MachineDriver tapper_machine_driver =
 			2000000,	/* 2 Mhz */
 			2,
 			sound_readmem,sound_writemem,0,0,
-			mcr_sh_interrupt,26
+			interrupt,26
 		}
 	},
 	30,
@@ -758,7 +940,6 @@ static struct MachineDriver tapper_machine_driver =
 
 	/* sound hardware */
 	0,
-	0,
 	mcr_sh_start,
 	AY8910_sh_stop,
 	AY8910_sh_update
@@ -772,7 +953,7 @@ static struct MachineDriver dotron_machine_driver =
 			CPU_Z80,
 			5000000,	/* 5 Mhz */
 			0,
-			readmem,writemem,dotron_readport,writeport,
+			readmem,writemem,readport,dt_writeport,
 			mcr_interrupt,32
 		},
 		{
@@ -780,12 +961,19 @@ static struct MachineDriver dotron_machine_driver =
 			2000000,	/* 2 Mhz */
 			2,
 			sound_readmem,sound_writemem,0,0,
-			mcr_sh_interrupt,26
+			interrupt,26
+		},
+		{
+			CPU_M6802 | CPU_AUDIO_CPU,
+			3580000/4,	/* .8 Mhz */
+			3,
+			snt_readmem,snt_writemem,0,0,
+			ignore_interrupt,1
 		}
 	},
 	30,
-	10,	/* 10 CPU slices per frame - enough for the sound CPU to read all commands */
-	mcr_init_machine,
+	100,	/* 100 CPU slices per frame - high enough to enable proper handshaking with the S&T board */
+	dotron_init_machine,
 
 	/* video hardware */
 	32*16, 30*16, { 0, 32*16-1, 0, 30*16-1 },
@@ -801,10 +989,9 @@ static struct MachineDriver dotron_machine_driver =
 
 	/* sound hardware */
 	0,
-	0,
-	mcr_sh_start,
-	AY8910_sh_stop,
-	AY8910_sh_update
+	dotron_sh_start,
+	dotron_sh_stop,
+	dotron_sh_update
 };
 
 static struct MachineDriver destderb_machine_driver =
@@ -823,7 +1010,7 @@ static struct MachineDriver destderb_machine_driver =
 			2000000,	/* 2 Mhz */
 			2,
 			sound_readmem,sound_writemem,0,0,
-			mcr_sh_interrupt,26
+			interrupt,26
 		}
 	},
 	30,
@@ -843,7 +1030,6 @@ static struct MachineDriver destderb_machine_driver =
 	mcr3_vh_screenrefresh,
 
 	/* sound hardware */
-	0,
 	0,
 	mcr_sh_start,
 	AY8910_sh_stop,
@@ -866,7 +1052,7 @@ static struct MachineDriver timber_machine_driver =
 			2000000,	/* 2 Mhz */
 			2,
 			timber_sound_readmem,timber_sound_writemem,0,0,
-			mcr_sh_interrupt,26
+			interrupt,26
 		}
 	},
 	30,
@@ -887,7 +1073,6 @@ static struct MachineDriver timber_machine_driver =
 
 	/* sound hardware */
 	0,
-	0,
 	mcr_sh_start,
 	AY8910_sh_stop,
 	AY8910_sh_update
@@ -901,13 +1086,20 @@ static struct MachineDriver rampage_machine_driver =
 			CPU_Z80,
 			5000000,	/* 5 Mhz */
 			0,
-			rampage_readmem,rampage_writemem,readport,writeport,
+			rampage_readmem,rampage_writemem,readport,rm_writeport,
 			mcr_interrupt,32
 		},
+		{
+			CPU_M68000 | CPU_AUDIO_CPU,
+			10000000,	/* 7.5 Mhz really, but use a higher value because of bad CPU timing */
+			2,
+			sg_readmem,sg_writemem,0,0,
+			interrupt,1
+		}
 	},
 	30,
-	10,	/* 10 CPU slices per frame - enough for the sound CPU to read all commands */
-	mcr_init_machine_no_watchdog,
+	100,	/* 100 CPU slices per frame - high enough to enable proper handshaking with the SG board */
+	rampage_init_machine,
 
 	/* video hardware */
 	32*16, 30*16, { 0, 32*16-1, 0, 30*16-1 },
@@ -923,10 +1115,51 @@ static struct MachineDriver rampage_machine_driver =
 
 	/* sound hardware */
 	0,
+	rampage_sh_start,
+	rampage_sh_stop,
+	DAC_sh_update
+};
+
+static struct MachineDriver sarge_machine_driver =
+{
+	/* basic machine hardware */
+	{
+		{
+			CPU_Z80,
+			5000000,	/* 5 Mhz */
+			0,
+			rampage_readmem,rampage_writemem,sarge_readport,sa_writeport,
+			mcr_interrupt,32
+		},
+		{
+			CPU_M6809 | CPU_AUDIO_CPU,
+			2250000,	/* 2.25 Mhz??? */
+			2,
+			tcs_readmem,tcs_writemem,0,0,
+			ignore_interrupt,1
+		}
+	},
+	30,
+	100,	/* 100 CPU slices per frame - high enough to enable proper handshaking with the SG board */
+	sarge_init_machine,
+
+	/* video hardware */
+	32*16, 30*16, { 0, 32*16-1, 0, 30*16-1 },
+	sarge_gfxdecodeinfo,
+	8*16, 8*16,
+	rampage_vh_convert_color_prom,
+
+	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY|VIDEO_MODIFIES_PALETTE,
 	0,
-	mcr_sh_start,
-	AY8910_sh_stop,
-	AY8910_sh_update
+	generic_vh_start,
+	generic_vh_stop,
+	rampage_vh_screenrefresh,
+
+	/* sound hardware */
+	0,
+	sarge_sh_start,
+	DAC_sh_stop,
+	DAC_sh_update
 };
 
 static struct MachineDriver spyhunt_machine_driver =
@@ -945,15 +1178,22 @@ static struct MachineDriver spyhunt_machine_driver =
 			2000000,	/* 2 Mhz */
 			2,
 			sound_readmem,sound_writemem,0,0,
-			mcr_sh_interrupt,26
+			interrupt,26
+		},
+		{
+			CPU_M68000 | CPU_AUDIO_CPU,
+			10000000,	/* 7.5 Mhz really, but use a higher value because of bad CPU timing */
+			3,
+			csd_readmem,csd_writemem,0,0,
+			ignore_interrupt,1
 		}
 	},
 	30,
 	10,	/* 10 CPU slices per frame - enough for the sound CPU to read all commands */
-	mcr_init_machine,
+	spyhunt_init_machine,
 
 	/* video hardware */
-	30*16, 30*16, { 0, 30*16-1, 0, 30*16-1 },
+	31*16, 30*16, { 0, 31*16-1, 0, 30*16-1 },
 	spyhunt_gfxdecodeinfo,
 	8*16+4, 8*16+4,
 	spyhunt_vh_convert_color_prom,
@@ -966,10 +1206,9 @@ static struct MachineDriver spyhunt_machine_driver =
 
 	/* sound hardware */
 	0,
-	0,
-	mcr_sh_start,
-	AY8910_sh_stop,
-	AY8910_sh_update
+	spyhunt_sh_start,
+	spyhunt_sh_stop,
+	spyhunt_sh_update
 };
 
 
@@ -1005,6 +1244,32 @@ ROM_START( tapper_rom )
 	ROM_LOAD( "tapsda10.bin", 0x3000, 0x1000, 0x5700e3bc )
 ROM_END
 
+ROM_START( rbtapper_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "RBTPG0.BIN", 0x0000, 0x4000, 0xe244a760 )
+	ROM_LOAD( "RBTPG1.BIN", 0x4000, 0x4000, 0x9d396be1 )
+	ROM_LOAD( "RBTPG2.BIN", 0x8000, 0x4000, 0xb5754c6f )
+	ROM_LOAD( "RBTPG3.BIN", 0xc000, 0x2000, 0xe4d2f90c )
+
+	ROM_REGION(0x28000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "RBTBG1.BIN", 0x00000, 0x4000, 0xf4a6a6c2 )
+	ROM_LOAD( "RBTBG0.BIN", 0x04000, 0x4000, 0xb2c39a07 )
+	ROM_LOAD( "RBTFG7.BIN", 0x08000, 0x4000, 0x13b5cd63 )
+	ROM_LOAD( "RBTFG6.BIN", 0x0c000, 0x4000, 0x13e3ace7 )
+	ROM_LOAD( "RBTFG5.BIN", 0x10000, 0x4000, 0xb7fc8fa2 )
+	ROM_LOAD( "RBTFG4.BIN", 0x14000, 0x4000, 0x96a7dc3f )
+	ROM_LOAD( "RBTFG3.BIN", 0x18000, 0x4000, 0x2b5f23af )
+	ROM_LOAD( "RBTFG2.BIN", 0x1c000, 0x4000, 0x83483c84 )
+	ROM_LOAD( "RBTFG1.BIN", 0x20000, 0x4000, 0x2640bc88 )
+	ROM_LOAD( "RBTFG0.BIN", 0x24000, 0x4000, 0xbf6680b0 )
+
+	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_LOAD( "rbtsnda7.bin", 0x0000, 0x1000, 0x7deadcee )
+	ROM_LOAD( "rbtsnda8.bin", 0x1000, 0x1000, 0x3fd4b634 )
+	ROM_LOAD( "rbtsnda9.bin", 0x2000, 0x1000, 0xd39ced7e )
+	ROM_LOAD( "rbtsda10.bin", 0x3000, 0x1000, 0xff9f449d )
+ROM_END
+
 ROM_START( dotron_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "loc-cpu1", 0x0000, 0x4000, 0x2b48866e )
@@ -1029,6 +1294,11 @@ ROM_START( dotron_rom )
 	ROM_LOAD( "loc-b", 0x1000, 0x1000, 0xe06bfdad )
 	ROM_LOAD( "loc-c", 0x2000, 0x1000, 0x4eb9e1c9 )
 	ROM_LOAD( "loc-d", 0x3000, 0x1000, 0x33985af4 )
+
+	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_LOAD( "pre-u3", 0xd000, 0x1000, 0x530b2539 )
+	ROM_LOAD( "pre-u4", 0xe000, 0x1000, 0x21a4f27e )
+	ROM_LOAD( "pre-u5", 0xf000, 0x1000, 0x022b5f5d )
 ROM_END
 
 ROM_START( destderb_rom )
@@ -1091,6 +1361,30 @@ ROM_START( rampage_rom )
 	ROM_LOAD( "fg-2", 0x18000, 0x10000, 0xdf6c8714 )
 	ROM_LOAD( "fg-1", 0x28000, 0x10000, 0xa0449c5e )
 	ROM_LOAD( "fg-0", 0x38000, 0x10000, 0xf9f7bf39 )
+
+	ROM_REGION(0x20000)  /* 128k for the Sounds Good board */
+	ROM_LOAD_EVEN( "ramp_u7.snd",  0x00000, 0x8000, 0xcaa4cb94 )
+	ROM_LOAD_ODD ( "ramp_u17.snd", 0x00000, 0x8000, 0xc05b8501 )
+	ROM_LOAD_EVEN( "ramp_u8.snd",  0x10000, 0x8000, 0xf12ce7b2 )
+	ROM_LOAD_ODD ( "ramp_u18.snd", 0x10000, 0x8000, 0xbc884046 )
+ROM_END
+
+ROM_START( sarge_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "cpu_3b.bin", 0x0000, 0x8000, 0xe4ccb988 )
+	ROM_LOAD( "cpu_5b.bin", 0x8000, 0x8000, 0xfcfd8a55 )
+
+	ROM_REGION(0x24000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "til_15a.bin", 0x00000, 0x2000, 0x9fbe8040 )
+	ROM_LOAD( "til_14b.bin", 0x02000, 0x2000, 0xf1d8588e )
+	ROM_LOAD( "spr_4e.bin", 0x04000, 0x8000, 0xbeb5a087 )
+	ROM_LOAD( "spr_5e.bin", 0x0c000, 0x8000, 0x8656a6b0 )
+	ROM_LOAD( "spr_6e.bin", 0x14000, 0x8000, 0x77fcd1fa )
+	ROM_LOAD( "spr_8e.bin", 0x1c000, 0x8000, 0x03a20ad4 )
+
+	ROM_REGION(0x10000)  /* 64k for the Turbo Cheap Squeak */
+	ROM_LOAD( "tcs_u5.bin", 0xc000, 0x2000, 0xee7518d3 )
+	ROM_LOAD( "tcs_u4.bin", 0xe000, 0x2000, 0x9b3a062e )
 ROM_END
 
 ROM_START( spyhunt_rom )
@@ -1120,6 +1414,12 @@ ROM_START( spyhunt_rom )
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
 	ROM_LOAD( "snd_0sd.a8", 0x0000, 0x1000, 0xd920c104 )
 	ROM_LOAD( "snd_1sd.a7", 0x1000, 0x1000, 0x241e9f44 )
+
+	ROM_REGION(0x8000)  /* 32k for the Chip Squeak Deluxe */
+	ROM_LOAD_EVEN( "csd_u7a.u7",   0x00000, 0x2000, 0xf002e3b0 )
+	ROM_LOAD_ODD ( "csd_u17b.u17", 0x00000, 0x2000, 0x34b0f16a )
+	ROM_LOAD_EVEN( "csd_u8c.u8",   0x04000, 0x2000, 0x333128c7 )
+	ROM_LOAD_ODD ( "csd_u18d.u18", 0x04000, 0x2000, 0x14d2cc46 )
 ROM_END
 
 
@@ -1199,12 +1499,33 @@ struct GameDriver tapper_driver =
 {
 	"Tapper",
 	"tapper",
-	"CHRISTOPHER KIRMSE\nAARON GILES\nNICOLA SALMORIA",
+	"Christopher Kirmse\nAaron Giles\nNicola Salmoria",
 	&tapper_machine_driver,
 
 	tapper_rom,
 	0, 0,
 	0,
+	0,	/* sound_prom */
+
+	0, tapper_input_ports, 0, 0, 0,
+
+	0, 0,0,
+	ORIENTATION_DEFAULT,
+
+	tapper_hiload, tapper_hisave
+};
+
+struct GameDriver rbtapper_driver =
+{
+	"Root Beer Tapper",
+	"rbtapper",
+	"Christopher Kirmse\nAaron Giles\nNicola Salmoria",
+	&tapper_machine_driver,
+
+	rbtapper_rom,
+	0, 0,
+	0,
+	0,	/* sound_prom */
 
 	0, tapper_input_ports, 0, 0, 0,
 
@@ -1218,12 +1539,13 @@ struct GameDriver dotron_driver =
 {
 	"Discs of Tron",
 	"dotron",
-	"CHRISTOPHER KIRMSE\nAARON GILES\nNICOLA SALMORIA",
+	"Christopher Kirmse\nAaron Giles\nNicola Salmoria\nAlan J. McCormick (speech info)",
 	&dotron_machine_driver,
 
 	dotron_rom,
 	0, 0,
 	0,
+	0,	/* sound_prom */
 
 	0, dotron_input_ports, 0, 0, 0,
 
@@ -1237,12 +1559,13 @@ struct GameDriver destderb_driver =
 {
 	"Demolition Derby",
 	"destderb",
-	"CHRISTOPHER KIRMSE\nAARON GILES\nNICOLA SALMORIA\nBRAD OLIVER",
+	"Christopher Kirmse\nAaron Giles\nNicola Salmoria\nBrad Oliver",
 	&destderb_machine_driver,
 
 	destderb_rom,
 	0, 0,
 	0,
+	0,	/* sound_prom */
 
 	0, destderb_input_ports, 0, 0, 0,
 
@@ -1256,12 +1579,13 @@ struct GameDriver timber_driver =
 {
 	"Timber",
 	"timber",
-	"CHRISTOPHER KIRMSE\nAARON GILES\nNICOLA SALMORIA\nBRAD OLIVER",
+	"Christopher Kirmse\nAaron Giles\nNicola Salmoria\nBrad Oliver",
 	&timber_machine_driver,
 
 	timber_rom,
 	0, 0,
 	0,
+	0,	/* sound_prom */
 
 	0, timber_input_ports, 0, 0, 0,
 
@@ -1275,12 +1599,13 @@ struct GameDriver rampage_driver =
 {
 	"Rampage",
 	"rampage",
-	"CHRISTOPHER KIRMSE\nAARON GILES\nNICOLA SALMORIA\nBRAD OLIVER",
+	"Aaron Giles\nChristopher Kirmse\nNicola Salmoria\nBrad Oliver",
 	&rampage_machine_driver,
 
 	rampage_rom,
 	0, 0,
 	0,
+	0,	/* sound_prom */
 
 	0, rampage_input_ports, 0, 0, 0,
 
@@ -1290,16 +1615,37 @@ struct GameDriver rampage_driver =
 	rampage_hiload, rampage_hisave
 };
 
+struct GameDriver sarge_driver =
+{
+	"Sarge",
+	"sarge",
+	"Aaron Giles\nChristopher Kirmse\nNicola Salmoria\nBrad Oliver",
+	&sarge_machine_driver,
+
+	sarge_rom,
+	0, 0,
+	0,
+	0,	/* sound_prom */
+
+	0, sarge_input_ports, 0, 0, 0,
+
+	0, 0,0,
+	ORIENTATION_DEFAULT,
+
+	0, 0
+};
+
 struct GameDriver spyhunt_driver =
 {
 	"Spy Hunter",
 	"spyhunt",
-	"AARON GILES\nCHRISTOPHER KIRMSE\nNICOLA SALMORIA\nBRAD OLIVER\nLAWNMOWER MAN",
+	"Aaron Giles\nChristopher Kirmse\nNicola Salmoria\nBrad Oliver\nLawnmower Man",
 	&spyhunt_machine_driver,
 
 	spyhunt_rom,
 	spyhunt_decode, 0,
 	0,
+	0,	/* sound_prom */
 
 	0, spyhunt_input_ports, 0, 0, 0,
 

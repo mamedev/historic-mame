@@ -6,12 +6,6 @@ J Clegg
 
 Loosely based on the Kung Fu Master driver.
 
-Know problems :-
-No Sound, We need a 6803 emulator in MAME to do the sound
-**note** a 6800/6803/6808 emulator would make the ability
-	 to have full sound in all the IREM games, plus
-	 realtime sound in the Willams games rather than samples!!!
-
 ****************************************************************************/
 
 #include "driver.h"
@@ -30,7 +24,6 @@ int yard_vh_start(void);
 void yard_vh_stop(void);
 void yard_vh_screenrefresh(struct osd_bitmap *bitmap);
 
-/* JB 971012 ... */
 extern unsigned char *mpatrol_io_ram;
 extern unsigned char *mpatrol_sample_data;
 extern unsigned char *mpatrol_sample_table;
@@ -41,7 +34,8 @@ void mpatrol_io_w(int offset, int value);
 int mpatrol_io_r(int offset);
 void mpatrol_sample_trigger_w(int offset,int value);
 void mpatrol_sound_cmd_w(int offset, int value);
-/* ... JB 971012 */
+
+
 
 static struct MemoryReadAddress readmem[] =
 {
@@ -80,7 +74,6 @@ static struct IOWritePort writeport[] =
 	{ -1 }	/* end of table */
 };
 
-/* JB 971012 ... */
 static struct MemoryReadAddress sound_readmem[] =
 {
 	{ 0x0000, 0x001f, mpatrol_io_r, &mpatrol_io_ram },
@@ -99,19 +92,17 @@ static struct MemoryWriteAddress sound_writemem[] =
 	{ 0x8000, 0xffff, MWA_ROM },
 	{ -1 }	/* end of table */
 };
-/* ... JB 971012 */
 
 
 
-/* JB 970920 */
-INPUT_PORTS_START( input_ports )
+INPUT_PORTS_START( yard_input_ports )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START2 )
 	/* coin input must be active for 19 frames to be consistently recognized */
-	PORT_BITX(0x04, IP_ACTIVE_LOW, IPT_COIN1 | IPF_IMPULSE,
-		"Coin", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 19 )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BITX(0x04, IP_ACTIVE_LOW, IPT_COIN3 | IPF_IMPULSE,
+		"Coin Aux", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 19 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
@@ -123,19 +114,19 @@ INPUT_PORTS_START( input_ports )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BITX(0x20, IP_ACTIVE_LOW, IPT_BUTTON1, "Snap/Forward Pass", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON1 )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BITX(0x80, IP_ACTIVE_LOW, IPT_BUTTON2, "Lateral Pass", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON2 )
 
 	PORT_START	/* IN2 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_COCKTAIL )
 
 	PORT_START	/* DSW1 */
 	PORT_DIPNAME( 0x01, 0x01, "SW1A", IP_KEY_NONE )
@@ -149,51 +140,141 @@ INPUT_PORTS_START( input_ports )
 	PORT_DIPSETTING( 0x08, "x 1.3" )
 	PORT_DIPSETTING( 0x04, "x 1.5" )
 	PORT_DIPSETTING( 0x00, "x 1.8" )
-	PORT_DIPNAME( 0x70, 0x70, "Coinage", IP_KEY_NONE )
-	PORT_DIPSETTING( 0x70, "1 Coin/1 Credit" )
-	PORT_DIPSETTING( 0x60, "2 Coins/1 Credit" )
-	PORT_DIPSETTING( 0x50, "3 Coins/1 Credit" )
-	PORT_DIPSETTING( 0x40, "4 Coins/1 Credit" )
-	PORT_DIPSETTING( 0x30, "5 Coins/1 Credit" )
-	PORT_DIPSETTING( 0x20, "6 Coins/1 Credit" )
-	/* PORT_DIPSETTING( 0x10, "INVALID" ) */
-	/* PORT_DIPSETTING( 0x00, "INVALID" ) */
-	PORT_DIPNAME( 0x80, 0x80, "SW8A", IP_KEY_NONE )
-	PORT_DIPSETTING( 0x80, "Off" )
-	PORT_DIPSETTING( 0x00, "On " )
+	/* TODO: support the different settings which happen in Coin Mode 2 */
+	PORT_DIPNAME( 0xf0, 0xf0, "Coinage", IP_KEY_NONE ) /* mapped on coin mode 1 */
+	PORT_DIPSETTING(    0xa0, "6 Coins/1 Credit" )
+	PORT_DIPSETTING(    0xb0, "5 Coins/1 Credit" )
+	PORT_DIPSETTING(    0xc0, "4 Coins/1 Credit" )
+	PORT_DIPSETTING(    0xd0, "3 Coins/1 Credit" )
+	PORT_DIPSETTING(    0xe0, "2 Coins/1 Credit" )
+	PORT_DIPSETTING(    0xf0, "1 Coin/1 Credit" )
+	PORT_DIPSETTING(    0x70, "1 Coin/2 Credits" )
+	PORT_DIPSETTING(    0x60, "1 Coin/3 Credits" )
+	PORT_DIPSETTING(    0x50, "1 Coin/4 Credits" )
+	PORT_DIPSETTING(    0x40, "1 Coin/5 Credits" )
+	PORT_DIPSETTING(    0x30, "1 Coin/6 Credits" )
+	PORT_DIPSETTING(    0x00, "Free Play" )
+	/* settings 0x10, 0x20, 0x80, 0x90 all give 1 Coin/1 Credit */
 
 	PORT_START	/* DSW2 */
-	PORT_DIPNAME( 0x01, 0x01, "SW1B", IP_KEY_NONE )
-	PORT_DIPSETTING( 0x01, "Off" )
-	PORT_DIPSETTING( 0x00, "On" )
+	PORT_DIPNAME( 0x01, 0x01, "Flip Screen", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x01, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
 	PORT_DIPNAME( 0x02, 0x00, "Cabinet", IP_KEY_NONE )
-	PORT_DIPSETTING( 0x00, "Upright" )
-	PORT_DIPSETTING( 0x02, "Cocktail" )
-	PORT_DIPNAME( 0x04, 0x04, "SW3B", IP_KEY_NONE )
-	PORT_DIPSETTING( 0x04, "Off" )
-	PORT_DIPSETTING( 0x00, "On" )
-	PORT_DIPNAME( 0x08, 0x08, "SW4B", IP_KEY_NONE )
-	PORT_DIPSETTING( 0x08, "Off" )
-	PORT_DIPSETTING( 0x00, "On" )
+	PORT_DIPSETTING(    0x00, "Upright" )
+	PORT_DIPSETTING(    0x02, "Cocktail" )
+/* This activates a different coin mode. Look at the dip switch setting schematic */
+	PORT_DIPNAME( 0x04, 0x04, "Coin Mode", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x04, "Mode 1" )
+	PORT_DIPSETTING(    0x00, "Mode 2" )
+	PORT_BITX(    0x08, 0x08, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Slow Motion", IP_KEY_NONE, IP_JOY_NONE, 0 )
+	PORT_DIPSETTING(    0x08, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
 	PORT_DIPNAME( 0x10, 0x10, "SW5B", IP_KEY_NONE )
 	PORT_DIPSETTING( 0x10, "Off" )
 	PORT_DIPSETTING( 0x00, "On" )
 	PORT_DIPNAME( 0x20, 0x20, "SW6B", IP_KEY_NONE )
 	PORT_DIPSETTING( 0x20, "Off" )
 	PORT_DIPSETTING( 0x00, "On" )
-	PORT_DIPNAME( 0x40, 0x40, "SW7B", IP_KEY_NONE )
-	PORT_DIPSETTING( 0x40, "Off" )
-	PORT_DIPSETTING( 0x00, "On" )
+	PORT_BITX(    0x40, 0x40, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Invulnerability", IP_KEY_NONE, IP_JOY_NONE, 0 )
+	PORT_DIPSETTING(    0x40, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
 	PORT_BITX(    0x80, 0x80, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE, 0 )
 	PORT_DIPSETTING(    0x80, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
 INPUT_PORTS_END
 
+/* exactly the same as yard, only difference is the Allow Continue dip switch */
+/* Also, the Cabinet dip switch doesn't seem to work. */
+INPUT_PORTS_START( vsyard_input_ports )
+	PORT_START	/* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START2 )
+	/* coin input must be active for 19 frames to be consistently recognized */
+	PORT_BITX(0x04, IP_ACTIVE_LOW, IPT_COIN3 | IPF_IMPULSE,
+		"Coin Aux", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 19 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
-static struct TrakPort trak_ports[] =
-{
-        { -1 }
-};
+	PORT_START	/* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON2 )
+
+	PORT_START	/* IN2 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_COCKTAIL )
+
+	PORT_START	/* DSW1 */
+	PORT_DIPNAME( 0x01, 0x00, "Continue (Vs. Mode Only)", IP_KEY_NONE )
+	PORT_DIPSETTING( 0x01, "No" )
+	PORT_DIPSETTING( 0x00, "Yes" )
+	PORT_DIPNAME( 0x02, 0x02, "SW2A", IP_KEY_NONE )
+	PORT_DIPSETTING( 0x02, "Off" )
+	PORT_DIPSETTING( 0x00, "On" )
+	PORT_DIPNAME( 0x0c, 0x0c, "Time Reduced", IP_KEY_NONE )
+	PORT_DIPSETTING( 0x0c, "Normal" )
+	PORT_DIPSETTING( 0x08, "x 1.3" )
+	PORT_DIPSETTING( 0x04, "x 1.5" )
+	PORT_DIPSETTING( 0x00, "x 1.8" )
+	/* TODO: support the different settings which happen in Coin Mode 2 */
+	PORT_DIPNAME( 0xf0, 0xf0, "Coinage", IP_KEY_NONE ) /* mapped on coin mode 1 */
+	PORT_DIPSETTING(    0xa0, "6 Coins/1 Credit" )
+	PORT_DIPSETTING(    0xb0, "5 Coins/1 Credit" )
+	PORT_DIPSETTING(    0xc0, "4 Coins/1 Credit" )
+	PORT_DIPSETTING(    0xd0, "3 Coins/1 Credit" )
+	PORT_DIPSETTING(    0xe0, "2 Coins/1 Credit" )
+	PORT_DIPSETTING(    0xf0, "1 Coin/1 Credit" )
+	PORT_DIPSETTING(    0x70, "1 Coin/2 Credits" )
+	PORT_DIPSETTING(    0x60, "1 Coin/3 Credits" )
+	PORT_DIPSETTING(    0x50, "1 Coin/4 Credits" )
+	PORT_DIPSETTING(    0x40, "1 Coin/5 Credits" )
+	PORT_DIPSETTING(    0x30, "1 Coin/6 Credits" )
+	PORT_DIPSETTING(    0x00, "Free Play" )
+	/* settings 0x10, 0x20, 0x80, 0x90 all give 1 Coin/1 Credit */
+
+	PORT_START	/* DSW2 */
+	PORT_DIPNAME( 0x01, 0x01, "Flip Screen", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x01, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x02, 0x00, "Cabinet?", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "Upright" )
+	PORT_DIPSETTING(    0x02, "Cocktail" )
+/* This activates a different coin mode. Look at the dip switch setting schematic */
+	PORT_DIPNAME( 0x04, 0x04, "Coin Mode", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x04, "Mode 1" )
+	PORT_DIPSETTING(    0x00, "Mode 2" )
+	PORT_BITX(    0x08, 0x08, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Slow Motion", IP_KEY_NONE, IP_JOY_NONE, 0 )
+	PORT_DIPSETTING(    0x08, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x10, 0x10, "SW5B", IP_KEY_NONE )
+	PORT_DIPSETTING( 0x10, "Off" )
+	PORT_DIPSETTING( 0x00, "On" )
+	PORT_DIPNAME( 0x20, 0x20, "SW6B", IP_KEY_NONE )
+	PORT_DIPSETTING( 0x20, "Off" )
+	PORT_DIPSETTING( 0x00, "On" )
+	PORT_BITX(    0x40, 0x40, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Invulnerability", IP_KEY_NONE, IP_JOY_NONE, 0 )
+	PORT_DIPSETTING(    0x40, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_BITX(    0x80, 0x80, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE, 0 )
+	PORT_DIPSETTING(    0x80, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+INPUT_PORTS_END
+
 
 
 static struct GfxLayout charlayout =
@@ -348,11 +429,11 @@ static struct MachineDriver machine_driver =
 		},
 		/* JB 971012 */
 		{
-			CPU_M6803,
+			CPU_M6802 | CPU_AUDIO_CPU,
 			1000000,	/* 1.0 Mhz ? */
 			2,
 			sound_readmem,sound_writemem,0,0,
-			mpatrol_sh_interrupt,68	/* 68 ints per frame = 4080 ints/sec */
+			nmi_interrupt,68	/* 68 ints per frame = 4080 ints/sec */
 		}
 	},
 	60,
@@ -372,7 +453,6 @@ static struct MachineDriver machine_driver =
 	yard_vh_screenrefresh,
 
 	/* sound hardware */
-	0,
 	mpatrol_sh_init,
 	/* JB 971012 */
 	mpatrol_sh_start,
@@ -413,6 +493,33 @@ ROM_START( yard_rom )
 ROM_END
 
 
+ROM_START( vsyard_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "yf-a-3n", 0x0000, 0x2000, 0x62af9fe3 )
+	ROM_LOAD( "yf-a-3m", 0x2000, 0x2000, 0x05825f66 )
+	ROM_LOAD( "yf-a-3k", 0x4000, 0x2000, 0xc22e2aca )
+
+	ROM_REGION(0x12000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "yf-a-3a", 0x00000, 0x2000, 0x1be716f5 )	/* chars */
+	ROM_LOAD( "yf-a-3c", 0x02000, 0x2000, 0x83060c38 )
+	ROM_LOAD( "yf-a-3d", 0x04000, 0x2000, 0xdd373627 )
+	ROM_LOAD( "yf-b-5c", 0x06000, 0x2000, 0x5331aec5 )	/* sprites */
+	ROM_LOAD( "yf-b-5a", 0x08000, 0x2000, 0xc052c88c )
+	ROM_LOAD( "yf-b-5e", 0x0a000, 0x2000, 0x7fdade5c )
+	ROM_LOAD( "yf-b-5d", 0x0c000, 0x2000, 0x8ed559bd )
+	ROM_LOAD( "yf-b-5j", 0x0e000, 0x2000, 0x687142a1 )
+	ROM_LOAD( "yf-b-5h", 0x10000, 0x2000, 0x0143b99b )
+
+	/* JB 971012 */
+	ROM_REGION(0x10000)	/* 64k for sound cpu */
+	/* should the samples be loaded here ??? */
+	ROM_LOAD( "yf-s-3b", 0x8000, 0x2000, 0xbbb87550 )		/* samples (ADPCM 4-bit) */
+	ROM_LOAD( "yf-s-1b", 0xa000, 0x2000, 0xec2129c1 )		/* samples (ADPCM 4-bit) */
+	ROM_LOAD( "yf-s-3a", 0xc000, 0x2000, 0xf4962ed6 )		/* samples (ADPCM 4-bit) */
+	ROM_LOAD( "yf-s-1a", 0xe000, 0x2000, 0xb2b58731 )
+ROM_END
+
+
 /* JB 971009 */
 static int hiload(void)
 {
@@ -422,7 +529,7 @@ static int hiload(void)
 
 	/* check if the hi score table has already been initialized */
 	if (memcmp(&RAM[0xe600],"\x00\x65\x03",3) == 0 &&
-			RAM[0xe684] | RAM[0xe685] | RAM[0xe686] != 0)	/* JB 971014 */
+			(RAM[0xe684] | RAM[0xe685] | RAM[0xe686]) != 0)	/* JB 971014 */
 	{
 		void *f;
 
@@ -470,8 +577,30 @@ struct GameDriver yard_driver =
 	yard_rom,
 	0, 0,
 	0,
+	0,	/* sound_prom */
 
-	0/*TBR*/,input_ports,trak_ports/*TBR*/,0/*TBR*/,0/*TBR*/,
+	0/*TBR*/,yard_input_ports,0/*TBR*/,0/*TBR*/,0/*TBR*/,
+
+	color_prom, 0, 0,
+	ORIENTATION_DEFAULT,
+
+	hiload, hisave /* JB 971009 */
+};
+
+
+struct GameDriver vsyard_driver =
+{
+	"10 Yard Fight (Vs. version)",
+	"vsyard",
+	"Lee Taylor\nJohn Clegg\nMirko Buffoni\nNicola Salmoria\nIshmair\nTim Lindquist (color info)\nAaron Giles (sound)\nKevin Brisley (hiscores)",
+	&machine_driver,
+
+	vsyard_rom,
+	0, 0,
+	0,
+	0,	/* sound_prom */
+
+	0/*TBR*/,vsyard_input_ports,0/*TBR*/,0/*TBR*/,0/*TBR*/,
 
 	color_prom, 0, 0,
 	ORIENTATION_DEFAULT,

@@ -11,7 +11,7 @@
 
 unsigned char *mcr3_paletteram;
 
-static int sprite_transparency[512]; /* no mcr3 game has more than this many sprites */
+static char sprite_transparency[512]; /* no mcr3 game has more than this many sprites */
 
 
 /***************************************************************************
@@ -264,12 +264,13 @@ void rampage_vh_screenrefresh(struct osd_bitmap *bitmap)
 
 ***************************************************************************/
 
+extern int spyhunt_lamp[];
+
 unsigned char *spyhunt_alpharam;
 int spyhunt_alpharam_size;
 int spyhunt_scrollx,spyhunt_scrolly;
 
 static struct osd_bitmap *backbitmap;	/* spy hunter only for scrolling background */
-static struct rectangle backclip;
 
 
 void spyhunt_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom)
@@ -306,10 +307,6 @@ int spyhunt_vh_start(void)
 		return 1;
 	memset(dirtybuffer,1,videoram_size);
 
-	backclip.min_x = backclip.min_y = 0;
-	backclip.max_x = 64*64 - 1;
-	backclip.max_y = 32*32 - 1;
-
 	backbitmap = osd_create_bitmap(64*64,32*32);
 	if (!backbitmap)
 	{
@@ -332,8 +329,10 @@ void spyhunt_vh_stop(void)
 
 void spyhunt_vh_screenrefresh(struct osd_bitmap *bitmap)
 {
+	static struct rectangle clip = { 0, 30*16-1, 0, 30*16-1 };
    int offs;
    int mx,my;
+   char buffer[32];
 
 
    /* for every character in the Video RAM, check if it has been modified */
@@ -352,7 +351,7 @@ void spyhunt_vh_screenrefresh(struct osd_bitmap *bitmap)
 			drawgfx(backbitmap,Machine->gfx[0],
 				(code & 0x3f) | ((code & 0x80) >> 1),
 				1,0,(code & 0x40),64*mx,32*my,
-				&backclip,TRANSPARENCY_NONE,0);
+				NULL,TRANSPARENCY_NONE,0);
 		}
    }
 
@@ -363,7 +362,7 @@ void spyhunt_vh_screenrefresh(struct osd_bitmap *bitmap)
 		scrollx = -spyhunt_scrollx * 2 - 16;
 		scrolly = -spyhunt_scrolly * 2;
 
-		copyscrollbitmap(bitmap,backbitmap,1,&scrollx,1,&scrolly,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+		copyscrollbitmap(bitmap,backbitmap,1,&scrollx,1,&scrolly,&clip,TRANSPARENCY_NONE,0);
 	}
 
    /* Draw the sprites. */
@@ -382,8 +381,8 @@ void spyhunt_vh_screenrefresh(struct osd_bitmap *bitmap)
       sy = (241-spriteram[offs])*2;
 
       drawgfx(bitmap,Machine->gfx[1],
-	      code,0,flipx,flipy,sx-16,sy,
-	      &Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+	      code,0,flipx,flipy,sx-16,sy+4,
+	      &clip,TRANSPARENCY_PEN,0);
 
       /* sprites use color 0 for background pen and 8 for the 'under tile' pen.
 			The color 8 is used to cover over other sprites.
@@ -414,7 +413,20 @@ void spyhunt_vh_screenrefresh(struct osd_bitmap *bitmap)
 	      drawgfx(bitmap,Machine->gfx[2],
 		      ch,
 		      0,0,0,16*mx-16,16*my,
-		      &Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+		      &clip,TRANSPARENCY_PEN,0);
 		}
 	}
+	
+	/* lamp indicators */
+	sprintf (buffer, "%s  %s  %s  %s  %s",
+				spyhunt_lamp[0] ? "OIL" : "   ",
+				spyhunt_lamp[1] ? "MISSILE" : "       ",
+				spyhunt_lamp[2] ? "VAN" : "   ",
+				spyhunt_lamp[3] ? "SMOKE" : "     ",
+				spyhunt_lamp[4] ? "GUNS" : "    ");
+	for (offs = 0; offs < 30; offs++)
+		drawgfx(bitmap,Machine->gfx[2],
+			buffer[offs],
+			0,0,0,30*16,(29-offs)*16,
+			&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
 }

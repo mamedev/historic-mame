@@ -112,7 +112,6 @@ extern void cloak_vh_screenrefresh(struct osd_bitmap *bitmap);
 static struct POKEYinterface interface =
 {
 	2,	/* 2 chips */
-	1,	/* 1 update per video frame (low quality) */
 	FREQ_17_APPROX,	/* 1.7 Mhz */
 	255,
 	NO_CLIP,
@@ -238,10 +237,24 @@ INPUT_PORTS_START( cloak_input_ports )
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_START2 )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_START1 )
 
-	PORT_START	/* DSW1 */
-	PORT_DIPNAME( 0x02, 0x02, "Credit mode", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x02, "Credit" )
+	PORT_START      /* DSW1 */
+	PORT_DIPNAME( 0x03, 0x02, "Credit mode", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x02, "1 Credit=1 Game" )
+	PORT_DIPSETTING(    0x01, "1 Credit=2 Games" )
+	PORT_DIPSETTING(    0x03, "2 Credits=1 Game" )
 	PORT_DIPSETTING(    0x00, "Free Play" )
+	PORT_DIPNAME( 0x30, 0x00, "Right Coin",IP_KEY_NONE)
+	PORT_DIPSETTING(    0x00, "1 Coin=1 Credit" )
+	PORT_DIPSETTING(    0x10, "1 Coin=2 Credits" )
+	PORT_DIPNAME( 0x0C, 0x00, "Left Coin",IP_KEY_NONE)
+	PORT_DIPSETTING(    0x00, "1 Coin=1 Credit" )
+	PORT_DIPSETTING(    0x04, "1 Coin=4 Credits" )
+	PORT_DIPSETTING(    0x08, "1 Coin=5 Credits" )
+	PORT_DIPSETTING(    0x0C, "1 Coin=6 Credits" )
+	PORT_DIPNAME( 0x40, 0x00, "Demo mode",IP_KEY_NONE)
+	PORT_DIPSETTING(    0x40, "Freeze on" )
+	PORT_DIPSETTING(    0x00, "Freeze off" )
+
 
 INPUT_PORTS_END
 
@@ -290,14 +303,14 @@ static struct MachineDriver machine_driver =
 		},
 		{
 			CPU_M6502,
-			1000000,	/* 1 Mhz ???? */
+                        1250000,        /* 1 Mhz ???? */
 			2,
 			readmem2,writemem2,0,0,
 			interrupt,2
 		}
 	},
 	60,
-	10,
+        5,
 	0,
 
 	/* video hardware */
@@ -314,7 +327,6 @@ static struct MachineDriver machine_driver =
 	cloak_vh_screenrefresh,
 
 	/* sound hardware */
-	0,
 	0,
 	cloak_sh_start,
 	pokey_sh_stop,
@@ -362,6 +374,7 @@ struct GameDriver cloak_driver =
 	cloak_rom,
 	0, 0,
 	0,
+	0,	/* sound_prom */
 
 	0, cloak_input_ports, 0, 0, 0,
 

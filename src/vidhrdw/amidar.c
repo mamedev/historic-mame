@@ -173,20 +173,20 @@ void amidar_vh_screenrefresh(struct osd_bitmap *bitmap)
 		int flipx,flipy,sx,sy;
 
 
-		flipx = spriteram[offs + 1] & 0x40;
-		flipy = spriteram[offs + 1] & 0x80;
 		sx = (spriteram[offs + 3] + 1) & 0xff;	/* ??? */
 		sy = 240 - spriteram[offs];
+		flipx = spriteram[offs + 1] & 0x40;
+		flipy = spriteram[offs + 1] & 0x80;
 
 		if (flipscreen[0])
 		{
-			flipx = !flipx;
 			sx = 241 - sx;	/* note: 241, not 240 */
+			flipx = !flipx;
 		}
 		if (flipscreen[1])
 		{
-			flipy = !flipy;
 			sy = 240 - sy;
+			flipy = !flipy;
 		}
 
 		/* Sprites #0, #1 and #2 need to be offset one pixel to be correctly */

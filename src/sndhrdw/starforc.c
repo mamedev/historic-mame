@@ -18,16 +18,9 @@ static Z80CTC ctc;
 #define SINGLE_DIVIDER 8
 
 static char *single;
-static single_rate = 1000;
-static single_volume = 0;
+static int single_rate = 1000;
+static int single_volume = 0;
 
-/* sound chips */
-#define SND_CLOCK (Machine->drv->cpu[1].cpu_clock)
-#define CHIPS 3
-static struct SN76496 sn[CHIPS];
-#define buffer_len 350
-#define emulation_rate (buffer_len*Machine->drv->frames_per_second)
-static char *sample;
 
 
 void starforce_pio_w( int offset , int data )
@@ -55,18 +48,7 @@ int starforce_ctc_r( int offset  )
 	return z80ctc_r( &ctc , offset );
 }
 
-void  starforce_sh_0_w( int offset , int data )
-{
-	SN76496Write(&sn[1],data);
-}
-void  starforce_sh_1_w( int offset , int data )
-{
-	SN76496Write(&sn[2],data);
-}
-void  starforce_sh_2_w( int offset , int data )
-{
-	SN76496Write(&sn[0],data);
-}
+
 
 void starforce_volume_w( int offset , int data )
 {
@@ -96,55 +78,61 @@ int starforce_sh_interrupt(void)
 	return Z80_IGNORE_INT;
 }
 
+
+
+static struct SN76496interface interface =
+{
+	3,	/* 3 chips */
+	2000000,	/* 2 Mhz? */
+	{ 255, 255, 255 }
+};
+
+
+
 int starforce_sh_start(void)
 {
-	int i,j;
+	int i;
+
 
 	pending_commands = 0;
+
+	if (SN76496_sh_start(&interface) != 0)
+		return 1;
 
 	z80ctc_reset( &ctc , Machine->drv->cpu[1].cpu_clock );
 	z80pio_reset( &pio );
 
-	if ((sample = malloc(buffer_len)) == 0)
-		return 1;
-
 	if ((single = malloc(SINGLE_LENGTH)) == 0)
 	{
-		free(sample);
+		SN76496_sh_stop();
 		free(single);
 		return 1;
 	}
 	for (i = 0;i < SINGLE_LENGTH;i++)		/* freq = ctc2 zco / 8 */
 		single[i] = ((i/SINGLE_DIVIDER)&0x01)*(SINGLE_VOLUME/2);
 
-	for (j = 0;j < CHIPS;j++)
-	{
-		sn[j].Clock = SND_CLOCK;
-		SN76496Reset(&sn[j]);
-	}
 	/* CTC2 single tone generator */
-	osd_play_sample(CHIPS ,single,SINGLE_LENGTH,single_rate,single_volume,1);
+	osd_play_sample(4,single,SINGLE_LENGTH,single_rate,single_volume,1);
+
 	return 0;
 }
 
+
+
 void starforce_sh_stop(void)
 {
-	free(sample);
+	SN76496_sh_stop();
 	free(single);
 }
 
+
+
 void starforce_sh_update(void)
 {
-	int i;
+	if (Machine->sample_rate == 0) return;
 
-	if (play_sound == 0) return;
-	for (i = 0;i < CHIPS;i++)
-	{
-		SN76496UpdateB(&sn[i] , emulation_rate , sample , buffer_len );
-		osd_play_streamed_sample(i,sample,buffer_len,emulation_rate,SSG_VOLUME );
-	}
+	SN76496_sh_update();
 
 	/* CTC2 single tone generator */
-	osd_adjust_sample(CHIPS,single_rate,single_volume );
+	osd_adjust_sample(4,single_rate,single_volume );
 }
-

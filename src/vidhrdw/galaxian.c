@@ -57,8 +57,7 @@ static int gfx_bank;	/* used by Pisces and "japirem" only */
 static int gfx_extend;	/* used by Moon Cresta only */
 static int bank_mask;	/* different games have different gfx bank switching */
 static int flipscreen[2];
-
-
+static int BackGround;	/* MJC 051297 */
 
 /***************************************************************************
 
@@ -85,15 +84,21 @@ static int flipscreen[2];
         -- 100 ohm resistor  -- RED
   bit 0 -- 150 ohm resistor  -- RED
 
+  The blue background in Scramble and other games goes through a 390 ohm
+  resistor.
+
 ***************************************************************************/
 void galaxian_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom)
 {
 	int i;
+	unsigned char *opalette;
 	#define TOTAL_COLORS(gfxn) (Machine->gfx[gfxn]->total_colors * Machine->gfx[gfxn]->color_granularity)
 	#define COLOR(gfxn,offs) (colortable[Machine->drv->gfxdecodeinfo[gfxn].color_codes_start + offs])
 
 
-	/* first, the character/sprite palette */
+	opalette = palette;
+
+	/* first, the char acter/sprite palette */
 	for (i = 0;i < 32;i++)
 	{
 		int bit0,bit1,bit2;
@@ -117,6 +122,7 @@ void galaxian_vh_convert_color_prom(unsigned char *palette, unsigned char *color
 
 		color_prom++;
 	}
+
 	/* now the stars */
 	for (i = 0;i < 64;i++)
 	{
@@ -132,6 +138,11 @@ void galaxian_vh_convert_color_prom(unsigned char *palette, unsigned char *color
 		*(palette++) = map[bits];
 	}
 
+	/* use an otherwise unused pen for the blue background */
+	opalette[3*4] = 0;
+	opalette[3*4 + 1] = 0;
+	opalette[3*4 + 2] = 0x55;
+
 
 	/* characters and sprites use the same palette */
 	for (i = 0;i < TOTAL_COLORS(0);i++)
@@ -141,24 +152,47 @@ void galaxian_vh_convert_color_prom(unsigned char *palette, unsigned char *color
 	}
 
 	/* bullets can be either white or yellow */
+
 	COLOR(2,0) = 0;
 	COLOR(2,1) = 0x0f + STARS_COLOR_BASE;	/* yellow */
 	COLOR(2,2) = 0;
 	COLOR(2,3) = 0x3f + STARS_COLOR_BASE;	/* white */
 }
 
+void scramble_background_w(int offset, int data)	/* MJC 051297 */
+{
+	int i,NewBackGround;
 
+    if (data & 1) NewBackGround=Machine->pens[4];
+    else NewBackGround=Machine->pens[0];
+
+    if (NewBackGround != BackGround)
+    {
+        BackGround = NewBackGround;
+
+        for (i=0;i<32;i+=4)
+        {
+		    Machine->gfx[0]->colortable[i] = BackGround;
+        }
+
+        memset(dirtybuffer,1,videoram_size);
+    }
+
+    if(errorlog) fprintf(errorlog,"background changed %d\n",data);
+}
 
 /***************************************************************************
 
   Start the video hardware emulation.
 
 ***************************************************************************/
+
 static int common_vh_start(void)
 {
 	int generator;
 	int x,y;
 
+	BackGround=Machine->pens[0];		/* MJC 051297 */
 
 	gfx_bank = 0;
 	gfx_extend = 0;
@@ -365,8 +399,16 @@ void galaxian_vh_screenrefresh(struct osd_bitmap *bitmap)
 		int scroll[32];
 
 
-		for (i = 0;i < 32;i++)
-			scroll[i] = -galaxian_attributesram[2 * i];
+		if (flipscreen[1])
+		{
+			for (i = 0;i < 32;i++)
+				scroll[31-i] = galaxian_attributesram[2 * i];
+		}
+		else
+		{
+			for (i = 0;i < 32;i++)
+				scroll[i] = -galaxian_attributesram[2 * i];
+		}
 
 		copyscrollbitmap(bitmap,tmpbitmap,0,0,32,scroll,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
 	}
@@ -400,21 +442,31 @@ void galaxian_vh_screenrefresh(struct osd_bitmap *bitmap)
 		int flipx,flipy,sx,sy,spritecode;
 
 
-		sx = spriteram[offs + 3];
+		sx = (spriteram[offs + 3] + 1) & 0xff;	/* ??? */
 		sy = 240 - spriteram[offs];
 		flipx = spriteram[offs + 1] & 0x40;
 		flipy = spriteram[offs + 1] & 0x80;
 
 		if (flipscreen[0])
 		{
+			sx = 241 - sx;	/* note: 241, not 240 (this is correct in Amidar, at least) */
 			flipx = !flipx;
-			sx = 240 - sx;
 		}
 		if (flipscreen[1])
 		{
-			flipy = !flipy;
 			sy = 240 - sy;
+			flipy = !flipy;
 		}
+
+		/* In Amidar, */
+		/* Sprites #0, #1 and #2 need to be offset one pixel to be correctly */
+		/* centered on the ladders in Turtles (we move them down, but since this */
+		/* is a rotated game, we actually move them left). */
+		/* Note that the adjustement must be done AFTER handling flipscreen, thus */
+		/* proving that this is a hardware related "feature" */
+		/* This is not Amidar, it is Galaxian/Scramble/hundreds of clones, and I'm */
+		/* not sure it should be the same. A good game to test alignment is Armored Car */
+//		if (offs <= 2*4) sy++;
 
 		spritecode = spriteram[offs + 1] & 0x3f;
 
@@ -444,8 +496,7 @@ void galaxian_vh_screenrefresh(struct osd_bitmap *bitmap)
 	{
 		int bpen;
 
-
-		bpen = Machine->pens[0];
+		bpen = BackGround; /* MJC 051297 */
 
 		switch (stars_type)
 		{

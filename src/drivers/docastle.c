@@ -70,6 +70,7 @@ ec00      sound port 4
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "sndhrdw/sn76496.h"
 
 
 
@@ -87,13 +88,7 @@ int docastle_vh_start(void);
 void docastle_vh_stop(void);
 void docastle_vh_screenrefresh(struct osd_bitmap *bitmap);
 
-void docastle_sound1_w(int offset,int data);
-void docastle_sound2_w(int offset,int data);
-void docastle_sound3_w(int offset,int data);
-void docastle_sound4_w(int offset,int data);
 int docastle_sh_start(void);
-void docastle_sh_stop(void);
-void docastle_sh_update(void);
 
 
 
@@ -143,10 +138,10 @@ static struct MemoryWriteAddress writemem2[] =
 {
 	{ 0x8000, 0x87ff, MWA_RAM },
 	{ 0xa000, 0xa008, docastle_shared0_w },
-	{ 0xe000, 0xe000, docastle_sound1_w },
-	{ 0xe400, 0xe400, docastle_sound2_w },
-	{ 0xe800, 0xe800, docastle_sound3_w },
-	{ 0xec00, 0xec00, docastle_sound4_w },
+	{ 0xe000, 0xe000, SN76496_0_w },
+	{ 0xe400, 0xe400, SN76496_1_w },
+	{ 0xe800, 0xe800, SN76496_2_w },
+	{ 0xec00, 0xec00, SN76496_3_w },
 	{ 0x0000, 0x3fff, MWA_ROM },
 	{ -1 }	/* end of table */
 };
@@ -186,10 +181,6 @@ static struct InputPort input_ports[] =
 	{ -1 }	/* end of table */
 };
 
-static struct TrakPort trak_ports[] =
-{
-        { -1 }
-};
 
 
 static struct KEYSet keys[] =
@@ -317,10 +308,9 @@ static struct MachineDriver machine_driver =
 
 	/* sound hardware */
 	0,
-	0,
 	docastle_sh_start,
-	docastle_sh_stop,
-	docastle_sh_update
+	SN76496_sh_stop,
+	SN76496_sh_update
 };
 
 
@@ -369,20 +359,20 @@ ROM_END
 
 ROM_START( dounicorn_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-        ROM_LOAD( "DOREV1.BIN",  0x0000, 0x2000, 0x37a4cc78 )
-        ROM_LOAD( "DOREV2.BIN",  0x2000, 0x2000, 0xadbc98e4 )
-        ROM_LOAD( "DOREV3.BIN",  0x4000, 0x2000, 0x3d89c3d9 )
-        ROM_LOAD( "DOREV4.BIN",  0x6000, 0x2000, 0x4010e2d6 )
+	ROM_LOAD( "DOREV1.BIN",  0x0000, 0x2000, 0x37a4cc78 )
+	ROM_LOAD( "DOREV2.BIN",  0x2000, 0x2000, 0xadbc98e4 )
+	ROM_LOAD( "DOREV3.BIN",  0x4000, 0x2000, 0x3d89c3d9 )
+	ROM_LOAD( "DOREV4.BIN",  0x6000, 0x2000, 0x4010e2d6 )
 
 	ROM_REGION(0xc000)	/* temporary space for graphics (disposed after conversion) */
-        ROM_LOAD( "DOREV5.BIN",  0x0000, 0x4000, 0x85e90c0d )
-        ROM_LOAD( "DOREV6.BIN",  0x4000, 0x2000, 0x31cdcc51 )
-        ROM_LOAD( "DOREV7.BIN",  0x6000, 0x2000, 0x4dcfe391 )
-        ROM_LOAD( "DOREV8.BIN",  0x8000, 0x2000, 0x56488818 )
-        ROM_LOAD( "DOREV9.BIN",  0xa000, 0x2000, 0x20de2a92 )
+	ROM_LOAD( "DOREV5.BIN",  0x0000, 0x4000, 0x85e90c0d )
+	ROM_LOAD( "DOREV6.BIN",  0x4000, 0x2000, 0x31cdcc51 )
+	ROM_LOAD( "DOREV7.BIN",  0x6000, 0x2000, 0x4dcfe391 )
+	ROM_LOAD( "DOREV8.BIN",  0x8000, 0x2000, 0x56488818 )
+	ROM_LOAD( "DOREV9.BIN",  0xa000, 0x2000, 0x20de2a92 )
 
 	ROM_REGION(0x10000)	/* 64k for the second CPU */
-        ROM_LOAD( "DOREV10.BIN", 0x0000, 0x4000, 0x92ad5143 )
+	ROM_LOAD( "DOREV10.BIN", 0x0000, 0x4000, 0x92ad5143 )
 ROM_END
 
 
@@ -440,8 +430,9 @@ struct GameDriver docastle_driver =
 	docastle_rom,
 	0, 0,
 	0,
+	0,	/* sound_prom */
 
-	input_ports, 0, trak_ports, dsw, keys,
+	input_ports, 0, 0/*TBR*/,dsw, keys,
 
 	color_prom, 0, 0,
 	ORIENTATION_ROTATE_270,
@@ -459,8 +450,9 @@ struct GameDriver docastl2_driver =
 	docastl2_rom,
 	0, 0,
 	0,
+	0,	/* sound_prom */
 
-	input_ports, 0, trak_ports, dsw, keys,
+	input_ports, 0, 0/*TBR*/,dsw, keys,
 
 	color_prom, 0, 0,
 	ORIENTATION_ROTATE_270,
@@ -478,8 +470,9 @@ struct GameDriver dounicorn_driver =
 	dounicorn_rom,
 	0, 0,
 	0,
+	0,	/* sound_prom */
 
-	input_ports, 0, trak_ports, dsw_unicorn, keys,
+	input_ports, 0, 0/*TBR*/,dsw_unicorn, keys,
 
 	color_prom, 0, 0,
 	ORIENTATION_ROTATE_270,

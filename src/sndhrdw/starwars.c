@@ -13,6 +13,7 @@ See drivers\starwars.c for notes
 
 #include "driver.h"
 #include "sndhrdw/pokyintf.h"
+#include "sndhrdw/5220intf.h"
 #include "starwars.h"
 
 /* These lines were modified from milliped.c */
@@ -60,13 +61,11 @@ int port_A_ddr = 0;      /* 6532 Data Direction Register A */
 int port_B_ddr = 0;      /* 6532 Data Direction Register B */
                          /* for each bit, 0 = input, 1 = output */
 
-static struct POKEYinterface interface =
+static struct POKEYinterface pokey_interface =
 {
 	4,			/* 4 chips */
-	1,			/* 1 update per video frame (low quality) */
-//	12,			/* 12 updates per video frame (good quality) */
 	1500000,
-	255,	/* volume */
+    127,    /* volume */
 	USE_CLIP,
 	/* The 8 pot handlers */
 	{ 0, 0, 0, 0 },
@@ -81,71 +80,55 @@ static struct POKEYinterface interface =
 	{ 0, 0, 0, 0 },
 };
 
+static struct TMS5220interface tms5220_interface =
+{
+    640000,     /* clock speed (80*samplerate) */
+    255,        /* volume */
+    0           /* IRQ handler */
+};
+
 int starwars_sh_start(void)
 {
-	return pokey_sh_start (&interface);
+	int rv;
+
+    rv = pokey_sh_start (&pokey_interface);
+    if (rv) return rv;
+    return(tms5220_sh_start (&tms5220_interface));
 }
 
-void starwars_pokey_sound_w (int offset,int data)
+void starwars_sh_stop(void)
 {
-	int pokey_num = offset >> 3;
-	int pokey_reg = offset % 8;
-	
-	switch (pokey_num) {
-		case 0:
-			pokey1_w (pokey_reg, data);
-			break;
-		case 1:
-			pokey2_w (pokey_reg, data);
-			break;
-		case 2:
-			pokey3_w (pokey_reg, data);
-			break;
-		case 3:
-			pokey4_w (pokey_reg, data);
-			break;
-		}	
+    pokey_sh_stop ();
+    tms5220_sh_stop ();
 }
 
-void starwars_pokey_ctl_w(int offset,int data)
+void starwars_sh_update()
 {
-	int pokey_num = offset >> 3;
-	int pokey_reg = (offset % 8) | 8;
-	
-	switch (pokey_num) {
-		case 0:
-			pokey1_w (pokey_reg, data);
-			break;
-		case 1:
-			pokey2_w (pokey_reg, data);
-			break;
-		case 2:
-			pokey3_w (pokey_reg, data);
-			break;
-		case 3:
-			pokey4_w (pokey_reg, data);
-			break;
-		}	
+    pokey_sh_update ();
+    tms5220_sh_update();
 }
 
 /********************************************************/
 
 int starwars_snd_interrupt(void)
 {
-	/* if the timer is running, decrement it, and check if it */
-	/* has expired.  If so - IRQ, otherwise ignore            */
-	if (timer_running)
-	{
-		if (--timer == 0)
-		{
-			timer_running = 0;
-			interrupt_flags |= 0x80; /* set timer interrupt flag */
-			return interrupt();
-		}
-	}
+    //pokey_update();
+    //tms5220_update();
 
-//	pokey_update();
-	return ignore_interrupt();
+    /* if the timer is running, decrement it, and check if it */
+    /* has expired.  If so - IRQ, otherwise ignore            */
+
+    if (timer_running)
+    {
+        if (--timer == 0)
+        {
+            timer_running = 0;
+            interrupt_flags |= 0x80; /* set timer interrupt flag */
+            return interrupt();
+        }
+    }
+
+    return ignore_interrupt();
 }
 /********************************************************/
 
@@ -163,9 +146,9 @@ int m6532_r(int offset)
             /* Note: bit 4 is always set to avoid sound self test */
 
             if (items_in_fifo == 0)
-                return (port_A&0x7f)|0x10;
+                return (port_A&0x7f)|0x10|(!tms5220_ready_r()<<2);
             else
-                return (port_A&0x7f)|0x90;
+                return (port_A&0x7f)|0x90|(!tms5220_ready_r()<<2);
 
         case 1: /* 0x81 - Read Port A DDR */
             return port_A_ddr;
@@ -194,9 +177,17 @@ void m6532_w(int offset, int data)
     switch (offset)
     {
         case 0: /* 0x80 - Port A Write */
-            port_A = (port_A&(~port_A_ddr))|(data&port_A_ddr);
 
             /* Write to speech chip on PA0 falling edge */
+
+            if((port_A&0x01)==1)
+            {
+            	port_A = (port_A&(~port_A_ddr))|(data&port_A_ddr);
+                if ((port_A&0x01)==0)
+                tms5220_data_w(0,port_B);
+            }
+            else
+            	port_A = (port_A&(~port_A_ddr))|(data&port_A_ddr);
 
             return;
 

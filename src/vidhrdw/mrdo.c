@@ -13,8 +13,9 @@
 
 unsigned char *mrdo_videoram2;
 unsigned char *mrdo_colorram2;
-unsigned char *mrdo_scroll_x;
+unsigned char *mrdo_scroll_y;
 static struct osd_bitmap *tmpbitmap1,*tmpbitmap2;
+static int flipscreen;
 
 
 
@@ -174,6 +175,20 @@ void mrdo_colorram2_w(int offset,int data)
 
 
 
+void mrdo_flipscreen_w(int offset,int data)
+{
+	/* bits 1-3 control the playfield priority, but they are not used by */
+	/* Mr. Do! so we don't emulate them */
+
+	if (flipscreen != (data & 0x01))
+	{
+		flipscreen = data & 0x01;
+		memset(dirtybuffer,1,videoram_size);
+	}
+}
+
+
+
 /***************************************************************************
 
   Draw the game screen in the given osd_bitmap.
@@ -197,8 +212,14 @@ void mrdo_vh_screenrefresh(struct osd_bitmap *bitmap)
 
 			dirtybuffer[offs] = 0;
 
-			sx = 8 * (offs / 32);
-			sy = 8 * (31 - offs % 32);
+			sx = offs % 32;
+			sy = offs / 32;
+			if (flipscreen)
+			{
+				sx = 31 - sx;
+				sy = 31 - sy;
+			}
+
 
 			/* Mr. Do! has two playfields, one of which can be scrolled. However, */
 			/* during gameplay this feature is not used, so I keep the composition */
@@ -206,37 +227,41 @@ void mrdo_vh_screenrefresh(struct osd_bitmap *bitmap)
 			drawgfx(tmpbitmap1,Machine->gfx[1],
 					videoram[offs] + 2 * (colorram[offs] & 0x80),
 					colorram[offs] & 0x7f,
-					0,0,sx,sy,
+					flipscreen,flipscreen,
+					8*sx,8*sy,
 					0,TRANSPARENCY_NONE,0);
 			drawgfx(tmpbitmap2,Machine->gfx[0],
 					mrdo_videoram2[offs] + 2 * (mrdo_colorram2[offs] & 0x80),
 					mrdo_colorram2[offs] & 0x7f,
-					0,0,sx,sy,
+					flipscreen,flipscreen,
+					8*sx,8*sy,
 					0,TRANSPARENCY_NONE,0);
 
 			drawgfx(tmpbitmap,Machine->gfx[1],
 					videoram[offs] + 2 * (colorram[offs] & 0x80),
 					colorram[offs] & 0x7f,
-					0,0,sx,sy,
+					flipscreen,flipscreen,
+					8*sx,8*sy,
 					&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
 			drawgfx(tmpbitmap,Machine->gfx[0],
 					mrdo_videoram2[offs] + 2 * (mrdo_colorram2[offs] & 0x80),
 					mrdo_colorram2[offs] & 0x7f,
-					0,0,sx,sy,
+					flipscreen,flipscreen,
+					8*sx,8*sy,
 					&Machine->drv->visible_area,(mrdo_colorram2[offs] & 0x40) ? TRANSPARENCY_NONE : TRANSPARENCY_PEN,0);
 		}
 	}
 
 
 	/* copy the character mapped graphics */
-	if (*mrdo_scroll_x)
+	if (*mrdo_scroll_y)
 	{
 		int scroll;
 
 
-		scroll = -*mrdo_scroll_x;
+		scroll = -*mrdo_scroll_y;
 
-		copyscrollbitmap(bitmap,tmpbitmap1,1,&scroll,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+		copyscrollbitmap(bitmap,tmpbitmap1,0,0,1,&scroll,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
 
 		copybitmap(bitmap,tmpbitmap2,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_COLOR,0);
 	}
@@ -252,8 +277,8 @@ void mrdo_vh_screenrefresh(struct osd_bitmap *bitmap)
 		{
 			drawgfx(bitmap,Machine->gfx[2],
 					spriteram[offs],spriteram[offs + 2] & 0x0f,
-					spriteram[offs + 2] & 0x20,spriteram[offs + 2] & 0x10,
-					256 - spriteram[offs + 1],240 - spriteram[offs + 3],
+					spriteram[offs + 2] & 0x10,spriteram[offs + 2] & 0x20,
+					spriteram[offs + 3],256 - spriteram[offs + 1],
 					&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
 		}
 	}

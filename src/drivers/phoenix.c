@@ -131,45 +131,142 @@ static struct MemoryWriteAddress pl_writemem[] =
 };
 
 
-static struct InputPort input_ports[] =
-{
-	{	/* IN0 */
-		0xff,
-		{ OSD_KEY_3, OSD_KEY_1, OSD_KEY_2, 0,
-			OSD_KEY_LCONTROL, OSD_KEY_RIGHT, OSD_KEY_LEFT, OSD_KEY_ALT },
-		{ 0, 0, 0, 0, OSD_JOY_FIRE1, OSD_JOY_RIGHT, OSD_JOY_LEFT, OSD_JOY_FIRE2 }
-	},
-	{	/* DSW */
-		0x60,
-		{ 0, 0, 0, 0, 0, 0, 0, IPB_VBLANK },
-		{ 0, 0, 0, 0, 0, 0, 0, 0 }
-	},
-	{ -1 }	/* end of table */
-};
 
-static struct TrakPort trak_ports[] =
-{
-        { -1 }
-};
+INPUT_PORTS_START( phoenix_input_ports )
+	PORT_START      /* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_2WAY )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_2WAY )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON2 )
 
-static struct KEYSet keys[] =
-{
-        { 0, 6, "MOVE LEFT"  },
-        { 0, 5, "MOVE RIGHT" },
-        { 0, 7, "BARRIER"    },
-        { 0, 4, "FIRE" },
-        { -1 }
-};
+	PORT_START      /* DSW0 */
+	PORT_DIPNAME( 0x03, 0x00, "Lives", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "3" )
+	PORT_DIPSETTING(    0x01, "4" )
+	PORT_DIPSETTING(    0x02, "5" )
+	PORT_DIPSETTING(    0x03, "6" )
+	PORT_DIPNAME( 0x0c, 0x00, "Bonus", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "3000" )
+	PORT_DIPSETTING(    0x04, "4000" )
+	PORT_DIPSETTING(    0x08, "5000" )
+	PORT_DIPSETTING(    0x0c, "6000" )
+	PORT_DIPNAME( 0x10, 0x00, "Coinage", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x10, "2 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x00, "1 Coin/1 Credit" )
+	PORT_DIPNAME( 0x20, 0x20, "DSW 6 Unknown", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x20, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x40, 0x40, "DSW 7 Unknown", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x40, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_VBLANK )
+INPUT_PORTS_END
 
 
-static struct DSW dsw[] =
-{
-	{ 1, 0x03, "LIVES", { "3", "4", "5", "6" } },
-	{ 1, 0x0c, "BONUS", { "3000", "4000", "5000", "6000" } },
-	{ 1, 0x20, "DEMO SOUNDS", { "OFF", "ON" } },
-	{ -1 }
-};
+INPUT_PORTS_START( phoenixt_input_ports )
+	PORT_START      /* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_2WAY )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_2WAY )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON2 )
 
+	PORT_START      /* DSW0 */
+	PORT_DIPNAME( 0x03, 0x00, "Lives", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "3" )
+	PORT_DIPSETTING(    0x01, "4" )
+	PORT_DIPSETTING(    0x02, "5" )
+	PORT_DIPSETTING(    0x03, "6" )
+	PORT_DIPNAME( 0x0c, 0x00, "Bonus", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "3000" )
+	PORT_DIPSETTING(    0x04, "4000" )
+	PORT_DIPSETTING(    0x08, "5000" )
+	PORT_DIPSETTING(    0x0c, "6000" )
+	PORT_DIPNAME( 0x10, 0x10, "DSW 5 Unknown", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x10, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x20, 0x20, "DSW 6 Unknown", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x20, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x40, 0x40, "DSW 7 Unknown", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x40, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_VBLANK )
+INPUT_PORTS_END
+
+INPUT_PORTS_START( phoenix3_input_ports )
+	PORT_START      /* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_2WAY )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_2WAY )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON2 )
+	PORT_START      /* DSW0 */
+	PORT_DIPNAME( 0x03, 0x00, "Lives", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "3" )
+	PORT_DIPSETTING(    0x01, "4" )
+	PORT_DIPSETTING(    0x02, "5" )
+	PORT_DIPSETTING(    0x03, "6" )
+	PORT_DIPNAME( 0x0c, 0x00, "Bonus", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "3000" )
+	PORT_DIPSETTING(    0x04, "4000" )
+	PORT_DIPSETTING(    0x08, "5000" )
+	PORT_DIPSETTING(    0x0c, "6000" )
+	PORT_DIPNAME( 0x10, 0x10, "DSW 5 Unknown", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x10, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x20, 0x20, "DSW 6 Unknown", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x20, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x40, 0x00, "Coinage", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x40, "2 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x00, "1 Coin/1 Credit" )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_VBLANK )
+INPUT_PORTS_END
+
+
+INPUT_PORTS_START( pleiads_input_ports )
+	PORT_START      /* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_2WAY )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_2WAY )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON2 )
+	PORT_START      /* DSW0 */
+	PORT_DIPNAME( 0x03, 0x00, "Lives", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "3" )
+	PORT_DIPSETTING(    0x01, "4" )
+	PORT_DIPSETTING(    0x02, "5" )
+	PORT_DIPSETTING(    0x03, "6" )
+	PORT_DIPNAME( 0x0c, 0x00, "Bonus", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "3000" )
+	PORT_DIPSETTING(    0x04, "4000" )
+	PORT_DIPSETTING(    0x08, "5000" )
+	PORT_DIPSETTING(    0x0c, "6000" )
+	PORT_DIPNAME( 0x10, 0x00, "Coinage", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x10, "2 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x00, "1 Coin/1 Credit" )
+	PORT_DIPNAME( 0x20, 0x20, "DSW 6 Unknown", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x20, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x40, 0x40, "Free Play", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x40, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_VBLANK )
+INPUT_PORTS_END
 
 
 static struct GfxLayout charlayout =
@@ -231,28 +328,6 @@ static unsigned char color_prom[] =
 };
 
 
-/* waveforms for the audio hardware */
-static unsigned char samples[141] =
-{
-        /* sine-wave */
-        0x0F, 0x0F, 0x0F, 0x06, 0x06, 0x09, 0x09, 0x06, 0x06, 0x09, 0x06, 0x0D, 0x0F, 0x0F, 0x0D, 0x00,
-        0xE6, 0xDE, 0xE1, 0xE6, 0xEC, 0xE6, 0xE7, 0xE7, 0xE7, 0xEC, 0xEC, 0xEC, 0xE7, 0xE1, 0xE1, 0xE7,
-/*
-	0x00,0x00,0x00,0x00,0x22,0x22,0x22,0x22,0x44,0x44,0x44,0x44,0x22,0x22,0x22,0x22,
-        0x00,0x00,0x00,0x00,0xdd,0xdd,0xdd,0xdd,0xbb,0xbb,0xbb,0xbb,0xdd,0xdd,0xdd,0xdd,
-*/
-        /* white-noise ? */
-        0x79, 0x75, 0x71, 0x72, 0x72, 0x6F, 0x70, 0x71, 0x71, 0x73, 0x75, 0x76, 0x74, 0x74, 0x78, 0x7A,
-        0x79, 0x7A, 0x7B, 0x7C, 0x7C, 0x7C, 0x7C, 0x7C, 0x7C, 0x7C, 0x7D, 0x80, 0x85, 0x88, 0x88, 0x87,
-        0x8B, 0x8B, 0x8A, 0x8A, 0x89, 0x87, 0x85, 0x87, 0x89, 0x86, 0x83, 0x84, 0x84, 0x85, 0x84, 0x84,
-        0x85, 0x86, 0x87, 0x87, 0x88, 0x88, 0x86, 0x81, 0x7E, 0x7D, 0x7F, 0x7D, 0x7C, 0x7D, 0x7D, 0x7C,
-        0x7E, 0x81, 0x7F, 0x7C, 0x7E, 0x82, 0x82, 0x82, 0x82, 0x83, 0x83, 0x84, 0x83, 0x82, 0x82, 0x83,
-        0x82, 0x84, 0x88, 0x8C, 0x8E, 0x8B, 0x8B, 0x8C, 0x8A, 0x8A, 0x8A, 0x89, 0x85, 0x86, 0x89, 0x89,
-        0x86, 0x85, 0x85, 0x85, 0x84, 0x83, 0x82, 0x83, 0x83, 0x83, 0x82, 0x83, 0x83
-
-};
-
-
 
 static struct MachineDriver machine_driver =
 {
@@ -283,11 +358,10 @@ static struct MachineDriver machine_driver =
 	phoenix_vh_screenrefresh,
 
 	/* sound hardware */
-        samples,
 	phoenix_sh_init,
-        phoenix_sh_start,
+	phoenix_sh_start,
 	0,
-        phoenix_sh_update
+	phoenix_sh_update
 };
 
 static struct MachineDriver pleiads_machine_driver =
@@ -319,17 +393,19 @@ static struct MachineDriver pleiads_machine_driver =
 	phoenix_vh_screenrefresh,
 
 	/* sound hardware */
-        samples,
-        pleiads_sh_init,
-        pleiads_sh_start,
+	pleiads_sh_init,
+	pleiads_sh_start,
 	0,
-        pleiads_sh_update
+	pleiads_sh_update
 };
 
 static const char *phoenix_sample_names[] =
 {
+	"*phoenix",
 	"shot8.sam",
 	"death8.sam",
+	"phoenix1.sam",
+	"phoenix2.sam",
 	0	/* end of array */
 };
 
@@ -449,7 +525,7 @@ static int hiload(void)
 
 
 
-static unsigned long get_score(char *score)
+static unsigned long get_score(unsigned char *score)
 {
      return (score[3])+(256*score[2])+((unsigned long)(65536)*score[1])+((unsigned long)(65536)*256*score[0]);
 }
@@ -484,14 +560,15 @@ struct GameDriver phoenix_driver =
 {
 	"Phoenix (Amstar)",
 	"phoenix",
-	"RICHARD DAVIES\nBRAD OLIVER\nMIRKO BUFFONI\nNICOLA SALMORIA\nSHAUN STEPHENSON\nANDREW SCOTT\nTim Lindquist (color info)",
+	"Richard Davies\nBrad Oliver\nMirko Buffoni\nNicola Salmoria\nShaun Stephenson\nAndrew Scott\nTim Lindquist (color info)\nMarco Cassili",
 	&machine_driver,
 
 	phoenix_rom,
 	0, 0,
 	phoenix_sample_names,
+	0,	/* sound_prom */
 
-	input_ports, 0, trak_ports, dsw, keys,
+	0/*TBR*/, phoenix_input_ports, 0/*TBR*/, 0/*TBR*/, 0/*TBR*/,
 
 	color_prom, 0, 0,
 	ORIENTATION_DEFAULT,
@@ -503,14 +580,15 @@ struct GameDriver phoenixt_driver =
 {
 	"Phoenix (Taito)",
 	"phoenixt",
-	"RICHARD DAVIES\nBRAD OLIVER\nMIRKO BUFFONI\nNICOLA SALMORIA\nSHAUN STEPHENSON\nANDREW SCOTT\nTim Lindquist (color info)",
+	"Richard Davies\nBrad Oliver\nMirko Buffoni\nNicola Salmoria\nShaun Stephenson\nAndrew Scott\nTim Lindquist (color info)\nMarco Cassili",
 	&machine_driver,
 
 	phoenixt_rom,
 	0, 0,
 	phoenix_sample_names,
+	0,	/* sound_prom */
 
-	input_ports, 0, trak_ports, dsw, keys,
+	0/*TBR*/, phoenixt_input_ports, 0/*TBR*/, 0/*TBR*/, 0/*TBR*/,
 
 	color_prom, 0, 0,
 	ORIENTATION_DEFAULT,
@@ -522,14 +600,15 @@ struct GameDriver phoenix3_driver =
 {
 	"Phoenix (T.P.N.)",
 	"phoenix3",
-	"RICHARD DAVIES\nBRAD OLIVER\nMIRKO BUFFONI\nNICOLA SALMORIA\nSHAUN STEPHENSON\nANDREW SCOTT\nTim Lindquist (color info)",
+	"Richard Davies\nBrad Oliver\nMirko Buffoni\nNicola Salmoria\nShaun Stephenson\nAndrew Scott\nTim Lindquist (color info)\nMarco Cassili",
 	&machine_driver,
 
 	phoenix3_rom,
 	0, 0,
 	phoenix_sample_names,
+	0,	/* sound_prom */
 
-	input_ports, 0, trak_ports, dsw, keys,
+	0/*TBR*/, phoenix3_input_ports, 0/*TBR*/, 0/*TBR*/, 0/*TBR*/,
 
 	color_prom, 0, 0,
 	ORIENTATION_DEFAULT,
@@ -541,14 +620,15 @@ struct GameDriver pleiads_driver =
 {
 	"Pleiads",
 	"pleiads",
-	"RICHARD DAVIES\nBRAD OLIVER\nMIRKO BUFFONI\nNICOLA SALMORIA\nSHAUN STEPHENSON\nANDREW SCOTT",
+	"Richard Davies\nBrad Oliver\nMirko Buffoni\nNicola Salmoria\nShaun Stephenson\nAndrew Scott\nMarco Cassili",
 	&pleiads_machine_driver,
 
 	pleiads_rom,
 	0, 0,
 	phoenix_sample_names,
+	0,	/* sound_prom */
 
-	input_ports, 0, trak_ports, dsw, keys,
+	0/*TBR*/, pleiads_input_ports, 0/*TBR*/, 0/*TBR*/, 0/*TBR*/,
 
 	color_prom, 0, 0,
 	ORIENTATION_DEFAULT,

@@ -89,18 +89,17 @@ void frogger_attributes_w(int offset,int data);
 void frogger_vh_screenrefresh(struct osd_bitmap *bitmap);
 
 void frogger_sh_irqtrigger_w(int offset,int data);
-int frogger_sh_interrupt(void);
 int frogger_sh_start(void);
 
 
 
 static struct MemoryReadAddress readmem[] =
 {
+	{ 0x0000, 0x3fff, MRA_ROM },
 	{ 0x8000, 0x87ff, MRA_RAM },
+	{ 0x8800, 0x8800, watchdog_reset_r },
 	{ 0xa800, 0xabff, MRA_RAM },	/* video RAM */
 	{ 0xb000, 0xb05f, MRA_RAM },	/* screen attributes, sprites */
-	{ 0x0000, 0x3fff, MRA_ROM },
-	{ 0x8800, 0x8800, MRA_NOP },
 	{ 0xe000, 0xe000, input_port_0_r },	/* IN0 */
 	{ 0xe002, 0xe002, input_port_1_r },	/* IN1 */
 	{ 0xe004, 0xe004, input_port_2_r },	/* IN2 */
@@ -109,6 +108,7 @@ static struct MemoryReadAddress readmem[] =
 
 static struct MemoryWriteAddress writemem[] =
 {
+	{ 0x0000, 0x3fff, MWA_ROM },
 	{ 0x8000, 0x87ff, MWA_RAM },
 	{ 0xa800, 0xabff, videoram_w, &videoram, &videoram_size },
 	{ 0xb000, 0xb03f, frogger_attributes_w, &frogger_attributesram },
@@ -116,7 +116,6 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0xb808, 0xb808, interrupt_enable_w },
 	{ 0xd000, 0xd000, soundlatch_w },
 	{ 0xd002, 0xd002, frogger_sh_irqtrigger_w },
-	{ 0x0000, 0x3fff, MWA_ROM },
 	{ -1 }	/* end of table */
 };
 
@@ -124,15 +123,15 @@ static struct MemoryWriteAddress writemem[] =
 
 static struct MemoryReadAddress sound_readmem[] =
 {
-	{ 0x4000, 0x43ff, MRA_RAM },
 	{ 0x0000, 0x17ff, MRA_ROM },
+	{ 0x4000, 0x43ff, MRA_RAM },
 	{ -1 }	/* end of table */
 };
 
 static struct MemoryWriteAddress sound_writemem[] =
 {
-	{ 0x4000, 0x43ff, MWA_RAM },
 	{ 0x0000, 0x17ff, MWA_ROM },
+	{ 0x4000, 0x43ff, MWA_RAM },
 	{ -1 }	/* end of table */
 };
 
@@ -152,47 +151,45 @@ static struct IOWritePort sound_writeport[] =
 };
 
 
+INPUT_PORTS_START( input_ports )
+	PORT_START	/* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* 1P shoot2 - unused */
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN3 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* 1P shoot1 - unused */
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_4WAY )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN1 )
 
-static struct InputPort input_ports[] =
-{
-	{	/* IN0 */
-		0xff,
-		{ 0, 0, OSD_KEY_3, 0, OSD_KEY_RIGHT, OSD_KEY_LEFT, 0, 0 },
-		{ 0, 0, 0, 0, OSD_JOY_RIGHT, OSD_JOY_LEFT, 0, 0 }
-	},
-	{	/* IN1 */
-		0xfc,
-		{ 0, 0, 0, 0, 0, 0, OSD_KEY_2, OSD_KEY_1 },
-		{ 0, 0, 0, 0, 0, 0, 0, 0 }
-	},
-	{	/* IN2 */
-		0xf7,
-		{ 0, 0, 0, 0, OSD_KEY_UP, 0, OSD_KEY_DOWN, 0 },
-		{ 0, 0, 0, 0, OSD_JOY_UP, 0, OSD_JOY_DOWN, 0 }
-	},
-	{ -1 }	/* end of table */
-};
+	PORT_START	/* IN1 */
+	PORT_DIPNAME( 0x03, 0x00, "Lives", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "3" )
+	PORT_DIPSETTING(    0x01, "5" )
+	PORT_DIPSETTING(    0x02, "7" )
+	PORT_BITX( 0,       0x03, IPT_DIPSWITCH_SETTING | IPF_CHEAT, "256", IP_KEY_NONE, IP_JOY_NONE, 0 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* 2P shoot2 - unused */
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* 2P shoot1 - unused */
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START1 )
 
-static struct TrakPort trak_ports[] =
-{
-        { -1 }
-};
-
-static struct KEYSet keys[] =
-{
-        { 2, 4, "MOVE UP" },
-        { 0, 5, "MOVE LEFT"  },
-        { 0, 4, "MOVE RIGHT" },
-        { 2, 6, "MOVE DOWN" },
-        { -1 }
-};
-
-
-static struct DSW dsw[] =
-{
-	{ 1, 0x03, "LIVES", { "3", "5", "7", "256" } },
-	{ -1 }
-};
+	PORT_START	/* IN2 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_4WAY | IPF_COCKTAIL )
+	PORT_DIPNAME( 0x06, 0x00, "Coinage", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x02, "A 2/1 B 2/1 C 2/1" )
+	PORT_DIPSETTING(    0x04, "A 2/1 B 1/3 C 2/1" )
+	PORT_DIPSETTING(    0x00, "A 1/1 B 1/1 C 1/1" )
+	PORT_DIPSETTING(    0x06, "A 1/1 B 1/6 C 1/1" )
+	PORT_DIPNAME( 0x08, 0x00, "Cabinet", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "Upright" )
+	PORT_DIPSETTING(    0x08, "Cocktail" )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_4WAY )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_4WAY )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNUSED )
+INPUT_PORTS_END
 
 
 
@@ -273,10 +270,10 @@ static struct MachineDriver machine_driver =
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
-			2000000,	/* 2 Mhz?????? */
+			1789750,	/* 1.78975 Mhz */
 			2,	/* memory region #2 */
 			sound_readmem,sound_writemem,sound_readport,sound_writeport,
-			frogger_sh_interrupt,10
+			ignore_interrupt,1	/* interrupts are triggered by the main CPU */
 		}
 	},
 	60,
@@ -296,7 +293,6 @@ static struct MachineDriver machine_driver =
 	frogger_vh_screenrefresh,
 
 	/* sound hardware */
-	0,
 	0,
 	frogger_sh_start,
 	AY8910_sh_stop,
@@ -415,14 +411,15 @@ struct GameDriver frogger_driver =
 {
 	"Frogger",
 	"frogger",
-	"ROBERT ANSCHUETZ\nNICOLA SALMORIA\nMIRKO BUFFONI",
+	"Robert Anschuetz\nNicola Salmoria\nMirko Buffoni\nMarco Cassili",
 	&machine_driver,
 
 	frogger_rom,
 	frogger_decode, 0,
 	0,
+	0,	/* sound_prom */
 
-	input_ports, 0, trak_ports, dsw, keys,
+	0/*TBR*/, input_ports, 0/*TBR*/, 0/*TBR*/, 0/*TBR*/,
 
 	color_prom, 0, 0,
 	ORIENTATION_DEFAULT,
@@ -436,14 +433,15 @@ struct GameDriver frogsega_driver =
 {
 	"Frogger (alternate version)",
 	"frogsega",
-	"ROBERT ANSCHUETZ\nNICOLA SALMORIA\nMIRKO BUFFONI",
+	"Robert Anschuetz\nNicola Salmoria\nMirko Buffoni\nMarco Cassili",
 	&machine_driver,
 
 	frogsega_rom,
 	frogger_decode, 0,
 	0,
+	0,	/* sound_prom */
 
-	input_ports, 0, trak_ports, dsw, keys,
+	0/*TBR*/, input_ports, 0/*TBR*/, 0/*TBR*/, 0/*TBR*/,
 
 	color_prom, 0, 0,
 	ORIENTATION_DEFAULT,

@@ -13,6 +13,7 @@
 
 unsigned char *bombjack_paletteram;
 static int background_image;
+static int flipscreen;
 
 
 
@@ -116,6 +117,17 @@ void bombjack_background_w(int offset,int data)
 
 
 
+void bombjack_flipscreen_w(int offset,int data)
+{
+	if (flipscreen != (data & 1))
+	{
+		flipscreen = data & 1;
+		memset(dirtybuffer,1,videoram_size);
+	}
+}
+
+
+
 /***************************************************************************
 
   Draw the game screen in the given osd_bitmap.
@@ -135,22 +147,18 @@ void bombjack_vh_screenrefresh(struct osd_bitmap *bitmap)
 	for (offs = videoram_size - 1;offs >= 0;offs--)
 	{
 		int sx,sy;
-		int bx,by;
 		int tilecode,tileattribute;
 
 
-		sx = 8 * (31 - offs / 32);
-		sy = 8 * (offs % 32);
+		sx = 31 - offs / 32;
+		sy = offs % 32;
 
 		if (background_image & 0x10)
 		{
 			int bgoffs;
 
 
-			bx = sx & 0xf0;
-			by = sy & 0xf0;
-
-			bgoffs = base+16*(15-bx/16)+by/16;
+			bgoffs = base+16*(15-sx/2)+sy/2;
 
 			tilecode = Machine->memory_region[2][bgoffs],
 			tileattribute = Machine->memory_region[2][bgoffs + 0x100];
@@ -158,43 +166,53 @@ void bombjack_vh_screenrefresh(struct osd_bitmap *bitmap)
 		else
 		{
 			tilecode = 0xff;
-			bx = by = tileattribute = 0;	/* avoid compiler warning */
+			tileattribute = 0;	/* avoid compiler warning */
 		}
 
 		if (dirtybuffer[offs])
 		{
+			if (flipscreen)
+			{
+				sx = 31 - sx;
+				sy = 31 - sy;
+			}
+
 			/* draw the background (this can be handled better) */
 			if (tilecode != 0xff)
 			{
 				struct rectangle clip;
+				int flipx;
 
 
-				clip.min_x = sx;
-				clip.max_x = sx+7;
-				clip.min_y = sy;
-				clip.max_y = sy+7;
+				clip.min_x = 8*sx;
+				clip.max_x = 8*sx+7;
+				clip.min_y = 8*sy;
+				clip.max_y = 8*sy+7;
+
+				flipx = tileattribute & 0x80;
+				if (flipscreen) flipx = !flipx;
 
 				drawgfx(tmpbitmap,Machine->gfx[1],
 						tilecode,
 						tileattribute & 0x0f,
-						tileattribute & 0x80,0,
-						bx,by,
+						flipx,flipscreen,
+						16*(sx/2),16*(sy/2),
 						&clip,TRANSPARENCY_NONE,0);
 
 				drawgfx(tmpbitmap,Machine->gfx[0],
-							videoram[offs] + 16 * (colorram[offs] & 0x10),
-							colorram[offs] & 0x0f,
-							0,0,
-							sx,sy,
-							&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+						videoram[offs] + 16 * (colorram[offs] & 0x10),
+						colorram[offs] & 0x0f,
+						flipscreen,flipscreen,
+						8*sx,8*sy,
+						&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
 			}
 			else
 				drawgfx(tmpbitmap,Machine->gfx[0],
-							videoram[offs] + 16 * (colorram[offs] & 0x10),
-							colorram[offs] & 0x0f,
-							0,0,
-							sx,sy,
-							&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+						videoram[offs] + 16 * (colorram[offs] & 0x10),
+						colorram[offs] & 0x0f,
+						flipscreen,flipscreen,
+						8*sx,8*sy,
+						&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
 
 
 			dirtybuffer[offs] = 0;
@@ -209,23 +227,48 @@ void bombjack_vh_screenrefresh(struct osd_bitmap *bitmap)
 	/* Draw the sprites. */
 	for (offs = spriteram_size - 4;offs >= 0;offs -= 4)
 	{
+
 /*
  abbbbbbb cdefgggg hhhhhhhh iiiiiiii
 
- a        ? (set when big sprites are selected)
+ a        use big sprites (32x32 instead of 16x16)
  bbbbbbb  sprite code
  c        x flip
  d        y flip (used only in death sequence?)
- e        use big sprites (32x32 instead of 16x16)
+ e        ? (set when big sprites are selected)
  f        ? (set only when the bonus (B) materializes?)
  gggg     color
  hhhhhhhh x position
  iiiiiiii y position
 */
-		drawgfx(bitmap,Machine->gfx[spriteram[offs+1] & 0x20 ? 3 : 2],
-				spriteram[offs] & 0x7f,spriteram[offs+1] & 0x0f,
-				spriteram[offs+1] & 0x80,spriteram[offs+1] & 0x40,
-				spriteram[offs+2]-1,spriteram[offs+3],
+		int sx,sy,flipx,flipy;
+
+
+		sx = spriteram[offs+2]-1;
+		sy = spriteram[offs+3];
+		flipx =	spriteram[offs+1] & 0x80;
+		flipy = spriteram[offs+1] & 0x40;
+		if (flipscreen)
+		{
+			if (spriteram[offs+1] & 0x20)
+			{
+				sx = 224 - sx;
+				sy = 224 - sy;
+			}
+			else
+			{
+				sx = 240 - sx;
+				sy = 240 - sy;
+			}
+			flipx = !flipx;
+			flipy = !flipy;
+		}
+
+		drawgfx(bitmap,Machine->gfx[(spriteram[offs] & 0x80) ? 3 : 2],
+				spriteram[offs] & 0x7f,
+				spriteram[offs+1] & 0x0f,
+				flipx,flipy,
+				sx,sy,
 				&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
 	}
 }

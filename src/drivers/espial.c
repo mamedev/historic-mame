@@ -22,33 +22,39 @@ read:
 6082      IN1
 6083      IN2
 6084      IN3
-6090      ????
+6090      read command back from sound CPU
 7000      ?
 
 write:
-6081      ?
+6081      ? - written to twice when the text during the self-test is drawn onscreen
+6090      write command to sound CPU
 7000      watchdog reset
 7100      NMI interrupt acknowledge/enable
 7200      ?
 
-Interrupts: VBlank -> NMI. There also seems to be code for IRQ, handled in
-            Interrupt Mode 1.
+Interrupts: VBlank -> NMI.
+			IRQ -> send sound commands to sound cpu. Runs in interrupt mode 1
 
 SOUND CPU:
 0000-1fff ROM
 2000-23ff RAM (?)
 
 read:
-6000      ?
+6000      read command from main CPU
 
 write:
-4000      ?
-6000      ?
+4000      ? watchdog ?
+6000      write command back to main CPU
+
+Interrupts: IRQs are triggered by writes to the sound_command location 0x6000 - im 1
+			NMIs occur regularly to process and play the sounds
 
 I/0 ports:
 write
 00        8910  control
 01        8910  write
+A ?
+B ?
 
 ***************************************************************************/
 
@@ -63,18 +69,15 @@ void espial_init_machine(void);
 void espial_interrupt_enable_w(int offset,int data);
 int espial_interrupt(void);
 
+int espial_sh_interrupt(void);
+int espial_sh_start(void);
+void espial_sound_command_w (int offset, int data);
+
 extern unsigned char *espial_attributeram;
 extern unsigned char *espial_column_scroll;
 void espial_attributeram_w(int offset,int data);
 void espial_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
 void espial_vh_screenrefresh(struct osd_bitmap *bitmap);
-
-
-static int pip(int offset)
-{
-	if (errorlog) fprintf(errorlog,"%04x: 6090\n",cpu_getpc());
-	return 0xff;
-}
 
 
 static struct MemoryReadAddress readmem[] =
@@ -92,7 +95,7 @@ static struct MemoryReadAddress readmem[] =
 	{ 0x6082, 0x6082, input_port_1_r },	/* IN1 */
 	{ 0x6083, 0x6083, input_port_2_r },	/* IN2 */
 	{ 0x6084, 0x6084, input_port_3_r },	/* IN3 */
-	{ 0x6090, 0x6090, pip },
+	{ 0x6090, 0x6090, soundlatch_r },	/* the main CPU reads the command back from the slave? */
 	{ -1 }	/* end of table */
 };
 
@@ -100,6 +103,7 @@ static struct MemoryWriteAddress writemem[] =
 {
 	{ 0x0000, 0x4fff, MWA_ROM },
 	{ 0x5800, 0x5fff, MWA_RAM },
+	{ 0x6090, 0x6090, espial_sound_command_w },
 	{ 0x7000, 0x7000, MWA_RAM }, /* watchdog reset */
 	{ 0x7100, 0x7100, espial_interrupt_enable_w },
 	{ 0x8000, 0x801f, MWA_RAM, &spriteram, &spriteram_size },
@@ -114,11 +118,11 @@ static struct MemoryWriteAddress writemem[] =
 };
 
 
-#ifdef TRYSOUND
 static struct MemoryReadAddress sound_readmem[] =
 {
 	{ 0x0000, 0x1fff, MRA_ROM },
 	{ 0x2000, 0x23ff, MRA_RAM },
+	{ 0x6000, 0x6000, soundlatch_r },
 	{ -1 }	/* end of table */
 };
 
@@ -126,6 +130,8 @@ static struct MemoryWriteAddress sound_writemem[] =
 {
 	{ 0x0000, 0x1fff, MWA_ROM },
 	{ 0x2000, 0x23ff, MWA_RAM },
+	{ 0x4000, 0x4000, MWA_NOP },
+	{ 0x6000, 0x6000, soundlatch_w },
 	{ -1 }	/* end of table */
 };
 
@@ -135,7 +141,6 @@ static struct IOWritePort sound_writeport[] =
 	{ 0x01, 0x01, AY8910_write_port_0_w },
 	{ -1 }	/* end of table */
 };
-#endif
 
 
 INPUT_PORTS_START( espial_input_ports )
@@ -263,17 +268,15 @@ static struct MachineDriver machine_driver =
 			3072000,	/* 3.072 Mhz */
 			0,
 			readmem,writemem,0,0,
-			espial_interrupt,1
+			espial_interrupt,2
 		},
-#ifdef TRYSOUND
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
-			2100000,	/* 2 Mhz?????? */
+			3072000,	/* 2 Mhz?????? */
 			2,	/* memory region #2 */
 			sound_readmem,sound_writemem,0,sound_writeport,
-			interrupt,1
+			espial_sh_interrupt,4
 		}
-#endif
 	},
 	60,
 	10,	/* 10 CPU slices per frame - enough for the sound CPU to read all commands */
@@ -293,10 +296,9 @@ static struct MachineDriver machine_driver =
 
 	/* sound hardware */
 	0,
-	0,
-	0/*espial_sh_start*/,
-	0/*AY8910_sh_stop*/,
-	0/*AY8910_sh_update*/
+	espial_sh_start,
+	AY8910_sh_stop,
+	AY8910_sh_update
 };
 
 
@@ -327,21 +329,59 @@ ROM_END
 
 
 
+static int hiload(void)
+{
+
+	/* check if the hi score table has already been initialized */
+        if (memcmp(&RAM[0x584c],"\x81\x00\x13",3) == 0 &&
+			memcmp(&RAM[0x58B7],"\x0d\x0a\x27",3) == 0)
+	{
+		void *f;
+
+
+		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
+		{
+			osd_fread(f,&RAM[0x584c],5*22);
+			osd_fclose(f);
+		}
+
+		return 1;
+	}
+	else return 0;	/* we can't load the hi scores yet */
+}
+
+
+
+static void hisave(void)
+{
+	void *f;
+
+
+	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
+	{
+		osd_fwrite(f,&RAM[0x584c],5*22);
+		osd_fclose(f);
+	}
+}
+
+
+
 struct GameDriver espial_driver =
 {
 	"Espial",
 	"espial",
-	"Brad Oliver\nNicola Salmoria\nTim Lindquist (color info)",
+	"Brad Oliver\nNicola Salmoria\nTim Lindquist (color info)\nJuan Carlos Lorente (high score save)",
 	&machine_driver,
 
 	espial_rom,
 	0, 0,
 	0,
+	0,	/* sound_prom */
 
 	0/*TBR*/,espial_input_ports,0/*TBR*/,0/*TBR*/,0/*TBR*/,
 
 	color_prom, 0, 0,
 	ORIENTATION_DEFAULT,
 
-	0, 0
+	hiload, hisave
 };

@@ -40,18 +40,19 @@ void lwings_vh_convert_color_prom(unsigned char *palette, unsigned char *colorta
          green=(i & 0x38)<<2;
          blue= (i & 0xc0);
 
-         palette[3*i]   =  red;    
-         palette[3*i+1] =  green;  
-         palette[3*i+2] =  blue;   
+         palette[3*i]   =  red;
+         palette[3*i+1] =  green;
+         palette[3*i+2] =  blue;
      }
 }
+
+
 
 /***************************************************************************
 
   Start the video hardware emulation.
 
 ***************************************************************************/
-
 int lwings_vh_start(void)
 {
 	if (generic_vh_start() != 0)
@@ -187,7 +188,7 @@ void lwings_vh_screenrefresh(struct osd_bitmap *bitmap)
                 for (i=0; i<max; i++)
 		{
                         if (dirtybuffer3[base] || dirtybuffer3[base+0x0400])
-                        {                           
+                        {
                            int redgreen=lwings_paletteram[base];
                            int blue=lwings_paletteram[base+0x0400]>>4;
                            int red=redgreen >> 4;
@@ -247,8 +248,9 @@ void lwings_vh_screenrefresh(struct osd_bitmap *bitmap)
 	{
 		int scrollx,scrolly;
 
-                scrolly = -(lwings_scrollx[0] + 256 * lwings_scrollx[1]);
-                scrollx = -(lwings_scrolly[0] + 256 * lwings_scrolly[1]);
+
+		scrolly = -(lwings_scrollx[0] + 256 * lwings_scrollx[1]);
+		scrollx = -(lwings_scrolly[0] + 256 * lwings_scrolly[1]);
 
 		copyscrollbitmap(bitmap,tmpbitmap2,1,&scrollx,1,&scrolly,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
 	}
@@ -257,56 +259,58 @@ void lwings_vh_screenrefresh(struct osd_bitmap *bitmap)
 	/* Draw the sprites. */
 	for (offs = spriteram_size - 4;offs >= 0;offs -= 4)
 	{
-                int code,colour,sx,sy;
+		int code,sx,sy;
 
-                /*
-                        Sprites
-                        =======
-                        0x80 Sprite code MSB
-                        0x40 Sprite code MSB
-                        0x20 Colour
-                        0x10 Colour
-                        0x08 Colour
-                        0x04 Y flip
-                        0x02 X flip
-                        0x01 X MSB
-                */
-                sy = spriteram[offs + 2];
-                if (sy != 0xf8) /* Small optimization */
-                {                                
-                        code = spriteram[offs];
-                        code += ( ((int)(spriteram[offs + 1]&0xc0)) << 2 );                        
-                        colour = (spriteram[offs + 1] & 0x38)>>3;
-                        sx = spriteram[offs + 3]-0x100 * ( spriteram[offs + 1] & 0x01);
+		/*
+		Sprites
+		=======
+		0x80 Sprite code MSB
+		0x40 Sprite code MSB
+		0x20 Colour
+		0x10 Colour
+		0x08 Colour
+		0x04 Y flip
+		0x02 X flip
+		0x01 X MSB
+		*/
+		code = spriteram[offs];
+		code += (spriteram[offs + 1] & 0xc0) << 2;
+		sx = spriteram[offs + 3] - 0x100 * (spriteram[offs + 1] & 0x01);
+		sy = spriteram[offs + 2];
 
-                        drawgfx(bitmap,Machine->gfx[2],
-                                        code,
-                                        colour,
-                                        spriteram[offs + 1]&0x02,
-                                        spriteram[offs + 1]&0x04,
-                                        sx, sy,
-					&Machine->drv->visible_area,TRANSPARENCY_PEN,15);
-                }
-        }
+		drawgfx(bitmap,Machine->gfx[2],
+				code,
+				(spriteram[offs + 1] & 0x38) >> 3,
+				spriteram[offs + 1] & 0x02,spriteram[offs + 1] & 0x04,
+				sx,sy,
+				&Machine->drv->visible_area,TRANSPARENCY_PEN,15);
+	}
 
 	/* draw the frontmost playfield. They are characters, but draw them as sprites */
 	for (offs = videoram_size - 1;offs >= 0;offs--)
 	{
-                int code=videoram[offs] + (((int)(colorram[offs] & 0xc0)<<2));
-                if (code != ' ')     /* don't draw spaces */
-		{
-			int sx,sy;
+		int code;
 
-                        sy = 8 * (offs / 32);
-                        sx = 8 * (offs % 32);
+
+		code = videoram[offs] + 4 * (colorram[offs] & 0xc0);
+		if (code != 0x20)     /* don't draw spaces */
+		{
+			int sx,sy,flipx,flipy;
+
+
+			sx = offs % 32;
+			sy = offs / 32;
+			flipx = colorram[offs] & 0x10;
+			flipy = colorram[offs] & 0x20;
 
 			drawgfx(bitmap,Machine->gfx[0],
-                                        code,
-                                        colorram[offs] & 0x0f,
-					0,0,sx,sy,
-                                        &Machine->drv->visible_area,TRANSPARENCY_PEN,3);
+					code,
+					colorram[offs] & 0x0f,
+					flipx,flipy,
+					8*sx,8*sy,
+					&Machine->drv->visible_area,TRANSPARENCY_PEN,3);
 		}
 	}
-        memset(lwings_paletteram_dirty, 0, sizeof(lwings_paletteram_dirty));
-}
 
+	memset(lwings_paletteram_dirty, 0, sizeof(lwings_paletteram_dirty));
+}

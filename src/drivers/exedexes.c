@@ -73,7 +73,6 @@ void exedexes_vh_convert_color_prom(unsigned char *palette, unsigned char *color
 void exedexes_vh_screenrefresh(struct osd_bitmap *bitmap);
 
 int capcom_sh_start(void);
-int capcom_sh_interrupt(void);
 
 
 
@@ -184,7 +183,7 @@ INPUT_PORTS_START( input_ports )
 	PORT_DIPSETTING(    0x00, "On" )
 
 	PORT_START      /* DSW1 */
-	PORT_DIPNAME( 0x07, 0x07, "Coin 2", IP_KEY_NONE )
+	PORT_DIPNAME( 0x07, 0x07, "Coin B", IP_KEY_NONE )
 	PORT_DIPSETTING(    0x00, "4 Coins/1 Credit")
 	PORT_DIPSETTING(    0x01, "3 Coins/1 Credit" )
 	PORT_DIPSETTING(    0x02, "2 Coins/1 Credit" )
@@ -193,7 +192,7 @@ INPUT_PORTS_START( input_ports )
 	PORT_DIPSETTING(    0x05, "1 Coin/3 Credits" )
 	PORT_DIPSETTING(    0x04, "1 Coin/4 Credits" )
 	PORT_DIPSETTING(    0x03, "1 Coin/5 Credits" )
-	PORT_DIPNAME( 0x38, 0x38, "Coin 1", IP_KEY_NONE )
+	PORT_DIPNAME( 0x38, 0x38, "Coin A", IP_KEY_NONE )
 	PORT_DIPSETTING(    0x00, "4 Coins/1 Credit")
 	PORT_DIPSETTING(    0x08, "3 Coins/1 Credit" )
 	PORT_DIPSETTING(    0x10, "2 Coins/1 Credit" )
@@ -423,7 +422,7 @@ static struct MachineDriver machine_driver =
 			3000000,	/* 3 Mhz ??? */
 			2,	/* memory region #2 */
 			sound_readmem,sound_writemem,0,0,
-			capcom_sh_interrupt,12
+			interrupt,4
 		}
 	},
 	60,
@@ -443,7 +442,6 @@ static struct MachineDriver machine_driver =
 	exedexes_vh_screenrefresh,
 
 	/* sound hardware */
-	0,
 	0,
 	capcom_sh_start,
 	AY8910_sh_stop,
@@ -533,6 +531,7 @@ struct GameDriver exedexes_driver =
 	exedexes_rom,
 	0, 0,
 	0,
+	0,	/* sound_prom */
 
 	0/*TBR*/,input_ports,0/*TBR*/,0/*TBR*/,0/*TBR*/,
 

@@ -30,8 +30,6 @@ struct RomModule
 #define ROM_START(name) static struct RomModule name[] = {
 /* start of memory region */
 #define ROM_REGION(length) { 0, length, 0, 0 },
-/* OBSOLETE - don't use in new code, use ROM_LOAD() instead */
-#define ROM_OBSOLETELOAD(name,offset,length) { name, offset, length, -1 },
 /* ROM to load */
 #define ROM_LOAD(name,offset,length,checksum) { name, offset, length, checksum },
 /* continue loading the previous ROM to a new address */

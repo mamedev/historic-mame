@@ -262,7 +262,8 @@ void Pokey_sound_init (uint32 freq17, uint16 playback_freq, uint8 num_pokeys, ui
    P17 = 0;
 
    /* calculate the sample 'divide by N' value based on the playback freq. */
-   Samp_n_max = ((uint32)freq17 << 8) / playback_freq;
+	if (playback_freq == 0) Samp_n_max = 0;
+	else Samp_n_max = ((uint32)freq17 << 8) / playback_freq;
 
    Samp_n_cnt[0] = 0;  /* initialize all bits of the sample */
    Samp_n_cnt[1] = 0;  /* 'divide by N' counter */

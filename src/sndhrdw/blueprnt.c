@@ -5,16 +5,24 @@
 
 
 
-int blueprnt_sh_interrupt(void)
-{
-	if (cpu_getiloops() % 2 == 0) return interrupt();
-	else
-	{
-		AY8910_update();
+static int dipsw;
 
-		if (pending_commands) return nmi_interrupt();
-		else return ignore_interrupt();
-	}
+static void dipsw_w(int offset,int data)
+{
+	dipsw = data;
+}
+
+int blueprnt_sh_dipsw_r(int offset)
+{
+	return dipsw;
+}
+
+
+
+void blueprnt_sound_command_w(int offset,int data)
+{
+	soundlatch_w(offset,data);
+	cpu_cause_interrupt(1,Z80_NMI_INT);
 }
 
 
@@ -22,12 +30,11 @@ int blueprnt_sh_interrupt(void)
 static struct AY8910interface interface =
 {
 	2,	/* 2 chips */
-	8,	/* 8 updates per video frame (good quality) */
-	1789750000,	/* 1.78975 MHZ ????? */
-	{ 255, 255 },
-	{ 0 },
-	{ sound_command_r },
-	{ 0 },
+	1000000,	/* 1MHz ????? */
+	{ 0x20ff, 0x20ff },
+	{            0, input_port_2_r },
+	{ soundlatch_r, input_port_3_r },
+	{ dipsw_w },
 	{ 0 }
 };
 
@@ -35,7 +42,5 @@ static struct AY8910interface interface =
 
 int blueprnt_sh_start(void)
 {
-	pending_commands = 0;
-
 	return AY8910_sh_start(&interface);
 }

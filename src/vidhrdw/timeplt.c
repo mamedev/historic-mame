@@ -11,10 +11,19 @@
 
 
 
+static int flipscreen;
+
+
+
 static struct rectangle spritevisiblearea =
 {
-	2*8, 30*8-1,
-	4*8, 31*8-1
+	4*8, 31*8-1,
+	2*8, 30*8-1
+};
+static struct rectangle spritevisibleareaflip =
+{
+	1*8, 28*8-1,
+	2*8, 30*8-1
 };
 
 
@@ -95,6 +104,25 @@ void timeplt_vh_convert_color_prom(unsigned char *palette, unsigned char *colort
 
 
 
+void timeplt_flipscreen_w(int offset,int data)
+{
+	if (flipscreen != (data & 1))
+	{
+		flipscreen = data & 1;
+		memset(dirtybuffer,1,videoram_size);
+	}
+}
+
+
+
+/* Return the current video scan line */
+int timeplt_scanline_r(int offset)
+{
+	return 255 - (cpu_getfcount() * 256 / cpu_getfperiod());
+}
+
+
+
 /***************************************************************************
 
   Draw the game screen in the given osd_bitmap.
@@ -113,19 +141,28 @@ void timeplt_vh_screenrefresh(struct osd_bitmap *bitmap)
 	{
 		if (dirtybuffer[offs])
 		{
-			int sx,sy;
+			int sx,sy,flipx,flipy;
 
 
 			dirtybuffer[offs] = 0;
 
-			sx = 8 * (31 - offs / 32);
-			sy = 8 * (offs % 32);
+			sx = offs % 32;
+			sy = offs / 32;
+			flipx = colorram[offs] & 0x40;
+			flipy = colorram[offs] & 0x80;
+			if (flipscreen)
+			{
+				sx = 31 - sx;
+				sy = 31 - sy;
+				flipx = !flipx;
+				flipy = !flipy;
+			}
 
 			drawgfx(tmpbitmap,Machine->gfx[0],
 					videoram[offs] + 8 * (colorram[offs] & 0x20),
 					colorram[offs] & 0x1f,
-					colorram[offs] & 0x80,colorram[offs] & 0x40,
-					sx,sy,
+					flipx,flipy,
+					8*sx,8*sy,
 					&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
 		}
 	}
@@ -146,24 +183,26 @@ void timeplt_vh_screenrefresh(struct osd_bitmap *bitmap)
 	/* order, to have the correct priorities. */
 	for (offs = spriteram_size - 2;offs >= 0;offs -= 2)
 	{
+		drawgfx(bitmap,Machine->gfx[1],
+				spriteram[offs + 1],
+				spriteram_2[offs] & 0x3f,
+				spriteram_2[offs] & 0x40,!(spriteram_2[offs] & 0x80),
+				240-spriteram[offs],spriteram_2[offs + 1]-1,
+				flipscreen ? &spritevisibleareaflip : &spritevisiblearea,TRANSPARENCY_PEN,0);
+
 		if (spriteram_2[offs + 1] < 240)
 		{
-			drawgfx(bitmap,Machine->gfx[1],
-					spriteram[offs + 1],
-					spriteram_2[offs] & 0x3f,
-					spriteram_2[offs] & 0x80,!(spriteram_2[offs] & 0x40),
-					spriteram_2[offs + 1] - 1,spriteram[offs],
-					&spritevisiblearea,TRANSPARENCY_PEN,0);
-
 			/* clouds are drawn twice, offset by 128 pixels horizontally and vertically */
+			/* this is done by the program, multiplexing the sprites; we don't emulate */
+			/* that, we just reproduce the behaviour. */
 			if (offs <= 2*2 || offs >= 19*2)
 			{
 				drawgfx(bitmap,Machine->gfx[1],
 						spriteram[offs + 1],
 						spriteram_2[offs] & 0x3f,
-						spriteram_2[offs] & 0x80,!(spriteram_2[offs] & 0x40),
-						(spriteram_2[offs + 1] - 1 + 128) & 0xff,(spriteram[offs] + 128) & 0xff,
-						&spritevisiblearea,TRANSPARENCY_PEN,0);
+						spriteram_2[offs] & 0x40,~spriteram_2[offs] & 0x80,
+						(240-spriteram[offs]+128) & 0xff,(spriteram_2[offs + 1]-1+128) & 0xff,
+						flipscreen ? &spritevisibleareaflip : &spritevisiblearea,TRANSPARENCY_PEN,0);
 			}
 		}
 	}

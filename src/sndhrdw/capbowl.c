@@ -1,91 +1,94 @@
-#include "mame.h"
+#include "driver.h"
 #include "m6809/m6809.h"
 #include "sndhrdw/generic.h"
+#include "sndhrdw/dac.h"
+#include "sndhrdw/2203intf.h"
+#include "sndhrdw/fm.h"
 
-static int trigger_int = 0;
+
 
 void capbowl_sndcmd_w(int offset,int data)
 {
-  sound_command_w(offset, data);
+	soundlatch_w(offset, data);
 
-  trigger_int++;
+	cpu_cause_interrupt(1,M6809_INT_IRQ);
 }
 
 
-static int first_time = 1;
 
-int capbowl_sndcmd_r(int offset)
-{
-  int ret;
-
-  if (first_time)
-  {
-    ret = 0x00;
-    first_time = 0;
-  }
-  else
-  {
-    ret = sound_command_r(offset);
-    if (errorlog)
-    {
-      fprintf(errorlog, "Sound Command Read: %02x\n", ret);
-    }
-  }
-
-  return ret;
-}
-
+static int firq_count;
 
 int capbowl_sound_interrupt(void)
 {
-  /* This location is normally incremented by FIRQ */
-  Machine->memory_region[2][0x000c]++;
+return M6809_INT_FIRQ;
 
-  /* Generate an interrupt if there is anything in the queue */
-  if (trigger_int)
-  {
-    trigger_int--;
-    return M6809_INT_IRQ;
-  }
-
-  return M6809_INT_NONE;
+/* the following doesn't seem to work too well */
+#if 0
+	if (firq_count)
+	{
+		firq_count--;
+		return M6809_INT_FIRQ;
+	}
+	else return ignore_interrupt();
+#endif
 }
 
-
-
-static int sound_reg = 0;
-
-void capbowl_sndreg_w(int offset,int data)
+/* handler called by the 2203 emulator when the internal timers cause an IRQ */
+static void irqhandler(void)
 {
-  sound_reg = data;
+	firq_count++;
 }
 
 
-int capbowl_sndreg_r(int offset)
+
+void capbowl_dac_w(int offset,int data)
 {
-  return 0x00;
+	DAC_data_w(0,data);
 }
 
 
 
-void capbowl_snddata_w(int offset,int data)
+static struct DACinterface DAinterface =
 {
-  if (errorlog)
-  {
-    fprintf(errorlog, "Sound Register Write: %02x - %02x\n", sound_reg, data);
-  }
-}
+	1,
+	441000,
+	{ 64, 64 },
+	{  1,  1 }
+};
 
-
-int capbowl_snddata_r(int offset)
+static struct YM2203interface interface =
 {
-  if (errorlog)
-  {
-    fprintf(errorlog, "Sound Register Read: %02x\n", sound_reg);
-  }
+	1,			/* 1 chip */
+	3000000,	/* 3.0 MHZ ??? */
+	{ YM2203_VOL(255,255) },
+	{ 0 },
+	{ 0 },
+	{ 0 },
+	{ 0 }
+};
 
-  return 0x00;
+int capbowl_sh_start(void)
+{
+	if( DAC_sh_start(&DAinterface) ) return 1;
+	if (YM2203_sh_start(&interface) != 0)
+	{
+		DAC_sh_stop();
+		return 1;
+	}
+
+	OPNSetIrqHandler(0,irqhandler);
+
+	return 0;
 }
 
+void capbowl_sh_stop(void)
+{
+	YM2203_sh_stop();
+	DAC_sh_stop();
+}
 
-
+void capbowl_sh_update(void)
+{
+	YM2203_sh_update();
+	DAC_sh_update();
+}

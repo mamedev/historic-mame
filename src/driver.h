@@ -61,7 +61,9 @@ enum { IPT_END=1,IPT_PORT,
 	/* analog inputs */
 	/* the "arg" field contains the default sensitivity expressed as a percentage */
 	/* (100 = default, 50 = half, 200 = twice) */
-	IPT_DIAL, IPT_TRACKBALL_X, IPT_TRACKBALL_Y, IPT_AD_STICK_X, IPT_AD_STICK_Y,
+	IPT_ANALOG_START,
+	IPT_PADDLE, IPT_DIAL, IPT_TRACKBALL_X, IPT_TRACKBALL_Y, IPT_AD_STICK_X, IPT_AD_STICK_Y,
+	IPT_ANALOG_END,
 
 	IPT_COIN1, IPT_COIN2, IPT_COIN3, IPT_COIN4,	/* coin slots */
 	IPT_START1, IPT_START2, IPT_START3, IPT_START4,	/* start buttons */
@@ -78,7 +80,7 @@ enum { IPT_END=1,IPT_PORT,
 									/* by other games running on the same hardware. */
 									/* This is different from IPT_UNUSED, which marks */
 									/* bits not connected to anything. */
-#define IPF_COCKTAIL   IPF_UNUSED	/* the bit is used in cocktail mode only */
+#define IPF_COCKTAIL   IPF_PLAYER2	/* the bit is used in cocktail mode only */
 
 #define IPF_CHEAT      0x40000000	/* Indicates that the input bit is a "cheat" key */
 									/* (providing invulnerabilty, level advance, and */
@@ -120,6 +122,11 @@ enum { IPT_END=1,IPT_PORT,
 #define IPF_MIN(min)			((min&0xff)  << 16 )
 #define IPF_MAX(max)			((max&0xff)  << 24 )
 
+/* LBO - these fields are packed into in->keyboard & in->joystick for analog controls */
+#define IPF_DEC(key)			((key&0xff)       )
+#define IPF_INC(key)			((key&0xff) << 8  )
+#define IPF_DELTA(val)			((val&0xff) << 16 )
+
 #define IP_NAME_DEFAULT ((const char *)-1)
 
 #define IP_KEY_DEFAULT -1
@@ -140,33 +147,21 @@ enum { IPT_END=1,IPT_PORT,
 #define PORT_BIT(mask,default,type) { mask, default, type, IP_NAME_DEFAULT, IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0 },
 /* input bit definition with extended fields */
 #define PORT_BITX(mask,default,type,name,key,joy,arg) { mask, default, type, name, key, joy, arg },
-/* LBO - analog input */
-#define PORT_ANALOG(mask,default,type,sensitivity,clip,min,max) { mask, default, type, IP_NAME_DEFAULT, 0, 0, IPF_SENSITIVITY(sensitivity) | IPF_CLIP(clip) | IPF_MIN(min) | IPF_MAX(max) },
+/* analog input */
+#define PORT_ANALOG(mask,default,type,sensitivity,clip,min,max) \
+	{ mask, default, type, IP_NAME_DEFAULT, \
+	IP_KEY_DEFAULT, IP_JOY_DEFAULT, \
+	IPF_SENSITIVITY(sensitivity) | IPF_CLIP(clip) | IPF_MIN(min) | IPF_MAX(max) },
+/* analog input with extended fields for defining default keys & sensitivities */
+#define PORT_ANALOGX(mask,default,type,sensitivity,clip,min,max,keydec,keyinc,joydec,joyinc,delta) \
+	{ mask, default, type, IP_NAME_DEFAULT, \
+	IPF_DEC(keydec) | IPF_INC(keyinc) | IPF_DELTA(delta), IPF_DEC(joydec) | IPF_INC(joyinc) | IPF_DELTA(delta), \
+	IPF_SENSITIVITY(sensitivity) | IPF_CLIP(clip) | IPF_MIN(min) | IPF_MAX(max) },
+
 /* dip switch definition */
 #define PORT_DIPNAME(mask,default,name,key) { mask, default, IPT_DIPSWITCH_NAME, name, key, IP_JOY_NONE, 0 },
-#define PORT_DIPSETTING(default,name) { -1, default, IPT_DIPSWITCH_SETTING, name, IP_KEY_NONE, IP_JOY_NONE, 0 },
+#define PORT_DIPSETTING(default,name) { 0, default, IPT_DIPSWITCH_SETTING, name, IP_KEY_NONE, IP_JOY_NONE, 0 },
 
-
-
-
-/*
- *  The idea behing the trak-ball support is to have the system dependent
- *  handler return a positive or negative number representing the distance
- *  from the mouse region origin.  Then depending on what the emulation needs,
- *  it will do a conversion on the distance from the origin into the desired
- *  format.  Why was it implemented this way?  Take Reactor and Crystal Castles
- *  as an example.  Reactor's inputs range from -127 to 127 where < 0 is
- *  left/down and >0 is right/up.  However, Crystal Castles just looks at the
- *  difference between successive unsigned char values.  So their inputs are
- *  quite different.
- */
-
-struct TrakPort {
-  int axis;                     /* The axis of the trak-ball */
-  int centered;                 /* Does it return to the "zero" position after a read? */
-  float scale;                  /* How much do we scale the value by? */
-  int (*conversion)(int data);  /* Function to do the conversion to what the game needs */
-};
 
 
 /* Key setting definition */
@@ -222,13 +217,15 @@ struct MachineCPU
 #define CPU_Z80    1
 #define CPU_M6502  2
 #define CPU_I86    3
-#define CPU_M6803  4
+#define CPU_I8039  4
+#define CPU_M6803  5
+#define CPU_M6802  CPU_M6803
 #define CPU_M6808  CPU_M6803
-#define CPU_M6809  5
-#define CPU_M68000 6
+#define CPU_M6809  6
+#define CPU_M68000 7
 
 /* set this if the CPU is used as a slave for audio. It will not be emulated if */
-/* play_sound == 0, therefore speeding up a lot the emulation. */
+/* sound is disabled, therefore speeding up a lot the emulation. */
 #define CPU_AUDIO_CPU 0x8000
 
 #define CPU_FLAGS_MASK 0xff00
@@ -281,7 +278,6 @@ struct MachineDriver
 	void (*vh_update)(struct osd_bitmap *bitmap);
 
 	/* sound hardware */
-	unsigned char *samples;
 	int (*sh_init)(const char *gamename);
 	int (*sh_start)(void);
 	void (*sh_stop)(void);
@@ -303,12 +299,13 @@ struct GameDriver
 									/* if the encryption is different from the above. */
 	const char **samplenames;	/* optional array of names of samples to load. */
 						/* drivers can retrieve them in Machine->samples */
+	const unsigned char *sound_prom;
 
-	struct InputPort *input_ports;
+struct InputPort *input_ports;	/* obsolete */
 	struct NewInputPort *new_input_ports;
-	struct TrakPort *trak_ports;
-	const struct DSW *dswsettings;
-	const struct KEYSet *keysettings;
+int trak;	/* filler for obsolete struct - will be removed */
+const struct DSW *dswsettings;	/* obsolete */
+const struct KEYSet *keysettings;	/* obsolete */
 
 		/* if they are available, provide a dump of the color proms (there is no */
 		/* copyright infringement in that, since you can't copyright a color scheme) */

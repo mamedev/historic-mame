@@ -110,6 +110,39 @@ void c1943_vh_convert_color_prom(unsigned char *palette, unsigned char *colortab
 
 
 
+int c1943_vh_start(void)
+{
+	if ((sc2bitmap = osd_create_bitmap(8*32,9*32)) == 0)
+		return 1;
+
+	if ((sc1bitmap = osd_create_bitmap(9*32,9*32)) == 0)
+	{
+		osd_free_bitmap(sc2bitmap);
+		return 1;
+	}
+
+	if (generic_vh_start() == 1)
+	{
+		osd_free_bitmap(sc2bitmap);
+		osd_free_bitmap(sc1bitmap);
+		return 1;
+	}
+
+	memset (sc2map, 0xff, sizeof (sc2map));
+	memset (sc1map, 0xff, sizeof (sc1map));
+
+	return 0;
+}
+
+
+void c1943_vh_stop(void)
+{
+	osd_free_bitmap(sc2bitmap);
+	osd_free_bitmap(sc1bitmap);
+}
+
+
+
 void c1943_c804_w(int offset,int data)
 {
 	int bankaddress;
@@ -147,39 +180,6 @@ void c1943_d806_w(int offset,int data)
 	/* bit 6 enables sprites */
 	objon = data & 0x40;
 }
-
-
-int c1943_vh_start(void)
-{
-	if ((sc2bitmap = osd_create_bitmap(8*32,9*32)) == 0)
-		return 1;
-	
-	if ((sc1bitmap = osd_create_bitmap(9*32,9*32)) == 0)
-	{
-		osd_free_bitmap(sc2bitmap);
-		return 1;
-	}
-	
-	if (generic_vh_start() == 1)
-	{
-		osd_free_bitmap(sc2bitmap);
-		osd_free_bitmap(sc1bitmap);
-		return 1;
-	}
-	
-	memset (sc2map, 0xff, sizeof (sc2map));
-	memset (sc1map, 0xff, sizeof (sc1map));
-
-	return 0;
-}
-
-
-void c1943_vh_stop(void)
-{
-	osd_free_bitmap(sc2bitmap);
-	osd_free_bitmap(sc1bitmap);
-}
-
 
 
 
@@ -221,7 +221,7 @@ void c1943_vh_screenrefresh(struct osd_bitmap *bitmap)
 
 				tile=p[offset];
 				attr=p[offset+1];
-				
+
 				if (tile != map[0] || attr != map[1])
 				{
 					map[0] = tile;
@@ -301,7 +301,7 @@ void c1943_vh_screenrefresh(struct osd_bitmap *bitmap)
 		{
 			int ty = (sy + top) % 9;
 			offs &= 0x7fff; /* Enforce limits (for top of scroll) */
-			
+
 			for (sx = 0;sx < 9;sx++)
 			{
 				int tile, attr, offset;
@@ -311,7 +311,7 @@ void c1943_vh_screenrefresh(struct osd_bitmap *bitmap)
 
 				tile=p[offset];
 				attr=p[offset+1];
-				
+
 				if (tile != map[0] || attr != map[1])
 				{
 					map[0] = tile;

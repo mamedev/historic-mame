@@ -10,15 +10,16 @@
 #include "driver.h"
 #include "M6809.h"
 
+extern unsigned char *williams_videoram;
+
 unsigned char *williams_port_select;
 unsigned char *williams_video_counter;
-unsigned char *williams_bank_select;
+unsigned char *williams_bank_base;
 
 unsigned char *robotron_catch;
 
 unsigned char *stargate_catch;
 
-unsigned char *defender_mirror;
 unsigned char *defender_irq_enable;
 unsigned char *defender_catch;
 unsigned char *defender_bank_base;
@@ -28,8 +29,7 @@ int defender_bank_select;
 unsigned char *splat_catch;
 
 unsigned char *blaster_catch;
-unsigned char *blaster_bank_base;
-unsigned char *blaster_bank_ram;
+unsigned char *blaster_bank2_base;
 
 
 void williams_sh_w(int offset,int data);
@@ -88,6 +88,13 @@ static int stargate_inttable[] = { 0x00, 0xff, 0x00, 0xff };
 static int video_counter_index;
 static unsigned char defender_video_counter;
 
+static int blaster_bank;
+static int vram_bank;
+
+
+int defender_io_r (int offset);
+void defender_io_w (int offset,int data);
+void defender_bank_select_w (int offset,int data);
 
 /***************************************************************************
 
@@ -103,9 +110,15 @@ void williams_init_machine (void)
 {
 	/* set the optimization flags */
 	m6809_Flags = M6809_FAST_NONE;
+}
 
+
+void defender_init_machine (void)
+{
+	/* set the optimization flags */
+	m6809_Flags = M6809_FAST_NONE;
 	/* initialize the banks */
-	defender_bank_ram = defender_bank_base;
+	defender_bank_select_w (0,0);
 }
 
 
@@ -146,6 +159,24 @@ int williams_input_port_2_3 (int offset)
 }
 
 
+/*
+ *  Switch between VRAM and ROM
+ */
+
+void williams_vram_select_w(int offset,int data)
+{
+	vram_bank = data;
+	if (vram_bank)
+	{
+		cpu_setbank (1, williams_bank_base);
+	}
+	else
+	{
+		cpu_setbank (1, williams_videoram);
+	}
+}
+
+
 
 /***************************************************************************
 
@@ -172,6 +203,28 @@ int robotron_catch_loop_r (int offset)
 	Stargate-specific routines
 
 ***************************************************************************/
+
+int stargate_input_port_0_r(int offset)
+{
+	int keys, altkeys;
+
+	keys = input_port_0_r (0);
+	altkeys = input_port_3_r (0);
+
+	if (altkeys)
+	{
+		keys |= altkeys;
+		if (Machine->memory_region[0][0x9c92] == 0xfd)
+		{
+			if (keys & 0x02)
+				keys = (keys & 0xfd) | 0x40;
+			else if (keys & 0x40)
+				keys = (keys & 0xbf) | 0x02;
+		}
+	}
+
+	return keys;
+}
 
 int stargate_interrupt (void)
 {
@@ -222,10 +275,18 @@ int defender_interrupt (void)
 
 void defender_bank_select_w (int offset,int data)
 {
-	static int bank[8] = { 0x00000, 0x10000, 0x20000, 0x30000, 0x00000, 0x00000, 0x00000, 0x40000 };
-	defender_bank_ram = defender_bank_base + bank[data];
-//	ROM = RAM + bank[data];
-	cpu_setrombase(&RAM[bank[data]]);
+	static int bank[8] = { 0x0c000, 0x10000, 0x11000, 0x12000, 0x0c000, 0x0c000, 0x0c000, 0x13000 };
+	/* set bank address */
+	cpu_setbank(1,&RAM[bank[data&7]]);
+	if( bank[data] < 0x10000 ){
+		/* i/o area map */
+		cpu_setbankhandler_r(1,defender_io_r );
+		cpu_setbankhandler_w(1,defender_io_w );
+	}else{
+		/* bank rom map */
+		cpu_setbankhandler_r(1,MRA_BANK1);
+		cpu_setbankhandler_w(1,MWA_ROM);
+	}
 }
 
 
@@ -233,22 +294,41 @@ void defender_bank_select_w (int offset,int data)
  *   Defender Read at C000-CFFF
  */
 
-int defender_bank_r (int offset)
+int defender_input_port_1_r(int offset)
 {
-	if (defender_bank_ram == defender_bank_base)    /* If bank = 0 then we are in the I/O */
+	int keys, altkeys;
+
+	keys = readinputport(1);
+	altkeys = readinputport(3);
+
+	if (altkeys)
 	{
-		if (offset == 0xc00)           /* Buttons IN 0  */
-			return input_port_0_r (0);
-		if (offset == 0xc04)           /* Buttons IN 1  */
-			return input_port_1_r (0);
-		if (offset == 0xc06)           /* Buttons IN 2  */
-			return input_port_2_r (0);
-		if (offset == 0x800)           /* video counter */
-			return defender_video_counter;
+		keys |= altkeys;
+		if (Machine->memory_region[0][0xa0bb] == 0xfd)
+		{
+			if (keys & 0x02)
+				keys = (keys & 0xfd) | 0x40;
+			else if (keys & 0x40)
+				keys = (keys & 0xbf) | 0x02;
+		}
 	}
 
+	return keys;
+}
+
+int defender_io_r (int offset)
+{
+	if (offset == 0xc00)           /* Buttons IN 0  */
+		return input_port_0_r (0);
+	if (offset == 0xc04)           /* Buttons IN 1  */
+		return defender_input_port_1_r (0);
+	if (offset == 0xc06)           /* Buttons IN 2  */
+		return input_port_2_r (0);
+	if (offset == 0x800)           /* video counter */
+		return defender_video_counter;
+
 	/* If not bank 0 then return banked RAM */
-	return defender_bank_ram[offset];
+	return defender_bank_base[offset];
 }
 
 
@@ -256,38 +336,21 @@ int defender_bank_r (int offset)
  *  Defender Write at C000-CFFF
  */
 
-void defender_bank_w (int offset,int data)
+void defender_io_w (int offset,int data)
 {
-	if (defender_bank_ram == defender_bank_base)
-	{
-		defender_bank_ram[offset] = data;
+	defender_bank_base[offset] = data;
 
-		/* WatchDog */
-		if (offset == 0x03fc)
-			return;
+	/* WatchDog */
+	if (offset == 0x03fc)
+		return;
 
-		/* Palette */
-		if (offset < 0x10)
-			williams_palette_w (offset, data);
+	/* Palette */
+	if (offset < 0x10)
+		williams_palette_w (offset, data);
 
-		/* Sound */
-		if (offset == 0x0c02)
-			williams_sh_w (offset,data);
-	}
-}
-
-
-/*
- *  Writes here must be mirrored to all 5 pages (they are self-generating code)
- */
-
-void defender_mirror_w(int offset,int data)
-{
-	*(defender_mirror + 0x00000 + offset) = data;
-	*(defender_mirror + 0x10000 + offset) = data;
-	*(defender_mirror + 0x20000 + offset) = data;
-	*(defender_mirror + 0x30000 + offset) = data;
-	*(defender_mirror + 0x40000 + offset) = data;
+	/* Sound */
+	if (offset == 0x0c02)
+		williams_sh_w (offset,data);
 }
 
 
@@ -410,11 +473,33 @@ int blaster_input_port_0(int offset)
  *  Blaster bank select
  */
 
+static int bank[16] = { 0x00000, 0x10000, 0x14000, 0x18000, 0x1c000, 0x20000, 0x24000, 0x28000,
+                        0x2c000, 0x30000, 0x34000, 0x38000, 0x2c000, 0x30000, 0x34000, 0x38000 };
+
+void blaster_vram_select_w(int offset,int data)
+{
+	vram_bank = data;
+	if (vram_bank)
+	{
+		cpu_setbank (1, &RAM[bank[blaster_bank]]);
+		cpu_setbank (2, blaster_bank2_base);
+	}
+	else
+	{
+		cpu_setbank (1, williams_videoram);
+		cpu_setbank (2, williams_videoram + 0x4000);
+	}
+}
+
 void blaster_bank_select_w(int offset,int data)
 {
-	static int bank[16] = { 0x00000, 0x10000, 0x20000, 0x30000, 0x40000, 0x50000, 0x60000, 0x70000,
-	                        0x80000, 0x90000, 0xa0000, 0xb0000, 0x80000, 0x90000, 0xa0000, 0xb0000 };
-	blaster_bank_ram = blaster_bank_base + bank[data];
-//	ROM = RAM + bank[data];
-	cpu_setrombase(&RAM[bank[data]]);
+	blaster_bank = data & 15;
+	if (vram_bank)
+	{
+		cpu_setbank (1, &RAM[bank[blaster_bank]]);
+	}
+	else
+	{
+		cpu_setbank (1, williams_videoram);
+	}
 }

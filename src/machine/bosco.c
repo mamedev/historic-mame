@@ -18,6 +18,7 @@ unsigned char bosco_hiscoreloaded;
 int		HiScore;
 
 void bosco_sample_play(int, int);
+void bosco_vh_interrupt(void);
 
 void bosco_init_machine(void)
 {
@@ -166,11 +167,20 @@ void bosco_customio_w_1(int offset,int data)
 				case 0x8D:
 					Score += 200;
 					break;
+				case 0x93:
+					Score += 200;
+					break;
 				case 0x95:
 					Score += 300;
 					break;
 				case 0x96:
 					Score += 400;
+					break;
+				case 0xA0:
+					Score += 500;
+					break;
+				case 0xA1:
+					Score += 1000;
 					break;
 				case 0xA2:
 					Score += 1500;
@@ -182,15 +192,6 @@ void bosco_customio_w_1(int offset,int data)
 					break;
 #if 0
 				case 0x89:
-					Score += ???;
-					break;
-				case 0x93:
-					Score += ???;
-					break;
-				case 0xA0:
-					Score += ???;
-					break;
-				case 0xA1:
 					Score += ???;
 					break;
 				case 0xB8:
@@ -414,11 +415,14 @@ void bosco_customio_w_2(int offset,int data)
 		case 0x91:
 			cpu_writemem16(0x9000,0);	/* ASG 971005 */
 			cpu_writemem16(0x9000 + 1,0);	/* ASG 971005 */
-			cpu_writemem16(0x9000 + 2,0);	/* ASG 971005 */
+			cpu_writemem16(0x9000 + 2,cpu_readmem16(0x89cc)); /* MLS 971221 */
 			cpu_writemem16(0x9000 + 3,0);	/* ASG 971005 */
 			break;
 
 		case 0xA1:
+			break;
+
+		default:
 			break;
 	}
 
@@ -471,6 +475,10 @@ int bosco_interrupt_1(void)
 		return Z80_NMI_INT;
 	}
 
+	if (cpu_getiloops() == 0)
+	{
+		bosco_vh_interrupt();	/* update the background stars position */
+	}
 	if (interrupt_enable_1) return 0xff;
 	else return Z80_IGNORE_INT;
 }

@@ -60,7 +60,6 @@ void sonson_vh_convert_color_prom(unsigned char *palette, unsigned char *colorta
 void sonson_vh_screenrefresh(struct osd_bitmap *bitmap);
 
 int capcom_sh_start(void);
-int capcom_sh_interrupt(void);
 
 
 
@@ -170,7 +169,7 @@ INPUT_PORTS_START( input_ports )
 	PORT_BITX(    0x40, 0x40, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE, 0 )
 	PORT_DIPSETTING(    0x40, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
-	PORT_DIPNAME( 0x80, 0x80, "unknown", IP_KEY_NONE )
+	PORT_DIPNAME( 0x80, 0x80, "unknown", IP_KEY_NONE )	/* maybe flip screen */
 	PORT_DIPSETTING(    0x80, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
 
@@ -296,7 +295,7 @@ static struct MachineDriver machine_driver =
 			2000000,	/* 2 Mhz (?) */
 			2,
 			sound_readmem,sound_writemem,0,0,
-			capcom_sh_interrupt,12
+			interrupt,4
 		},
 	},
 	60,
@@ -316,7 +315,6 @@ static struct MachineDriver machine_driver =
 	sonson_vh_screenrefresh,
 
 	/* sound hardware */
-	0,
 	0,
 	capcom_sh_start,
 	AY8910_sh_stop,
@@ -411,6 +409,7 @@ struct GameDriver sonson_driver =
 	sonson_rom,
 	0, 0,
 	0,
+	0,	/* sound_prom */
 
 	0/*TBR*/,input_ports,0/*TBR*/,0/*TBR*/,0/*TBR*/,
 

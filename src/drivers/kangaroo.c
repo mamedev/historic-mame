@@ -98,7 +98,6 @@ interrupts:
 /* machine */
 int  kangaroo_sec_chip_r(int offset);
 void kangaroo_sec_chip_w(int offset,int val);
-int  kangaroo_interrupt(void);
 
 /* vidhrdw */
 int  kangaroo_vh_start(void);
@@ -114,9 +113,9 @@ int kangaroo_sh_start(void);
 static struct MemoryReadAddress readmem[] =
 {
         { 0x0000, 0x5fff, MRA_ROM },
-	{ 0x8000, 0xbfff, MRA_RAM },
-        { 0xee00, 0xee00, input_port_3_r },
-        { 0xe400, 0xe400, input_port_7_r },
+        { 0x8000, 0xbfff, MRA_RAM },
+        { 0xee00, 0xee00, input_port_2_r },
+        { 0xe400, 0xe400, input_port_3_r },
         { 0xe000, 0xe3ff, MRA_RAM },
         { 0xec00, 0xec00, input_port_0_r },
         { 0xed00, 0xed00, input_port_1_r },
@@ -183,111 +182,96 @@ static struct IOReadPort sh_readport[] =
 };
 
 
-static struct InputPort k_input_ports[] =
-{
-	{	/* IN0 */
-                0x20,
-                { OSD_KEY_4, OSD_KEY_1, OSD_KEY_2, OSD_KEY_3, 0, 0, 0, 0 },
-		{ 0, 0, 0, 0, 0, 0, 0, 0 }
-	},
 
-	{	/* IN1 */
-                0x00,
-		{ OSD_KEY_RIGHT, OSD_KEY_LEFT, OSD_KEY_UP, OSD_KEY_DOWN,
-                                OSD_KEY_LCONTROL, 0, 0, 0 },
-		{ OSD_JOY_RIGHT, OSD_JOY_LEFT, OSD_JOY_UP, OSD_JOY_DOWN,
-                                OSD_JOY_FIRE, 0, 0, 0 }
-	},
-	{	/* IN2 */
-		0x00,
-                { 0 , 0, 0, 0, 0, 0, 0, 0 },
-                { 0 , 0, 0, 0, 0, 0, 0, 0 }
-	},
-	{	/* IN3 */
-                0x00,
-		{ OSD_KEY_RIGHT, OSD_KEY_LEFT, OSD_KEY_UP, OSD_KEY_DOWN,
-                                OSD_KEY_LCONTROL, 0, 0, 0 },
-		{ OSD_JOY_RIGHT, OSD_JOY_LEFT, OSD_JOY_UP, OSD_JOY_DOWN,
-                                OSD_JOY_FIRE, 0, 0, 0 }
-	},
-	{	/* IN4 */
-		0x00,
-                { 0 , 0, 0, 0, 0, 0, 0, 0 },
-                { 0 , 0, 0, 0, 0, 0, 0, 0 }
-	},
-	{	/* IN5 */
-		0x0f,
-		{ 0, 0, 0, 0, 0, 0, 0, 0 },
-		{ 0, 0, 0, 0, 0, 0, 0, 0 }
-	},
-	{	/* IN6 */
-		0x00,
-		{ OSD_KEY_3, OSD_KEY_4, OSD_KEY_F1, 0, 0, 0, 0, 0 },
-		{ 0, 0, 0, 0, 0, 0, 0, 0 }
-	},
-	{	/* DSW1 */
-		0x00,
-		{ 0, 0, 0, 0, 0, 0, 0, 0 },
-		{ 0, 0, 0, 0, 0, 0, 0, 0 }
-	},
-	{ -1 }  /* end of table */
-};
+INPUT_PORTS_START( input_ports )
+	PORT_START      /* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN3 )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_START1 )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_START2 )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_COIN1 )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_COIN2 )
+	PORT_DIPNAME( 0x20, 0x00, "Music", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x20, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x40, 0x00, "Cabinet", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "Upright" )
+	PORT_DIPSETTING(    0x40, "Cocktail" )
+	PORT_DIPNAME( 0x80, 0x00, "Unknown", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "Off" )
+	PORT_DIPSETTING(    0x80, "On" )
 
-static struct TrakPort trak_ports[] =
-{
-        { -1 }
-};
+	PORT_START      /* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_8WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_8WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_8WAY )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BITX(    0x80, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE, 0 )
+	PORT_DIPSETTING(    0x00, "Off" )
+	PORT_DIPSETTING(    0x80, "On" )
 
+	PORT_START      /* IN2 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_COCKTAIL )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 
-static struct KEYSet keys[] =
-{
-        { 1, 2, "PL1 MOVE UP" },
-        { 1, 1, "PL1 MOVE LEFT"  },
-        { 1, 0, "PL1 MOVE RIGHT" },
-        { 1, 3, "PL1 MOVE DOWN" },
-        { 1, 4, "PL1 FIRE" },
-        { 3, 2, "PL2 MOVE UP" },
-        { 3, 1, "PL2 MOVE LEFT"  },
-        { 3, 0, "PL2 MOVE RIGHT" },
-        { 3, 3, "PL2 MOVE DOWN" },
-        { 3, 4, "PL2 FIRE" },
-        { -1 }
-};
-
-
-static struct DSW dsw[] =
-{
-        { 7, 0x01, "LIVES", { "03", "05" } },
-        { 7, 0x02, "DIFFICULTY", { "EASY", "HARD" } },
-        { 7, 0x0c, "BONUS", { "NO BONUS", "AT 10 000", "AT 10 AND EVERY 30 000", "AT 20 AND EVERY 40 000" } },
-        { 0, 0x20, "MUSIC", { "ON ", "OFF" } }, /* 970617 -V- */
-        { 7, 0xf0, "COIN SELECT 1", { "1/1 1/1", "2/1 2/1", "2/1 1/3", "1/1 1/2",\
-                        "1/1 1/3", "1/1 1/4", "1/1 1/5", "1/1 1/6",\
-                        "1/2 1/2", "1/2 1/4", "1/2 1/5", "1/2 1/10",\
-                        "1/2 1/11", "1/2 1/12", "1/2 1/6", "FREE FREE" } },
-       /* { 7, 0xc0, "COIN SELECT 2", { "SET A", "SET B", "SET C", "SET D" } },*/
-	{ -1 }
-};
+	PORT_START      /* DSW0 */
+	PORT_DIPNAME( 0x01, 0x00, "Lives", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "3" )
+	PORT_DIPSETTING(    0x01, "5" )
+	PORT_DIPNAME( 0x02, 0x00, "Difficulty", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "Easy" )
+	PORT_DIPSETTING(    0x02, "Hard" )
+	PORT_DIPNAME( 0x0c, 0x00, "Bonus Life", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x08, "10000 30000" )
+	PORT_DIPSETTING(    0x04, "10000" )
+	PORT_DIPSETTING(    0x0c, "20000 40000" )
+	PORT_DIPSETTING(    0x00, "None" )
+	PORT_DIPNAME( 0xf0, 0x00, "Coinage", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x10, "A 2/1 B 2/1" )
+	PORT_DIPSETTING(    0x20, "A 2/1 B 1/3" )
+	PORT_DIPSETTING(    0x00, "A 1/1 B 1/1" )
+	PORT_DIPSETTING(    0x30, "A 1/1 B 1/2" )
+	PORT_DIPSETTING(    0x40, "A 1/1 B 1/3" )
+	PORT_DIPSETTING(    0x50, "A 1/1 B 1/4" )
+	PORT_DIPSETTING(    0x60, "A 1/1 B 1/5" )
+	PORT_DIPSETTING(    0x70, "A 1/1 B 1/6" )
+	PORT_DIPSETTING(    0x80, "A 1/2 B 1/2" )
+	PORT_DIPSETTING(    0x90, "A 1/2 B 1/4" )
+	PORT_DIPSETTING(    0xa0, "A 1/2 B 1/5" )
+	PORT_DIPSETTING(    0xe0, "A 1/2 B 1/6" )
+	PORT_DIPSETTING(    0xb0, "A 1/2 B 1/10" )
+	PORT_DIPSETTING(    0xc0, "A 1/2 B 1/11" )
+	PORT_DIPSETTING(    0xd0, "A 1/2 B 1/12" )
+	PORT_DIPSETTING(    0xf0, "Free Play" )
+INPUT_PORTS_END
 
 
 
 static struct GfxLayout sprlayout =
 {
-        1,4,    /* 4 * 1 lines */
-        8192,   /* 8192 "characters" */
-        4,      /* 4 bpp        */
-        { 0x2000*8, 0x2000*8+4, 0, 4  },       /* 4 and 8192 bytes between planes */
-        { 0,1,2,3 },
-        { 0,1,2,3 },
-        1*8
+	1,4,    /* 4 * 1 lines */
+	8192,   /* 8192 "characters" */
+	4,      /* 4 bpp        */
+	{ 0x2000*8, 0x2000*8+4, 0, 4  },       /* 4 and 8192 bytes between planes */
+	{ 0,1,2,3 },
+	{ 0,1,2,3 },
+	1*8
 };
 
 
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-        { 2, 0 , &sprlayout, 0, 1 },
-        { -1 } /* end of array */
+	{ 2, 0 , &sprlayout, 0, 1 },
+	{ -1 } /* end of array */
 };
 
 
@@ -372,7 +356,7 @@ static struct MachineDriver machine_driver =
 			2500000,
 			3,
 			sh_readmem,sh_writemem,sh_readport,sh_writeport,
-			kangaroo_interrupt,1
+			interrupt,1
 		}
 	},
 	60,
@@ -385,18 +369,17 @@ static struct MachineDriver machine_driver =
 	sizeof(palette)/3,sizeof(colortable),
 	0,
 
-	VIDEO_TYPE_RASTER|VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER|VIDEO_MODIFIES_PALETTE|VIDEO_SUPPORTS_DIRTY,
 	0,
-        kangaroo_vh_start,
-        kangaroo_vh_stop,
-        kangaroo_vh_screenrefresh,
+	kangaroo_vh_start,
+	kangaroo_vh_stop,
+	kangaroo_vh_screenrefresh,
 
 	/* sound hardware */
 	0,
-	0,
-        kangaroo_sh_start,
+	kangaroo_sh_start,
 	AY8910_sh_stop,
-        AY8910_sh_update
+	AY8910_sh_update
 };
 
 
@@ -416,7 +399,8 @@ ROM_START( kangaroo_rom )
 	ROM_LOAD( "tvg80.bin", 0x5000, 0x1000, 0xf47576eb )
 
 	ROM_REGION(0x2000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_OBSOLETELOAD( "tvg83.bin", 0x0000, 0x1000 )	/* not needed - could be removed */
+	/* empty memory region - not used by the game, but needed bacause the main */
+	/* core currently always frees region #1 after initialization. */
 
 	ROM_REGION(0x10000) /* space for graphics roms */
 	ROM_LOAD( "tvg84.bin", 0x0000, 0x1000, 0x6d872ead )  /* because of very rare way */
@@ -434,17 +418,18 @@ struct GameDriver kangaroo_driver =
 {
 	"Kangaroo",
 	"kangaroo",
-	"VILLE LAITINEN",
+	"Ville Laitinen (MAME driver)\nMarco Cassili",
 	&machine_driver,
 
-        kangaroo_rom,
+	kangaroo_rom,
 	0, 0,
 	0,
+	0,	/* sound_prom */
 
-        k_input_ports, 0, trak_ports, dsw, keys,
+	0/*TBR*/, input_ports, 0/*TBR*/, 0/*TBR*/, 0/*TBR*/,
 
 	0, palette, colortable,
 	ORIENTATION_DEFAULT,
 
-        kangaroo_hiload, kangaroo_hisave
+	kangaroo_hiload, kangaroo_hisave
 };

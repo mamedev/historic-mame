@@ -193,7 +193,6 @@ static struct MachineDriver machine_driver =
 	0,
 	0,
 	0,
-	0,
 	carnival_sh_update											/* MJC */
 };
 
@@ -295,6 +294,7 @@ struct GameDriver carnival_driver =
 	carnival_rom,
 	0, 0,
 	carnival_sample_names,										/* MJC */
+	0,	/* sound_prom */
 
 	0, input_ports, 0, 0, 0,
 
@@ -348,6 +348,7 @@ struct GameDriver pulsar_driver =
 	pulsar_rom,
 	0, 0,
 	0,
+	0,	/* sound_prom */
 
 	0, input_ports, 0, 0, 0,
 
@@ -402,6 +403,7 @@ struct GameDriver invho2_driver =
 	invhd2_rom,
 	0, 0,
 	0,
+	0,	/* sound_prom */
 
 	0, input_ports, 0, 0, 0,
 
@@ -468,7 +470,6 @@ static struct MachineDriver sspaceattack_machine_driver =
 	0,
 	0,
 	0,
-	0,
 	0
 };
 
@@ -517,6 +518,7 @@ struct GameDriver sspaceat_driver =
 	sspaceat_rom,
 	0, 0,
 	0,
+	0,	/* sound_prom */
 
 	0, sspaceat_input_ports, 0, 0, 0,
 
@@ -541,25 +543,28 @@ ROM_START( invinco_rom )
 	ROM_LOAD( "315a.u22", 0x5400, 0x0400, 0x0c6fffb1 )
 	ROM_LOAD( "316a.u21", 0x5800, 0x0400, 0x9b5dfb21 )
 	ROM_LOAD( "317a.u20", 0x5c00, 0x0400, 0x6b868418 )
+	ROM_LOAD( "318a.uxx", 0x6000, 0x0400, 0x8c7227ea )
 ROM_END
 
 INPUT_PORTS_START( invinco_input_ports )
+	PORT_START /* Dip Switch */
+	PORT_DIPNAME( 0x03, 0x00, "Lives", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "3" )
+	PORT_DIPSETTING(    0x01, "4" )
+	PORT_DIPSETTING(    0x02, "5" )
+	PORT_DIPSETTING(    0x03, "6" )
+	PORT_BIT( 0xFc, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
-		PORT_START	/* Dip Switch */
-        PORT_BIT( 0xFF, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_START /* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT )
 
-        PORT_START /* IN1 */
-        PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1 )
-        PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START2 )
-        PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON1 )
-        PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT )
-        PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT )
-
-        PORT_START
-        PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_VBLANK )
-		PORT_BITX(0x80, IP_ACTIVE_LOW, IPT_COIN1 | IPF_IMPULSE,
-				"Coin", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 18 )
-
+	PORT_START
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_VBLANK )
+	PORT_BITX(0x80, IP_ACTIVE_LOW, IPT_COIN1 | IPF_IMPULSE, "Coin", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 18 )
 INPUT_PORTS_END
 
 static unsigned char invinco_color_prom[] =
@@ -582,6 +587,7 @@ struct GameDriver invinco_driver =
 	invinco_rom,
 	0, 0,
 	0,
+	0,	/* sound_prom */
 
 	0, invinco_input_ports, 0, 0, 0,
 

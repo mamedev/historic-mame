@@ -1,11 +1,69 @@
 #include "driver.h"
-#include "pokey.h"
+#include "sndhrdw\generic.h"
+#include "I8039.h"
+#include "dac.h"
+
+/* A nice macro which saves us a lot of typing */
+#define M_OSD_PLAY_SAMPLE(channel, soundnum, loop) { \
+	if (Machine->samples->sample[soundnum] != 0) \
+		osd_play_sample(channel, \
+			Machine->samples->sample[soundnum]->data, \
+			Machine->samples->sample[soundnum]->length, \
+			Machine->samples->sample[soundnum]->smpfreq, \
+			Machine->samples->sample[soundnum]->volume,loop); }
+
+
+static unsigned char dkongDAC;
+unsigned char *dkong_dac = &dkongDAC;
+
+static struct DACinterface DAinterface =
+{
+	1,
+	441000,
+	{255,255 },
+	{  1,  1 }
+};
+
+
+
+void dkong_sh_w(int offset,int data)
+{
+	if (data)
+        {
+	        cpu_cause_interrupt(1,I8039_EXT_INT);
+        }
+}
+
+
+void dkong_digital_out_w(int offset,int data)
+{
+	*dkong_dac = data;
+	DAC_data_w(0,data);
+}
+
+
+
+int dkong_sh_start(void)
+{
+	if( DAC_sh_start(&DAinterface) ) return 1;
+	return 0;
+}
+
+void dkong_sh_stop(void)
+{
+	DAC_sh_stop();
+}
+
+void dkong_sh_update(void)
+{
+	DAC_sh_update();
+}
 
 
 
 void dkong_sh1_w(int offset,int data)
 {
-	static state[8];
+	static int state[8];
 
 
 	if (Machine->samples == 0) return;
@@ -13,121 +71,55 @@ void dkong_sh1_w(int offset,int data)
 	if (state[offset] != data)
 	{
 		if ((Machine->samples->sample[offset] != 0) && (data))
-			osd_play_sample(offset,Machine->samples->sample[offset]->data,
-					Machine->samples->sample[offset]->length,
-                                        Machine->samples->sample[offset]->smpfreq,
-                                        Machine->samples->sample[offset]->volume,0);
+			M_OSD_PLAY_SAMPLE(offset+1,offset,0);
 
 		state[offset] = data;
 	}
 }
 
 
-void dkong_sh3_w(int offset,int data)
+void dkongjr_sh_death_w(int offset,int data)
 {
-	static last_dead;
+	static int death = 0;
 
 
 	if (Machine->samples == 0) return;
 
-	if (last_dead != data)
+	if (death != data)
 	{
-		last_dead = data;
-		if (data)
-		{
-			if (Machine->samples->sample[24])
-				osd_play_sample(0,Machine->samples->sample[24]->data,
-						Machine->samples->sample[24]->length,
-                                                Machine->samples->sample[24]->smpfreq,
-                                                Machine->samples->sample[24]->volume,0);
-			osd_stop_sample(1);		  /* kill other samples */
-			osd_stop_sample(2);
-			osd_stop_sample(3);
-			osd_stop_sample(4);
-			osd_stop_sample(5);
-		}
+		if ((Machine->samples->sample[0] != 0) && (data))
+			M_OSD_PLAY_SAMPLE(8,0,0);
+
+		death = data;
 	}
 }
-
-
-void dkong_sh2_w(int offset,int data)
+void dkongjr_sh_drop_w(int offset,int data)
 {
-	static last;
-	static hit = 0;
+	static int drop = 0;
+
 
 	if (Machine->samples == 0) return;
 
-    if (data != 6)
+	if (drop != data)
 	{
-	   hit = 0;
-    }
+		if ((Machine->samples->sample[1] != 0) && (data))
+			M_OSD_PLAY_SAMPLE(8,1,0);
 
-	if (last != data)
-	{
-		last = data;
-
-		switch (data)
-		{
-		   case 6:	  /* mix in hammer hit on different channel */
-		   last = 4;
-		   if (!hit)
-		   {
-		       if (Machine->samples->sample[data+8] != 0)
-			   {
-			   	  osd_play_sample(3,Machine->samples->sample[data+8]->data,
-				     Machine->samples->sample[data+8]->length,
-                                     Machine->samples->sample[data+8]->smpfreq,
-                                     Machine->samples->sample[data+8]->volume,0);
-			   }
-			   hit = 1;
-			}
-			break;
-
-            case 13:
-			last = 11;
-		    if (Machine->samples->sample[data+8] != 0)
-			{
-			   osd_play_sample(3,Machine->samples->sample[data+8]->data,
-				  Machine->samples->sample[data+8]->length,
-                                  Machine->samples->sample[data+8]->smpfreq,
-                                  Machine->samples->sample[data+8]->volume,0);
-			}
-			break;
-
-			case 8:		  /* these samples repeat */
-			case 9:
-			case 10:
-			case 11:
-			case 4:
-			case 3:
-			if (Machine->samples->sample[data+8] != 0)
-			{
-				osd_play_sample(4,Machine->samples->sample[data+8]->data,
-						Machine->samples->sample[data+8]->length,
-                                                Machine->samples->sample[data+8]->smpfreq,
-                                                Machine->samples->sample[data+8]->volume,1);
-			}
-			break;
-
-			default:		  /* the rest do not */
-			if (data != 0)
-			{
-				if (Machine->samples->sample[data+8] != 0)
-				{
-					osd_play_sample(4,Machine->samples->sample[data+8]->data,
-							Machine->samples->sample[data+8]->length,
-                                                        Machine->samples->sample[data+8]->smpfreq,
-                                                        Machine->samples->sample[data+8]->volume,0);
-
-				}
-			}
-			break;
-		}
+		drop = data;
 	}
 }
-
-
-
-void dkong_sh_update(void)
+void dkongjr_sh_roar_w(int offset,int data)
 {
+	static int roar = 0;
+
+
+	if (Machine->samples == 0) return;
+
+	if (roar != data)
+	{
+		if ((Machine->samples->sample[2] != 0) && (data))
+			M_OSD_PLAY_SAMPLE(8,2,0);
+
+		roar = data;
+	}
 }

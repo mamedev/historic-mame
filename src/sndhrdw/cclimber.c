@@ -1,4 +1,5 @@
 #include "driver.h"
+#include "sndhrdw/generic.h"
 #include "sndhrdw/8910intf.h"
 
 
@@ -22,8 +23,7 @@ static void cclimber_portA_w(int offset,int data)
 static struct AY8910interface interface =
 {
 	1,	/* 1 chip */
-	1,	/* 1 update per video frame (low quality) */
-	1536000000,	/* 1.536 MHZ */
+	1536000,	/* 1.536 MHZ */
 	{ 255 },
 	{ 0 },
 	{ 0 },
@@ -75,7 +75,7 @@ void cclimber_sample_trigger_w(int offset,int data)
 	int start,end;
 
 
-	if (data == 0 || play_sound == 0)
+	if (data == 0 || Machine->sample_rate == 0)
 		return;
 
 	start = 64 * porta;
@@ -87,3 +87,34 @@ void cclimber_sample_trigger_w(int offset,int data)
 
 	osd_play_sample(1,samples + start,end - start,sample_freq,sample_volume,0);
 }
+
+
+
+
+static struct AY8910interface swimmer_interface =
+{
+	2,	/* 2 chips */
+	1832727,	/* 1.832727040 MHZ?????? */
+	{ 255, 255 },
+	{ 0 },
+	{ 0 },
+	{ 0 },
+	{ 0 }
+};
+
+
+int swimmer_sh_start(void)
+{
+	pending_commands = 0;
+
+	return AY8910_sh_start(&swimmer_interface);
+}
+
+
+
+void swimmer_sh_soundlatch_w(int offset,int data)
+{
+	soundlatch_w(0,data);
+	cpu_cause_interrupt(1,0xff);
+}
+

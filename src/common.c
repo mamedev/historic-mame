@@ -11,10 +11,19 @@
 /* LBO */
 #ifdef LSB_FIRST
 #define intelLong(x) (x)
+#define BL0 0
+#define BL1 1
+#define BL2 2
+#define BL3 3
 #else
 #define intelLong(x) (((x << 24) | (((unsigned long) x) >> 24) | (( x & 0x0000ff00) << 8) | (( x & 0x00ff0000) >> 8)))
+#define BL0 3
+#define BL1 2
+#define BL2 1
+#define BL3 0
 #endif
 
+#define TA
 
 void showdisclaimer(void)   /* MAURY_BEGIN: dichiarazione */
 {
@@ -99,7 +108,11 @@ int readroms(const struct RomModule *rommodule,const char *basename)
 			name = romp->name;
 			if ((f = osd_fopen(basename,name,OSD_FILETYPE_ROM,0)) == 0)
 			{
+				#ifdef macintosh	/* JB 971005 */
+					printf ("Unable to open ROM %s\n", name);
+				#else
 				fprintf(stderr, "Unable to open ROM %s\n",name);
+				#endif
 				goto printromlist;
 			}
 
@@ -112,7 +125,7 @@ int readroms(const struct RomModule *rommodule,const char *basename)
 /* ASG 970926 -- begin */
 				unsigned char *c;
 				unsigned int i;
-				unsigned int length = romp->length & ~0x80000000;
+				int length = romp->length & ~0x80000000;
 
 
 				/* ROM_RELOAD */
@@ -197,14 +210,20 @@ int readroms(const struct RomModule *rommodule,const char *basename)
 			} while (romp->length && (romp->name == 0 || romp->name == (char *)-1));
 
 			sum = ((sum & 0xffff) << 16) | (xor & 0xffff);
-			if (expchecksum != -1 && expchecksum != sum)
+			if (expchecksum != sum)
 			{
+				#ifdef macintosh	/* JB 971005 */
+					printf("The checksum of ROM '%-12s' does not match the one MacMAME was tested with.\r"
+					"WARNING: the game might not run correctly.\r"
+					"Expected:%08x  Found:%08x\r",name,expchecksum,sum);
+				#else
 				if (checksumwarning == 0)
 					printf("The checksum of some ROMs does not match that of the ones MAME was tested with.\n"
 							"WARNING: the game might not run correctly.\n"
 							"Name         Expected  Found\n");
 				checksumwarning++;
 				printf("%-12s %08x %08x\n",name,expchecksum,sum);
+				#endif
 			}
 
 			osd_fclose(f);
@@ -213,22 +232,26 @@ int readroms(const struct RomModule *rommodule,const char *basename)
 		region++;
 	}
 
+	#ifndef macintosh	/* JB 971005 */
 	if (checksumwarning > 0)
 	{
 		printf("Press return to continue\n");
 		getchar();
 	}
+	#endif
 
 	return 0;
 
 
 printromlist:
+	#ifndef macintosh	/* JB 971005 */
 	printf("\n");                         /* MAURY_BEGIN: dichiarazione */
 	showdisclaimer();
 	printf("Press return to continue\n"); /* MAURY_END: dichiarazione */
 	getchar();
 
 	printromlist(rommodule,basename);
+	#endif
 
 
 getout:
@@ -288,14 +311,20 @@ void printromlist(const struct RomModule *romp,const char *basename)
 
 ***************************************************************************/
 struct GameSamples *readsamples(const char **samplenames,const char *basename)
+/* V.V - avoids samples duplication */
+/* if first samplename is *dir, looks for samples into "basename" first, then "dir" */
 {
 	int i;
 	struct GameSamples *samples;
+	int skipfirst = 0;
 
 	if (samplenames == 0 || samplenames[0] == 0) return 0;
 
+	if (samplenames[0][0] == '*')
+		skipfirst = 1;
+
 	i = 0;
-	while (samplenames[i] != 0) i++;
+	while (samplenames[i+skipfirst] != 0) i++;
 
 	if ((samples = malloc(sizeof(struct GameSamples) + (i-1)*sizeof(struct GameSample))) == 0)
 		return 0;
@@ -310,9 +339,12 @@ struct GameSamples *readsamples(const char **samplenames,const char *basename)
 		char buf[100];
 
 
-		if (samplenames[i][0])
+		if (samplenames[i+skipfirst][0])
 		{
-			if ((f = osd_fopen(basename,samplenames[i],OSD_FILETYPE_SAMPLE,0)) != 0)
+			if ((f = osd_fopen(basename,samplenames[i+skipfirst],OSD_FILETYPE_SAMPLE,0)) == 0)
+				if (skipfirst)
+					f = osd_fopen(samplenames[0]+1,samplenames[i+skipfirst],OSD_FILETYPE_SAMPLE,0);
+			if (f != 0)
 			{
 				if (osd_fseek(f,0,SEEK_END) == 0)
 				{
@@ -562,12 +594,13 @@ void drawgfx_core(struct osd_bitmap *dest,const struct GfxElement *gfx,
 		unsigned int code,unsigned int color,int flipx,int flipy,int sx,int sy,
 		const struct rectangle *clip,int transparency,int transparent_color,int dirty)
 {
-	int ox,oy,ex,ey,x,y,start,dy;
+	int ox,oy,ex,ey,y,start,dy;
 	const unsigned char *sd;
-	unsigned char *bm;
+	unsigned char *bm,*bme;
 	int col;
+	int *sd4;
+	int trans4,col4;
 	struct rectangle myclip;
-
 
 	if (!gfx) return;
 
@@ -676,22 +709,23 @@ void drawgfx_core(struct osd_bitmap *dest,const struct GfxElement *gfx,
 				{
 					for (y = sy;y <= ey;y++)
 					{
-						bm = dest->line[y] + sx;
+						bm  = dest->line[y];
+						bme = bm + ex;
 						sd = gfx->gfxdata->line[start] + gfx->width-1 - (sx-ox);
-						for( x = sx ; x <= ex-7 ; x+=8 )
+						for( bm += sx ; bm <= bme-7 ; bm+=8 )
 						{
-							*(bm++) = paldata[*(sd--)];
-							*(bm++) = paldata[*(sd--)];
-							*(bm++) = paldata[*(sd--)];
-							*(bm++) = paldata[*(sd--)];
-							*(bm++) = paldata[*(sd--)];
-							*(bm++) = paldata[*(sd--)];
-							*(bm++) = paldata[*(sd--)];
-							*(bm++) = paldata[*(sd--)];
-							/* bm+=7; */
+							sd-=8;
+							bm[0] = paldata[sd[8]];
+							bm[1] = paldata[sd[7]];
+							bm[2] = paldata[sd[6]];
+							bm[3] = paldata[sd[5]];
+							bm[4] = paldata[sd[4]];
+							bm[5] = paldata[sd[3]];
+							bm[6] = paldata[sd[2]];
+							bm[7] = paldata[sd[1]];
 						}
-						for( ; x <= ex ; x++)
-							*(bm++) = paldata[*(sd--)];
+						for( ; bm <= bme ; bm++ )
+							*bm = paldata[*(sd--)];
 						start+=dy;
 					}
 				}
@@ -699,95 +733,86 @@ void drawgfx_core(struct osd_bitmap *dest,const struct GfxElement *gfx,
 				{
 					for (y = sy;y <= ey;y++)
 					{
-						bm = dest->line[y] + sx;
+						bm  = dest->line[y];
+						bme = bm + ex;
 						sd = gfx->gfxdata->line[start] + (sx-ox);
-						for( x = sx ; x <= ex-7 ; x+=8 )
+						for( bm += sx ; bm <= bme-7 ; bm+=8 )
 						{
-							*(bm++) = paldata[*(sd++)];
-							*(bm++) = paldata[*(sd++)];
-							*(bm++) = paldata[*(sd++)];
-							*(bm++) = paldata[*(sd++)];
-							*(bm++) = paldata[*(sd++)];
-							*(bm++) = paldata[*(sd++)];
-							*(bm++) = paldata[*(sd++)];
-							*(bm++) = paldata[*(sd++)];
+							bm[0] = paldata[sd[0]];
+							bm[1] = paldata[sd[1]];
+							bm[2] = paldata[sd[2]];
+							bm[3] = paldata[sd[3]];
+							bm[4] = paldata[sd[4]];
+							bm[5] = paldata[sd[5]];
+							bm[6] = paldata[sd[6]];
+							bm[7] = paldata[sd[7]];
+							sd+=8;
 						}
-						for( ; x <= ex ; x++)
-							*(bm++) = paldata[*(sd++)];
+						for( ; bm <= bme ; bm++ )
+							*bm = paldata[*(sd++)];
 						start+=dy;
 					}
 				}
 				break;
 
 			case TRANSPARENCY_PEN:
+				trans4 = transparent_color * 0x01010101;
 				if (flipx)	/* X flip */
 				{
-					int *sd4;
-					int trans4,col4;
-
-					trans4 = transparent_color * 0x01010101;
 					for (y = sy;y <= ey;y++)
 					{
-						bm = dest->line[y] + sx;
+						bm  = dest->line[y];
+						bme = bm + ex;
 						sd4 = (int *)(gfx->gfxdata->line[start] + gfx->width -1 - (sx-ox) -3);
-						for (x = sx;x <= ex-3;x+=4)
+						for( bm += sx ; bm <= bme-3 ; bm+=4 )
 						{
 							if ((col4=*sd4) != trans4){
-								col4 = intelLong (col4); /* LBO */
 								col = (col4>>24)&0xff;
-								if (col != transparent_color) bm[0] = paldata[col];
+								if (col != transparent_color) bm[BL0] = paldata[col];
 								col = (col4>>16)&0xff;
-								if (col != transparent_color) bm[1] = paldata[col];
+								if (col != transparent_color) bm[BL1] = paldata[col];
 								col = (col4>>8)&0xff;
-								if (col != transparent_color) bm[2] = paldata[col];
+								if (col != transparent_color) bm[BL2] = paldata[col];
 								col = col4&0xff;
-								if (col != transparent_color) bm[3] = paldata[col];
+								if (col != transparent_color) bm[BL3] = paldata[col];
 							}
-							bm+=4;
 							sd4--;
 						}
 						sd = (unsigned char *)sd4+3;
-						for (;x <= ex;x++)
+						for( ; bm <= bme ; bm++ )
 						{
 							col = *(sd--);
 							if (col != transparent_color) *bm = paldata[col];
-							bm++;
 						}
 						start+=dy;
 					}
 				}
 				else		/* normal */
 				{
-					int *sd4;
-					int trans4,col4;
-
-					trans4 = transparent_color * 0x01010101;
 					for (y = sy;y <= ey;y++)
 					{
-						bm = dest->line[y] + sx;
+						bm  = dest->line[y];
+						bme = bm + ex;
 						sd4 = (int *)(gfx->gfxdata->line[start] + (sx-ox));
-						for (x = sx;x <= ex-3;x+=4)
+						for( bm += sx ; bm <= bme-3 ; bm+=4 )
 						{
 							if ((col4=*sd4) != trans4){
-								col4 = intelLong (col4); /* LBO */
 								col = col4&0xff;
-								if (col != transparent_color) bm[0] = paldata[col];
+								if (col != transparent_color) bm[BL0] = paldata[col];
 								col = (col4>>8)&0xff;
-								if (col != transparent_color) bm[1] = paldata[col];
+								if (col != transparent_color) bm[BL1] = paldata[col];
 								col = (col4>>16)&0xff;
-								if (col != transparent_color) bm[2] = paldata[col];
+								if (col != transparent_color) bm[BL2] = paldata[col];
 								col = (col4>>24)&0xff;
-								if (col != transparent_color) bm[3] = paldata[col];
+								if (col != transparent_color) bm[BL3] = paldata[col];
 							}
-							bm+=4;
 							sd4++;
 						}
 						sd = (unsigned char *)sd4;
-						for (;x <= ex;x++)
+						for( ; bm <= bme ; bm++ )
 						{
 							col = *(sd++);
 							if (col != transparent_color) *bm = paldata[col];
-							bm++;
 						}
 						start+=dy;
 					}
@@ -799,13 +824,13 @@ void drawgfx_core(struct osd_bitmap *dest,const struct GfxElement *gfx,
 				{
 					for (y = sy;y <= ey;y++)
 					{
-						bm = dest->line[y] + sx;
+						bm  = dest->line[y];
+						bme = bm + ex;
 						sd = gfx->gfxdata->line[start] + gfx->width-1 - (sx-ox);
-						for (x = sx;x <= ex;x++)
+						for( bm += sx ; bm <= bme ; bm++ )
 						{
 							col = paldata[*(sd--)];
 							if (col != transparent_color) *bm = col;
-							bm++;
 						}
 						start+=dy;
 					}
@@ -814,13 +839,13 @@ void drawgfx_core(struct osd_bitmap *dest,const struct GfxElement *gfx,
 				{
 					for (y = sy;y <= ey;y++)
 					{
-						bm = dest->line[y] + sx;
+						bm  = dest->line[y];
+						bme = bm + ex;
 						sd = gfx->gfxdata->line[start] + (sx-ox);
-						for (x = sx;x <= ex;x++)
+						for( bm += sx ; bm <= bme ; bm++ )
 						{
 							col = paldata[*(sd++)];
 							if (col != transparent_color) *bm = col;
-							bm++;
 						}
 						start+=dy;
 					}
@@ -832,13 +857,13 @@ void drawgfx_core(struct osd_bitmap *dest,const struct GfxElement *gfx,
 				{
 					for (y = sy;y <= ey;y++)
 					{
-						bm = dest->line[y] + sx;
+						bm  = dest->line[y];
+						bme = bm + ex;
 						sd = gfx->gfxdata->line[start] + gfx->width-1 - (sx-ox);
-						for (x = sx;x <= ex;x++)
+						for( bm += sx ; bm <= bme ; bm++ )
 						{
 							if (*bm == transparent_color)
 								*bm = paldata[*sd];
-							bm++;
 							sd--;
 						}
 						start+=dy;
@@ -848,13 +873,13 @@ void drawgfx_core(struct osd_bitmap *dest,const struct GfxElement *gfx,
 				{
 					for (y = sy;y <= ey;y++)
 					{
-						bm = dest->line[y] + sx;
+						bm  = dest->line[y];
+						bme = bm + ex;
 						sd = gfx->gfxdata->line[start] + (sx-ox);
-						for (x = sx;x <= ex;x++)
+						for( bm += sx ; bm <= bme ; bm++ )
 						{
 							if (*bm == transparent_color)
 								*bm = paldata[*sd];
-							bm++;
 							sd++;
 						}
 						start+=dy;
@@ -872,22 +897,23 @@ void drawgfx_core(struct osd_bitmap *dest,const struct GfxElement *gfx,
 				{
 					for (y = sy;y <= ey;y++)
 					{
-						bm = dest->line[y] + sx;
+						bm  = dest->line[y];
+						bme = bm + ex;
 						sd = gfx->gfxdata->line[start] + gfx->width-1 - (sx-ox);
-						for( x = sx ; x <= ex-7 ; x+=8 )
+						for( bm += sx ; bm <= bme-7 ; bm+=8 )
 						{
-							*(bm++) = *(sd--);
-							*(bm++) = *(sd--);
-							*(bm++) = *(sd--);
-							*(bm++) = *(sd--);
-							*(bm++) = *(sd--);
-							*(bm++) = *(sd--);
-							*(bm++) = *(sd--);
-							*(bm++) = *(sd--);
-							/* bm+=7; */
+							sd-=8;
+							bm[0] = sd[8];
+							bm[1] = sd[7];
+							bm[2] = sd[6];
+							bm[3] = sd[5];
+							bm[4] = sd[4];
+							bm[5] = sd[3];
+							bm[6] = sd[2];
+							bm[7] = sd[1];
 						}
-						for( ; x <= ex ; x++)
-							*(bm++) = *(sd--);
+						for( ; bm <= bme ; bm++ )
+							*bm = *(sd--);
 						start+=dy;
 					}
 				}
@@ -905,83 +931,79 @@ void drawgfx_core(struct osd_bitmap *dest,const struct GfxElement *gfx,
 
 			case TRANSPARENCY_PEN:
 			case TRANSPARENCY_COLOR:
+				trans4 = transparent_color * 0x01010101;
+
 				if (flipx)	/* X flip */
 				{
-					int *sd4;
-					int trans4,col4;
-
-					trans4 = transparent_color * 0x01010101;
-
 					for (y = sy;y <= ey;y++)
 					{
-						bm = dest->line[y] + sx;
+						bm  = dest->line[y];
+						bme = bm + ex;
 						sd4 = (int *)(gfx->gfxdata->line[start] + gfx->width-1 - (sx-ox) - 3);
-						for (x = sx;x <= ex-3;x+=4)
+						for( bm += sx ; bm <= bme-3 ; bm+=4 )
 						{
 							if( (col4=*sd4) != trans4 )
 							{
-								col4 = intelLong (col4); /* LBO */
-								col = col4>>24;
-								if (col != transparent_color) bm[0] = col;
+								col = (col4>>24)&0xff;
+								if (col != transparent_color) bm[BL0] = col;
 								col = (col4>>16)&0xff;
-								if (col != transparent_color) bm[1] = col;
+								if (col != transparent_color) bm[BL1] = col;
 								col = (col4>>8)&0xff;
-								if (col != transparent_color) bm[2] = col;
+								if (col != transparent_color) bm[BL2] = col;
 								col = col4&0xff;
-								if (col != transparent_color) bm[3] = col;
+								if (col != transparent_color) bm[BL3] = col;
 							}
-							bm+=4;
 							sd4--;
 						}
 						sd = (unsigned char *)sd4+3;
-						for (;x <= ex;x++)
+						for( ; bm <= bme ; bm++ )
 						{
 							col = *(sd--);
 							if (col != transparent_color) *bm = col;
-							bm++;
 						}
 						start+=dy;
 					}
 				}
 				else	/* normal */
 				{
-					int *sd4;
-					int trans4,col4;
 					int xod4;
-
-					trans4 = transparent_color * 0x01010101;
 
 					for (y = sy;y <= ey;y++)
 					{
-						bm = dest->line[y] + sx;
+						bm = dest->line[y];
+						bme = bm + ex;
 						sd4 = (int *)(gfx->gfxdata->line[start] + (sx-ox));
-						for (x = sx;x <= ex-3;x+=4)
+						bm += sx;
+						while( bm <= bme-3 )
 						{
-							if( (col4=*sd4) != trans4 )
+							/* bypass loop */
+							while( bm <= bme-3 && *sd4 == trans4 )
+							{ sd4++; bm+=4; }
+							/* drawing loop */
+							while( bm <= bme-3 && (col4=*sd4) != trans4 )
 							{
 								xod4 = col4^trans4;
 								if( (xod4&0x000000ff) && (xod4&0x0000ff00) &&
 								    (xod4&0x00ff0000) && (xod4&0xff000000) )
-											*(int *)bm = col4;
+								{
+									*(int *)bm = col4;
+								}
 								else
 								{
-									col4 = intelLong (col4); /* LBO */
-									xod4 = intelLong (xod4); /* LBO */
-									if(xod4&0x000000ff) bm[0] = col4&0xff;
-									if(xod4&0x0000ff00) bm[1] = (col4>>8)&0xff;
-									if(xod4&0x00ff0000) bm[2] = (col4>>16)&0xff;
-									if(xod4&0xff000000) bm[3] = (col4>>24);
+									if(xod4&0x000000ff) bm[BL0] = col4;
+									if(xod4&0x0000ff00) bm[BL1] = col4>>8;
+									if(xod4&0x00ff0000) bm[BL2] = col4>>16;
+									if(xod4&0xff000000) bm[BL3] = col4>>24;
 								}
+								sd4++;
+								bm+=4;
 							}
-							bm+=4;
-							sd4++;
 						}
 						sd = (unsigned char *)sd4;
-						for (;x <= ex;x++)
+						for( ; bm <= bme ; bm++ )
 						{
 							col = *(sd++);
 							if (col != transparent_color) *bm = col;
-							bm++;
 						}
 						start+=dy;
 					}
@@ -993,13 +1015,13 @@ void drawgfx_core(struct osd_bitmap *dest,const struct GfxElement *gfx,
 				{
 					for (y = sy;y <= ey;y++)
 					{
-						bm = dest->line[y] + sx;
+						bm = dest->line[y];
+						bme = bm + ex;
 						sd = gfx->gfxdata->line[start] + gfx->width-1 - (sx-ox);
-						for (x = sx;x <= ex;x++)
+						for( bm = bm+sx ; bm <= bme ; bm++ )
 						{
 							if (*bm == transparent_color)
 								*bm = *sd;
-							bm++;
 							sd--;
 						}
 						start+=dy;
@@ -1009,13 +1031,13 @@ void drawgfx_core(struct osd_bitmap *dest,const struct GfxElement *gfx,
 				{
 					for (y = sy;y <= ey;y++)
 					{
-						bm = dest->line[y] + sx;
+						bm = dest->line[y];
+						bme = bm + ex;
 						sd = gfx->gfxdata->line[start] + (sx-ox);
-						for (x = sx;x <= ex;x++)
+						for( bm = bm+sx ; bm <= bme ; bm++ )
 						{
 							if (*bm == transparent_color)
 								*bm = *sd;
-							bm++;
 							sd++;
 						}
 						start+=dy;
@@ -1026,6 +1048,10 @@ void drawgfx_core(struct osd_bitmap *dest,const struct GfxElement *gfx,
 	}
 }
 
+#ifdef macintosh
+  #include "macdrawgfx.c"
+#endif
+
 /* ASG 971011 - this is the real draw gfx now */
 void drawgfx(struct osd_bitmap *dest,const struct GfxElement *gfx,
 		unsigned int code,unsigned int color,int flipx,int flipy,int sx,int sy,
@@ -1033,8 +1059,6 @@ void drawgfx(struct osd_bitmap *dest,const struct GfxElement *gfx,
 {
 	drawgfx_core(dest,gfx,code,color,flipx,flipy,sx,sy,clip,transparency,transparent_color,1);
 }
-
-
 
 /***************************************************************************
 

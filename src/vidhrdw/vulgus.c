@@ -14,6 +14,7 @@
 unsigned char *vulgus_bgvideoram,*vulgus_bgcolorram;
 int vulgus_bgvideoram_size;
 unsigned char *vulgus_scrolllow,*vulgus_scrollhigh;
+unsigned char *vulgus_palette_bank;
 static unsigned char *dirtybuffer2;
 static struct osd_bitmap *tmpbitmap2;
 
@@ -23,51 +24,60 @@ static struct osd_bitmap *tmpbitmap2;
 
   Convert the color PROMs into a more useable format.
 
-  This function comes from 1942. It is yet unknown how Vulgus works.
-
 ***************************************************************************/
 void vulgus_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom)
 {
 	int i;
+	#define TOTAL_COLORS(gfxn) (Machine->gfx[gfxn]->total_colors * Machine->gfx[gfxn]->color_granularity)
+	#define COLOR(gfxn,offs) (colortable[Machine->drv->gfxdecodeinfo[gfxn].color_codes_start + offs])
 
 
-	for (i = 0;i < 256;i++)
+	for (i = 0;i < Machine->drv->total_colors;i++)
 	{
 		int bit0,bit1,bit2,bit3;
 
 
-		bit0 = (color_prom[i] >> 0) & 0x01;
-		bit1 = (color_prom[i] >> 1) & 0x01;
-		bit2 = (color_prom[i] >> 2) & 0x01;
-		bit3 = (color_prom[i] >> 3) & 0x01;
-		palette[3*i] = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
-		bit0 = (color_prom[i+256] >> 0) & 0x01;
-		bit1 = (color_prom[i+256] >> 1) & 0x01;
-		bit2 = (color_prom[i+256] >> 2) & 0x01;
-		bit3 = (color_prom[i+256] >> 3) & 0x01;
-		palette[3*i + 1] = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
-		bit0 = (color_prom[i+256*2] >> 0) & 0x01;
-		bit1 = (color_prom[i+256*2] >> 1) & 0x01;
-		bit2 = (color_prom[i+256*2] >> 2) & 0x01;
-		bit3 = (color_prom[i+256*2] >> 3) & 0x01;
-		palette[3*i + 2] = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
+		bit0 = (color_prom[0] >> 0) & 0x01;
+		bit1 = (color_prom[0] >> 1) & 0x01;
+		bit2 = (color_prom[0] >> 2) & 0x01;
+		bit3 = (color_prom[0] >> 3) & 0x01;
+		*(palette++) = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
+		bit0 = (color_prom[Machine->drv->total_colors] >> 0) & 0x01;
+		bit1 = (color_prom[Machine->drv->total_colors] >> 1) & 0x01;
+		bit2 = (color_prom[Machine->drv->total_colors] >> 2) & 0x01;
+		bit3 = (color_prom[Machine->drv->total_colors] >> 3) & 0x01;
+		*(palette++) = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
+		bit0 = (color_prom[2*Machine->drv->total_colors] >> 0) & 0x01;
+		bit1 = (color_prom[2*Machine->drv->total_colors] >> 1) & 0x01;
+		bit2 = (color_prom[2*Machine->drv->total_colors] >> 2) & 0x01;
+		bit3 = (color_prom[2*Machine->drv->total_colors] >> 3) & 0x01;
+		*(palette++) = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
+
+		color_prom++;
 	}
 
-	/* characters use colors 128-143 */
-	for (i = 0;i < 64*4;i++)
-		colortable[i] = color_prom[i + 256*3] + 128;
+	color_prom += 2*Machine->drv->total_colors;
+	/* color_prom now points to the beginning of the lookup table */
 
-	/* sprites use colors 64-79 */
-	for (i = 64*4;i < 64*4+16*16;i++)
-		colortable[i] = color_prom[i + 256*3] + 64;
 
-	/* background tiles use colors 0-63 in four banks */
-	for (i = 64*4+16*16;i < 64*4+16*16+32*8;i++)
+	/* characters use colors 32-47 (?) */
+	for (i = 0;i < TOTAL_COLORS(0);i++)
+		COLOR(0,i) = *(color_prom++) + 32;
+
+	/* sprites use colors 16-31 */
+	for (i = 0;i < TOTAL_COLORS(2);i++)
 	{
-		colortable[i] = color_prom[i + 256*3];
-		colortable[i+32*8] = color_prom[i + 256*3] + 16;
-		colortable[i+2*32*8] = color_prom[i + 256*3] + 32;
-		colortable[i+3*32*8] = color_prom[i + 256*3] + 48;
+		COLOR(2,i) = *(color_prom++) + 16;
+	}
+
+	/* background tiles use colors 0-15, 64-79, 128-143, 192-207 in four banks */
+	for (i = 0;i < TOTAL_COLORS(1)/4;i++)
+	{
+		COLOR(1,i) = *color_prom;
+		COLOR(1,i+32*8) = *color_prom + 64;
+		COLOR(1,i+2*32*8) = *color_prom + 128;
+		COLOR(1,i+3*32*8) = *color_prom + 192;
+		color_prom++;
 	}
 }
 
@@ -141,6 +151,17 @@ void vulgus_bgcolorram_w(int offset,int data)
 
 
 
+void vulgus_palette_bank_w(int offset,int data)
+{
+	if (*vulgus_palette_bank != data)
+	{
+		memset(dirtybuffer2,1,vulgus_bgvideoram_size);
+		*vulgus_palette_bank = data;
+	}
+}
+
+
+
 /***************************************************************************
 
   Draw the game screen in the given osd_bitmap.
@@ -151,7 +172,11 @@ void vulgus_bgcolorram_w(int offset,int data)
 void vulgus_vh_screenrefresh(struct osd_bitmap *bitmap)
 {
 	int offs;
+	int scrollx,scrolly;
 
+
+	scrollx = -(vulgus_scrolllow[0] + 256 * vulgus_scrollhigh[0]);
+	scrolly = vulgus_scrolllow[1] + 256 * vulgus_scrollhigh[1] - 256;
 
 	for (offs = vulgus_bgvideoram_size - 1;offs >= 0;offs--)
 	{
@@ -160,43 +185,51 @@ void vulgus_vh_screenrefresh(struct osd_bitmap *bitmap)
 
 		if (dirtybuffer2[offs])
 		{
-			dirtybuffer2[offs] = 0;
+			int minx,maxx,miny,maxy;
 
-			sx = offs % 32;
-			sy = 31 - offs / 32;
 
-			drawgfx(tmpbitmap2,Machine->gfx[(vulgus_bgcolorram[offs] & 0x80) ? 2 : 1],
-					vulgus_bgvideoram[offs],
-					vulgus_bgcolorram[offs] & 0x1f,
-					vulgus_bgcolorram[offs] & 0x40,vulgus_bgcolorram[offs] & 0x20,
-					16 * sx,16 * sy,
-					0,TRANSPARENCY_NONE,0);
+			sx = 16 * (offs % 32);
+			sy = 16 * (31 - offs / 32);
+
+			/* between level Vulgus changes the palette bank every frame. Redrawing */
+			/* the whole background every time would slow the game to a crawl, so here */
+			/* we check and redraw only the visible tiles */
+			minx = (sx + scrollx) & 0x1ff;
+			maxx = (sx + 15 + scrollx) & 0x1ff;
+			if (minx > maxx) minx = maxx - 15;
+			miny = (sy + scrolly) & 0x1ff;
+			maxy = (sy + 15 + scrolly) & 0x1ff;
+			if (miny > maxy) miny = maxy - 15;
+
+			if (minx + 15 >= Machine->drv->visible_area.min_x &&
+					maxx - 15 <= Machine->drv->visible_area.max_x &&
+					miny + 15 >= Machine->drv->visible_area.min_y &&
+					maxy - 15 <= Machine->drv->visible_area.max_y)
+			{
+				dirtybuffer2[offs] = 0;
+
+				drawgfx(tmpbitmap2,Machine->gfx[1],
+						vulgus_bgvideoram[offs] + 2 * (vulgus_bgcolorram[offs] & 0x80),
+						(vulgus_bgcolorram[offs] & 0x1f) + 32 * *vulgus_palette_bank,
+						vulgus_bgcolorram[offs] & 0x40,vulgus_bgcolorram[offs] & 0x20,
+						sx,sy,
+						0,TRANSPARENCY_NONE,0);
+			}
 		}
 	}
 
 
 	/* copy the background graphics */
-	{
-		int scrollx,scrolly;
-
-
-		scrollx = -(vulgus_scrolllow[0] + 256 * vulgus_scrollhigh[0]);
-		scrolly = vulgus_scrolllow[1] + 256 * vulgus_scrollhigh[1] - 256;
-
-		copyscrollbitmap(bitmap,tmpbitmap2,1,&scrollx,1,&scrolly,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
-	}
+	copyscrollbitmap(bitmap,tmpbitmap2,1,&scrollx,1,&scrolly,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
 
 
 	/* Draw the sprites. */
 	for (offs = spriteram_size - 4;offs >= 0;offs -= 4)
 	{
-		int bank,i,code,col,sx,sy;
+		int code,i,col,sx,sy;
 
 
-		bank = 3;
-		if (spriteram[offs] & 0x80) bank++;
-
-		code = spriteram[offs] & 0x7f;
+		code = spriteram[offs];
 		col = spriteram[offs + 1] & 0x0f;
 		sx = spriteram[offs + 2];
 		sy = 240 - spriteram[offs + 3] + 0x10 * (spriteram[offs + 1] & 0x10);
@@ -206,8 +239,9 @@ void vulgus_vh_screenrefresh(struct osd_bitmap *bitmap)
 
 		do
 		{
-			drawgfx(bitmap,Machine->gfx[bank],
-					code + i,col,
+			drawgfx(bitmap,Machine->gfx[2],
+					code + i,
+					col,
 					0, 0,
 					sx + 16 * i,sy,
 					&Machine->drv->visible_area,TRANSPARENCY_PEN,15);
@@ -230,9 +264,9 @@ void vulgus_vh_screenrefresh(struct osd_bitmap *bitmap)
 
 			drawgfx(bitmap,Machine->gfx[0],
 					videoram[offs] + 2 * (colorram[offs] & 0x80),
-					colorram[offs] & 0x0f,
+					colorram[offs] & 0x3f,
 					0,0,sx,sy,
-					&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+					&Machine->drv->visible_area,TRANSPARENCY_COLOR,47);
 		}
 	}
 }

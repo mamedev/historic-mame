@@ -49,7 +49,7 @@ static struct MemoryReadAddress readmem[] =
 	{ 0x1800, 0x1bff, btime_mirrorvideoram_r },
 	{ 0x1c00, 0x1fff, btime_mirrorcolorram_r },
 	{ 0x2000, 0x2000, input_port_2_r },	/* DSW1 */
-	{ 0x2001, 0x2001, input_port_3_r },	/* DSW2?? */
+	{ 0x2001, 0x2001, input_port_3_r },	/* DSW2 */
 	{ 0x2002, 0x2002, input_port_0_r },	/* IN0 */
 	{ 0x2003, 0x2003, input_port_1_r },	/* IN1 */
 	{ 0x3000, 0x7fff, MRA_ROM },
@@ -76,60 +76,58 @@ static struct MemoryWriteAddress writemem[] =
 
 
 
-static struct InputPort input_ports[] =
-{
-	{	/* IN0 */
-		0xff,
-		{ OSD_KEY_RIGHT, OSD_KEY_LEFT, OSD_KEY_UP, OSD_KEY_DOWN,
-				OSD_KEY_LCONTROL, 0, OSD_KEY_3, OSD_KEY_4 },
-		{ OSD_JOY_RIGHT, OSD_JOY_LEFT, OSD_JOY_UP, OSD_JOY_DOWN,
-				OSD_JOY_FIRE, 0, 0, 0 }
-	},
-	{	/* IN1 */
-		0xff,
-		{ 0, 0, 0, 0, 0, 0, OSD_KEY_1, OSD_KEY_2 },
-		{ 0, 0, 0, 0, 0, 0, 0, 0 }
-	},
-	{	/* DSW1 */
-		0x3f,
-		{ 0, 0, 0, 0, 0, 0, 0, IPB_VBLANK },
-		{ 0, 0, 0, 0, 0, 0, 0, 0 }
-	},
-	{	/* DSW2?? */
-		0xff,
-		{ OSD_KEY_Q, OSD_KEY_W, OSD_KEY_E, OSD_KEY_R, OSD_KEY_T, OSD_KEY_Y, OSD_KEY_U, OSD_KEY_I },
-		{ 0, 0, 0, 0, 0, 0, 0, 0 }
-	},
-	{ -1 }	/* end of table */
-};
+INPUT_PORTS_START( input_ports )
+	PORT_START	/* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_4WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_4WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_4WAY )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN2 )
 
-static struct TrakPort trak_ports[] =
-{
-        { -1 }
-};
+	PORT_START	/* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START2 )
 
+	PORT_START	/* DSW1 */
+	PORT_DIPNAME( 0x03, 0x03, "Coin A", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "2 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x03, "1 Coin/1 Credit" )
+	PORT_DIPSETTING(    0x01, "1 Coin/2 Credits" )
+	PORT_DIPSETTING(    0x02, "1 Coin/3 Credits" )
+	PORT_DIPNAME( 0x0c, 0x0c, "Coin B", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "2 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x0c, "1 Coin/1 Credit" )
+	PORT_DIPSETTING(    0x04, "1 Coin/2 Credits" )
+	PORT_DIPSETTING(    0x08, "1 Coin/3 Credits" )
+	PORT_BIT( 0x30, 0x30, IPT_UNKNOWN )	/* almost certainly unused */
+	PORT_DIPNAME( 0x40, 0x00, "Cabinet", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "Upright" )
+	PORT_DIPSETTING(    0x40, "Cocktail" )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_VBLANK  )
 
-static struct KEYSet keys[] =
-{
-        { 0, 2, "MOVE UP" },
-        { 0, 1, "MOVE LEFT"  },
-        { 0, 0, "MOVE RIGHT" },
-        { 0, 3, "MOVE DOWN" },
-        { 0, 4, "FIRE" },
-        { -1 }
-};
-
-
-static struct DSW dsw[] =
-{
-	{ 3, 0x01, "LIVES", { "5", "3" }, 1 },
-	{ 3, 0x02, "COIN A", { "1 COIN 2 PLAYS", "1 COIN 1 PLAY" }, 1 },
-	{ 3, 0x0c, "COIN B", { "2 COINS 1 PLAY",  "1 COIN 2 PLAYS",  "1 COIN 3 PLAYS", "1 COIN 1 PLAY" }, 1 },
-	{ 3, 0x10, "SW5", { "0", "1" } },
-	{ 3, 0x20, "SW6", { "0", "1" } },
-	{ 3, 0x40, "CABINET", { "UPRIGHT", "COCKTAIL" } },
-	{ -1 }
-};
+	PORT_START	/* DSW2 */
+	PORT_DIPNAME( 0x01, 0x01, "Lives", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x01, "3" )
+	PORT_DIPSETTING(    0x00, "5" )
+	PORT_DIPNAME( 0x06, 0x04, "Bonus Life", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x04, "30000" )
+	PORT_DIPSETTING(    0x02, "50000" )
+	PORT_DIPSETTING(    0x00, "70000"  )
+	PORT_DIPSETTING(    0x06, "None"  )
+	PORT_BIT( 0x78, 0x78, IPT_UNKNOWN )	/* almost certainly unused */
+	PORT_DIPNAME( 0x80, 0x80, "Difficulty", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x80, "Easy" )
+	PORT_DIPSETTING(    0x00, "Hard" )
+INPUT_PORTS_END
 
 
 
@@ -175,15 +173,15 @@ static unsigned char palette[] =
 	0xf8,0x64,0xd8,   /* pink       */
 	0x00,0xd8,0x00,   /* darkgreen  */
 	0x00,0xf8,0xd8,   /* darkcyan   */
-	0xd8,0xd8,0x94,   /* darkyellow */
-	0xd8,0xf8,0xd8,   /* darkwhite  */
-	0xf8,0x94,0x44,   /* orange     */
+	0xd8,0xd8,0x74,   /* darkyellow */
+	0xd8,0x74,0x40,   /* darkwhite  */
+	0xff,0x44,0x00,   /* orange     */
 	0x00,0x00,0xd8,   /* blue   */
 	0xf8,0x00,0x00,   /* red    */
 	0xff,0x00,0xff,   /* purple */
 	0x00,0xf8,0x00,   /* green  */
 	0x00,0xff,0xff,   /* cyan   */
-	0xf8,0xf8,0x00,   /* yellow */
+	0xf8,0xf8,0x20,   /* yellow */
 	0xff,0xff,0xff    /* white  */
 };
 
@@ -195,10 +193,7 @@ enum
 
 static unsigned char colortable[] =
 {
-	black, darkred,   blue,       darkyellow, yellow, green,     darkpurple, orange,
-	black, darkgreen, darkred,    yellow,	   green, darkred,   darkgreen,  yellow,
-	black, yellow,    darkgreen,  red,	         red, green,     orange,     yellow,
-	black, darkwhite, red,        pink,        green, darkcyan,  red,        darkwhite
+	black, darkyellow, blue, darkwhite, red, orange, yellow, white,
 };
 
 
@@ -232,7 +227,6 @@ static struct MachineDriver machine_driver =
 	eggs_vh_screenrefresh,
 
 	/* sound hardware */
-	0,
 	0,
 	eggs_sh_start,
 	AY8910_sh_stop,
@@ -316,8 +310,9 @@ struct GameDriver eggs_driver =
 	eggs_rom,
 	0, 0,
 	0,
+	0,	/* sound_prom */
 
-	input_ports, 0, trak_ports, dsw, keys,
+    0/*TBR*/, input_ports, 0/*TBR*/, 0/*TBR*/, 0/*TBR*/,
 
 	0, palette, colortable,
 	ORIENTATION_DEFAULT,

@@ -13,10 +13,10 @@
 /* cpu state                                                               */
 /***************************************************************************/
 
-static union {          /* eight general registers */
-	WORD w[8];      /* viewed as 16 bits registers */
-	BYTE b[16];     /* or as 8 bit registers */
-} regs;
+static i86basicregs regs;	/* ASG 971222 */
+
+int i86_ICount;
+#define cycle_count i86_ICount
 
 static unsigned ip;     /* instruction pointer register */
 static unsigned sregs[4];       /* four segment registers */
@@ -28,10 +28,10 @@ static int AuxVal, OverVal, SignVal, ZeroVal, CarryVal, ParityVal; /* 0 or non-0
 int int86_pending;   /* The interrupt number of a pending external interrupt pending */
 	/* NMI is number 2. For INTR interrupts, the level is caught on the bus during an INTA cycle */
 
-static unsigned char *Memory;   /* fetching goes directly to memory instead of going through MAME's cpu_readmem() */
+/* ASG 971222 static unsigned char *Memory;   * fetching goes directly to memory instead of going through MAME's cpu_readmem() */
 
 /***************************************************************************/
-static int cycle_count, cycles_per_run;
+/* ASG 971222 static int cycle_count, cycles_per_run; */
 
 #include "instr.h"
 #include "ea.h"
@@ -41,12 +41,13 @@ static UINT8 parity_table[256];
 /***************************************************************************/
 
 
-void I86_Reset(unsigned char *mem,int cycles)
+/* ASG 971222 void I86_Reset(unsigned char *mem,int cycles)*/
+void i86_Reset (void)
 {
     unsigned int i,j,c;
     BREGS reg_name[8]={ AL, CL, DL, BL, AH, CH, DH, BH };
 
-    cycles_per_run=cycles;
+    /* ASG 971222 cycles_per_run=cycles;*/
     int86_pending=0;
     for (i = 0; i < 4; i++) sregs[i] = 0;
     sregs[CS]=0xFFFF;
@@ -59,7 +60,7 @@ void I86_Reset(unsigned char *mem,int cycles)
     for (i=0; i < 8; i++) regs.w[i] = 0;
     ip = 0;
 
-    Memory=mem;
+    /* ASG 971222 Memory=mem;*/
 
     for (i = 0;i < 256; i++)
     {
@@ -2729,6 +2730,7 @@ static void i_retf(void)
 
     POP(ip);
     POP(sregs[CS]);
+	base[CS] = SegBase(CS);
     cycle_count-=14;
 }
 
@@ -3609,6 +3611,7 @@ static void i_f6pre(void)
     case 0x38:  /* IDIV AL, Ew */
 	cycle_count-=106;
 	{
+
 	    INT16 result;
 
 	    result = regs.w[AX];
@@ -3803,11 +3806,13 @@ static void i_cli(void)
     /* Opcode 0xfa */
 
     cycle_count-=2;
+
     IF = 0;
 }
 
 
 static void i_sti(void)
+
 {
     /* Opcode 0xfb */
 
@@ -3898,12 +3903,16 @@ static void i_ffpre(void)
     case 0x10:  /* CALL ew */
 	cycle_count-=9; /* 8 if dest is in memory */
 	tmp = GetRMWord(ModRM);
+	/* Make sure SS is valid and not overridden */
+	base[SS] = SegBase(SS);
 	PUSH(ip);
 	ip = (WORD)tmp;
 	break;
 
-    case 0x18:  /* CALL FAR ea */
+	case 0x18:  /* CALL FAR ea */
 	cycle_count-=11;
+	/* Make sure SS is valid and not overridden */
+	base[SS] = SegBase(SS);
 	PUSH(sregs[CS]);
 	PUSH(ip);
 	ip = GetRMWord(ModRM);
@@ -3923,9 +3932,11 @@ static void i_ffpre(void)
 	base[CS] = SegBase(CS);
 	break;
 
-    case 0x30:  /* PUSH ea */
+	case 0x30:  /* PUSH ea */
 	cycle_count-=3;
 	tmp = GetRMWord(ModRM);
+	/* Make sure SS is valid and not overridden */
+	base[SS] = SegBase(SS);
 	PUSH(tmp);
 	break;
     }
@@ -3940,17 +3951,69 @@ static void i_invalid(void)
 }
 
 
-
-void I86_Execute(void)
+/* ASG 971222 -- added these interface functions */
+void i86_SetRegs(i86_Regs *Regs)
 {
-    if (int86_pending) external_int();
+	regs = Regs->regs;
+	ip = Regs->ip;
+	ExpandFlags(Regs->flags);
+	sregs[CS] = Regs->sregs[CS];
+	sregs[DS] = Regs->sregs[DS];
+	sregs[ES] = Regs->sregs[ES];
+	sregs[SS] = Regs->sregs[SS];
+	int86_pending = Regs->pending_interrupts;
 
-    cycle_count=cycles_per_run;
+	base[CS] = SegBase(CS);
+	base[DS] = SegBase(DS);
+	base[ES] = SegBase(ES);
+	base[SS] = SegBase(SS);
+}
+
+
+void i86_GetRegs(i86_Regs *Regs)
+{
+	Regs->regs = regs;
+	Regs->ip = ip;
+	Regs->flags = CompressFlags();
+	Regs->sregs[CS] = sregs[CS];
+	Regs->sregs[DS] = sregs[DS];
+	Regs->sregs[ES] = sregs[ES];
+	Regs->sregs[SS] = sregs[SS];
+	Regs->pending_interrupts = int86_pending;
+}
+
+
+unsigned i86_GetPC(void)
+{
+	return ip;
+}
+
+
+void i86_Cause_Interrupt(int type)
+{
+	int86_pending = type;
+}
+
+
+void i86_Clear_Pending_Interrupts(void)
+{
+	int86_pending = 0;
+}
+
+
+
+int i86_Execute(int cycles)
+{
+/* ASG 971222    if (int86_pending) external_int();*/
+
+    cycle_count=cycles;/* ASG 971222 cycles_per_run;*/
     while(cycle_count>0)
     {
 #ifdef DEBUG
 printf("[%04x:%04x]=%02x\tAX=%04x\tBX=%04x\tCX=%04x\tDX=%04x\n",sregs[CS],ip,GetMemB(base[CS],ip),regs.w[AX],regs.w[BX],regs.w[CX],regs.w[DX]);
 #endif
+
+	if (int86_pending) external_int();	/* ASG 971222 */
 
 #if defined(BIGCASE) && !defined(RS6000)
   /* Some compilers cannot handle large case statements */
@@ -4217,6 +4280,6 @@ printf("[%04x:%04x]=%02x\tAX=%04x\tBX=%04x\tCX=%04x\tDX=%04x\n",sregs[CS],ip,Get
 	instruction[FETCH]();
 #endif
     }
-    int86_pending=I86_NMI_INT;
+/* ASG 971222    int86_pending=I86_NMI_INT;*/
+	return cycles - cycle_count;
 }
-

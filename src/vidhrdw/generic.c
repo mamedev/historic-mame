@@ -17,6 +17,8 @@ unsigned char *spriteram;	/* not used in this module... */
 unsigned char *spriteram_2;	/* ... */
 unsigned char *spriteram_3;	/* ... */
 int spriteram_size;	/* ... here just for convenience */
+int spriteram_2_size;	/* ... here just for convenience */
+int spriteram_3_size;	/* ... here just for convenience */
 unsigned char *dirtybuffer;
 struct osd_bitmap *tmpbitmap;
 

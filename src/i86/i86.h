@@ -60,13 +60,11 @@ typedef enum { AH,AL,CH,CL,DH,DL,BH,BL,SPH,SPL,BPH,BPL,SIH,SIL,DIH,DIL } BREGS;
 #define write_port(port,val) cpu_writeport(port,val)
 
 /* no need to go through cpu_readmem for these ones... */
-#define FETCH ((BYTE)Memory[base[CS]+ip++])
-#define FETCHWORD(var) { var=Memory[base[CS]+ip]+(Memory[base[CS]+ip+1]<<8); ip+=2; }
-#define PUSH(val) { WORD tmptmp=val; cycle_count-=11; regs.w[SP]-=2; \
-		Memory[base[SS]+regs.w[SP]]=tmptmp; \
-		Memory[base[SS]+regs.w[SP]+1]=tmptmp>>8; }
-#define POP(var) { WORD tmptmp=regs.w[SP]; cycle_count-=10; regs.w[SP]+=2; \
-		var=Memory[base[SS]+tmptmp]+(Memory[base[SS]+tmptmp+1]<<8); }
+/* ASG 971222 -- PUSH/POP now use the standard mechanisms; opcode reading is the same */
+#define FETCH ((BYTE)cpu_readop(base[CS]+ip++))
+#define FETCHWORD(var) { var=cpu_readop(base[CS]+ip)+(cpu_readop(base[CS]+ip+1)<<8); ip+=2; }
+#define PUSH(val) { regs.w[SP]-=2; WriteWord(regs.w[SP],val); }
+#define POP(var) { var = ReadWord(regs.w[SP]); regs.w[SP]+=2; }
 /************************************************************************/
 #define CompressFlags() (WORD)(CF | (PF << 2) | (AF << 4) | (ZF << 6) \
 			    | (SF << 7) | (TF << 8) | (IF << 9) \

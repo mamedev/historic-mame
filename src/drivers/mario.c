@@ -67,6 +67,13 @@ write:
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "I8039.h"
+
+static int tune = 0;
+static int test = 0;
+static int p[8] = { 0,0xf0,0,0,0,0,0,0 };
+static int t[2] = { 0,0 };
+
 
 
 
@@ -76,11 +83,50 @@ int  mario_vh_start(void);
 void mario_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
 void mario_vh_screenrefresh(struct osd_bitmap *bitmap);
 
-void mario_sh1_w(int offset,int data);
-void mario_sh2_w(int offset,int data);
-void mario_sh3_w(int offset,int data);
-void mario_sh_update(void);
+/*
+ *  from sndhrdw/mario.c
+ */
+extern unsigned char *mario_dac;
+void   mario_digital_out_w(int offset,int data);
+int    mario_sh_start(void);
+void   mario_sh_stop(void);
+void   mario_sh_update(void);
+void   mario_sh_w(int offset,int data);
+void   mario_sh1_w(int offset,int data);
+/*void   mario_sh2_w(int offset,int data);*/
+void   mario_sh3_w(int offset,int data);
 
+
+#define ACTIVELOW_PORT_BIT(P,A,D)   ((P & (~(1 << A))) | ((D ^ 1) << A))
+#define ACTIVEHIGH_PORT_BIT(P,A,D)   ((P & (~(1 << A))) | (D << A))
+
+
+void mario_sh_growing(int offset, int data)    { t[1] = data; }
+void mario_sh_getcoin(int offset, int data)    { t[0] = data; }
+void mario_sh_crab(int offset, int data)       { p[1] = ACTIVEHIGH_PORT_BIT(p[1],0,data); }
+void mario_sh_turtle(int offset, int data)     { p[1] = ACTIVEHIGH_PORT_BIT(p[1],1,data); }
+void mario_sh_fly(int offset, int data)        { p[1] = ACTIVEHIGH_PORT_BIT(p[1],2,data); }
+static void mario_sh_tuneselect(int offset, int data) { tune = data; }
+
+static int  mario_sh_getp1(int offset)   { return p[1]; }
+static int  mario_sh_getp2(int offset)   { return p[2]; }
+static int  mario_sh_gett0(int offset)   { return t[0]; }
+static int  mario_sh_gett1(int offset)   { return t[1]; }
+static int  mario_sh_gettune(int offset) { return tune; }
+static int  mario_sh_gettest(int offset) { return test; }
+
+static void mario_sh_putsound(int offset, int data)
+{
+	mario_digital_out_w(offset, data);
+}
+static void mario_sh_putp1(int offset, int data)
+{
+        p[1] = data;
+}
+static void mario_sh_putp2(int offset, int data)
+{
+        p[2] = data;
+}
 
 
 static struct MemoryReadAddress readmem[] =
@@ -105,60 +151,97 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x7e80, 0x7e80, mario_gfxbank_w },
 	{ 0x7e83, 0x7e83, mario_palettebank_w },
 	{ 0x7e84, 0x7e84, interrupt_enable_w },
-	{ 0x7f00, 0x7f07, mario_sh1_w },    /* ???? */
-	{ 0x7e00, 0x7e00, mario_sh2_w },    /* ???? */
+        { 0x7c00, 0x7c00, mario_sh3_w },
+        { 0x7f01, 0x7f01, mario_sh_getcoin },
+        { 0x7f03, 0x7f03, mario_sh_crab },
+        { 0x7f04, 0x7f04, mario_sh_turtle },
+        { 0x7f05, 0x7f05, mario_sh_fly },
+        { 0x7f00, 0x7f07, mario_sh1_w },
+	{ 0x7e00, 0x7e00, mario_sh_tuneselect },
 	{ 0x7000, 0x73ff, MWA_NOP },	/* ??? */
-	{ 0x7e85, 0x7e85, MWA_NOP },	/* ??? */
+//	{ 0x7e85, 0x7e85, MWA_RAM },	/* Sets alternative 1 and 0 */
 	{ 0xf000, 0xffff, MWA_ROM },
 	{ -1 }	/* end of table */
 };
 
-
-static struct InputPort input_ports[] =
+static struct IOWritePort mario_writeport[] =
 {
-	{	/* IN0 */
-		0x00,
-		{ OSD_KEY_RIGHT, OSD_KEY_LEFT, 0, 0, OSD_KEY_LCONTROL, OSD_KEY_1, OSD_KEY_2, OSD_KEY_F1 },
-		{ OSD_JOY_RIGHT, OSD_JOY_LEFT, 0, 0, OSD_JOY_FIRE, 0, 0, 0 },
-	},
-	{	/* IN1 */
-		0x00,
-		{ OSD_KEY_X, OSD_KEY_Z, 0, 0, OSD_KEY_SPACE, OSD_KEY_3, 0, 0 },
-		{ 0, 0, 0, 0, 0, 0, 0, 0 }
-	},
-	{	/* DSW */
-		0x00,
-		{ 0, 0, 0, 0, 0, 0, 0, 0 },
-		{ 0, 0, 0, 0, 0, 0, 0, 0 }
-	},
+	{ 0x00,   0x00,   IOWP_NOP },  /* unknown... is this a trigger? */
 	{ -1 }	/* end of table */
 };
 
-static struct TrakPort trak_ports[] =
+static struct MemoryReadAddress readmem_sound[] =
 {
-        { -1 }
+	{ 0x0000, 0x0fff, MRA_ROM },
+	{ -1 }	/* end of table */
+};
+static struct MemoryWriteAddress writemem_sound[] =
+{
+	{ 0x0000, 0x0fff, MWA_ROM },
+	{ -1 }	/* end of table */
+};
+static struct IOReadPort readport_sound[] =
+{
+	{ 0x00,     0xff,     mario_sh_gettune },
+        { I8039_p1, I8039_p1, mario_sh_getp1 },
+	{ I8039_p2, I8039_p2, mario_sh_getp2 },
+	{ I8039_t0, I8039_t0, mario_sh_gett0 },
+	{ I8039_t1, I8039_t1, mario_sh_gett1 },
+	{ -1 }	/* end of table */
+};
+static struct IOWritePort writeport_sound[] =
+{
+	{ 0x00,     0xff,     mario_sh_putsound },
+	{ I8039_p1, I8039_p1, mario_sh_putp1 },
+	{ I8039_p2, I8039_p2, mario_sh_putp2 },
+	{ -1 }	/* end of table */
 };
 
+INPUT_PORTS_START( input_ports )
 
-static struct KEYSet keys[] =
-{
-	{ 0, 1, "PL1 MOVE LEFT"  },
-	{ 0, 0, "PL1 MOVE RIGHT" },
-	{ 0, 4, "PL1 JUMP" },
-	{ 1, 1, "PL2 MOVE LEFT"  },
-	{ 1, 0, "PL2 MOVE RIGHT" },
-	{ 1, 4, "PL2 JUMP" },
-	{ -1 }
-};
+	PORT_START      /* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_2WAY )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_2WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_START1 )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_START2 )
+	PORT_BITX(0x80, IP_ACTIVE_HIGH, IPT_SERVICE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE, 0 )
 
+	PORT_START      /* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_2WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_2WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_PLAYER2 )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_COIN2 )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_COIN1 )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 
-static struct DSW dsw[] =
-{
-	{ 2, 0x03, "LIVES", { "3", "4", "5", "6" } },
-	{ 2, 0x30, "BONUS", { "20000", "30000", "40000", "NONE" } },
-	{ 2, 0xc0, "DIFFICULTY", { "EASY", "MEDIUM", "HARD", "HARDEST" } },
-	{ -1 }
-};
+	PORT_START      /* DSW0 */
+	PORT_DIPNAME( 0x03, 0x00, "Lives", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "3" )
+	PORT_DIPSETTING(    0x01, "4" )
+	PORT_DIPSETTING(    0x02, "5" )
+	PORT_DIPSETTING(    0x03, "6" )
+	PORT_DIPNAME( 0x0c, 0x00, "Coinage", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x04, "2 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x00, "1 Coin/1 Credit" )
+	PORT_DIPSETTING(    0x08, "1 Coin/2 Credits" )
+	PORT_DIPSETTING(    0x0c, "1 Coin/3 Credits" )
+	PORT_DIPNAME( 0x30, 0x00, "Bonus Life", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "20000" )
+	PORT_DIPSETTING(    0x10, "30000" )
+	PORT_DIPSETTING(    0x20, "40000" )
+	PORT_DIPSETTING(    0x30, "None" )
+	PORT_DIPNAME( 0xc0, 0x00, "Difficulty", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "Easy" )
+	PORT_DIPSETTING(    0x40, "Medium" )
+	PORT_DIPSETTING(    0x80, "Hard" )
+	PORT_DIPSETTING(    0xc0, "Hardest" )
+INPUT_PORTS_END
+
 
 
 static struct GfxLayout charlayout =
@@ -244,13 +327,20 @@ static struct MachineDriver machine_driver =
 			CPU_Z80,
 			3072000,	/* 3.072 Mhz (?) */
 			0,
-			readmem,writemem,0,0,
+			readmem,writemem,0,mario_writeport,
 			nmi_interrupt,1
+		},
+		{
+			CPU_I8039 | CPU_AUDIO_CPU,
+                        670000,         /* 670 khz (?) */
+			2,
+			readmem_sound,writemem_sound,readport_sound,writeport_sound,
+			ignore_interrupt,1
 		}
 	},
 	60,
 	10,	/* 10 CPU slices per frame - enough for the sound CPU to read all commands */
-	0,
+        0,
 
 	/* video hardware */
 	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
@@ -266,9 +356,8 @@ static struct MachineDriver machine_driver =
 
 	/* sound hardware */
 	0,
-	0,
-	0,
-	0,
+	mario_sh_start,
+	mario_sh_stop,
 	mario_sh_update
 };
 
@@ -285,43 +374,45 @@ static const char *sample_names[] =
 	/* 7d00 - 7d07 sounds */
 	"death.sam", 		/* 0x00 death */
 	"getcoin.sam",		/* 0x01 coin */
-	"effect02.sam", /* 0x02 */
+	"effect00.sam", 	/* 0x02 ice appears? */
 	"crab.sam", 		/* 0x03 crab appears */
 	"turtle.sam", 		/* 0x04 turtle appears */
-	"effect05.sam", /* 0x05 */
-	"effect06.sam", /* 0x06 */
+	"fly.sam", 			/* 0x05 fighterfly appears*/
+	"effect01.sam", /* 0x06 */
 	"skid.sam", 		/* 0x07 skid */
-	
+
 	/* 7e00 sounds */
-	"b_loop.sam",	/* 0x10 - 08 bonus ticker */
-	"blueapp.sam",	/* 0x20 - 09 red fireball appears */
-	"tune03.sam",	/* 0x40 - 0a */
-	"tune04.sam",	/* 0x80 - 0b */
-	
+	"b_coin.sam",	/* 0x10 - 08 end bonus count? */
+	"blueapp.sam",	/* 0x20 - 09 red/blue fireball appears */
+	"ice.sam",		/* 0x40 - 0a ice spreads? */
+	"effect03.sam",	/* 0x80 - 0b */
+
 	"pow.sam",			/* 0x01 - 0c pow */
 	"resurr.sam",		/* 0x02 - 0d resurrection */
 	"jump.sam",			/* 0x03 - 0e jump */
 	"kill.sam",			/* 0x04 - 0f kill creature */
 	"flip.sam",			/* 0x05 - 10 flip creature */
-	"tune06.sam",		/* 0x06 - 11 coin appear */
-	"crab_int.sam",		/* 0x07 - 12 crab intro? */
-	"crab_int.sam",		/* 0x08 - 13 crab intro? */
+	"effect04.sam",		/* 0x06 - 11 coin appear */
+	"intro2.sam",		/* 0x07 - 12 jack-in-the-box music */
+	"crab_int.sam",		/* 0x08 - 13 crab pissed off */
 	"levstart.sam",		/* 0x09 - 14 level start */
 	"turtintr.sam",		/* 0x0a - 15 turtle intro */
 	"gameover.sam",		/* 0x0b - 16 game over */
 	"b_perf.sam",		/* 0x0c - 17 perfect bonus */
 	"endlevel.sam",		/* 0x0d - 18 end level */
-	"b_coin.sam",		/* 0x0e - 19 grab bonus coin */
-	"tune0f.sam",	/* 0x0f - 1a */
+	"b_loop.sam",		/* 0x0e - 19 bonus counter */
+	"effect05.sam",	/* 0x0f - 1a */
 
 	/* 7c00 */
 	"run.sam", /* 03, 02, 01 - 0x1b */
-	
+
 	/* 7c80 */
 	"run.sam", /* 03, 02, 01 - 0x1c */
-	
+
     0	/* end of array */
 };
+
+
 
 ROM_START( mario_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
@@ -348,6 +439,11 @@ ROM_END
 
 static int hiload(void)
 {
+	/* get RAM pointer (this game is multiCPU, we can't assume the global */
+	/* RAM pointer is pointing to the right place) */
+	unsigned char *RAM = Machine->memory_region[0];
+
+
 	/* check if the hi score table has already been initialized */
 	if (memcmp(&RAM[0x6b1d],"\x00\x20\x01",3) == 0 &&
 			memcmp(&RAM[0x6ba5],"\x00\x32\x00",3) == 0)
@@ -374,6 +470,9 @@ static int hiload(void)
 
 static void hisave(void)
 {
+	/* get RAM pointer (this game is multiCPU, we can't assume the global */
+	/* RAM pointer is pointing to the right place) */
+	unsigned char *RAM = Machine->memory_region[0];
 	void *f;
 
 
@@ -391,14 +490,15 @@ struct GameDriver mario_driver =
 {
 	"Mario Bros.",
 	"mario",
-	"Mirko Buffoni (MAME driver)\nNicola Salmoria (MAME driver)\nTim Lindquist (color info)",
+	"Mirko Buffoni (MAME driver)\nNicola Salmoria (MAME driver)\nTim Lindquist (color info)\nDan Boris (8039 info)\nRon Fries (Audio Info)\nMarco Cassili",
 	&machine_driver,
 
 	mario_rom,
 	0, 0,
 	sample_names,
+	0,	/* sound_prom */
 
-	input_ports, 0, trak_ports, dsw, keys,
+	0/*TBR*/, input_ports, 0/*TBR*/, 0/*TBR*/, 0/*TBR*/,
 
 	color_prom, 0, 0,
 	ORIENTATION_DEFAULT,

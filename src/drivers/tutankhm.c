@@ -275,10 +275,6 @@ static struct InputPort input_ports[] =
 	{ -1 }	/* end of table */
 };
 
-static struct TrakPort trak_ports[] =
-{
-        { -1 }
-};
 
 
 static struct DSW dsw[] =
@@ -396,7 +392,6 @@ static struct MachineDriver machine_driver =
 	tut_vh_screenrefresh,				/* vh_update routine */
 
 	/* sound hardware */
-	0,						/* pointer to samples */
 	0,						/* sh_init routine */
 	tutankhm_sh_start,				/* sh_start routine */
 	AY8910_sh_stop,					/* sh_stop routine */
@@ -423,7 +418,8 @@ ROM_START( tutankhm_rom )
 	ROM_LOAD( "ra1_9i.cpu", 0x18000, 0x1000, 0x8e1e46ce )
 
 	ROM_REGION( 0x1000 ) /* ROM Region 1 -- discarded */
-	ROM_OBSOLETELOAD( "ra1_6h.cpu", 0x0000, 0x1000 )	/* not needed - could be removed */
+	/* empty memory region - not used by the game, but needed bacause the main */
+	/* core currently always frees region #1 after initialization. */
 
 	ROM_REGION( 0x10000 ) /* 64k for Z80 sound CPU code */
 	ROM_LOAD( "ra1_7a.snd", 0x0000, 0x1000, 0x00122ac0 )
@@ -479,8 +475,9 @@ struct GameDriver tutankhm_driver =
 	tutankhm_rom,
 	0, 0,   /* ROM decode and opcode decode functions */
 	0,      /* Sample names */
+	0,	/* sound_prom */
 
-	input_ports, 0, trak_ports, dsw, keys,
+	input_ports, 0, 0/*TBR*/,dsw, keys,
 
 	0, 0, 0,   /* colors, palette, colortable */
 	ORIENTATION_DEFAULT,

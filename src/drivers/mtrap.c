@@ -26,7 +26,6 @@ read:
 5103      IN1
           bit 2  Must be 1 to have collision enabled?
                Probably Collision between sprite and background.
-               Press the key 7 to test
 
           bit 4  Probably Collision flag between sprites
                Press the key 8 to test
@@ -76,37 +75,37 @@ extern unsigned char *exidy_sprite1_ypos;
 extern unsigned char *exidy_sprite2_xpos;
 extern unsigned char *exidy_sprite2_ypos;
 
+
+
 unsigned char *mtrap_i2r;
 
-int mtrap_input_port_2_r(int offset)
+int mtrap_input_port_3_r(int offset)
 {
-	int value;
+	int res;
 
-	/* Get 2 coin keys */
-	value=input_port_2_r(offset) & 0x60;
 
-	/* Combine with what's in memory */
-	value=value | (*mtrap_i2r & 0x9F);
+	/* Start with what's in memory */
+	res = *mtrap_i2r & 0x8b;
+
+	/* get coin 1 status */
+	if ((readinputport(1) & 0x80) == 0) res |= 0x40;
+
+	/* get coin 2 status */
+	if ((readinputport(0) & 0x01) != 0) res |= 0x20;
 
 	/* Character collision */
-	if (*exidy_sprite1_xpos == 0x78 && *exidy_sprite1_ypos == 0x38)
-		value=value & 0xFB;
-	else
-		value=value | 0x04;
+	if (!(*exidy_sprite1_xpos == 0x78 && *exidy_sprite1_ypos == 0x38))
+		res |= 0x04;
 
 	/* Sprite collision */
-	if (	(*exidy_sprite1_xpos + 0x10 < *exidy_sprite2_xpos) ||
-		(*exidy_sprite1_xpos > *exidy_sprite2_xpos + 0x10) ||
-		(*exidy_sprite1_ypos + 0x10 < *exidy_sprite2_ypos) ||
-		(*exidy_sprite1_ypos > *exidy_sprite2_ypos + 0x10) ||
-		(*exidy_sprite_enable&0x40))
-	{
-		value=value & 0xEF;
-	}
-	else
-		value=value | 0x10;
+	if (!((*exidy_sprite1_xpos + 0x10 < *exidy_sprite2_xpos) ||
+			(*exidy_sprite1_xpos > *exidy_sprite2_xpos + 0x10) ||
+			(*exidy_sprite1_ypos + 0x10 < *exidy_sprite2_ypos) ||
+			(*exidy_sprite1_ypos > *exidy_sprite2_ypos + 0x10) ||
+			(*exidy_sprite_enable&0x40)))
+		res |= 0x10;
 
-	return value;
+	return res;
 }
 
 static struct MemoryReadAddress readmem[] =
@@ -116,8 +115,8 @@ static struct MemoryReadAddress readmem[] =
 	{ 0x4800, 0x4fff, MRA_RAM },
 	{ 0x5100, 0x5100, input_port_0_r },	/* DSW */
 	{ 0x5101, 0x5101, input_port_1_r },	/* IN0 */
-	{ 0x5103, 0x5103, mtrap_input_port_2_r, &mtrap_i2r },	/* IN1 */
-	{ 0x5213, 0x5213, input_port_3_r },	/* IN2 */
+	{ 0x5103, 0x5103, mtrap_input_port_3_r, &mtrap_i2r },
+	{ 0x5213, 0x5213, input_port_2_r },	/* IN1 */
 	{ 0x8000, 0xffff, MRA_ROM },
 	{ -1 }	/* end of table */
 };
@@ -156,61 +155,51 @@ static struct MemoryWriteAddress sound_writemem[] =
 	{ -1 }	/* end of table */
 };
 
+INPUT_PORTS_START( input_ports )
+	PORT_START	/* DSW0 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN2 )
+	PORT_DIPNAME( 0x06, 0x06, "Bonus", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x06, "30000" )
+	PORT_DIPSETTING(    0x04, "40000" )
+	PORT_DIPSETTING(    0x02, "50000" )
+	PORT_DIPSETTING(    0x00, "60000" )
+	PORT_DIPNAME( 0x98, 0x98, "Coinage", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x90, "2 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x98, "1 Coin/1 Credit" )
+	PORT_DIPSETTING(    0x88, "1 Coin/2 Credits" )
+	PORT_DIPSETTING(    0x80, "1 Coin/4 Credits" )
+	PORT_DIPSETTING(    0x00, "Coin A 2/1 Coin B 1/3" )
+	PORT_DIPSETTING(    0x08, "Coin A 1/3 Coin B 2/7" )
+	PORT_DIPSETTING(    0x10, "Coin A 1/1 Coin B 1/4" )
+	PORT_DIPSETTING(    0x18, "Coin A 1/1 Coin B 1/5" )
+	PORT_DIPNAME( 0x60, 0x40, "Lives", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x60, "2" )
+	PORT_DIPSETTING(    0x40, "3" )
+	PORT_DIPSETTING(    0x20, "4" )
+	PORT_DIPSETTING(    0x00, "5" )
 
-static struct InputPort input_ports[] =
-{
-	{	/* DSW */
-		0xb0,
-		{ OSD_KEY_4, 0, 0, 0, 0, 0, 0, 0 },
-		{ 0, 0, 0, 0, 0, 0, 0, 0 }
-	},
-	{	/* IN0 */
-		0xff,
-		{ OSD_KEY_1, OSD_KEY_2, OSD_KEY_RIGHT, OSD_KEY_LEFT,
-				OSD_KEY_LCONTROL, OSD_KEY_UP, OSD_KEY_DOWN, OSD_KEY_3 },
-		{ 0, 0, OSD_JOY_RIGHT, OSD_JOY_LEFT,
-				OSD_JOY_FIRE1, OSD_JOY_UP, OSD_JOY_DOWN, 0 }
-	},
-	{	/* IN1 */
-		0x00,
-		{ 0, 0, 0, 0, 0, OSD_KEY_4, OSD_KEY_3, 0 },
-		{ 0, 0, 0, 0, 0, 0, 0, 0 }
-	},
-	{	/* IN2 */
-		0xff,
-		{ OSD_KEY_X, OSD_KEY_Z, 0, OSD_KEY_C, 0, 0, 0, 0 },
-		{ OSD_JOY_FIRE2, OSD_JOY_FIRE3, 0, OSD_JOY_FIRE4, 0, 0, 0, 0 },
-	},
-	{ -1 }	/* end of table */
-};
+	PORT_START	/* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_4WAY )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_4WAY )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_4WAY )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN1 )
 
-static struct TrakPort trak_ports[] =
-{
-        { -1 }
-};
-
-
-static struct KEYSet keys[] =
-{
-        { 1, 5, "MOVE UP" },
-        { 1, 3, "MOVE LEFT"  },
-        { 1, 2, "MOVE RIGHT" },
-        { 1, 6, "MOVE DOWN" },
-	{ 1, 4, "DOG BUTTON" },
-	{ 3, 1, "RED DOOR BUTTON" },
-	{ 3, 0, "YELLOW DOOR BUTTON" },
-	{ 3, 3, "BLUE DOOR BUTTON" },
-        { -1 }
-};
-
-static struct DSW dsw[] =
-{
-	{ 0, 0x60, "LIVES", { "2", "3", "4", "5" } },
-	{ 0, 0x06, "BONUS", { "20000", "30000", "40000", "50000" } },
-	{ 0, 0x18, "COIN SELECT", { "1 COIN 4 CREDITS", "1 COIN 2 CREDITS", "2 COINS 1 CREDIT", "1 COIN 1 CREDIT" } },
-	{ -1 }
-};
-
+	PORT_START	/* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON2 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON3 )
+	PORT_BITX(    0x04, 0x04, IPT_DIPSWITCH_NAME, "Free Play", IP_KEY_NONE, IP_JOY_NONE, 0 )
+	PORT_DIPSETTING(    0x04, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON4 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+INPUT_PORTS_END
 
 
 static struct GfxLayout charlayout =
@@ -437,7 +426,7 @@ static struct MachineDriver mtrap_machine_driver =
 	mtrap_init_machine,
 
 	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 0*8, 32*8-1 },
+	32*8, 32*8, { 0*8, 31*8-1, 0*8, 32*8-1 },
 	gfxdecodeinfo,
 	sizeof(palette)/3,sizeof(colortable),
 	0,
@@ -449,7 +438,6 @@ static struct MachineDriver mtrap_machine_driver =
 	exidy_vh_screenrefresh,
 
 	/* sound hardware */
-	0,
 	0,
 	0,
 	0,
@@ -534,14 +522,15 @@ struct GameDriver mtrap_driver =
 {
 	"Mouse Trap",
 	"mtrap",
-	"MARC LAFONTAINE\nBRIAN LEVINE\nMIKE BALFOUR",
+	"Marc LaFontaine\nBrian Levine\nMike Balfour\nMarco Cassili",
 	&mtrap_machine_driver,
 
 	mtrap_rom,
 	0, 0,
 	0,
+	0,	/* sound_prom */
 
-	input_ports, 0, trak_ports, dsw, keys,
+	0/*TBR*/, input_ports, 0/*TBR*/, 0/*TBR*/, 0/*TBR*/,
 
 	0, palette, colortable,
 	ORIENTATION_DEFAULT,

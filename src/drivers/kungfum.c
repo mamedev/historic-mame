@@ -1,6 +1,8 @@
 /****************************************************************************
 
-Kung Fu Master memory map (Doc by Ishmair)
+Kung Fu Master
+Data East<Irem, 1984
+memory map (Doc by Ishmair)
 
 ROMS mapping
 
@@ -83,7 +85,90 @@ Puertos OUT;  (00)      ;Sound related. (Look at subrutine 0DE5h)
                         ;digital sound will be easy to implement.
               (01)       ?
 
-****************************************************************************/
+
+|-------------------------------------------------------------------------|
+|                           Kung-Fu Master                                |
+|                                                                         |
+|                      DIP Switch #1 Settings                             |
+|-------------------------------------------------------------------------|
+|  Function:                    | SW#1 SW#2 SW#3 SW#4 SW#5 SW#6 SW#7 SW#8 |
+|-------------------------------|-----------------------------------------|
+|                               |                                         |
+| Difficulty:                   |                                         |
+|   Easy                        | Off                                     |
+|   Difficult                   | On                                      |
+| Energy:                       |                                         |
+|   Slow                        |      Off                                |
+|   Fast                        |      On                                 |
+| Fighters:                     |                                         |
+|   2                           |           On   Off                      |
+|   3                           |           Off  Off                      |
+|   4                           |           Off  On                       |
+|   5                           |           On   On                       |
+|                               |                                         |
+|                               |               Coin Mode 2               |
+|                               |           (DIP SW2 #3 = "On")           |
+|   Selector A:                 |                                         |
+|   -----------                 |                                         |
+|   1 Coin  1 Credit            |                     Off  Off            |
+|   2 Coins 1 Credit            |                     On   Off            |
+|   3 Coins 1 Credit            |                     Off  On             |
+|   Free Play                   |                     On   On             |
+|                               |                                         |
+|   Selector B:                 |                                         |
+|   -----------                 |                                         |
+|   1 Coin  2 Credits           |                               Off  Off  |
+|   1 Coin  3 Credits           |                               On   Off  |
+|   1 Coin  5 Credits           |                               Off  On   |
+|   1 Coin  6 Credits           |                               On   On   |
+|                               |               Coin Mode 1               |
+|                               |           (DIP SW2 #3 = "Off")          |
+|   1 Coin  1 Credit            |                     Off  Off  Off  Off  |
+|   2 Coins 1 Credit            |                     On   Off  Off  Off  |
+|   3 Coins 1 Credit            |                     Off  On   Off  Off  |
+|   4 Coins 1 Credit            |                     On   On   Off  Off  |
+|   5 Coins 1 Credit            |                     Off  Off  On   Off  |
+|   6 Coins 1 Credit            |                     On   Off  On   Off  |
+|                               |                                         |
+|   1 Coin  2 Credits           |                     Off  Off  Off  On   |
+|   1 Coin  3 Credits           |                     On   Off  Off  On   |
+|   1 Coin  4 Credits           |                     Off  On   Off  On   |
+|   1 Coin  5 Credits           |                     On   On   Off  On   |
+|   1 Coin  6 Credits           |                     Off  Off  On   On   |
+|   Free Play                   |                     On   On   On   On   |
+|-------------------------------------------------------------------------|
+|                                                                         |
+|                      DIP Switch #2 Settings                             |
+|-------------------------------------------------------------------------|
+|  Function:                    | SW#1 SW#2 SW#3 SW#4 SW#5 SW#6 SW#7 SW#8 |
+|-------------------------------|-----------------------------------------|
+|                               |                                         |
+| Picture:                      |                                         |
+|   Normal                      | Off                                     |
+|   Inverted                    | On                                      |
+| Table Type:                   |                                         |
+|   Cocktail Table              |      Off                                |
+|   Upright                     |      On                                 |
+| Coin Mode:                    |                                         |
+|   Mode 1                      |           Off                           |
+|   Mode 2                      |           On                            |
+| Stop Mode:                    |                                         |
+|   Without                     |                     Off                 |
+|   With                        |                     On                  |
+| Hit Mode:                     |                                         |
+|   No Hit                      |                               Off       |
+|   Hit                         |                               On        |
+| Test Mode:                    |                                         |
+|   Off                         |                                    Off  |
+|   On                          |                                    On   |
+|-------------------------------------------------------------------------|
+
+Note #1: SW#4 and SW#6 are supposed to be in the "Off" position.
+
+Note #2: Initiate "Stop Mode" with 2P Start button.
+         Start again with 1P Start button.
+
+**************************************************************************/
 
 #include "driver.h"
 #include "Z80/Z80.h"
@@ -93,6 +178,7 @@ Puertos OUT;  (00)      ;Sound related. (Look at subrutine 0DE5h)
 
 extern unsigned char *kungfum_scroll_low;
 extern unsigned char *kungfum_scroll_high;
+void kungfum_flipscreen_w(int offset,int value);
 void kungfum_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
 int kungfum_vh_start(void);
 void kungfum_vh_stop(void);
@@ -112,21 +198,21 @@ void mpatrol_sound_cmd_w(int offset, int value);
 
 static struct MemoryReadAddress readmem[] =
 {
-	{ 0xe000, 0xefff, MRA_RAM },
-	{ 0xd000, 0xdfff, MRA_RAM },         /* Video and Color ram */
 	{ 0x0000, 0x7fff, MRA_ROM },
+	{ 0xd000, 0xdfff, MRA_RAM },         /* Video and Color ram */
+	{ 0xe000, 0xefff, MRA_RAM },
 	{ -1 }	/* end of table */
 };
 
 static struct MemoryWriteAddress writemem[] =
 {
-	{ 0xe000, 0xefff, MWA_RAM },
-	{ 0xd000, 0xd7ff, videoram_w, &videoram, &videoram_size },
-	{ 0xd800, 0xdfff, colorram_w, &colorram },
-	{ 0xc020, 0xc0df, MWA_RAM, &spriteram, &spriteram_size },
+	{ 0x0000, 0x7fff, MWA_ROM },
 	{ 0xa000, 0xa000, MWA_RAM, &kungfum_scroll_low },
 	{ 0xb000, 0xb000, MWA_RAM, &kungfum_scroll_high },
-	{ 0x0000, 0x7fff, MWA_ROM },
+	{ 0xc020, 0xc0df, MWA_RAM, &spriteram, &spriteram_size },
+	{ 0xd000, 0xd7ff, videoram_w, &videoram, &videoram_size },
+	{ 0xd800, 0xdfff, colorram_w, &colorram },
+	{ 0xe000, 0xefff, MWA_RAM },
 	{ -1 }	/* end of table */
 };
 
@@ -144,6 +230,7 @@ static struct IOReadPort readport[] =
 static struct IOWritePort writeport[] =
 {
 	{ 0x00, 0x00, mpatrol_sound_cmd_w },
+	{ 0x01, 0x01, kungfum_flipscreen_w },
 	{ -1 }	/* end of table */
 };
 
@@ -168,68 +255,95 @@ static struct MemoryWriteAddress sound_writemem[] =
 	{ -1 }	/* end of table */
 };
 
+INPUT_PORTS_START( input_ports )
+	PORT_START	/* IN0 */
+/* Start 1 & 2 also restarts and freezes the game with stop mode on
+   and are used in test mode to enter and esc the various tests */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START2 )
+	/* coin input must be active for 19 frames to be consistently recognized */
+	PORT_BITX(0x04, IP_ACTIVE_LOW, IPT_COIN3 | IPF_IMPULSE,
+		"Coin Aux", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 19 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0xf0, IP_ACTIVE_LOW, IPT_UNUSED )
 
-static struct InputPort input_ports[] =
-{
-	{	/* IN0 */
-		0xff,
-		{ OSD_KEY_1, OSD_KEY_2, OSD_KEY_3, 0, 0, 0, 0, 0 },
-		{ 0, 0, 0, 0, 0, 0, 0, 0 }
-	},
-	{	/* IN1 */
-		0xff,
-		{ OSD_KEY_RIGHT, OSD_KEY_LEFT, OSD_KEY_DOWN, OSD_KEY_UP,
-				0, OSD_KEY_LCONTROL, 0, OSD_KEY_ALT },
-		{ OSD_JOY_RIGHT, OSD_JOY_LEFT, OSD_JOY_DOWN, OSD_JOY_UP,
-				0, OSD_JOY_FIRE1, 0, OSD_JOY_FIRE2 }
-	},
-	{	/* IN2 */
-		0xff,
-		{ 0, 0, 0, 0, 0, 0, 0, 0 },
-		{ 0, 0, 0, 0, 0, 0, 0, 0 }
-	},
-	{	/* DSW1 */
-		0xff,
-		{ 0, 0, 0, 0, 0, 0, 0, 0 },
-		{ 0, 0, 0, 0, 0, 0, 0, 0 }
-	},
-	{	/* DSW2 */
-		0xfd,
-		{ 0, 0, 0, 0, 0, 0, 0, OSD_KEY_F1 },
-		{ 0, 0, 0, 0, 0, 0, 0, 0 }
-	},
-	{ -1 }	/* end of table */
-};
+	PORT_START	/* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* probably unused */
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* probably unused */
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON2 )
 
-static struct TrakPort trak_ports[] =
-{
-        { -1 }
-};
+	PORT_START	/* IN2 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* probably unused */
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_COCKTAIL )
 
+	PORT_START	/* DSW1 */
+	PORT_DIPNAME( 0x01, 0x01, "Difficulty", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x01, "Easy" )
+	PORT_DIPSETTING(    0x00, "Hard" )
+	PORT_DIPNAME( 0x02, 0x02, "Energy Loss", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x02, "Slow" )
+	PORT_DIPSETTING(    0x00, "Fast" )
+	PORT_DIPNAME( 0x0c, 0x0c, "Lives", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x08, "2" )
+	PORT_DIPSETTING(    0x0c, "3" )
+	PORT_DIPSETTING(    0x04, "4" )
+	PORT_DIPSETTING(    0x00, "5" )
+	/* TODO: support the different settings which happen in Coin Mode 2 */
+	PORT_DIPNAME( 0xf0, 0xf0, "Coinage", IP_KEY_NONE ) /* mapped on coin mode 1 */
+	PORT_DIPSETTING(    0xa0, "6 Coins/1 Credit" )
+	PORT_DIPSETTING(    0xb0, "5 Coins/1 Credit" )
+	PORT_DIPSETTING(    0xc0, "4 Coins/1 Credit" )
+	PORT_DIPSETTING(    0xd0, "3 Coins/1 Credit" )
+	PORT_DIPSETTING(    0xe0, "2 Coins/1 Credit" )
+	PORT_DIPSETTING(    0xf0, "1 Coin/1 Credit" )
+	PORT_DIPSETTING(    0x70, "1 Coin/2 Credits" )
+	PORT_DIPSETTING(    0x60, "1 Coin/3 Credits" )
+	PORT_DIPSETTING(    0x50, "1 Coin/4 Credits" )
+	PORT_DIPSETTING(    0x40, "1 Coin/5 Credits" )
+	PORT_DIPSETTING(    0x30, "1 Coin/6 Credits" )
+	PORT_DIPSETTING(    0x00, "Free Play" )
+	/* settings 0x10, 0x20, 0x80, 0x90 all give 1 Coin/1 Credit */
 
-static struct KEYSet keys[] =
-{
-	{ 1, 3, "JUMP" },
-	{ 1, 1, "MOVE LEFT"  },
-	{ 1, 0, "MOVE RIGHT" },
-	{ 1, 2, "CROUCH" },
-	{ 1, 5, "PUNCH" },
-	{ 1, 7, "KICK" },
-	{ -1 }
-};
-
-
-static struct DSW dsw[] =
-{
-	{ 3, 0x0c, "LIVES", { "5", "4", "2", "3" }, 1 },
-	{ 3, 0x01, "DIFFICULTY", { "HARD", "EASY" }, 1 },
-	{ 3, 0x02, "TIMER", { "FAST", "SLOW" }, 1 },
-	{ 4, 0x40, "DEMO MODE", { "ON", "OFF" }, 1 },
-	{ 4, 0x20, "LEVEL SELECT", { "ON", "OFF" }, 1 },
-	{ 4, 0x08, "SW4B", { "ON", "OFF" }, 1 },
-	{ 4, 0x10, "SW5B", { "ON", "OFF" }, 1 },
-	{ -1 }
-};
+	PORT_START	/* DSW2 */
+	PORT_DIPNAME( 0x01, 0x01, "Flip Screen", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x01, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x02, 0x00, "Cabinet", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "Upright" )
+	PORT_DIPSETTING(    0x02, "Cocktail" )
+/* This activates a different coin mode. Look at the dip switch setting schematic */
+	PORT_DIPNAME( 0x04, 0x04, "Coin Mode", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x04, "Mode 1" )
+	PORT_DIPSETTING(    0x00, "Mode 2" )
+	/* In slowmo mode, press 2 to slow game speed */
+	PORT_BITX   ( 0x08, 0x08, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Slow Motion Mode", IP_KEY_NONE, IP_JOY_NONE, 0 )
+	PORT_DIPSETTING(    0x08, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	/* In stop mode, press 2 to stop and 1 to restart */
+	PORT_BITX   ( 0x10, 0x10, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Stop Mode", IP_KEY_NONE, IP_JOY_NONE, 0 )
+	PORT_DIPSETTING(    0x10, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x20, 0x20, "SW 6B", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x20, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_BITX   ( 0x40, 0x40, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Hit Mode", IP_KEY_NONE, IP_JOY_NONE, 0 )
+	PORT_DIPSETTING(    0x40, "Hit" )
+	PORT_DIPSETTING(    0x00, "No Hit" )
+	PORT_BITX(    0x80, 0x80, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE, 0 )
+	PORT_DIPSETTING(    0x80, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+INPUT_PORTS_END
 
 
 
@@ -388,11 +502,11 @@ static struct MachineDriver machine_driver =
 			interrupt,1
 		},
 		{
-			CPU_M6803,
+			CPU_M6802 | CPU_AUDIO_CPU,
 			1000000,	/* 1.0 Mhz ? */
 			2,
 			sound_readmem,sound_writemem,0,0,
-			mpatrol_sh_interrupt,68	/* 68 ints per frame = 4080 ints/sec */
+			nmi_interrupt,68	/* 68 ints per frame = 4080 ints/sec */
 		}
 	},
 	60,
@@ -412,7 +526,6 @@ static struct MachineDriver machine_driver =
 	kungfum_vh_screenrefresh,
 
 	/* sound hardware */
-	0,
 	mpatrol_sh_init,
 	mpatrol_sh_start,
 	AY8910_sh_stop,
@@ -530,14 +643,15 @@ struct GameDriver kungfum_driver =
 {
 	"Kung Fu Master",
 	"kungfum",
-	"Mirko Buffoni\nNicola Salmoria\nIshmair\nPaul Swan\nAaron Giles (sound)",
+	"Mirko Buffoni\nNicola Salmoria\nIshmair\nPaul Swan\nAaron Giles (sound)\nMarco Cassili",
 	&machine_driver,
 
 	kungfum_rom,
 	0, 0,
 	0,
+	0,	/* sound_prom */
 
-	input_ports, 0, trak_ports, dsw, keys,
+	0/*TBR*/, input_ports, 0/*TBR*/, 0/*TBR*/, 0/*TBR*/,
 
 	color_prom, 0, 0,
 	ORIENTATION_DEFAULT,
@@ -549,14 +663,15 @@ struct GameDriver kungfub_driver =
 {
 	"Kung Fu Master (bootleg)",
 	"kungfub",
-	"Mirko Buffoni\nNicola Salmoria\nIshmair\nPaul Swan\nAaron Giles (sound)",
+	"Mirko Buffoni\nNicola Salmoria\nIshmair\nPaul Swan\nAaron Giles (sound)\nMarco Cassili",
 	&machine_driver,
 
 	kungfub_rom,
 	0, 0,
 	0,
+	0,	/* sound_prom */
 
-	input_ports, 0, trak_ports, dsw, keys,
+	0/*TBR*/, input_ports, 0/*TBR*/, 0/*TBR*/, 0/*TBR*/,
 
 	color_prom, 0, 0,
 	ORIENTATION_DEFAULT,

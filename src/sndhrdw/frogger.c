@@ -4,40 +4,37 @@
 
 
 
+/* The timer clock which feeds the upper 4 bits of    */
+/* AY-3-8910 port B is based on the same clock        */
+/* feeding the sound CPU Z80.  It is a divide by      */
+/* 5120, formed by a standard divide by 512, followed */
+/* by a divide by 10 using a 4 bit bi-quinary count   */
+/* sequence. (See LS90 data sheet for an example)     */
+/* The upper three bits come directly from the        */
+/* upper three bits of the bi-quinary counter.        */
+/* Bit 4 comes from the output of the divide by 512.  */
+
+static int frogger_timer[20] = {
+0x00, 0x10, 0x00, 0x10, 0x08, 0x18, 0x08, 0x18, 0x40, 0x50,
+0x80, 0x90, 0x80, 0x90, 0x88, 0x98, 0x88, 0x98, 0xc0, 0xd0
+};
+
 static int frogger_portB_r(int offset)
 {
-	int clock;
+	/* need to protect from totalcycles overflow */
+	static int last_totalcycles = 0;
 
-#define TIMER_RATE 170
+	/* number of Z80 clock cycles to count */
+	static int clock;
 
-	clock = cpu_gettotalcycles() / TIMER_RATE;
+	int current_totalcycles;
 
-#if 0	/* temporarily removed */
-	/* to speed up the emulation, detect when the program is looping waiting */
-	/* for the timer, and skip the necessary CPU cycles in that case */
-	if (cpu_getreturnpc() == 0x0140)
-	{
-		/* wait until clock & 0x08 == 0 */
-		if ((clock & 0x08) != 0)
-		{
-			clock = clock + 0x08;
-			clockticks = clock * TIMER_RATE;
-			cpu_seticount(Z80_IPeriod - clockticks);
-		}
-	}
-	else if (cpu_getreturnpc() == 0x0149)
-	{
-		/* wait until clock & 0x08 != 0 */
-		if ((clock & 0x08) == 0)
-		{
-			clock = (clock + 0x08) & ~0x07;
-			clockticks = clock * TIMER_RATE;
-			cpu_seticount(Z80_IPeriod - clockticks);
-		}
-	}
-#endif
+	current_totalcycles = cpu_gettotalcycles();
+	clock = (clock + (current_totalcycles-last_totalcycles)) % 5120;
 
-	return clock;
+	last_totalcycles = current_totalcycles;
+
+	return frogger_timer[clock/256];
 }
 
 
@@ -58,22 +55,11 @@ void frogger_sh_irqtrigger_w(int offset,int data)
 
 
 
-int frogger_sh_interrupt(void)
-{
-	AY8910_update();
-
-	/* interrupts don't happen here, the handler is used only to update the 8910 */
-	return ignore_interrupt();
-}
-
-
-
 static struct AY8910interface interface =
 {
 	1,	/* 1 chip */
-	10,	/* 10 updates per video frame (good quality) */
-	1789750000,	/* 1.78975 MHZ ?? */
-	{ 255 },
+	1789750,	/* 1.78975 MHZ */
+	{ 0x60ff },
 	{ soundlatch_r },
 	{ frogger_portB_r },
 	{ 0 },

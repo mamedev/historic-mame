@@ -72,21 +72,21 @@ int spacduel_IN3_r (int offset) {
 
 int bwidow_interrupt(void)
 {
-	if (cpu_getiloops() == 5)
+	if (cpu_getiloops() == 7)
 		avgdvg_clr_busy();
 	return interrupt();
 }
 
 int gravitar_interrupt(void)
 {
-	if (cpu_getiloops() == 5)
+	if (cpu_getiloops() == 7)
 		avgdvg_clr_busy();
 	return interrupt();
 }
 
 int spacduel_interrupt(void)
 {
-	if (cpu_getiloops() == 5)
+	if (cpu_getiloops() == 7)
 		avgdvg_clr_busy();
 	return interrupt();
 }

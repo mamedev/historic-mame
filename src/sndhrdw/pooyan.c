@@ -8,7 +8,7 @@ static int pooyan_portB_r(int offset)
 {
 	int clock;
 
-#define TIMER_RATE 36
+#define TIMER_RATE 38
 
 	clock = cpu_gettotalcycles() / TIMER_RATE;
 
@@ -42,12 +42,18 @@ static int pooyan_portB_r(int offset)
 
 
 
-int pooyan_sh_interrupt(void)
+void pooyan_sh_irqtrigger_w(int offset,int data)
 {
-	AY8910_update();
+	static int last;
 
-	if (pending_commands) return interrupt();
-	else return ignore_interrupt();
+
+	if (last == 1 && data == 0)
+	{
+		/* setting bit 0 high then low triggers IRQ on the sound CPU */
+		cpu_cause_interrupt(1,0xff);
+	}
+
+	last = data;
 }
 
 
@@ -55,10 +61,9 @@ int pooyan_sh_interrupt(void)
 static struct AY8910interface interface =
 {
 	2,	/* 2 chips */
-	10,	/* 10 updates per video frame (good quality) */
-	1789750000,	/* 1.78975 MHZ ?? */
-	{ 255, 255 },
-	{ sound_command_r },
+	1789750,	/* 1.78975 MHZ ?? */
+	{ 0x30ff, 0x30ff },
+	{ soundlatch_r },
 	{ pooyan_portB_r },
 	{ 0 },
 	{ 0 }
@@ -68,7 +73,5 @@ static struct AY8910interface interface =
 
 int pooyan_sh_start(void)
 {
-	pending_commands = 0;
-
 	return AY8910_sh_start(&interface);
 }

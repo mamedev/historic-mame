@@ -30,10 +30,4 @@ int input_port_13_r(int offset);
 int input_port_14_r(int offset);
 int input_port_15_r(int offset);
 
-int readtrakport(int port);
-int input_trak_0_r(int offset);
-int input_trak_1_r(int offset);
-int input_trak_2_r(int offset);
-int input_trak_3_r(int offset);
-
 #endif

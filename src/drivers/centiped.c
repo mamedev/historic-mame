@@ -134,9 +134,7 @@ the Atari vector games.
 
 
 int centiped_IN0_r(int offset);
-
-int centiped_trakball_x (int data);
-int centiped_trakball_y (int data);
+int centiped_IN2_r(int offset);	/* JB 971220 */
 
 extern unsigned char *centiped_charpalette,*centiped_spritepalette;
 void centiped_vh_convert_color_prom (unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
@@ -148,7 +146,6 @@ void centiped_vh_flipscreen_w (int offset, int data);
 static struct POKEYinterface interface =
 {
 	1,	/* 1 chip */
-	1,	/* 10 updates per video frame (good quality) */
 	FREQ_17_APPROX,	/* 1.7 Mhz */
 	255,
 	NO_CLIP,
@@ -185,7 +182,7 @@ static struct MemoryReadAddress readmem[] =
 	{ 0xf800, 0xffff, MRA_ROM },	/* for the reset / interrupt vectors */
 	{ 0x0c00, 0x0c00, centiped_IN0_r },	/* IN0 */
 	{ 0x0c01, 0x0c01, input_port_1_r },	/* IN1 */
-	{ 0x0c02, 0x0c02, input_trak_1_r },	/* IN2 */
+	{ 0x0c02, 0x0c02, centiped_IN2_r },	/* IN2 */	/* JB 971220 */
 	{ 0x0c03, 0x0c03, input_port_3_r },	/* IN3 */
 	{ 0x0800, 0x0800, input_port_4_r },	/* DSW1 */
 	{ 0x0801, 0x0801, input_port_5_r },	/* DSW2 */
@@ -216,7 +213,7 @@ static struct MemoryWriteAddress writemem[] =
 
 INPUT_PORTS_START( input_ports )
 	PORT_START	/* IN0 */
-	PORT_BIT ( 0x0f, IP_ACTIVE_HIGH, IPT_UNKNOWN )	/* bits for trackball x */
+	PORT_ANALOG ( 0x0f, IP_ACTIVE_HIGH, IPT_TRACKBALL_X | IPF_REVERSE, 100, 7, 0, 0 ) /* JB 971220 */
 	PORT_DIPNAME (0x10, 0x00, "Cabinet", IP_KEY_NONE )
 	PORT_DIPSETTING (   0x00, "Upright" )
 	PORT_DIPSETTING (   0x10, "Cocktail" )
@@ -224,7 +221,7 @@ INPUT_PORTS_START( input_ports )
 	PORT_DIPSETTING(    0x20, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
 	PORT_BIT ( 0x40, IP_ACTIVE_HIGH, IPT_VBLANK )
-	PORT_BIT ( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )	/* sign bit for trackball */
+	PORT_BIT ( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )	/* direction bit for trackball x */
 
 	PORT_START	/* IN1 */
 	PORT_BIT ( 0x01, IP_ACTIVE_LOW, IPT_START1 )
@@ -237,7 +234,11 @@ INPUT_PORTS_START( input_ports )
 	PORT_BIT ( 0x80, IP_ACTIVE_LOW, IPT_COIN2 )
 
 	PORT_START	/* IN2 */
-	PORT_BIT ( 0xff, IP_ACTIVE_HIGH, IPT_UNKNOWN )	/* bits for trackball y */
+	PORT_ANALOG ( 0x0f, IP_ACTIVE_HIGH, IPT_TRACKBALL_Y, 100, 7, 0, 0 ) /* JB 971220 */
+	PORT_BIT ( 0x10, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT ( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT ( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT ( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN ) /* direction bit for trackball y */
 
 	PORT_START	/* IN3 */
 	PORT_BIT ( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY | IPF_COCKTAIL )
@@ -260,7 +261,7 @@ INPUT_PORTS_START( input_ports )
 	PORT_DIPSETTING (   0x04, "3" )
 	PORT_DIPSETTING (   0x08, "4" )
 	PORT_DIPSETTING (   0x0c, "5" )
-	PORT_DIPNAME (0x30, 0x10, "Bonus", IP_KEY_NONE )
+	PORT_DIPNAME (0x30, 0x10, "Bonus Life", IP_KEY_NONE )
 	PORT_DIPSETTING (   0x00, "10000" )
 	PORT_DIPSETTING (   0x10, "12000" )
 	PORT_DIPSETTING (   0x20, "15000" )
@@ -294,22 +295,6 @@ INPUT_PORTS_START( input_ports )
 	PORT_DIPSETTING (   0x80, "6 credits/5 coins" )
 	PORT_DIPSETTING (   0x0a, "4 credits/3 coins" )
 INPUT_PORTS_END
-
-static struct TrakPort trak_ports[] = {
-  {
-    X_AXIS,
-    1,
-    1.0,
-    centiped_trakball_x
-  },
-  {
-    Y_AXIS,
-    1,
-    1.0,
-    centiped_trakball_y
-  },
-  { -1 }
-};
 
 
 static struct GfxLayout charlayout =
@@ -374,7 +359,6 @@ static struct MachineDriver machine_driver =
 	centiped_vh_screenrefresh,
 
 	/* sound hardware */
-	0,
 	0,
 	centiped_sh_start,
 	pokey_sh_stop,
@@ -444,21 +428,15 @@ struct GameDriver centiped_driver =
 {
 	"Centipede",
 	"centiped",
-	"Ivan Mackintosh\n"
-	"Edward Massey\n"
-	"Pete Rittwage\n"
-	"Nicola Salmoria\n"
-	"Mirko Buffoni\n"
-	"   (MAME driver)\n"
-	"Brad Oliver\n"
-	"   (additional code)",
+	"Ivan Mackintosh (hardware info)\nEdward Massey (MageX emulator)\nPete Rittwage (hardware info)\nNicola Salmoria (MAME driver)\nMirko Buffoni (MAME driver)\nBrad Oliver (additional code)",
 	&machine_driver,
 
 	centiped_rom,
 	0, 0,
 	0,
+	0,	/* sound_prom */
 
-	0/*TBR*/, input_ports, trak_ports, 0/*TBR*/, 0/*TBR*/,
+	0/*TBR*/, input_ports, 0/*TBR*/, 0/*TBR*/, 0/*TBR*/,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,

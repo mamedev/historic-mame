@@ -347,15 +347,14 @@ static void drawsprites(struct osd_bitmap *bitmap)
 			flipy = spriteram[offs + 2] & 2;
 			if (flipscreen[0])
 			{
-				sx = 240 - sx;
+				sx = 237 - sx;
 				flipx = !flipx;
 			}
 			if (flipscreen[1])
 			{
-				sy = 240 - sy;
+				sy = 242 - sy;
 				flipy = !flipy;
 			}
-
 
 			drawgfx(bitmap,Machine->gfx[(spriteram[offs + 3] & 0x40) ? 3 : 1],
 					spriteram[offs + 3] & 0x3f,
@@ -375,10 +374,21 @@ static void drawplayfield1(struct osd_bitmap *bitmap)
 		int i,scrollx,scrolly[32];
 
 
-/* TODO: support flipscreen */
-		scrollx = -*taito_scrollx1 + 15;
-		for (i = 0;i < 32;i++)
-			scrolly[i] = -taito_colscrolly1[i] - *taito_scrolly1;
+		if (flipscreen[0])
+			scrollx = *taito_scrollx1 + 2;
+		else
+			scrollx = -*taito_scrollx1 + 14;
+
+		if (flipscreen[1])
+		{
+			for (i = 0;i < 32;i++)
+				scrolly[31-i] = taito_colscrolly1[i] + *taito_scrolly1;
+		}
+		else
+		{
+			for (i = 0;i < 32;i++)
+				scrolly[i] = -taito_colscrolly1[i] - *taito_scrolly1;
+		}
 
 		copyscrollbitmap(bitmap,tmpbitmap,1,&scrollx,32,scrolly,&Machine->drv->visible_area,TRANSPARENCY_COLOR,0);
 	}
@@ -392,11 +402,22 @@ static void drawplayfield2(struct osd_bitmap *bitmap)
 		int i,scrollx,scrolly[32];
 
 
-/* TODO: support flipscreen */
 		scrollx = *taito_scrollx2;
-		scrollx = -((scrollx & 0xf8) | (7 - ((scrollx+1) & 7))) + 16;
-		for (i = 0;i < 32;i++)
-			scrolly[i] = -taito_colscrolly2[i] - *taito_scrolly2;
+		if (flipscreen[0])
+			scrollx = ((scrollx & 0xf8) | ((scrollx+1) & 7)) + 10;
+		else
+			scrollx = -((scrollx & 0xf8) | (7 - ((scrollx+1) & 7))) + 16;
+
+		if (flipscreen[1])
+		{
+			for (i = 0;i < 32;i++)
+				scrolly[31-i] = taito_colscrolly2[i] + *taito_scrolly2;
+		}
+		else
+		{
+			for (i = 0;i < 32;i++)
+				scrolly[i] = -taito_colscrolly2[i] - *taito_scrolly2;
+		}
 
 		copyscrollbitmap(bitmap,tmpbitmap2,1,&scrollx,32,scrolly,&Machine->drv->visible_area,TRANSPARENCY_COLOR,0);
 	}
@@ -410,11 +431,22 @@ static void drawplayfield3(struct osd_bitmap *bitmap)
 		int i,scrollx,scrolly[32];
 
 
-/* TODO: support flipscreen */
 		scrollx = *taito_scrollx3;
-		scrollx = -((scrollx & 0xf8) | (7 - ((scrollx-1) & 7))) + 18;
-		for (i = 0;i < 32;i++)
-			scrolly[i] = -taito_colscrolly3[i] - *taito_scrolly3;
+		if (flipscreen[0])
+			scrollx = ((scrollx & 0xf8) | ((scrollx-1) & 7)) + 12;
+		else
+			scrollx = -((scrollx & 0xf8) | (7 - ((scrollx-1) & 7))) + 18;
+
+		if (flipscreen[1])
+		{
+			for (i = 0;i < 32;i++)
+				scrolly[31-i] = taito_colscrolly3[i] + *taito_scrolly3;
+		}
+		else
+		{
+			for (i = 0;i < 32;i++)
+				scrolly[i] = -taito_colscrolly3[i] - *taito_scrolly3;
+		}
 
 		copyscrollbitmap(bitmap,tmpbitmap3,1,&scrollx,32,scrolly,&Machine->drv->visible_area,TRANSPARENCY_COLOR,0);
 	}

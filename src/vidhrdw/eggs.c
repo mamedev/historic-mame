@@ -59,7 +59,7 @@ void eggs_vh_screenrefresh(struct osd_bitmap *bitmap)
 					videoram[offs + 0x20],
 					0,
 					videoram[offs + 0] & 0x02,videoram[offs + 0] & 0x04,
-					239 - videoram[offs + 2*0x20],videoram[offs + 3*0x20],
+					240 - videoram[offs + 2*0x20],videoram[offs + 3*0x20],
 					&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
 	}
 }

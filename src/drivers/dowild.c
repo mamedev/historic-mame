@@ -41,6 +41,7 @@ ac00      sound port 4
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "sndhrdw/sn76496.h"
 
 
 
@@ -55,13 +56,7 @@ int docastle_vh_start(void);
 void docastle_vh_stop(void);
 void docastle_vh_screenrefresh(struct osd_bitmap *bitmap);
 
-void docastle_sound1_w(int offset,int data);
-void docastle_sound2_w(int offset,int data);
-void docastle_sound3_w(int offset,int data);
-void docastle_sound4_w(int offset,int data);
 int docastle_sh_start(void);
-void docastle_sh_stop(void);
-void docastle_sh_update(void);
 
 
 
@@ -111,95 +106,368 @@ static struct MemoryWriteAddress writemem2[] =
 {
 	{ 0x8000, 0x87ff, MWA_RAM },
 	{ 0xe000, 0xe008, docastle_shared0_w },
-	{ 0xa000, 0xa000, docastle_sound1_w },
-	{ 0xa400, 0xa400, docastle_sound2_w },
-	{ 0xa800, 0xa800, docastle_sound3_w },
-	{ 0xac00, 0xac00, docastle_sound4_w },
+	{ 0xa000, 0xa000, SN76496_0_w },
+	{ 0xa400, 0xa400, SN76496_1_w },
+	{ 0xa800, 0xa800, SN76496_2_w },
+	{ 0xac00, 0xac00, SN76496_3_w },
 	{ 0x0000, 0x3fff, MWA_ROM },
 	{ -1 }	/* end of table */
 };
 
 
 
-static struct InputPort input_ports[] =
-{
-	{	/* IN0 */
-		0xff,
-		{ OSD_KEY_RIGHT, OSD_KEY_UP, OSD_KEY_LEFT, OSD_KEY_DOWN,
-				OSD_KEY_Q, OSD_KEY_W, OSD_KEY_E, OSD_KEY_R },
-		{ OSD_JOY_RIGHT, OSD_JOY_UP, OSD_JOY_LEFT, OSD_JOY_DOWN,
-				0, 0, 0, 0 }
-	},
-	{	/* IN1 */
-		0xff,
-		{ OSD_KEY_LCONTROL, 0, 0, OSD_KEY_1,
-				0, 0, 0, OSD_KEY_2 },
-		{ OSD_JOY_FIRE, 0, 0, 0, 0, 0, 0, 0 }
-	},
-	{	/* IN2 */
-		0xff,
-		{ OSD_KEY_T, OSD_KEY_C, OSD_KEY_5, OSD_KEY_Z, OSD_KEY_4, OSD_KEY_3, 0, 0 },
-		{ 0, 0, 0, 0, 0, 0, 0, 0 }
-	},
-	{	/* DSWA */
-		0xdf,
-		{ 0, 0, OSD_KEY_F1, 0, 0, 0, 0, 0 },
-		{ 0, 0, 0, 0, 0, 0, 0, 0 }
-	},
-	{	/* COIN */
-		0xff,
-		{ 0, 0, 0, 0, 0, 0, 0, 0 },
-		{ 0, 0, 0, 0, 0, 0, 0, 0 }
-	},
-	{ -1 }	/* end of table */
-};
+INPUT_PORTS_START( dowild_input_ports )
+	PORT_START	/* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_4WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_4WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_4WAY )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_4WAY | IPF_COCKTAIL )
 
-static struct TrakPort trak_ports[] =
-{
-        { -1 }
-};
+	PORT_START	/* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* reported as not used */
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* reported as 2 Player Fire */
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* reported as 2 Player Jump */
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* reported as not used */
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START2 )
+
+	PORT_START	/* IN2 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_TILT )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* reported as test */
+/* coin input must be active for 32 frames to be consistently recognized */
+	PORT_BITX(0x04, IP_ACTIVE_LOW, IPT_COIN3 | IPF_IMPULSE, "Coin Aux", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 32)
+	PORT_DIPNAME( 0x08, 0x08, "Freeze", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x08, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* reported as not used */
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* reported as not used */
+
+	PORT_START	/* DSW0 */
+	PORT_DIPNAME( 0x80, 0x80, "Lives", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x80, "3" )
+	PORT_DIPSETTING(    0x00, "5" )
+	PORT_DIPNAME( 0x40, 0x40, "Special", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x40, "Given" )
+	PORT_DIPSETTING(    0x00, "Not Given" )
+	PORT_DIPNAME( 0x20, 0x00, "Cabinet", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "Upright" )
+	PORT_DIPSETTING(    0x20, "Cocktail" )
+	PORT_DIPNAME( 0x10, 0x10, "Extra", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x10, "Easy" )
+	PORT_DIPSETTING(    0x00, "Hard" )
+	PORT_DIPNAME( 0x08, 0x08, "DSW5", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x08, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_BITX(    0x04, 0x04, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Rack Test", OSD_KEY_F1, IP_JOY_NONE, 0 )
+	PORT_DIPSETTING(    0x04, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x03, 0x03, "Difficulty", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x03, "Easy" )
+	PORT_DIPSETTING(    0x02, "Medium" )
+	PORT_DIPSETTING(    0x01, "Hard" )
+	PORT_DIPSETTING(    0x00, "Hardest" )
+
+	PORT_START	/* DSW1 */
+	PORT_DIPNAME( 0x0f, 0x0f, "Coin B", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x06, "4 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x08, "3 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x0a, "2 Coins/1 Credits" )
+	PORT_DIPSETTING(    0x07, "3 Coins/2 Credits" )
+	PORT_DIPSETTING(    0x0f, "1 Coin/1 Credit" )
+	PORT_DIPSETTING(    0x09, "2 Coins/3 Credits" )
+	PORT_DIPSETTING(    0x0e, "1 Coin/2 Credits" )
+	PORT_DIPSETTING(    0x0d, "1 Coin/3 Credits" )
+	PORT_DIPSETTING(    0x0c, "1 Coin/4 Credits" )
+	PORT_DIPSETTING(    0x0b, "1 Coin/5 Credits" )
+	PORT_DIPSETTING(    0x00, "Free Play" )
+	/* 0x01, 0x02, 0x03, 0x04, 0x05 all give 1 Coin/1 Credit */
+	PORT_DIPNAME( 0xf0, 0xf0, "Coin A", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x60, "4 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x80, "3 Coins/1 Credit" )
+	PORT_DIPSETTING(    0xa0, "2 Coins/1 Credits" )
+	PORT_DIPSETTING(    0x70, "3 Coins/2 Credits" )
+	PORT_DIPSETTING(    0xf0, "1 Coin/1 Credit" )
+	PORT_DIPSETTING(    0x90, "2 Coins/3 Credits" )
+	PORT_DIPSETTING(    0xe0, "1 Coin/2 Credits" )
+	PORT_DIPSETTING(    0xd0, "1 Coin/3 Credits" )
+	PORT_DIPSETTING(    0xc0, "1 Coin/4 Credits" )
+	PORT_DIPSETTING(    0xb0, "1 Coin/5 Credits" )
+	PORT_DIPSETTING(    0x00, "Free Play" )
+	/* 0x10, 0x20, 0x30, 0x40, 0x50 all give 1 Coin/1 Credit */
+INPUT_PORTS_END
+
+INPUT_PORTS_START( jjack_input_ports )
+	PORT_START	/* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_4WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_4WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_4WAY )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_4WAY | IPF_COCKTAIL )
+
+	PORT_START	/* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* reported as not used */
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* reported as 2 Player Fire */
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* reported as 2 Player Jump */
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* reported as not used */
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START2 )
+
+	PORT_START	/* IN2 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_TILT )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* reported as test */
+/* coin input must be active for 32 frames to be consistently recognized */
+	PORT_BITX(0x04, IP_ACTIVE_LOW, IPT_COIN3 | IPF_IMPULSE, "Coin Aux", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 32)
+	PORT_DIPNAME( 0x08, 0x08, "Freeze", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x08, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* reported as not used */
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* reported as not used */
+
+	PORT_START	/* DSW0 */
+	PORT_DIPNAME( 0xc0, 0xc0, "Lives", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "2" )
+	PORT_DIPSETTING(    0xc0, "3" )
+	PORT_DIPSETTING(    0x80, "4" )
+	PORT_DIPSETTING(    0x40, "5" )
+	PORT_DIPNAME( 0x20, 0x00, "Cabinet", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "Upright" )
+	PORT_DIPSETTING(    0x20, "Cocktail" )
+	PORT_DIPNAME( 0x10, 0x10, "Extra?", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x10, "Easy" )
+	PORT_DIPSETTING(    0x00, "Hard" )
+	PORT_DIPNAME( 0x08, 0x08, "DSW5", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x08, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_BITX(    0x04, 0x04, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Rack Test", OSD_KEY_F1, IP_JOY_NONE, 0 )
+	PORT_DIPSETTING(    0x04, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x03, 0x03, "Difficulty?", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x03, "Easy" )
+	PORT_DIPSETTING(    0x02, "Medium" )
+	PORT_DIPSETTING(    0x01, "Hard" )
+	PORT_DIPSETTING(    0x00, "Hardest" )
+
+	PORT_START	/* DSW1 */
+	PORT_DIPNAME( 0x0f, 0x0f, "Coin B", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x06, "4 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x08, "3 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x0a, "2 Coins/1 Credits" )
+	PORT_DIPSETTING(    0x07, "3 Coins/2 Credits" )
+	PORT_DIPSETTING(    0x0f, "1 Coin/1 Credit" )
+	PORT_DIPSETTING(    0x09, "2 Coins/3 Credits" )
+	PORT_DIPSETTING(    0x0e, "1 Coin/2 Credits" )
+	PORT_DIPSETTING(    0x0d, "1 Coin/3 Credits" )
+	PORT_DIPSETTING(    0x0c, "1 Coin/4 Credits" )
+	PORT_DIPSETTING(    0x0b, "1 Coin/5 Credits" )
+	PORT_DIPSETTING(    0x00, "Free Play" )
+	/* 0x01, 0x02, 0x03, 0x04, 0x05 all give 1 Coin/1 Credit */
+	PORT_DIPNAME( 0xf0, 0xf0, "Coin A", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x60, "4 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x80, "3 Coins/1 Credit" )
+	PORT_DIPSETTING(    0xa0, "2 Coins/1 Credits" )
+	PORT_DIPSETTING(    0x70, "3 Coins/2 Credits" )
+	PORT_DIPSETTING(    0xf0, "1 Coin/1 Credit" )
+	PORT_DIPSETTING(    0x90, "2 Coins/3 Credits" )
+	PORT_DIPSETTING(    0xe0, "1 Coin/2 Credits" )
+	PORT_DIPSETTING(    0xd0, "1 Coin/3 Credits" )
+	PORT_DIPSETTING(    0xc0, "1 Coin/4 Credits" )
+	PORT_DIPSETTING(    0xb0, "1 Coin/5 Credits" )
+	PORT_DIPSETTING(    0x00, "Free Play" )
+	/* 0x10, 0x20, 0x30, 0x40, 0x50 all give 1 Coin/1 Credit */
+INPUT_PORTS_END
 
 
-static struct KEYSet dowild_keys[] =
-{
-	{ 0, 1, "MOVE UP" },
-	{ 0, 2, "MOVE LEFT"  },
-	{ 0, 0, "MOVE RIGHT" },
-	{ 0, 3, "MOVE DOWN" },
-	{ 1, 0, "ACCELERATE" },
-	{ -1 }
-};
+INPUT_PORTS_START( dorunrun_input_ports )
+	PORT_START	/* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_4WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_4WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_4WAY )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_4WAY | IPF_COCKTAIL )
 
-static struct KEYSet dorunrun_keys[] =
-{
-	{ 0, 1, "MOVE UP" },
-	{ 0, 2, "MOVE LEFT"  },
-	{ 0, 0, "MOVE RIGHT" },
-	{ 0, 3, "MOVE DOWN" },
-	{ 1, 0, "FIRE" },
-	{ -1 }
-};
+	PORT_START	/* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START2 )
 
-static struct KEYSet kickridr_keys[] =
-{
-	{ 0, 1, "MOVE UP" },
-	{ 0, 2, "MOVE LEFT"  },
-	{ 0, 0, "MOVE RIGHT" },
-	{ 0, 3, "MOVE DOWN" },
-	{ 1, 0, "KICK" },
-	{ -1 }
-};
+	PORT_START	/* IN2 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_TILT )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* Reported as Test */
+/* coin input must be active for 32 frames to be consistently recognized */
+	PORT_BITX(0x04, IP_ACTIVE_LOW, IPT_COIN3 | IPF_IMPULSE, "Coin Aux", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 32)
+	PORT_DIPNAME( 0x08, 0x08, "Freeze", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x08, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START	/* DSW0 */
+	PORT_DIPNAME( 0x80, 0x80, "Lives", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x80, "3" )
+	PORT_DIPSETTING(    0x00, "5" )
+	PORT_DIPNAME( 0x40, 0x40, "Special", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x40, "Given" )
+	PORT_DIPSETTING(    0x00, "Not Given" )
+	PORT_DIPNAME( 0x20, 0x00, "Cabinet", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "Upright" )
+	PORT_DIPSETTING(    0x20, "Cocktail" )
+	PORT_DIPNAME( 0x10, 0x10, "Extra", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x10, "Easy" )
+	PORT_DIPSETTING(    0x00, "Hard" )
+	PORT_DIPNAME( 0x08, 0x08, "DSW5", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x08, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x04, 0x04, "Demo Sounds", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "Off" )
+	PORT_DIPSETTING(    0x04, "On" )
+	PORT_DIPNAME( 0x03, 0x03, "Difficulty", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x03, "Easy" )
+	PORT_DIPSETTING(    0x02, "Medium" )
+	PORT_DIPSETTING(    0x01, "Hard" )
+	PORT_DIPSETTING(    0x00, "Hardest" )
+
+	PORT_START	/* DSW1 */
+	PORT_DIPNAME( 0x0f, 0x0f, "Coin B", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x06, "4 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x08, "3 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x0a, "2 Coins/1 Credits" )
+	PORT_DIPSETTING(    0x07, "3 Coins/2 Credits" )
+	PORT_DIPSETTING(    0x0f, "1 Coin/1 Credit" )
+	PORT_DIPSETTING(    0x09, "2 Coins/3 Credits" )
+	PORT_DIPSETTING(    0x0e, "1 Coin/2 Credits" )
+	PORT_DIPSETTING(    0x0d, "1 Coin/3 Credits" )
+	PORT_DIPSETTING(    0x0c, "1 Coin/4 Credits" )
+	PORT_DIPSETTING(    0x0b, "1 Coin/5 Credits" )
+	PORT_DIPSETTING(    0x00, "Free Play" )
+	/* 0x01, 0x02, 0x03, 0x04, 0x05 all give 1 Coin/1 Credit */
+	PORT_DIPNAME( 0xf0, 0xf0, "Coin A", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x60, "4 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x80, "3 Coins/1 Credit" )
+	PORT_DIPSETTING(    0xa0, "2 Coins/1 Credits" )
+	PORT_DIPSETTING(    0x70, "3 Coins/2 Credits" )
+	PORT_DIPSETTING(    0xf0, "1 Coin/1 Credit" )
+	PORT_DIPSETTING(    0x90, "2 Coins/3 Credits" )
+	PORT_DIPSETTING(    0xe0, "1 Coin/2 Credits" )
+	PORT_DIPSETTING(    0xd0, "1 Coin/3 Credits" )
+	PORT_DIPSETTING(    0xc0, "1 Coin/4 Credits" )
+	PORT_DIPSETTING(    0xb0, "1 Coin/5 Credits" )
+	PORT_DIPSETTING(    0x00, "Free Play" )
+	/* 0x10, 0x20, 0x30, 0x40, 0x50 all give 1 Coin/1 Credit */
+INPUT_PORTS_END
 
 
-static struct DSW dsw[] =
-{
-	{ 3, 0x80, "LIVES", { "5", "3" }, 1 },
-	{ 3, 0x03, "DIFFICULTY", { "HARDEST", "HARD", "MEDIUM", "EASY" }, 1 },
-	{ 3, 0x10, "EXTRA", { "HARD", "EASY" }, 1 },
-	{ 3, 0x40, "SPECIAL", { "NOT GIVEN", "GIVEN" }, 1 },
-	{ 3, 0x08, "SW4", { "ON", "OFF" }, 1 },
-	{ -1 }
-};
+INPUT_PORTS_START( kickridr_input_ports )
+	PORT_START	/* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_COCKTAIL )
+
+	PORT_START	/* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START2 )
+
+	PORT_START	/* IN2 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_TILT )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* Reported as Test */
+/* coin input must be active for 32 frames to be consistently recognized */
+	PORT_BITX(0x04, IP_ACTIVE_LOW, IPT_COIN3 | IPF_IMPULSE, "Coin Aux", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 32)
+	PORT_DIPNAME( 0x08, 0x08, "Freeze", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x08, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START	/* DSW0 */
+	PORT_DIPNAME( 0x03, 0x03, "Difficulty?", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x03, "Easy" )
+	PORT_DIPSETTING(    0x02, "Medium" )
+	PORT_DIPSETTING(    0x01, "Hard" )
+	PORT_DIPSETTING(    0x00, "Hardest" )
+	PORT_BITX(    0x04, 0x04, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Rack Test", OSD_KEY_F1, IP_JOY_NONE, 0 )
+	PORT_DIPSETTING(    0x04, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x08, 0x08, "DSW5", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x08, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x10, 0x10, "DSW4", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x10, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x20, 0x00, "Cabinet", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "Upright" )
+	PORT_DIPSETTING(    0x20, "Cocktail" )
+	PORT_DIPNAME( 0x40, 0x40, "DSW2", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x40, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x80, 0x80, "DSW1", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x80, "On" )
+	PORT_DIPSETTING(    0x00, "Off" )
+
+	PORT_START	/* DSW1 */
+	PORT_DIPNAME( 0x0f, 0x0f, "Coin B", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x06, "4 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x08, "3 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x0a, "2 Coins/1 Credits" )
+	PORT_DIPSETTING(    0x07, "3 Coins/2 Credits" )
+	PORT_DIPSETTING(    0x0f, "1 Coin/1 Credit" )
+	PORT_DIPSETTING(    0x09, "2 Coins/3 Credits" )
+	PORT_DIPSETTING(    0x0e, "1 Coin/2 Credits" )
+	PORT_DIPSETTING(    0x0d, "1 Coin/3 Credits" )
+	PORT_DIPSETTING(    0x0c, "1 Coin/4 Credits" )
+	PORT_DIPSETTING(    0x0b, "1 Coin/5 Credits" )
+	PORT_DIPSETTING(    0x00, "Free Play" )
+	/* 0x01, 0x02, 0x03, 0x04, 0x05 all give 1 Coin/1 Credit */
+	PORT_DIPNAME( 0xf0, 0xf0, "Coin A", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x60, "4 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x80, "3 Coins/1 Credit" )
+	PORT_DIPSETTING(    0xa0, "2 Coins/1 Credits" )
+	PORT_DIPSETTING(    0x70, "3 Coins/2 Credits" )
+	PORT_DIPSETTING(    0xf0, "1 Coin/1 Credit" )
+	PORT_DIPSETTING(    0x90, "2 Coins/3 Credits" )
+	PORT_DIPSETTING(    0xe0, "1 Coin/2 Credits" )
+	PORT_DIPSETTING(    0xd0, "1 Coin/3 Credits" )
+	PORT_DIPSETTING(    0xc0, "1 Coin/4 Credits" )
+	PORT_DIPSETTING(    0xb0, "1 Coin/5 Credits" )
+	PORT_DIPSETTING(    0x00, "Free Play" )
+	/* 0x10, 0x20, 0x30, 0x40, 0x50 all give 1 Coin/1 Credit */
+INPUT_PORTS_END
 
 
 
@@ -257,6 +525,26 @@ static unsigned char dowild_color_prom[] =
 	0x00,0x00,0x01,0x01,0x02,0x02,0x03,0x03,0x00,0x24,0x49,0x6D,0x92,0xB6,0xDB,0xFF
 };
 
+static unsigned char jjack_color_prom[] =
+{
+	0x00,0x13,0xAC,0x60,0xFF,0x14,0xE0,0xFC,0x00,0xFF,0xF6,0xE0,0x1C,0x80,0x17,0x92,
+	0xFF,0xFE,0x17,0xE2,0x80,0x20,0x00,0xE0,0x02,0x03,0xF0,0x20,0xE0,0xFF,0x80,0x00,
+	0xFC,0xE2,0xE0,0x03,0x60,0x00,0x90,0x00,0x00,0xFF,0xF6,0xF0,0x1C,0xE0,0x17,0x6E,
+	0xC8,0xD0,0x64,0x88,0x37,0xFF,0xF8,0x00,0xF0,0xFC,0x92,0xFC,0x1C,0xE0,0x00,0x00,
+	0xE0,0xFC,0xFC,0xB6,0x6E,0x6D,0x0C,0x00,0xF0,0xEE,0xE0,0x03,0x60,0x00,0x90,0x00,
+	0x49,0x92,0x0C,0xFF,0x60,0x24,0x00,0x00,0x00,0x6D,0x60,0xFF,0x92,0x6D,0x00,0x00,
+	0xFF,0xF6,0x00,0x13,0x60,0x20,0x00,0x0F,0x64,0xFD,0xF6,0xE0,0x20,0xF0,0xA0,0x1C,
+	0xE2,0xFF,0xFC,0x00,0xE0,0x1C,0x03,0x00,0x00,0x92,0x16,0x4A,0x02,0x02,0x00,0x13,
+	0x00,0xE0,0x0C,0xFC,0xB0,0xF0,0xA0,0xEE,0x00,0xF1,0xE2,0xFC,0x92,0x1F,0xB2,0x00,
+	0xFF,0xF6,0x17,0xFF,0x92,0x00,0x00,0x00,0x49,0xFD,0x13,0xE2,0xAC,0x92,0x64,0x00,
+	0x00,0xFC,0x0B,0x88,0xFF,0x00,0x00,0x00,0x80,0x88,0x40,0xFF,0x92,0x00,0x00,0x00,
+	0x80,0x88,0x40,0xE0,0x92,0x00,0x00,0x00,0x00,0xD0,0xA8,0x88,0x08,0x14,0x2C,0x48,
+	0x00,0x1C,0x92,0x82,0x45,0xF8,0x0C,0x00,0x00,0xF0,0x88,0xF4,0xAC,0x8C,0x60,0x40,
+	0x68,0xFF,0x00,0x6F,0x20,0xFC,0x03,0x00,0x14,0x08,0xAC,0x88,0x17,0x1F,0xFF,0x64,
+	0x00,0x6D,0xB6,0xA0,0x01,0xD0,0x49,0xE0,0x00,0x17,0xF4,0x88,0xAC,0x8C,0x60,0x1C,
+	0x00,0xD0,0xA8,0x88,0x68,0x00,0xB0,0x0F,0x00,0xD0,0xA8,0x88,0x68,0x14,0x94,0xFF,
+};
+
 static unsigned char dorunrun_color_prom[] =
 {
 	0x00,0xFF,0xFC,0xE8,0xE0,0xC0,0xA0,0xFC,0x00,0x14,0x10,0x0C,0xFC,0xC0,0xFF,0x00,
@@ -275,6 +563,26 @@ static unsigned char dorunrun_color_prom[] =
 	0x00,0xC1,0x52,0xFC,0xF7,0xEF,0xFB,0x17,0xE4,0xF2,0xF0,0xFC,0x7F,0x1F,0x13,0x00,
 	0x00,0x20,0x40,0x60,0x80,0xA0,0xC0,0xE0,0x00,0x04,0x08,0x0C,0x10,0x14,0x18,0x1C,
 	0x00,0x00,0x01,0x01,0x02,0x02,0x03,0x03,0x00,0x24,0x49,0x6D,0x92,0xB6,0xDB,0xFF
+};
+
+static unsigned char spiero_color_prom[] =
+{
+	0x00,0xFF,0xFC,0xF0,0xE0,0x2B,0xA0,0xFC,0x00,0x35,0x31,0x2D,0xFC,0xC0,0xFF,0x00,
+	0x00,0x26,0x27,0x4B,0xF9,0xFF,0xE0,0xEA,0x00,0x26,0x27,0x4B,0xE0,0xFC,0x9C,0xFC,
+	0x00,0xEB,0xFC,0x13,0x0F,0x0B,0xFF,0x92,0x00,0xFC,0x9C,0xE0,0xD0,0xD7,0xB3,0x8F,
+	0x00,0x9C,0xFC,0xDC,0xD0,0xD7,0xB3,0x8F,0x00,0x19,0xDE,0x15,0xD0,0xD7,0xB3,0x8F,
+	0x00,0x8F,0xF4,0x88,0xD0,0xB3,0x14,0x10,0x00,0xFF,0xF8,0xF0,0xD0,0x1C,0x14,0x10,
+	0x00,0x10,0x1C,0x14,0xD0,0xD7,0xB3,0x8F,0x00,0x8F,0xF4,0x88,0xD0,0xB3,0x17,0x13,
+	0x00,0xFF,0xF8,0xF0,0xD0,0x1F,0x17,0x13,0x00,0x13,0x1F,0x17,0xD0,0xD7,0xB3,0x8F,
+	0x00,0x8F,0xF4,0x88,0xD0,0xB3,0xB4,0x90,0x00,0xFF,0xF8,0xF0,0xD0,0xD8,0xB4,0x90,
+	0x00,0x90,0xD8,0xB4,0xD0,0xD7,0xB3,0x8F,0x00,0x8F,0xF4,0x88,0xD0,0xB3,0xBB,0x96,
+	0x00,0xFF,0xF8,0xF0,0xD0,0xDF,0xBB,0x96,0x00,0x96,0xDF,0xBB,0xD0,0xD7,0xB3,0x8F,
+	0x00,0xA0,0x0F,0xFF,0xE0,0xEC,0xFC,0x0F,0x1C,0x14,0x0C,0xF4,0xD0,0xAC,0x88,0x00,
+	0xE4,0xF8,0x88,0xB4,0x0B,0x7F,0x6E,0x17,0xFD,0xF8,0xB0,0xE4,0xC0,0x80,0x40,0x00,
+	0x40,0x60,0x80,0xA0,0xF7,0xEF,0xFF,0x00,0x00,0x13,0x52,0xE0,0xFF,0x63,0x1C,0x9C,
+	0x00,0xC1,0x52,0xFC,0xF7,0xEF,0xFB,0x17,0xFF,0x13,0xE6,0xFC,0xFB,0xF7,0x7C,0x02,
+	0x00,0x20,0x40,0x60,0x80,0xA0,0xC0,0xE0,0x00,0x04,0x08,0x0C,0x10,0x14,0x18,0x1C,
+	0x00,0x00,0x01,0x01,0x02,0x02,0x03,0x03,0x00,0x24,0x49,0x6D,0x92,0xB6,0xDB,0xFF,
 };
 
 static unsigned char kickridr_color_prom[] =
@@ -337,10 +645,9 @@ static struct MachineDriver machine_driver =
 
 	/* sound hardware */
 	0,
-	0,
 	docastle_sh_start,
-	docastle_sh_stop,
-	docastle_sh_update
+	SN76496_sh_stop,
+	SN76496_sh_update
 };
 
 
@@ -370,6 +677,25 @@ ROM_START( dowild_rom )
 ROM_END
 
 
+ROM_START( jjack_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "j1.bin",  0x0000, 0x2000, 0xcd2da76d )
+	ROM_LOAD( "j3.bin",  0x4000, 0x2000, 0xaadcd8e6 )
+	ROM_LOAD( "j4.bin",  0x6000, 0x2000, 0x9306bcd2 )
+	ROM_LOAD( "j2.bin",  0x8000, 0x2000, 0x1c2c2a84 )
+
+	ROM_REGION(0xc000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "j5.bin",  0x0000, 0x4000, 0xe4549bd8 )
+	ROM_LOAD( "j6.bin",  0x4000, 0x2000, 0x62d40f3c )
+	ROM_LOAD( "j7.bin",  0x6000, 0x2000, 0x2e94b664 )
+	ROM_LOAD( "j8.bin",  0x8000, 0x2000, 0x0914de92 )
+	ROM_LOAD( "j9.bin",  0xa000, 0x2000, 0xd5d6f378 )
+
+	ROM_REGION(0x10000)	/* 64k for the second CPU */
+	ROM_LOAD( "j0.bin",  0x0000, 0x4000, 0x25a030a6 )
+ROM_END
+
+
 ROM_START( dorunrun_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "2764.P1",  0x0000, 0x2000, 0x8ce02038 )
@@ -387,6 +713,26 @@ ROM_START( dorunrun_rom )
 	ROM_REGION(0x10000)	/* 64k for the second CPU */
 	ROM_LOAD( "27128.P7", 0x0000, 0x4000, 0x0f9be91f )
 ROM_END
+
+
+ROM_START( spiero_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "SP1.BIN",  0x0000, 0x2000, 0xcc3428ee )
+	ROM_LOAD( "SP3.BIN",  0x4000, 0x2000, 0xcc45a37d )
+	ROM_LOAD( "SP4.BIN",  0x6000, 0x2000, 0xc9964244 )
+	ROM_LOAD( "SP2.BIN",  0x8000, 0x2000, 0x8e065230 )
+
+	ROM_REGION(0xc000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "SP5.BIN",  0x0000, 0x4000, 0x81ddb357 )
+	ROM_LOAD( "SP6.BIN",  0x4000, 0x2000, 0x5dc7b99b )
+	ROM_LOAD( "SP7.BIN",  0x6000, 0x2000, 0x37eb2d0d )
+	ROM_LOAD( "SP8.BIN",  0x8000, 0x2000, 0x08e60916 )
+	ROM_LOAD( "SP9.BIN",  0xa000, 0x2000, 0xff4c1b7e )
+
+	ROM_REGION(0x10000)	/* 64k for the second CPU */
+	ROM_LOAD( "SP0.BIN",  0x0000, 0x4000, 0x0f9be91f )
+ROM_END
+
 
 ROM_START( kickridr_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
@@ -500,17 +846,38 @@ struct GameDriver dowild_driver =
 {
 	"Mr. Do! Wild Ride",
 	"dowild",
-	"MIRKO BUFFONI\nNICOLA SALMORIA\nGARY WALTON\nSIMON WALLS",
+	"Mirko Buffoni\nNicola Salmoria\nGary Walton\nSimon Walls\nMarco Cassili",
 	&machine_driver,
 
 	dowild_rom,
 	0, 0,
 	0,
+	0,	/* sound_prom */
 
-	input_ports, 0, trak_ports, dsw, dowild_keys,
+	0/*TBR*/, dowild_input_ports, 0/*TBR*/, 0/*TBR*/, 0/*TBR*/,
 
 	dowild_color_prom, 0, 0,
 	ORIENTATION_DEFAULT,
+
+	dowild_hiload, dowild_hisave
+};
+
+struct GameDriver jjack_driver =
+{
+	"Jumping Jack (Japanese)",
+	"jjack",
+	"Mirko Buffoni\nNicola Salmoria\nGary Walton\nSimon Walls\nMarco Cassili",
+	&machine_driver,
+
+	jjack_rom,
+	0, 0,
+	0,
+	0,	/* sound_prom */
+
+	0/*TBR*/, jjack_input_ports, 0/*TBR*/, 0/*TBR*/, 0/*TBR*/,
+
+	jjack_color_prom, 0, 0,
+	ORIENTATION_ROTATE_270,
 
 	dowild_hiload, dowild_hisave
 };
@@ -519,16 +886,37 @@ struct GameDriver dorunrun_driver =
 {
 	"Mr. Do! Run Run",
 	"dorunrun",
-	"MIRKO BUFFONI\nNICOLA SALMORIA\nGARY WALTON\nSIMON WALLS",
+	"Mirko Buffoni\nNicola Salmoria\nGary Walton\nSimon Walls\nMarco Cassili",
 	&machine_driver,
 
 	dorunrun_rom,
 	0, 0,
 	0,
+	0,	/* sound_prom */
 
-	input_ports, 0, trak_ports, dsw, dorunrun_keys,
+	0/*TBR*/, dorunrun_input_ports, 0/*TBR*/, 0/*TBR*/, 0/*TBR*/,
 
 	dorunrun_color_prom, 0, 0,
+	ORIENTATION_DEFAULT,
+
+	dorunrun_hiload, dorunrun_hisave
+};
+
+struct GameDriver spiero_driver =
+{
+	"Super Piero (Japanese Do! Run Run)",
+	"spiero",
+	"Mirko Buffoni\nNicola Salmoria\nGary Walton\nSimon Walls\nMarco Cassili",
+	&machine_driver,
+
+	spiero_rom,
+	0, 0,
+	0,
+	0,	/* sound_prom */
+
+	0/*TBR*/, dorunrun_input_ports, 0/*TBR*/, 0/*TBR*/, 0/*TBR*/,
+
+	spiero_color_prom, 0, 0,
 	ORIENTATION_DEFAULT,
 
 	dorunrun_hiload, dorunrun_hisave
@@ -538,14 +926,15 @@ struct GameDriver kickridr_driver =
 {
 	"Kick Rider",
 	"kickridr",
-	"MIRKO BUFFONI\nNICOLA SALMORIA\nGARY WALTON\nSIMON WALLS",
+	"Mirko Buffoni\nNicola Salmoria\nGary Walton\nSimon Walls\nMarco Cassili",
 	&machine_driver,
 
 	kickridr_rom,
 	0, 0,
 	0,
+	0,	/* sound_prom */
 
-	input_ports, 0, trak_ports, dsw, kickridr_keys,
+	0/*TBR*/, kickridr_input_ports, 0/*TBR*/, 0/*TBR*/, 0/*TBR*/,
 
 	kickridr_color_prom, 0, 0,
 	ORIENTATION_DEFAULT,

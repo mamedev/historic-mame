@@ -1,24 +1,33 @@
+#define MAX_76496 4
+
+
+struct SN76496interface
+{
+	int num;	/* total number of 76496 in the machine */
+	int clock;
+	int volume[MAX_76496];
+};
+
 struct SN76496
 {
 	/* set this before calling SN76496Reset() */
-	int Clock;	/* chip clock in Hz */
-
-	/* read these after calling SN76496Update(), and produce the required sounds */
-	int Volume[4];	/* volume of voice 0-2 and noise. Range is 0-255 */
-	int Frequency[3];	/* tone frequency in Hz */
-	int NoiseShiftRate;	/* sample rate for the noise sample */
-        int Noisemode;          /* noise mode 0=white noise, 1=periodic noise */
-	/* private */
-	int Register[8];
-	int LastRegister;
-	/* buffer mode */
-	int Counter[4];
-	int NoiseGen;
+	int Clock;			/* chip clock in Hz     */
+	int freqStep;		/* frequency count step */
+	int Volume[4];		/* volume of voice 0-2 and noise. Range is 0-0x1fff */
+	int NoiseFB;		/* noise feedback mask */
+	int Register[8];	/* registers */
+	int LastRegister;	/* last writed register */
+	int Counter[4];		/* frequency counter    */
+	int Turn[4];
+	int Dir[4];			/* output direction     */
+	int VolTable[16];	/* volume tables        */
+	unsigned int NoiseGen;		/* noise generator      */
 };
 
-
-
-void SN76496Reset(struct SN76496 *R);
-void SN76496Write(struct SN76496 *R,int data);
-void SN76496Update(struct SN76496 *R);
-void SN76496UpdateB(struct SN76496 *R , int rate , char *buffer , int size);
+int SN76496_sh_start(struct SN76496interface *interface);
+void SN76496_sh_stop(void);
+void SN76496_0_w(int offset,int data);
+void SN76496_1_w(int offset,int data);
+void SN76496_2_w(int offset,int data);
+void SN76496_3_w(int offset,int data);
+void SN76496_sh_update(void);

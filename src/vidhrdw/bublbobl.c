@@ -270,6 +270,17 @@ void bublbobl_vh_screenrefresh(struct osd_bitmap *bitmap)
 							videoram[goffs + 1] & 0x40,videoram[goffs + 1] & 0x80,
 							-4*(gfx_code & 0x40) + sx + xc * 8,sy + yc * 8,
 							&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+
+					if (height == 32)
+					{
+						/* redraw shifted down 256 pixels for wraparound */
+						drawgfx(bitmap,Machine->gfx[0],
+								videoram[goffs] + 256 * (videoram[goffs + 1] & 0x03) + 1024 * (gfx_code & 0x0f),
+								(videoram[goffs + 1] & 0x3c) >> 2,
+								videoram[goffs + 1] & 0x40,videoram[goffs + 1] & 0x80,
+								-4*(gfx_code & 0x40) + sx + xc * 8,sy + yc * 8 + 256,
+								&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+					}
 				}
 			}
 		}

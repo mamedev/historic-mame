@@ -23,7 +23,7 @@ case 0x70: if(R->P&V_FLAG) { M_JR; } else R->PC.W++; break; /* BVS * REL */
 
 /* RTI */
 case 0x40:
-  M_POP(R->P);R->P|=R_FLAG;M_POP(R->PC.B.l);M_POP(R->PC.B.h);
+  M_POP(R->P);R->P|=R_FLAG;M_POP(R->PC.B.l);M_POP(R->PC.B.h);change_pc16(R->PC.W);/*ASG 971124*/
 
 /* NS 970904 */
   if((R->pending_irq!=0)&&(R->P&I_FLAG)==0)	/* NS 970904 */
@@ -33,7 +33,7 @@ case 0x40:
 
 /* RTS */
 case 0x60:
-  M_POP(R->PC.B.l);M_POP(R->PC.B.h);R->PC.W++;break;
+  M_POP(R->PC.B.l);M_POP(R->PC.B.h);R->PC.W++;change_pc16(R->PC.W);/*ASG 971124*/break;
 
 /* JSR $ssss ABS */
 case 0x20:
@@ -41,16 +41,17 @@ case 0x20:
   K.B.h=Op6502(R->PC.W);
   M_PUSH(R->PC.B.h);
   M_PUSH(R->PC.B.l);
-  R->PC=K;break;
+  R->PC=K;change_pc16(R->PC.W);/*ASG 971124*/break;
 
 /* JMP $ssss ABS */
-case 0x4C: M_LDWORD(K);R->PC=K;break;
+case 0x4C: M_LDWORD(K);R->PC=K;change_pc16(R->PC.W);/*ASG 971124*/break;
 
 /* JMP ($ssss) ABDINDIR */
 case 0x6C:
   M_LDWORD(K);
   R->PC.B.l=Rd6502(K.W++);
   R->PC.B.h=Rd6502(K.W);
+  change_pc16(R->PC.W);/*ASG 971124*/
   break;
 
 /* BRK */
@@ -61,6 +62,7 @@ case 0x00:
   R->P=(R->P|I_FLAG)&~D_FLAG;
   R->PC.B.l=Rd6502(0xFFFE);
   R->PC.B.h=Rd6502(0xFFFF);
+  change_pc16(R->PC.W);/*ASG 971124*/
   break;
 
 /* CLI */

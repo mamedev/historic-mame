@@ -9,12 +9,6 @@
 struct POKEYinterface
 {
 	int num;	/* total number of pokeys in the machine */
-	int updates_per_frame;	/* you have to call pokey_update() this number of */
-							/* times each video frame. This is usually done from */
-							/* inside the interrupt handler. If you set this to */
-							/* 1, you don't HAVE /you may if you want to) to call */
-							/* pokey_update(), it will be called automatically by */
-							/* pokey_sh_update() */
 	int clock;
 	int volume;
 	int clip;				/* determines if pokey.c will clip the sample range */
@@ -35,8 +29,6 @@ int pokey1_sh_start (void);
 int pokey2_sh_start (void);
 int pokey4_sh_start (void);
 
-void pokey_update(void);
-
 int pokey_sh_start (struct POKEYinterface *interface);
 void pokey_sh_stop (void);
 
@@ -44,11 +36,13 @@ int pokey1_r (int offset);
 int pokey2_r (int offset);
 int pokey3_r (int offset);
 int pokey4_r (int offset);
+int quad_pokey_r (int offset);
 
 void pokey1_w (int offset,int data);
 void pokey2_w (int offset,int data);
 void pokey3_w (int offset,int data);
 void pokey4_w (int offset,int data);
+void quad_pokey_w (int offset,int data);
 
 void pokey_sh_update (void);
 

@@ -25,7 +25,7 @@ void omegrace_init_machine(void)
 int omegrace_interrupt(void)
 {
 	update_analog_ports();
-	if (cpu_getiloops()==5) avgdvg_clr_busy();
+	if (cpu_getiloops()==3) avgdvg_clr_busy();
 	return interrupt();
 }
 

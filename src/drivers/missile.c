@@ -157,10 +157,9 @@ void missile_vh_update(struct osd_bitmap *bitmap);
 static struct POKEYinterface interface =
 {
 	1,	/* 1 chip */
-	1,	/* 1 update per video frame (low quality) */
 	FREQ_17_APPROX,	/* 1.7 Mhz */
 	255,
-	NO_CLIP,
+	USE_CLIP,  /* EEA was NO_CLIP */
 	/* The 8 pot handlers */
 	{ 0 },
 	{ 0 },
@@ -196,128 +195,80 @@ static struct MemoryWriteAddress writemem[] =
 
 
 
-static struct InputPort input_ports[] =
-{
-	{ /* IN0  - 4800, all inverted */
-	/*
-	 80 = right coin
-	 40 = center coin
-	 20 = left coin
-	 10 = 1 player start
-	 08 = 2 player start
-	 04 = 2nd player left fire (cocktail)
-	 02 = 2nd player center fire (cocktail)
-	 01 = 2nd player right fire (cocktail)
-	 */
-		0xFF,
-		{OSD_KEY_D, OSD_KEY_S, OSD_KEY_A, OSD_KEY_2, OSD_KEY_1, OSD_KEY_3, 0, 0},
-		{0, 0, 0, 0, 0, 0, 0, 0 }
-	},
+INPUT_PORTS_START( input_ports )
+	PORT_START	/* IN0 */
+	PORT_BIT ( 0x01, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_COCKTAIL )
+	PORT_BIT ( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_COCKTAIL )
+	PORT_BIT ( 0x04, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
+	PORT_BIT ( 0x08, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT ( 0x10, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT ( 0x20, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT ( 0x40, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT ( 0x80, IP_ACTIVE_LOW, IPT_COIN3 )
 
+	PORT_START	/* IN1 */
+	PORT_BIT ( 0x01, IP_ACTIVE_LOW, IPT_BUTTON3 )
+	PORT_BIT ( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 )
+	PORT_BIT ( 0x04, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT ( 0x18, 0x00, IPT_UNUSED )	/* trackball input, handled in machine/missile.c */
+	PORT_BIT ( 0x20, IP_ACTIVE_LOW, IPT_TILT )
+	PORT_BITX( 0x40, IP_ACTIVE_LOW, IPT_SERVICE , "Service Mode", OSD_KEY_F2, IP_JOY_NONE, 0 )
+	PORT_BIT ( 0x80, IP_ACTIVE_HIGH, IPT_VBLANK )
 
-	{ /* IN1 - 4900, all inverted */
-	/*
-	 80 = vbl read
-	 40 = self test
-	 20 = SLAM switch
-	 10 = horiz trackball input
-	 08 = vertical trackball input
-	 04 = 1st player left fire
-	 02 = 1st player center fire
-	 01 = 1st player right fire
-	*/
+	PORT_START	/* IN2 */
+	PORT_DIPNAME (0x03, 0x00, "Coinage", IP_KEY_NONE )
+	PORT_DIPSETTING (   0x01, "2 Coins/1 Credit" )
+	PORT_DIPSETTING (   0x00, "1 Coin/1 Credit" )
+	PORT_DIPSETTING (   0x03, "1 Coin/2 Credits" )
+	PORT_DIPSETTING (   0x02, "Free Play" )
+	PORT_DIPNAME (0x0c, 0x00, "Right Coin", IP_KEY_NONE )
+	PORT_DIPSETTING (   0x00, "*1" )
+	PORT_DIPSETTING (   0x04, "*4" )
+	PORT_DIPSETTING (   0x08, "*5" )
+	PORT_DIPSETTING (   0x0c, "*6" )
+	PORT_DIPNAME (0x10, 0x00, "Center Coin", IP_KEY_NONE )
+	PORT_DIPSETTING (   0x00, "*1" )
+	PORT_DIPSETTING (   0x10, "*2" )
+	PORT_DIPNAME (0x60, 0x00, "Language", IP_KEY_NONE )
+	PORT_DIPSETTING (   0x00, "English" )
+	PORT_DIPSETTING (   0x20, "French" )
+	PORT_DIPSETTING (   0x40, "German" )
+	PORT_DIPSETTING (   0x60, "Spanish" )
+	PORT_DIPNAME (0x80, 0x80, "Unknown", IP_KEY_NONE )
+	PORT_DIPSETTING (   0x80, "Off" )
+	PORT_DIPSETTING (   0x00, "On" )
 
-		0x67,
-		{ OSD_KEY_D, OSD_KEY_S, OSD_KEY_A, 0, 0, OSD_KEY_F6, OSD_KEY_F5, IPB_VBLANK},
-		{ 0, 0, 0, 0, 0, 0, 0, 0 }
-	},
+	PORT_START	/* IN3 */
+	PORT_DIPNAME (0x03, 0x00, "Cities", IP_KEY_NONE )
+	PORT_DIPSETTING (   0x02, "4" )
+	PORT_DIPSETTING (   0x01, "5" )
+	PORT_DIPSETTING (   0x03, "6" )
+	PORT_DIPSETTING (   0x00, "7" )
+	PORT_DIPNAME (0x04, 0x04, "Bonus Credit for 4 Coins", IP_KEY_NONE )
+	PORT_DIPSETTING (   0x04, "No" )
+	PORT_DIPSETTING (   0x00, "Yes" )
+	PORT_DIPNAME (0x08, 0x08, "Trackball Size", IP_KEY_NONE )
+	PORT_DIPSETTING (   0x00, "Large" )
+	PORT_DIPSETTING (   0x08, "Mini" )
+	PORT_DIPNAME (0x70, 0x00, "Bonus City", IP_KEY_NONE )
+	PORT_DIPSETTING (   0x10, "8000" )
+	PORT_DIPSETTING (   0x70, "10000" )
+	PORT_DIPSETTING (   0x60, "12000" )
+	PORT_DIPSETTING (   0x50, "14000" )
+	PORT_DIPSETTING (   0x40, "15000" )
+	PORT_DIPSETTING (   0x30, "18000" )
+	PORT_DIPSETTING (   0x20, "20000" )
+	PORT_DIPSETTING (   0x00, "None" )
+	PORT_DIPNAME (0x80, 0x00, "Cabinet", IP_KEY_NONE )
+	PORT_DIPSETTING (   0x00, "Upright" )
+	PORT_DIPSETTING (   0x80, "Cocktail" )
 
+	PORT_START	/* FAKE */
+	PORT_ANALOG ( 0x0f, 0x0, IPT_TRACKBALL_Y | IPF_CENTER | IPF_REVERSE, 50, 7, 0, 0)
 
-	{	/* IN2  - 4A00 - Pricing Option switches, all inverted */
-			0x02,
-		{ 0, 0, 0, 0, 0, 0, 0, 0 },
-		{ 0, 0, 0, 0, 0, 0, 0, 0 }
-	},
-
-
-	{	/* IN3  4008 Game Option switches, all inverted */
-		0x00,
-		{ 0, 0, 0, 0, 0, 0, 0, 0 },
-		{ 0, 0, 0, 0, 0, 0, 0, 0 }
-	},
-
-	{ -1 }	/* end of table */
-};
-
-
-static struct TrakPort trak_ports[] =
-{
-        {
-          X_AXIS,
-          1,
-          1.0,
-          missile_trakball_r
-        },
-        {
-          Y_AXIS,
-          1,
-          1.0,
-          missile_trakball_r
-        },
-        { -1 }
-};
-
-
-static struct KEYSet keys[] =
-{
-        { 1, 2, "LEFT FIRE" },
-        { 1, 1, "CENTER FIRE" },
-        { 1, 0, "RIGHT FIRE" },
-        { -1 }
-};
-
-
-
-
-
-static struct DSW dsw[] =
-{
-	{ 2, 0x03, "COINAGE", { "1 COIN 1 PLAY", "2 COINS 1 PLAY", "FREE PLAY", "1 COIN 2 PLAYS" } },
-	{ 2, 0x60, "LANGUAGE", { "ENGLISH", "FRENCH", "GERMAN", "SPANISH" } },
-	{ 3, 0x03, "NUMBER OF CITIES", { "7", "5", "4", "6" } },
-/* 	{ 3, 0x08, "TRACKBALL", { "LARGE", "MINI" } }, not very useful */
-	{ 3, 0x70, "BONUS AT", { "NO BONUS", "8000", "20000", "18000", "15000", "14000", "12000", "10000" } },
-/* 	{ 3, 0x80, "MODEL", { "UPRIGHT", "COCKTAIL" } }, */
-	{ -1 }
-};
-
-
-
-
-
-/* Missile Command has only minimal character mapped graphics, this definition is here */
-/* mainly for the dip switch menu */
-static struct GfxLayout charlayout =
-{
-	8,8,	/* 8*8 characters */
-	50,	/* 50 characters */
-	1,	/* 1 bit per pixel */
-	{ 0 },
-
-	{ 0, 1, 2, 3, 4, 5, 6, 7 },		/* characters are upside down */
-	{ 7*8, 6*8, 5*8, 4*8, 3*8, 2*8, 1*8, 0*8 },
-	8*8														/* every char takes 8 consecutive bytes */
-};
-
-
-
-
-static struct GfxDecodeInfo gfxdecodeinfo[] =
-{
-	{ 0, 0x731A, &charlayout,     0, 0x10 },
-	{ -1 } /* end of array */
-};
-
+	PORT_START	/* FAKE */
+	PORT_ANALOG ( 0x0f, 0x0, IPT_TRACKBALL_X | IPF_CENTER, 50, 7, 0, 0)
+INPUT_PORTS_END
 
 
 
@@ -336,9 +287,6 @@ static unsigned char palette[] =
 
 
 
-
-
-
 static struct MachineDriver machine_driver =
 {
 	/* basic machine hardware */
@@ -348,16 +296,16 @@ static struct MachineDriver machine_driver =
 			1000000,	/* 1 Mhz ???? */
 			0,
 			readmem,writemem,0,0,
-			interrupt, 1
+			interrupt, 4  /* EEA was 1 */
 		}
 	},
 	60,
 	10,
-	missile_init_machine,
+ 	missile_init_machine,
 
 	/* video hardware */
 	256, 231, { 0, 255, 0, 230 },
-	gfxdecodeinfo,
+	0,
 	sizeof(palette)/3, 0,
 	0,
 
@@ -368,7 +316,6 @@ static struct MachineDriver machine_driver =
 	missile_vh_update,
 
 	/* sound hardware */
-	0,
 	0,
 	missile_sh_start,
 	pokey_sh_stop,
@@ -431,14 +378,15 @@ struct GameDriver missile_driver =
 {
 	"Missile Command",
 	"missile",
-	"Ray Giarratana\nMarco Cassili",
+	"Ray Giarratana\nMarco Cassili\nEric Anschuetz",  /* EEA */
 	&machine_driver,
 
 	missile_rom,
 	0, 0,
 	0,
+	0,	/* sound_prom */
 
-	input_ports, 0, trak_ports, dsw, keys,
+	0/*TBR*/,input_ports,0/*TBR*/,0/*TBR*/,0/*TBR*/,
 
 	0, palette, 0,
 	ORIENTATION_DEFAULT,

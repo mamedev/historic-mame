@@ -201,6 +201,18 @@ int offs;
     }
   }
 
+	/* ASG 971015 -- *this* was fun to figure out... :-) */
+	{
+		int x1 = machine_scrn_x;
+		int x2 = (x1 + xb) & 0xff;
+		int y1 = (0x3f - ((trg-0x8000+yb*0x100) / 256)) * 4;
+		int y2 = (0x3f - ((trg-0x8000) / 256)) * 4 + 3;
+
+		if (x1 > x2) x1 = 0, x2 = 255;
+
+		osd_mark_dirty(x1,y1,x2,y2,0);
+	}
+
 }
 
 
@@ -365,6 +377,8 @@ void arabian_videoramw(int offset, int val)
 	tmpbitmap2->line[sy+1][sx] = Machine->pens[ tmpbitmap2->line[sy+1][sx] ];
 	tmpbitmap2->line[sy+2][sx] = Machine->pens[ tmpbitmap2->line[sy+2][sx] ];
 	tmpbitmap2->line[sy+3][sx] = Machine->pens[ tmpbitmap2->line[sy+3][sx] ];
+
+	osd_mark_dirty(sx,sy,sx,sy+3,0);	/* ASG 971015 */
 }
 
 

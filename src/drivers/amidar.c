@@ -63,9 +63,8 @@ void amidar_flipy_w(int offset,int data);
 void amidar_attributes_w(int offset,int data);
 void amidar_vh_screenrefresh(struct osd_bitmap *bitmap);
 
-void amidar_sh_irqtrigger_w(int offset,int data);
-int amidar_sh_interrupt(void);
-int amidar_sh_start(void);
+void scramble_sh_irqtrigger_w(int offset,int data);
+int scramble_sh_start(void);
 
 
 
@@ -75,7 +74,7 @@ static struct MemoryReadAddress amidar_readmem[] =
 	{ 0x8000, 0x87ff, MRA_RAM },
 	{ 0x9000, 0x93ff, MRA_RAM },
 	{ 0x9800, 0x985f, MRA_RAM },
-	{ 0xa800, 0xa800, MRA_NOP },
+	{ 0xa800, 0xa800, watchdog_reset_r },
 	{ 0xb000, 0xb000, input_port_0_r },	/* IN0 */
 	{ 0xb010, 0xb010, input_port_1_r },	/* IN1 */
 	{ 0xb020, 0xb020, input_port_2_r },	/* IN2 */
@@ -97,7 +96,7 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0xa030, 0xa030, MWA_NOP },
 	{ 0xa038, 0xa038, MWA_NOP },
 	{ 0xb800, 0xb800, soundlatch_w },
-	{ 0xb810, 0xb810, amidar_sh_irqtrigger_w },
+	{ 0xb810, 0xb810, scramble_sh_irqtrigger_w },
 	{ -1 }	/* end of table */
 };
 
@@ -460,10 +459,10 @@ static struct MachineDriver machine_driver =
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
-			2100000,	/* 2 Mhz?????? */
+			1789750,	/* 1.78975 Mhz */
 			2,	/* memory region #2 */
 			sound_readmem,sound_writemem,sound_readport,sound_writeport,
-			amidar_sh_interrupt,10
+			ignore_interrupt,1	/* interrupts are triggered by the main CPU */
 		}
 	},
 	60,
@@ -484,8 +483,7 @@ static struct MachineDriver machine_driver =
 
 	/* sound hardware */
 	0,
-	0,
-	amidar_sh_start,
+	scramble_sh_start,
 	AY8910_sh_stop,
 	AY8910_sh_update
 };
@@ -693,6 +691,7 @@ struct GameDriver amidar_driver =
 	amidar_rom,
 	0, 0,
 	0,
+	0,	/* sound_prom */
 
 	0/*TBR*/,amidar_input_ports,0/*TBR*/,0/*TBR*/,0/*TBR*/,
 
@@ -712,6 +711,7 @@ struct GameDriver amidarjp_driver =
 	amidarjp_rom,
 	0, 0,
 	0,
+	0,	/* sound_prom */
 
 	0/*TBR*/,amidarjp_input_ports,0/*TBR*/,0/*TBR*/,0/*TBR*/,
 
@@ -731,6 +731,7 @@ struct GameDriver amigo_driver =
 	amigo_rom,
 	0, 0,
 	0,
+	0,	/* sound_prom */
 
 	0/*TBR*/,amidar_input_ports,0/*TBR*/,0/*TBR*/,0/*TBR*/,
 
@@ -750,6 +751,7 @@ struct GameDriver turtles_driver =
 	turtles_rom,
 	0, 0,
 	0,
+	0,	/* sound_prom */
 
 	0/*TBR*/,turtles_input_ports,0/*TBR*/,0/*TBR*/,0/*TBR*/,
 
@@ -769,6 +771,7 @@ struct GameDriver turpin_driver =
 	turpin_rom,
 	0, 0,
 	0,
+	0,	/* sound_prom */
 
 	0/*TBR*/,turpin_input_ports,0/*TBR*/,0/*TBR*/,0/*TBR*/,
 

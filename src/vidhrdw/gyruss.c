@@ -12,6 +12,7 @@
 
 
 unsigned char *gyruss_spritebank,*gyruss_6809_drawplanet,*gyruss_6809_drawship;
+static int flipscreen;
 
 
 typedef struct {
@@ -234,6 +235,17 @@ void gyruss_queuereg_w (int offset,int data)
 
 
 
+void gyruss_flipscreen_w(int offset,int data)
+{
+	if (flipscreen != (data & 1))
+	{
+		flipscreen = data & 1;
+		memset(dirtybuffer,1,videoram_size);
+	}
+}
+
+
+
 /***************************************************************************
 
   Draw the game screen in the given osd_bitmap.
@@ -252,18 +264,27 @@ void gyruss_vh_screenrefresh(struct osd_bitmap *bitmap)
 	{
 		if (dirtybuffer[offs])
 		{
-			int sx,sy;
+			int sx,sy,flipx,flipy;
 
 
 			dirtybuffer[offs] = 0;
 
-			sx = 31 - offs / 32;
-			sy = offs % 32;
+			sx = offs % 32;
+			sy = offs / 32;
+			flipx = colorram[offs] & 0x40;
+			flipy = colorram[offs] & 0x80;
+			if (flipscreen)
+			{
+				sx = 31 - sx;
+				sy = 31 - sy;
+				flipx = !flipx;
+				flipy = !flipy;
+			}
 
 			drawgfx(tmpbitmap,Machine->gfx[0],
 					videoram[offs] + 8 * (colorram[offs] & 0x20),
 					colorram[offs] & 0x0f,
-					colorram[offs] & 0x80,colorram[offs] & 0x40,
+					flipx,flipy,
 					8*sx,8*sy,
 					&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
 		}
@@ -301,28 +322,31 @@ void gyruss_vh_screenrefresh(struct osd_bitmap *bitmap)
 		{
 			if (sr[2 + offs] & 0x10)	/* double height */
 			{
-				drawgfx(bitmap,Machine->gfx[(sr[offs + 2] & 0x20) ? 5 : 6],
-						sr[offs + 1]/2,
-						sr[offs + 2] & 0x0f,
-						sr[offs + 2] & 0x80,!(sr[offs + 2] & 0x40),
-						sr[offs + 3],sr[offs + 0],
-						&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+				if (sr[offs + 0] != 0)
+					drawgfx(bitmap,Machine->gfx[3],
+							sr[offs + 1]/2 + 4*(sr[offs + 2] & 0x20),
+							sr[offs + 2] & 0x0f,
+							!(sr[offs + 2] & 0x40),sr[offs + 2] & 0x80,
+							sr[offs + 0],240-sr[offs + 3]+1,
+							&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
 			}
 			else	/* single height */
 			{
-				drawgfx(bitmap,Machine->gfx[((sr[offs + 2] & 0x20) ? 1 : 3) + (sr[offs + 1] & 1)],
-						sr[offs + 1]/2,
-						sr[offs + 2] & 0x0f,
-						sr[offs + 2] & 0x80,!(sr[offs + 2] & 0x40),
-						sr[offs + 3],sr[offs + 0],
-						&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+				if (sr[offs + 0] != 0)
+					drawgfx(bitmap,Machine->gfx[1 + (sr[offs + 1] & 1)],
+							sr[offs + 1]/2 + 4*(sr[offs + 2] & 0x20),
+							sr[offs + 2] & 0x0f,
+							!(sr[offs + 2] & 0x40),sr[offs + 2] & 0x80,
+							sr[offs + 0],240-sr[offs + 3]+1,
+							&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
 
-				drawgfx(bitmap,Machine->gfx[((sr[offs + 6] & 0x20) ? 1 : 3) + (sr[offs + 5] & 1)],
-						sr[offs + 5]/2,
-						sr[offs + 6] & 0x0f,
-						sr[offs + 6] & 0x80,!(sr[offs + 6] & 0x40),
-						sr[offs + 7],sr[offs + 4],
-						&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+				if (sr[offs + 4] != 0)
+					drawgfx(bitmap,Machine->gfx[1 + (sr[offs + 5] & 1)],
+							sr[offs + 5]/2 + 4*(sr[offs + 6] & 0x20),
+							sr[offs + 6] & 0x0f,
+							!(sr[offs + 6] & 0x40),sr[offs + 6] & 0x80,
+							sr[offs + 4],240-sr[offs + 7]+1,
+							&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
 			}
 		}
 	}
@@ -331,17 +355,26 @@ void gyruss_vh_screenrefresh(struct osd_bitmap *bitmap)
 	/* redraw the characters which have priority over sprites */
 	for (offs = videoram_size - 1;offs >= 0;offs--)
 	{
-		int sx,sy;
+		int sx,sy,flipx,flipy;
 
 
-		sx = 31 - offs / 32;
-		sy = offs % 32;
+		sx = offs % 32;
+		sy = offs / 32;
+		flipx = colorram[offs] & 0x40;
+		flipy = colorram[offs] & 0x80;
+		if (flipscreen)
+		{
+			sx = 31 - sx;
+			sy = 31 - sy;
+			flipx = !flipx;
+			flipy = !flipy;
+		}
 
 		if ((colorram[offs] & 0x10) != 0)
 			drawgfx(bitmap,Machine->gfx[0],
 					videoram[offs] + 8 * (colorram[offs] & 0x20),
 					colorram[offs] & 0x0f,
-					colorram[offs] & 0x80,colorram[offs] & 0x40,
+					flipx,flipy,
 					8*sx,8*sy,
 					&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
 	}

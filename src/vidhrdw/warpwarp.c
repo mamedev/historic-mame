@@ -86,6 +86,8 @@ void warpwarp_vh_screenrefresh(struct osd_bitmap *bitmap)
 				{
 					int j;
 
+					osd_mark_dirty (x,y,x+1,y+1,0);	/* ASG 971015 */
+
 					for (j = 0; j < 2; j++)
 					{
 						bitmap->line[y+j][x+0] = colour;

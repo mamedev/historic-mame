@@ -70,7 +70,6 @@ int kroozr_dial_r(int offset);
 int kroozr_trakball_x_r(int offset);
 int kroozr_trakball_y_r(int offset);
 
-int mcr_sh_interrupt(void);
 int mcr_sh_start(void);
 
 static struct MemoryReadAddress mcr2_readmem[] =
@@ -190,7 +189,7 @@ INPUT_PORTS_START( tron_input_ports )
 	PORT_DIPSETTING(    0x00, "On" )
 
 	PORT_START	/* IN1 -- controls spinner */
-	PORT_ANALOG( 0xff, 0x00, IPT_DIAL | IPF_REVERSE, 50, 0, 0, 0 )
+	PORT_ANALOGX( 0xff, 0x00, IPT_DIAL | IPF_REVERSE, 50, 0, 0, 0, OSD_KEY_Z, OSD_KEY_X, 0, 0, 4 )
 
 	PORT_START	/* IN2 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY )
@@ -485,7 +484,7 @@ static struct MachineDriver tron_machine_driver =
 			2000000,	/* 2 Mhz */
 			2,	/* memory region #2 */
 			sound_readmem,sound_writemem,0,0,
-			mcr_sh_interrupt,26
+			interrupt,26
 		}
 	},
 	30,
@@ -505,7 +504,6 @@ static struct MachineDriver tron_machine_driver =
 	mcr2_vh_screenrefresh,
 
 	/* sound hardware */
-	0,
 	0,
 	mcr_sh_start,
 	AY8910_sh_stop,
@@ -528,7 +526,7 @@ static struct MachineDriver domino_machine_driver =
 			2000000,	/* 2 Mhz */
 			2,	/* memory region #2 */
 			sound_readmem,sound_writemem,0,0,
-			mcr_sh_interrupt,26
+			interrupt,26
 		}
 	},
 	30,
@@ -548,7 +546,6 @@ static struct MachineDriver domino_machine_driver =
 	mcr2_vh_screenrefresh,
 
 	/* sound hardware */
-	0,
 	0,
 	mcr_sh_start,
 	AY8910_sh_stop,
@@ -571,7 +568,7 @@ static struct MachineDriver wacko_machine_driver =
 			2000000,	/* 2 Mhz */
 			2,	/* memory region #2 */
 			sound_readmem,sound_writemem,0,0,
-			mcr_sh_interrupt,26
+			interrupt,26
 		}
 	},
 	30,
@@ -591,7 +588,6 @@ static struct MachineDriver wacko_machine_driver =
 	mcr2_vh_screenrefresh,
 
 	/* sound hardware */
-	0,
 	0,
 	mcr_sh_start,
 	AY8910_sh_stop,
@@ -614,7 +610,7 @@ static struct MachineDriver kroozr_machine_driver =
 			2000000,	/* 2 Mhz */
 			2,	/* memory region #2 */
 			sound_readmem,sound_writemem,0,0,
-			mcr_sh_interrupt,26
+			interrupt,26
 		}
 	},
 	30,
@@ -634,7 +630,6 @@ static struct MachineDriver kroozr_machine_driver =
 	mcr2_vh_screenrefresh,
 
 	/* sound hardware */
-	0,
 	0,
 	mcr_sh_start,
 	AY8910_sh_stop,
@@ -657,7 +652,7 @@ static struct MachineDriver journey_machine_driver =
 			2000000,	/* 2 Mhz */
 			2,	/* memory region #2 */
 			sound_readmem,sound_writemem,0,0,
-			mcr_sh_interrupt,26
+			interrupt,26
 		}
 	},
 	30,
@@ -677,7 +672,6 @@ static struct MachineDriver journey_machine_driver =
 	journey_vh_screenrefresh,
 
 	/* sound hardware */
-	0,
 	0,
 	mcr_sh_start,
 	AY8910_sh_stop,
@@ -785,6 +779,7 @@ struct GameDriver tron_driver =
 	tron_rom,
 	0, 0,
 	0,
+	0,	/* sound_prom */
 
 	0/*TBR*/,tron_input_ports,0/*TBR*/,0/*TBR*/,0/*TBR*/,
 
@@ -825,6 +820,7 @@ struct GameDriver twotiger_driver =
 	twotiger_rom,
 	0, 0,
 	0,
+	0,	/* sound_prom */
 
 	0/*TBR*/,twotiger_input_ports,0/*TBR*/,0/*TBR*/,0/*TBR*/,
 
@@ -866,6 +862,7 @@ struct GameDriver domino_driver =
 	domino_rom,
 	0, 0,
 	0,
+	0,	/* sound_prom */
 
 	0/*TBR*/,domino_input_ports,0/*TBR*/,0/*TBR*/,0/*TBR*/,
 
@@ -908,6 +905,7 @@ struct GameDriver shollow_driver =
 	shollow_rom,
 	0, 0,
 	0,
+	0,	/* sound_prom */
 
 	0/*TBR*/,shollow_input_ports,0/*TBR*/,0/*TBR*/,0/*TBR*/,
 
@@ -948,6 +946,7 @@ struct GameDriver wacko_driver =
 	wacko_rom,
 	0, 0,
 	0,
+	0,	/* sound_prom */
 
 	0/*TBR*/,wacko_input_ports, 0/*TBR*/,0/*TBR*/,0/*TBR*/,
 
@@ -989,6 +988,7 @@ struct GameDriver kroozr_driver =
 	kroozr_rom,
 	0, 0,
 	0,
+	0,	/* sound_prom */
 
 	0/*TBR*/,kroozr_input_ports, 0/*TBR*/,0/*TBR*/,0/*TBR*/,
 
@@ -1035,6 +1035,7 @@ struct GameDriver journey_driver =
 	journey_rom,
 	0, 0,
 	0,
+	0,	/* sound_prom */
 
 	0/*TBR*/,domino_input_ports,0/*TBR*/,0/*TBR*/,0/*TBR*/,
 

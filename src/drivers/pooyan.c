@@ -35,7 +35,7 @@ read:
         l == left coin mech, r = right coinmech.
 
 0xA080	IN0 Port
-0xA0A0  IN1 Port
+0xA0A0	IN1 Port
 0xA0C0	IN2 Port
 
 write:
@@ -44,11 +44,11 @@ write:
 
 0xA181	interrupt trigger on audio CPU.
 
-0xA183	????
+0xA183	maybe reset sound cpu?
 
 0xA184	????
 
-0xA187	Watchdog reset.
+0xA187	Flip screen
 
 interrupts:
 standard NMI at 0x66
@@ -62,39 +62,40 @@ standard NMI at 0x66
 
 
 
+void pooyan_flipscreen_w(int offset,int data);
 void pooyan_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
 void pooyan_vh_screenrefresh(struct osd_bitmap *bitmap);
 
-int pooyan_sh_interrupt(void);
+void pooyan_sh_irqtrigger_w(int offset,int data);
 int pooyan_sh_start(void);
 
 
 
 static struct MemoryReadAddress readmem[] =
 {
-	{ 0x8000, 0x8fff, MRA_RAM },	/* color and video RAM */
 	{ 0x0000, 0x7fff, MRA_ROM },
+	{ 0x8000, 0x8fff, MRA_RAM },	/* color and video RAM */
+	{ 0xa000, 0xa000, input_port_4_r },	/* DSW2 */
 	{ 0xa080, 0xa080, input_port_0_r },	/* IN0 */
 	{ 0xa0a0, 0xa0a0, input_port_1_r },	/* IN1 */
 	{ 0xa0c0, 0xa0c0, input_port_2_r },	/* IN2 */
 	{ 0xa0e0, 0xa0e0, input_port_3_r },	/* DSW1 */
-	{ 0xa000, 0xa000, input_port_4_r },	/* DSW2 */
 	{ -1 }	/* end of table */
 };
 
 static struct MemoryWriteAddress writemem[] =
 {
-	{ 0x8800, 0x8fff, MWA_RAM },
+	{ 0x0000, 0x7fff, MWA_ROM },
 	{ 0x8000, 0x83ff, colorram_w, &colorram },
 	{ 0x8400, 0x87ff, videoram_w, &videoram, &videoram_size },
+	{ 0x8800, 0x8fff, MWA_RAM },
 	{ 0x9010, 0x903f, MWA_RAM, &spriteram, &spriteram_size },
 	{ 0x9410, 0x943f, MWA_RAM, &spriteram_2 },
+	{ 0xa000, 0xa000, MWA_NOP },	/* watchdog reset? */
+	{ 0xa100, 0xa100, soundlatch_w },
 	{ 0xa180, 0xa180, interrupt_enable_w },
-	{ 0xa187, 0xa187, MWA_NOP },
-	{ 0xa100, 0xa100, sound_command_w },
-        { 0xa028, 0xa028, MWA_RAM },
-        { 0xa000, 0xa000, MWA_NOP },
-	{ 0x0000, 0x7fff, MWA_ROM },
+	{ 0xa181, 0xa181, pooyan_sh_irqtrigger_w },
+	{ 0xa187, 0xa187, pooyan_flipscreen_w },
 	{ -1 }	/* end of table */
 };
 
@@ -121,62 +122,98 @@ static struct MemoryWriteAddress sound_writemem[] =
 };
 
 
+INPUT_PORTS_START( input_ports )
+	PORT_START	/* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN3 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
-static struct InputPort input_ports[] =
-{
-	{	/* IN0 */
-		0xff,
-		{ 0, 0, OSD_KEY_3, OSD_KEY_1, OSD_KEY_2, 0, 0, 0 },
-		{ 0, 0, 0, 0, 0, 0, 0, 0 }
-	},
-	{	/* IN1 */
-		0xff,
-		{ OSD_KEY_LEFT, OSD_KEY_RIGHT, OSD_KEY_UP, OSD_KEY_DOWN, OSD_KEY_LCONTROL, 0, 0, 0 },
-		{ OSD_JOY_LEFT, OSD_JOY_RIGHT, OSD_JOY_UP, OSD_JOY_DOWN, OSD_JOY_FIRE, 0, 0, 0 }
-	},
-	{	/* IN2 */
-		0xff,
-		{ 0, 0, 0, 0, 0, 0, 0, 0 },
-		{ 0, 0, 0, 0, 0, 0, 0, 0 }
-	},
-	{	/* DSW1 */
-		0xff,
-		{ 0, 0, 0, 0, 0, 0, 0, 0 },
-		{ 0, 0, 0, 0, 0, 0, 0, 0 }
-	},
-	{	/* DSW2 */
-		0x73,
-		{ 0, 0, 0, 0, 0, 0, 0, 0 },
-		{ 0, 0, 0, 0, 0, 0, 0, 0 }
-	},
-	{ -1 }	/* end of table */
-};
+	PORT_START	/* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_2WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_2WAY )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
-static struct TrakPort trak_ports[] =
-{
-        { -1 }
-};
+	PORT_START	/* IN2 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_2WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_2WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
+	PORT_START	/* DSW0 */
+	PORT_DIPNAME( 0x0f, 0x0f, "Coin A", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x02, "4 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x05, "3 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x08, "2 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x04, "3 Coins/2 Credits" )
+	PORT_DIPSETTING(    0x01, "4 Coins/3 Credits" )
+	PORT_DIPSETTING(    0x0f, "1 Coin/1 Credit" )
+	PORT_DIPSETTING(    0x03, "3 Coins/4 Credits" )
+	PORT_DIPSETTING(    0x07, "2 Coins/3 Credits" )
+	PORT_DIPSETTING(    0x0e, "1 Coin/2 Credits" )
+	PORT_DIPSETTING(    0x06, "2 Coins/5 Credits" )
+	PORT_DIPSETTING(    0x0d, "1 Coin/3 Credits" )
+	PORT_DIPSETTING(    0x0c, "1 Coin/4 Credits" )
+	PORT_DIPSETTING(    0x0b, "1 Coin/5 Credits" )
+	PORT_DIPSETTING(    0x0a, "1 Coin/6 Credits" )
+	PORT_DIPSETTING(    0x09, "1 Coin/7 Credits" )
+	PORT_DIPSETTING(    0x00, "Free Play" )
+	PORT_DIPNAME( 0xf0, 0xf0, "Coin B", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "Attract Mode - No Play" )
+	PORT_DIPSETTING(    0x20, "4 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x50, "3 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x80, "2 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x40, "3 Coins/2 Credits" )
+	PORT_DIPSETTING(    0x10, "4 Coins/3 Credits" )
+	PORT_DIPSETTING(    0xf0, "1 Coin/1 Credit" )
+	PORT_DIPSETTING(    0x30, "3 Coins/4 Credits" )
+	PORT_DIPSETTING(    0x70, "2 Coins/3 Credits" )
+	PORT_DIPSETTING(    0xe0, "1 Coin/2 Credits" )
+	PORT_DIPSETTING(    0x60, "2 Coins/5 Credits" )
+	PORT_DIPSETTING(    0xd0, "1 Coin/3 Credits" )
+	PORT_DIPSETTING(    0xc0, "1 Coin/4 Credits" )
+	PORT_DIPSETTING(    0xb0, "1 Coin/5 Credits" )
+	PORT_DIPSETTING(    0xa0, "1 Coin/6 Credits" )
+	PORT_DIPSETTING(    0x90, "1 Coin/7 Credits" )
 
-static struct KEYSet keys[] =
-{
-        { 1, 2, "MOVE UP" },
-        { 1, 0, "MOVE LEFT"  },
-        { 1, 1, "MOVE RIGHT" },
-        { 1, 3, "MOVE DOWN" },
-        { 1, 4, "FIRE"      },
-        { -1 }
-};
-
-
-static struct DSW dsw[] =
-{
-	{ 4, 0x03, "LIVES", { "255", "5", "4", "3" }, 1 },
-	{ 4, 0x08, "BONUS", { "30000", "50000" } },
-	{ 4, 0x70, "DIFFICULTY", { "HARDEST", "HARD", "DIFFICULT", "MEDIUM", "NORMAL", "EASIER", "EASY" , "EASIEST" }, 1 },
-	{ 4, 0x80, "DEMO SOUNDS", { "ON", "OFF" }, 1 },
-	{ -1 }
-};
+	PORT_START	/* DSW1 */
+	PORT_DIPNAME( 0x03, 0x03, "Lives", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x03, "3" )
+	PORT_DIPSETTING(    0x02, "4" )
+	PORT_DIPSETTING(    0x01, "5" )
+	PORT_BITX( 0,       0x00, IPT_DIPSWITCH_SETTING | IPF_CHEAT, "255", IP_KEY_NONE, IP_JOY_NONE, 0 )
+	PORT_DIPNAME( 0x04, 0x00, "Cabinet", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "Upright" )
+	PORT_DIPSETTING(    0x04, "Cocktail" )
+	PORT_DIPNAME( 0x08, 0x08, "Bonus Life", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x08, "50000 80000" )
+	PORT_DIPSETTING(    0x00, "30000 70000" )
+	PORT_DIPNAME( 0x70, 0x70, "Difficulty", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x70, "Easiest" )
+	PORT_DIPSETTING(    0x60, "Easier" )
+	PORT_DIPSETTING(    0x50, "Easy" )
+	PORT_DIPSETTING(    0x40, "Normal" )
+	PORT_DIPSETTING(    0x30, "Medium" )
+	PORT_DIPSETTING(    0x20, "Difficult" )
+	PORT_DIPSETTING(    0x10, "Hard" )
+	PORT_DIPSETTING(    0x00, "Hardest" )
+	PORT_DIPNAME( 0x80, 0x00, "Demo Sounds", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPSETTING(    0x80, "Off" )
+INPUT_PORTS_END
 
 
 
@@ -186,8 +223,8 @@ static struct GfxLayout charlayout =
 	256,	/* 256 characters */
 	4,	/* 4 bits per pixel */
 	{ 0x1000*8+4, 0x1000*8+0, 4, 0 },
-	{ 7*8, 6*8, 5*8, 4*8, 3*8, 2*8, 1*8, 0*8 },
 	{ 0, 1, 2, 3, 8*8+0,8*8+1,8*8+2,8*8+3 },
+	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
 	16*8	/* every char takes 16 consecutive bytes */
 };
 static struct GfxLayout spritelayout =
@@ -196,10 +233,10 @@ static struct GfxLayout spritelayout =
 	64,	/* 64 sprites */
 	4,	/* 4 bits per pixel */
 	{ 0x1000*8+4, 0x1000*8+0, 4, 0 },
-	{ 39*8, 38*8, 37*8, 36*8, 35*8, 34*8, 33*8, 32*8,
-			7*8, 6*8, 5*8, 4*8, 3*8, 2*8, 1*8, 0*8 },
-	{ 0, 1, 2, 3,  8*8, 8*8+1, 8*8+2, 8*8+3,
+	{ 0, 1, 2, 3,  8*8+0, 8*8+1, 8*8+2, 8*8+3,
 			16*8+0, 16*8+1, 16*8+2, 16*8+3,  24*8+0, 24*8+1, 24*8+2, 24*8+3 },
+	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8,
+			32*8, 33*8, 34*8, 35*8, 36*8, 37*8, 38*8, 39*8 },
 	64*8	/* every sprite takes 64 consecutive bytes */
 };
 
@@ -269,10 +306,10 @@ static struct MachineDriver machine_driver =
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
-			3072000,	/* 3.072 Mhz (?) */
+			14318180/4,	/* ? */
 			2,	/* memory region #2 */
 			sound_readmem,sound_writemem,0,0,
-			pooyan_sh_interrupt,10
+			ignore_interrupt,1	/* interrupts are triggered by the main CPU */
 		}
 	},
 	60,
@@ -280,7 +317,7 @@ static struct MachineDriver machine_driver =
 	0,
 
 	/* video hardware */
-	32*8, 32*8, { 2*8, 30*8-1, 0*8, 32*8-1 },
+	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
 	gfxdecodeinfo,
 	256,32*16,
 	pooyan_vh_convert_color_prom,
@@ -292,7 +329,6 @@ static struct MachineDriver machine_driver =
 	pooyan_vh_screenrefresh,
 
 	/* sound hardware */
-	0,
 	0,
 	pooyan_sh_start,
 	AY8910_sh_stop,
@@ -325,6 +361,23 @@ ROM_START( pooyan_rom )
 	ROM_LOAD( "sd02_a8.snd",  0x1000, 0x1000, 0xe108928c )
 ROM_END
 
+ROM_START( pootan_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "poo_ic22.bin",  0x0000, 0x2000, 0x1fc0a5aa )
+	ROM_LOAD( "poo_ic23.bin",  0x2000, 0x2000, 0x39faab9a )
+	ROM_LOAD( "poo_ic24.bin",  0x4000, 0x2000, 0xd72a8cea )
+	ROM_LOAD( "poo_ic25.bin",  0x6000, 0x2000, 0xb83a5d06 )
+
+	ROM_REGION(0x4000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "poo_ic13.bin",  0x0000, 0x1000, 0x1e020240 )
+	ROM_LOAD( "poo_ic14.bin",  0x1000, 0x1000, 0x7c58b368 )
+	ROM_LOAD( "poo_ic16.bin",  0x2000, 0x1000, 0x18d9a3fb )
+	ROM_LOAD( "poo_ic15.bin",  0x3000, 0x1000, 0xf00ec45a )
+
+	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_LOAD( "poo_a1.bin",   0x0000, 0x1000, 0x41dc452c )
+	ROM_LOAD( "poo_a2.bin",   0x1000, 0x1000, 0xe108928c )
+ROM_END
 
 
 static int hiload(void)
@@ -382,17 +435,39 @@ struct GameDriver pooyan_driver =
 {
 	"Pooyan",
 	"pooyan",
-	"MIKE CUDDY\nALLARD VAN DER BAS\nNICOLA SALMORIA",
+	"Mike Cuddy (hardware info)\nAllard Van Der Bas (Pooyan emulator)\nNicola Salmoria (MAME driver)\nMarco Cassili",
 	&machine_driver,
 
 	pooyan_rom,
 	0, 0,
 	0,
+	0,	/* sound_prom */
 
-	input_ports, 0, trak_ports, dsw, keys,
+	0/*TBR*/, input_ports, 0/*TBR*/, 0/*TBR*/, 0/*TBR*/,
 
 	color_prom, 0, 0,
-	ORIENTATION_DEFAULT,
+	ORIENTATION_ROTATE_270,
 
 	hiload, hisave
 };
+
+struct GameDriver pootan_driver =
+{
+	"Pootan",
+	"pootan",
+	"Mike Cuddy (hardware info)\nAllard Van Der Bas (Pooyan emulator)\nNicola Salmoria (MAME driver)\nMarco Cassili",
+	&machine_driver,
+
+	pootan_rom,
+	0, 0,
+	0,
+	0,	/* sound_prom */
+
+	0/*TBR*/, input_ports, 0/*TBR*/, 0/*TBR*/, 0/*TBR*/,
+
+	color_prom, 0, 0,
+	ORIENTATION_ROTATE_270,
+
+	hiload, hisave
+};
+

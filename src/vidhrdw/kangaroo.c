@@ -265,6 +265,8 @@ void kangaroo_videoramw(int offset, int val)
 	tmpbitmap2->line[sy+1][sx] = Machine->pens[ tmpbitmap2->line[sy+1][sx] ];
 	tmpbitmap2->line[sy+2][sx] = Machine->pens[ tmpbitmap2->line[sy+2][sx] ];
 	tmpbitmap2->line[sy+3][sx] = Machine->pens[ tmpbitmap2->line[sy+3][sx] ];
+
+	osd_mark_dirty (sx,sy,sx,sy+3,0);	/* ASG 971015 */
 }
 
 

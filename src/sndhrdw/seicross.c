@@ -13,8 +13,7 @@ static int seicross_portB_r(int offset)
 static struct AY8910interface interface =
 {
 	1,	/* 1 chip */
-	1,	/* 1 update per video frame (low quality) */
-	1536000000,	/* 1.536 MHZ ?? */
+	1536000,	/* 1.536 MHZ ?? */
 	{ 255 },
 	{ 0 },
 	{ seicross_portB_r },

@@ -10,21 +10,55 @@
 #include "driver.h"
 #include "Z80.h"
 
-/* dummy bits for IN4 to control the spinner */
-#define IN4_LEFT	0x40
-#define IN4_RIGHT	0x80
-
 void sega_vg_draw (void);
+
+extern void (*sega_decrypt)(int,unsigned int *);
+unsigned char *sega_mem;
 
 unsigned char mult1;
 unsigned short result;
 unsigned char ioSwitch; /* determines whether we're reading the spinner or the buttons */
-unsigned char dir = 0;
+
+void sega_wr(int offset, int data)
+{
+	int pc,off;
+
+	pc = cpu_getpreviouspc();
+	off = offset;
+
+	/* Check if this is a valid PC (ie not a spurious stack write) */
+	if (pc != -1)
+	{
+		int op, page, bad;
+
+		op = sega_mem[pc] & 0xFF;
+		if (op == 0x32)
+		{
+			bad = sega_mem[pc+1] & 0xFF;
+			page = (sega_mem[pc+2] & 0xFF) << 8;
+			(*sega_decrypt)(pc,&bad);
+			off = (page & 0xFF00) | (bad & 0x00FF);
+		}
+	}
+
+
+	/* MWA_ROM */
+	if      ((off>=0x0000) && (off<=0xbfff))
+	{
+		;
+	}
+	/* MWA_RAM */
+	else if ((off>=0xc800) && (off<=0xefff))
+	{
+		sega_mem[off]=data;
+	}
+}
 
 int sega_interrupt (void) {
 
 	sega_vg_draw ();
-	return interrupt ();
+	if (input_port_5_r(0) & 0x01)	return nmi_interrupt();
+	else return interrupt();
 	}
 
 void sega_mult1_w (int offset, int data) {
@@ -34,6 +68,7 @@ void sega_mult1_w (int offset, int data) {
 
 void sega_mult2_w (int offset, int data) {
 
+	/* Curiously, the multiply is _only_ calculated by writes to this port. */
 	result = mult1 * data;
 	}
 
@@ -52,78 +87,94 @@ int sega_mult_r (int offset) {
 	return (c);
 	}
 
-int zektor_IN4_r (int offset) {
+/***************************************************************************
+
+  The Sega games store the DIP switches in a very mangled format that's
+  not directly useable by MAME.  This function mangles the DIP switches
+  into a format that can be used.
+
+  Original format:
+  Port 0 - 2-4, 2-8, 1-4, 1-8
+  Port 1 - 2-3, 2-7, 1-3, 1-7
+  Port 2 - 2-2, 2-6, 1-2, 1-6
+  Port 3 - 2-1, 2-5, 1-1, 1-5
+  MAME format:
+  Port 6 - 1-1, 1-2, 1-3, 1-4, 1-5, 1-6, 1-7, 1-8
+  Port 7 - 2-1, 2-2, 2-3, 2-4, 2-5, 2-6, 2-7, 2-8
+***************************************************************************/
+int sega_read_ports(int offset)
+{
+        int dip1, dip2;
+
+        dip1 = input_port_6_r(offset);
+        dip2 = input_port_7_r(offset);
+
+        switch(offset)
+        {
+                case 0:
+                   return ((input_port_0_r(0) & 0xF0) | ((dip2 & 0x08)>>3) | ((dip2 & 0x80)>>6) |
+                                                        ((dip1 & 0x08)>>1) | ((dip1 & 0x80)>>4));
+                case 1:
+                   return ((input_port_1_r(0) & 0xF0) | ((dip2 & 0x04)>>2) | ((dip2 & 0x40)>>5) |
+                                                        ((dip1 & 0x04)>>0) | ((dip1 & 0x40)>>3));
+                case 2:
+                   return ((input_port_2_r(0) & 0xF0) | ((dip2 & 0x02)>>1) | ((dip2 & 0x20)>>4) |
+                                                        ((dip1 & 0x02)<<1) | ((dip1 & 0x20)>>2));
+                case 3:
+                   return ((input_port_3_r(0) & 0xF0) | ((dip2 & 0x01)>>0) | ((dip2 & 0x10)>>3) |
+                                                        ((dip1 & 0x01)<<2) | ((dip1 & 0x10)>>1));
+        }
+
+        return 0;
+}
+
+
+int sega_IN4_r (int offset) {
+
+/*
+	The spinner is a bit of a hack. The values returned are always increasing.
+	That is, regardless of whether you turn the spinner left or right, the self-test
+	should always show the number as increasing. The direction is only reflected in
+	the least significant bit.
+*/
 
 	int res;
-	int trak_in;
-	static unsigned char spinner = 0;
+	int dir;
+	char spinner;							/* The trackball delta */
+	static unsigned char oldSpinner = 0;
+	static unsigned char spinnerVal = 0;	/* This is the value returned */
 
 	res = readinputport (4);
 
 	if (ioSwitch & 1) /* ioSwitch = 0x01 or 0xff */
-		return (res & 0x3f); /* mask out the left/right dummy bits */
+		return res;
 	else { /* ioSwitch = 0xfe */
-		if (res & IN4_LEFT) {
-			spinner += 2;
-			dir = 1;
-			}
-		if (res & IN4_RIGHT) {
-			spinner += 2;
+
+                res = readinputport(8);
+		spinner = (res - oldSpinner);
+		oldSpinner = res;
+
+		if (spinner & 0x80) {
 			dir = 0;
+			spinner = 0x80 - spinner;
 			}
-		trak_in = readtrakport(0);
+		else dir = 1;
+		spinnerVal += spinner;
 
-			if (trak_in < 0) {
-				dir = 1;
-				trak_in = abs(trak_in);
-			} else if (trak_in > 0)
-				dir = 0;
-			spinner += trak_in;
-
-		return ((spinner << 1) | dir);
+		return ((~spinnerVal << 1) | dir);
 	}
 }
 
-int startrek_IN4_r (int offset) {
+int elim4_IN4_r (int offset) {
 
-	int res;
-	int trak_in;
-	static unsigned char spinner = 0;
+/*
+	If the ioPort ($f8) is 0x1f, we're reading the 4 coin inputs.
+	If the ioPort ($f8) is 0x1e, we're reading player 3 & 4 controls.
+*/
 
-	res = readinputport (4);
-
-	if (ioSwitch & 1) /* ioSwitch = 0x01 or 0xff */
-		return (res & 0x3f); /* mask out the left/right dummy bits */
-	/* ioSwitch = 0xfe */
-	/* The spinner controls in Star Trek are inverted from the rest of */
-	/* the Sega vector games that use the spinner */
-	if (res & IN4_LEFT) {
-		spinner -= 10;
-		dir = 0;
-	}
-	if (res & IN4_RIGHT) {
-		spinner -= 10;
-		dir = 1;
-	}
-	trak_in = readtrakport(0);
-	if (trak_in != NO_TRAK) {
-		if (trak_in < 0) {
-			dir = 0;
-			trak_in = abs(trak_in);
-		} else if (trak_in > 1)
-			dir = 1;
-		spinner -= trak_in;
-	}
-	return ((spinner << 1) | dir);
+	if (ioSwitch == 0x1e)
+		return readinputport (4);
+	if (ioSwitch == 0x1f)
+                return readinputport (8);
+	return (0);
 }
-
-int sega_spinner(int data) {
-
-#define MAX_SPINNER	64
-
-	if (data > MAX_SPINNER)
-		data = MAX_SPINNER;
-	if (data < -MAX_SPINNER)
-		data = -MAX_SPINNER;
-	return (data);
-	}

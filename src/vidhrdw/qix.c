@@ -13,10 +13,7 @@
 
 unsigned char *qix_paletteram,*qix_palettebank;
 unsigned char *qix_videoaddress;
-static unsigned char qixpal[256];
 static unsigned char *screen;
-static int dirtypalette;
-
 
 
 /***************************************************************************
@@ -38,43 +35,54 @@ void qix_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable
 {
 	int i;
 
-
-	for (i = 0;i < 256;i++)
+	/* the palette will be initialized by the game. We just set it to some */
+	/* pre-cooked values so the startup copyright notice can be displayed. */
+	for (i = 0;i < Machine->drv->total_colors;i++)
 	{
-		/* this conversion table is probably quite wrong, but at least it gives */
-		/* a reasonable gray scale in the test screen. However, in the very same */
-		/* test screen the red, green and blue squares are almost invisible since */
-		/* they are very dark (value = 1, intensity = 0) */
-		static unsigned char table[16] =
-		{
-			0x00,	/* value = 0, intensity = 0 */
-			0x12,	/* value = 0, intensity = 1 */
-			0x24,	/* value = 0, intensity = 2 */
-			0x49,	/* value = 0, intensity = 3 */
-			0x12,	/* value = 1, intensity = 0 */
-			0x24,	/* value = 1, intensity = 1 */
-			0x49,	/* value = 1, intensity = 2 */
-			0x92,	/* value = 1, intensity = 3 */
-			0x5b,	/* value = 2, intensity = 0 */
-			0x6d,	/* value = 2, intensity = 1 */
-			0x92,	/* value = 2, intensity = 2 */
-			0xdb,	/* value = 2, intensity = 3 */
-			0x7f,	/* value = 3, intensity = 0 */
-			0x91,	/* value = 3, intensity = 1 */
-			0xb6,	/* value = 3, intensity = 2 */
-			0xff	/* value = 3, intensity = 3 */
-		};
-		int bits,intensity;
-
-
-		intensity = (i >> 0) & 0x03;
-		bits = (i >> 6) & 0x03;
-		palette[3*i] = table[(bits << 2) | intensity];
-		bits = (i >> 4) & 0x03;
-		palette[3*i + 1] = table[(bits << 2) | intensity];
-		bits = (i >> 2) & 0x03;
-		palette[3*i + 2] = table[(bits << 2) | intensity];
+		*(palette++) = ((i & 1) >> 0) * 0xff;
+		*(palette++) = ((i & 2) >> 1) * 0xff;
+		*(palette++) = ((i & 4) >> 2) * 0xff;
 	}
+}
+
+
+
+static void update_pen (int pen, int val)
+{
+	/* this conversion table should be about right. It gives a reasonable */
+	/* gray scale in the test screen, and the red, green and blue squares */
+	/* in the same screen are barely visible, as the manual requires. */
+	static unsigned char table[16] =
+	{
+		0x00,	/* value = 0, intensity = 0 */
+		0x12,	/* value = 0, intensity = 1 */
+		0x24,	/* value = 0, intensity = 2 */
+		0x49,	/* value = 0, intensity = 3 */
+		0x12,	/* value = 1, intensity = 0 */
+		0x24,	/* value = 1, intensity = 1 */
+		0x49,	/* value = 1, intensity = 2 */
+		0x92,	/* value = 1, intensity = 3 */
+		0x5b,	/* value = 2, intensity = 0 */
+		0x6d,	/* value = 2, intensity = 1 */
+		0x92,	/* value = 2, intensity = 2 */
+		0xdb,	/* value = 2, intensity = 3 */
+		0x7f,	/* value = 3, intensity = 0 */
+		0x91,	/* value = 3, intensity = 1 */
+		0xb6,	/* value = 3, intensity = 2 */
+		0xff	/* value = 3, intensity = 3 */
+	};
+
+	int bits,intensity,red,green,blue;
+
+	intensity = (val >> 0) & 0x03;
+	bits = (val >> 6) & 0x03;
+	red = table[(bits << 2) | intensity];
+	bits = (val >> 4) & 0x03;
+	green = table[(bits << 2) | intensity];
+	bits = (val >> 2) & 0x03;
+	blue = table[(bits << 2) | intensity];
+
+	osd_modify_pen (Machine->pens[pen], red, green, blue);
 }
 
 
@@ -86,8 +94,6 @@ void qix_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable
 ***************************************************************************/
 int qix_vh_start(void)
 {
-	dirtypalette = 1;
-
 	if ((screen = malloc(256*256)) == 0)
 		return 1;
 
@@ -135,13 +141,14 @@ void qix_videoram_w(int offset,int data)
 {
 	int x, y;
 
-
 	offset += (qix_videoaddress[0] & 0x80) * 0x100;
 
 	/* bitmap is rotated -90 deg. */
 	x = offset >> 8;
 	y = ~offset & 0xff;
-	tmpbitmap->line[y][x] = qixpal[data];
+	tmpbitmap->line[y][x] = Machine->pens[data];
+
+	osd_mark_dirty(x,y,x,y,0);
 
 	screen[offset] = data;
 }
@@ -166,7 +173,9 @@ void qix_addresslatch_w(int offset,int data)
 	/* bitmap is rotated -90 deg. */
 	x = offset >> 8;
 	y = ~offset & 0xff;
-	tmpbitmap->line[y][x] = qixpal[data];
+	tmpbitmap->line[y][x] = Machine->pens[data];
+
+	osd_mark_dirty(x,y,x,y,0);
 
 	screen[offset] = data;
 }
@@ -184,11 +193,10 @@ Qix uses a palette of 64 colors (2 each RGB) and four intensities (RRGGBBII).
 */
 void qix_paletteram_w(int offset,int data)
 {
-	if (qix_paletteram[offset] != data)
-	{
-		dirtypalette = 1;
-		qix_paletteram[offset] = data;
-	}
+	qix_paletteram[offset] = data;
+
+	if ((*qix_palettebank & 0x03) == (offset / 256))
+		update_pen (offset % 256, data);
 }
 
 
@@ -196,7 +204,13 @@ void qix_paletteram_w(int offset,int data)
 void qix_palettebank_w(int offset,int data)
 {
 	if ((*qix_palettebank & 0x03) != (data & 0x03))
-		dirtypalette = 1;
+	{
+		unsigned char *pram = &qix_paletteram[256 * (data & 0x03)];
+		int i;
+
+		for (i = 0;i < 256;i++)
+			update_pen (i, *pram++);
+	}
 
 	*qix_palettebank = data;
 }
@@ -205,30 +219,6 @@ void qix_palettebank_w(int offset,int data)
 
 void qix_vh_screenrefresh(struct osd_bitmap *bitmap)
 {
-	if (dirtypalette)
-	{
-		int i,x;
-		unsigned char *bm,*pram;
-
-
-		dirtypalette = 0;
-
-		pram = &qix_paletteram[256 * (*qix_palettebank & 0x03)];
-
-		for (i = 0;i < 256;i++)
-			qixpal[i] = Machine->pens[*pram++];
-
-
-		/* refresh the bitmap with new colors */
-		for (i = 0;i < 256;i++)
-		{
-			bm = tmpbitmap->line[i];
-			for (x = 0;x < 256;x++)
-				*bm++ = qixpal[screen[(x << 8) + (255 - i)]];
-		}
-	}
-
-
 	/* copy the screen */
 	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
 }

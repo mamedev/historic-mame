@@ -20,20 +20,15 @@
 
 *****************************************************************************/
 
-#define NEW_OP			/* merge cpu cycles , haspostbyte and extend op code */
-#define NEW_FLAG		/* use flag table after increment and decrement */
-#define NEW_DREG		/* pack areg and breg to dreg*/
-#define NEW_BR			/* bypass fixed condition branch */
-
 #include <stdio.h>
 #include <stdlib.h>
+#include "osd_dbg.h"
 #include "m6809.h"
 #include "driver.h"
 
 INLINE void fetch_effective_address( void );
 
 /* 6809 registers */
-#ifdef NEW_DREG
 static byte cc,dpreg;
 
 static union {
@@ -47,9 +42,6 @@ static union {
 #define areg (dbreg.b.h)
 #define breg (dbreg.b.l)
 
-#else
-static byte cc,dpreg,areg,breg;
-#endif
 static word xreg,yreg,ureg,sreg,pcreg;
 
 static word eaddr; /* effective address */
@@ -57,15 +49,10 @@ static word eaddr; /* effective address */
 static int pending_interrupts;	/* NS 970908 */
 
 /* public globals */
-/*int	m6809_IPeriod=50000;*/ /* NS 970908 */
 int	m6809_ICount=50000;
-/*int	m6809_IRequest=INT_NONE;*/ /* NS 970908 */
 int m6809_Flags;	/* flags for speed optimization */
 
 /* flag, handlers for speed optimization */
-/* ASG 091197 static int fastopcodes;
-static int (*rd_op_handler)();
-static int (*rd_op_handler_wd)();*/
 static int (*rd_u_handler)();
 static int (*rd_u_handler_wd)();
 static int (*rd_s_handler)();
@@ -82,10 +69,8 @@ static void (*wr_s_handler_wd)();
 #define M_RDOP_ARG(A)   M6809_RDOP_ARG(A)
 
 /* macros to access memory */
-/* ASG 091197 #define IMMBYTE(b)	{b=(*rd_op_handler)(pcreg);pcreg++;}
-#define IMMWORD(w)	{w=(*rd_op_handler_wd)(pcreg);pcreg+=2;}*/
-#define IMMBYTE(b)	{b = M_RDOP(pcreg++);}	/* TS 971002 */
-#define IMMWORD(w)	{w = (M_RDOP(pcreg)<<8) + M_RDOP(pcreg+1); pcreg+=2;}	/* TS 971002 */
+#define IMMBYTE(b)	{b = M_RDOP_ARG(pcreg++);}
+#define IMMWORD(w)	{w = (M_RDOP_ARG(pcreg)<<8) + M_RDOP_ARG(pcreg+1); pcreg+=2;}
 
 #define PUSHBYTE(b) {--sreg;(*wr_s_handler)(sreg,b);}
 #define PUSHWORD(w) {sreg-=2;(*wr_s_handler_wd)(sreg,w);}
@@ -117,7 +102,6 @@ static void (*wr_s_handler_wd)();
 #define SET_V8(a,b,r)	cc|=(((a^b^r^(r>>1))&0x80)>>6)
 #define SET_V16(a,b,r)	cc|=(((a^b^r^(r>>1))&0x8000)>>14)
 
-#ifdef NEW_FLAG
 static byte flags8i[256]=	/* increment */
 {
 0x04,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
@@ -158,7 +142,6 @@ static byte flags8d[256]= /* decrement */
 };
 #define SET_FLAGS8I(a)		{cc|=flags8i[(a)&0xff];}
 #define SET_FLAGS8D(a)		{cc|=flags8d[(a)&0xff];}
-#endif
 
 /* combos */
 #define SET_NZ8(a)			{SET_N8(a);SET_Z(a);}
@@ -170,13 +153,8 @@ static byte flags8d[256]= /* decrement */
 #define SIGNED(b) ((word)(b&0x80?b|0xff00:b))
 
 /* macros to access dreg */
-#ifdef NEW_DREG
 #define GETDREG (dbreg.w)
 #define SETDREG(n) {dbreg.w=n;}
-#else
-#define GETDREG ((areg<<8)|breg)
-#define SETDREG(n) {areg=(n)>>8;breg=(n);}
-#endif
 
 /* macros for addressing modes (postbytes have their own code) */
 #define DIRECT {IMMBYTE(eaddr);eaddr|=(dpreg<<8);}
@@ -232,8 +210,6 @@ static byte flags8d[256]= /* decrement */
 			 case 10: cc=val;break;\
 			 case 11: dpreg=val;break;}
 
-#ifdef NEW_OP
-
 #define EOP 0xff			/* 0xff = extend op code          */
 #define E   0x80			/* 0x80 = fetch effective address */
 /* timings for 1-byte opcodes */
@@ -282,78 +258,15 @@ static unsigned char cycles2[] =
 #undef EOP
 #undef E
 
-#else
-
-static unsigned char haspostbyte[] = {
-  /*0*/      0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-  /*1*/      0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-  /*2*/      0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-  /*3*/      1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,
-  /*4*/      0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-  /*5*/      0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-  /*6*/      1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
-  /*7*/      0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-  /*8*/      0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-  /*9*/      0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-  /*A*/      1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
-  /*B*/      0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-  /*C*/      0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-  /*D*/      0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-  /*E*/      1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
-  /*F*/      0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
-            };
-static unsigned char cycles1[] =
-{
-		/*	0  1  2  3  4  5  6  7  8  9  A  B  C  D  E  F */
-  /*0*/		6, 0, 0, 6, 6, 0, 6, 6, 6, 6, 6, 0, 6, 6, 3, 6,
-  /*1*/		0, 0, 2, 2, 0, 0, 5, 9, 0, 2, 3, 0, 3, 2, 8, 7,
-  /*2*/		3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
-  /*3*/		4, 4, 4, 4, 5, 5, 5, 5, 0, 5, 3, 6, 0,11, 0,19,
-  /*4*/		2, 0, 0, 2, 2, 0, 2, 2, 2, 2, 2, 0, 2, 2, 0, 2,
-  /*5*/		2, 0, 0, 2, 2, 0, 2, 2, 2, 2, 2, 0, 2, 2, 0, 2,
-  /*6*/		6, 0, 0, 6, 6, 0, 6, 6, 6, 6, 6, 0, 6, 6, 3, 6,
-  /*7*/		7, 0, 0, 7, 7, 0, 7, 7, 7, 7, 7, 0, 7, 7, 4, 7,
-  /*8*/		2, 2, 2, 4, 2, 2, 2, 2, 2, 2, 2, 2, 4, 7, 3, 0,
-  /*9*/		4, 4, 4, 6, 4, 4, 4, 4, 4, 4, 4, 4, 6, 7, 5, 5,
-  /*A*/		4, 4, 4, 6, 4, 4, 4, 4, 4, 4, 4, 4, 6, 7, 5, 5,
-  /*B*/		5, 5, 5, 7, 5, 5, 5, 5, 5, 5, 5, 5, 7, 8, 6, 6,
-  /*C*/		2, 2, 2, 4, 2, 2, 2, 2, 2, 2, 2, 2, 3, 0, 3, 3,
-  /*D*/		4, 4, 4, 6, 4, 4, 4, 4, 4, 4, 4, 4, 5, 5, 5, 5,
-  /*E*/		4, 4, 4, 6, 4, 4, 4, 4, 4, 4, 4, 4, 5, 5, 5, 5,
-  /*F*/		5, 5, 5, 7, 5, 5, 5, 5, 5, 5, 5, 5, 6, 6, 6, 6
-};
-
-/* timings for 2-byte opcodes */
-static unsigned char cycles2[] =
-{
-		/*	0  1  2  3  4  5  6  7  8  9  A  B  C  D  E  F */
-  /*0*/		0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-  /*1*/		0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-  /*2*/		0, 5, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6,
-  /*3*/		0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,20,
-  /*4*/		0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-  /*5*/		0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-  /*6*/		0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-  /*7*/		0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-  /*8*/		0, 0, 0, 5, 0, 0, 0, 0, 0, 0, 0, 0, 5, 0, 4, 0,
-  /*9*/		0, 0, 0, 7, 0, 0, 0, 0, 0, 0, 0, 0, 7, 0, 6, 6,
-  /*A*/		0, 0, 0, 7, 0, 0, 0, 0, 0, 0, 0, 0, 7, 0, 6, 6,
-  /*B*/		0, 0, 0, 8, 0, 0, 0, 0, 0, 0, 0, 0, 8, 0, 7, 7,
-  /*C*/		0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 0,
-  /*D*/		0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 6, 6,
-  /*E*/		0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 6, 6,
-  /*F*/		0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 7, 7
-};
-#endif
 
 static int rd_slow( int addr )
 {
-	return M_RDMEM(addr);
+    return M_RDMEM(addr);
 }
 
 static int rd_slow_wd( int addr )
 {
-	return( (M_RDMEM(addr)<<8) | (M_RDMEM((addr+1)&0xffff)) );
+    return( (M_RDMEM(addr)<<8) | (M_RDMEM((addr+1)&0xffff)) );
 }
 
 static int rd_fast( int addr )
@@ -392,15 +305,15 @@ INLINE unsigned M_RDMEM_WORD (dword A)
 {
 	int i;
 
-	i = M_RDMEM(((A)+1)&0xFFFF);
-	i |= M_RDMEM(A)<<8;
+    i = M_RDMEM(A)<<8;
+    i |= M_RDMEM(((A)+1)&0xFFFF);
 	return i;
 }
 
 INLINE void M_WRMEM_WORD (dword A,word V)
 {
-	M_WRMEM (((A)+1)&0xFFFF,V&255);
 	M_WRMEM (A,V>>8);
+	M_WRMEM (((A)+1)&0xFFFF,V&255);
 }
 
 /****************************************************************************/
@@ -513,14 +426,9 @@ void m6809_reset(void)
 	cc |= 0x40;			/* FIRQ disabled */
 	areg = 0x00;		/* clear accumulator a */
 	breg = 0x00;		/* clear accumulator b */
-/*	m6809_ICount=m6809_IPeriod;*/ /* NS 970908 */
-/*	m6809_IRequest=INT_NONE;*/ /* NS 970908 */
 	m6809_Clear_Pending_Interrupts();	/* NS 970908 */
 
 	/* default to unoptimized memory access */
-/* ASG 091197 	fastopcodes = FALSE;
-	rd_op_handler = rd_slow;
-	rd_op_handler_wd = rd_slow_wd;*/
 	rd_u_handler = rd_slow;
 	rd_u_handler_wd = rd_slow_wd;
 	rd_s_handler = rd_slow;
@@ -531,11 +439,6 @@ void m6809_reset(void)
 	wr_s_handler_wd = wr_slow_wd;
 
 	/* optimize memory access according to flags */
-/* ASG 091197 	if( m6809_Flags & M6809_FAST_OP )
-	{
-		fastopcodes = TRUE;
-		rd_op_handler = rd_fast; rd_op_handler_wd = rd_fast_wd;
- 	}*/
 	if( m6809_Flags & M6809_FAST_U )
 	{
 		rd_u_handler=rd_fast; rd_u_handler_wd=rd_fast_wd;
@@ -552,10 +455,23 @@ void m6809_reset(void)
 void m6809_Cause_Interrupt(int type)	/* NS 970908 */
 {
 	pending_interrupts |= type;
+	if (type & (M6809_INT_NMI | M6809_INT_IRQ | M6809_INT_FIRQ))
+	{
+		pending_interrupts &= ~M6809_SYNC;
+		if (pending_interrupts & M6809_CWAI)
+		{
+			if ((pending_interrupts & M6809_INT_NMI) != 0)
+				pending_interrupts &= ~M6809_CWAI;
+			else if ((pending_interrupts & M6809_INT_IRQ) != 0 && (cc & 0x10) == 0)
+				pending_interrupts &= ~M6809_CWAI;
+			else if ((pending_interrupts & M6809_INT_FIRQ) != 0 && (cc & 0x40) == 0)
+				pending_interrupts &= ~M6809_CWAI;
+		}
+	}
 }
 void m6809_Clear_Pending_Interrupts(void)	/* NS 970908 */
 {
-	pending_interrupts = 0;
+	pending_interrupts &= ~(M6809_INT_IRQ | M6809_INT_FIRQ | M6809_INT_NMI);
 }
 
 
@@ -564,31 +480,32 @@ void m6809_Clear_Pending_Interrupts(void)	/* NS 970908 */
 /* execute instructions on this CPU until icount expires */
 int m6809_execute(int cycles)	/* NS 970908 */
 {
-#ifdef NEW_OP
 	byte op_count;	/* op code clock count */
-#endif
 	byte ireg;
 	m6809_ICount = cycles;	/* NS 970908 */
 
+	if (pending_interrupts & (M6809_CWAI | M6809_SYNC))
+	{
+		m6809_ICount = 0;
+		goto getout;
+	}
+
 	do
 	{
-		if (pending_interrupts != 0) Interrupt();	/* NS 970908 */
+		if (pending_interrupts != 0)
+			Interrupt();	/* NS 970908 */
 
-		#if 0
-		asg_6809Trace(OP_ROM, pcreg);	/* TS 971002 */
-		#endif
+#ifdef	MAME_DEBUG
+{
+  extern int mame_debug;
+  if (mame_debug) MAME_Debug();
+}
+#endif
+		ireg=M_RDOP(pcreg++);
 
-		/* ASG 091197 if( fastopcodes )*/ ireg=M_RDOP(pcreg++);
-		/* ASG 091197 else ireg=M_RDMEM(pcreg++);*/
-
-#ifdef NEW_OP
 		if( (op_count = cycles1[ireg])!=0xff ){
 			if( op_count &0x80 ) fetch_effective_address();
-#else
-		if( ireg!=0x10 && ireg!=0x11 )
-		{
-			if(haspostbyte[ireg]) fetch_effective_address();
-#endif
+
 			switch( ireg )
 			{
 				case 0x00: neg_di(); break;
@@ -848,16 +765,11 @@ int m6809_execute(int cycles)	/* NS 970908 */
 				case 0xfe: ldu_ex(); break;
 				case 0xff: stu_ex(); break;
 			}
-#ifndef NEW_OP
-			m6809_ICount -= cycles1[ireg];
-#endif
 		}
 		else
 		{
-#ifdef NEW_OP
 			byte ireg2;
-			/* ASG 091197 if( fastopcodes ) */ ireg2=M_RDOP(pcreg++);
-			/* ASG 091197 else iregw|=M_RDMEM(pcreg++); */
+			ireg2=M_RDOP(pcreg++);
 
 			if( (op_count=cycles2[ireg2]) &0x80 ) fetch_effective_address();
 
@@ -923,101 +835,19 @@ int m6809_execute(int cycles)	/* NS 970908 */
 			}
 		}
 		m6809_ICount -= op_count & 0x7f;
-#else
-			word iregw;
-			iregw = ireg; iregw<<=8;
-			/* ASG 091197 if( fastopcodes ) */ iregw|=M_RDOP(pcreg++);
-			/* ASG 091197 else iregw|=M_RDMEM(pcreg++); */
 
-			if(haspostbyte[iregw&0xff]) fetch_effective_address();
+	} while( m6809_ICount>0 );
 
-			switch( iregw )
-			{
-				case 0x1021: lbrn(); break;
-				case 0x1022: lbhi(); break;
-				case 0x1023: lbls(); break;
-				case 0x1024: lbcc(); break;
-				case 0x1025: lbcs(); break;
-				case 0x1026: lbne(); break;
-				case 0x1027: lbeq(); break;
-				case 0x1028: lbvc(); break;
-				case 0x1029: lbvs(); break;
-				case 0x102a: lbpl(); break;
-				case 0x102b: lbmi(); break;
-				case 0x102c: lbge(); break;
-				case 0x102d: lblt(); break;
-				case 0x102e: lbgt(); break;
-				case 0x102f: lble(); break;
-				case 0x103f: swi2(); break;
-				case 0x1083: cmpd_im(); break;
-				case 0x108c: cmpy_im(); break;
-				case 0x108e: ldy_im(); break;
-				case 0x108f: sty_im(); break; /* ILLEGAL? */
-				case 0x1093: cmpd_di(); break;
-				case 0x109c: cmpy_di(); break;
-				case 0x109e: ldy_di(); break;
-				case 0x109f: sty_di(); break;
-				case 0x10a3: cmpd_ix(); break;
-				case 0x10ac: cmpy_ix(); break;
-				case 0x10ae: ldy_ix(); break;
-				case 0x10af: sty_ix(); break;
-				case 0x10b3: cmpd_ex(); break;
-				case 0x10bc: cmpy_ex(); break;
-				case 0x10be: ldy_ex(); break;
-				case 0x10bf: sty_ex(); break;
-				case 0x10ce: lds_im(); break;
-				case 0x10cf: sts_im(); break; /* ILLEGAL? */
-				case 0x10de: lds_di(); break;
-				case 0x10df: sts_di(); break;
-				case 0x10ee: lds_ix(); break;
-				case 0x10ef: sts_ix(); break;
-				case 0x10fe: lds_ex(); break;
-				case 0x10ff: sts_ex(); break;
-				case 0x113f: swi3(); break;
-				case 0x1183: cmpu_im(); break;
-				case 0x118c: cmps_im(); break;
-				case 0x1193: cmpu_di(); break;
-				case 0x119c: cmps_di(); break;
-				case 0x11a3: cmpu_ix(); break;
-				case 0x11ac: cmps_ix(); break;
-				case 0x11b3: cmpu_ex(); break;
-				case 0x11bc: cmps_ex(); break;
-				default: illegal(); break;
-			}
-			m6809_ICount -= cycles2[iregw&0xff];
-		}
-#endif
-
-#if 0	/* NS 970908 */
-		if( m6809_IRequest==INT_FIRQ )
-		{
-			m6809_IRequest = INT_NONE;
-			m6809_FIRQ();
-		}
-#endif
-	}
-	while( m6809_ICount>0 );
-
+getout:
 	return cycles - m6809_ICount;	/* NS 970908 */
-
-#if 0	/* NS 970908 */
-	m6809_IRequest = INT_NONE;
-
-	if( saved_icount ) m6809_ICount = saved_icount; else /* JB 970824 */
-	m6809_ICount = m6809_IPeriod;
-	saved_icount = 0;	/* JB 970824 */
-
-	/* Interrupt if needed  */
-	if(cpu_interrupt()==INT_IRQ) m6809_Interrupt();
-#endif
 }
 
 INLINE void fetch_effective_address( void )
 {
 	byte postbyte;
 
-	/* ASG 091197 if( fastopcodes ) */ postbyte=M_RDOP(pcreg++);
-	/* ASG 091197 else postbyte = M_RDMEM(pcreg++);*/
+
+	postbyte=M_RDOP_ARG(pcreg++);
 
 	switch(postbyte)
 	{

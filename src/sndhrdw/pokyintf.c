@@ -12,10 +12,16 @@
 
 #include "driver.h"
 #include "sndhrdw/pokyintf.h"
+#include "sndhrdw/generic.h"
 
-#define TARGET_EMULATION_RATE 44100	/* will be adapted to be a multiple of buffer_len */
+#define MIN_SLICE 10	/* minimum update step for POKEY (226usec @ 44100Hz) */
+#define POKEY_GAIN	16
+
 static int buffer_len;
 static int emulation_rate;
+static int sample_pos;
+
+static int channel;
 
 extern uint8 rng[MAXPOKEYS];
 static uint8 pokey_random[MAXPOKEYS];     /* The random number for each pokey */
@@ -34,17 +40,21 @@ int pokey_sh_start (struct POKEYinterface *interface)
 
 	intf = interface;
 
-	buffer_len = TARGET_EMULATION_RATE / Machine->drv->frames_per_second / intf->updates_per_frame;
-	emulation_rate = buffer_len * Machine->drv->frames_per_second * intf->updates_per_frame;
+	buffer_len = Machine->sample_rate / Machine->drv->frames_per_second;
+	emulation_rate = buffer_len * Machine->drv->frames_per_second;
+	sample_pos = 0;
 
-	if ((buffer = malloc(buffer_len * intf->updates_per_frame)) == 0)
+	channel = get_play_channels(1);
+
+	if ((buffer = malloc(buffer_len)) == 0)
 	{
 		free(buffer);
 		return 1;
 	}
-	memset(buffer,0x80,buffer_len * intf->updates_per_frame);
+	memset(buffer,0,buffer_len);
 
 	Pokey_sound_init (intf->clock, emulation_rate, intf->num, intf->clip);
+//	Pokey_sound_init (intf->clock, emulation_rate, intf->num, true);
 
 	for (i = 0; i < intf->num; i ++)
 		/* Seed the values */
@@ -56,6 +66,23 @@ int pokey_sh_start (struct POKEYinterface *interface)
 
 void pokey_sh_stop (void)
 {
+}
+
+static void update_pokeys(void)
+{
+	int totcycles,leftcycles,newpos;
+
+	totcycles = cpu_getfperiod();
+	leftcycles = cpu_getfcount();
+	newpos = buffer_len * (totcycles-leftcycles) / totcycles;
+
+	if (newpos > buffer_len)
+		newpos = buffer_len;
+	if (newpos - sample_pos < MIN_SLICE)
+		return;
+	Pokey_process (buffer + sample_pos, newpos - sample_pos);
+
+	sample_pos = newpos;
 }
 
 
@@ -112,12 +139,11 @@ int Read_pokey_regs (uint16 addr, uint8 chip)
 			if (rng[chip]) {
 				pokey_random[chip] = (pokey_random[chip]>>4) | (rand()&0xf0);
 				}
+			if (errorlog) fprintf (errorlog, "RNG #%d data: %02x\n", chip, pokey_random[chip]);
 			return pokey_random[chip];
 			break;
 		default:
-#ifdef DEBUG
 			if (errorlog) fprintf (errorlog, "Pokey #%d read from register %02x\n", chip, addr);
-#endif
 			return 0;
 			break;
 	}
@@ -145,51 +171,71 @@ int pokey4_r (int offset)
 	return Read_pokey_regs (offset,3);
 }
 
+int quad_pokey_r (int offset)
+{
+	int pokey_num = (offset >> 3) & ~0x04;
+    int control = (offset & 0x20) >> 2;
+	int pokey_reg = (offset % 8) | control;
+
+//    if (errorlog) fprintf (errorlog, "offset: %04x pokey_num: %02x pokey_reg: %02x\n", offset, pokey_num, pokey_reg);
+	return Read_pokey_regs (pokey_reg,pokey_num);
+}
+
 
 void pokey1_w (int offset,int data)
 {
-	Update_pokey_sound (offset,data,0,16/intf->num);
+	update_pokeys ();
+	Update_pokey_sound (offset,data,0,POKEY_GAIN/intf->num);
 }
 
 void pokey2_w (int offset,int data)
 {
-	Update_pokey_sound (offset,data,1,16/intf->num);
+	update_pokeys ();
+	Update_pokey_sound (offset,data,1,POKEY_GAIN/intf->num);
 }
 
 void pokey3_w (int offset,int data)
 {
-	Update_pokey_sound (offset,data,2,16/intf->num);
+	update_pokeys ();
+	Update_pokey_sound (offset,data,2,POKEY_GAIN/intf->num);
 }
 
 void pokey4_w (int offset,int data)
 {
-	Update_pokey_sound (offset,data,3,16/intf->num);
+	update_pokeys ();
+	Update_pokey_sound (offset,data,3,POKEY_GAIN/intf->num);
 }
 
-static int updatecount;
-
-void pokey_update(void)
+void quad_pokey_w (int offset,int data)
 {
-	if (updatecount >= intf->updates_per_frame) return;
+	int pokey_num = (offset >> 3) & ~0x04;
+    int control = (offset & 0x20) >> 2;
+	int pokey_reg = (offset % 8) | control;
 
-	Pokey_process (&buffer[updatecount * buffer_len],buffer_len);
-
-	updatecount++;
+	switch (pokey_num) {
+		case 0:
+			pokey1_w (pokey_reg, data);
+			break;
+		case 1:
+			pokey2_w (pokey_reg, data);
+			break;
+		case 2:
+			pokey3_w (pokey_reg, data);
+			break;
+		case 3:
+			pokey4_w (pokey_reg, data);
+			break;
+		}
 }
 
 
 void pokey_sh_update (void)
 {
+	if (Machine->sample_rate == 0) return;
 
-	if (play_sound == 0) return;
+	if (sample_pos < buffer_len)
+		Pokey_process (buffer + sample_pos, buffer_len - sample_pos);
+	sample_pos = 0;
 
-	if (intf->updates_per_frame == 1) pokey_update();
-
-if (errorlog && updatecount != intf->updates_per_frame)
-	fprintf(errorlog,"Error: pokey_update() has not been called %d times in a frame\n",intf->updates_per_frame);
-
-	updatecount = 0;	/* must be zeroed here to keep in sync in case of a reset */
-
-	osd_play_streamed_sample(0,buffer,buffer_len * intf->updates_per_frame,emulation_rate,intf->volume);
-
+	osd_play_streamed_sample(channel,buffer,buffer_len,emulation_rate,intf->volume);
 }

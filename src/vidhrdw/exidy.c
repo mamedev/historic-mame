@@ -9,8 +9,6 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-
-
 unsigned char *exidy_characterram;
 unsigned char *exidy_color_lookup;
 
@@ -119,16 +117,17 @@ void exidy_vh_screenrefresh(struct osd_bitmap *bitmap)
 				sx,sy,
 				&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
 		}
+
 		if (!(*exidy_sprite_enable&0x40))
 		{
 			sx = 236-*exidy_sprite2_xpos-4;
 			sy = 244-*exidy_sprite2_ypos-4;
 
 			drawgfx(bitmap,Machine->gfx[1],
-					((*exidy_sprite_no>>4) & 0x0F)+32,2+enable_set,
-					0,0,
-					sx,sy,
-					&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+				((*exidy_sprite_no>>4) & 0x0F)+32,2+enable_set,
+				0,0,
+				sx,sy,
+				&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
 		}
 	}
 }

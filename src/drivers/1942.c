@@ -371,7 +371,6 @@ void c1942_vh_convert_color_prom(unsigned char *palette, unsigned char *colortab
 void c1942_vh_screenrefresh(struct osd_bitmap *bitmap);
 
 int capcom_sh_start(void);
-int capcom_sh_interrupt(void);
 
 
 
@@ -683,7 +682,7 @@ static struct MachineDriver machine_driver =
 			3000000,	/* 3 Mhz ??? */
 			2,	/* memory region #2 */
 			sound_readmem,sound_writemem,0,0,
-			capcom_sh_interrupt,12
+			interrupt,4
 		}
 	},
 	60,
@@ -703,7 +702,6 @@ static struct MachineDriver machine_driver =
 	c1942_vh_screenrefresh,
 
 	/* sound hardware */
-	0,
 	0,
 	capcom_sh_start,
 	AY8910_sh_stop,
@@ -822,6 +820,7 @@ struct GameDriver c1942_driver =
 	c1942_rom,
 	0, 0,
 	0,
+	0,	/* sound_prom */
 
 	0/*TBR*/,input_ports,0/*TBR*/,0/*TBR*/,0/*TBR*/,
 

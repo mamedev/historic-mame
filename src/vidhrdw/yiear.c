@@ -11,6 +11,9 @@
 
 
 
+static int flipscreen;
+
+
 
 /***************************************************************************
 
@@ -40,17 +43,18 @@ void yiear_vh_convert_color_prom(unsigned char *palette, unsigned char *colortab
 	{
 		int bit0,bit1,bit2;
 
-
 		/* red component */
 		bit0 = (*color_prom >> 0) & 0x01;
 		bit1 = (*color_prom >> 1) & 0x01;
 		bit2 = (*color_prom >> 2) & 0x01;
 		*(palette++) = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+
 		/* green component */
 		bit0 = (*color_prom >> 3) & 0x01;
 		bit1 = (*color_prom >> 4) & 0x01;
 		bit2 = (*color_prom >> 5) & 0x01;
 		*(palette++) = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+
 		/* blue component */
 		bit0 = 0;
 		bit1 = (*color_prom >> 6) & 0x01;
@@ -72,61 +76,97 @@ void yiear_vh_convert_color_prom(unsigned char *palette, unsigned char *colortab
 
 
 
-void yiear_videoram_w(int offset,int data)
+void yiear_4f00_w(int offset,int data)
 {
-	if (videoram[offset] != data)
+	/* bit 0 flips screen */
+	if (flipscreen != (data & 1))
 	{
-		dirtybuffer[offset/2] = 1;
-		videoram[offset] = data;
+		flipscreen = data & 1;
+		memset(dirtybuffer,1,videoram_size);
 	}
+
+	/* bits 3 and 4 are for coin counters - we ignore them */
 }
 
+
+
+/***************************************************************************
+
+  Draw the game screen in the given osd_bitmap.
+  Do NOT call osd_update_display() from this function, it will be called by
+  the main emulation engine.
+
+***************************************************************************/
 void yiear_vh_screenrefresh(struct osd_bitmap *bitmap)
 {
-	int i;
+	int offs;
 
-	/* draw background */
+
+	/* for every character in the Video RAM, check if it has been modified */
+	/* since last time and update it accordingly. */
+	for (offs = videoram_size - 2;offs >= 0;offs -= 2)
 	{
-		unsigned char *vr = videoram;
-		for (i = 0;i < videoram_size;i++) if ( dirtybuffer[i] )
+		if (dirtybuffer[offs] || dirtybuffer[offs + 1])
 		{
-			unsigned char byte1 = vr[i*2];
-			unsigned char byte2 = vr[i*2+1];
-			int code = 16*(byte1 & 0x10) + byte2;
-			int flipx = byte1 & 0x80;
-			int flipy = byte1 & 0x40;
-			int sx = 8 * (i % 32);
-			int sy = 8 * (i / 32);
+			int sx,sy,flipx,flipy;
 
-			dirtybuffer[i] = 0;
+
+			dirtybuffer[offs] = dirtybuffer[offs + 1] = 0;
+
+			sx = (offs/2) % 32;
+			sy = (offs/2) / 32;
+			flipx = videoram[offs] & 0x80;
+			flipy = videoram[offs] & 0x40;
+			if (flipscreen)
+			{
+				sx = 31 - sx;
+				sy = 31 - sy;
+				flipx = !flipx;
+				flipy = !flipy;
+			}
 
 			drawgfx(tmpbitmap,Machine->gfx[0],
-				code,0,flipx,flipy,sx,sy,
+				videoram[offs + 1] + 0x10 * (videoram[offs] & 0x10),
+				0,
+				flipx,flipy,
+				8*sx,8*sy,
 				0,TRANSPARENCY_NONE,0);
 		}
 	}
 
+
 	/* copy the temporary bitmap to the screen */
-	copybitmap(bitmap,tmpbitmap,0,0,0,0,
-		&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
 
-	/* draw sprites. */
+
+	/* draw sprites */
+	for (offs = spriteram_size - 16;offs >= 0;offs -= 16)
 	{
-		unsigned char *sr  = spriteram;
+		int sx,sy,flipx,flipy;
 
-		for (i = 23*16; i>=0; i -= 16)
+
+		sy = 240 - spriteram[offs + 6];
+
+		if (sy < 240)
 		{
-			int sy = 239-sr[i+0x06];
-			if( sy<239 ){
-				int code = 256*(sr[i+0x0f] & 1) + sr[i+0x0e];
-				int flipx = (sr[i+0x0f]&0x40)?0:1;
-				int flipy = (sr[i+0x0f]&0x80)?1:0;
-				int sx = sr[i+0x04];
+			sx = spriteram[offs + 4];
+			flipx = ~spriteram[offs + 15] & 0x40;
+			flipy = spriteram[offs + 15] & 0x80;
 
-				drawgfx(bitmap,Machine->gfx[1],
-					code,0,flipx,flipy,sx,sy,
-					&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
-				}
+			if (flipscreen)
+			{
+				sx = 240 - sx;
+				sy = 240 - sy;
+				flipx = !flipx;
+				flipy = !flipy;
+			}
+
+			drawgfx(bitmap,Machine->gfx[1],
+				spriteram[offs + 14] + 256 * (spriteram[offs + 15] & 1),
+				0,
+				flipx,flipy,
+				sx,sy,
+				&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
 		}
 	}
 }

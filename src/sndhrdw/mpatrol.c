@@ -12,15 +12,20 @@ unsigned char *mpatrol_io_ram;
 unsigned char *mpatrol_sample_data;
 unsigned char *mpatrol_sample_table;
 
+static int sample_channel;
 
 static int command[2];
+
+static int port1;
+static int port2;
+static int ddr1;
+static int ddr2;
 
 
 static struct AY8910interface interface =
 {
 	2,	/* 2 chips */
-	17,	/* 17 updates per video frame (good quality) */
-	910000000,	/* .91 MHZ ?? */
+	910000,	/* .91 MHZ ?? */
 	{ 160, 160 },
 	{ 0 },
 	{ 0 },
@@ -42,121 +47,82 @@ void mpatrol_sound_cmd_w(int offset, int value)
 }
 
 
-/* update the AY8910 only 1/4 of the time (17 times/frame should be plenty) */
-int mpatrol_sh_interrupt(void)
+void mpatrol_io_w(int offset, int data)
 {
-	if (cpu_getiloops () % 4 == 0)
-		AY8910_update ();
-
-	return nmi_interrupt();
-}
-
-
-/* although I cannot find documentation on the 6803, it appears that you write to
-   address location $03 to specify the port you wish to output to, and then write
-   the value to be sent to location $02.  Finally, you write to a trigger port to
-   actually send the data out.  I also think you have to put a $ff into location
-   0 as well to indicate that you are writing instead of reading, but I'm
-   not checking for that. */
-void mpatrol_io_w(int offset, int value)
-{
-	static int cmd[2], val[2], trigger[2];
-
-	mpatrol_io_ram[offset] = value;
-	if (offset == 2)
+	switch (offset)
 	{
-		switch (mpatrol_io_ram[3])
-		{
-			case 0x15:
-				cmd[0] = value & 0x0f;
-				break;
-			case 0x10:
-				val[0] = value;
-				break;
-			case 0x0d:
-				cmd[1] = value & 0x0f;
-				break;
-			case 0x08:
-				val[1] = value;
-				break;
-			default:
-				if (errorlog)
-					fprintf (errorlog, "Unknown I/O write to port %02X\n", mpatrol_io_ram[3]);
-				break;
-		}
-	}
-	else if (offset == 3)
-	{
-		switch (value)
-		{
-			case 0x11:
-				trigger[0] = 1;
-				break;
-			case 0x10:
-				if (trigger[0])
-				{
-					AY8910_control_port_0_w (0, cmd[0]);
-					AY8910_write_port_0_w (0, val[0]);
-					trigger[0] = 0;
-				}
-				break;
-			case 0x09:
-				trigger[1] = 1;
-				break;
-			case 0x08:
-				if (trigger[1])
-				{
-					/* the ultimate Moon Patrol hack: the envelope for this chip only sounds close
-					   to correct if it's divided by about 6. It doesn't seem to hurt the other
-					   games, so I'm leaving it in! ASG */
-/*					if (cmd[1] == 11 || cmd[1] == 12)
-					{
-						static int total;
-						if (cmd[1] == 11) total = (total & 0xff00) | (val[1] & 0xff);
-						else total = (total & 0x00ff) | ((val[1] << 8) & 0xff00);
-						AY8910_control_port_1_w (0, 11);
-						AY8910_write_port_1_w (0, (total/6) & 0xff);
-						AY8910_control_port_1_w (0, 12);
-						AY8910_write_port_1_w (0, (total/6) >> 8);
-					}
-					else*/
-					{
-						AY8910_control_port_1_w (0, cmd[1]);
-						AY8910_write_port_1_w (0, val[1]);
-					}
+		/* port 1 DDR */
+		case 0:
+			ddr1 = data;
+			break;
 
-					trigger[1] = 0;
+		/* port 2 DDR */
+		case 1:
+			ddr2 = data;
+			break;
+
+		/* port 1 */
+		case 2:
+			data = (port1 & ~ddr1) | (data & ddr1);
+			port1 = data;
+			break;
+
+		/* port 2 */
+		case 3:
+			data = (port2 & ~ddr2) | (data & ddr2);
+
+			/* write latch */
+			if ((port2 & 0x01) && !(data & 0x01))
+			{
+				/* control or data port? */
+				if (port2 & 0x04)
+				{
+					/* PSG 0 or 1? */
+					if (port2 & 0x10)
+						AY8910_control_port_0_w (0, port1);
+					else if (port2 & 0x08)
+						AY8910_control_port_1_w (0, port1);
 				}
-				break;
-		}
+				else
+				{
+					/* PSG 0 or 1? */
+					if (port2 & 0x10)
+						AY8910_write_port_0_w (0, port1);
+					else if (port2 & 0x08)
+						AY8910_write_port_1_w (0, port1);
+				}
+			}
+			port2 = data;
+			break;
 	}
 }
 
 
-/* although I cannot find documentation on the 6803, it appears that you write to
-   address location $03 to specify the port you wish to read from, and then read
-   the value from location $02.  I also think you have to put a $00 into
-   location 0 as well to indicate that you are reading instead of writing, but I'm
-   not checking for that. */
 int mpatrol_io_r(int offset)
 {
-	if (mpatrol_io_ram[0] == 0x00)
+	switch (offset)
 	{
-		switch (mpatrol_io_ram[3])
-		{
-			case 0x10:
-				return AY8910_read_port_0_r (0);
-			case 0x08:
-				return AY8910_read_port_1_r (0);
-			case 0x14:
-				return command[1];	/* return the current sound command */
-			case 0x0c:
-				return command[0];	/* return the current sound command */
-			default:
-				if (errorlog)
-					fprintf (errorlog, "Unknown I/O read from port %02X\n", mpatrol_io_ram[3]);
-				return mpatrol_io_ram[offset];
-		}
+		/* port 1 DDR */
+		case 0:
+			return ddr1;
+
+		/* port 2 DDR */
+		case 1:
+			return ddr2;
+
+		/* port 1 */
+		case 2:
+
+			/* input 0 or 1? */
+			if (port2 & 0x10)
+				return (command[1] & ~ddr1) | (port1 & ddr1);
+			else if (port2 & 0x08)
+				return (command[0] & ~ddr1) | (port1 & ddr1);
+			return (port1 & ddr1);
+
+		/* port 2 */
+		case 3:
+			return (port2 & ddr2);
 	}
 
 	return 0;
@@ -236,7 +202,7 @@ static int get_sample_num (int offset)
 			return i;
 		table += 4;
 	}
-	
+
 	if (errorlog)
 		fprintf (errorlog, "Unknown sample at %04X\n", offset);
 	return 0;
@@ -249,25 +215,25 @@ void mpatrol_sample_trigger_w(int offset, int value)
 {
 	static int lastword, oldval;
 	int word = offset >> 1;
-	int channel = 0;
+	int channel = -1;
 	int sample = 0;
-	
+
 	/* 4 16-bit words here: length1, length2, offset1, offset2 */
 	if (word != lastword)
 		oldval = (mpatrol_sample_data[(word<<1)] << 8) + mpatrol_sample_data[(word<<1) + 1];
-	
+
 	mpatrol_sample_data[offset] = value;
 
 	if (word == lastword)
 	{
 		int newval = (mpatrol_sample_data[(word<<1)] << 8) + mpatrol_sample_data[(word<<1) + 1];
-		
+
 		switch (word)
 		{
 			case 0:	/* channel 2 length */
 				if (newval != oldval - 1)
 				{
-					channel = 2;
+					channel = sample_channel + 0;
 					sample = get_sample_num ((mpatrol_sample_data[4] << 8) + mpatrol_sample_data[5]);
 				}
 				break;
@@ -275,16 +241,16 @@ void mpatrol_sample_trigger_w(int offset, int value)
 			case 1:	/* channel 3 length */
 				if (newval != oldval - 1)
 				{
-					channel = 3;
+					channel = sample_channel + 1;
 					sample = get_sample_num ((mpatrol_sample_data[6] << 8) + mpatrol_sample_data[7]);
 				}
 				break;
 		}
 	}
-	lastword = word;	
-	
-	
-	if (channel)
+	lastword = word;
+
+
+	if (channel != -1)
 	{
 		if (Machine->samples->sample[sample])
 		{
@@ -303,5 +269,6 @@ void mpatrol_sample_trigger_w(int offset, int value)
 /* Standard sound startup */
 int mpatrol_sh_start(void)
 {
+	sample_channel = get_play_channels(2);
 	return AY8910_sh_start(&interface);
 }

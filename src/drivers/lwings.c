@@ -13,7 +13,7 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "sndhrdw/generic.h"
-#include "sndhrdw/8910intf.h"
+#include "sndhrdw/2203intf.h"
 
 void lwings_bankswitch_w(int offset,int data);
 void lwings_paletteram_w(int offset,int data);
@@ -36,8 +36,9 @@ void lwings_vh_stop(void);
 void lwings_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
 void lwings_vh_screenrefresh(struct osd_bitmap *bitmap);
 
-int capcom_sh_start(void);
-int capcom_sh_interrupt(void);
+int capcomOPN_sh_start(void);
+
+
 
 static struct MemoryReadAddress readmem[] =
 {
@@ -91,16 +92,16 @@ static struct MemoryWriteAddress sound_writemem[] =
 	{ -1 }	/* end of table */
 };
 
-INPUT_PORTS_START( input_ports )
+INPUT_PORTS_START( sectionz_input_ports )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START2 )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* probably unused */
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* probably unused */
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_COIN3 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* probably unused */
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* probably unused */
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN2 )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN2 )
 
 	PORT_START	/* IN1 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
@@ -123,69 +124,63 @@ INPUT_PORTS_START( input_ports )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* probably unused */
 
 	PORT_START	/* DSW0 */
-        PORT_BITX(    0x01, 0x01, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE, 0 )
-        PORT_DIPSETTING(    0x00, "On")
-        PORT_DIPSETTING(    0x01, "Off" )
+	PORT_BITX(    0x01, 0x01, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE, 0 )
+	PORT_DIPSETTING(    0x01, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x02, 0x02, "Screen Inversion", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x02, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x0c, 0x0c, "Lives", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x04, "2" )
+	PORT_DIPSETTING(    0x0c, "3" )
+	PORT_DIPSETTING(    0x08, "4" )
+	PORT_DIPSETTING(    0x00, "5" )
+	PORT_DIPNAME( 0x30, 0x30, "Coin A", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "4 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x20, "3 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x10, "2 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x30, "1 Coin/1 Credit" )
+	PORT_DIPNAME( 0xc0, 0xc0, "Coin B", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "2 Coins/1 Credit" )
+	PORT_DIPSETTING(    0xc0, "1 Coin/1 Credit" )
+	PORT_DIPSETTING(    0x40, "1 Coin/2 Credits" )
+	PORT_DIPSETTING(    0x80, "1 Coin/3 Credits" )
 
-        PORT_DIPNAME( 0x0c, 0x08, "Players", IP_KEY_NONE )
-        PORT_DIPSETTING(    0x04, "2" )
-        PORT_DIPSETTING(    0x0c, "3" )
-        PORT_DIPSETTING(    0x08, "4" )
-        PORT_DIPSETTING(    0x00, "5" )
-
-        PORT_DIPNAME( 0x02, 0x00, "Screen Inversion", IP_KEY_NONE )
-        PORT_DIPSETTING(    0x00, "Off")
-        PORT_DIPSETTING(    0x02, "On" )
-
-        PORT_DIPNAME( 0xc0, 0xc0, "Coin 1", IP_KEY_NONE )
-        PORT_DIPSETTING(    0x00, "4 Coin 1 credits" )
-        PORT_DIPSETTING(    0x40, "2 Coin 1 credits" )
-        PORT_DIPSETTING(    0x80, "3 Coin 1 credits" )
-        PORT_DIPSETTING(    0xc0, "1 Coin 1 credit" )
-
-        PORT_DIPNAME( 0x30, 0x30, "Coin 2", IP_KEY_NONE )
-        PORT_DIPSETTING(    0x00, "4 Coin 1 credits" )
-        PORT_DIPSETTING(    0x10, "2 Coin 1 credits" )
-        PORT_DIPSETTING(    0x20, "3 Coin 1 credits" )
-        PORT_DIPSETTING(    0x30, "1 Coin 1 credit" )
-
-        PORT_START      /* DSW1 */
-        PORT_DIPNAME( 0x01, 0x01, "Continue", IP_KEY_NONE )
-        PORT_DIPSETTING(    0x00, "Off")
-        PORT_DIPSETTING(    0x01, "On" )
-        PORT_DIPNAME( 0x06, 0x02, "Difficulty", IP_KEY_NONE )
-        PORT_DIPSETTING(    0x02, "Easy" )
-        PORT_DIPSETTING(    0x06, "Normal" )
-        PORT_DIPSETTING(    0x04, "Difficult" )
-        PORT_DIPSETTING(    0x00, "Very Difficult" )
-
-        PORT_DIPNAME( 0x38, 0x00, "Bonus", IP_KEY_NONE )
-        PORT_DIPSETTING(    0x00, "30000 60000" )
-        PORT_DIPSETTING(    0x08, "30000 80000" )
-        PORT_DIPSETTING(    0x10, "20000 60000" )
-        PORT_DIPSETTING(    0x18, "40000 60000" )
-        PORT_DIPSETTING(    0x20, "40000 100000" )
-        PORT_DIPSETTING(    0x28, "20000 70000" )
-        PORT_DIPSETTING(    0x30, "30000 70000" )
-        PORT_DIPSETTING(    0x38, "20000 50000" )
-
-        PORT_DIPNAME( 0xc0, 0x00, "Type", IP_KEY_NONE )
-        PORT_DIPSETTING(    0x00, "Upright one player" )
-        PORT_DIPSETTING(    0x40, "Upright one player" )
-        PORT_DIPSETTING(    0x80, "")
-        PORT_DIPSETTING(    0xc0, "???" )
+	PORT_START      /* DSW1 */
+	PORT_DIPNAME( 0x01, 0x01, "Allow Continue", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "No" )
+	PORT_DIPSETTING(    0x01, "Yes" )
+	PORT_DIPNAME( 0x06, 0x06, "Difficulty", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x02, "Easy" )
+	PORT_DIPSETTING(    0x06, "Normal" )
+	PORT_DIPSETTING(    0x04, "Difficult" )
+	PORT_DIPSETTING(    0x00, "Very Difficult" )
+	PORT_DIPNAME( 0x38, 0x38, "Bonus Life", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x38, "20000 50000" )
+	PORT_DIPSETTING(    0x18, "20000 60000" )
+	PORT_DIPSETTING(    0x28, "20000 70000" )
+	PORT_DIPSETTING(    0x08, "30000 60000" )
+	PORT_DIPSETTING(    0x30, "30000 70000" )
+	PORT_DIPSETTING(    0x10, "30000 80000" )
+	PORT_DIPSETTING(    0x20, "40000 100000" )
+	PORT_DIPSETTING(    0x00, "None" )
+	PORT_DIPNAME( 0xc0, 0x00, "Cabinet", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "Upright One Player" )
+	PORT_DIPSETTING(    0x40, "Upright Two Players" )
+/*	PORT_DIPSETTING(    0x80, "???" )	probably unused */
+	PORT_DIPSETTING(    0xc0, "Cocktail" )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( input_ports_lwings )
+INPUT_PORTS_START( lwings_input_ports )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START2 )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* probably unused */
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* probably unused */
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_COIN3 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* probably unused */
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* probably unused */
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN2 )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN2 )
 
 	PORT_START	/* IN1 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
@@ -207,37 +202,52 @@ INPUT_PORTS_START( input_ports_lwings )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* probably unused */
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* probably unused */
 
-        /* The DIP switches below aren't complete */
 	PORT_START	/* DSW0 */
+	PORT_DIPNAME( 0x03, 0x03, "Unknown 1/2", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "0" )
+	PORT_DIPSETTING(    0x01, "1" )
+	PORT_DIPSETTING(    0x02, "2" )
+	PORT_DIPSETTING(    0x03, "3" )
+	PORT_DIPNAME( 0x0c, 0x0c, "Lives", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x0c, "3" )
+	PORT_DIPSETTING(    0x04, "4" )
+	PORT_DIPSETTING(    0x08, "5" )
+	PORT_DIPSETTING(    0x00, "6" )
+	PORT_DIPNAME( 0x30, 0x30, "Coin B", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "4 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x20, "3 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x10, "2 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x30, "1 Coin/1 Credit" )
+	PORT_DIPNAME( 0xc0, 0xc0, "Coin A", IP_KEY_NONE )
+	PORT_DIPSETTING(    0xc0, "1 Coin/1 Credit" )
+	PORT_DIPSETTING(    0x00, "2 Coins/4 Credits" )
+	PORT_DIPSETTING(    0x40, "1 Coin/2 Credits" )
+	PORT_DIPSETTING(    0x80, "1 Coin/3 Credits" )
 
-        PORT_DIPNAME( 0x0c, 0x04, "Players", IP_KEY_NONE )
-        PORT_DIPSETTING(    0x0c, "2" )
-        PORT_DIPSETTING(    0x04, "3" )
-        PORT_DIPSETTING(    0x08, "4" )
-        PORT_DIPSETTING(    0x00, "5" )
-
-        PORT_DIPNAME( 0xc0, 0xc0, "Coin 1", IP_KEY_NONE )
-        PORT_DIPSETTING(    0x00, "4 Coin 1 credits" )
-        PORT_DIPSETTING(    0x40, "2 Coin 1 credits" )
-        PORT_DIPSETTING(    0x80, "3 Coin 1 credits" )
-        PORT_DIPSETTING(    0xc0, "1 Coin 1 credit" )
-
-        PORT_DIPNAME( 0x30, 0x30, "Coin 2", IP_KEY_NONE )
-        PORT_DIPSETTING(    0x00, "4 Coin 1 credits" )
-        PORT_DIPSETTING(    0x10, "2 Coin 1 credits" )
-        PORT_DIPSETTING(    0x20, "3 Coin 1 credits" )
-        PORT_DIPSETTING(    0x30, "1 Coin 1 credit" )
-
-        PORT_START      /* DSW1 */
-        PORT_DIPNAME( 0x10, 0x10, "Continue", IP_KEY_NONE )
-        PORT_DIPSETTING(    0x00, "Off" )
-        PORT_DIPSETTING(    0x10, "On" )
-
-        PORT_DIPNAME( 0x08, 0x08, "Demo Sound", IP_KEY_NONE )
-        PORT_DIPSETTING(    0x00, "Off" )
-        PORT_DIPSETTING(    0x08, "On" )
-
-
+	PORT_START      /* DSW1 */
+	PORT_DIPNAME( 0x01, 0x01, "Unknown 3", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "0" )
+	PORT_DIPSETTING(    0x01, "1" )
+	PORT_DIPNAME( 0x06, 0x06, "Difficulty?", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x02, "Easy?" )
+	PORT_DIPSETTING(    0x06, "Normal?" )
+	PORT_DIPSETTING(    0x04, "Difficult?" )
+	PORT_DIPSETTING(    0x00, "Very Difficult?" )
+	PORT_DIPNAME( 0x08, 0x08, "Demo Sounds", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "Off" )
+	PORT_DIPSETTING(    0x08, "On" )
+	PORT_DIPNAME( 0x10, 0x10, "Allow Continue", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "No" )
+	PORT_DIPSETTING(    0x10, "Yes" )
+	PORT_DIPNAME( 0xe0, 0xe0, "Bonus Life", IP_KEY_NONE )
+	PORT_DIPSETTING(    0xe0, "20000 50000" )
+	PORT_DIPSETTING(    0x60, "20000 60000" )
+	PORT_DIPSETTING(    0xa0, "20000 70000" )
+	PORT_DIPSETTING(    0x20, "30000 60000" )
+	PORT_DIPSETTING(    0xc0, "30000 70000" )
+	PORT_DIPSETTING(    0x40, "30000 80000" )
+	PORT_DIPSETTING(    0x80, "40000 100000" )
+	PORT_DIPSETTING(    0x00, "None" )
 INPUT_PORTS_END
 
 
@@ -303,7 +313,7 @@ static struct MachineDriver machine_driver =
 			3000000,	/* 3 Mhz ??? */
 			2,	/* memory region #2 */
 			sound_readmem,sound_writemem,0,0,
-                        capcom_sh_interrupt,12
+			interrupt,4
 		}
 	},
 	60,
@@ -325,10 +335,9 @@ static struct MachineDriver machine_driver =
 
 	/* sound hardware */
 	0,
-	0,
-        capcom_sh_start,
-	AY8910_sh_stop,
-	AY8910_sh_update
+	capcomOPN_sh_start,
+	YM2203_sh_stop,
+	YM2203_sh_update
 };
 
 
@@ -339,47 +348,140 @@ static struct MachineDriver machine_driver =
 ***************************************************************************/
 
 ROM_START( lwings_rom )
-        ROM_REGION(0x20000)     /* 64k for code + 3*16k for the banked ROMs images */
-        ROM_LOAD( "6c_lw01.bin",  0x00000, 0x8000, 0x664f6939 )
-        ROM_LOAD( "7c_lw02.bin",  0x10000, 0x8000, 0x5506f9b8 )
-        ROM_LOAD( "9c_lw03.bin",  0x18000, 0x8000, 0x45a255a0 )
+	ROM_REGION(0x20000)     /* 64k for code + 3*16k for the banked ROMs images */
+	ROM_LOAD( "6c_lw01.bin",  0x00000, 0x8000, 0x664f6939 )
+	ROM_LOAD( "7c_lw02.bin",  0x10000, 0x8000, 0x5506f9b8 )
+	ROM_LOAD( "9c_lw03.bin",  0x18000, 0x8000, 0x45a255a0 )
 
-        ROM_REGION(0x70000)     /* temporary space for graphics (disposed after conversion) */
-        ROM_LOAD( "9h_lw05.bin", 0x00000, 0x4000, 0x0bf1930f )  /* characters */
-
-        ROM_LOAD( "3b_lw12.bin", 0x10000, 0x8000, 0xbebb9519 )     /* tiles */
-        ROM_LOAD( "1b_lw06.bin", 0x18000, 0x8000, 0x2bd30a6f )     /* tiles */
-        ROM_LOAD( "3d_lw13.bin", 0x20000, 0x8000, 0x4dd132db )     /* tiles */
-        ROM_LOAD( "1d_lw07.bin", 0x28000, 0x8000, 0x5fee27d2 )     /* tiles */
-        ROM_LOAD( "3e_lw14.bin", 0x30000, 0x8000, 0xf796da02 )     /* tiles */        ROM_LOAD( "1e_lw08.bin", 0x38000, 0x8000, 0xcc211065 )     /* tiles */
-        ROM_LOAD( "3f_lw15.bin", 0x40000, 0x8000, 0x27502d44 )     /* tiles */
-        ROM_LOAD( "1f_lw09.bin", 0x48000, 0x8000, 0xe7f59523 )     /* tiles */
-
-        ROM_LOAD( "3j_lw17.bin", 0x50000, 0x8000, 0xabcd8c3f )     /* sprites */
-        ROM_LOAD( "1j_lw11.bin", 0x58000, 0x8000, 0x7f560e0a )     /* sprites */
-        ROM_LOAD( "3h_lw16.bin", 0x60000, 0x8000, 0xfe4fb851 )     /* sprites */
-        ROM_LOAD( "1h_lw10.bin", 0x68000, 0x8000, 0xbce45b9e )     /* sprites */
+	ROM_REGION(0x70000)     /* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "9h_lw05.bin", 0x00000, 0x4000, 0x0bf1930f )  /* characters */
+	ROM_LOAD( "3b_lw12.bin", 0x10000, 0x8000, 0xbebb9519 )     /* tiles */
+	ROM_LOAD( "1b_lw06.bin", 0x18000, 0x8000, 0x2bd30a6f )     /* tiles */
+	ROM_LOAD( "3d_lw13.bin", 0x20000, 0x8000, 0x4dd132db )     /* tiles */
+	ROM_LOAD( "1d_lw07.bin", 0x28000, 0x8000, 0x5fee27d2 )     /* tiles */
+	ROM_LOAD( "3e_lw14.bin", 0x30000, 0x8000, 0xf796da02 )     /* tiles */
+	ROM_LOAD( "1e_lw08.bin", 0x38000, 0x8000, 0xcc211065 )     /* tiles */
+	ROM_LOAD( "3f_lw15.bin", 0x40000, 0x8000, 0x27502d44 )     /* tiles */
+	ROM_LOAD( "1f_lw09.bin", 0x48000, 0x8000, 0xe7f59523 )     /* tiles */
+	ROM_LOAD( "3j_lw17.bin", 0x50000, 0x8000, 0xabcd8c3f )     /* sprites */
+	ROM_LOAD( "1j_lw11.bin", 0x58000, 0x8000, 0x7f560e0a )     /* sprites */
+	ROM_LOAD( "3h_lw16.bin", 0x60000, 0x8000, 0xfe4fb851 )     /* sprites */
+	ROM_LOAD( "1h_lw10.bin", 0x68000, 0x8000, 0xbce45b9e )     /* sprites */
 
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
-        ROM_LOAD( "11e_lw04.bin", 0x0000, 0x8000, 0x314df447 )
+	ROM_LOAD( "11e_lw04.bin", 0x0000, 0x8000, 0x314df447 )
 ROM_END
+
+ROM_START( lwingsjp_rom )
+	ROM_REGION(0x20000)     /* 64k for code + 3*16k for the banked ROMs images */
+	ROM_LOAD( "a_06c.rom",  0x00000, 0x8000, 0x32da996c )
+	ROM_LOAD( "a_07c.rom",  0x10000, 0x8000, 0x5717e44b )
+	ROM_LOAD( "a_09c.rom",  0x18000, 0x8000, 0x45a255a0 )
+
+	ROM_REGION(0x70000)     /* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "a_09h.rom", 0x00000, 0x4000, 0x0bf1930f )  /* characters */
+	ROM_LOAD( "b_03b.rom", 0x10000, 0x8000, 0x97c116c3 )     /* tiles */
+	ROM_LOAD( "b_01b.rom", 0x18000, 0x8000, 0x31c18a63 )     /* tiles */
+	ROM_LOAD( "b_03d.rom", 0x20000, 0x8000, 0x346ad050 )     /* tiles */
+	ROM_LOAD( "b_01d.rom", 0x28000, 0x8000, 0xadc849d6 )     /* tiles */
+	ROM_LOAD( "b_03e.rom", 0x30000, 0x8000, 0x017ac406 )     /* tiles */
+	ROM_LOAD( "b_01e.rom", 0x38000, 0x8000, 0xc34943cf )     /* tiles */
+	ROM_LOAD( "b_03f.rom", 0x40000, 0x8000, 0xb2962e04 )     /* tiles */
+	ROM_LOAD( "b_01f.rom", 0x48000, 0x8000, 0x871dc5eb )     /* tiles */
+	ROM_LOAD( "b_03j.rom", 0x50000, 0x8000, 0x6c24efb0 )     /* sprites */
+	ROM_LOAD( "b_01j.rom", 0x58000, 0x8000, 0xf3715fe3 )     /* sprites */
+	ROM_LOAD( "b_03h.rom", 0x60000, 0x8000, 0x17d60134 )     /* sprites */
+	ROM_LOAD( "b_01h.rom", 0x68000, 0x8000, 0xd92720a7 )     /* sprites */
+
+	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_LOAD( "a_11e.rom", 0x0000, 0x8000, 0x314df447 )
+ROM_END
+
+
+
+static int hiload(void)
+{
+	/* get RAM pointer (this game is multiCPU, we can't assume the global */
+	/* RAM pointer is pointing to the right place) */
+	unsigned char *RAM = Machine->memory_region[0];
+
+
+	/* check if the hi score table has already been initialized */
+        if (memcmp(&RAM[0xce00],"\x00\x30\x00",3) == 0 &&
+                        memcmp(&RAM[0xce4e],"\x00\x08\x00",3) == 0)
+	{
+		void *f;
+
+
+		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
+		{
+			osd_fread(f,&RAM[0xce00],13*7);
+			RAM[0xce97] = RAM[0xce00];
+			RAM[0xce98] = RAM[0xce01];
+			RAM[0xce99] = RAM[0xce02];
+			osd_fclose(f);
+		}
+
+		return 1;
+	}
+	else return 0;	/* we can't load the hi scores yet */
+}
+
+
+
+static void hisave(void)
+{
+	void *f;
+	/* get RAM pointer (this game is multiCPU, we can't assume the global */
+	/* RAM pointer is pointing to the right place) */
+	unsigned char *RAM = Machine->memory_region[0];
+
+
+	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
+	{
+		osd_fwrite(f,&RAM[0xce00],13*7);
+		osd_fclose(f);
+	}
+}
+
+
 
 struct GameDriver lwings_driver =
 {
-        "Legendary Wings",
-        "lwings",
-        "PAUL LEAMAN",
+	"Legendary Wings",
+	"lwings",
+	"Paul Leaman\nMarco Cassili (dip switches)",
 	&machine_driver,
 
-        lwings_rom,
+	lwings_rom,
 	0, 0,
 	0,
+	0,	/* sound_prom */
 
-        0, input_ports_lwings, 0, 0, 0,
+	0, lwings_input_ports, 0, 0, 0,
 
-        NULL, 0, 0,
-        ORIENTATION_ROTATE_270,
-        NULL, NULL
+	NULL, 0, 0,
+	ORIENTATION_ROTATE_270,
+	hiload, hisave
+};
+
+struct GameDriver lwingsjp_driver =
+{
+	"Legendary Wings (Japanese)",
+	"lwingsjp",
+	"Paul Leaman\nMarco Cassili (dip switches)",
+	&machine_driver,
+
+	lwingsjp_rom,
+	0, 0,
+	0,
+	0,	/* sound_prom */
+
+	0/*TBR*/, lwings_input_ports, 0/*TBR*/, 0/*TBR*/, 0/*TBR*/,
+
+	NULL, 0, 0,
+	ORIENTATION_ROTATE_270,
+	hiload, hisave
 };
 
 /***************************************************************
@@ -394,48 +496,45 @@ struct GameDriver lwings_driver =
 
 
 ROM_START( sectionz_rom )
-        ROM_REGION(0x20000)     /* 64k for code + 3*16k for the banked ROMs images */
-        ROM_LOAD( "6c_sz01.bin",  0x00000, 0x8000, 0x0ad0dfbe )
-        ROM_LOAD( "7c_sz02.bin",  0x10000, 0x8000, 0xee7e960e )
-        ROM_LOAD( "9c_sz03.bin",  0x18000, 0x8000, 0x7d3980a1 )
+	ROM_REGION(0x20000)     /* 64k for code + 3*16k for the banked ROMs images */
+	ROM_LOAD( "6c_sz01.bin",  0x00000, 0x8000, 0x0ad0dfbe )
+	ROM_LOAD( "7c_sz02.bin",  0x10000, 0x8000, 0xee7e960e )
+	ROM_LOAD( "9c_sz03.bin",  0x18000, 0x8000, 0x7d3980a1 )
 
-        ROM_REGION(0x70000)     /* temporary space for graphics (disposed after conversion) */
-        ROM_LOAD( "9h_sz05.bin", 0x00000, 0x4000, 0xb8520000 )     /* characters */
-
-        ROM_LOAD( "3b_SZ12.bin", 0x10000, 0x8000, 0x8081a4e9 )     /* tiles */
-        ROM_LOAD( "1b_SZ06.bin", 0x18000, 0x8000, 0x0324323a )     /* tiles */
-        ROM_LOAD( "3d_SZ13.bin", 0x20000, 0x8000, 0xb5d7a0ad )     /* tiles */
-        ROM_LOAD( "1d_SZ07.bin", 0x28000, 0x8000, 0x031e915a )     /* tiles */
-        ROM_LOAD( "3e_SZ14.bin", 0x30000, 0x8000, 0xd40d5373 )     /* tiles */
-        ROM_LOAD( "1e_SZ08.bin", 0x38000, 0x8000, 0xdfcbf461 )     /* tiles */
-        ROM_LOAD( "3f_SZ15.bin", 0x40000, 0x8000, 0xa332ea3c )     /* tiles */
-        ROM_LOAD( "1f_SZ09.bin", 0x48000, 0x8000, 0x27b80a1c )     /* tiles */
-
-        ROM_LOAD( "3j_sz17.bin", 0x50000, 0x8000, 0x1a7d3f2b )     /* sprites */
-        ROM_LOAD( "1j_sz11.bin", 0x58000, 0x8000, 0xfd420ebc )     /* sprites */
-        ROM_LOAD( "3h_sz16.bin", 0x60000, 0x8000, 0x3a32ae7c )     /* sprites */
-        ROM_LOAD( "1h_sz10.bin", 0x68000, 0x8000, 0x750adac0 )     /* sprites */
+	ROM_REGION(0x70000)     /* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "9h_sz05.bin", 0x00000, 0x4000, 0xb8520000 )     /* characters */
+	ROM_LOAD( "3b_SZ12.bin", 0x10000, 0x8000, 0x8081a4e9 )     /* tiles */
+	ROM_LOAD( "1b_SZ06.bin", 0x18000, 0x8000, 0x0324323a )     /* tiles */
+	ROM_LOAD( "3d_SZ13.bin", 0x20000, 0x8000, 0xb5d7a0ad )     /* tiles */
+	ROM_LOAD( "1d_SZ07.bin", 0x28000, 0x8000, 0x031e915a )     /* tiles */
+	ROM_LOAD( "3e_SZ14.bin", 0x30000, 0x8000, 0xd40d5373 )     /* tiles */
+	ROM_LOAD( "1e_SZ08.bin", 0x38000, 0x8000, 0xdfcbf461 )     /* tiles */
+	ROM_LOAD( "3f_SZ15.bin", 0x40000, 0x8000, 0xa332ea3c )     /* tiles */
+	ROM_LOAD( "1f_SZ09.bin", 0x48000, 0x8000, 0x27b80a1c )     /* tiles */
+	ROM_LOAD( "3j_sz17.bin", 0x50000, 0x8000, 0x1a7d3f2b )     /* sprites */
+	ROM_LOAD( "1j_sz11.bin", 0x58000, 0x8000, 0xfd420ebc )     /* sprites */
+	ROM_LOAD( "3h_sz16.bin", 0x60000, 0x8000, 0x3a32ae7c )     /* sprites */
+	ROM_LOAD( "1h_sz10.bin", 0x68000, 0x8000, 0x750adac0 )     /* sprites */
 
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
-        ROM_LOAD( "11e_sz04.bin", 0x0000, 0x8000, 0x44b6a7dc )
+	ROM_LOAD( "11e_sz04.bin", 0x0000, 0x8000, 0x44b6a7dc )
 ROM_END
 
 struct GameDriver sectionz_driver =
 {
-        "Section Z",
-        "sectionz",
-        "PAUL LEAMAN",
-        &machine_driver,
+	"Section Z",
+	"sectionz",
+	"Paul Leaman\nMarco Cassili (dip switches)",
+	&machine_driver,
 
-        sectionz_rom,
+	sectionz_rom,
 	0, 0,
 	0,
+	0,	/* sound_prom */
 
-        0, input_ports, 0, 0, 0,
+	0/*TBR*/, sectionz_input_ports, 0/*TBR*/, 0/*TBR*/, 0/*TBR*/,
 
-        NULL, 0, 0,
-        ORIENTATION_DEFAULT,
-        NULL, NULL
+	NULL, 0, 0,
+	ORIENTATION_DEFAULT,
+	hiload, hisave
 };
-
-

@@ -306,20 +306,17 @@ INPUT_PORTS_START( bzone_input_ports )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICKRIGHT_UP | IPF_2WAY )
 	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICKLEFT_DOWN | IPF_2WAY )
 	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICKLEFT_UP | IPF_2WAY )
-	PORT_BITX( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1, "Fire", OSD_KEY_SPACE, OSD_JOY_FIRE, 0 )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 )
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_START1 )
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_START2 )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNUSED )
 
-	PORT_START	/* IN4 - fake port for single joystick control */
+	PORT_START	/* fake port for single joystick control */
 	/* This fake port is handled via bzone_IN3_r */
-	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_8WAY )
-	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_8WAY )
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_8WAY )
-	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY )
-	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 )
-
-
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_8WAY | IPF_CHEAT )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_CHEAT )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_CHEAT )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_CHEAT )
 INPUT_PORTS_END
 
 
@@ -410,7 +407,7 @@ INPUT_PORTS_START( redbaron_input_ports )
 	/* IN3 - the real machine reads either the X or Y axis from this port */
 	/* Instead, we use the two fake 5 & 6 ports and bank-switch the proper */
 	/* value based on the lsb of the byte written to the sound port */
-	PORT_START	
+	PORT_START
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_4WAY )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_4WAY )
 	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_4WAY )
@@ -427,7 +424,7 @@ INPUT_PORTS_START( redbaron_input_ports )
 	PORT_ANALOG ( 0xff, 0x80, IPT_AD_STICK_X, 50, 0, 64, 192 )
 
 	PORT_START	/* IN6 */
-	PORT_ANALOG ( 0xff, 0x80, IPT_AD_STICK_Y, 50, 0, 64, 192 )
+	PORT_ANALOG ( 0xff, 0x80, IPT_AD_STICK_Y | IPF_REVERSE, 50, 0, 64, 192 )
 INPUT_PORTS_END
 
 static struct GfxLayout fakelayout =
@@ -534,7 +531,6 @@ static struct MachineDriver bzone_machine_driver =
 
 	/* sound hardware */
 	0,
-	0,
 	bzone_sh_start,
 	pokey_sh_stop,
 	pokey_sh_update
@@ -549,6 +545,7 @@ static struct MachineDriver bzone_machine_driver =
 
 static const char *bzone_sample_names[] =
 {
+	"*bzone",
 	"fire.sam",
 	"fire2.sam",
 	"engine1.sam",
@@ -593,13 +590,13 @@ struct GameDriver bzone_driver =
 	"Battle Zone",
 	"bzone",
 	VECTOR_TEAM
-	"Neil Bradley\n  (fps info)\n"
-	"Mauro Minenna\n  (solo joystick code)\n",
+	"Mauro Minenna (solo joystick code)\n",
 	&bzone_machine_driver,
 
 	bzone_rom,
 	0, 0,
 	bzone_sample_names,
+	0,	/* sound_prom */
 
 	0, bzone_input_ports, 0, 0, 0,
 
@@ -614,13 +611,13 @@ struct GameDriver bzone2_driver =
 	"Battle Zone (alternate version)",
 	"bzone2",
 	VECTOR_TEAM
-	"Neil Bradley\n  (fps info)\n"
-	"Mauro Minenna\n  (solo joystick code)\n",
+	"Mauro Minenna (solo joystick code)\n",
 	&bzone_machine_driver,
 
 	bzone2_rom,
 	0, 0,
 	bzone_sample_names,
+	0,	/* sound_prom */
 
 	0, bzone_input_ports, 0, 0, 0,
 
@@ -661,7 +658,6 @@ static struct MachineDriver redbaron_machine_driver =
 	avg_screenrefresh,
 
 	/* sound hardware */
-	0,
 	0,
 	redbaron_sh_start,
 	pokey_sh_stop,
@@ -704,12 +700,13 @@ struct GameDriver redbaron_driver =
 	"Red Baron",
 	"redbaron",
 	VECTOR_TEAM
-	"Baloo\n  (joystick code)\n",
+	"Baloo (joystick code)\n",
 	&redbaron_machine_driver,
 
 	redbaron_rom,
 	0, 0,
 	redbaron_sample_names,
+	0,	/* sound_prom */
 
 	0/*TBR*/, redbaron_input_ports, 0/*TBR*/, 0/*TBR*/, 0/*TBR*/,
 

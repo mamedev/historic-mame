@@ -34,6 +34,7 @@ Coin insertion in left slot generates a NMI, in right slot an IRQ.
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "sndhrdw/sn76496.h"
 
 
 
@@ -45,11 +46,7 @@ void ladybug_vh_convert_color_prom(unsigned char *palette, unsigned char *colort
 void ladybug_flipscreen_w(int offset,int data);
 void ladybug_vh_screenrefresh(struct osd_bitmap *bitmap);
 
-void ladybug_sound1_w(int offset,int data);
-void ladybug_sound2_w(int offset,int data);
 int ladybug_sh_start(void);
-void ladybug_sh_stop(void);
-void ladybug_sh_update(void);
 
 
 
@@ -73,8 +70,8 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x6000, 0x6fff, MWA_RAM },
 	{ 0x7000, 0x73ff, MWA_RAM, &spriteram, &spriteram_size },
 	{ 0xa000, 0xa000, ladybug_flipscreen_w },
-	{ 0xb000, 0xbfff, ladybug_sound1_w },
-	{ 0xc000, 0xcfff, ladybug_sound2_w },
+	{ 0xb000, 0xbfff, SN76496_0_w },
+	{ 0xc000, 0xcfff, SN76496_1_w },
 	{ 0xd000, 0xd3ff, videoram_w, &videoram, &videoram_size },
 	{ 0xd400, 0xd7ff, colorram_w, &colorram },
 	{ -1 }	/* end of table */
@@ -483,10 +480,9 @@ static struct MachineDriver machine_driver =
 
 	/* sound hardware */
 	0,
-	0,
 	ladybug_sh_start,
-	ladybug_sh_stop,
-	ladybug_sh_update
+	SN76496_sh_stop,
+	SN76496_sh_update
 };
 
 
@@ -668,6 +664,7 @@ struct GameDriver ladybug_driver =
 	ladybug_rom,
 	0, 0,
 	0,
+	0,	/* sound_prom */
 
 	0/*TBR*/,ladybug_input_ports,0/*TBR*/,0/*TBR*/,0/*TBR*/,
 
@@ -687,6 +684,7 @@ struct GameDriver snapjack_driver =
 	snapjack_rom,
 	0, 0,
 	0,
+	0,	/* sound_prom */
 
 	0/*TBR*/,snapjack_input_ports,0/*TBR*/,0/*TBR*/,0/*TBR*/,
 
@@ -706,6 +704,7 @@ struct GameDriver cavenger_driver =
 	cavenger_rom,
 	0, 0,
 	0,
+	0,	/* sound_prom */
 
 	0/*TBR*/,cavenger_input_ports,0/*TBR*/,0/*TBR*/,0/*TBR*/,
 

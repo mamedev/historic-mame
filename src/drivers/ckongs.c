@@ -101,38 +101,37 @@ void galaxian_vh_screenrefresh(struct osd_bitmap *bitmap);
 int scramble_vh_interrupt(void);
 
 void scramble_sh_irqtrigger_w(int offset,int data);
-int scramble_sh_interrupt(void);
 int scramble_sh_start(void);
 
 
 
 static struct MemoryReadAddress readmem[] =
 {
-	{ 0x6000, 0x6bff, MRA_RAM },	/* RAM */
-	{ 0x9000, 0x93ff, MRA_RAM },	/* Video RAM */
-	{ 0x9800, 0x987f, MRA_RAM },	/* screen attributes, sprites, bullets */
 	{ 0x0000, 0x5fff, MRA_ROM },
-	{ 0xb000, 0xb000, MRA_NOP },
+	{ 0x6000, 0x6bff, MRA_RAM },	/* RAM */
 	{ 0x7000, 0x7000, input_port_0_r },	/* IN0 */
 	{ 0x7001, 0x7001, input_port_1_r },	/* IN1 */
 	{ 0x7002, 0x7002, input_port_2_r },	/* IN2 */
+	{ 0x9000, 0x93ff, MRA_RAM },	/* Video RAM */
+	{ 0x9800, 0x987f, MRA_RAM },	/* screen attributes, sprites, bullets */
+	{ 0xb000, 0xb000, watchdog_reset_r },
 	{ -1 }	/* end of table */
 };
 
 static struct MemoryWriteAddress writemem[] =
 {
+	{ 0x0000, 0x5fff, MWA_ROM },
 	{ 0x6000, 0x6bff, MWA_RAM },
+	{ 0x7800, 0x7800, soundlatch_w },
+	{ 0x7801, 0x7801, scramble_sh_irqtrigger_w },
 	{ 0x9000, 0x93ff, videoram_w, &videoram, &videoram_size },
 	{ 0x9800, 0x983f, galaxian_attributes_w, &galaxian_attributesram },
 	{ 0x9840, 0x985f, MWA_RAM, &spriteram, &spriteram_size },
 	{ 0x9860, 0x987f, MWA_RAM, &galaxian_bulletsram, &galaxian_bulletsram_size },
 	{ 0xa801, 0xa801, interrupt_enable_w },
-	{ 0xa804, 0xa804, galaxian_stars_w },
 	{ 0xa802, 0xa802, MWA_NOP },
+	{ 0xa804, 0xa804, galaxian_stars_w },
 	{ 0xa806, 0xa807, MWA_NOP },
-	{ 0x7800, 0x7800, soundlatch_w },
-	{ 0x7801, 0x7801, scramble_sh_irqtrigger_w },
-	{ 0x0000, 0x5fff, MWA_ROM },
 	{ -1 }	/* end of table */
 };
 
@@ -140,15 +139,15 @@ static struct MemoryWriteAddress writemem[] =
 
 static struct MemoryReadAddress sound_readmem[] =
 {
-	{ 0x8000, 0x83ff, MRA_RAM },
 	{ 0x0000, 0x1fff, MRA_ROM },
+	{ 0x8000, 0x83ff, MRA_RAM },
 	{ -1 }	/* end of table */
 };
 
 static struct MemoryWriteAddress sound_writemem[] =
 {
-	{ 0x8000, 0x83ff, MWA_RAM },
 	{ 0x0000, 0x1fff, MWA_ROM },
+	{ 0x8000, 0x83ff, MWA_RAM },
 	{ -1 }	/* end of table */
 };
 
@@ -196,10 +195,6 @@ static struct InputPort input_ports[] =
 	{ -1 }	/* end of table */
 };
 
-static struct TrakPort trak_ports[] =
-{
-        { -1 }
-};
 
 
 static struct KEYSet keys[] =
@@ -297,10 +292,10 @@ static struct MachineDriver machine_driver =
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
-			1789750,	/* 1.78975 Mhz?????? */
+			1789750,	/* 1.78975 Mhz */
 			2,	/* memory region #2 */
 			sound_readmem,sound_writemem,sound_readport,sound_writeport,
-			scramble_sh_interrupt,10
+			ignore_interrupt,1	/* interrupts are triggered by the main CPU */
 		}
 	},
 	60,
@@ -320,7 +315,6 @@ static struct MachineDriver machine_driver =
 	galaxian_vh_screenrefresh,
 
 	/* sound hardware */
-	0,
 	0,
 	scramble_sh_start,
 	AY8910_sh_stop,
@@ -365,8 +359,9 @@ struct GameDriver ckongs_driver =
 	ckongs_rom,
 	0, 0,
 	0,
+	0,	/* sound_prom */
 
-	input_ports, 0, trak_ports, dsw, keys,
+	input_ports, 0, 0/*TBR*/,dsw, keys,
 
 	color_prom, 0, 0,
 	ORIENTATION_ROTATE_90,

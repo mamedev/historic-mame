@@ -55,15 +55,22 @@ inline void PutPix2 (int y, int x, int p1, int p2)
 	if (Machine->orientation & ORIENTATION_SWAP_XY)
 	{
 		williams_bitmap->line[x][y] = lookup[p1];
-		williams_bitmap->line[x+dx][y] = lookup[p2];
+		if (x+dx >= 0 && x+dx < SCREEN_WIDTH)
+			williams_bitmap->line[x+dx][y] = lookup[p2];
+
+		/* ASG 971015 -- mark the area dirty - this is sloppy, but oh well */
+		osd_mark_dirty (y,x-1,y,x+1,0);
 	}
 	else
 	{
 		unsigned char *p = &williams_bitmap->line[y][x];
 		p[0] = lookup[p1];
-		p[dx] = lookup[p2];
-	}
+		if (x+dx >= 0 && x+dx < SCREEN_WIDTH)
+			p[dx] = lookup[p2];
 
+		/* ASG 971015 -- mark the area dirty - this is sloppy, but oh well */
+		osd_mark_dirty (x-1,y,x+1,y,0);
+	}
 }
 
 
@@ -148,13 +155,7 @@ void williams_vh_stop (void)
 
 void williams_vh_screenrefresh (struct osd_bitmap *bitmap)
 {
-	if (Machine->drv->visible_area.max_y == SCREEN_HEIGHT-1)
-		copybitmap (bitmap, williams_bitmap, 0, 0, 0, 0, &Machine->drv->visible_area, TRANSPARENCY_NONE, 0);
-	else
-	{
-		int scrollx = 0, scrolly = -4;
-		copyscrollbitmap (bitmap, williams_bitmap, 0, &scrollx, 1, &scrolly, &Machine->drv->visible_area, TRANSPARENCY_NONE, 0);
-	}
+	copybitmap (bitmap, williams_bitmap, 0, 0, 0, 0, &Machine->drv->visible_area, TRANSPARENCY_NONE, 0);
 }
 
 
@@ -173,20 +174,6 @@ void williams_videoram_w (int offset, int data)
 	x = offset % 256;
 	y = offset / 256;
 	PutPix2 (x, y*2, data >> 4, data & 0x0f);
-}
-
-
-/*
- *  Generic videoram read function; works for every game except Blaster
- */
-
-int williams_videoram_r (int offset)
-{
-	/* Read the video ram or the ROM */
-	if (*williams_bank_select == 0)
-			return williams_videoram[offset];
-	else
-		return RAM[offset];
 }
 
 
@@ -275,11 +262,41 @@ void williams_blitter_w (int offset, int data)
 	}
 	else
 	{
+		/* ASG 971015 -- this marks the destination area dirty */
+		{
+			int x1 = (dest / 256)*2;
+			int x2 = x1 + w*2 + 1;
+			int y1 = dest % 256;
+			int y2 = y1 + h;
+			int temp;
+
+			if (x1 > SCREEN_WIDTH) x1 = 0;
+
+			if (Machine->orientation & ORIENTATION_FLIP_X)
+			{
+				temp = SCREEN_WIDTH-1 - x1;
+				x1 = SCREEN_WIDTH-1 - x2;
+				x2 = temp;
+			}
+
+			if (Machine->orientation & ORIENTATION_FLIP_Y)
+			{
+				temp = SCREEN_HEIGHT-1 - y1;
+				y1 = SCREEN_HEIGHT-1 - y2;
+				y2 = temp;
+			}
+
+			if (Machine->orientation & ORIENTATION_SWAP_XY)
+				osd_mark_dirty (y1,x1,y2,x2,0);
+			else
+				osd_mark_dirty (x1,y1,x2,y2,0);
+		}
+
 		for (i = 0; i < h; i++)
 		{
 			for (j = 0; j < w; j++)
 			{
-				int pix = williams_videoram_r (source);
+				int pix = cpu_readmem16 (source);
 				int p1 = pix >> 4;
 				int p2 = pix & 0x0f;
 
@@ -358,16 +375,22 @@ static void williams_videoram_blitter_w (int offset, int data, int flag, int p1,
 	if (Machine->orientation & ORIENTATION_SWAP_XY)
 	{
 		bm1 = &williams_bitmap->line[x][y];
-		bm2 = &williams_bitmap->line[x+dx][y];
+		if (x+dx >= 0 && x+dx < SCREEN_WIDTH)
+			bm2 = &williams_bitmap->line[x+dx][y];
+		else bm2 = 0;
 	}
 	else
 	{
 		bm1 = &williams_bitmap->line[y][x];
-		bm2 = bm1 + dx;
+		if (x+dx >= 0 && x+dx < SCREEN_WIDTH)
+			bm2 = bm1 + dx;
+		else bm2 = 0;
 	}
 
 	pb1 = inverse_colors[*bm1];
-	pb2 = inverse_colors[*bm2];
+	if (bm2)
+		pb2 = inverse_colors[*bm2];
+	else pb2 = 0;
 
 	/*  Not optimized yet, there must be a way to do that faster  */
 	if ((flag & 0x08) == 0)
@@ -425,7 +448,8 @@ static void williams_videoram_blitter_w (int offset, int data, int flag, int p1,
 
 	/*  Put the pixels in our bitmap  */
 	*bm1 = Machine->gfx[0]->colortable[pb1];
-	*bm2 = Machine->gfx[0]->colortable[pb2];
+	if (bm2)
+		*bm2 = Machine->gfx[0]->colortable[pb2];
 }
 
 
@@ -460,11 +484,41 @@ void splat_blitter_w(int offset,int data)
 	w = williams_blitterram[6];
 	h = williams_blitterram[7];
 
+	/* ASG 971015 -- this marks the destination area dirty */
+	{
+		int x1 = (dest / 256)*2;
+		int x2 = x1 + w*2 + 1;
+		int y1 = dest % 256;
+		int y2 = y1 + h;
+		int temp;
+
+		if (x1 > SCREEN_WIDTH) x1 = 0;
+
+		if (Machine->orientation & ORIENTATION_FLIP_X)
+		{
+			temp = SCREEN_WIDTH-1 - x1;
+			x1 = SCREEN_WIDTH-1 - x2;
+			x2 = temp;
+		}
+
+		if (Machine->orientation & ORIENTATION_FLIP_Y)
+		{
+			temp = SCREEN_HEIGHT-1 - y1;
+			y1 = SCREEN_HEIGHT-1 - y2;
+			y2 = temp;
+		}
+
+		if (Machine->orientation & ORIENTATION_SWAP_XY)
+			osd_mark_dirty (y1,x1,y2,x2,0);
+		else
+			osd_mark_dirty (x1,y1,x2,y2,0);
+	}
+
 	for (i = 0; i < h; i++)
 	{
 		for (j = 0; j < w; j++)
 		{
-			int pix = williams_videoram_r (source);
+			int pix = cpu_readmem16 (source);
 			int p1 = pix >> 4;
 			int p2 = pix & 0x0F;
 
@@ -721,8 +775,10 @@ void blaster_vh_screenrefresh (struct osd_bitmap *bitmap)
 */
 int i,j;
 int back_color;
-int pen0 = Machine->pens[0];	/* ASG 071001 -- we don't translate color 0, but pen 0 */
-int back_pen;	/* ASG 071001 -- look up the pen before blitting */
+int pen0 = Machine->pens[0];	/* ASG 971001 -- we don't translate color 0, but pen 0 */
+int back_pen;	/* ASG 971001 -- look up the pen before blitting */
+
+int first = -1; /* ASG 971015 - keep track of patches to be marked dirty */
 
 /* Copy williams_bitmap in bitmap */
 	williams_vh_screenrefresh (bitmap);
@@ -737,28 +793,33 @@ if((*blaster_video_bits & 0x01) != 0){
   for(j=0;j<256;j++){
 		if((blaster_color_zero_flags[j] & 0x01) != 0){
 			back_color = blaster_color_zero_table[j]^0xFF;
-
       if(back_color != 0)
 	      if(back_color < 16)
 	      	back_color += 64; /* Since we lose the 16 first colors point elsewhere */
     }
 
     if(back_color == 0)
+    {
+    	if (first != -1) osd_mark_dirty (0,first,SCREEN_WIDTH-1,j-1,0);	/* ASG 971015 */
     	continue;
+    }
+    if (first == -1) first = j; 	/* ASG 971015 */
 
-	back_pen = Machine->pens[back_color];	/* ASG 071001 -- look up the pen */
+	back_pen = Machine->pens[back_color];	/* ASG 971001 -- look up the pen */
 
 		for(i=0;i<SCREEN_WIDTH-2;i++){
-      if(bitmap->line[j][i] == pen0)	/* ASG 071001 -- compare vs. pen 0 */
-			  bitmap->line[j][i] = back_pen;	/* ASG 071001 -- use the pen */
+      if(bitmap->line[j][i] == pen0)	/* ASG 971001 -- compare vs. pen 0 */
+			  bitmap->line[j][i] = back_pen;	/* ASG 971001 -- use the pen */
     }
   }
+
+ 	if (first != -1) osd_mark_dirty (0,first,SCREEN_WIDTH-1,SCREEN_HEIGHT-1,0);	/* ASG 971015 */
 }
 
 	/* Automatic erase video ram each frames (for Blaster) */
 	/* Clear the bitmap but not the upper 24 lines */
   if((*blaster_video_bits & 0x02) != 0)
-	{	/* ASG 071001 -- changed to use fillbitmap */
+	{	/* ASG 971001 -- changed to use fillbitmap */
 		struct rectangle clip;
 		clip.min_x = 0;
 		clip.max_x = SCREEN_WIDTH;
@@ -766,21 +827,6 @@ if((*blaster_video_bits & 0x01) != 0){
 		clip.max_y = SCREEN_HEIGHT;
 		fillbitmap (williams_bitmap, pen0, &clip);
 	}
-}
-
-
-/*
- *  Blaster-specific videoram read function; handles extra ROM banks
- */
-
-int blaster_videoram_r (int offset)
-{
-	if (*williams_bank_select == 0)
-		return williams_videoram[offset];
-	else if (offset < 0x4000)
-		return blaster_bank_ram[offset];
-	else
-		return RAM[offset];
 }
 
 
@@ -808,11 +854,41 @@ void blaster_blitter_w(int offset,int data)
 	w = williams_blitterram[6];
 	h = williams_blitterram[7];
 
+	/* ASG 971015 -- this marks the destination area dirty */
+	{
+		int x1 = (dest / 256)*2;
+		int x2 = x1 + w*2 + 1;
+		int y1 = dest % 256;
+		int y2 = y1 + h;
+		int temp;
+
+		if (x1 > SCREEN_WIDTH) x1 = 0;
+
+		if (Machine->orientation & ORIENTATION_FLIP_X)
+		{
+			temp = SCREEN_WIDTH-1 - x1;
+			x1 = SCREEN_WIDTH-1 - x2;
+			x2 = temp;
+		}
+
+		if (Machine->orientation & ORIENTATION_FLIP_Y)
+		{
+			temp = SCREEN_HEIGHT-1 - y1;
+			y1 = SCREEN_HEIGHT-1 - y2;
+			y2 = temp;
+		}
+
+		if (Machine->orientation & ORIENTATION_SWAP_XY)
+			osd_mark_dirty (y1,x1,y2,x2,0);
+		else
+			osd_mark_dirty (x1,y1,x2,y2,0);
+	}
+
 	for (i = 0; i < h; i++)
 	{
 		for (j = 0; j < w; j++)
 		{
-			int pix = blaster_videoram_r (source);
+			int pix = cpu_readmem16 (source);
 			int p1 = remap[pix >> 4];
 			int p2 = remap[pix & 0x0F];
 

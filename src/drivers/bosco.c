@@ -93,6 +93,8 @@ void bosco_vh_convert_color_prom(unsigned char *palette, unsigned char *colortab
 extern unsigned char *bosco_videoram2,*bosco_colorram2;
 extern unsigned char *bosco_radarx,*bosco_radary,*bosco_radarattr;
 extern unsigned char *bosco_scrollx,*bosco_scrolly;
+extern unsigned char *bosco_starcontrol,*bosco_staronoff;
+extern unsigned char *bosco_flipvideo,*bosco_starblink;
 void bosco_videoram2_w(int offset,int data);
 void bosco_colorram2_w(int offset,int data);
 int  bosco_vh_start(void);
@@ -101,7 +103,8 @@ void bosco_vh_screenrefresh(struct osd_bitmap *bitmap);
 
 void pengo_sound_w(int offset,int data);
 int  bosco_sh_start(void);
-void pengo_sh_update(void);
+void waveform_sh_stop(void);
+void waveform_sh_update(void);
 extern unsigned char *pengo_soundregs;
 extern unsigned char bosco_hiscoreloaded;
 extern int  HiScore;
@@ -146,12 +149,12 @@ static struct MemoryWriteAddress writemem_cpu1[] =
 	{ 0x7800, 0x9fff, bosco_sharedram_w },
 
 	{ 0x6800, 0x681f, pengo_sound_w, &pengo_soundregs },
-	{ 0x6830, 0x6830, MWA_NOP },
 	{ 0x7000, 0x7010, MWA_RAM },
 	{ 0x7100, 0x7100, bosco_customio_w_1 },
 	{ 0x6820, 0x6820, bosco_interrupt_enable_1_w },
 	{ 0x6822, 0x6822, bosco_interrupt_enable_3_w },
 	{ 0x6823, 0x6823, bosco_halt_w },
+/*	{ 0x6830, 0x6830, watchdog_reset_w },	*/
 	{ 0x0000, 0x3fff, MWA_ROM },
 
 	{ 0x83d4, 0x83df, MWA_RAM, &spriteram, &spriteram_size },	/* these are here just to initialize */
@@ -160,6 +163,10 @@ static struct MemoryWriteAddress writemem_cpu1[] =
 	{ 0x8bf4, 0x8bff, MWA_RAM, &bosco_radary },
 	{ 0x9810, 0x9810, MWA_RAM, &bosco_scrollx },
 	{ 0x9820, 0x9820, MWA_RAM, &bosco_scrolly },
+	{ 0x9830, 0x9830, MWA_RAM, &bosco_starcontrol },
+	{ 0x9840, 0x9840, MWA_RAM, &bosco_staronoff },
+	{ 0x9870, 0x9870, MWA_RAM, &bosco_flipvideo },
+	{ 0x9874, 0x9875, MWA_RAM, &bosco_starblink },
 	{ 0x9804, 0x980f, MWA_RAM, &bosco_radarattr },
 
 	{ -1 }	/* end of table */
@@ -176,6 +183,7 @@ static struct MemoryWriteAddress writemem_cpu2[] =
 	{ 0x9100, 0x9100, bosco_customio_w_2 },
 	{ 0x7800, 0x9fff, bosco_sharedram_w },
 	{ 0x6821, 0x6821, bosco_interrupt_enable_2_w },
+/*	{ 0x6830, 0x6830, watchdog_reset_w },	*/
 	{ 0x0000, 0x1fff, MWA_ROM },
 	{ -1 }	/* end of table */
 };
@@ -190,58 +198,198 @@ static struct MemoryWriteAddress writemem_cpu3[] =
 	{ 0x7800, 0x9fff, bosco_sharedram_w },
 	{ 0x6800, 0x681f, pengo_sound_w },
 	{ 0x6822, 0x6822, bosco_interrupt_enable_3_w },
+/*	{ 0x6830, 0x6830, watchdog_reset_w },	*/
 	{ 0x0000, 0x1fff, MWA_ROM },
 	{ -1 }	/* end of table */
 };
 
 
+INPUT_PORTS_START( bosco_input_ports )
+	PORT_START      /* DSW0 */
+	PORT_DIPNAME( 0x07, 0x07, "Coinage", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "Free Play" )
+	PORT_DIPSETTING(    0x01, "4 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x02, "3 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x03, "2 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x04, "2 Coins/3 Credits" )
+	PORT_DIPSETTING(    0x05, "1 Coin/3 Credits" )
+	PORT_DIPSETTING(    0x06, "1 Coin/2 Credits" )
+	PORT_DIPSETTING(    0x07, "1 Coin/1 Credit" )
+	/* TODO: bonus scores are different for 5 lives */
+	PORT_DIPNAME( 0x38, 0x08, "Bonus Fighter", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x30, "15K 50K" )
+	PORT_DIPSETTING(    0x38, "20K 70K" )
+	PORT_DIPSETTING(    0x08, "10K 50K 50K" )
+	PORT_DIPSETTING(    0x10, "15K 50K 50K" )
+	PORT_DIPSETTING(    0x18, "15K 70K 70K" )
+	PORT_DIPSETTING(    0x20, "20K 70K 70K" )
+	PORT_DIPSETTING(    0x28, "40K 100K 100K" )
+	PORT_DIPSETTING(    0x00, "None" )
+	PORT_DIPNAME( 0xc0, 0x80, "Fighters", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "1" )
+	PORT_DIPSETTING(    0x40, "2" )
+	PORT_DIPSETTING(    0x80, "3" )
+	PORT_DIPSETTING(    0xc0, "5" )
 
-static struct InputPort input_ports[] =
-{
-	{	/* DSW1 */
-		0xe1,
-		{ 0, 0, 0, 0, 0, 0, 0, 0 },
-		{ 0, 0, 0, 0, 0, 0, 0, 0 }
-	},
-	{	/* DSW2 */
-		0xf7,
-		{ 0, 0, 0, 0, 0, 0, 0, 0 },
-		{ 0, 0, 0, 0, 0, 0, 0, 0 }
-	},
-	{	/* IN0 */
-		0xff,
-		{ OSD_KEY_UP, OSD_KEY_RIGHT, OSD_KEY_DOWN, OSD_KEY_LEFT, OSD_KEY_LCONTROL, 0, 0, 0 },
-		{ OSD_JOY_UP, OSD_JOY_RIGHT, OSD_JOY_DOWN, OSD_JOY_LEFT, OSD_JOY_FIRE, 0, 0, 0 },
-	},
-	{ -1 }	/* end of table */
-};
+	PORT_START      /* DSW1 */
+	PORT_DIPNAME( 0x01, 0x01, "2 Credits Game", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "1 Player" )
+	PORT_DIPSETTING(    0x01, "2 Players" )
+	PORT_DIPNAME( 0x06, 0x06, "Difficulty", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x02, "Easy" )
+	PORT_DIPSETTING(    0x06, "Medium" )
+	PORT_DIPSETTING(    0x04, "Hardest" )
+	PORT_DIPSETTING(    0x00, "Auto" )
+	PORT_DIPNAME( 0x08, 0x08, "Allow Continue", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "No" )
+	PORT_DIPSETTING(    0x08, "Yes" )
+	PORT_DIPNAME( 0x10, 0x00, "Demo Sounds", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x10, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x20, 0x20, "Freeze", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x20, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x40, 0x40, "Test ????", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x40, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x80, 0x80, "Cabinet", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x80, "Upright" )
+	PORT_DIPSETTING(    0x00, "Cocktail" )
 
-static struct TrakPort trak_ports[] =
-{
-        { -1 }
-};
+	PORT_START	/* FAKE */
+	/* The player inputs are not memory mapped, they are handled by an I/O chip. */
+	/* These fake input ports are read by galaga_customio_data_r() */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY )
+	PORT_BITX(0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_IMPULSE,
+			IP_NAME_DEFAULT, IP_KEY_DEFAULT, IP_JOY_DEFAULT, 1 )
+	PORT_BITX(0x20, IP_ACTIVE_LOW, IPT_BUTTON1, 0, IP_KEY_PREVIOUS, IP_JOY_PREVIOUS, 0 )
+	PORT_BIT( 0xc0, IP_ACTIVE_LOW, IPT_UNUSED )
 
-static struct KEYSet keys[] =
-{
-        { 2, 3, "MOVE LEFT"  },
-        { 2, 1, "MOVE RIGHT" },
-        { 2, 0, "MOVE UP"    },
-        { 2, 2, "MOVE DOWN"  },
-        { 2, 4, "FIRE"       },
-        { -1 }
-};
+	PORT_START	/* FAKE */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY | IPF_COCKTAIL)
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL)
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_COCKTAIL)
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_COCKTAIL)
+	PORT_BITX(0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_IMPULSE | IPF_COCKTAIL,
+			IP_NAME_DEFAULT, IP_KEY_DEFAULT, IP_JOY_DEFAULT, 1 )
+	PORT_BITX(0x20, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL, 0, IP_KEY_PREVIOUS, IP_JOY_PREVIOUS, 0 )
+	PORT_BIT( 0xc0, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START      /* FAKE */
+	/* the button here is used to trigger the sound in the test screen */
+	PORT_BITX(0x03, IP_ACTIVE_LOW, IPT_BUTTON1,     0, IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0 )
+	PORT_BITX(0x04, IP_ACTIVE_LOW, IPT_START1 | IPF_IMPULSE,
+			IP_NAME_DEFAULT, IP_KEY_DEFAULT, IP_JOY_DEFAULT, 1 )
+	PORT_BITX(0x08, IP_ACTIVE_LOW, IPT_START2 | IPF_IMPULSE,
+			IP_NAME_DEFAULT, IP_KEY_DEFAULT, IP_JOY_DEFAULT, 1 )
+	PORT_BITX(0x10, IP_ACTIVE_LOW, IPT_COIN1 | IPF_IMPULSE,
+			IP_NAME_DEFAULT, IP_KEY_DEFAULT, IP_JOY_DEFAULT, 1 )
+	PORT_BITX(0x20, IP_ACTIVE_LOW, IPT_COIN2 | IPF_IMPULSE,
+			IP_NAME_DEFAULT, IP_KEY_DEFAULT, IP_JOY_DEFAULT, 1 )
+	PORT_BITX(0x40, IP_ACTIVE_LOW, IPT_COIN3 | IPF_IMPULSE,
+			IP_NAME_DEFAULT, IP_KEY_DEFAULT, IP_JOY_DEFAULT, 1 )
+	PORT_BITX(    0x80, 0x80, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE, 0 )
+	PORT_DIPSETTING(    0x80, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+
+INPUT_PORTS_END
 
 
-static struct DSW bosco_dsw[] =
-{
-	{ 0, 0xc0, "LIVES", { "2", "4", "3", "5" } },
- 	{ 0, 0x38, "BONUS", { "NONE", "30K 100K 100K", "20K 70K 70K", "20K 60K", "20K 60K 60K", "30K 120K 120K", "20K 80K 80K", "30K 80K" }, 1 },
-	{ 1, 0x06, "DIFFICULTY", { "MEDIUM", "HARD", "HARDEST", "EASY" }, 1 },
-	{ 1, 0x08, "DEMO SOUNDS", { "ON", "OFF" }, 1 },
-	{ 1, 0x01, "2 CREDITS GAME", { "1 PLAYER", "2 PLAYERS" }, 1 },
-	{ 1, 0x40, "CONFIGURATION", { "ON", "OFF" }, 1 },
-	{ -1 }
-};
+INPUT_PORTS_START( bosconm_input_ports )
+	PORT_START      /* DSW0 */
+	PORT_DIPNAME( 0x07, 0x07, "Coinage", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "Free Play" )
+	PORT_DIPSETTING(    0x01, "4 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x02, "3 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x03, "2 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x04, "2 Coins/3 Credits" )
+	PORT_DIPSETTING(    0x05, "1 Coin/3 Credits" )
+	PORT_DIPSETTING(    0x06, "1 Coin/2 Credits" )
+	PORT_DIPSETTING(    0x07, "1 Coin/1 Credit" )
+	/* TODO: bonus scores are different for 5 lives */
+	PORT_DIPNAME( 0x38, 0x08, "Bonus Fighter", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x30, "15K 50K" )
+	PORT_DIPSETTING(    0x38, "20K 70K" )
+	PORT_DIPSETTING(    0x08, "10K 50K 50K" )
+	PORT_DIPSETTING(    0x10, "15K 50K 50K" )
+	PORT_DIPSETTING(    0x18, "15K 70K 70K" )
+	PORT_DIPSETTING(    0x20, "20K 70K 70K" )
+	PORT_DIPSETTING(    0x28, "40K 100K 100K" )
+	PORT_DIPSETTING(    0x00, "None" )
+	PORT_DIPNAME( 0xc0, 0x80, "Fighters", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "1" )
+	PORT_DIPSETTING(    0x40, "2" )
+	PORT_DIPSETTING(    0x80, "3" )
+	PORT_DIPSETTING(    0xc0, "5" )
+
+	PORT_START      /* DSW1 */
+	PORT_DIPNAME( 0x01, 0x01, "2 Credits Game", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "1 Player" )
+	PORT_DIPSETTING(    0x01, "2 Players" )
+	PORT_DIPNAME( 0x06, 0x06, "Difficulty", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x02, "Easy" )
+	PORT_DIPSETTING(    0x06, "Medium" )
+	PORT_DIPSETTING(    0x04, "Hardest" )
+	PORT_DIPSETTING(    0x00, "Auto" )
+	PORT_DIPNAME( 0x08, 0x00, "Demo Sounds", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x08, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x10, 0x10, "Freeze", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x10, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x20, 0x20, "Allow Continue", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "No" )
+	PORT_DIPSETTING(    0x20, "Yes" )
+	PORT_DIPNAME( 0x40, 0x40, "Test ????", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x40, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x80, 0x80, "Cabinet", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x80, "Upright" )
+	PORT_DIPSETTING(    0x00, "Cocktail" )
+
+	PORT_START	/* FAKE */
+	/* The player inputs are not memory mapped, they are handled by an I/O chip. */
+	/* These fake input ports are read by galaga_customio_data_r() */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY )
+	PORT_BITX(0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_IMPULSE,
+			IP_NAME_DEFAULT, IP_KEY_DEFAULT, IP_JOY_DEFAULT, 1 )
+	PORT_BITX(0x20, IP_ACTIVE_LOW, IPT_BUTTON1, 0, IP_KEY_PREVIOUS, IP_JOY_PREVIOUS, 0 )
+	PORT_BIT( 0xc0, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START	/* FAKE */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY | IPF_COCKTAIL)
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL)
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_COCKTAIL)
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_COCKTAIL)
+	PORT_BITX(0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_IMPULSE | IPF_COCKTAIL,
+			IP_NAME_DEFAULT, IP_KEY_DEFAULT, IP_JOY_DEFAULT, 1 )
+	PORT_BITX(0x20, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL, 0, IP_KEY_PREVIOUS, IP_JOY_PREVIOUS, 0 )
+	PORT_BIT( 0xc0, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START      /* FAKE */
+	/* the button here is used to trigger the sound in the test screen */
+	PORT_BITX(0x03, IP_ACTIVE_LOW, IPT_BUTTON1,     0, IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0 )
+	PORT_BITX(0x04, IP_ACTIVE_LOW, IPT_START1 | IPF_IMPULSE,
+			IP_NAME_DEFAULT, IP_KEY_DEFAULT, IP_JOY_DEFAULT, 1 )
+	PORT_BITX(0x08, IP_ACTIVE_LOW, IPT_START2 | IPF_IMPULSE,
+			IP_NAME_DEFAULT, IP_KEY_DEFAULT, IP_JOY_DEFAULT, 1 )
+	PORT_BITX(0x10, IP_ACTIVE_LOW, IPT_COIN1 | IPF_IMPULSE,
+			IP_NAME_DEFAULT, IP_KEY_DEFAULT, IP_JOY_DEFAULT, 1 )
+	PORT_BITX(0x20, IP_ACTIVE_LOW, IPT_COIN2 | IPF_IMPULSE,
+			IP_NAME_DEFAULT, IP_KEY_DEFAULT, IP_JOY_DEFAULT, 1 )
+	PORT_BITX(0x40, IP_ACTIVE_LOW, IPT_COIN3 | IPF_IMPULSE,
+			IP_NAME_DEFAULT, IP_KEY_DEFAULT, IP_JOY_DEFAULT, 1 )
+	PORT_BITX(    0x80, 0x80, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE, 0 )
+	PORT_DIPSETTING(    0x80, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+
+INPUT_PORTS_END
 
 
 static struct GfxLayout charlayout =
@@ -272,9 +420,8 @@ static struct GfxLayout spritelayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x0000, &charlayout,       0, 32 },
-	{ 1, 0x0000, &charlayout,    32*4, 32 },	/* for the radar */
-	{ 1, 0x1000, &spritelayout,  0, 32 },
+	{ 1, 0x0000, &charlayout,      0, 64 },
+	{ 1, 0x1000, &spritelayout, 64*4, 64 },
 	{ -1 } /* end of array */
 };
 
@@ -283,51 +430,33 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 static unsigned char color_prom[] =
 {
 	/* PROM 6B Palette */
-	0xF6, 0x07, 0x1F, 0x3F, 0xC4, 0xDF, 0xF8, 0xD8,
-	0x0B, 0x28, 0xC3, 0x51, 0x26, 0x0D, 0xA4, 0x00,
-	0xA4, 0x0D, 0x1F, 0x3F, 0xC4, 0xDF, 0xF8, 0xD8,
-	0x0B, 0x28, 0xC3, 0x51, 0x26, 0x07, 0xF6, 0x00,
+	0xF6,0x07,0x1F,0x3F,0xC4,0xDF,0xF8,0xD8,0x0B,0x28,0xC3,0x51,0x26,0x0D,0xA4,0x00,
+	0xA4,0x0D,0x1F,0x3F,0xC4,0xDF,0xF8,0xD8,0x0B,0x28,0xC3,0x51,0x26,0x07,0xF6,0x00,
 
 	/* PROM 4M Lookup Table */
-	0x0F, 0x0F, 0x0F, 0x0F, 0x0F, 0x01, 0x00, 0x0E,
-	0x0F, 0x02, 0x06, 0x01, 0x0F, 0x05, 0x04, 0x01,
-	0x0F, 0x06, 0x07, 0x02, 0x0F, 0x02, 0x07, 0x08,
-	0x0F, 0x0C, 0x01, 0x0B, 0x0F, 0x03, 0x09, 0x01,
-	0x0F, 0x00, 0x0E, 0x01, 0x0F, 0x00, 0x01, 0x02,
-	0x0F, 0x0E, 0x00, 0x0C, 0x0F, 0x07, 0x0E, 0x0D,
-	0x0F, 0x0E, 0x03, 0x0D, 0x0F, 0x00, 0x00, 0x07,
-	0x0F, 0x0D, 0x00, 0x06, 0x0F, 0x09, 0x0B, 0x04,
-	0x0F, 0x09, 0x0B, 0x09, 0x0F, 0x09, 0x0B, 0x0B,
-	0x0F, 0x0D, 0x05, 0x0E, 0x0F, 0x09, 0x0B, 0x01,
-	0x0F, 0x09, 0x04, 0x01, 0x0F, 0x09, 0x0B, 0x05,
-	0x0F, 0x09, 0x0B, 0x0D, 0x0F, 0x09, 0x09, 0x01,
-	0x0F, 0x0D, 0x07, 0x0E, 0x00, 0x00, 0x00, 0x00,
-	0x00, 0x00, 0x00, 0x0F, 0x00, 0x00, 0x00, 0x0E,
-	0x00, 0x0D, 0x0F, 0x0D, 0x0F, 0x0F, 0x0F, 0x0D,
-	0x0F, 0x0F, 0x0F, 0x0E, 0x0F, 0x0D, 0x0F, 0x07,
-	0x0F, 0x0F, 0x0F, 0x0F, 0x0F, 0x0D, 0x0E, 0x00,
-	0x0F, 0x0F, 0x0F, 0x0E, 0x0F, 0x0B, 0x09, 0x04,
-	0x0F, 0x09, 0x0B, 0x09, 0x0F, 0x09, 0x0B, 0x0B,
-	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x0F,
-	0x00, 0x00, 0x00, 0x0E, 0x0F, 0x0D, 0x0F, 0x0D,
-	0x0F, 0x0F, 0x0F, 0x0D, 0x0F, 0x0F, 0x0F, 0x0E,
-	0x0F, 0x0F, 0x0F, 0x07, 0x0F, 0x0F, 0x0F, 0x02,
-	0x0F, 0x0F, 0x0F, 0x07, 0x0F, 0x0F, 0x0F, 0x0F,
-	0x0F, 0x0F, 0x0E, 0x0E, 0x0F, 0x01, 0x0F, 0x01,
-	0x0F, 0x09, 0x03, 0x07, 0x0F, 0x02, 0x07, 0x09,
-	0x0F, 0x0C, 0x05, 0x01, 0x0D, 0x0D, 0x0F, 0x0F,
-	0x03, 0x03, 0x0F, 0x0F, 0x09, 0x09, 0x0F, 0x0F,
-	0x0F, 0x0F, 0x0F, 0x0D, 0x0F, 0x0F, 0x0F, 0x06,
-	0x0F, 0x0F, 0x0F, 0x05, 0x0F, 0x03, 0x0F, 0x03,
-	0x0F, 0x03, 0x0F, 0x05, 0x0F, 0x0F, 0x0F, 0x03,
-	0x0F, 0x0F, 0x03, 0x05, 0x0F, 0x03, 0x0F, 0x0F
+	0x0F,0x0F,0x0F,0x0F,0x0F,0x01,0x00,0x0E,0x0F,0x02,0x06,0x01,0x0F,0x05,0x04,0x01,
+	0x0F,0x06,0x07,0x02,0x0F,0x02,0x07,0x08,0x0F,0x0C,0x01,0x0B,0x0F,0x03,0x09,0x01,
+	0x0F,0x00,0x0E,0x01,0x0F,0x00,0x01,0x02,0x0F,0x0E,0x00,0x0C,0x0F,0x07,0x0E,0x0D,
+	0x0F,0x0E,0x03,0x0D,0x0F,0x00,0x00,0x07,0x0F,0x0D,0x00,0x06,0x0F,0x09,0x0B,0x04,
+	0x0F,0x09,0x0B,0x09,0x0F,0x09,0x0B,0x0B,0x0F,0x0D,0x05,0x0E,0x0F,0x09,0x0B,0x01,
+	0x0F,0x09,0x04,0x01,0x0F,0x09,0x0B,0x05,0x0F,0x09,0x0B,0x0D,0x0F,0x09,0x09,0x01,
+	0x0F,0x0D,0x07,0x0E,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x0F,0x00,0x00,0x00,0x0E,
+	0x00,0x0D,0x0F,0x0D,0x0F,0x0F,0x0F,0x0D,0x0F,0x0F,0x0F,0x0E,0x0F,0x0D,0x0F,0x07,
+	0x0F,0x0F,0x0F,0x0F,0x0F,0x0D,0x0E,0x00,0x0F,0x0F,0x0F,0x0E,0x0F,0x0B,0x09,0x04,
+	0x0F,0x09,0x0B,0x09,0x0F,0x09,0x0B,0x0B,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x0F,
+	0x00,0x00,0x00,0x0E,0x0F,0x0D,0x0F,0x0D,0x0F,0x0F,0x0F,0x0D,0x0F,0x0F,0x0F,0x0E,
+	0x0F,0x0F,0x0F,0x07,0x0F,0x0F,0x0F,0x02,0x0F,0x0F,0x0F,0x07,0x0F,0x0F,0x0F,0x0F,
+	0x0F,0x0F,0x0E,0x0E,0x0F,0x01,0x0F,0x01,0x0F,0x09,0x03,0x07,0x0F,0x02,0x07,0x09,
+	0x0F,0x0C,0x05,0x01,0x0D,0x0D,0x0F,0x0F,0x03,0x03,0x0F,0x0F,0x09,0x09,0x0F,0x0F,
+	0x0F,0x0F,0x0F,0x0D,0x0F,0x0F,0x0F,0x06,0x0F,0x0F,0x0F,0x05,0x0F,0x03,0x0F,0x03,
+	0x0F,0x03,0x0F,0x05,0x0F,0x0F,0x0F,0x03,0x0F,0x0F,0x03,0x05,0x0F,0x03,0x0F,0x0F
 };
 
 
 
 
 /* waveforms for the audio hardware */
-static unsigned char samples[8*32] =
+static unsigned char sound_prom[] =
 {
 	0xff,0x11,0x22,0x33,0x44,0x55,0x55,0x66,0x66,0x66,0x55,0x55,0x44,0x33,0x22,0x11,
 	0xff,0xdd,0xcc,0xbb,0xaa,0x99,0x99,0x88,0x88,0x88,0x99,0x99,0xaa,0xbb,0xcc,0xdd,
@@ -388,9 +517,9 @@ static struct MachineDriver machine_driver =
 	bosco_init_machine,
 
 	/* video hardware */
-	36*8, 28*8, { 0*8, 36*8-1, 0*8, 28*8-1 },
+	36*8, 28*8, { 0*8+3, 36*8-1, 0*8, 28*8-1 },
 	gfxdecodeinfo,
-	32+64,64*4,	/* 32 for the characters, 64 for the stars */
+	32+64,64*4+64*4,	/* 32 for the characters, 64 for the stars */
 	bosco_vh_convert_color_prom,
 
 	VIDEO_TYPE_RASTER,
@@ -400,11 +529,10 @@ static struct MachineDriver machine_driver =
 	bosco_vh_screenrefresh,
 
 	/* sound hardware */
-	samples,
 	0,
 	bosco_sh_start,
-	0,
-	pengo_sh_update
+	waveform_sh_stop,
+	waveform_sh_update
 };
 
 
@@ -467,6 +595,7 @@ ROM_END
 
 static const char *bosco_sample_names[] =
 {
+	"*bosco",
 	"MIDBANG.SAM",
 	"BIGBANG.SAM",
 	"SHOT.SAM",
@@ -498,6 +627,9 @@ static int hiload(void)
 		for (i = 0; i < 3; i++)
 		{
 			HiScore = HiScore * 10 + RAM[0x8065 + i];
+			/* Set colour RAM to show large values if they are not zero */
+			if (RAM[0x8065 + i] != 0)
+				RAM[0x8865 + i] = 0x62;
 		}
 		for (i = 0; i < 4; i++)
 		{
@@ -535,14 +667,15 @@ struct GameDriver bosco_driver =
 {
 	"Bosconian (Midway)",
 	"bosco",
-	"MARTIN SCRAGG\nAARON GILES\nNICOLA SALMORIA\nMIRKO BUFFONI",
+	"Martin Scragg\nAaron Giles\nPete Grounds\nSidney Brown\nKurt Mahan (color info)\nNicola Salmoria\nMirko Buffoni",
 	&machine_driver,
 
 	bosco_rom,
 	0, 0,
 	bosco_sample_names,
+	sound_prom,	/* sound_prom */
 
-	input_ports, 0, trak_ports, bosco_dsw, keys,
+	0, bosco_input_ports, 0, 0, 0,
 
 	color_prom, 0, 0,
 	ORIENTATION_DEFAULT,
@@ -554,14 +687,15 @@ struct GameDriver bosconm_driver =
 {
 	"Bosconian (Namco)",
 	"bosconm",
-	"MARTIN SCRAGG\nAARON GILES\nNICOLA SALMORIA\nMIRKO BUFFONI",
+	"Martin Scragg\nAaron Giles\nPete Grounds\nSidney Brown\nKurt Mahan (color info)\nNicola Salmoria\nMirko Buffoni",
 	&machine_driver,
 
 	bosconm_rom,
 	0, 0,
 	bosco_sample_names,
+	sound_prom,	/* sound_prom */
 
-	input_ports, 0, trak_ports, bosco_dsw, keys,
+	0, bosconm_input_ports, 0, 0, 0,
 
 	color_prom, 0, 0,
 	ORIENTATION_DEFAULT,

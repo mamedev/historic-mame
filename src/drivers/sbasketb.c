@@ -1,7 +1,8 @@
 /***************************************************************************
 
 Super Basketball memory map (preliminary)
-(Hold down 1 & 2 keys to enter test mode on start up)
+(Hold down Start 1 & Start 2 keys to enter test mode on start up;
+ use Start 1 to change modes)
 
 MAIN BOARD:
 0000-2fff RAM
@@ -15,13 +16,22 @@ MAIN BOARD:
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "sndhrdw/generic.h"
-#include "sndhrdw/8910intf.h"
+#include "sndhrdw/sn76496.h"
 #include "M6809.h"
 
 
 extern unsigned char *sbasketb_scroll;
+extern unsigned char *sbasketb_palettebank;
 void sbasketb_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
 void sbasketb_vh_screenrefresh(struct osd_bitmap *bitmap);
+
+extern unsigned char *sbasketb_dac;
+void sbasketb_sh_irqtrigger_w(int offset,int data);
+int sbasketb_sh_timer_r(int offset);
+void sbasketb_dac_w(int offset,int data);
+int sbasketb_sh_start(void);
+void sbasketb_sh_stop(void);
+void sbasketb_sh_update(void);
 
 
 
@@ -35,158 +45,188 @@ void sbasketb_init_machine(void)
 
 static struct MemoryReadAddress readmem[] =
 {
-        { 0x0000, 0x3bff, MRA_RAM },    /* RAM and Video RAM */
-        { 0x3c10, 0x3c10, MRA_NOP },    /* ???? */
-        { 0x3e00, 0x3e00, input_port_0_r },
-        { 0x3e01, 0x3e01, input_port_1_r },
-        { 0x3e02, 0x3e02, input_port_2_r },
-        { 0x3e03, 0x3e03, MRA_NOP },    /* ???? */
-        { 0x3e80, 0x3e80, input_port_3_r },
-        { 0x3f00, 0x3f00, input_port_4_r },
-        { 0x6000, 0xffff, MRA_ROM },
-        { -1 }  /* end of table */
+	{ 0x0000, 0x3bff, MRA_RAM },    /* RAM and Video RAM */
+	{ 0x3c10, 0x3c10, MRA_NOP },    /* ???? */
+	{ 0x3e00, 0x3e00, input_port_0_r },
+	{ 0x3e01, 0x3e01, input_port_1_r },
+	{ 0x3e02, 0x3e02, input_port_2_r },
+	{ 0x3e03, 0x3e03, MRA_NOP }, 	/* maybe there's a flip screen bit here */
+	{ 0x3e80, 0x3e80, input_port_3_r },
+	{ 0x3f00, 0x3f00, input_port_4_r },
+	{ 0x6000, 0xffff, MRA_ROM },
+	{ -1 }  /* end of table */
 };
 
 static struct MemoryWriteAddress writemem[] =
 {
-        { 0x0000, 0x2fff, MWA_RAM },
-        { 0x2500, 0x28ff, MWA_RAM, &spriteram, &spriteram_size },
-        { 0x3000, 0x33ff, colorram_w, &colorram },
-        { 0x3400, 0x37ff, videoram_w, &videoram, &videoram_size },
-        { 0x3800, 0x3bff, MWA_RAM },
-        { 0x3c00, 0x3c00, MWA_NOP },  /* Gets written to it all the time. Dunno what it does */
-        { 0x3c20, 0x3c20, MWA_NOP },  /* ??? */
-        { 0x3c80, 0x3c80, MWA_NOP },  /* ??? */
-        { 0x3c81, 0x3c81, interrupt_enable_w },  /* Interrupt enable */
-        { 0x3c83, 0x3c83, MWA_NOP },  /* Coin counter 1 */
-        { 0x3c84, 0x3c84, MWA_NOP },  /* Coin counter 2 */
-        { 0x3c85, 0x3c85, MWA_NOP },  /* Counter gets incremented on every interrupt */
-        { 0x3d00, 0x3d00, sound_command_w },  /* Sound Command */
-        { 0x3d80, 0x3d80, sound_command_w },  /* Sound Command (Same as 3d00 ???) */
-        { 0x3f80, 0x3f80, MWA_RAM, &sbasketb_scroll },  /* Scroll amount */
-        { 0x6000, 0xffff, MWA_ROM },
-        { -1 }  /* end of table */
+	{ 0x0000, 0x2fff, MWA_RAM },
+	{ 0x2500, 0x28ff, MWA_RAM, &spriteram, &spriteram_size },
+	{ 0x3000, 0x33ff, colorram_w, &colorram },
+	{ 0x3400, 0x37ff, videoram_w, &videoram, &videoram_size },
+	{ 0x3800, 0x3bff, MWA_RAM },
+	{ 0x3c00, 0x3c00, MWA_NOP },  /* Gets written to it all the time. Dunno what it does */
+	{ 0x3c20, 0x3c20, MWA_RAM, &sbasketb_palettebank },  /* sprite palette bank */
+	{ 0x3c80, 0x3c80, MWA_NOP },  /* ??? */
+	{ 0x3c81, 0x3c81, interrupt_enable_w },  /* Interrupt enable */
+	{ 0x3c83, 0x3c83, MWA_NOP },  /* Coin counter 1 */
+	{ 0x3c84, 0x3c84, MWA_NOP },  /* Coin counter 2 */
+	{ 0x3c85, 0x3c85, MWA_NOP },  /* Counter gets incremented on every interrupt */
+	{ 0x3d00, 0x3d00, soundlatch_w },  /* Sound Command */
+	{ 0x3d80, 0x3d80, sbasketb_sh_irqtrigger_w },  /* trigger IRQ on sound board? */
+	{ 0x3f80, 0x3f80, MWA_RAM, &sbasketb_scroll },  /* Scroll amount */
+	{ 0x6000, 0xffff, MWA_ROM },
+	{ -1 }  /* end of table */
 };
 
-#if 0
 static struct MemoryReadAddress sound_readmem[] =
 {
-        { 0x4000, 0x43ff, MRA_RAM },
-        { 0x8000, 0x8000, MRA_RAM },  /* ??? */
-        { 0x6000, 0x6000, sound_command_r },
-        { 0x0000, 0x3fff, MRA_ROM },
-        { -1 }  /* end of table */
+	{ 0x0000, 0x3fff, MRA_ROM },
+	{ 0x4000, 0x43ff, MRA_RAM },
+	{ 0x6000, 0x6000, soundlatch_r },
+	{ 0x8000, 0x8000, sbasketb_sh_timer_r },
+	{ -1 }  /* end of table */
 };
 
 static struct MemoryWriteAddress sound_writemem[] =
 {
-        { 0x4000, 0x43ff, MWA_RAM },
-        { 0x0000, 0x3fff, MWA_ROM },
-        { -1 }  /* end of table */
-};
-#endif
-
-
-
-static struct InputPort input_ports[] =
-{
-  {       /* IN0 */
-          0xff,
-          { OSD_KEY_3, 0, OSD_KEY_F1, OSD_KEY_1, OSD_KEY_2, 0, 0, 0},
-          { 0, 0, 0, 0, 0, 0, 0, 0 },
-  },
-  {       /* IN1 */
-          0xff,
-          { OSD_KEY_LEFT, OSD_KEY_RIGHT, OSD_KEY_UP, OSD_KEY_DOWN,
-            OSD_KEY_LCONTROL, OSD_KEY_ALT, OSD_KEY_SPACE, 0},
-          { OSD_JOY_LEFT, OSD_JOY_RIGHT, OSD_JOY_UP, OSD_JOY_DOWN,
-            OSD_JOY_FIRE1, OSD_JOY_FIRE2, OSD_JOY_FIRE3, 0 },
-  },
-  {       /* IN2 */
-          0xff,                         /* Player 2 Controls (Table only) */
-          { 0, 0, 0, 0, 0, 0, 0, 0 },
-          { 0, 0, 0, 0, 0, 0, 0, 0 },
-  },
-  {       /* DSW1 */
-          0xf8,
-          { 0, 0, 0, 0, 0, 0, 0, 0 },
-          { 0, 0, 0, 0, 0, 0, 0, 0 },
-  },
-  {       /* DSW2 */
-          0xff,
-          { 0, 0, 0, 0, 0, 0, 0, 0 },
-          { 0, 0, 0, 0, 0, 0, 0, 0 },
-  },
-        { -1 }  /* end of table */
-};
-
-static struct TrakPort trak_ports[] =
-{
-        { -1 }
+	{ 0x0000, 0x3fff, MWA_ROM },
+	{ 0x4000, 0x43ff, MWA_RAM },
+	{ 0xc00f, 0xc00f, MWA_NOP },	/* ???? */
+	{ 0xc1cf, 0xc1cf, MWA_NOP },	/* ???? */
+	{ 0xe000, 0xe000, sbasketb_dac_w, &sbasketb_dac },
+	{ 0xe001, 0xe001, SN76496_0_w },	/* SN76496 command */
+	{ 0xe002, 0xe002, MWA_NOP },	/* SN76496 command */
+	{ -1 }  /* end of table */
 };
 
 
-static struct KEYSet keys[] =
-{
-  { 1, 0, "MOVE LEFT" },
-  { 1, 1, "MOVE RIGHT"  },
-  { 1, 2, "MOVE UP" },
-  { 1, 3, "MOVE DOWN" },
-  { 1, 4, "DRIBBLE" },
-  { 1, 5, "SHOOT" },
-  { 1, 6, "PASS" },
-  { -1 }
-};
+
+INPUT_PORTS_START( input_ports )
+	PORT_START	/* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN3 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START	/* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON3 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START	/* IN2 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_COCKTAIL )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_COCKTAIL  )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START	/* DSW0 */
+	PORT_DIPNAME( 0x03, 0x00, "Game Time", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x03, "30" )
+	PORT_DIPSETTING(    0x01, "40" )
+	PORT_DIPSETTING(    0x02, "50" )
+	PORT_DIPSETTING(    0x00, "60" )
+	PORT_DIPNAME( 0x04, 0x00, "Cabinet", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "Upright" )
+	PORT_DIPSETTING(    0x04, "Cocktail" )
+	PORT_DIPNAME( 0x08, 0x08, "Starting Score", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x08, "70-78" )
+	PORT_DIPSETTING(    0x00, "100-115" )
+	PORT_DIPNAME( 0x10, 0x00, "Ranking", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "Data Remaining" )
+	PORT_DIPSETTING(    0x10, "Data Initialized" )
+	PORT_DIPNAME( 0x60, 0x60, "Difficulty", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x60, "Easy" )
+	PORT_DIPSETTING(    0x40, "Medium" )
+	PORT_DIPSETTING(    0x20, "Hard" )
+	PORT_DIPSETTING(    0x00, "Hardest" )
+	PORT_DIPNAME( 0x80, 0x00, "Demo Sounds", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x80, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+
+	PORT_START	/* DSW1 */
+	PORT_DIPNAME( 0x0f, 0x0f, "Coin A", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x02, "4 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x05, "3 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x08, "2 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x04, "3 Coins/2 Credits" )
+	PORT_DIPSETTING(    0x01, "4 Coins/3 Credits" )
+	PORT_DIPSETTING(    0x0f, "1 Coin/1 Credit" )
+	PORT_DIPSETTING(    0x03, "3 Coins/4 Credits" )
+	PORT_DIPSETTING(    0x07, "2 Coins/3 Credits" )
+	PORT_DIPSETTING(    0x0e, "1 Coin/2 Credits" )
+	PORT_DIPSETTING(    0x06, "2 Coins/5 Credits" )
+	PORT_DIPSETTING(    0x0d, "1 Coin/3 Credits" )
+	PORT_DIPSETTING(    0x0c, "1 Coin/4 Credits" )
+	PORT_DIPSETTING(    0x0b, "1 Coin/5 Credits" )
+	PORT_DIPSETTING(    0x0a, "1 Coin/6 Credits" )
+	PORT_DIPSETTING(    0x09, "1 Coin/7 Credits" )
+	PORT_DIPSETTING(    0x00, "Free Play" )
+	PORT_DIPNAME( 0xf0, 0xf0, "Coin B", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x20, "4 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x50, "3 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x80, "2 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x40, "3 Coins/2 Credits" )
+	PORT_DIPSETTING(    0x10, "4 Coins/3 Credits" )
+	PORT_DIPSETTING(    0xf0, "1 Coin/1 Credit" )
+	PORT_DIPSETTING(    0x30, "3 Coins/4 Credits" )
+	PORT_DIPSETTING(    0x70, "2 Coins/3 Credits" )
+	PORT_DIPSETTING(    0xe0, "1 Coin/2 Credits" )
+	PORT_DIPSETTING(    0x60, "2 Coins/5 Credits" )
+	PORT_DIPSETTING(    0xd0, "1 Coin/3 Credits" )
+	PORT_DIPSETTING(    0xc0, "1 Coin/4 Credits" )
+	PORT_DIPSETTING(    0xb0, "1 Coin/5 Credits" )
+	PORT_DIPSETTING(    0xa0, "1 Coin/6 Credits" )
+	PORT_DIPSETTING(    0x90, "1 Coin/7 Credits" )
+	PORT_DIPSETTING(    0x00, "Free Play" )
+INPUT_PORTS_END
 
 
-static struct DSW sbasketb_dsw[] =
-{
-  { 3, 0x08, "STARTING SCORE", {"115 - 100", " 78 -  70"}, 1},
-  { 4, 0x0f, "COINS/PLAY",   { "FREE PLAY", "4/3",
-                               "4/1", "3/4",
-                               "3/2", "3/1",
-                               "2/5", "2/3",
-                               "2/1", "1/7",
-                               "1/6", "1/5",
-                               "1/4", "1/3",
-                               "1/2", "1/1"}, 1 },
-  { 3, 0x03, "GAME TIME", {"60 SECS", "40 SECS", "50 SECS", "30 SECS"}, 1},
-  { 3, 0x80, "ATTRACT SOUND", {"ON", "OFF"}, 1},
-  { 3, 0x10, "BUCK UP", {"ON", "OFF"}, 1},
-          { -1 }
-};
+
 
 static struct GfxLayout charlayout =
 {
-        8,8,    /* 8*8 characters */
-        512,    /* 512 characters */
-        4,      /* 4 bits per pixel */
-        { 0, 1, 2, 3 }, /* the bitplanes are packed */
-        { 7*4*8, 6*4*8, 5*4*8, 4*4*8, 3*4*8, 2*4*8, 1*4*8, 0*4*8 },
-        { 0*4, 1*4, 2*4, 3*4, 4*4, 5*4, 6*4, 7*4 },
-        8*4*8     /* every char takes 32 consecutive bytes */
+	8,8,    /* 8*8 characters */
+	512,    /* 512 characters */
+	4,      /* 4 bits per pixel */
+	{ 0, 1, 2, 3 }, /* the bitplanes are packed */
+	{ 7*4*8, 6*4*8, 5*4*8, 4*4*8, 3*4*8, 2*4*8, 1*4*8, 0*4*8 },
+	{ 0*4, 1*4, 2*4, 3*4, 4*4, 5*4, 6*4, 7*4 },
+	8*4*8     /* every char takes 32 consecutive bytes */
 };
 
 static struct GfxLayout spritelayout =
 {
-        16,16,  /* 16*16 sprites */
-        128 * 3,/* 384 sprites */
-        4,      /* 4 bits per pixel */
-        { 0, 1, 2, 3 },        /* the bitplanes are packed */
-        { 15*4*16, 14*4*16, 13*4*16, 12*4*16, 11*4*16, 10*4*16, 9*4*16, 8*4*16,
-           7*4*16, 6*4*16, 5*4*16, 4*4*16, 3*4*16, 2*4*16, 1*4*16, 0*4*16 },
-        { 0*4, 1*4, 2*4, 3*4, 4*4, 5*4, 6*4, 7*4,
-                        8*4, 9*4, 10*4, 11*4, 12*4, 13*4, 14*4, 15*4 },
-        32*4*8    /* every sprite takes 128 consecutive bytes */
+	16,16,  /* 16*16 sprites */
+	128 * 3,/* 384 sprites */
+	4,      /* 4 bits per pixel */
+	{ 0, 1, 2, 3 },        /* the bitplanes are packed */
+	{ 15*4*16, 14*4*16, 13*4*16, 12*4*16, 11*4*16, 10*4*16, 9*4*16, 8*4*16,
+	   7*4*16, 6*4*16, 5*4*16, 4*4*16, 3*4*16, 2*4*16, 1*4*16, 0*4*16 },
+	{ 0*4, 1*4, 2*4, 3*4, 4*4, 5*4, 6*4, 7*4,
+					8*4, 9*4, 10*4, 11*4, 12*4, 13*4, 14*4, 15*4 },
+	32*4*8    /* every sprite takes 128 consecutive bytes */
 };
 
 
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-        { 1, 0x0000, &charlayout,       0, 16 },
-        { 1, 0x4000, &spritelayout, 16*16, 16 },
-        { -1 } /* end of array */
+	{ 1, 0x0000, &charlayout,       0, 16 },
+	{ 1, 0x4000, &spritelayout, 16*16, 16*16 },
+	{ -1 } /* end of array */
 };
 
 
@@ -284,51 +324,44 @@ static unsigned char color_prom[] =
 
 static struct MachineDriver sbasketb_machine_driver =
 {
-        /* basic machine hardware */
-        {
-                {
-                        CPU_M6809,
-                        1400000,        /* 1.400 Mhz ??? */
-                        0,
-                        readmem,writemem,0,0,
-                        interrupt,1
-                },
-#if 0
-                {
-                        CPU_Z80 | CPU_AUDIO_CPU,
-                        3072000,        /* 1.400 Mhz ??? */
-                        2,
-                        sound_readmem,sound_writemem,0,0,
-                        interrupt,1
-                }
-#endif
-        },
-        60,
+	/* basic machine hardware */
+	{
+		{
+			CPU_M6809,
+			1400000,        /* 1.400 Mhz ??? */
+			0,
+			readmem,writemem,0,0,
+			interrupt,1
+		},
+		{
+			CPU_Z80 | CPU_AUDIO_CPU,
+			3579500,	/* 3.5795 Mhz ? */
+			2,
+			sound_readmem,sound_writemem,0,0,
+			ignore_interrupt,1	/* interrupts are triggered by the main CPU */
+		}
+	},
+	60,
 	10,	/* 10 CPU slices per frame - enough for the sound CPU to read all commands */
-        sbasketb_init_machine,
+	sbasketb_init_machine,
 
-        /* video hardware */
-        32*8, 32*8, { 2*8, 30*8-1, 0*8, 32*8-1 },
-        gfxdecodeinfo,
-        256,16*16+16*16,
-        sbasketb_vh_convert_color_prom,
+	/* video hardware */
+	32*8, 32*8, { 2*8, 30*8-1, 0*8, 32*8-1 },
+	gfxdecodeinfo,
+	256,16*16+16*16*16,
+	sbasketb_vh_convert_color_prom,
 
 	VIDEO_TYPE_RASTER,
-        0,
-        generic_vh_start,
-        generic_vh_stop,
-        sbasketb_vh_screenrefresh,
+	0,
+	generic_vh_start,
+	generic_vh_stop,
+	sbasketb_vh_screenrefresh,
 
-        /* sound hardware */
-        0,
-        0,
-        0,
-        0,
-        0
-#if 0
-        AY8910_sh_stop,                 /* sh_stop routine */
-        AY8910_sh_update                /* sh_update routine */
-#endif
+	/* sound hardware */
+	0,
+	sbasketb_sh_start,
+	sbasketb_sh_stop,
+	sbasketb_sh_update
 };
 
 
@@ -402,19 +435,20 @@ static void hisave(void)
 
 struct GameDriver sbasketb_driver =
 {
-        "Super Basketball",
-        "sbasketb",
-        "ZSOLT VASVARI\nTim Linquist (color info)",
-        &sbasketb_machine_driver,
+	"Super Basketball",
+	"sbasketb",
+	"Zsolt Vasvari\nTim Linquist (color info)\nMarco Cassili",
+	&sbasketb_machine_driver,
 
-        sbasketb_rom,
-        0, 0,
-        0,
+	sbasketb_rom,
+	0, 0,
+	0,
+	0,	/* sound_prom */
 
-        input_ports, 0, trak_ports, sbasketb_dsw, keys,
+	0/*TBR*/, input_ports, 0/*TBR*/, 0/*TBR*/, 0/*TBR*/,
 
-        color_prom, 0, 0,
-        ORIENTATION_DEFAULT,
+	color_prom, 0, 0,
+	ORIENTATION_DEFAULT,
 
-        hiload, hisave
+	hiload, hisave
 };

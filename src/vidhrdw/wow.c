@@ -71,18 +71,22 @@ int wow_video_retrace_r(int offset)
     return CurrentScan;
 }
 
-/* Doesn't seem to work (i.e. I don't fully understand it!) */
+/* Switches colour registers at this zone - 40 zones (NOT USED) */
 
 void colour_split_w(int offset, int data)
 {
 /*
-	if(ColourSplit != data)
+	int NewSplit;
+
+    NewSplit = (data * 2) - 1;
+
+	if(ColourSplit != NewSplit)
     {
-        ColourSplit = data;
+        ColourSplit = NewSplit;
         memset(dirtybuffer,1,videoram_size);
     }
 */
-    if (errorlog) fprintf(errorlog,"Colour split set to %02x\n",data);
+    if (errorlog) fprintf(errorlog,"Colour split set to %02d\n",ColourSplit);
 }
 
 void colour_register_w(int offset, int data)
@@ -485,13 +489,32 @@ void Gorf_CopyLine(int Line)
     int memloc;
     int i,x;
     int data,color;
+    int ey;
 
     memloc = Line * 80;
+
+    /* Handle Line swops outside of loop */
+
+    if (Machine->orientation & ORIENTATION_SWAP_XY)
+    {
+  		if (Machine->orientation & ORIENTATION_FLIP_Y)
+            ey = 203 - Line;
+        else
+  			ey = Line;
+    }
+    else
+    {
+  		if (Machine->orientation & ORIENTATION_FLIP_X)
+            ey = 203 - Line;
+        else
+  			ey = Line;
+    }
 
     for(i=0;i<80;i++,memloc++)
     {
     	if(dirtybuffer[memloc])
         {
+          	dirtybuffer[memloc] = 0;
 			data = wow_videoram[memloc];
 
             for(x=316-(i*4);x<=319-(i*4);x++)
@@ -500,27 +523,21 @@ void Gorf_CopyLine(int Line)
 
                 if (Machine->orientation & ORIENTATION_SWAP_XY)
                 {
-                	int ex,ey;
-
 					if (Machine->orientation & ORIENTATION_FLIP_X)
-						ex = 319 - x;
+						tmpbitmap->line[ey][319-x] = Machine->pens[Colour[color]];
                     else
-                    	ex = x;
-
-  					if (Machine->orientation & ORIENTATION_FLIP_Y)
-  						ey = 203 - Line;
-                    else
-                      	ey = Line;
-
-					tmpbitmap->line[ey][ex] = Machine->pens[Colour[color]];
+                    	tmpbitmap->line[ey][x] = Machine->pens[Colour[color]];
                 }
                 else
-					tmpbitmap->line[x][Line] = Machine->pens[Colour[color]];
+                {
+					if (Machine->orientation & ORIENTATION_FLIP_Y)
+						tmpbitmap->line[319-x][ey] = Machine->pens[Colour[color]];
+                    else
+                    	tmpbitmap->line[x][ey] = Machine->pens[Colour[color]];
+                }
 
                 data >>= 2;
             }
-
-          	dirtybuffer[memloc] = 0;
         }
     }
 }
@@ -603,10 +620,21 @@ void seawolf2_vh_screenrefresh(struct osd_bitmap *bitmap)
         }
         else
         {
-	        for(y=25;y<46;y++) bitmap->line[y][centre] = Machine->pens[0x77];
+			if (Machine->orientation & ORIENTATION_FLIP_X)
+				centre = 319 - centre;
+
+	        for(y=25;y<46;y++)
+  			    if (Machine->orientation & ORIENTATION_FLIP_Y)
+  				    bitmap->line[203-y][centre] = Machine->pens[0x77];
+                else
+                	bitmap->line[y][centre] = Machine->pens[0x77];
 
     	    for(x=centre-20;x<centre+21;x++)
-        	    if((x>0) && (x<=319)) bitmap->line[35][x] = Machine->pens[0x77];
+        	    if((x>0) && (x<=319))
+                    if (Machine->orientation & ORIENTATION_FLIP_Y)
+  				        bitmap->line[203-35][x] = Machine->pens[0x77];
+                    else
+                        bitmap->line[35][x] = Machine->pens[0x77];
         }
 
         /* Red sight for Player 2 */
@@ -638,10 +666,21 @@ void seawolf2_vh_screenrefresh(struct osd_bitmap *bitmap)
             }
             else
             {
-	            for(y=25;y<46;y++) bitmap->line[y][centre] = Machine->pens[0x58];
+			    if ((Machine->orientation & ORIENTATION_FLIP_X))
+				    centre = 319 - centre;
+
+	            for(y=25;y<46;y++)
+  			        if (Machine->orientation & ORIENTATION_FLIP_Y)
+  				        bitmap->line[203-y][centre] = Machine->pens[0x58];
+                    else
+                	    bitmap->line[y][centre] = Machine->pens[0x58];
 
     	        for(x=centre-20;x<centre+21;x++)
-        	        if((x>0) && (x<=319)) bitmap->line[33][x] = Machine->pens[0x58];
+        	        if((x>0) && (x<=319))
+                        if (Machine->orientation & ORIENTATION_FLIP_Y)
+  				            bitmap->line[203-33][x] = Machine->pens[0x58];
+                        else
+                            bitmap->line[33][x] = Machine->pens[0x58];
             }
         }
     }
@@ -752,8 +791,26 @@ void CopyLine(int Line)
     int memloc;
     int i,x;
     int data,color;
+   	int ey;
 
     memloc = Line * 80;
+
+    /* Handle Line swops outside of loop */
+
+    if (Machine->orientation & ORIENTATION_SWAP_XY)
+    {
+  		if (Machine->orientation & ORIENTATION_FLIP_Y)
+  			ey = Line;
+        else
+            ey = 203 - Line;
+    }
+    else
+    {
+  		if (Machine->orientation & ORIENTATION_FLIP_Y)
+            ey = 203 - Line;
+        else
+  			ey = Line;
+    }
 
     for(i=0;i<80;i++,memloc++)
     {
@@ -764,26 +821,22 @@ void CopyLine(int Line)
 
             for(x=i*4+3;x>=i*4;x--)
             {
-            	color = (data & 03) + 4;
+            	color = (data & 03) | 4;
 
                 if (Machine->orientation & ORIENTATION_SWAP_XY)
                 {
-                	int ex,ey;
-
 					if (Machine->orientation & ORIENTATION_FLIP_X)
-						ex = x;
+						tmpbitmap->line[x][ey] = Machine->pens[Colour[color]];
                     else
-                    	ex = 319 - x;
-
-  					if (Machine->orientation & ORIENTATION_FLIP_Y)
-  						ey = Line;
-                    else
-                      	ey = 203 - Line;
-
-					tmpbitmap->line[ex][ey] = Machine->pens[Colour[color]];
+                    	tmpbitmap->line[319-x][ey] = Machine->pens[Colour[color]];
                 }
                 else
-					tmpbitmap->line[Line][x] = Machine->pens[Colour[color]];
+                {
+					if (Machine->orientation & ORIENTATION_FLIP_X)
+                        tmpbitmap->line[ey][319-x] = Machine->pens[Colour[color]];
+                    else
+						tmpbitmap->line[ey][x] = Machine->pens[Colour[color]];
+                }
 
                 data >>= 2;
             }

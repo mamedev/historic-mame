@@ -213,7 +213,7 @@ void yard_vh_screenrefresh(struct osd_bitmap *bitmap)
 		for (offs = 0x1000;offs <= 0x1FFF;offs++)
 		{
 			int sx,sy,n,i;
-			
+
 			dirtybuffer[offs] = 0;
 			sx = ( ( offs - 0x1000 ) % 16 ) * 4 + ( 25 * 8 ) - 4;/* JB 970912 */
 			sy = ( ( offs - 0x1000 ) / 16 ) ;
@@ -224,8 +224,8 @@ void yard_vh_screenrefresh(struct osd_bitmap *bitmap)
 				for (i = 0;i < 4;i++)
 				{
 					int col;
-	
-	
+
+
 					col = (n >> i) & 0x11;
 					col = ((col >> 3) | col) & 3;
 					if (sx+i >= Machine->drv->visible_area.max_x-(6*8-1) &&
@@ -239,21 +239,26 @@ void yard_vh_screenrefresh(struct osd_bitmap *bitmap)
 	visible_rect = (*yard_sprite_priority ? &spritevisiblearea2 : &spritevisiblearea);/* JB 970912 */
 	for (offs = spriteram_size - 4;offs >= 0;offs -= 4)
 	{
-		int sprt,bank;
+		int sprt,bank,flipx,flipy;
 		bank = ((spriteram[offs + 1] & 0x020) >> 5) + 1;
 		sprt = spriteram[offs + 2];
 		sprt &= 0xbf;
+		flipx = spriteram[offs + 1] & 0x40;
+		flipy = spriteram[offs + 1] & 0x80;
+
+		if (flipy) sprt = sprt + 0x40;
 		drawgfx(bitmap,Machine->gfx[bank],
-				sprt,//spriteram[offs + 2] ,
+				sprt,
 				spriteram[offs + 1] & 0x1f,
-				spriteram[offs + 1] & 0x40,spriteram[offs + 1] & 0x80,
+				flipx,flipy,
 				spriteram[offs + 3],241 - spriteram[offs],
 				visible_rect,TRANSPARENCY_COLOR,0);
-		sprt = sprt + 0x40;
+		if (flipy) sprt = sprt - 0x40;
+		else sprt = sprt + 0x40;
 		drawgfx(bitmap,Machine->gfx[bank],
-				sprt,//spriteram[offs + 2] ,
+				sprt,
 				spriteram[offs + 1] & 0x1f,
-				spriteram[offs + 1] & 0x40,spriteram[offs + 1] & 0x80,
+				flipx,flipy,
 				spriteram[offs + 3],241 - spriteram[offs] + 16,
 				visible_rect,TRANSPARENCY_COLOR,0);
 	}

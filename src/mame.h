@@ -10,7 +10,7 @@
 
 extern FILE *errorlog;
 
-#define MAX_GFX_ELEMENTS 10
+#define MAX_GFX_ELEMENTS 20
 #define MAX_MEMORY_REGIONS 10
 #define MAX_PENS 256	/* can't handle more than 256 colors on screen */
 
@@ -27,6 +27,11 @@ struct RunningMachine
 								/* pens[6] instead of just 6. */
 	const struct GameDriver *gamedrv;	/* contains the definition of the game machine */
 	const struct MachineDriver *drv;	/* same as gamedrv->drv */
+	int sample_rate;	/* the digital audio sample rate; 0 if sound is disabled. */
+						/* This is set to a default value, or a value specified by */
+						/* the user; osd_init() is allowed to change it to the actual */
+						/* sample rate supported by the audio card. */
+	int sample_bits;	/* 8 or 16 */
 	struct GameSamples *samples;	/* samples loaded from disk */
 	struct NewInputPort *input_ports;	/* the input ports definition from the driver */
 								/* is copied here and modified (load settings from disk, */

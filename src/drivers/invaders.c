@@ -103,12 +103,14 @@ extern unsigned char *invaders_videoram;
 void invaders_videoram_w(int offset,int data);
 void lrescue_videoram_w(int offset,int data);    /* V.V */
 void invrvnge_videoram_w(int offset,int data);   /* V.V */
+void rollingc_videoram_w(int offset,int data);   /* L.T */
 int invaders_vh_start(void);
 void invaders_vh_stop(void);
 void invaders_vh_screenrefresh(struct osd_bitmap *bitmap);
 void invaders_sh_port3_w(int offset,int data);
 void invaders_sh_port5_w(int offset,int data);
 void invaders_sh_update(void);
+
 
 
 
@@ -126,6 +128,30 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x2400, 0x3fff, invaders_videoram_w, &invaders_videoram },
 	{ 0x0000, 0x1fff, MWA_ROM },
 	{ 0x4000, 0x57ff, MWA_ROM },
+	{ -1 }  /* end of table */
+};
+
+
+static struct MemoryReadAddress rollingc_readmem[] =
+{
+//	{ 0x2000, 0x2002, MRA_RAM },
+//	{ 0x2003, 0x2003, hack },
+	{ 0x2000, 0x3fff, MRA_RAM },
+	{ 0x0000, 0x1fff, MRA_ROM },
+	{ 0x4000, 0x5fff, MRA_ROM },
+	{ 0xa400, 0xbfff, MRA_RAM },
+	{ 0xe400, 0xffff, MRA_RAM },
+	{ -1 }  /* end of table */
+};
+
+static struct MemoryWriteAddress rollingc_writemem[] =
+{
+	{ 0x2000, 0x23ff, MWA_RAM },
+	{ 0x2400, 0x3fff, rollingc_videoram_w, &invaders_videoram },
+	{ 0x0000, 0x1fff, MWA_ROM },
+	{ 0x4000, 0x5fff, MWA_ROM },
+	{ 0xa400, 0xbfff, MWA_RAM },
+	{ 0xe400, 0xffff, MWA_RAM },
 	{ -1 }  /* end of table */
 };
 
@@ -148,7 +174,6 @@ static struct MemoryWriteAddress invrvnge_writemem[] = /* V.V */ /* Whole functi
 	{ 0x4000, 0x57ff, MWA_ROM },
 	{ -1 }  /* end of table */
 };
-
 
 
 static struct IOReadPort readport[] =
@@ -177,131 +202,352 @@ void invaders_dummy_write(int offset,int data)
 static struct IOWritePort writeport[] =
 {
 	{ 0x02, 0x02, invaders_shift_amount_w },
-        { 0x03, 0x03, invaders_sh_port3_w },
+	{ 0x03, 0x03, invaders_sh_port3_w },
 	{ 0x04, 0x04, invaders_shift_data_w },
-        { 0x05, 0x05, invaders_sh_port5_w },
-        { 0x06, 0x06, invaders_dummy_write },
+	{ 0x05, 0x05, invaders_sh_port5_w },
+	{ 0x06, 0x06, invaders_dummy_write },
 	{ -1 }  /* end of table */
 };
 
 static struct IOWritePort invdelux_writeport[] =
 {
 	{ 0x02, 0x02, invaders_shift_amount_w },
-        { 0x03, 0x03, invaders_sh_port3_w },
+	{ 0x03, 0x03, invaders_sh_port3_w },
 	{ 0x04, 0x04, invaders_shift_data_w },
-        { 0x05, 0x05, invaders_sh_port5_w },
-        { 0x06, 0x06, invaders_dummy_write },
+	{ 0x05, 0x05, invaders_sh_port5_w },
+	{ 0x06, 0x06, invaders_dummy_write },
 	{ -1 }  /* end of table */
 };
 
 
-static struct InputPort input_ports[] =
-{
-	{       /* IN0 */
-		0x81,
-		{ OSD_KEY_3, OSD_KEY_2, OSD_KEY_1, 0,
-				OSD_KEY_LCONTROL, OSD_KEY_LEFT, OSD_KEY_RIGHT, 0 },
-		{ 0, 0, 0, 0,
-				OSD_JOY_FIRE, OSD_JOY_LEFT, OSD_JOY_RIGHT, 0 }
-	},
-	{       /* IN1 */
-		0x00,
-		{ 0, 0, OSD_KEY_T, 0,
-				OSD_KEY_LCONTROL, OSD_KEY_LEFT, OSD_KEY_RIGHT, 0 },
-		{ 0, 0, 0, 0,
-				OSD_JOY_FIRE, OSD_JOY_LEFT, OSD_JOY_RIGHT, 0 }
-	},
-	{ -1 }
-};
+INPUT_PORTS_START( invaders_input_ports )
+	PORT_START      /* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_START2 )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_START1 )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_2WAY )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_2WAY )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_START      /* DSW0 */
+	PORT_DIPNAME( 0x03, 0x00, "Lives", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "3" )
+	PORT_DIPSETTING(    0x01, "4" )
+	PORT_DIPSETTING(    0x02, "5" )
+	PORT_DIPSETTING(    0x03, "6" )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_DIPNAME( 0x08, 0x00, "Bonus", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "1500" )
+	PORT_DIPSETTING(    0x08, "1000" )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT )
+	PORT_DIPNAME( 0x80, 0x00, "Coin Info", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPSETTING(    0x80, "Off" )
+INPUT_PORTS_END
 
-static struct InputPort invdelux_input_ports[] =
-{
-	{       /* IN0 */
-		0xf4,
-		{ 0, 0, 0, 0, 0, 0, OSD_KEY_N, 0 },
-		{ 0, 0, 0, 0, 0, 0, 0, 0 }
-	},
-	{       /* IN1 */
-		0x81,
-		{ OSD_KEY_3, OSD_KEY_2, OSD_KEY_1, 0,
-				OSD_KEY_LCONTROL, OSD_KEY_LEFT, OSD_KEY_RIGHT, 0 },
-		{ 0, 0, 0, 0,
-				OSD_JOY_FIRE, OSD_JOY_LEFT, OSD_JOY_RIGHT, 0 }
-	},
-	{       /* IN2 */
-		0x00,
-		{ 0, 0, OSD_KEY_T, 0,
-                	    OSD_KEY_LCONTROL, OSD_KEY_LEFT, OSD_KEY_RIGHT, 0 },
-		{ 0, 0, 0, 0, OSD_JOY_FIRE,    OSD_JOY_LEFT, OSD_JOY_RIGHT, 0 }
-	},
-	{ -1 }
-};
+INPUT_PORTS_START( earthinv_input_ports )
+	PORT_START      /* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_START2 )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_START1 )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_2WAY )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_2WAY )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_START      /* DSW0 */
+	PORT_DIPNAME( 0x01, 0x00, "Lives", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "2" )
+	PORT_DIPSETTING(    0x01, "3" )
+	PORT_DIPNAME( 0x02, 0x00, "Unknown DSW 1", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPSETTING(    0x02, "Off" )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_DIPNAME( 0x08, 0x00, "Unknown DSW 2", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPSETTING(    0x08, "Off" )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT )
+	PORT_DIPNAME( 0x80, 0x80, "Coinage", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "2 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x80, "1 Coin/1 Credit" )
+INPUT_PORTS_END
 
+INPUT_PORTS_START( spaceatt_input_ports )
+	PORT_START      /* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_START2 )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_START1 )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_2WAY )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_2WAY )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_START      /* DSW0 */
+	PORT_DIPNAME( 0x03, 0x00, "Lives", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "3" )
+	PORT_DIPSETTING(    0x01, "4" )
+	PORT_DIPSETTING(    0x02, "5" )
+	PORT_DIPSETTING(    0x03, "6" )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_DIPNAME( 0x08, 0x00, "Bonus", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "1500" )
+	PORT_DIPSETTING(    0x08, "1000" )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT )
+	PORT_DIPNAME( 0x80, 0x00, "Coinage", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "1 Coin/1 Credit" )
+	PORT_DIPSETTING(    0x80, "2 Coins/1 Credit" )
+INPUT_PORTS_END
 
-static struct TrakPort trak_ports[] =
-{
-        { -1 }
-};
+INPUT_PORTS_START( galxwars_input_ports )
+	PORT_START      /* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_START2 )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_START1 )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_2WAY )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_2WAY )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_START      /* DSW0 */
+	PORT_DIPNAME( 0x03, 0x00, "Lives", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "2" )
+	PORT_DIPSETTING(    0x01, "3" )
+	PORT_DIPSETTING(    0x02, "4" )
+	PORT_DIPSETTING(    0x03, "5" )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_DIPNAME( 0x08, 0x00, "Bonus", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "3000" )
+	PORT_DIPSETTING(    0x08, "5000" )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT )
+	PORT_DIPNAME( 0x80, 0x00, "Coinage", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "1 Coin/1 Credit" )
+	PORT_DIPSETTING(    0x80, "2 Coins/1 Credit" )
+INPUT_PORTS_END
 
-static struct KEYSet keys[] =
-{
-	{ 0, 5, "PL1 MOVE LEFT"  },
-	{ 0, 6, "PL1 MOVE RIGHT" },
-	{ 0, 4, "PL1 FIRE"       },
-	{ 1, 5, "PL1 MOVE LEFT"  },
-	{ 1, 6, "PL1 MOVE RIGHT" },
-	{ 1, 4, "PL1 FIRE"       },
-	{ -1 }
-};
+INPUT_PORTS_START( lrescue_input_ports )
+	PORT_START      /* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_START2 )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_START1 )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_2WAY )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_2WAY )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_START      /* DSW0 */
+	PORT_DIPNAME( 0x03, 0x00, "Lives", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "3" )
+	PORT_DIPSETTING(    0x01, "4" )
+	PORT_DIPSETTING(    0x02, "5" )
+	PORT_DIPSETTING(    0x03, "6" )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_DIPNAME( 0x08, 0x00, "Unknown", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPSETTING(    0x08, "Off" )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT )
+	PORT_DIPNAME( 0x80, 0x00, "Unknown", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPSETTING(    0x80, "Off" )
+INPUT_PORTS_END
 
-static struct KEYSet invaders_keys[] =
-{
-	{ 0, 5, "PL1 MOVE LEFT"  },
-	{ 0, 6, "PL1 MOVE RIGHT" },
-	{ 0, 4, "PL1 FIRE"       },
-	{ 1, 5, "PL2 MOVE LEFT"  },
-	{ 1, 6, "PL2 MOVE RIGHT" },
-	{ 1, 4, "PL2 FIRE"       },
-	{ -1 }
-};
+INPUT_PORTS_START( invdelux_input_ports )
+	PORT_START      /* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* N ? */
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_START      /* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_START2 )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_START1 )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_2WAY )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_2WAY )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_START      /* DSW0 */
+	PORT_DIPNAME( 0x01, 0x00, "Lives", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "3" )
+	PORT_DIPSETTING(    0x01, "4" )
+	PORT_DIPNAME( 0x02, 0x00, "Unknown", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "Off" )
+	PORT_DIPSETTING(    0x02, "On" )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_DIPNAME( 0x08, 0x00, "Preset Mode", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "Off" )
+	PORT_DIPSETTING(    0x08, "On" )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT )
+	PORT_DIPNAME( 0x80, 0x00, "Coin Info", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPSETTING(    0x80, "Off" )
+INPUT_PORTS_END
 
-/* Deluxe uses set two to input the name */
-static struct KEYSet invdelux_keys[] =
-{
-	{ 1, 5, "PL1 MOVE LEFT"  },
-	{ 1, 6, "PL1 MOVE RIGHT" },
-	{ 1, 4, "PL1 FIRE"       },
-	{ 2, 5, "PL2 MOVE LEFT"  },
-	{ 2, 6, "PL2 MOVE RIGHT" },
-	{ 2, 4, "PL2 FIRE"       },
-	{ -1 }
-};
+INPUT_PORTS_START( invadpt2_input_ports )
+	PORT_START      /* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_START2 )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_START1 )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_2WAY )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_2WAY )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_START      /* DSW0 */
+	PORT_DIPNAME( 0x01, 0x00, "Lives", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "3" )
+	PORT_DIPSETTING(    0x01, "4" )
+	PORT_DIPNAME( 0x02, 0x00, "Unknown", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "Off" )
+	PORT_DIPSETTING(    0x02, "On" )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_DIPNAME( 0x08, 0x00, "Preset Mode", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "Off" )
+	PORT_DIPSETTING(    0x08, "On" )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT )
+	PORT_DIPNAME( 0x80, 0x00, "Coin Info", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPSETTING(    0x80, "Off" )
+INPUT_PORTS_END
 
+INPUT_PORTS_START( desterth_input_ports )
+	PORT_START      /* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_START2 )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_START1 )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_2WAY )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_2WAY )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_START      /* DSW0 */
+	PORT_DIPNAME( 0x03, 0x00, "Lives", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "3" )
+	PORT_DIPSETTING(    0x01, "4" )
+	PORT_DIPSETTING(    0x02, "5" )
+	PORT_DIPSETTING(    0x03, "6" )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_DIPNAME( 0x08, 0x00, "Unknown", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPSETTING(    0x08, "Off" )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT )
+	PORT_DIPNAME( 0x80, 0x00, "Coinage", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "1 Coin/1 Credit" )
+	PORT_DIPSETTING(    0x80, "2 Coins/1 Credit" )
+INPUT_PORTS_END
 
-static struct DSW dsw[] =
-{
-	{ 1, 0x03, "LIVES", { "3", "4", "5", "6" } },
-	{ 1, 0x08, "BONUS", { "1500", "1000" }, 1 },
-	{ -1 }
-};
+INPUT_PORTS_START( cosmicmo_input_ports )
+	PORT_START      /* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_START2 )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_START1 )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_2WAY )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_2WAY )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_START      /* DSW0 */
+	PORT_DIPNAME( 0x03, 0x00, "Lives", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "2" )
+	PORT_DIPSETTING(    0x01, "3" )
+	PORT_DIPSETTING(    0x02, "4" )
+	PORT_DIPSETTING(    0x03, "5" )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_DIPNAME( 0x08, 0x00, "Unknown", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPSETTING(    0x08, "Off" )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT )
+	PORT_DIPNAME( 0x80, 0x00, "Coinage", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "1 Coin/1 Credit" )
+	PORT_DIPSETTING(    0x80, "1 Coin/2 Credits" )
+INPUT_PORTS_END
 
-static struct DSW invaders_dsw[] =
-{
-	{ 1, 0x03, "BASES", { "3", "4", "5", "6" } },
-	{ 1, 0x08, "BONUS", { "1500", "1000" }, 1 },
-	{ 1, 0x80, "COIN INFO", { "ON", "OFF" }, 0 },
-	{ -1 }
-};
+INPUT_PORTS_START( spaceph_input_ports )
+	PORT_START      /* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_START2 )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_START1 )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_2WAY )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_2WAY )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_START      /* IN1 */
+	PORT_DIPNAME( 0x03, 0x00, "Fuel", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x03, "35000" )
+	PORT_DIPSETTING(    0x02, "25000" )
+	PORT_DIPSETTING(    0x01, "20000" )
+	PORT_DIPSETTING(    0x00, "15000" )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_UNKNOWN ) /* Tilt */
+	PORT_DIPNAME( 0x08, 0x00, "Bonus Fuel", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x08, "10000" )
+	PORT_DIPSETTING(    0x00, "15000" )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_UNKNOWN ) /* Fire */
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN ) /* Left */
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN ) /* Right */
+	PORT_DIPNAME( 0x80, 0x00, "Coinage", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x80, "1 Coin/2 Credits" )
+	PORT_DIPSETTING(    0x00, "1 Coin/1 Credit" )
+INPUT_PORTS_END
 
-static struct DSW invdelux_dsw[] =
-{
-	{ 2, 0x01, "BASES", { "3", "4" }, 0},
-	{ 2, 0x08, "PRESET MODE", { "OFF", "ON" }, 0 },
-	{ 2, 0x80, "COIN INFO", { "ON", "OFF" }, 0 },
-	{ -1 }
-};
-
-
+INPUT_PORTS_START( rollingc_input_ports )
+	PORT_START      /* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) /* Game Select */
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) /* Game Select */
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_START      /* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_START2 )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_START1 )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 ) /* Player 1 Controls */
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_2WAY ) /* Player 1 Controls */
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_2WAY ) /* Player 1 Controls */
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_START      /* DSW1 */
+	PORT_DIPNAME( 0x03, 0x00, "Lives", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "3" )
+	PORT_DIPSETTING(    0x01, "4" )
+	PORT_DIPSETTING(    0x02, "5" )
+	PORT_DIPSETTING(    0x03, "6" )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_UNKNOWN ) /* Tilt ? */
+	PORT_DIPNAME( 0x08, 0x00, "Unknown 1", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPSETTING(    0x08, "Off" )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 ) /* Player 2 Controls */
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT ) /* Player 2 Controls */
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT ) /* Player 2 Controls */
+	PORT_DIPNAME( 0x80, 0x00, "Unknown 2", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPSETTING(    0x80, "Off" )
+INPUT_PORTS_END
 
 static unsigned char palette[] = /* V.V */ /* Smoothed pure colors, overlays are not so contrasted */
 {
@@ -317,6 +563,27 @@ static unsigned char palette[] = /* V.V */ /* Smoothed pure colors, overlays are
 enum { BLACK,RED,GREEN,YELLOW,WHITE,CYAN,PURPLE }; /* V.V */
 
 
+static unsigned char rollingc_palette[] =
+{
+	0xff,0xff,0xff, /* BLACK */
+	0xa0,0xa0,0xa0, /* ?????? */
+	0x00,0xff,0x00, /* GREEN */
+	0x00,0xa0,0xa0, /* GREEN */
+	0xff,0x00,0xff, /* PURPLE */
+	0x00,0xff,0xff, /* CYAN */
+	0xa0,0x00,0xa0, /* WHITE */
+	0xff,0x00,0x00, /* RED */
+	0xff,0xff,0x00,  /* YELLOW */
+	0x80,0x40,0x20, /* ?????? */
+	0x80,0x80,0x00, /* GREEN */
+	0x00,0x80,0x80, /* GREEN */
+	0xa0,0xa0,0xff, /* PURPLE */
+	0xa0,0xff,0x80, /* CYAN */
+	0xff,0xff,0x00, /* WHITE */
+	0xff,0x00,0xa0, /* RED */
+	0x00,0x00,0x00 /* RED */
+
+};
 
 static struct MachineDriver machine_driver =
 {
@@ -340,14 +607,13 @@ static struct MachineDriver machine_driver =
 	sizeof(palette)/3, 0,
 	0,
 
-	VIDEO_TYPE_RASTER,
+	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY,
 	0,
 	invaders_vh_start,
 	invaders_vh_stop,
 	invaders_vh_screenrefresh,
 
 	/* sound hardware */
-	0,
 	0,
 	0,
 	0,
@@ -377,14 +643,13 @@ static struct MachineDriver lrescue_machine_driver = /* V.V */ /* Whole function
 	sizeof(palette)/3, 0,
 	0,
 
-	VIDEO_TYPE_RASTER,
+	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY,
 	0,
 	invaders_vh_start,
 	invaders_vh_stop,
 	invaders_vh_screenrefresh,
 
 	/* sound hardware */
-	0,
 	0,
 	0,
 	0,
@@ -414,14 +679,13 @@ static struct MachineDriver invrvnge_machine_driver = /* V.V */ /* Whole functio
 	sizeof(palette)/3, 0,
 	0,
 
-	VIDEO_TYPE_RASTER,
+	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY,
 	0,
 	invaders_vh_start,
 	invaders_vh_stop,
 	invaders_vh_screenrefresh,
 
 	/* sound hardware */
-	0,
 	0,
 	0,
 	0,
@@ -452,7 +716,7 @@ static struct MachineDriver invdelux_machine_driver =
 	sizeof(palette)/3, 0,
 	0,
 
-	VIDEO_TYPE_RASTER,
+	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY,
 	0,
 	invaders_vh_start,
 	invaders_vh_stop,
@@ -460,6 +724,42 @@ static struct MachineDriver invdelux_machine_driver =
 
 	/* sound hardware */
 	0,
+	0,
+	0,
+	invaders_sh_update
+};
+
+
+
+static struct MachineDriver rollingc_machine_driver =
+{
+	/* basic machine hardware */
+	{
+		{
+			CPU_Z80,
+			2000000,        /* 1 Mhz? */
+			0,
+			rollingc_readmem,rollingc_writemem,invdelux_readport,writeport,
+			invaders_interrupt,2    /* two interrupts per frame */
+		}
+	},
+	60,
+	1,	/* single CPU, no need for interleaving */
+	0,
+
+	/* video hardware */
+	32*8, 32*8, { 2*8, 30*8-1, 0*8, 32*8-1 },
+	0,	/* no gfxdecodeinfo - bitmapped display */
+	sizeof(rollingc_palette)/3, 0,
+	0,
+
+	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY,
+	0,
+	invaders_vh_start,
+	invaders_vh_stop,
+	invaders_vh_screenrefresh,
+
+	/* sound hardware */
 	0,
 	0,
 	0,
@@ -476,72 +776,133 @@ static struct MachineDriver invdelux_machine_driver =
 
 ROM_START( invaders_rom )
 	ROM_REGION(0x10000)     /* 64k for code */
-	ROM_OBSOLETELOAD( "invaders.h", 0x0000, 0x0800)
-	ROM_OBSOLETELOAD( "invaders.g", 0x0800, 0x0800)
-	ROM_OBSOLETELOAD( "invaders.f", 0x1000, 0x0800)
-	ROM_OBSOLETELOAD( "invaders.e", 0x1800, 0x0800)
+	ROM_LOAD( "invaders.h", 0x0000, 0x0800, 0x50d4f038 )
+	ROM_LOAD( "invaders.g", 0x0800, 0x0800, 0x0d20437a )
+	ROM_LOAD( "invaders.f", 0x1000, 0x0800, 0x5175f639 )
+	ROM_LOAD( "invaders.e", 0x1800, 0x0800, 0x1206db68 )
+ROM_END
+
+ROM_START( earthinv_rom )
+	ROM_REGION(0x10000)		/* 64k for code */
+	ROM_LOAD( "invaders.h", 0x0000, 0x0800, 0xec409c20 )
+	ROM_LOAD( "invaders.g", 0x0800, 0x0800, 0x46a1b083 )
+	ROM_LOAD( "invaders.f", 0x1000, 0x0800, 0xfcb8d54c )
+	ROM_LOAD( "invaders.e", 0x1800, 0x0800, 0x38dff747 )
 ROM_END
 
 ROM_START( spaceatt_rom )
 	ROM_REGION(0x10000)     /* 64k for code */
-	ROM_OBSOLETELOAD( "spaceatt.h", 0x0000, 0x0800)
-	ROM_OBSOLETELOAD( "spaceatt.g", 0x0800, 0x0800)
-	ROM_OBSOLETELOAD( "spaceatt.f", 0x1000, 0x0800)
-	ROM_OBSOLETELOAD( "spaceatt.e", 0x1800, 0x0800)
+	ROM_LOAD( "spaceatt.h", 0x0000, 0x0800, 0x607fceab )
+	ROM_LOAD( "spaceatt.g", 0x0800, 0x0800, 0x47146b7c )
+	ROM_LOAD( "spaceatt.f", 0x1000, 0x0800, 0xf7306b0a )
+	ROM_LOAD( "spaceatt.e", 0x1800, 0x0800, 0xb362b53c )
 ROM_END
 
 ROM_START( invrvnge_rom )
 	ROM_REGION(0x10000)     /* 64k for code */
-	ROM_OBSOLETELOAD( "invrvnge.h", 0x0000, 0x0800)
-	ROM_OBSOLETELOAD( "invrvnge.g", 0x0800, 0x0800)
-	ROM_OBSOLETELOAD( "invrvnge.f", 0x1000, 0x0800)
-	ROM_OBSOLETELOAD( "invrvnge.e", 0x1800, 0x0800)
+	ROM_LOAD( "invrvnge.h", 0x0000, 0x0800, 0xe6a7b0ab )
+	ROM_LOAD( "invrvnge.g", 0x0800, 0x0800, 0xc3355da1 )
+	ROM_LOAD( "invrvnge.f", 0x1000, 0x0800, 0x81b0bac0 )
+	ROM_LOAD( "invrvnge.e", 0x1800, 0x0800, 0xe90b9c6f )
 ROM_END
 
 ROM_START( invdelux_rom )
 	ROM_REGION(0x10000)     /* 64k for code */
-	ROM_OBSOLETELOAD( "invdelux.h", 0x0000, 0x0800)
-	ROM_OBSOLETELOAD( "invdelux.g", 0x0800, 0x0800)
-	ROM_OBSOLETELOAD( "invdelux.f", 0x1000, 0x0800)
-	ROM_OBSOLETELOAD( "invdelux.e", 0x1800, 0x0800)
-	ROM_OBSOLETELOAD( "invdelux.d", 0x4000, 0x0800)
+	ROM_LOAD( "invdelux.h", 0x0000, 0x0800, 0x5b009eba )
+	ROM_LOAD( "invdelux.g", 0x0800, 0x0800, 0x5f0db2f5 )
+	ROM_LOAD( "invdelux.f", 0x1000, 0x0800, 0x0204561c )
+	ROM_LOAD( "invdelux.e", 0x1800, 0x0800, 0x8a364d1a )
+	ROM_LOAD( "invdelux.d", 0x4000, 0x0800, 0x5239e87f )
 ROM_END
 
 ROM_START( galxwars_rom )
 	ROM_REGION(0x10000)     /* 64k for code */
-	ROM_OBSOLETELOAD( "galxwars.0", 0x0000, 0x0400)
-	ROM_OBSOLETELOAD( "galxwars.1", 0x0400, 0x0400)
-	ROM_OBSOLETELOAD( "galxwars.2", 0x0800, 0x0400)
-	ROM_OBSOLETELOAD( "galxwars.3", 0x0c00, 0x0400)
-	ROM_OBSOLETELOAD( "galxwars.4", 0x4000, 0x0400)
-	ROM_OBSOLETELOAD( "galxwars.5", 0x4400, 0x0400)
+	ROM_LOAD( "galxwars.0", 0x0000, 0x0400, 0x3ad5521b )
+	ROM_LOAD( "galxwars.1", 0x0400, 0x0400, 0xce40024c )
+	ROM_LOAD( "galxwars.2", 0x0800, 0x0400, 0xe3dff58d )
+	ROM_LOAD( "galxwars.3", 0x0c00, 0x0400, 0x93490efd )
+	ROM_LOAD( "galxwars.4", 0x4000, 0x0400, 0x83edc2fd )
+	ROM_LOAD( "galxwars.5", 0x4400, 0x0400, 0xc1234a3d )
 ROM_END
 
 ROM_START( lrescue_rom )
 	ROM_REGION(0x10000)     /* 64k for code */
-	ROM_OBSOLETELOAD( "lrescue.1", 0x0000, 0x0800)
-	ROM_OBSOLETELOAD( "lrescue.2", 0x0800, 0x0800)
-	ROM_OBSOLETELOAD( "lrescue.3", 0x1000, 0x0800)
-	ROM_OBSOLETELOAD( "lrescue.4", 0x1800, 0x0800)
-	ROM_OBSOLETELOAD( "lrescue.5", 0x4000, 0x0800)
-	ROM_OBSOLETELOAD( "lrescue.6", 0x4800, 0x0800)
+	ROM_LOAD( "lrescue.1", 0x0000, 0x0800, 0x9fa38d01 )
+	ROM_LOAD( "lrescue.2", 0x0800, 0x0800, 0x3d00e2b8 )
+	ROM_LOAD( "lrescue.3", 0x1000, 0x0800, 0x2fc56073 )
+	ROM_LOAD( "lrescue.4", 0x1800, 0x0800, 0xc2170fa3 )
+	ROM_LOAD( "lrescue.5", 0x4000, 0x0800, 0x238ce80c )
+	ROM_LOAD( "lrescue.6", 0x4800, 0x0800, 0x464afa4a )
 ROM_END
 
 ROM_START( desterth_rom )
 	ROM_REGION(0x10000)     /* 64k for code */
-	ROM_OBSOLETELOAD( "36_h.bin", 0x0000, 0x0800)
-	ROM_OBSOLETELOAD( "35_g.bin", 0x0800, 0x0800)
-	ROM_OBSOLETELOAD( "34_f.bin", 0x1000, 0x0800)
-	ROM_OBSOLETELOAD( "33_e.bin", 0x1800, 0x0800)
-	ROM_OBSOLETELOAD( "32_d.bin", 0x4000, 0x0800)
-	ROM_OBSOLETELOAD( "31_c.bin", 0x4800, 0x0800)
-	ROM_OBSOLETELOAD( "42_b.bin", 0x5000, 0x0800)
+	ROM_LOAD( "36_h.bin", 0x0000, 0x0800, 0x386b443d )
+	ROM_LOAD( "35_g.bin", 0x0800, 0x0800, 0x838c80be )
+	ROM_LOAD( "34_f.bin", 0x1000, 0x0800, 0x1fc49074 )
+	ROM_LOAD( "33_e.bin", 0x1800, 0x0800, 0x7bb1a60f )
+	ROM_LOAD( "32_d.bin", 0x4000, 0x0800, 0x5a2d5195 )
+	ROM_LOAD( "31_c.bin", 0x4800, 0x0800, 0x8c9da1e1 )
+	ROM_LOAD( "42_b.bin", 0x5000, 0x0800, 0xcea0bb2c )
+ROM_END
+
+ROM_START( invaders2_rom )
+	ROM_REGION(0x10000)     /* 64k for code */
+	ROM_LOAD( "pv.01", 0x0000, 0x0800,0x8b00eeba )
+	ROM_LOAD( "pv.02", 0x0800, 0x0800,0x0c7adc30 )
+	ROM_LOAD( "pv.03", 0x1000, 0x0800,0xb2384c12 )
+	ROM_LOAD( "pv.04", 0x1800, 0x0800,0x14411f47 )
+	ROM_LOAD( "pv.05", 0x4000, 0x0800,0x2990da7a )
+ROM_END
+
+ROM_START( cosmicmo_rom )  /* L.T */
+	ROM_REGION(0x10000)     /* 64k for code */
+	ROM_LOAD( "cosmicmo.1", 0x0000, 0x0400,0x3ccca2e4 )
+	ROM_LOAD( "cosmicmo.2", 0x0400, 0x0400,0xc8ecbfbc )
+	ROM_LOAD( "cosmicmo.3", 0x0800, 0x0400,0xd9e97659 )
+	ROM_LOAD( "cosmicmo.4", 0x0c00, 0x0400,0xa1c2ead0 )
+	ROM_LOAD( "cosmicmo.5", 0x4000, 0x0400,0xff83f719 )
+	ROM_LOAD( "cosmicmo.6", 0x4400, 0x0400,0x79df7b39 )
+	ROM_LOAD( "cosmicmo.7", 0x4800, 0x0400,0x95dd75a7 )
+ROM_END
+
+ROM_START( spaceph_rom )
+	ROM_REGION(0x10000)     /* 64k for code */
+	ROM_LOAD( "sv01.bin", 0x0000, 0x0400, 0x5e769e98 )
+	ROM_LOAD( "sv02.bin", 0x0400, 0x0400, 0xaaacc506 )
+	ROM_LOAD( "sv03.bin", 0x0800, 0x0400, 0x734dec43 )
+	ROM_LOAD( "sv04.bin", 0x0c00, 0x0400, 0xf16661e4 )
+	ROM_LOAD( "sv05.bin", 0x1000, 0x0400, 0x02ba1408 )
+	ROM_LOAD( "sv06.bin", 0x1400, 0x0400, 0xcab9ea59 )
+	ROM_LOAD( "sv07.bin", 0x1800, 0x0400, 0xc8f1c563 )
+	ROM_LOAD( "sv08.bin", 0x1c00, 0x0400, 0x923d6d79 )
+	ROM_LOAD( "sv09.bin", 0x4000, 0x0400, 0xae6f21e9 )
+	ROM_LOAD( "sv10.bin", 0x4400, 0x0400, 0x1176e23a )
+	ROM_LOAD( "sv11.bin", 0x4800, 0x0400, 0xbbb49a42 )
+	ROM_LOAD( "sv12.bin", 0x4c00, 0x0400, 0xca632a7b )
+ROM_END
+
+ROM_START( rollingc_rom )
+	ROM_REGION(0x10000)     /* 64k for code */
+	ROM_LOAD( "rc01.bin", 0x0000, 0x0400, 0x6fcfc861 )
+	ROM_LOAD( "rc02.bin", 0x0400, 0x0400, 0xaa7205d8 )
+	ROM_LOAD( "rc03.bin", 0x0800, 0x0400, 0xb1d8f7c8 )
+	ROM_LOAD( "rc04.bin", 0x0c00, 0x0400, 0x2637f611 )
+	ROM_LOAD( "rc05.bin", 0x1000, 0x0400, 0x82c0fb70 )
+	ROM_LOAD( "rc06.bin", 0x1400, 0x0400, 0x52da00c8 )
+	ROM_LOAD( "rc07.bin", 0x1800, 0x0400, 0xf0c569f7 )
+	ROM_LOAD( "rc08.bin", 0x1c00, 0x0400, 0x033ac1a8 )
+	ROM_LOAD( "rc09.bin", 0x4000, 0x0800, 0x4c3b8fe3 )
+	ROM_LOAD( "rc10.bin", 0x4800, 0x0800, 0xceebaefd )
+	ROM_LOAD( "rc11.bin", 0x5000, 0x0800, 0x68228d74 )
+	ROM_LOAD( "rc12.bin", 0x5800, 0x0800, 0xdd2c4d68 )
 ROM_END
 
 
 
 static const char *invaders_sample_names[] =
 {
+	"*invaders",
 	"0.SAM",
 	"1.SAM",
 	"2.SAM",
@@ -750,19 +1111,19 @@ static int desterth_hiload(void)     /* V.V */ /* Whole function */
 
 
 
-
 struct GameDriver invaders_driver =
 {
 	"Space Invaders",
 	"invaders",
-	"MICHAEL STRUTTS\nNICOLA SALMORIA\nTORMOD TJABERG\nMIRKO BUFFONI\nVALERIO VERRANDO",    /* V.V */
+	"Michael Strutts (Space Invaders emulator)\nNicola Salmoria\nTormod Tjaberg (sound)\nMirko Buffoni\nValerio Verrando\nMarco Cassili",
 	&machine_driver,
 
 	invaders_rom,
 	0, 0,
 	invaders_sample_names,
+	0,	/* sound_prom */
 
-	input_ports, 0, trak_ports, invaders_dsw, invaders_keys,
+	0/*TBR*/, invaders_input_ports, 0/*TBR*/, 0/*TBR*/, 0/*TBR*/,
 
 	0, palette, 0,
 	ORIENTATION_DEFAULT,
@@ -774,14 +1135,15 @@ struct GameDriver earthinv_driver =
 {
 	"Super Earth Invasion",
 	"earthinv",
-	"MICHAEL STRUTTS\nNICOLA SALMORIA\nTORMOD TJABERG\nMIRKO BUFFONI",
+	"Michael Strutts (Space Invaders emulator)\nNicola Salmoria\nTormod Tjaberg (sound)\nMirko Buffoni\nMarco Cassili",
 	&machine_driver,
 
-	invaders_rom,
+	earthinv_rom,
 	0, 0,
 	invaders_sample_names,
+	0,	/* sound_prom */
 
-	input_ports, 0, trak_ports, dsw, keys,
+	0/*TBR*/, earthinv_input_ports, 0/*TBR*/, 0/*TBR*/, 0/*TBR*/,
 
 	0, palette, 0,
 	ORIENTATION_DEFAULT,
@@ -793,14 +1155,15 @@ struct GameDriver spaceatt_driver =
 {
 	"Space Attack II",
 	"spaceatt",
-	"MICHAEL STRUTTS\nNICOLA SALMORIA\nTORMOD TJABERG\nMIRKO BUFFONI\nVALERIO VERRANDO",    /* V.V */
+	"Michael Strutts (Space Invaders emulator)\nNicola Salmoria\nTormod Tjaberg (sound)\nMirko Buffoni\nValerio Verrando\nMarco Cassili",
 	&machine_driver,
 
 	spaceatt_rom,
 	0, 0,
 	invaders_sample_names,
+	0,	/* sound_prom */
 
-	input_ports, 0, trak_ports, dsw, keys,
+	0/*TBR*/, spaceatt_input_ports, 0/*TBR*/, 0/*TBR*/, 0/*TBR*/,
 
 	0, palette, 0,
 	ORIENTATION_DEFAULT,
@@ -812,14 +1175,15 @@ struct GameDriver invrvnge_driver =
 {
 	"Invaders Revenge",
 	"invrvnge",
-	"MICHAEL STRUTTS\nNICOLA SALMORIA\nTORMOD TJABERG\nMIRKO BUFFONI\nMarco Cassili (high score save)",
+	"Michael Strutts (Space Invaders emulator)\nNicola Salmoria\nTormod Tjaberg (sound)\nMirko Buffoni\nMarco Cassili (high score save)",
 	&invrvnge_machine_driver,
 
 	invrvnge_rom,
 	0, 0,
 	invaders_sample_names,
+	0,	/* sound_prom */
 
-	input_ports, 0, trak_ports, dsw, keys,
+	0/*TBR*/, desterth_input_ports, 0/*TBR*/, 0/*TBR*/, 0/*TBR*/,
 
 	0, palette, 0,
 	ORIENTATION_DEFAULT,
@@ -829,16 +1193,17 @@ struct GameDriver invrvnge_driver =
 
 struct GameDriver invdelux_driver =
 {
-	"Invaders Deluxe",
+	"Space Invaders Part II (Midway)",
 	"invdelux",
-	"MICHAEL STRUTTS\nNICOLA SALMORIA\nTORMOD TJABERG\nMIRKO BUFFONI\nVALERIO VERRANDO",    /* V.V */
+	"Michael Strutts (Space Invaders emulator)\nNicola Salmoria\nTormod Tjaberg (sound)\nMirko Buffoni\nValerio Verrando\nMarco Cassili",
 	&invdelux_machine_driver,
 
 	invdelux_rom,
 	0, 0,
 	invaders_sample_names,
+	0,	/* sound_prom */
 
-	invdelux_input_ports, 0, trak_ports, invdelux_dsw, invdelux_keys,
+	0/*TBR*/, invdelux_input_ports, 0/*TBR*/, 0/*TBR*/, 0/*TBR*/,
 
 	0, palette, 0,
 	ORIENTATION_DEFAULT,
@@ -846,18 +1211,41 @@ struct GameDriver invdelux_driver =
 	invdelux_hiload, invdelux_hisave
 };
 
+/* LT 24-11-1997 */
+struct GameDriver invadpt2_driver =
+{
+	"Space Invaders Part II (Taito)",
+	"invadpt2",
+	"Michael Strutts (Space Invaders emulator)\nNicola Salmoria\nTormod Tjaberg (sound)\nMirko Buffoni\nValerio Verrando\nLee Taylor\nMarco Cassili",
+	&lrescue_machine_driver,
+
+	invaders2_rom,
+	0, 0,
+	invaders_sample_names,
+	0,	/* sound_prom */
+
+	0/*TBR*/, invadpt2_input_ports, 0/*TBR*/, 0/*TBR*/, 0/*TBR*/,
+
+	0, palette, 0,
+	ORIENTATION_DEFAULT,
+
+        invdelux_hiload, invdelux_hisave
+};
+
+
 struct GameDriver galxwars_driver =
 {
 	"Galaxy Wars",
 	"galxwars",
-	"MICHAEL STRUTTS\nNICOLA SALMORIA\nTORMOD TJABERG\nMIRKO BUFFONI\nVALERIO VERRANDO",    /* V.V */
+	"Michael Strutts (Space Invaders emulator)\nNicola Salmoria\nTormod Tjaberg (sound)\nMirko Buffoni\nValerio Verrando\nMarco Cassili",
 	&machine_driver,
 
 	galxwars_rom,
 	0, 0,
 	invaders_sample_names,
+	0,	/* sound_prom */
 
-	input_ports, 0, trak_ports, dsw, keys,
+	0/*TBR*/, galxwars_input_ports, 0/*TBR*/, 0/*TBR*/, 0/*TBR*/,
 
 	0, palette, 0,
 	ORIENTATION_DEFAULT,
@@ -869,14 +1257,15 @@ struct GameDriver lrescue_driver =
 {
 	"Lunar Rescue",
 	"lrescue",
-	"MICHAEL STRUTTS\nNICOLA SALMORIA\nTORMOD TJABERG\nMIRKO BUFFONI\nVALERIO VERRANDO",    /* V.V */
+	"Michael Strutts (Space Invaders emulator)\nNicola Salmoria\nTormod Tjaberg (sound)\nMirko Buffoni\nValerio Verrando\nMarco Cassili",
 	&lrescue_machine_driver,
 
 	lrescue_rom,
 	0, 0,
 	invaders_sample_names,
+	0,	/* sound_prom */
 
-	input_ports, 0, trak_ports, dsw, keys,
+	0/*TBR*/, lrescue_input_ports, 0/*TBR*/, 0/*TBR*/, 0/*TBR*/,
 
 	0, palette, 0,
 	ORIENTATION_DEFAULT,
@@ -889,17 +1278,84 @@ struct GameDriver desterth_driver =
 {
 	"Destination Earth",
 	"desterth",
-	"MICHAEL STRUTTS\nNICOLA SALMORIA\nTORMOD TJABERG\nMIRKO BUFFONI\nVALERIO VERRANDO",    /* V.V */
-	&machine_driver,
+	"Michael Strutts (Space Invaders emulator)\nNicola Salmoria\nTormod Tjaberg (sound)\nMirko Buffoni\nValerio Verrando\nMarco Cassili",
+        &machine_driver,
 
 	desterth_rom,
 	0, 0,
 	invaders_sample_names,
+	0,	/* sound_prom */
 
-	input_ports, 0, trak_ports, dsw, keys,
+	0/*TBR*/, desterth_input_ports, 0/*TBR*/, 0/*TBR*/, 0/*TBR*/,
 
 	0, palette, 0,
 	ORIENTATION_DEFAULT,
 
 	desterth_hiload, lrescue_hisave
 };
+
+
+struct GameDriver cosmicmo_driver =
+{
+	"Cosmic Monsters",
+	"cosmicmo",
+	"Michael Strutts (Space Invaders emulator)\nNicola Salmoria\nTormod Tjaberg (sound)\nMirko Buffoni\nValerio Verrando\nLee Taylor\nMarco Cassili",
+	&machine_driver,
+
+        cosmicmo_rom,
+	0, 0,
+	invaders_sample_names,
+	0,	/* sound_prom */
+
+	0/*TBR*/, cosmicmo_input_ports, 0/*TBR*/, 0/*TBR*/, 0/*TBR*/,
+
+	0, palette, 0,
+	ORIENTATION_DEFAULT,
+
+	invaders_hiload, invaders_hisave
+};
+
+
+
+/* LT 3-12-1997 */
+struct GameDriver spaceph_driver =
+{
+	"Space Phantoms",
+	"spaceph",
+	"Michael Strutts (Space Invaders emulator)\nNicola Salmoria\nTormod Tjaberg (sound)\nMirko Buffoni\nValerio Verrando\nLee Taylor\nPaul Swan\nMarco Cassili",
+	&lrescue_machine_driver,
+
+	spaceph_rom,
+	0, 0,
+	invaders_sample_names,
+	0,	/* sound_prom */
+
+	0/*TBR*/, spaceph_input_ports, 0/*TBR*/, 0/*TBR*/, 0/*TBR*/,
+
+	0, palette, 0,
+	ORIENTATION_DEFAULT,
+
+        0,0
+};
+
+/* LT 3-12-1997 */
+struct GameDriver rollingc_driver =
+{
+	"Rolling Crash - Moon Base",
+	"rollingc",
+	"Michael Strutts (Space Invaders emulator)\nNicola Salmoria\nTormod Tjaberg (sound)\nMirko Buffoni\nValerio Verrando\nLee Taylor\nPaul Swan",    /*L.T */
+	&rollingc_machine_driver,
+
+	rollingc_rom,
+	0, 0,
+	invaders_sample_names,
+	0,	/* sound_prom */
+
+	0/*TBR*/, rollingc_input_ports, 0/*TBR*/, 0/*TBR*/, 0/*TBR*/,
+
+	0,rollingc_palette, 0,
+	ORIENTATION_DEFAULT,
+
+	0, 0
+};
+

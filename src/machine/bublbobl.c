@@ -338,20 +338,20 @@ void bublbobl_play_sound(int offset, int data)
 
 int bublbobl_sharedram1_r(int offset)
 {
-  return bublbobl_sharedram1[offset];
+	return bublbobl_sharedram1[offset];
 }
 int bublbobl_sharedram2_r(int offset)
 {
-  return bublbobl_sharedram2[offset];
+	return bublbobl_sharedram2[offset];
 }
 
 void bublbobl_sharedram1_w(int offset, int data)
 {
-  bublbobl_sharedram1[offset] = data;
+	bublbobl_sharedram1[offset] = data;
 }
 void bublbobl_sharedram2_w(int offset, int data)
 {
-  bublbobl_sharedram2[offset] = data;
+	bublbobl_sharedram2[offset] = data;
 }
 
 

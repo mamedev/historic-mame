@@ -13,8 +13,6 @@
 #include "sndhrdw/pokyintf.h"
 
 
-/* #define TRACKBALL */
-
 static int ctrld;
 static int h_pos, v_pos;
 
@@ -22,53 +20,6 @@ int  missile_video_r(int address);
 void missile_video_w(int address, int data);
 void missile_video_mult_w(int address, int data);
 void missile_video_3rd_bit_w(int address, int data);
-
-
-
-
-/********************************************************************************************/
-int missile_read_trackball()
-{
-	#define KEYMOVE 2
-
-	int xdelta, ydelta;
-
-
-/* 	mouse support */
-	xdelta = readtrakport(0);
-	ydelta = readtrakport(1);
-
-	h_pos += xdelta;
-	v_pos -= ydelta;
-
-/* 	keyboard & joystick support	 */
-	if(osd_key_pressed(OSD_KEY_UP) || osd_joy_pressed(OSD_JOY_UP))
-		v_pos += KEYMOVE;
-	if(osd_key_pressed(OSD_KEY_DOWN) || osd_joy_pressed(OSD_JOY_DOWN))
-		v_pos -= KEYMOVE;
-	if(osd_key_pressed(OSD_KEY_LEFT) || osd_joy_pressed(OSD_JOY_LEFT))
-		h_pos -= KEYMOVE;
-	if(osd_key_pressed(OSD_KEY_RIGHT) || osd_joy_pressed(OSD_JOY_RIGHT))
-		h_pos += KEYMOVE;
-
-
-	return( ((v_pos << 4) & 0xF0)  |  (h_pos & 0x0F));
-}
-
-
-
-int missile_trakball_r(int data)
-{
-	#define MAXMOVE 7
-
-	data = data >> 1;
-	if(data > MAXMOVE)
-		data = MAXMOVE;
-	else if(data < -MAXMOVE)
-		data = -MAXMOVE;
-	return data;
-}
-
 
 
 /********************************************************************************************/
@@ -80,23 +31,24 @@ void missile_4800_w(int offset, int data)
 
 
 /********************************************************************************************/
-#if 0
-int missile_4008_r(int offset)
-{
-	return(readinputport(3));
-}
-#endif
-
-
-/********************************************************************************************/
 int missile_4800_r(int offset)
 {
-	if(ctrld)
-		return(missile_read_trackball());
-	else
-		return (readinputport(0));
-}
+	int xdelta, ydelta;
 
+	if(ctrld) {
+/* EEA Added this */
+	    ydelta = readinputport(4);
+	    v_pos += ydelta;
+	    xdelta = readinputport(5);
+	    h_pos += xdelta;
+  	    return( ((v_pos << 4) & 0xF0)  |  (h_pos & 0x0F));
+/*	EEA return(missile_read_trackball()); */
+	}
+	else {
+		return (readinputport(0));
+
+	}
+}
 
 /********************************************************************************************/
 int missile_4900_r(int offset)

@@ -1,21 +1,47 @@
+/***************************************************************************
+
+  This sound driver is used by the Scramble, Super Cobra  and Amidar drivers.
+
+***************************************************************************/
+
+
 #include "driver.h"
 #include "sndhrdw/generic.h"
 #include "sndhrdw/8910intf.h"
 
 
 
+/* The timer clock which feeds the upper 4 bits of    */
+/* AY-3-8910 port B is based on the same clock        */
+/* feeding the sound CPU Z80.  It is a divide by      */
+/* 5120, formed by a standard divide by 512, followed */
+/* by a divide by 10 using a 4 bit bi-quinary count   */
+/* sequence. (See LS90 data sheet for an example)     */
+/* The upper three bits come directly from the        */
+/* upper three bits of the bi-quinary counter.        */
+/* Bit 4 comes from the output of the divide by 512.  */
+
+static int scramble_timer[20] = {
+0x00, 0x10, 0x00, 0x10, 0x20, 0x30, 0x20, 0x30, 0x40, 0x50,
+0x80, 0x90, 0x80, 0x90, 0xa0, 0xb0, 0xa0, 0xb0, 0xc0, 0xd0
+};
+
 static int scramble_portB_r(int offset)
 {
-	int clock;
+	/* need to protect from totalcycles overflow */
+	static int last_totalcycles = 0;
 
-#define TIMER_RATE (512*2)
+	/* number of Z80 clock cycles to count */
+	static int clock;
 
-	clock = cpu_gettotalcycles() / TIMER_RATE;
+	int current_totalcycles;
 
-	clock = ((clock & 0x01) << 4) | ((clock & 0x02) << 6) |
-			((clock & 0x08) << 2) | ((clock & 0x10) << 2);
+	current_totalcycles = cpu_gettotalcycles();
+	clock = (clock + (current_totalcycles-last_totalcycles)) % 5120;
 
-	return clock;
+	last_totalcycles = current_totalcycles;
+
+	return scramble_timer[clock/256];
 }
 
 
@@ -29,6 +55,14 @@ void scramble_sh_irqtrigger_w(int offset,int data)
 	{
 		/* setting bit 3 low then high triggers IRQ on the sound CPU */
 		cpu_cause_interrupt(1,0xff);
+
+	/* TODO: I shouldn't do this, but if I don't, in Minefield some commands */
+	/* go lost regardless of the CPU interleaving factor (even 500 won't be */
+	/* enough). The command which goes lost is the "turn on helicopter sound" at */
+	/* the beginning of the game. Currently, calling seticount() means that we */
+	/* throw away some CPU cycles for CPU #0. Hopefully this will be fixed when */
+	/* proper slice control is implemented. */
+		cpu_seticount(0);
 	}
 
 	last = data & 0x08;
@@ -36,22 +70,11 @@ void scramble_sh_irqtrigger_w(int offset,int data)
 
 
 
-int scramble_sh_interrupt(void)
-{
-	AY8910_update();
-
-	/* interrupts don't happen here, the handler is used only to update the 8910 */
-	return ignore_interrupt();
-}
-
-
-
 static struct AY8910interface interface =
 {
 	2,	/* 2 chips */
-	10,	/* 10 updates per video frame (good quality) */
-	1789750000,	/* 1.78975 Mhz (? the crystal is 14.318 MHz) */
-	{ 255, 255 },
+	1789750,	/* 1.78975 Mhz */
+	{ 0x60ff, 0x60ff },
 	{ soundlatch_r },
 	{ scramble_portB_r },
 	{ 0 },

@@ -21,8 +21,7 @@ static int starforc_portB_r(int offset)
 static struct AY8910interface interface =
 {
 	3,	/* 3 chips */
-	10,	/* 10 updates per video frame (good quality) */
-	1832727040,	/* 1.832727040 MHZ?????? */
+	1832727,	/* 1.832727040 MHZ?????? */
 	{ 255, 255, 255 },
 	{ 0 },
 	{ 0 },
@@ -42,8 +41,6 @@ int starforc_sh_start(void)
 
 int starforc_sh_interrupt(void)
 {
-	AY8910_update();
-
 	if (pending_commands) return interrupt();
 	else return ignore_interrupt();
 }

@@ -19,7 +19,6 @@ static char *noise;
 
 static int shootsampleloaded = 0;
 static int deathsampleloaded = 0;
-static int backgroundsampleloaded = 0;
 static int F=2;
 static int t=0;
 static int LastPort1=0;
@@ -32,6 +31,21 @@ static int lforate1=0;
 static int lforate2=0;
 static int lforate3=0;
 
+static unsigned char waveform1[32] =
+{
+   0x88, 0x88, 0x88, 0x88, 0xaa, 0xaa, 0xaa, 0xaa,
+   0xcc, 0xcc, 0xcc, 0xcc, 0xee, 0xee, 0xee, 0xee,
+   0x11, 0x11, 0x11, 0x11, 0x22, 0x22, 0x22, 0x22,
+   0x44, 0x44, 0x44, 0x44, 0x66, 0x66, 0x66, 0x66,
+};
+static unsigned char waveform2[32] =
+{
+   0x44, 0x44, 0x44, 0x44, 0x44, 0x44, 0x44, 0x44,
+   0x44, 0x44, 0x44, 0x44, 0x44, 0x44, 0x44, 0x44,
+   0xcc, 0xcc, 0xcc, 0xcc, 0xcc, 0xcc, 0xcc, 0xcc,
+   0xcc, 0xcc, 0xcc, 0xcc, 0xcc, 0xcc, 0xcc, 0xcc
+};
+
 int mooncrst_sh_init(const char *gamename)
 {
         if (Machine->samples != 0 && Machine->samples->sample[0] != 0)    /* We should check also that Samplename[0] = 0 */
@@ -43,11 +57,6 @@ int mooncrst_sh_init(const char *gamename)
           deathsampleloaded = 1;
         else
           deathsampleloaded = 0;
-
-        if (Machine->samples != 0 && Machine->samples->sample[2] != 0)    /* We should check also that Samplename[0] = 0 */
-          backgroundsampleloaded = 1;
-        else
-          backgroundsampleloaded = 0;
 
         return 0;
 }
@@ -81,33 +90,10 @@ void mooncrst_noise_w(int offset,int data)
 
 void mooncrst_background_w(int offset,int data)
 {
-     static int playBackground = 0;
        if (data & 1)
        lfo_active=1;
        else
        lfo_active=0;
-
-        if (backgroundsampleloaded)
-        {
-          if (data & 1)
-          {
-             if (!playBackground)
-             {
-                osd_play_sample(3,Machine->samples->sample[2]->data,
-                               Machine->samples->sample[2]->length,
-                               Machine->samples->sample[2]->smpfreq,
-                               Machine->samples->sample[2]->volume,1);
-                playBackground = 1;
-             }
-          }
-          else
-          {
-             playBackground = 0;
-             osd_stop_sample(3);
-          }
-
-        }
-
 }
 
 void mooncrst_shoot_w(int offset,int data)
@@ -140,14 +126,13 @@ int mooncrst_sh_start(void)
 	for (i = 0;i < TONE_LENGTH;i++)
 		tone[i] = WAVE_AMPLITUDE * sin(2*PI*i/TONE_PERIOD);
 
-        osd_play_sample(0, Machine->drv->samples,32,1000,0,1);
+        osd_play_sample(0,waveform1,32,1000,0,1);
         if (!deathsampleloaded)
    	    osd_play_sample(1,noise,NOISE_LENGTH,NOISE_RATE,0,1);
-        if (!backgroundsampleloaded)
-        {
-            osd_play_sample(3, &Machine->drv->samples[32],32,1000,0,1);
-            osd_play_sample(4, &Machine->drv->samples[32],32,1000,0,1);
-        }
+
+        osd_play_sample(3,waveform2,32,1000,0,1);
+        osd_play_sample(4,waveform2,32,1000,0,1);
+
 	return 0;
 }
 
@@ -184,12 +169,10 @@ void mooncrst_lfo_freq_w(int offset,int data)
 
 void mooncrst_sh_update(void)
 {
-  if (!backgroundsampleloaded)
-  {
     if (lfo_active)
     {
-      osd_adjust_sample(3,freq*32,48);
-      osd_adjust_sample(4,(freq+60)*32,48);
+      osd_adjust_sample(3,freq*32,32);
+      osd_adjust_sample(4,(freq+60)*32,32);
       if (t==0)
          freq-=lfo_rate;
       if (freq<=MINFREQ)
@@ -202,5 +185,4 @@ void mooncrst_sh_update(void)
     }
     t++;
     if (t==3) t=0;
-  }
 }

@@ -51,13 +51,18 @@ int tempest_IN0_r(int offset)
 	return res;
 }
 
+void tempest_led_w (int offset, int data)
+{
+	osd_led_w (0, ~(data >> 1));
+	osd_led_w (1, ~data);
+	/* FLIP is bit 0x04 */
+}
 
 int tempest_interrupt(void)
 {
 	update_analog_ports();
-	/* We cheat and update the pokey sound here since it needs frequent attention */
-	pokey_update ();
-	if (cpu_getiloops() == 5)
+
+	if (cpu_getiloops() == 7)
 		avgdvg_clr_busy();
 	return interrupt();
 }

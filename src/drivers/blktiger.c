@@ -15,7 +15,7 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "sndhrdw/generic.h"
-#include "sndhrdw/8910intf.h"
+#include "sndhrdw/2203intf.h"
 
 extern unsigned char *blktiger_paletteram;
 extern int blktiger_paletteram_size;
@@ -44,8 +44,9 @@ void blktiger_vh_stop(void);
 void blktiger_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
 void blktiger_vh_screenrefresh(struct osd_bitmap *bitmap);
 
-int capcom_sh_start(void);
-int capcom_sh_interrupt(void);
+int capcomOPN_sh_start(void);
+
+
 
 static struct MemoryReadAddress readmem[] =
 {
@@ -169,7 +170,7 @@ INPUT_PORTS_START( input_ports )
         PORT_DIPSETTING(    0x00, "On" )
         PORT_DIPSETTING(    0x80, "Off")
 
-        PORT_DIPNAME( 0x07, 0x07, "Coin 1", IP_KEY_NONE )
+        PORT_DIPNAME( 0x07, 0x07, "Coin A", IP_KEY_NONE )
         PORT_DIPSETTING(    0x00, "1")
         PORT_DIPSETTING(    0x01, "2")
         PORT_DIPSETTING(    0x02, "3")
@@ -179,7 +180,7 @@ INPUT_PORTS_START( input_ports )
         PORT_DIPSETTING(    0x06, "7")
         PORT_DIPSETTING(    0x07, "1 coin 1 credit")
 
-        PORT_DIPNAME( 0x38, 0x38, "Coin 2", IP_KEY_NONE )
+        PORT_DIPNAME( 0x38, 0x38, "Coin B", IP_KEY_NONE )
         PORT_DIPSETTING(    0x00, "1")
         PORT_DIPSETTING(    0x08, "2")
         PORT_DIPSETTING(    0x10, "3")
@@ -223,9 +224,9 @@ INPUT_PORTS_END
 static struct GfxLayout charlayout =
 {
 	8,8,	/* 8*8 characters */
-        2048,   /* 1024 characters */
+	2048,   /* 2048 characters */
 	2,	/* 2 bits per pixel */
-        { 0, 4 },
+	{ 4, 0 },
 	{ 0, 1, 2, 3, 8+0, 8+1, 8+2, 8+3 },
 	{ 0*16, 1*16, 2*16, 3*16, 4*16, 5*16, 6*16, 7*16 },
 	16*8	/* every char takes 16 consecutive bytes */
@@ -234,22 +235,22 @@ static struct GfxLayout charlayout =
 static struct GfxLayout spritelayout =
 {
 	16,16,	/* 16*16 sprites */
-        2048,   /* 2048 sprites */
+	2048,   /* 2048 sprites */
 	4,	/* 4 bits per pixel */
-        { 0x20000*8+4, 0x20000*8+0, 4, 0 },
-        { 0, 1, 2, 3, 8+0, 8+1, 8+2, 8+3,
-	    32*8+0, 32*8+1, 32*8+2, 32*8+3, 33*8+0, 33*8+1, 33*8+2, 33*8+3 },
+	{ 0x20000*8+4, 0x20000*8+0, 4, 0 },
+	{ 0, 1, 2, 3, 8+0, 8+1, 8+2, 8+3,
+	32*8+0, 32*8+1, 32*8+2, 32*8+3, 33*8+0, 33*8+1, 33*8+2, 33*8+3 },
 	{ 0*16, 1*16, 2*16, 3*16, 4*16, 5*16, 6*16, 7*16,
-			8*16, 9*16, 10*16, 11*16, 12*16, 13*16, 14*16, 15*16 },
+	8*16, 9*16, 10*16, 11*16, 12*16, 13*16, 14*16, 15*16 },
 	64*8	/* every sprite takes 64 consecutive bytes */
 };
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-        /*   start    pointer       colour start   number of colours */
-        { 1, 0x00000, &charlayout,      0,  32 },
-        { 1, 0x10000, &spritelayout,  32*4, 16 },
-        { 1, 0x50000, &spritelayout,  32*4+16*16,  16 },
+	/*   start    pointer       colour start   number of colours */
+	{ 1, 0x00000, &charlayout,      0,  32 },
+	{ 1, 0x10000, &spritelayout,  32*4, 16 },
+	{ 1, 0x50000, &spritelayout,  32*4+16*16,  16 },
 	{ -1 } /* end of array */
 };
 
@@ -270,7 +271,7 @@ static struct MachineDriver machine_driver =
 			3000000,	/* 3 Mhz ??? */
 			2,	/* memory region #2 */
 			sound_readmem,sound_writemem,0,0,
-                        capcom_sh_interrupt,12
+			interrupt,4
 		}
 	},
 	60,
@@ -292,10 +293,9 @@ static struct MachineDriver machine_driver =
 
 	/* sound hardware */
 	0,
-	0,
-        capcom_sh_start,
-	AY8910_sh_stop,
-	AY8910_sh_update
+	capcomOPN_sh_start,
+	YM2203_sh_stop,
+	YM2203_sh_update
 };
 
 
@@ -329,6 +329,32 @@ ROM_START( blktiger_rom )
         ROM_REGION(0x10000) /* 64k for the audio CPU */
         ROM_LOAD( "blktiger.1l", 0x0000, 0x8000, 0xdc92e1f4 )
 ROM_END
+
+ROM_START( blkdrgon_rom )
+        ROM_REGION(0x50000)     /* 64k for code + banked ROMs images */
+        ROM_LOAD( "blkdrgon.5e",  0x00000, 0x08000, 0x706cb178 )  /* CODE */
+        ROM_LOAD( "blkdrgon.6e",  0x10000, 0x10000, 0xe1cf308b )  /* 0+1 */
+        ROM_LOAD( "blkdrgon.8e",  0x20000, 0x10000, 0x6f50ba9e )  /* 2+3 */
+        ROM_LOAD( "blkdrgon.9e",  0x30000, 0x10000, 0xc0501050 )  /* 4+5 */
+        ROM_LOAD( "blkdrgon.10e", 0x40000, 0x10000, 0x42c29ca2 )  /* 6+7 */
+
+        ROM_REGION(0x90000)     /* temporary space for graphics (disposed after conversion) */
+        ROM_LOAD( "blkdrgon.2n", 0x00000, 0x8000, 0x09175e49 )  /* characters */
+
+        ROM_LOAD( "blkdrgon.5b", 0x10000, 0x10000, 0x0122a656 ) /* tiles */
+        ROM_LOAD( "blkdrgon.4b", 0x20000, 0x10000, 0xfa0e4e9c ) /* tiles */
+        ROM_LOAD( "blkdrgon.9b", 0x30000, 0x10000, 0xeb156837 ) /* tiles */
+        ROM_LOAD( "blkdrgon.8b", 0x40000, 0x10000, 0x83c8acf8 ) /* tiles */
+
+        ROM_LOAD( "blkdrgon.5a", 0x50000, 0x10000, 0xdc33c175 ) /* sprites */
+        ROM_LOAD( "blkdrgon.4a", 0x60000, 0x10000, 0x51f829e4 ) /* sprites */
+        ROM_LOAD( "blkdrgon.9a", 0x70000, 0x10000, 0x057f831b ) /* sprites */
+        ROM_LOAD( "blkdrgon.8a", 0x80000, 0x10000, 0x03585086 ) /* sprites */
+
+        ROM_REGION(0x10000) /* 64k for the audio CPU */
+        ROM_LOAD( "blkdrgon.1l", 0x0000, 0x8000, 0xdc92e1f4 )
+ROM_END
+
 
 static void blktiger_decode(void)
 {
@@ -364,21 +390,130 @@ static void blktiger_decode(void)
         RAM[0x5d05]=0; RAM[0x5d06]=0;
 }
 
+static void blkdrgon_decode(void)
+{
+        /*
+         *  Patch the software protection.
+         *
+         *  The game checks input port 7 and ends up in a tight loop if
+         *  values do not match. The arcade machine will lock up solid.
+         *
+         *  Here I patch the ROMS directly, nopping out the tight loops. Someone
+         *  less lazy than myself would figure out how the device worked and
+         *  emulate it.
+         *
+         *  This approach obviously won't work for a different ROM set. If you
+         *  have another ROM set then disassemble blktiger.5e and search for and
+         *  make a note of all tight loops (JR NZ,-02). All such instructions
+         *  should be patched.
+         */
+
+        /* Startup check */
+        RAM[0x0ac4]=0; RAM[0x0ac5]=0;
+
+        /* End level check */
+        RAM[0x5dd0]=0; RAM[0x5dd1]=0;
+
+
+        /*
+         *   They also check the CRC of the protection routines. Zap those
+         *   tight loops as well.
+         */
+
+        RAM[0x0b5c]=0; RAM[0x0b5d]=0;
+        RAM[0x1129]=0; RAM[0x112a]=0;
+        RAM[0x5e2e]=0; RAM[0x5e2f]=0;
+        RAM[0x5f1a]=0; RAM[0x5f1b]=0;
+
+        /*   Intro check
+         */
+
+        RAM[0x2b98f]=0; RAM[0x2b990]=0;
+        RAM[0x2baa6]=0; RAM[0x2baa7]=0;
+}
+
+
+
+static int hiload(void)
+{
+	/* get RAM pointer (this game is multiCPU, we can't assume the global */
+	/* RAM pointer is pointing to the right place) */
+	unsigned char *RAM = Machine->memory_region[0];
+
+
+	/* check if the hi score table has already been initialized */
+        if (memcmp(&RAM[0xe204],"\x02\x00\x00",3) == 0)
+	{
+		void *f;
+
+
+		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
+		{
+
+                        osd_fread(f,&RAM[0xe200],16*5);
+                        memcpy(&RAM[0xe1e0], &RAM[0xe200], 8);
+			osd_fclose(f);
+		}
+
+		return 1;
+	}
+	else return 0;	/* we can't load the hi scores yet */
+}
+
+
+
+static void hisave(void)
+{
+	void *f;
+	/* get RAM pointer (this game is multiCPU, we can't assume the global */
+	/* RAM pointer is pointing to the right place) */
+	unsigned char *RAM = Machine->memory_region[0];
+
+
+	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
+	{
+                osd_fwrite(f,&RAM[0xe200],16*5);
+		osd_fclose(f);
+	}
+}
+
+
+
 struct GameDriver blktiger_driver =
 {
-        "Black Tiger",
-        "blktiger",
-        "Paul Leaman\nIshmair",
-        &machine_driver,
+	"Black Tiger",
+	"blktiger",
+	"Paul Leaman (MAME driver)\nIshmair\nJuan Carlos Lorente (high score save)",
+	&machine_driver,
 
-        blktiger_rom,
-        blktiger_decode,
-        0,0,
+	blktiger_rom,
+	blktiger_decode,0,
+	0,
+	0,	/* sound_prom */
 
-        0,input_ports,0,0,0,
-        NULL, 0, 0,
+	0,input_ports,0,0,0,
+	NULL, 0, 0,
 
-        ORIENTATION_DEFAULT,
-        NULL, NULL
+	ORIENTATION_DEFAULT,
+	hiload, hisave
+};
+
+struct GameDriver blkdrgon_driver =
+{
+	"Black Dragon (Black Tiger clone)",
+	"blkdrgon",
+	"Paul Leaman (MAME driver)\nIshmair\nJuan Carlos Lorente (high score save)",
+	&machine_driver,
+
+	blkdrgon_rom,
+	blkdrgon_decode,0,
+	0,
+	0,	/* sound_prom */
+
+	0,input_ports,0,0,0,
+	NULL, 0, 0,
+
+	ORIENTATION_DEFAULT,
+	hiload, hisave
 };
 

@@ -12,6 +12,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include "osd_dbg.h"
 
 #include "Z80.h"
 
@@ -2316,6 +2317,10 @@ static void ei(void)
   R.IFF1=R.IFF2=1;
   ++R.R;
   opcode=M_RDOP(R.PC.D);
+{	/* NS 971024 */
+	extern int previouspc;
+	previouspc = R.PC.D;
+}
   R.PC.W.l++;
   Z80_ICount-=cycles_main[opcode];
   (*(opcode_main[opcode]))();
@@ -2387,6 +2392,11 @@ static void Interrupt (void/*int j*/)	/* NS 970904 */
 	if (R.pending_irq == Z80_IGNORE_INT && R.pending_nmi == 0) return;	/* NS 970904 */
 	if (R.pending_nmi != 0 || R.IFF1)	/* NS 970904 */
  {
+{	/* NS 971024 */
+	extern int previouspc;
+	previouspc = -1;	/* there isn't a valid previouspc */
+}
+
   /* Clear interrupt flip-flop 1 */
   R.IFF1=0;
   /* Check if processor was halted */
@@ -2495,8 +2505,20 @@ if (R.pending_nmi != 0 || R.pending_irq != Z80_IGNORE_INT) Interrupt();	/* NS 97
   if (Z80_Trace) Z80_Debug(&R);
   if (!Z80_Running) break;
 #endif
+#ifdef MAME_DEBUG
+{
+  extern int mame_debug;
+  if (mame_debug) MAME_Debug();
+}
+#endif
   ++R.R;
   opcode=M_RDOP(R.PC.D);
+
+{	/* NS 971024 */
+	extern int previouspc;
+	previouspc = R.PC.D;
+}
+
   R.PC.W.l++;
   Z80_ICount-=cycles_main[opcode];
   (*(opcode_main[opcode]))();

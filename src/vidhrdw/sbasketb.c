@@ -12,6 +12,7 @@
 
 
 unsigned char *sbasketb_scroll;
+unsigned char *sbasketb_palettebank;
 static struct rectangle scroll_area = { 0*8, 32*8-1, 0*8, 32*8-1 };
 
 
@@ -20,7 +21,8 @@ static struct rectangle scroll_area = { 0*8, 32*8-1, 0*8, 32*8-1 };
 
   Convert the color PROMs into a more useable format.
 
-  Super Basketball has three 256x4 palette PROMs (one per gun).
+  Super Basketball has three 256x4 palette PROMs (one per gun) and two 256x4
+  lookup table PROMs (one for characters, one for sprites).
   I don't know for sure how the palette PROMs are connected to the RGB
   output, but it's probably the usual:
 
@@ -69,10 +71,17 @@ void sbasketb_vh_convert_color_prom(unsigned char *palette, unsigned char *color
 	for (i = 0;i < TOTAL_COLORS(0);i++)
 		COLOR(0,i) = (*(color_prom++) & 0x0f) + 240;
 
-	/* sprites use colors 0-15 */
-	for (i = 0;i < TOTAL_COLORS(1);i++)
-		COLOR(1,i) = (*(color_prom++) & 0x0f);
+	/* sprites use colors 0-256 (?) in 16 banks */
+	for (i = 0;i < TOTAL_COLORS(1)/16;i++)
+	{
+		int j;
 
+
+		for (j = 0;j < 16;j++)
+			COLOR(1,i + j * TOTAL_COLORS(1)/16) = (*color_prom & 0x0f) + 16 * j;
+
+		color_prom++;
+	}
 }
 
 
@@ -119,7 +128,7 @@ void sbasketb_vh_screenrefresh(struct osd_bitmap *bitmap)
 			scroll[i] = 0;
 
 		for (i = 6;i < 32;i++)
-			scroll[i] = *sbasketb_scroll;
+			scroll[i] = *sbasketb_scroll + 1;
 
 		copyscrollbitmap(bitmap,tmpbitmap,32,scroll,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
 	}
@@ -130,7 +139,7 @@ void sbasketb_vh_screenrefresh(struct osd_bitmap *bitmap)
 		if (spriteram[offs + 4] || spriteram[offs + 6])
 			drawgfx(bitmap,Machine->gfx[1],
 					spriteram[offs + 0x0e] | ((spriteram[offs + 0x0f] & 0x20) << 3),
-					spriteram[offs + 0x0f] & 0x0f,
+					(spriteram[offs + 0x0f] & 0x0f) + 16 * *sbasketb_palettebank,
 					spriteram[offs + 0x0f] & 0x80,spriteram[offs + 0x0f] & 0x40,
 					spriteram[offs + 6],spriteram[offs + 4],
 					&Machine->drv->visible_area,TRANSPARENCY_PEN,0);

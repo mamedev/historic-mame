@@ -1,5 +1,7 @@
 /***************************************************************************
 
+TODO: properly emulate the trackball.
+
   Coors Light Bowling from Capcom
 
   Memory Map:
@@ -27,7 +29,7 @@
                 either 0 or 0x0f. So there may be a way to improve the colors.
 
                 Remaining 0xe0 bytes contain 2 pixels each for a total of
-                448 pixels, but only 359 seem to be displayed.
+                448 pixels, but only 360 seem to be displayed.
                 (Each scanline appears vertically on MAME)
 
   6000          Sound command
@@ -38,23 +40,29 @@
                                 Bit 4   Hook Left
                                 Bit 5   Hook Right
                                 Bit 6   Start
+                                Bit 7   Right Coin
 
 ***************************************************************************/
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "sndhrdw/generic.h"
+#include "sndhrdw/2203intf.h"
+#include "M6809.h"
 
+
+
+unsigned char *capbowl_firq_enable;
+
+
+
+void capbowl_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
 void capbowl_vh_screenrefresh(struct osd_bitmap *bitmap);
-
-int capbowl_interrupt(void);
 
 int  capbowl_vh_start(void);
 void capbowl_vh_stop(void);
 
-void capbowl_firq_enable_w(int offset,int data);
-
-void capbowl_scanline_w(int offset,int data);
+extern unsigned char *capbowl_scanline;
 
 void capbowl_videoram_w(int offset,int data);
 int  capbowl_videoram_r(int offset);
@@ -66,417 +74,137 @@ int  capbowl_pagedrom_r(int offset);
 int  capbowl_service_r(int offset);
 void capbowl_service_w(int offset, int data);
 
-int  capbowl_track_y_r(int offset);
-int  capbowl_track_x_r(int offset);
-
 
 void capbowl_sndcmd_w(int offset,int data);
-int  capbowl_sndcmd_r(int offset);
-
-void capbowl_sndreg_w(int offset,int data);
-int  capbowl_sndreg_r(int offset);
-
-void capbowl_snddata_w(int offset,int data);
-int  capbowl_snddata_r(int offset);
-
+void capbowl_dac_w(int offset,int data);
+int capbowl_sh_start(void);
+void capbowl_sh_stop(void);
+void capbowl_sh_update(void);
 int capbowl_sound_interrupt(void);
+
+
 
 static struct MemoryReadAddress readmem[] =
 {
-        { 0x0000, 0x3fff, capbowl_pagedrom_r},
-        { 0x5000, 0x50e2, MRA_RAM},
-        { 0x50e3, 0x50e3, capbowl_service_r},
-        { 0x50e4, 0x57ff, MRA_RAM},
-        { 0x5800, 0x5842, MRA_RAM},
-        { 0x5b00, 0x5bff, capbowl_videoram_r },
-        { 0x7000, 0x7000, capbowl_track_y_r },
-        { 0x7800, 0x7800, capbowl_track_x_r },
-        { 0x8000, 0xffff, MRA_ROM },
-        { -1 }  /* end of table */
+	{ 0x0000, 0x3fff, MRA_BANK1 },
+	{ 0x5000, 0x57ff, MRA_RAM },
+	{ 0x582d, 0x582d, MRA_RAM },
+	{ 0x5836, 0x5836, MRA_NOP },	/* firq acknowledge? */
+	{ 0x5b00, 0x5bff, capbowl_videoram_r },
+	{ 0x7000, 0x7000, input_port_0_r },
+	{ 0x7800, 0x7800, input_port_1_r },
+	{ 0x8000, 0xffff, MRA_ROM },
+	{ -1 }  /* end of table */
 };
 
 static struct MemoryWriteAddress writemem[] =
 {
-        { 0x4000, 0x4000, capbowl_scanline_w },
-        { 0x4800, 0x4800, capbowl_rom_select_w },
-        { 0x5000, 0x50e2, MWA_RAM},
-        { 0x50e3, 0x50e3, capbowl_service_w},
-        { 0x50e4, 0x57ff, MWA_RAM},
-        { 0x5800, 0x582c, MWA_RAM},
-        { 0x582d, 0x582d, capbowl_firq_enable_w},
-        { 0x582e, 0x5842, MWA_RAM},
-        { 0x5b00, 0x5bff, capbowl_videoram_w, &videoram, &videoram_size },
-        { 0x5c00, 0x5c00, MWA_NOP }, /* Off by 1 bug?? */
-        { 0x6000, 0x6000, capbowl_sndcmd_w },
-        { 0x6800, 0x6800, MWA_NOP },
-        { 0x8000, 0xffff, MWA_ROM },
-        { -1 }  /* end of table */
+	{ 0x4000, 0x4000, MWA_RAM, &capbowl_scanline },
+	{ 0x4800, 0x4800, capbowl_rom_select_w },
+	{ 0x5000, 0x57ff, MWA_RAM },
+	{ 0x582a, 0x582a, MWA_RAM },	/* ??? */
+	{ 0x582d, 0x582d, MWA_RAM, &capbowl_firq_enable },	/* ??? */
+	{ 0x5b00, 0x5bff, capbowl_videoram_w },
+	{ 0x5c00, 0x5c00, MWA_NOP }, /* Off by 1 bug?? */
+	{ 0x6000, 0x6000, capbowl_sndcmd_w },
+	{ 0x6800, 0x6800, MWA_NOP },	/* trackball reset? */
+	{ 0x8000, 0xffff, MWA_ROM },
+	{ -1 }  /* end of table */
 };
 
 
-/* I have no idea how the sound works, but I put debugging messages in
-   so maybe someone can figure it out */
 static struct MemoryReadAddress sound_readmem[] =
 {
-        { 0x0000, 0x07ff, MRA_RAM},
-        { 0x1000, 0x1000, capbowl_sndreg_r},  /* Sound register */
-        { 0x1001, 0x1001, capbowl_snddata_r}, /* Sound data */
-        { 0x7000, 0x7000, capbowl_sndcmd_r},  /* Sound command */
-        { 0x8000, 0xffff, MRA_ROM },
-        { -1 }  /* end of table */
+	{ 0x0000, 0x07ff, MRA_RAM },
+	{ 0x1000, 0x1000, YM2203_status_port_0_r },
+	{ 0x1001, 0x1001, YM2203_read_port_0_r },
+	{ 0x7000, 0x7000, soundlatch_r },
+	{ 0x8000, 0xffff, MRA_ROM },
+	{ -1 }  /* end of table */
 };
 
 static struct MemoryWriteAddress sound_writemem[] =
 {
-        { 0x0000, 0x07ff, MWA_RAM},
-        { 0x1000, 0x1000, capbowl_sndreg_w},  /* Sound register */
-        { 0x1001, 0x1001, capbowl_snddata_w}, /* Sound data */
-        { 0x2000, 0x2000, MWA_NOP},  /* ????? */
-        { -1 }  /* end of table */
+	{ 0x0000, 0x07ff, MWA_RAM},
+	{ 0x1000, 0x1000, YM2203_control_port_0_w },
+	{ 0x1001, 0x1001, YM2203_write_port_0_w },
+	{ 0x2000, 0x2000, MWA_NOP },  /* ????? */
+	{ 0x6000, 0x6000, capbowl_dac_w },
+	{ 0x8000, 0xffff, MWA_ROM },
+	{ -1 }  /* end of table */
 };
 
 
 
-static struct InputPort input_ports[] =
+/***************************************************************************
+
+  Coors Light Bowling uses NMI to trigger the self test. We use a fake input
+  port to tie that event to a keypress.
+
+***************************************************************************/
+static int capbowl_interrupt(void)
 {
-  {       /* IN1 */
-          0xff,
-          { OSD_KEY_UP, OSD_KEY_DOWN, 0, 0, 0, 0, 0, OSD_KEY_3 },
-          { OSD_JOY_UP, OSD_JOY_DOWN, 0, 0, 0, 0, 0, 0 }
-  },
-  {       /* IN2 */
-          0xff,
-          { OSD_KEY_LEFT, OSD_KEY_RIGHT, 0, 0, OSD_KEY_Z, OSD_KEY_X, OSD_KEY_1, 0 },
-          { OSD_JOY_LEFT, OSD_JOY_RIGHT, 0, 0, OSD_JOY_FIRE1, OSD_JOY_FIRE2, 0, 0 }
-  },
-        { -1 }  /* end of table */
-};
+	if (readinputport(2) & 1)	/* get status of the F2 key */
+		return nmi_interrupt();	/* trigger self test */
+	else if (*capbowl_firq_enable & 0x04)
+		return M6809_INT_FIRQ;
+	else return ignore_interrupt();
+}
+
+INPUT_PORTS_START( input_ports )
+	PORT_START	/* IN0 */
+	PORT_ANALOG ( 0x0f, 0x00, IPT_TRACKBALL_Y | IPF_REVERSE | IPF_CENTER, 100, 7, 0, 0 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_COCKTAIL )
+	PORT_DIPNAME( 0x40, 0x40, "Cabinet", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x40, "Upright" )
+	PORT_DIPSETTING(    0x00, "Cocktail" )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN1 )
+
+	PORT_START	/* IN1 */
+	PORT_ANALOG ( 0x0f, 0x00, IPT_TRACKBALL_X | IPF_CENTER, 100, 7, 0, 0 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN2 )
+
+	PORT_START	/* FAKE */
+	/* This fake input port is used to get the status of the F2 key, */
+	/* and activate the test mode, which is triggered by a NMI */
+	PORT_BITX(0x01, IP_ACTIVE_HIGH, IPT_SERVICE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE, 0 )
+INPUT_PORTS_END
 
 
-/* This game uses a track ball, but since I don't have one, I'm not going
-   to attempt to emulate it */
-static struct TrakPort trak_ports[] =
-{
-        { -1 }
-};
 
-
-static struct KEYSet keys[] =
-{
-  { 1, 0, "MOVE LEFT" },
-  { 1, 1, "MOVE RIGHT"  },
-  { 0, 0, "ROLL FASTER" },
-  { 0, 1, "ROLL SLOWER" },
-  { 1, 4, "HOOK LEFT" },
-  { 1, 5, "HOOK RIGHT" },
-  { -1 }
-};
-
-
-/* Doesn't use DIP switches. See Memory Map */
-static struct DSW capbowl_dsw[] =
-{
-          { -1 }
-};
-
-
-unsigned char capbowl_palette[256 * 3] =
-{
-        0x00, 0x00, 0x00,
-        0x00, 0x00, 0x4f,
-        0x00, 0x00, 0x8f,
-        0x00, 0x00, 0xff,
-        0x00, 0x2f, 0x00,
-        0x00, 0x2f, 0x4f,
-        0x00, 0x2f, 0x8f,
-        0x00, 0x2f, 0xff,
-        0x00, 0x4f, 0x00,
-        0x00, 0x4f, 0x4f,
-        0x00, 0x4f, 0x8f,
-        0x00, 0x4f, 0xff,
-        0x00, 0x6f, 0x00,
-        0x00, 0x6f, 0x4f,
-        0x00, 0x6f, 0x8f,
-        0x00, 0x6f, 0xff,
-        0x00, 0x8f, 0x00,
-        0x00, 0x8f, 0x4f,
-        0x00, 0x8f, 0x8f,
-        0x00, 0x8f, 0xff,
-        0x00, 0xaf, 0x00,
-        0x00, 0xaf, 0x4f,
-        0x00, 0xaf, 0x8f,
-        0x00, 0xaf, 0xff,
-        0x00, 0xcf, 0x00,
-        0x00, 0xcf, 0x4f,
-        0x00, 0xcf, 0x8f,
-        0x00, 0xcf, 0xff,
-        0x00, 0xff, 0x00,
-        0x00, 0xff, 0x4f,
-        0x00, 0xff, 0x8f,
-        0x00, 0xff, 0xff,
-
-        0x2f, 0x00, 0x00,
-        0x2f, 0x00, 0x4f,
-        0x2f, 0x00, 0x8f,
-        0x2f, 0x00, 0xff,
-        0x2f, 0x2f, 0x00,
-        0x2f, 0x2f, 0x4f,
-        0x2f, 0x2f, 0x8f,
-        0x2f, 0x2f, 0xff,
-        0x2f, 0x4f, 0x00,
-        0x2f, 0x4f, 0x4f,
-        0x2f, 0x4f, 0x8f,
-        0x2f, 0x4f, 0xff,
-        0x2f, 0x6f, 0x00,
-        0x2f, 0x6f, 0x4f,
-        0x2f, 0x6f, 0x8f,
-        0x2f, 0x6f, 0xff,
-        0x2f, 0x8f, 0x00,
-        0x2f, 0x8f, 0x4f,
-        0x2f, 0x8f, 0x8f,
-        0x2f, 0x8f, 0xff,
-        0x2f, 0xaf, 0x00,
-        0x2f, 0xaf, 0x4f,
-        0x2f, 0xaf, 0x8f,
-        0x2f, 0xaf, 0xff,
-        0x2f, 0xcf, 0x00,
-        0x2f, 0xcf, 0x4f,
-        0x2f, 0xcf, 0x8f,
-        0x2f, 0xcf, 0xff,
-        0x2f, 0xff, 0x00,
-        0x2f, 0xff, 0x4f,
-        0x2f, 0xff, 0x8f,
-        0x2f, 0xff, 0xff,
-
-        0x4f, 0x00, 0x00,
-        0x4f, 0x00, 0x4f,
-        0x4f, 0x00, 0x8f,
-        0x4f, 0x00, 0xff,
-        0x4f, 0x2f, 0x00,
-        0x4f, 0x2f, 0x4f,
-        0x4f, 0x2f, 0x8f,
-        0x4f, 0x2f, 0xff,
-        0x4f, 0x4f, 0x00,
-        0x4f, 0x4f, 0x4f,
-        0x4f, 0x4f, 0x8f,
-        0x4f, 0x4f, 0xff,
-        0x4f, 0x6f, 0x00,
-        0x4f, 0x6f, 0x4f,
-        0x4f, 0x6f, 0x8f,
-        0x4f, 0x6f, 0xff,
-        0x4f, 0x8f, 0x00,
-        0x4f, 0x8f, 0x4f,
-        0x4f, 0x8f, 0x8f,
-        0x4f, 0x8f, 0xff,
-        0x4f, 0xaf, 0x00,
-        0x4f, 0xaf, 0x4f,
-        0x4f, 0xaf, 0x8f,
-        0x4f, 0xaf, 0xff,
-        0x4f, 0xcf, 0x00,
-        0x4f, 0xcf, 0x4f,
-        0x4f, 0xcf, 0x8f,
-        0x4f, 0xcf, 0xff,
-        0x4f, 0xff, 0x00,
-        0x4f, 0xff, 0x4f,
-        0x4f, 0xff, 0x8f,
-        0x4f, 0xff, 0xff,
-
-        0x6f, 0x00, 0x00,
-        0x6f, 0x00, 0x4f,
-        0x6f, 0x00, 0x8f,
-        0x6f, 0x00, 0xff,
-        0x6f, 0x2f, 0x00,
-        0x6f, 0x2f, 0x4f,
-        0x6f, 0x2f, 0x8f,
-        0x6f, 0x2f, 0xff,
-        0x6f, 0x4f, 0x00,
-        0x6f, 0x4f, 0x4f,
-        0x6f, 0x4f, 0x8f,
-        0x6f, 0x4f, 0xff,
-        0x6f, 0x6f, 0x00,
-        0x6f, 0x6f, 0x4f,
-        0x6f, 0x6f, 0x8f,
-        0x6f, 0x6f, 0xff,
-        0x6f, 0x8f, 0x00,
-        0x6f, 0x8f, 0x4f,
-        0x6f, 0x8f, 0x8f,
-        0x6f, 0x8f, 0xff,
-        0x6f, 0xaf, 0x00,
-        0x6f, 0xaf, 0x4f,
-        0x6f, 0xaf, 0x8f,
-        0x6f, 0xaf, 0xff,
-        0x6f, 0xcf, 0x00,
-        0x6f, 0xcf, 0x4f,
-        0x6f, 0xcf, 0x8f,
-        0x6f, 0xcf, 0xff,
-        0x6f, 0xff, 0x00,
-        0x6f, 0xff, 0x4f,
-        0x6f, 0xff, 0x8f,
-        0x6f, 0xff, 0xff,
-
-        0x8f, 0x00, 0x00,
-        0x8f, 0x00, 0x4f,
-        0x8f, 0x00, 0x8f,
-        0x8f, 0x00, 0xff,
-        0x8f, 0x2f, 0x00,
-        0x8f, 0x2f, 0x4f,
-        0x8f, 0x2f, 0x8f,
-        0x8f, 0x2f, 0xff,
-        0x8f, 0x4f, 0x00,
-        0x8f, 0x4f, 0x4f,
-        0x8f, 0x4f, 0x8f,
-        0x8f, 0x4f, 0xff,
-        0x8f, 0x6f, 0x00,
-        0x8f, 0x6f, 0x4f,
-        0x8f, 0x6f, 0x8f,
-        0x8f, 0x6f, 0xff,
-        0x8f, 0x8f, 0x00,
-        0x8f, 0x8f, 0x4f,
-        0x8f, 0x8f, 0x8f,
-        0x8f, 0x8f, 0xff,
-        0x8f, 0xaf, 0x00,
-        0x8f, 0xaf, 0x4f,
-        0x8f, 0xaf, 0x8f,
-        0x8f, 0xaf, 0xff,
-        0x8f, 0xcf, 0x00,
-        0x8f, 0xcf, 0x4f,
-        0x8f, 0xcf, 0x8f,
-        0x8f, 0xcf, 0xff,
-        0x8f, 0xff, 0x00,
-        0x8f, 0xff, 0x4f,
-        0x8f, 0xff, 0x8f,
-        0x8f, 0xff, 0xff,
-
-        0xaf, 0x00, 0x00,
-        0xaf, 0x00, 0x4f,
-        0xaf, 0x00, 0x8f,
-        0xaf, 0x00, 0xff,
-        0xaf, 0x2f, 0x00,
-        0xaf, 0x2f, 0x4f,
-        0xaf, 0x2f, 0x8f,
-        0xaf, 0x2f, 0xff,
-        0xaf, 0x4f, 0x00,
-        0xaf, 0x4f, 0x4f,
-        0xaf, 0x4f, 0x8f,
-        0xaf, 0x4f, 0xff,
-        0xaf, 0x6f, 0x00,
-        0xaf, 0x6f, 0x4f,
-        0xaf, 0x6f, 0x8f,
-        0xaf, 0x6f, 0xff,
-        0xaf, 0x8f, 0x00,
-        0xaf, 0x8f, 0x4f,
-        0xaf, 0x8f, 0x8f,
-        0xaf, 0x8f, 0xff,
-        0xaf, 0xaf, 0x00,
-        0xaf, 0xaf, 0x4f,
-        0xaf, 0xaf, 0x8f,
-        0xaf, 0xaf, 0xff,
-        0xaf, 0xcf, 0x00,
-        0xaf, 0xcf, 0x4f,
-        0xaf, 0xcf, 0x8f,
-        0xaf, 0xcf, 0xff,
-        0xaf, 0xff, 0x00,
-        0xaf, 0xff, 0x4f,
-        0xaf, 0xff, 0x8f,
-        0xaf, 0xff, 0xff,
-
-        0xcf, 0x00, 0x00,
-        0xcf, 0x00, 0x4f,
-        0xcf, 0x00, 0x8f,
-        0xcf, 0x00, 0xff,
-        0xcf, 0x2f, 0x00,
-        0xcf, 0x2f, 0x4f,
-        0xcf, 0x2f, 0x8f,
-        0xcf, 0x2f, 0xff,
-        0xcf, 0x4f, 0x00,
-        0xcf, 0x4f, 0x4f,
-        0xcf, 0x4f, 0x8f,
-        0xcf, 0x4f, 0xff,
-        0xcf, 0x6f, 0x00,
-        0xcf, 0x6f, 0x4f,
-        0xcf, 0x6f, 0x8f,
-        0xcf, 0x6f, 0xff,
-        0xcf, 0x8f, 0x00,
-        0xcf, 0x8f, 0x4f,
-        0xcf, 0x8f, 0x8f,
-        0xcf, 0x8f, 0xff,
-        0xcf, 0xaf, 0x00,
-        0xcf, 0xaf, 0x4f,
-        0xcf, 0xaf, 0x8f,
-        0xcf, 0xaf, 0xff,
-        0xcf, 0xcf, 0x00,
-        0xcf, 0xcf, 0x4f,
-        0xcf, 0xcf, 0x8f,
-        0xcf, 0xcf, 0xff,
-        0xcf, 0xff, 0x00,
-        0xcf, 0xff, 0x4f,
-        0xcf, 0xff, 0x8f,
-        0xcf, 0xff, 0xff,
-
-        0xff, 0x00, 0x00,
-        0xff, 0x00, 0x4f,
-        0xff, 0x00, 0x8f,
-        0xff, 0x00, 0xff,
-        0xff, 0x2f, 0x00,
-        0xff, 0x2f, 0x4f,
-        0xff, 0x2f, 0x8f,
-        0xff, 0x2f, 0xff,
-        0xff, 0x4f, 0x00,
-        0xff, 0x4f, 0x4f,
-        0xff, 0x4f, 0x8f,
-        0xff, 0x4f, 0xff,
-        0xff, 0x6f, 0x00,
-        0xff, 0x6f, 0x4f,
-        0xff, 0x6f, 0x8f,
-        0xff, 0x6f, 0xff,
-        0xff, 0x8f, 0x00,
-        0xff, 0x8f, 0x4f,
-        0xff, 0x8f, 0x8f,
-        0xff, 0x8f, 0xff,
-        0xff, 0xaf, 0x00,
-        0xff, 0xaf, 0x4f,
-        0xff, 0xaf, 0x8f,
-        0xff, 0xaf, 0xff,
-        0xff, 0xcf, 0x00,
-        0xff, 0xcf, 0x4f,
-        0xff, 0xcf, 0x8f,
-        0xff, 0xcf, 0xff,
-        0xff, 0xff, 0x00,
-        0xff, 0xff, 0x4f,
-        0xff, 0xff, 0x8f,
-        0xff, 0xff, 0xff
-};
-
-
-static struct MachineDriver capbowl_machine_driver =
+static struct MachineDriver machine_driver =
 {
 	/* basic machine hardware */
 	{
-			{
-					CPU_M6809,
-					1000000,        /* 1 Mhz ??? */
-					0,
-					readmem,writemem,0,0,
-					capbowl_interrupt,2
-			},
-			{
-					CPU_M6809 | CPU_AUDIO_CPU,
-					1000000,
-					2,
-					sound_readmem,sound_writemem,0,0,
-					capbowl_sound_interrupt,12
-			}
+		{
+			CPU_M6809,
+			1250000,        /* 1.25 Mhz ??? */
+			0,
+			readmem,writemem,0,0,
+			capbowl_interrupt,2	/* ?? */
+		},
+		{
+			CPU_M6809 | CPU_AUDIO_CPU,
+			1250000,        /* 1.25 Mhz ??? */
+			2,
+			sound_readmem,sound_writemem,0,0,
+			capbowl_sound_interrupt,10	/* ?? */
+		}
 	},
 	60,
 	10,	/* 10 CPU slices per frame - enough for the sound CPU to read all commands */
 	0,
 
 	/* video hardware */
-	/* The visible region is 245x359 */
-	512, 512, { 0, 128+245-1, 89, 512-64-1 },
+	/* The visible region is 245x360 */
+	256, 360, { 0, 244, 0, 359 },
 	0,
-	sizeof(capbowl_palette)/3, 0,
-	0,
+	256,0,
+	capbowl_vh_convert_color_prom,
 
 	VIDEO_TYPE_RASTER,
 	0,
@@ -486,10 +214,9 @@ static struct MachineDriver capbowl_machine_driver =
 
 	/* sound hardware */
 	0,
-	0,
-	0,
-	0,
-	0
+	capbowl_sh_start,
+	capbowl_sh_stop,
+	capbowl_sh_update
 };
 
 
@@ -501,80 +228,75 @@ static struct MachineDriver capbowl_machine_driver =
 ***************************************************************************/
 
 ROM_START( capbowl_rom )
-        ROM_REGION(0x28000)   /* 160k for code and graphics */
-        ROM_LOAD( "u6",  0x8000 , 0x8000, 0x99fede6e )
-        ROM_LOAD( "gr0", 0x10000, 0x8000, 0x64039867 )
-        ROM_LOAD( "gr1", 0x18000, 0x8000, 0x3a758375 )
-        ROM_LOAD( "gr2", 0x20000, 0x8000, 0xb63eb4f2 )
-        ROM_REGION(0x1000)    /* Dummy area */
-        ROM_REGION(0x10000)   /* 64k for sound */
-        ROM_LOAD( "sound", 0x8000, 0x8000, 0xe27c494a )
+	ROM_REGION(0x28000)   /* 160k for code and graphics */
+	ROM_LOAD( "u6",  0x8000 , 0x8000, 0x99fede6e )
+	ROM_LOAD( "gr0", 0x10000, 0x8000, 0x64039867 )
+	ROM_LOAD( "gr1", 0x18000, 0x8000, 0x3a758375 )
+	ROM_LOAD( "gr2", 0x20000, 0x8000, 0xb63eb4f2 )
+
+	ROM_REGION(0x1000)      /* temporary space for graphics (disposed after conversion) */
+	/* empty memory region - not used by the game, but needed bacause the main */
+	/* core currently always frees region #1 after initialization. */
+
+	ROM_REGION(0x10000)   /* 64k for sound */
+	ROM_LOAD( "sound", 0x8000, 0x8000, 0xe27c494a )
 ROM_END
+
 
 
 static int hiload(void)
 {
-  void *f;
-  /* get RAM pointer (this game is multiCPU, we can't assume the global */
-  /* RAM pointer is pointing to the right place) */
-  unsigned char *RAM = Machine->memory_region[0];
+	void *f;
+	/* get RAM pointer (this game is multiCPU, we can't assume the global */
+	/* RAM pointer is pointing to the right place) */
+	unsigned char *RAM = Machine->memory_region[0];
 
-  /* Try loading static RAM */
+	/* Try loading static RAM */
+	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
+	{
+		osd_fread(f,&RAM[0x5000],0x800);
+		osd_fclose(f);
+	}
+	/* Invalidate the static RAM to force reseting to factory settings */
+	else memset(&RAM[0x5000],0xff,0x800);
 
-  if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-  {
-     osd_fread(f,&RAM[0x5000],0x800);
-     osd_fclose(f);
-  }
-  else
-  {
-    /* Force reseting to factory settings */
-    Machine->memory_region[0][0x55c1] = 0x01;
-    Machine->memory_region[0][0x5625] = 0x01;
-    Machine->memory_region[0][0x56af] = 0x01;
-    Machine->memory_region[0][0x5739] = 0x01;
-    Machine->memory_region[0][0x57c3] = 0x01;
-  }
-
-  return 1;
+	return 1;
 }
-
-
 
 static void hisave(void)
 {
-        void *f;
-        /* get RAM pointer (this game is multiCPU, we can't assume the global */
-        /* RAM pointer is pointing to the right place) */
-        unsigned char *RAM = Machine->memory_region[0];
+	void *f;
+	/* get RAM pointer (this game is multiCPU, we can't assume the global */
+	/* RAM pointer is pointing to the right place) */
+	unsigned char *RAM = Machine->memory_region[0];
 
 
-        if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-        {
-                osd_fwrite(f,&RAM[0x5000],0x0800);
-                osd_fclose(f);
-        }
+	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
+	{
+		osd_fwrite(f,&RAM[0x5000],0x0800);
+		osd_fclose(f);
+	}
 }
+
 
 
 struct GameDriver capbowl_driver =
 {
-        "Capcom Bowling",
-        "capbowl",
-        "ZSOLT VASVARI\nMIRKO BUFFONI",
-        &capbowl_machine_driver,
+	"Capcom Bowling",
+	"capbowl",
+	"Zsolt Vasvari\nMirko Buffoni\nNicola Salmoria",
+	&machine_driver,
 
-        capbowl_rom,
-        0, 0,
-        0,
+	capbowl_rom,
+	0, 0,
+	0,
+	0,	/* sound_prom */
 
-        input_ports, 0, trak_ports, capbowl_dsw, keys,
+	0/*TBR*/,input_ports,0/*TBR*/,0/*TBR*/,0/*TBR*/,
 
-        0, capbowl_palette, 0,
+	0, 0, 0,
 
-        ORIENTATION_DEFAULT,
+	ORIENTATION_DEFAULT,
 
-        hiload, hisave
+	hiload, hisave
 };
-
-

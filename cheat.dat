@@ -17,6 +17,14 @@
 1942:0:E164:80:0:Power Up Fire
 1943:0:F206:40:0:Invincibility PL1
 1943:0:F286:40:0:Invincibility PL2
+1943:0:F257:FE:0:Full Time for Gun PL1
+1943:0:F251:01:0:Auto Gun for PL1
+1943:0:F251:02:0:Shot Gun for PL1
+1943:0:F251:04:0:Three Way Gun for PL1
+1943:0:F251:08:0:Shell Gun for PL1
+1943:0:F251:10:0:Laser Gun for PL1
+1943:0:F206:40:0:64 Energy for PL1
+3stooges:0:0721:9:0:Infinite Lives
 amidar:0:8288:6:0:Infinite Lives
 amidar:0:8285:6:0:Infinite Jump
 amidar:0:81F5:FF:0:Invincibility
@@ -36,15 +44,74 @@ asteroid:0:0056:5:0:Infinite Lives
 asteroi2:0:0057:5:0:Infinite Lives
 atlantis:0:4022:6:0:Infinite Lives
 bagman:0:6056:5:0:Infinite Lives
-bagman:0:61E8:99:0:Bonus always 99
+bagman:0:61E8:99:0:Infinite Time (99)
 bagman:0:61CF:1:0:Carry a pic
 bankp:0:E0A0:6:0:Infinite Lives
+bankp:0:E0A5:38:0:Infinite Time
 berzerk:0:4349:6:0:Infinite Lives
 blaster:0:BD26:6:0:Infinite Lives
 blaster:0:973E:3:0:Invincibility
 blktiger:0:F3A0:9:0:Infinite lives
+blktiger:0:F3A0:9:0:Infinite Lives
+blktiger:0:F3AD:6:0:Infinite Shield
+blktiger:0:F3B0:9:0:Vitality
+blktiger:0:F3AB:9:0:Keys
+blktiger:0:F3B1:20:0:Time
+blktiger:0:F3A8:ff:0:Lotsa Money
+blktiger:0:F3A1:1:0:Level 2 Start
+blktiger:0:F3A1:2:0:Level 3 Start
+blktiger:0:F3A1:3:0:Level 4 Start
+blktiger:0:F3A1:4:0:Level 5 Start
+blktiger:0:F3A1:5:0:Level 6 Start
+blktiger:0:F3A1:6:0:Level 7 Start
+blktiger:0:F3A1:7:0:Level 8 Start
 blueprnt:0:80E1:4:0:Infinite Lives
-boblbobl:0:E645:6:0:Infinite Lives
+; -----------------
+boblbobl:0:E645:6:0:Infinite Lives (P1)
+boblbobl:0:e6c1:26:0:Extra Fast (P1)
+boblbobl:0:e6c2:80:0:Long Range Bubbles (P1)
+boblbobl:0:e6c2:ff:0:Extra Long Range Bubbles (P1)
+boblbobl:0:E64a:6:0:Infinite Lives (P2)
+boblbobl:0:e6f3:26:0:Extra Fast (P2)
+boblbobl:0:e6f4:80:0:Long Range Bubbles (P2)
+boblbobl:0:e6f4:ff:0:Extra Long Range Bubbles (P2)
+boblbobl:0:e5db:1:0:'Super' (1JBLRJ1R)
+boblbobl:0:e5d1:1:0:'Original Game' (BJBJBJR1)
+boblbobl:0:e5d2:1:0:'Power Up' (LJL1LBL1)
+boblbobl:0:F676:1:0:Constant Extend Letters
+boblbobl:0:e603:1:0:Always Warn (Bell Item)
+;
+; the next two, used together, get rid of the introduction screen
+;
+boblbobl:0:25f6:1:0:Cut Journey Time (LSB)
+boblbobl:0:25f7:0:0:Cut Journey Time (MSB)
+;
+; these 3 will warp you to the specified level and keep you there
+; until you turn them off
+;
+boblbobl:0:e64b:18:0:Level 25 (Fire Bubbles)
+boblbobl:0:e64b:1d:0:Level 30 (Lightning Bubbles)
+boblbobl:0:e64b:63:0:Level 100 (Big Baddie)
+;
+; these will make a potion bottle appear on the next screen -
+; it will be the type requested unless you have earned a
+; higher valued special item, or unless you have fallen off
+; the bottom of the screen since setting the cheat - falling
+; off the screen 'upgrades' the potion to the next level
+;
+boblbobl:0:e5E7:F:1:Sunflower Potion
+boblbobl:0:e5E7:10:1:Flower Potion
+boblbobl:0:e5E7:11:1:Clover Potion
+boblbobl:0:e5E7:12:1:Rainbow Potion
+boblbobl:0:e5E7:13:1:Musical Potion
+;
+; the next two should be used when you want to end the current screen
+; they need re-using for each screen you get stuck on
+; choose just one of the two
+;
+boblbobl:0:F590:1:1:Drown 'em All!
+boblbobl:0:E720:1:1:Throw The Book At Them
+; ---------------------------
 bombjack:0:819B:5:0:Infinite Lives
 bosco:0:83E2:5:0:Infinite Lives
 bosconm:0:83E2:5:0:Infinite Lives
@@ -65,6 +132,9 @@ ccboot:0:80D8:6:0:Infinite Lives
 ccjap:0:80D8:6:0:Infinite Lives
 cclimber:0:80D8:6:0:Infinite Lives
 centiped:0:00A5:6:0:Infinite Lives
+centiped:0:0070:F8:0:No Fleas and Scorpions
+centiped:0:0061:FF:0:No Spiders
+centiped:0:00B5:0:0:No Spider sound
 ckong:0:6228:6:0:Infinite Lives
 ckonga:0:6228:6:0:Infinite Lives
 ckongjeu:0:6228:6:0:Infinite Lives
@@ -91,7 +161,10 @@ dkongjr:0:6228:6:0:Infinite Lives
 dkongjp:0:6228:6:0:Infinite Lives
 dkong:0:6228:6:0:Infinite Lives
 dkong3:0:601A:6:0:Infinite Lives
+docastle:0:8103:7:0:Infinite lives
+docastl2:0:8103:7:0:Infinite lives
 domino:0:C1B5:8:0:Infinite Lives
+dorunrun:0:2203:7:0:Infinite lives
 dotron:0:E00C:6:0:Infinite Lives
 dotron:0:E43A:9:0:Infinite Shields
 ;
@@ -100,7 +173,10 @@ dotron:0:E43A:9:0:Infinite Shields
 ;level 6 or 7
 dotron:0:E012:6:0:Level 6 before animation
 dotron:0:E012:7:0:Level 7 after animation
-;
+douni:0:8103:7:0:Infinite lives
+dowild:0:2103:7:0:Infinite lives
+earthinv:0:21FF:7:0:Infinite Lives PL1
+earthinv:0:22FF:7:0:Infinite Lives PL2
 eggs:0:0055:7:0:Infinite Lives PL1
 eggs:0:005F:7:0:Infinite Lives PL2
 elevatob:0:8234:14:0:Infinite Lives
@@ -141,6 +217,13 @@ gberet:0:D229:5:0:Infinite ammo
 gng:0:0060:8:0:Infinite Lives
 gng:0:00AC:0:0:Invincibility
 gng:0:00AC:1:0:Suicide
+gng:0:0073:0:1:Get The Torch
+gng:0:0073:1:1:Get The Lance
+gng:0:0073:2:1:Get The Axe
+gng:0:0073:3:1:Get The Shield/Cross
+gng:0:0073:4:1:Get The Knife/Sword
+gng:0:00AB:FF:0:Infinite Time
+gng:0:050A:FF:1:Warp To Top Of Screen
 gngcross:0:0060:8:0:Infinite Lives
 gngcross:0:00AC:0:0:Invincibility
 gngcross:0:00AC:1:0:Suicide
@@ -149,6 +232,7 @@ gorf:0:D033:5:0:Infinite Lives PL2
 gravitar:0:0042:6:0:Infinite Lives
 gravitar:0:016C:99:0:Infinite Fuel
 gunsmoke:0:E040:6:0:Infinite lives
+gunsmoke:0:E037:ff:0:Horse (Invulnerability)
 gyruss:0:9600:6:0:Infinite Lives
 hangly:0:4e14:5:0:Infinite Lives
 hangly:0:4e15:4:0:Infinite Lives (Visual)
@@ -157,6 +241,8 @@ hangly:0:4DA8:1:0:Pink always blue
 hangly:0:4DA9:1:0:Green always blue
 hangly:0:4DAA:1:0:Orange always blue
 hangly:0:4DCC:2:0:Stay blue until you eat them
+invaders:0:21FF:7:0:Infinite Lives PL1
+invaders:0:22FF:7:0:Infinite Lives PL2
 invdelux:0:21FF:7:0:Infinite Lives PL1
 invdelux:0:22FF:7:0:Infinite Lives PL2
 invinco:0:E3BC:9:0:Infinite Lives PL1
@@ -202,7 +288,7 @@ kungfum:0:E084:6:0:Infinite lives
 ;The next code is timed because you will
 ;be stuck at the end of the levels if not.
 kungfum:0:E004:5:5:Infinite time
-kungfum:0:E709:20:3:Invincibility
+kungfum:0:E709:40:10:Invincibility
 kungfub:0:E084:6:0:Infinite lives
 ;
 ;The next code is timed because you will
@@ -211,6 +297,7 @@ kungfub:0:E004:5:5:Infinite time
 kungfub:0:E709:20:3:Invincibility
 ladybug:0:6066:6:0:Infinite lives PL1
 ladybug:0:6067:2:0:Infinite lives PL2
+llander:0:00AE:20:0:Infinite Fuel
 locomotn:0:9900:6:0:Infinite Lives
 losttomb:0:8617:6:0:Infinite lives
 losttomb:0:868D:50:0:Stop timer
@@ -225,23 +312,51 @@ mario:0:6116:7:0:Infinite lives PL1
 mario:0:6156:7:0:Infinite lives PL2
 milliped:0:00B3:6:0:Infinite lives PL1
 milliped:0:00B4:6:0:Infinite lives PL2
+missile:0:00c0:2:0:Infinite cities
+motos:0:1826:11:0:Infinite Lives
+mpatrol:0:e515:A:0:Infinite lives
 mplanets:0:130A:6:0:Infinite Lives
-mspacatk:0:4E14:5:0:4E14 = 03
-mspacatk:0:4E15:4:0:4E15 = 02
+mranger:0:E515:A:0:Infinite lives
+mrdo:0:E097:6:0:Infinite lives PL1
+mrdo:0:E11C:6:0:Infinite lives PL2
+mrdot:0:E097:6:0:Infinite lives PL1
+mrdot:0:E11C:6:0:Infinite lives PL2
+mrlo:0:E097:6:0:Infinite lives PL1
+mrlo:0:E11C:6:0:Infinite lives PL2
+mspacatk:0:4E14:5:0:Infinite Lives
+mspacatk:0:4E15:4:0:Infinite Lives (Visual)
 mspacatk:0:4DA7:1:0:Red always blue
 mspacatk:0:4DA8:1:0:Pink always blue
 mspacatk:0:4DA9:1:0:Green always blue
 mspacatk:0:4DAA:1:0:Orange always blue
 mspacatk:0:4DCC:2:0:Stay blue until you eat them
-mspacman:0:4E14:5:0:4E14 = 03
-mspacman:0:4E15:4:0:4E15 = 02
+mspacman:0:4E14:6:0:Infinite Lives
+mspacman:0:4E15:5:0:Infinite Lives (Visual)
 mspacman:0:4DA7:1:0:Red always blue
 mspacman:0:4DA8:1:0:Pink always blue
 mspacman:0:4DA9:1:0:Green always blue
 mspacman:0:4DAA:1:0:Orange always blue
 mspacman:0:4DCC:2:0:Stay blue until you eat them
+mtrap:0:005A:6:0:Infinite Lives PL1
+mtrap:0:005B:6:0:Infinite Lives PL2
+mtrap:0:006C:6:0:Infinite Bones PL1
+mtrap:0:006D:6:0:Infinite Bones PL2
+mtrap:0:006E:93:0:Always a Dog
+mystston:0:0031:6:0:Infinite lives
+namcopac:0:4e14:5:0:Infinite Lives
+namcopac:0:4e15:4:0:Infinite Lives (Visual)
+namcopac:0:4DA7:1:0:Red always blue
+namcopac:0:4DA8:1:0:Pink always blue
+namcopac:0:4DA9:1:0:Green always blue
+namcopac:0:4DAA:1:0:Orange always blue
+namcopac:0:4DCC:2:0:Stay blue until you eat them
+naughtyb:0:4028:5:0:Infinite lives
 nibbler:0:00B0:32:0:Infinite lives PL1
 nibbler:0:00B1:32:0:Infinite lives PL2
+nrallyx:0:800F:5:0:Infinite Lives
+; Do not let activated at the end of a level
+nrallyx:0:826B:3B:0:Infinite Fuel
+omegrace:0:4066:5:0:Infinite lives
 pacman:0:4e14:5:0:Infinite Lives
 pacman:0:4e15:4:0:Infinite Lives (Visual)
 pacman:0:4DA7:1:0:Red always blue
@@ -249,6 +364,37 @@ pacman:0:4DA8:1:0:Pink always blue
 pacman:0:4DA9:1:0:Green always blue
 pacman:0:4DAA:1:0:Orange always blue
 pacman:0:4DCC:2:0:Stay blue until you eat them
+pacmanbl:0:4214:A:0:Infinite lives
+pacmanbl:0:4215:9:0:Infinite lives (Visual)
+pacmanbl:0:41A7:1:0:Red always blue
+pacmanbl:0:41A8:1:0:Pink always blue
+pacmanbl:0:41A9:1:0:Green always blue
+pacmanbl:0:41AA:1:0:Orange always blue
+pacmanbl:0:41CC:2:0:Stay blue until you eat them
+pacmanjp:0:4e14:5:0:Infinite Lives
+pacmanjp:0:4e15:4:0:Infinite Lives (Visual)
+pacmanjp:0:4DA7:1:0:Red always blue
+pacmanjp:0:4DA8:1:0:Pink always blue
+pacmanjp:0:4DA9:1:0:Green always blue
+pacmanjp:0:4DAA:1:0:Orange always blue
+pacmanjp:0:4DCC:2:0:Stay blue until you eat them
+pacmod:0:4e14:5:0:Infinite Lives
+pacmod:0:4e15:4:0:Infinite Lives (Visual)
+pacmod:0:4DA7:1:0:Red always blue
+pacmod:0:4DA8:1:0:Pink always blue
+pacmod:0:4DA9:1:0:Green always blue
+pacmod:0:4DAA:1:0:Orange always blue
+pacmod:0:4DCC:2:0:Stay blue until you eat them
+pacnpal:0:1175:7:0:Infinite lives
+pacplus:0:4e14:5:0:Infinite Lives
+pacplus:0:4e15:4:0:Infinite Lives (Visual)
+pacplus:0:4DA7:1:0:Red always blue
+pacplus:0:4DA8:1:0:Pink always blue
+pacplus:0:4DA9:1:0:Green always blue
+pacplus:0:4DAA:1:0:Orange always blue
+pacplus:0:4DCC:2:0:Stay blue until you eat them
+panic:0:40D0:5:0:Infinite Lives
+panica:0:40D0:5:0:Infinite Lives
 pengo:0:8814:5:0:Infinite Lives
 pengoa:0:8814:5:0:Infinite Lives
 penta:0:8814:5:0:Infinite Lives
@@ -278,36 +424,57 @@ puckman:0:4DA8:1:0:Pink always blue
 puckman:0:4DA9:1:0:Green always blue
 puckman:0:4DAA:1:0:Orange always blue
 puckman:0:4DCC:2:0:Stay blue until you eat them
+pulsar:0:E596:9:0:Infinite Lives
+pulsar:0:E58E:A:4:Infinite Fuel
 qbert:0:0D00:3:0:Infinite lives
+qbertjp:0:1000:3:0:Infinite Lives
+qbertqub:0:0819:7:0:Infinite Lives
 rallyx:0:800F:5:0:Infinite Lives
 ;
 ; Do not let activated at the end of a level
 rallyx:0:826B:3C:0:Infinite Fuel
 ;
 rallyx:0:81B0:2:0:Always 3 red cars
+rampage:0:E49E:C4:0:Infinite Energy Pl1
+rampage:0:E49E:C7:0:Infinite Damage Pl1
+rampage:0:E4EE:C7:0:Infinite Damage Pl2
+rampage:0:E53E:C7:0:Infinite Damage Pl3
+reactor:0:023C:15:0:Infinite Lives PL1
+reactor:0:0405:15:0:Infinite Lives PL2
+reactor:0:0247:14:0:Infinite Decoys Pl1
+reactor:0:0410:14:0:Infinite Decoys Pl2
 redbaron:0:00B0:9:0:Infinite lives
 rescue:0:8669:9:0:Infinite lives
 robby:0:E388:4:0:Infinite lives
-robotron:0:BDEC:7:0:Infinite lives
+robotron:0:BDEC:8:0:Infinite Lives PL1
+robotron:0:BE28:8:0:Infinite Lives PL2
 rushatck:0:DBB0:5:0:Infinite lives
 rushatck:0:D229:5:0:Infinite ammo
 sbagman:0:6056:7:0:Infinite Lives
+sbagman:0:61E8:99:0:Infinite Time (99)
 ;
 ; Do not let activated at the end of a level
 sbasketb:0:2280:59:0:59 seconds
 ; Do not let activated at the end of a level
 sbasketb:0:2281:9:0:9 minutes
 scobra:0:8108:5:0:Infinite Lives
+scobra:0:8105:FF:0:Infinite Fuel
 scobrab:0:8108:5:0:Infinite Lives
+scobrab:0:8105:FF:0:Infinite Fuel
 scobrak:0:8108:5:0:Infinite Lives
+scobrak:0:8105:FF:0:Infinite Fuel
 scramble:0:4108:5:0:Infinite Lives
+scramble:0:4105:FF:0:Infinite Fuel
 seawolf2:0:C1DB:99:0:Infinite Time
+sectionz:0:CDA0:B:0:Infinite Lives
+sectionz:0:C08F:4:0:Maximum Power
+sectionz:0:C10F:3:0:Maximum Speed
 seicross:0:78A1:99:0:Infinite Lives
 shollow:0:C39D:9:0:Infinite Lives
 shollow:0:C396:78:0:Infinite Shield
-silkworm:0:D531:5:0:Infinite Lives
 sinistar:0:9FFC:6:0:Infinite Lives
 sinistar:0:A013:32:0:Infinite Bombs
+silkworm:0:D531:5:0:Infinite Lives
 snapjack:0:6017:2:0:Infinite Lives PL1
 snapjack:0:6018:2:0:Infinite Lives PL2
 solarfox:0:73AC:9:0:Infinite Lives
@@ -317,14 +484,24 @@ spaceplt:0:AD10:3:0:Infinite Lives PL1
 spaceplt:0:AD20:3:0:Infinite Lives PL2
 spacefb:0:C002:9:0:Infinite Lives
 spaceatt:0:21FF:5:0:Infinite Lives
+spacezap:0:D012:9:0:Infinite Lives
 spacfury:0:CD1C:5:0:Infinite Lives
+splat:0:9911:9:0:Infinite Lives PL1
+sspaceat:0:E5D9:8:0:Infinite Lives PL1
 starforc:0:8166:9:0:Infinite Lives
+stargate:0:BDDE:11:0:Infinite Lives PL1
+stargate:0:BDE0:12:0:Infinite Smart Bomb PL1
+stargate:0:BDE1:B0:0:Infinite Inviso PL1
+stargate:0:BE1D:11:0:Infinite Lives PL2
+stargate:0:BE1F:11:0:Infinite Smart Bomb Pl2
+stargate:0:BE20:B0:0:Infinite Inviso Pl2
 startrek:0:CE17:4:0:Infinite Shield
 startrek:0:CE18:4:0:Infinite Torpedo
+startrek:0:E4D9:99:0:Infinite Warp
 starwars:0:4860:9:0:Infinite Shield
 superpac:0:1007:6:0:Infinite Lives
 superpac:0:1625:1:0:Invincibility
-superg:0:421D:5:0:Infinite Lives
+superg:0:421D:6:0:Infinite Lives
 sxevious:0:8183:9:0:Infinite Lives
 tapper:0:E4A7:6:0:Infinite Lives
 ;
@@ -353,6 +530,7 @@ timber:0:E537:8:0:Infinite Lives PL1
 timber:0:E53B:8:0:Infinite Lives PL2
 timber:0:E49F:59:0:Always 59 seconds
 timber:0:E49E:59:0:Always 59 minutes
+todruaga:0:1703:5:0:Infinite Lives
 tp84:0:57D0:5:0:Infinite Lives
 tron:0:C41F:4:0:Infinite Lives PL1&2
 turpin:0:8630:9:0:Infinite Lives
@@ -366,9 +544,11 @@ vanguard:0:00BE:8:0:Infinite Lives
 vanguard:0:00A0:3:0:Invincibility
 venture:0:00BE:3:0:Infinite Lives
 vulgus:0:E520:5:0:Infinite Lives
-vulgus:0:E506:8:0:Infiite Bombs
+vulgus:0:E506:8:0:Infinite Bombs
 wacko:0:C264:5:0:Infinite Lives
 warofbug:0:4109:6:0:Infinite lives
+warpwarp:0:8000:6:0:Infinite Lives
+warpwarp:0:8000:6:0:Infinite Lives
 wow:0:D301:5:0:Infinite lives PL1
 wow:0:D300:5:0:Infinite lives PL2
 xevious:0:8183:9:0:Infinite Lives
@@ -379,7 +559,12 @@ xeviousn:0:8183:9:0:Infinite Lives
 yard:0:E44A:30:4:Infinite Time
 yard:0:E44A:60:1:Reset Timer (once)
 yiear:0:508C:8:0:Infinite energy
+zaxxon:0:6067:6:0:Infinite Lives
+zaxxon:0:62B1:80:0:Infinite Fuel
+
 ;
 ;----------------
 ;New ones
 ;
+exerion:0:6046:50:0:Infinite Firepower
+exerion:0:6048:6:0:Infinite Lives

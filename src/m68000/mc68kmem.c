@@ -1,4 +1,5 @@
-#include "cpudefs.h"
+/* ASG 971105 #include "cpudefs.h"*/
+#include "M68000.h"	/* ASG 971105 */
 #include "driver.h"
 #include "cpuintrf.h"
 #include "readcpu.h"
@@ -16,7 +17,7 @@ union flagu intel_flag_lookup[256];
 union flagu regflags;
 
 extern int cpu_interrupt(void);
-extern MC68000_disasm(CPTR, CPTR*, int);
+/* ASG 971105 extern MC68000_disasm(CPTR, CPTR*, int); */
 extern void BuildCPU(void);
 
 #define MC68000_interrupt() (cpu_interrupt())
@@ -25,8 +26,10 @@ extern void BuildCPU(void);
 #define ReadMEM(A) (cpu_readmem24(A))
 #define WriteMEM(A,V) (cpu_writemem24(A,V))
 
-static int icount=0;
-static int MC68000_IPeriod=0;
+/* ASG 971105 static int icount=0;*/
+/* ASG 971105 static int MC68000_IPeriod=0;*/
+int MC68000_ICount;
+static int pending_interrupts;
 
 static int InitStatus=0;
 
@@ -173,7 +176,11 @@ void inline Exception(int nr, CPTR oldpc)
 void inline Interrupt68k(int level)
 {
    int ipl=(regs.sr&0xf00)>>8;
-   if(level>=ipl) Exception(24+level,0);
+   if(level>=ipl)
+   {
+   	Exception(24+level,0);
+   	pending_interrupts &= ~(1 << (level-1));	/* ASG 971105 */
+   }
 }
 
 void Initialisation() {
@@ -182,7 +189,7 @@ void Initialisation() {
    initCPU();
 }
 
-void MC68000_reset(long IPeriod)
+void MC68000_Reset(void)	/* ASG 971105 */
 {
 if (!InitStatus)
 {
@@ -190,8 +197,8 @@ if (!InitStatus)
 	InitStatus=1;
 }
 
-  MC68000_IPeriod = IPeriod;
-  icount = IPeriod;
+/* ASG 971105   MC68000_IPeriod = IPeriod;
+  icount = IPeriod;*/
 
    regs.a[7]=get_long(0);
    m68k_setpc(get_long(4));
@@ -205,32 +212,89 @@ if (!InitStatus)
    regs.intmask = 7;
    regs.vbr = regs.sfc = regs.dfc = 0;
    regs.fpcr = regs.fpsr = regs.fpiar = 0;
+
+   pending_interrupts = 0;		/* ASG 971105 */
 }
 
+
+void MC68000_SetRegs(MC68000_Regs *src)
+{
+	regs = src->regs;
+	NFLG = (regs.sr >> 3) & 1;
+	ZFLG = (regs.sr >> 2) & 1;
+	VFLG = (regs.sr >> 1) & 1;
+	CFLG = regs.sr & 1;
+	pending_interrupts = src->pending_interrupts;
+}
+
+void MC68000_GetRegs(MC68000_Regs *dst)
+{
+	regs.sr = (regs.sr & 0xfff0) | (NFLG << 3) | (ZFLG << 2) | (VFLG << 1) |
+	CFLG;
+	dst->regs = regs;
+	dst->pending_interrupts = pending_interrupts;
+}
+
+/* ASG 971105 */
+void MC68000_Cause_Interrupt(int level)
+{
+	if (level >= 1 && level <= 7)
+		pending_interrupts |= (1 << (level-1));
+}
+
+/* ASG 971105 */
+void MC68000_Clear_Pending_Interrupts(void)
+{
+	pending_interrupts = 0;
+}
+
+/* ASG 971105 */
+int  MC68000_GetPC(void)
+{
+	return regs.pc;
+}
 
 
 
 /* Execute one 68000 instruction */
 
-void MC68000_Execute(void)
+/* ASG 971105 */
+int MC68000_Execute(int cycles)
 {
-        UWORD opcode;
+	UWORD opcode;
 
+	MC68000_ICount = cycles;
 	do
 	{
-	      #ifdef ASM_MEMORY
-		opcode=nextiword_opcode();
-	      #else
-		opcode=nextiword();
-	      #endif
+		if (pending_interrupts)
+		{
+			static unsigned char inttable[128] =
+			{
+				0, 1, 2, 2, 3, 3, 3, 3, 4, 4, 4, 4, 4, 4, 4, 4,
+				5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5,
+				6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6,
+				6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6,
+				7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7,
+				7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7,
+				7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7,
+				7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7
+			};
+			Interrupt68k (inttable[pending_interrupts]);
+		}
 
-		icount -= 15;
+		#ifdef ASM_MEMORY
+			opcode=nextiword_opcode();
+		#else
+			opcode=nextiword();
+		#endif
+
+		MC68000_ICount -= 15;
 		cpufunctbl[opcode](opcode);
 
 	}
-	while (icount>0);
-	icount += MC68000_IPeriod;
-        Interrupt68k(MC68000_interrupt());
+	while (MC68000_ICount > 0);
+
+   return (cycles - MC68000_ICount);
 }
 
 

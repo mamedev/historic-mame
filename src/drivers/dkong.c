@@ -43,8 +43,8 @@ read:
  *
 *
  * IN2 (bits NOT inverted)
- * bit 7 : COIN
- * bit 6 : ?
+ * bit 7 : COIN (IS inverted in Radarscope)
+ * bit 6 : ? Radarscope does some wizardry with this bit
  * bit 5 : ?
  * bit 4 : ?
  * bit 3 : START 2
@@ -101,6 +101,25 @@ write:
 7d86-7d87 palette bank selector (only bit 0 is significant: 7d86 = bit 0 7d87 = bit 1)
 
 
+8039 Memory Map:
+
+0000-07ff ROM
+0800-0fff Compressed sound sample (Gorilla roar in DKong)
+
+Read ports:
+0x20   Read current tune
+P2.5   Active low when jumping
+T0     Select sound for jump (Normal or Barrell?)
+T1     Active low when gorilla is falling
+
+Write ports:
+P1     Digital out
+P2.7   External decay
+P2.6   Select second ROM reading (MOVX instruction will access area 800-fff)
+P2.2-0 Select the bank of 256 bytes for second ROM
+
+
+
 Donkey Kong 3 memory map (preliminary):
 
 RAM and read ports same as above;
@@ -122,45 +141,16 @@ I/O ports
 write:
 00        ?
 
-*
- * IN0 (bits NOT inverted)
- * bit 7 : TEST
- * bit 6 : START 2
- * bit 5 : START 1
- * bit 4 : JUMP player 1
- * bit 3 : ? DOWN player 1 ?
- * bit 2 : ? UP player 1 ?
- * bit 1 : LEFT player 1
- * bit 0 : RIGHT player 1
- *
-*
- * IN1 (bits NOT inverted)
- * bit 7 : ?
- * bit 6 : COIN 2
- * bit 5 : COIN 1
- * bit 4 : JUMP player 2
- * bit 3 : ? DOWN player 2 ?
- * bit 2 : ? UP player 2 ?
- * bit 1 : LEFT player 2
- * bit 0 : RIGHT player 2
- *
-*
- * DSW1 (bits NOT inverted)
- * bit 7 : \ difficulty
- * bit 6 : / 00 = easy  01 = medium  10 = hard  11 = hardest
- * bit 5 : \ bonus
- * bit 4 : / 00 = 20000  01 = 30000  10 = 40000  11 = none
- * bit 3 : \ coins per play
- * bit 2 : /
- * bit 1 : \ 00 = 3 lives  01 = 4 lives
- * bit 0 : / 10 = 5 lives  11 = 6 lives
- *
-
 ***************************************************************************/
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "I8039.h"
 
+static int tune = 0;
+static int page = 0;
+static int p[8] = { 255,255,255,255,255,255,255,255 };
+static int t[2] = { 1,1 };
 
 
 void dkongjr_gfxbank_w(int offset,int data);
@@ -172,10 +162,61 @@ int dkong_vh_start(void);
 void dkong_vh_screenrefresh(struct osd_bitmap *bitmap);
 void dkong3_vh_screenrefresh(struct osd_bitmap *bitmap);
 
-void dkong_sh1_w(int offset,int data);
-void dkong_sh2_w(int offset,int data);
-void dkong_sh3_w(int offset,int data);
+int  dkong_sh_start();
+void dkong_sh_stop();
 void dkong_sh_update(void);
+void dkong_sh_w(int offset, int data);
+void dkongjr_sh_death_w(int offset, int data);
+void dkongjr_sh_drop_w(int offset, int data);
+void dkongjr_sh_roar_w(int offset, int data);
+void dkong_sh1_w(int offset,int data);
+void dkong_digital_out_w(int offset, int data);
+
+extern unsigned char *dkong_dac;
+
+#define ACTIVELOW_PORT_BIT(P,A,D)   ((P & (~(1 << A))) | ((D ^ 1) << A))
+
+
+void dkong_sh_jump(int offset, int data)       { p[2] = ACTIVELOW_PORT_BIT(p[2],5,data); }
+void dkong_sh_gorilla(int offset, int data)    { t[1] = data ^ 1; }
+void dkong_sh_barrell(int offset, int data)    { t[0] = data ^ 1; }
+void dkong_sh_tuneselect(int offset, int data) { tune = data ^ 0x0f; }
+
+void dkongjr_sh_test6(int offset, int data)      { p[2] = ACTIVELOW_PORT_BIT(p[2],6,data); }
+void dkongjr_sh_test5(int offset, int data)      { p[2] = ACTIVELOW_PORT_BIT(p[2],5,data); }
+void dkongjr_sh_test4(int offset, int data)      { p[2] = ACTIVELOW_PORT_BIT(p[2],4,data); }
+void dkongjr_sh_tuneselect(int offset, int data) { tune = data; }
+
+
+static int  dkong_sh_getp1(int offset)   { return p[1]; }
+static int  dkong_sh_getp2(int offset)   { return p[2]; }
+static int  dkong_sh_gett0(int offset)   { return t[0]; }
+static int  dkong_sh_gett1(int offset)   { return t[1]; }
+static int  dkong_sh_gettune(int offset)
+{
+        unsigned char *SND = Machine->memory_region[2];
+        if (page & 0x40)
+        {
+                switch (offset)
+                {
+                        case 0x20:  return tune;
+                }
+        }
+        return (SND[2048+(page & 7)*256+offset]);
+}
+static void dkong_sh_putp1(int offset, int data)
+{
+	dkong_digital_out_w(offset, data);
+}
+static void dkong_sh_putp2(int offset, int data)
+{
+	/*   If P2.Bit7 -> is apparently an external signal decay or other output control
+	 *   If P2.Bit6 -> activates the external compressed sample ROM
+         *   P2.Bit2-0  -> select the 256 byte bank for external ROM
+	 */
+
+        page = (data & 0x47);
+}
 
 
 
@@ -198,19 +239,56 @@ static struct MemoryWriteAddress dkong_writemem[] =
 	{ 0x6000, 0x68ff, MWA_RAM },
 	{ 0x6900, 0x6a7f, MWA_RAM, &spriteram, &spriteram_size },
 	{ 0x6a80, 0x6fff, MWA_RAM },
+        { 0x7000, 0x73ff, MWA_RAM },    /* ???? */
 	{ 0x7400, 0x77ff, videoram_w, &videoram, &videoram_size },
 	{ 0x7800, 0x7803, MWA_RAM },	/* ???? */
 	{ 0x7808, 0x7808, MWA_RAM },	/* ???? */
-	{ 0x7c00, 0x7c00, dkong_sh2_w },    	/* ???? */
 	{ 0x7c80, 0x7c80, dkongjr_gfxbank_w },
-	{ 0x7d00, 0x7d07, dkong_sh1_w },    /* ???? */
-	{ 0x7d80, 0x7d80, dkong_sh3_w },
+	{ 0x7c00, 0x7c00, dkong_sh_tuneselect },
+/*
+        { 0x7d00, 0x7d00, dkong_sh_walk },
+        { 0x7d02, 0x7d02, dkong_sh_boom },
+        { 0x7d03, 0x7d03, dkong_sh_coin },
+        { 0x7d06, 0x7d07, MWA_NOP },
+*/
+        { 0x7d01, 0x7d01, dkong_sh_jump },
+        { 0x7d04, 0x7d04, dkong_sh_gorilla },
+        { 0x7d05, 0x7d05, dkong_sh_barrell },
+        { 0x7d00, 0x7d07, dkong_sh1_w },
+	{ 0x7d80, 0x7d80, dkong_sh_w },
 	{ 0x7d81, 0x7d83, MWA_RAM },	/* ???? */
 	{ 0x7d84, 0x7d84, interrupt_enable_w },
 	{ 0x7d85, 0x7d85, MWA_RAM },
 	{ 0x7d86, 0x7d87, dkong_palettebank_w },
 	{ -1 }	/* end of table */
 };
+static struct MemoryReadAddress readmem_sound[] =
+{
+	{ 0x0000, 0x0fff, MRA_ROM },
+	{ -1 }	/* end of table */
+};
+static struct MemoryWriteAddress writemem_sound[] =
+{
+	{ 0x0000, 0x0fff, MWA_ROM },
+	{ -1 }	/* end of table */
+};
+static struct IOReadPort readport_sound[] =
+{
+	{ 0x00,     0xff,     dkong_sh_gettune },
+	{ I8039_p1, I8039_p1, dkong_sh_getp1 },
+	{ I8039_p2, I8039_p2, dkong_sh_getp2 },
+	{ I8039_t0, I8039_t0, dkong_sh_gett0 },
+	{ I8039_t1, I8039_t1, dkong_sh_gett1 },
+	{ -1 }	/* end of table */
+};
+static struct IOWritePort writeport_sound[] =
+{
+	{ I8039_p1, I8039_p1, dkong_sh_putp1 },
+	{ I8039_p2, I8039_p2, dkong_sh_putp2 },
+	{ -1 }	/* end of table */
+};
+
+
 static struct MemoryWriteAddress dkongjr_writemem[] =
 {
 	{ 0x0000, 0x5fff, MWA_ROM },
@@ -220,16 +298,22 @@ static struct MemoryWriteAddress dkongjr_writemem[] =
 	{ 0x7400, 0x77ff, videoram_w, &videoram, &videoram_size },
 	{ 0x7800, 0x7803, MWA_RAM },	/* ???? */
 	{ 0x7808, 0x7808, MWA_RAM },	/* ???? */
-	{ 0x7c00, 0x7c00, MWA_RAM },	/* ???? */
+	{ 0x7c00, 0x7c00, dkongjr_sh_tuneselect },
 	{ 0x7c80, 0x7c80, dkongjr_gfxbank_w },
-	{ 0x7d00, 0x7d07, MWA_RAM },	/* ???? */
-	{ 0x7d80, 0x7d83, MWA_RAM },	/* ???? */
+        { 0x7c81, 0x7c81, dkongjr_sh_test6 },
+        { 0x7d03, 0x7d03, dkongjr_sh_roar_w },
+//        { 0x7d03, 0x7d03, dkongjr_sh_test5 },
+        { 0x7d04, 0x7d04, dkong_sh_gorilla },
+        { 0x7d05, 0x7d05, dkong_sh_barrell },
+        { 0x7d06, 0x7d06, dkongjr_sh_test4 },
+	{ 0x7d80, 0x7d80, dkongjr_sh_death_w },
+        { 0x7d81, 0x7d81, dkongjr_sh_drop_w },   /* active when Junior is falling */
 	{ 0x7d84, 0x7d84, interrupt_enable_w },
-	{ 0x7d85, 0x7d85, MWA_RAM },
 	{ 0x7d86, 0x7d87, dkong_palettebank_w },
 	{ 0x8000, 0x9fff, MWA_ROM },	/* bootleg DKjr only */
 	{ -1 }	/* end of table */
 };
+
 static struct MemoryWriteAddress dkong3_writemem[] =
 {
 	{ 0x0000, 0x5fff, MWA_ROM },
@@ -239,98 +323,179 @@ static struct MemoryWriteAddress dkong3_writemem[] =
 	{ 0x7400, 0x77ff, videoram_w, &videoram, &videoram_size },
 	{ 0x7e81, 0x7e81, dkong3_gfxbank_w },
 	{ 0x7e84, 0x7e84, interrupt_enable_w },
+	{ 0x7e85, 0x7e85, MWA_NOP },	/* ??? */
 	{ 0x7e86, 0x7e87, dkong_palettebank_w },
 	{ 0x8000, 0x9fff, MWA_ROM },
 	{ -1 }	/* end of table */
 };
 
-
-
-static struct InputPort input_ports[] =
+static struct IOWritePort dkong3_writeport[] =
 {
-	{	/* IN0 */
-		0x00,
-		{ OSD_KEY_RIGHT, OSD_KEY_LEFT, OSD_KEY_UP, OSD_KEY_DOWN,
-				OSD_KEY_LCONTROL, 0, 0, 0 },
-		{ OSD_JOY_RIGHT, OSD_JOY_LEFT, OSD_JOY_UP, OSD_JOY_DOWN,
-				OSD_JOY_FIRE, 0, 0, 0 },
-	},
-	{	/* IN1 */
-		0x00,
-		{ 0, 0, 0, 0, 0, 0, 0, 0 },
-		{ 0, 0, 0, 0, 0, 0, 0, 0 }
-	},
-	{	/* IN2 */
-		0x00,
-		{ OSD_KEY_F2, 0, OSD_KEY_1, OSD_KEY_2, 0, 0, 0, OSD_KEY_3 },
-		{ 0, 0, 0, 0, 0, 0, 0, 0 }
-	},
-	{	/* DSW1 */
-		0x84,
-		{ 0, 0, 0, 0, 0, 0, 0, 0 },
-		{ 0, 0, 0, 0, 0, 0, 0, 0 }
-	},
+	{ 0x00, 0x00, IOWP_NOP },	/* ??? */
 	{ -1 }	/* end of table */
 };
 
-static struct InputPort dkong3_input_ports[] =
+#ifdef DKONG3_TRY_SOUND
+static struct MemoryReadAddress dkong3_sound1_readmem[] =
 {
-	{	/* IN0 */
-		0x00,
-		{ OSD_KEY_RIGHT, OSD_KEY_LEFT, OSD_KEY_UP, OSD_KEY_DOWN,
-				OSD_KEY_LCONTROL, OSD_KEY_1, OSD_KEY_2, OSD_KEY_F1 },
-		{ OSD_JOY_RIGHT, OSD_JOY_LEFT, OSD_JOY_UP, OSD_JOY_DOWN,
-				OSD_JOY_FIRE, 0, 0, 0 },
-	},
-	{	/* IN1 */
-		0x00,
-		{ 0, 0, 0, 0, 0, OSD_KEY_3, 0, 0 },
-		{ 0, 0, 0, 0, 0, 0, 0, 0 }
-	},
-	{	/* DSW2 */
-		0x00,
-		{ 0, 0, 0, 0, 0, 0, 0, 0 },
-		{ 0, 0, 0, 0, 0, 0, 0, 0 }
-	},
-	{	/* DSW1 */
-		0x00,
-		{ 0, 0, 0, 0, 0, 0, 0, 0 },
-		{ 0, 0, 0, 0, 0, 0, 0, 0 }
-	},
+	{ 0x0000, 0x01ff, MRA_RAM },
+	{ 0xe000, 0xffff, MRA_ROM },
 	{ -1 }	/* end of table */
 };
 
-static struct TrakPort trak_ports[] =
+static struct MemoryWriteAddress dkong3_sound1_writemem[] =
 {
-        { -1 }
+	{ 0x0000, 0x01ff, MWA_RAM },
+	{ 0xe000, 0xffff, MWA_ROM },
+	{ -1 }	/* end of table */
 };
 
-static struct KEYSet keys[] =
+static struct MemoryReadAddress dkong3_sound2_readmem[] =
 {
-        { 0, 2, "MOVE UP" },
-        { 0, 1, "MOVE LEFT"  },
-        { 0, 0, "MOVE RIGHT" },
-        { 0, 3, "MOVE DOWN" },
-        { 0, 4, "JUMP" },
-        { -1 }
+	{ 0x0000, 0x01ff, MRA_RAM },
+	{ 0xe000, 0xffff, MRA_ROM },
+	{ -1 }	/* end of table */
 };
 
-
-static struct DSW dsw[] =
+static struct MemoryWriteAddress dkong3_sound2_writemem[] =
 {
-	{ 3, 0x03, "LIVES", { "3", "4", "5", "6" } },
-	{ 3, 0x0c, "BONUS", { "7000", "10000", "15000", "20000" } },
-	{ -1 }
+	{ 0x0000, 0x01ff, MWA_RAM },
+	{ 0xe000, 0xffff, MWA_ROM },
+	{ -1 }	/* end of table */
 };
+#endif
 
-static struct DSW dkong3_dsw[] =
-{
-	{ 3, 0x03, "LIVES", { "3", "4", "5", "6" } },
-	{ 3, 0x0c, "BONUS", { "30000", "40000", "50000", "NONE" } },
-	{ 3, 0x30, "ADDITIONAL BONUS", { "30000", "40000", "50000", "NONE" } },
-	{ 3, 0xc0, "DIFFICULTY", { "EASY", "MEDIUM", "HARD", "HARDEST" } },
-	{ -1 }
-};
+
+
+INPUT_PORTS_START( dkong_input_ports )
+	PORT_START      /* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_4WAY )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_4WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_4WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_4WAY )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+
+	PORT_START      /* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_COCKTAIL )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+
+	PORT_START      /* IN2 */
+	PORT_DIPNAME( 0x01, 0x00, "Self Test", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "Off" )
+	PORT_DIPSETTING(    0x01, "On" )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_START1 )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_START2 )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_COIN1 )
+
+	PORT_START      /* DSW0 */
+	PORT_DIPNAME( 0x03, 0x00, "Lives", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "3" )
+	PORT_DIPSETTING(    0x01, "4" )
+	PORT_DIPSETTING(    0x02, "5" )
+	PORT_DIPSETTING(    0x03, "6" )
+	PORT_DIPNAME( 0x0c, 0x00, "Bonus Life", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "7000" )
+	PORT_DIPSETTING(    0x04, "10000" )
+	PORT_DIPSETTING(    0x08, "15000" )
+	PORT_DIPSETTING(    0x0c, "20000" )
+	PORT_DIPNAME( 0x70, 0x00, "Coinage", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x70, "5 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x50, "4 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x30, "3 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x10, "2 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x00, "1 Coin/1 Credit" )
+	PORT_DIPSETTING(    0x20, "1 Coin/2 Credits" )
+	PORT_DIPSETTING(    0x40, "1 Coin/3 Credits" )
+	PORT_DIPSETTING(    0x60, "1 Coin/4 Credits" )
+	PORT_DIPNAME( 0x80, 0x80, "Cabinet", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x80, "Upright" )
+	PORT_DIPSETTING(    0x00, "Cocktail" )
+INPUT_PORTS_END
+
+
+INPUT_PORTS_START( dkong3_input_ports )
+	PORT_START      /* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_4WAY )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_4WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_4WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_4WAY )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_START1 )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_START2 )
+	PORT_BITX(0x80, IP_ACTIVE_HIGH, IPT_SERVICE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE, 0 )
+
+	PORT_START      /* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_COCKTAIL )
+	PORT_BITX(0x20, IP_ACTIVE_HIGH, IPT_COIN1 | IPF_IMPULSE, "Coin A", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 1)
+	PORT_BITX(0x40, IP_ACTIVE_HIGH, IPT_COIN2 | IPF_IMPULSE, "Coin B", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 1)
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+
+	PORT_START      /* DSW0 */
+	PORT_DIPNAME( 0x07, 0x00, "Coin A", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x02, "3 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x04, "2 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x00, "1 Coin/1 Credit" )
+	PORT_DIPSETTING(    0x06, "1 Coin/2 Credits" )
+	PORT_DIPSETTING(    0x01, "1 Coin/3 Credits" )
+	PORT_DIPSETTING(    0x03, "1 Coin/4 Credits" )
+	PORT_DIPSETTING(    0x05, "1 Coin/5 Credits" )
+	PORT_DIPSETTING(    0x07, "1 Coin/6 Credits" )
+	PORT_DIPNAME( 0x08, 0x00, "Unknown 1", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "Off" )
+	PORT_DIPSETTING(    0x08, "On" )
+	PORT_DIPNAME( 0x10, 0x00, "Unknown 2", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "Off" )
+	PORT_DIPSETTING(    0x10, "On" )
+	PORT_DIPNAME( 0x20, 0x00, "Unknown 3", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "Off" )
+	PORT_DIPSETTING(    0x20, "On" )
+	PORT_DIPNAME( 0x40, 0x00, "Self Test", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "Off" )
+	PORT_DIPSETTING(    0x40, "On" )
+	PORT_DIPNAME( 0x80, 0x00, "Cabinet", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "Upright" )
+	PORT_DIPSETTING(    0x80, "Cocktail" )
+
+	PORT_START      /* DSW1 */
+	PORT_DIPNAME( 0x03, 0x00, "Lives", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "3" )
+	PORT_DIPSETTING(    0x01, "4" )
+	PORT_DIPSETTING(    0x02, "5" )
+	PORT_DIPSETTING(    0x03, "6" )
+	PORT_DIPNAME( 0x0c, 0x00, "Bonus Life", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "30000" )
+	PORT_DIPSETTING(    0x04, "40000" )
+	PORT_DIPSETTING(    0x08, "50000" )
+	PORT_DIPSETTING(    0x0c, "None" )
+	PORT_DIPNAME( 0x30, 0x00, "Additional Bonus", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "30000" )
+	PORT_DIPSETTING(    0x10, "40000" )
+	PORT_DIPSETTING(    0x20, "50000" )
+	PORT_DIPSETTING(    0x30, "None" )
+	PORT_DIPNAME( 0xc0, 0x00, "Difficulty", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "Easy" )
+	PORT_DIPSETTING(    0x40, "Medium" )
+	PORT_DIPSETTING(    0x80, "Hard" )
+	PORT_DIPSETTING(    0xc0, "Hardest" )
+INPUT_PORTS_END
+
 
 
 static struct GfxLayout dkong_charlayout =
@@ -650,6 +815,13 @@ static struct MachineDriver dkong_machine_driver =
 			0,
 			readmem,dkong_writemem,0,0,
 			nmi_interrupt,1
+		},
+		{
+			CPU_I8039 | CPU_AUDIO_CPU,
+			6000000/15,	/* 6Mhz crystal */
+			2,
+			readmem_sound,writemem_sound,readport_sound,writeport_sound,
+			ignore_interrupt,1
 		}
 	},
 	60,
@@ -670,9 +842,8 @@ static struct MachineDriver dkong_machine_driver =
 
 	/* sound hardware */
 	0,
-	0,
-	0,
-	0,
+	dkong_sh_start,
+	dkong_sh_stop,
 	dkong_sh_update
 };
 
@@ -686,6 +857,13 @@ static struct MachineDriver dkongjr_machine_driver =
 			0,
 			readmem,dkongjr_writemem,0,0,
 			nmi_interrupt,1
+		},
+		{
+			CPU_I8039 | CPU_AUDIO_CPU,
+			6000000/15,	/* 6Mhz crystal */
+			2,
+			readmem_sound,writemem_sound,readport_sound,writeport_sound,
+			ignore_interrupt,1
 		}
 	},
 	60,
@@ -706,10 +884,9 @@ static struct MachineDriver dkongjr_machine_driver =
 
 	/* sound hardware */
 	0,
-	0,
-	0,
-	0,
-	0
+	dkong_sh_start,
+	dkong_sh_stop,
+	dkong_sh_update
 };
 
 static struct MachineDriver dkong3_machine_driver =
@@ -720,8 +897,24 @@ static struct MachineDriver dkong3_machine_driver =
 			CPU_Z80,
 			4000000,	/* 4 Mhz ? */
 			0,
-			readmem,dkong3_writemem,0,0,
+			readmem,dkong3_writemem,0,dkong3_writeport,
 			nmi_interrupt,1
+#ifdef DKONG3_TRY_SOUND
+		},
+		{
+			CPU_M6502 | CPU_AUDIO_CPU,
+			1000000,	/* 1Mhz ??? */
+			2,
+			dkong3_sound1_readmem,dkong3_sound1_writemem,0,0,
+			nmi_interrupt,1
+		},
+		{
+			CPU_M6502 | CPU_AUDIO_CPU,
+			1000000,	/* 1Mhz ??? */
+			3,
+			dkong3_sound2_readmem,dkong3_sound2_writemem,0,0,
+			nmi_interrupt,1
+#endif
 		}
 	},
 	60,
@@ -741,7 +934,6 @@ static struct MachineDriver dkong3_machine_driver =
 	dkong_vh_screenrefresh,
 
 	/* sound hardware */
-	0,
 	0,
 	0,
 	0,
@@ -799,24 +991,32 @@ ROM_END
 
 ROM_START( radarscp_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "radar09",  0x0000, 0x1000, 0x00000000 )
-	ROM_LOAD( "radar10",  0x1000, 0x1000, 0x00000000 )
-	ROM_LOAD( "radar11",  0x2000, 0x1000, 0x00000000 )
-	ROM_LOAD( "radar12",  0x3000, 0x1000, 0x00000000 )
+	ROM_LOAD( "trs2c5fc", 0x0000, 0x1000, 0x3a9b1c65 )
+	ROM_LOAD( "trs2c5gc", 0x1000, 0x1000, 0x98b422a0 )
+	ROM_LOAD( "trs2c5hc", 0x2000, 0x1000, 0xbe0fbe29 )
+	ROM_LOAD( "trs2c5kc", 0x3000, 0x1000, 0xeb145992 )
 	/* space for diagnostic ROM */
 
 	ROM_REGION(0x3000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "radar08",  0x0000, 0x0800, 0x5d1336e3 )
-	ROM_LOAD( "radar07",  0x0800, 0x0800, 0x1fbd16c3 )
-	ROM_LOAD( "radar05",  0x1000, 0x0800, 0xa22a04e4 )
-	ROM_LOAD( "radar04",  0x1800, 0x0800, 0x92fc90ae )
-	ROM_LOAD( "radar03",  0x2000, 0x0800, 0x8689204f )
-	ROM_LOAD( "radar02",  0x2800, 0x0800, 0x9a945dee )
+	ROM_LOAD( "trs2v3hc", 0x0000, 0x0800, 0x5d1336e3 )
+	ROM_LOAD( "trs2v3gc", 0x0800, 0x0800, 0x1fbd16c3 )
+	ROM_LOAD( "trs2v3dc", 0x1000, 0x0800, 0xa22a04e4 )
+	ROM_LOAD( "trs2v3cc", 0x1800, 0x0800, 0x92fc90ae )
+	ROM_LOAD( "trs2v3bc", 0x2000, 0x0800, 0x8689204f )
+	ROM_LOAD( "trs2v3ac", 0x2800, 0x0800, 0xdc347d2e )
 
 	ROM_REGION(0x1000)	/* sound */
-	ROM_LOAD( "radar01",  0x0000, 0x0800, 0x5eb1a017)	/* ??? */
-	ROM_LOAD( "radar06",  0x0800, 0x0800, 0x681894a8)	/* ??? */
+	ROM_LOAD( "trs2s3i",  0x0000, 0x0800, 0x5eb1a017)	/* ??? */
+	ROM_LOAD( "trs2v3ec", 0x0800, 0x0800, 0x681894a8)	/* ??? */
 ROM_END
+
+static void radarscp_unprotect(void)
+{
+	/* Radarscope does some checks with bit 6 of 7d00 which prevent it from working. */
+	/* It's probably a copy protection. We comment it out. */
+	RAM[0x1e9c] = 0xc3;
+	RAM[0x1e9d] = 0xbd;
+}
 
 ROM_START( dkongjr_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
@@ -841,6 +1041,31 @@ ROM_START( dkongjr_rom )
 
 	ROM_REGION(0x1000)	/* sound? */
 	ROM_LOAD( "dkj.3h",  0x0000, 0x1000, 0x65e71f9f )
+ROM_END
+
+ROM_START( dkngjrjp_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "dkjr1",  0x0000, 0x1000, 0xc255ddf7 )
+	ROM_CONTINUE(       0x3000, 0x1000 )
+	ROM_LOAD( "dkjr2",  0x2000, 0x0800, 0x2e3b6d3f )
+	ROM_CONTINUE(       0x4800, 0x0800 )
+	ROM_CONTINUE(       0x1000, 0x0800 )
+	ROM_CONTINUE(       0x5800, 0x0800 )
+	ROM_LOAD( "dkjr3",  0x4000, 0x0800, 0xcfbddbcd )
+	ROM_CONTINUE(       0x2800, 0x0800 )
+	ROM_CONTINUE(       0x5000, 0x0800 )
+	ROM_CONTINUE(       0x1800, 0x0800 )
+
+	ROM_REGION(0x6000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "dkjr9",  0x0000, 0x1000, 0x6ea64ce2 )
+	ROM_LOAD( "dkjr10", 0x1000, 0x1000, 0x2dd08634 )
+	ROM_LOAD( "dkjr5",  0x2000, 0x0800, 0x9ecd901b )
+	ROM_LOAD( "dkjr6",  0x2800, 0x0800, 0xac9378bb )
+	ROM_LOAD( "dkjr7",  0x3000, 0x0800, 0x9785a0b9 )
+	ROM_LOAD( "dkjr8",  0x3800, 0x0800, 0xecc39067 )
+
+	ROM_REGION(0x1000)	/* sound? */
+	ROM_LOAD( "dkjr4",  0x0000, 0x1000, 0x65e71f9f )
 ROM_END
 
 ROM_START( dkjrjp_rom )
@@ -909,9 +1134,11 @@ ROM_START( dkong3_rom )
 	ROM_LOAD( "dk3v.7e", 0x4000, 0x1000, 0x233a64e8 )
 	ROM_LOAD( "dk3v.7f", 0x5000, 0x1000, 0x4381b33d )
 
-	ROM_REGION(0x4000)	/* sound */
-	ROM_LOAD( "dk3c.5l", 0x0000, 0x2000, 0x34813d8d )
-	ROM_LOAD( "dk3c.6h", 0x2000, 0x2000, 0xe2c9caa7 )
+	ROM_REGION(0x10000)	/* sound #1 */
+	ROM_LOAD( "dk3c.5l", 0xe000, 0x2000, 0x34813d8d )
+
+	ROM_REGION(0x10000)	/* sound #2 */
+	ROM_LOAD( "dk3c.6h", 0xe000, 0x2000, 0xe2c9caa7 )
 ROM_END
 
 ROM_START( hunchy_rom )
@@ -947,6 +1174,7 @@ ROM_END
 
 static const char *sample_names[] =
 {
+	"*dkong",
 	"effect00.sam",
 	"effect01.sam",
 	"effect02.sam",
@@ -955,30 +1183,27 @@ static const char *sample_names[] =
 	"effect05.sam",
 	"effect06.sam",
 	"effect07.sam",
-	"tune00.sam",
-	"tune01.sam",
-	"tune02.sam",
-	"tune03.sam",
-	"tune04.sam",
-	"tune05.sam",
-	"tune06.sam",
-	"tune07.sam",
-	"tune08.sam",
-	"tune09.sam",
-	"tune0a.sam",
-	"tune0b.sam",
-	"tune0c.sam",
-	"tune0d.sam",
-	"tune0e.sam",
-	"tune0f.sam",
-	"interupt.sam",
-    0	/* end of array */
+        0	/* end of array */
+};
+
+static const char *dkongjr_sample_names[] =
+{
+	"*dkongjr",
+	"death.sam",
+	"drop.sam",
+	"roar.sam",
+        0	/* end of array */
 };
 
 
 
 static int hiload(void)
 {
+	/* get RAM pointer (this game is multiCPU, we can't assume the global */
+	/* RAM pointer is pointing to the right place) */
+	unsigned char *RAM = Machine->memory_region[0];
+
+
 	/* check if the hi score table has already been initialized */
 	if (memcmp(&RAM[0x611d],"\x50\x76\x00",3) == 0 &&
 			memcmp(&RAM[0x61a5],"\x00\x43\x00",3) == 0 &&
@@ -1008,10 +1233,11 @@ static int hiload(void)
 	else return 0;	/* we can't load the hi scores yet */
 }
 
-
-
 static void hisave(void)
 {
+	/* get RAM pointer (this game is multiCPU, we can't assume the global */
+	/* RAM pointer is pointing to the right place) */
+	unsigned char *RAM = Machine->memory_region[0];
 	void *f;
 
 
@@ -1022,10 +1248,13 @@ static void hisave(void)
 	}
 }
 
-
-
 static int dkong3_hiload(void)
 {
+	/* get RAM pointer (this game is multiCPU, we can't assume the global */
+	/* RAM pointer is pointing to the right place) */
+	unsigned char *RAM = Machine->memory_region[0];
+
+
 	/* check if the hi score table has already been initialized */
 	if (memcmp(&RAM[0x6b1d],"\x00\x20\x01",3) == 0 &&
 			memcmp(&RAM[0x6ba5],"\x00\x32\x00",3) == 0)
@@ -1049,10 +1278,11 @@ static int dkong3_hiload(void)
 	else return 0;	/* we can't load the hi scores yet */
 }
 
-
-
 static void dkong3_hisave(void)
 {
+	/* get RAM pointer (this game is multiCPU, we can't assume the global */
+	/* RAM pointer is pointing to the right place) */
+	unsigned char *RAM = Machine->memory_region[0];
 	void *f;
 
 
@@ -1071,14 +1301,15 @@ struct GameDriver dkong_driver =
 {
 	"Donkey Kong (US version)",
 	"dkong",
-	"Gary Shepherdson (Kong emulator)\nBrad Thomas (hardware info)\nEdward Massey (MageX emulator)\nNicola Salmoria (MAME driver)\nRon Fries (sound)\nGary Walton (color info)\nSimon Walls (color info)",
+	"Gary Shepherdson (Kong emulator)\nBrad Thomas (hardware info)\nEdward Massey (MageX emulator)\nNicola Salmoria (MAME driver)\nRon Fries (sound)\nGary Walton (color info)\nSimon Walls (color info)\nMarco Cassili",
 	&dkong_machine_driver,
 
 	dkong_rom,
 	0, 0,
 	sample_names,
+	0,      /* sound_prom */
 
-	input_ports, 0, trak_ports, dsw, keys,
+	0/*TBR*/, dkong_input_ports, 0/*TBR*/, 0/*TBR*/, 0/*TBR*/,
 
 	dkong_color_prom, 0, 0,
 	ORIENTATION_ROTATE_90,
@@ -1090,14 +1321,15 @@ struct GameDriver dkongjp_driver =
 {
 	"Donkey Kong (Japanese version)",
 	"dkongjp",
-	"Gary Shepherdson (Kong emulator)\nBrad Thomas (hardware info)\nEdward Massey (MageX emulator)\nNicola Salmoria (MAME driver)\nRon Fries (sound)\nGary Walton (color info)\nSimon Walls (color info)",
+	"Gary Shepherdson (Kong emulator)\nBrad Thomas (hardware info)\nEdward Massey (MageX emulator)\nNicola Salmoria (MAME driver)\nRon Fries (sound)\nGary Walton (color info)\nSimon Walls (color info)\nMarco Cassili",
 	&dkong_machine_driver,
 
 	dkongjp_rom,
 	0, 0,
-	sample_names,
+	dkongjr_sample_names,
+	0,      /* sound_prom */
 
-	input_ports, 0, trak_ports, dsw, keys,
+	0/*TBR*/, dkong_input_ports, 0/*TBR*/, 0/*TBR*/, 0/*TBR*/,
 
 	dkong_color_prom, 0, 0,
 	ORIENTATION_ROTATE_90,
@@ -1109,14 +1341,15 @@ struct GameDriver radarscp_driver =
 {
 	"Radarscope",
 	"radarscp",
-	"Gary Shepherdson (Kong emulator)\nBrad Thomas (hardware info)\nEdward Massey (MageX emulator)\nNicola Salmoria (MAME driver)",
+	"Andy White (protection workaround)\nGary Shepherdson (Kong emulator)\nBrad Thomas (hardware info)\nEdward Massey (MageX emulator)\nNicola Salmoria (MAME driver)\nMarco Cassili",
 	&dkong_machine_driver,
 
 	radarscp_rom,
-	0, 0,
+	radarscp_unprotect, 0,
 	0,
+	0,      /* sound_prom */
 
-	input_ports, 0, trak_ports, dsw, keys,
+	0/*TBR*/, dkong_input_ports, 0/*TBR*/, 0/*TBR*/, 0/*TBR*/,
 
 	dkong_color_prom, 0, 0,
 	ORIENTATION_ROTATE_90,
@@ -1128,14 +1361,15 @@ struct GameDriver dkongjr_driver =
 {
 	"Donkey Kong Jr. (US)",
 	"dkongjr",
-	"Gary Shepherdson (Kong emulator)\nBrad Thomas (hardware info)\nNicola Salmoria (MAME driver)\nTim Lindquist (color info)",
+	"Gary Shepherdson (Kong emulator)\nBrad Thomas (hardware info)\nNicola Salmoria (MAME driver)\nTim Lindquist (color info)\nMarco Cassili",
 	&dkongjr_machine_driver,
 
 	dkongjr_rom,
 	0, 0,
-	0,
+	dkongjr_sample_names,
+	0,      /* sound_prom */
 
-	input_ports, 0, trak_ports, dsw, keys,
+	0/*TBR*/, dkong_input_ports, 0/*TBR*/, 0/*TBR*/, 0/*TBR*/,
 
 	dkongjr_color_prom, 0, 0,
 	ORIENTATION_ROTATE_90,
@@ -1143,18 +1377,39 @@ struct GameDriver dkongjr_driver =
 	hiload, hisave
 };
 
+struct GameDriver dkngjrjp_driver =
+{
+	"Donkey Kong Jr. (Original Japanese)",
+	"dkngjrjp",
+	"Gary Shepherdson (Kong emulator)\nBrad Thomas (hardware info)\nNicola Salmoria (MAME driver)\nTim Lindquist (color info)\nMarco Cassili",
+	&dkongjr_machine_driver,
+
+	dkngjrjp_rom,
+	0, 0,
+	dkongjr_sample_names,
+	0,      /* sound_prom */
+
+	0/*TBR*/, dkong_input_ports, 0/*TBR*/, 0/*TBR*/, 0/*TBR*/,
+
+	dkongjr_color_prom, 0, 0,
+	ORIENTATION_ROTATE_90,
+
+	0, 0
+};
+
 struct GameDriver dkjrjp_driver =
 {
 	"Donkey Kong Jr. (Japanese)",
 	"dkjrjp",
-	"Gary Shepherdson (Kong emulator)\nBrad Thomas (hardware info)\nNicola Salmoria (MAME driver)\nTim Lindquist (color info)",
+	"Gary Shepherdson (Kong emulator)\nBrad Thomas (hardware info)\nNicola Salmoria (MAME driver)\nTim Lindquist (color info)\nMarco Cassili",
 	&dkongjr_machine_driver,
 
 	dkjrjp_rom,
 	0, 0,
-	0,
+	dkongjr_sample_names,
+	0,      /* sound_prom */
 
-	input_ports, 0, trak_ports, dsw, keys,
+	0/*TBR*/, dkong_input_ports, 0/*TBR*/, 0/*TBR*/, 0/*TBR*/,
 
 	dkongjr_color_prom, 0, 0,
 	ORIENTATION_ROTATE_90,
@@ -1166,14 +1421,15 @@ struct GameDriver dkjrbl_driver =
 {
 	"Donkey Kong Jr. (bootleg)",
 	"dkjrbl",
-	"Gary Shepherdson (Kong emulator)\nBrad Thomas (hardware info)\nNicola Salmoria (MAME driver)\nTim Lindquist (color info)",
+	"Gary Shepherdson (Kong emulator)\nBrad Thomas (hardware info)\nNicola Salmoria (MAME driver)\nTim Lindquist (color info)\nMarco Cassili",
 	&dkongjr_machine_driver,
 
 	dkjrbl_rom,
 	0, 0,
-	0,
+	dkongjr_sample_names,
+	0,      /* sound_prom */
 
-	input_ports, 0, trak_ports, dsw, keys,
+	0/*TBR*/, dkong_input_ports, 0/*TBR*/, 0/*TBR*/, 0/*TBR*/,
 
 	dkongjr_color_prom, 0, 0,
 	ORIENTATION_ROTATE_90,
@@ -1185,14 +1441,15 @@ struct GameDriver dkong3_driver =
 {
 	"Donkey Kong 3",
 	"dkong3",
-	"Mirko Buffoni (MAME driver)\nNicola Salmoria (additional code)\nTim Lindquist (color info)",
+	"Mirko Buffoni (MAME driver)\nNicola Salmoria (additional code)\nTim Lindquist (color info)\nMarco Cassili",
 	&dkong3_machine_driver,
 
 	dkong3_rom,
 	0, 0,
 	0,
+	0,      /* sound_prom */
 
-	dkong3_input_ports, 0, trak_ports, dkong3_dsw, keys,
+	0/*TBR*/, dkong3_input_ports, 0/*TBR*/, 0/*TBR*/, 0/*TBR*/,
 
 	dkong3_color_prom, 0, 0,
 	ORIENTATION_ROTATE_90,
@@ -1200,6 +1457,9 @@ struct GameDriver dkong3_driver =
 	dkong3_hiload, dkong3_hisave
 };
 
+
+/* Since this game does not work the input ports and dip switches
+ have not been tested */
 struct GameDriver hunchy_driver =
 {
 	"Hunchback",
@@ -1210,11 +1470,14 @@ struct GameDriver hunchy_driver =
 	hunchy_rom,
 	0, 0,
 	0,
+	0,      /* sound_prom */
 
-	input_ports, 0, trak_ports, dsw, keys,
+	0/*TBR*/, dkong_input_ports, 0/*TBR*/, 0/*TBR*/, 0/*TBR*/,
 
 	hunchy_color_prom, 0, 0,
 	ORIENTATION_ROTATE_90,
 
 	0, 0
 };
+
+

@@ -17,40 +17,7 @@ read:
 7800      Watchdog Reset (Battle of Atlantis)
 8100      IN0
 8101      IN1
-8102      IN2
-
-*
- * IN0 (all bits are inverted)
- * bit 7 : COIN 1
- * bit 6 : COIN 2
- * bit 5 : LEFT player 1
- * bit 4 : RIGHT player 1
- * bit 3 : SHOOT 1 player 1
- * bit 2 : CREDIT (SERVICE)
- * bit 1 : SHOOT 2 player 1
- * bit 0 : UP player 2 (TABLE only)
- *
-*
- * IN1 (all bits are inverted)
- * bit 7 : START 1
- * bit 6 : START 2
- * bit 5 : LEFT player 2 (TABLE only)
- * bit 4 : RIGHT player 2 (TABLE only)
- * bit 3 : SHOOT 1 player 2 (TABLE only)
- * bit 2 : SHOOT 2 player 2 (TABLE only)
- * bit 1 :\ nr of lives
- * bit 0 :/ 00 = 3  01 = 4  10 = 5  11 = 256
-*
- * IN2 (all bits are inverted)
- * bit 7 : protection check?
- * bit 6 : DOWN player 1
- * bit 5 : protection check?
- * bit 4 : UP player 1
- * bit 3 : COCKTAIL or UPRIGHT cabinet (0 = UPRIGHT)
- * bit 2 :\ coins per play
- * bit 1 :/
- * bit 0 : DOWN player 2 (TABLE only)
- *
+8102      IN2 (bits 5 and 7 used for protection check in Scramble)
 
 write:
 6801      interrupt enable
@@ -99,48 +66,66 @@ extern unsigned char *galaxian_attributesram;
 extern unsigned char *galaxian_bulletsram;
 extern int galaxian_bulletsram_size;
 void galaxian_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
+void galaxian_flipx_w(int offset,int data);
+void galaxian_flipy_w(int offset,int data);
 void galaxian_attributes_w(int offset,int data);
 void galaxian_stars_w(int offset,int data);
+void scramble_background_w(int offset, int data);	/* MJC 051297 */
 int scramble_vh_start(void);
 void galaxian_vh_screenrefresh(struct osd_bitmap *bitmap);
 int scramble_vh_interrupt(void);
 
 void scramble_sh_irqtrigger_w(int offset,int data);
-int scramble_sh_interrupt(void);
 int scramble_sh_start(void);
 int frogger_sh_interrupt(void);
 int frogger_sh_start(void);
 
+void scramble_background_w(int offset, int data);	/* MJC 051297 */
 
 
-static struct MemoryReadAddress readmem[] =
+static struct MemoryReadAddress scramble_readmem[] =
 {
-	{ 0x4000, 0x4bff, MRA_RAM },	/* RAM and Video RAM */
 	{ 0x0000, 0x3fff, MRA_ROM },
+	{ 0x4000, 0x4bff, MRA_RAM },	/* RAM and Video RAM */
+	{ 0x5000, 0x507f, MRA_RAM },	/* screen attributes, sprites, bullets */
 	{ 0x7000, 0x7000, MRA_NOP },
 	{ 0x7800, 0x7800, MRA_NOP },
 	{ 0x8100, 0x8100, input_port_0_r },	/* IN0 */
 	{ 0x8101, 0x8101, input_port_1_r },	/* IN1 */
-	{ 0x8102, 0x8102, scramble_IN2_r },	/* IN2 */
-	{ 0x5000, 0x507f, MRA_RAM },	/* screen attributes, sprites, bullets */
+	{ 0x8102, 0x8102, scramble_IN2_r },	/* IN2 with protection check */
 	{ 0x8202, 0x8202, scramble_protection_r },
+	{ -1 }	/* end of table */
+};
+
+static struct MemoryReadAddress readmem[] =
+{
+	{ 0x0000, 0x3fff, MRA_ROM },
+	{ 0x4000, 0x4bff, MRA_RAM },	/* RAM and Video RAM */
+	{ 0x5000, 0x507f, MRA_RAM },	/* screen attributes, sprites, bullets */
+	{ 0x7000, 0x7000, watchdog_reset_r },
+	{ 0x7800, 0x7800, watchdog_reset_r },
+	{ 0x8100, 0x8100, input_port_0_r },	/* IN0 */
+	{ 0x8101, 0x8101, input_port_1_r },	/* IN1 */
+	{ 0x8102, 0x8102, input_port_2_r },	/* IN2 */
 	{ -1 }	/* end of table */
 };
 
 static struct MemoryWriteAddress writemem[] =
 {
+	{ 0x0000, 0x3fff, MWA_ROM },
 	{ 0x4000, 0x47ff, MWA_RAM },
 	{ 0x4800, 0x4bff, videoram_w, &videoram, &videoram_size },
 	{ 0x5000, 0x503f, galaxian_attributes_w, &galaxian_attributesram },
 	{ 0x5040, 0x505f, MWA_RAM, &spriteram, &spriteram_size },
 	{ 0x5060, 0x507f, MWA_RAM, &galaxian_bulletsram, &galaxian_bulletsram_size },
 	{ 0x6801, 0x6801, interrupt_enable_w },
-	{ 0x6804, 0x6804, galaxian_stars_w },
 	{ 0x6802, 0x6802, MWA_NOP },
-	{ 0x6806, 0x6807, MWA_NOP },
+	{ 0x6803, 0x6803, scramble_background_w },
+	{ 0x6804, 0x6804, galaxian_stars_w },
+	{ 0x6806, 0x6806, galaxian_flipx_w },
+	{ 0x6807, 0x6807, galaxian_flipy_w },
 	{ 0x8200, 0x8200, soundlatch_w },
 	{ 0x8201, 0x8201, scramble_sh_irqtrigger_w },
-	{ 0x0000, 0x3fff, MWA_ROM },
 	{ -1 }	/* end of table */
 };
 
@@ -148,30 +133,30 @@ static struct MemoryWriteAddress writemem[] =
 
 static struct MemoryReadAddress sound_readmem[] =
 {
-	{ 0x8000, 0x83ff, MRA_RAM },
 	{ 0x0000, 0x17ff, MRA_ROM },
+	{ 0x8000, 0x83ff, MRA_RAM },
 	{ -1 }	/* end of table */
 };
 
 static struct MemoryWriteAddress sound_writemem[] =
 {
-	{ 0x8000, 0x83ff, MWA_RAM },
 	{ 0x0000, 0x17ff, MWA_ROM },
+	{ 0x8000, 0x83ff, MWA_RAM },
 	{ -1 }	/* end of table */
 };
 
 
 static struct MemoryReadAddress froggers_sound_readmem[] =
 {
-	{ 0x4000, 0x43ff, MRA_RAM },
 	{ 0x0000, 0x17ff, MRA_ROM },
+	{ 0x4000, 0x43ff, MRA_RAM },
 	{ -1 }	/* end of table */
 };
 
 static struct MemoryWriteAddress froggers_sound_writemem[] =
 {
-	{ 0x4000, 0x43ff, MWA_RAM },
 	{ 0x0000, 0x17ff, MWA_ROM },
+	{ 0x4000, 0x43ff, MWA_RAM },
 	{ -1 }	/* end of table */
 };
 
@@ -179,17 +164,17 @@ static struct MemoryWriteAddress froggers_sound_writemem[] =
 
 static struct IOReadPort sound_readport[] =
 {
-	{ 0x80, 0x80, AY8910_read_port_0_r },
 	{ 0x20, 0x20, AY8910_read_port_1_r },
+	{ 0x80, 0x80, AY8910_read_port_0_r },
 	{ -1 }	/* end of table */
 };
 
 static struct IOWritePort sound_writeport[] =
 {
-	{ 0x40, 0x40, AY8910_control_port_0_w },
-	{ 0x80, 0x80, AY8910_write_port_0_w },
 	{ 0x10, 0x10, AY8910_control_port_1_w },
 	{ 0x20, 0x20, AY8910_write_port_1_w },
+	{ 0x40, 0x40, AY8910_control_port_0_w },
+	{ 0x80, 0x80, AY8910_write_port_0_w },
 	{ -1 }	/* end of table */
 };
 
@@ -201,96 +186,223 @@ static struct IOReadPort froggers_sound_readport[] =
 
 static struct IOWritePort froggers_sound_writeport[] =
 {
-	{ 0x80, 0x80, AY8910_control_port_0_w },
 	{ 0x40, 0x40, AY8910_write_port_0_w },
+	{ 0x80, 0x80, AY8910_control_port_0_w },
 	{ -1 }	/* end of table */
 };
 
 
 
-static struct InputPort input_ports[] =
-{
-	{	/* IN0 */
-		0xff,
-		{ OSD_KEY_UP, OSD_KEY_ALT, OSD_KEY_5, OSD_KEY_LCONTROL,
-				OSD_KEY_RIGHT, OSD_KEY_LEFT, OSD_KEY_4, OSD_KEY_3 },
-		{ OSD_JOY_UP, OSD_JOY_FIRE2, 0, OSD_JOY_FIRE1,
-				OSD_JOY_RIGHT, OSD_JOY_LEFT, 0, 0 }
-	},
-	{	/* IN1 */
-		0xfc,
-		{ 0, 0, OSD_KEY_ALT, OSD_KEY_LCONTROL,
-				OSD_KEY_RIGHT, OSD_KEY_LEFT, OSD_KEY_2, OSD_KEY_1 },
-		{ 0, 0, OSD_JOY_FIRE2, OSD_JOY_FIRE1,
-				OSD_JOY_RIGHT, OSD_JOY_LEFT, 0, 0 }
-	},
-	{	/* IN2 */
-		0xf1,
-		{ OSD_KEY_DOWN, 0, 0, 0, OSD_KEY_UP, 0, OSD_KEY_DOWN, 0 },
-		{ OSD_JOY_DOWN, 0, 0, 0, OSD_JOY_UP, 0, OSD_JOY_DOWN, 0 }
-	},
-	{ -1 }	/* end of table */
-};
+INPUT_PORTS_START( scramble_input_ports )
+	PORT_START	/* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN3 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN1 )
 
-static struct TrakPort trak_ports[] =
-{
-        { -1 }
-};
+	PORT_START	/* IN1 */
+	PORT_DIPNAME( 0x03, 0x00, "Lives", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "3" )
+	PORT_DIPSETTING(    0x01, "4" )
+	PORT_DIPSETTING(    0x02, "5" )
+	PORT_BITX( 0,       0x03, IPT_DIPSWITCH_SETTING | IPF_CHEAT, "256", IP_KEY_NONE, IP_JOY_NONE, 0 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_COCKTAIL )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START1 )
 
+	PORT_START	/* IN2 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_COCKTAIL )
+	PORT_DIPNAME( 0x06, 0x00, "Coinage", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x02, "A 1/2 B 1/1 C 1/2" )
+	PORT_DIPSETTING(    0x04, "A 1/3 B 3/1 C 1/3" )
+	PORT_DIPSETTING(    0x00, "A 1/1 B 2/1 C 1/1" )
+	PORT_DIPSETTING(    0x06, "A 1/4 B 4/1 C 1/4" )
+	PORT_DIPNAME( 0x08, 0x00, "Cabinet", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "Upright" )
+	PORT_DIPSETTING(    0x08, "Cocktail" )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* protection check? */
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* protection check? */
+INPUT_PORTS_END
 
-static struct KEYSet keys[] =
-{
-        { 2, 4, "PL1 MOVE UP" },
-        { 0, 5, "PL1 MOVE LEFT"  },
-        { 0, 4, "PL1 MOVE RIGHT" },
-        { 2, 6, "PL1 MOVE DOWN" },
-        { 0, 3, "PL1 FIRE FRONT" },
-        { 0, 1, "PL1 FIRE DOWN" },
-        { 0, 0, "PL2 MOVE UP" },
-        { 1, 5, "PL2 MOVE LEFT"  },
-        { 1, 4, "PL2 MOVE RIGHT" },
-        { 2, 0, "PL2 MOVE DOWN" },
-        { 1, 3, "PL2 FIRE FRONT" },
-        { 1, 2, "PL2 FIRE DOWN" },
-        { -1 }
-};
+/* same as scramble, dip switches are different (no cocktail?) and COIN3 doesn't work. */
+INPUT_PORTS_START( atlantis_input_ports )
+	PORT_START	/* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* probably unused */
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN1 )
 
+	PORT_START	/* IN1 */
+	PORT_DIPNAME( 0x01, 0x00, "SW1", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "Off" )
+	PORT_DIPSETTING(    0x01, "On" )
+	PORT_DIPNAME( 0x02, 0x02, "Lives", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "5" )
+	PORT_DIPSETTING(    0x02, "3" )
+	PORT_BITX( 0,       0x03, IPT_DIPSWITCH_SETTING | IPF_CHEAT, "256", IP_KEY_NONE, IP_JOY_NONE, 0 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_COCKTAIL )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START1 )
 
-static struct DSW scramble_dsw[] =
-{
-	{ 1, 0x03, "LIVES", { "3", "4", "5", "256" } },
-	{ 2, 0x06, "COINAGE", { "A 1/1 B 2/1 C 1/1", "A 1/2 B 1/1 C 1/2", "A 1/3 B 3/1 C 1/3", "A 1/4 B 4/1 C 1/4" } },
-	{ -1 }
-};
-static struct DSW theend_dsw[] =
-{
-	{ 1, 0x03, "LIVES", { "3", "4", "5", "256" } },
-	{ 2, 0x06, "COINAGE", { "1 Coin/1 Credit", "2 Coins/1 Credit", "3 Coins/1 Credit", "1 Coin/2 Credits" } },
-	{ -1 }
-};
-static struct DSW atlantis_dsw[] =
-{
-	{ 1, 0x02, "LIVES", { "5", "3" }, 1 },
-	{ 1, 0x01, "SW1", { "OFF", "ON" } },
-	{ 2, 0x0e, "COINAGE", { "0", "1", "2", "3", "4", "5", "6", "7" } },
-	{ -1 }
-};
-static struct DSW froggers_dsw[] =
-{
-	{ 1, 0x03, "LIVES", { "3", "4", "5", "256" } },
-	{ 2, 0x06, "COINAGE", { "A 1/1 B 1/1 C 1/1", "A 2/1 B 2/1 C 2/1", "A 2/1 B 1/3 C 2/1", "A 1/1 B 1/6 C 1/1" } },
-	{ -1 }
-};
-static struct DSW triplep_dsw[] =
-{
-	{ 1, 0x01, "SW1", { "OFF", "ON" } },
-	{ 1, 0x02, "SW2", { "OFF", "ON" } },
-	{ 2, 0x02, "SW3", { "OFF", "ON" } },
-	{ 2, 0x04, "SW4", { "OFF", "ON" } },
-	{ 2, 0x08, "SW5", { "OFF", "ON" } },
-	{ -1 }
-};
+	PORT_START	/* IN2 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_COCKTAIL )
+	PORT_DIPNAME( 0x0e, 0x00, "Coinage", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "0" )
+	PORT_DIPSETTING(    0x02, "1" )
+	PORT_DIPSETTING(    0x04, "2" )
+	PORT_DIPSETTING(    0x06, "3" )
+	PORT_DIPSETTING(    0x08, "4" )
+	PORT_DIPSETTING(    0x0a, "5" )
+	PORT_DIPSETTING(    0x0c, "6" )
+	PORT_DIPSETTING(    0x0e, "7" )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+INPUT_PORTS_END
 
+/* same as scramble, dip switches are different */
+INPUT_PORTS_START( theend_input_ports )
+	PORT_START	/* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN3 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN1 )
+
+	PORT_START	/* IN1 */
+	PORT_DIPNAME( 0x03, 0x00, "Lives", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "3" )
+	PORT_DIPSETTING(    0x01, "4" )
+	PORT_DIPSETTING(    0x02, "5" )
+	PORT_BITX( 0,       0x03, IPT_DIPSWITCH_SETTING | IPF_CHEAT, "256", IP_KEY_NONE, IP_JOY_NONE, 0 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_COCKTAIL )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START1 )
+
+	PORT_START	/* IN2 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_COCKTAIL )
+	PORT_DIPNAME( 0x06, 0x00, "Coinage", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x04, "3 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x02, "2 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x00, "1 Coin/1 Credit" )
+	PORT_DIPSETTING(    0x06, "1 Coin/2 Credits" )
+	PORT_DIPNAME( 0x08, 0x00, "Cabinet", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "Upright" )
+	PORT_DIPSETTING(    0x08, "Cocktail" )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* protection check? */
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* protection check? */
+INPUT_PORTS_END
+
+INPUT_PORTS_START( froggers_input_ports )
+	PORT_START	/* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* 1P shoot2 - unused */
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN3 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* 1P shoot1 - unused */
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_4WAY )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN1 )
+
+	PORT_START	/* IN1 */
+	PORT_DIPNAME( 0x03, 0x00, "Lives", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "3" )
+	PORT_DIPSETTING(    0x01, "5" )
+	PORT_DIPSETTING(    0x02, "7" )
+	PORT_BITX( 0,       0x03, IPT_DIPSWITCH_SETTING | IPF_CHEAT, "256", IP_KEY_NONE, IP_JOY_NONE, 0 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* 2P shoot2 - unused */
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* 2P shoot1 - unused */
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START1 )
+
+	PORT_START	/* IN2 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_4WAY | IPF_COCKTAIL )
+	PORT_DIPNAME( 0x06, 0x00, "Coinage", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x02, "A 2/1 B 2/1 C 2/1" )
+	PORT_DIPSETTING(    0x04, "A 2/1 B 1/3 C 2/1" )
+	PORT_DIPSETTING(    0x00, "A 1/1 B 1/1 C 1/1" )
+	PORT_DIPSETTING(    0x06, "A 1/1 B 1/6 C 1/1" )
+	PORT_DIPNAME( 0x08, 0x00, "Cabinet", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "Upright" )
+	PORT_DIPSETTING(    0x08, "Cocktail" )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_4WAY )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_4WAY )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNUSED )
+INPUT_PORTS_END
+
+INPUT_PORTS_START( amidars_input_ports )
+	PORT_START	/* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* 1P shoot2 - unused */
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN3 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_4WAY )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN1 )
+
+	PORT_START	/* IN1 */
+	PORT_DIPNAME( 0x03, 0x02, "Lives", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x03, "2" )
+	PORT_DIPSETTING(    0x02, "3" )
+	PORT_DIPSETTING(    0x01, "4" )
+	PORT_BITX( 0,       0x00, IPT_DIPSWITCH_SETTING | IPF_CHEAT, "256", IP_KEY_NONE, IP_JOY_NONE, 0 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_COCKTAIL )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START1 )
+
+	PORT_START	/* IN2 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_4WAY | IPF_COCKTAIL )
+	PORT_DIPNAME( 0x02, 0x00, "Coinage", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "A 1/1 B 1/6" )
+	PORT_DIPSETTING(    0x02, "A 2/1 B 1/3" )
+	PORT_DIPNAME( 0x04, 0x00, "Unknown 1", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x04, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x08, 0x00, "Cabinet", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "Upright" )
+	PORT_DIPSETTING(    0x08, "Cocktail" )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_4WAY )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_DIPNAME( 0x20, 0x00, "Unknown 2", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x20, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_4WAY )
+	PORT_DIPNAME( 0x80, 0x00, "Unknown 3", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x80, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+INPUT_PORTS_END
 
 
 static struct GfxLayout charlayout =
@@ -329,11 +441,11 @@ static struct GfxLayout bulletlayout =
 static struct GfxLayout theend_bulletlayout =
 {
 	/* there is no gfx ROM for this one, it is generated by the hardware */
-	3,1,	/* 3*1 line */
+	7,1,	/* 4*1 line, I think - 7*1 to position it correctly */
 	1,	/* just one */
 	1,	/* 1 bit per pixel */
 	{ 0 },
-	{ 2, 2, 2 },	/* I "know" that this bit is 1 */
+	{ 2, 2, 2, 2, 0, 0, 0 },	/* I "know" that this bit is 1 */
 	{ 0 },	/* I "know" that this bit is 1 */
 	0	/* no use */
 };
@@ -379,6 +491,12 @@ static unsigned char triplep_color_prom[] =
 	0x00,0x24,0xFF,0x3F,0x00,0x1E,0x2F,0x07,0x00,0x5E,0xD9,0xBF,0x00,0x07,0xFF,0x3F
 };
 
+static unsigned char amidars_color_prom[] =
+{
+	/* palette */
+	0x00,0x07,0xC0,0xB6,0x00,0x38,0xC5,0x67,0x00,0x30,0x07,0x3F,0x00,0x07,0x30,0x3F,
+	0x00,0x3F,0x30,0x07,0x00,0x38,0x67,0x3F,0x00,0xFF,0x07,0xDF,0x00,0xF8,0x07,0xFF
+};
 
 
 static struct MachineDriver scramble_machine_driver =
@@ -389,15 +507,15 @@ static struct MachineDriver scramble_machine_driver =
 			CPU_Z80,
 			3072000,	/* 3.072 Mhz */
 			0,
-			readmem,writemem,0,0,
+			scramble_readmem,writemem,0,0,
 			scramble_vh_interrupt,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
-			1789750,	/* 1.78975 Mhz?????? */
+			1789750,	/* 1.78975 Mhz */
 			2,	/* memory region #2 */
 			sound_readmem,sound_writemem,sound_readport,sound_writeport,
-			scramble_sh_interrupt,10
+			ignore_interrupt,1	/* interrupts are triggered by the main CPU */
 		}
 	},
 	60,
@@ -418,15 +536,12 @@ static struct MachineDriver scramble_machine_driver =
 
 	/* sound hardware */
 	0,
-	0,
 	scramble_sh_start,
 	AY8910_sh_stop,
 	AY8910_sh_update
 };
 
-
-
-/* same as Scramble, the only difference is the gfxdecodeinfo */
+/* same as Scramble, the only differences are gfxdecodeinfo and readmem */
 static struct MachineDriver theend_machine_driver =
 {
 	/* basic machine hardware */
@@ -440,10 +555,10 @@ static struct MachineDriver theend_machine_driver =
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
-			1789750,	/* 1.78975 Mhz?????? */
+			1789750,	/* 1.78975 Mhz */
 			2,	/* memory region #2 */
 			sound_readmem,sound_writemem,sound_readport,sound_writeport,
-			scramble_sh_interrupt,10
+			ignore_interrupt,1	/* interrupts are triggered by the main CPU */
 		}
 	},
 	60,
@@ -464,13 +579,10 @@ static struct MachineDriver theend_machine_driver =
 
 	/* sound hardware */
 	0,
-	0,
 	scramble_sh_start,
 	AY8910_sh_stop,
 	AY8910_sh_update
 };
-
-
 
 static struct MachineDriver froggers_machine_driver =
 {
@@ -485,10 +597,10 @@ static struct MachineDriver froggers_machine_driver =
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
-			2000000,	/* 2 Mhz?????? */
+			1789750,	/* 1.78975 Mhz */
 			2,	/* memory region #2 */
 			froggers_sound_readmem,froggers_sound_writemem,froggers_sound_readport,froggers_sound_writeport,
-			frogger_sh_interrupt,10
+			ignore_interrupt,1	/* interrupts are triggered by the main CPU */
 		}
 	},
 	60,
@@ -508,7 +620,6 @@ static struct MachineDriver froggers_machine_driver =
 	galaxian_vh_screenrefresh,
 
 	/* sound hardware */
-	0,
 	0,
 	frogger_sh_start,
 	AY8910_sh_stop,
@@ -602,18 +713,24 @@ ROM_START( froggers_rom )
 	ROM_LOAD( "snd_e5.bin", 0x1000, 0x0800, 0x7ec0f39e )
 ROM_END
 
-ROM_START( triplep_rom )
+ROM_START( amidars_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "triplep.2g", 0x0000, 0x1000, 0x62f9bd01 )
-	ROM_LOAD( "triplep.2h", 0x1000, 0x1000, 0x3a8878fc )
-	ROM_LOAD( "triplep.2k", 0x2000, 0x1000, 0x410b1bdb )
-	ROM_LOAD( "triplep.2l", 0x3000, 0x1000, 0x9b85297b )
+	ROM_LOAD( "am2d", 0x0000, 0x0800, 0xc39cdbc8 )
+	ROM_LOAD( "am2e", 0x0800, 0x0800, 0xe55fb831 )
+	ROM_LOAD( "am2f", 0x1000, 0x0800, 0xa3f93717 )
+	ROM_LOAD( "am2h", 0x1800, 0x0800, 0x8d476771 )
+	ROM_LOAD( "am2j", 0x2000, 0x0800, 0x95553e91 )
+	ROM_LOAD( "am2l", 0x2800, 0x0800, 0xa5f97fb3 )
+	ROM_LOAD( "am2m", 0x3000, 0x0800, 0x3bc201c8 )
+	ROM_LOAD( "am2p", 0x3800, 0x0800, 0x1960db94 )
 
 	ROM_REGION(0x1000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "triplep.5f", 0x0000, 0x0800, 0x5c3c843c )
-	ROM_LOAD( "triplep.5h", 0x0800, 0x0800, 0x4c6246e0 )
+	ROM_LOAD( "am5f", 0x0000, 0x0800, 0xe09ed6c8 )
+	ROM_LOAD( "am5h", 0x0800, 0x0800, 0x3355a22f )
 
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_LOAD( "am5c", 0x0000, 0x1000, 0x2fd961f7 )
+	ROM_LOAD( "am5d", 0x1000, 0x1000, 0xfa4bd265 )
 ROM_END
 
 
@@ -821,14 +938,15 @@ struct GameDriver scramble_driver =
 {
 	"Scramble",
 	"scramble",
-	"NICOLA SALMORIA\nMIKE BALFOUR",
+	"Nicola Salmoria (MAME driver)\nMike Balfour (high score save)",
 	&scramble_machine_driver,
 
 	scramble_rom,
 	0, 0,
 	0,
+	0,	/* sound_prom */
 
-	input_ports, 0, trak_ports, scramble_dsw, keys,
+	0/*TBR*/, scramble_input_ports, 0/*TBR*/, 0/*TBR*/, 0/*TBR*/,
 
 	scramble_color_prom, 0, 0,
 	ORIENTATION_ROTATE_90,
@@ -846,8 +964,9 @@ struct GameDriver atlantis_driver =
 	atlantis_rom,
 	0, 0,
 	0,
+	0,	/* sound_prom */
 
-	input_ports, 0, trak_ports, atlantis_dsw, keys,
+	0/*TBR*/, atlantis_input_ports, 0/*TBR*/, 0/*TBR*/, 0/*TBR*/,
 
 	scramble_color_prom, 0, 0,
 	ORIENTATION_ROTATE_90,
@@ -865,8 +984,9 @@ struct GameDriver theend_driver =
 	theend_rom,
 	0, 0,
 	0,
+	0,	/* sound_prom */
 
-	input_ports, 0, trak_ports, theend_dsw, keys,
+	0/*TBR*/, theend_input_ports, 0/*TBR*/, 0/*TBR*/, 0/*TBR*/,
 
 	scramble_color_prom, 0, 0,
 	ORIENTATION_ROTATE_90,
@@ -884,8 +1004,9 @@ struct GameDriver froggers_driver =
 	froggers_rom,
 	froggers_decode, 0,
 	0,
+	0,	/* sound_prom */
 
-	input_ports, 0, trak_ports, froggers_dsw, keys,
+	0/*TBR*/, froggers_input_ports, 0/*TBR*/, 0/*TBR*/, 0/*TBR*/,
 
 	froggers_color_prom, 0, 0,
 	ORIENTATION_ROTATE_90,
@@ -893,25 +1014,204 @@ struct GameDriver froggers_driver =
 	froggers_hiload, froggers_hisave
 };
 
-/* Triple Punch isn't working yet. Commenting out the line 6801 - interrupt_enable_w */
-/* from writemem makes it start, however it resets soon after you start a game */
-/* This game also has a test mode - I got it once but haven't been able to get */
-/* it again. */
+struct GameDriver amidars_driver =
+{
+	"Amidars",
+	"amidars",
+	"Nicola Salmoria\nMike Coates",
+	&scramble_machine_driver,
+
+	amidars_rom,
+	0, 0,
+	0,
+	0,	/* sound_prom */
+
+	0, amidars_input_ports, 0, 0, 0,
+
+	amidars_color_prom, 0, 0,
+	ORIENTATION_ROTATE_90,
+
+	0,0
+};
+
+
+
+
+
+
+
+
+
+
+
+static struct MemoryReadAddress triplep_readmem[] =
+{
+	{ 0x0000, 0x3fff, MRA_ROM },
+	{ 0x4000, 0x4bff, MRA_RAM },	/* RAM and Video RAM */
+	{ 0x5000, 0x507f, MRA_RAM },	/* screen attributes, sprites, bullets */
+	{ 0x7000, 0x7000, watchdog_reset_r },
+	{ 0x8100, 0x8100, input_port_0_r },	/* IN0 */
+	{ 0x8101, 0x8101, input_port_1_r },	/* IN1 */
+	{ 0x8102, 0x8102, input_port_2_r },	/* IN2 */
+	{ -1 }	/* end of table */
+};
+
+static struct MemoryWriteAddress triplep_writemem[] =
+{
+	{ 0x0000, 0x3fff, MWA_ROM },
+	{ 0x4000, 0x47ff, MWA_RAM },
+	{ 0x4800, 0x4bff, videoram_w, &videoram, &videoram_size },
+	{ 0x4c00, 0x4fff, videoram_w },	/* mirror address */
+	{ 0x5000, 0x503f, galaxian_attributes_w, &galaxian_attributesram },
+	{ 0x5040, 0x505f, MWA_RAM, &spriteram, &spriteram_size },
+	{ 0x5060, 0x507f, MWA_RAM, &galaxian_bulletsram, &galaxian_bulletsram_size },
+	{ 0x6801, 0x6801, interrupt_enable_w },
+	{ 0x6802, 0x6802, MWA_NOP },
+	{ 0x6803, 0x6803, scramble_background_w },
+	{ 0x6804, 0x6804, galaxian_stars_w },
+	{ 0x6806, 0x6806, galaxian_flipx_w },
+	{ 0x6807, 0x6807, galaxian_flipy_w },
+	{ -1 }	/* end of table */
+};
+
+static int pip(int offset)
+{
+if (errorlog) fprintf(errorlog,"PC %04x: read port 2\n",cpu_getpc());
+	if (cpu_getpc() == 0x015a) return 0xff;
+	else if (cpu_getpc() == 0x0886) return 0x05;
+	else return 0;
+}
+static int pap(int offset)
+{
+if (errorlog) fprintf(errorlog,"PC %04x: read port 3\n",cpu_getpc());
+	if (cpu_getpc() == 0x015d) return 0x04;
+	else return 0;
+}
+
+static struct IOReadPort triplep_readport[] =
+{
+	{ 0x01, 0x01, AY8910_read_port_0_r },
+	{ 0x02, 0x02, pip },
+	{ 0x03, 0x03, pap },
+	{ -1 }	/* end of table */
+};
+
+static struct IOWritePort triplep_writeport[] =
+{
+	{ 0x01, 0x01, AY8910_control_port_0_w },
+	{ 0x00, 0x00, AY8910_write_port_0_w },
+	{ -1 }	/* end of table */
+};
+
+INPUT_PORTS_START( triplep_input_ports )
+	PORT_START	/* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN3 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_4WAY )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN1 )
+
+	PORT_START	/* IN1 */
+	PORT_DIPNAME( 0x03, 0x00, "Lives", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "3" )
+	PORT_DIPSETTING(    0x01, "4" )
+	PORT_DIPSETTING(    0x02, "5" )
+	PORT_BITX( 0,       0x03, IPT_DIPSWITCH_SETTING | IPF_CHEAT, "256", IP_KEY_NONE, IP_JOY_NONE, 0 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START1 )
+
+	PORT_START	/* IN2 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_4WAY | IPF_COCKTAIL )
+	PORT_DIPNAME( 0x06, 0x00, "Coinage", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x02, "A 1/2 B 1/1 C 1/2" )
+	PORT_DIPSETTING(    0x04, "A 1/3 B 3/1 C 1/3" )
+	PORT_DIPSETTING(    0x00, "A 1/1 B 2/1 C 1/1" )
+	PORT_DIPSETTING(    0x06, "A 1/4 B 4/1 C 1/4" )
+	PORT_DIPNAME( 0x08, 0x00, "Cabinet", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "Upright" )
+	PORT_DIPSETTING(    0x08, "Cocktail" )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_4WAY )
+	PORT_BITX(    0x20, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE, 0 )
+	PORT_DIPSETTING(    0x00, "Off" )
+	PORT_DIPSETTING(    0x20, "On" )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_4WAY )
+	PORT_BITX(    0x80, 0x00, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Rack Test", OSD_KEY_F1, IP_JOY_NONE, 0 )
+	PORT_DIPSETTING(    0x00, "Off" )
+	PORT_DIPSETTING(    0x80, "On" )
+INPUT_PORTS_END
+
+
+/* Triple Punch is different - only one CPU, one 8910 */
+static struct MachineDriver triplep_machine_driver =
+{
+	/* basic machine hardware */
+	{
+		{
+			CPU_Z80,
+			3072000,	/* 3.072 Mhz? */
+			0,
+			triplep_readmem,triplep_writemem,triplep_readport,triplep_writeport,
+			scramble_vh_interrupt,1
+		}
+	},
+	60,
+	10,	/* 10 CPU slices per frame - enough for the sound CPU to read all commands */
+	0,
+
+	/* video hardware */
+	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
+	scramble_gfxdecodeinfo,
+	32+64,8*4+2*2,	/* 32 for the characters, 64 for the stars */
+	galaxian_vh_convert_color_prom,
+
+	VIDEO_TYPE_RASTER,
+	0,
+	scramble_vh_start,
+	generic_vh_stop,
+	galaxian_vh_screenrefresh,
+
+	/* sound hardware */
+	0,
+	frogger_sh_start,
+	AY8910_sh_stop,
+	AY8910_sh_update
+};
+
+ROM_START( triplep_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "triplep.2g", 0x0000, 0x1000, 0x62f9bd01 )
+	ROM_LOAD( "triplep.2h", 0x1000, 0x1000, 0x3a8878fc )
+	ROM_LOAD( "triplep.2k", 0x2000, 0x1000, 0x410b1bdb )
+	ROM_LOAD( "triplep.2l", 0x3000, 0x1000, 0x9b85297b )
+
+	ROM_REGION(0x1000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "triplep.5f", 0x0000, 0x0800, 0x5c3c843c )
+	ROM_LOAD( "triplep.5h", 0x0800, 0x0800, 0x4c6246e0 )
+ROM_END
+
 struct GameDriver triplep_driver =
 {
 	"Triple Punch",
 	"triplep",
 	"NICOLA SALMORIA",
-	&scramble_machine_driver,
+	&triplep_machine_driver,
 
 	triplep_rom,
 	0, 0,
 	0,
+	0,	/* sound_prom */
 
-	input_ports, 0, trak_ports, triplep_dsw, keys,
+	0/*TBR*/, triplep_input_ports, 0/*TBR*/, 0/*TBR*/, 0/*TBR*/,
 
 	triplep_color_prom, 0, 0,
 	ORIENTATION_ROTATE_90,
 
-	0, 0
+	scramble_hiload, scramble_hisave
 };

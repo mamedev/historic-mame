@@ -66,7 +66,7 @@ void locomotn_vh_screenrefresh(struct osd_bitmap *bitmap)
 	{
 		if (spriteram_2[offs + 1] > 16)
 			drawgfx(bitmap,Machine->gfx[1],
-					((spriteram_2[offs] >> 2) & 0x1f) + 0x20*(spriteram_2[offs] & 0x01),
+					((spriteram_2[offs] & 0x7c) >> 2) + 0x20*(spriteram_2[offs] & 0x01),
 					spriteram[offs + 1],
 					0,0,
 					spriteram[offs] - 16,spriteram_2[offs + 1] + 32,

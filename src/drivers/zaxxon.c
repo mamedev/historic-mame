@@ -21,7 +21,7 @@ see the input_ports definition below for details on the input bits
 write:
 c000-c002 ?
 c006      ?
-ff3c-ff3f ?
+ff3c-ff3f sound (see below)
 fff0      interrupt enable
 fff1      ?
 fff8-fff9 background playfield position
@@ -32,6 +32,56 @@ fffe      ?
 interrupts:
 VBlank triggers IRQ, handled with interrupt mode 1
 NMI enters the test mode.
+
+-------------
+
+Zaxxon Sound Information: (from the schematics)
+by Frank Palazzolo
+
+There are four registers in the 8255. they are mapped to
+(111x xxxx 0011 11pp) by Zaxxon.  Zaxxon writes to these
+at FF3C-FF3F.
+
+There are three modes of the 8255, but by the schematics I
+can see that Zaxxon is using "Mode 0", which is very simple.
+
+Important Note:
+These are all Active-Low outputs.
+A 1 De-activates the sound, while a 0 Activates/Triggers it
+
+Port A Output:
+FF3C bit7 Battleship
+     bit6 Laser
+     bit5 Base Missle
+     bit4 Homing Missle
+     bit3 Player Ship D
+     bit2 Player Ship C
+     bit1 Player Ship B
+     bit0 Player Ship A
+
+Port B Output:
+FF3D bit7 Cannon
+     bit6 N/C
+     bit5 M-Exp
+     bit4 S-Exp
+     bit3 N/C
+     bit2 N/C
+     bit1 N/C
+     bit0 N/C
+
+Port C Output:
+FF3E bit7 N/C
+     bit6 N/C
+     bit5 N/C
+     bit4 N/C
+     bit3 Alarm 3
+     bit2 Alarm 2
+     bit1 N/C
+     bit0 Shot
+
+Control Byte:
+FF3F Should be written an 0x80 for Mode 0
+     (Very Simple) operation of the 8255
 
 ***************************************************************************/
 
@@ -148,7 +198,7 @@ INPUT_PORTS_START( input_ports )
 	PORT_DIPSETTING(    0x30, "3" )
 	PORT_DIPSETTING(    0x10, "4" )
 	PORT_DIPSETTING(    0x20, "5" )
-	PORT_DIPSETTING(    0x00, "Infinite" )
+	PORT_BITX( 0,       0x00, IPT_DIPSWITCH_SETTING | IPF_CHEAT, "Infinite", IP_KEY_NONE, IP_JOY_NONE, 0 )
 	PORT_DIPNAME( 0x40, 0x40, "Demo Sounds", IP_KEY_NONE )
 	PORT_DIPSETTING(    0x00, "Off" )
 	PORT_DIPSETTING(    0x40, "On" )
@@ -251,122 +301,10 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 
 
-static unsigned char palette[] =
-{
-  0x00,0x00,0x00, /* BLACK */
-  0xFF,0x00,0x00, /* RED */
-  0xdb,0x92,0x49, /* BROWN */
-  0xff,0xb6,0xdb, /* PINK */
-  0xFF,0xFF,0xFF, /* WHITE */
-  0x00,0xFF,0xFF, /* CYAN */
-  0x49,0xb6,0xdb, /* DKCYAN */
-  0xFF,0x60,0x00, /* DKORANGE */
-  0x00,0x00,0x96, /* DKBLUE */
-  0xFF,0xFF,0x00, /* YELLOW */
-  0x03,0x96,0xd2, /* LTBLUE */
-  0x24,0x24,0xdb, /* BLUE */
-  0x00,0xdb,0x00, /* GREEN */
-  0x49,0xb6,0x92, /* DKGREEN */
-  0xff,0xb6,0x92, /* LTORANGE */
-  0xb6,0xb6,0xb6, /* GRAY */
-  0x19,0x96,0x62, /* VDKGREEN */
-  0xC0,0x00,0x00, /* DKRED */
-
-  0xFF,0x00,0xFF, /* CUSTOM1 magenta*/
-  0x80,0xC0,0xFF, /* CUSTOM2 blue plane*/
-  0xFF,0xE0,0x00, /* CUSTOM3 */
-  0xFF,0xC0,0x40, /* CUSTOM4 */
-
-  0xc0,0xff,0x00, /* GREEN1 */
-  0x80,0xe0,0x00, /* GREEN2 */
-  0x40,0xc0,0x00, /* GREEN3 */
-
-  0x00,0x00,0x80, /* BACK1 dark blue*/
-  0x00,0x00,0xC0, /* BACK2 Blue */
-  0x40,0xA0,0xFF, /* BACK3 */
-  0x60,0xA0,0xE0, /* BACK4 */
-  0xA0,0xD0,0xF0, /* BACK5 */
-  0xC0,0xE0,0xFF, /* BACK6 */
-  0x00,0x60,0xC0, /* BACK7 */
-  0xE0,0x80,0xE0, /* BACK8 */
-  0x50,0x90,0xD0, /* BACK9 */
-  0x40,0x80,0xC0, /* BACK10 */
-  0x80,0xB0,0xE0, /* BACK11 */
-
-  0x00,0x00,0xFF, /* BLUE1 */
-  0x00,0x00,0xC0, /* BLUE2 */
-  0x00,0x00,0x80, /* BLUE3 */
-
-  0xFF,0xFF,0xFF, /* YELLOW1 */
-  0xFF,0xFF,0x00, /* YELLOW2 */
-  0xFF,0xE0,0x00, /* YELLOW3 */
-  0xE0,0xC0,0x00, /* YELLOW4 */
-  0xD0,0xA0,0x00, /* YELLOW5 */
-
-  0xA0,0x00,0x00, /* DKRED2 */
-  0x80,0x00,0x00, /* DKRED3 */
-
-  0x80,0xA0,0xC0, /* GRAY1 */
-  0x90,0xA0,0xC0, /* GRAY2 */
-  0xC0,0xE0,0xFF, /* GRAY3 */
-  0xA0,0xC0,0xE0, /* GRAY4 */
-  0x80,0xA0,0xC0, /* GRAY5 */
-  0x60,0x80,0xA0, /* GRAY6 */
-};
-
-enum {BLACK,RED,BROWN,PINK,WHITE,CYAN,DKCYAN,DKORANGE,
-		DKBLUE,YELLOW,LTBLUE,BLUE,GREEN,DKGREEN,LTORANGE,GRAY,
-		VDKGREEN,DKRED,
-		CUSTOM1,CUSTOM2,CUSTOM3,CUSTOM4,
-		GREEN1,GREEN2,GREEN3,
-		BACK1,BACK2,BACK3,BACK4,BACK5,BACK6,BACK7,BACK8,BACK9,BACK10,BACK11,
-		BLUE1,BLUE2,BLUE3,
-		YELLOW1,YELLOW2,YELLOW3,YELLOW4,YELLOW5,
-		DKRED2,DKRED3,GRAY1,GRAY2,GRAY3,GRAY4,GRAY5,GRAY6};
-
-static unsigned char colortable[] =
-{
-	0,BLACK,BACK5,YELLOW2,YELLOW2,YELLOW1,YELLOW5,DKORANGE,   /* Explosion Space */
-	0,BLACK,BACK5,CYAN,YELLOW,BLUE,GREEN,DKORANGE,                  /* Explosion plane 1 */
-	0,BLACK,BACK5,CYAN,RED,BLUE,GREEN,DKORANGE,                  /* Explosion plane 2 */
-	0,BLACK,BACK5,RED,DKORANGE,RED,DKRED,DKRED2,                    /* Explosion Rocket 1 and NMI bullet in space (low level)*/
-	0,BLACK,BACK5,RED,DKORANGE,RED,DKRED,DKRED2,                /* Player Bullet and NMI in space */
-	0,0,2,3,0,0,0,0,
-	0,BLACK,YELLOW,RED,RED,RED,RED,RED,                            /* NMI Bullet */
-	0,BLUE2,RED,BACK5,BACK4,BLUE1,BLUE3,BLACK,                /* Satellite 1/2 */
-	0,DKRED,BLACK,DKCYAN,RED,RED,RED,RED,                     /* Plane When Hit and Cannon bullet */
-	0,BLACK,GRAY5,GRAY1,GRAY2,GRAY3,GRAY4,GRAY6,              /* Cannon 2 */
-	0,WHITE,BACK3,BACK5,BACK6,BACK9,DKORANGE,BLACK,           /* NMI Plane 1 (and Standing planes) */
-	0,BACK2, BACK7, BLACK, BLACK, BACK4,BACK8,BLACK,              /* BG-Zaxxon Arena */
-	0,DKCYAN,LTBLUE,BLUE,  DKBLUE,BLACK,WHITE,CYAN,             /* BG-Space BG */
-	0,BLACK, WHITE, BACK2, BACK1, BACK6,BACK5,BACK4,              /* BG-City BG 2 */
-	0,BACK6, BACK5, BACK3, BACK2, BACK1,BACK4,BLACK,              /* BG-City BG 1 */
-	0,BACK5, BACK6, YELLOW,WHITE, BACK4,BLACK,BACK2,             /* BG-Buildings */
-	0,CUSTOM1,RED,BACK5,CUSTOM3,CUSTOM4,BLACK,WHITE,          /* Plane and Force field */
-	0,YELLOW1,YELLOW2,YELLOW3,YELLOW4,YELLOW5,BLACK,BLACK,    /* NMI Plane 2 */
-	0,BLACK,GREEN3,RED,CUSTOM3,GREEN1,GREEN2,GREEN2,          /* Cannon 1 */
-	0,WHITE,BLACK,BACK6,BACK5,BACK4,LTBLUE,BLACK,             /* Wall and Junk pile from shooting radar,fuel...(with score) */
-	0,GRAY5,BLACK,RED,DKRED,DKORANGE,CUSTOM3,WHITE,           /* Radar & Fuel */
-	0,RED,DKRED,RED,DKORANGE,RED,CUSTOM3,LTORANGE,            /* Rocket 1 */
-	0,WHITE,BACK6,BACK5,BACK4,BACK11,BACK10,BLACK,            /* Zaxxon 1 */
-	0,BLUE2,CYAN,BACK5,BACK4,BLUE1,BLUE3,BLACK,               /* Satellite 2/2 */
-	0,WHITE,PINK,DKORANGE,CYAN,RED,DKRED,BLACK,               /* Zaxxon 2 (RED) */
-	0,RED,DKRED,RED,DKORANGE,YELLOW,LTORANGE,LTORANGE,        /* Rocket 2 */
-	0,BLACK,BLACK,BLACK,BLACK,BLACK,BLACK,BLACK,              /* Shadow of Plane */
-	0,DKRED2,BLACK, RED,   BLACK, DKRED3,BLACK, BLACK,              /* BG-Zaxxon Arena */
-	0,DKCYAN,BLUE,  WHITE, DKBLUE,DKRED2,LTBLUE,CYAN,            /* BG-Space BG */
-	0,BLACK, DKRED2,BACK4, DKRED3,WHITE, WHITE, BACK10,           /* BG-City BG 2 */
-	0,WHITE, BACK3, BACK10,DKRED2,DKRED3,BACK4, BLACK,           /* Zaxxon Dead + BG-City BG 1 */
-	0,BACK4, YELLOW,BLACK, WHITE, BACK10,WHITE, DKRED2            /* BG-Buildings */
-};
-
-
-
-static unsigned char color_prom[] =
+/* these are actually Super Zaxxon's PROMs. Most colors are wrong. */
+static unsigned char szaxxon_color_prom[] =
 {
 	/* U98 - palette */
-	/* many of the colors coming out from this don't seem to be right. Either this */
-	/* dump isn't good, or I've done something wrong in the decoding. */
 	0x00,0x00,0xF0,0xF0,0x36,0x26,0x00,0xFF,0x00,0x00,0xF0,0xF6,0x26,0x36,0x00,0xFF,
 	0x00,0x00,0xF0,0x36,0x00,0x06,0x00,0xFF,0x00,0x00,0xF0,0x06,0x06,0x00,0x00,0x00,
 	0x00,0x00,0xF0,0x38,0x06,0x06,0x00,0x00,0x00,0x00,0x36,0xC6,0x46,0x85,0x00,0xFF,
@@ -382,7 +320,24 @@ static unsigned char color_prom[] =
 	0x00,0x26,0x85,0xF6,0x07,0x06,0x05,0x04,0x00,0xA3,0x26,0x06,0x04,0xA4,0x16,0x5D,
 	0x00,0xF6,0x36,0x06,0x04,0x26,0x03,0x00,0x00,0x16,0x00,0xEE,0xE6,0xC6,0x5D,0x00,
 	0x00,0x07,0x06,0x04,0xC4,0x85,0x05,0x05,0x00,0x00,0x36,0x16,0x05,0xEE,0xE6,0xC6,
-	0x00,0xEE,0xE6,0xC4,0x16,0x05,0xC6,0x00,0x00,0xE6,0xEE,0x85,0x36,0xC6,0x00,0x16
+	0x00,0xEE,0xE6,0xC4,0x16,0x05,0xC6,0x00,0x00,0xE6,0xEE,0x85,0x36,0xC6,0x00,0x16,
+	/* U72 - character color lookup table */
+	0x00,0x01,0x01,0x01,0x01,0x01,0x01,0x02,0x03,0x00,0x04,0x00,0x03,0x03,0x02,0x01,
+	0x04,0x01,0x04,0x01,0x04,0x01,0x01,0x01,0x01,0x01,0x01,0x01,0x06,0x06,0x06,0x01,
+	0x00,0x01,0x01,0x01,0x01,0x01,0x01,0x02,0x03,0x00,0x04,0x00,0x03,0x03,0x02,0x01,
+	0x04,0x01,0x04,0x01,0x04,0x01,0x01,0x01,0x01,0x01,0x01,0x01,0x06,0x06,0x06,0x01,
+	0x00,0x01,0x01,0x01,0x01,0x01,0x01,0x02,0x03,0x00,0x04,0x00,0x03,0x03,0x02,0x01,
+	0x04,0x01,0x04,0x01,0x04,0x01,0x01,0x01,0x01,0x01,0x01,0x03,0x06,0x06,0x06,0x01,
+	0x00,0x01,0x01,0x01,0x01,0x01,0x01,0x02,0x03,0x00,0x04,0x00,0x03,0x03,0x02,0x01,
+	0x04,0x01,0x04,0x01,0x04,0x01,0x01,0x01,0x02,0x02,0x02,0x02,0x05,0x05,0x06,0x01,
+	0x00,0x01,0x01,0x01,0x01,0x01,0x01,0x02,0x03,0x00,0x04,0x00,0x03,0x03,0x02,0x01,
+	0x04,0x01,0x04,0x01,0x04,0x01,0x01,0x01,0x02,0x02,0x02,0x02,0x05,0x05,0x06,0x01,
+	0x00,0x01,0x01,0x01,0x01,0x01,0x01,0x02,0x03,0x00,0x04,0x00,0x03,0x03,0x02,0x01,
+	0x04,0x01,0x04,0x01,0x04,0x01,0x01,0x01,0x02,0x02,0x02,0x02,0x05,0x05,0x06,0x01,
+	0x00,0x01,0x01,0x01,0x01,0x01,0x01,0x02,0x03,0x00,0x04,0x00,0x03,0x03,0x02,0x01,
+	0x04,0x01,0x04,0x01,0x04,0x01,0x01,0x01,0x02,0x02,0x02,0x02,0x05,0x05,0x04,0x01,
+	0x00,0x01,0x01,0x01,0x01,0x01,0x01,0x02,0x03,0x00,0x04,0x00,0x03,0x03,0x02,0x01,
+	0x04,0x01,0x04,0x01,0x04,0x01,0x01,0x01,0x02,0x02,0x02,0x02,0x05,0x05,0x04,0x01
 };
 
 
@@ -419,7 +374,6 @@ static struct MachineDriver machine_driver =
 	0,
 	0,
 	0,
-	0,
 	0
 };
 
@@ -440,7 +394,7 @@ ROM_START( zaxxon_rom )
 	ROM_REGION(0xd800)	/* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "zaxxon.14", 0x0000, 0x0800, 0xec944b06 )	/* characters */
 	ROM_LOAD( "zaxxon.15", 0x0800, 0x0800, 0x77cd19bf )
-	/* 1000-1800 empty space to convert the characters as 3bpp instead of 2 */
+	/* 1000-17ff empty space to convert the characters as 3bpp instead of 2 */
 	ROM_LOAD( "zaxxon.6",  0x1800, 0x2000, 0x27b35545 )	/* background tiles */
 	ROM_LOAD( "zaxxon.5",  0x3800, 0x2000, 0x1b73959d )
 	ROM_LOAD( "zaxxon.4",  0x5800, 0x2000, 0x3deedf22 )
@@ -454,6 +408,153 @@ ROM_START( zaxxon_rom )
 	ROM_LOAD( "zaxxon.10", 0x4000, 0x2000, 0x46743110 )
 	ROM_LOAD( "zaxxon.9",  0x6000, 0x2000, 0x6be85050 )
 ROM_END
+
+ROM_START( szaxxon_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "suzaxxon.3", 0x0000, 0x2000, 0x48c0840e )
+	ROM_LOAD( "suzaxxon.2", 0x2000, 0x2000, 0xe25f4a85 )
+	ROM_LOAD( "suzaxxon.1", 0x4000, 0x1000, 0xd996ee1a )
+
+	ROM_REGION(0xd800)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "suzaxxon.14", 0x0000, 0x0800, 0xe48a4b06 )	/* characters */
+	ROM_LOAD( "suzaxxon.15", 0x0800, 0x0800, 0xc6f7e543 )
+	/* 1000-17ff empty space to convert the characters as 3bpp instead of 2 */
+	ROM_LOAD( "suzaxxon.6",  0x1800, 0x2000, 0xd3a4530c )	/* background tiles */
+	ROM_LOAD( "suzaxxon.5",  0x3800, 0x2000, 0x292e67e4 )
+	ROM_LOAD( "suzaxxon.4",  0x5800, 0x2000, 0xe2ad3d31 )
+	ROM_LOAD( "suzaxxon.11", 0x7800, 0x2000, 0x06ace32c )	/* sprites */
+	ROM_LOAD( "suzaxxon.12", 0x9800, 0x2000, 0xc4a9c83d )
+	ROM_LOAD( "suzaxxon.13", 0xb800, 0x2000, 0x4d02ddce )
+
+	ROM_REGION(0x8000)	/* background graphics */
+	ROM_LOAD( "suzaxxon.8",  0x0000, 0x2000, 0x1e73bfd5 )
+	ROM_LOAD( "suzaxxon.7",  0x2000, 0x2000, 0x67046918 )
+	ROM_LOAD( "suzaxxon.10", 0x4000, 0x2000, 0x9d8b2333 )
+	ROM_LOAD( "suzaxxon.9",  0x6000, 0x2000, 0xb0d97103 )
+ROM_END
+
+ROM_START( futspy_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "fs_snd.u27", 0x0000, 0x2000, 0x3423c119 )
+	ROM_LOAD( "fs_snd.u28", 0x2000, 0x2000, 0x785c0e84 )
+	ROM_LOAD( "fs_snd.u29", 0x4000, 0x1000, 0x5448fa68 )
+
+	ROM_REGION(0x13800)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "fs_snd.u68", 0x0000, 0x0800, 0x27ac8fb0 )	/* characters */
+	ROM_LOAD( "fs_snd.u69", 0x0800, 0x0800, 0x47472653 )
+	/* 1000-17ff empty space to convert the characters as 3bpp instead of 2 */
+	ROM_LOAD( "fs_vid.113", 0x1800, 0x2000, 0x8fc6d336 )	/* background tiles */
+	ROM_LOAD( "fs_vid.112", 0x3800, 0x2000, 0x1fdb0ad1 )
+	ROM_LOAD( "fs_vid.111", 0x5800, 0x2000, 0xd739fde1 )
+/* Future Spy has 128 sprites, this is different from Zaxxon */
+	ROM_LOAD( "fs_vid.u77", 0x7800, 0x4000, 0x0c546754 )	/* sprites */
+	ROM_LOAD( "fs_vid.u78", 0xb800, 0x4000, 0x65348620 )
+	ROM_LOAD( "fs_vid.u79", 0xf800, 0x4000, 0x9df771f5 )
+
+	ROM_REGION(0x8000)	/* background graphics */
+	ROM_LOAD( "fs_vid.u91", 0x0000, 0x2000, 0x74c8b47e )
+	ROM_LOAD( "fs_vid.u90", 0x2000, 0x2000, 0x794d9111 )
+	ROM_LOAD( "fs_vid.u93", 0x4000, 0x2000, 0xa5cb5131 )
+	ROM_LOAD( "fs_vid.u92", 0x6000, 0x2000, 0xc7693001 )
+ROM_END
+
+
+
+static void szaxxon_decode(void)
+{
+/*
+	the values vary, but the translation mask is always layed out like this:
+
+	  0 1 2 3 4 5 6 7 8 9 a b c d e f
+	0 A A A A A A A A B B B B B B B B
+	1 A A A A A A A A B B B B B B B B
+	2 C C C C C C C C D D D D D D D D
+	3 C C C C C C C C D D D D D D D D
+	4 A A A A A A A A B B B B B B B B
+	5 A A A A A A A A B B B B B B B B
+	6 C C C C C C C C D D D D D D D D
+	7 C C C C C C C C D D D D D D D D
+	8 D D D D D D D D C C C C C C C C
+	9 D D D D D D D D C C C C C C C C
+	a B B B B B B B B A A A A A A A A
+	b B B B B B B B B A A A A A A A A
+	c D D D D D D D D C C C C C C C C
+	d D D D D D D D D C C C C C C C C
+	e B B B B B B B B A A A A A A A A
+	f B B B B B B B B A A A A A A A A
+
+	(e.g. 0xc0 is XORed with D)
+	therefore in the following tables we only keep track of A, B, C and D.
+*/
+
+	/* THE TABLES ARE NOT ACCURATELY VERIFIED - SOME VALUES COULD BE WRONG */
+	static const unsigned char data_xortable[16][4] =
+	{
+		{ 0x28,0x28,0x88,0x88 },	/* ...0...0...0...0 */
+		{ 0x88,0x88,0x28,0x28 },	/* ...0...0...0...1 */
+		{ 0x20,0xa8,0x20,0xA8 },	/* ...0...0...1...0 */
+		{ 0x28,0x28,0x88,0x88 },	/* ...0...0...1...1 */
+		{ 0x88,0x88,0x28,0x28 },	/* ...0...1...0...0 */
+		{ 0x28,0x28,0x88,0x88 },	/* ...0...1...0...1 */
+		{ 0x20,0xA8,0x20,0xA8 },	/* ...0...1...1...0 */
+		{ 0x88,0x88,0x28,0x28 },	/* ...0...1...1...1 */
+		{ 0x88,0x88,0x28,0x28 },	/* ...1...0...0...0 */
+		{ 0x28,0x28,0x88,0x88 },	/* ...1...0...0...1 */
+		{ 0x28,0x28,0x88,0x88 },	/* ...1...0...1...0 */
+		{ 0x20,0xa8,0x20,0xa8 },	/* ...1...0...1...1 */
+		{ 0x20,0xa8,0x20,0xa8 },	/* ...1...1...0...0 */
+		{ 0x20,0xa8,0x20,0xa8 },	/* ...1...1...0...1 */
+		{ 0x88,0x88,0x28,0x28 },	/* ...1...1...1...0 */
+		{ 0x28,0x28,0x88,0x88 }		/* ...1...1...1...1 */
+	};
+	static const unsigned char opcode_xortable[16][4] =
+	{
+		{ 0x88,0xA0,0xA0,0x88 },	/* ...0...0...0...0 */
+		{ 0x08,0x20,0xA8,0x80 },	/* ...0...0...0...1 */
+		{ 0xA8,0x20,0x80,0x08 },	/* ...0...0...1...0 */
+		{ 0x88,0xA0,0xA0,0x88 },	/* ...0...0...1...1 */
+		{ 0x08,0x20,0xA8,0x80 },	/* ...0...1...0...0 */
+//                       ^^^^ at 0x010A, this should be 0x28
+		{ 0x88,0xA0,0xA0,0x88 },	/* ...0...1...0...1 */
+		{ 0xA8,0x20,0x80,0x08 },	/* ...0...1...1...0 */
+		{ 0x08,0x20,0xA8,0x80 },	/* ...0...1...1...1 */
+		{ 0x08,0x20,0xA8,0x80 },	/* ...1...0...0...0 */
+//                       ^^^^ at 0x1020 and 0x1022, this should be 0x28
+		{ 0x88,0xA0,0xA0,0x88 },	/* ...1...0...0...1 */
+		{ 0x88,0xA0,0xA0,0x88 },	/* ...1...0...1...0 */
+		{ 0xA8,0x20,0x80,0x08 },	/* ...1...0...1...1 */
+		{ 0xA8,0x20,0x80,0x08 },	/* ...1...1...0...0 */
+		{ 0xA8,0x20,0x80,0x08 },	/* ...1...1...0...1 */
+		{ 0x08,0x20,0xA8,0x80 },	/* ...1...1...1...0 */
+		{ 0x88,0xA0,0xA0,0x88 }		/* ...1...1...1...1 */
+	};
+	int A;
+
+
+	for (A = 0x0000;A < 0x5000;A++)
+	{
+		int i,j;
+		unsigned char src;
+
+
+		src = RAM[A];
+
+		/* pick the translation table from bits 0, 4, 8 and 12 of the address */
+		i = (A & 1) + (((A >> 4) & 1) << 1) + (((A >> 8) & 1) << 2) + (((A >> 12) & 1) << 3);
+
+		/* pick the offset in the table from bits 1 and 3 of the source data */
+		j = ((src >> 3) & 1) + (((src >> 5) & 1) << 1);
+
+		/* the bottom half of the translation table is the mirror image of the top */
+		if (src & 0x80) j = 3 - j;
+
+		/* decode the ROM data */
+		RAM[A] = src ^ data_xortable[i][j];
+
+		/* now decode the opcodes */
+		ROM[A] = src ^ opcode_xortable[i][j];
+	}
+}
 
 
 
@@ -511,11 +612,56 @@ struct GameDriver zaxxon_driver =
 	zaxxon_rom,
 	0, 0,
 	0,
+	0,	/* sound_prom */
 
 	0/*TBR*/,input_ports,0/*TBR*/,0/*TBR*/,0/*TBR*/,
 
-	color_prom, palette, colortable,
+	szaxxon_color_prom, 0, 0,
 	ORIENTATION_DEFAULT,
 
 	hiload, hisave
+};
+
+/* Super Zaxxon runs on hardware similar to Zaxxon, but the program ROMs are encrypted */
+/* so it isn't working. */
+struct GameDriver szaxxon_driver =
+{
+	"Super Zaxxon",
+	"szaxxon",
+	"Mirko Buffoni (MAME driver)\nNicola Salmoria (MAME driver)\nTim Lindquist (encryption and color info)",
+	&machine_driver,
+
+	szaxxon_rom,
+	0, szaxxon_decode,
+	0,
+	0,	/* sound_prom */
+
+	0/*TBR*/,input_ports,0/*TBR*/,0/*TBR*/,0/*TBR*/,
+
+	szaxxon_color_prom, 0, 0,
+	ORIENTATION_DEFAULT,
+
+	hiload, hisave
+};
+
+/* Future Spy runs on hardware similar to Zaxxon, but the program ROMs are encrypted */
+/* so it isn't working. */
+struct GameDriver futspy_driver =
+{
+	"Future Spy",
+	"futspy",
+	"Nicola Salmoria",
+	&machine_driver,
+
+	futspy_rom,
+	0, 0,
+	0,
+	0,	/* sound_prom */
+
+	0/*TBR*/,input_ports,0/*TBR*/,0/*TBR*/,0/*TBR*/,
+
+	szaxxon_color_prom, 0, 0,
+	ORIENTATION_ROTATE_180,
+
+	0, 0
 };

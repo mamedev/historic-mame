@@ -337,22 +337,23 @@ void swmathbx(int offset, int data)
         mw2(0,data);
         break;
 
-	case 4: /* dvsrh */
-	  DIVISOR = ((DIVISOR & 0x00ff) | (data<<8));
-	  if(DIVISOR!=0)
-		  RESULT = (int)(((long)DIVIDEND<<14)/(long)DIVISOR);
-	  else
-		  RESULT = (int)-1;
-	  break;
+      case 4: /* dvsrh */
+        DIVISOR = ((DIVISOR & 0x00ff) | (data<<8));
 
       case 5: /* dvsrl */
+
+        /* Note: Divide is triggered by write to low byte.  This is */
+        /*       dependant on the proper 16 bit write order in the  */
+        /*       6809 emulation (high bytes, then low byte).        */
+        /*       If the Tie fighters look corrupt, he byte order of */
+        /*       the 16 bit writes in the 6809 are backwards        */
+
         DIVISOR = ((DIVISOR & 0xff00) | (data));
 
-     /* ASG 971002 -- calculate here as well, or else we're dependent on the byte order of a write */
-	  if(DIVISOR!=0)
-		  RESULT = (int)(((long)DIVIDEND<<14)/(long)DIVISOR);
-	  else
-		  RESULT = (int)-1;
+        if(DIVISOR!=0)
+            RESULT = (int)(((long)DIVIDEND<<14)/(long)DIVISOR);
+        else
+            RESULT = (int)-1;
         break;
 
       case 6: /* dvddh */

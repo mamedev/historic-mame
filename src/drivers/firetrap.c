@@ -1,0 +1,490 @@
+/***************************************************************************
+
+Fire Trap memory map (preliminary)
+
+Z80:
+0000-7fff ROM
+8000-bfff Banked ROM (4 banks)
+c000-cfff RAM
+d000-d7ff bg #1 video/color RAM (alternating pages 0x100 long)
+d000-dfff bg #2 video/color RAM (alternating pages 0x100 long)
+e000-e3ff fg video RAM
+e400-e7ff fg color RAM
+e800-e97f sprites RAM
+
+memory mapped ports:
+read:
+f010      IN0
+f011      IN1
+f012      IN2
+f013      DSW0
+f014      DSW1
+f015      from pin 10 of 8751 controller
+f016      from port #1 of 8751 controller
+
+write:
+f000      IRQ acknowledge
+f001      sound command (also causes NMI on sound CPU)
+f002      ROM bank selection
+f003      flip screen
+f004      NMI disable
+f005      to port #2 of 8751 controller (signal on P3.2)
+f008-f009 bg #1 y scroll
+f00a-f00b bg #1 x scroll
+f00c-f00d bg #2 y scroll
+f00e-f00f bg #2 x scroll
+
+interrupts:
+VBlank triggers NMI.
+the 8751 triggers IRQ
+
+6502:
+0000-07ff RAM
+4000-7fff Banked ROM (2 banks)
+8000-ffff ROM
+
+read:
+3400      command from the main cpu
+
+write:
+1000      YM3526
+2000      VOICE
+2400      ADPCM
+2800      ROM bank select
+
+
+8751:
+Who knows, it's protected. The bootleg doesn't have it.
+
+***************************************************************************/
+
+#include "driver.h"
+#include "vidhrdw/generic.h"
+#include "sndhrdw/generic.h"
+#include "sndhrdw/8910intf.h"
+
+
+
+extern unsigned char *firetrap_bg1videoram,*firetrap_bg2videoram;
+extern unsigned char *firetrap_videoram,*firetrap_colorram;
+extern unsigned char *firetrap_scroll1x,*firetrap_scroll1y;
+extern unsigned char *firetrap_scroll2x,*firetrap_scroll2y;
+extern int firetrap_bgvideoram_size;
+extern int firetrap_videoram_size;
+void firetrap_bg1videoram_w(int offset,int data);
+void firetrap_bg2videoram_w(int offset,int data);
+void firetrap_flipscreen_w(int offset,int data);
+int firetrap_vh_start(void);
+void firetrap_vh_stop(void);
+void firetrap_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
+void firetrap_vh_screenrefresh(struct osd_bitmap *bitmap);
+
+
+
+void firetrap_nmi_disable_w(int offset,int data)
+{
+	interrupt_enable_w(offset,~data & 1);
+}
+
+void firetrap_bankselect_w(int offset,int data)
+{
+	int bankaddress;
+
+
+	bankaddress = 0x10000 + (data & 0x03) * 0x4000;
+	cpu_setbank(1,&RAM[bankaddress]);
+}
+
+int firetrap_8751_r(int offset)
+{
+//if (errorlog) fprintf(errorlog,"PC:%04x read from 8751\n",cpu_getpc());
+
+	/* Check for coin insertion */
+	/* the following only works in the bootleg version, which doesn't have an */
+	/* 8751 - the real thing is much more complicated than that. */
+	if ((readinputport(2) & 0x70) != 0x70) return 0xff;
+	else return 0;
+}
+
+void firetrap_8751_w(int offset,int data)
+{
+if (errorlog) fprintf(errorlog,"PC:%04x write %02x to 8751\n",cpu_getpc(),data);
+	cpu_cause_interrupt(0,0xff);
+}
+
+
+
+static struct MemoryReadAddress readmem[] =
+{
+	{ 0x0000, 0x7fff, MRA_ROM },
+	{ 0x8000, 0xbfff, MRA_BANK1 },
+	{ 0xc000, 0xe97f, MRA_RAM },
+	{ 0xf010, 0xf010, input_port_0_r },
+	{ 0xf011, 0xf011, input_port_1_r },
+	{ 0xf012, 0xf012, input_port_2_r },
+	{ 0xf013, 0xf013, input_port_3_r },
+	{ 0xf014, 0xf014, input_port_4_r },
+	{ 0xf016, 0xf016, firetrap_8751_r },
+	{ 0xf800, 0xf8ff, MRA_ROM },	/* extra ROM in the bootleg with unprotection code */
+	{ -1 }	/* end of table */
+};
+
+static struct MemoryWriteAddress writemem[] =
+{
+	{ 0x0000, 0xbfff, MWA_ROM },
+	{ 0xc000, 0xcfff, MWA_RAM },
+	{ 0xd000, 0xd7ff, firetrap_bg1videoram_w, &firetrap_bg1videoram, &firetrap_bgvideoram_size },
+	{ 0xd800, 0xdfff, firetrap_bg2videoram_w, &firetrap_bg2videoram },
+	{ 0xe000, 0xe3ff, MWA_RAM, &firetrap_videoram, &firetrap_videoram_size },
+	{ 0xe400, 0xe7ff, MWA_RAM, &firetrap_colorram },
+	{ 0xe800, 0xe97f, MWA_RAM, &spriteram, &spriteram_size },
+	{ 0xf000, 0xf000, MWA_NOP },	/* IRQ acknowledge */
+	{ 0xf002, 0xf002, firetrap_bankselect_w },
+	{ 0xf003, 0xf003, firetrap_flipscreen_w },
+	{ 0xf004, 0xf004, firetrap_nmi_disable_w },
+//	{ 0xf005, 0xf005, firetrap_8751_w },
+	{ 0xf008, 0xf009, MWA_RAM, &firetrap_scroll1y },
+	{ 0xf00a, 0xf00b, MWA_RAM, &firetrap_scroll1x },
+	{ 0xf00c, 0xf00d, MWA_RAM, &firetrap_scroll2y },
+	{ 0xf00e, 0xf00f, MWA_RAM, &firetrap_scroll2x },
+	{ -1 }	/* end of table */
+};
+
+#if 0
+static struct MemoryReadAddress sound_readmem[] =
+{
+	{ 0x4000, 0x7fff, MRA_BANK1 },
+	{ 0x8000, 0xffff, MRA_ROM },
+	{ -1 }	/* end of table */
+};
+
+static struct MemoryWriteAddress sound_writemem[] =
+{
+	{ 0x4000, 0xffff, MWA_ROM },
+	{ -1 }	/* end of table */
+};
+#endif
+
+
+INPUT_PORTS_START( input_ports )
+	PORT_START	/* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_UP | IPF_4WAY )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_DOWN | IPF_4WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_LEFT | IPF_4WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_RIGHT | IPF_4WAY )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICKRIGHT_UP | IPF_4WAY )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICKRIGHT_DOWN | IPF_4WAY )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICKRIGHT_LEFT | IPF_4WAY )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICKRIGHT_RIGHT | IPF_4WAY )
+
+	PORT_START	/* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_UP | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_DOWN | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_LEFT | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_RIGHT | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICKRIGHT_UP | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICKRIGHT_DOWN | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICKRIGHT_LEFT | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICKRIGHT_RIGHT | IPF_4WAY | IPF_COCKTAIL )
+
+	PORT_START      /* IN2 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_COIN3 )	/* bootleg only */
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_COIN1 )	/* bootleg only */
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN2 )	/* bootleg only */
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_VBLANK )
+
+	PORT_START      /* DSW0 */
+	PORT_DIPNAME( 0x07, 0x07, "Coin A", IP_KEY_NONE )
+//	PORT_DIPSETTING(    0x00, "1 Coin/1 Credit" )
+//	PORT_DIPSETTING(    0x01, "1 Coin/1 Credit" )
+//	PORT_DIPSETTING(    0x02, "1 Coin/1 Credit" )
+	PORT_DIPSETTING(    0x07, "1 Coin/1 Credit" )
+	PORT_DIPSETTING(    0x06, "1 Coin/2 Credits" )
+	PORT_DIPSETTING(    0x05, "1 Coin/3 Credits" )
+	PORT_DIPSETTING(    0x03, "1 Coin/4 Credits" )
+	PORT_DIPSETTING(    0x04, "1 Coin/6 Credits" )
+	PORT_DIPNAME( 0x18, 0x18, "Coin B", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "4 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x08, "3 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x10, "2 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x18, "1 Coin/1 Credit" )
+	PORT_DIPNAME( 0x20, 0x00, "Cabinet", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "Upright" )
+	PORT_DIPSETTING(    0x20, "Cocktail" )
+	PORT_DIPNAME( 0x40, 0x40, "Demo Sounds", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "Off" )
+	PORT_DIPSETTING(    0x40, "On" )
+	PORT_DIPNAME( 0x80, 0x80, "Flip Screen", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x80, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+
+	PORT_START      /* DSW1 */
+	PORT_DIPNAME( 0x03, 0x03, "Difficulty", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x02, "Easy" )
+	PORT_DIPSETTING(    0x03, "Normal" )
+	PORT_DIPSETTING(    0x01, "Hard" )
+	PORT_DIPSETTING(    0x00, "Hardest" )
+	PORT_DIPNAME( 0x0c, 0x0c, "Lives", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "1" )
+	PORT_DIPSETTING(    0x0c, "3" )
+	PORT_DIPSETTING(    0x08, "4" )
+	PORT_DIPSETTING(    0x04, "5" )
+	PORT_DIPNAME( 0x30, 0x30, "Bonus Life", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x30, "50000 70000" )
+	PORT_DIPSETTING(    0x20, "60000 80000" )
+	PORT_DIPSETTING(    0x10, "80000 100000" )
+	PORT_DIPSETTING(    0x00, "50000" )
+	PORT_DIPNAME( 0x40, 0x40, "Allow Continue", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x40, "Yes" )
+	PORT_DIPSETTING(    0x00, "No" )
+	PORT_BITX(    0x80, 0x80, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE, 0 )
+	PORT_DIPSETTING(    0x80, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+INPUT_PORTS_END
+
+
+
+static struct GfxLayout charlayout =
+{
+	8,8,	/* 8*8 characters */
+	512,	/* 512 characters */
+	2,	/* 2 bits per pixel */
+	{ 0, 4 },	/* the two bitplanes for 4 pixels are packed into one byte */
+	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
+	{ 3, 2, 1, 0, 0x1000*8+3, 0x1000*8+2, 0x1000*8+1, 0x1000*8+0 },
+	8*8	/* every char takes 8 consecutive bytes */
+};
+static struct GfxLayout tilelayout =
+{
+	16,16,	/* 16*16 characters */
+	256,	/* 256 characters */
+	4,	/* 4 bits per pixel */
+	{ 0, 4, 0x8000*8+0, 0x8000*8+4 },	/* the two bitplanes for 4 pixels are packed into one byte */
+	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8,
+			8*8, 9*8, 10*8, 11*8, 12*8, 13*8, 14*8, 15*8 },
+	{ 3, 2, 1, 0, 0x2000*8+3, 0x2000*8+2, 0x2000*8+1, 0x2000*8+0,
+			16*8+3, 16*8+2, 16*8+1, 16*8+0, 16*8+0x2000*8+3, 16*8+0x2000*8+2, 16*8+0x2000*8+1, 16*8+0x2000*8+0 },
+	32*8	/* every char takes 32 consecutive bytes */
+};
+static struct GfxLayout spritelayout =
+{
+	16,16,	/* 16*16 sprites */
+	1024,	/* 1024 sprites */
+	4,	/* 4 bits per pixel */
+	{ 0, 1024*16*16, 2*1024*16*16, 3*1024*16*16 },	/* the bitplanes are separated */
+	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8,
+			8*8, 9*8, 10*8, 11*8, 12*8, 13*8, 14*8, 15*8 },
+	{ 7, 6, 5, 4, 3, 2, 1, 0,
+			16*8+7, 16*8+6, 16*8+5, 16*8+4, 16*8+3, 16*8+2, 16*8+1, 16*8+0 },
+	32*8	/* every sprite takes 32 consecutive bytes */
+};
+
+static struct GfxDecodeInfo gfxdecodeinfo[] =
+{
+	{ 1, 0x00000, &charlayout,                0, 16 },
+	{ 1, 0x02000, &tilelayout,             16*4,  4 },
+	{ 1, 0x06000, &tilelayout,             16*4,  4 },
+	{ 1, 0x12000, &tilelayout,             16*4,  4 },
+	{ 1, 0x16000, &tilelayout,             16*4,  4 },
+	{ 1, 0x22000, &tilelayout,        16*4+4*16,  4 },
+	{ 1, 0x26000, &tilelayout,        16*4+4*16,  4 },
+	{ 1, 0x32000, &tilelayout,        16*4+4*16,  4 },
+	{ 1, 0x36000, &tilelayout,        16*4+4*16,  4 },
+	{ 1, 0x42000, &spritelayout, 16*4+4*16+4*16,  4 },
+	{ -1 } /* end of array */
+};
+
+
+
+static unsigned char color_prom[] =
+{
+	/* 3B - palette red and green component */
+	0x00,0x00,0xF0,0x0F,0x00,0xFF,0x02,0xF0,0x00,0xB7,0x02,0x0F,0x00,0xF0,0x02,0x00,
+	0x00,0x0F,0x02,0x00,0x00,0xFF,0x02,0x00,0x00,0x00,0xFF,0xAF,0x00,0x00,0xAF,0x7F,
+	0x00,0x00,0x7F,0x4F,0x00,0x00,0x4F,0x0F,0x00,0x00,0x0F,0x08,0x00,0xCF,0x00,0x00,
+	0x00,0xFF,0x0F,0x00,0x00,0xFF,0x00,0x00,0x00,0xFF,0xE0,0x00,0x00,0xFF,0x4B,0x00,
+	0x00,0xE0,0xC0,0x90,0x60,0x9F,0x7F,0x00,0xFF,0x4C,0x08,0xAA,0x4C,0x0F,0x5F,0x7F,
+	0x00,0x99,0x67,0x35,0x03,0x9F,0x7F,0x00,0xFF,0x4C,0x17,0xAA,0x4C,0x0F,0x5F,0x7F,
+	0x00,0x7F,0x4C,0x2A,0x08,0x9F,0x06,0x00,0xFF,0x0F,0x00,0x90,0x0F,0x5F,0x9F,0xDF,
+	0x00,0xDD,0xBB,0x88,0x55,0x7F,0x05,0x00,0xFF,0xDF,0x00,0x90,0x08,0x0A,0x2D,0x7D,
+	0x00,0xBF,0x9F,0x9F,0x4B,0x5D,0xBF,0x00,0xFF,0xF6,0x20,0x33,0x99,0xBB,0xF8,0x0F,
+	0x00,0xF0,0xC0,0x90,0x67,0xFF,0x4C,0x00,0xBB,0x00,0x00,0x7F,0x70,0x40,0x0F,0x0F,
+	0x00,0xEE,0xCC,0xAA,0x66,0x88,0xD3,0x00,0xFF,0x7F,0x00,0x00,0x62,0x5F,0xF0,0x0F,
+	0x00,0xAA,0x99,0x88,0x55,0x77,0x8F,0x00,0xFF,0x7F,0x00,0x00,0xBE,0x4E,0xF0,0x0F,
+	0x00,0x33,0x70,0xB0,0x66,0xDD,0x88,0xAA,0x00,0x00,0x00,0xBB,0x2A,0x55,0x66,0x99,
+	0x00,0x00,0x20,0x50,0x00,0x03,0x00,0x00,0x01,0xED,0x00,0x00,0x07,0x00,0x00,0x00,
+	0x00,0xFF,0xCC,0x99,0x40,0x70,0xA7,0x27,0xFF,0xAC,0x60,0xE7,0x92,0x30,0x00,0x77,
+	0x00,0x56,0x33,0x44,0x10,0x21,0x32,0x00,0x67,0x49,0x00,0xA6,0x00,0x01,0x13,0x24,
+	/* 4B - palette blue component */
+	0x00,0x0F,0x00,0x00,0x00,0x0F,0x0B,0x00,0x00,0x0F,0x08,0x00,0x00,0x00,0x08,0x00,
+	0x00,0x09,0x08,0x00,0x00,0x0F,0x08,0x00,0x00,0x03,0x00,0x00,0x00,0x03,0x00,0x00,
+	0x00,0x03,0x00,0x00,0x00,0x03,0x00,0x00,0x00,0x03,0x00,0x00,0x00,0x00,0x00,0x00,
+	0x00,0x0F,0x00,0x00,0x00,0x0F,0x0F,0x00,0x00,0x0F,0x00,0x00,0x00,0x0F,0x04,0x00,
+	0x00,0x05,0x00,0x02,0x01,0x09,0x01,0x00,0x0F,0x05,0x00,0x0A,0x00,0x00,0x05,0x07,
+	0x00,0x0F,0x0E,0x0D,0x0A,0x09,0x01,0x00,0x0F,0x05,0x00,0x0A,0x00,0x00,0x05,0x07,
+	0x00,0x00,0x00,0x00,0x00,0x09,0x00,0x00,0x0F,0x08,0x0D,0x00,0x00,0x00,0x00,0x00,
+	0x00,0x0D,0x0B,0x08,0x05,0x07,0x05,0x00,0x0F,0x00,0x0D,0x00,0x05,0x00,0x02,0x01,
+	0x00,0x0B,0x09,0x09,0x04,0x05,0x0F,0x00,0x0F,0x0C,0x09,0x03,0x09,0x0B,0x06,0x00,
+	0x00,0x0F,0x0C,0x09,0x00,0x0F,0x05,0x00,0x0B,0x0E,0x09,0x00,0x07,0x04,0x09,0x00,
+	0x00,0x0E,0x0C,0x0A,0x06,0x08,0x09,0x00,0x0F,0x07,0x0A,0x06,0x0D,0x05,0x00,0x00,
+	0x00,0x0A,0x09,0x08,0x05,0x07,0x00,0x00,0x0F,0x07,0x07,0x05,0x00,0x05,0x00,0x00,
+	0x00,0x0F,0x00,0x00,0x06,0x09,0x08,0x0A,0x07,0x0A,0x0D,0x0B,0x00,0x05,0x04,0x06,
+	0x00,0x0B,0x00,0x00,0x03,0x0A,0x05,0x0A,0x04,0x06,0x06,0x08,0x07,0x09,0x09,0x08,
+	0x00,0x0F,0x0C,0x09,0x00,0x00,0x02,0x00,0x0C,0x00,0x0A,0x0C,0x0B,0x0A,0x00,0x07,
+	0x00,0x03,0x03,0x03,0x00,0x00,0x00,0x00,0x04,0x00,0x04,0x07,0x0A,0x04,0x00,0x00
+};
+
+
+
+static struct MachineDriver machine_driver =
+{
+	/* basic machine hardware */
+	{
+		{
+			CPU_Z80,
+			6000000,	/* 6 Mhz */
+			0,
+			readmem,writemem,0,0,
+			nmi_interrupt,1
+		},
+#if 0
+		{
+			CPU_M6502 | CPU_AUDIO_CPU,
+			1500000,	/* 1.5 Mhz? */
+			2,	/* memory region #2 */
+			sound_readmem,sound_writemem,0,0,
+			ignore_interrupt,1
+		},
+#endif
+	},
+	60,
+	10,	/* 10 CPU slices per frame - enough for the sound CPU to read all commands */
+	0,
+
+	/* video hardware */
+	32*8, 32*8, { 1*8, 31*8-1, 0*8, 32*8-1 },
+	gfxdecodeinfo,
+	256,16*4+4*16+4*16+4*16,
+	firetrap_vh_convert_color_prom,
+
+	VIDEO_TYPE_RASTER,
+	0,
+	firetrap_vh_start,
+	firetrap_vh_stop,
+	firetrap_vh_screenrefresh,
+
+	/* sound hardware */
+	0,
+	0,
+	0,
+	0
+};
+
+
+
+/***************************************************************************
+
+  Game driver(s)
+
+***************************************************************************/
+
+ROM_START( firetrap_rom )
+	ROM_REGION(0x20000)	/* 64k for code + 64k for banked ROMs */
+	ROM_LOAD( "di02.bin",  0x00000, 0x8000, 0x73228b3c )
+	ROM_LOAD( "di01.bin",  0x10000, 0x8000, 0xe0df1885 )
+	ROM_LOAD( "di00.bin",  0x18000, 0x8000, 0x150dcd9f )
+
+	ROM_REGION(0x62000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "di03.bin",  0x00000, 0x2000, 0x52f31563 )	/* characters */
+	ROM_LOAD( "di06.bin",  0x02000, 0x8000, 0x259f1eab )	/* tiles */
+	ROM_LOAD( "di07.bin",  0x0a000, 0x8000, 0xa819796d )
+	ROM_LOAD( "di04.bin",  0x12000, 0x8000, 0x09fb07c9 )
+	ROM_LOAD( "di05.bin",  0x1a000, 0x8000, 0x85236d25 )
+	ROM_LOAD( "di09.bin",  0x22000, 0x8000, 0x50d837aa )
+	ROM_LOAD( "di11.bin",  0x2a000, 0x8000, 0xdc2fce6f )
+	ROM_LOAD( "di08.bin",  0x32000, 0x8000, 0x1bae1e98 )
+	ROM_LOAD( "di10.bin",  0x3a000, 0x8000, 0xb9904b02 )
+	ROM_LOAD( "di16.bin",  0x42000, 0x8000, 0xc5032565 )	/* sprites */
+	ROM_LOAD( "di13.bin",  0x4a000, 0x8000, 0x08c92385 )
+	ROM_LOAD( "di14.bin",  0x52000, 0x8000, 0xebfc9f9e )
+	ROM_LOAD( "di15.bin",  0x5a000, 0x8000, 0x8d67bbe1 )
+
+	ROM_REGION(0x18000)	/* 64k for the sound CPU + 32k for banked ROMs */
+	ROM_LOAD( "di17.bin",  0x08000, 0x8000, 0x5f3832e8 )
+	ROM_LOAD( "di18.bin",  0x10000, 0x8000, 0x0bd60332 )
+
+	/* there's also a protected 8751 microcontroller with ROM onboard */
+ROM_END
+
+ROM_START( firetpbl_rom )
+	ROM_REGION(0x28000)	/* 64k for code + 96k for banked ROMs */
+	ROM_LOAD( "ft0d.bin",  0x00000, 0x8000, 0x33ae61e2 )
+	ROM_LOAD( "ft0c.bin",  0x10000, 0x8000, 0x029dbdfd )
+	ROM_LOAD( "ft0b.bin",  0x18000, 0x8000, 0x1877c68d )
+	ROM_LOAD( "ft0a.bin",  0x08000, 0x8000, 0x9f15003f )	/* unprotection code */
+
+	ROM_REGION(0x62000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "ft0e.bin",  0x00000, 0x2000, 0x66f41692 )	/* characters */
+	ROM_LOAD( "ft02.bin",  0x02000, 0x8000, 0x259f1eab )	/* tiles */
+	ROM_LOAD( "ft04.bin",  0x0a000, 0x8000, 0xa819796d )
+	ROM_LOAD( "ft01.bin",  0x12000, 0x8000, 0x09fb07c9 )
+	ROM_LOAD( "ft03.bin",  0x1a000, 0x8000, 0x85236d25 )
+	ROM_LOAD( "ft06.bin",  0x22000, 0x8000, 0x50d837aa )
+	ROM_LOAD( "ft08.bin",  0x2a000, 0x8000, 0xdc2fce6f )
+	ROM_LOAD( "ft05.bin",  0x32000, 0x8000, 0x1bae1e98 )
+	ROM_LOAD( "ft07.bin",  0x3a000, 0x8000, 0xb9904b02 )
+	ROM_LOAD( "ft12.bin",  0x42000, 0x8000, 0xc5032565 )	/* sprites */
+	ROM_LOAD( "ft09.bin",  0x4a000, 0x8000, 0x28c90385 )
+	ROM_LOAD( "ft10.bin",  0x52000, 0x8000, 0xb5249f96 )
+	ROM_LOAD( "ft11.bin",  0x5a000, 0x8000, 0x8d67bbe1 )
+
+	ROM_REGION(0x18000)	/* 64k for the sound CPU + 32k for banked ROMs */
+	ROM_LOAD( "ft13.bin",  0x08000, 0x8000, 0x5f3832e8 )
+	ROM_LOAD( "ft14.bin",  0x10000, 0x8000, 0x0bd60332 )
+ROM_END
+
+
+
+struct GameDriver firetrap_driver =
+{
+	"Fire Trap",
+	"firetrap",
+	"Nicola Salmoria (MAME driver)\nTim Lindquist (color and hardware info)",
+	&machine_driver,
+
+	firetrap_rom,
+	0, 0,
+	0,
+	0,	/* sound_prom */
+
+	0/*TBR*/,input_ports,0/*TBR*/,0/*TBR*/,0/*TBR*/,
+
+	color_prom, 0, 0,
+	ORIENTATION_DEFAULT,
+
+	0, 0
+};
+
+struct GameDriver firetpbl_driver =
+{
+	"Fire Trap (Japanese bootleg)",
+	"firetpbl",
+	"Nicola Salmoria (MAME driver)\nTim Lindquist (color and hardware info)",
+	&machine_driver,
+
+	firetpbl_rom,
+	0, 0,
+	0,
+	0,	/* sound_prom */
+
+	0/*TBR*/,input_ports,0/*TBR*/,0/*TBR*/,0/*TBR*/,
+
+	color_prom, 0, 0,
+	ORIENTATION_DEFAULT,
+
+	0, 0
+};

@@ -12,6 +12,7 @@
 
 
 static struct osd_bitmap *tmpbitmap1;
+static char sprite_transparency[256];
 
 
 
@@ -114,6 +115,31 @@ static void convert_color_prom(unsigned char *palette, unsigned char *colortable
 	i = 1;
 	while (color_prom[i] != 0) i++;
 	colortable[64*16+8] = i;	/* replace pen 0 with a non trasparent black */
+
+
+   /* now check our sprites and mark which ones have color 15 ('draw under') */
+	{
+		struct GfxElement *gfx;
+		int i,x,y;
+		unsigned char *dp;
+
+		gfx = Machine->gfx[1];
+		for (i=0;i<gfx->total_elements;i++)
+		{
+			sprite_transparency[i] = 0;
+
+			for (y=0;y<gfx->height;y++)
+			{
+				dp = gfx->gfxdata->line[i * gfx->height + y];
+				for (x=0;x<gfx->width;x++)
+				if (dp[x] == 15)
+					sprite_transparency[i] = 1;
+			}
+
+			if (sprite_transparency[i])
+if (errorlog) fprintf(errorlog,"sprite %i has transparency.\n",i);
+		}
+	}
 }
 
 
@@ -217,12 +243,36 @@ void docastle_vh_screenrefresh(struct osd_bitmap *bitmap)
 	/* order, to have the correct priorities. */
 	for (offs = 0;offs < spriteram_size;offs += 4)
 	{
+		int sx,sy,code,color;
+
+
+		code = spriteram[offs + 3];
+		color = spriteram[offs + 2] & 0x1f;
+		sx = spriteram[offs + 1];
+		sy = spriteram[offs];
+
 		drawgfx(bitmap,Machine->gfx[1],
-			spriteram[offs + 3],
-			spriteram[offs + 2] & 0x1f,
+			code,
+			color,
 			spriteram[offs + 2] & 0x40,spriteram[offs + 2] & 0x80,
-			spriteram[offs + 1],spriteram[offs],
+			sx,sy,
 			&Machine->drv->visible_area,TRANSPARENCY_COLOR,0);
+
+		/* sprites use color 0 for background pen and 8 for the 'under tile' pen.
+		   The color 7 is used to cover over other sprites.
+		   At the beginning we scanned all sprites and marked the ones that contained
+		   at least one pixel of color 7, so we only need to worry about these few. */
+		if (sprite_transparency[code])
+		{
+			struct rectangle clip;
+
+			clip.min_x = sx;
+			clip.max_x = sx+31;
+			clip.min_y = sy;
+			clip.max_y = sy+31;
+
+			copybitmap(bitmap,tmpbitmap,0,0,0,0,&clip,TRANSPARENCY_THROUGH,7+(color*8));
+		}
 	}
 
 

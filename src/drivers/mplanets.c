@@ -3,7 +3,8 @@
 Mad Planets' memory map
 
 Thanks to Richard Davies who provided a keyboard/joystick substitute for the
-dialer (anyone interested in adding a joystick's knob support in Mame ?-)
+dialer...
+...now obsolete BW
 
 Main processor (8088 minimum mode) memory map.
 0000-0fff RAM
@@ -65,8 +66,6 @@ void gottlieb_vh_init_color_palette(unsigned char *palette, unsigned char *color
 void gottlieb_sh_w(int offset, int data);
 void gottlieb_sh_update(void);
 void gottlieb_output(int offset, int data);
-int mplanets_IN1_r(int offset);
-int mplanets_dial_r(int offset);
 extern unsigned char *gottlieb_paletteram;
 void gottlieb_paletteram_w(int offset,int data);
 void gottlieb_vh_screenrefresh(struct osd_bitmap *bitmap);
@@ -82,10 +81,10 @@ static struct MemoryReadAddress readmem[] =
 {
 	{ 0x0000, 0x57ff, MRA_RAM },
 	{ 0x5800, 0x5800, input_port_0_r },     /* DSW */
-	{ 0x5801, 0x5801, mplanets_IN1_r },     /* buttons */
-	{ 0x5802, 0x5802, input_port_2_r },     /* trackball H: not used */
-	{ 0x5803, 0x5803, mplanets_dial_r },     /* trackball V: dialer */
-	{ 0x5804, 0x5804, input_port_4_r },     /* joystick */
+	{ 0x5801, 0x5801, input_port_1_r },     /* buttons */
+	{ 0x5802, 0x5802, MRA_NOP },     		/* trackball H: not used */
+	{ 0x5803, 0x5803, input_port_2_r },     /* trackball V: dialer */
+	{ 0x5804, 0x5804, input_port_3_r },     /* joystick */
 	{ 0x6000, 0xffff, MRA_ROM },
 	{ -1 }  /* end of table */
 };
@@ -106,76 +105,55 @@ static struct MemoryWriteAddress writemem[] =
 	{ -1 }  /* end of table */
 };
 
-static struct InputPort input_ports[] =
-{
-	{       /* DSW */
-		0x00,
-		{ 0, 0, 0, 0, 0, 0, 0, 0 },
-		{ 0, 0, 0, 0, 0, 0, 0, 0 }
-	},
-	{       /* buttons */
-		0x80,
-		{ OSD_KEY_3, OSD_KEY_4, /* coin 1 and 2 */
-		  0,0,                  /* not connected ? */
-		  0,0,                  /* not connected ? */
-		  OSD_KEY_F2,           /* select */
-		  0 },                  /* test mode */
-		{ 0, 0, 0, 0, 0, 0, 0, 0 }
-	},
-	{       /* trackball H: not used */
-		0x00,
-		{ 0, 0, 0, 0, 0, 0, 0, 0 },
-		{ 0, 0, 0, 0, 0, 0, 0, 0 }
-	},
-	{       /* trackball V: dialer */
-		0x00,
-		{ 0, 0, 0, 0, 0, 0, 0, 0 },
-		{ 0, 0, 0, 0, 0, 0, 0, 0 }
-	},
-	{       /* joystick */
-		0x00,
-		{ OSD_KEY_UP, OSD_KEY_RIGHT, OSD_KEY_DOWN, OSD_KEY_LEFT,
-		OSD_KEY_LCONTROL,OSD_KEY_1,OSD_KEY_2,OSD_KEY_ALT},
-		{ OSD_JOY_UP, OSD_JOY_RIGHT, OSD_JOY_DOWN, OSD_JOY_LEFT,
-					OSD_JOY_FIRE1, 0, 0, OSD_JOY_FIRE2 }
-	},
-	{ -1 }  /* end of table */
-};
 
-static struct TrakPort trak_ports[] =
-{
-	{ -1 }
-};
+/* JB 971221 */
+INPUT_PORTS_START( input_ports )
+	PORT_START	/* DSW */
+	PORT_DIPNAME (0x08, 0x00, "Round Select", IP_KEY_NONE )
+	PORT_DIPSETTING (   0x00, "Off" )
+	PORT_DIPSETTING (   0x08, "On" )
+	PORT_DIPNAME (0x01, 0x00, "Attract Sound", IP_KEY_NONE )
+	PORT_DIPSETTING (   0x01, "Off" )
+	PORT_DIPSETTING (   0x00, "On" )
+	PORT_DIPNAME (0x14, 0x00, "Coinage", IP_KEY_NONE )
+	PORT_DIPSETTING (   0x04, "2 Coins/1 Credit" )
+	PORT_DIPSETTING (   0x00, "1 Coin/1 Credit" )
+	PORT_DIPSETTING (   0x10, "1 Coin/2 Credits" )
+	PORT_DIPSETTING (   0x14, "Free Play" )
+	PORT_DIPNAME (0x20, 0x00, "Ships", IP_KEY_NONE )
+	PORT_DIPSETTING (   0x00, "3" )
+	PORT_DIPSETTING (   0x20, "5" )
+	PORT_DIPNAME (0x02, 0x00, "Extra Ship", IP_KEY_NONE )
+	PORT_DIPSETTING (   0x00, "10000" )
+	PORT_DIPSETTING (   0x02, "12000" )
+	PORT_DIPNAME (0xc0, 0x00, "Difficulty", IP_KEY_NONE )
+	PORT_DIPSETTING (   0x00, "Standard" )
+	PORT_DIPSETTING (   0x40, "Easy" )
+	PORT_DIPSETTING (   0x80, "Hard" )
+	PORT_DIPSETTING (   0xc0, "Very Hard" )
 
+	PORT_START	/* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_COIN2 )
+	PORT_BIT( 0x3c, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BITX(0x40, IP_ACTIVE_HIGH, IPT_SERVICE, "Advance in Service Mode", OSD_KEY_F1, IP_JOY_NONE, 0 )
+	PORT_BITX( 0x80, 0x80, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE, 0 )
+	PORT_DIPSETTING (   0x80, "Off" )
+	PORT_DIPSETTING (   0x00, "On" )
 
-static struct KEYSet keys[] =
-{
-	{ 4, 0, "MOVE UP" },
-	{ 4, 3, "MOVE LEFT"  },
-	{ 4, 1, "MOVE RIGHT" },
-	{ 4, 2, "MOVE DOWN" },
-	{ 4, 4, "FIRE1"     },
-	{ 4, 7, "FIRE2"     },
-	{ -1 }
-};
+	PORT_START	/* trackball v (dial) */
+	PORT_ANALOGX ( 0xff, 0x00, IPT_DIAL | IPF_CENTER, 100, 2, 0, 0, OSD_KEY_Z, OSD_KEY_X, 0, 0, 2 )
 
-
-static struct DSW dsw[] =
-{
-	{ 0, 0x08, "ROUND SELECT", { "OFF","ON" } },
-	{ 0, 0x01, "ATTRACT MODE SOUND", { "ON", "OFF" } },
-	{ 0, 0x1C, "", {
-		"1 PLAY FOR 1 COIN" , "1 PLAY FOR 2 COINS",
-		"1 PLAY FOR 1 COIN" , "1 PLAY FOR 2 COINS",
-		"2 PLAYS FOR 1 COIN", "FREE PLAY",
-		"2 PLAYS FOR 1 COIN", "FREE PLAY"
-		} },
-	{ 0, 0x20, "SHIPS PER GAME", { "3", "5" } },
-	{ 0, 0x02, "EXTRA SHIP EVERY", { "10000", "12000" } },
-	{ 0, 0xC0, "DIFFICULTY", { "STANDARD", "EASY", "HARD", "VERY HARD" } },
-	/*{ 1, 0x80, "TEST MODE", {"ON", "OFF"} },*/
-	{ -1 }
-};
+	PORT_START	/* IN3 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_8WAY )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_8WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_8WAY )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_START1 )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_START2 )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_BUTTON2 )
+INPUT_PORTS_END
 
 
 static struct GfxLayout charlayout =
@@ -249,7 +227,6 @@ static const struct MachineDriver machine_driver =
 	gottlieb_vh_screenrefresh,
 
 	/* sound hardware */
-	0,      /* samples */
 	0,
 	gottlieb_sh_start,
 	gottlieb_sh_stop,
@@ -321,8 +298,9 @@ struct GameDriver mplanets_driver =
 	mplanets_rom,
 	0, 0,   /* rom decode and opcode decode functions */
 	0,
+	0,	/* sound_prom */
 
-	input_ports, 0, trak_ports, dsw, keys,
+	0/*TBR*/, input_ports, 0/*TBR*/, 0/*TBR*/, 0/*TBR*/,
 
 	0, 0, 0,
 	ORIENTATION_ROTATE_270,

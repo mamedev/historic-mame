@@ -50,6 +50,7 @@
 
 #include <stdio.h>
 #include <stdlib.h> /* DS */
+#include <osd_dbg.h>
 
 #include "m6808.h" /* DS */
 
@@ -178,16 +179,16 @@ INLINE unsigned M_RDMEM_WORD (dword A)
 {
  int i;
 
- i = M_RDMEM(((A)+1)&0xFFFF);
- i |= M_RDMEM(A)<<8;
+ i = M_RDMEM(A)<<8;
+ i |= M_RDMEM(((A)+1)&0xFFFF);
  return i;
 }
 
 /* DS */
 INLINE void M_WRMEM_WORD (dword A,word V)
 {
- M_WRMEM (((A)+1)&0xFFFF,V&255);
  M_WRMEM (A,V>>8);
+ M_WRMEM (((A)+1)&0xFFFF,V&255);
 }
 
 /* DS */
@@ -318,6 +319,12 @@ int m6808_execute(int cycles) /* MB */
 
 	do
 	{
+#ifdef	MAME_DEBUG
+{
+  extern int mame_debug;
+  if (mame_debug) MAME_Debug();
+}
+#endif
 		if (pending_interrupts != 0) Interrupt();	/* MB */
 
 		ireg=M_RDOP(ipcreg++);

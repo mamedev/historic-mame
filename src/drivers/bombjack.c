@@ -13,6 +13,7 @@ MAIN BOARD:
 8c00-8fff RAM 3
 9000-93ff Video RAM (RAM 4)
 9400-97ff Color RAM (RAM 4)
+9c00-9cff Palette RAM
 c000-dfff ROM 4
 
 memory mapped ports:
@@ -27,9 +28,9 @@ b005      DSW2
 write:
 9820-987f sprites
 9a00      ? number of small sprites for video controller
-9c00-9cff palette
 9e00      background image selector
 b000      interrupt enable
+b004      flip screen
 b800      command to soundboard & trigger NMI on sound board
 
 
@@ -69,41 +70,42 @@ NMI interrupts for music timing
 extern unsigned char *bombjack_paletteram;
 void bombjack_paletteram_w(int offset,int data);
 void bombjack_background_w(int offset,int data);
+void bombjack_flipscreen_w(int offset,int data);
 void bombjack_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
 void bombjack_vh_screenrefresh(struct osd_bitmap *bitmap);
 
 int bombjack_sh_intflag_r(int offset);
 int bombjack_sh_start(void);
-int bombjack_sh_interrupt(void);
 
 
 
 static struct MemoryReadAddress readmem[] =
 {
-	{ 0xb003, 0xb003, MRA_NOP },
+	{ 0x0000, 0x7fff, MRA_ROM },
+	{ 0x8000, 0x97ff, MRA_RAM },	/* including video and color RAM */
 	{ 0xb000, 0xb000, input_port_0_r },	/* player 1 input */
 	{ 0xb001, 0xb001, input_port_1_r },	/* player 2 input */
 	{ 0xb002, 0xb002, input_port_2_r },	/* coin */
+	{ 0xb003, 0xb003, MRA_NOP },	/* watchdog reset? */
 	{ 0xb004, 0xb004, input_port_3_r },	/* DSW1 */
 	{ 0xb005, 0xb005, input_port_4_r },	/* DSW2 */
-	{ 0x0000, 0x7fff, MRA_ROM },
-	{ 0x8000, 0x97ff, MRA_RAM },	/* including video and color RAM */
 	{ 0xc000, 0xdfff, MRA_ROM },
 	{ -1 }  /* end of table */
 };
 
 static struct MemoryWriteAddress writemem[] =
 {
-	{ 0x9820, 0x987f, MWA_RAM, &spriteram, &spriteram_size },
-	{ 0x9c00, 0x9cff, bombjack_paletteram_w, &bombjack_paletteram },
-	{ 0xb000, 0xb000, interrupt_enable_w },
-	{ 0x9e00, 0x9e00, bombjack_background_w },
-	{ 0xb800, 0xb800, sound_command_w },
-	{ 0x9a00, 0x9a00, MWA_NOP },
+	{ 0x0000, 0x7fff, MWA_ROM },
 	{ 0x8000, 0x8fff, MWA_RAM },
 	{ 0x9000, 0x93ff, videoram_w, &videoram, &videoram_size },
 	{ 0x9400, 0x97ff, colorram_w, &colorram },
-	{ 0x0000, 0x7fff, MWA_ROM },
+	{ 0x9820, 0x987f, MWA_RAM, &spriteram, &spriteram_size },
+	{ 0x9a00, 0x9a00, MWA_NOP },
+	{ 0x9c00, 0x9cff, bombjack_paletteram_w, &bombjack_paletteram },
+	{ 0x9e00, 0x9e00, bombjack_background_w },
+	{ 0xb000, 0xb000, interrupt_enable_w },
+	{ 0xb004, 0xb004, bombjack_flipscreen_w },
+	{ 0xb800, 0xb800, sound_command_w },
 	{ 0xc000, 0xdfff, MWA_ROM },
 	{ -1 }  /* end of table */
 };
@@ -113,16 +115,16 @@ static struct MemoryReadAddress bombjack_sound_readmem[] =
 #if 0
 	{ 0x4390, 0x4390, bombjack_sh_intflag_r },	/* kludge to speed up the emulation */
 #endif
-	{ 0x2000, 0x5fff, MRA_RAM },
 	{ 0x0000, 0x1fff, MRA_ROM },
+	{ 0x2000, 0x5fff, MRA_RAM },
 	{ 0x6000, 0x6000, sound_command_r },
 	{ -1 }  /* end of table */
 };
 
 static struct MemoryWriteAddress bombjack_sound_writemem[] =
 {
-	{ 0x2000, 0x5fff, MWA_RAM },
 	{ 0x0000, 0x1fff, MWA_ROM },
+	{ 0x2000, 0x5fff, MWA_RAM },
 	{ -1 }  /* end of table */
 };
 
@@ -139,70 +141,81 @@ static struct IOWritePort bombjack_sound_writeport[] =
 };
 
 
+INPUT_PORTS_START( input_ports )
+	PORT_START	/* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_8WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_8WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_8WAY )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN )	/* probably unused */
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )	/* probably unused */
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )	/* probably unused */
 
-static struct InputPort input_ports[] =
-{
-	{	/* IN0 */
-		0x00,
-		{ OSD_KEY_RIGHT, OSD_KEY_LEFT, OSD_KEY_UP, OSD_KEY_DOWN,
-				OSD_KEY_LCONTROL, 0, 0, 0 },
-		{ OSD_JOY_RIGHT, OSD_JOY_LEFT, OSD_JOY_UP, OSD_JOY_DOWN,
-				OSD_JOY_FIRE, 0, 0, 0 }
-	},
-	{	/* IN1 */
-		0x00,
-		{ 0, 0, 0, 0, 0, 0, 0, 0 },
-		{ 0, 0, 0, 0, 0, 0, 0, 0 }
-	},
-	{	/* IN2 */
-		0x00,
-		{ OSD_KEY_4, OSD_KEY_3, OSD_KEY_1, OSD_KEY_2, 0, 0, 0, 0 },
-		{ 0, 0, 0, 0, 0, 0, 0, 0 }
-	},
-	{	/* DSW1 */
-		0xc0,
-		{ 0, 0, 0, 0, 0, 0, 0, 0 },
-		{ 0, 0, 0, 0, 0, 0, 0, 0 }
-	},
-	{	/* DSW2 */
-		0x00,
-		{ 0, 0, 0, 0, 0, 0, 0, 0 },
-		{ 0, 0, 0, 0, 0, 0, 0, 0 }
-	},
-	{ -1 }  /* end of table */
-};
+	PORT_START	/* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_COCKTAIL )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN )	/* probably unused */
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )	/* probably unused */
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )	/* probably unused */
 
-static struct TrakPort trak_ports[] =
-{
-        { -1 }
-};
+	PORT_START	/* IN2 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_COIN2 )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_START1 )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_START2 )
+	PORT_BIT( 0xf0, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* probably unused */
 
+	PORT_START	/* DSW0 */
+	PORT_DIPNAME( 0x03, 0x00, "Coin A", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "1 Coin/1 Credit" )
+	PORT_DIPSETTING(    0x01, "1 Coin/2 Credits" )
+	PORT_DIPSETTING(    0x02, "1 Coin/3 Credits" )
+	PORT_DIPSETTING(    0x03, "1 Coin/6 Credits" )
+	PORT_DIPNAME( 0x0c, 0x00, "Coin B", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x04, "2 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x00, "1 Coin/1 Credit" )
+	PORT_DIPSETTING(    0x08, "1 Coin/2 Credits" )
+	PORT_DIPSETTING(    0x0c, "1 Coin/3 Credits" )
+	PORT_DIPNAME( 0x30, 0x00, "Lives", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x30, "2" )
+	PORT_DIPSETTING(    0x00, "3" )
+	PORT_DIPSETTING(    0x10, "4" )
+	PORT_DIPSETTING(    0x20, "5" )
+	PORT_DIPNAME( 0x40, 0x40, "Cabinet", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x40, "Upright" )
+	PORT_DIPSETTING(    0x00, "Cocktail" )
+	PORT_DIPNAME( 0x80, 0x80, "Demo Sounds", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "Off" )
+	PORT_DIPSETTING(    0x80, "On" )
 
-static struct KEYSet keys[] =
-{
-        { 0, 2, "MOVE UP" },
-        { 0, 1, "MOVE LEFT"  },
-        { 0, 0, "MOVE RIGHT" },
-        { 0, 3, "MOVE DOWN" },
-        { 0, 4, "JUMP" },
-        { -1 }
-};
-
-
-static struct DSW dsw[] =
-{
-	{ 3, 0x30, "LIVES", { "3", "4", "5", "2" } },
-	{ 4, 0x18, "DIFFICULTY 1 (BIRD)", { "EASY", "MEDIUM", "HARD", "HARDEST" } },
-	{ 4, 0x60, "DIFFICULTY 2", { "MEDIUM", "EASY", "HARD", "HARDEST" } },
-		/* not a mistake, MEDIUM and EASY are swapped */
-	{ 4, 0x80, "SPECIAL", { "EASY", "HARD" } },
-	{ 3, 0x40, "CABINET", { "COCKTAIL", "UPRIGHT" } },
-	{ 3, 0x80, "DEMO SOUNDS", { "OFF", "ON" } },
-	{ 4, 0x07, "INITIAL HIGH SCORE", { "10000", "100000", "30000", "50000", "100000", "50000", "100000", "50000" } },
-	{ 3, 0x03, "COIN 1", { "1/1", "1/2", "1/3", "1/6" } },
-	{ 3, 0x0c, "COIN 2", { "1/1", "2/1", "1/2", "1/3" } },
-	{ -1 }
-};
+	PORT_START	/* DSW1 */
+	PORT_DIPNAME( 0x07, 0x00, "Initial High Score?", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "10000" )
+	PORT_DIPSETTING(    0x01, "100000" )
+	PORT_DIPSETTING(    0x02, "30000" )
+	PORT_DIPSETTING(    0x03, "50000" )
+	PORT_DIPSETTING(    0x04, "100000" )
+	PORT_DIPSETTING(    0x05, "50000" )
+	PORT_DIPSETTING(    0x06, "100000" )
+	PORT_DIPSETTING(    0x07, "50000" )
+	PORT_DIPNAME( 0x18, 0x00, "Bird Speed", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "Easy" )
+	PORT_DIPSETTING(    0x08, "Medium" )
+	PORT_DIPSETTING(    0x10, "Hard" )
+	PORT_DIPSETTING(    0x18, "Hardest" )
+	PORT_DIPNAME( 0x60, 0x00, "Enemies Number & Speed", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x20, "Easy" )
+	PORT_DIPSETTING(    0x00, "Medium" )
+	PORT_DIPSETTING(    0x40, "Hard" )
+	PORT_DIPSETTING(    0x60, "Hardest" )
+	PORT_DIPNAME( 0x80, 0x00, "Special Coin", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "Easy" )
+	PORT_DIPSETTING(    0x80, "Hard" )
+INPUT_PORTS_END
 
 
 
@@ -288,7 +301,7 @@ static struct MachineDriver machine_driver =
 			3072000,	/* 3.072 Mhz????? */
 			3,	/* memory region #3 */
 			bombjack_sound_readmem,bombjack_sound_writemem,0,bombjack_sound_writeport,
-			bombjack_sh_interrupt,10
+			nmi_interrupt,1
 		}
 	},
 	60,
@@ -308,7 +321,6 @@ static struct MachineDriver machine_driver =
 	bombjack_vh_screenrefresh,
 
 	/* sound hardware */
-	0,
 	0,
 	bombjack_sh_start,
 	AY8910_sh_stop,
@@ -430,14 +442,15 @@ struct GameDriver bombjack_driver =
 {
 	"Bomb Jack",
 	"bombjack",
-	"BRAD THOMAS\nJAKOB FRENDSEN\nCONNY MELIN\nMIRKO BUFFONI\nNICOLA SALMORIA\nJAREK BURCZYNSKI",
+	"Brad Thomas (hardware info)\nJakob Frendsen (hardware info)\nConny Melin (hardware info)\nMirko Buffoni (MAME driver)\nNicola Salmoria (MAME driver)\nJarek Burczynski (sound)\nMarco Cassili",
 	&machine_driver,
 
 	bombjack_rom,
 	0, 0,
 	0,
+	0,	/* sound_prom */
 
-	input_ports, 0, trak_ports, dsw, keys,
+	0/*TBR*/, input_ports, 0/*TBR*/, 0/*TBR*/, 0/*TBR*/,
 
 	0,0,0,
 	ORIENTATION_DEFAULT,

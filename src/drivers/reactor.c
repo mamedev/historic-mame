@@ -2,7 +2,9 @@
 Reactor hardware: very similar to Q*bert with a different memory map...
 
 Thanks to Richard Davies who provided a keyboard/joystick substitute for the
-trackball (now, who wants to add mouse services in Mame ?-)
+trackball...
+
+...which is now obsolete. BW
 
 Main processor (8088 minimum mode)  memory map.
 0000-1fff RAM
@@ -52,12 +54,6 @@ Sound processor (6502) memory map:
 7000-7fff PROM
 (repeated in 8000-ffff, A15 only used in socket expansion)
 
-Nota: I've used my own 6502 emulator in order to compute the digital effects
-because the clock emulation is much more precise and allows to put timestamps
-on amplitude DAC writes. MAME doesn't allow to compute the digital effects in
-real time like Euphoric (oops, <ad. mode end>) so the effects are provided
-as precomputed samples (some of them are quite big, I should convert them
-to 22kHz)
 ******************************************************************************/
 
 #include "driver.h"
@@ -70,10 +66,6 @@ void gottlieb_characterram_w(int offset, int data);
 int gottlieb_sh_init(const char *gamename);
 void gottlieb_sh_update(void);
 void gottlieb_output(int offset, int data);
-int reactor_IN1_r(int offset);
-int reactor_tb_H_r(int offset);
-int reactor_tb_V_r(int offset);
-int gottlieb_trakball(int data);
 extern unsigned char *gottlieb_paletteram;
 extern unsigned char *gottlieb_characterram;
 void gottlieb_paletteram_w(int offset,int data);
@@ -92,9 +84,9 @@ static struct MemoryReadAddress readmem[] =
 {
 	{ 0x0000, 0x6fff, MRA_RAM },
 	{ 0x7000, 0x7000, input_port_0_r },     /* DSW */
-	{ 0x7001, 0x7001, reactor_IN1_r },      /* buttons */
-	{ 0x7002, 0x7002, reactor_tb_H_r },     /* trackball H */
-	{ 0x7003, 0x7003, reactor_tb_V_r },     /* trackball V */
+	{ 0x7001, 0x7001, input_port_1_r },		/* buttons */		/* JB 971221 */
+	{ 0x7002, 0x7002, input_port_2_r },     /* trackball H */	/* JB 971221 */
+	{ 0x7003, 0x7003, input_port_3_r },     /* trackball V */	/* JB 971221 */
 	{ 0x7004, 0x7004, input_port_4_r },     /* joystick */
 	{ 0x8000, 0xffff, MRA_ROM },
 	{ -1 }  /* end of table */
@@ -117,79 +109,55 @@ static struct MemoryWriteAddress writemem[] =
 };
 
 
+/* JB 971221 */
+INPUT_PORTS_START( input_ports )
+	PORT_START	/* DSW */
+	PORT_DIPNAME (0x01, 0x01, "Sound with Logos", IP_KEY_NONE )
+	PORT_DIPSETTING (   0x00, "Off" )
+	PORT_DIPSETTING (   0x01, "On" )
+	PORT_DIPNAME (0x02, 0x02, "Bounce Chambers Points", IP_KEY_NONE )
+	PORT_DIPSETTING (   0x00, "10" )
+	PORT_DIPSETTING (   0x02, "15" )
+	PORT_DIPNAME (0x04, 0x04, "Free Play", IP_KEY_NONE )
+	PORT_DIPSETTING (   0x04, "Off" )
+	PORT_DIPSETTING (   0x00, "On" )
+	PORT_DIPNAME (0x08, 0x08, "Sound with Instructions", IP_KEY_NONE )
+	PORT_DIPSETTING (   0x00, "Off" )
+	PORT_DIPSETTING (   0x08, "On" )
+	PORT_DIPNAME (0x10, 0x10, "Cabinet", IP_KEY_NONE )
+	PORT_DIPSETTING (   0x10, "Upright" )
+	PORT_DIPSETTING (   0x00, "Cocktail" )
+	PORT_DIPNAME (0x20, 0x20, "Coinage", IP_KEY_NONE )
+	PORT_DIPSETTING (   0x00, "2 Coins/1 Credit" )
+	PORT_DIPSETTING (   0x20, "1 Coin/1 Credit" )
+	PORT_DIPNAME (0xc0, 0xc0, "Bonus Ship", IP_KEY_NONE )
+	PORT_DIPSETTING (   0x00, "10000" )
+	PORT_DIPSETTING (   0x40, "12000" )
+	PORT_DIPSETTING (   0xc0, "15000" )
+	PORT_DIPSETTING (   0x80, "20000" )
 
-static struct InputPort input_ports[] =
-{
-	{       /* DSW */
-		0x0,
-		{ 0, 0, 0, 0, 0, 0, 0, 0 },
-		{ 0, 0, 0, 0, 0, 0, 0, 0 }
-	},
-	{       /* buttons */
-		0x02,   /* test mode off */
-		{ OSD_KEY_F2 /* select */, 0,0,0,0,0,0,0 },
-		{ 0, 0, 0, 0, 0, 0, 0, 0 }
-	},
-	{       /* trackball: handled by reactor_tb_H_r() */
-		0x0,
-		{ 0, 0, 0, 0, 0, 0, 0, 0 },
-		{ 0, 0, 0, 0, 0, 0, 0, 0 }
-	},
-	{       /* trackball: handled by reactor_tb_V_r() */
-		0x0,
-		{ 0, 0, 0, 0, 0, 0, 0, 0 },
-		{ 0, 0, 0, 0, 0, 0, 0, 0 }
-	},
-	{       /* buttons */
-		0x00,
-		{ OSD_KEY_1, OSD_KEY_2,         /* energy & decoy player 1. */
-		  OSD_KEY_ALT, OSD_KEY_LCONTROL, /* decoy & energy player 2. Also for 1 & 2 player start, long plays */
-		  OSD_KEY_3, 0 /* coin 2 */, 0, 0 },
-		{ 0, 0, OSD_JOY_FIRE2, OSD_JOY_FIRE1, 0, 0, 0, 0 }
-	},
-	{ -1 }  /* end of table */
-};
+	PORT_START	/* IN1 */
+	PORT_BITX(0x01, IP_ACTIVE_HIGH, IPT_SERVICE, "Advance in Service Mode", OSD_KEY_F1, IP_JOY_NONE, 0 )
+	PORT_BITX(0x02, 0x02, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE, 0 )
+	PORT_DIPSETTING (   0x02, "Off" )
+	PORT_DIPSETTING (   0x00, "On" )
+	PORT_BIT ( 0xfc, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 
-static struct TrakPort trak_ports[] = {
-  {
-    X_AXIS,
-    1,
-    1.0,
-    gottlieb_trakball
-  },
-  {
-    Y_AXIS,
-    1,
-    1.0,
-    gottlieb_trakball
-  },
-  { -1 }
-};
+	PORT_START	/* trackball h */
+	PORT_ANALOG ( 0xff, 0, IPT_TRACKBALL_X | IPF_CENTER, 100, 127, 0, 0 )
 
-static struct KEYSet keys[] =
-{
-	{ 4, 1, "PLAYER 1 DECOY" },
-	{ 4, 0, "PLAYER 1 ENERGY" },
-	{ 4, 2, "PLAYER 2 DECOY" },
-	{ 4, 3, "PLAYER 2 ENERGY" },
-	{ -1 }
-};
+	PORT_START	/* trackball v */
+	PORT_ANALOG ( 0xff, 0, IPT_TRACKBALL_Y | IPF_CENTER, 100, 127, 0, 0 )
 
-
-
-static struct DSW dsw[] =
-{
-	{ 0, 0x08, "SOUND WITH INSTRUCTIONS", { "NO","YES" } },
-	{ 0, 0x01, "SOUND WITH LOGOS", { "NO", "YES" } },
-	{ 0, 0x10, "", { "COCKTAIL", "UPRIGHT" } },
-	{ 0, 0x04, "FREE PLAY", { "YES" , "NO" } },
-	{ 0, 0x20, "COINS PER CREDIT", { "2", "1" } },
-	{ 0, 0x02, "BOUNCE CHAMBERS PTS", { "10", "15" } },
-	{ 0, 0xC0, "BONUS SHIP AT", { "10000", "12000", "20000", "15000" } },
-/* the following switch must be connected to the IP16 line */
-/*      { 1, 0x2, "TEST MODE", {"ON", "OFF"} },*/
-	{ -1 }
-};
+	PORT_START	/* IN4 */
+	PORT_BIT ( 0x01, IP_ACTIVE_HIGH, IPT_START1 )
+	PORT_BIT ( 0x02, IP_ACTIVE_HIGH, IPT_START2 )
+	PORT_BIT ( 0x04, IP_ACTIVE_HIGH, IPT_BUTTON2 )
+	PORT_BIT ( 0x08, IP_ACTIVE_HIGH, IPT_BUTTON1 )
+	PORT_BIT ( 0x10, IP_ACTIVE_HIGH, IPT_COIN1 )
+	PORT_BIT ( 0x20, IP_ACTIVE_HIGH, IPT_COIN2 )
+	PORT_BIT ( 0xc0, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+INPUT_PORTS_END
 
 
 static struct GfxLayout charlayout =
@@ -259,7 +227,6 @@ static const struct MachineDriver machine_driver =
 	gottlieb_vh_screenrefresh,
 
 	/* sound hardware */
-	0,      /* samples */
 	0,
 	gottlieb_sh_start,
 	gottlieb_sh_stop,
@@ -325,8 +292,9 @@ struct GameDriver reactor_driver =
 	reactor_rom,
 	0, 0,   /* rom decode and opcode decode functions */
 	0,
+	0,	/* sound_prom */
 
-	input_ports, 0, trak_ports, dsw, keys,
+	0/*TBR*/, input_ports, 0/*TBR*/, 0/*TBR*/, 0/*TBR*/,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,

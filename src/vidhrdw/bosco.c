@@ -10,6 +10,22 @@
 #include "vidhrdw/generic.h"
 
 
+#define MAX_STARS 250
+#define STARS_COLOR_BASE 32
+
+unsigned char *bosco_starcontrol;
+unsigned char *bosco_staronoff;
+unsigned char *bosco_starblink;
+unsigned char *bosco_flipvideo;
+static unsigned int stars_scrollx;
+static unsigned int stars_scrolly;
+
+struct star
+{
+	int x,y,col,set;
+};
+static struct star stars[MAX_STARS];
+static int total_stars;
 
 #define VIDEO_RAM_SIZE 0x400
 
@@ -60,12 +76,13 @@ void bosco_vh_convert_color_prom(unsigned char *palette, unsigned char *colortab
 		palette[3*i + 2] = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
 	}
 
-	/* characters */
-	for (i = 0;i < 32*4;i++)
-		colortable[i] = 15 - (color_prom[i + 32] & 0x0f);
-	/* sprites / radar */
-	for (i = 32*4;i < 64*4;i++)
-		colortable[i] = (15 - (color_prom[i + 32] & 0x0f)) + 0x10;
+	/* characters / sprites */
+	for (i = 0;i < 64*4;i++)
+	{
+		colortable[i] = 15 - (color_prom[i + 32] & 0x0f);	/* chars */
+		colortable[i+64*4] = 15 - (color_prom[i + 32] & 0x0f) + 0x10;	/* sprites */
+		if (colortable[i+64*4] == 0x10) colortable[i+64*4] = 0;	/* preserve transparency */
+	}
 
 
 	/* now the stars */
@@ -85,6 +102,10 @@ void bosco_vh_convert_color_prom(unsigned char *palette, unsigned char *colortab
 
 int bosco_vh_start(void)
 {
+	int generator;
+	int x,y;
+	int set = 0;
+
 	if (generic_vh_start() != 0)
 		return 1;
 
@@ -99,9 +120,50 @@ int bosco_vh_start(void)
 		return 1;
 	}
 
+	/* precalculate the star background */
+	/* this comes from the Galaxian hardware, Bosconian is probably different */
+	total_stars = 0;
+	generator = 0;
+
+	for (x = 255;x >= 0;x--)
+	{
+		for (y = 511;y >= 0;y--)
+		{
+			int bit1,bit2;
+
+
+			generator <<= 1;
+			bit1 = (~generator >> 17) & 1;
+			bit2 = (generator >> 5) & 1;
+
+			if (bit1 ^ bit2) generator |= 1;
+
+			if (x >= Machine->drv->visible_area.min_x &&
+					x <= Machine->drv->visible_area.max_x &&
+					((~generator >> 16) & 1) &&
+					(generator & 0xff) == 0xff)
+			{
+				int color;
+
+				color = (~(generator >> 8)) & 0x3f;
+				if (color && total_stars < MAX_STARS)
+				{
+					stars[total_stars].x = x;
+					stars[total_stars].y = y;
+					stars[total_stars].col = Machine->pens[color + STARS_COLOR_BASE];
+					stars[total_stars].set = set;
+					if (++set > 3)
+						set = 0;
+
+					total_stars++;
+				}
+			}
+		}
+	}
+	*bosco_staronoff = 1;
+
 	return 0;
 }
-
 
 
 /***************************************************************************
@@ -167,7 +229,7 @@ void bosco_vh_screenrefresh(struct osd_bitmap *bitmap)
 
 			drawgfx(tmpbitmap1,Machine->gfx[0],
 					bosco_videoram2[offs],
-					bosco_colorram2[offs] & 0x1f,
+					bosco_colorram2[offs] & 0x3f,
 					!(bosco_colorram2[offs] & 0x40),bosco_colorram2[offs] & 0x80,
 					8*sx,8*sy,
 					0,TRANSPARENCY_NONE,0);
@@ -185,9 +247,9 @@ void bosco_vh_screenrefresh(struct osd_bitmap *bitmap)
 			{
 				dirtybuffer[offs] = 0;
 
-				drawgfx(tmpbitmap,Machine->gfx[1],
+				drawgfx(tmpbitmap,Machine->gfx[0],
 						videoram[offs],
-						colorram[offs] & 0x1f,
+						colorram[offs] & 0x3f,
 						!(colorram[offs] & 0x40),colorram[offs] & 0x80,
 						8 * ((sx ^ 4) + 28),8*(sy-2),
 						&radarvisiblearea,TRANSPARENCY_NONE,0);
@@ -215,7 +277,7 @@ void bosco_vh_screenrefresh(struct osd_bitmap *bitmap)
 	/* draw the sprites */
 	for (offs = 0;offs < spriteram_size;offs += 2)
 	{
-		drawgfx(bitmap,Machine->gfx[2],
+		drawgfx(bitmap,Machine->gfx[1],
 				spriteram[offs] >> 2,spriteram_2[offs + 1],
 				spriteram[offs] & 1,spriteram[offs] & 2,
 				spriteram[offs + 1] - 1,224 - spriteram_2[offs],
@@ -319,4 +381,36 @@ void bosco_vh_screenrefresh(struct osd_bitmap *bitmap)
 			}
 		}
 	}
+	/* draw the stars */
+	if ((*bosco_staronoff & 1) == 0)
+	{
+		int bpen;
+
+		bpen = Machine->pens[0];
+		for (offs = 0;offs < total_stars;offs++)
+		{
+			int x,y;
+			int set;
+			int starset[4][2] = {{0,3},{0,1},{2,3},{2,1}};
+
+			x = (stars[offs].x + stars_scrollx) % 224;
+			y = (stars[offs].y + stars_scrolly) % 224;
+
+			set = (bosco_starblink[0] & 1) + ((bosco_starblink[1] & 1) << 1);
+			if ((bitmap->line[y][x] == bpen) &&
+					((stars[offs].set == starset[set][0]) ||
+					 (stars[offs].set == starset[set][1])))
+				bitmap->line[y][x] = stars[offs].col;
+		}
+	}
 }
+
+void bosco_vh_interrupt(void)
+{
+	int speedsx[8] = { -1, -2, -3, 0, 3, 2, 1, 0 };
+	int speedsy[8] = { 0, -1, -2, -3, 0, 3, 2, 1 };
+
+	stars_scrollx += speedsx[*bosco_starcontrol & 7];
+	stars_scrolly += speedsy[(*bosco_starcontrol & 56) >> 3];
+}
+

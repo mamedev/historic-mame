@@ -220,7 +220,6 @@ int spacduel_interrupt(void);
 static struct POKEYinterface interface =
 {
 	2,	/* 2 chips */
-	1,	/* 1 update per video frame (low quality) */
 	FREQ_17_APPROX,	/* 1.7 Mhz */
 	255,
 	NO_CLIP,
@@ -364,27 +363,27 @@ INPUT_PORTS_START( bwidow_input_ports )
 	PORT_DIPSETTING (   0x10, "Medium" )
 	PORT_DIPSETTING (   0x20, "Hard" )
 	PORT_DIPSETTING (   0x30, "Demo" )
-	PORT_DIPNAME (0xc0, 0x00, "Bonus", IP_KEY_NONE )
+	PORT_DIPNAME (0xc0, 0x00, "Bonus Life", IP_KEY_NONE )
 	PORT_DIPSETTING (   0x00, "20000" )
 	PORT_DIPSETTING (   0x40, "30000" )
 	PORT_DIPSETTING (   0x80, "40000" )
 	PORT_DIPSETTING (   0xc0, "None" )
 
 	PORT_START	/* IN3 - Movement joystick */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_RIGHT | IPF_4WAY )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_LEFT | IPF_4WAY )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_DOWN | IPF_4WAY )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_UP | IPF_4WAY )
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_RIGHT )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_LEFT )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_DOWN )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_UP )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START2 )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START	/* IN4 - Firing joystick */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICKRIGHT_RIGHT | IPF_4WAY )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICKRIGHT_LEFT | IPF_4WAY )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICKRIGHT_DOWN | IPF_4WAY )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICKRIGHT_UP | IPF_4WAY )
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICKRIGHT_RIGHT )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICKRIGHT_LEFT )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICKRIGHT_DOWN )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICKRIGHT_UP )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START2 )
@@ -418,7 +417,7 @@ INPUT_PORTS_START( gravitar_input_ports )
 	PORT_DIPSETTING (   0x00, "Easy" )
 	PORT_DIPSETTING (   0x10, "Hard" )
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNUSED )
-	PORT_DIPNAME (0xc0, 0x00, "Bonus", IP_KEY_NONE )
+	PORT_DIPNAME (0xc0, 0x00, "Bonus Life", IP_KEY_NONE )
 	PORT_DIPSETTING (   0x00, "10000" )
 	PORT_DIPSETTING (   0x40, "20000" )
 	PORT_DIPSETTING (   0x80, "30000" )
@@ -499,7 +498,7 @@ INPUT_PORTS_START( spacduel_input_ports )
 	PORT_DIPSETTING (   0x10, "German" )
 	PORT_DIPSETTING (   0x20, "French" )
 	PORT_DIPSETTING (   0x30, "Spanish" )
-	PORT_DIPNAME (0xc0, 0x00, "Bonus", IP_KEY_NONE )
+	PORT_DIPNAME (0xc0, 0x00, "Bonus Life", IP_KEY_NONE )
 	PORT_DIPSETTING (   0x00, "10000" )
 	PORT_DIPSETTING (   0x40, "15000" )
 	PORT_DIPSETTING (   0x80, "8000" )
@@ -596,10 +595,10 @@ static struct MachineDriver bwidow_machine_driver =
 			1500000,	/* 1.5 Mhz */
 			0,
 			readmem,writemem,0,0,
-			bwidow_interrupt,6 /* 4 interrupts per frame? */
+			bwidow_interrupt,8 /* 240 Hz interrupts */
 		}
 	},
-	45, /* frames per second */
+	30, /* frames per second */
 	1,
 	0,
 
@@ -617,7 +616,6 @@ static struct MachineDriver bwidow_machine_driver =
 
 	/* sound hardware */
 	0,
-	0,
 	bwidow_sh_start,
 	pokey_sh_stop,
 	pokey_sh_update
@@ -632,10 +630,10 @@ static struct MachineDriver gravitar_machine_driver =
 			1500000,	/* 1.5 Mhz */
 			0,
 			readmem,writemem,0,0,
-			gravitar_interrupt,6 /* 4 interrupts per frame? */
+			gravitar_interrupt,8 /* 240 Hz */
 		}
 	},
-	45, /* frames per second */
+	30, /* frames per second */
 	1,
 	0,
 
@@ -653,7 +651,6 @@ static struct MachineDriver gravitar_machine_driver =
 
 	/* sound hardware */
 	0,
-	0,
 	bwidow_sh_start,
 	pokey_sh_stop,
 	pokey_sh_update
@@ -668,10 +665,10 @@ static struct MachineDriver spacduel_machine_driver =
 			1500000,	/* 1.5 Mhz */
 			0,
 			spacduel_readmem,spacduel_writemem,0,0,
-			spacduel_interrupt,6 /* 4 interrupts per frame? */
+			spacduel_interrupt,8 /* 240 Hz */
 		}
 	},
-	45, /* frames per second */
+	30, /* frames per second */
 	1,
 	0,
 
@@ -688,7 +685,6 @@ static struct MachineDriver spacduel_machine_driver =
 	avg_screenrefresh,
 
 	/* sound hardware */
-	0,
 	0,
 	bwidow_sh_start,
 	pokey_sh_stop,
@@ -771,6 +767,7 @@ struct GameDriver bwidow_driver =
 	bwidow_rom,
 	0, 0,
 	0,
+	0,	/* sound_prom */
 
 	0/*TBR*/, bwidow_input_ports, 0/*TBR*/, 0/*TBR*/, 0/*TBR*/,
 
@@ -820,6 +817,7 @@ struct GameDriver gravitar_driver =
 	gravitar_rom,
 	0, 0,
 	0,
+	0,	/* sound_prom */
 
 	0/*TBR*/, gravitar_input_ports, 0/*TBR*/, 0/*TBR*/, 0/*TBR*/,
 
@@ -871,6 +869,7 @@ struct GameDriver spacduel_driver =
 	spacduel_rom,
 	0, 0,
 	0,
+	0,	/* sound_prom */
 
 	0/*TBR*/, spacduel_input_ports, 0/*TBR*/, 0/*TBR*/, 0/*TBR*/,
 

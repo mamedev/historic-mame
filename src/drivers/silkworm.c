@@ -259,7 +259,7 @@ static struct MachineDriver machine_driver =
 	{
 		{
 			CPU_Z80,
-			6000000,	/* 6 Mhz (?????) */
+			8000000,	/* 6 Mhz (?????) */
 			0,
 			readmem,writemem,0,0,
 			interrupt,1
@@ -282,7 +282,6 @@ static struct MachineDriver machine_driver =
 	silkworm_vh_screenrefresh,
 
 	/* sound hardware */
-	0,
 	0,
 	0,
 	0,
@@ -335,6 +334,7 @@ struct GameDriver silkworm_driver =
 	silkworm_rom,
 	0, 0,
 	0,
+	0,	/* sound_prom */
 
 	0/*TBR*/,input_ports,0/*TBR*/,0/*TBR*/,0/*TBR*/,
 

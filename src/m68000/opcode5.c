@@ -434,7 +434,7 @@ void op_50c8(ULONG opcode) /* DBcc */
 {{	WORD src = regs.d[srcreg];
 {	WORD offs = nextiword();
 	if (!cctrue(0)) {
-	if (src--) regs.pc += (LONG)offs - 2;
+	if (src--) { regs.pc += (LONG)offs - 2; /*change_pc24(regs.pc&0xffffff);*/ }	/* ASG 971108 */
 	regs.d[srcreg] = (regs.d[srcreg] & ~0xffff) | ((src) & 0xffff);
 	}
 }}}}
@@ -922,7 +922,7 @@ void op_51c8(ULONG opcode) /* DBcc */
 {{	WORD src = regs.d[srcreg];
 {	WORD offs = nextiword();
 	if (!cctrue(1)) {
-	if (src--) regs.pc += (LONG)offs - 2;
+	if (src--) { regs.pc += (LONG)offs - 2; /*change_pc24(regs.pc&0xffffff);*/ }	/* ASG 971108 */
 	regs.d[srcreg] = (regs.d[srcreg] & ~0xffff) | ((src) & 0xffff);
 	}
 }}}}
@@ -987,7 +987,7 @@ void op_52c8(ULONG opcode) /* DBcc */
 {{	WORD src = regs.d[srcreg];
 {	WORD offs = nextiword();
 	if (!cctrue(2)) {
-	if (src--) regs.pc += (LONG)offs - 2;
+	if (src--) { regs.pc += (LONG)offs - 2; /*change_pc24(regs.pc&0xffffff);*/ }	/* ASG 971108 */
 	regs.d[srcreg] = (regs.d[srcreg] & ~0xffff) | ((src) & 0xffff);
 	}
 }}}}
@@ -1052,7 +1052,7 @@ void op_53c8(ULONG opcode) /* DBcc */
 {{	WORD src = regs.d[srcreg];
 {	WORD offs = nextiword();
 	if (!cctrue(3)) {
-	if (src--) regs.pc += (LONG)offs - 2;
+	if (src--) { regs.pc += (LONG)offs - 2; /*change_pc24(regs.pc&0xffffff);*/ }	/* ASG 971108 */
 	regs.d[srcreg] = (regs.d[srcreg] & ~0xffff) | ((src) & 0xffff);
 	}
 }}}}
@@ -1117,7 +1117,7 @@ void op_54c8(ULONG opcode) /* DBcc */
 {{	WORD src = regs.d[srcreg];
 {	WORD offs = nextiword();
 	if (!cctrue(4)) {
-	if (src--) regs.pc += (LONG)offs - 2;
+	if (src--) { regs.pc += (LONG)offs - 2; /*change_pc24(regs.pc&0xffffff);*/ }	/* ASG 971108 */
 	regs.d[srcreg] = (regs.d[srcreg] & ~0xffff) | ((src) & 0xffff);
 	}
 }}}}
@@ -1182,7 +1182,7 @@ void op_55c8(ULONG opcode) /* DBcc */
 {{	WORD src = regs.d[srcreg];
 {	WORD offs = nextiword();
 	if (!cctrue(5)) {
-	if (src--) regs.pc += (LONG)offs - 2;
+	if (src--) { regs.pc += (LONG)offs - 2; /*change_pc24(regs.pc&0xffffff);*/ }	/* ASG 971108 */
 	regs.d[srcreg] = (regs.d[srcreg] & ~0xffff) | ((src) & 0xffff);
 	}
 }}}}
@@ -1247,7 +1247,7 @@ void op_56c8(ULONG opcode) /* DBcc */
 {{	WORD src = regs.d[srcreg];
 {	WORD offs = nextiword();
 	if (!cctrue(6)) {
-	if (src--) regs.pc += (LONG)offs - 2;
+	if (src--) { regs.pc += (LONG)offs - 2; /*change_pc24(regs.pc&0xffffff);*/ }	/* ASG 971108 */
 	regs.d[srcreg] = (regs.d[srcreg] & ~0xffff) | ((src) & 0xffff);
 	}
 }}}}
@@ -1312,7 +1312,7 @@ void op_57c8(ULONG opcode) /* DBcc */
 {{	WORD src = regs.d[srcreg];
 {	WORD offs = nextiword();
 	if (!cctrue(7)) {
-	if (src--) regs.pc += (LONG)offs - 2;
+	if (src--) { regs.pc += (LONG)offs - 2; /*change_pc24(regs.pc&0xffffff);*/ }	/* ASG 971108 */
 	regs.d[srcreg] = (regs.d[srcreg] & ~0xffff) | ((src) & 0xffff);
 	}
 }}}}
@@ -1377,7 +1377,7 @@ void op_58c8(ULONG opcode) /* DBcc */
 {{	WORD src = regs.d[srcreg];
 {	WORD offs = nextiword();
 	if (!cctrue(8)) {
-	if (src--) regs.pc += (LONG)offs - 2;
+	if (src--) { regs.pc += (LONG)offs - 2; /*change_pc24(regs.pc&0xffffff);*/ }	/* ASG 971108 */
 	regs.d[srcreg] = (regs.d[srcreg] & ~0xffff) | ((src) & 0xffff);
 	}
 }}}}
@@ -1442,7 +1442,7 @@ void op_59c8(ULONG opcode) /* DBcc */
 {{	WORD src = regs.d[srcreg];
 {	WORD offs = nextiword();
 	if (!cctrue(9)) {
-	if (src--) regs.pc += (LONG)offs - 2;
+	if (src--) { regs.pc += (LONG)offs - 2; /*change_pc24(regs.pc&0xffffff);*/; }	/* ASG 971108 */
 	regs.d[srcreg] = (regs.d[srcreg] & ~0xffff) | ((src) & 0xffff);
 	}
 }}}}
@@ -1507,7 +1507,7 @@ void op_5ac8(ULONG opcode) /* DBcc */
 {{	WORD src = regs.d[srcreg];
 {	WORD offs = nextiword();
 	if (!cctrue(10)) {
-	if (src--) regs.pc += (LONG)offs - 2;
+	if (src--) { regs.pc += (LONG)offs - 2; /*change_pc24(regs.pc&0xffffff);*/ }	/* ASG 971108 */
 	regs.d[srcreg] = (regs.d[srcreg] & ~0xffff) | ((src) & 0xffff);
 	}
 }}}}
@@ -1572,7 +1572,7 @@ void op_5bc8(ULONG opcode) /* DBcc */
 {{	WORD src = regs.d[srcreg];
 {	WORD offs = nextiword();
 	if (!cctrue(11)) {
-	if (src--) regs.pc += (LONG)offs - 2;
+	if (src--) { regs.pc += (LONG)offs - 2; /*change_pc24(regs.pc&0xffffff);*/ }	/* ASG 971108 */
 	regs.d[srcreg] = (regs.d[srcreg] & ~0xffff) | ((src) & 0xffff);
 	}
 }}}}
@@ -1637,7 +1637,7 @@ void op_5cc8(ULONG opcode) /* DBcc */
 {{	WORD src = regs.d[srcreg];
 {	WORD offs = nextiword();
 	if (!cctrue(12)) {
-	if (src--) regs.pc += (LONG)offs - 2;
+	if (src--) { regs.pc += (LONG)offs - 2; /*change_pc24(regs.pc&0xffffff);*/ }	/* ASG 971108 */
 	regs.d[srcreg] = (regs.d[srcreg] & ~0xffff) | ((src) & 0xffff);
 	}
 }}}}
@@ -1702,7 +1702,7 @@ void op_5dc8(ULONG opcode) /* DBcc */
 {{	WORD src = regs.d[srcreg];
 {	WORD offs = nextiword();
 	if (!cctrue(13)) {
-	if (src--) regs.pc += (LONG)offs - 2;
+	if (src--) { regs.pc += (LONG)offs - 2; /*change_pc24(regs.pc&0xffffff);*/ }	/* ASG 971108 */
 	regs.d[srcreg] = (regs.d[srcreg] & ~0xffff) | ((src) & 0xffff);
 	}
 }}}}
@@ -1767,7 +1767,7 @@ void op_5ec8(ULONG opcode) /* DBcc */
 {{	WORD src = regs.d[srcreg];
 {	WORD offs = nextiword();
 	if (!cctrue(14)) {
-	if (src--) regs.pc += (LONG)offs - 2;
+	if (src--) { regs.pc += (LONG)offs - 2; /*change_pc24(regs.pc&0xffffff);*/ }	/* ASG 971108 */
 	regs.d[srcreg] = (regs.d[srcreg] & ~0xffff) | ((src) & 0xffff);
 	}
 }}}}
@@ -1832,7 +1832,7 @@ void op_5fc8(ULONG opcode) /* DBcc */
 {{	WORD src = regs.d[srcreg];
 {	WORD offs = nextiword();
 	if (!cctrue(15)) {
-	if (src--) regs.pc += (LONG)offs - 2;
+	if (src--) { regs.pc += (LONG)offs - 2; /*change_pc24(regs.pc&0xffffff);*/ }	/* ASG 971108 */
 	regs.d[srcreg] = (regs.d[srcreg] & ~0xffff) | ((src) & 0xffff);
 	}
 }}}}

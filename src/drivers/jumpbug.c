@@ -143,10 +143,7 @@ static struct InputPort input_ports[] =
 	{ -1 }	/* end of table */
 };
 
-static struct TrakPort trak_ports[] =
-{
-        { -1 }
-};
+
 
 static struct KEYSet keys[] =
 {
@@ -203,6 +200,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 
 
+/* this is NOT the original color PROM */
 static unsigned char color_prom[] =
 {
 	/* palette */
@@ -241,7 +239,6 @@ static struct MachineDriver machine_driver =
 	jumpbug_vh_screenrefresh,
 
 	/* sound hardware */
-	0,
 	0,
 	jumpbug_sh_start,
 	AY8910_sh_stop,
@@ -348,8 +345,9 @@ struct GameDriver jumpbug_driver =
 	jumpbug_rom,
 	jumpbug_decode, 0,
 	0,
+	0,	/* sound_prom */
 
-	input_ports, 0, trak_ports, dsw, keys,
+	input_ports, 0, 0/*TBR*/,dsw, keys,
 
 	color_prom, 0, 0,
 	ORIENTATION_DEFAULT,
@@ -367,8 +365,9 @@ struct GameDriver jbugsega_driver =
 	jbugsega_rom,
 	0, 0,
 	0,
+	0,	/* sound_prom */
 
-	input_ports, 0, trak_ports, dsw, keys,
+	input_ports, 0, 0/*TBR*/,dsw, keys,
 
 	color_prom, 0, 0,
 	ORIENTATION_DEFAULT,

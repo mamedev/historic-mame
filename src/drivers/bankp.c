@@ -31,7 +31,7 @@ write:
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-
+#include "sndhrdw/sn76496.h"
 
 
 extern unsigned char *bankp_videoram2;
@@ -45,12 +45,7 @@ int bankp_vh_start(void);
 void bankp_vh_stop(void);
 void bankp_vh_screenrefresh(struct osd_bitmap *bitmap);
 
-void bankp_sound1_w(int offset,int data);
-void bankp_sound2_w(int offset,int data);
-void bankp_sound3_w(int offset,int data);
 int bankp_sh_start(void);
-void bankp_sh_stop(void);
-void bankp_sh_update(void);
 
 
 
@@ -85,9 +80,9 @@ static struct IOReadPort readport[] =
 
 static struct IOWritePort writeport[] =
 {
-	{ 0x00, 0x00, bankp_sound1_w },
-	{ 0x01, 0x01, bankp_sound2_w },
-	{ 0x02, 0x02, bankp_sound3_w },
+	{ 0x00, 0x00, SN76496_0_w },
+	{ 0x01, 0x01, SN76496_1_w },
+	{ 0x02, 0x02, SN76496_2_w },
 	{ 0x05, 0x05, bankp_scroll_w },
 	{ 0x07, 0x07, bankp_out_w },
 	{ -1 }	/* end of table */
@@ -253,10 +248,9 @@ static struct MachineDriver machine_driver =
 
 	/* sound hardware */
 	0,
-	0,
 	bankp_sh_start,
-	bankp_sh_stop,
-	bankp_sh_update
+	SN76496_sh_stop,
+	SN76496_sh_update
 };
 
 
@@ -336,6 +330,7 @@ struct GameDriver bankp_driver =
 	bankp_rom,
 	0, 0,
 	0,
+	0,	/* sound_prom */
 
 	0/*TBR*/,input_ports,0/*TBR*/,0/*TBR*/,0/*TBR*/,
 

@@ -31,7 +31,7 @@ fc00      interrupt vector? (not needed by Bobble Bobble)
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "sndhrdw/generic.h"
-#include "sndhrdw/8910intf.h"
+#include "sndhrdw/2203intf.h"
 
 /* prototypes for functions in ../machine/bublbobl.c */
 extern unsigned char *bublbobl_sharedram1,*bublbobl_sharedram2;
@@ -57,7 +57,7 @@ int bublbobl_vh_start(void);
 void bublbobl_vh_stop(void);
 void bublbobl_vh_screenrefresh(struct osd_bitmap *bitmap);
 
-int bublbobl_sh_interrupt(void);
+void bublbobl_sound_command_w(int offset,int data);
 int bublbobl_sh_start(void);
 
 
@@ -82,7 +82,7 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0xdd00, 0xdfff, bublbobl_objectram_w, &bublbobl_objectram, &bublbobl_objectram_size },	/* handled by bublbobl_sharedram_w() */
 	{ 0xf800, 0xf9ff, bublbobl_paletteram_w, &bublbobl_paletteram },
 	{ 0xc000, 0xf9ff, bublbobl_sharedram1_w, &bublbobl_sharedram1 },
-	{ 0xfa00, 0xfa00, sound_command_w },
+	{ 0xfa00, 0xfa00, bublbobl_sound_command_w },
 	{ 0xfa80, 0xfa80, MWA_NOP },
 	{ 0xfb40, 0xfb40, bublbobl_bankswitch_w },
 	{ 0xfc01, 0xfdff, bublbobl_sharedram2_w, &bublbobl_sharedram2 },
@@ -106,26 +106,22 @@ static struct MemoryWriteAddress writemem_lvl[] =
 	{ -1 }  /* end of table */
 };
 
-#ifdef TRY_SOUND
+
+
 static int pip(int offset)
 {
+//if (errorlog) fprintf(errorlog,"%04x read pip\n",cpu_getpc());
 	return 0x80;
-}
-static int pap(int offset)
-{
-	static int count;
-
-	return count;
 }
 
 static struct MemoryReadAddress sound_readmem[] =
 {
 	{ 0x0000, 0x7fff, MRA_ROM },
 	{ 0x8000, 0x8fff, MRA_RAM },
-	{ 0x9000, 0x9000, pap },
-	{ 0x9001, 0x9001, AY8910_read_port_0_r },
+	{ 0x9000, 0x9000, YM2203_status_port_0_r },
+	{ 0x9001, 0x9001, YM2203_read_port_0_r },
 	{ 0xa000, 0xa000, pip },
-	{ 0xb000, 0xb000, sound_command_r },
+	{ 0xb000, 0xb000, soundlatch_r },
 	{ 0xb001, 0xb001, MRA_NOP },	/* sound chip? */
 	{ 0xe000, 0xefff, MRA_ROM },	/* space for diagnostic ROM? */
 	{ -1 }	/* end of table */
@@ -135,89 +131,218 @@ static struct MemoryWriteAddress sound_writemem[] =
 {
 	{ 0x0000, 0x7fff, MWA_ROM },
 	{ 0x8000, 0x8fff, MWA_RAM },
-	{ 0x9000, 0x9000, AY8910_control_port_0_w },
-	{ 0x9001, 0x9001, AY8910_write_port_0_w },
+	{ 0x9000, 0x9000, YM2203_control_port_0_w },
+	{ 0x9001, 0x9001, YM2203_write_port_0_w },
 	{ 0xa000, 0xa001, MWA_NOP },	/* sound chip? */
 	{ 0xb000, 0xb001, MWA_NOP },	/* sound chip? */
 	{ 0xb002, 0xb002, MWA_NOP },	/* interrupt enable/acknowledge? */
 	{ 0xe000, 0xefff, MWA_ROM },	/* space for diagnostic ROM? */
 	{ -1 }	/* end of table */
 };
-#endif
 
+INPUT_PORTS_START( bublbobl_input_ports )
+	PORT_START      /* DSW0 */
+	PORT_DIPNAME( 0x01, 0x00, "Language", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x01, "Japanese" )
+	PORT_DIPSETTING(    0x00, "English" )
+	PORT_DIPNAME( 0x02, 0x02, "Flip Screen", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x02, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_BITX(    0x04, 0x04, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE, 0 )
+	PORT_DIPSETTING(    0x04, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x08, 0x08, "Demo Sounds", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "Off" )
+	PORT_DIPSETTING(    0x08, "On" )
+	PORT_DIPNAME( 0x30, 0x30, "Coin A", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x10, "2 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x30, "1 Coin/1 Credit" )
+	PORT_DIPSETTING(    0x00, "2 Coins/3 Credits" )
+	PORT_DIPSETTING(    0x20, "1 Coin/2 Credits" )
+	PORT_DIPNAME( 0xc0, 0xc0, "Coin B", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x40, "2 Coins/1 Credit" )
+	PORT_DIPSETTING(    0xc0, "1 Coin/1 Credit" )
+	PORT_DIPSETTING(    0x00, "2 Coins/3 Credits" )
+	PORT_DIPSETTING(    0x80, "1 Coin/2 Credits" )
 
+	PORT_START      /* DSW1 */
+	PORT_DIPNAME( 0x03, 0x03, "Difficulty", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x02, "Easy" )
+	PORT_DIPSETTING(    0x03, "Medium" )
+	PORT_DIPSETTING(    0x01, "Hard" )
+	PORT_DIPSETTING(    0x00, "Hardest" )
+	PORT_DIPNAME( 0x0c, 0x0c, "Bonus Life", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x08, "20000 80000" )
+	PORT_DIPSETTING(    0x0c, "30000 100000" )
+	PORT_DIPSETTING(    0x04, "40000 200000" )
+	PORT_DIPSETTING(    0x00, "50000 250000" )
+	PORT_DIPNAME( 0x30, 0x30, "Lives", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x10, "1" )
+	PORT_DIPSETTING(    0x00, "2" )
+	PORT_DIPSETTING(    0x30, "3" )
+	PORT_DIPSETTING(    0x20, "5" )
+	PORT_DIPNAME( 0xc0, 0xc0, "Spare", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "A" )
+	PORT_DIPSETTING(    0x40, "B" )
+	PORT_DIPSETTING(    0x80, "C" )
+	PORT_DIPSETTING(    0xc0, "D" )
 
-static struct InputPort bublbobl_input_ports[] =
-{
-    {	/* 1: DSWA - FF00 */
-	0xff,
-	{ 0, 0, 0, 0, 0, 0, 0, 0 }, /* test mode */
-	{ 0, 0, 0, 0, 0, 0, 0, 0 }
-    },
-    {	/* 2: DSWB - FF01 */
-	0x3f,
-	{ 0, 0, 0, 0, 0, 0, 0, 0 },
-	{ 0, 0, 0, 0, 0, 0, 0, 0 }
-    },
-    {	/* 3: IN0 - FF02 */
-	0xff,
-	{ OSD_KEY_LEFT, OSD_KEY_RIGHT, OSD_KEY_4, OSD_KEY_3,
-	  OSD_KEY_ALT, OSD_KEY_LCONTROL, OSD_KEY_1, 0 },
-	{ OSD_JOY_LEFT, OSD_JOY_RIGHT, 0, 0,
-	  OSD_JOY_UP, OSD_JOY_FIRE, 0, 0 }
-    },
-    {	/* 4: IN1 - FF03 */
-	0xff,
-	{ OSD_KEY_Q, OSD_KEY_W, OSD_KEY_T, OSD_KEY_5,
-	  OSD_KEY_I, OSD_KEY_O, OSD_KEY_2, 0 },
-	{ 0, 0, 0, 0, 0, 0, 0, 0 }
-    },
-    { -1 }  /* end of table */
-};
+	PORT_START      /* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_2WAY )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_2WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON2 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
-static struct TrakPort trak_ports[] =
-{
-	{ -1 }
-};
+	PORT_START      /* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_2WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_2WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_TILT ) /* ?????*/
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_COIN3 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+INPUT_PORTS_END
 
-static struct KEYSet keys[] =
-{
-    { 2, 0, "P1 LEFT" },    { 2, 1, "P1 RIGHT" },
-    { 2, 4, "P1 JUMP" },    { 2, 5, "P1 BUBBLE" },
-    { 3, 0, "P2 LEFT" },    { 3, 1, "P2 RIGHT" },
-    { 3, 4, "P2 JUMP" },    { 3, 5, "P2 BUBBLE" },
-    { -1 }
-};
+INPUT_PORTS_START( boblbobl_input_ports )
+	PORT_START      /* DSW0 */
+	PORT_DIPNAME( 0x01, 0x00, "Language", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "English" )
+	PORT_DIPSETTING(    0x01, "Japanese" )
+	PORT_DIPNAME( 0x02, 0x00, "Flip Screen", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x02, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_BITX(    0x04, 0x04, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE, 0 )
+	PORT_DIPSETTING(    0x04, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x08, 0x08, "Demo Sounds", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "Off" )
+	PORT_DIPSETTING(    0x08, "On" )
+	PORT_DIPNAME( 0x30, 0x30, "Coin A", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x10, "2 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x30, "1 Coin/1 Credit" )
+	PORT_DIPSETTING(    0x00, "2 Coins/3 Credits" )
+	PORT_DIPSETTING(    0x20, "1 Coin/2 Credits" )
+	PORT_DIPNAME( 0xc0, 0xc0, "Coin B", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x40, "2 Coins/1 Credit" )
+	PORT_DIPSETTING(    0xc0, "1 Coin/1 Credit" )
+	PORT_DIPSETTING(    0x00, "2 Coins/3 Credits" )
+	PORT_DIPSETTING(    0x80, "1 Coin/2 Credits" )
 
-static struct DSW dsw[] =
-{
-    { 1, 0x30, "LIVES", { "2", "1", "5", "3" } },
-    { 1, 0x0c, "BONUS", { "50/250", "40/200", "20/80", "30/100" } },
-    { 1, 0x03, "DIFFICULTY", { "VERY HARD", "HARD", "EASY", "NORMAL" } },
-    { 0, 0x01, "LANGUAGE", { "ENGLISH", "JAPANESE" } },
-    { 0, 0x30, "SLOT A", { "2C/3P", "2C/1P", "1C/2P", "1C/1P" } },
-    { 0, 0xc0, "SLOT B", { "2C/3P", "2C/1P", "1C/2P", "1C/1P" } },
-    { 0, 0x08, "ATTRACT SND", { "OFF", "ON" } },
-    { 0, 0x04, "TEST MODE", { "ON", "OFF" },1 },
-    { 0, 0x02, "REV SCREEN", { "ON", "OFF" },1 },
-    { 1, 0xc0, "SPARE", { "A", "B", "C", "D" } },
-    { -1 }
-};
+	PORT_START      /* DSW1 */
+	PORT_DIPNAME( 0x03, 0x03, "Difficulty", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x02, "Easy" )
+	PORT_DIPSETTING(    0x03, "Medium" )
+	PORT_DIPSETTING(    0x01, "Hard" )
+	PORT_DIPSETTING(    0x00, "Hardest" )
+	PORT_DIPNAME( 0x0c, 0x0c, "Bonus Life", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x08, "20000 80000" )
+	PORT_DIPSETTING(    0x0c, "30000 100000" )
+	PORT_DIPSETTING(    0x04, "40000 200000" )
+	PORT_DIPSETTING(    0x00, "50000 250000" )
+	PORT_DIPNAME( 0x30, 0x30, "Lives", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x10, "1" )
+	PORT_DIPSETTING(    0x00, "2" )
+	PORT_DIPSETTING(    0x30, "3" )
+	PORT_DIPSETTING(    0x20, "5" )
+	PORT_DIPNAME( 0xc0, 0x00, "Monster Speed", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "Normal" )
+	PORT_DIPSETTING(    0x40, "Medium" )
+	PORT_DIPSETTING(    0x80, "High" )
+	PORT_DIPSETTING(    0xc0, "Very High" )
 
-static struct DSW sboblbob_dsw[] =
-{
-    { 1, 0x30, "LIVES", { "2", "1", "5", "3" } },
-    { 1, 0x0c, "BONUS", { "50/250", "40/200", "20/80", "30/100" } },
-    { 1, 0x03, "DIFFICULTY", { "VERY HARD", "HARD", "EASY", "NORMAL" } },
-    { 0, 0x01, "Game", { "Super Bobble Bobble", "Bobble Bobble" } },
-    { 0, 0x30, "SLOT A", { "2C/3P", "2C/1P", "1C/2P", "1C/1P" } },
-    { 0, 0xc0, "SLOT B", { "2C/3P", "2C/1P", "1C/2P", "1C/1P" } },
-    { 0, 0x08, "ATTRACT SND", { "OFF", "ON" } },
-    { 0, 0x04, "TEST MODE", { "ON", "OFF" },1 },
-    { 0, 0x02, "REV SCREEN", { "ON", "OFF" },1 },
-    { 1, 0xc0, "SPARE", { "A", "B", "C", "D" } },
-    { -1 }
-};
+	PORT_START      /* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_2WAY )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_2WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON2 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START      /* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_2WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_2WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_TILT ) /* ?????*/
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_COIN3 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+INPUT_PORTS_END
+
+INPUT_PORTS_START( sboblbob_input_ports )
+	PORT_START      /* DSW0 */
+	PORT_DIPNAME( 0x01, 0x00, "Game", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "Super Bobble Bobble" )
+	PORT_DIPSETTING(    0x01, "Bobble Bobble" )
+	PORT_DIPNAME( 0x02, 0x02, "Flip Screen", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x02, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_BITX(    0x04, 0x04, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE, 0 )
+	PORT_DIPSETTING(    0x04, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x08, 0x08, "Demo Sounds", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "Off" )
+	PORT_DIPSETTING(    0x08, "On" )
+	PORT_DIPNAME( 0x30, 0x30, "Coin A", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x10, "2 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x30, "1 Coin/1 Credit" )
+	PORT_DIPSETTING(    0x00, "2 Coins/3 Credits" )
+	PORT_DIPSETTING(    0x20, "1 Coin/2 Credits" )
+	PORT_DIPNAME( 0xc0, 0xc0, "Coin B", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x40, "2 Coins/1 Credit" )
+	PORT_DIPSETTING(    0xc0, "1 Coin/1 Credit" )
+	PORT_DIPSETTING(    0x00, "2 Coins/3 Credits" )
+	PORT_DIPSETTING(    0x80, "1 Coin/2 Credits" )
+
+	PORT_START      /* DSW1 */
+	PORT_DIPNAME( 0x03, 0x03, "Difficulty", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x02, "Easy" )
+	PORT_DIPSETTING(    0x03, "Medium" )
+	PORT_DIPSETTING(    0x01, "Hard" )
+	PORT_DIPSETTING(    0x00, "Hardest" )
+	PORT_DIPNAME( 0x0c, 0x0c, "Bonus Life", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x08, "20000 80000" )
+	PORT_DIPSETTING(    0x0c, "30000 100000" )
+	PORT_DIPSETTING(    0x04, "40000 200000" )
+	PORT_DIPSETTING(    0x00, "50000 250000" )
+	PORT_DIPNAME( 0x30, 0x30, "Lives", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x10, "1" )
+	PORT_DIPSETTING(    0x00, "2" )
+	PORT_DIPSETTING(    0x30, "3" )
+	PORT_DIPSETTING(    0x20, "6" )
+	PORT_DIPNAME( 0xc0, 0x00, "Monster Speed", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "Normal" )
+	PORT_DIPSETTING(    0x40, "Medium" )
+	PORT_DIPSETTING(    0x80, "High" )
+	PORT_DIPSETTING(    0xc0, "Very High" )
+
+	PORT_START      /* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_2WAY )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_2WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON2 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START      /* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_2WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_2WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_TILT ) /* ?????*/
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_COIN3 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+INPUT_PORTS_END
 
 
 
@@ -252,24 +377,23 @@ static struct MachineDriver bublbobl_machine_driver =
 			6000000,		/* 6 Mhz??? */
 			0,			/* memory_region */
 			readmem,writemem,0,0,
-			bublbobl_interrupt, 1
+			bublbobl_interrupt,1
 		},
 		{
 			CPU_Z80,
 			6000000,		/* 6 Mhz??? */
 			2,			/* memory_region */
 			readmem_lvl,writemem_lvl,0,0,
-			interrupt, 1
+			interrupt,1
 		},
-#ifdef TRY_SOUND
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			4000000,	/* 4 Mhz ??? */
 			3,	/* memory region #3 */
 			sound_readmem,sound_writemem,0,0,
-			bublbobl_sh_interrupt,1
+			interrupt,1	/* NMIs are triggered by the main CPU; I don't know */
+						/* whether the IRQs should be triggered by the 2203 */
 		}
-#endif
     },
     60,				/* frames_per_second */
 	100,	/* 100 CPU slices per frame - an high value to ensure proper */
@@ -290,15 +414,10 @@ static struct MachineDriver bublbobl_machine_driver =
 	bublbobl_vh_stop,
 	bublbobl_vh_screenrefresh,
 
-#ifdef TRY_SOUND
-	0,
 	0,
 	bublbobl_sh_start,
-	AY8910_sh_stop,
-	AY8910_sh_update
-#else
-	0,0,0,0,0
-#endif
+	YM2203_sh_stop,
+	YM2203_sh_update
 };
 
 static struct MachineDriver boblbobl_machine_driver =
@@ -310,24 +429,23 @@ static struct MachineDriver boblbobl_machine_driver =
 			6000000,		/* 6 Mhz??? */
 			0,			/* memory_region */
 			readmem,writemem,0,0,
-			interrupt, 1	/* interrupt mode 1, unlike Bubble Bobble */
+			interrupt,1	/* interrupt mode 1, unlike Bubble Bobble */
 		},
 		{
 			CPU_Z80,
 			6000000,		/* 6 Mhz??? */
 			2,			/* memory_region */
 			readmem_lvl,writemem_lvl,0,0,
-			interrupt, 1
+			interrupt,1
 		},
-#ifdef TRY_SOUND
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			4000000,	/* 4 Mhz ??? */
 			3,	/* memory region #3 */
 			sound_readmem,sound_writemem,0,0,
-			bublbobl_sh_interrupt,1
+			interrupt,1	/* NMIs are triggered by the main CPU; I don't know */
+						/* whether the IRQs should be triggered by the 2203 */
 		}
-#endif
     },
     60,				/* frames_per_second */
 	100,	/* 100 CPU slices per frame - an high value to ensure proper */
@@ -348,15 +466,10 @@ static struct MachineDriver boblbobl_machine_driver =
 	bublbobl_vh_stop,
 	bublbobl_vh_screenrefresh,
 
-#ifdef TRY_SOUND
-	0,
 	0,
 	bublbobl_sh_start,
-	AY8910_sh_stop,
-	AY8910_sh_update
-#else
-	0,0,0,0,0
-#endif
+	YM2203_sh_stop,
+	YM2203_sh_update
 };
 
 
@@ -529,14 +642,15 @@ struct GameDriver bublbobl_driver =
 {
 	"Bubble Bobble",
 	"bublbobl",
-	"CHRIS MOORE\nOLIVER WHITE\nNICOLA SALMORIA",
+	"Chris Moore\nOliver White\nNicola Salmoria\nMarco Cassili",
 	&bublbobl_machine_driver,
 
 	bublbobl_rom,
 	bublbobl_patch, 0,	/* remove protection */
 	0,
+	0,	/* sound_prom */
 
-	bublbobl_input_ports, 0, trak_ports, dsw, keys,
+	0/*TBR*/, bublbobl_input_ports, 0/*TBR*/, 0/*TBR*/, 0/*TBR*/,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
@@ -548,14 +662,15 @@ struct GameDriver boblbobl_driver =
 {
 	"Bobble Bobble (bootleg Bubble Bobble)",
 	"boblbobl",
-	"CHRIS MOORE\nOLIVER WHITE\nNICOLA SALMORIA",
+	"Chris Moore\nOliver White\nNicola Salmoria\nMarco Cassili",
 	&boblbobl_machine_driver,
 
 	boblbobl_rom,
 	boblbobl_patch, 0,	/* remove protection */
 	0,
+	0,	/* sound_prom */
 
-	bublbobl_input_ports, 0, trak_ports, dsw, keys,
+	0/*TBR*/, boblbobl_input_ports, 0/*TBR*/, 0/*TBR*/, 0/*TBR*/,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
@@ -567,14 +682,15 @@ struct GameDriver sboblbob_driver =
 {
 	"Bobble Bobble (bootleg Bubble Bobble, alternate version)",
 	"sboblbob",
-	"CHRIS MOORE\nOLIVER WHITE\nNICOLA SALMORIA",
+	"Chris Moore\nOliver White\nNicola Salmoria\nMarco Cassili",
 	&boblbobl_machine_driver,
 
 	sboblbob_rom,
 	0, 0,
 	0,
+	0,	/* sound_prom */
 
-	bublbobl_input_ports, 0, trak_ports, sboblbob_dsw, keys,
+	0/*TBR*/, sboblbob_input_ports, 0/*TBR*/, 0/*TBR*/, 0/*TBR*/,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,

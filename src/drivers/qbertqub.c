@@ -87,10 +87,6 @@ static struct InputPort input_ports[] =
 	{ -1 }  /* end of table */
 };
 
-static struct TrakPort trak_ports[] =
-{
-        { -1 }
-};
 
 
 static struct KEYSet keys[] =
@@ -195,7 +191,6 @@ static const struct MachineDriver machine_driver =
 	gottlieb_vh_screenrefresh,
 
 	/* sound hardware */
-	0,      /* samples */
 	0,
 	gottlieb_sh_start,
 	gottlieb_sh_stop,
@@ -266,8 +261,9 @@ struct GameDriver qbertqub_driver =
 	qbertqub_rom,
 	0, 0,   /* rom decode and opcode decode functions */
 	0,
+	0,	/* sound_prom */
 
-	input_ports, 0, trak_ports, dsw, keys,
+	input_ports, 0, 0/*TBR*/,dsw, keys,
 
 	0, 0, 0,
 	ORIENTATION_ROTATE_270,

@@ -180,10 +180,6 @@ static struct IOWritePort writeport[] =
 	{ -1 }	/* end of table */
 };
 
-static struct TrakPort trak_ports[] =
-{
-        { -1 }
-};
 
 
 static struct KEYSet keys[] =
@@ -276,7 +272,6 @@ static struct MachineDriver machine_driver =
 	0,
 	0,
 	0,
-	0,
 	0
 };
 
@@ -310,9 +305,10 @@ struct GameDriver spacefb_driver =
 
 	spacefb_rom,
 	0, 0,
-        0,
+	0,
+	0,	/* sound_prom */
 
-	input_ports, 0, trak_ports, dsw, keys,
+	input_ports, 0, 0/*TBR*/,dsw, keys,
 
 	colorprom, 0, 0,
 	ORIENTATION_DEFAULT,

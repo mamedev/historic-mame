@@ -38,27 +38,10 @@ static struct MemoryWriteAddress writemem[] =
 
 
 
-static struct InputPort input_ports[] =
-{
-	{ -1 }	/* end of table */
-};
+INPUT_PORTS_START( input_ports )
+	PORT_START
+INPUT_PORTS_END
 
-static struct TrakPort trak_ports[] =
-{
-        { -1 }
-};
-
-
-static struct KEYSet keys[] =
-{
-        { -1 }
-};
-
-
-static struct DSW dsw[] =
-{
-	{ -1 }
-};
 
 
 static struct GfxLayout charlayout =
@@ -193,7 +176,6 @@ static struct MachineDriver machine_driver =
 	0,
 	0,
 	0,
-	0,
 	0
 };
 
@@ -251,8 +233,9 @@ struct GameDriver punchout_driver =
 	punchout_rom,
 	0, 0,
 	0,
+	0,	/* sound_prom */
 
-	input_ports, 0, trak_ports, dsw, keys,
+    0/*TBR*/, input_ports, 0/*TBR*/, 0/*TBR*/, 0/*TBR*/,
 
 	0, palette, colortable,
 	ORIENTATION_DEFAULT,

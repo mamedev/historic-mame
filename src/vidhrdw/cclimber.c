@@ -25,7 +25,6 @@ static struct osd_bitmap *bsbitmap;
 static int flipscreen[2];
 
 
-
 /***************************************************************************
 
   Convert the color PROMs into a more useable format.
@@ -86,6 +85,53 @@ void cclimber_vh_convert_color_prom(unsigned char *palette, unsigned char *color
 	{
 		if (i % 4 == 0) COLOR(2,i) = 0;
 		else COLOR(2,i) = i + 64;
+	}
+}
+
+/* similar to the above, but graphics are 3bpp */
+void swimmer_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom)
+{
+	int i;
+	#define TOTAL_COLORS(gfxn) (Machine->gfx[gfxn]->total_colors * Machine->gfx[gfxn]->color_granularity)
+	#define COLOR(gfxn,offs) (colortable[Machine->drv->gfxdecodeinfo[gfxn].color_codes_start + offs])
+
+
+	for (i = 0;i < Machine->drv->total_colors;i++)
+	{
+		int bit0,bit1,bit2;
+
+
+		/* red component */
+		bit0 = (*color_prom >> 0) & 0x01;
+		bit1 = (*color_prom >> 1) & 0x01;
+		bit2 = (*color_prom >> 2) & 0x01;
+		*(palette++) = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+		/* green component */
+		bit0 = (*color_prom >> 3) & 0x01;
+		bit1 = (*color_prom >> 4) & 0x01;
+		bit2 = (*color_prom >> 5) & 0x01;
+		*(palette++) = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+		/* blue component */
+		bit0 = 0;
+		bit1 = (*color_prom >> 6) & 0x01;
+		bit2 = (*color_prom >> 7) & 0x01;
+		*(palette++) = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+
+		color_prom++;
+	}
+
+
+	/* character and sprite lookup table */
+	/* they use colors 0-127 */
+	for (i = 0;i < TOTAL_COLORS(0);i++)
+		COLOR(0,i) = i;
+
+	/* big sprite lookup table */
+	/* it uses colors 128-191 */
+	for (i = 0;i < TOTAL_COLORS(2);i++)
+	{
+		if (i % 8 == 0) COLOR(2,i) = 0;
+		else COLOR(2,i) = i + 128;
 	}
 }
 
@@ -251,8 +297,16 @@ void cclimber_vh_screenrefresh(struct osd_bitmap *bitmap)
 		int scroll[32];
 
 
-		for (offs = 0;offs < 32;offs++)
-			scroll[offs] = -cclimber_column_scroll[offs];
+		if (flipscreen[1])
+		{
+			for (offs = 0;offs < 32;offs++)
+				scroll[offs] = cclimber_column_scroll[31 - offs];
+		}
+		else
+		{
+			for (offs = 0;offs < 32;offs++)
+				scroll[offs] = -cclimber_column_scroll[offs];
+		}
 
 		copyscrollbitmap(bitmap,tmpbitmap,0,0,32,scroll,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
 	}
@@ -320,6 +374,141 @@ void cclimber_vh_screenrefresh(struct osd_bitmap *bitmap)
 		drawgfx(bitmap,Machine->gfx[spriteram[offs + 1] & 0x10 ? 4 : 3],
 				(spriteram[offs] & 0x3f) + 2 * (spriteram[offs + 1] & 0x20),
 				spriteram[offs + 1] & 0x0f,
+				flipx,flipy,
+				sx,sy,
+				&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+	}
+
+
+	if ((cclimber_bigspriteram[0] & 1) == 0)
+		/* draw the "big sprite" over sprites */
+		drawbigsprite(bitmap);
+}
+
+/* This is identical to the cclimber routine except for the difference in bankswitching the gfx */
+void swimmer_vh_screenrefresh(struct osd_bitmap *bitmap)
+{
+	int offs;
+
+
+	/* for every character in the Video RAM, check if it has been modified */
+	/* since last time and update it accordingly. */
+	for (offs = videoram_size - 1;offs >= 0;offs--)
+	{
+		if (dirtybuffer[offs])
+		{
+			int sx,sy,flipx,flipy;
+
+
+			dirtybuffer[offs] = 0;
+
+			sx = offs % 32;
+			sy = offs / 32;
+			flipx = colorram[offs] & 0x40;
+			flipy = colorram[offs] & 0x80;
+			if (flipscreen[0])
+			{
+				sx = 31 - sx;
+				flipx = !flipx;
+			}
+			if (flipscreen[1])
+			{
+				sy = 31 - sy;
+				flipy = !flipy;
+			}
+
+			drawgfx(tmpbitmap,Machine->gfx[0],
+					videoram[offs] | ((colorram[offs] & 0x10) << 4),
+					0/*colorram[offs] & 0x0f*/,
+					flipx,flipy,
+					8*sx,8*sy,
+					0,TRANSPARENCY_NONE,0);
+		}
+	}
+
+
+	/* copy the temporary bitmap to the screen */
+	{
+		int scroll[32];
+
+
+		if (flipscreen[1])
+		{
+			for (offs = 0;offs < 32;offs++)
+				scroll[offs] = cclimber_column_scroll[31 - offs];
+		}
+		else
+		{
+			for (offs = 0;offs < 32;offs++)
+				scroll[offs] = -cclimber_column_scroll[offs];
+		}
+
+		copyscrollbitmap(bitmap,tmpbitmap,0,0,32,scroll,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+	}
+
+
+	/* update the "big sprite" */
+	{
+		int newcol;
+		static int lastcol;
+
+
+		newcol = cclimber_bigspriteram[1] & 0x07;
+
+		for (offs = cclimber_bsvideoram_size - 1;offs >= 0;offs--)
+		{
+			int sx,sy;
+
+
+			if (bsdirtybuffer[offs] || newcol != lastcol)
+			{
+				bsdirtybuffer[offs] = 0;
+
+				sx = offs % 16;
+				sy = offs / 16;
+
+				drawgfx(bsbitmap,Machine->gfx[2],
+						cclimber_bsvideoram[offs],0/*newcol*/,
+						0,0,
+						8*sx,8*sy,
+						0,TRANSPARENCY_NONE,0);
+			}
+
+		}
+
+		lastcol = newcol;
+	}
+
+
+	if (cclimber_bigspriteram[0] & 1)
+		/* draw the "big sprite" below sprites */
+		drawbigsprite(bitmap);
+
+
+	/* draw sprites */
+	for (offs = 0;offs < spriteram_size;offs += 4)
+	{
+		int sx,sy,flipx,flipy;
+
+
+		sx = spriteram[offs + 3];
+		sy = 240 - spriteram[offs + 2];
+		flipx = spriteram[offs] & 0x40;
+		flipy = spriteram[offs] & 0x80;
+		if (flipscreen[0])
+		{
+			sx = 240 - sx;
+			flipx = !flipx;
+		}
+		if (flipscreen[1])
+		{
+			sy = 240 - sy;
+			flipy = !flipy;
+		}
+
+		drawgfx(bitmap,Machine->gfx[1],
+				(spriteram[offs] & 0x3f) | (spriteram[offs + 1] & 0x10) << 2,
+				0/*spriteram[offs + 1] & 0x0f*/,
 				flipx,flipy,
 				sx,sy,
 				&Machine->drv->visible_area,TRANSPARENCY_PEN,0);

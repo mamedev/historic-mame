@@ -131,3 +131,23 @@ int soundlatch_r(int offset)
 	read_debug = 1;
 	return latch;
 }
+
+/***************************************************************************
+
+  This function returns top of reserved sound channels
+
+***************************************************************************/
+static int reserved_channel = 0;
+
+int get_play_channels( int request )
+{
+	int ret_value = reserved_channel;
+
+	reserved_channel += request;
+	return ret_value;
+}
+
+void reset_play_channels(void)
+{
+	reserved_channel = 0;
+}

@@ -1,7 +1,6 @@
 #include "driver.h"
 #include "sndhrdw/generic.h"
-
-#define AUDIO_CONV(A) (A+0x80)
+#include "sndhrdw/dac.h"
 
 
 #ifdef OLD_ROUTINES
@@ -85,15 +84,6 @@ void qbert_sh_w(int offset,int data)
 }
 #else
 
-#define TARGET_EMULATION_RATE 44100     /* will be adapted to be a multiple of buffer_len */
-static int emulation_rate;
-static int buffer_len;
-static unsigned char *buffer;
-static int sample_pos;
-
-
-static unsigned char amplitude_DAC;
-
 
 void gottlieb_sh_w(int offset,int data)
 {
@@ -109,56 +99,39 @@ void gottlieb_sh2_w(int offset,int command)
 
 void gottlieb_sh_update(void)
 {
-	while (sample_pos < buffer_len)
-		buffer[sample_pos++] = amplitude_DAC;
-
-	osd_play_streamed_sample(0,buffer,buffer_len,emulation_rate,255);
-
-	sample_pos=0;
+	DAC_sh_update ();
 }
 
 void qbert_sh_w(int offset, int data)
 {}
 #endif
 
+
+static struct DACinterface dac_intf =
+{
+	1,
+	441000,
+	{ 255 },
+	{ 0 },
+};
+
 int gottlieb_sh_start(void)
 {
-    buffer_len = TARGET_EMULATION_RATE / Machine->drv->frames_per_second;
-    emulation_rate = buffer_len * Machine->drv->frames_per_second;
-
-    if ((buffer = malloc(buffer_len)) == 0)
-	return 1;
-    memset(buffer,0x80,buffer_len);
-
-    sample_pos = 0;
-
-    return 0;
+	return DAC_sh_start (&dac_intf);
 }
 
 
 
 void gottlieb_sh_stop(void)
 {
-    free(buffer);
+	DAC_sh_stop ();
 }
 
 
 
 void gottlieb_amplitude_DAC_w(int offset,int data)
 {
-	int totcycles,leftcycles,newpos;
-
-
-	totcycles = Machine->drv->cpu[1].cpu_clock / Machine->drv->frames_per_second;
-	leftcycles = cpu_getfcount();
-	newpos = buffer_len * (totcycles-leftcycles) / totcycles;
-
-	while (sample_pos < newpos-1)
-	    buffer[sample_pos++] = amplitude_DAC;
-
-    amplitude_DAC=AUDIO_CONV(data);
-
-    buffer[sample_pos++] = amplitude_DAC;
+	DAC_data_w (offset, data);
 }
 
 

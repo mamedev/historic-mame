@@ -218,10 +218,6 @@ static struct InputPort input_ports[] =
 	{ -1 }	/* end of table */
 };
 
-static struct TrakPort trak_ports[] =
-{
-        { -1 }
-};
 
 
 static struct KEYSet keys[] =
@@ -342,7 +338,7 @@ static unsigned char colortable[] =
 
 enum
 {
-	c_text, c_wall, c_gbln, c_mstr, c_qbox, c_door
+	c_text, c_wall, c_gbln, c_mstr
 };
 
 static unsigned char venture_color_lookup[] =
@@ -454,7 +450,7 @@ static struct MachineDriver venture_machine_driver =
 	venture_init_machine,
 
 	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 0*8, 32*8-1 },
+	32*8, 32*8, { 0*8, 31*8-1, 0*8, 32*8-1 },
 	gfxdecodeinfo,
 	sizeof(palette)/3,sizeof(colortable),
 	0,
@@ -466,7 +462,6 @@ static struct MachineDriver venture_machine_driver =
 	exidy_vh_screenrefresh,
 
 	/* sound hardware */
-	0,
 	0,
 	0,
 	0,
@@ -562,8 +557,9 @@ struct GameDriver venture_driver =
 	venture_rom,
 	0, 0,
 	0,
+	0,	/* sound_prom */
 
-	input_ports, 0, trak_ports, dsw, keys,
+	input_ports, 0, 0/*TBR*/,dsw, keys,
 
 	0, palette, colortable,
 	ORIENTATION_DEFAULT,

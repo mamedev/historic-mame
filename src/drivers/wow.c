@@ -128,10 +128,7 @@ static struct InputPort input_ports[] =
 	{ -1 }	/* end of table */
 };
 
-static struct TrakPort trak_ports[] =
-{
-        { -1 }
-};
+
 
 static struct KEYSet keys[] =
 {
@@ -504,7 +501,6 @@ static struct MachineDriver wow_machine_driver =
 	wow_vh_screenrefresh_stars,
 
 	/* sound hardware */
-	0,
     0,             				/* Initialise audio hardware */
     wow_sh_start,   			/* Start audio  */
     wow_sh_stop,     			/* Stop audio   */
@@ -550,14 +546,15 @@ struct GameDriver wow_driver =
 {
     "Wizard of Wor",
 	"wow",
-    "NICOLA SALMORIA (Mame Driver)\nSTEVE SCAVONE (Info and Code)\nMIKE COATES (Extra Code)\nMIKE BALFOUR (High Scores)",
+    "Nicola Salmoria (MAME Driver)\nSteve Scavone (info and code)\nJim Hernandez (hardware info)\nMike Coates (extra code)\nMike Balfour (high score save)",
 	&wow_machine_driver,
 
 	wow_rom,
 	0, 0,
 	0,
+	0,	/* sound_prom */
 
-	wow_input_ports, 0, trak_ports, wow_dsw, keys,
+	wow_input_ports, 0, 0/*TBR*/,wow_dsw, keys,
 
 	0, palette, colortable,
 	ORIENTATION_DEFAULT,
@@ -634,7 +631,6 @@ static struct MachineDriver robby_machine_driver =
 	0,
 	0,
 	0,
-	0,
 	0
 };
 
@@ -684,8 +680,9 @@ struct GameDriver robby_driver =
 	robby_rom,
 	0, 0,
 	0,
+	0,	/* sound_prom */
 
-	input_ports, 0, trak_ports, dsw, keys,
+	input_ports, 0, 0/*TBR*/,dsw, keys,
 
 	0, palette, colortable,
 	ORIENTATION_DEFAULT,
@@ -799,7 +796,7 @@ static struct MachineDriver gorf_machine_driver =
 	0,
 
 	/* video hardware */
-	204, 320, { 0, 204-1, 0, 320-1 },	/* ASG */
+	204, 320, { 0, 204-13, 0, 320-1 },
 	0,	/* no gfxdecodeinfo - bitmapped display */
 	sizeof(palette)/3,sizeof(colortable),
 	0,
@@ -811,7 +808,6 @@ static struct MachineDriver gorf_machine_driver =
 	gorf_vh_screenrefresh,
 
 	/* sound hardware */
-	0,
     0,            				/* Initialise audio hardware */
     wow_sh_start,    			/* Start audio  */
     wow_sh_stop,     			/* Stop audio   */
@@ -821,7 +817,7 @@ static struct MachineDriver gorf_machine_driver =
 static int gorf_hiload(void)
 {
 	/* check if the hi score table has already been initialized */
-        if ((RAM[0xD00B]==0xFF) && (RAM[0xD03D]=0x33))
+        if ((RAM[0xD00B]==0xFF) && (RAM[0xD03D]==0x33))
 	{
 		void *f;
 
@@ -861,8 +857,9 @@ struct GameDriver gorf_driver =
 	gorf_rom,
 	0, 0,
 	0,
+	0,	/* sound_prom */
 
-	Gorf_input_ports, 0, trak_ports, Gorf_dsw, Gorf_keys,
+	Gorf_input_ports, 0, 0/*TBR*/,Gorf_dsw, Gorf_keys,
 
 	0, palette, colortable,
 	ORIENTATION_DEFAULT,
@@ -957,7 +954,6 @@ static struct MachineDriver spacezap_machine_driver =
 	0,
 	0,
 	0,
-	0,
 	0
 };
 
@@ -1006,8 +1002,9 @@ struct GameDriver spacezap_driver =
 	spacezap_rom,
 	0, 0,
 	0,
+	0,	/* sound_prom */
 
-	spacezap_input_ports, 0, trak_ports, spacezap_dsw, spacezap_keys,
+	spacezap_input_ports, 0, 0/*TBR*/,spacezap_dsw, spacezap_keys,
 
 	0, palette, colortable,
 	ORIENTATION_DEFAULT,
@@ -1131,7 +1128,6 @@ static struct MachineDriver seawolf_machine_driver =
 	0,
 	0,
 	0,
-	0,
 	0
 };
 
@@ -1178,8 +1174,9 @@ struct GameDriver seawolf_driver =
 	seawolf2_rom,
 	0, 0,
 	0,
+	0,	/* sound_prom */
 
-	seawolf2_input_ports, 0, trak_ports, seawolf2_dsw, seawolf2_keys,
+	seawolf2_input_ports, 0, 0/*TBR*/,seawolf2_dsw, seawolf2_keys,
 
 	0, palette, colortable,
 	ORIENTATION_DEFAULT,

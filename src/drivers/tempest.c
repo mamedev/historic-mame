@@ -173,12 +173,12 @@ High Scores:
 int tempest_interrupt(void);
 int tempest_catch_busyloop (int offset);
 int tempest_IN0_r(int offset);
+void tempest_led_w (int offset, int data);
 
 /* Misc sound code */
 static struct POKEYinterface interface =
 {
 	2,	/* 2 chips */
-	6,	/* 6 updates per video frame - tied to interrupts per frame */
 	FREQ_17_APPROX,	/* 1.7 Mhz */
 	255,
 	NO_CLIP,
@@ -232,12 +232,12 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x60d0, 0x60df, pokey2_w },
 	{ 0x6080, 0x609f, mb_go },
 	{ 0x4800, 0x4800, avgdvg_go },
-	{ 0x5000, 0x5000, MWA_RAM },
+	{ 0x5000, 0x5000, watchdog_reset_w },
 	{ 0x5800, 0x5800, avgdvg_reset },
 	{ 0x9000, 0xdfff, MWA_ROM },
 	{ 0x3000, 0x3fff, MWA_ROM },
 	{ 0x4000, 0x4000, MWA_NOP },
-	{ 0x60e0, 0x60e0, MWA_NOP },
+	{ 0x60e0, 0x60e0, tempest_led_w },
 	{ -1 }	/* end of table */
 };
 
@@ -262,7 +262,7 @@ INPUT_PORTS_START( input_ports )
 	PORT_START	/* IN1/DSW0 */
 	/* This is the Tempest spinner input. It only uses 4 bits. It also clips the */
 	/* returned value to a maximum of +/- 7 */
-	PORT_ANALOG ( 0x0f, 0x00, IPT_DIAL | IPF_REVERSE, 100, 7, 0, 0 )
+	PORT_ANALOGX ( 0x0f, 0x00, IPT_DIAL | IPF_REVERSE, 100, 7, 0, 0, OSD_KEY_LEFT, OSD_KEY_RIGHT, OSD_JOY_LEFT, OSD_JOY_RIGHT, 1 )
 	/* The next one is reponsible for cocktail mode.
 	 * According to the documentation, this is not a switch, although
 	 * it may have been planned to put it on the Math Box PCB, D/E2 )
@@ -393,10 +393,10 @@ static struct MachineDriver machine_driver =
 			1500000,	/* 1.5 Mhz */
 			0,
 			readmem,writemem,0,0,
-			tempest_interrupt,6 /* approx. 250Hz */
+			tempest_interrupt,8 /* approx. 250Hz */
 		}
 	},
-	45, /* frames per second */
+	30, /* frames per second */
 	1,
 	0,
 
@@ -408,12 +408,11 @@ static struct MachineDriver machine_driver =
 
 	VIDEO_TYPE_VECTOR,
 	0,
-	avg_start,
+	avg_start_tempest,
 	avg_stop,
 	avg_screenrefresh,
 
 	/* sound hardware */
-	0,
 	0,
 	tempest_sh_start,
 	pokey_sh_stop,
@@ -454,6 +453,24 @@ ROM_START( tempest_rom )
 	ROM_LOAD( "136002.124", 0x3800, 0x0800, 0xb6c4f9f8 )
 ROM_END
 
+ROM_START( temptube_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "136002.113", 0x9000, 0x0800, 0xc4180c0e )
+	ROM_LOAD( "136002.114", 0x9800, 0x0800, 0x3bf4999a )
+	ROM_LOAD( "136002.115", 0xa000, 0x0800, 0x22bb1713 )
+	ROM_LOAD( "136002.116", 0xa800, 0x0800, 0xee2a0306 )
+	ROM_LOAD( "136002.117", 0xb000, 0x0800, 0x85788680 )
+	ROM_LOAD( "tube.118",   0xb800, 0x0800, 0xf4ecc108 )
+	ROM_LOAD( "136002.119", 0xc000, 0x0800, 0x02e4a6ae )
+	ROM_LOAD( "136002.120", 0xc800, 0x0800, 0x82d1e4ed )
+	ROM_LOAD( "136002.121", 0xd000, 0x0800, 0xe663151f )
+	ROM_LOAD( "136002.122", 0xd800, 0x0800, 0x292ebfb4 )
+	ROM_RELOAD(             0xf800, 0x0800 )	/* for reset/interrupt vectors */
+	/* Mathbox ROMs */
+	ROM_LOAD( "136002.123", 0x3000, 0x0800, 0xca906060 )
+	ROM_LOAD( "136002.124", 0x3800, 0x0800, 0xb6c4f9f8 )
+ROM_END
+
 #if 0
 ROM_START( tempest3_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
@@ -473,14 +490,36 @@ struct GameDriver tempest_driver =
 	"Tempest",
 	"tempest",
 	VECTOR_TEAM
-	"Neil Bradley\n  (AVG jsr $0)\n"
-	"Keith Gerdes\n  (Pokey RNG protection)",
+	"Keith Gerdes (Pokey protection)",
 
 	&machine_driver,
 
 	tempest_rom,
 	0, 0,
 	0,
+	0,	/* sound_prom */
+
+	0/*TBR*/,input_ports, 0/*TBR*/, 0/*TBR*/,0/*TBR*/,
+
+	color_prom, 0, 0,
+	ORIENTATION_DEFAULT,
+
+	atari_vg_earom_load, atari_vg_earom_save
+};
+
+struct GameDriver temptube_driver =
+{
+	"Tempest Tubes",
+	"temptube",
+	VECTOR_TEAM
+	"Keith Gerdes (Pokey protection)",
+
+	&machine_driver,
+
+	temptube_rom,
+	0, 0,
+	0,
+	0,	/* sound_prom */
 
 	0/*TBR*/,input_ports, 0/*TBR*/, 0/*TBR*/,0/*TBR*/,
 

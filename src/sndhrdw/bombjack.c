@@ -3,21 +3,10 @@
 
 
 
-int bombjack_sh_interrupt(void)
-{
-	AY8910_update();
-
-	if (cpu_getiloops() == 0) return nmi_interrupt();
-	else return ignore_interrupt();
-}
-
-
-
 static struct AY8910interface interface =
 {
 	3,	/* 3 chips */
-	10,	/* 10 updates per video frame (good quality) */
-	1832727040,	/* 1.832727040 MHZ?????? */
+	1832727,	/* 1.832727040 MHZ?????? */
 	{ 255, 255, 255 },
 	{ 0 },
 	{ 0 },

@@ -1,7 +1,6 @@
 /***************************************************************************
 
 to do:
--Verify the Dip switches functions
 -Better sound emulation
 -Speed!!!
  -The Z80 spends most of its time reading the timer, we should trap that.
@@ -65,7 +64,7 @@ Read/Write
 
 
 ------ Sound CPU (Z80) -----
-There is 3 or 4 76489AN chips driven by the Z80
+There are 3 or 4 76489AN chips driven by the Z80
 
 0000-1fff Rom program (A6)
 2000-3fff Rom Program (A4) (not used or missing?)
@@ -73,17 +72,18 @@ There is 3 or 4 76489AN chips driven by the Z80
 6000-7fff Sound data in
 8000-9fff Timer
 A000-Bfff
-C000      ? Store Data that will go to one of the 76489AN
-C001      Sound 1
-C002      Sound 2 (optional)
-C003      Sound 3
-C004      Sound 4
+C000      Store Data that will go to one of the 76489AN
+C001      76489 #1 trigger
+C002      76489 #2 (optional) trigger
+C003      76489 #3 trigger
+C004      76489 #4 trigger
 
 ***************************************************************************/
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "sndhrdw/generic.h"
+#include "sndhrdw/sn76496.h"
 
 
 /* In Machine */
@@ -112,12 +112,7 @@ void tp84_vh_screenrefresh(struct osd_bitmap *bitmap);
 
 int tp84_sh_timer_r(int offset);
 int tp84_sh_interrupt(void);
-void tp84_sound1_w(int offset,int data);
-void tp84_sound2_w(int offset,int data);
-void tp84_sound3_w(int offset,int data);
 int tp84_sh_start(void);
-void tp84_sh_stop(void);
-void tp84_sh_update(void);
 
 
 
@@ -174,7 +169,6 @@ static struct MemoryWriteAddress writemem_cpu2[] =
 	{ 0x6000, 0x7fff, MWA_RAM },
 	{ 0x8000, 0x87ff, tp84_sharedram_w },    /* shared RAM with the main CPU */
 	{ 0xe000, 0xffff, MWA_ROM },              /* ROM code */
-
 	{ -1 }	/* end of table */
 };
 
@@ -193,75 +187,102 @@ static struct MemoryWriteAddress sound_writemem[] =
 	{ 0x0000, 0x1fff, MWA_ROM },
 	{ 0x4000, 0x43ff, MWA_RAM },
 	{ 0xc000, 0xc000, MWA_NOP },
-	{ 0xc001, 0xc001, tp84_sound1_w },
-	{ 0xc003, 0xc003, tp84_sound1_w },
-	{ 0xc004, 0xc004, tp84_sound1_w },
+	{ 0xc001, 0xc001, SN76496_0_w },
+	{ 0xc003, 0xc003, SN76496_1_w },
+	{ 0xc004, 0xc004, SN76496_2_w },
 	{ -1 }	/* end of table */
 };
 
+INPUT_PORTS_START( input_ports )
+	PORT_START      /* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN3 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
+	PORT_START      /* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
-static struct InputPort TP84_input_ports[] =
-{
-	{	/* Insert Coin */
-		0xFF,	/* default_value */
-		{ OSD_KEY_3, 0, 0, OSD_KEY_1, OSD_KEY_2, 0, 0, 0 },
-		{ 0, 0, 0, 0, 0, 0, 0, 0 }	/* not affected by joystick */
-	},
-	{	/* Player 1 joystick */
-		0xFF,	/* default_value */
-		{ OSD_KEY_LEFT, OSD_KEY_RIGHT, OSD_KEY_UP, OSD_KEY_DOWN, OSD_KEY_LCONTROL, OSD_KEY_ALT, 0, 0},
-		{ OSD_JOY_LEFT, OSD_JOY_RIGHT, OSD_JOY_UP, OSD_JOY_DOWN, OSD_JOY_FIRE2, OSD_JOY_FIRE1, 0, 0}
-	},
-	{	/* Second player joystick */
-		0xFF,	/* default_value */
-		{ 0, 0, 0, 0, 0, 0, 0, 0 },
-		{ 0, 0, 0, 0, 0, 0, 0, 0 }	/* not affected by joystick */
-	},
-	{	/* Dip 1 Self test and pricing */
-		0xff,	/* default_value */
-		{ 0, 0, 0, 0, 0, 0, 0, 0 },
-		{ 0, 0, 0, 0, 0, 0, 0, 0 }	/* not affected by joystick */
-	},
-	{	/* Dip 2 */
-		0xD5,	/* default_value */
-		{ 0, 0, 0, 0, 0, 0, 0, 0 },
-		{ 0, 0, 0, 0, 0, 0, 0, 0 }	/* not affected by joystick */
-	},
-	{ -1 }	/* end of table */
-};
+	PORT_START      /* IN2 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_COCKTAIL )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
+	PORT_START      /* DSW0 */
+	PORT_DIPNAME( 0x0f, 0x0f, "Coin A", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x02, "4 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x05, "3 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x08, "2 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x04, "3 Coins/2 Credits" )
+	PORT_DIPSETTING(    0x01, "4 Coins/3 Credits" )
+	PORT_DIPSETTING(    0x0f, "1 Coin/1 Credit" )
+	PORT_DIPSETTING(    0x03, "3 Coins/4 Credits" )
+	PORT_DIPSETTING(    0x07, "2 Coins/3 Credits" )
+	PORT_DIPSETTING(    0x0e, "1 Coin/2 Credits" )
+	PORT_DIPSETTING(    0x06, "2 Coins/5 Credits" )
+	PORT_DIPSETTING(    0x0d, "1 Coin/3 Credits" )
+	PORT_DIPSETTING(    0x0c, "1 Coin/4 Credits" )
+	PORT_DIPSETTING(    0x0b, "1 Coin/5 Credits" )
+	PORT_DIPSETTING(    0x0a, "1 Coin/6 Credits" )
+	PORT_DIPSETTING(    0x09, "1 Coin/7 Credits" )
+	PORT_DIPSETTING(    0x00, "Free Play" )
+	PORT_DIPNAME( 0xf0, 0xf0, "Coin B", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x20, "4 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x50, "3 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x80, "2 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x40, "3 Coins/2 Credits" )
+	PORT_DIPSETTING(    0x10, "4 Coins/3 Credits" )
+	PORT_DIPSETTING(    0xf0, "1 Coin/1 Credit" )
+	PORT_DIPSETTING(    0x30, "3 Coins/4 Credits" )
+	PORT_DIPSETTING(    0x70, "2 Coins/3 Credits" )
+	PORT_DIPSETTING(    0xe0, "1 Coin/2 Credits" )
+	PORT_DIPSETTING(    0x60, "2 Coins/5 Credits" )
+	PORT_DIPSETTING(    0xd0, "1 Coin/3 Credits" )
+	PORT_DIPSETTING(    0xc0, "1 Coin/4 Credits" )
+	PORT_DIPSETTING(    0xb0, "1 Coin/5 Credits" )
+	PORT_DIPSETTING(    0xa0, "1 Coin/6 Credits" )
+	PORT_DIPSETTING(    0x90, "1 Coin/7 Credits" )
+	PORT_DIPSETTING(    0x00, "Invalid" )
 
-static struct KEYSet keys[] =
-{
-				{ 1, 2, "MOVE UP" },
-				{ 1, 3, "MOVE DOWN" },
-				{ 1, 0, "MOVE LEFT"  },
-				{ 1, 1, "MOVE RIGHT" },
-				{ 1, 4, "FIRE" },
-				{ 1, 5, "MISSILE" },
-				{ -1 }
-};
-
-
-/* This needs a lot of work... */
-static struct DSW TP84_dsw[] =
-{
-	{ 4, 0x03, "LIVES", {"7", "5", "3", "2" } },
-
-	{ 4, 0x18, "BONUS AT", { "40000 80000", "30000 70000",\
-													 "20000 60000", "10000 50000" } },
-/*Not sure*/
-	{ 4, 0x60, "DIFFICULTY", { "HARD", "MEDIUM", "NORMAL", "EASY" }, 1 },
-
-	{ -1 }
-};
-
-static struct TrakPort trak_ports[] =
-{
-        { -1 }
-};
-
+	PORT_START      /* DSW1 */
+	PORT_DIPNAME( 0x03, 0x02, "Lives", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x03, "2" )
+	PORT_DIPSETTING(    0x02, "3" )
+	PORT_DIPSETTING(    0x01, "5" )
+	PORT_DIPSETTING(    0x00, "7" )
+	PORT_DIPNAME( 0x04, 0x00, "Cabinet", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "Upright" )
+	PORT_DIPSETTING(    0x04, "Cocktail" )
+	PORT_DIPNAME( 0x18, 0x18, "Bonus", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x18, "10000 50000" )
+	PORT_DIPSETTING(    0x10, "20000 60000" )
+	PORT_DIPSETTING(    0x08, "30000 70000" )
+	PORT_DIPSETTING(    0x00, "40000 80000" )
+	PORT_DIPNAME( 0x60, 0x60, "Difficulty", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x60, "Easy" )
+	PORT_DIPSETTING(    0x40, "Normal" )
+	PORT_DIPSETTING(    0x20, "Medium" )
+	PORT_DIPSETTING(    0x00, "Hard" )
+	PORT_DIPNAME( 0x80, 0x00, "Demo Sounds", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x80, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+INPUT_PORTS_END
 
 
 static struct GfxLayout charlayout =
@@ -414,7 +435,7 @@ static struct MachineDriver machine_driver =
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
-			3072000,	/* 3.072 Mhz ? */
+			14318180/4,	/* ? */
 			3,	/* memory region #3 */
 			sound_readmem,sound_writemem,0,0,
 			tp84_sh_interrupt,1
@@ -439,10 +460,9 @@ static struct MachineDriver machine_driver =
 
 	/* sound hardware */
 	0,
-	0,
 	tp84_sh_start,
-	tp84_sh_stop,
-	tp84_sh_update
+	SN76496_sh_stop,
+	SN76496_sh_update
 };
 
 
@@ -517,18 +537,15 @@ struct GameDriver tp84_driver =
 {
 	"Time Pilot 84",
 	"tp84",
-	"Marc Lafontaine (MAME driver)\nJuan Carlos Lorente (high score)",
+	"Marc Lafontaine (MAME driver)\nJuan Carlos Lorente (high score)\nMarco Cassili",
 	&machine_driver,		/* MachineDriver * */
 
 	tp84_rom,			/* RomModule * */
 	0, 0,					/* ROM decrypt routines */
 	0,						/* samplenames */
+	0,	/* sound_prom */
 
-	TP84_input_ports,	/* InputPort  */
-	0,
-	trak_ports,                     /* TrackBall  */
-	TP84_dsw,		/* DSW        */
-	keys,                   /* KEY def    */
+	0/*TBR*/, input_ports, 0/*TBR*/, 0/*TBR*/, 0/*TBR*/,
 
 	color_prom,						/* color prom */
 	0, 	          /* palette */

@@ -37,7 +37,7 @@ write:
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "sndhrdw/generic.h"
-#include "sndhrdw/8910intf.h"
+#include "sndhrdw/2203intf.h"
 
 
 
@@ -48,13 +48,14 @@ extern int commando_bgvideoram_size;
 extern unsigned char *commando_scrollx,*commando_scrolly;
 void commando_bgvideoram_w(int offset,int data);
 void commando_bgcolorram_w(int offset,int data);
+void commando_spriteram_w(int offset,int data);
+void commando_c804_w(int offset,int data);
 int commando_vh_start(void);
 void commando_vh_stop(void);
 void commando_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
 void commando_vh_screenrefresh(struct osd_bitmap *bitmap);
 
-int capcom_sh_start(void);
-int capcom_sh_interrupt(void);
+int capcomOPN_sh_start(void);
 
 
 
@@ -66,8 +67,7 @@ static struct MemoryReadAddress readmem[] =
 	{ 0xc002, 0xc002, input_port_2_r },
 	{ 0xc003, 0xc003, input_port_3_r },
 	{ 0xc004, 0xc004, input_port_4_r },
-	{ 0xe000, 0xff7f, MRA_RAM },
-	{ 0xd000, 0xd7ff, MRA_RAM },
+	{ 0xd000, 0xffff, MRA_RAM },
 	{ -1 }	/* end of table */
 };
 
@@ -75,6 +75,7 @@ static struct MemoryWriteAddress writemem[] =
 {
 	{ 0x0000, 0xbfff, MWA_ROM },
 	{ 0xc800, 0xc800, soundlatch_w },
+	{ 0xc804, 0xc804, commando_c804_w },
 	{ 0xc808, 0xc809, MWA_RAM, &commando_scrolly },
 	{ 0xc80a, 0xc80b, MWA_RAM, &commando_scrollx },
 	{ 0xd000, 0xd3ff, videoram_w, &videoram, &videoram_size },
@@ -82,7 +83,8 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0xd800, 0xdbff, commando_bgvideoram_w, &commando_bgvideoram, &commando_bgvideoram_size },
 	{ 0xdc00, 0xdfff, commando_bgcolorram_w, &commando_bgcolorram },
 	{ 0xe000, 0xfdff, MWA_RAM },
-	{ 0xfe00, 0xff7f, MWA_RAM, &spriteram, &spriteram_size },
+	{ 0xfe00, 0xff7f, commando_spriteram_w, &spriteram, &spriteram_size },
+	{ 0xff80, 0xffff, MWA_RAM },
 	{ -1 }	/* end of table */
 };
 
@@ -100,74 +102,93 @@ static struct MemoryWriteAddress sound_writemem[] =
 {
 	{ 0x0000, 0x3fff, MWA_ROM },
 	{ 0x4000, 0x47ff, MWA_RAM },
-	{ 0x8000, 0x8000, AY8910_control_port_0_w },
-	{ 0x8001, 0x8001, AY8910_write_port_0_w },
-	{ 0x8002, 0x8002, AY8910_control_port_1_w },
-	{ 0x8003, 0x8003, AY8910_write_port_1_w },
+	{ 0x8000, 0x8000, YM2203_control_port_0_w },
+	{ 0x8001, 0x8001, YM2203_write_port_0_w },
+	{ 0x8002, 0x8002, YM2203_control_port_1_w },
+	{ 0x8003, 0x8003, YM2203_write_port_1_w },
 	{ -1 }	/* end of table */
 };
 
 
 
-static struct InputPort input_ports[] =
-{
-	{	/* IN0 */
-		0xff,
-		{ OSD_KEY_1, OSD_KEY_2, 0, 0, 0, 0, 0, OSD_KEY_3 },
-		{ 0, 0, 0, 0, 0, 0, 0, 0 }
-	},
-	{	/* IN1 */
-		0xff,
-		{ OSD_KEY_RIGHT, OSD_KEY_LEFT, OSD_KEY_DOWN, OSD_KEY_UP,
-				OSD_KEY_LCONTROL, OSD_KEY_ALT, 0, 0 },
-		{ OSD_JOY_RIGHT, OSD_JOY_LEFT, OSD_JOY_DOWN, OSD_JOY_UP,
-				OSD_JOY_FIRE1, OSD_JOY_FIRE2, 0, 0 }
-	},
-	{	/* IN2 */
-		0xff,
-		{ 0, 0, 0, 0, 0, 0, 0, 0 },
-		{ 0, 0, 0, 0, 0, 0, 0, 0 }
-	},
-	{	/* DSW1 */
-		0xff,
-		{ 0, 0, 0, 0, 0, 0, 0, 0 },
-		{ 0, 0, 0, 0, 0, 0, 0, 0 }
-	},
-	{	/* DSW2 */
-		0x3f,
-		{ 0, 0, 0, 0, 0, 0, 0, 0 },
-		{ 0, 0, 0, 0, 0, 0, 0, 0 }
-	},
-	{ -1 }	/* end of table */
-};
+INPUT_PORTS_START( input_ports )
+	PORT_START	/* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN2 )
 
-static struct TrakPort trak_ports[] =
-{
-        { -1 }
-};
+	PORT_START	/* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNUSED )
 
+	PORT_START	/* IN2 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_COCKTAIL )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNUSED )
 
-static struct KEYSet keys[] =
-{
-	{ 1, 3, "MOVE UP" },
-	{ 1, 1, "MOVE LEFT"  },
-	{ 1, 0, "MOVE RIGHT" },
-	{ 1, 2, "MOVE DOWN" },
-	{ 1, 4, "FIRE" },
-	{ 1, 5, "GRENADE" },
-	{ -1 }
-};
+	PORT_START	/* DSW0 */
+	PORT_DIPNAME( 0x03, 0x03, "Starting Stage", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x03, "1" )
+	PORT_DIPSETTING(    0x01, "3" )
+	PORT_DIPSETTING(    0x02, "5")
+	PORT_DIPSETTING(    0x00, "7")
+	PORT_DIPNAME( 0x0c, 0x0c, "Lives", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x04, "2" )
+	PORT_DIPSETTING(    0x0c, "3" )
+	PORT_DIPSETTING(    0x08, "4" )
+	PORT_DIPSETTING(    0x00, "5" )
+	PORT_DIPNAME( 0x30, 0x30, "Coin A", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "4 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x20, "3 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x10, "2 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x30, "1 Coin/1 Credit" )
+	PORT_DIPNAME( 0xc0, 0xc0, "Coin B", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "2 Coins/1 Credit" )
+	PORT_DIPSETTING(    0xc0, "1 Coin/1 Credit" )
+	PORT_DIPSETTING(    0x40, "1 Coin/2 Credits" )
+	PORT_DIPSETTING(    0x80, "1 Coin/3 Credits" )
 
-
-static struct DSW dsw[] =
-{
-	{ 3, 0x0c, "LIVES", { "5", "2", "4", "3" }, 1 },
-	{ 4, 0x07, "BONUS", { "NONE", "20000 700000", "30000 800000", "10000 600000", "40000 1000000", "20000 600000", "30000 700000", "10000 500000" }, 1 },
-	{ 4, 0x10, "DIFFICULTY", { "DIFFICULT", "NORMAL" }, 1 },
-	{ 3, 0x03, "STARTING STAGE", { "7", "3", "5", "1" }, 1 },
-	{ 4, 0x08, "DEMO SOUNDS", { "OFF", "ON" } },
-	{ -1 }
-};
+	PORT_START      /* DSW1 */
+	PORT_DIPNAME( 0x07, 0x07, "Bonus Life", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x04, "40000 50000" )
+	PORT_DIPSETTING(    0x07, "10000 500000" )
+	PORT_DIPSETTING(    0x03, "10000 600000" )
+	PORT_DIPSETTING(    0x05, "20000 600000" )
+	PORT_DIPSETTING(    0x01, "20000 700000" )
+	PORT_DIPSETTING(    0x06, "30000 700000" )
+	PORT_DIPSETTING(    0x02, "30000 800000" )
+	PORT_DIPSETTING(    0x00, "None" )
+	PORT_DIPNAME( 0x08, 0x08, "Demo Sounds", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "Off" )
+	PORT_DIPSETTING(    0x08, "On" )
+	PORT_DIPNAME( 0x10, 0x10, "Difficulty", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x10, "Normal" )
+	PORT_DIPSETTING(    0x00, "Difficult" )
+	PORT_DIPNAME( 0x20, 0x00, "Flip Screen", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "Off" )
+	PORT_DIPSETTING(    0x20, "On" )
+	PORT_DIPNAME( 0xc0, 0x00, "Cabinet", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "Upright One Player" )
+	PORT_DIPSETTING(    0x40, "Upright Two Players" )
+/*	PORT_DIPSETTING(    0x80, "Cocktail" ) */
+	PORT_DIPSETTING(    0xc0, "Cocktail" )
+INPUT_PORTS_END
 
 
 
@@ -177,8 +198,8 @@ static struct GfxLayout charlayout =
 	1024,	/* 1024 characters */
 	2,	/* 2 bits per pixel */
 	{ 4, 0 },
+	{ 0, 1, 2, 3, 8+0, 8+1, 8+2, 8+3 },
 	{ 0*16, 1*16, 2*16, 3*16, 4*16, 5*16, 6*16, 7*16 },
-	{ 8+3, 8+2, 8+1, 8+0, 3, 2, 1, 0 },
 	16*8	/* every char takes 16 consecutive bytes */
 };
 static struct GfxLayout tilelayout =
@@ -187,10 +208,10 @@ static struct GfxLayout tilelayout =
 	1024,	/* 1024 tiles */
 	3,	/* 3 bits per pixel */
 	{ 0, 1024*32*8, 2*1024*32*8 },	/* the bitplanes are separated */
+	{ 0, 1, 2, 3, 4, 5, 6, 7,
+			16*8+0, 16*8+1, 16*8+2, 16*8+3, 16*8+4, 16*8+5, 16*8+6, 16*8+7 },
 	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8,
 			8*8, 9*8, 10*8, 11*8, 12*8, 13*8, 14*8, 15*8 },
-	{ 16*8+7, 16*8+6, 16*8+5, 16*8+4, 16*8+3, 16*8+2, 16*8+1, 16*8+0,
-			7, 6, 5, 4, 3, 2, 1, 0 },
 	32*8	/* every tile takes 32 consecutive bytes */
 };
 static struct GfxLayout spritelayout =
@@ -199,10 +220,10 @@ static struct GfxLayout spritelayout =
 	768,	/* 768 sprites */
 	4,	/* 4 bits per pixel */
 	{ 768*64*8+4, 768*64*8+0, 4, 0 },
+	{ 0, 1, 2, 3, 8+0, 8+1, 8+2, 8+3,
+			32*8+0, 32*8+1, 32*8+2, 32*8+3, 33*8+0, 33*8+1, 33*8+2, 33*8+3 },
 	{ 0*16, 1*16, 2*16, 3*16, 4*16, 5*16, 6*16, 7*16,
 			8*16, 9*16, 10*16, 11*16, 12*16, 13*16, 14*16, 15*16 },
-	{ 33*8+3, 33*8+2, 33*8+1, 33*8+0, 32*8+3, 32*8+2, 32*8+1, 32*8+0,
-			8+3, 8+2, 8+1, 8+0, 3, 2, 1, 0 },
 	64*8	/* every sprite takes 64 consecutive bytes */
 };
 
@@ -285,14 +306,14 @@ static struct MachineDriver machine_driver =
 			4000000,	/* 4 Mhz (?) */
 			0,
 			readmem,writemem,0,0,
-			commando_interrupt,2
+			commando_interrupt,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			3000000,	/* 3 Mhz ??? */
 			2,	/* memory region #2 */
 			sound_readmem,sound_writemem,0,0,
-			capcom_sh_interrupt,12
+			interrupt,4
 		}
 	},
 	60,
@@ -300,7 +321,7 @@ static struct MachineDriver machine_driver =
 	0,
 
 	/* video hardware */
-	32*8, 32*8, { 2*8, 30*8-1, 0*8, 32*8-1 },
+	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
 	gfxdecodeinfo,
 	256,16*4+4*16+16*8,
 	commando_vh_convert_color_prom,
@@ -313,10 +334,9 @@ static struct MachineDriver machine_driver =
 
 	/* sound hardware */
 	0,
-	0,
-	capcom_sh_start,
-	AY8910_sh_stop,
-	AY8910_sh_update
+	capcomOPN_sh_start,
+	YM2203_sh_stop,
+	YM2203_sh_update
 };
 
 
@@ -418,7 +438,8 @@ static int hiload(void)
 
 	/* check if the hi score table has already been initialized */
 	if (memcmp(&RAM[0xee00],"\x00\x50\x00",3) == 0 &&
-			memcmp(&RAM[0xee4e],"\x00\x08\x00",3) == 0)
+			memcmp(&RAM[0xee4e],"\x00\x08\x00",3) == 0 &&
+			memcmp(&RAM[0xee97],"\x00\x50\x00",3) == 0)	/* high score */
 	{
 		void *f;
 
@@ -460,17 +481,18 @@ struct GameDriver commando_driver =
 {
 	"Commando (US version)",
 	"commando",
-	"PAUL JOHNSON\nNICOLA SALMORIA",
+	"Paul Johnson (hardware info)\nNicola Salmoria (MAME driver)",
 	&machine_driver,
 
 	commando_rom,
 	0, commando_decode,
 	0,
+	0,	/* sound_prom */
 
-	input_ports, 0, trak_ports, dsw, keys,
+	0/*TBR*/, input_ports, 0/*TBR*/, 0/*TBR*/, 0/*TBR*/,
 
 	color_prom, 0, 0,
-	ORIENTATION_DEFAULT,
+	ORIENTATION_ROTATE_90,
 
 	hiload, hisave
 };
@@ -479,17 +501,18 @@ struct GameDriver commandj_driver =
 {
 	"Commando (Japanese version)",
 	"commandj",
-	"PAUL JOHNSON\nNICOLA SALMORIA",
+	"Paul Johnson (hardware info)\nNicola Salmoria (MAME driver)",
 	&machine_driver,
 
 	commandj_rom,
 	0, commando_decode,
 	0,
+	0,	/* sound_prom */
 
-	input_ports, 0, trak_ports, dsw, keys,
+	0/*TBR*/, input_ports, 0/*TBR*/, 0/*TBR*/, 0/*TBR*/,
 
 	color_prom, 0, 0,
-	ORIENTATION_DEFAULT,
+	ORIENTATION_ROTATE_90,
 
 	hiload, hisave
 };

@@ -13,6 +13,7 @@
 
 unsigned char *kungfum_scroll_low;
 unsigned char *kungfum_scroll_high;
+static int flipscreen;
 
 
 
@@ -20,6 +21,11 @@ static struct rectangle spritevisiblearea =
 {
 	0*8, 32*8-1,
 	10*8, 32*8-1
+};
+static struct rectangle flipspritevisiblearea =
+{
+	0*8, 32*8-1,
+	0*8, 22*8-1
 };
 
 
@@ -132,6 +138,20 @@ void kungfum_vh_stop(void)
 
 
 
+void kungfum_flipscreen_w(int offset,int data)
+{
+	/* screen flip is handled both by software and hardware */
+	data ^= ~readinputport(4) & 1;
+
+	if (flipscreen != (data & 1))
+	{
+		flipscreen = data & 1;
+		memset(dirtybuffer,1,videoram_size);
+	}
+}
+
+
+
 /***************************************************************************
 
   Draw the game screen in the given osd_bitmap.
@@ -150,19 +170,28 @@ void kungfum_vh_screenrefresh(struct osd_bitmap *bitmap)
 	{
 		if (dirtybuffer[offs])
 		{
-			int sx,sy;
+			int sx,sy,flipx,flipy;
 
 
 			dirtybuffer[offs] = 0;
 
-			sx = 8 * (offs % 64);
-			sy = 8 * (offs / 64);
+			sx = offs % 64;
+			sy = offs / 64;
+			flipx = colorram[offs] & 0x20;
+			flipy = 0;
+			if (flipscreen)
+			{
+				sx = 63 - sx;
+				sy = 31 - sy;
+				flipx = !flipx;
+				flipy = !flipy;
+			}
 
 			drawgfx(tmpbitmap,Machine->gfx[0],
 					videoram[offs] + 4 * (colorram[offs] & 0xc0),
 					colorram[offs] & 0x1f,
-					colorram[offs] & 0x20,0,
-					sx,sy,
+					flipx,flipy,
+					8*sx,8*sy,
 					0,TRANSPARENCY_NONE,0);
 		}
 	}
@@ -173,10 +202,20 @@ void kungfum_vh_screenrefresh(struct osd_bitmap *bitmap)
 		int scroll[32];
 
 
-		for (i = 0;i < 6;i++)
-			scroll[i] = -128;
-		for (i = 6;i < 32;i++)
-			scroll[i] = -(*kungfum_scroll_low + 256 * *kungfum_scroll_high) - 128;
+		if (flipscreen)
+		{
+			for (i = 31;i > 25;i--)
+				scroll[i] = -128;
+			for (i = 25;i >= 0;i--)
+				scroll[i] = (*kungfum_scroll_low + 256 * *kungfum_scroll_high) - 128;
+		}
+		else
+		{
+			for (i = 0;i < 6;i++)
+				scroll[i] = -128;
+			for (i = 6;i < 32;i++)
+				scroll[i] = -(*kungfum_scroll_low + 256 * *kungfum_scroll_high) - 128;
+		}
 
 		copyscrollbitmap(bitmap,tmpbitmap,32,scroll,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
 	}
@@ -185,7 +224,7 @@ void kungfum_vh_screenrefresh(struct osd_bitmap *bitmap)
 	/* Draw the sprites. */
 	for (offs = 0;offs < spriteram_size;offs += 8)
 	{
-		int bank,i,code,col,flipx,sx,sy;
+		int bank,i,incr,code,col,flipx,flipy,sx,sy;
 		static unsigned char sprite_height_prom[] =
 		{
 			/* B-5F - sprite height, one entry per 32 sprites */
@@ -200,9 +239,10 @@ void kungfum_vh_screenrefresh(struct osd_bitmap *bitmap)
 		if (code != 0 || bank != 0)
 		{
 			col = spriteram[offs+0] & 0x1f;
-			flipx = spriteram[offs+5] & 0x40;
 			sx = (256 * spriteram[offs+7] + spriteram[offs+6]) - 128,
 			sy = 256+128-15 - (256 * spriteram[offs+3] + spriteram[offs+2]),
+			flipx = spriteram[offs+5] & 0x40;
+			flipy = spriteram[offs+5] & 0x80;
 
 			i = sprite_height_prom[(256 * bank + code) / 32];
 			if (i == 1)	/* double height */
@@ -217,13 +257,28 @@ void kungfum_vh_screenrefresh(struct osd_bitmap *bitmap)
 				sy -= 3*16;
 			}
 
+			if (flipscreen)
+			{
+				sx = 240 - sx;
+				sy = 242 - i*16 - sy;	/* sprites are slightly misplaced by the hardware */
+				flipx = !flipx;
+				flipy = !flipy;
+			}
+
+			if (flipy)
+			{
+				incr = -1;
+				code += i;
+			}
+			else incr = 1;
+
 			do
 			{
 				drawgfx(bitmap,Machine->gfx[1 + bank],
-						code + i,col,
-						flipx, 0,
+						code + i * incr,col,
+						flipx,flipy,
 						sx,sy + 16 * i,
-						&spritevisiblearea,TRANSPARENCY_PEN,0);
+						flipscreen ? &flipspritevisiblearea : &spritevisiblearea,TRANSPARENCY_PEN,0);
 
 				i--;
 			} while (i >= 0);

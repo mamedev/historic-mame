@@ -88,8 +88,8 @@ struct IOWritePort
 
 /* ASG 971007 customize to elemet size period */
 /* 24 bits address */
-#define ABITS1_24    12
-#define ABITS2_24    10
+#define ABITS1_24    14
+#define ABITS2_24     8
 #define ABITS3_24     0
 #define ABITS_MIN_24  2      /* minimum memory block is 4 bytes */
 /* 20 bits address */
@@ -119,6 +119,8 @@ extern unsigned char *OP_ROM;	/* op_code used */
 
 /* ----- memory setting subroutine ---- */
 void cpu_setOPbase16(int pc );
+void cpu_setOPbase20(int pc );
+void cpu_setOPbase24(int pc );
 
 /* ----- memory setup function ----- */
 int initmemoryhandlers(void);
@@ -144,18 +146,24 @@ int cpu_readport(int Port);
 void cpu_writeport(int Port,int Value);
 
 /* -----  bank memory function ----- */
-#define cpu_setbank(B,A)  {cpu_bankbase[B]=(unsigned char *)(A)-cpu_bankoffset[B];if(ophw==B){ \
+#define cpu_setbank(B,A)  {cpu_bankbase[B]=(unsigned char *)(A)/*ASG 971213 -cpu_bankoffset[B]*/;if(ophw==B){ \
                                ophw=0xff;cpu_setOPbase16(cpu_getpc());}}
-/* -----  op-code rompage select ----- */
-#define cpu_setrombase(A) ROM=OP_ROM=(A)	/* ASG 971005 -- renamed to avoid confusion */
+/* ------ bank memory handler ------ */
+extern void cpu_setbankhandler_r(int bank,int (*handler)() );
+extern void cpu_setbankhandler_w(int bank,void (*handler)() );
 
-/* ----- op-code reasion set function ----- */
-#define change_pc(pc) {if(cur_mrhard[pc>>ABITS2_16]!=ophw)cpu_setOPbase16(pc);}
+/* ----- op-code region set function ----- */
+#define change_pc change_pc16
+/* ASG 971108 -- added 20 and 24-bit version */
+#define change_pc16(pc) {if(cur_mrhard[(pc)>>(ABITS2_16+ABITS_MIN_16)]!=ophw)cpu_setOPbase16(pc);}
+#define change_pc20(pc) {if(cur_mrhard[(pc)>>(ABITS2_20+ABITS_MIN_20)]!=ophw)cpu_setOPbase20(pc);}
+#define change_pc24(pc) {if(cur_mrhard[(pc)>>(ABITS2_24+ABITS_MIN_24)]!=ophw)cpu_setOPbase24(pc);}
+
 
 /* bank memory functions */
 extern MHELE ophw;
 extern unsigned char *cpu_bankbase[];
-extern int cpu_bankoffset[];	/* ASG 971005 */
+/*ASG 971213extern int cpu_bankoffset[];*/
 
 #define cpu_readop(A) 		(OP_ROM[A])
 #define cpu_readop_arg(A)	(OP_RAM[A])

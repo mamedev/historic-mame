@@ -10,12 +10,12 @@ Millipede memory map (preliminary)
 13E0-13EF       SPRITE VERTICAL OFFSETS
 13F0-13FF       SPRITE COLOR OFFSETS
 
-2000            BIT 1-4 dip switch
+2000            BIT 1-4 trackball
                 BIT 5 IS P1 FIRE
                 BIT 6 IS P1 START
                 BIT 7 IS SERVICE
 
-2001            BIT 1-4 dip switch
+2001            BIT 1-4 trackball
                 BIT 5 IS P2 FIRE
                 BIT 6 IS P2 START
                 BIT 7,8 (?)
@@ -33,6 +33,13 @@ Millipede memory map (preliminary)
 2680            CLEAR WATCHDOG
 4000-7FFF       GAME CODE
 
+Known issues:
+
+* Color ram isn't emulated. I think it fills 2480-249f.
+
+* The dipswitches under $2000 aren't fully emulated. There must be some sort of
+trick to reading them properly.
+
 *************************************************************************/
 
 #include "driver.h"
@@ -40,21 +47,19 @@ Millipede memory map (preliminary)
 #include "sndhrdw/pokyintf.h"
 
 
+int milliped_vh_start(void);
+void milliped_vh_stop(void);
 
 void milliped_vh_screenrefresh(struct osd_bitmap *bitmap);
 
-/* Added 11-JUL-97 JB */
-int milliped_IN_r(int offset);
-int centiped_trakball_x(int data);
-int centiped_trakball_y(int data);
-/* End 11-JUL-97 */
+int milliped_IN0_r(int offset);	/* JB 971220 */
+int milliped_IN1_r(int offset);	/* JB 971220 */
 
 
 /* Misc sound code */
 static struct POKEYinterface interface =
 {
 	2,	/* 2 chips */
-	1,	/* 1 update per video frame (low quality) */
 	FREQ_17_APPROX,	/* 1.7 Mhz */
 	255,
 	NO_CLIP,
@@ -83,10 +88,9 @@ static struct MemoryReadAddress readmem[] =
 	{ 0x0000, 0x0200, MRA_RAM },
 	{ 0x1000, 0x13ff, MRA_RAM },
 	{ 0x4000, 0x7fff, MRA_ROM },
-	{ 0xf000, 0xffff, MRA_ROM },	/* for the reset / interrupt vectors */
-/*	{ 0x2000, 0x2000, input_port_0_r },
-	{ 0x2001, 0x2001, input_port_1_r }, */ /* Replaced 11-JUL-97 JB */
-	{ 0x2000, 0x2001, milliped_IN_r }, /* Added 11-JUL-97 JB */
+	{ 0xf000, 0xffff, MRA_ROM },		/* for the reset / interrupt vectors */
+	{ 0x2000, 0x2000, milliped_IN0_r },	/* JB 971220 */
+	{ 0x2001, 0x2001, milliped_IN1_r },	/* JB 971220 */
 	{ 0x2010, 0x2010, input_port_2_r },
 	{ 0x2011, 0x2011, input_port_3_r },
 	{ 0x0400, 0x040f, pokey1_r },
@@ -108,95 +112,113 @@ static struct MemoryWriteAddress writemem[] =
 };
 
 
+INPUT_PORTS_START( input_ports )
+	PORT_START	/* IN0 $2000 */	/* see port 6 for x trackball */
+	PORT_DIPNAME (0x03, 0x00, "Language", IP_KEY_NONE )
+	PORT_DIPSETTING (   0x00, "English" )
+	PORT_DIPSETTING (   0x01, "German" )
+	PORT_DIPSETTING (   0x02, "French" )
+	PORT_DIPSETTING (   0x03, "Spanish" )
+	PORT_DIPNAME (0x0c, 0x04, "Bonus", IP_KEY_NONE )
+	PORT_DIPSETTING (   0x00, "0" )
+	PORT_DIPSETTING (   0x04, "0 1x" )
+	PORT_DIPSETTING (   0x08, "0 1x 2x" )
+	PORT_DIPSETTING (   0x0c, "0 1x 2x 3x" )
+	PORT_BIT ( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT ( 0x20, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT ( 0x40, IP_ACTIVE_LOW, IPT_VBLANK )
+	PORT_BIT ( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 
-static struct InputPort input_ports[] =
-{
-	{
-		0xf8,
-		{ 0, 0, 0, 0, OSD_KEY_LCONTROL, OSD_KEY_1, IPB_VBLANK, 0},
-		{ 0, 0, 0, 0, OSD_JOY_FIRE, 0, 0,0}
-	},
-	{
-		0xf0,
-		{ 0, 0, 0, 0, OSD_KEY_LCONTROL, OSD_KEY_2, 0, 0 },
-		{ 0, 0, 0, 0, OSD_JOY_FIRE, 0, 0, 0}
-	},
-	{
-		0xff,
-		{ OSD_KEY_RIGHT, OSD_KEY_LEFT, OSD_KEY_DOWN, OSD_KEY_UP,
-				0, 0, OSD_KEY_3, 0 },
-		{ OSD_JOY_RIGHT, OSD_JOY_LEFT, OSD_JOY_DOWN, OSD_JOY_UP,
-				0, 0, 0, 0}
-	},
-	{
-		0xff,
-		{ OSD_KEY_RIGHT, OSD_KEY_LEFT, OSD_KEY_DOWN, OSD_KEY_UP,
-				0, 0, 0, 0 },
-		{ OSD_JOY_RIGHT, OSD_JOY_LEFT, OSD_JOY_DOWN, OSD_JOY_UP,
-				0, 0, 0, 0}
-	},
-	{	/* DSW1 */
-		0x14,
-		{ 0, 0, 0, 0, 0, 0, 0, 0 },
-		{ 0, 0, 0, 0, 0, 0, 0, 0 }
-	},
-	{	/* DSW2 */
-		0x02,
-		{ 0, 0, 0, 0, 0, 0, 0, 0 },
-		{ 0, 0, 0, 0, 0, 0, 0, 0 }
-	},
-	{ -1 }	/* end of table */
-};
+	PORT_START	/* IN1 $2001 */	/* see port 7 for y trackball */
+	PORT_BIT ( 0x03, IP_ACTIVE_HIGH, IPT_UNKNOWN )				/* JB 971220 */
+	PORT_DIPNAME (0x04, 0x00, "Credit Minimum", IP_KEY_NONE )	/* JB 971220 */
+	PORT_DIPSETTING (   0x00, "1" )
+	PORT_DIPSETTING (   0x04, "2" )
+	PORT_DIPNAME (0x08, 0x00, "Coin Counters", IP_KEY_NONE )	/* JB 971220 */
+	PORT_DIPSETTING (   0x00, "1" )
+	PORT_DIPSETTING (   0x08, "2" )
+	PORT_BIT ( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
+	PORT_BIT ( 0x20, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT ( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT ( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 
-/* Added 11-JUL-97 JB */
-static struct TrakPort trak_ports[] = {
-  {
-    X_AXIS,
-    1,
-    1.0,
-    centiped_trakball_x
-  },
-  {
-    Y_AXIS,
-    1,
-    1.0,
-    centiped_trakball_y
-  },
-  { -1 }
-};
-/* End 11-JUL-97 JB */
+	PORT_START	/* IN2 $2010 */
+	PORT_BIT ( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
+	PORT_BIT ( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY )
+	PORT_BIT ( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY )
+	PORT_BIT ( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY )
+	PORT_BIT ( 0x10, IP_ACTIVE_LOW, IPT_TILT )
+	PORT_BIT ( 0x20, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT ( 0x40, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT ( 0x80, IP_ACTIVE_LOW, IPT_COIN3 )
 
+	PORT_START	/* IN3 $2011 */
+	PORT_BIT ( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT ( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT ( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT ( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT ( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT ( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT ( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT ( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
+	PORT_START	/* 4 */ /* DSW1 $0408 */
+	PORT_DIPNAME (0x01, 0x00, "Millipede Head", IP_KEY_NONE )
+	PORT_DIPSETTING (   0x00, "Easy" )
+	PORT_DIPSETTING (   0x01, "Hard" )
+	PORT_DIPNAME (0x02, 0x00, "Beetle", IP_KEY_NONE )
+	PORT_DIPSETTING (   0x00, "Easy" )
+	PORT_DIPSETTING (   0x02, "Hard" )
+	PORT_DIPNAME (0x0c, 0x04, "Lives", IP_KEY_NONE )
+	PORT_DIPSETTING (   0x00, "2" )
+	PORT_DIPSETTING (   0x04, "3" )
+	PORT_DIPSETTING (   0x08, "4" )
+	PORT_DIPSETTING (   0x0c, "5" )
+	PORT_DIPNAME (0x30, 0x10, "Bonus Life", IP_KEY_NONE )
+	PORT_DIPSETTING (   0x00, "12000" )
+	PORT_DIPSETTING (   0x10, "15000" )
+	PORT_DIPSETTING (   0x20, "20000" )
+	PORT_DIPSETTING (   0x30, "None" )
+	PORT_DIPNAME (0x40, 0x00, "Spider", IP_KEY_NONE )
+	PORT_DIPSETTING (   0x00, "Easy" )
+	PORT_DIPSETTING (   0x40, "Hard" )
+	PORT_DIPNAME (0x80, 0x00, "Starting Score Select", IP_KEY_NONE )
+	PORT_DIPSETTING (   0x00, "On" )
+	PORT_DIPSETTING (   0x80, "Off" )
 
-static struct KEYSet keys[] =
-{
-        { 2, 3, "PL1 MOVE UP" },
-        { 2, 1, "PL1 MOVE LEFT"  },
-        { 2, 0, "PL1 MOVE RIGHT" },
-        { 2, 2, "PL1 MOVE DOWN" },
-        { 0, 4, "PL1 FIRE" },
-        { 3, 3, "PL2 MOVE UP" },
-        { 3, 1, "PL2 MOVE LEFT"  },
-        { 3, 0, "PL2 MOVE RIGHT" },
-        { 3, 2, "PL2 MOVE DOWN" },
-        { 1, 4, "PL2 FIRE" },
-        { -1 }
-};
+	PORT_START	/* 5 */ /* DSW2 $0808 */
+	PORT_DIPNAME (0x03, 0x02, "Coinage", IP_KEY_NONE )
+	PORT_DIPSETTING (   0x00, "Free Play" )
+	PORT_DIPSETTING (   0x01, "1 Coin/2 Credits" )
+	PORT_DIPSETTING (   0x02, "1 Coin/1 Credit" )
+	PORT_DIPSETTING (   0x03, "2 Coins/1 Credit" )
+	PORT_DIPNAME (0x0c, 0x00, "Right Coin", IP_KEY_NONE )
+	PORT_DIPSETTING (   0x00, "*1" )
+	PORT_DIPSETTING (   0x04, "*4" )
+	PORT_DIPSETTING (   0x08, "*5" )
+	PORT_DIPSETTING (   0x0c, "*6" )
+	PORT_DIPNAME (0x10, 0x00, "Left Coin", IP_KEY_NONE )
+	PORT_DIPSETTING (   0x00, "*1" )
+	PORT_DIPSETTING (   0x10, "*2" )
+	PORT_DIPNAME (0xe0, 0x00, "Bonus Coins", IP_KEY_NONE )
+	PORT_DIPSETTING (   0x00, "None" )
+	PORT_DIPSETTING (   0x20, "3 credits/2 coins" )
+	PORT_DIPSETTING (   0x40, "5 credits/4 coins" )
+	PORT_DIPSETTING (   0x60, "6 credits/4 coins" )
+	PORT_DIPSETTING (   0x80, "6 credits/5 coins" )
+	PORT_DIPSETTING (   0xa0, "4 credits/3 coins" )
+	PORT_DIPSETTING (   0xc0, "Demo mode" )
 
+	/* JB 971220 */
+	PORT_START	/* 6 */	/* FAKE - used to read the x trackball at $2000 */
+	PORT_ANALOG ( 0x0f, IP_ACTIVE_HIGH, IPT_TRACKBALL_X | IPF_REVERSE, 100, 7, 0, 0 )
+	PORT_BIT ( 0x40, IP_ACTIVE_LOW, IPT_VBLANK )
+	PORT_BIT ( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )	/* trackball x direction bit */
 
-static struct DSW dsw[] =
-{
-	{ 4, 0x0c, "LIVES", { "2", "3", "4", "5" } },
-	{ 4, 0x30, "BONUS", { "12000", "15000", "20000", "NONE" } },
-	{ 4, 0x80, "STARTING SCORE SELECT", { "ON", "OFF" }, 1 },
-	{ 0, 0x0c, "", { "0", "0 1XBONUS", "0 1XBONUS 2XBONUS", "0 1XBONUS 2XBONUS 3XBONUS" } },
-	{ 4, 0x01, "MILLIPEDE HEAD", { "EASY", "HARD" } },
-	{ 4, 0x02, "BEETLE", { "EASY", "HARD" } },
-	{ 4, 0x40, "SPIDER", { "EASY", "HARD" } },
-	{ 0, 0x03, "LANGUAGE", { "ENGLISH", "GERMAN", "FRENCH", "SPANISH" } },
-	{ -1 }
-};
-
+	PORT_START	/* 7 */	/* FAKE - used to read the y trackball at $2001 */
+	PORT_ANALOG ( 0x0f, IP_ACTIVE_HIGH, IPT_TRACKBALL_Y, 100, 7, 0, 0 )
+	PORT_BIT ( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )	/* trackball y direction bit */
+INPUT_PORTS_END
 
 
 static struct GfxLayout charlayout =
@@ -225,8 +247,8 @@ static struct GfxLayout spritelayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x0000, &charlayout,     0, 8 },
-	{ 1, 0x0000, &spritelayout,   0, 8 },
+	{ 1, 0x0000, &charlayout,     0, 16 },
+	{ 1, 0x0000, &spritelayout,   0, 16 },
 	{ -1 } /* end of array */
 };
 
@@ -267,7 +289,15 @@ static unsigned char colortable[] =
 	black, yellow,    darkgreen,  red,
 	black, green,     orange,     yellow,
 	black, darkwhite, red,        pink,
-	black, darkcyan,  red,        darkwhite
+	black, darkcyan,  red,        darkwhite,
+	blue,  darkred,   white,      darkyellow,
+	blue,  green,     darkpurple, orange,
+	blue,  darkgreen, darkred,    yellow,
+	blue,  darkred,   darkgreen,  yellow,
+	blue,  yellow,    darkgreen,  red,
+	blue,  green,     orange,     yellow,
+	blue,  darkwhite, red,        pink,
+	blue,  darkcyan,  red,        darkwhite
 };
 
 
@@ -296,12 +326,11 @@ static struct MachineDriver machine_driver =
 
 	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY,
 	0,
-	generic_vh_start,
-	generic_vh_stop,
+	milliped_vh_start,
+	milliped_vh_stop,
 	milliped_vh_screenrefresh,
 
 	/* sound hardware */
-	0,
 	0,
 	milliped_sh_start,
 	pokey_sh_stop,
@@ -371,14 +400,15 @@ struct GameDriver milliped_driver =
 {
 	"Millipede",
 	"milliped",
-	"IVAN MACKINTOSH\nNICOLA SALMORIA\nJOHN BUTLER\nAARON GILES\nBERND WIEBELT",
+	"IVAN MACKINTOSH\nNICOLA SALMORIA\nJOHN BUTLER\nAARON GILES\nBERND WIEBELT\nBRAD OLIVER",
 	&machine_driver,
 
 	milliped_rom,
 	0, 0,
 	0,
+	0,	/* sound_prom */
 
-	input_ports, 0, trak_ports, dsw, keys,
+	0/*TBR*/, input_ports, 0/*TBR*/, 0/*TBR*/, 0/*TBR*/,
 
 	0, palette, colortable,
 	ORIENTATION_DEFAULT,

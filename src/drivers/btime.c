@@ -27,56 +27,6 @@ write
 4004      Map number
 5005      ?
 
-IN0  Player 1 Joystick
-7\
-6 |
-5 |
-4 |  Pepper
-3 |  Down
-2 |  Up
-1 |  Left
-0/   Right
-
-IN1  Player 2 Joystick (TABLE only)
-7\
-6 |
-5 |
-4 |  Pepper
-3 |  Down
-2 |  Up
-1 |  Left
-0/   Right
-
-Coin slot
-7\   Coin Right side
-6 |  Coin Left Side
-5 |
-4 |
-3 |
-2 |  Tilt  (must be set to 1)
-1 |  Player 2 start
-0/   Player 1 start
-
-DSW1
-7    HVBlank input toggle (???)
-6    TABLE or UPRIGHT cabinet select (0 = UPRIGHT)
-5\   Diagnostic bit 2
-4/   Diagnostic bit 1
-3\
-2/   Credit base for slot 2
-1\
-0/   Credit base for slot 1
-
-DSW2
-7
-6
-5
-4    Pepper awarded at end level?
-3    4 or 6 pursuers
-2\   Select bonus chef award
-1/
-0    3 or 5 chefs
-
 
 interrupts:
 A NMI causes reset.
@@ -114,13 +64,13 @@ int btime_interrupt(void);
 
 void btime_paletteram_w(int offset,int data);
 void btime_background_w(int offset,int data);
-void btime_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
-void btime_vh_screenrefresh(struct osd_bitmap *bitmap);
-
 int btime_mirrorvideoram_r(int offset);
 int btime_mirrorcolorram_r(int offset);
 void btime_mirrorvideoram_w(int offset,int data);
 void btime_mirrorcolorram_w(int offset,int data);
+void btime_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
+void btime_vh_screenrefresh(struct osd_bitmap *bitmap);
+
 void btime_sh_interrupt_enable_w(int offset,int data);
 int btime_sh_interrupt(void);
 int btime_sh_start(void);
@@ -163,7 +113,7 @@ static struct MemoryReadAddress sound_readmem[] =
 {
 	{ 0x0000, 0x03ff, MRA_RAM },
 	{ 0xf000, 0xffff, MRA_ROM },
-	{ 0xa000, 0xa000, sound_command_r },
+	{ 0xa000, 0xa000, sound_command_latch_r },
 	{ -1 }	/* end of table */
 };
 
@@ -181,71 +131,120 @@ static struct MemoryWriteAddress sound_writemem[] =
 
 
 
-static struct InputPort input_ports[] =
+/***************************************************************************
+
+  Burger Time doesn't have VBlank interrupts.
+  Interrupts are still used by the game, coin insertion generates an IRQ.
+
+***************************************************************************/
+int btime_interrupt(void)
 {
-	{	/* IN0 */
-		0xff,
-		{ OSD_KEY_RIGHT, OSD_KEY_LEFT, OSD_KEY_UP, OSD_KEY_DOWN,
-				OSD_KEY_LCONTROL, 0, 0, 0 },
-		{ OSD_JOY_RIGHT, OSD_JOY_LEFT, OSD_JOY_UP, OSD_JOY_DOWN,
-				OSD_JOY_FIRE, 0, 0, 0 }
-	},
-	{	/* IN1 */
-		0xff,
-		{ 0, 0, 0, 0, 0, 0, 0, 0 },
-		{ 0, 0, 0, 0, 0, 0, 0, 0 }
-	},
-	{	/* IN2 */
-		0x3f,
-		{ OSD_KEY_1, OSD_KEY_2, OSD_KEY_T, 0, 0, 0, OSD_KEY_4, OSD_KEY_3 },
-		{ 0, 0, 0, 0, 0, 0, 0, 0 }
-	},
-	{	/* DSW1 */
-		0x3f,
-		{ 0, 0, 0, 0, OSD_KEY_F1, OSD_KEY_F2, 0, IPB_VBLANK },
-		{ 0, 0, 0, 0, 0, 0, 0, 0 }
-	},
-	{	/* DSW2 */
-		0xff,
-		{ 0, 0, 0, 0, 0, 0, 0, 0 },
-		{ 0, 0, 0, 0, 0, 0, 0, 0 }
-	},
-	{ -1 }	/* end of table */
-};
-
-static struct TrakPort trak_ports[] =
-{
-        { -1 }
-};
+	static int coin;
 
 
-static struct KEYSet keys[] =
-{
-        { 0, 2, "MOVE UP" },
-        { 0, 1, "MOVE LEFT"  },
-        { 0, 0, "MOVE RIGHT" },
-        { 0, 3, "MOVE DOWN" },
-        { 0, 4, "JUMP" },
-        { -1 }
-};
+	if (readinputport(2) & 0xc0)	/* Coin */
+	{
+		if (coin == 0)
+		{
+			coin = 1;
+			return interrupt();
+		}
+		else return ignore_interrupt();
+	}
+	else
+	{
+		coin = 0;
+		return ignore_interrupt();
+	}
+}
 
 
-static struct DSW dsw[] =
-{
-	{ 4, 0x01, "LIVES", { "5", "3" }, 1 },
-	{ 4, 0x06, "BONUS", { "30000", "20000", "15000", "10000" }, 1 },
-/*	{ 4, 0x06, "BONUS", { "50000", "40000", "30000", "20000" }, 1 },*/
-	{ 4, 0x08, "PURSUERS", { "6", "4" }, 1 },
-	{ 4, 0x10, "END OF LEVEL PEPPER", { "YES", "NO" } },
-	{ -1 }
-};
+
+INPUT_PORTS_START( input_ports )
+	PORT_START	/* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_4WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_4WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_4WAY )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START	/* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START	/* IN2 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_TILT )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_COIN1 )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_COIN2 )
+
+	PORT_START	/* DSW1 */
+	PORT_DIPNAME( 0x03, 0x03, "Coin A", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "2 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x03, "1 Coin/1 Credit" )
+	PORT_DIPSETTING(    0x02, "1 Coin/2 Credits" )
+	PORT_DIPSETTING(    0x01, "1 Coin/3 Credits" )
+	PORT_DIPNAME( 0x0c, 0x0c, "Coin B", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "2 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x0c, "1 Coin/1 Credit" )
+	PORT_DIPSETTING(    0x08, "1 Coin/2 Credits" )
+	PORT_DIPSETTING(    0x04, "1 Coin/3 Credits" )
+	PORT_BITX(    0x10, 0x10, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE, 0 )
+	PORT_DIPSETTING(    0x10, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x20, 0x20, "Cross Hatch Pattern", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x20, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x40, 0x00, "Cabinet", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "Upright" )
+	PORT_DIPSETTING(    0x40, "Cocktail" )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_VBLANK  )
+
+	PORT_START	/* DSW2 */
+	PORT_DIPNAME( 0x01, 0x01, "Lives", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x01, "3" )
+	PORT_DIPSETTING(    0x00, "5" )
+	PORT_DIPNAME( 0x06, 0x06, "Bonus Life", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x06, "10000" )
+	PORT_DIPSETTING(    0x04, "15000" )
+	PORT_DIPSETTING(    0x02, "20000"  )
+	PORT_DIPSETTING(    0x00, "30000"  )
+	PORT_DIPNAME( 0x08, 0x08, "Enemies", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x08, "4" )
+	PORT_DIPSETTING(    0x00, "6" )
+	PORT_DIPNAME( 0x10, 0x10, "End of Level Pepper", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x10, "No" )
+	PORT_DIPSETTING(    0x00, "Yes" )
+	PORT_DIPNAME( 0x20, 0x20, "Unknown 1", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x20, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x40, 0x40, "Unknown 2", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x40, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x80, 0x80, "Unknown 3", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x80, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+INPUT_PORTS_END
 
 
 
 static struct GfxLayout charlayout =
 {
 	8,8,	/* 8*8 characters */
-	1024,	/* 512 characters */
+	1024,	/* 1024 characters */
 	3,	/* 3 bits per pixel */
 	{ 0, 1024*8*8, 2*1024*8*8 },	/* the bitplanes are separated */
 	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
@@ -255,28 +254,28 @@ static struct GfxLayout charlayout =
 
 static struct GfxLayout spritelayout =
 {
-	16,16,  /* 16*8 sprites */
-	256,    /* 128 sprites */
+	16,16,  /* 16*16 sprites */
+	256,    /* 256 sprites */
 	3,	/* 3 bits per pixel */
 	{ 0, 256*16*16, 2*256*16*16 },	/* the bitplanes are separated */
 	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8,
 			8*8, 9*8, 10*8, 11*8, 12*8, 13*8, 14*8, 15*8 },
 	{ 7, 6, 5, 4, 3, 2, 1, 0,
 			16*8+7, 16*8+6, 16*8+5, 16*8+4, 16*8+3, 16*8+2, 16*8+1, 16*8+0 },
-	32*8	/* every sprite takes 16 consecutive bytes */
+	32*8	/* every sprite takes 32 consecutive bytes */
 };
 
-static struct GfxLayout charlayout2 =
+static struct GfxLayout tilelayout =
 {
 	16,16,  /* 16*16 characters */
-	16,    /* 16 characters */
+	64,    /* 64 characters */
 	3,	/* 3 bits per pixel */
 	{ 0, 64*16*16, 64*2*16*16 },	/* the bitplanes are separated */
 	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8,
 			8*8, 9*8, 10*8, 11*8, 12*8, 13*8, 14*8, 15*8 },
 	{ 7, 6, 5, 4, 3, 2, 1, 0,
 			16*8+7, 16*8+6, 16*8+5, 16*8+4, 16*8+3, 16*8+2, 16*8+1, 16*8+0 },
-	32*8	/* every sprite takes 16 consecutive bytes */
+	32*8	/* every tile takes 32 consecutive bytes */
 };
 
 
@@ -284,7 +283,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
 	{ 1, 0x0000, &charlayout,   0, 1 },	/* char set #1 */
 	{ 1, 0x0000, &spritelayout, 0, 1 },	/* sprites */
-	{ 1, 0x6000, &charlayout2,  8, 1 },	/* background tiles */
+	{ 1, 0x6000, &tilelayout,   8, 1 },	/* background tiles */
 	{ -1 } /* end of array */
 };
 
@@ -299,7 +298,7 @@ static struct MachineDriver machine_driver =
 			1500000,	/* 1.5 Mhz ???? */
 			0,
 			readmem,writemem,0,0,
-			interrupt,12	/* IRQs are only used to check coin insertion and diagnostic commands */
+			btime_interrupt,1
 		},
 		{
 			CPU_M6502 | CPU_AUDIO_CPU,
@@ -326,7 +325,6 @@ static struct MachineDriver machine_driver =
 	btime_vh_screenrefresh,
 
 	/* sound hardware */
-	0,
 	0,
 	btime_sh_start,
 	AY8910_sh_stop,
@@ -598,14 +596,15 @@ struct GameDriver btime_driver =
 {
 	"Burger Time (Midway)",
 	"btime",
-	"KEVIN BRISLEY\nMIRKO BUFFONI\nNICOLA SALMORIA",
+	"Kevin Brisley (Replay emulator)\nMirko Buffoni (MAME driver)\nNicola Salmoria (MAME driver)",
 	&machine_driver,
 
 	btime_rom,
 	0, btime_decode,
 	0,
+	0,	/* sound_prom */
 
-	input_ports, 0, trak_ports, dsw, keys,
+    0/*TBR*/, input_ports, 0/*TBR*/, 0/*TBR*/, 0/*TBR*/,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
@@ -617,14 +616,15 @@ struct GameDriver btimea_driver =
 {
 	"Burger Time (Data East)",
 	"btimea",
-	"KEVIN BRISLEY\nMIRKO BUFFONI\nNICOLA SALMORIA",
+	"Kevin Brisley (Replay emulator)\nMirko Buffoni (MAME driver)\nNicola Salmoria (MAME driver)",
 	&machine_driver,
 
 	btimea_rom,
 	0, btimea_decode,
 	0,
+	0,	/* sound_prom */
 
-	input_ports, 0, trak_ports, dsw, keys,
+    0/*TBR*/, input_ports, 0/*TBR*/, 0/*TBR*/, 0/*TBR*/,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,

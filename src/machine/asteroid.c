@@ -13,7 +13,7 @@
 
 int asteroid_interrupt (void)
 {
-	if (cpu_getiloops() == 5)
+	if (cpu_getiloops() == 3)
 		avgdvg_clr_busy();
 
 	/* Turn off interrupts if self-test is enabled */
@@ -25,7 +25,7 @@ int asteroid_interrupt (void)
 
 int llander_interrupt (void)
 {
-	if (cpu_getiloops() == 5)
+	if (cpu_getiloops() == 3)
 		avgdvg_clr_busy();
 
 	/* Turn off interrupts if self-test is enabled */
@@ -121,6 +121,8 @@ void asteroid_bank_switch_w (int offset,int data)
 			RAM[0x300 + i] = temp;
 		}
 	}
+	osd_led_w (0, ~(data >> 1));
+	osd_led_w (1, ~data);
 }
 
 void astdelux_bank_switch_w (int offset,int data)
@@ -141,6 +143,11 @@ void astdelux_bank_switch_w (int offset,int data)
 			RAM[0x300 + i] = temp;
 		}
 	}
+}
+
+void astdelux_led_w (int offset,int data)
+{
+	osd_led_w (offset, ~data);
 }
 
 void asteroid_init_machine(void)
@@ -182,6 +189,12 @@ int llander_IN0_r (int offset)
 void llander_init_machine(void)
 {
 	avgdvg_clr_busy();
+}
+
+void llander_led_w (int offset,int data)
+{
+	osd_led_w (0, ~(data >> 1));
+	osd_led_w (1, ~data);
 }
 
 int llander_zeropage_r(int offset)

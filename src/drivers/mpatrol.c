@@ -57,7 +57,6 @@ extern unsigned char *mpatrol_sample_data;
 extern unsigned char *mpatrol_sample_table;
 int mpatrol_sh_init(const char *);
 int mpatrol_sh_start(void);
-int mpatrol_sh_interrupt(void);
 void mpatrol_io_w(int offset, int value);
 int mpatrol_io_r(int offset);
 void mpatrol_sample_trigger_w(int offset,int value);
@@ -156,10 +155,6 @@ static struct InputPort input_ports[] =
 	{ -1 }  /* end of table */
 };
 
-static struct TrakPort trak_ports[] =
-{
-	{ -1 }
-};
 
 
 static struct KEYSet keys[] =
@@ -294,11 +289,11 @@ static struct MachineDriver machine_driver =
 			interrupt,1
 		},
 		{
-			CPU_M6808,
+			CPU_M6802 | CPU_AUDIO_CPU,
 			1000000,        /* 1.0 Mhz ? */
 			2,
 			sound_readmem,sound_writemem,0,0,
-			mpatrol_sh_interrupt,68 /* 68 ints per frame = 4080 ints/sec -- can this be right? */
+			nmi_interrupt,68 /* 68 ints per frame = 4080 ints/sec -- can this be right? */
 		}
 	},
 	60,
@@ -318,7 +313,6 @@ static struct MachineDriver machine_driver =
 	mpatrol_vh_screenrefresh,
 
 	/* sound hardware */
-	0,
 	mpatrol_sh_init,
 	mpatrol_sh_start,
 	AY8910_sh_stop,
@@ -422,8 +416,9 @@ struct GameDriver mpatrol_driver =
 	mpatrol_rom,
 	0, 0,
 	0,
+	0,	/* sound_prom */
 
-	input_ports, 0, trak_ports, dsw, keys,
+	input_ports, 0, 0/*TBR*/,dsw, keys,
 
 	color_prom, 0, 0,
 	ORIENTATION_DEFAULT,
@@ -435,14 +430,15 @@ struct GameDriver mranger_driver =
 {
 	"Moon Ranger (bootleg Moon Patrol)",
 	"mranger",
-	"Nicola Salmoria\nChris Hardy\nValerio Verrando\nTim Lindquist (color info)\nAaron Giles (sound)",
+	"Nicola Salmoria (MAME driver)\nChris Hardy (hardware info)\nTim Lindquist (color info)\nAaron Giles (sound)\nValerio Verrando (high score save)",
 	&machine_driver,
 
 	mranger_rom,
 	0, 0,
 	0,
+	0,	/* sound_prom */
 
-	input_ports, 0, trak_ports, dsw, keys,
+	input_ports, 0, 0/*TBR*/,dsw, keys,
 
 	color_prom, 0, 0,
 	ORIENTATION_DEFAULT,

@@ -110,7 +110,6 @@ void warlord_vh_screenrefresh(struct osd_bitmap *bitmap);
 static struct POKEYinterface interface =
 {
 	1,	/* 1 chip */
-	1,	/* 1 update per video frame (low quality) */
 	FREQ_17_APPROX,
 	255,
 	NO_CLIP,
@@ -183,7 +182,7 @@ INPUT_PORTS_START( input_ports )
 	PORT_BIT ( 0x20, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT ( 0x40, IP_ACTIVE_LOW, IPT_COIN2 )
 	PORT_BIT ( 0x80, IP_ACTIVE_LOW, IPT_COIN3 )
-	
+
 	PORT_START	/* IN2 */
 	PORT_DIPNAME (0x03, 0x00, "Language", IP_KEY_NONE )
 	PORT_DIPSETTING (   0x00, "English" )
@@ -221,7 +220,7 @@ INPUT_PORTS_START( input_ports )
 	PORT_DIPSETTING (   0x80, "6 credits/5 coins" )
 
 	PORT_START	/* IN4 - fake to control player 1 paddle */
-	PORT_ANALOG ( 0xff, 0x80, IPT_AD_STICK_X, 50, 32, 0x1d, 0xcb )
+	PORT_ANALOG ( 0xff, 0x80, IPT_PADDLE, 50, 32, 0x1d, 0xcb )
 
 	PORT_START	/* IN5 - fake to control players 2-4 with keyboard */
 	PORT_BITX( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_2WAY | IPF_PLAYER2, "2p Right", OSD_KEY_A, IP_JOY_NONE, 0 )
@@ -284,7 +283,6 @@ static struct MachineDriver machine_driver =
 
 	/* sound hardware */
 	0,
-	0,
 	warlord_sh_start,
 	pokey_sh_stop,
 	pokey_sh_update
@@ -338,6 +336,7 @@ struct GameDriver warlord_driver =
 	warlord_rom,
 	0, 0,
 	0,
+	0,	/* sound_prom */
 
 	0/*TBR*/, input_ports, 0/*TBR*/, 0/*TBR*/, 0/*TBR*/,
 

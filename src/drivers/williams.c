@@ -9,9 +9,9 @@ Not sure of the board: Turkey shoot, Joust 2
 0000-8FFF ROM   (for Blaster, 0000-3FFF is a bank of 12 ROMs)
 0000-97FF Video  RAM Bank switched with ROM (96FF for Blaster)
 9800-BFFF RAM
- 	0xBB00 Blaster only, Color 0 for each line (256 entry)
+	0xBB00 Blaster only, Color 0 for each line (256 entry)
 	0xBC00 Blaster only, Color 0 flags, latch color only if bit 0 = 1 (256 entry)
-            Do something else with the bit 1, I do not know what
+	    Do something else with the bit 1, I do not know what
 C000-CFFF I/O
 D000-FFFF ROM
 
@@ -43,7 +43,7 @@ C900 rom_enable_scr_ctrl  Switch between video ram and rom at 0000-97FF
 C940 Blaster only: Select bank in the color Prom for color remap
 C980 Blaster only: Select witch ROM is at 0000-3FFF
 C9C0 Blaster only: bit 0 = enable the color 0 changing each lines
-                   bit 1 = erase back each frame
+		   bit 1 = erase back each frame
 
 
 ***** Blitter ****** (Stargate and Defender do not have blitter)
@@ -371,9 +371,10 @@ d000 Select bank (c000-cfff)
 /**** from machine/williams.h ****/
 extern unsigned char *williams_port_select;
 extern unsigned char *williams_video_counter;
-extern unsigned char *williams_bank_select;
+extern unsigned char *williams_bank_base;
 void williams_init_machine(void);
 int williams_interrupt(void);
+void williams_vram_select_w(int offset,int data);
 int williams_input_port_0_1(int offset);
 int williams_input_port_2_3(int offset);
 
@@ -383,9 +384,9 @@ int robotron_catch_loop_r(int offset); /* JB 970823 */
 extern unsigned char *stargate_catch;
 int stargate_interrupt(void);
 int stargate_catch_loop_r(int offset); /* JB 970823 */
+int stargate_input_port_0_r(int offset);
 
 
-extern unsigned char *defender_mirror;
 extern unsigned char *defender_irq_enable;
 extern unsigned char *defender_catch;
 extern unsigned char *defender_bank_base;
@@ -393,16 +394,16 @@ int defender_interrupt(void);
 int defender_bank_r(int offset);
 void defender_bank_w(int offset,int data);
 void defender_bank_select_w(int offset,int data);
-void defender_mirror_w(int offset,int data);
 int defender_catch_loop_r(int offset); /* JB 970823 */
 
 extern unsigned char *blaster_color_zero_table;
 extern unsigned char *blaster_color_zero_flags;
 
 extern unsigned char *blaster_catch;
-extern unsigned char *blaster_bank_base;
+extern unsigned char *blaster_bank2_base;
 int blaster_catch_loop_r(int offset); /* JB 970823 */
 void blaster_bank_select_w(int offset,int data);
+void blaster_vram_select_w(int offset,int data);
 int blaster_input_port_0(int offset);
 int sinistar_input_port_0(int offset);
 
@@ -451,7 +452,7 @@ void defender_videoram_w(int offset,int data);
 
 static struct MemoryReadAddress robotron_readmem[] =
 {
-	{ 0x0000, 0x97ff, williams_videoram_r },
+	{ 0x0000, 0x97ff, MRA_BANK1, &williams_bank_base },
 	{ 0x9810, 0x9810, robotron_catch_loop_r, &robotron_catch }, /* JB 970823 */
 	{ 0x9800, 0xbfff, MRA_RAM },
 	{ 0xc804, 0xc804, input_port_0_r },     /* IN0 */
@@ -466,7 +467,7 @@ static struct MemoryReadAddress robotron_readmem[] =
 
 static struct MemoryReadAddress joust_readmem[] =
 {
-	{ 0x0000, 0x97ff, williams_videoram_r },
+	{ 0x0000, 0x97ff, MRA_BANK1, &williams_bank_base },
 	{ 0x9800, 0xbfff, MRA_RAM },
 	{ 0xc804, 0xc804, williams_input_port_0_1 }, /* IN0-1 */
 	{ 0xc806, 0xc806, input_port_2_r },          /* IN2 */
@@ -480,10 +481,10 @@ static struct MemoryReadAddress joust_readmem[] =
 
 static struct MemoryReadAddress stargate_readmem[] =
 {
-	{ 0x0000, 0x97ff, williams_videoram_r },
+	{ 0x0000, 0x97ff, MRA_BANK1, &williams_bank_base },
 	{ 0x9c39, 0x9c39, stargate_catch_loop_r, &stargate_catch }, /* JB 970823 */
 	{ 0x9800, 0xbfff, MRA_RAM },
-	{ 0xc804, 0xc804, input_port_0_r },     /* IN0 */
+	{ 0xc804, 0xc804, stargate_input_port_0_r }, /* IN0 */
 	{ 0xc806, 0xc806, input_port_1_r },     /* IN1 */
 	{ 0xc80c, 0xc80c, input_port_2_r },     /* IN2 */
 	{ 0xc80e, 0xc80e, MRA_RAM },            /* not used? */
@@ -495,7 +496,7 @@ static struct MemoryReadAddress stargate_readmem[] =
 
 static struct MemoryReadAddress bubbles_readmem[] =
 {
-	{ 0x0000, 0x97ff, williams_videoram_r },
+	{ 0x0000, 0x97ff, MRA_BANK1, &williams_bank_base },
 	{ 0x9800, 0xbfff, MRA_RAM },
 	{ 0xc804, 0xc804, input_port_0_r },     /* IN0 */
 	{ 0xc806, 0xc806, input_port_1_r },     /* IN1 */
@@ -519,7 +520,7 @@ static struct MemoryWriteAddress williams_writemem[] =
 	{ 0xc000, 0xc00f, williams_palette_w, &williams_paletteram, &williams_paletteram_size },
 	{ 0xc807, 0xc807, MWA_RAM, &williams_port_select },
 	{ 0xc80e, 0xc80e, williams_sh_w },                            /* Sound */
-	{ 0xc900, 0xc900, MWA_RAM, &williams_bank_select },           /* bank  */
+	{ 0xc900, 0xc900, williams_vram_select_w },           /* bank  */
 	{ 0xca00, 0xca07, williams_blitter_w, &williams_blitterram }, /* blitter */
 	{ 0xcbff, 0xcbff, MWA_NOP },                                  /* WatchDog (have to be $39) */
 	{ 0xcc00, 0xcfff, MWA_RAM },                                  /* CMOS                      */
@@ -534,8 +535,8 @@ static struct MemoryWriteAddress williams_writemem[] =
 
 static struct MemoryReadAddress splat_readmem[] =
 {
-	{ 0x0000, 0x97ff, williams_videoram_r },
-	{ 0x984b, 0x984b, splat_catch_loop_r, &splat_catch },	 /* JB 970823 */
+	{ 0x0000, 0x97ff, MRA_BANK1, &williams_bank_base },
+	{ 0x984b, 0x984b, splat_catch_loop_r, &splat_catch },    /* JB 970823 */
 	{ 0x9800, 0xbfff, MRA_RAM },
 	{ 0xc804, 0xc804, williams_input_port_0_1 },           /* IN0-1 */
 	{ 0xc806, 0xc806, williams_input_port_2_3 },           /* IN2-3*/
@@ -559,7 +560,7 @@ static struct MemoryWriteAddress splat_writemem[] =
 	{ 0xc000, 0xc00f, williams_palette_w, &williams_paletteram, &williams_paletteram_size },
 	{ 0xc807, 0xc807, MWA_RAM, &williams_port_select },
 	{ 0xc80e, 0xc80e, williams_sh_w},                           /* Sound */
-	{ 0xc900, 0xc900, MWA_RAM, &williams_bank_select },         /* bank  */
+	{ 0xc900, 0xc900, williams_vram_select_w },         /* bank  */
 	{ 0xca00, 0xca07, splat_blitter_w, &williams_blitterram },  /* blitter */
 	{ 0xcbff, 0xcbff, MWA_NOP },                                /* WatchDog     */
 	{ 0xcc00, 0xcfff, MWA_RAM },                                /* CMOS         */
@@ -574,7 +575,7 @@ static struct MemoryWriteAddress splat_writemem[] =
 
 static struct MemoryReadAddress sinistar_readmem[] =
 {
-	{ 0x0000, 0x97ff, williams_videoram_r },
+	{ 0x0000, 0x97ff, MRA_BANK1, &williams_bank_base },
 	{ 0x9800, 0xbfff, MRA_RAM },
 	{ 0xc804, 0xc804, sinistar_input_port_0 },    /* IN0 Special joystick */
 	{ 0xc806, 0xc806, input_port_1_r },          /* IN1 */
@@ -598,7 +599,7 @@ static struct MemoryWriteAddress sinistar_writemem[] =
 	{ 0x9800, 0xbfff, MWA_RAM },
 	{ 0xc000, 0xc00f, williams_palette_w, &williams_paletteram, &williams_paletteram_size },
 	{ 0xc80e, 0xc80e, williams_sh_w },                            /* Sound */
-	{ 0xc900, 0xc900, MWA_RAM, &williams_bank_select },             /* bank  */
+	{ 0xc900, 0xc900, williams_vram_select_w },             /* bank  */
 	{ 0xca00, 0xca07, williams_blitter_w, &williams_blitterram },   /* blitter */
 	{ 0xcbff, 0xcbff, MWA_NOP },                                    /* WatchDog     */
 	{ 0xcc00, 0xcfff, MWA_RAM },                                    /* CMOS         */
@@ -614,8 +615,9 @@ static struct MemoryWriteAddress sinistar_writemem[] =
 
 static struct MemoryReadAddress blaster_readmem[] =
 {
-	{ 0x0000, 0x96ff, blaster_videoram_r, &blaster_bank_base },
-/*	{ 0x9700, 0x9700, blaster_catch_loop_r, &blaster_catch },*/		/* JB 970823 */
+	{ 0x0000, 0x3fff, MRA_BANK1, &williams_bank_base },
+	{ 0x4000, 0x96ff, MRA_BANK2, &blaster_bank2_base },
+/*      { 0x9700, 0x9700, blaster_catch_loop_r, &blaster_catch },*/             /* JB 970823 */
 	{ 0x9700, 0xbfff, MRA_RAM },
 	{ 0xc804, 0xc804, blaster_input_port_0 },    /* IN0 */
 	{ 0xc806, 0xc806, input_port_1_r },          /* IN1 */
@@ -641,7 +643,7 @@ static struct MemoryWriteAddress blaster_writemem[] =
 	{ 0xbd00, 0xbfff, MWA_RAM },
 	{ 0xc000, 0xc00f, williams_palette_w, &williams_paletteram, &williams_paletteram_size },
 	{ 0xc80e, 0xc80e, williams_sh_w},                            /* Sound */
-	{ 0xc900, 0xc900, MWA_RAM, &williams_bank_select },          /* bank  */
+	{ 0xc900, 0xc900, blaster_vram_select_w },          			 /* VRAM bank  */
 	{ 0xc940, 0xc940, MWA_RAM, &blaster_remap_select },          /* select remap colors in Remap prom */
 	{ 0xc980, 0xc980, blaster_bank_select_w },                   /* Bank Select */
 	{ 0xc9C0, 0xc9C0, MWA_RAM, &blaster_video_bits },            /* Video related bits */
@@ -661,8 +663,8 @@ static struct MemoryReadAddress defender_readmem[] =
 {
 	{ 0xa05d, 0xa05d, defender_catch_loop_r, &defender_catch }, /* JB 970823 */
 	{ 0x0000, 0xbfff, MRA_RAM },
-	{ 0xc000, 0xcfff, defender_bank_r },
-	{ 0xcc07, 0xcc07, defender_bank_r, &defender_irq_enable },
+	{ 0xc000, 0xcfff, MRA_BANK1 },          /* i/o / rom */
+	{ 0xcc07, 0xcc07, MRA_BANK1, &defender_irq_enable },
 	{ 0xd000, 0xffff, MRA_ROM },
 	{ -1 }  /* end of table */
 };
@@ -675,10 +677,9 @@ static struct MemoryReadAddress defender_readmem[] =
 static struct MemoryWriteAddress defender_writemem[] =
 {
 	{ 0x0000, 0x97ff, defender_videoram_w, &videoram, &videoram_size },
-	{ 0xa08f, 0xa097, defender_mirror_w, &defender_mirror },
 	{ 0x9800, 0xbfff, MWA_RAM },
-	{ 0xc000, 0xcfff, defender_bank_w, &defender_bank_base },
-	{ 0xc000, 0xc00f, MWA_RAM, &williams_paletteram, &williams_paletteram_size },	/* here only to initialize the pointers */
+	{ 0xc000, 0xcfff, MWA_BANK1, &defender_bank_base }, /* non map */
+	{ 0xc000, 0xc00f, MWA_RAM, &williams_paletteram, &williams_paletteram_size },   /* here only to initialize the pointers */
 	{ 0xd000, 0xd000, defender_bank_select_w },       /* Bank Select */
 	{ 0xd001, 0xffff, MWA_ROM },
 	{ -1 }  /* end of table */
@@ -694,7 +695,7 @@ static struct MemoryReadAddress sound_readmem[] =
 	{ 0x0400, 0x0400, MRA_RAM },
 	{ 0x0402, 0x0402, soundlatch_r },
 	{ 0xf000, 0xffff, MRA_ROM },
-	{ -1 }	/* end of table */
+	{ -1 }  /* end of table */
 };
 
 static struct MemoryWriteAddress sound_writemem[] =
@@ -702,7 +703,7 @@ static struct MemoryWriteAddress sound_writemem[] =
 	{ 0x0000, 0x007f, MWA_RAM },
 	{ 0x0400, 0x0400, williams_digital_out_w, &williams_dac },
 	{ 0xf000, 0xffff, MWA_ROM },
-	{ -1 }	/* end of table */
+	{ -1 }  /* end of table */
 };
 
 
@@ -714,7 +715,7 @@ static struct MemoryWriteAddress sound_writemem[] =
  */
 
 INPUT_PORTS_START( robotron_input_ports )
-	PORT_START	/* IN0 */
+	PORT_START      /* IN0 */
 	PORT_BITX(0x01, IP_ACTIVE_HIGH, IPT_JOYSTICKLEFT_UP, "Move Up", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0)
 	PORT_BITX(0x02, IP_ACTIVE_HIGH, IPT_JOYSTICKLEFT_DOWN, "Move Down", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0)
 	PORT_BITX(0x04, IP_ACTIVE_HIGH, IPT_JOYSTICKLEFT_LEFT, "Move Left", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0)
@@ -724,12 +725,12 @@ INPUT_PORTS_START( robotron_input_ports )
 	PORT_BITX(0x40, IP_ACTIVE_HIGH, IPT_JOYSTICKRIGHT_UP, "Fire Up", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0)
 	PORT_BITX(0x80, IP_ACTIVE_HIGH, IPT_JOYSTICKRIGHT_DOWN, "Fire Down", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0)
 
-	PORT_START	/* IN1 */
+	PORT_START      /* IN1 */
 	PORT_BITX(0x01, IP_ACTIVE_HIGH, IPT_JOYSTICKRIGHT_LEFT, "Fire Left", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0)
 	PORT_BITX(0x02, IP_ACTIVE_HIGH, IPT_JOYSTICKRIGHT_RIGHT, "Fire Right", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0)
 	PORT_BIT( 0xfc, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 
-	PORT_START	/* IN2 */
+	PORT_START      /* IN2 */
 	PORT_BITX(0x01, IP_ACTIVE_HIGH, 0, "Auto Up", OSD_KEY_5, IP_JOY_NONE, 0)
 	PORT_BITX(0x02, IP_ACTIVE_HIGH, 0, "Advance", OSD_KEY_6, IP_JOY_NONE, 0)
 	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_COIN1 )
@@ -742,7 +743,7 @@ INPUT_PORTS_END
  */
 
 INPUT_PORTS_START( joust_input_ports )
-	PORT_START	/* IN0 */
+	PORT_START      /* IN0 */
 	PORT_BITX(0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_2WAY | IPF_PLAYER2, "Player 2 Move Left", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0)
 	PORT_BITX(0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_2WAY | IPF_PLAYER2, "Player 2 Move Right", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0)
 	PORT_BITX(0x04, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_PLAYER2, "Player 2 Flap", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0)
@@ -752,16 +753,16 @@ INPUT_PORTS_START( joust_input_ports )
 	PORT_BIT( 0xc0, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 
 /*Not really a hardware port, this is just to map the buttons */
-	PORT_START	/* IN1 */
+	PORT_START      /* IN1 */
 	PORT_BITX(0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_2WAY | IPF_PLAYER1, "Player 1 Move Left", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0)
 	PORT_BITX(0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_2WAY | IPF_PLAYER1, "Player 1 Move Right", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0)
 	PORT_BITX(0x04, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_PLAYER1, "Player 1 Flap", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0)
 	PORT_BIT( 0xf8, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 
-	PORT_START	/* IN2 */
+	PORT_START      /* IN2 */
 	PORT_BIT( 0xff, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 
-	PORT_START	/* IN3 */
+	PORT_START      /* IN3 */
 	PORT_BITX(0x01, IP_ACTIVE_HIGH, 0, "Auto Up", OSD_KEY_5, IP_JOY_NONE, 0)
 	PORT_BITX(0x02, IP_ACTIVE_HIGH, 0, "Advance", OSD_KEY_6, IP_JOY_NONE, 0)
 	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_COIN1 )
@@ -774,26 +775,31 @@ INPUT_PORTS_END
  */
 
 INPUT_PORTS_START( stargate_input_ports )
-	PORT_START	/* IN0 */
+	PORT_START      /* IN0 */
 	PORT_BITX(0x01, IP_ACTIVE_HIGH, IPT_BUTTON1, "Fire", OSD_KEY_COLON, IP_JOY_DEFAULT, 0)
 	PORT_BITX(0x02, IP_ACTIVE_HIGH, IPT_BUTTON2, "Thrust", OSD_KEY_L, IP_JOY_DEFAULT, 0)
 	PORT_BITX(0x04, IP_ACTIVE_HIGH, IPT_BUTTON3, "Smart Bomb", OSD_KEY_COMMA, IP_JOY_DEFAULT, 0)
 	PORT_BITX(0x08, IP_ACTIVE_HIGH, IPT_BUTTON4, "Hyperspace", OSD_KEY_N, IP_JOY_DEFAULT, 0)
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_START2 )
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_START1 )
-	PORT_BITX(0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT, "Reverse", OSD_KEY_ALT, IP_JOY_DEFAULT, 0)
-	PORT_BITX(0x80, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN, "Move Down", OSD_KEY_S, IP_JOY_DEFAULT, 0)
+	PORT_BITX(0x40, IP_ACTIVE_HIGH, IPT_BUTTON6, "Reverse", OSD_KEY_ALT, IP_JOY_DEFAULT, 0)
+	PORT_BITX(0x80, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_8WAY, "Move Down", OSD_KEY_S, IP_JOY_DEFAULT, 0)
 
-	PORT_START	/* IN1 */
-	PORT_BITX(0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP, "Move Up", OSD_KEY_Q, IP_JOY_DEFAULT, 0)
+	PORT_START      /* IN1 */
+	PORT_BITX(0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_8WAY, "Move Up", OSD_KEY_Q, IP_JOY_DEFAULT, 0)
 	PORT_BITX(0x02, IP_ACTIVE_HIGH, IPT_BUTTON5, "Inviso", OSD_KEY_SPACE, IP_JOY_DEFAULT, 0)
 	PORT_BIT( 0xfc, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 
-	PORT_START	/* IN2 */
+	PORT_START      /* IN2 */
 	PORT_BITX(0x01, IP_ACTIVE_HIGH, 0, "Auto Up", OSD_KEY_5, IP_JOY_NONE, 0)
 	PORT_BITX(0x02, IP_ACTIVE_HIGH, 0, "Advance", OSD_KEY_6, IP_JOY_NONE, 0)
 	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_COIN1 )
 	PORT_BITX(0x08, IP_ACTIVE_HIGH, 0, "High Score Reset", OSD_KEY_7, IP_JOY_NONE, 0)
+
+	PORT_START      /* IN3 - fake port for better joystick control */
+	/* This fake port is handled via stargate_input_port_0 */
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_CHEAT )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_CHEAT )
 INPUT_PORTS_END
 
 
@@ -802,25 +808,30 @@ INPUT_PORTS_END
  */
 
 INPUT_PORTS_START( defender_input_ports )
-	PORT_START	/* IN0 */
+	PORT_START      /* IN0 */
 	PORT_BITX(0x01, IP_ACTIVE_HIGH, 0, "Auto Up", OSD_KEY_5, IP_JOY_NONE, 0)
 	PORT_BITX(0x02, IP_ACTIVE_HIGH, 0, "Advance", OSD_KEY_6, IP_JOY_NONE, 0)
 	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_COIN1 )
 	PORT_BITX(0x08, IP_ACTIVE_HIGH, 0, "High Score Reset", OSD_KEY_7, IP_JOY_NONE, 0)
 
-	PORT_START	/* IN1 */
+	PORT_START      /* IN1 */
 	PORT_BITX(0x01, IP_ACTIVE_HIGH, IPT_BUTTON1, "Fire", OSD_KEY_COLON, IP_JOY_DEFAULT, 0)
 	PORT_BITX(0x02, IP_ACTIVE_HIGH, IPT_BUTTON2, "Thrust", OSD_KEY_L, IP_JOY_DEFAULT, 0)
 	PORT_BITX(0x04, IP_ACTIVE_HIGH, IPT_BUTTON3, "Smart Bomb", OSD_KEY_COMMA, IP_JOY_DEFAULT, 0)
 	PORT_BITX(0x08, IP_ACTIVE_HIGH, IPT_BUTTON4, "Hyperspace", OSD_KEY_N, IP_JOY_DEFAULT, 0)
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_START2 )
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_START1 )
-	PORT_BITX(0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT, "Reverse", OSD_KEY_ALT, IP_JOY_DEFAULT, 0)
-	PORT_BITX(0x80, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN, "Move Down", OSD_KEY_S, IP_JOY_DEFAULT, 0)
+	PORT_BITX(0x40, IP_ACTIVE_HIGH, IPT_BUTTON6, "Reverse", OSD_KEY_ALT, IP_JOY_DEFAULT, 0)
+	PORT_BITX(0x80, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_8WAY, "Move Down", OSD_KEY_S, IP_JOY_DEFAULT, 0)
 
-	PORT_START	/* IN2 */
-	PORT_BITX(0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP, "Move Up", OSD_KEY_Q, IP_JOY_DEFAULT, 0)
+	PORT_START      /* IN2 */
+	PORT_BITX(0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_8WAY, "Move Up", OSD_KEY_Q, IP_JOY_DEFAULT, 0)
 	PORT_BIT( 0xfe, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+
+	PORT_START      /* IN3 - fake port for better joystick control */
+	/* This fake port is handled via defender_input_port_1 */
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_CHEAT )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_CHEAT )
 INPUT_PORTS_END
 
 
@@ -829,7 +840,7 @@ INPUT_PORTS_END
  */
 
 INPUT_PORTS_START( sinistar_input_ports )
-	PORT_START	/* IN0 */
+	PORT_START      /* IN0 */
 /* Not really the hardware bits, see sinistar_input_port_0() */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN )
@@ -838,13 +849,13 @@ INPUT_PORTS_START( sinistar_input_ports )
 	PORT_BIT( 0xf0, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 
 
-	PORT_START	/* IN1 */
+	PORT_START      /* IN1 */
 	PORT_BITX(0x01, IP_ACTIVE_HIGH, IPT_BUTTON1, "Fire", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0)
 	PORT_BITX(0x02, IP_ACTIVE_HIGH, IPT_BUTTON2, "Bomb", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0)
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_START1 )
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_START2 )
 
-	PORT_START	/* IN2 */
+	PORT_START      /* IN2 */
 	PORT_BITX(0x01, IP_ACTIVE_HIGH, 0, "Auto Up", OSD_KEY_5, IP_JOY_NONE, 0)
 	PORT_BITX(0x02, IP_ACTIVE_HIGH, 0, "Advance", OSD_KEY_6, IP_JOY_NONE, 0)
 	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_COIN1 )
@@ -857,7 +868,7 @@ INPUT_PORTS_END
  */
 
 INPUT_PORTS_START( bubbles_input_ports )
-	PORT_START	/* IN0 */
+	PORT_START      /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN )
 	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT )
@@ -865,10 +876,10 @@ INPUT_PORTS_START( bubbles_input_ports )
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_START2 )
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_START1 )
 
-	PORT_START	/* IN1 */
+	PORT_START      /* IN1 */
 	PORT_BIT( 0xff, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 
-	PORT_START	/* IN2 */
+	PORT_START      /* IN2 */
 	PORT_BITX(0x01, IP_ACTIVE_HIGH, 0, "Auto Up", OSD_KEY_5, IP_JOY_NONE, 0)
 	PORT_BITX(0x02, IP_ACTIVE_HIGH, 0, "Advance", OSD_KEY_6, IP_JOY_NONE, 0)
 	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_COIN1 )
@@ -881,7 +892,7 @@ INPUT_PORTS_END
  */
 
 INPUT_PORTS_START( splat_input_ports )
-	PORT_START	/* IN0 */
+	PORT_START      /* IN0 */
 	PORT_BITX(0x01, IP_ACTIVE_HIGH, IPT_JOYSTICKLEFT_UP | IPF_8WAY | IPF_PLAYER2, "Walk Up", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0)
 	PORT_BITX(0x02, IP_ACTIVE_HIGH, IPT_JOYSTICKLEFT_DOWN | IPF_8WAY | IPF_PLAYER2, "Walk Down", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0)
 	PORT_BITX(0x04, IP_ACTIVE_HIGH, IPT_JOYSTICKLEFT_LEFT | IPF_8WAY | IPF_PLAYER2, "Walk Left", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0)
@@ -891,27 +902,27 @@ INPUT_PORTS_START( splat_input_ports )
 	PORT_BITX(0x40, IP_ACTIVE_HIGH, IPT_JOYSTICKRIGHT_UP | IPF_8WAY | IPF_PLAYER2, "Throw Up", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0)
 	PORT_BITX(0x80, IP_ACTIVE_HIGH, IPT_JOYSTICKRIGHT_DOWN | IPF_8WAY | IPF_PLAYER2, "Throw Down", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0)
 
-	PORT_START	/* IN1 */
+	PORT_START      /* IN1 */
 	PORT_BITX(0x01, IP_ACTIVE_HIGH, IPT_JOYSTICKLEFT_UP | IPF_8WAY | IPF_PLAYER1, "Walk Up", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0)
 	PORT_BITX(0x02, IP_ACTIVE_HIGH, IPT_JOYSTICKLEFT_DOWN | IPF_8WAY | IPF_PLAYER1, "Walk Down", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0)
 	PORT_BITX(0x04, IP_ACTIVE_HIGH, IPT_JOYSTICKLEFT_LEFT | IPF_8WAY | IPF_PLAYER1, "Walk Left", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0)
 	PORT_BITX(0x08, IP_ACTIVE_HIGH, IPT_JOYSTICKLEFT_RIGHT | IPF_8WAY | IPF_PLAYER1, "Walk Right", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0)
-/*	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_START1 )
+/*      PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_START1 )
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_START2 )*/
 	PORT_BITX(0x40, IP_ACTIVE_HIGH, IPT_JOYSTICKRIGHT_UP | IPF_8WAY | IPF_PLAYER1, "Throw Up", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0)
 	PORT_BITX(0x80, IP_ACTIVE_HIGH, IPT_JOYSTICKRIGHT_DOWN | IPF_8WAY | IPF_PLAYER1, "Throw Down", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0)
 
-	PORT_START	/* IN2 */
+	PORT_START      /* IN2 */
 	PORT_BITX(0x01, IP_ACTIVE_HIGH, IPT_JOYSTICKRIGHT_LEFT | IPF_8WAY | IPF_PLAYER2, "Throw Left", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0)
 	PORT_BITX(0x02, IP_ACTIVE_HIGH, IPT_JOYSTICKRIGHT_RIGHT | IPF_8WAY | IPF_PLAYER2, "Throw Right", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0)
 	PORT_BIT( 0xfc, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 
-	PORT_START	/* IN3 */
+	PORT_START      /* IN3 */
 	PORT_BITX(0x01, IP_ACTIVE_HIGH, IPT_JOYSTICKRIGHT_LEFT | IPF_8WAY | IPF_PLAYER1, "Throw Left", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0)
 	PORT_BITX(0x02, IP_ACTIVE_HIGH, IPT_JOYSTICKRIGHT_RIGHT | IPF_8WAY | IPF_PLAYER1, "Throw Right", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0)
 	PORT_BIT( 0xfc, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 
-	PORT_START	/* IN4 */
+	PORT_START      /* IN4 */
 	PORT_BITX(0x01, IP_ACTIVE_HIGH, 0, "Auto Up", OSD_KEY_5, IP_JOY_NONE, 0)
 	PORT_BITX(0x02, IP_ACTIVE_HIGH, 0, "Advance", OSD_KEY_6, IP_JOY_NONE, 0)
 	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_COIN1 )
@@ -924,7 +935,7 @@ INPUT_PORTS_END
  */
 
 INPUT_PORTS_START( blaster_input_ports )
-	PORT_START	/* IN0 */
+	PORT_START      /* IN0 */
 /* Not really the hardware bits, see blaster_input_port_0() */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN )
@@ -932,7 +943,7 @@ INPUT_PORTS_START( blaster_input_ports )
 	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT )
 	PORT_BIT( 0xf0, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 
-	PORT_START	/* IN1 */
+	PORT_START      /* IN1 */
 	PORT_BITX(0x01, IP_ACTIVE_HIGH, IPT_BUTTON2, "Thrust panel", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0)
 	PORT_BITX(0x02, IP_ACTIVE_HIGH, IPT_BUTTON1, "Blast", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0)
 	PORT_BITX(0x04, IP_ACTIVE_HIGH, IPT_BUTTON3, "Thrust joystick", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0)
@@ -941,7 +952,7 @@ INPUT_PORTS_START( blaster_input_ports )
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_START2 )
 	PORT_BIT( 0xc0, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 
-	PORT_START	/* IN2 */
+	PORT_START      /* IN2 */
 	PORT_BITX(0x01, IP_ACTIVE_HIGH, 0, "Auto Up", OSD_KEY_5, IP_JOY_NONE, 0)
 	PORT_BITX(0x02, IP_ACTIVE_HIGH, 0, "Advance", OSD_KEY_6, IP_JOY_NONE, 0)
 	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_COIN1 )
@@ -955,7 +966,7 @@ static struct GfxLayout fakelayout =
 {
 	1,1,
 	0,
-	4,	/* 4 bits per pixel */
+	4,      /* 4 bits per pixel */
 	{ 0 },
 	{ 0 },
 	{ 0 },
@@ -988,14 +999,14 @@ static struct MachineDriver robotron_machine_driver =
 		},
 		{
 			CPU_M6808 | CPU_AUDIO_CPU,
-			894750,	/* 0.89475 Mhz (3.579 / 4) */
-			2,	/* memory region #2 */
+			894750, /* 0.89475 Mhz (3.579 / 4) */
+			2,      /* memory region #2 */
 			sound_readmem,sound_writemem,0,0,
-			ignore_interrupt,1	/* interrupts are triggered by the main CPU */
+			ignore_interrupt,1      /* interrupts are triggered by the main CPU */
 		}
 	},
 	60,                                     /* frames per second */
-	10,	/* 10 CPU slices per frame - enough for the sound CPU to read all commands */
+	10,     /* 10 CPU slices per frame - enough for the sound CPU to read all commands */
 	williams_init_machine,          /* init machine routine */
 
 	/* video hardware */
@@ -1006,14 +1017,13 @@ static struct MachineDriver robotron_machine_driver =
 	16,                                      /* color table length */
 	williams_vh_convert_color_prom,         /* convert color prom routine */
 
-	VIDEO_TYPE_RASTER|VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER|VIDEO_MODIFIES_PALETTE|VIDEO_SUPPORTS_DIRTY,
 	0,                                      /* vh_init routine */
 	williams_vh_start,                      /* vh_start routine */
 	williams_vh_stop,                       /* vh_stop routine */
 	williams_vh_screenrefresh,              /* vh_update routine */
 
 	/* sound hardware */
-	0,                                      /* pointer to samples */
 	0,                                      /* sh_init routine */
 	williams_sh_start,                      /* sh_start routine */
 	williams_sh_stop,                       /* sh_stop routine */
@@ -1038,14 +1048,14 @@ static struct MachineDriver joust_machine_driver =
 		},
 		{
 			CPU_M6808 | CPU_AUDIO_CPU,
-			894750,	/* 0.89475 Mhz (3.579 / 4) */
-			2,	/* memory region #2 */
+			894750, /* 0.89475 Mhz (3.579 / 4) */
+			2,      /* memory region #2 */
 			sound_readmem,sound_writemem,0,0,
-			ignore_interrupt,1	/* interrupts are triggered by the main CPU */
+			ignore_interrupt,1      /* interrupts are triggered by the main CPU */
 		}
 	},
 	60,                                     /* frames per second */
-	10,	/* 10 CPU slices per frame - enough for the sound CPU to read all commands */
+	10,     /* 10 CPU slices per frame - enough for the sound CPU to read all commands */
 	williams_init_machine,          /* init machine routine */
 
 	/* video hardware */
@@ -1056,14 +1066,13 @@ static struct MachineDriver joust_machine_driver =
 	16,                                      /* color table length */
 	williams_vh_convert_color_prom,         /* convert color prom routine */
 
-	VIDEO_TYPE_RASTER|VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER|VIDEO_MODIFIES_PALETTE|VIDEO_SUPPORTS_DIRTY,
 	0,                                      /* vh_init routine */
 	williams_vh_start,                      /* vh_start routine */
 	williams_vh_stop,                       /* vh_stop routine */
 	williams_vh_screenrefresh,              /* vh_update routine */
 
 	/* sound hardware */
-	0,                                      /* pointer to samples */
 	0,                                      /* sh_init routine */
 	williams_sh_start,                      /* sh_start routine */
 	williams_sh_stop,                       /* sh_stop routine */
@@ -1089,14 +1098,14 @@ static struct MachineDriver stargate_machine_driver =
 		},
 		{
 			CPU_M6808 | CPU_AUDIO_CPU,
-			894750,	/* 0.89475 Mhz (3.579 / 4) */
-			2,	/* memory region #2 */
+			894750, /* 0.89475 Mhz (3.579 / 4) */
+			2,      /* memory region #2 */
 			sound_readmem,sound_writemem,0,0,
-			ignore_interrupt,1	/* interrupts are triggered by the main CPU */
+			ignore_interrupt,1      /* interrupts are triggered by the main CPU */
 		}
 	},
 	60,                                     /* frames per second */
-	10,	/* 10 CPU slices per frame - enough for the sound CPU to read all commands */
+	10,     /* 10 CPU slices per frame - enough for the sound CPU to read all commands */
 	williams_init_machine,          /* init machine routine */
 
 	/* video hardware */
@@ -1107,14 +1116,13 @@ static struct MachineDriver stargate_machine_driver =
 	16,                                      /* color table length */
 	williams_vh_convert_color_prom,         /* convert color prom routine */
 
-	VIDEO_TYPE_RASTER|VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER|VIDEO_MODIFIES_PALETTE|VIDEO_SUPPORTS_DIRTY,
 	0,                                      /* vh_init routine */
 	williams_vh_start,                      /* vh_start routine */
 	williams_vh_stop,                       /* vh_stop routine */
 	williams_vh_screenrefresh,              /* vh_update routine */
 
 	/* sound hardware */
-	0,                                      /* pointer to samples */
 	0,                                      /* sh_init routine */
 	williams_sh_start,                      /* sh_start routine */
 	williams_sh_stop,                       /* sh_stop routine */
@@ -1139,14 +1147,14 @@ static struct MachineDriver sinistar_machine_driver =
 		},
 		{
 			CPU_M6808 | CPU_AUDIO_CPU,
-			894750,	/* 0.89475 Mhz (3.579 / 4) */
-			2,	/* memory region #2 */
+			894750, /* 0.89475 Mhz (3.579 / 4) */
+			2,      /* memory region #2 */
 			sound_readmem,sound_writemem,0,0,
-			ignore_interrupt,1	/* interrupts are triggered by the main CPU */
+			ignore_interrupt,1      /* interrupts are triggered by the main CPU */
 		}
 	},
 	60,                                     /* frames per second */
-	10,	/* 10 CPU slices per frame - enough for the sound CPU to read all commands */
+	10,     /* 10 CPU slices per frame - enough for the sound CPU to read all commands */
 	williams_init_machine,          /* init machine routine */
 
 	/* video hardware */
@@ -1157,14 +1165,13 @@ static struct MachineDriver sinistar_machine_driver =
 	16,                                      /* color table length */
 	williams_vh_convert_color_prom,         /* convert color prom routine */
 
-	VIDEO_TYPE_RASTER|VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER|VIDEO_MODIFIES_PALETTE|VIDEO_SUPPORTS_DIRTY,
 	0,                                      /* vh_init routine */
 	williams_vh_start,                      /* vh_start routine */
 	williams_vh_stop,                       /* vh_stop routine */
 	williams_vh_screenrefresh,              /* vh_update routine */
 
 	/* sound hardware */
-	0,                                      /* pointer to samples */
 	0,                                      /* sh_init routine */
 	williams_sh_start,                      /* sh_start routine */
 	williams_sh_stop,                       /* sh_stop routine */
@@ -1189,14 +1196,14 @@ static struct MachineDriver defender_machine_driver =
 		},
 		{
 			CPU_M6808 | CPU_AUDIO_CPU,
-			894750,	/* 0.89475 Mhz (3.579 / 4) */
-			2,	/* memory region #2 */
+			894750, /* 0.89475 Mhz (3.579 / 4) */
+			2,      /* memory region #2 */
 			sound_readmem,sound_writemem,0,0,
-			ignore_interrupt,1	/* interrupts are triggered by the main CPU */
+			ignore_interrupt,1      /* interrupts are triggered by the main CPU */
 		}
 	},
 	60,                                     /* frames per second */
-	10,	/* 10 CPU slices per frame - enough for the sound CPU to read all commands */
+	10,     /* 10 CPU slices per frame - enough for the sound CPU to read all commands */
 	williams_init_machine,          /* init machine routine */
 
 	/* video hardware */
@@ -1207,14 +1214,13 @@ static struct MachineDriver defender_machine_driver =
 	16,                                      /* color table length */
 	williams_vh_convert_color_prom,         /* convert color prom routine */
 
-	VIDEO_TYPE_RASTER|VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER|VIDEO_MODIFIES_PALETTE|VIDEO_SUPPORTS_DIRTY,
 	0,                                      /* vh_init routine */
 	williams_vh_start,                      /* vh_start routine */
 	williams_vh_stop,                       /* vh_stop routine */
 	williams_vh_screenrefresh,              /* vh_update routine */
 
 	/* sound hardware */
-	0,                                      /* pointer to samples */
 	0,                                      /* sh_init routine */
 	williams_sh_start,                      /* sh_start routine */
 	williams_sh_stop,                       /* sh_stop routine */
@@ -1239,14 +1245,14 @@ static struct MachineDriver splat_machine_driver =
 		},
 		{
 			CPU_M6808 | CPU_AUDIO_CPU,
-			894750,	/* 0.89475 Mhz (3.579 / 4) */
-			2,	/* memory region #2 */
+			894750, /* 0.89475 Mhz (3.579 / 4) */
+			2,      /* memory region #2 */
 			sound_readmem,sound_writemem,0,0,
-			ignore_interrupt,1	/* interrupts are triggered by the main CPU */
+			ignore_interrupt,1      /* interrupts are triggered by the main CPU */
 		}
 	},
 	60,                                     /* frames per second */
-	10,	/* 10 CPU slices per frame - enough for the sound CPU to read all commands */
+	10,     /* 10 CPU slices per frame - enough for the sound CPU to read all commands */
 	williams_init_machine,          /* init machine routine */
 
 	/* video hardware */
@@ -1257,14 +1263,13 @@ static struct MachineDriver splat_machine_driver =
 	16,                                      /* color table length */
 	williams_vh_convert_color_prom,         /* convert color prom routine */
 
-	VIDEO_TYPE_RASTER|VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER|VIDEO_MODIFIES_PALETTE|VIDEO_SUPPORTS_DIRTY,
 	0,                                      /* vh_init routine */
 	williams_vh_start,                      /* vh_start routine */
 	williams_vh_stop,                       /* vh_stop routine */
 	williams_vh_screenrefresh,              /* vh_update routine */
 
 	/* sound hardware */
-	0,                                      /* pointer to samples */
 	0,                                      /* sh_init routine */
 	williams_sh_start,                      /* sh_start routine */
 	williams_sh_stop,                       /* sh_stop routine */
@@ -1289,14 +1294,14 @@ static struct MachineDriver bubbles_machine_driver =
 		},
 		{
 			CPU_M6808 | CPU_AUDIO_CPU,
-			894750,	/* 0.89475 Mhz (3.579 / 4) */
-			2,	/* memory region #2 */
+			894750, /* 0.89475 Mhz (3.579 / 4) */
+			2,      /* memory region #2 */
 			sound_readmem,sound_writemem,0,0,
-			ignore_interrupt,1	/* interrupts are triggered by the main CPU */
+			ignore_interrupt,1      /* interrupts are triggered by the main CPU */
 		}
 	},
 	60,                                     /* frames per second */
-	10,	/* 10 CPU slices per frame - enough for the sound CPU to read all commands */
+	10,     /* 10 CPU slices per frame - enough for the sound CPU to read all commands */
 	williams_init_machine,          /* init machine routine */
 
 	/* video hardware */
@@ -1307,14 +1312,13 @@ static struct MachineDriver bubbles_machine_driver =
 	16,                                      /* color table length */
 	williams_vh_convert_color_prom,         /* convert color prom routine */
 
-	VIDEO_TYPE_RASTER|VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER|VIDEO_MODIFIES_PALETTE|VIDEO_SUPPORTS_DIRTY,
 	0,                                      /* vh_init routine */
 	williams_vh_start,                      /* vh_start routine */
 	williams_vh_stop,                       /* vh_stop routine */
 	williams_vh_screenrefresh,              /* vh_update routine */
 
 	/* sound hardware */
-	0,                                      /* pointer to samples */
 	0,                                      /* sh_init routine */
 	williams_sh_start,                      /* sh_start routine */
 	williams_sh_stop,                       /* sh_stop routine */
@@ -1339,14 +1343,14 @@ static struct MachineDriver blaster_machine_driver =
 		},
 		{
 			CPU_M6808 | CPU_AUDIO_CPU,
-			894750,	/* 0.89475 Mhz (3.579 / 4) */
-			2,	/* memory region #2 */
+			894750, /* 0.89475 Mhz (3.579 / 4) */
+			2,      /* memory region #2 */
 			sound_readmem,sound_writemem,0,0,
-			ignore_interrupt,1	/* interrupts are triggered by the main CPU */
+			ignore_interrupt,1      /* interrupts are triggered by the main CPU */
 		}
 	},
 	60,                                     /* frames per second */
-	10,	/* 10 CPU slices per frame - enough for the sound CPU to read all commands */
+	10,     /* 10 CPU slices per frame - enough for the sound CPU to read all commands */
 	williams_init_machine,          /* init machine routine */
 
 	/* video hardware */
@@ -1357,14 +1361,13 @@ static struct MachineDriver blaster_machine_driver =
 	16,                                      /* color table length */
 	blaster_vh_convert_color_prom,         /* convert color prom routine */
 
-	VIDEO_TYPE_RASTER|VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER|VIDEO_MODIFIES_PALETTE|VIDEO_SUPPORTS_DIRTY,
 	0,                                      /* vh_init routine */
 	williams_vh_start,                      /* vh_start routine */
 	williams_vh_stop,                       /* vh_stop routine */
 	blaster_vh_screenrefresh,               /* vh_update routine */
 
 	/* sound hardware */
-	0,                                      /* pointer to samples */
 	0,                                      /* sh_init routine */
 	williams_sh_start,                      /* sh_start routine */
 	williams_sh_stop,                       /* sh_stop routine */
@@ -1531,10 +1534,34 @@ ROM_START( robotron_rom )
 	ROM_LOAD( "ROBOTRON.SBb", 0xe000, 0x1000, 0xe816f8e6 )
 	ROM_LOAD( "ROBOTRON.SBc", 0xf000, 0x1000, 0xcfc2d9aa )
 
-	ROM_REGION(0x1000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_OBSOLETELOAD( "ROBOTRON.SND",0x0000,0x1000 ) /* not needed - could be removed */
+	ROM_REGION(0x1000)      /* temporary space for graphics (disposed after conversion) */
+	/* empty memory region - not used by the game, but needed bacause the main */
+	/* core currently always frees region #1 after initialization. */
 
-	ROM_REGION(0x10000)	/* 64k for the sound CPU */
+	ROM_REGION(0x10000)     /* 64k for the sound CPU */
+	ROM_LOAD( "ROBOTRON.SND", 0xf000, 0x1000, 0x000f85e5 )
+ROM_END
+
+ROM_START( robotryo_rom )
+	ROM_REGION(0x10000)     /* 64k for code */
+	ROM_LOAD( "ROBOTRON.YO1", 0x0000, 0x1000, 0xd5778c45 )
+	ROM_LOAD( "ROBOTRON.YO2", 0x1000, 0x1000, 0x51fb054b )
+	ROM_LOAD( "ROBOTRON.YO3", 0x2000, 0x1000, 0x8f4af95e )
+	ROM_LOAD( "ROBOTRON.YO4", 0x3000, 0x1000, 0xeef123ef )
+	ROM_LOAD( "ROBOTRON.YO5", 0x4000, 0x1000, 0x6327d431 )
+	ROM_LOAD( "ROBOTRON.YO6", 0x5000, 0x1000, 0x8b53f7cd )
+	ROM_LOAD( "ROBOTRON.YO7", 0x6000, 0x1000, 0x8f8cbcee )
+	ROM_LOAD( "ROBOTRON.YO8", 0x7000, 0x1000, 0x5e442b24 )
+	ROM_LOAD( "ROBOTRON.YO9", 0x8000, 0x1000, 0x294d9c17 )
+	ROM_LOAD( "ROBOTRON.YOa", 0xd000, 0x1000, 0x1ac7fceb )
+	ROM_LOAD( "ROBOTRON.YOb", 0xe000, 0x1000, 0xe615fee7 )
+	ROM_LOAD( "ROBOTRON.YOc", 0xf000, 0x1000, 0xd4bdec59 )
+
+	ROM_REGION(0x1000)      /* temporary space for graphics (disposed after conversion) */
+	/* empty memory region - not used by the game, but needed bacause the main */
+	/* core currently always frees region #1 after initialization. */
+
+	ROM_REGION(0x10000)     /* 64k for the sound CPU */
 	ROM_LOAD( "ROBOTRON.SND", 0xf000, 0x1000, 0x000f85e5 )
 ROM_END
 
@@ -1549,6 +1576,7 @@ struct GameDriver robotron_driver =
 	robotron_rom,                   /* RomModule * */
 	0, 0,                           /* ROM decrypt routines */
 	0,          /* samplenames */
+	0,      /* sound_prom */
 
 	0/*TBR*/,robotron_input_ports,0/*TBR*/,0/*TBR*/,0/*TBR*/,
 
@@ -1559,10 +1587,51 @@ struct GameDriver robotron_driver =
 };
 
 
+struct GameDriver robotryo_driver =
+{
+	"Robotron (Yellow/Orange label)",
+	"robotryo",
+	"Marc Lafontaine\nSteven Hugg\nMirko Buffoni\nAaron Giles\nValerio Verrando",
+	&robotron_machine_driver,       /* MachineDriver * */
 
+	robotryo_rom,                   /* RomModule * */
+	0, 0,                           /* ROM decrypt routines */
+	0,          /* samplenames */
+	0,      /* sound_prom */
+
+	0/*TBR*/,robotron_input_ports,0/*TBR*/,0/*TBR*/,0/*TBR*/,
+
+	0, 0, 0,
+	ORIENTATION_DEFAULT,
+
+	cmos_load, cmos_save
+};
 
 ROM_START( joust_rom )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGION(0x10000)     /* 64k for code */
+	ROM_LOAD( "JOUST.WG1", 0x0000, 0x1000, 0x56ea72c8 )
+	ROM_LOAD( "JOUST.WG2", 0x1000, 0x1000, 0xe32af9c4 )
+	ROM_LOAD( "JOUST.WG3", 0x2000, 0x1000, 0x21ec9c8e )
+	ROM_LOAD( "JOUST.WG4", 0x3000, 0x1000, 0xad230361 )
+	ROM_LOAD( "JOUST.WG5", 0x4000, 0x1000, 0xd37f04e9 )
+	ROM_LOAD( "JOUST.WG6", 0x5000, 0x1000, 0x727b5c05 )
+	ROM_LOAD( "JOUST.WG7", 0x6000, 0x1000, 0x81aa3756 )
+	ROM_LOAD( "JOUST.WG8", 0x7000, 0x1000, 0x8d1829b6 )
+	ROM_LOAD( "JOUST.WG9", 0x8000, 0x1000, 0xcbfcd9a6 )
+	ROM_LOAD( "JOUST.WGa", 0xd000, 0x1000, 0xf102016a )
+	ROM_LOAD( "JOUST.WGb", 0xe000, 0x1000, 0x11b3700d )
+	ROM_LOAD( "JOUST.WGc", 0xf000, 0x1000, 0x0cd46bb8 )
+
+	ROM_REGION(0x1000)      /* temporary space for graphics (disposed after conversion) */
+	/* empty memory region - not used by the game, but needed bacause the main */
+	/* core currently always frees region #1 after initialization. */
+
+	ROM_REGION(0x10000)     /* 64k for the sound CPU */
+	ROM_LOAD( "JOUST.SND", 0xf000, 0x1000, 0x5799e563 )
+ROM_END
+
+ROM_START( joustr_rom )
+	ROM_REGION(0x10000)     /* 64k for code */
 	ROM_LOAD( "JOUST.SR1", 0x0000, 0x1000, 0x56ea72c8 )
 	ROM_LOAD( "JOUST.SR2", 0x1000, 0x1000, 0xe32af9c4 )
 	ROM_LOAD( "JOUST.SR3", 0x2000, 0x1000, 0x21ec9c8e )
@@ -1576,23 +1645,132 @@ ROM_START( joust_rom )
 	ROM_LOAD( "JOUST.SRb", 0xe000, 0x1000, 0x54b23102 )
 	ROM_LOAD( "JOUST.SRc", 0xf000, 0x1000, 0x0cd46bd8 )
 
-	ROM_REGION(0x1000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_OBSOLETELOAD( "JOUST.SND",0x0000,0x1000 ) /* not needed - could be removed */
+	ROM_REGION(0x1000)      /* temporary space for graphics (disposed after conversion) */
+	/* empty memory region - not used by the game, but needed bacause the main */
+	/* core currently always frees region #1 after initialization. */
 
-	ROM_REGION(0x10000)	/* 64k for the sound CPU */
+	ROM_REGION(0x10000)     /* 64k for the sound CPU */
 	ROM_LOAD( "JOUST.SND", 0xf000, 0x1000, 0x5799e563 )
 ROM_END
 
+ROM_START( joustg_rom )
+	ROM_REGION(0x10000)     /* 64k for code */
+	ROM_LOAD( "JOUST.SG1", 0x0000, 0x1000, 0x56ea72c8 )
+	ROM_LOAD( "JOUST.SG2", 0x1000, 0x1000, 0xe32af9c4 )
+	ROM_LOAD( "JOUST.SG3", 0x2000, 0x1000, 0x21ec9c8e )
+	ROM_LOAD( "JOUST.SG4", 0x3000, 0x1000, 0xad230361 )
+	ROM_LOAD( "JOUST.SG5", 0x4000, 0x1000, 0xd37f04e9 )
+	ROM_LOAD( "JOUST.SG6", 0x5000, 0x1000, 0x727b5c05 )
+	ROM_LOAD( "JOUST.SG7", 0x6000, 0x1000, 0x81aa3756 )
+	ROM_LOAD( "JOUST.SG8", 0x7000, 0x1000, 0x8d1829b6 )
+	ROM_LOAD( "JOUST.SG9", 0x8000, 0x1000, 0xcbfcd9a6 )
+	ROM_LOAD( "JOUST.SGa", 0xd000, 0x1000, 0xf102016a )
+	ROM_LOAD( "JOUST.SGb", 0xe000, 0x1000, 0x11b3700d )
+	ROM_LOAD( "JOUST.SGc", 0xf000, 0x1000, 0x0cd46bb8 )
+
+	ROM_REGION(0x1000)      /* temporary space for graphics (disposed after conversion) */
+	/* empty memory region - not used by the game, but needed bacause the main */
+	/* core currently always frees region #1 after initialization. */
+
+	ROM_REGION(0x10000)     /* 64k for the sound CPU */
+	ROM_LOAD( "JOUST.SND", 0xf000, 0x1000, 0x5799e563 )
+ROM_END
+
+ROM_START( joustwr_rom )
+	ROM_REGION(0x10000)     /* 64k for code */
+	ROM_LOAD( "JOUST.WR1", 0x0000, 0x1000, 0x56ea72c8 )
+	ROM_LOAD( "JOUST.WR2", 0x1000, 0x1000, 0xe32af9c4 )
+	ROM_LOAD( "JOUST.WR3", 0x2000, 0x1000, 0x21ec9c8e )
+	ROM_LOAD( "JOUST.WR4", 0x3000, 0x1000, 0xad230361 )
+	ROM_LOAD( "JOUST.WR5", 0x4000, 0x1000, 0xd37f04e9 )
+	ROM_LOAD( "JOUST.WR6", 0x5000, 0x1000, 0x727b5c05 )
+	ROM_LOAD( "JOUST.WR7", 0x6000, 0x1000, 0x81aacd2c )
+	ROM_LOAD( "JOUST.WR8", 0x7000, 0x1000, 0x8d1829b6 )
+	ROM_LOAD( "JOUST.WR9", 0x8000, 0x1000, 0xcbfcd9a6 )
+	ROM_LOAD( "JOUST.WRa", 0xd000, 0x1000, 0x4292d584 )
+	ROM_LOAD( "JOUST.WRb", 0xe000, 0x1000, 0x11b3700d )
+	ROM_LOAD( "JOUST.WRc", 0xf000, 0x1000, 0x0cd46bb8 )
+
+	ROM_REGION(0x1000)      /* temporary space for graphics (disposed after conversion) */
+	/* empty memory region - not used by the game, but needed bacause the main */
+	/* core currently always frees region #1 after initialization. */
+
+	ROM_REGION(0x10000)     /* 64k for the sound CPU */
+	ROM_LOAD( "JOUST.SND", 0xf000, 0x1000, 0x5799e563 )
+ROM_END
+
+
 struct GameDriver joust_driver =
 {
-	"Joust",
+	"Joust (White/Green label)",
 	"joust",
+	"Marc Lafontaine\nSteven Hugg\nMirko Buffoni\nAaron Giles\nValerio Verrando",
+	&joust_machine_driver,          /* MachineDriver * */
+
+	joust_rom,                      /* White/Green version, latest */
+	0, 0,                           /* ROM decrypt routines */
+	0,          /* samplenames */
+	0,      /* sound_prom */
+
+	0/*TBR*/,joust_input_ports,0/*TBR*/,0/*TBR*/,0/*TBR*/,
+
+	0, 0, 0,
+	ORIENTATION_DEFAULT,
+
+	cmos_load, cmos_save
+};
+
+struct GameDriver joustr_driver =
+{
+	"Joust (Red label)",
+	"joustr",
 	"Marc Lafontaine\nSteven Hugg\nMirko Buffoni\nAaron Giles",
 	&joust_machine_driver,          /* MachineDriver * */
 
-	joust_rom,                      /* RomModule * */
+	joustr_rom,                     /* Solid Red version, has pterodactyl bug */
 	0, 0,                           /* ROM decrypt routines */
 	0,          /* samplenames */
+	0,      /* sound_prom */
+
+	0/*TBR*/,joust_input_ports,0/*TBR*/,0/*TBR*/,0/*TBR*/,
+
+	0, 0, 0,
+	ORIENTATION_DEFAULT,
+
+	cmos_load, cmos_save
+};
+
+struct GameDriver joustg_driver =
+{
+	"Joust (Green label)",
+	"joustg",
+	"Marc Lafontaine\nSteven Hugg\nMirko Buffoni\nAaron Giles",
+	&joust_machine_driver,          /* MachineDriver * */
+
+	joustg_rom,                     /* Solid Red version, has pterodactyl bug */
+	0, 0,                           /* ROM decrypt routines */
+	0,          /* samplenames */
+	0,      /* sound_prom */
+
+	0/*TBR*/,joust_input_ports,0/*TBR*/,0/*TBR*/,0/*TBR*/,
+
+	0, 0, 0,
+	ORIENTATION_DEFAULT,
+
+	cmos_load, cmos_save
+};
+
+struct GameDriver joustwr_driver =
+{
+	"Joust (White/Red label)",
+	"joustwr",
+	"Marc Lafontaine\nSteven Hugg\nMirko Buffoni\nAaron Giles",
+	&joust_machine_driver,          /* MachineDriver * */
+
+	joustwr_rom,                     /* Solid Red version, has pterodactyl bug */
+	0, 0,                           /* ROM decrypt routines */
+	0,          /* samplenames */
+	0,      /* sound_prom */
 
 	0/*TBR*/,joust_input_ports,0/*TBR*/,0/*TBR*/,0/*TBR*/,
 
@@ -1619,10 +1797,11 @@ ROM_START( sinistar_rom )
 	ROM_LOAD( "SINISTAR.10", 0xe000, 0x1000, 0xaf1de107 )
 	ROM_LOAD( "SINISTAR.11", 0xf000, 0x1000, 0x81481d1a )
 
-	ROM_REGION(0x1000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_OBSOLETELOAD( "SINISTAR.SND",0x0000,0x1000 ) /* not needed - could be removed */
+	ROM_REGION(0x1000)      /* temporary space for graphics (disposed after conversion) */
+	/* empty memory region - not used by the game, but needed bacause the main */
+	/* core currently always frees region #1 after initialization. */
 
-	ROM_REGION(0x10000)	/* 64k for the sound CPU */
+	ROM_REGION(0x10000)     /* 64k for the sound CPU */
 	ROM_LOAD( "SINISTAR.SND", 0xf000, 0x1000, 0x7400ae74 )
 ROM_END
 
@@ -1636,6 +1815,7 @@ struct GameDriver sinistar_driver =
 	sinistar_rom,                   /* RomModule * */
 	0, 0,                           /* ROM decrypt routines */
 	0,                              /* samplenames */
+	0,      /* sound_prom */
 
 	0/*TBR*/,sinistar_input_ports,0/*TBR*/,0/*TBR*/,0/*TBR*/,
 
@@ -1663,12 +1843,37 @@ ROM_START( bubbles_rom )
 	ROM_LOAD( "BUBBLES.11B", 0xe000, 0x1000, 0x31598c5d )
 	ROM_LOAD( "BUBBLES.12B", 0xf000, 0x1000, 0xfdb24d56 )
 
-	ROM_REGION(0x1000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_OBSOLETELOAD( "BUBBLES.SND",0x0000,0x1000 ) /* not needed - could be removed */
+	ROM_REGION(0x1000)      /* temporary space for graphics (disposed after conversion) */
+	/* empty memory region - not used by the game, but needed bacause the main */
+	/* core currently always frees region #1 after initialization. */
 
-	ROM_REGION(0x10000)	/* 64k for the sound CPU */
+	ROM_REGION(0x10000)     /* 64k for the sound CPU */
 	ROM_LOAD( "BUBBLES.SND", 0xf000, 0x1000, 0x82ae5994 )
 ROM_END
+
+ROM_START( bubblesr_rom )
+	ROM_REGION(0x10000)     /* 64k for code */
+	ROM_LOAD( "BUBBLES.1B",  0x0000, 0x1000, 0x90409106 )
+	ROM_LOAD( "BUBBLES.2B",  0x1000, 0x1000, 0x2eae0950 )
+	ROM_LOAD( "BUBBLES.3B",  0x2000, 0x1000, 0xf6ad9f95 )
+	ROM_LOAD( "BUBBLES.4B",  0x3000, 0x1000, 0x945d4b73 )
+	ROM_LOAD( "BUBBLES.5B",  0x4000, 0x1000, 0xb002076e )
+	ROM_LOAD( "BUBBLES.6B",  0x5000, 0x1000, 0x4617e675 )
+	ROM_LOAD( "BUBBLES.7B",  0x6000, 0x1000, 0x16d20c98 )
+	ROM_LOAD( "BUBBLES.8B",  0x7000, 0x1000, 0xfb8bad59 )
+	ROM_LOAD( "BUBBLES.9B",  0x8000, 0x1000, 0xc5ca8ce2 )
+	ROM_LOAD( "BUBBLES.10B", 0xd000, 0x1000, 0x8cc42496 )
+	ROM_LOAD( "BUBBLES.11B", 0xe000, 0x1000, 0xfd0252a2 )
+	ROM_LOAD( "BUBBLES.12B", 0xf000, 0x1000, 0xfcb24da2 )
+
+	ROM_REGION(0x1000)      /* temporary space for graphics (disposed after conversion) */
+	/* empty memory region - not used by the game, but needed bacause the main */
+	/* core currently always frees region #1 after initialization. */
+
+	ROM_REGION(0x10000)     /* 64k for the sound CPU */
+	ROM_LOAD( "BUBBLES.SND", 0xf000, 0x1000, 0x82ae5994 )
+ROM_END
+
 
 struct GameDriver bubbles_driver =
 {
@@ -1680,6 +1885,28 @@ struct GameDriver bubbles_driver =
 	bubbles_rom,                    /* RomModule * */
 	0, 0,                           /* ROM decrypt routines */
 	0,                              /* samplenames */
+	0,      /* sound_prom */
+
+	0/*TBR*/,bubbles_input_ports,0/*TBR*/,0/*TBR*/,0/*TBR*/,
+
+	0, 0, 0,
+	ORIENTATION_DEFAULT,
+
+	cmos_load, cmos_save
+};
+
+
+struct GameDriver bubblesr_driver =
+{
+	"Bubbles (Red Label)",
+	"bubblesr",
+	"Marc Lafontaine\nSteven Hugg\nMirko Buffoni\nAaron Giles\nValerio Verrando",
+	&bubbles_machine_driver,        /* MachineDriver * */
+
+	bubblesr_rom,                   /* RomModule * */
+	0, 0,                           /* ROM decrypt routines */
+	0,                              /* samplenames */
+	0,      /* sound_prom */
 
 	0/*TBR*/,bubbles_input_ports,0/*TBR*/,0/*TBR*/,0/*TBR*/,
 
@@ -1707,10 +1934,11 @@ ROM_START( stargate_rom )
 	ROM_LOAD( "11", 0xe000, 0x1000, 0xd33c4d64 )
 	ROM_LOAD( "12", 0xf000, 0x1000, 0x94afba0b )
 
-	ROM_REGION(0x1000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_OBSOLETELOAD( "sg.snd",0x0000,0x0800 ) /* not needed - could be removed */
+	ROM_REGION(0x1000)      /* temporary space for graphics (disposed after conversion) */
+	/* empty memory region - not used by the game, but needed bacause the main */
+	/* core currently always frees region #1 after initialization. */
 
-	ROM_REGION(0x10000)	/* 64k for the sound CPU */
+	ROM_REGION(0x10000)     /* 64k for the sound CPU */
 	ROM_LOAD( "sg.snd", 0xf800, 0x0800, 0xe18a8e66 )
 ROM_END
 
@@ -1724,6 +1952,7 @@ struct GameDriver stargate_driver =
 	stargate_rom,                   /* RomModule * */
 	0, 0,                           /* ROM decrypt routines */
 	0,                              /* samplenames */
+	0,      /* sound_prom */
 
 	0/*TBR*/,stargate_input_ports,0/*TBR*/,0/*TBR*/,0/*TBR*/,
 
@@ -1737,41 +1966,26 @@ struct GameDriver stargate_driver =
 
 
 ROM_START( defender_rom )
-	ROM_REGION(0x50000)
+	ROM_REGION(0x14000)
 	/* bank 0 is the place for CMOS ram */
-	ROM_LOAD( "defend.9", 0x1c000, 0x0800, 0x3e2646ae )
-	ROM_LOAD( "defend.12",0x1c800, 0x0800, 0xd13eeb4a )
-	ROM_LOAD( "defend.8", 0x2c000, 0x0800, 0x67afa299 )
-	ROM_LOAD( "defend.11",0x2c800, 0x0800, 0x287572ed )
-	ROM_LOAD( "defend.7", 0x3c000, 0x0800, 0x344c9bd0 )
-	ROM_LOAD( "defend.10",0x3c800, 0x0800, 0xee30b06e )
-	ROM_LOAD( "defend.6", 0x4c000, 0x0800, 0x8c7b2da3 )
-	ROM_LOAD( "defend.10",0x4c800, 0x0800, 0xee30b06e )
+	ROM_LOAD( "defend.9", 0x10000, 0x0800, 0x3e2646ae )
+	ROM_LOAD( "defend.12",0x10800, 0x0800, 0xd13eeb4a )
+	ROM_LOAD( "defend.8", 0x11000, 0x0800, 0x67afa299 )
+	ROM_LOAD( "defend.11",0x11800, 0x0800, 0x287572ed )
+	ROM_LOAD( "defend.7", 0x12000, 0x0800, 0x344c9bd0 )
+	ROM_LOAD( "defend.10",0x12800, 0x0800, 0xee30b06e )
+	ROM_LOAD( "defend.6", 0x13000, 0x0800, 0x8c7b2da3 )
+	ROM_LOAD( "defend.10",0x13800, 0x0800, 0xee30b06e )
 	ROM_LOAD( "defend.1", 0xd000, 0x0800, 0x4aa8c614 )
-	ROM_RELOAD(          0x1d000, 0x0800 )
-	ROM_RELOAD(          0x2d000, 0x0800 )
-	ROM_RELOAD(          0x3d000, 0x0800 )
-	ROM_RELOAD(          0x4d000, 0x0800 )
 	ROM_LOAD( "defend.4", 0xd800, 0x0800, 0x99e9bb31 )
-	ROM_RELOAD(          0x1d800, 0x0800 )
-	ROM_RELOAD(          0x2d800, 0x0800 )
-	ROM_RELOAD(          0x3d800, 0x0800 )
-	ROM_RELOAD(          0x4d800, 0x0800 )
 	ROM_LOAD( "defend.2", 0xe000, 0x1000, 0x8991dceb )
-	ROM_RELOAD(          0x1e000, 0x1000 )
-	ROM_RELOAD(          0x2e000, 0x1000 )
-	ROM_RELOAD(          0x3e000, 0x1000 )
-	ROM_RELOAD(          0x4e000, 0x1000 )
 	ROM_LOAD( "defend.3", 0xf000, 0x1000, 0x3f6e9fe2 )
-	ROM_RELOAD(          0x1f000, 0x1000 )
-	ROM_RELOAD(          0x2f000, 0x1000 )
-	ROM_RELOAD(          0x3f000, 0x1000 )
-	ROM_RELOAD(          0x4f000, 0x1000 )
 
-	ROM_REGION(0x1000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_OBSOLETELOAD( "defend.snd",0x0000,0x0800 ) /* not needed - could be removed */
+	ROM_REGION(0x1000)      /* temporary space for graphics (disposed after conversion) */
+	/* empty memory region - not used by the game, but needed bacause the main */
+	/* core currently always frees region #1 after initialization. */
 
-	ROM_REGION(0x10000)	/* 64k for the sound CPU */
+	ROM_REGION(0x10000)     /* 64k for the sound CPU */
 	ROM_LOAD( "defend.snd", 0xf800, 0x0800, 0xa7f601a4 )
 ROM_END
 
@@ -1785,6 +1999,7 @@ struct GameDriver defender_driver =
 	defender_rom,                   /* RomModule * */
 	0, 0,                           /* ROM decrypt routines */
 	0,                              /* samplenames */
+	0,      /* sound_prom */
 
 	0/*TBR*/,defender_input_ports,0/*TBR*/,0/*TBR*/,0/*TBR*/,
 
@@ -1812,10 +2027,11 @@ ROM_START( splat_rom )
 	ROM_LOAD( "SPLAT.11", 0xe000, 0x1000, 0x77ca0200 )
 	ROM_LOAD( "SPLAT.12", 0xf000, 0x1000, 0x9f4667ba )
 
-	ROM_REGION(0x1000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_OBSOLETELOAD( "SPLAT.SND",0x0000,0x1000 ) /* not needed - could be removed */
+	ROM_REGION(0x1000)      /* temporary space for graphics (disposed after conversion) */
+	/* empty memory region - not used by the game, but needed bacause the main */
+	/* core currently always frees region #1 after initialization. */
 
-	ROM_REGION(0x10000)	/* 64k for the sound CPU */
+	ROM_REGION(0x10000)     /* 64k for the sound CPU */
 	ROM_LOAD( "SPLAT.SND", 0xf000, 0x1000, 0x999bcb87 )
 ROM_END
 
@@ -1830,6 +2046,7 @@ struct GameDriver splat_driver =
 	splat_rom,                      /* RomModule * */
 	0, 0,                           /* ROM decrypt routines */
 	0,                              /* samplenames */
+	0,      /* sound_prom */
 
 	0/*TBR*/,splat_input_ports,0/*TBR*/,0/*TBR*/,0/*TBR*/,
 
@@ -1843,85 +2060,31 @@ struct GameDriver splat_driver =
 
 
 ROM_START( blaster_rom )
-	ROM_REGION(0xc0000)     /* 768k for code -- I know this is huge, sorry */
+	ROM_REGION(0x3c000)
 	ROM_LOAD( "blaster.11", 0x04000, 0x2000, 0xdc7831b2 )
-	ROM_RELOAD(             0x14000, 0x2000 )
-	ROM_RELOAD(             0x24000, 0x2000 )
-	ROM_RELOAD(             0x34000, 0x2000 )
-	ROM_RELOAD(             0x44000, 0x2000 )
-	ROM_RELOAD(             0x54000, 0x2000 )
-	ROM_RELOAD(             0x64000, 0x2000 )
-	ROM_RELOAD(             0x74000, 0x2000 )
-	ROM_RELOAD(             0x84000, 0x2000 )
-	ROM_RELOAD(             0x94000, 0x2000 )
-	ROM_RELOAD(             0xa4000, 0x2000 )
-	ROM_RELOAD(             0xb4000, 0x2000 )
 	ROM_LOAD( "blaster.12", 0x06000, 0x2000, 0x68244eb6 )
-	ROM_RELOAD(             0x16000, 0x2000 )
-	ROM_RELOAD(             0x26000, 0x2000 )
-	ROM_RELOAD(             0x36000, 0x2000 )
-	ROM_RELOAD(             0x46000, 0x2000 )
-	ROM_RELOAD(             0x56000, 0x2000 )
-	ROM_RELOAD(             0x66000, 0x2000 )
-	ROM_RELOAD(             0x76000, 0x2000 )
-	ROM_RELOAD(             0x86000, 0x2000 )
-	ROM_RELOAD(             0x96000, 0x2000 )
-	ROM_RELOAD(             0xa6000, 0x2000 )
-	ROM_RELOAD(             0xb6000, 0x2000 )
 	ROM_LOAD( "blaster.17", 0x08000, 0x1000, 0xecbf6a51 )
-	ROM_RELOAD(             0x18000, 0x1000 )
-	ROM_RELOAD(             0x28000, 0x1000 )
-	ROM_RELOAD(             0x38000, 0x1000 )
-	ROM_RELOAD(             0x48000, 0x1000 )
-	ROM_RELOAD(             0x58000, 0x1000 )
-	ROM_RELOAD(             0x68000, 0x1000 )
-	ROM_RELOAD(             0x78000, 0x1000 )
-	ROM_RELOAD(             0x88000, 0x1000 )
-	ROM_RELOAD(             0x98000, 0x1000 )
-	ROM_RELOAD(             0xa8000, 0x1000 )
-	ROM_RELOAD(             0xb8000, 0x1000 )
 	ROM_LOAD( "blaster.16", 0x0d000, 0x1000, 0xd6e04ee2 )
-	ROM_RELOAD(             0x1d000, 0x1000 )
-	ROM_RELOAD(             0x2d000, 0x1000 )
-	ROM_RELOAD(             0x3d000, 0x1000 )
-	ROM_RELOAD(             0x4d000, 0x1000 )
-	ROM_RELOAD(             0x5d000, 0x1000 )
-	ROM_RELOAD(             0x6d000, 0x1000 )
-	ROM_RELOAD(             0x7d000, 0x1000 )
-	ROM_RELOAD(             0x8d000, 0x1000 )
-	ROM_RELOAD(             0x9d000, 0x1000 )
-	ROM_RELOAD(             0xad000, 0x1000 )
-	ROM_RELOAD(             0xbd000, 0x1000 )
 	ROM_LOAD( "blaster.13", 0x0e000, 0x2000, 0x376fc541 )
-	ROM_RELOAD(             0x1e000, 0x2000 )
-	ROM_RELOAD(             0x2e000, 0x2000 )
-	ROM_RELOAD(             0x3e000, 0x2000 )
-	ROM_RELOAD(             0x4e000, 0x2000 )
-	ROM_RELOAD(             0x5e000, 0x2000 )
-	ROM_RELOAD(             0x6e000, 0x2000 )
-	ROM_RELOAD(             0x7e000, 0x2000 )
-	ROM_RELOAD(             0x8e000, 0x2000 )
-	ROM_RELOAD(             0x9e000, 0x2000 )
-	ROM_RELOAD(             0xae000, 0x2000 )
-	ROM_RELOAD(             0xbe000, 0x2000 )
 
 	ROM_LOAD( "blaster.15", 0x00000, 0x4000, 0x1c345c06 )
 	ROM_LOAD( "blaster.8",  0x10000, 0x4000, 0xc297d5ab )
-	ROM_LOAD( "blaster.9",  0x20000, 0x4000, 0xe88478a0 )
-	ROM_LOAD( "blaster.10", 0x30000, 0x4000, 0xc68a1386 )
-	ROM_LOAD( "blaster.6",  0x40000, 0x4000, 0x3142941e )
-	ROM_LOAD( "blaster.5",  0x50000, 0x4000, 0x2ebd56e5 )
-	ROM_LOAD( "blaster.14", 0x60000, 0x4000, 0xe0267262 )
-	ROM_LOAD( "blaster.7",  0x70000, 0x4000, 0x17bff9a5 )
-	ROM_LOAD( "blaster.1",  0x80000, 0x4000, 0x37d9abe5 )
-	ROM_LOAD( "blaster.2",  0x90000, 0x4000, 0xd99ff133 )
-	ROM_LOAD( "blaster.4",  0xa0000, 0x4000, 0x8d86011c )
-	ROM_LOAD( "blaster.3",  0xb0000, 0x4000, 0x86ddd013 )
+	ROM_LOAD( "blaster.9",  0x14000, 0x4000, 0xe88478a0 )
+	ROM_LOAD( "blaster.10", 0x18000, 0x4000, 0xc68a1386 )
+	ROM_LOAD( "blaster.6",  0x1c000, 0x4000, 0x3142941e )
+	ROM_LOAD( "blaster.5",  0x20000, 0x4000, 0x2ebd56e5 )
+	ROM_LOAD( "blaster.14", 0x24000, 0x4000, 0xe0267262 )
+	ROM_LOAD( "blaster.7",  0x28000, 0x4000, 0x17bff9a5 )
+	ROM_LOAD( "blaster.1",  0x2c000, 0x4000, 0x37d9abe5 )
+	ROM_LOAD( "blaster.2",  0x30000, 0x4000, 0xd99ff133 )
+	ROM_LOAD( "blaster.4",  0x34000, 0x4000, 0x8d86011c )
+	ROM_LOAD( "blaster.3",  0x38000, 0x4000, 0x86ddd013 )
 
-	ROM_REGION(0x1000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_OBSOLETELOAD( "blaster.18",0x0000,0x1000 ) /* not needed - could be removed */
+	ROM_REGION(0x1000)      /* temporary space for graphics (disposed after conversion) */
+	/* empty memory region - not used by the game, but needed bacause the main */
+	/* core currently always frees region #1 after initialization. */
 
-	ROM_REGION(0x10000)	/* 64k for the sound CPU */
+	ROM_REGION(0x10000)     /* 64k for the sound CPU */
 	ROM_LOAD( "blaster.18", 0xf000, 0x1000, 0x42c2fc80 )
 ROM_END
 
@@ -1936,6 +2099,7 @@ struct GameDriver blaster_driver =
 	blaster_rom,                    /* RomModule * */
 	0, 0,                           /* ROM decrypt routines */
 	0,                              /* samplenames */
+	0,      /* sound_prom */
 
 	0/*TBR*/,blaster_input_ports,0/*TBR*/,0/*TBR*/,0/*TBR*/,
 

@@ -74,8 +74,8 @@ write:
 
 void locomotn_vh_screenrefresh(struct osd_bitmap *bitmap);
 
-int pooyan_sh_interrupt(void);
-int pooyan_sh_start(void);
+void locomotn_sh_irqtrigger_w(int offset,int data);
+int locomotn_sh_start(void);
 
 
 
@@ -100,8 +100,8 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0xa080, 0xa080, MWA_NOP },
 	{ 0xa181, 0xa181, interrupt_enable_w },
 	{ 0x0000, 0x5fff, MWA_ROM },
-	{ 0xa100, 0xa100, sound_command_w },
-	{ 0xa180, 0xa180, MWA_NOP },
+	{ 0xa100, 0xa100, soundlatch_w },
+	{ 0xa180, 0xa180, locomotn_sh_irqtrigger_w },
 	{ -1 }	/* end of table */
 };
 
@@ -154,10 +154,6 @@ static struct InputPort input_ports[] =
 	{ -1 }	/* end of table */
 };
 
-static struct TrakPort trak_ports[] =
-{
-        { -1 }
-};
 
 
 static struct KEYSet keys[] =
@@ -214,8 +210,8 @@ static struct GfxLayout spritelayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x0000, &charlayout,   0, 8 },
-	{ 1, 0x1000, &spritelayout, 0, 8 },
+	{ 1, 0x0000, &charlayout,   0, 32 },
+	{ 1, 0x1000, &spritelayout, 0, 32 },
 	{ -1 } /* end of array */
 };
 
@@ -223,43 +219,72 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 static unsigned char palette[] =
 {
-	0x00,0x00,0x00,	/* BLACK */
-	0xff,0x00,0x00, /* RED */
-	0x00,0xff,0x00, /* GREEN */
-	0x00,0x00,0xff, /* BLUE */
-	0xff,0xff,0x00, /* YELLOW */
-	0xff,0x00,0xff, /* MAGENTA */
-	0x00,0xff,0xff, /* CYAN */
-	0xff,0xff,0xff, /* WHITE */
-	0xE0,0xE0,0xE0, /* LTGRAY */
-	0xC0,0xC0,0xC0, /* DKGRAY */
-	0xe0,0xb0,0x70,	/* BROWN */
-	0xd0,0xa0,0x60,	/* BROWN0 */
-	0xc0,0x90,0x50,	/* BROWN1 */
-	0xa3,0x78,0x3a,	/* BROWN2 */
-	0x80,0x60,0x20,	/* BROWN3 */
-	0x54,0x40,0x14,	/* BROWN4 */
-	0x54,0xa8,0xff, /* LTBLUE */
-	0x00,0xa0,0x00, /* DKGREEN */
-	0x00,0xe0,0x00, /* GRASSGREEN */
-	0xff,0xb6,0xdb,	/* PINK */
-	0x49,0xb6,0xdb,	/* DKCYAN */
-	0xff,96,0x49,	/* DKORANGE */
-	0xff,128,0x00,	/* ORANGE */
-	0xdb,0xdb,0xdb	/* GREY */
+	0x00,0x00,0x00,	/*  0 - BLACK */
+	241,0,0, 		/*  1 - RED */
+	0x00,0xff,0x00, /*  2 - GREEN */
+	0x00,0x00,0xff, /*  3 - BLUE */
+	0xff,0xff,0x00, /*  4 - YELLOW 				*/
+	0xff,0x00,0xff, /*  5 - MAGENTA */
+	0x00,0xff,0xff, /*  6 - CYAN */
+	0xff,0xff,0xff, /*  7 - WHITE */
+	0xE0,0xE0,0xE0, /*  8 - LTGRAY 				*/
+	0xC0,0xC0,0xC0, /*  9 - DKGRAY 				*/
+	0,146,214,		/* 10 - CELSETE 1			*/
+	0xd0,0xa0,0x60,	/* 11 - BROWN0 */
+	0xc0,0x90,0x50,	/* 12 - BROWN1 */
+	179,179,93,		/* 13 - MARRON 2			*/
+	206,157,92,		/* 14 - MARRON 1			*/
+	161,117,56,		/* 15 - MARRON 3			*/
+	35,49,19, 		/* 16 - CELESTE 3 */
+	0x00,0xa0,0x00, /* 17 - DKGREEN */
+	0x00,0xe0,0x00, /* 18 - GRASSGREEN */
+	0,134,0,		/* 19 - VERDE 1 			*/
+	0x49,0xb6,0xdb,	/* 20 - DKCYAN */
+	0xff,96,0x49,	/* 21 - DKORANGE */
+	130,205,253,	/* 22 - CELESTE 2 			*/
+	0xdb,0xdb,0xdb	/* 23 - GREY */
 };
 
 
 static unsigned char colortable[] =
 {
-	0,1,2,3,
+
+	0,22,4,15,	/* Estacion				*/
+	0,1,10,13,	/* Tren					*/
+	0,4,0,1,	/* Tren Loco			*/
 	0,4,5,6,
-	0,7,8,9,
-	0,10,11,12,
-	0,13,14,15,
-	0,1,3,5,
-	0,7,9,11,
-	0,13,15,17
+	0,1,8,1,	/* Loop Sweeper 2		*/
+	0,2,2,2,
+	0,3,3,3,
+	0,8,9,7,	/* Loop Sweeper 1		*/
+
+
+	0,6,7,6,	/* Cartel cuenta regr.	*/
+	0,6,1,6,
+	0,6,3,6,
+	0,6,3,6,
+	0,6,1,6,	/* Cartel de puntaje	*/
+	0,6,1,6,
+	0,6,4,6,	/* Cartel Deposit Coin	*/
+	0,6,3,6,
+
+	0,5,19,5,	/* Cartel de Hi Score 1	*/
+	0,5,19,5,	/* Cartel de Hi Score 2	*/
+	0,5,19,5,	/* Cartel de Hi Score 3	*/
+	0,5,22,5,	/* Cartel Loco Motion	*/
+	0,5,2,5,
+	0,5,3,5,
+	0,5,7,5,
+	0,5,21,5,
+
+	0,1,2,3,
+	0,1,2,3,
+	0,1,7,3,		/* Cartel 1UP High	*/
+	0,1,2,3,
+	0,10,14,4,		/* Curva BD			*/
+	0,22,14,4,		/* Curva AC			*/
+	0,19,14,4,		/* Cruce de via		*/
+	0,4,5,6
 };
 
 
@@ -280,7 +305,7 @@ static struct MachineDriver machine_driver =
 			3072000,	/* 3.072 Mhz (?) */
 			2,	/* memory region #2 */
 			sound_readmem,sound_writemem,0,0,
-			pooyan_sh_interrupt,10
+			ignore_interrupt,1	/* interrupts are triggered by the main CPU */
 		}
 	},
 	60,
@@ -301,8 +326,7 @@ static struct MachineDriver machine_driver =
 
 	/* sound hardware */
 	0,
-	0,
-	pooyan_sh_start,
+	locomotn_sh_start,
 	AY8910_sh_stop,
 	AY8910_sh_update
 };
@@ -398,14 +422,15 @@ struct GameDriver locomotn_driver =
 {
 	"Loco-Motion",
 	"locomotn",
-	"NICOLA SALMORIA\nLAWNMOWER MAN\nMIKE BALFOUR",
+	"Nicola Salmoria\nLawnmower Man\nMike Balfour (high score save)\nGonzalo Casas (colors)",
 	&machine_driver,
 
 	locomotn_rom,
 	0, 0,
 	0,
+	0,	/* sound_prom */
 
-	input_ports, 0, trak_ports, dsw, keys,
+	input_ports, 0, 0/*TBR*/,dsw, keys,
 
 	0, palette, colortable,
 	ORIENTATION_DEFAULT,

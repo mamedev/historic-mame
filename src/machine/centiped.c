@@ -9,82 +9,82 @@
 
 #include "driver.h"
 
-
+/* JB 971220 */
+/* This wrapper routine is necessary because Centipede requires a direction bit
+   to be set or cleared. We have to look at the change in the input port to
+   determine whether to set or clear the bit. Why doesn't Centipede do this
+   itself instead of requiring a direction bit? */
 int centiped_IN0_r(int offset)
 {
-	int res;
-	int trak;
+	int res, delta;
+	static int last = 0;
+	static int lastdelta = 0;
 
 	res = readinputport(0);
-	trak = readtrakport(0);
 
-	return(res|trak);
+	/* Determine the change since last time. */
+	delta = (res & 0x0f) - last;
+	last = (res & 0x0f);
+
+	/* Skanky hack to determine correct direction bit,
+	   necessary because input port is updated half as often as Centipede
+	   reads it, which causes every second delta to be 0. */
+	if (delta==0)
+		delta = lastdelta;
+	else
+		lastdelta = delta;
+
+	/* Since we know input delta is clipped to 7, if delta is greater than that, it
+	   must have wrapped past 0, so adjust. */
+	if (delta<-7)
+		delta += 16;
+	else
+	if (delta>7)
+		delta -= 16;
+
+	/* Centipede expects a direction bit. */
+	if (delta<0)
+		res |= 0x80;
+
+	return res;
 }
 
-int centiped_trakball_x(int data) {
-  static char x = 0;
-  static int res = 0;
+/* JB 971220 */
+/* This wrapper routine is necessary because Centipede requires a direction bit
+   to be set or cleared. We have to look at the change in the input port to
+   determine whether to set or clear the bit. Why doesn't Centipede do this
+   itself instead of requiring a direction bit? */
+int centiped_IN2_r(int offset)
+{
+	int res, delta;
+	static int last = 0;
+	static int lastdelta = 0;
 
-  if(data > 7) {
-    data = 7;
-  }
+	res = readinputport(2);
 
-  if(data < -7) {
-    data = -7;
-  }
+	/* Determine the change since last time. */
+	delta = res - last;
+	last = res;
 
-  x -= (char)data;
+	/* Skanky hack to determine correct direction bit,
+	   necessary because input port is updated half as often as Centipede
+	   reads it, which causes every second delta to be 0. */
+	if (delta==0)
+		delta = lastdelta;
+	else
+		lastdelta = delta;
 
-  if(x<0x00) {
-    x += 0x10;
-  }
+	/* Since we know input delta is clipped to 7, if delta is greater than that, it
+	   must have wrapped past 0, so adjust. */
+	if (delta<-7)
+		delta += 16;
+	else
+	if (delta>7)
+		delta -= 16;
 
-  if(x>0x10) {
-    x -= 0x10;
-  }
+	/* Centipede expects a direction bit. */
+	if (delta<0)
+		res |= 0x80;
 
-  if(data < 0) {
-    res = x;
-  }
-
-  if(data > 0) {
-    res = 0x80|x;
-  }
-
-  return(res);
-}
-
-int centiped_trakball_y(int data) {
-  static char y = 0;
-  static int res = 0;
-
-  data = -data;
-
-  if(data > 7) {
-    data = 7;
-  }
-
-  if(data < -7) {
-    data = -7;
-  }
-
-  y -= (char)data;
-
-  if(y<0x00) {
-    y += 0x10;
-  }
-
-  if(y>0x10) {
-    y -= 0x10;
-  }
-
-  if(data < 0) {
-    res = y;
-  }
-
-  if(data > 0) {
-    res = 0x80|y;
-  }
-
-  return(res);
+	return res;
 }

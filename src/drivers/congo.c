@@ -48,6 +48,7 @@ NMI causes a ROM/RAM test.
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "sndhrdw/generic.h"
+#include "sndhrdw/SN76496.h"
 
 
 extern unsigned char *congo_background_position;
@@ -56,12 +57,8 @@ void zaxxon_vh_convert_color_prom(unsigned char *palette, unsigned char *colorta
 int  congo_vh_start(void);
 void congo_vh_stop(void);
 void congo_vh_screenrefresh(struct osd_bitmap *bitmap);
-void congo_sound1_w(int offset, int data);
-void congo_sound2_w(int offset, int data);
-int congo_sh_start(void);
-void congo_sh_update(void);
-void congo_sh_stop(void);
 
+int congo_sh_start(void);
 void congo_daio(int offset, int data);
 
 
@@ -82,42 +79,44 @@ static struct MemoryReadAddress readmem[] =
 
 static struct MemoryWriteAddress writemem[] =
 {
-        { 0x8000, 0x83ff, MWA_RAM },
-        { 0xa000, 0xa3ff, videoram_w, &videoram, &videoram_size },
-        { 0xa400, 0xa7ff, colorram_w, &colorram },
-        { 0x8400, 0x8fff, MWA_RAM, &spriteram },
-        { 0xc01f, 0xc01f, interrupt_enable_w },
-        { 0xc028, 0xc029, MWA_RAM, &congo_background_position },
-        { 0xc01d, 0xc01d, MWA_RAM, &congo_background_enable },
-        { 0xc038, 0xc038, sound_command_w },
-        { 0xc030, 0xc033, MWA_NOP }, /* ??? */
-        { 0xc01e, 0xc01e, MWA_NOP }, /* flip unused for now */
-        { 0xc018, 0xc018, MWA_NOP }, /* coinAen */
-        { 0xc019, 0xc019, MWA_NOP }, /* coinBen */
-        { 0xc01a, 0xc01a, MWA_NOP }, /* serven */
-        { 0xc01b, 0xc01b, MWA_NOP }, /* counterA */
-        { 0xc01c, 0xc01c, MWA_NOP }, /* counterB */
-        { 0x0000, 0x7fff, MWA_ROM },
+	{ 0x8000, 0x83ff, MWA_RAM },
+	{ 0xa000, 0xa3ff, videoram_w, &videoram, &videoram_size },
+	{ 0xa400, 0xa7ff, colorram_w, &colorram },
+	{ 0x8400, 0x8fff, MWA_RAM, &spriteram },
+	{ 0xc01f, 0xc01f, interrupt_enable_w },
+	{ 0xc028, 0xc029, MWA_RAM, &congo_background_position },
+	{ 0xc01d, 0xc01d, MWA_RAM, &congo_background_enable },
+	{ 0xc038, 0xc038, sound_command_w },
+	{ 0xc030, 0xc033, MWA_NOP }, /* ??? */
+	{ 0xc01e, 0xc01e, MWA_NOP }, /* flip unused for now */
+	{ 0xc018, 0xc018, MWA_NOP }, /* coinAen */
+	{ 0xc019, 0xc019, MWA_NOP }, /* coinBen */
+	{ 0xc01a, 0xc01a, MWA_NOP }, /* serven */
+	{ 0xc01b, 0xc01b, MWA_NOP }, /* counterA */
+	{ 0xc01c, 0xc01c, MWA_NOP }, /* counterB */
+	{ 0x0000, 0x7fff, MWA_ROM },
 	{ -1 }  /* end of table */
 };
 
 
 static struct MemoryReadAddress sh_readmem[] =
 {
-        { 0x0000, 0x1fff, MRA_ROM },
-        { 0x4000, 0x47ff, MRA_RAM },
-        { 0x8000, 0x8003, sound_command_latch_r },
-        { -1 }
+	{ 0x0000, 0x1fff, MRA_ROM },
+	{ 0x4000, 0x47ff, MRA_RAM },
+	{ 0x8000, 0x8003, sound_command_latch_r },
+	{ -1 }
 };
 static struct MemoryWriteAddress sh_writemem[] =
 {
-        { 0x6000, 0x6003, congo_sound1_w },
-        { 0xa000, 0xa003, congo_sound2_w },
-        { 0x4000, 0x47ff , MWA_RAM },
-        { 0x8000, 0x8003 , congo_daio },
-        { 0x0000, 0x2000 , MWA_ROM },
-        { -1 }
+	{ 0x6000, 0x6003, SN76496_0_w },
+	{ 0xa000, 0xa003, SN76496_1_w },
+	{ 0x4000, 0x47ff, MWA_RAM },
+	{ 0x8000, 0x8003, congo_daio },
+	{ 0x0000, 0x2000, MWA_ROM },
+	{ -1 }
 };
+
+
 
 /***************************************************************************
 
@@ -186,7 +185,7 @@ INPUT_PORTS_START( input_ports )
 	PORT_DIPSETTING(    0x30, "3" )
 	PORT_DIPSETTING(    0x10, "4" )
 	PORT_DIPSETTING(    0x20, "5" )
-	PORT_DIPSETTING(    0x00, "Infinite" )
+	PORT_BITX( 0,       0x00, IPT_DIPSWITCH_SETTING | IPF_CHEAT, "Infinite", IP_KEY_NONE, IP_JOY_NONE, 0 )
 	PORT_DIPNAME( 0x40, 0x40, "Demo Sounds", IP_KEY_NONE )
 	PORT_DIPSETTING(    0x00, "Off" )
 	PORT_DIPSETTING(    0x40, "On" )
@@ -317,13 +316,13 @@ static unsigned char color_prom[] =
 
 static const char *congo_samplenames[] =
 {
-        "gorilla.sam",
-        "bass.sam",
-        "congaa.sam",
-        "congab.sam",
-        "rim.sam",
-        0
-
+	"*congo",
+	"gorilla.sam",
+	"bass.sam",
+	"congaa.sam",
+	"congab.sam",
+	"rim.sam",
+	0
 };
 
 
@@ -357,7 +356,7 @@ static struct MachineDriver machine_driver =
 	256,32*8,
 	zaxxon_vh_convert_color_prom,
 
-	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY,
+	VIDEO_TYPE_RASTER,
 	0,
 	congo_vh_start,
 	congo_vh_stop,
@@ -365,10 +364,9 @@ static struct MachineDriver machine_driver =
 
 	/* sound hardware */
 	0,
-	0,
 	congo_sh_start,
-	congo_sh_stop,
-	congo_sh_update
+	SN76496_sh_stop,
+	SN76496_sh_update
 };
 
 
@@ -406,6 +404,35 @@ ROM_START( congo_rom )
 
 	ROM_REGION(0x10000) /*64K for the sound cpu*/
 	ROM_LOAD( "congo17.bin", 0x0000, 0x2000 ,0xe4e0223c)
+ROM_END
+
+ROM_START( tiptop_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "tiptop1.bin",  0x0000, 0x2000, 0x83b2291a )
+	ROM_LOAD( "tiptop2.bin",  0x2000, 0x2000, 0x85d20018 )
+	ROM_LOAD( "tiptop3.bin",  0x4000, 0x2000, 0x98290647 )
+	ROM_LOAD( "tiptop4.bin",  0x6000, 0x2000, 0x58baf652 )
+
+	ROM_REGION(0x13800)      /* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "tiptop5.bin",  0x00000, 0x1000, 0x863539ed )	/* characters */
+	/* 1000-1800 empty space to convert the characters as 3bpp instead of 2 */
+	ROM_LOAD( "tiptop8.bin",  0x01800, 0x2000, 0xb060d10e )	/* background tiles */
+	ROM_LOAD( "tiptop9.bin",  0x03800, 0x2000, 0xf10944e7 )
+	ROM_LOAD( "tiptop10.bin", 0x05800, 0x2000, 0xccf64f98 )
+	ROM_LOAD( "tiptop12.bin", 0x07800, 0x2000, 0x96781f3e )	/* sprites */
+	ROM_LOAD( "tiptop13.bin", 0x09800, 0x2000, 0x5e0d138d )
+	ROM_LOAD( "tiptop11.bin", 0x0b800, 0x2000, 0x4a0cef9a )
+	ROM_LOAD( "tiptop14.bin", 0x0d800, 0x2000, 0x33c05a1e )
+	ROM_LOAD( "tiptop16.bin", 0x0f800, 0x2000, 0xdd85484b )
+	ROM_LOAD( "tiptop15.bin", 0x11800, 0x2000, 0xb3f44d2e )
+	ROM_REGION(0x8000)      /* background data */
+	ROM_LOAD( "tiptop6.bin", 0x0000, 0x2000, 0x785c8c22 )
+	/* 2000-3fff empty space to match Zaxxon */
+	ROM_LOAD( "tiptop7.bin", 0x4000, 0x2000, 0x87817173 )
+	/* 6000-7fff empty space to match Zaxxon */
+
+	ROM_REGION(0x10000) /*64K for the sound cpu*/
+	ROM_LOAD( "tiptop17.bin", 0x0000, 0x2000 ,0xe4e0223c)
 ROM_END
 
 
@@ -460,12 +487,33 @@ struct GameDriver congo_driver =
 {
 	"Congo Bongo",
 	"congo",
-        "Ville Laitinen (MAME driver)\nNicola Salmoria (Zaxxon driver)\nTim Lindquist (color&sound info)",
+	"Ville Laitinen (MAME driver)\nNicola Salmoria (Zaxxon driver)\nTim Lindquist (color & sound info)",
 	&machine_driver,
 
 	congo_rom,
 	0, 0,
-        congo_samplenames,
+	congo_samplenames,
+	0,	/* sound_prom */
+
+	0/*TBR*/,input_ports,0/*TBR*/,0/*TBR*/,0/*TBR*/,
+
+	color_prom, 0, 0,
+	ORIENTATION_DEFAULT,
+
+	hiload, hisave
+};
+
+struct GameDriver tiptop_driver =
+{
+	"Tip Top",
+	"tiptop",
+	"Ville Laitinen (MAME driver)\nNicola Salmoria (Zaxxon driver)\nTim Lindquist (color & sound info)",
+	&machine_driver,
+
+	tiptop_rom,
+	0, 0,
+	congo_samplenames,
+	0,	/* sound_prom */
 
 	0/*TBR*/,input_ports,0/*TBR*/,0/*TBR*/,0/*TBR*/,
 

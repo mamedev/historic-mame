@@ -10,6 +10,10 @@
 
 extern int nocheat;
 
+/* Prototypes for routines found in inptport.c */
+const char *default_name(const struct NewInputPort *in);
+int default_key(const struct NewInputPort *in);
+int default_joy(const struct NewInputPort *in);
 
 static int findbestcolor(unsigned char r,unsigned char g,unsigned char b)
 {
@@ -401,7 +405,7 @@ int showcharset(void)
 		switch (key)
 		{
 			case OSD_KEY_RIGHT:
-				if (Machine->gfx[bank + 1])
+				if (bank+1 < MAX_GFX_ELEMENTS && Machine->gfx[bank + 1])
 				{
 					bank++;
 					line = 0;
@@ -691,6 +695,9 @@ static int old_setkeysettings(void)
 	else return 0;
 }
 
+#ifdef macintosh
+static int old_setjoysettings(void) { return 0; }
+#else
 static int old_setjoysettings(void)
 {
 	struct DisplayText dt[80];
@@ -739,6 +746,7 @@ static int old_setjoysettings(void)
 		displayset(dt,total,s);
 
 		key = osd_read_keyrepeat();
+		osd_poll_joystick();
 
 		switch (key)
 		{
@@ -816,6 +824,7 @@ keysettings[s].num ].joystick[ keysettings[s].mask ] = OSD_JOY2_FIRE;
 	if (done == 2) return 1;
 	else return 0;
 }
+#endif
 
 
 
@@ -826,7 +835,6 @@ static int setdipswitches(void)
 	int i,s,key,done;
 	struct NewInputPort *in;
 	int total;
-const char *default_name(const struct NewInputPort *in);
 
 
 if (Machine->input_ports == 0)
@@ -839,7 +847,8 @@ if (Machine->input_ports == 0)
 	while (in->type != IPT_END)
 	{
 		if ((in->type & ~IPF_MASK) == IPT_DIPSWITCH_NAME && default_name(in) != 0 &&
-				(in->type & IPF_UNUSED) == 0)
+				(in->type & IPF_UNUSED) == 0 &&
+				!(nocheat && (in->type & IPF_CHEAT)))
 		{
 			entry[total] = in;
 
@@ -915,7 +924,8 @@ if (Machine->input_ports == 0)
 						entry[s]->default_value = (entry[s]+1)->default_value & entry[s]->mask;
 					else
 					{
-						if (((in+1)->type & ~IPF_MASK) == IPT_DIPSWITCH_SETTING)
+						if (((in+1)->type & ~IPF_MASK) == IPT_DIPSWITCH_SETTING &&
+								!(nocheat && ((in+1)->type & IPF_CHEAT)))
 							entry[s]->default_value = (in+1)->default_value & entry[s]->mask;
 					}
 				}
@@ -934,7 +944,8 @@ if (Machine->input_ports == 0)
 						entry[s]->default_value = (entry[s]+1)->default_value & entry[s]->mask;
 					else
 					{
-						if (((in-1)->type & ~IPF_MASK) == IPT_DIPSWITCH_SETTING)
+						if (((in-1)->type & ~IPF_MASK) == IPT_DIPSWITCH_SETTING &&
+								!(nocheat && ((in-1)->type & IPF_CHEAT)))
 							entry[s]->default_value = (in-1)->default_value & entry[s]->mask;
 					}
 				}
@@ -970,12 +981,10 @@ static int setkeysettings(void)
 	int i,s,key,done;
 	struct NewInputPort *in;
 	int total;
-const char *default_name(const struct NewInputPort *in);
-int default_key(const struct NewInputPort *in);
 
 
-if (Machine->input_ports == 0)
-	return old_setkeysettings();
+	if (Machine->input_ports == 0)
+		return old_setkeysettings();
 
 
 	in = Machine->input_ports;
@@ -983,8 +992,9 @@ if (Machine->input_ports == 0)
 	total = 0;
 	while (in->type != IPT_END)
 	{
-		if (default_name(in) != 0 && default_key(in) != IP_KEY_NONE &&
-				(in->type & IPF_UNUSED) == 0)
+		if (default_name(in) != 0 && default_key(in) != IP_KEY_NONE && (in->type & IPF_UNUSED) == 0
+			&& (((in->type & 0xff) < IPT_ANALOG_START) || ((in->type & 0xff) > IPT_ANALOG_END))
+			&& !(nocheat && (in->type & IPF_CHEAT)))
 		{
 			entry[total] = in;
 
@@ -1093,6 +1103,9 @@ if (Machine->input_ports == 0)
 
 
 
+#ifdef macintosh
+static int setjoysettings(void) { return 0; }
+#else
 static int setjoysettings(void)
 {
 	struct DisplayText dt[80];
@@ -1100,12 +1113,10 @@ static int setjoysettings(void)
 	int i,s,key,done;
 	struct NewInputPort *in;
 	int total;
-const char *default_name(const struct NewInputPort *in);
-int default_joy(const struct NewInputPort *in);
 
 
-if (Machine->input_ports == 0)
-	return old_setjoysettings();
+	if (Machine->input_ports == 0)
+		return old_setjoysettings();
 
 
 	in = Machine->input_ports;
@@ -1113,8 +1124,9 @@ if (Machine->input_ports == 0)
 	total = 0;
 	while (in->type != IPT_END)
 	{
-		if (default_name(in) != 0 && default_joy(in) != IP_JOY_NONE &&
-				(in->type & IPF_UNUSED) == 0)
+		if (default_name(in) != 0 && default_joy(in) != IP_JOY_NONE && (in->type & IPF_UNUSED) == 0
+			&& (((in->type & 0xff) < IPT_ANALOG_START) || ((in->type & 0xff) > IPT_ANALOG_END))
+			&& !(nocheat && (in->type & IPF_CHEAT)))
 		{
 			entry[total] = in;
 
@@ -1156,6 +1168,7 @@ if (Machine->input_ports == 0)
 		displayset(dt,total,s);
 
 		key = osd_read_keyrepeat();
+		osd_poll_joystick();
 
 		switch (key)
 		{
@@ -1174,42 +1187,48 @@ if (Machine->input_ports == 0)
 				else
 				{
 					int newjoy;
-                              		int joyindex, joypressed;
+					int joyindex, joypressed;
 					dt[2 * s + 1].text = "            ";
 					dt[2 * s + 1].x = Machine->scrbitmap->width - 2*Machine->uifont->width - Machine->uifont->width*strlen(dt[2 * s + 1].text);
 					displayset(dt,total,s);
 
 					/* Check all possible joystick values for switch or button press */
-                              		joypressed = 0;
-                              		while (!joypressed) {
-                                          if (osd_key_pressed(OSD_KEY_ESC))
-                                              joypressed = 1;
-					  osd_poll_joystick();
+					joypressed = 0;
+					while (!joypressed)
+					{
+						if (osd_key_pressed(OSD_KEY_ESC))
+							joypressed = 1;
+						osd_poll_joystick();
 
-                                        /* Allows for "All buttons" */
-                                        if (osd_key_pressed(OSD_KEY_A)) {
-                                          entry[s]->joystick = OSD_JOY_FIRE;
-                                          joypressed = 1;
-                                        }
-                                        if (osd_key_pressed(OSD_KEY_B)) {
-                                          entry[s]->joystick = OSD_JOY2_FIRE;
-                                          joypressed = 1;
-                                        }
-                                        /* Clears entry "None" */
-                                        if (osd_key_pressed(OSD_KEY_N)) {
-                                          entry[s]->joystick = IP_JOY_NONE;
-                                          joypressed = 1;
-                                        }
+						/* Allows for "All buttons" */
+						if (osd_key_pressed(OSD_KEY_A))
+						{
+							entry[s]->joystick = OSD_JOY_FIRE;
+							joypressed = 1;
+						}
+						if (osd_key_pressed(OSD_KEY_B))
+						{
+							entry[s]->joystick = OSD_JOY2_FIRE;
+							joypressed = 1;
+						}
+						/* Clears entry "None" */
+						if (osd_key_pressed(OSD_KEY_N))
+						{
+							entry[s]->joystick = IP_JOY_NONE;
+							joypressed = 1;
+						}
 
-				  	  for (joyindex = 1; joyindex < OSD_MAX_JOY; joyindex++) {
-					    newjoy = osd_joy_pressed(joyindex);
-					    if (newjoy) {
-					      entry[s]->joystick = joyindex;
-                                    	      joypressed = 1;
-					      break;
-					    }
-					  }
-                              }
+						for (joyindex = 1; joyindex < OSD_MAX_JOY; joyindex++)
+						{
+							newjoy = osd_joy_pressed(joyindex);
+							if (newjoy)
+							{
+								entry[s]->joystick = joyindex;
+								joypressed = 1;
+								break;
+							}
+						}
+					}
 				}
 				break;
 
@@ -1228,102 +1247,322 @@ if (Machine->input_ports == 0)
 	if (done == 2) return 1;
 	else return 0;
 }
-
+#endif
 
 
 static int settraksettings(void)
 {
-	struct DisplayText dt[40];
+	struct DisplayText dt[80];
+	struct NewInputPort *entry[40];
 	int i,s,key,done;
-	int total;
-	struct TrakPort *traksettings;
-	char number[10][6];
+	struct NewInputPort *in;
+	int total,total2;
 
-	traksettings = Machine->gamedrv->trak_ports;
-	if (traksettings == 0) return 0;
 
+	if (Machine->input_ports == 0)
+		return 0;
+
+	in = Machine->input_ports;
+
+	/* Count the total number of analog controls */
 	total = 0;
-	while (traksettings[total].axis != -1) total++;
-
-	if (total == 0) return 0;
-
-	for (i = 0;i < total;i++)
+	while (in->type != IPT_END)
 	{
-	        switch(traksettings[i].axis) {
-		case X_AXIS:
-		  dt[2*i].text = "X AXIS";
-		  break;
-		case Y_AXIS:
-		  dt[2*i].text = "Y AXIS";
-		  break;
+		if (((in->type & 0xff) > IPT_ANALOG_START) && ((in->type & 0xff) < IPT_ANALOG_END)
+				&& !(nocheat && (in->type & IPF_CHEAT)))
+		{
+			entry[total] = in;
+			total++;
 		}
-		dt[2 * i].x = 2*Machine->uifont->width;
-		dt[2 * i].y = 2*Machine->uifont->height * i + (Machine->scrbitmap->height - 2*Machine->uifont->height * (total + 1)) / 2;
+		in++;
 	}
 
-	dt[2 * total].text = "RETURN TO MAIN MENU";
-	dt[2 * total].x = (Machine->scrbitmap->width - Machine->uifont->width * strlen(dt[2 * total].text)) / 2;
-	dt[2 * total].y = 2*Machine->uifont->height * (total+1) + (Machine->scrbitmap->height - 2*Machine->uifont->height * (total + 1)) / 2;
-	dt[2 * total + 1].text = 0;     /* terminate array */
-	total++;
+	if (total == 0) return 0;
+	/* Each analog control has 7 entries - deckey, inckey, key & joy delta, decjoy, incjoy, reverse, sensitivity */
+
+#define ENTRIES 7
+
+	total2 = total * ENTRIES;
+
+	dt[2 * total2].text = "Return to Main Menu";
+	dt[2 * total2].x = (Machine->scrbitmap->width - Machine->uifont->width * strlen(dt[2 * total2].text)) / 2;
+	dt[2 * total2].y = (3*Machine->uifont->height * (total2+1))/2 + (Machine->scrbitmap->height - (3*Machine->uifont->height * (total2 + 1))/2) / 2;
+	dt[2 * total2 + 1].text = 0;	/* terminate array */
+	total2++;
 
 	s = 0;
 	done = 0;
 	do
 	{
-		for (i = 0;i < total;i++)
+		for (i = 0;i < total2;i++)
 		{
 			dt[2 * i].color = (i == s) ? DT_COLOR_YELLOW : DT_COLOR_WHITE;
-			if (i < total - 1)
+			if (i < total2 - 1)
 			{
+				char label[30][40];
+				char setting[30][40];
+				int key, joy;
+				int sensitivity;
+				int reverse;
+
+				strcpy (label[i], default_name(entry[i/ENTRIES]));
+				key = default_key (entry[i/ENTRIES]);
+				joy = default_joy (entry[i/ENTRIES]);
+				sensitivity = (entry[i/ENTRIES]->arg & 0x000000ff) * 100 / 16;
+				reverse = (entry[i/ENTRIES]->type & IPF_REVERSE);
+
+				switch (i%ENTRIES)
+				{
+					case 0:
+						strcat (label[i], " Key Dec");
+						strcpy (setting[i], osd_key_name (key & 0xff));
+						break;
+					case 1:
+						strcat (label[i], " Key Inc");
+						strcpy (setting[i], osd_key_name ((key & 0xff00) >> 8));
+						break;
+					case 2:
+						strcat (label[i], " Joy Dec");
+						strcpy (setting[i], osd_joy_name (joy & 0xff));
+						break;
+					case 3:
+						strcat (label[i], " Joy Inc");
+						strcpy (setting[i], osd_joy_name ((joy & 0xff00) >> 8));
+						break;
+					case 4:
+						strcat (label[i], " Key/Joy Delta");
+						sprintf(setting[i],"%d",(key & 0xff0000) >> 16);
+						break;
+					case 5:
+						strcat (label[i], " Reverse ");
+						if (reverse)
+							sprintf(setting[i],"On");
+						else
+							sprintf(setting[i],"Off");
+						break;
+					case 6:
+						strcat (label[i], " Sensitivity (%)");
+						sprintf(setting[i],"%3d",sensitivity);
+						break;
+				}
+				dt[2 * i].text = label[i];
+				dt[2 * i].x = 0;
+				dt[2 * i].y = (3*Machine->uifont->height * i)/2 + (Machine->scrbitmap->height - (3*Machine->uifont->height * (total2 + 1))/2) / 2;
 				dt[2 * i + 1].color = (i == s) ? DT_COLOR_YELLOW : DT_COLOR_WHITE;
-				sprintf(number[i],"%3.1f",traksettings[i].scale);
-				dt[2 * i + 1].text = number[i];
-				dt[2 * i + 1].x = Machine->scrbitmap->width - 2*Machine->uifont->width - Machine->uifont->width*strlen(dt[2 * i + 1].text);
+				dt[2 * i + 1].text = setting[i];
+				dt[2 * i + 1].x = Machine->scrbitmap->width - Machine->uifont->width*strlen(dt[2 * i + 1].text);
 				dt[2 * i + 1].y = dt[2 * i].y;
+
+				in++;
 			}
 		}
 
-		displaytext(dt,1);
+		displayset(dt,total2,s);
 
 		key = osd_read_keyrepeat();
 
 		switch (key)
 		{
 			case OSD_KEY_DOWN:
-				if (s < total - 1) s++;
+				if (s < total2 - 1) s++;
 				else s = 0;
 				break;
 
 			case OSD_KEY_UP:
 				if (s > 0) s--;
-				else s = total - 1;
-				break;
-
-			case OSD_KEY_RIGHT:
-				if (s < total - 1)
-				{
-				  traksettings[s].scale += 0.1;
-
-				  if (traksettings[s].scale > 10.0 ) {
-				    traksettings[s].scale = 10.0;
-				  }
-				}
+				else s = total2 - 1;
 				break;
 
 			case OSD_KEY_LEFT:
-				if (s < total - 1)
+				if ((s % ENTRIES) == 4)
+				/* keyboard/joystick delta */
 				{
-				  traksettings[s].scale -= 0.1;
+					int oldval = default_key (entry[s/ENTRIES]);
+					int val = (oldval & 0xff0000) >> 16;
 
-				  if (traksettings[s].scale < -10.0 ) {
-				    traksettings[s].scale = -10.0;
-				  }
+					val --;
+					if (val < 1) val = entry[s/ENTRIES]->mask - 1;
+					oldval &= ~0xff0000;
+					oldval |= (val & 0xff) << 16;
+					entry[s/ENTRIES]->keyboard = oldval;
+				}
+				else if ((s % ENTRIES) == 5)
+				/* reverse */
+				{
+					int reverse = entry[s/ENTRIES]->type & IPF_REVERSE;
+					if (reverse)
+						reverse=0;
+					else
+						reverse=IPF_REVERSE;
+					entry[s/ENTRIES]->type &= ~IPF_REVERSE;
+					entry[s/ENTRIES]->type |= reverse;
+				}
+				else if ((s % ENTRIES) == 6)
+				/* sensitivity */
+				{
+					int oldval = (entry[s/ENTRIES]->arg);
+					int val = (oldval & 0xff);
+
+					val --;
+					if (val < 1) val = 1;
+					oldval &= ~0xff;
+					oldval |= (val & 0xff);
+					entry[s/ENTRIES]->arg = oldval;
+				}
+				break;
+
+			case OSD_KEY_RIGHT:
+				if ((s % ENTRIES) == 4)
+				/* keyboard/joystick delta */
+				{
+					int oldval = default_key (entry[s/ENTRIES]);
+					int val = (oldval & 0xff0000) >> 16;
+
+					val ++;
+					if (val > entry[s/ENTRIES]->mask - 1) val = 1;
+					oldval &= ~0xff0000;
+					oldval |= (val & 0xff) << 16;
+					entry[s/ENTRIES]->keyboard = oldval;
+				}
+				else if ((s % ENTRIES) == 5)
+				/* reverse */
+				{
+					int reverse = entry[s/ENTRIES]->type & IPF_REVERSE;
+					if (reverse)
+						reverse=0;
+					else
+						reverse=IPF_REVERSE;
+					entry[s/ENTRIES]->type &= ~IPF_REVERSE;
+					entry[s/ENTRIES]->type |= reverse;
+				}
+				else if ((s % ENTRIES) == 6)
+				/* sensitivity */
+				{
+					int oldval = (entry[s/ENTRIES]->arg);
+					int val = (oldval & 0xff);
+
+					val ++;
+					if (val > 255) val = 255;
+					oldval &= ~0xff;
+					oldval |= (val & 0xff);
+					entry[s/ENTRIES]->arg = oldval;
 				}
 				break;
 
 			case OSD_KEY_ENTER:
-				if (s == total - 1) done = 1;
+				if (s == total2 - 1) done = 1;
+				else
+				{
+					switch (s % ENTRIES)
+					{
+						case 0:
+						case 1:
+						/* We're changing either the dec key or the inc key */
+						{
+							int newkey;
+							int oldkey = default_key (entry[s/ENTRIES]);
+
+							dt[2 * s + 1].text = "            ";
+							dt[2 * s + 1].x = Machine->scrbitmap->width - 2*Machine->uifont->width - Machine->uifont->width*strlen(dt[2 * s + 1].text);
+							displayset(dt,total2,s);
+							newkey = osd_read_key();
+							switch (newkey)
+							{
+								case OSD_KEY_ESC:
+									newkey = IP_KEY_DEFAULT;
+									break;
+								case OSD_KEY_P:
+								case OSD_KEY_F3:
+								case OSD_KEY_F4:
+								case OSD_KEY_TAB:
+								case OSD_KEY_F8:
+								case OSD_KEY_F9:
+								case OSD_KEY_F10:
+								case OSD_KEY_F11:
+								case OSD_KEY_F12:
+									newkey = IP_KEY_NONE;
+									break;
+							}
+							if (s % ENTRIES)
+							{
+								oldkey &= ~0xff00;
+								oldkey |= (newkey << 8);
+							}
+							else
+							{
+								oldkey &= ~0xff;
+								oldkey |= (newkey);
+							}
+							entry[s/ENTRIES]->keyboard = oldkey;
+							break;
+						}
+						case 2:
+						case 3:
+						/* We're changing either the dec joy or the inc joy */
+						{
+							int newjoy;
+							int oldjoy = default_joy (entry[s/ENTRIES]);
+							int joyindex, joypressed;
+							dt[2 * s + 1].text = "            ";
+							dt[2 * s + 1].x = Machine->scrbitmap->width - 2*Machine->uifont->width - Machine->uifont->width*strlen(dt[2 * s + 1].text);
+							displayset(dt,total,s);
+
+							/* Check all possible joystick values for switch or button press */
+							joypressed = 0;
+							newjoy = -1;
+							while (!joypressed)
+							{
+								if (osd_key_pressed(OSD_KEY_ESC))
+									joypressed = 1;
+								osd_poll_joystick();
+
+								/* Allows for "All buttons" */
+								if (osd_key_pressed(OSD_KEY_A))
+								{
+									newjoy = OSD_JOY_FIRE;
+									joypressed = 1;
+								}
+								if (osd_key_pressed(OSD_KEY_B))
+								{
+									newjoy = OSD_JOY2_FIRE;
+									joypressed = 1;
+								}
+								/* Clears entry "None" */
+								if (osd_key_pressed(OSD_KEY_N))
+								{
+									newjoy = IP_JOY_NONE;
+									joypressed = 1;
+								}
+
+								for (joyindex = 1; joyindex < OSD_MAX_JOY; joyindex++)
+								{
+									newjoy = osd_joy_pressed(joyindex);
+									if (newjoy)
+									{
+										newjoy = joyindex;
+										joypressed = 1;
+										break;
+									}
+								}
+							}
+							if (newjoy != -1)
+							{
+								if ((s % ENTRIES) == 4)
+								{
+									oldjoy &= ~0xff00;
+									oldjoy |= (newjoy << 8);
+								}
+								else
+								{
+									oldjoy &= ~0xff;
+									oldjoy |= (newjoy);
+								}
+								entry[s/ENTRIES]->joystick = oldjoy;
+							}
+							break;
+						}
+					}
+				}
 				break;
 
 			case OSD_KEY_ESC:
@@ -1333,7 +1572,7 @@ static int settraksettings(void)
 		}
 	} while (done == 0);
 
-	while (osd_key_pressed(key));   /* wait for key release */
+	while (osd_key_pressed(key));	/* wait for key release */
 
 	/* clear the screen before returning */
 	osd_clearbitmap(Machine->scrbitmap);
@@ -1378,7 +1617,7 @@ int setup_menu(void)
 	dt[0].text = "DIP SWITCH SETUP";
 	dt[1].text = "KEYBOARD SETUP";
 	dt[2].text = "JOYSTICK SETUP";
-        dt[3].text = "TRACKBALL SETUP";
+	dt[3].text = "ANALOG SETUP";
 	dt[4].text = "CREDITS";
 	if (nocheat == 0) dt[5].text = "CHEAT";
 	dt[total-1].text = "RETURN TO GAME";
@@ -1433,9 +1672,9 @@ int setup_menu(void)
 							done = 2;
 						break;
 
-				        case 3:
-					        if(settraksettings())
-						        done = 2;
+					case 3:
+						if(settraksettings())
+							done = 2;
 						break;
 
 					case 4:

@@ -18,63 +18,6 @@ a001      IN1
 a002      DSW1
 a003      DSW2
 
-*
- * IN0 (all bits are inverted)
- * bit 7 : TILT if this is 0 coins are not accepted
- * bit 6 : START 2
- * bit 5 : START 1
- * bit 4 : FIRE player 1
- * bit 3 : UP player 1
- * bit 2 : RIGHT player 1
- * bit 1 : DOWN player 1
- * bit 0 : LEFT player 1
- *
-*
- * IN1 (all bits are inverted)
- * bit 7 : COIN 2
- * bit 6 : COIN 1
- * bit 5 : unused
- * bit 4 : FIRE player 2 (TABLE only)
- * bit 3 : UP player 2 (TABLE only)
- * bit 2 : RIGHT player 2 (TABLE only)
- * bit 1 : DOWN player 2 (TABLE only)
- * bit 0 : LEFT player 2 (TABLE only)
- *
-*
- * DSW1 (all bits are inverted)
- * bit 7 : DIP SWITCH 8\ Number of lives
- * bit 6 : DIP SWITCH 7/ 11 = 3  10 = 4  01 = 5  11 = 2
- * bit 5 : DIP SWITCH 6  COCKTAIL or UPRIGHT (0 = UPRIGHT)
- * bit 4 : DIP SWITCH 5  "EXTRA" difficulty  1 = easy  0 = hard
- * bit 3 : DIP SWITCH 4  "SPECIAL" difficulty  1 = easy  0 = hard
- * bit 2 : DIP SWITCH 3  RACK TEST
- * bit 1 : DIP SWITCH 2\ Difficulty level
- * bit 0 : DIP SWITCH 1/ 11 = 1st (easy) 10 = 2nd 01 = 3rd 00 = 4th (hard)
- *
-*
- * DSW2 (all bits are inverted)
- * bit 7 : DIP SWITCH 8\
- * bit 6 : DIP SWITCH 7| Left coin slot
- * bit 5 : DIP SWITCH 6|
- * bit 4 : DIP SWITCH 5/
- * bit 3 : DIP SWITCH 4\
- * bit 2 : DIP SWITCH 3| Right coin slot
- * bit 1 : DIP SWITCH 2|
- * bit 0 : DIP SWITCH 1/
- *                       1111 = 1 coin 1 play
- *                       1110 = 1 coin 2 plays
- *                       1101 = 1 coin 3 plays
- *                       1100 = 1 coin 4 plays
- *                       1011 = 1 coin 5 plays
- *                       1010 = 2 coins 1 play
- *                       1001 = 2 coins 3 plays
- *                       1000 = 3 coins 1 play
- *                       0111 = 3 coins 2 plays
- *                       0110 = 4 coins 1 play
- *                       0000 = FREE PLAY
- *                 all others = 1 coin 1 play
- *
-
 write:
 9000-90ff sprites, 64 groups of 4 bytes.
 9800      flip (bit 0) playfield priority selector? (bits 1-3)
@@ -87,6 +30,7 @@ f800      playfield 0 X scroll position
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "sndhrdw/sn76496.h"
 
 
 
@@ -94,19 +38,16 @@ int mrdo_SECRE_r(int offset);
 
 extern unsigned char *mrdo_videoram2;
 extern unsigned char *mrdo_colorram2;
-extern unsigned char *mrdo_scroll_x;
+extern unsigned char *mrdo_scroll_y;
 void mrdo_videoram2_w(int offset,int data);
 void mrdo_colorram2_w(int offset,int data);
+void mrdo_flipscreen_w(int offset,int data);
 void mrdo_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
 int mrdo_vh_start(void);
 void mrdo_vh_stop(void);
 void mrdo_vh_screenrefresh(struct osd_bitmap *bitmap);
 
-void ladybug_sound1_w(int offset,int data);
-void ladybug_sound2_w(int offset,int data);
 int ladybug_sh_start(void);
-void ladybug_sh_stop(void);
-void ladybug_sh_update(void);
 
 
 
@@ -131,69 +72,89 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x8800, 0x8bff, mrdo_colorram2_w, &mrdo_colorram2 },
 	{ 0x8c00, 0x8fff, mrdo_videoram2_w, &mrdo_videoram2 },
 	{ 0x9000, 0x90ff, MWA_RAM, &spriteram, &spriteram_size },
-	{ 0x9801, 0x9801, ladybug_sound1_w },
-	{ 0x9802, 0x9802, ladybug_sound2_w },
-	{ 0xf800, 0xffff, MWA_RAM, &mrdo_scroll_x },
-	{ 0x9800, 0x9800, MWA_NOP },
+	{ 0x9800, 0x9800, mrdo_flipscreen_w },	/* screen flip + playfield priority */
+	{ 0x9801, 0x9801, SN76496_0_w },
+	{ 0x9802, 0x9802, SN76496_1_w },
+	{ 0xf800, 0xffff, MWA_RAM, &mrdo_scroll_y },
 	{ 0xf000, 0xf7ff, MWA_NOP },
 	{ 0x0000, 0x7fff, MWA_ROM },
 	{ -1 }	/* end of table */
 };
 
 
+INPUT_PORTS_START( input_ports )
+	PORT_START	/* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_4WAY )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_4WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_4WAY )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_TILT )
 
-static struct InputPort input_ports[] =
-{
-	{	/* IN0 */
-		0xff,
-		{ OSD_KEY_LEFT, OSD_KEY_DOWN, OSD_KEY_RIGHT, OSD_KEY_UP,
-				OSD_KEY_LCONTROL, OSD_KEY_1, OSD_KEY_2, 0 },
-		{ OSD_JOY_LEFT, OSD_JOY_DOWN, OSD_JOY_RIGHT, OSD_JOY_UP,
-				OSD_JOY_FIRE, 0, 0, 0 }
-	},
-	{	/* IN1 */
-		0xff,
-		{ 0, 0, 0, 0, 0, 0, OSD_KEY_3, 0 },
-		{ 0, 0, 0, 0, 0, 0, 0, 0 }
-	},
-	{	/* DSW1 */
-		0xdf,
-		{ 0, 0, OSD_KEY_F1, 0, 0, 0, 0, 0 },
-		{ 0, 0, 0, 0, 0, 0, 0, 0 }
-	},
-	{	/* DSW2 */
-		0xff,
-		{ 0, 0, 0, 0, 0, 0, 0, 0 },
-		{ 0, 0, 0, 0, 0, 0, 0, 0 }
-	},
-	{ -1 }	/* end of table */
-};
+	PORT_START	/* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN2 )
 
-static struct TrakPort trak_ports[] =
-{
-        { -1 }
-};
+	PORT_START	/* DSW0 */
+	PORT_DIPNAME( 0x03, 0x03, "Difficulty", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x03, "Easy" )
+	PORT_DIPSETTING(    0x02, "Medium" )
+	PORT_DIPSETTING(    0x01, "Hard" )
+	PORT_DIPSETTING(    0x00, "Hardest" )
+	PORT_BITX(    0x04, 0x04, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Rack Test", OSD_KEY_F1, IP_JOY_NONE, 0 )
+	PORT_DIPSETTING(    0x04, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x08, 0x08, "Special", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x08, "Easy" )
+	PORT_DIPSETTING(    0x00, "Hard" )
+	PORT_DIPNAME( 0x10, 0x10, "Extra", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x10, "Easy" )
+	PORT_DIPSETTING(    0x00, "Hard" )
+	PORT_DIPNAME( 0x20, 0x00, "Cabinet", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "Upright" )
+	PORT_DIPSETTING(    0x20, "Cocktail" )
+	PORT_DIPNAME( 0xc0, 0xc0, "Lives", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "2" )
+	PORT_DIPSETTING(    0xc0, "3" )
+	PORT_DIPSETTING(    0x80, "4" )
+	PORT_DIPSETTING(    0x40, "5" )
 
-
-static struct KEYSet keys[] =
-{
-        { 0, 3, "MOVE UP" },
-        { 0, 0, "MOVE LEFT"  },
-        { 0, 2, "MOVE RIGHT" },
-        { 0, 1, "MOVE DOWN" },
-        { 0, 4, "FIRE"      },
-        { -1 }
-};
-
-
-static struct DSW dsw[] =
-{
-	{ 2, 0xc0, "LIVES", { "2", "5", "4", "3" }, 1 },
-	{ 2, 0x03, "DIFFICULTY", { "HARDEST", "HARD", "MEDIUM", "EASY" }, 1 },
-	{ 2, 0x10, "EXTRA", { "HARD", "EASY" }, 1 },
-	{ 2, 0x08, "SPECIAL", { "HARD", "EASY" }, 1 },
-	{ -1 }
-};
+	PORT_START	/* DSW1 */
+	PORT_DIPNAME( 0x0f, 0x0f, "Right Coin", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x06, "4 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x08, "3 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x0a, "2 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x07, "3 Coins/2 Credits" )
+	PORT_DIPSETTING(    0x0f, "1 Coin/1 Credit" )
+	PORT_DIPSETTING(    0x09, "2 Coins/3 Credits" )
+	PORT_DIPSETTING(    0x0e, "1 Coin/2 Credits" )
+	PORT_DIPSETTING(    0x0d, "1 Coin/3 Credits" )
+	PORT_DIPSETTING(    0x0c, "1 Coin/4 Credits" )
+	PORT_DIPSETTING(    0x0b, "1 Coin/5 Credits" )
+	PORT_DIPSETTING(    0x00, "Free play" )
+	/* settings 0x01 thru 0x05 all give 1 Coin/1 Credit */
+	PORT_DIPNAME( 0xf0, 0xf0, "Left Coin", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x60, "4 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x80, "3 Coins/1 Credit" )
+	PORT_DIPSETTING(    0xa0, "2 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x70, "3 Coins/2 Credits" )
+	PORT_DIPSETTING(    0xf0, "1 Coin/1 Credit" )
+	PORT_DIPSETTING(    0x90, "2 Coins/3 Credits" )
+	PORT_DIPSETTING(    0xe0, "1 Coin/2 Credits" )
+	PORT_DIPSETTING(    0xd0, "1 Coin/3 Credits" )
+	PORT_DIPSETTING(    0xc0, "1 Coin/4 Credits" )
+	PORT_DIPSETTING(    0xb0, "1 Coin/5 Credits" )
+	PORT_DIPSETTING(    0x00, "Free play" )
+	/* settings 0x10 thru 0x50 all give 1 Coin/1 Credit */
+INPUT_PORTS_END
 
 
 
@@ -203,8 +164,8 @@ static struct GfxLayout charlayout =
 	512,	/* 512 characters */
 	2,	/* 2 bits per pixel */
 	{ 0, 512*8*8 },	/* the two bitplanes are separated */
+	{ 7, 6, 5, 4, 3, 2, 1, 0 },
 	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
-	{ 0, 1, 2, 3, 4, 5, 6, 7 },
 	8*8	/* every char takes 8 consecutive bytes */
 };
 static struct GfxLayout spritelayout =
@@ -213,10 +174,10 @@ static struct GfxLayout spritelayout =
 	128,	/* 128 sprites */
 	2,	/* 2 bits per pixel */
 	{ 4, 0 },	/* the two bitplanes for 4 pixels are packed into one byte */
+	{ 3, 2, 1, 0, 8+3, 8+2, 8+1, 8+0,
+			16+3, 16+2, 16+1, 16+0, 24+3, 24+2, 24+1, 24+0 },
 	{ 0*16, 2*16, 4*16, 6*16, 8*16, 10*16, 12*16, 14*16,
 			16*16, 18*16, 20*16, 22*16, 24*16, 26*16, 28*16, 30*16 },
-	{ 24+0, 24+1, 24+2, 24+3, 16+0, 16+1, 16+2, 16+3,
-			8+0, 8+1, 8+2, 8+3, 0, 1, 2, 3 },
 	64*8	/* every sprite takes 64 consecutive bytes */
 };
 
@@ -264,7 +225,7 @@ static struct MachineDriver machine_driver =
 	0,
 
 	/* video hardware */
-	32*8, 32*8, { 4*8, 28*8-1, 1*8, 31*8-1 },
+	32*8, 32*8, { 1*8, 31*8-1, 4*8, 28*8-1 },
 	gfxdecodeinfo,
 	256,4*144,
 	mrdo_vh_convert_color_prom,
@@ -277,10 +238,9 @@ static struct MachineDriver machine_driver =
 
 	/* sound hardware */
 	0,
-	0,
 	ladybug_sh_start,
-	ladybug_sh_stop,
-	ladybug_sh_update
+	SN76496_sh_stop,
+	SN76496_sh_update
 };
 
 
@@ -339,6 +299,21 @@ ROM_START( mrlo_rom )
 	ROM_LOAD( "k5-06.bin", 0x5000, 0x1000, 0xb456cce4 )
 ROM_END
 
+ROM_START( mrdu_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+        ROM_LOAD( "DU1.BIN",  0x0000, 0x2000, 0xb738fe88 )
+        ROM_LOAD( "DU2.BIN",  0x2000, 0x2000, 0xa21679bc )
+        ROM_LOAD( "DU3.BIN",  0x4000, 0x2000, 0xa36ea250 )
+        ROM_LOAD( "DU4.BIN",  0x6000, 0x2000, 0xdf60933e)
+
+	ROM_REGION(0x6000)	/* temporary space for graphics (disposed after conversion) */
+        ROM_LOAD( "DU9.BIN",  0x0000, 0x1000, 0xe717f699 )
+        ROM_LOAD( "DU10.BIN", 0x1000, 0x1000, 0xd0b2db78 )
+        ROM_LOAD( "DU8.BIN",  0x2000, 0x1000, 0x005b757b )
+        ROM_LOAD( "DU7.BIN",  0x3000, 0x1000, 0x5d25fe31 )
+        ROM_LOAD( "DU5.BIN",  0x4000, 0x1000, 0x7f8e8642 )
+        ROM_LOAD( "DU6.BIN",  0x5000, 0x1000, 0xb456cce4 )
+ROM_END
 
 
 static int hiload(void)
@@ -381,17 +356,18 @@ struct GameDriver mrdo_driver =
 {
 	"Mr. Do! (Universal)",
 	"mrdo",
-	"NICOLA SALMORIA\nPAUL SWAN",
+	"Nicola Salmoria (MAME driver)\nPaul Swan (color info)\nMarco Cassili",
 	&machine_driver,
 
 	mrdo_rom,
 	0, 0,
 	0,
+	0,	/* sound_prom */
 
-	input_ports, 0, trak_ports, dsw, keys,
+	0/*TBR*/, input_ports, 0/*TBR*/, 0/*TBR*/, 0/*TBR*/,
 
 	color_prom, 0, 0,
-	ORIENTATION_DEFAULT,
+	ORIENTATION_ROTATE_270,
 
 	hiload, hisave
 };
@@ -400,17 +376,18 @@ struct GameDriver mrdot_driver =
 {
 	"Mr. Do! (Taito)",
 	"mrdot",
-	"NICOLA SALMORIA\nPAUL SWAN",
+	"Nicola Salmoria (MAME driver)\nPaul Swan (color info)\nMarco Cassili",
 	&machine_driver,
 
 	mrdot_rom,
 	0, 0,
 	0,
+	0,	/* sound_prom */
 
-	input_ports, 0, trak_ports, dsw, keys,
+	0/*TBR*/, input_ports, 0/*TBR*/, 0/*TBR*/, 0/*TBR*/,
 
 	color_prom, 0, 0,
-	ORIENTATION_DEFAULT,
+	ORIENTATION_ROTATE_270,
 
 	hiload, hisave
 };
@@ -419,17 +396,39 @@ struct GameDriver mrlo_driver =
 {
 	"Mr. Lo!",
 	"mrlo",
-	"NICOLA SALMORIA\nPAUL SWAN",
+	"Nicola Salmoria (MAME driver)\nPaul Swan (color info)\nMarco Cassili",
 	&machine_driver,
 
 	mrlo_rom,
 	0, 0,
 	0,
+	0,	/* sound_prom */
 
-	input_ports, 0, trak_ports, dsw, keys,
+	0/*TBR*/, input_ports, 0/*TBR*/, 0/*TBR*/, 0/*TBR*/,
 
 	color_prom, 0, 0,
-	ORIENTATION_DEFAULT,
+	ORIENTATION_ROTATE_270,
 
 	hiload, hisave
 };
+
+struct GameDriver mrdu_driver =
+{
+	"Mr. Du!",
+	"mrdu",
+	"Nicola Salmoria (MAME driver)\nPaul Swan (color info)\nMarco Cassili\nLee Taylor",
+	&machine_driver,
+
+	mrdu_rom,
+	0, 0,
+	0,
+	0,	/* sound_prom */
+
+	0/*TBR*/, input_ports, 0/*TBR*/, 0/*TBR*/, 0/*TBR*/,
+
+	color_prom, 0, 0,
+	ORIENTATION_ROTATE_270,
+
+	hiload, hisave
+};
+

@@ -14,8 +14,10 @@ static int irq_enabled;
 static int nmi_enabled;
 int berzerk_irq_end_of_screen;
 
-static int_count;
-static int led_count;
+static int int_count;
+
+
+
 void berzerk_init_machine()
 {
   int i;
@@ -28,8 +30,6 @@ void berzerk_init_machine()
   nmi_enabled = 0;
   berzerk_irq_end_of_screen = 0;
   int_count = 0;
-  led_count = 0;
-
 }
 
 
@@ -62,19 +62,16 @@ int berzerk_disable_nmi_r(int offset)
 
 int berzerk_led_on_w(int offset)
 {
-   led_count++;
-   if (errorlog)
-      fprintf(errorlog,"LED On %i\n",led_count);
+	osd_led_w(0,1);
 
-   return 0;
+	return 0;
 }
 
 int berzerk_led_off_w(int offset)
 {
-   if (errorlog)
-      fprintf(errorlog,"LED Off\n");
+	osd_led_w(0,0);
 
-   return 0;
+	return 0;
 }
 
 int berzerk_interrupt()
@@ -117,3 +114,14 @@ int berzerk_interrupt()
   return Z80_IGNORE_INT;
 }
 
+
+
+int  frenzy_mirror_r(int offset)
+{
+        return RAM[0xf400+(offset&0x3ff)];
+}
+
+void frenzy_mirror_w(int offset, int data)
+{
+        RAM[0xf400+(offset&0x3ff)] = data;
+}

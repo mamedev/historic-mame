@@ -69,6 +69,8 @@ void invaders_videoram_w(int offset,int data)
 			if (data & 0x80) tmpbitmap->line[y][x] = col;
 			else tmpbitmap->line[y][x] = Machine->pens[BLACK];
 
+			osd_mark_dirty(x,y,x,y,0);      /* ASG 971015 */
+
 			y++;
 			data <<= 1;
 		}
@@ -100,6 +102,8 @@ void invrvnge_videoram_w(int offset,int data)   /* V.V */ /* Whole function */
 			if (data & 0x80) tmpbitmap->line[y][x] = col;
 			else tmpbitmap->line[y][x] = Machine->pens[BLACK];
 
+			osd_mark_dirty(x,y,x,y,0);      /* ASG 971015 */
+
 			y++;
 			data <<= 1;
 		}
@@ -129,8 +133,8 @@ void lrescue_videoram_w(int offset,int data)    /* V.V */ /* Whole function */
 
 			if (y >= 8 && y < 16) {
 				if (x < 88) col = Machine->pens[CYAN];
-				if (x >= 88 && x < 176) col = Machine->pens[RED];
-				if (x >= 176) col = Machine->pens[YELLOW];
+				if (x >= 88 && x < 168) col = Machine->pens[RED];
+				if (x >= 168) col = Machine->pens[YELLOW];
 				}
 
 
@@ -142,7 +146,7 @@ void lrescue_videoram_w(int offset,int data)    /* V.V */ /* Whole function */
 
 
 			if (y >= 24 && y < 32) {
-				if (x >= 88 && x < 176) col = Machine->pens[GREEN];	/* or 168? */
+				if (x >= 88 && x < 176) col = Machine->pens[GREEN];     /* or 168? */
 				if (x >= 176) col = Machine->pens[YELLOW];
 				}
 
@@ -157,19 +161,54 @@ void lrescue_videoram_w(int offset,int data)    /* V.V */ /* Whole function */
 			if (y >= 232 && y < 240) col = Machine->pens[RED];
 			if (y >= 240) {
 				if (x < 152) col = Machine->pens[CYAN];
-				if (x >= 152 && x < 200) col = Machine->pens[PURPLE];
-				if (x >= 200) col = Machine->pens[CYAN];
+				if (x >= 152 && x < 208) col = Machine->pens[PURPLE];
+				if (x >= 208) col = Machine->pens[CYAN];
 				}
 			if (x == 239) col = Machine->pens[BLACK];
 
 			if (data & 0x80) tmpbitmap->line[y][x] = col;
 			else tmpbitmap->line[y][x] = Machine->pens[BLACK];
 
+			osd_mark_dirty(x,y,x,y,0);      /* ASG 971015 */
+
 			y++;
 			data <<= 1;
 		}
 	}
 }
+
+
+
+void rollingc_videoram_w(int offset,int data)
+{
+	if (invaders_videoram[offset] != data)
+	{
+		int i,x,y;
+
+
+		invaders_videoram[offset] = data;
+
+		x = offset / 32 + 16;
+		y = 256-8 - 8 * (offset % 32);
+
+		for (i = 0;i < 8;i++)
+		{
+			int col;
+
+
+			col = Machine->pens[RAM[0xa400 + offset] & 0x0f];
+			if (data & 0x80) tmpbitmap->line[y][x] = col;
+			else tmpbitmap->line[y][x] = Machine->pens[17];
+
+			osd_mark_dirty(x,y,x,y,0);      /* ASG 971015 */
+
+			y++;
+			data <<= 1;
+		}
+	}
+}
+
+
 
 
 

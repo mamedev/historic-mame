@@ -36,8 +36,6 @@ I/O 9  ;AY-3-8910 Data Write Reg.
 I/O C  ;AY-3-8910 Data Read Reg.
         Port A of the 8910 is connected to IN0
         Port B of the 8910 is connected to IN1
-see the input_ports definition below for details on the input bits
-
 
 ***************************************************************************/
 
@@ -106,7 +104,6 @@ static struct IOWritePort writeport[] =
 {
 	{ 0x08, 0x08, AY8910_control_port_0_w },
 	{ 0x09, 0x09, AY8910_write_port_0_w },
-        { 0x56, 0x56, IOWP_NOP },
 	{ -1 }	/* end of table */
 };
 
@@ -283,7 +280,6 @@ static struct MachineDriver machine_driver =
 
 	/* sound hardware */
 	0,
-	0,
 	bagman_sh_start,
 	AY8910_sh_stop,
 	AY8910_sh_update
@@ -400,6 +396,7 @@ struct GameDriver bagman_driver =
 	bagman_rom,
 	0, 0,
 	0,
+	0,	/* sound_prom */
 
 	0/*TBR*/,bagman_input_ports,0/*TBR*/,0/*TBR*/,0/*TBR*/,
 
@@ -419,6 +416,7 @@ struct GameDriver sbagman_driver =
 	sbagman_rom,
 	0, 0,
 	0,
+	0,	/* sound_prom */
 
 	0/*TBR*/,sbagman_input_ports,0/*TBR*/,0/*TBR*/,0/*TBR*/,
 

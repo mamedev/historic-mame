@@ -42,7 +42,6 @@
 static struct POKEYinterface interface =
 {
 	1,	/* 1 chip */
-	1,	/* 1 update per video frame (low quality) */
 	FREQ_17_APPROX,	/* 1.7 Mhz */
 	255,
 	NO_CLIP,

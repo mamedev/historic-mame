@@ -34,11 +34,3 @@ void kangaroo_sec_chip_w(int offset, int val)
 {
 /*  clock = val & 0xff; */
 }
-
-/* This is not really necessary ? after all it does nothing ;) -V-
-*/
-int kangaroo_interrupt(void)
-{
-  /* clock = (clock+1) & 0xff; */
-  return 0xffff;
-}

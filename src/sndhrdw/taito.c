@@ -2,19 +2,20 @@
 #include "Z80.h"
 #include "sndhrdw/generic.h"
 #include "sndhrdw/8910intf.h"
+#include "sndhrdw/dac.h"
 
 
-#define AUDIO_CONV(A) (A+0x80)
-
-#define TARGET_EMULATION_RATE 44100     /* will be adapted to be a multiple of buffer_len */
-static int emulation_rate;
-static int buffer_len;
-static unsigned char *buffer;
-static int sample_pos;
-
-static unsigned char amplitude_DAC;
 
 static int sndnmi_disable = 1;
+static unsigned char voltable[255];
+
+static struct DACinterface DAinterface =
+{
+	1,
+	441000,
+	{ 128, 128 },
+	{  1,  1 }
+};
 
 
 
@@ -27,19 +28,7 @@ static void taito_sndnmi_msk(int offset,int data)
 
 static void taito_digital_out(int offset,int data)
 {
-	int totcycles,leftcycles,newpos;
-
-
-	totcycles = Machine->drv->cpu[1].cpu_clock / Machine->drv->frames_per_second;
-	leftcycles = cpu_getfcount();
-	newpos = buffer_len * (totcycles-leftcycles) / totcycles;
-
-	while (sample_pos < newpos-1)
-	    buffer[sample_pos++] = amplitude_DAC;
-
-    amplitude_DAC=AUDIO_CONV(data);
-
-    buffer[sample_pos++] = amplitude_DAC;
+	DAC_data_w(0,voltable[data]);
 }
 
 
@@ -48,8 +37,6 @@ int taito_sh_interrupt(void)
 {
 	static int count;
 
-
-	AY8910_update();
 
 	count++;
 	if (count>=16){
@@ -68,9 +55,8 @@ int taito_sh_interrupt(void)
 static struct AY8910interface interface =
 {
 	4,	/* 4 chips */
-	10,	/* 10 updates per video frame (good quality) */
-	1500000000,	/* 1.5 MHz */
-	{ 255, 255, 255, 255 },
+	1500000,	/* 1.5 MHz */
+	{ 255, 255, 255, 0x40ff },
 	{ input_port_5_r, 0, 0, 0 },		/* port Aread */
 	{ input_port_6_r, 0, 0, 0 },		/* port Bread */
 	{ 0, taito_digital_out, 0, 0 },				/* port Awrite */
@@ -81,35 +67,69 @@ static struct AY8910interface interface =
 
 int taito_sh_start(void)
 {
+	int i,j;
+	int weight[8],totweight;
+
+
 	pending_commands = 0;
 
-    buffer_len = TARGET_EMULATION_RATE / Machine->drv->frames_per_second;
-    emulation_rate = buffer_len * Machine->drv->frames_per_second;
-
-    if ((buffer = malloc(buffer_len)) == 0)
+	if( DAC_sh_start(&DAinterface) ) return 1;
+	if( AY8910_sh_start(&interface) ){
+		DAC_sh_stop();
 		return 1;
-    memset(buffer,0x80,buffer_len);
+	}
 
-    sample_pos = 0;
+	/* reproduce the resistor ladder
 
-	return AY8910_sh_start(&interface);
+	   -- 30 -+
+	          15
+	   -- 30 -+
+	          15
+	   -- 30 -+
+	          15
+	   -- 30 -+
+	          15
+	   -- 30 -+
+	          15
+	   -- 30 -+
+	          15
+	   -- 30 -+
+	          15
+	   -- 30 -+-------- out
+	*/
+
+	totweight = 0;
+	for (i = 0;i < 8;i++)
+	{
+		weight[i] = 75600 / (30 + (7-i) * 15);
+		totweight += weight[i];
+	}
+
+	for (i = 0;i < 8;i++)
+		weight[i] = (255 * weight[i] + totweight / 2) / totweight;
+
+	for (i = 0;i < 256;i++)
+	{
+		voltable[i] = 0;
+
+		for (j = 0;j < 8;j++)
+		{
+			if ((i >> j) & 1)
+				voltable[i] += weight[j];
+		}
+	}
+
+	return 0;
 }
 
 void taito_sh_stop(void)
 {
 	AY8910_sh_stop();
-
-    free(buffer);
+	DAC_sh_stop();
 }
 
 void taito_sh_update(void)
 {
 	AY8910_sh_update();
-
-	while (sample_pos < buffer_len)
-		buffer[sample_pos++] = amplitude_DAC;
-
-	osd_play_streamed_sample(4,buffer,buffer_len,emulation_rate,255);
-
-	sample_pos=0;
+	DAC_sh_update();
 }

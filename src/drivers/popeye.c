@@ -16,8 +16,8 @@ Popeye memory map (preliminary)
 a000-a3ff  Text video ram
 a400-a7ff  Text Attribute
 
-c000-cfff  Background bitmap. Accessed as nibbles: bit 7 selects which of the
-           two nibbles should be written to.
+c000-cfff  Background bitmap. Accessed as nibbles: bit 7 selects which of
+           the two nibbles should be written to.
 
 
 I/O 0  ;AY-3-8910 Control Reg.
@@ -31,7 +31,7 @@ I/O 3  ;AY-3-8910 Data Read Reg.
 		bit 4-5 = ?
 
 		DSW2
-        bit 0-1 = lives
+		bit 0-1 = lives
 		bit 2-3 = difficulty
 		bit 4-5 = bonus
 		bit 6 = demo sounds
@@ -67,7 +67,6 @@ int  popeye_vh_start(void);
 void popeye_vh_stop(void);
 
 int popeye_sh_start(void);
-int popeye_sh_interrupt(void);
 
 
 
@@ -113,72 +112,83 @@ static struct IOWritePort writeport[] =
 };
 
 
+INPUT_PORTS_START( input_ports )
 
+	PORT_START	/* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_4WAY )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_4WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_4WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_4WAY )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN ) /* probably unused */
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN ) /* probably unused */
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN ) /* probably unused */
 
+	PORT_START	/* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_COCKTAIL )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN ) /* probably unused */
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN ) /* probably unused */
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN ) /* probably unused */
 
-static struct InputPort input_ports[] =
-{
-	{	/* IN0 */
-		0x00,
-		{ OSD_KEY_RIGHT, OSD_KEY_LEFT, OSD_KEY_UP, OSD_KEY_DOWN,
-				OSD_KEY_LCONTROL, OSD_KEY_E, OSD_KEY_Q, OSD_KEY_W },
-		{ OSD_JOY_RIGHT, OSD_JOY_LEFT, OSD_JOY_UP, OSD_JOY_DOWN,
-                                OSD_JOY_FIRE1, OSD_JOY_FIRE2, OSD_JOY_FIRE3, OSD_JOY_FIRE4 }
-	},
-	{	/* IN1 */
-		0x00,
-		{ 0, 0, 0, 0, 0, 0, 0, 0 },
-		{ 0, 0, 0, 0, 0, 0, 0, 0 }
-	},
-	{	/* IN2 */
-		0x00,
-		{ OSD_KEY_8, OSD_KEY_9, OSD_KEY_1,OSD_KEY_2,
-                      OSD_KEY_0, OSD_KEY_5, OSD_KEY_4,OSD_KEY_3 },
-		{ 0, 0, 0, 0, 0, 0, 0, 0 }
-	},
-	{	/* DSW1 */
-		0x3f,
-		{ 0, 0, 0, 0, 0, 0, 0, 0 },
-		{ 0, 0, 0, 0, 0, 0, 0, 0 }
-	},
-	{	/* DSW2 */
-		0x3d,
-		{ 0, 0, 0, 0, 0, 0, 0, 0 },
-		{ 0, 0, 0, 0, 0, 0, 0, 0 }
-	},
-	{ -1 }	/* end of table */
-};
+	PORT_START	/* IN2 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_UNKNOWN ) /* probably unused */
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_UNKNOWN ) /* probably unused */
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_START1 )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_START2 )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_UNKNOWN ) /* probably unused */
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_COIN3 )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_COIN2 )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_COIN1 )
 
-static struct TrakPort trak_ports[] =
-{
-        { -1 }
-};
+	PORT_START	/* DSW0 */
+	PORT_DIPNAME( 0x0f, 0x0f, "Coinage", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x03, "3 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x04, "2 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x0f, "1 Coin/1 Credit" )
+	PORT_DIPSETTING(    0x06, "1 Coin/2 Credits" )
+	PORT_DIPSETTING(    0x02, "2 Coins/5 Credits" )
+	PORT_DIPSETTING(    0x0a, "1 Coin/3 Credits" )
+	PORT_DIPSETTING(    0x09, "1 Coin/4 Credits" )
+	PORT_DIPSETTING(    0x05, "1 Coin/5 Credits" )
+	PORT_DIPSETTING(    0x08, "1 Coin/6 Credits" )
+	PORT_DIPSETTING(    0x00, "Free play" )
+/*  0x0e = 2 Coins/1 Credit
+    0x07, 0x0c = 1 Coin/1 Credit
+    0x01, 0x0b, 0x0d = 1 Coin/2 Credits */
+	PORT_DIPNAME( 0x10, 0x10, "Unknown 1", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "Off" )
+	PORT_DIPSETTING(    0x10, "On" )
+	PORT_DIPNAME( 0x20, 0x20, "Unknown 2", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "Off" )
+	PORT_DIPSETTING(    0x20, "On" )
 
-static struct KEYSet keys[] =
-{
-        { 0, 2, "MOVE UP" },
-        { 0, 1, "MOVE LEFT"  },
-        { 0, 0, "MOVE RIGHT" },
-        { 0, 3, "MOVE DOWN" },
-        { 0, 4, "FIRE1" },
-        { 0, 6, "FIRE2" },
-        { 0, 7, "FIRE3" },
-        { 0, 5, "FIRE4" },
-        { -1 }
-};
-
-
-static struct DSW dsw[] =
-{
-	{ 4, 0x03, "LIVES", { "4", "3", "2", "1" }, 1 },
-	{ 4, 0x30, "BONUS", { "NONE", "80000", "60000", "40000" }, 1 },
-	{ 4, 0x0c, "DIFFICULTY", { "HARDEST", "HARD", "MEDIUM", "EASY" }, 1 },
-	{ 4, 0x40, "DEMO SOUNDS", { "ON", "OFF" }, 1 },
-	{ 3, 0x10, "SW1 5", { "ON", "OFF" }, 1 },
-	{ 3, 0x20, "SW1 6", { "ON", "OFF" }, 1 },
-	{ -1 }
-};
-
+	PORT_START	/* DSW1 */
+	PORT_DIPNAME( 0x03, 0x01, "Lives", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x03, "1" )
+	PORT_DIPSETTING(    0x02, "2" )
+	PORT_DIPSETTING(    0x01, "3" )
+	PORT_DIPSETTING(    0x00, "4" )
+	PORT_DIPNAME( 0x0c, 0x0c, "Difficulty", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x0c, "Easy" )
+	PORT_DIPSETTING(    0x08, "Medium" )
+	PORT_DIPSETTING(    0x04, "Hard" )
+	PORT_DIPSETTING(    0x00, "Hardest" )
+	PORT_DIPNAME( 0x30, 0x30, "Bonus Life", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x30, "40000" )
+	PORT_DIPSETTING(    0x20, "60000" )
+	PORT_DIPSETTING(    0x10, "80000" )
+	PORT_DIPSETTING(    0x00, "None" )
+	PORT_DIPNAME( 0x40, 0x00, "Demo Sounds", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x40, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x80, 0x00, "Cabinet", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "Upright" )
+	PORT_DIPSETTING(    0x80, "Cocktail" )
+INPUT_PORTS_END
 
 
 static struct GfxLayout charlayout =
@@ -286,7 +296,7 @@ static struct MachineDriver machine_driver =
 			4000000,	/* 4 Mhz */
 			0,
 			readmem,writemem,readport,writeport,
-			popeye_sh_interrupt,20
+			nmi_interrupt,2
 		}
 	},
 	30,
@@ -306,7 +316,6 @@ static struct MachineDriver machine_driver =
 	popeye_vh_screenrefresh,
 
 	/* sound hardware */
-	0,
 	0,
 	popeye_sh_start,
 	AY8910_sh_stop,
@@ -361,12 +370,15 @@ static int hiload(void)
 			RAM[0x8fee] = RAM[0x8200+i-1];
 			RAM[0x8fef] = RAM[0x8200+i];
 
-			RAM[0x8f32] = RAM[0x8200+i] >> 4;
-			RAM[0x8f33] = RAM[0x8200+i] & 0x0f;
-			RAM[0x8f34] = RAM[0x8200+i-1] >> 4;
-			RAM[0x8f35] = RAM[0x8200+i-1] & 0x0f;
-			RAM[0x8f36] = RAM[0x8200+i-2] >> 4;
-			RAM[0x8f37] = RAM[0x8200+i-2] & 0x0f;
+
+			/* I think the first lValue of the next sentences *
+			 * is unnecessary. Please confirm if you know it  */
+			RAM[0x8f32] = RAM[0xA04F] = RAM[0x8200+i] >> 4;
+			RAM[0x8f33] = RAM[0xA050] = RAM[0x8200+i] & 0x0f;
+			RAM[0x8f34] = RAM[0xA051] = RAM[0x8200+i-1] >> 4;
+			RAM[0x8f35] = RAM[0xA052] = RAM[0x8200+i-1] & 0x0f;
+			RAM[0x8f36] = RAM[0xA053] = RAM[0x8200+i-2] >> 4;
+			RAM[0x8f37] = RAM[0xA054] = RAM[0x8200+i-2] & 0x0f;
 
 			osd_fclose(f);
 		}
@@ -396,14 +408,15 @@ struct GameDriver popeyebl_driver =
 {
 	"Popeye (bootleg)",
 	"popeyebl",
-	"MARC LAFONTAINE\nNICOLA SALMORIA",
+	"Marc Lafontaine\nNicola Salmoria\nMarco Cassili",
 	&machine_driver,
 
 	popeyebl_rom,
 	0, 0,
 	0,
+	0,	/* sound_prom */
 
-	input_ports, 0, trak_ports, dsw, keys,
+	0/*TBR*/, input_ports, 0/*TBR*/, 0/*TBR*/, 0/*TBR*/,
 
 	color_prom, 0, 0,
 	ORIENTATION_DEFAULT,
