@@ -270,7 +270,7 @@ static void namco_update_stereo(int ch, void **buffer, int length)
 }
 
 
-int namco_sh_start(const struct namco_interface *intf)
+int namco_sh_start(const struct MachineSound *msound)
 {
 	const char *mono_name = "NAMCO sound";
 	const char *stereo_names[] =
@@ -279,12 +279,14 @@ int namco_sh_start(const struct namco_interface *intf)
 		"NAMCO sound right"
 	};
 	sound_channel *voice;
+	const struct namco_interface *intf = msound->sound_interface;
+
 
 	/* get stream channels */
 	sample_bits = Machine->sample_bits;
 	if (intf->stereo)
 	{
-		stream = stream_init_multi(2, stereo_names, intf->samplerate, sample_bits, 0, namco_update_stereo);
+		stream = stream_init_multi(msound,2, stereo_names, intf->samplerate, sample_bits, 0, namco_update_stereo);
 		stream_set_volume(stream + 0, intf->volume);
 		stream_set_volume(stream + 1, intf->volume);
 		stream_set_pan(stream + 0, OSD_PAN_LEFT);
@@ -292,7 +294,7 @@ int namco_sh_start(const struct namco_interface *intf)
 	}
 	else
 	{
-		stream = stream_init(mono_name, intf->samplerate, sample_bits, 0, namco_update_mono);
+		stream = stream_init(msound,mono_name, intf->samplerate, sample_bits, 0, namco_update_mono);
 		stream_set_volume(stream, intf->volume);
 	}
 

@@ -9,7 +9,8 @@ enum {
 	Z80_IX, Z80_IY,	Z80_AF2, Z80_BC2, Z80_DE2, Z80_HL2,
 	Z80_R, Z80_I, Z80_IM, Z80_IFF1, Z80_IFF2, Z80_HALT,
 	Z80_NMI_STATE, Z80_IRQ_STATE, Z80_DC0, Z80_DC1, Z80_DC2, Z80_DC3,
-	Z80_NMI_NESTING };
+	Z80_NMI_NESTING
+};
 
 extern int z80_ICount;              /* T-state count                        */
 

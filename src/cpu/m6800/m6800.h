@@ -303,7 +303,15 @@ extern unsigned Dasm680x(int subtype, char *buf, unsigned pc);
 #define M6803_PORT1 0x100
 #define M6803_PORT2 0x101
 
+#define HD63701_DDR1 M6803_DDR1
+#define HD63701_DDR2 M6803_DDR2
+
+#define HD63701_PORT1 M6803_PORT1
+#define HD63701_PORT2 M6803_PORT2
+
 int m6803_internal_registers_r(int offset);
 void m6803_internal_registers_w(int offset,int data);
+int hd63701_internal_registers_r(int offset);
+void hd63701_internal_registers_w(int offset,int data);
 
 #endif /* _M6800_H */

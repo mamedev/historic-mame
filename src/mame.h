@@ -53,14 +53,14 @@ struct GameOptions {
 	void *record;
 	void *playback;
 	int mame_debug;
-	char cheat;
-	char gui_host;
+	int cheat;
+	int gui_host;
 
 	int samplerate;
 	int samplebits;
-	char no_fm;
-	char use_samples;
-	char use_emulated_ym3812;
+	int no_fm;
+	int use_samples;
+	int use_emulated_ym3812;
 
 	int norotate;
 	int ror;
@@ -69,9 +69,9 @@ struct GameOptions {
 	int flipy;
 	int beam;
 	int flicker;
-	char translucency;
-	char antialias;
-	char use_artwork;
+	int translucency;
+	int antialias;
+	int use_artwork;
 
 #ifdef MESS
 	char file_list[MAX_ROM+MAX_FLOPPY+MAX_HARD+MAX_CASSETTE][32];

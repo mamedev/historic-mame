@@ -162,7 +162,7 @@ int net_vers_check( int player )
 
 	/* setup app and network support version info */
 	memset( szVerSelf, 0, sizeof(szVerSelf) ); /* zero out array first */
-	strcpy( szVerSelf, mameversion );
+	strcpy( szVerSelf, build_version );
 	strcpy( (szVerSelf+25), netversion );
 
     dprintf(("net_vers_check()\n"))

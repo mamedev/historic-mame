@@ -398,7 +398,7 @@ void AY8910_reset(int chip)
 								/* has not been initialized. */
 }
 
-static int AY8910_init(int chip,const char *chipname,int clock,int sample_rate,int sample_bits,
+static int AY8910_init(const struct MachineSound *msound,int chip,const char *chipname,int clock,int sample_rate,int sample_bits,
 		int (*portAread)(int offset),int (*portBread)(int offset),
 		void (*portAwrite)(int offset,int data),void (*portBwrite)(int offset,int data))
 {
@@ -419,7 +419,7 @@ static int AY8910_init(int chip,const char *chipname,int clock,int sample_rate,i
 		name[i] = buf[i];
 		sprintf(buf[i],"%s #%d Ch %c",chipname,chip,'A'+i);
 	}
-	PSG->Channel = stream_init_multi(3,
+	PSG->Channel = stream_init_multi(msound,3,
 			name,sample_rate,sample_bits,
 			chip,(sample_bits == 16) ? AY8910Update_16 : AY8910Update_8);
 
@@ -435,23 +435,24 @@ static int AY8910_init(int chip,const char *chipname,int clock,int sample_rate,i
 
 
 
-int AY8910_sh_start_ex(const struct AY8910interface *interface,const char *chipname)
+int AY8910_sh_start_ex(const struct MachineSound *msound,const char *chipname)
 {
 	int chip;
+	const struct AY8910interface *intf = msound->sound_interface;
 
 
-	for (chip = 0;chip < interface->num;chip++)
+	for (chip = 0;chip < intf->num;chip++)
 	{
-		if (AY8910_init(chip,chipname,interface->baseclock,Machine->sample_rate,Machine->sample_bits,
-				interface->portAread[chip],interface->portBread[chip],
-				interface->portAwrite[chip],interface->portBwrite[chip]) != 0)
+		if (AY8910_init(msound,chip,chipname,intf->baseclock,Machine->sample_rate,Machine->sample_bits,
+				intf->portAread[chip],intf->portBread[chip],
+				intf->portAwrite[chip],intf->portBwrite[chip]) != 0)
 			return 1;
-		AY8910_set_volume(chip,interface->volume[chip] & 0xff,(interface->volume[chip] >> 8) & 0xff);
+		AY8910_set_volume(chip,intf->volume[chip] & 0xff,(intf->volume[chip] >> 8) & 0xff);
 	}
 	return 0;
 }
 
-int AY8910_sh_start(const struct AY8910interface *interface)
+int AY8910_sh_start(const struct MachineSound *msound)
 {
-	return AY8910_sh_start_ex(interface,"AY8910");
+	return AY8910_sh_start_ex(msound,"AY8910");
 }

@@ -62,18 +62,18 @@ static int speechQueuePtr = 0;
 const char *astrob_sample_names[] =
 {
 	"*astrob",
-	"invadr1.sam","winvadr1.sam","invadr2.sam","winvadr2.sam",
-	"invadr3.sam","winvadr3.sam","invadr4.sam","winvadr4.sam",
-	"asteroid.sam","refuel.sam",
+	"invadr1.wav","winvadr1.wav","invadr2.wav","winvadr2.wav",
+	"invadr3.wav","winvadr3.wav","invadr4.wav","winvadr4.wav",
+	"asteroid.wav","refuel.wav",
 
-	"pbullet.sam","ebullet.sam","eexplode.sam","pexplode.sam",
-	"deedle.sam","sonar.sam",
+	"pbullet.wav","ebullet.wav","eexplode.wav","pexplode.wav",
+	"deedle.wav","sonar.wav",
 
-	"01.sam","02.sam","03.sam","04.sam","05.sam","06.sam","07.sam","08.sam",
-	"09.sam","0a.sam","0b.sam","0c.sam","0d.sam","0e.sam","0f.sam","10.sam",
-	"11.sam","12.sam","13.sam","14.sam","15.sam","16.sam","17.sam","18.sam",
-	"19.sam","1a.sam","1b.sam","1c.sam","1d.sam","1e.sam","1f.sam","20.sam",
-	"22.sam","23.sam",
+	"01.wav","02.wav","03.wav","04.wav","05.wav","06.wav","07.wav","08.wav",
+	"09.wav","0a.wav","0b.wav","0c.wav","0d.wav","0e.wav","0f.wav","10.wav",
+	"11.wav","12.wav","13.wav","14.wav","15.wav","16.wav","17.wav","18.wav",
+	"19.wav","1a.wav","1b.wav","1c.wav","1d.wav","1e.wav","1f.wav","20.wav",
+	"22.wav","23.wav",
 	0
 };
 
@@ -116,7 +116,7 @@ static struct sa astrob_sa[TOTAL_SOUNDS] =
 
 /* Special speech handling code.  Someday this will hopefully be
    replaced with true speech synthesis. */
-int astrob_speech_sh_start(void)
+int astrob_speech_sh_start(const struct MachineSound *msound)
 {
    int i;
 
@@ -330,9 +330,9 @@ The Sound Board consists solely of sounds created through discrete circuitry.
 
 const char *spaceod_sample_names[] =
 {
-		"fire.sam", "bomb.sam", "eexplode.sam", "pexplode.sam",
-		"warp.sam", "birth.sam", "scoreup.sam", "ssound.sam",
-		"accel.sam", "damaged.sam", "erocket.sam",
+		"fire.wav", "bomb.wav", "eexplode.wav", "pexplode.wav",
+		"warp.wav", "birth.wav", "scoreup.wav", "ssound.wav",
+		"accel.wav", "damaged.wav", "erocket.wav",
 		0
 };
 
@@ -409,7 +409,7 @@ static unsigned int rom_offset = 0;
 
 const char *monsterb_sample_names[] =
 {
-		"zap.sam","jumpdown.sam",
+		"zap.wav","jumpdown.wav",
 		0
 };
 

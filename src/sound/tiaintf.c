@@ -21,11 +21,11 @@ static int channel;
 static const struct TIAinterface *intf;
 static unsigned char *buffer;
 
-int tia_sh_start (const struct TIAinterface *interface)
+int tia_sh_start(const struct MachineSound *msound)
 {
 	int i, res;
 
-	intf = interface;
+	intf = msound->sound_interface;
 
 	buffer_len = Machine->sample_rate / Machine->drv->frames_per_second;
 	if (buffer_len == 0) return 0;

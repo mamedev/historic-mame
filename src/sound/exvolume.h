@@ -13,7 +13,7 @@ struct EXVOLUMEinterface
 	int volume2[MAX_EXVOLUME];  /* pan & volume to output2     */
 };
 
-int  EXVOLUME_sh_start (struct EXVOLUMEinterface *interface);
+int  EXVOLUME_sh_start (struct MachineSound *msound);
 void EXVOLUME_sh_stop (void);
 void EXVOLUME_sh_update (void);
 

@@ -101,7 +101,7 @@ void mooncrst_shoot_w(int offset,int data)
 }
 
 
-int mooncrst_sh_start(void)
+int mooncrst_sh_start(const struct MachineSound *msound)
 {
 	int i;
 

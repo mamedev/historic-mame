@@ -937,8 +937,8 @@ static void xevios_decode(void)
 static const char *xevious_sample_names[] =
 {
 	"*xevious",
-	"explo1.sam",	/* ground target explosion */
-	"explo2.sam",	/* Solvalou explosion */
+	"explo1.wav",	/* ground target explosion */
+	"explo2.wav",	/* Solvalou explosion */
 	0	/* end of array */
 };
 

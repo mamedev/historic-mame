@@ -531,10 +531,40 @@ static struct MachineDriver empire_machine_driver =
 
 ***************************************************************************/
 
-ROM_START (starwars_rom)
+ROM_START (starwar1_rom)
 	ROM_REGION(0x12000)     /* 2 64k ROM spaces */
 	ROM_LOAD( "136021.105",   0x3000, 0x1000, 0x538e7d2f ) /* 3000-3fff is 4k vector rom */
 	ROM_LOAD( "136021.114",   0x6000, 0x2000, 0xe75ff867 )   /* ROM 0 bank pages 0 and 1 */
+	ROM_CONTINUE(            0x10000, 0x2000 )
+	ROM_LOAD( "136021.102",   0x8000, 0x2000, 0xf725e344 ) /*  8k ROM 1 bank */
+	ROM_LOAD( "136021.203",   0xa000, 0x2000, 0xf6da0a00 ) /*  8k ROM 2 bank */
+	ROM_LOAD( "136021.104",   0xc000, 0x2000, 0x7e406703 ) /*  8k ROM 3 bank */
+	ROM_LOAD( "136021.206",   0xe000, 0x2000, 0xc7e51237 ) /*  8k ROM 4 bank */
+
+	/* Load the Mathbox PROM's temporarily into the Vector RAM area */
+	/* During initialisation they will be converted into useable form */
+	/* and stored elsewhere. */
+	ROM_LOAD( "136021.110",   0x0000, 0x0400, 0x01061762 ) /* PROM 0 */
+	ROM_LOAD( "136021.111",   0x0400, 0x0400, 0x2e619b70 ) /* PROM 1 */
+	ROM_LOAD( "136021.112",   0x0800, 0x0400, 0x6cfa3544 ) /* PROM 2 */
+	ROM_LOAD( "136021.113",   0x0c00, 0x0400, 0x03f6acb2 ) /* PROM 3 */
+
+	ROM_REGION_DISPOSE(0x1000)      /* temporary space for graphics (disposed after conversion) */
+	/* empty memory region - not used by the game, but needed because the main */
+	/* core currently always frees region #1 after initialization. */
+
+	/* Sound ROMS */
+	ROM_REGION(0x10000)     /* Really only 32k, but it looks like 64K */
+	ROM_LOAD( "136021.107",   0x4000, 0x2000, 0xdbf3aea2 ) /* Sound ROM 0 */
+	ROM_RELOAD(               0xc000,0x2000) /* Copied again for */
+	ROM_LOAD( "136021.208",   0x6000, 0x2000, 0xe38070a8 ) /* Sound ROM 0 */
+	ROM_RELOAD(               0xe000,0x2000) /* proper int vecs */
+ROM_END
+
+ROM_START (starwars_rom)
+	ROM_REGION(0x12000)     /* 2 64k ROM spaces */
+	ROM_LOAD( "136021.105",   0x3000, 0x1000, 0x538e7d2f ) /* 3000-3fff is 4k vector rom */
+	ROM_LOAD( "136021.214",   0x6000, 0x2000, 0x04f1876e )   /* ROM 0 bank pages 0 and 1 */
 	ROM_CONTINUE(            0x10000, 0x2000 )
 	ROM_LOAD( "136021.102",   0x8000, 0x2000, 0xf725e344 ) /*  8k ROM 1 bank */
 	ROM_LOAD( "136021.203",   0xa000, 0x2000, 0xf6da0a00 ) /*  8k ROM 2 bank */
@@ -635,7 +665,7 @@ struct GameDriver starwars_driver =
 	__FILE__,
 	0,
 	"starwars",
-	"Star Wars",
+	"Star Wars (rev 2)",
 	"1983",
 	"Atari",
 	"Steve Baines (MAME driver)\nBrad Oliver (MAME driver)\nFrank Palazzolo (MAME driver)\n"VECTOR_TEAM,
@@ -644,6 +674,33 @@ struct GameDriver starwars_driver =
 	0,
 
 	starwars_rom,
+	translate_proms, 0,  /* ROM decryption, Opcode decryption */
+	0,     /* Sample Array (optional) */
+	0,	/* sound_prom */
+
+	input_ports,
+	color_prom, /* Colour PROM */
+	0,          /* palette */
+	0,          /* colourtable */
+	ORIENTATION_DEFAULT,
+
+	novram_load, novram_save /* Highscore load, save */
+};
+
+struct GameDriver starwar1_driver =
+{
+	__FILE__,
+	&starwars_driver,
+	"starwar1",
+	"Star Wars (rev 1)",
+	"1983",
+	"Atari",
+	"Steve Baines (MAME driver)\nBrad Oliver (MAME driver)\nFrank Palazzolo (MAME driver)\n"VECTOR_TEAM,
+	0,
+	&machine_driver,
+	0,
+
+	starwar1_rom,
 	translate_proms, 0,  /* ROM decryption, Opcode decryption */
 	0,     /* Sample Array (optional) */
 	0,	/* sound_prom */

@@ -29,7 +29,7 @@ struct ADPCMinterface
 	int volume[MAX_ADPCM];     /* master volume */
 };
 
-int ADPCM_sh_start (const struct ADPCMinterface *interface);
+int ADPCM_sh_start (const struct MachineSound *msound);
 void ADPCM_sh_stop (void);
 void ADPCM_sh_update (void);
 
@@ -52,7 +52,7 @@ struct OKIM6295interface
 	int volume[MAX_OKIM6295]; /* master volume */
 };
 
-int OKIM6295_sh_start (const struct OKIM6295interface *intf);
+int OKIM6295_sh_start (const struct MachineSound *msound);
 void OKIM6295_sh_stop (void);
 void OKIM6295_sh_update (void);
 
@@ -75,7 +75,7 @@ struct MSM5205interface
 	int volume[MAX_OKIM6295]; /* master volume */
 };
 
-int MSM5205_sh_start (const struct MSM5205interface *intf);
+int MSM5205_sh_start (const struct MachineSound *msound);
 void MSM5205_sh_stop (void);
 void MSM5205_sh_update (void);
 

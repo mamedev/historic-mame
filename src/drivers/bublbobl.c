@@ -889,6 +889,38 @@ ROM_START( bublbobl_rom )
 	ROM_LOAD( "68705.bin",    0x0000, 0x0800, 0x78caa635 )	/* from a pirate board */
 ROM_END
 
+ROM_START( bublbobr_rom )
+    ROM_REGION(0x1c000)	/* 64k+64k for the first CPU */
+    ROM_LOAD( "25.cpu",       0x00000, 0x8000, 0x2d901c9d )
+    ROM_LOAD( "24.cpu",       0x08000, 0x4000, 0xb7afedc4 )	/* banked at 8000-bfff. I must load */
+	ROM_CONTINUE(             0x10000, 0xc000 )				/* bank 0 at 8000 because the code falls into */
+															/* it from 7fff, so bank switching wouldn't work */
+    ROM_REGION_DISPOSE(0x80000)	/* temporary space for graphics (disposed after conversion) */
+    ROM_LOAD( "a78_09.bin",   0x00000, 0x8000, 0x20358c22 )    /* 1st plane */
+    ROM_LOAD( "a78_10.bin",   0x08000, 0x8000, 0x930168a9 )
+    ROM_LOAD( "a78_11.bin",   0x10000, 0x8000, 0x9773e512 )
+    ROM_LOAD( "a78_12.bin",   0x18000, 0x8000, 0xd045549b )
+    ROM_LOAD( "a78_13.bin",   0x20000, 0x8000, 0xd0af35c5 )
+    ROM_LOAD( "a78_14.bin",   0x28000, 0x8000, 0x7b5369a8 )
+	/* 0x30000-0x3ffff empty */
+    ROM_LOAD( "a78_15.bin",   0x40000, 0x8000, 0x6b61a413 )    /* 2nd plane */
+    ROM_LOAD( "a78_16.bin",   0x48000, 0x8000, 0xb5492d97 )
+    ROM_LOAD( "a78_17.bin",   0x50000, 0x8000, 0xd69762d5 )
+    ROM_LOAD( "a78_18.bin",   0x58000, 0x8000, 0x9f243b68 )
+    ROM_LOAD( "a78_19.bin",   0x60000, 0x8000, 0x66e9438c )
+    ROM_LOAD( "a78_20.bin",   0x68000, 0x8000, 0x9ef863ad )
+	/* 0x70000-0x7ffff empty */
+
+    ROM_REGION(0x10000)	/* 64k for the second CPU */
+    ROM_LOAD( "a78_08.bin",   0x0000, 0x08000, 0xae11a07b )
+
+    ROM_REGION(0x10000)	/* 64k for the third CPU */
+    ROM_LOAD( "a78_07.bin",   0x0000, 0x08000, 0x4f9a26e8 )
+
+	ROM_REGION(0x0800)	/* 2k for the microcontroller */
+	ROM_LOAD( "68705.bin",    0x0000, 0x0800, 0x78caa635 )	/* from a pirate board */
+ROM_END
+
 ROM_START( boblbobl_rom )
     ROM_REGION(0x1c000)	/* 64k+64k for the first CPU */
     ROM_LOAD( "bb3",          0x00000, 0x8000, 0x01f81936 )
@@ -1147,6 +1179,32 @@ struct GameDriver bublbobl_driver =
 	0,
 
 	bublbobl_rom,
+	0, 0,
+	0,
+	0,	/* sound_prom */
+
+	bublbobl_input_ports,
+
+	0, 0, 0,
+	ORIENTATION_DEFAULT,
+
+	bublbobl_hiload, bublbobl_hisave
+};
+
+struct GameDriver bublbobr_driver =
+{
+	__FILE__,
+	&bublbobl_driver,
+	"bublbobr",
+	"Bubble Bobble (US)",
+	"1986",
+	"Taito America (Romstar license)",
+	"Chris Moore\nOliver White\nNicola Salmoria\nMarco Cassili",
+	0,
+	&bublbobl_machine_driver,
+	0,
+
+	bublbobr_rom,
 	0, 0,
 	0,
 	0,	/* sound_prom */

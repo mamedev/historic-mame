@@ -128,25 +128,26 @@ void CVSD_set_volume(int num,int volume,int gain)
 }
 
 
-int CVSD_sh_start(const struct CVSDinterface *interface)
+int CVSD_sh_start(const struct MachineSound *msound)
 {
 	int i;
+	const struct CVSDinterface *intf = msound->sound_interface;
 
 
-	for (i = 0;i < interface->num;i++)
+	for (i = 0;i < intf->num;i++)
 	{
 		char name[40];
 
 
 		sprintf(name,"CVSD #%d",i);
-		channel[i] = stream_init(
+		channel[i] = stream_init(msound,
 				name,Machine->sample_rate,8,
 				i,CVSD_update);
 
 		if (channel[i] == -1)
 			return 1;
 
-		CVSD_set_volume(i,interface->volume[i] & 0xff,(interface->volume[i] >> 8) & 0xff);
+		CVSD_set_volume(i,intf->volume[i] & 0xff,(intf->volume[i] >> 8) & 0xff);
 
 		latch[i] = 0;
 		current_databit[i] = 0;

@@ -84,14 +84,14 @@ void ym2413_setinstrument(int channel, int inst)
         /*    OPL_WRITE(0xc0+channel, ( (*pn) << 1 )); */
 }
 
-int YM2413_sh_start(const struct YM2413interface *interface)
+int YM2413_sh_start(const struct MachineSound *msound)
 {
         int i;
         for (i=0; i<ym2413_channels; i++)
         {
                 pending_register[i]=0;
         }
-	return YM3812_sh_start(interface);
+	return YM3812_sh_start(msound);
 }
 
 void YM2413_sh_stop(void)

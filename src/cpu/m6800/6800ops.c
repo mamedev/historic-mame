@@ -55,7 +55,7 @@ INLINE void asld (void)
 INLINE void tap (void)
 {
 	CC=A;
-	CHECK_IRQ_LINES;	/* HJB 990301 */
+	CHECK_IRQ_LINES(1); /* HJB 990417 */
 }
 
 /* $07 TPA inherent ----- */
@@ -79,17 +79,42 @@ INLINE void dex (void)
 }
 
 /* $0a CLV */
+INLINE void clv (void)
+{
+	CLV;
+}
 
 /* $0b SEV */
+INLINE void sev (void)
+{
+	SEV;
+}
 
 /* $0c CLC */
+INLINE void clc (void)
+{
+	CLC;
+}
 
 /* $0d SEC */
+INLINE void sec (void)
+{
+	SEC;
+}
 
 /* $0e CLI */
+INLINE void cli (void)
+{
+	CLI;
+	CHECK_IRQ_LINES(1); /* HJB 990417 */
+}
 
 /* $0f SEI */
-
+INLINE void sei (void)
+{
+	SEI;
+	CHECK_IRQ_LINES(1); /* HJB 990417 */
+}
 
 #if macintosh
 #pragma mark ____1x____
@@ -195,7 +220,7 @@ INLINE void bra( void )
 	UINT8 t;
 	IMMBYTE(t);PC+=SIGNED(t);change_pc(PC);
 	/* speed up busy loops */
-	if (t==0xfe) m6808_ICount = 0;
+	if (t==0xfe) EAT_CYCLES;
 }
 
 /* $21 BRN relative ----- */
@@ -384,7 +409,7 @@ INLINE void rti( void )
 	PULLWORD(pX);
 	PULLWORD(pPC);
 	change_pc(PC);
-	CHECK_IRQ_LINES;	/* HJB 990301 */
+	CHECK_IRQ_LINES(0); /* HJB 990417 */
 }
 
 /* $3c PSHX inherent ----- */
@@ -398,7 +423,7 @@ INLINE void mul( void )
 {
 	UINT16 t;
 	t=A*B;
-	CLR_ZC; SET_Z16(t); if(t&0x80) SEC;
+	CLR_C; if(t&0x80) SEC;
 	D=t;
 }
 
@@ -409,14 +434,14 @@ INLINE void wai( void )
 	 * WAI stacks the entire machine state on the
 	 * hardware stack, then waits for an interrupt.
 	 */
-	m6808_ICount = 0;
 	m6808.wai_state |= M6808_WAI;
 	PUSHWORD(pPC);
 	PUSHWORD(pX);
 	PUSHBYTE(A);
 	PUSHBYTE(B);
 	PUSHBYTE(CC);
-	CHECK_IRQ_LINES;
+	CHECK_IRQ_LINES(0);
+	if (m6808.wai_state & M6808_WAI) EAT_CYCLES;
 }
 
 /* $3f SWI absolute indirect ----- */

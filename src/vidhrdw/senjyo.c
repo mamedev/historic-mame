@@ -362,9 +362,9 @@ void senjyo_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	int i;
 
 
-	/* two arbitrary colors for the radar dots */
-	palette_change_color(400,0xff,0xff,0xff);	/* white for enemies */
-	palette_change_color(401,0xff,0x00,0x00);	/* red for player */
+	/* two colors for the radar dots (verified on the real board) */
+	palette_change_color(400,0xff,0x00,0x00);	/* red for enemies */
+	palette_change_color(401,0xff,0xff,0x00);	/* yellow for player */
 
 	{
 		int scrollx,scrolly;

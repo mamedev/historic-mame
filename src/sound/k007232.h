@@ -13,7 +13,7 @@ struct K007232_interface
 };
 
 
-int K007232_sh_start(const struct K007232_interface *intf);
+int K007232_sh_start(const struct MachineSound *msound);
 void K007232_WriteReg(int r,int v);
 int K007232_ReadReg(int r);
 

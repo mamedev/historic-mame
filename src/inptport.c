@@ -38,7 +38,7 @@ extern unsigned int lastcoin[COIN_COUNTERS];
 extern unsigned int coinlockedout[COIN_COUNTERS];
 
 static unsigned short input_port_value[MAX_INPUT_PORTS];
-static unsigned char input_vblank[MAX_INPUT_PORTS];
+static unsigned short input_vblank[MAX_INPUT_PORTS];
 
 /* Assuming a maxium of one analog input device per port BW 101297 */
 static struct InputPort *input_analog[MAX_INPUT_PORTS];

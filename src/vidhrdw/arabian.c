@@ -15,6 +15,92 @@ static struct osd_bitmap *tmpbitmap2;
 static unsigned char inverse_palette[256]; /* JB 970727 */
 
 
+void arabian_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
+{
+	int i;
+
+	/* this should be very close */
+	for (i = 0;i < Machine->drv->total_colors/2;i++)
+	{
+		int on;
+
+
+		on = (i & 0x08) ? 0x80 : 0xff;
+
+		*(palette++) = (i & 0x04) ? 0xff : 0;
+		*(palette++) = (i & 0x02) ? on : 0;
+		*(palette++) = (i & 0x01) ? on : 0;
+	}
+
+
+	/* this is handmade to match the screen shot */
+
+	*(palette++) = 0x00;
+	*(palette++) = 0x00;	  // 0000
+	*(palette++) = 0x00;
+
+	*(palette++) = 0x00;
+	*(palette++) = 0xff;  // 0001
+	*(palette++) = 0x00;
+
+	*(palette++) = 0x00;
+	*(palette++) = 0xff;  // 0010
+	*(palette++) = 0x00;
+
+	*(palette++) = 0x00;
+	*(palette++) = 0xff;  // 0011
+	*(palette++) = 0x00;
+
+	*(palette++) = 0xff;
+	*(palette++) = 0x00;  // 0100
+	*(palette++) = 0x00;
+
+	*(palette++) = 0xff;
+	*(palette++) = 0xff;  // 0101
+	*(palette++) = 0x00;
+
+	*(palette++) = 0xff;
+	*(palette++) = 0xff;  // 0110
+	*(palette++) = 0x00;
+
+	*(palette++) = 0xff;
+	*(palette++) = 0xff;  // 0111
+	*(palette++) = 0x00;
+
+
+
+	*(palette++) = 0x00;
+	*(palette++) = 0x00;  // 1000
+	*(palette++) = 0x00;
+
+	*(palette++) = 0xff;
+	*(palette++) = 0xff;  // 1001
+	*(palette++) = 0x00;
+
+	*(palette++) = 0xff;
+	*(palette++) = 0x80;  // 1010
+	*(palette++) = 0x00;
+
+	*(palette++) = 0x00;
+	*(palette++) = 0xff;  // 1011
+	*(palette++) = 0x00;
+
+	*(palette++) = 0xff;
+	*(palette++) = 0x00;  // 1100
+	*(palette++) = 0x00;
+
+	*(palette++) = 0xff;
+	*(palette++) = 0xff;  // 1101
+	*(palette++) = 0x00;
+
+	*(palette++) = 0xff;
+	*(palette++) = 0x80;  // 1110
+	*(palette++) = 0x00;
+
+	*(palette++) = 0xff;
+	*(palette++) = 0xff;  // 1111
+	*(palette++) = 0x00;
+}
 
 /***************************************************************************
 
@@ -26,7 +112,7 @@ static unsigned char inverse_palette[256]; /* JB 970727 */
 
 int arabian_vh_start(void)
 {
-int p1,p2,p3,p4,v1,v2,offs;
+	int p1,p2,p3,p4,v1,v2,offs;
 	int i;	/* JB 970727 */
 
 	if ((tmpbitmap = osd_create_bitmap(Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
@@ -59,10 +145,10 @@ after conversion :
   DDDD CCCC        BBBB AAAA
 */
 
-  for (offs=0; offs<0x3fff; offs++)
+  for (offs=0; offs<0x4000; offs++)
   {
-     v1 = Machine->memory_region[2][offs];
-     v2 = Machine->memory_region[2][offs+0x4000];
+     v1 = Machine->memory_region[1][offs];
+     v2 = Machine->memory_region[1][offs+0x4000];
 
      p1 = (v1 & 0x01) | ( (v1 & 0x10) >> 3) | ( (v2 & 0x01) << 2 ) | ( (v2 & 0x10) >> 1);
      v1 = v1 >> 1;
@@ -75,8 +161,8 @@ after conversion :
      v2 = v2 >> 1;
      p4 = (v1 & 0x01) | ( (v1 & 0x10) >> 3) | ( (v2 & 0x01) << 2 ) | ( (v2 & 0x10) >> 1);
 
-     Machine->memory_region[2][offs] = p1 | (p2<<4);
-     Machine->memory_region[2][offs+0x4000] = p3 | (p4<<4);
+     Machine->memory_region[1][offs] = p1 | (p2<<4);
+     Machine->memory_region[1][offs+0x4000] = p3 | (p4<<4);
 
   }
 	return 0;
@@ -97,294 +183,252 @@ void arabian_vh_stop(void)
 
 
 
-void arabian_blit_byte(int offset, int val, int val2, int plane)
+INLINE void blit_byte(UINT8 x, UINT8 y, int val, int val2, UINT8 plane)
 {
-  int plane1,plane2,plane3,plane4;
-  int p1,p2,p3,p4;
-  unsigned char *bm;
+	int p1,p2,p3,p4;
 
-  int	sy;
-  int	sx;
-
-  plane1 = plane & 0x01;
-  plane2 = plane & 0x02;
-  plane3 = plane & 0x04;
-  plane4 = plane & 0x08;
-
-  p4 = val & 0x0f;
-  p3 = (val >> 4) & 0x0f;
-  p2 = val2 & 0x0f;
-  p1 = (val2 >> 4) & 0x0f;
-
-	sx = offset % 256;
-	sy = (0x3f - (offset / 256)) * 4;
-
-	/* JB 970727 */
-	tmpbitmap->line[sy][sx] = inverse_palette[ tmpbitmap->line[sy][sx] ];
-	tmpbitmap->line[sy+1][sx] = inverse_palette[ tmpbitmap->line[sy+1][sx] ];
-	tmpbitmap->line[sy+2][sx] = inverse_palette[ tmpbitmap->line[sy+2][sx] ];
-	tmpbitmap->line[sy+3][sx] = inverse_palette[ tmpbitmap->line[sy+3][sx] ];
-	tmpbitmap2->line[sy][sx] = inverse_palette[ tmpbitmap2->line[sy][sx] ];
-	tmpbitmap2->line[sy+1][sx] = inverse_palette[ tmpbitmap2->line[sy+1][sx] ];
-	tmpbitmap2->line[sy+2][sx] = inverse_palette[ tmpbitmap2->line[sy+2][sx] ];
-	tmpbitmap2->line[sy+3][sx] = inverse_palette[ tmpbitmap2->line[sy+3][sx] ];
-
-     if (plane1)
-     {
-	bm = tmpbitmap->line[sy] + sx;
-        if (p1!=8)
-		*bm = p1;
-
-	bm = tmpbitmap->line[sy+1] + sx;
-	if (p2!=8)
-		*bm = p2;
-
-	bm = tmpbitmap->line[sy+2] + sx;
-	if (p3!=8)
-		*bm = p3;
-
-	bm = tmpbitmap->line[sy+3] + sx;
-	if (p4!=8)
-		*bm = p4;
-     }
+	INT8 dx=0,dy=1;
 
 
-     if (plane3)
-     {
-	bm = tmpbitmap2->line[sy] + sx;
-        if (p1!=8)
-		*bm = (16+p1);
-
-	bm = tmpbitmap2->line[sy+1] + sx;
-	if (p2!=8)
-		*bm = (16+p2);
-
-	bm = tmpbitmap2->line[sy+2] + sx;
-	if (p3!=8)
-		*bm = (16+p3);
-
-	bm = tmpbitmap2->line[sy+3] + sx;
-	if (p4!=8)
-		*bm = (16+p4);
-
-     }
-
-	/* JB 970727 */
-	tmpbitmap->line[sy][sx] = Machine->pens[ tmpbitmap->line[sy][sx] ];
-	tmpbitmap->line[sy+1][sx] = Machine->pens[ tmpbitmap->line[sy+1][sx] ];
-	tmpbitmap->line[sy+2][sx] = Machine->pens[ tmpbitmap->line[sy+2][sx] ];
-	tmpbitmap->line[sy+3][sx] = Machine->pens[ tmpbitmap->line[sy+3][sx] ];
-	tmpbitmap2->line[sy][sx] = Machine->pens[ tmpbitmap2->line[sy][sx] ];
-	tmpbitmap2->line[sy+1][sx] = Machine->pens[ tmpbitmap2->line[sy+1][sx] ];
-	tmpbitmap2->line[sy+2][sx] = Machine->pens[ tmpbitmap2->line[sy+2][sx] ];
-	tmpbitmap2->line[sy+3][sx] = Machine->pens[ tmpbitmap2->line[sy+3][sx] ];
-}
+	p4 =  val        & 0x0f;
+	p3 = (val  >> 4) & 0x0f;
+	p2 =  val2       & 0x0f;
+	p1 = (val2 >> 4) & 0x0f;
 
 
-void arabian_blit_area(int plane, int src, int trg, int xb, int yb)
-{
-int x,y;
-int machine_scrn_x;
-int offs;
-
-  machine_scrn_x = (trg-0x8000) & 0xff;
-
-  for (y=0; y<=yb; y++)
-  {
-    offs=trg-0x8000+y*0x100;
-    for (x=0; x<=xb; x++)
-    {
-      if ( (offs < 0x3fff) && ( machine_scrn_x + x < 0xf8 ) )
-        arabian_blit_byte(offs,Machine->memory_region[2][src], Machine->memory_region[2][src+0x4000] , plane);
-      src++;
-      offs++;
-    }
-  }
-
-	/* ASG 971015 -- *this* was fun to figure out... :-) */
+	if (Machine->orientation & ORIENTATION_FLIP_X)
 	{
-		int x1 = machine_scrn_x;
-		int x2 = (x1 + xb) & 0xff;
-		int y1 = (0x3f - ((trg-0x8000+yb*0x100) / 256)) * 4;
-		int y2 = (0x3f - ((trg-0x8000) / 256)) * 4 + 3;
+		x = ~x;
+	}
+	if (Machine->orientation & ORIENTATION_FLIP_Y)
+	{
+		y = ~y;
+		dy = -1;
+	}
+	if (Machine->orientation & ORIENTATION_SWAP_XY)
+	{
+		UINT8 temp = x;
+		x = y;
+		y = temp;
 
-		if (x1 > x2) x1 = 0, x2 = 255;
-
-		osd_mark_dirty(x1,y1,x2,y2,0);
+		dx = dy;
+		dy = 0;
 	}
 
+
+	if (plane & 0x01)
+	{
+		if (p4 != 8)  tmpbitmap ->line[x     ][y     ] = Machine->pens[p4];
+		if (p3 != 8)  tmpbitmap ->line[x+  dx][y+  dy] = Machine->pens[p3];
+		if (p2 != 8)  tmpbitmap ->line[x+2*dx][y+2*dy] = Machine->pens[p2];
+		if (p1 != 8)  tmpbitmap ->line[x+3*dx][y+3*dy] = Machine->pens[p1];
+	}
+
+	if (plane & 0x04)
+	{
+		if (p4 != 8)  tmpbitmap2->line[x     ][y     ] = Machine->pens[16+p4];
+		if (p3 != 8)  tmpbitmap2->line[x+  dx][y+  dy] = Machine->pens[16+p3];
+		if (p2 != 8)  tmpbitmap2->line[x+2*dx][y+2*dy] = Machine->pens[16+p2];
+		if (p1 != 8)  tmpbitmap2->line[x+3*dx][y+3*dy] = Machine->pens[16+p1];
+	}
+
+	osd_mark_dirty(y,x,y+3*dy,x+3*dx,0);
 }
 
 
-void arabian_spriteramw(int offset,int val)
+void arabian_blit_area(UINT8 plane, UINT16 src, UINT8 x, UINT8 y, UINT8 sx, UINT8 sy)
 {
-  int pl, src,trg, xb,yb;
+	int i,j;
 
-  spriteram[offset]=val;
+	for (i = 0; i <= sy; i++, y += 4)
+	{
+		for (j = 0; j <= sx; j++)
+		{
+			blit_byte(x+j, y, Machine->memory_region[1][src], Machine->memory_region[1][src+0x4000], plane);
+			src++;
+		}
+	}
+}
 
-  if ( (offset%8) ==6 )
-  {
-     pl  = spriteram[offset-6];
-     src = spriteram[offset-5] + 256 * spriteram[offset-4];
-     trg = spriteram[offset-3] + 256 * spriteram[offset-2];
-     xb  = spriteram[offset-1];
-     yb  = spriteram[offset];
-     arabian_blit_area(pl,src,trg,xb,yb);
-  }
 
+void arabian_blitter_w(int offset,int val)
+{
+	spriteram[offset]=val;
+
+	if ((offset & 0x07) == 6)
+	{
+		UINT8 plane,x,y,sx,sy;
+		UINT16 src;
+
+		plane = spriteram[offset-6];
+		src   = spriteram[offset-5] | (spriteram[offset-4] << 8);
+		x     = spriteram[offset-3];
+		y     = spriteram[offset-2] << 2;
+		sx    = spriteram[offset-1];
+		sy    = spriteram[offset-0];
+
+		arabian_blit_area(plane,src,x,y,sx,sy);
+	}
 }
 
 
 
-void arabian_videoramw(int offset, int val)
+void arabian_videoram_w(int offset, int val)
 {
-  int plane1,plane2,plane3,plane4;
-  unsigned char *bm;
-  unsigned char *pom;
+	int plane1,plane2,plane3,plane4;
+	unsigned char *bm;
 
-  int sx;
-  int sy;
-
-  plane1 = Machine->memory_region[0][0xe000] & 0x01;
-  plane2 = Machine->memory_region[0][0xe000] & 0x02;
-  plane3 = Machine->memory_region[0][0xe000] & 0x04;
-  plane4 = Machine->memory_region[0][0xe000] & 0x08;
+	UINT8 x,y;
+	INT8 dx=0, dy=1;
 
 
-  sx = offset % 256;
-  sy = (0x3f - (offset / 256)) * 4;
+	plane1 = spriteram[0] & 0x01;
+	plane2 = spriteram[0] & 0x02;
+	plane3 = spriteram[0] & 0x04;
+	plane4 = spriteram[0] & 0x08;
+
+	x = offset & 0xff;
+	y = (offset >> 8) << 2;
+
+
+	if (Machine->orientation & ORIENTATION_FLIP_X)
+	{
+		x = ~x;
+	}
+	if (Machine->orientation & ORIENTATION_FLIP_Y)
+	{
+		y = ~y;
+		dy = -1;
+	}
+	if (Machine->orientation & ORIENTATION_SWAP_XY)
+	{
+		UINT8 temp = x;
+		x = y;
+		y = temp;
+
+		dx = dy;
+		dy = 0;
+	}
+
 
 	/* JB 970727 */
-	tmpbitmap->line[sy][sx] = inverse_palette[ tmpbitmap->line[sy][sx] ];
-	tmpbitmap->line[sy+1][sx] = inverse_palette[ tmpbitmap->line[sy+1][sx] ];
-	tmpbitmap->line[sy+2][sx] = inverse_palette[ tmpbitmap->line[sy+2][sx] ];
-	tmpbitmap->line[sy+3][sx] = inverse_palette[ tmpbitmap->line[sy+3][sx] ];
-	tmpbitmap2->line[sy][sx] = inverse_palette[ tmpbitmap2->line[sy][sx] ];
-	tmpbitmap2->line[sy+1][sx] = inverse_palette[ tmpbitmap2->line[sy+1][sx] ];
-	tmpbitmap2->line[sy+2][sx] = inverse_palette[ tmpbitmap2->line[sy+2][sx] ];
-	tmpbitmap2->line[sy+3][sx] = inverse_palette[ tmpbitmap2->line[sy+3][sx] ];
+	tmpbitmap ->line[x     ][y     ] = inverse_palette[ tmpbitmap ->line[x     ][y     ] ];
+	tmpbitmap ->line[x+  dx][y+  dy] = inverse_palette[ tmpbitmap ->line[x+  dx][y+  dy] ];
+	tmpbitmap ->line[x+2*dx][y+2*dy] = inverse_palette[ tmpbitmap ->line[x+2*dx][y+2*dy] ];
+	tmpbitmap ->line[x+3*dx][y+3*dy] = inverse_palette[ tmpbitmap ->line[x+3*dx][y+3*dy] ];
+	tmpbitmap2->line[x     ][y     ] = inverse_palette[ tmpbitmap2->line[x     ][y     ] ];
+	tmpbitmap2->line[x+  dx][y+  dy] = inverse_palette[ tmpbitmap2->line[x+  dx][y+  dy] ];
+	tmpbitmap2->line[x+2*dx][y+2*dy] = inverse_palette[ tmpbitmap2->line[x+2*dx][y+2*dy] ];
+	tmpbitmap2->line[x+3*dx][y+3*dy] = inverse_palette[ tmpbitmap2->line[x+3*dx][y+3*dy] ];
 
-	pom = tmpbitmap->line[sy] + sx;
-	bm = pom;
+	if (plane1)
+	{
+		bm = &tmpbitmap->line[x     ][y     ];
+		*bm &= 0xf3;
+		if (val & 0x10) *bm |= 8;
+		if (val & 0x01) *bm |= 4;
 
-     if (plane1)
-     {
+		bm = &tmpbitmap->line[x+  dx][y+  dy];
+		*bm &= 0xf3;
+		if (val & 0x20) *bm |= 8;
+		if (val & 0x02) *bm |= 4;
 
-	*bm &= 0xf3;
-	if (val & 0x80) *bm |= 8;
-	if (val & 0x08) *bm |= 4;
+		bm = &tmpbitmap->line[x+2*dx][y+2*dy];
+		*bm &= 0xf3;
+		if (val & 0x40) *bm |= 8;
+		if (val & 0x04) *bm |= 4;
 
-	bm = tmpbitmap->line[sy+1] + sx;
-	*bm &= 0xf3;
-	if (val & 0x40) *bm |= 8;
-	if (val & 0x04) *bm |= 4;
+		bm = &tmpbitmap->line[x+3*dx][y+3*dy];
+		*bm &= 0xf3;
+		if (val & 0x80) *bm |= 8;
+		if (val & 0x08) *bm |= 4;
+	}
 
-	bm = tmpbitmap->line[sy+2] + sx;
-	*bm &= 0xf3;
-	if (val & 0x20) *bm |= 8;
-	if (val & 0x02) *bm |= 4;
+	if (plane2)
+	{
+		bm = &tmpbitmap->line[x     ][y     ];
+		*bm &= 0xfc;
+		if (val & 0x10) *bm |= 2;
+		if (val & 0x01) *bm |= 1;
 
-	bm = tmpbitmap->line[sy+3] + sx;
-	*bm &= 0xf3;
-	if (val & 0x10) *bm |= 8;
-	if (val & 0x01) *bm |= 4;
+		bm = &tmpbitmap->line[x+  dx][y+  dy];
+		*bm &= 0xfc;
+		if (val & 0x20) *bm |= 2;
+		if (val & 0x02) *bm |= 1;
 
-     }
+		bm = &tmpbitmap->line[x+2*dx][y+2*dy];
+		*bm &= 0xfc;
+		if (val & 0x40) *bm |= 2;
+		if (val & 0x04) *bm |= 1;
 
-     bm=pom;
-     if (plane2)
-     {
-	*bm &= 0xfc;
-	if (val & 0x80) *bm |= 2;
-	if (val & 0x08) *bm |= 1;
+		bm = &tmpbitmap->line[x+3*dx][y+3*dy];
+		*bm &= 0xfc;
+		if (val & 0x80) *bm |= 2;
+		if (val & 0x08) *bm |= 1;
+	}
 
-	bm = tmpbitmap->line[sy+1] + sx;
-	*bm &= 0xfc;
-	if (val & 0x40) *bm |= 2;
-	if (val & 0x04) *bm |= 1;
+	if (plane3)
+	{
+		bm = &tmpbitmap2->line[x     ][y     ];
+		*bm &= 0xf3;
+		if (val & 0x10) *bm |= (16+8);
+		if (val & 0x01) *bm |= (16+4);
 
-	bm = tmpbitmap->line[sy+2] + sx;
-	*bm &= 0xfc;
-	if (val & 0x20) *bm |= 2;
-	if (val & 0x02) *bm |= 1;
+		bm = &tmpbitmap2->line[x+  dx][y+  dy];
+		*bm &= 0xf3;
+		if (val & 0x20) *bm |= (16+8);
+		if (val & 0x02) *bm |= (16+4);
 
-	bm = tmpbitmap->line[sy+3] + sx;
-	*bm &= 0xfc;
-	if (val & 0x10) *bm |= 2;
-	if (val & 0x01) *bm |= 1;
+		bm = &tmpbitmap2->line[x+2*dx][y+2*dy];
+		*bm &= 0xf3;
+		if (val & 0x40) *bm |= (16+8);
+		if (val & 0x04) *bm |= (16+4);
 
-     }
+		bm = &tmpbitmap2->line[x+3*dx][y+3*dy];
+		*bm &= 0xf3;
+		if (val & 0x80) *bm |= (16+8);
+		if (val & 0x08) *bm |= (16+4);
+	}
 
+	if (plane4)
+	{
+		bm = &tmpbitmap2->line[x     ][y     ];
+		*bm &= 0xfc;
+		if (val & 0x10) *bm |= (16+2);
+		if (val & 0x01) *bm |= (16+1);
 
-    pom = tmpbitmap2->line[sy] + sx;
-    bm = pom;
+		bm = &tmpbitmap2->line[x+  dx][y+  dy];
+		*bm &= 0xfc;
+		if (val & 0x20) *bm |= (16+2);
+		if (val & 0x02) *bm |= (16+1);
 
-     if (plane3)
-     {
+		bm = &tmpbitmap2->line[x+2*dx][y+2*dy];
+		*bm &= 0xfc;
+		if (val & 0x40) *bm |= (16+2);
+		if (val & 0x04) *bm |= (16+1);
 
-	*bm &= 0xf3;
-	if (val & 0x80) *bm |= (16+8);
-	if (val & 0x08) *bm |= (16+4);
-
-	bm = tmpbitmap2->line[sy+1] + sx;
-	*bm &= 0xf3;
-	if (val & 0x40) *bm |= (16+8);
-	if (val & 0x04) *bm |= (16+4);
-
-	bm = tmpbitmap2->line[sy+2] + sx;
-	*bm &= 0xf3;
-	if (val & 0x20) *bm |= (16+8);
-	if (val & 0x02) *bm |= (16+4);
-
-	bm = tmpbitmap2->line[sy+3] + sx;
-	*bm &= 0xf3;
-	if (val & 0x10) *bm |= (16+8);
-	if (val & 0x01) *bm |= (16+4);
-
-     }
-
-     bm=pom;
-     if (plane4)
-     {
-
-	*bm &= 0xfc;
-	if (val & 0x80) *bm |= (16+2);
-	if (val & 0x08) *bm |= (16+1);
-
-	bm = tmpbitmap2->line[sy+1] + sx;
-	*bm &= 0xfc;
-	if (val & 0x40) *bm |= (16+2);
-	if (val & 0x04) *bm |= (16+1);
-
-	bm = tmpbitmap2->line[sy+2] + sx;
-	*bm &= 0xfc;
-	if (val & 0x20) *bm |= (16+2);
-	if (val & 0x02) *bm |= (16+1);
-
-	bm = tmpbitmap2->line[sy+3] + sx;
-	*bm &= 0xfc;
-	if (val & 0x10) *bm |= (16+2);
-	if (val & 0x01) *bm |= (16+1);
-
-     }
+		bm = &tmpbitmap2->line[x+3*dx][y+3*dy];
+		*bm &= 0xfc;
+		if (val & 0x80) *bm |= (16+2);
+		if (val & 0x08) *bm |= (16+1);
+	}
 
 	/* JB 970727 */
-	tmpbitmap->line[sy][sx] = Machine->pens[ tmpbitmap->line[sy][sx] ];
-	tmpbitmap->line[sy+1][sx] = Machine->pens[ tmpbitmap->line[sy+1][sx] ];
-	tmpbitmap->line[sy+2][sx] = Machine->pens[ tmpbitmap->line[sy+2][sx] ];
-	tmpbitmap->line[sy+3][sx] = Machine->pens[ tmpbitmap->line[sy+3][sx] ];
-	tmpbitmap2->line[sy][sx] = Machine->pens[ tmpbitmap2->line[sy][sx] ];
-	tmpbitmap2->line[sy+1][sx] = Machine->pens[ tmpbitmap2->line[sy+1][sx] ];
-	tmpbitmap2->line[sy+2][sx] = Machine->pens[ tmpbitmap2->line[sy+2][sx] ];
-	tmpbitmap2->line[sy+3][sx] = Machine->pens[ tmpbitmap2->line[sy+3][sx] ];
+	tmpbitmap ->line[x     ][y     ] = Machine->pens[ tmpbitmap ->line[x     ][y     ] ];
+	tmpbitmap ->line[x+  dx][y+  dy] = Machine->pens[ tmpbitmap ->line[x+  dx][y+  dy] ];
+	tmpbitmap ->line[x+2*dx][y+2*dy] = Machine->pens[ tmpbitmap ->line[x+2*dx][y+2*dy] ];
+	tmpbitmap ->line[x+3*dx][y+3*dy] = Machine->pens[ tmpbitmap ->line[x+3*dx][y+3*dy] ];
+	tmpbitmap2->line[x     ][y     ] = Machine->pens[ tmpbitmap2->line[x     ][y     ] ];
+	tmpbitmap2->line[x+  dx][y+  dy] = Machine->pens[ tmpbitmap2->line[x+  dx][y+  dy] ];
+	tmpbitmap2->line[x+2*dx][y+2*dy] = Machine->pens[ tmpbitmap2->line[x+2*dx][y+2*dy] ];
+	tmpbitmap2->line[x+3*dx][y+3*dy] = Machine->pens[ tmpbitmap2->line[x+3*dx][y+3*dy] ];
 
-	osd_mark_dirty(sx,sy,sx,sy+3,0);	/* ASG 971015 */
+	osd_mark_dirty(y,x,y+3*dy,x+3*dx,0);
 }
 
 
 void arabian_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
-	/* copy the character mapped graphics */
-	copybitmap(bitmap,tmpbitmap2,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
- 	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_COLOR,0);
+	copybitmap(bitmap,tmpbitmap2,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE, 0);
+ 	copybitmap(bitmap,tmpbitmap ,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_COLOR,0);
 }

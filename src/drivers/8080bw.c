@@ -34,8 +34,9 @@
 /* 730 - 4 Player Bowling                (midwbowl)                         */
 /* 739 - Space Invaders                  (invaders)                         */
 /* 742 - Blue Shark                      (blueshrk)                         */
-/* 851 - Space Invaders Part II (Midway) (invdelux)                         */
-/* 852 - Space Invaders Deluxe           NO DRIVER                          */
+/* 851 - Space Invaders II cocktail      NO DRIVER                          */
+/* 852 - Space Invaders Deluxe           (invdelux)                         */
+/* 870 - Space Invaders Deluxe cocktail  NO DRIVER                          */
 /*                                                                          */
 /* Taito                                                                    */
 /* -----                                                                    */
@@ -390,15 +391,15 @@ static void invaders_hisave(void)
 static const char *invaders_sample_names[] =
 {
 	"*invaders",
-	"0.SAM",
-	"1.SAM",
-	"2.SAM",
-	"3.SAM",
-	"4.SAM",
-	"5.SAM",
-	"6.SAM",
-	"7.SAM",
-	"8.SAM",
+	"0.wav",
+	"1.wav",
+	"2.wav",
+	"3.wav",
+	"4.wav",
+	"5.wav",
+	"6.wav",
+	"7.wav",
+	"8.wav",
 	0       /* end of array */
 };
 
@@ -2390,10 +2391,10 @@ static struct MachineDriver boothill_machine_driver =                   /* MJC 3
 static const char *boothill_sample_names[] =
 {
 	"*boothill", /* in case we ever find any bootlegs hehehe */
-	"addcoin.sam",
-	"endgame.sam",
-	"gunshot.sam",
-	"killed.sam",
+	"addcoin.wav",
+	"endgame.wav",
+	"gunshot.wav",
+	"killed.wav",
 	0       /* end of array */
 };
 

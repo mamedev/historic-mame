@@ -1,57 +1,68 @@
 #include "driver.h"
 
 
-#define AUDIO_CONV(a) ((a)-0x80)
+/* macro to convert 4-bit unsigned samples to 8-bit signed samples */
+#define SAMPLE_CONV4(a) (0x11*((a&0x0f))-0x80)
 
 #define SND_CLOCK 3072000	/* 3.072 Mhz */
 
 
-static signed char *samples;	/* 16k for samples */
-static int sample_freq,sample_volume;
-static int porta;
+static signed char *samplebuf;	/* buffer to decode samples at run time */
 static int channel;
 
 
-void cclimber_portA_w(int offset,int data)
+
+int cclimber_sh_start(const struct MachineSound *msound)
 {
-	porta = data;
-}
-
-
-
-int cclimber_sh_start(void)
-{
-	int i;
-	unsigned char bits;
-
-
 	channel = get_play_channels(1);
 
-	samples = malloc (0x4000);
-	if (!samples)
+	samplebuf = malloc (2*Machine->memory_region_length[3]);
+	if (!samplebuf)
 		return 1;
-
-	/* decode the rom samples */
-	for (i = 0;i < 0x2000;i++)
-	{
-		bits = Machine->memory_region[3][i] & 0xf0;
-		samples[2 * i] = AUDIO_CONV((bits | (bits >> 4)));
-
-		bits = Machine->memory_region[3][i] & 0x0f;
-		samples[2 * i + 1] = AUDIO_CONV(((bits << 4) | bits));
-	}
 
 	return 0;
 }
 
-
 void cclimber_sh_stop(void)
 {
-	if (samples)
-		free(samples);
-	samples = NULL;
+	if (samplebuf)
+		free(samplebuf);
+	samplebuf = NULL;
 }
 
+
+
+static void cclimber_play_sample(int start,int freq,int volume)
+{
+	int len;
+	const UINT8 *rom = Machine->memory_region[3];
+
+
+	/* decode the rom samples */
+	len = 0;
+	while (start + len < Machine->memory_region_length[3] && rom[start+len] != 0x70)
+	{
+		int sample;
+
+		sample = (rom[start + len] & 0xf0) >> 4;
+		samplebuf[2*len] = SAMPLE_CONV4(sample);
+
+		sample = rom[start + len] & 0x0f;
+		samplebuf[2*len + 1] = SAMPLE_CONV4(sample);
+
+		len++;
+	}
+
+	osd_play_sample(channel,samplebuf,2 * len,freq,8*volume,0);
+}
+
+
+static int sample_num,sample_freq,sample_volume;
+
+void cclimber_sample_select_w(int offset,int data)
+{
+	sample_num = data;
+}
 
 void cclimber_sample_rate_w(int offset,int data)
 {
@@ -59,29 +70,15 @@ void cclimber_sample_rate_w(int offset,int data)
 	sample_freq = SND_CLOCK / 4 / (256 - data);
 }
 
-
-
 void cclimber_sample_volume_w(int offset,int data)
 {
 	sample_volume = data & 0x1f;	/* range 0-31 */
 }
 
-
-
 void cclimber_sample_trigger_w(int offset,int data)
 {
-	int start,end;
-
-
 	if (data == 0 || Machine->sample_rate == 0)
 		return;
 
-	start = 64 * porta;
-	end = start;
-
-	/* find end of sample */
-	while (end < 0x4000 && (samples[end] != AUDIO_CONV(0x77) || samples[end+1] != AUDIO_CONV(0x00)))
-		end += 2;
-
-	osd_play_sample(channel,samples + start,end - start,sample_freq,sample_volume*8,0);
+	cclimber_play_sample(32 * sample_num,sample_freq,sample_volume);
 }

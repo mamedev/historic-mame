@@ -194,7 +194,7 @@ void astdelux_sounds_w (int offset,int data)
 
 ***************************************************************************/
 
-int llander_sh_start(void)
+int llander_sh_start(const struct MachineSound *msound)
 {
 	int loop,lfsrtmp,nor1,nor2,bit14,bit6;
 	long fraction,remainder;

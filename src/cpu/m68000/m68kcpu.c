@@ -138,8 +138,8 @@ uint8 m68k_exception_cycle_table[256] =
    50, /*  2: Bus Error                                (unused in emulation) */
    50, /*  3: Address Error                            (unused in emulation) */
    34, /*  4: Illegal Instruction                                            */
-   42, /*  5: Divide by Zero                                                 */
-   44, /*  6: CHK                                                            */
+   38, /*  5: Divide by Zero -- ASG: changed from 42                         */
+   40, /*  6: CHK -- ASG: chanaged from 44                                   */
    34, /*  7: TRAPV                                                          */
    34, /*  8: Privilege Violation                                            */
    34, /*  9: Trace                                                          */
@@ -165,22 +165,22 @@ uint8 m68k_exception_cycle_table[256] =
    44, /* 29: Level 5 Interrupt Autovector                                   */
    44, /* 30: Level 6 Interrupt Autovector                                   */
    44, /* 31: Level 7 Interrupt Autovector                                   */
-   38, /* 32: TRAP #0                                                        */
-   38, /* 33: TRAP #1                                                        */
-   38, /* 34: TRAP #2                                                        */
-   38, /* 35: TRAP #3                                                        */
-   38, /* 36: TRAP #4                                                        */
-   38, /* 37: TRAP #5                                                        */
-   38, /* 38: TRAP #6                                                        */
-   38, /* 39: TRAP #7                                                        */
-   38, /* 40: TRAP #8                                                        */
-   38, /* 41: TRAP #9                                                        */
-   38, /* 42: TRAP #10                                                       */
-   38, /* 43: TRAP #11                                                       */
-   38, /* 44: TRAP #12                                                       */
-   38, /* 45: TRAP #13                                                       */
-   38, /* 46: TRAP #14                                                       */
-   38, /* 47: TRAP #15                                                       */
+   34, /* 32: TRAP #0 -- ASG: chanaged from 38                               */
+   34, /* 33: TRAP #1                                                        */
+   34, /* 34: TRAP #2                                                        */
+   34, /* 35: TRAP #3                                                        */
+   34, /* 36: TRAP #4                                                        */
+   34, /* 37: TRAP #5                                                        */
+   34, /* 38: TRAP #6                                                        */
+   34, /* 39: TRAP #7                                                        */
+   34, /* 40: TRAP #8                                                        */
+   34, /* 41: TRAP #9                                                        */
+   34, /* 42: TRAP #10                                                       */
+   34, /* 43: TRAP #11                                                       */
+   34, /* 44: TRAP #12                                                       */
+   34, /* 45: TRAP #13                                                       */
+   34, /* 46: TRAP #14                                                       */
+   34, /* 47: TRAP #15                                                       */
     4, /* 48: FP Branch or Set on Unknown Condition    (unused in emulation) */
     4, /* 49: FP Inexact Result                        (unused in emulation) */
     4, /* 50: FP Divide by Zero                        (unused in emulation) */
@@ -376,6 +376,7 @@ void m68k_set_cpu_mode(int cpu_mode)
 
 
 /* Execute some instructions until we use up num_clks clock cycles */
+/* ASG: removed per-instruction interrupt checks */
 int m68k_execute(int num_clks)
 {
 #if M68K_HALT
@@ -383,43 +384,52 @@ int m68k_execute(int num_clks)
    {
 #endif /* M68K_HALT */
    /* Make sure we're not stopped */
-   if(!CPU_STOPPED ||
-         (CPU_INTS_PENDING & m68k_int_masks[CPU_INT_MASK]))
+   if(!CPU_STOPPED)
    {
       /* Set our pool of clock cycles available */
       m68k_clks_left = num_clks;
 
+      /* ASG: update cycles */
+      m68k_clks_left -= CPU_INT_CYCLES;
+      CPU_INT_CYCLES = 0;
+
       /* Main loop.  Keep going until we run out of clock cycles */
       do
       {
-         /* check for an interrupt */
-         if(!(CPU_INTS_PENDING & m68k_int_masks[CPU_INT_MASK]))
-         {
-            /* Set tracing accodring to T1. (T0 is done inside instruction) */
-            m68ki_set_trace(); /* auto-disable (see m68kcpu.h) */
+         /* Set tracing accodring to T1. (T0 is done inside instruction) */
+         m68ki_set_trace(); /* auto-disable (see m68kcpu.h) */
 
-            /* Call external hook to peek at CPU */
-            m68ki_instr_hook(); /* auto-disable (see m68kcpu.h) */
+         /* Call external hook to peek at CPU */
+         m68ki_instr_hook(); /* auto-disable (see m68kcpu.h) */
 
-            /* MAME */
-            CPU_PPC = CPU_PC;
-			CALL_MAME_DEBUG;
-            /* MAME */
+         /* MAME */
+         CPU_PPC = CPU_PC;
+         CALL_MAME_DEBUG;
+	#if A68000_COREDEBUG
+		Asgard68000MiniTrace(&CPU_D[0], &CPU_A[0], m68k_peek_pc(), m68k_peek_sr(), m68k_clks_left);
+	#endif
+         /* MAME */
 
-            /* Read an instruction and call its handler */
-            CPU_IR = m68ki_read_instruction();
-            m68k_instruction_jump_table[CPU_IR]();
+         /* Read an instruction and call its handler */
+         CPU_IR = m68ki_read_instruction();
+         m68k_instruction_jump_table[CPU_IR]();
 
-            /* Trace m68k_exception, if necessary */
-            m68ki_exception_if_trace(); /* auto-disable (see m68kcpu.h) */
-            continue;
-         }
-         else
-            m68ki_service_interrupt();
+         /* Trace m68k_exception, if necessary */
+         m68ki_exception_if_trace(); /* auto-disable (see m68kcpu.h) */
+         continue;
       } while(m68k_clks_left > 0);
 
 	  /* set previous PC to current PC for the next entry into the loop */
       CPU_PPC = CPU_PC;
+
+      /* ASG: update cycles */
+      m68k_clks_left -= CPU_INT_CYCLES;
+      CPU_INT_CYCLES = 0;
+
+	#if A68000_COREDEBUG
+		Asgard68000MiniTrace(&CPU_D[0], &CPU_A[0], m68k_peek_pc(), m68k_peek_sr(), m68k_clks_left);
+	#endif
+
       /* return how many clocks we used */
       return num_clks - m68k_clks_left;
    }
@@ -430,20 +440,43 @@ int m68k_execute(int num_clks)
    /* We get here if the CPU is stopped */
    m68k_clks_left = 0;
 
+	#if A68000_COREDEBUG
+		Asgard68000MiniTrace(&CPU_D[0], &CPU_A[0], m68k_peek_pc(), m68k_peek_sr(), m68k_clks_left);
+	#endif
+
    return num_clks;
 }
 
 
-/* Set the current interrupt level */
+/* ASG: rewrote so that the int_line is a mask of the IPL0/IPL1/IPL2 bits */
 void m68k_assert_irq(int int_line)
 {
-   CPU_INTS_PENDING |= 1 << (int_line&7);
+   /* OR in the bits of the interrupt */
+   int old_state = CPU_INT_STATE;
+   CPU_INT_STATE = 0;	/* ASG: remove me to do proper mask setting */
+   CPU_INT_STATE |= int_line & 7;
+
+   /* if it's NMI, we're edge triggered */
+   if (CPU_INT_STATE == 7)
+   {
+      if (old_state != 7)
+         m68ki_service_interrupt(1 << 7);
+   }
+
+   /* other interrupts just reflect the current state */
+   else
+      m68ki_check_interrupts();
 }
 
-/* clear an interrupt line */
+/* ASG: rewrote so that the int_line is a mask of the IPL0/IPL1/IPL2 bits */
 void m68k_clear_irq(int int_line)
 {
-   CPU_INTS_PENDING &= ~(1<<(int_line&7));
+   /* AND in the bits of the interrupt */
+   CPU_INT_STATE &= ~int_line & 7;
+   CPU_INT_STATE = 0;	/* ASG: remove me to do proper mask setting */
+
+   /* check for interrupts again */
+   m68ki_check_interrupts();
 }
 
 
@@ -452,12 +485,13 @@ void m68k_pulse_reset(void *param)
 {
    CPU_HALTED = 0;
    CPU_STOPPED = 0;
-   CPU_INTS_PENDING = 0;
+   CPU_INT_STATE = 0;	/* ASG: changed from CPU_INTS_PENDING */
    CPU_T1 = CPU_T0 = 0;
    m68ki_clear_trace();
    CPU_S = 1;
    CPU_M = 0;
    CPU_INT_MASK = 7;
+/* ASG: removed a bunch of this initialization....
    CPU_X = CPU_N = CPU_V = CPU_C = 0;
    CPU_NOT_Z = 1;
    CPU_USP = 0;
@@ -466,11 +500,11 @@ void m68k_pulse_reset(void *param)
    CPU_D[0] = CPU_D[1] = CPU_D[2] = CPU_D[3] =
    CPU_D[4] = CPU_D[5] = CPU_D[6] = CPU_D[7] =
    CPU_A[0] = CPU_A[1] = CPU_A[2] = CPU_A[3] =
-   CPU_A[4] = CPU_A[5] = CPU_A[6] = CPU_A[7] = 0;
+   CPU_A[4] = CPU_A[5] = CPU_A[6] = CPU_A[7] = 0;*/
    CPU_VBR = 0;
-   CPU_SFC = 0;
-   CPU_DFC = 0;
-   CPU_A[7] = CPU_ISP = m68ki_read_32(0);
+/* CPU_SFC = 0;
+   CPU_DFC = 0;*/
+   CPU_A[7] = /*CPU_ISP =*/ m68ki_read_32(0);
    m68ki_set_pc(m68ki_read_32(4));
    m68k_clks_left = 0;
 
@@ -481,8 +515,8 @@ void m68k_pulse_reset(void *param)
    else
    {
       m68ki_build_opcode_table();
-//      if(CPU_MODE == 0)
-//         CPU_MODE = M68K_DEFAULT_CPU_MODE;
+/*    if(CPU_MODE == 0)
+         CPU_MODE = M68K_DEFAULT_CPU_MODE;*/
       m68k_set_int_ack_callback(NULL);
       m68k_set_bkpt_ack_callback(NULL);
       m68k_set_reset_instr_callback(NULL);
@@ -523,7 +557,8 @@ unsigned m68k_get_context(void* dst)
 		cpu->dfc				  = CPU_DFC;
 		cpu->stopped			  = CPU_STOPPED;
 		cpu->halted 			  = CPU_HALTED;
-		cpu->ints_pending		  = CPU_INTS_PENDING;
+		cpu->int_state			  = CPU_INT_STATE;	/* ASG: changed from CPU_INTS_PENDING */
+		cpu->int_cycles           = CPU_INT_CYCLES;	/* ASG */
 		cpu->int_ack_callback	  = CPU_INT_ACK_CALLBACK;
 		cpu->bkpt_ack_callback	  = CPU_BKPT_ACK_CALLBACK;
 		cpu->reset_instr_callback = CPU_RESET_INSTR_CALLBACK;
@@ -541,7 +576,7 @@ void m68k_set_context(void* src)
 		m68k_cpu_context *cpu = src;
 
         CPU_MODE                 = cpu->mode;
-		m68ki_set_sr(cpu->sr); /* This stays on top to prevent side-effects */
+		m68ki_set_sr_no_int(cpu->sr); /* This stays on top to prevent side-effects */
 		m68ki_set_pc(cpu->pc);
 		memcpy(CPU_D, cpu->d, sizeof(CPU_D));
 		memcpy(CPU_A, cpu->a, sizeof(CPU_D));
@@ -553,13 +588,17 @@ void m68k_set_context(void* src)
 		CPU_DFC 				 = cpu->dfc;
 		CPU_STOPPED 			 = cpu->stopped;
 		CPU_HALTED				 = cpu->halted;
-		CPU_INTS_PENDING		 = cpu->ints_pending;
+		CPU_INT_STATE			 = cpu->int_state;	/* ASG: changed from CPU_INTS_PENDING */
+		CPU_INT_CYCLES           = cpu->int_cycles;	/* ASG */
 		CPU_INT_ACK_CALLBACK	 = cpu->int_ack_callback;
 		CPU_BKPT_ACK_CALLBACK	 = cpu->bkpt_ack_callback;
 		CPU_RESET_INSTR_CALLBACK = cpu->reset_instr_callback;
 		CPU_PC_CHANGED_CALLBACK  = cpu->pc_changed_callback;
 		CPU_SET_FC_CALLBACK 	 = cpu->set_fc_callback;
 		CPU_INSTR_HOOK_CALLBACK  = cpu->instr_hook_callback;
+
+		/* ASG: check for interrupts */
+		m68ki_check_interrupts();
 	}
 }
 

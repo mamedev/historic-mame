@@ -498,14 +498,18 @@ int initmemoryhandlers(void)
 		/* initialize port structures */
 		readport[cpu] = Machine->drv->cpu[cpu].port_read;
 		writeport[cpu] = Machine->drv->cpu[cpu].port_write;
+		portmask[cpu] = 0xffff;
 #if HAS_Z80
         if ((Machine->drv->cpu[cpu].cpu_type & ~CPU_FLAGS_MASK) == CPU_Z80 &&
-				(Machine->drv->cpu[cpu].cpu_type & CPU_16BIT_PORT) == 0)
+			(Machine->drv->cpu[cpu].cpu_type & CPU_16BIT_PORT) == 0)
 			portmask[cpu] = 0xff;
-		else
 #endif
-            portmask[cpu] = 0xffff;
-	}
+#if HAS_Z80_VM
+		if ((Machine->drv->cpu[cpu].cpu_type & ~CPU_FLAGS_MASK) == CPU_Z80_VM &&
+			(Machine->drv->cpu[cpu].cpu_type & CPU_16BIT_PORT) == 0)
+            portmask[cpu] = 0xff;
+#endif
+    }
 
 	/* initialize grobal handler */
 	for( i = 0 ; i < MH_HARDMAX ; i++ ){
@@ -547,9 +551,9 @@ int initmemoryhandlers(void)
 	/* ROM memory */
 	memorywritehandler[HT_ROM] = mwh_rom;
 
-	/* if any CPU is 24-bit or more, we change the error handlers to be more benign */
+	/* if any CPU is 21-bit or more, we change the error handlers to be more benign */
 	for (cpu = 0; cpu < cpu_gettotalcpu(); cpu++)
-		if (ADDRESS_BITS (cpu) >= 24)
+		if (ADDRESS_BITS (cpu) >= 21)
 		{
 			memoryreadhandler[HT_NON] = mrh_error_sparse;
 			memorywritehandler[HT_NON] = mwh_error_sparse;
@@ -1702,10 +1706,10 @@ void cpu_writeport(int Port,int Value)
 {
 	const struct IOWritePort *iowp = cur_writeport;
 
+	Port &= cur_portmask;
+
 	if (iowp)
 	{
-		/* Don't mask Z80_HALT_PORT! */
-        if (Port != 0x10000) Port &= cur_portmask;
 		while (iowp->start != -1)
 		{
 			if (Port >= iowp->start && Port <= iowp->end)
@@ -1723,7 +1727,7 @@ void cpu_writeport(int Port,int Value)
 		}
 	}
 
-	if (errorlog && Port != 0x10000) fprintf(errorlog,"CPU #%d PC %04x: warning - write %02x to unmapped I/O port %02x\n",cpu_getactivecpu(),cpu_get_pc(),Value,Port);
+	if (errorlog) fprintf(errorlog,"CPU #%d PC %04x: warning - write %02x to unmapped I/O port %02x\n",cpu_getactivecpu(),cpu_get_pc(),Value,Port);
 }
 
 
@@ -2067,7 +2071,7 @@ void cpu_setOPbase29 (int pc)    /* AJP 980803 */
 	if (errorlog) fprintf(errorlog,"CPU #%d PC %04x: warning - op-code execute on mapped i/o\n",cpu_getactivecpu(),cpu_get_pc());
 }
 
-void install_mem_read_handler(int cpu, int start, int end, int (*handler)(int))
+void *install_mem_read_handler(int cpu, int start, int end, int (*handler)(int))
 {
 	MHELE hardware = 0;
 	int abitsmin;
@@ -2147,7 +2151,7 @@ void install_mem_read_handler(int cpu, int start, int end, int (*handler)(int))
 		{
 			if (errorlog) fprintf(errorlog, "read memory hardware pattern over !\n");
 			if (errorlog) fprintf(errorlog, "Failed to install new memory handler.\n");
-			return;
+			return memory_find_base(cpu, start);
 		}
 		else
 		{
@@ -2167,8 +2171,9 @@ void install_mem_read_handler(int cpu, int start, int end, int (*handler)(int))
 		fprintf(errorlog,"used read  elements %d/%d , functions %d/%d\n"
 		    ,rdelement_max,MH_ELEMAX , rdhard_max,MH_HARDMAX );
 	}
+	return memory_find_base(cpu, start);
 }
-void install_mem_write_handler(int cpu, int start, int end, void (*handler)(int, int))
+void *install_mem_write_handler(int cpu, int start, int end, void (*handler)(int, int))
 {
 	MHELE hardware = 0;
 	int abitsmin;
@@ -2257,7 +2262,7 @@ void install_mem_write_handler(int cpu, int start, int end, void (*handler)(int,
 			if (errorlog) fprintf(errorlog, "write memory hardware pattern over !\n");
 			if (errorlog) fprintf(errorlog, "Failed to install new memory handler.\n");
 
-			return;
+			return memory_find_base(cpu, start);
 		}
 		else
 		{
@@ -2277,6 +2282,7 @@ void install_mem_write_handler(int cpu, int start, int end, void (*handler)(int,
 		fprintf(errorlog,"used write elements %d/%d , functions %d/%d\n"
 		    ,wrelement_max,MH_ELEMAX , wrhard_max,MH_HARDMAX );
 	}
+	return memory_find_base(cpu, start);
 }
 
 #ifdef MEM_DUMP

@@ -828,7 +828,7 @@ struct GameDriver treahunt_driver =
 	"treahunt",
 	"Treasure Hunt",
 	"1982",
-	"Hara Ind.",
+	"Hara Industries",
 	"Brad Oliver\nMike Balfour",
 	GAME_NOT_WORKING,
 	&machine_driver,

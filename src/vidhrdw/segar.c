@@ -438,7 +438,7 @@ void spaceod_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		sv.refresh = 1;
 
 	// scenes 0,1 are horiz.  scenes 2,3 are vert.
-	vert_scene = (sv.back_scene & 0x02);
+	vert_scene = !(sv.back_scene & 0x02);
 
 	sprite_transparency=TRANSPARENCY_PEN;
 
@@ -498,25 +498,27 @@ void spaceod_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 	/* Copy the scrolling background */
 	{
-		int scroll;
+		int scrollx,scrolly;
 
 		if (vert_scene)
 		{
 			if (sv.bflip)
-				scroll = sv.backshift;
+				scrolly = sv.backshift;
 			else
-				scroll = -sv.backshift;
+				scrolly = -sv.backshift;
 
-			copyscrollbitmap(bitmap,sv.vertbackbitmap,1,&scroll,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+			copyscrollbitmap(bitmap,sv.vertbackbitmap,0,0,1,&scrolly,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
 		}
 		else
 		{
 			if (sv.bflip)
-				scroll = sv.backshift;
+				scrollx = sv.backshift;
 			else
-				scroll = -sv.backshift;
+				scrollx = -sv.backshift;
 
-			copyscrollbitmap(bitmap,sv.horizbackbitmap,0,0,1,&scroll,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+			scrolly = -32;
+
+			copyscrollbitmap(bitmap,sv.horizbackbitmap,1,&scrollx,1,&scrolly,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
 		}
 	}
 

@@ -45,7 +45,7 @@ static void *timer1;
 static void *timer2;
 
 /* Function procs to access the selected YM type */
-static int ( *sh_start )( const struct YM3812interface *interface );
+static int ( *sh_start )( const struct MachineSound *msound );
 static void ( *sh_stop )( void );
 static int ( *status_port_0_r )( int offset );
 static void ( *control_port_0_w )( int offset, int data );
@@ -84,16 +84,16 @@ void timer2_callback (int param)
 	timer2 = timer_set (TIME_IN_USEC (timer2_val * 320) * timer_scale, 0, timer2_callback);
 }
 
-int nonemu_YM3812_sh_start(const struct YM3812interface *interface)
+int nonemu_YM3812_sh_start(const struct MachineSound *msound)
 {
 	pending_register = -1;
 	timer1 = timer2 = 0;
 	status_register = 0x80;
 	timer_register = 0;
 	timer1_val = timer2_val = 256;
-	intf = interface;
+	intf = msound->sound_interface;
 
-	timer_scale = (double)MASTER_CLOCK_BASE / (double)interface->baseclock;
+	timer_scale = (double)MASTER_CLOCK_BASE / (double)intf->baseclock;
 
 	return 0;
 }
@@ -273,13 +273,14 @@ void emu_ym3812_fixed_pointer_problem_update( int nNoll, void *pBuffer, int nLen
 	ym3812_Update( ym, pBuffer, nLength );
 }
 
-int emu_YM3812_sh_start(const struct YM3812interface *interface ) {
+int emu_YM3812_sh_start(const struct MachineSound *msound)
+{
 	int rate = Machine->sample_rate;
 
 	if ( ym )		/* duplicate entry */
 		return 1;
 
-	intf = interface;
+	intf = msound->sound_interface;
 
 	sample_bits = Machine->sample_bits;
 
@@ -291,7 +292,7 @@ int emu_YM3812_sh_start(const struct YM3812interface *interface ) {
 	timer1 = timer2 = 0;
 	ym->SetTimer = timer_handler;
 
-   ym_channel = stream_init(
+   ym_channel = stream_init(msound,
 			"OPL 1/2/L",rate,sample_bits,
 			0,emu_ym3812_fixed_pointer_problem_update);
 	return 0;
@@ -344,7 +345,8 @@ int emu_YM3812_read_port_0_r( int offset ) {
 	Begin of YM3812 interface stubs block
  **********************************************************************************************/
 
-int YM3812_sh_start(const struct YM3812interface *interface ) {
+int YM3812_sh_start(const struct MachineSound *msound)
+{
 
 	if ( options.use_emulated_ym3812 ) {
 		sh_start = emu_YM3812_sh_start;
@@ -363,7 +365,7 @@ int YM3812_sh_start(const struct YM3812interface *interface ) {
 	}
 
    /* now call the proper handler */
-	return (*sh_start)(interface);
+	return (*sh_start)(msound);
 }
 
 void YM3812_sh_stop( void ) {

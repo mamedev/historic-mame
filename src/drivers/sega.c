@@ -144,6 +144,8 @@ void elim1_sh_w (int offset, int data);
 void elim2_sh_w (int offset, int data);
 void spacfury1_sh_w (int offset, int data);
 void spacfury2_sh_w (int offset, int data);
+void zektor1_sh_w (int offset, int data);
+void zektor2_sh_w (int offset, int data);
 
 int tacscan_sh_start (void);
 void tacscan_sh_w (int offset, int data);
@@ -203,6 +205,8 @@ static struct IOReadPort zektor_readport[] =
 static struct IOWritePort zektor_writeport[] =
 {
 	{ 0x38, 0x38, sega_sh_speech_w },
+        { 0x3e, 0x3e, zektor1_sh_w },
+        { 0x3f, 0x3f, zektor2_sh_w },
 	{ 0xbd, 0xbd, sega_mult1_w },
 	{ 0xbe, 0xbe, sega_mult2_w },
 	{ 0xf8, 0xf8, sega_switch_w },
@@ -1164,38 +1168,38 @@ static const char *spacfury_sample_names[] =
 {
 	"*spacfury",
 	/* Speech samples */
-	"sf01.sam",
-	"sf02.sam",
-	"sf03.sam",
-	"sf04.sam",
-	"sf05.sam",
-	"sf06.sam",
-	"sf07.sam",
-	"sf08.sam",
-	"sf09.sam",
-	"sf0a.sam",
-	"sf0b.sam",
-	"sf0c.sam",
-	"sf0d.sam",
-	"sf0e.sam",
-	"sf0f.sam",
-	"sf10.sam",
-	"sf11.sam",
-	"sf12.sam",
-	"sf13.sam",
-	"sf14.sam",
-	"sf15.sam",
+	"sf01.wav",
+	"sf02.wav",
+	"sf03.wav",
+	"sf04.wav",
+	"sf05.wav",
+	"sf06.wav",
+	"sf07.wav",
+	"sf08.wav",
+	"sf09.wav",
+	"sf0a.wav",
+	"sf0b.wav",
+	"sf0c.wav",
+	"sf0d.wav",
+	"sf0e.wav",
+	"sf0f.wav",
+	"sf10.wav",
+	"sf11.wav",
+	"sf12.wav",
+	"sf13.wav",
+	"sf14.wav",
+	"sf15.wav",
 	/* Sound samples */
-	"sfury1.sam",
-	"sfury2.sam",
-	"sfury3.sam",
-	"sfury4.sam",
-	"sfury5.sam",
-	"sfury6.sam",
-	"sfury7.sam",
-	"sfury8.sam",
-	"sfury9.sam",
-	"sfury10.sam",
+	"sfury1.wav",
+	"sfury2.wav",
+	"sfury3.wav",
+	"sfury4.wav",
+	"sfury5.wav",
+	"sfury6.wav",
+	"sfury7.wav",
+	"sfury8.wav",
+	"sfury9.wav",
+	"sfury10.wav",
     0	/* end of array */
 };
 
@@ -1309,31 +1313,47 @@ struct GameDriver spacfura_driver =
 static const char *zektor_sample_names[] =
 {
 	"*zektor",
-	"zk01.sam",
-	"zk02.sam",
-	"zk03.sam",
-	"zk04.sam",
-	"zk05.sam",
-	"zk06.sam",
-	"zk07.sam",
-	"zk08.sam",
-	"zk09.sam",
-	"zk0a.sam",
-	"zk0b.sam",
-	"zk0c.sam",
-	"zk0d.sam",
-	"zk0e.sam",
-	"zk0f.sam",
-	"zk10.sam",
-	"zk11.sam",
-	"zk12.sam",
-	"zk13.sam",
+        "zk01.wav",  /* 1 */
+	"zk02.wav",
+	"zk03.wav",
+	"zk04.wav",
+	"zk05.wav",
+	"zk06.wav",
+	"zk07.wav",
+	"zk08.wav",
+	"zk09.wav",
+	"zk0a.wav",
+	"zk0b.wav",
+	"zk0c.wav",
+	"zk0d.wav",
+	"zk0e.wav",
+	"zk0f.wav",
+	"zk10.wav",
+	"zk11.wav",
+	"zk12.wav",
+	"zk13.wav",
+        "elim1.wav",  /* 19 fireball */
+        "elim2.wav",  /* 20 bounce */
+        "elim3.wav",  /* 21 Skitter */
+        "elim4.wav",  /* 22 Eliminator */
+        "elim5.wav",  /* 23 Electron */
+        "elim6.wav",  /* 24 fire */
+        "elim7.wav",  /* 25 thrust */
+        "elim8.wav",  /* 26 Electron */
+        "elim9.wav",  /* 27 small explosion */
+        "elim10.wav", /* 28 med explosion */
+        "elim11.wav", /* 29 big explosion */
+                      /* Missing Zizzer */
+                      /* Missing City fly by */
+                      /* Missing Rotation Rings */
+
+
     0	/* end of array */
 };
 
 static struct Samplesinterface zektor_samples_interface =
 {
-	1 /* only speech for now */
+        12 /* only speech for now */
 };
 
 static struct MachineDriver zektor_machine_driver =
@@ -1374,7 +1394,7 @@ static struct MachineDriver zektor_machine_driver =
 	{
 		{
 			SOUND_SAMPLES,
-			&zektor_samples_interface
+                        &spacfury_samples_interface
 		}
 	}
 };
@@ -1417,27 +1437,27 @@ static const char *tacscan_sample_names[] =
 {
 	"*tacscan",
 	/* Player ship thrust sounds */
-	"01.sam",
-	"02.sam",
-	"03.sam",
-        "plaser.sam",
-	"pexpl.sam",
-	"pship.sam",
-	"tunnelh.sam",
-	"sthrust.sam",
-	"slaser.sam",
-	"sexpl.sam",
-	"eshot.sam",
-	"eexpl.sam",
-        "tunnelw.sam",
-        "flight1.sam",
-        "flight2.sam",
-        "flight3.sam",
-        "flight4.sam",
-        "flight5.sam",
-        "formatn.sam",
-        "warp.sam",
-        "credit.sam",
+	"01.wav",
+	"02.wav",
+	"03.wav",
+        "plaser.wav",
+	"pexpl.wav",
+	"pship.wav",
+	"tunnelh.wav",
+	"sthrust.wav",
+	"slaser.wav",
+	"sexpl.wav",
+	"eshot.wav",
+	"eexpl.wav",
+        "tunnelw.wav",
+        "flight1.wav",
+        "flight2.wav",
+        "flight3.wav",
+        "flight4.wav",
+        "flight5.wav",
+        "formatn.wav",
+        "warp.wav",
+        "credit.wav",
 
     0	/* end of array */
 };
@@ -1526,18 +1546,18 @@ struct GameDriver tacscan_driver =
 static const char *elim_sample_names[] =
 {
 	"*elim2",
-	"elim1.sam",
-	"elim2.sam",
-	"elim3.sam",
-	"elim4.sam",
-	"elim5.sam",
-	"elim6.sam",
-	"elim7.sam",
-	"elim8.sam",
-	"elim9.sam",
-	"elim10.sam",
-	"elim11.sam",
-	"elim12.sam",
+	"elim1.wav",
+	"elim2.wav",
+	"elim3.wav",
+	"elim4.wav",
+	"elim5.wav",
+	"elim6.wav",
+	"elim7.wav",
+	"elim8.wav",
+	"elim9.wav",
+	"elim10.wav",
+	"elim11.wav",
+	"elim12.wav",
     0	/* end of array */
 };
 
@@ -1721,64 +1741,64 @@ static const char *startrek_sample_names[] =
 {
 	"*startrek",
 	/* Speech samples */
-	"st01.sam",
-	"st02.sam",
-	"st03.sam",
-	"st04.sam",
-	"st05.sam",
-	"st06.sam",
-	"st07.sam",
-	"st08.sam",
-	"st09.sam",
-	"st0a.sam",
-	"st0b.sam",
-	"st0c.sam",
-	"st0d.sam",
-	"st0e.sam",
-	"st0f.sam",
-	"st10.sam",
-	"st11.sam",
-	"st12.sam",
-	"st13.sam",
-	"st14.sam",
-	"st15.sam",
-	"st16.sam",
-	"st17.sam",
+	"st01.wav",
+	"st02.wav",
+	"st03.wav",
+	"st04.wav",
+	"st05.wav",
+	"st06.wav",
+	"st07.wav",
+	"st08.wav",
+	"st09.wav",
+	"st0a.wav",
+	"st0b.wav",
+	"st0c.wav",
+	"st0d.wav",
+	"st0e.wav",
+	"st0f.wav",
+	"st10.wav",
+	"st11.wav",
+	"st12.wav",
+	"st13.wav",
+	"st14.wav",
+	"st15.wav",
+	"st16.wav",
+	"st17.wav",
 	/* Sound samples */
-	"trek1.sam",
-	"trek2.sam",
-	"trek3.sam",
-	"trek4.sam",
-	"trek5.sam",
-	"trek6.sam",
-	"trek7.sam",
-	"trek8.sam",
-	"trek9.sam",
-	"trek10.sam",
-	"trek11.sam",
-	"trek12.sam",
-	"trek13.sam",
-	"trek14.sam",
-	"trek15.sam",
-	"trek16.sam",
-	"trek17.sam",
-	"trek18.sam",
-	"trek19.sam",
-	"trek20.sam",
-	"trek21.sam",
-	"trek22.sam",
-	"trek23.sam",
-	"trek24.sam",
-	"trek25.sam",
-	"trek26.sam",
-	"trek27.sam",
-	"trek28.sam",
+	"trek1.wav",
+	"trek2.wav",
+	"trek3.wav",
+	"trek4.wav",
+	"trek5.wav",
+	"trek6.wav",
+	"trek7.wav",
+	"trek8.wav",
+	"trek9.wav",
+	"trek10.wav",
+	"trek11.wav",
+	"trek12.wav",
+	"trek13.wav",
+	"trek14.wav",
+	"trek15.wav",
+	"trek16.wav",
+	"trek17.wav",
+	"trek18.wav",
+	"trek19.wav",
+	"trek20.wav",
+	"trek21.wav",
+	"trek22.wav",
+	"trek23.wav",
+	"trek24.wav",
+	"trek25.wav",
+	"trek26.wav",
+	"trek27.wav",
+	"trek28.wav",
     0	/* end of array */
 };
 
 static struct Samplesinterface startrek_samples_interface =
 {
-	6	/* 6 channels */
+        12       /* 6 channels */
 };
 
 static struct MachineDriver startrek_machine_driver =

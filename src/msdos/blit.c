@@ -15,11 +15,67 @@ extern int gfx_yoffset;
 extern int gfx_display_lines;
 extern int gfx_display_columns;
 extern int gfx_width;
+extern int gfx_height;
 extern int skiplines;
 extern int skipcolumns;
+extern int use_triplebuf;
+extern int triplebuf_pos;
 
 unsigned int doublepixel[256];
 unsigned int quadpixel[256]; /* for quadring pixels */
+
+
+static int vesa_scroll_async(int x, int y)
+{
+   int ret, seg;
+   long a;
+	extern void (*_pm_vesa_scroller)(void);	/* in Allegro */
+	extern int _mmio_segment;	/* in Allegro */
+	#define BYTES_PER_PIXEL(bpp)     (((int)(bpp) + 7) / 8)	/* in Allegro */
+	extern __dpmi_regs _dpmi_reg;	/* in Allegro... I think */
+
+//   vesa_xscroll = x;
+//   vesa_yscroll = y;
+
+   if (_pm_vesa_scroller) {            /* use protected mode interface? */
+      seg = _mmio_segment ? _mmio_segment : _my_ds();
+
+      a = ((x * BYTES_PER_PIXEL(screen->vtable->color_depth)) +
+	   (y * ((unsigned long)screen->line[1] - (unsigned long)screen->line[0]))) / 4;
+
+      asm (
+	 "  pushw %%es ; "
+	 "  movw %w1, %%es ; "         /* set the IO segment */
+	 "  call *%0 ; "               /* call the VESA function */
+	 "  popw %%es "
+
+      :                                /* no outputs */
+
+      : "S" (_pm_vesa_scroller),       /* function pointer in esi */
+	"a" (seg),                     /* IO segment in eax */
+	"b" (0x00),                    /* mode in ebx */
+	"c" (a & 0xFFFF),              /* low word of address in ecx */
+	"d" (a >> 16)                  /* high word of address in edx */
+
+      : "memory", "%edi", "%cc"        /* clobbers edi and flags */
+      );
+
+      ret = 0;
+   }
+   else {                              /* use a real mode interrupt call */
+      _dpmi_reg.x.ax = 0x4F07;
+      _dpmi_reg.x.bx = 0;
+      _dpmi_reg.x.cx = x;
+      _dpmi_reg.x.dx = y;
+
+      __dpmi_int(0x10, &_dpmi_reg);
+      ret = _dpmi_reg.h.ah;
+
+//      _vsync_in();
+   }
+
+   return (ret ? -1 : 0);
+}
 
 
 void blitscreen_dirty1_vga(void)
@@ -308,18 +364,24 @@ INLINE void copyline_4x_8bpp(unsigned char *src,short seg,unsigned long address,
 	}
 
 
-
 #define DIRTY0(BPP) \
 	short dest_seg; \
 	int y,vesa_line,line_offs,xoffs,width; \
 	unsigned char *src; \
 	unsigned long address; \
 	dest_seg = screen->seg; \
-	vesa_line = gfx_yoffset; \
+	vesa_line = gfx_yoffset + triplebuf_pos; \
 	line_offs = (scrbitmap->line[1] - scrbitmap->line[0]); \
 	xoffs = (BPP/8)*gfx_xoffset; \
 	width = gfx_display_columns/(4/(BPP/8)); \
 	src = scrbitmap->line[skiplines] + (BPP/8)*skipcolumns;	\
+
+#define TRIPLEBUF_FLIP \
+	if (use_triplebuf) \
+	{ \
+		vesa_scroll_async(0,triplebuf_pos); \
+		triplebuf_pos = (triplebuf_pos + gfx_height) % (3*gfx_height); \
+	}
 
 #define DIRTY0_NXNS(MX,MY,BPP) \
 	for (y = 0;y < gfx_display_lines;y++) \
@@ -328,7 +390,8 @@ INLINE void copyline_4x_8bpp(unsigned char *src,short seg,unsigned long address,
 		copyline_##MX##x_##BPP##bpp(src,dest_seg,address,width); \
 		vesa_line += MY; \
 		src += line_offs; \
-	}
+	} \
+	TRIPLEBUF_FLIP
 
 #define DIRTY0_NX2(MX,BPP) \
 	for (y = 0;y < gfx_display_lines;y++) \
@@ -339,7 +402,8 @@ INLINE void copyline_4x_8bpp(unsigned char *src,short seg,unsigned long address,
 		copyline_##MX##x_##BPP##bpp(src,dest_seg,address,width); \
 		vesa_line += 2; \
 		src += line_offs; \
-	}
+	} \
+	TRIPLEBUF_FLIP
 
 #define DIRTY0_NX3(MX,BPP) \
 	for (y = 0;y < gfx_display_lines;y++) \
@@ -352,7 +416,8 @@ INLINE void copyline_4x_8bpp(unsigned char *src,short seg,unsigned long address,
 		copyline_##MX##x_##BPP##bpp(src,dest_seg,address,width); \
 		vesa_line += 3; \
 		src += line_offs; \
-	}
+	} \
+	TRIPLEBUF_FLIP
 
 
 

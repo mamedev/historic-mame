@@ -290,6 +290,28 @@ ROM_START( blockout_rom )
 
 	ROM_REGION(0x20000)	/* 128k for ADPCM samples - sound chip is OKIM6295 */
 	ROM_LOAD( "bo29e2-0.bin", 0x0000, 0x20000, 0x15c5a99d )
+
+	ROM_REGION(0x0100)	/* PROMs */
+	ROM_LOAD( "mb7114h.25",   0x0000, 0x0100, 0xb25bbda7 )	/* unknown */
+ROM_END
+
+ROM_START( blckout2_rom )
+	ROM_REGION(0x40000)	/* 2*128k for 68000 code */
+	ROM_LOAD_EVEN( "29a0",         0x00000, 0x20000, 0x605f931e )
+	ROM_LOAD_ODD ( "29a1",         0x00000, 0x20000, 0x38f07000 )
+
+	ROM_REGION_DISPOSE(0x800)
+	/* empty memory region - not used by the game, but needed because the main */
+	/* core currently always frees region #1 after initialization. */
+
+	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_LOAD( "bo29e3-0.bin", 0x0000, 0x8000, 0x3ea01f78 )
+
+	ROM_REGION(0x20000)	/* 128k for ADPCM samples - sound chip is OKIM6295 */
+	ROM_LOAD( "bo29e2-0.bin", 0x0000, 0x20000, 0x15c5a99d )
+
+	ROM_REGION(0x0100)	/* PROMs */
+	ROM_LOAD( "mb7114h.25",   0x0000, 0x0100, 0xb25bbda7 )	/* unknown */
 ROM_END
 
 
@@ -331,7 +353,7 @@ struct GameDriver blockout_driver =
 	__FILE__,
 	0,
 	"blockout",
-	"Block Out",
+	"Block Out (set 1)",
 	"1989",
 	"Technos + California Dreams",
 	"Nicola Salmoria\nAaron Giles (ADPCM sound)",
@@ -340,6 +362,31 @@ struct GameDriver blockout_driver =
 	0,
 
 	blockout_rom,
+	0, 0,
+	0,
+	0,	/* sound_prom */
+
+	input_ports,
+
+	0, 0, 0,
+	ORIENTATION_DEFAULT,
+	hiload, hisave /* hsc 12/1/98 */
+};
+
+struct GameDriver blckout2_driver =
+{
+	__FILE__,
+	&blockout_driver,
+	"blckout2",
+	"Block Out (set 2)",
+	"1989",
+	"Technos + California Dreams",
+	"Nicola Salmoria\nAaron Giles (ADPCM sound)",
+	0,
+	&machine_driver,
+	0,
+
+	blckout2_rom,
 	0, 0,
 	0,
 	0,	/* sound_prom */

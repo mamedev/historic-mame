@@ -88,8 +88,11 @@ static int pseudo_to_key_code(int keycode)
 		case OSD_KEY_CHEAT_TOGGLE:
 			return OSD_KEY_F5;
 
-		case OSD_KEY_FRAMESKIP:
+		case OSD_KEY_FRAMESKIP_INC:
 			return OSD_KEY_F9;
+
+		case OSD_KEY_FRAMESKIP_DEC:
+			return OSD_KEY_F8;
 
 		case OSD_KEY_THROTTLE:
 			return OSD_KEY_F10;
@@ -310,13 +313,22 @@ int osd_read_keyrepeat(void)
 
 int osd_debug_readkey(void)
 {
-	int res;
+	int i,res;
 
 	clear_keybuf();
 	res = readkey() >> 8;
 
 	if (res == KEY_RCONTROL) res = OSD_KEY_RCONTROL;
 	if (res == KEY_ALTGR) res = OSD_KEY_ALTGR;
+
+	/* avoid problems when exiting the debugger (e.g. F4) */
+	for (i = OSD_MAX_KEY;i > OSD_KEY_NONE;i--)
+	{
+		if (osd_key_pressed(i))
+			memory[i] = 1;
+		else
+			memory[i] = 0;
+	}
 
 	return res;
 }

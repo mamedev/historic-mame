@@ -17,6 +17,9 @@
 #if (HAS_Z80)
 #include "cpu/z80/z80.h"
 #endif
+#if (HAS_Z80_VM)
+#include "cpu/z80/z80_vm.h"
+#endif
 #if (HAS_8080 || HAS_8085A)
 #include "cpu/i8085/i8085.h"
 #endif
@@ -108,7 +111,8 @@ struct cpuinfo
 static struct cpuinfo cpu[MAX_CPU];
 
 static int activecpu,totalcpu;
-static int running;	/* number of cycles that the CPU emulation was requested to run */
+static int cpu_running[MAX_CPU];
+static int cycles_running;	/* number of cycles that the CPU emulation was requested to run */
 					/* (needed by cpu_getfcount) */
 static int have_to_reset;
 static int hiscoreloaded;
@@ -255,7 +259,7 @@ struct cpu_interface cpuintf[] =
 		NULL,								/* Load CPU state */
         Dummy_info,                         /* Get formatted string for a specific register */
 		Dummy_dasm, 						/* Disassemble one instruction */
-        1,                                  /* Number of IRQ lines */
+		1,0,								/* Number of IRQ lines, default IRQ vector */
 		&dummy_icount,						/* Pointer to the instruction count */
 		0,									/* Interrupt types: none, IRQ, NMI */
 		-1,
@@ -288,7 +292,41 @@ struct cpu_interface cpuintf[] =
 		z80_state_load, 					/* Load CPU state */
         z80_info,                           /* Get formatted string for a specific register */
 		z80_dasm,							/* Disassemble one instruction */
-        1,                                  /* Number of IRQ lines */
+		1,0xff, 							/* Number of IRQ lines, default IRQ vector */
+		&z80_ICount,						/* Pointer to the instruction count */
+		Z80_IGNORE_INT, 					/* Interrupt types: none, IRQ, NMI */
+		Z80_IRQ_INT,
+		Z80_NMI_INT,
+        cpu_readmem16,                      /* Memory read */
+		cpu_writemem16, 					/* Memory write */
+		cpu_setOPbase16,					/* Update CPU opcode base */
+		0,16,CPU_IS_LE,1,4, 				/* CPU address shift, bits, endianess, align unit, max. instruction length	*/
+		ABITS1_16,ABITS2_16,ABITS_MIN_16	/* Address bits, for the memory system */
+	},
+#endif
+#if (HAS_Z80_VM)
+    {
+		CPU_Z80_VM, 						/* CPU number and family cores sharing resources */
+		z80_vm_reset,						/* Reset CPU */
+		z80_vm_exit,						/* Shut down the CPU */
+		z80_vm_execute, 					/* Execute a number of cycles */
+		z80_vm_get_context, 				/* Get the contents of the registers */
+		z80_vm_set_context, 				/* Set the contents of the registers */
+		z80_vm_get_pc,						/* Return the current program counter */
+		z80_vm_set_pc,						/* Set the current program counter */
+		z80_vm_get_sp,						/* Return the current stack pointer */
+		z80_vm_set_sp,						/* Set the current stack pointer */
+		z80_vm_get_reg, 					/* Get a specific register value */
+		z80_vm_set_reg, 					/* Set a specific register value */
+		z80_vm_set_nmi_line,				/* Set state of the NMI line */
+		z80_vm_set_irq_line,				/* Set state of the IRQ line */
+		z80_vm_set_irq_callback,			/* Set IRQ enable/vector callback */
+		NULL,								/* Cause internal interrupt */
+		z80_vm_state_save,					/* Save CPU state */
+		z80_vm_state_load,					/* Load CPU state */
+		z80_vm_info,						/* Get formatted string for a specific register */
+		z80_vm_dasm,						/* Disassemble one instruction */
+		1,0xff, 							/* Number of IRQ lines, default IRQ vector */
 		&z80_ICount,						/* Pointer to the instruction count */
 		Z80_IGNORE_INT, 					/* Interrupt types: none, IRQ, NMI */
 		Z80_IRQ_INT,
@@ -322,7 +360,7 @@ struct cpu_interface cpuintf[] =
 		i8080_state_load,					/* Load CPU state */
         i8080_info,                         /* Get formatted string for a specific register */
 		i8080_dasm, 						/* Disassemble one instruction */
-        4,                                  /* Number of IRQ lines */
+		4,0xff, 							/* Number of IRQ lines, default IRQ vector */
 		&i8080_ICount,						/* Pointer to the instruction count */
 		I8080_NONE, 						/* Interrupt types: none, IRQ, NMI */
 		I8080_INTR,
@@ -356,7 +394,7 @@ struct cpu_interface cpuintf[] =
 		i8085_state_load,					/* Load CPU state */
         i8085_info,                         /* Get formatted string for a specific register */
 		i8085_dasm, 						/* Disassemble one instruction */
-        4,                                  /* Number of IRQ lines */
+		4,0xff, 							/* Number of IRQ lines, default IRQ vector */
 		&i8085_ICount,						/* Pointer to the instruction count */
 		I8085_NONE, 						/* Interrupt types: none, IRQ, NMI */
 		I8085_INTR,
@@ -390,7 +428,7 @@ struct cpu_interface cpuintf[] =
 		m6502_state_load,					/* Load CPU state */
         m6502_info,                         /* Get formatted string for a specific register */
 		m6502_dasm, 						/* Disassemble one instruction */
-        1,                                  /* Number of IRQ lines */
+		1,0,								/* Number of IRQ lines, default IRQ vector */
 		&m6502_ICount,						/* Pointer to the instruction count */
 		M6502_INT_NONE, 					/* Interrupt types: none, IRQ, NMI */
 		M6502_INT_IRQ,
@@ -424,7 +462,7 @@ struct cpu_interface cpuintf[] =
 		m65c02_state_load,					/* Load CPU state */
         m65c02_info,                        /* Get formatted string for a specific register */
 		m65c02_dasm,						/* Disassemble one instruction */
-        1,                                  /* Number of IRQ lines */
+		1,0,								/* Number of IRQ lines, default IRQ vector */
 		&m65c02_ICount, 					/* Pointer to the instruction count */
 		M65C02_INT_NONE,					/* Interrupt types: none, IRQ, NMI */
 		M65C02_INT_IRQ,
@@ -458,7 +496,7 @@ struct cpu_interface cpuintf[] =
 		m6510_state_load,					/* Load CPU state */
         m6510_info,                         /* Get formatted string for a specific register */
 		m6510_dasm, 						/* Disassemble one instruction */
-        1,                                  /* Number of IRQ lines */
+		1,0,								/* Number of IRQ lines, default IRQ vector */
 		&m6510_ICount,						/* Pointer to the instruction count */
 		M6510_INT_NONE, 					/* Interrupt types: none, IRQ, NMI */
 		M6510_INT_IRQ,
@@ -492,7 +530,7 @@ struct cpu_interface cpuintf[] =
 		NULL,								/* Load CPU state */
         h6280_info,                         /* Get formatted string for a specific register */
 		h6280_dasm, 						/* Disassemble one instruction */
-        3,                                  /* Number of IRQ lines */
+		3,0,								/* Number of IRQ lines, default IRQ vector */
 		&h6280_ICount,						/* Pointer to the instruction count */
 		H6280_INT_NONE, 					/* Interrupt types: none, IRQ, NMI */
 		-1,
@@ -526,7 +564,7 @@ struct cpu_interface cpuintf[] =
 		NULL,								/* Load CPU state */
         i86_info,                           /* Get formatted string for a specific register */
 		i86_dasm,							/* Disassemble one instruction */
-        1,                                  /* Number of IRQ lines */
+		1,0,								/* Number of IRQ lines, default IRQ vector */
 		&i86_ICount,						/* Pointer to the instruction count */
 		I86_INT_NONE,						/* Interrupt types: none, IRQ, NMI */
 		-1000,
@@ -560,7 +598,7 @@ struct cpu_interface cpuintf[] =
 		NULL,								/* Load CPU state */
         i8035_info,                         /* Get formatted string for a specific register */
 		i8035_dasm, 						/* Disassemble one instruction */
-        1,                                  /* Number of IRQ lines */
+		1,0,								/* Number of IRQ lines, default IRQ vector */
 		&i8035_ICount,						/* Pointer to the instruction count */
 		I8035_IGNORE_INT,					/* Interrupt types: none, IRQ, NMI */
 		I8035_EXT_INT,
@@ -594,7 +632,7 @@ struct cpu_interface cpuintf[] =
 		NULL,								/* Load CPU state */
         i8039_info,                         /* Get formatted string for a specific register */
 		i8039_dasm, 						/* Disassemble one instruction */
-        1,                                  /* Number of IRQ lines */
+		1,0,								/* Number of IRQ lines, default IRQ vector */
 		&i8039_ICount,						/* Pointer to the instruction count */
 		I8039_IGNORE_INT,					/* Interrupt types: none, IRQ, NMI */
 		I8039_EXT_INT,
@@ -628,7 +666,7 @@ struct cpu_interface cpuintf[] =
 		NULL,								/* Load CPU state */
         i8048_info,                         /* Get formatted string for a specific register */
 		i8048_dasm, 						/* Disassemble one instruction */
-        1,                                  /* Number of IRQ lines */
+		1,0,								/* Number of IRQ lines, default IRQ vector */
 		&i8048_ICount,						/* Pointer to the instruction count */
 		I8048_IGNORE_INT,					/* Interrupt types: none, IRQ, NMI */
 		I8048_EXT_INT,
@@ -662,7 +700,7 @@ struct cpu_interface cpuintf[] =
 		NULL,								/* Load CPU state */
         n7751_info,                         /* Get formatted string for a specific register */
 		n7751_dasm, 						/* Disassemble one instruction */
-        1,                                  /* Number of IRQ lines */
+		1,0,								/* Number of IRQ lines, default IRQ vector */
 		&n7751_ICount,						/* Pointer to the instruction count */
 		N7751_IGNORE_INT,					/* Interrupt types: none, IRQ, NMI */
 		N7751_EXT_INT,
@@ -696,7 +734,7 @@ struct cpu_interface cpuintf[] =
 		m6800_state_load,					/* Load CPU state */
 		m6800_info, 						/* Get formatted string for a specific register */
 		m6800_dasm, 						/* Disassemble one instruction */
-		1,									/* Number of IRQ lines */
+		1,0,								/* Number of IRQ lines, default IRQ vector */
 		&m6800_ICount,						/* Pointer to the instruction count */
 		M6800_INT_NONE, 					/* Interrupt types: none, IRQ, NMI */
 		M6800_INT_IRQ,
@@ -730,7 +768,7 @@ struct cpu_interface cpuintf[] =
 		m6801_state_load,					/* Load CPU state */
 		m6801_info, 						/* Get formatted string for a specific register */
 		m6801_dasm, 						/* Disassemble one instruction */
-		1,									/* Number of IRQ lines */
+		1,0,								/* Number of IRQ lines, default IRQ vector */
 		&m6801_ICount,						/* Pointer to the instruction count */
 		M6801_INT_NONE, 					/* Interrupt types: none, IRQ, NMI */
 		M6801_INT_IRQ,
@@ -764,7 +802,7 @@ struct cpu_interface cpuintf[] =
 		m6802_state_load,					/* Load CPU state */
         m6802_info,                         /* Get formatted string for a specific register */
 		m6802_dasm, 						/* Disassemble one instruction */
-		1,									/* Number of IRQ lines */
+		1,0,								/* Number of IRQ lines, default IRQ vector */
 		&m6802_ICount,						/* Pointer to the instruction count */
 		M6802_INT_NONE, 					/* Interrupt types: none, IRQ, NMI */
 		M6802_INT_IRQ,
@@ -798,7 +836,7 @@ struct cpu_interface cpuintf[] =
 		m6803_state_load,					/* Load CPU state */
         m6803_info,                         /* Get formatted string for a specific register */
 		m6803_dasm, 						/* Disassemble one instruction */
-		1,									/* Number of IRQ lines */
+		1,0,								/* Number of IRQ lines, default IRQ vector */
 		&m6803_ICount,						/* Pointer to the instruction count */
 		M6803_INT_NONE, 					/* Interrupt types: none, IRQ, NMI */
 		M6803_INT_IRQ,
@@ -832,7 +870,7 @@ struct cpu_interface cpuintf[] =
 		m6808_state_load,					/* Load CPU state */
         m6808_info,                         /* Get formatted string for a specific register */
 		m6808_dasm, 						/* Disassemble one instruction */
-		1,									/* Number of IRQ lines */
+		1,0,								/* Number of IRQ lines, default IRQ vector */
 		&m6808_ICount,						/* Pointer to the instruction count */
 		M6808_INT_NONE, 					/* Interrupt types: none, IRQ, NMI */
 		M6808_INT_IRQ,
@@ -866,7 +904,7 @@ struct cpu_interface cpuintf[] =
 		hd63701_state_load, 				/* Load CPU state */
         hd63701_info,                       /* Get formatted string for a specific register */
 		hd63701_dasm,						/* Disassemble one instruction */
-		1,									/* Number of IRQ lines */
+		1,0,								/* Number of IRQ lines, default IRQ vector */
 		&hd63701_ICount,					/* Pointer to the instruction count */
 		HD63701_INT_NONE,					/* Interrupt types: none, IRQ, NMI */
 		HD63701_INT_IRQ,
@@ -900,7 +938,7 @@ struct cpu_interface cpuintf[] =
 		m6805_state_load,					/* Load CPU state */
         m6805_info,                         /* Get formatted string for a specific register */
 		m6805_dasm, 						/* Disassemble one instruction */
-        1,                                  /* Number of IRQ lines */
+		1,0,								/* Number of IRQ lines, default IRQ vector */
 		&m6805_ICount,						/* Pointer to the instruction count */
 		M6805_INT_NONE, 					/* Interrupt types: none, IRQ, NMI */
 		M6805_INT_IRQ,
@@ -934,7 +972,7 @@ struct cpu_interface cpuintf[] =
 		m68705_state_load,					/* Load CPU state */
         m68705_info,                        /* Get formatted string for a specific register */
 		m68705_dasm,						/* Disassemble one instruction */
-        1,                                  /* Number of IRQ lines */
+		1,0,								/* Number of IRQ lines, default IRQ vector */
 		&m68705_ICount, 					/* Pointer to the instruction count */
 		M68705_INT_NONE,					/* Interrupt types: none, IRQ, NMI */
 		M68705_INT_IRQ,
@@ -968,7 +1006,7 @@ struct cpu_interface cpuintf[] =
 		hd63705_state_load, 				/* Load CPU state */
 		hd63705_info,						/* Get formatted string for a specific register */
 		hd63705_dasm,						/* Disassemble one instruction */
-		8,									/* Number of IRQ lines */
+		8,0,								/* Number of IRQ lines, default IRQ vector */
 		&hd63705_ICount,					/* Pointer to the instruction count */
 		HD63705_INT_NONE,					/* Interrupt types: none, IRQ, NMI */
 		HD63705_INT_IRQ,
@@ -1002,7 +1040,7 @@ struct cpu_interface cpuintf[] =
 		m6309_state_load,					/* Load CPU state */
         m6309_info,                         /* Get formatted string for a specific register */
 		m6309_dasm, 						/* Disassemble one instruction */
-        2,                                  /* Number of IRQ lines */
+		2,0,								/* Number of IRQ lines, default IRQ vector */
 		&m6309_ICount,						/* Pointer to the instruction count */
 		M6309_INT_NONE, 					/* Interrupt types: none, IRQ, NMI */
 		M6309_INT_IRQ,
@@ -1036,7 +1074,7 @@ struct cpu_interface cpuintf[] =
 		m6809_state_load,					/* Load CPU state */
         m6809_info,                         /* Get formatted string for a specific register */
 		m6809_dasm, 						/* Disassemble one instruction */
-        2,                                  /* Number of IRQ lines */
+		2,0,								/* Number of IRQ lines, default IRQ vector */
 		&m6809_ICount,						/* Pointer to the instruction count */
 		M6809_INT_NONE, 					/* Interrupt types: none, IRQ, NMI */
 		M6809_INT_IRQ,
@@ -1070,7 +1108,7 @@ struct cpu_interface cpuintf[] =
         NULL,                               /* Load CPU state */
         m68000_info,                        /* Get formatted string for a specific register */
 		m68000_dasm,						/* Disassemble one instruction */
-        8,                                  /* Number of IRQ lines */
+		8,MC68000_INT_ACK_AUTOVECTOR,		/* Number of IRQ lines, default IRQ vector */
 		&m68000_ICount, 					/* Pointer to the instruction count */
 		MC68000_INT_NONE,					/* Interrupt types: none, IRQ, NMI */
 		-1,
@@ -1104,7 +1142,7 @@ struct cpu_interface cpuintf[] =
 		NULL,								/* Load CPU state */
 		m68010_info,						/* Get formatted string for a specific register */
 		m68010_dasm,						/* Disassemble one instruction */
-        8,                                  /* Number of IRQ lines */
+		8,MC68010_INT_ACK_AUTOVECTOR,		/* Number of IRQ lines, default IRQ vector */
 		&m68010_ICount, 					/* Pointer to the instruction count */
 		MC68010_INT_NONE,					/* Interrupt types: none, IRQ, NMI */
 		-1,
@@ -1138,8 +1176,8 @@ struct cpu_interface cpuintf[] =
 		NULL,								/* Load CPU state */
 		m68020_info,						/* Get formatted string for a specific register */
 		m68020_dasm,						/* Disassemble one instruction */
-        8,                                  /* Number of IRQ lines */
-		&m68020_ICount, 					/* Pointer to the instruction count */
+		8,MC68020_INT_ACK_AUTOVECTOR,		/* Number of IRQ lines, default IRQ vector */
+        &m68020_ICount,                     /* Pointer to the instruction count */
 		MC68020_INT_NONE,					/* Interrupt types: none, IRQ, NMI */
 		-1,
 		-1,
@@ -1172,7 +1210,7 @@ struct cpu_interface cpuintf[] =
 		NULL,								/* Load CPU state */
         t11_info,                           /* Get formatted string for a specific register */
 		t11_dasm,							/* Disassemble one instruction */
-        4,                                  /* Number of IRQ lines */
+		4,0,								/* Number of IRQ lines, default IRQ vector */
 		&t11_ICount,						/* Pointer to the instruction count */
 		T11_INT_NONE,						/* Interrupt types: none, IRQ, NMI */
 		-1,
@@ -1206,7 +1244,7 @@ struct cpu_interface cpuintf[] =
 		s2650_state_load,					/* Load CPU state */
         s2650_info,                         /* Get formatted string for a specific register */
 		s2650_dasm, 						/* Disassemble one instruction */
-        2,                                  /* Number of IRQ lines */
+		2,0,								/* Number of IRQ lines, default IRQ vector */
 		&s2650_ICount,						/* Pointer to the instruction count */
 		S2650_INT_NONE, 					/* Interrupt types: none, IRQ, NMI */
 		-1,
@@ -1240,7 +1278,7 @@ struct cpu_interface cpuintf[] =
 		NULL,								/* Load CPU state */
 		tms34010_info,						/* Get formatted string for a specific register */
 		tms34010_dasm,						/* Disassemble one instruction */
-        2,                                  /* Number of IRQ lines */
+		2,0,								/* Number of IRQ lines, default IRQ vector */
 		&tms34010_ICount,					/* Pointer to the instruction count */
 		TMS34010_INT_NONE,					/* Interrupt types: none, IRQ, NMI */
 		TMS34010_INT1,
@@ -1274,7 +1312,7 @@ struct cpu_interface cpuintf[] =
 		NULL,								/* Load CPU state */
 		tms9900_info,						/* Get formatted string for a specific register */
 		tms9900_dasm,						/* Disassemble one instruction */
-        1,                                  /* Number of IRQ lines */
+		1,0,								/* Number of IRQ lines, default IRQ vector */
 		&tms9900_ICount,					/* Pointer to the instruction count */
 		TMS9900_NONE,						/* Interrupt types: none, IRQ, NMI */
 		-1,
@@ -1308,7 +1346,7 @@ struct cpu_interface cpuintf[] =
 		NULL,								/* Load CPU state */
         z8000_info,                         /* Get formatted string for a specific register */
 		z8000_dasm, 						/* Disassemble one instruction */
-        2,                                  /* Number of IRQ lines */
+		2,0,								/* Number of IRQ lines, default IRQ vector */
 		&z8000_ICount,						/* Pointer to the instruction count */
 		Z8000_INT_NONE, 					/* Interrupt types: none, IRQ, NMI */
 		Z8000_NVI,
@@ -1342,7 +1380,7 @@ struct cpu_interface cpuintf[] =
 		NULL,								/* Load CPU state */
 		tms320c10_info, 					/* Get formatted string for a specific register */
 		tms320c10_dasm, 					/* Disassemble one instruction */
-        2,                                  /* Number of IRQ lines */
+		2,0,								/* Number of IRQ lines, default IRQ vector */
 		&tms320c10_ICount,					/* Pointer to the instruction count */
 		TMS320C10_INT_NONE, 				/* Interrupt types: none, IRQ, NMI */
 		-1,
@@ -1376,7 +1414,7 @@ struct cpu_interface cpuintf[] =
 		NULL,								/* Load CPU state */
 		ccpu_info,							/* Get formatted string for a specific register */
 		ccpu_dasm,							/* Disassemble one instruction */
-        2,                                  /* Number of IRQ lines */
+		2,0,								/* Number of IRQ lines, default IRQ vector */
 		&ccpu_ICount,						/* Pointer to the instruction count  */
 		0,									/* Interrupt types: none, IRQ, NMI	*/
 		-1,
@@ -1410,8 +1448,8 @@ struct cpu_interface cpuintf[] =
 		NULL,								/* Load CPU state */
 		pdp1_info,							/* Get formatted string for a specific register */
 		pdp1_dasm,							/* Disassemble one instruction */
-        0,                                  /* Number of IRQ lines */
-		&pdp1_ICount,						/* Pointer to the instruction count  */
+		0,0,								/* Number of IRQ lines, default IRQ vector */
+		&pd0,_ICount,						/* Pointer to the instruction count  */
 		0,									/* Interrupt types: none, IRQ, NMI	*/
 		-1,
 		-1,
@@ -1489,6 +1527,7 @@ void cpu_run(void)
 		/* Zap the context buffer */
 		memset(cpu[i].context, 0, size );
 
+
         /* Save if there is another CPU of the same type */
 		cpu[i].save_context = 0;
 
@@ -1505,7 +1544,13 @@ void cpu_run(void)
 		}
 
 		#endif
-	}
+
+        for( j = 0; j < MAX_IRQ_LINES; j++ )
+		{
+			irq_line_state[i * MAX_IRQ_LINES + j] = CLEAR_LINE;
+            irq_line_vector[i * MAX_IRQ_LINES + j] = cpuintf[CPU_TYPE(i)].default_vector;
+		}
+    }
 
 #ifdef	MAME_DEBUG
 	/* Initialize the debugger */
@@ -1523,8 +1568,18 @@ reset:
 
 	/* enable all CPUs (except for audio CPUs if the sound is off) */
 	for (i = 0; i < totalcpu; i++)
-		if (!CPU_AUDIO(i) || Machine->sample_rate != 0)
+	{
+        if (!CPU_AUDIO(i) || Machine->sample_rate != 0)
+		{
+			cpu_running[i] = 1;
 			timer_suspendcpu (i, 0);
+		}
+		else
+		{
+			cpu_running[i] = 0;
+			timer_suspendcpu (i, 1);
+		}
+	}
 
 	have_to_reset = 0;
 	hiscoreloaded = 0;
@@ -1634,7 +1689,7 @@ if (errorlog) fprintf(errorlog,"Machine reset\n");
         }
 #endif
         /* ask the timer system to schedule */
-		if (timer_schedule_cpu (&cpunum, &running))
+		if (timer_schedule_cpu (&cpunum, &cycles_running))
 		{
 			int ran;
 
@@ -1649,7 +1704,7 @@ if (errorlog) fprintf(errorlog,"Machine reset\n");
 
             /* run for the requested number of cycles */
 			osd_profiler(OSD_PROFILE_CPU1 + cpunum);
-			ran = EXECUTE (activecpu, running);
+			ran = EXECUTE (activecpu, cycles_running);
 			osd_profiler(OSD_PROFILE_END);
 
 			/* update based on how many cycles we really ran */
@@ -1695,6 +1750,7 @@ if (errorlog) fprintf(errorlog,"Machine reset\n");
 			cpu[i].context = NULL;
 		}
 	}
+	totalcpu = 0;
 }
 
 
@@ -1758,13 +1814,16 @@ void cpu_reset(int cpunum)
   Use this function to stop and restart CPUs
 
 ***************************************************************************/
-void cpu_halt(int cpunum,int _running)
+void cpu_halt(int cpunum,int running)
 {
 	if (cpunum >= MAX_CPU) return;
 
 	/* don't resume audio CPUs if sound is disabled */
 	if (!CPU_AUDIO(cpunum) || Machine->sample_rate != 0)
-		timer_suspendcpu (cpunum, !_running);
+	{
+		cpu_running[cpunum] = running;
+		timer_suspendcpu (cpunum, !running);
+	}
 }
 
 
@@ -1778,7 +1837,7 @@ int cpu_getstatus(int cpunum)
 {
 	if (cpunum >= MAX_CPU) return 0;
 
-	return !timer_iscpususpended (cpunum);
+	return cpu_running[cpunum];
 }
 
 
@@ -1829,7 +1888,7 @@ void cpu_set_sp(unsigned val)
 int cycles_currently_ran(void)
 {
 	int cpunum = (activecpu < 0) ? 0 : activecpu;
-	return running - ICOUNT (cpunum);
+	return cycles_running - ICOUNT (cpunum);
 }
 
 int cycles_left_to_run(void)
@@ -2113,6 +2172,9 @@ void cpu_3_irq_line_vector_w(int offset, int data) { cpu_irq_line_vector_w(3, of
 ***************************************************************************/
 void cpu_set_nmi_line(int cpunum, int state)
 {
+	/* don't trigger interrupts on suspended CPUs */
+	if (cpu_getstatus(cpunum) == 0) return;
+
 	LOG((errorlog,"cpu_set_nmi_line(%d,%d)\n",cpunum,state));
 	timer_set (TIME_NOW, (cpunum & 7) | (state << 3), cpu_manualnmicallback);
 }
@@ -2125,6 +2187,9 @@ void cpu_set_nmi_line(int cpunum, int state)
 ***************************************************************************/
 void cpu_set_irq_line(int cpunum, int irqline, int state)
 {
+	/* don't trigger interrupts on suspended CPUs */
+	if (cpu_getstatus(cpunum) == 0) return;
+
 	LOG((errorlog,"cpu_set_irq_line(%d,%d,%d)\n",cpunum,irqline,state));
 	timer_set (TIME_NOW, (irqline & 7) | ((cpunum & 7) << 3) | (state << 6), cpu_manualirqcallback);
 }
@@ -2137,6 +2202,9 @@ void cpu_set_irq_line(int cpunum, int irqline, int state)
 ***************************************************************************/
 void cpu_cause_interrupt(int cpunum,int type)
 {
+	/* don't trigger interrupts on suspended CPUs */
+	if (cpu_getstatus(cpunum) == 0) return;
+
 	timer_set (TIME_NOW, (cpunum & 7) | (type << 3), cpu_manualintcallback);
 }
 
@@ -3763,10 +3831,10 @@ const char *cpunum_dump_state(int cpunum)
 void cpu_dump_states(void)
 {
 	int i;
-	for( i = 0; i < MAX_CPU; i++ )
+
+	for( i = 0; i < totalcpu; i++ )
 	{
-		if( CPU_TYPE(i) != CPU_DUMMY )
-			fputs( cpunum_dump_state(i), stderr );
+		fputs( cpunum_dump_state(i), stderr );
 	}
 	fflush(stderr);
 }

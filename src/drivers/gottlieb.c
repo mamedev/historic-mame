@@ -1520,10 +1520,10 @@ ROM_END
 static const char *qbert_sample_names[] =
 {
 	"*qbert",
-	"FX_18.SAM", /*curse*/
-	"FX_20.SAM", /*little purple guy*/
-	"fx_22.sam", /*snake falling */
-	"fx_17.sam", /*green guy*/
+	"FX_18.wav", /*curse*/
+	"FX_20.wav", /*little purple guy*/
+	"fx_22.wav", /*snake falling */
+	"fx_17.wav", /*green guy*/
      0	/* end of array */
 };
 

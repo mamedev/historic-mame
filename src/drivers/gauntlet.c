@@ -119,35 +119,33 @@ Program ROM (48K bytes)                   4000-FFFF   R    D0-D7
 
 
 extern unsigned char *gauntlet_speed_check;
+extern int gauntlet_slapstic_num;
+extern int vindctr2_screen_refresh;
 
-int gauntlet_control_r (int offset);
-int gauntlet_io_r (int offset);
-int gauntlet_68010_speedup_r (int offset);
-int gauntlet_6502_speedup_r (int offset);
-int gauntlet_6502_switch_r (int offset);
-int gauntlet_playfieldram_r (int offset);
-int gauntlet_alpharam_r (int offset);
-int gauntlet_vscroll_r (int offset);
+int gauntlet_control_r(int offset);
+int gauntlet_io_r(int offset);
+int gauntlet_68010_speedup_r(int offset);
+int gauntlet_6502_speedup_r(int offset);
+int gauntlet_6502_switch_r(int offset);
+int gauntlet_playfieldram_r(int offset);
+int gauntlet_alpharam_r(int offset);
 
-void gauntlet_io_w (int offset, int data);
-void gauntlet_68010_speedup_w (int offset, int data);
-void gauntlet_6502_mix_w (int offset, int data);
-void gauntlet_sound_ctl_w (int offset, int data);
-void gauntlet_tms_w (int offset, int data);
-void gauntlet_playfieldram_w (int offset, int data);
-void gauntlet_alpharam_w (int offset, int data);
-void gauntlet_vscroll_w (int offset, int data);
+void gauntlet_io_w(int offset, int data);
+void gauntlet_68010_speedup_w(int offset, int data);
+void gauntlet_6502_mix_w(int offset, int data);
+void gauntlet_sound_ctl_w(int offset, int data);
+void gauntlet_tms_w(int offset, int data);
+void gauntlet_playfieldram_w(int offset, int data);
+void gauntlet_alpharam_w(int offset, int data);
+void gauntlet_hscroll_w(int offset, int data);
+void gauntlet_vscroll_w(int offset, int data);
 
-int gauntlet_interrupt (void);
-int gauntlet_sound_interrupt (void);
+int gauntlet_interrupt(void);
 
-void gauntlet_init_machine (void);
-void gaunt2p_init_machine (void);
-void gauntlet2_init_machine (void);
+void gauntlet_init_machine(void);
 
-int gauntlet_vh_start (void);
-void gauntlet_vh_stop (void);
-
+int gauntlet_vh_start(void);
+void gauntlet_vh_stop(void);
 void gauntlet_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 
@@ -166,15 +164,14 @@ static struct MemoryReadAddress gauntlet_readmem[] =
 	{ 0x802000, 0x802fff, atarigen_eeprom_r },
 	{ 0x803000, 0x803007, gauntlet_control_r },
 	{ 0x803008, 0x80300f, gauntlet_io_r },
-	{ 0x900000, 0x901fff, gauntlet_playfieldram_r },
-	{ 0x902000, 0x903fff, MRA_BANK4 },
+	{ 0x900000, 0x901fff, MRA_BANK2 },
+	{ 0x902000, 0x903fff, MRA_BANK3 },
 	{ 0x904000, 0x904003, gauntlet_68010_speedup_r },
-	{ 0x904004, 0x904fff, MRA_BANK2 },
-	{ 0x905f6c, 0x905f6f, gauntlet_vscroll_r },
-	{ 0x905000, 0x905eff, gauntlet_alpharam_r },
-	{ 0x905f00, 0x905fff, MRA_BANK3 },
+	{ 0x904004, 0x904fff, MRA_BANK4 },
+	{ 0x905000, 0x905eff, MRA_BANK5 },
+	{ 0x905f00, 0x905fff, MRA_BANK6 },
 	{ 0x910000, 0x9107ff, paletteram_word_r },
-	{ 0x930000, 0x930003, MRA_BANK5 },
+	{ 0x930000, 0x930003, MRA_BANK7 },
 	{ -1 }  /* end of table */
 };
 
@@ -186,20 +183,20 @@ static struct MemoryWriteAddress gauntlet_writemem[] =
 	{ 0x040000, 0x07ffff, MWA_ROM },
 	{ 0x800000, 0x801fff, MWA_BANK1 },
 	{ 0x802000, 0x802fff, atarigen_eeprom_w, &atarigen_eeprom, &atarigen_eeprom_size },
-	{ 0x803100, 0x803103, MWA_NOP },
+	{ 0x803100, 0x803103, watchdog_reset_w },
 	{ 0x803120, 0x80312f, gauntlet_io_w },
-	{ 0x803140, 0x803143, MWA_NOP },
+	{ 0x803140, 0x803143, atarigen_vblank_ack_w },
 	{ 0x803150, 0x803153, atarigen_eeprom_enable_w },
 	{ 0x803170, 0x803173, atarigen_sound_w },
 	{ 0x900000, 0x901fff, gauntlet_playfieldram_w, &atarigen_playfieldram, &atarigen_playfieldram_size },
-	{ 0x902000, 0x903fff, MWA_BANK4, &atarigen_spriteram, &atarigen_spriteram_size },
+	{ 0x902000, 0x903fff, MWA_BANK3, &atarigen_spriteram, &atarigen_spriteram_size },
 	{ 0x904000, 0x904003, gauntlet_68010_speedup_w, &gauntlet_speed_check },
-	{ 0x904004, 0x904fff, MWA_BANK2 },
-	{ 0x905f6c, 0x905f6f, gauntlet_vscroll_w, &atarigen_vscroll },
+	{ 0x904004, 0x904fff, MWA_BANK4 },
+	{ 0x905f6e, 0x905f6f, gauntlet_vscroll_w, &atarigen_vscroll },
 	{ 0x905000, 0x905eff, gauntlet_alpharam_w, &atarigen_alpharam, &atarigen_alpharam_size },
-	{ 0x905f00, 0x905fff, MWA_BANK3 },
+	{ 0x905f00, 0x905fff, MWA_BANK6 },
 	{ 0x910000, 0x9107ff, paletteram_IIIIRRRRGGGGBBBB_word_w, &paletteram },
-	{ 0x930000, 0x930003, MWA_BANK5, &atarigen_hscroll },
+	{ 0x930000, 0x930001, gauntlet_hscroll_w, &atarigen_hscroll },
 	{ -1 }  /* end of table */
 };
 
@@ -220,7 +217,7 @@ static struct MemoryReadAddress gauntlet_sound_readmem[] =
 	{ 0x1030, 0x103f, gauntlet_6502_switch_r },
 	{ 0x1800, 0x180f, pokey1_r },
 	{ 0x1811, 0x1811, YM2151_status_port_0_r },
-	{ 0x1830, 0x183f, MRA_NOP },
+	{ 0x1830, 0x183f, atarigen_6502_irq_ack_r },
 	{ 0x4000, 0xffff, MRA_ROM },
 	{ -1 }  /* end of table */
 };
@@ -236,7 +233,7 @@ static struct MemoryWriteAddress gauntlet_sound_writemem[] =
 	{ 0x1810, 0x1810, YM2151_register_port_0_w },
 	{ 0x1811, 0x1811, YM2151_data_port_0_w },
 	{ 0x1820, 0x182f, gauntlet_tms_w },
-	{ 0x1830, 0x183f, MWA_NOP },
+	{ 0x1830, 0x183f, atarigen_6502_irq_ack_w },
 	{ 0x4000, 0xffff, MWA_ROM },
 	{ -1 }  /* end of table */
 };
@@ -312,7 +309,65 @@ INPUT_PORTS_START( gauntlet_ports )
 	PORT_DIPSETTING(    0x01, "Blue/Valkyrie" )
 	PORT_DIPSETTING(    0x02, "Yellow/Wizard" )
 	PORT_DIPSETTING(    0x03, "Green/Elf" )
+INPUT_PORTS_END
 
+
+INPUT_PORTS_START( vindctr2_ports )
+	PORT_START	/* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER1 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER1 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON4 | IPF_PLAYER1 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_UP    | IPF_PLAYER1 | IPF_2WAY )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICKRIGHT_UP   | IPF_PLAYER1 | IPF_2WAY )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_DOWN  | IPF_PLAYER1 | IPF_2WAY )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICKRIGHT_DOWN | IPF_PLAYER1 | IPF_2WAY )
+
+	PORT_START	/* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER2 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON4 | IPF_PLAYER2 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_UP    | IPF_PLAYER2 | IPF_2WAY )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICKRIGHT_UP   | IPF_PLAYER2 | IPF_2WAY )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_DOWN  | IPF_PLAYER2 | IPF_2WAY )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICKRIGHT_DOWN | IPF_PLAYER2 | IPF_2WAY )
+
+	PORT_START	/* IN2 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0xfc, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START	/* IN3 */
+	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START	/* IN4 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN4 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN3 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0xf0, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START	/* DSW */
+	PORT_BIT( 0x07, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_BITX(    0x08, 0x08, IPT_DIPSWITCH_NAME | IPF_TOGGLE, DEF_STR( Service_Mode ), OSD_KEY_F2, IP_JOY_NONE )
+	PORT_DIPSETTING(    0x08, DEF_STR( Off ))
+	PORT_DIPSETTING(    0x00, DEF_STR( On ))
+	PORT_BIT( 0x30, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW,  IPT_VBLANK )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNUSED )
+
+	PORT_START	/* single joystick */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_8WAY | IPF_CHEAT | IPF_PLAYER1 )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_CHEAT | IPF_PLAYER1 )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_CHEAT | IPF_PLAYER1 )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_CHEAT | IPF_PLAYER1 )
+
+	PORT_START	/* single joystick */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_8WAY | IPF_CHEAT | IPF_PLAYER2 )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_CHEAT | IPF_PLAYER2 )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_CHEAT | IPF_PLAYER2 )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_CHEAT | IPF_PLAYER2 )
 INPUT_PORTS_END
 
 
@@ -338,9 +393,9 @@ static struct GfxLayout charlayout =
 static struct GfxLayout spritelayout =
 {
 	8,8,	/* 8*8 sprites */
-	12288,	/* up to 12288 of them */
+	24576,	/* up to 24576 of them */
 	4,		/* 4 bits per pixel */
-	{ 3*8*0x18000, 2*8*0x18000, 1*8*0x18000, 0*8*0x18000 },
+	{ 3*8*0x30000, 2*8*0x30000, 1*8*0x30000, 0*8*0x30000 },
 	{ 0, 1, 2, 3, 4, 5, 6, 7 },
 	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
 	8*8	/* every sprite takes 8 consecutive bytes */
@@ -349,8 +404,8 @@ static struct GfxLayout spritelayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x60000, &charlayout,      0, 64 },		/* characters 8x8 */
-	{ 1, 0x00000, &spritelayout,  256, 32 },		/* sprites & playfield */
+	{ 2, 0x00000, &charlayout,      0, 64 },		/* characters 8x8 */
+	{ 3, 0x00000, &spritelayout,  256, 32 },		/* sprites & playfield */
 	{ -1 } /* end of array */
 };
 
@@ -364,22 +419,11 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 static struct POKEYinterface pokey_interface =
 {
-	1,	/* 1 chip */
-	1789790,	/* 1.5 MHz??? */
+	1,			/* 1 chip */
+	7159160/4,
 	40,
 	POKEY_DEFAULT_GAIN,
-	NO_CLIP,
-	/* The 8 pot handlers */
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	/* The allpot handler */
-	{ 0 }
+	NO_CLIP
 };
 
 
@@ -394,7 +438,7 @@ static struct TMS5220interface tms5220_interface =
 static struct YM2151interface ym2151_interface =
 {
 	1,			/* 1 chip */
-	3579580,	/* seems to be the standard */
+	7159160/2,
 	{ YM3012_VOL(60,OSD_PAN_LEFT,60,OSD_PAN_RIGHT) },
 	{ 0 }
 };
@@ -412,7 +456,7 @@ static struct MachineDriver gauntlet_machine_driver =
 	/* basic machine hardware */
 	{
 		{
-			CPU_M68000,
+			CPU_M68010,
 			7159160,
 			0,
 			gauntlet_readmem,gauntlet_writemem,0,0,
@@ -420,11 +464,11 @@ static struct MachineDriver gauntlet_machine_driver =
 		},
 		{
 			CPU_M6502,
-			1789790,
-			2,
+			7159160/4,
+			1,
 			gauntlet_sound_readmem,gauntlet_sound_writemem,0,0,
 			0,0,
-			gauntlet_sound_interrupt,250
+			atarigen_6502_irq_gen,250
 		},
 	},
 	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
@@ -451,123 +495,13 @@ static struct MachineDriver gauntlet_machine_driver =
 			&ym2151_interface
 		},
 		{
-			SOUND_TMS5220,
-			&tms5220_interface
-		},
-		{
 			SOUND_POKEY,
 			&pokey_interface
-		}
-	}
-};
-
-
-static struct MachineDriver gaunt2p_machine_driver =
-{
-	/* basic machine hardware */
-	{
-		{
-			CPU_M68000,
-			7159160,
-			0,
-			gauntlet_readmem,gauntlet_writemem,0,0,
-			gauntlet_interrupt,1
-		},
-		{
-			CPU_M6502,
-			1789790,		/* Clocked by the 2H signal; best guess = (64*8)*(32*8)*60fps/4 = 1.966MHz */
-			2,
-			gauntlet_sound_readmem,gauntlet_sound_writemem,0,0,
-			0,0,
-			gauntlet_sound_interrupt,250
-		},
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	10,
-	gaunt2p_init_machine,
-
-	/* video hardware */
-	42*8, 30*8, { 0*8, 42*8-1, 0*8, 30*8-1 },
-	gfxdecodeinfo,
-	1024,1024,
-	0,
-
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_BEFORE_VBLANK,
-	0,
-	gauntlet_vh_start,
-	gauntlet_vh_stop,
-	gauntlet_vh_screenrefresh,
-
-	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		{
-			SOUND_YM2151,
-			&ym2151_interface
 		},
 		{
 			SOUND_TMS5220,
 			&tms5220_interface
 		},
-		{
-			SOUND_POKEY,
-			&pokey_interface
-		}
-	}
-};
-
-
-static struct MachineDriver gauntlet2_machine_driver =
-{
-	/* basic machine hardware */
-	{
-		{
-			CPU_M68000,
-			7159160,
-			0,
-			gauntlet_readmem,gauntlet_writemem,0,0,
-			gauntlet_interrupt,1
-		},
-		{
-			CPU_M6502,
-			1789790,		/* Clocked by the 2H signal; best guess = (64*8)*(32*8)*60fps/4 = 1.966MHz */
-			2,
-			gauntlet_sound_readmem,gauntlet_sound_writemem,0,0,
-			0,0,
-			gauntlet_sound_interrupt,250
-		},
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	10,
-	gauntlet2_init_machine,
-
-	/* video hardware */
-	42*8, 30*8, { 0*8, 42*8-1, 0*8, 30*8-1 },
-	gfxdecodeinfo,
-	1024,1024,
-	0,
-
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_BEFORE_VBLANK,
-	0,
-	gauntlet_vh_start,
-	gauntlet_vh_stop,
-	gauntlet_vh_screenrefresh,
-
-	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		{
-			SOUND_YM2151,
-			&ym2151_interface
-		},
-		{
-			SOUND_TMS5220,
-			&tms5220_interface
-		},
-		{
-			SOUND_POKEY,
-			&pokey_interface
-		}
 	}
 };
 
@@ -588,20 +522,25 @@ ROM_START( gauntlet_rom )
 	ROM_LOAD_EVEN( "gauntlt1.7a",  0x40000, 0x08000, 0x6fb8419c )
 	ROM_LOAD_ODD ( "gauntlt1.7b",  0x40000, 0x08000, 0x931bd2a0 )
 
-	ROM_REGION_DISPOSE(0x64000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "gauntlt1.1a",  0x00000, 0x08000, 0x91700f33 )
-	ROM_LOAD( "gauntlt1.1b",  0x08000, 0x08000, 0x869330be )
-	ROM_LOAD( "gauntlt1.1l",  0x18000, 0x08000, 0xd497d0a8 )
-	ROM_LOAD( "gauntlt1.1mn", 0x20000, 0x08000, 0x29ef9882 )
-	ROM_LOAD( "gauntlt1.2a",  0x30000, 0x08000, 0x9510b898 )
-	ROM_LOAD( "gauntlt1.2b",  0x38000, 0x08000, 0x11e0ac5b )
-	ROM_LOAD( "gauntlt1.2l",  0x48000, 0x08000, 0x29a5db41 )
-	ROM_LOAD( "gauntlt1.2mn", 0x50000, 0x08000, 0x8bf3b263 )
-	ROM_LOAD( "gauntlt1.6p",  0x60000, 0x04000, 0x6c276a1d )        /* alpha font */
-
 	ROM_REGION(0x10000)	/* 64k for 6502 code */
 	ROM_LOAD( "gauntlt1.16r", 0x4000, 0x4000, 0x6ee7f3cc )
 	ROM_LOAD( "gauntlt1.16s", 0x8000, 0x8000, 0xfa19861f )
+
+	ROM_REGION_DISPOSE(0x04000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "gauntlt1.6p",  0x00000, 0x04000, 0x6c276a1d )
+
+	ROM_REGION_DISPOSE(0xc0000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "gauntlt1.1a",  0x00000, 0x08000, 0x91700f33 )
+	ROM_LOAD( "gauntlt1.1b",  0x08000, 0x08000, 0x869330be )
+
+	ROM_LOAD( "gauntlt1.1l",  0x30000, 0x08000, 0xd497d0a8 )
+	ROM_LOAD( "gauntlt1.1mn", 0x38000, 0x08000, 0x29ef9882 )
+
+	ROM_LOAD( "gauntlt1.2a",  0x60000, 0x08000, 0x9510b898 )
+	ROM_LOAD( "gauntlt1.2b",  0x68000, 0x08000, 0x11e0ac5b )
+
+	ROM_LOAD( "gauntlt1.2l",  0x90000, 0x08000, 0x29a5db41 )
+	ROM_LOAD( "gauntlt1.2mn", 0x98000, 0x08000, 0x8bf3b263 )
 ROM_END
 
 
@@ -614,20 +553,25 @@ ROM_START( gauntir1_rom )
 	ROM_LOAD_EVEN( "gaun1ir1.7a",  0x40000, 0x08000, 0xc57377b3 )
 	ROM_LOAD_ODD ( "gaun1ir1.7b",  0x40000, 0x08000, 0x1cac2071 )
 
-	ROM_REGION_DISPOSE(0x64000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "gauntlt1.1a",  0x00000, 0x08000, 0x91700f33 )
-	ROM_LOAD( "gauntlt1.1b",  0x08000, 0x08000, 0x869330be )
-	ROM_LOAD( "gauntlt1.1l",  0x18000, 0x08000, 0xd497d0a8 )
-	ROM_LOAD( "gauntlt1.1mn", 0x20000, 0x08000, 0x29ef9882 )
-	ROM_LOAD( "gauntlt1.2a",  0x30000, 0x08000, 0x9510b898 )
-	ROM_LOAD( "gauntlt1.2b",  0x38000, 0x08000, 0x11e0ac5b )
-	ROM_LOAD( "gauntlt1.2l",  0x48000, 0x08000, 0x29a5db41 )
-	ROM_LOAD( "gauntlt1.2mn", 0x50000, 0x08000, 0x8bf3b263 )
-	ROM_LOAD( "gauntlt1.6p",  0x60000, 0x04000, 0x6c276a1d )        /* alpha font */
-
 	ROM_REGION(0x10000)	/* 64k for 6502 code */
 	ROM_LOAD( "gauntlt1.16r", 0x4000, 0x4000, 0x6ee7f3cc )
 	ROM_LOAD( "gauntlt1.16s", 0x8000, 0x8000, 0xfa19861f )
+
+	ROM_REGION_DISPOSE(0x04000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "gauntlt1.6p",  0x00000, 0x04000, 0x6c276a1d )
+
+	ROM_REGION_DISPOSE(0xc0000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "gauntlt1.1a",  0x00000, 0x08000, 0x91700f33 )
+	ROM_LOAD( "gauntlt1.1b",  0x08000, 0x08000, 0x869330be )
+
+	ROM_LOAD( "gauntlt1.1l",  0x30000, 0x08000, 0xd497d0a8 )
+	ROM_LOAD( "gauntlt1.1mn", 0x38000, 0x08000, 0x29ef9882 )
+
+	ROM_LOAD( "gauntlt1.2a",  0x60000, 0x08000, 0x9510b898 )
+	ROM_LOAD( "gauntlt1.2b",  0x68000, 0x08000, 0x11e0ac5b )
+
+	ROM_LOAD( "gauntlt1.2l",  0x90000, 0x08000, 0x29a5db41 )
+	ROM_LOAD( "gauntlt1.2mn", 0x98000, 0x08000, 0x8bf3b263 )
 ROM_END
 
 
@@ -640,20 +584,25 @@ ROM_START( gauntir2_rom )
 	ROM_LOAD_EVEN( "gaun1ir2.7a",  0x40000, 0x08000, 0x73e1ad79 )
 	ROM_LOAD_ODD ( "gaun1ir2.7b",  0x40000, 0x08000, 0xfd248cea )
 
-	ROM_REGION_DISPOSE(0x64000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "gauntlt1.1a",  0x00000, 0x08000, 0x91700f33 )
-	ROM_LOAD( "gauntlt1.1b",  0x08000, 0x08000, 0x869330be )
-	ROM_LOAD( "gauntlt1.1l",  0x18000, 0x08000, 0xd497d0a8 )
-	ROM_LOAD( "gauntlt1.1mn", 0x20000, 0x08000, 0x29ef9882 )
-	ROM_LOAD( "gauntlt1.2a",  0x30000, 0x08000, 0x9510b898 )
-	ROM_LOAD( "gauntlt1.2b",  0x38000, 0x08000, 0x11e0ac5b )
-	ROM_LOAD( "gauntlt1.2l",  0x48000, 0x08000, 0x29a5db41 )
-	ROM_LOAD( "gauntlt1.2mn", 0x50000, 0x08000, 0x8bf3b263 )
-	ROM_LOAD( "gauntlt1.6p",  0x60000, 0x04000, 0x6c276a1d )        /* alpha font */
-
 	ROM_REGION(0x10000)	/* 64k for 6502 code */
 	ROM_LOAD( "gauntlt1.16r", 0x4000, 0x4000, 0x6ee7f3cc )
 	ROM_LOAD( "gauntlt1.16s", 0x8000, 0x8000, 0xfa19861f )
+
+	ROM_REGION_DISPOSE(0x04000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "gauntlt1.6p",  0x00000, 0x04000, 0x6c276a1d )
+
+	ROM_REGION_DISPOSE(0xc0000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "gauntlt1.1a",  0x00000, 0x08000, 0x91700f33 )
+	ROM_LOAD( "gauntlt1.1b",  0x08000, 0x08000, 0x869330be )
+
+	ROM_LOAD( "gauntlt1.1l",  0x30000, 0x08000, 0xd497d0a8 )
+	ROM_LOAD( "gauntlt1.1mn", 0x38000, 0x08000, 0x29ef9882 )
+
+	ROM_LOAD( "gauntlt1.2a",  0x60000, 0x08000, 0x9510b898 )
+	ROM_LOAD( "gauntlt1.2b",  0x68000, 0x08000, 0x11e0ac5b )
+
+	ROM_LOAD( "gauntlt1.2l",  0x90000, 0x08000, 0x29a5db41 )
+	ROM_LOAD( "gauntlt1.2mn", 0x98000, 0x08000, 0x8bf3b263 )
 ROM_END
 
 
@@ -666,20 +615,25 @@ ROM_START( gaunt2p_rom )
 	ROM_LOAD_EVEN( "gaunt2p.7a",   0x40000, 0x08000, 0x5b4ee415 )
 	ROM_LOAD_ODD ( "gaunt2p.7b",   0x40000, 0x08000, 0x41f5c9e2 )
 
-	ROM_REGION_DISPOSE(0x64000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "gauntlt1.1a",  0x00000, 0x08000, 0x91700f33 )
-	ROM_LOAD( "gauntlt1.1b",  0x08000, 0x08000, 0x869330be )
-	ROM_LOAD( "gauntlt1.1l",  0x18000, 0x08000, 0xd497d0a8 )
-	ROM_LOAD( "gauntlt1.1mn", 0x20000, 0x08000, 0x29ef9882 )
-	ROM_LOAD( "gauntlt1.2a",  0x30000, 0x08000, 0x9510b898 )
-	ROM_LOAD( "gauntlt1.2b",  0x38000, 0x08000, 0x11e0ac5b )
-	ROM_LOAD( "gauntlt1.2l",  0x48000, 0x08000, 0x29a5db41 )
-	ROM_LOAD( "gauntlt1.2mn", 0x50000, 0x08000, 0x8bf3b263 )
-	ROM_LOAD( "gauntlt1.6p",  0x60000, 0x04000, 0x6c276a1d )        /* alpha font */
-
 	ROM_REGION(0x10000)	/* 64k for 6502 code */
 	ROM_LOAD( "gauntlt1.16r", 0x4000, 0x4000, 0x6ee7f3cc )
 	ROM_LOAD( "gauntlt1.16s", 0x8000, 0x8000, 0xfa19861f )
+
+	ROM_REGION_DISPOSE(0x04000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "gauntlt1.6p",  0x00000, 0x04000, 0x6c276a1d )
+
+	ROM_REGION_DISPOSE(0xc0000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "gauntlt1.1a",  0x00000, 0x08000, 0x91700f33 )
+	ROM_LOAD( "gauntlt1.1b",  0x08000, 0x08000, 0x869330be )
+
+	ROM_LOAD( "gauntlt1.1l",  0x30000, 0x08000, 0xd497d0a8 )
+	ROM_LOAD( "gauntlt1.1mn", 0x38000, 0x08000, 0x29ef9882 )
+
+	ROM_LOAD( "gauntlt1.2a",  0x60000, 0x08000, 0x9510b898 )
+	ROM_LOAD( "gauntlt1.2b",  0x68000, 0x08000, 0x11e0ac5b )
+
+	ROM_LOAD( "gauntlt1.2l",  0x90000, 0x08000, 0x29a5db41 )
+	ROM_LOAD( "gauntlt1.2mn", 0x98000, 0x08000, 0x8bf3b263 )
 ROM_END
 
 
@@ -694,28 +648,87 @@ ROM_START( gaunt2_rom )
 	ROM_LOAD_EVEN( "gauntlt2.6a",  0x50000, 0x08000, 0xae301bba )
 	ROM_LOAD_ODD ( "gauntlt2.6b",  0x50000, 0x08000, 0xe94aaa8a )
 
-	ROM_REGION_DISPOSE(0x64000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGION(0x10000)	/* 64k for 6502 code */
+	ROM_LOAD( "gauntlt2.16r", 0x4000, 0x4000, 0x5c731006 )
+	ROM_LOAD( "gauntlt2.16s", 0x8000, 0x8000, 0xdc3591e7 )
+
+	ROM_REGION_DISPOSE(0x04000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "gauntlt2.6p",  0x00000, 0x04000, 0xd101905d )
+
+	ROM_REGION_DISPOSE(0xc0000)	/* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "gauntlt2.1a",  0x00000, 0x08000, 0x09df6e23 )
 	ROM_LOAD( "gauntlt2.1b",  0x08000, 0x08000, 0x869330be )
 	ROM_LOAD( "gauntlt2.1c",  0x10000, 0x04000, 0xe4c98f01 )
 	ROM_RELOAD(               0x14000, 0x04000 )
-	ROM_LOAD( "gauntlt2.1l",  0x18000, 0x08000, 0x33cb476e )
-	ROM_LOAD( "gauntlt2.1mn", 0x20000, 0x08000, 0x29ef9882 )
-	ROM_LOAD( "gauntlt2.1p",  0x28000, 0x04000, 0xc4857879 )
-	ROM_RELOAD(               0x2c000, 0x04000 )
-	ROM_LOAD( "gauntlt2.2a",  0x30000, 0x08000, 0xf71e2503 )
-	ROM_LOAD( "gauntlt2.2b",  0x38000, 0x08000, 0x11e0ac5b )
-	ROM_LOAD( "gauntlt2.2c",  0x40000, 0x04000, 0xd9c2c2d1 )
+
+	ROM_LOAD( "gauntlt2.1l",  0x30000, 0x08000, 0x33cb476e )
+	ROM_LOAD( "gauntlt2.1mn", 0x38000, 0x08000, 0x29ef9882 )
+	ROM_LOAD( "gauntlt2.1p",  0x40000, 0x04000, 0xc4857879 )
 	ROM_RELOAD(               0x44000, 0x04000 )
-	ROM_LOAD( "gauntlt2.2l",  0x48000, 0x08000, 0x9e30b2e9 )
-	ROM_LOAD( "gauntlt2.2mn", 0x50000, 0x08000, 0x8bf3b263 )
-	ROM_LOAD( "gauntlt2.2p",  0x58000, 0x04000, 0xa32c732a )
-	ROM_RELOAD(               0x5c000, 0x04000 )
-	ROM_LOAD( "gauntlt2.6p",  0x60000, 0x04000, 0xd101905d )        /* alpha font */
+
+	ROM_LOAD( "gauntlt2.2a",  0x60000, 0x08000, 0xf71e2503 )
+	ROM_LOAD( "gauntlt2.2b",  0x68000, 0x08000, 0x11e0ac5b )
+	ROM_LOAD( "gauntlt2.2c",  0x70000, 0x04000, 0xd9c2c2d1 )
+	ROM_RELOAD(               0x74000, 0x04000 )
+
+	ROM_LOAD( "gauntlt2.2l",  0x90000, 0x08000, 0x9e30b2e9 )
+	ROM_LOAD( "gauntlt2.2mn", 0x98000, 0x08000, 0x8bf3b263 )
+	ROM_LOAD( "gauntlt2.2p",  0xa0000, 0x04000, 0xa32c732a )
+	ROM_RELOAD(               0xa4000, 0x04000 )
+ROM_END
+
+
+ROM_START( vindctr2_rom )
+	ROM_REGION(0x80000)	/* 8*64k for 68000 code */
+	ROM_LOAD_EVEN( "1186", 0x00000, 0x08000, 0xaf138263 )
+	ROM_LOAD_ODD ( "1187", 0x00000, 0x08000, 0x44baff64 )
+	ROM_LOAD_EVEN( "1196", 0x38000, 0x04000, 0xc92bf6dd )
+	ROM_LOAD_ODD ( "1197", 0x38000, 0x04000, 0xd7ace347 )
+	ROM_LOAD_EVEN( "3188", 0x40000, 0x08000, 0x10f558d2 )
+	ROM_LOAD_ODD ( "3189", 0x40000, 0x08000, 0x302e24b6 )
+	ROM_LOAD_EVEN( "2190", 0x50000, 0x08000, 0xe7dc2b74 )
+	ROM_LOAD_ODD ( "2191", 0x50000, 0x08000, 0xed8ed86e )
+	ROM_LOAD_EVEN( "2192", 0x60000, 0x08000, 0xeec2c93d )
+	ROM_LOAD_ODD ( "2193", 0x60000, 0x08000, 0x3fbee9aa )
+	ROM_LOAD_EVEN( "1194", 0x70000, 0x08000, 0xe6bcf458 )
+	ROM_LOAD_ODD ( "1195", 0x70000, 0x08000, 0xb9bf245d )
 
 	ROM_REGION(0x10000)	/* 64k for 6502 code */
-	ROM_LOAD( "gauntlt2.16r", 0x4000, 0x4000, 0x5c731006 )
-	ROM_LOAD( "gauntlt2.16s", 0x8000, 0x8000, 0xdc3591e7 )
+	ROM_LOAD( "1160", 0x4000, 0x4000, 0xeef0a003 )
+	ROM_LOAD( "1161", 0x8000, 0x8000, 0x68c74337 )
+
+	ROM_REGION_DISPOSE(0x04000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "1198",  0x00000, 0x04000, 0xf99b631a )
+
+	ROM_REGION_DISPOSE(0xc0000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "1101", 0x00000, 0x08000, 0xdd3833ad )
+	ROM_LOAD( "1166", 0x08000, 0x08000, 0xe2db50a0 )
+	ROM_LOAD( "1170", 0x10000, 0x08000, 0xf050ab43 )
+	ROM_LOAD( "1174", 0x18000, 0x08000, 0xb6704bd1 )
+	ROM_LOAD( "1178", 0x20000, 0x08000, 0xd3006f05 )
+	ROM_LOAD( "1182", 0x28000, 0x08000, 0x9046e985 )
+
+	ROM_LOAD( "1102", 0x30000, 0x08000, 0xd505b04a )
+	ROM_LOAD( "1167", 0x38000, 0x08000, 0x1869c76d )
+	ROM_LOAD( "1171", 0x40000, 0x08000, 0x1b229c2b )
+	ROM_LOAD( "1175", 0x48000, 0x08000, 0x73c41aca )
+	ROM_LOAD( "1179", 0x50000, 0x08000, 0x9b7cb0ef )
+	ROM_LOAD( "1183", 0x58000, 0x08000, 0x393bba42 )
+
+	ROM_LOAD( "1103", 0x60000, 0x08000, 0x50e76162 )
+	ROM_LOAD( "1168", 0x68000, 0x08000, 0x35c78469 )
+	ROM_LOAD( "1172", 0x70000, 0x08000, 0x314ac268 )
+	ROM_LOAD( "1176", 0x78000, 0x08000, 0x061d79db )
+	ROM_LOAD( "1180", 0x80000, 0x08000, 0x89c1fe16 )
+	/* warning: if you find a good ROM, remove the memset from the rom_decode, below! */
+	ROM_LOAD( "1184", 0x88000, 0x08000, 0x00000000 )
+
+	ROM_LOAD( "1104", 0x90000, 0x08000, 0x9484ba65 )
+	ROM_LOAD( "1169", 0x98000, 0x08000, 0x132d3337 )
+	ROM_LOAD( "1173", 0xa0000, 0x08000, 0x98de2426 )
+	ROM_LOAD( "1177", 0xa8000, 0x08000, 0x9d0824f8 )
+	ROM_LOAD( "1181", 0xb0000, 0x08000, 0x9e62b27c )
+	ROM_LOAD( "1185", 0xb8000, 0x08000, 0x9d62f6b7 )
 ROM_END
 
 
@@ -726,7 +739,7 @@ ROM_END
  *
  *************************************/
 
-static void gauntlet_rom_decode (void)
+static void gauntlet_rom_decode(void)
 {
 	unsigned long *p1, *p2, temp;
 	int i;
@@ -753,9 +766,47 @@ static void gauntlet_rom_decode (void)
 	for (i = 0; i < 0x8000 / 4; i++)
 		temp = *p1, *p1++ = *p2, *p2++ = temp;
 
+	/* warning: remove me once a good copy of Vindicators 2 1184 is found! */
+	memset(&Machine->memory_region[3][0x88000], 0xff, 0x8000);
+
 	/* also invert the graphics bits on the playfield and motion objects */
-	for (i = 0; i < 0x60000; i++)
-		Machine->memory_region[1][i] ^= 0xff;
+	for (i = 0; i < Machine->memory_region_length[3]; i++)
+		Machine->memory_region[3][i] ^= 0xff;
+}
+
+
+
+/*************************************
+ *
+ *		Driver initialization
+ *
+ *************************************/
+
+void gauntlet_init(void)
+{
+	gauntlet_slapstic_num = 104;
+	vindctr2_screen_refresh = 0;
+}
+
+
+void gaunt2p_init(void)
+{
+	gauntlet_slapstic_num = 107;
+	vindctr2_screen_refresh = 0;
+}
+
+
+void gauntlet2_init(void)
+{
+	gauntlet_slapstic_num = 106;
+	vindctr2_screen_refresh = 0;
+}
+
+
+void vindctr2_init(void)
+{
+	gauntlet_slapstic_num = 118;
+	vindctr2_screen_refresh = 1;
 }
 
 
@@ -777,7 +828,7 @@ struct GameDriver gauntlet_driver =
 	"Aaron Giles (MAME driver)\nMike Balfour (graphics info)\nFrank Palazzolo (Slapstic decoding)",
 	0,
 	&gauntlet_machine_driver,
-	0,
+	gauntlet_init,
 
 	gauntlet_rom,
 	gauntlet_rom_decode,
@@ -804,7 +855,7 @@ struct GameDriver gauntir1_driver =
 	"Aaron Giles (MAME driver)\nMike Balfour (graphics info)\nFrank Palazzolo (Slapstic decoding)",
 	0,
 	&gauntlet_machine_driver,
-	0,
+	gauntlet_init,
 
 	gauntir1_rom,
 	gauntlet_rom_decode,
@@ -831,7 +882,7 @@ struct GameDriver gauntir2_driver =
 	"Aaron Giles (MAME driver)\nMike Balfour (graphics info)\nFrank Palazzolo (Slapstic decoding)",
 	0,
 	&gauntlet_machine_driver,
-	0,
+	gauntlet_init,
 
 	gauntir2_rom,
 	gauntlet_rom_decode,
@@ -857,8 +908,8 @@ struct GameDriver gaunt2p_driver =
 	"Atari Games",
 	"Aaron Giles (MAME driver)\nMike Balfour (graphics info)\nFrank Palazzolo (Slapstic decoding)",
 	0,
-	&gaunt2p_machine_driver,
-	0,
+	&gauntlet_machine_driver,
+	gaunt2p_init,
 
 	gaunt2p_rom,
 	gauntlet_rom_decode,
@@ -884,8 +935,8 @@ struct GameDriver gaunt2_driver =
 	"Atari Games",
 	"Aaron Giles (MAME driver)\nMike Balfour (graphics info)\nFrank Palazzolo (Slapstic decoding)",
 	0,
-	&gauntlet2_machine_driver,
-	0,
+	&gauntlet_machine_driver,
+	gauntlet2_init,
 
 	gaunt2_rom,
 	gauntlet_rom_decode,
@@ -894,6 +945,33 @@ struct GameDriver gaunt2_driver =
 	0,	/* sound_prom */
 
 	gauntlet_ports,
+
+	0, 0, 0,   /* colors, palette, colortable */
+	ORIENTATION_DEFAULT,
+	atarigen_hiload, atarigen_hisave
+};
+
+
+struct GameDriver vindctr2_driver =
+{
+	__FILE__,
+	0,
+	"vindctr2",
+	"Vindicators part II",
+	"1988",
+	"Atari Games",
+	"Aaron Giles (MAME driver)\nMike Balfour (graphics info)\nFrank Palazzolo (Slapstic decoding)",
+	GAME_IMPERFECT_COLORS,
+	&gauntlet_machine_driver,
+	vindctr2_init,
+
+	vindctr2_rom,
+	gauntlet_rom_decode,
+	0,
+	0,
+	0,	/* sound_prom */
+
+	vindctr2_ports,
 
 	0, 0, 0,   /* colors, palette, colortable */
 	ORIENTATION_DEFAULT,

@@ -139,7 +139,7 @@ void mooncrst_noise_w(int offset,int data);
 void mooncrst_background_w(int offset,int data);
 void mooncrst_shoot_w(int offset,int data);
 void mooncrst_lfo_freq_w(int offset,int data);
-int  mooncrst_sh_start(void);
+int  mooncrst_sh_start(const struct MachineSound *msound);
 void mooncrst_sh_stop(void);
 void mooncrst_sh_update(void);
 
@@ -1181,8 +1181,8 @@ static struct MachineDriver jumpbug_machine_driver =
 static const char *mooncrst_sample_names[] =
 {
 	"*galaxian",
-	"shot.sam",
-	"death.sam",
+	"shot.wav",
+	"death.wav",
 	0	/* end of array */
 };
 
@@ -2313,7 +2313,7 @@ struct GameDriver redufo_driver =
 	"redufo",
 	"Defend the Terra Attack on the Red UFO",
 	"????",
-	"hack",
+	"Hara Industries??",
 	"Robert Aanchuetz\nNicola Salmoria\nAndrew Scott\nMarco Cassili",
 	0,
 	&warofbug_machine_driver,

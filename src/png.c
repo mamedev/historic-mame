@@ -18,16 +18,14 @@
 
 #include "driver.h"
 #include "inflate.h"
-
-/* These are the only two functions that should be needed */
-int png_read_artwork(const char *file_name, struct osd_bitmap **bitmap, UINT8 **palette, int *num_palette, UINT8 **trans, int *num_trans);
+#include "png.h"
 
 extern unsigned int crc32 (unsigned int crc, const unsigned char *buf, unsigned int len);
 
-#define PNG_Signature       "\x89\x50\x4E\x47\x0D\x0A\x1A\x0A"
-#define PNG_MaxChunkLength  0x7FFFFFFFL
+#define PNG_Signature		"\x89\x50\x4E\x47\x0D\x0A\x1A\x0A"
+#define PNG_MaxChunkLength	0x7FFFFFFFL
 
-#define PNG_CN_IHDR 0x49484452L     /* Chunk names */
+#define PNG_CN_IHDR 0x49484452L 	/* Chunk names */
 #define PNG_CN_PLTE 0x504C5445L
 #define PNG_CN_IDAT 0x49444154L
 #define PNG_CN_IEND 0x49454E44L
@@ -44,44 +42,13 @@ extern unsigned int crc32 (unsigned int crc, const unsigned char *buf, unsigned 
 #define PNG_CN_tIME 0x74494D45L
 #define PNG_CN_sCAL 0x7343414CL
 
-#define PNG_PF_None     0   /* Prediction filters */
-#define PNG_PF_Sub      1
-#define PNG_PF_Up       2
-#define PNG_PF_Average  3
-#define PNG_PF_Paeth    4
+#define PNG_PF_None 	0	/* Prediction filters */
+#define PNG_PF_Sub		1
+#define PNG_PF_Up		2
+#define PNG_PF_Average	3
+#define PNG_PF_Paeth	4
 
 int use_artwork;
-
-struct png_info {
-	UINT32 width, height;
-	UINT32 xoffset, yoffset;
-	UINT32 xres, yres;
-	double xscale, yscale;
-	double source_gamma;
-	UINT32 chromaticities[8];
-	UINT32 resolution_unit, offset_unit, scale_unit;
-	UINT8 bit_depth;
-	UINT32 significant_bits[4];
-	UINT32 background_color[4];
-	UINT8 color_type;
-	UINT8 compression_method;
-	UINT8 filter_method;
-	UINT8 interlace_method;
-	UINT32 num_palette;
-	UINT8 *palette;
-	UINT32 num_trans;
-	UINT8 *trans;
-	UINT8 *image;
-
-	/* The rest is private and should not be used
-	 * by the public functions
-	 */
-	UINT8 bpp;
-	UINT32 rowbytes;
-	UINT8 *zimage;
-	UINT32 zlength;
-	UINT8 *fimage;
-};
 
 /* read_uint is here so we don't have to deal with byte-ordering issues */
 static UINT32 read_uint (void *fp)
@@ -90,7 +57,7 @@ static UINT32 read_uint (void *fp)
 	UINT32 i;
 
 	if (osd_fread(fp, v, 4) != 4)
-        if (errorlog)
+		if (errorlog)
 			fprintf(errorlog,"Unexpected EOF in PNG\n");
 	i = (v[0]<<24) | (v[1]<<16) | (v[2]<<8) | (v[3]);
 	return i;
@@ -105,7 +72,7 @@ static UINT32 convert_uint (UINT8 *v)
 	return i;
 }
 
-static int unfilter(struct png_info *p)
+int png_unfilter(struct png_info *p)
 {
 	UINT32 i, j, bpp, filter;
 	INT32 prediction, pA, pB, pC, dA, dB, dC;
@@ -172,7 +139,7 @@ static int unfilter(struct png_info *p)
 	return 1;
 }
 
-static int verify_signature (void *fp)
+int png_verify_signature (void *fp)
 {
 	INT8 signature[8];
 
@@ -193,7 +160,7 @@ static int verify_signature (void *fp)
 	return 1;
 }
 
-static int inflate_image (struct png_info *p)
+int png_inflate_image (struct png_info *p)
 {
 	/* translates color_type to bytes per pixel */
 	const int samples[] = {1, 0, 3, 1, 2, 0, 4};
@@ -225,7 +192,7 @@ static int inflate_image (struct png_info *p)
 	return 1;
 }
 
-static int read_chunks(void *fp, struct png_info *p)
+int png_read_chunks(void *fp, struct png_info *p)
 {
 	UINT32 i;
 	UINT32 chunk_length, chunk_type=0, chunk_crc, crc;
@@ -421,30 +388,30 @@ static int read_png(const char *file_name, struct png_info *p)
 		return 0;
 	}
 
-	if (verify_signature(png)==0)
+	if (png_verify_signature(png)==0)
 	{
 		osd_fclose(png);
 		return 0;
 	}
 
-	if (read_chunks(png, p)==0)
+	if (png_read_chunks(png, p)==0)
 	{
 		osd_fclose(png);
 		return 0;
 	}
 	osd_fclose(png);
 
-	if (inflate_image(p)==0)
+	if (png_inflate_image(p)==0)
 		return 0;
 
-	if(unfilter (p)==0)
+	if(png_unfilter (p)==0)
 		return 0;
 	free (p->fimage);
 
 	return 1;
 }
 
-static void expand_buffer (UINT8 *inbuf, UINT8 *outbuf, int width, int height, int bit_depth)
+void png_expand_buffer (UINT8 *inbuf, UINT8 *outbuf, int width, int height, int bit_depth)
 {
 	int i,j, k;
 
@@ -508,7 +475,7 @@ static int png_read_bitmap(const char *file_name, struct osd_bitmap **bitmap, st
 	}
 
 	/* Convert to 8 bit */
-	expand_buffer (p->image, pixmap8, p->width, p->height, p->bit_depth);
+	png_expand_buffer (p->image, pixmap8, p->width, p->height, p->bit_depth);
 	free (p->image);
 
 	if (!(*bitmap=osd_new_bitmap(p->width,p->height,8)))

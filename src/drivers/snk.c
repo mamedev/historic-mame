@@ -2079,7 +2079,7 @@ ROM_START( aso_rom )
 
 	ROM_REGION_DISPOSE(0x4000) /* characters */
 	ROM_LOAD( "aso.14",   0x0000, 0x2000, 0x8baa2253 )
-	ROM_LOAD( "aso.14",   0x2000, 0x2000, 0x8baa2253 )
+//	ROM_LOAD( "aso.14",   0x2000, 0x2000, 0x8baa2253 )
 
 	ROM_REGION_DISPOSE( 0x8000 ) /* background tiles */
 	ROM_LOAD( "aso.10",  0x0000, 0x8000, 0x00dff996 )
@@ -2113,7 +2113,7 @@ ROM_START( alphmiss_rom ) /* BAD DUMP! */
 
 	ROM_REGION_DISPOSE( 0x4000 ) /* characters */
 	ROM_LOAD( "p14.1h",   0x0000, 0x2000, 0x00000000 )
-	ROM_LOAD( "p14.1h",   0x2000, 0x2000, 0x00000000 )
+//	ROM_LOAD( "p14.1h",   0x2000, 0x2000, 0x00000000 )
 
 	ROM_REGION_DISPOSE( 0x8000 ) /* background tiles */
 	ROM_LOAD( "p10.14h",  0x0000, 0x8000, 0x00000000 )
@@ -2800,6 +2800,35 @@ ROM_END
 
 /***********************************************************************/
 
+/****  TNK3 high score save routine  -  RJF (Mar 26, 1999)  ****/
+static int tnk3_hiload(void){
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+        if (memcmp(&RAM[0xfed1],"\x13\x29\x00",3) == 0){
+		void *f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0);
+		if (f){
+                        osd_fread(f,&RAM[0xfed1], 10*13);
+			osd_fclose(f);
+
+                        /* copy the high score to ram */
+                        RAM[0xfc59] = RAM[0xfed1];
+                        RAM[0xfc5a] = RAM[0xfed2];
+                        RAM[0xfc5b] = RAM[0xfed3];
+		}
+		return 1;
+	}
+	return 0;  /* we can't load the hi scores yet */
+}
+
+static void tnk3_hisave(void){
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	void *f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1);
+
+                        osd_fwrite(f,&RAM[0xfed1],10*13);
+			osd_fclose(f);
+}
+
+
 static int ikari_hiload(void){
 	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
@@ -3038,7 +3067,7 @@ struct GameDriver tnk3_driver =
 	PROM_MEMORY_REGION( MEM_COLOR ), 0, 0,
 	ORIENTATION_ROTATE_270,
 
-	0,0
+	tnk3_hiload, tnk3_hisave
 };
 
 struct GameDriver aso_driver =
@@ -3357,7 +3386,7 @@ struct GameDriver chopper_driver =
 	"SNK",
 	CREDITS,
 	0,
-	&gwar_machine_driver,
+	&psychos_machine_driver,
 	0,
 
 	chopper_rom,

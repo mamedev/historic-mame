@@ -169,11 +169,11 @@ static void astrocade_update(int num, int newpos)
 	sample_pos[num]    = pos;
 }
 
-int astrocade_sh_start(const struct astrocade_interface *interface)
+int astrocade_sh_start(const struct MachineSound *msound)
 {
 	int i;
 
-	intf = interface;
+	intf = msound->sound_interface;
 
 	if (Machine->sample_rate == 0)
 	{

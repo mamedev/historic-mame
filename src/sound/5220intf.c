@@ -38,9 +38,9 @@ static void tms5220_update (int force);
 
 ***********************************************************************************************/
 
-int tms5220_sh_start (const struct TMS5220interface *interface)
+int tms5220_sh_start (const struct MachineSound *msound)
 {
-    intf = interface;
+    intf = msound->sound_interface;
 
     /* determine the output sample rate and buffer size */
     buffer_len = intf->baseclock / 80 / Machine->drv->frames_per_second;
@@ -54,7 +54,7 @@ int tms5220_sh_start (const struct TMS5220interface *interface)
 
     /* reset the 5220 */
     tms5220_reset ();
-    tms5220_set_irq (interface->irq);
+    tms5220_set_irq (intf->irq);
 
     /* request a sound channel */
     channel = get_play_channels (1);

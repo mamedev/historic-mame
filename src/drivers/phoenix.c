@@ -297,10 +297,10 @@ MACHINE_DRIVER(pleiads)
 static const char *phoenix_sample_names[] =
 {
 	"*phoenix",
-	"shot8.sam",
-	"death8.sam",
-	"phoenix1.sam",
-	"phoenix2.sam",
+	"shot8.wav",
+	"death8.wav",
+	"phoenix1.wav",
+	"phoenix2.wav",
 	0	/* end of array */
 };
 

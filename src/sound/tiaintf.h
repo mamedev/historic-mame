@@ -12,7 +12,7 @@ struct TIAinterface
 	int gain;
 };
 
-int tia_sh_start (const struct TIAinterface *interface);
+int tia_sh_start (const struct MachineSound *msound);
 void tia_sh_stop (void);
 void tia_sh_update (void);
 void tia_w (UINT16 addr, UINT8 val);

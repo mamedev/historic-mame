@@ -35,14 +35,14 @@ static void volumectrlUpdateOne(int param,void *buffer,int length)
 	memcpy(buffer,controller[param].src_buffer,length*controller[param].sample_size);
 }
 
-int EXVOLUME_sh_start(struct EXVOLUMEinterface *interface )
+int EXVOLUME_sh_start(struct MachineSound *msound)
 {
 	int i,j;
 	int vol1,pan1,vol2,pan2;
 
 	if(errorlog) fprintf(errorlog,"taito controller start");
 
-	intf = interface;
+	intf = msound->sound_interface;
 	if( intf->num > MAX_EXVOLUME ) return 1;
 
 	/* stream system initialize */
@@ -74,7 +74,7 @@ int EXVOLUME_sh_start(struct EXVOLUMEinterface *interface )
 			vctrl->sample_size = sample_bits/8;
 			vctrl->src_buffer  = stream_get_buffer(j);
 			vctrl->stream[1] =
-				stream_init(new_name,sample_rate,sample_bits,i,volumectrlUpdateOne);
+				stream_init(msound,new_name,sample_rate,sample_bits,i,volumectrlUpdateOne);
 			/* volume regiater initialize */
 			vctrl->volume[0] = 255;
 			vctrl->volume[1] = 255;

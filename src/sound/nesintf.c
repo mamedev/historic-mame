@@ -26,12 +26,12 @@ static int volume[MAX_NESPSG];
 
 static int channel;
 
-int NESPSG_sh_start(const struct NESinterface *interface)
+int NESPSG_sh_start(const struct MachineSound *msound)
 {
 	int i;
 
 
-	intf = interface;
+	intf = msound->sound_interface;
 
 	buffer_len = Machine->sample_rate / Machine->drv->frames_per_second;
 	emulation_rate = buffer_len * Machine->drv->frames_per_second;

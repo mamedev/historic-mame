@@ -30,6 +30,7 @@ write:
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "machine/6821pia.h"
 
 
 extern unsigned char *zaccaria_attributesram;
@@ -37,6 +38,35 @@ extern unsigned char *zaccaria_attributesram;
 void zaccaria_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 void zaccaria_attributes_w(int offset,int data);
 void zaccaria_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+
+
+
+static pia6821_interface pia_intf =
+{
+	2,                                             	/* 2 chips */
+	{ PIA_DDRA, PIA_CTLA, PIA_DDRB, PIA_CTLB,
+	  PIA_DDRA, PIA_CTLA, PIA_DDRB, PIA_CTLB },    	/* offsets */
+/* all connections unknown */
+	{ 0, 0 },	/* input port A  */
+	{ 0, 0 },	/* input bit CA1 */
+	{ 0, 0 },	/* input bit CA2 */
+	{ 0, 0 },	/* input port B  */
+	{ 0, 0 },	/* input bit CB1 */
+	{ 0, 0 },	/* input bit CB2 */
+	{ 0, 0 },	/* output port A */
+	{ 0, 0 },	/* output port B */
+	{ 0, 0 },	/* output CA2 */
+	{ 0, 0 },	/* output CB2 */
+	{ 0, 0 },	/* IRQ A */
+	{ 0, 0 },	/* IRQ B */
+};
+
+static void zaccaria_init_machine(void)
+{
+	pia_startup(&pia_intf);
+}
+
+
 
 struct GameDriver monymony_driver;
 
@@ -145,18 +175,160 @@ static struct MemoryWriteAddress writemem[] =
 	{ -1 }	/* end of table */
 };
 
+static struct MemoryReadAddress sound_readmem1[] =
+{
+	{ 0x0000, 0x007f, MRA_RAM },
+	{ 0x500c, 0x500f, pia_1_r },
+	{ 0xf000, 0xffff, MRA_ROM },
+	{ -1 }	/* end of table */
+};
+
+static struct MemoryWriteAddress sound_writemem1[] =
+{
+	{ 0x0000, 0x007f, MWA_RAM },
+	{ 0x500c, 0x500f, pia_1_w },
+	{ 0xf000, 0xffff, MWA_ROM },
+	{ -1 }	/* end of table */
+};
+
+static struct MemoryReadAddress sound_readmem2[] =
+{
+	{ 0x0000, 0x007f, MRA_RAM },
+	{ 0x0090, 0x0093, pia_2_r },
+	{ 0xe000, 0xffff, MRA_ROM },
+	{ -1 }	/* end of table */
+};
+
+static struct MemoryWriteAddress sound_writemem2[] =
+{
+	{ 0x0000, 0x007f, MWA_RAM },
+	{ 0x0090, 0x0093, pia_2_w },
+	{ 0xe000, 0xffff, MWA_ROM },
+	{ -1 }	/* end of table */
+};
 
 
-INPUT_PORTS_START( input_ports )
+
+INPUT_PORTS_START( monymony_input_ports )
 	PORT_START
 	PORT_DIPNAME( 0x03, 0x01, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x00, "2" )
 	PORT_DIPSETTING(    0x01, "3" )
 	PORT_DIPSETTING(    0x02, "4" )
 	PORT_DIPSETTING(    0x03, "5" )
-	PORT_DIPNAME( 0x04, 0x00, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
+	PORT_BITX(    0x04, 0x00, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Infinite Lives", IP_KEY_NONE, IP_JOY_NONE )
+	PORT_DIPSETTING(    0x00, "Off" )
+	PORT_DIPSETTING(    0x04, "On" )
+	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(    0x00, "Easy" )
+	PORT_DIPSETTING(    0x08, "Hard" )
+	PORT_DIPNAME( 0x10, 0x00, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( Cocktail ) )
+	PORT_DIPNAME( 0x20, 0x00, "Freeze" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x00, "Cross Hatch Pattern" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Unknown ) )	/* random high scores? */
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+
+	PORT_START
+	PORT_DIPNAME( 0x03, 0x01, DEF_STR( Bonus_Life ) )
+	PORT_DIPSETTING(    0x01, "200000" )
+	PORT_DIPSETTING(    0x02, "300000" )
+	PORT_DIPSETTING(    0x03, "400000" )
+	PORT_DIPSETTING(    0x00, "None" )
+	PORT_DIPNAME( 0x04, 0x04, "Table Title" )
+	PORT_DIPSETTING(    0x04, "High Scores" )
+	PORT_DIPSETTING(    0x00, "Todays High Scores" )
+	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x10, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_BITX(    0x80, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, DEF_STR( Service_Mode ), OSD_KEY_F2, IP_JOY_NONE )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
+
+	PORT_START
+	PORT_DIPNAME( 0x03, 0x02, DEF_STR( Coin_A ) )
+	PORT_DIPSETTING(    0x03, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 1C_3C ) )
+	PORT_DIPNAME( 0x8c, 0x84, DEF_STR( Coin_B ) )
+	PORT_DIPSETTING(    0x8c, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(    0x88, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x84, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x0c, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( 1C_4C ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( 1C_5C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 1C_6C ) )
+	PORT_DIPNAME( 0x70, 0x50, "Coin C" )
+	PORT_DIPSETTING(    0x70, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(    0x60, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x50, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x30, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( 1C_4C ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( 1C_5C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 1C_7C ) )
+
+	PORT_START
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_TILT )	/* I think */
+	PORT_BIT( 0xf8, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN3 )
+	PORT_BIT( 0x30, 0x00, IPT_UNKNOWN )	/* protection check in Jack Rabbit - must be 0 */
+	PORT_BIT( 0xc8, IP_ACTIVE_LOW, IPT_UNKNOWN )
+INPUT_PORTS_END
+
+INPUT_PORTS_START( jackrabt_input_ports )
+	PORT_START
+	PORT_DIPNAME( 0x03, 0x01, DEF_STR( Lives ) )
+	PORT_DIPSETTING(    0x00, "2" )
+	PORT_DIPSETTING(    0x01, "3" )
+	PORT_DIPSETTING(    0x02, "4" )
+	PORT_DIPSETTING(    0x03, "5" )
+	PORT_BITX(    0x04, 0x00, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Infinite Lives", IP_KEY_NONE, IP_JOY_NONE )
+	PORT_DIPSETTING(    0x00, "Off" )
+	PORT_DIPSETTING(    0x04, "On" )
 	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
@@ -180,9 +352,9 @@ INPUT_PORTS_START( input_ports )
 	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x04, 0x00, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x04, 0x04, "Table Title" )
+	PORT_DIPSETTING(    0x04, "High Scores" )
+	PORT_DIPSETTING(    0x00, "Todays High Scores" )
 	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
@@ -303,11 +475,25 @@ static struct MachineDriver machine_driver =
 			0,
 			readmem,writemem,0,0,
 			nmi_interrupt,1
+		},
+		{
+			CPU_M6802 | CPU_AUDIO_CPU,
+			1500000,	/* ????? */
+			3,
+			sound_readmem1,sound_writemem1,0,0,
+			ignore_interrupt,1
+		},
+		{
+			CPU_M6802 | CPU_AUDIO_CPU,
+			1500000,	/* ????? */
+			4,
+			sound_readmem2,sound_writemem2,0,0,
+			ignore_interrupt,1
 		}
 	},
 	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,	/* single CPU, no need for interleaving */
-	0,
+	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
+	zaccaria_init_machine,
 
 	/* video hardware */
 	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
@@ -357,11 +543,17 @@ ROM_START( monymony_rom )
 	ROM_LOAD( "monymony.9g",  0x0000, 0x0200, 0xfc9a0f21 )
 	ROM_LOAD( "monymony.9f",  0x0200, 0x0200, 0x93106704 )
 
-	/* there are also sound ROMs. CPU is 6802, not emulated yet */
-	ROM_REGION(0x2000)
-	ROM_LOAD( "1g",           0x0000, 0x2000, 0x1e8ffe3e )
-	ROM_LOAD( "1h",           0x0000, 0x2000, 0xaad76193 )
-	ROM_LOAD( "1i",           0x0000, 0x2000, 0x94e3858b )
+	ROM_REGION(0x10000)	/* 64k for first 6802 */
+	ROM_LOAD( "1i",           0x7000, 0x1000, 0x94e3858b )	/* ?? */
+	ROM_CONTINUE(             0xf000, 0x1000 )
+
+	ROM_REGION(0x10000)	/* 64k for second 6802 */
+	ROM_LOAD( "1h",           0x6000, 0x1000, 0xaad76193 )	/* ?? */
+	ROM_CONTINUE(             0xe000, 0x1000 )
+	ROM_LOAD( "1g",           0x7000, 0x1000, 0x1e8ffe3e )	/* ?? */
+	ROM_CONTINUE(             0xf000, 0x1000 )
+
+	ROM_REGION(0x2000)	/* TMS5200 sample data??? */
 	ROM_LOAD( "2g",           0x0000, 0x2000, 0x78b01b98 )
 ROM_END
 
@@ -389,11 +581,17 @@ ROM_START( jackrabt_rom )
 	ROM_LOAD( "jr-ic9g",      0x0000, 0x0200, 0x85577107 )
 	ROM_LOAD( "jr-ic9f",      0x0200, 0x0200, 0x085914d1 )
 
-	/* there are also sound ROMs. CPU is 6802, not emulated yet */
-	ROM_REGION(0x2000)
-	ROM_LOAD( "7snd.1g",      0x0000, 0x2000, 0xc722eff8 )
-	ROM_LOAD( "8snd.1h",      0x0000, 0x2000, 0xf4507111 )
-	ROM_LOAD( "9snd.1i",      0x0000, 0x2000, 0x3dab977f )
+	ROM_REGION(0x10000)	/* 64k for first 6802 */
+	ROM_LOAD( "9snd.1i",      0x7000, 0x1000, 0x3dab977f )	/* ?? */
+	ROM_CONTINUE(             0xf000, 0x1000 )
+
+	ROM_REGION(0x10000)	/* 64k for second 6802 */
+	ROM_LOAD( "8snd.1h",      0x6000, 0x1000, 0xf4507111 )	/* ?? */
+	ROM_CONTINUE(             0xe000, 0x1000 )
+	ROM_LOAD( "7snd.1g",      0x7000, 0x1000, 0xc722eff8 )	/* ?? */
+	ROM_CONTINUE(             0xf000, 0x1000 )
+
+	ROM_REGION(0x2000)	/* TMS5200 sample data??? */
 	ROM_LOAD( "13snd.2g",     0x0000, 0x2000, 0xfc05654e )
 ROM_END
 
@@ -421,11 +619,17 @@ ROM_START( jackrab2_rom )
 	ROM_LOAD( "jr-ic9g",      0x0000, 0x0200, 0x85577107 )
 	ROM_LOAD( "jr-ic9f",      0x0200, 0x0200, 0x085914d1 )
 
-	/* there are also sound ROMs. CPU is 6802, not emulated yet */
-	ROM_REGION(0x2000)
-	ROM_LOAD( "7snd.1g",      0x0000, 0x2000, 0xc722eff8 )
-	ROM_LOAD( "8snd.1h",      0x0000, 0x2000, 0xf4507111 )
-	ROM_LOAD( "9snd.1i",      0x0000, 0x2000, 0x3dab977f )
+	ROM_REGION(0x10000)	/* 64k for first 6802 */
+	ROM_LOAD( "9snd.1i",      0x7000, 0x1000, 0x3dab977f )	/* ?? */
+	ROM_CONTINUE(             0xf000, 0x1000 )
+
+	ROM_REGION(0x10000)	/* 64k for second 6802 */
+	ROM_LOAD( "8snd.1h",      0x6000, 0x1000, 0xf4507111 )	/* ?? */
+	ROM_CONTINUE(             0xe000, 0x1000 )
+	ROM_LOAD( "7snd.1g",      0x7000, 0x1000, 0xc722eff8 )	/* ?? */
+	ROM_CONTINUE(             0xf000, 0x1000 )
+
+	ROM_REGION(0x2000)	/* TMS5200 sample data??? */
 	ROM_LOAD( "13snd.2g",     0x0000, 0x2000, 0xfc05654e )
 ROM_END
 
@@ -453,11 +657,17 @@ ROM_START( jackrabs_rom )
 	ROM_LOAD( "jr-ic9g",      0x0000, 0x0200, 0x85577107 )
 	ROM_LOAD( "jr-ic9f",      0x0200, 0x0200, 0x085914d1 )
 
-	/* there are also sound ROMs. CPU is 6802, not emulated yet */
-	ROM_REGION(0x2000)
-	ROM_LOAD( "7snd.1g",      0x0000, 0x2000, 0xc722eff8 )
-	ROM_LOAD( "8snd.1h",      0x0000, 0x2000, 0xf4507111 )
-	ROM_LOAD( "9snd.1i",      0x0000, 0x2000, 0x3dab977f )
+	ROM_REGION(0x10000)	/* 64k for first 6802 */
+	ROM_LOAD( "9snd.1i",      0x7000, 0x1000, 0x3dab977f )	/* ?? */
+	ROM_CONTINUE(             0xf000, 0x1000 )
+
+	ROM_REGION(0x10000)	/* 64k for second 6802 */
+	ROM_LOAD( "8snd.1h",      0x6000, 0x1000, 0xf4507111 )	/* ?? */
+	ROM_CONTINUE(             0xe000, 0x1000 )
+	ROM_LOAD( "7snd.1g",      0x7000, 0x1000, 0xc722eff8 )	/* ?? */
+	ROM_CONTINUE(             0xf000, 0x1000 )
+
+	ROM_REGION(0x2000)	/* TMS5200 sample data??? */
 	ROM_LOAD( "13snd.2g",     0x0000, 0x2000, 0xfc05654e )
 ROM_END
 
@@ -564,7 +774,7 @@ struct GameDriver monymony_driver =
 	0,
 	0,	/* sound_prom */
 
-	input_ports,
+	monymony_input_ports,
 
 	PROM_MEMORY_REGION(2), 0, 0,
 	ORIENTATION_ROTATE_90,
@@ -590,7 +800,7 @@ struct GameDriver jackrabt_driver =
 	0,
 	0,	/* sound_prom */
 
-	input_ports,
+	jackrabt_input_ports,
 
 	PROM_MEMORY_REGION(2), 0, 0,
 	ORIENTATION_ROTATE_90,
@@ -616,7 +826,7 @@ struct GameDriver jackrab2_driver =
 	0,
 	0,	/* sound_prom */
 
-	input_ports,
+	jackrabt_input_ports,
 
 	PROM_MEMORY_REGION(2), 0, 0,
 	ORIENTATION_ROTATE_90,
@@ -642,7 +852,7 @@ struct GameDriver jackrabs_driver =
 	0,
 	0,	/* sound_prom */
 
-	input_ports,
+	jackrabt_input_ports,
 
 	PROM_MEMORY_REGION(2), 0, 0,
 	ORIENTATION_ROTATE_90,

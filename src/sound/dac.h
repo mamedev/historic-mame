@@ -9,7 +9,7 @@ struct DACinterface
 	int volume[MAX_DAC];
 };
 
-int DAC_sh_start(const struct DACinterface *interface);
+int DAC_sh_start(const struct MachineSound *msound);
 void DAC_data_w(int num,int data);
 void DAC_signed_data_w(int num,int data);
 void DAC_set_volume(int num,int volume,int gain);

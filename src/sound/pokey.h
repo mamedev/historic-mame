@@ -101,7 +101,10 @@
 
 #define CLIP			/* required to force clipping */
 
-#define USE_SAMP_N_MAX	1	/* limit max. frequency to playback rate */
+#define USE_SAMP_N_MAX	0	/* limit max. frequency to playback rate */
+			/* MUST BE LEFT TO 0! Setting it to 1 improves speed */
+			/* but causes some effects to be lost (e.g. "whoosh" when */
+			/* you fall in a puddle in Marble Madness */
 
 
 #define NO_CLIP   0
@@ -141,14 +144,14 @@ struct POKEYinterface {
 };
 
 /* ASG 980126 - added a return parameter to indicate failure */
-int Pokey_sound_init (int freq17, int playback_freq, int volume, int num_pokeys, int use_clip);
+int Pokey_sound_init (const struct MachineSound *msound,int freq17, int playback_freq, int volume, int num_pokeys, int use_clip);
 /* ASG 980126 - added this function for cleanup */
 void Pokey_sound_exit (void);
 void Update_pokey_sound (int addr, int val, int chip, int gain);
 void Pokey_process (int chip, void *buffer, int n);
 int Read_pokey_regs (int addr, int chip);
 
-int pokey_sh_start (const struct POKEYinterface *interface);
+int pokey_sh_start (const struct MachineSound *msound);
 void pokey_sh_stop (void);
 
 int pokey1_r (int offset);

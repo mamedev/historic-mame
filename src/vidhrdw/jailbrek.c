@@ -78,10 +78,10 @@ static void drawsprites( struct osd_bitmap *bitmap ) {
 		color = spriteram[i+1] & 0x0f;
 
 		drawgfx(bitmap,Machine->gfx[1],
-				tile,/*color*/0,
+				tile,color,
 				flipx,flipy,
 				sx,sy,
-				0,TRANSPARENCY_PEN,0);
+				&Machine->drv->visible_area,TRANSPARENCY_COLOR,0);
 	}
 }
 

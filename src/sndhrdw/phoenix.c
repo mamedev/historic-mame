@@ -171,29 +171,34 @@ void phoenix_sound_control_b_w(int offset,int data)
 	}
 
 	/* melody */
-	/* 0 - no tune, 1 - alarm beep?, 2 - even level tune, 3 - odd level tune */
+	/* 0 - no tune, 1 - alarm beep?, 2 - level tune, 3 - start game tune */
 
 	switch (tune)
 	{
 		case 0:
+			/* The game seems to issue a 'no tune' command to the melody chip when it thinks */
+			/* a song should end. As the samples will be of the complete tune from the */
+			/* original machine, there is no need to stop the tune ourselves (and if we do */
+			/* it sounds wrong). */
+
 			/* This case seems to prevent the melody from repeating rather than stopping it outright */
-/*			osd_stop_sample (3); */
+			/*osd_stop_sample (3);
 			if (song_playing != 0)
-				M_OSD_PLAY_SAMPLE (3, song_playing, 0);
+				M_OSD_PLAY_SAMPLE (3, song_playing, 0);*/
 			song_playing = 0;
 			break;
 		case 2:
 			if (song_playing != 2)
 			{
 				song_playing = 2;
-				M_OSD_PLAY_SAMPLE (3, 2, 1);
+				M_OSD_PLAY_SAMPLE (3, 2, 0);
 			}
 			break;
 		case 3:
 			if (song_playing != 3)
 			{
 				song_playing = 3;
-				M_OSD_PLAY_SAMPLE (3, 3, 1);
+				M_OSD_PLAY_SAMPLE (3, 3, 0);
 			}
 			break;
 	}

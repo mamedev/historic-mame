@@ -1317,22 +1317,22 @@ static void herocast_decode(void)
 static const char *sample_names[] =
 {
 	"*dkong",
-	"effect00.sam",
-	"effect01.sam",
-	"effect02.sam",
+	"effect00.wav",
+	"effect01.wav",
+	"effect02.wav",
 	0	/* end of array */
 };
 
 static const char *dkongjr_sample_names[] =
 {
 	"*dkongjr",
-	"death.sam",
-	"drop.sam",
-	"roar.sam",
-	"jump.sam",  /* HC */
-	"walk.sam",  /* HC */
-	"land.sam",  /* HC */
-	"climb.sam", /* HC */
+	"death.wav",
+	"drop.wav",
+	"roar.wav",
+	"jump.wav",  /* HC */
+	"walk.wav",  /* HC */
+	"land.wav",  /* HC */
+	"climb.wav", /* HC */
 	0	/* end of array */
 };
 

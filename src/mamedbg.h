@@ -57,6 +57,9 @@ enum {
     EA_VALUE,       /* immediate value */
     EA_ABS_PC,      /* change PC absolute (JMP or CALL type opcodes) */
     EA_REL_PC,      /* change PC relative (BRA or JR type opcodes) */
+	EA_ZPG_RD,		/* read zero page memory */
+	EA_ZPG_WR,		/* write zero page memory */
+	EA_ZPG_RDWR,	/* read then write zero page memory */
     EA_MEM_RD,      /* read memory */
     EA_MEM_WR,      /* write memory */
     EA_MEM_RDWR,    /* read then write memory */

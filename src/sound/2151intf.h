@@ -29,9 +29,10 @@ void YM2151_register_port_2_w(int offset,int data);
 void YM2151_data_port_0_w(int offset,int data);
 void YM2151_data_port_1_w(int offset,int data);
 void YM2151_data_port_2_w(int offset,int data);
-int YM2151_sh_start(const struct YM2151interface *interface);
-int YM2151_ALT_sh_start(const struct YM2151interface *interface);
+int YM2151_sh_start(const struct MachineSound *msound);
+int YM2151_ALT_sh_start(const struct MachineSound *msound);
 void YM2151_sh_stop(void);
+void YM2151_sh_reset(void);
 
 void YM2151UpdateRequest(int chip);
 #endif

@@ -111,7 +111,7 @@ void polepos_back_draw( int offs ) {
 }
 
 extern unsigned char *polepos_road_memory;
-void polepos_road_draw( int offs, int data ) {
+void polepos_road_draw( int offs ) {
 	int sx, sy, code, color;
 	sx = (offs / 2) % 32;
 	sy = (offs / 2) / 32;
@@ -126,13 +126,13 @@ void polepos_road_draw( int offs, int data ) {
 
 static void draw_foreground( struct osd_bitmap *bitmap ) {
 	int i;
-	
+
 	for ( i = 0; i < videoram_size; i += 2 ) {
 		int offs = i / 2;
 		int sx, sy;
 		int code = videoram[i];
 		int color = videoram[i+1] & 0x3f;	/* 6 bits color */
-		
+
 		sx = offs % 32;
 		sy = offs / 32;
         drawgfx( bitmap,Machine->gfx[0],

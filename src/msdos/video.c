@@ -105,6 +105,8 @@ int vgafreq;
 int always_synced;
 int video_sync;
 int wait_vsync;
+int use_triplebuf;
+int triplebuf_pos;
 int vsync_frame_rate;
 int color_depth;
 int skiplines;
@@ -455,7 +457,7 @@ static void select_display_mode(void)
 
 	/* Select desired tweaked mode for 256x224 */
 	/* still no real 256x224 mode supported */
-	if (use_vesa == 0 && width <= 256 && height <= 244)
+	if (use_vesa == 0 && width <= 256 && height <= 224)
 	{
 		if (tw256x224_hor)
 		{
@@ -1181,6 +1183,16 @@ int osd_set_display(int width,int height, int attributes)
 			if (errorlog)
 				fprintf (errorlog, "Found matching %s mode\n", gfx_driver->desc);
 			gfx_mode = mode;
+
+			/* disable triple buffering if the screen is not large enough */
+			if (errorlog)
+				fprintf (errorlog, "Virtual screen size %dx%d\n",VIRTUAL_W,VIRTUAL_H);
+			if (VIRTUAL_H < 3*gfx_height)
+			{
+				use_triplebuf = 0;
+				if (errorlog)
+					fprintf (errorlog, "Triple buffer disabled\n");
+			}
 		}
 	}
 	else
@@ -1647,27 +1659,16 @@ void osd_save_snapshot(void)
 	} while (f != 0);
 
 	get_palette(pal);
-	if (use_vesa == 0)
+	bmp = create_bitmap_ex(scrbitmap->depth,gfx_display_columns,gfx_display_lines);
+	if (scrbitmap->depth == 8)
 	{
-		bmp = create_bitmap(scrbitmap->width,scrbitmap->height);
-		for (y = 0;y < scrbitmap->height;y++)
-			memcpy(bmp->line[y],scrbitmap->line[y],scrbitmap->width);
+		for (y = 0;y < gfx_display_lines;y++)
+			memcpy(bmp->line[y],scrbitmap->line[y+skiplines]+skipcolumns,gfx_display_columns);
 	}
-	else /* VESA modes */
+	else
 	{
-		int width, height;
-
-		width = scrbitmap->width-skipcolumns;
-		height = scrbitmap->height-skiplines;
-
-		if (doubling)
-		{
-			width *=2;
-			height *=2;
-		}
-
-		bmp = create_sub_bitmap (screen, gfx_xoffset, gfx_yoffset,
-				width, height);
+		for (y = 0;y < gfx_display_lines;y++)
+			memcpy(bmp->line[y],scrbitmap->line[y+skiplines]+2*skipcolumns,2*gfx_display_columns);
 	}
 	save_pcx(name,bmp,pal);
 	destroy_bitmap(bmp);
@@ -1982,7 +1983,7 @@ void osd_update_video_and_audio(void)
 	if (osd_key_pressed(OSD_KEY_PGDN) || osd_key_pressed(OSD_KEY_PGUP))
 		pan_display();
 
-	if (osd_key_pressed_memory(OSD_KEY_FRAMESKIP))
+	if (osd_key_pressed_memory(OSD_KEY_FRAMESKIP_INC))
 	{
 		if (autoframeskip)
 		{
@@ -1991,8 +1992,36 @@ void osd_update_video_and_audio(void)
 		}
 		else
 		{
-			frameskip = (frameskip + 1) % 12;
-			if (frameskip == 0) autoframeskip = 1;
+			if (frameskip == FRAMESKIP_LEVELS-1)
+			{
+				frameskip = 0;
+				autoframeskip = 1;
+			}
+			else
+				frameskip++;
+		}
+
+		if (showfps == 0)
+			showfpstemp = 2*Machine->drv->frames_per_second;
+
+		/* reset the frame counter every time the frameskip key is pressed, so */
+		/* we'll measure the average FPS on a consistent status. */
+		frames_displayed = 0;
+	}
+
+	if (osd_key_pressed_memory(OSD_KEY_FRAMESKIP_DEC))
+	{
+		if (autoframeskip)
+		{
+			autoframeskip = 0;
+			frameskip = FRAMESKIP_LEVELS-1;
+		}
+		else
+		{
+			if (frameskip == 0)
+				autoframeskip = 1;
+			else
+				frameskip--;
 		}
 
 		if (showfps == 0)

@@ -3,7 +3,6 @@
 #include <string.h>
 #include <ctype.h>
 
-#define CHECK_DUPE_ENTRIES	0
 
 int atoh(char* buff);
 char* modify_ea_string(char* old_ea_string, char* insert_string);
@@ -21,20 +20,6 @@ int generate_funcs(FILE* file_ac, FILE* file_dm, FILE* file_nz);
 int generate_table(FILE* table_file);
 int generate_prototypes(FILE* prototype_file);
 
-#if CHECK_DUPE_ENTRIES
-#define PRINT_TABLE_ENTRY(file, name, mask, match, clks) \
-{ \
-    unsigned o, bits = mask; \
-    for( o = 0; o < 0x10000; o++ ) \
-        if( ((o & (mask)) == (match)) && g_opcode_used[o]++ ) \
-            fprintf(stderr, "opcode %04X defined %d times [%s]\n",o,g_opcode_used[o], name); \
-    bits = ((bits & 0xaaaa) >> 1) + (bits & 0x5555); \
-    bits = ((bits & 0xcccc) >> 2) + (bits & 0x3333); \
-    bits = ((bits & 0xf0f0) >> 4) + (bits & 0x0f0f); \
-    bits = ((bits & 0xff00) >> 8) + (bits & 0x00ff); \
-    fprintf(file, "\t{%-24s, %2d, 0x%04x, 0x%04x},\n", name, bits, mask, match); \
-}
-#else
 #define PRINT_TABLE_ENTRY(file, name, mask, match, clks) \
 { \
     unsigned bits = mask; \
@@ -44,7 +29,6 @@ int generate_prototypes(FILE* prototype_file);
     bits = ((bits & 0xff00) >> 8) + (bits & 0x00ff); \
     fprintf(file, "\t{%-24s, %2d, 0x%04x, 0x%04x},\n", name, bits, mask, match); \
 }
-#endif
 
 #define PRINT_PROTOTYPE(file, name) fprintf(file, "void %s(void);\n", name)
 
@@ -63,9 +47,6 @@ typedef struct
 int g_errors = 0;
 char g_m68k_in_c[255+1] = "m68k_in.c";
 
-#if CHECK_DUPE_ENTRIES
-char *g_opcode_used;
-#endif
 
 int g_ea_8_cycle_table[64]=
 {
@@ -418,7 +399,6 @@ static opcode_handler_struct g_func_table[] =
 	{"m68000_cmpa_32"        , 0xf1c0, 0xb1c0, 0xfff, 2,   6},
 	{"m68000_cmpi_d_8"       , 0xfff8, 0x0c00, 0x000, 0,   8},
 	{"m68000_cmpi_8"         , 0xffc0, 0x0c00, 0xbf8, 0,   8},
-	{"m68000_cmpi_8"         , 0xffc0, 0x0c00, 0xbf8, 0,   8},
 	{"m68020_cmpi_pcdi_8"    , 0xffff, 0x0c3a, 0x000, 0,   8},
 	{"m68020_cmpi_pcix_8"    , 0xffff, 0x0c3b, 0x000, 0,   8},
 	{"m68000_cmpi_d_16"      , 0xfff8, 0x0c40, 0x000, 1,   8},
@@ -591,13 +571,13 @@ static opcode_handler_struct g_func_table[] =
 	{"m68010_movec_cr"       , 0xffff, 0x4e7a, 0x000, 0,  12},
 	{"m68010_movec_rc"       , 0xffff, 0x4e7b, 0x000, 0,  10},
 	{"m68000_movem_pd_16"    , 0xfff8, 0x48a0, 0x000, 1,  40}, /* fix in code */
-	{"m68000_movem_pd_32"    , 0xfff8, 0x48e0, 0x000, 2,  72},
+	{"m68000_movem_pd_32"    , 0xfff8, 0x48e0, 0x000, 1,  72},	/* ASG: size really 2, but cycles like 1 */
 	{"m68000_movem_pi_16"    , 0xfff8, 0x4c98, 0x000, 1,  44},
-	{"m68000_movem_pi_32"    , 0xfff8, 0x4cd8, 0x000, 2,  76},
+	{"m68000_movem_pi_32"    , 0xfff8, 0x4cd8, 0x000, 1,  76},	/* ASG: size really 2, but cycles like 1 */
 	{"m68000_movem_re_16"    , 0xffc0, 0x4880, 0x278, 1,  36}, /* HJB was 0x2f8 */
-	{"m68000_movem_re_32"    , 0xffc0, 0x48c0, 0x278, 2,  68}, /* HJB was 0x2f8 */
+	{"m68000_movem_re_32"    , 0xffc0, 0x48c0, 0x278, 1,  68}, /* HJB was 0x2f8 */	/* ASG: size really 2, but cycles like 1 */
 	{"m68000_movem_er_16"    , 0xffc0, 0x4c80, 0x27b, 1,  40}, /* JCB was 0x37b */
-	{"m68000_movem_er_32"    , 0xffc0, 0x4cc0, 0x27b, 2,  72}, /* JCB was 0x37b */
+	{"m68000_movem_er_32"    , 0xffc0, 0x4cc0, 0x27b, 1,  72}, /* JCB was 0x37b */	/* ASG: size really 2, but cycles like 1 */
 	{"m68000_movep_er_16"    , 0xf1f8, 0x0108, 0x000, 1,  16},
 	{"m68000_movep_er_32"    , 0xf1f8, 0x0148, 0x000, 2,  24},
 	{"m68000_movep_re_16"    , 0xf1f8, 0x0188, 0x000, 1,  16},
@@ -871,6 +851,16 @@ int atoh(char* buff)
 }
 
 
+/* Safe version of fgets that works on Macs and PCs */
+char *safe_fgets(char * s, int n, FILE * file)
+{
+	char *result = fgets(s, n, file);
+	if (s[0] == '\r')
+		memcpy(s, s + 1, n - 1);
+	return result;
+}
+
+
 char* modify_ea_string(char* old_ea_string, char* insert_string)
 {
 	static char buff[300];
@@ -954,6 +944,16 @@ int get_clk_add(int func_num, int ea_mode)
 		return g_moves_bw_cycle_table[ea_mode];
 	if(strcmp(g_func_table[func_num].name, "m68000_moves_32") == 0)
 		return g_moves_l_cycle_table[ea_mode];
+
+	/* ASG: added these cases -- immediate modes take 2 extra cycles here */
+	if(ea_mode == 0x3c &&
+	   (strcmp(g_func_table[func_num].name, "m68000_add_er_32") == 0 ||
+		strcmp(g_func_table[func_num].name, "m68000_adda_32") == 0 ||
+		strcmp(g_func_table[func_num].name, "m68000_and_er_32") == 0 ||
+		strcmp(g_func_table[func_num].name, "m68000_or_er_32") == 0 ||
+		strcmp(g_func_table[func_num].name, "m68000_sub_er_32") == 0 ||
+		strcmp(g_func_table[func_num].name, "m68000_suba_32") == 0))
+		return g_ea_cycle_table[g_func_table[func_num].size][ea_mode] + 2;
 
 	return g_ea_cycle_table[g_func_table[func_num].size][ea_mode];
 }
@@ -1065,44 +1065,81 @@ void add_table_footer(FILE* filep)
 	fprintf(filep, "{\n");
 	fprintf(filep, "\tconst opcode_handler_struct *a = aptr, *b = bptr;\n");
 	fprintf(filep, "\tif( a->bits != b->bits )\n");
-	fprintf(filep, "\t\treturn b->bits - a->bits;\n");
-	fprintf(filep, "\treturn b->match - a->match;\n");
+	fprintf(filep, "\t\treturn a->bits - b->bits;\n");
+	fprintf(filep, "\tif( a->mask != b->mask )\n");
+	fprintf(filep, "\t\treturn a->mask - b->mask;\n");
+	fprintf(filep, "\treturn a->match - b->match;\n");
 	fprintf(filep, "}\n\n");
 
 	fprintf(filep, "/* Build the opcode handler jump table */\n");
 	fprintf(filep, "void m68ki_build_opcode_table(void)\n");
 	fprintf(filep, "{\n");
-	fprintf(filep, "\tuint opcode;\n");
-	fprintf(filep, "\topcode_handler_struct *ostruct, *last_ostruct = NULL;\n");
-	fprintf(filep, "\tuint table_length = 0;\n\n");
-
+	fprintf(filep, "\topcode_handler_struct *ostruct;\n");
+	fprintf(filep, "\tuint table_length = 0;\n");
+	fprintf(filep, "\tint i,j;\n");
+	fprintf(filep, "\n");
 	fprintf(filep, "\tfor(ostruct = m68k_opcode_handler_table;ostruct->opcode_handler != 0;ostruct++)\n");
-	fprintf(filep, "\t\ttable_length++;\n\n");
-
-    fprintf(filep, "\tqsort((void *)m68k_opcode_handler_table, table_length, sizeof(m68k_opcode_handler_table[0]), compare_nof_true_bits);\n\n");
-
-	fprintf(filep, "\tfor( opcode = 0; opcode < 0x10000; opcode++ )\n");
+	fprintf(filep, "\t\ttable_length++;\n");
+	fprintf(filep, "\n");
+	fprintf(filep, "\tqsort((void *)m68k_opcode_handler_table, table_length, sizeof(m68k_opcode_handler_table[0]), compare_nof_true_bits);\n");
+	fprintf(filep, "\n");
+	fprintf(filep, "\tfor( i = 0; i < 0x10000; i++ )\n");
 	fprintf(filep, "\t{\n");
-	fprintf(filep, "\t\t/* Reset last_opcode for every xxx7/xxxF opcode */\n");
-    fprintf(filep, "\t\tif( (opcode & 7) == 7 ) last_ostruct = m68k_opcode_handler_table;\n");
-	fprintf(filep, "\t\t/* Check if the last hit matches this opcode too */\n");
-    fprintf(filep, "\t\tif( last_ostruct && (opcode & last_ostruct->mask) == last_ostruct->match )\n");
+	fprintf(filep, "\t\t/* default to illegal */\n");
+	fprintf(filep, "\t\tm68k_instruction_jump_table[i] = m68000_illegal;\n");
+	fprintf(filep, "\t}\n");
+	fprintf(filep, "\n");
+	fprintf(filep, "\tostruct = m68k_opcode_handler_table;\n");
+	fprintf(filep, "\twhile (ostruct->mask != 0xff00)\n");
+	fprintf(filep, "\t{\n");
+	fprintf(filep, "\t\tfor (i = 0;i < 0x10000;i++)\n");
 	fprintf(filep, "\t\t{\n");
-	fprintf(filep, "\t\t\tm68k_instruction_jump_table[opcode] = last_ostruct->opcode_handler;\n");
-	fprintf(filep, "\t\t\tcontinue;\n");
-	fprintf(filep, "\t\t}\n");
-    fprintf(filep, "\t\t/* default to illegal */\n");
-	fprintf(filep, "\t\tm68k_instruction_jump_table[opcode] = m68000_illegal;\n");
-	fprintf(filep, "\t\t/* search through opcode handler table for a match */\n");
-	fprintf(filep, "\t\tfor( ostruct = m68k_opcode_handler_table; ostruct->opcode_handler; ostruct++ )\n");
-	fprintf(filep, "\t\t{\n");
-	fprintf(filep, "\t\t\tif( (opcode & ostruct->mask) == ostruct->match )\n");
+	fprintf(filep, "\t\t\tif ((i & ostruct->mask) == ostruct->match)\n");
 	fprintf(filep, "\t\t\t{\n");
-	fprintf(filep, "\t\t\t\tm68k_instruction_jump_table[opcode] = ostruct->opcode_handler;\n");
-	fprintf(filep, "\t\t\t\tlast_ostruct = ostruct;\n");
-	fprintf(filep, "\t\t\t\tbreak;\n");
+	fprintf(filep, "\t\t\t\tm68k_instruction_jump_table[i] = ostruct->opcode_handler;\n");
 	fprintf(filep, "\t\t\t}\n");
 	fprintf(filep, "\t\t}\n");
+	fprintf(filep, "\t\tostruct++;\n");
+	fprintf(filep, "\t}\n");
+	fprintf(filep, "\twhile (ostruct->mask == 0xff00)\n");
+	fprintf(filep, "\t{\n");
+	fprintf(filep, "\t\tfor (i = 0;i <= 0xff;i++)\n");
+	fprintf(filep, "\t\t\tm68k_instruction_jump_table[ostruct->match | i] = ostruct->opcode_handler;\n");
+	fprintf(filep, "\t\tostruct++;\n");
+	fprintf(filep, "\t}\n");
+	fprintf(filep, "\twhile (ostruct->mask == 0xf1f8)\n");
+	fprintf(filep, "\t{\n");
+	fprintf(filep, "\t\tfor (i = 0;i < 8;i++)\n");
+	fprintf(filep, "\t\t{\n");
+	fprintf(filep, "\t\t\tfor (j = 0;j < 8;j++)\n");
+	fprintf(filep, "\t\t\t{\n");
+	fprintf(filep, "\t\t\t\tm68k_instruction_jump_table[ostruct->match | (i << 9) | j] = ostruct->opcode_handler;\n");
+	fprintf(filep, "\t\t\t}\n");
+	fprintf(filep, "\t\t}\n");
+	fprintf(filep, "\t\tostruct++;\n");
+	fprintf(filep, "\t}\n");
+	fprintf(filep, "\twhile (ostruct->mask == 0xfff0)\n");
+	fprintf(filep, "\t{\n");
+	fprintf(filep, "\t\tfor (i = 0;i <= 0x0f;i++)\n");
+	fprintf(filep, "\t\t\tm68k_instruction_jump_table[ostruct->match | i] = ostruct->opcode_handler;\n");
+	fprintf(filep, "\t\tostruct++;\n");
+	fprintf(filep, "\t}\n");
+	fprintf(filep, "\twhile (ostruct->mask == 0xf1ff)\n");
+	fprintf(filep, "\t{\n");
+	fprintf(filep, "\t\tfor (i = 0;i <= 0x07;i++)\n");
+	fprintf(filep, "\t\t\tm68k_instruction_jump_table[ostruct->match | (i << 9)] = ostruct->opcode_handler;\n");
+	fprintf(filep, "\t\tostruct++;\n");
+	fprintf(filep, "\t}\n");
+	fprintf(filep, "\twhile (ostruct->mask == 0xfff8)\n");
+	fprintf(filep, "\t{\n");
+	fprintf(filep, "\t\tfor (i = 0;i <= 0x07;i++)\n");
+	fprintf(filep, "\t\t\tm68k_instruction_jump_table[ostruct->match | i] = ostruct->opcode_handler;\n");
+	fprintf(filep, "\t\tostruct++;\n");
+	fprintf(filep, "\t}\n");
+	fprintf(filep, "\twhile (ostruct->mask == 0xffff)\n");
+	fprintf(filep, "\t{\n");
+	fprintf(filep, "\t\tm68k_instruction_jump_table[ostruct->match] = ostruct->opcode_handler;\n");
+	fprintf(filep, "\t\tostruct++;\n");
 	fprintf(filep, "\t}\n");
 	fprintf(filep, "}\n");
 }
@@ -1112,7 +1149,7 @@ int generate_funcs(FILE* file_ac, FILE* file_dm, FILE* file_nz)
 {
 	FILE* input_file;
 	FILE* output_file;
-	char func_lines[200][300];
+	static char func_lines[200][300];
 	char name[200];
 	char full_name[200];
 	char* name_start;
@@ -1143,7 +1180,7 @@ int generate_funcs(FILE* file_ac, FILE* file_dm, FILE* file_nz)
 		/* Find the first line of the function */
 		func_lines[0][0] = '\n';
 		while(func_lines[0][0] == '\n')
-			if(fgets(func_lines[0], 200, input_file) == NULL)
+			if(safe_fgets(func_lines[0], 200, input_file) == NULL)
 				exit(0);
 
 		/* Extract the name of the function */
@@ -1182,7 +1219,7 @@ int generate_funcs(FILE* file_ac, FILE* file_dm, FILE* file_nz)
 		ea_line = 0;
 		for(i=1;i<200;i++)
 		{
-			if(fgets(func_lines[i], 200, input_file) == NULL)
+			if(safe_fgets(func_lines[i], 200, input_file) == NULL)
 				exit(0);
 			if(func_lines[i][0] == '}')
 			{
@@ -1822,7 +1859,7 @@ int generate_prototypes(FILE* prototype_file)
 
 int main(int ac, char **av)
 {
-	char output_path[255+1] = "./";
+	char output_path[255+1] = "";
 	char filename[255+1];
     char* prototype_filename = "m68kops.h";
 	char* table_filename	 = "m68kops.c";
@@ -1886,17 +1923,6 @@ int main(int ac, char **av)
 		perror("");
 		exit(-1);
 	}
-
-#if CHECK_DUPE_ENTRIES
-    g_opcode_used = malloc(0x10000);
-	if(g_opcode_used == NULL)
-	{
-		fprintf(stderr, "Unable to allocate g_opcode_used array\n");
-		perror("");
-		exit(-1);
-    }
-	memset( g_opcode_used, 0, 0x10000 );
-#endif
 
     add_prototype_header(prototype_file);
 	generate_prototypes(prototype_file);

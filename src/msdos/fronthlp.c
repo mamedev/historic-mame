@@ -653,6 +653,9 @@ int frontend_help (int argc, char **argv)
 						strcmp(drivers[i]->name,"stratvox") &&
 						strcmp(drivers[i]->name,"irobot") &&
 						strcmp(drivers[i]->name,"leprechn") &&
+						strcmp(drivers[i]->name,"starcrus") &&
+						strcmp(drivers[i]->name,"astrof") &&
+						strcmp(drivers[i]->name,"tomahawk") &&
 						1)
 						printf("%s %dx%d\n",drivers[i]->name,
 								drivers[i]->drv->visible_area.max_x - drivers[i]->drv->visible_area.min_x + 1,

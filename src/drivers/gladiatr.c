@@ -1023,9 +1023,9 @@ ADPCM_SAMPLES_END
 static const char *gladiatr_samplenames[]=
 {
 	"*gladiatr",
-        "dtirene.sam",  /*data used to request sample = 0xe7*/
-        "atirene.sam",  /*data used to request sample = 0xea*/
-        "atirene2.sam", /*data used to request sample = 0xeb*/
+	"dtirene.wav",  /*data used to request sample = 0xe7*/
+	"atirene.wav",  /*data used to request sample = 0xea*/
+	"atirene2.wav", /*data used to request sample = 0xeb*/
 	0
 };
 

@@ -2,8 +2,6 @@
 #include "cpu/i8039/i8039.h"
 
 
-/*#define USE_SAMPLES*/
-
 
 /* The timer clock which feeds the upper 4 bits of    					*/
 /* AY-3-8910 port A is based on the same clock        					*/

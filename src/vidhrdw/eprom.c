@@ -49,10 +49,10 @@ static int xscroll, yscroll;
  *
  *************************************/
 
-void eprom_vh_stop (void);
+void eprom_vh_stop(void);
 
-static void redraw_playfield_chunk (struct osd_bitmap *bitmap, int xpos, int ypos, int w, int h, int pri);
-static void eprom_debug (void);
+static void redraw_playfield_chunk(struct osd_bitmap *bitmap, int xpos, int ypos, int w, int h, int pri);
+static void eprom_debug(void);
 
 
 
@@ -76,25 +76,25 @@ int eprom_vh_start(void)
 
 	/* allocate dirty buffers */
 	if (!playfielddirty)
-		playfielddirty = malloc (atarigen_playfieldram_size / 2);
+		playfielddirty = malloc(atarigen_playfieldram_size / 2);
 	if (!playfielddirty)
 	{
-		eprom_vh_stop ();
+		eprom_vh_stop();
 		return 1;
 	}
-	memset (playfielddirty, 1, atarigen_playfieldram_size / 2);
+	memset(playfielddirty, 1, atarigen_playfieldram_size / 2);
 
 	/* allocate bitmaps */
 	if (!playfieldbitmap)
-		playfieldbitmap = osd_new_bitmap (64*8, 64*8, Machine->scrbitmap->depth);
+		playfieldbitmap = osd_new_bitmap(64*8, 64*8, Machine->scrbitmap->depth);
 	if (!playfieldbitmap)
 	{
-		eprom_vh_stop ();
+		eprom_vh_stop();
 		return 1;
 	}
 
 	/* initialize the displaylist system */
-	return atarigen_init_display_list (&eprom_modesc);
+	return atarigen_init_display_list(&eprom_modesc);
 }
 
 
@@ -105,16 +105,16 @@ int eprom_vh_start(void)
  *
  *************************************/
 
-void eprom_vh_stop (void)
+void eprom_vh_stop(void)
 {
 	/* free bitmaps */
 	if (playfieldbitmap)
-		osd_free_bitmap (playfieldbitmap);
+		osd_free_bitmap(playfieldbitmap);
 	playfieldbitmap = 0;
 
 	/* free dirty buffers */
 	if (playfielddirty)
-		free (playfielddirty);
+		free(playfielddirty);
 	playfielddirty = 0;
 }
 
@@ -126,18 +126,18 @@ void eprom_vh_stop (void)
  *
  *************************************/
 
-void eprom_latch_w (int offset, int data)
+void eprom_latch_w(int offset, int data)
 {
 	/* reset extra CPU */
 	if (!(data & 0x00ff0000))
 	{
 		if (!(data & 1))
 		{
-			cpu_halt (2, 0);
-			cpu_reset (2);
+			cpu_halt(2, 0);
+			cpu_reset(2);
 		}
 		else
-			cpu_halt (2, 1);
+			cpu_halt(2, 1);
 	}
 }
 
@@ -149,39 +149,39 @@ void eprom_latch_w (int offset, int data)
  *
  *************************************/
 
-int eprom_playfieldram_r (int offset)
+int eprom_playfieldram_r(int offset)
 {
-	return READ_WORD (&atarigen_playfieldram[offset]);
+	return READ_WORD(&atarigen_playfieldram[offset]);
 }
 
 
-void eprom_playfieldram_w (int offset, int data)
+void eprom_playfieldram_w(int offset, int data)
 {
-	int oldword = READ_WORD (&atarigen_playfieldram[offset]);
-	int newword = COMBINE_WORD (oldword, data);
+	int oldword = READ_WORD(&atarigen_playfieldram[offset]);
+	int newword = COMBINE_WORD(oldword, data);
 
 	if (oldword != newword)
 	{
-		WRITE_WORD (&atarigen_playfieldram[offset], newword);
+		WRITE_WORD(&atarigen_playfieldram[offset], newword);
 		playfielddirty[offset / 2] = 1;
 	}
 }
 
 
-int eprom_playfieldpalram_r (int offset)
+int eprom_playfieldpalram_r(int offset)
 {
-	return READ_WORD (&eprom_playfieldpalram[offset]);
+	return READ_WORD(&eprom_playfieldpalram[offset]);
 }
 
 
-void eprom_playfieldpalram_w (int offset, int data)
+void eprom_playfieldpalram_w(int offset, int data)
 {
-	int oldword = READ_WORD (&eprom_playfieldpalram[offset]);
-	int newword = COMBINE_WORD (oldword, data);
+	int oldword = READ_WORD(&eprom_playfieldpalram[offset]);
+	int newword = COMBINE_WORD(oldword, data);
 
 	if (oldword != newword)
 	{
-		WRITE_WORD (&eprom_playfieldpalram[offset], newword);
+		WRITE_WORD(&eprom_playfieldpalram[offset], newword);
 		playfielddirty[offset / 2] = 1;
 	}
 }
@@ -194,14 +194,14 @@ void eprom_playfieldpalram_w (int offset, int data)
  *
  *************************************/
 
-int eprom_update_display_list (int scanline)
+int eprom_update_display_list(int scanline)
 {
 	/* look up the SLIP link */
-	int scrolly = (READ_WORD (&atarigen_alpharam[0xf02]) >> 7) & 0x1ff;
+	int scrolly = (READ_WORD(&atarigen_alpharam[0xf02]) >> 7) & 0x1ff;
 
-	int link = READ_WORD (&atarigen_alpharam[0xf80 + 2 * (((scanline + scrolly) / 8) & 0x3f)]) & 0x3ff;
+	int link = READ_WORD(&atarigen_alpharam[0xf80 + 2 * (((scanline + scrolly) / 8) & 0x3f)]) & 0x3ff;
 
-	atarigen_update_display_list (atarigen_spriteram, link, scanline);
+	atarigen_update_display_list(atarigen_spriteram, link, scanline);
 
 	return scrolly;
 }
@@ -236,14 +236,14 @@ int eprom_update_display_list (int scanline)
  *---------------------------------------------------------------------------------
  */
 
-void eprom_calc_mo_colors (struct osd_bitmap *bitmap, struct rectangle *clip, unsigned short *data, void *param)
+void eprom_calc_mo_colors(struct osd_bitmap *bitmap, struct rectangle *clip, unsigned short *data, void *param)
 {
 	unsigned char *colors = param;
 	int color = data[2] & 15;
 	colors[color] = 1;
 }
 
-void eprom_render_mo (struct osd_bitmap *bitmap, struct rectangle *clip, unsigned short *data, void *param)
+void eprom_render_mo(struct osd_bitmap *bitmap, struct rectangle *clip, unsigned short *data, void *param)
 {
 	int xadv, x, y, sx, sy;
 
@@ -289,17 +289,17 @@ void eprom_render_mo (struct osd_bitmap *bitmap, struct rectangle *clip, unsigne
 				continue;
 
 			/* draw the sprite */
-			drawgfx (bitmap, Machine->gfx[1], pict, color, hflip, 0,
+			drawgfx(bitmap, Machine->gfx[1], pict, color, hflip, 0,
 						sx, sy, clip, TRANSPARENCY_PEN, 0);
 		}
 	}
 
 	/* now redraw the playfield if we need to */
-/*	redraw_playfield_chunk (bitmap, xpos, ypos, hsize, vsize, pri);*/
+/*	redraw_playfield_chunk(bitmap, xpos, ypos, hsize, vsize, pri);*/
 }
 
 
-static void redraw_playfield_chunk (struct osd_bitmap *bitmap, int xpos, int ypos, int w, int h, int pri)
+static void redraw_playfield_chunk(struct osd_bitmap *bitmap, int xpos, int ypos, int w, int h, int pri)
 {
 	struct rectangle clip;
 	int x, y, sx;
@@ -336,20 +336,20 @@ static void redraw_playfield_chunk (struct osd_bitmap *bitmap, int xpos, int ypo
 
 			/* process the data */
 			offs = (x & 0x3f) * 64 + (y & 0x3f);
-			data2 = READ_WORD (&eprom_playfieldpalram[offs * 2]);
+			data2 = READ_WORD(&eprom_playfieldpalram[offs * 2]);
 			color = (data2 >> 8) & 15;
 
 			/* the logic is more complicated than this, but this is close */
 			if (pri != 3)
 			{
-				int data1 = READ_WORD (&atarigen_playfieldram[offs * 2]);
+				int data1 = READ_WORD(&atarigen_playfieldram[offs * 2]);
 				int hflip = data1 & 0x8000;
 				int mask = 0x0000;
 
 				if (pri & 1) mask |= 0x00ff;
 				if (pri & 2) mask |= 0xff00;
 
-				drawgfx (bitmap, Machine->gfx[1], data1 & 0x7fff, 0x10 + color, hflip, 0,
+				drawgfx(bitmap, Machine->gfx[1], data1 & 0x7fff, 0x10 + color, hflip, 0,
 						sx, sy, &clip, TRANSPARENCY_PENS, mask);
 			}
 		}
@@ -372,32 +372,32 @@ void eprom_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	int x, y, sx, sy, offs, xoffs, yoffs, i;
 
 
-	eprom_debug ();
+	eprom_debug();
 
 
 	/* reset color tracking */
-	memset (mo_map, 0, sizeof (mo_map));
-	memset (pf_map, 0, sizeof (pf_map));
-	memset (al_map, 0, sizeof (al_map));
+	memset(mo_map, 0, sizeof(mo_map));
+	memset(pf_map, 0, sizeof(pf_map));
+	memset(al_map, 0, sizeof(al_map));
 	palette_init_used_colors();
 
 	/* update color usage for the playfield */
 	for (offs = 0; offs < 64*64; offs++)
 	{
-		int data2 = READ_WORD (&eprom_playfieldpalram[offs * 2]);
+		int data2 = READ_WORD(&eprom_playfieldpalram[offs * 2]);
 		int color = (data2 >> 8) & 15;
 		pf_map[color] = 1;
 	}
 
 	/* update color usage for the mo's */
-	atarigen_render_display_list (bitmap, eprom_calc_mo_colors, mo_map);
+	atarigen_render_display_list(bitmap, eprom_calc_mo_colors, mo_map);
 
 	/* update color usage for the alphanumerics */
 	for (sy = 0; sy < YCHARS; sy++)
 	{
 		for (sx = 0, offs = sy * 64; sx < XCHARS; sx++, offs++)
 		{
-			int data = READ_WORD (&atarigen_alpharam[offs * 2]);
+			int data = READ_WORD(&atarigen_alpharam[offs * 2]);
 			int color = (data >> 10) & 0x1f;
 			al_map[color] = 1;
 		}
@@ -407,26 +407,26 @@ void eprom_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	for (i = 0; i < 16; i++)
 	{
 		if (pf_map[i])
-			memset (&palette_used_colors[512 + i * 16], PALETTE_COLOR_USED, 16);
+			memset(&palette_used_colors[512 + i * 16], PALETTE_COLOR_USED, 16);
 		if (mo_map[i])
 		{
 			palette_used_colors[256 + i * 16] = PALETTE_COLOR_TRANSPARENT;
-			memset (&palette_used_colors[256 + i * 16 + 1], PALETTE_COLOR_USED, 15);
+			memset(&palette_used_colors[256 + i * 16 + 1], PALETTE_COLOR_USED, 15);
 		}
 		if (al_map[i])
-			memset (&palette_used_colors[0 + i * 4], PALETTE_COLOR_USED, 4);
+			memset(&palette_used_colors[0 + i * 4], PALETTE_COLOR_USED, 4);
 		if (al_map[16+i])
-			memset (&palette_used_colors[0 + (i+32) * 4], PALETTE_COLOR_USED, 4);
+			memset(&palette_used_colors[0 + (i+32) * 4], PALETTE_COLOR_USED, 4);
 	}
 
-	if (palette_recalc ())
-		memset (playfielddirty, 1, atarigen_playfieldram_size / 2);
+	if (palette_recalc())
+		memset(playfielddirty, 1, atarigen_playfieldram_size / 2);
 
 
 
 	/* compute scrolling so we know what to update */
-	xscroll = READ_WORD (&atarigen_alpharam[0xf00]);
-	yscroll = READ_WORD (&atarigen_alpharam[0xf02]);
+	xscroll = READ_WORD(&atarigen_alpharam[0xf00]);
+	yscroll = READ_WORD(&atarigen_alpharam[0xf02]);
 	xscroll = -((xscroll >> 7) & 0x1ff);
 	yscroll = -((yscroll >> 7) & 0x1ff);
 
@@ -462,12 +462,12 @@ void eprom_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			/* rerender if dirty */
 			if (playfielddirty[offs])
 			{
-				int data1 = READ_WORD (&atarigen_playfieldram[offs * 2]);
-				int data2 = READ_WORD (&eprom_playfieldpalram[offs * 2]);
+				int data1 = READ_WORD(&atarigen_playfieldram[offs * 2]);
+				int data2 = READ_WORD(&eprom_playfieldpalram[offs * 2]);
 				int color = (data2 >> 8) & 15;
 				int hflip = data1 & 0x8000;
 
-				drawgfx (playfieldbitmap, Machine->gfx[1], data1 & 0x7fff, 0x10 + color, hflip, 0,
+				drawgfx(playfieldbitmap, Machine->gfx[1], data1 & 0x7fff, 0x10 + color, hflip, 0,
 						8 * sx, 8 * sy, 0, TRANSPARENCY_NONE, 0);
 				playfielddirty[offs] = 0;
 			}
@@ -475,11 +475,11 @@ void eprom_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	}
 
 	/* copy the playfield to the destination */
-	copyscrollbitmap (bitmap, playfieldbitmap, 1, &xscroll, 1, &yscroll, &Machine->drv->visible_area,
+	copyscrollbitmap(bitmap, playfieldbitmap, 1, &xscroll, 1, &yscroll, &Machine->drv->visible_area,
 			TRANSPARENCY_NONE, 0);
 
 	/* render the motion objects */
-	atarigen_render_display_list (bitmap, eprom_render_mo, NULL);
+	atarigen_render_display_list(bitmap, eprom_render_mo, NULL);
 
 	/*
 	 *---------------------------------------------------------------------------------
@@ -500,14 +500,14 @@ void eprom_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	{
 		for (sx = 0, offs = sy * 64; sx < XCHARS; sx++, offs++)
 		{
-			int data = READ_WORD (&atarigen_alpharam[offs * 2]);
+			int data = READ_WORD(&atarigen_alpharam[offs * 2]);
 			int pict = (data & 0x3ff);
 
 			if (pict || (data & 0x8000))
 			{
 				int color = ((data >> 10) & 0xf) | ((data >> 9) & 0x20);
 
-				drawgfx (bitmap, Machine->gfx[0],
+				drawgfx(bitmap, Machine->gfx[0],
 						pict, color,
 						0, 0,
 						8 * sx, 8 * sy,
@@ -525,56 +525,56 @@ void eprom_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
  *
  *************************************/
 
-static void eprom_debug (void)
+static void eprom_debug(void)
 {
-	if (osd_key_pressed (OSD_KEY_9))
+	if (osd_key_pressed(OSD_KEY_9))
 	{
 		static int count;
 		char name[50];
 		FILE *f;
 		int i;
 
-		while (osd_key_pressed (OSD_KEY_9)) { }
+		while (osd_key_pressed(OSD_KEY_9)) { }
 
-		sprintf (name, "Dump %d", ++count);
-		f = fopen (name, "wt");
+		sprintf(name, "Dump %d", ++count);
+		f = fopen(name, "wt");
 
-		fprintf (f, "\n\nAlpha Palette:\n");
+		fprintf(f, "\n\nAlpha Palette:\n");
 		for (i = 0x000; i < 0x100; i++)
 		{
-			fprintf (f, "%04X ", READ_WORD (&paletteram[i*2]));
-			if ((i & 15) == 15) fprintf (f, "\n");
+			fprintf(f, "%04X ", READ_WORD(&paletteram[i*2]));
+			if ((i & 15) == 15) fprintf(f, "\n");
 		}
 
-		fprintf (f, "\n\nMotion Object Palette:\n");
+		fprintf(f, "\n\nMotion Object Palette:\n");
 		for (i = 0x100; i < 0x200; i++)
 		{
-			fprintf (f, "%04X ", READ_WORD (&paletteram[i*2]));
-			if ((i & 15) == 15) fprintf (f, "\n");
+			fprintf(f, "%04X ", READ_WORD(&paletteram[i*2]));
+			if ((i & 15) == 15) fprintf(f, "\n");
 		}
 
-		fprintf (f, "\n\nPlayfield Palette:\n");
+		fprintf(f, "\n\nPlayfield Palette:\n");
 		for (i = 0x200; i < 0x400; i++)
 		{
-			fprintf (f, "%04X ", READ_WORD (&paletteram[i*2]));
-			if ((i & 15) == 15) fprintf (f, "\n");
+			fprintf(f, "%04X ", READ_WORD(&paletteram[i*2]));
+			if ((i & 15) == 15) fprintf(f, "\n");
 		}
 
-		fprintf (f, "\n\nMotion Object Config:\n");
+		fprintf(f, "\n\nMotion Object Config:\n");
 		for (i = 0x00; i < 0x40; i++)
 		{
-			fprintf (f, "%04X ", READ_WORD (&atarigen_playfieldram[0xf00 + i*2]));
-			if ((i & 15) == 15) fprintf (f, "\n");
+			fprintf(f, "%04X ", READ_WORD(&atarigen_playfieldram[0xf00 + i*2]));
+			if ((i & 15) == 15) fprintf(f, "\n");
 		}
 
-		fprintf (f, "\n\nMotion Object SLIPs:\n");
+		fprintf(f, "\n\nMotion Object SLIPs:\n");
 		for (i = 0x00; i < 0x40; i++)
 		{
-			fprintf (f, "%04X ", READ_WORD (&atarigen_playfieldram[0xf80 + i*2]));
-			if ((i & 15) == 15) fprintf (f, "\n");
+			fprintf(f, "%04X ", READ_WORD(&atarigen_playfieldram[0xf80 + i*2]));
+			if ((i & 15) == 15) fprintf(f, "\n");
 		}
 
-		fprintf (f, "\n\nMotion Objects\n");
+		fprintf(f, "\n\nMotion Objects\n");
 		for (i = 0; i < 0x400; i++)
 		{
 			unsigned short *data = (unsigned short *)&atarigen_spriteram[i*8];
@@ -585,18 +585,18 @@ static void eprom_debug (void)
 			int ypos = yscroll - (data[3] >> 7) - vsize * 8;
 			int color = data[2] & 15;
 			int hflip = data[3] & 0x0008;
-			fprintf (f, "   Object %03X: L=%03X P=%04X C=%X X=%03X Y=%03X W=%d H=%d F=%d LEFT=(%04X %04X %04X %04X)\n",
+			fprintf(f, "   Object %03X: L=%03X P=%04X C=%X X=%03X Y=%03X W=%d H=%d F=%d LEFT=(%04X %04X %04X %04X)\n",
 					i, data[0] & 0x3ff, pict, color, xpos & 0x1ff, ypos & 0x1ff, hsize, vsize, hflip,
 					data[0] & 0xfc00, data[1] & 0x0000, data[2] & 0x0070, data[3] & 0x0000);
 		}
 
-		fprintf (f, "\n\nPlayfield dump\n");
+		fprintf(f, "\n\nPlayfield dump\n");
 		for (i = 0; i < atarigen_playfieldram_size / 2; i++)
 		{
-			fprintf (f, "%04X ", READ_WORD (&atarigen_playfieldram[i*2]));
-			if ((i & 63) == 63) fprintf (f, "\n");
+			fprintf(f, "%04X ", READ_WORD(&atarigen_playfieldram[i*2]));
+			if ((i & 63) == 63) fprintf(f, "\n");
 		}
 
-		fclose (f);
+		fclose(f);
 	}
 }

@@ -20,28 +20,88 @@
 
 /*************************************
  *
- *		Statics
+ *		Globals we own
  *
  *************************************/
 
-static unsigned char *playfielddirty;
-
-static struct osd_bitmap *playfieldbitmap;
-
-static unsigned char trans_count_col[XCHARS];
-static unsigned char trans_count_row[YCHARS];
-
-static int xscroll, yscroll;
+int vindctr2_screen_refresh;
 
 
 
 /*************************************
  *
- *		Prototypes from other modules
+ *		Statics
  *
  *************************************/
 
-void gauntlet_vh_stop (void);
+static struct tilemap *playfield;
+static struct tilemap *alpha;
+
+static int playfield_bank;
+static int playfield_color_base;
+
+static int xscroll;
+static int yscroll;
+
+
+#if 0
+static void vindictr_debug(void);
+#endif
+
+
+
+/*************************************
+ *
+ *		TileMap callbacks
+ *
+ *************************************/
+
+/*-----------------------------------------------------
+ * 	Playfield encoding
+ *
+ *		64x64 tile scrolling grid, with X/Y swapped
+ *
+ *		1 16-bit word is used per tile
+ *
+ *			Bits 0-11  = image
+ *			Bits 12-14 = color
+ *			Bit  15    = horizontal flip
+ *---------------------------------------------------*/
+
+static void playfield_get_info(int col, int row)
+{
+	int tile_index = 64 * col + row;
+	int data = READ_WORD(&atarigen_playfieldram[tile_index * 2]);
+	int code = playfield_bank + ((data & 0xfff) ^ 0x800);
+	int color = playfield_color_base + ((data >> 12) & 7);
+
+	SET_TILE_INFO(1, code, color);
+	tile_info.flags = (data & 0x8000) ? TILE_FLIPX : 0;
+}
+
+
+/*-----------------------------------------------------
+ * 	Alpha layer encoding
+ *
+ *		64x64 tile fixed grid, only 42x30 is visible
+ *
+ *		1 16-bit word is used per tile
+ *
+ *			Bits 0-9   = index of the character
+ *			Bit  10-13 = color
+ *			Bit  15    = transparent/opaque
+ *---------------------------------------------------*/
+
+static void alpha_get_info(int col, int row)
+{
+	int tile_index = 64 * row + col;
+	int data = READ_WORD(&atarigen_alpharam[tile_index * 2]);
+	int code = data & 0x3ff;
+	int color = ((data >> 10) & 0xf) | ((data >> 9) & 0x20);
+
+	SET_TILE_INFO(0, code, color);
+	tile_info.flags = (data & 0x8000) ? TILE_IGNORE_TRANSPARENCY : 0;
+}
 
 
 
@@ -63,31 +123,27 @@ int gauntlet_vh_start(void)
 		0                    /* render in reverse link order */
 	};
 
-	/* allocate dirty buffers */
-	if (!playfielddirty)
-		playfielddirty = malloc (atarigen_playfieldram_size / 2);
-	if (!playfielddirty)
-	{
-		gauntlet_vh_stop ();
+	/* allocate playfield tilemap */
+	playfield = tilemap_create(playfield_get_info, TILEMAP_OPAQUE, 8,8, 64,64);
+	if (!playfield)
 		return 1;
-	}
-	memset (playfielddirty, 1, atarigen_playfieldram_size / 2);
+	tilemap_set_scroll_cols(playfield, 1);
+	tilemap_set_scroll_rows(playfield, 1);
 
-	/* allocate bitmaps */
-	if (!playfieldbitmap)
-		playfieldbitmap = osd_new_bitmap (64*8, 64*8, Machine->scrbitmap->depth);
-	if (!playfieldbitmap)
-	{
-		gauntlet_vh_stop ();
+	/* allocate alpha tilemap */
+	alpha = tilemap_create(alpha_get_info, TILEMAP_TRANSPARENT, 8,8, 64,64);
+	if (!alpha)
 		return 1;
-	}
+	alpha->transparent_pen = 0;
 
-	/* initialize the transparency trackers */
-	memset (trans_count_col, YCHARS, sizeof (trans_count_col));
-	memset (trans_count_row, XCHARS, sizeof (trans_count_row));
+	/* set up the appropriate variables for Gauntlet vs. Vindicators 2 */
+	if (vindctr2_screen_refresh)
+		playfield_color_base = 0x10;
+	else
+		playfield_color_base = 0x18;
 
 	/* initialize the displaylist system */
-	return atarigen_init_display_list (&gauntlet_modesc);
+	return atarigen_init_display_list(&gauntlet_modesc);
 }
 
 
@@ -100,65 +156,48 @@ int gauntlet_vh_start(void)
 
 void gauntlet_vh_stop(void)
 {
-	/* free bitmaps */
-	if (playfieldbitmap)
-		osd_free_bitmap (playfieldbitmap);
-	playfieldbitmap = 0;
-
-	/* free dirty buffers */
-	if (playfielddirty)
-		free (playfielddirty);
-	playfielddirty = 0;
 }
 
 
 
 /*************************************
  *
- *		Vertical scroll/PF bank
+ *		Scroll/bank registers
  *
  *************************************/
 
-int gauntlet_vscroll_r (int offset)
+void gauntlet_hscroll_w(int offset, int data)
 {
-	return READ_WORD (&atarigen_vscroll[offset]);
+	/* update memory */
+	int oldword = READ_WORD(&atarigen_hscroll[offset]);
+	int newword = COMBINE_WORD(oldword, data);
+	WRITE_WORD(&atarigen_hscroll[offset], newword);
+
+	/* set the new scroll */
+	xscroll = newword & 0x1ff;
+	tilemap_set_scrollx(playfield, 0, -xscroll);
 }
 
 
-void gauntlet_vscroll_w (int offset, int data)
+void gauntlet_vscroll_w(int offset, int data)
 {
-	int oldword = READ_WORD (&atarigen_vscroll[offset]);
-	int newword = COMBINE_WORD (oldword, data);
-	WRITE_WORD (&atarigen_vscroll[offset], newword);
+	int temp;
 
-	/* invalidate the entire playfield if we're switching ROM banks */
-	if (offset == 2 && (oldword & 3) != (newword & 3))
-		memset (playfielddirty, 1, atarigen_playfieldram_size / 2);
-}
+	/* update memory */
+	int oldword = READ_WORD(&atarigen_vscroll[offset]);
+	int newword = COMBINE_WORD(oldword, data);
+	WRITE_WORD(&atarigen_vscroll[offset], newword);
 
+	/* set the new scroll */
+	yscroll = (newword >> 7) & 0x1ff;
+	tilemap_set_scrolly(playfield, 0, -yscroll);
 
-
-/*************************************
- *
- *		Playfield RAM read/write handlers
- *
- *************************************/
-
-int gauntlet_playfieldram_r (int offset)
-{
-	return READ_WORD (&atarigen_playfieldram[offset]);
-}
-
-
-void gauntlet_playfieldram_w (int offset, int data)
-{
-	int oldword = READ_WORD (&atarigen_playfieldram[offset]);
-	int newword = COMBINE_WORD (oldword, data);
-
-	if (oldword != newword)
+	/* set the new ROM bank */
+	temp = (newword & 3) << 12;
+	if (temp != playfield_bank)
 	{
-		WRITE_WORD (&atarigen_playfieldram[offset], newword);
-		playfielddirty[offset / 2] = 1;
+		playfield_bank = temp;
+		tilemap_mark_all_tiles_dirty(playfield);
 	}
 }
 
@@ -166,37 +205,30 @@ void gauntlet_playfieldram_w (int offset, int data)
 
 /*************************************
  *
- *		Alpha RAM read/write handlers
+ *		Playfield/alpha RAM
  *
  *************************************/
 
-int gauntlet_alpharam_r (int offset)
+void gauntlet_playfieldram_w(int offset, int data)
 {
-	return READ_WORD (&atarigen_alpharam[offset]);
+	int oldword = READ_WORD(&atarigen_playfieldram[offset]);
+	int newword = COMBINE_WORD(oldword, data);
+	if (oldword != newword)
+	{
+		WRITE_WORD(&atarigen_playfieldram[offset], newword);
+		tilemap_mark_tile_dirty(playfield, (offset / 2) / 64, (offset / 2) % 64);
+	}
 }
 
 
-void gauntlet_alpharam_w (int offset, int data)
+void gauntlet_alpharam_w(int offset, int data)
 {
-	int oldword = READ_WORD (&atarigen_alpharam[offset]);
-	int newword = COMBINE_WORD (oldword, data);
-	WRITE_WORD (&atarigen_alpharam[offset], newword);
-
-	/* track opacity of rows & columns */
-	if ((oldword ^ newword) & 0x8000)
+	int oldword = READ_WORD(&atarigen_alpharam[offset]);
+	int newword = COMBINE_WORD(oldword, data);
+	if (oldword != newword)
 	{
-		int sx,sy;
-
-		sx = (offset/2) % 64;
-		sy = (offset/2) / 64;
-
-		if (sx < XCHARS && sy < YCHARS)
-		{
-			if (newword & 0x8000)
-				trans_count_col[sx]--, trans_count_row[sy]--;
-			else
-				trans_count_col[sx]++, trans_count_row[sy]++;
-		}
+		WRITE_WORD(&atarigen_alpharam[offset], newword);
+		tilemap_mark_tile_dirty(alpha, (offset / 2) % 64, (offset / 2) / 64);
 	}
 }
 
@@ -208,67 +240,40 @@ void gauntlet_alpharam_w (int offset, int data)
  *
  *************************************/
 
-int gauntlet_update_display_list (int scanline)
-{
-	/* look up the SLIP link */
-	int scrolly = (READ_WORD (&atarigen_vscroll[2]) >> 7) & 0x1ff;
-
-	int link = READ_WORD (&atarigen_alpharam[0xf80 + 2 * (((scanline + scrolly) / 8) & 0x3f)]) & 0x3ff;
-
-	atarigen_update_display_list (atarigen_spriteram, link, scanline);
-
-	return scrolly;
-}
-
-
-/*---------------------------------------------------------------------------------
- *
+/*-----------------------------------------------------
  * 	Motion Object encoding
  *
  *		4 16-bit words are used
  *
  *		Word 1:
- *
  *			Bits 0-14  = index of the image (0-32767)
  *
  *		Word 2:
- *
- *			Bits 0-3   = sprite color
- *			Bits 7-15  = X position of the sprite
+ *			Bits 0-3   = color
+ *			Bits 7-15  = X position
  *
  *		Word 3:
- *
- *			Bits 0-2   = height of the sprite / 8 (ranges from 1-8)
- *			Bits 3-5   = width of the sprite / 8 (ranges from 1-8)
+ *			Bits 0-2   = vertical tiles - 1
+ *			Bits 3-5   = horizontal tiles - 1
  *			Bit  6     = horizontal flip
- *			Bits 7-14  = Y position of the sprite
+ *			Bits 7-14  = Y position
  *
  *		Word 4:
- *
- *			Bits 0-9   = link to the next image to display
- *
- *---------------------------------------------------------------------------------
- */
+ *			Bits 0-9   = link to the next object
+ *---------------------------------------------------*/
 
-void gauntlet_calc_mo_colors (struct osd_bitmap *bitmap, struct rectangle *clip, unsigned short *data, void *param)
-{
-	unsigned char *colors = param;
-	int color = data[1] & 0x0f;
-	colors[color] = 1;
-}
-
-void gauntlet_render_mo (struct osd_bitmap *bitmap, struct rectangle *clip, unsigned short *data, void *param)
+static void render_mo(struct osd_bitmap *bitmap, struct rectangle *clip, unsigned short *data, void *param)
 {
 	int sx, sy, x, y, xadv;
 
 	/* extract data from the various words */
 	int pict = data[0] & 0x7fff;
 	int color = data[1] & 0x0f;
-	int xpos = xscroll + (data[1] >> 7);
+	int xpos = (data[1] >> 7) - xscroll;
 	int vsize = (data[2] & 7) + 1;
 	int hsize = ((data[2] >> 3) & 7) + 1;
 	int hflip = data[2] & 0x40;
-	int ypos = yscroll - (data[2] >> 7) - vsize * 8;
+	int ypos = -(data[2] >> 7) - vsize * 8 - yscroll;
 
 	/* adjust for h flip */
 	if (hflip)
@@ -301,188 +306,166 @@ void gauntlet_render_mo (struct osd_bitmap *bitmap, struct rectangle *clip, unsi
 			if (sx <= -8 || sx >= XDIM)
 				continue;
 
-			/* draw the sprite */
-			drawgfx (bitmap, Machine->gfx[1],
+			/* draw the mo */
+			drawgfx(bitmap, Machine->gfx[1],
 					pict ^ 0x800, color, hflip, 0, sx, sy, clip, TRANSPARENCY_PEN, 0);
 		}
 	}
 }
 
 
-
-/***************************************************************************
-
-  Draw the game screen in the given osd_bitmap.
-  Do NOT call osd_update_display() from this function, it will be called by
-  the main emulation engine.
-
-***************************************************************************/
-
-void gauntlet_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+int gauntlet_update_display_list(int scanline)
 {
-	unsigned char mo_map[16], al_map[32], pf_map[16];
-	int x, y, sx, sy, xoffs, yoffs, i, offs, bank;
-	struct rectangle clip;
+	/* look up the SLIP link */
+	int link = READ_WORD(&atarigen_alpharam[0xf80 + 2 * (((scanline + yscroll) / 8) & 0x3f)]) & 0x3ff;
+	atarigen_update_display_list(atarigen_spriteram, link, scanline);
+	return yscroll;
+}
 
 
+/*************************************
+ *
+ *		Motion object palette
+ *
+ *************************************/
 
-	/* reset color tracking */
-	memset (mo_map, 0, sizeof (mo_map));
-	memset (pf_map, 0, sizeof (pf_map));
-	memset (al_map, 0, sizeof (al_map));
-	palette_init_used_colors();
+static void calc_mo_colors(struct osd_bitmap *bitmap, struct rectangle *clip, unsigned short *data, void *param)
+{
+	unsigned char *colors = param;
+	int color = data[1] & 0x0f;
+	colors[color] = 1;
+}
 
-	/* update color usage for the playfield */
-	for (offs = 0; offs < 64*64; offs++)
-	{
-		int data = READ_WORD (&atarigen_playfieldram[offs * 2]);
-		int color = ((data >> 12) & 7) + 8;
-		pf_map[color] = 1;
-	}
+
+static void mark_mo_colors(void)
+{
+	unsigned char mo_map[16];
+	int i;
 
 	/* update color usage for the mo's */
-	atarigen_render_display_list (bitmap, gauntlet_calc_mo_colors, mo_map);
-
-	/* update color usage for the alphanumerics */
-	for (sy = 0; sy < YCHARS; sy++)
-	{
-		for (sx = 0, offs = sy * 64; sx < XCHARS; sx++, offs++)
-		{
-			int data = READ_WORD (&atarigen_alpharam[offs * 2]);
-			int color = (data >> 10) & 0x1f;
-			al_map[color] = 1;
-		}
-	}
+	memset(mo_map, 0, sizeof(mo_map));
+	atarigen_render_display_list(NULL, calc_mo_colors, mo_map);
 
 	/* rebuild the palette */
 	for (i = 0; i < 16; i++)
-	{
-		if (pf_map[i])
-			memset (&palette_used_colors[512 + i * 16], PALETTE_COLOR_USED, 16);
 		if (mo_map[i])
 		{
 			palette_used_colors[256 + i * 16] = PALETTE_COLOR_TRANSPARENT;
-			memset (&palette_used_colors[256 + i * 16 + 1], PALETTE_COLOR_USED, 15);
+			memset(&palette_used_colors[256 + i * 16 + 1], PALETTE_COLOR_USED, 15);
 		}
-		if (al_map[i])
-			memset (&palette_used_colors[0 + i * 4], PALETTE_COLOR_USED, 4);
-		if (al_map[16+i])
-			memset (&palette_used_colors[0 + (i+32) * 4], PALETTE_COLOR_USED, 4);
-	}
-
-	if (palette_recalc ())
-		memset (playfielddirty, 1, atarigen_playfieldram_size / 2);
+}
 
 
+/*************************************
+ *
+ *		Main screen refresh
+ *
+ *************************************/
 
-	/* clip out any rows and columns that are completely covered by characters */
-	for (x = 0; x < XCHARS; x++)
-		if (trans_count_col[x]) break;
-	clip.min_x = x*8;
+void gauntlet_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+{
+#if 0
+	vindictr_debug();
+#endif
 
-	for (x = XCHARS-1; x > 0; x--)
-		if (trans_count_col[x]) break;
-	clip.max_x = x*8+7;
+	/* update the tilemaps */
+	tilemap_update(ALL_TILEMAPS);
 
-	for (y = 0; y < YCHARS; y++)
-		if (trans_count_row[y]) break;
-	clip.min_y = y*8;
+	/* handle the palette */
+	palette_init_used_colors();
+	mark_mo_colors();
+	if (palette_recalc())
+		tilemap_mark_all_pixels_dirty(ALL_TILEMAPS);
 
-	for (y = YCHARS-1; y > 0; y--)
-		if (trans_count_row[y]) break;
-	clip.max_y = y*8+7;
+	/* render the tilemaps */
+	tilemap_render(ALL_TILEMAPS);
 
-	/* compute scrolling so we know what to update */
-	xscroll = READ_WORD (&atarigen_hscroll[0]);
-	yscroll = READ_WORD (&atarigen_vscroll[2]);
-	xscroll = -(xscroll & 0x1ff);
-	yscroll = -((yscroll >> 7) & 0x1ff);
+	/* draw it all */
+	tilemap_draw(bitmap, playfield, 0);
+	atarigen_render_display_list(bitmap, render_mo, NULL);
+	tilemap_draw(bitmap, alpha, 0);
+}
 
-	/*
-	 *---------------------------------------------------------------------------------
-	 *
-	 * 	Playfield encoding
-	 *
-	 *		1 16-bit word is used
-	 *
-	 *			Bits 0-11  = image
-	 *			Bits 12-14 = color
-	 *			Bit  15    = horizontal flip
-	 *
-	 *---------------------------------------------------------------------------------
-	 */
 
-	/* update only the portion of the playfield that's visible. */
-	bank = (READ_WORD (&atarigen_vscroll[2]) & 3) << 12;
-	xoffs = (-xscroll / 8) + (clip.min_x / 8);
-	yoffs = (-yscroll / 8) + (clip.min_y / 8);
+/*************************************
+ *
+ *		Debugging
+ *
+ *************************************/
 
-	/* loop over the visible Y region */
-	for (y = yoffs + (clip.max_y - clip.min_y) / 8 + 1; y >= yoffs; y--)
+#if 0
+
+void vindictr_dump_mo(struct osd_bitmap *bitmap, struct rectangle *clip, unsigned short *data, void *param)
+{
+	FILE *f = param;
+
+	/* extract data from the various words */
+	int pict = data[0] & 0x7fff;
+	int color = data[1] & 0x0f;
+	int xpos = xscroll + (data[1] >> 7);
+	int vsize = (data[2] & 7) + 1;
+	int hsize = ((data[2] >> 3) & 7) + 1;
+	int hflip = data[2] & 0x40;
+	int ypos = yscroll - (data[2] >> 7) - vsize * 8;
+
+	fprintf(f, "PICT=%04X color=%1X X=%03X Y=%03X SIZE=%dx%d FLIP=%d\n",
+		pict, color, xpos, ypos, hsize, vsize, hflip);
+}
+
+
+static void vindictr_debug(void)
+{
+	if (osd_key_pressed(OSD_KEY_9))
 	{
-		sy = y & 63;
+		static int count;
+		char name[50];
+		FILE *f;
+		int i;
 
-		/* loop over the visible X region */
-		for (x = xoffs + clip.max_x/8 + 1; x >= xoffs; x--)
+		while (osd_key_pressed(OSD_KEY_9)) { }
+
+		sprintf(name, "Dump %d", ++count);
+		f = fopen(name, "wt");
+
+		fprintf(f, "\n\nAlpha Palette:\n");
+		for (i = 0x000; i < 0x100; i++)
 		{
-			/* compute the offset */
-			sx = x & 63;
-			offs = sx * 64 + sy;
-
-			/* rerender if dirty */
-			if (playfielddirty[offs])
-			{
-				int data = READ_WORD (&atarigen_playfieldram[offs * 2]);
-				int color = ((data >> 12) & 7) + 8;
-				int hflip = (data >> 15) & 1;
-				int pict = bank + (data & 0xfff);
-
-				drawgfx (playfieldbitmap, Machine->gfx[1], pict ^ 0x800, color + 0x10, hflip, 0,
-						8 * sx, 8 * sy, 0, TRANSPARENCY_NONE, 0);
-				playfielddirty[offs] = 0;
-			}
+			fprintf(f, "%04X ", READ_WORD(&paletteram[i*2]));
+			if ((i & 15) == 15) fprintf(f, "\n");
 		}
-	}
 
-	/* copy the playfield to the destination */
-	copyscrollbitmap (bitmap, playfieldbitmap, 1, &xscroll, 1, &yscroll, &clip, TRANSPARENCY_NONE, 0);
-
-	/* render the motion objects */
-	atarigen_render_display_list (bitmap, gauntlet_render_mo, NULL);
-
-	/*
-	 *---------------------------------------------------------------------------------
-	 *
-	 * 	Alpha layer encoding
-	 *
-	 *		1 16-bit word is used
-	 *
-	 *			Bits 0-9   = index of the character
-	 *			Bit  10-13 = color
-	 *			Bit  15    = transparent/opaque
-	 *
-	 *---------------------------------------------------------------------------------
-	 */
-
-	/* redraw the alpha layer completely */
-	for (sy = 0; sy < YCHARS; sy++)
-	{
-		for (sx = 0, offs = sy * 64; sx < XCHARS; sx++, offs++)
+		fprintf(f, "\n\nMotion Object Palette:\n");
+		for (i = 0x100; i < 0x200; i++)
 		{
-			int data = READ_WORD (&atarigen_alpharam[offs * 2]);
-			int pict = (data & 0x3ff);
-
-			if (pict || (data & 0x8000))
-			{
-				int color = ((data >> 10) & 0xf) | ((data >> 9) & 0x20);
-
-				drawgfx (bitmap, Machine->gfx[0],
-						pict, color,
-						0, 0,
-						8 * sx, 8 * sy,
-						0,
-						(data & 0x8000) ? TRANSPARENCY_NONE : TRANSPARENCY_PEN, 0);
-			}
+			fprintf(f, "%04X ", READ_WORD(&paletteram[i*2]));
+			if ((i & 15) == 15) fprintf(f, "\n");
 		}
+
+		fprintf(f, "\n\nPlayfield Palette:\n");
+		for (i = 0x200; i < 0x400; i++)
+		{
+			fprintf(f, "%04X ", READ_WORD(&paletteram[i*2]));
+			if ((i & 15) == 15) fprintf(f, "\n");
+		}
+
+		fprintf(f, "\n\nPlayfield dump\n");
+		for (i = 0; i < atarigen_playfieldram_size / 2; i++)
+		{
+			fprintf(f, "%04X ", READ_WORD(&atarigen_playfieldram[i*2]));
+			if ((i & 63) == 63) fprintf(f, "\n");
+		}
+
+		fprintf(f, "\n\nAlpha dump\n");
+		for (i = 0; i < atarigen_alpharam_size / 2; i++)
+		{
+			fprintf(f, "%04X ", READ_WORD(&atarigen_alpharam[i*2]));
+			if ((i & 63) == 63) fprintf(f, "\n");
+		}
+
+		fprintf(f,"\n\nMotion objects\n");
+		atarigen_render_display_list(NULL, vindictr_dump_mo, f);
+
+		fclose(f);
 	}
 }
+#endif

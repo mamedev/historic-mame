@@ -12,9 +12,13 @@
 #include "cpu/m6502/m6502.h"
 
 
-void slapstic_init (int chip);
-int slapstic_bank (void);
-int slapstic_tweak (int offset);
+#define SOUND_INTERLEAVE_RATE		TIME_IN_USEC(50)
+#define SOUND_INTERLEAVE_REPEAT		20
+
+
+void slapstic_init(int chip);
+int slapstic_bank(void);
+int slapstic_tweak(int offset);
 
 
 
@@ -36,16 +40,21 @@ int atarigen_eeprom_size;
 
 static int unlocked;
 
-static void *comm_timer;
-static void *stop_comm_timer;
-
 static struct atarigen_modesc *modesc;
 
 static unsigned short *displaylist;
 static unsigned short *displaylist_end;
 static unsigned short *displaylist_last;
 
-static void (*sound_int)(void);
+static void (*update_int_state)(int vblank, int sound);
+
+static int main_vblank_set;
+
+
+INLINE void update_main_irq_states(void)
+{
+	update_int_state(main_vblank_set, atarigen_sound_to_cpu_ready);
+}
 
 
 
@@ -55,17 +64,16 @@ static void (*sound_int)(void);
  *
  *************************************/
 
-void atarigen_init_machine (void (*_sound_int)(void), int slapstic)
+void atarigen_init_machine(void (*update_int)(int, int), int slapstic)
 {
 	unlocked = 0;
 	atarigen_cpu_to_sound = atarigen_cpu_to_sound_ready = 0;
 	atarigen_sound_to_cpu = atarigen_sound_to_cpu_ready = 0;
 
-	comm_timer = stop_comm_timer = NULL;
+	main_vblank_set = 0;
+	update_int_state = update_int;
 
-	sound_int = _sound_int;
-
-	if (slapstic) slapstic_init (slapstic);
+	if (slapstic) slapstic_init(slapstic);
 }
 
 
@@ -76,24 +84,24 @@ void atarigen_init_machine (void (*_sound_int)(void), int slapstic)
  *
  *************************************/
 
-void atarigen_eeprom_enable_w (int offset, int data)
+void atarigen_eeprom_enable_w(int offset, int data)
 {
 	unlocked = 1;
 }
 
 
-int atarigen_eeprom_r (int offset)
+int atarigen_eeprom_r(int offset)
 {
-	return READ_WORD (&atarigen_eeprom[offset]) | 0xff00;
+	return READ_WORD(&atarigen_eeprom[offset]) | 0xff00;
 }
 
 
-void atarigen_eeprom_w (int offset, int data)
+void atarigen_eeprom_w(int offset, int data)
 {
 	if (!unlocked)
 		return;
 
-	COMBINE_WORD_MEM (&atarigen_eeprom[offset], data);
+	COMBINE_WORD_MEM(&atarigen_eeprom[offset], data);
 	unlocked = 0;
 }
 
@@ -105,32 +113,32 @@ void atarigen_eeprom_w (int offset, int data)
  *
  *************************************/
 
-int atarigen_hiload (void)
+int atarigen_hiload(void)
 {
 	void *f;
 
-	f = osd_fopen (Machine->gamedrv->name, 0, OSD_FILETYPE_HIGHSCORE, 0);
+	f = osd_fopen(Machine->gamedrv->name, 0, OSD_FILETYPE_HIGHSCORE, 0);
 	if (f)
 	{
-		osd_fread (f, atarigen_eeprom, atarigen_eeprom_size);
-		osd_fclose (f);
+		osd_fread(f, atarigen_eeprom, atarigen_eeprom_size);
+		osd_fclose(f);
 	}
 	else
-		memset (atarigen_eeprom, 0xff, atarigen_eeprom_size);
+		memset(atarigen_eeprom, 0xff, atarigen_eeprom_size);
 
 	return 1;
 }
 
 
-void atarigen_hisave (void)
+void atarigen_hisave(void)
 {
 	void *f;
 
-	f = osd_fopen (Machine->gamedrv->name, 0, OSD_FILETYPE_HIGHSCORE, 1);
+	f = osd_fopen(Machine->gamedrv->name, 0, OSD_FILETYPE_HIGHSCORE, 1);
 	if (f)
 	{
-		osd_fwrite (f, atarigen_eeprom, atarigen_eeprom_size);
-		osd_fclose (f);
+		osd_fwrite(f, atarigen_eeprom, atarigen_eeprom_size);
+		osd_fclose(f);
 	}
 }
 
@@ -142,16 +150,16 @@ void atarigen_hisave (void)
  *
  *************************************/
 
-int atarigen_slapstic_r (int offset)
+int atarigen_slapstic_r(int offset)
 {
-	int bank = slapstic_tweak (offset / 2) * 0x2000;
-	return READ_WORD (&atarigen_slapstic[bank + (offset & 0x1fff)]);
+	int bank = slapstic_tweak(offset / 2) * 0x2000;
+	return READ_WORD(&atarigen_slapstic[bank + (offset & 0x1fff)]);
 }
 
 
-void atarigen_slapstic_w (int offset, int data)
+void atarigen_slapstic_w(int offset, int data)
 {
-	slapstic_tweak (offset / 2);
+	slapstic_tweak(offset / 2);
 }
 
 
@@ -162,60 +170,56 @@ void atarigen_slapstic_w (int offset, int data)
  *
  *************************************/
 
-static void atarigen_delayed_sound_reset (int param)
+static void atarigen_delayed_sound_reset(int param)
 {
-	cpu_reset (1);
-	cpu_halt (1, 1);
+	cpu_halt(1, 1);
+	cpu_reset(1);
 
-	atarigen_cpu_to_sound_ready = atarigen_sound_to_cpu_ready = 0;
-	atarigen_cpu_to_sound = atarigen_sound_to_cpu = 0;
+	atarigen_sound_to_cpu_ready = 0;
+	update_main_irq_states();
 }
 
 
-void atarigen_sound_reset (void)
+void atarigen_sound_reset_w(int offset, int data)
 {
-	timer_set (TIME_NOW, 0, atarigen_delayed_sound_reset);
+	timer_set(TIME_NOW, 0, atarigen_delayed_sound_reset);
 }
 
 
-static void atarigen_stop_comm_timer (int param)
+static void atarigen_comm_timer(int param)
 {
-	if (comm_timer)
-		timer_remove (comm_timer);
-	comm_timer = stop_comm_timer = NULL;
+	if (--param)
+		timer_set(SOUND_INTERLEAVE_RATE, param, atarigen_comm_timer);
 }
 
 
-static void atarigen_delayed_sound_w (int param)
+static void atarigen_delayed_sound_w(int param)
 {
 	if (atarigen_cpu_to_sound_ready)
-		if (errorlog) fprintf (errorlog, "Missed command from 68010\n");
+		if (errorlog) fprintf(errorlog, "Missed command from 68010\n");
 
 	atarigen_cpu_to_sound = param;
 	atarigen_cpu_to_sound_ready = 1;
-	cpu_cause_interrupt (1, M6502_INT_NMI);
+	cpu_set_nmi_line(1, ASSERT_LINE);
 
 	/* allocate a high frequency timer until a response is generated */
 	/* the main CPU is *very* sensistive to the timing of the response */
-	if (!comm_timer)
-		comm_timer = timer_pulse (TIME_IN_USEC (50), 0, 0);
-	if (stop_comm_timer)
-		timer_remove (stop_comm_timer);
-	stop_comm_timer = timer_set (TIME_IN_USEC (1000), 0, atarigen_stop_comm_timer);
+	timer_set(SOUND_INTERLEAVE_RATE, SOUND_INTERLEAVE_REPEAT, atarigen_comm_timer);
 }
 
 
-void atarigen_sound_w (int offset, int data)
+void atarigen_sound_w(int offset, int data)
 {
 	/* use a timer to force a resynchronization */
 	if (!(data & 0x00ff0000))
-		timer_set (TIME_NOW, data & 0xff, atarigen_delayed_sound_w);
+		timer_set(TIME_NOW, data & 0xff, atarigen_delayed_sound_w);
 }
 
 
-int atarigen_6502_sound_r (int offset)
+int atarigen_6502_sound_r(int offset)
 {
 	atarigen_cpu_to_sound_ready = 0;
+	cpu_set_nmi_line(1, CLEAR_LINE);
 	return atarigen_cpu_to_sound;
 }
 
@@ -227,36 +231,77 @@ int atarigen_6502_sound_r (int offset)
  *
  *************************************/
 
-static void atarigen_delayed_6502_sound_w (int param)
+static void atarigen_delayed_6502_sound_w(int param)
 {
 	if (atarigen_sound_to_cpu_ready)
-		if (errorlog) fprintf (errorlog, "Missed result from 6502\n");
+		if (errorlog) fprintf(errorlog, "Missed result from 6502\n");
 
 	atarigen_sound_to_cpu = param;
 	atarigen_sound_to_cpu_ready = 1;
-	if (sound_int)
-		(*sound_int) ();
-
-	/* remove the high frequency timer if there is one */
-	if (comm_timer)
-		timer_remove (comm_timer);
-	comm_timer = NULL;
+	update_main_irq_states();
 }
 
 
-void atarigen_6502_sound_w (int offset, int data)
+void atarigen_6502_sound_w(int offset, int data)
 {
 	/* use a timer to force a resynchronization */
-	timer_set (TIME_NOW, data, atarigen_delayed_6502_sound_w);
+	timer_set(TIME_NOW, data, atarigen_delayed_6502_sound_w);
 }
 
 
-int atarigen_sound_r (int offset)
+int atarigen_sound_r(int offset)
 {
 	atarigen_sound_to_cpu_ready = 0;
+	update_main_irq_states();
 	return atarigen_sound_to_cpu | 0xff00;
 }
 
+
+/*************************************
+ *
+ *		periodic interrupt generators
+ *
+ *************************************/
+
+void atarigen_update_interrupts(void)
+{
+	update_main_irq_states();
+}
+
+
+int atarigen_vblank_gen(void)
+{
+	main_vblank_set = 1;
+	update_main_irq_states();
+	return 0;
+}
+
+
+void atarigen_vblank_ack_w(int offset, int data)
+{
+	main_vblank_set = 0;
+	update_main_irq_states();
+}
+
+
+int atarigen_6502_irq_gen(void)
+{
+	cpu_set_irq_line(1, M6502_INT_IRQ, ASSERT_LINE);
+	return 0;
+}
+
+
+int atarigen_6502_irq_ack_r(int offset)
+{
+	cpu_set_irq_line(1, M6502_INT_IRQ, CLEAR_LINE);
+	return 0;
+}
+
+
+void atarigen_6502_irq_ack_w(int offset, int data)
+{
+	cpu_set_irq_line(1, M6502_INT_IRQ, CLEAR_LINE);
+}
 
 
 /*************************************
@@ -265,11 +310,11 @@ int atarigen_sound_r (int offset)
  *
  *************************************/
 
-int atarigen_init_display_list (struct atarigen_modesc *_modesc)
+int atarigen_init_display_list(struct atarigen_modesc *_modesc)
 {
 	modesc = _modesc;
 
-	displaylist = malloc (modesc->maxmo * 10 * (Machine->drv->screen_height / 8));
+	displaylist = malloc(modesc->maxmo * 10 * (Machine->drv->screen_height / 8));
 	if (!displaylist)
 		return 1;
 
@@ -280,7 +325,7 @@ int atarigen_init_display_list (struct atarigen_modesc *_modesc)
 }
 
 
-void atarigen_update_display_list (unsigned char *base, int start, int scanline)
+void atarigen_update_display_list(unsigned char *base, int start, int scanline)
 {
 	int link = start, match = 0, moskip = modesc->moskip, wordskip = modesc->mowordskip;
 	int ignoreword = modesc->ignoreword;
@@ -308,7 +353,7 @@ void atarigen_update_display_list (unsigned char *base, int start, int scanline)
 	}
 
 	/* visit all the sprites and copy their data into the display list */
-	memset (spritevisit, 0, sizeof (spritevisit));
+	memset(spritevisit, 0, sizeof(spritevisit));
 	while (!spritevisit[link])
 	{
 		unsigned char *modata = &base[link * moskip];
@@ -317,7 +362,7 @@ void atarigen_update_display_list (unsigned char *base, int start, int scanline)
 		/* bounds checking */
 		if (d - displaylist >= modesc->maxmo * 5 * (Machine->drv->screen_height / 8))
 		{
-			if (errorlog) fprintf (errorlog, "Motion object list exceeded maximum\n");
+			if (errorlog) fprintf(errorlog, "Motion object list exceeded maximum\n");
 			break;
 		}
 
@@ -325,10 +370,10 @@ void atarigen_update_display_list (unsigned char *base, int start, int scanline)
 		*d++ = scanline;
 
 		/* add the data words */
-		data[0] = *d++ = READ_WORD (&modata[0]);
-		data[1] = *d++ = READ_WORD (&modata[wordskip]);
-		data[2] = *d++ = READ_WORD (&modata[2 * wordskip]);
-		data[3] = *d++ = READ_WORD (&modata[3 * wordskip]);
+		data[0] = *d++ = READ_WORD(&modata[0]);
+		data[1] = *d++ = READ_WORD(&modata[wordskip]);
+		data[2] = *d++ = READ_WORD(&modata[2 * wordskip]);
+		data[3] = *d++ = READ_WORD(&modata[3 * wordskip]);
 
 		/* is this one to ignore? */
 		if (data[ignoreword] == 0xffff)
@@ -359,7 +404,7 @@ void atarigen_update_display_list (unsigned char *base, int start, int scanline)
 }
 
 
-void atarigen_render_display_list (struct osd_bitmap *bitmap, atarigen_morender morender, void *param)
+void atarigen_render_display_list(struct osd_bitmap *bitmap, atarigen_morender morender, void *param)
 {
 	unsigned short *base = displaylist;
 	int last_start_scan = -1;

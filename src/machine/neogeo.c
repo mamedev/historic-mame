@@ -21,7 +21,6 @@ extern int weekday;
 
 int neogeo_game_fix;
 
-extern void install_mem_read_handler(int cpu, int start, int end, int (*handler)(int));
 static void neogeo_custom_memory(void);
 
 
@@ -59,29 +58,6 @@ void neogeo_init_machine (void)
 }
 
 
-static void fixbadsamples(unsigned char *buf,int length)
-{
-	while (length >= 0x200000)
-	{
-		int i;
-
-
-		for (i = 1;i < 0x200000;i += 2)
-			if (buf[i] != 0xff) break;	/* good ROM */
-
-		if (i >= 0x200000)
-		{
-if (errorlog) fprintf(errorlog,"improving bad sample ROM...\n");
-			for (i = 1;i < 0x200000;i += 2)
-				buf[i] = 0x80;
-		}
-
-		buf += 0x200000;
-		length -= 0x200000;
-	}
-}
-
-
 /* This function is only called once per game. */
 void neogeo_onetime_init_machine(void)
 {
@@ -89,18 +65,15 @@ void neogeo_onetime_init_machine(void)
     void *f;
 	extern struct YM2610interface neogeo_ym2610_interface;
 
-	fixbadsamples(Machine->memory_region[6],Machine->memory_region_length[6]);
 	if (Machine->memory_region[7])
 	{
-		fixbadsamples(Machine->memory_region[7],Machine->memory_region_length[7]);
-
 		if (errorlog) fprintf(errorlog,"using memory region 7 for Delta T samples\n");
-		neogeo_ym2610_interface.pcmroma[0] = 7;
+		neogeo_ym2610_interface.pcmromb[0] = 7;
 	}
 	else
 	{
 		if (errorlog) fprintf(errorlog,"using memory region 6 for Delta T samples\n");
-		neogeo_ym2610_interface.pcmroma[0] = 6;
+		neogeo_ym2610_interface.pcmromb[0] = 6;
 	}
 
     /* Allocate ram banks */
@@ -445,7 +418,7 @@ static void fatfury2_protection_w(int offset,int data)
 {
 	switch (offset)
 	{
-		case 0x55552:	/* data == 0x5555; read back from 55550, ffff0, 00000 ,ff000 */
+		case 0x55552:	/* data == 0x5555; read back from 55550, ffff0, 00000, ff000 */
 			prot_data = 0xff00ff00;
 			break;
 

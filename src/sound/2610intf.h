@@ -4,8 +4,6 @@
 #include "fm.h"
 #ifdef BUILD_YM2610
   void YM2610UpdateRequest(int chip);
-#else
-  #include "ym2610.h"
 #endif
 
 #define   MAX_2610    (2)
@@ -24,21 +22,23 @@ struct YM2610interface{
 	void ( *portAwrite[MAX_2610] )( int offset, int data );
 	void ( *portBwrite[MAX_2610] )( int offset, int data );
 	void ( *handler[MAX_2610] )( int irq );	/* IRQ handler for the YM2610 */
-	int pcmroma[MAX_2610];		/* Delta-T rom top buffer */
-	int pcmromb[MAX_2610];		/* ADPCM rom top buffer */
+	int pcmromb[MAX_2610];		/* Delta-T rom region */
+	int pcmroma[MAX_2610];		/* ADPCM   rom region */
 	int volumeFM[MAX_2610];		/* use YM3012_VOL macro */
 };
 
 /************************************************/
 /* Sound Hardware Start							*/
 /************************************************/
-int YM2610_sh_start(const struct YM2610interface *interface );
-int YM2610B_sh_start(const struct YM2610interface *interface );
+int YM2610_sh_start(const struct MachineSound *msound);
+int YM2610B_sh_start(const struct MachineSound *msound);
 
 /************************************************/
 /* Sound Hardware Stop							*/
 /************************************************/
 void YM2610_sh_stop(void);
+
+void YM2610_sh_reset(void);
 
 /************************************************/
 /* Chip 0 functions								*/

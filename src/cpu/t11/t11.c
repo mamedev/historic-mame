@@ -39,26 +39,18 @@ typedef struct
 	PAIR	ppc;	/* previous program counter */
     PAIR    reg[8];
     PAIR    psw;
-    int     op;
-    int     pending_interrupts;
+    UINT16  op;
+    UINT8	wait_state;
     UINT8   *bank[8];
-#if NEW_INTERRUPT_SYSTEM
     INT8    irq_state[4];
+    int		interrupt_cycles;
     int     (*irq_callback)(int irqline);
-#endif
 } t11_Regs;
 
 static t11_Regs t11;
 
 /* public globals */
 int	t11_ICount=50000;
-
-/* bits for the pending interrupts */
-#define T11_IRQ0_BIT    0x0001
-#define T11_IRQ1_BIT    0x0002
-#define T11_IRQ2_BIT    0x0004
-#define T11_IRQ3_BIT    0x0008
-#define T11_WAIT        0x8000      /* Wait is pending */
 
 /* register definitions and shortcuts */
 #define REGD(x) t11.reg[x].d
@@ -71,38 +63,38 @@ int	t11_ICount=50000;
 #define PSW t11.psw.b.l
 
 /* shortcuts for reading opcodes */
-INLINE int ROPCODE (void)
+INLINE int ROPCODE(void)
 {
 	int pc = PCD;
 	PC += 2;
-	return READ_WORD (&t11.bank[pc >> 13][pc & 0x1fff]);
+	return READ_WORD(&t11.bank[pc >> 13][pc & 0x1fff]);
 }
 
 /* shortcuts for reading/writing memory bytes */
-#define RBYTE(addr)      T11_RDMEM (addr)
-#define WBYTE(addr,data) T11_WRMEM ((addr), (data))
+#define RBYTE(addr)      T11_RDMEM(addr)
+#define WBYTE(addr,data) T11_WRMEM((addr), (data))
 
 /* shortcuts for reading/writing memory words */
-INLINE int RWORD (int addr)
+INLINE int RWORD(int addr)
 {
-	return T11_RDMEM_WORD (addr);
+	return T11_RDMEM_WORD(addr);
 }
 
-INLINE void WWORD (int addr, int data)
+INLINE void WWORD(int addr, int data)
 {
-	T11_WRMEM_WORD (addr, data);
+	T11_WRMEM_WORD(addr, data);
 }
 
 /* pushes/pops a value from the stack */
-INLINE void PUSH (int val)
+INLINE void PUSH(int val)
 {
 	SP -= 2;
-	WWORD (SPD, val);
+	WWORD(SPD, val);
 }
 
-INLINE int POP (void)
+INLINE int POP(void)
 {
-	int result = RWORD (SPD);
+	int result = RWORD(SPD);
 	SP += 2;
 	return result;
 }
@@ -131,12 +123,51 @@ INLINE int POP (void)
 #define SET_Z (PSW |= ZFLAG)
 #define SET_N (PSW |= NFLAG)
 
+/****************************************************************************
+ * Checks active interrupts for a valid one
+ ****************************************************************************/
+static void t11_check_irqs(void)
+{
+	int priority = PSW & 0xe0;
+	int irq;
+
+	/* loop over IRQs from highest to lowest */
+//	for (irq = 3; irq >= 0; irq--)
+	for (irq = 0; irq < 4; irq++)
+	{
+	    if (t11.irq_state[irq] != CLEAR_LINE)
+		{
+			/* get the priority of this interrupt */
+			int new_pc = RWORD(0x38 + (irq * 0x10));
+			int new_psw = RWORD(0x3a + (irq * 0x10));
+
+			/* if it's greater than the current priority, take it */
+			if ((new_psw & 0xe0) > priority)
+			{
+				if (t11.irq_callback)
+					(*t11.irq_callback)(irq);
+
+				/* push the old state, set the new one */
+				PUSH(PSW);
+				PUSH(PC);
+				PCD = new_pc;
+				PSW = new_psw;
+				priority = new_psw & 0xe0;
+
+				/* count 50 cycles (who knows what it really is) and clear the WAIT flag */
+				t11.interrupt_cycles += 50;
+				t11.wait_state = 0;
+//				return;
+			}
+	    }
+	}
+}
+
 /* includes the static function prototypes and the master opcode table */
 #include "t11table.c"
 
 /* includes the actual opcode implementations */
 #include "t11ops.c"
-
 
 /****************************************************************************
  * Get all registers in given buffer
@@ -155,6 +186,7 @@ void t11_set_context(void *src)
 {
 	if( src )
 		t11 = *(t11_Regs*)src;
+	t11_check_irqs();
 }
 
 /****************************************************************************
@@ -281,7 +313,7 @@ void t11_reset(void *param)
 	int i;
 	extern unsigned char *RAM;
 
-	memset (&t11, 0, sizeof (t11));
+	memset(&t11, 0, sizeof(t11));
 	SP = 0x0400;
 	PC = 0x8000;
 	PSW = 0xe0;
@@ -290,7 +322,6 @@ void t11_reset(void *param)
 		t11.bank[i] = &RAM[i * 0x2000];
 	for (i = 0; i < 4; i++)
 		t11.irq_state[i] = CLEAR_LINE;
-	t11.pending_interrupts = 0;
 }
 
 void t11_exit(void)
@@ -306,27 +337,8 @@ void t11_set_nmi_line(int state)
 void t11_set_irq_line(int irqline, int state)
 {
     t11.irq_state[irqline] = state;
-	if( state == CLEAR_LINE )
-	{
-		switch( irqline )
-		{
-			case T11_IRQ0: t11.pending_interrupts &= ~T11_IRQ0_BIT; break;
-			case T11_IRQ1: t11.pending_interrupts &= ~T11_IRQ1_BIT; break;
-			case T11_IRQ2: t11.pending_interrupts &= ~T11_IRQ2_BIT; break;
-			case T11_IRQ3: t11.pending_interrupts &= ~T11_IRQ3_BIT; break;
-		}
-	}
-	else
-	{
-        t11.pending_interrupts &= ~T11_WAIT;
-		switch( irqline )
-		{
-			case T11_IRQ0: t11.pending_interrupts |= T11_IRQ0_BIT; break;
-			case T11_IRQ1: t11.pending_interrupts |= T11_IRQ1_BIT; break;
-			case T11_IRQ2: t11.pending_interrupts |= T11_IRQ2_BIT; break;
-			case T11_IRQ3: t11.pending_interrupts |= T11_IRQ3_BIT; break;
-        }
-    }
+    if (state != CLEAR_LINE)
+    	t11_check_irqs();
 }
 
 void t11_set_irq_callback(int (*callback)(int irqline))
@@ -334,116 +346,28 @@ void t11_set_irq_callback(int (*callback)(int irqline))
 	t11.irq_callback = callback;
 }
 
-/* Generate interrupts - I don't really know how this works, but this is how Paperboy uses them */
-static void Interrupt(void)
-{
-	int level = (PSW >> 5) & 3;
-
-    if (t11.pending_interrupts & T11_IRQ3_BIT)
-	{
-		PUSH (PSW);
-		PUSH (PC);
-		PCD = RWORD (0x60);
-		PSW = RWORD (0x62);
-		if( t11.irq_callback )
-			(*t11.irq_callback)(T11_IRQ3);
-    }
-	else if ((t11.pending_interrupts & T11_IRQ2_BIT) && level < 3)
-	{
-		PUSH (PSW);
-		PUSH (PC);
-		PCD = RWORD (0x50);
-		PSW = RWORD (0x52);
-		if( t11.irq_callback )
-			(*t11.irq_callback)(T11_IRQ2);
-    }
-	else if ((t11.pending_interrupts & T11_IRQ1_BIT) && level < 2)
-	{
-		PUSH (PSW);
-		PUSH (PC);
-		PCD = RWORD (0x40);
-		PSW = RWORD (0x42);
-		if( t11.irq_callback )
-			(*t11.irq_callback)(T11_IRQ1);
-    }
-	else if ((t11.pending_interrupts & T11_IRQ0_BIT) && level < 1)
-	{
-		PUSH (PSW);
-		PUSH (PC);
-		PCD = RWORD (0x38);
-		PSW = RWORD (0x3a);
-		if( t11.irq_callback )
-			(*t11.irq_callback)(T11_IRQ0);
-    }
-}
-
-
 
 /* execute instructions on this CPU until icount expires */
 int t11_execute(int cycles)
 {
 	t11_ICount = cycles;
+	t11_ICount -= t11.interrupt_cycles;
+	t11.interrupt_cycles = 0;
 
-	if (t11.pending_interrupts & T11_WAIT)
+	if (t11.wait_state)
 	{
 		t11_ICount = 0;
 		goto getout;
 	}
 
-change_pc (0xffff);
+change_pc(0xffff);
 	do
 	{
-		if (t11.pending_interrupts != 0)
-			Interrupt();
-
-#if 0
-/* use this code to nail a bogus jump or opcode */
-		{
-			extern int DasmT11 (unsigned char *pBase, char *buffer, int pc);
-			static unsigned int pclist[256];
-			static unsigned char inst[256][8];
-			static int pcindex = 0;
-			int i;
-
-			pclist[pcindex] = PCD;
-			for (i = 0; i < 8; i++)
-				inst[pcindex][i] = t11.bank[(PCD + i) >> 13][(PCD + i) & 0x1fff];
-			pcindex = (pcindex + 1) & 255;
-
-			if (PCD < 0x4000)
-			{
-				char buffer[200];
-				int i;
-
-				#undef printf
-				printf ("Error!\n");
-				for (i = 255; i >= 0; i--)
-				{
-					unsigned char *temp;
-					int index = (pcindex - i) & 255;
-
-					temp = OP_ROM;
-					OP_ROM = &inst[index][0] - pclist[index];
-					DasmT11 (&inst[index][0], buffer, pclist[index]);
-					OP_ROM = temp;
-
-					printf ("%04X: %s\n", pclist[index], buffer);
-				}
-				printf ("$38 = %04X\n", RAM[0x38] + (RAM[0x39] << 8));
-				printf ("$40 = %04X\n", RAM[0x40] + (RAM[0x41] << 8));
-				printf ("$50 = %04X\n", RAM[0x50] + (RAM[0x51] << 8));
-				printf ("$60 = %04X\n", RAM[0x60] + (RAM[0x61] << 8));
-				gets (buffer);
-			}
-		}
-#endif
-
-
 		t11.ppc = t11.reg[7];	/* copy PC to previous PC */
 
 		CALL_MAME_DEBUG;
 
-		t11.op = ROPCODE ();
+		t11.op = ROPCODE();
 		(*opcode_table[t11.op >> 3])();
 
 		t11_ICount -= 22;
@@ -451,6 +375,10 @@ change_pc (0xffff);
 	} while (t11_ICount > 0);
 
 getout:
+
+	t11_ICount -= t11.interrupt_cycles;
+	t11.interrupt_cycles = 0;
+
 	return cycles - t11_ICount;
 }
 

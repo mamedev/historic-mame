@@ -65,7 +65,7 @@ static pia6821_interface pia_intf =
 	{ 0, 0 }                                        /* IRQ B */
 };
 
-int exidy_sh_start(void)
+int exidy_sh_start(const struct MachineSound *msound)
 {
 	/* Init 8253 */
 	exidy_sh8253_clstate[0]=0;

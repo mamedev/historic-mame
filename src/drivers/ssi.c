@@ -75,6 +75,7 @@ static struct MemoryReadAddress readmem[] =
 	{ 0x200000, 0x20ffff, MRA_BANK1 },
 	{ 0x300000, 0x301fff, paletteram_word_r },
 	{ 0x400000, 0x400003, ssi_sound_r },
+	{ 0x600000, 0x60ffff, MRA_BANK3 },
 	{ 0x800000, 0x80ffff, ssi_videoram_r },
 	{ -1 }  /* end of table */
 };
@@ -87,6 +88,8 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x300000, 0x301fff, paletteram_RRRRGGGGBBBBxxxx_word_w, &paletteram },
 	{ 0x400000, 0x400003, ssi_sound_w },
 //	{ 0x500000, 0x500001, MWA_NOP },	/* ?? */
+	{ 0x600000, 0x60ffff, MWA_BANK3 }, /* unused f2 video layers */
+//	{ 0x620000, 0x62000f, MWA_NOP }, /* unused f2 video control registers */
 	{ 0x800000, 0x80ffff, ssi_videoram_w, &videoram, &videoram_size }, /* sprite ram */
 	{ -1 }  /* end of table */
 };
@@ -166,9 +169,9 @@ INPUT_PORTS_START( ssi_input_ports )
 	PORT_BITX(    0x04, 0x04, IPT_DIPSWITCH_NAME | IPF_TOGGLE, DEF_STR( Service_Mode ), OSD_KEY_F2, IP_JOY_NONE )
 	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x08, DEF_STR( Off ))
-	PORT_DIPSETTING(    0x00, DEF_STR( On ))
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ))
+	PORT_DIPSETTING(    0x08, DEF_STR( On ))
 	PORT_DIPNAME( 0x30, 0x30, DEF_STR( Coin_A ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( 4C_1C ))
 	PORT_DIPSETTING(    0x10, DEF_STR( 3C_1C ))
@@ -179,6 +182,91 @@ INPUT_PORTS_START( ssi_input_ports )
 	PORT_DIPSETTING(    0x80, DEF_STR( 1C_3C ))
 	PORT_DIPSETTING(    0x40, DEF_STR( 1C_4C ))
 	PORT_DIPSETTING(    0x00, DEF_STR( 1C_6C ))
+
+	PORT_START /* DSW B */
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ))
+	PORT_DIPSETTING(    0x00, DEF_STR( On ))
+	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( Off ))
+	PORT_DIPSETTING(    0x00, DEF_STR( On ))
+	PORT_DIPNAME( 0x0c, 0x0c, "Shields" )
+	PORT_DIPSETTING(    0x00, "None")
+	PORT_DIPSETTING(    0x0c, "1")
+	PORT_DIPSETTING(    0x04, "2")
+	PORT_DIPSETTING(    0x08, "3")
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Lives ) )
+	PORT_DIPSETTING(    0x00, "2")
+	PORT_DIPSETTING(    0x10, "3")
+	PORT_DIPNAME( 0x20, 0x20, "2 Players Mode" )
+	PORT_DIPSETTING(    0x00, "Alternate")
+	PORT_DIPSETTING(    0x20, "Simultaneous")
+	PORT_DIPNAME( 0x40, 0x40, "Allow Continue" )
+	PORT_DIPSETTING(    0x40, DEF_STR( Yes ))
+	PORT_DIPSETTING(    0x00, DEF_STR( No ))
+	PORT_DIPNAME( 0x80, 0x80, "Allow Simultaneous Game" )
+	PORT_DIPSETTING(    0x80, DEF_STR( Yes ))
+	PORT_DIPSETTING(    0x00, DEF_STR( No ))
+ /* I think the cabinet for this game should have two joysticks even
+	in upright mode. Maybe this dip actually set cocktail mode where
+	simultaneous game is now allowed of course.
+	Or maybe it's just what I described... Sand666 21/5 */
+INPUT_PORTS_END
+
+INPUT_PORTS_START( majest12_input_ports )
+	PORT_START      /* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER1 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START1)
+
+	PORT_START      /* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START2)
+
+	PORT_START      /* IN2 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_TILT )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN3 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START /* DSW A */
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ))
+	PORT_DIPSETTING(    0x00, DEF_STR( On ))
+	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( Off ))
+	PORT_DIPSETTING(    0x00, DEF_STR( On ))
+	PORT_BITX(    0x04, 0x04, IPT_DIPSWITCH_NAME | IPF_TOGGLE, DEF_STR( Service_Mode ), OSD_KEY_F2, IP_JOY_NONE )
+	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ))
+	PORT_DIPSETTING(    0x08, DEF_STR( On ))
+	PORT_DIPNAME( 0x30, 0x30, DEF_STR( Coin_A ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 3C_1C ))
+	PORT_DIPSETTING(    0x10, DEF_STR( 2C_1C ))
+	PORT_DIPSETTING(    0x30, DEF_STR( 1C_1C ))
+	PORT_DIPSETTING(    0x20, DEF_STR( 1C_2C ))
+	PORT_DIPNAME( 0xc0, 0xc0, DEF_STR( Coin_B ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 3C_1C ))
+	PORT_DIPSETTING(    0x40, DEF_STR( 2C_1C ))
+	PORT_DIPSETTING(    0xc0, DEF_STR( 1C_1C ))
+	PORT_DIPSETTING(    0x80, DEF_STR( 1C_2C ))
 
 	PORT_START /* DSW B */
 	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )
@@ -303,18 +391,36 @@ static struct MachineDriver machine_driver =
 
 ROM_START( ssi_rom )
 	ROM_REGION(0x80000)     /* 512k for 68000 code */
-	ROM_LOAD_EVEN( "ssi_15-1.rom", 0x0000, 0x40000, 0xce9308a6 )
-	ROM_LOAD_ODD ( "ssi_16-1.rom", 0x0000, 0x40000, 0x470a483a )
+	ROM_LOAD_EVEN( "ssi_15-1.rom", 0x00000, 0x40000, 0xce9308a6 )
+	ROM_LOAD_ODD ( "ssi_16-1.rom", 0x00000, 0x40000, 0x470a483a )
 
 	ROM_REGION_DISPOSE(0x100000)      /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "ssi_m01.rom",  0x0000, 0x100000, 0xa1b4f486 )
+	ROM_LOAD( "ssi_m01.rom",  0x00000, 0x100000, 0xa1b4f486 )
 
 	ROM_REGION(0x1c000)      /* sound cpu */
 	ROM_LOAD( "ssi_09.rom",   0x00000, 0x04000, 0x88d7f65c )
-	ROM_CONTINUE(			  0x10000, 0x0c000 ) /* banked stuff */
+	ROM_CONTINUE(             0x10000, 0x0c000 ) /* banked stuff */
 
 	ROM_REGION(0x20000)      /* ADPCM samples */
-	ROM_LOAD( "ssi_m02.rom",  0x0000, 0x20000, 0x3cb0b907 )
+	ROM_LOAD( "ssi_m02.rom",  0x00000, 0x20000, 0x3cb0b907 )
+ROM_END
+
+ROM_START( majest12_rom )
+	ROM_REGION(0x80000)     /* 512k for 68000 code */
+	ROM_LOAD_EVEN( "c64-07.bin", 0x00000, 0x20000, 0xf29ed5c9 )
+	ROM_LOAD_EVEN( "c64-06.bin", 0x40000, 0x20000, 0x18dc71ac )
+	ROM_LOAD_ODD ( "c64-08.bin", 0x00000, 0x20000, 0xddfd33d5 )
+	ROM_LOAD_ODD ( "c64-05.bin", 0x40000, 0x20000, 0xb61866c0 )
+
+	ROM_REGION_DISPOSE(0x100000)      /* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "ssi_m01.rom",  0x00000, 0x100000, 0xa1b4f486 )
+
+	ROM_REGION(0x1c000)      /* sound cpu */
+	ROM_LOAD( "ssi_09.rom",   0x00000, 0x04000, 0x88d7f65c )
+	ROM_CONTINUE(             0x10000, 0x0c000 ) /* banked stuff */
+
+	ROM_REGION(0x20000)      /* ADPCM samples */
+	ROM_LOAD( "ssi_m02.rom",  0x00000, 0x20000, 0x3cb0b907 )
 ROM_END
 
 
@@ -338,6 +444,31 @@ struct GameDriver ssi_driver =
 	0,	/* sound_prom */
 
 	ssi_input_ports,
+
+	0, 0, 0,   /* colors, palette, colortable */
+	ORIENTATION_ROTATE_270,
+	0, 0
+};
+
+struct GameDriver majest12_driver =
+{
+	__FILE__,
+	&ssi_driver,
+	"majest12",
+	"Majestic Twelve",
+	"1990",
+	"Taito",
+	"Howie Cohen \nAlex Pasadyn \nBill Boyle (graphics info) \nRichard Bush (technical information)",
+	0,
+	&machine_driver,
+	0,
+
+	majest12_rom,
+	0, 0,
+	0,
+	0,	/* sound_prom */
+
+	majest12_input_ports,
 
 	0, 0, 0,   /* colors, palette, colortable */
 	ORIENTATION_ROTATE_270,

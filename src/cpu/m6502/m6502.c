@@ -28,7 +28,7 @@
 
 extern FILE * errorlog;
 
-#define VERBOSE 1
+#define VERBOSE 0
 
 #if VERBOSE
 #define LOG(x)	if( errorlog ) fprintf x
@@ -114,17 +114,10 @@ void m6502_reset(void *param)
 	/* read the reset vector into PC */
     PCL = RDMEM(M6502_RST_VEC);
     PCH = RDMEM(M6502_RST_VEC+1);
-	m6502.sp.d = 0x01ff;	/* stack pointer (always 100 - 1FF) */
-	m6502.zp.d = 0; 		/* zero page address */
-	m6502.ea.d = 0; 		/* effective address */
-	m6502.a = 0;			/* Accumulator */
-	m6502.x = 0;			/* X index register */
-	m6502.y = 0;			/* Y index register */
+	m6502.sp.d = 0x0100 | (m6502.sp.b.l);	/* stack pointer (always 100 - 1FF) */
 	m6502.p = F_T|F_I|F_Z;	/* set T, I and Z flags */
 	m6502.pending_irq = 0;	/* nonzero if an IRQ is pending */
 	m6502.after_cli = 0;	/* pending IRQ and last insn cleared I */
-	m6502.nmi_state = CLEAR_LINE;
-	m6502.irq_state = CLEAR_LINE;
 	m6502.irq_callback = NULL;
 
 	change_pc16(PCD);

@@ -755,6 +755,26 @@ ROM_START( intrepid_rom )
 	ROM_LOAD( "ic23.6",       0x0800, 0x0800, 0x91ca7097 )
 ROM_END
 
+ROM_START( intrepi2_rom )
+	ROM_REGION(0x10000)     /* 64k for main CPU */
+	ROM_LOAD( "intrepid.001", 0x0000, 0x1000, 0x9505df1e )
+	ROM_LOAD( "intrepid.002", 0x1000, 0x1000, 0x27e9f53f )
+	ROM_LOAD( "intrepid.003", 0x2000, 0x1000, 0xda082ed7 )
+	ROM_LOAD( "intrepid.004", 0x3000, 0x1000, 0x60acecd9 )
+	ROM_LOAD( "intrepid.005", 0x4000, 0x1000, 0x7c868725 )
+
+	ROM_REGION_DISPOSE(0x2000)      /* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "ic9.9",        0x0000, 0x1000, 0x8c70d18d )
+	ROM_LOAD( "ic8.8",        0x1000, 0x1000, 0x04d067d3 )
+
+	ROM_REGION(0x0020)      /* Color PROM */
+	ROM_LOAD( "ic3.prm",      0x0000, 0x0020, 0x927ff40a )
+
+	ROM_REGION(0x10000)     /* 64k for audio CPU */
+	ROM_LOAD( "intrepid.007", 0x0000, 0x0800, 0xf85ead07 )
+	ROM_LOAD( "intrepid.006", 0x0800, 0x0800, 0x9eb6c61b )
+ROM_END
+
 ROM_START( portman_rom )
 	ROM_REGION(0x10000)     /* 64k for main CPU */
 	ROM_LOAD( "pe1",       0x0000, 0x1000, 0xa5cf6083 )
@@ -788,8 +808,30 @@ ROM_START( suprmous_rom )
 	ROM_LOAD( "sm.8",         0x1000, 0x1000, 0x2f81ab5f )
 	ROM_LOAD( "sm.9",         0x2000, 0x1000, 0x8463af89 )
 
-	ROM_REGION(0x0040)      /* Color PROM */
-	/* We don't have this yet */
+	ROM_REGION(0x0040)      /* Color PROMs */
+	ROM_LOAD( "smouse2.clr",  0x0000, 0x0020, 0x8c295553 )
+	ROM_LOAD( "smouse1.clr",  0x0020, 0x0020, 0xd815504b )
+
+	ROM_REGION(0x10000)	   /* 64k for audio CPU */
+	ROM_LOAD( "sm.6",         0x0000, 0x1000, 0xfba71785 )
+ROM_END
+
+ROM_START( suprmou2_rom )
+	ROM_REGION(0x10000)	    /* 64k for main CPU */
+	ROM_LOAD( "suprmous.x1",         0x0000, 0x1000, 0xad72b467 )
+	ROM_LOAD( "suprmous.x2",         0x1000, 0x1000, 0x53f5be5e )
+	ROM_LOAD( "suprmous.x3",         0x2000, 0x1000, 0xb5b8d34d )
+	ROM_LOAD( "suprmous.x4",         0x3000, 0x1000, 0x603333df )
+	ROM_LOAD( "suprmous.x5",         0x4000, 0x1000, 0x2ef9cbf1 )
+
+	ROM_REGION_DISPOSE(0x3000)	    /* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "suprmous.x7",         0x0000, 0x1000, 0xe9295071 )
+	ROM_LOAD( "suprmous.x8",         0x1000, 0x1000, 0xdbef9db8 )
+	ROM_LOAD( "suprmous.x9",         0x2000, 0x1000, 0x700d996e )
+
+	ROM_REGION(0x0040)      /* Color PROMs */
+	ROM_LOAD( "smouse2.clr",  0x0000, 0x0020, 0x8c295553 )
+	ROM_LOAD( "smouse1.clr",  0x0020, 0x0020, 0xd815504b )
 
 	ROM_REGION(0x10000)	   /* 64k for audio CPU */
 	ROM_LOAD( "sm.6",         0x0000, 0x1000, 0xfba71785 )
@@ -1036,7 +1078,7 @@ struct GameDriver intrepid_driver =
 	__FILE__,
 	0,
 	"intrepid",
-	"Intrepid",
+	"Intrepid (set 1)",
 	"1983",
 	"Nova Games Ltd.",
 	"Zsolt Vasvari",
@@ -1045,6 +1087,32 @@ struct GameDriver intrepid_driver =
 	0,
 
 	intrepid_rom,
+	0, 0,
+	0,
+	0,      /* sound_prom */
+
+	intrepid_input_ports,
+
+	PROM_MEMORY_REGION(2), 0, 0,
+	ORIENTATION_ROTATE_90,
+
+	intrepid_hiload, intrepid_hisave
+};
+
+struct GameDriver intrepi2_driver =
+{
+	__FILE__,
+	&intrepid_driver,
+	"intrepi2",
+	"Intrepid (set 2)",
+	"1983",
+	"Nova Games Ltd.",
+	"Zsolt Vasvari",
+	GAME_IMPERFECT_COLORS,
+	&intrepid_machine_driver,
+	0,
+
+	intrepi2_rom,
 	0, 0,
 	0,
 	0,      /* sound_prom */
@@ -1103,7 +1171,34 @@ struct GameDriver suprmous_driver =
 
 	suprmous_input_ports,
 
-	0, 0, 0,
+	PROM_MEMORY_REGION(2), 0, 0,
+	ORIENTATION_ROTATE_90,
+
+	suprmous_hiload, suprmous_hisave
+};
+
+
+struct GameDriver suprmou2_driver =
+{
+	__FILE__,
+	&suprmous_driver,
+	"suprmou2",
+	"Funny Mouse (bootleg?)",
+	"1982",
+	"Chu Co. Ltd",
+	"Brad Oliver",
+	GAME_WRONG_COLORS,
+	&suprmous_machine_driver,
+	0,
+
+	suprmou2_rom,
+	0, 0,
+	0,
+	0,	/* sound_prom */
+
+	suprmous_input_ports,
+
+	PROM_MEMORY_REGION(2), 0, 0,
 	ORIENTATION_ROTATE_90,
 
 	suprmous_hiload, suprmous_hisave

@@ -451,40 +451,40 @@ static const char *berzerk_sample_names[] =
 {
 	"*berzerk", /* universal samples directory */
 	"",
-	"01.sam", // "kill"
-	"02.sam", // "attack"
-	"03.sam", // "charge"
-	"04.sam", // "got"
-	"05.sam", // "to"
-	"06.sam", // "get"
+	"01.wav", // "kill"
+	"02.wav", // "attack"
+	"03.wav", // "charge"
+	"04.wav", // "got"
+	"05.wav", // "to"
+	"06.wav", // "get"
 	"",
-	"08.sam", // "alert"
-	"09.sam", // "detected"
-	"10.sam", // "the"
-	"11.sam", // "in"
-	"12.sam", // "it"
+	"08.wav", // "alert"
+	"09.wav", // "detected"
+	"10.wav", // "the"
+	"11.wav", // "in"
+	"12.wav", // "it"
 	"",
 	"",
-	"15.sam", // "humanoid"
-	"16.sam", // "coins"
-	"17.sam", // "pocket"
-	"18.sam", // "intruder"
+	"15.wav", // "humanoid"
+	"16.wav", // "coins"
+	"17.wav", // "pocket"
+	"18.wav", // "intruder"
 	"",
-	"20.sam", // "escape"
-	"21.sam", // "destroy"
-	"22.sam", // "must"
-	"23.sam", // "not"
-	"24.sam", // "chicken"
-	"25.sam", // "fight"
-	"26.sam", // "like"
-	"27.sam", // "a"
-	"28.sam", // "robot"
+	"20.wav", // "escape"
+	"21.wav", // "destroy"
+	"22.wav", // "must"
+	"23.wav", // "not"
+	"24.wav", // "chicken"
+	"25.wav", // "fight"
+	"26.wav", // "like"
+	"27.wav", // "a"
+	"28.wav", // "robot"
 	"",
-	"30.sam", // player fire
-	"31.sam", // baddie fire
-	"32.sam", // kill baddie
-	"33.sam", // kill human (real)
-	"34.sam", // kill human (cheat)
+	"30.wav", // player fire
+	"31.wav", // baddie fire
+	"32.wav", // kill baddie
+	"33.wav", // kill human (real)
+	"34.wav", // kill human (cheat)
 	0	/* end of array */
 };
 

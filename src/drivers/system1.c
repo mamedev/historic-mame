@@ -1017,9 +1017,9 @@ INPUT_PORTS_START( teddybb_input_ports )
 	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Cabinet ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( Cocktail ) )
-	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Demo_Sounds ) )
-	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( On ) )
 	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x08, "2" )
 	PORT_DIPSETTING(    0x0c, "3" )
@@ -2510,9 +2510,29 @@ ROM_END
 
 ROM_START( myheroj_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "mhj_boot.01",  0x0000, 0x4000, 0xff54dcec )
+	ROM_LOAD( "mhj_boot.02",  0x4000, 0x4000, 0x5c41eea8 )
+	ROM_LOAD( "epr6965.96",   0x8000, 0x4000, 0x3cbbaf64 )
+
+	ROM_REGION_DISPOSE(0xc000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "mhj_boot.11",  0x0000, 0x4000, 0xfe2039f4 )
+	ROM_LOAD( "mhj_boot.10",  0x4000, 0x4000, 0x0ff682e8 )
+	ROM_LOAD( "mhj_boot.09",  0x8000, 0x4000, 0x558b6926 )
+
+	ROM_REGION(0x10000)	/* 64k for sprites data */
+	ROM_LOAD( "epr6921.117",  0x0000, 0x4000, 0xf19e05a1 )
+	ROM_LOAD( "epr6923.u04",  0x4000, 0x4000, 0x7988adc3 )
+	ROM_LOAD( "epr6922.110",  0x8000, 0x4000, 0x37f77a78 )
+	ROM_LOAD( "epr6924.u05",  0xc000, 0x4000, 0x42bdc8f6 )
+
+	ROM_REGION(0x10000)	/* 64k for sound cpu */
+	ROM_LOAD( "mhj_boot.08",  0x0000, 0x2000, 0xaf467223 )
+ROM_END
+
+ROM_START( myherok_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
 	/* all the three program ROMs have bits 0-1 swapped */
-	/* when decoded, 07 is identical to the unencrypted one. The other */
-	/* two are different. */
+	/* when decoded, they are identical to the Japanese version */
 	ROM_LOAD( "ry-11.rom",    0x0000, 0x4000, 0x6f4c8ee5 )	/* encrypted */
 	ROM_LOAD( "ry-09.rom",    0x4000, 0x4000, 0x369302a1 )	/* encrypted */
 	ROM_LOAD( "ry-07.rom",    0x8000, 0x4000, 0xb8e9922e )
@@ -2531,10 +2551,10 @@ ROM_START( myheroj_rom )
 	ROM_LOAD( "epr6924.u05",  0xc000, 0x4000, 0x42bdc8f6 )
 
 	ROM_REGION(0x10000)	/* 64k for sound cpu */
-	ROM_LOAD( "ry-01.rom",    0x0000, 0x2000, 0xaf467223 )
+	ROM_LOAD( "mhj_boot.08",  0x0000, 0x2000, 0xaf467223 )
 ROM_END
 
-void myheroj_unmangle(void)
+void myherok_unmangle(void)
 {
 	int A;
 	unsigned char *RAM;
@@ -4414,7 +4434,7 @@ struct GameDriver myhero_driver =
 	__FILE__,
 	0,
 	"myhero",
-	"My Hero",
+	"My Hero (US)",
 	"1985",
 	"Sega",
 	BASE_CREDITS,
@@ -4439,7 +4459,7 @@ struct GameDriver myheroj_driver =
 	__FILE__,
 	&myhero_driver,
 	"myheroj",
-	"Seishun Scandal",
+	"My Hero (Japan)",
 	"1985",
 	"Coreland / Sega",
 	BASE_CREDITS,
@@ -4448,7 +4468,32 @@ struct GameDriver myheroj_driver =
 	0,
 
 	myheroj_rom,
-	myheroj_unmangle, myheroj_decode,	/* additional data and address line scrambling */
+	0, myheroj_decode,
+	0,
+	0,
+
+	myhero_input_ports,
+
+	0, 0, 0,
+	ORIENTATION_DEFAULT,
+	myhero_hiload, myhero_hisave
+};
+
+struct GameDriver myherok_driver =
+{
+	__FILE__,
+	&myhero_driver,
+	"myherok",
+	"Seishun Scandal (Korea)",
+	"1985",
+	"Coreland / Sega",
+	BASE_CREDITS,
+	0,
+	&system1_machine_driver,
+	0,
+
+	myherok_rom,
+	myherok_unmangle, myheroj_decode,	/* additional data and address line scrambling */
 	0,
 	0,
 
@@ -4792,8 +4837,8 @@ struct GameDriver gardia_driver =
 	0,
 	"gardia",
 	"Gardia",
-	"????",
-	"????",
+	"1986",
+	"Sega / Coreland",
 	BASE_CREDITS,
 	GAME_NOT_WORKING,
 	&brain_machine_driver,
@@ -4817,8 +4862,8 @@ struct GameDriver blockgal_driver =
 	0,
 	"blockgal",
 	"Block Gal",
-	"????",
-	"????",
+	"1987",
+	"Sega / Vic Tokai",
 	BASE_CREDITS,
 	GAME_NOT_WORKING,
 	&system1_machine_driver,
@@ -4867,8 +4912,8 @@ struct GameDriver dakkochn_driver =
 	0,
 	"dakkochn",
 	"DakkoChan Jansoh",
-	"????",
-	"?????",
+	"1987",
+	"Sega",
 	BASE_CREDITS,
 	GAME_NOT_WORKING,
 	&chplft_machine_driver,
@@ -4892,8 +4937,8 @@ struct GameDriver ufosensi_driver =
 	0,
 	"ufosensi",
 	"Ufo Senshi Yohko Chan",
-	"????",
-	"?????",
+	"1988",
+	"Sega",
 	BASE_CREDITS,
 	GAME_NOT_WORKING,
 	&chplft_machine_driver,

@@ -64,25 +64,26 @@ void DAC_set_volume(int num,int volume,int gain)
 }
 
 
-int DAC_sh_start(const struct DACinterface *interface)
+int DAC_sh_start(const struct MachineSound *msound)
 {
 	int i;
+	const struct DACinterface *intf = msound->sound_interface;
 
 
-	for (i = 0;i < interface->num;i++)
+	for (i = 0;i < intf->num;i++)
 	{
 		char name[40];
 
 
 		sprintf(name,"DAC #%d",i);
-		channel[i] = stream_init(
+		channel[i] = stream_init(msound,
 				name,Machine->sample_rate,8,
 				i,DAC_update);
 
 		if (channel[i] == -1)
 			return 1;
 
-		DAC_set_volume(i,interface->volume[i] & 0xff,(interface->volume[i] >> 8) & 0xff);
+		DAC_set_volume(i,intf->volume[i] & 0xff,(intf->volume[i] >> 8) & 0xff);
 
 		latch[i] = 0;
 	}

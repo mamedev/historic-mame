@@ -12,7 +12,6 @@
 ***************************************************************************/
 
 #include "driver.h"
-#include "sound/psgintf.h"
 #include "sound/fm.h"
 #include "sound/2612intf.h"
 
@@ -101,13 +100,14 @@ void YM2612UpdateRequest(int chip)
 /***********************************************************/
 /*    YM2612 (fm4ch type)                                  */
 /***********************************************************/
-int YM2612_sh_start(const struct YM2612interface *interface ){
+int YM2612_sh_start(const struct MachineSound *msound)
+{
 	int i,j;
 	int rate = Machine->sample_rate;
 	char buf[YM2612_NUMBUF][40];
 	const char *name[YM2612_NUMBUF];
 
-	intf = interface;
+	intf = msound->sound_interface;
 	if( intf->num > MAX_2612 ) return 1;
 
 	/* FM init */
@@ -123,7 +123,7 @@ int YM2612_sh_start(const struct YM2612interface *interface ){
 			name[j] = buf[j];
 			sprintf(buf[j],"YM2612(%s) #%d %s",j < 2 ? "FM" : "ADPCM",i,(j&1)?"Rt":"Lt");
 		}
-		stream[i] = stream_init_multi(YM2612_NUMBUF,
+		stream[i] = stream_init_multi(msound,YM2612_NUMBUF,
 			name,rate,Machine->sample_bits,
 			i,YM2612UpdateOne);
 		/* volume setup */
@@ -149,6 +149,15 @@ int YM2612_sh_start(const struct YM2612interface *interface ){
 void YM2612_sh_stop(void)
 {
   YM2612Shutdown();
+}
+
+/* reset */
+void YM2612_sh_reset(void)
+{
+	int i;
+
+	for (i = 0;i < intf->num;i++)
+		YM2612ResetChip(i);
 }
 
 /************************************************/
@@ -238,13 +247,6 @@ void YM2612_data_port_1_A_w(int offset,int data){
 }
 void YM2612_data_port_1_B_w(int offset,int data){
   YM2612Write(1,3,data);
-}
-
-/************************************************/
-/* Sound Hardware Update						*/
-/************************************************/
-void YM2612_sh_update(void)
-{
 }
 
 /**************** end of file ****************/

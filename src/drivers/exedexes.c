@@ -214,8 +214,8 @@ static struct GfxLayout charlayout =
 	512,	/* 512 characters */
 	2,	/* 2 bits per pixel */
 	{ 4, 0 },
+	{ 0, 1, 2, 3, 8+0, 8+1, 8+2, 8+3 },
 	{ 0*16, 1*16, 2*16, 3*16, 4*16, 5*16, 6*16, 7*16 },
-	{ 8+3, 8+2, 8+1, 8+0, 3, 2, 1, 0 },
 	16*8	/* every char takes 16 consecutive bytes */
 };
 static struct GfxLayout spritelayout =
@@ -224,10 +224,10 @@ static struct GfxLayout spritelayout =
         256,    /* 256 sprites */
         4,      /* 4 bits per pixel */
         { 0x4000*8+4, 0x4000*8+0, 4, 0 },
+	{ 0, 1, 2, 3, 8+0, 8+1, 8+2, 8+3,
+			32*8+0, 32*8+1, 32*8+2, 32*8+3, 33*8+0, 33*8+1, 33*8+2, 33*8+3 },
 	{ 0*16, 1*16, 2*16, 3*16, 4*16, 5*16, 6*16, 7*16,
 			8*16, 9*16, 10*16, 11*16, 12*16, 13*16, 14*16, 15*16 },
-	{ 33*8+3, 33*8+2, 33*8+1, 33*8+0, 32*8+3, 32*8+2, 32*8+1, 32*8+0,
-			8+3, 8+2, 8+1, 8+0, 3, 2, 1, 0 },
 	64*8	/* every sprite takes 64 consecutive bytes */
 };
 static struct GfxLayout tilelayout =
@@ -236,14 +236,14 @@ static struct GfxLayout tilelayout =
 	64,    /* 64 tiles */
 	2,      /* 2 bits per pixel */
 	{ 4, 0 },
+	{ 0, 1, 2, 3, 8+0, 8+1, 8+2, 8+3,
+			64*8+0, 64*8+1, 64*8+2, 64*8+3, 65*8+0, 65*8+1, 65*8+2, 65*8+3,
+			128*8+0, 128*8+1, 128*8+2, 128*8+3, 129*8+0, 129*8+1, 129*8+2, 129*8+3,
+			192*8+0, 192*8+1, 192*8+2, 192*8+3, 193*8+0, 193*8+1, 193*8+2, 193*8+3 },
 	{ 0*16, 1*16, 2*16, 3*16, 4*16, 5*16, 6*16, 7*16,
 			8*16, 9*16, 10*16, 11*16, 12*16, 13*16, 14*16, 15*16,
 			16*16, 17*16, 18*16, 19*16, 20*16, 21*16, 22*16, 23*16,
 			24*16, 25*16, 26*16, 27*16, 28*16, 29*16, 30*16, 31*16 },
-	{ 192*8+8+3, 192*8+8+2, 192*8+8+1, 192*8+8+0, 192*8+3, 192*8+2, 192*8+1, 192*8+0,
-			128*8+8+3, 128*8+8+2, 128*8+8+1, 128*8+8+0, 128*8+3, 128*8+2, 128*8+1, 128*8+0,
-			64*8+8+3, 64*8+8+2, 64*8+8+1, 64*8+8+0, 64*8+3, 64*8+2, 64*8+1, 64*8+0,
-			8+3, 8+2, 8+1, 8+0, 3, 2, 1, 0 },
 	256*8	/* every tile takes 256 consecutive bytes */
 };
 
@@ -304,7 +304,7 @@ static struct MachineDriver machine_driver =
 	0,
 
 	/* video hardware */
-	32*8, 32*8, { 2*8, 30*8-1, 0*8, 32*8-1 },
+	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
 	gfxdecodeinfo,
 	256,64*4+64*4+16*16+16*16,
 	exedexes_vh_convert_color_prom,
@@ -459,7 +459,7 @@ struct GameDriver exedexes_driver =
 	input_ports,
 
 	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_DEFAULT,
+	ORIENTATION_ROTATE_270,
 
 	hiload, hisave
 };
@@ -485,7 +485,7 @@ struct GameDriver savgbees_driver =
 	input_ports,
 
 	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_DEFAULT,
+	ORIENTATION_ROTATE_270,
 
 	hiload, hisave
 };

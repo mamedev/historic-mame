@@ -142,11 +142,11 @@ int cclimber_vh_start(void);
 void cclimber_vh_stop(void);
 void cclimber_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
-void cclimber_portA_w(int offset,int data);
+void cclimber_sample_select_w(int offset,int data);
 void cclimber_sample_trigger_w(int offset,int data);
 void cclimber_sample_rate_w(int offset,int data);
 void cclimber_sample_volume_w(int offset,int data);
-int cclimber_sh_start(void);
+int cclimber_sh_start(const struct MachineSound *msound);
 void cclimber_sh_stop(void);
 
 
@@ -436,7 +436,7 @@ static struct AY8910interface ay8910_interface =
 	{ 255 },
 	{ 0 },
 	{ 0 },
-	{ cclimber_portA_w },
+	{ cclimber_sample_select_w },
 	{ 0 }
 };
 

@@ -432,7 +432,7 @@ ROM_END
 static const char *rallyx_sample_names[] =
 {
 	"*rallyx",
-	"BANG.SAM",
+	"BANG.wav",
 	0	/* end of array */
 };
 

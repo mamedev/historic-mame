@@ -613,6 +613,26 @@ static void cache_closezip(ZIP* zip) {
 	closezip(zip);
 }
 
+/* CK980415 added to allow osd code to clear zip cache for auditing--each time
+   the user opens up an audit for a game we should reread the zip */
+void unzip_cache_clear()
+{
+	unsigned i;
+
+	/* search in the cache buffer for any zip info and clear it */
+	for(i=0;i<ZIP_CACHE_MAX;++i) {
+		if (zip_cache_map[i] != NULL) {
+			/* close zip */
+			closezip(zip_cache_map[i]);
+
+			/* reset cache entry */
+			zip_cache_map[i] = 0;
+//			return;
+
+		}
+	}
+}
+
 #define cache_suspendzip(a) suspendzip(a)
 
 #else
@@ -620,6 +640,8 @@ static void cache_closezip(ZIP* zip) {
 #define cache_openzip(a) openzip(a)
 #define cache_closezip(a) closezip(a)
 #define cache_suspendzip(a) closezip(a)
+
+#define unzip_cache_clear()
 
 #endif
 
@@ -665,7 +687,7 @@ int /* error */ load_zipped_file (const char* zipfile, const char* filename, uns
 
 		sprintf(crc,"%08x",ent->crc32);
 		if (equal_filename(ent->name, filename) ||
-				!strcmp(crc, filename))
+				(ent->crc32 && !strcmp(crc, filename)))
 		{
 			*length = ent->uncompressed_size;
 			*buf = (unsigned char*)malloc( *length );

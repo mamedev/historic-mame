@@ -9,7 +9,7 @@ static int channel;
 
 
 
-int bosco_sh_start(void)
+int bosco_sh_start(const struct MachineSound *msound)
 {
 	int i;
 	unsigned char bits;

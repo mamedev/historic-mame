@@ -16,6 +16,6 @@ void sample_stop(int channel);
 int sample_playing(int channel);
 
 
-int samples_sh_start(const struct Samplesinterface *interface);
+int samples_sh_start(const struct MachineSound *msound);
 
 #endif

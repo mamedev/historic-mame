@@ -1,32 +1,16 @@
 /*
-  File: fm.h -- header file for software emuration for FM sound generator
+  File: fm.h -- header file for software emuration for FM sound genelator
+
 */
 #ifndef _H_FM_FM_
 #define _H_FM_FM_
 
-#if (HAS_YM2203 || HAS_YM2608 || HAS_YM2610 || HAS_YM2612)
-#define BUILD_OPN    1		/* build YM2203 or YM2608 or YM2612 emurator */
-#endif
-#if (HAS_YM2203)
-#define BUILD_YM2203 1		/* build YM2203(OPN) emurator */
-#endif
-#if (HAS_YM2608)
-#define BUILD_YM2608 1		/* build YM2608(OPNA)emurator */
-#endif
-#if (HAS_YM2610)
-#define BUILD_YM2610 1		/* build YM2610(OPNB)emurator */
-#endif
-#if (HAS_YM2612)
-#define BUILD_YM2612 1		/* build YM2612 emurator */
-#endif
-
-#ifdef __MMSND__
-#define BUILD_YM2612 1		/* build YM2612 emurator */
-#endif
-
-#if (HAS_YM2151)
-#define BUILD_YM2151 1		/* build YM2151(OPM) emurator */
-#endif
+#define BUILD_YM2203 (HAS_YM2203)		/* build YM2203(OPN)   emulator */
+#define BUILD_YM2608 (HAS_YM2608)		/* build YM2608(OPNA)  emulator */
+#define BUILD_YM2610 (HAS_YM2610)		/* build YM2610(OPNB)  emulator */
+#define BUILD_YM2610B (HAS_YM2610B)		/* build YM2610B(OPNB?)emulator */
+#define BUILD_YM2612 (HAS_YM2612)		/* build YM2612(OPN2)  emulator */
+#define BUILD_YM2151 (HAS_YM2151)		/* build YM2151(OPM)   emulator */
 
 /* stereo mixing / separate */
 //#define FM_STEREO_MIX
@@ -130,7 +114,8 @@ int YM2203TimerOver(int n, int c);
 #ifdef BUILD_YM2608
 /* -------------------- YM2608(OPNA) Interface -------------------- */
 
-int YM2608Init(int num, int baseclock, int rate,int *pcmroma, int *pcmromb,
+int YM2608Init(int num, int baseclock, int rate,
+               void **pcmroma,int *pcmsizea,short *rhythmrom,int *rhythmpos,
                FM_TIMERHANDLER TimerHandler,FM_IRQHANDLER IRQHandler);
 void YM2608Shutdown(void);
 void YM2608ResetChip(int num);
@@ -147,7 +132,8 @@ int YM2608TimerOver(int n, int c );
 
 #define   MAX_2610    (2)
 
-int YM2610Init(int num, int baseclock, int rate, const int *pcmroma, const int *pcmromb,
+int YM2610Init(int num, int baseclock, int rate,
+               void **pcmroma,int *pcmasize,void **pcmromb,int *pcmbsize,
                FM_TIMERHANDLER TimerHandler,FM_IRQHANDLER IRQHandler);
 void YM2610Shutdown(void);
 void YM2610ResetChip(int num);

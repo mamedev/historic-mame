@@ -17,7 +17,7 @@
 #define YDIM (YCHARS*8)
 
 
-extern int slapstic_tweak (int offset);
+extern int slapstic_tweak(int offset);
 
 
 struct atarisys2_mo_data
@@ -67,10 +67,10 @@ static int *pf_bank, *mo_bank;
  *
  *************************************/
 
-void atarisys2_vh_stop (void);
+void atarisys2_vh_stop(void);
 
 #if 0
-static void atarisys2_dump_video_ram (void);
+static void atarisys2_dump_video_ram(void);
 #endif
 
 
@@ -93,10 +93,10 @@ int atarisys2_vh_start(void)
 	};
 
 	/* allocate banked memory */
-	alpharam = calloc (0x8000, 1);
+	alpharam = calloc(0x8000, 1);
 	if (!alpharam)
 	{
-		atarisys2_vh_stop ();
+		atarisys2_vh_stop();
 		return 1;
 	}
 	spriteram = alpharam + alpharam_size;
@@ -108,19 +108,19 @@ int atarisys2_vh_start(void)
 
 	/* allocate dirty buffers */
 	if (!playfielddirty)
-		playfielddirty = malloc (playfieldram_size / 2);
+		playfielddirty = malloc(playfieldram_size / 2);
 	if (!playfielddirty)
 	{
-		atarisys2_vh_stop ();
+		atarisys2_vh_stop();
 		return 1;
 	}
 
 	/* allocate bitmaps */
 	if (!playfieldbitmap)
-		playfieldbitmap = osd_new_bitmap (128*8, 64*8, Machine->scrbitmap->depth);
+		playfieldbitmap = osd_new_bitmap(128*8, 64*8, Machine->scrbitmap->depth);
 	if (!playfieldbitmap)
 	{
-		atarisys2_vh_stop ();
+		atarisys2_vh_stop();
 		return 1;
 	}
 
@@ -132,7 +132,7 @@ int atarisys2_vh_start(void)
 	if (palette_used_colors)
 	{
 		int i;
-		memset (palette_used_colors, PALETTE_COLOR_USED, Machine->drv->total_colors * sizeof(unsigned char));
+		memset(palette_used_colors, PALETTE_COLOR_USED, Machine->drv->total_colors * sizeof(unsigned char));
 		for (i = 0; i < 4; i++)
 			palette_used_colors[15 + i * 16] = PALETTE_COLOR_TRANSPARENT;
 		for (i = 0; i < 8; i++)
@@ -140,11 +140,11 @@ int atarisys2_vh_start(void)
 	}
 
 	/* initialize the displaylist system */
-	return atarigen_init_display_list (&atarisys2_modesc);
+	return atarigen_init_display_list(&atarisys2_modesc);
 }
 
 
-int paperboy_vh_start (void)
+int paperboy_vh_start(void)
 {
 	/* playfield bit mapping */
 	static int pf_offs[16] =
@@ -174,11 +174,11 @@ int paperboy_vh_start (void)
 
 	pf_bank = pf_offs;
 	mo_bank = mo_offs;
-	return atarisys2_vh_start ();
+	return atarisys2_vh_start();
 }
 
 
-int apb_vh_start (void)
+int apb_vh_start(void)
 {
 	/* playfield bit mapping */
 	static int pf_offs[16] =
@@ -208,11 +208,11 @@ int apb_vh_start (void)
 
 	pf_bank = pf_offs;
 	mo_bank = mo_offs;
-	return atarisys2_vh_start ();
+	return atarisys2_vh_start();
 }
 
 
-int a720_vh_start (void)
+int a720_vh_start(void)
 {
 	/* playfield bit mapping */
 	static int pf_offs[16] =
@@ -242,11 +242,11 @@ int a720_vh_start (void)
 
 	pf_bank = pf_offs;
 	mo_bank = mo_offs;
-	return atarisys2_vh_start ();
+	return atarisys2_vh_start();
 }
 
 
-int ssprint_vh_start (void)
+int ssprint_vh_start(void)
 {
 	/* playfield bit mapping */
 	static int pf_offs[16] =
@@ -276,11 +276,11 @@ int ssprint_vh_start (void)
 
 	pf_bank = pf_offs;
 	mo_bank = mo_offs;
-	return atarisys2_vh_start ();
+	return atarisys2_vh_start();
 }
 
 
-int csprint_vh_start (void)
+int csprint_vh_start(void)
 {
 	/* playfield bit mapping */
 	static int pf_offs[16] =
@@ -310,7 +310,7 @@ int csprint_vh_start (void)
 
 	pf_bank = pf_offs;
 	mo_bank = mo_offs;
-	return atarisys2_vh_start ();
+	return atarisys2_vh_start();
 }
 
 
@@ -325,17 +325,17 @@ void atarisys2_vh_stop(void)
 {
 	/* free memory */
 	if (alpharam)
-		free (alpharam);
+		free(alpharam);
 	alpharam = playfieldram = spriteram = 0;
 
 	/* free bitmaps */
 	if (playfieldbitmap)
-		osd_free_bitmap (playfieldbitmap);
+		osd_free_bitmap(playfieldbitmap);
 	playfieldbitmap = 0;
 
 	/* free dirty buffers */
 	if (playfielddirty)
-		free (playfielddirty);
+		free(playfielddirty);
 	playfielddirty = 0;
 }
 
@@ -347,27 +347,27 @@ void atarisys2_vh_stop(void)
  *
  *************************************/
 
-void atarisys2_vscroll_w (int offset, int data)
+void atarisys2_vscroll_w(int offset, int data)
 {
-	int oldword = READ_WORD (&atarigen_vscroll[offset]);
-	int newword = COMBINE_WORD (oldword, data);
-	WRITE_WORD (&atarigen_vscroll[offset], newword);
+	int oldword = READ_WORD(&atarigen_vscroll[offset]);
+	int newword = COMBINE_WORD(oldword, data);
+	WRITE_WORD(&atarigen_vscroll[offset], newword);
 
 	/* if we changed the bank, we need to rerender the playfield */
 	if (offset == 0 && (oldword & 15) != (newword & 15))
-		memset (playfielddirty, 1, playfieldram_size / 2);
+		memset(playfielddirty, 1, playfieldram_size / 2);
 }
 
 
-void atarisys2_hscroll_w (int offset, int data)
+void atarisys2_hscroll_w(int offset, int data)
 {
-	int oldword = READ_WORD (&atarigen_hscroll[offset]);
-	int newword = COMBINE_WORD (oldword, data);
-	WRITE_WORD (&atarigen_hscroll[offset], newword);
+	int oldword = READ_WORD(&atarigen_hscroll[offset]);
+	int newword = COMBINE_WORD(oldword, data);
+	WRITE_WORD(&atarigen_hscroll[offset], newword);
 
 	/* if we changed the bank, we need to rerender the playfield */
 	if (offset == 0 && (oldword & 15) != (newword & 15))
-		memset (playfielddirty, 1, playfieldram_size / 2);
+		memset(playfielddirty, 1, playfieldram_size / 2);
 }
 
 
@@ -378,7 +378,7 @@ void atarisys2_hscroll_w (int offset, int data)
  *
  *************************************/
 
-void atarisys2_paletteram_w (int offset, int data)
+void atarisys2_paletteram_w(int offset, int data)
 {
 	static const int intensity_table[16] =
 	{
@@ -395,17 +395,17 @@ void atarisys2_paletteram_w (int offset, int data)
 
 	int inten, red, green, blue;
 
-	int oldword = READ_WORD (&paletteram[offset]);
-	int newword = COMBINE_WORD (oldword, data);
+	int oldword = READ_WORD(&paletteram[offset]);
+	int newword = COMBINE_WORD(oldword, data);
 	int indx = offset / 2;
 
-	WRITE_WORD (&paletteram[offset], newword);
+	WRITE_WORD(&paletteram[offset], newword);
 
 	inten = intensity_table[newword & 15];
 	red = (color_table[(newword >> 12) & 15] * inten) >> 4;
 	green = (color_table[(newword >> 8) & 15] * inten) >> 4;
 	blue = (color_table[(newword >> 4) & 15] * inten) >> 4;
-	palette_change_color (indx, red, green, blue);
+	palette_change_color(indx, red, green, blue);
 }
 
 
@@ -416,29 +416,29 @@ void atarisys2_paletteram_w (int offset, int data)
  *
  *************************************/
 
-int atarisys2_slapstic_r (int offset)
+int atarisys2_slapstic_r(int offset)
 {
-	slapstic_tweak (offset / 2);
+	slapstic_tweak(offset / 2);
 
 	/* an extra tweak for the next opcode fetch */
-	videobank = slapstic_tweak (0x1234);
+	videobank = slapstic_tweak(0x1234);
 	videoram = alpharam + videobank * 0x2000;
 
-	return READ_WORD (&atarisys2_slapstic_base[offset]);
+	return READ_WORD(&atarisys2_slapstic_base[offset]);
 }
 
 
-void atarisys2_slapstic_w (int offset, int data)
+void atarisys2_slapstic_w(int offset, int data)
 {
-	slapstic_tweak (offset / 2);
+	slapstic_tweak(offset / 2);
 
 	/* an extra tweak for the next opcode fetch */
-	videobank = slapstic_tweak (0x1234);
+	videobank = slapstic_tweak(0x1234);
 	videoram = alpharam + videobank * 0x2000;
 }
 
 
-void atarisys2_vmmu_w (int offset, int data)
+void atarisys2_vmmu_w(int offset, int data)
 {
 	if (offset == 0)
 	{
@@ -455,17 +455,17 @@ void atarisys2_vmmu_w (int offset, int data)
  *
  *************************************/
 
-int atarisys2_videoram_r (int offset)
+int atarisys2_videoram_r(int offset)
 {
-	return READ_WORD (&videoram[offset]);
+	return READ_WORD(&videoram[offset]);
 }
 
 
-void atarisys2_videoram_w (int offset, int data)
+void atarisys2_videoram_w(int offset, int data)
 {
-	int oldword = READ_WORD (&videoram[offset]);
-	int newword = COMBINE_WORD (oldword, data);
-	WRITE_WORD (&videoram[offset], newword);
+	int oldword = READ_WORD(&videoram[offset]);
+	int newword = COMBINE_WORD(oldword, data);
+	WRITE_WORD(&videoram[offset], newword);
 
 	if (videobank >= 2)
 		if ((oldword & 0x3fff) != (newword & 0x3fff))
@@ -483,9 +483,9 @@ void atarisys2_videoram_w (int offset, int data)
  *
  *************************************/
 
-void atarisys2_update_display_list (int scanline)
+void atarisys2_update_display_list(int scanline)
 {
-	atarigen_update_display_list (spriteram, 0, scanline);
+	atarigen_update_display_list(spriteram, 0, scanline);
 }
 
 
@@ -520,7 +520,7 @@ void atarisys2_update_display_list (int scanline)
  *---------------------------------------------------------------------------------
  */
 
-void atarisys2_render_mo (struct osd_bitmap *bitmap, struct rectangle *clip, unsigned short *data, void *param)
+void atarisys2_render_mo(struct osd_bitmap *bitmap, struct rectangle *clip, unsigned short *data, void *param)
 {
 	struct atarisys2_mo_data *modata = param;
 	int *redraw_list = modata->redraw_list;
@@ -579,7 +579,7 @@ void atarisys2_render_mo (struct osd_bitmap *bitmap, struct rectangle *clip, uns
 			break;
 
 		/* draw the sprite */
-		drawgfx (bitmap, Machine->gfx[2], pict, color, hflip, 0,
+		drawgfx(bitmap, Machine->gfx[2], pict, color, hflip, 0,
 			xpos, sy, clip, TRANSPARENCY_PEN, 15);
 	}
 }
@@ -602,17 +602,17 @@ void atarisys2_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	int bank[2];
 
 
-/*	if (osd_key_pressed (OSD_KEY_9)) atarisys2_dump_video_ram ();*/
+/*	if (osd_key_pressed(OSD_KEY_9)) atarisys2_dump_video_ram();*/
 
 
 	/* recalc the palette if necessary */
-	if (palette_recalc ())
-		memset (playfielddirty, 1, playfieldram_size / 2);
+	if (palette_recalc())
+		memset(playfielddirty, 1, playfieldram_size / 2);
 
 
 	/* compute scrolling so we know what to update */
-	xscroll = (READ_WORD (&atarigen_hscroll[0]) >> 6);
-	yscroll = (READ_WORD (&atarigen_vscroll[0]) >> 6);
+	xscroll = (READ_WORD(&atarigen_hscroll[0]) >> 6);
+	yscroll = (READ_WORD(&atarigen_vscroll[0]) >> 6);
 	xscroll = -(xscroll & 0x3ff);
 	yscroll = -(yscroll & 0x1ff);
 
@@ -637,8 +637,8 @@ void atarisys2_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	yoffs = -yscroll / 8;
 
 	/* look up the banks */
-	bank[0] = pf_bank[READ_WORD (&atarigen_hscroll[0]) & 15];
-	bank[1] = pf_bank[READ_WORD (&atarigen_vscroll[0]) & 15];
+	bank[0] = pf_bank[READ_WORD(&atarigen_hscroll[0]) & 15];
+	bank[1] = pf_bank[READ_WORD(&atarigen_vscroll[0]) & 15];
 
 	/* loop over the visible Y portion */
 	for (y = yoffs + YCHARS + 1; y >= yoffs; y--)
@@ -653,7 +653,7 @@ void atarisys2_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			/* compute the offset */
 			sx = x & 127;
 			offs = sy * 128 + sx;
-			data = READ_WORD (&playfieldram[offs * 2]);
+			data = READ_WORD(&playfieldram[offs * 2]);
 
 			/* redraw if dirty */
 			if (playfielddirty[offs])
@@ -662,7 +662,7 @@ void atarisys2_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 				int pict = data & 0x3ff;
 				int color = (data >> 11) & 7;
 
-				drawgfx (playfieldbitmap, Machine->gfx[1], pfbank + pict, color, 0, 0,
+				drawgfx(playfieldbitmap, Machine->gfx[1], pfbank + pict, color, 0, 0,
 						8 * sx, 8 * sy, 0, TRANSPARENCY_NONE, 0);
 				playfielddirty[offs] = 0;
 			}
@@ -670,14 +670,14 @@ void atarisys2_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	}
 
 	/* copy the playfield to the destination */
-	copyscrollbitmap (bitmap, playfieldbitmap, 1, &xscroll, 1, &yscroll, &Machine->drv->visible_area, TRANSPARENCY_NONE, 0);
+	copyscrollbitmap(bitmap, playfieldbitmap, 1, &xscroll, 1, &yscroll, &Machine->drv->visible_area, TRANSPARENCY_NONE, 0);
 
 	/* prepare the motion object data structure */
 	modata.xhold = 0;
 	modata.redraw_list = modata.redraw = redraw_list;
 
 	/* render the motion objects */
-	atarigen_render_display_list (bitmap, atarisys2_render_mo, &modata);
+	atarigen_render_display_list(bitmap, atarisys2_render_mo, &modata);
 
 	/* redraw playfield tiles with higher priority */
 	for (r = redraw_list; r < modata.redraw; r++)
@@ -721,7 +721,7 @@ void atarisys2_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 				/* process the data */
 				offs = (y & 0x3f) * 128 + (x & 0x7f);
-				data = READ_WORD (&playfieldram[offs * 2]);
+				data = READ_WORD(&playfieldram[offs * 2]);
 				pfpri = ((~data >> 13) & 6) | 1;
 
 				/* this is the priority equation from the schematics */
@@ -731,7 +731,7 @@ void atarisys2_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 					int pict = data & 0x3ff;
 					int color = (data >> 11) & 7;
 
-					drawgfx (bitmap, Machine->gfx[1], pfbank + pict, color, 0, 0,
+					drawgfx(bitmap, Machine->gfx[1], pfbank + pict, color, 0, 0,
 							sx, sy, &clip, TRANSPARENCY_PENS, 0x000000ff);
 				}
 			}
@@ -759,7 +759,7 @@ void atarisys2_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		/* loop over the X coordinate */
 		for (sx = 0, offs = sy * 64; sx < XCHARS; sx++, offs++)
 		{
-			int data = READ_WORD (&alpharam[offs * 2]);
+			int data = READ_WORD(&alpharam[offs * 2]);
 			int pict = data & 0x3ff;
 
 			/* if there's a non-zero picture or if we're fully opaque, draw the tile */
@@ -768,7 +768,7 @@ void atarisys2_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 				int color = (data >> 13) & 7;
 
 				/* draw the character */
-				drawgfx (bitmap, Machine->gfx[0], pict, color, 0, 0,
+				drawgfx(bitmap, Machine->gfx[0], pict, color, 0, 0,
 						8 * sx, 8 * sy, 0, TRANSPARENCY_PEN, 0);
 			}
 		}
@@ -791,45 +791,45 @@ static void atarisys2_dump_video_ram (void)
 	FILE *f;
 	int i;
 
-	while (osd_key_pressed (OSD_KEY_9)) { }
+	while (osd_key_pressed(OSD_KEY_9)) { }
 
-	sprintf (name, "Dump %d", ++count);
-	f = fopen (name, "wt");
+	sprintf(name, "Dump %d", ++count);
+	f = fopen(name, "wt");
 
-	fprintf (f, "MO Palette\n");
+	fprintf(f, "MO Palette\n");
 	for (i = 0x00; i < 0x40; i++)
 	{
-		fprintf (f, "%04X ", READ_WORD (&paletteram[i*2]));
-		if ((i & 15) == 15) fprintf (f, "\n");
+		fprintf(f, "%04X ", READ_WORD(&paletteram[i*2]));
+		if ((i & 15) == 15) fprintf(f, "\n");
 	}
 
-	fprintf (f, "\n\nAlpha Palette\n");
+	fprintf(f, "\n\nAlpha Palette\n");
 	for (i = 0x40; i < 0x80; i++)
 	{
-		fprintf (f, "%04X ", READ_WORD (&paletteram[i*2]));
-		if ((i & 15) == 15) fprintf (f, "\n");
+		fprintf(f, "%04X ", READ_WORD(&paletteram[i*2]));
+		if ((i & 15) == 15) fprintf(f, "\n");
 	}
 
-	fprintf (f, "\n\nPlayfield Palette\n");
+	fprintf(f, "\n\nPlayfield Palette\n");
 	for (i = 0x80; i < 0x100; i++)
 	{
-		fprintf (f, "%04X ", READ_WORD (&paletteram[i*2]));
-		if ((i & 15) == 15) fprintf (f, "\n");
+		fprintf(f, "%04X ", READ_WORD(&paletteram[i*2]));
+		if ((i & 15) == 15) fprintf(f, "\n");
 	}
 
-	fprintf (f, "\n\nX Scroll = %03X\nY Scroll = %03X\n",
-		READ_WORD (&atarigen_hscroll[0]) >> 6, READ_WORD (&atarigen_vscroll[0]) >> 6);
+	fprintf(f, "\n\nX Scroll = %03X\nY Scroll = %03X\n",
+		READ_WORD(&atarigen_hscroll[0]) >> 6, READ_WORD(&atarigen_vscroll[0]) >> 6);
 
-	fprintf (f, "\n\nX PFBank0 = %X\nY PFBank1 = %X\n",
-		READ_WORD (&atarigen_hscroll[0]) & 15, READ_WORD (&atarigen_vscroll[0]) & 15);
+	fprintf(f, "\n\nX PFBank0 = %X\nY PFBank1 = %X\n",
+		READ_WORD(&atarigen_hscroll[0]) & 15, READ_WORD(&atarigen_vscroll[0]) & 15);
 
-	fprintf (f, "\n\nMotion Objects\n");
+	fprintf(f, "\n\nMotion Objects\n");
 	for (i = 0; i < spriteram_size; i += 8)
 	{
-		int data1 = READ_WORD (&spriteram[i+0]);
-		int data2 = READ_WORD (&spriteram[i+2]);
-		int data3 = READ_WORD (&spriteram[i+4]);
-		int data4 = READ_WORD (&spriteram[i+6]);
+		int data1 = READ_WORD(&spriteram[i+0]);
+		int data2 = READ_WORD(&spriteram[i+2]);
+		int data3 = READ_WORD(&spriteram[i+4]);
+		int data4 = READ_WORD(&spriteram[i+6]);
 
 		int ypos = (data1 >> 6) & 0x1ff;
 		int vsize = ((data1 >> 3) & 7) + 1;
@@ -841,25 +841,25 @@ static void atarisys2_dump_video_ram (void)
 		int color = (data4 & 0x0f);
 		int xpos = (data4 >> 6) & 0x3ff;
 
-		fprintf (f, "  Object %02X: 0=%04X 1=%04X 2=%04X 3=%04X\n",
+		fprintf(f, "  Object %02X: 0=%04X 1=%04X 2=%04X 3=%04X\n",
 			i, data1, data2, data3, data4);
 	}
 
-	fprintf (f, "\n\nPlayfield dump\n");
+	fprintf(f, "\n\nPlayfield dump\n");
 	for (i = 0; i < playfieldram_size / 2; i++)
 	{
-		fprintf (f, "%04X ", READ_WORD (&playfieldram[i*2]));
-		if ((i & 127) == 127) fprintf (f, "\n");
-		else if ((i & 127) == 63) fprintf (f, "\n      ");
+		fprintf(f, "%04X ", READ_WORD(&playfieldram[i*2]));
+		if ((i & 127) == 127) fprintf(f, "\n");
+		else if ((i & 127) == 63) fprintf(f, "\n      ");
 	}
 
-	fprintf (f, "\n\nAlpha dump\n");
+	fprintf(f, "\n\nAlpha dump\n");
 	for (i = 0; i < alpharam_size / 2; i++)
 	{
-		fprintf (f, "%04X ", READ_WORD (&alpharam[i*2]));
-		if ((i & 63) == 63) fprintf (f, "\n");
+		fprintf(f, "%04X ", READ_WORD(&alpharam[i*2]));
+		if ((i & 63) == 63) fprintf(f, "\n");
 	}
 
-	fclose (f);
+	fclose(f);
 }
 #endif

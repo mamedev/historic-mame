@@ -234,143 +234,165 @@ int readroms(void)
 				}
 			}
 
-			if (f == 0)
+			if (f)
 			{
-				if (options.gui_host)
-					printf ("Unable to open ROM %s\n", name);
-				else
-					fprintf(stderr, "Unable to open ROM %s\n",name);
-				goto printromlist;
-			}
-
-			do
-			{
-				unsigned char *c;
-				unsigned int i;
-				int length = romp->length & ~ROMFLAG_MASK;
-
-
-				if (romp->name == (char *)-1)
-					osd_fseek(f,0,SEEK_SET);	/* ROM_RELOAD */
-				else
-					explength += length;
-
-				if (romp->offset + length > region_size)
+				do
 				{
-					printf("Error in RomModule definition: %s out of memory region space\n",name);
-					osd_fclose(f);
-					goto getout;
-				}
-
-				if (romp->length & (ROMFLAG_ALTERNATE | ROMFLAG_NIBBLE))
-				{
-					unsigned char *temp;
+					unsigned char *c;
+					unsigned int i;
+					int length = romp->length & ~ROMFLAG_MASK;
 
 
-					temp = malloc (length);
+					if (romp->name == (char *)-1)
+						osd_fseek(f,0,SEEK_SET);	/* ROM_RELOAD */
+					else
+						explength += length;
 
-					if (!temp)
+					if (romp->offset + length > region_size)
 					{
-						printf("Out of memory reading ROM %s\n",name);
+						printf("Error in RomModule definition: %s out of memory region space\n",name);
 						osd_fclose(f);
 						goto getout;
 					}
 
-					if (osd_fread(f,temp,length) != length)
+					if (romp->length & (ROMFLAG_ALTERNATE | ROMFLAG_NIBBLE))
 					{
-						printf("Unable to read ROM %s\n",name);
-						free(temp);
-						osd_fclose(f);
-						goto printromlist;
-					}
+						unsigned char *temp;
 
-					if (romp->length & ROMFLAG_NIBBLE)
-					{
-						/* ROM_LOAD_NIB_LOW and ROM_LOAD_NIB_HIGH */
-						c = Machine->memory_region[region] + romp->offset;
-						if (romp->length & ROMFLAG_ALTERNATE)
+
+						temp = malloc (length);
+
+						if (!temp)
 						{
-							/* Load into the high nibble */
-							for (i = 0;i < length;i ++)
+							printf("Out of memory reading ROM %s\n",name);
+							osd_fclose(f);
+							goto getout;
+						}
+
+						if (osd_fread(f,temp,length) != length)
+						{
+							printf("Unable to read ROM %s\n",name);
+							free(temp);
+							osd_fclose(f);
+							goto printromlist;
+						}
+
+						if (romp->length & ROMFLAG_NIBBLE)
+						{
+							/* ROM_LOAD_NIB_LOW and ROM_LOAD_NIB_HIGH */
+							c = Machine->memory_region[region] + romp->offset;
+							if (romp->length & ROMFLAG_ALTERNATE)
 							{
-								c[i] = (c[i] & 0x0f) | ((temp[i] & 0x0f) << 4);
+								/* Load into the high nibble */
+								for (i = 0;i < length;i ++)
+								{
+									c[i] = (c[i] & 0x0f) | ((temp[i] & 0x0f) << 4);
+								}
 							}
+							else
+							{
+								/* Load into the low nibble */
+								for (i = 0;i < length;i ++)
+								{
+									c[i] = (c[i] & 0xf0) | (temp[i] & 0x0f);
+								}
+							}
+
+							free (temp);
 						}
 						else
 						{
-							/* Load into the low nibble */
-							for (i = 0;i < length;i ++)
-							{
-								c[i] = (c[i] & 0xf0) | (temp[i] & 0x0f);
-							}
-						}
+							/* ROM_LOAD_EVEN and ROM_LOAD_ODD */
+							/* copy the ROM data */
+						#ifdef LSB_FIRST
+							c = Machine->memory_region[region] + (romp->offset ^ 1);
+						#else
+							c = Machine->memory_region[region] + romp->offset;
+						#endif
 
-						free (temp);
+							for (i = 0;i < length;i+=2)
+							{
+								c[i*2] = temp[i];
+								c[i*2+2] = temp[i+1];
+							}
+
+							free(temp);
+						}
 					}
 					else
 					{
-						/* ROM_LOAD_EVEN and ROM_LOAD_ODD */
-						/* copy the ROM data */
+						int wide = romp->length & ROMFLAG_WIDE;
 					#ifdef LSB_FIRST
-						c = Machine->memory_region[region] + (romp->offset ^ 1);
+						int swap = (romp->length & ROMFLAG_SWAP) ^ ROMFLAG_SWAP;
 					#else
-						c = Machine->memory_region[region] + romp->offset;
+						int swap = romp->length & ROMFLAG_SWAP;
 					#endif
 
-						for (i = 0;i < length;i+=2)
-						{
-							c[i*2] = temp[i];
-							c[i*2+2] = temp[i+1];
-						}
+						osd_fread(f,Machine->memory_region[region] + romp->offset,length);
 
-						free(temp);
+						/* apply swappage */
+						c = Machine->memory_region[region] + romp->offset;
+						if (wide && swap)
+						{
+							for (i = 0; i < length; i += 2)
+							{
+								int temp = c[i];
+								c[i] = c[i+1];
+								c[i+1] = temp;
+							}
+						}
 					}
+
+					romp++;
+				} while (romp->length && (romp->name == 0 || romp->name == (char *)-1));
+
+				if (explength != osd_fsize (f))
+				{
+					sprintf (&buf[strlen(buf)], "%-12s WRONG LENGTH (expected: %08x found: %08x)\n",
+							name,explength,osd_fsize(f));
+					lengthwarning++;
+				}
+
+				if (expchecksum != osd_fcrc (f))
+				{
+					checksumwarning++;
+					if (expchecksum)
+						sprintf(&buf[strlen(buf)], "%-12s WRONG CRC (expected: %08x found: %08x)\n",
+								name,expchecksum,osd_fcrc(f));
+					else
+						sprintf(&buf[strlen(buf)],"%-12s NO GOOD DUMP KNOWN\n",name);
+				}
+
+				osd_fclose(f);
+			}
+			else
+			{
+				/* allow for a NO GOOD DUMP KNOWN rom to be missing */
+				if (expchecksum == 0)
+				{
+					sprintf (&buf[strlen(buf)], "%-12s NOT FOUND (NO GOOD DUMP KNOWN)\n",
+							name);
+					lengthwarning++;
+
+					do
+					{
+						int i;
+
+						/* fill space with random data */
+						for (i = 0;i < romp->length;i++)
+							Machine->memory_region[region][romp->offset + i] = rand();
+						romp++;
+					} while (romp->length && (romp->name == 0 || romp->name == (char *)-1));
 				}
 				else
 				{
-					int wide = romp->length & ROMFLAG_WIDE;
-				#ifdef LSB_FIRST
-					int swap = (romp->length & ROMFLAG_SWAP) ^ ROMFLAG_SWAP;
-				#else
-					int swap = romp->length & ROMFLAG_SWAP;
-				#endif
-
-					osd_fread(f,Machine->memory_region[region] + romp->offset,length);
-
-					/* apply swappage */
-					c = Machine->memory_region[region] + romp->offset;
-					if (wide && swap)
-					{
-						for (i = 0; i < length; i += 2)
-						{
-							int temp = c[i];
-							c[i] = c[i+1];
-							c[i+1] = temp;
-						}
-					}
+					if (options.gui_host)
+						printf("Unable to open ROM %s. Your ROM set is incomplete or corrupt.\n", name);
+					else
+						fprintf(stderr, "Unable to open ROM %s\n",name);
+					goto printromlist;
 				}
-
-				romp++;
-			} while (romp->length && (romp->name == 0 || romp->name == (char *)-1));
-
-			if (explength != osd_fsize (f))
-			{
-				sprintf (&buf[strlen(buf)], "%-12s WRONG LENGTH (expected: %08x found: %08x)\n",
-						name,explength,osd_fsize(f));
-				lengthwarning++;
 			}
-
-			if (expchecksum != osd_fcrc (f))
-			{
-				checksumwarning++;
-				if (expchecksum)
-					sprintf(&buf[strlen(buf)], "%-12s WRONG CRC (expected: %08x found: %08x)\n",
-							name,expchecksum,osd_fcrc(f));
-				else
-					sprintf(&buf[strlen(buf)],"%-12s NO GOOD DUMP EXISTS\n",name);
-			}
-
-			osd_fclose(f);
 		}
 
 		region++;
@@ -466,6 +488,122 @@ void printromlist(const struct RomModule *romp,const char *basename)
   it doesn't find a file: it will load as many samples as it can find.
 
 ***************************************************************************/
+static struct GameSample *read_wav_sample(void *f)
+{
+	unsigned long offset = 0;
+	UINT32 length, rate, filesize, temp32;
+	UINT16 bits, temp16;
+	char buf[32];
+	struct GameSample *result;
+
+	/* read the core header and make sure it's a WAVE file */
+	offset += osd_fread(f, buf, 4);
+	if (offset < 4)
+		return NULL;
+	if (memcmp(&buf[0], "RIFF", 4) != 0)
+		return NULL;
+
+	/* get the total size */
+	offset += osd_fread(f, &filesize, 4);
+	if (offset < 8)
+		return NULL;
+	filesize = intelLong(filesize);
+
+	/* read the RIFF file type and make sure it's a WAVE file */
+	offset += osd_fread(f, buf, 4);
+	if (offset < 12)
+		return NULL;
+	if (memcmp(&buf[0], "WAVE", 4) != 0)
+		return NULL;
+
+	/* seek until we find a format tag */
+	while (1)
+	{
+		offset += osd_fread(f, buf, 4);
+		offset += osd_fread(f, &length, 4);
+		length = intelLong(length);
+		if (memcmp(&buf[0], "fmt ", 4) == 0)
+			break;
+
+		/* seek to the next block */
+		osd_fseek(f, length, SEEK_CUR);
+		offset += length;
+		if (offset >= filesize)
+			return NULL;
+	}
+
+	/* read the format -- make sure it is PCM */
+	offset += osd_fread_lsbfirst(f, &temp16, 2);
+	if (temp16 != 1)
+		return NULL;
+
+	/* number of channels -- only mono is supported */
+	offset += osd_fread_lsbfirst(f, &temp16, 2);
+	if (temp16 != 1)
+		return NULL;
+
+	/* sample rate */
+	offset += osd_fread(f, &rate, 4);
+	rate = intelLong(rate);
+
+	/* bytes/second and block alignment are ignored */
+	offset += osd_fread(f, buf, 6);
+
+	/* bits/sample */
+	offset += osd_fread_lsbfirst(f, &bits, 2);
+	if (bits != 8 && bits != 16)
+		return NULL;
+
+	/* seek past any extra data */
+	osd_fseek(f, length - 16, SEEK_CUR);
+	offset += length - 16;
+
+	/* seek until we find a data tag */
+	while (1)
+	{
+		offset += osd_fread(f, buf, 4);
+		offset += osd_fread(f, &length, 4);
+		length = intelLong(length);
+		if (memcmp(&buf[0], "data", 4) == 0)
+			break;
+
+		/* seek to the next block */
+		osd_fseek(f, length, SEEK_CUR);
+		offset += length;
+		if (offset >= filesize)
+			return NULL;
+	}
+
+	/* allocate the game sample */
+	result = malloc(sizeof(struct GameSample) + length);
+	if (result == NULL)
+		return NULL;
+
+	/* fill in the sample data */
+	result->length = length;
+	result->volume = 100;
+	result->smpfreq = rate;
+	result->resolution = bits;
+
+	/* read the data in */
+	if (bits == 8)
+	{
+		osd_fread(f, result->data, length);
+
+		/* convert 8-bit data to signed samples */
+		for (temp32 = 0; temp32 < length; temp32++)
+			result->data[temp32] ^= 0x80;
+	}
+	else
+	{
+		/* 16-bit data is fine as-is */
+		osd_fread_lsbfirst(f, result->data, length);
+	}
+
+	return result;
+}
+
+
 struct GameSamples *readsamples(const char **samplenames,const char *basename)
 /* V.V - avoids samples duplication */
 /* if first samplename is *dir, looks for samples into "basename" first, then "dir" */
@@ -495,8 +633,6 @@ struct GameSamples *readsamples(const char **samplenames,const char *basename)
 	for (i = 0;i < samples->total;i++)
 	{
 		void *f;
-		char buf[100];
-
 
 		if (samplenames[i+skipfirst][0])
 		{
@@ -505,37 +641,7 @@ struct GameSamples *readsamples(const char **samplenames,const char *basename)
 					f = osd_fopen(samplenames[0]+1,samplenames[i+skipfirst],OSD_FILETYPE_SAMPLE,0);
 			if (f != 0)
 			{
-				if (osd_fseek(f,0,SEEK_END) == 0)
-				{
-					int dummy;
-					unsigned char smpvol=0, smpres=0;
-					unsigned smplen=0, smpfrq=0;
-
-					osd_fseek(f,0,SEEK_SET);
-					osd_fread(f,buf,4);
-					if (memcmp(buf, "MAME", 4) == 0)
-					{
-						osd_fread(f,&smplen,4);         /* all datas are LITTLE ENDIAN */
-						osd_fread(f,&smpfrq,4);
-						smplen = intelLong (smplen);  /* so convert them in the right endian-ness */
-						smpfrq = intelLong (smpfrq);
-						osd_fread(f,&smpres,1);
-						osd_fread(f,&smpvol,1);
-						osd_fread(f,&dummy,2);
-						if ((smplen != 0) && (samples->sample[i] = malloc(sizeof(struct GameSample) + (smplen)*sizeof(char))) != 0)
-						{
-							samples->sample[i]->length = smplen;
-							samples->sample[i]->volume = smpvol;
-							samples->sample[i]->smpfreq = smpfrq;
-							samples->sample[i]->resolution = smpres;
-							if (smpres == 8)
-								osd_fread(f,samples->sample[i]->data,smplen);
-							else if (smpres == 16)
-								osd_fread_lsbfirst(f,samples->sample[i]->data,smplen);
-						}
-					}
-				}
-
+				samples->sample[i] = read_wav_sample(f);
 				osd_fclose(f);
 			}
 		}

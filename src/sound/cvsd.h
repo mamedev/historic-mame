@@ -9,7 +9,7 @@ struct CVSDinterface
 	int volume[MAX_CVSD];
 };
 
-int CVSD_sh_start(const struct CVSDinterface *interface);
+int CVSD_sh_start(const struct MachineSound *msound);
 void CVSD_digit_w(int offset, int databit);
 void CVSD_dig_and_clk_w(int offset, int databit);
 void CVSD_clock_w(int offset, int databit);

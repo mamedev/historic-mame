@@ -1061,7 +1061,7 @@ static struct MachineDriver aerofgt_machine_driver =
 								/* IRQs are triggered by the YM2610 */
 		}
 	},
-	60, 500,	/* frames per second, vblank duration */
+	60, 400,	/* frames per second, vblank duration */
 				/* wrong but improves sprite-background synchronization */
 	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
 	0,
@@ -1236,6 +1236,31 @@ ROM_START( aerofgtb_rom )
 	ROM_LOAD( "it-19-01",     0x00000, 0x40000, 0x6d42723d )
 ROM_END
 
+ROM_START( aerofgtc_rom )
+	ROM_REGION(0x80000)	/* 68000 code */
+	ROM_LOAD_EVEN( "v2.149",            0x00000, 0x40000, 0xf187aec6 )
+	ROM_LOAD_ODD ( "v1.111",            0x00000, 0x40000, 0x9e684b19 )
+
+	ROM_REGION_DISPOSE(0x280000)	/* temporary space for graphics (disposed after conversion) */
+	/* gfx ROMs were missing in this set, I'm using the aerofgtb ones */
+	ROM_LOAD( "it-19-03",     0x000000, 0x080000, 0x85eba1a4 )
+	ROM_LOAD( "it-19-02",     0x080000, 0x080000, 0x4f57f8ba )
+	ROM_LOAD( "it-19-04",     0x100000, 0x080000, 0x3b329c1f )
+	ROM_LOAD( "it-19-05",     0x180000, 0x080000, 0x02b525af )
+	ROM_LOAD( "g27",          0x200000, 0x040000, 0x4d89cbc8 )
+	ROM_LOAD( "g26",          0x240000, 0x040000, 0x8072c1d2 )
+
+	ROM_REGION(0x30000)	/* 64k for the audio CPU + banks */
+	ROM_LOAD( "2.153",        0x00000, 0x20000, 0xa1ef64ec )
+	ROM_RELOAD(               0x10000, 0x20000 )
+
+	ROM_REGION(0x100000) /* sound samples */
+	ROM_LOAD( "it-19-06",     0x000000, 0x100000, 0xcdbbdb1d )
+
+	ROM_REGION(0x40000) /* sound samples */
+	ROM_LOAD( "it-19-01",     0x00000, 0x40000, 0x6d42723d )
+ROM_END
+
 ROM_START( unkvsys_rom )
 	ROM_REGION(0x60000)	/* 68000 code */
 	ROM_LOAD_EVEN( "v4",           0x00000, 0x10000, 0x1d4240c2 )
@@ -1345,7 +1370,7 @@ struct GameDriver aerofgtb_driver =
 	__FILE__,
 	&aerofgt_driver,
 	"aerofgtb",
-	"Aero Fighters (Turbo Force hardware)",
+	"Aero Fighters (Turbo Force hardware set 1)",
 	"1992",
 	"Video System Co.",
 	"Nicola Salmoria",
@@ -1354,6 +1379,31 @@ struct GameDriver aerofgtb_driver =
 	0,
 
 	aerofgtb_rom,
+	0, 0,
+	0,
+	0,	/* sound_prom */
+
+	aerofgtb_input_ports,
+
+	0, 0, 0,
+	ORIENTATION_ROTATE_270,
+	0, 0
+};
+
+struct GameDriver aerofgtc_driver =
+{
+	__FILE__,
+	&aerofgt_driver,
+	"aerofgtc",
+	"Aero Fighters (Turbo Force hardware set 2)",
+	"1992",
+	"Video System Co.",
+	"Nicola Salmoria",
+	0,
+	&aerofgtb_machine_driver,
+	0,
+
+	aerofgtc_rom,
 	0, 0,
 	0,
 	0,	/* sound_prom */

@@ -617,12 +617,12 @@ static struct MachineDriver bzone_machine_driver =
 static const char *bzone_sample_names[] =
 {
 	"*bzone",
-	"fire.sam",
-	"fire2.sam",
-	"engine1.sam",
-	"engine2.sam",
-	"explode1.sam",
-	"explode2.sam",
+	"fire.wav",
+	"fire2.wav",
+	"engine1.wav",
+	"engine2.wav",
+	"explode1.wav",
+	"explode2.wav",
     0	/* end of array */
 };
 
@@ -787,9 +787,9 @@ static struct MachineDriver redbaron_machine_driver =
 
 static const char *redbaron_sample_names[] =
 {
-	"fire.sam",
-	"spin.sam",
-	"explode1.sam",
+	"fire.wav",
+	"spin.wav",
+	"explode1.wav",
     0	/* end of array */
 };
 

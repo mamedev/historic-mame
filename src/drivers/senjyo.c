@@ -13,9 +13,9 @@ MAIN BOARD:
 9400-97ff Color RAM
 9800-987f Sprites
 9c00-9dff Palette RAM
-a000-a1ff Background Video RAM #3
+a000-a37f Background Video RAM #3
 a800-aaff Background Video RAM #2
-b000-b37f Background Video RAM #1
+b000-b1ff Background Video RAM #1
 b800-bbff Radar bitmap
 
 read:
@@ -95,7 +95,7 @@ int senjyo_vh_start(void);
 void senjyo_vh_stop(void);
 void senjyo_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
-int senjyo_sh_start(void);
+int senjyo_sh_start(const struct MachineSound *msound);
 void senjyo_sh_stop(void);
 void senjyo_sh_update(void);
 
@@ -139,9 +139,9 @@ static struct MemoryReadAddress readmem[] =
 	{ 0x9800, 0x987f, MRA_RAM },
 	{ 0x9c00, 0x9d8f, MRA_RAM },
 	{ 0x9e00, 0x9e3f, MRA_RAM },
-	{ 0xa000, 0xa1ff, MRA_RAM },
+	{ 0xa000, 0xa37f, MRA_RAM },
 	{ 0xa800, 0xaaff, MRA_RAM },
-	{ 0xb000, 0xb37f, MRA_RAM },
+	{ 0xb000, 0xb1ff, MRA_RAM },
 	{ 0xb800, 0xbbff, MRA_RAM },
 	{ 0xd000, 0xd000, input_port_0_r },	/* player 1 input */
 	{ 0xd001, 0xd001, input_port_1_r },	/* player 2 input */
@@ -173,9 +173,9 @@ static struct MemoryWriteAddress writemem[] =
 /*	{ 0x9e38, 0x9e38, probably radar y position (Senjyo only, fixed at 0x61) */
 /*	{ 0x9e3d, 0x9e3d, probably radar x position (Senjyo only, 0x00/0xc0 depending on screen flip) */
 { 0x9e00, 0x9e3f, MWA_RAM },
-	{ 0xa000, 0xa1ff, senjyo_bg3videoram_w, &senjyo_bg3videoram },
+	{ 0xa000, 0xa37f, senjyo_bg3videoram_w, &senjyo_bg3videoram },
 	{ 0xa800, 0xaaff, senjyo_bg2videoram_w, &senjyo_bg2videoram },
-	{ 0xb000, 0xb37f, senjyo_bg1videoram_w, &senjyo_bg1videoram },
+	{ 0xb000, 0xb1ff, senjyo_bg1videoram_w, &senjyo_bg1videoram },
 	{ 0xb800, 0xbbff, MWA_RAM, &senjyo_radarram },
 	{ 0xd004, 0xd004, z80pioA_0_p_w },
 	{ -1 }  /* end of table */

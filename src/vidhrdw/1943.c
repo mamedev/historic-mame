@@ -112,7 +112,7 @@ void c1943_vh_convert_color_prom(unsigned char *palette, unsigned short *colorta
 
 int c1943_vh_start(void)
 {
-	if ((sc2bitmap = osd_create_bitmap(8*32,9*32)) == 0)
+	if ((sc2bitmap = osd_create_bitmap(9*32,8*32)) == 0)
 		return 1;
 
 	if ((sc1bitmap = osd_create_bitmap(9*32,9*32)) == 0)
@@ -232,8 +232,8 @@ void c1943_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 					drawgfx(sc2bitmap,Machine->gfx[2],
 							tile,
 							(attr & 0x3c) >> 2,
-							attr&0x80, attr&0x40,
-							sx*32, ty*32,
+							attr&0x40, attr&0x80,
+							(8-ty)*32, sx*32,
 							0,
 							TRANSPARENCY_NONE,0);
 				}
@@ -242,8 +242,8 @@ void c1943_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			offs-=0x10;
 		}
 
-		xscroll = 0;
-		yscroll = -(top*32+32-bg_scrolly);
+		xscroll = (top*32-bg_scrolly);
+		yscroll = 0;
 		copyscrollbitmap(bitmap,sc2bitmap,
 			1,&xscroll,
 			1,&yscroll,
@@ -265,8 +265,8 @@ void c1943_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			if (color == 0x0a || color == 0x0b)	/* the priority is actually selected by */
 												/* bit 3 of BMPROM.07 */
 			{
-				sx = spriteram[offs + 2];
-				sy = 240 - spriteram[offs + 3] + ((spriteram[offs + 1] & 0x10) << 4);
+				sx = spriteram[offs + 3] - ((spriteram[offs + 1] & 0x10) << 4);
+				sy = spriteram[offs + 2];
 				if (flipscreen)
 				{
 					sx = 240 - sx;
@@ -323,8 +323,8 @@ void c1943_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 					drawgfx(sc1bitmap,Machine->gfx[1],
 							tile,
 							(attr & 0x3c) >> 2,
-							attr & 0x80,attr & 0x40,
-							tx*32, ty*32,
+							attr & 0x40,attr & 0x80,
+							(8-ty)*32, tx*32,
 							0,
 							TRANSPARENCY_NONE,0);
 				}
@@ -332,8 +332,8 @@ void c1943_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			offs-=0x10;
 		}
 
-		xscroll = -(left*32+bg_scrollx);
-		yscroll = -(top*32+32-bg_scrolly);
+		xscroll = (top*32-bg_scrolly);
+		yscroll = -(left*32+bg_scrollx);
 		copyscrollbitmap(bitmap,sc1bitmap,
 			1,&xscroll,
 			1,&yscroll,
@@ -354,8 +354,8 @@ void c1943_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			if (color != 0x0a && color != 0x0b)	/* the priority is actually selected by */
 												/* bit 3 of BMPROM.07 */
 			{
-				sx = spriteram[offs + 2];
-				sy = 240 - spriteram[offs + 3] + ((spriteram[offs + 1] & 0x10) << 4);
+				sx = spriteram[offs + 3] - ((spriteram[offs + 1] & 0x10) << 4);
+				sy = spriteram[offs + 2];
 				if (flipscreen)
 				{
 					sx = 240 - sx;
@@ -378,8 +378,8 @@ void c1943_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		/* draw the frontmost playfield. They are characters, but draw them as sprites */
 		for (offs = videoram_size - 1;offs >= 0;offs--)
 		{
-			sx = offs / 32;
-			sy = 31 - offs % 32;
+			sx = offs % 32;
+			sy = offs / 32;
 			if (flipscreen)
 			{
 				sx = 31 - sx;

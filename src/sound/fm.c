@@ -1,12 +1,15 @@
 #define YM2610B_WARNING
 
+/* YM2608 rhythm data is PCM ,not an ADPCM */
+#define YM2608_RHYTHM_PCM
+
 /*
 **
 ** File: fm.c -- software implementation of FM sound generator
 **
 ** Copyright (C) 1998 Tatsuyuki Satoh , MultiArcadeMachineEmurator development
 **
-** Version 0.35e
+** Version 0.35f
 **
 */
 
@@ -29,21 +32,21 @@
 ** change ADPCMA_DECODE_MIN/MAX.
 */
 
-//#define FM_DEBUG */
 /*
     no check:
+		YM2608 rhythm sound
 		OPN  SSG type envelope
 		YM2612 DAC output mode
 		YM2151 CSM speech mode
 	no support:
-		status busy flag (already not busy )
+		status busy flag (already not busy)
 		LFO contoller (YM2612/YM2610/YM2608/YM2151)
 		YM2151 noise mode
-		YM2151 output pins (CT0 and CT1)
-		YM2608/YM2610 Expansion status/Expansion interrupt
 		YM2608 DELTA-T-ADPCM and RYTHM
 		YM2610 DELTA-T-ADPCM with PCM port
 		YM2610 PCM memory data access
+
+		YM2608 status mask (register :0x110)
 	preliminary :
 		key scale level rate (?)
 		attack rate time rate , curve (?)
@@ -51,7 +54,6 @@
 		self feedback calcration
 		YM2610 ADPCM mixing level
 	Problem :
-		is sometime hiss noize heard ?
 
 	note:
                         OPN                           OPM
@@ -87,6 +89,12 @@
 #ifndef PI
 #define PI 3.14159265357989
 #endif
+
+/***** shared function building option ****/
+#define BUILD_OPN (BUILD_YM2203||BUILD_YM2608||BUILD_YM2610||BUILD_YM2612)
+#define BUILD_OPNB (BUILD_YM2610||BUILD_YM2610B)
+#define BUILD_FM_ADPCMA (BUILD_YM2608||BUILD_YM2610)
+#define BUILD_FM_ADPCMB (BUILD_YM2608||BUILD_YM2610)
 
 /**** YM2610 ADPCM defines ****/
 #define ADPCMA_VOLUME_RATE  (1)
@@ -281,8 +289,6 @@ typedef struct fm_state {
 	int TAC;					/* timer a counter     */
 	unsigned char TB;			/* timer b             */
 	int TBC;					/* timer b counter     */
-	void *timer_a_timer;		/* timer for a         */
-	void *timer_b_timer;		/* timer for b         */
 	/* speedup customize */
 	/* time tables */
 	signed int DT_TABLE[8][32];     /* detune tables       */
@@ -305,9 +311,10 @@ typedef struct opn_3slot {
 	unsigned char kcode[3];		/* key code    :          */
 }FM_3SLOT;
 
+/* adpcm type A and type B struct */
 typedef struct adpcm_state {
-  unsigned char flag;
-  unsigned char flagMask;
+  unsigned char flag;		/* port state */
+  unsigned char flagMask;	/* arrived    */
   unsigned char now_data;
   unsigned int now_addr;
   unsigned int now_step;
@@ -343,27 +350,6 @@ typedef struct ym2203_f {
 	FM_CH CH[3];			/* channel state     */
 } YM2203;
 
-/* here's the virtual YM2608 */
-typedef struct ym2608_f {
-	FM_OPN OPN;						/* OPN state       */
-/*	FMSAMPLE *Buf[YM2608_NUMBUF];*/	/* sound buffer */
-	FM_CH CH[6];					/* channel state   */
-	int address1;					/* additional address register */
-	/* PCM Part   (YM2608) */
-	int ADMode;		/* mode of ADPCM unit */
-	int ADPAN;		/* PAN */
-	int ADStart;	/* Start address */
-	int ADStop;		/* Stop address */
-	int ADDelta;	/* Playback sampling rate */
-	int ADTL;		/* output level */
-	int ADLimit;	/* Limit address */
-	int ADData;		/* PCM data */
-	/* Rhythm Part (YM2608) */
-	int RTL;		/* Total level */
-	int RPAN[6];	/* PAN */
-	int RIL[6];		/* IL  */
-} YM2608;
-
 /* here's the virtual YM2610 */
 typedef struct ym2610_f {
 	FM_OPN OPN;						/* OPN state    */
@@ -380,6 +366,9 @@ typedef struct ym2610_f {
 	int port1state, port1control, port1shift;
 	unsigned char adpcm_arrivedEndAddress,adpcm_statusmask;
 } YM2610;
+
+/* here's the virtual YM2608 */
+typedef YM2610 YM2608;
 
 /* here's the virtual YM2612 */
 typedef struct ym2612_f {
@@ -562,6 +551,26 @@ static signed int outd[4];
 static int feedback2;		/* connect for operator 2 */
 static int feedback3;		/* connect for operator 3 */
 static int feedback4;		/* connect for operator 4 */
+
+/* log output level */
+#define LOG_ERR  3      /* ERROR       */
+#define LOG_WAR  2      /* WARNING     */
+#define LOG_INF  1      /* INFORMATION */
+
+#define LOG_LEVEL LOG_INF
+
+#ifndef __RAINE__
+static void Log(int level,char *format,...)
+{
+	int i;
+	va_list argptr;
+
+	if( level < LOG_LEVEL ) return;
+	va_start(argptr,format);
+	/* */
+	if (errorlog) vfprintf( errorlog, format , argptr);
+}
+#endif
 
 /* --------------- Customize External interface port (SSG,Timer,etc) ---------------*/
 #include "fmext.c"
@@ -988,12 +997,10 @@ static void init_timetables( FM_ST *ST , char *DTTABLE , int ARRATE , int DRRATE
 	}
 
 #if 0
-	if(errorlog){
-		for (i = 0;i < 64 ;i++){	/* make for overflow area */
-			fprintf(errorlog,"rate %2d , ar %f ms , dr %f ms \n",i,
-				((double)(EG_ENT<<ENV_BITS) / ST->AR_TABLE[i]) * (1000.0 / ST->rate),
-				((double)(EG_ENT<<ENV_BITS) / ST->DR_TABLE[i]) * (1000.0 / ST->rate) );
-		}
+	for (i = 0;i < 64 ;i++){	/* make for overflow area */
+		Log(LOG_WAR,"rate %2d , ar %f ms , dr %f ms \n",i,
+			((double)(EG_ENT<<ENV_BITS) / ST->AR_TABLE[i]) * (1000.0 / ST->rate),
+			((double)(EG_ENT<<ENV_BITS) / ST->DR_TABLE[i]) * (1000.0 / ST->rate) );
 	}
 #endif
 }
@@ -1009,9 +1016,6 @@ static void reset_channel( FM_ST *ST , FM_CH *CH , int chan )
 	ST->TAC    = 0;
 	ST->TB     = 0;
 	ST->TBC    = 0;
-
-	ST->timer_a_timer = 0;
-	ST->timer_b_timer = 0;
 
 	for( c = 0 ; c < chan ; c++ )
 	{
@@ -1044,7 +1048,7 @@ static int FMInitTable( void )
 		rate = ((1<<TL_BITS)-1)/pow(10,EG_STEP*t/20);	/* dB -> voltage */
 		TL_TABLE[       t] =  (int)rate;
 		TL_TABLE[TL_MAX+t] = -TL_TABLE[t];
-/*		if(errorlog) fprintf(errorlog,"TotalLevel(%3d) = %x\n",t,TL_TABLE[t]);*/
+/*		Log(LOG_INF,"TotalLevel(%3d) = %x\n",t,TL_TABLE[t]);*/
 	}
 	/* fill volume off area */
 	for ( t = EG_ENT-1; t < TL_MAX ;t++){
@@ -1063,7 +1067,7 @@ static int FMInitTable( void )
 		SIN_TABLE[          s] = SIN_TABLE[SIN_ENT/2-s] = &TL_TABLE[j];
         /* degree 180 - 270    , degree 360 - 270 : minus section */
 		SIN_TABLE[SIN_ENT/2+s] = SIN_TABLE[SIN_ENT  -s] = &TL_TABLE[TL_MAX+j];
-/*		if(errorlog) fprintf(errorlog,"sin(%3d) = %f:%f db\n",s,pom,(double)j * EG_STEP);*/
+/*		Log(LOG_INF,"sin(%3d) = %f:%f db\n",s,pom,(double)j * EG_STEP);*/
 	}
 	/* envelope counter -> envelope output table */
 	for (i=0; i<EG_ENT; i++)
@@ -1089,7 +1093,7 @@ static int FMInitTable( void )
 	{
 		while( j && (ENV_CURVE[j] < i) ) j--;
 		DRAR_TABLE[i] = j<<ENV_BITS;
-		/* if(errorlog) fprintf(errorlog,"DR %06X = %06X,AR=%06X\n",i,DRAR_TABLE[i],ENV_CURVE[DRAR_TABLE[i]>>ENV_BITS] ); */
+		/* Log(LOG_INF,"DR %06X = %06X,AR=%06X\n",i,DRAR_TABLE[i],ENV_CURVE[DRAR_TABLE[i]>>ENV_BITS] ); */
 	}
 	return 1;
 }
@@ -1224,7 +1228,7 @@ INLINE void CALC_TIMER_B( FM_ST *ST,int step){
 }
 #endif /* INTERNAL_TIMER */
 
-#ifdef BUILD_OPN
+#if BUILD_OPN
 /* ---------- priscaler set(and make time tables) ---------- */
 void OPNSetPris(FM_OPN *OPN , int pris , int TimerPris, int SSGpris)
 {
@@ -1245,7 +1249,7 @@ void OPNSetPris(FM_OPN *OPN , int pris , int TimerPris, int SSGpris)
 		/* opn freq counter = 20bit */
 		OPN->FN_TABLE[fn] = (double)fn * OPN->ST.freqbase / 4096  * FREQ_RATE * (1<<7) / 2;
 	}
-/*	if(errorlog) fprintf(errorlog,"OPN %d set priscaler %d\n",OPN->ST.index,pris);*/
+/*	Log(LOG_INF,"OPN %d set priscaler %d\n",OPN->ST.index,pris);*/
 }
 
 /* ---------- write a OPN mode register 0x20-0x2f ---------- */
@@ -1285,9 +1289,7 @@ static void OPNWriteMode(FM_OPN *OPN, int r, int v)
 		if(v&0x20) FM_KEYON(CH,SLOT2); else FM_KEYOFF(CH,SLOT2);
 		if(v&0x40) FM_KEYON(CH,SLOT3); else FM_KEYOFF(CH,SLOT3);
 		if(v&0x80) FM_KEYON(CH,SLOT4); else FM_KEYOFF(CH,SLOT4);
-/*		if(errorlog) fprintf(errorlog,"OPN %d:%d : KEY %02X\n",n,c,v&0xf0);*/
-		break;
-	case 0x29: /* SCH,irq mask (YM2608) */
+/*		Log(LOG_INF,"OPN %d:%d : KEY %02X\n",n,c,v&0xf0);*/
 		break;
 	}
 }
@@ -1301,7 +1303,7 @@ static void OPNWriteReg(FM_OPN *OPN, int r, int v)
 
 	/* 0x30 - 0xff */
 	if( (c = OPN_CHAN(r)) == 3 ) return; /* 0xX3,0xX7,0xXB,0xXF */
-	if( (r >= 0x100) && (OPN->type & TYPE_6CH) ) c+=3;
+	if( (r >= 0x100) /* && (OPN->type & TYPE_6CH) */ ) c+=3;
 		CH = OPN->P_CH;
 		CH = &CH[c];
 
@@ -1328,7 +1330,7 @@ static void OPNWriteReg(FM_OPN *OPN, int r, int v)
 		break;
 	case 0x90:	/* SSG-EG */
 #ifndef SEG_SUPPORT
-		if(errorlog && (v&0x08)) fprintf(errorlog,"OPN %d,%d,%d :SSG-TYPE envelope selected (not supported )\n",OPN->ST.index,c,OPN_SLOT(r) );
+		if(v&0x08) Log(LOG_ERR,"OPN %d,%d,%d :SSG-TYPE envelope selected (not supported )\n",OPN->ST.index,c,OPN_SLOT(r));
 #endif
 		SLOT->SEG = v&0x0f;
 		break;
@@ -1388,7 +1390,7 @@ static void OPNWriteReg(FM_OPN *OPN, int r, int v)
 				/* PAN */
 				CH->PAN = (v>>6)&0x03; /* PAN : b6 = R , b7 = L */
 				set_algorythm( CH );
-				/* if(errorlog) fprintf(errorlog,"OPN %d,%d : PAN %d\n",n,c,CH->PAN);*/
+				/* Log(LOG_INF,"OPN %d,%d : PAN %d\n",n,c,CH->PAN);*/
 			}
 			break;
 		}
@@ -1398,12 +1400,7 @@ static void OPNWriteReg(FM_OPN *OPN, int r, int v)
 
 #endif /* BUILD_OPN */
 
-
-
-
-
-
-#ifdef BUILD_YM2203
+#if BUILD_YM2203
 /*******************************************************************************/
 /*		YM2203 local section                                                   */
 /*******************************************************************************/
@@ -1634,473 +1631,7 @@ int YM2203TimerOver(int n,int c)
 
 #endif /* BUILD_YM2203 */
 
-
-
-
-
-#ifdef BUILD_YM2608
-/*******************************************************************************/
-/*		YM2608 local section                                                   */
-/*******************************************************************************/
-static YM2608 *FM2608=NULL;	/* array of YM2608's */
-
-/* Get next pcm data */
-INLINE int YM2608ReadADPCM(int n)
-{
-	YM2608 *F2608 = &(FM2608[n]);
-	if( F2608->ADMode & 0x20 )
-	{	/* buffer memory */
-		/* F2203->OPN.ST.status |= 0x04; */
-		return 0;
-	}
-	else
-	{	/* from PCM data register */
-		FM_STATUS_SET(F2608->OPN.ST,0x08); /* BRDY = 1 */
-		return F2608->ADData;
-	}
-}
-
-/* Put decoded data */
-INLINE void YM2608WriteADPCM(int n,int v)
-{
-	YM2608 *F2608 = &(FM2608[n]);
-	if( F2608->ADMode & 0x20 )
-	{	/* for buffer */
-		return;
-	}
-	else
-	{	/* for PCM data port */
-		F2608->ADData = v;
-		FM_STATUS_SET(F2608->OPN.ST,0x08) /* BRDY = 1 */
-	}
-}
-
-/* ---------- ADPCM Register Write 0x100-0x10f ---------- */
-INLINE void YM2608ADPCMWrite(int n,int r,int v)
-{
-	YM2608 *F2608 = &(FM2608[n]);
-
-	switch(r)
-	{
-	case 0x00:
-		{
-		/* START,REC,MEMDATA,REPEAT,SPOFF,--,--,RESET */
-		int cng = F2608->ADMode ^ v;
-		F2608->ADMode = v;
-		switch( v & 0xe0 )
-		{
-		case 0x80:	/* ADPCM play from PCM data port after write PCM data */
-			break;
-		case 0xa0:	/* ADPCM play from buffer memory */
-			break;
-		case 0x60:	/* write buffer MEMORY from PCM data port */
-			break;
-		case 0x20:	/* read  buffer MEMORY to   PCM data port */
-			break;
-		}
-		}
-		break;
-	case 0x01:
-		/* L,R,-,-,SAMPLE,DA/AD,RAMTYPE,ROM */
-		F2608->ADPAN = v>>6;
-		break;
-	case 0x02:	/* Start Address L */
-		F2608->ADStart = (F2608->ADStart & 0xff00) | v;
-		break;
-	case 0x03:	/* Start Address H */
-		F2608->ADStart = (F2608->ADStart & 0x00ff) | (v<<8);
-		break;
-	case 0x04:	/* Stop Address L */
-		F2608->ADStop = (F2608->ADStop & 0xff00) | v;
-		break;
-	case 0x05:	/* Stop Address H */
-		F2608->ADStop = (F2608->ADStop & 0x00ff) | (v<<8);
-		break;
-	case 0x06:	/* Prescale L (PCM and Recoard frq) */
-	case 0x07:	/* Proscale H */
-		break;
-	case 0x08:	/* ADPCM data */
-		break;
-	case 0x09:	/* DELTA-N L (ADPCM Playback Prescaler) */
-		F2608->ADDelta = (F2608->ADDelta & 0xff00) | v;
-		break;
-	case 0x0a:	/* DELTA-N H */
-		F2608->ADDelta = (F2608->ADDelta & 0x00ff) | (v<<8);
-		break;
-	case 0x0b:	/* Level control (volume) */
-		F2608->ADTL = v;
-		break;
-	case 0x0c:	/* Limit address L */
-		F2608->ADLimit = (F2608->ADLimit & 0xff00) | v;
-		break;
-	case 0x0d:	/* Limit address H */
-		F2608->ADLimit = (F2608->ADLimit & 0x00ff) | (v<<8);
-		break;
-	case 0x0e:	/* DAC data */
-		break;
-	case 0x0f:	/* PCM data port */
-		F2608->ADData = v;
-		FM_STATUS_RESET(F2608->OPN.ST,0x08);
-		break;
-	}
-}
-
-/* ---------- Rhythm Register Write 0x10-0x1f ---------- */
-INLINE void YM2608RhythmWrite(int n,int r,int v)
-{
-	YM2608 *F2608 = &(FM2608[n]);
-	int c;
-
-	switch( r ){
-	case 0x10: /* DM,--,RIM,TOM,HH,TOP,SD,BD */
-		if( v & 0x80 )
-		{	/* dump */
-			if( v & 0x20 ) RhythmStop(n,RY_RIM);
-			if( v & 0x10 ) RhythmStop(n,RY_TOM);
-			if( v & 0x08 ) RhythmStop(n,RY_HH);
-			if( v & 0x04 ) RhythmStop(n,RY_TOP);
-			if( v & 0x02 ) RhythmStop(n,RY_SD);
-			if( v & 0x01 ) RhythmStop(n,RY_BD);
-		}
-		else
-		{	/* key on */
-			if( v & 0x20 ) RhythmStart(n,RY_RIM);
-			if( v & 0x10 ) RhythmStart(n,RY_TOM);
-			if( v & 0x08 ) RhythmStart(n,RY_HH);
-			if( v & 0x04 ) RhythmStart(n,RY_TOP);
-			if( v & 0x02 ) RhythmStart(n,RY_SD);
-			if( v & 0x01 ) RhythmStart(n,RY_BD);
-		}
-		break;
-	case 0x11:	/* B0-5 = RTL */
-		F2608->RTL = (v & 0x3f);
-		break;
-	case 0x18:	/* BD  : B7=L,B6=R,B4-0=IL */
-	case 0x19:	/* SD  : B7=L,B6=R,B4-0=IL */
-	case 0x1A:	/* TOP : B7=L,B6=R,B4-0=IL */
-	case 0x1B:	/* HH  : B7=L,B6=R,B4-0=IL */
-	case 0x1C:	/* TOM : B7=L,B6=R,B4-0=IL */
-	case 0x1D:	/* RIM : B7=L,B6=R,B4-0=IL */
-		c = r & 0x18;
-		/* B7=L,B6=R,B4-0=BD IL */
-		F2608->RPAN[c] = v>>6;
-		F2608->RIL[c] = v&0x1f;
-		break;
-	}
-}
-
-/* ---------- IRQ flag Controll Write 0x110 ---------- */
-INLINE void YM2608IRQFlagWrite(FM_ST *ST,int n,int v)
-{
-	if( v & 0x80 )
-	{	/* Reset IRQ flag */
-		FM_STATUS_RESET(ST,0xff);
-	}
-	else
-	{	/* Set IRQ mask */
-		FM_IRQMASK_SET(ST,v & 0x1f);
-	}
-}
-
-/* ---------- update one of chip ----------- */
-void YM2608UpdateOne(int num, void **buffer, int length)
-{
-	YM2608 *F2608 = &(FM2608[num]);
-	FM_OPN *OPN   = &(FM2608[num].OPN);
-	int dataR,dataL;
-	int i,ch;
-
-	/* set bufer */
-	bufL = (FMSAMPLE *)buffer[0];
-	bufR = (FMSAMPLE *)buffer[1];
-
-	if( (void *)F2608 != cur_chip ){
-		cur_chip = (void *)F2608;
-
-		State = &OPN->ST;
-		cch[0]   = &F2608->CH[0];
-		cch[1]   = &F2608->CH[1];
-		cch[2]   = &F2608->CH[2];
-		cch[3]   = &F2608->CH[3];
-		cch[4]   = &F2608->CH[4];
-		cch[5]   = &F2608->CH[5];
-	}
-	/* update frequency counter */
-	CALC_FCOUNT( cch[0] );
-	CALC_FCOUNT( cch[1] );
-	if( (State->mode & 0xc0) ){
-		/* 3SLOT MODE */
-		if( cch[2]->SLOT[SLOT1].Incr==-1){
-			/* 3 slot mode */
-			CALC_FCSLOT(&cch[2]->SLOT[SLOT1] , OPN->SL3.fc[1] , OPN->SL3.kcode[1] );
-			CALC_FCSLOT(&cch[2]->SLOT[SLOT2] , OPN->SL3.fc[2] , OPN->SL3.kcode[2] );
-			CALC_FCSLOT(&cch[2]->SLOT[SLOT3] , OPN->SL3.fc[0] , OPN->SL3.kcode[0] );
-			CALC_FCSLOT(&cch[2]->SLOT[SLOT4] , cch[2]->fc , cch[2]->kcode );
-		}
-	}else CALC_FCOUNT( cch[2] );
-	CALC_FCOUNT( cch[3] );
-	CALC_FCOUNT( cch[4] );
-	CALC_FCOUNT( cch[5] );
-	/* buffering */
-    for( i=0; i < length ; i++ )
-	{
-		/* clear output acc. */
-		outd[OPN_LEFT] = outd[OPN_RIGHT]= outd[OPN_CENTER] = 0;
-		/* calcrate FM */
-		for( ch=0;ch<6;ch++) FM_CALC_CH( cch[ch] );
-		/* get left & right output */
-		dataL = Limit( outd[OPN_CENTER] + outd[OPN_LEFT], OPN_MAXOUT, OPN_MINOUT );
-		dataR = Limit( outd[OPN_CENTER] + outd[OPN_RIGHT], OPN_MAXOUT, OPN_MINOUT );
-		/* buffering */
-#ifdef FM_STEREO_MIX		/* stereo mixing */
-		/* stereo mix */
-		((FMSAMPLE_MIX *)bufL)[i] = ((dataL>>OPN_OUTSB)<<FM_OUTPUT_BIT)|(dataR>>OPN_OUTSB);
-#else
-		/* stereo separate */
-		bufL[i] = dataL>>OPN_OUTSB;
-		bufR[i] = dataR>>OPN_OUTSB;
-#endif
-		}
-
-#ifdef LFO_SUPPORT
-		CALC_LOPM_LFO;
-#endif
-#ifdef INTERNAL_TIMER
-		/* timer controll */
-		CALC_TIMER_A( State , cch[2] );
-#endif
-	}
-#ifdef INTERNAL_TIMER
-	CALC_TIMER_B( State , length );
-#endif
-}
-
-/* -------------------------- YM2608(OPNA) ---------------------------------- */
-int YM2608Init(int num, int clock, int rate, int *pcmroma, int *pcmromb,
-               FM_TIMERHANDLER TimerHandler,FM_IRQHANDLER IRQHandler)
-
-{
-	int i,j;
-
-    if (FM2608) return (-1);	/* duplicate init. */
-    cur_chip = NULL;	/* hiro-shi!! */
-
-	FMNumChips = num;
-
-	/* allocate extend state space */
-	if( (FM2608 = (YM2608 *)malloc(sizeof(YM2608) * FMNumChips))==NULL)
-		return (-1);
-	/* clear */
-	memset(FM2608,0,sizeof(YM2608) * FMNumChips);
-	/* allocate total level table (128kb space) */
-	if( !FMInitTable() )
-	{
-		free( FM2608 );
-		return (-1);
-	}
-
-	for ( i = 0 ; i < FMNumChips; i++ ) {
-		FM2608[i].OPN.ST.index = i;
-		FM2608[i].OPN.type = TYPE_YM2608;
-		FM2608[i].OPN.P_CH = FM2608[i].CH;
-		FM2608[i].OPN.ST.clock = clock;
-		FM2608[i].OPN.ST.rate = rate;
-		/* FM2608[i].OPN.ST.irq = 0; */
-		/* FM2608[i].OPN.ST.status = 0; */
-		FM2608[i].OPN.ST.timermodel = FM_TIMER_SINGLE;
-		/* Extend handler */
-		FM2608[i].OPN.ST.Timer_Handler = TimerHandler;
-		FM2608[i].OPN.ST.IRQ_Handler   = IRQHandler;
-		YM2608ResetChip(i);
-	}
-	return 0;
-}
-
-/* ---------- shut down emurator ----------- */
-void YM2608Shutdown()
-{
-    if (!FM2608) return;
-
-	FMCloseTable();
-	free(FM2608);
-	FM2608 = NULL;
-}
-
-/* ---------- reset one of chip ---------- */
-void YM2608ResetChip(int num)
-{
-	int i;
-	YM2608 *F2608 = &(FM2608[num]);
-	FM_OPN *OPN   = &(FM2608[num].OPN);
-
-	/* Reset Priscaler */
-	OPNSetPris( OPN, 6*24, 6*24,4*2); /* OPN 1/6 , SSG 1/4 */
-	/* reset SSG section */
-	SSGReset(OPN->ST.index);
-	/* status clear */
-	FM_IRQMASK_SET(&OPN->ST,0x03);
-	OPNWriteMode(OPN,0x27,0x30); /* mode 0 , timer reset */
-
-	reset_channel( &OPN->ST , F2608->CH , 6 );
-	/* reset OPerator paramater */
-	for(i = 0xb6 ; i >= 0xb4 ; i-- )
-	{
-		OPNWriteReg(OPN,i      ,0xc0);
-		OPNWriteReg(OPN,i|0x100,0xc0);
-	}
-	for(i = 0xb2 ; i >= 0x30 ; i-- )
-	{
-		OPNWriteReg(OPN,i      ,0);
-		OPNWriteReg(OPN,i|0x100,0);
-	}
-	for(i = 0x26 ; i >= 0x20 ; i-- ) OPNWriteReg(OPN,i,0);
-	/* reset ADPCM unit */
-	/* reset RITHM unit */
-}
-
-/* YM2608 write */
-/* n = number  */
-/* a = address */
-/* v = value   */
-int YM2608Write(int n, int a,int v)
-{
-	YM2608 *F2608 = &(FM2608[n]);
-	FM_OPN *OPN   = &(FM2608[n].OPN);
-	int addr;
-
-	switch( a&3){
-	case 0:	/* address port 0 */
-		OPN->ST.address = v & 0xff;
-		/* Write register to SSG emurator */
-		if( v < 16 ) SSGWrite(n,0,v);
-		switch(OPN->ST.address)
-		{
-		case 0x2d:	/* divider sel */
-			OPNSetPris( OPN, 6*24, 6*24, 4*2); /* OPN 1/6 , SSG 1/4 */
-			break;
-		case 0x2e:	/* divider sel */
-			OPNSetPris( OPN, 3*24, 3*24,2*2); /* OPN 1/3 , SSG 1/2 */
-			break;
-		case 0x2f:	/* divider sel */
-			OPNSetPris( OPN, 2*24, 2*24,1*2); /* OPN 1/2 , SSG 1/1 */
-			break;
-		}
-		break;
-	case 1:	/* data port 0    */
-		addr = OPN->ST.address;
-		switch(addr & 0xf0)
-		{
-		case 0x00:	/* SSG section */
-			/* Write data to SSG emurator */
-			SSGWrite(n,a,v);
-			break;
-		case 0x10:	/* Rhythm section */
-			YM2608UpdateReq(n);
-			YM2608RhythmWrite(n,F2608->address1,v);
-			break;
-		case 0x20:	/* Mode Register */
-			YM2608UpdateReq(n);
-			 OPNWriteMode(OPN,addr,v);
-		default:	/* OPN section */
-			YM2608UpdateReq(n);
-			/* write register */
-			 OPNWriteReg(OPN,addr,v);
-		}
-		break;
-	case 2:	/* address port 1 */
-		F2608->address1 = v & 0xff;
-		break;
-	case 3:	/* data port 1    */
-		addr = F2608->address1;
-		YM2608UpdateReq(n);
-		switch( addr & 0xf0 )
-		{
-		case 0x00:	/* ADPCM PORT */
-			YM2608ADPCMWrite(n,addr,v);
-			break;
-		case 0x10:	/* IRQ Flag controll */
-			if( addr == 0x10 )
-				YM2608IRQFlagWrite(&(OPN->ST),n,v);
-			break;
-		default:
-#ifdef FM_DEBUG
-			if( addr == 0x28 ) OPNWriteMode(n,addr,v|0x04,F2608->CH);
-			else
-#endif
-			OPNWriteReg(OPN,addr|0x100,v);
-		}
-	}
-	return OPN->ST.irq;
-}
-unsigned char YM2608Read(int n,int a)
-{
-	YM2608 *F2608 = &(FM2608[n]);
-	int addr = F2608->OPN.ST.address;
-	int ret = 0;
-
-	switch( a&3 ){
-	case 0:	/* status 0 : YM2203 compatible */
-		ret = F2608->OPN.ST.status & 0x83;
-		break;
-	case 1:	/* status 0 */
-		if( addr < 16 ) ret = SSGRead(n);
-		break;
-	case 2:	/* status 1 : + ADPCM status */
-		ret = F2608->OPN.ST.status;
-		break;
-	case 3:
-		ret = 0;
-		break;
-	}
-	return ret;
-}
-
-int YM2608TimerOver(int n,int c)
-{
-	YM2608 *F2608 = &(FM2608[n]);
-
-	if( c )
-	{	/* Timer B */
-		TimerBOver( &(F2608->OPN.ST) );
-	}
-	else
-	{	/* Timer A */
-		YM2608UpdateReq(n);
-		/* timer update */
-		TimerAOver( &(F2608->OPN.ST) );
-		/* CSM mode key,TL controll */
-		if( F2608->OPN.ST.mode & 0x80 )
-		{	/* CSM mode total level latch and auto key on */
-			CSMKeyControll( &(F2608->CH[2]) );
-		}
-	}
-	return FM2608->OPN.ST.irq;
-}
-
-#if 0
-/* ---------- return the buffer ---------- */
-FMSAMPLE **YM2608Buffer(int n)
-{
-    return &(FM2608[n].Buf);
-}
-#endif
-
-#if 0
-/* ---------- set buffer ---------- */
-int YM2608SetBuffer(int n, FMSAMPLE **buf )
-{
-	int i;
-	for( i = 0 ; i < YM2608_NUMBUF ; i++){
-		FM2608[n].Buf[i] = buf[i];
-		if( cur_chip == &FM2608[n] ) cur_chip = NULL;
-	}
-	return 0;
-}
-#endif
-
-#endif /* BUILD_YM2608 */
-
-#ifdef BUILD_YM2610
+#if (BUILD_FM_ADPCMA || BUILD_FM_ADPCMB)
 
 //#define ADPCMA_DECODE_RANGE 1024
 #define ADPCMA_DECODE_RANGE 1024
@@ -2117,15 +1648,15 @@ int YM2608SetBuffer(int n, FMSAMPLE **buf )
 #define ADPCMB_DELTA_MIN (127)
 #define ADPCMB_DELTA_DEF (127)
 
-/* -------------------------- YM2610(OPNB) ---------------------------------- */
 /***************************************************************/
 /*    ADPCM units are made by Hiromitsu Shioya (MMSND)         */
 /***************************************************************/
 
-static YM2610 *FM2610=NULL;	/* array of YM2610's */
-
 static char         *pcmbufA, *pcmbufB;
 static unsigned int pcmsizeA, pcmsizeB;
+
+static unsigned char adpcm_arrivedEndAddress;
+static unsigned char adpcm_statusmask;
 
 /************************************************************/
 /************************************************************/
@@ -2237,8 +1768,7 @@ INLINE void OPNB_ADPCM_CALC_CHA( YM2610 *F2610, ADPCM_CH *ch )
 		do{
 #if 0
 			if ( ch->now_addr > (pcmsizeA<<1) ) {
-				if ( errorlog )
-					fprintf( errorlog, "YM2610: Attempting to play past adpcm rom size!\n" );
+				Log(LOG_WAR,"YM2610: Attempting to play past adpcm rom size!\n" );
 				return;
 			}
 #endif
@@ -2297,8 +1827,7 @@ INLINE void OPNB_ADPCM_CALC_CHB( YM2610 *F2610, ADPCM_CH *ch )
 			}
 #if 0
 			if ( ch->now_addr > (pcmsizeB<<1) ) {
-				if ( errorlog )
-					fprintf( errorlog, "YM2610: Attempting to play past Delta T rom size!\n" );
+				Log(LOG_WAR,"YM2610: Attempting to play past Delta T rom size!\n" );
 				return;
 			}
 #endif
@@ -2341,6 +1870,678 @@ INLINE void OPNB_ADPCM_CALC_CHB( YM2610 *F2610, ADPCM_CH *ch )
 	*(ch->pan) += ch->adpcml;
 }
 
+static YM2610 *FM2610=NULL;	/* array of YM2610's */
+
+/* ADPCM type A */
+static void FM_ADPCMAWrite(YM2610 *F2610,int r,int v)
+{
+	ADPCM_CH *adpcm = F2610->adpcm;
+	unsigned char c = r&0x07;
+
+	F2610->adpcmreg[1][r] = v&0xff; /* stock data */
+	switch( r ){
+	case 0x00: /* DM,--,C5,C4,C3,C2,C1,C0 */
+	  F2610->port1state = v&0xff;
+	  if( !(v&0x80) ){
+	    /* KEY ON */
+	    for( c = 0; c < 6; c++ ){
+	      if( (1<<c)&v ){
+		/**** start adpcm ****/
+		adpcm[c].step     = (unsigned int)((float)(1<<ADPCM_SHIFT)*((float)F2610->OPN.ST.freqbase)/4096.0/3.0);
+		adpcm[c].now_addr = adpcm[c].start<<1;
+		adpcm[c].now_step = (1<<ADPCM_SHIFT)-adpcm[c].step;
+		/*adpcm[c].adpcmm   = 0;*/
+		adpcm[c].adpcmx   = 0;
+		adpcm[c].adpcmd   = 0;
+		adpcm[c].adpcml   = 0;
+		adpcm[c].flag     = 1;
+		if(F2610->pcmbuf[1]==NULL){			// Check ROM Mapped
+#ifdef __RAINE__
+		  PrintDebug("YM2610: main adpcm rom not mapped\n");
+#else
+		  Log(LOG_WAR,"YM2610: Attempting to play regular adpcm but no rom is mapped\n");
+#endif
+		  adpcm[c].flag = 0;
+		} else{
+		  if(adpcm[c].end >= F2610->pcm_size[1]){		// Check End in Range
+#ifdef __RAINE__
+		    PrintDebug("YM2610: main adpcm end out of range: $%08x\n",adpcm[c].end);
+#endif
+		    adpcm[c].end = F2610->pcm_size[1]-1;
+		  }
+		  if(adpcm[c].start >= F2610->pcm_size[1]){	// Check Start in Range
+#ifdef __RAINE__
+		    PrintDebug("YM2610: main adpcm start out of range: $%08x\n",adpcm[c].start);
+#endif
+		    adpcm[c].flag = 0;
+		  }
+		}
+		/*** (1<<c)&v ***/
+	      }
+	      /**** for loop ****/
+	    }
+	  } else{
+	    /* KEY OFF */
+	    for( c = 0; c < 6; c++ ){
+	      if( (1<<c)&v )  adpcm[c].flag = 0;
+	    }
+	  }
+	  break;
+	case 0x01:	/* B0-5 = TL 0.75dB step */
+		F2610->TL_adpcmb = &(TL_TABLE[((v&0x3f)^0x3f)*(int)(0.75/EG_STEP)]);
+		for( c = 0; c < 6; c++ ){
+		  adpcm[c].volume = F2610->TL_adpcmb[adpcm[c].IL*(int)(0.75/EG_STEP)] / ADPCMA_DECODE_RANGE / ADPCMA_VOLUME_DIV;
+		  /**** calc pcm * volume data ****/
+		  adpcm[c].adpcml = adpcm[c].adpcmx * adpcm[c].volume;
+		}
+		break;
+	default:
+		c = r&0x07;
+		if( c >= 0x06 ) return;
+		switch( r&0x38 ){
+		case 0x08:	/* B7=L,B6=R,B4-0=IL */
+			adpcm[c].IL = (v&0x1f)^0x1f;
+			adpcm[c].volume = F2610->TL_adpcmb[adpcm[c].IL*(int)(0.75/EG_STEP)] / ADPCMA_DECODE_RANGE / ADPCMA_VOLUME_DIV;
+			adpcm[c].pan    = &outd[(v>>6)&0x03];
+			/**** calc pcm * volume data ****/
+			adpcm[c].adpcml = adpcm[c].adpcmx * adpcm[c].volume;
+			break;
+		case 0x10:
+		case 0x18:
+			adpcm[c].start  = ( (F2610->adpcmreg[1][0x18 + c]*0x0100 | F2610->adpcmreg[1][0x10 + c]) << F2610->port1shift);
+			break;
+		case 0x20:
+		case 0x28:
+			adpcm[c].end    = ( (F2610->adpcmreg[1][0x28 + c]*0x0100 | F2610->adpcmreg[1][0x20 + c]) << F2610->port1shift);
+			adpcm[c].end   += (1<<F2610->port1shift) - 1;
+			break;
+		}
+	}
+}
+
+/* ADPCM type B (DELTA-T) */
+static void FM_ADPCMBWrite(YM2610 *F2610,int r,int v)
+{
+	ADPCM_CH *adpcm = &(F2610->adpcm[6]);
+
+	F2610->adpcmreg[0][r] = v&0xff; /* stock data */
+	switch( r ){
+	case 0x00:	/* START,REC,MEMDATA,REPEAT,SPOFF,--,--,RESET */
+#if 0
+		case 0x60:	/* write buffer MEMORY from PCM data port */
+		case 0x20:	/* read  buffer MEMORY to   PCM data port */
+#endif
+	  if( v&0x80 ){
+		F2610->port0state = v&0x90; /* start req,memory mode,repeat flag copy */
+		/**** start ADPCM ****/
+		adpcm->volume_w_step = (double)adpcm->volume * adpcm->step / (1<<ADPCM_SHIFT);
+		adpcm->now_addr = (adpcm->start)<<1;
+		adpcm->now_step = (1<<ADPCM_SHIFT)-adpcm->step;
+		/*adpcm->adpcmm   = 0;*/
+		adpcm->adpcmx   = 0;
+		adpcm->adpcml   = 0;
+		adpcm->adpcmd   = ADPCMB_DELTA_DEF;
+		adpcm->next_leveling=0;
+		adpcm->flag     = 1; /* start ADPCM */
+	    if( !adpcm->step ){
+	      adpcm->flag = 0;
+	      F2610->port0state = 0x00;
+	    }
+	    /**** PCMROM check & limit check ****/
+	    if(F2610->pcmbuf[0] == NULL){			// Check ROM Mapped
+#ifdef __RAINE__
+	      PrintDebug("YM2610: Delta-T adpcm rom not mapped\n");
+#endif
+	      adpcm->flag = 0;
+	      F2610->port0state = 0x00;
+	    } else{
+	      if( adpcm->end >= F2610->pcm_size[0] ){		// Check End in Range
+#ifdef __RAINE__
+		PrintDebug("YM2610: Delta-T adpcm end out of range: $%08x\n",adpcm->end);
+#endif
+		adpcm->end = F2610->pcm_size[0] - 1;
+	      }
+	      if( adpcm->start >= F2610->pcm_size[0] ){		// Check Start in Range
+#ifdef __RAINE__
+		PrintDebug("YM2610: Delta-T adpcm start out of range: $%08x\n",adpcm->start);
+#endif
+		adpcm->flag = 0;
+		F2610->port0state = 0x00;
+	      }
+	    }
+	  } else if( v&0x01 ){
+		adpcm->flag = 0;
+	    F2610->port0state = 0x00;
+	  }
+	  break;
+	case 0x01:	/* L,R,-,-,SAMPLE,DA/AD,RAMTYPE,ROM */
+	  F2610->port0control = v&0xff;
+	  adpcm->pan = &outd[(v>>6)&0x03];
+	  break;
+	case 0x02:	/* Start Address L */
+	case 0x03:	/* Start Address H */
+	  adpcm->start  = (F2610->adpcmreg[0][0x3]*0x0100 | F2610->adpcmreg[0][0x2]) << F2610->port0shift;
+		break;
+	case 0x04:	/* Stop Address L */
+	case 0x05:	/* Stop Address H */
+		adpcm->end    = (F2610->adpcmreg[0][0x5]*0x0100 | F2610->adpcmreg[0][0x4]) << F2610->port0shift;
+		adpcm->end   += (1<<F2610->port0shift) - 1;
+		break;
+	case 0x06:	/* Prescale L (PCM and Recoard frq) */
+	case 0x07:	/* Proscale H */
+	case 0x08:	/* ADPCM data */
+	  break;
+	case 0x09:	/* DELTA-N L (ADPCM Playback Prescaler) */
+	case 0x0a:	/* DELTA-N H */
+		adpcm->delta  = (F2610->adpcmreg[0][0xa]*0x0100 | F2610->adpcmreg[0][0x9]);
+		adpcm->step     = (unsigned int)((float)(adpcm->delta*(1<<(ADPCM_SHIFT-16)))*((float)F2610->OPN.ST.freqbase)/4096.0);
+		adpcm->volume_w_step = (double)adpcm->volume * adpcm->step / (1<<ADPCM_SHIFT);
+		break;
+	case 0x0b:	/* Level control (volume , voltage flat) */
+		{
+			int oldvol = adpcm->volume;
+			adpcm->volume = ((v&0xff)<<(TL_BITS-8)) * ADPCMB_VOLUME_RATE / ADPCMB_DECODE_RANGE;
+			if( oldvol != 0 )
+			{
+				adpcm->adpcml      = (int)((double)adpcm->adpcml      / (double)oldvol * (double)adpcm->volume);
+				adpcm->sample_step = (int)((double)adpcm->sample_step / (double)oldvol * (double)adpcm->volume);
+			}
+			adpcm->volume_w_step = (int)((double)adpcm->volume * (double)adpcm->step / (double)(1<<ADPCM_SHIFT));
+		}
+		break;
+	}
+}
+
+#endif /* BUILD_FM_ADPCM */
+
+
+#if BUILD_YM2608
+/*******************************************************************************/
+/*		YM2608 local section                                                   */
+/*******************************************************************************/
+static YM2608 *FM2608=NULL;	/* array of YM2608's */
+
+#if 0
+/* Get next pcm data */
+INLINE int YM2608ReadADPCM(int n)
+{
+	YM2608 *F2608 = &(FM2608[n]);
+	if( F2608->ADMode & 0x20 )
+	{	/* buffer memory */
+		/* F2203->OPN.ST.status |= 0x04; */
+		return 0;
+	}
+	else
+	{	/* from PCM data register */
+		FM_STATUS_SET(F2608->OPN.ST,0x08); /* BRDY = 1 */
+		return F2608->ADData;
+	}
+}
+
+/* Put decoded data */
+INLINE void YM2608WriteADPCM(int n,int v)
+{
+	YM2608 *F2608 = &(FM2608[n]);
+	if( F2608->ADMode & 0x20 )
+	{	/* for buffer */
+		return;
+	}
+	else
+	{	/* for PCM data port */
+		F2608->ADData = v;
+		FM_STATUS_SET(F2608->OPN.ST,0x08) /* BRDY = 1 */
+	}
+}
+#endif
+
+/* ---------- IRQ flag Controll Write 0x110 ---------- */
+INLINE void YM2608IRQFlagWrite(FM_ST *ST,int n,int v)
+{
+	if( v & 0x80 )
+	{	/* Reset IRQ flag */
+		FM_STATUS_RESET(ST,0xff);
+	}
+	else
+	{	/* Set IRQ mask */
+		/* !!!!!!!!!! pending !!!!!!!!!! */
+		/* F2610->adpcm_statusmask = v & 0x1f; */
+	}
+}
+
+#ifdef YM2608_RHYTHM_PCM
+/**** RYTHM (PCM) ****/
+INLINE void YM2608_RYTHM( YM2610 *F2610, ADPCM_CH *ch )
+
+{
+	unsigned int step;
+	int data;
+
+	ch->now_step += ch->step;
+	if ( ch->now_step >= (1<<ADPCM_SHIFT) )
+	{
+		step = ch->now_step >> ADPCM_SHIFT;
+		ch->now_step &= (1<<ADPCM_SHIFT)-1;
+		/* end check */
+		if ( (ch->now_addr+step) > (ch->end<<1) ) {
+			ch->flag = 0;
+			F2610->adpcm_arrivedEndAddress |= ch->flagMask & F2610->adpcm_statusmask;
+			return;
+		}
+		do{
+			/* get a next pcm data */
+			ch->adpcmx = ((short *)pcmbufA)[ch->now_addr];
+			ch->now_addr++;
+			/**** calc pcm * volume data ****/
+			ch->adpcml = ch->adpcmx * ch->volume;
+		}while(--step);
+	}
+	/* output for work of output channels (outd[OPNxxxx])*/
+	*(ch->pan) += ch->adpcml;
+}
+#endif /* YM2608_RHYTHM_PCM */
+
+/* ---------- update one of chip ----------- */
+void YM2608UpdateOne(int num, void **buffer, int length)
+{
+	YM2608 *F2608 = &(FM2608[num]);
+	FM_OPN *OPN   = &(FM2608[num].OPN);
+	int dataR,dataL;
+	int i,j,ch;
+
+	/* set bufer */
+	bufL = (FMSAMPLE *)buffer[0];
+	bufR = (FMSAMPLE *)buffer[1];
+
+	if( (void *)F2608 != cur_chip ){
+		cur_chip = (void *)F2608;
+
+		State = &OPN->ST;
+		cch[0]   = &F2608->CH[0];
+		cch[1]   = &F2608->CH[1];
+		cch[2]   = &F2608->CH[2];
+		cch[3]   = &F2608->CH[3];
+		cch[4]   = &F2608->CH[4];
+		cch[5]   = &F2608->CH[5];
+		/* setup adpcm rom address */
+		pcmbufB  = F2608->pcmbuf[0];
+		pcmsizeB = F2608->pcm_size[0];
+		pcmbufA  = F2608->pcmbuf[1];
+		pcmsizeA = F2608->pcm_size[1];
+	}
+	/* update frequency counter */
+	CALC_FCOUNT( cch[0] );
+	CALC_FCOUNT( cch[1] );
+	if( (State->mode & 0xc0) ){
+		/* 3SLOT MODE */
+		if( cch[2]->SLOT[SLOT1].Incr==-1){
+			/* 3 slot mode */
+			CALC_FCSLOT(&cch[2]->SLOT[SLOT1] , OPN->SL3.fc[1] , OPN->SL3.kcode[1] );
+			CALC_FCSLOT(&cch[2]->SLOT[SLOT2] , OPN->SL3.fc[2] , OPN->SL3.kcode[2] );
+			CALC_FCSLOT(&cch[2]->SLOT[SLOT3] , OPN->SL3.fc[0] , OPN->SL3.kcode[0] );
+			CALC_FCSLOT(&cch[2]->SLOT[SLOT4] , cch[2]->fc , cch[2]->kcode );
+		}
+	}else CALC_FCOUNT( cch[2] );
+	CALC_FCOUNT( cch[3] );
+	CALC_FCOUNT( cch[4] );
+	CALC_FCOUNT( cch[5] );
+	/* buffering */
+    for( i=0; i < length ; i++ )
+	{
+		/* clear output acc. */
+		outd[OPN_LEFT] = outd[OPN_RIGHT]= outd[OPN_CENTER] = 0;
+		/**** deltaT ADPCM ****/
+		if( F2608->adpcm[6].flag )
+			OPNB_ADPCM_CALC_CHB( F2608, &F2608->adpcm[6]);
+		/* FM */
+		FM_CALC_CH( cch[0] );
+		FM_CALC_CH( cch[1] );
+		FM_CALC_CH( cch[2] );
+		FM_CALC_CH( cch[3] );
+		FM_CALC_CH( cch[4] );
+		FM_CALC_CH( cch[5] );
+		for( j = 0; j < 6; j++ )
+		{
+			/**** ADPCM ****/
+			if( F2608->adpcm[j].flag )
+#ifdef YM2608_RHYTHM_PCM
+				YM2608_RYTHM(F2608, &F2608->adpcm[j]);
+#else
+				OPNB_ADPCM_CALC_CHA( F2608, &F2608->adpcm[j]);
+#endif
+		}
+		/* get left & right output with clipping */
+		dataL = Limit( outd[OPN_CENTER] + outd[OPN_LEFT], OPNB_MAXOUT, OPNB_MINOUT );
+		dataR = Limit( outd[OPN_CENTER] + outd[OPN_RIGHT], OPNB_MAXOUT, OPNB_MINOUT );
+		/* buffering */
+		/* stereo separate */
+#ifdef FM_STEREO_MIX		/* stereo mixing */
+		/* stereo mix */
+		((FMSAMPLE_MIX *)bufL)[i] = ((dataL>>OPNB_OUTSB)<<FM_OUTPUT_BIT)|(dataR>>OPNB_OUTSB);
+#else
+		/* stereo separate */
+		bufL[i] = dataL>>OPNB_OUTSB;
+		bufR[i] = dataR>>OPNB_OUTSB;
+#endif
+
+#ifdef LFO_SUPPORT
+		CALC_LOPM_LFO;
+#endif
+#ifdef INTERNAL_TIMER
+		/* timer controll */
+		CALC_TIMER_A( State , cch[2] );
+#endif
+	}
+#ifdef INTERNAL_TIMER
+	CALC_TIMER_B( State , length );
+#endif
+}
+
+/* -------------------------- YM2608(OPNA) ---------------------------------- */
+int YM2608Init(int num, int clock, int rate,
+               void **pcmroma,int *pcmsizea,short *rhythmrom,int *rhythmpos,
+               FM_TIMERHANDLER TimerHandler,FM_IRQHANDLER IRQHandler)
+{
+	int i,j;
+
+    if (FM2608) return (-1);	/* duplicate init. */
+    cur_chip = NULL;	/* hiro-shi!! */
+
+	FMNumChips = num;
+
+	/* allocate extend state space */
+	if( (FM2608 = (YM2608 *)malloc(sizeof(YM2608) * FMNumChips))==NULL)
+		return (-1);
+	/* clear */
+	memset(FM2608,0,sizeof(YM2608) * FMNumChips);
+	/* allocate total level table (128kb space) */
+	if( !FMInitTable() )
+	{
+		free( FM2608 );
+		return (-1);
+	}
+
+	for ( i = 0 ; i < FMNumChips; i++ ) {
+		FM2608[i].OPN.ST.index = i;
+		FM2608[i].OPN.type = TYPE_YM2608;
+		FM2608[i].OPN.P_CH = FM2608[i].CH;
+		FM2608[i].OPN.ST.clock = clock;
+		FM2608[i].OPN.ST.rate = rate;
+		/* FM2608[i].OPN.ST.irq = 0; */
+		/* FM2608[i].OPN.ST.status = 0; */
+		FM2608[i].OPN.ST.timermodel = FM_TIMER_SINGLE;
+		/* Extend handler */
+		FM2608[i].OPN.ST.Timer_Handler = TimerHandler;
+		FM2608[i].OPN.ST.IRQ_Handler   = IRQHandler;
+		/* ADPCM */
+		FM2608[i].pcmbuf[0]   = (char *)(pcmroma[i]);
+		FM2608[i].pcm_size[0] = pcmsizea[i];
+		FM2608[i].pcmbuf[1]   = (char *)rhythmrom;
+#ifdef YM2608_RHYTHM_PCM
+		/* rhythm sound setup (PCM) */
+		for(j=0;j<6;j++)
+		{
+			/* rhythm sound */
+			FM2608[i].adpcm[j].start = rhythmpos[j];
+			FM2608[i].adpcm[j].end   = rhythmpos[j+1]-1;
+		}
+		FM2608[i].pcm_size[1] = rhythmpos[6];
+#else
+		/* rhythm sound setup (ADPCM) */
+		FM2608[i].pcm_size[1] = rhythmsize;
+#endif
+		YM2608ResetChip(i);
+	}
+	InitOPNB_ADPCMATable();
+	return 0;
+}
+
+/* ---------- shut down emurator ----------- */
+void YM2608Shutdown()
+{
+    if (!FM2608) return;
+
+	FMCloseTable();
+	free(FM2608);
+	FM2608 = NULL;
+}
+
+/* ---------- reset one of chip ---------- */
+void YM2608ResetChip(int num)
+{
+	int i;
+	YM2608 *F2608 = &(FM2608[num]);
+	FM_OPN *OPN   = &(FM2608[num].OPN);
+
+	/* Reset Priscaler */
+	OPNSetPris( OPN, 6*24, 6*24,4*2); /* OPN 1/6 , SSG 1/4 */
+	/* reset SSG section */
+	SSGReset(OPN->ST.index);
+	/* status clear */
+	FM_IRQMASK_SET(&OPN->ST,0x1f);
+	OPNWriteMode(OPN,0x27,0x30); /* mode 0 , timer reset */
+
+	/* extend 3ch. disable */
+	//OPN->type &= (~TYPE_6CH);
+
+	reset_channel( &OPN->ST , F2608->CH , 6 );
+	/* reset OPerator paramater */
+	for(i = 0xb6 ; i >= 0xb4 ; i-- )
+	{
+		OPNWriteReg(OPN,i      ,0xc0);
+		OPNWriteReg(OPN,i|0x100,0xc0);
+	}
+	for(i = 0xb2 ; i >= 0x30 ; i-- )
+	{
+		OPNWriteReg(OPN,i      ,0);
+		OPNWriteReg(OPN,i|0x100,0);
+	}
+	for(i = 0x26 ; i >= 0x20 ; i-- ) OPNWriteReg(OPN,i,0);
+	/* reset ADPCM unit */
+	/**** ADPCM work initial ****/
+	for( i = 0; i < 6+1; i++ ){
+		F2608->adpcm[i].now_addr  = 0;
+		F2608->adpcm[i].now_step  = 0;
+		F2608->adpcm[i].step      = 0;
+		F2608->adpcm[i].start     = 0;
+		F2608->adpcm[i].end       = 0;
+		/* F2608->adpcm[i].delta     = 21866; */
+		F2608->adpcm[i].volume    = 0;
+		F2608->adpcm[i].pan       = &outd[OPN_CENTER]; /* default center */
+		F2608->adpcm[i].flagMask  = (i == 6) ? 0x20 : 0;
+		F2608->adpcm[i].flag      = 0;
+		F2608->adpcm[i].adpcmx    = 0;
+		F2608->adpcm[i].adpcmd    = 127;
+		F2608->adpcm[i].adpcml    = 0;
+		/* DELTA-T */
+		/*F2608->adpcm[i].adpcmm    = 0;*/
+		F2608->adpcm[i].volume_w_step = 0;
+	    F2608->adpcm[i].next_leveling=0;
+	}
+	F2608->TL_adpcmb = &(TL_TABLE[0x3f*(int)(0.75/EG_STEP)]);
+	F2608->port0state = 0;
+	F2608->port0shift = 8;		/* allways 8bits shift */
+	//F2608->port1state = 0;
+	F2608->port1state = -1;
+	F2608->port1shift = 8;		/* allways 8bits shift */
+	F2608->adpcm_arrivedEndAddress = 0; /* don't used */
+	F2608->adpcm_statusmask = 0xbf;     /* don't used */
+}
+
+/* YM2608 write */
+/* n = number  */
+/* a = address */
+/* v = value   */
+int YM2608Write(int n, int a,int v)
+{
+	YM2608 *F2608 = &(FM2608[n]);
+	FM_OPN *OPN   = &(FM2608[n].OPN);
+	int addr;
+
+	switch(a&3){
+	case 0:	/* address port 0 */
+		OPN->ST.address = v & 0xff;
+		/* Write register to SSG emurator */
+		if( v < 16 ) SSGWrite(n,0,v);
+		switch(OPN->ST.address)
+		{
+		case 0x2d:	/* divider sel */
+			OPNSetPris( OPN, 6*24, 6*24, 4*2); /* OPN 1/6 , SSG 1/4 */
+			break;
+		case 0x2e:	/* divider sel */
+			OPNSetPris( OPN, 3*24, 3*24,2*2); /* OPN 1/3 , SSG 1/2 */
+			break;
+		case 0x2f:	/* divider sel */
+			OPNSetPris( OPN, 2*24, 2*24,1*2); /* OPN 1/2 , SSG 1/1 */
+			break;
+		}
+		break;
+	case 1:	/* data port 0    */
+		addr = OPN->ST.address;
+		switch(addr & 0xf0)
+		{
+		case 0x00:	/* SSG section */
+			/* Write data to SSG emurator */
+			SSGWrite(n,a,v);
+			break;
+		case 0x10:	/* 0x10-0x1f : Rhythm section */
+			YM2608UpdateReq(n);
+			FM_ADPCMAWrite(F2608,addr-0x10,v);
+			break;
+		case 0x20:	/* Mode Register */
+			switch(addr)
+			{
+			case 0x29: /* SCH,xirq mask */
+				/* SCH,xx,xxx,EN_ZERO,EN_BRDY,EN_EOS,EN_TB,EN_TA */
+				/* extend 3ch. enable/disable */
+				if(v&0x80) OPN->type |= TYPE_6CH;
+				else       OPN->type &= ~TYPE_6CH;
+				/* IRQ MASK */
+				FM_IRQMASK_SET(&OPN->ST,v&0x1f);
+				break;
+			default:
+				YM2608UpdateReq(n);
+				OPNWriteMode(OPN,addr,v);
+			}
+			break;
+		default:	/* OPN section */
+			YM2608UpdateReq(n);
+			OPNWriteReg(OPN,addr,v);
+		}
+		break;
+	case 2:	/* address port 1 */
+		F2608->address1 = v & 0xff;
+		break;
+	case 3:	/* data port 1    */
+		addr = F2608->address1;
+		YM2608UpdateReq(n);
+		switch( addr & 0xf0 )
+		{
+		case 0x00:	/* ADPCM PORT */
+			switch( addr )
+			{
+			case 0x0c:	/* Limit address L */
+				//F2608->ADLimit = (F2608->ADLimit & 0xff00) | v;
+				//break;
+			case 0x0d:	/* Limit address H */
+				//F2608->ADLimit = (F2608->ADLimit & 0x00ff) | (v<<8);
+				//break;
+			case 0x0e:	/* DAC data */
+				//break;
+			case 0x0f:	/* PCM data port */
+				//F2608->ADData = v;
+				//FM_STATUS_RESET(F2608->OPN.ST,0x08);
+				break;
+			default:
+				/* 0x00-0x0b */
+				FM_ADPCMBWrite(F2608,addr,v);
+			}
+			break;
+		case 0x10:	/* IRQ Flag controll */
+			if( addr == 0x10 )
+				YM2608IRQFlagWrite(&(OPN->ST),n,v);
+			break;
+		default:
+			OPNWriteReg(OPN,addr|0x100,v);
+		}
+	}
+	return OPN->ST.irq;
+}
+unsigned char YM2608Read(int n,int a)
+{
+	YM2608 *F2608 = &(FM2608[n]);
+	int addr = F2608->OPN.ST.address;
+	int ret = 0;
+
+	switch( a&3 ){
+	case 0:	/* status 0 : YM2203 compatible */
+		/* BUSY:x:x:x:x:x:FLAGB:FLAGA */
+		if(addr==0xff) ret = 0x00; /* ID code */
+		else ret = F2608->OPN.ST.status & 0x83;
+		break;
+	case 1:	/* status 0 */
+		if( addr < 16 ) ret = SSGRead(n);
+		break;
+	case 2:	/* status 1 : + ADPCM status */
+		/* BUSY:x:PCMBUSY:ZERO:BRDY:EOS:FLAGB:FLAGA */
+		if(addr==0xff) ret = 0x00; /* ID code */
+		else ret = F2608->OPN.ST.status | (F2608->adpcm[6].flag ? 0x20 : 0);
+		break;
+	case 3:
+		ret = 0;
+		break;
+	}
+	return ret;
+}
+
+int YM2608TimerOver(int n,int c)
+{
+	YM2608 *F2608 = &(FM2608[n]);
+
+	if( c )
+	{	/* Timer B */
+		TimerBOver( &(F2608->OPN.ST) );
+	}
+	else
+	{	/* Timer A */
+		YM2608UpdateReq(n);
+		/* timer update */
+		TimerAOver( &(F2608->OPN.ST) );
+		/* CSM mode key,TL controll */
+		if( F2608->OPN.ST.mode & 0x80 )
+		{	/* CSM mode total level latch and auto key on */
+			CSMKeyControll( &(F2608->CH[2]) );
+		}
+	}
+	return FM2608->OPN.ST.irq;
+}
+
+#if 0
+/* ---------- return the buffer ---------- */
+FMSAMPLE **YM2608Buffer(int n)
+{
+    return &(FM2608[n].Buf);
+}
+#endif
+
+#if 0
+/* ---------- set buffer ---------- */
+int YM2608SetBuffer(int n, FMSAMPLE **buf )
+{
+	int i;
+	for( i = 0 ; i < YM2608_NUMBUF ; i++){
+		FM2608[n].Buf[i] = buf[i];
+		if( cur_chip == &FM2608[n] ) cur_chip = NULL;
+	}
+	return 0;
+}
+#endif
+
+#endif /* BUILD_YM2608 */
+
+#if BUILD_YM2610
+/* -------------------------- YM2610(OPNB) ---------------------------------- */
+//static YM2610 *FM2610=NULL;	/* array of YM2610's */
+
 /* ---------- update one of chip (YM2610B FM6: ADPCM-A6: ADPCM-B:1) ----------- */
 void YM2610UpdateOne(int num, void **buffer, int length)
 {
@@ -2348,8 +2549,6 @@ void YM2610UpdateOne(int num, void **buffer, int length)
 	FM_OPN *OPN   = &(FM2610[num].OPN);
 	static FMSAMPLE  *buf[YM2610_NUMBUF];
 	int dataR,dataL;
-	int dataRA,dataLA;
-	int dataRB,dataLB;
 	int i,j;
 
 	/* buffer setup */
@@ -2377,9 +2576,9 @@ void YM2610UpdateOne(int num, void **buffer, int length)
 	if(errorlog)
 	{
 		if( F2610->CH[0].SLOT[3].evm > ENV_MOD_OFF )
-		  fprintf(errorlog,FM_MSG_YM2610B,num,0);
+			Log(LOG_WAR,FM_MSG_YM2610B,num,0);
 		if( F2610->CH[3].SLOT[3].evm > ENV_MOD_OFF )
-		  fprintf(errorlog,FM_MSG_YM2610B,num,3);
+			Log(LOG_WAR,FM_MSG_YM2610B,num,3);
 	}
 #endif
 	/* update frequency counter */
@@ -2445,7 +2644,9 @@ void YM2610UpdateOne(int num, void **buffer, int length)
 	CALC_TIMER_B( State , length );
 #endif
 }
+#endif /* BUILD_YM2610 */
 
+#if BUILD_YM2610B
 /* ---------- update one of chip (YM2610B FM6: ADPCM-A6: ADPCM-B:1) ----------- */
 void YM2610BUpdateOne(int num, void **buffer, int length)
 {
@@ -2453,8 +2654,6 @@ void YM2610BUpdateOne(int num, void **buffer, int length)
 	FM_OPN *OPN   = &(FM2610[num].OPN);
 	static FMSAMPLE  *buf[YM2610_NUMBUF];
 	int dataR,dataL;
-	int dataRA,dataLA;
-	int dataRB,dataLB;
 	int i,j;
 
 	/* buffer setup */
@@ -2541,8 +2740,11 @@ void YM2610BUpdateOne(int num, void **buffer, int length)
 	CALC_TIMER_B( State , length );
 #endif
 }
+#endif /* BUILD_YM2610B */
 
-int YM2610Init(int num, int clock, int rate, const int *pcmroma, const int *pcmromb,
+#if BUILD_OPNB
+int YM2610Init(int num, int clock, int rate,
+               void **pcmroma,int *pcmsizea,void **pcmromb,int *pcmsizeb,
                FM_TIMERHANDLER TimerHandler,FM_IRQHANDLER IRQHandler)
 
 {
@@ -2579,17 +2781,10 @@ int YM2610Init(int num, int clock, int rate, const int *pcmroma, const int *pcmr
 		FM2610[i].OPN.ST.Timer_Handler = TimerHandler;
 		FM2610[i].OPN.ST.IRQ_Handler   = IRQHandler;
 		/* ADPCM */
-#ifndef __RAINE__
-		FM2610[i].pcmbuf[0] = (char *)(Machine->memory_region[pcmroma[i]]);
-		FM2610[i].pcm_size[0] = Machine->memory_region_length[pcmroma[i]];
-		FM2610[i].pcmbuf[1] = (char *)(Machine->memory_region[pcmromb[i]]);
-		FM2610[i].pcm_size[1] = Machine->memory_region_length[pcmromb[i]];
-#else
-		FM2610[i].pcmbuf[0] = (char *)(YM2610_Rompointers[0]);
-		FM2610[i].pcmbuf[1] = (char *)(YM2610_Rompointers[1]);
-		FM2610[i].pcm_size[0] = YM2610_Romsizes[0];
-		FM2610[i].pcm_size[1] = YM2610_Romsizes[1];
-#endif
+		FM2610[i].pcmbuf[0]   = (char *)(pcmroma[i]);
+		FM2610[i].pcm_size[0] = pcmsizea[i];
+		FM2610[i].pcmbuf[1]   = (char *)(pcmromb[i]);
+		FM2610[i].pcm_size[1] = pcmsizeb[i];
 		/* */
 		YM2610ResetChip(i);
 	}
@@ -2674,197 +2869,6 @@ void YM2610ResetChip(int num)
 	F2610->adpcm_statusmask = 0xbf;
 }
 
-/* 10-1f */
-void YM2610ADPCMWrite1(int n,int r,int v)
-{
-	YM2610 *F2610 = &(FM2610[n]);
-	ADPCM_CH *adpcm = &(F2610->adpcm[6]);
-
-	F2610->adpcmreg[0][r] = v&0xff; /* stock data */
-	switch( r ){
-	case 0x10:	/* START,REC,MEMDATA,REPEAT,SPOFF,--,--,RESET */
-	  if( v&0x80 ){
-		F2610->port0state = v&0x90; /* start request & repeat flag copy */
-		/**** start ADPCM ****/
-		adpcm->volume_w_step = (double)adpcm->volume * adpcm->step / (1<<ADPCM_SHIFT);
-		adpcm->now_addr = (adpcm->start)<<1;
-		adpcm->now_step = (1<<ADPCM_SHIFT)-adpcm->step;
-		/*adpcm->adpcmm   = 0;*/
-		adpcm->adpcmx   = 0;
-		adpcm->adpcml   = 0;
-		adpcm->adpcmd   = ADPCMB_DELTA_DEF;
-		adpcm->next_leveling=0;
-		adpcm->flag     = 1; /* start ADPCM */
-	    if( !adpcm->step ){
-	      adpcm->flag = 0;
-	      F2610->port0state = 0x00;
-	    }
-	    /**** PCMROM check & limit check ****/
-	    if(F2610->pcmbuf[0] == NULL){			// Check ROM Mapped
-#ifdef __RAINE__
-	      PrintDebug("YM2610: Delta-T adpcm rom not mapped\n");
-#endif
-	      adpcm->flag = 0;
-	      F2610->port0state = 0x00;
-	    } else{
-	      if( adpcm->end >= F2610->pcm_size[0] ){		// Check End in Range
-#ifdef __RAINE__
-		PrintDebug("YM2610: Delta-T adpcm end out of range: $%08x\n",adpcm->end);
-#endif
-		adpcm->end = F2610->pcm_size[0] - 1;
-	      }
-	      if( adpcm->start >= F2610->pcm_size[0] ){		// Check Start in Range
-#ifdef __RAINE__
-		PrintDebug("YM2610: Delta-T adpcm start out of range: $%08x\n",adpcm->start);
-#endif
-		adpcm->flag = 0;
-		F2610->port0state = 0x00;
-	      }
-	    }
-	  } else if( v&0x01 ){
-		adpcm->flag = 0;
-	    F2610->port0state = 0x00;
-	  }
-	  break;
-	case 0x11:	/* L,R,-,-,SAMPLE,DA/AD,RAMTYPE,ROM */
-	  F2610->port0control = v&0xff;
-	  adpcm->pan = &outd[(v>>6)&0x03];
-	  break;
-	case 0x12:	/* Start Address L */
-	case 0x13:	/* Start Address H */
-	  adpcm->start  = (F2610->adpcmreg[0][0x13]*0x0100 | F2610->adpcmreg[0][0x12]) << F2610->port0shift;
-		break;
-	case 0x14:	/* Stop Address L */
-	case 0x15:	/* Stop Address H */
-		adpcm->end    = (F2610->adpcmreg[0][0x15]*0x0100 | F2610->adpcmreg[0][0x14]) << F2610->port0shift;
-		adpcm->end   += (1<<F2610->port0shift) - 1;
-		break;
-	case 0x16:	/* Prescale L (PCM and Recoard frq) */
-	case 0x17:	/* Proscale H */
-	case 0x18:	/* ADPCM data */
-	  break;
-	case 0x19:	/* DELTA-N L (ADPCM Playback Prescaler) */
-	case 0x1a:	/* DELTA-N H */
-		adpcm->delta  = (F2610->adpcmreg[0][0x1a]*0x0100 | F2610->adpcmreg[0][0x19]);
-		adpcm->step     = (unsigned int)((float)(adpcm->delta*(1<<(ADPCM_SHIFT-16)))*((float)F2610->OPN.ST.freqbase)/4096.0);
-		adpcm->volume_w_step = (double)adpcm->volume * adpcm->step / (1<<ADPCM_SHIFT);
-		break;
-	case 0x1b:	/* Level control (volume , voltage flat) */
-		{
-			int oldvol = adpcm->volume;
-			adpcm->volume = ((v&0xff)<<(TL_BITS-8)) * ADPCMB_VOLUME_RATE / ADPCMB_DECODE_RANGE;
-			if( oldvol != 0 )
-			{
-				adpcm->adpcml      = (int)((double)adpcm->adpcml      / (double)oldvol * (double)adpcm->volume);
-				adpcm->sample_step = (int)((double)adpcm->sample_step / (double)oldvol * (double)adpcm->volume);
-			}
-			adpcm->volume_w_step = (int)((double)adpcm->volume * (double)adpcm->step / (double)(1<<ADPCM_SHIFT));
-		}
-		break;
-	case 0x1c:	/* Limit address L (YM2608) */
-				/* Extend Status Clear/Mask (YM2610) */
-		F2610->adpcm_statusmask = ~v;
-		F2610->adpcm_arrivedEndAddress &= F2610->adpcm_statusmask;
-		break;
-	case 0x1d:	/* Limit address H (YM2608) */
-	case 0x1e:	/* DAC data (YM2608) */
-	  break;
-	case 0x1f:	/* PCM data port (YM2608) */
-		if ( errorlog )
-			fprintf( errorlog, "YM2610: Write PCM data\n" );
-		break;
-	}
-}
-
-/* 100-12f */
-void YM2610ADPCMWrite2(int n,int r,int v)
-{
-	YM2610 *F2610 = &(FM2610[n]);
-	ADPCM_CH *adpcm = F2610->adpcm;
-	unsigned char c = r&0x07;
-
-	F2610->adpcmreg[1][r] = v&0xff; /* stock data */
-	switch( r ){
-	case 0x00: /* DM,--,C5,C4,C3,C2,C1,C0 */
-	  F2610->port1state = v&0xff;
-	  if( !(v&0x80) ){
-	    /* KEY ON */
-	    for( c = 0; c < 6; c++ ){
-	      if( (1<<c)&v ){
-				/**** start adpcm ****/
-		adpcm[c].step     = (unsigned int)((float)(1<<ADPCM_SHIFT)*((float)F2610->OPN.ST.freqbase)/4096.0/3.0);
-		adpcm[c].now_addr = adpcm[c].start<<1;
-		adpcm[c].now_step = (1<<ADPCM_SHIFT)-adpcm[c].step;
-		/*adpcm[c].adpcmm   = 0;*/
-		adpcm[c].adpcmx   = 0;
-		adpcm[c].adpcmd   = 0;
-		adpcm[c].adpcml   = 0;
-		adpcm[c].flag     = 1;
-		if(F2610->pcmbuf[1]==NULL){			// Check ROM Mapped
-#ifdef __RAINE__
-		  PrintDebug("YM2610: main adpcm rom not mapped\n");
-#else
-		  if ( errorlog )
-		    fprintf( errorlog, "YM2610: Attempting to play regular adpcm but no rom is mapped?\n" );
-#endif
-		  adpcm[c].flag = 0;
-		} else{
-		  if(adpcm[c].end >= F2610->pcm_size[1]){		// Check End in Range
-#ifdef __RAINE__
-		    PrintDebug("YM2610: main adpcm end out of range: $%08x\n",adpcm[c].end);
-#endif
-		    adpcm[c].end = F2610->pcm_size[1]-1;
-		  }
-		  if(adpcm[c].start >= F2610->pcm_size[1]){	// Check Start in Range
-#ifdef __RAINE__
-		    PrintDebug("YM2610: main adpcm start out of range: $%08x\n",adpcm[c].start);
-#endif
-		    adpcm[c].flag = 0;
-		  }
-		}
-		/*** (1<<c)&v ***/
-	      }
-	      /**** for loop ****/
-	    }
-	  } else{
-	    /* KEY OFF */
-	    for( c = 0; c < 6; c++ ){
-	      if( (1<<c)&v )  adpcm[c].flag = 0;
-	    }
-	  }
-	  break;
-	case 0x01:	/* B0-5 = TL 0.75dB step */
-		F2610->TL_adpcmb = &(TL_TABLE[((v&0x3f)^0x3f)*(int)(0.75/EG_STEP)]);
-		for( c = 0; c < 6; c++ ){
-		  adpcm[c].volume = F2610->TL_adpcmb[adpcm[c].IL*(int)(0.75/EG_STEP)] / ADPCMA_DECODE_RANGE / ADPCMA_VOLUME_DIV;
-		  /**** calc pcm * volume data ****/
-		  adpcm[c].adpcml = adpcm[c].adpcmx * adpcm[c].volume;
-		}
-		break;
-	default:
-		c = r&0x07;
-		if( c >= 0x06 ) return;
-		switch( r&0x38 ){
-		case 0x08:	/* B7=L,B6=R,B4-0=IL */
-			adpcm[c].IL = (v&0x1f)^0x1f;
-			adpcm[c].volume = F2610->TL_adpcmb[adpcm[c].IL*(int)(0.75/EG_STEP)] / ADPCMA_DECODE_RANGE / ADPCMA_VOLUME_DIV;
-			adpcm[c].pan    = &outd[(v>>6)&0x03];
-			/**** calc pcm * volume data ****/
-			adpcm[c].adpcml = adpcm[c].adpcmx * adpcm[c].volume;
-			break;
-		case 0x10:
-		case 0x18:
-			adpcm[c].start  = ( (F2610->adpcmreg[1][0x18 + c]*0x0100 | F2610->adpcmreg[1][0x10 + c]) << F2610->port1shift);
-			break;
-		case 0x20:
-		case 0x28:
-			adpcm[c].end    = ( (F2610->adpcmreg[1][0x28 + c]*0x0100 | F2610->adpcmreg[1][0x20 + c]) << F2610->port1shift);
-			adpcm[c].end   += (1<<F2610->port1shift) - 1;
-			break;
-		}
-	}
-}
-
 /* YM2610 write */
 /* n = number  */
 /* a = address */
@@ -2891,7 +2895,16 @@ int YM2610Write(int n, int a,int v)
 			break;
 		case 0x10: /* DeltaT ADPCM */
 			YM2610UpdateReq(n);
-			YM2610ADPCMWrite1(n,addr,v);
+			switch(addr)
+			{
+			case 0x1c: /*  FLAG CONTROL : Extend Status Clear/Mask */
+				F2610->adpcm_statusmask = ~v;
+				F2610->adpcm_arrivedEndAddress &= F2610->adpcm_statusmask;
+				break;
+			default:
+				/* 0x10-0x1b */
+				FM_ADPCMBWrite(F2610,addr & 0x0f,v);
+			}
 			break;
 		case 0x20:	/* Mode Register */
 			YM2610UpdateReq(n);
@@ -2910,7 +2923,8 @@ int YM2610Write(int n, int a,int v)
 		YM2610UpdateReq(n);
 		addr = F2610->address1;
 		if( addr < 0x30 )
-			YM2610ADPCMWrite2(n,addr,v);
+			/* 100-12f : ADPCM A section */
+			FM_ADPCMAWrite(F2610,addr,v);
 		else
 			OPNWriteReg(OPN,addr|0x100,v);
 	}
@@ -3002,7 +3016,7 @@ int YM2610SetBuffer(int n, FMSAMPLE **buf )
 #endif /* BUILD_YM2610 */
 
 
-#ifdef BUILD_YM2612
+#if BUILD_YM2612
 /*******************************************************************************/
 /*		YM2612 local section                                                   */
 /*******************************************************************************/
@@ -3208,10 +3222,6 @@ int YM2612Write(int n, int a,int v)
 	case 3:	/* data port 1    */
 		addr = F2612->address1;
 		YM2612UpdateReq(n);
-#ifdef FM_DEBUG
-		if( addr == 0x28 ) OPNWriteMode(&(F2612->OPN),addr,v|0x04);
-		else
-#endif
 		OPNWriteReg(&(F2612->OPN),addr|0x100,v);
 		break;
 	}
@@ -3224,7 +3234,11 @@ unsigned char YM2612Read(int n,int a)
 
 	switch( a&3){
 	case 0:	/* status 0 */
+		return F2612->OPN.ST.status;
+	case 1:
 	case 2:
+	case 3:
+		Log(LOG_WAR,"YM2612 #%d:A=%d read unmapped area\n");
 		return F2612->OPN.ST.status;
 	}
 	return 0;
@@ -3269,7 +3283,7 @@ int YM2612SetBuffer(int n, FMSAMPLE **buf )
 
 
 
-#ifdef BUILD_YM2151
+#if BUILD_YM2151
 /*******************************************************************************/
 /*		YM2151 local section                                                   */
 /*******************************************************************************/
@@ -3296,7 +3310,7 @@ void OPMInitTable( int num )
 		pom = 6.875 * pow (2, ((i+4*64)*1.5625/1200.0) ); /*13.75Hz is note A 12semitones below A-0, so D#0 is 4 semitones above then*/
 		/*calculate phase increment for above precounted Hertz value*/
 		OPM->KC_TABLE[i] = (unsigned int)(pom * rate);
-		/*if(errorlog) fprintf(errorlog,"OPM KC %d = %x\n",i,OPM->KC_TABLE[i]);*/
+		/*Log(LOG_WAR,"OPM KC %d = %x\n",i,OPM->KC_TABLE[i]);*/
 	}
 
 	/* make time tables */
@@ -3403,7 +3417,7 @@ void OPMWriteReg(int n, int r, int v)
 			/* b0-4 noise freq  */
 			if( v & 0x80 ){
 				/* !!!!! do not supported noise mode  !!!!! */
-				if(errorlog) fprintf(errorlog,"OPM Noise mode sel ( not supported )\n");
+				Log(LOG_WAR,"OPM Noise mode sel ( not supported )\n");
 			}
 			OPM->NReg = v & 0x8f;
 			break;

@@ -292,9 +292,9 @@ static struct GfxLayout spritelayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x00000, &charlayout,            0,  1 },
-	{ 1, 0x02000, &backlayout,         1*16, 16 },
-	{ 1, 0x12000, &spritelayout, 1*16+16*16, 64 },
+	{ 1, 0x00000, &charlayout,            0,   1 },
+	{ 1, 0x02000, &backlayout,         1*16,  16 },
+	{ 1, 0x12000, &spritelayout, 1*16+16*16, 256 },
 	{ -1 } /* end of array */
 };
 
@@ -356,7 +356,7 @@ static struct MachineDriver ym3526_machine_driver =
 	/* video hardware */
 	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
 	gfxdecodeinfo,
-	256, 1*16+16*16+16*64,
+	256, 1*16+16*16+16*256,
 	terrac_vh_convert_color_prom,
 
 	VIDEO_TYPE_RASTER,
@@ -404,7 +404,7 @@ static struct MachineDriver ym2203_machine_driver =
 	/* video hardware */
 	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
 	gfxdecodeinfo,
-	256, 1*16+16*16+16*64,
+	256, 1*16+16*16+16*256,
 	terrac_vh_convert_color_prom,
 
 	VIDEO_TYPE_RASTER,
@@ -431,13 +431,13 @@ static struct MachineDriver ym2203_machine_driver =
 
 ROM_START( terracre_rom )
 	ROM_REGION(0x20000)	/* 128K for 68000 code */
-	ROM_LOAD_ODD( "1a_4b.rom",    0x00000, 0x04000, 0x76f17479 )
+	ROM_LOAD_ODD ( "1a_4b.rom",    0x00000, 0x04000, 0x76f17479 )
 	ROM_LOAD_EVEN( "1a_4d.rom",    0x00000, 0x04000, 0x8119f06e )
-	ROM_LOAD_ODD( "1a_6b.rom",    0x08000, 0x04000, 0xba4b5822 )
+	ROM_LOAD_ODD ( "1a_6b.rom",    0x08000, 0x04000, 0xba4b5822 )
 	ROM_LOAD_EVEN( "1a_6d.rom",    0x08000, 0x04000, 0xca4852f6 )
-	ROM_LOAD_ODD( "1a_7b.rom",    0x10000, 0x04000, 0xd0771bba )
+	ROM_LOAD_ODD ( "1a_7b.rom",    0x10000, 0x04000, 0xd0771bba )
 	ROM_LOAD_EVEN( "1a_7d.rom",    0x10000, 0x04000, 0x029d59d9 )
-	ROM_LOAD_ODD( "1a_9b.rom",    0x18000, 0x04000, 0x69227b56 )
+	ROM_LOAD_ODD ( "1a_9b.rom",    0x18000, 0x04000, 0x69227b56 )
 	ROM_LOAD_EVEN( "1a_9d.rom",    0x18000, 0x04000, 0x5a672942 )
 
 	ROM_REGION_DISPOSE(0x28000)
@@ -468,13 +468,13 @@ ROM_END
 
 ROM_START( terracra_rom )
 	ROM_REGION(0x20000)	/* 128K for 68000 code */
-	ROM_LOAD_ODD( "1a_4b.rom",    0x00000, 0x04000, 0x76f17479 )
+	ROM_LOAD_ODD ( "1a_4b.rom",    0x00000, 0x04000, 0x76f17479 )
 	ROM_LOAD_EVEN( "1a_4d.rom",    0x00000, 0x04000, 0x8119f06e )
-	ROM_LOAD_ODD( "1a_6b.rom",    0x08000, 0x04000, 0xba4b5822 )
+	ROM_LOAD_ODD ( "1a_6b.rom",    0x08000, 0x04000, 0xba4b5822 )
 	ROM_LOAD_EVEN( "1a_6d.rom",    0x08000, 0x04000, 0xca4852f6 )
-	ROM_LOAD_ODD( "1a_7b.rom",    0x10000, 0x04000, 0xd0771bba )
+	ROM_LOAD_ODD ( "1a_7b.rom",    0x10000, 0x04000, 0xd0771bba )
 	ROM_LOAD_EVEN( "1a_7d.rom",    0x10000, 0x04000, 0x029d59d9 )
-	ROM_LOAD_ODD( "1a_9b.rom",    0x18000, 0x04000, 0x69227b56 )
+	ROM_LOAD_ODD ( "1a_9b.rom",    0x18000, 0x04000, 0x69227b56 )
 	ROM_LOAD_EVEN( "1a_9d.rom",    0x18000, 0x04000, 0x5a672942 )
 
 	ROM_REGION_DISPOSE(0x28000)

@@ -1000,15 +1000,15 @@ ROM_END
 static const char *vanguard_sample_names[] =
 {
 	"*vanguard",
-	"fire.sam",
-	"explsion.sam",
+	"fire.wav",
+	"explsion.wav",
 	0
 };
 
 static const char *fantasy_sample_names[] =
 {
 	"*vanguard",
-	"explsion.sam",
+	"explsion.wav",
 	0
 };
 

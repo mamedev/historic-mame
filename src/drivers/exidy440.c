@@ -227,7 +227,7 @@ extern unsigned char *exidy440_sound_banks;
 extern unsigned char *exidy440_sound_volume;
 extern double exidy440_sound_gain;
 
-int exidy440_sh_start(void);
+int exidy440_sh_start(const struct MachineSound *msound);
 void exidy440_sh_stop(void);
 void exidy440_sh_update(void);
 int exidy440_sound_interrupt(void);

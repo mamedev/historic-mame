@@ -1,5 +1,5 @@
 /****************************************************************************
- *	The new MAME debugger V0.51
+ *	The new MAME debugger V0.53
  *	Written by:   Juergen Buchmueller (so far - help welcome! :)
  *
  *	Based on code found in the preivous version of the MAME debugger
@@ -1010,6 +1010,13 @@ const char *set_ea_info( int what, unsigned value, int size, int access )
 		}
 		break;
 
+	case EA_ZPG_RD:
+	case EA_ZPG_WR:
+	case EA_ZPG_RDWR:
+		result &= 0xff;
+		width = 2;
+		break;
+
 	case EA_ABS_PC: /* Absolute program counter change */
 		result &= AMASK;
 		if( size == EA_INT8 || size == EA_UINT8 )
@@ -1252,7 +1259,10 @@ const char *get_ea_info( unsigned pc )
 		"#",    /* immediate */
 		"=",    /* absolute PC */
 		"$",    /* relative PC */
-		"<",    /* memory read */
+		"<",    /* zero page memory read */
+		">",    /* zero page memory write */
+		"*",    /* zero page memory modify */
+        "<",    /* memory read */
 		">",    /* memory write */
 		"*",    /* memory modify */
 		"P<",   /* port read */
@@ -3200,7 +3210,7 @@ static void cmd_help( void )
 		/* Did not find the start of a command? */
 		if( cmd == INVALID )
 		{
-			dst += sprintf( dst, "Welcome to the new MAME debugger V0.51!") + 1;
+			dst += sprintf( dst, "Welcome to the new MAME debugger V0.53!") + 1;
 			dst += sprintf( dst, " " ) + 1;
 			dst += sprintf( dst, "Many commands accept either a value or a register name.") + 1;
 			dst += sprintf( dst, "You can indeed type either \"R HL = SP\" or \"R HL = 1FD0\".") + 1;
@@ -3587,6 +3597,12 @@ static void cmd_brk_exec_set( void )
 			DBG.brk_exec_reset = 0;
         }
     }
+	else
+	{
+		DBG.brk_exec = DBGDASM.pc_cur;
+		DBG.brk_exec_times = 0;
+		DBG.brk_exec_reset = 0;
+	}
 	dbg_update = 1;
     edit_cmds_reset();
 }
@@ -4402,11 +4418,11 @@ static void cmd_trace_to_file( void )
 static void cmd_dasm_up( void )
 {
 	if ( (DBGDASM.pc_cur >= dasm_line( DBGDASM.pc_top, 1 ) ) &&
-		 (DBGDASM.pc_cur < DBGDASM.pc_end) )
+		 ((DBGDASM.pc_cur < DBGDASM.pc_end) || (DBGDASM.pc_end < DBGDASM.pc_top)) )
 	{
 		unsigned dasm_pc_1st = DBGDASM.pc_top;
 		unsigned dasm_pc_2nd = DBGDASM.pc_top;
-		while( dasm_pc_2nd < DBGDASM.pc_end )
+		while( dasm_pc_2nd != DBGDASM.pc_end )
 		{
 			dasm_pc_2nd = dasm_line( dasm_pc_1st, 1 );
 
@@ -4430,15 +4446,15 @@ static void cmd_dasm_up( void )
 		 * If we can't find one then just go back one byte,
 		 * which means that a previous guess was wrong.
 		 */
-		unsigned dasm_pc_tmp = lshift((rshift(DBGDASM.pc_top) - INSTL) & AMASK);
-		if( dasm_pc_tmp > DBGDASM.pc_end )
-			dasm_pc_tmp = 0;
-		while( dasm_pc_tmp < DBGDASM.pc_top )
+		unsigned dasm_pc_tmp = rshift(DBGDASM.pc_top - lshift(INSTL)) & AMASK;
+		int i;
+		for( i = 0; i < INSTL; i += ALIGN )
 		{
-			if( dasm_line( dasm_pc_tmp, 1 ) == DBGDASM.pc_top )
+			if( dasm_line( lshift(dasm_pc_tmp), 1 ) == DBGDASM.pc_top )
 				break;
 			dasm_pc_tmp += ALIGN;
 		}
+		dasm_pc_tmp = lshift(dasm_pc_tmp);
 		if( dasm_pc_tmp == DBGDASM.pc_top )
 			dasm_pc_tmp -= ALIGN;
 		DBGDASM.pc_cur = dasm_pc_tmp;
@@ -4470,27 +4486,26 @@ static void cmd_dasm_page_up( void )
 {
 	UINT32 i;
     /*
-     * This uses a 'rolling window' of start
-     *  addresses to work out the best address to
-     *  use to generate the previous pagefull of
-     *  disassembly - CM 980428
+	 * This uses a 'rolling window' of start addresses to work out
+	 * the best address to use to generate the previous pagefull of
+	 * disassembly - CM 980428
      */
 	if( DBGDASM.pc_top > 0 )
     {
-        unsigned dasm_pc_tmp[50];   /* needs to be > max windows height */
+		unsigned dasm_pc_row[50];	/* needs to be > max windows height */
         unsigned h = win_get_h(WIN_DASM(activecpu));
-		unsigned dasm_pc_1st = lshift((rshift(DBGDASM.pc_top) - INSTL * h) & AMASK);
+		unsigned dasm_pc_tmp = lshift((rshift(DBGDASM.pc_top) - h * INSTL) & AMASK);
 
-		if( dasm_pc_1st > DBGDASM.pc_top )
+		if( dasm_pc_tmp > DBGDASM.pc_top )
 		{
 			DBGDASM.pc_top = 0;
         }
         else
         {
-			for( i= 0; dasm_pc_1st < DBGDASM.pc_top; i++ )
+			for( i= 0; dasm_pc_tmp < DBGDASM.pc_top; i++ )
 			{
-				dasm_pc_tmp[i % h] = dasm_pc_1st;
-				dasm_pc_1st = dasm_line( dasm_pc_1st, 1 );
+				dasm_pc_row[i % h] = dasm_pc_tmp;
+				dasm_pc_tmp = dasm_line( dasm_pc_tmp, 1 );
 			}
 
 			/*
@@ -4499,13 +4514,13 @@ static void cmd_dasm_page_up( void )
 			 */
 			if( i < h )
 			{
-				dasm_pc_1st = dasm_pc_tmp[0];
+				dasm_pc_tmp = dasm_pc_row[0];
 				win_msgbox(cur_col[E_ERROR], "DBGDASM page up",
 					"Increase cpu_intf[].max_inst_len? Line = %d\n", i);
 			}
 			else
 			{
-				DBGDASM.pc_top = dasm_pc_tmp[(i+ 1) % h];
+				DBGDASM.pc_top = dasm_pc_row[(i + 1) % h];
 			}
 		}
     }
@@ -4546,7 +4561,7 @@ static void cmd_dasm_home( void )
 static void cmd_dasm_end( void )
 {
 	unsigned h = win_get_h(WIN_DASM(activecpu));
-	unsigned tmp_address = lshift(AMASK - h * INSTL);
+	unsigned tmp_address = lshift(AMASK - h * INSTL + 1);
 	unsigned end_address;
 	for( ; ; )
 	{
@@ -4633,7 +4648,8 @@ static void cmd_dasm_hist_follow( void )
                 DBG.hist_cnt++;
             }
 			else
-			if( access == EA_MEM_RD || access == EA_MEM_WR || access == EA_MEM_RDWR )
+			if( access == EA_MEM_RD || access == EA_MEM_WR || access == EA_MEM_RDWR ||
+				access == EA_ZPG_RD || access == EA_ZPG_WR || access == EA_ZPG_RDWR )
 			{
 				DBGMEM[0].offset = address	% DBGMEM[0].size;
 				DBGMEM[0].base = address - DBGMEM[0].offset;

@@ -115,7 +115,7 @@ int exidy_sh8253_r(int offset);
 int exidy_sh6840_r(int offset);
 void exidy_sh6840_w(int offset,int data);
 
-extern int exidy_sh_start(void);
+extern int exidy_sh_start(const struct MachineSound *msound);
 extern void exidy_sh_stop(void);
 
 /* These are defined in vidhrdw/exidy.c */
@@ -160,7 +160,7 @@ extern unsigned char exidy_collision_mask;
 /* These are defined in sndhrdw/targ.c */
 extern unsigned char targ_spec_flag;
 extern void targ_sh_w(int offset,int data);
-extern int targ_sh_start(void);
+extern int targ_sh_start(const struct MachineSound *msound);
 extern void targ_sh_stop(void);
 
 
@@ -892,11 +892,11 @@ static unsigned short pepper2_colortable[] =
 static const char *targ_sample_names[] =
 {
 	"*targ",
-	"expl.sam",
-	"shot.sam",
-	"sexpl.sam",
-	"spslow.sam",
-	"spfast.sam",
+	"expl.wav",
+	"shot.wav",
+	"sexpl.wav",
+	"spslow.wav",
+	"spfast.wav",
 	0       /* end of array */
 };
 

@@ -309,11 +309,11 @@ char *ym3812_pDrumNames[5] = { "ym3812/bassdrum.raw", "ym3812/snardrum.raw", "ym
 #ifdef MAMEVER
 static const char *ym3812_pDrumNames[] =
 {
-	"bassdrum.sam",
-	"snardrum.sam",
-	"tomtom.sam",
-	"topcmbal.sam",
-	"hihat.sam",
+	"bassdrum.wav",
+	"snardrum.wav",
+	"tomtom.wav",
+	"topcmbal.wav",
+	"hihat.wav",
 	0
 };
 #endif

@@ -308,10 +308,10 @@ static struct MachineDriver machine_driver =
 static const char *tankbatt_sample_names[] =
 {
 	"*tankbatt",
-	"fire.sam",
-	"engine1.sam",
-	"engine2.sam",
-	"explode1.sam",
+	"fire.wav",
+	"engine1.wav",
+	"engine2.wav",
+	"explode1.wav",
     0	/* end of array */
 };
 

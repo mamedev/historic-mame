@@ -2,7 +2,7 @@
 #include "vidhrdw/generic.h"
 
 
-static struct osd_bitmap *tmpbitmap2;
+static struct osd_bitmap *tmpbitmap2,*tmpbitmap3;
 static int scroll0,scroll1;
 static int palette_bank;
 static const unsigned char *pacland_color_prom;
@@ -53,16 +53,22 @@ void pacland_vh_convert_color_prom(unsigned char *palette, unsigned short *color
 	/* color_prom now points to the beginning of the lookup table */
 
 	/* Sprites */
-	for (i = 0;i < TOTAL_COLORS(2)/2;i++)
+	for (i = 0;i < TOTAL_COLORS(2)/3;i++)
 	{
 		COLOR(2,i) = *(color_prom++);
+
+		/* color 0x7f is special, it makes the foreground tiles it overlaps */
+		/* transparent (used in round 19) */
+		if (COLOR(2,i) == 0x7f) COLOR(2,i + 2*TOTAL_COLORS(2)/3) = COLOR(2,i);
+		else COLOR(2,i + 2*TOTAL_COLORS(2)/3) = 0xff;
+
 		/* transparent colors are 0x7f and 0xff - map all to 0xff */
 		if (COLOR(2,i) == 0x7f) COLOR(2,i) = 0xff;
 
 		/* high priority colors which appear over the foreground even when */
 		/* the foreground has priority over sprites */
-		if (COLOR(2,i) >= 0xf0) COLOR(2,i + TOTAL_COLORS(2)/2) = COLOR(2,i);
-		else COLOR(2,i + TOTAL_COLORS(2)/2) = 0xff;
+		if (COLOR(2,i) >= 0xf0) COLOR(2,i + TOTAL_COLORS(2)/3) = COLOR(2,i);
+		else COLOR(2,i + TOTAL_COLORS(2)/3) = 0xff;
 	}
 
 	/* Foreground */
@@ -103,7 +109,15 @@ int pacland_vh_start( void )
 
 	if ( ( tmpbitmap2 = osd_create_bitmap( 64*8, 32*8 ) ) == 0 )
 	{
+		osd_free_bitmap(tmpbitmap);
+		free( dirtybuffer );
+		return 1;
+	}
+
+	if ( ( tmpbitmap3 = osd_create_bitmap(Machine->drv->screen_width,Machine->drv->screen_height) ) == 0 )
+	{
 		osd_free_bitmap(tmpbitmap2);
+		osd_free_bitmap(tmpbitmap);
 		free( dirtybuffer );
 		return 1;
 	}
@@ -115,9 +129,10 @@ int pacland_vh_start( void )
 
 void pacland_vh_stop(void)
 {
+	osd_free_bitmap(tmpbitmap3);
 	osd_free_bitmap(tmpbitmap2);
+	osd_free_bitmap(tmpbitmap);
 	free( dirtybuffer );
-	osd_free_bitmap( tmpbitmap );
 }
 
 
@@ -180,6 +195,7 @@ void pacland_bankswitch_w(int offset,int data)
 			palette_change_color(i,r,g,b);
 		}
 	}
+	palette_change_color(0x7f,8,8,8);	/* make color 0x7f unique so we can use it for transparency */
 }
 
 
@@ -198,7 +214,7 @@ static void pacland_draw_sprites( struct osd_bitmap *bitmap,int priority)
 		int gfx = ( spriteram_3[offs] >> 7 ) & 1;
 		int color = ( spriteram[offs+1] & 0x3f ) + 64 * priority;
 		int x = (spriteram_2[offs+1]) + 0x100*(spriteram_3[offs+1] & 1) - 48;
-		int y = 256 - spriteram_2[offs] - 24;
+		int y = 256 - spriteram_2[offs] - 23;
 		int flipy = spriteram_3[offs] & 2;
 		int flipx = spriteram_3[offs] & 1;
 
@@ -343,6 +359,7 @@ void pacland_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	}
 
 	/* copy scrolled contents */
+	fillbitmap(tmpbitmap3,Machine->pens[0x7f],&Machine->drv->visible_area);
 	{
 		int i,scroll[32];
 
@@ -354,12 +371,15 @@ void pacland_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 				scroll[i] = -scroll0;
 		}
 
-		copyscrollbitmap( bitmap, tmpbitmap2, 32, scroll, 0, 0, &Machine->drv->visible_area, TRANSPARENCY_COLOR, 0xff );
+		copyscrollbitmap( tmpbitmap3, tmpbitmap2, 32, scroll, 0, 0, &Machine->drv->visible_area, TRANSPARENCY_COLOR, 0xff );
 	}
+	pacland_draw_sprites(tmpbitmap3,2);
+	copybitmap(bitmap,tmpbitmap3,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_COLOR,0x7f);
 
 	pacland_draw_sprites(bitmap,0);
 
-	/* redraw the tiles which have priority over the background */
+	/* redraw the tiles which have priority over the sprites */
+	fillbitmap(tmpbitmap3,Machine->pens[0x7f],&Machine->drv->visible_area);
 	for ( offs = 0; offs < videoram_size / 2; offs += 2 )
 	{
 		if (videoram[offs+1] & 0x20)
@@ -383,7 +403,7 @@ void pacland_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			code = videoram[offs] + ((videoram[offs+1] & 0x01) << 8);
 			color = ((videoram[offs+1] & 0x1e) >> 1) + ((code & 0x1e0) >> 1);
 
-			drawgfx(bitmap,Machine->gfx[0],
+			drawgfx(tmpbitmap3,Machine->gfx[0],
 					code,
 					color,
 					flipx,flipy,
@@ -391,6 +411,8 @@ void pacland_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 					&Machine->drv->visible_area,TRANSPARENCY_COLOR,0xff);
 		}
 	}
+	pacland_draw_sprites(tmpbitmap3,2);
+	copybitmap(bitmap,tmpbitmap3,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_COLOR,0x7f);
 
 	pacland_draw_sprites(bitmap,1);
 }

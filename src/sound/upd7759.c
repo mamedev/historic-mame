@@ -278,9 +278,10 @@ if (errorlog)
  */
 
 
-int UPD7759_sh_start (const struct UPD7759_interface *intf)
+int UPD7759_sh_start (const struct MachineSound *msound)
 {
 	int i, j;
+	const struct UPD7759_interface *intf = msound->sound_interface;
 
 	/* compute the difference tables */
 	ComputeTables ();
@@ -314,7 +315,7 @@ int UPD7759_sh_start (const struct UPD7759_interface *intf)
 
 		sprintf(name,"uPD7759 #%d",i);
 
-		channel[i] = stream_init(name, emulation_rate, bits, i, UPD7759_update);
+		channel[i] = stream_init(msound,name, emulation_rate, bits, i, UPD7759_update);
 		stream_set_volume(channel[i], intf->volume[i]);
 	}
 	return 0;

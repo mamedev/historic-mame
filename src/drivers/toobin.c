@@ -53,68 +53,150 @@ EEPROM                             FFA000-FFAFFF  R/W  D0-D7
 
 Program RAM                        FFC000-FFFFFF  R/W  D0-D15
 
-
-
-TOOBIN' 6502 MEMORY MAP
-
-Function                                  Address     R/W  Data
----------------------------------------------------------------
-Program RAM                               0000-1FFF   R/W  D0-D7
-
-Music (YM-2151)                           2000-2001   R/W  D0-D7
-
-Read 68010 Port (Input Buffer)            280A        R    D0-D7
-
-Self-test                                 280C        R    D7
-Output Buffer Full (@2A02) (Active High)              R    D5
-Left Coin Switch                                      R    D1
-Right Coin Switch                                     R    D0
-
-Interrupt acknowledge                     2A00        W    xx
-Write 68010 Port (Outbut Buffer)          2A02        W    D0-D7
-Banked ROM select (at 3000-3FFF)          2A04        W    D6-D7
-???                                       2A06        W
-
-Effects                                   2C00-2C0F   R/W  D0-D7
-
-Banked Program ROM (4 pages)              3000-3FFF   R    D0-D7
-Static Program ROM (48K bytes)            4000-FFFF   R    D0-D7
-
 ****************************************************************************/
 
 
 
 #include "driver.h"
 #include "machine/atarigen.h"
+#include "sndhrdw/ataraud2.h"
 #include "vidhrdw/generic.h"
 
 
-extern unsigned char *toobin_interrupt_scan;
 extern unsigned char *toobin_intensity;
 extern unsigned char *toobin_moslip;
 
-int toobin_io_r (int offset);
-int toobin_6502_switch_r (int offset);
-int toobin_playfieldram_r (int offset);
-int toobin_sound_r (int offset);
-int toobin_controls_r (int offset);
+static unsigned char *toobin_interrupt_scan;
+static int scanline_int_state;
+static void *interrupt_timer;
 
-void toobin_interrupt_scan_w (int offset, int data);
-void toobin_interrupt_ack_w (int offset, int data);
-void toobin_sound_reset_w (int offset, int data);
-void toobin_moslip_w (int offset, int data);
-void toobin_6502_bank_w (int offset, int data);
-void toobin_paletteram_w (int offset, int data);
-void toobin_playfieldram_w (int offset, int data);
 
-int toobin_interrupt (void);
-int toobin_sound_interrupt (void);
+int toobin_playfieldram_r(int offset);
 
-void toobin_init_machine (void);
+void toobin_moslip_w(int offset, int data);
+void toobin_paletteram_w(int offset, int data);
+void toobin_playfieldram_w(int offset, int data);
 
-int toobin_vh_start (void);
-void toobin_vh_stop (void);
+int toobin_vh_start(void);
+void toobin_vh_stop(void);
 void toobin_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+
+void toobin_update_display_list(int scanline);
+
+
+
+/*************************************
+ *
+ *		Initialization
+ *
+ *************************************/
+
+static void toobin_update_interrupts(int vblank, int sound)
+{
+	int newstate = 0;
+
+	if (scanline_int_state)
+		newstate |= 1;
+	if (sound)
+		newstate |= 2;
+
+	if (newstate)
+		cpu_set_irq_line(0, newstate, ASSERT_LINE);
+	else
+		cpu_set_irq_line(0, 7, CLEAR_LINE);
+}
+
+
+void toobin_init_machine(void)
+{
+	atarigen_init_machine(toobin_update_interrupts, 0);
+	ataraud2_reset(1, 2, 1, 0x10);
+
+	scanline_int_state = 0;
+	interrupt_timer = 0;
+}
+
+
+
+/*************************************
+ *
+ *		Interrupt handlers.
+ *
+ *************************************/
+
+int toobin_interrupt(void)
+{
+	/* set a timer to reset the video parameters just before the end of VBLANK */
+	timer_set(TIME_IN_USEC(Machine->drv->vblank_duration - 10), 0, toobin_update_display_list);
+	return ignore_interrupt();
+}
+
+
+void toobin_interrupt_callback(int param)
+{
+	/* generate the interrupt */
+	scanline_int_state = 1;
+	atarigen_update_interrupts();
+
+	/* set a new timer to go off at the same scan line next frame */
+	interrupt_timer = timer_set(TIME_IN_HZ(Machine->drv->frames_per_second), 0, toobin_interrupt_callback);
+}
+
+
+void toobin_interrupt_scan_w(int offset, int data)
+{
+	int oldword = READ_WORD(&toobin_interrupt_scan[offset]);
+	int newword = COMBINE_WORD(oldword, data);
+
+	/* if something changed, update the word in memory */
+	if (oldword != newword)
+	{
+		WRITE_WORD(&toobin_interrupt_scan[offset], newword);
+
+		/* if this is offset 0, modify the timer */
+		if (!offset)
+		{
+			/* remove any previous timer and set a new one */
+			if (interrupt_timer)
+				timer_remove(interrupt_timer);
+			interrupt_timer = timer_set(cpu_getscanlinetime(newword & 0x1ff), 0, toobin_interrupt_callback);
+		}
+	}
+}
+
+
+void toobin_interrupt_ack_w(int offset, int data)
+{
+	scanline_int_state = 0;
+	atarigen_update_interrupts();
+}
+
+
+
+/*************************************
+ *
+ *		I/O read dispatch
+ *
+ *************************************/
+
+int toobin_io_r(int offset)
+{
+	static int hblank = 0x8000;
+	int result = input_port_1_r(offset) << 8;
+
+	/* fake HBLANK by just toggling it every read */
+	result ^= hblank ^= 0x8000;
+	if (atarigen_cpu_to_sound_ready) result ^= 0x2000;
+
+	return result | 0xff;
+}
+
+
+int toobin_controls_r(int offset)
+{
+	return input_port_0_r(offset);
+}
+
 
 
 /*************************************
@@ -153,48 +235,12 @@ static struct MemoryWriteAddress toobin_writemem[] =
 	{ 0xff8340, 0xff8343, toobin_interrupt_scan_w, &toobin_interrupt_scan },
 	{ 0xff8380, 0xff8383, toobin_moslip_w, &toobin_moslip },
 	{ 0xff83c0, 0xff83c3, toobin_interrupt_ack_w },
-	{ 0xff8400, 0xff8403, toobin_sound_reset_w },
+	{ 0xff8400, 0xff8403, atarigen_sound_reset_w },
 	{ 0xff8500, 0xff8503, atarigen_eeprom_enable_w },
 	{ 0xff8600, 0xff8603, MWA_BANK4, &atarigen_hscroll },
 	{ 0xff8700, 0xff8703, MWA_BANK5, &atarigen_vscroll },
 	{ 0xffa000, 0xffafff, atarigen_eeprom_w, &atarigen_eeprom, &atarigen_eeprom_size },
 	{ 0xffc000, 0xffffff, MWA_BANK1 },
-	{ -1 }  /* end of table */
-};
-
-
-
-/*************************************
- *
- *		Sound CPU memory handlers
- *
- *************************************/
-
-static struct MemoryReadAddress toobin_sound_readmem[] =
-{
-	{ 0x0000, 0x1fff, MRA_RAM },
-	{ 0x2000, 0x2001, YM2151_status_port_0_r },
-	{ 0x280a, 0x280a, atarigen_6502_sound_r },
-	{ 0x280c, 0x280c, toobin_6502_switch_r },
-	{ 0x280e, 0x280e, MRA_NOP },
-	{ 0x2c00, 0x2c0f, pokey1_r },
-	{ 0x3000, 0x3fff, MRA_BANK8 },
-	{ 0x4000, 0xffff, MRA_ROM },
-	{ -1 }  /* end of table */
-};
-
-
-static struct MemoryWriteAddress toobin_sound_writemem[] =
-{
-	{ 0x0000, 0x1fff, MWA_RAM },
-	{ 0x2000, 0x2000, YM2151_register_port_0_w },
-	{ 0x2001, 0x2001, YM2151_data_port_0_w },
-	{ 0x2a00, 0x2a00, MWA_NOP },
-	{ 0x2a02, 0x2a02, atarigen_6502_sound_w },
-	{ 0x2a04, 0x2a04, toobin_6502_bank_w },
-	{ 0x2a06, 0x2a06, MWA_NOP },
-	{ 0x2c00, 0x2c0f, pokey1_w },
-	{ 0x3000, 0xffff, MWA_ROM },
 	{ -1 }  /* end of table */
 };
 
@@ -208,42 +254,32 @@ static struct MemoryWriteAddress toobin_sound_writemem[] =
 
 INPUT_PORTS_START( toobin_ports )
 	PORT_START	/* IN0 */
-	PORT_BIT( 0xfc, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START2 )
-	PORT_BITX(0x02, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2, "P2 Throw", OSD_KEY_COMMA, IP_JOY_DEFAULT )
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1 )
-	PORT_BITX(0x01, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1, "P1 Throw", OSD_KEY_LCONTROL, IP_JOY_DEFAULT )
-
-	PORT_START	/* IN1 */
-	PORT_BITX(0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_PLAYER1, "P1 Right Hand", OSD_KEY_E, IP_JOY_DEFAULT )
-	PORT_BITX(0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_PLAYER1, "P1 Left Hand", OSD_KEY_Q, IP_JOY_DEFAULT )
-	PORT_BITX(0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_PLAYER1, "P1 Left Foot", OSD_KEY_A, IP_JOY_DEFAULT )
-	PORT_BITX(0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_PLAYER1, "P1 Right Foot", OSD_KEY_D, IP_JOY_DEFAULT )
-	PORT_BITX(0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_PLAYER2, "P2 Right Hand", OSD_KEY_O, IP_JOY_DEFAULT )
-	PORT_BITX(0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_PLAYER2, "P2 Left Hand", OSD_KEY_U, IP_JOY_DEFAULT )
-	PORT_BITX(0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_PLAYER2, "P2 Left Foot", OSD_KEY_J, IP_JOY_DEFAULT )
-	PORT_BITX(0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_PLAYER2, "P2 Right Foot", OSD_KEY_L, IP_JOY_DEFAULT )
-
-	PORT_START	/* IN2 */
-	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNUSED ) /* self test */
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNUSED ) /* input buffer full */
-	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNUSED ) /* output buffer full */
-	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_UNUSED ) /* speech chip ready */
-	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_UNUSED )
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_COIN3 )
-	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_COIN2 )
-	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 )
+	PORT_BITX(0x0001, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_PLAYER2, "P2 Right Foot", OSD_KEY_L, IP_JOY_DEFAULT )
+	PORT_BITX(0x0002, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_PLAYER2, "P2 Left Foot", OSD_KEY_J, IP_JOY_DEFAULT )
+	PORT_BITX(0x0004, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_PLAYER2, "P2 Left Hand", OSD_KEY_U, IP_JOY_DEFAULT )
+	PORT_BITX(0x0008, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_PLAYER2, "P2 Right Hand", OSD_KEY_O, IP_JOY_DEFAULT )
+	PORT_BITX(0x0010, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_PLAYER1, "P1 Right Foot", OSD_KEY_D, IP_JOY_DEFAULT )
+	PORT_BITX(0x0020, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_PLAYER1, "P1 Left Foot", OSD_KEY_A, IP_JOY_DEFAULT )
+	PORT_BITX(0x0040, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_PLAYER1, "P1 Left Hand", OSD_KEY_Q, IP_JOY_DEFAULT )
+	PORT_BITX(0x0080, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_PLAYER1, "P1 Right Hand", OSD_KEY_E, IP_JOY_DEFAULT )
+	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BITX(0x0100, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1, "P1 Throw", OSD_KEY_LCONTROL, IP_JOY_DEFAULT )
+	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BITX(0x0200, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2, "P2 Throw", OSD_KEY_COMMA, IP_JOY_DEFAULT )
+	PORT_BIT( 0xfc00, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START	/* DSW */
-	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNUSED )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_VBLANK )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x03, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_BITX(    0x10, 0x10, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Self Test", OSD_KEY_F2, IP_JOY_NONE )
 	PORT_DIPSETTING(    0x10, DEF_STR( Off ))
 	PORT_DIPSETTING(    0x00, DEF_STR( On ))
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BIT( 0x03, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_VBLANK )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNUSED )
+
+	ATARI_AUDIO_2_PORT	/* audio board port */
 INPUT_PORTS_END
 
 
@@ -292,47 +328,10 @@ static struct GfxLayout toobin_spritelayout =
 
 static struct GfxDecodeInfo toobin_gfxdecodeinfo[] =
 {
-	{ 1, 0x280000, &toobin_charlayout,     512, 64 },
-	{ 1, 0x000000, &toobin_pflayout,         0, 16 },
-	{ 1, 0x080000, &toobin_spritelayout,   256, 16 },
+	{ 2, 0x280000, &toobin_charlayout,     512, 64 },
+	{ 2, 0x000000, &toobin_pflayout,         0, 16 },
+	{ 2, 0x080000, &toobin_spritelayout,   256, 16 },
 	{ -1 } /* end of array */
-};
-
-
-
-/*************************************
- *
- *		Sound definitions
- *
- *************************************/
-
-static struct POKEYinterface pokey_interface =
-{
-	1,	/* 1 chip */
-	1789790,	/* ? */
-	40,
-	POKEY_DEFAULT_GAIN,
-	NO_CLIP,
-	/* The 8 pot handlers */
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	/* The allpot handler */
-	{ 0 }
-};
-
-
-static struct YM2151interface ym2151_interface =
-{
-	1,			/* 1 chip */
-	3579580,	/* 3.58 MHZ ? */
-	{ YM3012_VOL(80,OSD_PAN_LEFT,80,OSD_PAN_RIGHT) },
-	{ 0 }
 };
 
 
@@ -355,13 +354,8 @@ static struct MachineDriver toobin_machine_driver =
 			toobin_interrupt,1
 		},
 		{
-			CPU_M6502,
-			1789790,
-			2,
-			toobin_sound_readmem,toobin_sound_writemem,0,0,
-			0,0,
-			toobin_sound_interrupt,250
-		},
+			ATARI_AUDIO_2_CPU(1)
+		}
 	},
 	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
 	10,    /* we need some interleave since the sound CPU talks to the main CPU */
@@ -380,17 +374,7 @@ static struct MachineDriver toobin_machine_driver =
 	toobin_vh_screenrefresh,
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		{
-			SOUND_YM2151,
-			&ym2151_interface
-		},
-		{
-			SOUND_POKEY,
-			&pokey_interface
-		}
-	}
+	ATARI_AUDIO_2_INTERFACES
 };
 
 
@@ -411,6 +395,10 @@ ROM_START( toobin_rom )
 	ROM_LOAD_ODD ( "061-3139.bin", 0x40000, 0x10000, 0x6f8a719a )
 	ROM_LOAD_EVEN( "061-1136.bin", 0x60000, 0x10000, 0x5ae3eeac )
 	ROM_LOAD_ODD ( "061-1140.bin", 0x60000, 0x10000, 0xdacbbd94 )
+
+	ROM_REGION(0x14000)	/* 64k for 6502 code */
+	ROM_LOAD( "061-1114.bin", 0x10000, 0x4000, 0xc0dcce1a )
+	ROM_CONTINUE(             0x04000, 0xc000 )
 
 	ROM_REGION_DISPOSE(0x284000)	/* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "061-1101.bin", 0x000000, 0x10000, 0x02696f15 )  /* bank 0 (4 bpp)*/
@@ -446,10 +434,6 @@ ROM_START( toobin_rom )
 	ROM_LOAD( "061-1132.bin", 0x230000, 0x10000, 0xc79f8ffc )
 	ROM_RELOAD(               0x270000, 0x10000 )
 	ROM_LOAD( "061-1142.bin", 0x280000, 0x04000, 0xa6ab551f )  /* alpha font */
-
-	ROM_REGION(0x14000)	/* 64k for 6502 code */
-	ROM_LOAD( "061-1114.bin", 0x10000, 0x4000, 0xc0dcce1a )
-	ROM_CONTINUE(             0x04000, 0xc000 )
 ROM_END
 
 

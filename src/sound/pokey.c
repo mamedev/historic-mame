@@ -441,7 +441,7 @@ UINT32 i, x = 0;
 /*****************************************************************************/
 
 /* ASG 980126 - added a return parameter to indicate failure */
-int Pokey_sound_init (int freq17, int playback_freq, int volume, int num_pokeys, int use_clip)
+int Pokey_sound_init (const struct MachineSound *msound,int freq17, int playback_freq, int volume, int num_pokeys, int use_clip)
 {
 	int chip, chan;
 
@@ -505,7 +505,7 @@ int Pokey_sound_init (int freq17, int playback_freq, int volume, int num_pokeys,
 		char name[40];
 
         sprintf(name, "Pokey #%d", chip);
-        channel[chip] = stream_init(name, playback_freq, 8, chip, Pokey_process);
+        channel[chip] = stream_init(msound,name, playback_freq, 8, chip, Pokey_process);
 		stream_set_volume(channel[chip],volume);
 
         if (channel[chip] == -1)
@@ -1359,13 +1359,13 @@ void Pokey_process (int chip, void *buffer, int n)
     }
 }
 
-int pokey_sh_start (const struct POKEYinterface *interface)
+int pokey_sh_start(const struct MachineSound *msound)
 {
 	int res;
 
-    intf = interface;
+    intf = msound->sound_interface;
 
-	res = Pokey_sound_init (intf->baseclock, Machine->sample_rate, intf->volume, intf->num, intf->clip);
+	res = Pokey_sound_init (msound,intf->baseclock, Machine->sample_rate, intf->volume, intf->num, intf->clip);
 
 	return res;
 }

@@ -11,11 +11,12 @@
 
 
 
-unsigned char *gberet_scroll;
+unsigned int gberet_scroll[32];
 unsigned char *gberet_spritebank;
+unsigned char *gberet_scrollram;
 static int interruptenable;
 static int flipscreen;
-
+static int sprites_type;
 
 
 /***************************************************************************
@@ -24,8 +25,7 @@ static int flipscreen;
 
   Green Beret has a 32 bytes palette PROM and two 256 bytes color lookup table
   PROMs (one for sprites, one for characters).
-  I don't know for sure how the palette PROM is connected to the RGB output,
-  but it's probably the usual:
+  The palette PROM is connected to the RGB output, this way:
 
   bit 7 -- 220 ohm resistor  -- BLUE
         -- 470 ohm resistor  -- BLUE
@@ -93,6 +93,15 @@ int gberet_vh_start(void)
 	return 0;
 }
 
+void gberet_init(void)
+{
+	sprites_type = 0;
+}
+
+void gberetb_init(void)
+{
+	sprites_type = 1;
+}
 
 
 /***************************************************************************
@@ -123,6 +132,23 @@ void gberet_e044_w(int offset,int data)
 	/* don't know about the other bits */
 }
 
+void gberet_scroll_w(int offset,int data)
+{
+	gberet_scrollram[offset] = data;
+
+	if (offset < 32)
+		gberet_scroll[offset] = (gberet_scroll[offset] & 0xff00) | data;
+	else
+		gberet_scroll[offset&0x1f] = (gberet_scroll[offset&0x1f] & 0x00ff) | (data << 8);
+}
+
+void gberetb_scroll_w(int offset,int data)
+{
+	if (offset) data |= 0x100;
+
+	for (offset = 6;offset < 29;offset++)
+		gberet_scroll[offset] = data + 64-8;
+}
 
 
 int gberet_interrupt(void)
@@ -145,6 +171,86 @@ int gberet_interrupt(void)
   the main emulation engine.
 
 ***************************************************************************/
+
+static void draw_sprites0(struct osd_bitmap *bitmap)
+{
+	int offs;
+	unsigned char *sr;
+
+	if (*gberet_spritebank & 0x08)
+		sr = spriteram_2;
+	else sr = spriteram;
+
+	for (offs = 0;offs < spriteram_size;offs += 4)
+	{
+		if (sr[offs+3])
+		{
+			int sx,sy,flipx,flipy;
+
+
+			sx = sr[offs+2] - 2*(sr[offs+1] & 0x80);
+			sy = sr[offs+3];
+			if (sprites_type) sy = 240 - sy;
+			flipx = sr[offs+1] & 0x10;
+			flipy = sr[offs+1] & 0x20;
+
+			if (flipscreen)
+			{
+				sx = 240 - sx;
+				sy = 240 - sy;
+				flipx = !flipx;
+				flipy = !flipy;
+			}
+
+			drawgfx(bitmap,Machine->gfx[1],
+					sr[offs+0] + ((sr[offs+1] & 0x40) << 2),
+					sr[offs+1] & 0x0f,
+					flipx,flipy,
+					sx,sy,
+					&Machine->drv->visible_area,TRANSPARENCY_COLOR,0);
+		}
+	}
+}
+
+static void draw_sprites1(struct osd_bitmap *bitmap)
+{
+	int offs;
+	unsigned char *sr;
+
+	sr = spriteram;
+
+	for (offs = spriteram_size - 4;offs >= 0;offs -= 4)
+	{
+		if (sr[offs+1])
+		{
+			int sx,sy,flipx,flipy;
+
+
+			sx = sr[offs+2] - 2*(sr[offs+3] & 0x80);
+			sy = sr[offs+1];
+			if (sprites_type) sy = 240 - sy;
+			flipx = sr[offs+3] & 0x10;
+			flipy = sr[offs+3] & 0x20;
+
+			if (flipscreen)
+			{
+				sx = 240 - sx;
+				sy = 240 - sy;
+				flipx = !flipx;
+				flipy = !flipy;
+			}
+
+			drawgfx(bitmap,Machine->gfx[1],
+					sr[offs+0] + ((sr[offs+3] & 0x40) << 2),
+					sr[offs+3] & 0x0f,
+					flipx,flipy,
+					sx,sy,
+					&Machine->drv->visible_area,TRANSPARENCY_COLOR,0);
+		}
+	}
+}
+
+
 void gberet_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	int offs;
@@ -191,54 +297,18 @@ void gberet_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		if (flipscreen)
 		{
 			for (offs = 0;offs < 32;offs++)
-				scroll[31-offs] = 256 + (gberet_scroll[offs] + 256 * gberet_scroll[offs + 32]);
+				scroll[31-offs] = 256 + gberet_scroll[offs];
 		}
 		else
 		{
 			for (offs = 0;offs < 32;offs++)
-				scroll[offs] = -(gberet_scroll[offs] + 256 * gberet_scroll[offs + 32]);
+				scroll[offs] = -gberet_scroll[offs];
 		}
 
 		copyscrollbitmap(bitmap,tmpbitmap,32,scroll,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
 	}
 
 
-	/* Draw the sprites. */
-	{
-		unsigned char *sr;
-
-
-		if ((*gberet_spritebank & 0x08) != 0)
-			sr = spriteram;
-		else sr = spriteram_2;
-
-		for (offs = 0;offs < spriteram_size;offs += 4)
-		{
-			if (sr[offs+3])
-			{
-				int sx,sy,flipx,flipy;
-
-
-				sx = sr[offs+2] - 2*(sr[offs+1] & 0x80);
-				sy = sr[offs+3];
-				flipx = sr[offs+1] & 0x10;
-				flipy = sr[offs+1] & 0x20;
-
-				if (flipscreen)
-				{
-					sx = 240 - sx;
-					sy = 240 - sy;
-					flipx = !flipx;
-					flipy = !flipy;
-				}
-
-				drawgfx(bitmap,Machine->gfx[1],
-						sr[offs] + ((sr[offs+1] & 0x40) << 2),
-						sr[offs+1] & 0x0f,
-						flipx,flipy,
-						sx,sy,
-						&Machine->drv->visible_area,TRANSPARENCY_COLOR,0);
-			}
-		}
-	}
+	if (sprites_type == 0) draw_sprites0(bitmap);	/* original */
+	else draw_sprites1(bitmap);	/* bootleg */
 }

@@ -109,7 +109,7 @@ static void ComputeTables (void)
  *   Start emulation of several ADPCM output streams
  */
 
-int ADPCM_sh_start (const struct ADPCMinterface *intf)
+int ADPCM_sh_start (const struct MachineSound *msound)
 {
 	int i;
 
@@ -117,43 +117,43 @@ int ADPCM_sh_start (const struct ADPCMinterface *intf)
 	ComputeTables ();
 
 	/* copy the interface pointer to a global */
-	adpcm_intf = intf;
+	adpcm_intf = msound->sound_interface;
 
 	/* set the default sample table */
 	sample_list = (struct ADPCMsample *)Machine->gamedrv->sound_prom;
 
 	/* if there's an init function, call it now to generate the table */
-	if (intf->init)
+	if (adpcm_intf->init)
 	{
 		sample_list = malloc (257 * sizeof (struct ADPCMsample));
 		if (!sample_list)
 			return 1;
 		memset (sample_list, 0, 257 * sizeof (struct ADPCMsample));
-		(*intf->init) (intf, sample_list, 256);
+		(*adpcm_intf->init) (adpcm_intf, sample_list, 256);
 	}
 
 	/* reserve sound channels */
-	channel = get_play_channels (intf->num);
+	channel = get_play_channels (adpcm_intf->num);
 
 	/* compute the emulation rate and buffer size */
 
 #if OVERSAMPLING
-	oversampling = (intf->frequency) ? Machine->sample_rate / intf->frequency + 1 : 1;
+	oversampling = (adpcm_intf->frequency) ? Machine->sample_rate / adpcm_intf->frequency + 1 : 1;
 	if (errorlog) fprintf(errorlog, "adpcm: using %d times oversampling\n", oversampling);
-    buffer_len = intf->frequency * oversampling / Machine->drv->frames_per_second;
+    buffer_len = adpcm_intf->frequency * oversampling / Machine->drv->frames_per_second;
 #else
-	buffer_len = intf->frequency / Machine->drv->frames_per_second;
+	buffer_len = adpcm_intf->frequency / Machine->drv->frames_per_second;
 #endif
     emulation_rate = buffer_len * Machine->drv->frames_per_second;
 
 	/* initialize the voices */
 	memset (adpcm, 0, sizeof (adpcm));
-	for (i = 0; i < intf->num; i++)
+	for (i = 0; i < adpcm_intf->num; i++)
 	{
 		adpcm[i].channel = channel + i;
 		adpcm[i].mask = 0xffffffff;
 		adpcm[i].signal = -2;
-		adpcm[i].volume = intf->volume[i];
+		adpcm[i].volume = adpcm_intf->volume[i];
 
 		/* allocate an output buffer */
 		adpcm[i].buffer = malloc (buffer_len * Machine->sample_bits / 8);
@@ -564,31 +564,34 @@ static int okim6295_command[MAX_OKIM6295];
  *    Start emulation of an OKIM6295-compatible chip
  */
 
-int OKIM6295_sh_start (const struct OKIM6295interface *intf)
+int OKIM6295_sh_start (const struct MachineSound *msound)
 {
 	static struct ADPCMinterface generic_interface;
+	struct MachineSound msound_copy;
 	int i;
 
 	/* save a global pointer to our interface */
-	okim6295_interface = intf;
+	okim6295_interface = msound->sound_interface;
 
 	/* create an interface for the generic system here */
-	generic_interface.num = 4 * intf->num;
-	generic_interface.frequency = intf->frequency;
-	generic_interface.region = intf->region[0];
+	generic_interface.num = 4 * okim6295_interface->num;
+	generic_interface.frequency = okim6295_interface->frequency;
+	generic_interface.region = okim6295_interface->region[0];
 	generic_interface.init = 0;
-	for (i = 0; i < intf->num; i++)
+	for (i = 0; i < okim6295_interface->num; i++)
 		generic_interface.volume[i*4+0] =
 		generic_interface.volume[i*4+1] =
 		generic_interface.volume[i*4+2] =
-		generic_interface.volume[i*4+3] = intf->volume[i];
+		generic_interface.volume[i*4+3] = okim6295_interface->volume[i];
 
 	/* reset the parameters */
-	for (i = 0; i < intf->num; i++)
+	for (i = 0; i < okim6295_interface->num; i++)
 		okim6295_command[i] = -1;
 
 	/* initialize it in the standard fashion */
-	return ADPCM_sh_start (&generic_interface);
+	memcpy(&msound_copy,msound,sizeof(msound));
+	msound_copy.sound_interface = &generic_interface;
+	return ADPCM_sh_start (&msound_copy);
 }
 
 
@@ -791,28 +794,31 @@ static const struct MSM5205interface *msm5205_interface;
  *    Start emulation of an MSM5205-compatible chip
  */
 
-int MSM5205_sh_start (const struct MSM5205interface *intf)
+int MSM5205_sh_start (const struct MachineSound *msound)
 {
 	static struct ADPCMinterface generic_interface;
+	struct MachineSound msound_copy;
 	int i, stream_size, result;
 
 	/* save a global pointer to our interface */
-	msm5205_interface = intf;
+	msm5205_interface = msound->sound_interface;
 
 	/* if there's an interrupt function to be called, set it up */
 	if (msm5205_interface->interrupt)
 		timer_pulse (TIME_IN_HZ (msm5205_interface->frequency), 0, msm5205_interface->interrupt);
 
 	/* create an interface for the generic system here */
-	generic_interface.num = intf->num;
-	generic_interface.frequency = intf->frequency;
+	generic_interface.num = msm5205_interface->num;
+	generic_interface.frequency = msm5205_interface->frequency;
 	generic_interface.region = 0;
 	generic_interface.init = 0;
-	for (i = 0; i < intf->num; i++)
-		generic_interface.volume[i] = intf->volume[i];
+	for (i = 0; i < msm5205_interface->num; i++)
+		generic_interface.volume[i] = msm5205_interface->volume[i];
 
 	/* initialize it in the standard fashion */
-	result = ADPCM_sh_start (&generic_interface);
+	memcpy(&msound_copy,msound,sizeof(msound));
+	msound_copy.sound_interface = &generic_interface;
+	result = ADPCM_sh_start (&msound_copy);
 
 	/* if we succeeded, create streams for everyone */
 	if (!result)
@@ -823,7 +829,7 @@ int MSM5205_sh_start (const struct MSM5205interface *intf)
 			stream_size <<= 1;
 
 		/* allocate streams for everyone */
-		for (i = 0; i < intf->num; i++)
+		for (i = 0; i < msm5205_interface->num; i++)
 		{
 			struct ADPCMVoice *voice = adpcm + i;
 

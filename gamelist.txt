@@ -33,8 +33,9 @@ to list them.
 | Anteater             |  Yes   |   No   |  Yes   |  Yes   |   No   | anteater |
 | Arabian              |  Yes   | Close  |  Yes   |  Yes   |   No   | arabian  |
 | Arkanoid             |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | arkanoid |
-| Arkanoid 2           |  Yes   |  Yes   |  Yes   |  Yes   |   No   | arkanoi2 |
+| Arkanoid 2           |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | arkanoi2 |
 | Arm Wrestling        |  Yes   | Close  |  Bad   |  Yes   |  n/a   | armwrest |
+| Armed Formation      |  Yes   |  Yes   |  Yes   |   No   |   No   | armedf   |
 | Armored Car          |  Yes   |  Yes?  |  Yes   |  Yes   |   No   | armorcar |
 | Asteroids            |  Yes   |  Yes   | Yes(1) |  Yes   |   No   | asteroid |
 | Asteroids Deluxe     |  Yes   |  Yes   |  Yes   |  Yes   |   No   | astdelux |
@@ -82,6 +83,7 @@ to list them.
 | Bull Fight           |  Yes   |  Yes   |  Yes   |  Yes   |   No   | bullfgtj |
 | Bump 'n Jump         |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | bnj      |
 | Burger Time          |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | btime    |
+| Cabal                |  Yes   |  Yes   | Wrong  |   No   |   No   | cabal    |
 | Calipso              |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | calipso  |
 | Canyon Bomber        |  Yes   |  b/w   |   No   |  Yes   |   No   | canyon   |
 | Capcom Bowling       |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | capbowl  |
@@ -118,6 +120,7 @@ to list them.
 | Cosmic Alien         |  Yes   |   No   |   No   |  Yes   |   No   | cosmica  |
 | Cosmic Avenger       |  Yes   |  Yes?  |  Yes   |  Yes   |  Yes   | cavenger |
 | Cosmic Guerilla      |  Yes   |  Yes   | Yes(1) |  Yes   |   No   | cosmicg  |
+| Cosmo Police Galivan |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | galivan  |
 | Crackshot            |  Yes   |  Yes   |  Yes   |  Yes   |   No   | cracksht |
 | Crash                |  Yes   |  Yes   |Partial |  Yes   |   No   | crash    |
 | Crater Raider        |  Yes   |  Yes   |  Yes   |  Yes   |   No   | crater   |
@@ -153,6 +156,7 @@ to list them.
 | Donkey Kong Jr.      |  Yes   |  Yes   | Yes(1) |  Yes   |   No   | dkongjr  |
 | Double Dragon        |  Yes   |  Yes   |  Yes   |  Yes   |   No   | ddragon  |
 | Double Dragon 2      |  Yes   |  Yes   |  Yes   |  Yes   |   No   | ddragon2 |
+| Double Dribble       |  Yes   |  Yes   |No Speech   No   |   No   | ddribble |
 | Dynamite Dux         |   No   |  Yes   |   No   |   No   |   No   | dduxbl   |
 | Dynasty Wars         |  Yes   |  Yes   |  Yes   |   No   |   No   | dwj      |
 | E-Swat               |   No   |  Yes   |   No   |   No   |   No   | eswatbl  |
@@ -194,7 +198,6 @@ to list them.
 | Galactic Warriors    |  Yes   |  Yes   |Partial |   No   |   No   | gwarrior |
 | Galaga               |  Yes   |  Yes   | Yes(1) |  Yes   |  Yes   | galaga   |
 | Galaxian             |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | galaxian |
-| Galivan              |  Yes   | Close  |  Yes   |  Yes   |  Yes   | galivan  |
 | Gals Panic           |  Yes   |  Yes   |  Yes   |   No   |   No   | galpanic |
 | Gaplus               |  Yes   |  Yes   | Yes(1) |   No   |   No   | gaplus   |
 | Gardia               |   No   |  Yes   |  Yes   |   No   |   No   | gardia   |
@@ -207,6 +210,7 @@ to list them.
 | Gingateikoku No GyakushuYes   |  Yes   |  Yes   |  Yes   |   No   | japirem  |
 | Gladiator            |  Yes   |  Yes   |  Yes   |  Yes   |   No   | gladiatr |
 | Glob,The             |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | theglob  |
+| Goindol              |  Yes   |  Yes   |  Yes   |   No   |   No   | goindol  |
 | Golden Axe           |  Yes   |  Yes   |  Yes   |   No   |   No   | goldnaxe |
 | Golden Star          |  Yes   |  Yes   |  Yes   |  Yes   |  n/a   | goldstar |
 | Gondomania           |  Yes   |  Yes   |  Yes   |  Yes   |   No   | gondo    |
@@ -237,10 +241,11 @@ to list them.
 | Hustle               |  Yes   |  b/w   |   No   |   No   |   No   | hustle   |
 | Hyper Sports         |  Yes   |  Yes   | Yes(1) |  Yes   |  Yes   | hyperspt |
 | I'm Sorry            |  Yes   |  Yes   |  Yes   |  Yes   |   No   | imsorry  |
-| I, Robot             |   No   |   No   |   No   |   No   |   No   | irobot   |
+| I, Robot             |   No   |   No   |  Yes   |   No   |   No   | irobot   |
 | Ikari Warriors       |  Yes   |  Yes   |Partial |  Yes   |   No   | ikari    |
 | Indiana Jones        |  Yes   |  Yes   |  Yes   |  Yes   |   No   | indytemp |
 | Inferno              |  Yes   |  Yes   |  Yes   |  Yes   |   No   | inferno  |
+| insector X           |  Yes   |  Yes   |  Yes   |   No   |  Yes   | insectx  |
 | Intrepid             |  Yes   | Close  |  Yes   |  Yes   |  Yes   | intrepid |
 | Invinco              |  Yes   |  Yes?  |   No   |   No   |   No   | invinco  |
 | Invinco / Deep Scan  |  Yes   |  Yes   |   No   |   No   |   No   | invds    |
@@ -318,7 +323,6 @@ to list them.
 | Mario Bros.          |  Yes   |  Yes   |Partl(1)|  Yes   |   No   | mario    |
 | Mat Mania            |  Yes   |  Yes?  |  Yes   |  Yes   |   No   | matmania |
 | Max RPM              |  Yes   |  Yes   |   No   |  Yes   |  n/a   | maxrpm   |
-| Maze Hunter          |  Yes   |  Yes   |  Yes   |   No   |   No   | mazeh    |
 | Meadows Lanes        |  Yes   |  b/w   |   No   |   No   |   No   | medlanes |
 | Mega Man             |  Yes   |  Yes   |   No   |   No   |   No   | megaman  |
 | Mega Twins           |  Yes   |  Yes   |  Yes   |   No   |   No   | mtwins   |
@@ -326,7 +330,7 @@ to list them.
 | Mercs                |  Yes   |  Yes   |  Yes   |   No   |   No   | mercs    |
 | Midnight Resistance  |  Yes   |  Yes   |  Yes   |  Yes   |   No   | midres   |
 | Mikie                |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | mikie    |
-| Millipede            |  Yes   |  Yes   |   No   |  Yes   |   No   | milliped |
+| Millipede            |  Yes   |  Yes   |  Yes   |  Yes   |   No   | milliped |
 | Minefield            |  Yes   |  Yes   |  Yes   |   No   |  n/a   | minefld  |
 | Missile Command      |  Yes   |  Yes   |  Yes   |  Yes   |   No   | missile  |
 | Mister Viking        |  Yes   |  Yes   |  Yes   |  Yes   |   No   | mrviking |
@@ -356,7 +360,7 @@ to list them.
 | Nemesis              |  Yes   |  Yes   |Partial |  Yes   |   No   | nemesis  |
 | Nemo                 |  Yes   |  Yes   |  Yes   |   No   |   No   | nemo     |
 | New Rally X          |  Yes   |  Yes   | Yes(1) |  Yes   |  Yes   | nrallyx  |
-| New Zealand Story    |  Yes   |  Yes   |  Yes   |  Yes   |   No   | tnzs     |
+| New Zealand Story    |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | tnzs     |
 | Nibbler              |  Yes   |  Yes   |Partial |  Yes   |  Yes   | nibbler  |
 | Night Driver         |  Yes   |  b/w   |   No   |   No   |   No   | nitedrvr |
 | Ninja Gai Den        |  Yes   |  Yes   |  Yes   |   No   |  n/a   | gaiden   |
@@ -396,6 +400,7 @@ to list them.
 | Popeye               |  Yes   |  Yes   |  Yes   |  Yes   |   No   | popeye   |
 | Port Man             |  Yes   | Close  |  Yes   |   No   |  Yes   | portman  |
 | Power Spikes         |  Yes   |  Yes   |  Yes   |   No   |   No   | pspikes  |
+| Prehistoric Isle in 1930Yes   |  Yes   |  Yes   |   No   |   No   | prehisle |
 | Psychic 5            |  Yes   |  Yes   |  Yes   |  Yes   |   No   | psychic5 |
 | Psycho-Nics Oscar    |  Yes   |  Yes   |  Yes   |   No   |   No   | oscar    |
 | Pulsar               |  Yes   |  Yes   |   No   |   No   |   No   | pulsar   |
@@ -431,7 +436,7 @@ to list them.
 | Roc'n Rope           |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | rocnrope |
 | RodLand              |  Yes   |  Yes   |  Yes   |   No   |   No   | rodlandj |
 | Rolling Crash        |  Yes   |  Yes   |   No   |   No   |   No   | rollingc |
-| Rolling Thunder      |  Yes   |  Yes   |  Yes   |  Yes   |   No   | rthunder |
+| Rolling Thunder      |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | rthunder |
 | Round-Up             |  Yes   | Close  |  Yes   |  Yes   |  Yes   | roundup  |
 | Route 16             |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | route16  |
 | Rygar                |  Yes   |  Yes   |  Yes   |  Yes   |   No   | rygar    |
@@ -458,6 +463,7 @@ to list them.
 | Shoot Out            |  Yes   |  Yes   |  Yes   |  Yes   |   No   | shootout |
 | Shooting Master      |   No   |   No   |  Yes   |   No   |   No   | shtngmst |
 | Showdown             |  Yes   |  Yes   |  Yes   |  Yes   |   No   | showdown |
+| Sichuan II           |  Yes   |  Yes   |  Yes   |   No   |   No   | sichuan2 |
 | Side Pocket          |  Yes   |   No   |  Yes   |  Yes   |   No   | sidepckt |
 | Side Track           |  Yes   |   No   | Yes(1) |  Yes   |   No   | sidetrac |
 | Sidearms             |  Yes   |  Yes   |  Yes   |  Yes   |   No   | sidearms |
@@ -543,6 +549,7 @@ to list them.
 | Tempest              |  Yes   | Close  |  Yes   |  Yes   |   No   | tempest  |
 | Terminator 2         |   No   |  Yes   |  Yes   |  Yes   |   No   | term2    |
 | Terra Cresta         |  Yes   |  Yes   |  Yes   |  Yes   |   No   | terracre |
+| Terra Force          |  Yes   |  Yes   |  Yes   |   No   |   No   | terraf   |
 | Tetris (Atari)       |  Yes   |  Yes   |  Yes   |  Yes   |  n/a   | atetris  |
 | Tetris (Sega)        |  Yes   |  Yes   |  Yes   |   No   |   No   | tetrisbl |
 | Three Stooges        |  Yes   |  Yes   |Partial |  Yes   |   No   | 3stooges |
@@ -584,6 +591,7 @@ to list them.
 | TwinBee              |  Yes   |  Yes   |Partial |   No   |   No   | twinbee  |
 | Two Tigers           |  Yes   |  Yes   |  Yes   |  Yes   |   No   | twotiger |
 | UN Squadron          |  Yes   |  Yes   |  Yes   |   No   |   No   | unsquad  |
+| Ufo Robo Dangar      |  Yes   |  Yes   |  Yes   |   No   |  Yes   | dangar   |
 | Ufo Senshi Yohko Chan|   No   |  Yes   |  Yes   |   No   |   No   | ufosensi |
 | Up'n Down            |  Yes   |  Yes   |  Yes   |  Yes   |   No   | upndown  |
 | Us vs Them           |Partial.|  Yes   |  Yes   |  Yes   |  n/a   | usvsthem |
@@ -597,6 +605,7 @@ to list them.
 | Vigilante            |  Yes   |  Yes   |  Yes   |  Yes   |   No   | vigilant |
 | Vimana               |  Yes   |  Yes   |   No   |   No   |   No   | vimana   |
 | Vindicators          |  Yes   |   No   |  Yes   |  Yes   |   No   | vindictr |
+| Vindicators part II  |  Yes   |   No   |  Yes   |  Yes   |   No   | vindctr2 |
 | Vulgus               |  Yes   |  Yes   |  Yes   |  Yes   |   No   | vulgus   |
 | Wacko                |  Yes   |  Yes   |  Yes   |  Yes   |   No   | wacko    |
 | War of the Bugs      |  Yes   |  Yes   |  Yes   |  Yes   |   No   | warofbug |
@@ -606,11 +615,13 @@ to list them.
 | Who Dunit            |  Yes   |  Yes   |  Yes   |  Yes   |   No   | whodunit |
 | Wild Western         |   No   |  Yes   |  Yes   |  n/a   |  Yes   | wwestern |
 | Willow               |  Yes   |  Yes   |  Yes   |   No   |   No   | willow   |
+| Wiping               |  Yes   |  Yes?  |  Yes   |  Yes   |   No   | wiping   |
 | Wiz                  |  Yes   |   No   |  Yes   |  Yes   |  Yes   | wiz      |
 | Wizard of Wor        |  Yes   | Maybe  | Yes(1) |  Yes   |  n/a   | wow      |
 | Wonder Boy           |  Yes   |  Yes   |  Yes   |  Yes   |   No   | wboy     |
 | Wonder Boy 3         |   No   |  Yes   |   No   |   No   |   No   | wb3bl    |
 | Wonder Boy in M.L.   |  Yes   |  Yes   | Wrong  |  Yes   |   No   | wbml     |
+| Wonder Momo          |  Yes   |  Yes   |  Yes   |   No   |  Yes   | wndrmomo |
 | World Cup 90         |  Yes   |  Yes   |  Yes   |  Yes   |   No   | wc90     |
 | Wrestle War          |   No   |  Yes   |   No   |   No   |   No   | wrestwar |
 | Xain'd Sleena        |  Yes   |  Yes   |  Yes   |  Yes   |   No   | xsleena  |
@@ -718,6 +729,15 @@ Anteater ("anteater")
 =====================
 Known issues:
 - cocktail mode doesn't work. This might well be a bug in the original.
+
+
+
+Arabian ("arabian")
+===================
+In test mode, to test sound press 1 and 2 player start simultaneously.
+2 players start + Button 1 will take you to the color test screen. Then hit
+1 + Button 1 to go to the level test screen.  Button 1 will take you to the
+next screen from then on.
 
 
 
@@ -2664,10 +2684,6 @@ SPACE   Weapons van
 SHIFT   Oil slick
 BUTTON5 Missiles
 ENTER   Toggle gearshift (note you can't start in high gear)
-
-Known issues:
-- Steering and acceleration should be via analog controls
-- Palette seems to be slightly off
 
 
 

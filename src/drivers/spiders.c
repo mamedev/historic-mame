@@ -223,15 +223,15 @@ static struct MemoryWriteAddress writemem[] =
 static struct MemoryReadAddress sound_readmem[] =
 {
 	{ 0x0000, 0x007f, MRA_RAM },
-        { 0xe000, 0xffff, MRA_ROM },
-        { -1 }  /* end of table */
+	{ 0xf800, 0xffff, MRA_ROM },
+	{ -1 }  /* end of table */
 };
 
 static struct MemoryWriteAddress sound_writemem[] =
 {
 	{ 0x0000, 0x007f, MWA_RAM },
-        { 0xe000, 0xffff, MWA_ROM },
-        { -1 }  /* end of table */
+	{ 0xf800, 0xffff, MWA_ROM },
+	{ -1 }  /* end of table */
 };
 #endif
 
@@ -381,38 +381,64 @@ static struct MachineDriver machine_driver =
 };
 
 
+
 ROM_START( spiders_rom )
 	ROM_REGION(0x10000)
-	ROM_LOAD( "sp1.bin",      0x0c000, 0x1000, 0x6a2578f6 )
-	ROM_LOAD( "sp2.bin",      0x0d000, 0x1000, 0xcf71d12b )
-	ROM_LOAD( "sp3.bin",      0x0e000, 0x1000, 0x464125da )
-	ROM_LOAD( "sp4.bin",      0x0f000, 0x1000, 0xf3d126bb )
+	ROM_LOAD( "sp-ic74",      0xc000, 0x1000, 0x6a2578f6 )
+	ROM_LOAD( "sp-ic73",      0xd000, 0x1000, 0xd69b2f21 )
+	ROM_LOAD( "sp-ic72",      0xe000, 0x1000, 0x464125da )
+	ROM_LOAD( "sp-ic71",      0xf000, 0x1000, 0xa9539b18 )
 
 	ROM_REGION_DISPOSE(0x1000)      /* temporary space for graphics (disposed after conversion) */
 	/* empty memory region - not used by the game, but needed because the main */
 	/* core currently always frees region #1 after initialization. */
 
 	ROM_REGION(0x10000)     /* 64k for the audio CPU */
-	ROM_LOAD( "sp10b.bin",    0x0f000, 0x1000, 0x88d2c44d )
+	ROM_LOAD( "sp-ic3",       0xf800, 0x0800, 0x944d761e )
 
 	ROM_REGION(0x10000)     /* 64k graphics block */
-	ROM_LOAD( "sp5.bin",      0x00000, 0x1000, 0xb6731baa )
-	ROM_LOAD( "sp6.bin",      0x01000, 0x1000, 0xbaec64e7 )
-	ROM_LOAD( "sp7.bin",      0x02000, 0x1000, 0xa40a5517 )
-	ROM_LOAD( "sp8.bin",      0x03000, 0x1000, 0x3ca08053 )
-	ROM_LOAD( "sp9a.bin",     0x04000, 0x1000, 0x07ea073c )
-	ROM_LOAD( "sp10a.bin",    0x05000, 0x1000, 0x41b344b4 )
-	ROM_LOAD( "sp9b.bin",     0x06000, 0x1000, 0x4d37da5a )
+	ROM_LOAD( "sp-ic33",      0x0000, 0x1000, 0xb6731baa )
+	ROM_LOAD( "sp-ic25",      0x1000, 0x1000, 0xbaec64e7 )
+	ROM_LOAD( "sp-ic24",      0x2000, 0x1000, 0xa40a5517 )
+	ROM_LOAD( "sp-ic23",      0x3000, 0x1000, 0x3ca08053 )
+	ROM_LOAD( "sp-ic22",      0x4000, 0x1000, 0x07ea073c )
+	ROM_LOAD( "sp-ic21",      0x5000, 0x1000, 0x41b344b4 )
+	ROM_LOAD( "sp-ic20",      0x6000, 0x1000, 0x4d37da5a )
+ROM_END
+
+ROM_START( spiders2_rom )
+	ROM_REGION(0x10000)
+	ROM_LOAD( "sp-ic74",      0xc000, 0x1000, 0x6a2578f6 )
+	ROM_LOAD( "sp2.bin",      0xd000, 0x1000, 0xcf71d12b )
+	ROM_LOAD( "sp-ic72",      0xe000, 0x1000, 0x464125da )
+	ROM_LOAD( "sp4.bin",      0xf000, 0x1000, 0xf3d126bb )
+
+	ROM_REGION_DISPOSE(0x1000)      /* temporary space for graphics (disposed after conversion) */
+	/* empty memory region - not used by the game, but needed because the main */
+	/* core currently always frees region #1 after initialization. */
+
+	ROM_REGION(0x10000)     /* 64k for the audio CPU */
+	ROM_LOAD( "sp-ic3",       0xf800, 0x0800, 0x944d761e )
+
+	ROM_REGION(0x10000)     /* 64k graphics block */
+	ROM_LOAD( "sp-ic33",      0x0000, 0x1000, 0xb6731baa )
+	ROM_LOAD( "sp-ic25",      0x1000, 0x1000, 0xbaec64e7 )
+	ROM_LOAD( "sp-ic24",      0x2000, 0x1000, 0xa40a5517 )
+	ROM_LOAD( "sp-ic23",      0x3000, 0x1000, 0x3ca08053 )
+	ROM_LOAD( "sp-ic22",      0x4000, 0x1000, 0x07ea073c )
+	ROM_LOAD( "sp-ic21",      0x5000, 0x1000, 0x41b344b4 )
+	ROM_LOAD( "sp-ic20",      0x6000, 0x1000, 0x4d37da5a )
 ROM_END
 
 
 
+/* this is a newer version with just one bug fix */
 struct GameDriver spiders_driver =
 {
 	__FILE__,
 	0,
 	"spiders",
-	"Spiders",
+	"Spiders (set 1)",
 	"1981",
 	"Sigma",
 	"Keith Wilkins",
@@ -433,3 +459,28 @@ struct GameDriver spiders_driver =
 	0,0
 };
 
+struct GameDriver spiders2_driver =
+{
+	__FILE__,
+	&spiders_driver,
+	"spiders2",
+	"Spiders (set 2)",
+	"1981",
+	"Sigma",
+	"Keith Wilkins",
+	0,
+	&machine_driver,
+	0,
+
+	spiders2_rom,
+	0, 0,
+	0,
+	0,
+
+	spiders_input_ports,
+
+	0, palette, 0,
+	ORIENTATION_ROTATE_270,
+
+	0,0
+};

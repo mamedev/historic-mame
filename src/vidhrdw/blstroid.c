@@ -54,12 +54,14 @@ static unsigned long priority[8];
  *
  *************************************/
 
-void blstroid_vh_stop (void);
-void blstroid_sound_reset (void);
-void blstroid_update_display_list (int scanline);
+extern int blstroid_irq_state;
+
+void blstroid_vh_stop(void);
+void blstroid_sound_reset(void);
+void blstroid_update_display_list(int scanline);
 
 #if 0
-static int blstroid_debug (void);
+static int blstroid_debug(void);
 #endif
 
 
@@ -83,28 +85,29 @@ int blstroid_vh_start(void)
 
 	/* allocate dirty buffers */
 	if (!playfielddirty)
-		playfielddirty = malloc (atarigen_playfieldram_size / 2);
+		playfielddirty = malloc(atarigen_playfieldram_size / 2);
 	if (!playfielddirty)
 	{
-		blstroid_vh_stop ();
+		blstroid_vh_stop();
 		return 1;
 	}
-	memset (playfielddirty, 1, atarigen_playfieldram_size / 2);
+	memset(playfielddirty, 1, atarigen_playfieldram_size / 2);
 
 	/* allocate bitmaps */
 	if (!playfieldbitmap)
-		playfieldbitmap = osd_new_bitmap (2*XDIM, YDIM, Machine->scrbitmap->depth);
+		playfieldbitmap = osd_new_bitmap(2*XDIM, YDIM, Machine->scrbitmap->depth);
 	if (!playfieldbitmap)
 	{
-		blstroid_vh_stop ();
+		blstroid_vh_stop();
 		return 1;
 	}
 
 	/* reset the timers */
-	memset (int1_timer, 0, sizeof (int1_timer));
+	memset(int1_timer, 0, sizeof(int1_timer));
+	blstroid_irq_state = 0;
 
 	/* initialize the displaylist system */
-	return atarigen_init_display_list (&blstroid_modesc);
+	return atarigen_init_display_list(&blstroid_modesc);
 }
 
 
@@ -115,16 +118,16 @@ int blstroid_vh_start(void)
  *
  *************************************/
 
-void blstroid_vh_stop (void)
+void blstroid_vh_stop(void)
 {
 	/* free bitmaps */
 	if (playfieldbitmap)
-		osd_free_bitmap (playfieldbitmap);
+		osd_free_bitmap(playfieldbitmap);
 	playfieldbitmap = 0;
 
 	/* free dirty buffers */
 	if (playfielddirty)
-		free (playfielddirty);
+		free(playfielddirty);
 	playfielddirty = 0;
 }
 
@@ -136,20 +139,31 @@ void blstroid_vh_stop (void)
  *
  *************************************/
 
-void blstroid_int1off_callback (int param)
+void blstroid_int1_off(int param)
 {
-	/* clear the interrupt generated as well */
-	cpu_clear_pending_interrupts (0);
+	blstroid_irq_state = 0;
+	atarigen_update_interrupts();
 }
 
 
-void blstroid_int1_callback (int param)
+void blstroid_int1_callback(int param)
 {
 	/* generate the interrupt */
-	cpu_cause_interrupt (0, 1);
+	blstroid_irq_state = 1;
+	atarigen_update_interrupts();
 
 	/* set ourselves up to go off next frame */
-	int1_timer[param] = timer_set (TIME_IN_HZ (Machine->drv->frames_per_second), param, blstroid_int1_callback);
+	int1_timer[param] = timer_set(TIME_IN_HZ(Machine->drv->frames_per_second), param, blstroid_int1_callback);
+
+	/* also set a timer to turn ourself off */
+	timer_set(cpu_getscanlineperiod(), 0, blstroid_int1_off);
+}
+
+
+void blstroid_irq_ack_w(int offset, int data)
+{
+	blstroid_irq_state = 0;
+	atarigen_update_interrupts();
 }
 
 
@@ -160,20 +174,20 @@ void blstroid_int1_callback (int param)
  *
  *************************************/
 
-int blstroid_playfieldram_r (int offset)
+int blstroid_playfieldram_r(int offset)
 {
-	return READ_WORD (&atarigen_playfieldram[offset]);
+	return READ_WORD(&atarigen_playfieldram[offset]);
 }
 
 
-void blstroid_playfieldram_w (int offset, int data)
+void blstroid_playfieldram_w(int offset, int data)
 {
-	int oldword = READ_WORD (&atarigen_playfieldram[offset]);
-	int newword = COMBINE_WORD (oldword, data);
+	int oldword = READ_WORD(&atarigen_playfieldram[offset]);
+	int newword = COMBINE_WORD(oldword, data);
 
 	if (oldword != newword)
 	{
-		WRITE_WORD (&atarigen_playfieldram[offset], newword);
+		WRITE_WORD(&atarigen_playfieldram[offset], newword);
 
 		playfielddirty[offset / 2] = 1;
 
@@ -183,10 +197,10 @@ void blstroid_playfieldram_w (int offset, int data)
 			int row = (offset >> 7) & 0x1f;
 
 			if ((newword & 0x8000) && !int1_timer[row])
-				int1_timer[row] = timer_set (cpu_getscanlinetime (8 * row), row, blstroid_int1_callback);
+				int1_timer[row] = timer_set(cpu_getscanlinetime(8 * row), row, blstroid_int1_callback);
 			else if (!(newword & 0x8000) && int1_timer[row])
 			{
-				timer_remove (int1_timer[row]);
+				timer_remove(int1_timer[row]);
 				int1_timer[row] = 0;
 			}
 		}
@@ -201,7 +215,7 @@ void blstroid_playfieldram_w (int offset, int data)
  *
  *************************************/
 
-void blstroid_priorityram_w (int offset, int data)
+void blstroid_priorityram_w(int offset, int data)
 {
 	int shift, which;
 
@@ -224,9 +238,9 @@ void blstroid_priorityram_w (int offset, int data)
  *
  *************************************/
 
-void blstroid_update_display_list (int scanline)
+void blstroid_update_display_list(int scanline)
 {
-	atarigen_update_display_list (atarigen_spriteram, 0, scanline);
+	atarigen_update_display_list(atarigen_spriteram, 0, scanline);
 }
 
 
@@ -259,14 +273,14 @@ void blstroid_update_display_list (int scanline)
  *---------------------------------------------------------------------------------
  */
 
-void blstroid_calc_mo_colors (struct osd_bitmap *bitmap, struct rectangle *clip, unsigned short *data, void *param)
+void blstroid_calc_mo_colors(struct osd_bitmap *bitmap, struct rectangle *clip, unsigned short *data, void *param)
 {
 	unsigned char *colors = param;
 	int color = data[3] & 15;
 	colors[color] = 1;
 }
 
-void blstroid_render_mo (struct osd_bitmap *bitmap, struct rectangle *clip, unsigned short *data, void *param)
+void blstroid_render_mo(struct osd_bitmap *bitmap, struct rectangle *clip, unsigned short *data, void *param)
 {
 	struct blstroid_mo_data *modata = param;
 	int *redraw_list = modata->redraw_list;
@@ -322,7 +336,7 @@ void blstroid_render_mo (struct osd_bitmap *bitmap, struct rectangle *clip, unsi
 			break;
 
 		/* draw the sprite */
-		drawgfx (bitmap, Machine->gfx[1], pict, color, hflip, vflip,
+		drawgfx(bitmap, Machine->gfx[1], pict, color, hflip, vflip,
 					2*xpos, sy, clip, TRANSPARENCY_PEN, 0);
 	}
 }
@@ -346,8 +360,8 @@ void blstroid_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 
 	/* reset color tracking */
-	memset (mo_map, 0, sizeof (mo_map));
-	memset (pf_map, 0, sizeof (pf_map));
+	memset(mo_map, 0, sizeof(mo_map));
+	memset(pf_map, 0, sizeof(pf_map));
 	palette_init_used_colors();
 
 	/* update color usage for the playfield */
@@ -357,30 +371,30 @@ void blstroid_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 		for (x = 0; x < XCHARS; x++, offs++)
 		{
-			int data = READ_WORD (&atarigen_playfieldram[offs * 2]);
+			int data = READ_WORD(&atarigen_playfieldram[offs * 2]);
 			int color = data >> 13;
 			pf_map[color] = 1;
 		}
 	}
 
 	/* update color usage for the mo's */
-	atarigen_render_display_list (bitmap, blstroid_calc_mo_colors, mo_map);
+	atarigen_render_display_list(bitmap, blstroid_calc_mo_colors, mo_map);
 
 	/* rebuild the palette */
 	for (i = 0; i < 16; i++)
 	{
 		if (pf_map[i])
-			memset (&palette_used_colors[256 + i * 16], PALETTE_COLOR_USED, 16);
+			memset(&palette_used_colors[256 + i * 16], PALETTE_COLOR_USED, 16);
 		if (mo_map[i])
 		{
 			palette_used_colors[0 + i * 16] = PALETTE_COLOR_TRANSPARENT;
-			memset (&palette_used_colors[0 + i * 16 + 1], PALETTE_COLOR_USED, 15);
+			memset(&palette_used_colors[0 + i * 16 + 1], PALETTE_COLOR_USED, 15);
 		}
 	}
 
 	/* remap if necessary */
-	if (palette_recalc ())
-		memset (playfielddirty, 1, atarigen_playfieldram_size / 2);
+	if (palette_recalc())
+		memset(playfielddirty, 1, atarigen_playfieldram_size / 2);
 
 
 	/*
@@ -407,10 +421,10 @@ void blstroid_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			/* rerender if dirty */
 			if (playfielddirty[offs])
 			{
-				int data = READ_WORD (&atarigen_playfieldram[offs * 2]);
+				int data = READ_WORD(&atarigen_playfieldram[offs * 2]);
 				int color = data >> 13;
 
-				drawgfx (playfieldbitmap, Machine->gfx[0], data & 0x1fff, color, 0, 0,
+				drawgfx(playfieldbitmap, Machine->gfx[0], data & 0x1fff, color, 0, 0,
 						16 * x, 8 * y, 0, TRANSPARENCY_NONE, 0);
 				playfielddirty[offs] = 0;
 			}
@@ -418,13 +432,13 @@ void blstroid_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	}
 
 	/* copy the playfield to the destination */
-	copybitmap (bitmap, playfieldbitmap, 0, 0, 0, 0, &Machine->drv->visible_area, TRANSPARENCY_NONE, 0);
+	copybitmap(bitmap, playfieldbitmap, 0, 0, 0, 0, &Machine->drv->visible_area, TRANSPARENCY_NONE, 0);
 
 	/* prepare the motion object data structure */
 	modata.redraw_list = modata.redraw = redraw_list;
 
 	/* render the motion objects */
-	atarigen_render_display_list (bitmap, blstroid_render_mo, &modata);
+	atarigen_render_display_list(bitmap, blstroid_render_mo, &modata);
 
 	/* redraw playfield tiles with higher priority */
 	for (r = redraw_list; r < modata.redraw; r++)
@@ -468,12 +482,12 @@ void blstroid_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 				/* process the data */
 				offs = (y & 0x3f) * 64 + (x & 0x3f);
-				data = READ_WORD (&atarigen_playfieldram[offs * 2]);
+				data = READ_WORD(&atarigen_playfieldram[offs * 2]);
 				color = data >> 13;
 
 				/* the logic is more complicated than this, but this is close */
 				if (!priority[color])
-					drawgfx (bitmap, Machine->gfx[0], data & 0x1fff, color, 0, 0,
+					drawgfx(bitmap, Machine->gfx[0], data & 0x1fff, color, 0, 0,
 							2*sx, sy, &clip, TRANSPARENCY_NONE, 0);
 			}
 		}
@@ -489,86 +503,86 @@ void blstroid_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
  *************************************/
 
 #if 0
-static int blstroid_debug (void)
+static int blstroid_debug(void)
 {
 	static unsigned long oldpri[8];
 	int hidebank = -1;
 
-	if (memcmp (oldpri, priority, sizeof (oldpri)))
+	if (memcmp(oldpri, priority, sizeof(oldpri)))
 	{
 		static FILE *f;
 		int i;
-		if (!f) f = fopen ("priority.log", "w");
+		if (!f) f = fopen("priority.log", "w");
 		for (i = 0; i < 8; i++)
-			fprintf (f, "%08lX ", priority[i]);
-		fprintf (f, "\n");
-		memcpy (oldpri, priority, sizeof (oldpri));
+			fprintf(f, "%08lX ", priority[i]);
+		fprintf(f, "\n");
+		memcpy(oldpri, priority, sizeof(oldpri));
 	}
 
-	if (osd_key_pressed (OSD_KEY_Q)) hidebank = 0;
-	if (osd_key_pressed (OSD_KEY_W)) hidebank = 1;
-	if (osd_key_pressed (OSD_KEY_E)) hidebank = 2;
-	if (osd_key_pressed (OSD_KEY_R)) hidebank = 3;
-	if (osd_key_pressed (OSD_KEY_T)) hidebank = 4;
-	if (osd_key_pressed (OSD_KEY_Y)) hidebank = 5;
-	if (osd_key_pressed (OSD_KEY_U)) hidebank = 6;
-	if (osd_key_pressed (OSD_KEY_I)) hidebank = 7;
+	if (osd_key_pressed(OSD_KEY_Q)) hidebank = 0;
+	if (osd_key_pressed(OSD_KEY_W)) hidebank = 1;
+	if (osd_key_pressed(OSD_KEY_E)) hidebank = 2;
+	if (osd_key_pressed(OSD_KEY_R)) hidebank = 3;
+	if (osd_key_pressed(OSD_KEY_T)) hidebank = 4;
+	if (osd_key_pressed(OSD_KEY_Y)) hidebank = 5;
+	if (osd_key_pressed(OSD_KEY_U)) hidebank = 6;
+	if (osd_key_pressed(OSD_KEY_I)) hidebank = 7;
 
-	if (osd_key_pressed (OSD_KEY_A)) hidebank = 8;
-	if (osd_key_pressed (OSD_KEY_S)) hidebank = 9;
-	if (osd_key_pressed (OSD_KEY_D)) hidebank = 10;
-	if (osd_key_pressed (OSD_KEY_F)) hidebank = 11;
-	if (osd_key_pressed (OSD_KEY_G)) hidebank = 12;
-	if (osd_key_pressed (OSD_KEY_H)) hidebank = 13;
-	if (osd_key_pressed (OSD_KEY_J)) hidebank = 14;
-	if (osd_key_pressed (OSD_KEY_K)) hidebank = 15;
+	if (osd_key_pressed(OSD_KEY_A)) hidebank = 8;
+	if (osd_key_pressed(OSD_KEY_S)) hidebank = 9;
+	if (osd_key_pressed(OSD_KEY_D)) hidebank = 10;
+	if (osd_key_pressed(OSD_KEY_F)) hidebank = 11;
+	if (osd_key_pressed(OSD_KEY_G)) hidebank = 12;
+	if (osd_key_pressed(OSD_KEY_H)) hidebank = 13;
+	if (osd_key_pressed(OSD_KEY_J)) hidebank = 14;
+	if (osd_key_pressed(OSD_KEY_K)) hidebank = 15;
 
-	if (osd_key_pressed (OSD_KEY_9))
+	if (osd_key_pressed(OSD_KEY_9))
 	{
 		static int count;
 		char name[50];
 		FILE *f;
 		int i;
 
-		while (osd_key_pressed (OSD_KEY_9)) { }
+		while (osd_key_pressed(OSD_KEY_9)) { }
 
-		sprintf (name, "Dump %d", ++count);
-		f = fopen (name, "wt");
+		sprintf(name, "Dump %d", ++count);
+		f = fopen(name, "wt");
 
-		fprintf (f, "\n\nMotion Object Palette:\n");
+		fprintf(f, "\n\nMotion Object Palette:\n");
 		for (i = 0x000; i < 0x100; i++)
 		{
-			fprintf (f, "%04X ", READ_WORD (&paletteram[i*2]));
-			if ((i & 15) == 15) fprintf (f, "\n");
+			fprintf(f, "%04X ", READ_WORD(&paletteram[i*2]));
+			if ((i & 15) == 15) fprintf(f, "\n");
 		}
 
-		fprintf (f, "\n\nPlayfield Palette:\n");
+		fprintf(f, "\n\nPlayfield Palette:\n");
 		for (i = 0x100; i < 0x200; i++)
 		{
-			fprintf (f, "%04X ", READ_WORD (&paletteram[i*2]));
-			if ((i & 15) == 15) fprintf (f, "\n");
+			fprintf(f, "%04X ", READ_WORD(&paletteram[i*2]));
+			if ((i & 15) == 15) fprintf(f, "\n");
 		}
 
-		fprintf (f, "\n\nMotion Objects\n");
+		fprintf(f, "\n\nMotion Objects\n");
 		for (i = 0; i < 0x40; i++)
 		{
-			fprintf (f, "   Object %02X:  Y=%04X  P=%04X  L=%04X  X=%04X\n",
+			fprintf(f, "   Object %02X:  Y=%04X  P=%04X  L=%04X  X=%04X\n",
 					i,
-					READ_WORD (&atarigen_spriteram[i*8+0]),
-					READ_WORD (&atarigen_spriteram[i*8+2]),
-					READ_WORD (&atarigen_spriteram[i*8+4]),
-					READ_WORD (&atarigen_spriteram[i*8+6])
+					READ_WORD(&atarigen_spriteram[i*8+0]),
+					READ_WORD(&atarigen_spriteram[i*8+2]),
+					READ_WORD(&atarigen_spriteram[i*8+4]),
+					READ_WORD(&atarigen_spriteram[i*8+6])
 			);
 		}
 
-		fprintf (f, "\n\nPlayfield dump\n");
+		fprintf(f, "\n\nPlayfield dump\n");
 		for (i = 0; i < atarigen_playfieldram_size / 2; i++)
 		{
-			fprintf (f, "%04X ", READ_WORD (&atarigen_playfieldram[i*2]));
-			if ((i & 63) == 63) fprintf (f, "\n");
+			fprintf(f, "%04X ", READ_WORD(&atarigen_playfieldram[i*2]));
+			if ((i & 63) == 63) fprintf(f, "\n");
 		}
 
-		fclose (f);
+		fclose(f);
 	}
 
 	return hidebank;

@@ -727,21 +727,21 @@ static struct MemoryWriteAddress cosmicguerilla_writemem[] =
 static const char *cosmicguerilla_sample_names[] =
 {
 	"*cosmicg",
-	"CG_M0.SAM",	/* 8 Different pitches of March Sound */
-	"CG_M1.SAM",
-	"CG_M2.SAM",
-	"CG_M3.SAM",
-	"CG_M4.SAM",
-	"CG_M5.SAM",
-	"CG_M6.SAM",
-	"CG_M7.SAM",
-	"CG_ATT.SAM",	/* Killer Attack */
-	"CG_CHNC.SAM",	/* Bonus Chance  */
-	"CG_EXT.SAM",	/* Got Bonus - have not got sound for, so use extend */
-	"CG_DEST.SAM",	/* Gun Destroy */
-	"CG_GUN.SAM",	/* Gun Shot */
-	"CG_GOTM.SAM",	/* Got Monster */
-	"CG_EXT.SAM",	/* Coin Extend */
+	"CG_M0.wav",	/* 8 Different pitches of March Sound */
+	"CG_M1.wav",
+	"CG_M2.wav",
+	"CG_M3.wav",
+	"CG_M4.wav",
+	"CG_M5.wav",
+	"CG_M6.wav",
+	"CG_M7.wav",
+	"CG_ATT.wav",	/* Killer Attack */
+	"CG_CHNC.wav",	/* Bonus Chance  */
+	"CG_EXT.wav",	/* Got Bonus - have not got sound for, so use extend */
+	"CG_DEST.wav",	/* Gun Destroy */
+	"CG_GUN.wav",	/* Gun Shot */
+	"CG_GOTM.wav",	/* Got Monster */
+	"CG_EXT.wav",	/* Coin Extend */
 	0       /* end of array */
 };
 

@@ -56,7 +56,7 @@ void targ_tone_generator(int data)
         osd_adjust_sample(tone_channel,maxfreq/(0xFF-sound_a_freq),tone_vol);
 }
 
-int targ_sh_start(void)
+int targ_sh_start(const struct MachineSound *msound)
 {
 	tone_channel = get_play_channels(1);
 

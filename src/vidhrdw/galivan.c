@@ -33,9 +33,16 @@ background:	0x4000 bytes of ROM:	76543210	tile code low bits
 #include "vidhrdw/generic.h"
 
 static unsigned char galivan_scrollx[2], galivan_scrolly[2];
-static int flipscreen;
 
-static struct osd_bitmap *background;
+/* Layers has only bits 5-6 active.
+   6 selects background off/on
+   5 is unknown (active only on title screen,
+     not for scores or push start nor game)
+*/
+
+static int flipscreen, layers;
+
+static struct tilemap *bg_tilemap, *char_tilemap;
 
 static const unsigned char *spritepalettebank;
 
@@ -60,6 +67,7 @@ unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 void galivan_init_machine(void)
 {
 	galivan_setrombank(0);
+	layers = 0x60;
 }
 
 
@@ -117,17 +125,23 @@ void galivan_vh_convert_color_prom(unsigned char *palette, unsigned short *color
 	}
 
 
-	/* I think that */
 	/* sprites use colors 128-191 in four banks */
 	/* The lookup table tells which colors to pick from the selected bank */
 	/* the bank is selected by another PROM and depends on the top 7 bits of */
-	/* the sprite code. */
-	for (i = 0;i < TOTAL_COLORS(2)/4;i++)
+	/* the sprite code. The PROM selects the bank *separately* for pens 0-7 and */
+	/* 8-15 (like for tiles). */
+	for (i = 0;i < TOTAL_COLORS(2)/16;i++)
 	{
 		int j;
 
-		for (j = 0;j < 4;j++)
-			COLOR(2,i + j * (TOTAL_COLORS(2)/4)) = 128 + j*16 + (*color_prom & 0x0f);
+		for (j = 0;j < 16;j++)
+		{
+			if (i & 8)
+				COLOR(2,i + j * (TOTAL_COLORS(2)/16)) = 128 + ((j & 0x0c) << 2) + (*color_prom & 0x0f);
+			else
+				COLOR(2,i + j * (TOTAL_COLORS(2)/16)) = 128 + ((j & 0x03) << 4) + (*color_prom & 0x0f);
+		}
+
 		color_prom++;
 	}
 
@@ -137,6 +151,30 @@ void galivan_vh_convert_color_prom(unsigned char *palette, unsigned short *color
 
 
 
+/***************************************************************************
+
+  Callbacks for the TileMap code
+
+***************************************************************************/
+
+static void get_bg_tile_info( int col, int row )
+{
+	unsigned char *RAM = Machine->memory_region[2];
+	int addr = row*128+col;
+	int attr = RAM[addr+0x4000];
+	int code = RAM[addr]+((attr & 0x03) << 8);
+	SET_TILE_INFO (1, code, (attr & 0x78) >> 3 /* Seems correct */);
+}
+
+static void get_char_tile_info( int col, int row )
+{
+	int addr = col*32 + row;
+	int attr = colorram[addr];
+	int code = videoram[addr]|((attr & 1) << 8);
+	SET_TILE_INFO (0, code, (attr & 0xe0) >> 5 /* not sure */ );
+	tile_info.priority = attr & 8 ? 0 : 1;	/* wrong */
+}
+
 
 
 /***************************************************************************
@@ -145,78 +183,51 @@ void galivan_vh_convert_color_prom(unsigned char *palette, unsigned short *color
 
 ***************************************************************************/
 
-void galivan_draw_background(int flip)
-{
-	unsigned char *RAM = Machine->memory_region[2];
-	int x,y;
-
-	/* draw the whole background */
-	for(y = 0; y < 128 ; y++)
-	{
-		for(x = 0; x < 128 ; x++)
-		{
-			int sx,sy;
-			int addr = y*128+x;
-			int attr = RAM[addr+0x4000];
-			int code = RAM[addr]+((attr & 0x03) << 8);
-
-			sx =16*x;
-			sy =16*y;
-			if (flip)
-			{
-				sx = 2048-16-sx;
-				sy = 2048-16-sy;
-			}
-
-
-			drawgfx(background, Machine->gfx[1],
-				code,
-				(attr & 0x78) >> 3,	/* not sure */
-				flip, flip,
-				sx, sy,
-				0, TRANSPARENCY_NONE, 0);
-		}
-	}
-}
-
-
-
 int galivan_vh_start(void)
 {
 
-	if  ( (background = osd_new_bitmap(2048, 2048, 4)) )
-	{
-		galivan_draw_background(flipscreen);
-		return generic_vh_start();
-	}
-	else
+	bg_tilemap = tilemap_create (get_bg_tile_info,
+								 TILEMAP_OPAQUE,
+								 16, 16,
+								 128, 128);
+	char_tilemap = tilemap_create (get_char_tile_info,
+								   TILEMAP_TRANSPARENT,
+								   8, 8,
+								   32, 32);
+	if (!bg_tilemap || !char_tilemap)
 		return 1;
+
+	tilemap_set_scroll_rows (bg_tilemap, 1);
+	tilemap_set_scroll_cols (bg_tilemap, 1);
+
+	char_tilemap->transparent_pen = 15;
+
+	return 0;
 }
-
-
 
 
 
 /***************************************************************************
 
-  Stop the video hardware emulation.
+  Memory handlers
 
 ***************************************************************************/
 
-void galivan_vh_stop(void)
+void galivan_videoram_w(int offset,int data)
 {
-  osd_free_bitmap(background);
-  generic_vh_stop();
+	if (data != videoram[offset]) {
+		videoram[offset] = data;
+		tilemap_mark_tile_dirty (char_tilemap, offset/32, offset%32);
+	}
 }
 
-
-
-/***************************************************************************
-
-  Video related registers.
-
-***************************************************************************/
-
+void galivan_colorram_w(int offset,int data)
+{
+	if (data != colorram[offset]) {
+		colorram[offset] = data;
+		tilemap_mark_tile_dirty (char_tilemap, offset/32, offset%32);
+	}
+}
 
 /* Written through port 40 */
 void galivan_gfxbank_w(int offset,int data)
@@ -229,23 +240,30 @@ void galivan_gfxbank_w(int offset,int data)
 	if (flipscreen != (data & 0x04))
 	{
 		flipscreen = data & 0x04;
-		galivan_draw_background(flipscreen);
+		tilemap_set_flip (bg_tilemap, flipscreen ? TILEMAP_FLIPX|TILEMAP_FLIPY : 0);
+		tilemap_set_flip (char_tilemap, flipscreen ? TILEMAP_FLIPX|TILEMAP_FLIPY : 0);
 	}
 
 	/* bit 7 selects one of two ROM banks for c000-dfff */
 	galivan_setrombank((data>>7)&1);
 
-//	if (errorlog) fprintf(errorlog,"Address: %04X - port 40 = %02x\n",cpu_get_pc(),data);
+/*	if (errorlog) fprintf(errorlog,"Address: %04X - port 40 = %02x\n",cpu_get_pc(),data); */
 }
 
 
 /* Written through port 41-42 */
 void galivan_scrollx_w(int offset,int data)
 {
+	static int up = 0;
+	if (offset == 1) {
+		if (data & 0x80)
+			up = 1;
+		else if (up) {
+			layers = data & 0x60;
+			up = 0;
+		}
+	}
 	galivan_scrollx[offset] = data;
-
-/* bits 765 probably enable/control priority of the gfx layers */
-
 }
 
 /* Written through port 43-44 */
@@ -259,77 +277,26 @@ void galivan_scrolly_w(int offset,int data)
 
 /***************************************************************************
 
-  Draw the game screen in the given osd_bitmap.
-  Do NOT call osd_update_display() from this function, it will be called by
-  the main emulation engine.
+  Display refresh
 
 ***************************************************************************/
-void galivan_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+
+static void draw_sprites(struct osd_bitmap *bitmap)
 {
 	int offs;
-
-
-	/* copy the static background graphics */
-	if ( (galivan_scrollx[1]&0x40)==0 ) /* this is wrong, but works for now */
-	{
-		int scrollx,scrolly;
-
-		scrollx = -(galivan_scrollx[0] + 256 * (galivan_scrollx[1]&0x7));
-		scrolly = -(galivan_scrolly[0] + 256 * (galivan_scrolly[1]&0x7));
-		if (flipscreen)
-		{
-			scrollx = -(scrollx-256);
-			scrolly = -(scrolly-256);
-		}
-
-		copyscrollbitmap(bitmap, background,
-					1, &scrollx, 1, &scrolly,
-					&Machine->drv->visible_area,
-					TRANSPARENCY_NONE,0);
-	}
-	else
-		osd_clearbitmap(Machine->scrbitmap);
-
-
-
-	/* draw the characters which don't have priority over sprites */
-	for (offs = videoram_size - 1;offs >= 0;offs--)
-	{
-		int sx,sy;
-		int attr = colorram[offs];
-
-		if (attr & 0x08)	/* not sure */
-		{
-			sy = offs % 32;
-			sx = offs / 32;
-
-			if (flipscreen)
-			{
-				sx = 31 - sx;
-				sy = 31 - sy;
-			}
-
-			drawgfx(bitmap,Machine->gfx[0],
-					videoram[offs] + 256 * (attr & 0x01),
-					(attr & 0xe0) >> 5,	/* not sure */
-					flipscreen,flipscreen,
-					8*sx,8*sy,
-					&Machine->drv->visible_area,TRANSPARENCY_PEN,15);
-		}
-	}
-
 
 	/* draw the sprites */
 	for (offs = 0;offs < spriteram_size;offs += 4)
 	{
-		int code,color;
+		int code;
 		int attr = spriteram[offs+2];
+		int color = (attr & 0x3c) >> 2;
 		int flipx = attr & 0x40;
 		int flipy = attr & 0x80;
 		int sx,sy;
 
-		sy = 240 - spriteram[offs];
 		sx = (spriteram[offs+3] - 0x80) + 256 * (attr & 0x01);
+		sy = 240 - spriteram[offs];
 		if (flipscreen)
 		{
 			sx = 240 - sx;
@@ -339,41 +306,34 @@ void galivan_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		}
 
 		code = spriteram[offs+1] + ((attr & 0x02) << 7);
-		color = (attr & 0x3c) >> 2;
 
 		drawgfx(bitmap,Machine->gfx[2],
 				code,
-				color + 16 * (spritepalettebank[code >> 2] & 0x03),	/* wrong */
+				color + 16 * (spritepalettebank[code >> 2] & 0x0f),
 				flipx,flipy,
 				sx,sy,
 				&Machine->drv->visible_area,TRANSPARENCY_PEN,15);
 	}
+}
 
 
-
-	/* draw the characters which have priority over sprites */
-	for (offs = videoram_size - 1;offs >= 0;offs--)
-	{
-		int sx,sy;
-		int attr = colorram[offs];
-
-		if (!(attr & 0x08))	/* not sure */
-		{
-			sy = offs % 32;
-			sx = offs / 32;
-
-			if (flipscreen)
-			{
-				sx = 31 - sx;
-				sy = 31 - sy;
-			}
-
-			drawgfx(bitmap,Machine->gfx[0],
-					videoram[offs] + 256 * (attr & 0x01),
-					(attr & 0xe0) >> 5,	/* not sure */
-					flipscreen,flipscreen,
-					8*sx,8*sy,
-					&Machine->drv->visible_area,TRANSPARENCY_PEN,15);
-		}
+void galivan_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+{
+	if ( (layers&0x40)==0 ) {
+		tilemap_set_scrollx (bg_tilemap, 0, -(galivan_scrollx[0] + 256 * (galivan_scrollx[1]&0x7)));
+		tilemap_set_scrolly (bg_tilemap, 0, -(galivan_scrolly[0] + 256 * (galivan_scrolly[1]&0x7)));
 	}
+
+	tilemap_update (ALL_TILEMAPS);
+	tilemap_render (ALL_TILEMAPS);
+	if ( (layers&0x40)==0 )
+		tilemap_draw (bitmap, bg_tilemap, TILEMAP_BACK);
+	else
+		fillbitmap(bitmap,Machine->pens[0],&Machine->drv->visible_area);
+
+	tilemap_draw (bitmap, char_tilemap, 0);
+
+	draw_sprites(bitmap);
+
+	tilemap_draw (bitmap, char_tilemap, 1);
 }

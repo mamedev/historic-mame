@@ -67,7 +67,7 @@ void YM2151UpdateRequest(int chip)
 	stream_update(stream[chip],0);
 }
 
-static int my_YM2151_sh_start(const struct YM2151interface *interface,int mode)
+static int my_YM2151_sh_start(const struct MachineSound *msound,int mode)
 {
 	int i,j;
 	int rate = Machine->sample_rate;
@@ -77,7 +77,7 @@ static int my_YM2151_sh_start(const struct YM2151interface *interface,int mode)
 
 	if( rate == 0 ) rate = 1000;	/* kludge to prevent nasty crashes */
 
-	intf = interface;
+	intf = msound->sound_interface;
 
 	if( mode ) FMMode = CHIP_YM2151_ALT;
 	else       FMMode = CHIP_YM2151_DAC;
@@ -106,7 +106,7 @@ static int my_YM2151_sh_start(const struct YM2151interface *interface,int mode)
 				}
 				sprintf(buf[j],"YM2151 #%d Ch%d(%s)",i,j+1,chname);
 			}
-			stream[i] = stream_init_multi(YM2151_NUMBUF,
+			stream[i] = stream_init_multi(msound,YM2151_NUMBUF,
 				name,rate,FM_OUTPUT_BIT,i,OPMUpdateOne);
 			/* volume setup */
 			for (j = 0 ; j < YM2151_NUMBUF ; j++)
@@ -149,7 +149,7 @@ static int my_YM2151_sh_start(const struct YM2151interface *interface,int mode)
 				}
 				sprintf(buf[j],"YM2151 #%d Ch%d(%s)",i,j+1,chname);
 			}
-			stream[i] = stream_init_multi(YM2151_NUMBUF,
+			stream[i] = stream_init_multi(msound,YM2151_NUMBUF,
 				name,rate,Machine->sample_bits,
 				i,YM2151UpdateOne);
 			/* volume setup */
@@ -173,14 +173,14 @@ static int my_YM2151_sh_start(const struct YM2151interface *interface,int mode)
 	return 1;
 }
 
-int YM2151_sh_start(const struct YM2151interface *interface)
+int YM2151_sh_start(const struct MachineSound *msound)
 {
-	return my_YM2151_sh_start(interface,0);
+	return my_YM2151_sh_start(msound,0);
 }
 
-int YM2151_ALT_sh_start(const struct YM2151interface *interface)
+int YM2151_ALT_sh_start(const struct MachineSound *msound)
 {
-	return my_YM2151_sh_start(interface,1);
+	return my_YM2151_sh_start(msound,1);
 }
 
 void YM2151_sh_stop(void)
@@ -196,6 +196,23 @@ void YM2151_sh_stop(void)
 		YM2151Shutdown();
 		break;
 	}
+}
+
+void YM2151_sh_reset(void)
+{
+	int i;
+
+	for (i = 0;i < intf->num;i++)
+	switch(FMMode)
+	{
+	case CHIP_YM2151_DAC:
+		OPMResetChip(i);
+		break;
+	case CHIP_YM2151_ALT:
+		YM2151ResetChip(i);
+		break;
+	}
+
 }
 
 static int lastreg0,lastreg1,lastreg2;

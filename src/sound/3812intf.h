@@ -21,7 +21,7 @@ void YM3812_write_port_0_w(int offset,int data);
 #define YM3526_control_port_0_w YM3812_control_port_0_w
 #define YM3526_write_port_0_w YM3812_write_port_0_w
 
-int YM3812_sh_start(const struct YM3812interface *interface);
+int YM3812_sh_start(const struct MachineSound *msound);
 void YM3812_sh_stop(void);
 void YM3812_sh_update(void);
 

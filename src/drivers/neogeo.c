@@ -309,7 +309,7 @@ if (errorlog) fprintf(errorlog,"warning: bankswitch to %02x but no banks availab
 	bankaddress = (data+1)*0x100000;
 	if (bankaddress >= Machine->memory_region_length[0])
 	{
-if (errorlog) fprintf(errorlog,"warning: bankswitch to empty bank %02x\n",data);
+if (errorlog) fprintf(errorlog,"PC %06x: warning: bankswitch to empty bank %02x\n",cpu_get_pc(),data);
 		bankaddress = 0x100000;
 	}
 
@@ -3011,8 +3011,8 @@ ROM_START( sonicwi3_rom )
 	NEO_BIOS_SOUND_128K( "sonw3_m1.rom", 0xb20e4291 )
 
     ROM_REGION_OPTIONAL(0x500000) /* sound samples */
-	ROM_LOAD( "sonw3_v1.rom", 0x000000, 0x400000, 0x00000000 )
-    ROM_LOAD( "sonw3_v2.rom", 0x000000, 0x100000, 0x32187ccd )
+	ROM_LOAD( "sonw3_v1.rom", 0x000000, 0x400000, 0x6f885152 )
+    ROM_LOAD( "sonw3_v2.rom", 0x400000, 0x100000, 0x32187ccd )
 ROM_END
 
 ROM_START( goalx3_rom )
@@ -3708,9 +3708,9 @@ ROM_START( rbff1_rom )
 	NEO_BIOS_SOUND_128K( "rbff1_m1.rom", 0x653492a7 )
 
 	ROM_REGION_OPTIONAL(0xc00000) /* sound samples */
-	ROM_LOAD( "rbff1_v1.rom", 0x000000, 0x400000, 0x00000000 )
-	ROM_LOAD( "rbff1_v2.rom", 0x400000, 0x400000, 0x00000000 )
-	ROM_LOAD( "rbff1_v3.rom", 0x800000, 0x400000, 0x00000000 )
+	ROM_LOAD( "rbff1_v1.rom", 0x000000, 0x400000, 0xb41cbaa2 )
+	ROM_LOAD( "rbff1_v2.rom", 0x400000, 0x400000, 0xa698a487 )
+	ROM_LOAD( "rbff1_v3.rom", 0x800000, 0x400000, 0x189d1c6c )
 ROM_END
 
 ROM_START( whp_rom )
@@ -4208,6 +4208,30 @@ ROM_START( breakers_rom )
     ROM_LOAD( "break_v2.rom", 0x400000, 0x400000, 0x1d43e420 )
 ROM_END
 
+ROM_START( breakrev_rom )
+	ROM_REGION(0x200000)
+	ROM_LOAD_WIDE_SWAP( "brev_p1.rom", 0x100000, 0x100000, 0xc828876d )
+	ROM_CONTINUE(                      0x000000, 0x100000)
+
+	NEO_SFIX_128K( "brev_s1.rom", 0xe7660a5d )
+
+	ROM_REGION (0x0a00000)
+    ROM_LOAD( "break_c1.rom", 0x000000, 0x400000, 0x68d4ae76 ) /* Plane 0,1 */
+    ROM_LOAD( "break_c3.rom", 0x400000, 0x400000, 0x645077f3 ) /* Plane 0,1 */
+	ROM_LOAD( "brev_c5.rom",  0x800000, 0x200000, 0x28ff1792 ) /* Plane 0,1 */
+
+	ROM_REGION( 0x0a00000)
+    ROM_LOAD( "break_c2.rom", 0x000000, 0x400000, 0xfdee05cd ) /* Plane 2,3 */
+    ROM_LOAD( "break_c4.rom", 0x400000, 0x400000, 0x63aeb74c ) /* Plane 2,3 */
+	ROM_LOAD( "brev_c6.rom",  0x800000, 0x200000, 0x23c65644 ) /* Plane 2,3 */
+
+	NEO_BIOS_SOUND_128K( "brev_m1.rom", 0x00f31c66 )
+
+	ROM_REGION_OPTIONAL( 0x800000)
+	ROM_LOAD( "brev_v1.rom", 0x000000, 0x400000, 0xe255446c )
+	ROM_LOAD( "brev_v2.rom", 0x400000, 0x400000, 0x9068198a )
+ROM_END
+
 ROM_START( flipshot_rom )
 	ROM_REGION(0x100000)
 	ROM_LOAD_WIDE_SWAP( "flip_p1.rom", 0x000000, 0x080000, 0xd2e7a7e3 )
@@ -4409,6 +4433,7 @@ NEODRIVER(goalx3,  "Goal! Goal! Goal!","1995","Visco",&neogeo_mvs_machine_driver
 NEODRIVER(neodrift,"Neo Drift Out - New Technology","1996","Visco",&neogeo_mvs_machine_driver)
 NEODRIVER(neomrdo, "Neo Mr Do!","1996","Visco",&neogeo_mvs_machine_driver)
 NEODRIVER(breakers,"Breakers","1996","Visco",&neogeo_mvs_16bit_machine_driver)
+NEODRIVERCLONE(breakrev,breakers,"Breakers Revenge","1998","Visco",&neogeo_mvs_16bit_machine_driver)
 NEODRIVER(flipshot,"Battle Flip Shot","1998","Visco",&neogeo_mvs_machine_driver)
 
 /* Data East Corporation */
@@ -4489,10 +4514,10 @@ NEODRIVER(ssideki2,"Super Sidekicks 2 - The World Championship","1994","SNK",&ne
 NEODRIVER(samsho2, "Samurai Shodown 2 / Samurai Spirits 2","1994","SNK",&neogeo_mvs_16bit_machine_driver)
 NEODRIVER(ssideki3,"Super Sidekicks 3 - The Next Glory","1995","SNK",&neogeo_mvs_raster_machine_driver)
 NEODRIVER(savagere,"Savage Reign","1995","SNK",&neogeo_mvs_16bit_machine_driver)
-NEODRIVER(samsho3, "Samurai Shodown 3 / Samurai Spirits 3","1995","SNK",&neogeo_mvs_machine_driver)
+NEODRIVER(samsho3, "Samurai Shodown 3 / Samurai Spirits 3","1995","SNK",&neogeo_mvs_16bit_machine_driver)
 NEODRIVER(fatfury3,"Fatal Fury 3","1995","SNK",&neogeo_mvs_machine_driver)
 NEODRIVER(kof95,   "The King of Fighters '95","1995","SNK",&neogeo_mvs_16bit_machine_driver)
-NEODRIVER(rbff1,   "Real Bout Fatal Fury","1995","SNK",&neogeo_mvs_machine_driver)
+NEODRIVER(rbff1,   "Real Bout Fatal Fury","1995","SNK",&neogeo_mvs_16bit_machine_driver)
 NEODRIVER(aof3,    "Art of Fighting 3 / Ryuu Ko No Ken 3","1996","SNK",&neogeo_mvs_machine_driver)
 NEODRIVER(kof96,   "The King of Fighters '96","1996","SNK",&neogeo_mvs_16bit_machine_driver)
 NEODRIVER(samsho4, "Samurai Shodown 4 / Samurai Spirits 4","1996","SNK",&neogeo_mvs_machine_driver)

@@ -11,7 +11,7 @@ struct astrocade_interface
 	int volume;			/* master volume */
 };
 
-int astrocade_sh_start(const struct astrocade_interface *interface);
+int astrocade_sh_start(const struct MachineSound *msound);
 void astrocade_sh_stop(void);
 void astrocade_sh_update(void);
 

@@ -4,6 +4,7 @@
 ****************************************************************************/
 
 #include <stdio.h>
+#include <string.h>
 #include "host.h"
 #include "cpuintrf.h"
 #include "memory.h"

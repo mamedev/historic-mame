@@ -36,7 +36,7 @@ static struct osd_bitmap *playfieldbitmap;
  *
  *************************************/
 
-void xybots_vh_stop (void);
+void xybots_vh_stop(void);
 
 
 
@@ -60,25 +60,25 @@ int xybots_vh_start(void)
 
 	/* allocate dirty buffers */
 	if (!playfielddirty)
-		playfielddirty = malloc (atarigen_playfieldram_size / 2);
+		playfielddirty = malloc(atarigen_playfieldram_size / 2);
 	if (!playfielddirty)
 	{
-		xybots_vh_stop ();
+		xybots_vh_stop();
 		return 1;
 	}
-	memset (playfielddirty, 1, atarigen_playfieldram_size / 2);
+	memset(playfielddirty, 1, atarigen_playfieldram_size / 2);
 
 	/* allocate bitmaps */
 	if (!playfieldbitmap)
-		playfieldbitmap = osd_new_bitmap (XDIM, YDIM, Machine->scrbitmap->depth);
+		playfieldbitmap = osd_new_bitmap(XDIM, YDIM, Machine->scrbitmap->depth);
 	if (!playfieldbitmap)
 	{
-		xybots_vh_stop ();
+		xybots_vh_stop();
 		return 1;
 	}
 
 	/* initialize the displaylist system */
-	return atarigen_init_display_list (&xybots_modesc);
+	return atarigen_init_display_list(&xybots_modesc);
 }
 
 
@@ -93,12 +93,12 @@ void xybots_vh_stop(void)
 {
 	/* free bitmaps */
 	if (playfieldbitmap)
-		osd_free_bitmap (playfieldbitmap);
+		osd_free_bitmap(playfieldbitmap);
 	playfieldbitmap = 0;
 
 	/* free dirty buffers */
 	if (playfielddirty)
-		free (playfielddirty);
+		free(playfielddirty);
 	playfielddirty = 0;
 }
 
@@ -110,20 +110,20 @@ void xybots_vh_stop(void)
  *
  *************************************/
 
-int xybots_playfieldram_r (int offset)
+int xybots_playfieldram_r(int offset)
 {
-	return READ_WORD (&atarigen_playfieldram[offset]);
+	return READ_WORD(&atarigen_playfieldram[offset]);
 }
 
 
-void xybots_playfieldram_w (int offset, int data)
+void xybots_playfieldram_w(int offset, int data)
 {
-	int oldword = READ_WORD (&atarigen_playfieldram[offset]);
-	int newword = COMBINE_WORD (oldword, data);
+	int oldword = READ_WORD(&atarigen_playfieldram[offset]);
+	int newword = COMBINE_WORD(oldword, data);
 
 	if (oldword != newword)
 	{
-		WRITE_WORD (&atarigen_playfieldram[offset], newword);
+		WRITE_WORD(&atarigen_playfieldram[offset], newword);
 		playfielddirty[offset / 2] = 1;
 	}
 }
@@ -136,9 +136,9 @@ void xybots_playfieldram_w (int offset, int data)
  *
  *************************************/
 
-void xybots_update_display_list (int scanline)
+void xybots_update_display_list(int scanline)
 {
-	atarigen_update_display_list (atarigen_spriteram, 0, scanline);
+	atarigen_update_display_list(atarigen_spriteram, 0, scanline);
 }
 
 
@@ -170,14 +170,14 @@ void xybots_update_display_list (int scanline)
  *---------------------------------------------------------------------------------
  */
 
-void xybots_calc_mo_colors (struct osd_bitmap *bitmap, struct rectangle *clip, unsigned short *data, void *param)
+void xybots_calc_mo_colors(struct osd_bitmap *bitmap, struct rectangle *clip, unsigned short *data, void *param)
 {
 	unsigned char *colors = param;
 	int color = data[3] & 7;
 	colors[color] = 1;
 }
 
-void xybots_render_mo (struct osd_bitmap *bitmap, struct rectangle *clip, unsigned short *data, void *param)
+void xybots_render_mo(struct osd_bitmap *bitmap, struct rectangle *clip, unsigned short *data, void *param)
 {
 	struct rectangle pfclip;
 	int sx, sy, x, y;
@@ -211,7 +211,7 @@ void xybots_render_mo (struct osd_bitmap *bitmap, struct rectangle *clip, unsign
 			break;
 
 		/* draw the sprite */
-		drawgfx (bitmap, Machine->gfx[2], pict, color, hflip, 0, xpos, sy, clip, TRANSPARENCY_PEN, 0);
+		drawgfx(bitmap, Machine->gfx[2], pict, color, hflip, 0, xpos, sy, clip, TRANSPARENCY_PEN, 0);
 	}
 
 	/* bring the clip in */
@@ -243,14 +243,14 @@ void xybots_render_mo (struct osd_bitmap *bitmap, struct rectangle *clip, unsign
 
 			/* process the data */
 			offs = (y & 0x3f) * 64 + (x & 0x3f);
-			dat = READ_WORD (&atarigen_playfieldram[offs * 2]);
+			dat = READ_WORD(&atarigen_playfieldram[offs * 2]);
 			color = (dat >> 11) & 15;
 
 			/* this is the priority equation from the schematics */
 			if (pri > color)
 			{
 				hflip = dat & 0x8000;
-				drawgfx (bitmap, Machine->gfx[1], dat & 0x1fff, color, hflip, 0,
+				drawgfx(bitmap, Machine->gfx[1], dat & 0x1fff, color, hflip, 0,
 						sx, sy, &pfclip, TRANSPARENCY_NONE, 0);
 			}
 		}
@@ -272,23 +272,24 @@ void xybots_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	unsigned char mo_map[16], al_map[8], pf_map[16];
 	int x, y, sx, sy, i, offs;
 
-if (osd_key_pressed (OSD_KEY_9))
+/*
+if (osd_key_pressed(OSD_KEY_9))
 {
-	FILE *f = fopen ("xybots.log", "w");
-	while (osd_key_pressed (OSD_KEY_9)) { }
+	FILE *f = fopen("xybots.log", "w");
+	while (osd_key_pressed(OSD_KEY_9)) { }
 	for (i = 0; i < 0x200; i += 2)
 	{
-		fprintf (f, "%04X ", READ_WORD (&atarigen_spriteram[i]));
-		if ((i & 0x3e) == 0x3e) fprintf (f, "\n");
+		fprintf(f, "%04X ", READ_WORD(&atarigen_spriteram[i]));
+		if ((i & 0x3e) == 0x3e) fprintf(f, "\n");
 	}
-	fclose (f);
+	fclose(f);
 }
-
+*/
 
 	/* reset color tracking */
-	memset (mo_map, 0, sizeof (mo_map));
-	memset (pf_map, 0, sizeof (pf_map));
-	memset (al_map, 0, sizeof (al_map));
+	memset(mo_map, 0, sizeof(mo_map));
+	memset(pf_map, 0, sizeof(pf_map));
+	memset(al_map, 0, sizeof(al_map));
 	palette_init_used_colors();
 
 	/* update color usage for the playfield */
@@ -300,7 +301,7 @@ if (osd_key_pressed (OSD_KEY_9))
 
 			/* read the data word */
 			offs = y * 64 + x;
-			data = READ_WORD (&atarigen_playfieldram[offs * 2]);
+			data = READ_WORD(&atarigen_playfieldram[offs * 2]);
 
 			/* update color statistics */
 			color = (data >> 11) & 15;
@@ -309,14 +310,14 @@ if (osd_key_pressed (OSD_KEY_9))
 	}
 
 	/* update color usage for the mo's */
-	atarigen_render_display_list (bitmap, xybots_calc_mo_colors, mo_map);
+	atarigen_render_display_list(bitmap, xybots_calc_mo_colors, mo_map);
 
 	/* update color usage for the alphanumerics */
 	for (sy = 0; sy < YCHARS; sy++)
 	{
 		for (sx = 0, offs = sy * 64; sx < XCHARS; sx++, offs++)
 		{
-			int data = READ_WORD (&atarigen_alpharam[offs * 2]);
+			int data = READ_WORD(&atarigen_alpharam[offs * 2]);
 			int color = (data >> 12) & 7;
 			al_map[color] = 1;
 		}
@@ -326,18 +327,18 @@ if (osd_key_pressed (OSD_KEY_9))
 	for (i = 0; i < 16; i++)
 	{
 		if (pf_map[i])
-			memset (&palette_used_colors[512 + i * 16], PALETTE_COLOR_USED, 16);
+			memset(&palette_used_colors[512 + i * 16], PALETTE_COLOR_USED, 16);
 		if (mo_map[i])
 		{
 			palette_used_colors[256 + i * 16] = PALETTE_COLOR_TRANSPARENT;
-			memset (&palette_used_colors[256 + i * 16 + 1], PALETTE_COLOR_USED, 15);
+			memset(&palette_used_colors[256 + i * 16 + 1], PALETTE_COLOR_USED, 15);
 		}
 		if (al_map[i])
-			memset (&palette_used_colors[0 + i * 4], PALETTE_COLOR_USED, 4);
+			memset(&palette_used_colors[0 + i * 4], PALETTE_COLOR_USED, 4);
 	}
 
-	if (palette_recalc ())
-		memset (playfielddirty, 1, atarigen_playfieldram_size / 2);
+	if (palette_recalc())
+		memset(playfielddirty, 1, atarigen_playfieldram_size / 2);
 
 
 
@@ -366,12 +367,12 @@ if (osd_key_pressed (OSD_KEY_9))
 			/* rerender if dirty */
 			if (playfielddirty[offs])
 			{
-				int data = READ_WORD (&atarigen_playfieldram[offs * 2]);
+				int data = READ_WORD(&atarigen_playfieldram[offs * 2]);
 				int color = (data >> 11) & 15;
 				int hflip = data & 0x8000;
 				int pict = data & 0x1fff;
 
-				drawgfx (playfieldbitmap, Machine->gfx[1], pict, color, hflip, 0,
+				drawgfx(playfieldbitmap, Machine->gfx[1], pict, color, hflip, 0,
 						8 * x, 8 * y, 0, TRANSPARENCY_NONE, 0);
 				playfielddirty[offs] = 0;
 			}
@@ -379,10 +380,10 @@ if (osd_key_pressed (OSD_KEY_9))
 	}
 
 	/* copy the playfield to the destination */
-	copybitmap (bitmap, playfieldbitmap, 0, 0, 0, 0, &Machine->drv->visible_area, TRANSPARENCY_NONE, 0);
+	copybitmap(bitmap, playfieldbitmap, 0, 0, 0, 0, &Machine->drv->visible_area, TRANSPARENCY_NONE, 0);
 
 	/* render the motion objects */
-	atarigen_render_display_list (bitmap, xybots_render_mo, NULL);
+	atarigen_render_display_list(bitmap, xybots_render_mo, NULL);
 
 	/*
 	 *---------------------------------------------------------------------------------
@@ -403,14 +404,14 @@ if (osd_key_pressed (OSD_KEY_9))
 	{
 		for (sx = 0, offs = sy * 64; sx < XCHARS; sx++, offs++)
 		{
-			int data = READ_WORD (&atarigen_alpharam[offs * 2]);
+			int data = READ_WORD(&atarigen_alpharam[offs * 2]);
 			int pict = (data & 0x3ff);
 
 			if (pict || (data & 0x8000))
 			{
 				int color = (data >> 12) & 7;
 
-				drawgfx (bitmap, Machine->gfx[0],
+				drawgfx(bitmap, Machine->gfx[0],
 						pict, color,
 						0, 0,
 						8 * sx, 8 * sy,

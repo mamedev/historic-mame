@@ -64,7 +64,7 @@ int ironhors_sh_timer_r(int offset)
 {
 	int clock;
 
-#define TIMER_RATE 128
+#define TIMER_RATE 256
 
 	clock = cpu_gettotalcycles() / TIMER_RATE;
 

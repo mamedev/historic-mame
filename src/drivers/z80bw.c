@@ -203,15 +203,15 @@ ROM_END
 static const char *astinvad_sample_names[] =
 {
 	"*invaders",
-	"0.SAM",
-	"1.SAM",
-	"2.SAM",
-	"3.SAM",
-	"4.SAM",
-	"5.SAM",
-	"6.SAM",
-	"7.SAM",
-	"8.SAM",
+	"0.wav",
+	"1.wav",
+	"2.wav",
+	"3.wav",
+	"4.wav",
+	"5.wav",
+	"6.wav",
+	"7.wav",
+	"8.wav",
 	0       /* end of array */
 };
 

@@ -188,26 +188,36 @@ void ironhors_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 				flipx = sr[offs+4] & 0x20;
 				flipy = sr[offs+4] & 0x40;  /* not sure yet */
 
-				if (sr[offs+4] & 0x04)    /* half sized sprite */
+				if ((sr[offs+4] & 0x0c) == 0x04)    /* half sized sprite */
 				{
-					int spritenum = sr[offs]*4+((sr[offs+1] & 8) >> 2);
+					int spritenum = sr[offs]*4+((sr[offs+1] & 0x0c) >> 2);
 					drawgfx(bitmap,Machine->gfx[2],
 							spritenum,
-							(sr[offs+4] & 0x0f) + 16 * palettebank,
+							((sr[offs+1] & 0xf0)>>4) + 16 * palettebank,
 							flipx,flipy,
-							sx,sy,
+							flipx?sx+8:sx,sy,
 							&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
 					drawgfx(bitmap,Machine->gfx[2],
 							spritenum+1,
-							(sr[offs+4] & 0x0f) + 16 * palettebank,
+							((sr[offs+1] & 0xf0)>>4) + 16 * palettebank,
 							flipx,flipy,
-							sx+8,sy,
+							flipx?sx:sx+8,sy,
+							&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+				}
+				else if ((sr[offs+4] & 0x0c) == 0x0c)    /* quarter sized sprite */
+				{
+					int spritenum = sr[offs]*4+((sr[offs+1] & 0x0c) >> 2);
+					drawgfx(bitmap,Machine->gfx[2],
+							spritenum,
+							((sr[offs+1] & 0xf0)>>4) + 16 * palettebank,
+							flipx,flipy,
+							sx,sy,
 							&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
 				}
 				else
 					drawgfx(bitmap,Machine->gfx[1],
 							sr[offs] + 256 * (sr[offs+1] & 1),
-							(sr[offs+4] & 0x0f) + 16 * palettebank,
+							((sr[offs+1] & 0xf0)>>4) + 16 * palettebank,
 							flipx,flipy,
 							sx,sy,
 							&Machine->drv->visible_area,TRANSPARENCY_PEN,0);

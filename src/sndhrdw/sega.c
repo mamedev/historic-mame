@@ -1,11 +1,15 @@
 #include "driver.h"
 
 /* History:
- * 2/5/99 Extra Life sound constant found $1C after fixing main driver.
- * 1/29/99 Additional Sound programming by Jim Hernandez.
- * Supports new 44.1Khz samples set made by me.
+
+ * 4/9/99 Zektor Discrete Sound Support mixed with voice samples.       (Jim Hernandez)
+          Zektor uses some Eliminator sounds.
+
+ * 2/5/99 Extra Life sound constant found $1C after fixing main driver. (Jim Hernandez)
+ * 1/29/99 Supports Tac Scan new 44.1Khz sample set.                    (Jim Hernandez)
+
  * -Stuff to do -
- * Find hex bit for credit.sam and warp.sam sound calls.
+ * Find hex bit for credit.wav and warp.wav sound calls.
  *
  * 2/05/98 now using the new sample_*() functions. BW
  *
@@ -379,6 +383,7 @@ void tacscan_sh_update (void)
 		sample_start (kVoiceShipRoar, 1, 1);
 }
 
+
 void elim1_sh_w (int offset,int data)
 {
 	data ^= 0xff;
@@ -437,92 +442,153 @@ void elim2_sh_w (int offset,int data)
 		sample_start (7, 4, 0);
 }
 
+
+void zektor1_sh_w (int offset,int data)
+{
+	data ^= 0xff;
+
+	/* Play fireball sample */
+	if (data & 0x02)
+                sample_start (0, 19, 0);
+
+	/* Play explosion samples */
+	if (data & 0x04)
+                sample_start (1, 29, 0);
+ 	if (data & 0x08)
+                  sample_start (1, 28, 0);
+ 	if (data & 0x10)
+                  sample_start (1, 27, 0);
+
+	/* Play bounce sample */
+	if (data & 0x20)
+   	{
+                if (sample_playing(2))
+                        osd_stop_sample (2);
+                sample_start (2, 20, 0);
+	}
+
+	/* Play lazer sample */
+	if (data & 0xc0)
+   	{
+		if (sample_playing(3))
+			osd_stop_sample (3);
+                sample_start (3, 24, 0);
+	}
+}
+
+void zektor2_sh_w (int offset,int data)
+{
+	data ^= 0xff;
+
+	/* Play thrust sample */
+	if (data & 0x0f)
+            sample_start (4, 25, 0);
+	else
+		sample_stop (4);
+
+	/* Play skitter sample */
+	if (data & 0x10)
+                sample_start (5, 21, 0);
+
+	/* Play eliminator sample */
+	if (data & 0x20)
+                sample_start (6, 22, 0);
+
+	/* Play electron samples */
+	if (data & 0x40)
+                sample_start (7, 40, 0);
+	if (data & 0x80)
+                sample_start (7, 41, 0);
+}
+
+
+
 void startrek_sh_w (int offset,int data)
 {
 	switch (data)
    	{
-		case 0x08: /* phaser - trek1.sam */
+		case 0x08: /* phaser - trek1.wav */
 			sample_start (1, 0x17, 0);
 			break;
-		case 0x0a: /* photon - trek2.sam */
+		case 0x0a: /* photon - trek2.wav */
 			sample_start (1, 0x18, 0);
 			break;
-		case 0x0e: /* targeting - trek3.sam */
+		case 0x0e: /* targeting - trek3.wav */
 			sample_start (1, 0x19, 0);
 			break;
-		case 0x10: /* dent - trek4.sam */
+		case 0x10: /* dent - trek4.wav */
 			sample_start (2, 0x1a, 0);
 			break;
-		case 0x12: /* shield hit - trek5.sam */
+		case 0x12: /* shield hit - trek5.wav */
 			sample_start (2, 0x1b, 0);
 			break;
-		case 0x14: /* enterprise hit - trek6.sam */
+		case 0x14: /* enterprise hit - trek6.wav */
 			sample_start (2, 0x1c, 0);
 			break;
-		case 0x16: /* enterprise explosion - trek7.sam */
+		case 0x16: /* enterprise explosion - trek7.wav */
 			sample_start (2, 0x1d, 0);
 			break;
-		case 0x1a: /* klingon explosion - trek8.sam */
+		case 0x1a: /* klingon explosion - trek8.wav */
 			sample_start (2, 0x1e, 0);
 			break;
-		case 0x1c: /* dock - trek9.sam */
+		case 0x1c: /* dock - trek9.wav */
 			sample_start (1, 0x1f, 0);
 			break;
-		case 0x1e: /* starbase hit - trek10.sam */
+		case 0x1e: /* starbase hit - trek10.wav */
 			sample_start (1, 0x20, 0);
 			break;
-		case 0x11: /* starbase red - trek11.sam */
+		case 0x11: /* starbase red - trek11.wav */
 			sample_start (1, 0x21, 0);
 			break;
-		case 0x22: /* starbase explosion - trek12.sam */
+		case 0x22: /* starbase explosion - trek12.wav */
 			sample_start (2, 0x22, 0);
 			break;
-		case 0x24: /* small bonus - trek13.sam */
+		case 0x24: /* small bonus - trek13.wav */
 			sample_start (3, 0x23, 0);
 			break;
-		case 0x25: /* large bonus - trek14.sam */
+		case 0x25: /* large bonus - trek14.wav */
 			sample_start (3, 0x24, 0);
 			break;
-		case 0x26: /* starbase intro - trek15.sam */
+		case 0x26: /* starbase intro - trek15.wav */
 			sample_start (1, 0x25, 0);
 			break;
-		case 0x27: /* klingon intro - trek16.sam */
+		case 0x27: /* klingon intro - trek16.wav */
 			sample_start (1, 0x26, 0);
 			break;
-		case 0x28: /* enterprise intro - trek17.sam */
+		case 0x28: /* enterprise intro - trek17.wav */
 			sample_start (1, 0x27, 0);
 			break;
-		case 0x29: /* player change - trek18.sam */
+		case 0x29: /* player change - trek18.wav */
 			sample_start (1, 0x28, 0);
 			break;
-		case 0x2e: /* klingon fire - trek19.sam */
+		case 0x2e: /* klingon fire - trek19.wav */
 			sample_start (2, 0x29, 0);
 			break;
-		case 0x04: /* impulse start - trek20.sam */
+		case 0x04: /* impulse start - trek20.wav */
 			sample_start (3, 0x2a, 0);
 			break;
-		case 0x06: /* warp start - trek21.sam */
+		case 0x06: /* warp start - trek21.wav */
 			sample_start (3, 0x2b, 0);
 			break;
-		case 0x0c: /* red alert start - trek22.sam */
+		case 0x0c: /* red alert start - trek22.wav */
 			sample_start (4, 0x2c, 0);
 			break;
-		case 0x18: /* warp suck - trek23.sam */
+		case 0x18: /* warp suck - trek23.wav */
 			sample_start (4, 0x2d, 0);
 			break;
-		case 0x19: /* saucer exit - trek24.sam */
+		case 0x19: /* saucer exit - trek24.wav */
 			sample_start (4, 0x2e, 0);
 			break;
-		case 0x2c: /* nomad motion - trek25.sam */
+		case 0x2c: /* nomad motion - trek25.wav */
 			sample_start (5, 0x2f, 0);
 			break;
-		case 0x2d: /* nomad stopped - trek26.sam */
+		case 0x2d: /* nomad stopped - trek26.wav */
 			sample_start (5, 0x30, 0);
 			break;
-		case 0x2b: /* coin drop music - trek27.sam */
+		case 0x2b: /* coin drop music - trek27.wav */
 			sample_start (1, 0x31, 0);
 			break;
-		case 0x2a: /* high score music - trek28.sam */
+		case 0x2a: /* high score music - trek28.wav */
 			sample_start (1, 0x32, 0);
 			break;
 	}
@@ -580,7 +646,8 @@ void spacfury2_sh_w (int offset,int data)
 		if (sample_playing(6))
 			osd_stop_sample(6);
 		sample_start(6, 0x18, 0);
-	}
+
+        }
 
 	/* fireball */
 	if (data & 0x04)

@@ -328,7 +328,7 @@ static struct MachineDriver machine_driver =
 	{
 		{
 			CPU_M6800,
-			3000000,	   /* ???? */
+			3000000/4,	   /* ???? */
 			0,
 			readmem,writemem,0,0,
 			skydiver_interrupt,8

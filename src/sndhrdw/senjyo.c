@@ -52,7 +52,7 @@ void senjyo_volume_w( int offset , int data )
 	single_volume = ((data & 0x0f)<<4)|(data & 0x0f);
 }
 
-int senjyo_sh_start(void)
+int senjyo_sh_start(const struct MachineSound *msound)
 {
     int i;
 

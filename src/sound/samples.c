@@ -84,9 +84,11 @@ int sample_playing(int channel)
 }
 
 
-int samples_sh_start(const struct Samplesinterface *interface)
+int samples_sh_start(const struct MachineSound *msound)
 {
-	numchannels = interface->channels;
+	const struct Samplesinterface *intf = msound->sound_interface;
+
+	numchannels = intf->channels;
 	firstchannel = get_play_channels(numchannels);
 	return 0;
 }

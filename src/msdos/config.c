@@ -17,7 +17,7 @@ extern int ignorecfg;
 
 /* from video.c */
 extern int frameskip,autoframeskip;
-extern int scanlines, use_vesa, video_sync, wait_vsync, ntsc;
+extern int scanlines, use_vesa, video_sync, wait_vsync, use_triplebuf, ntsc;
 extern int stretch, use_double;
 extern int vgafreq, always_synced, color_depth, skiplines, skipcolumns;
 extern float osd_gamma_correction;
@@ -311,6 +311,7 @@ void parse_cmdline (int argc, char **argv, int game_index)
 	use_double  = get_bool   ("config", "double",       NULL, -1);
 	video_sync  = get_bool   ("config", "vsync",        NULL,  0);
 	wait_vsync  = get_bool   ("config", "waitvsync",    NULL,  0);
+	use_triplebuf  = get_bool("config", "triplebuffer",        NULL,  0);
 	options.antialias   = get_bool   ("config", "antialias",    NULL,  1);
 	use_vesa    = get_bool   ("config", "vesa",         NULL,  0);
 	options.translucency = get_bool    ("config", "translucency", NULL, 1);

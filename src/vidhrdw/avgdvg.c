@@ -77,9 +77,8 @@ int vector_updates; /* avgdvg_go()'s per Mame frame, should be 1 */
 static int vg_step = 0;    /* single step the vector generator */
 static int total_length;   /* length of all lines drawn in a frame */
 
-/* Use overlay if present MLR OCT0598 */
+/* Use backdrop if present MLR OCT0598 */
 static struct artwork *backdrop = NULL;
-static struct artwork *overlay = NULL;
 
 #define MAXSTACK 8 	/* Tempest needs more than 4     BW 210797 */
 
@@ -939,7 +938,7 @@ void avg_init_colors (unsigned char *palette, unsigned short *colortable,const u
 
 		/* Monochrome Aqua colors (Asteroids Deluxe,Red Baron) .ac JAN2498 */
 		case  VEC_PAL_MONO_AQUA:
-			/* Use overlay if present MLR OCT0598 */
+			/* Use backdrop if present MLR OCT0598 */
 			if ((backdrop=artwork_load("astdelux.png", 32, Machine->drv->total_colors-32))!=NULL)
 			{
 				shade_fill (palette, GREEN|BLUE, 8, 23, 1, 254);
@@ -958,31 +957,12 @@ void avg_init_colors (unsigned char *palette, unsigned short *colortable,const u
 
 		/* Monochrome Green/Red vector colors (Battlezone) .ac JAN2498 */
 		case  VEC_PAL_BZONE:
-			/* Use overlay if present MLR OCT0598 */
-			if ((backdrop=artwork_load("bzone_b.png", 8, Machine->drv->total_colors-8))!=NULL)
-			{
-				memcpy (palette+3*backdrop->start_pen, backdrop->orig_palette,
-					3*backdrop->num_pens_used);
-				if ((overlay = artwork_load("bzone.png",
-							     8+backdrop->num_pens_used,
-							     Machine->drv->total_colors -
-							    (8+backdrop->num_pens_used)))!=NULL)
-				{
-					overlay_set_palette (overlay, palette, Machine->drv->total_colors
-							     -9-backdrop->num_pens_used);
-					colorram[2] = 7;
-					colorram[4] = 7;
-				}
-			}
-			else
-			{
-				if (backdrop)
-					artwork_free(backdrop);
-				backdrop = NULL;
-				overlay = NULL;
-				shade_fill (palette, RED  ,     8, 128+4, 1, 254);
-				shade_fill (palette, GREEN, 128+5, 254  , 1, 254);
-			}
+			shade_fill (palette, RED  ,  8, 23, 1, 254);
+			shade_fill (palette, GREEN, 24, 31, 1, 254);
+			shade_fill (palette, WHITE, 32, 47, 1, 254);
+			/* Use backdrop if present MLR OCT0598 */
+			if ((backdrop=artwork_load("bzone.png", 48, Machine->drv->total_colors-48))!=NULL)
+				memcpy (palette+3*backdrop->start_pen, backdrop->orig_palette, 3*backdrop->num_pens_used);
 			break;
 
 		/* Colored games (Major Havoc, Star Wars, Tempest) .ac JAN2498 */
@@ -1098,9 +1078,7 @@ level # - green
 
 void avg_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
-	if (overlay && backdrop)
-		vector_vh_update_artwork(bitmap, overlay, backdrop, full_refresh);
-	else if (backdrop)
+	if (backdrop)
 		vector_vh_update_backdrop(bitmap, backdrop, full_refresh);
 	else
 		vector_vh_update(bitmap,full_refresh);
@@ -1147,9 +1125,6 @@ int avg_start_bzone(void)
 	if (backdrop)
 		backdrop_refresh(backdrop);
 
-	if (overlay)
-		overlay_remap(overlay);
-
 	return avgdvg_init (USE_AVG_BZONE);
 }
 
@@ -1172,8 +1147,6 @@ void avg_stop(void)
 
 	if (backdrop) artwork_free(backdrop);
 	backdrop = NULL;
-	if (overlay) artwork_free(overlay);
-	overlay = NULL;
 }
 
 void dvg_stop(void)
@@ -1185,7 +1158,5 @@ void dvg_stop(void)
 
 	if (backdrop) artwork_free(backdrop);
 	backdrop = NULL;
-	if (overlay) artwork_free(overlay);
-	overlay = NULL;
 }
 

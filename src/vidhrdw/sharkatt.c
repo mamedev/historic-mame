@@ -41,38 +41,58 @@ void sharkatt_color_map_w(int offset, int data)
     r = vals[(data & 0x03) >> 0];
     g = vals[(data & 0x0C) >> 2];
     b = vals[(data & 0x30) >> 4];
-	palette_change_color(offset,r,g,b);
+	palette_change_color (offset,r,g,b);
 }
 
 /***************************************************************************
  sharkatt_videoram_w
  **************************************************************************/
+static void plot_pixel (int x, int y, int col)
+{
+	if (Machine->orientation & ORIENTATION_SWAP_XY)
+	{
+		int temp;
+
+		temp = x;
+		x = y;
+		y = temp;
+	}
+	if (Machine->orientation & ORIENTATION_FLIP_X)
+		x = 255 - x;
+	if (Machine->orientation & ORIENTATION_FLIP_Y)
+		y = 255 - y;
+
+	tmpbitmap->line[y][x] = col;
+	Machine->scrbitmap->line[y][x] = col;
+	/* TODO: we should mark 8 bits dirty at a time */
+	osd_mark_dirty (x,y,x,y,0);
+}
+
 void sharkatt_videoram_w(int offset,int data)
 {
 	if ((dirtybuffer[offset]) || (videoram[offset] != data))
 	{
 		int i,x,y;
 
-        dirtybuffer[offset] = 0;
+		dirtybuffer[offset] = 0;
 
 		videoram[offset] = data;
 
-		y = offset / 32;
-		x = 8 * (offset % 32);
+		x = offset / 32;
+		y = 8 * (offset % 32);
 
 		for (i = 0;i < 8;i++)
 		{
 			int col;
 
-
 			col = Machine->pens[color_plane & 0x0F];
 
-			if (data & 0x80) Machine->scrbitmap->line[y][x] = tmpbitmap->line[y][x] = col;
-			else Machine->scrbitmap->line[y][x] = tmpbitmap->line[y][x] = Machine->pens[0];
+			if (data & 0x80)
+				plot_pixel (x, y, col);
+			else
+				plot_pixel (x, y, Machine->pens[0]);
 
-			osd_mark_dirty(x,y,x,y,0);
-
-			x++;
+			y++;
 			data <<= 1;
 		}
 	}

@@ -9,31 +9,14 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-unsigned char *lastduel_sprites;
-unsigned char *lastduel_scroll1;
-unsigned char *lastduel_scroll2;
-unsigned char *lastduel_vram;
-unsigned char *lastduel_ram;
-
-static struct osd_bitmap *scroll1_bitmap;
-static struct osd_bitmap *scroll2_bitmap;
-static unsigned char *scroll1_dirty;
-static unsigned char *scroll2_dirty;
+unsigned char *lastduel_vram,*lastduel_scroll2,*lastduel_scroll1;
+static struct osd_bitmap *scroll1_bitmap,*scroll2_bitmap;
+static unsigned char *scroll1_dirty,*scroll2_dirty;
 static int scroll[16];
 
 void lastduel_scroll_w( int offset, int data )
 {
 	scroll[offset]=data&0xffff;  /* Scroll data, other bits unknown */
-}
-
-int lastduel_sprites_r(int offset)
-{
-	return READ_WORD(&lastduel_sprites[offset]);
-}
-
-void lastduel_sprites_w(int offset,int value)
-{
-	COMBINE_WORD_MEM(&lastduel_sprites[offset],value);
 }
 
 int lastduel_scroll1_r(int offset)
@@ -79,14 +62,6 @@ void lastduel_vram_w(int offset,int value)
 {
  	COMBINE_WORD_MEM(&lastduel_vram[offset],value);
 }
-
-#if 0
-void lastduel_set_dirty(void)
-{
-	memset(scroll1_dirty,1,0x1000);
-	memset(scroll2_dirty,1,0x1000);
-}
-#endif
 
 /***************************************************************************
 
@@ -194,8 +169,8 @@ void lastduel_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	for (color = 0;color < 16;color++) colmask[color] = 0;
 	for(offs=0x500-8;offs>-1;offs-=8)
 	{
-		int attributes = READ_WORD(&lastduel_sprites[offs+2]);
-		code=READ_WORD(&lastduel_sprites[offs]);
+		int attributes = READ_WORD(&spriteram[offs+2]);
+		code=READ_WORD(&spriteram[offs]);
 		color = attributes&0xf;
 
 		colmask[color] |= pen_usage[code];
@@ -263,15 +238,15 @@ void lastduel_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	}
 
 	/* Sprites */
-	for(offs=0x500-8;offs>-1;offs-=8)
+	for(offs=0x500-8;offs>=0;offs-=8)
 	{
 		int attributes,sy,sx,flipx,flipy;
-		code=READ_WORD(&lastduel_sprites[offs]);
+		code=READ_WORD(&spriteram[offs]);
 		if (!code) continue;
 
-		attributes = READ_WORD(&lastduel_sprites[offs+2]);
-		sy = READ_WORD(&lastduel_sprites[offs+4]) & 0x1ff;
-		sx = READ_WORD(&lastduel_sprites[offs+6]) & 0x1ff;
+		attributes = READ_WORD(&spriteram[offs+2]);
+		sy = READ_WORD(&spriteram[offs+4]) & 0x1ff;
+		sx = READ_WORD(&spriteram[offs+6]) & 0x1ff;
 
 		flipx = attributes&0x20;
 		flipy = attributes&0x40;

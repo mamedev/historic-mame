@@ -95,7 +95,7 @@ static struct MemoryWriteAddress rainbow_writemem[] =
 	{ 0xc40000, 0xc40003, rastan_scrollX_w, &rastan_scrollx },  /* scroll X  1st.w plane1  2nd.w plane2 */
 	{ 0xd00000, 0xd0ffff, MWA_BANK4 },
 	{ 0x380000, 0x380003, rastan_videocontrol_w },	/* sprite palette bank, coin counters, other unknowns */
-	{ 0x3e0000, 0x3e0003, rastan_sound_w },
+//	{ 0x3e0000, 0x3e0003, rastan_sound_w },
 #ifdef MAME_DEBUG
 	{ 0x3c0000, 0x3c0003, MWA_NOP },
 #endif
@@ -136,7 +136,7 @@ static struct MemoryWriteAddress jumping_writemem[] =
     { 0x430000, 0x430003, rastan_scrollY_w, &rastan_scrolly },  /* scroll Y  1st.w plane1  2nd.w plane2 */
    	{ 0xc40000, 0xc40003, rastan_scrollX_w, &rastan_scrollx },  /* scroll X  1st.w plane1  2nd.w plane2 */
     { 0x440000, 0x4407ff, MWA_BANK4 },
-	{ 0x3e0000, 0x3e0003, rastan_sound_w },
+//	{ 0x3e0000, 0x3e0003, rastan_sound_w },
     { 0xd00800, 0xd00fff, MWA_BANK5 }, 				/* Needed for Attract Mode */
 #ifdef MAME_DEBUG
     { 0x3c0000, 0x3c0001, MWA_NOP },				/* Watchdog ? */

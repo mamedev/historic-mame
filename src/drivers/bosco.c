@@ -110,7 +110,7 @@ void bosco_vh_stop(void);
 void bosco_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 void pengo_sound_w(int offset,int data);
-int  bosco_sh_start(void);
+int  bosco_sh_start(const struct MachineSound *msound);
 void bosco_sh_stop(void);
 extern unsigned char *pengo_soundregs;
 extern unsigned char bosco_hiscoreloaded;
@@ -614,9 +614,9 @@ ROM_END
 static const char *bosco_sample_names[] =
 {
 	"*bosco",
-	"MIDBANG.SAM",
-	"BIGBANG.SAM",
-	"SHOT.SAM",
+	"MIDBANG.wav",
+	"BIGBANG.wav",
+	"SHOT.wav",
 	0	/* end of array */
 };
 

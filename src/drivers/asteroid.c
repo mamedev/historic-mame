@@ -154,7 +154,7 @@ void asteroid_sounds_w(int offset,int data);
 void astdelux_sounds_w(int offset,int data);
 void llander_sounds_w(int offset,int data);
 void llander_snd_reset_w(int offset,int data);
-int llander_sh_start(void);
+int llander_sh_start(const struct MachineSound *msound);
 void llander_sh_stop(void);
 void llander_sh_update(void);
 
@@ -765,17 +765,17 @@ static struct MachineDriver llander_machine_driver =
 static const char *asteroid_sample_names[] =
 {
 	"*asteroid",
-	"explode1.sam",
-	"explode2.sam",
-	"explode3.sam",
-	"thrust.sam",
-	"thumphi.sam",
-	"thumplo.sam",
-	"fire.sam",
-	"lsaucer.sam",
-	"ssaucer.sam",
-	"sfire.sam",
-	"life.sam",
+	"explode1.wav",
+	"explode2.wav",
+	"explode3.wav",
+	"thrust.wav",
+	"thumphi.wav",
+	"thumplo.wav",
+	"fire.wav",
+	"lsaucer.wav",
+	"ssaucer.wav",
+	"sfire.wav",
+	"life.wav",
     0	/* end of array */
 };
 
@@ -881,10 +881,10 @@ ROM_END
 
 static const char *astdelux_sample_names[] =
 {
-	"explode1.sam",
-	"explode2.sam",
-	"explode3.sam",
-	"thrust.sam",
+	"explode1.wav",
+	"explode2.wav",
+	"explode3.wav",
+	"thrust.wav",
 	0
 };
 

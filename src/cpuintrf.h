@@ -56,6 +56,9 @@ enum {
 #ifndef HAS_Z80
 #define HAS_Z80 		0
 #endif
+#ifndef HAS_Z80_VM
+#define HAS_Z80_VM		0
+#endif
 #ifndef HAS_8080
 #define HAS_8080		0
 #endif
@@ -179,7 +182,8 @@ struct cpu_interface
     void (*cpu_state_load)(void *file);
     const char* (*cpu_info)(void *context,int regnum);
     unsigned (*cpu_dasm)(char *buffer,unsigned pc);
-    unsigned num_irqs;
+	unsigned num_irqs;
+	int default_vector;
     int *icount;
     int no_int, irq_int, nmi_int;
     int (*memory_read)(int offset);

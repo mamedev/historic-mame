@@ -603,7 +603,7 @@ ROM_END
 static const char *galaga_sample_names[] =
 {
 	"*galaga",
-	"BANG.SAM",
+	"BANG.wav",
 	0       /* end of array */
 };
 

@@ -14,8 +14,8 @@ VPATH=src $(wildcard src/cpu/*)
 
 # uncomment next line to do a smaller compile including only one driver
 # TINY_COMPILE = 1
-TINY_NAME = rthunder_driver
-TINY_OBJS = obj/drivers/rthunder.o obj/vidhrdw/rthunder.o
+TINY_NAME = skykid_driver
+TINY_OBJS = obj/drivers/pacland.o obj/vidhrdw/pacland.o
 
 # uncomment one of the two next lines to not compile the NeoGeo games or to
 # compile only the NeoGeo games
@@ -34,70 +34,72 @@ CPUS+=M68000
 SOUNDS+=YM2610
 else
 # uncomment the following lines to include a CPU core
-CPUS+=Z80
-CPUS+=8080
-CPUS+=8085A
-CPUS+=M6502
-CPUS+=M65C02
-CPUS+=M6510
-CPUS+=H6280
-CPUS+=I86
-CPUS+=I8035
-CPUS+=I8039
-CPUS+=I8048
-CPUS+=N7751
-CPUS+=M6800
-CPUS+=M6801
-CPUS+=M6802
-CPUS+=M6803
-CPUS+=M6808
-CPUS+=HD63701
-CPUS+=M6805
-CPUS+=M68705
-CPUS+=HD63705
-CPUS+=M6309
-CPUS+=M6809
-CPUS+=M68000
-CPUS+=M68010
-CPUS+=M68020
-CPUS+=T11
-CPUS+=S2650
-CPUS+=TMS34010
-CPUS+=TMS9900
-CPUS+=Z8000
-CPUS+=TMS320C10
-CPUS+=CCPU
-# CPUS+=PDP1
+CPUS+=Z80@
+#CPUS+=Z80_VM@
+CPUS+=8080@
+CPUS+=8085A@
+CPUS+=M6502@
+CPUS+=M65C02@
+CPUS+=M6510@
+CPUS+=H6280@
+CPUS+=I86@
+CPUS+=I8035@
+CPUS+=I8039@
+CPUS+=I8048@
+CPUS+=N7751@
+CPUS+=M6800@
+CPUS+=M6801@
+CPUS+=M6802@
+CPUS+=M6803@
+CPUS+=M6808@
+CPUS+=HD63701@
+CPUS+=M6805@
+CPUS+=M68705@
+CPUS+=HD63705@
+CPUS+=M6309@
+CPUS+=M6809@
+CPUS+=M68000@
+CPUS+=M68010@
+CPUS+=M68020@
+CPUS+=T11@
+CPUS+=S2650@
+CPUS+=TMS34010@
+CPUS+=TMS9900@
+CPUS+=Z8000@
+CPUS+=TMS320C10@
+CPUS+=CCPU@
+# CPUS+=PDP1@
 
 # uncomment the following lines to include a sound core
-SOUNDS+=CUSTOM
-SOUNDS+=SAMPLES
-SOUNDS+=DAC
-SOUNDS+=AY8910
-SOUNDS+=YM2203
-SOUNDS+=YM2151
-SOUNDS+=YM2151_ALT
-#SOUNDS+=YM2608
-SOUNDS+=YM2610
-SOUNDS+=YM2612
-SOUNDS+=YM3438
-SOUNDS+=YM2413
-SOUNDS+=YM3812
-SOUNDS+=YM3526
-SOUNDS+=SN76496
-SOUNDS+=POKEY
-#SOUNDS+=TIA
-SOUNDS+=NES
-SOUNDS+=ASTROCADE
-SOUNDS+=NAMCO
-SOUNDS+=TMS5220
-SOUNDS+=VLM5030
-SOUNDS+=ADPCM
-SOUNDS+=OKIM6295
-SOUNDS+=MSM5205
-SOUNDS+=UPD7759
-SOUNDS+=HC55516
-SOUNDS+=K007232
+SOUNDS+=CUSTOM@
+SOUNDS+=SAMPLES@
+SOUNDS+=DAC@
+SOUNDS+=AY8910@
+SOUNDS+=YM2203@
+SOUNDS+=YM2151@
+SOUNDS+=YM2151_ALT@
+SOUNDS+=YM2608@
+SOUNDS+=YM2610@
+SOUNDS+=YM2610B@
+SOUNDS+=YM2612@
+SOUNDS+=YM3438@
+SOUNDS+=YM2413@
+SOUNDS+=YM3812@
+SOUNDS+=YM3526@
+SOUNDS+=SN76496@
+SOUNDS+=POKEY@
+#SOUNDS+=TIA@
+SOUNDS+=NES@
+SOUNDS+=ASTROCADE@
+SOUNDS+=NAMCO@
+SOUNDS+=TMS5220@
+SOUNDS+=VLM5030@
+SOUNDS+=ADPCM@
+SOUNDS+=OKIM6295@
+SOUNDS+=MSM5205@
+SOUNDS+=UPD7759@
+SOUNDS+=HC55516@
+SOUNDS+=K007232@
 endif
 
 # List of CPU core (and, for a debug build, disassembler) object files
@@ -106,168 +108,175 @@ CPUOBJS =
 DBGOBJS =
 ASMDEFS =
 
-CPU=$(strip $(findstring Z80,$(CPUS)))
+CPU=$(strip $(findstring Z80@,$(CPUS)))
 ifneq ($(CPU),)
 CPUDEFS += -DHAS_Z80=1
 CPUOBJS += obj/cpu/z80/z80.o
 DBGOBJS += obj/cpu/z80/z80dasm.o
 endif
 
-CPU=$(strip $(findstring 8080,$(CPUS)))
+CPU=$(strip $(findstring Z80_VM@,$(CPUS)))
+ifneq ($(CPU),)
+CPUDEFS += -DHAS_Z80_VM=1
+CPUOBJS += obj/cpu/z80/z80_vm.o
+DBGOBJS += obj/cpu/z80/z80dasm.o
+endif
+
+CPU=$(strip $(findstring 8080@,$(CPUS)))
 ifneq ($(CPU),)
 CPUDEFS += -DHAS_8080=1
 CPUOBJS += obj/cpu/i8085/i8085.o
 DBGOBJS += obj/cpu/i8085/8085dasm.o
 endif
 
-CPU=$(strip $(findstring 8085A,$(CPUS)))
+CPU=$(strip $(findstring 8085A@,$(CPUS)))
 ifneq ($(CPU),)
 CPUDEFS += -DHAS_8085A=1
 CPUOBJS += obj/cpu/i8085/i8085.o
 DBGOBJS += obj/cpu/i8085/8085dasm.o
 endif
 
-CPU=$(strip $(findstring M6502,$(CPUS)))
+CPU=$(strip $(findstring M6502@,$(CPUS)))
 ifneq ($(CPU),)
 CPUDEFS += -DHAS_M6502=1
 CPUOBJS += obj/cpu/m6502/m6502.o
 DBGOBJS += obj/cpu/m6502/6502dasm.o
 endif
 
-CPU=$(strip $(findstring M65C02,$(CPUS)))
+CPU=$(strip $(findstring M65C02@,$(CPUS)))
 ifneq ($(CPU),)
 CPUDEFS += -DHAS_M65C02=1
 CPUOBJS += obj/cpu/m6502/m6502.o
 DBGOBJS += obj/cpu/m6502/6502dasm.o
 endif
 
-CPU=$(strip $(findstring M6510,$(CPUS)))
+CPU=$(strip $(findstring M6510@,$(CPUS)))
 ifneq ($(CPU),)
 CPUDEFS += -DHAS_M6510=1
 CPUOBJS += obj/cpu/m6502/m6502.o
 DBGOBJS += obj/cpu/m6502/6502dasm.o
 endif
 
-CPU=$(strip $(findstring H6280,$(CPUS)))
+CPU=$(strip $(findstring H6280@,$(CPUS)))
 ifneq ($(CPU),)
 CPUDEFS += -DHAS_H6280=1
 CPUOBJS += obj/cpu/h6280/h6280.o
 DBGOBJS += obj/cpu/h6280/6280dasm.o
 endif
 
-CPU=$(strip $(findstring I86,$(CPUS)))
+CPU=$(strip $(findstring I86@,$(CPUS)))
 ifneq ($(CPU),)
 CPUDEFS += -DHAS_I86=1
 CPUOBJS += obj/cpu/i86/i86.o
 DBGOBJS += obj/cpu/i86/i86dasm.o
 endif
 
-CPU=$(strip $(findstring I8035,$(CPUS)))
+CPU=$(strip $(findstring I8035@,$(CPUS)))
 ifneq ($(CPU),)
 CPUDEFS += -DHAS_I8035=1
 CPUOBJS += obj/cpu/i8039/i8039.o
 DBGOBJS += obj/cpu/i8039/8039dasm.o
 endif
 
-CPU=$(strip $(findstring I8039,$(CPUS)))
+CPU=$(strip $(findstring I8039@,$(CPUS)))
 ifneq ($(CPU),)
 CPUDEFS += -DHAS_I8039=1
 CPUOBJS += obj/cpu/i8039/i8039.o
 DBGOBJS += obj/cpu/i8039/8039dasm.o
 endif
 
-CPU=$(strip $(findstring I8048,$(CPUS)))
+CPU=$(strip $(findstring I8048@,$(CPUS)))
 ifneq ($(CPU),)
 CPUDEFS += -DHAS_I8048=1
 CPUOBJS += obj/cpu/i8039/i8039.o
 DBGOBJS += obj/cpu/i8039/8039dasm.o
 endif
 
-CPU=$(strip $(findstring N7751,$(CPUS)))
+CPU=$(strip $(findstring N7751@,$(CPUS)))
 ifneq ($(CPU),)
 CPUDEFS += -DHAS_N7751=1
 CPUOBJS += obj/cpu/i8039/i8039.o
 DBGOBJS += obj/cpu/i8039/8039dasm.o
 endif
 
-CPU=$(strip $(findstring M6800 ,$(CPUS)))
+CPU=$(strip $(findstring M6800@,$(CPUS)))
 ifneq ($(CPU),)
 CPUDEFS += -DHAS_M6800=1
 CPUOBJS += obj/cpu/m6800/m6800.o
 DBGOBJS += obj/cpu/m6800/6800dasm.o
 endif
 
-CPU=$(strip $(findstring M6801,$(CPUS)))
+CPU=$(strip $(findstring M6801@,$(CPUS)))
 ifneq ($(CPU),)
 CPUDEFS += -DHAS_M6801=1
 CPUOBJS += obj/cpu/m6800/m6800.o
 DBGOBJS += obj/cpu/m6800/6800dasm.o
 endif
 
-CPU=$(strip $(findstring M6802,$(CPUS)))
+CPU=$(strip $(findstring M6802@,$(CPUS)))
 ifneq ($(CPU),)
 CPUDEFS += -DHAS_M6802=1
 CPUOBJS += obj/cpu/m6800/m6800.o
 DBGOBJS += obj/cpu/m6800/6800dasm.o
 endif
 
-CPU=$(strip $(findstring M6803,$(CPUS)))
+CPU=$(strip $(findstring M6803@,$(CPUS)))
 ifneq ($(CPU),)
 CPUDEFS += -DHAS_M6803=1
 CPUOBJS += obj/cpu/m6800/m6800.o
 DBGOBJS += obj/cpu/m6800/6800dasm.o
 endif
 
-CPU=$(strip $(findstring M6808,$(CPUS)))
+CPU=$(strip $(findstring M6808@,$(CPUS)))
 ifneq ($(CPU),)
 CPUDEFS += -DHAS_M6808=1
 CPUOBJS += obj/cpu/m6800/m6800.o
 DBGOBJS += obj/cpu/m6800/6800dasm.o
 endif
 
-CPU=$(strip $(findstring HD63701,$(CPUS)))
+CPU=$(strip $(findstring HD63701@,$(CPUS)))
 ifneq ($(CPU),)
 CPUDEFS += -DHAS_HD63701=1
 CPUOBJS += obj/cpu/m6800/m6800.o
 DBGOBJS += obj/cpu/m6800/6800dasm.o
 endif
 
-CPU=$(strip $(findstring M6805,$(CPUS)))
+CPU=$(strip $(findstring M6805@,$(CPUS)))
 ifneq ($(CPU),)
 CPUDEFS += -DHAS_M6805=1
 CPUOBJS += obj/cpu/m6805/m6805.o
 DBGOBJS += obj/cpu/m6805/6805dasm.o
 endif
 
-CPU=$(strip $(findstring M68705,$(CPUS)))
+CPU=$(strip $(findstring M68705@,$(CPUS)))
 ifneq ($(CPU),)
 CPUDEFS += -DHAS_M68705=1
 CPUOBJS += obj/cpu/m6805/m6805.o
 DBGOBJS += obj/cpu/m6805/6805dasm.o
 endif
 
-CPU=$(strip $(findstring HD63705,$(CPUS)))
+CPU=$(strip $(findstring HD63705@,$(CPUS)))
 ifneq ($(CPU),)
 CPUDEFS += -DHAS_HD63705=1
 CPUOBJS += obj/cpu/m6805/m6805.o
 DBGOBJS += obj/cpu/m6805/6805dasm.o
 endif
 
-CPU=$(strip $(findstring M6309,$(CPUS)))
+CPU=$(strip $(findstring M6309@,$(CPUS)))
 ifneq ($(CPU),)
 CPUDEFS += -DHAS_M6309=1
 CPUOBJS += obj/cpu/m6809/m6809.o
 DBGOBJS += obj/cpu/m6809/6809dasm.o
 endif
 
-CPU=$(strip $(findstring M6809,$(CPUS)))
+CPU=$(strip $(findstring M6809@,$(CPUS)))
 ifneq ($(CPU),)
 CPUDEFS += -DHAS_M6809=1
 CPUOBJS += obj/cpu/m6809/m6809.o
 DBGOBJS += obj/cpu/m6809/6809dasm.o
 endif
 
-CPU=$(strip $(findstring M68000,$(CPUS)))
+CPU=$(strip $(findstring M68000@,$(CPUS)))
 ifneq ($(CPU),)
 CPUDEFS += -DHAS_M68000=1
 ifdef X86_ASM_68K
@@ -281,7 +290,7 @@ endif
 DBGOBJS += obj/cpu/m68000/d68k.o
 endif
 
-CPU=$(strip $(findstring M68010,$(CPUS)))
+CPU=$(strip $(findstring M68010@,$(CPUS)))
 ifneq ($(CPU),)
 CPUDEFS += -DHAS_M68010=1
 ifdef X86_ASM_68K
@@ -295,7 +304,7 @@ endif
 DBGOBJS += obj/cpu/m68000/d68k.o
 endif
 
-CPU=$(strip $(findstring M68020,$(CPUS)))
+CPU=$(strip $(findstring M68020@,$(CPUS)))
 ifneq ($(CPU),)
 CPUDEFS += -DHAS_M68020=1
 ifdef X86_ASM_68K
@@ -309,56 +318,56 @@ endif
 DBGOBJS += obj/cpu/m68000/d68k.o
 endif
 
-CPU=$(strip $(findstring T11,$(CPUS)))
+CPU=$(strip $(findstring T11@,$(CPUS)))
 ifneq ($(CPU),)
 CPUDEFS += -DHAS_T11=1
 CPUOBJS += obj/cpu/t11/t11.o
 DBGOBJS += obj/cpu/t11/t11dasm.o
 endif
 
-CPU=$(strip $(findstring S2650,$(CPUS)))
+CPU=$(strip $(findstring S2650@,$(CPUS)))
 ifneq ($(CPU),)
 CPUDEFS += -DHAS_S2650=1
 CPUOBJS += obj/cpu/s2650/s2650.o
 DBGOBJS += obj/cpu/s2650/2650dasm.o
 endif
 
-CPU=$(strip $(findstring TMS34010,$(CPUS)))
+CPU=$(strip $(findstring TMS34010@,$(CPUS)))
 ifneq ($(CPU),)
 CPUDEFS += -DHAS_TMS34010=1
 CPUOBJS += obj/cpu/tms34010/tms34010.o obj/cpu/tms34010/34010fld.o
 DBGOBJS += obj/cpu/tms34010/34010dsm.o
 endif
 
-CPU=$(strip $(findstring TMS9900,$(CPUS)))
+CPU=$(strip $(findstring TMS9900@,$(CPUS)))
 ifneq ($(CPU),)
 CPUDEFS += -DHAS_TMS9900=1
 CPUOBJS += obj/cpu/tms9900/tms9900.o
 DBGOBJS += obj/cpu/tms9900/9900dasm.o
 endif
 
-CPU=$(strip $(findstring Z8000,$(CPUS)))
+CPU=$(strip $(findstring Z8000@,$(CPUS)))
 ifneq ($(CPU),)
 CPUDEFS += -DHAS_Z8000=1
 CPUOBJS += obj/cpu/z8000/z8000.o
 DBGOBJS += obj/cpu/z8000/8000dasm.o
 endif
 
-CPU=$(strip $(findstring TMS320C10,$(CPUS)))
+CPU=$(strip $(findstring TMS320C10@,$(CPUS)))
 ifneq ($(CPU),)
 CPUDEFS += -DHAS_TMS320C10=1
 CPUOBJS += obj/cpu/tms32010/tms32010.o
 DBGOBJS += obj/cpu/tms32010/32010dsm.o
 endif
 
-CPU=$(strip $(findstring CCPU,$(CPUS)))
+CPU=$(strip $(findstring CCPU@,$(CPUS)))
 ifneq ($(CPU),)
 CPUDEFS += -DHAS_CCPU=1
 CPUOBJS += obj/cpu/ccpu/ccpu.o obj/vidhrdw/cinemat.o
 DBGOBJS += obj/cpu/ccpu/ccpudasm.o
 endif
 
-CPU=$(strip $(findstring PDP1,$(CPUS)))
+CPU=$(strip $(findstring PDP1@,$(CPUS)))
 ifneq ($(CPU),)
 CPUDEFS += -DHAS_PDP1=1
 CPUOBJS += obj/cpu/pdp1/pdp1.o
@@ -367,168 +376,174 @@ endif
 
 
 
-SOUND=$(strip $(findstring CUSTOM,$(SOUNDS)))
+SOUND=$(strip $(findstring CUSTOM@,$(SOUNDS)))
 ifneq ($(SOUND),)
 SOUNDDEFS += -DHAS_CUSTOM=1
 endif
 
-SOUND=$(strip $(findstring SAMPLES,$(SOUNDS)))
+SOUND=$(strip $(findstring SAMPLES@,$(SOUNDS)))
 ifneq ($(SOUND),)
 SOUNDDEFS += -DHAS_SAMPLES=1
 SOUNDOBJS += obj/sound/samples.o
 endif
 
-SOUND=$(strip $(findstring DAC,$(SOUNDS)))
+SOUND=$(strip $(findstring DAC@,$(SOUNDS)))
 ifneq ($(SOUND),)
 SOUNDDEFS += -DHAS_DAC=1
 SOUNDOBJS += obj/sound/dac.o
 endif
 
-SOUND=$(strip $(findstring AY8910,$(SOUNDS)))
+SOUND=$(strip $(findstring AY8910@,$(SOUNDS)))
 ifneq ($(SOUND),)
 SOUNDDEFS += -DHAS_AY8910=1
 SOUNDOBJS += obj/sound/ay8910.o
 endif
 
-SOUND=$(strip $(findstring YM2203,$(SOUNDS)))
+SOUND=$(strip $(findstring YM2203@,$(SOUNDS)))
 ifneq ($(SOUND),)
 SOUNDDEFS += -DHAS_YM2203=1
 SOUNDOBJS += obj/sound/2203intf.o obj/sound/ay8910.o obj/sound/fm.o
 endif
 
-SOUND=$(strip $(findstring YM2151,$(SOUNDS)))
+SOUND=$(strip $(findstring YM2151@,$(SOUNDS)))
 ifneq ($(SOUND),)
 SOUNDDEFS += -DHAS_YM2151=1
 SOUNDOBJS += obj/sound/2151intf.o obj/sound/ym2151.o obj/sound/fm.o
 endif
 
-SOUND=$(strip $(findstring YM2151_ALT,$(SOUNDS)))
+SOUND=$(strip $(findstring YM2151_ALT@,$(SOUNDS)))
 ifneq ($(SOUND),)
 SOUNDDEFS += -DHAS_YM2151_ALT=1
 SOUNDOBJS += obj/sound/2151intf.o obj/sound/ym2151.o obj/sound/fm.o
 endif
 
-SOUND=$(strip $(findstring YM2608,$(SOUNDS)))
+SOUND=$(strip $(findstring YM2608@,$(SOUNDS)))
 ifneq ($(SOUND),)
 SOUNDDEFS += -DHAS_YM2608=1
 SOUNDOBJS += obj/sound/2608intf.o obj/sound/ay8910.o obj/sound/fm.o
 endif
 
-SOUND=$(strip $(findstring YM2610,$(SOUNDS)))
+SOUND=$(strip $(findstring YM2610@,$(SOUNDS)))
 ifneq ($(SOUND),)
 SOUNDDEFS += -DHAS_YM2610=1
 SOUNDOBJS += obj/sound/2610intf.o obj/sound/ay8910.o obj/sound/fm.o
 endif
 
-SOUND=$(strip $(findstring YM2612,$(SOUNDS)))
+SOUND=$(strip $(findstring YM2610B@,$(SOUNDS)))
+ifneq ($(SOUND),)
+SOUNDDEFS += -DHAS_YM2610B=1
+SOUNDOBJS += obj/sound/2610intf.o obj/sound/ay8910.o obj/sound/fm.o
+endif
+
+SOUND=$(strip $(findstring YM2612@,$(SOUNDS)))
 ifneq ($(SOUND),)
 SOUNDDEFS += -DHAS_YM2612=1
 SOUNDOBJS += obj/sound/2612intf.o obj/sound/ay8910.o obj/sound/fm.o
 endif
 
-SOUND=$(strip $(findstring YM3438,$(SOUNDS)))
+SOUND=$(strip $(findstring YM3438@,$(SOUNDS)))
 ifneq ($(SOUND),)
 SOUNDDEFS += -DHAS_YM3438=1
 SOUNDOBJS += obj/sound/2612intf.o obj/sound/ay8910.o obj/sound/fm.o
 endif
 
-SOUND=$(strip $(findstring YM2413,$(SOUNDS)))
+SOUND=$(strip $(findstring YM2413@,$(SOUNDS)))
 ifneq ($(SOUND),)
 SOUNDDEFS += -DHAS_YM2413=1
 SOUNDOBJS += obj/sound/3812intf.o obj/sound/ym2413.o obj/sound/ym3812.o
 endif
 
-SOUND=$(strip $(findstring YM3812,$(SOUNDS)))
+SOUND=$(strip $(findstring YM3812@,$(SOUNDS)))
 ifneq ($(SOUND),)
 SOUNDDEFS += -DHAS_YM3812=1
 SOUNDOBJS += obj/sound/3812intf.o obj/sound/ym3812.o
 endif
 
-SOUND=$(strip $(findstring YM3526,$(SOUNDS)))
+SOUND=$(strip $(findstring YM3526@,$(SOUNDS)))
 ifneq ($(SOUND),)
 SOUNDDEFS += -DHAS_YM3526=1
 SOUNDOBJS += obj/sound/3812intf.o obj/sound/ym3812.o
 endif
 
-SOUND=$(strip $(findstring SN76496,$(SOUNDS)))
+SOUND=$(strip $(findstring SN76496@,$(SOUNDS)))
 ifneq ($(SOUND),)
 SOUNDDEFS += -DHAS_SN76496=1
 SOUNDOBJS += obj/sound/sn76496.o
 endif
 
-SOUND=$(strip $(findstring POKEY,$(SOUNDS)))
+SOUND=$(strip $(findstring POKEY@,$(SOUNDS)))
 ifneq ($(SOUND),)
 SOUNDDEFS += -DHAS_POKEY=1
 SOUNDOBJS += obj/sound/pokey.o
 endif
 
-SOUND=$(strip $(findstring TIA,$(SOUNDS)))
+SOUND=$(strip $(findstring TIA@,$(SOUNDS)))
 ifneq ($(SOUND),)
 SOUNDDEFS += -DHAS_TIA=1
 SOUNDOBJS += obj/sound/tiasound.o obj/sound/tiaintf.o
 endif
 
-SOUND=$(strip $(findstring NES,$(SOUNDS)))
+SOUND=$(strip $(findstring NES@,$(SOUNDS)))
 ifneq ($(SOUND),)
 SOUNDDEFS += -DHAS_NES=1
 SOUNDOBJS += obj/sound/nes.o obj/sound/nesintf.o
 endif
 
-SOUND=$(strip $(findstring ASTROCADE,$(SOUNDS)))
+SOUND=$(strip $(findstring ASTROCADE@,$(SOUNDS)))
 ifneq ($(SOUND),)
 SOUNDDEFS += -DHAS_ASTROCADE=1
 SOUNDOBJS += obj/sound/astrocde.o
 endif
 
-SOUND=$(strip $(findstring NAMCO,$(SOUNDS)))
+SOUND=$(strip $(findstring NAMCO@,$(SOUNDS)))
 ifneq ($(SOUND),)
 SOUNDDEFS += -DHAS_NAMCO=1
 SOUNDOBJS += obj/sound/namco.o
 endif
 
-SOUND=$(strip $(findstring TMS5220,$(SOUNDS)))
+SOUND=$(strip $(findstring TMS5220@,$(SOUNDS)))
 ifneq ($(SOUND),)
 SOUNDDEFS += -DHAS_TMS5220=1
 SOUNDOBJS += obj/sound/tms5220.o obj/sound/5220intf.o
 endif
 
-SOUND=$(strip $(findstring VLM5030,$(SOUNDS)))
+SOUND=$(strip $(findstring VLM5030@,$(SOUNDS)))
 ifneq ($(SOUND),)
 SOUNDDEFS += -DHAS_VLM5030=1
 SOUNDOBJS += obj/sound/vlm5030.o
 endif
 
-SOUND=$(strip $(findstring ADPCM,$(SOUNDS)))
+SOUND=$(strip $(findstring ADPCM@,$(SOUNDS)))
 ifneq ($(SOUND),)
 SOUNDDEFS += -DHAS_ADPCM=1
 SOUNDOBJS += obj/sound/adpcm.o
 endif
 
-SOUND=$(strip $(findstring OKIM6295,$(SOUNDS)))
+SOUND=$(strip $(findstring OKIM6295@,$(SOUNDS)))
 ifneq ($(SOUND),)
 SOUNDDEFS += -DHAS_OKIM6295=1
 SOUNDOBJS += obj/sound/adpcm.o
 endif
 
-SOUND=$(strip $(findstring MSM5205,$(SOUNDS)))
+SOUND=$(strip $(findstring MSM5205@,$(SOUNDS)))
 ifneq ($(SOUND),)
 SOUNDDEFS += -DHAS_MSM5205=1
 SOUNDOBJS += obj/sound/adpcm.o
 endif
 
-SOUND=$(strip $(findstring UPD7759,$(SOUNDS)))
+SOUND=$(strip $(findstring UPD7759@,$(SOUNDS)))
 ifneq ($(SOUND),)
 SOUNDDEFS += -DHAS_UPD7759=1
 SOUNDOBJS += obj/sound/upd7759.o
 endif
 
-SOUND=$(strip $(findstring HC55516,$(SOUNDS)))
+SOUND=$(strip $(findstring HC55516@,$(SOUNDS)))
 ifneq ($(SOUND),)
 SOUNDDEFS += -DHAS_HC55516=1
 SOUNDOBJS += obj/sound/cvsd.o
 endif
 
-SOUND=$(strip $(findstring K007232,$(SOUNDS)))
+SOUND=$(strip $(findstring K007232@,$(SOUNDS)))
 ifneq ($(SOUND),)
 SOUNDDEFS += -DHAS_K007232=1
 SOUNDOBJS += obj/sound/k007232.o
@@ -592,7 +607,8 @@ COREOBJS = obj/version.o obj/driver.o obj/mame.o obj/common.o obj/usrintrf.o \
          obj/mamedbg.o obj/window.o \
          $(sort $(DBGOBJS)) \
 
-DRVLIBS = obj/pacman.a obj/galaxian.a obj/scramble.a obj/cclimber.a \
+DRVLIBS = obj/pacman.a obj/galaxian.a obj/scramble.a \
+         obj/cclimber.a obj/nichibut.a \
          obj/phoenix.a obj/namco.a obj/univers.a obj/nintendo.a \
          obj/midw8080.a obj/midwz80.a obj/meadows.a obj/astrocde.a \
          obj/mcr.a obj/irem.a obj/gottlieb.a obj/oldtaito.a \
@@ -606,7 +622,7 @@ DRVLIBS = obj/pacman.a obj/galaxian.a obj/scramble.a obj/cclimber.a \
          obj/atarisy2.a obj/atari.a obj/rockola.a obj/snk.a obj/technos.a \
          obj/berzerk.a obj/gameplan.a obj/stratvox.a obj/zaccaria.a \
          obj/upl.a obj/tms.a obj/cinemar.a obj/cinemav.a obj/thepit.a \
-         obj/valadon.a obj/seibu.a obj/nichibut.a obj/jaleco.a obj/visco.a \
+         obj/valadon.a obj/seibu.a obj/jaleco.a obj/visco.a \
          obj/toaplan.a obj/leland.a obj/other.a \
 
 NEOLIBS = obj/neogeo.a \
@@ -671,6 +687,9 @@ obj/cpu/z80/z80.asm:  src/cpu/z80/makez80.c
 	$(CC) $(CDEFS) $(CFLAGS) -DDOS -o obj/cpu/z80/makez80.exe $<
 	obj/cpu/z80/makez80 $(Z80DEF) $(CDEFS) $(CFLAGS) $@
 
+obj/cpu/z80/z80_vm.o: src/cpu/z80/z80.c
+        $(CC) $(CDEFS) $(CFLAGS) -DZ80_VM=1 -c $< -o $@
+
 obj/%.a:
 	 $(AR) cr $@ $^
 
@@ -695,7 +714,14 @@ obj/scramble.a: \
 obj/cclimber.a: \
          obj/vidhrdw/cclimber.o obj/sndhrdw/cclimber.o obj/drivers/cclimber.o \
          obj/drivers/yamato.o \
-         obj/vidhrdw/seicross.o obj/drivers/seicross.o \
+
+obj/nichibut.a: \
+         obj/vidhrdw/seicross.o obj/sndhrdw/wiping.o obj/drivers/seicross.o \
+         obj/vidhrdw/wiping.o obj/drivers/wiping.o \
+         obj/vidhrdw/cop01.o obj/drivers/cop01.o \
+         obj/vidhrdw/terracre.o obj/drivers/terracre.o \
+         obj/vidhrdw/galivan.o obj/drivers/galivan.o \
+         obj/vidhrdw/armedf.o obj/drivers/armedf.o \
 
 obj/phoenix.a: \
          obj/vidhrdw/phoenix.o obj/sndhrdw/phoenix.o obj/drivers/phoenix.o \
@@ -723,7 +749,6 @@ obj/univers.a: \
          obj/vidhrdw/ladybug.o obj/drivers/ladybug.o \
          obj/vidhrdw/mrdo.o obj/drivers/mrdo.o \
          obj/machine/docastle.o obj/vidhrdw/docastle.o obj/drivers/docastle.o \
-         obj/drivers/dowild.o \
 
 obj/nintendo.a: \
          obj/vidhrdw/dkong.o obj/sndhrdw/dkong.o obj/drivers/dkong.o \
@@ -786,7 +811,6 @@ obj/taito2.a: \
          obj/vidhrdw/superqix.o obj/drivers/superqix.o \
          obj/machine/twincobr.o obj/vidhrdw/twincobr.o obj/drivers/twincobr.o \
          obj/machine/tnzs.o obj/vidhrdw/tnzs.o obj/drivers/tnzs.o \
-         obj/drivers/arkanoi2.o \
          obj/machine/slapfght.o obj/vidhrdw/slapfght.o obj/drivers/slapfght.o \
          obj/vidhrdw/superman.o obj/drivers/superman.o obj/machine/cchip.o \
          obj/drivers/lkage.o \
@@ -910,6 +934,7 @@ obj/konami.a: \
          obj/vidhrdw/jailbrek.o obj/drivers/jailbrek.o \
          obj/vidhrdw/ironhors.o obj/drivers/ironhors.o \
          obj/machine/jackal.o obj/vidhrdw/jackal.o obj/drivers/jackal.o \
+         obj/machine/ddrible.o obj/vidhrdw/ddrible.o obj/drivers/ddrible.o \
          obj/vidhrdw/contra.o obj/drivers/contra.o \
          obj/vidhrdw/mainevt.o obj/drivers/mainevt.o \
 
@@ -972,14 +997,14 @@ obj/atarisy2.a: \
          obj/machine/atarisy2.o obj/vidhrdw/atarisy2.o obj/drivers/atarisy2.o \
 
 obj/atari.a: \
-         obj/machine/atarigen.o \
+         obj/machine/atarigen.o obj/sndhrdw/ataraud2.o \
          obj/machine/slapstic.o \
          obj/machine/gauntlet.o obj/vidhrdw/gauntlet.o obj/drivers/gauntlet.o \
          obj/vidhrdw/atetris.o obj/drivers/atetris.o \
-         obj/machine/toobin.o obj/vidhrdw/toobin.o obj/drivers/toobin.o \
+         obj/vidhrdw/toobin.o obj/drivers/toobin.o \
          obj/vidhrdw/vindictr.o obj/drivers/vindictr.o \
          obj/vidhrdw/klax.o obj/drivers/klax.o \
-         obj/machine/blstroid.o obj/vidhrdw/blstroid.o obj/drivers/blstroid.o \
+         obj/vidhrdw/blstroid.o obj/drivers/blstroid.o \
          obj/vidhrdw/eprom.o obj/drivers/eprom.o \
          obj/vidhrdw/xybots.o obj/drivers/xybots.o \
 
@@ -989,6 +1014,8 @@ obj/rockola.a: \
 
 obj/snk.a: \
          obj/vidhrdw/snk.o obj/drivers/snk.o \
+         obj/vidhrdw/pow.o obj/drivers/pow.o \
+         obj/vidhrdw/prehisle.o obj/drivers/prehisle.o \
 
 obj/technos.a: \
          obj/vidhrdw/mystston.o obj/drivers/mystston.o \
@@ -1035,11 +1062,6 @@ obj/valadon.a: \
 obj/seibu.a: \
          obj/vidhrdw/wiz.o obj/drivers/wiz.o \
 
-obj/nichibut.a: \
-         obj/vidhrdw/cop01.o obj/drivers/cop01.o \
-         obj/vidhrdw/terracre.o obj/drivers/terracre.o \
-         obj/vidhrdw/galivan.o obj/drivers/galivan.o \
-
 obj/jaleco.a: \
          obj/vidhrdw/exerion.o obj/drivers/exerion.o \
          obj/vidhrdw/aeroboto.o obj/drivers/aeroboto.o \
@@ -1076,6 +1098,7 @@ obj/other.a: \
          obj/vidhrdw/tankbatt.o obj/drivers/tankbatt.o \
          obj/vidhrdw/liberatr.o obj/machine/liberatr.o obj/drivers/liberatr.o \
          obj/vidhrdw/dday.o obj/sndhrdw/dday.o obj/drivers/dday.o \
+         obj/vidhrdw/cabal.o obj/drivers/cabal.o \
          obj/vidhrdw/toki.o obj/drivers/toki.o \
          obj/vidhrdw/gundealr.o obj/drivers/gundealr.o \
          obj/machine/leprechn.o obj/vidhrdw/leprechn.o obj/drivers/leprechn.o \
@@ -1092,11 +1115,12 @@ obj/other.a: \
          obj/machine/exctsccr.o obj/vidhrdw/exctsccr.o obj/drivers/exctsccr.o \
          obj/vidhrdw/speedbal.o obj/drivers/speedbal.o \
          obj/vidhrdw/sauro.o obj/drivers/sauro.o \
-         obj/vidhrdw/pow.o obj/drivers/pow.o \
          obj/vidhrdw/galpanic.o obj/drivers/galpanic.o \
          obj/vidhrdw/ambush.o obj/drivers/ambush.o \
          obj/vidhrdw/polepos.o obj/drivers/polepos.o obj/machine/polepos.o \
          obj/vidhrdw/starcrus.o obj/drivers/starcrus.o \
+         obj/vidhrdw/sichuan2.o obj/sndhrdw/sichuan2.o obj/drivers/sichuan2.o \
+         obj/vidhrdw/goindol.o obj/drivers/goindol.o \
 
 # dependencies
 obj/cpu/z80/z80.o:  z80.c z80.h z80daa.h

@@ -103,10 +103,29 @@
           A --- D      | R |0 ---|>--- D3
   M1  --- 0| P |0 --- 3| O |1 ---|>--- D5
   A0  --- 1| R |1 --- 4| M |2 ---|>--- D7
-  A4  --- 2| O |2 --- 5| 2 |3
+  A4  --- 2| O |2 --- 5| 2 |3 ---
   A8  --- 3| M |3 --- 6|   |
   A12 --- 4| 1 |4 --- 7|   |
             ---         ---
+
+
+  My Hero:
+
+  the bootleg does the decryption using a single 256x4 PROM, mapped in the
+  obvious way:
+
+  data to            XOR
+  decode            value
+          A ---
+  D3  --- 0|   |
+  D5  --- 1|   |D
+  D7  --- 2| P |0 --- D3
+  A0  --- 3| R |1 --- D5
+  A4  --- 4| O |2 --- D7
+  A8  --- 5| M |3 ---
+  A12 --- 6|   |
+  M1  --- 7|   |
+            ---
 
 
 
@@ -134,7 +153,7 @@
   315-5115 TeddyBoy Blues
   315-5135 Heavy Metal &
            Wonder Boy (set 1 & 2; bootlegs?)
-  ???-???? My Hero                bits 0 and 1 in all ROMs swapped as well
+  ???-???? My Hero
 
 
   The following games use a different encryption algorithm:

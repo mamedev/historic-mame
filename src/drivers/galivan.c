@@ -1,4 +1,8 @@
 /***************************************************************************
+
+TODO:
+- dangar input ports
+
 					Galivan
 			    (C) 1985 Nihon Bussan
 
@@ -63,11 +67,7 @@ c00d	counter
 					TO DO
 					-----
 
-- Player can't get off lifts (maybe a missing button?)
-- Find the color proms and check color attributes
 - Find out how layers are enabled\disabled  and changed priority
-- Tune the sound section
-- Achieve pixel accurate positioning of gfx
 
 
 ***************************************************************************/
@@ -78,10 +78,11 @@ void galivan_vh_convert_color_prom(unsigned char *palette, unsigned short *color
 void galivan_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 void galivan_scrollx_w(int offset,int data);
 void galivan_scrolly_w(int offset,int data);
+void galivan_videoram_w(int offset,int data);
+void galivan_colorram_w(int offset,int data);
 void galivan_gfxbank_w(int offset,int data);
 void galivan_init_machine(void);
 int galivan_vh_start(void);
-void galivan_vh_stop(void);
 
 extern unsigned char *foreground_ram;
 extern int foreground_ram_size;
@@ -100,6 +101,10 @@ int galivan_sound_command_r(int offset)
 	return data;
 }
 
+static int IO_port_c0_read(int offset)
+{
+  return (0x58); /* To Avoid Reset on Ufo Robot dangar */
+}
 
 
 /* Main cpu data */
@@ -117,8 +122,8 @@ static struct MemoryWriteAddress writemem[] =
 {
  	/* comment line if you want to change 0x0009 rom location */
 	{ 0x0000, 0xbfff, MWA_ROM },
-	{ 0xd800, 0xdbff, videoram_w, &videoram, &videoram_size },
-	{ 0xdc00, 0xdfff, colorram_w, &colorram },
+	{ 0xd800, 0xdbff, galivan_videoram_w, &videoram, &videoram_size },
+	{ 0xdc00, 0xdfff, galivan_colorram_w, &colorram },
 	{ 0xe000, 0xe0ff, MWA_RAM, &spriteram, &spriteram_size },
 	{ 0xe100, 0xffff, MWA_RAM },
 	{ -1 }	/* end of table */
@@ -134,6 +139,7 @@ static struct IOReadPort readport[] =
 	{ 0x02, 0x02, input_port_2_r },
 	{ 0x03, 0x03, input_port_3_r },
 	{ 0x04, 0x04, input_port_4_r },
+	{ 0xc0, 0xc0, IO_port_c0_read }, /* dangar needs to return 0x58 */
 	{ -1 }	/* end of table */
 };
 
@@ -143,8 +149,8 @@ static struct IOWritePort writeport[] =
 	{ 0x41, 0x42, galivan_scrollx_w },
 	{ 0x43, 0x44, galivan_scrolly_w },
 	{ 0x45, 0x45, galivan_sound_command_w },
-//	{ 0x46, 0x46, IOWP_NOP },
-//	{ 0x47, 0x47, IOWP_NOP },
+/*	{ 0x46, 0x46, IOWP_NOP }, */
+/*	{ 0x47, 0x47, IOWP_NOP }, */
 	{ -1 }	/* end of table */
 };
 
@@ -170,7 +176,7 @@ static struct MemoryWriteAddress sound_writemem[] =
 
 static struct IOReadPort sound_readport[] =
 {
-//	{ 0x04, 0x04, IORP_NOP }, /* value read and *discarded* */
+/*	{ 0x04, 0x04, IORP_NOP },    value read and *discarded*    */
 	{ 0x06, 0x06, galivan_sound_command_r },
 	{ -1 }	/* end of table */
 };
@@ -184,12 +190,12 @@ static struct IOWritePort sound_writeport[] =
 };
 
 
-INPUT_PORTS_START( galivan_input_ports )
 
+INPUT_PORTS_START( galivan_input_ports )
 	PORT_START      /* IN0 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY )
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 )
@@ -197,12 +203,12 @@ INPUT_PORTS_START( galivan_input_ports )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON3 )
 
 	PORT_START      /* IN1 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_COCKTAIL  )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_COCKTAIL  )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL  )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL  )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_COCKTAIL  )
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_COCKTAIL )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_COCKTAIL )
 
@@ -229,17 +235,17 @@ INPUT_PORTS_START( galivan_input_ports )
 	PORT_DIPSETTING(    0x08, "60000 after first" )
 	PORT_DIPSETTING(    0x00, "90000 after first" )
 	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Demo_Sounds ) )
-	PORT_DIPSETTING(    0x10, DEF_STR( On ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( On ) )
 	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Cabinet ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
 	PORT_DIPSETTING(    0x20, DEF_STR( Cocktail ) )
 	PORT_BITX(    0x40, 0x40, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Invulnerability", IP_KEY_NONE, IP_JOY_NONE )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
-	PORT_DIPNAME( 0x80, 0x80, "DSW1 7 (Unknown)" )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
 	PORT_START	/* IN4 - DSW2 */
 	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Coin_A ) )
@@ -258,14 +264,95 @@ INPUT_PORTS_START( galivan_input_ports )
 	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Flip_Screen ) )
 	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x40, 0x40, "DSW2 6 (Unknown)" )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown) )
 	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
-	PORT_DIPNAME( 0x80, 0x80, "DSW2 7 (Unused?)" )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )	/* unused? */
-
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 INPUT_PORTS_END
+
+INPUT_PORTS_START( dangar_input_ports )
+	PORT_START      /* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON3 )
+
+	PORT_START      /* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_COCKTAIL )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_COCKTAIL )
+
+	PORT_START  /* IN2 - TEST, COIN, START */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_COIN3 )
+	PORT_BITX(0x20, 0x20, 0, DEF_STR( Service_Mode ), OSD_KEY_F2, IP_JOY_NONE )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START	/* IN3 - DSW1 */
+	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Lives ) )
+	PORT_DIPSETTING(    0x00, "2" )
+	PORT_DIPSETTING(    0x03, "3" )
+	PORT_DIPSETTING(    0x02, "4" )
+	PORT_DIPSETTING(    0x01, "5" )
+	PORT_DIPNAME( 0x04, 0x04, "First Bonus" )
+	PORT_DIPSETTING(    0x04, "20000" )
+	PORT_DIPSETTING(    0x00, "50000" )
+	PORT_DIPNAME( 0x08, 0x08, "Second Bonus" )
+	PORT_DIPSETTING(    0x08, "60000 after first" )
+	PORT_DIPSETTING(    0x00, "90000 after first" )
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Cocktail ) )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+
+	PORT_START	/* IN4 - DSW2 */
+	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Coin_A ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x03, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Free_Play ) )
+	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Coin_B ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x0c, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 2C_3C ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( 1C_2C ) )
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(    0x10, "Easy" )
+	PORT_DIPSETTING(    0x00, "Hard" )
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Flip_Screen ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_BITX(    0x40, 0x40, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Invulnerability", IP_KEY_NONE, IP_JOY_NONE )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+INPUT_PORTS_END
+
 
 
 /* galivan gfx layouts */
@@ -310,9 +397,9 @@ static struct GfxLayout spritelayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x00000, &charlayout,            0,  8 },
-	{ 1, 0x04000, &tilelayout,         8*16, 16 },
-	{ 1, 0x24000, &spritelayout, 8*16+16*16, 64 },
+	{ 1, 0x00000, &charlayout,            0,   8 },
+	{ 1, 0x04000, &tilelayout,         8*16,  16 },
+	{ 1, 0x24000, &spritelayout, 8*16+16*16, 256 },
 	{ -1 }
 };
 
@@ -360,13 +447,13 @@ static struct MachineDriver galivan_machine_driver =
 	/* video hardware */
 	32*8, 32*8, { 0, 32*8-1, 2*8, 30*8-1 },
 	gfxdecodeinfo,
-	256, 8*16+16*16+64*16,
+	256, 8*16+16*16+256*16,
 	galivan_vh_convert_color_prom,
 
 	VIDEO_TYPE_RASTER,
 	0,
 	galivan_vh_start,
-	galivan_vh_stop,
+	0,
 	galivan_vh_screenrefresh,
 
 	/* sound hardware */
@@ -424,6 +511,99 @@ ROM_START( galivan_rom )
 	ROM_LOAD( "gv12.15b",    0x04000, 0x08000, 0x5b7a0d6d )
 ROM_END
 
+ROM_START( galivan2_rom )
+	ROM_REGION(0x14000)		/* Region 0 - main cpu code */
+	ROM_LOAD( "e-1",         0x00000, 0x08000, 0xd8cc72b8 )
+	ROM_LOAD( "e-2",         0x08000, 0x04000, 0x9e5b3157 )
+	ROM_LOAD( "gv3.4b",      0x10000, 0x04000, 0x82f0c5e6 ) /* 2 banks at c000 */
+
+	ROM_REGION_DISPOSE(0x34000)	/* Region 1 - temporary for gfx roms */
+	ROM_LOAD( "gv4.13d",     0x00000, 0x04000, 0x162490b4 ) /* chars */
+	ROM_LOAD( "gv7.14f",     0x04000, 0x08000, 0xeaa1a0db ) /* tiles */
+	ROM_LOAD( "gv8.15f",     0x0c000, 0x08000, 0xf174a41e )
+	ROM_LOAD( "gv9.17f",     0x14000, 0x08000, 0xedc60f5d )
+	ROM_LOAD( "gv10.19f",    0x1c000, 0x08000, 0x41f27fca )
+	ROM_LOAD( "gv14.4f",     0x24000, 0x08000, 0x03e2229f ) /* sprites */
+	ROM_LOAD( "gv13.1f",     0x2c000, 0x08000, 0xbca9e66b )
+
+	ROM_REGION(0x8000)		/* Region 2 - background */
+	ROM_LOAD( "gv6.19d",     0x00000, 0x04000, 0xda38168b )
+	ROM_LOAD( "gv5.17d",     0x04000, 0x04000, 0x22492d2a )
+
+	ROM_REGION(0x0500)		/* Region 3 - color proms */
+	ROM_LOAD( "mb7114e.9f",  0x0000, 0x0100, 0xde782b3e )	/* red */
+	ROM_LOAD( "mb7114e.10f", 0x0100, 0x0100, 0x0ae2a857 )	/* green */
+	ROM_LOAD( "mb7114e.11f", 0x0200, 0x0100, 0x7ba8b9d1 )	/* blue */
+	ROM_LOAD( "mb7114e.2d",  0x0300, 0x0100, 0x75466109 )	/* sprite lookup table */
+	ROM_LOAD( "mb7114e.7f",  0x0400, 0x0100, 0x06538736 )	/* sprite palette bank */
+
+	ROM_REGION(0x10000)		/* Region 4 - sound cpu code */
+	ROM_LOAD( "gv11.14b",    0x00000, 0x04000, 0x05f1a0e3 )
+	ROM_LOAD( "gv12.15b",    0x04000, 0x08000, 0x5b7a0d6d )
+ROM_END
+
+ROM_START( dangar_rom )
+	ROM_REGION(0x14000)		/* Region 0 - main cpu code */
+	ROM_LOAD( "dangar08.1b",     0x00000, 0x8000, 0xe52638f2 )
+	ROM_LOAD( "dangar09.3b",     0x08000, 0x4000, 0x809d280f )
+	ROM_LOAD( "dangar10.5b",     0x10000, 0x4000, 0x00000000 )
+
+	ROM_REGION_DISPOSE(0x34000)	/* Region 1 - temporary for gfx roms */
+	ROM_LOAD( "dangar05.13d", 0x00000, 0x4000, 0x40cb378a )	/* chars */
+	ROM_LOAD( "dangar01.14f", 0x04000, 0x8000, 0xd59ed1f1 )  /* tiles */
+	ROM_LOAD( "dangar02.15f", 0x0c000, 0x8000, 0xdfdb931c )
+	ROM_LOAD( "dangar03.17f", 0x14000, 0x8000, 0x6954e8c3 )
+	ROM_LOAD( "dangar04.19f", 0x1c000, 0x8000, 0x4af6a8bf )
+	ROM_LOAD( "dangarxx.f4",  0x24000, 0x8000, 0x55711884 )  /* sprites */
+	ROM_LOAD( "dangarxx.f1",  0x2C000, 0x8000, 0x8cf11419 )
+
+	ROM_REGION(0x8000)		/* Region 2 - background */
+	ROM_LOAD( "dangar07.19d", 0x0000, 0x4000, 0x6dba32cf )
+	ROM_LOAD( "dangar06.17d", 0x4000, 0x4000, 0x6c899071 )
+
+	ROM_REGION(0x0500)		/* Region 3 - color proms */
+	ROM_LOAD( "63s141n.001", 0x0000, 0x0100, 0xb29f6a07 )	/* red */
+	ROM_LOAD( "63s141n.002", 0x0100, 0x0100, 0xc6de5ecb )	/* green */
+	ROM_LOAD( "63s141n.003", 0x0200, 0x0100, 0xa5bbd6dc )	/* blue */
+	ROM_LOAD( "63s141n.004", 0x0300, 0x0100, 0xa4ac95a5 )	/* sprite lookup table */
+	ROM_LOAD( "63s141n.005", 0x0400, 0x0100, 0x00000000 )	/* sprite palette bank */
+
+	ROM_REGION(0x10000)		/* Region 4 - sound cpu code */
+	ROM_LOAD( "dangar13.b14", 0x0000, 0x4000, 0x3e041873 )
+	ROM_LOAD( "dangar14.b15", 0x4000, 0x8000, 0x488e3463 )
+ROM_END
+
+ROM_START( dangar2_rom )
+	ROM_REGION(0x14000)		/* Region 0 - main cpu code */
+	ROM_LOAD( "dangar2.016",     0x00000, 0x8000, 0x743fa2d4 )
+	ROM_LOAD( "dangar2.017",     0x08000, 0x4000, 0x1cdc60a5 )
+	ROM_LOAD( "dangar2.018",     0x10000, 0x4000, 0xdb7f6613 )
+
+	ROM_REGION_DISPOSE(0x34000)	/* Region 1 - temporary for gfx roms */
+	ROM_LOAD( "dangar2.011",  0x00000, 0x4000, 0xe804ffe1 )	/* chars */
+	ROM_LOAD( "dangar01.14f", 0x04000, 0x8000, 0xd59ed1f1 )  /* tiles */
+	ROM_LOAD( "dangar02.15f", 0x0c000, 0x8000, 0xdfdb931c )
+	ROM_LOAD( "dangar03.17f", 0x14000, 0x8000, 0x6954e8c3 )
+	ROM_LOAD( "dangar04.19f", 0x1c000, 0x8000, 0x4af6a8bf )
+	ROM_LOAD( "dangarxx.f4",  0x24000, 0x8000, 0x55711884 )  /* sprites */
+	ROM_LOAD( "dangarxx.f1",  0x2C000, 0x8000, 0x8cf11419 )
+
+	ROM_REGION(0x8000)		/* Region 2 - background */
+	ROM_LOAD( "dangar07.19d", 0x0000, 0x4000, 0x6dba32cf )
+	ROM_LOAD( "dangar06.17d", 0x4000, 0x4000, 0x6c899071 )
+
+	ROM_REGION(0x0500)		/* Region 3 - color proms */
+	ROM_LOAD( "63s141n.001", 0x0000, 0x0100, 0xb29f6a07 )	/* red */
+	ROM_LOAD( "63s141n.002", 0x0100, 0x0100, 0xc6de5ecb )	/* green */
+	ROM_LOAD( "63s141n.003", 0x0200, 0x0100, 0xa5bbd6dc )	/* blue */
+	ROM_LOAD( "63s141n.004", 0x0300, 0x0100, 0xa4ac95a5 )	/* sprite lookup table */
+	ROM_LOAD( "63s141n.005", 0x0400, 0x0100, 0x00000000 )	/* sprite palette bank */
+
+	ROM_REGION(0x10000)		/* Region 4 - sound cpu code */
+	ROM_LOAD( "dangar13.b14", 0x0000, 0x4000, 0x3e041873 )
+	ROM_LOAD( "dangar14.b15", 0x4000, 0x8000, 0x488e3463 )
+ROM_END
+
 
 /* Ten entries, 13 bytes each:  3 bytes - score/10 (BCD)
 					 10 bytes - name (ASCII)		*/
@@ -468,11 +648,11 @@ struct GameDriver galivan_driver =
 	__FILE__,
 	0,
 	"galivan",
-	"Galivan",
+	"Cosmo Police Galivan (12/16/1985)",
 	"1985",
 	"Nichibutsu",
 	"Luca Elia\nOlivier Galibert",
-	GAME_IMPERFECT_COLORS,
+	0,
 	&galivan_machine_driver,
 	0,
 
@@ -487,4 +667,82 @@ struct GameDriver galivan_driver =
 	ORIENTATION_ROTATE_270,
 
 	galivan_hiload, galivan_hisave
+};
+
+struct GameDriver galivan2_driver =
+{
+	__FILE__,
+	&galivan_driver,
+	"galivan2",
+	"Cosmo Police Galivan (12/11/1985)",
+	"1985",
+	"Nichibutsu",
+	"Luca Elia\nOlivier Galibert",
+	0,
+	&galivan_machine_driver,
+	0,
+
+	galivan2_rom,
+	0, 0,
+	0,
+	0,
+
+	galivan_input_ports,
+
+	PROM_MEMORY_REGION(3), 0, 0,
+	ORIENTATION_ROTATE_270,
+
+	galivan_hiload, galivan_hisave
+};
+
+struct GameDriver dangar_driver =
+{
+	__FILE__,
+	0,
+	"dangar",
+	"Ufo Robo Dangar (12/1/1986)",
+	"1986",
+	"Nichibutsu",
+	"Luca Elia\nOlivier Galibert\nCarlos A. Lozano\nNicola Salmoria\n",
+	0,
+	&galivan_machine_driver,
+	0,
+
+	dangar_rom,
+	0, 0,
+	0,
+	0,
+
+	dangar_input_ports,
+
+	PROM_MEMORY_REGION(3), 0, 0,
+	ORIENTATION_ROTATE_270,
+
+	0, 0
+};
+
+struct GameDriver dangar2_driver =
+{
+	__FILE__,
+	&dangar_driver,
+	"dangar2",
+	"Ufo Robo Dangar (9/26/1986)",
+	"1986",
+	"Nichibutsu",
+	"Luca Elia\nOlivier Galibert\nCarlos A. Lozano\nNicola Salmoria\n",
+	0,
+	&galivan_machine_driver,
+	0,
+
+	dangar2_rom,
+	0, 0,
+	0,
+	0,
+
+	dangar_input_ports,
+
+	PROM_MEMORY_REGION(3), 0, 0,
+	ORIENTATION_ROTATE_270,
+
+	0, 0
 };

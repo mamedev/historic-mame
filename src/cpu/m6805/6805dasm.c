@@ -58,78 +58,81 @@ static const char *op_name_str[] = {
 	"tstx", "txa"
 };
 
-#define _0	0,0
-#define _jr 0,EA_REL_PC
-#define _jp 0,EA_REL_PC
-#define _rm EA_UINT8,EA_MEM_RD
-#define _wm EA_UINT8,EA_MEM_WR
-#define _rw EA_UINT8,EA_MEM_RDWR
+#define _0		0,0
+#define _bra	0,EA_REL_PC
+#define _jmp	0,EA_ABS_PC
+#define _zrd	EA_UINT8,EA_ZPG_RD
+#define _zwr	EA_UINT8,EA_ZPG_WR
+#define _zrw	EA_UINT8,EA_ZPG_RDWR
+#define _mrd	EA_UINT8,EA_MEM_RD
+#define _mwr	EA_UINT8,EA_MEM_WR
+#define _mrw	EA_UINT8,EA_MEM_RDWR
 
 const unsigned char disasm[0x100][4] = {
-	{brset,_btr,_rm}, {brclr,_btr,_rm}, {brset,_btr,_rm}, {brclr,_btr,_rm}, /* 00 */
-	{brset,_btr,_rm}, {brclr,_btr,_rm}, {brset,_btr,_rm}, {brclr,_btr,_rm},
-	{brset,_btr,_rm}, {brclr,_btr,_rm}, {brset,_btr,_rm}, {brclr,_btr,_rm},
-	{brset,_btr,_rm}, {brclr,_btr,_rm}, {brset,_btr,_rm}, {brclr,_btr,_rm},
-	{bset, _bit,_wm}, {bclr, _bit,_wm}, {bset, _bit,_wm}, {bclr, _bit,_wm}, /* 10 */
-	{bset, _bit,_wm}, {bclr, _bit,_wm}, {bset, _bit,_wm}, {bclr, _bit,_wm},
-	{bset, _bit,_wm}, {bclr, _bit,_wm}, {bset, _bit,_wm}, {bclr, _bit,_wm},
-	{bset, _bit,_wm}, {bclr, _bit,_wm}, {bset, _bit,_wm}, {bclr, _bit,_wm},
-	{bra,  _rel,_jr}, {brn,  _rel,_jr}, {bhi,  _rel,_jr}, {bls,  _rel,_jr}, /* 20 */
-	{bcc,  _rel,_jr}, {bcs,  _rel,_jr}, {bne,  _rel,_jr}, {beq,  _rel,_jr},
-	{bhcc, _rel,_jr}, {bhcs, _rel,_jr}, {bpl,  _rel,_jr}, {bmi,  _rel,_jr},
-	{bmc,  _rel,_jr}, {bms,  _rel,_jr}, {bil,  _rel,_jr}, {bih,  _rel,_jr},
-	{neg,  _dir,_rw}, {ill,  _imp,_0 }, {ill,  _imp,_0 }, {com,  _dir,_rw}, /* 30 */
-	{lsr,  _dir,_rw}, {ill,  _imp,_0 }, {ror,  _dir,_rw}, {asr,  _dir,_rw},
-	{asl,  _dir,_rw}, {rol,  _dir,_rw}, {dec,  _dir,_rw}, {ill,  _imp,_0 },
-	{inc,  _dir,_rw}, {tst,  _dir,_rm}, {ill,  _imp,_0 }, {clr,  _dir,_wm},
-	{nega, _imp,_0 }, {ill,  _imp,_0 }, {ill,  _imp,_0 }, {coma, _imp,_0 }, /* 40 */
-	{lsra, _imp,_0 }, {ill,  _imp,_0 }, {rora, _imp,_0 }, {asra, _imp,_0 },
-	{asla, _imp,_0 }, {rola, _imp,_0 }, {deca, _imp,_0 }, {ill,  _imp,_0 },
-	{inca, _imp,_0 }, {tsta, _imp,_0 }, {ill,  _imp,_0 }, {clra, _imp,_0 },
-	{negx, _imp,_0 }, {ill,  _imp,_0 }, {ill,  _imp,_0 }, {comx, _imp,_0 }, /* 50 */
-	{lsrx, _imp,_0 }, {ill,  _imp,_0 }, {rorx, _imp,_0 }, {asrx, _imp,_0 },
-	{aslx, _imp,_0 }, {rolx, _imp,_0 }, {decx, _imp,_0 }, {ill,  _imp,_0 },
-	{incx, _imp,_0 }, {tstx, _imp,_0 }, {ill,  _imp,_0 }, {clrx, _imp,_0 },
-	{neg,  _ix1,_rw}, {ill,  _imp,_0 }, {ill,  _imp,_0 }, {com,  _ix1,_rw}, /* 60 */
-	{lsr,  _ix1,_rw}, {ill,  _imp,_0 }, {ror,  _ix1,_rw}, {asr,  _ix1,_rw},
-	{asl,  _ix1,_rw}, {rol,  _ix1,_rw}, {dec,  _ix1,_rw}, {ill,  _imp,_0 },
-	{inc,  _ix1,_rw}, {tst,  _ix1,_rm}, {jmp,  _ix1,_jp}, {clr,  _ix1,_wm},
-	{neg,  _idx,_rw}, {ill,  _imp,_0 }, {ill,  _imp,_0 }, {com,  _idx,_rw}, /* 70 */
-	{lsr,  _idx,_rw}, {ill,  _imp,_0 }, {ror,  _idx,_rw}, {asr,  _idx,_rw},
-	{asl,  _idx,_rw}, {rol,  _idx,_rw}, {dec,  _idx,_rw}, {ill,  _imp,_0 },
-	{inc,  _idx,_rw}, {tst,  _idx,_rm}, {jmp,  _idx,_jp}, {clr,  _idx,_wm},
-	{rti,  _imp,_0 }, {rts,  _imp,_0 }, {ill,  _imp,_0 }, {swi,  _imp,_0 }, /* 80 */
-	{ill,  _imp,_0 }, {ill,  _imp,_0 }, {ill,  _imp,_0 }, {ill,  _imp,_0 },
-	{ill,  _imp,_0 }, {ill,  _imp,_0 }, {ill,  _imp,_0 }, {ill,  _imp,_0 },
-	{ill,  _imp,_0 }, {ill,  _imp,_0 }, {ill,  _imp,_0 }, {ill,  _imp,_0 },
-	{ill,  _imp,_0 }, {ill,  _imp,_0 }, {ill,  _imp,_0 }, {ill,  _imp,_0 }, /* 90 */
-	{ill,  _imp,_0 }, {ill,  _imp,_0 }, {ill,  _imp,_0 }, {tax,  _imp,_0 },
-	{clc,  _imp,_0 }, {sec,  _imp,_0 }, {cli,  _imp,_0 }, {sei,  _imp,_0 },
-	{rsp,  _imp,_0 }, {nop,  _imp,_0 }, {ill,  _imp,_0 }, {txa,  _imp,_0 },
-	{suba, _imm,_0 }, {cmpa, _imm,_0 }, {sbca, _imm,_0 }, {cpx,  _imm,_0 }, /* a0 */
-	{anda, _imm,_0 }, {bita, _imm,_0 }, {lda,  _imm,_0 }, {ill,  _imp,_0 },
-	{eora, _imm,_0 }, {adca, _imm,_0 }, {ora,  _imm,_0 }, {adda, _imm,_0 },
-	{ill,  _imp,_0 }, {bsr,  _rel,_jr}, {ldx,  _imm,_0 }, {ill,  _imp,_0 },
-	{suba, _dir,_rm}, {cmpa, _dir,_rm}, {sbca, _dir,_rm}, {cpx,  _dir,_rm}, /* b0 */
-	{anda, _dir,_rm}, {bita, _dir,_rm}, {lda,  _dir,_rm}, {sta,  _dir,_wm},
-	{eora, _dir,_rm}, {adca, _dir,_rm}, {ora,  _dir,_rm}, {adda, _dir,_rm},
-	{jmp,  _dir,_rm}, {jsr,  _dir,_jp}, {ldx,  _dir,_rm}, {stx,  _dir,_wm},
-	{suba, _ext,_rm}, {cmpa, _ext,_rm}, {sbca, _ext,_rm}, {cpx,  _ext,_rm}, /* c0 */
-	{anda, _ext,_rm}, {bita, _ext,_rm}, {lda,  _ext,_rm}, {sta,  _ext,_wm},
-	{eora, _ext,_rm}, {adca, _ext,_rm}, {ora,  _ext,_rm}, {adda, _ext,_rm},
-	{jmp,  _ext,_jp}, {jsr,  _ext,_jp}, {ldx,  _ext,_rm}, {stx,  _ext,_wm},
-	{suba, _ix2,_rm}, {cmpa, _ix2,_rm}, {sbca, _ix2,_rm}, {cpx,  _ix2,_rm}, /* d0 */
-	{anda, _ix2,_rm}, {bita, _ix2,_rm}, {lda,  _ix2,_rm}, {sta,  _ix2,_wm},
-	{eora, _ix2,_rm}, {adca, _ix2,_rm}, {ora,  _ix2,_rm}, {adda, _ix2,_rm},
-	{jmp,  _ix2,_jp}, {jsr,  _ix2,_jp}, {ldx,  _ix2,_rm}, {stx,  _ix2,_wm},
-	{suba, _ix1,_rm}, {cmpa, _ix1,_rm}, {sbca, _ix1,_rm}, {cpx,  _ix1,_rm}, /* e0 */
-	{anda, _ix1,_rm}, {bita, _ix1,_rm}, {lda,  _ix1,_rm}, {sta,  _ix1,_wm},
-	{eora, _ix1,_rm}, {adca, _ix1,_rm}, {ora,  _ix1,_rm}, {adda, _ix1,_rm},
-	{jmp,  _ix1,_jp}, {jsr,  _ix1,_jp}, {ldx,  _ix1,_rm}, {stx,  _ix1,_wm},
-	{suba, _idx,_rm}, {cmpa, _idx,_rm}, {sbca, _idx,_rm}, {cpx,  _idx,_rm}, /* f0 */
-	{anda, _idx,_rm}, {bita, _idx,_rm}, {lda,  _idx,_rm}, {sta,  _idx,_wm},
-	{eora, _idx,_rm}, {adca, _idx,_rm}, {ora,  _idx,_rm}, {adda, _idx,_rm},
-	{jmp,  _idx,_jp}, {jsr,  _idx,_jp}, {ldx,  _idx,_rm}, {stx,  _idx,_wm}
+	{brset,_btr,_zrd},{brclr,_btr,_zrd},{brset,_btr,_zrd},{brclr,_btr,_zrd},/* 00 */
+	{brset,_btr,_zrd},{brclr,_btr,_zrd},{brset,_btr,_zrd},{brclr,_btr,_zrd},
+	{brset,_btr,_zrd},{brclr,_btr,_zrd},{brset,_btr,_zrd},{brclr,_btr,_zrd},
+	{brset,_btr,_zrd},{brclr,_btr,_zrd},{brset,_btr,_zrd},{brclr,_btr,_zrd},
+	{bset, _bit,_zwr},{bclr, _bit,_zwr},{bset, _bit,_zwr},{bclr, _bit,_zwr},/* 10 */
+	{bset, _bit,_zwr},{bclr, _bit,_zwr},{bset, _bit,_zwr},{bclr, _bit,_zwr},
+	{bset, _bit,_zwr},{bclr, _bit,_zwr},{bset, _bit,_zwr},{bclr, _bit,_zwr},
+	{bset, _bit,_zwr},{bclr, _bit,_zwr},{bset, _bit,_zwr},{bclr, _bit,_zwr},
+	{bra,  _rel,_bra},{brn,  _rel,_bra},{bhi,  _rel,_bra},{bls,  _rel,_bra},/* 20 */
+	{bcc,  _rel,_bra},{bcs,  _rel,_bra},{bne,  _rel,_bra},{beq,  _rel,_bra},
+	{bhcc, _rel,_bra},{bhcs, _rel,_bra},{bpl,  _rel,_bra},{bmi,  _rel,_bra},
+	{bmc,  _rel,_bra},{bms,  _rel,_bra},{bil,  _rel,_bra},{bih,  _rel,_bra},
+	{neg,  _dir,_mrw},{ill,  _imp,_0  },{ill,  _imp,_0	},{com,  _dir,_mrw},/* 30 */
+	{lsr,  _dir,_mrw},{ill,  _imp,_0  },{ror,  _dir,_mrw},{asr,  _dir,_mrw},
+	{asl,  _dir,_mrw},{rol,  _dir,_mrw},{dec,  _dir,_mrw},{ill,  _imp,_0  },
+	{inc,  _dir,_mrw},{tst,  _dir,_mrd},{ill,  _imp,_0	},{clr,  _dir,_mwr},
+	{nega, _imp,_0	},{ill,  _imp,_0  },{ill,  _imp,_0	},{coma, _imp,_0  },/* 40 */
+	{lsra, _imp,_0	},{ill,  _imp,_0  },{rora, _imp,_0	},{asra, _imp,_0  },
+	{asla, _imp,_0	},{rola, _imp,_0  },{deca, _imp,_0	},{ill,  _imp,_0  },
+	{inca, _imp,_0	},{tsta, _imp,_0  },{ill,  _imp,_0	},{clra, _imp,_0  },
+	{negx, _imp,_0	},{ill,  _imp,_0  },{ill,  _imp,_0	},{comx, _imp,_0  },/* 50 */
+	{lsrx, _imp,_0	},{ill,  _imp,_0  },{rorx, _imp,_0	},{asrx, _imp,_0  },
+	{aslx, _imp,_0	},{rolx, _imp,_0  },{decx, _imp,_0	},{ill,  _imp,_0  },
+	{incx, _imp,_0	},{tstx, _imp,_0  },{ill,  _imp,_0	},{clrx, _imp,_0  },
+	{neg,  _ix1,_zrw},{ill,  _imp,_0  },{ill,  _imp,_0	},{com,  _ix1,_zrw},/* 60 */
+	{lsr,  _ix1,_zrw},{ill,  _imp,_0  },{ror,  _ix1,_zrw},{asr,  _ix1,_zrw},
+	{asl,  _ix1,_zrw},{rol,  _ix1,_zrw},{dec,  _ix1,_zrw},{ill,  _imp,_0  },
+	{inc,  _ix1,_zrw},{tst,  _ix1,_zrw},{jmp,  _ix1,_jmp},{clr,  _ix1,_zwr},
+	{neg,  _idx,_mrw},{ill,  _imp,_0  },{ill,  _imp,_0	},{com,  _idx,_mrw},/* 70 */
+	{lsr,  _idx,_mrw},{ill,  _imp,_0  },{ror,  _idx,_mrw},{asr,  _idx,_mrw},
+	{asl,  _idx,_mrw},{rol,  _idx,_mrw},{dec,  _idx,_mrw},{ill,  _imp,_0  },
+	{inc,  _idx,_mrw},{tst,  _idx,_mrd},{jmp,  _idx,_jmp},{clr,  _idx,_mwr},
+	{rti,  _imp,_0	},{rts,  _imp,_0  },{ill,  _imp,_0	},{swi,  _imp,_0  },/* 80 */
+	{ill,  _imp,_0	},{ill,  _imp,_0  },{ill,  _imp,_0	},{ill,  _imp,_0  },
+	{ill,  _imp,_0	},{ill,  _imp,_0  },{ill,  _imp,_0	},{ill,  _imp,_0  },
+	{ill,  _imp,_0	},{ill,  _imp,_0  },{ill,  _imp,_0	},{ill,  _imp,_0  },
+	{ill,  _imp,_0	},{ill,  _imp,_0  },{ill,  _imp,_0	},{ill,  _imp,_0  },/* 90 */
+	{ill,  _imp,_0	},{ill,  _imp,_0  },{ill,  _imp,_0	},{tax,  _imp,_0  },
+	{clc,  _imp,_0	},{sec,  _imp,_0  },{cli,  _imp,_0	},{sei,  _imp,_0  },
+	{rsp,  _imp,_0	},{nop,  _imp,_0  },{ill,  _imp,_0	},{txa,  _imp,_0  },
+	{suba, _imm,_0	},{cmpa, _imm,_0  },{sbca, _imm,_0	},{cpx,  _imm,_0  },/* a0 */
+	{anda, _imm,_0	},{bita, _imm,_0  },{lda,  _imm,_0	},{ill,  _imp,_0  },
+	{eora, _imm,_0	},{adca, _imm,_0  },{ora,  _imm,_0	},{adda, _imm,_0  },
+	{ill,  _imp,_0	},{bsr,  _rel,_bra},{ldx,  _imm,_0	},{ill,  _imp,_0  },
+	{suba, _dir,_zrd},{cmpa, _dir,_zrd},{sbca, _dir,_zrd},{cpx,  _dir,_zrd},/* b0 */
+	{anda, _dir,_zrd},{bita, _dir,_zrd},{lda,  _dir,_zrd},{sta,  _dir,_zwr},
+	{eora, _dir,_zrd},{adca, _dir,_zrd},{ora,  _dir,_zrd},{adda, _dir,_zrd},
+	{jmp,  _dir,_zrd},{jsr,  _dir,_jmp},{ldx,  _dir,_zrd},{stx,  _dir,_zwr},
+	{suba, _ext,_mrd},{cmpa, _ext,_mrd},{sbca, _ext,_mrd},{cpx,  _ext,_mrd},/* c0 */
+	{anda, _ext,_mrd},{bita, _ext,_mrd},{lda,  _ext,_mrd},{sta,  _ext,_mwr},
+	{eora, _ext,_mrd},{adca, _ext,_mrd},{ora,  _ext,_mrd},{adda, _ext,_mrd},
+	{jmp,  _ext,_jmp},{jsr,  _ext,_jmp},{ldx,  _ext,_mrd},{stx,  _ext,_mwr},
+	{suba, _ix2,_mrd},{cmpa, _ix2,_mrd},{sbca, _ix2,_mrd},{cpx,  _ix2,_mrd},/* d0 */
+	{anda, _ix2,_mrd},{bita, _ix2,_mrd},{lda,  _ix2,_mrd},{sta,  _ix2,_mwr},
+	{eora, _ix2,_mrd},{adca, _ix2,_mrd},{ora,  _ix2,_mrd},{adda, _ix2,_mrd},
+	{jmp,  _ix2,_jmp},{jsr,  _ix2,_jmp},{ldx,  _ix2,_mrd},{stx,  _ix2,_mwr},
+	{suba, _ix1,_zrd},{cmpa, _ix1,_zrd},{sbca, _ix1,_zrd},{cpx,  _ix1,_zrd},/* e0 */
+	{anda, _ix1,_zrd},{bita, _ix1,_zrd},{lda,  _ix1,_zrd},{sta,  _ix1,_zwr},
+	{eora, _ix1,_zrd},{adca, _ix1,_zrd},{ora,  _ix1,_zrd},{adda, _ix1,_zrd},
+	{jmp,  _ix1,_jmp},{jsr,  _ix1,_jmp},{ldx,  _ix1,_zrd},{stx,  _ix1,_zwr},
+	{suba, _idx,_mrd},{cmpa, _idx,_mrd},{sbca, _idx,_mrd},{cpx,  _idx,_mrd},/* f0 */
+	{anda, _idx,_mrd},{bita, _idx,_mrd},{lda,  _idx,_mrd},{sta,  _idx,_mwr},
+	{eora, _idx,_mrd},{adca, _idx,_mrd},{ora,  _idx,_mrd},{adda, _idx,_mrd},
+	{jmp,  _idx,_jmp},{jsr,  _idx,_jmp},{ldx,  _idx,_mrd},{stx,  _idx,_mwr}
 };
 
 #if 0
@@ -180,14 +183,14 @@ unsigned Dasm6805 (char *buf, unsigned pc)
 	size = disasm[code][2];
 	access = disasm[code][3];
 
-    buf += sprintf(buf, "%-5s", op_name_str[disasm[code][0]]);
+	buf += sprintf(buf, "%-6s", op_name_str[disasm[code][0]]);
 
 	switch( disasm[code][1] )
 	{
 	case _btr:	/* bit test and relative branch */
 		bit = (code >> 1) & 7;
 		ea = cpu_readop_arg(pc+1);
-		sym1 = set_ea_info(1, ea, EA_UINT8, EA_MEM_RD);
+		sym1 = set_ea_info(1, ea, EA_UINT8, EA_ZPG_RD);
 		sym2 = set_ea_info(0, pc + 3, (INT8)cpu_readop_arg(pc+2), EA_REL_PC);
 		sprintf (buf, "%d,%s,%s", bit, sym1, sym2);
 		return 3;
@@ -208,31 +211,33 @@ unsigned Dasm6805 (char *buf, unsigned pc)
 	case _dir:	/* direct (zero page address) */
 		addr = cpu_readop_arg(pc+1);
 		ea = addr;
-		sym1 = set_ea_info(1, ea, EA_UINT8, EA_MEM_RD);
+		sym1 = set_ea_info(1, ea, size, access);
         sprintf (buf, "%s", sym1);
 		return 2;
 	case _ext:	/* extended (16 bit address) */
 		addr = (cpu_readop_arg(pc+1) << 8) + cpu_readop_arg(pc+2);
 		ea = addr;
-		sym1 = set_ea_info(1, ea, EA_UINT16, EA_MEM_RD);
+		sym1 = set_ea_info(1, ea, size, access);
 		sprintf (buf, "%s", sym1);
 		return 3;
 	case _idx:	/* indexed */
 		ea = m6805_get_reg(M6805_X);
-		set_ea_info(0, ea, EA_UINT8, EA_MEM_RD);
+		set_ea_info(0, ea, size, access);
 		sprintf (buf, "(x)");
 		return 1;
 	case _ix1:	/* indexed + byte (zero page) */
 		addr = cpu_readop_arg(pc+1);
-		ea = (addr + cpu_get_reg(M6805_X)) & 0xffff;
-        sym1 = set_ea_info(0, ea, size, access);
-		sprintf (buf, "(x+$%02x)", addr);
+		ea = (addr + cpu_get_reg(M6805_X)) & 0xff;
+		sym1 = set_ea_info(0, addr, EA_UINT8, EA_VALUE);
+		sym2 = set_ea_info(0, ea, size, access);
+		sprintf (buf, "(x+%s)", sym1);
 		return 2;
 	case _ix2:	/* indexed + word (16 bit address) */
 		addr = (cpu_readop_arg(pc+1) << 8) + cpu_readop_arg(pc+2);
 		ea = (addr + cpu_get_reg(M6805_X)) & 0xffff;
-		sym1 = set_ea_info(0, ea, size, access);
-		sprintf (buf, "(x+$%04x)", addr);
+		sym1 = set_ea_info(0, addr, EA_UINT16, EA_VALUE);
+		sym2 = set_ea_info(0, ea, size, access);
+		sprintf (buf, "(x+%s)", sym1);
 		return 3;
     default:    /* implicit */
 		return 1;

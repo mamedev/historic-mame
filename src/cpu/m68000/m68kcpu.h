@@ -44,7 +44,7 @@
 #undef uint16
 #undef uint
 
-#define int8   char
+#define int8   signed char			/* ASG: changed from char to signed char */
 #define uint8  unsigned char
 #define int16  short
 #define uint16 unsigned short
@@ -287,9 +287,10 @@ INLINE int MAKE_INT_32(int value)
 #define CPU_V            m68k_cpu.v_flag
 #define CPU_C            m68k_cpu.c_flag
 #define CPU_INT_MASK     m68k_cpu.int_mask
-#define CPU_INTS_PENDING m68k_cpu.ints_pending
+#define CPU_INT_STATE    m68k_cpu.int_state /* ASG: changed from CPU_INTS_PENDING */
 #define CPU_STOPPED      m68k_cpu.stopped
 #define CPU_HALTED       m68k_cpu.halted
+#define CPU_INT_CYCLES   m68k_cpu.int_cycles /* ASG */
 
 #define CPU_INT_ACK_CALLBACK     m68k_cpu.int_ack_callback
 #define CPU_BKPT_ACK_CALLBACK    m68k_cpu.bkpt_ack_callback
@@ -527,9 +528,10 @@ typedef struct
    uint v_flag;      /* Overflow */
    uint c_flag;      /* Carry */
    uint int_mask;    /* I0-I2 */
-   uint ints_pending;/* Pending Interrupts */
+   uint int_state;   /* Current interrupt state -- ASG: changed from ints_pending */
    uint stopped;     /* Stopped state */
    uint halted;      /* Halted state */
+   uint int_cycles;  /* ASG: extra cycles from generated interrupts */
 
    /* Callbacks to host */
    int  (*int_ack_callback)(int int_line);  /* Interrupt Acknowledge */
@@ -594,10 +596,12 @@ INLINE void m68ki_set_m_flag(int value);                 /* Set the M flag */
 INLINE void m68ki_set_sm_flag(int s_value, int m_value); /* Set the S and M flags */
 INLINE void m68ki_set_ccr(uint value);                   /* set the condition code register */
 INLINE void m68ki_set_sr(uint value);                    /* set the status register */
+INLINE void m68ki_set_sr_no_int(uint value);             /* ASG: set the status register, but don't check interrupts */
 INLINE void m68ki_set_pc(uint address);                  /* set the program counter */
-INLINE void m68ki_service_interrupt(void);               /* service a pending interrupt */
+INLINE void m68ki_service_interrupt(uint pending_mask);  /* service a pending interrupt -- ASG: added parameter */
 INLINE void m68ki_exception(uint vector);                /* process an exception */
 INLINE void m68ki_interrupt(uint vector);				 /* process an interrupt */
+INLINE void m68ki_check_interrupts(void); 				 /* ASG: check for interrupts */
 
 /* ======================================================================== */
 /* =========================== UTILITY FUNCTIONS ========================== */
@@ -827,35 +831,51 @@ INLINE uint m68ki_get_ea_pcix(void)
 /* Set the S flag and change the active stack pointer. */
 INLINE void m68ki_set_s_flag(int value)
 {
-   /* Backup the old stack pointer */
-   CPU_SP[CPU_S | (CPU_M & (CPU_S<<1))] = CPU_A[7];
-   /* Set the S flag */
-   CPU_S = value != 0;
-   /* Set the new stack pointer */
-   CPU_A[7] = CPU_SP[CPU_S | (CPU_M & (CPU_S<<1))];
+   /* ASG: Only do the rest if we're changing */
+   value = (value != 0);
+   if (CPU_S != value)
+   {
+      /* Backup the old stack pointer */
+      CPU_SP[CPU_S | (CPU_M & (CPU_S<<1))] = CPU_A[7];
+      /* Set the S flag */
+      CPU_S = value;
+      /* Set the new stack pointer */
+      CPU_A[7] = CPU_SP[CPU_S | (CPU_M & (CPU_S<<1))];
+   }
 }
 
 /* Set the M flag and change the active stack pointer. */
 INLINE void m68ki_set_m_flag(int value)
 {
-   /* Backup the old stack pointer */
-   CPU_SP[CPU_S | (CPU_M & (CPU_S<<1))] = CPU_A[7];
-   /* Set the M flag */
-   CPU_M = (value != 0 && CPU_MODE & CPU_MODE_020_PLUS)<<1;
-   /* Set the new stack pointer */
-   CPU_A[7] = CPU_SP[CPU_S | (CPU_M & (CPU_S<<1))];
+   /* ASG: Only do the rest if we're changing */
+   value = (value != 0 && CPU_MODE & CPU_MODE_020_PLUS)<<1;
+   if (CPU_M != value)
+   {
+      /* Backup the old stack pointer */
+      CPU_SP[CPU_S | (CPU_M & (CPU_S<<1))] = CPU_A[7];
+      /* Set the M flag */
+      CPU_M = value;
+      /* Set the new stack pointer */
+      CPU_A[7] = CPU_SP[CPU_S | (CPU_M & (CPU_S<<1))];
+   }
 }
 
 /* Set the S and M flags and change the active stack pointer. */
 INLINE void m68ki_set_sm_flag(int s_value, int m_value)
 {
-   /* Backup the old stack pointer */
-   CPU_SP[CPU_S | (CPU_M & (CPU_S<<1))] = CPU_A[7];
-   /* Set the S and M flags */
-   CPU_S = s_value != 0;
-   CPU_M = (m_value != 0 && CPU_MODE & CPU_MODE_020_PLUS)<<1;
-   /* Set the new stack pointer */
-   CPU_A[7] = CPU_SP[CPU_S | (CPU_M & (CPU_S<<1))];
+   /* ASG: Only do the rest if we're changing */
+   s_value = (s_value != 0);
+   m_value = (m_value != 0 && CPU_MODE & CPU_MODE_020_PLUS)<<1;
+   if (CPU_S != s_value || CPU_M != m_value)
+   {
+      /* Backup the old stack pointer */
+      CPU_SP[CPU_S | (CPU_M & (CPU_S<<1))] = CPU_A[7];
+      /* Set the S and M flags */
+      CPU_S = s_value != 0;
+      CPU_M = (m_value != 0 && CPU_MODE & CPU_MODE_020_PLUS)<<1;
+      /* Set the new stack pointer */
+      CPU_A[7] = CPU_SP[CPU_S | (CPU_M & (CPU_S<<1))];
+   }
 }
 
 
@@ -871,6 +891,32 @@ INLINE void m68ki_set_ccr(uint value)
 
 /* Set the status register */
 INLINE void m68ki_set_sr(uint value)
+{
+   /* ASG: detect changes to the INT_MASK */
+   int old_mask = CPU_INT_MASK;
+
+   /* Mask out the "unimplemented" bits */
+   value &= m68k_sr_implemented_bits[CPU_MODE];
+
+   /* Now set the status register */
+   CPU_T1 = BIT_F(value);
+   CPU_T0 = BIT_E(value);
+   CPU_INT_MASK = (value >> 8) & 7;
+   CPU_X = BIT_4(value);
+   CPU_N = BIT_3(value);
+   CPU_NOT_Z = !BIT_2(value);
+   CPU_V = BIT_1(value);
+   CPU_C = BIT_0(value);
+   m68ki_set_sm_flag(BIT_D(value), BIT_C(value));
+
+   /* ASG: detect changes to the INT_MASK */
+   if (CPU_INT_MASK != old_mask)
+      m68ki_check_interrupts();
+}
+
+
+/* Set the status register */
+INLINE void m68ki_set_sr_no_int(uint value)
 {
    /* Mask out the "unimplemented" bits */
    value &= m68k_sr_implemented_bits[CPU_MODE];
@@ -939,7 +985,9 @@ INLINE void m68ki_interrupt(uint vector)
    uint old_sr = m68ki_get_sr();
 
    /* Use up some clock cycles */
-   USE_CLKS(m68k_exception_cycle_table[vector]);
+   /* ASG: just keep them pending */
+/* USE_CLKS(m68k_exception_cycle_table[vector]);*/
+   CPU_INT_CYCLES += m68k_exception_cycle_table[vector];
 
    /* Turn off stopped state and trace flag, clear pending traces */
    CPU_STOPPED = 0;
@@ -958,13 +1006,13 @@ INLINE void m68ki_interrupt(uint vector)
 
 
 /* Service an interrupt request */
-INLINE void m68ki_service_interrupt(void)
+INLINE void m68ki_service_interrupt(uint pending_mask)	/* ASG: added parameter here */
 {
    uint int_level = 7;
    uint vector;
 
    /* Start at level 7 and then go down */
-   for(;!(CPU_INTS_PENDING & (1<<int_level));int_level--)
+   for(;!(pending_mask & (1<<int_level));int_level--)	/* ASG: changed to use parameter instead of CPU_INTS_PENDING */
       ;
 
    /* Get the exception vector */
@@ -1029,6 +1077,15 @@ INLINE void m68ki_service_interrupt(void)
 
    /* Set the interrupt mask to the level of the one being serviced */
    CPU_INT_MASK = int_level;
+}
+
+
+/* ASG: Check for interrupts */
+INLINE void m68ki_check_interrupts(void)
+{
+   uint pending_mask = 1 << CPU_INT_STATE;
+   if (pending_mask & m68k_int_masks[CPU_INT_MASK])
+      m68ki_service_interrupt(pending_mask);
 }
 
 

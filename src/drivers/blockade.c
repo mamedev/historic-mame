@@ -688,7 +688,7 @@ ROM_END
 static const char *blockade_sample_name[] =
 {
     "*blockade",
-    "BOOM.SAM",
+    "BOOM.wav",
     0   /* end of array */
 };
 

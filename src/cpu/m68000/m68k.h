@@ -113,7 +113,8 @@ typedef struct                 /* CPU Context */
    unsigned int  dfc;          /* Destination Function Code.  Used in 68010+ */
    unsigned int  stopped;      /* Stopped state: only interrupt can restart */
    unsigned int  halted;       /* Halted state: only reset can restart */
-   unsigned int  ints_pending; /* Interrupt levels pending */
+   unsigned int  int_state;	   /* Current interrupt line states -- ASG: changed from ints_pending */
+   unsigned int  int_cycles;   /* Extra cycles taken due to interrupts -- ASG: added */
    int  (*int_ack_callback)(int int_level); /* Interrupt Acknowledge */
    void (*bkpt_ack_callback)(int data);     /* Breakpoint Acknowledge */
    void (*reset_instr_callback)(void);      /* Called when a RESET instruction is encountered */

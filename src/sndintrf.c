@@ -168,26 +168,26 @@ static double refresh_period_inv;
 
 struct snd_interface
 {
-	unsigned sound_num;						/* ID */
-	const char *name;						/* description */
-	int (*chips_num)(const void *intf);		/* returns number of chips if applicable */
-	int (*chips_clock)(const void *intf);	/* returns chips clock if applicable */
-	int (*start)(const void *intf);			/* starts sound emulation */
-	void (*stop)(void);						/* stops sound emulation */
-	void (*update)(void);					/* updates emulation once per frame if necessary */
-	void (*reset)(void);					/* resets sound emulation */
+	unsigned sound_num;										/* ID */
+	const char *name;										/* description */
+	int (*chips_num)(const struct MachineSound *msound);	/* returns number of chips if applicable */
+	int (*chips_clock)(const struct MachineSound *msound);	/* returns chips clock if applicable */
+	int (*start)(const struct MachineSound *msound);		/* starts sound emulation */
+	void (*stop)(void);										/* stops sound emulation */
+	void (*update)(void);									/* updates emulation once per frame if necessary */
+	void (*reset)(void);									/* resets sound emulation */
 };
 
 
 #if (HAS_CUSTOM)
 static const struct CustomSound_interface *cust_intf;
 
-int custom_sh_start(const struct CustomSound_interface *intf)
+int custom_sh_start(const struct MachineSound *msound)
 {
-	cust_intf = intf;
+	cust_intf = msound->sound_interface;
 
-	if (intf->sh_start)
-		return (*intf->sh_start)();
+	if (cust_intf->sh_start)
+		return (*cust_intf->sh_start)(msound);
 	else return 0;
 }
 void custom_sh_stop(void)
@@ -200,81 +200,80 @@ void custom_sh_update(void)
 }
 #endif
 #if (HAS_DAC)
-int DAC_num(const void* interface) { return ((struct DACinterface*)interface)->num; }
+int DAC_num(const struct MachineSound *msound) { return ((struct DACinterface*)msound->sound_interface)->num; }
 #endif
 #if (HAS_ADPCM)
-int ADPCM_num(const void* interface) { return ((struct ADPCMinterface*)interface)->num; }
+int ADPCM_num(const struct MachineSound *msound) { return ((struct ADPCMinterface*)msound->sound_interface)->num; }
 #endif
 #if (HAS_OKIM6295)
-int OKIM6295_num(const void* interface) { return ((struct OKIM6295interface*)interface)->num; }
+int OKIM6295_num(const struct MachineSound *msound) { return ((struct OKIM6295interface*)msound->sound_interface)->num; }
 #endif
 #if (HAS_MSM5205)
-int MSM5205_num(const void* interface) { return ((struct MSM5205interface*)interface)->num; }
+int MSM5205_num(const struct MachineSound *msound) { return ((struct MSM5205interface*)msound->sound_interface)->num; }
 #endif
 #if (HAS_HC55516)
-int HC55516_num(const void* interface) { return ((struct CVSDinterface*)interface)->num; }
+int HC55516_num(const struct MachineSound *msound) { return ((struct CVSDinterface*)msound->sound_interface)->num; }
 #endif
 #if (HAS_AY8910)
-int AY8910_clock(const void* interface) { return ((struct AY8910interface*)interface)->baseclock; }
-int AY8910_num(const void* interface) { return ((struct AY8910interface*)interface)->num; }
+int AY8910_clock(const struct MachineSound *msound) { return ((struct AY8910interface*)msound->sound_interface)->baseclock; }
+int AY8910_num(const struct MachineSound *msound) { return ((struct AY8910interface*)msound->sound_interface)->num; }
 #endif
 #if (HAS_YM2203)
-int YM2203_clock(const void* interface) { return ((struct YM2203interface*)interface)->baseclock; }
-int YM2203_num(const void* interface) { return ((struct YM2203interface*)interface)->num; }
+int YM2203_clock(const struct MachineSound *msound) { return ((struct YM2203interface*)msound->sound_interface)->baseclock; }
+int YM2203_num(const struct MachineSound *msound) { return ((struct YM2203interface*)msound->sound_interface)->num; }
 #endif
 #if (HAS_YM2413)
-int YM2413_clock(const void* interface) { return ((struct YM2413interface*)interface)->baseclock; }
-int YM2413_num(const void* interface) { return ((struct YM2413interface*)interface)->num; }
+int YM2413_clock(const struct MachineSound *msound) { return ((struct YM2413interface*)msound->sound_interface)->baseclock; }
+int YM2413_num(const struct MachineSound *msound) { return ((struct YM2413interface*)msound->sound_interface)->num; }
 #endif
 #if (HAS_YM2608)
-int YM2608_clock(const void* interface) { return ((struct YM2608interface*)interface)->baseclock; }
-int YM2608_num(const void* interface) { return ((struct YM2608interface*)interface)->num; }
+int YM2608_clock(const struct MachineSound *msound) { return ((struct YM2608interface*)msound->sound_interface)->baseclock; }
+int YM2608_num(const struct MachineSound *msound) { return ((struct YM2608interface*)msound->sound_interface)->num; }
 #endif
 #if (HAS_YM2610)
-int YM2610_clock(const void* interface) { return ((struct YM2610interface*)interface)->baseclock; }
-int YM2610_num(const void* interface) { return ((struct YM2610interface*)interface)->num; }
+int YM2610_clock(const struct MachineSound *msound) { return ((struct YM2610interface*)msound->sound_interface)->baseclock; }
+int YM2610_num(const struct MachineSound *msound) { return ((struct YM2610interface*)msound->sound_interface)->num; }
 #endif
 #if (HAS_YM2612)
-int YM2612_clock(const void* interface) { return ((struct YM2612interface*)interface)->baseclock; }
-int YM2612_num(const void* interface) { return ((struct YM2612interface*)interface)->num; }
+int YM2612_clock(const struct MachineSound *msound) { return ((struct YM2612interface*)msound->sound_interface)->baseclock; }
+int YM2612_num(const struct MachineSound *msound) { return ((struct YM2612interface*)msound->sound_interface)->num; }
 #endif
 #if (HAS_POKEY)
-int POKEY_clock(const void* interface) { return ((struct POKEYinterface*)interface)->baseclock; }
-int POKEY_num(const void* interface) { return ((struct POKEYinterface*)interface)->num; }
+int POKEY_clock(const struct MachineSound *msound) { return ((struct POKEYinterface*)msound->sound_interface)->baseclock; }
+int POKEY_num(const struct MachineSound *msound) { return ((struct POKEYinterface*)msound->sound_interface)->num; }
 #endif
 #if (HAS_TIA)
-int TIA_clock(const void* interface) { return ((struct TIAinterface*)interface)->baseclock; }
+int TIA_clock(const struct MachineSound *msound) { return ((struct TIAinterface*)msound->sound_interface)->baseclock; }
 #endif
 #if (HAS_YM3812)
-int YM3812_clock(const void* interface) { return ((struct YM3812interface*)interface)->baseclock; }
-int YM3812_num(const void* interface) { return ((struct YM3812interface*)interface)->num; }
+int YM3812_clock(const struct MachineSound *msound) { return ((struct YM3812interface*)msound->sound_interface)->baseclock; }
+int YM3812_num(const struct MachineSound *msound) { return ((struct YM3812interface*)msound->sound_interface)->num; }
 #endif
 #if (HAS_VLM5030)
-int VLM5030_clock(const void* interface) { return ((struct VLM5030interface*)interface)->baseclock; }
+int VLM5030_clock(const struct MachineSound *msound) { return ((struct VLM5030interface*)msound->sound_interface)->baseclock; }
 #endif
 #if (HAS_TMS5220)
-int TMS5220_clock(const void* interface) { return ((struct TMS5220interface*)interface)->baseclock; }
+int TMS5220_clock(const struct MachineSound *msound) { return ((struct TMS5220interface*)msound->sound_interface)->baseclock; }
 #endif
 #if (HAS_YM2151)
-int YM2151_clock(const void* interface) { return ((struct YM2151interface*)interface)->baseclock; }
-int YM2151_num(const void* interface) { return ((struct YM2151interface*)interface)->num; }
+int YM2151_clock(const struct MachineSound *msound) { return ((struct YM2151interface*)msound->sound_interface)->baseclock; }
+int YM2151_num(const struct MachineSound *msound) { return ((struct YM2151interface*)msound->sound_interface)->num; }
 #endif
 #if (HAS_NES)
-int NES_clock(const void* interface) { return ((struct NESinterface*)interface)->baseclock; }
-int NES_num(const void* interface) { return ((struct NESinterface*)interface)->num; }
+int NES_clock(const struct MachineSound *msound) { return ((struct NESinterface*)msound->sound_interface)->baseclock; }
+int NES_num(const struct MachineSound *msound) { return ((struct NESinterface*)msound->sound_interface)->num; }
 #endif
 #if (HAS_SN76496)
-int SN76496_clock(const void* interface) { return ((struct SN76496interface*)interface)->baseclock; }
-int SN76496_num(const void* interface) { return ((struct SN76496interface*)interface)->num; }
+int SN76496_clock(const struct MachineSound *msound) { return ((struct SN76496interface*)msound->sound_interface)->baseclock; }
+int SN76496_num(const struct MachineSound *msound) { return ((struct SN76496interface*)msound->sound_interface)->num; }
 #endif
 #if (HAS_UPD7759)
-int UPD7759_clock(const void* interface) { return ((struct UPD7759_interface*)interface)->clock_rate; }
+int UPD7759_clock(const struct MachineSound *msound) { return ((struct UPD7759_interface*)msound->sound_interface)->clock_rate; }
 #endif
 #if (HAS_ASTROCADE)
-int ASTROCADE_clock(const void* interface) { return ((struct astrocade_interface*)interface)->baseclock; }
-int ASTROCADE_num(const void* interface) { return ((struct astrocade_interface*)interface)->num; }
+int ASTROCADE_clock(const struct MachineSound *msound) { return ((struct astrocade_interface*)msound->sound_interface)->baseclock; }
+int ASTROCADE_num(const struct MachineSound *msound) { return ((struct astrocade_interface*)msound->sound_interface)->num; }
 #endif
-
 
 struct snd_interface sndintf[] =
 {
@@ -294,7 +293,7 @@ struct snd_interface sndintf[] =
 		"Custom",
 		0,
 		0,
-		(int  (*)(const void *))custom_sh_start,
+		custom_sh_start,
 		custom_sh_stop,
 		custom_sh_update,
 		0
@@ -306,7 +305,7 @@ struct snd_interface sndintf[] =
 		"Samples",
 		0,
 		0,
-		(int  (*)(const void *))samples_sh_start,
+		samples_sh_start,
 		0,
 		0,
 		0
@@ -318,7 +317,7 @@ struct snd_interface sndintf[] =
 		"DAC",
 		DAC_num,
 		0,
-		(int  (*)(const void *))DAC_sh_start,
+		DAC_sh_start,
 		0,
 		0,
 		0
@@ -330,7 +329,7 @@ struct snd_interface sndintf[] =
 		"AY-8910",
 		AY8910_num,
 		AY8910_clock,
-		(int  (*)(const void *))AY8910_sh_start,
+		AY8910_sh_start,
 		0,
 		0,
 		0
@@ -342,10 +341,10 @@ struct snd_interface sndintf[] =
 		"YM-2203",
 		YM2203_num,
 		YM2203_clock,
-		(int  (*)(const void *))YM2203_sh_start,
+		YM2203_sh_start,
 		YM2203_sh_stop,
 		0,
-		YM2203_sh_reset,
+		YM2203_sh_reset
 	},
 #endif
 #if (HAS_YM2151)
@@ -354,10 +353,10 @@ struct snd_interface sndintf[] =
 		"YM-2151",
 		YM2151_num,
 		YM2151_clock,
-		(int  (*)(const void *))YM2151_sh_start,
+		YM2151_sh_start,
 		YM2151_sh_stop,
 		0,
-		0
+		YM2151_sh_reset
 	},
 #endif
 #if (HAS_YM2151_ALT)
@@ -366,7 +365,7 @@ struct snd_interface sndintf[] =
 		"YM-2151a",
 		YM2151_num,
 		YM2151_clock,
-		(int  (*)(const void *))YM2151_ALT_sh_start,
+		YM2151_ALT_sh_start,
 		YM2151_sh_stop,
 		0,
 		0
@@ -378,10 +377,10 @@ struct snd_interface sndintf[] =
 		"YM-2608",
 		YM2608_num,
 		YM2608_clock,
-		(int  (*)(const void *))YM2608_sh_start,
+		YM2608_sh_start,
 		YM2608_sh_stop,
 		0,
-		0
+		YM2608_sh_reset
 	},
 #endif
 #if (HAS_YM2610)
@@ -390,10 +389,22 @@ struct snd_interface sndintf[] =
 		"YM-2610",
 		YM2610_num,
 		YM2610_clock,
-		(int  (*)(const void *))YM2610_sh_start,
+		YM2610_sh_start,
 		YM2610_sh_stop,
 		0,
-		0
+		YM2610_sh_reset
+	},
+#endif
+#if (HAS_YM2610B)
+    {
+		SOUND_YM2610B,
+		"YM-2610B",
+		YM2610_num,
+		YM2610_clock,
+		YM2610B_sh_start,
+		YM2610_sh_stop,
+		0,
+		YM2610_sh_reset
 	},
 #endif
 #if (HAS_YM2612)
@@ -402,10 +413,10 @@ struct snd_interface sndintf[] =
 		"YM-2612",
 		YM2612_num,
 		YM2612_clock,
-		(int  (*)(const void *))YM2612_sh_start,
+		YM2612_sh_start,
 		YM2612_sh_stop,
-		YM2612_sh_update,
-		0
+		0,
+		YM2612_sh_reset
 	},
 #endif
 #if (HAS_YM3438)
@@ -414,10 +425,10 @@ struct snd_interface sndintf[] =
 		"YM-3438",
 		YM2612_num,
 		YM2612_clock,
-		(int  (*)(const void *))YM2612_sh_start,
+		YM2612_sh_start,
 		YM2612_sh_stop,
-		YM2612_sh_update,
-		0
+		0,
+		YM2612_sh_reset
 	},
 #endif
 #if (HAS_YM2413)
@@ -426,7 +437,7 @@ struct snd_interface sndintf[] =
 		"YM-2413",
 		YM2413_num,
 		YM2413_clock,
-		(int  (*)(const void *))YM2413_sh_start,
+		YM2413_sh_start,
 		YM2413_sh_stop,
 		0,
 		0
@@ -438,7 +449,7 @@ struct snd_interface sndintf[] =
 		"YM-3812",
 		YM3812_num,
 		YM3812_clock,
-		(int  (*)(const void *))YM3812_sh_start,
+		YM3812_sh_start,
 		YM3812_sh_stop,
 		0,
 		0
@@ -450,7 +461,7 @@ struct snd_interface sndintf[] =
 		"YM-3526",
 		YM3812_num,
 		YM3812_clock,
-		(int  (*)(const void *))YM3812_sh_start,
+		YM3812_sh_start,
 		YM3812_sh_stop,
 		0,
 		0
@@ -462,7 +473,7 @@ struct snd_interface sndintf[] =
 		"SN76496",
 		SN76496_num,
 		SN76496_clock,
-		(int  (*)(const void *))SN76496_sh_start,
+		SN76496_sh_start,
 		0,
 		0,
 		0
@@ -474,7 +485,7 @@ struct snd_interface sndintf[] =
 		"Pokey",
 		POKEY_num,
 		POKEY_clock,
-		(int  (*)(const void *))pokey_sh_start,
+		pokey_sh_start,
 		pokey_sh_stop,
 		0,
 		0
@@ -486,7 +497,7 @@ struct snd_interface sndintf[] =
 		"TIA",
 		0,
 		TIA_clock,
-		(int  (*)(const void *))tia_sh_start,
+		tia_sh_start,
 		tia_sh_stop,
 		tia_sh_update,
 		0
@@ -498,7 +509,7 @@ struct snd_interface sndintf[] =
 		"NES",
 		NES_num,
 		NES_clock,
-		(int  (*)(const void *))NESPSG_sh_start,
+		NESPSG_sh_start,
 		NESPSG_sh_stop,
 		NESPSG_sh_update,
 		0
@@ -510,7 +521,7 @@ struct snd_interface sndintf[] =
 		"Astrocade",
 		ASTROCADE_num,
 		ASTROCADE_clock,
-		(int  (*)(const void *))astrocade_sh_start,
+		astrocade_sh_start,
 		astrocade_sh_stop,
 		astrocade_sh_update,
 		0
@@ -522,7 +533,7 @@ struct snd_interface sndintf[] =
 		"Namco",
 		0,
 		0,
-		(int  (*)(const void *))namco_sh_start,
+		namco_sh_start,
 		namco_sh_stop,
 		0,
 		0
@@ -534,7 +545,7 @@ struct snd_interface sndintf[] =
 		"TMS5520",
 		0,
 		TMS5220_clock,
-		(int  (*)(const void *))tms5220_sh_start,
+		tms5220_sh_start,
 		tms5220_sh_stop,
 		tms5220_sh_update,
 		0
@@ -546,7 +557,7 @@ struct snd_interface sndintf[] =
 		"VLM5030",
 		0,
 		VLM5030_clock,
-		(int  (*)(const void *))VLM5030_sh_start,
+		VLM5030_sh_start,
 		VLM5030_sh_stop,
 		VLM5030_sh_update,
 		0
@@ -558,7 +569,7 @@ struct snd_interface sndintf[] =
 		"ADPCM",
 		ADPCM_num,
 		0,
-		(int  (*)(const void *))ADPCM_sh_start,
+		ADPCM_sh_start,
 		ADPCM_sh_stop,
 		ADPCM_sh_update,
 		0
@@ -570,7 +581,7 @@ struct snd_interface sndintf[] =
 		"OKI6295",
 		OKIM6295_num,
 		0,
-		(int  (*)(const void *))OKIM6295_sh_start,
+		OKIM6295_sh_start,
 		OKIM6295_sh_stop,
 		OKIM6295_sh_update,
 		0
@@ -582,7 +593,7 @@ struct snd_interface sndintf[] =
 		"MSM5205",
 		MSM5205_num,
 		0,
-		(int  (*)(const void *))MSM5205_sh_start,
+		MSM5205_sh_start,
 		MSM5205_sh_stop,
 		MSM5205_sh_update,
 		0
@@ -594,7 +605,7 @@ struct snd_interface sndintf[] =
 		"uPD7759",
 		0,
 		UPD7759_clock,
-		(int  (*)(const void *))UPD7759_sh_start,
+		UPD7759_sh_start,
 		UPD7759_sh_stop,
 		0,
 		0
@@ -606,7 +617,7 @@ struct snd_interface sndintf[] =
 		"HC55516",
 		HC55516_num,
 		0,
-		(int  (*)(const void *))CVSD_sh_start,
+		CVSD_sh_start,
 		0,
 		0,
 		0
@@ -618,7 +629,7 @@ struct snd_interface sndintf[] =
 		"007232",
 		0,
 		0,
-		(int  (*)(const void *))K007232_sh_start,
+		K007232_sh_start,
 		0,
 		0,
 		0
@@ -651,7 +662,7 @@ if (errorlog) fprintf(errorlog,"Sound #%d wrong ID %d: check enum SOUND_... in s
 
 	while (Machine->drv->sound[totalsound].sound_type != 0 && totalsound < MAX_SOUND)
 	{
-		if ((*sndintf[Machine->drv->sound[totalsound].sound_type].start)(Machine->drv->sound[totalsound].sound_interface) != 0)
+		if ((*sndintf[Machine->drv->sound[totalsound].sound_type].start)(&Machine->drv->sound[totalsound]) != 0)
 			goto getout;
 
 		totalsound++;
@@ -754,7 +765,7 @@ const char *sound_name(const struct MachineSound *msound)
 int sound_num(const struct MachineSound *msound)
 {
 	if (msound->sound_type < SOUND_COUNT && sndintf[msound->sound_type].chips_num)
-		return (*sndintf[msound->sound_type].chips_num)(msound->sound_interface);
+		return (*sndintf[msound->sound_type].chips_num)(msound);
 	else
 		return 0;
 }
@@ -762,7 +773,7 @@ int sound_num(const struct MachineSound *msound)
 int sound_clock(const struct MachineSound *msound)
 {
 	if (msound->sound_type < SOUND_COUNT && sndintf[msound->sound_type].chips_clock)
-		return (*sndintf[msound->sound_type].chips_clock)(msound->sound_interface);
+		return (*sndintf[msound->sound_type].chips_clock)(msound);
 	else
 		return 0;
 }

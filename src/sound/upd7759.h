@@ -23,7 +23,7 @@ struct UPD7759_interface
 	void (*irqcallback[MAX_UPD7759])(int param);	/* for slave mode only */
 };
 
-int UPD7759_sh_start (const struct UPD7759_interface *intf);
+int UPD7759_sh_start (const struct MachineSound *msound);
 void UPD7759_sh_stop (void);
 
 void UPD7759_reset_w (int num, int data);

@@ -1,7 +1,7 @@
 /*****************************************************************************
  *
  *	 z80.c
- *	 Portable Z80 emulator V1.5
+ *	 Portable Z80 emulator V1.7
  *
  *	 Copyright (C) 1998,1999 Juergen Buchmueller, all rights reserved.
  *
@@ -23,7 +23,11 @@
 #include "cpuintrf.h"
 #include "state.h"
 #include "mamedbg.h"
+#if Z80_VM
+#include "z80_vm.h"
+#else
 #include "z80.h"
+#endif
 
 #define VERBOSE 0
 
@@ -60,11 +64,32 @@
 #define BIG_FLAGS_ARRAY     0
 #endif
 
+#if Z80_VM
 static UINT8 z80_reg_layout[] = {
-	Z80_PC, Z80_SP, Z80_AF, Z80_BC, Z80_DE, Z80_HL, -1,
-	Z80_IX, Z80_IY, Z80_AF2,Z80_BC2,Z80_DE2,Z80_HL2,-1,
-	Z80_R,	Z80_I,	Z80_IM, Z80_IFF1,Z80_IFF2, -1,
-	Z80_NMI_STATE,Z80_IRQ_STATE,Z80_DC0,Z80_DC1,Z80_DC2,Z80_DC3, Z80_NMI_NESTING, 0
+    Z80_PC, Z80_SP, Z80_AF, Z80_BC, Z80_DE, Z80_HL, -1,
+    Z80_IX, Z80_IY, Z80_AF2,Z80_BC2,Z80_DE2,Z80_HL2,-1,
+    Z80_R,  Z80_I,  Z80_IM, Z80_IFF1,Z80_IFF2, -1,
+	Z80_NMI_STATE,Z80_IRQ_STATE,Z80_DC0,Z80_DC1,Z80_DC2,Z80_DC3, Z80_NMI_NESTING,-1,
+	Z80_BANK0, Z80_BANK1, Z80_BANK2, Z80_BANK3, -1,
+	Z80_BANK4, Z80_BANK5, Z80_BANK6, Z80_BANK7, 0
+};
+
+
+static UINT8 z80_win_layout[] = {
+	27, 0,53, 6,	/* register window (top rows) */
+	 0, 0,26,22,	/* disassembler window (left colums) */
+	27, 7,53, 6,	/* memory #1 window (right, upper middle) */
+	27,14,53, 8,	/* memory #2 window (right, lower middle) */
+	 0,23,80, 1,	/* command line window (bottom rows) */
+};
+
+#else
+
+static UINT8 z80_reg_layout[] = {
+    Z80_PC, Z80_SP, Z80_AF, Z80_BC, Z80_DE, Z80_HL, -1,
+    Z80_IX, Z80_IY, Z80_AF2,Z80_BC2,Z80_DE2,Z80_HL2,-1,
+    Z80_R,  Z80_I,  Z80_IM, Z80_IFF1,Z80_IFF2, -1,
+    Z80_NMI_STATE,Z80_IRQ_STATE,Z80_DC0,Z80_DC1,Z80_DC2,Z80_DC3, Z80_NMI_NESTING, 0
 };
 
 static UINT8 z80_win_layout[] = {
@@ -74,6 +99,7 @@ static UINT8 z80_win_layout[] = {
 	27,14,53, 8,	/* memory #2 window (right, lower middle) */
 	 0,23,80, 1,	/* command line window (bottom rows) */
 };
+#endif
 
 /****************************************************************************/
 /* The Z80 registers. HALT is set to 1 when the CPU is halted, the refresh  */
@@ -93,6 +119,9 @@ typedef struct {
 /* 84 */    int     (*irq_callback)(int irqline);
 /* 88 */    int     extra_cycles;       /* extra cycles for interrupts */
 /* 8C */    int     nmi_nesting;        /* nested NMI depth */
+#if Z80_VM
+/* 90 */	UINT32	bank[8];			/* bank memory address (24 bit) */
+#endif
 }   Z80_Regs;
 
 #define CF  0x01
@@ -264,15 +293,114 @@ static UINT8 cc_ed[0x100] = {
  8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8,
  8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8};
 
-/* these tables are defined later */
-extern void (*Z80op[0x100])(void);
-extern void (*Z80cb[0x100])(void);
-extern void (*Z80dd[0x100])(void);
-extern void (*Z80ed[0x100])(void);
-extern void (*Z80fd[0x100])(void);
-extern void (*Z80xxcb[0x100])(void);
-
 static void take_interrupt(void);
+
+#define PROTOTYPES(tablename,prefix) \
+	INLINE void prefix##_00(void); INLINE void prefix##_01(void); INLINE void prefix##_02(void); INLINE void prefix##_03(void); \
+	INLINE void prefix##_04(void); INLINE void prefix##_05(void); INLINE void prefix##_06(void); INLINE void prefix##_07(void); \
+	INLINE void prefix##_08(void); INLINE void prefix##_09(void); INLINE void prefix##_0a(void); INLINE void prefix##_0b(void); \
+	INLINE void prefix##_0c(void); INLINE void prefix##_0d(void); INLINE void prefix##_0e(void); INLINE void prefix##_0f(void); \
+	INLINE void prefix##_10(void); INLINE void prefix##_11(void); INLINE void prefix##_12(void); INLINE void prefix##_13(void); \
+	INLINE void prefix##_14(void); INLINE void prefix##_15(void); INLINE void prefix##_16(void); INLINE void prefix##_17(void); \
+	INLINE void prefix##_18(void); INLINE void prefix##_19(void); INLINE void prefix##_1a(void); INLINE void prefix##_1b(void); \
+	INLINE void prefix##_1c(void); INLINE void prefix##_1d(void); INLINE void prefix##_1e(void); INLINE void prefix##_1f(void); \
+	INLINE void prefix##_20(void); INLINE void prefix##_21(void); INLINE void prefix##_22(void); INLINE void prefix##_23(void); \
+	INLINE void prefix##_24(void); INLINE void prefix##_25(void); INLINE void prefix##_26(void); INLINE void prefix##_27(void); \
+	INLINE void prefix##_28(void); INLINE void prefix##_29(void); INLINE void prefix##_2a(void); INLINE void prefix##_2b(void); \
+	INLINE void prefix##_2c(void); INLINE void prefix##_2d(void); INLINE void prefix##_2e(void); INLINE void prefix##_2f(void); \
+	INLINE void prefix##_30(void); INLINE void prefix##_31(void); INLINE void prefix##_32(void); INLINE void prefix##_33(void); \
+	INLINE void prefix##_34(void); INLINE void prefix##_35(void); INLINE void prefix##_36(void); INLINE void prefix##_37(void); \
+	INLINE void prefix##_38(void); INLINE void prefix##_39(void); INLINE void prefix##_3a(void); INLINE void prefix##_3b(void); \
+	INLINE void prefix##_3c(void); INLINE void prefix##_3d(void); INLINE void prefix##_3e(void); INLINE void prefix##_3f(void); \
+	INLINE void prefix##_40(void); INLINE void prefix##_41(void); INLINE void prefix##_42(void); INLINE void prefix##_43(void); \
+	INLINE void prefix##_44(void); INLINE void prefix##_45(void); INLINE void prefix##_46(void); INLINE void prefix##_47(void); \
+	INLINE void prefix##_48(void); INLINE void prefix##_49(void); INLINE void prefix##_4a(void); INLINE void prefix##_4b(void); \
+	INLINE void prefix##_4c(void); INLINE void prefix##_4d(void); INLINE void prefix##_4e(void); INLINE void prefix##_4f(void); \
+	INLINE void prefix##_50(void); INLINE void prefix##_51(void); INLINE void prefix##_52(void); INLINE void prefix##_53(void); \
+	INLINE void prefix##_54(void); INLINE void prefix##_55(void); INLINE void prefix##_56(void); INLINE void prefix##_57(void); \
+	INLINE void prefix##_58(void); INLINE void prefix##_59(void); INLINE void prefix##_5a(void); INLINE void prefix##_5b(void); \
+	INLINE void prefix##_5c(void); INLINE void prefix##_5d(void); INLINE void prefix##_5e(void); INLINE void prefix##_5f(void); \
+	INLINE void prefix##_60(void); INLINE void prefix##_61(void); INLINE void prefix##_62(void); INLINE void prefix##_63(void); \
+	INLINE void prefix##_64(void); INLINE void prefix##_65(void); INLINE void prefix##_66(void); INLINE void prefix##_67(void); \
+	INLINE void prefix##_68(void); INLINE void prefix##_69(void); INLINE void prefix##_6a(void); INLINE void prefix##_6b(void); \
+	INLINE void prefix##_6c(void); INLINE void prefix##_6d(void); INLINE void prefix##_6e(void); INLINE void prefix##_6f(void); \
+	INLINE void prefix##_70(void); INLINE void prefix##_71(void); INLINE void prefix##_72(void); INLINE void prefix##_73(void); \
+	INLINE void prefix##_74(void); INLINE void prefix##_75(void); INLINE void prefix##_76(void); INLINE void prefix##_77(void); \
+	INLINE void prefix##_78(void); INLINE void prefix##_79(void); INLINE void prefix##_7a(void); INLINE void prefix##_7b(void); \
+	INLINE void prefix##_7c(void); INLINE void prefix##_7d(void); INLINE void prefix##_7e(void); INLINE void prefix##_7f(void); \
+	INLINE void prefix##_80(void); INLINE void prefix##_81(void); INLINE void prefix##_82(void); INLINE void prefix##_83(void); \
+	INLINE void prefix##_84(void); INLINE void prefix##_85(void); INLINE void prefix##_86(void); INLINE void prefix##_87(void); \
+	INLINE void prefix##_88(void); INLINE void prefix##_89(void); INLINE void prefix##_8a(void); INLINE void prefix##_8b(void); \
+	INLINE void prefix##_8c(void); INLINE void prefix##_8d(void); INLINE void prefix##_8e(void); INLINE void prefix##_8f(void); \
+	INLINE void prefix##_90(void); INLINE void prefix##_91(void); INLINE void prefix##_92(void); INLINE void prefix##_93(void); \
+	INLINE void prefix##_94(void); INLINE void prefix##_95(void); INLINE void prefix##_96(void); INLINE void prefix##_97(void); \
+	INLINE void prefix##_98(void); INLINE void prefix##_99(void); INLINE void prefix##_9a(void); INLINE void prefix##_9b(void); \
+	INLINE void prefix##_9c(void); INLINE void prefix##_9d(void); INLINE void prefix##_9e(void); INLINE void prefix##_9f(void); \
+	INLINE void prefix##_a0(void); INLINE void prefix##_a1(void); INLINE void prefix##_a2(void); INLINE void prefix##_a3(void); \
+	INLINE void prefix##_a4(void); INLINE void prefix##_a5(void); INLINE void prefix##_a6(void); INLINE void prefix##_a7(void); \
+	INLINE void prefix##_a8(void); INLINE void prefix##_a9(void); INLINE void prefix##_aa(void); INLINE void prefix##_ab(void); \
+	INLINE void prefix##_ac(void); INLINE void prefix##_ad(void); INLINE void prefix##_ae(void); INLINE void prefix##_af(void); \
+	INLINE void prefix##_b0(void); INLINE void prefix##_b1(void); INLINE void prefix##_b2(void); INLINE void prefix##_b3(void); \
+	INLINE void prefix##_b4(void); INLINE void prefix##_b5(void); INLINE void prefix##_b6(void); INLINE void prefix##_b7(void); \
+	INLINE void prefix##_b8(void); INLINE void prefix##_b9(void); INLINE void prefix##_ba(void); INLINE void prefix##_bb(void); \
+	INLINE void prefix##_bc(void); INLINE void prefix##_bd(void); INLINE void prefix##_be(void); INLINE void prefix##_bf(void); \
+	INLINE void prefix##_c0(void); INLINE void prefix##_c1(void); INLINE void prefix##_c2(void); INLINE void prefix##_c3(void); \
+	INLINE void prefix##_c4(void); INLINE void prefix##_c5(void); INLINE void prefix##_c6(void); INLINE void prefix##_c7(void); \
+	INLINE void prefix##_c8(void); INLINE void prefix##_c9(void); INLINE void prefix##_ca(void); INLINE void prefix##_cb(void); \
+	INLINE void prefix##_cc(void); INLINE void prefix##_cd(void); INLINE void prefix##_ce(void); INLINE void prefix##_cf(void); \
+	INLINE void prefix##_d0(void); INLINE void prefix##_d1(void); INLINE void prefix##_d2(void); INLINE void prefix##_d3(void); \
+	INLINE void prefix##_d4(void); INLINE void prefix##_d5(void); INLINE void prefix##_d6(void); INLINE void prefix##_d7(void); \
+	INLINE void prefix##_d8(void); INLINE void prefix##_d9(void); INLINE void prefix##_da(void); INLINE void prefix##_db(void); \
+	INLINE void prefix##_dc(void); INLINE void prefix##_dd(void); INLINE void prefix##_de(void); INLINE void prefix##_df(void); \
+	INLINE void prefix##_e0(void); INLINE void prefix##_e1(void); INLINE void prefix##_e2(void); INLINE void prefix##_e3(void); \
+	INLINE void prefix##_e4(void); INLINE void prefix##_e5(void); INLINE void prefix##_e6(void); INLINE void prefix##_e7(void); \
+	INLINE void prefix##_e8(void); INLINE void prefix##_e9(void); INLINE void prefix##_ea(void); INLINE void prefix##_eb(void); \
+	INLINE void prefix##_ec(void); INLINE void prefix##_ed(void); INLINE void prefix##_ee(void); INLINE void prefix##_ef(void); \
+	INLINE void prefix##_f0(void); INLINE void prefix##_f1(void); INLINE void prefix##_f2(void); INLINE void prefix##_f3(void); \
+	INLINE void prefix##_f4(void); INLINE void prefix##_f5(void); INLINE void prefix##_f6(void); INLINE void prefix##_f7(void); \
+	INLINE void prefix##_f8(void); INLINE void prefix##_f9(void); INLINE void prefix##_fa(void); INLINE void prefix##_fb(void); \
+	INLINE void prefix##_fc(void); INLINE void prefix##_fd(void); INLINE void prefix##_fe(void); INLINE void prefix##_ff(void); \
+static void (*tablename[0x100])(void) = {	\
+    prefix##_00,prefix##_01,prefix##_02,prefix##_03,prefix##_04,prefix##_05,prefix##_06,prefix##_07, \
+    prefix##_08,prefix##_09,prefix##_0a,prefix##_0b,prefix##_0c,prefix##_0d,prefix##_0e,prefix##_0f, \
+    prefix##_10,prefix##_11,prefix##_12,prefix##_13,prefix##_14,prefix##_15,prefix##_16,prefix##_17, \
+    prefix##_18,prefix##_19,prefix##_1a,prefix##_1b,prefix##_1c,prefix##_1d,prefix##_1e,prefix##_1f, \
+    prefix##_20,prefix##_21,prefix##_22,prefix##_23,prefix##_24,prefix##_25,prefix##_26,prefix##_27, \
+    prefix##_28,prefix##_29,prefix##_2a,prefix##_2b,prefix##_2c,prefix##_2d,prefix##_2e,prefix##_2f, \
+    prefix##_30,prefix##_31,prefix##_32,prefix##_33,prefix##_34,prefix##_35,prefix##_36,prefix##_37, \
+    prefix##_38,prefix##_39,prefix##_3a,prefix##_3b,prefix##_3c,prefix##_3d,prefix##_3e,prefix##_3f, \
+    prefix##_40,prefix##_41,prefix##_42,prefix##_43,prefix##_44,prefix##_45,prefix##_46,prefix##_47, \
+    prefix##_48,prefix##_49,prefix##_4a,prefix##_4b,prefix##_4c,prefix##_4d,prefix##_4e,prefix##_4f, \
+    prefix##_50,prefix##_51,prefix##_52,prefix##_53,prefix##_54,prefix##_55,prefix##_56,prefix##_57, \
+    prefix##_58,prefix##_59,prefix##_5a,prefix##_5b,prefix##_5c,prefix##_5d,prefix##_5e,prefix##_5f, \
+    prefix##_60,prefix##_61,prefix##_62,prefix##_63,prefix##_64,prefix##_65,prefix##_66,prefix##_67, \
+    prefix##_68,prefix##_69,prefix##_6a,prefix##_6b,prefix##_6c,prefix##_6d,prefix##_6e,prefix##_6f, \
+    prefix##_70,prefix##_71,prefix##_72,prefix##_73,prefix##_74,prefix##_75,prefix##_76,prefix##_77, \
+    prefix##_78,prefix##_79,prefix##_7a,prefix##_7b,prefix##_7c,prefix##_7d,prefix##_7e,prefix##_7f, \
+    prefix##_80,prefix##_81,prefix##_82,prefix##_83,prefix##_84,prefix##_85,prefix##_86,prefix##_87, \
+    prefix##_88,prefix##_89,prefix##_8a,prefix##_8b,prefix##_8c,prefix##_8d,prefix##_8e,prefix##_8f, \
+    prefix##_90,prefix##_91,prefix##_92,prefix##_93,prefix##_94,prefix##_95,prefix##_96,prefix##_97, \
+    prefix##_98,prefix##_99,prefix##_9a,prefix##_9b,prefix##_9c,prefix##_9d,prefix##_9e,prefix##_9f, \
+    prefix##_a0,prefix##_a1,prefix##_a2,prefix##_a3,prefix##_a4,prefix##_a5,prefix##_a6,prefix##_a7, \
+    prefix##_a8,prefix##_a9,prefix##_aa,prefix##_ab,prefix##_ac,prefix##_ad,prefix##_ae,prefix##_af, \
+    prefix##_b0,prefix##_b1,prefix##_b2,prefix##_b3,prefix##_b4,prefix##_b5,prefix##_b6,prefix##_b7, \
+    prefix##_b8,prefix##_b9,prefix##_ba,prefix##_bb,prefix##_bc,prefix##_bd,prefix##_be,prefix##_bf, \
+    prefix##_c0,prefix##_c1,prefix##_c2,prefix##_c3,prefix##_c4,prefix##_c5,prefix##_c6,prefix##_c7, \
+    prefix##_c8,prefix##_c9,prefix##_ca,prefix##_cb,prefix##_cc,prefix##_cd,prefix##_ce,prefix##_cf, \
+    prefix##_d0,prefix##_d1,prefix##_d2,prefix##_d3,prefix##_d4,prefix##_d5,prefix##_d6,prefix##_d7, \
+    prefix##_d8,prefix##_d9,prefix##_da,prefix##_db,prefix##_dc,prefix##_dd,prefix##_de,prefix##_df, \
+    prefix##_e0,prefix##_e1,prefix##_e2,prefix##_e3,prefix##_e4,prefix##_e5,prefix##_e6,prefix##_e7, \
+    prefix##_e8,prefix##_e9,prefix##_ea,prefix##_eb,prefix##_ec,prefix##_ed,prefix##_ee,prefix##_ef, \
+    prefix##_f0,prefix##_f1,prefix##_f2,prefix##_f3,prefix##_f4,prefix##_f5,prefix##_f6,prefix##_f7, \
+	prefix##_f8,prefix##_f9,prefix##_fa,prefix##_fb,prefix##_fc,prefix##_fd,prefix##_fe,prefix##_ff  \
+}
+
+PROTOTYPES(Z80op,op);
+PROTOTYPES(Z80cb,cb);
+PROTOTYPES(Z80dd,dd);
+PROTOTYPES(Z80ed,ed);
+PROTOTYPES(Z80fd,fd);
+PROTOTYPES(Z80xxcb,xxcb);
 
 /***************************************************************
  * define an opcode function
@@ -433,29 +561,45 @@ static void take_interrupt(void);
 /***************************************************************
  * Read a byte from given memory location
  ***************************************************************/
-#define RM(Addr) (UINT8)cpu_readmem16(Addr)
+#if Z80_VM
+INLINE UINT8 RM( UINT32 addr )
+{
+	unsigned vm = Z80.bank[addr >> 13] + (addr & 0x1fff);
+	return cpu_readmem16(vm);
+}
+#else
+#define RM(addr) (UINT8)cpu_readmem16(addr)
+#endif
 
 /***************************************************************
  * Read a word from given memory location
  ***************************************************************/
-INLINE void RM16( UINT32 Addr, PAIR *r )
+INLINE void RM16( UINT32 addr, PAIR *r )
 {
-	r->b.l = RM(Addr);
-	r->b.h = RM(Addr+1);
+	r->b.l = RM(addr);
+	r->b.h = RM(addr+1);
 }
 
 /***************************************************************
  * Write a byte to given memory location
  ***************************************************************/
-#define WM(Addr,Value) cpu_writemem16(Addr,Value)
+#if Z80_VM
+INLINE void WM( UINT32 addr, UINT8 value )
+{
+	unsigned vm = Z80.bank[addr >> 13] + (addr & 0x1fff);
+	cpu_writemem16( vm, value );
+}
+#else
+#define WM(addr,value) cpu_writemem16(addr,value)
+#endif
 
 /***************************************************************
  * Write a word to given memory location
  ***************************************************************/
-INLINE void WM16( UINT32 Addr, PAIR *r )
+INLINE void WM16( UINT32 addr, PAIR *r )
 {
-	WM(Addr,r->b.l);
-	WM(Addr+1,r->b.h);
+	WM(addr,r->b.l);
+	WM(addr+1,r->b.h);
 }
 
 /***************************************************************
@@ -463,12 +607,21 @@ INLINE void WM16( UINT32 Addr, PAIR *r )
  * reading opcodes. In case of system with memory mapped I/O,
  * this function can be used to greatly speed up emulation
  ***************************************************************/
+#if Z80_VM
+INLINE UINT8 ROP(void)
+{
+	unsigned pc = Z80.bank[_PCD >> 13] + (_PCD & 0x1fff);
+	_PC++;
+	return cpu_readop(pc);
+}
+#else
 INLINE UINT8 ROP(void)
 {
 	unsigned pc = _PCD;
 	_PC++;
 	return cpu_readop(pc);
 }
+#endif
 
 /****************************************************************
  * ARG() is identical to ROP() except it is used
@@ -476,14 +629,31 @@ INLINE UINT8 ROP(void)
  * support systems that use different encoding mechanisms for
  * opcodes and opcode arguments
  ***************************************************************/
+#if Z80_VM
+INLINE UINT8 ARG(void)
+{
+	unsigned pc = Z80.bank[_PCD >> 13] + (_PCD & 0x1fff);
+	_PC++;
+	return cpu_readop_arg(pc);
+}
+#else
 INLINE UINT8 ARG(void)
 {
 	unsigned pc = _PCD;
     _PC++;
 	return cpu_readop_arg(pc);
 }
+#endif
 
-#ifdef	LSB_FIRST
+#if Z80_VM
+INLINE UINT16 ARG16(void)
+{
+	UINT16 result = ARG();
+	result |= ARG() << 8;
+	return result;
+}
+#else
+#ifdef  LSB_FIRST
 INLINE UINT16 ARG16(void)
 {
 	unsigned pc = _PCD;
@@ -497,6 +667,7 @@ INLINE UINT16 ARG16(void)
     _PC += 2;
 	return cpu_readop_arg(pc) | (cpu_readop_arg(pc+1) << 8);
 }
+#endif
 #endif
 
 /***************************************************************
@@ -721,17 +892,17 @@ INLINE UINT16 ARG16(void)
 /***************************************************************
  * RST
  ***************************************************************/
-#define RST(Addr)												\
+#define RST(addr)												\
 	PUSH( PC ); 												\
-	_PCD = Addr;												\
+	_PCD = addr;												\
 	change_pc16(_PCD)
 
 /***************************************************************
  * INC	r8
  ***************************************************************/
-INLINE UINT8 INC(UINT8 Value)
+INLINE UINT8 INC(UINT8 value)
 {
-	UINT8 res = Value + 1;
+	UINT8 res = value + 1;
 	_F = (_F & CF) | SZHV_inc[res];
 	return (UINT8)res;
 }
@@ -739,9 +910,9 @@ INLINE UINT8 INC(UINT8 Value)
 /***************************************************************
  * DEC	r8
  ***************************************************************/
-INLINE UINT8 DEC(UINT8 Value)
+INLINE UINT8 DEC(UINT8 value)
 {
-	UINT8 res = Value - 1;
+	UINT8 res = value - 1;
 	_F = (_F & CF) | SZHV_dec[res];
     return res;
 }
@@ -804,7 +975,7 @@ INLINE UINT8 DEC(UINT8 Value)
  * ADD	A,n
  ***************************************************************/
 #ifdef X86_ASM
-#define ADD(Value)												\
+#define ADD(value)												\
  asm (															\
  " addb %2,%0           \n"                                     \
  " lahf                 \n"                                     \
@@ -814,21 +985,21 @@ INLINE UINT8 DEC(UINT8 Value)
  " andb $0xd1,%%ah      \n" /* sign, zero, half carry, carry */ \
  " orb %%ah,%1          \n"                                     \
  :"=r" (_A), "=r" (_F)                                          \
- :"r" (Value), "1" (_F), "0" (_A)                               \
+ :"r" (value), "1" (_F), "0" (_A)                               \
  )
 #else
 #if BIG_FLAGS_ARRAY
-#define ADD(Value)												\
+#define ADD(value)												\
 {																\
 	UINT32 ah = _AFD & 0xff00;									\
-	UINT32 res = (UINT8)((ah >> 8) + Value);					\
+	UINT32 res = (UINT8)((ah >> 8) + value);					\
 	_F = SZHVC_add[ah | res];									\
     _A = res;                                                   \
 }
 #else
-#define ADD(Value)												\
+#define ADD(value)												\
 {																\
-    unsigned val = Value;                                       \
+	unsigned val = value;										\
     unsigned res = _A + val;                                    \
     _F = SZ[(UINT8)res] | ((res >> 8) & CF) |                   \
         ((_A ^ res ^ val) & HF) |                               \
@@ -842,7 +1013,7 @@ INLINE UINT8 DEC(UINT8 Value)
  * ADC	A,n
  ***************************************************************/
 #ifdef X86_ASM
-#define ADC(Value)												\
+#define ADC(value)												\
  asm (															\
  " shrb $1,%1           \n"                                     \
  " adcb %2,%0           \n"                                     \
@@ -853,21 +1024,21 @@ INLINE UINT8 DEC(UINT8 Value)
  " andb $0xd1,%%ah      \n" /* sign, zero, half carry, carry */ \
  " orb %%ah,%1          \n" /* combine with P/V */              \
  :"=r" (_A), "=r" (_F)                                          \
- :"r" (Value), "1" (_F), "0" (_A)                               \
+ :"r" (value), "1" (_F), "0" (_A)                               \
  )
 #else
 #if BIG_FLAGS_ARRAY
-#define ADC(Value)												\
+#define ADC(value)												\
 {																\
 	UINT32 ah = _AFD & 0xff00, c = _AFD & 1;					\
-	UINT32 res = (UINT8)((ah >> 8) + Value + c);				\
+	UINT32 res = (UINT8)((ah >> 8) + value + c);				\
 	_F = SZHVC_add[(c << 16) | ah | res];						\
     _A = res;                                                   \
 }
 #else
-#define ADC(Value)												\
+#define ADC(value)												\
 {																\
-    unsigned val = Value;                                       \
+	unsigned val = value;										\
 	unsigned res = _A + val + (_F & CF);						\
 	_F = SZ[res & 0xff] | ((res >> 8) & CF) |					\
 		((_A ^ res ^ val) & HF) |								\
@@ -881,7 +1052,7 @@ INLINE UINT8 DEC(UINT8 Value)
  * SUB	n
  ***************************************************************/
 #ifdef X86_ASM
-#define SUB(Value)												\
+#define SUB(value)												\
  asm (															\
  " subb %2,%0           \n"                                     \
  " lahf                 \n"                                     \
@@ -892,21 +1063,21 @@ INLINE UINT8 DEC(UINT8 Value)
  " andb $0xd1,%%ah      \n" /* sign, zero, half carry, carry */ \
  " orb %%ah,%1          \n" /* combine with P/V */              \
  :"=r" (_A), "=r" (_F)                                          \
- :"r" (Value), "1" (_F), "0" (_A)                               \
+ :"r" (value), "1" (_F), "0" (_A)                               \
  )
 #else
 #if BIG_FLAGS_ARRAY
-#define SUB(Value)												\
+#define SUB(value)												\
 {																\
 	UINT32 ah = _AFD & 0xff00;									\
-	UINT32 res = (UINT8)((ah >> 8) - Value);					\
+	UINT32 res = (UINT8)((ah >> 8) - value);					\
 	_F = SZHVC_sub[ah | res];									\
     _A = res;                                                   \
 }
 #else
-#define SUB(Value)												\
+#define SUB(value)												\
 {																\
-	unsigned val = Value;										\
+	unsigned val = value;										\
 	unsigned res = _A - val;									\
 	_F = SZ[res & 0xff] | ((res >> 8) & CF) | NF |				\
 		((_A ^ res ^ val) & HF) |								\
@@ -920,7 +1091,7 @@ INLINE UINT8 DEC(UINT8 Value)
  * SBC	A,n
  ***************************************************************/
 #ifdef X86_ASM
-#define SBC(Value)												\
+#define SBC(value)												\
  asm (															\
  " shrb $1,%1           \n"                                     \
  " sbbb %2,%0           \n"                                     \
@@ -932,21 +1103,21 @@ INLINE UINT8 DEC(UINT8 Value)
  " andb $0xd1,%%ah      \n" /* sign, zero, half carry, carry */ \
  " orb %%ah,%1          \n" /* combine with P/V */              \
  :"=r" (_A), "=r" (_F)                                          \
- :"r" (Value), "1" (_F), "0" (_A)                               \
+ :"r" (value), "1" (_F), "0" (_A)                               \
  )
 #else
 #if BIG_FLAGS_ARRAY
-#define SBC(Value)												\
+#define SBC(value)												\
 {																\
 	UINT32 ah = _AFD & 0xff00, c = _AFD & 1;					\
-	UINT32 res = (UINT8)((ah >> 8) - Value - c);				\
+	UINT32 res = (UINT8)((ah >> 8) - value - c);				\
 	_F = SZHVC_sub[(c<<16) | ah | res]; 						\
     _A = res;                                                   \
 }
 #else
-#define SBC(Value)												\
+#define SBC(value)												\
 {																\
-	unsigned val = Value;										\
+	unsigned val = value;										\
 	unsigned res = _A - val - (_F & CF);						\
 	_F = SZ[res & 0xff] | ((res >> 8) & CF) | NF |				\
 		((_A ^ res ^ val) & HF) |								\
@@ -960,9 +1131,9 @@ INLINE UINT8 DEC(UINT8 Value)
  * NEG
  ***************************************************************/
 #define NEG {                                                   \
-	UINT8 Value = _A;											\
+	UINT8 value = _A;											\
 	_A = 0; 													\
-	SUB(Value); 												\
+	SUB(value); 												\
 }
 
 /***************************************************************
@@ -979,29 +1150,29 @@ INLINE UINT8 DEC(UINT8 Value)
 /***************************************************************
  * AND	n
  ***************************************************************/
-#define AND(Value)												\
-	_A &= Value;												\
+#define AND(value)												\
+	_A &= value;												\
 	_F = SZP[_A] | HF
 
 /***************************************************************
  * OR	n
  ***************************************************************/
-#define OR(Value)												\
-	_A |= Value;												\
+#define OR(value)												\
+	_A |= value;												\
 	_F = SZP[_A]
 
 /***************************************************************
  * XOR	n
  ***************************************************************/
-#define XOR(Value)												\
-	_A ^= Value;												\
+#define XOR(value)												\
+	_A ^= value;												\
 	_F = SZP[_A]
 
 /***************************************************************
  * CP	n
  ***************************************************************/
 #ifdef X86_ASM
-#define CP(Value)												\
+#define CP(value)												\
  asm (															\
  " cmpb %2,%0           \n"                                     \
  " lahf                 \n"                                     \
@@ -1012,20 +1183,20 @@ INLINE UINT8 DEC(UINT8 Value)
  " andb $0xd1,%%ah      \n" /* sign, zero, half carry, carry */ \
  " orb %%ah,%1          \n" /* combine with P/V */              \
  :"=r" (_A), "=r" (_F)                                          \
- :"r" (Value), "1" (_F), "0" (_A)                               \
+ :"r" (value), "1" (_F), "0" (_A)                               \
  )
 #else
 #if BIG_FLAGS_ARRAY
-#define CP(Value)												\
+#define CP(value)												\
 {																\
 	UINT32 ah = _AFD & 0xff00;									\
-	UINT32 res = (UINT8)((ah >> 8) - Value);					\
+	UINT32 res = (UINT8)((ah >> 8) - value);					\
 	_F = SZHVC_sub[ah | res];									\
 }
 #else
-#define CP(Value)												\
+#define CP(value)												\
 {																\
-	unsigned val = Value;										\
+	unsigned val = value;										\
 	unsigned res = _A - val;									\
 	_F = SZ[res & 0xff] | ((res >> 8) & CF) | NF |				\
 		((_A ^ res ^ val) & HF) |								\
@@ -1172,9 +1343,9 @@ asm (															\
 /***************************************************************
  * RLC	r8
  ***************************************************************/
-INLINE UINT8 RLC(UINT8 Value)
+INLINE UINT8 RLC(UINT8 value)
 {
-	unsigned res = Value;
+	unsigned res = value;
 	unsigned c = (res & 0x80) ? CF : 0;
 	res = ((res << 1) | (res >> 7)) & 0xff;
 	_F = SZP[res] | c;
@@ -1184,9 +1355,9 @@ INLINE UINT8 RLC(UINT8 Value)
 /***************************************************************
  * RRC	r8
  ***************************************************************/
-INLINE UINT8 RRC(UINT8 Value)
+INLINE UINT8 RRC(UINT8 value)
 {
-	unsigned res = Value;
+	unsigned res = value;
 	unsigned c = (res & 0x01) ? CF : 0;
 	res = ((res >> 1) | (res << 7)) & 0xff;
 	_F = SZP[res] | c;
@@ -1196,9 +1367,9 @@ INLINE UINT8 RRC(UINT8 Value)
 /***************************************************************
  * RL	r8
  ***************************************************************/
-INLINE UINT8 RL(UINT8 Value)
+INLINE UINT8 RL(UINT8 value)
 {
-	unsigned res = Value;
+	unsigned res = value;
 	unsigned c = (res & 0x80) ? CF : 0;
 	res = ((res << 1) | (_F & CF)) & 0xff;
 	_F = SZP[res] | c;
@@ -1208,9 +1379,9 @@ INLINE UINT8 RL(UINT8 Value)
 /***************************************************************
  * RR	r8
  ***************************************************************/
-INLINE UINT8 RR(UINT8 Value)
+INLINE UINT8 RR(UINT8 value)
 {
-	unsigned res = Value;
+	unsigned res = value;
 	unsigned c = (res & 0x01) ? CF : 0;
 	res = ((res >> 1) | (_F << 7)) & 0xff;
 	_F = SZP[res] | c;
@@ -1220,9 +1391,9 @@ INLINE UINT8 RR(UINT8 Value)
 /***************************************************************
  * SLA	r8
  ***************************************************************/
-INLINE UINT8 SLA(UINT8 Value)
+INLINE UINT8 SLA(UINT8 value)
 {
-	unsigned res = Value;
+	unsigned res = value;
 	unsigned c = (res & 0x80) ? CF : 0;
 	res = (res << 1) & 0xff;
 	_F = SZP[res] | c;
@@ -1232,9 +1403,9 @@ INLINE UINT8 SLA(UINT8 Value)
 /***************************************************************
  * SRA	r8
  ***************************************************************/
-INLINE UINT8 SRA(UINT8 Value)
+INLINE UINT8 SRA(UINT8 value)
 {
-	unsigned res = Value;
+	unsigned res = value;
 	unsigned c = (res & 0x01) ? CF : 0;
 	res = ((res >> 1) | (res & 0x80)) & 0xff;
 	_F = SZP[res] | c;
@@ -1244,9 +1415,9 @@ INLINE UINT8 SRA(UINT8 Value)
 /***************************************************************
  * SLL	r8
  ***************************************************************/
-INLINE UINT8 SLL(UINT8 Value)
+INLINE UINT8 SLL(UINT8 value)
 {
-	unsigned res = Value;
+	unsigned res = value;
 	unsigned c = (res & 0x80) ? CF : 0;
 	res = ((res << 1) | 0x01) & 0xff;
 	_F = SZP[res] | c;
@@ -1256,9 +1427,9 @@ INLINE UINT8 SLL(UINT8 Value)
 /***************************************************************
  * SRL	r8
  ***************************************************************/
-INLINE UINT8 SRL(UINT8 Value)
+INLINE UINT8 SRL(UINT8 value)
 {
-	unsigned res = Value;
+	unsigned res = value;
 	unsigned c = (res & 0x01) ? CF : 0;
 	res = (res >> 1) & 0xff;
 	_F = SZP[res] | c;
@@ -1274,17 +1445,17 @@ INLINE UINT8 SRL(UINT8 Value)
 /***************************************************************
  * RES	bit,r8
  ***************************************************************/
-INLINE UINT8 RES(UINT8 bit, UINT8 Value)
+INLINE UINT8 RES(UINT8 bit, UINT8 value)
 {
-	return Value & ~(1<<bit);
+	return value & ~(1<<bit);
 }
 
 /***************************************************************
  * SET  bit,r8
  ***************************************************************/
-INLINE UINT8 SET(UINT8 bit, UINT8 Value)
+INLINE UINT8 SET(UINT8 bit, UINT8 value)
 {
-	return Value | (1<<bit);
+	return value | (1<<bit);
 }
 
 /***************************************************************
@@ -2200,113 +2371,113 @@ OP(illegal,1) {
 /**********************************************************
  * IX register related opcodes (DD prefix)
  **********************************************************/
-#define dd_00 illegal_1 											  /* DB   DD		  */
-#define dd_01 illegal_1 											  /* DB   DD		  */
-#define dd_02 illegal_1 											  /* DB   DD		  */
-#define dd_03 illegal_1 											  /* DB   DD		  */
-#define dd_04 illegal_1 											  /* DB   DD		  */
-#define dd_05 illegal_1 											  /* DB   DD		  */
-#define dd_06 illegal_1 											  /* DB   DD		  */
-#define dd_07 illegal_1 											  /* DB   DD		  */
+OP(dd,00) { illegal_1();											} /* DB   DD		  */
+OP(dd,01) { illegal_1();											} /* DB   DD		  */
+OP(dd,02) { illegal_1();											} /* DB   DD		  */
+OP(dd,03) { illegal_1();											} /* DB   DD		  */
+OP(dd,04) { illegal_1();											} /* DB   DD		  */
+OP(dd,05) { illegal_1();											} /* DB   DD		  */
+OP(dd,06) { illegal_1();											} /* DB   DD		  */
+OP(dd,07) { illegal_1();											} /* DB   DD		  */
 
-#define dd_08 illegal_1 											  /* DB   DD		  */
+OP(dd,08) { illegal_1();											} /* DB   DD		  */
 OP(dd,09) { ADD16(IX,BC);											} /* ADD  IX,BC 	  */
-#define dd_0a illegal_1 											  /* DB   DD		  */
-#define dd_0b illegal_1 											  /* DB   DD		  */
-#define dd_0c illegal_1 											  /* DB   DD		  */
-#define dd_0d illegal_1 											  /* DB   DD		  */
-#define dd_0e illegal_1 											  /* DB   DD		  */
-#define dd_0f illegal_1 											  /* DB   DD		  */
+OP(dd,0a) { illegal_1();											} /* DB   DD		  */
+OP(dd,0b) { illegal_1();											} /* DB   DD		  */
+OP(dd,0c) { illegal_1();											} /* DB   DD		  */
+OP(dd,0d) { illegal_1();											} /* DB   DD		  */
+OP(dd,0e) { illegal_1();											} /* DB   DD		  */
+OP(dd,0f) { illegal_1();											} /* DB   DD		  */
 
-#define dd_10 illegal_1 											  /* DB   DD		  */
-#define dd_11 illegal_1 											  /* DB   DD		  */
-#define dd_12 illegal_1 											  /* DB   DD		  */
-#define dd_13 illegal_1 											  /* DB   DD		  */
-#define dd_14 illegal_1 											  /* DB   DD		  */
-#define dd_15 illegal_1 											  /* DB   DD		  */
-#define dd_16 illegal_1 											  /* DB   DD		  */
-#define dd_17 illegal_1 											  /* DB   DD		  */
+OP(dd,10) { illegal_1();											} /* DB   DD		  */
+OP(dd,11) { illegal_1();											} /* DB   DD		  */
+OP(dd,12) { illegal_1();											} /* DB   DD		  */
+OP(dd,13) { illegal_1();											} /* DB   DD		  */
+OP(dd,14) { illegal_1();											} /* DB   DD		  */
+OP(dd,15) { illegal_1();											} /* DB   DD		  */
+OP(dd,16) { illegal_1();											} /* DB   DD		  */
+OP(dd,17) { illegal_1();											} /* DB   DD		  */
 
-#define dd_18 illegal_1 											  /* DB   DD		  */
+OP(dd,18) { illegal_1();											} /* DB   DD		  */
 OP(dd,19) { ADD16(IX,DE);											} /* ADD  IX,DE 	  */
-#define dd_1a illegal_1 											  /* DB   DD		  */
-#define dd_1b illegal_1 											  /* DB   DD		  */
-#define dd_1c illegal_1 											  /* DB   DD		  */
-#define dd_1d illegal_1 											  /* DB   DD		  */
-#define dd_1e illegal_1 											  /* DB   DD		  */
-#define dd_1f illegal_1 											  /* DB   DD		  */
+OP(dd,1a) { illegal_1();											} /* DB   DD		  */
+OP(dd,1b) { illegal_1();											} /* DB   DD		  */
+OP(dd,1c) { illegal_1();											} /* DB   DD		  */
+OP(dd,1d) { illegal_1();											} /* DB   DD		  */
+OP(dd,1e) { illegal_1();											} /* DB   DD		  */
+OP(dd,1f) { illegal_1();											} /* DB   DD		  */
 
-#define dd_20 illegal_1 											  /* DB   DD		  */
+OP(dd,20) { illegal_1();											} /* DB   DD		  */
 OP(dd,21) { _IX = ARG16();											} /* LD   IX,w		  */
-OP(dd,22) { WM16( ARG16(), &Z80.IX );								} /* LD   (w),IX	  */
+OP(dd,22) { EA = ARG16(); WM16( EA, &Z80.IX );						} /* LD   (w),IX	  */
 OP(dd,23) { _IX++;													} /* INC  IX		  */
 OP(dd,24) { _HX = INC(_HX); 										} /* INC  HX		  */
 OP(dd,25) { _HX = DEC(_HX); 										} /* DEC  HX		  */
 OP(dd,26) { _HX = ARG();											} /* LD   HX,n		  */
-#define dd_27 illegal_1 											  /* DB   DD		  */
+OP(dd,27) { illegal_1();											} /* DB   DD		  */
 
-#define dd_28 illegal_1 											  /* DB   DD		  */
+OP(dd,28) { illegal_1();											} /* DB   DD		  */
 OP(dd,29) { ADD16(IX,IX);											} /* ADD  IX,IX 	  */
-OP(dd,2a) { RM16( ARG16(), &Z80.IX );								} /* LD   IX,(w)	  */
+OP(dd,2a) { EA = ARG16(); RM16( EA, &Z80.IX );						} /* LD   IX,(w)	  */
 OP(dd,2b) { _IX--;													} /* DEC  IX		  */
 OP(dd,2c) { _LX = INC(_LX); 										} /* INC  LX		  */
 OP(dd,2d) { _LX = DEC(_LX); 										} /* DEC  LX		  */
 OP(dd,2e) { _LX = ARG();											} /* LD   LX,n		  */
-#define dd_2f illegal_1 											  /* DB   DD		  */
+OP(dd,2f) { illegal_1();											} /* DB   DD		  */
 
-#define dd_30 illegal_1 											  /* DB   DD		  */
-#define dd_31 illegal_1 											  /* DB   DD		  */
-#define dd_32 illegal_1 											  /* DB   DD		  */
-#define dd_33 illegal_1 											  /* DB   DD		  */
+OP(dd,30) { illegal_1();											} /* DB   DD		  */
+OP(dd,31) { illegal_1();											} /* DB   DD		  */
+OP(dd,32) { illegal_1();											} /* DB   DD		  */
+OP(dd,33) { illegal_1();											} /* DB   DD		  */
 OP(dd,34) { EAX; WM( EA, INC(RM(EA)) ); 							} /* INC  (IX+o)	  */
 OP(dd,35) { EAX; WM( EA, DEC(RM(EA)) ); 							} /* DEC  (IX+o)	  */
 OP(dd,36) { EAX; WM( EA, ARG() );									} /* LD   (IX+o),n	  */
-#define dd_37 illegal_1 											  /* DB   DD		  */
+OP(dd,37) { illegal_1();											} /* DB   DD		  */
 
-#define dd_38 illegal_1 											  /* DB   DD		  */
+OP(dd,38) { illegal_1();											} /* DB   DD		  */
 OP(dd,39) { ADD16(IX,SP);											} /* ADD  IX,SP 	  */
-#define dd_3a illegal_1 											  /* DB   DD		  */
-#define dd_3b illegal_1 											  /* DB   DD		  */
-#define dd_3c illegal_1 											  /* DB   DD		  */
-#define dd_3d illegal_1 											  /* DB   DD		  */
-#define dd_3e illegal_1 											  /* DB   DD		  */
-#define dd_3f illegal_1 											  /* DB   DD		  */
+OP(dd,3a) { illegal_1();											} /* DB   DD		  */
+OP(dd,3b) { illegal_1();											} /* DB   DD		  */
+OP(dd,3c) { illegal_1();											} /* DB   DD		  */
+OP(dd,3d) { illegal_1();											} /* DB   DD		  */
+OP(dd,3e) { illegal_1();											} /* DB   DD		  */
+OP(dd,3f) { illegal_1();											} /* DB   DD		  */
 
-#define dd_40 illegal_1 											  /* DB   DD		  */
-#define dd_41 illegal_1 											  /* DB   DD		  */
-#define dd_42 illegal_1 											  /* DB   DD		  */
-#define dd_43 illegal_1 											  /* DB   DD		  */
+OP(dd,40) { illegal_1();											} /* DB   DD		  */
+OP(dd,41) { illegal_1();											} /* DB   DD		  */
+OP(dd,42) { illegal_1();											} /* DB   DD		  */
+OP(dd,43) { illegal_1();											} /* DB   DD		  */
 OP(dd,44) { _B = _HX;												} /* LD   B,HX		  */
 OP(dd,45) { _B = _LX;												} /* LD   B,LX		  */
 OP(dd,46) { EAX; _B = RM(EA);										} /* LD   B,(IX+o)	  */
-#define dd_47 illegal_1 											  /* DB   DD		  */
+OP(dd,47) { illegal_1();											} /* DB   DD		  */
 
-#define dd_48 illegal_1 											  /* DB   DD		  */
-#define dd_49 illegal_1 											  /* DB   DD		  */
-#define dd_4a illegal_1 											  /* DB   DD		  */
-#define dd_4b illegal_1 											  /* DB   DD		  */
+OP(dd,48) { illegal_1();											} /* DB   DD		  */
+OP(dd,49) { illegal_1();											} /* DB   DD		  */
+OP(dd,4a) { illegal_1();											} /* DB   DD		  */
+OP(dd,4b) { illegal_1();											} /* DB   DD		  */
 OP(dd,4c) { _C = _HX;												} /* LD   C,HX		  */
 OP(dd,4d) { _C = _LX;												} /* LD   C,LX		  */
 OP(dd,4e) { EAX; _C = RM(EA);										} /* LD   C,(IX+o)	  */
-#define dd_4f illegal_1 											  /* DB   DD		  */
+OP(dd,4f) { illegal_1();											} /* DB   DD		  */
 
-#define dd_50 illegal_1 											  /* DB   DD		  */
-#define dd_51 illegal_1 											  /* DB   DD		  */
-#define dd_52 illegal_1 											  /* DB   DD		  */
-#define dd_53 illegal_1 											  /* DB   DD		  */
+OP(dd,50) { illegal_1();											} /* DB   DD		  */
+OP(dd,51) { illegal_1();											} /* DB   DD		  */
+OP(dd,52) { illegal_1();											} /* DB   DD		  */
+OP(dd,53) { illegal_1();											} /* DB   DD		  */
 OP(dd,54) { _D = _HX;												} /* LD   D,HX		  */
 OP(dd,55) { _D = _LX;												} /* LD   D,LX		  */
 OP(dd,56) { EAX; _D = RM(EA);										} /* LD   D,(IX+o)	  */
-#define dd_57 illegal_1 											  /* DB   DD		  */
+OP(dd,57) { illegal_1();											} /* DB   DD		  */
 
-#define dd_58 illegal_1 											  /* DB   DD		  */
-#define dd_59 illegal_1 											  /* DB   DD		  */
-#define dd_5a illegal_1 											  /* DB   DD		  */
-#define dd_5b illegal_1 											  /* DB   DD		  */
+OP(dd,58) { illegal_1();											} /* DB   DD		  */
+OP(dd,59) { illegal_1();											} /* DB   DD		  */
+OP(dd,5a) { illegal_1();											} /* DB   DD		  */
+OP(dd,5b) { illegal_1();											} /* DB   DD		  */
 OP(dd,5c) { _E = _HX;												} /* LD   E,HX		  */
 OP(dd,5d) { _E = _LX;												} /* LD   E,LX		  */
 OP(dd,5e) { EAX; _E = RM(EA);										} /* LD   E,(IX+o)	  */
-#define dd_5f illegal_1 											  /* DB   DD		  */
+OP(dd,5f) { illegal_1();											} /* DB   DD		  */
 
 OP(dd,60) { _HX = _B;												} /* LD   HX,B		  */
 OP(dd,61) { _HX = _C;												} /* LD   HX,C		  */
@@ -2332,272 +2503,272 @@ OP(dd,72) { EAX; WM( EA, _D );										} /* LD   (IX+o),D	  */
 OP(dd,73) { EAX; WM( EA, _E );										} /* LD   (IX+o),E	  */
 OP(dd,74) { EAX; WM( EA, _H );										} /* LD   (IX+o),H	  */
 OP(dd,75) { EAX; WM( EA, _L );										} /* LD   (IX+o),L	  */
-#define dd_76 illegal_1 													  /* DB   DD		  */
+OP(dd,76) { illegal_1();											}		  /* DB   DD		  */
 OP(dd,77) { EAX; WM( EA, _A );										} /* LD   (IX+o),A	  */
 
-#define dd_78 illegal_1 											  /* DB   DD		  */
-#define dd_79 illegal_1 											  /* DB   DD		  */
-#define dd_7a illegal_1 											  /* DB   DD		  */
-#define dd_7b illegal_1 											  /* DB   DD		  */
+OP(dd,78) { illegal_1();											} /* DB   DD		  */
+OP(dd,79) { illegal_1();											} /* DB   DD		  */
+OP(dd,7a) { illegal_1();											} /* DB   DD		  */
+OP(dd,7b) { illegal_1();											} /* DB   DD		  */
 OP(dd,7c) { _A = _HX;												} /* LD   A,HX		  */
 OP(dd,7d) { _A = _LX;												} /* LD   A,LX		  */
 OP(dd,7e) { EAX; _A = RM(EA);										} /* LD   A,(IX+o)	  */
-#define dd_7f illegal_1 											  /* DB   DD		  */
+OP(dd,7f) { illegal_1();											} /* DB   DD		  */
 
-#define dd_80 illegal_1 											  /* DB   DD		  */
-#define dd_81 illegal_1 											  /* DB   DD		  */
-#define dd_82 illegal_1 											  /* DB   DD		  */
-#define dd_83 illegal_1 											  /* DB   DD		  */
+OP(dd,80) { illegal_1();											} /* DB   DD		  */
+OP(dd,81) { illegal_1();											} /* DB   DD		  */
+OP(dd,82) { illegal_1();											} /* DB   DD		  */
+OP(dd,83) { illegal_1();											} /* DB   DD		  */
 OP(dd,84) { ADD(_HX);												} /* ADD  A,HX		  */
 OP(dd,85) { ADD(_LX);												} /* ADD  A,LX		  */
 OP(dd,86) { EAX; ADD(RM(EA));										} /* ADD  A,(IX+o)	  */
-#define dd_87 illegal_1 											  /* DB   DD		  */
+OP(dd,87) { illegal_1();											} /* DB   DD		  */
 
-#define dd_88 illegal_1 											  /* DB   DD		  */
-#define dd_89 illegal_1 											  /* DB   DD		  */
-#define dd_8a illegal_1 											  /* DB   DD		  */
-#define dd_8b illegal_1 											  /* DB   DD		  */
+OP(dd,88) { illegal_1();											} /* DB   DD		  */
+OP(dd,89) { illegal_1();											} /* DB   DD		  */
+OP(dd,8a) { illegal_1();											} /* DB   DD		  */
+OP(dd,8b) { illegal_1();											} /* DB   DD		  */
 OP(dd,8c) { ADC(_HX);												} /* ADC  A,HX		  */
 OP(dd,8d) { ADC(_LX);												} /* ADC  A,LX		  */
 OP(dd,8e) { EAX; ADC(RM(EA));										} /* ADC  A,(IX+o)	  */
-#define dd_8f illegal_1 											  /* DB   DD		  */
+OP(dd,8f) { illegal_1();											} /* DB   DD		  */
 
-#define dd_90 illegal_1 											  /* DB   DD		  */
-#define dd_91 illegal_1 											  /* DB   DD		  */
-#define dd_92 illegal_1 											  /* DB   DD		  */
-#define dd_93 illegal_1 											  /* DB   DD		  */
+OP(dd,90) { illegal_1();											} /* DB   DD		  */
+OP(dd,91) { illegal_1();											} /* DB   DD		  */
+OP(dd,92) { illegal_1();											} /* DB   DD		  */
+OP(dd,93) { illegal_1();											} /* DB   DD		  */
 OP(dd,94) { SUB(_HX);												} /* SUB  HX		  */
 OP(dd,95) { SUB(_LX);												} /* SUB  LX		  */
 OP(dd,96) { EAX; SUB(RM(EA));										} /* SUB  (IX+o)	  */
-#define dd_97 illegal_1 											  /* DB   DD		  */
+OP(dd,97) { illegal_1();											} /* DB   DD		  */
 
-#define dd_98 illegal_1 											  /* DB   DD		  */
-#define dd_99 illegal_1 											  /* DB   DD		  */
-#define dd_9a illegal_1 											  /* DB   DD		  */
-#define dd_9b illegal_1 											  /* DB   DD		  */
+OP(dd,98) { illegal_1();											} /* DB   DD		  */
+OP(dd,99) { illegal_1();											} /* DB   DD		  */
+OP(dd,9a) { illegal_1();											} /* DB   DD		  */
+OP(dd,9b) { illegal_1();											} /* DB   DD		  */
 OP(dd,9c) { SBC(_HX);												} /* SBC  A,HX		  */
 OP(dd,9d) { SBC(_LX);												} /* SBC  A,LX		  */
 OP(dd,9e) { EAX; SBC(RM(EA));										} /* SBC  A,(IX+o)	  */
-#define dd_9f illegal_1 											  /* DB   DD		  */
+OP(dd,9f) { illegal_1();											} /* DB   DD		  */
 
-#define dd_a0 illegal_1 											  /* DB   DD		  */
-#define dd_a1 illegal_1 											  /* DB   DD		  */
-#define dd_a2 illegal_1 											  /* DB   DD		  */
-#define dd_a3 illegal_1 											  /* DB   DD		  */
+OP(dd,a0) { illegal_1();											} /* DB   DD		  */
+OP(dd,a1) { illegal_1();											} /* DB   DD		  */
+OP(dd,a2) { illegal_1();											} /* DB   DD		  */
+OP(dd,a3) { illegal_1();											} /* DB   DD		  */
 OP(dd,a4) { AND(_HX);												} /* AND  HX		  */
 OP(dd,a5) { AND(_LX);												} /* AND  LX		  */
 OP(dd,a6) { EAX; AND(RM(EA));										} /* AND  (IX+o)	  */
-#define dd_a7 illegal_1 											  /* DB   DD		  */
+OP(dd,a7) { illegal_1();											} /* DB   DD		  */
 
-#define dd_a8 illegal_1 											  /* DB   DD		  */
-#define dd_a9 illegal_1 											  /* DB   DD		  */
-#define dd_aa illegal_1 											  /* DB   DD		  */
-#define dd_ab illegal_1 											  /* DB   DD		  */
+OP(dd,a8) { illegal_1();											} /* DB   DD		  */
+OP(dd,a9) { illegal_1();											} /* DB   DD		  */
+OP(dd,aa) { illegal_1();											} /* DB   DD		  */
+OP(dd,ab) { illegal_1();											} /* DB   DD		  */
 OP(dd,ac) { XOR(_HX);												} /* XOR  HX		  */
 OP(dd,ad) { XOR(_LX);												} /* XOR  LX		  */
 OP(dd,ae) { EAX; XOR(RM(EA));										} /* XOR  (IX+o)	  */
-#define dd_af illegal_1 											  /* DB   DD		  */
+OP(dd,af) { illegal_1();											} /* DB   DD		  */
 
-#define dd_b0 illegal_1 											  /* DB   DD		  */
-#define dd_b1 illegal_1 											  /* DB   DD		  */
-#define dd_b2 illegal_1 											  /* DB   DD		  */
-#define dd_b3 illegal_1 											  /* DB   DD		  */
+OP(dd,b0) { illegal_1();											} /* DB   DD		  */
+OP(dd,b1) { illegal_1();											} /* DB   DD		  */
+OP(dd,b2) { illegal_1();											} /* DB   DD		  */
+OP(dd,b3) { illegal_1();											} /* DB   DD		  */
 OP(dd,b4) { OR(_HX);												} /* OR   HX		  */
 OP(dd,b5) { OR(_LX);												} /* OR   LX		  */
 OP(dd,b6) { EAX; OR(RM(EA));										} /* OR   (IX+o)	  */
-#define dd_b7 illegal_1 											  /* DB   DD		  */
+OP(dd,b7) { illegal_1();											} /* DB   DD		  */
 
-#define dd_b8 illegal_1 											  /* DB   DD		  */
-#define dd_b9 illegal_1 											  /* DB   DD		  */
-#define dd_ba illegal_1 											  /* DB   DD		  */
-#define dd_bb illegal_1 											  /* DB   DD		  */
+OP(dd,b8) { illegal_1();											} /* DB   DD		  */
+OP(dd,b9) { illegal_1();											} /* DB   DD		  */
+OP(dd,ba) { illegal_1();											} /* DB   DD		  */
+OP(dd,bb) { illegal_1();											} /* DB   DD		  */
 OP(dd,bc) { CP(_HX);												} /* CP   HX		  */
 OP(dd,bd) { CP(_LX);												} /* CP   LX		  */
 OP(dd,be) { EAX; CP(RM(EA));										} /* CP   (IX+o)	  */
-#define dd_bf illegal_1 											  /* DB   DD		  */
+OP(dd,bf) { illegal_1();											} /* DB   DD		  */
 
-#define dd_c0 illegal_1 											  /* DB   DD		  */
-#define dd_c1 illegal_1 											  /* DB   DD		  */
-#define dd_c2 illegal_1 											  /* DB   DD		  */
-#define dd_c3 illegal_1 											  /* DB   DD		  */
-#define dd_c4 illegal_1 											  /* DB   DD		  */
-#define dd_c5 illegal_1 											  /* DB   DD		  */
-#define dd_c6 illegal_1 											  /* DB   DD		  */
-#define dd_c7 illegal_1 													  /* DB   DD		  */
+OP(dd,c0) { illegal_1();											} /* DB   DD		  */
+OP(dd,c1) { illegal_1();											} /* DB   DD		  */
+OP(dd,c2) { illegal_1();											} /* DB   DD		  */
+OP(dd,c3) { illegal_1();											} /* DB   DD		  */
+OP(dd,c4) { illegal_1();											} /* DB   DD		  */
+OP(dd,c5) { illegal_1();											} /* DB   DD		  */
+OP(dd,c6) { illegal_1();											} /* DB   DD		  */
+OP(dd,c7) { illegal_1();											}		  /* DB   DD		  */
 
-#define dd_c8 illegal_1 											  /* DB   DD		  */
-#define dd_c9 illegal_1 											  /* DB   DD		  */
-#define dd_ca illegal_1 											  /* DB   DD		  */
+OP(dd,c8) { illegal_1();											} /* DB   DD		  */
+OP(dd,c9) { illegal_1();											} /* DB   DD		  */
+OP(dd,ca) { illegal_1();											} /* DB   DD		  */
 OP(dd,cb) { EAX; EXEC(xxcb,ARG());									} /* **   DD CB xx	  */
-#define dd_cc illegal_1 											  /* DB   DD		  */
-#define dd_cd illegal_1 											  /* DB   DD		  */
-#define dd_ce illegal_1 											  /* DB   DD		  */
-#define dd_cf illegal_1 											  /* DB   DD		  */
+OP(dd,cc) { illegal_1();											} /* DB   DD		  */
+OP(dd,cd) { illegal_1();											} /* DB   DD		  */
+OP(dd,ce) { illegal_1();											} /* DB   DD		  */
+OP(dd,cf) { illegal_1();											} /* DB   DD		  */
 
-#define dd_d0 illegal_1 											  /* DB   DD		  */
-#define dd_d1 illegal_1 											  /* DB   DD		  */
-#define dd_d2 illegal_1 											  /* DB   DD		  */
-#define dd_d3 illegal_1 											  /* DB   DD		  */
-#define dd_d4 illegal_1 											  /* DB   DD		  */
-#define dd_d5 illegal_1 											  /* DB   DD		  */
-#define dd_d6 illegal_1 											  /* DB   DD		  */
-#define dd_d7 illegal_1 											  /* DB   DD		  */
+OP(dd,d0) { illegal_1();											} /* DB   DD		  */
+OP(dd,d1) { illegal_1();											} /* DB   DD		  */
+OP(dd,d2) { illegal_1();											} /* DB   DD		  */
+OP(dd,d3) { illegal_1();											} /* DB   DD		  */
+OP(dd,d4) { illegal_1();											} /* DB   DD		  */
+OP(dd,d5) { illegal_1();											} /* DB   DD		  */
+OP(dd,d6) { illegal_1();											} /* DB   DD		  */
+OP(dd,d7) { illegal_1();											} /* DB   DD		  */
 
-#define dd_d8 illegal_1 											  /* DB   DD		  */
-#define dd_d9 illegal_1 											  /* DB   DD		  */
-#define dd_da illegal_1 											  /* DB   DD		  */
-#define dd_db illegal_1 											  /* DB   DD		  */
-#define dd_dc illegal_1 											  /* DB   DD		  */
-#define dd_dd illegal_1 											  /* DB   DD		  */
-#define dd_de illegal_1 											  /* DB   DD		  */
-#define dd_df illegal_1 											  /* DB   DD		  */
+OP(dd,d8) { illegal_1();											} /* DB   DD		  */
+OP(dd,d9) { illegal_1();											} /* DB   DD		  */
+OP(dd,da) { illegal_1();											} /* DB   DD		  */
+OP(dd,db) { illegal_1();											} /* DB   DD		  */
+OP(dd,dc) { illegal_1();											} /* DB   DD		  */
+OP(dd,dd) { illegal_1();											} /* DB   DD		  */
+OP(dd,de) { illegal_1();											} /* DB   DD		  */
+OP(dd,df) { illegal_1();											} /* DB   DD		  */
 
-#define dd_e0 illegal_1 											  /* DB   DD		  */
+OP(dd,e0) { illegal_1();											} /* DB   DD		  */
 OP(dd,e1) { POP(IX);												} /* POP  IX		  */
-#define dd_e2 illegal_1 											  /* DB   DD		  */
+OP(dd,e2) { illegal_1();											} /* DB   DD		  */
 OP(dd,e3) { EXSP(IX);												} /* EX   (SP),IX	  */
-#define dd_e4 illegal_1 											  /* DB   DD		  */
+OP(dd,e4) { illegal_1();											} /* DB   DD		  */
 OP(dd,e5) { PUSH( IX ); 											} /* PUSH IX		  */
-#define dd_e6 illegal_1 											  /* DB   DD		  */
-#define dd_e7 illegal_1 											  /* DB   DD		  */
+OP(dd,e6) { illegal_1();											} /* DB   DD		  */
+OP(dd,e7) { illegal_1();											} /* DB   DD		  */
 
-#define dd_e8 illegal_1 											  /* DB   DD		  */
+OP(dd,e8) { illegal_1();											} /* DB   DD		  */
 OP(dd,e9) { _PC = _IX; change_pc16(_PCD);							} /* JP   (IX)		  */
-#define dd_ea illegal_1 											  /* DB   DD		  */
-#define dd_eb illegal_1 											  /* DB   DD		  */
-#define dd_ec illegal_1 											  /* DB   DD		  */
-#define dd_ed illegal_1 											  /* DB   DD		  */
-#define dd_ee illegal_1 											  /* DB   DD		  */
-#define dd_ef illegal_1 											  /* DB   DD		  */
+OP(dd,ea) { illegal_1();											} /* DB   DD		  */
+OP(dd,eb) { illegal_1();											} /* DB   DD		  */
+OP(dd,ec) { illegal_1();											} /* DB   DD		  */
+OP(dd,ed) { illegal_1();											} /* DB   DD		  */
+OP(dd,ee) { illegal_1();											} /* DB   DD		  */
+OP(dd,ef) { illegal_1();											} /* DB   DD		  */
 
-#define dd_f0 illegal_1 											  /* DB   DD		  */
-#define dd_f1 illegal_1 											  /* DB   DD		  */
-#define dd_f2 illegal_1 											  /* DB   DD		  */
-#define dd_f3 illegal_1 											  /* DB   DD		  */
-#define dd_f4 illegal_1 											  /* DB   DD		  */
-#define dd_f5 illegal_1 											  /* DB   DD		  */
-#define dd_f6 illegal_1 											  /* DB   DD		  */
-#define dd_f7 illegal_1 											  /* DB   DD		  */
+OP(dd,f0) { illegal_1();											} /* DB   DD		  */
+OP(dd,f1) { illegal_1();											} /* DB   DD		  */
+OP(dd,f2) { illegal_1();											} /* DB   DD		  */
+OP(dd,f3) { illegal_1();											} /* DB   DD		  */
+OP(dd,f4) { illegal_1();											} /* DB   DD		  */
+OP(dd,f5) { illegal_1();											} /* DB   DD		  */
+OP(dd,f6) { illegal_1();											} /* DB   DD		  */
+OP(dd,f7) { illegal_1();											} /* DB   DD		  */
 
-#define dd_f8 illegal_1 											  /* DB   DD		  */
+OP(dd,f8) { illegal_1();											} /* DB   DD		  */
 OP(dd,f9) { _SP = _IX;												} /* LD   SP,IX 	  */
-#define dd_fa illegal_1 											  /* DB   DD		  */
-#define dd_fb illegal_1 											  /* DB   DD		  */
-#define dd_fc illegal_1 											  /* DB   DD		  */
-#define dd_fd illegal_1 											  /* DB   DD		  */
-#define dd_fe illegal_1 											  /* DB   DD		  */
-#define dd_ff illegal_1 											  /* DB   DD		  */
+OP(dd,fa) { illegal_1();											} /* DB   DD		  */
+OP(dd,fb) { illegal_1();											} /* DB   DD		  */
+OP(dd,fc) { illegal_1();											} /* DB   DD		  */
+OP(dd,fd) { illegal_1();											} /* DB   DD		  */
+OP(dd,fe) { illegal_1();											} /* DB   DD		  */
+OP(dd,ff) { illegal_1();											} /* DB   DD		  */
 
 /**********************************************************
  * IY register related opcodes (FD prefix)
  **********************************************************/
-#define fd_00 illegal_1 											  /* DB   FD		  */
-#define fd_01 illegal_1 											  /* DB   FD		  */
-#define fd_02 illegal_1 											  /* DB   FD		  */
-#define fd_03 illegal_1 											  /* DB   FD		  */
-#define fd_04 illegal_1 											  /* DB   FD		  */
-#define fd_05 illegal_1 											  /* DB   FD		  */
-#define fd_06 illegal_1 											  /* DB   FD		  */
-#define fd_07 illegal_1 											  /* DB   FD		  */
+OP(fd,00) { illegal_1();											} /* DB   FD		  */
+OP(fd,01) { illegal_1();											} /* DB   FD		  */
+OP(fd,02) { illegal_1();											} /* DB   FD		  */
+OP(fd,03) { illegal_1();											} /* DB   FD		  */
+OP(fd,04) { illegal_1();											} /* DB   FD		  */
+OP(fd,05) { illegal_1();											} /* DB   FD		  */
+OP(fd,06) { illegal_1();											} /* DB   FD		  */
+OP(fd,07) { illegal_1();											} /* DB   FD		  */
 
-#define fd_08 illegal_1 											  /* DB   FD		  */
+OP(fd,08) { illegal_1();											} /* DB   FD		  */
 OP(fd,09) { ADD16(IY,BC);											} /* ADD  IY,BC 	  */
-#define fd_0a illegal_1 											  /* DB   FD		  */
-#define fd_0b illegal_1 											  /* DB   FD		  */
-#define fd_0c illegal_1 											  /* DB   FD		  */
-#define fd_0d illegal_1 											  /* DB   FD		  */
-#define fd_0e illegal_1 											  /* DB   FD		  */
-#define fd_0f illegal_1 											  /* DB   FD		  */
+OP(fd,0a) { illegal_1();											} /* DB   FD		  */
+OP(fd,0b) { illegal_1();											} /* DB   FD		  */
+OP(fd,0c) { illegal_1();											} /* DB   FD		  */
+OP(fd,0d) { illegal_1();											} /* DB   FD		  */
+OP(fd,0e) { illegal_1();											} /* DB   FD		  */
+OP(fd,0f) { illegal_1();											} /* DB   FD		  */
 
-#define fd_10 illegal_1 											  /* DB   FD		  */
-#define fd_11 illegal_1 											  /* DB   FD		  */
-#define fd_12 illegal_1 											  /* DB   FD		  */
-#define fd_13 illegal_1 											  /* DB   FD		  */
-#define fd_14 illegal_1 											  /* DB   FD		  */
-#define fd_15 illegal_1 											  /* DB   FD		  */
-#define fd_16 illegal_1 											  /* DB   FD		  */
-#define fd_17 illegal_1 											  /* DB   FD		  */
+OP(fd,10) { illegal_1();											} /* DB   FD		  */
+OP(fd,11) { illegal_1();											} /* DB   FD		  */
+OP(fd,12) { illegal_1();											} /* DB   FD		  */
+OP(fd,13) { illegal_1();											} /* DB   FD		  */
+OP(fd,14) { illegal_1();											} /* DB   FD		  */
+OP(fd,15) { illegal_1();											} /* DB   FD		  */
+OP(fd,16) { illegal_1();											} /* DB   FD		  */
+OP(fd,17) { illegal_1();											} /* DB   FD		  */
 
-#define fd_18 illegal_1 											  /* DB   FD		  */
+OP(fd,18) { illegal_1();											} /* DB   FD		  */
 OP(fd,19) { ADD16(IY,DE);											} /* ADD  IY,DE 	  */
-#define fd_1a illegal_1 											  /* DB   FD		  */
-#define fd_1b illegal_1 											  /* DB   FD		  */
-#define fd_1c illegal_1 											  /* DB   FD		  */
-#define fd_1d illegal_1 											  /* DB   FD		  */
-#define fd_1e illegal_1 											  /* DB   FD		  */
-#define fd_1f illegal_1 											  /* DB   FD		  */
+OP(fd,1a) { illegal_1();											} /* DB   FD		  */
+OP(fd,1b) { illegal_1();											} /* DB   FD		  */
+OP(fd,1c) { illegal_1();											} /* DB   FD		  */
+OP(fd,1d) { illegal_1();											} /* DB   FD		  */
+OP(fd,1e) { illegal_1();											} /* DB   FD		  */
+OP(fd,1f) { illegal_1();											} /* DB   FD		  */
 
-#define fd_20 illegal_1 											  /* DB   FD		  */
+OP(fd,20) { illegal_1();											} /* DB   FD		  */
 OP(fd,21) { _IY = ARG16();											} /* LD   IY,w		  */
-OP(fd,22) { WM16( ARG16(), &Z80.IY );								} /* LD   (w),IY	  */
+OP(fd,22) { EA = ARG16(); WM16( EA, &Z80.IY );						} /* LD   (w),IY	  */
 OP(fd,23) { _IY++;													} /* INC  IY		  */
 OP(fd,24) { _HY = INC(_HY); 										} /* INC  HY		  */
 OP(fd,25) { _HY = DEC(_HY); 										} /* DEC  HY		  */
 OP(fd,26) { _HY = ARG();											} /* LD   HY,n		  */
-#define fd_27 illegal_1 											  /* DB   FD		  */
+OP(fd,27) { illegal_1();											} /* DB   FD		  */
 
-#define fd_28 illegal_1 											  /* DB   FD		  */
+OP(fd,28) { illegal_1();											} /* DB   FD		  */
 OP(fd,29) { ADD16(IY,IY);											} /* ADD  IY,IY 	  */
-OP(fd,2a) { RM16( ARG16(), &Z80.IY );								} /* LD   IY,(w)	  */
+OP(fd,2a) { EA = ARG16(); RM16( EA, &Z80.IY );						} /* LD   IY,(w)	  */
 OP(fd,2b) { _IY--;													} /* DEC  IY		  */
 OP(fd,2c) { _LY = INC(_LY); 										} /* INC  LY		  */
 OP(fd,2d) { _LY = DEC(_LY); 										} /* DEC  LY		  */
 OP(fd,2e) { _LY = ARG();											} /* LD   LY,n		  */
-#define fd_2f illegal_1 											  /* DB   FD		  */
+OP(fd,2f) { illegal_1();											} /* DB   FD		  */
 
-#define fd_30 illegal_1 											  /* DB   FD		  */
-#define fd_31 illegal_1 											  /* DB   FD		  */
-#define fd_32 illegal_1 											  /* DB   FD		  */
-#define fd_33 illegal_1 											  /* DB   FD		  */
+OP(fd,30) { illegal_1();											} /* DB   FD		  */
+OP(fd,31) { illegal_1();											} /* DB   FD		  */
+OP(fd,32) { illegal_1();											} /* DB   FD		  */
+OP(fd,33) { illegal_1();											} /* DB   FD		  */
 OP(fd,34) { EAY; WM( EA, INC(RM(EA)) ); 							} /* INC  (IY+o)	  */
 OP(fd,35) { EAY; WM( EA, DEC(RM(EA)) ); 							} /* DEC  (IY+o)	  */
 OP(fd,36) { EAY; WM( EA, ARG() );									} /* LD   (IY+o),n	  */
-#define fd_37 illegal_1 											  /* DB   FD		  */
+OP(fd,37) { illegal_1();											} /* DB   FD		  */
 
-#define fd_38 illegal_1 											  /* DB   FD		  */
+OP(fd,38) { illegal_1();											} /* DB   FD		  */
 OP(fd,39) { ADD16(IY,SP);											} /* ADD  IY,SP 	  */
-#define fd_3a illegal_1 											  /* DB   FD		  */
-#define fd_3b illegal_1 											  /* DB   FD		  */
-#define fd_3c illegal_1 											  /* DB   FD		  */
-#define fd_3d illegal_1 											  /* DB   FD		  */
-#define fd_3e illegal_1 											  /* DB   FD		  */
-#define fd_3f illegal_1 											  /* DB   FD		  */
+OP(fd,3a) { illegal_1();											} /* DB   FD		  */
+OP(fd,3b) { illegal_1();											} /* DB   FD		  */
+OP(fd,3c) { illegal_1();											} /* DB   FD		  */
+OP(fd,3d) { illegal_1();											} /* DB   FD		  */
+OP(fd,3e) { illegal_1();											} /* DB   FD		  */
+OP(fd,3f) { illegal_1();											} /* DB   FD		  */
 
-#define fd_40 illegal_1 											  /* DB   FD		  */
-#define fd_41 illegal_1 											  /* DB   FD		  */
-#define fd_42 illegal_1 											  /* DB   FD		  */
-#define fd_43 illegal_1 											  /* DB   FD		  */
+OP(fd,40) { illegal_1();											} /* DB   FD		  */
+OP(fd,41) { illegal_1();											} /* DB   FD		  */
+OP(fd,42) { illegal_1();											} /* DB   FD		  */
+OP(fd,43) { illegal_1();											} /* DB   FD		  */
 OP(fd,44) { _B = _HY;												} /* LD   B,HY		  */
 OP(fd,45) { _B = _LY;												} /* LD   B,LY		  */
 OP(fd,46) { EAY; _B = RM(EA);										} /* LD   B,(IY+o)	  */
-#define fd_47 illegal_1 											  /* DB   FD		  */
+OP(fd,47) { illegal_1();											} /* DB   FD		  */
 
-#define fd_48 illegal_1 											  /* DB   FD		  */
-#define fd_49 illegal_1 											  /* DB   FD		  */
-#define fd_4a illegal_1 											  /* DB   FD		  */
-#define fd_4b illegal_1 											  /* DB   FD		  */
+OP(fd,48) { illegal_1();											} /* DB   FD		  */
+OP(fd,49) { illegal_1();											} /* DB   FD		  */
+OP(fd,4a) { illegal_1();											} /* DB   FD		  */
+OP(fd,4b) { illegal_1();											} /* DB   FD		  */
 OP(fd,4c) { _C = _HY;												} /* LD   C,HY		  */
 OP(fd,4d) { _C = _LY;												} /* LD   C,LY		  */
 OP(fd,4e) { EAY; _C = RM(EA);										} /* LD   C,(IY+o)	  */
-#define fd_4f illegal_1 											  /* DB   FD		  */
+OP(fd,4f) { illegal_1();											} /* DB   FD		  */
 
-#define fd_50 illegal_1 											  /* DB   FD		  */
-#define fd_51 illegal_1 											  /* DB   FD		  */
-#define fd_52 illegal_1 											  /* DB   FD		  */
-#define fd_53 illegal_1 											  /* DB   FD		  */
+OP(fd,50) { illegal_1();											} /* DB   FD		  */
+OP(fd,51) { illegal_1();											} /* DB   FD		  */
+OP(fd,52) { illegal_1();											} /* DB   FD		  */
+OP(fd,53) { illegal_1();											} /* DB   FD		  */
 OP(fd,54) { _D = _HY;												} /* LD   D,HY		  */
 OP(fd,55) { _D = _LY;												} /* LD   D,LY		  */
 OP(fd,56) { EAY; _D = RM(EA);										} /* LD   D,(IY+o)	  */
-#define fd_57 illegal_1 											  /* DB   FD		  */
+OP(fd,57) { illegal_1();											} /* DB   FD		  */
 
-#define fd_58 illegal_1 											  /* DB   FD		  */
-#define fd_59 illegal_1 											  /* DB   FD		  */
-#define fd_5a illegal_1 											  /* DB   FD		  */
-#define fd_5b illegal_1 											  /* DB   FD		  */
+OP(fd,58) { illegal_1();											} /* DB   FD		  */
+OP(fd,59) { illegal_1();											} /* DB   FD		  */
+OP(fd,5a) { illegal_1();											} /* DB   FD		  */
+OP(fd,5b) { illegal_1();											} /* DB   FD		  */
 OP(fd,5c) { _E = _HY;												} /* LD   E,HY		  */
 OP(fd,5d) { _E = _LY;												} /* LD   E,LY		  */
 OP(fd,5e) { EAY; _E = RM(EA);										} /* LD   E,(IY+o)	  */
-#define fd_5f illegal_1 											  /* DB   FD		  */
+OP(fd,5f) { illegal_1();											} /* DB   FD		  */
 
 OP(fd,60) { _HY = _B;												} /* LD   HY,B		  */
 OP(fd,61) { _HY = _C;												} /* LD   HY,C		  */
@@ -2623,161 +2794,161 @@ OP(fd,72) { EAY; WM( EA, _D );										} /* LD   (IY+o),D	  */
 OP(fd,73) { EAY; WM( EA, _E );										} /* LD   (IY+o),E	  */
 OP(fd,74) { EAY; WM( EA, _H );										} /* LD   (IY+o),H	  */
 OP(fd,75) { EAY; WM( EA, _L );										} /* LD   (IY+o),L	  */
-#define fd_76 illegal_1 													  /* DB   FD		  */
+OP(fd,76) { illegal_1();											}		  /* DB   FD		  */
 OP(fd,77) { EAY; WM( EA, _A );										} /* LD   (IY+o),A	  */
 
-#define fd_78 illegal_1 											  /* DB   FD		  */
-#define fd_79 illegal_1 											  /* DB   FD		  */
-#define fd_7a illegal_1 											  /* DB   FD		  */
-#define fd_7b illegal_1 											  /* DB   FD		  */
+OP(fd,78) { illegal_1();											} /* DB   FD		  */
+OP(fd,79) { illegal_1();											} /* DB   FD		  */
+OP(fd,7a) { illegal_1();											} /* DB   FD		  */
+OP(fd,7b) { illegal_1();											} /* DB   FD		  */
 OP(fd,7c) { _A = _HY;												} /* LD   A,HY		  */
 OP(fd,7d) { _A = _LY;												} /* LD   A,LY		  */
 OP(fd,7e) { EAY; _A = RM(EA);										} /* LD   A,(IY+o)	  */
-#define fd_7f illegal_1 											  /* DB   FD		  */
+OP(fd,7f) { illegal_1();											} /* DB   FD		  */
 
-#define fd_80 illegal_1 											  /* DB   FD		  */
-#define fd_81 illegal_1 											  /* DB   FD		  */
-#define fd_82 illegal_1 											  /* DB   FD		  */
-#define fd_83 illegal_1 											  /* DB   FD		  */
+OP(fd,80) { illegal_1();											} /* DB   FD		  */
+OP(fd,81) { illegal_1();											} /* DB   FD		  */
+OP(fd,82) { illegal_1();											} /* DB   FD		  */
+OP(fd,83) { illegal_1();											} /* DB   FD		  */
 OP(fd,84) { ADD(_HY);												} /* ADD  A,HY		  */
 OP(fd,85) { ADD(_LY);												} /* ADD  A,LY		  */
 OP(fd,86) { EAY; ADD(RM(EA));										} /* ADD  A,(IY+o)	  */
-#define fd_87 illegal_1 											  /* DB   FD		  */
+OP(fd,87) { illegal_1();											} /* DB   FD		  */
 
-#define fd_88 illegal_1 											  /* DB   FD		  */
-#define fd_89 illegal_1 											  /* DB   FD		  */
-#define fd_8a illegal_1 											  /* DB   FD		  */
-#define fd_8b illegal_1 											  /* DB   FD		  */
+OP(fd,88) { illegal_1();											} /* DB   FD		  */
+OP(fd,89) { illegal_1();											} /* DB   FD		  */
+OP(fd,8a) { illegal_1();											} /* DB   FD		  */
+OP(fd,8b) { illegal_1();											} /* DB   FD		  */
 OP(fd,8c) { ADC(_HY);												} /* ADC  A,HY		  */
 OP(fd,8d) { ADC(_LY);												} /* ADC  A,LY		  */
 OP(fd,8e) { EAY; ADC(RM(EA));										} /* ADC  A,(IY+o)	  */
-#define fd_8f illegal_1 											  /* DB   FD		  */
+OP(fd,8f) { illegal_1();											} /* DB   FD		  */
 
-#define fd_90 illegal_1 											  /* DB   FD		  */
-#define fd_91 illegal_1 											  /* DB   FD		  */
-#define fd_92 illegal_1 											  /* DB   FD		  */
-#define fd_93 illegal_1 											  /* DB   FD		  */
+OP(fd,90) { illegal_1();											} /* DB   FD		  */
+OP(fd,91) { illegal_1();											} /* DB   FD		  */
+OP(fd,92) { illegal_1();											} /* DB   FD		  */
+OP(fd,93) { illegal_1();											} /* DB   FD		  */
 OP(fd,94) { SUB(_HY);												} /* SUB  HY		  */
 OP(fd,95) { SUB(_LY);												} /* SUB  LY		  */
 OP(fd,96) { EAY; SUB(RM(EA));										} /* SUB  (IY+o)	  */
-#define fd_97 illegal_1 											  /* DB   FD		  */
+OP(fd,97) { illegal_1();											} /* DB   FD		  */
 
-#define fd_98 illegal_1 											  /* DB   FD		  */
-#define fd_99 illegal_1 											  /* DB   FD		  */
-#define fd_9a illegal_1 											  /* DB   FD		  */
-#define fd_9b illegal_1 											  /* DB   FD		  */
+OP(fd,98) { illegal_1();											} /* DB   FD		  */
+OP(fd,99) { illegal_1();											} /* DB   FD		  */
+OP(fd,9a) { illegal_1();											} /* DB   FD		  */
+OP(fd,9b) { illegal_1();											} /* DB   FD		  */
 OP(fd,9c) { SBC(_HY);												} /* SBC  A,HY		  */
 OP(fd,9d) { SBC(_LY);												} /* SBC  A,LY		  */
 OP(fd,9e) { EAY; SBC(RM(EA));										} /* SBC  A,(IY+o)	  */
-#define fd_9f illegal_1 											  /* DB   FD		  */
+OP(fd,9f) { illegal_1();											} /* DB   FD		  */
 
-#define fd_a0 illegal_1 											  /* DB   FD		  */
-#define fd_a1 illegal_1 											  /* DB   FD		  */
-#define fd_a2 illegal_1 											  /* DB   FD		  */
-#define fd_a3 illegal_1 											  /* DB   FD		  */
+OP(fd,a0) { illegal_1();											} /* DB   FD		  */
+OP(fd,a1) { illegal_1();											} /* DB   FD		  */
+OP(fd,a2) { illegal_1();											} /* DB   FD		  */
+OP(fd,a3) { illegal_1();											} /* DB   FD		  */
 OP(fd,a4) { AND(_HY);												} /* AND  HY		  */
 OP(fd,a5) { AND(_LY);												} /* AND  LY		  */
 OP(fd,a6) { EAY; AND(RM(EA));										} /* AND  (IY+o)	  */
-#define fd_a7 illegal_1 											  /* DB   FD		  */
+OP(fd,a7) { illegal_1();											} /* DB   FD		  */
 
-#define fd_a8 illegal_1 											  /* DB   FD		  */
-#define fd_a9 illegal_1 											  /* DB   FD		  */
-#define fd_aa illegal_1 											  /* DB   FD		  */
-#define fd_ab illegal_1 											  /* DB   FD		  */
+OP(fd,a8) { illegal_1();											} /* DB   FD		  */
+OP(fd,a9) { illegal_1();											} /* DB   FD		  */
+OP(fd,aa) { illegal_1();											} /* DB   FD		  */
+OP(fd,ab) { illegal_1();											} /* DB   FD		  */
 OP(fd,ac) { XOR(_HY);												} /* XOR  HY		  */
 OP(fd,ad) { XOR(_LY);												} /* XOR  LY		  */
 OP(fd,ae) { EAY; XOR(RM(EA));										} /* XOR  (IY+o)	  */
-#define fd_af illegal_1 											  /* DB   FD		  */
+OP(fd,af) { illegal_1();											} /* DB   FD		  */
 
-#define fd_b0 illegal_1 											  /* DB   FD		  */
-#define fd_b1 illegal_1 											  /* DB   FD		  */
-#define fd_b2 illegal_1 											  /* DB   FD		  */
-#define fd_b3 illegal_1 											  /* DB   FD		  */
+OP(fd,b0) { illegal_1();											} /* DB   FD		  */
+OP(fd,b1) { illegal_1();											} /* DB   FD		  */
+OP(fd,b2) { illegal_1();											} /* DB   FD		  */
+OP(fd,b3) { illegal_1();											} /* DB   FD		  */
 OP(fd,b4) { OR(_HY);												} /* OR   HY		  */
 OP(fd,b5) { OR(_LY);												} /* OR   LY		  */
 OP(fd,b6) { EAY; OR(RM(EA));										} /* OR   (IY+o)	  */
-#define fd_b7 illegal_1 											  /* DB   FD		  */
+OP(fd,b7) { illegal_1();											} /* DB   FD		  */
 
-#define fd_b8 illegal_1 											  /* DB   FD		  */
-#define fd_b9 illegal_1 											  /* DB   FD		  */
-#define fd_ba illegal_1 											  /* DB   FD		  */
-#define fd_bb illegal_1 											  /* DB   FD		  */
+OP(fd,b8) { illegal_1();											} /* DB   FD		  */
+OP(fd,b9) { illegal_1();											} /* DB   FD		  */
+OP(fd,ba) { illegal_1();											} /* DB   FD		  */
+OP(fd,bb) { illegal_1();											} /* DB   FD		  */
 OP(fd,bc) { CP(_HY);												} /* CP   HY		  */
 OP(fd,bd) { CP(_LY);												} /* CP   LY		  */
 OP(fd,be) { EAY; CP(RM(EA));										} /* CP   (IY+o)	  */
-#define fd_bf illegal_1 											  /* DB   FD		  */
+OP(fd,bf) { illegal_1();											} /* DB   FD		  */
 
-#define fd_c0 illegal_1 											  /* DB   FD		  */
-#define fd_c1 illegal_1 											  /* DB   FD		  */
-#define fd_c2 illegal_1 											  /* DB   FD		  */
-#define fd_c3 illegal_1 											  /* DB   FD		  */
-#define fd_c4 illegal_1 											  /* DB   FD		  */
-#define fd_c5 illegal_1 											  /* DB   FD		  */
-#define fd_c6 illegal_1 											  /* DB   FD		  */
-#define fd_c7 illegal_1 											  /* DB   FD		  */
+OP(fd,c0) { illegal_1();											} /* DB   FD		  */
+OP(fd,c1) { illegal_1();											} /* DB   FD		  */
+OP(fd,c2) { illegal_1();											} /* DB   FD		  */
+OP(fd,c3) { illegal_1();											} /* DB   FD		  */
+OP(fd,c4) { illegal_1();											} /* DB   FD		  */
+OP(fd,c5) { illegal_1();											} /* DB   FD		  */
+OP(fd,c6) { illegal_1();											} /* DB   FD		  */
+OP(fd,c7) { illegal_1();											} /* DB   FD		  */
 
-#define fd_c8 illegal_1 											  /* DB   FD		  */
-#define fd_c9 illegal_1 											  /* DB   FD		  */
-#define fd_ca illegal_1 											  /* DB   FD		  */
+OP(fd,c8) { illegal_1();											} /* DB   FD		  */
+OP(fd,c9) { illegal_1();											} /* DB   FD		  */
+OP(fd,ca) { illegal_1();											} /* DB   FD		  */
 OP(fd,cb) { EAY; EXEC(xxcb,ARG());									} /* **   FD CB xx	  */
-#define fd_cc illegal_1 											  /* DB   FD		  */
-#define fd_cd illegal_1 											  /* DB   FD		  */
-#define fd_ce illegal_1 											  /* DB   FD		  */
-#define fd_cf illegal_1 											  /* DB   FD		  */
+OP(fd,cc) { illegal_1();											} /* DB   FD		  */
+OP(fd,cd) { illegal_1();											} /* DB   FD		  */
+OP(fd,ce) { illegal_1();											} /* DB   FD		  */
+OP(fd,cf) { illegal_1();											} /* DB   FD		  */
 
-#define fd_d0 illegal_1 											  /* DB   FD		  */
-#define fd_d1 illegal_1 											  /* DB   FD		  */
-#define fd_d2 illegal_1 											  /* DB   FD		  */
-#define fd_d3 illegal_1 											  /* DB   FD		  */
-#define fd_d4 illegal_1 											  /* DB   FD		  */
-#define fd_d5 illegal_1 											  /* DB   FD		  */
-#define fd_d6 illegal_1 											  /* DB   FD		  */
-#define fd_d7 illegal_1 											  /* DB   FD		  */
+OP(fd,d0) { illegal_1();											} /* DB   FD		  */
+OP(fd,d1) { illegal_1();											} /* DB   FD		  */
+OP(fd,d2) { illegal_1();											} /* DB   FD		  */
+OP(fd,d3) { illegal_1();											} /* DB   FD		  */
+OP(fd,d4) { illegal_1();											} /* DB   FD		  */
+OP(fd,d5) { illegal_1();											} /* DB   FD		  */
+OP(fd,d6) { illegal_1();											} /* DB   FD		  */
+OP(fd,d7) { illegal_1();											} /* DB   FD		  */
 
-#define fd_d8 illegal_1 											  /* DB   FD		  */
-#define fd_d9 illegal_1 											  /* DB   FD		  */
-#define fd_da illegal_1 											  /* DB   FD		  */
-#define fd_db illegal_1 											  /* DB   FD		  */
-#define fd_dc illegal_1 											  /* DB   FD		  */
-#define fd_dd illegal_1 											  /* DB   FD		  */
-#define fd_de illegal_1 											  /* DB   FD		  */
-#define fd_df illegal_1 											  /* DB   FD		  */
+OP(fd,d8) { illegal_1();											} /* DB   FD		  */
+OP(fd,d9) { illegal_1();											} /* DB   FD		  */
+OP(fd,da) { illegal_1();											} /* DB   FD		  */
+OP(fd,db) { illegal_1();											} /* DB   FD		  */
+OP(fd,dc) { illegal_1();											} /* DB   FD		  */
+OP(fd,dd) { illegal_1();											} /* DB   FD		  */
+OP(fd,de) { illegal_1();											} /* DB   FD		  */
+OP(fd,df) { illegal_1();											} /* DB   FD		  */
 
-#define fd_e0 illegal_1 											  /* DB   FD		  */
+OP(fd,e0) { illegal_1();											} /* DB   FD		  */
 OP(fd,e1) { POP(IY);												} /* POP  IY		  */
-#define fd_e2 illegal_1 											  /* DB   FD		  */
+OP(fd,e2) { illegal_1();											} /* DB   FD		  */
 OP(fd,e3) { EXSP(IY);												} /* EX   (SP),IY	  */
-#define fd_e4 illegal_1 											  /* DB   FD		  */
+OP(fd,e4) { illegal_1();											} /* DB   FD		  */
 OP(fd,e5) { PUSH( IY ); 											} /* PUSH IY		  */
-#define fd_e6 illegal_1 											  /* DB   FD		  */
-#define fd_e7 illegal_1 											  /* DB   FD		  */
+OP(fd,e6) { illegal_1();											} /* DB   FD		  */
+OP(fd,e7) { illegal_1();											} /* DB   FD		  */
 
-#define fd_e8 illegal_1 											  /* DB   FD		  */
+OP(fd,e8) { illegal_1();											} /* DB   FD		  */
 OP(fd,e9) { _PC = _IY; change_pc16(_PCD);							} /* JP   (IY)		  */
-#define fd_ea illegal_1 											  /* DB   FD		  */
-#define fd_eb illegal_1 											  /* DB   FD		  */
-#define fd_ec illegal_1 											  /* DB   FD		  */
-#define fd_ed illegal_1 											  /* DB   FD		  */
-#define fd_ee illegal_1 											  /* DB   FD		  */
-#define fd_ef illegal_1 											  /* DB   FD		  */
+OP(fd,ea) { illegal_1();											} /* DB   FD		  */
+OP(fd,eb) { illegal_1();											} /* DB   FD		  */
+OP(fd,ec) { illegal_1();											} /* DB   FD		  */
+OP(fd,ed) { illegal_1();											} /* DB   FD		  */
+OP(fd,ee) { illegal_1();											} /* DB   FD		  */
+OP(fd,ef) { illegal_1();											} /* DB   FD		  */
 
-#define fd_f0 illegal_1 											  /* DB   FD		  */
-#define fd_f1 illegal_1 											  /* DB   FD		  */
-#define fd_f2 illegal_1 											  /* DB   FD		  */
-#define fd_f3 illegal_1 											  /* DB   FD		  */
-#define fd_f4 illegal_1 											  /* DB   FD		  */
-#define fd_f5 illegal_1 											  /* DB   FD		  */
-#define fd_f6 illegal_1 											  /* DB   FD		  */
-#define fd_f7 illegal_1 											  /* DB   FD		  */
+OP(fd,f0) { illegal_1();											} /* DB   FD		  */
+OP(fd,f1) { illegal_1();											} /* DB   FD		  */
+OP(fd,f2) { illegal_1();											} /* DB   FD		  */
+OP(fd,f3) { illegal_1();											} /* DB   FD		  */
+OP(fd,f4) { illegal_1();											} /* DB   FD		  */
+OP(fd,f5) { illegal_1();											} /* DB   FD		  */
+OP(fd,f6) { illegal_1();											} /* DB   FD		  */
+OP(fd,f7) { illegal_1();											} /* DB   FD		  */
 
-#define fd_f8 illegal_1 											  /* DB   FD		  */
+OP(fd,f8) { illegal_1();											} /* DB   FD		  */
 OP(fd,f9) { _SP = _IY;												} /* LD   SP,IY 	  */
-#define fd_fa illegal_1 											  /* DB   FD		  */
-#define fd_fb illegal_1 											  /* DB   FD		  */
-#define fd_fc illegal_1 											  /* DB   FD		  */
-#define fd_fd illegal_1 											  /* DB   FD		  */
-#define fd_fe illegal_1 											  /* DB   FD		  */
-#define fd_ff illegal_1 											  /* DB   FD		  */
+OP(fd,fa) { illegal_1();											} /* DB   FD		  */
+OP(fd,fb) { illegal_1();											} /* DB   FD		  */
+OP(fd,fc) { illegal_1();											} /* DB   FD		  */
+OP(fd,fd) { illegal_1();											} /* DB   FD		  */
+OP(fd,fe) { illegal_1();											} /* DB   FD		  */
+OP(fd,ff) { illegal_1();											} /* DB   FD		  */
 
 OP(illegal,2)
 {
@@ -2789,82 +2960,82 @@ OP(illegal,2)
 /**********************************************************
  * special opcodes (ED prefix)
  **********************************************************/
-#define ed_00 illegal_2 											  /* DB   ED		  */
-#define ed_01 illegal_2 											  /* DB   ED		  */
-#define ed_02 illegal_2 											  /* DB   ED		  */
-#define ed_03 illegal_2 											  /* DB   ED		  */
-#define ed_04 illegal_2 											  /* DB   ED		  */
-#define ed_05 illegal_2 											  /* DB   ED		  */
-#define ed_06 illegal_2 											  /* DB   ED		  */
-#define ed_07 illegal_2 											  /* DB   ED		  */
+OP(ed,00) { illegal_2();											} /* DB   ED		  */
+OP(ed,01) { illegal_2();											} /* DB   ED		  */
+OP(ed,02) { illegal_2();											} /* DB   ED		  */
+OP(ed,03) { illegal_2();											} /* DB   ED		  */
+OP(ed,04) { illegal_2();											} /* DB   ED		  */
+OP(ed,05) { illegal_2();											} /* DB   ED		  */
+OP(ed,06) { illegal_2();											} /* DB   ED		  */
+OP(ed,07) { illegal_2();											} /* DB   ED		  */
 
-#define ed_08 illegal_2 											  /* DB   ED		  */
-#define ed_09 illegal_2 											  /* DB   ED		  */
-#define ed_0a illegal_2 											  /* DB   ED		  */
-#define ed_0b illegal_2 											  /* DB   ED		  */
-#define ed_0c illegal_2 											  /* DB   ED		  */
-#define ed_0d illegal_2 											  /* DB   ED		  */
-#define ed_0e illegal_2 											  /* DB   ED		  */
-#define ed_0f illegal_2 											  /* DB   ED		  */
+OP(ed,08) { illegal_2();											} /* DB   ED		  */
+OP(ed,09) { illegal_2();											} /* DB   ED		  */
+OP(ed,0a) { illegal_2();											} /* DB   ED		  */
+OP(ed,0b) { illegal_2();											} /* DB   ED		  */
+OP(ed,0c) { illegal_2();											} /* DB   ED		  */
+OP(ed,0d) { illegal_2();											} /* DB   ED		  */
+OP(ed,0e) { illegal_2();											} /* DB   ED		  */
+OP(ed,0f) { illegal_2();											} /* DB   ED		  */
 
-#define ed_10 illegal_2 											  /* DB   ED		  */
-#define ed_11 illegal_2 											  /* DB   ED		  */
-#define ed_12 illegal_2 											  /* DB   ED		  */
-#define ed_13 illegal_2 											  /* DB   ED		  */
-#define ed_14 illegal_2 											  /* DB   ED		  */
-#define ed_15 illegal_2 											  /* DB   ED		  */
-#define ed_16 illegal_2 											  /* DB   ED		  */
-#define ed_17 illegal_2 											  /* DB   ED		  */
+OP(ed,10) { illegal_2();											} /* DB   ED		  */
+OP(ed,11) { illegal_2();											} /* DB   ED		  */
+OP(ed,12) { illegal_2();											} /* DB   ED		  */
+OP(ed,13) { illegal_2();											} /* DB   ED		  */
+OP(ed,14) { illegal_2();											} /* DB   ED		  */
+OP(ed,15) { illegal_2();											} /* DB   ED		  */
+OP(ed,16) { illegal_2();											} /* DB   ED		  */
+OP(ed,17) { illegal_2();											} /* DB   ED		  */
 
-#define ed_18 illegal_2 											  /* DB   ED		  */
-#define ed_19 illegal_2 											  /* DB   ED		  */
-#define ed_1a illegal_2 											  /* DB   ED		  */
-#define ed_1b illegal_2 											  /* DB   ED		  */
-#define ed_1c illegal_2 											  /* DB   ED		  */
-#define ed_1d illegal_2 											  /* DB   ED		  */
-#define ed_1e illegal_2 											  /* DB   ED		  */
-#define ed_1f illegal_2 											  /* DB   ED		  */
+OP(ed,18) { illegal_2();											} /* DB   ED		  */
+OP(ed,19) { illegal_2();											} /* DB   ED		  */
+OP(ed,1a) { illegal_2();											} /* DB   ED		  */
+OP(ed,1b) { illegal_2();											} /* DB   ED		  */
+OP(ed,1c) { illegal_2();											} /* DB   ED		  */
+OP(ed,1d) { illegal_2();											} /* DB   ED		  */
+OP(ed,1e) { illegal_2();											} /* DB   ED		  */
+OP(ed,1f) { illegal_2();											} /* DB   ED		  */
 
-#define ed_20 illegal_2 											  /* DB   ED		  */
-#define ed_21 illegal_2 											  /* DB   ED		  */
-#define ed_22 illegal_2 											  /* DB   ED		  */
-#define ed_23 illegal_2 											  /* DB   ED		  */
-#define ed_24 illegal_2 											  /* DB   ED		  */
-#define ed_25 illegal_2 											  /* DB   ED		  */
-#define ed_26 illegal_2 											  /* DB   ED		  */
-#define ed_27 illegal_2 											  /* DB   ED		  */
+OP(ed,20) { illegal_2();											} /* DB   ED		  */
+OP(ed,21) { illegal_2();											} /* DB   ED		  */
+OP(ed,22) { illegal_2();											} /* DB   ED		  */
+OP(ed,23) { illegal_2();											} /* DB   ED		  */
+OP(ed,24) { illegal_2();											} /* DB   ED		  */
+OP(ed,25) { illegal_2();											} /* DB   ED		  */
+OP(ed,26) { illegal_2();											} /* DB   ED		  */
+OP(ed,27) { illegal_2();											} /* DB   ED		  */
 
-#define ed_28 illegal_2 											  /* DB   ED		  */
-#define ed_29 illegal_2 											  /* DB   ED		  */
-#define ed_2a illegal_2 											  /* DB   ED		  */
-#define ed_2b illegal_2 											  /* DB   ED		  */
-#define ed_2c illegal_2 											  /* DB   ED		  */
-#define ed_2d illegal_2 											  /* DB   ED		  */
-#define ed_2e illegal_2 											  /* DB   ED		  */
-#define ed_2f illegal_2 											  /* DB   ED		  */
+OP(ed,28) { illegal_2();											} /* DB   ED		  */
+OP(ed,29) { illegal_2();											} /* DB   ED		  */
+OP(ed,2a) { illegal_2();											} /* DB   ED		  */
+OP(ed,2b) { illegal_2();											} /* DB   ED		  */
+OP(ed,2c) { illegal_2();											} /* DB   ED		  */
+OP(ed,2d) { illegal_2();											} /* DB   ED		  */
+OP(ed,2e) { illegal_2();											} /* DB   ED		  */
+OP(ed,2f) { illegal_2();											} /* DB   ED		  */
 
-#define ed_30 illegal_2 											  /* DB   ED		  */
-#define ed_31 illegal_2 											  /* DB   ED		  */
-#define ed_32 illegal_2 											  /* DB   ED		  */
-#define ed_33 illegal_2 											  /* DB   ED		  */
-#define ed_34 illegal_2 											  /* DB   ED		  */
-#define ed_35 illegal_2 											  /* DB   ED		  */
-#define ed_36 illegal_2 											  /* DB   ED		  */
-#define ed_37 illegal_2 											  /* DB   ED		  */
+OP(ed,30) { illegal_2();											} /* DB   ED		  */
+OP(ed,31) { illegal_2();											} /* DB   ED		  */
+OP(ed,32) { illegal_2();											} /* DB   ED		  */
+OP(ed,33) { illegal_2();											} /* DB   ED		  */
+OP(ed,34) { illegal_2();											} /* DB   ED		  */
+OP(ed,35) { illegal_2();											} /* DB   ED		  */
+OP(ed,36) { illegal_2();											} /* DB   ED		  */
+OP(ed,37) { illegal_2();											} /* DB   ED		  */
 
-#define ed_38 illegal_2 											  /* DB   ED		  */
-#define ed_39 illegal_2 											  /* DB   ED		  */
-#define ed_3a illegal_2 											  /* DB   ED		  */
-#define ed_3b illegal_2 											  /* DB   ED		  */
-#define ed_3c illegal_2 											  /* DB   ED		  */
-#define ed_3d illegal_2 											  /* DB   ED		  */
-#define ed_3e illegal_2 											  /* DB   ED		  */
-#define ed_3f illegal_2 											  /* DB   ED		  */
+OP(ed,38) { illegal_2();											} /* DB   ED		  */
+OP(ed,39) { illegal_2();											} /* DB   ED		  */
+OP(ed,3a) { illegal_2();											} /* DB   ED		  */
+OP(ed,3b) { illegal_2();											} /* DB   ED		  */
+OP(ed,3c) { illegal_2();											} /* DB   ED		  */
+OP(ed,3d) { illegal_2();											} /* DB   ED		  */
+OP(ed,3e) { illegal_2();											} /* DB   ED		  */
+OP(ed,3f) { illegal_2();											} /* DB   ED		  */
 
 OP(ed,40) { _B = IN(_BC); _F = (_F & CF) | SZP[_B]; 				} /* IN   B,(C) 	  */
 OP(ed,41) { OUT(_BC,_B);											} /* OUT  (C),B 	  */
 OP(ed,42) { SBC16( BC );											} /* SBC  HL,BC 	  */
-OP(ed,43) { WM16( ARG16(), &Z80.BC );								} /* LD   (w),BC	  */
+OP(ed,43) { EA = ARG16(); WM16( EA, &Z80.BC );						} /* LD   (w),BC	  */
 OP(ed,44) { NEG;													} /* NEG			  */
 OP(ed,45) { RETN;													} /* RETN;			  */
 OP(ed,46) { _IM = 0;												} /* IM   0 		  */
@@ -2873,7 +3044,7 @@ OP(ed,47) { LD_I_A; 												} /* LD   I,A		  */
 OP(ed,48) { _C = IN(_BC); _F = (_F & CF) | SZP[_C]; 				} /* IN   C,(C) 	  */
 OP(ed,49) { OUT(_BC,_C);											} /* OUT  (C),C 	  */
 OP(ed,4a) { ADC16( BC );											} /* ADC  HL,BC 	  */
-OP(ed,4b) { RM16( ARG16(), &Z80.BC );								} /* LD   BC,(w)	  */
+OP(ed,4b) { EA = ARG16(); RM16( EA, &Z80.BC );						} /* LD   BC,(w)	  */
 OP(ed,4c) { NEG;													} /* NEG			  */
 OP(ed,4d) { RETI;													} /* RETI			  */
 OP(ed,4e) { _IM = 0;												} /* IM   0 		  */
@@ -2882,7 +3053,7 @@ OP(ed,4f) { LD_R_A; 												} /* LD   R,A		  */
 OP(ed,50) { _D = IN(_BC); _F = (_F & CF) | SZP[_D]; 				} /* IN   D,(C) 	  */
 OP(ed,51) { OUT(_BC,_D);											} /* OUT  (C),D 	  */
 OP(ed,52) { SBC16( DE );											} /* SBC  HL,DE 	  */
-OP(ed,53) { WM16( ARG16(), &Z80.DE );								} /* LD   (w),DE	  */
+OP(ed,53) { EA = ARG16(); WM16( EA, &Z80.DE );						} /* LD   (w),DE	  */
 OP(ed,54) { NEG;													} /* NEG			  */
 OP(ed,55) { RETN;													} /* RETN;			  */
 OP(ed,56) { _IM = 1;												} /* IM   1 		  */
@@ -2891,7 +3062,7 @@ OP(ed,57) { LD_A_I; 												} /* LD   A,I		  */
 OP(ed,58) { _E = IN(_BC); _F = (_F & CF) | SZP[_E]; 				} /* IN   E,(C) 	  */
 OP(ed,59) { OUT(_BC,_E);											} /* OUT  (C),E 	  */
 OP(ed,5a) { ADC16( DE );											} /* ADC  HL,DE 	  */
-OP(ed,5b) { RM16( ARG16(), &Z80.DE );								} /* LD   DE,(w)	  */
+OP(ed,5b) { EA = ARG16(); RM16( EA, &Z80.DE );						} /* LD   DE,(w)	  */
 OP(ed,5c) { NEG;													} /* NEG			  */
 OP(ed,5d) { RETI;													} /* RETI			  */
 OP(ed,5e) { _IM = 2;												} /* IM   2 		  */
@@ -2900,7 +3071,7 @@ OP(ed,5f) { LD_A_R; 												} /* LD   A,R		  */
 OP(ed,60) { _H = IN(_BC); _F = (_F & CF) | SZP[_H]; 				} /* IN   H,(C) 	  */
 OP(ed,61) { OUT(_BC,_H);											} /* OUT  (C),H 	  */
 OP(ed,62) { SBC16( HL );											} /* SBC  HL,HL 	  */
-OP(ed,63) { WM16( ARG16(), &Z80.HL );								} /* LD   (w),HL	  */
+OP(ed,63) { EA = ARG16(); WM16( EA, &Z80.HL );						} /* LD   (w),HL	  */
 OP(ed,64) { NEG;													} /* NEG			  */
 OP(ed,65) { RETN;													} /* RETN;			  */
 OP(ed,66) { _IM = 0;												} /* IM   0 		  */
@@ -2909,7 +3080,7 @@ OP(ed,67) { RRD;													} /* RRD  (HL)		  */
 OP(ed,68) { _L = IN(_BC); _F = (_F & CF) | SZP[_L]; 				} /* IN   L,(C) 	  */
 OP(ed,69) { OUT(_BC,_L);											} /* OUT  (C),L 	  */
 OP(ed,6a) { ADC16( HL );											} /* ADC  HL,HL 	  */
-OP(ed,6b) { RM16( ARG16(), &Z80.HL );								} /* LD   HL,(w)	  */
+OP(ed,6b) { EA = ARG16(); RM16( EA, &Z80.HL );						} /* LD   HL,(w)	  */
 OP(ed,6c) { NEG;													} /* NEG			  */
 OP(ed,6d) { RETI;													} /* RETI			  */
 OP(ed,6e) { _IM = 0;												} /* IM   0 		  */
@@ -2918,164 +3089,164 @@ OP(ed,6f) { RLD;													} /* RLD  (HL)		  */
 OP(ed,70) { UINT8 res = IN(_BC); _F = (_F & CF) | SZP[res]; 		} /* IN   0,(C) 	  */
 OP(ed,71) { OUT(_BC,0); 											} /* OUT  (C),0 	  */
 OP(ed,72) { SBC16( SP );											} /* SBC  HL,SP 	  */
-OP(ed,73) { WM16( ARG16(), &Z80.SP );								} /* LD   (w),SP	  */
+OP(ed,73) { EA = ARG16(); WM16( EA, &Z80.SP );						} /* LD   (w),SP	  */
 OP(ed,74) { NEG;													} /* NEG			  */
 OP(ed,75) { RETN;													} /* RETN;			  */
 OP(ed,76) { _IM = 1;												} /* IM   1 		  */
-#define ed_77 illegal_2 											  /* DB   ED,77 	  */
+OP(ed,77) { illegal_2();											} /* DB   ED,77 	  */
 
 OP(ed,78) { _A = IN(_BC); _F = (_F & CF) | SZP[_A]; 				} /* IN   E,(C) 	  */
 OP(ed,79) { OUT(_BC,_A);											} /* OUT  (C),E 	  */
 OP(ed,7a) { ADC16( SP );											} /* ADC  HL,SP 	  */
-OP(ed,7b) { RM16( ARG16(), &Z80.SP );								} /* LD   SP,(w)	  */
+OP(ed,7b) { EA = ARG16(); RM16( EA, &Z80.SP );						} /* LD   SP,(w)	  */
 OP(ed,7c) { NEG;													} /* NEG			  */
 OP(ed,7d) { RETI;													} /* RETI			  */
 OP(ed,7e) { _IM = 2;												} /* IM   2 		  */
-#define ed_7f illegal_2 											  /* DB   ED,7F 	  */
+OP(ed,7f) { illegal_2();											} /* DB   ED,7F 	  */
 
-#define ed_80 illegal_2 											  /* DB   ED		  */
-#define ed_81 illegal_2 											  /* DB   ED		  */
-#define ed_82 illegal_2 											  /* DB   ED		  */
-#define ed_83 illegal_2 											  /* DB   ED		  */
-#define ed_84 illegal_2 											  /* DB   ED		  */
-#define ed_85 illegal_2 											  /* DB   ED		  */
-#define ed_86 illegal_2 											  /* DB   ED		  */
-#define ed_87 illegal_2 											  /* DB   ED		  */
+OP(ed,80) { illegal_2();											} /* DB   ED		  */
+OP(ed,81) { illegal_2();											} /* DB   ED		  */
+OP(ed,82) { illegal_2();											} /* DB   ED		  */
+OP(ed,83) { illegal_2();											} /* DB   ED		  */
+OP(ed,84) { illegal_2();											} /* DB   ED		  */
+OP(ed,85) { illegal_2();											} /* DB   ED		  */
+OP(ed,86) { illegal_2();											} /* DB   ED		  */
+OP(ed,87) { illegal_2();											} /* DB   ED		  */
 
-#define ed_88 illegal_2 											  /* DB   ED		  */
-#define ed_89 illegal_2 											  /* DB   ED		  */
-#define ed_8a illegal_2 											  /* DB   ED		  */
-#define ed_8b illegal_2 											  /* DB   ED		  */
-#define ed_8c illegal_2 											  /* DB   ED		  */
-#define ed_8d illegal_2 											  /* DB   ED		  */
-#define ed_8e illegal_2 											  /* DB   ED		  */
-#define ed_8f illegal_2 											  /* DB   ED		  */
+OP(ed,88) { illegal_2();											} /* DB   ED		  */
+OP(ed,89) { illegal_2();											} /* DB   ED		  */
+OP(ed,8a) { illegal_2();											} /* DB   ED		  */
+OP(ed,8b) { illegal_2();											} /* DB   ED		  */
+OP(ed,8c) { illegal_2();											} /* DB   ED		  */
+OP(ed,8d) { illegal_2();											} /* DB   ED		  */
+OP(ed,8e) { illegal_2();											} /* DB   ED		  */
+OP(ed,8f) { illegal_2();											} /* DB   ED		  */
 
-#define ed_90 illegal_2 											  /* DB   ED		  */
-#define ed_91 illegal_2 											  /* DB   ED		  */
-#define ed_92 illegal_2 											  /* DB   ED		  */
-#define ed_93 illegal_2 											  /* DB   ED		  */
-#define ed_94 illegal_2 											  /* DB   ED		  */
-#define ed_95 illegal_2 											  /* DB   ED		  */
-#define ed_96 illegal_2 											  /* DB   ED		  */
-#define ed_97 illegal_2 											  /* DB   ED		  */
+OP(ed,90) { illegal_2();											} /* DB   ED		  */
+OP(ed,91) { illegal_2();											} /* DB   ED		  */
+OP(ed,92) { illegal_2();											} /* DB   ED		  */
+OP(ed,93) { illegal_2();											} /* DB   ED		  */
+OP(ed,94) { illegal_2();											} /* DB   ED		  */
+OP(ed,95) { illegal_2();											} /* DB   ED		  */
+OP(ed,96) { illegal_2();											} /* DB   ED		  */
+OP(ed,97) { illegal_2();											} /* DB   ED		  */
 
-#define ed_98 illegal_2 											  /* DB   ED		  */
-#define ed_99 illegal_2 											  /* DB   ED		  */
-#define ed_9a illegal_2 											  /* DB   ED		  */
-#define ed_9b illegal_2 											  /* DB   ED		  */
-#define ed_9c illegal_2 											  /* DB   ED		  */
-#define ed_9d illegal_2 											  /* DB   ED		  */
-#define ed_9e illegal_2 											  /* DB   ED		  */
-#define ed_9f illegal_2 											  /* DB   ED		  */
+OP(ed,98) { illegal_2();											} /* DB   ED		  */
+OP(ed,99) { illegal_2();											} /* DB   ED		  */
+OP(ed,9a) { illegal_2();											} /* DB   ED		  */
+OP(ed,9b) { illegal_2();											} /* DB   ED		  */
+OP(ed,9c) { illegal_2();											} /* DB   ED		  */
+OP(ed,9d) { illegal_2();											} /* DB   ED		  */
+OP(ed,9e) { illegal_2();											} /* DB   ED		  */
+OP(ed,9f) { illegal_2();											} /* DB   ED		  */
 
 OP(ed,a0) { LDI;													} /* LDI			  */
 OP(ed,a1) { CPI;													} /* CPI			  */
 OP(ed,a2) { INI;													} /* INI			  */
 OP(ed,a3) { OUTI;													} /* OUTI			  */
-#define ed_a4 illegal_2 											  /* DB   ED		  */
-#define ed_a5 illegal_2 											  /* DB   ED		  */
-#define ed_a6 illegal_2 											  /* DB   ED		  */
-#define ed_a7 illegal_2 											  /* DB   ED		  */
+OP(ed,a4) { illegal_2();											} /* DB   ED		  */
+OP(ed,a5) { illegal_2();											} /* DB   ED		  */
+OP(ed,a6) { illegal_2();											} /* DB   ED		  */
+OP(ed,a7) { illegal_2();											} /* DB   ED		  */
 
 OP(ed,a8) { LDD;													} /* LDD			  */
 OP(ed,a9) { CPD;													} /* CPD			  */
 OP(ed,aa) { IND;													} /* IND			  */
 OP(ed,ab) { OUTD;													} /* OUTD			  */
-#define ed_ac illegal_2 											  /* DB   ED		  */
-#define ed_ad illegal_2 											  /* DB   ED		  */
-#define ed_ae illegal_2 											  /* DB   ED		  */
-#define ed_af illegal_2 											  /* DB   ED		  */
+OP(ed,ac) { illegal_2();											} /* DB   ED		  */
+OP(ed,ad) { illegal_2();											} /* DB   ED		  */
+OP(ed,ae) { illegal_2();											} /* DB   ED		  */
+OP(ed,af) { illegal_2();											} /* DB   ED		  */
 
 OP(ed,b0) { LDIR;													} /* LDIR			  */
 OP(ed,b1) { CPIR;													} /* CPIR			  */
 OP(ed,b2) { INIR;													} /* INIR			  */
 OP(ed,b3) { OTIR;													} /* OTIR			  */
-#define ed_b4 illegal_2 											  /* DB   ED		  */
-#define ed_b5 illegal_2 											  /* DB   ED		  */
-#define ed_b6 illegal_2 											  /* DB   ED		  */
-#define ed_b7 illegal_2 											  /* DB   ED		  */
+OP(ed,b4) { illegal_2();											} /* DB   ED		  */
+OP(ed,b5) { illegal_2();											} /* DB   ED		  */
+OP(ed,b6) { illegal_2();											} /* DB   ED		  */
+OP(ed,b7) { illegal_2();											} /* DB   ED		  */
 
 OP(ed,b8) { LDDR;													} /* LDDR			  */
 OP(ed,b9) { CPDR;													} /* CPDR			  */
 OP(ed,ba) { INDR;													} /* INDR			  */
 OP(ed,bb) { OTDR;													} /* OTDR			  */
-#define ed_bc illegal_2 											  /* DB   ED		  */
-#define ed_bd illegal_2 											  /* DB   ED		  */
-#define ed_be illegal_2 											  /* DB   ED		  */
-#define ed_bf illegal_2 											  /* DB   ED		  */
+OP(ed,bc) { illegal_2();											} /* DB   ED		  */
+OP(ed,bd) { illegal_2();											} /* DB   ED		  */
+OP(ed,be) { illegal_2();											} /* DB   ED		  */
+OP(ed,bf) { illegal_2();											} /* DB   ED		  */
 
-#define ed_c0 illegal_2 											  /* DB   ED		  */
-#define ed_c1 illegal_2 											  /* DB   ED		  */
-#define ed_c2 illegal_2 											  /* DB   ED		  */
-#define ed_c3 illegal_2 											  /* DB   ED		  */
-#define ed_c4 illegal_2 											  /* DB   ED		  */
-#define ed_c5 illegal_2 											  /* DB   ED		  */
-#define ed_c6 illegal_2 											  /* DB   ED		  */
-#define ed_c7 illegal_2 											  /* DB   ED		  */
+OP(ed,c0) { illegal_2();											} /* DB   ED		  */
+OP(ed,c1) { illegal_2();											} /* DB   ED		  */
+OP(ed,c2) { illegal_2();											} /* DB   ED		  */
+OP(ed,c3) { illegal_2();											} /* DB   ED		  */
+OP(ed,c4) { illegal_2();											} /* DB   ED		  */
+OP(ed,c5) { illegal_2();											} /* DB   ED		  */
+OP(ed,c6) { illegal_2();											} /* DB   ED		  */
+OP(ed,c7) { illegal_2();											} /* DB   ED		  */
 
-#define ed_c8 illegal_2 											  /* DB   ED		  */
-#define ed_c9 illegal_2 											  /* DB   ED		  */
-#define ed_ca illegal_2 											  /* DB   ED		  */
-#define ed_cb illegal_2 											  /* DB   ED		  */
-#define ed_cc illegal_2 											  /* DB   ED		  */
-#define ed_cd illegal_2 											  /* DB   ED		  */
-#define ed_ce illegal_2 											  /* DB   ED		  */
-#define ed_cf illegal_2 											  /* DB   ED		  */
+OP(ed,c8) { illegal_2();											} /* DB   ED		  */
+OP(ed,c9) { illegal_2();											} /* DB   ED		  */
+OP(ed,ca) { illegal_2();											} /* DB   ED		  */
+OP(ed,cb) { illegal_2();											} /* DB   ED		  */
+OP(ed,cc) { illegal_2();											} /* DB   ED		  */
+OP(ed,cd) { illegal_2();											} /* DB   ED		  */
+OP(ed,ce) { illegal_2();											} /* DB   ED		  */
+OP(ed,cf) { illegal_2();											} /* DB   ED		  */
 
-#define ed_d0 illegal_2 											  /* DB   ED		  */
-#define ed_d1 illegal_2 											  /* DB   ED		  */
-#define ed_d2 illegal_2 											  /* DB   ED		  */
-#define ed_d3 illegal_2 											  /* DB   ED		  */
-#define ed_d4 illegal_2 											  /* DB   ED		  */
-#define ed_d5 illegal_2 											  /* DB   ED		  */
-#define ed_d6 illegal_2 											  /* DB   ED		  */
-#define ed_d7 illegal_2 											  /* DB   ED		  */
+OP(ed,d0) { illegal_2();											} /* DB   ED		  */
+OP(ed,d1) { illegal_2();											} /* DB   ED		  */
+OP(ed,d2) { illegal_2();											} /* DB   ED		  */
+OP(ed,d3) { illegal_2();											} /* DB   ED		  */
+OP(ed,d4) { illegal_2();											} /* DB   ED		  */
+OP(ed,d5) { illegal_2();											} /* DB   ED		  */
+OP(ed,d6) { illegal_2();											} /* DB   ED		  */
+OP(ed,d7) { illegal_2();											} /* DB   ED		  */
 
-#define ed_d8 illegal_2 											  /* DB   ED		  */
-#define ed_d9 illegal_2 											  /* DB   ED		  */
-#define ed_da illegal_2 											  /* DB   ED		  */
-#define ed_db illegal_2 											  /* DB   ED		  */
-#define ed_dc illegal_2 											  /* DB   ED		  */
-#define ed_dd illegal_2 											  /* DB   ED		  */
-#define ed_de illegal_2 											  /* DB   ED		  */
-#define ed_df illegal_2 											  /* DB   ED		  */
+OP(ed,d8) { illegal_2();											} /* DB   ED		  */
+OP(ed,d9) { illegal_2();											} /* DB   ED		  */
+OP(ed,da) { illegal_2();											} /* DB   ED		  */
+OP(ed,db) { illegal_2();											} /* DB   ED		  */
+OP(ed,dc) { illegal_2();											} /* DB   ED		  */
+OP(ed,dd) { illegal_2();											} /* DB   ED		  */
+OP(ed,de) { illegal_2();											} /* DB   ED		  */
+OP(ed,df) { illegal_2();											} /* DB   ED		  */
 
-#define ed_e0 illegal_2 											  /* DB   ED		  */
-#define ed_e1 illegal_2 											  /* DB   ED		  */
-#define ed_e2 illegal_2 											  /* DB   ED		  */
-#define ed_e3 illegal_2 											  /* DB   ED		  */
-#define ed_e4 illegal_2 											  /* DB   ED		  */
-#define ed_e5 illegal_2 											  /* DB   ED		  */
-#define ed_e6 illegal_2 											  /* DB   ED		  */
-#define ed_e7 illegal_2 											  /* DB   ED		  */
+OP(ed,e0) { illegal_2();											} /* DB   ED		  */
+OP(ed,e1) { illegal_2();											} /* DB   ED		  */
+OP(ed,e2) { illegal_2();											} /* DB   ED		  */
+OP(ed,e3) { illegal_2();											} /* DB   ED		  */
+OP(ed,e4) { illegal_2();											} /* DB   ED		  */
+OP(ed,e5) { illegal_2();											} /* DB   ED		  */
+OP(ed,e6) { illegal_2();											} /* DB   ED		  */
+OP(ed,e7) { illegal_2();											} /* DB   ED		  */
 
-#define ed_e8 illegal_2 											  /* DB   ED		  */
-#define ed_e9 illegal_2 											  /* DB   ED		  */
-#define ed_ea illegal_2 											  /* DB   ED		  */
-#define ed_eb illegal_2 											  /* DB   ED		  */
-#define ed_ec illegal_2 											  /* DB   ED		  */
-#define ed_ed illegal_2 											  /* DB   ED		  */
-#define ed_ee illegal_2 											  /* DB   ED		  */
-#define ed_ef illegal_2 											  /* DB   ED		  */
+OP(ed,e8) { illegal_2();											} /* DB   ED		  */
+OP(ed,e9) { illegal_2();											} /* DB   ED		  */
+OP(ed,ea) { illegal_2();											} /* DB   ED		  */
+OP(ed,eb) { illegal_2();											} /* DB   ED		  */
+OP(ed,ec) { illegal_2();											} /* DB   ED		  */
+OP(ed,ed) { illegal_2();											} /* DB   ED		  */
+OP(ed,ee) { illegal_2();											} /* DB   ED		  */
+OP(ed,ef) { illegal_2();											} /* DB   ED		  */
 
-#define ed_f0 illegal_2 											  /* DB   ED		  */
-#define ed_f1 illegal_2 											  /* DB   ED		  */
-#define ed_f2 illegal_2 											  /* DB   ED		  */
-#define ed_f3 illegal_2 											  /* DB   ED		  */
-#define ed_f4 illegal_2 											  /* DB   ED		  */
-#define ed_f5 illegal_2 											  /* DB   ED		  */
-#define ed_f6 illegal_2 											  /* DB   ED		  */
-#define ed_f7 illegal_2 											  /* DB   ED		  */
+OP(ed,f0) { illegal_2();											} /* DB   ED		  */
+OP(ed,f1) { illegal_2();											} /* DB   ED		  */
+OP(ed,f2) { illegal_2();											} /* DB   ED		  */
+OP(ed,f3) { illegal_2();											} /* DB   ED		  */
+OP(ed,f4) { illegal_2();											} /* DB   ED		  */
+OP(ed,f5) { illegal_2();											} /* DB   ED		  */
+OP(ed,f6) { illegal_2();											} /* DB   ED		  */
+OP(ed,f7) { illegal_2();											} /* DB   ED		  */
 
-#define ed_f8 illegal_2 											  /* DB   ED		  */
-#define ed_f9 illegal_2 											  /* DB   ED		  */
-#define ed_fa illegal_2 											  /* DB   ED		  */
-#define ed_fb illegal_2 											  /* DB   ED		  */
-#define ed_fc illegal_2 											  /* DB   ED		  */
-#define ed_fd illegal_2 											  /* DB   ED		  */
-#define ed_fe illegal_2 											  /* DB   ED		  */
-#define ed_ff illegal_2 											  /* DB   ED		  */
+OP(ed,f8) { illegal_2();											} /* DB   ED		  */
+OP(ed,f9) { illegal_2();											} /* DB   ED		  */
+OP(ed,fa) { illegal_2();											} /* DB   ED		  */
+OP(ed,fb) { illegal_2();											} /* DB   ED		  */
+OP(ed,fc) { illegal_2();											} /* DB   ED		  */
+OP(ed,fd) { illegal_2();											} /* DB   ED		  */
+OP(ed,fe) { illegal_2();											} /* DB   ED		  */
+OP(ed,ff) { illegal_2();											} /* DB   ED		  */
 
 #if TIME_LOOP_HACKS
 #define CHECK_BC_LOOP												\
@@ -3157,7 +3328,7 @@ OP(op,1f) { RRA;													} /* RRA			  */
 
 OP(op,20) { JR_COND( !(_F & ZF) );									} /* JR   NZ,o		  */
 OP(op,21) { _HL = ARG16();											} /* LD   HL,w		  */
-OP(op,22) { WM16( ARG16(), &Z80.HL );								} /* LD   (w),HL	  */
+OP(op,22) { EA = ARG16(); WM16( EA, &Z80.HL );						} /* LD   (w),HL	  */
 OP(op,23) { _HL++;													} /* INC  HL		  */
 OP(op,24) { _H = INC(_H);											} /* INC  H 		  */
 OP(op,25) { _H = DEC(_H);											} /* DEC  H 		  */
@@ -3166,7 +3337,7 @@ OP(op,27) { DAA;													} /* DAA			  */
 
 OP(op,28) { JR_COND( _F & ZF ); 									} /* JR   Z,o		  */
 OP(op,29) { ADD16(HL,HL);											} /* ADD  HL,HL 	  */
-OP(op,2a) { RM16( ARG16(), &Z80.HL );								} /* LD   HL,(w)	  */
+OP(op,2a) { EA = ARG16(); RM16( EA, &Z80.HL );						} /* LD   HL,(w)	  */
 OP(op,2b) { _HL--;													} /* DEC  HL		  */
 OP(op,2c) { _L = INC(_L);											} /* INC  L 		  */
 OP(op,2d) { _L = DEC(_L);											} /* DEC  L 		  */
@@ -3175,7 +3346,7 @@ OP(op,2f) { _A ^= 0xff; _F |= HF | NF;								} /* CPL			  */
 
 OP(op,30) { JR_COND( !(_F & CF) );									} /* JR   NC,o		  */
 OP(op,31) { _SP = ARG16();											} /* LD   SP,w		  */
-OP(op,32) { WM( ARG16(), _A );										} /* LD   (w),A 	  */
+OP(op,32) { EA = ARG16(); WM( EA, _A ); 							} /* LD   (w),A 	  */
 OP(op,33) { _SP++;													} /* INC  SP		  */
 OP(op,34) { WM( _HL, INC(RM(_HL)) );								} /* INC  (HL)		  */
 OP(op,35) { WM( _HL, DEC(RM(_HL)) );								} /* DEC  (HL)		  */
@@ -3184,7 +3355,7 @@ OP(op,37) { _F = (_F & ~(HF|NF)) | CF;								} /* SCF			  */
 
 OP(op,38) { JR_COND( _F & CF ); 									} /* JR   C,o		  */
 OP(op,39) { ADD16(HL,SP);											} /* ADD  HL,SP 	  */
-OP(op,3a) { _A = RM( ARG16() ); 									} /* LD   A,(w) 	  */
+OP(op,3a) { EA = ARG16(); _A = RM( EA );							} /* LD   A,(w) 	  */
 OP(op,3b) { _SP--;													} /* DEC  SP		  */
 OP(op,3c) { _A = INC(_A);											} /* INC  A 		  */
 OP(op,3d) { _A = DEC(_A);											} /* DEC  A 		  */
@@ -3408,48 +3579,6 @@ OP(op,fe) { CP(ARG());												} /* CP   n 		  */
 OP(op,ff) { RST(0x38);												} /* RST  7 		  */
 
 
-#define MKTABLE(tablename,prefix) \
-void (*tablename[0x100])(void) = {	 \
-    prefix##_00,prefix##_01,prefix##_02,prefix##_03,prefix##_04,prefix##_05,prefix##_06,prefix##_07, \
-    prefix##_08,prefix##_09,prefix##_0a,prefix##_0b,prefix##_0c,prefix##_0d,prefix##_0e,prefix##_0f, \
-    prefix##_10,prefix##_11,prefix##_12,prefix##_13,prefix##_14,prefix##_15,prefix##_16,prefix##_17, \
-    prefix##_18,prefix##_19,prefix##_1a,prefix##_1b,prefix##_1c,prefix##_1d,prefix##_1e,prefix##_1f, \
-    prefix##_20,prefix##_21,prefix##_22,prefix##_23,prefix##_24,prefix##_25,prefix##_26,prefix##_27, \
-    prefix##_28,prefix##_29,prefix##_2a,prefix##_2b,prefix##_2c,prefix##_2d,prefix##_2e,prefix##_2f, \
-    prefix##_30,prefix##_31,prefix##_32,prefix##_33,prefix##_34,prefix##_35,prefix##_36,prefix##_37, \
-    prefix##_38,prefix##_39,prefix##_3a,prefix##_3b,prefix##_3c,prefix##_3d,prefix##_3e,prefix##_3f, \
-    prefix##_40,prefix##_41,prefix##_42,prefix##_43,prefix##_44,prefix##_45,prefix##_46,prefix##_47, \
-    prefix##_48,prefix##_49,prefix##_4a,prefix##_4b,prefix##_4c,prefix##_4d,prefix##_4e,prefix##_4f, \
-    prefix##_50,prefix##_51,prefix##_52,prefix##_53,prefix##_54,prefix##_55,prefix##_56,prefix##_57, \
-    prefix##_58,prefix##_59,prefix##_5a,prefix##_5b,prefix##_5c,prefix##_5d,prefix##_5e,prefix##_5f, \
-    prefix##_60,prefix##_61,prefix##_62,prefix##_63,prefix##_64,prefix##_65,prefix##_66,prefix##_67, \
-    prefix##_68,prefix##_69,prefix##_6a,prefix##_6b,prefix##_6c,prefix##_6d,prefix##_6e,prefix##_6f, \
-    prefix##_70,prefix##_71,prefix##_72,prefix##_73,prefix##_74,prefix##_75,prefix##_76,prefix##_77, \
-    prefix##_78,prefix##_79,prefix##_7a,prefix##_7b,prefix##_7c,prefix##_7d,prefix##_7e,prefix##_7f, \
-    prefix##_80,prefix##_81,prefix##_82,prefix##_83,prefix##_84,prefix##_85,prefix##_86,prefix##_87, \
-    prefix##_88,prefix##_89,prefix##_8a,prefix##_8b,prefix##_8c,prefix##_8d,prefix##_8e,prefix##_8f, \
-    prefix##_90,prefix##_91,prefix##_92,prefix##_93,prefix##_94,prefix##_95,prefix##_96,prefix##_97, \
-    prefix##_98,prefix##_99,prefix##_9a,prefix##_9b,prefix##_9c,prefix##_9d,prefix##_9e,prefix##_9f, \
-    prefix##_a0,prefix##_a1,prefix##_a2,prefix##_a3,prefix##_a4,prefix##_a5,prefix##_a6,prefix##_a7, \
-    prefix##_a8,prefix##_a9,prefix##_aa,prefix##_ab,prefix##_ac,prefix##_ad,prefix##_ae,prefix##_af, \
-    prefix##_b0,prefix##_b1,prefix##_b2,prefix##_b3,prefix##_b4,prefix##_b5,prefix##_b6,prefix##_b7, \
-    prefix##_b8,prefix##_b9,prefix##_ba,prefix##_bb,prefix##_bc,prefix##_bd,prefix##_be,prefix##_bf, \
-    prefix##_c0,prefix##_c1,prefix##_c2,prefix##_c3,prefix##_c4,prefix##_c5,prefix##_c6,prefix##_c7, \
-    prefix##_c8,prefix##_c9,prefix##_ca,prefix##_cb,prefix##_cc,prefix##_cd,prefix##_ce,prefix##_cf, \
-    prefix##_d0,prefix##_d1,prefix##_d2,prefix##_d3,prefix##_d4,prefix##_d5,prefix##_d6,prefix##_d7, \
-    prefix##_d8,prefix##_d9,prefix##_da,prefix##_db,prefix##_dc,prefix##_dd,prefix##_de,prefix##_df, \
-    prefix##_e0,prefix##_e1,prefix##_e2,prefix##_e3,prefix##_e4,prefix##_e5,prefix##_e6,prefix##_e7, \
-    prefix##_e8,prefix##_e9,prefix##_ea,prefix##_eb,prefix##_ec,prefix##_ed,prefix##_ee,prefix##_ef, \
-    prefix##_f0,prefix##_f1,prefix##_f2,prefix##_f3,prefix##_f4,prefix##_f5,prefix##_f6,prefix##_f7, \
-    prefix##_f8,prefix##_f9,prefix##_fa,prefix##_fb,prefix##_fc,prefix##_fd,prefix##_fe,prefix##_ff}
-
-MKTABLE(Z80op,op);
-MKTABLE(Z80cb,cb);
-MKTABLE(Z80dd,dd);
-MKTABLE(Z80ed,ed);
-MKTABLE(Z80fd,fd);
-MKTABLE(Z80xxcb,xxcb);
-
 static void take_interrupt(void)
 {
     if( _IFF1 )
@@ -3485,7 +3614,7 @@ static void take_interrupt(void)
         /* Interrupt mode 2. Call [Z80.I:databyte] */
         if( _IM == 2 )
         {
-            irq_vector = (irq_vector & 0xfe) | (_I << 8);
+			irq_vector = (irq_vector & 0xff) | (_I << 8);
             PUSH( PC );
 			RM16( irq_vector, &Z80.PC );
             LOG((errorlog, "Z80#%d IM2 [$%04x] = $%04x\n",cpu_getactivecpu() , irq_vector, _PCD));
@@ -3529,7 +3658,11 @@ static void take_interrupt(void)
 /****************************************************************************
  * Reset registers to their initial values
  ****************************************************************************/
+#if Z80_VM
+void z80_vm_reset(void *param)
+#else
 void z80_reset(void *param)
+#endif
 {
 	Z80_DaisyChain *daisy_chain = (Z80_DaisyChain *)param;
 	int i, p;
@@ -3624,6 +3757,19 @@ void z80_reset(void *param)
 	Z80.service_irq = -1;
     Z80.nmi_state = CLEAR_LINE;
 	Z80.irq_state = CLEAR_LINE;
+	Z80.nmi_nesting = 0;
+
+#if Z80_VM
+	/* reset the virtual memory offsets */
+	Z80.bank[0] = 0x0000;
+	Z80.bank[1] = 0x2000;
+	Z80.bank[2] = 0x4000;
+	Z80.bank[3] = 0x6000;
+	Z80.bank[4] = 0x8000;
+	Z80.bank[5] = 0xa000;
+	Z80.bank[6] = 0xc000;
+	Z80.bank[7] = 0xe000;
+#endif
 
     if( daisy_chain )
 	{
@@ -3642,7 +3788,11 @@ void z80_reset(void *param)
     change_pc(_PCD);
 }
 
+#if Z80_VM
+void z80_vm_exit(void)
+#else
 void z80_exit(void)
+#endif
 {
 #if BIG_FLAGS_ARRAY
 	if (SZHVC_add) free(SZHVC_add);
@@ -3655,7 +3805,11 @@ void z80_exit(void)
 /****************************************************************************
  * Execute IPeriod T-states. Return number of T-states really executed
  ****************************************************************************/
+#if Z80_VM
+int z80_vm_execute(int cycles)
+#else
 int z80_execute(int cycles)
+#endif
 {
     z80_ICount = cycles;
 
@@ -3678,7 +3832,11 @@ int z80_execute(int cycles)
 /****************************************************************************
  * Get all registers in given buffer
  ****************************************************************************/
+#if Z80_VM
+unsigned z80_vm_get_context (void *dst)
+#else
 unsigned z80_get_context (void *dst)
+#endif
 {
 	if( dst )
 	    *(Z80_Regs*)dst = Z80;
@@ -3688,7 +3846,11 @@ unsigned z80_get_context (void *dst)
 /****************************************************************************
  * Set all registers to given values
  ****************************************************************************/
+#if Z80_VM
+void z80_vm_set_context (void *src)
+#else
 void z80_set_context (void *src)
+#endif
 {
 	if( src )
 		Z80 = *(Z80_Regs*)src;
@@ -3698,7 +3860,11 @@ void z80_set_context (void *src)
 /****************************************************************************
  * Return program counter
  ****************************************************************************/
+#if Z80_VM
+unsigned z80_vm_get_pc (void)
+#else
 unsigned z80_get_pc (void)
+#endif
 {
     return _PCD;
 }
@@ -3706,7 +3872,11 @@ unsigned z80_get_pc (void)
 /****************************************************************************
  * Set program counter
  ****************************************************************************/
+#if Z80_VM
+void z80_vm_set_pc (unsigned val)
+#else
 void z80_set_pc (unsigned val)
+#endif
 {
 	_PC = val;
 	change_pc(_PCD);
@@ -3715,7 +3885,11 @@ void z80_set_pc (unsigned val)
 /****************************************************************************
  * Return stack pointer
  ****************************************************************************/
+#if Z80_VM
+unsigned z80_vm_get_sp (void)
+#else
 unsigned z80_get_sp (void)
+#endif
 {
 	return _SPD;
 }
@@ -3723,7 +3897,11 @@ unsigned z80_get_sp (void)
 /****************************************************************************
  * Set stack pointer
  ****************************************************************************/
+#if Z80_VM
+void z80_vm_set_sp (unsigned val)
+#else
 void z80_set_sp (unsigned val)
+#endif
 {
 	_SP = val;
 }
@@ -3731,7 +3909,11 @@ void z80_set_sp (unsigned val)
 /****************************************************************************
  * Return a specific register
  ****************************************************************************/
+#if Z80_VM
+unsigned z80_vm_get_reg (int regnum)
+#else
 unsigned z80_get_reg (int regnum)
+#endif
 {
 	switch( regnum )
 	{
@@ -3760,7 +3942,17 @@ unsigned z80_get_reg (int regnum)
 		case Z80_DC2: return Z80.int_state[2];
 		case Z80_DC3: return Z80.int_state[3];
 		case Z80_NMI_NESTING: return Z80.nmi_nesting;
-		case REG_PREVIOUSPC: return Z80.PPC.w.l;
+#if Z80_VM
+		case Z80_BANK0: return Z80.bank[0];
+		case Z80_BANK1: return Z80.bank[1];
+		case Z80_BANK2: return Z80.bank[2];
+		case Z80_BANK3: return Z80.bank[3];
+		case Z80_BANK4: return Z80.bank[4];
+		case Z80_BANK5: return Z80.bank[5];
+		case Z80_BANK6: return Z80.bank[6];
+		case Z80_BANK7: return Z80.bank[7];
+#endif
+        case REG_PREVIOUSPC: return Z80.PPC.w.l;
 		default:
 			if( regnum <= REG_SP_CONTENTS )
 			{
@@ -3775,7 +3967,11 @@ unsigned z80_get_reg (int regnum)
 /****************************************************************************
  * Set a specific register
  ****************************************************************************/
+#if Z80_VM
+void z80_vm_set_reg (int regnum, unsigned val)
+#else
 void z80_set_reg (int regnum, unsigned val)
+#endif
 {
 	switch( regnum )
 	{
@@ -3804,7 +4000,17 @@ void z80_set_reg (int regnum, unsigned val)
 		case Z80_DC2: Z80.int_state[2] = val; break;
 		case Z80_DC3: Z80.int_state[3] = val; break;
 		case Z80_NMI_NESTING: Z80.nmi_nesting = val; break;
-		default:
+#if Z80_VM
+		case Z80_BANK0: Z80.bank[0] = val; break;
+		case Z80_BANK1: Z80.bank[1] = val; break;
+		case Z80_BANK2: Z80.bank[2] = val; break;
+		case Z80_BANK3: Z80.bank[3] = val; break;
+		case Z80_BANK4: Z80.bank[4] = val; break;
+		case Z80_BANK5: Z80.bank[5] = val; break;
+		case Z80_BANK6: Z80.bank[6] = val; break;
+		case Z80_BANK7: Z80.bank[7] = val; break;
+#endif
+        default:
 			if( regnum <= REG_SP_CONTENTS )
 			{
 				unsigned offset = _SPD + 2 * (REG_SP_CONTENTS - regnum);
@@ -3820,7 +4026,11 @@ void z80_set_reg (int regnum, unsigned val)
 /****************************************************************************
  * Set NMI line state
  ****************************************************************************/
+#if Z80_VM
+void z80_vm_set_nmi_line(int state)
+#else
 void z80_set_nmi_line(int state)
+#endif
 {
 	if( Z80.nmi_state == state ) return;
 
@@ -3853,7 +4063,11 @@ void z80_set_nmi_line(int state)
 /****************************************************************************
  * Set IRQ line state
  ****************************************************************************/
+#if Z80_VM
+void z80_vm_set_irq_line(int irqline, int state)
+#else
 void z80_set_irq_line(int irqline, int state)
+#endif
 {
 	LOG((errorlog, "Z80#%d set_irq_line %d\n",cpu_getactivecpu() , state));
     Z80.irq_state = state;
@@ -3903,7 +4117,11 @@ void z80_set_irq_line(int irqline, int state)
 /****************************************************************************
  * Set IRQ vector callback
  ****************************************************************************/
+#if Z80_VM
+void z80_vm_set_irq_callback(int (*callback)(int))
+#else
 void z80_set_irq_callback(int (*callback)(int))
+#endif
 {
 	LOG((errorlog, "Z80#%d set_irq_callback $%08x\n",cpu_getactivecpu() , (int)callback));
     Z80.irq_callback = callback;
@@ -3912,7 +4130,11 @@ void z80_set_irq_callback(int (*callback)(int))
 /****************************************************************************
  * Save CPU state
  ****************************************************************************/
+#if Z80_VM
+void z80_vm_state_save(void *file)
+#else
 void z80_state_save(void *file)
+#endif
 {
 	int cpu = cpu_getactivecpu();
 	state_save_UINT16(file, "z80", cpu, "AF", &Z80.AF.w.l, 1);
@@ -3946,7 +4168,11 @@ void z80_state_save(void *file)
 /****************************************************************************
  * Load CPU state
  ****************************************************************************/
+#if Z80_VM
+void z80_vm_state_load(void *file)
+#else
 void z80_state_load(void *file)
+#endif
 {
 	int cpu = cpu_getactivecpu();
 	state_load_UINT16(file, "z80", cpu, "AF", &Z80.AF.w.l, 1);
@@ -3980,7 +4206,11 @@ void z80_state_load(void *file)
 /****************************************************************************
  * Return a formatted string for a register
  ****************************************************************************/
+#if Z80_VM
+const char *z80_vm_info(void *context, int regnum)
+#else
 const char *z80_info(void *context, int regnum)
+#endif
 {
 	static char buffer[32][47+1];
 	static int which = 0;
@@ -4018,7 +4248,17 @@ const char *z80_info(void *context, int regnum)
 		case CPU_INFO_REG+Z80_DC2: if(Z80.irq_max >= 3) sprintf(buffer[which], "DC2:%X", r->int_state[2]); break;
 		case CPU_INFO_REG+Z80_DC3: if(Z80.irq_max >= 4) sprintf(buffer[which], "DC3:%X", r->int_state[3]); break;
 		case CPU_INFO_REG+Z80_NMI_NESTING: sprintf(buffer[which], "NMIN:%X", r->nmi_nesting); break;
-		case CPU_INFO_FLAGS:
+#if Z80_VM
+		case CPU_INFO_REG+Z80_BANK0: sprintf(buffer[which], "0:%06X", r->bank[0]); break;
+		case CPU_INFO_REG+Z80_BANK1: sprintf(buffer[which], "1:%06X", r->bank[1]); break;
+		case CPU_INFO_REG+Z80_BANK2: sprintf(buffer[which], "2:%06X", r->bank[2]); break;
+		case CPU_INFO_REG+Z80_BANK3: sprintf(buffer[which], "3:%06X", r->bank[3]); break;
+		case CPU_INFO_REG+Z80_BANK4: sprintf(buffer[which], "4:%06X", r->bank[4]); break;
+		case CPU_INFO_REG+Z80_BANK5: sprintf(buffer[which], "5:%06X", r->bank[5]); break;
+		case CPU_INFO_REG+Z80_BANK6: sprintf(buffer[which], "6:%06X", r->bank[6]); break;
+		case CPU_INFO_REG+Z80_BANK7: sprintf(buffer[which], "7:%06X", r->bank[7]); break;
+#endif
+        case CPU_INFO_FLAGS:
 			sprintf(buffer[which], "%c%c%c%c%c%c%c%c",
 				r->AF.b.l & 0x80 ? 'S':'.',
 				r->AF.b.l & 0x40 ? 'Z':'.',
@@ -4029,9 +4269,13 @@ const char *z80_info(void *context, int regnum)
 				r->AF.b.l & 0x02 ? 'N':'.',
 				r->AF.b.l & 0x01 ? 'C':'.');
 			break;
+#if Z80_VM
+		case CPU_INFO_NAME: return "Z80 VM";
+#else
 		case CPU_INFO_NAME: return "Z80";
-		case CPU_INFO_FAMILY: return "Zilog Z80";
-		case CPU_INFO_VERSION: return "1.5";
+#endif
+        case CPU_INFO_FAMILY: return "Zilog Z80";
+		case CPU_INFO_VERSION: return "1.6";
 		case CPU_INFO_FILE: return __FILE__;
 		case CPU_INFO_CREDITS: return "Copyright (C) 1998,1999 Juergen Buchmueller, all rights reserved.";
 		case CPU_INFO_REG_LAYOUT: return (const char *)z80_reg_layout;
@@ -4040,7 +4284,11 @@ const char *z80_info(void *context, int regnum)
 	return buffer[which];
 }
 
+#if Z80_VM
+unsigned z80_vm_dasm( char *buffer, unsigned pc )
+#else
 unsigned z80_dasm( char *buffer, unsigned pc )
+#endif
 {
 #ifdef MAME_DEBUG
     return DasmZ80( buffer, pc );
@@ -4049,3 +4297,4 @@ unsigned z80_dasm( char *buffer, unsigned pc )
 	return 1;
 #endif
 }
+

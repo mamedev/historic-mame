@@ -184,11 +184,11 @@ static struct Samplesinterface samples_interface =
 const char *turbo_sample_names[]=
 {
 	"*turbo",
-	"01.sam", /* Trig1 */
-	"02.sam", /* Trig2 */
-	"03.sam", /* Trig3 */
-	"04.sam", /* Trig4 */
-	"10.sam", /* Ambulance */
+	"01.wav", /* Trig1 */
+	"02.wav", /* Trig2 */
+	"03.wav", /* Trig3 */
+	"04.wav", /* Trig4 */
+	"10.wav", /* Ambulance */
 	0 /*array end*/
 };
 

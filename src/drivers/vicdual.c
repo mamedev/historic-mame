@@ -1502,16 +1502,16 @@ static unsigned char ho2ds_color_prom[] =
 static const char *carnival_sample_names[] =
 {
 	"*carnival",
-	"bear.sam",
-	"bonus1.sam",
-	"bonus2.sam",
-	"clang.sam",
-	"duck1.sam",
-	"duck2.sam",
-	"duck3.sam",
-	"pipehit.sam",
-	"ranking.sam",
-	"rifle.sam",
+	"bear.wav",
+	"bonus1.wav",
+	"bonus2.wav",
+	"clang.wav",
+	"duck1.wav",
+	"duck2.wav",
+	"duck3.wav",
+	"pipehit.wav",
+	"ranking.wav",
+	"rifle.wav",
 	NULL
 };
 

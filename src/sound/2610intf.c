@@ -85,17 +85,20 @@ void YM2610UpdateRequest(int chip)
 	stream_update(stream[chip],100);
 }
 
-int YM2610_sh_start(const struct YM2610interface *interface ){
+int YM2610_sh_start(const struct MachineSound *msound)
+{
 	int i,j;
 	int rate = Machine->sample_rate;
 	char buf[YM2610_NUMBUF][40];
 	const char *name[YM2610_NUMBUF];
 	int mixed_vol,vol[YM2610_NUMBUF],pan[YM2610_NUMBUF];
+	void *pcmbufa[YM2610_NUMBUF],*pcmbufb[YM2610_NUMBUF];
+	int  pcmsizea[YM2610_NUMBUF],pcmsizeb[YM2610_NUMBUF];
 
-	intf = interface;
+	intf = msound->sound_interface;
 	if( intf->num > MAX_2610 ) return 1;
 
-	if( AY8910_sh_start_ex((struct AY8910interface *)interface,"YM2610(SSG)") ) return 1;
+	if( AY8910_sh_start_ex(msound,"YM2610(SSG)") ) return 1;
 
 	/* FM init */
 #if 0
@@ -127,34 +130,44 @@ int YM2610_sh_start(const struct YM2610interface *interface ){
 			}
 			sprintf(buf[j],"YM2610 #%d Ch%d(%s)",i,j+1,chname);
 		}
-		stream[i] = stream_init_multi(YM2610_NUMBUF,name,rate,FM_OUTPUT_BIT,i,YM2610UpdateOne);
+		stream[i] = stream_init_multi(msound,YM2610_NUMBUF,name,rate,FM_OUTPUT_BIT,i,YM2610UpdateOne);
 		/* volume setup */
 		for (j = 0 ; j < YM2610_NUMBUF ; j++)
 		{
 			stream_set_volume(stream[i]+j,vol[j]);
 			stream_set_pan(stream[i]+j,pan[j]);
 		}
+		/* setup adpcm buffers */
+		pcmbufa[i]  = (void *)(Machine->memory_region[intf->pcmroma[i]]);
+		pcmsizea[i] = Machine->memory_region_length[intf->pcmroma[i]];
+		pcmbufb[i]  = (void *)(Machine->memory_region[intf->pcmromb[i]]);
+		pcmsizeb[i] = Machine->memory_region_length[intf->pcmromb[i]];
 	}
 
 	/**** initialize YM2610 ****/
-	if (YM2610Init(intf->num,intf->baseclock,rate, intf->pcmroma, intf->pcmromb,TimerHandler,IRQHandler) == 0)
+	if (YM2610Init(intf->num,intf->baseclock,rate,
+		           pcmbufa,pcmsizea,pcmbufb,pcmsizeb,
+		           TimerHandler,IRQHandler) == 0)
 		return 0;
 
 	/* error */
 	return 1;
 }
 
-int YM2610B_sh_start(const struct YM2610interface *interface ){
+int YM2610B_sh_start(const struct MachineSound *msound)
+{
 	int i,j;
 	int rate = Machine->sample_rate;
 	char buf[YM2610_NUMBUF][40];
 	const char *name[YM2610_NUMBUF];
 	int mixed_vol,vol[YM2610_NUMBUF],pan[YM2610_NUMBUF];
+	void *pcmbufa[YM2610_NUMBUF],*pcmbufb[YM2610_NUMBUF];
+	int  pcmsizea[YM2610_NUMBUF],pcmsizeb[YM2610_NUMBUF];
 
-	intf = interface;
+	intf = msound->sound_interface;
 	if( intf->num > MAX_2610 ) return 1;
 
-	if( AY8910_sh_start_ex((struct AY8910interface *)interface,"YM2610(SSG)") ) return 1;
+	if( AY8910_sh_start_ex(msound,"YM2610B(SSG)") ) return 1;
 
 	/* FM init */
 #if 0
@@ -184,19 +197,26 @@ int YM2610B_sh_start(const struct YM2610interface *interface ){
 			case OSD_PAN_RIGHT: chname="Rt";break;
 			default:            chname="??";break;
 			}
-			sprintf(buf[j],"YM2610 #%d Ch%d(%s)",i,j+1,chname);
+			sprintf(buf[j],"YM2610B #%d Ch%d(%s)",i,j+1,chname);
 		}
-		stream[i] = stream_init_multi(YM2610_NUMBUF,name,rate,FM_OUTPUT_BIT,i,YM2610BUpdateOne);
+		stream[i] = stream_init_multi(msound,YM2610_NUMBUF,name,rate,FM_OUTPUT_BIT,i,YM2610BUpdateOne);
 		/* volume setup */
 		for (j = 0 ; j < YM2610_NUMBUF ; j++)
 		{
 			stream_set_volume(stream[i]+j,vol[j]);
 			stream_set_pan(stream[i]+j,pan[j]);
 		}
+		/* setup adpcm buffers */
+		pcmbufa[i]  = (void *)(Machine->memory_region[intf->pcmroma[i]]);
+		pcmsizea[i] = Machine->memory_region_length[intf->pcmroma[i]];
+		pcmbufb[i]  = (void *)(Machine->memory_region[intf->pcmromb[i]]);
+		pcmsizeb[i] = Machine->memory_region_length[intf->pcmromb[i]];
 	}
 
 	/**** initialize YM2610 ****/
-	if (YM2610Init(intf->num,intf->baseclock,rate, intf->pcmroma, intf->pcmromb,TimerHandler,0) == 0)
+	if (YM2610Init(intf->num,intf->baseclock,rate,
+		           pcmbufa,pcmsizea,pcmbufb,pcmsizeb,
+		           TimerHandler,IRQHandler) == 0)
 		return 0;
 
 	/* error */
@@ -209,6 +229,15 @@ int YM2610B_sh_start(const struct YM2610interface *interface ){
 void YM2610_sh_stop(void)
 {
 	YM2610Shutdown();
+}
+
+/* reset */
+void YM2610_sh_reset(void)
+{
+	int i;
+
+	for (i = 0;i < intf->num;i++)
+		YM2610ResetChip(i);
 }
 
 /************************************************/

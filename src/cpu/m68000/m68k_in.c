@@ -6056,7 +6056,8 @@ void m68000_movem_pd_32(void)
 			count++;
 		}
 	AY = ea;
-	USE_CLKS((count << 4) + 8);
+	/* ASG: changed from (count << 4) to (count << 3) */
+	USE_CLKS((count << 3) + 8);
 }
 
 
@@ -6094,7 +6095,8 @@ void m68000_movem_pi_32(void)
 			count++;
 		}
 	AY = ea;
-	USE_CLKS((count << 4) + 12);
+	/* ASG: changed from (count << 4) to (count << 3) */
+	USE_CLKS((count << 3) + 12);
 }
 
 
@@ -6130,7 +6132,8 @@ void m68000_movem_re_32(void)
 			ea += 4;
 			count++;
 		}
-	USE_CLKS((count << 4) + 4);
+	/* ASG: changed from (count << 4) to (count << 3) */
+	USE_CLKS((count << 3) + 4);
 }
 
 
@@ -6166,7 +6169,8 @@ void m68000_movem_er_32(void)
 			ea += 4;
 			count++;
 		}
-	USE_CLKS((count << 4) + 8);
+	/* ASG: changed from (count << 4) to (count << 3) */
+	USE_CLKS((count << 3) + 8);
 }
 
 
@@ -7746,29 +7750,6 @@ void m68000_rte(void)
 		new_pc = m68ki_pull_32();
 		m68ki_branch_long(new_pc);
 		m68ki_set_sr(new_sr);
-#if 1	/* HJB test: execute one more instruction after RTE */
-		{
-			extern void (*m68k_instruction_jump_table[]) (void);	/* opcode handler jump table */
-
-			/* Set tracing accodring to T1. (T0 is done inside instruction) */
-			m68ki_set_trace();		   /* auto-disable (see m68kcpu.h) */
-
-			/* Call external hook to peek at CPU */
-			m68ki_instr_hook();		   /* auto-disable (see m68kcpu.h) */
-
-			/* MAME */
-			CPU_PPC = CPU_PC;
-			CALL_MAME_DEBUG;
-			/* MAME */
-
-			/* Read an instruction and call its handler */
-			CPU_IR = m68ki_read_instruction();
-			m68k_instruction_jump_table[CPU_IR] ();
-
-			/* Trace m68k_exception, if necessary */
-			m68ki_exception_if_trace();		/* auto-disable (see m68kcpu.h) */
-		}
-#endif
 		if (!(CPU_MODE & CPU_MODE_010_PLUS))
 		{
 			USE_CLKS(20);

@@ -37,8 +37,101 @@ static int tnzs_mcu_1;
 
 static void tnzs_update_mcu (void);
 
+static int current_inputport;	/* reads of c000 (sound cpu) expect a sequence of values */
+static int number_of_credits;
+
+
+void arkanoi2_init_machine (void)
+{
+    current_inputport = -3;
+    number_of_credits = 0;
+}
+
+
+/* number of input ports to be cycled through (coins, buttons etc.) */
+#define ip_num 2
+
+int arkanoi2_inputport_r(int offset)
+{
+	int ret;
+
+	if (offset == 0)
+	{
+        switch(current_inputport)
+		{
+			case -3: ret = 0x55; break;
+			case -2: ret = 0xaa; break;
+			case -1: ret = 0x5a; break;
+		case ip_num: current_inputport = 0; /* fall through */
+			case 0:  ret = number_of_credits; break;
+			default: ret = readinputport(current_inputport+2); break;
+		}
+	  current_inputport++;
+	  return ret;
+	}
+	else
+		return (0x01);	/* 0xE1 for tilt, 31 service ok */
+}
+
+
+void arkanoi2_inputport_w(int offset, int data)
+{
+	if (offset == 0)
+		number_of_credits -= ((~data)&0xff)+1;	/* sub data from credits */
+	else
+/* TBD: value written (or its low nibble) subtracted from sequence index? */
+		if (current_inputport>=0)	/* if the initial sequence is done */
+			current_inputport=0;	/* reset input port number */
+}
+
+
+int arkanoi2_sh_f000_r(int offs)
+{
+	int val;
+
+	val = readinputport(2);
+	if (offs == 0)
+	{
+		if (errorlog) fprintf (errorlog, "f000_r: %02x\n", val & 0xff);
+		return val & 0xff;
+	}
+	else
+	{
+		if (errorlog) fprintf (errorlog, "f001_r: %02x\n", (val >> 8) & 0xff);
+		return ((val >> 8) & 0xff);
+	}
+}
+
+int arkanoi2_interrupt(void)
+{
+	static int insertcoin;
+	int t;
+
+    /* Update credit counter. The game somehow tells the hardware when
+       to decrease the counter. (maybe by writing to c001 on the 2nd cpu?) */
+	t = (readinputport(2) & 0x7000) ^ 0x5000;
+	if (t && !insertcoin)
+		number_of_credits++;
+	insertcoin = t;
+
+	return 0;
+}
+
+
+
+
 int tnzs_interrupt (void)
 {
+	static int insertcoin;
+	int t;
+
+    /* Update credit counter. The game somehow tells the hardware when
+       to decrease the counter. (maybe by writing to c001 on the 2nd cpu?) */
+	t = osd_key_pressed(OSD_KEY_3);
+	if (t && !insertcoin)
+		number_of_credits++;
+	insertcoin = t;
+
 	tnzs_update_mcu ();
 	return 0;
 }
@@ -70,13 +163,13 @@ void tnzs_init_machine (void)
 {
     tnzs_credits = 0;
     tnzs_coin_a = 0;
-    tnzs_oldcoin_a = readinputport (1) & 0x01;
-    tnzs_oldcoin_b = readinputport (1) & 0x02;
-    tnzs_oldservice = readinputport (2) & 0x01;
+    tnzs_oldcoin_a = readinputport (3) & 0x01;
+    tnzs_oldcoin_b = readinputport (3) & 0x02;
+    tnzs_oldservice = readinputport (4) & 0x01;
     tnzs_tilt = 0;
 
-    tnzs_dip_a = readinputport (5) & 0x30;
-    tnzs_dip_b = readinputport (5) & 0xc0;
+    tnzs_dip_a = readinputport (0) & 0x30;
+    tnzs_dip_b = readinputport (0) & 0xc0;
 
     tnzs_inputport = -4;
     tnzs_mcu_1 = 0;
@@ -102,7 +195,7 @@ static void tnzs_update_mcu (void)
 	int val;
 
     /* read coin switch A */
-    val = readinputport (1) & 0x01;
+    val = readinputport (3) & 0x01;
     if (val && !tnzs_oldcoin_a)
     {
     	tnzs_coin_a ++;
@@ -119,7 +212,7 @@ static void tnzs_update_mcu (void)
     tnzs_oldcoin_a = val;
 
 	/* read coin switch B */
-    val = readinputport (1) & 0x02;
+    val = readinputport (3) & 0x02;
     if (val && !tnzs_oldcoin_b)
     {
     	/* coin was inserted, adjust based on the dip settings */
@@ -134,7 +227,7 @@ static void tnzs_update_mcu (void)
     tnzs_oldcoin_b = val;
 
 	/* read the service coin switch */
-    val = readinputport (2) & 0x01;
+    val = readinputport (4) & 0x01;
     if (val && !tnzs_oldservice) tnzs_credits ++;
     tnzs_oldservice = val;
 
@@ -142,7 +235,7 @@ static void tnzs_update_mcu (void)
 	if (tnzs_credits > 9) tnzs_credits = 9;
 
 	/* read the tilt switch */
-    if ((readinputport (2) & 0x02) == 0x00) tnzs_tilt = 1;
+    if ((readinputport (4) & 0x02) == 0x00) tnzs_tilt = 1;
 }
 
 int tnzs_mcu_r (int offset)
@@ -162,10 +255,10 @@ int tnzs_mcu_r (int offset)
 		/* otherwise handle the inputs */
 		switch (tnzs_mcu_1)
 		{
-			case 0x1a: return (readinputport (1));
-			case 0x21: return (readinputport (2));
-			case 0x01: return (readinputport (3));
-			case 0x02: return (readinputport (4));
+			case 0x1a: return (readinputport (3));
+			case 0x21: return (readinputport (4));
+			case 0x01: return (readinputport (5));
+			case 0x02: return (readinputport (6));
 
 			/* Reset the coin counter */
 			case 0x41: return 0xff;
@@ -175,7 +268,7 @@ int tnzs_mcu_r (int offset)
 				if (tnzs_inputport == 1)
 					return tnzs_credits;
 				else
-					return readinputport (0);
+					return readinputport (2);
 				break;
 
 			/* Should not be reached */

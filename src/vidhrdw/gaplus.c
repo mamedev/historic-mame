@@ -84,6 +84,11 @@ void gaplus_vh_convert_color_prom(unsigned char *palette, unsigned short *colort
 
 #define MAX_STARS			250
 
+/* starfield speed constants (bigger = faster) */
+#define SPEED_1 0.5
+#define SPEED_2 1.0
+#define SPEED_3 2.0
+
 struct star {
 	float x,y;
 	int col,set;
@@ -138,21 +143,18 @@ static void starfield_init( void ) {
 	}
 }
 
-static void starfield_update( struct osd_bitmap *bitmap ) {
-
+void gaplus_starfield_update( void ) {
 	int i;
 	int width, height;
 
 	width = Machine->drv->screen_width;
 	height = Machine->drv->screen_height;
 
-	fillbitmap( bitmap, Machine->pens[0], &Machine->drv->visible_area );
-
 	/* check if we're running */
 	if ( ( gaplus_starfield_control[0] & 1 ) == 0 )
 		return;
 
-	/* draw the starfields */
+	/* update the starfields */
 	for ( i = 0; i < total_stars; i++ ) {
 		int x, y;
 
@@ -162,33 +164,43 @@ static void starfield_update( struct osd_bitmap *bitmap ) {
 			break;
 
 			case 0x86:
-				/* scroll down x1 */
-				stars[i].x += 0.25;
+				/* scroll down (speed 1) */
+				stars[i].x += SPEED_1;
 			break;
 
 			case 0x85:
-				/* scroll down x2 */
-				stars[i].x += 0.50;
+				/* scroll down (speed 2) */
+				stars[i].x += SPEED_2;
 			break;
 
 			case 0x06:
-				/* scroll down x4 */
-				stars[i].x += 1.0;
+				/* scroll down (speed 3) */
+				stars[i].x += SPEED_3;
 			break;
 
 			case 0x80:
-				/* scroll up x1 */
-				stars[i].x -= 0.25;
+				/* scroll up (speed 1) */
+				stars[i].x -= SPEED_1;
 			break;
 
 			case 0x82:
-				/* scroll up x2 */
-				stars[i].x -= 0.50;
+				/* scroll up (speed 2) */
+				stars[i].x -= SPEED_2;
 			break;
 
 			case 0x81:
-				/* scroll up x4 */
-				stars[i].x -= 1.0;
+				/* scroll up (speed 3) */
+				stars[i].x -= SPEED_3;
+			break;
+
+			case 0x9f:
+				/* scroll left (speed 2) */
+				stars[i].y += SPEED_2;
+			break;
+
+			case 0xaf:
+				/* scroll left (speed 1) */
+				stars[i].y += SPEED_1;
 			break;
 		}
 
@@ -198,6 +210,30 @@ static void starfield_update( struct osd_bitmap *bitmap ) {
 
 		if ( stars[i].x >= ( float )( width*2 ) )
 			stars[i].x -= ( float )( width*2 );
+
+		if ( stars[i].y < 0 )
+			stars[i].y = ( float )( height ) + stars[i].y;
+
+		if ( stars[i].y >= ( float )( height ) )
+			stars[i].y -= ( float )( height );
+	}
+}
+
+static void starfield_render( struct osd_bitmap *bitmap ) {
+
+	int i;
+	int width, height;
+
+	width = Machine->drv->screen_width;
+	height = Machine->drv->screen_height;
+
+	/* check if we're running */
+	if ( ( gaplus_starfield_control[0] & 1 ) == 0 )
+		return;
+
+	/* draw the starfields */
+	for ( i = 0; i < total_stars; i++ ) {
+		int x, y;
 
 		x = stars[i].x;
 		y = stars[i].y;
@@ -224,6 +260,14 @@ static void starfield_update( struct osd_bitmap *bitmap ) {
 
 void gaplus_starfield_control_w( int offset, int data ) {
 	gaplus_starfield_control[offset] = data;
+}
+
+static int flipscreen = 0;
+
+void gaplus_flipscreen_w( int data )
+{
+	flipscreen = data;
+	memset(dirtybuffer,1,videoram_size);
 }
 
 extern unsigned char *gaplus_sharedram;
@@ -267,11 +311,14 @@ void gaplus_draw_sprite(struct osd_bitmap *dest,unsigned int code,unsigned int c
   the main emulation engine.
 
 ***************************************************************************/
+
 void gaplus_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	int offs;
 
-	starfield_update( bitmap );
+	fillbitmap( bitmap, Machine->pens[0], &Machine->drv->visible_area );
+
+	starfield_render( bitmap );
 
 	/* for every character in the Video RAM, check if it has been modified */
 	/* since last time and update it accordingly. */
@@ -304,6 +351,11 @@ void gaplus_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			sy = my + 2;
 		}
 
+		if (flipscreen)
+		{
+			sx = 27 - sx;
+			sy = 35 - sy;
+		}
 		/* colorram layout: */
 		/* bit 7 = bank */
 		/* bit 6 = chars that go on top of sprites (unimplemented yet) */
@@ -316,7 +368,7 @@ void gaplus_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
         drawgfx(bitmap,Machine->gfx[bank],
                 videoram[offs],
                 colorram[offs] & 0x3f,
-                0,0,8*sy,8*sx,
+                flipscreen,flipscreen,8*sy,8*sx,
                 &Machine->drv->visible_area,TRANSPARENCY_PEN,0);
 	}
 
@@ -332,6 +384,11 @@ void gaplus_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
             int x = (spriteram_2[offs+1]-71) + 0x100*(spriteram_3[offs+1] & 1);
 			int flipy = spriteram_3[offs] & 2;
 			int flipx = spriteram_3[offs] & 1;
+
+			if (flipscreen)
+			{
+				flipx = !flipx;
+			}
 
             switch (spriteram_3[offs] & 0xa8)
 			{

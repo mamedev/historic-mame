@@ -107,7 +107,7 @@ static void common_videoram_w(int offset,int data,int palette)
 	   The game writes the same bytes with different colors. For example, the
 	   fuel meter doesn't work with that 'optimization' */
 
-	int i,x,y,dy,fore,back,color;
+	int i,x,y,dx,dy,fore,back,color;
 
 	videoram[offset] = data;
 
@@ -116,18 +116,37 @@ static void common_videoram_w(int offset,int data,int palette)
 	fore = Machine->pens[color | palette | 1];
 	back = Machine->pens[color | palette    ];
 
-	x = offset & 0xff;
-	y = (offset >> 8) << 3;
-	dy = 1;
+	x = (offset >> 8) << 3;
+	y = 255 - (offset & 0xff);
+	dx = 1;
+	dy = 0;
 
 	if (flipscreen)
 	{
 		x = 255 - x;
 		y = 255 - y;
-		dy = -1;
+		dx = -1;
 	}
 
-	osd_mark_dirty(x,y,x,y+(7*dy),0);
+	if (Machine->orientation & ORIENTATION_SWAP_XY)
+	{
+		int t;
+
+		t = x; x = y; y = t;
+		t = dx; dx = dy; dy = t;
+	}
+	if (Machine->orientation & ORIENTATION_FLIP_X)
+	{
+		x = x ^ 0xff;
+		dx = -dx;
+	}
+	if (Machine->orientation & ORIENTATION_FLIP_Y)
+	{
+		y = y ^ 0xff;
+		dy = -dy;
+	}
+
+	osd_mark_dirty(x,y,x+(7*dx),y+(7*dy),0);
 
 	for (i = 0; i < 8; i++)
 	{
@@ -136,6 +155,7 @@ static void common_videoram_w(int offset,int data,int palette)
 		else
 			Machine->scrbitmap->line[y][x] = tmpbitmap->line[y][x] = back;
 
+		x += dx;
 		y += dy;
 		data >>= 1;
 	}

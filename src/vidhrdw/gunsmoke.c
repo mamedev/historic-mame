@@ -210,8 +210,8 @@ void gunsmoke_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 					drawgfx(bgbitmap,Machine->gfx[1],
 							tile,
 							(attr & 0x3c) >> 2,
-							attr & 0x80,attr & 0x40,
-							tx*32, ty*32,
+							attr & 0x40,attr & 0x80,
+							(8-ty)*32, tx*32,
 							0,
 							TRANSPARENCY_NONE,0);
 				}
@@ -220,8 +220,8 @@ void gunsmoke_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			offs-=0x10;
 		}
 
-		xscroll = -(left*32+bg_scrollx);
-		yscroll = -(top*32+32-bg_scrolly);
+		xscroll = (top*32-bg_scrolly);
+		yscroll = -(left*32+bg_scrollx);
 		copyscrollbitmap(bitmap,bgbitmap,
 			1,&xscroll,
 			1,&yscroll,
@@ -243,10 +243,10 @@ void gunsmoke_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			bank = (spriteram[offs + 1] & 0xc0) >> 6;
 			if (bank == 3) bank += sprite3bank;
 
- 			sx = spriteram[offs + 2];
-			sy = 240 - spriteram[offs + 3] + ((spriteram[offs + 1] & 0x20) << 3);
-			flipx = spriteram[offs + 1] & 0x10;
-			flipy = 0;
+			sx = spriteram[offs + 3] - ((spriteram[offs + 1] & 0x20) << 3);
+ 			sy = spriteram[offs + 2];
+			flipx = 0;
+			flipy = spriteram[offs + 1] & 0x10;
 			if (flipscreen)
 			{
 				sx = 240 - sx;
@@ -270,8 +270,8 @@ void gunsmoke_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		/* draw the frontmost playfield. They are characters, but draw them as sprites */
 		for (offs = videoram_size - 1;offs >= 0;offs--)
 		{
-			sx = offs / 32;
-			sy = 31 - offs % 32;
+			sx = offs % 32;
+			sy = offs / 32;
 			if (flipscreen)
 			{
 				sx = 31 - sx;
@@ -281,7 +281,7 @@ void gunsmoke_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			drawgfx(bitmap,Machine->gfx[0],
 					videoram[offs] + ((colorram[offs] & 0xc0) << 2),
 					colorram[offs] & 0x1f,
-					flipscreen,flipscreen,
+					!flipscreen,!flipscreen,
 					8*sx,8*sy,
 					&Machine->drv->visible_area,TRANSPARENCY_COLOR,79);
 		}

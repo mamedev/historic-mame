@@ -74,13 +74,20 @@ void terrac_vh_convert_color_prom(unsigned char *palette, unsigned short *colort
 	/* sprites use colors 128-191 in four banks */
 	/* The lookup table tells which colors to pick from the selected bank */
 	/* the bank is selected by another PROM and depends on the top 8 bits of */
-	/* the sprite code. */
-	for (i = 0;i < TOTAL_COLORS(2)/4;i++)
+	/* the sprite code. The PROM selects the bank *separately* for pens 0-7 and */
+	/* 8-15 (like for tiles). */
+	for (i = 0;i < TOTAL_COLORS(2)/16;i++)
 	{
 		int j;
 
-		for (j = 0;j < 4;j++)
-			COLOR(2,i + j * (TOTAL_COLORS(2)/4)) = 128 + j*16 + (*color_prom & 0x0f);
+		for (j = 0;j < 16;j++)
+		{
+			if (i & 8)
+				COLOR(2,i + j * (TOTAL_COLORS(2)/16)) = 128 + ((j & 0x0c) << 2) + (*color_prom & 0x0f);
+			else
+				COLOR(2,i + j * (TOTAL_COLORS(2)/16)) = 128 + ((j & 0x03) << 4) + (*color_prom & 0x0f);
+		}
+
 		color_prom++;
 	}
 
@@ -199,24 +206,23 @@ void terracre_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 	for (x = 0;x <spriteram_size;x += 8)
 	{
-		int code = READ_WORD(&spriteram[x+2]) & 0xff;
+		int code;
 		int attr = READ_WORD(&spriteram[x+4]) & 0xff;
-		int bank = (attr & 2) >> 1;
-		int color = (attr&0xf0) >> 4;
-		int flipx = attr & 4;
-		int flipy = attr & 8;
-
+		int color = (attr & 0xf0) >> 4;
+		int flipx = attr & 0x04;
+		int flipy = attr & 0x08;
 		int sx,sy;
 
-		code += 256 * bank;
 		sx = (READ_WORD(&spriteram[x+6]) & 0xff) - 0x80 + 256 * (attr & 1);
-		sy = READ_WORD(&spriteram[x]) & 0xff;
+		sy = 240 - (READ_WORD(&spriteram[x]) & 0xff);
+
+		code = (READ_WORD(&spriteram[x+2]) & 0xff) + ((attr & 0x02) << 7);
 
 		drawgfx(bitmap,Machine->gfx[2],
 				code,
-				color + 16 * (spritepalettebank[code >> 1] & 0x03),
+				color + 16 * (spritepalettebank[code >> 1] & 0x0f),
 				flipx,flipy,
-				sx,240 - sy,
+				sx,sy,
 				&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
 	}
 

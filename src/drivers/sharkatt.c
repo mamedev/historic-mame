@@ -186,7 +186,7 @@ static struct MachineDriver machine_driver =
 	0,
 
 	/* video hardware */
-	32*8, 32*8, { 2*8, 30*8-1, 0*8, 32*8-1 },
+	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
 	0,      /* no gfxdecodeinfo - bitmapped display */
 	16, 16,
 	0,
@@ -297,7 +297,7 @@ struct GameDriver sharkatt_driver =
 	sharkatt_input_ports,
 
 	0, 0, 0,    /* colors, palette, colortable */
-	ORIENTATION_DEFAULT,
+	ORIENTATION_SWAP_XY,
 
 	hiload, hisave
 };

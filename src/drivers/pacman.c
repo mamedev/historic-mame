@@ -1137,6 +1137,29 @@ ROM_START( mspacatk_rom )
 	ROM_LOAD( "82s126.3m",    0x0100, 0x0100, 0x77245b66 )	/* timing - not used */
 ROM_END
 
+ROM_START( pacgal_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "boot1",        0x0000, 0x1000, 0xd16b31b7 )
+	ROM_LOAD( "boot2",        0x1000, 0x1000, 0x0d32de5e )
+	ROM_LOAD( "pacman.7fh",   0x2000, 0x1000, 0x513f4d5c )
+	ROM_LOAD( "pacman.7hj",   0x3000, 0x1000, 0x70694c8e )
+	ROM_LOAD( "boot5",        0x8000, 0x1000, 0x8c3e6de6 )
+	ROM_LOAD( "boot6",        0x9000, 0x1000, 0x368cb165 )
+
+	ROM_REGION_DISPOSE(0x2000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "5e",           0x0000, 0x1000, 0x5c281d01 )
+	ROM_LOAD( "pacman.5ef",   0x1000, 0x0800, 0x65a3ee71 )
+	ROM_LOAD( "pacman.5hj",   0x1800, 0x0800, 0x50c7477d )
+
+	ROM_REGION(0x0120)	/* color PROMs */
+	ROM_LOAD( "82s123.7f",    0x0000, 0x0020, 0x2fc650bd )
+	ROM_LOAD( "82s129.4a",    0x0020, 0x0100, 0x63efb927 )
+
+	ROM_REGION(0x0200)	/* sound PROMs */
+	ROM_LOAD( "82s126.1m",    0x0000, 0x0100, 0xa9cc86bf )
+	ROM_LOAD( "82s126.3m",    0x0100, 0x0100, 0x77245b66 )	/* timing - not used */
+ROM_END
+
 ROM_START( maketrax_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "maketrax.6e",  0x0000, 0x1000, 0x0150fb4a )
@@ -2289,6 +2312,32 @@ struct GameDriver mspacatk_driver =
 	0,
 
 	mspacatk_rom,
+	0, 0,
+	0,
+	0,	/* sound_prom */
+
+	mspacman_input_ports,
+
+	PROM_MEMORY_REGION(2), 0, 0,
+	ORIENTATION_ROTATE_90,
+
+	pacman_hiload, pacman_hisave
+};
+
+struct GameDriver pacgal_driver =
+{
+	__FILE__,
+	&mspacman_driver,
+	"pacgal",
+	"Pac Gal",
+	"1981",
+	"hack",
+	BASE_CREDITS,
+	0,
+	&machine_driver,
+	0,
+
+	pacgal_rom,
 	0, 0,
 	0,
 	0,	/* sound_prom */

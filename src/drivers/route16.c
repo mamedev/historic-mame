@@ -341,8 +341,8 @@ ROM_END
 static const char *stratvox_sample_names[] =
 {
 	"*stratvox",
-	"explode.sam", // Sample played when player's ship is exploding
-	"bonus.sam",   // Sample played when reached 5000 pts and bonus ship
+	"explode.wav", // Sample played when player's ship is exploding
+	"bonus.wav",   // Sample played when reached 5000 pts and bonus ship
                    // is awarded
     0   /* end of array */
 };
@@ -355,6 +355,29 @@ ROM_START( stratvox_rom )
 	ROM_LOAD( "ls04.bin",     0x1800, 0x0800, 0xb0927e3b )
 	ROM_LOAD( "ls05.bin",     0x2000, 0x0800, 0xccd25c4e )
 	ROM_LOAD( "ls06.bin",     0x2800, 0x0800, 0x07a907a7 )
+
+	ROM_REGION_DISPOSE(0x1000)
+	/* empty memory region - not used by the game, but needed because the main */
+	/* core currently always frees region #1 after initialization. */
+
+	ROM_REGION(0x0200) /* color proms */
+	/* The upper 128 bytes are 0's, used by the hardware to blank the display */
+	ROM_LOAD( "pr09",         0x0000, 0x0100, 0x08793ef7 ) /* top bitmap */
+	ROM_LOAD( "pr10",         0x0100, 0x0100, 0x08793ef7 ) /* bottom bitmap */
+
+	ROM_REGION(0x10000)     /* 64k for the second CPU */
+	ROM_LOAD( "ls07.bin",     0x0000, 0x0800, 0x4d333985 )
+	ROM_LOAD( "ls08.bin",     0x0800, 0x0800, 0x35b753fc )
+ROM_END
+
+ROM_START( stratvxb_rom )
+	ROM_REGION(0x10000)     /* 64k for code */
+	ROM_LOAD( "ls01.bin",     0x0000, 0x0800, 0xbf4d582e )
+	ROM_LOAD( "ls02.bin",     0x0800, 0x0800, 0x16739dd4 )
+	ROM_LOAD( "ls03.bin",     0x1000, 0x0800, 0x083c28de )
+	ROM_LOAD( "ls04.bin",     0x1800, 0x0800, 0xb0927e3b )
+	ROM_LOAD( "ls05.bin",     0x2000, 0x0800, 0xccd25c4e )
+	ROM_LOAD( "a5-1",         0x2800, 0x0800, 0x70c4ef8e )
 
 	ROM_REGION_DISPOSE(0x1000)
 	/* empty memory region - not used by the game, but needed because the main */
@@ -505,6 +528,32 @@ struct GameDriver stratvox_driver =
 	stratvox_set_machine_type,
 
 	stratvox_rom,
+	0, 0,
+	stratvox_sample_names,
+	0,	/* sound_prom */
+
+	stratvox_input_ports,
+
+	PROM_MEMORY_REGION(2), 0, 0,
+	ORIENTATION_ROTATE_270,
+
+	stratvox_hiload, stratvox_hisave
+};
+
+struct GameDriver stratvxb_driver =
+{
+	__FILE__,
+	&stratvox_driver,
+	"stratvxb",
+	"Stratovox (bootleg)",
+	"1980",
+	"bootleg",
+	"Darren Olafson\nZsolt Vasvari\nMike Balfour",
+	0,
+	&stratvox_machine_driver,
+	stratvox_set_machine_type,
+
+	stratvxb_rom,
 	0, 0,
 	stratvox_sample_names,
 	0,	/* sound_prom */

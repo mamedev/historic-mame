@@ -445,17 +445,17 @@ static void tomahawk_hisave(void)
 static const char *astrof_sample_names[] =
 {
 	"*astrof",
-	"fire.sam",
-	"ekilled.sam",
-	"wave1.sam",
-	"wave2.sam",
-	"wave3.sam",
-	"wave4.sam",
-	"bossfire.sam",
-	"fuel.sam",
-	"death.sam",
-	"bosshit.sam",
-	"bosskill.sam",
+	"fire.wav",
+	"ekilled.wav",
+	"wave1.wav",
+	"wave2.wav",
+	"wave3.wav",
+	"wave4.wav",
+	"bossfire.wav",
+	"fuel.wav",
+	"death.wav",
+	"bosshit.wav",
+	"bosskill.wav",
 	0   /* end of array */
 };
 
@@ -490,7 +490,7 @@ struct GameDriver astrof_driver =
 	astrof_input_ports,
 
 	PROM_MEMORY_REGION(1), 0, 0,
-	ORIENTATION_DEFAULT,
+	ORIENTATION_ROTATE_90,
 
 	astrof_hiload, astrof_hisave
 };
@@ -516,7 +516,7 @@ struct GameDriver astrof2_driver =
 	astrof_input_ports,
 
 	PROM_MEMORY_REGION(1), 0, 0,
-	ORIENTATION_DEFAULT,
+	ORIENTATION_ROTATE_90,
 
 	astrof_hiload, astrof_hisave
 };
@@ -542,7 +542,7 @@ struct GameDriver astrof3_driver =
 	astrof_input_ports,
 
 	PROM_MEMORY_REGION(1), 0, 0,
-	ORIENTATION_DEFAULT,
+	ORIENTATION_ROTATE_90,
 
 	astrof_hiload, astrof_hisave
 };
@@ -568,7 +568,7 @@ struct GameDriver tomahawk_driver =
 	tomahawk_input_ports,
 
 	PROM_MEMORY_REGION(1), 0, 0,
-	ORIENTATION_DEFAULT,
+	ORIENTATION_ROTATE_90,
 
 	tomahawk_hiload, tomahawk_hisave
 
@@ -595,7 +595,7 @@ struct GameDriver tomahaw5_driver =
 	tomahawk_input_ports,
 
 	PROM_MEMORY_REGION(1), 0, 0,
-	ORIENTATION_DEFAULT,
+	ORIENTATION_ROTATE_90,
 
 	tomahawk_hiload, tomahawk_hisave
 };

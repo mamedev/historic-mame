@@ -8,6 +8,7 @@ Add flipped and cocktail cabinet mode
 Remove sprite lag (watch the "bullets" signs on the walls during scrlling).
   Increasing vblank_duration does it but some sprites flicker.
 
+Add correct dipswitches and potentially fix controls in Wonder Momo.
 
 Notes:
 -----
@@ -28,14 +29,15 @@ extern unsigned char *rthunder_videoram, *spriteram, *dirtybuffer;
 
 /*******************************************************************/
 
-extern void rthunder_vh_convert_color_prom(	unsigned char *palette, unsigned short *colortable,
-	const unsigned char *color_prom);
-extern int rthunder_vh_start( void );
-extern void rthunder_vh_screenrefresh( struct osd_bitmap *bitmap, int fullrefresh );
-extern int rthunder_videoram_r(int offset);
-extern void rthunder_videoram_w(int offset,int data);
-extern void rthunder_scroll_w( int layer, int offset, int data );
-extern void rthunder_tilebank_w( int offset, int data );
+void rthunder_vh_convert_color_prom(	unsigned char *palette, unsigned short *colortable, const unsigned char *color_prom);
+int rthunder_vh_start( void );
+void rthunder_vh_screenrefresh( struct osd_bitmap *bitmap, int fullrefresh );
+void wndrmomo_vh_screenrefresh( struct osd_bitmap *bitmap, int fullrefresh );
+int rthunder_videoram_r(int offset);
+void rthunder_videoram_w(int offset,int data);
+void rthunder_scroll_w( int layer, int offset, int data );
+void rthunder_tilebank_select_0( int offset, int data );
+void rthunder_tilebank_select_1( int offset, int data );
 
 /*******************************************************************/
 
@@ -56,26 +58,6 @@ extern void rthunder_tilebank_w( int offset, int data );
 /* You can turn on/off cycle skipping in the next line */
 #define CYCLE_SKIP 1
 
-#if CYCLE_SKIP
-static int cpu0_skip_r( int offs ) {
-
-	if ( spriteram[0x126f] == spriteram[0x126e] && cpu_get_pc() == 0xd64c ) {
-		if ( spriteram[0x12b4] == spriteram[0x12b3] ) {
-			cpu_spinuntil_int();
-		}
-	}
-
-	return spriteram[0x126f];
-}
-
-static int cpu1_skip_r( int offs ) {
-
-	if ( spriteram[0x1268] == spriteram[0x1267] && cpu_get_pc() == 0xb0c1 )
-		cpu_spinuntil_int();
-
-	return spriteram[0x1268];
-}
-#endif
 
 /*******************************************************************/
 
@@ -84,23 +66,19 @@ static int cpu1_skip_r( int offs ) {
 /* signed/unsigned 8-bit conversion macros */
 #define AUDIO_CONV(A) ((A)^0x80)
 
-static int rt_totalsamples1;
-static int rt_totalsamples2;
+static int rt_totalsamples[4];
 
 static int rt_decode_sample( void ) {
 	struct GameSamples *samples;
-	unsigned char *src = Machine->memory_region[MEM_SAMPLES], *scan, *dest;
-	int size, n1, n2, n;
+	unsigned char *src, *scan, *dest, last=0;
+	int size, n = 0, j;
 
 	/* get amount of samples */
-	n1 = ( ( src[0] << 8 ) + src[1] ) / 2;
-	src = Machine->memory_region[MEM_SAMPLES]+0x10000;
-	n2 = ( ( src[0] << 8 ) + src[1] ) / 2;
-
-	n = n1 + n2;
-
-	rt_totalsamples1 = n1;
-	rt_totalsamples2 = n2;
+	for ( j = 0; j < 4; j++ ) {
+		src = Machine->memory_region[MEM_SAMPLES]+ ( j * 0x10000 );
+		rt_totalsamples[j] = ( ( src[0] << 8 ) + src[1] ) / 2;
+		n += rt_totalsamples[j];
+	}
 
 	/* calculate the amount of headers needed */
 	size = sizeof( struct GameSamples ) + n * sizeof( struct GameSamples * );
@@ -115,13 +93,21 @@ static int rt_decode_sample( void ) {
 	for ( n = 0; n < samples->total; n++ ) {
 		int indx, start, offs;
 
-		if ( n < n1 ) {
+		if ( n < rt_totalsamples[0] ) {
 			src = Machine->memory_region[MEM_SAMPLES];
 			indx = n;
-		} else {
-			src = Machine->memory_region[MEM_SAMPLES]+0x10000;
-			indx = n - n1;
-		}
+		} else
+			if ( ( n - rt_totalsamples[0] ) < rt_totalsamples[1] ) {
+				src = Machine->memory_region[MEM_SAMPLES]+0x10000;
+				indx = n - rt_totalsamples[0];
+			} else
+				if ( ( n - ( rt_totalsamples[0] + rt_totalsamples[1] ) ) < rt_totalsamples[2] ) {
+					src = Machine->memory_region[MEM_SAMPLES]+0x20000;
+					indx = n - ( rt_totalsamples[0] + rt_totalsamples[1] );
+				} else {
+					src = Machine->memory_region[MEM_SAMPLES]+0x30000;
+					indx = n - ( rt_totalsamples[0] + rt_totalsamples[1] + rt_totalsamples[2] );
+				}
 
 		/* calculate header offset */
 		offs = indx * 2;
@@ -137,8 +123,7 @@ static int rt_decode_sample( void ) {
 			if ( *scan == 0x00 ) { /* run length encoded data start tag */
 				/* get RLE size */
 				size += scan[1] + 1;
-				/* skip RLE data */
-				scan += 3;
+				scan += 2;
 			} else {
 				size++;
 				scan++;
@@ -163,11 +148,12 @@ static int rt_decode_sample( void ) {
 			if ( *scan == 0x00 ) { /* run length encoded data start tag */
 				int i;
 				for ( i = 0; i <= scan[1]; i++ ) /* unpack RLE */
-					*dest++ = AUDIO_CONV( scan[2] );
+					*dest++ = last;
 
-				scan += 3;
+				scan += 2;
 			} else {
-				*dest++ = AUDIO_CONV( scan[0] );
+				last = AUDIO_CONV( scan[0] );
+				*dest++ = last;
 				scan++;
 			}
 		}
@@ -195,9 +181,24 @@ static void namco_voice0_select_w( int offset, int data ) {
 	if ( data == 0 )
 		sample_stop( 0 );
 
-	if ( data & 0x40 ) {
-		data &= 0x3f;
-		data += rt_totalsamples1;
+	switch ( data & 0xc0 ) {
+		case 0x00:
+		break;
+
+		case 0x40:
+			data &= 0x3f;
+			data += rt_totalsamples[0];
+		break;
+
+		case 0x80:
+			data &= 0x3f;
+			data += rt_totalsamples[0] + rt_totalsamples[1];
+		break;
+
+		case 0xc0:
+			data &= 0x3f;
+			data += rt_totalsamples[0] + rt_totalsamples[1] + rt_totalsamples[2];
+		break;
 	}
 
 	voice[0] = data - 1;
@@ -219,20 +220,57 @@ static void namco_voice1_select_w( int offset, int data ) {
 	if ( data == 0 )
 		sample_stop( 1 );
 
-	if ( data & 0x40 ) {
-		data &= 0x3f;
-		data += rt_totalsamples1;
+	switch ( data & 0xc0 ) {
+		case 0x00:
+		break;
+
+		case 0x40:
+			data &= 0x3f;
+			data += rt_totalsamples[0];
+		break;
+
+		case 0x80:
+			data &= 0x3f;
+			data += rt_totalsamples[0] + rt_totalsamples[1];
+		break;
+
+		case 0xc0:
+			data &= 0x3f;
+			data += rt_totalsamples[0] + rt_totalsamples[1] + rt_totalsamples[2];
+		break;
 	}
 
 	voice[1] = data - 1;
 }
-
 /*******************************************************************/
 
 /* shared memory area with the mcu */
-static unsigned char *shared;
-static int shared_r( int offs ) { return shared[offs]; }
-static void shared_w( int offs, int data ) { shared[offs] = data; }
+static unsigned char *shared1,*shared2;
+static int shared1_r( int offs ) { return shared1[offs]; }
+static void shared1_w( int offs, int data ) { shared1[offs] = data; }
+static int shared2_r( int offs ) { return shared2[offs]; }
+static void shared2_w( int offs, int data ) { shared2[offs] = data; }
+
+#if CYCLE_SKIP
+static int cpu0_skip_r( int offs ) {
+
+	if ( shared2[0x126f] == shared2[0x126e] && cpu_get_pc() == 0xd64c ) {
+		if ( shared2[0x12b4] == shared2[0x12b3] ) {
+			cpu_spinuntil_int();
+		}
+	}
+
+	return shared2[0x126f];
+}
+
+static int cpu1_skip_r( int offs ) {
+
+	if ( shared2[0x1268] == shared2[0x1267] && cpu_get_pc() == 0xb0c1 )
+		cpu_spinuntil_int();
+
+	return shared2[0x1268];
+}
+#endif
 
 /*
 	each layer has its own pair of scroll registers, but in practice
@@ -243,21 +281,27 @@ static void scroll1_w( int offset, int data ){ rthunder_scroll_w( 1, offset, dat
 static void scroll2_w( int offset, int data ){ rthunder_scroll_w( 2, offset, data ); }
 static void scroll3_w( int offset, int data ){ rthunder_scroll_w( 3, offset, data ); }
 
-static void spriteram_w( int offset, int data ){
+static void spriteram_w( int offset, int data )
+{
 	spriteram[offset] = data;
 }
-static int spriteram_r( int offset ){
+static int spriteram_r( int offset )
+{
 	return spriteram[offset];
 }
 
-static void bankswitch1_w( int offset, int data ){
+static void bankswitch1_w( int offset, int data )
+{
 	unsigned char *base = Machine->memory_region[MEM_DATA1];
+//if (errorlog) fprintf(errorlog,"bank 1 select %02x\n",data);
 	cpu_setbank( 1, base + ((data&0x1f)*0x2000) );
 	if( data&0xe0 && errorlog ) fprintf( errorlog, "big bank\n" );
 }
 
-static void bankswitch2_w( int offset, int data ){
+static void bankswitch2_w( int offset, int data )
+{
 	unsigned char *base = Machine->memory_region[MEM_DATA2];
+//if (errorlog) fprintf(errorlog,"bank 2 select %02x\n",data);
 	cpu_setbank( 2, base + ((data&0x03)*0x2000) );
 }
 
@@ -304,11 +348,6 @@ static void int_enable_w( int offs, int data ) {
 	int_enabled[cpu] = 1;
 }
 
-static void mcu_irqtrigger_w(int offset,int data)
-{
-	cpu_cause_interrupt(2,HD63701_INT_IRQ);
-}
-
 static void rthunder_coin_w(int offset,int data)
 {
 	coin_lockout_w(0,data & 1);
@@ -326,13 +365,9 @@ static struct MemoryReadAddress readmem1[] =
 	{ 0x0000, 0x3fff, rthunder_videoram_r },
 	{ 0x4000, 0x40ff, namcos1_wavedata_r }, /* PSG device, shared RAM */
 	{ 0x4100, 0x413f, namcos1_sound_r }, /* PSG device, shared RAM */
-	{ 0x4000, 0x43ff, shared_r },
-
-#if CYCLE_SKIP
-	{ 0x566f, 0x566f, cpu0_skip_r },
-#endif
-
-	{ 0x4400, 0x5fff, spriteram_r },
+	{ 0x4000, 0x43ff, shared1_r },
+	{ 0x4400, 0x57ff, shared2_r },
+	{ 0x5800, 0x5fff, spriteram_r },
 	{ 0x6000, 0x7fff, MRA_BANK1 },
 	{ 0x8000, 0xffff, MRA_ROM },
 	{ -1 }
@@ -341,32 +376,37 @@ static struct MemoryReadAddress readmem1[] =
 static struct MemoryWriteAddress writemem1[] =
 {
 	{ 0x0000, 0x3fff, rthunder_videoram_w, &rthunder_videoram },
+
 	{ 0x4000, 0x40ff, namcos1_wavedata_w, &namco_wavedata }, /* PSG device, shared RAM */
 	{ 0x4100, 0x413f, namcos1_sound_w, &namco_soundregs }, /* PSG device, shared RAM */
-	{ 0x4000, 0x43ff, shared_w, &shared },
-	{ 0x4400, 0x5fff, spriteram_w, &spriteram },
+	{ 0x4000, 0x43ff, shared1_w, &shared1 },
+
+	{ 0x4400, 0x57ff, shared2_w, &shared2 },
+	{ 0x5800, 0x5fff, spriteram_w, &spriteram },
 
 	{ 0x6000, 0x6000, namco_voice0_play_w },
 	{ 0x6200, 0x6200, namco_voice0_select_w },
 	{ 0x6400, 0x6400, namco_voice1_play_w },
 	{ 0x6600, 0x6600, namco_voice1_select_w },
 	{ 0x6800, 0x6800, bankswitch1_w },
+//	{ 0x6c00, 0x6c00, MWA_NOP }, /* ??? */
+//	{ 0x6e00, 0x6e00, MWA_NOP }, /* ??? */
 
-//	{ 0x6c00, 0x6c00, MWA_NOP }, /* written once on startup - background color? */
-//	{ 0x6e00, 0x6e00, MWA_NOP }, /* written once on startup - background color? */
-
-	{ 0x8000, 0x8000, watchdog_reset_w }, /* watchdog? */
+	{ 0x8000, 0x8000, watchdog_reset_w }, /* ? */
 	{ 0x8400, 0x8400, int_enable_w }, /* written when CPU1 is done its interrupt routine */
-
-	{ 0x8800, 0x8800, rthunder_tilebank_w },
-	{ 0x8c00, 0x8c00, rthunder_tilebank_w },
+	{ 0x8800, 0x8800, rthunder_tilebank_select_0 },
+	{ 0x8c00, 0x8c00, rthunder_tilebank_select_1 },
 
 	{ 0x9000, 0x9002, scroll0_w },
+//	{ 0x9003, 0x9003 } main CPU rom bank select would be here
 	{ 0x9004, 0x9006, scroll1_w },
+
 	{ 0x9400, 0x9402, scroll2_w },
+//	{ 0x9403, 0x9403 } sub CPU rom bank select would be here
 	{ 0x9404, 0x9406, scroll3_w },
 
-	{ 0xa000, 0xa000, mcu_irqtrigger_w },
+	{ 0xa000, 0xa000, MWA_NOP },	/* ??? */
+
 	{ 0x8000, 0xffff, MWA_ROM },
 	{ -1 }
 };
@@ -374,12 +414,8 @@ static struct MemoryWriteAddress writemem1[] =
 static struct MemoryReadAddress readmem2[] =
 {
 	{ 0x0000, 0x03ff, MRA_RAM },
-
-#if CYCLE_SKIP
-	{ 0x1668, 0x1668, cpu1_skip_r },
-#endif
-
-	{ 0x0400, 0x1fff, spriteram_r },
+	{ 0x0400, 0x17ff, shared2_r },
+	{ 0x1800, 0x1fff, spriteram_r },
 	{ 0x2000, 0x5fff, rthunder_videoram_r },
 	{ 0x6000, 0x7fff, MRA_BANK2 },
 	{ 0x8000, 0xffff, MRA_ROM },
@@ -389,24 +425,53 @@ static struct MemoryReadAddress readmem2[] =
 static struct MemoryWriteAddress writemem2[] =
 {
 	{ 0x0000, 0x03ff, MWA_RAM },
-	{ 0x0400, 0x1fff, spriteram_w },
+	{ 0x0400, 0x17ff, shared2_w },
+	{ 0x1800, 0x1fff, spriteram_w },
 	{ 0x2000, 0x5fff, rthunder_videoram_w },
+
+	{ 0x8000, 0x8000, watchdog_reset_w }, /* ? */
+	{ 0x8800, 0x8800, int_enable_w },	/* written when CPU2 is done its interrupt */
+
+//	{ 0xd800, 0xd802 } layer 2 scroll registers would be here
 	{ 0xd803, 0xd803, bankswitch2_w },
-	{ 0x8000, 0x8000, watchdog_reset_w }, /* (rthunder) watchdog? */
-	{ 0x8800, 0x8800, int_enable_w },	/* (rthunder) written when CPU2 is done its interrupt */
-	{ 0xc000, 0xc000, watchdog_reset_w }, /* (wndrmomo) watchdog? */
-	{ 0xc800, 0xc800, int_enable_w },	/* (wndrmomo) written when CPU2 is done its interrupt */
+//	{ 0xd804, 0xd806 } layer 3 scroll registers would be here
+
+	{ 0x8000, 0xffff, MWA_ROM },
+	{ -1 }
+};
+
+static struct MemoryReadAddress wndrmomo_readmem2[] =
+{
+	{ 0x2000, 0x23ff, MRA_RAM },
+	{ 0x2400, 0x37ff, shared2_r },
+	{ 0x3800, 0x3fff, spriteram_r },
+//	{ 0x2000, 0x5fff, rthunder_videoram_r },
+	{ 0x6000, 0x7fff, MRA_BANK2 },
+	{ 0x8000, 0xffff, MRA_ROM },
+	{ -1 }
+};
+
+static struct MemoryWriteAddress wndrmomo_writemem2[] =
+{
+	{ 0x2000, 0x23ff, MWA_RAM },
+	{ 0x2400, 0x37ff, shared2_w },
+	{ 0x3800, 0x3fff, spriteram_w },
+//	{ 0x2000, 0x5fff, rthunder_videoram_w },
+
+	{ 0xc000, 0xc000, watchdog_reset_w }, /* ? */
+	{ 0xc800, 0xc800, int_enable_w },	/* written when CPU2 is done its interrupt */
+
 	{ 0x8000, 0xffff, MWA_ROM },
 	{ -1 }
 };
 
 static struct MemoryReadAddress mcu_readmem[] =
 {
-	{ 0x0000, 0x001f, m6803_internal_registers_r },
+	{ 0x0000, 0x001f, hd63701_internal_registers_r },
 	{ 0x0080, 0x00ff, MRA_RAM },
 	{ 0x1000, 0x10ff, namcos1_wavedata_r }, /* PSG device, shared RAM */
 	{ 0x1100, 0x113f, namcos1_sound_r }, /* PSG device, shared RAM */
-	{ 0x1000, 0x13ff, shared_r },
+	{ 0x1000, 0x13ff, shared1_r },
 	{ 0x1400, 0x1fff, MRA_RAM },
 	{ 0x2000, 0x2001, YM2151_status_port_0_r },
 	{ 0x2020, 0x2020, input_port_0_r },
@@ -420,16 +485,51 @@ static struct MemoryReadAddress mcu_readmem[] =
 
 static struct MemoryWriteAddress mcu_writemem[] =
 {
-	{ 0x0000, 0x001f, m6803_internal_registers_w },
+	{ 0x0000, 0x001f, hd63701_internal_registers_w },
 	{ 0x0080, 0x00ff, MWA_RAM },
 	{ 0x1000, 0x10ff, namcos1_wavedata_w }, /* PSG device, shared RAM */
 	{ 0x1100, 0x113f, namcos1_sound_w }, /* PSG device, shared RAM */
-	{ 0x1000, 0x13ff, shared_w },
+	{ 0x1000, 0x13ff, shared1_w },
 	{ 0x1400, 0x1fff, MWA_RAM },
 	{ 0x2000, 0x2000, YM2151_register_port_0_w },
 	{ 0x2001, 0x2001, YM2151_data_port_0_w },
-	{ 0xb000, 0xb000, MWA_NOP }, /* ??? */
-	{ 0xb800, 0xb800, MWA_NOP }, /* ??? */
+	{ 0xb000, 0xb000, MWA_NOP }, /* ??? written (not always) at end of interrupt */
+	{ 0xb800, 0xb800, MWA_NOP }, /* ??? written (not always) at end of interrupt */
+	{ 0x4000, 0xbfff, MWA_ROM },
+	{ 0xf000, 0xffff, MWA_ROM },
+	{ -1 }	/* end of table */
+};
+
+static struct MemoryReadAddress wndrmomo_mcu_readmem[] =
+{
+	{ 0x0000, 0x001f, hd63701_internal_registers_r },
+	{ 0x0080, 0x00ff, MRA_RAM },
+	{ 0x1000, 0x10ff, namcos1_wavedata_r }, /* PSG device, shared RAM */
+	{ 0x1100, 0x113f, namcos1_sound_r }, /* PSG device, shared RAM */
+	{ 0x1000, 0x13ff, shared1_r },
+	{ 0x1400, 0x1fff, MRA_RAM },
+	{ 0x3800, 0x3801, YM2151_status_port_0_r },
+	{ 0x3820, 0x3820, input_port_0_r },
+	{ 0x3821, 0x3821, input_port_1_r },
+	{ 0x3830, 0x3830, dsw_r0 },
+	{ 0x3831, 0x3831, dsw_r1 },
+	{ 0x4000, 0xbfff, MRA_ROM },
+	{ 0xf000, 0xffff, MRA_ROM },
+	{ -1 }	/* end of table */
+};
+
+static struct MemoryWriteAddress wndrmomo_mcu_writemem[] =
+{
+	{ 0x0000, 0x001f, hd63701_internal_registers_w },
+	{ 0x0080, 0x00ff, MWA_RAM },
+	{ 0x1000, 0x10ff, namcos1_wavedata_w }, /* PSG device, shared RAM */
+	{ 0x1100, 0x113f, namcos1_sound_w }, /* PSG device, shared RAM */
+	{ 0x1000, 0x13ff, shared1_w },
+	{ 0x1400, 0x1fff, MWA_RAM },
+	{ 0x3800, 0x3800, YM2151_register_port_0_w },
+	{ 0x3801, 0x3801, YM2151_data_port_0_w },
+	{ 0xc000, 0xc000, MWA_NOP }, /* ??? */
+	{ 0xc800, 0xc800, MWA_NOP }, /* ??? */
 	{ 0x4000, 0xbfff, MWA_ROM },
 	{ 0xf000, 0xffff, MWA_ROM },
 	{ -1 }	/* end of table */
@@ -437,19 +537,19 @@ static struct MemoryWriteAddress mcu_writemem[] =
 
 static struct IOReadPort mcu_readport[] =
 {
-	{ M6803_PORT1, M6803_PORT1, input_port_4_r },
+	{ HD63701_PORT1, HD63701_PORT1, input_port_4_r },
 	{ -1 }	/* end of table */
 };
 
 static void pip2(int offset,int data)
 {
-if (errorlog) fprintf(errorlog,"%04x: write %02x to port 2 ddr %02x\n",cpu_get_pc(),data,m6803_internal_registers_r(M6803_DDR2));
+if (errorlog) fprintf(errorlog,"%04x: write %02x to port 2 ddr %02x\n",cpu_get_pc(),data,hd63701_internal_registers_r(HD63701_DDR2));
 }
 
 static struct IOWritePort mcu_writeport[] =
 {
-	{ M6803_PORT1, M6803_PORT1, rthunder_coin_w },
-	{ M6803_PORT2, M6803_PORT2, pip2 },
+	{ HD63701_PORT1, HD63701_PORT1, rthunder_coin_w },
+	{ HD63701_PORT2, HD63701_PORT2, pip2 },
 	{ -1 }	/* end of table */
 };
 
@@ -458,7 +558,7 @@ static struct IOWritePort mcu_writeport[] =
 
 INPUT_PORTS_START( rthunder_input_ports )
 	PORT_START
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* button 3 player 2 */
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_4WAY )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_4WAY | IPF_PLAYER2 )
@@ -468,14 +568,14 @@ INPUT_PORTS_START( rthunder_input_ports )
 	PORT_BITX( 0x80, 0x80, IPT_SERVICE, "Service Switch", OSD_KEY_F1, IP_JOY_NONE )
 
 	PORT_START
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* button 3 player 1 */
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_4WAY )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_4WAY | IPF_PLAYER2 )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_COIN3 )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_COIN2 )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START2 )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START      /* DSWA */
 	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Coin_B ) )
@@ -539,7 +639,7 @@ INPUT_PORTS_END
 
 INPUT_PORTS_START( rthundrb_input_ports )
 	PORT_START
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* button 3 player 2 */
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_4WAY )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_4WAY | IPF_PLAYER2 )
@@ -549,14 +649,14 @@ INPUT_PORTS_START( rthundrb_input_ports )
 	PORT_BITX( 0x80, 0x80, IPT_SERVICE, "Service Switch", OSD_KEY_F1, IP_JOY_NONE )
 
 	PORT_START
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* button 3 player 1 */
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_4WAY )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_4WAY | IPF_PLAYER2 )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_COIN3 )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_COIN2 )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START2 )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START      /* DSWA */
 	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Coin_B ) )
@@ -584,8 +684,8 @@ INPUT_PORTS_START( rthundrb_input_ports )
 
 	PORT_START      /* DSWB */
 	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Flip_Screen ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x01, DEF_STR( On ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Cabinet ) )
 	PORT_DIPSETTING(    0x02, DEF_STR( Upright ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Cocktail ) )
@@ -617,6 +717,88 @@ INPUT_PORTS_START( rthundrb_input_ports )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_4WAY | IPF_PLAYER2 )
 INPUT_PORTS_END
+
+INPUT_PORTS_START( wndrmomo_input_ports )
+	PORT_START
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* button 3 player 2 */
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_4WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_4WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BITX( 0x80, 0x80, IPT_SERVICE, "Service Switch", OSD_KEY_F1, IP_JOY_NONE )
+
+	PORT_START
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* button 3 player 1 */
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_4WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_4WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_COIN3 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START      /* DSWA */
+	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Coin_B ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x03, DEF_STR( 3C_1C ) )
+	PORT_DIPNAME( 0x04, 0x00, "Freeze" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( On ) )
+	PORT_DIPNAME( 0x08, 0x08, "Level Select" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( On ) )
+	PORT_DIPNAME( 0x10, 0x00, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x60, 0x00, DEF_STR( Coin_A ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x60, DEF_STR( 3C_1C ) )
+	PORT_BITX(    0x80, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, DEF_STR( Service_Mode ), OSD_KEY_F2, IP_JOY_NONE )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
+
+	PORT_START      /* DSWB */
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Flip_Screen ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x06, 0x00, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x00, "Type A" )
+	PORT_DIPSETTING(    0x02, "Type B" )
+	PORT_DIPSETTING(    0x04, "Type C" )
+//	PORT_DIPSETTING(    0x06, "Type A" )
+	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( On ) )
+	PORT_DIPNAME( 0x10, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
+
+	PORT_START
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_4WAY )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_4WAY | IPF_PLAYER2 )
+INPUT_PORTS_END
+
 
 /*******************************************************************/
 
@@ -676,7 +858,7 @@ static struct YM2151interface ym2151_interface =
 
 static struct namco_interface namco_interface =
 {
-	24000,  /* sample rate (hand tuned) */
+	49152000/2048, 		/* 24000Hz */
 	8,		/* number of voices */
 	16,		/* gain adjustment */
 	50,     /* playback volume */
@@ -710,24 +892,25 @@ static struct MachineDriver machine_driver =
 	{
 		{
 			CPU_M6809,
-			1500000, 		/* ??? */
+			6000000/4,
+//			49152000/32, 		/* ? */
 			MEM_CPU1,
 			readmem1,writemem1,0,0,
 			rt_interrupt,1
 		},
 		{
 			CPU_M6809,
-			1500000, 		/* ??? */
+			49152000/32, 		/* ? */
 			MEM_CPU2,
 			readmem2,writemem2,0,0,
 			rt_interrupt,1
 		},
 		{
 			CPU_HD63701,	/* or compatible 6808 with extra instructions */
-			6000000,		/* ??? */
+			49152000/32, 		/* ? */
 			MEM_MCU,
 			mcu_readmem,mcu_writemem,mcu_readport,mcu_writeport,
-			ignore_interrupt, 1 /* irq's triggered by the main cpu */
+			interrupt, 1	/* ??? */
 		}
 	},
 	60, DEFAULT_60HZ_VBLANK_DURATION,
@@ -737,7 +920,7 @@ static struct MachineDriver machine_driver =
 	/* video hardware */
 	36*8, 28*8, { 0*8, 36*8-1, 0*8, 28*8-1 },
 	gfxdecodeinfo,
-	256,4096,
+	512,4096,
 	rthunder_vh_convert_color_prom,
 
 	VIDEO_TYPE_RASTER,
@@ -745,6 +928,66 @@ static struct MachineDriver machine_driver =
 	rthunder_vh_start,
 	0,
 	rthunder_vh_screenrefresh,
+
+	/* sound hardware */
+	0,rt_decode_sample,0,0,
+	{
+		{
+			SOUND_YM2151,
+			&ym2151_interface
+		},
+		{
+			SOUND_NAMCO,
+			&namco_interface
+		},
+		{
+			SOUND_SAMPLES,
+			&samples_interface
+		}
+	}
+};
+
+static struct MachineDriver wndrmomo_machine_driver =
+{
+	{
+		{
+			CPU_M6809,
+			6000000/4,
+//			49152000/32, 		/* ? */
+			MEM_CPU1,
+			readmem1,writemem1,0,0,
+			rt_interrupt,1
+		},
+		{
+			CPU_M6809,
+			49152000/32, 		/* ? */
+			MEM_CPU2,
+			wndrmomo_readmem2,wndrmomo_writemem2,0,0,
+			rt_interrupt,1
+		},
+		{
+			CPU_HD63701,	/* or compatible 6808 with extra instructions */
+			49152000/32, 		/* ? */
+			MEM_MCU,
+			wndrmomo_mcu_readmem,wndrmomo_mcu_writemem,mcu_readport,mcu_writeport,
+			interrupt, 1	/* ??? */
+		}
+	},
+	60, DEFAULT_60HZ_VBLANK_DURATION,
+	100, /* cpu slices */
+	rt_init_machine, /* init machine */
+
+	/* video hardware */
+	36*8, 28*8, { 0*8, 36*8-1, 0*8, 28*8-1 },
+	gfxdecodeinfo,
+	512,4096,
+	rthunder_vh_convert_color_prom,
+
+	VIDEO_TYPE_RASTER,
+	0,
+	rthunder_vh_start,
+	0,
+	wndrmomo_vh_screenrefresh,
 
 	/* sound hardware */
 	0,rt_decode_sample,0,0,
@@ -818,8 +1061,8 @@ ROM_START( rthunder_rom )
 	/* k3 empty */
 	/* m3 empty */
 
-	ROM_REGION( 32 ) /* ??? */
-	ROM_LOAD( "mb7112e.7u",	0x0000, 0x0020, 0xe4130804 )
+	ROM_REGION( 32 ) /* PROM */
+	ROM_LOAD( "mb7112e.6u",	0x0000, 0x0020, 0xe4130804 )	/* timing for the tilemap generator (not used) */
 ROM_END
 
 ROM_START( rthundrb_rom )
@@ -870,8 +1113,8 @@ ROM_START( rthundrb_rom )
 	/* k3 empty */
 	/* m3 empty */
 
-	ROM_REGION( 32 ) /* ??? */
-	ROM_LOAD( "mb7112e.7u",	0x0000, 0x0020, 0xe4130804 )
+	ROM_REGION( 32 ) /* PROM */
+	ROM_LOAD( "mb7112e.6u",	0x0000, 0x0020, 0xe4130804 )	/* timing for the tilemap generator (not used) */
 ROM_END
 
 ROM_START( wndrmomo_rom )
@@ -888,22 +1131,25 @@ ROM_START( wndrmomo_rom )
 	ROM_LOAD( "wm1-2.12c", 0x8000, 0x8000, 0x3181efd0 )
 
 	ROM_REGION( 0x8000 ) /* bank switched data for CPU2 */
-	ROM_LOAD( "wm1-3.12d", 0x0000, 0x8000, 0x55f01df7 )
+	/* empty */
 
 	ROM_REGION( 0x24000 ) /* tiles */
-	ROM_LOAD( "wm1-8.7s", 0x00000, 0x10000, 0x14f52e72 )	/* plane 1,2 */
-	ROM_LOAD( "wm1-6.4s", 0x10000, 0x08000, 0x42d0b513 )
-	ROM_LOAD( "wm1-7.7r", 0x18000, 0x04000, 0x7d662527 )	/* plane 3 */
-	ROM_LOAD( "wm1-5.4r", 0x20000, 0x04000, 0xa81b481f )
+	ROM_LOAD( "wm1-6.7r", 0x00000, 0x08000, 0x42d0b513 )	/* plane 1,2 */
+	ROM_RELOAD(           0x08000, 0x08000 )
+	ROM_LOAD( "wm1-4.4r", 0x10000, 0x08000, 0xbbe67836 )
+	ROM_LOAD( "wm1-7.7s", 0x18000, 0x04000, 0x7d662527 )	/* plane 3 */
+	ROM_RELOAD(           0x1c000, 0x04000 )
+	ROM_LOAD( "wm1-5.4s", 0x20000, 0x04000, 0xa81b481f )
 
 	ROM_REGION( 0x80000 ) /* sprites */
- 	ROM_LOAD( "wm1-9.12h",  0x00000, 0x10000, 0x16f8cdae )
- 	ROM_LOAD( "wm1-10.12k", 0x10000, 0x10000, 0xbfbc1896 )
- 	ROM_LOAD( "wm1-11.12l", 0x20000, 0x10000, 0xd775ddb2 )
- 	ROM_LOAD( "wm1-12.12m", 0x30000, 0x10000, 0xde64c12f )
- 	ROM_LOAD( "wm1-13.12p", 0x40000, 0x10000, 0xcfe589ad )
- 	ROM_LOAD( "wm1-14.12r", 0x50000, 0x10000, 0x2ae21a53 )
- 	ROM_LOAD( "wm1-15.12t", 0x60000, 0x10000, 0xb5c98be0 )
+	ROM_LOAD( "wm1-8.12h",  0x00000, 0x10000, 0x14f52e72 )
+ 	ROM_LOAD( "wm1-9.12k",  0x10000, 0x10000, 0x16f8cdae )
+ 	ROM_LOAD( "wm1-10.12l", 0x20000, 0x10000, 0xbfbc1896 )
+ 	ROM_LOAD( "wm1-11.12m", 0x30000, 0x10000, 0xd775ddb2 )
+ 	ROM_LOAD( "wm1-12.12p", 0x40000, 0x10000, 0xde64c12f )
+ 	ROM_LOAD( "wm1-13.12r", 0x50000, 0x10000, 0xcfe589ad )
+ 	ROM_LOAD( "wm1-14.12t", 0x60000, 0x10000, 0x2ae21a53 )
+ 	ROM_LOAD( "wm1-15.12u", 0x70000, 0x10000, 0xb5c98be0 )
 
 	ROM_REGION( 0x1400 ) /* color proms */
 	ROM_LOAD( "wm1-1.3r", 0x0000, 0x0200, 0x1af8ade8 )	/* red & green components */
@@ -912,7 +1158,7 @@ ROM_START( wndrmomo_rom )
 	ROM_LOAD( "wm1-4.5v", 0x0c00, 0x0800, 0xf4e83e0b )	/* sprites colortable */
 
 	ROM_REGION( 0x10000 ) /* MCU data */
-	ROM_LOAD( "wm1-4.6b",    0x04000, 0x8000, 0xbbe67836 )
+	ROM_LOAD( "wm1-3.6b",    0x04000, 0x8000, 0x55f01df7 )
 	ROM_LOAD( "rt1-mcu.bin", 0x0f000, 0x1000, 0x6ef08fb3 )
 
 	ROM_REGION( 0x40000 ) /* PCM samples for Hitachi CPU */
@@ -921,8 +1167,8 @@ ROM_START( wndrmomo_rom )
 	ROM_LOAD( "wm1-19.k3", 0x20000, 0x10000, 0xd288e912 )
 	ROM_LOAD( "wm1-20.m3", 0x30000, 0x10000, 0x076a72cb )
 
-	ROM_REGION( 32 ) /* ??? */
-	ROM_LOAD( "wm1-5.6u",	0x0000, 0x0020, 0xe4130804 )
+	ROM_REGION( 32 ) /* PROM */
+	ROM_LOAD( "wm1-5.6u",	0x0000, 0x0020, 0xe4130804 )	/* timing for the tilemap generator (not used) */
 ROM_END
 
 
@@ -952,6 +1198,13 @@ static void rthunder_gfx_untangle( void ) {
 		free( buffer );
 	}
 }
+
+#if CYCLE_SKIP
+static void rthunder_init_driver( void ) {
+	install_mem_read_handler( 0, 0x566f, 0x566f, cpu0_skip_r );
+	install_mem_read_handler( 1, 0x1668, 0x1668, cpu1_skip_r );
+}
+#endif
 
 /***************************************************************************
 
@@ -1010,7 +1263,11 @@ struct GameDriver rthunder_driver =
 	"Jimmy Hamm\nPhil Stroffolino\nErnesto Corvi",
 	0,
 	&machine_driver,
+#if CYCLE_SKIP
+	rthunder_init_driver,
+#else
 	0,
+#endif
 
 	rthunder_rom,
 	rthunder_gfx_untangle, 0,
@@ -1057,14 +1314,14 @@ struct GameDriver wndrmomo_driver =
 	"Namco",
 	"Jimmy Hamm\nPhil Stroffolino\nErnesto Corvi",
 	0,
-	&machine_driver,
+	&wndrmomo_machine_driver,
 	0,
 
 	wndrmomo_rom,
 	rthunder_gfx_untangle, 0,
 	0,
 	0, /* sound prom */
-	rthunder_input_ports,
+	wndrmomo_input_ports,
 
 	PROM_MEMORY_REGION(MEM_COLOR), 0, 0,
 	ORIENTATION_DEFAULT,

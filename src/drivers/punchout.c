@@ -754,12 +754,12 @@ static struct GfxDecodeInfo armwrest_gfxdecodeinfo[] =
 /* filename for speech sample files */
 static const char *punchout_sample_names[] =
 {
-	"00.sam","01.sam","02.sam","03.sam","04.sam","05.sam","06.sam","07.sam",
-	"08.sam","09.sam","0a.sam","0b.sam","0c.sam","0d.sam","0e.sam","0f.sam",
-	"10.sam","11.sam","12.sam","13.sam","14.sam","15.sam","16.sam","17.sam",
-	"18.sam","19.sam","1a.sam","1b.sam","1c.sam","1d.sam","1e.sam","1f.sam",
-	"20.sam","21.sam","22.sam","23.sam","24.sam","25.sam","26.sam","27.sam",
-	"28.sam","29.sam","2a.sam","2b.sam",
+	"00.wav","01.wav","02.wav","03.wav","04.wav","05.wav","06.wav","07.wav",
+	"08.wav","09.wav","0a.wav","0b.wav","0c.wav","0d.wav","0e.wav","0f.wav",
+	"10.wav","11.wav","12.wav","13.wav","14.wav","15.wav","16.wav","17.wav",
+	"18.wav","19.wav","1a.wav","1b.wav","1c.wav","1d.wav","1e.wav","1f.wav",
+	"20.wav","21.wav","22.wav","23.wav","24.wav","25.wav","26.wav","27.wav",
+	"28.wav","29.wav","2a.wav","2b.wav",
 	0
 };
 
@@ -784,6 +784,7 @@ static struct VLM5030interface vlm5030_interface =
 	3580000,    /* master clock */
 	255,        /* volume       */
 	4,          /* memory region of speech rom */
+	0,          /* memory size of speech rom */
 	0           /* VCU pin level (default)     */
 };
 

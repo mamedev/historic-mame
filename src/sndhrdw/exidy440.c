@@ -134,7 +134,7 @@ static void fir_filter_8(short *input, unsigned char *output, int count);
 	Initialize the sound system
 *************************************/
 
-int exidy440_sh_start(void)
+int exidy440_sh_start(const struct MachineSound *msound)
 {
 	const char *names[] =
 	{
@@ -167,7 +167,7 @@ int exidy440_sh_start(void)
 	sample_bits = Machine->sample_bits;
 	for (i = 0; i < 4; i++)
 	{
-		sound_channel[i].stream = stream_init_multi(2, &names[i * 2], (i & 2) ? SAMPLE_RATE_SLOW : SAMPLE_RATE_FAST, sample_bits, i, channel_update);
+		sound_channel[i].stream = stream_init_multi(msound,2, &names[i * 2], (i & 2) ? SAMPLE_RATE_SLOW : SAMPLE_RATE_FAST, sample_bits, i, channel_update);
 		stream_set_pan(sound_channel[i].stream + 0, OSD_PAN_LEFT);
 		stream_set_pan(sound_channel[i].stream + 1, OSD_PAN_RIGHT);
 	}

@@ -57,10 +57,10 @@ static int last_intensity;
  *
  *************************************/
 
-void toobin_vh_stop (void);
+void toobin_vh_stop(void);
 
 #if 0
-static void toobin_dump_video_ram (void);
+static void toobin_dump_video_ram(void);
 #endif
 
 
@@ -84,27 +84,27 @@ int toobin_vh_start(void)
 
 	/* allocate dirty buffers */
 	if (!playfielddirty)
-		playfielddirty = malloc (atarigen_playfieldram_size / 4);
+		playfielddirty = malloc(atarigen_playfieldram_size / 4);
 	if (!playfielddirty)
 	{
-		toobin_vh_stop ();
+		toobin_vh_stop();
 		return 1;
 	}
-	memset (playfielddirty, 1, atarigen_playfieldram_size / 4);
+	memset(playfielddirty, 1, atarigen_playfieldram_size / 4);
 
 	/* allocate bitmaps */
 	if (!playfieldbitmap)
-		playfieldbitmap = osd_new_bitmap (128*8, 64*8, Machine->scrbitmap->depth);
+		playfieldbitmap = osd_new_bitmap(128*8, 64*8, Machine->scrbitmap->depth);
 	if (!playfieldbitmap)
 	{
-		toobin_vh_stop ();
+		toobin_vh_stop();
 		return 1;
 	}
 
 	last_intensity = 0;
 
 	/* initialize the displaylist system */
-	return atarigen_init_display_list (&toobin_modesc);
+	return atarigen_init_display_list(&toobin_modesc);
 }
 
 
@@ -119,12 +119,12 @@ void toobin_vh_stop(void)
 {
 	/* free bitmaps */
 	if (playfieldbitmap)
-		osd_free_bitmap (playfieldbitmap);
+		osd_free_bitmap(playfieldbitmap);
 	playfieldbitmap = 0;
 
 	/* free dirty buffers */
 	if (playfielddirty)
-		free (playfielddirty);
+		free(playfielddirty);
 	playfielddirty = 0;
 }
 
@@ -136,20 +136,20 @@ void toobin_vh_stop(void)
  *
  *************************************/
 
-int toobin_playfieldram_r (int offset)
+int toobin_playfieldram_r(int offset)
 {
-	return READ_WORD (&atarigen_playfieldram[offset]);
+	return READ_WORD(&atarigen_playfieldram[offset]);
 }
 
 
-void toobin_playfieldram_w (int offset, int data)
+void toobin_playfieldram_w(int offset, int data)
 {
-	int oldword = READ_WORD (&atarigen_playfieldram[offset]);
-	int newword = COMBINE_WORD (oldword, data);
+	int oldword = READ_WORD(&atarigen_playfieldram[offset]);
+	int newword = COMBINE_WORD(oldword, data);
 
 	if (oldword != newword)
 	{
-		WRITE_WORD (&atarigen_playfieldram[offset], newword);
+		WRITE_WORD(&atarigen_playfieldram[offset], newword);
 		playfielddirty[offset / 4] = 1;
 	}
 }
@@ -162,11 +162,11 @@ void toobin_playfieldram_w (int offset, int data)
  *
  *************************************/
 
-void toobin_paletteram_w (int offset, int data)
+void toobin_paletteram_w(int offset, int data)
 {
-	int oldword = READ_WORD (&paletteram[offset]);
-	int newword = COMBINE_WORD (oldword, data);
-	WRITE_WORD (&paletteram[offset], newword);
+	int oldword = READ_WORD(&paletteram[offset]);
+	int newword = COMBINE_WORD(oldword, data);
+	WRITE_WORD(&paletteram[offset], newword);
 
 	{
 		int red =   (((newword >> 10) & 31) * 224) >> 5;
@@ -184,7 +184,7 @@ void toobin_paletteram_w (int offset, int data)
 			blue = (blue * last_intensity) >> 5;
 		}
 
-		palette_change_color ((offset / 2) & 0x3ff, red, green, blue);
+		palette_change_color((offset / 2) & 0x3ff, red, green, blue);
 	}
 }
 
@@ -196,17 +196,17 @@ void toobin_paletteram_w (int offset, int data)
  *
  *************************************/
 
-void toobin_update_display_list (int scanline)
+void toobin_update_display_list(int scanline)
 {
-	int link = READ_WORD (&toobin_moslip[0]) & 0xff;
-	atarigen_update_display_list (atarigen_spriteram, link, scanline);
+	int link = READ_WORD(&toobin_moslip[0]) & 0xff;
+	atarigen_update_display_list(atarigen_spriteram, link, scanline);
 }
 
 
-void toobin_moslip_w (int offset, int data)
+void toobin_moslip_w(int offset, int data)
 {
-	COMBINE_WORD_MEM (&toobin_moslip[offset], data);
-	toobin_update_display_list (cpu_getscanline ());
+	COMBINE_WORD_MEM(&toobin_moslip[offset], data);
+	toobin_update_display_list(cpu_getscanline());
 }
 
 
@@ -242,7 +242,7 @@ void toobin_moslip_w (int offset, int data)
  *---------------------------------------------------------------------------------
  */
 
-void toobin_calc_mo_colors (struct osd_bitmap *bitmap, struct rectangle *clip, unsigned short *data, void *param)
+void toobin_calc_mo_colors(struct osd_bitmap *bitmap, struct rectangle *clip, unsigned short *data, void *param)
 {
 	unsigned short *colors = param;
 	int color = data[3] & 0x0f;
@@ -256,7 +256,7 @@ void toobin_calc_mo_colors (struct osd_bitmap *bitmap, struct rectangle *clip, u
 		*colors |= Machine->gfx[2]->pen_usage[pict];
 }
 
-void toobin_render_mo (struct osd_bitmap *bitmap, struct rectangle *clip, unsigned short *data, void *param)
+void toobin_render_mo(struct osd_bitmap *bitmap, struct rectangle *clip, unsigned short *data, void *param)
 {
 	struct toobin_mo_data *modata = param;
 	int *redraw_list = modata->redraw_list;
@@ -334,7 +334,7 @@ void toobin_render_mo (struct osd_bitmap *bitmap, struct rectangle *clip, unsign
 				continue;
 
 			/* draw the sprite */
-			drawgfx (bitmap, Machine->gfx[2],
+			drawgfx(bitmap, Machine->gfx[2],
 					pict, color, hflip, vflip, sx, sy, clip, TRANSPARENCY_PEN, 0);
 		}
 	}
@@ -364,13 +364,13 @@ void toobin_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 
 	/* compute the intensity and modify the palette if it's different */
-	intensity = 0x1f - (READ_WORD (&toobin_intensity[0]) & 0x1f);
+	intensity = 0x1f - (READ_WORD(&toobin_intensity[0]) & 0x1f);
 	if (intensity != last_intensity)
 	{
 		last_intensity = intensity;
 		for (i = 0; i < 256+256+64; i++)
 		{
-			int newword = READ_WORD (&paletteram[i*2]);
+			int newword = READ_WORD(&paletteram[i*2]);
 			int red =   (((newword >> 10) & 31) * 224) >> 5;
 			int green = (((newword >>  5) & 31) * 224) >> 5;
 			int blue =  (((newword      ) & 31) * 224) >> 5;
@@ -386,37 +386,37 @@ void toobin_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 				blue = (blue * last_intensity) >> 5;
 			}
 
-			palette_change_color (i, red, green, blue);
+			palette_change_color(i, red, green, blue);
 		}
 	}
 
 
-/*	if (osd_key_pressed (OSD_KEY_9)) toobin_dump_video_ram ();*/
+/*	if (osd_key_pressed(OSD_KEY_9)) toobin_dump_video_ram();*/
 
 
 	/* reset color tracking */
-	memset (mo_map, 0, sizeof (mo_map));
-	memset (pf_map, 0, sizeof (pf_map));
-	memset (al_map, 0, sizeof (al_map));
+	memset(mo_map, 0, sizeof(mo_map));
+	memset(pf_map, 0, sizeof(pf_map));
+	memset(al_map, 0, sizeof(al_map));
 	palette_init_used_colors();
 
 	/* update color usage for the playfield */
 	for (offs = 0; offs < 128*64; offs++)
 	{
-		int data1 = READ_WORD (&atarigen_playfieldram[offs * 4]);
+		int data1 = READ_WORD(&atarigen_playfieldram[offs * 4]);
 		int color = data1 & 15;
 		pf_map[color] = 1;
 	}
 
 	/* update color usage for the mo's */
-	atarigen_render_display_list (bitmap, toobin_calc_mo_colors, mo_map);
+	atarigen_render_display_list(bitmap, toobin_calc_mo_colors, mo_map);
 
 	/* update color usage for the alphanumerics */
 	for (sy = 0; sy < YCHARS; sy++)
 	{
 		for (sx = 0, offs = sy * 64; sx < XCHARS; sx++, offs++)
 		{
-			int data = READ_WORD (&atarigen_alpharam[offs * 2]);
+			int data = READ_WORD(&atarigen_alpharam[offs * 2]);
 			int color = (data >> 12) & 15;
 			al_map[color] = 1;
 		}
@@ -426,7 +426,7 @@ void toobin_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	for (i = 0; i < 16; i++)
 	{
 		if (pf_map[i])
-			memset (&palette_used_colors[0 + i * 16], PALETTE_COLOR_USED, 16);
+			memset(&palette_used_colors[0 + i * 16], PALETTE_COLOR_USED, 16);
 		if (mo_map[i])
 		{
 			int j;
@@ -436,17 +436,17 @@ void toobin_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 					palette_used_colors[256 + i * 16 + j] = PALETTE_COLOR_USED;
 		}
 		if (al_map[i])
-			memset (&palette_used_colors[512 + i * 4], PALETTE_COLOR_USED, 4);
+			memset(&palette_used_colors[512 + i * 4], PALETTE_COLOR_USED, 4);
 	}
 
-	if (palette_recalc ())
-		memset (playfielddirty, 1, atarigen_playfieldram_size / 2);
+	if (palette_recalc())
+		memset(playfielddirty, 1, atarigen_playfieldram_size / 2);
 
 
 
 	/* compute scrolling so we know what to update */
-	xscroll = (READ_WORD (&atarigen_hscroll[0]) >> 6);
-	yscroll = (READ_WORD (&atarigen_vscroll[0]) >> 6);
+	xscroll = (READ_WORD(&atarigen_hscroll[0]) >> 6);
+	yscroll = (READ_WORD(&atarigen_vscroll[0]) >> 6);
 	xscroll = -(xscroll & 0x3ff);
 	yscroll = -(yscroll & 0x1ff);
 
@@ -491,14 +491,14 @@ void toobin_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			/* rerender if dirty */
 			if (playfielddirty[offs])
 			{
-				int data1 = READ_WORD (&atarigen_playfieldram[offs * 4]);
-				int data2 = READ_WORD (&atarigen_playfieldram[offs * 4 + 2]);
+				int data1 = READ_WORD(&atarigen_playfieldram[offs * 4]);
+				int data2 = READ_WORD(&atarigen_playfieldram[offs * 4 + 2]);
 				int color = data1 & 15;
 				int vflip = data2 & 0x8000;
 				int hflip = data2 & 0x4000;
 				int pict = data2 & 0x3fff;
 
-				drawgfx (playfieldbitmap, Machine->gfx[1], pict, color, hflip, vflip,
+				drawgfx(playfieldbitmap, Machine->gfx[1], pict, color, hflip, vflip,
 						8 * sx, 8 * sy, 0, TRANSPARENCY_NONE, 0);
 				playfielddirty[offs] = 0;
 			}
@@ -506,13 +506,13 @@ void toobin_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	}
 
 	/* copy the playfield to the destination */
-	copyscrollbitmap (bitmap, playfieldbitmap, 1, &xscroll, 1, &yscroll, &Machine->drv->visible_area, TRANSPARENCY_NONE, 0);
+	copyscrollbitmap(bitmap, playfieldbitmap, 1, &xscroll, 1, &yscroll, &Machine->drv->visible_area, TRANSPARENCY_NONE, 0);
 
 	/* prepare the motion object data structure */
 	modata.redraw_list = modata.redraw = redraw_list;
 
 	/* render the motion objects */
-	atarigen_render_display_list (bitmap, toobin_render_mo, &modata);
+	atarigen_render_display_list(bitmap, toobin_render_mo, &modata);
 
 	/* redraw playfield tiles with higher priority */
 	for (r = redraw_list; r < modata.redraw; r++)
@@ -557,19 +557,19 @@ void toobin_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 				/* process the data */
 				offs = (y & 0x3f) * 128 + (x & 0x7f);
-				data1 = READ_WORD (&atarigen_playfieldram[offs * 4]);
+				data1 = READ_WORD(&atarigen_playfieldram[offs * 4]);
 				pfpri = (data1 >> 4) & 3;
 
 				/* there is a PAL on the board which does priority; this is wrong, but workable */
 				if (pfpri)
 				{
-					int data2 = READ_WORD (&atarigen_playfieldram[offs * 4 + 2]);
+					int data2 = READ_WORD(&atarigen_playfieldram[offs * 4 + 2]);
 					int vflip = data2 & 0x8000;
 					int hflip = data2 & 0x4000;
 					int pict = data2 & 0x3fff;
 					int color = data1 & 15;
 
-					drawgfx (bitmap, Machine->gfx[1], pict, color, hflip, vflip,
+					drawgfx(bitmap, Machine->gfx[1], pict, color, hflip, vflip,
 							sx, sy, &clip, TRANSPARENCY_PENS, 0x000000ff);
 				}
 			}
@@ -597,7 +597,7 @@ void toobin_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		/* loop over the X coordinate */
 		for (sx = 0, offs = sy * 64; sx < XCHARS; sx++, offs++)
 		{
-			int data = READ_WORD (&atarigen_alpharam[offs * 2]);
+			int data = READ_WORD(&atarigen_alpharam[offs * 2]);
 			int pict = data & 0x3ff;
 
 			/* if there's a non-zero picture or if we're fully opaque, draw the tile */
@@ -607,7 +607,7 @@ void toobin_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 				int hflip = data & 0x400;
 
 				/* draw the character */
-				drawgfx (bitmap, Machine->gfx[0], pict, color, hflip, 0,
+				drawgfx(bitmap, Machine->gfx[0], pict, color, hflip, 0,
 						8 * sx, 8 * sy, 0, TRANSPARENCY_PEN, 0);
 			}
 		}
@@ -623,49 +623,49 @@ void toobin_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
  *************************************/
 
 #if 0
-static void toobin_dump_video_ram (void)
+static void toobin_dump_video_ram(void)
 {
 	static int count;
 	char name[50];
 	FILE *f;
 	int i;
 
-	while (osd_key_pressed (OSD_KEY_9)) { }
+	while (osd_key_pressed(OSD_KEY_9)) { }
 
-	sprintf (name, "Dump %d", ++count);
-	f = fopen (name, "wt");
+	sprintf(name, "Dump %d", ++count);
+	f = fopen(name, "wt");
 
-	fprintf (f, "\n\nPlayfield Palette:\n");
+	fprintf(f, "\n\nPlayfield Palette:\n");
 	for (i = 0x000; i < 0x100; i++)
 	{
-		fprintf (f, "%04X ", READ_WORD (&paletteram[i*2]));
-		if ((i & 15) == 15) fprintf (f, "\n");
+		fprintf(f, "%04X ", READ_WORD(&paletteram[i*2]));
+		if ((i & 15) == 15) fprintf(f, "\n");
 	}
 
-	fprintf (f, "\n\nMotion Object Palette:\n");
+	fprintf(f, "\n\nMotion Object Palette:\n");
 	for (i = 0x100; i < 0x200; i++)
 	{
-		fprintf (f, "%04X ", READ_WORD (&paletteram[i*2]));
-		if ((i & 15) == 15) fprintf (f, "\n");
+		fprintf(f, "%04X ", READ_WORD(&paletteram[i*2]));
+		if ((i & 15) == 15) fprintf(f, "\n");
 	}
 
-	fprintf (f, "\n\nAlpha Palette\n");
+	fprintf(f, "\n\nAlpha Palette\n");
 	for (i = 0x200; i < 0x300; i++)
 	{
-		fprintf (f, "%04X ", READ_WORD (&paletteram[i*2]));
-		if ((i & 15) == 15) fprintf (f, "\n");
+		fprintf(f, "%04X ", READ_WORD(&paletteram[i*2]));
+		if ((i & 15) == 15) fprintf(f, "\n");
 	}
 
-	fprintf (f, "\n\nX Scroll = %03X\nY Scroll = %03X\n",
-		READ_WORD (&atarigen_hscroll[0]) >> 6, READ_WORD (&atarigen_vscroll[0]) >> 6);
+	fprintf(f, "\n\nX Scroll = %03X\nY Scroll = %03X\n",
+		READ_WORD(&atarigen_hscroll[0]) >> 6, READ_WORD(&atarigen_vscroll[0]) >> 6);
 
-	fprintf (f, "\n\nMotion Objects\n");
+	fprintf(f, "\n\nMotion Objects\n");
 	for (i = 0; i < atarigen_spriteram_size; i += 8)
 	{
-		int data1 = READ_WORD (&atarigen_spriteram[i+0]);
-		int data2 = READ_WORD (&atarigen_spriteram[i+2]);
-		int data3 = READ_WORD (&atarigen_spriteram[i+4]);
-		int data4 = READ_WORD (&atarigen_spriteram[i+6]);
+		int data1 = READ_WORD(&atarigen_spriteram[i+0]);
+		int data2 = READ_WORD(&atarigen_spriteram[i+2]);
+		int data3 = READ_WORD(&atarigen_spriteram[i+4]);
+		int data4 = READ_WORD(&atarigen_spriteram[i+6]);
 
 		int ypos = (data1 >> 6) & 0x1ff;
 		int vsize = ((data1 >> 3) & 7) + 1;
@@ -677,25 +677,25 @@ static void toobin_dump_video_ram (void)
 		int color = (data4 & 0x0f);
 		int xpos = (data4 >> 6) & 0x3ff;
 
-		fprintf (f, "  Object %02X: P=%04X C=%01X X=%03X Y=%03X HSIZ=%d VSIZ=%d HFLP=%d VFLP=%d L=%02X Leftovers: %04X %04X\n",
+		fprintf(f, "  Object %02X: P=%04X C=%01X X=%03X Y=%03X HSIZ=%d VSIZ=%d HFLP=%d VFLP=%d L=%02X Leftovers: %04X %04X\n",
 				i/8, pict, color, xpos, ypos, hsize, vsize, hflip, vflip, link, data3 & 0xff00, data4 & 0x30);
 	}
 
-	fprintf (f, "\n\nPlayfield dump\n");
+	fprintf(f, "\n\nPlayfield dump\n");
 	for (i = 0; i < atarigen_playfieldram_size / 4; i++)
 	{
-		fprintf (f, "%01X%04X ", READ_WORD (&atarigen_playfieldram[i*4]), READ_WORD (&atarigen_playfieldram[i*4+2]));
-		if ((i & 127) == 127) fprintf (f, "\n");
-		else if ((i & 127) == 63) fprintf (f, "\n      ");
+		fprintf(f, "%01X%04X ", READ_WORD(&atarigen_playfieldram[i*4]), READ_WORD(&atarigen_playfieldram[i*4+2]));
+		if ((i & 127) == 127) fprintf(f, "\n");
+		else if ((i & 127) == 63) fprintf(f, "\n      ");
 	}
 
-	fprintf (f, "\n\nAlpha dump\n");
+	fprintf(f, "\n\nAlpha dump\n");
 	for (i = 0; i < atarigen_alpharam_size / 2; i++)
 	{
-		fprintf (f, "%04X ", READ_WORD (&atarigen_alpharam[i*2]));
-		if ((i & 63) == 63) fprintf (f, "\n");
+		fprintf(f, "%04X ", READ_WORD(&atarigen_alpharam[i*2]));
+		if ((i & 63) == 63) fprintf(f, "\n");
 	}
 
-	fclose (f);
+	fclose(f);
 }
 #endif

@@ -187,8 +187,12 @@ int VerifyRomSet (int game, verify_printf_proc verify_printf)
 		switch (aud->status)
 		{
 			case AUD_ROM_NOT_FOUND:
-				verify_printf ("%-8s: %-12s %7d bytes %08x NOT FOUND\n",
-					drivers[game]->name, aud->rom, aud->explength, aud->expchecksum);
+				if (aud->expchecksum)
+					verify_printf ("%-8s: %-12s %7d bytes %08x NOT FOUND\n",
+						drivers[game]->name, aud->rom, aud->explength, aud->expchecksum);
+				else
+					verify_printf ("%-8s: %-12s %7d bytes NOT FOUND (NO GOOD DUMP KNOWN)\n",
+						drivers[game]->name, aud->rom, aud->explength, aud->expchecksum);
 				badarchive = 1;
 				break;
 			case AUD_BAD_CHECKSUM:
@@ -196,7 +200,7 @@ int VerifyRomSet (int game, verify_printf_proc verify_printf)
 					verify_printf ("%-8s: %-12s %7d bytes %08x INCORRECT CHECKSUM: %08x\n",
 						drivers[game]->name, aud->rom, aud->explength, aud->expchecksum, aud->checksum);
 				else
-					verify_printf ("%-8s: %-12s %7d bytes NO GOOD DUMP EXISTS\n",
+					verify_printf ("%-8s: %-12s %7d bytes NO GOOD DUMP KNOWN\n",
 						drivers[game]->name, aud->rom, aud->explength);
 				badarchive = 1;
 				break;
@@ -209,7 +213,7 @@ int VerifyRomSet (int game, verify_printf_proc verify_printf)
 					verify_printf ("%-8s: %-12s %7d bytes %08x INCORRECT LENGTH: %8d\n",
 						drivers[game]->name, aud->rom, aud->explength, aud->expchecksum, aud->length);
 				else
-					verify_printf ("%-8s: %-12s %7d bytes NO GOOD DUMP EXISTS\n",
+					verify_printf ("%-8s: %-12s %7d bytes NO GOOD DUMP KNOWN\n",
 						drivers[game]->name, aud->rom, aud->explength);
 				badarchive = 1;
 				break;

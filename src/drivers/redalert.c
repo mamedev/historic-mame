@@ -172,8 +172,8 @@ static struct GfxLayout backlayout =
 	0x400,	  /* 1024 characters */
 	1,	/* 1 bits per pixel */
 	{ 0 }, /* No info needed for bit offsets */
+	{ 0, 1, 2, 3, 4, 5, 6, 7 },
 	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
-	{ 7, 6, 5, 4, 3, 2, 1, 0 },
 	8*8 /* every char takes 8 consecutive bytes */
 };
 
@@ -183,8 +183,8 @@ static struct GfxLayout charlayout =
 	128,	/* 128 characters */
 	1,	/* 1 bits per pixel */
 	{ 0 }, /* No info needed for bit offsets */
+	{ 0, 1, 2, 3, 4, 5, 6, 7 },
 	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
-	{ 7, 6, 5, 4, 3, 2, 1, 0 },
 	8*8 /* every char takes 8 consecutive bytes */
 };
 
@@ -194,8 +194,8 @@ static struct GfxLayout spritelayout =
 	128,	/* 128 characters */
 	2,		/* 1 bits per pixel */
 	{ 0, 0x800*8 }, /* No info needed for bit offsets */
+	{ 0, 1, 2, 3, 4, 5, 6, 7 },
 	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
-	{ 7, 6, 5, 4, 3, 2, 1, 0 },
 	8*8 /* every char takes 8 consecutive bytes */
 };
 
@@ -291,7 +291,7 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_M6502 | CPU_AUDIO_CPU,
 			1000000,	   /* 1 MHz */
-			2,
+			1,
 			sound_readmem,sound_writemem,0,0,
 			/* IRQ is hooked to a 555 timer, whose freq is 1150 Hz */
 			0,0,
@@ -300,7 +300,7 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_8085A | CPU_AUDIO_CPU,
 			1000000,	   /* 1 MHz? */
-			3,
+			2,
 			voice_readmem,voice_writemem,0,0,
 			ignore_interrupt,1
 		}
@@ -310,7 +310,7 @@ static struct MachineDriver machine_driver =
 	0,
 
 	/* video hardware */
-	32*8, 32*8, { 1*8, 31*8-1, 0*8, 32*8-1 },
+	32*8, 32*8, { 0*8, 32*8-1, 1*8, 31*8-1 },
 	gfxdecodeinfo,
 	sizeof(palette)/3,sizeof(colortable)/sizeof(unsigned short),
 	0,
@@ -345,16 +345,14 @@ ROM_START( redalert_rom )
 	ROM_LOAD( "rag6",         	0x6000, 0x1000, 0xcb2a308c )
 	ROM_LOAD( "rag7n",        	0x7000, 0x1000, 0x82ab2dae )
 	ROM_LOAD( "rag8n",        	0x8000, 0x1000, 0xb80eece9 )
-	ROM_RELOAD( 		 0xF000, 0x1000 )
+	ROM_RELOAD(                0xf000, 0x1000 )
 	ROM_LOAD( "rag9",         	0x9000, 0x1000, 0x2b7d1295 )
 	ROM_LOAD( "ragab",        	0xa000, 0x1000, 0xab99f5ed )
 	ROM_LOAD( "ragb",         	0xb000, 0x1000, 0x8e0d1661 )
 
-	ROM_REGION_DISPOSE(0x100) /* temporary for graphics - unused */
-
 	ROM_REGION(0x10000) /* 64k for code */
 	ROM_LOAD( "w3s1",         	0x7800, 0x0800, 0x4af956a5 )
-	ROM_RELOAD( 		 0xF800, 0x0800 )
+	ROM_RELOAD(                0xf800, 0x0800 )
 
 	ROM_REGION(0x10000) /* 64k for code */
 	ROM_LOAD( "ras1b",        	0x0000, 0x1000, 0xec690845 )
@@ -383,7 +381,7 @@ struct GameDriver redalert_driver =
 	"1981",
 	"GDI + Irem",
 	"Mike Balfour\nDick Milliken (Information)",
-	0,
+	GAME_IMPERFECT_COLORS,
 	&machine_driver,
 	0,
 
@@ -395,6 +393,6 @@ struct GameDriver redalert_driver =
 	redalert_input_ports,
 
 	0, palette, colortable,
-	ORIENTATION_DEFAULT,
-	0,0
+	ORIENTATION_ROTATE_270,
+	0, 0
 };

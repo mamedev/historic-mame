@@ -452,15 +452,15 @@ static struct MachineDriver masao_machine_driver =
 static const char *sample_names[] =
 {
 	/* 7f01 - 7f07 sounds */
-	"ice.sam",    /* 0x02 ice appears (formerly effect0.sam) */
-	"coin.sam",   /* 0x06 coin appears (formerly effect1.sam) */
-	"skid.sam",   /* 0x07 skid */
+	"ice.wav",    /* 0x02 ice appears (formerly effect0.wav) */
+	"coin.wav",   /* 0x06 coin appears (formerly effect1.wav) */
+	"skid.wav",   /* 0x07 skid */
 
 	/* 7c00 */
-	"run.sam",        /* 03, 02, 01 - 0x1b */
+	"run.wav",        /* 03, 02, 01 - 0x1b */
 
 	/* 7c80 */
-	"luigirun.sam",   /* 03, 02, 01 - 0x1c */
+	"luigirun.wav",   /* 03, 02, 01 - 0x1c */
 
     0	/* end of array */
 };

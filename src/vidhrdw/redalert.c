@@ -171,8 +171,8 @@ void redalert_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 			dirtybuffer[offs] = 0;
 
-			sx = 8 * (offs % 32);
-			sy = 8 * (offs / 32);
+			sx = 31 - offs / 32;
+			sy = offs % 32;
 
 			stat_transparent = TRANSPARENCY_NONE;
 
@@ -184,16 +184,20 @@ void redalert_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 				color = color_lookup[charcode];
 
 				drawgfx(tmpbitmap,Machine->gfx[2],
-						charcode-0x80,color,
-						0,0,sx,sy,
+						charcode-0x80,
+						color,
+						0,0,
+						8*sx,8*sy,
 						&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
 			}
 
 			/* Second layer - background */
 			color = redalert_backcolor[offs];
 			drawgfx(tmpbitmap,Machine->gfx[0],
-					offs,color,
-					0,0,sx,sy,
+					offs,
+					color,
+					0,0,
+					8*sx,8*sy,
 					&Machine->drv->visible_area,stat_transparent,0);
 
 			/* Third layer - alphanumerics & sprites */
@@ -201,16 +205,20 @@ void redalert_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			{
 				color = color_lookup[charcode];
 				drawgfx(tmpbitmap,Machine->gfx[1],
-						charcode,color,
-						0,0,sx,sy,
+						charcode,
+						color,
+						0,0,
+						8*sx,8*sy,
 						&Machine->drv->visible_area,TRANSPARENCY_COLOR,0);
 			}
 			else if (charcode < 0xC0)
 			{
 				color = color_lookup[charcode];
 				drawgfx(tmpbitmap,Machine->gfx[2],
-						charcode-0x80,color,
-						0,0,sx,sy,
+						charcode-0x80,
+						color,
+						0,0,
+						8*sx,8*sy,
 						&Machine->drv->visible_area,TRANSPARENCY_COLOR,0);
 			}
 

@@ -115,8 +115,6 @@ Program ROM (48K bytes)                   4000-FFFF   R    D0-D7
 
 ****************************************************************************/
 
-
-
 #include "driver.h"
 #include "machine/atarigen.h"
 #include "vidhrdw/generic.h"
@@ -126,45 +124,46 @@ extern unsigned char *atarisys2_interrupt_enable;
 extern unsigned char *atarisys2_bankselect;
 extern unsigned char *atarisys2_slapstic_base;
 
-int atarisys2_slapstic_r (int offset);
-int atarisys2_adc_r (int offset);
-int atarisys2_switch_r (int offset);
-int atarisys2_videoram_r (int offset);
-int atarisys2_leta_r (int offset);
-int atarisys2_6502_switch_r (int offset);
+int atarisys2_slapstic_r(int offset);
+int atarisys2_adc_r(int offset);
+int atarisys2_switch_r(int offset);
+int atarisys2_videoram_r(int offset);
+int atarisys2_leta_r(int offset);
+int atarisys2_sound_r(int offset);
+int atarisys2_6502_sound_r(int offset);
+int atarisys2_6502_switch_r(int offset);
 
-void atarisys2_slapstic_w (int offset, int data);
-void atarisys2_watchdog_w (int offset, int data);
-void atarisys2_bankselect_w (int offset, int data);
-void atarisys2_adc_strobe_w (int offset, int data);
-void atarisys2_vmmu_w (int offset, int data);
-void atarisys2_interrupt_ack_w (int offset, int data);
-void atarisys2_vscroll_w (int offset, int data);
-void atarisys2_hscroll_w (int offset, int data);
-void atarisys2_videoram_w (int offset, int data);
-void atarisys2_paletteram_w (int offset, int data);
-void atarisys2_tms5220_w (int offset, int data);
-void atarisys2_tms5220_strobe_w (int offset, int data);
-void atarisys2_mixer_w (int offset, int data);
-void atarisys2_sound_enable_w (int offset, int data);
-void atarisys2_6502_switch_w (int offset, int data);
+void atarisys2_slapstic_w(int offset, int data);
+void atarisys2_bankselect_w(int offset, int data);
+void atarisys2_adc_strobe_w(int offset, int data);
+void atarisys2_vmmu_w(int offset, int data);
+void atarisys2_interrupt_ack_w(int offset, int data);
+void atarisys2_vscroll_w(int offset, int data);
+void atarisys2_hscroll_w(int offset, int data);
+void atarisys2_videoram_w(int offset, int data);
+void atarisys2_paletteram_w(int offset, int data);
+void atarisys2_tms5220_w(int offset, int data);
+void atarisys2_tms5220_strobe_w(int offset, int data);
+void atarisys2_mixer_w(int offset, int data);
+void atarisys2_6502_sound_w(int offset, int data);
+void atarisys2_sound_enable_w(int offset, int data);
+void atarisys2_6502_switch_w(int offset, int data);
 
-int atarisys2_interrupt (void);
-int atarisys2_sound_interrupt (void);
+int atarisys2_interrupt(void);
 
-void paperboy_init_machine (void);
-void apb_init_machine (void);
-void a720_init_machine (void);
-void ssprint_init_machine (void);
-void csprint_init_machine (void);
+void paperboy_init_machine(void);
+void apb_init_machine(void);
+void a720_init_machine(void);
+void ssprint_init_machine(void);
+void csprint_init_machine(void);
 
-int paperboy_vh_start (void);
-int apb_vh_start (void);
-int a720_vh_start (void);
-int ssprint_vh_start (void);
-int csprint_vh_start (void);
+int paperboy_vh_start(void);
+int apb_vh_start(void);
+int a720_vh_start(void);
+int ssprint_vh_start(void);
+int csprint_vh_start(void);
 
-void atarisys2_vh_stop (void);
+void atarisys2_vh_stop(void);
 void atarisys2_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 
@@ -180,7 +179,7 @@ static struct MemoryReadAddress atarisys2_readmem[] =
 	{ 0x1000, 0x11ff, paletteram_word_r },
 	{ 0x1400, 0x1403, atarisys2_adc_r },
 	{ 0x1800, 0x1801, atarisys2_switch_r },
-	{ 0x1c00, 0x1c01, atarigen_sound_r },
+	{ 0x1c00, 0x1c01, atarisys2_sound_r },
 	{ 0x2000, 0x3fff, atarisys2_videoram_r },
 	{ 0x4000, 0x5fff, MRA_BANK1 },
 	{ 0x6000, 0x7fff, MRA_BANK2 },
@@ -202,7 +201,7 @@ static struct MemoryWriteAddress atarisys2_writemem[] =
 	{ 0x1680, 0x1681, atarigen_sound_w },
 	{ 0x1700, 0x1701, atarisys2_hscroll_w, &atarigen_hscroll },
 	{ 0x1780, 0x1781, atarisys2_vscroll_w, &atarigen_vscroll },
-	{ 0x1800, 0x1801, atarisys2_watchdog_w },
+	{ 0x1800, 0x1801, watchdog_reset_w },
 	{ 0x2000, 0x3fff, atarisys2_videoram_w },
 	{ 0x4000, 0x7fff, MWA_ROM },
 	{ 0x8000, 0x81ff, atarisys2_slapstic_w, &atarisys2_slapstic_base },
@@ -218,7 +217,7 @@ static struct MemoryWriteAddress atarisys2_writemem[] =
  *
  *************************************/
 
-static void sound_eeprom_w (int offset, int data)
+static void sound_eeprom_w(int offset, int data)
 {
 	Machine->memory_region[2][offset + 0x1000] = data;
 /*	{
@@ -237,7 +236,7 @@ static struct MemoryReadAddress atarisys2_sound_readmem[] =
 	{ 0x1830, 0x183f, pokey2_r },
 	{ 0x1840, 0x1840, atarisys2_6502_switch_r },
 	{ 0x1850, 0x1851, YM2151_status_port_0_r },
-	{ 0x1860, 0x1860, atarigen_6502_sound_r },
+	{ 0x1860, 0x1860, atarisys2_6502_sound_r },
 	{ 0x4000, 0xffff, MRA_ROM },
 	{ -1 }  /* end of table */
 };
@@ -253,9 +252,9 @@ static struct MemoryWriteAddress atarisys2_sound_writemem[] =
 	{ 0x1851, 0x1851, YM2151_data_port_0_w },
 	{ 0x1870, 0x1870, atarisys2_tms5220_w },
 	{ 0x1872, 0x1873, atarisys2_tms5220_strobe_w },
-	{ 0x1874, 0x1874, atarigen_6502_sound_w },
+	{ 0x1874, 0x1874, atarisys2_6502_sound_w },
 	{ 0x1876, 0x1876, MWA_NOP },	/* coin counters */
-	{ 0x1878, 0x1878, MWA_NOP },	/* IRQ clear */
+	{ 0x1878, 0x1878, atarigen_6502_irq_ack_w },
 	{ 0x187a, 0x187a, atarisys2_mixer_w },
 	{ 0x187c, 0x187c, atarisys2_6502_switch_w },
 	{ 0x187e, 0x187e, atarisys2_sound_enable_w },
@@ -747,7 +746,7 @@ static struct MachineDriver paperboy_machine_driver =
 			2,
 			atarisys2_sound_readmem,atarisys2_sound_writemem,0,0,
 			0,0,
-			atarisys2_sound_interrupt,250
+			atarigen_6502_irq_gen,250
 		},
 	},
 	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
@@ -802,7 +801,7 @@ static struct MachineDriver apb_machine_driver =
 			2,
 			atarisys2_sound_readmem,atarisys2_sound_writemem,0,0,
 			0,0,
-			atarisys2_sound_interrupt,250
+			atarigen_6502_irq_gen,250
 		},
 	},
 	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
@@ -857,7 +856,7 @@ static struct MachineDriver a720_machine_driver =
 			2,
 			atarisys2_sound_readmem,atarisys2_sound_writemem,0,0,
 			0,0,
-			atarisys2_sound_interrupt,250
+			atarigen_6502_irq_gen,250
 		},
 	},
 	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
@@ -912,7 +911,7 @@ static struct MachineDriver ssprint_machine_driver =
 			2,
 			atarisys2_sound_readmem,atarisys2_sound_writemem,0,0,
 			0,0,
-			atarisys2_sound_interrupt,250
+			atarigen_6502_irq_gen,250
 		},
 	},
 	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
@@ -963,7 +962,7 @@ static struct MachineDriver csprint_machine_driver =
 			2,
 			atarisys2_sound_readmem,atarisys2_sound_writemem,0,0,
 			0,0,
-			atarisys2_sound_interrupt,250
+			atarigen_6502_irq_gen,250
 		},
 	},
 	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
@@ -1316,16 +1315,16 @@ ROM_END
  *
  *************************************/
 
-void paperboy_rom_decode (void)
+void paperboy_rom_decode(void)
 {
 	int i;
 
 	/* expand the 16k program ROMs into full 64k chunks */
 	for (i = 0x10000; i < 0x90000; i += 0x20000)
 	{
-		memcpy (&Machine->memory_region[0][i + 0x08000], &Machine->memory_region[0][i], 0x8000);
-		memcpy (&Machine->memory_region[0][i + 0x10000], &Machine->memory_region[0][i], 0x8000);
-		memcpy (&Machine->memory_region[0][i + 0x18000], &Machine->memory_region[0][i], 0x8000);
+		memcpy(&Machine->memory_region[0][i + 0x08000], &Machine->memory_region[0][i], 0x8000);
+		memcpy(&Machine->memory_region[0][i + 0x10000], &Machine->memory_region[0][i], 0x8000);
+		memcpy(&Machine->memory_region[0][i + 0x18000], &Machine->memory_region[0][i], 0x8000);
 	}
 
 	/* invert the bits of the sprites */
@@ -1334,7 +1333,7 @@ void paperboy_rom_decode (void)
 }
 
 
-void apb_rom_decode (void)
+void apb_rom_decode(void)
 {
 	int i;
 
@@ -1344,7 +1343,7 @@ void apb_rom_decode (void)
 }
 
 
-void a720_rom_decode (void)
+void a720_rom_decode(void)
 {
 	int i;
 
@@ -1354,13 +1353,13 @@ void a720_rom_decode (void)
 }
 
 
-void ssprint_rom_decode (void)
+void ssprint_rom_decode(void)
 {
 	int i;
 
 	/* expand the 32k program ROMs into full 64k chunks */
 	for (i = 0x10000; i < 0x90000; i += 0x20000)
-		memcpy (&Machine->memory_region[0][i + 0x10000], &Machine->memory_region[0][i], 0x10000);
+		memcpy(&Machine->memory_region[0][i + 0x10000], &Machine->memory_region[0][i], 0x10000);
 
 	/* invert the bits of the sprites */
 	for (i = 0x80000; i < 0xc0000; i++)
@@ -1368,13 +1367,13 @@ void ssprint_rom_decode (void)
 }
 
 
-void csprint_rom_decode (void)
+void csprint_rom_decode(void)
 {
 	int i;
 
 	/* expand the 32k program ROMs into full 64k chunks */
 	for (i = 0x10000; i < 0x90000; i += 0x20000)
-		memcpy (&Machine->memory_region[0][i + 0x10000], &Machine->memory_region[0][i], 0x10000);
+		memcpy(&Machine->memory_region[0][i + 0x10000], &Machine->memory_region[0][i], 0x10000);
 
 	/* invert the bits of the sprites */
 	for (i = 0x80000; i < 0xc0000; i++)
@@ -1390,15 +1389,15 @@ void csprint_rom_decode (void)
  *
  *************************************/
 
-int paperboy_hiload (void)
+int paperboy_hiload(void)
 {
 	void *f;
 
-	f = osd_fopen (Machine->gamedrv->name, 0, OSD_FILETYPE_HIGHSCORE, 0);
+	f = osd_fopen(Machine->gamedrv->name, 0, OSD_FILETYPE_HIGHSCORE, 0);
 	if (f)
 	{
-		osd_fread (f, atarigen_eeprom, atarigen_eeprom_size);
-		osd_fclose (f);
+		osd_fread(f, atarigen_eeprom, atarigen_eeprom_size);
+		osd_fclose(f);
 	}
 	else
 	{
@@ -1426,10 +1425,10 @@ int paperboy_hiload (void)
 		for (i = 0x0000; i < 0x0042; i++)
 			atarigen_eeprom[i + 0x0000] = 0x00;
 
-		for (i = 0; i < sizeof (data0042); i++)
+		for (i = 0; i < sizeof(data0042); i++)
 			atarigen_eeprom[i + 0x0042] = data0042[i];
 
-		for (i = 0; i < sizeof (data00fb); i++)
+		for (i = 0; i < sizeof(data00fb); i++)
 			atarigen_eeprom[i + 0x00fb] = data00fb[i];
 	}
 
@@ -1437,15 +1436,15 @@ int paperboy_hiload (void)
 }
 
 
-int ssprint_hiload (void)
+int ssprint_hiload(void)
 {
 	void *f;
 
-	f = osd_fopen (Machine->gamedrv->name, 0, OSD_FILETYPE_HIGHSCORE, 0);
+	f = osd_fopen(Machine->gamedrv->name, 0, OSD_FILETYPE_HIGHSCORE, 0);
 	if (f)
 	{
-		osd_fread (f, atarigen_eeprom, atarigen_eeprom_size);
-		osd_fclose (f);
+		osd_fread(f, atarigen_eeprom, atarigen_eeprom_size);
+		osd_fclose(f);
 	}
 	else
 	{
@@ -1472,13 +1471,13 @@ int ssprint_hiload (void)
 		};
 		int i;
 
-		for (i = 0; i < sizeof (data0000); i++)
+		for (i = 0; i < sizeof(data0000); i++)
 			atarigen_eeprom[i + 0x0000] = data0000[i];
 
 		for (i = 0x0069; i < 0x0186; i++)
 			atarigen_eeprom[i] = 0xff;
 
-		for (i = 0; i < sizeof (data0186); i++)
+		for (i = 0; i < sizeof(data0186); i++)
 			atarigen_eeprom[i + 0x0186] = data0186[i];
 	}
 

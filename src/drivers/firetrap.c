@@ -299,8 +299,8 @@ static struct GfxLayout charlayout =
 	512,	/* 512 characters */
 	2,	/* 2 bits per pixel */
 	{ 0, 4 },	/* the two bitplanes for 4 pixels are packed into one byte */
-	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
 	{ 3, 2, 1, 0, 0x1000*8+3, 0x1000*8+2, 0x1000*8+1, 0x1000*8+0 },
+	{ 7*8, 6*8, 5*8, 4*8, 3*8, 2*8, 1*8, 0*8 },
 	8*8	/* every char takes 8 consecutive bytes */
 };
 static struct GfxLayout tilelayout =
@@ -309,10 +309,10 @@ static struct GfxLayout tilelayout =
 	256,	/* 256 characters */
 	4,	/* 4 bits per pixel */
 	{ 0, 4, 0x8000*8+0, 0x8000*8+4 },	/* the two bitplanes for 4 pixels are packed into one byte */
-	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8,
-			8*8, 9*8, 10*8, 11*8, 12*8, 13*8, 14*8, 15*8 },
 	{ 3, 2, 1, 0, 0x2000*8+3, 0x2000*8+2, 0x2000*8+1, 0x2000*8+0,
 			16*8+3, 16*8+2, 16*8+1, 16*8+0, 16*8+0x2000*8+3, 16*8+0x2000*8+2, 16*8+0x2000*8+1, 16*8+0x2000*8+0 },
+	{ 15*8, 14*8, 13*8, 12*8, 11*8, 10*8, 9*8, 8*8,
+			7*8, 6*8, 5*8, 4*8, 3*8, 2*8, 1*8, 0*8 },
 	32*8	/* every char takes 32 consecutive bytes */
 };
 static struct GfxLayout spritelayout =
@@ -321,10 +321,10 @@ static struct GfxLayout spritelayout =
 	1024,	/* 1024 sprites */
 	4,	/* 4 bits per pixel */
 	{ 0, 1024*16*16, 2*1024*16*16, 3*1024*16*16 },	/* the bitplanes are separated */
-	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8,
-			8*8, 9*8, 10*8, 11*8, 12*8, 13*8, 14*8, 15*8 },
 	{ 7, 6, 5, 4, 3, 2, 1, 0,
 			16*8+7, 16*8+6, 16*8+5, 16*8+4, 16*8+3, 16*8+2, 16*8+1, 16*8+0 },
+	{ 15*8, 14*8, 13*8, 12*8, 11*8, 10*8, 9*8, 8*8,
+			7*8, 6*8, 5*8, 4*8, 3*8, 2*8, 1*8, 0*8 },
 	32*8	/* every sprite takes 32 consecutive bytes */
 };
 
@@ -388,7 +388,7 @@ static struct MachineDriver machine_driver =
 	0,
 
 	/* video hardware */
-	32*8, 32*8, { 1*8, 31*8-1, 0*8, 32*8-1 },
+	32*8, 32*8, { 0*8, 32*8-1, 1*8, 31*8-1 },
 	gfxdecodeinfo,
 	256+1,16*4+4*16+4*16+4*16,
 	firetrap_vh_convert_color_prom,
@@ -542,7 +542,7 @@ struct GameDriver firetrap_driver =
 	input_ports,
 
 	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_DEFAULT,
+	ORIENTATION_ROTATE_90,
 
 	hiload, hisave
 };
@@ -568,7 +568,7 @@ struct GameDriver firetpbl_driver =
 	input_ports,
 
 	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_DEFAULT,
+	ORIENTATION_ROTATE_90,
 
 	hiload, hisave
 };

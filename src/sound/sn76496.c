@@ -208,7 +208,7 @@ static void SN76496_set_volume(int chip,int volume,int gain)
 
 
 
-static int SN76496_init(int chip,int clock,int sample_rate,int sample_bits)
+static int SN76496_init(const struct MachineSound *msound,int chip,int clock,int sample_rate,int sample_bits)
 {
 	int i;
 	struct SN76496 *R = &sn[chip];
@@ -216,7 +216,7 @@ static int SN76496_init(int chip,int clock,int sample_rate,int sample_bits)
 
 
 	sprintf(name,"SN76496 #%d",chip);
-	R->Channel = stream_init(
+	R->Channel = stream_init(msound,
 			name,sample_rate,sample_bits,
 			chip,(sample_bits == 16) ? SN76496Update_16 : SN76496Update_8);
 
@@ -249,17 +249,18 @@ static int SN76496_init(int chip,int clock,int sample_rate,int sample_bits)
 
 
 
-int SN76496_sh_start(const struct SN76496interface *interface)
+int SN76496_sh_start(const struct MachineSound *msound)
 {
 	int chip;
+	const struct SN76496interface *intf = msound->sound_interface;
 
 
-	for (chip = 0;chip < interface->num;chip++)
+	for (chip = 0;chip < intf->num;chip++)
 	{
-		if (SN76496_init(chip,interface->baseclock,Machine->sample_rate,Machine->sample_bits) != 0)
+		if (SN76496_init(msound,chip,intf->baseclock,Machine->sample_rate,Machine->sample_bits) != 0)
 			return 1;
 
-		SN76496_set_volume(chip,interface->volume[chip] & 0xff,(interface->volume[chip] >> 8) & 0xff);
+		SN76496_set_volume(chip,intf->volume[chip] & 0xff,(intf->volume[chip] >> 8) & 0xff);
 	}
 	return 0;
 }

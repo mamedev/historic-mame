@@ -328,9 +328,9 @@ options:
               0/none       - no joystick
               1/standard   - normal 2 button joystick
               2/dual       - dual joysticks
-              3/button4    - Stick/Pad with 4 buttons
-              4/button6    - Stick/Pad with 6 buttons
-              5/button8    - Stick/Pad with 8 buttons
+              3/4button    - Stick/Pad with 4 buttons
+              4/6button    - Stick/Pad with 6 buttons
+              5/8button    - Stick/Pad with 8 buttons
               6/fspro      - CH Flightstick Pro
               7/wingex     - Wingman Extreme
                            - Wingman Warrior without spinner

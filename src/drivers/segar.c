@@ -40,25 +40,25 @@ TODO:
 
 /* sndhrdw/segar.c */
 
-extern void astrob_speech_port_w(int offset, int data);
-extern void astrob_audio_ports_w(int offset, int data);
-extern void spaceod_audio_ports_w(int offset, int data);
-extern void monsterb_audio_8255_w(int offset, int data);
-extern  int monsterb_audio_8255_r(int offset);
+void astrob_speech_port_w(int offset, int data);
+void astrob_audio_ports_w(int offset, int data);
+void spaceod_audio_ports_w(int offset, int data);
+void monsterb_audio_8255_w(int offset, int data);
+ int monsterb_audio_8255_r(int offset);
 
-extern  int monsterb_sh_rom_r(int offset);
-extern  int monsterb_sh_t1_r(int offset);
-extern  int monsterb_sh_command_r(int offset);
-extern void monsterb_sh_dac_w(int offset, int data);
-extern void monsterb_sh_busy_w(int offset, int data);
-extern void monsterb_sh_offset_a0_a3_w(int offset, int data);
-extern void monsterb_sh_offset_a4_a7_w(int offset, int data);
-extern void monsterb_sh_offset_a8_a11_w(int offset, int data);
-extern void monsterb_sh_rom_select_w(int offset, int data);
+ int monsterb_sh_rom_r(int offset);
+ int monsterb_sh_t1_r(int offset);
+ int monsterb_sh_command_r(int offset);
+void monsterb_sh_dac_w(int offset, int data);
+void monsterb_sh_busy_w(int offset, int data);
+void monsterb_sh_offset_a0_a3_w(int offset, int data);
+void monsterb_sh_offset_a4_a7_w(int offset, int data);
+void monsterb_sh_offset_a8_a11_w(int offset, int data);
+void monsterb_sh_rom_select_w(int offset, int data);
 
 /* temporary speech handling through samples */
-extern int astrob_speech_sh_start(void);
-extern void astrob_speech_sh_update(void);
+int astrob_speech_sh_start(const struct MachineSound *msound);
+void astrob_speech_sh_update(void);
 
 /* sample names */
 extern const char *astrob_sample_names[];
@@ -67,9 +67,9 @@ extern const char *monsterb_sample_names[];
 extern const char *spaceod_sample_names[];
 
 /* sndhrdw/monsterb.c */
-extern int TMS3617_sh_start(void);
-extern void TMS3617_sh_stop(void);
-extern void TMS3617_sh_update(void);
+int TMS3617_sh_start(const struct MachineSound *msound);
+void TMS3617_sh_stop(void);
+void TMS3617_sh_update(void);
 
 
 /* machine/segar.c */
@@ -1456,9 +1456,16 @@ static int monsterb_hiload(void)
 {
         unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
+		static int firsttime = 0;
+
+		if (firsttime == 0)
+		{
+			memset(&RAM[0xC913],0xff,7);
+			firsttime = 1;
+		}
 
         /* check if memory has already been initialized */
-        if (memcmp(&RAM[0xC8E8],"\x22\x0e\xd5\x0a",4) == 0)
+        if (memcmp(&RAM[0xc913],"\x00\x00\x00\x00\x00\x00\x00",7) == 0)
         {
                 void *f;
 
@@ -1468,9 +1475,10 @@ static int monsterb_hiload(void)
                         osd_fclose(f);
                 }
 
-                return 1;
+        	firsttime = 0;
+			return 1;
         }
-        else return 0;  /* we can't load the hi scores yet */
+		else return 0;  /* we can't load the hi scores yet */
 }
 
 
@@ -1496,9 +1504,17 @@ static void monsterb_hisave(void)
 static int s005_hiload(void)
 {
         unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+		static int firsttime = 0;
+
+		if (firsttime == 0)
+		{
+			memset(&RAM[0xC911],0xff,8);
+			firsttime = 1;
+		}
+
 
         /* check if memory has already been initialized */
-        if (memcmp(&RAM[0xC8ED],"\x10\x1B\x17",3) == 0)
+        if (memcmp(&RAM[0xC911],"\x00\x00\x00\x00\x00\x00\x00\x00",8) == 0)
         {
                 void *f;
 
@@ -1508,7 +1524,8 @@ static int s005_hiload(void)
                         osd_fclose(f);
                 }
 
-                return 1;
+                firsttime = 0;
+				return 1;
         }
         else return 0;  /* we can't load the hi scores yet */
 }
@@ -1571,19 +1588,19 @@ static void spaceod_hisave(void)
 
 }
 
-/* TODO: fix this */
+
 static int pignewt_hiload(void)
 {
         unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
         /* check if memory has already been initialized */
-        if (memcmp(&RAM[0xCFE7],"PIGNEWTON",9) == 0)
+        if (memcmp(&RAM[0xCFE7],"PIGNEWTON",9) == 0 && memcmp(&RAM[0xce0c],"\x12\x54\x83",3)==0)
         {
                 void *f;
 
                 if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
                 {
-                        osd_fread(f,&RAM[0xCE0C],3*30); /* Top 30 hi scores? */
+
+ 						osd_fread(f,&RAM[0xCE0C],3*30); /* Top 30 hi scores? */
                         osd_fread(f,&RAM[0xCFD2],3*10); /* Top 10 initials */
                         osd_fclose(f);
                 }
@@ -1593,6 +1610,26 @@ static int pignewt_hiload(void)
         else return 0;  /* we can't load the hi scores yet */
 }
 
+static int pignewta_hiload(void)
+{
+        unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+        /* check if memory has already been initialized */
+        if (memcmp(&RAM[0xCFE7],"PIGNEWTON",9) == 0 && memcmp(&RAM[0xce0c],"\x02\x90\x00",3)==0)
+        {
+                void *f;
+
+                if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
+                {
+
+ 						osd_fread(f,&RAM[0xCE0C],3*30); /* Top 30 hi scores? */
+                        osd_fread(f,&RAM[0xCFD2],3*10); /* Top 10 initials */
+                        osd_fclose(f);
+                }
+
+                return 1;
+        }
+        else return 0;  /* we can't load the hi scores yet */
+}
 
 
 static void pignewt_hisave(void)
@@ -1667,9 +1704,9 @@ static struct Samplesinterface astrob_samples_interface =
 /* TODO: someday this will become a speech synthesis interface */
 static struct CustomSound_interface astrob_custom_interface =
 {
-        astrob_speech_sh_start,
-        0,
-        astrob_speech_sh_update
+	astrob_speech_sh_start,
+	0,
+	astrob_speech_sh_update
 };
 
 static struct MachineDriver astrob_machine_driver =
@@ -2152,7 +2189,7 @@ struct GameDriver pignewta_driver =
         0, 0, 0,
         ORIENTATION_ROTATE_270,
 
-        pignewt_hiload,pignewt_hisave
+        pignewta_hiload,pignewt_hisave
 };
 
 struct GameDriver sindbadm_driver =

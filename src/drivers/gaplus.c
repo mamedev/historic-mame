@@ -1,5 +1,9 @@
 /***************************************************************************
 
+MAME driver by:
+	Manuel Abadia (emumanu@hotmail.com)
+	Ernesto Corvi (someone@secureshell.com)
+
 Gaplus Memory Map (preliminary)
 
 CPU #1: (MAIN CPU)
@@ -62,10 +66,14 @@ extern void gaplus_customio_w_3(int offset,int data);
 extern int gaplus_customio_r_1(int offset);
 extern int gaplus_customio_r_2(int offset);
 extern int gaplus_customio_r_3(int offset);
+extern int gaplusa_customio_r_1( int offset );
+extern int gaplusa_customio_r_2( int offset );
+extern int gaplusa_customio_r_3( int offset );
 extern int galaga3_customio_r_1(int offset);
 extern int galaga3_customio_r_2(int offset);
 extern int galaga3_customio_r_3(int offset);
 
+extern int gaplus_interrupt_1(void);
 extern void gaplus_reset_2_3_w(int offset, int data);
 extern int gaplus_interrupt_2(void);
 extern void gaplus_interrupt_ctrl_2_w(int offset,int data);
@@ -163,6 +171,21 @@ static struct MemoryWriteAddress writemem_cpu3[] =
 	{ -1 }						  /* end of table */
 };
 
+static struct MemoryReadAddress gaplusa_readmem_cpu1[] =
+{
+	{ 0x0000, 0x03ff, videoram_r },									/* video RAM */
+	{ 0x0400, 0x07ff, colorram_r },									/* color RAM */
+	{ 0x0800, 0x1fff, gaplus_sharedram_r, &gaplus_sharedram },		/* shared RAM with CPU #2 & spriteram */
+	{ 0x6040, 0x63ff, gaplus_snd_sharedram_r, &gaplus_snd_sharedram },  /* shared RAM with CPU #3 */
+	{ 0x6800, 0x680f, gaplusa_customio_r_1, &gaplus_customio_1 },	/* custom I/O chip #1 interface */
+	{ 0x6810, 0x681f, gaplusa_customio_r_2, &gaplus_customio_2 },	/* custom I/O chip #2 interface */
+	{ 0x6820, 0x682f, gaplusa_customio_r_3, &gaplus_customio_3 },	/* custom I/O chip #3 interface */
+	{ 0x7820, 0x782f, MRA_RAM },									/* ??? */
+	{ 0x7c00, 0x7c01, MRA_NOP },									/* ??? */
+	{ 0xa000, 0xffff, MRA_ROM },									/* gp2-4.64 at a000, gp2-3.64 at c000, gp2-2.64 at e000 */
+	{ -1 }															/* end of table */
+};
+
 static struct MemoryReadAddress galaga3_readmem_cpu1[] =
 {
 	{ 0x0000, 0x03ff, videoram_r }, /* video RAM */
@@ -183,30 +206,30 @@ static struct MemoryReadAddress galaga3_readmem_cpu1[] =
 /* The dipswitches and player inputs are not memory mapped, they are handled by an I/O chip. */
 INPUT_PORTS_START( gaplus_input_ports )
 	PORT_START  /* DSW0 */
-	PORT_DIPNAME( 0x03, 0x00, "Coin A" )
-	PORT_DIPSETTING(	0x03, "3 Coins/1 Credit" )
-	PORT_DIPSETTING(	0x02, "2 Coins/1 Credit" )
-	PORT_DIPSETTING(	0x00, "1 Coin/1 Credit" )
-	PORT_DIPSETTING(	0x01, "1 Coin/2 Credits" )
-	PORT_DIPNAME( 0x0c, 0x00, "Lives" )
+	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Coin_A ) )
+	PORT_DIPSETTING(	0x03, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(	0x02, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(	0x01, DEF_STR( 1C_2C ) )
+	PORT_DIPNAME( 0x0c, 0x00, DEF_STR( Lives ) )
 	PORT_DIPSETTING(	0x04, "2" )
 	PORT_DIPSETTING(	0x00, "3" )
 	PORT_DIPSETTING(	0x08, "4" )
 	PORT_DIPSETTING(	0x0c, "5" )
-	PORT_DIPNAME( 0x10, 0x00, "Demo Sounds" )
-	PORT_DIPSETTING(	0x10, "Off" )
-	PORT_DIPSETTING(	0x00, "On" )
-	PORT_DIPNAME( 0x20, 0x20, "Cabinet" )
-	PORT_DIPSETTING(	0x20, "Upright" )
-	PORT_DIPSETTING(	0x00, "Cocktail" )
-	PORT_DIPNAME( 0xc0, 0x00, "Coin B" )
-	PORT_DIPSETTING(	0xc0, "3 Coins/1 Credit" )
-	PORT_DIPSETTING(	0x80, "2 Coins/1 Credit" )
-	PORT_DIPSETTING(	0x00, "1 Coin/1 Credit" )
-	PORT_DIPSETTING(	0x40, "1 Coin/2 Credits" )
+	PORT_DIPNAME( 0x10, 0x00, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(	0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(	0x20, DEF_STR( Upright ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( Cocktail ) )
+	PORT_DIPNAME( 0xc0, 0x00, DEF_STR( Coin_B ) )
+	PORT_DIPSETTING(	0xc0, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(	0x80, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(	0x40, DEF_STR( 1C_2C ) )
 
 	PORT_START  /* DSW1 */
-	PORT_DIPNAME( 0x07, 0x00, "Difficulty" )
+	PORT_DIPNAME( 0x07, 0x00, DEF_STR( Difficulty ) )
 	PORT_DIPSETTING(	0x00, "0" )
 	PORT_DIPSETTING(	0x01, "1" )
 	PORT_DIPSETTING(	0x02, "2" )
@@ -216,12 +239,12 @@ INPUT_PORTS_START( gaplus_input_ports )
 	PORT_DIPSETTING(	0x06, "6" )
 	PORT_DIPSETTING(	0x07, "7" )
 	PORT_BITX(	0x08, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE )
-	PORT_DIPSETTING(	0x00, "Off" )
-	PORT_DIPSETTING(	0x08, "On" )
+	PORT_DIPSETTING(	0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(	0x08, DEF_STR( On ) )
 	PORT_BITX(	0x10, 0x00, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Rack Test", OSD_KEY_F1, IP_JOY_NONE )
-	PORT_DIPSETTING(	0x00, "Off" )
-	PORT_DIPSETTING(	0x10, "On" )
-	PORT_DIPNAME( 0xe0, 0xe0, "Bonus Life" )
+	PORT_DIPSETTING(	0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(	0x10, DEF_STR( On ) )
+	PORT_DIPNAME( 0xe0, 0xe0, DEF_STR( Bonus_Life ) )
 	PORT_DIPSETTING(	0xe0, "30k 70k and every 70k" )
 	PORT_DIPSETTING(	0xc0, "30k 100k and every 100k" )
 	PORT_DIPSETTING(	0xa0, "30k 100k and every 200k" )
@@ -255,7 +278,146 @@ INPUT_PORTS_START( gaplus_input_ports )
 	PORT_BITX(  0x08, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_PLAYER2, 0, IP_KEY_PREVIOUS, IP_JOY_PREVIOUS )
 INPUT_PORTS_END
 
+INPUT_PORTS_START( galaga3_input_ports )
+	PORT_START  /* DSW0 */
+	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Coin_A ) )
+	PORT_DIPSETTING(	0x03, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(	0x02, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(	0x01, DEF_STR( 1C_2C ) )
+	PORT_DIPNAME( 0x0c, 0x00, DEF_STR( Lives ) )
+	PORT_DIPSETTING(	0x04, "2" )
+	PORT_DIPSETTING(	0x00, "3" )
+	PORT_DIPSETTING(	0x08, "4" )
+	PORT_DIPSETTING(	0x0c, "5" )
+	PORT_DIPNAME( 0x10, 0x00, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(	0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( Upright ) )
+	PORT_DIPSETTING(	0x20, DEF_STR( Cocktail ) )
+	PORT_DIPNAME( 0xc0, 0x00, DEF_STR( Coin_B ) )
+	PORT_DIPSETTING(	0xc0, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(	0x80, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(	0x40, DEF_STR( 1C_2C ) )
 
+	PORT_START  /* DSW1 */
+	PORT_DIPNAME( 0x07, 0x00, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(	0x00, "0" )
+	PORT_DIPSETTING(	0x01, "1" )
+	PORT_DIPSETTING(	0x02, "2" )
+	PORT_DIPSETTING(	0x03, "3" )
+	PORT_DIPSETTING(	0x04, "4" )
+	PORT_DIPSETTING(	0x05, "5" )
+	PORT_DIPSETTING(	0x06, "6" )
+	PORT_DIPSETTING(	0x07, "7" )
+	PORT_BITX(	0x08, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE )
+	PORT_DIPSETTING(	0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(	0x08, DEF_STR( On ) )
+	PORT_BITX(	0x10, 0x00, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Rack Test", OSD_KEY_F1, IP_JOY_NONE )
+	PORT_DIPSETTING(	0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(	0x10, DEF_STR( On ) )
+	PORT_DIPNAME( 0xe0, 0xe0, DEF_STR( Bonus_Life ) )
+	PORT_DIPSETTING(    0x00, "30k 100k and every 200k" )
+    PORT_DIPSETTING(    0x20, "30k 150k" )
+    PORT_DIPSETTING(    0x40, "30k 100k and every 300k" )
+    PORT_DIPSETTING(    0x60, "30k 100k and every 150k" )
+    PORT_DIPSETTING(    0x80, "30k 100k and every 100k" )
+    PORT_DIPSETTING(    0xa0, "30k 80k and every 100k" )
+    PORT_DIPSETTING(    0xc0, "50k 150k and every 200k" )
+    PORT_DIPSETTING(    0xe0, "50k 150k and every 150k" )
+
+    PORT_START  /* IN0 */
+	PORT_BIT(  0x01, IP_ACTIVE_HIGH, IPT_BUTTON1 )
+    PORT_BIT(  0x02, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_PLAYER2)
+	PORT_BIT(  0x04, IP_ACTIVE_HIGH, IPT_START1 )
+    PORT_BIT(  0x08, IP_ACTIVE_HIGH, IPT_START2 )
+    PORT_BIT(  0x10, IP_ACTIVE_HIGH, IPT_COIN1 )
+    PORT_BIT(  0x20, IP_ACTIVE_HIGH, IPT_COIN2 )
+		/* 0x40 service switch (not implemented yet) */
+
+    PORT_START  /* IN1 */
+    PORT_BIT(   0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_8WAY  )
+    PORT_BIT(   0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY  )
+    PORT_BIT(   0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_8WAY )
+    PORT_BIT(   0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_8WAY )
+    PORT_BIT(   0x10, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_8WAY | IPF_PLAYER2 )
+    PORT_BIT(   0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER2 )
+    PORT_BIT(   0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_PLAYER2 )
+    PORT_BIT(   0x80, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_PLAYER2 )
+
+INPUT_PORTS_END
+
+INPUT_PORTS_START( galaga3a_input_ports )
+	PORT_START  /* DSW0 */
+	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Coin_A ) )
+	PORT_DIPSETTING(	0x03, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(	0x02, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(	0x01, DEF_STR( 1C_2C ) )
+	PORT_DIPNAME( 0x0c, 0x00, DEF_STR( Lives ) )
+	PORT_DIPSETTING(	0x04, "2" )
+	PORT_DIPSETTING(	0x00, "3" )
+	PORT_DIPSETTING(	0x08, "4" )
+	PORT_DIPSETTING(	0x0c, "5" )
+	PORT_DIPNAME( 0x10, 0x00, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(	0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( Upright ) )
+	PORT_DIPSETTING(	0x20, DEF_STR( Cocktail ) )
+	PORT_DIPNAME( 0xc0, 0x00, DEF_STR( Coin_B ) )
+	PORT_DIPSETTING(	0xc0, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(	0x80, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(	0x40, DEF_STR( 1C_2C ) )
+
+	PORT_START  /* DSW1 */
+	PORT_DIPNAME( 0x07, 0x00, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(	0x00, "0" )
+	PORT_DIPSETTING(	0x01, "1" )
+	PORT_DIPSETTING(	0x02, "2" )
+	PORT_DIPSETTING(	0x03, "3" )
+	PORT_DIPSETTING(	0x04, "4" )
+	PORT_DIPSETTING(	0x05, "5" )
+	PORT_DIPSETTING(	0x06, "6" )
+	PORT_DIPSETTING(	0x07, "7" )
+	PORT_BITX(	0x08, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE )
+	PORT_DIPSETTING(	0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(	0x08, DEF_STR( On ) )
+	PORT_BITX(	0x10, 0x00, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Rack Test", OSD_KEY_F1, IP_JOY_NONE )
+	PORT_DIPSETTING(	0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(	0x10, DEF_STR( On ) )
+	PORT_DIPNAME( 0xe0, 0xe0, DEF_STR( Bonus_Life ) )
+	PORT_DIPSETTING(    0x00, "100k 300k and every 600k" )
+    PORT_DIPSETTING(    0x20, "150k 400k" )
+    PORT_DIPSETTING(    0x40, "150k 400k and every 900k" )
+    PORT_DIPSETTING(    0x60, "100k 300k and every 300k" )
+    PORT_DIPSETTING(    0x80, "50k 200k and every 300k" )
+    PORT_DIPSETTING(    0xa0, "50k 150k and every 600k" )
+    PORT_DIPSETTING(    0xc0, "50k 150k and every 300k" )
+    PORT_DIPSETTING(    0xe0, "30k 150k and every 600k" )
+
+    PORT_START  /* IN0 */
+	PORT_BIT(  0x01, IP_ACTIVE_HIGH, IPT_BUTTON1 )
+    PORT_BIT(  0x02, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_PLAYER2)
+	PORT_BIT(  0x04, IP_ACTIVE_HIGH, IPT_START1 )
+    PORT_BIT(  0x08, IP_ACTIVE_HIGH, IPT_START2 )
+    PORT_BIT(  0x10, IP_ACTIVE_HIGH, IPT_COIN1 )
+    PORT_BIT(  0x20, IP_ACTIVE_HIGH, IPT_COIN2 )
+		/* 0x40 service switch (not implemented yet) */
+
+    PORT_START  /* IN1 */
+    PORT_BIT(   0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_8WAY  )
+    PORT_BIT(   0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY  )
+    PORT_BIT(   0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_8WAY )
+    PORT_BIT(   0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_8WAY )
+    PORT_BIT(   0x10, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_8WAY | IPF_PLAYER2 )
+    PORT_BIT(   0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER2 )
+    PORT_BIT(   0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_PLAYER2 )
+    PORT_BIT(   0x80, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_PLAYER2 )
+INPUT_PORTS_END
 
 static struct GfxLayout charlayout1 =
 {
@@ -358,7 +520,65 @@ static struct MachineDriver gaplus_machine_driver =
 			1536000,			/* 24.576 Mhz / 16 = 1.536 Mhz */
 			0,
 			readmem_cpu1,writemem_cpu1,0,0,
-			interrupt,1
+			gaplus_interrupt_1,1
+		},
+		{
+			CPU_M6809,		  /* SUB CPU */
+			1536000,			/* 24.576 Mhz / 16 = 1.536 Mhz */
+			2,
+			readmem_cpu2,writemem_cpu2,0,0,
+			gaplus_interrupt_2,1
+		},
+		{
+			CPU_M6809,		  /* SOUND CPU */
+			1536000,			/* 24.576 Mhz / 16 = 1.536 Mhz */
+			3,
+			readmem_cpu3,writemem_cpu3,0,0,
+			gaplus_interrupt_3,1
+		}
+	},
+	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
+	100,	/* a high value to ensure proper synchronization of the CPUs */
+	gaplus_init_machine,	/* init machine routine */
+
+	/* video hardware */
+	36*8, 28*8,
+	{ 0*8, 36*8-1, 0*8, 28*8-1 },
+	gfxdecodeinfo,
+	256,
+	64*4+64*8,
+	gaplus_vh_convert_color_prom,
+
+	VIDEO_TYPE_RASTER,
+	0,
+	gaplus_vh_start,
+	gaplus_vh_stop,
+	gaplus_vh_screenrefresh,
+
+	/* sound hardware */
+	0,0,0,0,
+	{
+		{
+			SOUND_NAMCO,
+			&namco_interface
+		},
+		{
+			SOUND_SAMPLES,
+			&samples_interface
+		}
+	}
+};
+
+static struct MachineDriver gaplusa_machine_driver =
+{
+	/* basic machine hardware  */
+	{
+		{
+			CPU_M6809,		  /* MAIN CPU */
+			1536000,			/* 24.576 Mhz / 16 = 1.536 Mhz */
+			0,
+			gaplusa_readmem_cpu1,writemem_cpu1,0,0,
+			gaplus_interrupt_1,1
 		},
 		{
 			CPU_M6809,		  /* SUB CPU */
@@ -416,7 +636,7 @@ static struct MachineDriver galaga3_machine_driver =
 			1536000,			/* 24.576 Mhz / 16 = 1.536 Mhz */
 			0,
 			galaga3_readmem_cpu1,writemem_cpu1,0,0,
-			interrupt,1
+			gaplus_interrupt_1,1
 		},
 		{
 			CPU_M6809,		  /* SUB CPU */
@@ -607,18 +827,19 @@ static int gaplus_hiload( void )
 {
 	int i;
 	void *f;
-	unsigned char temp[6];
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char temp[0xa0];
 
 	/* check if the hi score table has already been initialized */
-	if (memcmp(&RAM[0x0990],"GAPLUS  24  AB",0x0e) == 0)
+	for ( i = 0; i < 0x0e; i++)
+		temp[i] = gaplus_sharedram_r( 0x0190 + i );
+
+	if (memcmp( temp, "GAPLUS  24  AB",0x0e ) == 0)
 	{
 		if ((f = osd_fopen( Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0 )) != 0)
 		{
-			osd_fread( f,&RAM[0x0900],0xa0 );
-			osd_fread( f, &temp, 0x06 );
-			for ( i = 0; i < 6; i++)
-				videoram_w( 0x3ed + i, temp[i] );
+			osd_fread( f,&temp,0xa0 );
+			for ( i = 0; i < 0xa0; i++)
+				gaplus_sharedram_w( 0x100 + i, temp[i] );
 			osd_fclose( f );
 		}
 		return 1;
@@ -632,15 +853,13 @@ static void gaplus_hisave( void )
 {
 	int i;
 	void *f;
-	unsigned char temp[6];
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char temp[0xa0];
 
 	if ((f = osd_fopen( Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1 )) != 0)
 	{
-		osd_fwrite( f, &RAM[0x0900], 0xa0 );
-		for ( i = 0; i < 6; i++)
-			temp[i] = videoram_r( 0x3ed + i );
-		osd_fwrite( f, &temp, 0x06 );
+		for ( i = 0; i < 0xa0; i++)
+			temp[i] = gaplus_sharedram_r( 0x100 + i);
+		osd_fwrite( f, temp, 0xa0 );
 		osd_fclose( f );
 	}
 }
@@ -650,18 +869,19 @@ static int galaga3_hiload( void )
 {
 	int i;
 	void *f;
-	unsigned char temp[6];
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char temp[0xa0];
 
 	/* check if the hi score table has already been initialized */
-	if (memcmp(&RAM[0x0990],"  A[A      4   ",0x0f) == 0)
+	for ( i = 0; i < 0x0f; i++)
+		temp[i] = gaplus_sharedram_r( 0x0190 + i );
+
+	if (memcmp( temp,"  A[A      4   ",0x0f ) == 0)
 	{
 		if ((f = osd_fopen( Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0 )) != 0)
 		{
-			osd_fread( f,&RAM[0x0900],0xa0 );
-			osd_fread( f, &temp, 0x06 );
-			for ( i = 0; i < 6; i++)
-				videoram_w( 0x3ed + i, temp[i] );
+			osd_fread( f,&temp,0xa0 );
+			for ( i = 0; i < 0xa0; i++)
+				gaplus_sharedram_w( 0x100 + i, temp[i] );
 			osd_fclose( f );
 		}
 		return 1;
@@ -707,8 +927,8 @@ struct GameDriver gaplusa_driver =
 	"1984",
 	"Namco",
 	"Manuel Abadia\nErnesto Corvi\nLarry Bank\nNicola Salmoria",
-	GAME_NOT_WORKING,
-	&gaplus_machine_driver,
+	0,
+	&gaplusa_machine_driver,
 	0,
 
 	gaplusa_rom,
@@ -733,7 +953,7 @@ struct GameDriver galaga3_driver =
 	"1984",
 	"Namco",
 	"Manuel Abadia\nErnesto Corvi\nLarry Bank\nNicola Salmoria",
-	GAME_NOT_WORKING,
+	0,
 	&galaga3_machine_driver,
 	0,
 
@@ -742,7 +962,7 @@ struct GameDriver galaga3_driver =
 	gaplus_sample_names,
 	0,
 
-	gaplus_input_ports,
+	galaga3_input_ports,
 
 	PROM_MEMORY_REGION(4),0,0,
 	ORIENTATION_ROTATE_90,
@@ -759,7 +979,7 @@ struct GameDriver galaga3a_driver =
 	"1984",
 	"Namco",
 	"Manuel Abadia\nErnesto Corvi\nLarry Bank\nNicola Salmoria",
-	GAME_NOT_WORKING,
+	0,
 	&galaga3_machine_driver,
 	0,
 
@@ -768,7 +988,7 @@ struct GameDriver galaga3a_driver =
 	gaplus_sample_names,
 	0,
 
-	gaplus_input_ports,
+	galaga3a_input_ports,
 
 	PROM_MEMORY_REGION(4),0,0,
 	ORIENTATION_ROTATE_90,

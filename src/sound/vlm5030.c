@@ -43,15 +43,13 @@ PPPPP : pitch
 #define IP_SIZE 20		/* samples per interpolator */
 #define FR_SIZE 8		/* interpolator per frame   */
 
-static int sample_pos;
-static int buffer_len;
-static int emulation_rate;
 static const struct VLM5030interface *intf;
 
-static unsigned char *outbuffer;
 static int channel;
+static int schannel;
 
 static unsigned char *VLM5030_rom;
+static int VLM5030_address_mask;
 static int VLM5030_address;
 static int pin_BSY;
 static int pin_ST;
@@ -222,14 +220,16 @@ static int get_bits(int sbit,int bits)
 	int offset = VLM5030_address + (sbit>>3);
 	int data;
 
-	data = VLM5030_rom[offset] | (((int)VLM5030_rom[offset+1])<<8);
+	data = VLM5030_rom[offset&VLM5030_address_mask] |
+	       (((int)VLM5030_rom[(offset+1)&VLM5030_address_mask])<<8);
 	data >>= sbit;
 	data &= (0xff>>(8-bits));
 #else
 	int offset = VLM5030_address + (sbit>>3);
 	int data;
 
-	data = (((int)VLM5030_rom[offset])<<8) | VLM5030_rom[offset+1];
+	data = (((int)VLM5030_rom[offset&VLM5030_address_mask])<<8) |
+	              VLM5030_rom[(offset+1)&VLM5030_address_mask];
 	data <<= (sbit&0x07);
 	data &= 0xffff;
 	data >>= (16 - bits);
@@ -248,7 +248,7 @@ static int parse_frame (void)
 	old_pitch = new_pitch;
 	memcpy( old_k , new_k , sizeof(old_k) );
 	/* command byte check */
-	cmd = VLM5030_rom[VLM5030_address];
+	cmd = VLM5030_rom[VLM5030_address&VLM5030_address_mask];
 	if( cmd & 0x01 )
 	{	/* extend frame */
 		new_energy = new_pitch = 0;
@@ -298,16 +298,17 @@ K10 TOTAL 35bit(+2bit)
 }
 
 /* decode and buffering data */
-static void vlm5030_process(unsigned char *buffer, int size)
+static void vlm5030_update_callback(int num,void *buf, int length)
 {
 	int buf_count=0;
 	int interp_effect;
+	unsigned char *buffer = (unsigned char *)buf;
 
 	/* running */
 	if( phase == PH_RUN )
 	{
 		/* playing speech */
-		while (size > 0)
+		while (length > 0)
 		{
 			int current_val;
 
@@ -429,7 +430,7 @@ static void vlm5030_process(unsigned char *buffer, int size)
 			if (pitch_count >= current_pitch )
 				pitch_count = 0;
 			/* size */
-			size--;
+			length--;
 		}
 /*		return;*/
 	}
@@ -438,7 +439,7 @@ phase_stop:
 	switch( phase )
 	{
 	case PH_SETUP:
-		sample_count -= size;
+		sample_count -= length;
 		if( sample_count <= 0 )
 		{
 			if(errorlog) fprintf(errorlog,"VLM5030 BSY=H\n" );
@@ -447,7 +448,7 @@ phase_stop:
 		}
 		break;
 	case PH_STOP:
-		sample_count -= size;
+		sample_count -= length;
 		if( sample_count <= 0 )
 		{
 			if(errorlog) fprintf(errorlog,"VLM5030 BSY=L\n" );
@@ -456,41 +457,36 @@ phase_stop:
 		}
 	}
 	/* silent buffering */
-	while (size > 0)
+	while (length > 0)
 	{
 		buffer[buf_count++] = 0x00;
-		size--;
+		length--;
 	}
 }
 
 /* realtime update */
-void VLM5030_update(void)
+static void VLM5030_update(void)
 {
-	int newpos;
-
-	if (Machine->sample_rate == 0) return;
-
 	if( !sampling_mode )
 	{
 		/* docode mode */
-		newpos = sound_scalebufferpos(buffer_len);	/* get current position based on the timer */
-
-		if (newpos - sample_pos < MIN_SLICE)
-			return;
-		if (sample_pos < buffer_len)
-			vlm5030_process (outbuffer + sample_pos, newpos - sample_pos);
-
-		sample_pos = newpos;
+		stream_update(channel,0);
 	}
 	else
 	{
 		/* sampling mode (check  busy flag) */
 		if( pin_ST == 0 && pin_BSY == 1 )
 		{
-			if( osd_get_sample_status(channel+1) )
+			if( osd_get_sample_status(schannel) )
 				pin_BSY = 0;
 		}
 	}
+}
+
+/* set speech rom address */
+void VLM5030_set_rom(void *speech_rom)
+{
+	VLM5030_rom = speech_rom;
 }
 
 /* get BSY pin level */
@@ -526,7 +522,7 @@ void VLM5030_RST (int pin )
 			if( pin_BSY )
 			{
 				if( sampling_mode )
-					osd_stop_sample( channel+1 );
+					osd_stop_sample( schannel );
 				phase = PH_RESET;
 				pin_BSY = 0;
 			}
@@ -569,7 +565,8 @@ void VLM5030_ST(int pin )
 				if(errorlog) fprintf(errorlog,"VLM5030 %02X start adr=%04X\n",table/2,VLM5030_address );
 
 				/* docode mode */
-				VLM5030_address = (((int)VLM5030_rom[table])<<8)|VLM5030_rom[table+1];
+				VLM5030_address = (((int)VLM5030_rom[table&VLM5030_address_mask])<<8)
+				                |        VLM5030_rom[(table+1)&VLM5030_address_mask];
 				/* reset process status */
 				interp_count = sample_count = 0;
 				/* clear filter */
@@ -581,7 +578,7 @@ void VLM5030_ST(int pin )
 				/* sampling mode */
 				int num = table>>1;
 
-				osd_play_sample(channel+1,
+				osd_play_sample(schannel,
 					Machine->samples->sample[num]->data,
 					Machine->samples->sample[num]->length,
 					Machine->samples->sample[num]->smpfreq,
@@ -602,47 +599,41 @@ void VLM5030_ST(int pin )
 
 /* start VLM5030 with sound rom              */
 /* speech_rom == 0 -> use sampling data mode */
-int VLM5030_sh_start(const struct VLM5030interface *interface )
+int VLM5030_sh_start(const struct MachineSound *msound)
 {
-    intf = interface;
+	int emulation_rate;
 
-	buffer_len = intf->baseclock / 440 / Machine->drv->frames_per_second;
-	emulation_rate = buffer_len * Machine->drv->frames_per_second;
-	sample_pos = 0;
+    intf = msound->sound_interface;
+
+	emulation_rate = intf->baseclock / 440;
 	pin_BSY = pin_RST = pin_ST  = 0;
+	phase = PH_IDLE;
 /*	VLM5030_VCU(intf->vcu); */
 
 	VLM5030_rom = Machine->memory_region[intf->memory_region];
-	if ((outbuffer = malloc(buffer_len)) == 0)
-	{
-		return 1;
-	}
-	memset(outbuffer,0x80,buffer_len);
+	/* memory size */
+	if( intf->memory_size == 0)
+		VLM5030_address_mask = Machine->memory_region_length[intf->memory_region]-1;
+	else
+		VLM5030_address_mask = intf->memory_size-1;
 
-	channel = get_play_channels(2);
+	channel = stream_init(msound,
+				"VLM5030",emulation_rate /* Machine->sample_rate */,8,
+				0,vlm5030_update_callback);
+	if (channel == -1) return 1;
+	stream_set_volume(channel,intf->volume);
+
+	schannel = get_play_channels(1);
 	return 0;
 }
 
 /* update VLM5030 */
 void VLM5030_sh_update( void )
 {
-	if (Machine->sample_rate == 0) return;
-
-	if( !sampling_mode )
-	{
-		if (sample_pos < buffer_len)
-			vlm5030_process (outbuffer + sample_pos, buffer_len - sample_pos);
-		sample_pos = 0;
-		osd_play_streamed_sample(channel,(signed char *)outbuffer,buffer_len,emulation_rate,intf->volume,OSD_PAN_CENTER);
-	}
+	VLM5030_update();
 }
 
-/* update VLM5030 */
+/* stop VLM5030 */
 void VLM5030_sh_stop( void )
 {
-	if (outbuffer != 0 )
-	{
-    	free( outbuffer );
-    	outbuffer = 0;
-	}
 }

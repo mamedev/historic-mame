@@ -230,23 +230,70 @@ INPUT_PORTS_START( input_ports )
 INPUT_PORTS_END
 
 
-static struct GfxLayout charlayout =
+
+static struct GfxLayout toki_charlayout =
+{
+	8,8,
+	4096,
+	4,
+	{ 4096*16*8+0, 4096*16*8+4, 0, 4 },
+	{ 3, 2, 1, 0, 8+3, 8+2, 8+1, 8+0 },
+	{ 0*16, 1*16, 2*16, 3*16, 4*16, 5*16, 6*16, 7*16 },
+	16*8
+};
+
+static struct GfxLayout toki_tilelayout =
+{
+	16,16,
+	4096,
+	4,
+	{ 2*4, 3*4, 0*4, 1*4 },
+	{ 3, 2, 1, 0, 16+3, 16+2, 16+1, 16+0,
+			64*8+3, 64*8+2, 64*8+1, 64*8+0, 64*8+16+3, 64*8+16+2, 64*8+16+1, 64*8+16+0 },
+	{ 0*32, 1*32, 2*32, 3*32, 4*32, 5*32, 6*32, 7*32,
+			8*32, 9*32, 10*32, 11*32, 12*32, 13*32, 14*32, 15*32 },
+	128*8
+};
+
+static struct GfxLayout toki_spritelayout =
+{
+	16,16,
+	8192,
+	4,
+	{ 2*4, 3*4, 0*4, 1*4 },
+	{ 3, 2, 1, 0, 16+3, 16+2, 16+1, 16+0,
+			64*8+3, 64*8+2, 64*8+1, 64*8+0, 64*8+16+3, 64*8+16+2, 64*8+16+1, 64*8+16+0 },
+	{ 0*32, 1*32, 2*32, 3*32, 4*32, 5*32, 6*32, 7*32,
+			8*32, 9*32, 10*32, 11*32, 12*32, 13*32, 14*32, 15*32 },
+	128*8
+};
+
+static struct GfxDecodeInfo toki_gfxdecodeinfo[] =
+{
+	{ 1, 0x000000, &toki_charlayout,  16*16, 16 },
+	{ 1, 0x020000, &toki_spritelayout, 0*16, 16 },
+	{ 1, 0x120000, &toki_tilelayout,  32*16, 16 },
+	{ 1, 0x1a0000, &toki_tilelayout,  48*16, 16 },
+	{ -1 } /* end of array */
+};
+
+static struct GfxLayout tokib_charlayout =
 {
 	8,8,	/* 8 by 8 */
 	4096,	/* 4096 characters */
 	4,	/* 4 bits per pixel */
-        {4096*8*8*3,4096*8*8*2,4096*8*8*1,4096*8*8*0 },	/* planes */
+	{4096*8*8*3,4096*8*8*2,4096*8*8*1,4096*8*8*0 },	/* planes */
 	{ 0, 1,  2,  3,  4,  5,  6,  7},		/* x bit */
 	{ 0, 8, 16, 24, 32, 40, 48, 56},		/* y bit */
 	8*8
 };
 
-static struct GfxLayout backgroundlayout =
+static struct GfxLayout tokib_tilelayout =
 {
 	16,16,	/* 16 by 16 */
 	4096,	/* 4096 characters */
 	4,	/* 4 bits per pixel */
-        { 4096*16*16*3,4096*16*16*2,4096*16*16*1,4096*16*16*0 },	/* planes */
+	{ 4096*16*16*3,4096*16*16*2,4096*16*16*1,4096*16*16*0 },	/* planes */
 	{ 0, 1, 2, 3, 4, 5, 6, 7,
 	  0x8000*8+0, 0x8000*8+1, 0x8000*8+2, 0x8000*8+3, 0x8000*8+4,
 	  0x8000*8+5, 0x8000*8+6, 0x8000*8+7 },				/* x bit */
@@ -257,24 +304,24 @@ static struct GfxLayout backgroundlayout =
 	8*8
 };
 
-static struct GfxLayout spriteslayout =
+static struct GfxLayout tokib_spriteslayout =
 {
 	16,16,	/* 16 by 16 */
 	8192,	/* 8192 sprites */
 	4,	/* 4 bits per pixel */
-        { 8192*16*16*3,8192*16*16*2,8192*16*16*1,8192*16*16*0 },	/* planes */
+	{ 8192*16*16*3,8192*16*16*2,8192*16*16*1,8192*16*16*0 },	/* planes */
 	{    0,     1,     2,     3,     4,     5,     6,     7,
 	 128+0, 128+1, 128+2, 128+3, 128+4, 128+5, 128+6, 128+7 },	/* x bit */
 	{ 0,8,16,24,32,40,48,56,64,72,80,88,96,104,112,120 },		/* y bit */
 	16*16
 };
 
-static struct GfxDecodeInfo gfxdecodeinfo[] =
+static struct GfxDecodeInfo tokib_gfxdecodeinfo[] =
 {
-	{ 1, 0x000000, &charlayout,			16*16,  16 },
-	{ 1, 0x020000, &spriteslayout,		 0*16,  16 },
-	{ 1, 0x120000, &backgroundlayout,	32*16,  16 },
-	{ 1, 0x1a0000, &backgroundlayout,	48*16,  16 },
+	{ 1, 0x000000, &tokib_charlayout,    16*16, 16 },
+	{ 1, 0x020000, &tokib_spriteslayout,  0*16, 16 },
+	{ 1, 0x120000, &tokib_tilelayout,	 32*16, 16 },
+	{ 1, 0x1a0000, &tokib_tilelayout,	 48*16, 16 },
 	{ -1 } /* end of array */
 };
 
@@ -297,7 +344,7 @@ static struct MSM5205interface msm5205_interface =
 
 
 
-static struct MachineDriver machine_driver =
+static struct MachineDriver toki_machine_driver =
 {
 	/* basic machine hardware */
 	{
@@ -311,7 +358,7 @@ static struct MachineDriver machine_driver =
 			toki_interrupt,1
 		},
 		{
-			CPU_Z80,
+			CPU_Z80 | CPU_AUDIO_CPU,
 			4000000,	/* 4 MHz (?) */
 			2,
 			sound_readmem,sound_writemem,
@@ -326,7 +373,59 @@ static struct MachineDriver machine_driver =
 	/* video hardware */
 	32*8, 32*8,
 	{ 0*8, 32*8-1, 0*8, 32*8-1 },
-	gfxdecodeinfo,
+	toki_gfxdecodeinfo,
+	4*256, 4*256,
+	0,
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	0,
+	toki_vh_start,
+	toki_vh_stop,
+	toki_vh_screenrefresh,
+
+	/* sound hardware; only samples because we still haven't YM 3812 */
+	0,0,0,0,
+	{
+		{
+			SOUND_YM3812,
+			&ym3812_interface
+		},
+		{
+			SOUND_MSM5205,
+			&msm5205_interface
+		}
+	}
+};
+
+static struct MachineDriver tokib_machine_driver =
+{
+	/* basic machine hardware */
+	{
+		{
+			CPU_M68000,
+			16000000,	/* with less than 14MHz there are slowdowns and the */
+						/* title screen doesn't wave correctly */
+			0,
+			readmem,writemem,
+			0,0,
+			toki_interrupt,1
+		},
+		{
+			CPU_Z80 | CPU_AUDIO_CPU,
+			4000000,	/* 4 MHz (?) */
+			2,
+			sound_readmem,sound_writemem,
+			0,0,
+			ignore_interrupt,0	/* IRQs are caused by the main CPU?? */
+								/* NMIs are caused by the ADPCM chip */
+		},
+	},
+	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
+	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
+	0,
+	/* video hardware */
+	32*8, 32*8,
+	{ 0*8, 32*8-1, 0*8, 32*8-1 },
+	tokib_gfxdecodeinfo,
 	4*256, 4*256,
 	0,
 	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
@@ -359,18 +458,121 @@ static struct MachineDriver machine_driver =
 
 ROM_START( toki_rom )
 	ROM_REGION(0x60000)	/* 6*64k for 68000 code */
+	ROM_LOAD_EVEN( "tokijp.006",   0x00000, 0x20000, 0x03d726b1 )
+	ROM_LOAD_ODD ( "tokijp.004",   0x00000, 0x20000, 0x54a45e12 )
+	ROM_LOAD_EVEN( "tokijp.005",   0x40000, 0x10000, 0xd6a82808 )
+	ROM_LOAD_ODD ( "tokijp.003",   0x40000, 0x10000, 0xa01a5b10 )
+
+	ROM_REGION_DISPOSE(0x220000)
+	ROM_LOAD( "tokijp.001",   0x000000, 0x10000, 0x8aa964a2 )	/* chars */
+	ROM_LOAD( "tokijp.002",   0x010000, 0x10000, 0x86e87e48 )
+	ROM_LOAD( "toki.ob1",     0x020000, 0x80000, 0xa27a80ba )	/* sprites */
+	ROM_LOAD( "toki.ob2",     0x0a0000, 0x80000, 0xfa687718 )
+	ROM_LOAD( "toki.bk1",     0x120000, 0x80000, 0xfdaa5f4b )	/* tiles 1 */
+	ROM_LOAD( "toki.bk2",     0x1a0000, 0x80000, 0xd86ac664 )	/* tiles 2 */
+
+	ROM_REGION(0x10000)	/* 64k for code */
+	/* is this the Z80 code? maybe its encrypted */
+	ROM_LOAD( "tokijp.008",   0x00000, 0x2000, 0x6c87c4c5 )
+
+	ROM_REGION(0x20000)	/* samples */
+	ROM_LOAD( "tokijp.009",   0x00000, 0x20000, 0xae7a6b8b )
+
+	ROM_REGION(0x10000)	/* unknown */
+	ROM_LOAD( "tokijp.007",   0x00000, 0x10000, 0xa67969c4 )
+ROM_END
+
+ROM_START( toki2_rom )
+	ROM_REGION(0x60000)	/* 6*64k for 68000 code */
+	ROM_LOAD_EVEN( "tokijp.006",   0x00000, 0x20000, 0x03d726b1 )
+	ROM_LOAD_ODD ( "4c.10k",       0x00000, 0x20000, 0xb2c345c5 )
+	ROM_LOAD_EVEN( "tokijp.005",   0x40000, 0x10000, 0xd6a82808 )
+	ROM_LOAD_ODD ( "tokijp.003",   0x40000, 0x10000, 0xa01a5b10 )
+
+	ROM_REGION_DISPOSE(0x220000)
+	ROM_LOAD( "tokijp.001",   0x000000, 0x10000, 0x8aa964a2 )	/* chars */
+	ROM_LOAD( "tokijp.002",   0x010000, 0x10000, 0x86e87e48 )
+	ROM_LOAD( "toki.ob1",     0x020000, 0x80000, 0xa27a80ba )	/* sprites */
+	ROM_LOAD( "toki.ob2",     0x0a0000, 0x80000, 0xfa687718 )
+	ROM_LOAD( "toki.bk1",     0x120000, 0x80000, 0xfdaa5f4b )	/* tiles 1 */
+	ROM_LOAD( "toki.bk2",     0x1a0000, 0x80000, 0xd86ac664 )	/* tiles 2 */
+
+	ROM_REGION(0x10000)	/* 64k for code */
+	/* is this the Z80 code? maybe its encrypted */
+	ROM_LOAD( "tokijp.008",   0x00000, 0x2000, 0x6c87c4c5 )
+
+	ROM_REGION(0x20000)	/* samples */
+	ROM_LOAD( "tokijp.009",   0x00000, 0x20000, 0xae7a6b8b )
+
+	ROM_REGION(0x10000)	/* unknown */
+	ROM_LOAD( "tokijp.007",   0x00000, 0x10000, 0xa67969c4 )
+ROM_END
+
+ROM_START( toki3_rom )
+	ROM_REGION(0x60000)	/* 6*64k for 68000 code */
+	ROM_LOAD_EVEN( "l10_6.bin",    0x00000, 0x20000, 0x94015d91 )
+	ROM_LOAD_ODD ( "k10_4e.bin",   0x00000, 0x20000, 0x531bd3ef )
+	ROM_LOAD_EVEN( "tokijp.005",   0x40000, 0x10000, 0xd6a82808 )
+	ROM_LOAD_ODD ( "tokijp.003",   0x40000, 0x10000, 0xa01a5b10 )
+
+	ROM_REGION_DISPOSE(0x220000)
+	ROM_LOAD( "tokijp.001",   0x000000, 0x10000, 0x8aa964a2 )	/* chars */
+	ROM_LOAD( "tokijp.002",   0x010000, 0x10000, 0x86e87e48 )
+	ROM_LOAD( "toki.ob1",     0x020000, 0x80000, 0xa27a80ba )	/* sprites */
+	ROM_LOAD( "toki.ob2",     0x0a0000, 0x80000, 0xfa687718 )
+	ROM_LOAD( "toki.bk1",     0x120000, 0x80000, 0xfdaa5f4b )	/* tiles 1 */
+	ROM_LOAD( "toki.bk2",     0x1a0000, 0x80000, 0xd86ac664 )	/* tiles 2 */
+
+	ROM_REGION(0x10000)	/* 64k for code */
+	/* is this the Z80 code? maybe its encrypted */
+	ROM_LOAD( "tokijp.008",   0x00000, 0x2000, 0x6c87c4c5 )
+
+	ROM_REGION(0x20000)	/* samples */
+	ROM_LOAD( "tokijp.009",   0x00000, 0x20000, 0xae7a6b8b )
+
+	ROM_REGION(0x10000)	/* unknown */
+	ROM_LOAD( "tokijp.007",   0x00000, 0x10000, 0xa67969c4 )
+ROM_END
+
+ROM_START( tokiu_rom )
+	ROM_REGION(0x60000)	/* 6*64k for 68000 code */
+	ROM_LOAD_EVEN( "6b.10m",       0x00000, 0x20000, 0x3674d9fe )
+	ROM_LOAD_ODD ( "14.10k",       0x00000, 0x20000, 0xbfdd48af )
+	ROM_LOAD_EVEN( "tokijp.005",   0x40000, 0x10000, 0xd6a82808 )
+	ROM_LOAD_ODD ( "tokijp.003",   0x40000, 0x10000, 0xa01a5b10 )
+
+	ROM_REGION_DISPOSE(0x220000)
+	ROM_LOAD( "tokijp.001",   0x000000, 0x10000, 0x8aa964a2 )	/* chars */
+	ROM_LOAD( "tokijp.002",   0x010000, 0x10000, 0x86e87e48 )
+	ROM_LOAD( "toki.ob1",     0x020000, 0x80000, 0xa27a80ba )	/* sprites */
+	ROM_LOAD( "toki.ob2",     0x0a0000, 0x80000, 0xfa687718 )
+	ROM_LOAD( "toki.bk1",     0x120000, 0x80000, 0xfdaa5f4b )	/* tiles 1 */
+	ROM_LOAD( "toki.bk2",     0x1a0000, 0x80000, 0xd86ac664 )	/* tiles 2 */
+
+	ROM_REGION(0x10000)	/* 64k for code */
+	/* is this the Z80 code? maybe its encrypted */
+	ROM_LOAD( "tokijp.008",   0x00000, 0x2000, 0x6c87c4c5 )
+
+	ROM_REGION(0x20000)	/* samples */
+	ROM_LOAD( "tokijp.009",   0x00000, 0x20000, 0xae7a6b8b )
+
+	ROM_REGION(0x10000)	/* unknown */
+	ROM_LOAD( "tokijp.007",   0x00000, 0x10000, 0xa67969c4 )
+ROM_END
+
+ROM_START( tokib_rom )
+	ROM_REGION(0x60000)	/* 6*64k for 68000 code */
 	ROM_LOAD_EVEN( "toki.e3",      0x00000, 0x20000, 0xae9b3da4 )
 	ROM_LOAD_ODD ( "toki.e5",      0x00000, 0x20000, 0x66a5a1d6 )
-	ROM_LOAD_EVEN( "toki.e2",      0x40000, 0x10000, 0xd6a82808 )
-	ROM_LOAD_ODD ( "toki.e4",      0x40000, 0x10000, 0xa01a5b10 )
+	ROM_LOAD_EVEN( "tokijp.005",   0x40000, 0x10000, 0xd6a82808 )
+	ROM_LOAD_ODD ( "tokijp.003",   0x40000, 0x10000, 0xa01a5b10 )
 
-	ROM_REGION_DISPOSE(0x220000)	/* 2*64k for foreground tiles */
-	ROM_LOAD( "toki.e21",     0x000000, 0x08000, 0xbb8cacbd )
+	ROM_REGION_DISPOSE(0x220000)
+	ROM_LOAD( "toki.e21",     0x000000, 0x08000, 0xbb8cacbd )	/* chars */
 	ROM_LOAD( "toki.e13",     0x008000, 0x08000, 0x052ad275 )
 	ROM_LOAD( "toki.e22",     0x010000, 0x08000, 0x04dcdc21 )
 	ROM_LOAD( "toki.e7",      0x018000, 0x08000, 0x70729106 )
-							/* 16*64k for sprites */
-	ROM_LOAD( "toki.e26",     0x020000, 0x20000, 0xa8ba71fc )
+	ROM_LOAD( "toki.e26",     0x020000, 0x20000, 0xa8ba71fc )	/* sprites */
 	ROM_LOAD( "toki.e28",     0x040000, 0x20000, 0x29784948 )
 	ROM_LOAD( "toki.e34",     0x060000, 0x20000, 0xe5f6e19b )
 	ROM_LOAD( "toki.e36",     0x080000, 0x20000, 0x96e8db8b )
@@ -378,8 +580,7 @@ ROM_START( toki_rom )
 	ROM_LOAD( "toki.e32",     0x0c0000, 0x20000, 0xc289d246 )
 	ROM_LOAD( "toki.e38",     0x0e0000, 0x20000, 0x87f4e7fb )
 	ROM_LOAD( "toki.e40",     0x100000, 0x20000, 0x96e87350 )
-							/* 8*64k for background #1 tiles */
-	ROM_LOAD( "toki.e23",     0x120000, 0x10000, 0xfeb13d35 )
+	ROM_LOAD( "toki.e23",     0x120000, 0x10000, 0xfeb13d35 )	/* tiles 1 */
 	ROM_LOAD( "toki.e24",     0x130000, 0x10000, 0x5b365637 )
 	ROM_LOAD( "toki.e15",     0x140000, 0x10000, 0x617c32e6 )
 	ROM_LOAD( "toki.e16",     0x150000, 0x10000, 0x2a11c0f0 )
@@ -387,8 +588,7 @@ ROM_START( toki_rom )
 	ROM_LOAD( "toki.e18",     0x170000, 0x10000, 0x4c2a72e1 )
 	ROM_LOAD( "toki.e8",      0x180000, 0x10000, 0x46a1b821 )
 	ROM_LOAD( "toki.e9",      0x190000, 0x10000, 0x82ce27f6 )
-							/* 8*64k for background #2 tiles */
-	ROM_LOAD( "toki.e25",     0x1a0000, 0x10000, 0x63026cad )
+	ROM_LOAD( "toki.e25",     0x1a0000, 0x10000, 0x63026cad )	/* tiles 2 */
 	ROM_LOAD( "toki.e20",     0x1b0000, 0x10000, 0xa7f2ce26 )
 	ROM_LOAD( "toki.e11",     0x1c0000, 0x10000, 0x48989aa0 )
 	ROM_LOAD( "toki.e12",     0x1d0000, 0x10000, 0xc2ad9342 )
@@ -399,7 +599,7 @@ ROM_START( toki_rom )
 
 	ROM_REGION(0x18000)	/* 64k for code + 32k for banked data */
 	ROM_LOAD( "toki.e1",      0x00000, 0x8000, 0x2832ef75 )
-	ROM_CONTINUE(        0x10000, 0x8000 )	/* banked at 8000-bfff */
+	ROM_CONTINUE(             0x10000, 0x8000 )	/* banked at 8000-bfff */
 ROM_END
 
 
@@ -435,7 +635,7 @@ static void hisave(void)
 }
 
 
-void toki_rom_decode (void)
+void tokib_rom_decode (void)
 {
 	unsigned char *temp = malloc (65536 * 2);
 	int i, offs;
@@ -471,16 +671,108 @@ struct GameDriver toki_driver =
 	__FILE__,
 	0,
 	"toki",
-	"Toki (bootleg)",
-	"1990",
-	"Datsu",
+	"Toki (set 1)",
+	"1989",
+	"Tad",
 	"Jarek Parchanski (MAME driver)\nRichard Bush (hardware info)", //Game authors:\n\nKitahara Haruki\nNishizawa Takashi\nSakuma Akira\nAoki Tsukasa\nKakiuchi Hiroyuki",
-	0,
-	&machine_driver,
+	GAME_NOT_WORKING,
+	&toki_machine_driver,
 	0,
 
 	toki_rom,
-	toki_rom_decode, 0,
+	0, 0,
+	0,
+	0,			/* sound_prom */
+	input_ports,
+	0, 0, 0, 	  	/* colors, palette, colortable */
+	ORIENTATION_DEFAULT,
+	hiload, hisave
+};
+
+struct GameDriver toki2_driver =
+{
+	__FILE__,
+	&toki_driver,
+	"toki2",
+	"Toki (set 2)",
+	"1989",
+	"Tad",
+	"Jarek Parchanski (MAME driver)\nRichard Bush (hardware info)", //Game authors:\n\nKitahara Haruki\nNishizawa Takashi\nSakuma Akira\nAoki Tsukasa\nKakiuchi Hiroyuki",
+	GAME_NOT_WORKING,
+	&toki_machine_driver,
+	0,
+
+	toki2_rom,
+	0, 0,
+	0,
+	0,			/* sound_prom */
+	input_ports,
+	0, 0, 0, 	  	/* colors, palette, colortable */
+	ORIENTATION_DEFAULT,
+	hiload, hisave
+};
+
+struct GameDriver toki3_driver =
+{
+	__FILE__,
+	&toki_driver,
+	"toki3",
+	"Toki (set 3)",
+	"1989",
+	"Tad",
+	"Jarek Parchanski (MAME driver)\nRichard Bush (hardware info)", //Game authors:\n\nKitahara Haruki\nNishizawa Takashi\nSakuma Akira\nAoki Tsukasa\nKakiuchi Hiroyuki",
+	GAME_NOT_WORKING,
+	&toki_machine_driver,
+	0,
+
+	toki3_rom,
+	0, 0,
+	0,
+	0,			/* sound_prom */
+	input_ports,
+	0, 0, 0, 	  	/* colors, palette, colortable */
+	ORIENTATION_DEFAULT,
+	hiload, hisave
+};
+
+struct GameDriver tokiu_driver =
+{
+	__FILE__,
+	&toki_driver,
+	"tokiu",
+	"Toki (US)",
+	"1989",
+	"Tad (Fabtek license)",
+	"Jarek Parchanski (MAME driver)\nRichard Bush (hardware info)", //Game authors:\n\nKitahara Haruki\nNishizawa Takashi\nSakuma Akira\nAoki Tsukasa\nKakiuchi Hiroyuki",
+	GAME_NOT_WORKING,
+	&toki_machine_driver,
+	0,
+
+	tokiu_rom,
+	0, 0,
+	0,
+	0,			/* sound_prom */
+	input_ports,
+	0, 0, 0, 	  	/* colors, palette, colortable */
+	ORIENTATION_DEFAULT,
+	hiload, hisave
+};
+
+struct GameDriver tokib_driver =
+{
+	__FILE__,
+	&toki_driver,
+	"tokib",
+	"Toki (bootleg)",
+	"1989",
+	"bootleg",
+	"Jarek Parchanski (MAME driver)\nRichard Bush (hardware info)", //Game authors:\n\nKitahara Haruki\nNishizawa Takashi\nSakuma Akira\nAoki Tsukasa\nKakiuchi Hiroyuki",
+	0,
+	&tokib_machine_driver,
+	0,
+
+	tokib_rom,
+	tokib_rom_decode, 0,
 	0,
 	0,			/* sound_prom */
 	input_ports,

@@ -480,7 +480,7 @@ static struct MachineDriver ddragon_machine_driver =
 		},
 		{
  			CPU_HD63701, /* we're missing the code for this one */
-			12000000 / 3, /* 4 Mhz */
+			2000000, /* 2 Mhz ???*/
 			2,
 			sub_readmem,sub_writemem,0,0,
 			ignore_interrupt,0

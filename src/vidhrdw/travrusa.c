@@ -172,6 +172,7 @@ int travrusa_vh_start(void)
   Memory handlers
 
 ***************************************************************************/
+
 void travrusa_videoram_w(int offset,int data)
 {
 	if (travrusa_videoram[offset] != data)
@@ -226,6 +227,7 @@ void travrusa_flipscreen_w(int offset,int data)
   Display refresh
 
 ***************************************************************************/
+
 static void draw_sprites(struct osd_bitmap *bitmap)
 {
 	int offs;

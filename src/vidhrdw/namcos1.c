@@ -6,20 +6,139 @@
 
 #define VIDEORAM_SIZE 0x800 /* this is for a single screen, no scroll */
 
+#define MAX_PLAYFIELDS 6
+
+struct playfield {
+	void					*base;
+	int						priority;
+	int						palette;
+	int						scroll_x;
+	int						scroll_y;
+	struct osd_bitmap		*bitmap;
+	void					*dirty;
+};
+
+struct playfield playfields[MAX_PLAYFIELDS];
+
+void namcos1_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom) {
+	int i;
+
+	for( i = 0; i < Machine->drv->total_colors; i++ ) {
+		palette[i*3+0] = 0;
+		palette[i*3+1] = 0;
+		palette[i*3+2] = 0;
+		colortable[i] = i;
+	}
+}
+
+static void dirty_playfields( void ) {
+	int i;
+
+	memset( dirtybuffer, 1, 0x8000 );
+}
+
 int namcos1_vh_start( void ) {
+	int i;
 
 	videoram = Machine->memory_region[NAMCO_S1_VIDEORAM_REGION];
 
-	{
-		/* horrid kludge to get namco sound to use the proper wave data */
-		namco_wavedata = ( Machine->memory_region[NAMCO_S1_RAM_REGION] ) + 0xa000; /* Ram 1, bank 1, offset 0x0000 */
+	dirtybuffer = malloc( 0x8000 );
+	if ( dirtybuffer == 0 )
+		return 1;
+
+	dirty_playfields();
+
+	for ( i = 0; i < MAX_PLAYFIELDS; i++ ) {
+		if ( i < 4 ) {
+			playfields[i].base = &videoram[i<<13];
+			playfields[i].dirty = &dirtybuffer[i<<13];
+			if ( i == 3 ) {
+				playfields[i].bitmap = osd_new_bitmap( 64*8, 32*8, Machine->scrbitmap->depth );
+			} else {
+				playfields[i].bitmap = osd_new_bitmap( 64*8, 64*8, Machine->scrbitmap->depth );
+			}
+		} else {
+			playfields[i].base = &videoram[0x7000+( ( i - 4 ) * VIDEORAM_SIZE )];
+			playfields[i].dirty = &dirtybuffer[0x7000+( ( i - 4 ) * VIDEORAM_SIZE )];
+			playfields[i].bitmap = osd_new_bitmap( Machine->drv->screen_width, Machine->drv->screen_height, Machine->scrbitmap->depth );
+		}
+
+		if ( playfields[i].bitmap == 0 ) {
+			free( dirtybuffer );
+			return 1;
+		}
+
+		playfields[i].palette = 0;
+		playfields[i].priority = 0x0f;
+		playfields[i].scroll_x = 0;
+		playfields[i].scroll_y = 0;
 	}
 
 	return 0;
 }
 
 void namcos1_vh_stop( void ) {
+	int i;
+
 	videoram = 0;
+
+	free( dirtybuffer );
+
+	for ( i = 0; i < MAX_PLAYFIELDS; i++ )
+		osd_free_bitmap( playfields[i].bitmap );
+}
+
+/* per game scroll adjustment */
+static int scrolloffsX[4];
+static int scrolloffsY[4];
+static int scrollneg;
+
+void namcos1_set_scroll_offsets( int *bgx, int*bgy, int negative ) {
+	int i;
+
+	for ( i = 0; i < 4; i++ ) {
+		scrolloffsX[i] = bgx[i];
+		scrolloffsY[i] = bgy[i];
+	}
+
+	scrollneg = negative;
+}
+
+void namcos1_playfield_control_w( int offs, int data ) {
+
+	offs &= 0xff; 	/* splatterhouse needs this */
+
+	if ( offs < 16 ) { /* scrolling */
+		int wichone = offs / 4;
+		int xy = offs & 2;
+		if ( xy == 0 ) { /* scroll x */
+			if ( offs & 1 )
+				playfields[wichone].scroll_x = ( playfields[wichone].scroll_x & 0xff00 ) | data;
+			else
+				playfields[wichone].scroll_x = ( playfields[wichone].scroll_x & 0xff ) | ( data << 8 );
+		} else { /* scroll y */
+			if ( offs & 1 )
+				playfields[wichone].scroll_y = ( playfields[wichone].scroll_y & 0xff00 ) | data;
+			else
+				playfields[wichone].scroll_y = ( playfields[wichone].scroll_y & 0xff ) | ( data << 8 );
+		}
+		return;
+	}
+
+	if ( offs < 22 ) { /* priority */
+		int wichone = offs - 16;
+		playfields[wichone].priority = data;
+		return;
+	}
+
+	if ( offs > 23 && offs < 30 ) { /* palette */
+		int wichone = offs - 24;
+		if ( playfields[wichone].palette != data ) {
+			playfields[wichone].palette = data;
+			dirty_playfields();
+		}
+		return;
+	}
 }
 
 int namcos1_videoram_r( int offs ) {
@@ -27,7 +146,10 @@ int namcos1_videoram_r( int offs ) {
 }
 
 void namcos1_videoram_w( int offs, int data ) {
-	videoram[offs] = data;
+	if ( videoram[offs] != data ) {
+		videoram[offs] = data;
+		dirtybuffer[offs] = 1;
+	}
 }
 
 static void namcos1_drawgfx(struct osd_bitmap *dest,const struct GfxElement *gfx,
@@ -163,6 +285,8 @@ static void namcos1_drawgfx(struct osd_bitmap *dest,const struct GfxElement *gfx
 			{
 				if (*sdmask)
 					*bm = paldata[*sd];
+				else
+					*bm = 0xfffe;
 				sd--;
 				sdmask--;
 			}
@@ -186,6 +310,8 @@ static void namcos1_drawgfx(struct osd_bitmap *dest,const struct GfxElement *gfx
 			{
 				if (*sdmask)
 					*bm = paldata[*sd];
+				else
+					*bm = 0xfffe;
 				sd++;
 				sdmask++;
 			}
@@ -281,131 +407,171 @@ static void draw_sprites( struct osd_bitmap *bitmap, int pri ) {
 	}
 }
 
-static void draw_background( struct osd_bitmap *bitmap, int base, int size, int color, int scrollx, int scrolly ) {
+static void draw_background( struct osd_bitmap *bitmap, int layer ) {
 	int offs;
-	unsigned char *vid = &videoram[base];
-
-	int sxmask = ( ( 64 * 8 ) - 1 );
-	int symask = ( size == VIDEORAM_SIZE * 4 ) ? ( ( 64 * 8 ) - 1 ) : ( ( 32 * 8 ) - 1 );
-
-	for ( offs = 0; offs < size; offs += 2 ) {
-		int sx,sy,code;
-
-		sx = ( ( offs / 2 ) % 64 ) * 8;
-		sy = ( ( offs / 2 ) / 64 ) * 8;
-
-		sx += scrollx;
-		sy += scrolly;
-
-		sx &= sxmask;
-		sy &= symask;
-
-		if ( sx < 0 || sx > Machine->drv->screen_width )
-			continue;
-		if ( sy < 0 || sy > Machine->drv->screen_height )
-			continue;
-
-		code = vid[offs+1] + ( ( vid[offs+0] & 0x3f ) << 8 );
-
-		namcos1_drawgfx( bitmap,Machine->gfx[1],
-				 code,
-				 color,
-				 0, 0,
-				 sx,sy,
-				 &Machine->drv->visible_area,0);
-	}
-}
-
-static void draw_foreground( struct osd_bitmap *bitmap, int base, int color ) {
-	int offs;
-	unsigned char *vid = &videoram[base];
+	unsigned char *vid = playfields[layer].base;
+	UINT16 *dir = (UINT16 *)playfields[layer].dirty;
+	struct osd_bitmap *bm = playfields[layer].bitmap;
+	int color = playfields[layer].palette;
 
 	for ( offs = 0; offs < VIDEORAM_SIZE; offs += 2 ) {
-		int offs2;
-		int sx,sy,code;
+		if ( dir[offs/2] ) {
+			int sx,sy,code;
 
-		offs2 = offs / 2;
-		sx = offs2 % 36;
-		sy = offs2 / 36;
+			dir[offs/2] = 0;
 
-		/* This is offsetted for some unknown reason */
+			sx = ( ( offs / 2 ) % 64 ) * 8;
+			sy = ( ( offs / 2 ) / 64 ) * 8;
 
-		if ( sx < 8 ) {
-			sx += 28;
-			sy--;
-		} else {
-			sx -= 8;
+			code = vid[offs+1] + ( ( vid[offs+0] & 0x3f ) << 8 );
+
+			namcos1_drawgfx( bm,Machine->gfx[1],
+					 code,
+					 color,
+					 0, 0,
+					 sx,sy,
+					 0,0);
 		}
-
-		code = vid[offs+1] + ( ( vid[offs+0] & 0x3f ) << 8 );
-
-		namcos1_drawgfx( bitmap,Machine->gfx[1],
-				 code,
-				 color,
-				 0, 0,
-				 8*sx,8*sy,
-				 &Machine->drv->visible_area,0);
 	}
-}
 
-/* per game scroll adjustment */
-static int scrolloffsX[4];
-static int scrolloffsY[4];
-static int scrollneg;
+	for ( offs = VIDEORAM_SIZE; offs < VIDEORAM_SIZE*2; offs += 2 ) {
+		if ( dir[offs/2] ) {
+			int sx,sy,code;
 
-static void namcos1_calc_scroll( int layer, unsigned char *layer_control, int *scrollx, int *scrolly ) {
+			dir[offs/2] = 0;
 
-	*scrollx = ( ( layer_control[layer] << 8 ) + ( layer_control[layer+1] ) ) - scrolloffsX[layer/4];
-	*scrolly = ( ( layer_control[layer+2] << 8 ) + layer_control[layer+3] ) - scrolloffsY[layer/4];
+			sx = ( ( offs / 2 ) % 64 ) * 8;
+			sy = ( ( offs / 2 ) / 64 ) * 8;
 
-	if ( scrollneg ) {
-		*scrollx = -(*scrollx);
-		*scrolly = -(*scrolly);
+			code = vid[offs+1] + ( ( vid[offs+0] & 0x3f ) << 8 );
+
+			namcos1_drawgfx( bm,Machine->gfx[1],
+					 code,
+					 color,
+					 0, 0,
+					 sx,sy,
+					 0,0);
+		}
 	}
-}
 
-#define SCROLL_SET( a ) namcos1_calc_scroll( a, layer_control, &scrollx, &scrolly );
+	if ( layer < 3 ) {
+		for ( offs = VIDEORAM_SIZE*2; offs < VIDEORAM_SIZE*3; offs += 2 ) {
+			if ( dir[offs/2] ) {
+				int sx,sy,code;
 
-void namcos1_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh) {
-	unsigned char *layer_control = ( Machine->memory_region[NAMCO_S1_RAM_REGION] + 0x9000 );
-	int i, color, scrollx, scrolly, pri, base, size, src_pri;
+				dir[offs/2] = 0;
 
-	palette_recalc();
+				sx = ( ( offs / 2 ) % 64 ) * 8;
+				sy = ( ( offs / 2 ) / 64 ) * 8;
 
-	fillbitmap(bitmap,Machine->pens[0x800],&Machine->drv->visible_area);
+				code = vid[offs+1] + ( ( vid[offs+0] & 0x3f ) << 8 );
 
-	for ( pri = 0x00; pri < 0x0f; pri++ ) { /* priority */
-		for( i = 0; i < 6; i++ ) {
-			src_pri = layer_control[i+0x10];
-
-			if ( ( src_pri & 0x0f ) == pri ) {
-				color = layer_control[i+0x18];
-				if ( i < 4 ) { /* background */
-					SCROLL_SET( ( i << 2 ) )
-					base = i << 13;
-					size = ( i == 3 ) ? ( VIDEORAM_SIZE * 2 ) : ( VIDEORAM_SIZE * 4 );
-					draw_background( bitmap, base, size, color, scrollx, scrolly );
-				} else { /* foreground */
-					base = 0x7000 + ( ( i - 4 ) * 0x800 );
-					draw_foreground( bitmap, base, color );
-				}
+				namcos1_drawgfx( bm,Machine->gfx[1],
+						 code,
+						 color,
+						 0, 0,
+						 sx,sy,
+						 0,0);
 			}
 		}
 
-		if ( pri < 8 )
-			draw_sprites( bitmap, pri );
+		for ( offs = VIDEORAM_SIZE*3; offs < VIDEORAM_SIZE*4; offs += 2 ) {
+			if ( dir[offs/2] ) {
+				int sx,sy,code;
+
+				dir[offs/2] = 0;
+
+				sx = ( ( offs / 2 ) % 64 ) * 8;
+				sy = ( ( offs / 2 ) / 64 ) * 8;
+
+				code = vid[offs+1] + ( ( vid[offs+0] & 0x3f ) << 8 );
+
+				namcos1_drawgfx( bm,Machine->gfx[1],
+						 code,
+						 color,
+						 0, 0,
+						 sx,sy,
+						 0,0);
+			}
+		}
+	}
+
+	{
+		int scrollx = playfields[layer].scroll_x;
+		int scrolly = playfields[layer].scroll_y;
+
+		scrollx -= scrolloffsX[layer];
+		scrolly -= scrolloffsY[layer];
+
+		if ( scrollneg ) {
+			scrollx = -scrollx;
+			scrolly = -scrolly;
+		}
+
+		copyscrollbitmap( bitmap, bm, 1, &scrollx, 1, &scrolly, &Machine->drv->visible_area, TRANSPARENCY_PEN, 0xfffe );
 	}
 }
 
-void namcos1_set_scroll_offsets( int *bgx, int*bgy, int negative ) {
-	int i;
+static void draw_foreground( struct osd_bitmap *bitmap, int layer ) {
+	int offs;
+	unsigned char *vid = playfields[layer].base;
+	UINT16 *dir = (UINT16 *)playfields[layer].dirty;
+	struct osd_bitmap *bm = playfields[layer].bitmap;
+	int color = playfields[layer].palette;
 
-	for ( i = 0; i < 4; i++ ) {
-		scrolloffsX[i] = bgx[i];
-		scrolloffsY[i] = bgy[i];
+	for ( offs = 0; offs < VIDEORAM_SIZE; offs += 2 ) {
+		if ( dir[offs/2] ) {
+			int offs2;
+			int sx,sy,code;
+
+			dir[offs/2] = 0;
+
+			offs2 = offs / 2;
+			sx = offs2 % 36;
+			sy = offs2 / 36;
+
+			/* This is offsetted for some unknown reason */
+
+			if ( sx < 8 ) {
+				sx += 28;
+				sy--;
+			} else {
+				sx -= 8;
+			}
+
+			code = vid[offs+1] + ( ( vid[offs+0] & 0x3f ) << 8 );
+
+			namcos1_drawgfx( bm,Machine->gfx[1],
+					 code,
+					 color,
+					 0, 0,
+					 8*sx,8*sy,
+					 0,0);
+		}
 	}
 
-	scrollneg = negative;
+	copybitmap( bitmap, bm, 0, 0, 0, 0, &Machine->drv->visible_area, TRANSPARENCY_PEN, 0xfffe );
+}
+
+void namcos1_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh) {
+	int pri, i;
+
+	if ( palette_recalc() )
+		dirty_playfields();
+
+	fillbitmap(bitmap,Machine->pens[0x800],&Machine->drv->visible_area);
+
+	for ( pri = 0x00; pri < 0x08; pri++ ) { /* priority */
+		for( i = 0; i < MAX_PLAYFIELDS; i++ ) {
+			if ( playfields[i].priority == pri ) {
+				if ( i < 4 )
+					draw_background( bitmap, i );
+				else
+					draw_foreground( bitmap, i );
+			}
+		}
+		draw_sprites( bitmap, pri );
+	}
 }
 
 void namcos1_set_sprite_offsets( int x, int y ) {

@@ -1,3 +1,14 @@
+#ifndef SNDINTRF_H
+#define SNDINTRF_H
+
+
+struct MachineSound
+{
+	int sound_type;
+	void *sound_interface;
+};
+
+
 #include "sound/streams.h"
 #if (HAS_SAMPLES)
 #include "sound/samples.h"
@@ -5,13 +16,25 @@
 #if (HAS_DAC)
 #include "sound/dac.h"
 #endif
-#if (HAS_AY8910 || HAS_YM2203 || HAS_YM2608 || HAS_YM2612 || HAS_YM3438)
-#include "sound/psgintf.h"
+#if (HAS_AY8910)
+#include "sound/ay8910.h"
+#endif
+#if (HAS_YM2203)
+#include "sound/2203intf.h"
+#endif
+#if (HAS_YM2608)
+#include "sound/2608intf.h"
+#endif
+#if (HAS_YM2612 || HAS_YM3438)
+#include "sound/2612intf.h"
 #endif
 #if (HAS_YM2151 || HAS_YM2151_ALT)
 #include "sound/2151intf.h"
 #endif
-#if (HAS_YM2610)
+#if (HAS_YM2608)
+#include "sound/2608intf.h"
+#endif
+#if (HAS_YM2610 || HAS_YM2610B)
 #include "sound/2610intf.h"
 #endif
 #if (HAS_YM3812 || HAS_YM3526)
@@ -58,14 +81,6 @@
 #endif
 
 
-
-struct MachineSound
-{
-	int sound_type;
-	void *sound_interface;
-};
-
-
 enum
 {
 	SOUND_DUMMY,
@@ -95,6 +110,9 @@ enum
 #endif
 #if (HAS_YM2610)
 	SOUND_YM2610,
+#endif
+#if (HAS_YM2610B)
+	SOUND_YM2610B,
 #endif
 #if (HAS_YM2612)
 	SOUND_YM2612,
@@ -160,7 +178,7 @@ enum
 /* structure for SOUND_CUSTOM sound drivers */
 struct CustomSound_interface
 {
-	int (*sh_start)(void);
+	int (*sh_start)(const struct MachineSound *msound);
 	void (*sh_stop)(void);
 	void (*sh_update)(void);
 };
@@ -201,3 +219,6 @@ void soundlatch4_clear_w(int offset,int data);
    something other than 0x00, use this function from machine_init. Note
    that this one call effects all 4 latches */
 void soundlatch_setclearedvalue(int value);
+
+
+#endif

@@ -60,7 +60,6 @@ and 1 SFX channel controlled by an 8039:
 #include "cpu/i8039/i8039.h"
 
 
-/*#define USE_SAMPLES*/
 /*#define EMULATE_6809*/
 
 
@@ -206,7 +205,6 @@ static struct MemoryWriteAddress m6809_writemem[] =
 };
 #endif
 
-#ifndef USE_SAMPLES
 static struct MemoryReadAddress i8039_readmem[] =
 {
 	{ 0x0000, 0x0fff, MRA_ROM },
@@ -231,7 +229,6 @@ static struct IOWritePort i8039_writeport[] =
 	{ I8039_p2, I8039_p2, IOWP_NOP },
 	{ -1 }	/* end of table */
 };
-#endif
 
 
 
@@ -490,18 +487,12 @@ static struct AY8910interface ay8910_interface =
 	{ gyruss_filter0_w, gyruss_filter1_w }
 };
 
-#ifndef USE_SAMPLES
 static struct DACinterface dac_interface =
 {
 	1,
 	{ 50 }
 };
-#else
-static struct Samplesinterface samples_interface =
-{
-	1	/* 1 channel */
-};
-#endif
+
 
 
 static struct MachineDriver machine_driver =
@@ -522,7 +513,6 @@ static struct MachineDriver machine_driver =
 			sound_readmem,sound_writemem,sound_readport,sound_writeport,
 			ignore_interrupt,1	/* interrupts are triggered by the main CPU */
 		},
-#ifndef USE_SAMPLES
 		{
 			CPU_I8039 | CPU_AUDIO_CPU,
 			8000000/15,	/* 8Mhz crystal */
@@ -530,7 +520,6 @@ static struct MachineDriver machine_driver =
 			i8039_readmem,i8039_writemem,i8039_readport,i8039_writeport,
 			ignore_interrupt,1
 		},
-#endif
 #ifdef EMULATE_6809
 		{
 			CPU_M6809,
@@ -573,17 +562,10 @@ static struct MachineDriver machine_driver =
 			SOUND_AY8910,
 			&ay8910_interface
 		},
-#ifndef USE_SAMPLES
 		{
 			SOUND_DAC,
 			&dac_interface
 		}
-#else
-		{
-			SOUND_SAMPLES,
-			&samples_interface
-		}
-#endif
 	}
 };
 
@@ -689,21 +671,6 @@ ROM_START( venus_rom )
 ROM_END
 
 
-#ifdef USE_SAMPLES
-static const char *gyruss_sample_names[] =
-{
-	"*gyruss",
-	"AUDIO01.SAM",
-	"AUDIO02.SAM",
-	"AUDIO03.SAM",
-	"AUDIO04.SAM",
-	"AUDIO05.SAM",
-	"AUDIO06.SAM",
-	"AUDIO07.SAM",
-	0	/* end of array */
-};
-#endif
-
 
 static void gyruss_decode(void)
 {
@@ -778,11 +745,7 @@ struct GameDriver gyruss_driver =
 
 	gyruss_rom,
 	0, gyruss_decode,
-#ifdef USE_SAMPLES
-	gyruss_sample_names,
-#else
 	0,
-#endif
 	0,	/* sound_prom */
 
 	gyruss_input_ports,
@@ -808,11 +771,7 @@ struct GameDriver gyrussce_driver =
 
 	gyrussce_rom,
 	0, gyruss_decode,
-#ifdef USE_SAMPLES
-	gyruss_sample_names,
-#else
 	0,
-#endif
 	0,	/* sound_prom */
 
 	gyrussce_input_ports,
@@ -838,11 +797,7 @@ struct GameDriver venus_driver =
 
 	venus_rom,
 	0, gyruss_decode,
-#ifdef USE_SAMPLES
-	gyruss_sample_names,
-#else
 	0,
-#endif
 	0,	/* sound_prom */
 
 	gyrussce_input_ports,

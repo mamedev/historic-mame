@@ -6,6 +6,7 @@
 /* from vidhrdw */
 extern int namcos1_videoram_r( int offs );
 extern void namcos1_videoram_w( int offs, int data );
+extern void namcos1_playfield_control_w( int offs, int data );
 extern void namcos1_set_scroll_offsets( int *bgx, int*bgy, int negative );
 extern void namcos1_set_sprite_offsets( int x, int y );
 
@@ -255,6 +256,8 @@ static void rvk_w( int offset, int data, int bank_offset ) {
 			bank_offset -= 0x0e;
 			RAM += 0x8000;
 			RAM[ ( bank_offset << 13 ) + offset ] = data;
+			if ( offset >= 0x1000 )
+				namcos1_playfield_control_w( offset - 0x1000, data );
 		break;
 
 		default:
@@ -542,25 +545,20 @@ void namcos1_banked_area_w( int offset, int data ) {
 *	                                                                                  *
 **************************************************************************************/
 
-static int mcu_first_time;
-
-void namcos1_mcu_control_w( int offset, int data ) {
+void namcos1_cpu_control_w( int offset, int data ) {
 
 	if ( data & 1 ) {
-		/* The first MCU check is done on the 'kernel' code section we're missing */
-		/* We just skip it */
-
-		if ( mcu_first_time ) {
-			mcu_first_time = 0;
-			cpu_halt( 3, 0 );
-			rvk_w( 0x1000, 0x00, 0x0f );
-		} else
-			cpu_halt( 3, 1 );
-
+//		cpu_reset( 1 );
+		cpu_reset( 2 );
 		cpu_reset( 3 );
 		cpu_halt( 1, 1 );
-	} else
+		cpu_halt( 2, 1 );
+		cpu_halt( 3, 1 );
+	} else {
 		cpu_halt( 1, 0 );
+		cpu_halt( 2, 0 );
+		cpu_halt( 3, 0 );
+	}
 }
 
 /**************************************************************************************
@@ -590,8 +588,8 @@ static int namcos1_setopbase (int pc) {
 }
 
 /* default values for cpu start banks */
-static int cpu0_start = 0x03ff;
-static int cpu1_start = 0x03fb;
+static int cpu0_start;
+static int cpu1_start;
 
 void namcos1_machine_init( void ) {
 
@@ -626,55 +624,6 @@ void namcos1_machine_init( void ) {
 		cpu_setbank( 2, RAM );
 	}
 
-	/* Fake MCU reset vector & regenerate mcu functionality */
-	/* This MIGHT be Pacmania specific. I'll look into it later */
-	{
-		unsigned char	*RAM = Machine->memory_region[7];
-		unsigned int	my_pc;
-
-		memset( &RAM[0xf000], 0, 0x1000 );
-
-		/* Reset vector */
-		RAM[0xfffe] = 0xb8;
-		RAM[0xffff] = 0x00;
-#define ASSEMBLE_START(a) my_pc = a
-#define ASSEMBLE(a) RAM[my_pc++] = a
-
-		ASSEMBLE_START(0xf469);
-
-		/* Skip callbacks if idling */
-		ASSEMBLE(0xb6); ASSEMBLE(0xc0); ASSEMBLE(0x2f); /* lda	$c02f */
-		ASSEMBLE(0x26); ASSEMBLE(0x05); /* bne +5 */
-		ASSEMBLE(0x38); /* pulx */
-		ASSEMBLE(0x08); /* inx */
-		ASSEMBLE(0x08); /* inx */
-		ASSEMBLE(0x08); /* inx */
-		ASSEMBLE(0x3c); /* pshx */
-
-		ASSEMBLE(0x39); /* rts */
-
-		/* IRQ vector */
-		RAM[0xfff8] = ( my_pc >> 8 ) & 0xff;
-		RAM[0xfff9] = ( my_pc & 0xff );
-
-		/* Signal we're working */
-		ASSEMBLE(0x86); ASSEMBLE(0xa6); /* lda #$a6 */
-		ASSEMBLE(0xb7); ASSEMBLE(0xc0); ASSEMBLE(0x00); /* sta	$c000 */
-
-		/* Process voice commands too */
-		ASSEMBLE(0x86); ASSEMBLE(0x01); /* lda #$01 */
-		ASSEMBLE(0x98); ASSEMBLE(0xb9); /* eora $b9 */
-		ASSEMBLE(0x97); ASSEMBLE(0xb9); /* sta $b9 */
-
-		ASSEMBLE(0x3b); /* rti */
-
-		/* This extra byte makes sure the rom checksum match */
-		ASSEMBLE(0x46);
-
-#undef ASSEMBLE_START
-#undef ASSEMBLE
-	}
-
 	/* Point mcu & sound shared RAM to destination */
 	{
 		unsigned char *RAM = ( Machine->memory_region[NAMCO_S1_RAM_REGION] ) + 0xb000; /* Ram 1, bank 1, offset 0x1000 */
@@ -682,14 +631,50 @@ void namcos1_machine_init( void ) {
 		cpu_setbank( 4, RAM );
 	}
 
-	/* Init MCU checks */
-	mcu_first_time = 1;
+	/* Set up Namco PSG wave address */
+	namco_wavedata = ( Machine->memory_region[NAMCO_S1_RAM_REGION] ) + 0xa000; /* Ram 1, bank 1, offset 0x0000 */
 
 	/* In case we had some cpu's suspended, resume them now */
 	cpu_halt( 1, 1 );
+	cpu_halt( 2, 1 );
 	cpu_halt( 3, 1 );
 
 	cpu_setOPbaseoverride( namcos1_setopbase );
+}
+
+/**************************************************************************************
+*	                                                                                  *
+*	Alice in Wonderland specific                                                      *
+*	                                                                                  *
+**************************************************************************************/
+
+void alice_driver_init( void ) {
+	int alice_key_id = 0x25;
+	int alice_key_id_query = 0x5b;
+
+	/* Set Alice's key id query */
+	key_id_query = alice_key_id_query;
+
+	/* Set Alice's key id */
+	key_id = alice_key_id;
+
+	key_r = rev1_key_r;
+	key_w = rev1_key_w;
+
+	/* set scrolling offsets for this game */
+	{
+		int bgx[4] = { 0x0b0, 0x0b2, 0x0b3, 0x0b4 };
+		int bgy[4] = { 0x108, 0x108, 0x108, 0x008 };
+
+		namcos1_set_scroll_offsets( bgx, bgy, 0 );
+	}
+
+	/* set sprite offsets for this game */
+	namcos1_set_sprite_offsets( 4, 204 );
+
+	/* set cpu startup banks */
+	cpu0_start = 0x03ff;
+	cpu1_start = 0x03bf;
 }
 
 /**************************************************************************************
@@ -717,6 +702,10 @@ void blazer_driver_init( void ) {
 
 	/* set sprite offsets for this game */
 	namcos1_set_sprite_offsets( -120, 232 );
+
+	/* set cpu startup banks */
+	cpu0_start = 0x03ff;
+	cpu1_start = 0x03fb;
 }
 
 /**************************************************************************************
@@ -744,6 +733,10 @@ void dspirits_driver_init( void ) {
 
 	/* set sprite offsets for this game */
 	namcos1_set_sprite_offsets( -120, 232 );
+
+	/* set cpu startup banks */
+	cpu0_start = 0x03ff;
+	cpu1_start = 0x03fb;
 }
 
 /**************************************************************************************
@@ -775,6 +768,10 @@ void galaga88_driver_init( void ) {
 
 	/* set sprite offsets for this game */
 	namcos1_set_sprite_offsets( -120, 232 );
+
+	/* set cpu startup banks */
+	cpu0_start = 0x03ff;
+	cpu1_start = 0x03fb;
 }
 
 /**************************************************************************************
@@ -806,6 +803,47 @@ void pacmania_driver_init( void ) {
 
 	/* set sprite offsets for this game */
 	namcos1_set_sprite_offsets( -56, 240 );
+
+	/* set cpu startup banks */
+	cpu0_start = 0x03ff;
+	cpu1_start = 0x03fb;
+}
+
+/**************************************************************************************
+*	                                                                                  *
+*	Shadowland specific                                                               *
+*	                                                                                  *
+**************************************************************************************/
+
+void shadowld_driver_init( void ) {
+	/* Shadowland has no Key Chip - We fill up the handler just to avoid incosistencies */
+
+	int shadowld_key_id = 0x00;
+	int shadowld_key_id_query = 0x00;
+
+	/* Set Shadowland's key id query */
+	key_id_query = shadowld_key_id_query;
+
+	/* Set Shadowland's key id */
+	key_id = shadowld_key_id;
+
+	key_r = rev1_key_r;
+	key_w = rev1_key_w;
+
+	/* set scrolling offsets for this game */
+	{
+		int bgx[4] = { 0x0b0, 0x0b2, 0x0b3, 0x0b4 };
+		int bgy[4] = { 0x108, 0x108, 0x108, 0x008 };
+
+		namcos1_set_scroll_offsets( bgx, bgy, 0 );
+	}
+
+	/* set sprite offsets for this game */
+	namcos1_set_sprite_offsets( -120, 215 );
+
+	/* set cpu startup banks */
+	cpu0_start = 0x03ff;
+	cpu1_start = 0x03fb;
 }
 
 /**************************************************************************************
@@ -821,10 +859,6 @@ void splatter_driver_init( void ) {
 	key_r = rev2_key_r;
 	key_w = rev2_key_w;
 
-	/* cpu1 start bank is different */
-	/* prg5, last bank */
-	cpu1_start = 0x037f;
-
 	/* set scrolling offsets for this game */
 	{
 		int bgx[4] = { 0x0b0, 0x0b2, 0x0b3, 0x0b4 };
@@ -834,7 +868,10 @@ void splatter_driver_init( void ) {
 	}
 
 	/* set sprite offsets for this game */
-	namcos1_set_sprite_offsets( -56, 240 );
+	namcos1_set_sprite_offsets( 0, 240 );
+
+	cpu0_start = 0x03ff;
+	cpu1_start = 0x037f;
 }
 
 /**************************************************************************************
@@ -850,6 +887,9 @@ void ws90_driver_init( void ) {
 	key_r = rev1_key_r;
 	key_w = rev1_key_w;
 
+	key[0x47] = 0x36;
+	key[0x40] = 0x36;
+
 	/* set scrolling offsets for this game */
 	{
 		int bgx[4] = { 0x0b0, 0x0b2, 0x0b3, 0x0b4 };
@@ -859,5 +899,9 @@ void ws90_driver_init( void ) {
 	}
 
 	/* set sprite offsets for this game */
-	namcos1_set_sprite_offsets( -56, 240 );
+	namcos1_set_sprite_offsets( 0, 240 );
+
+	/* set cpu startup banks */
+	cpu0_start = 0x03ff;
+	cpu1_start = 0x03fb;
 }

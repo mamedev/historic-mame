@@ -56,13 +56,7 @@ void thepit_vh_convert_color_prom(unsigned char *palette, unsigned short *colort
 		*(palette++) = 0xff * ((i >> 0) & 1);
 	}
 
-	/* Get out if color PROM is not available (Super Mouse)	*/
-	if (!color_prom)
-	{
-		return;
-	}
-
-	for (i = 0;i < 32;i++)
+	for (i = 0;i < Machine->drv->total_colors-8;i++)
 	{
 		int bit0,bit1,bit2;
 
@@ -81,7 +75,7 @@ void thepit_vh_convert_color_prom(unsigned char *palette, unsigned short *colort
 		*(palette++) = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
 	}
 
-	for (i = 0;i < 4 * 8;i++)
+	for (i = 0;i < Machine->drv->total_colors-8;i++)
 	{
 		colortable[i] = i + 8;
 	}

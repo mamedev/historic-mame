@@ -67,14 +67,20 @@ extern FILE *errorlog;
 #define LOG(x)
 #endif
 
-
-#define M6800_CLKDIV	4
-#define M6803_CLKDIV	4
-#define HD63701_CLKDIV	2
+/* CPU subtypes, needed for extra insn after TAP/CLI/SEI */
+enum {
+	SUBTYPE_M6800,
+	SUBTYPE_M6801,
+	SUBTYPE_M6802,
+	SUBTYPE_M6803,
+	SUBTYPE_M6808,
+	SUBTYPE_HD63701
+};
 
 /* 6800 Registers */
 typedef struct
 {
+	int 	subtype;		/* CPU subtype */
 	PAIR	ppc;			/* Previous program counter */
 	PAIR	pc; 			/* Program counter */
 	PAIR	s;				/* Stack pointer */
@@ -83,7 +89,7 @@ typedef struct
 	UINT8	cc; 			/* Condition codes */
 	UINT8	wai_state;		/* WAI opcode state */
 	UINT8	nmi_state;		/* NMI line state */
-	UINT8	irq_state[2];	/* IRQ and OCI line state */
+	UINT8	irq_state;		/* IRQ line state */
     int     (*irq_callback)(int irqline);
 	int 	extra_cycles;	/* cycles used for interrupts */
 
@@ -92,8 +98,8 @@ typedef struct
 	UINT8	port1_data;
 	UINT8	port2_data;
 	UINT8	tcsr;			/* Timer Control and Status Register */
-	UINT32	counter;		/* counter * 4 */
-	UINT32	output_compare;	/* output compare * 4 */
+	UINT16	counter;		/* counter */
+	UINT16	output_compare;	/* output compare * 4 */
 	UINT8	ram_ctrl;
 
 }   m6800_Regs;
@@ -151,8 +157,36 @@ static void (*wr_s_handler_w)(PAIR *);
 #define PULLWORD(w) (*rd_s_handler_w)(&w)
 
 /* check the IRQ lines for pending interrupts */
-#define CHECK_IRQ_LINES {												\
-	if( m6800.irq_state[M6800_IRQ_LINE] != CLEAR_LINE && !(CC & 0x10) ) \
+#define CHECK_IRQ_LINES(one_more_insn) {								\
+	if( one_more_insn ) 												\
+	{																	\
+		UINT8 ireg; 													\
+		pPPC = pPC; 													\
+		CALL_MAME_DEBUG;												\
+		ireg = M_RDOP(PC++);											\
+        switch( m6800.subtype )                                         \
+		{																\
+		case SUBTYPE_M6800: 											\
+		case SUBTYPE_M6802: 											\
+		case SUBTYPE_M6808: 											\
+			(*m6800_insn[ireg])();										\
+			INCREMENT_COUNTER(cycles_6800[ireg]);						\
+            m6800_ICount -= cycles_6800[ireg];                          \
+			break;														\
+		case SUBTYPE_M6801: 											\
+		case SUBTYPE_M6803: 											\
+			(*m6803_insn[ireg])();										\
+			INCREMENT_COUNTER(cycles_6800[ireg]);						\
+            m6800_ICount -= cycles_6803[ireg];                          \
+            break;                                                      \
+		case SUBTYPE_HD63701:											\
+			(*hd63701_insn[ireg])();									\
+			INCREMENT_COUNTER(cycles_6800[ireg]);						\
+            m6800_ICount -= cycles_63701[ireg];                         \
+            break;                                                      \
+		}																\
+    }                                                                   \
+	if( m6800.irq_state != CLEAR_LINE && !(CC & 0x10) )					\
 	{																	\
         /* standard IRQ */                                              \
 		LOG((errorlog, "M6800#%d take IRQ\n", cpu_getactivecpu()));     \
@@ -177,24 +211,50 @@ static void (*wr_s_handler_w)(PAIR *);
 	}																	\
 }
 
-#define TAKE_OCI {													\
-	LOG((errorlog, "M6800#%d take OCI\n", cpu_getactivecpu()));     \
-	if( m6800.wai_state & M6800_WAI )								\
-	{																\
-		m6800.extra_cycles += 4;									\
-	}																\
-	else                                                            \
-	{                                                               \
-		PUSHWORD(pPC);												\
-		PUSHWORD(pX);												\
-		PUSHBYTE(A);												\
-		PUSHBYTE(B);												\
-		PUSHBYTE(CC);												\
-		m6800.extra_cycles += 12;									\
-	}                                                               \
-	SEI;                                                            \
-	RM16( 0xfff4, &pPC );											\
-	change_pc(PC);													\
+#define TAKE_OCI {														\
+	if( !(CC & 0x10) )													\
+	{																	\
+		LOG((errorlog, "M6800#%d take OCI\n", cpu_getactivecpu()));     \
+		if( m6800.wai_state & M6800_WAI )								\
+		{																\
+			m6800.extra_cycles += 4;									\
+		}																\
+		else                                                            \
+		{                                                               \
+			PUSHWORD(pPC);												\
+			PUSHWORD(pX);												\
+			PUSHBYTE(A);												\
+			PUSHBYTE(B);												\
+			PUSHBYTE(CC);												\
+			m6800.extra_cycles += 12;									\
+		}                                                               \
+		SEI;                                                            \
+		RM16( 0xfff4, &pPC );											\
+		change_pc(PC);													\
+	}																	\
+}
+
+#define TAKE_TOI {														\
+	if( !(CC & 0x10) )													\
+	{																	\
+		LOG((errorlog, "M6800#%d take TOI\n", cpu_getactivecpu()));     \
+		if( m6800.wai_state & M6800_WAI )								\
+		{																\
+			m6800.extra_cycles += 4;									\
+		}																\
+		else                                                            \
+		{                                                               \
+			PUSHWORD(pPC);												\
+			PUSHWORD(pX);												\
+			PUSHBYTE(A);												\
+			PUSHBYTE(B);												\
+			PUSHBYTE(CC);												\
+			m6800.extra_cycles += 12;									\
+		}                                                               \
+		SEI;                                                            \
+		RM16( 0xfff2, &pPC );											\
+		change_pc(PC);													\
+	}																	\
 }
 
 
@@ -207,6 +267,7 @@ static void (*wr_s_handler_w)(PAIR *);
 #define CLR_Z		CC&=0xfb
 #define CLR_NZC 	CC&=0xf2
 #define CLR_ZC		CC&=0xfa
+#define CLR_C		CC&=0xfe
 
 /* macros for CC -- CC bits affected should be reset before calling */
 #define SET_Z(a)		if(!a)SEZ
@@ -306,18 +367,44 @@ static UINT8 flags8d[256]= /* decrement */
 
 #define INCREMENT_COUNTER(amount)															\
 {																							\
-	UINT32 old_counter;																		\
+	UINT16 old_counter;																		\
 																							\
 	old_counter = m6800.counter;															\
-	m6800.counter = (m6800.counter + amount) & 0x3ffff;										\
+	m6800.counter = m6800.counter + amount; 												\
 	if ((old_counter < m6800.output_compare && m6800.counter >= m6800.output_compare) ||	\
-		((m6800.counter < old_counter) && /* loop around */									\
+		(m6800.counter < old_counter && /* loop around */									\
 		(old_counter < m6800.output_compare || m6800.counter >= m6800.output_compare)))		\
 	{																						\
 		m6800.tcsr |= TCSR_OCF;																\
 		if (m6800.tcsr & TCSR_EOCI)															\
 			TAKE_OCI;																		\
 	}																						\
+	if (old_counter < 0xffff && (m6800.counter >= 0xffff || m6800.counter < old_counter))	\
+	{																						\
+		m6800.tcsr |= TCSR_TOF;																\
+		if (m6800.tcsr & TCSR_ETOI)															\
+			TAKE_TOI;																		\
+	}																						\
+}
+
+#define EAT_CYCLES																	\
+{																					\
+	int counter_left,cycles_to_eat;													\
+																					\
+	if (m6800.output_compare > m6800.counter)	/* OCI */							\
+		counter_left = m6800.output_compare - m6800.counter;						\
+	else if (m6800.counter == 0xffff)	/* OCI ofter TOI */							\
+		counter_left = m6800.output_compare + 1;									\
+	else	/* TOI */																\
+		counter_left = 0xffff - m6800.counter;										\
+																					\
+	cycles_to_eat = (counter_left < m6800_ICount) ? counter_left : m6800_ICount;	\
+																					\
+	if (cycles_to_eat > 0)															\
+	{																				\
+		m6800_ICount -= cycles_to_eat;												\
+		INCREMENT_COUNTER(cycles_to_eat);											\
+	}																				\
 }
 
 
@@ -335,73 +422,67 @@ static UINT8 flags8d[256]= /* decrement */
 #define BRANCH(f) {IMMBYTE(t);if(f){PC+=SIGNED(t);change_pc(PC);}}
 #define NXORV  ((CC&0x08)^((CC&0x02)<<2))
 
-/* Macro to adjust cycle counts to multiples of the internal clock divider */
-#define C(n)   (n*M6800_CLKDIV)
 static unsigned char cycles_6800[] =
 {
-		/*	 0	   1	 2	   3	 4	   5	 6	   7	 8	   9	 A	   B	 C	   D	 E	   F */
-	/*0*/ C( 0),C( 2),C( 0),C( 0),C( 0),C( 0),C( 2),C( 2),C( 4),C( 4),C( 2),C( 2),C( 2),C( 2),C( 2),C( 2),
-	/*1*/ C( 2),C( 2),C( 0),C( 0),C( 0),C( 0),C( 2),C( 2),C( 0),C( 2),C( 0),C( 2),C( 0),C( 0),C( 0),C( 0),
-	/*2*/ C( 4),C( 0),C( 4),C( 4),C( 4),C( 4),C( 4),C( 4),C( 4),C( 4),C( 4),C( 4),C( 4),C( 4),C( 4),C( 4),
-	/*3*/ C( 4),C( 4),C( 4),C( 4),C( 4),C( 4),C( 4),C( 4),C( 0),C( 5),C( 0),C(10),C( 0),C( 0),C( 9),C(12),
-	/*4*/ C( 2),C( 0),C( 0),C( 2),C( 2),C( 0),C( 2),C( 2),C( 2),C( 2),C( 2),C( 0),C( 2),C( 2),C( 0),C( 2),
-	/*5*/ C( 2),C( 0),C( 0),C( 2),C( 2),C( 0),C( 2),C( 2),C( 2),C( 2),C( 2),C( 0),C( 2),C( 2),C( 0),C( 2),
-	/*6*/ C( 7),C( 0),C( 0),C( 7),C( 7),C( 0),C( 7),C( 7),C( 7),C( 7),C( 7),C( 0),C( 7),C( 7),C( 4),C( 7),
-	/*7*/ C( 6),C( 0),C( 0),C( 6),C( 6),C( 0),C( 6),C( 6),C( 6),C( 6),C( 6),C( 0),C( 6),C( 6),C( 3),C( 6),
-	/*8*/ C( 2),C( 2),C( 2),C( 0),C( 2),C( 2),C( 2),C( 0),C( 2),C( 2),C( 2),C( 2),C( 3),C( 8),C( 3),C( 0),
-	/*9*/ C( 3),C( 3),C( 3),C( 0),C( 3),C( 3),C( 3),C( 4),C( 3),C( 3),C( 3),C( 3),C( 4),C( 0),C( 4),C( 5),
-	/*A*/ C( 5),C( 5),C( 5),C( 0),C( 5),C( 5),C( 5),C( 6),C( 5),C( 5),C( 5),C( 5),C( 6),C( 8),C( 6),C( 7),
-	/*B*/ C( 4),C( 4),C( 4),C( 0),C( 4),C( 4),C( 4),C( 5),C( 4),C( 4),C( 4),C( 4),C( 5),C( 9),C( 5),C( 6),
-	/*C*/ C( 2),C( 2),C( 2),C( 0),C( 2),C( 2),C( 2),C( 0),C( 2),C( 2),C( 2),C( 2),C( 0),C( 0),C( 3),C( 0),
-	/*D*/ C( 3),C( 3),C( 3),C( 0),C( 3),C( 3),C( 3),C( 4),C( 3),C( 3),C( 3),C( 3),C( 0),C( 0),C( 4),C( 5),
-	/*E*/ C( 5),C( 5),C( 5),C( 0),C( 5),C( 5),C( 5),C( 6),C( 5),C( 5),C( 5),C( 5),C( 0),C( 0),C( 6),C( 7),
-	/*F*/ C( 4),C( 4),C( 4),C( 0),C( 4),C( 4),C( 4),C( 5),C( 4),C( 4),C( 4),C( 4),C( 0),C( 0),C( 5),C( 6)
+		/* 0  1  2  3  4  5  6  7  8  9  A  B  C  D  E  F */
+	/*0*/  0, 2, 0, 0, 0, 0, 2, 2, 4, 4, 2, 2, 2, 2, 2, 2,
+	/*1*/  2, 2, 0, 0, 0, 0, 2, 2, 0, 2, 0, 2, 0, 0, 0, 0,
+	/*2*/  4, 0, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4,
+	/*3*/  4, 4, 4, 4, 4, 4, 4, 4, 0, 5, 0,10, 0, 0, 9,12,
+	/*4*/  2, 0, 0, 2, 2, 0, 2, 2, 2, 2, 2, 0, 2, 2, 0, 2,
+	/*5*/  2, 0, 0, 2, 2, 0, 2, 2, 2, 2, 2, 0, 2, 2, 0, 2,
+	/*6*/  7, 0, 0, 7, 7, 0, 7, 7, 7, 7, 7, 0, 7, 7, 4, 7,
+	/*7*/  6, 0, 0, 6, 6, 0, 6, 6, 6, 6, 6, 0, 6, 6, 3, 6,
+	/*8*/  2, 2, 2, 0, 2, 2, 2, 0, 2, 2, 2, 2, 3, 8, 3, 0,
+	/*9*/  3, 3, 3, 0, 3, 3, 3, 4, 3, 3, 3, 3, 4, 0, 4, 5,
+	/*A*/  5, 5, 5, 0, 5, 5, 5, 6, 5, 5, 5, 5, 6, 8, 6, 7,
+	/*B*/  4, 4, 4, 0, 4, 4, 4, 5, 4, 4, 4, 4, 5, 9, 5, 6,
+	/*C*/  2, 2, 2, 0, 2, 2, 2, 0, 2, 2, 2, 2, 0, 0, 3, 0,
+	/*D*/  3, 3, 3, 0, 3, 3, 3, 4, 3, 3, 3, 3, 0, 0, 4, 5,
+	/*E*/  5, 5, 5, 0, 5, 5, 5, 6, 5, 5, 5, 5, 0, 0, 6, 7,
+	/*F*/  4, 4, 4, 0, 4, 4, 4, 5, 4, 4, 4, 4, 0, 0, 5, 6
 };
 
-#undef	C
-#define C(n)   (n*M6803_CLKDIV)
 static unsigned char cycles_6803[] =
 {
-		/*	 0	   1	 2	   3	 4	   5	 6	   7	 8	   9	 A	   B	 C	   D	 E	   F */
-	/*0*/ C( 0),C( 2),C( 0),C( 0),C( 3),C( 3),C( 2),C( 2),C( 3),C( 3),C( 2),C( 2),C( 2),C( 2),C( 2),C( 2),
-	/*1*/ C( 2),C( 2),C( 0),C( 0),C( 0),C( 0),C( 2),C( 2),C( 0),C( 2),C( 0),C( 2),C( 0),C( 0),C( 0),C( 0),
-	/*2*/ C( 3),C( 3),C( 3),C( 3),C( 3),C( 3),C( 3),C( 3),C( 3),C( 3),C( 3),C( 3),C( 3),C( 3),C( 3),C( 3),
-	/*3*/ C( 3),C( 3),C( 4),C( 4),C( 3),C( 3),C( 3),C( 3),C( 5),C( 5),C( 3),C(10),C( 4),C(10),C( 9),C(12),
-	/*4*/ C( 2),C( 0),C( 0),C( 2),C( 2),C( 0),C( 2),C( 2),C( 2),C( 2),C( 2),C( 0),C( 2),C( 2),C( 0),C( 2),
-	/*5*/ C( 2),C( 0),C( 0),C( 2),C( 2),C( 0),C( 2),C( 2),C( 2),C( 2),C( 2),C( 0),C( 2),C( 2),C( 0),C( 2),
-	/*6*/ C( 6),C( 0),C( 0),C( 6),C( 6),C( 0),C( 6),C( 6),C( 6),C( 6),C( 6),C( 0),C( 6),C( 6),C( 3),C( 6),
-	/*7*/ C( 6),C( 0),C( 0),C( 6),C( 6),C( 0),C( 6),C( 6),C( 6),C( 6),C( 6),C( 0),C( 6),C( 6),C( 3),C( 6),
-	/*8*/ C( 2),C( 2),C( 2),C( 4),C( 2),C( 2),C( 2),C( 0),C( 2),C( 2),C( 2),C( 2),C( 4),C( 6),C( 3),C( 0),
-	/*9*/ C( 3),C( 3),C( 3),C( 5),C( 3),C( 3),C( 3),C( 3),C( 3),C( 3),C( 3),C( 3),C( 5),C( 5),C( 4),C( 4),
-	/*A*/ C( 4),C( 4),C( 4),C( 6),C( 4),C( 4),C( 4),C( 4),C( 4),C( 4),C( 4),C( 4),C( 6),C( 6),C( 5),C( 5),
-	/*B*/ C( 4),C( 4),C( 4),C( 6),C( 4),C( 4),C( 4),C( 4),C( 4),C( 4),C( 4),C( 4),C( 6),C( 6),C( 5),C( 5),
-	/*C*/ C( 2),C( 2),C( 2),C( 4),C( 2),C( 2),C( 2),C( 0),C( 2),C( 2),C( 2),C( 2),C( 3),C( 0),C( 3),C( 0),
-	/*D*/ C( 3),C( 3),C( 3),C( 5),C( 3),C( 3),C( 3),C( 3),C( 3),C( 3),C( 3),C( 3),C( 4),C( 4),C( 4),C( 4),
-	/*E*/ C( 4),C( 4),C( 4),C( 6),C( 4),C( 4),C( 4),C( 4),C( 4),C( 4),C( 4),C( 4),C( 5),C( 5),C( 5),C( 5),
-	/*F*/ C( 4),C( 4),C( 4),C( 6),C( 4),C( 4),C( 4),C( 4),C( 4),C( 4),C( 4),C( 4),C( 5),C( 5),C( 5),C( 5)
+		/* 0  1  2  3  4  5  6  7  8  9  A  B  C  D  E  F */
+	/*0*/  0, 2, 0, 0, 3, 3, 2, 2, 3, 3, 2, 2, 2, 2, 2, 2,
+	/*1*/  2, 2, 0, 0, 0, 0, 2, 2, 0, 2, 0, 2, 0, 0, 0, 0,
+	/*2*/  3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
+	/*3*/  3, 3, 4, 4, 3, 3, 3, 3, 5, 5, 3,10, 4,10, 9,12,
+	/*4*/  2, 0, 0, 2, 2, 0, 2, 2, 2, 2, 2, 0, 2, 2, 0, 2,
+	/*5*/  2, 0, 0, 2, 2, 0, 2, 2, 2, 2, 2, 0, 2, 2, 0, 2,
+	/*6*/  6, 0, 0, 6, 6, 0, 6, 6, 6, 6, 6, 0, 6, 6, 3, 6,
+	/*7*/  6, 0, 0, 6, 6, 0, 6, 6, 6, 6, 6, 0, 6, 6, 3, 6,
+	/*8*/  2, 2, 2, 4, 2, 2, 2, 0, 2, 2, 2, 2, 4, 6, 3, 0,
+	/*9*/  3, 3, 3, 5, 3, 3, 3, 3, 3, 3, 3, 3, 5, 5, 4, 4,
+	/*A*/  4, 4, 4, 6, 4, 4, 4, 4, 4, 4, 4, 4, 6, 6, 5, 5,
+	/*B*/  4, 4, 4, 6, 4, 4, 4, 4, 4, 4, 4, 4, 6, 6, 5, 5,
+	/*C*/  2, 2, 2, 4, 2, 2, 2, 0, 2, 2, 2, 2, 3, 0, 3, 0,
+	/*D*/  3, 3, 3, 5, 3, 3, 3, 3, 3, 3, 3, 3, 4, 4, 4, 4,
+	/*E*/  4, 4, 4, 6, 4, 4, 4, 4, 4, 4, 4, 4, 5, 5, 5, 5,
+	/*F*/  4, 4, 4, 6, 4, 4, 4, 4, 4, 4, 4, 4, 5, 5, 5, 5
 };
 
-#undef	C
-#define C(n)   (n*HD63701_CLKDIV)
 static unsigned char cycles_63701[] =
 {
-		/*	 0	   1	 2	   3	 4	   5	 6	   7	 8	   9	 A	   B	 C	   D	 E	   F */
-	/*0*/ C( 0),C( 1),C( 0),C( 0),C( 1),C( 1),C( 1),C( 1),C( 1),C( 1),C( 1),C( 1),C( 1),C( 1),C( 1),C( 1),
-	/*1*/ C( 1),C( 1),C( 0),C( 0),C( 0),C( 0),C( 1),C( 1),C( 2),C( 2),C( 4),C( 1),C( 0),C( 0),C( 0),C( 0),
-	/*2*/ C( 3),C( 3),C( 3),C( 3),C( 3),C( 3),C( 3),C( 3),C( 3),C( 3),C( 3),C( 3),C( 3),C( 3),C( 3),C( 3),
-	/*3*/ C( 1),C( 1),C( 3),C( 3),C( 1),C( 1),C( 4),C( 4),C( 4),C( 5),C( 1),C(10),C( 5),C( 7),C( 9),C(12),
-	/*4*/ C( 1),C( 0),C( 0),C( 1),C( 1),C( 0),C( 1),C( 1),C( 1),C( 1),C( 1),C( 0),C( 1),C( 1),C( 0),C( 1),
-	/*5*/ C( 1),C( 0),C( 0),C( 1),C( 1),C( 0),C( 1),C( 1),C( 1),C( 1),C( 1),C( 0),C( 1),C( 1),C( 0),C( 1),
-	/*6*/ C( 6),C( 7),C( 7),C( 6),C( 6),C( 7),C( 6),C( 6),C( 6),C( 6),C( 6),C( 5),C( 6),C( 4),C( 3),C( 5),
-	/*7*/ C( 6),C( 6),C( 6),C( 6),C( 6),C( 6),C( 6),C( 6),C( 6),C( 6),C( 6),C( 4),C( 6),C( 4),C( 3),C( 5),
-	/*8*/ C( 2),C( 2),C( 2),C( 3),C( 2),C( 2),C( 2),C( 0),C( 2),C( 2),C( 2),C( 2),C( 3),C( 5),C( 3),C( 0),
-	/*9*/ C( 3),C( 3),C( 3),C( 4),C( 3),C( 3),C( 3),C( 3),C( 3),C( 3),C( 3),C( 3),C( 4),C( 5),C( 4),C( 4),
-	/*A*/ C( 4),C( 4),C( 4),C( 5),C( 4),C( 4),C( 4),C( 4),C( 4),C( 4),C( 4),C( 4),C( 5),C( 5),C( 5),C( 5),
-	/*B*/ C( 4),C( 4),C( 4),C( 5),C( 4),C( 4),C( 4),C( 4),C( 4),C( 4),C( 4),C( 4),C( 5),C( 6),C( 5),C( 5),
-	/*C*/ C( 2),C( 2),C( 2),C( 3),C( 2),C( 2),C( 2),C( 0),C( 2),C( 2),C( 2),C( 2),C( 3),C( 0),C( 3),C( 0),
-	/*D*/ C( 3),C( 3),C( 3),C( 4),C( 3),C( 3),C( 3),C( 3),C( 3),C( 3),C( 3),C( 3),C( 4),C( 4),C( 4),C( 4),
-	/*E*/ C( 4),C( 4),C( 4),C( 5),C( 4),C( 4),C( 4),C( 4),C( 4),C( 4),C( 4),C( 4),C( 5),C( 5),C( 5),C( 5),
-	/*F*/ C( 4),C( 4),C( 4),C( 5),C( 4),C( 4),C( 4),C( 4),C( 4),C( 4),C( 4),C( 4),C( 5),C( 5),C( 5),C( 5)
+		/* 0  1  2  3  4  5  6  7  8  9  A  B  C  D  E  F */
+	/*0*/  0, 1, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+	/*1*/  1, 1, 0, 0, 0, 0, 1, 1, 2, 2, 4, 1, 0, 0, 0, 0,
+	/*2*/  3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
+	/*3*/  1, 1, 3, 3, 1, 1, 4, 4, 4, 5, 1,10, 5, 7, 9,12,
+	/*4*/  1, 0, 0, 1, 1, 0, 1, 1, 1, 1, 1, 0, 1, 1, 0, 1,
+	/*5*/  1, 0, 0, 1, 1, 0, 1, 1, 1, 1, 1, 0, 1, 1, 0, 1,
+	/*6*/  6, 7, 7, 6, 6, 7, 6, 6, 6, 6, 6, 5, 6, 4, 3, 5,
+	/*7*/  6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 4, 6, 4, 3, 5,
+	/*8*/  2, 2, 2, 3, 2, 2, 2, 0, 2, 2, 2, 2, 3, 5, 3, 0,
+	/*9*/  3, 3, 3, 4, 3, 3, 3, 3, 3, 3, 3, 3, 4, 5, 4, 4,
+	/*A*/  4, 4, 4, 5, 4, 4, 4, 4, 4, 4, 4, 4, 5, 5, 5, 5,
+	/*B*/  4, 4, 4, 5, 4, 4, 4, 4, 4, 4, 4, 4, 5, 6, 5, 5,
+	/*C*/  2, 2, 2, 3, 2, 2, 2, 0, 2, 2, 2, 2, 3, 0, 3, 0,
+	/*D*/  3, 3, 3, 4, 3, 3, 3, 3, 3, 3, 3, 3, 4, 4, 4, 4,
+	/*E*/  4, 4, 4, 5, 4, 4, 4, 4, 4, 4, 4, 4, 5, 5, 5, 5,
+	/*F*/  4, 4, 4, 5, 4, 4, 4, 4, 4, 4, 4, 4, 5, 5, 5, 5
 };
 
 /* pre-clear a PAIR union; clearing h2 and h3 only might be faster? */
@@ -487,6 +568,12 @@ INLINE void WM16( UINT32 Addr, PAIR *p )
 	WM( Addr, p->b.l );
 }
 
+/* include the opcode prototypes and function pointer tables */
+#include "6800tbl.c"
+
+/* include the opcode functions */
+#include "6800ops.c"
+
 /****************************************************************************
  * Reset registers to their initial values
  ****************************************************************************/
@@ -512,12 +599,19 @@ void m6800_reset(void *param)
 	RM16( 0xfffe, &m6800.pc );
     change_pc(PC);
 
+	/* HJB 990417 set CPU subtype (other reset functions override this) */
+    m6800.subtype   = SUBTYPE_M6800;
+
+    m6800.wai_state = 0;
+	m6800.nmi_state = 0;
+	m6800.irq_state = 0;
+
 	m6800.port1_ddr = 0x00;
 	m6800.port2_ddr = 0x00;
 	/* TODO: on reset port 2 should be read to determine the operating mode (bits 0-2) */
 	m6800.tcsr = 0x00;
-	m6800.counter = 0x0000*4;
-	m6800.output_compare = 0xffff*4;
+	m6800.counter = 0x0000;
+	m6800.output_compare = 0xffff;
 	m6800.ram_ctrl |= 0x40;
 }
 
@@ -548,7 +642,7 @@ void m6800_set_context(void *src)
 	if( src )
 		m6800 = *(m6800_Regs*)src;
 	change_pc(PC);
-    CHECK_IRQ_LINES;    /* HJB 990301 */
+	CHECK_IRQ_LINES(0); /* HJB 990417 */
 }
 
 
@@ -603,7 +697,7 @@ unsigned m6800_get_reg(int regnum)
 		case M6800_B: return m6800.d.b.l;
 		case M6800_X: return m6800.x.w.l;
 		case M6800_NMI_STATE: return m6800.nmi_state;
-		case M6800_IRQ_STATE: return m6800.irq_state[M6800_IRQ_LINE];
+		case M6800_IRQ_STATE: return m6800.irq_state;
 		case REG_PREVIOUSPC: return m6800.ppc.w.l;
 		default:
 			if( regnum <= REG_SP_CONTENTS )
@@ -675,12 +769,12 @@ void m6800_set_nmi_line(int state)
 
 void m6800_set_irq_line(int irqline, int state)
 {
-	if (m6800.irq_state[irqline] == state) return;
+	if (m6800.irq_state == state) return;
 	LOG((errorlog, "M6800#%d set_irq_line %d,%d\n", cpu_getactivecpu(), irqline, state));
-	m6800.irq_state[irqline] = state;
+	m6800.irq_state = state;
 	if (state == CLEAR_LINE) return;
 
-    CHECK_IRQ_LINES;
+	CHECK_IRQ_LINES(0); /* HJB 990417 */
 }
 
 void m6800_set_irq_callback(int (*callback)(int irqline))
@@ -698,7 +792,7 @@ static void state_save(void *file, const char *module)
 	state_save_UINT16(file,module,cpu,"X", &m6800.x.w.l, 1);
 	state_save_UINT8(file,module,cpu,"CC", &m6800.cc, 1);
 	state_save_UINT8(file,module,cpu,"NMI_STATE", &m6800.nmi_state, 1);
-	state_save_UINT8(file,module,cpu,"IRQ_STATE", &m6800.irq_state[M6800_IRQ_LINE], 1);
+	state_save_UINT8(file,module,cpu,"IRQ_STATE", &m6800.irq_state, 1);
 }
 
 static void state_load(void *file, const char *module)
@@ -711,13 +805,11 @@ static void state_load(void *file, const char *module)
 	state_load_UINT16(file,module,cpu,"X", &m6800.x.w.l, 1);
 	state_load_UINT8(file,module,cpu,"CC", &m6800.cc, 1);
 	state_load_UINT8(file,module,cpu,"NMI_STATE", &m6800.nmi_state, 1);
-	state_load_UINT8(file,module,cpu,"IRQ_STATE", &m6800.irq_state[M6800_IRQ_LINE], 1);
+	state_load_UINT8(file,module,cpu,"IRQ_STATE", &m6800.irq_state, 1);
 }
 
 void m6800_state_save(void *file) { state_save(file,"m6800"); }
 void m6800_state_load(void *file) { state_load(file,"m6800"); }
-
-#include "6800ops.c"
 
 /****************************************************************************
  * Execute cycles CPU cycles. Return number of cycles really executed
@@ -727,14 +819,13 @@ int m6800_execute(int cycles)
 	UINT8 ireg;
 	m6800_ICount = cycles;
 
-	INCREMENT_COUNTER(m6800.extra_cycles * M6800_CLKDIV)
-	m6800_ICount -= m6800.extra_cycles * M6800_CLKDIV;
+	INCREMENT_COUNTER(m6800.extra_cycles);
+	m6800_ICount -= m6800.extra_cycles;
 	m6800.extra_cycles = 0;
 
     if( m6800.wai_state & M6800_WAI )
 	{
-		INCREMENT_COUNTER(m6800_ICount)
-		m6800_ICount = 0;
+		EAT_CYCLES;
 		goto getout;
 	}
 
@@ -760,8 +851,8 @@ int m6800_execute(int cycles)
 			case 0x0B: SEV; break;
 			case 0x0C: CLC; break;
 			case 0x0D: SEC; break;
-			case 0x0E: CLI; CHECK_IRQ_LINES; break;
-			case 0x0F: SEI; break;
+			case 0x0E: cli(); break;
+			case 0x0F: sei(); break;
 			case 0x10: sba(); break;
 			case 0x11: cba(); break;
 			case 0x12: illegal(); break;
@@ -1003,13 +1094,13 @@ int m6800_execute(int cycles)
 			case 0xfe: ldx_ex(); break;
 			case 0xff: stx_ex(); break;
 		}
-		INCREMENT_COUNTER(cycles_6800[ireg])
+		INCREMENT_COUNTER(cycles_6800[ireg]);
 		m6800_ICount -= cycles_6800[ireg];
 	} while( m6800_ICount>0 );
 
 getout:
-	INCREMENT_COUNTER(m6800.extra_cycles * M6800_CLKDIV)
-	m6800_ICount -= m6800.extra_cycles * M6800_CLKDIV;
+	INCREMENT_COUNTER(m6800.extra_cycles);
+	m6800_ICount -= m6800.extra_cycles;
     m6800.extra_cycles = 0;
 
     return cycles - m6800_ICount;
@@ -1053,7 +1144,7 @@ const char *m6800_info(void *context, int regnum)
 		case CPU_INFO_REG+M6800_X: sprintf(buffer[which], "X:%04X", r->x.w.l); break;
 		case CPU_INFO_REG+M6800_CC: sprintf(buffer[which], "CC:%02X", r->cc); break;
 		case CPU_INFO_REG+M6800_NMI_STATE: sprintf(buffer[which], "NMI:%X", r->nmi_state); break;
-		case CPU_INFO_REG+M6800_IRQ_STATE: sprintf(buffer[which], "IRQ:%X", r->irq_state[M6800_IRQ_LINE]); break;
+		case CPU_INFO_REG+M6800_IRQ_STATE: sprintf(buffer[which], "IRQ:%X", r->irq_state); break;
 		case CPU_INFO_FLAGS:
 			sprintf(buffer[which], "%c%c%c%c%c%c%c%c",
 				r->cc & 0x80 ? '?':'.',
@@ -1090,7 +1181,11 @@ unsigned m6800_dasm(char *buffer, unsigned pc)
  * M6801 almost (fully?) equal to the M6803
  ****************************************************************************/
 #if HAS_M6801
-void m6801_reset(void *param) { m6800_reset(param); }
+void m6801_reset(void *param)
+{
+	m6800_reset(param);
+	m6800.subtype = SUBTYPE_M6801;
+}
 void m6801_exit(void) { m6800_exit(); }
 int  m6801_execute(int cycles) { return m6803_execute(cycles); }
 unsigned m6801_get_context(void *dst) { return m6800_get_context(dst); }
@@ -1147,7 +1242,11 @@ unsigned m6801_dasm(char *buffer, unsigned pc)
  * M6802 almost (fully?) equal to the M6800
  ****************************************************************************/
 #if HAS_M6802
-void m6802_reset(void *param) { m6800_reset(param); }
+void m6802_reset(void *param)
+{
+	m6800_reset(param);
+	m6800.subtype = SUBTYPE_M6802;
+}
 void m6802_exit(void) { m6800_exit(); }
 int  m6802_execute(int cycles) { return m6800_execute(cycles); }
 unsigned m6802_get_context(void *dst) { return m6800_get_context(dst); }
@@ -1205,7 +1304,11 @@ unsigned m6802_dasm(char *buffer, unsigned pc)
  * M6803 almost (fully?) equal to the M6801
  ****************************************************************************/
 #if HAS_M6803
-void m6803_reset(void *param) { m6800_reset(param); }
+void m6803_reset(void *param)
+{
+	m6800_reset(param);
+	m6800.subtype = SUBTYPE_M6803;
+}
 void m6803_exit(void) { m6800_exit(); }
 #endif
 /****************************************************************************
@@ -1217,14 +1320,13 @@ int m6803_execute(int cycles)
     UINT8 ireg;
     m6803_ICount = cycles;
 
-	INCREMENT_COUNTER(m6803.extra_cycles * M6803_CLKDIV)
-	m6803_ICount -= m6803.extra_cycles * M6803_CLKDIV;
+	INCREMENT_COUNTER(m6803.extra_cycles);
+	m6803_ICount -= m6803.extra_cycles;
 	m6803.extra_cycles = 0;
 
     if( m6803.wai_state & M6800_WAI )
     {
-		INCREMENT_COUNTER(m6803_ICount)
-        m6803_ICount = 0;
+		EAT_CYCLES;
         goto getout;
     }
 
@@ -1251,8 +1353,8 @@ int m6803_execute(int cycles)
             case 0x0B: SEV; break;
             case 0x0C: CLC; break;
             case 0x0D: SEC; break;
-            case 0x0E: CLI; CHECK_IRQ_LINES; break;
-            case 0x0F: SEI; break;
+			case 0x0E: cli(); break;
+            case 0x0F: sei(); break;
             case 0x10: sba(); break;
             case 0x11: cba(); break;
             case 0x12: illegal(); break;
@@ -1494,13 +1596,13 @@ int m6803_execute(int cycles)
             case 0xfe: ldx_ex(); break;
             case 0xff: stx_ex(); break;
         }
-		INCREMENT_COUNTER(cycles_6803[ireg])
+		INCREMENT_COUNTER(cycles_6803[ireg]);
         m6803_ICount -= cycles_6803[ireg];
     } while( m6803_ICount>0 );
 
 getout:
-	INCREMENT_COUNTER(m6803.extra_cycles * M6803_CLKDIV)
-	m6803_ICount -= m6803.extra_cycles * M6803_CLKDIV;
+	INCREMENT_COUNTER(m6803.extra_cycles);
+	m6803_ICount -= m6803.extra_cycles;
     m6803.extra_cycles = 0;
 
     return cycles - m6803_ICount;
@@ -1562,7 +1664,11 @@ unsigned m6803_dasm(char *buffer, unsigned pc)
  * M6808 almost (fully?) equal to the M6800
  ****************************************************************************/
 #if HAS_M6808
-void m6808_reset(void *param) { m6800_reset(param); }
+void m6808_reset(void *param)
+{
+	m6800_reset(param);
+	m6800.subtype = SUBTYPE_M6808;
+}
 void m6808_exit(void) { m6800_exit(); }
 int  m6808_execute(int cycles) { return m6800_execute(cycles); }
 unsigned m6808_get_context(void *dst) { return m6800_get_context(dst); }
@@ -1619,7 +1725,11 @@ unsigned m6808_dasm(char *buffer, unsigned pc)
  * HD63701 similiar to the M6800
  ****************************************************************************/
 #if HAS_HD63701
-void hd63701_reset(void *param) { m6800_reset(param); }
+void hd63701_reset(void *param)
+{
+	m6800_reset(param);
+	m6800.subtype = SUBTYPE_HD63701;
+}
 void hd63701_exit(void) { m6800_exit(); }
 /****************************************************************************
  * Execute cycles CPU cycles. Return number of cycles really executed
@@ -1629,14 +1739,13 @@ int hd63701_execute(int cycles)
     UINT8 ireg;
     hd63701_ICount = cycles;
 
-	INCREMENT_COUNTER(hd63701.extra_cycles * HD63701_CLKDIV)
-	hd63701_ICount -= hd63701.extra_cycles * HD63701_CLKDIV;
+	INCREMENT_COUNTER(hd63701.extra_cycles);
+	hd63701_ICount -= hd63701.extra_cycles;
 	hd63701.extra_cycles = 0;
 
     if( hd63701.wai_state & M6808_WAI )
     {
-		INCREMENT_COUNTER(hd63701_ICount)
-        hd63701_ICount = 0;
+		EAT_CYCLES;
         goto getout;
     }
 
@@ -1662,8 +1771,8 @@ int hd63701_execute(int cycles)
             case 0x0B: SEV; break;
             case 0x0C: CLC; break;
             case 0x0D: SEC; break;
-            case 0x0E: CLI; CHECK_IRQ_LINES; break;
-            case 0x0F: SEI; break;
+			case 0x0E: cli(); break;
+            case 0x0F: sei(); break;
             case 0x10: sba(); break;
             case 0x11: cba(); break;
 			case 0x12: undoc1(); break;
@@ -1905,13 +2014,13 @@ int hd63701_execute(int cycles)
             case 0xfe: ldx_ex(); break;
             case 0xff: stx_ex(); break;
         }
-		INCREMENT_COUNTER(cycles_63701[ireg])
+		INCREMENT_COUNTER(cycles_63701[ireg]);
 		hd63701_ICount -= cycles_63701[ireg];
     } while( hd63701_ICount>0 );
 
 getout:
-	INCREMENT_COUNTER(hd63701.extra_cycles * HD63701_CLKDIV)
-	hd63701_ICount -= hd63701.extra_cycles * HD63701_CLKDIV;
+	INCREMENT_COUNTER(hd63701.extra_cycles);
+	hd63701_ICount -= hd63701.extra_cycles;
     hd63701.extra_cycles = 0;
 
     return cycles - hd63701_ICount;
@@ -1991,21 +2100,21 @@ int m6803_internal_registers_r(int offset)
 if (errorlog) fprintf(errorlog,"CPU #%d PC %04x: warning - read from unsupported internal register %02x\n",cpu_getactivecpu(),cpu_get_pc(),offset);
 			return 0;
 		case 0x08:
-if (errorlog) fprintf(errorlog,"CPU #%d PC %04x: warning - read TCSR register\n",cpu_getactivecpu(),cpu_get_pc());
+//if (errorlog) fprintf(errorlog,"CPU #%d PC %04x: warning - read TCSR register\n",cpu_getactivecpu(),cpu_get_pc());
 			return m6800.tcsr;
 /* TODO:
- - read 08 (with TCFR_TOF set), read 09 clears TCFR_TOF
- - read 08 (with TCFR_OCF set), write 0b or 0c clears TCFR_OCF
- - read 08 (with TCFR_ICF set), read 0d clears TCFR_ICF
+ - read 08 (with TCSR_TOF set), read 09 clears TCSR_TOF
+ - read 08 (with TCSR_OCF set), write 0b or 0c clears TCSR_OCF
+ - read 08 (with TCSR_ICF set), read 0d clears TCSR_ICF
 */
 		case 0x09:
-			return (m6800.counter >> 10) & 0xff;
+			return (m6800.counter >> 8) & 0xff;
 		case 0x0a:
-			return (m6800.counter >> 2) & 0xff;
+			return (m6800.counter >> 0) & 0xff;
 		case 0x0b:
-			return (m6800.output_compare >> 10) & 0xff;
+			return (m6800.output_compare >> 8) & 0xff;
 		case 0x0c:
-			return (m6800.output_compare >> 2) & 0xff;
+			return (m6800.output_compare >> 0) & 0xff;
 		case 0x0d:
 		case 0x0e:
 		case 0x0f:
@@ -2037,6 +2146,8 @@ if (errorlog) fprintf(errorlog,"CPU #%d PC %04x: warning - read from reserved in
 
 void m6803_internal_registers_w(int offset,int data)
 {
+	static int latch09;
+
 	switch (offset)
 	{
 		case 0x00:
@@ -2074,17 +2185,21 @@ if (errorlog) fprintf(errorlog,"CPU #%d PC %04x: warning - write %02x to unsuppo
 			break;
 		case 0x08:
 			m6800.tcsr = data;
-if (errorlog) fprintf(errorlog,"CPU #%d PC %04x: TCSR = %02x\n",cpu_getactivecpu(),cpu_get_pc(),data);
+//if (errorlog) fprintf(errorlog,"CPU #%d PC %04x: TCSR = %02x\n",cpu_getactivecpu(),cpu_get_pc(),data);
+if (errorlog && (data & TCSR_EICI)) fprintf(errorlog,"warning - EICI not supported\n");
 			break;
 		case 0x09:
-		case 0x0a:
-			m6800.counter = 0xfff8*4;
+			latch09 = data & 0xff;	/* 6301 only */
+			m6800.counter = 0xfff8;
+			break;
+		case 0x0a:	/* 6301 only */
+			m6800.counter = (latch09 << 8) | (data & 0xff);
 			break;
 		case 0x0b:
-			m6800.output_compare = (m6800.output_compare & 0x003fc) | ((data << 10) & 0x3fc00);
+			m6800.output_compare = (m6800.output_compare & 0x00ff) | ((data << 8) & 0xff00);
 			break;
 		case 0x0c:
-			m6800.output_compare = (m6800.output_compare & 0x3fc00) | ((data << 2) & 0x03fc);
+			m6800.output_compare = (m6800.output_compare & 0xff00) | ((data << 0) & 0x00ff);
 			break;
 		case 0x0d:
 		case 0x0e:
@@ -2116,4 +2231,15 @@ if (errorlog) fprintf(errorlog,"CPU #%d PC %04x: write %02x to RAM control regis
 if (errorlog) fprintf(errorlog,"CPU #%d PC %04x: warning - write %02x to reserved internal register %02x\n",cpu_getactivecpu(),cpu_get_pc(),data,offset);
 			break;
 	}
+}
+
+
+int hd63701_internal_registers_r(int offset)
+{
+	return m6803_internal_registers_r(offset);
+}
+
+void hd63701_internal_registers_w(int offset,int data)
+{
+	m6803_internal_registers_w(offset,data);
 }

@@ -168,7 +168,7 @@ static struct TMS3617_interface monsterb_intf =
    100              /* playback volume */
 };
 
-int TMS3617_sh_start(void)
+int TMS3617_sh_start(const struct MachineSound *msound)
 {
 	int voice;
 	struct TMS3617_interface *intf = &monsterb_intf;

@@ -9,7 +9,7 @@
 #include "cpu/m6502/m6502.h"
 #include "cpu/t11/t11.h"
 
-extern void atarisys2_update_display_list (int scanline);
+extern void atarisys2_update_display_list(int scanline);
 
 
 
@@ -34,10 +34,12 @@ static int tms5220_data;
 static int tms5220_data_strobe;
 
 static int last_sound_reset;
-
-static int irq_hold0, irq_hold2, irq_hold3;
-
 static int which_adc;
+
+static int v32_state;
+static int vblank_state;
+static int p2portwr_state;
+static int p2portrd_state;
 
 static int pedal_value[3], pedal_count;
 
@@ -49,33 +51,57 @@ static int pedal_value[3], pedal_count;
  *
  *************************************/
 
-static void atarisys2_soundint (void)
+static void atarisy2_update_interrupts(int vblank, int sound)
 {
-	if (!irq_hold0 && (READ_WORD (&atarisys2_interrupt_enable[0]) & 1))
-	{
-		cpu_cause_interrupt (0, 0);
-		irq_hold0 = 1;
-	}
+char temp[100];
+temp[4] = 0;
+
+	if (vblank_state)
+		cpu_set_irq_line(0, 3, ASSERT_LINE), temp[0] = 'V';
+	else
+		cpu_set_irq_line(0, 3, CLEAR_LINE), temp[0] = '.';
+
+	if (v32_state)
+		cpu_set_irq_line(0, 2, ASSERT_LINE), temp[1] = '3';
+	else
+		cpu_set_irq_line(0, 2, CLEAR_LINE), temp[1] = '.';
+
+	if (p2portwr_state)
+		cpu_set_irq_line(0, 1, ASSERT_LINE), temp[2] = 'W';
+	else
+		cpu_set_irq_line(0, 1, CLEAR_LINE), temp[2] = '.';
+
+	if (p2portrd_state)
+		cpu_set_irq_line(0, 0, ASSERT_LINE), temp[3] = 'R';
+	else
+		cpu_set_irq_line(0, 0, CLEAR_LINE), temp[3] = '.';
+
+#undef printf
+//printf("%s\n", temp);
 }
 
 
-static void atarisys2_init_machine (int slapstic)
+static void atarisys2_init_machine(int slapstic)
 {
 	int ch;
 
+	/* warning -- the above sound logic may or may not need to happen... */
+	atarigen_init_machine(atarisy2_update_interrupts, slapstic);
 
-	atarigen_init_machine (atarisys2_soundint, slapstic);
 	last_sound_reset = 0;
-	irq_hold0 = irq_hold2 = irq_hold3 = 1;
 	tms5220_data_strobe = 1;
+
+	v32_state = 0;
+	vblank_state = 0;
+	p2portwr_state = 0;
+	p2portrd_state = 0;
+
 	/* set panning for the two pokey chips */
 	for (ch = 0;ch < MAX_STREAM_CHANNELS;ch++)
 	{
-		if (stream_get_name(ch) != 0 &&
-				!strcmp(stream_get_name(ch),"Pokey #0"))
+		if (stream_get_name(ch) != 0 && !strcmp(stream_get_name(ch),"Pokey #0"))
 			stream_set_pan(ch,OSD_PAN_LEFT);
-		if (stream_get_name(ch) != 0 &&
-				!strcmp(stream_get_name(ch),"Pokey #1"))
+		if (stream_get_name(ch) != 0 && !strcmp(stream_get_name(ch),"Pokey #1"))
 			stream_set_pan(ch,OSD_PAN_RIGHT);
 	}
 	which_adc = 0;
@@ -84,35 +110,35 @@ static void atarisys2_init_machine (int slapstic)
 }
 
 
-void paperboy_init_machine (void)
+void paperboy_init_machine(void)
 {
-	atarisys2_init_machine (105);
+	atarisys2_init_machine(105);
 }
 
 
-void apb_init_machine (void)
+void apb_init_machine(void)
 {
-	atarisys2_init_machine (110);
+	atarisys2_init_machine(110);
 	pedal_count = 1;
 }
 
 
-void a720_init_machine (void)
+void a720_init_machine(void)
 {
-	atarisys2_init_machine (107);
+	atarisys2_init_machine(107);
 }
 
 
-void ssprint_init_machine (void)
+void ssprint_init_machine(void)
 {
-	atarisys2_init_machine (108);
+	atarisys2_init_machine(108);
 	pedal_count = 3;
 }
 
 
-void csprint_init_machine (void)
+void csprint_init_machine(void)
 {
-	atarisys2_init_machine (109);
+	atarisys2_init_machine(109);
 	pedal_count = 2;
 }
 
@@ -124,43 +150,40 @@ void csprint_init_machine (void)
  *
  *************************************/
 
-void atarisys2_32v_interrupt (int param)
+void atarisys2_32v_interrupt(int param)
 {
 	/* generate the 32V interrupt (IRQ 2) */
-	if (!irq_hold2 && (READ_WORD (&atarisys2_interrupt_enable[0]) & 4))
-	{
-		cpu_cause_interrupt (0, 2);
-		irq_hold2 = 1;
-	}
+	v32_state = (READ_WORD(&atarisys2_interrupt_enable[0]) & 4) != 0;
+	atarigen_update_interrupts();
 
 	/* set the timer for the next one */
 	param += 64;
 	if (param < 384)
-		timer_set (64.0 * cpu_getscanlineperiod (), param, atarisys2_32v_interrupt);
+		timer_set(64.0 * cpu_getscanlineperiod(), param, atarisys2_32v_interrupt);
 }
 
 
-void atarisys2_video_update (int param)
+void atarisys2_video_update(int param)
 {
-	atarisys2_update_display_list (param);
+	atarisys2_update_display_list(param);
 	param += 8;
 	if (param < 384)
-		timer_set (8.0 * cpu_getscanlineperiod (), param, atarisys2_video_update);
+		timer_set(8.0 * cpu_getscanlineperiod(), param, atarisys2_video_update);
 }
 
 
-int atarisys2_interrupt (void)
+int atarisys2_interrupt(void)
 {
     int i;
 
 	/* set the 32V timer */
-	timer_set (TIME_IN_USEC (Machine->drv->vblank_duration), 0, atarisys2_32v_interrupt);
-	timer_set (TIME_IN_USEC (Machine->drv->vblank_duration), 0, atarisys2_video_update);
+	timer_set(TIME_IN_USEC(Machine->drv->vblank_duration), 0, atarisys2_32v_interrupt);
+	timer_set(TIME_IN_USEC(Machine->drv->vblank_duration), 0, atarisys2_video_update);
 
 	/* update the pedals once per frame */
     for (i = 0; i < pedal_count; i++)
 	{
-		if (readinputport (3 + i) & 0x80)
+		if (readinputport(3 + i) & 0x80)
 		{
 			pedal_value[i] += 64;
 			if (pedal_value[i] > 0xff) pedal_value[i] = 0xff;
@@ -172,50 +195,45 @@ int atarisys2_interrupt (void)
 		}
 	}
 
-	/* VBLANK is 3 */
-	if (!irq_hold3 && (READ_WORD (&atarisys2_interrupt_enable[0]) & 8))
-	{
-		irq_hold3 = 1;
-		return 3;
-	}
-	else
-		return ignore_interrupt ();
+	/* clock the VBLANK through */
+	vblank_state = (READ_WORD(&atarisys2_interrupt_enable[0]) & 8) != 0;
+	atarigen_update_interrupts();
+
+	/* generate VBLANK */
+	return ignore_interrupt();
 }
 
 
-void atarisys2_interrupt_ack_w (int offset, int data)
+void atarisys2_interrupt_ack_w(int offset, int data)
 {
 	/* reset sound IRQ */
 	if (offset == 0x00)
-		irq_hold0 = 0;
+	{
+		p2portrd_state = 0;
+		atarigen_update_interrupts();
+	}
 
 	/* reset sound CPU */
 	else if (offset == 0x20)
 	{
 		if (last_sound_reset == 0 && (data & 1))
-			atarigen_sound_reset ();
+			atarigen_sound_reset_w(0, 0);
 		last_sound_reset = data & 1;
 	}
 
 	/* reset 32V IRQ */
 	else if (offset == 0x40)
-		irq_hold2 = 0;
+	{
+		v32_state = 0;
+		atarigen_update_interrupts();
+	}
 
 	/* reset VBLANK IRQ */
 	else if (offset == 0x60)
-		irq_hold3 = 0;
-}
-
-
-int atarisys2_sound_interrupt (void)
-{
-	return interrupt ();
-}
-
-
-void atarisys2_watchdog_w (int offset, int data)
-{
-	watchdog_reset_w (offset, data);
+	{
+		vblank_state = 0;
+		atarigen_update_interrupts();
+	}
 }
 
 
@@ -226,7 +244,7 @@ void atarisys2_watchdog_w (int offset, int data)
  *
  *************************************/
 
-void atarisys2_bankselect_w (int offset, int data)
+void atarisys2_bankselect_w(int offset, int data)
 {
 	static int bankoffset[64] =
 	{
@@ -248,21 +266,21 @@ void atarisys2_bankselect_w (int offset, int data)
 		0x8e000, 0x86000, 0x7e000, 0x76000
 	};
 
-	int oldword = READ_WORD (&atarisys2_bankselect[offset]);
-	int newword = COMBINE_WORD (oldword, data);
+	int oldword = READ_WORD(&atarisys2_bankselect[offset]);
+	int newword = COMBINE_WORD(oldword, data);
 	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 	unsigned char *base = &RAM[bankoffset[(newword >> 10) & 0x3f]];
 
-	WRITE_WORD (&atarisys2_bankselect[offset], newword);
+	WRITE_WORD(&atarisys2_bankselect[offset], newword);
 	if (offset == 0)
 	{
-		cpu_setbank (1, base);
-		t11_SetBank (0x4000, base);
+		cpu_setbank(1, base);
+		t11_SetBank(0x4000, base);
 	}
 	else if (offset == 2)
 	{
-		cpu_setbank (2, base);
-		t11_SetBank (0x6000, base);
+		cpu_setbank(2, base);
+		t11_SetBank(0x6000, base);
 	}
 }
 
@@ -274,9 +292,9 @@ void atarisys2_bankselect_w (int offset, int data)
  *
  *************************************/
 
-int atarisys2_switch_r (int offset)
+int atarisys2_switch_r(int offset)
 {
-	int result = input_port_1_r (offset) | (input_port_2_r (offset) << 8);
+	int result = input_port_1_r(offset) | (input_port_2_r(offset) << 8);
 
 	if (atarigen_cpu_to_sound_ready) result ^= 0x20;
 	if (atarigen_sound_to_cpu_ready) result ^= 0x10;
@@ -285,20 +303,20 @@ int atarisys2_switch_r (int offset)
 }
 
 
-int atarisys2_6502_switch_r (int offset)
+int atarisys2_6502_switch_r(int offset)
 {
-	int result = input_port_0_r (offset);
+	int result = input_port_0_r(offset);
 
 	if (atarigen_cpu_to_sound_ready) result ^= 0x01;
 	if (atarigen_sound_to_cpu_ready) result ^= 0x02;
-	if (tms5220_ready_r ()) result ^= 0x04;
-	if (!(input_port_2_r (offset) & 0x80)) result ^= 0x10;
+	if (tms5220_ready_r()) result ^= 0x04;
+	if (!(input_port_2_r(offset) & 0x80)) result ^= 0x10;
 
 	return result;
 }
 
 
-void atarisys2_6502_switch_w (int offset, int data)
+void atarisys2_6502_switch_w(int offset, int data)
 {
 }
 
@@ -310,26 +328,26 @@ void atarisys2_6502_switch_w (int offset, int data)
  *
  *************************************/
 
-void atarisys2_adc_strobe_w (int offset, int data)
+void atarisys2_adc_strobe_w(int offset, int data)
 {
 	which_adc = (offset / 2) & 3;
 }
 
 
-int atarisys2_adc_r (int offset)
+int atarisys2_adc_r(int offset)
 {
     if (which_adc == 1 && pedal_count == 1)   /* APB */
         return ~pedal_value[0];
 
 	if (which_adc < pedal_count)
 		return (~pedal_value[which_adc]);
-	return readinputport (3 + which_adc) | 0xff00;
+	return readinputport(3 + which_adc) | 0xff00;
 }
 
 
-int atarisys2_leta_r (int offset)
+int atarisys2_leta_r(int offset)
 {
-	return readinputport (7 + (offset & 3));
+	return readinputport(7 + (offset & 3));
 }
 
 
@@ -340,15 +358,47 @@ int atarisys2_leta_r (int offset)
  *
  *************************************/
 
-void atarisys2_mixer_w (int offset, int data)
+void atarisys2_mixer_w(int offset, int data)
 {
 }
 
 
-void atarisys2_sound_enable_w (int offset, int data)
+void atarisys2_sound_enable_w(int offset, int data)
 {
 }
 
+
+int atarisys2_sound_r(int offset)
+{
+	/* clear the p2portwr state on a p1portrd */
+	p2portwr_state = 0;
+	atarigen_update_interrupts();
+
+	/* handle it normally otherwise */
+	return atarigen_sound_r(offset);
+}
+
+
+void atarisys2_6502_sound_w(int offset, int data)
+{
+	/* clock the state through */
+	p2portwr_state = (READ_WORD(&atarisys2_interrupt_enable[0]) & 2) != 0;
+	atarigen_update_interrupts();
+
+	/* handle it normally otherwise */
+	atarigen_6502_sound_w(offset, data);
+}
+
+
+int atarisys2_6502_sound_r(int offset)
+{
+	/* clock the state through */
+	p2portrd_state = (READ_WORD(&atarisys2_interrupt_enable[0]) & 1) != 0;
+	atarigen_update_interrupts();
+
+	/* handle it normally otherwise */
+	return atarigen_6502_sound_r(offset);
+}
 
 
 /*************************************
@@ -357,16 +407,16 @@ void atarisys2_sound_enable_w (int offset, int data)
  *
  *************************************/
 
-void atarisys2_tms5220_w (int offset, int data)
+void atarisys2_tms5220_w(int offset, int data)
 {
 	tms5220_data = data;
 }
 
 
-void atarisys2_tms5220_strobe_w (int offset, int data)
+void atarisys2_tms5220_strobe_w(int offset, int data)
 {
 	if (!(offset & 1) && tms5220_data_strobe)
-		tms5220_data_w (0, tms5220_data);
+		tms5220_data_w(0, tms5220_data);
 	tms5220_data_strobe = offset & 1;
 }
 

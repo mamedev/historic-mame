@@ -157,7 +157,7 @@ void docastle_vh_convert_color_prom(unsigned char *palette,unsigned short *color
 	convert_color_prom(palette,colortable,color_prom,0);
 }
 
-void dowild_vh_convert_color_prom(unsigned char *palette,unsigned short *colortable,const unsigned char *color_prom)
+void dorunrun_vh_convert_color_prom(unsigned char *palette,unsigned short *colortable,const unsigned char *color_prom)
 {
 	convert_color_prom(palette,colortable,color_prom,1);
 }

@@ -45,10 +45,10 @@ static int last_pfbank, pfbank;
  *
  *************************************/
 
-void vindictr_vh_stop (void);
+void vindictr_vh_stop(void);
 
 #if 0
-static void vindictr_debug (void);
+static void vindictr_debug(void);
 #endif
 
 
@@ -73,26 +73,26 @@ int vindictr_vh_start(void)
 
 	/* allocate dirty buffers */
 	if (!playfielddirty)
-		playfielddirty = malloc (atarigen_playfieldram_size / 2);
+		playfielddirty = malloc(atarigen_playfieldram_size / 2);
 	if (!playfielddirty)
 	{
-		vindictr_vh_stop ();
+		vindictr_vh_stop();
 		return 1;
 	}
-	memset (playfielddirty, 1, atarigen_playfieldram_size / 2);
+	memset(playfielddirty, 1, atarigen_playfieldram_size / 2);
 	last_pfbank = 0;
 
 	/* allocate bitmaps */
 	if (!playfieldbitmap)
-		playfieldbitmap = osd_new_bitmap (64*8, 64*8, Machine->scrbitmap->depth);
+		playfieldbitmap = osd_new_bitmap(64*8, 64*8, Machine->scrbitmap->depth);
 	if (!playfieldbitmap)
 	{
-		vindictr_vh_stop ();
+		vindictr_vh_stop();
 		return 1;
 	}
 
 	/* initialize the displaylist system */
-	return atarigen_init_display_list (&vindictr_modesc);
+	return atarigen_init_display_list(&vindictr_modesc);
 }
 
 
@@ -103,16 +103,16 @@ int vindictr_vh_start(void)
  *
  *************************************/
 
-void vindictr_vh_stop (void)
+void vindictr_vh_stop(void)
 {
 	/* free bitmaps */
 	if (playfieldbitmap)
-		osd_free_bitmap (playfieldbitmap);
+		osd_free_bitmap(playfieldbitmap);
 	playfieldbitmap = 0;
 
 	/* free dirty buffers */
 	if (playfielddirty)
-		free (playfielddirty);
+		free(playfielddirty);
 	playfielddirty = 0;
 }
 
@@ -124,7 +124,7 @@ void vindictr_vh_stop (void)
  *
  *************************************/
 
-void vindictr_latch_w (int offset, int data)
+void vindictr_latch_w(int offset, int data)
 {
 }
 
@@ -136,20 +136,20 @@ void vindictr_latch_w (int offset, int data)
  *
  *************************************/
 
-int vindictr_playfieldram_r (int offset)
+int vindictr_playfieldram_r(int offset)
 {
-	return READ_WORD (&atarigen_playfieldram[offset]);
+	return READ_WORD(&atarigen_playfieldram[offset]);
 }
 
 
-void vindictr_playfieldram_w (int offset, int data)
+void vindictr_playfieldram_w(int offset, int data)
 {
-	int oldword = READ_WORD (&atarigen_playfieldram[offset]);
-	int newword = COMBINE_WORD (oldword, data);
+	int oldword = READ_WORD(&atarigen_playfieldram[offset]);
+	int newword = COMBINE_WORD(oldword, data);
 
 	if (oldword != newword)
 	{
-		WRITE_WORD (&atarigen_playfieldram[offset], newword);
+		WRITE_WORD(&atarigen_playfieldram[offset], newword);
 		playfielddirty[offset / 2] = 1;
 	}
 }
@@ -162,15 +162,15 @@ void vindictr_playfieldram_w (int offset, int data)
  *
  *************************************/
 
-int vindictr_spriteram_r (int offset)
+int vindictr_spriteram_r(int offset)
 {
-	return READ_WORD (&atarigen_spriteram[offset]);
+	return READ_WORD(&atarigen_spriteram[offset]);
 }
 
 
-void vindictr_spriteram_w (int offset, int data)
+void vindictr_spriteram_w(int offset, int data)
 {
-	COMBINE_WORD_MEM (&atarigen_spriteram[offset], data);
+	COMBINE_WORD_MEM(&atarigen_spriteram[offset], data);
 }
 
 
@@ -181,15 +181,15 @@ void vindictr_spriteram_w (int offset, int data)
  *
  *************************************/
 
-int vindictr_alpharam_r (int offset)
+int vindictr_alpharam_r(int offset)
 {
-	return READ_WORD (&atarigen_alpharam[offset]);
+	return READ_WORD(&atarigen_alpharam[offset]);
 }
 
 
-void vindictr_alpharam_w (int offset, int data)
+void vindictr_alpharam_w(int offset, int data)
 {
-	COMBINE_WORD_MEM (&atarigen_alpharam[offset], data);
+	COMBINE_WORD_MEM(&atarigen_alpharam[offset], data);
 }
 
 
@@ -200,7 +200,7 @@ void vindictr_alpharam_w (int offset, int data)
  *
  *************************************/
 
-int vindictr_update_display_list (int scanline)
+int vindictr_update_display_list(int scanline)
 {
 	int link, i;
 
@@ -210,7 +210,7 @@ int vindictr_update_display_list (int scanline)
 		xscroll = yscroll = pfbank = -1;
 		for (i = 0xed8; i < 0xfff && (xscroll < 0 || yscroll < 0 || pfbank < 0); i += 2)
 		{
-			int val = READ_WORD (&atarigen_alpharam[i]);
+			int val = READ_WORD(&atarigen_alpharam[i]);
 			int flag = val & 0x7e00;
 			if (flag == 0x7e00)
 				yscroll = val & 0x1ff;
@@ -222,8 +222,8 @@ int vindictr_update_display_list (int scanline)
 	}
 
 	/* look up the SLIP link */
-	link = READ_WORD (&atarigen_alpharam[0xf80 + 2 * (((scanline + yscroll) / 8) & 0x3f)]) & 0x3ff;
-	atarigen_update_display_list (atarigen_spriteram, link, scanline);
+	link = READ_WORD(&atarigen_alpharam[0xf80 + 2 * (((scanline + yscroll) / 8) & 0x3f)]) & 0x3ff;
+	atarigen_update_display_list(atarigen_spriteram, link, scanline);
 
 	return yscroll;
 }
@@ -258,14 +258,14 @@ int vindictr_update_display_list (int scanline)
  *---------------------------------------------------------------------------------
  */
 
-void vindictr_calc_mo_colors (struct osd_bitmap *bitmap, struct rectangle *clip, unsigned short *data, void *param)
+void vindictr_calc_mo_colors(struct osd_bitmap *bitmap, struct rectangle *clip, unsigned short *data, void *param)
 {
 	unsigned char *colors = param;
 	int color = data[1] & 0x0f;
 	colors[color] = 1;
 }
 
-void vindictr_render_mo (struct osd_bitmap *bitmap, struct rectangle *clip, unsigned short *data, void *param)
+void vindictr_render_mo(struct osd_bitmap *bitmap, struct rectangle *clip, unsigned short *data, void *param)
 {
 //	struct vindictr_mo_data *modata = param;
 //	int *redraw_list = modata->redraw_list;
@@ -313,14 +313,14 @@ void vindictr_render_mo (struct osd_bitmap *bitmap, struct rectangle *clip, unsi
 				continue;
 
 			/* draw the sprite */
-			drawgfx (bitmap, Machine->gfx[1], pict, color, hflip, 0,
+			drawgfx(bitmap, Machine->gfx[1], pict, color, hflip, 0,
 						sx, sy, clip, TRANSPARENCY_PEN, 0);
 		}
 	}
 }
 
 
-static void draw_playfield_chunk (struct osd_bitmap *bitmap, struct rectangle *clip, int bank)
+static void draw_playfield_chunk(struct osd_bitmap *bitmap, struct rectangle *clip, int bank)
 {
 	int w = (clip->max_x - clip->min_x + 1) / 8;
 	int h = (clip->max_y - clip->min_y + 1) / 8;
@@ -352,11 +352,11 @@ static void draw_playfield_chunk (struct osd_bitmap *bitmap, struct rectangle *c
 
 			/* process the data */
 			offs = (x & 0x3f) * 64 + (y & 0x3f);
-			data = READ_WORD (&atarigen_playfieldram[offs * 2]);
+			data = READ_WORD(&atarigen_playfieldram[offs * 2]);
 			color = (data >> 11) & 14;
 
 			hflip = data & 0x8000;
-			drawgfx (bitmap, Machine->gfx[1], bank + (data & 0xfff), 0x10 + color, hflip, 0,
+			drawgfx(bitmap, Machine->gfx[1], bank + (data & 0xfff), 0x10 + color, hflip, 0,
 					sx, sy, clip, TRANSPARENCY_NONE, 0);
 		}
 	}
@@ -380,7 +380,7 @@ void vindictr_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	struct vindictr_mo_data modata;
 
 #if 0
-	vindictr_debug ();
+	vindictr_debug();
 #endif
 
 
@@ -388,28 +388,28 @@ void vindictr_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	yscroll = -yscroll;
 
 	/* reset color tracking */
-	memset (mo_map, 0, sizeof (mo_map));
-	memset (pf_map, 0, sizeof (pf_map));
-	memset (al_map, 0, sizeof (al_map));
+	memset(mo_map, 0, sizeof(mo_map));
+	memset(pf_map, 0, sizeof(pf_map));
+	memset(al_map, 0, sizeof(al_map));
 	palette_init_used_colors();
 
 	/* update color usage for the playfield */
 	for (offs = 0; offs < 64*64; offs++)
 	{
-		int data = READ_WORD (&atarigen_playfieldram[offs * 2]);
+		int data = READ_WORD(&atarigen_playfieldram[offs * 2]);
 		int color = (data >> 11) & 14;
 		pf_map[color] = 1;
 	}
 
 	/* update color usage for the mo's */
-	atarigen_render_display_list (bitmap, vindictr_calc_mo_colors, mo_map);
+	atarigen_render_display_list(bitmap, vindictr_calc_mo_colors, mo_map);
 
 	/* update color usage for the alphanumerics */
 	for (sy = 0; sy < YCHARS; sy++)
 	{
 		for (sx = 0, offs = sy * 64; sx < XCHARS; sx++, offs++)
 		{
-			int data = READ_WORD (&atarigen_alpharam[offs * 2]);
+			int data = READ_WORD(&atarigen_alpharam[offs * 2]);
 			int color = (data >> 10) & 0x1f;
 			al_map[color] = 1;
 		}
@@ -419,20 +419,20 @@ void vindictr_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	for (i = 0; i < 16; i++)
 	{
 		if (pf_map[i])
-			memset (&palette_used_colors[512 + i * 16], PALETTE_COLOR_USED, 16);
+			memset(&palette_used_colors[512 + i * 16], PALETTE_COLOR_USED, 16);
 		if (mo_map[i])
 		{
 			palette_used_colors[256 + i * 16] = PALETTE_COLOR_TRANSPARENT;
-			memset (&palette_used_colors[256 + i * 16 + 1], PALETTE_COLOR_USED, 15);
+			memset(&palette_used_colors[256 + i * 16 + 1], PALETTE_COLOR_USED, 15);
 		}
 		if (al_map[i])
-			memset (&palette_used_colors[0 + i * 4], PALETTE_COLOR_USED, 4);
+			memset(&palette_used_colors[0 + i * 4], PALETTE_COLOR_USED, 4);
 		if (al_map[16+i])
-			memset (&palette_used_colors[0 + (i+32) * 4], PALETTE_COLOR_USED, 4);
+			memset(&palette_used_colors[0 + (i+32) * 4], PALETTE_COLOR_USED, 4);
 	}
 
-	if (palette_recalc ())
-		memset (playfielddirty, 1, atarigen_playfieldram_size / 2);
+	if (palette_recalc())
+		memset(playfielddirty, 1, atarigen_playfieldram_size / 2);
 
 
 	/*
@@ -454,7 +454,7 @@ void vindictr_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 	/* if it's different than last frame, we need to refresh the whole playfield */
 	if (pfbank != last_pfbank)
-		memset (playfielddirty, 1, atarigen_playfieldram_size / 2);
+		memset(playfielddirty, 1, atarigen_playfieldram_size / 2);
 	last_pfbank = pfbank;
 
 	/* update only the portion of the playfield that's visible. */
@@ -476,11 +476,11 @@ void vindictr_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			/* rerender if dirty */
 			if (playfielddirty[offs])
 			{
-				int data = READ_WORD (&atarigen_playfieldram[offs * 2]);
+				int data = READ_WORD(&atarigen_playfieldram[offs * 2]);
 				int hflip = data & 0x8000;
 				int color = (data >> 11) & 14;
 
-				drawgfx (playfieldbitmap, Machine->gfx[1], pfbank + (data & 0x0fff), 0x10 + color, hflip, 0,
+				drawgfx(playfieldbitmap, Machine->gfx[1], pfbank + (data & 0x0fff), 0x10 + color, hflip, 0,
 						8 * sx, 8 * sy, 0, TRANSPARENCY_NONE, 0);
 				playfielddirty[offs] = 0;
 			}
@@ -500,15 +500,15 @@ void vindictr_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			offs = y * 64 + XCHARS;
 			for (x = XCHARS; x < 64; x++, offs++)
 			{
-				int data = READ_WORD (&atarigen_alpharam[offs * 2]);
+				int data = READ_WORD(&atarigen_alpharam[offs * 2]);
 				if ((data & 0x7e00) == 0x7400 && ((data & 7) * 0x1000) != curbank)
 				{
 					clip.max_y = (y + 1) * 8 - 1;
 					if (curbank == pfbank)
-						copyscrollbitmap (bitmap, playfieldbitmap, 1, &xscroll, 1, &yscroll,
+						copyscrollbitmap(bitmap, playfieldbitmap, 1, &xscroll, 1, &yscroll,
 								&clip, TRANSPARENCY_NONE, 0);
 					else
-						draw_playfield_chunk (bitmap, &clip, curbank);
+						draw_playfield_chunk(bitmap, &clip, curbank);
 					clip.min_y = clip.max_y + 1;
 					curbank = (data & 7) * 0x1000;
 					break;
@@ -519,10 +519,10 @@ void vindictr_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		{
 			clip.max_y = YCHARS * 8 - 1;
 			if (curbank == pfbank)
-				copyscrollbitmap (bitmap, playfieldbitmap, 1, &xscroll, 1, &yscroll,
+				copyscrollbitmap(bitmap, playfieldbitmap, 1, &xscroll, 1, &yscroll,
 						&clip, TRANSPARENCY_NONE, 0);
 			else
-				draw_playfield_chunk (bitmap, &clip, curbank);
+				draw_playfield_chunk(bitmap, &clip, curbank);
 		}
 	}
 
@@ -530,7 +530,7 @@ void vindictr_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	modata.redraw_list = modata.redraw = redraw_list;
 
 	/* render the motion objects */
-	atarigen_render_display_list (bitmap, vindictr_render_mo, &modata);
+	atarigen_render_display_list(bitmap, vindictr_render_mo, &modata);
 
 	/*
 	 *---------------------------------------------------------------------------------
@@ -551,14 +551,14 @@ void vindictr_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	{
 		for (sx = 0, offs = sy * 64; sx < XCHARS; sx++, offs++)
 		{
-			int data = READ_WORD (&atarigen_alpharam[offs * 2]);
+			int data = READ_WORD(&atarigen_alpharam[offs * 2]);
 			int pict = (data & 0x3ff);
 
 			if (pict || (data & 0x8000))
 			{
 				int color = ((data >> 10) & 0xf) | ((data >> 9) & 0x20);
 
-				drawgfx (bitmap, Machine->gfx[0], pict, color, 0, 0,
+				drawgfx(bitmap, Machine->gfx[0], pict, color, 0, 0,
 						8 * sx, 8 * sy, 0, (data & 0x8000) ? TRANSPARENCY_NONE : TRANSPARENCY_PEN, 0);
 			}
 		}
@@ -573,56 +573,56 @@ void vindictr_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
  *************************************/
 
 #if 0
-static void vindictr_debug (void)
+static void vindictr_debug(void)
 {
-	if (osd_key_pressed (OSD_KEY_9))
+	if (osd_key_pressed(OSD_KEY_9))
 	{
 		static int count;
 		char name[50];
 		FILE *f;
 		int i;
 
-		while (osd_key_pressed (OSD_KEY_9)) { }
+		while (osd_key_pressed(OSD_KEY_9)) { }
 
-		sprintf (name, "Dump %d", ++count);
-		f = fopen (name, "wt");
+		sprintf(name, "Dump %d", ++count);
+		f = fopen(name, "wt");
 
-		fprintf (f, "\n\nAlpha Palette:\n");
+		fprintf(f, "\n\nAlpha Palette:\n");
 		for (i = 0x000; i < 0x100; i++)
 		{
-			fprintf (f, "%04X ", READ_WORD (&paletteram[i*2]));
-			if ((i & 15) == 15) fprintf (f, "\n");
+			fprintf(f, "%04X ", READ_WORD(&paletteram[i*2]));
+			if ((i & 15) == 15) fprintf(f, "\n");
 		}
 
-		fprintf (f, "\n\nMotion Object Palette:\n");
+		fprintf(f, "\n\nMotion Object Palette:\n");
 		for (i = 0x100; i < 0x200; i++)
 		{
-			fprintf (f, "%04X ", READ_WORD (&paletteram[i*2]));
-			if ((i & 15) == 15) fprintf (f, "\n");
+			fprintf(f, "%04X ", READ_WORD(&paletteram[i*2]));
+			if ((i & 15) == 15) fprintf(f, "\n");
 		}
 
-		fprintf (f, "\n\nPlayfield Palette:\n");
+		fprintf(f, "\n\nPlayfield Palette:\n");
 		for (i = 0x200; i < 0x400; i++)
 		{
-			fprintf (f, "%04X ", READ_WORD (&paletteram[i*2]));
-			if ((i & 15) == 15) fprintf (f, "\n");
+			fprintf(f, "%04X ", READ_WORD(&paletteram[i*2]));
+			if ((i & 15) == 15) fprintf(f, "\n");
 		}
 
-		fprintf (f, "\n\nMotion Object Config:\n");
+		fprintf(f, "\n\nMotion Object Config:\n");
 		for (i = 0x00; i < 0x40; i++)
 		{
-			fprintf (f, "%04X ", READ_WORD (&atarigen_alpharam[0xf00 + i*2]));
-			if ((i & 15) == 15) fprintf (f, "\n");
+			fprintf(f, "%04X ", READ_WORD(&atarigen_alpharam[0xf00 + i*2]));
+			if ((i & 15) == 15) fprintf(f, "\n");
 		}
 
-		fprintf (f, "\n\nMotion Object SLIPs:\n");
+		fprintf(f, "\n\nMotion Object SLIPs:\n");
 		for (i = 0x00; i < 0x40; i++)
 		{
-			fprintf (f, "%04X ", READ_WORD (&atarigen_alpharam[0xf80 + i*2]));
-			if ((i & 15) == 15) fprintf (f, "\n");
+			fprintf(f, "%04X ", READ_WORD(&atarigen_alpharam[0xf80 + i*2]));
+			if ((i & 15) == 15) fprintf(f, "\n");
 		}
 
-		fprintf (f, "\n\nMotion Objects\n");
+		fprintf(f, "\n\nMotion Objects\n");
 		for (i = 0; i < 0x400; i++)
 		{
 			unsigned short *data = (unsigned short *)&atarigen_spriteram[i*8];
@@ -633,26 +633,26 @@ static void vindictr_debug (void)
 			int ypos = yscroll - (data[3] >> 7) - vsize * 8;
 			int color = data[2] & 15;
 			int hflip = data[3] & 0x0008;
-			fprintf (f, "   Object %03X: L=%03X P=%04X C=%X X=%03X Y=%03X W=%d H=%d F=%d LEFT=(%04X %04X %04X %04X)\n",
+			fprintf(f, "   Object %03X: L=%03X P=%04X C=%X X=%03X Y=%03X W=%d H=%d F=%d LEFT=(%04X %04X %04X %04X)\n",
 					i, data[0] & 0x3ff, pict, color, xpos & 0x1ff, ypos & 0x1ff, hsize, vsize, hflip,
 					data[0], data[1], data[2], data[3]);
 		}
 
-		fprintf (f, "\n\nPlayfield dump\n");
+		fprintf(f, "\n\nPlayfield dump\n");
 		for (i = 0; i < atarigen_playfieldram_size / 2; i++)
 		{
-			fprintf (f, "%04X ", READ_WORD (&atarigen_playfieldram[i*2]));
-			if ((i & 63) == 63) fprintf (f, "\n");
+			fprintf(f, "%04X ", READ_WORD(&atarigen_playfieldram[i*2]));
+			if ((i & 63) == 63) fprintf(f, "\n");
 		}
 
-		fprintf (f, "\n\nAlpha dump\n");
+		fprintf(f, "\n\nAlpha dump\n");
 		for (i = 0; i < atarigen_alpharam_size / 2; i++)
 		{
-			fprintf (f, "%04X ", READ_WORD (&atarigen_alpharam[i*2]));
-			if ((i & 63) == 63) fprintf (f, "\n");
+			fprintf(f, "%04X ", READ_WORD(&atarigen_alpharam[i*2]));
+			if ((i & 63) == 63) fprintf(f, "\n");
 		}
 
-		fclose (f);
+		fclose(f);
 	}
 }
 #endif

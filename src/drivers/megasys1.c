@@ -1100,7 +1100,7 @@ static struct GfxDecodeInfo gfxdecodeinfo_C[] =
 static struct YM2151interface ym2151_interface =
 {
 	1,
-	3000000,	/* ?? */
+	3500000,	/* ?? */
 	{ YM3012_VOL(50,OSD_PAN_LEFT,50,OSD_PAN_RIGHT) },
 	{ 0 }
 };
@@ -1109,7 +1109,7 @@ static struct YM2151interface ym2151_interface =
 static struct OKIM6295interface okim6295_interface =
 {
 	2,
-	22000,	/* ?? */
+	30000,	/* ?? */
 	{3,4},
 	{ 50, 50 }
 };

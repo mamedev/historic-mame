@@ -38,7 +38,7 @@ NMI enters the test mode.
 Changes:
 25 Jan 98 LBO
 	* Added crude support for samples based on Frank's info. As of yet, I don't have
-	  a set that matches the names - I need a way to edit the .sam files I have.
+	  a set that matches the names - I need a way to edit the .wav files I have.
 	  Hopefully I'll be able to create a good set shortly. I also don't know which
 	  sounds "loop".
 26 Jan 98 LBO
@@ -207,40 +207,40 @@ INPUT_PORTS_START( zaxxon_input_ports )
 	PORT_DIPSETTING(    0x80, DEF_STR( Cocktail ) )
 
 	PORT_START	/* DSW1 */
- 	PORT_DIPNAME( 0x0f, 0x03, "B Coin/Cred" )
-	PORT_DIPSETTING(    0x0f, "4/1" )
-	PORT_DIPSETTING(    0x07, "3/1" )
-	PORT_DIPSETTING(    0x0b, "2/1" )
-	PORT_DIPSETTING(    0x06, "2/1+Bonus each 5" )
-	PORT_DIPSETTING(    0x0a, "2/1+Bonus each 2" )
-	PORT_DIPSETTING(    0x03, "1/1" )
-	PORT_DIPSETTING(    0x02, "1/1+Bonus each 5" )
-	PORT_DIPSETTING(    0x0c, "1/1+Bonus each 4" )
-	PORT_DIPSETTING(    0x04, "1/1+Bonus each 2" )
-	PORT_DIPSETTING(    0x0d, "1/2" )
-	PORT_DIPSETTING(    0x08, "1/2+Bonus each 5" )
-	PORT_DIPSETTING(    0x00, "1/2+Bonus each 4" )
-	PORT_DIPSETTING(    0x05, "1/3" )
-	PORT_DIPSETTING(    0x09, "1/4" )
-	PORT_DIPSETTING(    0x01, "1/5" )
-	PORT_DIPSETTING(    0x0e, "1/6" )
-	PORT_DIPNAME( 0xf0, 0x30, "A Coin/Cred" )
-	PORT_DIPSETTING(    0xf0, "4/1" )
-	PORT_DIPSETTING(    0x70, "3/1" )
-	PORT_DIPSETTING(    0xb0, "2/1" )
-	PORT_DIPSETTING(    0x60, "2/1+Bonus each 5" )
-	PORT_DIPSETTING(    0xa0, "2/1+Bonus each 2" )
-	PORT_DIPSETTING(    0x30, "1/1" )
-	PORT_DIPSETTING(    0x20, "1/1+Bonus each 5" )
-	PORT_DIPSETTING(    0xc0, "1/1+Bonus each 4" )
-	PORT_DIPSETTING(    0x40, "1/1+Bonus each 2" )
-	PORT_DIPSETTING(    0xd0, "1/2" )
-	PORT_DIPSETTING(    0x80, "1/2+Bonus each 5" )
-	PORT_DIPSETTING(    0x00, "1/2+Bonus each 4" )
-	PORT_DIPSETTING(    0x50, "1/3" )
-	PORT_DIPSETTING(    0x90, "1/4" )
-	PORT_DIPSETTING(    0x10, "1/5" )
-	PORT_DIPSETTING(    0xe0, "1/6" )
+	PORT_DIPNAME( 0x0f, 0x03, DEF_STR ( Coin_B ) )
+	PORT_DIPSETTING(    0x0f, DEF_STR ( 4C_1C ) )
+	PORT_DIPSETTING(    0x07, DEF_STR ( 3C_1C ) )
+	PORT_DIPSETTING(    0x0b, DEF_STR ( 2C_1C ) )
+	PORT_DIPSETTING(    0x06, "2 Coins/1 Credit 5/3 6/4" )
+	PORT_DIPSETTING(    0x0a, "2 Coins/1 Credit 3/2 4/3" )
+	PORT_DIPSETTING(    0x03, DEF_STR ( 1C_1C ) )
+	PORT_DIPSETTING(    0x02, "1 Coin/1 Credit 5/6" )
+	PORT_DIPSETTING(    0x0c, "1 Coin/1 Credit 4/5" )
+	PORT_DIPSETTING(    0x04, "1 Coin/1 Credit 2/3" )
+	PORT_DIPSETTING(    0x0d, DEF_STR ( 1C_2C ) )
+	PORT_DIPSETTING(    0x08, "1 Coin/2 Credits 5/11" )
+	PORT_DIPSETTING(    0x00, "1 Coin/2 Credits 4/9" )
+	PORT_DIPSETTING(    0x05, DEF_STR ( 1C_3C ) )
+	PORT_DIPSETTING(    0x09, DEF_STR ( 1C_4C ) )
+	PORT_DIPSETTING(    0x01, DEF_STR ( 1C_5C ) )
+	PORT_DIPSETTING(    0x0e, DEF_STR ( 1C_6C ) )
+	PORT_DIPNAME( 0xf0, 0x30, DEF_STR ( Coin_A ) )
+	PORT_DIPSETTING(    0xf0, DEF_STR ( 4C_1C ) )
+	PORT_DIPSETTING(    0x70, DEF_STR ( 3C_1C ) )
+	PORT_DIPSETTING(    0xb0, DEF_STR ( 2C_1C ) )
+	PORT_DIPSETTING(    0x60, "2 Coins/1 Credit 5/3 6/4" )
+	PORT_DIPSETTING(    0xa0, "2 Coins/1 Credit 3/2 4/3" )
+	PORT_DIPSETTING(    0x30, DEF_STR ( 1C_1C ) )
+	PORT_DIPSETTING(    0x20, "1 Coin/1 Credit 5/6" )
+	PORT_DIPSETTING(    0xc0, "1 Coin/1 Credit 4/5" )
+	PORT_DIPSETTING(    0x40, "1 Coin/1 Credit 2/3" )
+	PORT_DIPSETTING(    0xd0, DEF_STR ( 1C_2C ) )
+	PORT_DIPSETTING(    0x80, "1 Coin/2 Credits 5/11" )
+	PORT_DIPSETTING(    0x00, "1 Coin/2 Credits 4/9" )
+	PORT_DIPSETTING(    0x50, DEF_STR ( 1C_3C ) )
+	PORT_DIPSETTING(    0x90, DEF_STR ( 1C_4C ) )
+	PORT_DIPSETTING(    0x10, DEF_STR ( 1C_5C ) )
+	PORT_DIPSETTING(    0xe0, DEF_STR ( 1C_6C ) )
 
 	PORT_START	/* FAKE */
 	/* This fake input port is used to get the status of the F2 key, */
@@ -282,40 +282,41 @@ INPUT_PORTS_START( futspy_input_ports )
 	PORT_BIT_IMPULSE( 0x80, IP_ACTIVE_HIGH, IPT_COIN3, 1 )
 
 	PORT_START	/* DSW1 */
- 	PORT_DIPNAME( 0x0f, 0x00, "A Coin/Cred" )
-	PORT_DIPSETTING(    0x08, "4/1" )
-	PORT_DIPSETTING(    0x07, "3/1" )
-	PORT_DIPSETTING(    0x06, "2/1" )
-	PORT_DIPSETTING(    0x0a, "2/1+Bonus each 5" )
-	PORT_DIPSETTING(    0x0b, "2/1+Bonus each 4" )
-	PORT_DIPSETTING(    0x00, "1/1" )
-	PORT_DIPSETTING(    0x0c, "1/1+Bonus each 5" )
-	PORT_DIPSETTING(    0x0d, "1/1+Bonus each 4" )
-	PORT_DIPSETTING(    0x0e, "1/1+Bonus each 2" )
-	PORT_DIPSETTING(    0x09, "2/3" )
-	PORT_DIPSETTING(    0x01, "1/2" )
-	PORT_DIPSETTING(    0x0f, "1/2+Bonus each 5" )
-	PORT_DIPSETTING(    0x02, "1/3" )
-	PORT_DIPSETTING(    0x03, "1/4" )
-	PORT_DIPSETTING(    0x04, "1/5" )
-	PORT_DIPSETTING(    0x05, "1/6" )
-	PORT_DIPNAME( 0xf0, 0x00, "B Coin/Cred" )
-	PORT_DIPSETTING(    0x80, "4/1" )
-	PORT_DIPSETTING(    0x70, "3/1" )
-	PORT_DIPSETTING(    0x60, "2/1" )
-	PORT_DIPSETTING(    0xa0, "2/1+Bonus each 5" )
-	PORT_DIPSETTING(    0xb0, "2/1+Bonus each 4" )
-	PORT_DIPSETTING(    0x00, "1/1" )
-	PORT_DIPSETTING(    0xc0, "1/1+Bonus each 5" )
-	PORT_DIPSETTING(    0xd0, "1/1+Bonus each 4" )
-	PORT_DIPSETTING(    0xe0, "1/1+Bonus each 2" )
-	PORT_DIPSETTING(    0x90, "2/3" )
-	PORT_DIPSETTING(    0x10, "1/2" )
-	PORT_DIPSETTING(    0xf0, "1/2+Bonus each 5" )
-	PORT_DIPSETTING(    0x20, "1/3" )
-	PORT_DIPSETTING(    0x30, "1/4" )
-	PORT_DIPSETTING(    0x40, "1/5" )
-	PORT_DIPSETTING(    0x50, "1/6" )
+	PORT_DIPNAME( 0x0f, 0x00, DEF_STR ( Coin_A ) )
+	PORT_DIPSETTING(    0x08, DEF_STR ( 4C_1C ) )
+	PORT_DIPSETTING(    0x07, DEF_STR ( 3C_1C ) )
+	PORT_DIPSETTING(    0x06, DEF_STR ( 2C_1C ) )
+	PORT_DIPSETTING(    0x0a, "2 Coins/1 Credit 5/3 6/4" )
+	PORT_DIPSETTING(    0x0b, "2 Coins/1 Credit 4/3" )
+	PORT_DIPSETTING(    0x00, DEF_STR ( 1C_1C ) )
+	PORT_DIPSETTING(    0x0e, "1 Coin/1 Credit 2/3" )
+	PORT_DIPSETTING(    0x0d, "1 Coin/1 Credit 4/5" )
+	PORT_DIPSETTING(    0x0c, "1 Coin/1 Credit 11/12" )
+	PORT_DIPSETTING(    0x09, DEF_STR ( 2C_3C ) )
+	PORT_DIPSETTING(    0x01, DEF_STR ( 1C_2C ) )
+	PORT_DIPSETTING(    0x0f, "1 Coin/2 Credits 5/11" )
+	PORT_DIPSETTING(    0x02, DEF_STR ( 1C_3C ) )
+	PORT_DIPSETTING(    0x03, DEF_STR ( 1C_4C ) )
+	PORT_DIPSETTING(    0x04, DEF_STR ( 1C_5C ) )
+	PORT_DIPSETTING(    0x05, DEF_STR ( 1C_6C ) )
+	PORT_DIPNAME( 0xf0, 0x00, DEF_STR ( Coin_B ) )
+	PORT_DIPSETTING(    0x80, DEF_STR ( 4C_1C ) )
+	PORT_DIPSETTING(    0x70, DEF_STR ( 3C_1C ) )
+	PORT_DIPSETTING(    0x60, DEF_STR ( 2C_1C ) )
+	PORT_DIPSETTING(    0xa0, "2 Coins/1 Credit 5/3 6/4" )
+	PORT_DIPSETTING(    0xb0, "2 Coins/1 Credit 4/3" )
+	PORT_DIPSETTING(    0x00, DEF_STR ( 1C_1C ) )
+	PORT_DIPSETTING(    0xe0, "1 Coin/1 Credit 2/3" )
+	PORT_DIPSETTING(    0xd0, "1 Coin/1 Credit 4/5" )
+	PORT_DIPSETTING(    0xc0, "1 Coin/1 Credit 11/12" )
+	PORT_DIPSETTING(    0x90, DEF_STR ( 2C_3C ) )
+	PORT_DIPSETTING(    0x10, DEF_STR ( 1C_2C ) )
+	PORT_DIPSETTING(    0xf0, "1 Coin/2 Credits 5/11" )
+	PORT_DIPSETTING(    0x20, DEF_STR ( 1C_3C ) )
+	PORT_DIPSETTING(    0x30, DEF_STR ( 1C_4C ) )
+	PORT_DIPSETTING(    0x40, DEF_STR ( 1C_5C ) )
+	PORT_DIPSETTING(    0x50, DEF_STR ( 1C_6C ) )
+
 
 	PORT_START	/* DSW0 */
 	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Cabinet ) )
@@ -517,18 +518,18 @@ static struct MachineDriver futspy_machine_driver =
 static const char *zaxxon_sample_names[] =
 {
 	"*zaxxon",
-	"03.sam",	/* Homing Missile */
-	"02.sam",	/* Base Missile */
-	"01.sam",	/* Laser (force field) */
-	"00.sam",	/* Battleship (end of level boss) */
-	"11.sam",	/* S-Exp (enemy explosion) */
-	"10.sam",	/* M-Exp (ship explosion) */
-	"08.sam", 	/* Cannon (ship fire) */
-	"23.sam",	/* Shot (enemy fire) */
-	"21.sam",	/* Alarm 2 (target lock) */
-	"20.sam",	/* Alarm 3 (low fuel) */
-	"05.sam",	/* initial background noise */
-	"04.sam",	/* looped asteroid noise */
+	"03.wav",	/* Homing Missile */
+	"02.wav",	/* Base Missile */
+	"01.wav",	/* Laser (force field) */
+	"00.wav",	/* Battleship (end of level boss) */
+	"11.wav",	/* S-Exp (enemy explosion) */
+	"10.wav",	/* M-Exp (ship explosion) */
+	"08.wav", 	/* Cannon (ship fire) */
+	"23.wav",	/* Shot (enemy fire) */
+	"21.wav",	/* Alarm 2 (target lock) */
+	"20.wav",	/* Alarm 3 (low fuel) */
+	"05.wav",	/* initial background noise */
+	"04.wav",	/* looped asteroid noise */
 	0
 };
 
@@ -558,6 +559,34 @@ ROM_START( zaxxon_rom )
 	ROM_REGION(0x0200)	/* color proms */
 	ROM_LOAD( "zaxxon.u98",   0x0000, 0x0100, 0x6cc6695b ) /* palette */
 	ROM_LOAD( "zaxxon.u72",   0x0100, 0x0100, 0xdeaa21f7 ) /* char lookup table */
+ROM_END
+
+ROM_START( zaxxon2_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "3a",           0x0000, 0x2000, 0xb18e428a )
+	ROM_LOAD( "zaxxon.2",     0x2000, 0x2000, 0x1c9ea398 )
+	ROM_LOAD( "1a",           0x4000, 0x1000, 0x1977d933 )
+
+	ROM_REGION_DISPOSE(0xd800)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "zaxxon.14",    0x0000, 0x0800, 0x07bf8c52 )	/* characters */
+	ROM_LOAD( "zaxxon.15",    0x0800, 0x0800, 0xc215edcb )
+	/* 1000-17ff empty space to convert the characters as 3bpp instead of 2 */
+	ROM_LOAD( "zaxxon.6",     0x1800, 0x2000, 0x6e07bb68 )	/* background tiles */
+	ROM_LOAD( "zaxxon.5",     0x3800, 0x2000, 0x0a5bce6a )
+	ROM_LOAD( "zaxxon.4",     0x5800, 0x2000, 0xa5bf1465 )
+	ROM_LOAD( "zaxxon.11",    0x7800, 0x2000, 0xeaf0dd4b )	/* sprites */
+	ROM_LOAD( "zaxxon.12",    0x9800, 0x2000, 0x1c5369c7 )
+	ROM_LOAD( "zaxxon.13",    0xb800, 0x2000, 0xab4e8a9a )
+
+	ROM_REGION(0x8000)	/* background graphics */
+	ROM_LOAD( "zaxxon.8",     0x0000, 0x2000, 0x28d65063 )
+	ROM_LOAD( "zaxxon.7",     0x2000, 0x2000, 0x6284c200 )
+	ROM_LOAD( "zaxxon.10",    0x4000, 0x2000, 0xa95e61fd )
+	ROM_LOAD( "zaxxon.9",     0x6000, 0x2000, 0x7e42691f )
+
+	ROM_REGION(0x0200)	/* color proms */
+	ROM_LOAD( "zaxxon.u98",   0x0000, 0x0100, 0x6cc6695b ) /* palette */
+	ROM_LOAD( "j214a2.72",    0x0100, 0x0100, 0xa9e1fb43 ) /* char lookup table */
 ROM_END
 
 ROM_START( szaxxon_rom )
@@ -709,7 +738,7 @@ struct GameDriver zaxxon_driver =
 	__FILE__,
 	0,
 	"zaxxon",
-	"Zaxxon",
+	"Zaxxon (set 1)",
 	"1982",
 	"Sega",
 	"Mirko Buffoni (MAME driver)\nNicola Salmoria (MAME driver)\nAlex Judd (sound)\nGerald Vanderick (color info)\nFrank Palazzolo (sound info)\nRiek Gladys (sound info)\nJohn Butler (video)",
@@ -718,6 +747,32 @@ struct GameDriver zaxxon_driver =
 	0,
 
 	zaxxon_rom,
+	0, 0,
+	zaxxon_sample_names,
+	0,	/* sound_prom */
+
+	zaxxon_input_ports,
+
+	PROM_MEMORY_REGION(3), 0, 0,
+	ORIENTATION_ROTATE_90,
+
+	hiload, hisave
+};
+
+struct GameDriver zaxxon2_driver =
+{
+	__FILE__,
+	&zaxxon_driver,
+	"zaxxon2",
+	"Zaxxon (set 2)",
+	"1982",
+	"Sega",
+	"Mirko Buffoni (MAME driver)\nNicola Salmoria (MAME driver)\nAlex Judd (sound)\nGerald Vanderick (color info)\nFrank Palazzolo (sound info)\nRiek Gladys (sound info)\nJohn Butler (video)",
+	0,
+	&zaxxon_machine_driver,
+	0,
+
+	zaxxon2_rom,
 	0, 0,
 	zaxxon_sample_names,
 	0,	/* sound_prom */

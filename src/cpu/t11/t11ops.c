@@ -13,11 +13,11 @@
 #define MAKE_EAB_RGD(r) ea = REGD(r)
 #define MAKE_EAB_IN(r)  ea = REGD(r); REGW(r) += ((r) < 6 ? 1 : 2)
 #define MAKE_EAB_INS(r) ea = REGD(r); REGW(r) += ((r) < 6 ? 1 : 2)
-#define MAKE_EAB_IND(r) ea = REGD(r); REGW(r) += 2; ea = RWORD (ea)
+#define MAKE_EAB_IND(r) ea = REGD(r); REGW(r) += 2; ea = RWORD(ea)
 #define MAKE_EAB_DE(r)  REGW(r) -= ((r) < 6 ? 1 : 2); ea = REGD(r)
-#define MAKE_EAB_DED(r) REGW(r) -= 2; ea = REGD(r); ea = RWORD (ea)
-#define MAKE_EAB_IX(r)  ea = ROPCODE (); ea = (ea + REGD(r)) & 0xffff
-#define MAKE_EAB_IXD(r) ea = ROPCODE (); ea = (ea + REGD(r)) & 0xffff; ea = RWORD (ea)
+#define MAKE_EAB_DED(r) REGW(r) -= 2; ea = REGD(r); ea = RWORD(ea)
+#define MAKE_EAB_IX(r)  ea = ROPCODE(); ea = (ea + REGD(r)) & 0xffff
+#define MAKE_EAB_IXD(r) ea = ROPCODE(); ea = (ea + REGD(r)) & 0xffff; ea = RWORD(ea)
 
 /* given a register index 'r', this computes the effective address for a word-sized operation
    and puts the result in 'ea' */
@@ -35,47 +35,47 @@
 
 /* for a byte-sized source operand: extracts 'sreg', computes 'ea', and loads the value into 'source' */
 #define GET_SB_RG  GET_SREG; source = REGB(sreg)
-#define GET_SB_RGD GET_SREG; MAKE_EAB_RGD(sreg); source = RBYTE (ea)
-#define GET_SB_IN  GET_SREG; if (sreg == 7) { source = ROPCODE (); } else { MAKE_EAB_IN (sreg); source = RBYTE (ea); }
-#define GET_SB_IND GET_SREG; if (sreg == 7) { ea = ROPCODE (); } else { MAKE_EAB_IND(sreg); } source = RBYTE (ea)
-#define GET_SB_DE  GET_SREG; MAKE_EAB_DE (sreg); source = RBYTE (ea)
-#define GET_SB_DED GET_SREG; MAKE_EAB_DED(sreg); source = RBYTE (ea)
-#define GET_SB_IX  GET_SREG; MAKE_EAB_IX (sreg); source = RBYTE (ea)
-#define GET_SB_IXD GET_SREG; MAKE_EAB_IXD(sreg); source = RBYTE (ea)
+#define GET_SB_RGD GET_SREG; MAKE_EAB_RGD(sreg); source = RBYTE(ea)
+#define GET_SB_IN  GET_SREG; if (sreg == 7) { source = ROPCODE(); } else { MAKE_EAB_IN(sreg); source = RBYTE(ea); }
+#define GET_SB_IND GET_SREG; if (sreg == 7) { ea = ROPCODE(); } else { MAKE_EAB_IND(sreg); } source = RBYTE(ea)
+#define GET_SB_DE  GET_SREG; MAKE_EAB_DE(sreg); source = RBYTE(ea)
+#define GET_SB_DED GET_SREG; MAKE_EAB_DED(sreg); source = RBYTE(ea)
+#define GET_SB_IX  GET_SREG; MAKE_EAB_IX(sreg); source = RBYTE(ea)
+#define GET_SB_IXD GET_SREG; MAKE_EAB_IXD(sreg); source = RBYTE(ea)
 
 /* for a word-sized source operand: extracts 'sreg', computes 'ea', and loads the value into 'source' */
 #define GET_SW_RG  GET_SREG; source = REGD(sreg)
-#define GET_SW_RGD GET_SREG; MAKE_EAW_RGD(sreg); source = RWORD (ea)
-#define GET_SW_IN  GET_SREG; if (sreg == 7) { source = ROPCODE (); } else { MAKE_EAW_IN (sreg); source = RWORD (ea); }
-#define GET_SW_IND GET_SREG; if (sreg == 7) { ea = ROPCODE (); } else { MAKE_EAW_IND(sreg); } source = RWORD (ea)
-#define GET_SW_DE  GET_SREG; MAKE_EAW_DE (sreg); source = RWORD (ea)
-#define GET_SW_DED GET_SREG; MAKE_EAW_DED(sreg); source = RWORD (ea)
-#define GET_SW_IX  GET_SREG; MAKE_EAW_IX (sreg); source = RWORD (ea)
-#define GET_SW_IXD GET_SREG; MAKE_EAW_IXD(sreg); source = RWORD (ea)
+#define GET_SW_RGD GET_SREG; MAKE_EAW_RGD(sreg); source = RWORD(ea)
+#define GET_SW_IN  GET_SREG; if (sreg == 7) { source = ROPCODE(); } else { MAKE_EAW_IN(sreg); source = RWORD(ea); }
+#define GET_SW_IND GET_SREG; if (sreg == 7) { ea = ROPCODE(); } else { MAKE_EAW_IND(sreg); } source = RWORD(ea)
+#define GET_SW_DE  GET_SREG; MAKE_EAW_DE(sreg); source = RWORD(ea)
+#define GET_SW_DED GET_SREG; MAKE_EAW_DED(sreg); source = RWORD(ea)
+#define GET_SW_IX  GET_SREG; MAKE_EAW_IX(sreg); source = RWORD(ea)
+#define GET_SW_IXD GET_SREG; MAKE_EAW_IXD(sreg); source = RWORD(ea)
 
 /* for a byte-sized destination operand: extracts 'dreg', computes 'ea', and loads the value into 'dest' */
 #define GET_DB_RG  GET_DREG; dest = REGB(dreg)
-#define GET_DB_RGD GET_DREG; MAKE_EAB_RGD(dreg); dest = RBYTE (ea)
-#define GET_DB_IN  GET_DREG; MAKE_EAB_IN (dreg); dest = RBYTE (ea)
-#define GET_DB_IND GET_DREG; if (dreg == 7) { ea = ROPCODE (); } else { MAKE_EAB_IND(dreg); } dest = RBYTE (ea)
-#define GET_DB_DE  GET_DREG; MAKE_EAB_DE (dreg); dest = RBYTE (ea)
-#define GET_DB_DED GET_DREG; MAKE_EAB_DED(dreg); dest = RBYTE (ea)
-#define GET_DB_IX  GET_DREG; MAKE_EAB_IX (dreg); dest = RBYTE (ea)
-#define GET_DB_IXD GET_DREG; MAKE_EAB_IXD(dreg); dest = RBYTE (ea)
+#define GET_DB_RGD GET_DREG; MAKE_EAB_RGD(dreg); dest = RBYTE(ea)
+#define GET_DB_IN  GET_DREG; MAKE_EAB_IN(dreg); dest = RBYTE(ea)
+#define GET_DB_IND GET_DREG; if (dreg == 7) { ea = ROPCODE(); } else { MAKE_EAB_IND(dreg); } dest = RBYTE(ea)
+#define GET_DB_DE  GET_DREG; MAKE_EAB_DE(dreg); dest = RBYTE(ea)
+#define GET_DB_DED GET_DREG; MAKE_EAB_DED(dreg); dest = RBYTE(ea)
+#define GET_DB_IX  GET_DREG; MAKE_EAB_IX(dreg); dest = RBYTE(ea)
+#define GET_DB_IXD GET_DREG; MAKE_EAB_IXD(dreg); dest = RBYTE(ea)
 
 /* for a word-sized destination operand: extracts 'dreg', computes 'ea', and loads the value into 'dest' */
 #define GET_DW_RG  GET_DREG; dest = REGD(dreg)
-#define GET_DW_RGD GET_DREG; MAKE_EAW_RGD(dreg); dest = RWORD (ea)
-#define GET_DW_IN  GET_DREG; MAKE_EAW_IN (dreg); dest = RWORD (ea)
-#define GET_DW_IND GET_DREG; if (dreg == 7) { ea = ROPCODE (); } else { MAKE_EAW_IND(dreg); } dest = RWORD (ea)
-#define GET_DW_DE  GET_DREG; MAKE_EAW_DE (dreg); dest = RWORD (ea)
-#define GET_DW_DED GET_DREG; MAKE_EAW_DED(dreg); dest = RWORD (ea)
-#define GET_DW_IX  GET_DREG; MAKE_EAW_IX (dreg); dest = RWORD (ea)
-#define GET_DW_IXD GET_DREG; MAKE_EAW_IXD(dreg); dest = RWORD (ea)
+#define GET_DW_RGD GET_DREG; MAKE_EAW_RGD(dreg); dest = RWORD(ea)
+#define GET_DW_IN  GET_DREG; MAKE_EAW_IN(dreg); dest = RWORD(ea)
+#define GET_DW_IND GET_DREG; if (dreg == 7) { ea = ROPCODE(); } else { MAKE_EAW_IND(dreg); } dest = RWORD(ea)
+#define GET_DW_DE  GET_DREG; MAKE_EAW_DE(dreg); dest = RWORD(ea)
+#define GET_DW_DED GET_DREG; MAKE_EAW_DED(dreg); dest = RWORD(ea)
+#define GET_DW_IX  GET_DREG; MAKE_EAW_IX(dreg); dest = RWORD(ea)
+#define GET_DW_IXD GET_DREG; MAKE_EAW_IXD(dreg); dest = RWORD(ea)
 
 /* writes a value to a previously computed 'ea' */
-#define PUT_DB_EA(v) WBYTE (ea, (v))
-#define PUT_DW_EA(v) WWORD (ea, (v))
+#define PUT_DB_EA(v) WBYTE(ea, (v))
+#define PUT_DW_EA(v) WWORD(ea, (v))
 
 /* writes a value to a previously computed 'dreg' register */
 #define PUT_DB_DREG(v) REGB(dreg) = (v)
@@ -83,23 +83,23 @@
 
 /* for a byte-sized destination operand: extracts 'dreg', computes 'ea', and writes 'v' to it */
 #define PUT_DB_RG(v)  GET_DREG; REGB(dreg) = (v)
-#define PUT_DB_RGD(v) GET_DREG; MAKE_EAB_RGD(dreg); WBYTE (ea, (v))
-#define PUT_DB_IN(v)  GET_DREG; MAKE_EAB_IN (dreg); WBYTE (ea, (v))
-#define PUT_DB_IND(v) GET_DREG; if (dreg == 7) { ea = ROPCODE (); } else { MAKE_EAB_IND(dreg); } WBYTE (ea, (v))
-#define PUT_DB_DE(v)  GET_DREG; MAKE_EAB_DE (dreg); WBYTE (ea, (v))
-#define PUT_DB_DED(v) GET_DREG; MAKE_EAB_DED(dreg); WBYTE (ea, (v))
-#define PUT_DB_IX(v)  GET_DREG; MAKE_EAB_IX (dreg); WBYTE (ea, (v))
-#define PUT_DB_IXD(v) GET_DREG; MAKE_EAB_IXD(dreg); WBYTE (ea, (v))
+#define PUT_DB_RGD(v) GET_DREG; MAKE_EAB_RGD(dreg); WBYTE(ea, (v))
+#define PUT_DB_IN(v)  GET_DREG; MAKE_EAB_IN(dreg); WBYTE(ea, (v))
+#define PUT_DB_IND(v) GET_DREG; if (dreg == 7) { ea = ROPCODE(); } else { MAKE_EAB_IND(dreg); } WBYTE(ea, (v))
+#define PUT_DB_DE(v)  GET_DREG; MAKE_EAB_DE(dreg); WBYTE(ea, (v))
+#define PUT_DB_DED(v) GET_DREG; MAKE_EAB_DED(dreg); WBYTE(ea, (v))
+#define PUT_DB_IX(v)  GET_DREG; MAKE_EAB_IX(dreg); WBYTE(ea, (v))
+#define PUT_DB_IXD(v) GET_DREG; MAKE_EAB_IXD(dreg); WBYTE(ea, (v))
 
 /* for a word-sized destination operand: extracts 'dreg', computes 'ea', and writes 'v' to it */
 #define PUT_DW_RG(v)  GET_DREG; REGW(dreg) = (v)
-#define PUT_DW_RGD(v) GET_DREG; MAKE_EAW_RGD(dreg); WWORD (ea, (v))
-#define PUT_DW_IN(v)  GET_DREG; MAKE_EAW_IN (dreg); WWORD (ea, (v))
-#define PUT_DW_IND(v) GET_DREG; if (dreg == 7) { ea = ROPCODE (); } else { MAKE_EAW_IND(dreg); } WWORD (ea, (v))
-#define PUT_DW_DE(v)  GET_DREG; MAKE_EAW_DE (dreg); WWORD (ea, (v))
-#define PUT_DW_DED(v) GET_DREG; MAKE_EAW_DED(dreg); WWORD (ea, (v))
-#define PUT_DW_IX(v)  GET_DREG; MAKE_EAW_IX (dreg); WWORD (ea, (v))
-#define PUT_DW_IXD(v) GET_DREG; MAKE_EAW_IXD(dreg); WWORD (ea, (v))
+#define PUT_DW_RGD(v) GET_DREG; MAKE_EAW_RGD(dreg); WWORD(ea, (v))
+#define PUT_DW_IN(v)  GET_DREG; MAKE_EAW_IN(dreg); WWORD(ea, (v))
+#define PUT_DW_IND(v) GET_DREG; if (dreg == 7) { ea = ROPCODE(); } else { MAKE_EAW_IND(dreg); } WWORD(ea, (v))
+#define PUT_DW_DE(v)  GET_DREG; MAKE_EAW_DE(dreg); WWORD(ea, (v))
+#define PUT_DW_DED(v) GET_DREG; MAKE_EAW_DED(dreg); WWORD(ea, (v))
+#define PUT_DW_IX(v)  GET_DREG; MAKE_EAW_IX(dreg); WWORD(ea, (v))
+#define PUT_DW_IXD(v) GET_DREG; MAKE_EAW_IXD(dreg); WWORD(ea, (v))
 
 /* flag clearing; must be done before setting */
 #define CLR_ZV   (PSW &= ~(ZFLAG | VFLAG))
@@ -204,8 +204,8 @@
 #define MOVB_X(s,d) int sreg, dreg, source, result, ea; GET_SB_##s; CLR_NZV; result = source; SETB_NZ; PUT_DW_##d((signed char)result)
 #define MOVB_M(s,d) int sreg, dreg, source, result, ea; GET_SB_##s; CLR_NZV; result = source; SETB_NZ; PUT_DB_##d(result)
 /* MTPS: flags = src */
-#define MTPS_R(d)   int dreg, dest;     GET_DW_##d; PSW = (PSW & ~0xef) | (dest & 0xef)
-#define MTPS_M(d)   int dreg, dest, ea; GET_DW_##d; PSW = (PSW & ~0xef) | (dest & 0xef)
+#define MTPS_R(d)   int dreg, dest;     GET_DW_##d; PSW = (PSW & ~0xef) | (dest & 0xef); t11_check_irqs()
+#define MTPS_M(d)   int dreg, dest, ea; GET_DW_##d; PSW = (PSW & ~0xef) | (dest & 0xef); t11_check_irqs()
 /* NEG: dst = -dst */
 #define NEG_R(d)    int dreg, dest, result;     GET_DW_##d; CLR_NZVC; result = -dest; SETW_NZ; if (dest == 0x8000) SET_V; if (result) SET_C; PUT_DW_DREG(result)
 #define NEG_M(d)    int dreg, dest, result, ea; GET_DW_##d; CLR_NZVC; result = -dest; SETW_NZ; if (dest == 0x8000) SET_V; if (result) SET_C; PUT_DW_EA(result)
@@ -255,13 +255,13 @@ static void op_0000(void)
 	switch (t11.op & 0x3f)
 	{
 		case 0x00:	/* HALT  */ t11_ICount = 0; break;
-		case 0x01:	/* WAIT  */ t11.pending_interrupts |= T11_WAIT; t11_ICount = 0; break;
-		case 0x02:	/* RTI   */ PC = POP(); PSW = POP(); break;
-		case 0x03:	/* BPT   */ PUSH(PSW); PUSH(PC); PC = RWORD (0x0c); PSW = RWORD (0x0e); break;
-		case 0x04:	/* IOT   */ PUSH(PSW); PUSH(PC); PC = RWORD (0x10); PSW = RWORD (0x12); break;
+		case 0x01:	/* WAIT  */ t11.wait_state = 1; t11_ICount = 0; break;
+		case 0x02:	/* RTI   */ PC = POP(); PSW = POP(); t11_check_irqs(); break;
+		case 0x03:	/* BPT   */ PUSH(PSW); PUSH(PC); PC = RWORD(0x0c); PSW = RWORD(0x0e); t11_check_irqs(); break;
+		case 0x04:	/* IOT   */ PUSH(PSW); PUSH(PC); PC = RWORD(0x10); PSW = RWORD(0x12); t11_check_irqs(); break;
 		case 0x05:	/* RESET */ break;
-		case 0x06:	/* RTT   */ PC = POP(); PSW = POP(); break;
-		default: 	illegal (); break;
+		case 0x06:	/* RTT   */ PC = POP(); PSW = POP(); t11_check_irqs(); break;
+		default: 	illegal(); break;
 	}
 }
 
@@ -271,6 +271,7 @@ static void illegal(void)
 	PUSH(PC);
 	PC = RWORD(0x08);
 	PSW = RWORD(0x0a);
+	t11_check_irqs();
 PC = 0;
 }
 
@@ -284,10 +285,10 @@ static void jmp_ixd(void)       { JMP(IXD); }
 
 static void rts(void)
 {
-	int dreg; 
-	GET_DREG; 
-	PC = REGD(dreg); 
-	REGW(dreg) = POP(); 
+	int dreg;
+	GET_DREG;
+	PC = REGD(dreg);
+	REGW(dreg) = POP();
 }
 
 static void ccc(void)			{ PSW &= ~(t11.op & 15); }
@@ -306,9 +307,9 @@ static void br(void)            { BR(1); }
 static void bne(void)           { BR(!GET_Z); }
 static void beq(void)           { BR( GET_Z); }
 static void bge(void)           { BR(!((GET_N >> 2) ^ GET_V)); }
-static void blt(void)           { BR( ((GET_N >> 2) ^ GET_V)); }
+static void blt(void)           { BR(((GET_N >> 2) ^ GET_V)); }
 static void bgt(void)           { BR(!GET_Z && !((GET_N >> 2) ^ GET_V)); }
-static void ble(void)           { BR( GET_Z ||  ((GET_N >> 2) ^ GET_V)); }
+static void ble(void)           { BR( GET_Z || ((GET_N >> 2) ^ GET_V)); }
 
 static void jsr_rgd(void)       { JSR(RGD); }
 static void jsr_in(void)        { JSR(IN);  }
@@ -837,7 +838,7 @@ static void xor_ixd(void)       { XOR_M(IXD); }
 static void sob(void)
 {
 	int sreg, source;
-	
+
 	GET_SREG; source = REGD(sreg);
 	source -= 1;
 	REGW(sreg) = source;
@@ -860,6 +861,7 @@ static void emt(void)
 	PUSH(PC);
 	PC = RWORD(0x18);
 	PSW = RWORD(0x1a);
+	t11_check_irqs();
 }
 
 static void trap(void)
@@ -868,6 +870,7 @@ static void trap(void)
 	PUSH(PC);
 	PC = RWORD(0x1c);
 	PSW = RWORD(0x1e);
+	t11_check_irqs();
 }
 
 static void clrb_rg(void)       { CLRB_R(RG);  }

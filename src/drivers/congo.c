@@ -410,11 +410,11 @@ ROM_END
 static const char *congo_samplenames[] =
 {
 	"*congo",
-	"gorilla.sam",
-	"bass.sam",
-	"congaa.sam",
-	"congab.sam",
-	"rim.sam",
+	"gorilla.wav",
+	"bass.wav",
+	"congaa.wav",
+	"congab.wav",
+	"rim.wav",
 	0
 };
 
